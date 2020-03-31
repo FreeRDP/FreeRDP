@@ -5,6 +5,8 @@
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2020 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2020 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +27,8 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 #include <winpr/smartcard.h>
+
+#pragma pack(push, 1)
 
 /* interface type_scard_pack */
 /* [unique][version][uuid] */
@@ -138,7 +142,7 @@ typedef struct _LocateCardsA_Call
 {
 	REDIR_SCARDCONTEXT hContext;
 	/* [range] */ DWORD cBytes;
-	/* [size_is] */ char* mszCards;
+	/* [size_is] */ CHAR* mszCards;
 	/* [range] */ DWORD cReaders;
 	/* [size_is] */ LPSCARD_READERSTATEA rgReaderStates;
 } LocateCardsA_Call;
@@ -228,7 +232,7 @@ typedef struct _Connect_Common
 
 typedef struct _ConnectA_Call
 {
-	/* [string] */ unsigned char* szReader;
+	/* [string] */ CHAR* szReader;
 	Connect_Common Common;
 } ConnectA_Call;
 
@@ -436,14 +440,16 @@ typedef struct _WriteCacheW_Call
 	WriteCache_Common Common;
 } WriteCacheW_Call;
 
+#pragma pack(pop)
+
 #define SMARTCARD_COMMON_TYPE_HEADER_LENGTH 8
 #define SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH 8
 
 #include "smartcard_main.h"
 
-LONG smartcard_pack_write_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size,
+LONG smartcard_pack_write_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, size_t size,
                                      UINT32 alignment);
-LONG smartcard_unpack_read_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size,
+LONG smartcard_unpack_read_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, size_t size,
                                       UINT32 alignment);
 
 SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartcard,
@@ -479,7 +485,7 @@ LONG smartcard_unpack_list_reader_groups_call(SMARTCARD_DEVICE* smartcard, wStre
                                               ListReaderGroups_Call* call, BOOL unicode);
 
 LONG smartcard_pack_list_reader_groups_return(SMARTCARD_DEVICE* smartcard, wStream* s,
-                                              const ListReaderGroups_Return* ret);
+                                              const ListReaderGroups_Return* ret, BOOL unicode);
 
 LONG smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s,
                                         ListReaders_Call* call, BOOL unicode);
@@ -515,8 +521,8 @@ LONG smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 LONG smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, ConnectW_Call* call);
 
-LONG smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Connect_Return* ret);
-void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, const Connect_Return* ret);
+LONG smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s,
+                                   const Connect_Return* ret);
 
 LONG smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Reconnect_Call* call);
 
@@ -552,9 +558,6 @@ LONG smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 
 LONG smartcard_unpack_set_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s,
                                       SetAttrib_Call* call);
-
-LONG smartcard_pack_set_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
-                                      const GetAttrib_Return* ret);
 
 LONG smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Control_Call* call);
 

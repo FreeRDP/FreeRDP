@@ -3,6 +3,8 @@
  * Smart Card API
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2020 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2020 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,17 +42,68 @@
  */
 
 #ifdef __APPLE__
-typedef unsigned int PCSC_DWORD;
-typedef PCSC_DWORD *PCSC_PDWORD, *PCSC_LPDWORD;
-typedef unsigned int PCSC_ULONG;
+
+#include <stdint.h>
+
+#ifndef BYTE
+typedef uint8_t PCSC_BYTE;
+#endif
+typedef uint8_t PCSC_UCHAR;
+typedef PCSC_UCHAR* PCSC_PUCHAR;
+typedef uint16_t PCSC_USHORT;
+
+#ifndef __COREFOUNDATION_CFPLUGINCOM__
+typedef uint32_t PCSC_ULONG;
+typedef void* PCSC_LPVOID;
+typedef int16_t PCSC_BOOL;
+#endif
+
 typedef PCSC_ULONG* PCSC_PULONG;
-typedef int PCSC_LONG;
+typedef const void* PCSC_LPCVOID;
+typedef uint32_t PCSC_DWORD;
+typedef PCSC_DWORD* PCSC_PDWORD;
+typedef uint16_t PCSC_WORD;
+typedef int32_t PCSC_LONG;
+typedef const char* PCSC_LPCSTR;
+typedef const PCSC_BYTE* PCSC_LPCBYTE;
+typedef PCSC_BYTE* PCSC_LPBYTE;
+typedef PCSC_DWORD* PCSC_LPDWORD;
+typedef char* PCSC_LPSTR;
+
 #else
-typedef unsigned long PCSC_DWORD;
-typedef PCSC_DWORD *PCSC_PDWORD, *PCSC_LPDWORD;
+
+#ifndef BYTE
+typedef unsigned char PCSC_BYTE;
+#endif
+typedef unsigned char PCSC_UCHAR;
+typedef PCSC_UCHAR* PCSC_PUCHAR;
+typedef unsigned short PCSC_USHORT;
+
+#ifndef __COREFOUNDATION_CFPLUGINCOM__
 typedef unsigned long PCSC_ULONG;
-typedef PCSC_ULONG* PCSC_PULONG;
+typedef void* PCSC_LPVOID;
+#endif
+
+typedef const void* PCSC_LPCVOID;
+typedef unsigned long PCSC_DWORD;
+typedef PCSC_DWORD* PCSC_PDWORD;
 typedef long PCSC_LONG;
+typedef const char* PCSC_LPCSTR;
+typedef const PCSC_BYTE* PCSC_LPCBYTE;
+typedef PCSC_BYTE* PCSC_LPBYTE;
+typedef PCSC_DWORD* PCSC_LPDWORD;
+typedef char* PCSC_LPSTR;
+
+/* these types were deprecated but still used by old drivers and
+ * applications. So just declare and use them. */
+typedef PCSC_LPSTR PCSC_LPTSTR;
+typedef PCSC_LPCSTR PCSC_LPCTSTR;
+
+/* types unused by pcsc-lite */
+typedef short PCSC_BOOL;
+typedef unsigned short PCSC_WORD;
+typedef PCSC_ULONG* PCSC_PULONG;
+
 #endif
 
 #define PCSC_SCARD_UNKNOWN 0x0001
@@ -61,8 +114,8 @@ typedef long PCSC_LONG;
 #define PCSC_SCARD_NEGOTIABLE 0x0020
 #define PCSC_SCARD_SPECIFIC 0x0040
 
-#define PCSC_SCARD_PROTOCOL_RAW 0x00000004
-#define PCSC_SCARD_PROTOCOL_T15 0x00000008
+#define PCSC_SCARD_PROTOCOL_RAW 0x00000004u
+#define PCSC_SCARD_PROTOCOL_T15 0x00000008u
 
 #define PCSC_MAX_BUFFER_SIZE 264
 #define PCSC_MAX_BUFFER_SIZE_EXTENDED (4 + 3 + (1 << 16) + 3 + 2)
@@ -70,10 +123,6 @@ typedef long PCSC_LONG;
 #define PCSC_MAX_ATR_SIZE 33
 
 #define PCSC_SCARD_AUTOALLOCATE (PCSC_DWORD)(-1)
-
-#define PCSC_SCARD_PCI_T0 (&g_PCSC_rgSCardT0Pci)
-#define PCSC_SCARD_PCI_T1 (&g_PCSC_rgSCardT1Pci)
-#define PCSC_SCARD_PCI_RAW (&g_PCSC_rgSCardRawPci)
 
 #define PCSC_SCARD_CTL_CODE(code) (0x42000000 + (code))
 #define PCSC_CM_IOCTL_GET_FEATURE_REQUEST PCSC_SCARD_CTL_CODE(3400)
@@ -118,49 +167,8 @@ typedef struct
 
 #pragma pack(pop)
 
-struct _PCSCFunctionTable
-{
-	PCSC_LONG(*pfnSCardEstablishContext)
-	(PCSC_DWORD dwScope, LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
-	PCSC_LONG (*pfnSCardReleaseContext)(SCARDCONTEXT hContext);
-	PCSC_LONG (*pfnSCardIsValidContext)(SCARDCONTEXT hContext);
-	PCSC_LONG(*pfnSCardConnect)
-	(SCARDCONTEXT hContext, LPCSTR szReader, PCSC_DWORD dwShareMode,
-	 PCSC_DWORD dwPreferredProtocols, LPSCARDHANDLE phCard, PCSC_LPDWORD pdwActiveProtocol);
-	PCSC_LONG(*pfnSCardReconnect)
-	(SCARDHANDLE hCard, PCSC_DWORD dwShareMode, PCSC_DWORD dwPreferredProtocols,
-	 PCSC_DWORD dwInitialization, PCSC_LPDWORD pdwActiveProtocol);
-	PCSC_LONG (*pfnSCardDisconnect)(SCARDHANDLE hCard, PCSC_DWORD dwDisposition);
-	PCSC_LONG (*pfnSCardBeginTransaction)(SCARDHANDLE hCard);
-	PCSC_LONG (*pfnSCardEndTransaction)(SCARDHANDLE hCard, PCSC_DWORD dwDisposition);
-	PCSC_LONG(*pfnSCardStatus)
-	(SCARDHANDLE hCard, LPSTR mszReaderName, PCSC_LPDWORD pcchReaderLen, PCSC_LPDWORD pdwState,
-	 PCSC_LPDWORD pdwProtocol, LPBYTE pbAtr, PCSC_LPDWORD pcbAtrLen);
-	PCSC_LONG(*pfnSCardGetStatusChange)
-	(SCARDCONTEXT hContext, PCSC_DWORD dwTimeout, PCSC_SCARD_READERSTATE* rgReaderStates,
-	 PCSC_DWORD cReaders);
-	PCSC_LONG(*pfnSCardControl)
-	(SCARDHANDLE hCard, PCSC_DWORD dwControlCode, LPCVOID pbSendBuffer, PCSC_DWORD cbSendLength,
-	 LPVOID pbRecvBuffer, PCSC_DWORD cbRecvLength, PCSC_LPDWORD lpBytesReturned);
-	PCSC_LONG(*pfnSCardTransmit)
-	(SCARDHANDLE hCard, const PCSC_SCARD_IO_REQUEST* pioSendPci, LPCBYTE pbSendBuffer,
-	 PCSC_DWORD cbSendLength, PCSC_SCARD_IO_REQUEST* pioRecvPci, LPBYTE pbRecvBuffer,
-	 PCSC_LPDWORD pcbRecvLength);
-	PCSC_LONG(*pfnSCardListReaderGroups)
-	(SCARDCONTEXT hContext, LPSTR mszGroups, PCSC_LPDWORD pcchGroups);
-	PCSC_LONG(*pfnSCardListReaders)
-	(SCARDCONTEXT hContext, LPCSTR mszGroups, LPSTR mszReaders, PCSC_LPDWORD pcchReaders);
-	PCSC_LONG (*pfnSCardFreeMemory)(SCARDCONTEXT hContext, LPCVOID pvMem);
-	PCSC_LONG (*pfnSCardCancel)(SCARDCONTEXT hContext);
-	PCSC_LONG(*pfnSCardGetAttrib)
-	(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPBYTE pbAttr, PCSC_LPDWORD pcbAttrLen);
-	PCSC_LONG(*pfnSCardSetAttrib)
-	(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPCBYTE pbAttr, PCSC_DWORD cbAttrLen);
-};
-typedef struct _PCSCFunctionTable PCSCFunctionTable;
-
 int PCSC_InitializeSCardApi(void);
-PSCardApiFunctionTable PCSC_GetSCardApiFunctionTable(void);
+const SCardApiFunctionTable* PCSC_GetSCardApiFunctionTable(void);
 
 #endif
 

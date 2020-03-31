@@ -3,6 +3,8 @@
  * Smart Card API
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2020 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2020 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +25,6 @@
 #include <winpr/platform.h>
 #include <winpr/smartcard.h>
 
-PSCardApiFunctionTable Inspect_RegisterSCardApi(PSCardApiFunctionTable pSCardApi);
+const SCardApiFunctionTable* Inspect_RegisterSCardApi(const SCardApiFunctionTable* pSCardApi);
 
 #endif /* WINPR_SMARTCARD_INSPECT_PRIVATE_H */

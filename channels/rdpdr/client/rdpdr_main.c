@@ -1471,7 +1471,7 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 
 	data_in = rdpdr->data_in;
 
-	if (!Stream_EnsureRemainingCapacity(data_in, (int)dataLength))
+	if (!Stream_EnsureRemainingCapacity(data_in, dataLength))
 	{
 		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 		return ERROR_INVALID_DATA;
@@ -1602,6 +1602,12 @@ static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)
 	return 0;
 }
 
+static void queue_free(void* obj)
+{
+	wStream* s = obj;
+	Stream_Free(s, TRUE);
+}
+
 /**
  * Function description
  *
@@ -1629,6 +1635,8 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 		WLog_ERR(TAG, "MessageQueue_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
+
+	rdpdr->queue->object.fnObjectFree = queue_free;
 
 	if (!(rdpdr->thread =
 	          CreateThread(NULL, 0, rdpdr_virtual_channel_client_thread, (void*)rdpdr, 0, NULL)))

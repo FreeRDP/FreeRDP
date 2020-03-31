@@ -3,6 +3,8 @@
  * Smart Card API
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2020 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2020 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,14 +108,14 @@
 
 #define SCARD_ATR_LENGTH 33
 
-#define SCARD_PROTOCOL_UNDEFINED 0x00000000
-#define SCARD_PROTOCOL_T0 0x00000001
-#define SCARD_PROTOCOL_T1 0x00000002
-#define SCARD_PROTOCOL_RAW 0x00010000
+#define SCARD_PROTOCOL_UNDEFINED 0x00000000u
+#define SCARD_PROTOCOL_T0 0x00000001u
+#define SCARD_PROTOCOL_T1 0x00000002u
+#define SCARD_PROTOCOL_RAW 0x00010000u
 
 #define SCARD_PROTOCOL_Tx (SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1)
-#define SCARD_PROTOCOL_DEFAULT 0x80000000
-#define SCARD_PROTOCOL_OPTIMAL 0x00000000
+#define SCARD_PROTOCOL_DEFAULT 0x80000000u
+#define SCARD_PROTOCOL_OPTIMAL 0x00000000u
 
 #define SCARD_POWER_DOWN 0
 #define SCARD_COLD_RESET 1
@@ -681,7 +683,7 @@ extern "C"
 	WINSCARDAPI LONG WINAPI SCardForgetCardTypeA(SCARDCONTEXT hContext, LPCSTR szCardName);
 	WINSCARDAPI LONG WINAPI SCardForgetCardTypeW(SCARDCONTEXT hContext, LPCWSTR szCardName);
 
-	WINSCARDAPI LONG WINAPI SCardFreeMemory(SCARDCONTEXT hContext, LPCVOID pvMem);
+	WINSCARDAPI LONG WINAPI SCardFreeMemory(SCARDCONTEXT hContext, LPVOID pvMem);
 
 	WINSCARDAPI HANDLE WINAPI SCardAccessStartedEvent(void);
 
@@ -959,7 +961,7 @@ typedef LONG(WINAPI* fnSCardSetCardTypeProviderNameW)(SCARDCONTEXT hContext, LPC
 typedef LONG(WINAPI* fnSCardForgetCardTypeA)(SCARDCONTEXT hContext, LPCSTR szCardName);
 typedef LONG(WINAPI* fnSCardForgetCardTypeW)(SCARDCONTEXT hContext, LPCWSTR szCardName);
 
-typedef LONG(WINAPI* fnSCardFreeMemory)(SCARDCONTEXT hContext, LPCVOID pvMem);
+typedef LONG(WINAPI* fnSCardFreeMemory)(SCARDCONTEXT hContext, LPVOID pvMem);
 
 typedef HANDLE(WINAPI* fnSCardAccessStartedEvent)(void);
 

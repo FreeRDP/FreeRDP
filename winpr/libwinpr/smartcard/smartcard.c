@@ -3,6 +3,8 @@
  * Smart Card API
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2020 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2020 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +36,7 @@
 #include "smartcard_inspect.h"
 
 static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
-static PSCardApiFunctionTable g_SCardApi = NULL;
+static const SCardApiFunctionTable* g_SCardApi = NULL;
 
 #define TAG WINPR_TAG("smartcard")
 
@@ -296,7 +298,7 @@ WINSCARDAPI LONG WINAPI SCardForgetCardTypeW(SCARDCONTEXT hContext, LPCWSTR szCa
 	SCARDAPI_STUB_CALL_LONG(SCardForgetCardTypeW, hContext, szCardName);
 }
 
-WINSCARDAPI LONG WINAPI SCardFreeMemory(SCARDCONTEXT hContext, LPCVOID pvMem)
+WINSCARDAPI LONG WINAPI SCardFreeMemory(SCARDCONTEXT hContext, LPVOID pvMem)
 {
 	SCARDAPI_STUB_CALL_LONG(SCardFreeMemory, hContext, pvMem);
 }
