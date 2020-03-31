@@ -136,9 +136,6 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	Stream_Read_UINT16(s, iconInfo->cbBitsMask);  /* cbBitsMask (2 bytes) */
 	Stream_Read_UINT16(s, iconInfo->cbBitsColor); /* cbBitsColor (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < iconInfo->cbBitsMask + iconInfo->cbBitsColor)
-		return FALSE;
-
 	/* bitsMask */
 	newBitMask = (BYTE*)realloc(iconInfo->bitsMask, iconInfo->cbBitsMask);
 
@@ -150,6 +147,8 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	}
 
 	iconInfo->bitsMask = newBitMask;
+	if (Stream_GetRemainingLength(s) < iconInfo->cbBitsMask)
+		return FALSE;
 	Stream_Read(s, iconInfo->bitsMask, iconInfo->cbBitsMask);
 
 	/* colorTable */
@@ -184,7 +183,11 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	}
 
 	if (iconInfo->colorTable)
+	{
+		if (Stream_GetRemainingLength(s) < iconInfo->cbColorTable)
+			return FALSE;
 		Stream_Read(s, iconInfo->colorTable, iconInfo->cbColorTable);
+	}
 
 	/* bitsColor */
 	newBitMask = (BYTE*)realloc(iconInfo->bitsColor, iconInfo->cbBitsColor);
@@ -197,6 +200,8 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	}
 
 	iconInfo->bitsColor = newBitMask;
+	if (Stream_GetRemainingLength(s) < iconInfo->cbBitsColor)
+		return FALSE;
 	Stream_Read(s, iconInfo->bitsColor, iconInfo->cbBitsColor);
 	return TRUE;
 }
