@@ -2161,7 +2161,7 @@ static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* updat
 	Stream_Read_UINT16(s, bitmapData->height); /* height (2 bytes) */
 	Stream_Read_UINT32(s, new_len);            /* length (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < new_len)
+	if ((new_len == 0) || (Stream_GetRemainingLength(s) < new_len))
 		goto fail;
 
 	new_data = (BYTE*)realloc(bitmapData->data, new_len);
