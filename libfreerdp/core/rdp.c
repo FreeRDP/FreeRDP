@@ -1393,7 +1393,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 				          "pduType %s not properly parsed, %" PRIdz
 				          " bytes remaining unhandled. Skipping.",
 				          pdu_type_to_str(pduType), diff);
-				if (!Stream_SafeSeek(s, pduLength))
+				if (!Stream_SafeSeek(s, pduLength - diff))
 					return -1;
 			}
 		}
