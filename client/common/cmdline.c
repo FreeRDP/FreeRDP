@@ -2554,10 +2554,14 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 						if (_strnicmp("AVC444", val, 7) == 0)
 						{
+							settings->GfxH264 = TRUE;
 							settings->GfxAVC444 = TRUE;
 						}
-						else if (_strnicmp("AVC420", val, 7) != 0)
-							rc = COMMAND_LINE_ERROR;
+						else if (_strnicmp("AVC420", val, 7) == 0)
+						{
+							settings->GfxH264 = TRUE;
+							settings->GfxAVC444 = FALSE;
+						}
 						else if (_strnicmp("mask:", val, 5) == 0)
 						{
 							ULONGLONG v;
@@ -2567,6 +2571,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 							else
 								settings->GfxCapsFilter = (UINT32)v;
 						}
+						else
+							rc = COMMAND_LINE_ERROR;
 					}
 				}
 				free(p);
