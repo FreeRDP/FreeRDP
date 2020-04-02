@@ -290,13 +290,14 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 
 	for (i = 0; i < bitmapCache->maxCells; i++)
 	{
-		bitmapCache->cells[i].number = settings->BitmapCacheV2CellInfo[i].numEntries;
+		BITMAP_V2_CELL* cell = &bitmapCache->cells[i];
+		UINT32 nr = settings->BitmapCacheV2CellInfo[i].numEntries;
 		/* allocate an extra entry for BITMAP_CACHE_WAITING_LIST_INDEX */
-		bitmapCache->cells[i].entries =
-		    (rdpBitmap**)calloc((bitmapCache->cells[i].number + 1), sizeof(rdpBitmap*));
+		cell->entries = (rdpBitmap**)calloc((nr + 1), sizeof(rdpBitmap*));
 
-		if (!bitmapCache->cells[i].entries)
+		if (!cell->entries)
 			goto fail;
+		cell->number = nr;
 	}
 
 	return bitmapCache;
@@ -308,16 +309,18 @@ fail:
 
 void bitmap_cache_free(rdpBitmapCache* bitmapCache)
 {
-	UINT32 i, j;
-	rdpBitmap* bitmap;
-
 	if (bitmapCache)
 	{
+		UINT32 i;
 		for (i = 0; i < bitmapCache->maxCells; i++)
 		{
-			for (j = 0; j < bitmapCache->cells[i].number + 1; j++)
+			UINT32 j;
+			BITMAP_V2_CELL* cell = &bitmapCache->cells[i];
+			if (!cell->entries)
+				continue;
+			for (j = 0; j < cell->number + 1; j++)
 			{
-				bitmap = bitmapCache->cells[i].entries[j];
+				rdpBitmap* bitmap = cell->entries[j];
 				Bitmap_Free(bitmapCache->context, bitmap);
 			}
 
