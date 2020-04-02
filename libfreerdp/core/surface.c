@@ -224,21 +224,26 @@ static BOOL update_write_surfcmd_bitmap_ex(wStream* s, const TS_BITMAP_DATA_EX* 
 
 BOOL update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* cmd)
 {
+	UINT16 cmdType;
 	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH))
 		return FALSE;
 
-	switch (cmd->cmdType)
+	cmdType = cmd->cmdType;
+	switch (cmdType)
 	{
 		case CMDTYPE_SET_SURFACE_BITS:
 		case CMDTYPE_STREAM_SURFACE_BITS:
 			break;
 		default:
-			WLog_ERR(TAG, "%s SURFACE_BITS_COMMAND->cmdType 0x%08" PRIx32 " not allowed.",
-			         cmd->cmdType);
-			return FALSE;
+			WLog_WARN(TAG,
+			          "SURFACE_BITS_COMMAND->cmdType 0x%04" PRIx16
+			          " not allowed, correcting to 0x%04" PRIx16,
+			          cmdType, CMDTYPE_STREAM_SURFACE_BITS);
+			cmdType = CMDTYPE_STREAM_SURFACE_BITS;
+			break;
 	}
 
-	Stream_Write_UINT16(s, cmd->cmdType);
+	Stream_Write_UINT16(s, cmdType);
 	Stream_Write_UINT16(s, cmd->destLeft);
 	Stream_Write_UINT16(s, cmd->destTop);
 	Stream_Write_UINT16(s, cmd->destRight);
