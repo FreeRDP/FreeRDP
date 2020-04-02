@@ -281,11 +281,12 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 	bitmapCache->settings = settings;
 	bitmapCache->update = ((freerdp*)settings->instance)->update;
 	bitmapCache->context = bitmapCache->update->context;
-	bitmapCache->maxCells = settings->BitmapCacheV2NumCells;
-	bitmapCache->cells = (BITMAP_V2_CELL*)calloc(bitmapCache->maxCells, sizeof(BITMAP_V2_CELL));
+	bitmapCache->cells =
+	    (BITMAP_V2_CELL*)calloc(settings->BitmapCacheV2NumCells, sizeof(BITMAP_V2_CELL));
 
 	if (!bitmapCache->cells)
 		goto fail;
+	bitmapCache->maxCells = settings->BitmapCacheV2NumCells;
 
 	for (i = 0; i < (int)bitmapCache->maxCells; i++)
 	{
