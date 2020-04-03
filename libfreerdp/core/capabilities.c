@@ -3553,9 +3553,10 @@ static BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOO
 		rest = Stream_GetRemainingLength(&sub);
 		if (rest > 0)
 		{
-			WLog_ERR(TAG,
-			         "incorrect offset, type:0x%04" PRIX16 " actual:%" PRIuz " expected:%" PRIuz "",
-			         type, length + rest, length);
+			WLog_WARN(TAG,
+			          "incorrect capability offset, type:0x%04" PRIX16 " %" PRIu16
+			          " bytes expected, %" PRIuz "bytes remaining",
+			          type, length, rest);
 		}
 
 		numberCapabilities--;
