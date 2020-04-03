@@ -71,7 +71,8 @@ static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 	if (!(context->nsc_context = nsc_context_new()))
 		goto fail_nsc_context;
 
-	nsc_context_set_pixel_format(context->nsc_context, PIXEL_FORMAT_RGB24);
+	if (!nsc_context_set_parameters(context->nsc_context, NSC_COLOR_FORMAT, PIXEL_FORMAT_RGB24))
+		goto fail_stream_new;
 
 	if (!(context->s = Stream_New(NULL, 65536)))
 		goto fail_stream_new;
@@ -151,7 +152,7 @@ static wStream* test_peer_stream_init(testPeerContext* context)
 static void test_peer_begin_frame(freerdp_peer* client)
 {
 	rdpUpdate* update = client->update;
-	SURFACE_FRAME_MARKER fm;
+	SURFACE_FRAME_MARKER fm = { 0 };
 	testPeerContext* context = (testPeerContext*)client->context;
 	fm.frameAction = SURFACECMD_FRAMEACTION_BEGIN;
 	fm.frameId = context->frame_id;
@@ -161,7 +162,7 @@ static void test_peer_begin_frame(freerdp_peer* client)
 static void test_peer_end_frame(freerdp_peer* client)
 {
 	rdpUpdate* update = client->update;
-	SURFACE_FRAME_MARKER fm;
+	SURFACE_FRAME_MARKER fm = { 0 };
 	testPeerContext* context = (testPeerContext*)client->context;
 	fm.frameAction = SURFACECMD_FRAMEACTION_END;
 	fm.frameId = context->frame_id;
@@ -215,6 +216,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 		cmd.bmp.codecID = client->settings->NSCodecId;
 	}
 
+	cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	cmd.destLeft = 0;
 	cmd.destTop = 0;
 	cmd.destRight = rect.width;
@@ -337,6 +339,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 			cmd.bmp.codecID = client->settings->NSCodecId;
 		}
 
+		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 		cmd.destLeft = context->icon_x;
 		cmd.destTop = context->icon_y;
 		cmd.destRight = context->icon_x + context->icon_width;
@@ -365,6 +368,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 		cmd.bmp.codecID = client->settings->NSCodecId;
 	}
 
+	cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	cmd.destLeft = x;
 	cmd.destTop = y;
 	cmd.destRight = x + context->icon_width;
