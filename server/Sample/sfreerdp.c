@@ -201,6 +201,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 
 	if (client->settings->RemoteFxCodec)
 	{
+		WLog_DBG(TAG, "Using RemoteFX codec");
 		if (!rfx_compose_message(context->rfx_context, s, &rect, 1, rgb_data, rect.width,
 		                         rect.height, rect.width * 3))
 		{
@@ -208,15 +209,17 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 		}
 
 		cmd.bmp.codecID = client->settings->RemoteFxCodecId;
+		cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
 	}
 	else
 	{
+		WLog_DBG(TAG, "Using NSCodec");
 		nsc_compose_message(context->nsc_context, s, rgb_data, rect.width, rect.height,
 		                    rect.width * 3);
 		cmd.bmp.codecID = client->settings->NSCodecId;
+		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	}
 
-	cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	cmd.destLeft = 0;
 	cmd.destTop = 0;
 	cmd.destRight = rect.width;
@@ -322,24 +325,28 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	rect.width = context->icon_width;
 	rect.height = context->icon_height;
 
+	if (client->settings->RemoteFxCodec)
+	{
+		cmd.bmp.codecID = client->settings->RemoteFxCodecId;
+		cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
+	}
+	else
+	{
+		cmd.bmp.codecID = client->settings->NSCodecId;
+		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
+	}
+
 	if (context->icon_x >= 0)
 	{
 		s = test_peer_stream_init(context);
 
 		if (client->settings->RemoteFxCodec)
-		{
 			rfx_compose_message(context->rfx_context, s, &rect, 1, context->bg_data, rect.width,
 			                    rect.height, rect.width * 3);
-			cmd.bmp.codecID = client->settings->RemoteFxCodecId;
-		}
 		else
-		{
 			nsc_compose_message(context->nsc_context, s, context->bg_data, rect.width, rect.height,
 			                    rect.width * 3);
-			cmd.bmp.codecID = client->settings->NSCodecId;
-		}
 
-		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 		cmd.destLeft = context->icon_x;
 		cmd.destTop = context->icon_y;
 		cmd.destRight = context->icon_x + context->icon_width;
@@ -356,19 +363,12 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	s = test_peer_stream_init(context);
 
 	if (client->settings->RemoteFxCodec)
-	{
 		rfx_compose_message(context->rfx_context, s, &rect, 1, context->icon_data, rect.width,
 		                    rect.height, rect.width * 3);
-		cmd.bmp.codecID = client->settings->RemoteFxCodecId;
-	}
 	else
-	{
 		nsc_compose_message(context->nsc_context, s, context->icon_data, rect.width, rect.height,
 		                    rect.width * 3);
-		cmd.bmp.codecID = client->settings->NSCodecId;
-	}
 
-	cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	cmd.destLeft = x;
 	cmd.destTop = y;
 	cmd.destRight = x + context->icon_width;
@@ -790,6 +790,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_LOW; */
 	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_FIPS; */
 	client->settings->RemoteFxCodec = TRUE;
+	client->settings->NSCodec = TRUE;
 	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
 	client->settings->RefreshRect = TRUE;
