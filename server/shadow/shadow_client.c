@@ -976,7 +976,7 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 			return FALSE;
 		}
 
-		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
+		cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
 		cmd.bmp.codecID = settings->RemoteFxCodecId;
 		cmd.destLeft = 0;
 		cmd.destTop = 0;
