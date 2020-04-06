@@ -102,7 +102,7 @@ const char* DATA_PDU_TYPE_STRINGS[80] = {
 	"?" /* 0x41 - 0x46 */
 };
 
-static BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type);
+static BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type, UINT16* channel_id);
 static void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type,
                                            UINT16 channel_id);
 static void rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id);
@@ -158,7 +158,7 @@ BOOL rdp_read_share_control_header(wStream* s, UINT16* length, UINT16* type, UIN
 	 http://msdn.microsoft.com/en-us/library/cc240576.aspx */
 	if (len == 0x8000)
 	{
-		if (!rdp_read_flow_control_pdu(s, type))
+		if (!rdp_read_flow_control_pdu(s, type, channel_id))
 			return FALSE;
 		*channel_id = 0;
 		*length = 8; /* Flow control PDU is 8 bytes */
@@ -1120,7 +1120,7 @@ int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
 	}
 }
 
-BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type)
+BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type, UINT16* channel_id)
 {
 	/*
 	 * Read flow control PDU - documented in FlowPDU section in T.128
@@ -1136,10 +1136,10 @@ BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type)
 		return FALSE;
 	Stream_Read_UINT8(s, pduType); /* pduTypeFlow */
 	*type = pduType;
-	Stream_Seek_UINT8(s);  /* pad8bits */
-	Stream_Seek_UINT8(s);  /* flowIdentifier */
-	Stream_Seek_UINT8(s);  /* flowNumber */
-	Stream_Seek_UINT16(s); /* pduSource */
+	Stream_Seek_UINT8(s);               /* pad8bits */
+	Stream_Seek_UINT8(s);               /* flowIdentifier */
+	Stream_Seek_UINT8(s);               /* flowNumber */
+	Stream_Read_UINT16(s, *channel_id); /* pduSource */
 	return TRUE;
 }
 
@@ -1329,25 +1329,19 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		while (Stream_GetRemainingLength(s) > 3)
 		{
 			wStream sub;
-			size_t startheader, endheader, start, end, diff, headerdiff;
+			size_t diff;
 
-			startheader = Stream_GetPosition(s);
 			if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 			{
 				WLog_ERR(TAG, "rdp_recv_tpkt_pdu: rdp_read_share_control_header() fail");
 				return -1;
 			}
-			start = endheader = Stream_GetPosition(s);
-			headerdiff = endheader - startheader;
-			if (pduLength < headerdiff)
-			{
-				WLog_ERR(
-				    TAG,
-				    "rdp_recv_tpkt_pdu: rdp_read_share_control_header() invalid pduLength %" PRIu16,
-				    pduLength);
-				return -1;
-			}
-			pduLength -= headerdiff;
+
+			/* Remove header data. */
+			if (pduLength > 5)
+				pduLength -= 6;
+			else
+				pduLength -= 4;
 			Stream_StaticInit(&sub, Stream_Pointer(s), pduLength);
 			if (!Stream_SafeSeek(s, pduLength))
 				return -1;
@@ -1389,9 +1383,8 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 					break;
 			}
 
-			end = Stream_GetPosition(&sub);
-			diff = end - start;
-			if (diff != pduLength)
+			diff = Stream_GetRemainingLength(&sub);
+			if (diff > 0)
 			{
 				WLog_WARN(TAG,
 				          "pduType %s not properly parsed, %" PRIdz
