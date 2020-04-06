@@ -3888,7 +3888,6 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 {
 	UINT16 channelId;
 	UINT16 pduType;
-	UINT16 pduLength;
 	UINT16 pduSource;
 	UINT16 length;
 	UINT16 numberCapabilities;
@@ -3901,7 +3900,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	if (freerdp_shall_disconnect(rdp->instance))
 		return TRUE;
 
-	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
+	if (!rdp_read_share_control_header(s, NULL, NULL, &pduType, &pduSource))
 	{
 		WLog_ERR(TAG, "rdp_read_share_control_header failed");
 		return FALSE;

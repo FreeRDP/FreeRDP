@@ -348,7 +348,6 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	rdpRdp* rdp;
 	UINT16 length;
 	UINT16 pduType;
-	UINT16 pduLength;
 	UINT16 pduSource;
 	UINT16 channelId;
 	UINT16 securityFlags = 0;
@@ -381,7 +380,8 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (channelId == MCS_GLOBAL_CHANNEL_ID)
 	{
-		if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
+		UINT16 pduLength, remain;
+		if (!rdp_read_share_control_header(s, &pduLength, &remain, &pduType, &pduSource))
 			return -1;
 
 		client->settings->PduSource = pduSource;
@@ -403,6 +403,8 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 			case PDU_TYPE_FLOW_RESPONSE:
 			case PDU_TYPE_FLOW_STOP:
 			case PDU_TYPE_FLOW_TEST:
+				if (!Stream_SafeSeek(s, remain))
+					return -1;
 				break;
 
 			default:
