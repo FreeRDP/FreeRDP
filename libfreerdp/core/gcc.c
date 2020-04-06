@@ -519,18 +519,27 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 
 	while (offset < length)
 	{
-		holdp = Stream_Pointer(s);
+		size_t rest;
+		wStream sub;
 
 		if (!gcc_read_user_data_header(s, &type, &blockLength))
 		{
 			WLog_ERR(TAG, "gcc_read_server_data_blocks: gcc_read_user_data_header failed");
 			return FALSE;
 		}
+		holdp = Stream_Pointer(s);
+		Stream_StaticInit(&sub, holdp, blockLength - 4);
+		if (!Stream_SafeSeek(s, blockLength - 4))
+		{
+			WLog_ERR(TAG, "gcc_read_server_data_blocks: stream too short");
+			return FALSE;
+		}
+		offset += blockLength;
 
 		switch (type)
 		{
 			case SC_CORE:
-				if (!gcc_read_server_core_data(s, mcs))
+				if (!gcc_read_server_core_data(&sub, mcs))
 				{
 					WLog_ERR(TAG, "gcc_read_server_data_blocks: gcc_read_server_core_data failed");
 					return FALSE;
@@ -539,7 +548,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 				break;
 
 			case SC_SECURITY:
-				if (!gcc_read_server_security_data(s, mcs))
+				if (!gcc_read_server_security_data(&sub, mcs))
 				{
 					WLog_ERR(TAG,
 					         "gcc_read_server_data_blocks: gcc_read_server_security_data failed");
@@ -549,7 +558,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 				break;
 
 			case SC_NET:
-				if (!gcc_read_server_network_data(s, mcs))
+				if (!gcc_read_server_network_data(&sub, mcs))
 				{
 					WLog_ERR(TAG,
 					         "gcc_read_server_data_blocks: gcc_read_server_network_data failed");
@@ -559,7 +568,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 				break;
 
 			case SC_MCS_MSGCHANNEL:
-				if (!gcc_read_server_message_channel_data(s, mcs))
+				if (!gcc_read_server_message_channel_data(&sub, mcs))
 				{
 					WLog_ERR(
 					    TAG,
@@ -570,7 +579,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 				break;
 
 			case SC_MULTITRANSPORT:
-				if (!gcc_read_server_multitransport_channel_data(s, mcs))
+				if (!gcc_read_server_multitransport_channel_data(&sub, mcs))
 				{
 					WLog_ERR(TAG, "gcc_read_server_data_blocks: "
 					              "gcc_read_server_multitransport_channel_data failed");
@@ -584,8 +593,13 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 				break;
 		}
 
-		offset += blockLength;
-		Stream_SetPointer(s, holdp + blockLength);
+		rest = Stream_GetRemainingLength(&sub);
+		if (rest > 0)
+		{
+			WLog_WARN(
+			    TAG, "gcc_read_server_data_blocks: ignoring %" PRIuz " bytes with type=%" PRIu16 "",
+			    rest, type);
+		}
 	}
 
 	return TRUE;
@@ -610,7 +624,7 @@ BOOL gcc_read_user_data_header(wStream* s, UINT16* type, UINT16* length)
 	Stream_Read_UINT16(s, *type);   /* type */
 	Stream_Read_UINT16(s, *length); /* length */
 
-	if (Stream_GetRemainingLength(s) < (size_t)(*length - 4))
+	if ((*length < 4) || (Stream_GetRemainingLength(s) < (size_t)(*length - 4)))
 		return FALSE;
 
 	return TRUE;

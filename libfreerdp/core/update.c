@@ -103,6 +103,9 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 	{
 		if (!(bitmapData->flags & NO_BITMAP_COMPRESSION_HDR))
 		{
+			if (Stream_GetRemainingLength(s) < 8)
+				return FALSE;
+
 			Stream_Read_UINT16(s,
 			                   bitmapData->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
 			Stream_Read_UINT16(s,
@@ -287,14 +290,14 @@ fail:
 	return NULL;
 }
 
-static void update_read_synchronize(rdpUpdate* update, wStream* s)
+static BOOL update_read_synchronize(rdpUpdate* update, wStream* s)
 {
 	WINPR_UNUSED(update);
-	Stream_Seek_UINT16(s); /* pad2Octets (2 bytes) */
-	                       /**
-	                        * The Synchronize Update is an artifact from the
-	                        * T.128 protocol and should be ignored.
-	                        */
+	return Stream_SafeSeek(s, 2); /* pad2Octets (2 bytes) */
+	                              /**
+	                               * The Synchronize Update is an artifact from the
+	                               * T.128 protocol and should be ignored.
+	                               */
 }
 
 static BOOL update_read_play_sound(wStream* s, PLAY_SOUND_UPDATE* play_sound)
@@ -807,7 +810,8 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 		break;
 
 		case UPDATE_TYPE_SYNCHRONIZE:
-			update_read_synchronize(update, s);
+			if (!update_read_synchronize(update, s))
+				goto fail;
 			rc = IFCALLRESULT(TRUE, update->Synchronize, context);
 			break;
 

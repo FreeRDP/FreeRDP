@@ -465,6 +465,8 @@ static BOOL autodetect_recv_bandwidth_measure_results(rdpRdp* rdp, wStream* s,
 		return FALSE;
 
 	WLog_VRB(AUTODETECT_TAG, "received Bandwidth Measure Results PDU");
+	if (Stream_GetRemainingLength(s) < 8)
+		return -1;
 	Stream_Read_UINT32(s, rdp->autodetect->bandwidthMeasureTimeDelta); /* timeDelta (4 bytes) */
 	Stream_Read_UINT32(s, rdp->autodetect->bandwidthMeasureByteCount); /* byteCount (4 bytes) */
 
