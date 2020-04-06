@@ -1328,6 +1328,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	{
 		while (Stream_GetRemainingLength(s) > 3)
 		{
+			wStream sub;
 			size_t startheader, endheader, start, end, diff, headerdiff;
 
 			startheader = Stream_GetPosition(s);
@@ -1347,6 +1348,9 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 				return -1;
 			}
 			pduLength -= headerdiff;
+			Stream_StaticInit(&sub, Stream_Pointer(s), pduLength);
+			if (!Stream_SafeSeek(s, pduLength))
+				return -1;
 
 			rdp->settings->PduSource = pduSource;
 			rdp->inPackets++;
@@ -1354,13 +1358,13 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			switch (pduType)
 			{
 				case PDU_TYPE_DATA:
-					rc = rdp_recv_data_pdu(rdp, s);
+					rc = rdp_recv_data_pdu(rdp, &sub);
 					if (rc < 0)
 						return rc;
 					break;
 
 				case PDU_TYPE_DEACTIVATE_ALL:
-					if (!rdp_recv_deactivate_all(rdp, s))
+					if (!rdp_recv_deactivate_all(rdp, &sub))
 					{
 						WLog_ERR(TAG, "rdp_recv_tpkt_pdu: rdp_recv_deactivate_all() fail");
 						return -1;
@@ -1369,14 +1373,14 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 					break;
 
 				case PDU_TYPE_SERVER_REDIRECTION:
-					return rdp_recv_enhanced_security_redirection_packet(rdp, s);
+					return rdp_recv_enhanced_security_redirection_packet(rdp, &sub);
 
 				case PDU_TYPE_FLOW_RESPONSE:
 				case PDU_TYPE_FLOW_STOP:
 				case PDU_TYPE_FLOW_TEST:
 					WLog_DBG(TAG, "flow message 0x%04" PRIX16 "", pduType);
 					/* http://msdn.microsoft.com/en-us/library/cc240576.aspx */
-					if (!Stream_SafeSeek(s, pduLength))
+					if (!Stream_SafeSeek(&sub, pduLength))
 						return -1;
 					break;
 
@@ -1385,7 +1389,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 					break;
 			}
 
-			end = Stream_GetPosition(s);
+			end = Stream_GetPosition(&sub);
 			diff = end - start;
 			if (diff != pduLength)
 			{
@@ -1393,8 +1397,6 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 				          "pduType %s not properly parsed, %" PRIdz
 				          " bytes remaining unhandled. Skipping.",
 				          pdu_type_to_str(pduType), diff);
-				if (!Stream_SafeSeek(s, pduLength - diff))
-					return -1;
 			}
 		}
 	}
