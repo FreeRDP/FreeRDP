@@ -1444,6 +1444,9 @@ static BOOL update_read_polyline_order(wStream* s, const ORDER_INFO* orderInfo,
 	{
 		DELTA_POINT* new_points;
 
+		if (new_num == 0)
+			return FALSE;
+
 		if (Stream_GetRemainingLength(s) < 1)
 		{
 			WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 1");
@@ -1739,7 +1742,7 @@ static BOOL update_read_fast_glyph_order(wStream* s, const ORDER_INFO* orderInfo
 			if (fastGlyph->cbData < new_cb)
 				return FALSE;
 
-			if (new_cb)
+			if (new_cb > 0)
 			{
 				BYTE* new_aj;
 				new_aj = (BYTE*)realloc(glyph->aj, new_cb);
@@ -1771,6 +1774,9 @@ static BOOL update_read_polygon_sc_order(wStream* s, const ORDER_INFO* orderInfo
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 	{
 		DELTA_POINT* newpoints;
+
+		if (num == 0)
+			return FALSE;
 
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
@@ -1808,6 +1814,9 @@ static BOOL update_read_polygon_cb_order(wStream* s, const ORDER_INFO* orderInfo
 	if (orderInfo->fieldFlags & ORDER_FIELD_13)
 	{
 		DELTA_POINT* newpoints;
+
+		if (num == 0)
+			return FALSE;
 
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
