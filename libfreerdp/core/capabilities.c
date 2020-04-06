@@ -3811,7 +3811,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 			WLog_ERR(TAG,
 			         "incorrect offset, type:0x%04" PRIX16 " actual:%" PRIuz " expected:%" PRIu16
 			         "",
-			         type, rest + length, length);
+			         type, length - rest, length);
 		}
 
 		numberCapabilities--;
