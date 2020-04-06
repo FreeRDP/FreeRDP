@@ -95,7 +95,7 @@ BOOL utf8_string_to_rail_string(const char* string, RAIL_UNICODE_STRING* unicode
 /* See [MS-RDPERP] 2.2.1.2.3 Icon Info (TS_ICON_INFO) */
 static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 {
-	BYTE* newBitMask;
+	BYTE* newBitMask = NULL;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
@@ -137,32 +137,31 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	Stream_Read_UINT16(s, iconInfo->cbBitsColor); /* cbBitsColor (2 bytes) */
 
 	/* bitsMask */
-	newBitMask = (BYTE*)realloc(iconInfo->bitsMask, iconInfo->cbBitsMask);
+	if (iconInfo->cbBitsMask > 0)
+	{
+		newBitMask = (BYTE*)realloc(iconInfo->bitsMask, iconInfo->cbBitsMask);
 
-	if (!newBitMask)
+		if (!newBitMask)
+		{
+			free(iconInfo->bitsMask);
+			iconInfo->bitsMask = NULL;
+			return FALSE;
+		}
+
+		iconInfo->bitsMask = newBitMask;
+		if (Stream_GetRemainingLength(s) < iconInfo->cbBitsMask)
+			return FALSE;
+		Stream_Read(s, iconInfo->bitsMask, iconInfo->cbBitsMask);
+	}
+	else
 	{
 		free(iconInfo->bitsMask);
 		iconInfo->bitsMask = NULL;
-		return FALSE;
+		iconInfo->cbBitsMask = 0;
 	}
-
-	iconInfo->bitsMask = newBitMask;
-	if (Stream_GetRemainingLength(s) < iconInfo->cbBitsMask)
-		return FALSE;
-	Stream_Read(s, iconInfo->bitsMask, iconInfo->cbBitsMask);
 
 	/* colorTable */
-	if (iconInfo->colorTable == NULL)
-	{
-		if (iconInfo->cbColorTable)
-		{
-			iconInfo->colorTable = (BYTE*)malloc(iconInfo->cbColorTable);
-
-			if (!iconInfo->colorTable)
-				return FALSE;
-		}
-	}
-	else if (iconInfo->cbColorTable)
+	if (iconInfo->cbColorTable > 0)
 	{
 		BYTE* new_tab;
 		new_tab = (BYTE*)realloc(iconInfo->colorTable, iconInfo->cbColorTable);
@@ -190,19 +189,28 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	}
 
 	/* bitsColor */
-	newBitMask = (BYTE*)realloc(iconInfo->bitsColor, iconInfo->cbBitsColor);
+	if (iconInfo->cbBitsColor > 0)
+	{
+		newBitMask = (BYTE*)realloc(iconInfo->bitsColor, iconInfo->cbBitsColor);
 
-	if (!newBitMask)
+		if (!newBitMask)
+		{
+			free(iconInfo->bitsColor);
+			iconInfo->bitsColor = NULL;
+			return FALSE;
+		}
+
+		iconInfo->bitsColor = newBitMask;
+		if (Stream_GetRemainingLength(s) < iconInfo->cbBitsColor)
+			return FALSE;
+		Stream_Read(s, iconInfo->bitsColor, iconInfo->cbBitsColor);
+	}
+	else
 	{
 		free(iconInfo->bitsColor);
 		iconInfo->bitsColor = NULL;
-		return FALSE;
+		iconInfo->cbBitsColor = 0;
 	}
-
-	iconInfo->bitsColor = newBitMask;
-	if (Stream_GetRemainingLength(s) < iconInfo->cbBitsColor)
-		return FALSE;
-	Stream_Read(s, iconInfo->bitsColor, iconInfo->cbBitsColor);
 	return TRUE;
 }
 
