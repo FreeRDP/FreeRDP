@@ -352,13 +352,13 @@ static BOOL udevman_parse_device_addr(const char* str, size_t maxLen, UINT8* id1
 {
 	unsigned long rc;
 	char s1[8] = { 0 };
-	char* s2;
+	char* s2 = strchr(str, sign);
 	size_t len = strnlen(str, maxLen);
 	size_t cpLen;
-	s2 = (strchr(str, sign)) + 1;
 
 	if (!s2)
 		return FALSE;
+	s2++;
 
 	cpLen = len - (strnlen(s2, len) + 1);
 
@@ -386,14 +386,14 @@ static BOOL udevman_parse_device_pid_vid(const char* str, size_t maxLen, UINT16*
 {
 	unsigned long rc;
 	char s1[8] = { 0 };
-	char* s2;
+	char* s2 = strchr(str, sign);
 	size_t len = strnlen(str, maxLen);
 	size_t cpLen;
-	s2 = (strchr(str, sign)) + 1;
 
 	if (!s2)
 		return FALSE;
 
+	s2++; /* We need the PID, not ':' */
 	cpLen = len - (strnlen(s2, len) + 1);
 
 	if (cpLen >= sizeof(s1))
