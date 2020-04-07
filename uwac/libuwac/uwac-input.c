@@ -122,10 +122,13 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 			break;
 	}
 
+	int buffer_add_listener_success = -1;
 	if (buffer)
-		wl_buffer_add_listener(buffer, &buffer_release_listener, seat);
+	{
+		buffer_add_listener_success = wl_buffer_add_listener(buffer, &buffer_release_listener, seat);
+	}
 
-	if (surface)
+	if (surface && buffer_add_listener_success > -1)
 	{
 		wl_surface_attach(surface, buffer, -x, -y);
 		wl_surface_damage(surface, 0, 0, image->width, image->height);
