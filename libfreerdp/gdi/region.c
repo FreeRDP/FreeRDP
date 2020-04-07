@@ -616,9 +616,12 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 
 	if ((hdc->hwnd->ninvalid + 1) > (INT64)hdc->hwnd->count)
 	{
-		int new_cnt;
+		size_t new_cnt;
 		HGDI_RGN new_rgn;
 		new_cnt = hdc->hwnd->count * 2;
+		if (new_cnt > UINT32_MAX)
+			return FALSE;
+
 		new_rgn = (HGDI_RGN)realloc(cinvalid, sizeof(GDI_RGN) * new_cnt);
 
 		if (!new_rgn)
