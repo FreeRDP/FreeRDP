@@ -89,6 +89,7 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 	struct wl_cursor_image* image;
 	struct wl_surface* surface = NULL;
 	int32_t x = 0, y = 0;
+	int buffer_add_listener_success = -1;
 
 	if (!seat || !seat->display || !seat->default_cursor || !seat->default_cursor->images)
 		return UWAC_ERROR_INTERNAL;
@@ -122,7 +123,6 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 			break;
 	}
 
-	int buffer_add_listener_success = -1;
 	if (buffer)
 	{
 		buffer_add_listener_success = wl_buffer_add_listener(buffer, &buffer_release_listener, seat);
