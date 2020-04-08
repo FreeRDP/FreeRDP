@@ -456,12 +456,16 @@ static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD
 		LPCSTR rreader = &(*mszReaders)[rpos];
 		LPSTR wreader = &(*mszReaders)[wpos];
 		size_t readerLen = strnlen(rreader, cchReaders - rpos);
+
+		if (readerLen == 0)
+			break;
+
 		rpos += readerLen + 1;
 
 		if (filter_match(list, rreader, readerLen))
 		{
 			if (rreader != wreader)
-				memmove(wreader, rreader, readerLen);
+				memmove(wreader, rreader, readerLen + 1);
 
 			wpos += readerLen + 1;
 		}
