@@ -140,7 +140,7 @@ do
 	common_run mkdir -p $BUILD_SRC/freerdp-build/$ARCH
 	common_run cd $BUILD_SRC/freerdp-build/$ARCH
 	common_run export ANDROID_NDK=$ANDROID_NDK
-	common_run cmake $CMAKE_CMD_ARGS \
+	common_run $CMAKE_PROGRAM $CMAKE_CMD_ARGS \
 		-DANDROID_ABI=$ARCH \
 		-DCMAKE_INSTALL_PREFIX=$BUILD_DST/$ARCH \
 		-DCMAKE_INSTALL_LIBDIR=. \
