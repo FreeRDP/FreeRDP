@@ -17,7 +17,7 @@ function build {
 	common_run export QUIET_CCAR="$CCACHE "
 	common_run export QUIET_CXX="$CCACHE "
 
-	common_run $MAKE
+	common_run $MAKE -j
 	# Install creates a non optimal directory layout, fix that
 	common_run $MAKE PREFIX=$BUILD_SRC/libs/$1 install
 	common_run cd $BASE

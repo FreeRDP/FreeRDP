@@ -72,13 +72,23 @@ IF(MSVC)
 ENDIF(MSVC)
 
 IF(ANDROID)
-    FIND_LIBRARY(OPENSSL_LIBRARIES
+    FIND_LIBRARY(SSL_LIBRARY
       NAMES
-        "freerdp-openssl"
+        "ssl"
       ${_OPENSSL_ROOT_HINTS_AND_PATHS}
       PATH_SUFFIXES
         "lib"
     )
+
+    FIND_LIBRARY(CRYPTO_LIBRARY
+      NAMES
+        "crypto"
+      ${_OPENSSL_ROOT_HINTS_AND_PATHS}
+      PATH_SUFFIXES
+        "lib"
+    )
+
+    list(APPEND OPENSSL_LIBRARIES ${CRYPTO_LIBRARY} ${SSL_LIBRARY})
 ELSEIF(WIN32 AND NOT CYGWIN)
   # MINGW should go here too
   IF(MSVC)
