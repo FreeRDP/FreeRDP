@@ -35,13 +35,8 @@ public class LibFreeRDP
 	static
 	{
 		final String h264 = "openh264";
-		final String[] libraries = { h264,
-			                         "freerdp-openssl",
-			                         "jpeg",
-			                         "winpr2",
-			                         "freerdp2",
-			                         "freerdp-client2",
-			                         "freerdp-android2" };
+		final String[] libraries = { h264,     "ssl",      "crypto",          "jpeg",
+			                         "winpr2", "freerdp2", "freerdp-client2", "freerdp-android2" };
 		final String LD_PATH = System.getProperty("java.library.path");
 
 		for (String lib : libraries)
