@@ -1,3 +1,40 @@
+# 2020-04-09  Version 2.0.0
+
+Important notes:
+
+* fix multiple CVEs: CVE-2020-11521 CVE-2020-11522 CVE-2020-11523 CVE-2020-11524 CVE-2020-11525 CVE-2020-11526
+* fix multiple other security related issues (#6005, #6006, #6007, #6008, #6009, #6010, #6011, #6012, #6013)
+* sha256 is now used instead of sha1 to fingerprint certificates. This will
+  invalidate all hosts in FreeRDP known_hosts2 file and causes a prompt if a
+  new connection is established after the update
+
+Noteworthy features and improvements:
+
+* First version of the RDP proxy was added (#5372) - thanks to @kubistika
+* Smartcard received some refactoring. Missing functions were added and input
+  validation was improved (#5884)
+* A new option /cert that unifies all certificate related options (#5880)  
+  The old options (cert-ignore, cert-deny, cert-name, cert-tofu) are still
+  available but marked as deprecated
+* Support for Remote Assistance Protocol Version 2 [MS-RA]
+* The DirectFB client was removed because it was unmaintained
+* Unified initialization of OrderSupport
+* Fix for licensing against Windows Server 2003
+* Font smoothing is now enabled per default
+* Flatpack support was added
+* Smart scaling for Wayland using libcairo was added (#5215)
+* Unified update->BeginPaint and update->EndPaint
+* An image scaling API for software drawing was added
+* Rail was updated to the latest spec version 28.0
+* Support for H.264 in the shadow server is now detected at runtime
+* Add mask=<value> option for /gfx and /gfx-h264  (#5771)
+* Code reformatting (#5667)
+* A new option /timeout was added to adjust the TCP ACK timeout (#5987)
+
+For a complete and detailed change log since the last release candidate run:
+git log 2.0.0-rc4..2.0.0
+
+
 # 2018-11-19	Version 2.0.0-rc4
 
 FreeRDP 2.0.0-rc4 is the fifth release candidate for 2.0.0. Although it mainly
