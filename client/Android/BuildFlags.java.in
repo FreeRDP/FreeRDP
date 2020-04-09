@@ -1,0 +1,6 @@
+package com.freerdp.freerdpcore.utils;
+
+public class BuildFlags
+{
+	private final static boolean USE_OPENSSL_DEFAULT_NAMES = @USE_OPENSSL_DEFAULT_NAMES@;
+}
