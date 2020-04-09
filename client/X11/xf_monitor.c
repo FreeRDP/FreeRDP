@@ -367,12 +367,22 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			if (!vscreen->monitors)
 				return FALSE;
 
-			settings->MonitorDefArray[nmonitors].x = vscreen->monitors[i].area.left;
-			settings->MonitorDefArray[nmonitors].y = vscreen->monitors[i].area.top;
+			settings->MonitorDefArray[nmonitors].x =
+			    (vscreen->monitors[i].area.left *
+			     (settings->PercentScreenUseWidth ? settings->PercentScreen : 100)) /
+			    100;
+			settings->MonitorDefArray[nmonitors].y =
+			    (vscreen->monitors[i].area.top *
+			     (settings->PercentScreenUseHeight ? settings->PercentScreen : 100)) /
+			    100;
 			settings->MonitorDefArray[nmonitors].width =
-			    vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1;
+			    ((vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1) *
+			     (settings->PercentScreenUseWidth ? settings->PercentScreen : 100)) /
+			    100;
 			settings->MonitorDefArray[nmonitors].height =
-			    vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1;
+			    ((vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1) *
+			     (settings->PercentScreenUseWidth ? settings->PercentScreen : 100)) /
+			    100;
 			settings->MonitorDefArray[nmonitors].orig_screen = i;
 #ifdef USABLE_XRANDR
 
@@ -461,10 +471,12 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			if (vB != destB)
 				xfc->fullscreenMonitors.bottom = settings->MonitorDefArray[i].orig_screen;
 
-			vX = destX;
-			vY = destY;
-			vR = destR;
-			vB = destB;
+			vX = destX / ((settings->PercentScreenUseWidth ? settings->PercentScreen : 100) / 100.);
+			vY =
+			    destY / ((settings->PercentScreenUseHeight ? settings->PercentScreen : 100) / 100.);
+			vR = destR / ((settings->PercentScreenUseWidth ? settings->PercentScreen : 100) / 100.);
+			vB =
+			    destB / ((settings->PercentScreenUseHeight ? settings->PercentScreen : 100) / 100.);
 		}
 
 		vscreen->area.left = 0;
