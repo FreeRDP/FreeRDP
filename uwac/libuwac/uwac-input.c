@@ -125,7 +125,8 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 
 	if (buffer)
 	{
-		buffer_add_listener_success = wl_buffer_add_listener(buffer, &buffer_release_listener, seat);
+		buffer_add_listener_success =
+		    wl_buffer_add_listener(buffer, &buffer_release_listener, seat);
 	}
 
 	if (surface && buffer_add_listener_success > -1)
