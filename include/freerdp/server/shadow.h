@@ -144,6 +144,7 @@ struct rdp_shadow_server
 	UINT32 h264QP;
 
 	char* ipcSocket;
+	char* bindAddress;
 	char* ConfigPath;
 	char* CertificateFile;
 	char* PrivateKeyFile;

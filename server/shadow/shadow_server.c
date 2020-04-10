@@ -49,6 +49,8 @@ static const COMMAND_LINE_ARGUMENT_A shadow_args[] = {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL,
 	  "Server IPC socket" },
+	{ "bind-address", COMMAND_LINE_VALUE_REQUIRED, "<bind-address>", NULL, NULL, -1, NULL,
+	  "Address to bind to" },
 	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL,
 	  "Select or list monitors" },
 	{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL,
@@ -223,6 +225,13 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			server->ipcSocket = _strdup(arg->Value);
 
 			if (!server->ipcSocket)
+				return -1;
+		}
+		CommandLineSwitchCase(arg, "bind-address")
+		{
+			server->bindAddress = _strdup(arg->Value);
+
+			if (!server->bindAddress)
 				return -1;
 		}
 		CommandLineSwitchCase(arg, "may-view")
@@ -482,7 +491,7 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 
 int shadow_server_start(rdpShadowServer* server)
 {
-	BOOL status;
+	BOOL status = TRUE;
 	WSADATA wsaData;
 
 	if (!server)
@@ -510,10 +519,12 @@ int shadow_server_start(rdpShadowServer* server)
 		return -1;
 	}
 
-	if (!server->ipcSocket)
-		status = server->listener->Open(server->listener, NULL, (UINT16)server->port);
-	else
-		status = server->listener->OpenLocal(server->listener, server->ipcSocket);
+	// Bind to TCP port if nothing is specified, otherwise bind to everything specified
+	if (!server->ipcSocket || server->bindAddress)
+		status &=
+		    server->listener->Open(server->listener, server->bindAddress, (UINT16)server->port);
+	if (server->ipcSocket)
+		status &= server->listener->OpenLocal(server->listener, server->ipcSocket);
 
 	if (!status)
 	{
@@ -799,6 +810,7 @@ rdpShadowServer* shadow_server_new(void)
 		return NULL;
 
 	server->port = 3389;
+	server->bindAddress = NULL;
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
 	server->rfxMode = RLGR3;
@@ -818,6 +830,8 @@ void shadow_server_free(rdpShadowServer* server)
 
 	free(server->ipcSocket);
 	server->ipcSocket = NULL;
+	free(server->bindAddress);
+	server->bindAddress = NULL;
 	freerdp_settings_free(server->settings);
 	server->settings = NULL;
 	free(server);
