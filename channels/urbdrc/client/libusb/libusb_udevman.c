@@ -861,9 +861,9 @@ static DWORD poll_thread(LPVOID lpThreadParameter)
 #else
 #define freerdp_urbdrc_client_subsystem_entry FREERDP_API freerdp_urbdrc_client_subsystem_entry
 #endif
-int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
+UINT freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
 {
-	int rc;
+	UINT rc;
 	UINT status;
 	UDEVMAN* udevman;
 	ADDIN_ARGV* args = pEntryPoints->args;
@@ -922,5 +922,5 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 	return 0;
 fail:
 	udevman_free(&udevman->iface);
-	return -1;
+	return ERROR_INTERNAL_ERROR;
 }
