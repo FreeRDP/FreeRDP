@@ -176,8 +176,11 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 	if (status != CHANNEL_RC_OK)
 		goto fail;
 
-	EnterCriticalSection(&context->mux);
-
+	if (!TryEnterCriticalSection(&context->mux))
+	{
+		free(pSurfaceIds);
+		return CHANNEL_RC_OK;
+	}
 	for (index = 0; index < count; index++)
 	{
 		surface = (xfGfxSurface*)context->GetSurfaceData(context, pSurfaceIds[index]);
