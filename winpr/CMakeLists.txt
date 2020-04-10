@@ -47,7 +47,7 @@ include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 
 # Soname versioning
-set(RAW_VERSION_STRING "2.0.0")
+set(RAW_VERSION_STRING "3.0.0-dev")
 if(EXISTS "${CMAKE_SOURCE_DIR}/.source_tag")
 	file(READ ${CMAKE_SOURCE_DIR}/.source_tag RAW_VERSION_STRING)
 elseif(USE_VERSION_FROM_GIT_TAG)
