@@ -33,6 +33,11 @@
 #define USE_SHM
 #endif
 
+/* uClibc and uClibc-ng don't provide O_TMPFILE */
+#ifndef O_TMPFILE
+#define O_TMPFILE (020000000 | O_DIRECTORY)
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #ifdef USE_SHM
