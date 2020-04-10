@@ -886,7 +886,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 {
 	long options = 0;
 	BIO* bio;
-	RSA* rsa;
+	EVP_PKEY* privkey;
 	X509* x509;
 	/**
 	 * SSL_OP_NO_SSLv2:
@@ -951,19 +951,19 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 		return FALSE;
 	}
 
-	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
+	privkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
 	BIO_free_all(bio);
 
-	if (!rsa)
+	if (!privkey)
 	{
 		WLog_ERR(TAG, "invalid private key");
 		return FALSE;
 	}
 
-	if (SSL_use_RSAPrivateKey(tls->ssl, rsa) <= 0)
+	if (SSL_use_PrivateKey(tls->ssl, privkey) <= 0)
 	{
-		WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed");
-		RSA_free(rsa);
+		WLog_ERR(TAG, "SSL_CTX_use_PrivateKey_file failed");
+		EVP_PKEY_free(privkey);
 		return FALSE;
 	}
 
