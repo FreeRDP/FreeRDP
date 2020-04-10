@@ -879,6 +879,7 @@ UINT freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS 
 	if (rc != LIBUSB_SUCCESS)
 		goto fail;
 
+#ifdef _WIN32
 #if LIBUSB_API_VERSION >= 0x01000106
 	/* Prefer usbDK backend on windows. Not uspported on other platforms. */
 	rc = libusb_set_option(udevman->context, LIBUSB_OPTION_USE_USBDK);
@@ -894,6 +895,7 @@ UINT freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS 
 			WLog_ERR(TAG, "LIBUSB_OPTION_USE_USBDK %s [%d]", libusb_strerror(rc), rc);
 			goto fail;
 	}
+#endif
 #endif
 
 	udevman->flags = UDEVMAN_FLAG_ADD_BY_VID_PID;
