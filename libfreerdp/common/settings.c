@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include <winpr/crt.h>
 
@@ -803,4 +804,124 @@ char* freerdp_get_param_string(const rdpSettings* settings, int id)
 int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 {
 	return freerdp_settings_set_string(settings, (size_t)id, param) ? 0 : -1;
+}
+
+static BOOL value_to_uint(const char* value, ULONGLONG* result, ULONGLONG min, ULONGLONG max)
+{
+	unsigned long long rc;
+
+	if (!value || !result)
+		return FALSE;
+
+	errno = 0;
+	rc = _strtoui64(value, NULL, 0);
+
+	if (errno != 0)
+		return FALSE;
+
+	if ((rc < min) || (rc > max))
+		return FALSE;
+
+	*result = rc;
+	return TRUE;
+}
+
+static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONGLONG max)
+{
+	long long rc;
+
+	if (!value || !result)
+		return FALSE;
+
+	errno = 0;
+	rc = _strtoi64(value, NULL, 0);
+
+	if (errno != 0)
+		return FALSE;
+
+	if ((rc < min) || (rc > max))
+		return FALSE;
+
+	*result = rc;
+	return TRUE;
+}
+
+static BOOL parsing_fail(const char* key, const char* type, const char* value)
+{
+	WLog_ERR(TAG, "Failed to parse key [%s] of type [%s]: value [%s]", key, type, value);
+	return FALSE;
+}
+
+BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name, const char* value)
+{
+	ULONGLONG uval;
+	LONGLONG ival;
+	SSIZE_T index, type;
+	if (!settings || !name)
+		return FALSE;
+
+	index = freerdp_settings_get_key_for_name(name);
+	if (index < 0)
+	{
+		WLog_ERR(TAG, "Invalid settings key [%s]", name);
+		return FALSE;
+	}
+
+	type = freerdp_settings_get_type_for_key((size_t)index);
+	switch (type)
+	{
+
+		case RDP_SETTINGS_TYPE_BOOL:
+		{
+			BOOL val = _strnicmp(value, "TRUE", 5) == 0;
+			if (!val && _strnicmp(value, "FALSE", 5) != 0)
+				return parsing_fail(name, "BOOL", value);
+			return freerdp_settings_set_bool(settings, index, val);
+		}
+		case RDP_SETTINGS_TYPE_UINT16:
+			if (!value_to_uint(value, &uval, 0, UINT16_MAX))
+				return parsing_fail(name, "UINT16", value);
+			if (!freerdp_settings_set_uint16(settings, index, uval))
+				return parsing_fail(name, "UINT16", value);
+			return TRUE;
+
+		case RDP_SETTINGS_TYPE_INT16:
+			if (!value_to_int(value, &ival, INT16_MIN, INT16_MAX))
+				return parsing_fail(name, "INT16", value);
+			if (!freerdp_settings_set_int16(settings, index, ival))
+				return parsing_fail(name, "INT16", value);
+			return TRUE;
+		case RDP_SETTINGS_TYPE_UINT32:
+			if (!value_to_uint(value, &uval, 0, UINT32_MAX))
+				return parsing_fail(name, "UINT32", value);
+			if (!freerdp_settings_set_uint32(settings, index, uval))
+				return parsing_fail(name, "UINT32", value);
+			return TRUE;
+		case RDP_SETTINGS_TYPE_INT32:
+			if (!value_to_int(value, &ival, INT32_MIN, INT32_MAX))
+				return parsing_fail(name, "INT32", value);
+			if (!freerdp_settings_set_int32(settings, index, ival))
+				return parsing_fail(name, "INT32", value);
+			return TRUE;
+		case RDP_SETTINGS_TYPE_UINT64:
+			if (!value_to_uint(value, &uval, 0, UINT64_MAX))
+				return parsing_fail(name, "UINT64", value);
+			if (!freerdp_settings_set_uint64(settings, index, uval))
+				return parsing_fail(name, "UINT64", value);
+			return TRUE;
+		case RDP_SETTINGS_TYPE_INT64:
+			if (!value_to_int(value, &ival, INT64_MIN, INT64_MAX))
+				return parsing_fail(name, "INT64", value);
+			if (!freerdp_settings_set_int64(settings, index, ival))
+				return parsing_fail(name, "INT64", value);
+			return TRUE;
+
+		case RDP_SETTINGS_TYPE_STRING:
+			return freerdp_settings_set_string(settings, index, value);
+		case RDP_SETTINGS_TYPE_POINTER:
+			return parsing_fail(name, "POINTER", value);
+		default:
+			return FALSE;
+	}
+	return FALSE;
 }
