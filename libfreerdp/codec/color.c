@@ -651,12 +651,23 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32
 			const BYTE* srcLine = &pSrcData[(y + nYSrc) * nSrcStep * srcVMultiplier + srcVOffset];
 			BYTE* dstLine = &pDstData[(y + nYDst) * nDstStep * dstVMultiplier + dstVOffset];
 
-			for (x = 0; x < nWidth; x++)
+			UINT32 color = ReadColor(&srcLine[nXSrc * srcByte], SrcFormat);
+			UINT32 oldColor = color;
+			UINT32 dstColor = FreeRDPConvertColor(color, SrcFormat, DstFormat, palette);
+			WriteColor(&dstLine[nXDst * dstByte], DstFormat, dstColor);
+			for (x = 1; x < nWidth; x++)
 			{
-				UINT32 dstColor;
-				UINT32 color = ReadColor(&srcLine[(x + nXSrc) * srcByte], SrcFormat);
-				dstColor = FreeRDPConvertColor(color, SrcFormat, DstFormat, palette);
-				WriteColor(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor);
+				color = ReadColor(&srcLine[(x + nXSrc) * srcByte], SrcFormat);
+				if (color == oldColor)
+				{
+					WriteColor(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor);
+				}
+				else
+				{
+					oldColor = color;
+					dstColor = FreeRDPConvertColor(color, SrcFormat, DstFormat, palette);
+					WriteColor(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor);
+				}
 			}
 		}
 	}
