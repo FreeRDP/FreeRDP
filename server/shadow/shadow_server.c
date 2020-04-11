@@ -491,7 +491,7 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 
 int shadow_server_start(rdpShadowServer* server)
 {
-	BOOL status = TRUE;
+	BOOL status;
 	WSADATA wsaData;
 
 	if (!server)
@@ -521,16 +521,26 @@ int shadow_server_start(rdpShadowServer* server)
 
 	// Bind to TCP port if nothing is specified, otherwise bind to everything specified
 	if (!server->ipcSocket || server->bindAddress)
-		status &=
-		    server->listener->Open(server->listener, server->bindAddress, (UINT16)server->port);
-	if (server->ipcSocket)
-		status &= server->listener->OpenLocal(server->listener, server->ipcSocket);
-
-	if (!status)
 	{
-		WLog_ERR(TAG,
-		         "Problem creating listener. (Port already used or insufficient permissions?)");
-		return -1;
+		status =
+		    server->listener->Open(server->listener, server->bindAddress, (UINT16)server->port);
+		if (!status)
+		{
+			WLog_ERR(
+			    TAG,
+			    "Problem creating TCP listener. (Port already used or insufficient permissions?)");
+			return -1;
+		}
+	}
+	if (server->ipcSocket)
+	{
+		status = server->listener->OpenLocal(server->listener, server->ipcSocket);
+		if (!status)
+		{
+			WLog_ERR(TAG, "Problem creating local socket listener. (Port already used or "
+			              "insufficient permissions?)");
+			return -1;
+		}
 	}
 
 	if (!(server->thread = CreateThread(NULL, 0, shadow_server_thread, (void*)server, 0, NULL)))
