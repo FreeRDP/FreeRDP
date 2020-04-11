@@ -25,7 +25,7 @@
 #define TEXT_FORMATS_COUNT 2
 
 /* used for createing a fake format list response, containing only text formats */
-static CLIPRDR_FORMAT g_text_formats[] = { { CF_TEXT, '\0' }, { CF_UNICODETEXT, '\0' } };
+static CLIPRDR_FORMAT g_text_formats[] = { { CF_TEXT, "\0" }, { CF_UNICODETEXT, "\0" } };
 
 BOOL pf_server_cliprdr_init(pServerContext* ps)
 {
