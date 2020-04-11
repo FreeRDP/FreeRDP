@@ -178,9 +178,13 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 	{
 		char buf[100];
 
+#if !defined(_CUPS_API_1_7)
 		cups_printjob->printjob_object =
 		    httpConnectEncrypt(cupsServer(), ippPort(), HTTP_ENCRYPT_IF_REQUESTED);
-
+#else
+		cups_printjob->printjob_object = httpConnect2(cupsServer(), ippPort(), NULL, AF_UNSPEC,
+		                                              HTTP_ENCRYPT_IF_REQUESTED, 1, 10000, NULL);
+#endif
 		if (!cups_printjob->printjob_object)
 		{
 			free(cups_printjob);
