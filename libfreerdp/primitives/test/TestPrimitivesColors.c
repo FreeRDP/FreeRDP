@@ -93,8 +93,8 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 
 			if (o1 != o2)
 			{
-				printf("RGBToRGB_16s8u_P3AC4R FAIL: out1[%d]=0x%08" PRIx32 " out2[%d]=0x%08" PRIx32
-				       "\n",
+				printf("RGBToRGB_16s8u_P3AC4R FAIL: out1[%" PRIu64 "]=0x%08" PRIx8 " out2[%" PRIu64
+				       "]=0x%08" PRIx8 "\n",
 				       i, out1[i], i, out2[i]);
 				failed = TRUE;
 			}

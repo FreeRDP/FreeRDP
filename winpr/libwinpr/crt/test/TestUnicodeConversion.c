@@ -433,7 +433,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	}
 	if ((i = _wcslen(dst)) != 16)
 	{
-		fprintf(stderr, "ConvertToUnicode failure A3: dst length is %d instead of 16\n", i);
+		fprintf(stderr, "ConvertToUnicode failure A3: dst length is %" PRIuz " instead of 16\n", i);
 		goto fail;
 	}
 	if (_wcscmp(dst, (const WCHAR*)cmp0))
@@ -455,7 +455,8 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	i = ConvertToUnicode(CP_UTF8, 0, src2, -1, &dst, 0);
 	if (i != 17)
 	{
-		fprintf(stderr, "ConvertToUnicode failure B1: unexpectedly returned %d instead of 17\n", i);
+		fprintf(stderr,
+		        "ConvertToUnicode failure B1: unexpectedly returned %" PRIuz " instead of 17\n", i);
 		goto fail;
 	}
 	if (dst == NULL)
@@ -465,7 +466,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	}
 	if ((i = _wcslen(dst)) != 16)
 	{
-		fprintf(stderr, "ConvertToUnicode failure B3: dst length is %d instead of 16\n", i);
+		fprintf(stderr, "ConvertToUnicode failure B3: dst length is %" PRIuz " instead of 16\n", i);
 		goto fail;
 	}
 	if (_wcscmp(dst, (WCHAR*)cmp0))
@@ -490,6 +491,9 @@ fail:
 
 int TestUnicodeConversion(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* Letters */
 
 	printf("Letters\n");
