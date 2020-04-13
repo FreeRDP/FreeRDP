@@ -100,7 +100,7 @@ typedef struct _WINPR_BIO_SIMPLE_SOCKET WINPR_BIO_SIMPLE_SOCKET;
 static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown);
 static int transport_bio_simple_uninit(BIO* bio);
 
-static long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
+__attribute__((unused)) static long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
                                           long ret)
 {
 	return 1;
@@ -459,7 +459,7 @@ struct _WINPR_BIO_BUFFERED_SOCKET
 };
 typedef struct _WINPR_BIO_BUFFERED_SOCKET WINPR_BIO_BUFFERED_SOCKET;
 
-static long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int argi,
+__attribute__((unused)) static long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int argi,
                                             long argl, long ret)
 {
 	return 1;

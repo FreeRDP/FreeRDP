@@ -233,7 +233,7 @@ static UINT rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
 	return status;
 }
 
-static void rdpei_print_contact_flags(UINT32 contactFlags)
+__attribute__((unused)) static void rdpei_print_contact_flags(UINT32 contactFlags)
 {
 	if (contactFlags & CONTACT_FLAG_DOWN)
 		WLog_DBG(TAG, " CONTACT_FLAG_DOWN");

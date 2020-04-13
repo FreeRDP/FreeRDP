@@ -2148,7 +2148,7 @@ static BOOL rdp_read_draw_gdiplus_cache_capability_set(wStream* s, rdpSettings* 
  * @param settings settings
  */
 
-static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s, const rdpSettings* settings)
+__attribute__((unused)) static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s, const rdpSettings* settings)
 {
 	size_t header;
 	UINT32 drawGDIPlusSupportLevel;
@@ -3056,7 +3056,7 @@ static BOOL rdp_write_rfx_server_capability_container(wStream* s, const rdpSetti
 	return TRUE;
 }
 
-static BOOL rdp_write_jpeg_server_capability_container(wStream* s, const rdpSettings* settings)
+__attribute__((unused)) static BOOL rdp_write_jpeg_server_capability_container(wStream* s, const rdpSettings* settings)
 {
 	WINPR_UNUSED(settings);
 	if (!Stream_EnsureRemainingCapacity(s, 8))

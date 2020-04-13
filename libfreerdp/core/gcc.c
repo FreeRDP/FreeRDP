@@ -2014,7 +2014,7 @@ BOOL gcc_read_server_multitransport_channel_data(wStream* s, rdpMcs* mcs)
 	return TRUE;
 }
 
-void gcc_write_server_multitransport_channel_data(wStream* s, rdpMcs* mcs)
+__attribute__((unused)) void gcc_write_server_multitransport_channel_data(wStream* s, rdpMcs* mcs)
 {
 	UINT32 flags = 0;
 	gcc_write_user_data_header(s, SC_MULTITRANSPORT, 8);

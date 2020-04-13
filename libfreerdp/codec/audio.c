@@ -254,7 +254,7 @@ BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what)
 	return TRUE;
 }
 
-static BOOL audio_format_valid(const AUDIO_FORMAT* format)
+__attribute__((unused)) static BOOL audio_format_valid(const AUDIO_FORMAT* format)
 {
 	if (!format)
 		return FALSE;

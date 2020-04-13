@@ -159,7 +159,7 @@ BOOL rdp_send_client_control_pdu(rdpRdp* rdp, UINT16 action)
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->userId);
 }
 
-static void rdp_write_persistent_list_entry(wStream* s, UINT32 key1, UINT32 key2)
+__attribute__((unused)) static void rdp_write_persistent_list_entry(wStream* s, UINT32 key1, UINT32 key2)
 {
 	Stream_Write_UINT32(s, key1); /* key1 (4 bytes) */
 	Stream_Write_UINT32(s, key2); /* key2 (4 bytes) */

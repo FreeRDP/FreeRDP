@@ -61,7 +61,7 @@ int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 	return 0;
 }
 
-static int freerdp_keyboard_init_apple(DWORD* keyboardLayoutId,
+__attribute__((unused)) static int freerdp_keyboard_init_apple(DWORD* keyboardLayoutId,
                                        DWORD x11_keycode_to_rdp_scancode[256])
 {
 	DWORD vkcode;

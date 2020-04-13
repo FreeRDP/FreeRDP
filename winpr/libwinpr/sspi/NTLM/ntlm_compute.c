@@ -652,7 +652,7 @@ void ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
  * @param sealing_key Destination sealing key
  */
 
-static int ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal_magic,
+__attribute__((unused)) static int ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal_magic,
                                      BYTE* sealing_key)
 {
 	BYTE* p;

@@ -51,7 +51,7 @@ static BOOL update_gdi_cache_color_table(rdpContext* context,
 	return TRUE;
 }
 
-void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
+__attribute__((unused)) void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 {
 	void* entry;
 

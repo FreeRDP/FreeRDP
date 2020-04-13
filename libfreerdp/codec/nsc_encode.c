@@ -418,7 +418,7 @@ static void nsc_rle_compress_data(NSC_CONTEXT* context)
 	}
 }
 
-static UINT32 nsc_compute_byte_count(NSC_CONTEXT* context, UINT32* ByteCount, UINT32 width,
+__attribute__((unused)) static UINT32 nsc_compute_byte_count(NSC_CONTEXT* context, UINT32* ByteCount, UINT32 width,
                                      UINT32 height)
 {
 	UINT32 tempWidth;

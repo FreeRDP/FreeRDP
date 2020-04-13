@@ -308,7 +308,7 @@ static void UwacDestroyGlobal(UwacGlobal* global)
 	free(global);
 }
 
-static void* display_bind(UwacDisplay* display, uint32_t name, const struct wl_interface* interface,
+__attribute__((unused)) static void* display_bind(UwacDisplay* display, uint32_t name, const struct wl_interface* interface,
                           uint32_t version)
 {
 	return wl_registry_bind(display->registry, name, interface, version);
@@ -325,7 +325,7 @@ int UwacDisplayWatchFd(UwacDisplay* display, int fd, uint32_t events, UwacTask* 
 	return epoll_ctl(display->epoll_fd, EPOLL_CTL_ADD, fd, &ep);
 }
 
-static void UwacDisplayUnwatchFd(UwacDisplay* display, int fd)
+__attribute__((unused)) static void UwacDisplayUnwatchFd(UwacDisplay* display, int fd)
 {
 	epoll_ctl(display->epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 }

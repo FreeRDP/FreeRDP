@@ -84,7 +84,7 @@ void nine_grid_cache_register_callbacks(rdpUpdate* update)
 	update->primary->MultiDrawNineGrid = update_gdi_multi_draw_nine_grid;
 }
 
-void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
+__attribute__((unused)) void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
 {
 	void* entry;
 
@@ -105,7 +105,7 @@ void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
 	return entry;
 }
 
-void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry)
+__attribute__((unused)) void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry)
 {
 	if (index >= nine_grid->maxEntries)
 	{

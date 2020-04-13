@@ -258,7 +258,7 @@ void wlf_disp_free(wlfDispContext* disp)
 	free(disp);
 }
 
-UINT wlf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, size_t nmonitors)
+__attribute__((unused)) UINT wlf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, size_t nmonitors)
 {
 	UINT ret = CHANNEL_RC_OK;
 	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts;

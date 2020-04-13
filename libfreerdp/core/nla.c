@@ -216,7 +216,7 @@ void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
  * @param credssp
  */
 
-static BOOL is_empty(const char* str)
+__attribute__((unused)) static BOOL is_empty(const char* str)
 {
 	if (!str)
 		return TRUE;
