@@ -125,14 +125,6 @@ extern "C"
 
 	/* Critical Section */
 
-#if defined(__linux__)
-/**
- * Linux NPTL thread synchronization primitives are implemented using
- * the futex system calls ... we can't beat futex with a spin loop.
- */
-#define WINPR_CRITICAL_SECTION_DISABLE_SPINCOUNT
-#endif
-
 	typedef struct _RTL_CRITICAL_SECTION
 	{
 		PVOID DebugInfo;
