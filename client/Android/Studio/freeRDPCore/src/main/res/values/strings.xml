@@ -5,8 +5,8 @@
     <string name="no">No</string>
     <string name="cancel">Cancel</string>
     <string name="cont">Continue</string>
-    <string name="login">Login</string>
-    <string name="logout">Logout</string>
+    <string name="login">Log in</string>
+    <string name="logout">Log out</string>
     <!-- Home menu items -->
     <string name="menu_exit">Exit</string>
     <string name="menu_about">About</string>
@@ -30,7 +30,7 @@
     <!-- Search strings -->
     <string name="search_hint">Connect to Computer</string>
     <!-- List placeholder labels -->
-    <string name="list_placeholder_login">Login</string>
+    <string name="list_placeholder_login">Log in</string>
     <string name="list_placeholder_no_servers">No Servers</string>
     <string name="list_placeholder_connecting">Connecting &#8230;</string>
     <string name="list_placeholder_disconnecting">Disconnecting &#8230;</string>
@@ -41,7 +41,7 @@
     <!-- Bookmark settings strings -->
     <string name="settings_cat_host">Host</string>
     <string name="settings_label">Label</string>
-    <string name="settings_hostname">Host</string>
+    <string name="settings_hostname">Hostname</string>
     <string name="settings_port">Port</string>
     <string name="settings_cat_credentials">Credentials</string>
     <string name="settings_credentials">Credentials</string>
@@ -70,7 +70,7 @@
     </string-array>
     <string name="settings_resolution">Resolution</string>
     <string name="resolution_automatic">Automatic</string>
-    <string name="resolution_fit">Fitscreen</string>
+    <string name="resolution_fit">Fit screen</string>
     <string name="resolution_custom">Custom</string>
     <string-array name="resolutions_array">
         <item>Automatic</item>
@@ -121,7 +121,7 @@
     <string name="settings_cat_gateway">Gateway</string>
     <string name="settings_enable_gateway_settings">Enable Gateway</string>
     <string name="settings_gateway_settings">Gateway Settings</string>
-    <string name="settings_redirect_sdcard">Redirect SDCard</string>
+    <string name="settings_redirect_sdcard">Redirect SD card</string>
     <string name="settings_redirect_sound">Redirect Sound</string>
     <string-array name="redirect_sound_array">
         <item>Do not play</item>
@@ -186,11 +186,11 @@
     <!-- Error message strings -->
     <string name="error_bookmark_incomplete_title">Cancel without saving?</string>
     <string name="error_bookmark_incomplete">Press "Cancel" to abort!\nPress "Continue" to specify the required fields!</string>
-    <string name="error_connection_failure">Failed to establish a connection to the server!</string>
+    <string name="error_connection_failure">Could not establish a connection to the server!</string>
     <!-- Info message strings -->
-    <string name="info_capabilities_changed">The screen settings have changed because the server does not support the settings you specified!</string>
-    <string name="info_reset_success">Deleted the certificate cache!</string>
-    <string name="info_reset_failed">Failed to delete certificate cache!</string>
+    <string name="info_capabilities_changed">Screen settings changed to ones supported by the server instead.</string>
+    <string name="info_reset_success">Certificate cache deleted.</string>
+    <string name="info_reset_failed">Could not delete the certificate cache!</string>
     <!-- Dialog strings -->
     <string name="dlg_title_verify_certificate">Verify Certificate</string>
     <string name="dlg_msg_verify_certificate">The identity of the remote computer cannot be verified. Do you want to connect anyway?</string>
@@ -201,14 +201,14 @@
     <string name="dlg_msg_logging_in">Logging in &#8230;</string>
     <string name="dlg_title_about">About aFreeRDP</string>
     <string name="dlg_title_create_bookmark_after_qc">Save Connection Settings?</string>
-    <string name="dlg_msg_create_bookmark_after_qc">Your connection settings have not been saved! Do you want to save them?</string>
+    <string name="dlg_msg_create_bookmark_after_qc">Do you want to save your unsaved connection settings?</string>
     <string name="dlg_title_save_bookmark">Save Connection?</string>
     <string name="dlg_save_bookmark">Do you want to save any changes you made to the connection settings?</string>
     <string name="dlg_dont_show_again">Do not ask again</string>
-    <string name="dlg_title_exit">Exit Application?</string>
-    <string name="dlg_msg_exit">Are you sure you want to exit the application?</string>
+    <string name="dlg_title_exit">Exit App?</string>
+    <string name="dlg_msg_exit">Are you sure you want to exit the app?</string>
     <string name="dlg_title_clear_cert_cache">Delete Certificates?</string>
-    <string name="dlg_msg_clear_cert_cache">Are you sure you want to delete all your cached Certificates?</string>
+    <string name="dlg_msg_clear_cert_cache">Are you sure you want to delete all your cached certificates?</string>
     <string name="debug_level">Debug Level</string>
     <string name="settings_debug">Debug Settings</string>
     <string name="preference_title_client">Client</string>
