@@ -1922,6 +1922,7 @@ static INLINE INT32 progressive_wb_read_region_header(PROGRESSIVE_CONTEXT* progr
 {
 	size_t offset, len;
 
+	memset(region, 0, sizeof(PROGRESSIVE_BLOCK_REGION));
 	if (Stream_GetRemainingLength(s) < 12)
 	{
 		WLog_Print(progressive->log, WLOG_ERROR,
@@ -2001,16 +2002,16 @@ static INLINE INT32 progressive_wb_skip_region(PROGRESSIVE_CONTEXT* progressive,
 {
 	INT32 rc;
 	size_t total;
-	PROGRESSIVE_BLOCK_REGION region = { 0 };
+	PROGRESSIVE_BLOCK_REGION* region = &progressive->region;
 
-	rc = progressive_wb_read_region_header(progressive, s, blockType, blockLen, &region);
+	rc = progressive_wb_read_region_header(progressive, s, blockType, blockLen, region);
 	if (rc < 0)
 		return rc;
 
-	total = (region.numRects * 8);
-	total += (region.numQuant * 5);
-	total += (region.numProgQuant * 16);
-	total += region.tileDataSize;
+	total = (region->numRects * 8);
+	total += (region->numQuant * 5);
+	total += (region->numProgQuant * 16);
+	total += region->tileDataSize;
 	if (!Stream_SafeSeek(s, total))
 		return -1111;
 
@@ -2143,7 +2144,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 	wStream *s, ss;
 	size_t start, end;
 	REGION16 clippingRects, updateRegion;
-	PROGRESSIVE_BLOCK_REGION* region;
+	PROGRESSIVE_BLOCK_REGION* region = &progressive->region;
 	PROGRESSIVE_SURFACE_CONTEXT* surface = progressive_get_surface_data(progressive, surfaceId);
 	union {
 		const BYTE* cbp;
@@ -2158,10 +2159,6 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 		           surfaceId);
 		return -1001;
 	}
-
-	region = calloc(1, sizeof(PROGRESSIVE_BLOCK_REGION));
-	if (!region)
-		return -1111;
 
 	Stream_StaticInit(&ss, sconv.bp, SrcSize);
 	s = &ss;
@@ -2306,7 +2303,6 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 	region16_uninit(&clippingRects);
 
 fail:
-	free(region);
 	return rc;
 }
 
