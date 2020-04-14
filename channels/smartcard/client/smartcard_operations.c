@@ -457,9 +457,6 @@ static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD
 		LPSTR wreader = &(*mszReaders)[wpos];
 		size_t readerLen = strnlen(rreader, cchReaders - rpos);
 
-		if (readerLen == 0)
-			break;
-
 		rpos += readerLen + 1;
 
 		if (filter_match(list, rreader, readerLen))
