@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Button labels -->
+    <string name="yes">Ja</string>
+    <string name="no">Nei</string>
+    <string name="cancel">Avbryt</string>
+    <string name="cont">Fortsett</string>
+    <string name="login">Logg inn</string>
+    <string name="logout">Logg ut</string>
+    <!-- Home menu items -->
+    <string name="menu_exit">Avslutt</string>
+    <string name="menu_about">Om</string>
+    <string name="menu_help">Hjelp</string>
+    <string name="menu_new_bookmark">Ny tilkobling</string>
+    <string name="menu_app_settings">Innstilling</string>
+    <!-- Bookmark menu items -->
+    <string name="menu_title_bookmark">Tilkobling</string>
+    <string name="menu_connect">Koble til</string>
+    <string name="menu_edit">Rediger</string>
+    <string name="menu_delete">Slett</string>
+    <!-- Session menu items -->
+    <string name="menu_sys_keyboard">Tastatur</string>
+    <string name="menu_ext_keyboard">Funksjonstaster</string>
+    <string name="menu_touch_pointer">Trykkpeker</string>
+    <string name="menu_home">hjem</string>
+    <string name="menu_disconnect">Koble fra</string>
+    <!-- List section headers -->
+    <string name="section_bookmarks">Manuelle tilkoblinger</string>
+    <string name="section_active_sessions">Pågående økter</string>
+    <!-- Search strings -->
+    <string name="search_hint">Koble til datamaskin</string>
+    <!-- List placeholder labels -->
+    <string name="list_placeholder_login">Logg inn</string>
+    <string name="list_placeholder_no_servers">No Servers</string>
+    <string name="list_placeholder_connecting">Kobler til &#8230;</string>
+    <string name="list_placeholder_disconnecting">Kobler fra &#8230;</string>
+    <string name="list_placeholder_connection_error">Mistet tilknytning</string>
+    <string name="list_placeholder_wrong_password">Feil passord</string>
+    <string name="list_placeholder_invalid_username">Ugyldig brukernavn</string>
+    <string name="list_placeholder_add_bookmark">Ny tilkobling</string>
+    <!-- Bookmark settings strings -->
+    <string name="settings_cat_host">Vert</string>
+    <string name="settings_label">Etikett</string>
+    <string name="settings_hostname">Vertsnavn</string>
+    <string name="settings_port">Port</string>
+    <string name="settings_cat_credentials">Identitetsdetaljer</string>
+    <string name="settings_credentials">Identitetsdetaljer</string>
+    <string name="settings_username">Brukernavn</string>
+    <string name="settings_password">Passord</string>
+    <string name="settings_domain">Domene</string>
+    <string name="settings_cat_settings">Innstillinger</string>
+    <string name="settings_screen">Skjerm</string>
+    <string name="settings_cat_screen">Skjeminnstillinger</string>
+    <string name="settings_colors">Farger</string>
+    <string-array name="colors_array">
+        <item>Palett (8-biters)</item>
+        <item>Høy farge (15-biters)</item>
+        <item>Høy farge (16-biters)</item>
+        <item>Sann farge (24-biters)</item>
+        <item>Høyeste kvalitet (32-biters)</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="colors_values_array" translatable="false">
+        <item>8</item>
+        <item>15</item>
+        <item>16</item>
+        <item>24</item>
+        <item>32</item>
+    </string-array>
+    <string name="settings_resolution">Oppløsning</string>
+    <string name="resolution_automatic">Automatisk</string>
+    <string name="resolution_fit">Tilpass til skjerm</string>
+    <string name="resolution_custom">Tilpasset</string>
+    <string-array name="resolutions_array">
+        <item>Automatic</item>
+        <item>Tilpass til skjerm</item>
+        <item>Egendefinert</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="resolutions_values_array" translatable="false">
+        <item>automatic</item>
+        <item>fitscreen</item>
+        <item>custom</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
+    </string-array>
+    <string name="settings_width">Bredde</string>
+    <string name="settings_height">Høyde</string>
+    <string name="settings_performance">Ytelse</string>
+    <string name="settings_cat_performance">Ytelsesinnstillinger</string>
+    <string name="settings_perf_remotefx">RemoteFX</string>
+    <string name="settings_perf_gfx" translatable="false">GFX</string>
+    <string name="settings_perf_gfx_h264" translatable="false">H264</string>
+    <string name="settings_perf_wallpaper">Skrivebordsbakgrunn</string>
+    <string name="settings_perf_font_smoothing">Skriftglatting</string>
+    <string name="settings_perf_desktop_composition">Skrivebordskomposisjon</string>
+    <string name="settings_perf_full_window_drag">Vindusinnhold under dragning</string>
+    <string name="settings_perf_menu_animation">Menyanimasjon</string>
+    <string name="settings_perf_theming">Visuelle stiler</string>
+    <string name="settings_advanced">Advansert</string>
+    <string name="settings_cat_advanced">Avanserte innstillinger</string>
+    <string name="settings_enable_3g_settings">3G-innstillinger</string>
+    <string name="settings_screen_3g">3G-skjerm</string>
+    <string name="settings_performance_3g">3G-ytelse</string>
+    <string name="settings_cat_gateway">Portner</string>
+    <string name="settings_enable_gateway_settings">Skru på portner</string>
+    <string name="settings_gateway_settings">Portner-innstilinger</string>
+    <string name="settings_redirect_sdcard">Videresend SD-kort</string>
+    <string name="settings_redirect_sound">Videresend lyd</string>
+    <string-array name="redirect_sound_array">
+        <item>Ikke spill</item>
+        <item>Spill på tjener</item>
+        <item>Spill på enhet</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="redirect_sound_values_array" translatable="false">
+        <item>2</item>
+        <item>1</item>
+        <item>0</item>
+    </string-array>
+    <string name="settings_redirect_microphone">Videresend mikrofon</string>
+    <string name="settings_security">Sikkerhet</string>
+    <string-array name="security_array">
+        <item>Automatisk</item>
+        <item>RDP</item>
+        <item>TLS</item>
+        <item>NLA</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="security_values_array" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string name="settings_remote_program">Fjernprogram</string>
+    <string name="settings_work_dir">Arbeidsmappe</string>
+    <string name="settings_async_channel">Asynk-kanal</string>
+    <string name="settings_async_input">Asynk-inndata</string>
+    <string name="settings_async_update">Asynk-oppdatering</string>
+    <string name="settings_console_mode">Konsollmodus</string>
+    <!-- App settings strings -->
+    <string name="settings_password_present">*******</string>
+    <string name="settings_password_empty">ikke satt</string>
+    <string name="settings_cat_ui">Brukergrensesnitt</string>
+    <string name="settings_ui_hide_status_bar">Skjul statusfelt</string>
+    <string name="settings_ui_hide_action_bar">Skjul handlingsfelt</string>
+    <string name="settings_ui_hide_zoom_controls">Skjul forstørrelseskontroller</string>
+    <string name="settings_ui_swap_mouse_buttons">Bytt museknapper</string>
+    <string name="settings_ui_invert_scrolling">Inverter rulling</string>
+    <string name="settings_ui_auto_scroll_touchpointer">Autorulling for trykkpeker</string>
+    <string name="settings_ui_ask_on_exit">Vis dialogvindu ved avslutning</string>
+    <string name="settings_cat_power">Strømsparing</string>
+    <string name="settings_cat_client">Klient</string>
+    <string name="settings_power_disconnect_timeout">Lukk tilkoblinger ved lediggang</string>
+    <string name="settings_cat_security">Sikkerhet</string>
+    <string name="settings_security_accept_certificates">Godta alle sertifikater</string>
+    <string name="settings_security_clear_certificate_cache">Tøm sertifikatshurtiglager</string>
+    <string name="settings_description_after_minutes">Etter %1$d minutt</string>
+    <string name="settings_description_disabled">Avskrudd</string>
+    <!-- Activity titles -->
+    <string name="title_bookmark_settings">Tilkoblingsinnstillinger</string>
+    <string name="title_application_settings">Innstillinger</string>
+    <string name="title_home">aFreeRDP - FreeRDP for Android</string>
+    <string name="title_create_shortcut">RDP-tilkoblinger</string>
+    <string name="title_help">Hjelp</string>
+    <string name="title_about">Om</string>
+    <!-- Error message strings -->
+    <string name="error_bookmark_incomplete_title">Avbryt uten å lagre?</string>
+    <string name="error_bookmark_incomplete">Trykk "Avbryt" for å annullere!\nTrykk "Fortsett" for å angi påkrevde felter!</string>
+    <string name="error_connection_failure">Klarte ikke å etablere tilknytning til tjeneren!</string>
+    <!-- Info message strings -->
+    <string name="info_capabilities_changed">Skjerminnstillingene har blitt endret til noe tjeneren støtter istedenfor.</string>
+    <string name="info_reset_success">Slettet sertifikatshurtiglageret.</string>
+    <string name="info_reset_failed">Klarte ikke å slette sertifikatshurtigageret!</string>
+    <!-- Dialog strings -->
+    <string name="dlg_title_verify_certificate">Bekreft sertifikat</string>
+    <string name="dlg_msg_verify_certificate">Identiteten til datamaskinen annensteds hen kan ikke bekreftes. Ønsker du å koble til likevel?</string>
+    <string name="dlg_title_credentials">Skriv inn dine identitetsdetaljer</string>
+    <string name="dlg_title_create_shortcut">Opprett snarvei</string>
+    <string name="dlg_msg_create_shortcut">Snarveisnavn:</string>
+    <string name="dlg_msg_connecting">Kobler til &#8230;</string>
+    <string name="dlg_msg_logging_in">Logger inn &#8230;</string>
+    <string name="dlg_title_about">Om aFreeRDP</string>
+    <string name="dlg_title_create_bookmark_after_qc">Lagre tilkoblingsinnstillinger?</string>
+    <string name="dlg_msg_create_bookmark_after_qc">Ønsker du å lagre de ulagrede tilkoblingsinnstillingene?</string>
+    <string name="dlg_title_save_bookmark">Lagre tilkobling?</string>
+    <string name="dlg_save_bookmark">Ønsker du å lagre endringer gjort i tilkoblingsinnstillingene?</string>
+    <string name="dlg_dont_show_again">Ikke spør igjen</string>
+    <string name="dlg_title_exit">Avslutt program?</string>
+    <string name="dlg_msg_exit">Er du sikker på at du vil avslutte programmet?</string>
+    <string name="dlg_title_clear_cert_cache">Slett sertifikater?</string>
+    <string name="dlg_msg_clear_cert_cache">Er du sikker på at du vil slette alle sertifikater i hurtiglager?</string>
+    <string name="debug_level">Feilsøkingsnivå</string>
+    <string name="settings_debug">Avlusingsinnstillinger</string>
+    <string name="preference_title_client">Klient</string>
+    <string name="preference_key_client_name" translatable="false">preference_key_client_name</string>
+    <string name="preference_title_client_name">Klientnavn</string>
+    <string name="preference_default_client_name" translatable="false">aFreeRDP</string>
+    <string name="preference_key_accept_certificates" translatable="false">security.accept_certificates</string>
+    <string name="preference_key_security_clear_certificate_cache" translatable="false">security.clear_certificate_cache</string>
+    <string name="preference_key_power_disconnect_timeout" translatable="false">power.disconnect_timeout</string>
+    <string name="preference_key_ui_hide_status_bar" translatable="false">ui.hide_status_bar</string>
+    <string name="preference_key_ui_ask_on_exit" translatable="false">ui.ask_on_exit</string>
+    <string name="preference_key_ui_auto_scroll_touchpointer" translatable="false">ui.auto_scroll_touchpointer</string>
+    <string name="preference_key_ui_invert_scrolling" translatable="false">ui.invert_scrolling</string>
+    <string name="preference_key_ui_swap_mouse_buttons" translatable="false">ui.swap_mouse_buttons</string>
+    <string name="preference_key_ui_hide_zoom_controls" translatable="false">ui.hide_zoom_controls</string>
+    <string name="preference_key_ui_hide_action_bar" translatable="false">ui.hide_action_bar</string>
+    <string-array name="debug_array" translatable="false">
+        <item>OFF</item>
+        <item>FATAL</item>
+        <item>ERROR</item>
+        <item>WARN</item>
+        <item>INFO</item>
+        <item>DEBUG</item>
+        <item>TRACE</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="debug_values_array" translatable="false">
+        <item>OFF</item>
+        <item>FATAL</item>
+        <item>ERROR</item>
+        <item>WARN</item>
+        <item>INFO</item>
+        <item>DEBUG</item>
+        <item>TRACE</item>
+    </string-array>
+
+    <string name="preference_key_h264_3g" translatable="false">bookmark.perf_gfx_h264</string>
+    <string name="preference_key_h264" translatable="false">bookmark.perf_gfx_h264</string>
+</resources>
