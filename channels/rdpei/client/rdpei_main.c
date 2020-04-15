@@ -445,6 +445,9 @@ static UINT rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 	UINT16 eventId;
 	UINT32 pduLength;
 	UINT error;
+	if (Stream_GetRemainingLength(s) < 6)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT16(s, eventId);   /* eventId (2 bytes) */
 	Stream_Read_UINT32(s, pduLength); /* pduLength (4 bytes) */
 #ifdef WITH_DEBUG_RDPEI
