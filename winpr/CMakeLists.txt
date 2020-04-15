@@ -46,6 +46,10 @@ include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 
+if (NOT WIN32)
+    add_definitions(-DWINPR_CRITICAL_SECTION_DISABLE_SPINCOUNT)
+endif()
+
 # Soname versioning
 set(RAW_VERSION_STRING "3.0.0-dev")
 if(EXISTS "${CMAKE_SOURCE_DIR}/.source_tag")
