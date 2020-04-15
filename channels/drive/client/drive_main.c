@@ -331,6 +331,7 @@ static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 	DRIVE_FILE* file;
 	UINT32 Length;
 	UINT64 Offset;
+	void* ptr;
 
 	if (!drive || !irp || !irp->input || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
@@ -341,6 +342,9 @@ static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
 	Stream_Seek(irp->input, 20); /* Padding */
+	ptr = Stream_Pointer(irp->input);
+	if (!Stream_SafeSeek(irp->input, Length))
+		return ERROR_INVALID_DATA;
 	file = drive_get_file_by_id(drive, irp->FileId);
 
 	if (!file)
@@ -353,7 +357,7 @@ static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 		irp->IoStatus = drive_map_windows_err(GetLastError());
 		Length = 0;
 	}
-	else if (!drive_file_write(file, Stream_Pointer(irp->input), Length))
+	else if (!drive_file_write(file, ptr, Length))
 	{
 		irp->IoStatus = drive_map_windows_err(GetLastError());
 		Length = 0;
