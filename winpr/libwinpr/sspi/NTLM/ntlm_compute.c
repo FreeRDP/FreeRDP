@@ -415,7 +415,6 @@ int ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 {
 	BYTE* blob;
-	BYTE nt_proof_str[WINPR_MD5_DIGEST_LENGTH];
 	SecBuffer ntlm_v2_temp;
 	SecBuffer ntlm_v2_temp_chal;
 	PSecBuffer TargetInfo;
@@ -454,8 +453,8 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	CopyMemory(blob, context->ServerChallenge, 8);
 	CopyMemory(&blob[8], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 	winpr_HMAC(WINPR_MD_MD5, (BYTE*)context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH,
-	           (BYTE*)ntlm_v2_temp_chal.pvBuffer, ntlm_v2_temp_chal.cbBuffer, (BYTE*)nt_proof_str,
-	           WINPR_MD5_DIGEST_LENGTH);
+	           (BYTE*)ntlm_v2_temp_chal.pvBuffer, ntlm_v2_temp_chal.cbBuffer,
+	           (BYTE*)context->NtProofString, WINPR_MD5_DIGEST_LENGTH);
 
 	/* NtChallengeResponse, Concatenate NTProofStr with temp */
 
@@ -463,12 +462,12 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 		return -1;
 
 	blob = (BYTE*)context->NtChallengeResponse.pvBuffer;
-	CopyMemory(blob, nt_proof_str, 16);
+	CopyMemory(blob, context->NtProofString, 16);
 	CopyMemory(&blob[16], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 	/* Compute SessionBaseKey, the HMAC-MD5 hash of NTProofStr using the NTLMv2 hash as the key */
 	winpr_HMAC(WINPR_MD_MD5, (BYTE*)context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH,
-	           (BYTE*)nt_proof_str, WINPR_MD5_DIGEST_LENGTH, (BYTE*)context->SessionBaseKey,
-	           WINPR_MD5_DIGEST_LENGTH);
+	           (BYTE*)context->NtProofString, WINPR_MD5_DIGEST_LENGTH,
+	           (BYTE*)context->SessionBaseKey, WINPR_MD5_DIGEST_LENGTH);
 	sspi_SecBufferFree(&ntlm_v2_temp);
 	sspi_SecBufferFree(&ntlm_v2_temp_chal);
 	return 1;
