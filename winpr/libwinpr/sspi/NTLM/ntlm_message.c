@@ -1173,9 +1173,10 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 			WLog_ERR(TAG, "Message Integrity Check (MIC) verification failed!");
 #ifdef WITH_DEBUG_NTLM
 			WLog_ERR(TAG, "Expected MIC:");
-			winpr_HexDump(TAG, WLOG_ERROR, messageIntegrityCheck, 16);
+			winpr_HexDump(TAG, WLOG_ERROR, messageIntegrityCheck, sizeof(messageIntegrityCheck));
 			WLog_ERR(TAG, "Actual MIC:");
-			winpr_HexDump(TAG, WLOG_ERROR, message->MessageIntegrityCheck, 16);
+			winpr_HexDump(TAG, WLOG_ERROR, message->MessageIntegrityCheck,
+			              sizeof(message->MessageIntegrityCheck));
 #endif
 			return SEC_E_MESSAGE_ALTERED;
 		}
@@ -1201,9 +1202,10 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 			WLog_ERR(TAG, "NtProofString verification failed!");
 #ifdef WITH_DEBUG_NTLM
 			WLog_ERR(TAG, "Expected NtProofString:");
-			winpr_HexDump(TAG, WLOG_ERROR, context->NtProofString, 16);
+			winpr_HexDump(TAG, WLOG_ERROR, context->NtProofString, sizeof(context->NtProofString));
 			WLog_ERR(TAG, "Actual NtProofString:");
-			winpr_HexDump(TAG, WLOG_ERROR, context->NTLMv2Response.Response, 16);
+			winpr_HexDump(TAG, WLOG_ERROR, context->NTLMv2Response.Response,
+			              sizeof(context->NTLMv2Response));
 #endif
 			return SEC_E_LOGON_DENIED;
 		}
