@@ -149,6 +149,8 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	UINT64 Offset;
 	ssize_t status;
 	BYTE* buffer = NULL;
+	if (Stream_GetRemainingLength(irp->input) < 12)
+		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
 	buffer = (BYTE*)malloc(Length);
