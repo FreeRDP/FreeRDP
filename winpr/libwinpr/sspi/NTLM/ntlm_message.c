@@ -219,6 +219,11 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 		return SEC_E_INVALID_TOKEN;
 	}
 
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		Stream_Free(s, FALSE);
+		return SEC_E_INVALID_TOKEN;
+	}
 	Stream_Read_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
 	if (!((message->NegotiateFlags & NTLMSSP_REQUEST_TARGET) &&
