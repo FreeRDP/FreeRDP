@@ -1180,6 +1180,34 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 			return SEC_E_MESSAGE_ALTERED;
 		}
 	}
+	else
+	{
+		/* no mic message was present
+
+		   https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/f9e6fbc4-a953-4f24-b229-ccdcc213b9ec
+		   the mic is optional, as not supported in Windows NT, Windows 2000, Windows XP, and
+		   Windows Server 2003 and, as it seems, in the NTLMv2 implementation of Qt5.
+
+		   now check the NtProofString, to detect if the entered client password matches the
+		   expected password.
+		   */
+
+#ifdef WITH_DEBUG_NTLM
+		WLog_DBG(TAG, "No MIC present, using NtProofString for verification.");
+#endif
+
+		if (memcmp(context->NTLMv2Response.Response, context->NtProofString, 16) != 0)
+		{
+			WLog_ERR(TAG, "NtProofString verification failed!");
+#ifdef WITH_DEBUG_NTLM
+			WLog_ERR(TAG, "Expected NtProofString:");
+			winpr_HexDump(TAG, WLOG_ERROR, context->NtProofString, 16);
+			WLog_ERR(TAG, "Actual NtProofString:");
+			winpr_HexDump(TAG, WLOG_ERROR, context->NTLMv2Response.Response, 16);
+#endif
+			return SEC_E_LOGON_DENIED;
+		}
+	}
 
 	/* Generate signing keys */
 	ntlm_generate_client_signing_key(context);
