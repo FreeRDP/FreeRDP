@@ -1920,7 +1920,7 @@ static INLINE INT32 progressive_wb_read_region_header(PROGRESSIVE_CONTEXT* progr
                                                       UINT16 blockType, UINT32 blockLen,
                                                       PROGRESSIVE_BLOCK_REGION* region)
 {
-	size_t offset, len;
+	size_t len;
 
 	memset(region, 0, sizeof(PROGRESSIVE_BLOCK_REGION));
 	if (Stream_GetRemainingLength(s) < 12)
@@ -1965,35 +1965,37 @@ static INLINE INT32 progressive_wb_read_region_header(PROGRESSIVE_CONTEXT* progr
 	}
 
 	len = Stream_GetRemainingLength(s);
-	offset = (region->numRects * 8);
-	if (len < offset)
+	if (len / 8 < region->numRects)
 	{
 		WLog_Print(progressive->log, WLOG_ERROR, "ProgressiveRegion data short for region->rects");
 		return -1015;
 	}
+	len -= region->numRects * 8ULL;
 
-	offset += (region->numQuant * 5);
-	if (len < offset)
+	if (len / 5 < region->numQuant)
 	{
 		WLog_Print(progressive->log, WLOG_ERROR, "ProgressiveRegion data short for region->cQuant");
 		return -1018;
 	}
+	len -= region->numQuant * 5ULL;
 
-	offset += (region->numProgQuant * 16);
-	if (len < offset)
+	if (len / 16 < region->numProgQuant)
 	{
 		WLog_Print(progressive->log, WLOG_ERROR,
 		           "ProgressiveRegion data short for region->cProgQuant");
 		return -1021;
 	}
+	len -= region->numProgQuant * 16ULL;
 
-	offset += region->tileDataSize;
-	if (len < offset)
+	if (len < region->tileDataSize)
 	{
 		WLog_Print(progressive->log, WLOG_ERROR, "ProgressiveRegion data short for region->tiles");
 		return -1024;
 	}
-
+	len -= region->tileDataSize;
+	if (len > 0)
+		WLog_Print(progressive->log, WLOG_DEBUG,
+		           "Unused byes detected, %" PRIuz " bytes not processed", len);
 	return 0;
 }
 
