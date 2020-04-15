@@ -83,13 +83,19 @@ static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	char* path = NULL;
 	int status;
+	WCHAR* ptr;
 	UINT32 PathLength;
-	Stream_Seek(irp->input, 28);
+	if (!Stream_SafeSeek(irp->input, 28))
+		return ERROR_INVALID_DATA;
 	/* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
 	/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
+	if (Stream_GetRemainingLength(irp->input) < 4)
+		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, PathLength);
-	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)Stream_Pointer(irp->input), PathLength / 2,
-	                            &path, 0, NULL, NULL);
+	ptr = (WCHAR*)Stream_Pointer(irp->input);
+	if (!Stream_SafeSeek(irp->input, PathLength))
+		return ERROR_INVALID_DATA;
+	status = ConvertFromUnicode(CP_UTF8, 0, ptr, PathLength / 2, &path, 0, NULL, NULL);
 
 	if (status < 1)
 		if (!(path = (char*)calloc(1, 1)))
