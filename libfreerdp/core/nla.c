@@ -241,7 +241,7 @@ static int nla_client_init(rdpNla* nla)
 		settings->DisableCredentialsDelegation = TRUE;
 
 	if (is_empty(settings->Username) ||
-	    (is_empty(settings->Password) && is_empty(settings->RedirectionPassword)))
+	    (is_empty(settings->Password) && is_empty((const char*)settings->RedirectionPassword)))
 	{
 		PromptPassword = TRUE;
 	}
