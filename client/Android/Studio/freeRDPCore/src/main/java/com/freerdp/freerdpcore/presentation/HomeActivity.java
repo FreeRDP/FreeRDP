@@ -113,7 +113,7 @@ public class HomeActivity extends AppCompatActivity
 				String curSection = separatedListAdapter.getSectionForPosition(position);
 				Log.v(TAG, "Clicked on item id " + separatedListAdapter.getItemId(position) +
 				               " in section " + curSection);
-				if (curSection == sectionLabelBookmarks)
+				if (curSection.equals(sectionLabelBookmarks))
 				{
 					String refStr = view.getTag().toString();
 					if (ConnectionReference.isManualBookmarkReference(refStr) ||
