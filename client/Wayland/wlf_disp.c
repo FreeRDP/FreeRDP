@@ -377,3 +377,25 @@ BOOL wlf_disp_uninit(wlfDispContext* wlfDisp, DispClientContext* disp)
 	wlfDisp->disp = NULL;
 	return TRUE;
 }
+
+int wlf_list_monitors(wlfContext* wlc)
+{
+	uint32_t i, nmonitors = UwacDisplayGetNbOutputs(wlc->display);
+
+	for (i = 0; i < nmonitors; i++)
+	{
+		const UwacOutput* monitor = UwacDisplayGetOutput(wlc->display, i);
+		UwacSize resolution;
+		UwacPosition pos;
+
+		if (!monitor)
+			continue;
+		UwacOutputGetPosition(monitor, &pos);
+		UwacOutputGetResolution(monitor, &resolution);
+
+		printf("     %s [%d] %dx%d\t+%d+%d\n", (i == 0) ? "*" : " ", i, resolution.width,
+		       resolution.height, pos.x, pos.y);
+	}
+
+	return 0;
+}

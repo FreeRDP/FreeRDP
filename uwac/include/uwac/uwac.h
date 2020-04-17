@@ -32,6 +32,7 @@
 #define UWAC_API
 #endif
 
+typedef struct uwac_position UwacPosition;
 typedef struct uwac_size UwacSize;
 typedef struct uwac_display UwacDisplay;
 typedef struct uwac_output UwacOutput;
@@ -61,6 +62,13 @@ enum
 	UWAC_MOD_SHIFT_MASK = 0x01,
 	UWAC_MOD_ALT_MASK = 0x02,
 	UWAC_MOD_CONTROL_MASK = 0x04,
+};
+
+/** @brief a position */
+struct uwac_position
+{
+	int x;
+	int y;
 };
 
 /** @brief a rectangle size measure */
@@ -381,7 +389,7 @@ extern "C"
 	 * @param display the display to query
 	 * @return the number of outputs
 	 */
-	UWAC_API uint32_t UwacDisplayGetNbOutputs(UwacDisplay* display);
+	UWAC_API uint32_t UwacDisplayGetNbOutputs(const UwacDisplay* display);
 
 	/**
 	 *	retrieve a particular UwacOutput object
@@ -391,7 +399,7 @@ extern "C"
 	 * @return the given UwacOutput, NULL if something failed (so you should query
 	 *UwacDisplayGetLastError() to have the reason)
 	 */
-	UWAC_API UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index);
+	UWAC_API const UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index);
 
 	/**
 	 * retrieve the resolution of a given UwacOutput
@@ -400,7 +408,16 @@ extern "C"
 	 * @param resolution a pointer on the
 	 * @return UWAC_SUCCESS on success
 	 */
-	UWAC_API UwacReturnCode UwacOutputGetResolution(UwacOutput* output, UwacSize* resolution);
+	UWAC_API UwacReturnCode UwacOutputGetResolution(const UwacOutput* output, UwacSize* resolution);
+
+	/**
+	 * retrieve the position of a given UwacOutput
+	 *
+	 * @param output the UwacOutput
+	 * @param pos a pointer on the target position
+	 * @return UWAC_SUCCESS on success
+	 */
+	UWAC_API UwacReturnCode UwacOutputGetPosition(const UwacOutput* output, UwacPosition* pos);
 
 	/**
 	 *	creates a window using a SHM surface
