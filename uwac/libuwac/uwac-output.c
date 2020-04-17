@@ -35,8 +35,8 @@ static void output_handle_geometry(void* data, struct wl_output* wl_output, int 
 {
 	UwacOutput* output = data;
 
-	/*	output->allocation.x = x;
-	    output->allocation.y = y;*/
+	output->position.x = x;
+	output->position.y = y;
 	output->transform = transform;
 
 	if (output->make)

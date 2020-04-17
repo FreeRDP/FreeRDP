@@ -137,6 +137,7 @@ struct uwac_output
 	bool doneNeeded;
 	bool doneReceived;
 
+	UwacPosition position;
 	UwacSize resolution;
 	int transform;
 	int scale;

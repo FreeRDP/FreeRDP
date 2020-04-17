@@ -33,4 +33,6 @@ void wlf_disp_free(wlfDispContext* disp);
 BOOL wlf_disp_handle_configure(wlfDispContext* disp, int32_t width, int32_t height);
 void wlf_disp_resized(wlfDispContext* disp);
 
+int wlf_list_monitors(wlfContext* wlc);
+
 #endif /* FREERDP_CLIENT_WAYLAND_DISP_H */

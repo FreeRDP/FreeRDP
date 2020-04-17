@@ -170,7 +170,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
 	wlfContext* context;
-	UwacOutput* output;
+	const UwacOutput* output;
 	UwacSize resolution;
 
 	if (!instance)
@@ -602,18 +602,30 @@ int main(int argc, char* argv[])
 	int status;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 	rdpContext* context;
+	rdpSettings* settings;
+	wlfContext* wlc;
+
 	RdpClientEntry(&clientEntryPoints);
 	context = freerdp_client_context_new(&clientEntryPoints);
-
 	if (!context)
 		goto fail;
+	wlc = (wlfContext*)context;
+	settings = context->settings;
 
-	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
-	status =
-	    freerdp_client_settings_command_line_status_print(context->settings, status, argc, argv);
+	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
+	status = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
 
 	if (status)
-		return 0;
+	{
+		BOOL list = settings->ListMonitors;
+		if (list)
+			wlf_list_monitors(wlc);
+
+		freerdp_client_context_free(context);
+		if (list)
+			return 0;
+		return status;
+	}
 
 	if (freerdp_client_start(context) != 0)
 		goto fail;
