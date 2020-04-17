@@ -661,35 +661,46 @@ UwacReturnCode UwacDisplayQueryShmFormats(const UwacDisplay* display, enum wl_sh
 	return UWAC_SUCCESS;
 }
 
-uint32_t UwacDisplayGetNbOutputs(UwacDisplay* display)
+uint32_t UwacDisplayGetNbOutputs(const UwacDisplay* display)
 {
 	return wl_list_length(&display->outputs);
 }
 
-UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index)
+const UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index)
 {
-	struct wl_list* l;
 	int i;
+	UwacOutput* ret = NULL;
 
 	if (!display)
 		return NULL;
 
-	for (i = 0, l = &display->outputs; l && i < index; i++, l = l->next)
-		;
+	i = 0;
+	wl_list_for_each(ret, &display->outputs, link)
+	{
+		if (i == index)
+			break;
+		i++;
+	}
 
-	if (!l)
+	if (!ret)
 	{
 		display->last_error = UWAC_NOT_FOUND;
 		return NULL;
 	}
 
 	display->last_error = UWAC_SUCCESS;
-	return container_of(l, UwacOutput, link);
+	return ret;
 }
 
-UwacReturnCode UwacOutputGetResolution(UwacOutput* output, UwacSize* resolution)
+UwacReturnCode UwacOutputGetResolution(const UwacOutput* output, UwacSize* resolution)
 {
 	*resolution = output->resolution;
+	return UWAC_SUCCESS;
+}
+
+UwacReturnCode UwacOutputGetPosition(const UwacOutput* output, UwacPosition* pos)
+{
+	*pos = output->position;
 	return UWAC_SUCCESS;
 }
 
