@@ -347,75 +347,6 @@ static BOOL udevman_unregister_all_udevices(IUDEVMAN* idevman)
 	return TRUE;
 }
 
-static BOOL udevman_parse_device_addr(const char* str, size_t maxLen, UINT8* id1, UINT8* id2,
-                                      char sign)
-{
-	unsigned long rc;
-	char s1[8] = { 0 };
-	char* s2 = strchr(str, sign);
-	size_t len = strnlen(str, maxLen);
-	size_t cpLen;
-
-	if (!s2)
-		return FALSE;
-	s2++;
-
-	cpLen = len - (strnlen(s2, len) + 1);
-
-	if (cpLen >= sizeof(s1))
-		cpLen = sizeof(s1) - 1;
-
-	strncpy(s1, str, cpLen);
-	rc = strtoul(s1, NULL, 16);
-
-	if ((rc > UINT8_MAX) || (errno != 0))
-		return FALSE;
-
-	*id1 = (UINT8)rc;
-	rc = strtoul(s2, NULL, 16);
-
-	if ((rc > UINT8_MAX) || (errno != 0))
-		return FALSE;
-
-	*id2 = (UINT8)rc;
-	return TRUE;
-}
-
-static BOOL udevman_parse_device_pid_vid(const char* str, size_t maxLen, UINT16* id1, UINT16* id2,
-                                         char sign)
-{
-	unsigned long rc;
-	char s1[8] = { 0 };
-	char* s2 = strchr(str, sign);
-	size_t len = strnlen(str, maxLen);
-	size_t cpLen;
-
-	if (!s2)
-		return FALSE;
-
-	s2++; /* We need the PID, not ':' */
-	cpLen = len - (strnlen(s2, len) + 1);
-
-	if (cpLen >= sizeof(s1))
-		cpLen = sizeof(s1) - 1;
-
-	strncpy(s1, str, cpLen);
-	errno = 0;
-	rc = strtoul(s1, NULL, 16);
-
-	if ((rc > UINT16_MAX) || (errno != 0))
-		return FALSE;
-
-	*id1 = (UINT16)rc;
-	rc = strtoul(s2, NULL, 16);
-
-	if ((rc > UINT16_MAX) || (errno != 0))
-		return FALSE;
-
-	*id2 = (UINT16)rc;
-	return TRUE;
-}
-
 static int udevman_is_auto_add(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*)idevman;
@@ -667,56 +598,63 @@ static void udevman_load_interface(UDEVMAN* udevman)
 	udevman->iface.initialize = udevman_initialize;
 }
 
+static BOOL udevman_parse_device_id_addr(const char** str, UINT16* id1, UINT16* id2, UINT16 max,
+                                         char split_sign, char delimiter)
+{
+	const char* mid;
+	unsigned long rc;
+
+	rc = strtoul(*str, (char**)&mid, 16);
+	/* These casts are safe, because strtoul only uses it to return a pointer */
+
+	if ((mid == *str) || (*mid != split_sign) || (rc > max))
+		return FALSE;
+
+	*id1 = (UINT16)rc;
+	rc = strtoul(++mid, (char**)str, 16);
+
+	if ((*str == mid) || (rc > max))
+		return FALSE;
+
+	*id2 = (UINT16)rc;
+
+	if (**str == '\0')
+		return TRUE;
+	if (**str == delimiter)
+	{
+		(*str)++;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* devices)
 {
-	BOOL rc = FALSE;
-	char* token;
-	int success = 0;
-	char* tmp;
-	char hardware_id[16];
-	const char* default_devices = "id";
+	const char* pos = devices;
+	UINT16 id1, id2;
 
-	if (!devices)
-		tmp = _strdup(default_devices);
-	else
-		tmp = _strdup(devices);
-
-	/* register all usb devices */
-	token = strtok(tmp, "#");
-
-	while (token)
+	while (*pos != '\0')
 	{
-		strcpy(hardware_id, token);
-		token = strtok(NULL, "#");
-
 		if (udevman->flags & UDEVMAN_FLAG_ADD_BY_VID_PID)
 		{
-			UINT16 idVendor, idProduct;
+			if (!udevman_parse_device_id_addr(&pos, &id1, &id2, UINT16_MAX, ':', '#'))
+				return FALSE;
 
-			if (!udevman_parse_device_pid_vid(hardware_id, sizeof(hardware_id), &idVendor,
-			                                  &idProduct, ':'))
-				goto fail;
-
-			success = add_device(&udevman->iface, DEVICE_ADD_FLAG_VENDOR | DEVICE_ADD_FLAG_PRODUCT,
-			                     0, 0, idVendor, idProduct);
+			add_device(&udevman->iface, DEVICE_ADD_FLAG_VENDOR | DEVICE_ADD_FLAG_PRODUCT, 0, 0, id1,
+			           id2);
 		}
 		else if (udevman->flags & UDEVMAN_FLAG_ADD_BY_ADDR)
 		{
-			UINT8 bus_number, dev_number;
+			if (!udevman_parse_device_id_addr(&pos, &id1, &id2, UINT8_MAX, ':', '#'))
+				return FALSE;
 
-			if (!udevman_parse_device_addr(hardware_id, sizeof(hardware_id), &bus_number,
-			                               &dev_number, ':'))
-				goto fail;
-
-			success = add_device(&udevman->iface, DEVICE_ADD_FLAG_BUS | DEVICE_ADD_FLAG_DEV,
-			                     bus_number, dev_number, 0, 0);
+			add_device(&udevman->iface, DEVICE_ADD_FLAG_BUS | DEVICE_ADD_FLAG_DEV, (UINT8)id1,
+			           (UINT8)id2, 0, 0);
 		}
 	}
 
-	rc = TRUE;
-fail:
-	free(tmp);
-	return rc;
+	return TRUE;
 }
 
 static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
