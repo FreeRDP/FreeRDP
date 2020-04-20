@@ -402,7 +402,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 	WCHAR* wszFormatName;
 	wStream sub1, sub2;
 	CLIPRDR_FORMAT* formats = NULL;
-	UINT error = CHANNEL_RC_OK;
+	UINT error = ERROR_INTERNAL_ERROR;
 
 	asciiNames = (formatList->msgFlags & CB_ASCII_NAMES) ? TRUE : FALSE;
 
@@ -551,7 +551,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 		}
 	}
 
-	return error;
+	return CHANNEL_RC_OK;
 
 error_out:
 	cliprdr_free_format_list(formatList);
