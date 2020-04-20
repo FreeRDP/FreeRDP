@@ -712,7 +712,10 @@ static void smartcard_trace_read_cache_return(SMARTCARD_DEVICE* smartcard,
 
 	if (ret->ReturnCode == SCARD_S_SUCCESS)
 	{
+		char buffer[1024];
 		WLog_LVL(TAG, g_LogLevel, " cbDataLen=%" PRId32, ret->cbDataLen);
+		WLog_LVL(TAG, g_LogLevel, "  cbData: %s",
+		         smartcard_array_dump(ret->pbData, ret->cbDataLen, buffer, sizeof(buffer)));
 	}
 	WLog_LVL(TAG, g_LogLevel, "}");
 }
