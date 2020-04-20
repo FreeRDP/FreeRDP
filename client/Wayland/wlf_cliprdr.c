@@ -174,6 +174,7 @@ static UINT wlf_cliprdr_send_client_format_list(wfClipboard* clipboard)
 	formatList.msgFlags = CB_RESPONSE_OK;
 	formatList.numFormats = (UINT32)clipboard->numClientFormats;
 	formatList.formats = clipboard->clientFormats;
+	formatList.msgType = CB_FORMAT_LIST;
 	return clipboard->context->ClientFormatList(clipboard->context, &formatList);
 }
 

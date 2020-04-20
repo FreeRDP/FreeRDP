@@ -294,7 +294,7 @@ static UINT pf_cliprdr_ServerFormatList(CliprdrClientContext* context,
 
 	if (pdata->config->TextOnly)
 	{
-		CLIPRDR_FORMAT_LIST list;
+		CLIPRDR_FORMAT_LIST list = { 0 };
 		pf_cliprdr_create_text_only_format_list(&list);
 		return server->ServerFormatList(server, &list);
 	}
