@@ -601,26 +601,28 @@ static void udevman_load_interface(UDEVMAN* udevman)
 static BOOL udevman_parse_device_id_addr(const char** str, UINT16* id1, UINT16* id2, UINT16 max,
                                          char split_sign, char delimiter)
 {
-	const char* mid;
+	char* mid;
+	char* end;
 	unsigned long rc;
 
-	rc = strtoul(*str, (char**)&mid, 16);
+	rc = strtoul(*str, &mid, 16);
 	/* These casts are safe, because strtoul only uses it to return a pointer */
 
 	if ((mid == *str) || (*mid != split_sign) || (rc > max))
 		return FALSE;
 
 	*id1 = (UINT16)rc;
-	rc = strtoul(++mid, (char**)str, 16);
+	rc = strtoul(++mid, &end, 16);
 
-	if ((*str == mid) || (rc > max))
+	if ((end == mid) || (rc > max))
 		return FALSE;
 
 	*id2 = (UINT16)rc;
 
-	if (**str == '\0')
+	*str += end - *str;
+	if (*end == '\0')
 		return TRUE;
-	if (**str == delimiter)
+	if (*end == delimiter)
 	{
 		(*str)++;
 		return TRUE;
