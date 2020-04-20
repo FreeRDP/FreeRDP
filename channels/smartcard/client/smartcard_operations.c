@@ -959,7 +959,7 @@ static LONG smartcard_ReadCacheA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 	if (!call->Common.fPbDataIsNULL)
 	{
 		ret.cbDataLen = call->Common.cbDataLen;
-		if (autoalloc)
+		if (!autoalloc)
 		{
 			ret.pbData = malloc(ret.cbDataLen);
 			if (!ret.pbData)
@@ -975,7 +975,11 @@ static LONG smartcard_ReadCacheA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 		ret.ReturnCode = SCardReadCacheA(operation->hContext, call->Common.CardIdentifier,
 		                                 call->Common.FreshnessCounter, call->szLookupName,
 		                                 ret.pbData, &ret.cbDataLen);
-	log_status_error(TAG, "SCardReadCacheA", ret.ReturnCode);
+	if ((ret.ReturnCode != SCARD_W_CACHE_ITEM_NOT_FOUND) &&
+	    (ret.ReturnCode != SCARD_W_CACHE_ITEM_STALE))
+	{
+		log_status_error(TAG, "SCardReadCacheA", ret.ReturnCode);
+	}
 	free(call->szLookupName);
 	free(call->Common.CardIdentifier);
 
@@ -1000,7 +1004,7 @@ static LONG smartcard_ReadCacheW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 	if (!call->Common.fPbDataIsNULL)
 	{
 		ret.cbDataLen = call->Common.cbDataLen;
-		if (autoalloc)
+		if (!autoalloc)
 		{
 			ret.pbData = malloc(ret.cbDataLen);
 			if (!ret.pbData)
@@ -1016,7 +1020,11 @@ static LONG smartcard_ReadCacheW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 		ret.ReturnCode = SCardReadCacheW(operation->hContext, call->Common.CardIdentifier,
 		                                 call->Common.FreshnessCounter, call->szLookupName,
 		                                 ret.pbData, &ret.cbDataLen);
-	log_status_error(TAG, "SCardReadCacheW", ret.ReturnCode);
+	if ((ret.ReturnCode != SCARD_W_CACHE_ITEM_NOT_FOUND) &&
+	    (ret.ReturnCode != SCARD_W_CACHE_ITEM_STALE))
+	{
+		log_status_error(TAG, "SCardReadCacheA", ret.ReturnCode);
+	}
 	free(call->szLookupName);
 	free(call->Common.CardIdentifier);
 
@@ -2685,7 +2693,8 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 	}
 
 	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT) &&
-	    (result != SCARD_E_NO_READERS_AVAILABLE) && (result != SCARD_E_NO_SERVICE))
+	    (result != SCARD_E_NO_READERS_AVAILABLE) && (result != SCARD_E_NO_SERVICE) &&
+	    (result != SCARD_W_CACHE_ITEM_NOT_FOUND) && (result != SCARD_W_CACHE_ITEM_STALE))
 	{
 		WLog_WARN(TAG, "IRP failure: %s (0x%08" PRIX32 "), status: %s (0x%08" PRIX32 ")",
 		          smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
