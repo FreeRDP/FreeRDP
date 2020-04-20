@@ -187,6 +187,7 @@ typedef struct _PCSC_SCARDHANDLE PCSC_SCARDHANDLE;
 typedef struct
 {
 	DWORD len;
+	DWORD freshness;
 	BYTE* data;
 } PCSC_CACHE_ITEM;
 
@@ -396,6 +397,9 @@ static PCSC_SCARDCONTEXT* PCSC_EstablishCardContext(SCARDCONTEXT hContext)
 	if (!pContext->cache)
 		goto errors;
 
+	pContext->cache->hash = HashTable_StringHash;
+	pContext->cache->keyCompare = HashTable_StringCompare;
+	pContext->cache->keyClone = HashTable_StringClone;
 	pContext->cache->keyFree = free;
 	pContext->cache->valueFree = pcsc_cache_item_free;
 	if (!g_CardContexts)
@@ -2660,14 +2664,19 @@ static LONG WINAPI PCSC_SCardReadCacheA(SCARDCONTEXT hContext, UUID* CardIdentif
 	PCSC_CACHE_ITEM* data;
 	PCSC_SCARDCONTEXT* ctx = PCSC_GetCardContextData(hContext);
 	char* id = card_id_and_name_a(CardIdentifier, LookupName);
-	WINPR_UNUSED(FreshnessCounter);
 
 	data = HashTable_GetItemValue(ctx->cache, id);
 	free(id);
 	if (!data)
 	{
 		*DataLen = 0;
-		return SCARD_S_SUCCESS;
+		return SCARD_W_CACHE_ITEM_NOT_FOUND;
+	}
+
+	if (FreshnessCounter != data->freshness)
+	{
+		*DataLen = 0;
+		return SCARD_W_CACHE_ITEM_STALE;
 	}
 
 	if (*DataLen == SCARD_AUTOALLOCATE)
@@ -2705,7 +2714,6 @@ static LONG WINAPI PCSC_SCardReadCacheW(SCARDCONTEXT hContext, UUID* CardIdentif
 	PCSC_CACHE_ITEM* data;
 	PCSC_SCARDCONTEXT* ctx = PCSC_GetCardContextData(hContext);
 	char* id = card_id_and_name_w(CardIdentifier, LookupName);
-	WINPR_UNUSED(FreshnessCounter);
 
 	data = HashTable_GetItemValue(ctx->cache, id);
 	free(id);
@@ -2713,7 +2721,13 @@ static LONG WINAPI PCSC_SCardReadCacheW(SCARDCONTEXT hContext, UUID* CardIdentif
 	if (!data)
 	{
 		*DataLen = 0;
-		return SCARD_S_SUCCESS;
+		return SCARD_W_CACHE_ITEM_NOT_FOUND;
+	}
+
+	if (FreshnessCounter != data->freshness)
+	{
+		*DataLen = 0;
+		return SCARD_W_CACHE_ITEM_STALE;
 	}
 
 	if (*DataLen == SCARD_AUTOALLOCATE)
@@ -2752,8 +2766,6 @@ static LONG WINAPI PCSC_SCardWriteCacheA(SCARDCONTEXT hContext, UUID* CardIdenti
 	PCSC_SCARDCONTEXT* ctx = PCSC_GetCardContextData(hContext);
 	char* id = card_id_and_name_a(CardIdentifier, LookupName);
 
-	WINPR_UNUSED(FreshnessCounter);
-
 	if (!id)
 		return SCARD_E_NO_MEMORY;
 
@@ -2771,6 +2783,7 @@ static LONG WINAPI PCSC_SCardWriteCacheA(SCARDCONTEXT hContext, UUID* CardIdenti
 		return SCARD_E_NO_MEMORY;
 	}
 	data->len = DataLen;
+	data->freshness = FreshnessCounter;
 	memcpy(data->data, Data, data->len);
 
 	HashTable_Remove(ctx->cache, id);
@@ -2787,8 +2800,6 @@ static LONG WINAPI PCSC_SCardWriteCacheW(SCARDCONTEXT hContext, UUID* CardIdenti
 	PCSC_SCARDCONTEXT* ctx = PCSC_GetCardContextData(hContext);
 	char* id = card_id_and_name_w(CardIdentifier, LookupName);
 
-	WINPR_UNUSED(FreshnessCounter);
-
 	if (!id)
 		return SCARD_E_NO_MEMORY;
 
@@ -2806,6 +2817,7 @@ static LONG WINAPI PCSC_SCardWriteCacheW(SCARDCONTEXT hContext, UUID* CardIdenti
 		return SCARD_E_NO_MEMORY;
 	}
 	data->len = DataLen;
+	data->freshness = FreshnessCounter;
 	memcpy(data->data, Data, data->len);
 
 	HashTable_Remove(ctx->cache, id);
