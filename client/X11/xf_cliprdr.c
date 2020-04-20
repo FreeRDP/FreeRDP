@@ -533,6 +533,7 @@ static void xf_cliprdr_get_requested_targets(xfClipboard* clipboard)
 	formatList.msgFlags = CB_RESPONSE_OK;
 	formatList.numFormats = numFormats;
 	formatList.formats = formats;
+	formatList.msgType = CB_FORMAT_LIST;
 	clipboard->context->ClientFormatList(clipboard->context, &formatList);
 	xf_cliprdr_free_formats(formats, numFormats);
 }
@@ -1100,6 +1101,7 @@ static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
 	formatList.msgFlags = CB_RESPONSE_OK;
 	formatList.numFormats = numFormats;
 	formatList.formats = formats;
+	formatList.msgType = CB_FORMAT_LIST;
 	ret = clipboard->context->ClientFormatList(clipboard->context, &formatList);
 	free(formats);
 

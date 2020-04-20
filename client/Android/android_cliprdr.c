@@ -81,6 +81,7 @@ UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr)
 	formatList.msgFlags = CB_RESPONSE_OK;
 	formatList.numFormats = numFormats;
 	formatList.formats = formats;
+	formatList.msgType = CB_FORMAT_LIST;
 
 	if (!afc->cliprdr->ClientFormatList)
 		goto fail;
