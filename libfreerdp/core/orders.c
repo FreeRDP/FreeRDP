@@ -2495,23 +2495,21 @@ BOOL update_write_cache_glyph_v2_order(wStream* s, const CACHE_GLYPH_V2_ORDER* c
 
 	return TRUE;
 }
-static BOOL update_decompress_brush(wStream* s, BYTE* output, BYTE bpp)
+static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BYTE bpp)
 {
-	UINT32 index;
 	UINT32 x, y, k;
 	BYTE byte = 0;
-	BYTE* palette;
-	UINT32 bytesPerPixel;
-	palette = Stream_Pointer(s) + 16;
-	bytesPerPixel = ((bpp + 1) / 8);
+	const BYTE* palette = Stream_Pointer(s) + 16;
+	const UINT32 bytesPerPixel = ((bpp + 1) / 8);
 
-	if (Stream_GetRemainingLength(s) < 16 + 7 * bytesPerPixel) // 64 / 4
+	if (!Stream_SafeSeek(s, 16ULL + 7ULL * bytesPerPixel)) // 64 / 4
 		return FALSE;
 
 	for (y = 7; y >= 0; y--)
 	{
 		for (x = 0; x < 8; x++)
 		{
+			UINT32 index;
 			if ((x % 4) == 0)
 				Stream_Read_UINT8(s, byte);
 
@@ -2519,13 +2517,14 @@ static BOOL update_decompress_brush(wStream* s, BYTE* output, BYTE bpp)
 
 			for (k = 0; k < bytesPerPixel; k++)
 			{
-				output[((y * 8 + x) * bytesPerPixel) + k] = palette[(index * bytesPerPixel) + k];
+				const size_t dstIndex = ((y * 8 + x) * bytesPerPixel) + k;
+				const size_t srcIndex = (index * bytesPerPixel) + k;
+				if (dstIndex >= outSize)
+					return FALSE;
+				output[dstIndex] = palette[srcIndex];
 			}
 		}
 	}
-
-	/* Skip the palette */
-	Stream_Seek(s, 7 * bytesPerPixel);
 
 	return TRUE;
 }
@@ -2590,7 +2589,8 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 			if (compressed != FALSE)
 			{
 				/* compressed brush */
-				if (!update_decompress_brush(s, cache_brush->data, cache_brush->bpp))
+				if (!update_decompress_brush(s, cache_brush->data, sizeof(cache_brush->data),
+				                             cache_brush->bpp))
 					goto fail;
 			}
 			else
