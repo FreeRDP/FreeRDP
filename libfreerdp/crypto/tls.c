@@ -1492,6 +1492,22 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 			fingerprint = crypto_cert_fingerprint(cert->px509);
 			/* search for matching entry in known_hosts file */
 			match = certificate_data_match(tls->certificate_store, certificate_data);
+			{
+				int match_old = -1;
+				char* sha1 = crypto_cert_fingerprint_by_hash(cert->px509, "sha1");
+				rdpCertificateData* certificate_data_sha1 =
+				    certificate_data_new(hostname, port, subject, issuer, sha1);
+
+				if (sha1 && certificate_data_sha1)
+					match_old =
+					    certificate_data_match(tls->certificate_store, certificate_data_sha1);
+
+				if (match_old == 0)
+					flags |= VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1;
+
+				certificate_data_free(certificate_data_sha1);
+				free(sha1);
+			}
 
 			if (match == 1)
 			{
