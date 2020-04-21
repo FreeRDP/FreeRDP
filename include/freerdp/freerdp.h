@@ -67,6 +67,7 @@ extern "C"
 #define VERIFY_CERT_FLAG_GATEWAY 0x20
 #define VERIFY_CERT_FLAG_CHANGED 0x40
 #define VERIFY_CERT_FLAG_MISMATCH 0x80
+#define VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1 0x100
 
 	typedef BOOL (*pContextNew)(freerdp* instance, rdpContext* context);
 	typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
