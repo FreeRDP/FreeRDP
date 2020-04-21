@@ -549,6 +549,9 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 	if (Stream_GetRemainingLength(s) < size)
 		return ERROR_BAD_LENGTH;
 
+	if (rdpsnd->wCurrentFormatNo >= rdpsnd->NumberOfClientFormats)
+		return ERROR_INTERNAL_ERROR;
+
 	data = Stream_Pointer(s);
 	format = &rdpsnd->ClientFormats[rdpsnd->wCurrentFormatNo];
 	WLog_Print(rdpsnd->log, WLOG_DEBUG,
@@ -624,8 +627,10 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 	Stream_Read_UINT8(s, rdpsnd->cBlockNo);
 	Stream_Seek(s, 3); /* bPad */
 	Stream_Read_UINT32(s, dwAudioTimeStamp);
-	rdpsnd->waveDataSize = BodySize - 12;
+	if (wFormatNo >= rdpsnd->NumberOfClientFormats)
+		return ERROR_INVALID_DATA;
 	format = &rdpsnd->ClientFormats[wFormatNo];
+	rdpsnd->waveDataSize = BodySize - 12;
 	rdpsnd->wArrivalTime = GetTickCount64();
 	WLog_Print(rdpsnd->log, WLOG_DEBUG,
 	           "%s Wave2PDU: cBlockNo: %" PRIu8 " wFormatNo: %" PRIu16 ", align=%hu",
