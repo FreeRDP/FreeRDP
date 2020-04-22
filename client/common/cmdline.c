@@ -3265,8 +3265,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	if (settings->RemoteFxCodec || settings->NSCodec || settings->SupportGraphicsPipeline)
 	{
 		settings->FastPathOutput = TRUE;
-		settings->LargePointerFlag =
-		    0x0002; /* (LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384); */
 		settings->FrameMarkerCommandEnabled = TRUE;
 		settings->ColorDepth = 32;
 	}
