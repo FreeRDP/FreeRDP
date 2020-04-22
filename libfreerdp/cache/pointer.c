@@ -96,6 +96,38 @@ static BOOL update_pointer_system(rdpContext* context, const POINTER_SYSTEM_UPDA
 	return TRUE;
 }
 
+static BOOL upate_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskData,
+                                      size_t lengthAndMask, const BYTE* xorMaskData,
+                                      size_t lengthXorMask)
+{
+	pointer->lengthAndMask = 0;
+	pointer->lengthXorMask = 0;
+
+	if (lengthAndMask && andMaskData)
+	{
+		pointer->lengthAndMask = lengthAndMask;
+		pointer->andMaskData = (BYTE*)malloc(lengthAndMask);
+
+		if (!pointer->andMaskData)
+			return FALSE;
+
+		CopyMemory(pointer->andMaskData, andMaskData, lengthAndMask);
+	}
+
+	if (lengthXorMask && xorMaskData)
+	{
+		pointer->lengthXorMask = lengthXorMask;
+		pointer->xorMaskData = (BYTE*)malloc(lengthXorMask);
+
+		if (!pointer->xorMaskData)
+			return FALSE;
+
+		CopyMemory(pointer->xorMaskData, xorMaskData, lengthXorMask);
+	}
+
+	return TRUE;
+}
+
 static BOOL update_pointer_color(rdpContext* context, const POINTER_COLOR_UPDATE* pointer_color)
 {
 	rdpPointer* pointer;
@@ -109,28 +141,11 @@ static BOOL update_pointer_color(rdpContext* context, const POINTER_COLOR_UPDATE
 		pointer->yPos = pointer_color->yPos;
 		pointer->width = pointer_color->width;
 		pointer->height = pointer_color->height;
-		pointer->lengthAndMask = pointer_color->lengthAndMask;
-		pointer->lengthXorMask = pointer_color->lengthXorMask;
 
-		if (pointer->lengthAndMask && pointer_color->andMaskData)
-		{
-			pointer->andMaskData = (BYTE*)malloc(pointer->lengthAndMask);
-
-			if (!pointer->andMaskData)
-				goto out_fail;
-
-			CopyMemory(pointer->andMaskData, pointer_color->andMaskData, pointer->lengthAndMask);
-		}
-
-		if (pointer->lengthXorMask && pointer_color->xorMaskData)
-		{
-			pointer->xorMaskData = (BYTE*)malloc(pointer->lengthXorMask);
-
-			if (!pointer->xorMaskData)
-				goto out_fail;
-
-			CopyMemory(pointer->xorMaskData, pointer_color->xorMaskData, pointer->lengthXorMask);
-		}
+		if (!upate_pointer_copy_andxor(pointer, pointer_color->andMaskData,
+		                               pointer_color->lengthAndMask, pointer_color->xorMaskData,
+		                               pointer_color->lengthXorMask))
+			goto out_fail;
 
 		if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
 			goto out_fail;
@@ -149,9 +164,8 @@ out_fail:
 
 static BOOL update_pointer_large(rdpContext* context, const POINTER_LARGE_UPDATE* pointer_large)
 {
-	rdpPointer* pointer;
+	rdpPointer* pointer = Pointer_Alloc(context);
 	rdpCache* cache = context->cache;
-	pointer = Pointer_Alloc(context);
 
 	if (pointer != NULL)
 	{
@@ -160,28 +174,11 @@ static BOOL update_pointer_large(rdpContext* context, const POINTER_LARGE_UPDATE
 		pointer->yPos = pointer_large->hotSpotY;
 		pointer->width = pointer_large->width;
 		pointer->height = pointer_large->height;
-		pointer->lengthAndMask = pointer_large->lengthAndMask;
-		pointer->lengthXorMask = pointer_large->lengthXorMask;
 
-		if (pointer->lengthAndMask && pointer_large->andMaskData)
-		{
-			pointer->andMaskData = (BYTE*)malloc(pointer->lengthAndMask);
-
-			if (!pointer->andMaskData)
-				goto out_fail;
-
-			CopyMemory(pointer->andMaskData, pointer_large->andMaskData, pointer->lengthAndMask);
-		}
-
-		if (pointer->lengthXorMask && pointer_large->xorMaskData)
-		{
-			pointer->xorMaskData = (BYTE*)malloc(pointer->lengthXorMask);
-
-			if (!pointer->xorMaskData)
-				goto out_fail;
-
-			CopyMemory(pointer->xorMaskData, pointer_large->xorMaskData, pointer->lengthXorMask);
-		}
+		if (!upate_pointer_copy_andxor(pointer, pointer_large->andMaskData,
+		                               pointer_large->lengthAndMask, pointer_large->xorMaskData,
+		                               pointer_large->lengthXorMask))
+			goto out_fail;
 
 		if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
 			goto out_fail;
@@ -217,30 +214,10 @@ static BOOL update_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* po
 	pointer->yPos = pointer_new->colorPtrAttr.yPos;
 	pointer->width = pointer_new->colorPtrAttr.width;
 	pointer->height = pointer_new->colorPtrAttr.height;
-	pointer->lengthAndMask = pointer_new->colorPtrAttr.lengthAndMask;
-	pointer->lengthXorMask = pointer_new->colorPtrAttr.lengthXorMask;
-
-	if (pointer->lengthAndMask)
-	{
-		pointer->andMaskData = (BYTE*)malloc(pointer->lengthAndMask);
-
-		if (!pointer->andMaskData)
-			goto out_fail;
-
-		CopyMemory(pointer->andMaskData, pointer_new->colorPtrAttr.andMaskData,
-		           pointer->lengthAndMask);
-	}
-
-	if (pointer->lengthXorMask)
-	{
-		pointer->xorMaskData = (BYTE*)malloc(pointer->lengthXorMask);
-
-		if (!pointer->xorMaskData)
-			goto out_fail;
-
-		CopyMemory(pointer->xorMaskData, pointer_new->colorPtrAttr.xorMaskData,
-		           pointer->lengthXorMask);
-	}
+	if (!upate_pointer_copy_andxor(
+	        pointer, pointer_new->colorPtrAttr.andMaskData, pointer_new->colorPtrAttr.lengthAndMask,
+	        pointer_new->colorPtrAttr.xorMaskData, pointer_new->colorPtrAttr.lengthXorMask))
+		goto out_fail;
 
 	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
 		goto out_fail;
