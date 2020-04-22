@@ -225,6 +225,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "ipc-socket")
 		{
+			/* /bind-address is incompatible */
+			if (server->ipcSocket)
+				return -1;
+
 			server->ipcSocket = _strdup(arg->Value);
 
 			if (!server->ipcSocket)
@@ -234,6 +238,9 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			int rc;
 			size_t len = strlen(arg->Value) + sizeof(bind_address);
+			/* /ipc-socket is incompatible */
+			if (server->ipcSocket)
+				return -1;
 			server->ipcSocket = calloc(len, sizeof(CHAR));
 
 			if (!server->ipcSocket)
