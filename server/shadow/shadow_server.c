@@ -45,12 +45,15 @@
 
 #define TAG SERVER_TAG("shadow")
 
+static const char bind_address[] = "bind-address,";
+
 static const COMMAND_LINE_ARGUMENT_A shadow_args[] = {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL,
 	  "Server IPC socket" },
 	{ "bind-address", COMMAND_LINE_VALUE_REQUIRED, "<bind-address>", NULL, NULL, -1, NULL,
-	  "Address to bind to" },
+	  "An address to bind to. Use '[<ipv6>]' for IPv6 addresses, e.g. '[::]' for "
+	  "localhost" },
 	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL,
 	  "Select or list monitors" },
 	{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL,
@@ -229,9 +232,15 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "bind-address")
 		{
-			server->bindAddress = _strdup(arg->Value);
+			int rc;
+			size_t len = strlen(arg->Value) + sizeof(bind_address);
+			server->ipcSocket = calloc(len, sizeof(CHAR));
 
-			if (!server->bindAddress)
+			if (!server->ipcSocket)
+				return -1;
+
+			rc = _snprintf(server->ipcSocket, len, "%s%s", bind_address, arg->Value);
+			if ((rc < 0) || ((size_t)rc != len - 1))
 				return -1;
 		}
 		CommandLineSwitchCase(arg, "may-view")
@@ -491,6 +500,7 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 
 int shadow_server_start(rdpShadowServer* server)
 {
+	BOOL ipc;
 	BOOL status;
 	WSADATA wsaData;
 
@@ -519,11 +529,33 @@ int shadow_server_start(rdpShadowServer* server)
 		return -1;
 	}
 
-	// Bind to TCP port if nothing is specified, otherwise bind to everything specified
-	if (!server->ipcSocket || server->bindAddress)
+	/* Bind to TCP port if nothing is specified, otherwise bind to everything specified */
+	ipc = server->ipcSocket && (strncmp(bind_address, server->ipcSocket,
+	                                    strnlen(bind_address, sizeof(bind_address))) != 0);
+	if (!ipc)
 	{
-		status =
-		    server->listener->Open(server->listener, server->bindAddress, (UINT16)server->port);
+		char* address =
+		    (server->ipcSocket)
+		        ? _strdup(server->ipcSocket + strnlen(bind_address, sizeof(bind_address)))
+		        : NULL;
+		char* modaddr = address;
+
+		if (modaddr)
+		{
+			if (modaddr[0] == '[')
+			{
+				char* end = strchr(address, ']');
+				if (!end)
+				{
+					WLog_ERR(TAG, "Could not parse bind-address %s", address);
+					return -1;
+				}
+				*end = '\0';
+				modaddr++;
+			}
+		}
+		status = server->listener->Open(server->listener, modaddr, (UINT16)server->port);
+		free(address);
 		if (!status)
 		{
 			WLog_ERR(
@@ -532,7 +564,7 @@ int shadow_server_start(rdpShadowServer* server)
 			return -1;
 		}
 	}
-	if (server->ipcSocket)
+	else
 	{
 		status = server->listener->OpenLocal(server->listener, server->ipcSocket);
 		if (!status)
@@ -820,7 +852,6 @@ rdpShadowServer* shadow_server_new(void)
 		return NULL;
 
 	server->port = 3389;
-	server->bindAddress = NULL;
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
 	server->rfxMode = RLGR3;
@@ -840,8 +871,6 @@ void shadow_server_free(rdpShadowServer* server)
 
 	free(server->ipcSocket);
 	server->ipcSocket = NULL;
-	free(server->bindAddress);
-	server->bindAddress = NULL;
 	freerdp_settings_free(server->settings);
 	server->settings = NULL;
 	free(server);
