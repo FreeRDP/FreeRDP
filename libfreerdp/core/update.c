@@ -506,7 +506,7 @@ static BOOL _update_read_pointer_large(wStream* s, POINTER_LARGE_UPDATE* pointer
 	if (!pointer)
 		goto fail;
 
-	if (Stream_GetRemainingLength(s) < 14)
+	if (Stream_GetRemainingLength(s) < 20)
 		goto fail;
 
 	Stream_Read_UINT16(s, pointer->xorBpp);
@@ -520,8 +520,8 @@ static BOOL _update_read_pointer_large(wStream* s, POINTER_LARGE_UPDATE* pointer
 	if ((pointer->width > 384) || (pointer->height > 384))
 		goto fail;
 
-	Stream_Read_UINT16(s, pointer->lengthAndMask); /* lengthAndMask (2 bytes) */
-	Stream_Read_UINT16(s, pointer->lengthXorMask); /* lengthXorMask (2 bytes) */
+	Stream_Read_UINT32(s, pointer->lengthAndMask); /* lengthAndMask (4 bytes) */
+	Stream_Read_UINT32(s, pointer->lengthXorMask); /* lengthXorMask (4 bytes) */
 
 	if (pointer->hotSpotX >= pointer->width)
 		pointer->hotSpotX = 0;
