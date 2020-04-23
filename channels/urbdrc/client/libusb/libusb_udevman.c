@@ -75,7 +75,8 @@ struct _UDEVMAN
 	IUDEVICE* head; /* head device in linked list */
 	IUDEVICE* tail; /* tail device in linked list */
 
-	LPSTR cmdline_devices;
+	LPSTR devices_vid_pid;
+	LPSTR devices_addr;
 	VID_PID_PAIR hotplug_vid_pids[MAX_HOTPLUG_VID_PIDS];
 	size_t num_hotplug_vid_pids;
 	UINT16 flags;
@@ -560,18 +561,22 @@ static int hotplug_callback(struct libusb_context* ctx, struct libusb_device* de
 		case LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED:
 			for (size_t i = 0; i < udevman->num_hotplug_vid_pids; i++)
 			{
-				if (udevman->hotplug_vid_pids[i].vid == desc.idVendor && udevman->hotplug_vid_pids[i].pid == desc.idProduct)
+				if (udevman->hotplug_vid_pids[i].vid == desc.idVendor &&
+				    udevman->hotplug_vid_pids[i].pid == desc.idProduct)
 				{
-					add_device(&udevman->iface, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor, desc.idProduct);
+					add_device(&udevman->iface, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor,
+					           desc.idProduct);
 					return 0;
 				}
 			}
 			if (udevman->iface.isAutoAdd(&udevman->iface) && !device_is_filtered(dev, &desc, event))
-				add_device(&udevman->iface, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor, desc.idProduct);
+				add_device(&udevman->iface, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor,
+				           desc.idProduct);
 			break;
 
 		case LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT:
-			del_device(&udevman->iface, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor, desc.idProduct);
+			del_device(&udevman->iface, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor,
+			           desc.idProduct);
 			break;
 
 		default:
@@ -626,18 +631,24 @@ static BOOL udevman_parse_device_id_addr(const char** str, UINT16* id1, UINT16* 
 	return FALSE;
 }
 
-static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* devices)
+static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* devices, BOOL add_by_addr)
 {
 	const char* pos = devices;
 	UINT16 id1, id2;
 
 	while (*pos != '\0')
 	{
-		if (udevman->flags & UDEVMAN_FLAG_ADD_BY_VID_PID)
-		{
-			if (!udevman_parse_device_id_addr(&pos, &id1, &id2, UINT16_MAX, ':', '#'))
-				return FALSE;
+		if (!udevman_parse_device_id_addr(&pos, &id1, &id2, (add_by_addr) ? UINT8_MAX : UINT16_MAX,
+		                                  ':', '#'))
+			return FALSE;
 
+		if (add_by_addr)
+		{
+			add_device(&udevman->iface, DEVICE_ADD_FLAG_BUS | DEVICE_ADD_FLAG_DEV, (UINT8)id1,
+			           (UINT8)id2, 0, 0);
+		}
+		else
+		{
 			add_device(&udevman->iface, DEVICE_ADD_FLAG_VENDOR | DEVICE_ADD_FLAG_PRODUCT, 0, 0, id1,
 			           id2);
 
@@ -648,16 +659,9 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 			}
 			else
 			{
-				WLog_WARN(TAG, "Maximum hotplug device ids reached. Hotplug may not work for all given devices.");
+				WLog_WARN(TAG, "Maximum hotplug device ids reached. Hotplug may not work for all "
+				               "devices specified.");
 			}
-		}
-		else if (udevman->flags & UDEVMAN_FLAG_ADD_BY_ADDR)
-		{
-			if (!udevman_parse_device_id_addr(&pos, &id1, &id2, UINT8_MAX, ':', '#'))
-				return FALSE;
-
-			add_device(&udevman->iface, DEVICE_ADD_FLAG_BUS | DEVICE_ADD_FLAG_DEV, (UINT8)id1,
-			           (UINT8)id2, 0, 0);
 		}
 	}
 
@@ -667,22 +671,22 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 {
 	int status;
-	DWORD flags;
-	const UINT16 mask = UDEVMAN_FLAG_ADD_BY_VID_PID | UDEVMAN_FLAG_ADD_BY_ADDR;
+	LPSTR devices = NULL;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	COMMAND_LINE_ARGUMENT_A urbdrc_udevman_args[] = {
 		{ "dbg", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "debug" },
 		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<devices>", NULL, NULL, -1, NULL, "device list" },
-		{ "id", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL,
+		{ "id", COMMAND_LINE_VALUE_OPTIONAL, "", NULL, BoolValueFalse, -1, NULL,
 		  "FLAG_ADD_BY_VID_PID" },
-		{ "addr", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "FLAG_ADD_BY_ADDR" },
+		{ "addr", COMMAND_LINE_VALUE_OPTIONAL, "", NULL, BoolValueFalse, -1, NULL,
+		  "FLAG_ADD_BY_ADDR" },
 		{ "auto", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "FLAG_ADD_BY_AUTO" },
 		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 	};
 
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
-	status = CommandLineParseArgumentsA(args->argc, args->argv, urbdrc_udevman_args, flags, udevman,
-	                                    NULL, NULL);
+	status = CommandLineParseArgumentsA(args->argc, args->argv, urbdrc_udevman_args,
+	                                    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON,
+	                                    udevman, NULL, NULL);
 
 	if (status != CHANNEL_RC_OK)
 		return status;
@@ -691,7 +695,7 @@ static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 
 	do
 	{
-		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 			continue;
 
 		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "dbg")
@@ -700,15 +704,21 @@ static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 		}
 		CommandLineSwitchCase(arg, "dev")
 		{
-			udevman->cmdline_devices = arg->Value;
+			devices = arg->Value;
 		}
 		CommandLineSwitchCase(arg, "id")
 		{
-			udevman->flags = UDEVMAN_FLAG_ADD_BY_VID_PID;
+			if (arg->Value)
+				udevman->devices_vid_pid = arg->Value;
+			else
+				udevman->flags = UDEVMAN_FLAG_ADD_BY_VID_PID;
 		}
 		CommandLineSwitchCase(arg, "addr")
 		{
-			udevman->flags = UDEVMAN_FLAG_ADD_BY_ADDR;
+			if (arg->Value)
+				udevman->devices_addr = arg->Value;
+			else
+				udevman->flags = UDEVMAN_FLAG_ADD_BY_ADDR;
 		}
 		CommandLineSwitchCase(arg, "auto")
 		{
@@ -720,25 +730,39 @@ static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
-	/* Can not add devices by address and VID/PID */
-	if ((udevman->flags & mask) == mask)
-		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+	if (devices)
+	{
+		if (udevman->flags & UDEVMAN_FLAG_ADD_BY_VID_PID)
+			udevman->devices_vid_pid = devices;
+		else if (udevman->flags & UDEVMAN_FLAG_ADD_BY_ADDR)
+			udevman->devices_addr = devices;
+	}
 
 	return CHANNEL_RC_OK;
 }
 
 static UINT udevman_listener_created_callback(IUDEVMAN* iudevman)
 {
+	LPSTR faulty_devices;
 	UDEVMAN* udevman = (UDEVMAN*)iudevman;
 
-	if (udevman->cmdline_devices &&
-	    !urbdrc_udevman_register_devices(udevman, udevman->cmdline_devices))
+	if (udevman->devices_vid_pid &&
+	    !urbdrc_udevman_register_devices(udevman, udevman->devices_vid_pid, FALSE))
 	{
-		WLog_ERR(TAG, "Invalid device id: \"%s\"", udevman->cmdline_devices);
-		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+		faulty_devices = udevman->devices_vid_pid;
+		goto err;
+	}
+	if (udevman->devices_addr &&
+	    !urbdrc_udevman_register_devices(udevman, udevman->devices_addr, TRUE))
+	{
+		faulty_devices = udevman->devices_addr;
+		goto err;
 	}
 
 	return CHANNEL_RC_OK;
+err:
+	WLog_ERR(TAG, "Invalid device argument: \"%s\"", faulty_devices);
+	return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 }
 
 static void udevman_load_interface(UDEVMAN* udevman)
