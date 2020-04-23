@@ -19,6 +19,18 @@
 
 define_channel_client("rdpdr")
 
+# Solaris / Openindiana patch, they have mntent.h in /usr/include/sys
+# linux in /usr/include
+#
+# Just add the path to the includes so the code will compile on any
+# platform
+find_path(EXTRA_INCLUDES
+    NAMES mntent.h
+    PATH_SUFFIXES sys)
+if (NOT "${EXTRA_INCLUDES}" STREQUAL "EXTRA_INCLUDES-NOTFOUND")
+    include_directories(${EXTRA_INCLUDES})
+endif()
+
 set(${MODULE_PREFIX}_SRCS
 	irp.c
 	irp.h
