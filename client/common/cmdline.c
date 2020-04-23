@@ -454,7 +454,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("\n");
 	printf("Multimedia Redirection: /video\n");
 #ifdef CHANNEL_URBDRC_CLIENT
-	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
+	printf("USB Device Redirection: /usb:id:054c:0268#4669:6e6b,addr:04:0c\n");
 #endif
 	printf("\n");
 	printf("For Gateways, the https_proxy environment variable is respected:\n");
