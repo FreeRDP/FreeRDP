@@ -76,7 +76,7 @@ out_fail:
 BOOL NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User, UINT32 UserLength, LPWSTR Domain,
               UINT32 DomainLength, BYTE* NtHash)
 {
-	BYTE NtHashV1[16];
+	BYTE NtHashV1[WINPR_MD5_DIGEST_LENGTH];
 
 	if ((!User) || (!Password) || (!NtHash))
 		return FALSE;
