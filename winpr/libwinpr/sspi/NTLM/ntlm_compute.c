@@ -415,14 +415,11 @@ int ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 {
 	BYTE* blob;
-	SecBuffer ntlm_v2_temp;
-	SecBuffer ntlm_v2_temp_chal;
-	PSecBuffer TargetInfo;
-	TargetInfo = &context->ChallengeTargetInfo;
+	SecBuffer ntlm_v2_temp = {0};
+	SecBuffer ntlm_v2_temp_chal = {0};
+	PSecBuffer TargetInfo = &context->ChallengeTargetInfo;
 	int ret = -1;
 
-	ZeroMemory(&ntlm_v2_temp, sizeof(ntlm_v2_temp));
-	ZeroMemory(&ntlm_v2_temp_chal, sizeof(ntlm_v2_temp_chal));
 	if (!sspi_SecBufferAlloc(&ntlm_v2_temp, TargetInfo->cbBuffer + 28))
 		goto exit;
 
