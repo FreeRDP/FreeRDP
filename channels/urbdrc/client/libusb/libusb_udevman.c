@@ -55,6 +55,16 @@
 	_man->iface.get_##_arg = udevman_get_##_arg; \
 	_man->iface.set_##_arg = udevman_set_##_arg
 
+#define MAX_HOTPLUG_VID_PIDS 32
+
+typedef struct _VID_PID_PAIR VID_PID_PAIR;
+
+struct _VID_PID_PAIR
+{
+	UINT16 vid;
+	UINT16 pid;
+};
+
 typedef struct _UDEVMAN UDEVMAN;
 
 struct _UDEVMAN
@@ -66,6 +76,8 @@ struct _UDEVMAN
 	IUDEVICE* tail; /* tail device in linked list */
 
 	LPSTR cmdline_devices;
+	VID_PID_PAIR hotplug_vid_pids[MAX_HOTPLUG_VID_PIDS];
+	size_t num_hotplug_vid_pids;
 	UINT16 flags;
 	UINT32 device_num;
 	UINT32 next_device_id;
@@ -533,7 +545,7 @@ static int hotplug_callback(struct libusb_context* ctx, struct libusb_device* de
                             libusb_hotplug_event event, void* user_data)
 {
 	struct libusb_device_descriptor desc;
-	IUDEVMAN* idevman = (IUDEVMAN*)user_data;
+	UDEVMAN* udevman = (UDEVMAN*)user_data;
 	const uint8_t bus = libusb_get_bus_number(dev);
 	const uint8_t addr = libusb_get_device_address(dev);
 	int rc = libusb_get_device_descriptor(dev, &desc);
@@ -543,18 +555,23 @@ static int hotplug_callback(struct libusb_context* ctx, struct libusb_device* de
 	if (rc != LIBUSB_SUCCESS)
 		return rc;
 
-	if (device_is_filtered(dev, &desc, event))
-		return 0;
-
 	switch (event)
 	{
 		case LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED:
-			if (idevman->isAutoAdd(idevman))
-				add_device(idevman, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor, desc.idProduct);
+			for (size_t i = 0; i < udevman->num_hotplug_vid_pids; i++)
+			{
+				if (udevman->hotplug_vid_pids[i].vid == desc.idVendor && udevman->hotplug_vid_pids[i].pid == desc.idProduct)
+				{
+					add_device(&udevman->iface, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor, desc.idProduct);
+					return 0;
+				}
+			}
+			if (udevman->iface.isAutoAdd(&udevman->iface) && !device_is_filtered(dev, &desc, event))
+				add_device(&udevman->iface, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor, desc.idProduct);
 			break;
 
 		case LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT:
-			del_device(idevman, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor, desc.idProduct);
+			del_device(&udevman->iface, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor, desc.idProduct);
 			break;
 
 		default:
@@ -623,6 +640,16 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 
 			add_device(&udevman->iface, DEVICE_ADD_FLAG_VENDOR | DEVICE_ADD_FLAG_PRODUCT, 0, 0, id1,
 			           id2);
+
+			if (udevman->num_hotplug_vid_pids < MAX_HOTPLUG_VID_PIDS)
+			{
+				udevman->hotplug_vid_pids[udevman->num_hotplug_vid_pids].vid = id1;
+				udevman->hotplug_vid_pids[udevman->num_hotplug_vid_pids++].pid = id2;
+			}
+			else
+			{
+				WLog_WARN(TAG, "Maximum hotplug device ids reached. Hotplug may not work for all given devices.");
+			}
 		}
 		else if (udevman->flags & UDEVMAN_FLAG_ADD_BY_ADDR)
 		{
