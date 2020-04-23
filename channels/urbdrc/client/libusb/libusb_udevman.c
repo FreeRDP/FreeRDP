@@ -65,6 +65,7 @@ struct _UDEVMAN
 	IUDEVICE* head; /* head device in linked list */
 	IUDEVICE* tail; /* tail device in linked list */
 
+	LPSTR cmdline_devices;
 	UINT16 flags;
 	UINT32 device_num;
 	UINT32 next_device_id;
@@ -575,29 +576,6 @@ static BOOL udevman_initialize(IUDEVMAN* idevman, UINT32 channelId)
 	return TRUE;
 }
 
-static void udevman_load_interface(UDEVMAN* udevman)
-{
-	/* standard */
-	udevman->iface.free = udevman_free;
-	/* manage devices */
-	udevman->iface.rewind = udevman_rewind;
-	udevman->iface.get_next = udevman_get_next;
-	udevman->iface.has_next = udevman_has_next;
-	udevman->iface.register_udevice = udevman_register_udevice;
-	udevman->iface.unregister_udevice = udevman_unregister_udevice;
-	udevman->iface.get_udevice_by_UsbDevice = udevman_get_udevice_by_UsbDevice;
-	/* Extension */
-	udevman->iface.isAutoAdd = udevman_is_auto_add;
-	/* Basic state */
-	BASIC_STATE_FUNC_REGISTER(device_num, udevman);
-	BASIC_STATE_FUNC_REGISTER(next_device_id, udevman);
-
-	/* control semaphore or mutex lock */
-	udevman->iface.loading_lock = udevman_loading_lock;
-	udevman->iface.loading_unlock = udevman_loading_unlock;
-	udevman->iface.initialize = udevman_initialize;
-}
-
 static BOOL udevman_parse_device_id_addr(const char** str, UINT16* id1, UINT16* id2, UINT16 max,
                                          char split_sign, char delimiter)
 {
@@ -663,7 +641,6 @@ static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
-	LPSTR devices = NULL;
 	const UINT16 mask = UDEVMAN_FLAG_ADD_BY_VID_PID | UDEVMAN_FLAG_ADD_BY_ADDR;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	COMMAND_LINE_ARGUMENT_A urbdrc_udevman_args[] = {
@@ -696,7 +673,7 @@ static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 		}
 		CommandLineSwitchCase(arg, "dev")
 		{
-			devices = arg->Value;
+			udevman->cmdline_devices = arg->Value;
 		}
 		CommandLineSwitchCase(arg, "id")
 		{
@@ -720,14 +697,45 @@ static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 	if ((udevman->flags & mask) == mask)
 		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-	/* Add listed devices after we know the format of addressing */
-	if (devices)
+	return CHANNEL_RC_OK;
+}
+
+static UINT udevman_listener_created_callback(IUDEVMAN* iudevman)
+{
+	UDEVMAN* udevman = (UDEVMAN*)iudevman;
+
+	if (udevman->cmdline_devices &&
+	    !urbdrc_udevman_register_devices(udevman, udevman->cmdline_devices))
 	{
-		if (!urbdrc_udevman_register_devices(udevman, devices))
-			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+		WLog_ERR(TAG, "Invalid device id: \"%s\"", udevman->cmdline_devices);
+		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 	}
 
 	return CHANNEL_RC_OK;
+}
+
+static void udevman_load_interface(UDEVMAN* udevman)
+{
+	/* standard */
+	udevman->iface.free = udevman_free;
+	/* manage devices */
+	udevman->iface.rewind = udevman_rewind;
+	udevman->iface.get_next = udevman_get_next;
+	udevman->iface.has_next = udevman_has_next;
+	udevman->iface.register_udevice = udevman_register_udevice;
+	udevman->iface.unregister_udevice = udevman_unregister_udevice;
+	udevman->iface.get_udevice_by_UsbDevice = udevman_get_udevice_by_UsbDevice;
+	/* Extension */
+	udevman->iface.isAutoAdd = udevman_is_auto_add;
+	/* Basic state */
+	BASIC_STATE_FUNC_REGISTER(device_num, udevman);
+	BASIC_STATE_FUNC_REGISTER(next_device_id, udevman);
+
+	/* control semaphore or mutex lock */
+	udevman->iface.loading_lock = udevman_loading_lock;
+	udevman->iface.loading_unlock = udevman_loading_unlock;
+	udevman->iface.initialize = udevman_initialize;
+	udevman->iface.listener_created_callback = udevman_listener_created_callback;
 }
 
 static BOOL poll_libusb_events(UDEVMAN* udevman)
