@@ -415,8 +415,8 @@ int ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 {
 	BYTE* blob;
-	SecBuffer ntlm_v2_temp = {0};
-	SecBuffer ntlm_v2_temp_chal = {0};
+	SecBuffer ntlm_v2_temp = { 0 };
+	SecBuffer ntlm_v2_temp_chal = { 0 };
 	PSecBuffer TargetInfo = &context->ChallengeTargetInfo;
 	int ret = -1;
 
