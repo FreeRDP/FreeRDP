@@ -313,6 +313,9 @@ static BOOL udevman_unregister_all_udevices(IUDEVMAN* idevman)
 	if (!idevman)
 		return FALSE;
 
+	if (!udevman->head)
+		return TRUE;
+
 	idevman->loading_lock(idevman);
 	idevman->rewind(idevman);
 
@@ -430,11 +433,17 @@ static void udevman_free(IUDEVMAN* idevman)
 		return;
 
 	udevman->running = FALSE;
-	WaitForSingleObject(udevman->thread, INFINITE);
+	if (udevman->thread)
+	{
+		WaitForSingleObject(udevman->thread, INFINITE);
+		CloseHandle(udevman->thread);
+	}
 
 	udevman_unregister_all_udevices(idevman);
-	CloseHandle(udevman->devman_loading);
-	CloseHandle(udevman->thread);
+
+	if (udevman->devman_loading)
+		CloseHandle(udevman->devman_loading);
+
 	libusb_exit(udevman->context);
 
 	ArrayList_Free(udevman->hotplug_vid_pids);
