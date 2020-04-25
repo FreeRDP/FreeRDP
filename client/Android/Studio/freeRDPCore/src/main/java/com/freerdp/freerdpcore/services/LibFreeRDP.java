@@ -40,10 +40,10 @@ public class LibFreeRDP
 			                         "ssl",
 			                         "crypto",
 			                         "jpeg",
-			                         "winpr2",
-			                         "freerdp2",
-			                         "freerdp-client2",
-			                         "freerdp-android2" };
+			                         "winpr3",
+			                         "freerdp3",
+			                         "freerdp-client3",
+			                         "freerdp-android3" };
 		final String LD_PATH = System.getProperty("java.library.path");
 
 		for (String lib : libraries)
