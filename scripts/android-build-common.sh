@@ -12,7 +12,7 @@ if [ -z $NDK_TARGET ]; then
 fi
 
 if [ -z $CMAKE_PROGRAM ]; then
-  	CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake -type f -executable -print -quit)
+  	CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake -type f -print -quit)
 fi
 
 if [ -z $CCACHE ]; then
@@ -99,7 +99,7 @@ function common_parse_arguments {
 
 			--sdk)
 			ANDROID_SDK="$2"
-  	        CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake -type f -executable -print -quit)
+  	        CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake -type f -print -quit)
 			shift
 			;;
 
@@ -196,7 +196,7 @@ function common_check_requirements {
 	fi
 
     if [ -z $CMAKE_PROGRAM ]; then
-    	CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake -type f -executable -print -quit)
+    	CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake -type f -print -quit)
     fi
 
 	for CMD in make git $CMAKE_PROGRAM $NDK_BUILD
