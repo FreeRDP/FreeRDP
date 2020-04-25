@@ -238,7 +238,7 @@ static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 			goto fail;
 
 		info.hbmColor = wf_create_dib((wfContext*)context, pointer->width, pointer->height,
-		                              srcFormat, NULL, &pdata);
+		                              gdi->dstFormat, NULL, &pdata);
 
 		if (!info.hbmColor)
 			goto fail;
