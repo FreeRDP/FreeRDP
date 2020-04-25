@@ -841,7 +841,7 @@ BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path
 	if (!X509_STORE_CTX_init(csc, cert_ctx, cert->px509, cert->px509chain))
 		goto end;
 
-	X509_STORE_CTX_set_purpose(csc, X509_PURPOSE_SSL_SERVER);
+	X509_STORE_CTX_set_purpose(csc, X509_PURPOSE_ANY);
 	X509_STORE_CTX_set_verify_cb(csc, verify_cb);
 
 	if (X509_verify_cert(csc) == 1)
