@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -68,6 +69,10 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 	    wl_shm_pool_create_buffer(pool, 0, seat->pointer_image->width, seat->pointer_image->height,
 	                              seat->pointer_image->width * 4, WL_SHM_FORMAT_ARGB8888);
 	wl_shm_pool_destroy(pool);
+
+	if (munmap(data, size) < 0)
+		fprintf(stderr, "%s: munmap(%p, %" PRIuz ") failed with [%d] %s\n", __FUNCTION__, data,
+		        size, errno, strerror(errno));
 
 error_mmap:
 	close(fd);
