@@ -52,7 +52,7 @@ static const COMMAND_LINE_ARGUMENT_A shadow_args[] = {
 	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL,
 	  "Server IPC socket" },
 	{ "bind-address", COMMAND_LINE_VALUE_REQUIRED, "<bind-address>", NULL, NULL, -1, NULL,
-	  "An address to bind to. Use '[<ipv6>]' for IPv6 addresses, e.g. '[::]' for "
+	  "An address to bind to. Use '[<ipv6>]' for IPv6 addresses, e.g. '[::1]' for "
 	  "localhost" },
 	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL,
 	  "Select or list monitors" },
@@ -536,7 +536,12 @@ int shadow_server_start(rdpShadowServer* server)
 		return -1;
 	}
 
-	/* Bind to TCP port if nothing is specified, otherwise bind to everything specified */
+	/* Bind magic:
+	 *
+	 * emtpy                 ... bind TCP all
+	 * <local path>          ... bind local (IPC)
+	 * bind-socket,<address> ... bind TCP to specified interface
+	 */
 	ipc = server->ipcSocket && (strncmp(bind_address, server->ipcSocket,
 	                                    strnlen(bind_address, sizeof(bind_address))) != 0);
 	if (!ipc)
@@ -557,7 +562,12 @@ int shadow_server_start(rdpShadowServer* server)
 					WLog_ERR(TAG, "Could not parse bind-address %s", address);
 					return -1;
 				}
-				*end = '\0';
+				*end++ = '\0';
+				if (strlen(end) > 0)
+				{
+					WLog_ERR(TAG, "Excess data after IPv6 address: '%s'", end);
+					return -1;
+				}
 				modaddr++;
 			}
 		}
