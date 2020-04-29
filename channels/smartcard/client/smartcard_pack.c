@@ -101,7 +101,7 @@ static BOOL smartcard_ndr_pointer_read_(wStream* s, UINT32* index, UINT32* ptr, 
 static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t elementSize,
                                ndr_ptr_t type)
 {
-	UINT32 len, offset, len2;
+	size_t len, offset, len2;
 	void* r;
 	size_t required;
 
@@ -163,9 +163,11 @@ static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t eleme
 		         min, len);
 		return STATUS_DATA_ERROR;
 	}
-	len *= elementSize;
 
-	if (Stream_GetRemainingLength(s) < len)
+	if (len > SIZE_MAX / 2)
+		return STATUS_BUFFER_TOO_SMALL;
+
+	if (Stream_GetRemainingLength(s) / elementSize < len)
 	{
 		WLog_ERR(TAG,
 		         "Short data while trying to read data from NDR pointer, expected %" PRIu32
@@ -173,6 +175,7 @@ static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t eleme
 		         len, Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
+	len *= elementSize;
 
 	r = calloc(len + 1, sizeof(CHAR));
 	if (!r)
