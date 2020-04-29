@@ -220,8 +220,14 @@ error_frames:
 static PresentationContext* PresentationContext_new(VideoClientContext* video, BYTE PresentationId,
                                                     UINT32 x, UINT32 y, UINT32 width, UINT32 height)
 {
+	size_t s;
 	VideoClientContextPriv* priv = video->priv;
-	PresentationContext* ret = calloc(1, sizeof(*ret));
+	PresentationContext* ret;
+	s = width * height * 4ULL;
+	if (s > INT32_MAX)
+		return NULL;
+
+	ret = calloc(1, sizeof(*ret));
 	if (!ret)
 		return NULL;
 
@@ -243,7 +249,7 @@ static PresentationContext* PresentationContext_new(VideoClientContext* video, B
 		goto error_currentSample;
 	}
 
-	ret->surfaceData = BufferPool_Take(priv->surfacePool, width * height * 4);
+	ret->surfaceData = BufferPool_Take(priv->surfacePool, s);
 	if (!ret->surfaceData)
 	{
 		WLog_ERR(TAG, "unable to allocate surfaceData");
