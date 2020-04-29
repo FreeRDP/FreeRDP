@@ -64,7 +64,7 @@ static MSUSB_PIPE_DESCRIPTOR** msusb_mspipes_read(wStream* s, UINT32 NumberOfPip
 	UINT32 pnum;
 	MSUSB_PIPE_DESCRIPTOR** MsPipes;
 
-	if (Stream_GetRemainingCapacity(s) < 12 * NumberOfPipes)
+	if (Stream_GetRemainingCapacity(s) / 12 < NumberOfPipes)
 		return NULL;
 
 	MsPipes = (MSUSB_PIPE_DESCRIPTOR**)calloc(NumberOfPipes, sizeof(MSUSB_PIPE_DESCRIPTOR*));
