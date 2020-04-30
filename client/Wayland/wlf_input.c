@@ -138,7 +138,6 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 	rdpInput* input;
 	UINT16 flags = 0;
 	int direction;
-	uint32_t step;
 	uint32_t x, y;
 
 	if (!instance || !ev || !instance->input)
@@ -152,13 +151,14 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 
 	input = instance->input;
 
-	direction = wl_fixed_to_int(ev->value);
+	direction = wl_fixed_to_double(ev->value) * 10.0;
 	switch (ev->axis)
 	{
 		case WL_POINTER_AXIS_VERTICAL_SCROLL:
 			flags |= PTR_FLAGS_WHEEL;
 			if (direction > 0)
 				flags |= PTR_FLAGS_WHEEL_NEGATIVE;
+			direction = -direction;
 			break;
 
 		case WL_POINTER_AXIS_HORIZONTAL_SCROLL:
@@ -171,10 +171,27 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 			return FALSE;
 	}
 
-	step = (uint32_t)abs(direction);
-	if (step > WheelRotationMask)
-		step = WheelRotationMask;
-	flags |= step;
+	/*                 direction -> flags
+	 * scroll down fast:    -256 -> 0x300
+	 * scroll down slowly:    -1 -> 0x3ff
+	 * scroll up   slowly:     0 -> 0x200
+	 * scroll up   fast:     255 -> 0x2ff
+	 *
+	 * scroll left  fast:   -256 -> 0x500
+	 * scroll left  slowly:   -1 -> 0x5ff
+	 * scroll right slowly:    0 -> 0x400
+	 * scroll right fast:    255 -> 0x4ff
+	 */
+
+	if (direction < -256)
+		direction = -256;
+	if (direction > 255)
+		direction = 255;
+
+	flags |= (uint8_t)direction;
+
+	WLog_DBG(TAG, "%s called | axis: %u | direction: %d | flags: 0x%x | x: %u / y: %u",
+	         __FUNCTION__, ev->axis, direction, flags, x, y);
 
 	return freerdp_input_send_mouse_event(input, flags, (UINT16)x, (UINT16)y);
 }
