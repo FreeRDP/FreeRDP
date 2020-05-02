@@ -79,6 +79,14 @@ static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, BOOL encoder)
 		case AV_CODEC_ID_NONE:
 			return TRUE;
 
+		case AV_CODEC_ID_AAC:
+		case AV_CODEC_ID_AAC_LATM:
+#if !defined(WITH_DSP_EXPERIMENTAL)
+			if (encoder)
+				return TRUE;
+#endif
+			return FALSE;
+
 		default:
 			return FALSE;
 	}

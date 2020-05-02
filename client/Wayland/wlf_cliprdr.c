@@ -624,6 +624,7 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 				rc = ERROR_INTERNAL_ERROR;
 			else
 			{
+				cdata = NULL;
 				cnv = ConvertToUnicode(CP_UTF8, 0, (LPCSTR)data, (int)size, &cdata, 0);
 				free(data);
 				data = NULL;

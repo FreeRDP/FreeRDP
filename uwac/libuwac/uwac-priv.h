@@ -218,6 +218,7 @@ struct uwac_buffer
 #endif
 	struct wl_buffer* wayland_buffer;
 	void* data;
+	size_t size;
 };
 typedef struct uwac_buffer UwacBuffer;
 
