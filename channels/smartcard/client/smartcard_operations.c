@@ -42,8 +42,19 @@
 static LONG log_status_error(const char* tag, const char* what, LONG status)
 {
 	if (status != SCARD_S_SUCCESS)
-		WLog_ERR(tag, "%s failed with error %s [%" PRId32 "]", what, SCardGetErrorString(status),
-		         status);
+	{
+		DWORD level = WLOG_ERROR;
+		switch (status)
+		{
+			case SCARD_E_TIMEOUT:
+				level = WLOG_DEBUG;
+				break;
+			default:
+				break;
+		}
+		WLog_Print(WLog_Get(tag), level, "%s failed with error %s [%" PRId32 "]", what,
+		           SCardGetErrorString(status), status);
+	}
 	return status;
 }
 
