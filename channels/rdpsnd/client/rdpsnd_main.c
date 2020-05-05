@@ -1440,12 +1440,25 @@ static UINT rdpsnd_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 {
 	RDPSND_CHANNEL_CALLBACK* callback = (RDPSND_CHANNEL_CALLBACK*)pChannelCallback;
 	rdpsndPlugin* plugin;
+	wStream* copy;
+	size_t len = Stream_GetRemainingLength(data);
+
 	if (!callback || !callback->plugin)
 		return ERROR_INVALID_PARAMETER;
 	plugin = (rdpsndPlugin*)callback->plugin;
 
-	if (!MessageQueue_Post(plugin->queue, NULL, 0, data, NULL))
+	copy = StreamPool_Take(plugin->pool, len);
+	if (!copy)
+		return ERROR_OUTOFMEMORY;
+	Stream_Copy(data, copy, len);
+	Stream_SealLength(copy);
+	Stream_SetPosition(copy, 0);
+
+	if (!MessageQueue_Post(plugin->queue, NULL, 0, copy, NULL))
+	{
+		Stream_Release(copy);
 		return ERROR_INTERNAL_ERROR;
+	}
 
 	return CHANNEL_RC_OK;
 }
