@@ -54,6 +54,8 @@ extern "C"
 
 	/* System.Collections.Queue */
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wQueue
 	{
 		int capacity;
@@ -114,6 +116,8 @@ extern "C"
 
 	/* System.Collections.ArrayList */
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wArrayList
 	{
 		int capacity;
@@ -166,6 +170,8 @@ extern "C"
 
 	/* System.Collections.DictionaryBase */
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wDictionary
 	{
 		BOOL synchronized;
@@ -177,6 +183,8 @@ extern "C"
 
 	typedef struct _wListDictionaryItem wListDictionaryItem;
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wListDictionaryItem
 	{
 		void* key;
@@ -185,6 +193,8 @@ extern "C"
 		wListDictionaryItem* next;
 	};
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wListDictionary
 	{
 		BOOL synchronized;
@@ -251,6 +261,8 @@ extern "C"
 
 	typedef struct _wKeyValuePair wKeyValuePair;
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wKeyValuePair
 	{
 		void* key;
@@ -261,6 +273,8 @@ extern "C"
 
 	/* Reference Table */
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wReference
 	{
 		UINT32 Count;
@@ -270,6 +284,8 @@ extern "C"
 
 	typedef int (*REFERENCE_FREE)(void* context, void* ptr);
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wReferenceTable
 	{
 		UINT32 size;
@@ -290,6 +306,8 @@ extern "C"
 
 	/* Countdown Event */
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wCountdownEvent
 	{
 		DWORD count;
@@ -321,6 +339,8 @@ extern "C"
 	typedef void (*HASH_TABLE_KEY_FREE_FN)(void* key);
 	typedef void (*HASH_TABLE_VALUE_FREE_FN)(void* value);
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wHashTable
 	{
 		BOOL synchronized;
@@ -367,6 +387,8 @@ extern "C"
 
 	/* BufferPool */
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wBufferPoolItem
 	{
 		int size;
@@ -374,6 +396,8 @@ extern "C"
 	};
 	typedef struct _wBufferPoolItem wBufferPoolItem;
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wBufferPool
 	{
 		int fixedSize;
@@ -407,6 +431,8 @@ extern "C"
 
 	/* ObjectPool */
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wObjectPool
 	{
 		int size;
@@ -443,6 +469,8 @@ extern "C"
 		MESSAGE_FREE_FN Free;
 	};
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wMessageQueue
 	{
 		int head;
@@ -589,6 +617,8 @@ extern "C"
 
 #define DEFINE_EVENT_ENTRY(_name) { #_name, { sizeof(_name##EventArgs), NULL }, 0, { NULL } },
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wPubSub
 	{
 		CRITICAL_SECTION lock;
@@ -620,6 +650,8 @@ extern "C"
 
 	/* BipBuffer */
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wBipBlock
 	{
 		size_t index;
@@ -627,6 +659,8 @@ extern "C"
 	};
 	typedef struct _wBipBlock wBipBlock;
 
+	/* WARNING: Do not access structs directly, the API will be reworked
+	 * to make this opaque. */
 	struct _wBipBuffer
 	{
 		size_t size;

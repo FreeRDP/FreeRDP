@@ -147,7 +147,7 @@ void Stack_Push(wStack* stack, void* obj)
 		const size_t new_cap = stack->capacity * 2;
 		void** new_arr = (void**)realloc(stack->array, sizeof(void*) * new_cap);
 
-		if (new_arr)
+		if (!new_arr)
 			goto end;
 
 		stack->array = new_arr;
