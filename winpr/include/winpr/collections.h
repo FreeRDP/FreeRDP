@@ -94,24 +94,15 @@ extern "C"
 
 	/* System.Collections.Stack */
 
-	struct _wStack
-	{
-		int size;
-		int capacity;
-		void** array;
-		CRITICAL_SECTION lock;
-		BOOL synchronized;
-		wObject object;
-	};
 	typedef struct _wStack wStack;
 
-	WINPR_API int Stack_Count(wStack* stack);
+	WINPR_API size_t Stack_Count(wStack* stack);
 	WINPR_API BOOL Stack_IsSynchronized(wStack* stack);
 
-#define Stack_Object(_stack) (&_stack->object)
+	WINPR_API wObject* Stack_Object(wStack* stack);
 
 	WINPR_API void Stack_Clear(wStack* stack);
-	WINPR_API BOOL Stack_Contains(wStack* stack, void* obj);
+	WINPR_API BOOL Stack_Contains(wStack* stack, const void* obj);
 
 	WINPR_API void Stack_Push(wStack* stack, void* obj);
 	WINPR_API void* Stack_Pop(wStack* stack);
