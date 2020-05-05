@@ -668,10 +668,14 @@ uint32_t UwacDisplayGetNbOutputs(const UwacDisplay* display)
 
 const UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index)
 {
-	int i;
+	int i, display_count;
 	UwacOutput* ret = NULL;
 
 	if (!display)
+		return NULL;
+
+	display_count = wl_list_length(&display->outputs);
+	if (display_count <= index)
 		return NULL;
 
 	i = 0;
@@ -694,6 +698,9 @@ const UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index)
 
 UwacReturnCode UwacOutputGetResolution(const UwacOutput* output, UwacSize* resolution)
 {
+	if ((output->resolution.height <= 0) || (output->resolution.width <= 0))
+		return UWAC_ERROR_INTERNAL;
+
 	*resolution = output->resolution;
 	return UWAC_SUCCESS;
 }
