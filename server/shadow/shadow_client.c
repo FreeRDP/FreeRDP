@@ -128,6 +128,7 @@ static INLINE void shadow_client_free_queued_message(void* obj)
 
 static BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 {
+	const char bind_address[] = "bind-address,";
 	rdpSettings* settings;
 	rdpShadowServer* server;
 	const wObject cb = { NULL, NULL, NULL, shadow_client_free_queued_message, NULL };
@@ -157,7 +158,8 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* clien
 	if (!(settings->RdpKeyFile = _strdup(settings->PrivateKeyFile)))
 		goto fail_rdpkey_file;
 
-	if (server->ipcSocket)
+	if (server->ipcSocket && (strncmp(bind_address, server->ipcSocket,
+	                                  strnlen(bind_address, sizeof(bind_address))) != 0))
 	{
 		settings->LyncRdpMode = TRUE;
 		settings->CompressionEnabled = FALSE;
