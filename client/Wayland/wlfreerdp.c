@@ -191,9 +191,9 @@ static BOOL wl_pre_connect(freerdp* instance)
 	if (settings->Fullscreen)
 	{
 		// Use the resolution of the first display output
-		output = UwacDisplayGetOutput(context->display, 1);
+		output = UwacDisplayGetOutput(context->display, 0);
 
-		if (output != NULL && UwacOutputGetResolution(output, &resolution) == UWAC_SUCCESS)
+		if ((output != NULL) && (UwacOutputGetResolution(output, &resolution) == UWAC_SUCCESS))
 		{
 			settings->DesktopWidth = (UINT32)resolution.width;
 			settings->DesktopHeight = (UINT32)resolution.height;
