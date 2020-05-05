@@ -51,7 +51,8 @@ static const COMMAND_LINE_ARGUMENT_A shadow_args[] = {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL,
 	  "Server IPC socket" },
-	{ "bind-address", COMMAND_LINE_VALUE_REQUIRED, "<bind-address>", NULL, NULL, -1, NULL,
+	{ "bind-address", COMMAND_LINE_VALUE_REQUIRED, "<bind-address>[,<another address>, ...]", NULL,
+	  NULL, -1, NULL,
 	  "An address to bind to. Use '[<ipv6>]' for IPv6 addresses, e.g. '[::1]' for "
 	  "localhost" },
 	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL,
@@ -505,6 +506,41 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 	return 0;
 }
 
+static BOOL open_port(rdpShadowServer* server, char* address)
+{
+	BOOL status;
+	char* modaddr = address;
+
+	if (modaddr)
+	{
+		if (modaddr[0] == '[')
+		{
+			char* end = strchr(address, ']');
+			if (!end)
+			{
+				WLog_ERR(TAG, "Could not parse bind-address %s", address);
+				return -1;
+			}
+			*end++ = '\0';
+			if (strlen(end) > 0)
+			{
+				WLog_ERR(TAG, "Excess data after IPv6 address: '%s'", end);
+				return -1;
+			}
+			modaddr++;
+		}
+	}
+	status = server->listener->Open(server->listener, modaddr, (UINT16)server->port);
+
+	if (!status)
+	{
+		WLog_ERR(TAG,
+		         "Problem creating TCP listener. (Port already used or insufficient permissions?)");
+	}
+
+	return status;
+}
+
 int shadow_server_start(rdpShadowServer* server)
 {
 	BOOL ipc;
@@ -546,40 +582,30 @@ int shadow_server_start(rdpShadowServer* server)
 	                                    strnlen(bind_address, sizeof(bind_address))) != 0);
 	if (!ipc)
 	{
-		char* address =
-		    (server->ipcSocket)
-		        ? _strdup(server->ipcSocket + strnlen(bind_address, sizeof(bind_address)))
-		        : NULL;
-		char* modaddr = address;
-
-		if (modaddr)
+		size_t x, count;
+		char** list = CommandLineParseCommaSeparatedValuesEx(NULL, server->ipcSocket, &count);
+		if (!list || (count <= 1))
 		{
-			if (modaddr[0] == '[')
+			free(list);
+			if (server->ipcSocket == NULL)
 			{
-				char* end = strchr(address, ']');
-				if (!end)
-				{
-					WLog_ERR(TAG, "Could not parse bind-address %s", address);
+				if (!open_port(server, NULL))
 					return -1;
-				}
-				*end++ = '\0';
-				if (strlen(end) > 0)
-				{
-					WLog_ERR(TAG, "Excess data after IPv6 address: '%s'", end);
-					return -1;
-				}
-				modaddr++;
+			}
+			else
+				return -1;
+		}
+
+		for (x = 1; x < count; x++)
+		{
+			BOOL success = open_port(server, list[x]);
+			if (!success)
+			{
+				free(list);
+				return -1;
 			}
 		}
-		status = server->listener->Open(server->listener, modaddr, (UINT16)server->port);
-		free(address);
-		if (!status)
-		{
-			WLog_ERR(
-			    TAG,
-			    "Problem creating TCP listener. (Port already used or insufficient permissions?)");
-			return -1;
-		}
+		free(list);
 	}
 	else
 	{
