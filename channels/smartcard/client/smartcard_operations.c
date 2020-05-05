@@ -41,9 +41,14 @@
 
 static LONG log_status_error(const char* tag, const char* what, LONG status)
 {
+	// avoid swamping console with SCARD_E_TIMEOUT errors
 	if (status != SCARD_S_SUCCESS)
-		WLog_ERR(tag, "%s failed with error %s [%" PRId32 "]", what, SCardGetErrorString(status),
-		         status);
+		if (status != SCARD_E_TIMEOUT)
+			WLog_ERR(tag, "%s failed with error %s [%" PRId32 "]", what, SCardGetErrorString(status),
+				 status);
+		else
+			WLog_DBG(tag, "%s failed with error %s [%" PRId32 "]", what, SCardGetErrorString(status),
+				 status);
 	return status;
 }
 
