@@ -605,7 +605,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
 		monitor = &(pdu.monitorDefArray[index]);
 		DEBUG_RDPGFX(gfx->log,
 		             "RecvResetGraphicsPdu: monitor left:%" PRIi32 " top:%" PRIi32 " right:%" PRIi32
-		             " left:%" PRIi32 " flags:0x%" PRIx32 "",
+		             " bottom:%" PRIi32 " flags:0x%" PRIx32 "",
 		             monitor->left, monitor->top, monitor->right, monitor->bottom, monitor->flags);
 	}
 
