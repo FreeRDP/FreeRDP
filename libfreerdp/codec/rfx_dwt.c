@@ -87,26 +87,27 @@ void rfx_dwt_2d_decode_block(INT16* buffer, INT16* idwt, int subband_width)
 	/* Inverse DWT in vertical direction, results are stored in original buffer. */
 	for (x = 0; x < total_width; x++)
 	{
-		/* Even coefficients */
-		for (n = 0; n < subband_width; n++)
+		l = idwt + x;
+		h = idwt + x + subband_width * total_width;
+		dst = buffer + x;
+
+		*dst = *l - ((*h * 2 + 1) >> 1);
+
+		for (n = 1; n < subband_width; n++)
 		{
-			y = n << 1;
-			dst = buffer + y * total_width + x;
-			l = idwt + n * total_width + x;
-			h = l + subband_width * total_width;
-			dst[0] = *l - (((n > 0 ? *(h - total_width) : *h) + (*h) + 1) >> 1);
+			l += total_width;
+			h += total_width;
+
+			/* Even coefficients */
+			dst[2 * total_width] = *l - ((*(h - total_width) + *h + 1) >> 1);
+
+			/* Odd coefficients */
+			dst[total_width] = (*(h - total_width) << 1) + ((*dst + dst[2 * total_width]) >> 1);
+
+			dst += 2 * total_width;
 		}
 
-		/* Odd coefficients */
-		for (n = 0; n < subband_width; n++)
-		{
-			y = n << 1;
-			dst = buffer + y * total_width + x;
-			l = idwt + n * total_width + x;
-			h = l + subband_width * total_width;
-			dst[total_width] =
-			    (*h << 1) + ((dst[0] + dst[n < subband_width - 1 ? 2 * total_width : 0]) >> 1);
-		}
+		dst[total_width] = (*h << 1) + ((*dst * 2) >> 1);
 	}
 }
 
