@@ -403,12 +403,11 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cb
 		cchWideChar = MultiByteToWideChar(CodePage, dwFlags, lpMultiByteStr, cbMultiByte, NULL, 0);
 		allocate = TRUE;
 	}
+	else if (!(*lpWideCharStr))
+		allocate = TRUE;
 
 	if (cchWideChar < 1)
 		return 0;
-
-	if (!(*lpWideCharStr))
-		allocate = TRUE;
 
 	if (allocate)
 	{
@@ -473,12 +472,11 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 		    WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL);
 		allocate = TRUE;
 	}
+	else if (!(*lpMultiByteStr))
+		allocate = TRUE;
 
 	if (cbMultiByte < 1)
 		return 0;
-
-	if (!(*lpMultiByteStr))
-		allocate = TRUE;
 
 	if (allocate)
 	{
