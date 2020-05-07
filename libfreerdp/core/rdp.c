@@ -385,6 +385,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataRequest
 	                                     : DomainMCSPDU_SendDataIndication;
 
+	*channelId = 0; /* Initialize in case of early abort */
 	if (!tpkt_read_header(s, length))
 		return FALSE;
 
