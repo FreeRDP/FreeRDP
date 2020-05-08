@@ -49,6 +49,9 @@ static LONG log_status_error(const char* tag, const char* what, LONG status)
 			case SCARD_E_TIMEOUT:
 				level = WLOG_DEBUG;
 				break;
+			case SCARD_E_NO_READERS_AVAILABLE:
+				level = WLOG_INFO;
+				break;
 			default:
 				break;
 		}
