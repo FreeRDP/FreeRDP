@@ -670,7 +670,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		if (!path)
 			continue;
 		/* copy hotpluged device mount point to the dev_array */
-		if (isAutomountLocation(path) && (size <= MAX_USB_DEVICES))
+		if (isAutomountLocation(path) && (size < MAX_USB_DEVICES))
 		{
 			dev_array[size].path = _strdup(path);
 			dev_array[size++].to_add = TRUE;

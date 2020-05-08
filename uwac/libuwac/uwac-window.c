@@ -65,6 +65,7 @@ static void UwacWindowDestroyBuffers(UwacWindow* w)
 		region16_uninit(&buffer->damage);
 #endif
 		wl_buffer_destroy(buffer->wayland_buffer);
+		munmap(buffer->data, buffer->size);
 	}
 
 	w->nbuffers = 0;
@@ -306,10 +307,14 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 	int i, fd;
 	void* data;
 	struct wl_shm_pool* pool;
+	size_t pagesize = sysconf(_SC_PAGESIZE);
 	newBuffers = xrealloc(w->buffers, (w->nbuffers + nbuffers) * sizeof(UwacBuffer));
 
 	if (!newBuffers)
 		return UWAC_ERROR_NOMEMORY;
+
+	/* round up to a multiple of PAGESIZE to page align data for each buffer */
+	allocSize = (allocSize + pagesize - 1) & ~(pagesize - 1);
 
 	w->buffers = newBuffers;
 	memset(w->buffers + w->nbuffers, 0, sizeof(UwacBuffer) * nbuffers);
@@ -346,6 +351,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 		region16_init(&buffer->damage);
 #endif
 		buffer->data = data + (allocSize * i);
+		buffer->size = allocSize;
 		buffer->wayland_buffer =
 		    wl_shm_pool_create_buffer(pool, allocSize * i, width, height, w->stride, format);
 		wl_buffer_add_listener(buffer->wayland_buffer, &buffer_listener, buffer);

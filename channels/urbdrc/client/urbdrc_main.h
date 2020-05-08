@@ -216,6 +216,7 @@ struct _IUDEVMAN
 	void (*loading_lock)(IUDEVMAN* idevman);
 	void (*loading_unlock)(IUDEVMAN* idevman);
 	BOOL (*initialize)(IUDEVMAN* idevman, UINT32 channelId);
+	UINT (*listener_created_callback)(IUDEVMAN* idevman);
 
 	IWTSPlugin* plugin;
 	UINT32 controlChannelId;

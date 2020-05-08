@@ -894,6 +894,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
  * FreeRDP Settings Data Structure
  */
 
+#define FreeRDP_Settings_StableAPI_MAX 5312
 struct rdp_settings
 {
 	/**
@@ -1561,6 +1562,19 @@ struct rdp_settings
 };
 typedef struct rdp_settings rdpSettings;
 
+enum rdp_settings_type
+{
+	RDP_SETTINGS_TYPE_BOOL,
+	RDP_SETTINGS_TYPE_UINT16,
+	RDP_SETTINGS_TYPE_INT16,
+	RDP_SETTINGS_TYPE_UINT32,
+	RDP_SETTINGS_TYPE_INT32,
+	RDP_SETTINGS_TYPE_UINT64,
+	RDP_SETTINGS_TYPE_INT64,
+	RDP_SETTINGS_TYPE_STRING,
+	RDP_SETTINGS_TYPE_POINTER
+};
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -1669,6 +1683,14 @@ extern "C"
 	                                             const char* param);
 
 	FREERDP_API const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id);
+
+	FREERDP_API BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name,
+	                                                     const char* value);
+
+	FREERDP_API SSIZE_T freerdp_settings_get_key_for_name(const char* value);
+	FREERDP_API SSIZE_T freerdp_settings_get_type_for_name(const char* value);
+	FREERDP_API SSIZE_T freerdp_settings_get_type_for_key(size_t key);
+	FREERDP_API const char* freerdp_settings_get_name_for_key(size_t key);
 
 #ifdef __cplusplus
 }

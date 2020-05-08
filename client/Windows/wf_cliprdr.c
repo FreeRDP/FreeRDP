@@ -1235,7 +1235,7 @@ static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 	UINT32 formatId = 0;
 	char formatName[1024];
 	CLIPRDR_FORMAT* formats = NULL;
-	CLIPRDR_FORMAT_LIST formatList;
+	CLIPRDR_FORMAT_LIST formatList = { 0 };
 
 	if (!clipboard)
 		return ERROR_INTERNAL_ERROR;
@@ -1287,6 +1287,7 @@ static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 
 	formatList.numFormats = numFormats;
 	formatList.formats = formats;
+	formatList.msgType = CB_FORMAT_LIST;
 	rc = clipboard->context->ClientFormatList(clipboard->context, &formatList);
 
 	for (index = 0; index < numFormats; index++)

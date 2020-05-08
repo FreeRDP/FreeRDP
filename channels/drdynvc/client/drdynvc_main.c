@@ -815,7 +815,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 
 	if (dataSize == 0)
 	{
-		dvcman_close_channel(drdynvc->channel_mgr, ChannelId, TRUE);
+		status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId, TRUE);
 	}
 	else if (dataSize <= CHANNEL_CHUNK_LENGTH - pos)
 	{

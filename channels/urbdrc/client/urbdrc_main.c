@@ -265,7 +265,8 @@ static UINT urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVI
 		const UINT16 bcdDevice = (UINT16)pdev->query_device_descriptor(pdev, BCD_DEVICE);
 		sprintf_s(HardwareIds[1], DEVICE_HARDWARE_ID_SIZE,
 		          "USB\\VID_%04" PRIX16 "&PID_%04" PRIX16 "", idVendor, idProduct);
-		sprintf_s(HardwareIds[0], DEVICE_HARDWARE_ID_SIZE, "%s&REV_%04" PRIX16 "", HardwareIds[1],
+		sprintf_s(HardwareIds[0], DEVICE_HARDWARE_ID_SIZE,
+		          "USB\\VID_%04" PRIX16 "&PID_%04" PRIX16 "&REV_%04" PRIX16 "", idVendor, idProduct,
 		          bcdDevice);
 	}
 	{
@@ -277,18 +278,20 @@ static UINT urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVI
 		{
 			sprintf_s(CompatibilityIds[2], DEVICE_COMPATIBILITY_ID_SIZE, "USB\\Class_%02" PRIX8 "",
 			          bDeviceClass);
-			sprintf_s(CompatibilityIds[1], DEVICE_COMPATIBILITY_ID_SIZE, "%s&SubClass_%02" PRIX8 "",
-			          CompatibilityIds[2], bDeviceSubClass);
-			sprintf_s(CompatibilityIds[0], DEVICE_COMPATIBILITY_ID_SIZE, "%s&Prot_%02" PRIX8 "",
-			          CompatibilityIds[1], bDeviceProtocol);
+			sprintf_s(CompatibilityIds[1], DEVICE_COMPATIBILITY_ID_SIZE,
+			          "USB\\Class_%02" PRIX8 "&SubClass_%02" PRIX8 "", bDeviceClass,
+			          bDeviceSubClass);
+			sprintf_s(CompatibilityIds[0], DEVICE_COMPATIBILITY_ID_SIZE,
+			          "USB\\Class_%02" PRIX8 "&SubClass_%02" PRIX8 "&Prot_%02" PRIX8 "",
+			          bDeviceClass, bDeviceSubClass, bDeviceProtocol);
 		}
 		else
 		{
 			sprintf_s(CompatibilityIds[2], DEVICE_COMPATIBILITY_ID_SIZE, "USB\\DevClass_00");
-			sprintf_s(CompatibilityIds[1], DEVICE_COMPATIBILITY_ID_SIZE, "%s&SubClass_00",
-			          CompatibilityIds[2]);
-			sprintf_s(CompatibilityIds[0], DEVICE_COMPATIBILITY_ID_SIZE, "%s&Prot_00",
-			          CompatibilityIds[1]);
+			sprintf_s(CompatibilityIds[1], DEVICE_COMPATIBILITY_ID_SIZE,
+			          "USB\\DevClass_00&SubClass_00");
+			sprintf_s(CompatibilityIds[0], DEVICE_COMPATIBILITY_ID_SIZE,
+			          "USB\\DevClass_00&SubClass_00&Prot_00");
 		}
 	}
 	func_instance_id_generate(pdev, strInstanceId, DEVICE_INSTANCE_STR_SIZE);
@@ -663,7 +666,9 @@ static UINT urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCall
  */
 static UINT urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
+	UINT status;
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pPlugin;
+	IUDEVMAN* udevman = urbdrc->udevman;
 	char channelName[sizeof(URBDRC_CHANNEL_NAME)] = { URBDRC_CHANNEL_NAME };
 
 	if (!urbdrc)
@@ -681,8 +686,15 @@ static UINT urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 
 	/* [MS-RDPEUSB] 2.1 Transport defines the channel name in uppercase letters */
 	CharUpperA(channelName);
-	return pChannelMgr->CreateListener(pChannelMgr, channelName, 0,
-	                                   &urbdrc->listener_callback->iface, NULL);
+	status = pChannelMgr->CreateListener(pChannelMgr, channelName, 0,
+	                                     &urbdrc->listener_callback->iface, NULL);
+	if (status != CHANNEL_RC_OK)
+		return status;
+
+	if (udevman->listener_created_callback)
+		return udevman->listener_created_callback(udevman);
+
+	return CHANNEL_RC_OK;
 }
 
 /**

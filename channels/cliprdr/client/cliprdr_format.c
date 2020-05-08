@@ -43,7 +43,7 @@
 UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
                                  UINT16 msgFlags)
 {
-	CLIPRDR_FORMAT_LIST formatList;
+	CLIPRDR_FORMAT_LIST formatList = { 0 };
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
@@ -82,7 +82,7 @@ error_out:
 UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
                                           UINT16 msgFlags)
 {
-	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse;
+	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse = { 0 };
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 

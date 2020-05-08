@@ -64,7 +64,7 @@ static MSUSB_PIPE_DESCRIPTOR** msusb_mspipes_read(wStream* s, UINT32 NumberOfPip
 	UINT32 pnum;
 	MSUSB_PIPE_DESCRIPTOR** MsPipes;
 
-	if (Stream_GetRemainingCapacity(s) < 12 * NumberOfPipes)
+	if (Stream_GetRemainingCapacity(s) / 12 < NumberOfPipes)
 		return NULL;
 
 	MsPipes = (MSUSB_PIPE_DESCRIPTOR**)calloc(NumberOfPipes, sizeof(MSUSB_PIPE_DESCRIPTOR*));
@@ -317,7 +317,7 @@ MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces)
 	MSUSB_CONFIG_DESCRIPTOR* MsConfig;
 	BYTE lenConfiguration, typeConfiguration;
 
-	if (Stream_GetRemainingCapacity(s) < 6 + NumInterfaces * 2)
+	if (Stream_GetRemainingCapacity(s) < 6ULL + NumInterfaces * 2ULL)
 		return NULL;
 
 	MsConfig = msusb_msconfig_new();

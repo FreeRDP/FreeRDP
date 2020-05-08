@@ -234,10 +234,11 @@ static UINT urbdrc_process_io_control(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* c
 	Stream_Read_UINT32(s, IoControlCode);
 	Stream_Read_UINT32(s, InputBufferSize);
 
-	if (Stream_GetRemainingLength(s) < InputBufferSize + 8)
+	if (!Stream_SafeSeek(s, InputBufferSize))
+		return ERROR_INVALID_DATA;
+	if (Stream_GetRemainingLength(s) < 8ULL)
 		return ERROR_INVALID_DATA;
 
-	Stream_Seek(s, InputBufferSize);
 	Stream_Read_UINT32(s, OutputBufferSize);
 	Stream_Read_UINT32(s, RequestId);
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
@@ -315,10 +316,10 @@ static UINT urbdrc_process_internal_io_control(IUDEVICE* pdev, URBDRC_CHANNEL_CA
 	Stream_Read_UINT32(s, IoControlCode);
 	Stream_Read_UINT32(s, InputBufferSize);
 
-	if (Stream_GetRemainingLength(s) < InputBufferSize + 8)
+	if (!Stream_SafeSeek(s, InputBufferSize))
 		return ERROR_INVALID_DATA;
-
-	Stream_Seek(s, InputBufferSize);
+	if (Stream_GetRemainingLength(s) < 8ULL)
+		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(s, OutputBufferSize);
 	Stream_Read_UINT32(s, RequestId);
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
@@ -398,7 +399,8 @@ static UINT urb_select_configuration(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* ca
                                      int transferDir)
 {
 	MSUSB_CONFIG_DESCRIPTOR* MsConfig = NULL;
-	UINT32 out_size, InterfaceId, NumInterfaces, usbd_status = 0;
+	size_t out_size;
+	UINT32 InterfaceId, NumInterfaces, usbd_status = 0;
 	BYTE ConfigurationDescriptorIsValid;
 	wStream* out;
 	int MsOutSize = 0;
@@ -451,6 +453,9 @@ static UINT urb_select_configuration(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* ca
 
 	if (MsConfig)
 		MsOutSize = MsConfig->MsOutSize;
+
+	if (MsOutSize > SIZE_MAX - 36)
+		return ERROR_INVALID_DATA;
 
 	if (MsOutSize > 0)
 		out_size = 36 + MsOutSize;
@@ -807,7 +812,8 @@ static UINT urb_control_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
                                            wStream* s, UINT32 RequestField, UINT32 MessageId,
                                            IUDEVMAN* udevman, BYTE func_recipient, int transferDir)
 {
-	UINT32 out_size, InterfaceId, OutputBufferSize, usbd_status;
+	size_t out_size;
+	UINT32 InterfaceId, OutputBufferSize, usbd_status;
 	BYTE bmRequestType, desc_index, desc_type;
 	UINT16 langId;
 	wStream* out;
@@ -831,14 +837,15 @@ static UINT urb_control_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
 	Stream_Read_UINT8(s, desc_type);
 	Stream_Read_UINT16(s, langId);
 	Stream_Read_UINT32(s, OutputBufferSize);
-
+	if (OutputBufferSize > UINT32_MAX - 36)
+		return ERROR_INVALID_DATA;
 	if (transferDir == USBD_TRANSFER_DIRECTION_OUT)
 	{
 		if (Stream_GetRemainingLength(s) < OutputBufferSize)
 			return ERROR_INVALID_DATA;
 	}
 
-	out_size = 36 + OutputBufferSize;
+	out_size = 36ULL + OutputBufferSize;
 	out = Stream_New(NULL, out_size);
 
 	if (!out)
@@ -885,7 +892,8 @@ static UINT urb_control_get_status_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
                                            wStream* s, UINT32 RequestField, UINT32 MessageId,
                                            IUDEVMAN* udevman, BYTE func_recipient, int transferDir)
 {
-	UINT32 out_size, InterfaceId, OutputBufferSize, usbd_status;
+	size_t out_size;
+	UINT32 InterfaceId, OutputBufferSize, usbd_status;
 	UINT16 Index;
 	BYTE bmRequestType;
 	wStream* out;
@@ -915,7 +923,9 @@ static UINT urb_control_get_status_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
 	Stream_Read_UINT16(s, Index); /** Index */
 	Stream_Seek(s, 2);
 	Stream_Read_UINT32(s, OutputBufferSize);
-	out_size = 36 + OutputBufferSize;
+	if (OutputBufferSize > UINT32_MAX - 36)
+		return ERROR_INVALID_DATA;
+	out_size = 36ULL + OutputBufferSize;
 	out = Stream_New(NULL, out_size);
 
 	if (!out)
@@ -970,6 +980,8 @@ static UINT urb_control_vendor_or_class_request(IUDEVICE* pdev, URBDRC_CHANNEL_C
 	Stream_Read_UINT16(s, Index);              /** index */
 	Stream_Read_UINT16(s, Padding);            /** Padding */
 	Stream_Read_UINT32(s, OutputBufferSize);
+	if (OutputBufferSize > UINT32_MAX - 36)
+		return ERROR_INVALID_DATA;
 
 	if (transferDir == USBD_TRANSFER_DIRECTION_OUT)
 	{
@@ -977,7 +989,7 @@ static UINT urb_control_vendor_or_class_request(IUDEVICE* pdev, URBDRC_CHANNEL_C
 			return ERROR_INVALID_DATA;
 	}
 
-	out_size = 36 + OutputBufferSize;
+	out_size = 36ULL + OutputBufferSize;
 	out = Stream_New(NULL, out_size);
 
 	if (!out)
@@ -1022,7 +1034,8 @@ static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
                                               wStream* s, UINT32 RequestField, UINT32 MessageId,
                                               IUDEVMAN* udevman, int transferDir)
 {
-	UINT32 out_size, InterfaceId, OutputBufferSize, usbd_status;
+	size_t out_size;
+	UINT32 InterfaceId, OutputBufferSize, usbd_status;
 	BYTE Recipient, InterfaceNumber, Ms_PageIndex;
 	UINT16 Ms_featureDescIndex;
 	wStream* out;
@@ -1050,6 +1063,8 @@ static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
 	Stream_Read_UINT16(s, Ms_featureDescIndex); /** Ms_featureDescIndex */
 	Stream_Seek(s, 3);                          /* Padding 2 */
 	Stream_Read_UINT32(s, OutputBufferSize);
+	if (OutputBufferSize > UINT32_MAX - 36)
+		return ERROR_INVALID_DATA;
 
 	switch (transferDir)
 	{
@@ -1064,7 +1079,7 @@ static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
 	}
 
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
-	out_size = 36 + OutputBufferSize;
+	out_size = 36ULL + OutputBufferSize;
 	out = Stream_New(NULL, out_size);
 
 	if (!out)
@@ -1245,7 +1260,8 @@ static UINT urb_control_get_configuration_request(IUDEVICE* pdev, URBDRC_CHANNEL
                                                   wStream* s, UINT32 RequestField, UINT32 MessageId,
                                                   IUDEVMAN* udevman, int transferDir)
 {
-	UINT32 out_size, InterfaceId, OutputBufferSize, usbd_status;
+	size_t out_size;
+	UINT32 InterfaceId, OutputBufferSize, usbd_status;
 	wStream* out;
 	URBDRC_PLUGIN* urbdrc;
 	const BOOL noAck = (RequestField & 0x80000000U) != 0;
@@ -1271,7 +1287,9 @@ static UINT urb_control_get_configuration_request(IUDEVICE* pdev, URBDRC_CHANNEL
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, OutputBufferSize);
-	out_size = 36 + OutputBufferSize;
+	if (OutputBufferSize > UINT32_MAX - 36)
+		return ERROR_INVALID_DATA;
+	out_size = 36ULL + OutputBufferSize;
 	out = Stream_New(NULL, out_size);
 
 	if (!out)
@@ -1298,7 +1316,8 @@ static UINT urb_control_get_interface_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
                                               wStream* s, UINT32 RequestField, UINT32 MessageId,
                                               IUDEVMAN* udevman, int transferDir)
 {
-	UINT32 out_size, InterfaceId, OutputBufferSize, usbd_status;
+	size_t out_size;
+	UINT32 InterfaceId, OutputBufferSize, usbd_status;
 	UINT16 interface;
 	wStream* out;
 	URBDRC_PLUGIN* urbdrc;
@@ -1327,7 +1346,9 @@ static UINT urb_control_get_interface_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
 	Stream_Read_UINT16(s, interface);
 	Stream_Seek(s, 2);
 	Stream_Read_UINT32(s, OutputBufferSize);
-	out_size = 36 + OutputBufferSize;
+	if (OutputBufferSize > UINT32_MAX - 36)
+		return ERROR_INVALID_DATA;
+	out_size = 36ULL + OutputBufferSize;
 	out = Stream_New(NULL, out_size);
 
 	if (!out)
@@ -1376,7 +1397,8 @@ static UINT urb_control_feature_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK*
 	Stream_Read_UINT16(s, FeatureSelector);
 	Stream_Read_UINT16(s, Index);
 	Stream_Read_UINT32(s, OutputBufferSize);
-
+	if (OutputBufferSize > UINT32_MAX - 36)
+		return ERROR_INVALID_DATA;
 	switch (transferDir)
 	{
 		case USBD_TRANSFER_DIRECTION_OUT:
@@ -1389,7 +1411,7 @@ static UINT urb_control_feature_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK*
 			break;
 	}
 
-	out = Stream_New(NULL, 36 + OutputBufferSize);
+	out = Stream_New(NULL, 36ULL + OutputBufferSize);
 
 	if (!out)
 		return ERROR_OUTOFMEMORY;

@@ -45,10 +45,16 @@
 
 #define TAG SERVER_TAG("shadow")
 
+static const char bind_address[] = "bind-address,";
+
 static const COMMAND_LINE_ARGUMENT_A shadow_args[] = {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL,
 	  "Server IPC socket" },
+	{ "bind-address", COMMAND_LINE_VALUE_REQUIRED, "<bind-address>[,<another address>, ...]", NULL,
+	  NULL, -1, NULL,
+	  "An address to bind to. Use '[<ipv6>]' for IPv6 addresses, e.g. '[::1]' for "
+	  "localhost" },
 	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL,
 	  "Select or list monitors" },
 	{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL,
@@ -220,9 +226,29 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "ipc-socket")
 		{
+			/* /bind-address is incompatible */
+			if (server->ipcSocket)
+				return -1;
+
 			server->ipcSocket = _strdup(arg->Value);
 
 			if (!server->ipcSocket)
+				return -1;
+		}
+		CommandLineSwitchCase(arg, "bind-address")
+		{
+			int rc;
+			size_t len = strlen(arg->Value) + sizeof(bind_address);
+			/* /ipc-socket is incompatible */
+			if (server->ipcSocket)
+				return -1;
+			server->ipcSocket = calloc(len, sizeof(CHAR));
+
+			if (!server->ipcSocket)
+				return -1;
+
+			rc = _snprintf(server->ipcSocket, len, "%s%s", bind_address, arg->Value);
+			if ((rc < 0) || ((size_t)rc != len - 1))
 				return -1;
 		}
 		CommandLineSwitchCase(arg, "may-view")
@@ -480,8 +506,44 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 	return 0;
 }
 
+static BOOL open_port(rdpShadowServer* server, char* address)
+{
+	BOOL status;
+	char* modaddr = address;
+
+	if (modaddr)
+	{
+		if (modaddr[0] == '[')
+		{
+			char* end = strchr(address, ']');
+			if (!end)
+			{
+				WLog_ERR(TAG, "Could not parse bind-address %s", address);
+				return -1;
+			}
+			*end++ = '\0';
+			if (strlen(end) > 0)
+			{
+				WLog_ERR(TAG, "Excess data after IPv6 address: '%s'", end);
+				return -1;
+			}
+			modaddr++;
+		}
+	}
+	status = server->listener->Open(server->listener, modaddr, (UINT16)server->port);
+
+	if (!status)
+	{
+		WLog_ERR(TAG,
+		         "Problem creating TCP listener. (Port already used or insufficient permissions?)");
+	}
+
+	return status;
+}
+
 int shadow_server_start(rdpShadowServer* server)
 {
+	BOOL ipc;
 	BOOL status;
 	WSADATA wsaData;
 
@@ -510,16 +572,50 @@ int shadow_server_start(rdpShadowServer* server)
 		return -1;
 	}
 
-	if (!server->ipcSocket)
-		status = server->listener->Open(server->listener, NULL, (UINT16)server->port);
-	else
-		status = server->listener->OpenLocal(server->listener, server->ipcSocket);
-
-	if (!status)
+	/* Bind magic:
+	 *
+	 * emtpy                 ... bind TCP all
+	 * <local path>          ... bind local (IPC)
+	 * bind-socket,<address> ... bind TCP to specified interface
+	 */
+	ipc = server->ipcSocket && (strncmp(bind_address, server->ipcSocket,
+	                                    strnlen(bind_address, sizeof(bind_address))) != 0);
+	if (!ipc)
 	{
-		WLog_ERR(TAG,
-		         "Problem creating listener. (Port already used or insufficient permissions?)");
-		return -1;
+		size_t x, count;
+		char** list = CommandLineParseCommaSeparatedValuesEx(NULL, server->ipcSocket, &count);
+		if (!list || (count <= 1))
+		{
+			free(list);
+			if (server->ipcSocket == NULL)
+			{
+				if (!open_port(server, NULL))
+					return -1;
+			}
+			else
+				return -1;
+		}
+
+		for (x = 1; x < count; x++)
+		{
+			BOOL success = open_port(server, list[x]);
+			if (!success)
+			{
+				free(list);
+				return -1;
+			}
+		}
+		free(list);
+	}
+	else
+	{
+		status = server->listener->OpenLocal(server->listener, server->ipcSocket);
+		if (!status)
+		{
+			WLog_ERR(TAG, "Problem creating local socket listener. (Port already used or "
+			              "insufficient permissions?)");
+			return -1;
+		}
 	}
 
 	if (!(server->thread = CreateThread(NULL, 0, shadow_server_thread, (void*)server, 0, NULL)))
