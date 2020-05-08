@@ -28,7 +28,7 @@ int mac_cliprdr_send_client_format_list(CliprdrClientContext *cliprdr)
 	UINT32 *pFormatIds;
 	const char *formatName;
 	CLIPRDR_FORMAT *formats;
-	CLIPRDR_FORMAT_LIST formatList;
+	CLIPRDR_FORMAT_LIST formatList = { 0 };
 	mfContext *mfc = (mfContext *)cliprdr->custom;
 
 	ZeroMemory(&formatList, sizeof(CLIPRDR_FORMAT_LIST));
@@ -56,6 +56,7 @@ int mac_cliprdr_send_client_format_list(CliprdrClientContext *cliprdr)
 	formatList.msgFlags = CB_RESPONSE_OK;
 	formatList.numFormats = numFormats;
 	formatList.formats = formats;
+	formatList.msgType = CB_FORMAT_LIST;
 
 	mfc->cliprdr->ClientFormatList(mfc->cliprdr, &formatList);
 

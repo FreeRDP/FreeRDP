@@ -339,10 +339,13 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 
 	image->type = WINPR_IMAGE_BITMAP;
 
-	if (Stream_Capacity(s) < bf.bfOffBits + bi.biSizeImage)
+	if (Stream_GetPosition(s) > bf.bfOffBits)
+		goto fail;
+	if (!Stream_SafeSeek(s, bf.bfOffBits - Stream_GetPosition(s)))
+		goto fail;
+	if (Stream_GetRemainingCapacity(s) < bi.biSizeImage)
 		goto fail;
 
-	Stream_SetPosition(s, bf.bfOffBits);
 	image->width = bi.biWidth;
 
 	if (bi.biHeight < 0)

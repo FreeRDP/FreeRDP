@@ -304,7 +304,8 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 	Stream_Seek(s, 4);
 	Stream_Read_UINT32(s, packetLength);
 
-	if ((packetLength > INT_MAX) || !Stream_EnsureCapacity(s, packetLength))
+	if ((packetLength > INT_MAX) || !Stream_EnsureCapacity(s, packetLength) ||
+	    (packetLength < header))
 	{
 		Stream_Free(s, TRUE);
 		return NULL;

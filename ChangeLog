@@ -1,3 +1,28 @@
+# 2020-05-05  Version 2.1.0
+
+Important notes:
+
+* fix multiple CVEs: CVE-2020-11039, CVE-2020-11038, CVE-2020-11043, CVE-2020-11040, CVE-2020-11041,
+  CVE-2020-11019, CVE-2020-11017, CVE-2020-11018
+* fix multiple leak and crash issues (#6129, #6128, #6127, #6110, #6081, #6077)
+
+Noteworthy features and improvements:
+* Fixed sound issues (#6043)
+* New expert command line options /tune and /tune-list to modify all client
+  settings in a generic way.
+* Fixes for smartcard cache, this improves compatibility of smartcard devices
+  with newer smartcard channel.
+* Shadow server can now be instructed to listen to multiple interfaces.
+* Improved server certificate support (#6052)
+* Various fixes for wayland client (fullscreen, mouse wheel, ...)
+* Fixed large mouse pointer support, now mouse pointers > 96x96 pixel are visible.
+* USB redirection command line improvements (filter options)
+* Various translation improvements for android and ios clients
+
+For a complete and detailed change log since the last release candidate run:
+git log 2.0.0..2.1.0
+
+
 # 2020-04-09  Version 2.0.0
 
 Important notes:
