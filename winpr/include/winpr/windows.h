@@ -31,6 +31,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
+#include <winpr/mingw.h>
 
 #else
 
