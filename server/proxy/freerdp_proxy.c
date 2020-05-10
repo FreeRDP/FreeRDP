@@ -94,8 +94,6 @@ int main(int argc, char* argv[])
 	if (argc >= 2)
 		config_path = argv[1];
 
-	pf_server_register_signal_handlers();
-
 	config = pf_server_config_load(config_path);
 	if (!config)
 		goto fail;
@@ -112,6 +110,8 @@ int main(int argc, char* argv[])
 	pf_modules_list_loaded_plugins();
 	if (!is_all_required_modules_loaded(config))
 		goto fail;
+
+	pf_server_register_signal_handlers();
 
 	server = pf_server_new(config);
 	if (!server)
