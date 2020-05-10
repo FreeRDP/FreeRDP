@@ -24,6 +24,7 @@
 #include "pf_log.h"
 #include "pf_modules.h"
 
+#include <freerdp/version.h>
 #include <freerdp/build-config.h>
 #include <winpr/collections.h>
 #include <stdlib.h>
@@ -84,6 +85,11 @@ int main(int argc, char* argv[])
 	proxyConfig* config = NULL;
 	char* config_path = "config.ini";
 	int status = -1;
+
+	WLog_INFO(TAG, "freerdp-proxy version info:");
+	WLog_INFO(TAG, "\tFreeRDP version: %s", FREERDP_VERSION_FULL);
+	WLog_INFO(TAG, "\tGit commit: %s", GIT_REVISION);
+	WLog_DBG(TAG, "\tBuild config: %s", freerdp_get_build_config());
 
 	if (argc >= 2)
 		config_path = argv[1];
