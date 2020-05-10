@@ -76,7 +76,7 @@ When run as user within a X session (for example from an xterm) a socket on
 Successful program execution.
 .TP
 .B 1
-Otherweise.
+Otherwise.
 
 .SH SEE ALSO
 wlog(7)
