@@ -1751,6 +1751,7 @@ rdpRdp* rdp_new(rdpContext* context)
 	if (!rdp)
 		return NULL;
 
+	InitializeCriticalSection(&rdp->critical);
 	rdp->context = context;
 	rdp->instance = context->instance;
 	flags = 0;
@@ -1763,7 +1764,7 @@ rdpRdp* rdp_new(rdpContext* context)
 		context->settings = freerdp_settings_new(flags);
 
 		if (!context->settings)
-			goto out_free;
+			goto fail;
 
 		newSettings = TRUE;
 	}
@@ -1784,93 +1785,67 @@ rdpRdp* rdp_new(rdpContext* context)
 	rdp->transport = transport_new(context);
 
 	if (!rdp->transport)
-		goto out_free_settings;
+		goto fail;
 
 	rdp->license = license_new(rdp);
 
 	if (!rdp->license)
-		goto out_free_transport;
+		goto fail;
 
 	rdp->input = input_new(rdp);
 
 	if (!rdp->input)
-		goto out_free_license;
+		goto fail;
 
 	rdp->update = update_new(rdp);
 
 	if (!rdp->update)
-		goto out_free_input;
+		goto fail;
 
 	rdp->fastpath = fastpath_new(rdp);
 
 	if (!rdp->fastpath)
-		goto out_free_update;
+		goto fail;
 
 	rdp->nego = nego_new(rdp->transport);
 
 	if (!rdp->nego)
-		goto out_free_fastpath;
+		goto fail;
 
 	rdp->mcs = mcs_new(rdp->transport);
 
 	if (!rdp->mcs)
-		goto out_free_nego;
+		goto fail;
 
 	rdp->redirection = redirection_new();
 
 	if (!rdp->redirection)
-		goto out_free_mcs;
+		goto fail;
 
 	rdp->autodetect = autodetect_new();
 
 	if (!rdp->autodetect)
-		goto out_free_redirection;
+		goto fail;
 
 	rdp->heartbeat = heartbeat_new();
 
 	if (!rdp->heartbeat)
-		goto out_free_autodetect;
+		goto fail;
 
 	rdp->multitransport = multitransport_new();
 
 	if (!rdp->multitransport)
-		goto out_free_heartbeat;
+		goto fail;
 
 	rdp->bulk = bulk_new(context);
 
 	if (!rdp->bulk)
-		goto out_free_multitransport;
+		goto fail;
 
 	return rdp;
-out_free_multitransport:
-	multitransport_free(rdp->multitransport);
-out_free_heartbeat:
-	heartbeat_free(rdp->heartbeat);
-out_free_autodetect:
-	autodetect_free(rdp->autodetect);
-out_free_redirection:
-	redirection_free(rdp->redirection);
-out_free_mcs:
-	mcs_free(rdp->mcs);
-out_free_nego:
-	nego_free(rdp->nego);
-out_free_fastpath:
-	fastpath_free(rdp->fastpath);
-out_free_update:
-	update_free(rdp->update);
-out_free_input:
-	input_free(rdp->input);
-out_free_license:
-	license_free(rdp->license);
-out_free_transport:
-	transport_free(rdp->transport);
-out_free_settings:
 
-	if (newSettings)
-		freerdp_settings_free(rdp->settings);
-
-out_free:
-	free(rdp);
+fail:
+	rdp_free(rdp);
 	return NULL;
 }
 
@@ -1950,6 +1925,7 @@ void rdp_free(rdpRdp* rdp)
 {
 	if (rdp)
 	{
+		DeleteCriticalSection(&rdp->critical);
 		winpr_RC4_Free(rdp->rc4_decrypt_key);
 		winpr_RC4_Free(rdp->rc4_encrypt_key);
 		winpr_Cipher_Free(rdp->fips_encrypt);
