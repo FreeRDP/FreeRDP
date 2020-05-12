@@ -364,13 +364,15 @@ static void printer_cups_add_ref_driver(rdpPrinterDriver* driver)
 }
 
 /* Singleton */
-static rdpCupsPrinterDriver* cups_driver = NULL;
+static rdpCupsPrinterDriver* uniq_cups_driver = NULL;
 
 static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 {
 	rdpCupsPrinterDriver* cups_driver = (rdpCupsPrinterDriver*)driver;
 	if (cups_driver->references <= 1)
 	{
+		if (uniq_cups_driver == cups_driver)
+			uniq_cups_driver = NULL;
 		free(cups_driver);
 		cups_driver = NULL;
 	}
@@ -384,23 +386,23 @@ rdpPrinterDriver* cups_freerdp_printer_client_subsystem_entry(void)
 FREERDP_API rdpPrinterDriver* freerdp_printer_client_subsystem_entry(void)
 #endif
 {
-	if (!cups_driver)
+	if (!uniq_cups_driver)
 	{
-		cups_driver = (rdpCupsPrinterDriver*)calloc(1, sizeof(rdpCupsPrinterDriver));
+		uniq_cups_driver = (rdpCupsPrinterDriver*)calloc(1, sizeof(rdpCupsPrinterDriver));
 
-		if (!cups_driver)
+		if (!uniq_cups_driver)
 			return NULL;
 
-		cups_driver->driver.EnumPrinters = printer_cups_enum_printers;
-		cups_driver->driver.ReleaseEnumPrinters = printer_cups_release_enum_printers;
-		cups_driver->driver.GetPrinter = printer_cups_get_printer;
+		uniq_cups_driver->driver.EnumPrinters = printer_cups_enum_printers;
+		uniq_cups_driver->driver.ReleaseEnumPrinters = printer_cups_release_enum_printers;
+		uniq_cups_driver->driver.GetPrinter = printer_cups_get_printer;
 
-		cups_driver->driver.AddRef = printer_cups_add_ref_driver;
-		cups_driver->driver.ReleaseRef = printer_cups_release_ref_driver;
+		uniq_cups_driver->driver.AddRef = printer_cups_add_ref_driver;
+		uniq_cups_driver->driver.ReleaseRef = printer_cups_release_ref_driver;
 
-		cups_driver->id_sequence = 1;
-		cups_driver->driver.AddRef(&cups_driver->driver);
+		uniq_cups_driver->id_sequence = 1;
+		uniq_cups_driver->driver.AddRef(&uniq_cups_driver->driver);
 	}
 
-	return &cups_driver->driver;
+	return &uniq_cups_driver->driver;
 }
