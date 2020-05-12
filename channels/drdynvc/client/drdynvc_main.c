@@ -40,6 +40,7 @@ static void dvcman_wtslistener_free(DVCMAN_LISTENER* listener)
 {
 	if (listener)
 		free(listener->channel_name);
+
 	free(listener);
 }
 
@@ -217,6 +218,11 @@ static void dvcman_plugin_terminate(void* plugin)
 		WLog_ERR(TAG, "Terminated failed with error %" PRIu32 "!", error);
 }
 
+static void wts_listener_free(void* arg)
+{
+	DVCMAN_LISTENER* listener = (DVCMAN_LISTENER*)arg;
+	dvcman_wtslistener_free(listener);
+}
 static IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 {
 	wObject* obj;
@@ -248,7 +254,7 @@ static IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	if (!dvcman->listeners)
 		goto fail;
 	obj = ArrayList_Object(dvcman->listeners);
-	obj->fnObjectFree = dvcman_wtslistener_free;
+	obj->fnObjectFree = wts_listener_free;
 
 	dvcman->plugin_names = ArrayList_New(TRUE);
 	if (!dvcman->plugin_names)
@@ -378,10 +384,10 @@ static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChan
 {
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 
-	ArrayList_Free(dvcman->listeners);
+	ArrayList_Free(dvcman->plugins);
 	ArrayList_Free(dvcman->channels);
 	ArrayList_Free(dvcman->plugin_names);
-	ArrayList_Free(dvcman->plugins);
+	ArrayList_Free(dvcman->listeners);
 
 	StreamPool_Free(dvcman->pool);
 	free(dvcman);
@@ -580,7 +586,6 @@ static UINT dvcman_open_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelManage
 static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId,
                                  BOOL bSendClosePDU)
 {
-	size_t i;
 	DVCMAN_CHANNEL* channel;
 	UINT error = CHANNEL_RC_OK;
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
@@ -614,14 +619,6 @@ static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 
 		}
 	}
 
-	ArrayList_Lock(dvcman->listeners);
-	for (i = ArrayList_Count(dvcman->listeners); i > 0; i--)
-	{
-		DVCMAN_LISTENER* listener = ArrayList_GetItem(dvcman->listeners, i - 1);
-		if (strcmp(listener->channel_name, channel->channel_name) == 0)
-			ArrayList_Remove(dvcman->listeners, listener);
-	}
-	ArrayList_Unlock(dvcman->listeners);
 	ArrayList_Remove(dvcman->channels, channel);
 	return error;
 }
