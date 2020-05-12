@@ -1916,7 +1916,7 @@ static UINT rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 	{
 		IWTSVirtualChannelManager* mgr = gfx->listener_callback->channel_mgr;
 		if (mgr)
-			IFCALL(mgr->DestroyListener, mgr, &gfx->iface);
+			IFCALL(mgr->DestroyListener, mgr, gfx->listener);
 	}
 	rdpgfx_client_context_free(context);
 	return CHANNEL_RC_OK;

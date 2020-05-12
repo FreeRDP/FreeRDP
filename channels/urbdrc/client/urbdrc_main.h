@@ -84,6 +84,7 @@ struct _URBDRC_PLUGIN
 	char* subsystem;
 
 	wLog* log;
+	IWTSListener* listener;
 };
 
 typedef BOOL (*PREGISTERURBDRCSERVICE)(IWTSPlugin* plugin, IUDEVMAN* udevman);

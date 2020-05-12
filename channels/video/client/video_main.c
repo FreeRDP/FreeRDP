@@ -1088,13 +1088,13 @@ static UINT video_plugin_terminated(IWTSPlugin* pPlugin)
 	{
 		IWTSVirtualChannelManager* mgr = video->control_callback->channel_mgr;
 		if (mgr)
-			IFCALL(mgr->DestroyListener, mgr, &video->control_callback->iface);
+			IFCALL(mgr->DestroyListener, mgr, video->controlListener);
 	}
 	if (video->data_callback)
 	{
 		IWTSVirtualChannelManager* mgr = video->data_callback->channel_mgr;
 		if (mgr)
-			IFCALL(mgr->DestroyListener, mgr, &video->data_callback->iface);
+			IFCALL(mgr->DestroyListener, mgr, video->dataListener);
 	}
 
 	if (video->context)

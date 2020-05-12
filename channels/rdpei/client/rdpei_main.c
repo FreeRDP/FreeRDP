@@ -601,7 +601,7 @@ static UINT rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 	{
 		IWTSVirtualChannelManager* mgr = rdpei->listener_callback->channel_mgr;
 		if (mgr)
-			IFCALL(mgr->DestroyListener, mgr, &rdpei->iface);
+			IFCALL(mgr->DestroyListener, mgr, rdpei->listener);
 	}
 	free(rdpei->listener_callback);
 	free(rdpei->context);
