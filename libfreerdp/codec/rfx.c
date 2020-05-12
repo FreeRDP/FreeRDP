@@ -153,7 +153,7 @@ static void rfx_tile_init(void* obj)
 	}
 }
 
-static void* rfx_decoder_tile_new(void* val)
+static void* rfx_decoder_tile_new(const void* val)
 {
 	RFX_TILE* tile = NULL;
 	WINPR_UNUSED(val);
@@ -184,7 +184,7 @@ static void rfx_decoder_tile_free(void* obj)
 	}
 }
 
-static void* rfx_encoder_tile_new(void* val)
+static void* rfx_encoder_tile_new(const void* val)
 {
 	WINPR_UNUSED(val);
 	return calloc(1, sizeof(RFX_TILE));

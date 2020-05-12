@@ -346,6 +346,7 @@ finally:
 TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid,
                                          IWTSVirtualChannelCallback* pChannelCallback)
 {
+	wObject* obj;
 	TSMF_PRESENTATION* presentation;
 
 	if (!guid || !pChannelCallback)
@@ -367,7 +368,10 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid,
 	if (!(presentation->stream_list = ArrayList_New(TRUE)))
 		goto error_stream_list;
 
-	ArrayList_Object(presentation->stream_list)->fnObjectFree = _tsmf_stream_free;
+	obj = ArrayList_Object(presentation->stream_list);
+	if (!obj)
+		goto error_add;
+	obj->fnObjectFree = _tsmf_stream_free;
 
 	if (ArrayList_Add(presentation_list, presentation) < 0)
 		goto error_add;
@@ -1206,6 +1210,7 @@ void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
                              rdpContext* rdpcontext)
 {
+	wObject* obj;
 	TSMF_STREAM* stream;
 	stream = tsmf_stream_find_by_id(presentation, stream_id);
 
@@ -1247,13 +1252,21 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
 	if (!stream->sample_list)
 		goto error_sample_list;
 
-	stream->sample_list->object.fnObjectFree = tsmf_sample_free;
+	obj = Queue_Object(stream->sample_list);
+	if (!obj)
+		goto error_sample_ack_list;
+	obj->fnObjectFree = tsmf_sample_free;
+
 	stream->sample_ack_list = Queue_New(TRUE, -1, -1);
 
 	if (!stream->sample_ack_list)
 		goto error_sample_ack_list;
 
-	stream->sample_ack_list->object.fnObjectFree = tsmf_sample_free;
+	obj = Queue_Object(stream->sample_ack_list);
+	if (!obj)
+		goto error_play_thread;
+	obj->fnObjectFree = tsmf_sample_free;
+
 	stream->play_thread =
 	    CreateThread(NULL, 0, tsmf_stream_playback_func, stream, CREATE_SUSPENDED, NULL);
 
@@ -1529,6 +1542,7 @@ static void tsmf_signal_handler(int s)
 
 BOOL tsmf_media_init(void)
 {
+	wObject* obj;
 #ifndef _WIN32
 	struct sigaction sigtrap;
 	sigtrap.sa_handler = tsmf_signal_handler;
@@ -1545,7 +1559,10 @@ BOOL tsmf_media_init(void)
 		if (!presentation_list)
 			return FALSE;
 
-		ArrayList_Object(presentation_list)->fnObjectFree = _tsmf_presentation_free;
+		obj = ArrayList_Object(presentation_list);
+		if (!obj)
+			return FALSE;
+		obj->fnObjectFree = _tsmf_presentation_free;
 	}
 
 	return TRUE;

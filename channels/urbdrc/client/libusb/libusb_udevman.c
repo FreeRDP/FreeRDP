@@ -903,6 +903,7 @@ static DWORD poll_thread(LPVOID lpThreadParameter)
 #endif
 UINT freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
 {
+	wObject* obj;
 	UINT rc;
 	UINT status;
 	UDEVMAN* udevman;
@@ -915,8 +916,11 @@ UINT freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS 
 	udevman->hotplug_vid_pids = ArrayList_New(TRUE);
 	if (!udevman->hotplug_vid_pids)
 		goto fail;
-	ArrayList_Object(udevman->hotplug_vid_pids)->fnObjectFree = free;
-	ArrayList_Object(udevman->hotplug_vid_pids)->fnObjectEquals = udevman_vid_pid_pair_equals;
+	obj = ArrayList_Object(udevman->hotplug_vid_pids);
+	if (!obj)
+		goto fail;
+	obj->fnObjectFree = free;
+	obj->fnObjectEquals = udevman_vid_pid_pair_equals;
 
 	udevman->next_device_id = BASE_USBDEVICE_NUM;
 	udevman->iface.plugin = pEntryPoints->plugin;

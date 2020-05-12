@@ -48,6 +48,7 @@ static BOOL ungrabKeyboardWithRightCtrl = TRUE;
 
 static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 {
+	wObject* obj;
 	FILE* keyScript;
 	char* keyCombination;
 	char buffer[1024] = { 0 };
@@ -62,7 +63,10 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	if (!xfc->keyCombinations)
 		return FALSE;
 
-	ArrayList_Object(xfc->keyCombinations)->fnObjectFree = free;
+	obj = ArrayList_Object(xfc->keyCombinations);
+	if (!obj)
+		return FALSE;
+	obj->fnObjectFree = free;
 	sprintf_s(command, sizeof(command), "%s key", xfc->context.settings->ActionScript);
 	keyScript = popen(command, "r");
 

@@ -27,23 +27,46 @@
 
 #include <winpr/collections.h>
 
+struct _wBipBlock
+{
+	size_t index;
+	size_t size;
+};
+typedef struct _wBipBlock wBipBlock;
+
+struct _wBipBuffer
+{
+	size_t size;
+	BYTE* buffer;
+	size_t pageSize;
+	wBipBlock blockA;
+	wBipBlock blockB;
+	wBipBlock readR;
+	wBipBlock writeR;
+};
+
 /**
  * The Bip Buffer - The Circular Buffer with a Twist:
  * http://www.codeproject.com/Articles/3479/The-Bip-Buffer-The-Circular-Buffer-with-a-Twist
  */
 
-#define BipBlock_Clear(_bbl) _bbl.index = _bbl.size = 0
+static INLINE void BipBlock_Clear(wBipBlock* _bbl)
+{
+	_bbl->index = _bbl->size = 0;
+}
 
-#define BipBlock_Copy(_dst, _src) \
-	_dst.index = _src.index;      \
-	_dst.size = _src.size
+static INLINE void BipBlock_Copy(wBipBlock* _dst, const wBipBlock* _src)
+{
+	_dst->index = _src->index;
+	_dst->size = _src->size;
+}
 
 void BipBuffer_Clear(wBipBuffer* bb)
 {
-	BipBlock_Clear(bb->blockA);
-	BipBlock_Clear(bb->blockB);
-	BipBlock_Clear(bb->readR);
-	BipBlock_Clear(bb->writeR);
+	BipBlock_Clear(&bb->blockA);
+	BipBlock_Clear(&bb->blockB);
+	BipBlock_Clear(&bb->readR);
+	BipBlock_Clear(&bb->writeR);
 }
 
 static BOOL BipBuffer_AllocBuffer(wBipBuffer* bb, size_t size)
@@ -198,7 +221,7 @@ void BipBuffer_WriteCommit(wBipBuffer* bb, size_t size)
 {
 	if (size == 0)
 	{
-		BipBlock_Clear(bb->writeR);
+		BipBlock_Clear(&bb->writeR);
 		return;
 	}
 
@@ -209,7 +232,7 @@ void BipBuffer_WriteCommit(wBipBuffer* bb, size_t size)
 	{
 		bb->blockA.index = bb->writeR.index;
 		bb->blockA.size = size;
-		BipBlock_Clear(bb->writeR);
+		BipBlock_Clear(&bb->writeR);
 		return;
 	}
 
@@ -218,7 +241,7 @@ void BipBuffer_WriteCommit(wBipBuffer* bb, size_t size)
 	else
 		bb->blockB.size += size;
 
-	BipBlock_Clear(bb->writeR);
+	BipBlock_Clear(&bb->writeR);
 }
 
 SSIZE_T BipBuffer_Write(wBipBuffer* bb, const BYTE* data, size_t size)
@@ -332,8 +355,8 @@ void BipBuffer_ReadCommit(wBipBuffer* bb, size_t size)
 
 	if (size >= bb->blockA.size)
 	{
-		BipBlock_Copy(bb->blockA, bb->blockB);
-		BipBlock_Clear(bb->blockB);
+		BipBlock_Copy(&bb->blockA, &bb->blockB);
+		BipBlock_Clear(&bb->blockB);
 	}
 	else
 	{

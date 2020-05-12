@@ -167,6 +167,7 @@ static const char* x11_event_string(int event)
 
 BOOL xf_event_action_script_init(xfContext* xfc)
 {
+	wObject* obj;
 	char* xevent;
 	FILE* actionScript;
 	char buffer[1024] = { 0 };
@@ -176,7 +177,10 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 	if (!xfc->xevents)
 		return FALSE;
 
-	ArrayList_Object(xfc->xevents)->fnObjectFree = free;
+	obj = ArrayList_Object(xfc->xevents);
+	if (!obj)
+		return FALSE;
+	obj->fnObjectFree = free;
 	sprintf_s(command, sizeof(command), "%s xevent", xfc->context.settings->ActionScript);
 	actionScript = popen(command, "r");
 

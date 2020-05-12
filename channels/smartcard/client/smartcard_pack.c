@@ -101,9 +101,9 @@ static BOOL smartcard_ndr_pointer_read_(wStream* s, UINT32* index, UINT32* ptr, 
 static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t elementSize,
                                ndr_ptr_t type)
 {
-	size_t len, offset, len2;
+	size_t len = 0, offset, len2;
 	void* r;
-	size_t required;
+	size_t required = 0;
 
 	switch (type)
 	{
