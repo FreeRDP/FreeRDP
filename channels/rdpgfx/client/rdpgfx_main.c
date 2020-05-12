@@ -1896,8 +1896,7 @@ static UINT rdpgfx_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 	gfx->listener_callback->plugin = pPlugin;
 	gfx->listener_callback->channel_mgr = pChannelMgr;
 	error = pChannelMgr->CreateListener(pChannelMgr, RDPGFX_DVC_CHANNEL_NAME, 0,
-	                                    (IWTSListenerCallback*)gfx->listener_callback,
-	                                    &(gfx->listener));
+	                                    &gfx->listener_callback->iface, &(gfx->listener));
 	gfx->listener->pInterface = gfx->iface.pInterface;
 	DEBUG_RDPGFX(gfx->log, "Initialize");
 	return error;
@@ -1913,6 +1912,12 @@ static UINT rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)pPlugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	DEBUG_RDPGFX(gfx->log, "Terminated");
+	if (gfx && gfx->listener_callback)
+	{
+		IWTSVirtualChannelManager* mgr = gfx->listener_callback->channel_mgr;
+		if (mgr)
+			IFCALL(mgr->DestroyListener, mgr, &gfx->iface);
+	}
 	rdpgfx_client_context_free(context);
 	return CHANNEL_RC_OK;
 }

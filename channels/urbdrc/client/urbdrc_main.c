@@ -709,7 +709,12 @@ static UINT urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
 
 	if (!urbdrc)
 		return ERROR_INVALID_DATA;
-
+	if (urbdrc->listener_callback)
+	{
+		IWTSVirtualChannelManager* mgr = urbdrc->listener_callback->channel_mgr;
+		if (mgr)
+			IFCALL(mgr->DestroyListener, mgr, &urbdrc->iface);
+	}
 	udevman = urbdrc->udevman;
 
 	if (udevman)
