@@ -72,10 +72,11 @@ static void pf_client_on_error_info(void* ctx, ErrorInfoEventArgs* e)
 	freerdp_send_error_info(ps->context.rdp);
 }
 
-static BOOL pf_client_load_rdpsnd(pClientContext* pc, proxyConfig* config)
+static BOOL pf_client_load_rdpsnd(pClientContext* pc)
 {
 	rdpContext* context = (rdpContext*)pc;
 	pServerContext* ps = pc->pdata->ps;
+	proxyConfig* config = pc->pdata->config;
 
 	/*
 	 * if AudioOutput is enabled in proxy and client connected with rdpsnd, use proxy as rdpsnd
@@ -95,6 +96,63 @@ static BOOL pf_client_load_rdpsnd(pClientContext* pc, proxyConfig* config)
 			return FALSE;
 	}
 
+	return TRUE;
+}
+
+static BOOL pf_client_passthrough_channels_init(pClientContext* pc)
+{
+	pServerContext* ps = pc->pdata->ps;
+	rdpSettings* settings = pc->context.settings;
+	proxyConfig* config = pc->pdata->config;
+	size_t i;
+
+	if (settings->ChannelCount + config->PassthroughCount >= settings->ChannelDefArraySize)
+	{
+		LOG_ERR(TAG, pc, "too many channels");
+		return FALSE;
+	}
+
+	for (i = 0; i < config->PassthroughCount; i++)
+	{
+		const char* channel_name = config->Passthrough[i];
+		CHANNEL_DEF channel = { 0 };
+
+		/* only connect connect this channel if already joined in peer connection */
+		if (!WTSVirtualChannelManagerIsChannelJoined(ps->vcm, channel_name))
+		{
+			LOG_INFO(TAG, ps, "client did not connected with channel %s, skipping passthrough",
+			         channel_name);
+
+			continue;
+		}
+
+		channel.options = CHANNEL_OPTION_INITIALIZED; /* TODO: Export to config. */
+		strncpy(channel.name, channel_name, CHANNEL_NAME_LEN);
+
+		settings->ChannelDefArray[settings->ChannelCount++] = channel;
+	}
+
+	return TRUE;
+}
+
+static BOOL pf_client_use_peer_load_balance_info(pClientContext* pc)
+{
+	pServerContext* ps = pc->pdata->ps;
+	rdpSettings* settings = pc->context.settings;
+	DWORD lb_info_len;
+	const char* lb_info = freerdp_nego_get_routing_token(&ps->context, &lb_info_len);
+	if (!lb_info)
+		return TRUE;
+
+	free(settings->LoadBalanceInfo);
+
+	settings->LoadBalanceInfoLength = lb_info_len;
+	settings->LoadBalanceInfo = malloc(settings->LoadBalanceInfoLength);
+
+	if (!settings->LoadBalanceInfo)
+		return FALSE;
+
+	CopyMemory(settings->LoadBalanceInfo, lb_info, settings->LoadBalanceInfoLength);
 	return TRUE;
 }
 
@@ -135,6 +193,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	settings->DynamicResolutionUpdate = config->DisplayControl;
 
 	settings->AutoReconnectionEnabled = TRUE;
+
 	/**
 	 * Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded.
@@ -144,45 +203,26 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    pf_channels_on_client_channel_disconnect);
 	PubSub_SubscribeErrorInfo(instance->context->pubSub, pf_client_on_error_info);
-
 	/**
 	 * Load all required plugins / channels / libraries specified by current
 	 * settings.
 	 */
 	LOG_INFO(TAG, pc, "Loading addins");
 
+	if (!config->UseLoadBalanceInfo)
 	{
-		/* add passthrough channels to channel def array */
-		size_t i;
+		/* if target is static (i.e fetched from config). make sure to use peer's load-balance info,
+		 * in order to support broker redirection.
+		 */
 
-		if (settings->ChannelCount + config->PassthroughCount >= settings->ChannelDefArraySize)
-		{
-			LOG_ERR(TAG, pc, "too many channels");
+		if (!pf_client_use_peer_load_balance_info(pc))
 			return FALSE;
-		}
-
-		for (i = 0; i < config->PassthroughCount; i++)
-		{
-			const char* channel_name = config->Passthrough[i];
-			CHANNEL_DEF channel = { 0 };
-
-			/* only connect connect this channel if already joined in peer connection */
-			if (!WTSVirtualChannelManagerIsChannelJoined(ps->vcm, channel_name))
-			{
-				LOG_INFO(TAG, ps, "client did not connected with channel %s, skipping passthrough",
-				         channel_name);
-
-				continue;
-			}
-
-			channel.options = CHANNEL_OPTION_INITIALIZED; /* TODO: Export to config. */
-			strncpy(channel.name, channel_name, CHANNEL_NAME_LEN);
-
-			settings->ChannelDefArray[settings->ChannelCount++] = channel;
-		}
 	}
 
-	if (!pf_client_load_rdpsnd(pc, config))
+	if (!pf_client_passthrough_channels_init(pc))
+		return FALSE;
+
+	if (!pf_client_load_rdpsnd(pc))
 	{
 		LOG_ERR(TAG, pc, "Failed to load rdpsnd client");
 		return FALSE;
