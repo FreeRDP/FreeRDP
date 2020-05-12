@@ -1560,7 +1560,7 @@ static UINT rdpsnd_plugin_terminated(IWTSPlugin* pPlugin)
 		{
 			IWTSVirtualChannelManager* mgr = rdpsnd->listener_callback->channel_mgr;
 			if (mgr)
-				IFCALL(mgr->DestroyListener, mgr, &rdpsnd->iface);
+				IFCALL(mgr->DestroyListener, mgr, rdpsnd->listener);
 		}
 		free(rdpsnd->listener_callback);
 		free(rdpsnd->iface.pInterface);

@@ -431,7 +431,7 @@ static UINT geometry_plugin_terminated(IWTSPlugin* pPlugin)
 	{
 		IWTSVirtualChannelManager* mgr = geometry->listener_callback->channel_mgr;
 		if (mgr)
-			IFCALL(mgr->DestroyListener, mgr, &geometry->iface);
+			IFCALL(mgr->DestroyListener, mgr, geometry->listener);
 	}
 
 	if (context)

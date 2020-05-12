@@ -687,7 +687,7 @@ static UINT urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 	/* [MS-RDPEUSB] 2.1 Transport defines the channel name in uppercase letters */
 	CharUpperA(channelName);
 	status = pChannelMgr->CreateListener(pChannelMgr, channelName, 0,
-	                                     &urbdrc->listener_callback->iface, NULL);
+	                                     &urbdrc->listener_callback->iface, &urbdrc->listener);
 	if (status != CHANNEL_RC_OK)
 		return status;
 
@@ -713,7 +713,7 @@ static UINT urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
 	{
 		IWTSVirtualChannelManager* mgr = urbdrc->listener_callback->channel_mgr;
 		if (mgr)
-			IFCALL(mgr->DestroyListener, mgr, &urbdrc->iface);
+			IFCALL(mgr->DestroyListener, mgr, urbdrc->listener);
 	}
 	udevman = urbdrc->udevman;
 
