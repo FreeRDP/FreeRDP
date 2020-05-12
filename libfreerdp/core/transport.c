@@ -325,6 +325,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	if (!settings->Authentication)
 		return TRUE;
 
+	nla_free(rdp->nla);
 	rdp->nla = nla_new(instance, transport, settings);
 
 	if (!rdp->nla)
@@ -1214,6 +1215,7 @@ void transport_free(rdpTransport* transport)
 	if (transport->ReceiveBuffer)
 		Stream_Release(transport->ReceiveBuffer);
 
+	nla_free(transport->nla);
 	StreamPool_Free(transport->ReceivePool);
 	CloseHandle(transport->connectedEvent);
 	CloseHandle(transport->rereadEvent);
