@@ -22,29 +22,66 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 
 #include <winpr/collections.h>
+
+struct _wStreamPool
+{
+	size_t aSize;
+	size_t aCapacity;
+	wStream** aArray;
+
+	size_t uSize;
+	size_t uCapacity;
+	wStream** uArray;
+
+	CRITICAL_SECTION lock;
+	BOOL synchronized;
+	size_t defaultSize;
+};
+
+static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL usedOrAvailable)
+{
+	size_t new_cap = 0;
+	size_t* cap = (usedOrAvailable) ? &pool->uCapacity : &pool->aCapacity;
+	size_t* size = (usedOrAvailable) ? &pool->uSize : &pool->aSize;
+	wStream*** array = (usedOrAvailable) ? &pool->uArray : &pool->aArray;
+
+	if (!pool)
+		return FALSE;
+	if (*cap == 0)
+		new_cap = *size + count;
+	else if (*size + count > *cap)
+		new_cap = *cap * 2;
+	else if ((*size + count) < *cap / 3)
+		new_cap = *cap / 2;
+
+	if (new_cap > 0)
+	{
+		wStream** new_arr;
+
+		if (*cap < *size + count)
+			*cap += count;
+
+		new_arr = (wStream**)realloc(*array, sizeof(wStream*) * new_cap);
+		if (!new_arr)
+			return FALSE;
+		*cap = new_cap;
+		*array = new_arr;
+	}
+	return TRUE;
+}
 
 /**
  * Methods
  */
 
-static void StreamPool_ShiftUsed(wStreamPool* pool, int index, int count)
+static void StreamPool_ShiftUsed(wStreamPool* pool, size_t index, INT64 count)
 {
 	if (count > 0)
 	{
-		if (pool->uSize + count > pool->uCapacity)
-		{
-			int new_cap;
-			wStream** new_arr;
-
-			new_cap = pool->uCapacity * 2;
-			new_arr = (wStream**)realloc(pool->uArray, sizeof(wStream*) * new_cap);
-			if (!new_arr)
-				return;
-			pool->uCapacity = new_cap;
-			pool->uArray = new_arr;
-		}
+		StreamPool_EnsureCapacity(pool, (size_t)count, TRUE);
 
 		MoveMemory(&pool->uArray[index + count], &pool->uArray[index],
 		           (pool->uSize - index) * sizeof(wStream*));
@@ -68,19 +105,7 @@ static void StreamPool_ShiftUsed(wStreamPool* pool, int index, int count)
 
 static void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
 {
-	if ((pool->uSize + 1) >= pool->uCapacity)
-	{
-		int new_cap;
-		wStream** new_arr;
-
-		new_cap = pool->uCapacity * 2;
-		new_arr = (wStream**)realloc(pool->uArray, sizeof(wStream*) * new_cap);
-		if (!new_arr)
-			return;
-		pool->uCapacity = new_cap;
-		pool->uArray = new_arr;
-	}
-
+	StreamPool_EnsureCapacity(pool, 1, TRUE);
 	pool->uArray[(pool->uSize)++] = s;
 }
 
@@ -90,7 +115,7 @@ static void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
 
 static void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 {
-	int index;
+	size_t index;
 	BOOL found = FALSE;
 
 	for (index = 0; index < pool->uSize; index++)
@@ -106,23 +131,11 @@ static void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 		StreamPool_ShiftUsed(pool, index, -1);
 }
 
-static void StreamPool_ShiftAvailable(wStreamPool* pool, int index, int count)
+static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 count)
 {
 	if (count > 0)
 	{
-		if (pool->aSize + count > pool->aCapacity)
-		{
-			int new_cap;
-			wStream** new_arr;
-
-			new_cap = pool->aCapacity * 2;
-			new_arr = (wStream**)realloc(pool->aArray, sizeof(wStream*) * new_cap);
-			if (!new_arr)
-				return;
-			pool->aCapacity = new_cap;
-			pool->aArray = new_arr;
-		}
-
+		StreamPool_EnsureCapacity(pool, (size_t)count, FALSE);
 		MoveMemory(&pool->aArray[index + count], &pool->aArray[index],
 		           (pool->aSize - index) * sizeof(wStream*));
 		pool->aSize += count;
@@ -145,8 +158,8 @@ static void StreamPool_ShiftAvailable(wStreamPool* pool, int index, int count)
 
 wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 {
-	int index;
-	int foundIndex;
+	size_t index;
+	SSIZE_T foundIndex;
 	wStream* s = NULL;
 
 	if (pool->synchronized)
@@ -204,31 +217,7 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 	if (pool->synchronized)
 		EnterCriticalSection(&pool->lock);
 
-	if ((pool->aSize + 1) >= pool->aCapacity)
-	{
-		int new_cap;
-		wStream** new_arr;
-
-		new_cap = pool->aCapacity * 2;
-		new_arr = (wStream**)realloc(pool->aArray, sizeof(wStream*) * new_cap);
-		if (!new_arr)
-			goto out_fail;
-		pool->aCapacity = new_cap;
-		pool->aArray = new_arr;
-	}
-	else if ((pool->aSize + 1) * 3 < pool->aCapacity)
-	{
-		int new_cap;
-		wStream** new_arr;
-
-		new_cap = pool->aCapacity / 2;
-		new_arr = (wStream**)realloc(pool->aArray, sizeof(wStream*) * new_cap);
-		if (!new_arr)
-			goto out_fail;
-		pool->aCapacity = new_cap;
-		pool->aArray = new_arr;
-	}
-
+	StreamPool_EnsureCapacity(pool, 1, FALSE);
 	pool->aArray[(pool->aSize)++] = s;
 	StreamPool_RemoveUsed(pool, s);
 
@@ -294,7 +283,7 @@ void Stream_Release(wStream* s)
 
 wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
 {
-	int index;
+	size_t index;
 	wStream* s = NULL;
 	BOOL found = FALSE;
 
@@ -359,6 +348,12 @@ void StreamPool_Clear(wStreamPool* pool)
 		Stream_Free(pool->aArray[pool->aSize], TRUE);
 	}
 
+	while (pool->uSize > 0)
+	{
+		(pool->uSize)--;
+		Stream_Free(pool->uArray[pool->uSize], TRUE);
+	}
+
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
 }
@@ -378,31 +373,18 @@ wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize)
 		pool->synchronized = synchronized;
 		pool->defaultSize = defaultSize;
 
-		pool->aSize = 0;
-		pool->aCapacity = 32;
-		pool->aArray = (wStream**)calloc(pool->aCapacity, sizeof(wStream*));
-
-		if (!pool->aArray)
-		{
-			free(pool);
-			return NULL;
-		}
-
-		pool->uSize = 0;
-		pool->uCapacity = 32;
-		pool->uArray = (wStream**)calloc(pool->uCapacity, sizeof(wStream*));
-
-		if (!pool->uArray)
-		{
-			free(pool->aArray);
-			free(pool);
-			return NULL;
-		}
+		if (!StreamPool_EnsureCapacity(pool, 32, FALSE))
+			goto fail;
+		if (!StreamPool_EnsureCapacity(pool, 32, TRUE))
+			goto fail;
 
 		InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 	}
 
 	return pool;
+fail:
+	StreamPool_Free(pool);
+	return NULL;
 }
 
 void StreamPool_Free(wStreamPool* pool)
@@ -418,4 +400,15 @@ void StreamPool_Free(wStreamPool* pool)
 
 		free(pool);
 	}
+}
+
+char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
+{
+	if (!pool || !buffer || (size < 1))
+		return NULL;
+	_snprintf(buffer, size - 1,
+	          "aSize    =%" PRIuz ", uSize    =%" PRIuz "aCapacity=%" PRIuz ", uCapacity=%" PRIuz,
+	          pool->aSize, pool->uSize, pool->aCapacity, pool->uCapacity);
+	buffer[size - 1] = '\0';
+	return buffer;
 }

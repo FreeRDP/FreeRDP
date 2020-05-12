@@ -394,21 +394,6 @@ extern "C"
 
 	/* StreamPool */
 
-	struct _wStreamPool
-	{
-		int aSize;
-		int aCapacity;
-		wStream** aArray;
-
-		int uSize;
-		int uCapacity;
-		wStream** uArray;
-
-		CRITICAL_SECTION lock;
-		BOOL synchronized;
-		size_t defaultSize;
-	};
-
 	WINPR_API wStream* StreamPool_Take(wStreamPool* pool, size_t size);
 	WINPR_API void StreamPool_Return(wStreamPool* pool, wStream* s);
 
@@ -423,6 +408,8 @@ extern "C"
 
 	WINPR_API wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize);
 	WINPR_API void StreamPool_Free(wStreamPool* pool);
+
+	WINPR_API char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size);
 
 #ifdef __cplusplus
 }
