@@ -571,8 +571,7 @@ static UINT rdpei_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 	rdpei->listener_callback->channel_mgr = pChannelMgr;
 
 	if ((error = pChannelMgr->CreateListener(pChannelMgr, RDPEI_DVC_CHANNEL_NAME, 0,
-	                                         (IWTSListenerCallback*)rdpei->listener_callback,
-	                                         &(rdpei->listener))))
+	                                         &rdpei->listener_callback->iface, &(rdpei->listener))))
 	{
 		WLog_ERR(TAG, "ChannelMgr->CreateListener failed with error %" PRIu32 "!", error);
 		goto error_out;
@@ -598,6 +597,12 @@ static UINT rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 	if (!pPlugin)
 		return ERROR_INVALID_PARAMETER;
 
+	if (rdpei && rdpei->listener_callback)
+	{
+		IWTSVirtualChannelManager* mgr = rdpei->listener_callback->channel_mgr;
+		if (mgr)
+			IFCALL(mgr->DestroyListener, mgr, &rdpei->iface);
+	}
 	free(rdpei->listener_callback);
 	free(rdpei->context);
 	free(rdpei);
