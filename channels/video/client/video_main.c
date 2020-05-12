@@ -1048,7 +1048,7 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 	callback->channel_mgr = channelMgr;
 
 	status = channelMgr->CreateListener(channelMgr, VIDEO_CONTROL_DVC_CHANNEL_NAME, 0,
-	                                    (IWTSListenerCallback*)callback, &(video->controlListener));
+	                                    &callback->iface, &(video->controlListener));
 
 	if (status != CHANNEL_RC_OK)
 		return status;
@@ -1067,7 +1067,7 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 	callback->channel_mgr = channelMgr;
 
 	status = channelMgr->CreateListener(channelMgr, VIDEO_DATA_DVC_CHANNEL_NAME, 0,
-	                                    (IWTSListenerCallback*)callback, &(video->dataListener));
+	                                    &callback->iface, &(video->dataListener));
 
 	if (status == CHANNEL_RC_OK)
 		video->dataListener->pInterface = video->wtsPlugin.pInterface;
@@ -1083,6 +1083,19 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 static UINT video_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)pPlugin;
+
+	if (video->control_callback)
+	{
+		IWTSVirtualChannelManager* mgr = video->control_callback->channel_mgr;
+		if (mgr)
+			IFCALL(mgr->DestroyListener, mgr, &video->control_callback->iface);
+	}
+	if (video->data_callback)
+	{
+		IWTSVirtualChannelManager* mgr = video->data_callback->channel_mgr;
+		if (mgr)
+			IFCALL(mgr->DestroyListener, mgr, &video->data_callback->iface);
+	}
 
 	if (video->context)
 		VideoClientContextPriv_free(video->context->priv);
