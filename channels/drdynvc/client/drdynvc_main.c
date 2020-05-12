@@ -615,7 +615,6 @@ static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 
 			Stream_Write_UINT8(s, (CLOSE_REQUEST_PDU << 4) | 0x02);
 			Stream_Write_UINT32(s, ChannelId);
 			error = drdynvc_send(drdynvc, s);
-			Stream_Release(s);
 		}
 	}
 
@@ -758,17 +757,19 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 	switch (status)
 	{
 		case CHANNEL_RC_OK:
-			Stream_AddRef(s);
 			return CHANNEL_RC_OK;
 
 		case CHANNEL_RC_NOT_CONNECTED:
+			Stream_Release(s);
 			return CHANNEL_RC_OK;
 
 		case CHANNEL_RC_BAD_CHANNEL_HANDLE:
+			Stream_Release(s);
 			WLog_ERR(TAG, "VirtualChannelWriteEx failed with CHANNEL_RC_BAD_CHANNEL_HANDLE");
 			return status;
 
 		default:
+			Stream_Release(s);
 			WLog_Print(drdynvc->log, WLOG_ERROR,
 			           "VirtualChannelWriteEx failed with %s [%08" PRIX32 "]",
 			           WTSErrorToString(status), status);
@@ -814,6 +815,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 	if (dataSize == 0)
 	{
 		dvcman_close_channel(drdynvc->channel_mgr, ChannelId, TRUE);
+		Stream_Release(data_out);
 	}
 	else if (dataSize <= CHANNEL_CHUNK_LENGTH - pos)
 	{
