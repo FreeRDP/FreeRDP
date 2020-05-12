@@ -137,6 +137,7 @@ static BOOL CALLBACK init_channel_handles_table(PINIT_ONCE once, PVOID param, PV
 
 rdpChannels* freerdp_channels_new(freerdp* instance)
 {
+	wObject* obj;
 	rdpChannels* channels;
 	channels = (rdpChannels*)calloc(1, sizeof(rdpChannels));
 
@@ -147,7 +148,6 @@ rdpChannels* freerdp_channels_new(freerdp* instance)
 
 	if (!g_ChannelHandles)
 		goto error;
-
 	if (!InitializeCriticalSectionAndSpinCount(&channels->channelsLock, 4000))
 		goto error;
 
@@ -157,7 +157,11 @@ rdpChannels* freerdp_channels_new(freerdp* instance)
 	if (!channels->queue)
 		goto error;
 
-	channels->queue->object.fnObjectFree = channel_queue_free;
+	obj = MessageQueue_Object(channels->queue);
+	if (!obj)
+		goto error;
+	obj->fnObjectFree = channel_queue_free;
+
 	return channels;
 error:
 	freerdp_channels_free(channels);
@@ -584,7 +588,6 @@ static BOOL freerdp_channels_process_message(freerdp* instance, wMessage* messag
 			freerdp_channels_process_message_free(message, CHANNEL_EVENT_WRITE_CANCELLED);
 			return FALSE;
 		}
-
 		channel =
 		    freerdp_channels_find_channel_by_name(instance->context->rdp, pChannelOpenData->name);
 
@@ -729,9 +732,7 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	int index;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
-
 	MessageQueue_PostQuit(channels->queue, 0);
-
 	freerdp_channels_check_fds(channels, instance);
 
 	/* tell all libraries we are shutting down */
@@ -1019,6 +1020,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelCloseEx(LPVOID pInitHandle, DWORD op
 		return CHANNEL_RC_BAD_INIT_HANDLE;
 
 	pChannelOpenData = HashTable_GetItemValue(g_ChannelHandles, (void*)(UINT_PTR)openHandle);
+
 	if (!pChannelOpenData)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 

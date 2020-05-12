@@ -332,13 +332,14 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context)
 // puts a buffer of size samples to the device
 int android_AudioOut(OPENSL_STREAM* p, const short* buffer, int size)
 {
+	HANDLE ev;
 	assert(p);
 	assert(buffer);
 	assert(size > 0);
 
+	ev = Queue_Event(p->queue);
 	/* Assure, that the queue is not full. */
-	if (p->queuesize <= Queue_Count(p->queue) &&
-	    WaitForSingleObject(p->queue->event, INFINITE) == WAIT_FAILED)
+	if (p->queuesize <= Queue_Count(p->queue) && WaitForSingleObject(ev, INFINITE) == WAIT_FAILED)
 	{
 		DEBUG_SND("WaitForSingleObject failed!");
 		return -1;

@@ -582,6 +582,7 @@ static void pf_server_clients_list_client_free(void* obj)
 
 proxyServer* pf_server_new(proxyConfig* config)
 {
+	wObject* obj;
 	proxyServer* server;
 
 	if (!config)
@@ -601,7 +602,8 @@ proxyServer* pf_server_new(proxyConfig* config)
 	if (!server->clients)
 		goto out;
 
-	server->clients->object.fnObjectFree = pf_server_clients_list_client_free;
+	obj = ArrayList_Object(server->clients);
+	obj->fnObjectFree = pf_server_clients_list_client_free;
 
 	server->waitGroup = CountdownEvent_New(0);
 	if (!server->waitGroup)

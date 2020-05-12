@@ -42,7 +42,6 @@ static void dvcman_wtslistener_free(DVCMAN_LISTENER* listener)
 {
 	if (listener)
 		free(listener->channel_name);
-
 	free(listener);
 }
 
@@ -394,7 +393,6 @@ static void dvcman_clear(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pCha
 	ArrayList_Clear(dvcman->plugin_names);
 	ArrayList_Clear(dvcman->listeners);
 }
-
 static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr)
 {
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
@@ -1436,7 +1434,7 @@ static void drdynvc_queue_object_free(void* obj)
 static UINT drdynvc_virtual_channel_event_initialized(drdynvcPlugin* drdynvc, LPVOID pData,
                                                       UINT32 dataLength)
 {
-	UINT error = CHANNEL_RC_OK;
+	wObject* obj;
 	WINPR_UNUSED(pData);
 	WINPR_UNUSED(dataLength);
 
@@ -1447,17 +1445,18 @@ static UINT drdynvc_virtual_channel_event_initialized(drdynvcPlugin* drdynvc, LP
 
 	if (!drdynvc->queue)
 	{
-		error = CHANNEL_RC_NO_MEMORY;
 		WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_New failed!");
 		goto error;
 	}
 
-	drdynvc->queue->object.fnObjectFree = drdynvc_queue_object_free;
+	obj = MessageQueue_Object(drdynvc->queue);
+	if (!obj)
+		goto error;
+	obj->fnObjectFree = drdynvc_queue_object_free;
 	drdynvc->channel_mgr = dvcman_new(drdynvc);
 
 	if (!drdynvc->channel_mgr)
 	{
-		error = CHANNEL_RC_NO_MEMORY;
 		WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_new failed!");
 		goto error;
 	}
@@ -1562,7 +1561,6 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 
 	CloseHandle(drdynvc->thread);
 	drdynvc->thread = NULL;
-
 	status = drdynvc->channelEntryPoints.pVirtualChannelCloseEx(drdynvc->InitHandle,
 	                                                            drdynvc->OpenHandle);
 
@@ -1603,7 +1601,6 @@ static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 		dvcman_free(drdynvc, drdynvc->channel_mgr);
 		drdynvc->channel_mgr = NULL;
 	}
-
 	drdynvc->InitHandle = 0;
 	free(drdynvc->context);
 	free(drdynvc);

@@ -659,6 +659,7 @@ static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 f
 
 static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 {
+	wObject* obj;
 	UINT32 file_group_format_id;
 	UINT32 local_file_format_id;
 	file_group_format_id = ClipboardRegisterFormat(clipboard, "FileGroupDescriptorW");
@@ -672,7 +673,10 @@ static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 	if (!clipboard->localFiles)
 		goto error;
 
-	ArrayList_Object(clipboard->localFiles)->fnObjectFree = free_posix_file;
+	obj = ArrayList_Object(clipboard->localFiles);
+	if (!obj)
+		goto error;
+	obj->fnObjectFree = free_posix_file;
 
 	if (!ClipboardRegisterSynthesizer(clipboard, local_file_format_id, file_group_format_id,
 	                                  convert_uri_list_to_filedescriptors))

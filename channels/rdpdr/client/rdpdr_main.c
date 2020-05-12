@@ -1661,6 +1661,7 @@ static void queue_free(void* obj)
 static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pData,
                                                   UINT32 dataLength)
 {
+	wObject* obj;
 	UINT32 status;
 	status = rdpdr->channelEntryPoints.pVirtualChannelOpenEx(rdpdr->InitHandle, &rdpdr->OpenHandle,
 	                                                         rdpdr->channelDef.name,
@@ -1681,7 +1682,10 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	rdpdr->queue->object.fnObjectFree = queue_free;
+	obj = MessageQueue_Object(rdpdr->queue);
+	if (!obj)
+		return ERROR_INTERNAL_ERROR;
+	obj->fnObjectFree = queue_free;
 
 	if (!(rdpdr->thread =
 	          CreateThread(NULL, 0, rdpdr_virtual_channel_client_thread, (void*)rdpdr, 0, NULL)))
