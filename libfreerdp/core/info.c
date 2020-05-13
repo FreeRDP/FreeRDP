@@ -1020,7 +1020,11 @@ BOOL rdp_send_client_info(rdpRdp* rdp)
 		return FALSE;
 	}
 
-	rdp_write_info_packet(rdp, s);
+	if (!rdp_write_info_packet(rdp, s))
+	{
+		Stream_Release(s);
+		return FALSE;
+	}
 	return rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
 }
 
