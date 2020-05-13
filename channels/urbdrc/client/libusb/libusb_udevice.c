@@ -753,7 +753,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
 	LIBUSB_DEVICE_DESCRIPTOR* devDescriptor;
-	const char* strDesc = "Generic Usb String";
+	const char strDesc[] = "Generic Usb String";
 	char deviceLocation[25] = { 0 };
 	BYTE bus_number;
 	BYTE device_address;
@@ -768,6 +768,9 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 	if (!pdev || !pdev->devDescriptor || !pdev->urbdrc)
 		return ERROR_INVALID_DATA;
 
+	if (inSize < 2)
+		return ERROR_INVALID_DATA;
+
 	urbdrc = pdev->urbdrc;
 	devDescriptor = pdev->devDescriptor;
 
@@ -775,9 +778,17 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 	{
 		case DeviceTextDescription:
 		{
-			BYTE data[0x100] = { 0 };
+			/* String descriptors contain the length of the descriptor text as first
+			 * byte (maximum of 0xFF=255 bytes).
+			 * The first 2 bytes are header data excluded from that.
+			 * Provide a buffer that is capable of holding the whole data in case
+			 * all bytes are in use. Make the buffer 2 bytes larger to ensure the
+			 * resulting string is ALWAYS '\0' terminated. */
+			BYTE data[UINT8_MAX + 4] = { 0 };
+			len = UINT8_MAX + 2;
+
 			ret = libusb_get_string_descriptor(pdev->libusb_handle, devDescriptor->iProduct,
-			                                   LocaleId, data, 0xFF);
+			                                   LocaleId, data, (int)len);
 			/* The returned data in the buffer is:
 			 * 1 byte  length of following data
 			 * 1 byte  descriptor type, must be 0x03 for strings
@@ -786,39 +797,31 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 			slen = data[0];
 			locale = data[1];
 
-			if ((ret <= 0) || (ret < 4) || (slen < 4) || (locale != LIBUSB_DT_STRING) ||
-			    (ret > UINT8_MAX))
+			if ((ret <= 2) || (slen <= 2) || (locale != LIBUSB_DT_STRING))
 			{
 				WLog_Print(urbdrc->log, WLOG_DEBUG,
 				           "libusb_get_string_descriptor: "
 				           "ERROR num %d, iProduct: %" PRIu8 "!",
 				           ret, devDescriptor->iProduct);
 
-				len = MIN(sizeof(strDesc), inSize);
+				len = MIN(sizeof(strDesc) - 1, (inSize - 1) / sizeof(WCHAR));
 				for (i = 0; i < len; i++)
 					text[i] = (WCHAR)strDesc[i];
-
-				*BufferSize = (BYTE)(len * 2);
+				text[len - 1] = L'\0';
 			}
 			else
 			{
-				/* ret and slen should be equals, but you never know creativity
-				 * of device manufacturers...
-				 * So also check the string length returned as server side does
-				 * not honor strings with multi '\0' characters well.
-				 */
-				const size_t rchar = _wcsnlen((WCHAR*)&data[2], sizeof(data) / 2);
-				len = MIN((BYTE)ret, slen);
-				len = MIN(len, inSize);
-				len = MIN(len, rchar * 2 + sizeof(WCHAR));
-				memcpy(Buffer, &data[2], len);
+				len = MIN(inSize, slen);
+				memcpy(text, &data[2], len);
+				len /= sizeof(WCHAR);
 
 				/* Just as above, the returned WCHAR string should be '\0'
 				 * terminated, but never trust hardware to conform to specs... */
-				Buffer[len - 2] = '\0';
-				Buffer[len - 1] = '\0';
-				*BufferSize = (BYTE)len;
+				text[len - 1] = L'\0';
 			}
+
+			len = _wcsnlen(text, len) + 1;
+			*BufferSize = (BYTE)len * sizeof(WCHAR);
 		}
 		break;
 
@@ -828,7 +831,8 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 			sprintf_s(deviceLocation, sizeof(deviceLocation),
 			          "Port_#%04" PRIu8 ".Hub_#%04" PRIu8 "", device_address, bus_number);
 
-			len = strnlen(deviceLocation, MIN(sizeof(deviceLocation), inSize - 1));
+			len = strnlen(deviceLocation,
+			              MIN(sizeof(deviceLocation) - 1, (inSize - 1) / sizeof(WCHAR)));
 			for (i = 0; i < len; i++)
 				text[i] = (WCHAR)deviceLocation[i];
 			text[len++] = '\0';
@@ -1056,7 +1060,7 @@ static void libusb_udev_channel_closed(IUDEVICE* idev)
 		if (channel)
 		{
 			/* Notify the server the device is no longer available. */
-			channel->Write(channel, 0, NULL, NULL);
+			stream_write_and_free(&urbdrc->iface, channel, NULL);
 		}
 		urbdrc->udevman->unregister_udevice(urbdrc->udevman, busNr, devNr);
 	}

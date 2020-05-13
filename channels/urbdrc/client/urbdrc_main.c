@@ -981,11 +981,10 @@ UINT stream_write_and_free(IWTSPlugin* plugin, IWTSVirtualChannel* channel, wStr
 {
 	UINT rc;
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)plugin;
+	size_t len = 0;
+	const BYTE* data = NULL;
 
-	if (!out)
-		return ERROR_INVALID_PARAMETER;
-
-	if (!channel || !out || !urbdrc)
+	if (!channel || !urbdrc)
 	{
 		Stream_Free(out, TRUE);
 		return ERROR_INVALID_PARAMETER;
@@ -997,8 +996,15 @@ UINT stream_write_and_free(IWTSPlugin* plugin, IWTSVirtualChannel* channel, wStr
 		return ERROR_INTERNAL_ERROR;
 	}
 
+	if (out)
+	{
+		Stream_SealLength(out);
+		len = Stream_Length(out);
+		data = Stream_Buffer(out);
+	}
+
 	urbdrc_dump_message(urbdrc->log, TRUE, TRUE, out);
-	rc = channel->Write(channel, Stream_GetPosition(out), Stream_Buffer(out), NULL);
+	rc = channel->Write(channel, len, data, NULL);
 	Stream_Free(out, TRUE);
 	return rc;
 }
