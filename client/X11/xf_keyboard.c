@@ -43,6 +43,9 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
+static BOOL controlDown = FALSE;
+static BOOL laltDown = FALSE;
+
 static BOOL firstPressRightCtrl = TRUE;
 static BOOL ungrabKeyboardWithRightCtrl = TRUE;
 
@@ -191,6 +194,28 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BYTE keycode)
 	DWORD rdp_scancode;
 	rdpInput* input;
 	input = xfc->context.input;
+
+	if (keycode == 0x25)
+	{
+		if (down)
+			controlDown = TRUE;
+		else
+			controlDown = FALSE;
+	}
+
+	if (keycode == 0x40)
+	{
+		if (down)
+			laltDown = TRUE;
+		else
+			laltDown = FALSE;
+	}
+
+	if (laltDown && controlDown && keycode == 0x73 && down == 1)
+	{
+		keycode = 0x77; // Del key
+	}
+
 	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
