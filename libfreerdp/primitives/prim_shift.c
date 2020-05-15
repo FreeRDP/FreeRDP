@@ -26,9 +26,11 @@ static INLINE pstatus_t general_lShiftC_16s(const INT16* pSrc, UINT32 val, INT16
 {
 	if (val == 0)
 		return PRIMITIVES_SUCCESS;
+	if (val >= 16)
+		return -1;
 
 	while (len--)
-		*pDst++ = *pSrc++ << val;
+		*pDst++ = (INT16)((UINT16)*pSrc++ << val);
 
 	return PRIMITIVES_SUCCESS;
 }
@@ -38,6 +40,8 @@ static INLINE pstatus_t general_rShiftC_16s(const INT16* pSrc, UINT32 val, INT16
 {
 	if (val == 0)
 		return PRIMITIVES_SUCCESS;
+	if (val >= 16)
+		return -1;
 
 	while (len--)
 		*pDst++ = *pSrc++ >> val;
@@ -51,9 +55,11 @@ static INLINE pstatus_t general_lShiftC_16u(const UINT16* pSrc, UINT32 val, UINT
 {
 	if (val == 0)
 		return PRIMITIVES_SUCCESS;
+	if (val >= 16)
+		return -1;
 
 	while (len--)
-		*pDst++ = *pSrc++ << val;
+		*pDst++ = (INT16)((UINT16)*pSrc++ << val);
 
 	return PRIMITIVES_SUCCESS;
 }
@@ -64,6 +70,8 @@ static INLINE pstatus_t general_rShiftC_16u(const UINT16* pSrc, UINT32 val, UINT
 {
 	if (val == 0)
 		return PRIMITIVES_SUCCESS;
+	if (val >= 16)
+		return -1;
 
 	while (len--)
 		*pDst++ = *pSrc++ >> val;
