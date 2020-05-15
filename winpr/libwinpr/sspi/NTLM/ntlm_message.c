@@ -367,12 +367,16 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
+	SECURITY_STATUS status = SEC_E_INVALID_TOKEN;
 	wStream* s;
-	int length;
-	PBYTE StartOffset;
-	PBYTE PayloadOffset;
+	size_t length;
+	size_t StartOffset;
+	size_t PayloadOffset;
 	NTLM_AV_PAIR* AvTimestamp;
 	NTLM_CHALLENGE_MESSAGE* message;
+	if (!context || !buffer)
+		return SEC_E_INTERNAL_ERROR;
+
 	ntlm_generate_client_challenge(context);
 	message = &context->CHALLENGE_MESSAGE;
 	ZeroMemory(message, sizeof(NTLM_CHALLENGE_MESSAGE));
@@ -381,77 +385,51 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (!s)
 		return SEC_E_INTERNAL_ERROR;
 
-	StartOffset = Stream_Pointer(s);
+	StartOffset = Stream_GetPosition(s);
 
 	if (ntlm_read_message_header(s, (NTLM_MESSAGE_HEADER*)message) < 0)
-	{
-		Stream_Free(s, FALSE);
-		return SEC_E_INVALID_TOKEN;
-	}
+		goto fail;
 
 	if (message->MessageType != MESSAGE_TYPE_CHALLENGE)
-	{
-		Stream_Free(s, FALSE);
-		return SEC_E_INVALID_TOKEN;
-	}
+		goto fail;
 
 	if (ntlm_read_message_fields(s, &(message->TargetName)) < 0) /* TargetNameFields (8 bytes) */
-	{
-		Stream_Free(s, FALSE);
-		return SEC_E_INVALID_TOKEN;
-	}
+		goto fail;
 
 	if (Stream_GetRemainingLength(s) < 4)
-	{
-		Stream_Free(s, FALSE);
-		return SEC_E_INVALID_TOKEN;
-	}
+		goto fail;
 
 	Stream_Read_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 	context->NegotiateFlags = message->NegotiateFlags;
 
 	if (Stream_GetRemainingLength(s) < 8)
-	{
-		Stream_Free(s, FALSE);
-		return SEC_E_INVALID_TOKEN;
-	}
+		goto fail;
 
 	Stream_Read(s, message->ServerChallenge, 8); /* ServerChallenge (8 bytes) */
 	CopyMemory(context->ServerChallenge, message->ServerChallenge, 8);
 
 	if (Stream_GetRemainingLength(s) < 8)
-	{
-		Stream_Free(s, FALSE);
-		return SEC_E_INVALID_TOKEN;
-	}
+		goto fail;
 
 	Stream_Read(s, message->Reserved, 8); /* Reserved (8 bytes), should be ignored */
 
 	if (ntlm_read_message_fields(s, &(message->TargetInfo)) < 0) /* TargetInfoFields (8 bytes) */
-	{
-		Stream_Free(s, FALSE);
-		return SEC_E_INVALID_TOKEN;
-	}
+		goto fail;
 
 	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 	{
 		if (ntlm_read_version_info(s, &(message->Version)) < 0) /* Version (8 bytes) */
-		{
-			Stream_Free(s, FALSE);
-			return SEC_E_INVALID_TOKEN;
-		}
+			goto fail;
 	}
 
 	/* Payload (variable) */
-	PayloadOffset = Stream_Pointer(s);
+	PayloadOffset = Stream_GetPosition(s);
 
+	status = SEC_E_INTERNAL_ERROR;
 	if (message->TargetName.Len > 0)
 	{
 		if (ntlm_read_message_fields_buffer(s, &(message->TargetName)) < 0)
-		{
-			Stream_Free(s, FALSE);
-			return SEC_E_INTERNAL_ERROR;
-		}
+			goto fail;
 	}
 
 	if (message->TargetInfo.Len > 0)
@@ -459,10 +437,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 		size_t cbAvTimestamp;
 
 		if (ntlm_read_message_fields_buffer(s, &(message->TargetInfo)) < 0)
-		{
-			Stream_Free(s, FALSE);
-			return SEC_E_INTERNAL_ERROR;
-		}
+			goto fail;
 
 		context->ChallengeTargetInfo.pvBuffer = message->TargetInfo.Buffer;
 		context->ChallengeTargetInfo.cbBuffer = message->TargetInfo.Len;
@@ -474,7 +449,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 			PBYTE ptr = ntlm_av_pair_get_value_pointer(AvTimestamp);
 
 			if (!ptr)
-				return SEC_E_INTERNAL_ERROR;
+				goto fail;
 
 			if (context->NTLMv2)
 				context->UseMIC = TRUE;
@@ -484,14 +459,14 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	}
 
 	length = (PayloadOffset - StartOffset) + message->TargetName.Len + message->TargetInfo.Len;
+	if (length > buffer->cbBuffer)
+		goto fail;
 
 	if (!sspi_SecBufferAlloc(&context->ChallengeMessage, length))
-	{
-		Stream_Free(s, FALSE);
-		return SEC_E_INTERNAL_ERROR;
-	}
+		goto fail;
 
-	CopyMemory(context->ChallengeMessage.pvBuffer, StartOffset, length);
+	if (context->ChallengeMessage.pvBuffer)
+		CopyMemory(context->ChallengeMessage.pvBuffer, Stream_Buffer(s) + StartOffset, length);
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "CHALLENGE_MESSAGE (length = %d)", length);
 	winpr_HexDump(TAG, WLOG_DEBUG, context->ChallengeMessage.pvBuffer,
@@ -517,10 +492,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (context->NTLMv2)
 	{
 		if (ntlm_construct_authenticate_target_info(context) < 0)
-		{
-			Stream_Free(s, FALSE);
-			return SEC_E_INTERNAL_ERROR;
-		}
+			goto fail;
 
 		sspi_SecBufferFree(&context->ChallengeTargetInfo);
 		context->ChallengeTargetInfo.pvBuffer = context->AuthenticateTargetInfo.pvBuffer;
@@ -530,16 +502,10 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ntlm_generate_timestamp(context); /* Timestamp */
 
 	if (ntlm_compute_lm_v2_response(context) < 0) /* LmChallengeResponse */
-	{
-		Stream_Free(s, FALSE);
-		return SEC_E_INTERNAL_ERROR;
-	}
+		goto fail;
 
 	if (ntlm_compute_ntlm_v2_response(context) < 0) /* NtChallengeResponse */
-	{
-		Stream_Free(s, FALSE);
-		return SEC_E_INTERNAL_ERROR;
-	}
+		goto fail;
 
 	ntlm_generate_key_exchange_key(context);     /* KeyExchangeKey */
 	ntlm_generate_random_session_key(context);   /* RandomSessionKey */
@@ -579,8 +545,10 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 #endif
 	context->state = NTLM_STATE_AUTHENTICATE;
 	ntlm_free_message_fields_buffer(&(message->TargetName));
+	status = SEC_I_CONTINUE_NEEDED;
+fail:
 	Stream_Free(s, FALSE);
-	return SEC_I_CONTINUE_NEEDED;
+	return status;
 }
 
 SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
