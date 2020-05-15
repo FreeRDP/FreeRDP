@@ -50,13 +50,13 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const pSrc[3]
 		{
 			INT16 R, G, B;
 			const INT32 divisor = 16;
-			const INT32 Y = ((*pY++) + 4096) << divisor;
+			const INT32 Y = (INT32)((UINT32)((*pY++) + 4096) << divisor);
 			const INT32 Cb = (*pCb++);
 			const INT32 Cr = (*pCr++);
-			const INT32 CrR = Cr * (INT32)(1.402525f * (1 << divisor));
-			const INT32 CrG = Cr * (INT32)(0.714401f * (1 << divisor));
-			const INT32 CbG = Cb * (INT32)(0.343730f * (1 << divisor));
-			const INT32 CbB = Cb * (INT32)(1.769905f * (1 << divisor));
+			const INT64 CrR = Cr * (INT64)(1.402525f * (1 << divisor)) * 1LL;
+			const INT64 CrG = Cr * (INT64)(0.714401f * (1 << divisor)) * 1LL;
+			const INT64 CbG = Cb * (INT64)(0.343730f * (1 << divisor)) * 1LL;
+			const INT64 CbB = Cb * (INT64)(1.769905f * (1 << divisor)) * 1LL;
 			R = ((INT16)((CrR + Y) >> divisor) >> 5);
 			G = ((INT16)((Y - CbG - CrG) >> divisor) >> 5);
 			B = ((INT16)((CbB + Y) >> divisor) >> 5);
@@ -90,18 +90,18 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const pSrc
 	{
 		for (x = 0; x < roi->width; x++)
 		{
-			INT16 R, G, B;
+			INT64 R, G, B;
 			const INT32 divisor = 16;
-			const INT32 Y = ((*pY++) + 4096) << divisor;
+			const INT32 Y = (INT32)((UINT32)((*pY++) + 4096) << divisor);
 			const INT32 Cb = (*pCb++);
 			const INT32 Cr = (*pCr++);
-			const INT32 CrR = Cr * (INT32)(1.402525f * (1 << divisor));
-			const INT32 CrG = Cr * (INT32)(0.714401f * (1 << divisor));
-			const INT32 CbG = Cb * (INT32)(0.343730f * (1 << divisor));
-			const INT32 CbB = Cb * (INT32)(1.769905f * (1 << divisor));
-			R = ((INT16)((CrR + Y) >> divisor) >> 5);
-			G = ((INT16)((Y - CbG - CrG) >> divisor) >> 5);
-			B = ((INT16)((CbB + Y) >> divisor) >> 5);
+			const INT64 CrR = Cr * (INT64)(1.402525f * (1 << divisor)) * 1LL;
+			const INT64 CrG = Cr * (INT64)(0.714401f * (1 << divisor)) * 1LL;
+			const INT64 CbG = Cb * (INT64)(0.343730f * (1 << divisor)) * 1LL;
+			const INT64 CbB = Cb * (INT64)(1.769905f * (1 << divisor)) * 1LL;
+			R = (INT64)((CrR + Y) >> (divisor + 5));
+			G = (INT64)((Y - CbG - CrG) >> (divisor + 5));
+			B = (INT64)((CbB + Y) >> (divisor + 5));
 			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0xFF);
 		}
 
@@ -170,7 +170,7 @@ static pstatus_t general_yCbCrToRGB_16s16s_P3P3(const INT16* const pSrc[3], INT3
 			INT32 y = (INT32)(*yptr++);
 			INT32 cb = (INT32)(*cbptr++);
 			INT32 cr = (INT32)(*crptr++);
-			INT32 r, g, b;
+			INT64 r, g, b;
 			/*
 			 * This is the slow floating point version kept here for reference.
 			 * y = y + 4096; // 128<<5=4096 so that we can scale the sum by>>5
@@ -191,10 +191,10 @@ static pstatus_t general_yCbCrToRGB_16s16s_P3P3(const INT16* const pSrc[3], INT3
 			 * G: 0.344 << 16 = 22544, 0.714 << 16 = 46792
 			 * B: 1.770 << 16 = 115998
 			 */
-			y = (y + 4096) << 16;
-			r = y + cr * 91947;
-			g = y - cb * 22544 - cr * 46792;
-			b = y + cb * 115998;
+			y = (INT32)((UINT32)(y + 4096) << 16);
+			r = y + cr * 91947LL;
+			g = y - cb * 22544LL - cr * 46792LL;
+			b = y + cb * 115998LL;
 			*rptr++ = CLIP(r >> 21);
 			*gptr++ = CLIP(g >> 21);
 			*bptr++ = CLIP(b >> 21);
