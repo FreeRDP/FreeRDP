@@ -470,10 +470,15 @@ void test_ntlm_server_free(TEST_NTLM_SERVER* ntlm)
 int TestNTLM(int argc, char* argv[])
 {
 	int status;
+	int rc = -1;
 	PSecBuffer pSecBuffer;
-	TEST_NTLM_CLIENT* client;
-	TEST_NTLM_SERVER* server;
+	TEST_NTLM_CLIENT* client = NULL;
+	TEST_NTLM_SERVER* server = NULL;
 	BOOL DynamicTest = TRUE;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/**
 	 * Client Initialization
 	 */
@@ -482,7 +487,7 @@ int TestNTLM(int argc, char* argv[])
 	if (!client)
 	{
 		printf("Memory allocation failed");
-		return -1;
+		goto fail;
 	}
 
 	status = test_ntlm_client_init(client, TEST_NTLM_USER, TEST_NTLM_DOMAIN, TEST_NTLM_PASSWORD);
@@ -490,7 +495,7 @@ int TestNTLM(int argc, char* argv[])
 	if (status < 0)
 	{
 		printf("test_ntlm_client_init failure\n");
-		return -1;
+		goto fail;
 	}
 
 	/**
@@ -501,7 +506,7 @@ int TestNTLM(int argc, char* argv[])
 	if (!server)
 	{
 		printf("Memory allocation failed\n");
-		return -1;
+		goto fail;
 	}
 
 	status = test_ntlm_server_init(server);
@@ -509,7 +514,7 @@ int TestNTLM(int argc, char* argv[])
 	if (status < 0)
 	{
 		printf("test_ntlm_server_init failure\n");
-		return -1;
+		goto fail;
 	}
 
 	/**
@@ -520,7 +525,7 @@ int TestNTLM(int argc, char* argv[])
 	if (status < 0)
 	{
 		printf("test_ntlm_client_authenticate failure\n");
-		return -1;
+		goto fail;
 	}
 
 	if (!DynamicTest)
@@ -557,7 +562,7 @@ int TestNTLM(int argc, char* argv[])
 		if (!pSecBuffer->pvBuffer)
 		{
 			printf("Memory allocation failed\n");
-			return -1;
+			goto fail;
 		}
 
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_NEGOTIATE, pSecBuffer->cbBuffer);
@@ -578,7 +583,7 @@ int TestNTLM(int argc, char* argv[])
 	if (status < 0)
 	{
 		printf("test_ntlm_server_authenticate failure\n");
-		return -1;
+		goto fail;
 	}
 
 	if (!DynamicTest)
@@ -616,7 +621,7 @@ int TestNTLM(int argc, char* argv[])
 		if (!pSecBuffer->pvBuffer)
 		{
 			printf("Memory allocation failed\n");
-			return -1;
+			goto fail;
 		}
 
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_CHALLENGE, pSecBuffer->cbBuffer);
@@ -643,7 +648,7 @@ int TestNTLM(int argc, char* argv[])
 	if (status < 0)
 	{
 		printf("test_ntlm_client_authenticate failure\n");
-		return -1;
+		goto fail;
 	}
 
 	pSecBuffer = &(client->outputBuffer[0]);
@@ -656,7 +661,7 @@ int TestNTLM(int argc, char* argv[])
 		if (!pSecBuffer->pvBuffer)
 		{
 			printf("Memory allocation failed\n");
-			return -1;
+			goto fail;
 		}
 
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_AUTHENTICATE, pSecBuffer->cbBuffer);
@@ -676,13 +681,16 @@ int TestNTLM(int argc, char* argv[])
 	if (status < 0)
 	{
 		printf("test_ntlm_server_authenticate failure\n");
-		return -1;
+		goto fail;
 	}
 
+	rc = 0;
+
+fail:
 	/**
 	 * Cleanup & Termination
 	 */
 	test_ntlm_client_free(client);
 	test_ntlm_server_free(server);
-	return 0;
+	return rc;
 }
