@@ -2702,9 +2702,9 @@ static BOOL rdp_read_bitmap_codec_guid(wStream* s, GUID* guid)
 	if (Stream_GetRemainingLength(s) < 16)
 		return FALSE;
 	Stream_Read(s, g, 16);
-	guid->Data1 = (g[3] << 24) | (g[2] << 16) | (g[1] << 8) | g[0];
-	guid->Data2 = (g[5] << 8) | g[4];
-	guid->Data3 = (g[7] << 8) | g[6];
+	guid->Data1 = ((UINT32)g[3] << 24U) | ((UINT32)g[2] << 16U) | (g[1] << 8U) | g[0];
+	guid->Data2 = (g[5] << 8U) | g[4];
+	guid->Data3 = (g[7] << 8U) | g[6];
 	guid->Data4[0] = g[8];
 	guid->Data4[1] = g[9];
 	guid->Data4[2] = g[10];
