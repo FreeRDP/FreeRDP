@@ -26,5 +26,10 @@
 #include <freerdp/api.h>
 
 FREERDP_LOCAL BOOL freerdp_settings_set_default_order_support(rdpSettings* settings);
+FREERDP_LOCAL BOOL freerdp_settings_set_pointer(rdpSettings* dst, size_t index, const void* ptr);
+FREERDP_LOCAL BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src);
+FREERDP_LOCAL void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup);
+FREERDP_LOCAL BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* val,
+                                                BOOL cleanup);
 
 #endif /* FREERDP_LIB_CORE_SETTINGS_H */
