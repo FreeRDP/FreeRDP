@@ -40,6 +40,8 @@
 #include <freerdp/build-config.h>
 #include <ctype.h>
 
+#include "settings.h"
+
 #ifdef _WIN32
 #pragma warning(push)
 #pragma warning(disable : 4244)
@@ -626,39 +628,15 @@ out_fail:
 
 static void freerdp_settings_free_internal(rdpSettings* settings)
 {
-	free(settings->ServerHostname);
-	free(settings->Username);
-	free(settings->Password);
-	free(settings->Domain);
-	free(settings->PasswordHash);
-	free(settings->AcceptedCert);
-	free(settings->AlternateShell);
-	free(settings->ShellWorkingDirectory);
-	free(settings->ComputerName);
 	free(settings->ChannelDefArray);
 	free(settings->MonitorDefArray);
 	free(settings->MonitorIds);
-	free(settings->ClientAddress);
-	free(settings->ClientDir);
-	free(settings->AllowedTlsCiphers);
-	free(settings->NtlmSamFile);
-	free(settings->CertificateFile);
-	free(settings->PrivateKeyFile);
-	free(settings->ConnectionFile);
-	free(settings->AssistanceFile);
 	free(settings->ReceivedCapabilities);
 	free(settings->OrderSupport);
-	free(settings->ClientHostname);
-	free(settings->ClientProductId);
 	free(settings->ServerRandom);
 	free(settings->ClientRandom);
 	free(settings->ServerCertificate);
-	free(settings->RdpKeyFile);
 	certificate_free(settings->RdpServerCertificate);
-	free(settings->CertificateContent);
-	free(settings->PrivateKeyContent);
-	free(settings->RdpKeyContent);
-	free(settings->CertificateAcceptedFingerprints);
 	free(settings->ClientAutoReconnectCookie);
 	free(settings->ServerAutoReconnectCookie);
 	free(settings->ClientTimeZone);
@@ -666,52 +644,21 @@ static void freerdp_settings_free_internal(rdpSettings* settings)
 	free(settings->GlyphCache);
 	free(settings->FragCache);
 	key_free(settings->RdpServerRsaKey);
-	free(settings->ConfigPath);
-	free(settings->CurrentPath);
-	free(settings->HomePath);
 	free(settings->LoadBalanceInfo);
-	free(settings->TargetNetAddress);
-	free(settings->RedirectionTargetFQDN);
-	free(settings->RedirectionTargetNetBiosName);
-	free(settings->RedirectionUsername);
-	free(settings->RedirectionDomain);
 	free(settings->RedirectionPassword);
 	free(settings->RedirectionTsvUrl);
-	free(settings->RedirectionAcceptedCert);
-	free(settings->RemoteAssistanceSessionId);
-	free(settings->RemoteAssistancePassword);
-	free(settings->RemoteAssistancePassStub);
-	free(settings->RemoteAssistanceRCTicket);
-	free(settings->AuthenticationServiceClass);
-	free(settings->GatewayHostname);
-	free(settings->GatewayUsername);
-	free(settings->GatewayPassword);
-	free(settings->GatewayDomain);
-	free(settings->GatewayAccessToken);
-	free(settings->GatewayAcceptedCert);
-	free(settings->CertificateName);
-	free(settings->DynamicDSTTimeZoneKeyName);
-	free(settings->PreconnectionBlob);
-	free(settings->KerberosKdc);
-	free(settings->KerberosRealm);
-	free(settings->DumpRemoteFxFile);
-	free(settings->PlayRemoteFxFile);
-	free(settings->RemoteApplicationName);
-	free(settings->RemoteApplicationIcon);
-	free(settings->RemoteApplicationProgram);
-	free(settings->RemoteApplicationFile);
-	free(settings->RemoteApplicationGuid);
-	free(settings->RemoteApplicationCmdLine);
-	free(settings->ImeFileName);
-	free(settings->DrivesToRedirect);
-	free(settings->WindowTitle);
-	free(settings->WmClass);
-	free(settings->ActionScript);
+
 	freerdp_target_net_addresses_free(settings);
 	freerdp_device_collection_free(settings);
 	freerdp_static_channel_collection_free(settings);
 	freerdp_dynamic_channel_collection_free(settings);
-	memset(settings, 0, sizeof(rdpSettings));
+
+	/* Extensions */
+	free(settings->ActionScript);
+	settings->ActionScript = NULL;
+
+	/* Free all strings, set other pointers NULL */
+	freerdp_settings_free_keys(settings, TRUE);
 }
 
 void freerdp_settings_free(rdpSettings* settings)
@@ -723,79 +670,13 @@ void freerdp_settings_free(rdpSettings* settings)
 	free(settings);
 }
 
-BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
+static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSettings* settings)
 {
+	BOOL rc = FALSE;
 	UINT32 index;
 
-	if (!settings || !_settings)
+	if (!_settings || !settings)
 		return FALSE;
-	freerdp_settings_free_internal(_settings);
-	*_settings = *settings;
-
-	/* char* values */
-#define CHECKED_STRDUP(name)                                            \
-	if (settings->name && !(_settings->name = _strdup(settings->name))) \
-	goto out_fail
-	CHECKED_STRDUP(ServerHostname);               /* 20 */
-	CHECKED_STRDUP(Username);                     /* 21 */
-	CHECKED_STRDUP(Password);                     /* 22 */
-	CHECKED_STRDUP(Domain);                       /* 23 */
-	CHECKED_STRDUP(PasswordHash);                 /* 24 */
-	CHECKED_STRDUP(AcceptedCert);                 /* 27 */
-	CHECKED_STRDUP(AlternateShell);               /* 640 */
-	CHECKED_STRDUP(ShellWorkingDirectory);        /* 641 */
-	CHECKED_STRDUP(ClientAddress);                /* 769 */
-	CHECKED_STRDUP(ClientDir);                    /* 770 */
-	CHECKED_STRDUP(DynamicDSTTimeZoneKeyName);    /* 897 */
-	CHECKED_STRDUP(RemoteAssistanceSessionId);    /* 1025 */
-	CHECKED_STRDUP(RemoteAssistancePassStub);     /* 1026 */
-	CHECKED_STRDUP(RemoteAssistancePassword);     /* 1027 */
-	CHECKED_STRDUP(RemoteAssistanceRCTicket);     /* 1028 */
-	CHECKED_STRDUP(AuthenticationServiceClass);   /* 1098 */
-	CHECKED_STRDUP(AllowedTlsCiphers);            /* 1101 */
-	CHECKED_STRDUP(NtlmSamFile);                  /* 1103 */
-	CHECKED_STRDUP(PreconnectionBlob);            /* 1155 */
-	CHECKED_STRDUP(TargetNetAddress);             /* 1217 */
-	CHECKED_STRDUP(RedirectionUsername);          /* 1220 */
-	CHECKED_STRDUP(RedirectionDomain);            /* 1221 */
-	CHECKED_STRDUP(RedirectionTargetFQDN);        /* 1224 */
-	CHECKED_STRDUP(RedirectionTargetNetBiosName); /* 1225 */
-	CHECKED_STRDUP(RedirectionAcceptedCert);      /* 1231 */
-	CHECKED_STRDUP(KerberosKdc);                  /* 1344 */
-	CHECKED_STRDUP(KerberosRealm);                /* 1345 */
-	CHECKED_STRDUP(CertificateName);              /* 1409 */
-	CHECKED_STRDUP(CertificateFile);              /* 1410 */
-	CHECKED_STRDUP(PrivateKeyFile);               /* 1411 */
-	CHECKED_STRDUP(RdpKeyFile);                   /* 1412 */
-	CHECKED_STRDUP(CertificateContent);           /* 1416 */
-	CHECKED_STRDUP(PrivateKeyContent);            /* 1417 */
-	CHECKED_STRDUP(RdpKeyContent);                /* 1418 */
-	CHECKED_STRDUP(WindowTitle);                  /* 1542 */
-	CHECKED_STRDUP(WmClass);                      /* 1549 */
-	CHECKED_STRDUP(ComputerName);                 /* 1664 */
-	CHECKED_STRDUP(ConnectionFile);               /* 1728 */
-	CHECKED_STRDUP(AssistanceFile);               /* 1729 */
-	CHECKED_STRDUP(HomePath);                     /* 1792 */
-	CHECKED_STRDUP(ConfigPath);                   /* 1793 */
-	CHECKED_STRDUP(CurrentPath);                  /* 1794 */
-	CHECKED_STRDUP(DumpRemoteFxFile);             /* 1858 */
-	CHECKED_STRDUP(PlayRemoteFxFile);             /* 1859 */
-	CHECKED_STRDUP(GatewayHostname);              /* 1986 */
-	CHECKED_STRDUP(GatewayUsername);              /* 1987 */
-	CHECKED_STRDUP(GatewayPassword);              /* 1988 */
-	CHECKED_STRDUP(GatewayDomain);                /* 1989 */
-	CHECKED_STRDUP(GatewayAccessToken);           /* 1997 */
-	CHECKED_STRDUP(GatewayAcceptedCert);          /* 1998 */
-	CHECKED_STRDUP(ProxyHostname);                /* 2016 */
-	CHECKED_STRDUP(RemoteApplicationName);        /* 2113 */
-	CHECKED_STRDUP(RemoteApplicationIcon);        /* 2114 */
-	CHECKED_STRDUP(RemoteApplicationProgram);     /* 2115 */
-	CHECKED_STRDUP(RemoteApplicationFile);        /* 2116 */
-	CHECKED_STRDUP(RemoteApplicationGuid);        /* 2117 */
-	CHECKED_STRDUP(RemoteApplicationCmdLine);     /* 2118 */
-	CHECKED_STRDUP(ImeFileName);                  /* 2628 */
-	CHECKED_STRDUP(DrivesToRedirect);             /* 4290 */
-	CHECKED_STRDUP(ActionScript);
 
 	if (settings->LoadBalanceInfo && settings->LoadBalanceInfoLength)
 	{
@@ -902,15 +783,6 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	CopyMemory(_settings->ReceivedCapabilities, settings->ReceivedCapabilities, 32);
 	CopyMemory(_settings->OrderSupport, settings->OrderSupport, 32);
-	_settings->ClientHostname = _strdup(settings->ClientHostname);
-
-	if (!_settings->ClientHostname)
-		goto out_fail;
-
-	_settings->ClientProductId = _strdup(settings->ClientProductId);
-
-	if (!_settings->ClientProductId)
-		goto out_fail;
 
 	_settings->BitmapCacheV2CellInfo =
 	    (BITMAP_CACHE_V2_CELL_INFO*)malloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
@@ -932,16 +804,6 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	CopyMemory(_settings->GlyphCache, settings->GlyphCache, sizeof(GLYPH_CACHE_DEFINITION) * 10);
 	CopyMemory(_settings->FragCache, settings->FragCache, sizeof(GLYPH_CACHE_DEFINITION));
-
-	if (settings->CertificateContent)
-		_settings->CertificateContent = _strdup(settings->CertificateContent);
-	if (settings->PrivateKeyContent)
-		_settings->PrivateKeyContent = _strdup(settings->PrivateKeyContent);
-	if (settings->RdpKeyContent)
-		_settings->RdpKeyContent = _strdup(settings->RdpKeyContent);
-	if (settings->CertificateAcceptedFingerprints)
-		_settings->CertificateAcceptedFingerprints =
-		    _strdup(settings->CertificateAcceptedFingerprints);
 
 	_settings->ClientAutoReconnectCookie =
 	    (ARC_CS_PRIVATE_PACKET*)malloc(sizeof(ARC_CS_PRIVATE_PACKET));
@@ -1119,6 +981,55 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 			goto out_fail;
 	}
 
+	if (settings->ActionScript)
+		_settings->ActionScript = _strdup(settings->ActionScript);
+	rc = TRUE;
+out_fail:
+	return rc;
+}
+
+BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
+{
+	BOOL rc;
+
+	if (!settings || !_settings)
+		return FALSE;
+
+	/* This is required to free all non string buffers */
+	freerdp_settings_free_internal(_settings);
+	/* This copies everything except allocated non string buffers. reset all allocated buffers to
+	 * NULL to fix issues during cleanup */
+	rc = freerdp_settings_clone_keys(_settings, settings);
+
+	_settings->LoadBalanceInfo = NULL;
+	_settings->ServerRandom = NULL;
+	_settings->ClientRandom = NULL;
+	_settings->RdpServerCertificate = NULL;
+	_settings->RdpServerRsaKey = NULL;
+	_settings->ChannelDefArray = NULL;
+	_settings->MonitorDefArray = NULL;
+	_settings->MonitorIds = NULL;
+	_settings->ReceivedCapabilities = NULL;
+	_settings->OrderSupport = NULL;
+	_settings->BitmapCacheV2CellInfo = NULL;
+	_settings->GlyphCache = NULL;
+	_settings->FragCache = NULL;
+	_settings->ClientAutoReconnectCookie = NULL;
+	_settings->ServerAutoReconnectCookie = NULL;
+	_settings->ClientTimeZone = NULL;
+	_settings->RedirectionPassword = NULL;
+	_settings->RedirectionTsvUrl = NULL;
+	_settings->TargetNetAddresses = NULL;
+	_settings->DeviceArray = NULL;
+	_settings->StaticChannelArray = NULL;
+	_settings->DynamicChannelArray = NULL;
+	_settings->ActionScript = NULL;
+	if (!rc)
+		goto out_fail;
+
+	/* Begin copying */
+	if (!freerdp_settings_int_buffer_copy(_settings, settings))
+		goto out_fail;
 	return TRUE;
 out_fail:
 	freerdp_settings_free_internal(_settings);
@@ -1134,13 +1045,7 @@ rdpSettings* freerdp_settings_clone(const rdpSettings* settings)
 
 	return _settings;
 out_fail:
-	/* In case any memory allocation failed during clone, some bytes might leak.
-	 *
-	 * freerdp_settings_free can't be reliable used at this point since it could
-	 * free memory of pointers copied by CopyMemory and detecting and freeing
-	 * each allocation separately is quite painful.
-	 */
-	free(_settings);
+	freerdp_settings_free(_settings);
 	return NULL;
 }
 #ifdef _WIN32
