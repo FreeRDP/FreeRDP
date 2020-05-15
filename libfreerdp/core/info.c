@@ -1141,7 +1141,7 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	 */
 	if (cbDomain)
 	{
-		if ((cbDomain % 2) || cbDomain > 52)
+		if ((cbDomain % 2) || (cbDomain > 52))
 		{
 			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %" PRIu32 "", cbDomain);
 			goto fail;
@@ -1155,7 +1155,7 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 
 		ptrconv.bp = Stream_Pointer(s);
 
-		if (ptrconv.wp[cbDomain / 2 - 1])
+		if (ptrconv.bp[cbDomain - 1] || ptrconv.bp[cbDomain - 2])
 		{
 			WLog_ERR(TAG, "protocol error: Domain field must be null terminated");
 			goto fail;
