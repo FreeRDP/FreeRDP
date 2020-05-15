@@ -1115,10 +1115,6 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	UINT32 Size;
 	UINT32 cbDomain;
 	UINT32 cbUserName;
-	union {
-		BYTE* bp;
-		WCHAR* wp;
-	} ptrconv;
 
 	WINPR_UNUSED(rdp);
 	ZeroMemory(info, sizeof(*info));
@@ -1141,6 +1137,7 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	 */
 	if (cbDomain)
 	{
+		WCHAR domain[26] = { 0 };
 		if ((cbDomain % 2) || (cbDomain > 52))
 		{
 			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %" PRIu32 "", cbDomain);
@@ -1153,22 +1150,21 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 			goto fail;
 		}
 
-		ptrconv.bp = Stream_Pointer(s);
+		memcpy(domain, Stream_Pointer(s), cbDomain);
+		Stream_Seek(s, cbDomain); /* domain */
 
-		if (ptrconv.bp[cbDomain - 1] || ptrconv.bp[cbDomain - 2])
+		if (domain[cbDomain / sizeof(WCHAR) - 1])
 		{
 			WLog_ERR(TAG, "protocol error: Domain field must be null terminated");
 			goto fail;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &info->domain, 0, NULL, FALSE) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, domain, -1, &info->domain, 0, NULL, FALSE) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert the Domain string");
 			goto fail;
 		}
 	}
-
-	Stream_Seek(s, cbDomain); /* domain */
 
 	/* cbUserName is the size in bytes of the Unicode character data in the UserName field.
 	 * The size of the mandatory null terminator is include in this value.
@@ -1178,6 +1174,8 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	 */
 	if (cbUserName)
 	{
+		WCHAR user[256] = { 0 };
+
 		if ((cbUserName % 2) || cbUserName < 2 || cbUserName > 512)
 		{
 			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %" PRIu32 "", cbUserName);
@@ -1190,22 +1188,22 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 			goto fail;
 		}
 
-		ptrconv.bp = Stream_Pointer(s);
+		memcpy(user, Stream_Pointer(s), cbUserName);
+		Stream_Seek(s, cbUserName); /* userName */
 
-		if (ptrconv.wp[cbUserName / 2 - 1])
+		if (user[cbUserName / sizeof(WCHAR) - 1])
 		{
 			WLog_ERR(TAG, "protocol error: UserName field must be null terminated");
 			goto fail;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &info->username, 0, NULL, FALSE) < 1)
+		if (ConvertFromUnicode(CP_UTF8, 0, user, -1, &info->username, 0, NULL, FALSE) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert the Domain string");
 			goto fail;
 		}
 	}
 
-	Stream_Seek(s, cbUserName); /* userName */
 	WLog_DBG(TAG, "LogonInfoV2: SessionId: 0x%08" PRIX32 " UserName: [%s] Domain: [%s]",
 	         info->sessionId, info->username, info->domain);
 	return TRUE;
