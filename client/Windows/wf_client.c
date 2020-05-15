@@ -438,6 +438,8 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 	fSave = FALSE;
 	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
 
+	if (username && *username)
+		strncpy(UserName, *username, CREDUI_MAX_USERNAME_LENGTH);
 	if (wfc->isConsole)
 		status = CredUICmdLinePromptForCredentialsA(
 		    title, NULL, 0, UserName, CREDUI_MAX_USERNAME_LENGTH + 1, Password,
