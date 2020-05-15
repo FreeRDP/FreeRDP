@@ -206,6 +206,16 @@ static char* IniFile_Load_GetNextLine(wIniFile* ini)
 	return ini->line;
 }
 
+static void IniFile_Key_Free(wIniFileKey* key)
+{
+	if (!key)
+		return;
+
+	free(key->name);
+	free(key->value);
+	free(key);
+}
+
 static wIniFileKey* IniFile_Key_New(const char* name, const char* value)
 {
 	wIniFileKey* key;
@@ -222,24 +232,12 @@ static wIniFileKey* IniFile_Key_New(const char* name, const char* value)
 
 		if (!key->name || !key->value)
 		{
-			free(key->name);
-			free(key->value);
-			free(key);
+			IniFile_Key_Free(key);
 			return NULL;
 		}
 	}
 
 	return key;
-}
-
-static void IniFile_Key_Free(wIniFileKey* key)
-{
-	if (!key)
-		return;
-
-	free(key->name);
-	free(key->value);
-	free(key);
 }
 
 static wIniFileSection* IniFile_Section_New(const char* name)
@@ -821,5 +819,6 @@ void IniFile_Free(wIniFile* ini)
 		IniFile_Section_Free(ini->sections[index]);
 
 	free(ini->sections);
+	free(ini->buffer);
 	free(ini);
 }
