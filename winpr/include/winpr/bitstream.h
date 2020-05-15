@@ -52,39 +52,39 @@ extern "C"
 	{
 		(_bs->prefetch) = 0;
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 4) < (_bs->capacity))
-			(_bs->prefetch) |= (*(_bs->pointer + 4) << 24);
+			(_bs->prefetch) |= ((UINT32) * (_bs->pointer + 4) << 24);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 5) < (_bs->capacity))
-			(_bs->prefetch) |= (*(_bs->pointer + 5) << 16);
+			(_bs->prefetch) |= ((UINT32) * (_bs->pointer + 5) << 16);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 6) < (_bs->capacity))
-			(_bs->prefetch) |= (*(_bs->pointer + 6) << 8);
+			(_bs->prefetch) |= ((UINT32) * (_bs->pointer + 6) << 8);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 7) < (_bs->capacity))
-			(_bs->prefetch) |= (*(_bs->pointer + 7) << 0);
+			(_bs->prefetch) |= ((UINT32) * (_bs->pointer + 7) << 0);
 	}
 
 	static INLINE void BitStream_Fetch(wBitStream* _bs)
 	{
 		(_bs->accumulator) = 0;
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 0) < (_bs->capacity))
-			(_bs->accumulator) |= (*(_bs->pointer + 0) << 24);
+			(_bs->accumulator) |= ((UINT32) * (_bs->pointer + 0) << 24);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 1) < (_bs->capacity))
-			(_bs->accumulator) |= (*(_bs->pointer + 1) << 16);
+			(_bs->accumulator) |= ((UINT32) * (_bs->pointer + 1) << 16);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 2) < (_bs->capacity))
-			(_bs->accumulator) |= (*(_bs->pointer + 2) << 8);
+			(_bs->accumulator) |= ((UINT32) * (_bs->pointer + 2) << 8);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 3) < (_bs->capacity))
-			(_bs->accumulator) |= (*(_bs->pointer + 3) << 0);
+			(_bs->accumulator) |= ((UINT32) * (_bs->pointer + 3) << 0);
 		BitStream_Prefetch(_bs);
 	}
 
 	static INLINE void BitStream_Flush(wBitStream* _bs)
 	{
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 0) < (_bs->capacity))
-			*(_bs->pointer + 0) = (_bs->accumulator >> 24);
+			*(_bs->pointer + 0) = ((UINT32)_bs->accumulator >> 24);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 1) < (_bs->capacity))
-			*(_bs->pointer + 1) = (_bs->accumulator >> 16);
+			*(_bs->pointer + 1) = ((UINT32)_bs->accumulator >> 16);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 2) < (_bs->capacity))
-			*(_bs->pointer + 2) = (_bs->accumulator >> 8);
+			*(_bs->pointer + 2) = ((UINT32)_bs->accumulator >> 8);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 3) < (_bs->capacity))
-			*(_bs->pointer + 3) = (_bs->accumulator >> 0);
+			*(_bs->pointer + 3) = ((UINT32)_bs->accumulator >> 0);
 	}
 
 	static INLINE void BitStream_Shift(wBitStream* _bs, UINT32 _nbits)
@@ -99,13 +99,13 @@ extern "C"
 			_bs->offset += _nbits;
 			if (_bs->offset < 32)
 			{
-				_bs->mask = ((1 << _nbits) - 1);
+				_bs->mask = ((1UL << _nbits) - 1);
 				_bs->accumulator |= ((_bs->prefetch >> (32 - _nbits)) & _bs->mask);
 				_bs->prefetch <<= _nbits;
 			}
 			else
 			{
-				_bs->mask = ((1 << _nbits) - 1);
+				_bs->mask = ((1UL << _nbits) - 1);
 				_bs->accumulator |= ((_bs->prefetch >> (32 - _nbits)) & _bs->mask);
 				_bs->prefetch <<= _nbits;
 				_bs->offset -= 32;
@@ -113,7 +113,7 @@ extern "C"
 				BitStream_Prefetch(_bs);
 				if (_bs->offset)
 				{
-					_bs->mask = ((1 << _bs->offset) - 1);
+					_bs->mask = ((1UL << _bs->offset) - 1);
 					_bs->accumulator |= ((_bs->prefetch >> (32 - _bs->offset)) & _bs->mask);
 					_bs->prefetch <<= _bs->offset;
 				}
@@ -149,7 +149,7 @@ extern "C"
 			_bs->pointer += 4;
 			if (_bs->offset)
 			{
-				_bs->mask = ((1 << _bs->offset) - 1);
+				_bs->mask = ((1UL << _bs->offset) - 1);
 				_bs->accumulator |= ((_bits & _bs->mask) << (32 - _bs->offset));
 			}
 		}
