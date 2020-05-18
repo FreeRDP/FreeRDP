@@ -223,8 +223,15 @@ BOOL xf_picture_transform_required(xfContext* xfc)
 }
 #endif /* WITH_XRENDER defined */
 
-void xf_draw_screen(xfContext* xfc, int x, int y, int w, int h)
+void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt, const char* file,
+                     int line)
 {
+	if (!xfc)
+	{
+		WLog_DBG(TAG, "[%s] called from [%s] xfc=%p", __FUNCTION__, fkt, xfc);
+		return;
+	}
+
 	if (w == 0 || h == 0)
 	{
 		WLog_WARN(TAG, "invalid width and/or height specified: w=%d h=%d", w, h);
