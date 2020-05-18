@@ -1183,7 +1183,7 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* s
 			sign[index] = input;
 		}
 
-		buffer[index] += (input << shift);
+		buffer[index] += (INT16)((UINT32)input << shift);
 	}
 
 	return 1;
