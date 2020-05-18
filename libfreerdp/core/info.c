@@ -67,6 +67,54 @@ static struct
 	{ INFO_HIDEF_RAIL_SUPPORTED, "INFO_HIDEF_RAIL_SUPPORTED" },
 };
 
+static BOOL rdp_read_info_null_string(UINT32 flags, wStream* s, size_t cbLen, CHAR** dst,
+                                      size_t max)
+{
+	CHAR* ret = NULL;
+
+	const BOOL unicode = flags & INFO_UNICODE;
+	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
+
+	if (Stream_GetRemainingLength(s) < (size_t)(cbLen))
+		return FALSE;
+
+	if (cbLen > 0)
+	{
+		WCHAR domain[512 / sizeof(WCHAR) + sizeof(WCHAR)] = { 0 };
+		/* cbDomain is the size in bytes of the character data in the Domain field.
+		 * This size excludes (!) the length of the mandatory null terminator.
+		 * Maximum value including the mandatory null terminator: 512
+		 */
+		if ((cbLen % 2) || (cbLen > (max - nullSize)))
+		{
+			WLog_ERR(TAG, "protocol error: invalid value: %" PRIuz "", cbLen);
+			return FALSE;
+		}
+
+		Stream_Read(s, domain, cbLen);
+
+		if (unicode)
+		{
+			if (ConvertFromUnicode(CP_UTF8, 0, domain, cbLen, &ret, 0, NULL, NULL) < 1)
+			{
+				WLog_ERR(TAG, "failed to convert Domain string");
+				return FALSE;
+			}
+		}
+		else
+		{
+			ret = calloc(cbLen + 1, nullSize);
+			if (!ret)
+				return FALSE;
+			memcpy(ret, domain, cbLen);
+		}
+	}
+
+	free(*dst);
+	*dst = ret;
+	return TRUE;
+}
+
 static char* rdp_info_package_flags_description(UINT32 flags)
 {
 	char* result;
@@ -245,10 +293,6 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	UINT16 cbClientDir;
 	UINT16 cbAutoReconnectLen;
 	rdpSettings* settings = rdp->settings;
-	union {
-		BYTE* bp;
-		WCHAR* wp;
-	} ptrconv;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -275,33 +319,9 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) < cbClientAddress)
 		return FALSE;
 
-	if (settings->ClientAddress)
-	{
-		free(settings->ClientAddress);
-		settings->ClientAddress = NULL;
-	}
-
-	if (cbClientAddress)
-	{
-		ptrconv.bp = Stream_Pointer(s);
-
-		if ((cbClientAddress < sizeof(WCHAR)) || (ptrconv.bp[cbClientAddress - 1]) ||
-		    (ptrconv.bp[cbClientAddress - 2]))
-		{
-			WLog_ERR(TAG, "protocol error: clientAddress must be null terminated");
-			return FALSE;
-		}
-
-		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->ClientAddress, 0, NULL,
-		                       NULL) < 1)
-		{
-			WLog_ERR(TAG, "failed to convert client address");
-			return FALSE;
-		}
-
-		Stream_Seek(s, cbClientAddress);
-		WLog_DBG(TAG, "rdp client address: [%s]", settings->ClientAddress);
-	}
+	if (!rdp_read_info_null_string(INFO_UNICODE, s, cbClientAddress, &settings->ClientAddress,
+	                               (settings->RdpVersion < RDP_VERSION_10_0) ? 64 : 80))
+		return FALSE;
 
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
@@ -316,41 +336,8 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	 * sets cbClientDir to 0.
 	 */
 
-	if ((cbClientDir % 2) || cbClientDir > 512)
-	{
-		WLog_ERR(TAG, "protocol error: invalid cbClientDir value: %" PRIu16 "", cbClientDir);
+	if (!rdp_read_info_null_string(INFO_UNICODE, s, cbClientDir, &settings->ClientDir, 512))
 		return FALSE;
-	}
-
-	if (Stream_GetRemainingLength(s) < cbClientDir)
-		return FALSE;
-
-	if (settings->ClientDir)
-	{
-		free(settings->ClientDir);
-		settings->ClientDir = NULL;
-	}
-
-	if (cbClientDir)
-	{
-		ptrconv.bp = Stream_Pointer(s);
-
-		if ((cbClientDir < sizeof(WCHAR)) || (ptrconv.bp[cbClientDir - 1]) ||
-		    (ptrconv.bp[cbClientDir - 2]))
-		{
-			WLog_ERR(TAG, "protocol error: clientDir must be null terminated");
-			return FALSE;
-		}
-
-		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->ClientDir, 0, NULL, NULL) < 1)
-		{
-			WLog_ERR(TAG, "failed to convert client directory");
-			return FALSE;
-		}
-
-		Stream_Seek(s, cbClientDir);
-		WLog_DBG(TAG, "rdp client dir: [%s]", settings->ClientDir);
-	}
 
 	/**
 	 * down below all fields are optional but if one field is not present,
