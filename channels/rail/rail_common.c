@@ -27,29 +27,34 @@
 
 #define TAG CHANNELS_TAG("rail.common")
 
-const char* const RAIL_ORDER_TYPE_STRINGS[] = { "",
-	                                            "Execute",
-	                                            "Activate",
-	                                            "System Parameters Update",
-	                                            "System Command",
-	                                            "Handshake",
-	                                            "Notify Event",
-	                                            "",
-	                                            "Window Move",
-	                                            "Local Move/Size",
-	                                            "Min Max Info",
-	                                            "Client Status",
-	                                            "System Menu",
-	                                            "Language Bar Info",
-	                                            "Get Application ID Request",
-	                                            "Get Application ID Response",
-	                                            "Execute Result",
-	                                            "",
-	                                            "",
-	                                            "",
-	                                            "",
-	                                            "",
-	                                            "" };
+static const char* const RAIL_ORDER_TYPE_STRINGS[] = { "",
+	                                                   "Execute",
+	                                                   "Activate",
+	                                                   "System Parameters Update",
+	                                                   "System Command",
+	                                                   "Handshake",
+	                                                   "Notify Event",
+	                                                   "",
+	                                                   "Window Move",
+	                                                   "Local Move/Size",
+	                                                   "Min Max Info",
+	                                                   "Client Status",
+	                                                   "System Menu",
+	                                                   "Language Bar Info",
+	                                                   "Get Application ID Request",
+	                                                   "Get Application ID Response",
+	                                                   "Execute Result",
+	                                                   "",
+	                                                   "",
+	                                                   "",
+	                                                   "",
+	                                                   "",
+	                                                   "" };
+
+const char* rail_get_order_type_string(BYTE orderType)
+{
+	return RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)];
+}
 
 /**
  * Function description
