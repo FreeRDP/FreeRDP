@@ -285,7 +285,8 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	{
 		ptrconv.bp = Stream_Pointer(s);
 
-		if (ptrconv.wp[cbClientAddress / 2 - 1])
+		if ((cbClientAddress < sizeof(WCHAR)) || (ptrconv.bp[cbClientAddress - 1]) ||
+		    (ptrconv.bp[cbClientAddress - 2]))
 		{
 			WLog_ERR(TAG, "protocol error: clientAddress must be null terminated");
 			return FALSE;
@@ -334,7 +335,8 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	{
 		ptrconv.bp = Stream_Pointer(s);
 
-		if (ptrconv.wp[cbClientDir / 2 - 1])
+		if ((cbClientDir < sizeof(WCHAR)) || (ptrconv.bp[cbClientDir - 1]) ||
+		    (ptrconv.bp[cbClientDir - 2]))
 		{
 			WLog_ERR(TAG, "protocol error: clientDir must be null terminated");
 			return FALSE;
