@@ -476,6 +476,69 @@ fail:
 	return ret;
 }
 
+static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, CHAR** dst,
+                                 size_t max)
+{
+	union
+	{
+		char c;
+		WCHAR w;
+		BYTE b[2];
+	} terminator;
+	CHAR* ret = NULL;
+
+	const BOOL unicode = flags & INFO_UNICODE;
+	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
+
+	if (Stream_GetRemainingLength(s) < (size_t)(cbLenNonNull + nullSize))
+		return FALSE;
+
+	if (cbLenNonNull > 0)
+	{
+		WCHAR domain[512 / sizeof(WCHAR) + sizeof(WCHAR)] = { 0 };
+		/* cbDomain is the size in bytes of the character data in the Domain field.
+		 * This size excludes (!) the length of the mandatory null terminator.
+		 * Maximum value including the mandatory null terminator: 512
+		 */
+		if ((cbLenNonNull % 2) || (cbLenNonNull > (max - nullSize)))
+		{
+			WLog_ERR(TAG, "protocol error: invalid value: %" PRIuz "", cbLenNonNull);
+			return FALSE;
+		}
+
+		Stream_Read(s, domain, cbLenNonNull);
+
+		if (unicode)
+		{
+			if (ConvertFromUnicode(CP_UTF8, 0, domain, cbLenNonNull, &ret, 0, NULL, NULL) < 1)
+			{
+				WLog_ERR(TAG, "failed to convert Domain string");
+				return FALSE;
+			}
+		}
+		else
+		{
+			ret = calloc(cbLenNonNull + 1, nullSize);
+			if (!ret)
+				return FALSE;
+			memcpy(ret, domain, cbLenNonNull);
+		}
+	}
+
+	terminator.w = L'\0';
+	Stream_Read(s, terminator.b, nullSize);
+
+	if (terminator.w != L'\0')
+	{
+		WLog_ERR(TAG, "protocol error: Domain must be null terminated");
+		free(ret);
+		return FALSE;
+	}
+
+	*dst = ret;
+	return TRUE;
+}
+
 /**
  * Read Info Packet (TS_INFO_PACKET).\n
  * @msdn{cc240475}
@@ -485,6 +548,7 @@ fail:
 
 static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 {
+	BOOL small = FALSE;
 	UINT32 flags;
 	UINT16 cbDomain;
 	UINT16 cbUserName;
@@ -493,10 +557,6 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	UINT16 cbWorkingDir;
 	UINT32 CompressionLevel;
 	rdpSettings* settings = rdp->settings;
-	union {
-		BYTE* bp;
-		WCHAR* wp;
-	} ptrconv;
 
 	if (Stream_GetRemainingLength(s) < 18)
 		return FALSE;
@@ -522,11 +582,9 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 		settings->CompressionLevel = CompressionLevel;
 	}
 
-	if (!(flags & INFO_UNICODE))
-	{
-		WLog_ERR(TAG, "Client without INFO_UNICODE flag: this is currently not supported");
-		return FALSE;
-	}
+	/* RDP 4 and 5 have smaller credential limits */
+	if (settings->RdpVersion < RDP_VERSION_5_PLUS)
+		small = TRUE;
 
 	Stream_Read_UINT16(s, cbDomain);         /* cbDomain (2 bytes) */
 	Stream_Read_UINT16(s, cbUserName);       /* cbUserName (2 bytes) */
@@ -534,178 +592,20 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	Stream_Read_UINT16(s, cbAlternateShell); /* cbAlternateShell (2 bytes) */
 	Stream_Read_UINT16(s, cbWorkingDir);     /* cbWorkingDir (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (size_t)(cbDomain + 2))
+	if (!rdp_read_info_string(flags, s, cbDomain, &settings->Domain, small ? 52 : 512))
 		return FALSE;
 
-	if (cbDomain > 0)
-	{
-		/* cbDomain is the size in bytes of the character data in the Domain field.
-		 * This size excludes (!) the length of the mandatory null terminator.
-		 * Maximum value including the mandatory null terminator: 512
-		 */
-		if ((cbDomain % 2) || cbDomain > 512)
-		{
-			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %" PRIu16 "", cbDomain);
-			return FALSE;
-		}
-
-		ptrconv.bp = Stream_Pointer(s);
-
-		if (ptrconv.wp[cbDomain / 2])
-		{
-			WLog_ERR(TAG, "protocol error: Domain must be null terminated");
-			return FALSE;
-		}
-
-		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->Domain, 0, NULL, NULL) < 1)
-		{
-			WLog_ERR(TAG, "failed to convert Domain string");
-			return FALSE;
-		}
-
-		Stream_Seek(s, cbDomain);
-	}
-
-	Stream_Seek(s, 2);
-
-	if (Stream_GetRemainingLength(s) < (size_t)(cbUserName + 2))
+	if (!rdp_read_info_string(flags, s, cbUserName, &settings->Username, small ? 44 : 512))
 		return FALSE;
 
-	if (cbUserName > 0)
-	{
-		/* cbUserName is the size in bytes of the character data in the UserName field.
-		 * This size excludes (!) the length of the mandatory null terminator.
-		 * Maximum value including the mandatory null terminator: 512
-		 */
-		if ((cbUserName % 2) || cbUserName > 512)
-		{
-			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %" PRIu16 "", cbUserName);
-			return FALSE;
-		}
-
-		ptrconv.bp = Stream_Pointer(s);
-
-		if (ptrconv.wp[cbUserName / 2])
-		{
-			WLog_ERR(TAG, "protocol error: UserName must be null terminated");
-			return FALSE;
-		}
-
-		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->Username, 0, NULL, NULL) < 1)
-		{
-			WLog_ERR(TAG, "failed to convert UserName string");
-			return FALSE;
-		}
-
-		Stream_Seek(s, cbUserName);
-	}
-
-	Stream_Seek(s, 2);
-
-	if (Stream_GetRemainingLength(s) < (size_t)(cbPassword + 2))
+	if (!rdp_read_info_string(flags, s, cbPassword, &settings->Password, small ? 32 : 512))
 		return FALSE;
 
-	if (cbPassword > 0)
-	{
-		/* cbPassword is the size in bytes of the character data in the Password field.
-		 * This size excludes (!) the length of the mandatory null terminator.
-		 * Maximum value including the mandatory null terminator: 512
-		 */
-		if ((cbPassword % 2) || cbPassword > LB_PASSWORD_MAX_LENGTH)
-		{
-			WLog_ERR(TAG, "protocol error: invalid cbPassword value: %" PRIu16 "", cbPassword);
-			return FALSE;
-		}
-
-		ptrconv.bp = Stream_Pointer(s);
-
-		if (ptrconv.wp[cbPassword / 2])
-		{
-			WLog_ERR(TAG, "protocol error: Password must be null terminated");
-			return FALSE;
-		}
-
-		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->Password, 0, NULL, NULL) < 1)
-		{
-			WLog_ERR(TAG, "failed to convert Password string");
-			return FALSE;
-		}
-
-		Stream_Seek(s, cbPassword);
-	}
-
-	Stream_Seek(s, 2);
-
-	if (Stream_GetRemainingLength(s) < (size_t)(cbAlternateShell + 2))
+	if (!rdp_read_info_string(flags, s, cbAlternateShell, &settings->AlternateShell, 512))
 		return FALSE;
 
-	if (cbAlternateShell > 0)
-	{
-		/* cbAlternateShell is the size in bytes of the character data in the AlternateShell field.
-		 * This size excludes (!) the length of the mandatory null terminator.
-		 * Maximum value including the mandatory null terminator: 512
-		 */
-		if ((cbAlternateShell % 2) || cbAlternateShell > 512)
-		{
-			WLog_ERR(TAG, "protocol error: invalid cbAlternateShell value: %" PRIu16 "",
-			         cbAlternateShell);
-			return FALSE;
-		}
-
-		ptrconv.bp = Stream_Pointer(s);
-
-		if (ptrconv.wp[cbAlternateShell / 2])
-		{
-			WLog_ERR(TAG, "protocol error: AlternateShell must be null terminated");
-			return FALSE;
-		}
-
-		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->AlternateShell, 0, NULL,
-		                       NULL) < 1)
-		{
-			WLog_ERR(TAG, "failed to convert AlternateShell string");
-			return FALSE;
-		}
-
-		Stream_Seek(s, cbAlternateShell);
-	}
-
-	Stream_Seek(s, 2);
-
-	if (Stream_GetRemainingLength(s) < (size_t)(cbWorkingDir + 2))
+	if (!rdp_read_info_string(flags, s, cbWorkingDir, &settings->ShellWorkingDirectory, 512))
 		return FALSE;
-
-	if (cbWorkingDir > 0)
-	{
-		/* cbWorkingDir is the size in bytes of the character data in the WorkingDir field.
-		 * This size excludes (!) the length of the mandatory null terminator.
-		 * Maximum value including the mandatory null terminator: 512
-		 */
-		if ((cbWorkingDir % 2) || cbWorkingDir > 512)
-		{
-			WLog_ERR(TAG, "protocol error: invalid cbWorkingDir value: %" PRIu16 "", cbWorkingDir);
-			return FALSE;
-		}
-
-		ptrconv.bp = Stream_Pointer(s);
-
-		if (ptrconv.wp[cbWorkingDir / 2])
-		{
-			WLog_ERR(TAG, "protocol error: WorkingDir must be null terminated");
-			return FALSE;
-		}
-
-		if (ConvertFromUnicode(CP_UTF8, 0, ptrconv.wp, -1, &settings->ShellWorkingDirectory, 0,
-		                       NULL, NULL) < 1)
-		{
-			WLog_ERR(TAG, "failed to convert AlternateShell string");
-			return FALSE;
-		}
-
-		Stream_Seek(s, cbWorkingDir);
-	}
-
-	Stream_Seek(s, 2);
 
 	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
 		return rdp_read_extended_info_packet(rdp, s); /* extraInfo */
