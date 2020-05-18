@@ -342,7 +342,10 @@ int main(int argc, char* argv[])
 	    freerdp_client_settings_command_line_status_print(context->settings, status, argc, argv);
 
 	if (status)
-		return 0;
+	{
+		rc = 0;
+		goto fail;
+	}
 
 	if (freerdp_client_start(context) != 0)
 		goto fail;
