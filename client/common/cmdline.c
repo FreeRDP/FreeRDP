@@ -3500,8 +3500,9 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			BOOL success;
 			const char* name = NULL;
 			const char* drive = tok;
-			char* start = strtok(tok, "(");
-			char* end = strtok(NULL, ")");
+			char* subcontext = NULL;
+			char* start = strtok_s(tok, "(", &subcontext);
+			char* end = strtok_s(NULL, ")", &subcontext);
 			if (start && end)
 				name = end;
 

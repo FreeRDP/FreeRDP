@@ -1198,9 +1198,10 @@ static BOOL is_accepted_fingerprint(CryptoCert cert, const char* CertificateAcce
 		char* cur = strtok_s(copy, ",", &context);
 		while (cur)
 		{
+			char* subcontext = NULL;
 			BOOL equal;
 			char* strhash;
-			const char* h = strtok(cur, ":");
+			const char* h = strtok_s(cur, ":", &subcontext);
 			const char* fp;
 
 			if (!h)

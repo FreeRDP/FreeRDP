@@ -2930,6 +2930,7 @@ unsigned int determineMacOSXVersion(void)
 	long minorVersion = 0;
 	long patchVersion = 0;
 	int count = 0;
+	char* context = NULL;
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_OSRELEASE;
 
@@ -2947,7 +2948,7 @@ unsigned int determineMacOSXVersion(void)
 		return 0;
 	}
 
-	tok = strtok(kernelVersion, ".");
+	tok = strtok_s(kernelVersion, ".", &context);
 	errno = 0;
 
 	while (tok)
@@ -2979,7 +2980,7 @@ unsigned int determineMacOSXVersion(void)
 				break;
 		}
 
-		tok = strtok(NULL, ".");
+		tok = strtok_s(NULL, ".", &context);
 		count++;
 	}
 
