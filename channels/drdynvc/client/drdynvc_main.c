@@ -1407,6 +1407,40 @@ static void drdynvc_queue_object_free(void* obj)
 		Stream_Release(s);
 }
 
+static UINT drdynvc_virtual_channel_event_initialized(drdynvcPlugin* drdynvc, LPVOID pData,
+                                                      UINT32 dataLength)
+{
+	UINT error = CHANNEL_RC_OK;
+	WINPR_UNUSED(pData);
+	WINPR_UNUSED(dataLength);
+
+	if (!drdynvc)
+		goto error;
+
+	drdynvc->queue = MessageQueue_New(NULL);
+
+	if (!drdynvc->queue)
+	{
+		error = CHANNEL_RC_NO_MEMORY;
+		WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_New failed!");
+		goto error;
+	}
+
+	drdynvc->queue->object.fnObjectFree = drdynvc_queue_object_free;
+	drdynvc->channel_mgr = dvcman_new(drdynvc);
+
+	if (!drdynvc->channel_mgr)
+	{
+		error = CHANNEL_RC_NO_MEMORY;
+		WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_new failed!");
+		goto error;
+	}
+
+	return CHANNEL_RC_OK;
+error:
+	return ERROR_INTERNAL_ERROR;
+}
+
 /**
  * Function description
  *
@@ -1436,25 +1470,6 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 		WLog_Print(drdynvc->log, WLOG_ERROR, "pVirtualChannelOpen failed with %s [%08" PRIX32 "]",
 		           WTSErrorToString(status), status);
 		return status;
-	}
-
-	drdynvc->queue = MessageQueue_New(NULL);
-
-	if (!drdynvc->queue)
-	{
-		error = CHANNEL_RC_NO_MEMORY;
-		WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_New failed!");
-		goto error;
-	}
-
-	drdynvc->queue->object.fnObjectFree = drdynvc_queue_object_free;
-	drdynvc->channel_mgr = dvcman_new(drdynvc);
-
-	if (!drdynvc->channel_mgr)
-	{
-		error = CHANNEL_RC_NO_MEMORY;
-		WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_new failed!");
-		goto error;
 	}
 
 	settings = (rdpSettings*)drdynvc->channelEntryPoints.pExtendedData;
@@ -1519,10 +1534,9 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 		return status;
 	}
 
-	MessageQueue_Free(drdynvc->queue);
 	CloseHandle(drdynvc->thread);
-	drdynvc->queue = NULL;
 	drdynvc->thread = NULL;
+
 	status = drdynvc->channelEntryPoints.pVirtualChannelCloseEx(drdynvc->InitHandle,
 	                                                            drdynvc->OpenHandle);
 
@@ -1540,12 +1554,6 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 		drdynvc->data_in = NULL;
 	}
 
-	if (drdynvc->channel_mgr)
-	{
-		dvcman_free(drdynvc, drdynvc->channel_mgr);
-		drdynvc->channel_mgr = NULL;
-	}
-
 	return status;
 }
 
@@ -1559,6 +1567,13 @@ static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
+	if (drdynvc->channel_mgr)
+	{
+		dvcman_free(drdynvc, drdynvc->channel_mgr);
+		drdynvc->channel_mgr = NULL;
+	}
+	MessageQueue_Free(drdynvc->queue);
+	drdynvc->queue = NULL;
 	drdynvc->InitHandle = 0;
 	free(drdynvc->context);
 	free(drdynvc);
@@ -1645,6 +1660,9 @@ static VOID VCAPITYPE drdynvc_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 
 	switch (event)
 	{
+		case CHANNEL_EVENT_INITIALIZED:
+			error = drdynvc_virtual_channel_event_initialized(drdynvc, pData, dataLength);
+			break;
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = drdynvc_virtual_channel_event_connected(drdynvc, pData, dataLength)))
 				WLog_Print(drdynvc->log, WLOG_ERROR,
