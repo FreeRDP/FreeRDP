@@ -185,7 +185,8 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 
 	while (fgets(buffer, sizeof(buffer), actionScript))
 	{
-		strtok(buffer, "\n");
+		char* context = NULL;
+		strtok_s(buffer, "\n", &context);
 		xevent = _strdup(buffer);
 
 		if (!xevent || ArrayList_Add(xfc->xevents, xevent) < 0)
@@ -253,7 +254,8 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 
 	while (fgets(buffer, sizeof(buffer), actionScript))
 	{
-		strtok(buffer, "\n");
+		char* context = NULL;
+		strtok_s(buffer, "\n", &context);
 	}
 
 	pclose(actionScript);
