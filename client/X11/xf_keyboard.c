@@ -74,7 +74,8 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 
 	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
 	{
-		strtok(buffer, "\n");
+		char* context = NULL;
+		strtok_s(buffer, "\n", &context);
 		keyCombination = _strdup(buffer);
 
 		if (!keyCombination || ArrayList_Add(xfc->keyCombinations, keyCombination) < 0)
@@ -433,7 +434,8 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 
 	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
 	{
-		strtok(buffer, "\n");
+		char* context = NULL;
+		strtok_s(buffer, "\n", &context);
 
 		if (strcmp(buffer, "key-local") == 0)
 			status = 0;
