@@ -781,7 +781,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 		Stream_Read_UINT32(pdu->s, Pointer);                      /* TsgCapsPtr (4 bytes) */
 		Stream_Read_UINT32(pdu->s, versionCaps->numCapabilities); /* NumCapabilities (4 bytes) */
 		Stream_Read_UINT16(pdu->s, versionCaps->majorVersion);    /* MajorVersion (2 bytes) */
-		Stream_Read_UINT16(pdu->s, versionCaps->majorVersion);    /* MinorVersion (2 bytes) */
+		Stream_Read_UINT16(pdu->s, versionCaps->minorVersion);    /* MinorVersion (2 bytes) */
 		Stream_Read_UINT16(
 		    pdu->s, versionCaps->quarantineCapabilities); /* QuarantineCapabilities (2 bytes) */
 
