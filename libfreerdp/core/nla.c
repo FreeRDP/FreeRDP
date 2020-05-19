@@ -1212,6 +1212,7 @@ SECURITY_STATUS nla_encrypt_public_key_hash(rdpNla* nla)
 	const size_t hashSize =
 	    nla->server ? sizeof(ServerClientHashMagic) : sizeof(ClientServerHashMagic);
 
+	sspi_SecBufferFree(&nla->pubKeyAuth);
 	if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, auth_data_length))
 	{
 		status = SEC_E_INSUFFICIENT_MEMORY;
@@ -2069,6 +2070,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 			return -1;
 		}
 
+		sspi_SecBufferFree(&nla->negoToken);
 		if (!sspi_SecBufferAlloc(&nla->negoToken, length))
 			return -1;
 
@@ -2097,6 +2099,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 		    Stream_GetRemainingLength(s) < length)
 			return -1;
 
+		sspi_SecBufferFree(&nla->pubKeyAuth);
 		if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, length))
 			return -1;
 
@@ -2121,6 +2124,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 				    Stream_GetRemainingLength(s) < length)
 					return -1;
 
+				sspi_SecBufferFree(&nla->ClientNonce);
 				if (!sspi_SecBufferAlloc(&nla->ClientNonce, length))
 					return -1;
 
@@ -2357,10 +2361,6 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 	nla->sendSeqNum = 0;
 	nla->recvSeqNum = 0;
 	nla->version = 6;
-	ZeroMemory(&nla->ClientNonce, sizeof(SecBuffer));
-	ZeroMemory(&nla->negoToken, sizeof(SecBuffer));
-	ZeroMemory(&nla->pubKeyAuth, sizeof(SecBuffer));
-	ZeroMemory(&nla->authInfo, sizeof(SecBuffer));
 	SecInvalidateHandle(&nla->context);
 
 	if (settings->NtlmSamFile)
