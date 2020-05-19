@@ -535,7 +535,7 @@ static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, 
 
 static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 {
-	BOOL small = FALSE;
+	BOOL smallsize = FALSE;
 	UINT32 flags;
 	UINT16 cbDomain;
 	UINT16 cbUserName;
@@ -571,7 +571,7 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 
 	/* RDP 4 and 5 have smaller credential limits */
 	if (settings->RdpVersion < RDP_VERSION_5_PLUS)
-		small = TRUE;
+		smallsize = TRUE;
 
 	Stream_Read_UINT16(s, cbDomain);         /* cbDomain (2 bytes) */
 	Stream_Read_UINT16(s, cbUserName);       /* cbUserName (2 bytes) */
@@ -579,13 +579,13 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	Stream_Read_UINT16(s, cbAlternateShell); /* cbAlternateShell (2 bytes) */
 	Stream_Read_UINT16(s, cbWorkingDir);     /* cbWorkingDir (2 bytes) */
 
-	if (!rdp_read_info_string(flags, s, cbDomain, &settings->Domain, small ? 52 : 512))
+	if (!rdp_read_info_string(flags, s, cbDomain, &settings->Domain, smallsize ? 52 : 512))
 		return FALSE;
 
-	if (!rdp_read_info_string(flags, s, cbUserName, &settings->Username, small ? 44 : 512))
+	if (!rdp_read_info_string(flags, s, cbUserName, &settings->Username, smallsize ? 44 : 512))
 		return FALSE;
 
-	if (!rdp_read_info_string(flags, s, cbPassword, &settings->Password, small ? 32 : 512))
+	if (!rdp_read_info_string(flags, s, cbPassword, &settings->Password, smallsize ? 32 : 512))
 		return FALSE;
 
 	if (!rdp_read_info_string(flags, s, cbAlternateShell, &settings->AlternateShell, 512))
