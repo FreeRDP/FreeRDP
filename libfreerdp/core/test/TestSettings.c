@@ -185,6 +185,7 @@ int TestSettings(int argc, char* argv[])
 	{
 		const size_t key = pointer_list_indices[x];
 		const void* val = freerdp_settings_get_pointer(settings, key);
+		WINPR_UNUSED(val);
 	}
 
 #endif
