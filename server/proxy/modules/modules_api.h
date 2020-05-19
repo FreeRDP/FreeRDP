@@ -48,10 +48,13 @@ typedef struct proxy_plugin
 
 	/* proxy hooks. a module can set these function pointers to register hooks */
 	proxyHookFn ClientPreConnect;
+	proxyHookFn ClientPostConnect;
 	proxyHookFn ClientLoginFailure;
+	proxyHookFn ClientEndPaint;
 	proxyHookFn ServerPostConnect;
 	proxyHookFn ServerChannelsInit;
 	proxyHookFn ServerChannelsFree;
+	proxyHookFn ServerSessionEnd;
 
 	/* proxy filters. a module can set these function pointers to register filters */
 	proxyFilterFn KeyboardEvent;

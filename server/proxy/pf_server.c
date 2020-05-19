@@ -420,6 +420,7 @@ fail:
 	LOG_INFO(TAG, ps, "starting shutdown of connection");
 	LOG_INFO(TAG, ps, "stopping proxy's client");
 	freerdp_client_stop(pc);
+	pf_modules_run_hook(HOOK_TYPE_SERVER_SESSION_END, pdata);
 	LOG_INFO(TAG, ps, "freeing server's channels");
 	pf_server_channels_free(ps);
 	LOG_INFO(TAG, ps, "freeing proxy data");

@@ -47,8 +47,8 @@ static const char* FILTER_TYPE_STRINGS[] = {
 };
 
 static const char* HOOK_TYPE_STRINGS[] = {
-	"CLIENT_PRE_CONNECT",   "CLIENT_LOGIN_FAILURE", "SERVER_POST_CONNECT",
-	"SERVER_CHANNELS_INIT", "SERVER_CHANNELS_FREE",
+	"CLIENT_PRE_CONNECT",  "CLIENT_POST_CONNECT",  "CLIENT_LOGIN_FAILURE", "CLIENT_END_PAINT",
+	"SERVER_POST_CONNECT", "SERVER_CHANNELS_INIT", "SERVER_CHANNELS_FREE", "SERVER_SESSION_END",
 };
 
 static const char* pf_modules_get_filter_type_string(PF_FILTER_TYPE result)
@@ -89,8 +89,16 @@ BOOL pf_modules_run_hook(PF_HOOK_TYPE type, proxyData* pdata)
 				IFCALLRET(plugin->ClientPreConnect, ok, pdata);
 				break;
 
+			case HOOK_TYPE_CLIENT_POST_CONNECT:
+				IFCALLRET(plugin->ClientPostConnect, ok, pdata);
+				break;
+
 			case HOOK_TYPE_CLIENT_LOGIN_FAILURE:
 				IFCALLRET(plugin->ClientLoginFailure, ok, pdata);
+				break;
+
+			case HOOK_TYPE_CLIENT_END_PAINT:
+				IFCALLRET(plugin->ClientEndPaint, ok, pdata);
 				break;
 
 			case HOOK_TYPE_SERVER_POST_CONNECT:
@@ -103,6 +111,10 @@ BOOL pf_modules_run_hook(PF_HOOK_TYPE type, proxyData* pdata)
 
 			case HOOK_TYPE_SERVER_CHANNELS_FREE:
 				IFCALLRET(plugin->ServerChannelsFree, ok, pdata);
+				break;
+
+			case HOOK_TYPE_SERVER_SESSION_END:
+				IFCALLRET(plugin->ServerSessionEnd, ok, pdata);
 				break;
 
 			default:

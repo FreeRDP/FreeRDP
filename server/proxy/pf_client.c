@@ -298,6 +298,9 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	ps = (rdpContext*)pc->pdata->ps;
 	config = pc->pdata->config;
 
+	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_POST_CONNECT, pc->pdata))
+		return FALSE;
+
 	if (config->SessionCapture)
 	{
 		if (!pf_capture_create_session_directory(pc))
