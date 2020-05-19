@@ -347,6 +347,7 @@ static void dvcman_channel_free(void* arg)
 		if (channel->channel_callback)
 		{
 			IFCALL(channel->channel_callback->OnClose, channel->channel_callback);
+			channel->channel_callback = NULL;
 		}
 
 		if (channel->status == CHANNEL_RC_OK)
