@@ -177,7 +177,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 * Also, OrderSupport need to be zeroed, because it is currently not supported.
 	 */
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
-	ZeroMemory(instance->settings->OrderSupport, 32);
+	ZeroMemory(settings->OrderSupport, 32);
 
 	settings->SupportDynamicChannels = TRUE;
 

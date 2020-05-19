@@ -60,11 +60,8 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char*
 	const char* routing_token = freerdp_nego_get_routing_token(context, &routing_token_length);
 	pServerContext* ps = (pServerContext*)context;
 
-	if (routing_token == NULL)
-	{
-		/* no routing token */
+	if (!routing_token)
 		return FALSE;
-	}
 
 	if ((routing_token_length <= prefix_len) || (routing_token_length >= TARGET_MAX))
 	{
@@ -149,7 +146,7 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	pc = pf_context_create_client_context(peer->settings);
 	if (pc == NULL)
 	{
-		LOG_ERR(TAG, ps, "[%s]: pf_context_create_client_context failed!");
+		LOG_ERR(TAG, ps, "failed to create client context!");
 		return FALSE;
 	}
 
@@ -160,7 +157,6 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 
 	if (!pf_server_get_target_info(peer->context, client_settings, pdata->config))
 	{
-
 		LOG_INFO(TAG, ps, "pf_server_get_target_info failed!");
 		return FALSE;
 	}
