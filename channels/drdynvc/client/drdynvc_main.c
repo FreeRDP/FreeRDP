@@ -381,9 +381,23 @@ static void dvcman_channel_free(void* arg)
 	free(channel);
 }
 
+static void dvcman_clear(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr)
+{
+	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
+
+	WINPR_UNUSED(drdynvc);
+
+	ArrayList_Clear(dvcman->plugins);
+	ArrayList_Clear(dvcman->channels);
+	ArrayList_Clear(dvcman->plugin_names);
+	ArrayList_Clear(dvcman->listeners);
+}
+
 static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr)
 {
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
+
+	WINPR_UNUSED(drdynvc);
 
 	ArrayList_Free(dvcman->plugins);
 	ArrayList_Free(dvcman->channels);
@@ -473,7 +487,6 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelMana
 	BOOL bAccept;
 	DVCMAN_CHANNEL* channel;
 	DrdynvcClientContext* context;
-	IWTSVirtualChannelCallback* pCallback;
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	UINT error;
 
@@ -494,10 +507,10 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelMana
 
 		if (strcmp(listener->channel_name, ChannelName) == 0)
 		{
+			IWTSVirtualChannelCallback* pCallback = NULL;
 			channel->iface.Write = dvcman_write_channel;
 			channel->iface.Close = dvcman_close_channel_iface;
 			bAccept = TRUE;
-			pCallback = NULL;
 
 			if ((error = listener->listener_callback->OnNewChannelConnection(
 			         listener->listener_callback, &channel->iface, NULL, &bAccept, &pCallback)) ==
@@ -1547,6 +1560,8 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 		           WTSErrorToString(status), status);
 	}
 
+	dvcman_clear(drdynvc, drdynvc->channel_mgr);
+	MessageQueue_Clear(drdynvc->queue);
 	drdynvc->OpenHandle = 0;
 
 	if (drdynvc->data_in)
