@@ -44,12 +44,16 @@ struct _wStreamPool
 static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL usedOrAvailable)
 {
 	size_t new_cap = 0;
-	size_t* cap = (usedOrAvailable) ? &pool->uCapacity : &pool->aCapacity;
-	size_t* size = (usedOrAvailable) ? &pool->uSize : &pool->aSize;
-	wStream*** array = (usedOrAvailable) ? &pool->uArray : &pool->aArray;
+	size_t* cap;
+	size_t* size;
+	wStream*** array;
 
 	if (!pool)
 		return FALSE;
+
+	cap = (usedOrAvailable) ? &pool->uCapacity : &pool->aCapacity;
+	size = (usedOrAvailable) ? &pool->uSize : &pool->aSize;
+	array = (usedOrAvailable) ? &pool->uArray : &pool->aArray;
 	if (*cap == 0)
 		new_cap = *size + count;
 	else if (*size + count > *cap)
