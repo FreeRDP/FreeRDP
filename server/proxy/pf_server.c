@@ -200,10 +200,18 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 {
 	pServerContext* ps = (pServerContext*)peer->context;
 	pClientContext* pc = ps->pdata->pc;
-	proxyData* pdata = pc->pdata;
+	proxyData* pdata = ps->pdata;
 	proxyConfig* config = pdata->config;
 	size_t i;
 	const char* channel_name = WTSChannelGetName(peer, channelId);
+
+	/*
+	 * client side is not initialized yet, call original callback.
+	 * this is probably a drdynvc message between peer and proxy server,
+	 * which doesn't need to be proxied.
+	 */
+	if (!pc)
+		goto original_cb;
 
 	for (i = 0; i < config->PassthroughCount; i++)
 	{
@@ -227,6 +235,7 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 		}
 	}
 
+original_cb:
 	return server_receive_channel_data_original(peer, channelId, data, size, flags, totalSize);
 }
 
