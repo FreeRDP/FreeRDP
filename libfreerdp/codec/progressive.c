@@ -1995,7 +1995,7 @@ static INLINE INT32 progressive_wb_read_region_header(PROGRESSIVE_CONTEXT* progr
 	len -= region->tileDataSize;
 	if (len > 0)
 		WLog_Print(progressive->log, WLOG_DEBUG,
-		           "Unused byes detected, %" PRIuz " bytes not processed", len);
+		           "Unused bytes detected, %" PRIuz " bytes not processed", len);
 	return 0;
 }
 
