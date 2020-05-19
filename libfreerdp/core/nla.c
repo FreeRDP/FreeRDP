@@ -1144,6 +1144,7 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 	const BOOL ntlm = (_tcsncmp(nla->packageName, NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0);
 	public_key_length = nla->PublicKey.cbBuffer;
 
+	sspi_SecBufferFree(&nla->pubKeyAuth);
 	if (!sspi_SecBufferAlloc(&nla->pubKeyAuth,
 	                         public_key_length + nla->ContextSizes.cbSecurityTrailer))
 		return SEC_E_INSUFFICIENT_MEMORY;
@@ -2465,6 +2466,7 @@ void nla_free(rdpNla* nla)
 	sspi_SecBufferFree(&nla->tsCredentials);
 	free(nla->ServicePrincipalName);
 	nla_identity_free(nla->identity);
+	nla_buffer_free(nla);
 	free(nla);
 }
 
