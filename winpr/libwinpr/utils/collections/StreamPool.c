@@ -225,7 +225,6 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 	pool->aArray[(pool->aSize)++] = s;
 	StreamPool_RemoveUsed(pool, s);
 
-out_fail:
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
 }

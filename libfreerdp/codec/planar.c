@@ -1170,7 +1170,6 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane, UINT32 width
                                                BYTE* outPlane)
 {
 	char s2c;
-	INT32 delta;
 	UINT32 y, x;
 	BYTE* outPtr;
 	const BYTE *srcPtr, *prevLinePtr;
@@ -1194,9 +1193,9 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane, UINT32 width
 	{
 		for (x = 0; x < width; x++, outPtr++, srcPtr++, prevLinePtr++)
 		{
-			delta = *srcPtr - *prevLinePtr;
+			INT32 delta = *srcPtr - *prevLinePtr;
 			s2c = (delta >= 0) ? (char)delta : (char)(~((BYTE)(-delta)) + 1);
-			s2c = (s2c >= 0) ? (s2c << 1) : (char)(((~((BYTE)s2c) + 1) << 1) - 1);
+			s2c = (s2c >= 0) ? ((UINT32)s2c << 1) : (char)(((UINT32)(~((BYTE)s2c) + 1) << 1) - 1);
 			*outPtr = (BYTE)s2c;
 		}
 	}

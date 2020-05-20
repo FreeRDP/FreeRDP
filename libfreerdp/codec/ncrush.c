@@ -1926,9 +1926,9 @@ static INLINE UINT16 get_word(const BYTE* data)
 static INLINE UINT32 get_dword(const BYTE* data)
 {
 	UINT32 tmp = *data++;
-	tmp |= *data++ << 8U;
-	tmp |= *data++ << 16U;
-	tmp |= *data++ << 24U;
+	tmp |= (UINT32)*data++ << 8U;
+	tmp |= (UINT32)*data++ << 16U;
+	tmp |= (UINT32)*data++ << 24U;
 	return tmp;
 }
 

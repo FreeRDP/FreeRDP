@@ -113,14 +113,12 @@ static BOOL nsc_decode(NSC_CONTEXT* context)
 
 static BOOL nsc_rle_decode(BYTE* in, BYTE* out, UINT32 outSize, UINT32 originalSize)
 {
-	UINT32 len;
-	UINT32 left;
-	BYTE value;
-	left = originalSize;
+	UINT32 left = originalSize;
 
 	while (left > 4)
 	{
-		value = *in++;
+		const BYTE value = *in++;
+		UINT32 len = 0;
 
 		if (left == 5)
 		{
@@ -143,8 +141,10 @@ static BOOL nsc_rle_decode(BYTE* in, BYTE* out, UINT32 outSize, UINT32 originalS
 			else
 			{
 				in++;
-				len = *((UINT32*)in);
-				in += 4;
+				len = ((UINT32)(*in++));
+				len |= ((UINT32)(*in++)) << 8U;
+				len |= ((UINT32)(*in++)) << 16U;
+				len |= ((UINT32)(*in++)) << 24U;
 			}
 
 			if (outSize < len)

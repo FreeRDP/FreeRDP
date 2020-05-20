@@ -395,7 +395,6 @@ UINT cliprdr_read_file_contents_response(wStream* s, CLIPRDR_FILE_CONTENTS_RESPO
 UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL useLongFormatNames)
 {
 	UINT32 index;
-	size_t position;
 	BOOL asciiNames;
 	int formatNameLength;
 	char* szFormatName;

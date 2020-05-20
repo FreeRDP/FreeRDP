@@ -772,11 +772,15 @@ void mppc_context_reset(MPPC_CONTEXT* mppc, BOOL flush)
 	ZeroMemory(&(mppc->MatchBuffer), sizeof(mppc->MatchBuffer));
 
 	if (flush)
+	{
 		mppc->HistoryOffset = mppc->HistoryBufferSize + 1;
+		mppc->HistoryPtr = mppc->HistoryBuffer;
+	}
 	else
+	{
 		mppc->HistoryOffset = 0;
-
 	mppc->HistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
+	}
 }
 
 MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor)

@@ -26,7 +26,7 @@
 
 #include <freerdp/rail.h>
 
-extern const char* const RAIL_ORDER_TYPE_STRINGS[];
+const char* rail_get_order_type_string(BYTE orderType);
 
 #define RAIL_PDU_HEADER_LENGTH 4
 

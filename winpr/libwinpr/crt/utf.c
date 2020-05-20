@@ -257,16 +257,24 @@ static const BYTE firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC 
 /* --------------------------------------------------------------------- */
 
 ConversionResult ConvertUTF16toUTF8(const WCHAR** sourceStart, const WCHAR* sourceEnd,
-                                    BYTE** targetStart, BYTE* targetEnd, ConversionFlags flags)
+                                    BYTE** targetStart, BYTE* te, ConversionFlags flags)
 {
-	BYTE* target;
+	size_t pos = 0;
+	size_t end = 0;
 	const WCHAR* source;
-	BOOL computeLength;
-	ConversionResult result;
-	computeLength = (!targetEnd) ? TRUE : FALSE;
+	const BOOL computeLength = (!te) ? TRUE : FALSE;
+	ConversionResult result = conversionOK;
+
+	if (targetStart && te)
+	{
+		const size_t s = (size_t)*targetStart;
+		const size_t e = (size_t)te;
+		if (s > e)
+			return sourceIllegal;
+		end = e - s;
+	}
+
 	source = *sourceStart;
-	target = *targetStart;
-	result = conversionOK;
 
 	while (source < sourceEnd)
 	{
@@ -345,12 +353,12 @@ ConversionResult ConvertUTF16toUTF8(const WCHAR** sourceStart, const WCHAR* sour
 			ch = UNI_REPLACEMENT_CHAR;
 		}
 
-		target += bytesToWrite;
+		pos += bytesToWrite;
 
-		if ((target > targetEnd) && (!computeLength))
+		if ((pos > end) && (!computeLength))
 		{
 			source = oldSource; /* Back up source pointer! */
-			target -= bytesToWrite;
+			pos -= bytesToWrite;
 			result = targetExhausted;
 			break;
 		}
@@ -361,19 +369,19 @@ ConversionResult ConvertUTF16toUTF8(const WCHAR** sourceStart, const WCHAR* sour
 			{
 				/* note: everything falls through. */
 				case 4:
-					*--target = (BYTE)((ch | byteMark) & byteMask);
+					(*targetStart)[--pos] = (BYTE)((ch | byteMark) & byteMask);
 					ch >>= 6;
 
 				case 3:
-					*--target = (BYTE)((ch | byteMark) & byteMask);
+					(*targetStart)[--pos] = (BYTE)((ch | byteMark) & byteMask);
 					ch >>= 6;
 
 				case 2:
-					*--target = (BYTE)((ch | byteMark) & byteMask);
+					(*targetStart)[--pos] = (BYTE)((ch | byteMark) & byteMask);
 					ch >>= 6;
 
 				case 1:
-					*--target = (BYTE)(ch | firstByteMark[bytesToWrite]);
+					(*targetStart)[--pos] = (BYTE)(ch | firstByteMark[bytesToWrite]);
 			}
 		}
 		else
@@ -382,24 +390,27 @@ ConversionResult ConvertUTF16toUTF8(const WCHAR** sourceStart, const WCHAR* sour
 			{
 				/* note: everything falls through. */
 				case 4:
-					--target;
+					--pos;
 
 				case 3:
-					--target;
+					--pos;
 
 				case 2:
-					--target;
+					--pos;
 
 				case 1:
-					--target;
+					--pos;
 			}
 		}
 
-		target += bytesToWrite;
+		pos += bytesToWrite;
 	}
 
 	*sourceStart = source;
-	*targetStart = target;
+	if (targetStart && *targetStart)
+		*targetStart = &(*targetStart)[pos];
+	else if (targetStart)
+		*targetStart = (BYTE*)pos;
 	return result;
 }
 
@@ -503,14 +514,24 @@ BOOL isLegalUTF8Sequence(const BYTE* source, const BYTE* sourceEnd)
 ConversionResult ConvertUTF8toUTF16(const BYTE** sourceStart, const BYTE* sourceEnd,
                                     WCHAR** targetStart, WCHAR* targetEnd, ConversionFlags flags)
 {
-	WCHAR* target;
+	size_t target = 0;
+	size_t end = 0;
 	const BYTE* source;
 	BOOL computeLength;
 	ConversionResult result;
 	computeLength = (!targetEnd) ? TRUE : FALSE;
 	result = conversionOK;
 	source = *sourceStart;
-	target = *targetStart;
+
+	if (targetStart && targetEnd)
+	{
+		const size_t s = (size_t)*targetStart;
+		const size_t e = (size_t)targetEnd;
+		if (s > e)
+			return sourceIllegal;
+
+		end = ((size_t)(targetEnd)) - ((size_t)(*targetStart));
+	}
 
 	while (source < sourceEnd)
 	{
@@ -561,7 +582,7 @@ ConversionResult ConvertUTF8toUTF16(const BYTE** sourceStart, const BYTE* source
 
 		ch -= offsetsFromUTF8[extraBytesToRead];
 
-		if ((target >= targetEnd) && (!computeLength))
+		if ((target >= end) && (!computeLength))
 		{
 			source -= (extraBytesToRead + 1); /* Back up source pointer! */
 			result = targetExhausted;
@@ -583,23 +604,15 @@ ConversionResult ConvertUTF8toUTF16(const BYTE** sourceStart, const BYTE* source
 				else
 				{
 					if (!computeLength)
-					{
-						Data_Write_UINT16(target, UNI_REPLACEMENT_CHAR);
-						target++;
-					}
-					else
-						target++;
+						Data_Write_UINT16(&(*targetStart)[target], UNI_REPLACEMENT_CHAR);
+					target++;
 				}
 			}
 			else
 			{
 				if (!computeLength)
-				{
-					Data_Write_UINT16(target, ch); /* normal case */
-					target++;
-				}
-				else
-					target++;
+					Data_Write_UINT16(&(*targetStart)[target], ch); /* normal case */
+				target++;
 			}
 		}
 		else if (ch > UNI_MAX_UTF16)
@@ -613,18 +626,14 @@ ConversionResult ConvertUTF8toUTF16(const BYTE** sourceStart, const BYTE* source
 			else
 			{
 				if (!computeLength)
-				{
-					Data_Write_UINT16(target, UNI_REPLACEMENT_CHAR);
-					target++;
-				}
-				else
-					target++;
+					Data_Write_UINT16(&(*targetStart)[target], UNI_REPLACEMENT_CHAR);
+				target++;
 			}
 		}
 		else
 		{
 			/* target is a character in range 0xFFFF - 0x10FFFF. */
-			if ((target + 1 >= targetEnd) && (!computeLength))
+			if ((target + 1 >= end) && (!computeLength))
 			{
 				source -= (extraBytesToRead + 1); /* Back up source pointer! */
 				result = targetExhausted;
@@ -637,11 +646,9 @@ ConversionResult ConvertUTF8toUTF16(const BYTE** sourceStart, const BYTE* source
 			{
 				WCHAR wchar;
 				wchar = (ch >> halfShift) + UNI_SUR_HIGH_START;
-				Data_Write_UINT16(target, wchar);
-				target++;
+				Data_Write_UINT16(&(*targetStart)[target++], wchar);
 				wchar = (ch & halfMask) + UNI_SUR_LOW_START;
-				Data_Write_UINT16(target, wchar);
-				target++;
+				Data_Write_UINT16(&(*targetStart)[target++], wchar);
 			}
 			else
 			{
@@ -652,7 +659,10 @@ ConversionResult ConvertUTF8toUTF16(const BYTE** sourceStart, const BYTE* source
 	}
 
 	*sourceStart = source;
-	*targetStart = target;
+	if (targetStart && (*targetStart))
+		*targetStart = &(*targetStart)[target];
+	else if (targetStart)
+		*targetStart = (WCHAR*)(target * sizeof(WCHAR));
 	return result;
 }
 

@@ -49,8 +49,7 @@ UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 	rail_write_pdu_header(s, orderType, orderLength);
 	Stream_SetPosition(s, orderLength);
 	WLog_Print(rail->log, WLOG_DEBUG, "Sending %s PDU, length: %" PRIu16 "",
-	           RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)],
-	           orderLength);
+	           rail_get_order_type_string(orderType), orderLength);
 	return rail_send_channel_data(rail, s);
 }
 
@@ -926,8 +925,7 @@ UINT rail_order_recv(railPlugin* rail, wStream* s)
 	}
 
 	WLog_Print(rail->log, WLOG_DEBUG, "Received %s PDU, length:%" PRIu16 "",
-	           RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)],
-	           orderLength);
+	           rail_get_order_type_string(orderType), orderLength);
 
 	switch (orderType)
 	{

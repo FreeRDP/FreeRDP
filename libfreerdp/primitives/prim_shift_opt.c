@@ -39,13 +39,13 @@ static primitives_t* generic = NULL;
 #if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 /* ------------------------------------------------------------------------- */
 SSE3_SCD_ROUTINE(sse2_lShiftC_16s, INT16, generic->lShiftC_16s, _mm_slli_epi16,
-                 *dptr++ = *sptr++ << val)
+                 *dptr++ = (INT16)((UINT16)*sptr++ << val))
 /* ------------------------------------------------------------------------- */
 SSE3_SCD_ROUTINE(sse2_rShiftC_16s, INT16, generic->rShiftC_16s, _mm_srai_epi16,
                  *dptr++ = *sptr++ >> val)
 /* ------------------------------------------------------------------------- */
 SSE3_SCD_ROUTINE(sse2_lShiftC_16u, UINT16, generic->lShiftC_16u, _mm_slli_epi16,
-                 *dptr++ = *sptr++ << val)
+                 *dptr++ = (INT16)((UINT16)*sptr++ << val))
 /* ------------------------------------------------------------------------- */
 SSE3_SCD_ROUTINE(sse2_rShiftC_16u, UINT16, generic->rShiftC_16u, _mm_srli_epi16,
                  *dptr++ = *sptr++ >> val)
