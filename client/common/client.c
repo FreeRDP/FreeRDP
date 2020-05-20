@@ -467,14 +467,17 @@ static DWORD client_cli_accept_certificate(rdpSettings* settings)
 		{
 			case 'y':
 			case 'Y':
+				fgetc(stdin);
 				return 1;
 
 			case 't':
 			case 'T':
+				fgetc(stdin);
 				return 2;
 
 			case 'n':
 			case 'N':
+				fgetc(stdin);
 				return 0;
 
 			default:
