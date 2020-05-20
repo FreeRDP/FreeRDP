@@ -23,13 +23,6 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-struct winpr_sam
-{
-	FILE* fp;
-	char* line;
-	char* buffer;
-	BOOL readOnly;
-};
 typedef struct winpr_sam WINPR_SAM;
 
 struct winpr_sam_entry

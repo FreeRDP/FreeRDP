@@ -594,7 +594,7 @@ static UINT cliprdr_temp_directory(CliprdrClientContext* context,
 	wStream* s;
 	WCHAR* wszTempDir = NULL;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
-	s = cliprdr_packet_new(CB_TEMP_DIRECTORY, 0, 520 * 2);
+	s = cliprdr_packet_new(CB_TEMP_DIRECTORY, 0, 260 * sizeof(WCHAR));
 
 	if (!s)
 	{
@@ -607,11 +607,13 @@ static UINT cliprdr_temp_directory(CliprdrClientContext* context,
 	if (length < 0)
 		return ERROR_INTERNAL_ERROR;
 
-	if (length > 520)
-		length = 520;
+	/* Path must be 260 UTF16 characters with '\0' termination.
+	 * ensure this here */
+	if (length >= 260)
+		length = 259;
 
-	Stream_Write(s, wszTempDir, (size_t)length * 2);
-	Stream_Zero(s, (520 - (size_t)length) * 2);
+	Stream_Write_UTF16_String(s, wszTempDir, length);
+	Stream_Zero(s, 520 - (length * sizeof(WCHAR)));
 	free(wszTempDir);
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "TempDirectory: %s", tempDirectory->szTempDir);
 	return cliprdr_packet_send(cliprdr, s);

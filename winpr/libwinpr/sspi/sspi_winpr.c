@@ -241,9 +241,12 @@ void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 		passwordLength *= 2;
 	}
 
-	memset(credentials->identity.User, 0, userLength);
-	memset(credentials->identity.Domain, 0, domainLength);
-	memset(credentials->identity.Password, 0, passwordLength);
+	if (credentials->identity.User)
+		memset(credentials->identity.User, 0, userLength);
+	if (credentials->identity.Domain)
+		memset(credentials->identity.Domain, 0, domainLength);
+	if (credentials->identity.Password)
+		memset(credentials->identity.Password, 0, passwordLength);
 	free(credentials->identity.User);
 	free(credentials->identity.Domain);
 	free(credentials->identity.Password);

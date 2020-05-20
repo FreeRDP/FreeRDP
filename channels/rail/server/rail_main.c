@@ -71,8 +71,8 @@ UINT rail_send_pdu(RailServerContext* context, wStream* s, UINT16 orderType)
 	Stream_SetPosition(s, 0);
 	rail_write_pdu_header(s, orderType, orderLength);
 	Stream_SetPosition(s, orderLength);
-	WLog_DBG(TAG, "Sending %s PDU, length: %" PRIu16 "",
-	         RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
+	WLog_DBG(TAG, "Sending %s PDU, length: %" PRIu16 "", rail_get_order_type_string(orderType),
+	         orderLength);
 	return rail_send(context, s, orderLength);
 }
 
@@ -1573,8 +1573,8 @@ UINT rail_server_handle_messages(RailServerContext* context)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	WLog_DBG(TAG, "Received %s PDU, length:%" PRIu16 "",
-	         RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
+	WLog_DBG(TAG, "Received %s PDU, length:%" PRIu16 "", rail_get_order_type_string(orderType),
+	         orderLength);
 
 	switch (orderType)
 	{

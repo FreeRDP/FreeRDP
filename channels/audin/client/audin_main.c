@@ -100,6 +100,8 @@ struct _AUDIN_PLUGIN
 
 	FREERDP_DSP_CONTEXT* dsp_context;
 	wLog* log;
+
+	IWTSListener* listener;
 };
 
 static BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args);
@@ -687,7 +689,7 @@ static UINT audin_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 	audin->listener_callback->plugin = pPlugin;
 	audin->listener_callback->channel_mgr = pChannelMgr;
 	return pChannelMgr->CreateListener(pChannelMgr, "AUDIO_INPUT", 0,
-	                                   (IWTSListenerCallback*)audin->listener_callback, NULL);
+	                                   &audin->listener_callback->iface, &audin->listener);
 }
 
 /**
@@ -704,6 +706,13 @@ static UINT audin_plugin_terminated(IWTSPlugin* pPlugin)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
 	WLog_Print(audin->log, WLOG_TRACE, "...");
+
+	if (audin->listener_callback)
+	{
+		IWTSVirtualChannelManager* mgr = audin->listener_callback->channel_mgr;
+		if (mgr)
+			IFCALL(mgr->DestroyListener, mgr, audin->listener);
+	}
 	audio_formats_free(audin->fixed_format, 1);
 
 	if (audin->device)

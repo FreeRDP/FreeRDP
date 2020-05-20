@@ -410,9 +410,9 @@ static UINT geometry_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 	geometry->listener_callback->iface.OnNewChannelConnection = geometry_on_new_channel_connection;
 	geometry->listener_callback->plugin = pPlugin;
 	geometry->listener_callback->channel_mgr = pChannelMgr;
-	status = pChannelMgr->CreateListener(pChannelMgr, GEOMETRY_DVC_CHANNEL_NAME, 0,
-	                                     (IWTSListenerCallback*)geometry->listener_callback,
-	                                     &(geometry->listener));
+	status =
+	    pChannelMgr->CreateListener(pChannelMgr, GEOMETRY_DVC_CHANNEL_NAME, 0,
+	                                &geometry->listener_callback->iface, &(geometry->listener));
 	geometry->listener->pInterface = geometry->iface.pInterface;
 	return status;
 }
@@ -426,6 +426,13 @@ static UINT geometry_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*)pPlugin;
 	GeometryClientContext* context = (GeometryClientContext*)geometry->iface.pInterface;
+
+	if (geometry && geometry->listener_callback)
+	{
+		IWTSVirtualChannelManager* mgr = geometry->listener_callback->channel_mgr;
+		if (mgr)
+			IFCALL(mgr->DestroyListener, mgr, geometry->listener);
+	}
 
 	if (context)
 		HashTable_Free(context->geometries);

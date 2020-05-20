@@ -1,3 +1,21 @@
+# 2020-05-20  Version 2.1.1
+
+Important notes:
+* CVE: GHSL-2020-100 OOB Read in ntlm_read_ChallengeMessage
+* CVE: GHSL-2020-101 OOB Read in security_fips_decrypt due to uninitialized value
+* CVE: GHSL-2020-102 OOB Write in crypto_rsa_common
+* Enforce synchronous legacy RDP encryption count (#6156)
+* Fixed some leaks and crashes missed in 2.1.0
+* Removed dynamic channel listener limits
+* Lots of resource cleanup fixes (clang sanitizers)
+* A couple of performance improvements
+* Various small annoyances eliminated (typos, prefilled username for windows client, ...)
+
+
+For a complete and detailed change log since the last release candidate run:
+git log 2.1.0..2.1.1
+
+
 # 2020-05-05  Version 2.1.0
 
 Important notes:

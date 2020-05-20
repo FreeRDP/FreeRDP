@@ -203,6 +203,7 @@ struct rdp_file
 	DWORD flags;
 };
 
+static void freerdp_client_file_string_check_free(LPSTR str);
 /*
  * Set an integer in a rdpFile
  *
@@ -841,15 +842,16 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 	return status;
 }
 
-#define FILE_POPULATE_STRING(_target, _setting) \
-	do                                          \
-	{                                           \
-		if (_setting)                           \
-		{                                       \
-			_target = _strdup(_setting);        \
-			if (!_target)                       \
-				return FALSE;                   \
-		}                                       \
+#define FILE_POPULATE_STRING(_target, _setting)             \
+	do                                                      \
+	{                                                       \
+		if (_setting)                                       \
+		{                                                   \
+			freerdp_client_file_string_check_free(_target); \
+			_target = _strdup(_setting);                    \
+			if (!_target)                                   \
+				return FALSE;                               \
+		}                                                   \
 	} while (0)
 
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings)

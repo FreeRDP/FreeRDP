@@ -19,6 +19,7 @@
 
 define_channel_client_subsystem("rdpsnd" "mac" "")
 
+find_library(COCOA_LIBRARY Cocoa REQUIRED)
 FIND_LIBRARY(CORE_FOUNDATION CoreFoundation)
 FIND_LIBRARY(CORE_AUDIO CoreAudio REQUIRED)
 FIND_LIBRARY(AUDIO_TOOL AudioToolbox REQUIRED)
@@ -38,6 +39,7 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
     ${AUDIO_TOOL}
     ${AV_FOUNDATION}
     ${CORE_AUDIO}
+    ${COCOA_LIBRARY}
     ${CORE_FOUNDATION})
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp winpr)

@@ -783,7 +783,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 			if (vBarUpdate)
 			{
 				UINT32 x;
-				BYTE* pSrcPixel;
+				BYTE* pSrcPixel = NULL;
 				BYTE* dstBuffer;
 
 				if (clear->VBarStorageCursor >= CLEARCODEC_VBAR_SIZE)
@@ -826,8 +826,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				if ((y + count) > vBarPixelCount)
 					count = (vBarPixelCount > y) ? (vBarPixelCount - y) : 0;
 
-				pSrcPixel =
-				    &vBarShortEntry->pixels[(y - vBarYOn) * GetBytesPerPixel(clear->format)];
+				if (count > 0)
+					pSrcPixel =
+					    &vBarShortEntry->pixels[(y - vBarYOn) * GetBytesPerPixel(clear->format)];
 
 				for (x = 0; x < count; x++)
 				{

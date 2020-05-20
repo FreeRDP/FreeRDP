@@ -1183,7 +1183,7 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* s
 			sign[index] = input;
 		}
 
-		buffer[index] += (input << shift);
+		buffer[index] += (INT16)((UINT32)input << shift);
 	}
 
 	return 1;
@@ -1995,7 +1995,7 @@ static INLINE INT32 progressive_wb_read_region_header(PROGRESSIVE_CONTEXT* progr
 	len -= region->tileDataSize;
 	if (len > 0)
 		WLog_Print(progressive->log, WLOG_DEBUG,
-		           "Unused byes detected, %" PRIuz " bytes not processed", len);
+		           "Unused bytes detected, %" PRIuz " bytes not processed", len);
 	return 0;
 }
 

@@ -605,7 +605,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
 		monitor = &(pdu.monitorDefArray[index]);
 		DEBUG_RDPGFX(gfx->log,
 		             "RecvResetGraphicsPdu: monitor left:%" PRIi32 " top:%" PRIi32 " right:%" PRIi32
-		             " left:%" PRIi32 " flags:0x%" PRIx32 "",
+		             " bottom:%" PRIi32 " flags:0x%" PRIx32 "",
 		             monitor->left, monitor->top, monitor->right, monitor->bottom, monitor->flags);
 	}
 
@@ -1826,12 +1826,6 @@ static UINT rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	free_surfaces(context, gfx->SurfaceTable);
 	evict_cache_slots(context, gfx->MaxCacheSlots, gfx->CacheSlots);
 
-	if (gfx->listener_callback)
-	{
-		free(gfx->listener_callback);
-		gfx->listener_callback = NULL;
-	}
-
 	free(callback);
 	gfx->UnacknowledgedFrames = 0;
 	gfx->TotalDecodedFrames = 0;
@@ -1896,8 +1890,7 @@ static UINT rdpgfx_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 	gfx->listener_callback->plugin = pPlugin;
 	gfx->listener_callback->channel_mgr = pChannelMgr;
 	error = pChannelMgr->CreateListener(pChannelMgr, RDPGFX_DVC_CHANNEL_NAME, 0,
-	                                    (IWTSListenerCallback*)gfx->listener_callback,
-	                                    &(gfx->listener));
+	                                    &gfx->listener_callback->iface, &(gfx->listener));
 	gfx->listener->pInterface = gfx->iface.pInterface;
 	DEBUG_RDPGFX(gfx->log, "Initialize");
 	return error;
@@ -1913,6 +1906,12 @@ static UINT rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)pPlugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	DEBUG_RDPGFX(gfx->log, "Terminated");
+	if (gfx && gfx->listener_callback)
+	{
+		IWTSVirtualChannelManager* mgr = gfx->listener_callback->channel_mgr;
+		if (mgr)
+			IFCALL(mgr->DestroyListener, mgr, gfx->listener);
+	}
 	rdpgfx_client_context_free(context);
 	return CHANNEL_RC_OK;
 }

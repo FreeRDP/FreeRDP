@@ -553,7 +553,7 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_UNUSED(header);
-	if ((slength = Stream_GetRemainingLength(s)) < 520)
+	if ((slength = Stream_GetRemainingLength(s)) < 260 * sizeof(WCHAR))
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength returned %" PRIuz " but should at least be 520",
 		         slength);
@@ -562,9 +562,9 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 
 	wszTempDir = (WCHAR*)Stream_Pointer(s);
 
-	if (wszTempDir[260] != 0)
+	if (wszTempDir[259] != 0)
 	{
-		WLog_ERR(TAG, "wszTempDir[260] was not 0");
+		WLog_ERR(TAG, "wszTempDir[259] was not 0");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -578,10 +578,10 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 		return ERROR_INVALID_DATA;
 	}
 
-	length = strnlen(cliprdr->temporaryDirectory, 520);
+	length = strnlen(cliprdr->temporaryDirectory, 260);
 
-	if (length > 519)
-		length = 519;
+	if (length >= 260)
+		length = 259;
 
 	CopyMemory(tempDirectory.szTempDir, cliprdr->temporaryDirectory, length);
 	tempDirectory.szTempDir[length] = '\0';

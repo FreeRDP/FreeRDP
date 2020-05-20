@@ -3,6 +3,8 @@
 #include <freerdp/settings.h>
 #include <freerdp/log.h>
 
+#include "../core/settings.h"
+
 #define TAG FREERDP_TAG("common.settings")
 
 struct settings_str_entry
@@ -384,6 +386,100 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_TargetNetPorts, 8, "FreeRDP_TargetNetPorts" },
 	{ FreeRDP_instance, 8, "FreeRDP_instance" },
 };
+
+BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
+{
+	size_t x;
+	for (x = 0; x < ARRAYSIZE(settings_map); x++)
+	{
+		const struct settings_str_entry* cur = &settings_map[x];
+		switch (cur->type)
+		{
+			case 0: /* bool */
+			{
+				BOOL sval = freerdp_settings_get_bool(src, cur->id);
+				if (!freerdp_settings_set_bool(dst, cur->id, sval))
+					return FALSE;
+			}
+			break;
+			case 1: /* UINT16 */
+			{
+				UINT16 sval = freerdp_settings_get_uint16(src, cur->id);
+				if (!freerdp_settings_set_uint16(dst, cur->id, sval))
+					return FALSE;
+			}
+			break;
+			case 2: /* INT16 */
+			{
+				INT16 sval = freerdp_settings_get_int16(src, cur->id);
+				if (!freerdp_settings_set_int16(dst, cur->id, sval))
+					return FALSE;
+			}
+			break;
+			case 3: /* UINT32 */
+			{
+				UINT32 sval = freerdp_settings_get_uint32(src, cur->id);
+				if (!freerdp_settings_set_uint32(dst, cur->id, sval))
+					return FALSE;
+			}
+			break;
+			case 4: /* INT32 */
+			{
+				INT32 sval = freerdp_settings_get_int32(src, cur->id);
+				if (!freerdp_settings_set_int32(dst, cur->id, sval))
+					return FALSE;
+			}
+			break;
+			case 5: /* UINT64 */
+			{
+				UINT64 sval = freerdp_settings_get_uint64(src, cur->id);
+				if (!freerdp_settings_set_uint64(dst, cur->id, sval))
+					return FALSE;
+			}
+			break;
+			case 6: /* INT64 */
+			{
+				INT64 sval = freerdp_settings_get_int64(src, cur->id);
+				if (!freerdp_settings_set_int64(dst, cur->id, sval))
+					return FALSE;
+			}
+			break;
+			case 7: /* strings */
+			{
+				const char* sval = freerdp_settings_get_string(src, cur->id);
+				if (!freerdp_settings_set_string_(dst, cur->id, sval, FALSE))
+					return FALSE;
+			}
+			break;
+			case 8: /* pointer */
+			{
+				const void* sval = freerdp_settings_get_pointer(src, cur->id);
+				if (!freerdp_settings_set_pointer(dst, cur->id, sval))
+					return FALSE;
+			}
+			break;
+		}
+	}
+	return TRUE;
+}
+
+void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup)
+{
+	size_t x;
+	for (x = 0; x < ARRAYSIZE(settings_map); x++)
+	{
+		const struct settings_str_entry* cur = &settings_map[x];
+		switch (cur->type)
+		{
+			case 7: /* strings */
+				freerdp_settings_set_string_(dst, cur->id, NULL, cleanup);
+				break;
+			case 8: /* pointer */
+				freerdp_settings_set_pointer(dst, cur->id, NULL);
+				break;
+		}
+	}
+}
 
 SSIZE_T freerdp_settings_get_key_for_name(const char* value)
 {

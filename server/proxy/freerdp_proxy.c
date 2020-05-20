@@ -24,6 +24,7 @@
 #include "pf_log.h"
 #include "pf_modules.h"
 
+#include <freerdp/version.h>
 #include <freerdp/build-config.h>
 #include <winpr/collections.h>
 #include <stdlib.h>
@@ -85,10 +86,13 @@ int main(int argc, char* argv[])
 	char* config_path = "config.ini";
 	int status = -1;
 
+	WLog_INFO(TAG, "freerdp-proxy version info:");
+	WLog_INFO(TAG, "\tFreeRDP version: %s", FREERDP_VERSION_FULL);
+	WLog_INFO(TAG, "\tGit commit: %s", GIT_REVISION);
+	WLog_DBG(TAG, "\tBuild config: %s", freerdp_get_build_config());
+
 	if (argc >= 2)
 		config_path = argv[1];
-
-	pf_server_register_signal_handlers();
 
 	config = pf_server_config_load(config_path);
 	if (!config)
@@ -106,6 +110,8 @@ int main(int argc, char* argv[])
 	pf_modules_list_loaded_plugins();
 	if (!is_all_required_modules_loaded(config))
 		goto fail;
+
+	pf_server_register_signal_handlers();
 
 	server = pf_server_new(config);
 	if (!server)

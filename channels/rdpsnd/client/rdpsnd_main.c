@@ -1541,8 +1541,7 @@ static UINT rdpsnd_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 	rdpsnd->listener_callback->plugin = pPlugin;
 	rdpsnd->listener_callback->channel_mgr = pChannelMgr;
 	status = pChannelMgr->CreateListener(pChannelMgr, RDPSND_DVC_CHANNEL_NAME, 0,
-	                                     (IWTSListenerCallback*)rdpsnd->listener_callback,
-	                                     &(rdpsnd->listener));
+	                                     &rdpsnd->listener_callback->iface, &(rdpsnd->listener));
 	rdpsnd->listener->pInterface = rdpsnd->iface.pInterface;
 	return rdpsnd_virtual_channel_event_initialized(rdpsnd);
 }
@@ -1557,6 +1556,12 @@ static UINT rdpsnd_plugin_terminated(IWTSPlugin* pPlugin)
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)pPlugin;
 	if (rdpsnd)
 	{
+		if (rdpsnd->listener_callback)
+		{
+			IWTSVirtualChannelManager* mgr = rdpsnd->listener_callback->channel_mgr;
+			if (mgr)
+				IFCALL(mgr->DestroyListener, mgr, rdpsnd->listener);
+		}
 		free(rdpsnd->listener_callback);
 		free(rdpsnd->iface.pInterface);
 	}

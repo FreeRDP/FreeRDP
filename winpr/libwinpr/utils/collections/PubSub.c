@@ -112,15 +112,10 @@ int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler Event
 	{
 		status = 0;
 
-		if (event->EventHandlerCount <= MAX_EVENT_HANDLERS)
-		{
-			event->EventHandlers[event->EventHandlerCount] = EventHandler;
-			event->EventHandlerCount++;
-		}
+		if (event->EventHandlerCount < MAX_EVENT_HANDLERS)
+			event->EventHandlers[event->EventHandlerCount++] = EventHandler;
 		else
-		{
 			status = -1;
-		}
 	}
 
 	if (pubSub->synchronized)
