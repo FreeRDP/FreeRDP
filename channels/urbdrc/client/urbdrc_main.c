@@ -668,12 +668,13 @@ static UINT urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 {
 	UINT status;
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pPlugin;
-	IUDEVMAN* udevman = urbdrc->udevman;
+	IUDEVMAN* udevman;
 	char channelName[sizeof(URBDRC_CHANNEL_NAME)] = { URBDRC_CHANNEL_NAME };
 
-	if (!urbdrc)
+	if (!urbdrc || !urbdrc->udevman)
 		return ERROR_INVALID_PARAMETER;
 
+	udevman = urbdrc->udevman;
 	urbdrc->listener_callback =
 	    (URBDRC_LISTENER_CALLBACK*)calloc(1, sizeof(URBDRC_LISTENER_CALLBACK));
 
