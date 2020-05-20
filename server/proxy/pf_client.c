@@ -177,7 +177,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 * Also, OrderSupport need to be zeroed, because it is currently not supported.
 	 */
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
-	ZeroMemory(instance->settings->OrderSupport, 32);
+	ZeroMemory(settings->OrderSupport, 32);
 
 	settings->SupportDynamicChannels = TRUE;
 
@@ -297,6 +297,9 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	pc = (pClientContext*)context;
 	ps = (rdpContext*)pc->pdata->ps;
 	config = pc->pdata->config;
+
+	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_POST_CONNECT, pc->pdata))
+		return FALSE;
 
 	if (config->SessionCapture)
 	{

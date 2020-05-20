@@ -38,6 +38,20 @@
 #define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu16 "", #key, config->key)
 #define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu32 "", #key, config->key)
 
+static char** pf_config_parse_comma_separated_list(const char* list, size_t* count)
+{
+	if (!list || !count)
+		return NULL;
+
+	if (strlen(list) == 0)
+	{
+		*count = 0;
+		return NULL;
+	}
+
+	return CommandLineParseCommaSeparatedValues(list, count);
+}
+
 BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key, UINT16* result)
 {
 	int val;
@@ -154,7 +168,7 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 	config->Clipboard = pf_config_get_bool(ini, "Channels", "Clipboard");
 	config->AudioOutput = pf_config_get_bool(ini, "Channels", "AudioOutput");
 	config->RemoteApp = pf_config_get_bool(ini, "Channels", "RemoteApp");
-	config->Passthrough = CommandLineParseCommaSeparatedValues(
+	config->Passthrough = pf_config_parse_comma_separated_list(
 	    pf_config_get_str(ini, "Channels", "Passthrough"), &config->PassthroughCount);
 
 	{
@@ -212,10 +226,10 @@ static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 	modules_to_load = IniFile_GetKeyValueString(ini, "Plugins", "Modules");
 	required_modules = IniFile_GetKeyValueString(ini, "Plugins", "Required");
 
-	config->Modules = CommandLineParseCommaSeparatedValues(modules_to_load, &config->ModulesCount);
+	config->Modules = pf_config_parse_comma_separated_list(modules_to_load, &config->ModulesCount);
 
 	config->RequiredPlugins =
-	    CommandLineParseCommaSeparatedValues(required_modules, &config->RequiredPluginsCount);
+	    pf_config_parse_comma_separated_list(required_modules, &config->RequiredPluginsCount);
 	return TRUE;
 }
 

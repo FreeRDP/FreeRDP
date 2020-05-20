@@ -112,17 +112,23 @@ BOOL pf_context_init_server_context(freerdp_peer* client)
 	return freerdp_peer_context_new(client);
 }
 
-/*
- * pf_context_copy_settings copies settings from `src` to `dst`.
- * when using this function, is_dst_server must be set to TRUE if the destination
- * settings are server's settings. otherwise, they must be set to FALSE.
- */
 BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 {
-	rdpSettings* before_copy = freerdp_settings_clone(dst);
+	BOOL rc = FALSE;
+	rdpSettings* before_copy;
 
+	if (!dst || !src)
+		return FALSE;
+
+	before_copy = freerdp_settings_clone(dst);
 	if (!before_copy)
 		return FALSE;
+
+#define REVERT_STR_VALUE(name)                                          \
+	free(dst->name);                                                    \
+	dst->name = NULL;                                                   \
+	if (before_copy->name && !(dst->name = _strdup(before_copy->name))) \
+	goto out_fail
 
 	if (!freerdp_settings_copy(dst, src))
 	{
@@ -130,31 +136,22 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 		return FALSE;
 	}
 
-	free(dst->ConfigPath);
-	free(dst->PrivateKeyContent);
-	free(dst->RdpKeyContent);
-	free(dst->RdpKeyFile);
-	free(dst->PrivateKeyFile);
-	free(dst->CertificateFile);
-	free(dst->CertificateName);
-	free(dst->CertificateContent);
-
-	/* adjust pointer to instance pointer */
+	/* keep original ServerMode value */
 	dst->ServerMode = before_copy->ServerMode;
 
 	/* revert some values that must not be changed */
-	dst->ConfigPath = _strdup(before_copy->ConfigPath);
-	dst->PrivateKeyContent = _strdup(before_copy->PrivateKeyContent);
-	dst->RdpKeyContent = _strdup(before_copy->RdpKeyContent);
-	dst->RdpKeyFile = _strdup(before_copy->RdpKeyFile);
-	dst->PrivateKeyFile = _strdup(before_copy->PrivateKeyFile);
-	dst->CertificateFile = _strdup(before_copy->CertificateFile);
-	dst->CertificateName = _strdup(before_copy->CertificateName);
-	dst->CertificateContent = _strdup(before_copy->CertificateContent);
+	REVERT_STR_VALUE(ConfigPath);
+	REVERT_STR_VALUE(PrivateKeyContent);
+	REVERT_STR_VALUE(RdpKeyContent);
+	REVERT_STR_VALUE(RdpKeyFile);
+	REVERT_STR_VALUE(PrivateKeyFile);
+	REVERT_STR_VALUE(CertificateFile);
+	REVERT_STR_VALUE(CertificateName);
+	REVERT_STR_VALUE(CertificateContent);
 
 	if (!dst->ServerMode)
 	{
-		/* adjust instance pointer for client's context */
+		/* adjust instance pointer */
 		dst->instance = before_copy->instance;
 
 		/*
@@ -168,8 +165,11 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 		dst->RdpServerRsaKey = NULL;
 	}
 
+	rc = TRUE;
+
+out_fail:
 	freerdp_settings_free(before_copy);
-	return TRUE;
+	return rc;
 }
 
 pClientContext* pf_context_create_client_context(rdpSettings* clientSettings)
@@ -203,42 +203,32 @@ proxyData* proxy_data_new(void)
 	BYTE temp[16];
 	proxyData* pdata = calloc(1, sizeof(proxyData));
 
-	if (pdata == NULL)
-	{
+	if (!pdata)
 		return NULL;
-	}
 
 	if (!(pdata->abort_event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-	{
-		proxy_data_free(pdata);
-		return NULL;
-	}
+		goto error;
 
 	if (!(pdata->gfx_server_ready = CreateEvent(NULL, TRUE, FALSE, NULL)))
-	{
-		proxy_data_free(pdata);
-		return NULL;
-	}
+		goto error;
 
 	winpr_RAND((BYTE*)&temp, 16);
 	if (!(pdata->session_id = winpr_BinToHexString(temp, 16, FALSE)))
-	{
-		proxy_data_free(pdata);
-		return NULL;
-	}
+		goto error;
 
 	if (!(pdata->modules_info = HashTable_New(FALSE)))
-	{
-		proxy_data_free(pdata);
-		return NULL;
-	}
+		goto error;
 
 	/* modules_info maps between plugin name to custom data */
 	pdata->modules_info->hash = HashTable_StringHash;
 	pdata->modules_info->keyCompare = HashTable_StringCompare;
 	pdata->modules_info->keyClone = HashTable_StringClone;
 	pdata->modules_info->keyFree = HashTable_StringFree;
+
 	return pdata;
+error:
+	proxy_data_free(pdata);
+	return NULL;
 }
 
 /* updates circular pointers between proxyData and pClientContext instances */

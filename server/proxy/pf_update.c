@@ -24,6 +24,7 @@
 #include <winpr/image.h>
 #include <winpr/sysinfo.h>
 
+#include "pf_modules.h"
 #include "pf_update.h"
 #include "pf_capture.h"
 #include "pf_context.h"
@@ -76,6 +77,9 @@ static BOOL pf_client_end_paint(rdpContext* context)
 
 	/* proxy end paint */
 	if (!ps->update->EndPaint(ps))
+		return FALSE;
+
+	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_END_PAINT, pdata))
 		return FALSE;
 
 	if (!pdata->config->SessionCapture)

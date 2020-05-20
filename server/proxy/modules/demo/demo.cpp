@@ -55,10 +55,13 @@ static proxyPlugin demo_plugin = {
 	plugin_desc,                /* description */
 	demo_plugin_unload,         /* PluginUnload */
 	NULL,                       /* ClientPreConnect */
+	NULL,                       /* ClientPostConnect */
 	NULL,                       /* ClientLoginFailure */
+	NULL,                       /* ClientEndPaint */
 	NULL,                       /* ServerPostConnect */
 	NULL,                       /* ServerChannelsInit */
 	NULL,                       /* ServerChannelsFree */
+	NULL,                       /* ServerSessionEnd */
 	demo_filter_keyboard_event, /* KeyboardEvent */
 	NULL,                       /* MouseEvent */
 	NULL,                       /* ClientChannelData */
