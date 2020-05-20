@@ -310,7 +310,7 @@ WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, L
 		}
 
 		SamResetEntry(entry);
-		sam->line = strtok_s(NULL, "\n", sam->context);
+		sam->line = strtok_s(NULL, "\n", &sam->context);
 	}
 
 out_fail:
