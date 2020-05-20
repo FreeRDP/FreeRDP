@@ -466,8 +466,7 @@ fail:
 static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, CHAR** dst,
                                  size_t max)
 {
-	union
-	{
+	union {
 		char c;
 		WCHAR w;
 		BYTE b[2];
@@ -549,7 +548,7 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 		return FALSE;
 
 	Stream_Read_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes ) */
-	Stream_Read_UINT32(s, flags); /* flags (4 bytes) */
+	Stream_Read_UINT32(s, flags);                      /* flags (4 bytes) */
 	settings->AudioCapture = ((flags & INFO_AUDIOCAPTURE) ? TRUE : FALSE);
 	settings->AudioPlayback = ((flags & INFO_NOAUDIOPLAYBACK) ? FALSE : TRUE);
 	settings->AutoLogonEnabled = ((flags & INFO_AUTOLOGON) ? TRUE : FALSE);
@@ -798,12 +797,12 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	/* excludes (!) the length of the mandatory null terminator */
 	cbWorkingDir = cbWorkingDir >= 2 ? cbWorkingDir - 2 : cbWorkingDir;
 	Stream_Write_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes) */
-	Stream_Write_UINT32(s, flags);            /* flags (4 bytes) */
-	Stream_Write_UINT16(s, cbDomain);         /* cbDomain (2 bytes) */
-	Stream_Write_UINT16(s, cbUserName);       /* cbUserName (2 bytes) */
-	Stream_Write_UINT16(s, cbPassword);       /* cbPassword (2 bytes) */
-	Stream_Write_UINT16(s, cbAlternateShell); /* cbAlternateShell (2 bytes) */
-	Stream_Write_UINT16(s, cbWorkingDir);     /* cbWorkingDir (2 bytes) */
+	Stream_Write_UINT32(s, flags);                      /* flags (4 bytes) */
+	Stream_Write_UINT16(s, cbDomain);                   /* cbDomain (2 bytes) */
+	Stream_Write_UINT16(s, cbUserName);                 /* cbUserName (2 bytes) */
+	Stream_Write_UINT16(s, cbPassword);                 /* cbPassword (2 bytes) */
+	Stream_Write_UINT16(s, cbAlternateShell);           /* cbAlternateShell (2 bytes) */
+	Stream_Write_UINT16(s, cbWorkingDir);               /* cbWorkingDir (2 bytes) */
 
 	Stream_Write(s, domainW, cbDomain);
 
