@@ -856,7 +856,7 @@ BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path
 
 	for (i = 0; i < ARRAYSIZE(purposes); i++)
 	{
-		int rc = -1;
+		int err = -1, rc = -1;
 		int purpose = purposes[i];
 		csc = X509_STORE_CTX_new();
 
@@ -869,6 +869,7 @@ BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path
 		X509_STORE_CTX_set_verify_cb(csc, verify_cb);
 
 		rc = X509_verify_cert(csc);
+		err = X509_STORE_CTX_get_error(csc);
 	skip:
 		X509_STORE_CTX_free(csc);
 		if (rc == 1)
@@ -876,6 +877,8 @@ BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path
 			status = TRUE;
 			break;
 		}
+		else if (err != X509_V_ERR_INVALID_PURPOSE)
+			break;
 	}
 
 	X509_STORE_free(cert_ctx);
