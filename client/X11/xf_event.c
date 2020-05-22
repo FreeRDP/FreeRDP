@@ -374,11 +374,11 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 }
 static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOOL app)
 {
-	if (xfc->use_xinput)
-		return TRUE;
-
 	if (xfc->window)
 		xf_floatbar_set_root_y(xfc->window->floatbar, event->y);
+
+	if (xfc->use_xinput)
+		return TRUE;
 
 	return xf_generic_MotionNotify(xfc, event->x, event->y, event->state, event->window, app);
 }
