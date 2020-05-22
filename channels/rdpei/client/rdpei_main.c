@@ -604,6 +604,7 @@ static UINT rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 			IFCALL(mgr->DestroyListener, mgr, rdpei->listener);
 	}
 	free(rdpei->listener_callback);
+	free(rdpei->contactPoints);
 	free(rdpei->context);
 	free(rdpei);
 	return CHANNEL_RC_OK;
