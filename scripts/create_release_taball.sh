@@ -1,5 +1,16 @@
 #!/bin/bash -e
 
+function run {
+	echo "[RUN] $@"
+	"$@"
+	RES=$?
+	if [[ $RES -ne 0 ]];
+	then
+		echo "[ERROR] $@ retured $RES"
+		exit 1
+	fi
+}
+
 if [ -z ${TAG:-} ];then
 	echo "No TAG set - trying to detect"
 	TAG=$(git describe --tags)
@@ -16,16 +27,24 @@ fi
 
 TMPDIR=$(mktemp -d -t release-${TAG}-XXXXXXXXXX)
 
-git archive ${TAG} --prefix=freerdp-${TAG}/ |gzip -9 > ${TMPDIR}/freerdp-${TAG}.tar.gz
-tar xzvf ${TMPDIR}/freerdp-${TAG}.tar.gz -C ${TMPDIR}
-echo ${TAG} > ${TMPDIR}/freerdp-${TAG}/.source_version
+run git archive --prefix=freerdp-${TAG}/ --format=tar.gz -o ${TMPDIR}/freerdp-${TAG}.tar.gz ${TAG}
+run tar xzvf ${TMPDIR}/freerdp-${TAG}.tar.gz -C ${TMPDIR}
+run echo ${TAG} > ${TMPDIR}/freerdp-${TAG}/.source_version
+
 pushd .
 cd  $TMPDIR
-tar czvf freerdp-${TAG}.tar.gz freerdp-${TAG}
-md5sum freerdp-${TAG}.tar.gz > freerdp-${TAG}.tar.gz.md5
-sha1sum freerdp-${TAG}.tar.gz > freerdp-${TAG}.tar.gz.sha1
-sha256sum freerdp-${TAG}.tar.gz > freerdp-${TAG}.tar.gz.sha256
+run tar czvf freerdp-${TAG}.tar.gz freerdp-${TAG}
+run md5sum freerdp-${TAG}.tar.gz > freerdp-${TAG}.tar.gz.md5
+run sha1sum freerdp-${TAG}.tar.gz > freerdp-${TAG}.tar.gz.sha1
+run sha256sum freerdp-${TAG}.tar.gz > freerdp-${TAG}.tar.gz.sha256
+
+run zip freerdp-${TAG}.zip freerdp-${TAG}
+run md5sum freerdp-${TAG}.zip > freerdp-${TAG}.zip.md5
+run sha1sum freerdp-${TAG}.zip > freerdp-${TAG}.zip.sha1
+run sha256sum freerdp-${TAG}.zip > freerdp-${TAG}.zip.sha256
 popd
-mv ${TMPDIR}/freerdp-${TAG}.tar.gz* .
-rm -rf ${TMPDIR}
+
+run mv ${TMPDIR}/freerdp-${TAG}.tar.gz* .
+run mv ${TMPDIR}/freerdp-${TAG}.zip* .
+run rm -rf ${TMPDIR}
 exit 0
