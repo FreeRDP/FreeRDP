@@ -1181,9 +1181,9 @@ static BOOL xf_pre_connect(freerdp* instance)
 
 	if (!settings->Username && !settings->CredentialsFromStdin && !settings->SmartcardLogon)
 	{
-		char* login_name = getlogin();
+		char login_name[MAX_PATH] = { 0 };
 
-		if (login_name)
+		if (getlogin_r(login_name, sizeof(login_name)) == 0)
 		{
 			settings->Username = _strdup(login_name);
 
