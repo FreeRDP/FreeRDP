@@ -572,54 +572,54 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		size += 8; /* unknown 8-byte padding */
 
 	if (!sspi_SecBufferAlloc(&context->AuthenticateTargetInfo, size))
-		return -1;
+		goto fail;
 
 	AuthenticateTargetInfo = (NTLM_AV_PAIR*)context->AuthenticateTargetInfo.pvBuffer;
 	cbAuthenticateTargetInfo = context->AuthenticateTargetInfo.cbBuffer;
 
 	if (!ntlm_av_pair_list_init(AuthenticateTargetInfo, cbAuthenticateTargetInfo))
-		return -1;
+		goto fail;
 
 	if (AvNbDomainName)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo, AvNbDomainName,
 		                           cbAvNbDomainName))
-			return -1;
+			goto fail;
 	}
 
 	if (AvNbComputerName)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo,
 		                           AvNbComputerName, cbAvNbComputerName))
-			return -1;
+			goto fail;
 	}
 
 	if (AvDnsDomainName)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo,
 		                           AvDnsDomainName, cbAvDnsDomainName))
-			return -1;
+			goto fail;
 	}
 
 	if (AvDnsComputerName)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo,
 		                           AvDnsComputerName, cbAvDnsComputerName))
-			return -1;
+			goto fail;
 	}
 
 	if (AvDnsTreeName)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo, AvDnsTreeName,
 		                           cbAvDnsTreeName))
-			return -1;
+			goto fail;
 	}
 
 	if (AvTimestamp)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo, AvTimestamp,
 		                           cbAvTimestamp))
-			return -1;
+			goto fail;
 	}
 
 	if (context->UseMIC)
@@ -629,28 +629,28 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 
 		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvAvFlags,
 		                      (PBYTE)&flags, 4))
-			return -1;
+			goto fail;
 	}
 
 	if (context->SendSingleHostData)
 	{
 		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvAvSingleHost,
 		                      (PBYTE)&context->SingleHostData, context->SingleHostData.Size))
-			return -1;
+			goto fail;
 	}
 
 	if (!context->SuppressExtendedProtection)
 	{
 		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvChannelBindings,
 		                      context->ChannelBindingsHash, 16))
-			return -1;
+			goto fail;
 
 		if (context->ServicePrincipalName.Length > 0)
 		{
 			if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvAvTargetName,
 			                      (PBYTE)context->ServicePrincipalName.Buffer,
 			                      context->ServicePrincipalName.Length))
-				return -1;
+				goto fail;
 		}
 	}
 
@@ -660,10 +660,13 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		AvEOL = ntlm_av_pair_get(ChallengeTargetInfo, cbChallengeTargetInfo, MsvAvEOL, NULL);
 
 		if (!AvEOL)
-			return -1;
+			goto fail;
 
 		ZeroMemory(AvEOL, sizeof(NTLM_AV_PAIR));
 	}
 
 	return 1;
+fail:
+	sspi_SecBufferFree(&context->AuthenticateTargetInfo);
+	return -1;
 }
