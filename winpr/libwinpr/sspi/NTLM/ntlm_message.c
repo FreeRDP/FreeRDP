@@ -544,9 +544,9 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	winpr_HexDump(TAG, WLOG_DEBUG, context->Timestamp, 8);
 #endif
 	context->state = NTLM_STATE_AUTHENTICATE;
-	ntlm_free_message_fields_buffer(&(message->TargetName));
 	status = SEC_I_CONTINUE_NEEDED;
 fail:
+	ntlm_free_message_fields_buffer(&(message->TargetName));
 	Stream_Free(s, FALSE);
 	return status;
 }
