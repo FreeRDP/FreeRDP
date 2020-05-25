@@ -170,22 +170,17 @@ rdpPcap* pcap_open(char* name, BOOL write)
 {
 	rdpPcap* pcap;
 
-	FILE* pcap_fp = fopen(name, write ? "w+b" : "rb");
-
-	if (pcap_fp == NULL)
-	{
-		WLog_ERR(TAG, "opening pcap dump");
-		return NULL;
-	}
-
 	pcap = (rdpPcap*)calloc(1, sizeof(rdpPcap));
 	if (!pcap)
-		goto fail_close;
+		goto fail;
 
 	pcap->name = name;
 	pcap->write = write;
 	pcap->record_count = 0;
-	pcap->fp = pcap_fp;
+	pcap->fp = fopen(name, write ? "w+b" : "rb");
+
+	if (pcap->fp == NULL)
+		goto fail;
 
 	if (write)
 	{
@@ -211,9 +206,7 @@ rdpPcap* pcap_open(char* name, BOOL write)
 	return pcap;
 
 fail:
-	free(pcap);
-fail_close:
-	fclose(pcap_fp);
+	pcap_close(pcap);
 	return NULL;
 }
 
@@ -231,6 +224,9 @@ void pcap_flush(rdpPcap* pcap)
 
 void pcap_close(rdpPcap* pcap)
 {
+	if (!pcap)
+		return;
+
 	pcap_flush(pcap);
 
 	if (pcap->fp != NULL)
