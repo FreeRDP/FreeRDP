@@ -69,10 +69,11 @@ struct rdp_cups_print_job
 static void printer_cups_get_printjob_name(char* buf, size_t size, size_t id)
 {
 	time_t tt;
+	struct tm tres;
 	struct tm* t;
 
 	tt = time(NULL);
-	t = localtime(&tt);
+	t = localtime_r(&tt, &tres);
 	sprintf_s(buf, size - 1, "FreeRDP Print %04d-%02d-%02d %02d-%02d-%02d - Job %" PRIdz,
 	          t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, id);
 }
