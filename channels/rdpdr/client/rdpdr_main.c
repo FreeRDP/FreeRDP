@@ -598,7 +598,10 @@ static BOOL isAutomountLocation(const char* path)
 	size_t x;
 	char buffer[MAX_PATH];
 	uid_t uid = getuid();
-	const char* uname = getlogin();
+	const char uname[MAX_PATH] = { 0 };
+
+	if (getlogin_r(uname, sizeof(uname)) != 0)
+		return FALSE;
 
 	if (!path)
 		return FALSE;
