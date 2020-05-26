@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <ctype.h>
 #include "triodef.h"
 #include "triostr.h"
@@ -328,7 +329,7 @@ TRIO_PUBLIC_STRING void trio_destroy TRIO_ARGS1((string), char* string)
 
 TRIO_PUBLIC_STRING size_t trio_length TRIO_ARGS1((string), TRIO_CONST char* string)
 {
-	return strlen(string);
+	return trio_length_max(string, INT_MAX);
 }
 
 #endif
