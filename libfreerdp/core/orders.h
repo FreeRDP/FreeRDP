@@ -189,7 +189,7 @@
 
 #define CG_GLYPH_UNICODE_PRESENT 0x0010
 
-FREERDP_LOCAL extern const BYTE PRIMARY_DRAWING_ORDER_FIELD_BYTES[];
+FREERDP_LOCAL BYTE get_primary_drawing_order_field_bytes(UINT32 orderType, BOOL* pValid);
 
 FREERDP_LOCAL BOOL update_recv_order(rdpUpdate* update, wStream* s);
 
