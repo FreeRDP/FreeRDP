@@ -1331,12 +1331,12 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	region16_copy(&invalidRegion, &(client->invalidRegion));
 	region16_clear(&(client->invalidRegion));
 	LeaveCriticalSection(&(client->lock));
+
+	EnterCriticalSection(&surface->lock);
 	rects = region16_rects(&(surface->invalidRegion), &numRects);
 
 	for (index = 0; index < numRects; index++)
-	{
 		region16_union_rect(&invalidRegion, &invalidRegion, &rects[index]);
-	}
 
 	surfaceRect.left = 0;
 	surfaceRect.top = 0;
@@ -1410,6 +1410,7 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	}
 
 out:
+	LeaveCriticalSection(&surface->lock);
 	region16_uninit(&invalidRegion);
 	return ret;
 }
