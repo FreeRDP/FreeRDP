@@ -128,90 +128,69 @@ out_fail:
 	return pam_status;
 }
 
-static int x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
+static BOOL x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
 {
-	if (PathFileExistsA("/etc/pam.d/lightdm"))
-	{
-		info->service_name = _strdup("lightdm");
-	}
-	else if (PathFileExistsA("/etc/pam.d/gdm"))
-	{
-		info->service_name = _strdup("gdm");
-	}
-	else if (PathFileExistsA("/etc/pam.d/xdm"))
-	{
-		info->service_name = _strdup("xdm");
-	}
-	else if (PathFileExistsA("/etc/pam.d/login"))
-	{
-		info->service_name = _strdup("login");
-	}
-	else if (PathFileExistsA("/etc/pam.d/sshd"))
-	{
-		info->service_name = _strdup("sshd");
-	}
-	else
-	{
-		return -1;
-	}
+	size_t x;
+	const char* base = "/etc/pam.d";
+	const char* hints[] = { "lightdm", "gdm", "xdm", "login", "sshd" };
 
-	if (!info->service_name)
-		return -1;
+	for (x = 0; x < ARRAYSIZE(hints); x++)
+	{
+		char path[MAX_PATH];
+		const char* hint = hints[x];
 
-	return 1;
+		_snprintf(path, sizeof(path), "%s/%s", base, hint);
+		if (PathFileExistsA(path))
+		{
+
+			info->service_name = _strdup(hint);
+			return info->service_name != NULL;
+		}
+	}
+	WLog_WARN(TAG, "Could not determine PAM service name");
+	return FALSE;
 }
 
 static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
                                        const char* user, const char* domain, const char* password)
 {
 	int pam_status;
-	SHADOW_PAM_AUTH_INFO* info;
+	SHADOW_PAM_AUTH_INFO info = { 0 };
 	WINPR_UNUSED(subsystem);
 	WINPR_UNUSED(client);
-	info = calloc(1, sizeof(SHADOW_PAM_AUTH_INFO));
 
-	if (!info)
-		return PAM_CONV_ERR;
-
-	if (x11_shadow_pam_get_service_name(info) < 0)
-	{
-		free(info);
+	if (!x11_shadow_pam_get_service_name(&info))
 		return -1;
-	}
 
-	info->appdata.user = user;
-	info->appdata.domain = domain;
-	info->appdata.password = password;
-	info->pamc.conv = &x11_shadow_pam_conv;
-	info->pamc.appdata_ptr = &(info->appdata);
-	pam_status = pam_start(info->service_name, 0, &(info->pamc), &(info->handle));
+	info.appdata.user = user;
+	info.appdata.domain = domain;
+	info.appdata.password = password;
+	info.pamc.conv = &x11_shadow_pam_conv;
+	info.pamc.appdata_ptr = &(info->appdata);
+	pam_status = pam_start(info->service_name, 0, &info.pamc, &info.handle);
 
 	if (pam_status != PAM_SUCCESS)
 	{
-		WLog_ERR(TAG, "pam_start failure: %s", pam_strerror(info->handle, pam_status));
-		free(info);
+		WLog_ERR(TAG, "pam_start failure: %s", pam_strerror(info.handle, pam_status));
 		return -1;
 	}
 
-	pam_status = pam_authenticate(info->handle, 0);
+	pam_status = pam_authenticate(info.handle, 0);
 
 	if (pam_status != PAM_SUCCESS)
 	{
-		WLog_ERR(TAG, "pam_authenticate failure: %s", pam_strerror(info->handle, pam_status));
-		free(info);
+		WLog_ERR(TAG, "pam_authenticate failure: %s", pam_strerror(info.handle, pam_status));
 		return -1;
 	}
 
-	pam_status = pam_acct_mgmt(info->handle, 0);
+	pam_status = pam_acct_mgmt(info.handle, 0);
 
 	if (pam_status != PAM_SUCCESS)
 	{
-		WLog_ERR(TAG, "pam_acct_mgmt failure: %s", pam_strerror(info->handle, pam_status));
-		free(info);
+		WLog_ERR(TAG, "pam_acct_mgmt failure: %s", pam_strerror(info.handle, pam_status));
 		return -1;
 	}
 
-	free(info);
 	return 1;
 }
 
