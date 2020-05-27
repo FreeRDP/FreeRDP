@@ -736,6 +736,7 @@ static int x11_shadow_error_handler_for_capture(Display* display, XErrorEvent* e
 
 static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 {
+	int rc = 0;
 	int count;
 	int status;
 	int x, y;
@@ -753,10 +754,13 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	if (count < 1)
 		return 1;
 
+	EnterCriticalSection(&surface->lock);
 	surfaceRect.left = 0;
 	surfaceRect.top = 0;
 	surfaceRect.right = surface->width;
 	surfaceRect.bottom = surface->height;
+	LeaveCriticalSection(&surface->lock);
+
 	XLockDisplay(subsystem->display);
 	/*
 	 * Ignore BadMatch error during image capture. The screen size may be
@@ -769,15 +773,26 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		image = subsystem->fb_image;
 		XCopyArea(subsystem->display, subsystem->root_window, subsystem->fb_pixmap,
 		          subsystem->xshm_gc, 0, 0, subsystem->width, subsystem->height, 0, 0);
+
+		EnterCriticalSection(&surface->lock);
 		status = shadow_capture_compare(surface->data, surface->scanline, surface->width,
 		                                surface->height, (BYTE*)&(image->data[surface->width * 4]),
 		                                image->bytes_per_line, &invalidRect);
+		LeaveCriticalSection(&surface->lock);
 	}
 	else
 	{
+		EnterCriticalSection(&surface->lock);
 		image = XGetImage(subsystem->display, subsystem->root_window, surface->x, surface->y,
 		                  surface->width, surface->height, AllPlanes, ZPixmap);
 
+		if (image)
+		{
+			status = shadow_capture_compare(surface->data, surface->scanline, surface->width,
+			                                surface->height, (BYTE*)image->data,
+			                                image->bytes_per_line, &invalidRect);
+		}
+		LeaveCriticalSection(&surface->lock);
 		if (!image)
 		{
 			/*
@@ -786,10 +801,6 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			 */
 			goto fail_capture;
 		}
-
-		status = shadow_capture_compare(surface->data, surface->scanline, surface->width,
-		                                surface->height, (BYTE*)image->data, image->bytes_per_line,
-		                                &invalidRect);
 	}
 
 	/* Restore the default error handler */
@@ -799,25 +810,32 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 	if (status)
 	{
+		BOOL empty;
+		EnterCriticalSection(&surface->lock);
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
 		region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
+		empty = region16_is_empty(&(surface->invalidRegion));
+		LeaveCriticalSection(&surface->lock);
 
-		if (!region16_is_empty(&(surface->invalidRegion)))
+		if (!empty)
 		{
+			BOOL success;
+			EnterCriticalSection(&surface->lock);
 			extents = region16_extents(&(surface->invalidRegion));
 			x = extents->left;
 			y = extents->top;
 			width = extents->right - extents->left;
 			height = extents->bottom - extents->top;
-
-			if (!freerdp_image_copy(surface->data, surface->format, surface->scanline, x, y, width,
-			                        height, (BYTE*)image->data, PIXEL_FORMAT_BGRX32,
-			                        image->bytes_per_line, x, y, NULL, FREERDP_FLIP_NONE))
+			success = freerdp_image_copy(surface->data, surface->format, surface->scanline, x, y,
+			                             width, height, (BYTE*)image->data, PIXEL_FORMAT_BGRX32,
+			                             image->bytes_per_line, x, y, NULL, FREERDP_FLIP_NONE);
+			LeaveCriticalSection(&surface->lock);
+			if (!success)
 				goto fail_capture;
 
 			// x11_shadow_blend_cursor(subsystem);
 			count = ArrayList_Count(server->clients);
-			shadow_subsystem_frame_update((rdpShadowSubsystem*)subsystem);
+			shadow_subsystem_frame_update(&subsystem->common);
 
 			if (count == 1)
 			{
@@ -829,23 +847,25 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 					    shadow_encoder_preferred_fps(client->encoder);
 			}
 
+			EnterCriticalSection(&surface->lock);
 			region16_clear(&(surface->invalidRegion));
+			LeaveCriticalSection(&surface->lock);
 		}
 	}
 
-	if (!subsystem->use_xshm)
-		XDestroyImage(image);
-
-	return 1;
+	rc = 1;
 fail_capture:
-
 	if (!subsystem->use_xshm && image)
 		XDestroyImage(image);
 
-	XSetErrorHandler(NULL);
-	XSync(subsystem->display, False);
-	XUnlockDisplay(subsystem->display);
-	return 0;
+	if (rc != 1)
+	{
+		XSetErrorHandler(NULL);
+		XSync(subsystem->display, False);
+		XUnlockDisplay(subsystem->display);
+	}
+
+	return rc;
 }
 
 static int x11_shadow_subsystem_process_message(x11ShadowSubsystem* subsystem, wMessage* message)

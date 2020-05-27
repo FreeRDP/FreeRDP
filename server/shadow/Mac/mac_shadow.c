@@ -370,6 +370,7 @@ static void (^mac_capture_stream_handler)(
   int width;
   int height;
   int nSrcStep;
+  BOOL empty;
   BYTE* pSrcData;
   RECTANGLE_16 surfaceRect;
   const RECTANGLE_16* extents;
@@ -381,14 +382,17 @@ static void (^mac_capture_stream_handler)(
   if (count < 1)
 	  return;
 
+  EnterCriticalSection(&(surface->lock));
   mac_shadow_capture_get_dirty_region(subsystem);
   surfaceRect.left = 0;
   surfaceRect.top = 0;
   surfaceRect.right = surface->width;
   surfaceRect.bottom = surface->height;
   region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
+  empty = region16_is_empty(&(surface->invalidRegion));
+  LeaveCriticalSection(&(surface->lock));
 
-  if (!region16_is_empty(&(surface->invalidRegion)))
+  if (!empty)
   {
 	  extents = region16_extents(&(surface->invalidRegion));
 	  x = extents->left;
@@ -410,13 +414,12 @@ static void (^mac_capture_stream_handler)(
 			                 pSrcData, PIXEL_FORMAT_BGRX32, nSrcStep, x, y, NULL,
 			                 FREERDP_FLIP_NONE);
 	  }
+	  LeaveCriticalSection(&(surface->lock));
 
 	  IOSurfaceUnlock(frameSurface, kIOSurfaceLockReadOnly, NULL);
 	  ArrayList_Lock(server->clients);
 	  count = ArrayList_Count(server->clients);
-	  EnterCriticalSection(&(surface->lock));
 	  shadow_subsystem_frame_update(&subsystem->common);
-	  LeaveCriticalSection(&(surface->lock));
 
 	  if (count == 1)
 	  {
@@ -430,7 +433,9 @@ static void (^mac_capture_stream_handler)(
 	  }
 
 	  ArrayList_Unlock(server->clients);
+	  EnterCriticalSection(&(surface->lock));
 	  region16_clear(&(surface->invalidRegion));
+	  LeaveCriticalSection(&(surface->lock));
   }
 
   if (status != kCGDisplayStreamFrameStatusFrameComplete)
