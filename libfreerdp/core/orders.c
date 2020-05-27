@@ -3762,12 +3762,13 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 		           name, end - start);
 		return FALSE;
 	}
-	diff = start - end;
+	diff = end - start;
 	if (diff > 0)
 	{
 		WLog_Print(update->log, WLOG_DEBUG,
 		           "SECONDARY_ORDER %s: read %" PRIuz "bytes short, skipping", name, diff);
-		Stream_Seek(s, diff);
+		if (!Stream_SafeSeek(s, diff))
+			return FALSE;
 	}
 	return rc;
 }
