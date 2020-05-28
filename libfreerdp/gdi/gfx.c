@@ -141,7 +141,10 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 		if (!freerdp_image_scale(gdi->primary_buffer, gdi->dstFormat, gdi->stride, nXDst, nYDst,
 		                         dwidth, dheight, surface->data, surface->format, surface->scanline,
 		                         nXSrc, nYSrc, swidth, sheight))
-			return CHANNEL_RC_NULL_DATA;
+		{
+			rc = CHANNEL_RC_NULL_DATA;
+			goto fail;
+		}
 
 		gdi_InvalidateRegion(gdi->primary->hdc, (INT32)nXDst, (INT32)nYDst, (INT32)dwidth,
 		                     (INT32)dheight);
