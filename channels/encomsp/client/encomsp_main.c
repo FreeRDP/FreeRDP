@@ -1116,8 +1116,11 @@ static DWORD WINAPI encomsp_virtual_channel_client_thread(LPVOID arg)
 			if ((error = encomsp_process_receive(encomsp, data)))
 			{
 				WLog_ERR(TAG, "encomsp_process_receive failed with error %" PRIu32 "!", error);
+				Stream_Free(data, TRUE);
 				break;
 			}
+
+			Stream_Free(data, TRUE);
 		}
 	}
 
