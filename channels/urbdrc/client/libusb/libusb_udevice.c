@@ -296,7 +296,7 @@ static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
 		user_data->cb(user_data->idev, user_data->callback, user_data->data, InterfaceId,
 		              user_data->noack, user_data->MessageId, RequestID, transfer->num_iso_packets,
 		              transfer->status, user_data->StartFrame, user_data->ErrorCount,
-		              user_data->OutputBufferSize);
+		              transfer->actual_length);
 		user_data->data = NULL;
 		HashTable_Remove(user_data->queue, (void*)(size_t)streamID);
 	}
