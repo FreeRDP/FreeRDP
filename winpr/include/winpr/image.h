@@ -66,6 +66,8 @@ typedef struct _WINPR_BITMAP_CORE_HEADER WINPR_BITMAP_CORE_HEADER;
 #define WINPR_IMAGE_BITMAP 0
 #define WINPR_IMAGE_PNG 1
 
+#define WINPR_IMAGE_BMP_HEADER_LEN 54
+
 struct _wImage
 {
 	int type;
@@ -85,6 +87,7 @@ extern "C"
 
 	WINPR_API int winpr_bitmap_write(const char* filename, const BYTE* data, int width, int height,
 	                                 int bpp);
+	WINPR_API BYTE* winpr_bitmap_construct_header(int width, int height, int bpp);
 
 	WINPR_API int winpr_image_write(wImage* image, const char* filename);
 	WINPR_API int winpr_image_read(wImage* image, const char* filename);
