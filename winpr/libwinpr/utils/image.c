@@ -100,24 +100,18 @@ static BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi)
 	return TRUE;
 }
 
-/**
- * Refer to "Compressed Image File Formats: JPEG, PNG, GIF, XBM, BMP" book
- */
-
-int winpr_bitmap_write(const char* filename, const BYTE* data, int width, int height, int bpp)
+BYTE* winpr_bitmap_construct_header(int width, int height, int bpp)
 {
-	FILE* fp;
 	WINPR_BITMAP_FILE_HEADER bf;
 	WINPR_BITMAP_INFO_HEADER bi;
-	wStream* s;
-	int ret = -1;
-	fp = fopen(filename, "w+b");
+	wStream s;
+	BYTE* buffer = NULL;
 
-	if (!fp)
-	{
-		WLog_ERR(TAG, "failed to open file %s", filename);
-		return -1;
-	}
+	buffer = malloc(WINPR_IMAGE_BMP_HEADER_LEN);
+	if (!buffer)
+		return NULL;
+
+	Stream_StaticInit(&s, buffer, WINPR_IMAGE_BMP_HEADER_LEN);
 
 	bf.bfType[0] = 'B';
 	bf.bfType[1] = 'M';
@@ -136,27 +130,49 @@ int winpr_bitmap_write(const char* filename, const BYTE* data, int width, int he
 	bi.biClrUsed = 0;
 	bi.biClrImportant = 0;
 	bi.biSize = sizeof(WINPR_BITMAP_INFO_HEADER);
-	s = Stream_New(NULL, sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(WINPR_BITMAP_INFO_HEADER));
 
-	if (!s)
+	if (!writeBitmapFileHeader(&s, &bf))
 		goto fail;
 
-	if (!writeBitmapFileHeader(s, &bf))
+	if (!writeBitmapInfoHeader(&s, &bi))
 		goto fail;
 
-	if (!writeBitmapInfoHeader(s, &bi))
-		goto fail;
+	return buffer;
+fail:
+	return NULL;
+}
 
-	Stream_SealLength(s);
+/**
+ * Refer to "Compressed Image File Formats: JPEG, PNG, GIF, XBM, BMP" book
+ */
 
-	if (fwrite(Stream_Buffer(s), Stream_Length(s), 1, fp) != 1 ||
-	    fwrite((void*)data, bi.biSizeImage, 1, fp) != 1)
+int winpr_bitmap_write(const char* filename, const BYTE* data, int width, int height, int bpp)
+{
+	FILE* fp;
+	BYTE* bmp_header = NULL;
+	UINT32 img_size = width * height * (bpp / 8);
+
+	int ret = -1;
+	fp = fopen(filename, "w+b");
+
+	if (!fp)
+	{
+		WLog_ERR(TAG, "failed to open file %s", filename);
+		return -1;
+	}
+
+	bmp_header = winpr_bitmap_construct_header(width, height, bpp);
+	if (!bmp_header)
+		return -1;
+
+	if (fwrite(bmp_header, WINPR_IMAGE_BMP_HEADER_LEN, 1, fp) != 1 ||
+	    fwrite((void*)data, img_size, 1, fp) != 1)
 		goto fail;
 
 	ret = 1;
 fail:
 	fclose(fp);
-	Stream_Free(s, TRUE);
+	free(bmp_header);
 	return ret;
 }
 
