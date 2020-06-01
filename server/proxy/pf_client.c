@@ -35,7 +35,6 @@
 #include "pf_update.h"
 #include "pf_log.h"
 #include "pf_modules.h"
-#include "pf_capture.h"
 
 #define TAG PROXY_TAG("client")
 
@@ -300,17 +299,6 @@ static BOOL pf_client_post_connect(freerdp* instance)
 
 	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_POST_CONNECT, pc->pdata))
 		return FALSE;
-
-	if (config->SessionCapture)
-	{
-		if (!pf_capture_create_session_directory(pc))
-		{
-			LOG_ERR(TAG, pc, "pf_capture_create_session_directory failed!");
-			return FALSE;
-		}
-
-		LOG_ERR(TAG, pc, "frames dir created: %s", pc->frames_dir);
-	}
 
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
