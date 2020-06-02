@@ -340,7 +340,6 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
 	time_t t;
 	struct tm tres;
-	;
 	struct tm* local_time;
 	TIME_ZONE_ENTRY* dtz;
 	LPTIME_ZONE_INFORMATION tz = lpTimeZoneInformation;
