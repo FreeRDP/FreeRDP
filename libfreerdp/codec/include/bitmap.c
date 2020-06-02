@@ -201,6 +201,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 
 				if (code == LITE_SET_FG_FG_RUN || code == MEGA_MEGA_SET_FG_RUN)
 				{
+					if (pbSrc >= pbEnd)
+						return FALSE;
 					SRCREADPIXEL(fgPel, pbSrc);
 					SRCNEXTPIXEL(pbSrc);
 				}
@@ -231,8 +233,12 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case MEGA_MEGA_DITHERED_RUN:
 				runLength = ExtractRunLength(code, pbSrc, &advance);
 				pbSrc = pbSrc + advance;
+				if (pbSrc >= pbEnd)
+					return FALSE;
 				SRCREADPIXEL(pixelA, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
+				if (pbSrc >= pbEnd)
+					return FALSE;
 				SRCREADPIXEL(pixelB, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
 
@@ -252,6 +258,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case MEGA_MEGA_COLOR_RUN:
 				runLength = ExtractRunLength(code, pbSrc, &advance);
 				pbSrc = pbSrc + advance;
+				if (pbSrc >= pbEnd)
+					return FALSE;
 				SRCREADPIXEL(pixelA, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
 
@@ -272,6 +280,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 				runLength = ExtractRunLength(code, pbSrc, &advance);
 				pbSrc = pbSrc + advance;
 
+				if (pbSrc >= pbEnd)
+					return FALSE;
 				if (code == LITE_SET_FG_FGBG_IMAGE || code == MEGA_MEGA_SET_FGBG_IMAGE)
 				{
 					SRCREADPIXEL(fgPel, pbSrc);
@@ -338,6 +348,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 					return FALSE;
 
 				UNROLL(runLength, {
+					if (pbSrc >= pbEnd)
+						return FALSE;
 					SRCREADPIXEL(temp, pbSrc);
 					SRCNEXTPIXEL(pbSrc);
 					DESTWRITEPIXEL(pbDest, temp);
