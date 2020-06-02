@@ -206,8 +206,12 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 	switch (NameFormat)
 	{
 		case NameSamCompatible:
+#ifndef getlogin_r
+			strncpy(login, getlogin(), sizeof(login));
+#else
 			if (getlogin_r(login, sizeof(login)) != 0)
 				return FALSE;
+#endif
 			length = strlen(login);
 
 			if (*nSize >= length)

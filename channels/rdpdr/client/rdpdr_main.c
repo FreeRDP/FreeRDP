@@ -600,8 +600,12 @@ static BOOL isAutomountLocation(const char* path)
 	uid_t uid = getuid();
 	char uname[MAX_PATH] = { 0 };
 
+#ifndef getlogin_r
+	strncpy(uname, getlogin(), sizeof(uname));
+#else
 	if (getlogin_r(uname, sizeof(uname)) != 0)
 		return FALSE;
+#endif
 
 	if (!path)
 		return FALSE;
