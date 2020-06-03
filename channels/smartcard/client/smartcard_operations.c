@@ -921,15 +921,38 @@ static LONG smartcard_LocateCardsA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	ret.ReturnCode = SCardLocateCardsA(operation->hContext, call->mszCards, call->rgReaderStates,
 	                                   call->cReaders);
 	log_status_error(TAG, "SCardLocateCardsA", ret.ReturnCode);
+	ret.cReaders = call->cReaders;
+	ret.rgReaderStates = NULL;
+
 	free(call->mszCards);
+
+	if (ret.cReaders > 0)
+	{
+		ret.rgReaderStates = (ReaderState_Return*)calloc(ret.cReaders, sizeof(ReaderState_Return));
+
+		if (!ret.rgReaderStates)
+			return STATUS_NO_MEMORY;
+	}
+
+	for (x = 0; x < ret.cReaders; x++)
+	{
+		ret.rgReaderStates[x].dwCurrentState = call->rgReaderStates[x].dwCurrentState;
+		ret.rgReaderStates[x].dwEventState = call->rgReaderStates[x].dwEventState;
+		ret.rgReaderStates[x].cbAtr = call->rgReaderStates[x].cbAtr;
+		CopyMemory(&(ret.rgReaderStates[x].rgbAtr), &(call->rgReaderStates[x].rgbAtr),
+		           sizeof(ret.rgReaderStates[x].rgbAtr));
+	}
+
+	status = smartcard_pack_locate_cards_return(smartcard, irp->output, &ret);
+
 	for (x = 0; x < call->cReaders; x++)
 	{
 		SCARD_READERSTATEA* state = &call->rgReaderStates[x];
 		free(state->szReader);
 	}
+
 	free(call->rgReaderStates);
 
-	status = smartcard_pack_locate_cards_return(smartcard, irp->output, &ret);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -947,15 +970,38 @@ static LONG smartcard_LocateCardsW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	ret.ReturnCode = SCardLocateCardsW(operation->hContext, call->mszCards, call->rgReaderStates,
 	                                   call->cReaders);
 	log_status_error(TAG, "SCardLocateCardsW", ret.ReturnCode);
+	ret.cReaders = call->cReaders;
+	ret.rgReaderStates = NULL;
+
 	free(call->mszCards);
+
+	if (ret.cReaders > 0)
+	{
+		ret.rgReaderStates = (ReaderState_Return*)calloc(ret.cReaders, sizeof(ReaderState_Return));
+
+		if (!ret.rgReaderStates)
+			return STATUS_NO_MEMORY;
+	}
+
+	for (x = 0; x < ret.cReaders; x++)
+	{
+		ret.rgReaderStates[x].dwCurrentState = call->rgReaderStates[x].dwCurrentState;
+		ret.rgReaderStates[x].dwEventState = call->rgReaderStates[x].dwEventState;
+		ret.rgReaderStates[x].cbAtr = call->rgReaderStates[x].cbAtr;
+		CopyMemory(&(ret.rgReaderStates[x].rgbAtr), &(call->rgReaderStates[x].rgbAtr),
+		           sizeof(ret.rgReaderStates[x].rgbAtr));
+	}
+
+	status = smartcard_pack_locate_cards_return(smartcard, irp->output, &ret);
+
 	for (x = 0; x < call->cReaders; x++)
 	{
 		SCARD_READERSTATEW* state = &call->rgReaderStates[x];
 		free(state->szReader);
 	}
+
 	free(call->rgReaderStates);
 
-	status = smartcard_pack_locate_cards_return(smartcard, irp->output, &ret);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
