@@ -1583,13 +1583,15 @@ static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
+	MessageQueue_Free(drdynvc->queue);
+	drdynvc->queue = NULL;
+
 	if (drdynvc->channel_mgr)
 	{
 		dvcman_free(drdynvc, drdynvc->channel_mgr);
 		drdynvc->channel_mgr = NULL;
 	}
-	MessageQueue_Free(drdynvc->queue);
-	drdynvc->queue = NULL;
+
 	drdynvc->InitHandle = 0;
 	free(drdynvc->context);
 	free(drdynvc);
