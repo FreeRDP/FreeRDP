@@ -38,7 +38,7 @@
 static proxyPluginsManager* g_plugins_manager = NULL;
 static captureConfig config = { 0 };
 
-static SOCKET capture_plugin_init_socket()
+static SOCKET capture_plugin_init_socket(void)
 {
 	int status;
 	int sockfd;
@@ -124,12 +124,13 @@ static BOOL capture_plugin_session_end(proxyData* pdata)
 {
 	SOCKET socket;
 	BOOL ret;
+	wStream* s;
 
 	socket = capture_plugin_get_socket(pdata);
 	if (socket == -1)
 		return FALSE;
 
-	wStream* s = capture_plugin_packet_new(SESSION_END_PDU_BASE_SIZE, MESSAGE_TYPE_SESSION_END);
+	s = capture_plugin_packet_new(SESSION_END_PDU_BASE_SIZE, MESSAGE_TYPE_SESSION_END);
 	if (!s)
 		return FALSE;
 
@@ -248,7 +249,7 @@ static BOOL capture_plugin_server_post_connect(proxyData* pdata)
 	return TRUE;
 }
 
-static BOOL capture_plugin_unload()
+static BOOL capture_plugin_unload(void)
 {
 	capture_plugin_config_free_internal(&config);
 	return TRUE;
