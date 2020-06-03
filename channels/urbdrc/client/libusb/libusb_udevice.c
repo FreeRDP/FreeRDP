@@ -1177,6 +1177,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 	user_data->streamID = streamID;
 #endif
 	libusb_set_iso_packet_lengths(iso_transfer, iso_packet_size);
+
 	HashTable_Add(pdev->request_queue, (void*)(size_t)streamID, iso_transfer);
 	return libusb_submit_transfer(iso_transfer);
 }
@@ -1301,7 +1302,6 @@ static int func_cancel_xact_request(URBDRC_PLUGIN* urbdrc, wHashTable* queue, ui
 		return -1;
 
 	status = libusb_cancel_transfer(transfer);
-	HashTable_Remove(queue, (void*)(size_t)streamID);
 
 	if (status < 0)
 	{
@@ -1357,6 +1357,7 @@ static int libusb_udev_cancel_transfer_request(IUDEVICE* idev, UINT32 RequestId)
 
 	urbdrc = (URBDRC_PLUGIN*)pdev->urbdrc;
 	cancelID = (id1) ? cancelID1 : cancelID2;
+
 	transfer = HashTable_GetItemValue(pdev->request_queue, (void*)(size_t)cancelID);
 	return func_cancel_xact_request(urbdrc, pdev->request_queue, cancelID, transfer);
 }
