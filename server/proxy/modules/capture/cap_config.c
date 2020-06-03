@@ -29,7 +29,7 @@ BOOL capture_plugin_init_config(captureConfig* config)
 	char* tmp = NULL;
 	DWORD nSize = GetEnvironmentVariableA(name, NULL, 0);
 
-	if (nSize)
+	if (nSize > 0)
 	{
 		char* colon;
 		int addrLen;
