@@ -306,7 +306,7 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 		value *= -1;
 	}
 
-	if (value <= 0x1FUL)
+	if (value <= 0x1FL)
 	{
 		byte = value & 0x1F;
 
@@ -315,7 +315,7 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 
 		Stream_Write_UINT8(s, byte);
 	}
-	else if (value <= 0x1FFFUL)
+	else if (value <= 0x1FFFL)
 	{
 		byte = (value >> 8) & 0x1F;
 
@@ -326,7 +326,7 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 		byte = (value & 0xFF);
 		Stream_Write_UINT8(s, byte);
 	}
-	else if (value <= 0x1FFFFFUL)
+	else if (value <= 0x1FFFFFL)
 	{
 		byte = (value >> 16) & 0x1F;
 
@@ -339,7 +339,7 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 		byte = (value & 0xFF);
 		Stream_Write_UINT8(s, byte);
 	}
-	else if (value <= 0x1FFFFFFFUL)
+	else if (value <= 0x1FFFFFFFL)
 	{
 		byte = (value >> 24) & 0x1F;
 
