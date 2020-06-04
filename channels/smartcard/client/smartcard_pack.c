@@ -931,7 +931,7 @@ static void smartcard_trace_read_cache_a_call(SMARTCARD_DEVICE* smartcard,
 static void smartcard_trace_read_cache_w_call(SMARTCARD_DEVICE* smartcard,
                                               const ReadCacheW_Call* call)
 {
-	char* tmp= NULL;
+	char* tmp = NULL;
 	char buffer[1024];
 	WINPR_UNUSED(smartcard);
 	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))
