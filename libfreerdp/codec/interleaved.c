@@ -232,7 +232,8 @@ static INLINE void write_pixel_24(BYTE* _buf, UINT32 _pix)
 
 static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 {
-	*(UINT16*)_buf = _pix;
+	_buf[0] = _pix & 0xFF;
+	_buf[1] = (_pix >> 8) & 0xFF;
 }
 
 #undef DESTWRITEPIXEL
