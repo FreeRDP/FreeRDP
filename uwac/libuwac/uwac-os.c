@@ -34,7 +34,7 @@
 #endif
 
 /* uClibc and uClibc-ng don't provide O_TMPFILE */
-#ifndef O_TMPFILE
+#if !defined(O_TMPFILE) && !defined(__FreeBSD__)
 #define O_TMPFILE (020000000 | O_DIRECTORY)
 #endif
 
@@ -230,7 +230,16 @@ int uwac_create_anonymous_file(off_t size)
 		return -1;
 	}
 
+#ifdef O_TMPFILE
 	fd = open(path, O_TMPFILE | O_RDWR | O_EXCL, 0600);
+#else
+	/*
+	 * Some platforms (e.g. FreeBSD) won't support O_TMPFILE and can't
+	 * reasonably emulate it at first blush.  Opt to make them rely on
+	 * the create_tmpfile_cloexec() path instead.
+	 */
+	fd = -1;
+#endif
 
 	if (fd < 0)
 	{
