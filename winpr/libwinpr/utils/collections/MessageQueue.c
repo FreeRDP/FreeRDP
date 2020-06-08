@@ -100,11 +100,12 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 	}
 
 	CopyMemory(&(queue->array[queue->tail]), message, sizeof(wMessage));
-	queue->tail = (queue->tail + 1) % queue->capacity;
-	queue->size++;
 
 	message = &(queue->array[queue->tail]);
 	message->time = GetTickCount64();
+
+	queue->tail = (queue->tail + 1) % queue->capacity;
+	queue->size++;
 
 	if (queue->size > 0)
 		SetEvent(queue->event);
