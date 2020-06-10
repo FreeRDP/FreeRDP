@@ -233,33 +233,9 @@ static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
-static BOOL pf_config_load_captures(wIniFile* ini, proxyConfig* config)
+static BOOL pf_config_load_gfx_settings(wIniFile* ini, proxyConfig* config)
 {
-	const char* captures_dir;
-
-	config->SessionCapture = pf_config_get_bool(ini, "SessionCapture", "Enabled");
-	if (!config->SessionCapture)
-		return TRUE;
-
-	captures_dir = pf_config_get_str(ini, "SessionCapture", "CapturesDirectory");
-
-	if (!captures_dir)
-		return FALSE;
-
-	config->CapturesDirectory = strdup(captures_dir);
-	if (!config->CapturesDirectory)
-		return FALSE;
-
-	if (!PathFileExistsA(config->CapturesDirectory))
-	{
-		if (!CreateDirectoryA(config->CapturesDirectory, NULL))
-		{
-			free(config->CapturesDirectory);
-			config->CapturesDirectory = NULL;
-			return FALSE;
-		}
-	}
-
+	config->DecodeGFX = pf_config_get_bool(ini, "GFXSettings", "DecodeGFX");
 	return TRUE;
 }
 
@@ -303,7 +279,7 @@ proxyConfig* pf_server_config_load(const char* path)
 	if (!pf_config_load_clipboard(ini, config))
 		goto out;
 
-	if (!pf_config_load_captures(ini, config))
+	if (!pf_config_load_gfx_settings(ini, config))
 		goto out;
 
 	IniFile_Free(ini);
@@ -330,7 +306,6 @@ void pf_server_config_print(proxyConfig* config)
 	CONFIG_PRINT_SECTION("Server");
 	CONFIG_PRINT_STR(config, Host);
 	CONFIG_PRINT_UINT16(config, Port);
-	CONFIG_PRINT_BOOL(config, SessionCapture);
 
 	if (!config->UseLoadBalanceInfo)
 	{
@@ -371,9 +346,8 @@ void pf_server_config_print(proxyConfig* config)
 	if (config->MaxTextLength > 0)
 		CONFIG_PRINT_UINT32(config, MaxTextLength);
 
-	CONFIG_PRINT_SECTION("SessionCapture");
-	CONFIG_PRINT_BOOL(config, SessionCapture);
-	CONFIG_PRINT_STR(config, CapturesDirectory);
+	CONFIG_PRINT_SECTION("GFXSettings");
+	CONFIG_PRINT_BOOL(config, DecodeGFX);
 }
 
 void pf_server_config_free(proxyConfig* config)
@@ -382,7 +356,6 @@ void pf_server_config_free(proxyConfig* config)
 		return;
 
 	free(config->Passthrough);
-	free(config->CapturesDirectory);
 	free(config->RequiredPlugins);
 	free(config->Modules);
 	free(config->TargetHost);

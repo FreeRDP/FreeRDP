@@ -57,7 +57,7 @@ static UINT pf_rdpgfx_reset_graphics(RdpgfxClientContext* context,
 	if ((error = server->ResetGraphics(server, resetGraphics)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->ResetGraphics(gfx_decoder, resetGraphics);
@@ -76,7 +76,7 @@ static UINT pf_rdpgfx_start_frame(RdpgfxClientContext* context,
 	if ((error = server->StartFrame(server, startFrame)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->StartFrame(gfx_decoder, startFrame);
@@ -94,7 +94,7 @@ static UINT pf_rdpgfx_end_frame(RdpgfxClientContext* context, const RDPGFX_END_F
 	if ((error = server->EndFrame(server, endFrame)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->EndFrame(gfx_decoder, endFrame);
@@ -113,7 +113,7 @@ static UINT pf_rdpgfx_surface_command(RdpgfxClientContext* context,
 	if ((error = server->SurfaceCommand(server, cmd)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->SurfaceCommand(gfx_decoder, cmd);
@@ -133,7 +133,7 @@ pf_rdpgfx_delete_encoding_context(RdpgfxClientContext* context,
 	if ((error = server->DeleteEncodingContext(server, deleteEncodingContext)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->DeleteEncodingContext(gfx_decoder, deleteEncodingContext);
@@ -152,7 +152,7 @@ static UINT pf_rdpgfx_create_surface(RdpgfxClientContext* context,
 	if ((error = server->CreateSurface(server, createSurface)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->CreateSurface(gfx_decoder, createSurface);
@@ -171,7 +171,7 @@ static UINT pf_rdpgfx_delete_surface(RdpgfxClientContext* context,
 	if ((error = server->DeleteSurface(server, deleteSurface)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->DeleteSurface(gfx_decoder, deleteSurface);
@@ -190,7 +190,7 @@ static UINT pf_rdpgfx_solid_fill(RdpgfxClientContext* context,
 	if ((error = server->SolidFill(server, solidFill)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->SolidFill(gfx_decoder, solidFill);
@@ -209,7 +209,7 @@ static UINT pf_rdpgfx_surface_to_surface(RdpgfxClientContext* context,
 	if ((error = server->SurfaceToSurface(server, surfaceToSurface)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->SurfaceToSurface(gfx_decoder, surfaceToSurface);
@@ -228,7 +228,7 @@ static UINT pf_rdpgfx_surface_to_cache(RdpgfxClientContext* context,
 	if ((error = server->SurfaceToCache(server, surfaceToCache)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->SurfaceToCache(gfx_decoder, surfaceToCache);
@@ -247,7 +247,7 @@ static UINT pf_rdpgfx_cache_to_surface(RdpgfxClientContext* context,
 	if ((error = server->CacheToSurface(server, cacheToSurface)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->CacheToSurface(gfx_decoder, cacheToSurface);
@@ -275,7 +275,7 @@ static UINT pf_rdpgfx_evict_cache_entry(RdpgfxClientContext* context,
 	if ((error = server->EvictCacheEntry(server, evictCacheEntry)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->EvictCacheEntry(gfx_decoder, evictCacheEntry);
@@ -294,7 +294,7 @@ static UINT pf_rdpgfx_map_surface_to_output(RdpgfxClientContext* context,
 	if ((error = server->MapSurfaceToOutput(server, surfaceToOutput)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->MapSurfaceToOutput(gfx_decoder, surfaceToOutput);
@@ -313,7 +313,7 @@ static UINT pf_rdpgfx_map_surface_to_window(RdpgfxClientContext* context,
 	if ((error = server->MapSurfaceToWindow(server, surfaceToWindow)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->MapSurfaceToWindow(gfx_decoder, surfaceToWindow);
@@ -333,7 +333,7 @@ static UINT pf_rdpgfx_map_surface_to_scaled_window(
 	if ((error = server->MapSurfaceToScaledWindow(server, surfaceToScaledWindow)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->MapSurfaceToScaledWindow(gfx_decoder, surfaceToScaledWindow);
@@ -353,7 +353,7 @@ static UINT pf_rdpgfx_map_surface_to_scaled_output(
 	if ((error = server->MapSurfaceToScaledOutput(server, surfaceToScaledOutput)))
 		return error;
 
-	if (!config->SessionCapture)
+	if (!config->DecodeGFX)
 		return CHANNEL_RC_OK;
 
 	return gfx_decoder->MapSurfaceToScaledOutput(gfx_decoder, surfaceToScaledOutput);
@@ -446,7 +446,7 @@ static UINT pf_rdpgfx_cache_import_offer(RdpgfxServerContext* context,
 	RdpgfxClientContext* client = (RdpgfxClientContext*)pdata->pc->gfx_proxy;
 	WLog_VRB(TAG, __FUNCTION__);
 
-	if (pdata->config->SessionCapture)
+	if (pdata->config->DecodeGFX)
 	{
 		/* do not proxy CacheImportOffer, as is it currently not supported by FREERDP. */
 		return CHANNEL_RC_OK;

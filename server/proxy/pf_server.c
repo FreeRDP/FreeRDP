@@ -137,12 +137,6 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	ps = (pServerContext*)peer->context;
 	pdata = ps->pdata;
 
-	if (pdata->config->SessionCapture && !peer->settings->SupportGraphicsPipeline)
-	{
-		LOG_ERR(TAG, ps, "Session capture feature is enabled, only accepting connections with GFX");
-		return FALSE;
-	}
-
 	pc = pf_context_create_client_context(peer->settings);
 	if (pc == NULL)
 	{

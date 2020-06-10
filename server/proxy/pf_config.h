@@ -65,9 +65,8 @@ struct proxy_config
 	BOOL TextOnly;
 	UINT32 MaxTextLength;
 
-	/* session capture */
-	BOOL SessionCapture;
-	char* CapturesDirectory;
+	/* gfx settings */
+	BOOL DecodeGFX;
 
 	/* modules */
 	char** Modules; /* module file names to load */

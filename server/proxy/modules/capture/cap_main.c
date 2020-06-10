@@ -232,9 +232,10 @@ static BOOL capture_plugin_server_post_connect(proxyData* pdata)
 	proxyConfig* config = pdata->config;
 	rdpSettings* settings = ps->context.settings;
 
-	if (!config->GFX || !config->SessionCapture)
+	if (!config->GFX || !config->DecodeGFX)
 	{
-		WLog_ERR(TAG, "config options 'GFX' and 'SessionCapture' options must be set to true!");
+		WLog_ERR(TAG, "config options 'Channels.GFX' and 'GFXSettings.DecodeGFX' options must be "
+		              "set to true!");
 		return FALSE;
 	}
 
