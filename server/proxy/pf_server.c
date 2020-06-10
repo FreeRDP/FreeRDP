@@ -170,6 +170,9 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 		return FALSE;
 	}
 
+	if (!pf_modules_run_hook(HOOK_TYPE_SERVER_POST_CONNECT, pdata))
+		return FALSE;
+
 	/* Start a proxy's client in it's own thread */
 	if (!(pdata->client_thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
 	{
@@ -179,7 +182,7 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 
 	pf_server_register_input_callbacks(peer->input);
 	pf_server_register_update_callbacks(peer->update);
-	return pf_modules_run_hook(HOOK_TYPE_SERVER_POST_CONNECT, pdata);
+	return TRUE;
 }
 
 static BOOL pf_server_activate(freerdp_peer* peer)
