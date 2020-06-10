@@ -89,10 +89,6 @@ struct p_client_context
 	 */
 	BOOL allow_next_conn_failure;
 
-	/* session capture */
-	char* frames_dir;
-	UINT64 frames_count;
-
 	wHashTable* vc_ids; /* channel_name -> channel_id map */
 };
 typedef struct p_client_context pClientContext;
