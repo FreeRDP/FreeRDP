@@ -604,9 +604,6 @@ static void pf_client_context_free(freerdp* instance, rdpContext* context)
 	if (!pc)
 		return;
 
-	free(pc->frames_dir);
-	pc->frames_dir = NULL;
-
 	HashTable_Free(pc->vc_ids);
 }
 

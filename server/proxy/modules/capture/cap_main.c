@@ -209,8 +209,6 @@ static BOOL capture_plugin_client_post_connect(proxyData* pdata)
 {
 	SOCKET socket;
 	wStream* s;
-	pClientContext* pc = pdata->pc;
-	rdpSettings* settings = pc->context.settings;
 
 	socket = capture_plugin_init_socket();
 	if (socket == -1)
@@ -221,7 +219,7 @@ static BOOL capture_plugin_client_post_connect(proxyData* pdata)
 
 	g_plugins_manager->SetPluginData(PLUGIN_NAME, pdata, (void*)socket);
 
-	s = capture_plugin_create_session_info_packet(settings);
+	s = capture_plugin_create_session_info_packet(pdata->pc);
 	if (!s)
 		return FALSE;
 

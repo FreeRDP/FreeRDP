@@ -20,9 +20,11 @@
 #include <winpr/stream.h>
 #include <freerdp/settings.h>
 
+#include "pf_context.h"
+
 /* protocol message sizes */
 #define HEADER_SIZE 6
-#define SESSION_INFO_PDU_BASE_SIZE 14
+#define SESSION_INFO_PDU_BASE_SIZE 46
 #define SESSION_END_PDU_BASE_SIZE 0
 #define CAPTURED_FRAME_PDU_BASE_SIZE 0
 
@@ -32,4 +34,4 @@
 #define MESSAGE_TYPE_SESSION_END 3
 
 wStream* capture_plugin_packet_new(UINT32 payload_size, UINT16 type);
-wStream* capture_plugin_create_session_info_packet(rdpSettings* settings);
+wStream* capture_plugin_create_session_info_packet(pClientContext* pc);
