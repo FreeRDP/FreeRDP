@@ -201,8 +201,10 @@ error:
 proxyData* proxy_data_new(void)
 {
 	BYTE temp[16];
-	proxyData* pdata = calloc(1, sizeof(proxyData));
+	char* hex;
+	proxyData* pdata;
 
+	pdata = calloc(1, sizeof(proxyData));
 	if (!pdata)
 		return NULL;
 
@@ -213,8 +215,13 @@ proxyData* proxy_data_new(void)
 		goto error;
 
 	winpr_RAND((BYTE*)&temp, 16);
-	if (!(pdata->session_id = winpr_BinToHexString(temp, 16, FALSE)))
+	hex = winpr_BinToHexString(temp, 16, FALSE);
+	if (!hex)
 		goto error;
+
+	CopyMemory(pdata->session_id, hex, PROXY_SESSION_ID_LENGTH);
+	pdata->session_id[PROXY_SESSION_ID_LENGTH] = '\0';
+	free(hex);
 
 	if (!(pdata->modules_info = HashTable_New(FALSE)))
 		goto error;
@@ -264,9 +271,6 @@ void proxy_data_free(proxyData* pdata)
 		CloseHandle(pdata->gfx_server_ready);
 		pdata->gfx_server_ready = NULL;
 	}
-
-	if (pdata->session_id)
-		free(pdata->session_id);
 
 	if (pdata->modules_info)
 		HashTable_Free(pdata->modules_info);
