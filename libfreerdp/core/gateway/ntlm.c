@@ -160,7 +160,7 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, LPCTSTR hostname)
 		return TRUE;
 	}
 
-	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, NULL) !=
+	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, hostnameX, &SpnLength, NULL) !=
 	    ERROR_BUFFER_OVERFLOW)
 		goto error;
 
@@ -169,8 +169,8 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, LPCTSTR hostname)
 	if (!ntlm->ServicePrincipalName)
 		goto error;
 
-	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, ntlm->ServicePrincipalName) !=
-	    ERROR_SUCCESS)
+	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, hostnameX, &SpnLength,
+	              ntlm->ServicePrincipalName) != ERROR_SUCCESS)
 		goto error;
 
 	status = TRUE;
