@@ -62,6 +62,7 @@ static BOOL wl_begin_paint(rdpContext* context)
 
 static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw, INT32 ih)
 {
+	BOOL res = FALSE;
 	rdpGdi* gdi;
 	char* data;
 	UINT32 x, y, w, h;
@@ -76,6 +77,7 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	if ((ix < 0) || (iy < 0) || (iw < 0) || (ih < 0))
 		return FALSE;
 
+	EnterCriticalSection(&context_w->critical);
 	x = (UINT32)ix;
 	y = (UINT32)iy;
 	w = (UINT32)iw;
@@ -84,16 +86,19 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	data = UwacWindowGetDrawingBuffer(context_w->window);
 
 	if (!data || (rc != UWAC_SUCCESS))
-		return FALSE;
+		goto fail;
 
 	gdi = context_w->context.gdi;
 
 	if (!gdi)
-		return FALSE;
+		goto fail;
 
 	/* Ignore output if the surface size does not match. */
 	if (((INT64)x > geometry.width) || ((INT64)y > geometry.height))
-		return TRUE;
+	{
+		res = TRUE;
+		goto fail;
+	}
 
 	area.left = x;
 	area.top = y;
@@ -103,21 +108,24 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	if (!wlf_copy_image(gdi->primary_buffer, gdi->stride, gdi->width, gdi->height, data, stride,
 	                    geometry.width, geometry.height, &area,
 	                    context_w->context.settings->SmartSizing))
-		return FALSE;
+		goto fail;
 
 	if (!wlf_scale_coordinates(&context_w->context, &x, &y, FALSE))
-		return FALSE;
+		goto fail;
 
 	if (!wlf_scale_coordinates(&context_w->context, &w, &h, FALSE))
-		return FALSE;
+		goto fail;
 
 	if (UwacWindowAddDamage(context_w->window, x, y, w, h) != UWAC_SUCCESS)
-		return FALSE;
+		goto fail;
 
 	if (UwacWindowSubmitBuffer(context_w->window, false) != UWAC_SUCCESS)
-		return FALSE;
+		goto fail;
 
-	return TRUE;
+	res = TRUE;
+fail:
+	LeaveCriticalSection(&context_w->critical);
+	return res;
 }
 
 static BOOL wl_end_paint(rdpContext* context)
@@ -552,6 +560,8 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	if (!wfl->displayHandle)
 		return FALSE;
 
+	InitializeCriticalSection(&wfl->critical);
+
 	return TRUE;
 }
 
@@ -567,6 +577,7 @@ static void wlf_client_free(freerdp* instance, rdpContext* context)
 
 	if (wlf->displayHandle)
 		CloseHandle(wlf->displayHandle);
+	DeleteCriticalSection(&wlf->critical);
 }
 
 static int wfl_client_start(rdpContext* context)
