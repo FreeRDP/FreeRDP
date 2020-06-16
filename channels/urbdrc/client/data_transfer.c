@@ -767,8 +767,6 @@ static void urb_isoch_transfer_cb(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callb
 			callback->channel->Write(callback->channel, Stream_GetPosition(out), Stream_Buffer(out),
 			                         NULL);
 	}
-
-	Stream_Free(out, TRUE);
 }
 
 static UINT urb_isoch_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, wStream* s,
