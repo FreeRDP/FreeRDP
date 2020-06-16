@@ -27,7 +27,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
-#include <winpr/interlocked.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
 #include <winpr/cmdline.h>
@@ -80,23 +79,6 @@ static UINT32 mappedGeometryHash(UINT64* g)
 static BOOL mappedGeometryKeyCompare(UINT64* g1, UINT64* g2)
 {
 	return *g1 == *g2;
-}
-
-void mappedGeometryRef(MAPPED_GEOMETRY* g)
-{
-	InterlockedIncrement(&g->refCounter);
-}
-
-void mappedGeometryUnref(MAPPED_GEOMETRY* g)
-{
-	if (InterlockedDecrement(&g->refCounter))
-		return;
-
-	g->MappedGeometryUpdate = NULL;
-	g->MappedGeometryClear = NULL;
-	g->custom = NULL;
-	free(g->geometry.rects);
-	free(g);
 }
 
 static void freerdp_rgndata_reset(FREERDP_RGNDATA* data)
