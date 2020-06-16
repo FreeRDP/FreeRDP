@@ -125,7 +125,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 	return hModule;
 #else
 	HMODULE library;
-	library = dlopen(lpLibFileName, RTLD_GLOBAL | RTLD_LAZY);
+	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
 
 	if (!library)
 	{
