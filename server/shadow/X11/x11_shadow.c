@@ -166,8 +166,8 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowC
 	info.appdata.domain = domain;
 	info.appdata.password = password;
 	info.pamc.conv = &x11_shadow_pam_conv;
-	info.pamc.appdata_ptr = &(info->appdata);
-	pam_status = pam_start(info->service_name, 0, &info.pamc, &info.handle);
+	info.pamc.appdata_ptr = &info.appdata;
+	pam_status = pam_start(info.service_name, 0, &info.pamc, &info.handle);
 
 	if (pam_status != PAM_SUCCESS)
 	{
