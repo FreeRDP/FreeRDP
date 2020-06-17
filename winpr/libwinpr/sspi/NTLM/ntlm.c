@@ -961,7 +961,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_RevertSecurityContext(PCtxtHandle phContex
 static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
                                                      PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	int index;
+	ULONG index;
 	int length;
 	void* data;
 	UINT32 SeqNo;
@@ -977,12 +977,14 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULON
 	SeqNo = MessageSeqNo;
 	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
-	for (index = 0; index < (int)pMessage->cBuffers; index++)
+	for (index = 0; index < pMessage->cBuffers; index++)
 	{
-		if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA)
-			data_buffer = &pMessage->pBuffers[index];
-		else if (pMessage->pBuffers[index].BufferType == SECBUFFER_TOKEN)
-			signature_buffer = &pMessage->pBuffers[index];
+		SecBuffer* cur = &pMessage->pBuffers[index];
+
+		if (cur->BufferType & SECBUFFER_DATA)
+			data_buffer = cur;
+		else if (cur->BufferType & SECBUFFER_TOKEN)
+			signature_buffer = cur;
 	}
 
 	if (!data_buffer)
@@ -1019,11 +1021,14 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULON
 	}
 
 	/* Encrypt message using with RC4, result overwrites original buffer */
-
-	if (context->confidentiality)
-		winpr_RC4_Update(context->SendRc4Seal, length, (BYTE*)data, (BYTE*)data_buffer->pvBuffer);
-	else
-		CopyMemory(data_buffer->pvBuffer, data, length);
+	if ((data_buffer->BufferType & SECBUFFER_READONLY) == 0)
+	{
+		if (context->confidentiality)
+			winpr_RC4_Update(context->SendRc4Seal, length, (BYTE*)data,
+			                 (BYTE*)data_buffer->pvBuffer);
+		else
+			CopyMemory(data_buffer->pvBuffer, data, length);
+	}
 
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "Data Buffer (length = %d)", length);
@@ -1034,11 +1039,14 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULON
 	free(data);
 	/* RC4-encrypt first 8 bytes of digest */
 	winpr_RC4_Update(context->SendRc4Seal, 8, digest, checksum);
-	signature = (BYTE*)signature_buffer->pvBuffer;
-	/* Concatenate version, ciphertext and sequence number to build signature */
-	Data_Write_UINT32(signature, version);
-	CopyMemory(&signature[4], (void*)checksum, 8);
-	Data_Write_UINT32(&signature[12], SeqNo);
+	if ((signature_buffer->BufferType & SECBUFFER_READONLY) == 0)
+	{
+		signature = (BYTE*)signature_buffer->pvBuffer;
+		/* Concatenate version, ciphertext and sequence number to build signature */
+		Data_Write_UINT32(signature, version);
+		CopyMemory(&signature[4], (void*)checksum, 8);
+		Data_Write_UINT32(&signature[12], SeqNo);
+	}
 	context->SendSeqNum++;
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "Signature (length = %" PRIu32 ")", signature_buffer->cbBuffer);
