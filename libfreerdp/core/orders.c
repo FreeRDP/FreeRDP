@@ -3506,7 +3506,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	Stream_Read_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Read_UINT16(s, extraFlags);  /* extraFlags (2 bytes) */
 	Stream_Read_UINT8(s, orderType);    /* orderType (1 byte) */
-	if (Stream_GetRemainingLength(s) < orderLength + 7)
+	if (Stream_GetRemainingLength(s) < orderLength + 7U)
 	{
 		WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) %" PRIuz " < %" PRIu16,
 		           Stream_GetRemainingLength(s), orderLength + 7);

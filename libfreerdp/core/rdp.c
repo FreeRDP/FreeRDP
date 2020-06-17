@@ -167,7 +167,7 @@ BOOL rdp_read_share_control_header(wStream* s, UINT16* tpktLength, UINT16* remai
 		return TRUE;
 	}
 
-	if ((len < 4) || ((len - 2) > Stream_GetRemainingLength(s)))
+	if ((len < 4U) || ((len - 2U) > Stream_GetRemainingLength(s)))
 		return FALSE;
 
 	if (tpktLength)
