@@ -44,7 +44,7 @@ FREERDP_LOCAL void rdg_free(rdpRdg* rdg);
 
 FREERDP_LOCAL BIO* rdg_get_front_bio_and_take_ownership(rdpRdg* rdg);
 
-FREERDP_LOCAL BOOL rdg_connect(rdpRdg* rdg, int timeout, BOOL* rpcFallback);
+FREERDP_LOCAL BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback);
 FREERDP_LOCAL DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RDG_H */

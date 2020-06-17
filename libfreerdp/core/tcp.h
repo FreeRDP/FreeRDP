@@ -64,7 +64,7 @@ FREERDP_LOCAL BIO_METHOD* BIO_s_simple_socket(void);
 FREERDP_LOCAL BIO_METHOD* BIO_s_buffered_socket(void);
 
 FREERDP_LOCAL int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
-                                      const char* hostname, int port, int timeout);
+                                      const char* hostname, int port, DWORD timeout);
 
 FREERDP_LOCAL char* freerdp_tcp_get_peer_address(SOCKET sockfd);
 
