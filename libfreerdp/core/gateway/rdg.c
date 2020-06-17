@@ -1167,7 +1167,7 @@ static BOOL rdg_tunnel_connect(rdpRdg* rdg)
 	return TRUE;
 }
 
-BOOL rdg_connect(rdpRdg* rdg, int timeout, BOOL* rpcFallback)
+BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback)
 {
 	BOOL status;
 	SOCKET outConnSocket = 0;
