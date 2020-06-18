@@ -304,6 +304,7 @@ static void wl_post_disconnect(freerdp* instance)
 
 static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 {
+	BOOL rc;
 	UwacEvent event;
 	wlfContext* context;
 
@@ -329,9 +330,11 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_FRAME_DONE:
-				if (UwacWindowSubmitBuffer(context->window, false) != UWAC_SUCCESS)
+				EnterCriticalSection(&context->critical);
+				rc = UwacWindowSubmitBuffer(context->window, false);
+				LeaveCriticalSection(&context->critical);
+				if (rc != UWAC_SUCCESS)
 					return FALSE;
-
 				break;
 
 			case UWAC_EVENT_POINTER_ENTER:
