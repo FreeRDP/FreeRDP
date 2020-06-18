@@ -737,27 +737,29 @@ UwacReturnCode UwacWindowGetDrawingBufferGeometry(UwacWindow* window, UwacSize* 
 
 UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window, bool copyContentForNextFrame)
 {
-	UwacBuffer* drawingBuffer;
-	UwacBuffer* nextBuffer;
+	UwacBuffer* currentDrawingBuffer;
+	UwacBuffer* nextDrawingBuffer;
+	UwacBuffer* pendingBuffer;
 
 	if (window->drawingBufferIdx < 0)
 		return UWAC_ERROR_INTERNAL;
 
-	drawingBuffer = &window->buffers[window->drawingBufferIdx];
+	currentDrawingBuffer = &window->buffers[window->drawingBufferIdx];
 
-	if ((window->pendingBufferIdx >= 0) || !drawingBuffer->dirty)
+	if ((window->pendingBufferIdx >= 0) || !currentDrawingBuffer->dirty)
 		return UWAC_SUCCESS;
 
 	window->pendingBufferIdx = window->drawingBufferIdx;
-	nextBuffer = UwacWindowFindFreeBuffer(window, &window->drawingBufferIdx);
+	nextDrawingBuffer = UwacWindowFindFreeBuffer(window, &window->drawingBufferIdx);
+	pendingBuffer = &window->buffers[window->pendingBufferIdx];
 
-	if ((!nextBuffer) || (window->drawingBufferIdx < 0))
+	if ((!nextDrawingBuffer) || (window->drawingBufferIdx < 0))
 		return UWAC_ERROR_NOMEMORY;
 
 	if (copyContentForNextFrame)
-		memcpy(nextBuffer->data, drawingBuffer->data, window->stride * window->height);
+		memcpy(nextDrawingBuffer->data, pendingBuffer->data, window->stride * window->height);
 
-	UwacSubmitBufferPtr(window, drawingBuffer);
+	UwacSubmitBufferPtr(window, pendingBuffer);
 	return UWAC_SUCCESS;
 }
 
