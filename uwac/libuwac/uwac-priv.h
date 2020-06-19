@@ -235,7 +235,8 @@ struct uwac_window
 
 	struct wl_region* opaque_region;
 	struct wl_region* input_region;
-	UwacBuffer *drawingBuffer, *pendingBuffer;
+	SSIZE_T drawingBufferIdx;
+	SSIZE_T pendingBufferIdx;
 	struct wl_surface* surface;
 	struct wl_shell_surface* shell_surface;
 	struct xdg_surface* xdg_surface;
