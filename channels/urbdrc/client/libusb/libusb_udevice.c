@@ -296,7 +296,7 @@ static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
 		user_data->cb(user_data->idev, user_data->callback, user_data->data, InterfaceId,
 		              user_data->noack, user_data->MessageId, RequestID, transfer->num_iso_packets,
 		              transfer->status, user_data->StartFrame, user_data->ErrorCount,
-		              user_data->OutputBufferSize);
+		              transfer->actual_length);
 		user_data->data = NULL;
 		HashTable_Remove(user_data->queue, (void*)(size_t)streamID);
 	}
@@ -465,7 +465,7 @@ static LIBUSB_DEVICE_DESCRIPTOR* udev_new_descript(URBDRC_PLUGIN* urbdrc, LIBUSB
 
 static int libusb_udev_select_interface(IUDEVICE* idev, BYTE InterfaceNumber, BYTE AlternateSetting)
 {
-	int error = 0, diff = 1;
+	int error = 0, diff = 0;
 	UDEVICE* pdev = (UDEVICE*)idev;
 	URBDRC_PLUGIN* urbdrc;
 	MSUSB_CONFIG_DESCRIPTOR* MsConfig;
@@ -480,21 +480,30 @@ static int libusb_udev_select_interface(IUDEVICE* idev, BYTE InterfaceNumber, BY
 	if (MsConfig)
 	{
 		MsInterfaces = MsConfig->MsInterfaces;
-
-		if ((MsInterfaces) && (MsInterfaces[InterfaceNumber]->AlternateSetting == AlternateSetting))
+		if (MsInterfaces)
 		{
-			diff = 0;
+			WLog_Print(urbdrc->log, WLOG_INFO,
+			           "select Interface(%" PRIu8 ") curr AlternateSetting(%" PRIu8
+			           ") new AlternateSetting(" PRIu8 ")",
+			           InterfaceNumber, MsInterfaces[InterfaceNumber]->AlternateSetting,
+			           AlternateSetting);
+
+			if (MsInterfaces[InterfaceNumber]->AlternateSetting != AlternateSetting)
+			{
+				diff = 1;
+			}
 		}
-	}
 
-	if (diff)
-	{
-		error = libusb_set_interface_alt_setting(pdev->libusb_handle, InterfaceNumber,
-		                                         AlternateSetting);
-
-		if (error < 0)
+		if (diff)
 		{
-			WLog_Print(urbdrc->log, WLOG_ERROR, "Set interface altsetting get error num %d", error);
+			error = libusb_set_interface_alt_setting(pdev->libusb_handle, InterfaceNumber,
+			                                         AlternateSetting);
+
+			if (error < 0)
+			{
+				WLog_Print(urbdrc->log, WLOG_ERROR, "Set interface altsetting get error num %d",
+				           error);
+			}
 		}
 	}
 
@@ -1168,6 +1177,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 	user_data->streamID = streamID;
 #endif
 	libusb_set_iso_packet_lengths(iso_transfer, iso_packet_size);
+
 	HashTable_Add(pdev->request_queue, (void*)(size_t)streamID, iso_transfer);
 	return libusb_submit_transfer(iso_transfer);
 }
@@ -1292,7 +1302,6 @@ static int func_cancel_xact_request(URBDRC_PLUGIN* urbdrc, wHashTable* queue, ui
 		return -1;
 
 	status = libusb_cancel_transfer(transfer);
-	HashTable_Remove(queue, (void*)(size_t)streamID);
 
 	if (status < 0)
 	{
@@ -1348,6 +1357,7 @@ static int libusb_udev_cancel_transfer_request(IUDEVICE* idev, UINT32 RequestId)
 
 	urbdrc = (URBDRC_PLUGIN*)pdev->urbdrc;
 	cancelID = (id1) ? cancelID1 : cancelID2;
+
 	transfer = HashTable_GetItemValue(pdev->request_queue, (void*)(size_t)cancelID);
 	return func_cancel_xact_request(urbdrc, pdev->request_queue, cancelID, transfer);
 }

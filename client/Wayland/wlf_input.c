@@ -30,7 +30,7 @@
 
 #define TAG CLIENT_TAG("wayland.input")
 
-#define MAX_CONTACTS 10
+#define MAX_CONTACTS 20
 
 typedef struct touch_contact
 {
@@ -241,6 +241,9 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 		}
 	}
 
+	if (i == MAX_CONTACTS)
+		return FALSE;
+
 	WLog_DBG(TAG, "%s called | event_id: %u | x: %u / y: %u", __FUNCTION__, touchId, x, y);
 
 	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
@@ -282,8 +285,6 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 	y = ev->y;
 	touchId = ev->id;
 
-	WLog_DBG(TAG, "%s called | event_id: %u | x: %u / y: %u", __FUNCTION__, touchId, x, y);
-
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (contacts[i].id == 0)
@@ -295,6 +296,11 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 			break;
 		}
 	}
+
+	if (i == MAX_CONTACTS)
+		return FALSE;
+
+	WLog_DBG(TAG, "%s called | event_id: %u | x: %u / y: %u", __FUNCTION__, touchId, x, y);
 
 	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
@@ -349,6 +355,9 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 			break;
 		}
 	}
+
+	if (i == MAX_CONTACTS)
+		return FALSE;
 
 	WLog_DBG(TAG, "%s called | event_id: %u | x: %u / y: %u", __FUNCTION__, touchId, x, y);
 

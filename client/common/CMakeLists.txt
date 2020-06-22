@@ -30,7 +30,8 @@ set(${MODULE_PREFIX}_SRCS
 	cmdline.c
 	compatibility.c
 	compatibility.h
-	file.c)
+	file.c
+	geometry.c)
 
 foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})
 	get_filename_component(NINC ${FREERDP_CHANNELS_CLIENT_SRC} PATH)

@@ -190,12 +190,13 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	if (!sbuffer)
 		goto fail;
 
-	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*)bind_pdu);
-	bind_pdu->auth_length = (UINT16)sbuffer->cbBuffer;
+	rpc_pdu_header_init(rpc, &bind_pdu->header);
+	bind_pdu->header.auth_length = (UINT16)sbuffer->cbBuffer;
 	bind_pdu->auth_verifier.auth_value = sbuffer->pvBuffer;
-	bind_pdu->ptype = PTYPE_BIND;
-	bind_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_SUPPORT_HEADER_SIGN | PFC_CONC_MPX;
-	bind_pdu->call_id = 2;
+	bind_pdu->header.ptype = PTYPE_BIND;
+	bind_pdu->header.pfc_flags =
+	    PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_SUPPORT_HEADER_SIGN | PFC_CONC_MPX;
+	bind_pdu->header.call_id = 2;
 	bind_pdu->max_xmit_frag = rpc->max_xmit_frag;
 	bind_pdu->max_recv_frag = rpc->max_recv_frag;
 	bind_pdu->assoc_group_id = 0;
@@ -240,9 +241,9 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
 	bind_pdu->auth_verifier.auth_reserved = 0x00;
 	bind_pdu->auth_verifier.auth_context_id = 0x00000000;
-	offset += (8 + bind_pdu->auth_length);
-	bind_pdu->frag_length = offset;
-	buffer = (BYTE*)malloc(bind_pdu->frag_length);
+	offset += (8 + bind_pdu->header.auth_length);
+	bind_pdu->header.frag_length = offset;
+	buffer = (BYTE*)malloc(bind_pdu->header.frag_length);
 
 	if (!buffer)
 		goto fail;
@@ -256,10 +257,11 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	offset = 116;
 	rpc_offset_pad(&offset, bind_pdu->auth_verifier.auth_pad_length);
 	CopyMemory(&buffer[offset], &bind_pdu->auth_verifier.auth_type, 8);
-	CopyMemory(&buffer[offset + 8], bind_pdu->auth_verifier.auth_value, bind_pdu->auth_length);
-	offset += (8 + bind_pdu->auth_length);
-	length = bind_pdu->frag_length;
-	clientCall = rpc_client_call_new(bind_pdu->call_id, 0);
+	CopyMemory(&buffer[offset + 8], bind_pdu->auth_verifier.auth_value,
+	           bind_pdu->header.auth_length);
+	offset += (8 + bind_pdu->header.auth_length);
+	length = bind_pdu->header.frag_length;
+	clientCall = rpc_client_call_new(bind_pdu->header.call_id, 0);
 
 	if (!clientCall)
 		goto fail;
@@ -374,12 +376,12 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 		return -1;
 	}
 
-	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*)auth_3_pdu);
-	auth_3_pdu->auth_length = (UINT16)sbuffer->cbBuffer;
+	rpc_pdu_header_init(rpc, &auth_3_pdu->header);
+	auth_3_pdu->header.auth_length = (UINT16)sbuffer->cbBuffer;
 	auth_3_pdu->auth_verifier.auth_value = sbuffer->pvBuffer;
-	auth_3_pdu->ptype = PTYPE_RPC_AUTH_3;
-	auth_3_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_CONC_MPX;
-	auth_3_pdu->call_id = 2;
+	auth_3_pdu->header.ptype = PTYPE_RPC_AUTH_3;
+	auth_3_pdu->header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_CONC_MPX;
+	auth_3_pdu->header.call_id = 2;
 	auth_3_pdu->max_xmit_frag = rpc->max_xmit_frag;
 	auth_3_pdu->max_recv_frag = rpc->max_recv_frag;
 	offset = 20;
@@ -388,9 +390,9 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	auth_3_pdu->auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
 	auth_3_pdu->auth_verifier.auth_reserved = 0x00;
 	auth_3_pdu->auth_verifier.auth_context_id = 0x00000000;
-	offset += (8 + auth_3_pdu->auth_length);
-	auth_3_pdu->frag_length = offset;
-	buffer = (BYTE*)malloc(auth_3_pdu->frag_length);
+	offset += (8 + auth_3_pdu->header.auth_length);
+	auth_3_pdu->header.frag_length = offset;
+	buffer = (BYTE*)malloc(auth_3_pdu->header.frag_length);
 
 	if (!buffer)
 	{
@@ -402,10 +404,11 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	offset = 20;
 	rpc_offset_pad(&offset, auth_3_pdu->auth_verifier.auth_pad_length);
 	CopyMemory(&buffer[offset], &auth_3_pdu->auth_verifier.auth_type, 8);
-	CopyMemory(&buffer[offset + 8], auth_3_pdu->auth_verifier.auth_value, auth_3_pdu->auth_length);
-	offset += (8 + auth_3_pdu->auth_length);
-	length = auth_3_pdu->frag_length;
-	clientCall = rpc_client_call_new(auth_3_pdu->call_id, 0);
+	CopyMemory(&buffer[offset + 8], auth_3_pdu->auth_verifier.auth_value,
+	           auth_3_pdu->header.auth_length);
+	offset += (8 + auth_3_pdu->header.auth_length);
+	length = auth_3_pdu->header.frag_length;
+	clientCall = rpc_client_call_new(auth_3_pdu->header.call_id, 0);
 
 	if (ArrayList_Add(rpc->client->ClientCallList, clientCall) >= 0)
 	{

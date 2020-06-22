@@ -895,7 +895,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	SecBufferDesc Message;
 	RpcClientCall* clientCall = NULL;
 	rdpNtlm* ntlm;
-	rpcconn_request_hdr_t* request_pdu = NULL;
+	rpcconn_request_hdr_t request_pdu = { 0 };
 	RpcVirtualConnection* connection;
 	RpcInChannel* inChannel;
 	size_t length;
@@ -931,25 +931,20 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	if (ntlm_client_query_auth_size(ntlm) < 0)
 		goto fail;
 
-	request_pdu = (rpcconn_request_hdr_t*)calloc(1, sizeof(rpcconn_request_hdr_t));
-
-	if (!request_pdu)
-		goto fail;
-
 	size = ntlm_client_get_context_max_size(ntlm);
 
 	if (size < 0)
 		goto fail;
 
-	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*)request_pdu);
-	request_pdu->ptype = PTYPE_REQUEST;
-	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	request_pdu->auth_length = (UINT16)size;
-	request_pdu->call_id = rpc->CallId++;
-	request_pdu->alloc_hint = length;
-	request_pdu->p_cont_id = 0x0000;
-	request_pdu->opnum = opnum;
-	clientCall = rpc_client_call_new(request_pdu->call_id, request_pdu->opnum);
+	rpc_pdu_header_init(rpc, &request_pdu.header);
+	request_pdu.header.ptype = PTYPE_REQUEST;
+	request_pdu.header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	request_pdu.header.auth_length = (UINT16)size;
+	request_pdu.header.call_id = rpc->CallId++;
+	request_pdu.alloc_hint = length;
+	request_pdu.p_cont_id = 0x0000;
+	request_pdu.opnum = opnum;
+	clientCall = rpc_client_call_new(request_pdu.header.call_id, request_pdu.opnum);
 
 	if (!clientCall)
 		goto fail;
@@ -960,34 +955,34 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 		goto fail;
 	}
 
-	if (request_pdu->opnum == TsProxySetupReceivePipeOpnum)
-		rpc->PipeCallId = request_pdu->call_id;
+	if (request_pdu.opnum == TsProxySetupReceivePipeOpnum)
+		rpc->PipeCallId = request_pdu.header.call_id;
 
-	request_pdu->stub_data = Stream_Buffer(s);
+	request_pdu.stub_data = Stream_Buffer(s);
 	offset = 24;
 	stub_data_pad = rpc_offset_align(&offset, 8);
 	offset += length;
-	request_pdu->auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
-	request_pdu->auth_verifier.auth_type = RPC_C_AUTHN_WINNT;
-	request_pdu->auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
-	request_pdu->auth_verifier.auth_reserved = 0x00;
-	request_pdu->auth_verifier.auth_context_id = 0x00000000;
-	offset += (8 + request_pdu->auth_length);
-	request_pdu->frag_length = offset;
-	buffer = (BYTE*)calloc(1, request_pdu->frag_length);
+	request_pdu.auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
+	request_pdu.auth_verifier.auth_type = RPC_C_AUTHN_WINNT;
+	request_pdu.auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
+	request_pdu.auth_verifier.auth_reserved = 0x00;
+	request_pdu.auth_verifier.auth_context_id = 0x00000000;
+	offset += (8 + request_pdu.header.auth_length);
+	request_pdu.header.frag_length = offset;
+	buffer = (BYTE*)calloc(1, request_pdu.header.frag_length);
 
 	if (!buffer)
 		goto fail;
 
-	CopyMemory(buffer, request_pdu, 24);
+	CopyMemory(buffer, &request_pdu, 24);
 	offset = 24;
 	rpc_offset_pad(&offset, stub_data_pad);
-	CopyMemory(&buffer[offset], request_pdu->stub_data, length);
+	CopyMemory(&buffer[offset], request_pdu.stub_data, length);
 	offset += length;
-	rpc_offset_pad(&offset, request_pdu->auth_verifier.auth_pad_length);
-	CopyMemory(&buffer[offset], &request_pdu->auth_verifier.auth_type, 8);
+	rpc_offset_pad(&offset, request_pdu.auth_verifier.auth_pad_length);
+	CopyMemory(&buffer[offset], &request_pdu.auth_verifier.auth_type, 8);
 	offset += 8;
-	Buffers[0].BufferType = SECBUFFER_DATA;  /* auth_data */
+	Buffers[0].BufferType = SECBUFFER_DATA | SECBUFFER_READONLY; /* auth_data */
 	Buffers[1].BufferType = SECBUFFER_TOKEN; /* signature */
 	Buffers[0].pvBuffer = buffer;
 	Buffers[0].cbBuffer = offset;
@@ -1007,14 +1002,13 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	CopyMemory(&buffer[offset], Buffers[1].pvBuffer, Buffers[1].cbBuffer);
 	offset += Buffers[1].cbBuffer;
 
-	if (rpc_in_channel_send_pdu(inChannel, buffer, request_pdu->frag_length) < 0)
+	if (rpc_in_channel_send_pdu(inChannel, buffer, request_pdu.header.frag_length) < 0)
 		goto fail;
 
 	rc = TRUE;
 fail:
 	free(buffer);
 	free(Buffers[1].pvBuffer);
-	free(request_pdu);
 	Stream_Free(s, TRUE);
 	return rc;
 }

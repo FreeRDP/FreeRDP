@@ -1120,7 +1120,7 @@ static void xf_button_map_init(xfContext* xfc)
 	x11_map[111] = 112;
 
 	/* query system for actual remapping */
-	if (!xfc->context.settings->UnmapButtons)
+	if (xfc->context.settings->UnmapButtons)
 	{
 		xf_get_x11_button_map(xfc, x11_map);
 	}
@@ -1142,8 +1142,8 @@ static void xf_button_map_init(xfContext* xfc)
 			else
 			{
 				button_map* map = &xfc->button_map[pos++];
-				map->button = physical + Button1;
-				map->flags = get_flags_for_button(logical);
+				map->button = logical;
+				map->flags = get_flags_for_button(physical + Button1);
 			}
 		}
 	}
@@ -1181,9 +1181,9 @@ static BOOL xf_pre_connect(freerdp* instance)
 
 	if (!settings->Username && !settings->CredentialsFromStdin && !settings->SmartcardLogon)
 	{
-		char* login_name = getlogin();
+		char login_name[MAX_PATH] = { 0 };
 
-		if (login_name)
+		if (getlogin_r(login_name, sizeof(login_name)) == 0)
 		{
 			settings->Username = _strdup(login_name);
 

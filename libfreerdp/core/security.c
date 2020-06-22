@@ -394,6 +394,8 @@ BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
 	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH];
 	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH];
 	BOOL result = FALSE;
+
+	EnterCriticalSection(&rdp->critical);
 	security_UINT32_le(length_le, length); /* length must be little-endian */
 
 	if (encryption)
@@ -456,6 +458,7 @@ BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
 	memcpy(output, md5_digest, 8);
 	result = TRUE;
 out:
+	LeaveCriticalSection(&rdp->critical);
 	winpr_Digest_Free(sha1);
 	winpr_Digest_Free(md5);
 	return result;
@@ -636,12 +639,14 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 		rdp->rc4_key_len = 16;
 	}
 
+	EnterCriticalSection(&rdp->critical);
 	memcpy(rdp->decrypt_update_key, rdp->decrypt_key, 16);
 	memcpy(rdp->encrypt_update_key, rdp->encrypt_key, 16);
 	rdp->decrypt_use_count = 0;
 	rdp->decrypt_checksum_use_count = 0;
 	rdp->encrypt_use_count = 0;
 	rdp->encrypt_checksum_use_count = 0;
+	LeaveCriticalSection(&rdp->critical);
 	return TRUE;
 }
 
@@ -741,29 +746,34 @@ fail:
 
 BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 {
+	BOOL rc = FALSE;
+	EnterCriticalSection(&rdp->critical);
 	if (rdp->rc4_decrypt_key == NULL)
-		return FALSE;
+		goto fail;
 
 	if (rdp->decrypt_use_count >= 4096)
 	{
 		if (!security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len, rdp))
-			return FALSE;
+			goto fail;
 
 		winpr_RC4_Free(rdp->rc4_decrypt_key);
 		rdp->rc4_decrypt_key = winpr_RC4_New(rdp->decrypt_key, rdp->rc4_key_len);
 
 		if (!rdp->rc4_decrypt_key)
-			return FALSE;
+			goto fail;
 
 		rdp->decrypt_use_count = 0;
 	}
 
 	if (!winpr_RC4_Update(rdp->rc4_decrypt_key, length, data, data))
-		return FALSE;
+		goto fail;
 
 	rdp->decrypt_use_count += 1;
 	rdp->decrypt_checksum_use_count++;
-	return TRUE;
+	rc = TRUE;
+fail:
+	LeaveCriticalSection(&rdp->critical);
+	return rc;
 }
 
 BOOL security_hmac_signature(const BYTE* data, size_t length, BYTE* output, rdpRdp* rdp)
@@ -772,7 +782,9 @@ BOOL security_hmac_signature(const BYTE* data, size_t length, BYTE* output, rdpR
 	BYTE use_count_le[4];
 	WINPR_HMAC_CTX* hmac;
 	BOOL result = FALSE;
+	EnterCriticalSection(&rdp->critical);
 	security_UINT32_le(use_count_le, rdp->encrypt_use_count);
+	LeaveCriticalSection(&rdp->critical);
 
 	if (!(hmac = winpr_HMAC_New()))
 		return FALSE;
@@ -831,7 +843,9 @@ BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* 
 	BYTE use_count_le[4];
 	WINPR_HMAC_CTX* hmac;
 	BOOL result = FALSE;
-	security_UINT32_le(use_count_le, rdp->decrypt_use_count);
+	EnterCriticalSection(&rdp->critical);
+	security_UINT32_le(use_count_le, rdp->decrypt_use_count++);
+	LeaveCriticalSection(&rdp->critical);
 
 	if (!(hmac = winpr_HMAC_New()))
 		return FALSE;
@@ -847,8 +861,6 @@ BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* 
 
 	if (!winpr_HMAC_Final(hmac, buf, WINPR_SHA1_DIGEST_LENGTH))
 		goto out;
-
-	rdp->decrypt_use_count++;
 
 	if (!memcmp(sig, buf, 8))
 		result = TRUE;

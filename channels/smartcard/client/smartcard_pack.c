@@ -389,7 +389,7 @@ static char* smartcard_msz_dump_a(const char* msz, size_t len, char* buffer, siz
 
 static char* smartcard_msz_dump_w(const WCHAR* msz, size_t len, char* buffer, size_t bufferLen)
 {
-	char* sz;
+	char* sz = NULL;
 	ConvertFromUnicode(CP_UTF8, 0, msz, (int)len, &sz, 0, NULL, NULL);
 	return smartcard_msz_dump_a(sz, len, buffer, bufferLen);
 }
@@ -466,7 +466,7 @@ static void smartcard_trace_context_and_string_call_w(const char* name,
                                                       const REDIR_SCARDCONTEXT* phContext,
                                                       const WCHAR* sz)
 {
-	char* tmp;
+	char* tmp = NULL;
 	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))
 		return;
 
@@ -883,7 +883,7 @@ static void smartcard_trace_write_cache_a_call(SMARTCARD_DEVICE* smartcard,
 static void smartcard_trace_write_cache_w_call(SMARTCARD_DEVICE* smartcard,
                                                const WriteCacheW_Call* call)
 {
-	char* tmp;
+	char* tmp = NULL;
 	char buffer[1024];
 	WINPR_UNUSED(smartcard);
 	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))
@@ -931,7 +931,7 @@ static void smartcard_trace_read_cache_a_call(SMARTCARD_DEVICE* smartcard,
 static void smartcard_trace_read_cache_w_call(SMARTCARD_DEVICE* smartcard,
                                               const ReadCacheW_Call* call)
 {
-	char* tmp;
+	char* tmp = NULL;
 	char buffer[1024];
 	WINPR_UNUSED(smartcard);
 	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))

@@ -89,7 +89,7 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 					strncpy(&tmp[cs], "</replaceable>", len);
 				else
 					/* coverity[buffer_size] */
-					strncpy(&tmp[cs], "&lt;", len);
+					strncpy(&tmp[cs], "&gt;", len);
 
 				cs += len;
 				break;
