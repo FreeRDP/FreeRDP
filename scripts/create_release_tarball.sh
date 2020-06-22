@@ -1,12 +1,12 @@
 #!/bin/bash -e
 
 function run {
-	echo "[RUN] $@"
+	echo "[RUN] $@" >&2
 	"$@"
 	RES=$?
 	if [[ $RES -ne 0 ]];
 	then
-		echo "[ERROR] $@ retured $RES"
+		echo "[ERROR] $@ retured $RES" >&2
 		exit 1
 	fi
 }
