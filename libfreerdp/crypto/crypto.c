@@ -105,11 +105,18 @@ static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, c
 	BIGNUM* exp = NULL;
 	BIGNUM* x = NULL;
 	BIGNUM* y = NULL;
-	size_t bufferSize = 2 * key_length + exponent_size;
+	size_t bufferSize;
 
 	if (!input || (length < 0) || (exponent_size < 0) || !modulus || !exponent || !output)
 		return -1;
 
+	if (exponent_size > SIZE_MAX / 2)
+		return -1;
+
+	if (key_length >= SIZE_MAX / 2 - exponent_size)
+		return -1;
+
+	bufferSize = 2ULL * key_length + exponent_size;
 	if (length > bufferSize)
 		bufferSize = length;
 

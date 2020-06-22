@@ -78,13 +78,14 @@ struct rdp_win_print_job
 static WCHAR* printer_win_get_printjob_name(size_t id)
 {
 	time_t tt;
+	struct tm tres;
 	struct tm* t;
 	WCHAR* str;
 	size_t len = 1024;
 	int rc;
 
 	tt = time(NULL);
-	t = localtime(&tt);
+	t = localtime_s(&tt, &tres);
 
 	str = calloc(len, sizeof(WCHAR));
 	if (!str)

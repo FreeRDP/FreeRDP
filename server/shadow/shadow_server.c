@@ -586,14 +586,19 @@ int shadow_server_start(rdpShadowServer* server)
 		char** list = CommandLineParseCommaSeparatedValuesEx(NULL, server->ipcSocket, &count);
 		if (!list || (count <= 1))
 		{
-			free(list);
 			if (server->ipcSocket == NULL)
 			{
 				if (!open_port(server, NULL))
+				{
+					free(list);
 					return -1;
+				}
 			}
 			else
+			{
+				free(list);
 				return -1;
+			}
 		}
 
 		for (x = 1; x < count; x++)

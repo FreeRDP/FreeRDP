@@ -579,7 +579,7 @@ BOOL glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyp
 		return FALSE;
 	}
 
-	if (index > glyphCache->glyphCache[id].number)
+	if (index >= glyphCache->glyphCache[id].number)
 	{
 		WLog_ERR(TAG, "invalid glyph cache index: %" PRIu32 " in cache id: %" PRIu32 "", index, id);
 		return FALSE;

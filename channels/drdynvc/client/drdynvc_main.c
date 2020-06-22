@@ -580,10 +580,15 @@ static UINT dvcman_open_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelManage
 	{
 		pCallback = channel->channel_callback;
 
-		if ((pCallback->OnOpen) && (error = pCallback->OnOpen(pCallback)))
+		if (pCallback->OnOpen)
 		{
-			WLog_Print(drdynvc->log, WLOG_ERROR, "OnOpen failed with error %" PRIu32 "!", error);
-			return error;
+			error = pCallback->OnOpen(pCallback);
+			if (error)
+			{
+				WLog_Print(drdynvc->log, WLOG_ERROR, "OnOpen failed with error %" PRIu32 "!",
+				           error);
+				return error;
+			}
 		}
 
 		WLog_Print(drdynvc->log, WLOG_DEBUG, "open_channel: ChannelId %" PRIu32 "", ChannelId);

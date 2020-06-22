@@ -213,11 +213,12 @@ void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 void GetSystemTime(LPSYSTEMTIME lpSystemTime)
 {
 	time_t ct = 0;
+	struct tm tres;
 	struct tm* stm = NULL;
 	WORD wMilliseconds = 0;
 	ct = time(NULL);
 	wMilliseconds = (WORD)(GetTickCount() % 1000);
-	stm = gmtime(&ct);
+	stm = gmtime_r(&ct, &tres);
 	ZeroMemory(lpSystemTime, sizeof(SYSTEMTIME));
 
 	if (stm)
@@ -242,11 +243,12 @@ BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime)
 VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
 {
 	time_t ct = 0;
+	struct tm tres;
 	struct tm* ltm = NULL;
 	WORD wMilliseconds = 0;
 	ct = time(NULL);
 	wMilliseconds = (WORD)(GetTickCount() % 1000);
-	ltm = localtime(&ct);
+	ltm = localtime_r(&ct, &tres);
 	ZeroMemory(lpSystemTime, sizeof(SYSTEMTIME));
 
 	if (ltm)

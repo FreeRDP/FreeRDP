@@ -339,12 +339,16 @@ winpr_get_current_time_zone_rule(const TIME_ZONE_RULE_ENTRY* rules, UINT32 count
 DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
 	time_t t;
+	struct tm tres;
 	struct tm* local_time;
 	TIME_ZONE_ENTRY* dtz;
 	LPTIME_ZONE_INFORMATION tz = lpTimeZoneInformation;
 	lpTimeZoneInformation->StandardBias = 0;
 	time(&t);
-	local_time = localtime(&t);
+	local_time = localtime_r(&t, &tres);
+	if (!local_time)
+		goto out_error;
+
 	memset(tz, 0, sizeof(TIME_ZONE_INFORMATION));
 #ifdef HAVE_TM_GMTOFF
 	{

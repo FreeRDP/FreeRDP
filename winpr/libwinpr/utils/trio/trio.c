@@ -2729,7 +2729,7 @@ TRIO_PRIVATE void TrioWriteString TRIO_ARGS5((self, string, flags, width, precis
                                              trio_class_t* self, TRIO_CONST char* string,
                                              trio_flags_t flags, int width, int precision)
 {
-	int length;
+	int length = 0;
 	int ch;
 
 	assert(VALID(self));
@@ -2747,7 +2747,7 @@ TRIO_PRIVATE void TrioWriteString TRIO_ARGS5((self, string, flags, width, precis
 	}
 	else
 	{
-		if (precision == 0)
+		if (precision <= 0)
 		{
 			length = trio_length(string);
 		}
@@ -4754,7 +4754,7 @@ TRIO_PUBLIC trio_pointer_t trio_register TRIO_ARGS2((callback, name), trio_callb
 		}
 
 		/* Bail out if namespace is too long */
-		if (trio_length(name) >= MAX_USER_NAME)
+		if (trio_length_max(name, MAX_USER_NAME) >= MAX_USER_NAME)
 			return NULL;
 
 		/* Bail out if namespace already is registered */

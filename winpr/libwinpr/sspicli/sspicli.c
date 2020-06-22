@@ -201,18 +201,23 @@ BOOL LogonUserExW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword
 BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize)
 {
 	size_t length;
-	char* login;
+	char login[MAX_PATH];
 
 	switch (NameFormat)
 	{
 		case NameSamCompatible:
-			login = getlogin();
+#ifndef getlogin_r
+			strncpy(login, getlogin(), sizeof(login));
+#else
+			if (getlogin_r(login, sizeof(login)) != 0)
+				return FALSE;
+#endif
 			length = strlen(login);
 
 			if (*nSize >= length)
 			{
 				CopyMemory(lpNameBuffer, login, length + 1);
-				return 1;
+				return TRUE;
 			}
 			else
 			{
@@ -235,7 +240,7 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 			break;
 	}
 
-	return 0;
+	return FALSE;
 }
 
 BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize)
