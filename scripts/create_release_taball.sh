@@ -38,7 +38,7 @@ run md5sum freerdp-${TAG}.tar.gz > freerdp-${TAG}.tar.gz.md5
 run sha1sum freerdp-${TAG}.tar.gz > freerdp-${TAG}.tar.gz.sha1
 run sha256sum freerdp-${TAG}.tar.gz > freerdp-${TAG}.tar.gz.sha256
 
-run zip freerdp-${TAG}.zip freerdp-${TAG}
+run zip -r freerdp-${TAG}.zip freerdp-${TAG}
 run md5sum freerdp-${TAG}.zip > freerdp-${TAG}.zip.md5
 run sha1sum freerdp-${TAG}.zip > freerdp-${TAG}.zip.sha1
 run sha256sum freerdp-${TAG}.zip > freerdp-${TAG}.zip.sha256
