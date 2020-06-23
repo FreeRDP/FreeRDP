@@ -215,8 +215,11 @@ static BOOL check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE ord
 	switch (orderType)
 	{
 		case ORDER_TYPE_CREATE_OFFSCREEN_BITMAP:
-		case ORDER_TYPE_SWITCH_SURFACE:
 			condition = settings->OffscreenSupportLevel != 0;
+			break;
+
+		case ORDER_TYPE_SWITCH_SURFACE:
+			condition = TRUE; /* Additional checks required, delay */
 			break;
 
 		case ORDER_TYPE_CREATE_NINE_GRID_BITMAP:
@@ -3867,6 +3870,14 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s, BYTE flags)
 			break;
 
 		case ORDER_TYPE_SWITCH_SURFACE:
+			if (!settings->OffscreenSupportLevel)
+			{
+				if (altsec->switch_surface.bitmapId != SCREEN_BITMAP_SURFACE)
+				{
+					check_order_activated(update->log, settings, orderName, FALSE);
+					return FALSE;
+				}
+			}
 			IFCALLRET(altsec->SwitchSurface, rc, context, &(altsec->switch_surface));
 			break;
 
