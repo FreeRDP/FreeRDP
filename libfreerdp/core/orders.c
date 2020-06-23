@@ -139,7 +139,8 @@ static BYTE get_bmf_bpp(UINT32 bmf, BOOL* pValid)
 {
 	if (pValid)
 		*pValid = TRUE;
-	switch (bmf)
+	/* Mask out highest bit */
+	switch (bmf & (~CACHED_BRUSH))
 	{
 		case 1:
 			return 1;
