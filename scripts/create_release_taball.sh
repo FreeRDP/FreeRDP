@@ -1,7 +1,6 @@
 #!/bin/bash -e
 
 function run {
-	echo "[RUN] $@"
 	"$@"
 	RES=$?
 	if [[ $RES -ne 0 ]];
