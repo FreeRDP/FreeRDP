@@ -626,15 +626,19 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 static SSIZE_T transport_read_layer_bytes(rdpTransport* transport, wStream* s, size_t toRead)
 {
 	SSIZE_T status;
-	if (toRead > SSIZE_MAX)
+	rdpContext *context = NULL;
+	if (!transport)
 		return 0;
-
-	status = transport_read_layer(transport, Stream_Pointer(s), toRead);
+	context = transport->context;
+	if (!context)
+		return 0;
+	status = context->update->io->Read(context, Stream_Pointer(s), toRead);
 
 	if (status <= 0)
 		return status;
 
 	Stream_Seek(s, (size_t)status);
+
 	return status == (SSIZE_T)toRead ? 1 : 0;
 }
 
@@ -652,7 +656,30 @@ static SSIZE_T transport_read_layer_bytes(rdpTransport* transport, wStream* s, s
  */
 int transport_read_pdu(rdpTransport* transport, wStream* s)
 {
-	int status;
+	int status = 0, read = 0;
+	SSIZE_T left = 0;
+	for (status = transport_handle_pdu(transport, s, &left); !status;
+		status = transport_handle_pdu(transport, s, &left))
+	{
+		read = transport_read_layer_bytes(transport, s, left ? left : 1);
+		WLog_Print(transport->log, WLOG_DEBUG, "read: %d, left to read: %d", read, left);
+		if (read < 0)
+			return read;
+	}
+	WLog_Print(transport->log, WLOG_DEBUG, "status: %d", status);
+	return status;
+}
+
+/**
+ * @brief Handle a complete PDU (NLA, fast-path or tpkt) from the filled wStream buffer.
+ *
+ * @param[in] transport rdpTransport
+ * @param[in] s wStream
+ * @return < 0 on error; 0 if not enough data is available; > 0 number of
+ * bytes of the *complete* pdu
+ */
+int transport_handle_pdu(rdpTransport* transport, wStream* s, SSIZE_T *left_to_read)
+{
 	size_t position;
 	size_t pduLength;
 	BYTE* header;
@@ -671,11 +698,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 		return -1;
 
 	/* Make sure at least two bytes are read for further processing */
-	if (position < 2 && (status = transport_read_layer_bytes(transport, s, 2 - position)) != 1)
-	{
-		/* No data available at the moment */
-		return status;
-	}
+	if (position < 2)
+		return 0;
 
 	/* update position value for further checks */
 	position = Stream_GetPosition(s);
@@ -697,9 +721,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 				if ((header[1] & ~(0x80)) == 1)
 				{
 					/* check for header bytes already was readed in previous calls */
-					if (position < 3 &&
-					    (status = transport_read_layer_bytes(transport, s, 3 - position)) != 1)
-						return status;
+					if (position < 3)
+						return 0;
 
 					pduLength = header[2];
 					pduLength += 3;
@@ -707,9 +730,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 				else if ((header[1] & ~(0x80)) == 2)
 				{
 					/* check for header bytes already was readed in previous calls */
-					if (position < 4 &&
-					    (status = transport_read_layer_bytes(transport, s, 4 - position)) != 1)
-						return status;
+					if (position < 4)
+						return 0;
 
 					pduLength = (header[2] << 8) | header[3];
 					pduLength += 4;
@@ -733,9 +755,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 		{
 			/* TPKT header */
 			/* check for header bytes already was readed in previous calls */
-			if (position < 4 &&
-			    (status = transport_read_layer_bytes(transport, s, 4 - position)) != 1)
-				return status;
+			if (position < 4)
+				return 0;
 
 			pduLength = (header[2] << 8) | header[3];
 
@@ -753,10 +774,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 			if (header[1] & 0x80)
 			{
 				/* check for header bytes already was readed in previous calls */
-				if (position < 3 &&
-				    (status = transport_read_layer_bytes(transport, s, 3 - position)) != 1)
-					return status;
-
+				if (position < 3)
+					return 0;
 				pduLength = ((header[1] & 0x7F) << 8) | header[2];
 			}
 			else
@@ -779,10 +798,13 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	if (!Stream_EnsureCapacity(s, Stream_GetPosition(s) + pduLength))
 		return -1;
 
-	status = transport_read_layer_bytes(transport, s, pduLength - Stream_GetPosition(s));
+	if (left_to_read)
+		*left_to_read = pduLength - Stream_GetPosition(s);
 
-	if (status != 1)
-		return status;
+
+	/* pdu not yet complete */
+	if (Stream_GetPosition(s) < pduLength)
+		return 0;
 
 	if (Stream_GetPosition(s) >= pduLength)
 		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
@@ -792,18 +814,97 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	return Stream_Length(s);
 }
 
-int transport_write(rdpTransport* transport, wStream* s)
+static BOOL transport_prepare_stream(rdpTransport *transport, wStream *s)
 {
-	size_t length;
-	int status = -1;
-	int writtenlength = 0;
-	rdpRdp* rdp = transport->context->rdp;
+	if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
+	{
+		Stream_Release(s);
+		return FALSE;
+	}
+	if (transport->NextPDUBytesLeft < 0)
+	{
+		/* if we currenlty have part of next pdu in buffer,
+		* we need to move it into next pdu's buffer  */
+		Stream_SetPosition(s, Stream_Length(s) + transport->NextPDUBytesLeft);
+		Stream_Read(s, transport->ReceiveBuffer->pointer, -(transport->NextPDUBytesLeft));
+		transport->NextPDUBytesLeft = 0;
+	}
+	Stream_Release(s);
+	return TRUE;
+}
 
-	if (!s)
+/**
+ * @brief Callback function to handle bytes from io backends
+ *
+ * @param[in] context rdpContext
+ * @param[in] buf const uint8_t*
+ * @param[in] buf_size size_t
+ * @return count of bytes succesfully handled, -1 on error
+ */
+static int transport_io_data_handler(rdpContext* context,
+                               const uint8_t* buf, size_t buf_size)
+{
+	rdpTransport *transport = NULL;
+	wStream *pdu = NULL;
+	if (buf_size > SSIZE_MAX)
+		return -1;
+	if (!context->rdp)
+		return -1;
+	transport = context->rdp->transport;
+	if (!transport)
 		return -1;
 
-	if (!transport)
-		goto fail;
+	Stream_Write(transport->ReceiveBuffer, buf, buf_size);
+	pdu = transport->ReceiveBuffer;
+	if (transport_handle_pdu(transport, pdu, 0) < 1)
+		return 0;
+	transport->ReceiveCallback(transport, pdu, transport->ReceiveExtra);
+	
+	if (!transport_prepare_stream(transport, pdu))
+		return -1;
+
+	return buf_size;
+}
+
+/**
+ * @brief Callback function for io backends read implementation
+ *
+ * @param[in] context rdpContext
+ * @param[out] buf const uint8_t*
+ * @param[in] buf_size size_t
+ * @return count of bytes succesfully handled
+  */
+static int transport_io_data_read(rdpContext* context,
+                               const uint8_t* buf, size_t buf_size)
+{
+	SSIZE_T status;
+	rdpTransport *transport = NULL;
+	if (buf_size > SSIZE_MAX)
+		return 0;
+
+	transport = context->rdp->transport;
+
+	status = transport_read_layer(transport, (BYTE*)buf, buf_size);
+
+	return status;
+}
+
+/**
+ * @brief Callback function for io backend write implementation
+ *
+ * @param[in] context rdpContext
+ * @param[in] buf const uint8_t*
+ * @param[in] buf_size size_t
+ * @return count of bytes succesfully handled
+  */
+static int transport_io_data_write(rdpContext* context,
+                               const uint8_t* buf, size_t buf_size)
+{
+	int status = -1;
+	size_t length;
+	int writtenlength = 0;
+	rdpRdp *rdp = context->rdp;
+	rdpTransport *transport = context->rdp->transport;
 
 	if (!transport->frontBio)
 	{
@@ -813,19 +914,19 @@ int transport_write(rdpTransport* transport, wStream* s)
 	}
 
 	EnterCriticalSection(&(transport->WriteLock));
-	length = Stream_GetPosition(s);
+	length = buf_size;
 	writtenlength = length;
-	Stream_SetPosition(s, 0);
 
 	if (length > 0)
 	{
 		rdp->outBytes += length;
-		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length, WLOG_PACKET_OUTBOUND);
+		WLog_Packet(transport->log, WLOG_TRACE, buf, length, WLOG_PACKET_OUTBOUND);
 	}
 
 	while (length > 0)
 	{
-		status = BIO_write(transport->frontBio, Stream_Pointer(s), length);
+		status = BIO_write(transport->frontBio, buf + writtenlength - length,
+			length);
 
 		if (status <= 0)
 		{
@@ -877,10 +978,8 @@ int transport_write(rdpTransport* transport, wStream* s)
 		}
 
 		length -= status;
-		Stream_Seek(s, status);
 	}
 
-	transport->written += writtenlength;
 out_cleanup:
 
 	if (status < 0)
@@ -891,6 +990,51 @@ out_cleanup:
 	}
 
 	LeaveCriticalSection(&(transport->WriteLock));
+fail:
+	if (!length)
+		return writtenlength;
+	return status;
+}
+
+void transport_register_default_io_callbacks(rdpUpdate* update)
+{
+	rdpIoUpdate io = { 0 };
+	io.context = update->context;
+	io.DataHandler = transport_io_data_handler;
+	io.Read = transport_io_data_read;
+	io.Write = transport_io_data_write;
+	freerdp_set_transport_callbacks(update->context, &io);
+}
+
+
+void freerdp_set_transport_callbacks(rdpContext* context, void *io_callbacks)
+{
+	rdpIoUpdate* io = ((rdpIoUpdate*)io_callbacks);
+	/* NOTE: DataHandler should not be switched */
+	io->DataHandler = transport_io_data_handler;
+	/* NOTE: add context ponter in case user forgot to do so */
+	io->context = context;
+	*(context->update->io) = *io;
+}
+
+
+int transport_write(rdpTransport* transport, wStream* s)
+{
+	int status = -1;
+	rdpRdp* rdp = NULL;
+
+	if (!s)
+		return -1;
+
+	if (!transport)
+		goto fail;
+
+	rdp = transport->context->rdp;
+
+	status = rdp->update->io->Write(rdp->context, Stream_Buffer(s), Stream_GetPosition(s));
+
+	if (status > 0)
+		transport->written += status;
 fail:
 	Stream_Release(s);
 	return status;
@@ -1002,8 +1146,9 @@ int transport_check_fds(rdpTransport* transport)
 	int status;
 	int recv_status;
 	wStream* received;
-	UINT64 now = GetTickCount64();
-	UINT64 dueDate = 0;
+//	UINT64 now = GetTickCount64();
+//	UINT64 dueDate = 0;
+//	WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds");
 
 	if (!transport)
 		return -1;
@@ -1015,43 +1160,44 @@ int transport_check_fds(rdpTransport* transport)
 		return -1;
 	}
 
-	dueDate = now + transport->settings->MaxTimeInCheckLoop;
+	// dueDate = now + transport->settings->MaxTimeInCheckLoop;
 
-	if (transport->haveMoreBytesToRead)
+/*	if (transport->haveMoreBytesToRead)
 	{
 		transport->haveMoreBytesToRead = FALSE;
 		ResetEvent(transport->rereadEvent);
-	}
+	} */
 
-	while (now < dueDate)
+//	while (now < dueDate)
 	{
 		if (freerdp_shall_disconnect(transport->context->instance))
 		{
 			return -1;
 		}
 
-		/**
-		 * Note: transport_read_pdu tries to read one PDU from
-		 * the transport layer.
-		 * The ReceiveBuffer might have a position > 0 in case of a non blocking
-		 * transport. If transport_read_pdu returns 0 the pdu couldn't be read at
-		 * this point.
-		 * Note that transport->ReceiveBuffer is replaced after each iteration
-		 * of this loop with a fresh stream instance from a pool.
-		 */
-		if ((status = transport_read_pdu(transport, transport->ReceiveBuffer)) <= 0)
+		if ((status = transport_read_layer_bytes(transport, transport->ReceiveBuffer,
+			transport->NextPDUBytesLeft ? transport->NextPDUBytesLeft : 1)) <= 0)
 		{
 			if (status < 0)
 				WLog_Print(transport->log, WLOG_DEBUG,
-				           "transport_check_fds: transport_read_pdu() - %i", status);
+				           "transport_check_fds: transport_read_layer_bytes() - %i", status);
+
+			return status;
+		}
+		if ((status = transport_handle_pdu(transport, transport->ReceiveBuffer,
+			&transport->NextPDUBytesLeft)) <= 0)
+		{
+			if (status < 0)
+				WLog_Print(transport->log, WLOG_DEBUG,
+				           "transport_check_fds: transport_handle_pdu() - %i", status);
 
 			return status;
 		}
 
 		received = transport->ReceiveBuffer;
 
-		if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
-			return -1;
+/*		if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
+			return -1; */
 
 		/**
 		 * status:
@@ -1060,7 +1206,9 @@ int transport_check_fds(rdpTransport* transport)
 		 * 	 1: redirection
 		 */
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
-		Stream_Release(received);
+
+		if (!transport_prepare_stream(transport, received))
+			return -1;
 
 		/* session redirection or activation */
 		if (recv_status == 1 || recv_status == 2)
@@ -1075,14 +1223,14 @@ int transport_check_fds(rdpTransport* transport)
 			return -1;
 		}
 
-		now = GetTickCount64();
+		//now = GetTickCount64();
 	}
 
-	if (now >= dueDate)
-	{
-		SetEvent(transport->rereadEvent);
-		transport->haveMoreBytesToRead = TRUE;
-	}
+/*	if (now >= dueDate)
+	{ */
+//		SetEvent(transport->rereadEvent);
+//		transport->haveMoreBytesToRead = TRUE;
+//	}
 
 	return 0;
 }

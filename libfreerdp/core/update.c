@@ -2936,6 +2936,11 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	if (!update->window)
 		goto fail;
 
+	update->io = (rdpIoUpdate*)calloc(1, sizeof(rdpIoUpdate));
+
+	if (!update->io)
+		goto fail;
+
 	deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 	deleteList->sIndices = 64;
 	deleteList->indices = calloc(deleteList->sIndices, 2);
@@ -2978,12 +2983,15 @@ void update_free(rdpUpdate* update)
 		}
 
 		free(update->secondary);
+		update->secondary = NULL;
 		free(update->altsec);
+		update->altsec = NULL;
 
-		if (update->window)
-		{
-			free(update->window);
-		}
+		free(update->window);
+		update->window = NULL;
+
+		free(update->io);
+		update->io = NULL;
 
 		MessageQueue_Free(update->queue);
 		DeleteCriticalSection(&update->mux);

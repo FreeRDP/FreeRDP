@@ -1559,6 +1559,7 @@ struct rdp_settings
 	                                   default value - currently UNUSED! */
 	ALIGN64 char* ActionScript;
 	ALIGN64 DWORD Floatbar;
+
 };
 typedef struct rdp_settings rdpSettings;
 
