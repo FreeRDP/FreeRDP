@@ -364,7 +364,7 @@ void nsc_context_free(NSC_CONTEXT* context)
 
 	if (context->priv)
 	{
-		for (i = 0; i < 4; i++)
+		for (i = 0; i < 5; i++)
 			free(context->priv->PlaneBuffers[i]);
 
 		nsc_profiler_print(context->priv);
