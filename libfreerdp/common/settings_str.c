@@ -87,6 +87,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_GfxSmallCache, 0, "FreeRDP_GfxSmallCache" },
 	{ FreeRDP_GfxThinClient, 0, "FreeRDP_GfxThinClient" },
 	{ FreeRDP_GrabKeyboard, 0, "FreeRDP_GrabKeyboard" },
+	{ FreeRDP_GrabMouse, 0, "FreeRDP_GrabMouse" },
 	{ FreeRDP_HasExtendedMouseEvent, 0, "FreeRDP_HasExtendedMouseEvent" },
 	{ FreeRDP_HasHorizontalWheel, 0, "FreeRDP_HasHorizontalWheel" },
 	{ FreeRDP_HasMonitorAttributes, 0, "FreeRDP_HasMonitorAttributes" },

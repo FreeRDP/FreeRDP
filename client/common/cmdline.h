@@ -184,6 +184,7 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "grab-keyboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Grab keyboard" },
+	{ "grab-mouse", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Grab mouse" },
 	{ "gt", COMMAND_LINE_VALUE_REQUIRED, "[rpc|http[,no-websockets]|auto[,no-websockets]]", NULL,
 	  NULL, -1, NULL, "Gateway transport type" },
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[[<domain>\\]<user>|<user>[@<domain>]]", NULL, NULL, -1,
