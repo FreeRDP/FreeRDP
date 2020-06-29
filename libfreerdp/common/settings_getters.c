@@ -231,6 +231,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_GrabKeyboard:
 			return settings->GrabKeyboard;
 
+		case FreeRDP_GrabMouse:
+			return settings->GrabMouse;
+
 		case FreeRDP_HasExtendedMouseEvent:
 			return settings->HasExtendedMouseEvent;
 
@@ -807,6 +810,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_GrabKeyboard:
 			settings->GrabKeyboard = val;
+			break;
+
+		case FreeRDP_GrabMouse:
+			settings->GrabMouse = val;
 			break;
 
 		case FreeRDP_HasExtendedMouseEvent:

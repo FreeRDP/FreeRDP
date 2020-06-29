@@ -2996,6 +2996,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->GrabKeyboard = enable;
 		}
+		CommandLineSwitchCase(arg, "grab-mouse")
+		{
+			settings->GrabMouse = enable;
+		}
 		CommandLineSwitchCase(arg, "unmap-buttons")
 		{
 			settings->UnmapButtons = enable;
