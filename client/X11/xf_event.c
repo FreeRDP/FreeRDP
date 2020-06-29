@@ -503,6 +503,10 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 		              CurrentTime);
 	}
 
+	/* Release all keys, should already be done at FocusOut but might be missed
+	 * if the WM decided to use an alternate event order */
+	xf_keyboard_release_all_keypress(xfc);
+
 	if (app)
 	{
 		xfAppWindow* appWindow;
@@ -532,7 +536,6 @@ static BOOL xf_event_FocusOut(xfContext* xfc, const XFocusOutEvent* event, BOOL 
 		XUngrabKeyboard(xfc->display, CurrentTime);
 
 	xf_keyboard_release_all_keypress(xfc);
-	xf_keyboard_clear(xfc);
 
 	if (app)
 		xf_rail_send_activate(xfc, event->window, FALSE);
