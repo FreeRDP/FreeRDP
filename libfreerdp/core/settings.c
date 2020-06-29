@@ -316,6 +316,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->Workarea = FALSE;
 	settings->Fullscreen = FALSE;
 	settings->GrabKeyboard = TRUE;
+	settings->GrabMouse = TRUE;
 	settings->Decorations = TRUE;
 	settings->RdpVersion = RDP_VERSION_10_7;
 	settings->ColorDepth = 16;
