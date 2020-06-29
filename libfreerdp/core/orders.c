@@ -184,7 +184,7 @@ static BYTE get_bpp_bmf(UINT32 bpp, BOOL* pValid)
 }
 
 static BOOL check_order_activated(wLog* log, rdpSettings* settings, const char* orderName,
-                                  BOOL condition)
+                                  BOOL condition, const char* extendedMessage)
 {
 	if (!condition)
 	{
@@ -193,6 +193,8 @@ static BOOL check_order_activated(wLog* log, rdpSettings* settings, const char* 
 			WLog_Print(log, WLOG_WARN,
 			           "%s - SERVER BUG: The support for this feature was not announced!",
 			           orderName);
+			if (extendedMessage)
+				WLog_Print(log, WLOG_WARN, "%s", extendedMessage);
 			return TRUE;
 		}
 		else
@@ -201,6 +203,8 @@ static BOOL check_order_activated(wLog* log, rdpSettings* settings, const char* 
 			           "%s - SERVER BUG: The support for this feature was not announced! Use "
 			           "/relax-order-checks to ignore",
 			           orderName);
+			if (extendedMessage)
+				WLog_Print(log, WLOG_WARN, "%s", extendedMessage);
 			return FALSE;
 		}
 	}
@@ -211,6 +215,7 @@ static BOOL check_order_activated(wLog* log, rdpSettings* settings, const char* 
 static BOOL check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE orderType,
                                       const char* orderName)
 {
+	const char* extendedMessage = NULL;
 	BOOL condition = FALSE;
 
 	switch (orderType)
@@ -218,6 +223,7 @@ static BOOL check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE ord
 		case ORDER_TYPE_CREATE_OFFSCREEN_BITMAP:
 		case ORDER_TYPE_SWITCH_SURFACE:
 			condition = settings->OffscreenSupportLevel != 0;
+			extendedMessage = "Adding +offscreen-cache might mitigate";
 			break;
 
 		case ORDER_TYPE_CREATE_NINE_GRID_BITMAP:
@@ -253,12 +259,13 @@ static BOOL check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE ord
 			break;
 	}
 
-	return check_order_activated(log, settings, orderName, condition);
+	return check_order_activated(log, settings, orderName, condition, extendedMessage);
 }
 
 static BOOL check_secondary_order_supported(wLog* log, rdpSettings* settings, BYTE orderType,
                                             const char* orderName)
 {
+	const char* extendedMessage = NULL;
 	BOOL condition = FALSE;
 
 	switch (orderType)
@@ -266,15 +273,18 @@ static BOOL check_secondary_order_supported(wLog* log, rdpSettings* settings, BY
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED:
 		case ORDER_TYPE_CACHE_BITMAP_COMPRESSED:
 			condition = settings->BitmapCacheEnabled;
+			extendedMessage = "Adding +bitmap-cache might mitigate";
 			break;
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
 			condition = settings->BitmapCacheEnabled;
+			extendedMessage = "Adding +bitmap-cache might mitigate";
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
 			condition = settings->BitmapCacheV3Enabled;
+			extendedMessage = "Adding +bitmap-cache might mitigate";
 			break;
 
 		case ORDER_TYPE_CACHE_COLOR_TABLE:
@@ -309,12 +319,13 @@ static BOOL check_secondary_order_supported(wLog* log, rdpSettings* settings, BY
 			break;
 	}
 
-	return check_order_activated(log, settings, orderName, condition);
+	return check_order_activated(log, settings, orderName, condition, extendedMessage);
 }
 
 static BOOL check_primary_order_supported(wLog* log, rdpSettings* settings, UINT32 orderType,
                                           const char* orderName)
 {
+	const char* extendedMessage = NULL;
 	BOOL condition = FALSE;
 
 	switch (orderType)
@@ -412,7 +423,7 @@ static BOOL check_primary_order_supported(wLog* log, rdpSettings* settings, UINT
 			break;
 	}
 
-	return check_order_activated(log, settings, orderName, condition);
+	return check_order_activated(log, settings, orderName, condition, extendedMessage);
 }
 
 static const char* primary_order_string(UINT32 orderType)
