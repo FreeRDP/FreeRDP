@@ -86,7 +86,7 @@ static IWTSVirtualChannel* get_channel(IUDEVMAN* idevman)
 static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 {
 	char *p, *path;
-	UINT8 containerId[17];
+	UINT8 containerId[17] = { 0 };
 	UINT16 idVendor, idProduct;
 	idVendor = (UINT16)pdev->query_device_descriptor(pdev, ID_VENDOR);
 	idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
@@ -97,7 +97,6 @@ static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 	else
 		p = path;
 
-	ZeroMemory(containerId, sizeof(containerId));
 	sprintf_s((char*)containerId, sizeof(containerId), "%04" PRIX16 "%04" PRIX16 "%s", idVendor,
 	          idProduct, p);
 	/* format */
