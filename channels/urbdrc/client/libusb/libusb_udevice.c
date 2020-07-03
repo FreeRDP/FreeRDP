@@ -805,7 +805,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 				           "%s [%d], iProduct: %" PRIu8 "!",
 				           msg, ret, devDescriptor->iProduct);
 
-				len = strnlen(strDesc, MIN(sizeof(strDesc), inSize));
+				len = MIN(sizeof(strDesc), inSize);
 				for (i = 0; i < len; i++)
 					text[i] = (WCHAR)strDesc[i];
 
