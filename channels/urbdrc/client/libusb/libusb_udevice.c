@@ -457,8 +457,10 @@ static LIBUSB_DEVICE* udev_get_libusb_dev(libusb_context* context, uint8_t bus_n
 static LIBUSB_DEVICE_DESCRIPTOR* udev_new_descript(URBDRC_PLUGIN* urbdrc, LIBUSB_DEVICE* libusb_dev)
 {
 	int ret;
-	LIBUSB_DEVICE_DESCRIPTOR* descriptor;
-	descriptor = (LIBUSB_DEVICE_DESCRIPTOR*)malloc(sizeof(LIBUSB_DEVICE_DESCRIPTOR));
+	LIBUSB_DEVICE_DESCRIPTOR* descriptor =
+	    (LIBUSB_DEVICE_DESCRIPTOR*)calloc(1, sizeof(LIBUSB_DEVICE_DESCRIPTOR));
+	if (!descriptor)
+		return NULL;
 	ret = libusb_get_device_descriptor(libusb_dev, descriptor);
 
 	if (log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_get_device_descriptor", ret))
