@@ -17,6 +17,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "urbdrc_helpers.h"
 #include "urbdrc_types.h"
 #include <winpr/print.h>
@@ -406,7 +410,7 @@ void urbdrc_dump_message(wLog* log, BOOL client, BOOL write, wStream* s)
 	           ", FunctionId=%08" PRIx32 ", length=%" PRIdz,
 	           type, call_to_string(client, InterfaceId, FunctionId), FunctionId, InterfaceId,
 	           MessageId, FunctionId, length);
-#if defined(WITH_URBDRC_DEBUG)
+#if defined(WITH_DEBUG_URBDRC)
 	if (write)
 		WLog_Print(log, WLOG_TRACE, "-------------------------- URBDRC sent: ---");
 	else
