@@ -762,7 +762,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
 	LIBUSB_DEVICE_DESCRIPTOR* devDescriptor;
-	const char* strDesc = "Generic Usb String";
+	const char strDesc[] = "Generic Usb String";
 	char deviceLocation[25] = { 0 };
 	BYTE bus_number;
 	BYTE device_address;
@@ -795,7 +795,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 			slen = data[0];
 			locale = data[1];
 
-			if ((ret <= 0) || (ret < 4) || (slen < 4) || (locale != LIBUSB_DT_STRING) ||
+			if ((ret <= 0) || (ret <= 4) || (slen <= 4) || (locale != LIBUSB_DT_STRING) ||
 			    (ret > UINT8_MAX))
 			{
 				WLog_Print(urbdrc->log, WLOG_DEBUG,
@@ -803,7 +803,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 				           "ERROR num %d, iProduct: %" PRIu8 "!",
 				           ret, devDescriptor->iProduct);
 
-				len = MIN(sizeof(strDesc), inSize);
+				len = strnlen(strDesc, MIN(sizeof(strDesc), inSize));
 				for (i = 0; i < len; i++)
 					text[i] = (WCHAR)strDesc[i];
 
