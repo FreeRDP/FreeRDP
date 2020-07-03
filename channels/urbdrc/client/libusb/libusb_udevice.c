@@ -561,8 +561,7 @@ libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsC
 
 		for (pnum = 0; pnum < LibusbNumEndpoint; pnum++)
 		{
-			t_MsPipe = (MSUSB_PIPE_DESCRIPTOR*)malloc(sizeof(MSUSB_PIPE_DESCRIPTOR));
-			memset(t_MsPipe, 0, sizeof(MSUSB_PIPE_DESCRIPTOR));
+			t_MsPipe = (MSUSB_PIPE_DESCRIPTOR*)calloc(1, sizeof(MSUSB_PIPE_DESCRIPTOR));
 
 			if (pnum < MsInterface->NumberOfPipes && MsInterface->MsPipes)
 			{
@@ -863,12 +862,11 @@ static int libusb_udev_os_feature_descriptor_request(IUDEVICE* idev, UINT32 Requ
                                                      BYTE* Buffer, int Timeout)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
-	BYTE ms_string_desc[0x13];
+	BYTE ms_string_desc[0x13] = { 0 };
 	int error = 0;
 	/*
 	pdev->request_queue->register_request(pdev->request_queue, RequestId, NULL, 0);
 	*/
-	memset(ms_string_desc, 0, 0x13);
 	error = libusb_control_transfer(pdev->libusb_handle, LIBUSB_ENDPOINT_IN | Recipient,
 	                                LIBUSB_REQUEST_GET_DESCRIPTOR, 0x03ee, 0, ms_string_desc, 0x12,
 	                                Timeout);
