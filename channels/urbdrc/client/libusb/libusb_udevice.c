@@ -798,10 +798,13 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 			if ((ret <= 0) || (ret <= 4) || (slen <= 4) || (locale != LIBUSB_DT_STRING) ||
 			    (ret > UINT8_MAX))
 			{
+				char* msg = "SHORT_DESCRIPTOR";
+				if (ret < 0)
+					msg = libusb_error_name(ret);
 				WLog_Print(urbdrc->log, WLOG_DEBUG,
 				           "libusb_get_string_descriptor: "
-				           "ERROR num %d, iProduct: %" PRIu8 "!",
-				           ret, devDescriptor->iProduct);
+				           "%s [%d], iProduct: %" PRIu8 "!",
+				           msg, ret, devDescriptor->iProduct);
 
 				len = strnlen(strDesc, MIN(sizeof(strDesc), inSize));
 				for (i = 0; i < len; i++)
