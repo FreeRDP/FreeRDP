@@ -31,6 +31,17 @@
 
 #define TAG FREERDP_TAG("gdi")
 
+static BOOL is_rect_valid(const RECTANGLE_16* rect, size_t width, size_t height)
+{
+	if (!rect)
+		return FALSE;
+	if ((rect->left > rect->right) || (rect->right > width))
+		return FALSE;
+	if ((rect->top > rect->bottom) || (rect->bottom > height))
+		return FALSE;
+	return TRUE;
+}
+
 static DWORD gfx_align_scanline(DWORD widthInBytes, DWORD alignment)
 {
 	const UINT32 align = alignment;
@@ -1114,7 +1125,6 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 	BOOL sameSurface;
 	UINT32 nWidth, nHeight;
 	const RECTANGLE_16* rectSrc;
-	RDPGFX_POINT16* destPt;
 	RECTANGLE_16 invalidRect;
 	gdiGfxSurface* surfaceSrc;
 	gdiGfxSurface* surfaceDst;
@@ -1134,12 +1144,18 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 	if (!surfaceSrc || !surfaceDst)
 		goto fail;
 
+	if (!is_rect_valid(rectSrc, surfaceSrc->width, surfaceSrc->height))
+		goto fail;
+
 	nWidth = rectSrc->right - rectSrc->left;
 	nHeight = rectSrc->bottom - rectSrc->top;
 
 	for (index = 0; index < surfaceToSurface->destPtsCount; index++)
 	{
-		destPt = &surfaceToSurface->destPts[index];
+		const RDPGFX_POINT16* destPt = &surfaceToSurface->destPts[index];
+		const RECTANGLE_16 rect = { destPt->x, destPt->y, destPt->x + nWidth, destPt->y + nHeight };
+		if (!is_rect_valid(&rect, surfaceDst->width, surfaceDst->height))
+			goto fail;
 
 		if (!freerdp_image_copy(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
 		                        destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data,
@@ -1192,6 +1208,9 @@ static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
 	if (!surface)
 		goto fail;
 
+	if (!is_rect_valid(rect, surface->width, surface->height))
+		goto fail;
+
 	cacheEntry = (gdiGfxCacheEntry*)calloc(1, sizeof(gdiGfxCacheEntry));
 
 	if (!cacheEntry)
@@ -1234,7 +1253,6 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 {
 	UINT status = ERROR_INTERNAL_ERROR;
 	UINT16 index;
-	RDPGFX_POINT16* destPt;
 	gdiGfxSurface* surface;
 	gdiGfxCacheEntry* cacheEntry;
 	RECTANGLE_16 invalidRect;
@@ -1248,7 +1266,12 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 
 	for (index = 0; index < cacheToSurface->destPtsCount; index++)
 	{
-		destPt = &cacheToSurface->destPts[index];
+		const RDPGFX_POINT16* destPt = &cacheToSurface->destPts[index];
+		const RECTANGLE_16 rect = { destPt->x, destPt->y, destPt->x + cacheEntry->width,
+			                        destPt->y + cacheEntry->height };
+
+		if (!is_rect_valid(&rect, surface->width, surface->height))
+			goto fail;
 
 		if (!freerdp_image_copy(surface->data, surface->format, surface->scanline, destPt->x,
 		                        destPt->y, cacheEntry->width, cacheEntry->height, cacheEntry->data,
