@@ -665,7 +665,7 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 		}
 		else
 		{
-			idpair = malloc(sizeof(VID_PID_PAIR));
+			idpair = calloc(1, sizeof(VID_PID_PAIR));
 			if (!idpair)
 				return CHANNEL_RC_NO_MEMORY;
 			idpair->vid = id1;
