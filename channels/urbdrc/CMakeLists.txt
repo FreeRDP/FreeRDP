@@ -21,6 +21,12 @@ include_directories(common)
 add_subdirectory(common)
 
 if(WITH_CLIENT_CHANNELS)
+    option(WITH_URBDRC_DEBUG "Dump data send/received in URBDRC channel" OFF)
+
+    if (WITH_URBDRC_DEBUG)
+        add_definitions(-DWITH_URBDRC_DEBUG=1)
+    endif()
+
     find_package(libusb-1.0 REQUIRED)
     include_directories(${LIBUSB_1_INCLUDE_DIRS})
 
