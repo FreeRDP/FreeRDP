@@ -36,7 +36,6 @@
 #include "pf_config.h"
 #include "pf_client.h"
 #include "pf_context.h"
-#include "pf_input.h"
 #include "pf_update.h"
 #include "pf_rdpgfx.h"
 #include "pf_disp.h"
@@ -181,8 +180,6 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 		return FALSE;
 	}
 
-	pf_server_register_input_callbacks(peer->input);
-	pf_server_register_update_callbacks(peer->update);
 	return pf_modules_run_hook(HOOK_TYPE_SERVER_POST_CONNECT, pdata);
 }
 
