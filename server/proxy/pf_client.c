@@ -35,6 +35,7 @@
 #include "pf_update.h"
 #include "pf_log.h"
 #include "pf_modules.h"
+#include "pf_input.h"
 
 #define TAG PROXY_TAG("client")
 
@@ -69,6 +70,19 @@ static void pf_client_on_error_info(void* ctx, ErrorInfoEventArgs* e)
 	/* forward error back to client */
 	freerdp_set_error_info(ps->context.rdp, e->code);
 	freerdp_send_error_info(ps->context.rdp);
+}
+
+static void pf_client_on_activated(void* ctx, ActivatedEventArgs* e)
+{
+	pClientContext* pc = (pClientContext*)ctx;
+	pServerContext* ps = pc->pdata->ps;
+	freerdp_peer* peer = ps->context.peer;
+
+	LOG_INFO(TAG, pc, "client activated, registering server input callbacks");
+
+	/* Register server input/update callbacks only after proxy client is fully activated */
+	pf_server_register_input_callbacks(peer->input);
+	pf_server_register_update_callbacks(peer->update);
 }
 
 static BOOL pf_client_load_rdpsnd(pClientContext* pc)
@@ -202,6 +216,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    pf_channels_on_client_channel_disconnect);
 	PubSub_SubscribeErrorInfo(instance->context->pubSub, pf_client_on_error_info);
+	PubSub_SubscribeActivated(instance->context->pubSub, pf_client_on_activated);
 	/**
 	 * Load all required plugins / channels / libraries specified by current
 	 * settings.
