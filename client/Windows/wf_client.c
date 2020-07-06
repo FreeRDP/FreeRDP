@@ -311,7 +311,7 @@ static WCHAR* wf_window_get_title(rdpSettings* settings)
 	}
 
 	port = (settings->ServerPort != 3389);
-	size = wcslen(name) + 16 + wcslen(prefix);
+	size = strlen(name) + 16 + wcslen(prefix);
 	windowTitle = calloc(size, sizeof(WCHAR));
 
 	if (!windowTitle)
