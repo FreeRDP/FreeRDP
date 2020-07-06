@@ -1493,7 +1493,8 @@ static int udev_get_hub_handle(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UDEVI
 		error = 0;
 		WLog_Print(urbdrc->log, WLOG_DEBUG, "  Port: %d", pdev->port_number);
 		/* gen device path */
-		sprintf(pdev->path, "ugen%" PRIu16 ".%" PRIu16 "", bus_number, dev_number);
+		sprintf(pdev->path, "%" PRIu16 "-%" PRIu16 "", bus_number, pdev->port_number);
+
 		WLog_Print(urbdrc->log, WLOG_DEBUG, "  DevPath: %s", pdev->path);
 		break;
 	}
