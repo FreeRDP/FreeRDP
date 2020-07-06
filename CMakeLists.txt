@@ -341,13 +341,25 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
 	endif()
 endif()
 
+set(THREAD_PREFER_PTHREAD_FLAG TRUE)
+
+if(NOT IOS)
+	find_package(Threads REQUIRED)
+endif()
+
 # Enable address sanitizer, where supported and when required
 if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
-	set(CMAKE_REQUIRED_FLAGS_SAVED ${CMAKE_REQUIRED_FLAGS})
+	CHECK_C_COMPILER_FLAG ("-fno-omit-frame-pointer" fno-omit-frame-pointer)
 
+	if (fno-omit-frame-pointer)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
+	endif()
+
+	set(CMAKE_REQUIRED_LINK_OPTIONS_SAVED ${CMAKE_REQUIRED_LINK_OPTIONS})
 	file(WRITE ${CMAKE_BINARY_DIR}/foo.txt "")
 	if(WITH_SANITIZE_ADDRESS)
-		list(APPEND CMAKE_REQUIRED_FLAGS "-fsanitize=address")
+		list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=address")
+		CHECK_C_COMPILER_FLAG ("-fsanitize=address" fsanitize-address)
 		CHECK_C_COMPILER_FLAG ("-fsanitize-blacklist=${CMAKE_BINARY_DIR}/foo.txt" fsanitize-blacklist)
 		CHECK_C_COMPILER_FLAG ("-fsanitize-address-use-after-scope" fsanitize-address-use-after-scope)
 
@@ -362,10 +374,9 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
 		if(fsanitize-address-use-after-scope)
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize-address-use-after-scope")
 		endif(fsanitize-address-use-after-scope)
-
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
 	elseif(WITH_SANITIZE_MEMORY)
-		list(APPEND CMAKE_REQUIRED_FLAGS "-fsanitize=memory")
+		list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=memory")
+		CHECK_C_COMPILER_FLAG ("-fsanitize=memory" fsanitize-memory)
 		CHECK_C_COMPILER_FLAG ("-fsanitize-blacklist=${CMAKE_BINARY_DIR}/foo.txt" fsanitize-blacklist)
 		CHECK_C_COMPILER_FLAG ("-fsanitize-memory-use-after-dtor" fsanitize-memory-use-after-dtor)
 		CHECK_C_COMPILER_FLAG ("-fsanitize-memory-track-origins" fsanitize-memory-track-origins)
@@ -385,22 +396,21 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
 		if (fsanitize-memory-track-origins)
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize-memory-track-origins")
 		endif(fsanitize-memory-track-origins)
-
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
 	elseif(WITH_SANITIZE_THREAD)
-		list(APPEND CMAKE_REQUIRED_FLAGS "-fsanitize=thread")
+		list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=thread")
+		CHECK_C_COMPILER_FLAG ("-fsanitize=thread" fsanitize-thread)
 		CHECK_C_COMPILER_FLAG ("-fsanitize-blacklist=${CMAKE_BINARY_DIR}/foo.txt" fsanitize-blacklist)
+
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=thread")
 		if(fsanitize-blacklist)
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/scripts/blacklist-thread-sanitizer.txt")
 		endif(fsanitize-blacklist)
 		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=thread")
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=thread")
-
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
 	endif()
 
 	file(REMOVE ${CMAKE_BINARY_DIR}/foo.txt)
+	set(CMAKE_REQUIRED_LINK_OPTIONS ${CMAKE_REQUIRED_LINK_OPTIONS_SAVED})
 
 	if (WITH_NO_UNDEFINED)
 		CHECK_C_COMPILER_FLAG (-Wl,--no-undefined no-undefined)
@@ -410,8 +420,6 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
 			SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
 		endif()
 	endif()
-
-	set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_SAVED})
 endif()
 
 if(MSVC)
@@ -595,12 +603,6 @@ if(ANDROID)
 		CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/gprof_generate.sh.cmake
 			${CMAKE_BINARY_DIR}/scripts/gprof_generate.sh @ONLY)
 	endif(WITH_GPROF)
-endif()
-
-set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-
-if(NOT IOS)
-	find_package(Threads REQUIRED)
 endif()
 
 if(NOT WIN32)
