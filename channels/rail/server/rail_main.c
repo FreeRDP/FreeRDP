@@ -60,7 +60,7 @@ static UINT rail_send(RailServerContext* context, wStream* s, ULONG length)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_send_pdu(RailServerContext* context, wStream* s, UINT16 orderType)
+static UINT rail_send_pdu(RailServerContext* context, wStream* s, UINT16 orderType)
 {
 	UINT16 orderLength;
 
