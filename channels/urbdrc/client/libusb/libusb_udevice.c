@@ -1621,9 +1621,9 @@ static IUDEVICE* udev_init(URBDRC_PLUGIN* urbdrc, libusb_context* context, LIBUS
 	{
 		pdev->isCompositeDevice = 1;
 	}
-	else if ((devDescriptor->bDeviceClass == LIBUSB_CLASS_APPLICATION) &&
+	else if ((devDescriptor->bDeviceClass == 0xef) &&
 	         (devDescriptor->bDeviceSubClass == LIBUSB_CLASS_COMM) &&
-	         (devDescriptor->bDeviceProtocol == LIBUSB_CLASS_AUDIO))
+	         (devDescriptor->bDeviceProtocol == 0x01))
 	{
 		pdev->isCompositeDevice = 1;
 	}
