@@ -38,6 +38,15 @@ BOOL pf_rail_context_init(pServerContext* ps)
 		return FALSE;
 	}
 
+	/*
+	 * when mstsc reconnects, it doesn't wait for a second handshake, so update all handshake flags
+	 * to be SET, then set them again when the remote server sends his handshake.
+	 */
+	rail_server_set_handshake_ex_flags(rail,
+	                                   TS_RAIL_ORDER_HANDSHAKEEX_FLAGS_HIDEF |
+	                                       TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED |
+	                                       TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_SNAP_ARRANGE_SUPPORTED);
+
 	rail->rdpcontext = (rdpContext*)ps;
 	return TRUE;
 }

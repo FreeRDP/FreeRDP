@@ -297,8 +297,6 @@ static UINT rail_send_server_handshake_ex(RailServerContext* context,
 	if (!context || !handshakeEx || !context->priv)
 		return ERROR_INVALID_PARAMETER;
 
-	/* Save channel flags to context */
-	context->priv->channelFlags = handshakeEx->railHandshakeFlags;
 	s = rail_pdu_init(RAIL_HANDSHAKE_EX_ORDER_LENGTH);
 
 	if (!s)
@@ -306,6 +304,8 @@ static UINT rail_send_server_handshake_ex(RailServerContext* context,
 		WLog_ERR(TAG, "rail_pdu_init failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
+
+	rail_server_set_handshake_ex_flags(context, handshakeEx->railHandshakeFlags);
 
 	rail_write_handshake_ex_order(s, handshakeEx);
 	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_HANDSHAKE_EX);
@@ -1520,6 +1520,17 @@ void rail_server_context_free(RailServerContext* context)
 
 	free(context->priv);
 	free(context);
+}
+
+void rail_server_set_handshake_ex_flags(RailServerContext* context, DWORD flags)
+{
+	RailServerPrivate* priv;
+
+	if (!context || !context->priv)
+		return;
+
+	priv = context->priv;
+	priv->channelFlags = flags;
 }
 
 UINT rail_server_handle_messages(RailServerContext* context)
