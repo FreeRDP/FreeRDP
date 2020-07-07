@@ -17,23 +17,30 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_LIB_CORE_HEARTBEET_H
-#define FREERDP_LIB_CORE_HEARTBEET_H
+#ifndef FREERDP_HEARTBEAT_H
+#define FREERDP_HEARTBEAT_H
 
-#include "rdp.h"
+#include <freerdp/types.h>
 
-#include <freerdp/heartbeat.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/log.h>
-#include <freerdp/api.h>
+typedef struct rdp_heartbeat rdpHeartbeat;
 
-#include <winpr/stream.h>
+typedef BOOL (*pServerHeartbeat)(freerdp* instance, BYTE period, BYTE count1, BYTE count2);
 
-int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s);
+struct rdp_heartbeat
+{
+	pServerHeartbeat ServerHeartbeat;
+};
 
-FREERDP_LOCAL rdpHeartbeat* heartbeat_new(void);
-FREERDP_LOCAL void heartbeat_free(rdpHeartbeat* heartbeat);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-#define HEARTBEAT_TAG FREERDP_TAG("core.heartbeat")
+	FREERDP_API BOOL freerdp_heartbeat_send_heartbeat_pdu(freerdp_peer* peer, BYTE period,
+	                                                      BYTE count1, BYTE count2);
 
-#endif /* FREERDP_LIB_CORE_HEARTBEET_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_HEARTBEAT_H */
