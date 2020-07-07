@@ -672,6 +672,7 @@ BOOL freerdp_context_new(freerdp* instance)
 	instance->update = rdp->update;
 	instance->settings = rdp->settings;
 	instance->autodetect = rdp->autodetect;
+	instance->heartbeat = rdp->heartbeat;
 	context->graphics = graphics_new(context);
 
 	if (!context->graphics)

@@ -54,6 +54,7 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <freerdp/update.h>
 #include <freerdp/message.h>
 #include <freerdp/autodetect.h>
+#include <freerdp/heartbeat.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -309,7 +310,9 @@ extern "C"
 		ALIGN64 rdpAutoDetect* autodetect; /* (offset 19)
 		                                Auto-Detect handle for the connection.
 		                                Will be initialized by a call to freerdp_context_new() */
-		UINT64 paddingB[32 - 20];          /* 20 */
+		ALIGN64 rdpHeartbeat* heartbeat;   /* (offset 21) */
+
+		UINT64 paddingB[32 - 21]; /* 21 */
 
 		ALIGN64 size_t
 		    ContextSize; /* (offset 32)
