@@ -156,12 +156,6 @@ static BOOL pf_client_use_peer_load_balance_info(pClientContext* pc)
 	return TRUE;
 }
 
-/**
- * Called before a connection is established.
- *
- * TODO: Take client to proxy settings and use channel whitelist to filter out
- * unwanted channels.
- */
 static BOOL pf_client_pre_connect(freerdp* instance)
 {
 	pClientContext* pc = (pClientContext*)instance->context;
@@ -273,6 +267,13 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	return client_receive_channel_data_original(instance, channelId, data, size, flags, totalSize);
 }
 
+static BOOL pf_client_on_server_heartbeat(freerdp* instance, BYTE period, BYTE count1, BYTE count2)
+{
+	pClientContext* pc = (pClientContext*)instance->context;
+	pServerContext* ps = pc->pdata->ps;
+	return freerdp_heartbeat_send_heartbeat_pdu(ps->context.peer, period, count1, count2);
+}
+
 /**
  * Called after a RDP connection was successfully established.
  * Settings might have changed during negotiation of client / server feature
@@ -347,6 +348,8 @@ static BOOL pf_client_post_connect(freerdp* instance)
 			HashTable_Add(pc->vc_ids, (void*)channel_name, (void*)channel_id);
 		}
 	}
+
+	instance->heartbeat->ServerHeartbeat = pf_client_on_server_heartbeat;
 
 	/*
 	 * after the connection fully established and settings were negotiated with target server,
