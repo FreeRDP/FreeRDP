@@ -29,7 +29,7 @@ def getVersionName = { ->
 
 ext {
     versionName = properties.get('VERSION_NAME', getVersionName())
-    versionCode = properties.get('VERSION_CODE', 18)
+    versionCode = properties.get('VERSION_CODE', 19)
 
     println '----------------- Project configuration -------------------'
     println 'VERSION_NAME:       ' + versionName
