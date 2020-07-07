@@ -31,6 +31,7 @@ int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 	BYTE period;
 	BYTE count1;
 	BYTE count2;
+	BOOL rc;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return -1;
@@ -44,7 +45,37 @@ int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 	         "received Heartbeat PDU -> period=%" PRIu8 ", count1=%" PRIu8 ", count2=%" PRIu8 "",
 	         period, count1, count2);
 
+	rc = IFCALLRESULT(TRUE, rdp->heartbeat->ServerHeartbeat, rdp->instance, period, count1, count2);
+	if (!rc)
+	{
+		WLog_ERR(HEARTBEAT_TAG, "heartbeat->ServerHeartbeat callback failed!");
+		return -1;
+	}
+
 	return 0;
+}
+
+BOOL freerdp_heartbeat_send_heartbeat_pdu(freerdp_peer* peer, BYTE period, BYTE count1, BYTE count2)
+{
+	rdpRdp* rdp = peer->context->rdp;
+	wStream* s = rdp_message_channel_pdu_init(rdp);
+
+	if (!s)
+		return FALSE;
+
+	Stream_Seek_UINT8(s);          /* reserved (1 byte) */
+	Stream_Write_UINT8(s, period); /* period (1 byte) */
+	Stream_Write_UINT8(s, count1); /* count1 (1 byte) */
+	Stream_Write_UINT8(s, count2); /* count2 (1 byte) */
+
+	WLog_DBG(HEARTBEAT_TAG,
+	         "sending Heartbeat PDU -> period=%" PRIu8 ", count1=%" PRIu8 ", count2=%" PRIu8 "",
+	         period, count1, count2);
+
+	if (!rdp_send_message_channel_pdu(rdp, s, SEC_HEARTBEAT))
+		return FALSE;
+
+	return TRUE;
 }
 
 rdpHeartbeat* heartbeat_new(void)
