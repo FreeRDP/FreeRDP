@@ -799,7 +799,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 			if ((ret <= 0) || (ret <= 4) || (slen <= 4) || (locale != LIBUSB_DT_STRING) ||
 			    (ret > UINT8_MAX))
 			{
-				char* msg = "SHORT_DESCRIPTOR";
+				const char* msg = "SHORT_DESCRIPTOR";
 				if (ret < 0)
 					msg = libusb_error_name(ret);
 				WLog_Print(urbdrc->log, WLOG_DEBUG,
@@ -1171,7 +1171,16 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 #endif
 	libusb_set_iso_packet_lengths(iso_transfer, iso_packet_size);
 
-	HashTable_Add(pdev->request_queue, (void*)(size_t)streamID, iso_transfer);
+	if ((HashTable_Contains(pdev->request_queue, (void*)(size_t)streamID)) ||
+	    (HashTable_Add(pdev->request_queue, (void*)(size_t)streamID, iso_transfer) < 0))
+	{
+		WLog_Print(urbdrc->log, WLOG_WARN,
+		           "Failed to queue iso transfer, streamID %08" PRIx32 " already in use!",
+		           streamID);
+		async_transfer_user_data_free(user_data);
+		libusb_free_transfer(iso_transfer);
+		return -1;
+	}
 	return libusb_submit_transfer(iso_transfer);
 }
 
@@ -1281,7 +1290,15 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL
 #else
 	user_data->streamID = streamID;
 #endif
-	HashTable_Add(pdev->request_queue, (void*)(size_t)streamID, transfer);
+	if ((HashTable_Contains(pdev->request_queue, (void*)(size_t)streamID)) ||
+	    (HashTable_Add(pdev->request_queue, (void*)(size_t)streamID, transfer) < 0))
+	{
+		WLog_Print(urbdrc->log, WLOG_WARN,
+		           "Failed to queue transfer, streamID %08" PRIx32 " already in use!", streamID);
+		async_transfer_user_data_free(user_data);
+		libusb_free_transfer(transfer);
+		return -1;
+	}
 	return libusb_submit_transfer(transfer);
 }
 
