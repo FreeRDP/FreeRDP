@@ -319,7 +319,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 		if (!pf_capture_create_session_directory(pc))
 		{
 			LOG_ERR(TAG, pc, "pf_capture_create_session_directory failed!");
-		return FALSE;
+			return FALSE;
 		}
 
 		LOG_ERR(TAG, pc, "frames dir created: %s", pc->frames_dir);
