@@ -75,11 +75,32 @@ struct _ASYNC_TRANSFER_USER_DATA
 	UINT32 OutputBufferSize;
 	URBDRC_CHANNEL_CALLBACK* callback;
 	t_isoch_transfer_cb cb;
-	wHashTable* queue;
+	wArrayList* queue;
 #if !defined(HAVE_STREAM_ID_API)
 	UINT32 streamID;
 #endif
 };
+
+static struct libusb_transfer* list_contains(wArrayList* list, UINT32 streamID)
+{
+	int x, count;
+	if (!list)
+		return NULL;
+	count = ArrayList_Count(list);
+	for (x = 0; x < count; x++)
+	{
+		struct libusb_transfer* transfer = ArrayList_GetItem(list, x);
+
+#if defined(HAVE_STREAM_ID_API)
+		const UINT32 currentID = libusb_transfer_get_stream_id(transfer);
+#else
+		const UINT32 currentID = user_data->streamID;
+#endif
+		if (currentID == streamID)
+			return transfer;
+	}
+	return NULL;
+}
 
 static BOOL log_libusb_result(wLog* log, DWORD lvl, const char* fmt, int error, ...)
 {
@@ -235,7 +256,7 @@ static void func_iso_callback(struct libusb_transfer* transfer)
 			const UINT32 InterfaceId =
 			    ((STREAM_ID_PROXY << 30) | user_data->idev->get_ReqCompletion(user_data->idev));
 
-			if (HashTable_Contains(user_data->queue, (void*)(size_t)streamID))
+			if (list_contains(user_data->queue, streamID))
 			{
 				if (!user_data->noack)
 				{
@@ -247,7 +268,7 @@ static void func_iso_callback(struct libusb_transfer* transfer)
 					              user_data->OutputBufferSize);
 					user_data->data = NULL;
 				}
-				HashTable_Remove(user_data->queue, (void*)(size_t)streamID);
+				ArrayList_Remove(user_data->queue, transfer);
 			}
 		}
 		break;
@@ -303,7 +324,7 @@ static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
 	streamID = user_data->streamID;
 #endif
 
-	if (HashTable_Contains(user_data->queue, (void*)(size_t)streamID))
+	if (list_contains(user_data->queue, streamID))
 	{
 		const UINT32 InterfaceId =
 		    ((STREAM_ID_PROXY << 30) | user_data->idev->get_ReqCompletion(user_data->idev));
@@ -314,7 +335,7 @@ static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
 		              transfer->status, user_data->StartFrame, user_data->ErrorCount,
 		              transfer->actual_length);
 		user_data->data = NULL;
-		HashTable_Remove(user_data->queue, (void*)(size_t)streamID);
+		ArrayList_Remove(user_data->queue, transfer);
 	}
 }
 
@@ -1172,8 +1193,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 #endif
 	libusb_set_iso_packet_lengths(iso_transfer, iso_packet_size);
 
-	if ((HashTable_Contains(pdev->request_queue, (void*)(size_t)streamID)) ||
-	    (HashTable_Add(pdev->request_queue, (void*)(size_t)streamID, iso_transfer) < 0))
+	if (ArrayList_Add(pdev->request_queue, iso_transfer) < 0)
 	{
 		WLog_Print(urbdrc->log, WLOG_WARN,
 		           "Failed to queue iso transfer, streamID %08" PRIx32 " already in use!",
@@ -1291,8 +1311,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL
 #else
 	user_data->streamID = streamID;
 #endif
-	if ((HashTable_Contains(pdev->request_queue, (void*)(size_t)streamID)) ||
-	    (HashTable_Add(pdev->request_queue, (void*)(size_t)streamID, transfer) < 0))
+	if (ArrayList_Add(pdev->request_queue, transfer) < 0)
 	{
 		WLog_Print(urbdrc->log, WLOG_WARN,
 		           "Failed to queue transfer, streamID %08" PRIx32 " already in use!", streamID);
@@ -1303,12 +1322,11 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL
 	return libusb_submit_transfer(transfer);
 }
 
-static int func_cancel_xact_request(URBDRC_PLUGIN* urbdrc, wHashTable* queue, uint32_t streamID,
-                                    struct libusb_transfer* transfer)
+static int func_cancel_xact_request(URBDRC_PLUGIN* urbdrc, struct libusb_transfer* transfer)
 {
 	int status;
 
-	if (!urbdrc || !queue || !transfer)
+	if (!urbdrc || !transfer)
 		return -1;
 
 	status = libusb_cancel_transfer(transfer);
@@ -1326,22 +1344,21 @@ static int func_cancel_xact_request(URBDRC_PLUGIN* urbdrc, wHashTable* queue, ui
 static void libusb_udev_cancel_all_transfer_request(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
-	ULONG_PTR* keys;
 	int count, x;
 
 	if (!pdev || !pdev->request_queue || !pdev->urbdrc)
 		return;
 
-	count = HashTable_GetKeys(pdev->request_queue, &keys);
+	ArrayList_Lock(pdev->request_queue);
+	count = ArrayList_Count(pdev->request_queue);
 
 	for (x = 0; x < count; x++)
 	{
-		struct libusb_transfer* transfer =
-		    HashTable_GetItemValue(pdev->request_queue, (void*)keys[x]);
-		func_cancel_xact_request(pdev->urbdrc, pdev->request_queue, (uint32_t)keys[x], transfer);
+		struct libusb_transfer* transfer = ArrayList_GetItem(pdev->request_queue, x);
+		func_cancel_xact_request(pdev->urbdrc, transfer);
 	}
 
-	free(keys);
+	ArrayList_Unlock(pdev->request_queue);
 }
 
 static int libusb_udev_cancel_transfer_request(IUDEVICE* idev, UINT32 RequestId)
@@ -1349,24 +1366,22 @@ static int libusb_udev_cancel_transfer_request(IUDEVICE* idev, UINT32 RequestId)
 	UDEVICE* pdev = (UDEVICE*)idev;
 	struct libusb_transfer* transfer;
 	URBDRC_PLUGIN* urbdrc;
-	BOOL id1;
-	uint32_t cancelID;
 	uint32_t cancelID1 = 0x40000000 | RequestId;
 	uint32_t cancelID2 = 0x80000000 | RequestId;
 
 	if (!idev || !pdev->urbdrc || !pdev->request_queue)
 		return -1;
 
-	id1 = HashTable_Contains(pdev->request_queue, (void*)(size_t)cancelID1);
+	transfer = list_contains(pdev->request_queue, cancelID1);
+	if (!transfer)
+		transfer = list_contains(pdev->request_queue, cancelID2);
 
-	if (!id1)
+	if (!transfer)
 		return -1;
 
 	urbdrc = (URBDRC_PLUGIN*)pdev->urbdrc;
-	cancelID = (id1) ? cancelID1 : cancelID2;
 
-	transfer = HashTable_GetItemValue(pdev->request_queue, (void*)(size_t)cancelID);
-	return func_cancel_xact_request(urbdrc, pdev->request_queue, cancelID, transfer);
+	return func_cancel_xact_request(urbdrc, transfer);
 }
 
 BASIC_STATE_FUNC_DEFINED(channelManager, IWTSVirtualChannelManager*)
@@ -1421,7 +1436,7 @@ static void udev_free(IUDEVICE* idev)
 
 	/* release all interface and  attach kernel driver */
 	udev->iface.attach_kernel_driver(idev);
-	HashTable_Free(udev->request_queue);
+	ArrayList_Free(udev->request_queue);
 	/* free the config descriptor that send from windows */
 	msusb_msconfig_free(udev->MsConfig);
 	libusb_close(udev->libusb_handle);
@@ -1656,12 +1671,12 @@ static IUDEVICE* udev_init(URBDRC_PLUGIN* urbdrc, libusb_context* context, LIBUS
 	/* initialize pdev */
 	pdev->bus_number = bus_number;
 	pdev->dev_number = dev_number;
-	pdev->request_queue = HashTable_New(TRUE);
+	pdev->request_queue = ArrayList_New(TRUE);
 
 	if (!pdev->request_queue)
 		goto fail;
 
-	pdev->request_queue->valueFree = request_free;
+	ArrayList_Object(pdev->request_queue)->fnObjectFree = request_free;
 
 	/* set config of windows */
 	pdev->MsConfig = msusb_msconfig_new();
