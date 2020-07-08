@@ -102,6 +102,31 @@ static struct libusb_transfer* list_contains(wArrayList* list, UINT32 streamID)
 	return NULL;
 }
 
+static UINT32 stream_id_from_buffer(struct libusb_transfer* transfer)
+{
+	if (!transfer)
+		return 0;
+#if defined(HAVE_STREAM_ID_API)
+	return libusb_transfer_get_stream_id(transfer);
+#else
+	ASYNC_TRANSFER_USER_DATA* user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
+	if (!user_data)
+		return 0;
+	return user_data->streamID;
+#endif
+}
+
+static void set_stream_id_for_buffer(struct libusb_transfer* transfer, UINT32 streamID)
+{
+#if defined(HAVE_STREAM_ID_API)
+	libusb_transfer_set_stream_id(transfer, streamID);
+#else
+	ASYNC_TRANSFER_USER_DATA* user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
+	if (!user_data)
+		return;
+	user_data->streamID = streamID;
+#endif
+}
 static BOOL log_libusb_result(wLog* log, DWORD lvl, const char* fmt, int error, ...)
 {
 	if (error < 0)
@@ -208,11 +233,7 @@ static void async_transfer_user_data_free(ASYNC_TRANSFER_USER_DATA* user_data)
 static void func_iso_callback(struct libusb_transfer* transfer)
 {
 	ASYNC_TRANSFER_USER_DATA* user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
-#if defined(HAVE_STREAM_ID_API)
-	const UINT32 streamID = libusb_transfer_get_stream_id(transfer);
-#else
-	const UINT32 streamID = user_data->streamID;
-#endif
+	const UINT32 streamID = stream_id_from_buffer(transfer);
 
 	switch (transfer->status)
 	{
@@ -318,11 +339,7 @@ static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
 		return;
 	}
 
-#if defined(HAVE_STREAM_ID_API)
-	streamID = libusb_transfer_get_stream_id(transfer);
-#else
-	streamID = user_data->streamID;
-#endif
+	streamID = stream_id_from_buffer(transfer);
 
 	if (list_contains(user_data->queue, streamID))
 	{
@@ -1185,11 +1202,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 	libusb_fill_iso_transfer(iso_transfer, pdev->libusb_handle, EndpointAddress,
 	                         Stream_Pointer(user_data->data), BufferSize, NumberOfPackets,
 	                         func_iso_callback, user_data, Timeout);
-#if defined(HAVE_STREAM_ID_API)
-	libusb_transfer_set_stream_id(iso_transfer, streamID);
-#else
-	user_data->streamID = streamID;
-#endif
+	set_stream_id_for_buffer(iso_transfer, streamID);
 	libusb_set_iso_packet_lengths(iso_transfer, iso_packet_size);
 
 	if (ArrayList_Add(pdev->request_queue, iso_transfer) < 0)
@@ -1305,11 +1318,8 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL
 			return -1;
 	}
 
-#if defined(HAVE_STREAM_ID_API)
-	libusb_transfer_set_stream_id(transfer, streamID);
-#else
-	user_data->streamID = streamID;
-#endif
+	set_stream_id_for_buffer(transfer, streamID);
+
 	if (ArrayList_Add(pdev->request_queue, transfer) < 0)
 	{
 		WLog_Print(urbdrc->log, WLOG_WARN,
