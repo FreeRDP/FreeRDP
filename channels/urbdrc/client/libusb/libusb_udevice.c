@@ -924,7 +924,10 @@ static int libusb_udev_os_feature_descriptor_request(IUDEVICE* idev, UINT32 Requ
 		                                LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | Recipient,
 		                                bMS_Vendorcode, (InterfaceNumber << 8) | Ms_PageIndex,
 		                                Ms_featureDescIndex, Buffer, *BufferSize, Timeout);
-		*BufferSize = error;
+		log_libusb_result(pdev->urbdrc->log, WLOG_DEBUG, "libusb_control_transfer", error);
+
+		if (error >= 0)
+			*BufferSize = error;
 	}
 
 	if (error < 0)
