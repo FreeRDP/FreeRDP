@@ -391,7 +391,7 @@ void urbdrc_dump_message(wLog* log, BOOL client, BOOL write, wStream* s)
 	pos = Stream_GetPosition(s);
 	if (write)
 	{
-		length = Stream_GetPosition(s);
+		length = pos;
 		Stream_SetPosition(s, 0);
 	}
 	else
@@ -407,7 +407,7 @@ void urbdrc_dump_message(wLog* log, BOOL client, BOOL write, wStream* s)
 
 	WLog_Print(log, WLOG_DEBUG,
 	           "[%-5s] %s [%08" PRIx32 "] InterfaceId=%08" PRIx32 ", MessageId=%08" PRIx32
-	           ", FunctionId=%08" PRIx32 ", length=%" PRIdz,
+	           ", FunctionId=%08" PRIx32 ", length=%" PRIuz,
 	           type, call_to_string(client, InterfaceId, FunctionId), FunctionId, InterfaceId,
 	           MessageId, FunctionId, length);
 #if defined(WITH_DEBUG_URBDRC)
