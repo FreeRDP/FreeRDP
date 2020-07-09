@@ -235,9 +235,9 @@ static void func_iso_callback(struct libusb_transfer* transfer)
 	ASYNC_TRANSFER_USER_DATA* user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
 	const UINT32 streamID = stream_id_from_buffer(transfer);
 
+	ArrayList_Lock(user_data->queue);
 	switch (transfer->status)
 	{
-
 		case LIBUSB_TRANSFER_COMPLETED:
 		{
 			int i;
@@ -296,6 +296,7 @@ static void func_iso_callback(struct libusb_transfer* transfer)
 		default:
 			break;
 	}
+	ArrayList_Unlock(user_data->queue);
 }
 
 static const LIBUSB_ENDPOINT_DESCEIPTOR* func_get_ep_desc(LIBUSB_CONFIG_DESCRIPTOR* LibusbConfig,
@@ -338,7 +339,7 @@ static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
 		WLog_ERR(TAG, "[%s]: Invalid transfer->user_data!");
 		return;
 	}
-
+	ArrayList_Lock(user_data->queue);
 	streamID = stream_id_from_buffer(transfer);
 
 	if (list_contains(user_data->queue, streamID))
@@ -354,6 +355,7 @@ static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
 		user_data->data = NULL;
 		ArrayList_Remove(user_data->queue, transfer);
 	}
+	ArrayList_Unlock(user_data->queue);
 }
 
 static BOOL func_set_usbd_status(URBDRC_PLUGIN* urbdrc, UDEVICE* pdev, UINT32* status,
@@ -1351,6 +1353,7 @@ static int func_cancel_xact_request(URBDRC_PLUGIN* urbdrc, struct libusb_transfe
 
 	return 0;
 }
+
 static void libusb_udev_cancel_all_transfer_request(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
@@ -1373,25 +1376,28 @@ static void libusb_udev_cancel_all_transfer_request(IUDEVICE* idev)
 
 static int libusb_udev_cancel_transfer_request(IUDEVICE* idev, UINT32 RequestId)
 {
+	int rc = -1;
 	UDEVICE* pdev = (UDEVICE*)idev;
 	struct libusb_transfer* transfer;
-	URBDRC_PLUGIN* urbdrc;
 	uint32_t cancelID1 = 0x40000000 | RequestId;
 	uint32_t cancelID2 = 0x80000000 | RequestId;
 
 	if (!idev || !pdev->urbdrc || !pdev->request_queue)
 		return -1;
 
+	ArrayList_Lock(pdev->request_queue);
 	transfer = list_contains(pdev->request_queue, cancelID1);
 	if (!transfer)
 		transfer = list_contains(pdev->request_queue, cancelID2);
 
-	if (!transfer)
-		return -1;
+	if (transfer)
+	{
+		URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pdev->urbdrc;
 
-	urbdrc = (URBDRC_PLUGIN*)pdev->urbdrc;
-
-	return func_cancel_xact_request(urbdrc, transfer);
+		rc = func_cancel_xact_request(urbdrc, transfer);
+	}
+	ArrayList_Unlock(pdev->request_queue);
+	return rc;
 }
 
 BASIC_STATE_FUNC_DEFINED(channelManager, IWTSVirtualChannelManager*)
