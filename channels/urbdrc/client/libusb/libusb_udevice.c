@@ -222,7 +222,6 @@ static ASYNC_TRANSFER_USER_DATA* async_transfer_user_data_new(IUDEVICE* idev, UI
 
 static void async_transfer_user_data_free(ASYNC_TRANSFER_USER_DATA* user_data)
 {
-
 	if (user_data)
 	{
 		Stream_Free(user_data->data, TRUE);
@@ -234,8 +233,9 @@ static void func_iso_callback(struct libusb_transfer* transfer)
 {
 	ASYNC_TRANSFER_USER_DATA* user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
 	const UINT32 streamID = stream_id_from_buffer(transfer);
+	wArrayList* list = user_data->queue;
 
-	ArrayList_Lock(user_data->queue);
+	ArrayList_Lock(list);
 	switch (transfer->status)
 	{
 		case LIBUSB_TRANSFER_COMPLETED:
@@ -277,7 +277,7 @@ static void func_iso_callback(struct libusb_transfer* transfer)
 			const UINT32 InterfaceId =
 			    ((STREAM_ID_PROXY << 30) | user_data->idev->get_ReqCompletion(user_data->idev));
 
-			if (list_contains(user_data->queue, streamID))
+			if (list_contains(list, streamID))
 			{
 				if (!user_data->noack)
 				{
@@ -289,14 +289,14 @@ static void func_iso_callback(struct libusb_transfer* transfer)
 					              user_data->OutputBufferSize);
 					user_data->data = NULL;
 				}
-				ArrayList_Remove(user_data->queue, transfer);
+				ArrayList_Remove(list, transfer);
 			}
 		}
 		break;
 		default:
 			break;
 	}
-	ArrayList_Unlock(user_data->queue);
+	ArrayList_Unlock(list);
 }
 
 static const LIBUSB_ENDPOINT_DESCEIPTOR* func_get_ep_desc(LIBUSB_CONFIG_DESCRIPTOR* LibusbConfig,
@@ -332,6 +332,7 @@ static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
 {
 	ASYNC_TRANSFER_USER_DATA* user_data;
 	uint32_t streamID;
+	wArrayList* list;
 
 	user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
 	if (!user_data)
@@ -339,10 +340,11 @@ static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
 		WLog_ERR(TAG, "[%s]: Invalid transfer->user_data!");
 		return;
 	}
-	ArrayList_Lock(user_data->queue);
+	list = user_data->queue;
+	ArrayList_Lock(list);
 	streamID = stream_id_from_buffer(transfer);
 
-	if (list_contains(user_data->queue, streamID))
+	if (list_contains(list, streamID))
 	{
 		const UINT32 InterfaceId =
 		    ((STREAM_ID_PROXY << 30) | user_data->idev->get_ReqCompletion(user_data->idev));
@@ -353,9 +355,9 @@ static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
 		              transfer->status, user_data->StartFrame, user_data->ErrorCount,
 		              transfer->actual_length);
 		user_data->data = NULL;
-		ArrayList_Remove(user_data->queue, transfer);
+		ArrayList_Remove(list, transfer);
 	}
-	ArrayList_Unlock(user_data->queue);
+	ArrayList_Unlock(list);
 }
 
 static BOOL func_set_usbd_status(URBDRC_PLUGIN* urbdrc, UDEVICE* pdev, UINT32* status,
@@ -1591,6 +1593,7 @@ static void request_free(void* value)
 
 	user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
 	async_transfer_user_data_free(user_data);
+	transfer->user_data = NULL;
 }
 
 static IUDEVICE* udev_init(URBDRC_PLUGIN* urbdrc, libusb_context* context, LIBUSB_DEVICE* device,
