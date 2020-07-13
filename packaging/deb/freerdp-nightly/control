@@ -37,6 +37,7 @@ Build-Depends:
  libusb-1.0-0-dev,
  libudev-dev,
  libdbus-glib-1-dev,
+ libpam0g-dev,
  uuid-dev, 
  libxml2-dev,
  libgstreamer1.0-dev | libgstreamer0.10-dev,
