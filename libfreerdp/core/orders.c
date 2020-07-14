@@ -2623,7 +2623,7 @@ static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BY
 	const BYTE* palette = Stream_Pointer(s) + 16;
 	const INT32 bytesPerPixel = ((bpp + 1) / 8);
 
-	if (!Stream_SafeSeek(s, 16ULL + 7ULL * bytesPerPixel)) // 64 / 4
+	if (Stream_GetRemainingLength(s) < 16 + bytesPerPixel * 4)
 		return FALSE;
 
 	for (y = 7; y >= 0; y--)
@@ -3617,7 +3617,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 {
 	BOOL rc = FALSE;
-	size_t start, end, diff;
+	size_t start, end, pos, diff;
 	BYTE orderType;
 	UINT16 extraFlags;
 	UINT16 orderLength;
@@ -3766,15 +3766,15 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 		WLog_Print(update->log, WLOG_ERROR, "SECONDARY ORDER %s failed", name);
 	}
 
-	start += orderLength + 7;
-	end = Stream_GetPosition(s);
-	if (start > end)
+	end = start + orderLength + 7;
+	pos = Stream_GetPosition(s);
+	if (pos > end)
 	{
 		WLog_Print(update->log, WLOG_WARN, "SECONDARY_ORDER %s: read %" PRIuz "bytes too much",
-		           name, end - start);
+		           name, pos - end);
 		return FALSE;
 	}
-	diff = end - start;
+	diff = end - pos;
 	if (diff > 0)
 	{
 		WLog_Print(update->log, WLOG_DEBUG,
