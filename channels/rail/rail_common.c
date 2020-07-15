@@ -51,9 +51,13 @@ static const char* const RAIL_ORDER_TYPE_STRINGS[] = { "",
 	                                                   "",
 	                                                   "" };
 
-const char* rail_get_order_type_string(BYTE orderType)
+const char* rail_get_order_type_string(UINT16 orderType)
 {
-	return RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)];
+	UINT32 index = ((orderType & 0xF0) >> 3) + (orderType & 0x0F);
+	if (index >= ARRAYSIZE(RAIL_ORDER_TYPE_STRINGS))
+		return "UNKNOWN";
+
+	return RAIL_ORDER_TYPE_STRINGS[index];
 }
 
 /**

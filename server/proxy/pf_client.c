@@ -35,6 +35,7 @@
 #include "pf_update.h"
 #include "pf_log.h"
 #include "pf_modules.h"
+#include "pf_input.h"
 #include "pf_capture.h"
 
 #define TAG PROXY_TAG("client")
@@ -70,6 +71,19 @@ static void pf_client_on_error_info(void* ctx, ErrorInfoEventArgs* e)
 	/* forward error back to client */
 	freerdp_set_error_info(ps->context.rdp, e->code);
 	freerdp_send_error_info(ps->context.rdp);
+}
+
+static void pf_client_on_activated(void* ctx, ActivatedEventArgs* e)
+{
+	pClientContext* pc = (pClientContext*)ctx;
+	pServerContext* ps = pc->pdata->ps;
+	freerdp_peer* peer = ps->context.peer;
+
+	LOG_INFO(TAG, pc, "client activated, registering server input callbacks");
+
+	/* Register server input/update callbacks only after proxy client is fully activated */
+	pf_server_register_input_callbacks(peer->input);
+	pf_server_register_update_callbacks(peer->update);
 }
 
 static BOOL pf_client_load_rdpsnd(pClientContext* pc)
@@ -156,12 +170,6 @@ static BOOL pf_client_use_peer_load_balance_info(pClientContext* pc)
 	return TRUE;
 }
 
-/**
- * Called before a connection is established.
- *
- * TODO: Take client to proxy settings and use channel whitelist to filter out
- * unwanted channels.
- */
 static BOOL pf_client_pre_connect(freerdp* instance)
 {
 	pClientContext* pc = (pClientContext*)instance->context;
@@ -203,6 +211,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    pf_channels_on_client_channel_disconnect);
 	PubSub_SubscribeErrorInfo(instance->context->pubSub, pf_client_on_error_info);
+	PubSub_SubscribeActivated(instance->context->pubSub, pf_client_on_activated);
 	/**
 	 * Load all required plugins / channels / libraries specified by current
 	 * settings.
@@ -271,6 +280,13 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	}
 
 	return client_receive_channel_data_original(instance, channelId, data, size, flags, totalSize);
+}
+
+static BOOL pf_client_on_server_heartbeat(freerdp* instance, BYTE period, BYTE count1, BYTE count2)
+{
+	pClientContext* pc = (pClientContext*)instance->context;
+	pServerContext* ps = pc->pdata->ps;
+	return freerdp_heartbeat_send_heartbeat_pdu(ps->context.peer, period, count1, count2);
 }
 
 /**
@@ -347,6 +363,8 @@ static BOOL pf_client_post_connect(freerdp* instance)
 			HashTable_Add(pc->vc_ids, (void*)channel_name, (void*)channel_id);
 		}
 	}
+
+	instance->heartbeat->ServerHeartbeat = pf_client_on_server_heartbeat;
 
 	/*
 	 * after the connection fully established and settings were negotiated with target server,

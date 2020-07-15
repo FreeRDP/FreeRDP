@@ -60,7 +60,7 @@ static UINT rail_send(RailServerContext* context, wStream* s, ULONG length)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rail_send_pdu(RailServerContext* context, wStream* s, UINT16 orderType)
+static UINT rail_server_send_pdu(RailServerContext* context, wStream* s, UINT16 orderType)
 {
 	UINT16 orderLength;
 
@@ -278,7 +278,7 @@ static UINT rail_send_server_handshake(RailServerContext* context,
 	}
 
 	rail_write_handshake_order(s, handshake);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_HANDSHAKE);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_HANDSHAKE);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -297,8 +297,6 @@ static UINT rail_send_server_handshake_ex(RailServerContext* context,
 	if (!context || !handshakeEx || !context->priv)
 		return ERROR_INVALID_PARAMETER;
 
-	/* Save channel flags to context */
-	context->priv->channelFlags = handshakeEx->railHandshakeFlags;
 	s = rail_pdu_init(RAIL_HANDSHAKE_EX_ORDER_LENGTH);
 
 	if (!s)
@@ -307,8 +305,10 @@ static UINT rail_send_server_handshake_ex(RailServerContext* context,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
+	rail_server_set_handshake_ex_flags(context, handshakeEx->railHandshakeFlags);
+
 	rail_write_handshake_ex_order(s, handshakeEx);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_HANDSHAKE_EX);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_HANDSHAKE_EX);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -344,7 +344,7 @@ static UINT rail_send_server_sysparam(RailServerContext* context,
 	}
 
 	rail_write_sysparam_order(s, sysparam, extendedSpiSupported);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_SYSPARAM);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_SYSPARAM);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -372,7 +372,7 @@ static UINT rail_send_server_local_move_size(RailServerContext* context,
 	}
 
 	rail_write_local_move_size_order(s, localMoveSize);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_LOCALMOVESIZE);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_LOCALMOVESIZE);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -400,7 +400,7 @@ static UINT rail_send_server_min_max_info(RailServerContext* context,
 	}
 
 	rail_write_min_max_info_order(s, minMaxInfo);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_MINMAXINFO);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_MINMAXINFO);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -428,7 +428,7 @@ static UINT rail_send_server_taskbar_info(RailServerContext* context,
 	}
 
 	rail_write_taskbar_info_order(s, taskbarInfo);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_TASKBARINFO);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_TASKBARINFO);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -456,7 +456,7 @@ static UINT rail_send_server_langbar_info(RailServerContext* context,
 	}
 
 	rail_write_langbar_info_order(s, langbarInfo);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_LANGBARINFO);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_LANGBARINFO);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -484,7 +484,7 @@ static UINT rail_send_server_exec_result(RailServerContext* context,
 	}
 
 	rail_write_exec_result_order(s, execResult);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_EXEC_RESULT);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_EXEC_RESULT);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -512,7 +512,7 @@ static UINT rail_send_server_z_order_sync(RailServerContext* context,
 	}
 
 	rail_write_z_order_sync_order(s, zOrderSync);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_ZORDER_SYNC);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_ZORDER_SYNC);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -539,7 +539,7 @@ static UINT rail_send_server_cloak(RailServerContext* context, const RAIL_CLOAK*
 	}
 
 	rail_write_cloak_order(s, cloak);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_CLOAK);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_CLOAK);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -568,7 +568,7 @@ rail_send_server_power_display_request(RailServerContext* context,
 	}
 
 	rail_write_power_display_request_order(s, powerDisplayRequest);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_POWER_DISPLAY_REQUEST);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_POWER_DISPLAY_REQUEST);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -596,7 +596,7 @@ static UINT rail_send_server_get_app_id_resp(RailServerContext* context,
 	}
 
 	rail_write_get_app_id_resp_order(s, getAppidResp);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_GET_APPID_RESP);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_GET_APPID_RESP);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -624,7 +624,7 @@ static UINT rail_send_server_get_appid_resp_ex(RailServerContext* context,
 	}
 
 	rail_write_get_appid_resp_ex_order(s, getAppidRespEx);
-	error = rail_send_pdu(context, s, TS_RAIL_ORDER_GET_APPID_RESP_EX);
+	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_GET_APPID_RESP_EX);
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -1520,6 +1520,17 @@ void rail_server_context_free(RailServerContext* context)
 
 	free(context->priv);
 	free(context);
+}
+
+void rail_server_set_handshake_ex_flags(RailServerContext* context, DWORD flags)
+{
+	RailServerPrivate* priv;
+
+	if (!context || !context->priv)
+		return;
+
+	priv = context->priv;
+	priv->channelFlags = flags;
 }
 
 UINT rail_server_handle_messages(RailServerContext* context)
