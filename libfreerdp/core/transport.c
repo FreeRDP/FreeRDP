@@ -637,6 +637,9 @@ static SSIZE_T transport_read_layer_bytes(rdpTransport* transport, wStream* s, s
 	if (status <= 0)
 		return status;
 
+	if (transport->NextPDUBytesLeft > 0)
+		transport->NextPDUBytesLeft -= status;
+
 	Stream_Seek(s, (size_t)status);
 
 	return status == (SSIZE_T)toRead ? 1 : 0;
@@ -662,11 +665,11 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 		status = transport_handle_pdu(transport, s, &left))
 	{
 		read = transport_read_layer_bytes(transport, s, left ? left : 1);
-		WLog_Print(transport->log, WLOG_DEBUG, "read: %d, left to read: %d", read, left);
 		if (read < 0)
 			return read;
+		if (left > 0)
+			left -= read;
 	}
-	WLog_Print(transport->log, WLOG_DEBUG, "status: %d", status);
 	return status;
 }
 
@@ -827,8 +830,8 @@ static BOOL transport_prepare_stream(rdpTransport *transport, wStream *s)
 		* we need to move it into next pdu's buffer  */
 		Stream_SetPosition(s, Stream_Length(s) + transport->NextPDUBytesLeft);
 		Stream_Read(s, transport->ReceiveBuffer->pointer, -(transport->NextPDUBytesLeft));
-		transport->NextPDUBytesLeft = 0;
 	}
+	transport->NextPDUBytesLeft = 0;
 	Stream_Release(s);
 	return TRUE;
 }
@@ -1196,9 +1199,6 @@ int transport_check_fds(rdpTransport* transport)
 
 		received = transport->ReceiveBuffer;
 
-/*		if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
-			return -1; */
-
 		/**
 		 * status:
 		 * 	-1: error
@@ -1227,10 +1227,10 @@ int transport_check_fds(rdpTransport* transport)
 	}
 
 /*	if (now >= dueDate)
-	{ */
-//		SetEvent(transport->rereadEvent);
-//		transport->haveMoreBytesToRead = TRUE;
-//	}
+	{
+		SetEvent(transport->rereadEvent);
+		transport->haveMoreBytesToRead = TRUE;
+	} */
 
 	return 0;
 }
