@@ -1,3 +1,31 @@
+# 2020-07-20 Version 2.2.0
+
+Important notes:
+* CVE-2020-15103 - Integer overflow due to missing input sanitation in rdpegfx channel
+
+Noteworty changes:
+* fix: memory leak in nsc
+* urbdrc
+  * some fixes and improvements
+* build
+  *  use cmake to detect getlogin_r
+  * improve asan checks/detection
+* server/proxy
+  * new: support for heartbeats
+  * new: support for rail handshake ex flags
+  * fix: possible race condition with redirects
+
+Fixed issues:
+* #6263 Sound & mic - filter GSM codec for microphone redirection
+* #6335: windows client title length
+* #6370 - "Alternate Secondary Drawing Order UNKNOWN"
+* #6298 - remoteapp with dialog is disconnecting when it loses focus
+* #6299 - v2.1.2: Can't connect to Windows7
+
+For a complete and detailed change log since the last release run:
+git log 2.1.2..2.2.0
+
+
 # 2020-06-22  Version 2.1.2
 
 Important notes:
