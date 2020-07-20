@@ -2674,9 +2674,10 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 	if (!rc)
 		goto fail;
 
-	Stream_Read_UINT8(s, cache_brush->cx);     /* cx (1 byte) */
-	Stream_Read_UINT8(s, cache_brush->cy);     /* cy (1 byte) */
-	/* according to  Section 2.2.2.2.1.2.7 errata the windows implementation sets this filed is set to 0x00 */
+	Stream_Read_UINT8(s, cache_brush->cx); /* cx (1 byte) */
+	Stream_Read_UINT8(s, cache_brush->cy); /* cy (1 byte) */
+	/* according to  Section 2.2.2.2.1.2.7 errata the windows implementation sets this filed is set
+	 * to 0x00 */
 	Stream_Read_UINT8(s, cache_brush->style);  /* style (1 byte) */
 	Stream_Read_UINT8(s, cache_brush->length); /* iBytes (1 byte) */
 
