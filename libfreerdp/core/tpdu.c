@@ -84,7 +84,7 @@ BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li, UINT16 tpktlength)
 
 	if (*li + 4 > tpktlength)
 	{
-		WLog_ERR(TAG, "tpdu length %" PRIu16 " > tpkt header length %" PRIu16, li, tpktlength);
+		WLog_ERR(TAG, "tpdu length %" PRIu8 " > tpkt header length %" PRIu16, *li, tpktlength);
 		return FALSE;
 	}
 
