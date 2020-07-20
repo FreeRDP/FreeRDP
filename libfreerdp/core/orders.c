@@ -2674,8 +2674,10 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 	if (!rc)
 		goto fail;
 
-	Stream_Read_UINT8(s, cache_brush->cx);     /* cx (1 byte) */
-	Stream_Read_UINT8(s, cache_brush->cy);     /* cy (1 byte) */
+	Stream_Read_UINT8(s, cache_brush->cx); /* cx (1 byte) */
+	Stream_Read_UINT8(s, cache_brush->cy); /* cy (1 byte) */
+	/* according to  Section 2.2.2.2.1.2.7 errata the windows implementation sets this filed is set
+	 * to 0x00 */
 	Stream_Read_UINT8(s, cache_brush->style);  /* style (1 byte) */
 	Stream_Read_UINT8(s, cache_brush->length); /* iBytes (1 byte) */
 
@@ -2690,20 +2692,20 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 				goto fail;
 			}
 
-			/* rows are encoded in reverse order */
 			if (Stream_GetRemainingLength(s) < 8)
 				goto fail;
 
+			/* rows are encoded in reverse order */
 			for (i = 7; i >= 0; i--)
-			{
 				Stream_Read_UINT8(s, cache_brush->data[i]);
-			}
 		}
 		else
 		{
 			if ((iBitmapFormat == BMF_8BPP) && (cache_brush->length == 20))
 				compressed = TRUE;
 			else if ((iBitmapFormat == BMF_16BPP) && (cache_brush->length == 24))
+				compressed = TRUE;
+			else if ((iBitmapFormat == BMF_24BPP) && (cache_brush->length == 28))
 				compressed = TRUE;
 			else if ((iBitmapFormat == BMF_32BPP) && (cache_brush->length == 32))
 				compressed = TRUE;
@@ -3635,6 +3637,10 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	Stream_Read_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Read_UINT16(s, extraFlags);  /* extraFlags (2 bytes) */
 	Stream_Read_UINT8(s, orderType);    /* orderType (1 byte) */
+	/*
+	 * According to [MS-RDPEGDI] 2.2.2.2.1.2.1.1 the order length must be increased by 13 bytes
+	 * including the header. As we already read the header 7 left
+	 */
 	if (Stream_GetRemainingLength(s) < orderLength + 7U)
 	{
 		WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) %" PRIuz " < %" PRIu16,
