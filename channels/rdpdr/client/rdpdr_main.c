@@ -580,7 +580,11 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 
 #else
 
+#ifdef __sun
+#include <sys/mnttab.h>
+#else
 #include <mntent.h>
+#endif
 #define MAX_USB_DEVICES 100
 
 typedef struct _hotplug_dev
@@ -657,12 +661,20 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	size_t i;
 	size_t size = 0;
 	int count, j;
+#ifdef __sun
+	struct mnttab ent;
+#else
 	struct mntent* ent;
+#endif
 	ULONG_PTR* keys = NULL;
 	UINT32 ids[1];
 	UINT error = 0;
 
+#ifdef __sun
+	f = fopen("/etc/mnttab", "r");
+#else
 	f = fopen("/proc/mounts", "r");
+#endif
 
 	if (f == NULL)
 	{
@@ -670,10 +682,19 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		return ERROR_OPEN_FAILED;
 	}
 
+#ifdef __sun
+	while (getmntent(f, &ent) == 0)
+#else
 	while ((ent = getmntent(f)) != NULL)
+#endif
 	{
 		/* Copy the line, path must obviously be shorter */
+#ifdef __sun
+		const char* path = ent.mnt_mountp;
+#else
 		const char* path = ent->mnt_dir;
+#endif
+
 		if (!path)
 			continue;
 		/* copy hotpluged device mount point to the dev_array */
