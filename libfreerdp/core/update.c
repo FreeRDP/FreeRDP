@@ -2983,15 +2983,9 @@ void update_free(rdpUpdate* update)
 		}
 
 		free(update->secondary);
-		update->secondary = NULL;
 		free(update->altsec);
-		update->altsec = NULL;
-
 		free(update->window);
-		update->window = NULL;
-
 		free(update->io);
-		update->io = NULL;
 
 		MessageQueue_Free(update->queue);
 		DeleteCriticalSection(&update->mux);

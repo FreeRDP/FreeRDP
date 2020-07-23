@@ -1149,9 +1149,8 @@ int transport_check_fds(rdpTransport* transport)
 	int status;
 	int recv_status;
 	wStream* received;
-//	UINT64 now = GetTickCount64();
-//	UINT64 dueDate = 0;
-//	WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds");
+	UINT64 now = GetTickCount64();
+	UINT64 dueDate = 0;
 
 	if (!transport)
 		return -1;
@@ -1163,15 +1162,15 @@ int transport_check_fds(rdpTransport* transport)
 		return -1;
 	}
 
-	// dueDate = now + transport->settings->MaxTimeInCheckLoop;
+	dueDate = now + transport->settings->MaxTimeInCheckLoop;
 
-/*	if (transport->haveMoreBytesToRead)
+	if (transport->haveMoreBytesToRead)
 	{
 		transport->haveMoreBytesToRead = FALSE;
 		ResetEvent(transport->rereadEvent);
-	} */
+	}
 
-//	while (now < dueDate)
+	while (now < dueDate)
 	{
 		if (freerdp_shall_disconnect(transport->context->instance))
 		{
@@ -1223,14 +1222,14 @@ int transport_check_fds(rdpTransport* transport)
 			return -1;
 		}
 
-		//now = GetTickCount64();
+		now = GetTickCount64();
 	}
 
-/*	if (now >= dueDate)
+	if (now >= dueDate)
 	{
 		SetEvent(transport->rereadEvent);
 		transport->haveMoreBytesToRead = TRUE;
-	} */
+	}
 
 	return 0;
 }
