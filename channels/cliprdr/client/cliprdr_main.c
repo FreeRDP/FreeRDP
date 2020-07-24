@@ -511,7 +511,7 @@ static UINT cliprdr_order_recv(cliprdrPlugin* cliprdr, wStream* s)
 
 		case CB_UNLOCK_CLIPDATA:
 			if ((error = cliprdr_process_unlock_clipdata(cliprdr, s, dataLen, msgFlags)))
-				WLog_ERR(TAG, "cliprdr_process_lock_clipdata failed with error %" PRIu32 "!",
+				WLog_ERR(TAG, "cliprdr_process_unlock_clipdata failed with error %" PRIu32 "!",
 				         error);
 
 			break;
@@ -679,7 +679,7 @@ static UINT cliprdr_client_lock_clipboard_data(CliprdrClientContext* context,
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_lock_clipdata_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -703,7 +703,7 @@ cliprdr_client_unlock_clipboard_data(CliprdrClientContext* context,
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_unlock_clipdata_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -802,7 +802,7 @@ cliprdr_client_file_contents_response(CliprdrClientContext* context,
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "cliprdr_packet_new failed!");
+		WLog_ERR(TAG, "cliprdr_packet_file_contents_response_new failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
