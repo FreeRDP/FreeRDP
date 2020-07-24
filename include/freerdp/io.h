@@ -28,7 +28,7 @@ typedef int (*pDataHandler)(rdpContext* context, const uint8_t* buf, size_t buf_
 
 struct rdp_io_update
 {
-	rdpContext* context; /* 0 */
+	rdpContext* context;     /* 0 */
 	UINT32 paddingA[16 - 1]; /* 1 */
 
 	/* switchable read
@@ -46,6 +46,5 @@ struct rdp_io_update
 	UINT32 paddingB[32 - 19]; /* 19 */
 };
 typedef struct rdp_io_update rdpIoUpdate;
-
 
 #endif /* FREERDP_UPDATE_IO_H */

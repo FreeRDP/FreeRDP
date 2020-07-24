@@ -626,7 +626,7 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 static SSIZE_T transport_read_layer_bytes(rdpTransport* transport, wStream* s, size_t toRead)
 {
 	SSIZE_T status;
-	rdpContext *context = NULL;
+	rdpContext* context = NULL;
 	if (!transport)
 		return 0;
 	context = transport->context;
@@ -662,7 +662,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	int status = 0, read = 0;
 	SSIZE_T left = 0;
 	for (status = transport_handle_pdu(transport, s, &left); !status;
-		status = transport_handle_pdu(transport, s, &left))
+	     status = transport_handle_pdu(transport, s, &left))
 	{
 		read = transport_read_layer_bytes(transport, s, left ? left : 1);
 		if (read < 0)
@@ -681,7 +681,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
  * @return < 0 on error; 0 if not enough data is available; > 0 number of
  * bytes of the *complete* pdu
  */
-int transport_handle_pdu(rdpTransport* transport, wStream* s, SSIZE_T *left_to_read)
+int transport_handle_pdu(rdpTransport* transport, wStream* s, SSIZE_T* left_to_read)
 {
 	size_t position;
 	size_t pduLength;
@@ -804,7 +804,6 @@ int transport_handle_pdu(rdpTransport* transport, wStream* s, SSIZE_T *left_to_r
 	if (left_to_read)
 		*left_to_read = pduLength - Stream_GetPosition(s);
 
-
 	/* pdu not yet complete */
 	if (Stream_GetPosition(s) < pduLength)
 		return 0;
@@ -817,7 +816,7 @@ int transport_handle_pdu(rdpTransport* transport, wStream* s, SSIZE_T *left_to_r
 	return Stream_Length(s);
 }
 
-static BOOL transport_prepare_stream(rdpTransport *transport, wStream *s)
+static BOOL transport_prepare_stream(rdpTransport* transport, wStream* s)
 {
 	if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
 	{
@@ -827,7 +826,7 @@ static BOOL transport_prepare_stream(rdpTransport *transport, wStream *s)
 	if (transport->NextPDUBytesLeft < 0)
 	{
 		/* if we currenlty have part of next pdu in buffer,
-		* we need to move it into next pdu's buffer  */
+		 * we need to move it into next pdu's buffer  */
 		Stream_SetPosition(s, Stream_Length(s) + transport->NextPDUBytesLeft);
 		Stream_Read(s, transport->ReceiveBuffer->pointer, -(transport->NextPDUBytesLeft));
 	}
@@ -844,11 +843,10 @@ static BOOL transport_prepare_stream(rdpTransport *transport, wStream *s)
  * @param[in] buf_size size_t
  * @return count of bytes succesfully handled, -1 on error
  */
-static int transport_io_data_handler(rdpContext* context,
-                               const uint8_t* buf, size_t buf_size)
+static int transport_io_data_handler(rdpContext* context, const uint8_t* buf, size_t buf_size)
 {
-	rdpTransport *transport = NULL;
-	wStream *pdu = NULL;
+	rdpTransport* transport = NULL;
+	wStream* pdu = NULL;
 	if (buf_size > SSIZE_MAX)
 		return -1;
 	if (!context->rdp)
@@ -862,7 +860,7 @@ static int transport_io_data_handler(rdpContext* context,
 	if (transport_handle_pdu(transport, pdu, 0) < 1)
 		return 0;
 	transport->ReceiveCallback(transport, pdu, transport->ReceiveExtra);
-	
+
 	if (!transport_prepare_stream(transport, pdu))
 		return -1;
 
@@ -876,12 +874,11 @@ static int transport_io_data_handler(rdpContext* context,
  * @param[out] buf const uint8_t*
  * @param[in] buf_size size_t
  * @return count of bytes succesfully handled
-  */
-static int transport_io_data_read(rdpContext* context,
-                               const uint8_t* buf, size_t buf_size)
+ */
+static int transport_io_data_read(rdpContext* context, const uint8_t* buf, size_t buf_size)
 {
 	SSIZE_T status;
-	rdpTransport *transport = NULL;
+	rdpTransport* transport = NULL;
 	if (buf_size > SSIZE_MAX)
 		return 0;
 
@@ -899,15 +896,14 @@ static int transport_io_data_read(rdpContext* context,
  * @param[in] buf const uint8_t*
  * @param[in] buf_size size_t
  * @return count of bytes succesfully handled
-  */
-static int transport_io_data_write(rdpContext* context,
-                               const uint8_t* buf, size_t buf_size)
+ */
+static int transport_io_data_write(rdpContext* context, const uint8_t* buf, size_t buf_size)
 {
 	int status = -1;
 	size_t length;
 	int writtenlength = 0;
-	rdpRdp *rdp = context->rdp;
-	rdpTransport *transport = context->rdp->transport;
+	rdpRdp* rdp = context->rdp;
+	rdpTransport* transport = context->rdp->transport;
 
 	if (!transport->frontBio)
 	{
@@ -928,8 +924,7 @@ static int transport_io_data_write(rdpContext* context,
 
 	while (length > 0)
 	{
-		status = BIO_write(transport->frontBio, buf + writtenlength - length,
-			length);
+		status = BIO_write(transport->frontBio, buf + writtenlength - length, length);
 
 		if (status <= 0)
 		{
@@ -1009,8 +1004,7 @@ void transport_register_default_io_callbacks(rdpUpdate* update)
 	freerdp_set_transport_callbacks(update->context, &io);
 }
 
-
-void freerdp_set_transport_callbacks(rdpContext* context, void *io_callbacks)
+void freerdp_set_transport_callbacks(rdpContext* context, void* io_callbacks)
 {
 	rdpIoUpdate* io = ((rdpIoUpdate*)io_callbacks);
 	/* NOTE: DataHandler should not be switched */
@@ -1019,7 +1013,6 @@ void freerdp_set_transport_callbacks(rdpContext* context, void *io_callbacks)
 	io->context = context;
 	*(context->update->io) = *io;
 }
-
 
 int transport_write(rdpTransport* transport, wStream* s)
 {
@@ -1177,8 +1170,9 @@ int transport_check_fds(rdpTransport* transport)
 			return -1;
 		}
 
-		if ((status = transport_read_layer_bytes(transport, transport->ReceiveBuffer,
-			transport->NextPDUBytesLeft ? transport->NextPDUBytesLeft : 1)) <= 0)
+		if ((status = transport_read_layer_bytes(
+		         transport, transport->ReceiveBuffer,
+		         transport->NextPDUBytesLeft ? transport->NextPDUBytesLeft : 1)) <= 0)
 		{
 			if (status < 0)
 				WLog_Print(transport->log, WLOG_DEBUG,
@@ -1187,7 +1181,7 @@ int transport_check_fds(rdpTransport* transport)
 			return status;
 		}
 		if ((status = transport_handle_pdu(transport, transport->ReceiveBuffer,
-			&transport->NextPDUBytesLeft)) <= 0)
+		                                   &transport->NextPDUBytesLeft)) <= 0)
 		{
 			if (status < 0)
 				WLog_Print(transport->log, WLOG_DEBUG,

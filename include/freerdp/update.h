@@ -224,7 +224,7 @@ struct rdp_update
 	rdpSecondaryUpdate* secondary; /* 34 */
 	rdpAltSecUpdate* altsec;       /* 35 */
 	rdpWindowUpdate* window;       /* 36 */
-	rdpIoUpdate* io;				 /* 37 */
+	rdpIoUpdate* io;               /* 37 */
 	UINT32 paddingC[48 - 38];      /* 38 */
 
 	pRefreshRect RefreshRect;       /* 48 */

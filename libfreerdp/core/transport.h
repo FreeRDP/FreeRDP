@@ -93,7 +93,7 @@ FREERDP_LOCAL BOOL transport_accept_tls(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_accept_nla(rdpTransport* transport);
 
 FREERDP_LOCAL int transport_read_pdu(rdpTransport* transport, wStream* s);
-FREERDP_LOCAL int transport_handle_pdu(rdpTransport* transport, wStream* s, SSIZE_T *left_to_read);
+FREERDP_LOCAL int transport_handle_pdu(rdpTransport* transport, wStream* s, SSIZE_T* left_to_read);
 FREERDP_LOCAL int transport_write(rdpTransport* transport, wStream* s);
 
 FREERDP_LOCAL void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
