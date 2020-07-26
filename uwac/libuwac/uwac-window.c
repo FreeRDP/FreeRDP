@@ -121,7 +121,7 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 	event->window = window;
 	event->states = surfaceState;
 
-	if (width && height)
+	if (width && height && window->pendingBufferIdx == -1)
 	{
 		event->width = width;
 		event->height = height;
