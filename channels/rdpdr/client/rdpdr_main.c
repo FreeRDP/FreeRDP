@@ -645,8 +645,7 @@ typedef struct _hotplug_dev
 	BOOL to_add;
 } hotplug_dev;
 
-static void
-handle_mountpoint(hotplug_dev *dev_array, size_t *size, const char *mountpoint)
+static void handle_mountpoint(hotplug_dev* dev_array, size_t* size, const char* mountpoint)
 {
 	if (!mountpoint)
 		return;
@@ -661,8 +660,7 @@ handle_mountpoint(hotplug_dev *dev_array, size_t *size, const char *mountpoint)
 
 #ifdef __sun
 #include <sys/mnttab.h>
-static UINT
-handle_platform_mounts_sun(hotplug_dev *dev_array, size_t *size)
+static UINT handle_platform_mounts_sun(hotplug_dev* dev_array, size_t* size)
 {
 	FILE* f;
 	struct mnttab ent;
@@ -683,12 +681,11 @@ handle_platform_mounts_sun(hotplug_dev *dev_array, size_t *size)
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/mount.h>
-static UINT
-handle_platform_mounts_bsd(hotplug_dev *dev_array, size_t *size)
+static UINT handle_platform_mounts_bsd(hotplug_dev* dev_array, size_t* size)
 {
 	int mntsize;
 	size_t idx;
-	struct statfs *mntbuf = NULL;
+	struct statfs* mntbuf = NULL;
 
 	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
 	if (!mntsize)
@@ -697,7 +694,7 @@ handle_platform_mounts_bsd(hotplug_dev *dev_array, size_t *size)
 		WLog_ERR(TAG, "getmntinfo failed!");
 		return ERROR_OPEN_FAILED;
 	}
-	for (idx = 0; idx < (size_t)mntsize; idx ++)
+	for (idx = 0; idx < (size_t)mntsize; idx++)
 	{
 		handle_mountpoint(dev_array, size, mntbuf[idx].f_mntonname);
 	}
@@ -706,10 +703,9 @@ handle_platform_mounts_bsd(hotplug_dev *dev_array, size_t *size)
 }
 #endif
 
-#if defined(__LINUX__) || defined (__linux__)
+#if defined(__LINUX__) || defined(__linux__)
 #include <mntent.h>
-static UINT
-handle_platform_mounts_linux(hotplug_dev *dev_array, size_t *size)
+static UINT handle_platform_mounts_linux(hotplug_dev* dev_array, size_t* size)
 {
 	FILE* f;
 	struct mntent* ent;
@@ -728,14 +724,13 @@ handle_platform_mounts_linux(hotplug_dev *dev_array, size_t *size)
 }
 #endif
 
-static UINT
-handle_platform_mounts(hotplug_dev *dev_array, size_t *size)
+static UINT handle_platform_mounts(hotplug_dev* dev_array, size_t* size)
 {
 #ifdef __sun
 	return handle_platform_mounts_sun(dev_array, size);
 #elif defined(__FreeBSD__) || defined(__OpenBSD__)
 	return handle_platform_mounts_bsd(dev_array, size);
-#elif defined(__LINUX__) || defined (__linux__)
+#elif defined(__LINUX__) || defined(__linux__)
 	return handle_platform_mounts_linux(dev_array, size);
 #endif
 	return ERROR_CALL_NOT_IMPLEMENTED;
