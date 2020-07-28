@@ -754,7 +754,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
 	CHANNEL_INIT_DATA* pChannelInitData;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
-	rdpChannels* channels = (rdpChannels*)pInitHandle;
+	rdpChannels* channels;
 
 	if (!pInitHandle)
 		return CHANNEL_RC_BAD_INIT_HANDLE;
