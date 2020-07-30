@@ -496,7 +496,7 @@ static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, 
 
 		if (unicode)
 		{
-			if (ConvertFromUnicode(CP_UTF8, 0, domain, cbLenNonNull, &ret, 0, NULL, NULL) < 1)
+			if (ConvertFromUnicode(CP_UTF8, 0, domain, -1, &ret, 0, NULL, NULL) < 1)
 			{
 				WLog_ERR(TAG, "failed to convert Domain string");
 				return FALSE;
