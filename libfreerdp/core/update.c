@@ -2941,6 +2941,8 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	if (!update->io)
 		goto fail;
 
+	transport_register_default_io_callbacks(update);
+
 	deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 	deleteList->sIndices = 64;
 	deleteList->indices = calloc(deleteList->sIndices, 2);
