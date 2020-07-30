@@ -627,6 +627,8 @@ static SSIZE_T transport_read_layer_bytes(rdpTransport* transport, wStream* s, s
 {
 	SSIZE_T status;
 	rdpContext* context = NULL;
+	if (toRead > SSIZE_MAX)
+		return 0;
 	if (!transport)
 		return 0;
 	context = transport->context;
@@ -879,8 +881,6 @@ static int transport_io_data_read(rdpContext* context, const uint8_t* buf, size_
 {
 	SSIZE_T status;
 	rdpTransport* transport = NULL;
-	if (buf_size > SSIZE_MAX)
-		return 0;
 
 	transport = context->rdp->transport;
 
