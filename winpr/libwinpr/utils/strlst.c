@@ -80,3 +80,152 @@ void string_list_print(FILE* out, const char* const* string_list)
 
 	fflush(out);
 }
+
+char* string_concatenate(const char* string, ...)
+{
+	char*   result;
+	char*   current;
+	/* sum the lengths of the strings */
+	const char*   arg = string;
+	int total_length = 0;
+	va_list strings;
+	va_start(strings, string);
+
+	while (arg)
+	{
+		total_length += strlen(arg);
+		arg = va_arg(strings, const char*);
+	}
+
+	va_end(strings);
+	total_length += 1; /*  null byte */
+
+	if (NULL == (result = malloc(total_length)))
+	{
+		return NULL;
+	}
+
+	/* start copying */
+	current = result;
+	strcpy(current, string);
+	current += strlen(string);
+	va_start(strings, string);
+	arg = va_arg(strings, const char*);
+
+	while (arg)
+	{
+		strcpy(current, arg);
+		current += strlen(arg);
+		arg = va_arg(strings, const char*);
+	}
+
+	va_end(strings);
+	/* strcpy copied the terminating null byte */
+	return result;
+}
+
+static int extract_separated_substrings(const char* string, const char* separator,
+                                        int remove_empty_substring, char** result)
+{
+	/*
+	PRECONDITION: (string != NULL) && (strlen(string) > 0) && (separator != NULL) && (strlen(separator) > 0)
+	*/
+	size_t seplen = strlen(separator);
+	int i = 0;
+	int done = 0;
+
+	do
+	{
+		char* next = strstr(string, separator);
+		size_t sublen = 0;
+		/*
+		* When there are no remaining separator,
+		* we still need to add the rest of the string
+		* so we find the end-of-string
+		*/
+		done = (next == NULL);
+
+		if (done)
+		{
+			next = strchr(string, '\0');
+		}
+
+		sublen = next - string;
+
+		if (!remove_empty_substring || (sublen > 0))
+		{
+			if (result != NULL)
+			{
+				result[i] = strndup(string, sublen);
+			}
+
+			i++;
+		}
+
+		if (!done)
+		{
+			string = next + seplen;
+		}
+	}
+	while (!done);
+
+	return i;
+}
+char**  string_list_split_string(const char* string, const char* separator,
+                                 int remove_empty_substring)
+{
+	char** result = NULL;
+	size_t seplen = ((separator == NULL) ? 0 : strlen(separator));
+	size_t count = 0;
+
+	if (string == NULL)
+	{
+		goto empty_result;
+	}
+
+	if (seplen == 0)
+	{
+		if (remove_empty_substring && (strlen(string) == 0))
+		{
+			goto empty_result;
+		}
+
+		result = calloc(2, sizeof(*result));
+
+		if (result == NULL)
+		{
+			return NULL;
+		}
+
+		result[0] = strdup(string);
+
+		if (result[0] == NULL)
+		{
+			free(result);
+			return NULL;
+		}
+
+		return result;
+	}
+
+	count = extract_separated_substrings(string, separator, remove_empty_substring, NULL);
+	result = calloc(count + 1, sizeof(*result));
+
+	if (result == NULL)
+	{
+		return NULL;
+	}
+
+	extract_separated_substrings(string, separator, remove_empty_substring, result);
+
+	if (count != string_list_length((char**)result))
+	{
+		/* at least one of the strdup couldn't allocate */
+		string_list_free(result);
+		return NULL;
+	}
+
+	return result;
+empty_result:
+	return calloc(1, sizeof(*result));
+}

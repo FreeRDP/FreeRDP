@@ -648,6 +648,25 @@ static void freerdp_settings_free_internal(rdpSettings* settings)
 	free(settings->RedirectionPassword);
 	free(settings->RedirectionTsvUrl);
 
+	free(settings->Pkcs11Module);
+	free(settings->Pin);
+	free(settings->CardName);
+	free(settings->ReaderName);
+	free(settings->ContainerName);
+	free(settings->CspName);
+	free(settings->UserHint);
+	free(settings->DomainHint);
+	free(settings->UserPrincipalName);
+	free(settings->CanonicalizedUserHint);
+	free(settings->IdCertificate);
+	free(settings->PkinitIdentity);
+	free(settings->PkinitAnchors);
+	free(settings->KerberosStartTime);
+	free(settings->KerberosLifeTime);
+	free(settings->KerberosRenewableLifeTime);
+	free(settings->TokenLabel);
+	free(settings->PkinitCertificate);
+
 	freerdp_target_net_addresses_free(settings);
 	freerdp_device_collection_free(settings);
 	freerdp_static_channel_collection_free(settings);

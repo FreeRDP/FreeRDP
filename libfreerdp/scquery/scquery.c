@@ -36,7 +36,7 @@ static void report_level(DWORD level, const char* file, unsigned long line, cons
 
 	if ((log != NULL) && (level >= WLog_GetLogLevel(log)))
 	{
-		WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, file, function, format, ap);
+		WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, file, function, ap);
 	}
 }
 
