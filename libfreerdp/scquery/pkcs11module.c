@@ -176,18 +176,18 @@ void template_allocate_buffers(template* template)
 		{
 			switch (attribute->type)
 			{
-			case CKA_WRAP_TEMPLATE:
-			case CKA_UNWRAP_TEMPLATE:
-				attribute_allocate_attribute_array(attribute);
-				break;
+				case CKA_WRAP_TEMPLATE:
+				case CKA_UNWRAP_TEMPLATE:
+					attribute_allocate_attribute_array(attribute);
+					break;
 
-			case CKA_ALLOWED_MECHANISMS:
-				attribute_allocate_ulong_array(attribute);
-				break;
+				case CKA_ALLOWED_MECHANISMS:
+					attribute_allocate_ulong_array(attribute);
+					break;
 
-			default:
-				attribute_allocate_buffer(attribute);
-				break;
+				default:
+					attribute_allocate_buffer(attribute);
+					break;
 			}
 		}
 	}
@@ -327,40 +327,40 @@ CK_RV object_get_attributes(pkcs11_module* module, CK_SESSION_HANDLE session,
 
 	switch (rv)
 	{
-	case CKR_OK:
-		if (!template_has_unallocated_buffers(template))
-		{
-			return rv;
-		}
-
-	case CKR_ATTRIBUTE_SENSITIVE:
-	case CKR_ATTRIBUTE_TYPE_INVALID:
-	case CKR_BUFFER_TOO_SMALL:
-		template_pack(template);
-		template_allocate_buffers(template);
-		rv = module->p11->C_GetAttributeValue(session, object, &template->attributes[0],
-		                                      template->count);
-		VERBOSE(module->verbose,
-		        "C_GetAttributeValue returned %s after buffer allocation for %lu attributes",
-		        pkcs11_return_value_label(rv), template->count);
-
-		switch (rv)
-		{
 		case CKR_OK:
+			if (!template_has_unallocated_buffers(template))
+			{
+				return rv;
+			}
+
 		case CKR_ATTRIBUTE_SENSITIVE:
 		case CKR_ATTRIBUTE_TYPE_INVALID:
 		case CKR_BUFFER_TOO_SMALL:
-			return rv;
+			template_pack(template);
+			template_allocate_buffers(template);
+			rv = module->p11->C_GetAttributeValue(session, object, &template->attributes[0],
+			                                      template->count);
+			VERBOSE(module->verbose,
+			        "C_GetAttributeValue returned %s after buffer allocation for %lu attributes",
+			        pkcs11_return_value_label(rv), template->count);
+
+			switch (rv)
+			{
+				case CKR_OK:
+				case CKR_ATTRIBUTE_SENSITIVE:
+				case CKR_ATTRIBUTE_TYPE_INVALID:
+				case CKR_BUFFER_TOO_SMALL:
+					return rv;
+
+				default:
+					CHECK_RV(rv, "C_GetAttributeValue");
+					return rv;
+			}
+
+			break;
 
 		default:
 			CHECK_RV(rv, "C_GetAttributeValue");
 			return rv;
-		}
-
-		break;
-
-	default:
-		CHECK_RV(rv, "C_GetAttributeValue");
-		return rv;
 	}
 }

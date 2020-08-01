@@ -940,7 +940,8 @@ error_out:
 static rdpPrinterDriver* printer_load_backend(const char* backend)
 {
 	typedef rdpPrinterDriver* (*backend_load_t)(void);
-	union {
+	union
+	{
 		PVIRTUALCHANNELENTRY entry;
 		backend_load_t backend;
 	} fktconv;

@@ -83,10 +83,10 @@ void string_list_print(FILE* out, const char* const* string_list)
 
 char* string_concatenate(const char* string, ...)
 {
-	char*   result;
-	char*   current;
+	char* result;
+	char* current;
 	/* sum the lengths of the strings */
-	const char*   arg = string;
+	const char* arg = string;
 	int total_length = 0;
 	va_list strings;
 	va_start(strings, string);
@@ -128,7 +128,8 @@ static int extract_separated_substrings(const char* string, const char* separato
                                         int remove_empty_substring, char** result)
 {
 	/*
-	PRECONDITION: (string != NULL) && (strlen(string) > 0) && (separator != NULL) && (strlen(separator) > 0)
+	PRECONDITION: (string != NULL) && (strlen(string) > 0) && (separator != NULL) &&
+	(strlen(separator) > 0)
 	*/
 	size_t seplen = strlen(separator);
 	int i = 0;
@@ -139,10 +140,10 @@ static int extract_separated_substrings(const char* string, const char* separato
 		char* next = strstr(string, separator);
 		size_t sublen = 0;
 		/*
-		* When there are no remaining separator,
-		* we still need to add the rest of the string
-		* so we find the end-of-string
-		*/
+		 * When there are no remaining separator,
+		 * we still need to add the rest of the string
+		 * so we find the end-of-string
+		 */
 		done = (next == NULL);
 
 		if (done)
@@ -166,13 +167,12 @@ static int extract_separated_substrings(const char* string, const char* separato
 		{
 			string = next + seplen;
 		}
-	}
-	while (!done);
+	} while (!done);
 
 	return i;
 }
-char**  string_list_split_string(const char* string, const char* separator,
-                                 int remove_empty_substring)
+char** string_list_split_string(const char* string, const char* separator,
+                                int remove_empty_substring)
 {
 	char** result = NULL;
 	size_t seplen = ((separator == NULL) ? 0 : strlen(separator));

@@ -764,7 +764,8 @@ static LONG WINAPI PCSC_SCardListReaderGroups_Internal(SCARDCONTEXT hContext, LP
 	PCSC_LONG status = SCARD_S_SUCCESS;
 	BOOL pcchGroupsAlloc = FALSE;
 	PCSC_DWORD pcsc_cchGroups = 0;
-	union {
+	union
+	{
 		LPSTR lpstr;
 		LPSTR* lppstr;
 	} conv;
@@ -835,7 +836,8 @@ static LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext, LPWSTR msz
 	LPSTR mszGroupsA = NULL;
 	LPSTR* pMszGroupsA = &mszGroupsA;
 	LONG status = SCARD_S_SUCCESS;
-	union {
+	union
+	{
 		LPWSTR lpstr;
 		LPWSTR* lppstr;
 	} conv;
@@ -871,7 +873,8 @@ static LONG WINAPI PCSC_SCardListReaders_Internal(SCARDCONTEXT hContext, LPCSTR 
 	PCSC_LONG status = SCARD_S_SUCCESS;
 	BOOL pcchReadersAlloc = FALSE;
 	PCSC_DWORD pcsc_cchReaders = 0;
-	union {
+	union
+	{
 		LPSTR lpstr;
 		LPSTR* lppstr;
 	} conv;
@@ -963,7 +966,8 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 	LPSTR* pMszReadersA = &mszReadersA;
 	LONG status = SCARD_S_SUCCESS;
 	BOOL nullCardContext = FALSE;
-	union {
+	union
+	{
 		LPWSTR lpstr;
 		LPWSTR* lppstr;
 	} conv;
@@ -1915,7 +1919,8 @@ static LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard, LPSTR mszReaderN
 
 	if (tATR)
 	{
-		union {
+		union
+		{
 			BYTE* pb;
 			BYTE** ppb;
 		} conv;
@@ -1926,7 +1931,8 @@ static LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard, LPSTR mszReaderN
 
 	if (tReader)
 	{
-		union {
+		union
+		{
 			CHAR* pc;
 			CHAR** ppc;
 			WCHAR* pw;
@@ -2009,7 +2015,8 @@ static LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard, LPCSCARD_IO_REQUEST pio
 	BYTE* pcsc_pbExtraBytes = NULL;
 	PCSC_DWORD pcsc_cbSendLength = (PCSC_DWORD)cbSendLength;
 	PCSC_DWORD pcsc_cbRecvLength = 0;
-	union {
+	union
+	{
 		const PCSC_SCARD_IO_REQUEST* pcs;
 		PCSC_SCARD_IO_REQUEST* ps;
 		LPSCARD_IO_REQUEST lps;
@@ -2218,7 +2225,8 @@ static LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dwAttrI
 	PCSC_SCARDHANDLE* pCard = NULL;
 	PCSC_DWORD pcsc_dwAttrId = (PCSC_DWORD)dwAttrId;
 	PCSC_DWORD pcsc_cbAttrLen = 0;
-	union {
+	union
+	{
 		BYTE* pb;
 		BYTE** ppb;
 	} conv;
@@ -2287,7 +2295,8 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 	char* friendlyNameA = NULL;
 	WCHAR* friendlyNameW = NULL;
 	LONG status = SCARD_S_SUCCESS;
-	union {
+	union
+	{
 		WCHAR** ppw;
 		BYTE* pb;
 		BYTE** ppb;
@@ -2402,7 +2411,8 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 	SCARDCONTEXT hContext;
 	BOOL pcbAttrLenAlloc = FALSE;
 	LONG status = SCARD_S_SUCCESS;
-	union {
+	union
+	{
 		BYTE* pb;
 		BYTE** ppb;
 	} conv;
@@ -2478,7 +2488,8 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 
 				if (status == SCARD_S_SUCCESS)
 				{
-					union {
+					union
+					{
 						BYTE* pb;
 						LPDWORD pd;
 					} conv;
@@ -2499,7 +2510,8 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 			{
 				UINT32 channelType = 0x20; /* USB */
 				UINT32 channelNumber = 0;
-				union {
+				union
+				{
 					BYTE* pb;
 					BYTE** ppb;
 					DWORD* ppd;
@@ -2682,7 +2694,8 @@ static LONG WINAPI PCSC_SCardReadCacheA(SCARDCONTEXT hContext, UUID* CardIdentif
 	if (*DataLen == SCARD_AUTOALLOCATE)
 	{
 		BYTE* mem;
-		union {
+		union
+		{
 			BYTE* pb;
 			BYTE** ppb;
 		} conv;
@@ -2733,7 +2746,8 @@ static LONG WINAPI PCSC_SCardReadCacheW(SCARDCONTEXT hContext, UUID* CardIdentif
 	if (*DataLen == SCARD_AUTOALLOCATE)
 	{
 		BYTE* mem;
-		union {
+		union
+		{
 			BYTE* pb;
 			BYTE** ppb;
 		} conv;

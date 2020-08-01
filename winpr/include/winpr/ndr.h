@@ -28,7 +28,8 @@
 #define __RPC_WIN32__ 1
 #define TARGET_IS_NT50_OR_LATER 1
 
-typedef union _CLIENT_CALL_RETURN {
+typedef union _CLIENT_CALL_RETURN
+{
 	void* Pointer;
 	LONG_PTR Simple;
 } CLIENT_CALL_RETURN;
@@ -243,7 +244,8 @@ struct _MIDL_STUB_DESC
 	void* (*pfnAllocate)(size_t);
 	void (*pfnFree)(void*);
 
-	union {
+	union
+	{
 		handle_t* pAutoHandle;
 		handle_t* pPrimitiveHandle;
 		PGENERIC_BINDING_INFO pGenericBindingInfo;
@@ -350,7 +352,8 @@ typedef struct
 	PARAM_ATTRIBUTES Attributes;
 	unsigned short StackOffset;
 
-	union {
+	union
+	{
 		unsigned char FormatChar;
 		unsigned short Offset;
 	} Type;

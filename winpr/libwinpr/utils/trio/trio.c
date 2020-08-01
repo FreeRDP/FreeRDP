@@ -795,13 +795,15 @@ typedef struct
 	/* Position in the argument list that this parameter refers to */
 	int position;
 	/* The data from the argument list */
-	union {
+	union
+	{
 		char* string;
 #if TRIO_FEATURE_WIDECHAR
 		trio_wchar_t* wstring;
 #endif
 		trio_pointer_t pointer;
-		union {
+		union
+		{
 			trio_intmax_t as_signed;
 			trio_uintmax_t as_unsigned;
 		} number;
@@ -815,7 +817,8 @@ typedef struct
 	} data;
 #if TRIO_FEATURE_USER_DEFINED
 	/* For the user-defined specifier */
-	union {
+	union
+	{
 		char namespace[MAX_USER_NAME];
 		int handler; /* if flags & FLAGS_USER_DEFINED_PARAMETER */
 	} user_defined;
@@ -826,7 +829,8 @@ typedef struct
 /* Container for customized functions */
 typedef struct
 {
-	union {
+	union
+	{
 		trio_outstream_t out;
 		trio_instream_t in;
 	} stream;
@@ -861,7 +865,8 @@ typedef struct _trio_class_t
 	 * if there had been sufficient space.
 	 */
 	int processed;
-	union {
+	union
+	{
 		/*
 		 * The number of characters that are actually written. Processed and
 		 * committed will only differ for the *nprintf functions.

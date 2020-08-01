@@ -1174,34 +1174,34 @@ struct rdp_settings
 
 	/* TODO: group kerberos and smartcard fields */
 	/* Kerberos and smartcard authentication */
-	ALIGN64 char* Pkcs11Module;                 /* 1284 */
-	ALIGN64 BOOL PinLoginRequired;              /* 1285 */
-	ALIGN64 BOOL PinPadIsPresent;               /* 1286 */
-	ALIGN64 char* Pin;                          /* 1287 */
-	ALIGN64 UINT32 KeySpec;                     /* 1288 */
-	ALIGN64 char* CardName;                     /* 1289 */
-	ALIGN64 char* ReaderName;                   /* 1290 */
-	ALIGN64 char* ContainerName;                /* 1291 */
-	ALIGN64 char* CspName;                      /* 1292 */
-	ALIGN64 char* UserHint;                     /* 1293 */
-	ALIGN64 char* DomainHint;                   /* 1294 */
-	ALIGN64 UINT32 CredentialsType;             /* 1295 */
-	ALIGN64 char* UserPrincipalName;            /* 1296 */
-	ALIGN64 char* CanonicalizedUserHint;        /* 1297 */
-	ALIGN64 char* IdCertificate;                /* 1298 */
-	ALIGN64 UINT64 IdCertificateLength;         /* 1299 */
-	ALIGN64 char* PkinitIdentity;               /* 1300 */
-	ALIGN64 char* PkinitAnchors;                /* 1301 */
-	ALIGN64 UINT64 SlotID;                      /* 1302 */
-	ALIGN64 char* TokenLabel;                   /* 1303 */
-	ALIGN64 INT32 TokenFlags;                   /* 1304 */
-	ALIGN64 char* KerberosStartTime;            /* 1305 */
-	ALIGN64 char* KerberosLifeTime;             /* 1306 */
-	ALIGN64 char* KerberosRenewableLifeTime;    /* 1307 */
-	ALIGN64 BOOL Pkinit;                        /* 1308 */
-	ALIGN64 char* PkinitCertificate;            /* 1309 */
-	ALIGN64 BOOL Krb5Trace;                     /* 1310 */
-	UINT64 padding1344[1344 - 1311];            /* 1311 */
+	ALIGN64 char* Pkcs11Module;              /* 1284 */
+	ALIGN64 BOOL PinLoginRequired;           /* 1285 */
+	ALIGN64 BOOL PinPadIsPresent;            /* 1286 */
+	ALIGN64 char* Pin;                       /* 1287 */
+	ALIGN64 UINT32 KeySpec;                  /* 1288 */
+	ALIGN64 char* CardName;                  /* 1289 */
+	ALIGN64 char* ReaderName;                /* 1290 */
+	ALIGN64 char* ContainerName;             /* 1291 */
+	ALIGN64 char* CspName;                   /* 1292 */
+	ALIGN64 char* UserHint;                  /* 1293 */
+	ALIGN64 char* DomainHint;                /* 1294 */
+	ALIGN64 UINT32 CredentialsType;          /* 1295 */
+	ALIGN64 char* UserPrincipalName;         /* 1296 */
+	ALIGN64 char* CanonicalizedUserHint;     /* 1297 */
+	ALIGN64 char* IdCertificate;             /* 1298 */
+	ALIGN64 UINT64 IdCertificateLength;      /* 1299 */
+	ALIGN64 char* PkinitIdentity;            /* 1300 */
+	ALIGN64 char* PkinitAnchors;             /* 1301 */
+	ALIGN64 UINT64 SlotID;                   /* 1302 */
+	ALIGN64 char* TokenLabel;                /* 1303 */
+	ALIGN64 INT32 TokenFlags;                /* 1304 */
+	ALIGN64 char* KerberosStartTime;         /* 1305 */
+	ALIGN64 char* KerberosLifeTime;          /* 1306 */
+	ALIGN64 char* KerberosRenewableLifeTime; /* 1307 */
+	ALIGN64 BOOL Pkinit;                     /* 1308 */
+	ALIGN64 char* PkinitCertificate;         /* 1309 */
+	ALIGN64 BOOL Krb5Trace;                  /* 1310 */
+	UINT64 padding1344[1344 - 1311];         /* 1311 */
 
 	/* Kerberos Authentication */
 	ALIGN64 char* KerberosKdc;       /* 1344 */
@@ -1209,22 +1209,22 @@ struct rdp_settings
 	UINT64 padding1408[1408 - 1346]; /* 1346 */
 
 	/* Server Certificate */
-	ALIGN64 BOOL IgnoreCertificate;               /* 1408 */
-	ALIGN64 char* CertificateName;                /* 1409 */
-	ALIGN64 char* CertificateFile;                /* 1410 */
-	ALIGN64 char* PrivateKeyFile;                 /* 1411 */
-	ALIGN64 char* RdpKeyFile;                     /* 1412 */
-	ALIGN64 rdpRsaKey* RdpServerRsaKey;           /* 1413 */
-	ALIGN64 rdpCertificate* RdpServerCertificate; /* 1414 */
-	ALIGN64 BOOL ExternalCertificateManagement;   /* 1415 */
-	ALIGN64 char* CertificateContent;             /* 1416 */
-	ALIGN64 char* PrivateKeyContent;              /* 1417 */
-	ALIGN64 char* RdpKeyContent;                  /* 1418 */
-	ALIGN64 BOOL AutoAcceptCertificate;           /* 1419 */
-	ALIGN64 BOOL AutoDenyCertificate;             /* 1420 */
+	ALIGN64 BOOL IgnoreCertificate;                /* 1408 */
+	ALIGN64 char* CertificateName;                 /* 1409 */
+	ALIGN64 char* CertificateFile;                 /* 1410 */
+	ALIGN64 char* PrivateKeyFile;                  /* 1411 */
+	ALIGN64 char* RdpKeyFile;                      /* 1412 */
+	ALIGN64 rdpRsaKey* RdpServerRsaKey;            /* 1413 */
+	ALIGN64 rdpCertificate* RdpServerCertificate;  /* 1414 */
+	ALIGN64 BOOL ExternalCertificateManagement;    /* 1415 */
+	ALIGN64 char* CertificateContent;              /* 1416 */
+	ALIGN64 char* PrivateKeyContent;               /* 1417 */
+	ALIGN64 char* RdpKeyContent;                   /* 1418 */
+	ALIGN64 BOOL AutoAcceptCertificate;            /* 1419 */
+	ALIGN64 BOOL AutoDenyCertificate;              /* 1420 */
 	ALIGN64 char* CertificateAcceptedFingerprints; /* 1421 */
 	UINT64 padding1472[1472 - 1422];               /* 1422 */
-	UINT64 padding1536[1536 - 1472];              /* 1472 */
+	UINT64 padding1536[1536 - 1472];               /* 1472 */
 
 	/**
 	 * User Interface

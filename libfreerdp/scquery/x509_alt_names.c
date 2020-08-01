@@ -170,20 +170,21 @@ void extract_asn1_string(GENERAL_NAME* name, alt_name alt_name)
 
 	switch (name->type)
 	{
-	case GEN_URI:
-	case GEN_DNS:
-	case GEN_EMAIL:
-		if (ASN1_STRING_to_UTF8(&string, name->d.ia5) < 0)
-		{
-			char* type = general_name_type_label(name->type);
-			ERROR(EX_OSERR, "Error converting with ASN1_STRING_to_UTF8 a %s general name", type);
-			free(type);
-			return;
-		}
+		case GEN_URI:
+		case GEN_DNS:
+		case GEN_EMAIL:
+			if (ASN1_STRING_to_UTF8(&string, name->d.ia5) < 0)
+			{
+				char* type = general_name_type_label(name->type);
+				ERROR(EX_OSERR, "Error converting with ASN1_STRING_to_UTF8 a %s general name",
+				      type);
+				free(type);
+				return;
+			}
 
-		/* alt_name_add_component makes a copy of the component: */
-		alt_name_add_component(alt_name, (char*)string);
-		OPENSSL_free(string);
+			/* alt_name_add_component makes a copy of the component: */
+			alt_name_add_component(alt_name, (char*)string);
+			OPENSSL_free(string);
 	}
 }
 
@@ -360,106 +361,109 @@ unsigned decode_der_item_collect(unsigned char* data, unsigned i, unsigned lengt
 	/* decode elements */
 	switch (class)
 	{
-	case 2: /*context specific*/
-	{
-		char index[3];
-		sprintf(index, "%d", tag);
-		collect(class, primitive, tag, (unsigned char*)index, strlen(index), collect_data);
-		i = decode_der_item_collect(data, i, len, collect, collect_data);
-		break;
-	}
-
-	default:
-		switch (tag)
+		case 2: /*context specific*/
 		{
-		case asn1_eoc:
-		{
-			/* not processed yet */
-			collect(class, primitive, tag, (unsigned char*)&"", 0, collect_data);
-			i += len;
+			char index[3];
+			sprintf(index, "%d", tag);
+			collect(class, primitive, tag, (unsigned char*)index, strlen(index), collect_data);
+			i = decode_der_item_collect(data, i, len, collect, collect_data);
 			break;
 		}
 
-		case asn1_boolean:
-		{
-			char buffer[8];
-			strcpy(buffer, (data[i] ? "true" : "false"));
-			collect(class, primitive, tag, (unsigned char*)buffer, strlen(buffer), collect_data);
-			i += len;
-			break;
-		}
-
-		case asn1_integer:
-		{
-			char* value = decode_integer(data, i, len);
-			collect(class, primitive, tag, (unsigned char*)value, strlen(value), collect_data);
-			free(value);
-			i += len;
-			break;
-		}
-
-		case asn1_bit_string:
-		case asn1_octet_string:
-		{
-			/* not processed yet */
-			collect(class, primitive, tag, (unsigned char*)&"", 0, collect_data);
-			i += len;
-			break;
-		}
-
-		case asn1_null:
-		{
-			char buffer[8];
-			strcpy(buffer, "null");
-			collect(class, primitive, tag, (unsigned char*)buffer, strlen(buffer), collect_data);
-			i += len;
-			break;
-		}
-
-		case asn1_set:
-		case asn1_sequence:
-		{
-			unsigned e = i + len;
-
-			while (i < e)
+		default:
+			switch (tag)
 			{
-				i = decode_der_item_collect(data, i, len, collect, collect_data);
+				case asn1_eoc:
+				{
+					/* not processed yet */
+					collect(class, primitive, tag, (unsigned char*)&"", 0, collect_data);
+					i += len;
+					break;
+				}
+
+				case asn1_boolean:
+				{
+					char buffer[8];
+					strcpy(buffer, (data[i] ? "true" : "false"));
+					collect(class, primitive, tag, (unsigned char*)buffer, strlen(buffer),
+					        collect_data);
+					i += len;
+					break;
+				}
+
+				case asn1_integer:
+				{
+					char* value = decode_integer(data, i, len);
+					collect(class, primitive, tag, (unsigned char*)value, strlen(value),
+					        collect_data);
+					free(value);
+					i += len;
+					break;
+				}
+
+				case asn1_bit_string:
+				case asn1_octet_string:
+				{
+					/* not processed yet */
+					collect(class, primitive, tag, (unsigned char*)&"", 0, collect_data);
+					i += len;
+					break;
+				}
+
+				case asn1_null:
+				{
+					char buffer[8];
+					strcpy(buffer, "null");
+					collect(class, primitive, tag, (unsigned char*)buffer, strlen(buffer),
+					        collect_data);
+					i += len;
+					break;
+				}
+
+				case asn1_set:
+				case asn1_sequence:
+				{
+					unsigned e = i + len;
+
+					while (i < e)
+					{
+						i = decode_der_item_collect(data, i, len, collect, collect_data);
+					}
+
+					break;
+				}
+
+				case asn1_utf8string:
+				case asn1_numericstring:
+				case asn1_printablestring:
+				case asn1_t61string:
+				case asn1_videotexstring:
+				case asn1_ia5string:
+				case asn1_graphicstring:
+				case asn1_iso64string:
+				case asn1_generalstring:
+				case asn1_universalstring:
+				case asn1_bmpstring:
+				{
+					collect(class, primitive, tag, data + i, len, collect_data);
+					i += len;
+					break;
+				}
+
+				case asn1_object:
+				case asn1_object_descriptor:
+				case asn1_external:
+				case asn1_real:
+				case asn1_enumerated:
+				case asn1_utctime:
+				case asn1_generalizedtime:
+				{
+					/* not processed yet */
+					collect(class, primitive, tag, (unsigned char*)&"", 0, collect_data);
+					i += len;
+					break;
+				}
 			}
-
-			break;
-		}
-
-		case asn1_utf8string:
-		case asn1_numericstring:
-		case asn1_printablestring:
-		case asn1_t61string:
-		case asn1_videotexstring:
-		case asn1_ia5string:
-		case asn1_graphicstring:
-		case asn1_iso64string:
-		case asn1_generalstring:
-		case asn1_universalstring:
-		case asn1_bmpstring:
-		{
-			collect(class, primitive, tag, data + i, len, collect_data);
-			i += len;
-			break;
-		}
-
-		case asn1_object:
-		case asn1_object_descriptor:
-		case asn1_external:
-		case asn1_real:
-		case asn1_enumerated:
-		case asn1_utctime:
-		case asn1_generalizedtime:
-		{
-			/* not processed yet */
-			collect(class, primitive, tag, (unsigned char*)&"", 0, collect_data);
-			i += len;
-			break;
-		}
-		}
 	}
 
 	return i;
@@ -471,13 +475,14 @@ void extract_othername_object(GENERAL_NAME* name, alt_name alt_name)
 	{
 		char* type;
 
-	case GEN_OTHERNAME:
-		alt_name_add_component(alt_name, type = type_id_to_oid_string(name->d.otherName->type_id));
-		unsigned char* der = NULL;
-		int length = i2d_ASN1_TYPE(name->d.otherName->value, &der);
-		decode_der_item_collect(der, 0, (unsigned)length, collect_alt_name_component, alt_name);
-		free(der);
-		free(type);
+		case GEN_OTHERNAME:
+			alt_name_add_component(alt_name,
+			                       type = type_id_to_oid_string(name->d.otherName->type_id));
+			unsigned char* der = NULL;
+			int length = i2d_ASN1_TYPE(name->d.otherName->value, &der);
+			decode_der_item_collect(der, 0, (unsigned)length, collect_alt_name_component, alt_name);
+			free(der);
+			free(type);
 	}
 }
 
@@ -491,22 +496,22 @@ alt_name extract_alt_name(GENERAL_NAME* name, unsigned i)
 
 	switch (name->type)
 	{
-	case GEN_URI:
-	case GEN_DNS:
-	case GEN_EMAIL:
-		alt_name = alt_name_new(type = general_name_type_label(name->type), 1);
-		extract_asn1_string(name, alt_name);
-		free(type);
-		return alt_name;
+		case GEN_URI:
+		case GEN_DNS:
+		case GEN_EMAIL:
+			alt_name = alt_name_new(type = general_name_type_label(name->type), 1);
+			extract_asn1_string(name, alt_name);
+			free(type);
+			return alt_name;
 
-	case GEN_OTHERNAME:
-		alt_name = alt_name_new(type = general_name_type_label(name->type), 1);
-		extract_othername_object(name, alt_name);
-		free(type);
-		return alt_name;
+		case GEN_OTHERNAME:
+			alt_name = alt_name_new(type = general_name_type_label(name->type), 1);
+			extract_othername_object(name, alt_name);
+			free(type);
+			return alt_name;
 
-	default:
-		return NULL;
+		default:
+			return NULL;
 	}
 }
 

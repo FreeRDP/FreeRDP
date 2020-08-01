@@ -2148,7 +2148,8 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 	REGION16 clippingRects, updateRegion;
 	PROGRESSIVE_BLOCK_REGION* region = &progressive->region;
 	PROGRESSIVE_SURFACE_CONTEXT* surface = progressive_get_surface_data(progressive, surfaceId);
-	union {
+	union
+	{
 		const BYTE* cbp;
 		BYTE* bp;
 	} sconv;

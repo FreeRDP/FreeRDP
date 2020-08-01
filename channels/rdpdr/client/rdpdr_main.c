@@ -580,7 +580,6 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 
 #else
 
-
 static const char* automountLocations[] = { "/run/user/%lu/gvfs", "/run/media/%s", "/media/%s",
 	                                        "/media", "/mnt" };
 

@@ -55,7 +55,7 @@ verbose_handler handle_verbose;
 	((verbose) ? handle_verbose(__FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__) : (void)0)
 
 #ifdef assert
-#	undef assert
+#undef assert
 #endif
 #define assert(condition)                                           \
 	do                                                              \

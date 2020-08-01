@@ -522,7 +522,8 @@ typedef struct
 	rpcconn_common_hdr_t header;
 } rpcconn_shutdown_hdr_t;
 
-typedef union {
+typedef union
+{
 	rpcconn_common_hdr_t common;
 	rpcconn_alter_context_hdr_t alter_context;
 	rpcconn_alter_context_response_hdr_t alter_context_response;

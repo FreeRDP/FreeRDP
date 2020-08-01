@@ -89,7 +89,7 @@ krb5_error_code KRB5_CALLCONV krb5_copy_data_add0(krb5_context context, const kr
 }
 
 #ifdef HAVE_PWD_H
-#	include <pwd.h>
+#include <pwd.h>
 static char* get_name_from_os()
 {
 	struct passwd* pw;
@@ -97,7 +97,7 @@ static char* get_name_from_os()
 	return (pw != NULL) ? pw->pw_name : NULL;
 }
 #else /* HAVE_PWD_H */
-#	ifdef _WIN32
+#ifdef _WIN32
 static char* get_name_from_os()
 {
 	static char name[1024];
@@ -113,13 +113,13 @@ static char* get_name_from_os()
 		return NULL;
 	}
 }
-#	else  /* _WIN32 */
+#else  /* _WIN32 */
 static char* get_name_from_os()
 {
 	return NULL;
 }
-#	endif /* _WIN32 */
-#endif     /* HAVE_PWD_H */
+#endif /* _WIN32 */
+#endif /* HAVE_PWD_H */
 
 typedef enum
 {
@@ -706,23 +706,26 @@ static int k5_kinit(struct k_opts* opts, struct k5_data* k5)
 
 	switch (opts->action)
 	{
-	case INIT_PW:
-		ret = krb5_get_init_creds_password(k5->ctx, &my_creds, k5->me, 0, kinit_prompter, &pwprompt,
-		                                   opts->starttime, opts->service_name, options);
-		break;
+		case INIT_PW:
+			ret = krb5_get_init_creds_password(k5->ctx, &my_creds, k5->me, 0, kinit_prompter,
+			                                   &pwprompt, opts->starttime, opts->service_name,
+			                                   options);
+			break;
 
-	case INIT_KT:
-		ret = krb5_get_init_creds_keytab(k5->ctx, &my_creds, k5->me, keytab, opts->starttime,
-		                                 opts->service_name, options);
-		break;
+		case INIT_KT:
+			ret = krb5_get_init_creds_keytab(k5->ctx, &my_creds, k5->me, keytab, opts->starttime,
+			                                 opts->service_name, options);
+			break;
 
-	case VALIDATE:
-		ret = krb5_get_validated_creds(k5->ctx, &my_creds, k5->me, k5->out_cc, opts->service_name);
-		break;
+		case VALIDATE:
+			ret = krb5_get_validated_creds(k5->ctx, &my_creds, k5->me, k5->out_cc,
+			                               opts->service_name);
+			break;
 
-	case RENEW:
-		ret = krb5_get_renewed_creds(k5->ctx, &my_creds, k5->me, k5->out_cc, opts->service_name);
-		break;
+		case RENEW:
+			ret =
+			    krb5_get_renewed_creds(k5->ctx, &my_creds, k5->me, k5->out_cc, opts->service_name);
+			break;
 	}
 
 	if (ret)
@@ -731,18 +734,18 @@ static int k5_kinit(struct k_opts* opts, struct k5_data* k5)
 
 		switch (opts->action)
 		{
-		case INIT_PW:
-		case INIT_KT:
-			doing = _("getting initial credentials");
-			break;
+			case INIT_PW:
+			case INIT_KT:
+				doing = _("getting initial credentials");
+				break;
 
-		case VALIDATE:
-			doing = _("validating credentials");
-			break;
+			case VALIDATE:
+				doing = _("validating credentials");
+				break;
 
-		case RENEW:
-			doing = _("renewing credentials");
-			break;
+			case RENEW:
+				doing = _("renewing credentials");
+				break;
 		}
 
 		/* If reply decryption failed, or if pre-authentication failed and we
