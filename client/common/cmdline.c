@@ -3015,7 +3015,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			settings->MultifragMaxRequestSize = (UINT32)val;
 		}
-		CommandLineSwitchCase(arg, "max-loop-time")
+		CommandLineSwitchCase(arg, "no-io-timeout")
 		{
 			LONGLONG val;
 
@@ -3023,10 +3023,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			if (val < 0)
-				settings->MaxTimeInCheckLoop =
+				settings->NoIoTimeout =
 				    10 * 60 * 60 * 1000; /* 10 hours can be considered as infinite */
 			else
-				settings->MaxTimeInCheckLoop = (UINT32)val;
+				settings->NoIoTimeout = (UINT32)val;
 		}
 		CommandLineSwitchCase(arg, "auto-request-control")
 		{

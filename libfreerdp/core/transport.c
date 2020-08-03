@@ -1143,7 +1143,7 @@ int transport_check_fds(rdpTransport* transport)
 	int recv_status;
 	wStream* received;
 	UINT64 now = GetTickCount64();
-	UINT64 dueDate = 0;
+	UINT64 dueDate;
 
 	if (!transport)
 		return -1;
@@ -1154,16 +1154,26 @@ int transport_check_fds(rdpTransport* transport)
 		freerdp_set_last_error_if_not(transport->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 		return -1;
 	}
+	if (!(transport->LastActivityTime))
+	{
+		transport->LastActivityTime = now;
+	}
+	dueDate = transport->LastActivityTime + transport->settings->NoIoTimeout;
 
-	dueDate = now + transport->settings->MaxTimeInCheckLoop;
+	if (now > dueDate)
+	{
+		WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds: io timeout occured: %i > %i",
+			now, dueDate);
+		return -1;
+	}
 
-	if (transport->haveMoreBytesToRead)
+/*	if (transport->haveMoreBytesToRead)
 	{
 		transport->haveMoreBytesToRead = FALSE;
 		ResetEvent(transport->rereadEvent);
-	}
+	} */
 
-	while (now < dueDate)
+/*	while (now < dueDate) */
 	{
 		if (freerdp_shall_disconnect(transport->context->instance))
 		{
@@ -1180,6 +1190,9 @@ int transport_check_fds(rdpTransport* transport)
 
 			return status;
 		}
+
+		transport->LastActivityTime = now;
+
 		if ((status = transport_handle_pdu(transport, transport->ReceiveBuffer,
 		                                   &transport->NextPDUBytesLeft)) <= 0)
 		{
@@ -1215,15 +1228,13 @@ int transport_check_fds(rdpTransport* transport)
 			           "transport_check_fds: transport->ReceiveCallback() - %i", recv_status);
 			return -1;
 		}
-
-		now = GetTickCount64();
 	}
 
-	if (now >= dueDate)
+/*	if (now >= dueDate)
 	{
 		SetEvent(transport->rereadEvent);
 		transport->haveMoreBytesToRead = TRUE;
-	}
+	} */
 
 	return 0;
 }

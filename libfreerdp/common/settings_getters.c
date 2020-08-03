@@ -1404,8 +1404,8 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_LoadBalanceInfoLength:
 			return settings->LoadBalanceInfoLength;
 
-		case FreeRDP_MaxTimeInCheckLoop:
-			return settings->MaxTimeInCheckLoop;
+		case FreeRDP_NoIoTimeout:
+			return settings->NoIoTimeout;
 
 		case FreeRDP_MonitorCount:
 			return settings->MonitorCount;
@@ -1802,8 +1802,8 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 			settings->LoadBalanceInfoLength = val;
 			break;
 
-		case FreeRDP_MaxTimeInCheckLoop:
-			settings->MaxTimeInCheckLoop = val;
+		case FreeRDP_NoIoTimeout:
+			settings->NoIoTimeout = val;
 			break;
 
 		case FreeRDP_MonitorCount:

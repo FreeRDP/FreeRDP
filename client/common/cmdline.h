@@ -217,7 +217,7 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	  NULL, -1, NULL, "Set the default log level, see wLog(7) for details" },
 	{ "max-fast-path-size", COMMAND_LINE_VALUE_REQUIRED, "<size>", NULL, NULL, -1, NULL,
 	  "Specify maximum fast-path update size" },
-	{ "max-loop-time", COMMAND_LINE_VALUE_REQUIRED, "<time>", NULL, NULL, -1, NULL,
+	{ "no-io-timeout", COMMAND_LINE_VALUE_REQUIRED, "<time>", NULL, NULL, -1, NULL,
 	  "Specify maximum time in milliseconds spend treating packets" },
 	{ "menu-anims", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "menu animations" },
