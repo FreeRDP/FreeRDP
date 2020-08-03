@@ -123,6 +123,12 @@ extern "C"
 	    freerdp* instance, const char* host, UINT16 port, const char* common_name,
 	    const char* subject, const char* issuer, const char* fingerprint, const char* old_subject,
 	    const char* old_issuer, const char* old_fingerprint, DWORD flags);
+
+	FREERDP_API BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type,
+	                                                    BOOL isDisplayMandatory,
+	                                                    BOOL isConsentMandatory, size_t length,
+	                                                    const WCHAR* message);
+
 	FREERDP_API BOOL client_auto_reconnect(freerdp* instance);
 	FREERDP_API BOOL client_auto_reconnect_ex(freerdp* instance,
 	                                          BOOL (*window_events)(freerdp* instance));
