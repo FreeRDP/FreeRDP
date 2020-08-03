@@ -663,6 +663,66 @@ DWORD client_cli_verify_changed_certificate_ex(freerdp* instance, const char* ho
 	return client_cli_accept_certificate(instance->settings);
 }
 
+BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
+                                        BOOL isConsentMandatory, size_t length,
+                                        const WCHAR* message)
+{
+	char answer;
+	const char* msgType = (type == 1) ? "Consent message" : "Service message";
+
+	if (!isDisplayMandatory && !isConsentMandatory)
+		return TRUE;
+
+	printf("%s:\n", msgType);
+#if defined(WIN32)
+	printf("%.*S\n", (int)length, message);
+#else
+	{
+		LPSTR msg;
+		if (ConvertFromUnicode(CP_UTF8, 0, message, (int)(length / 2), &msg, 0, NULL, NULL) < 1)
+		{
+			printf("Failed to convert message!\n");
+			return FALSE;
+		}
+		printf("%s\n", msg);
+		free(msg);
+	}
+#endif
+
+	while (isConsentMandatory)
+	{
+		printf("I understand and agree to the terms of this policy (Y/N) \n");
+		fflush(stdout);
+		answer = fgetc(stdin);
+
+		if (feof(stdin))
+		{
+			printf("\nError: Could not read answer from stdin.\n");
+			return FALSE;
+		}
+
+		switch (answer)
+		{
+			case 'y':
+			case 'Y':
+				fgetc(stdin);
+				return TRUE;
+
+			case 'n':
+			case 'N':
+				fgetc(stdin);
+				return FALSE;
+
+			default:
+				break;
+		}
+
+		printf("\n");
+	}
+
+	return TRUE;
+}
+
 BOOL client_auto_reconnect(freerdp* instance)
 {
 	return client_auto_reconnect_ex(instance, NULL);
