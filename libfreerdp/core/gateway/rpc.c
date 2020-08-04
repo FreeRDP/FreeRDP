@@ -647,8 +647,8 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 
 	context = channel->client->context;
 	settings = context->settings;
-	proxyUsername = settings->ProxyUsername;
-	proxyPassword = settings->ProxyPassword;
+	proxyUsername = freerdp_settings_get_string(settings, FreeRDP_ProxyUsername);
+	proxyPassword = freerdp_settings_get_string(settings, FreeRDP_ProxyPassword);
 	{
 		sockfd = freerdp_tcp_connect(context, settings, channel->client->host,
 		                             channel->client->port, timeout);
