@@ -225,8 +225,9 @@ wStream* transport_send_stream_init(rdpTransport* transport, int size)
 	return s;
 }
 
-BOOL transport_attach(rdpTransport* transport, int sockfd)
+BOOL transport_attach(void* _transport, int sockfd)
 {
+	rdpTransport* transport = _transport;
 	BIO* socketBio = NULL;
 	BIO* bufferedBio;
 	socketBio = BIO_new(BIO_s_simple_socket());
@@ -259,8 +260,9 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 	return TRUE;
 }
 
-BOOL transport_connect_tls(rdpTransport* transport)
+BOOL transport_connect_tls(void* _transport)
 {
+	rdpTransport *transport = _transport;
 	int tlsStatus;
 	rdpTls* tls = NULL;
 	rdpContext* context = transport->context;
@@ -319,7 +321,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	freerdp* instance = context->instance;
 	rdpRdp* rdp = context->rdp;
 
-	if (!transport_connect_tls(transport))
+	if (!context->update->io->TLSConnect(transport))
 		return FALSE;
 
 	if (!settings->Authentication)
@@ -419,20 +421,22 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		    proxy_prepare(settings, &proxyHostname, &peerPort, &proxyUsername, &proxyPassword);
 
 		if (isProxyConnection)
-			sockfd = freerdp_tcp_connect(context, settings, proxyHostname, peerPort, timeout);
+			sockfd = transport->context->update->io->TCPConnect(
+				context, settings, proxyHostname, peerPort, timeout);
 		else
-			sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout);
+			sockfd = transport->context->update->io->TCPConnect(
+				context, settings, hostname, port, timeout);
 
 		if (sockfd < 0)
 			return FALSE;
 
-		if (!transport_attach(transport, sockfd))
+		if (!transport->context->update->io->TransportAttach(transport, sockfd))
 			return FALSE;
 
 		if (isProxyConnection)
 		{
-			if (!proxy_connect(settings, transport->frontBio, proxyUsername, proxyPassword,
-			                   hostname, port))
+			if (!transport->context->update->io->ProxyConnect(
+				settings, transport->frontBio, proxyUsername, proxyPassword, hostname, port))
 				return FALSE;
 		}
 
@@ -998,6 +1002,10 @@ void transport_register_default_io_callbacks(rdpUpdate* update)
 {
 	rdpIoUpdate io = { 0 };
 	io.context = update->context;
+	io.TCPConnect = freerdp_tcp_connect;
+	io.TLSConnect = transport_connect_tls;
+	io.TransportAttach = transport_attach;
+	io.ProxyConnect = proxy_connect;
 	io.DataHandler = transport_io_data_handler;
 	io.Read = transport_io_data_read;
 	io.Write = transport_io_data_write;

@@ -371,9 +371,10 @@ fail:
 	return rc;
 }
 
-BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* proxyUsername,
+BOOL proxy_connect(rdpSettings* settings, void* _bio, const char* proxyUsername,
                    const char* proxyPassword, const char* hostname, UINT16 port)
 {
+	BIO* bufferedBio = _bio;
 	switch (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType))
 	{
 		case PROXY_TYPE_NONE:

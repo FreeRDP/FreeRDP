@@ -703,7 +703,6 @@ BOOL freerdp_context_new(freerdp* instance)
 		goto fail;
 	}
 
-	update_register_client_callbacks(rdp->update);
 	instance->context->abortEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	transport_register_default_io_callbacks(rdp->update);

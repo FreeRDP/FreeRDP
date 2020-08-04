@@ -811,7 +811,6 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	client->autodetect->context = context;
 	update_register_server_callbacks(client->update);
 	autodetect_register_server_callbacks(client->autodetect);
-	transport_register_default_io_callbacks(rdp->update);
 
 	if (!(context->errorDescription = calloc(1, 500)))
 	{
@@ -819,7 +818,7 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 		goto fail_error_description;
 	}
 
-	if (!transport_attach(rdp->transport, client->sockfd))
+	if (!rdp->update->io->TransportAttach(rdp->transport, client->sockfd))
 		goto fail_transport_attach;
 
 	rdp->transport->ReceiveCallback = peer_recv_callback;

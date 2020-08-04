@@ -19,8 +19,19 @@
 
 #ifndef FREERDP_UPDATE_IO_H
 #define FREERDP_UPDATE_IO_H
+/* TODO:
+ * RDG
+ * RPC
+ */
 
 #include <freerdp/types.h>
+
+typedef int (*pTCPConnect)(rdpContext* context, rdpSettings* settings, const char* hostname, int port,
+                        DWORD timeout);
+typedef BOOL (*pTLSConnect)(void* transport);
+typedef BOOL (*pProxyConnect)(rdpSettings* settings, void* bufferedBio, const char* proxyUsername,
+                   const char* proxyPassword, const char* hostname, UINT16 port);
+typedef BOOL (*pTransportAttach)(void* transport, int sockfd);
 
 typedef int (*pRead)(rdpContext* context, const uint8_t* buf, size_t buf_size);
 typedef int (*pWrite)(rdpContext* context, const uint8_t* buf, size_t buf_size);
@@ -31,19 +42,42 @@ struct rdp_io_update
 	rdpContext* context;     /* 0 */
 	UINT32 paddingA[16 - 1]; /* 1 */
 
+	/* switchable connect
+	 * used to create tcp connection */
+	pTCPConnect TCPConnect; /* 17 */
+
+	/* switchable TLSConnect
+	 * used to setup tls on already established TCP connection */
+	pTLSConnect TLSConnect;
+
+	/* switchable proxy_connect
+	 * used to initialize proxy connection,
+	 * can be implemented inside TcpConnect and just return TRUE,
+	 * used to maintain compatibility with old design. */
+	pProxyConnect ProxyConnect; /* 18 */
+
+	/* should noop and return TRUE, used to mimic
+	 * current freerdp design */
+	pTransportAttach TransportAttach; /* 19 */
+
+
+	UINT32 paddingB[32 - 20]; /* 20 */
+
 	/* switchable read
 	 * used to read bytes from IO backend */
-	pWrite Read; /* 16 */
+	pWrite Read; /* 33 */
 
 	/* switchable write
 	 * used to write bytes to IO backend */
-	pWrite Write; /* 17 */
+	pWrite Write; /* 34 */
 
 	/* switchable data handler
 	 * used if IO backed doing internal polling and reading
 	 * and just passing recieved data to freerdp */
-	pDataHandler DataHandler; /* 18 */
-	UINT32 paddingB[32 - 19]; /* 19 */
+	pDataHandler DataHandler; /* 35 */
+
+
+	UINT32 paddingC[48 - 36]; /* 36 */
 };
 typedef struct rdp_io_update rdpIoUpdate;
 

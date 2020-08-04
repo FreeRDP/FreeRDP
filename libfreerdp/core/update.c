@@ -2908,6 +2908,9 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 	if (!update)
 		return NULL;
+	update->context = rdp->context;
+	if (update->context)
+		update->context->update = update;
 
 	update->log = WLog_Get("com.freerdp.core.update");
 	InitializeCriticalSection(&(update->mux));
@@ -2940,6 +2943,8 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 	if (!update->io)
 		goto fail;
+
+	transport_register_default_io_callbacks(update);
 
 	deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 	deleteList->sIndices = 64;
