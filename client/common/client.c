@@ -668,7 +668,7 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
                                         const WCHAR* message)
 {
 	char answer;
-	const char* msgType = (type == 1) ? "Consent message" : "Service message";
+	const char* msgType = (type == GATEWAY_MESSAGE_CONSENT) ? "Consent message" : "Service message";
 
 	if (!isDisplayMandatory && !isConsentMandatory)
 		return TRUE;
