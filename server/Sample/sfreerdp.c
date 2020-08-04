@@ -823,7 +823,8 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 			count += tmp;
 		}
 		handles[count++] = WTSVirtualChannelManagerGetEventHandle(context->vcm);
-		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+		/* NOTE: for some reason polling failing here ... */
+		status = WaitForMultipleObjects(count, handles, FALSE, 1000);
 
 		if (status == WAIT_FAILED)
 		{

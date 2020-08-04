@@ -1150,8 +1150,6 @@ int transport_check_fds(rdpTransport* transport)
 	int status;
 	int recv_status;
 	wStream* received;
-	UINT64 now = GetTickCount64();
-	UINT64 dueDate;
 
 	if (!transport)
 		return -1;
@@ -1162,26 +1160,7 @@ int transport_check_fds(rdpTransport* transport)
 		freerdp_set_last_error_if_not(transport->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 		return -1;
 	}
-	if (!(transport->LastActivityTime))
-	{
-		transport->LastActivityTime = now;
-	}
-	dueDate = transport->LastActivityTime + transport->settings->NoIoTimeout;
 
-	if (now > dueDate)
-	{
-		WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds: io timeout occured: %i > %i",
-			now, dueDate);
-		return -1;
-	}
-
-/*	if (transport->haveMoreBytesToRead)
-	{
-		transport->haveMoreBytesToRead = FALSE;
-		ResetEvent(transport->rereadEvent);
-	} */
-
-/*	while (now < dueDate) */
 	{
 		if (freerdp_shall_disconnect(transport->context->instance))
 		{
@@ -1193,23 +1172,31 @@ int transport_check_fds(rdpTransport* transport)
 		         transport->NextPDUBytesLeft ? transport->NextPDUBytesLeft : 1)) <= 0)
 		{
 			if (status < 0)
+			{
 				WLog_Print(transport->log, WLOG_DEBUG,
 				           "transport_check_fds: transport_read_layer_bytes() - %i", status);
-
+			}
 			return status;
 		}
-
-		transport->LastActivityTime = now;
 
 		if ((status = transport_handle_pdu(transport, transport->ReceiveBuffer,
 		                                   &transport->NextPDUBytesLeft)) <= 0)
 		{
 			if (status < 0)
+			{
 				WLog_Print(transport->log, WLOG_DEBUG,
 				           "transport_check_fds: transport_handle_pdu() - %i", status);
-
+			}
+			else
+			{
+				SetEvent(transport->rereadEvent);
+				transport->haveMoreBytesToRead = TRUE;
+			}
 			return status;
 		}
+		transport->haveMoreBytesToRead = FALSE;
+		ResetEvent(transport->rereadEvent);
+
 
 		received = transport->ReceiveBuffer;
 
@@ -1237,12 +1224,6 @@ int transport_check_fds(rdpTransport* transport)
 			return -1;
 		}
 	}
-
-/*	if (now >= dueDate)
-	{
-		SetEvent(transport->rereadEvent);
-		transport->haveMoreBytesToRead = TRUE;
-	} */
 
 	return 0;
 }

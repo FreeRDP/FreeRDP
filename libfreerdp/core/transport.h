@@ -78,7 +78,6 @@ struct rdp_transport
 	HANDLE rereadEvent;
 	BOOL haveMoreBytesToRead;
 	wLog* log;
-	UINT64 LastActivityTime;
 };
 
 FREERDP_LOCAL wStream* transport_send_stream_init(rdpTransport* transport, int size);

@@ -326,7 +326,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->SupportHeartbeatPdu = TRUE;
 	settings->ServerMode = (flags & FREERDP_SETTINGS_SERVER_MODE) ? TRUE : FALSE;
 	settings->WaitForOutputBufferFlush = TRUE;
-	settings->NoIoTimeout = 60000;
 	settings->DesktopWidth = 1024;
 	settings->DesktopHeight = 768;
 	settings->Workarea = FALSE;
