@@ -645,7 +645,7 @@ static BOOL wf_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDi
 		return TRUE;
 
 	/* special handling for consent messages (show modal dialog) */
-	if (type == 1 && isConsentMandatory)
+	if (type == GATEWAY_MESSAGE_CONSENT && isConsentMandatory)
 	{
 		int mbRes;
 		WCHAR* msg;

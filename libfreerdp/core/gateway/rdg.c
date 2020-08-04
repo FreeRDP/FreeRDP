@@ -775,7 +775,7 @@ static BOOL rdg_process_tunnel_response_optional(rdpRdg* rdg, wStream* s, UINT16
 		}
 
 		return IFCALLRESULT(TRUE, context->instance->PresentGatewayMessage, context->instance,
-		                    TSG_ASYNC_MESSAGE_CONSENT_MESSAGE, TRUE, TRUE, msgLenBytes, msg);
+		                    GATEWAY_MESSAGE_CONSENT, TRUE, TRUE, msgLenBytes, msg);
 	}
 
 	return TRUE;
@@ -1441,7 +1441,7 @@ static BOOL rdg_process_service_message(rdpRdg* rdg, wStream* s)
 	}
 
 	return IFCALLRESULT(TRUE, context->instance->PresentGatewayMessage, context->instance,
-	                    TSG_ASYNC_MESSAGE_SERVICE_MESSAGE, TRUE, FALSE, msgLenBytes, msg);
+	                    GATEWAY_MESSAGE_SERVICE, TRUE, FALSE, msgLenBytes, msg);
 }
 
 static BOOL rdg_process_unknown_packet(rdpRdg* rdg, int type)
