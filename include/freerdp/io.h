@@ -62,9 +62,9 @@ struct rdp_io_update
 	pTransportAttach TransportAttach; /* 19 */
 
 	/* callback used to shutdown whole io operations */
-	pTransportDisconnect TransportDisconnect;
+	pTransportDisconnect TransportDisconnect; /* 20 */
 
-	UINT32 paddingB[32 - 20]; /* 20 */
+	UINT32 paddingB[32 - 21]; /* 21 */
 
 	/* switchable read
 	 * used to read bytes from IO backend */
