@@ -1022,10 +1022,10 @@ static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT1
 		return FALSE;
 	else
 	{
-		const char* peerHostname = settings->GatewayHostname;
-		const char* proxyUsername = settings->ProxyUsername;
-		const char* proxyPassword = settings->ProxyPassword;
-		*port = settings->GatewayPort;
+		const char* peerHostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+		const char* proxyUsername = freerdp_settings_get_string(settings, FreeRDP_GatewayUsername);
+		const char* proxyPassword = freerdp_settings_get_string(settings, FreeRDP_GatewayPassword);
+		*port = freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort);
 		*isProxy = proxy_prepare(settings, &peerHostname, port, &proxyUsername, &proxyPassword);
 		result = freerdp_tcp_resolve_host(peerHostname, *port, 0);
 

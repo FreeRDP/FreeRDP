@@ -1567,9 +1567,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	else
 		compatibility = freerdp_client_detect_command_line(argc - 1, &argv[1], &flags);
 
-	settings->ProxyHostname = NULL;
-	settings->ProxyUsername = NULL;
-	settings->ProxyPassword = NULL;
+	freerdp_settings_set_string(settings, FreeRDP_ProxyHostname, NULL);
+	freerdp_settings_set_string(settings, FreeRDP_ProxyUsername, NULL);
+	freerdp_settings_set_string(settings, FreeRDP_ProxyPassword, NULL);
 
 	if (compatibility)
 	{
@@ -2089,7 +2089,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "proxy")
 		{
 			/* initial value */
-			settings->ProxyType = PROXY_TYPE_HTTP;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_HTTP))
+				return COMMAND_LINE_ERROR_MEMORY;
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
@@ -2104,12 +2105,23 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					*p = '\0';
 
 					if (_stricmp("no_proxy", arg->Value) == 0)
-						settings->ProxyType = PROXY_TYPE_IGNORE;
-
+					{
+						if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType,
+						                                 PROXY_TYPE_IGNORE))
+							return COMMAND_LINE_ERROR_MEMORY;
+					}
 					if (_stricmp("http", arg->Value) == 0)
-						settings->ProxyType = PROXY_TYPE_HTTP;
+					{
+						if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType,
+						                                 PROXY_TYPE_HTTP))
+							return COMMAND_LINE_ERROR_MEMORY;
+					}
 					else if (_stricmp("socks5", arg->Value) == 0)
-						settings->ProxyType = PROXY_TYPE_SOCKS;
+					{
+						if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType,
+						                                 PROXY_TYPE_SOCKS))
+							return COMMAND_LINE_ERROR_MEMORY;
+					}
 					else
 					{
 						WLog_ERR(TAG, "Only HTTP and SOCKS5 proxies supported by now");
@@ -2142,18 +2154,15 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					}
 
 					*colonPtr = '\0';
-					settings->ProxyUsername = _strdup(arg->Value);
-
-					if (!settings->ProxyUsername)
+					if (!freerdp_settings_set_string(settings, FreeRDP_ProxyUsername, arg->Value))
 					{
 						WLog_ERR(TAG, "unable to allocate proxy username");
 						return COMMAND_LINE_ERROR_MEMORY;
 					}
 
 					*atPtr = '\0';
-					settings->ProxyPassword = _strdup(colonPtr + 1);
 
-					if (!settings->ProxyPassword)
+					if (!freerdp_settings_set_string(settings, FreeRDP_ProxyPassword, colonPtr + 1))
 					{
 						WLog_ERR(TAG, "unable to allocate proxy password");
 						return COMMAND_LINE_ERROR_MEMORY;
@@ -2172,11 +2181,16 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 					length = (size_t)(p - arg->Value);
-					settings->ProxyPort = (UINT16)val;
-					settings->ProxyHostname = (char*)malloc(length + 1);
-					strncpy(settings->ProxyHostname, arg->Value, length);
-					settings->ProxyHostname[length] = '\0';
+					if (!freerdp_settings_set_uint16(settings, FreeRDP_ProxyPort, val))
+						return FALSE;
+					*p = '\0';
 				}
+
+				p = strchr(arg->Value, '/');
+				if (p)
+					*p = '\0';
+				if (!freerdp_settings_set_string(settings, FreeRDP_ProxyHostname, arg->Value))
+					return FALSE;
 			}
 			else
 			{
