@@ -24,6 +24,18 @@
         /* Allow rw access to download folder */
         "--filesystem=xdg-download"
     ],
+    "add-build-extensions": {
+      "org.freedesktop.Platform.ffmpeg-full": {
+        "directory": "lib/ffmpeg",
+        "version": "19.08",
+        "add-ld-path": "."
+      },
+      "org.freedesktop.Platform.openh264": {
+        "directory": "lib/openh264",
+        "version": "2.1.0",
+        "add-ld-path": "."
+      }
+    },
     "modules": [
     {
         /**
@@ -33,8 +45,8 @@
         "sources": [
         {
             "type": "archive",
-            "url": "https://xorg.freedesktop.org/releases/individual/app/xprop-1.2.3.tar.bz2",
-            "sha256": "d22afb28c86d85fff10a50156a7d0fa930c80ae865d70b26d805fd28a17a521b"
+            "url": "https://xorg.freedesktop.org/releases/individual/app/xprop-1.2.4.tar.bz2",
+            "sha256": "8c77fb096e46c60032b7e2bde9492c3ffcc18734f50b395085a5f10bfd3cf753"
         }
         ]
     },
@@ -45,8 +57,8 @@
             {
                 "type": "git",
                 "url": "https://github.com/libusb/libusb.git",
-                "tag": "v1.0.22",
-                "commit": "0034b2afdcdb1614e78edaa2a9e22d5936aeae5d"
+                "tag": "v1.0.23",
+                "commit": "e782eeb2514266f6738e242cdcb18e3ae1ed06fa"
             }
         ]
     },
@@ -63,8 +75,8 @@
             {
                 "type": "git",
                 "url": "https://github.com/LudovicRousseau/PCSC.git",
-                "tag": "pcsc-1.8.24",
-                "commit": "73d95ada3221c060cbd7b6aa2375453f9d0e359b"
+                "tag": "pcsc-1.9.0",
+                "commit": "e796a0f12fbefa459bff0d25e27089615fa91f21"
             }
         ]
     },
