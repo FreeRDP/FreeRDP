@@ -151,22 +151,22 @@ typedef struct
 {
 	UINT32 code;
 	const char* name;
-} t_err_mapping;
+} t_flag_mapping;
 
-static const t_err_mapping tunnel_response_fields_present[] = {
+static const t_flag_mapping tunnel_response_fields_present[] = {
 	{ HTTP_TUNNEL_RESPONSE_FIELD_TUNNEL_ID, "HTTP_TUNNEL_RESPONSE_FIELD_TUNNEL_ID" },
 	{ HTTP_TUNNEL_RESPONSE_FIELD_CAPS, "HTTP_TUNNEL_RESPONSE_FIELD_CAPS" },
 	{ HTTP_TUNNEL_RESPONSE_FIELD_SOH_REQ, "HTTP_TUNNEL_RESPONSE_FIELD_SOH_REQ" },
 	{ HTTP_TUNNEL_RESPONSE_FIELD_CONSENT_MSG, "HTTP_TUNNEL_RESPONSE_FIELD_CONSENT_MSG" }
 };
 
-static const t_err_mapping channel_response_fields_present[] = {
+static const t_flag_mapping channel_response_fields_present[] = {
 	{ HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID, "HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID" },
 	{ HTTP_CHANNEL_RESPONSE_OPTIONAL, "HTTP_CHANNEL_RESPONSE_OPTIONAL" },
 	{ HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT, "HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT" }
 };
 
-static const t_err_mapping tunnel_authorization_response_fields_present[] = {
+static const t_flag_mapping tunnel_authorization_response_fields_present[] = {
 	{ HTTP_TUNNEL_AUTH_RESPONSE_FIELD_REDIR_FLAGS, "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_REDIR_FLAGS" },
 	{ HTTP_TUNNEL_AUTH_RESPONSE_FIELD_IDLE_TIMEOUT,
 	  "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_IDLE_TIMEOUT" },
@@ -174,15 +174,23 @@ static const t_err_mapping tunnel_authorization_response_fields_present[] = {
 	  "HTTP_TUNNEL_AUTH_RESPONSE_FIELD_SOH_RESPONSE" }
 };
 
-static const t_err_mapping extended_auth[] = {
+static const t_flag_mapping extended_auth[] = {
 	{ HTTP_EXTENDED_AUTH_NONE, "HTTP_EXTENDED_AUTH_NONE" },
 	{ HTTP_EXTENDED_AUTH_SC, "HTTP_EXTENDED_AUTH_SC" },
 	{ HTTP_EXTENDED_AUTH_PAA, "HTTP_EXTENDED_AUTH_PAA" },
 	{ HTTP_EXTENDED_AUTH_SSPI_NTLM, "HTTP_EXTENDED_AUTH_SSPI_NTLM" }
 };
 
-static const char* fields_present_to_string(UINT16 fieldsPresent, const t_err_mapping* map,
-                                            size_t elements)
+static const t_flag_mapping capabilities_enum[] = {
+	{ HTTP_CAPABILITY_TYPE_QUAR_SOH, "HTTP_CAPABILITY_TYPE_QUAR_SOH" },
+	{ HTTP_CAPABILITY_IDLE_TIMEOUT, "HTTP_CAPABILITY_IDLE_TIMEOUT" },
+	{ HTTP_CAPABILITY_MESSAGING_CONSENT_SIGN, "HTTP_CAPABILITY_MESSAGING_CONSENT_SIGN" },
+	{ HTTP_CAPABILITY_MESSAGING_SERVICE_MSG, "HTTP_CAPABILITY_MESSAGING_SERVICE_MSG" },
+	{ HTTP_CAPABILITY_REAUTH, "HTTP_CAPABILITY_REAUTH" },
+	{ HTTP_CAPABILITY_UDP_TRANSPORT, "HTTP_CAPABILITY_UDP_TRANSPORT" }
+};
+
+static const char* flags_to_string(UINT32 flags, const t_flag_mapping* map, size_t elements)
 {
 	size_t x = 0;
 	static char buffer[1024] = { 0 };
@@ -194,31 +202,31 @@ static const char* fields_present_to_string(UINT16 fieldsPresent, const t_err_ma
 		if (buffer[0] != '\0')
 			strcat(buffer, "|");
 
-		if ((map[x].code & fieldsPresent) != 0)
+		if ((map[x].code & flags) != 0)
 			strcat(buffer, map[x].name);
 	}
 
-	sprintf_s(fields, ARRAYSIZE(fields), " [%04" PRIx16 "]", fieldsPresent);
+	sprintf_s(fields, ARRAYSIZE(fields), " [%04" PRIx32 "]", flags);
 	strcat(buffer, fields);
 	return buffer;
 }
 
 static const char* channel_response_fields_present_to_string(UINT16 fieldsPresent)
 {
-	return fields_present_to_string(fieldsPresent, channel_response_fields_present,
-	                                ARRAYSIZE(channel_response_fields_present));
+	return flags_to_string(fieldsPresent, channel_response_fields_present,
+	                       ARRAYSIZE(channel_response_fields_present));
 }
 
 static const char* tunnel_response_fields_present_to_string(UINT16 fieldsPresent)
 {
-	return fields_present_to_string(fieldsPresent, tunnel_response_fields_present,
-	                                ARRAYSIZE(tunnel_response_fields_present));
+	return flags_to_string(fieldsPresent, tunnel_response_fields_present,
+	                       ARRAYSIZE(tunnel_response_fields_present));
 }
 
 static const char* tunnel_authorization_response_fields_present_to_string(UINT16 fieldsPresent)
 {
-	return fields_present_to_string(fieldsPresent, tunnel_authorization_response_fields_present,
-	                                ARRAYSIZE(tunnel_authorization_response_fields_present));
+	return flags_to_string(fieldsPresent, tunnel_authorization_response_fields_present,
+	                       ARRAYSIZE(tunnel_authorization_response_fields_present));
 }
 
 static const char* extended_auth_to_string(UINT16 auth)
@@ -226,7 +234,38 @@ static const char* extended_auth_to_string(UINT16 auth)
 	if (auth == HTTP_EXTENDED_AUTH_NONE)
 		return "HTTP_EXTENDED_AUTH_NONE [0x0000]";
 
-	return fields_present_to_string(auth, extended_auth, ARRAYSIZE(extended_auth));
+	return flags_to_string(auth, extended_auth, ARRAYSIZE(extended_auth));
+}
+
+static const char* capabilities_enum_to_string(UINT32 capabilities)
+{
+	return flags_to_string(capabilities, capabilities_enum, ARRAYSIZE(capabilities_enum));
+}
+
+static BOOL rdg_read_http_unicode_string(wStream* s, WCHAR** string, UINT16* lengthInBytes)
+{
+	WCHAR* str;
+	UINT16 strLenBytes;
+
+	/* Read length of the string */
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
+	Stream_Read_UINT16(s, strLenBytes);
+
+	/* Remember position of our string */
+	Stream_GetPointer(s, str);
+
+	/* seek past the string - if this fails something is wrong */
+	if (!Stream_SafeSeek(s, strLenBytes))
+		return FALSE;
+
+	/* return the string data (if wanted) */
+	if (string)
+		*string = str;
+	if (lengthInBytes)
+		*lengthInBytes = strLenBytes;
+
+	return TRUE;
 }
 
 static BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
@@ -357,6 +396,9 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 	UINT16 fieldsPresent = 0;
 	WCHAR* PAACookie = NULL;
 	int PAACookieLen = 0;
+	const UINT32 capabilities = HTTP_CAPABILITY_TYPE_QUAR_SOH |
+	                            HTTP_CAPABILITY_MESSAGING_CONSENT_SIGN |
+	                            HTTP_CAPABILITY_MESSAGING_SERVICE_MSG;
 
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
 	{
@@ -381,12 +423,12 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 		return FALSE;
 	}
 
-	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_CREATE);        /* Type (2 bytes) */
-	Stream_Write_UINT16(s, 0);                             /* Reserved (2 bytes) */
-	Stream_Write_UINT32(s, packetSize);                    /* PacketLength (4 bytes) */
-	Stream_Write_UINT32(s, HTTP_CAPABILITY_TYPE_QUAR_SOH); /* CapabilityFlags (4 bytes) */
-	Stream_Write_UINT16(s, fieldsPresent);                 /* FieldsPresent (2 bytes) */
-	Stream_Write_UINT16(s, 0);                             /* Reserved (2 bytes), must be 0 */
+	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_CREATE); /* Type (2 bytes) */
+	Stream_Write_UINT16(s, 0);                      /* Reserved (2 bytes) */
+	Stream_Write_UINT32(s, packetSize);             /* PacketLength (4 bytes) */
+	Stream_Write_UINT32(s, capabilities);           /* CapabilityFlags (4 bytes) */
+	Stream_Write_UINT16(s, fieldsPresent);          /* FieldsPresent (2 bytes) */
+	Stream_Write_UINT16(s, 0);                      /* Reserved (2 bytes), must be 0 */
 
 	if (PAACookie)
 	{
@@ -669,6 +711,76 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 	return rdg_send_tunnel_request(rdg);
 }
 
+static BOOL rdg_process_tunnel_response_optional(rdpRdg* rdg, wStream* s, UINT16 fieldsPresent)
+{
+	if (fieldsPresent & HTTP_TUNNEL_RESPONSE_FIELD_TUNNEL_ID)
+	{
+		/* Seek over tunnelId (4 bytes) */
+		if (!Stream_SafeSeek(s, 4))
+		{
+			WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 4", __FUNCTION__,
+			         Stream_GetRemainingLength(s));
+			return FALSE;
+		}
+	}
+
+	if (fieldsPresent & HTTP_TUNNEL_RESPONSE_FIELD_CAPS)
+	{
+		UINT32 caps;
+		if (Stream_GetRemainingLength(s) < 4)
+		{
+			WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 4", __FUNCTION__,
+			         Stream_GetRemainingLength(s));
+			return FALSE;
+		}
+
+		Stream_Read_UINT32(s, caps);
+		WLog_DBG(TAG, "capabilities=%s", capabilities_enum_to_string(caps));
+	}
+
+	if (fieldsPresent & HTTP_TUNNEL_RESPONSE_FIELD_SOH_REQ)
+	{
+		UINT16 certLen;
+
+		/* Seek over nonce (20 bytes) */
+		if (!Stream_SafeSeek(s, 20))
+		{
+			WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 20", __FUNCTION__,
+			         Stream_GetRemainingLength(s));
+			return FALSE;
+		}
+
+		/* Read serverCert */
+		if (!rdg_read_http_unicode_string(s, NULL, NULL))
+		{
+			WLog_ERR(TAG, "[%s] Failed to read string", __FUNCTION__);
+			return FALSE;
+		}
+	}
+
+	if (fieldsPresent & HTTP_TUNNEL_RESPONSE_FIELD_CONSENT_MSG)
+	{
+		WCHAR* msg;
+		UINT16 msgLenBytes;
+		rdpContext* context = rdg->context;
+
+		assert(context);
+		assert(context->instance);
+
+		/* Read message string and invoke callback */
+		if (!rdg_read_http_unicode_string(s, &msg, &msgLenBytes))
+		{
+			WLog_ERR(TAG, "[%s] Failed to read string", __FUNCTION__);
+			return FALSE;
+		}
+
+		return IFCALLRESULT(TRUE, context->instance->PresentGatewayMessage, context->instance,
+		                    GATEWAY_MESSAGE_CONSENT, TRUE, TRUE, msgLenBytes, msg);
+	}
+
+	return TRUE;
+}
+
 static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 {
 	UINT16 serverVersion, fieldsPresent;
@@ -702,6 +814,9 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 		freerdp_set_last_error_log(rdg->context, errorCode);
 		return FALSE;
 	}
+
+	if (!rdg_process_tunnel_response_optional(rdg, s, fieldsPresent))
+		return FALSE;
 
 	return rdg_send_tunnel_authorization(rdg);
 }
@@ -1310,6 +1425,25 @@ static BOOL rdg_process_keep_alive_packet(rdpRdg* rdg)
 	return (status < 0 ? FALSE : TRUE);
 }
 
+static BOOL rdg_process_service_message(rdpRdg* rdg, wStream* s)
+{
+	const WCHAR* msg;
+	UINT16 msgLenBytes;
+	rdpContext* context = rdg->context;
+	assert(context);
+	assert(context->instance);
+
+	/* Read message string */
+	if (!rdg_read_http_unicode_string(s, &msg, &msgLenBytes))
+	{
+		WLog_ERR(TAG, "[%s] Failed to read string", __FUNCTION__);
+		return FALSE;
+	}
+
+	return IFCALLRESULT(TRUE, context->instance->PresentGatewayMessage, context->instance,
+	                    GATEWAY_MESSAGE_SERVICE, TRUE, FALSE, msgLenBytes, msg);
+}
+
 static BOOL rdg_process_unknown_packet(rdpRdg* rdg, int type)
 {
 	WINPR_UNUSED(rdg);
@@ -1362,6 +1496,8 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 				return FALSE;
 			}
 		}
+
+		Stream_SetPosition(s, 0);
 	}
 
 	switch (type)
@@ -1376,6 +1512,16 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 			EnterCriticalSection(&rdg->writeSection);
 			status = rdg_process_keep_alive_packet(rdg);
 			LeaveCriticalSection(&rdg->writeSection);
+			break;
+
+		case PKT_TYPE_SERVICE_MESSAGE:
+			if (!s)
+			{
+				WLog_ERR(TAG, "[%s] PKT_TYPE_SERVICE_MESSAGE requires payload but none was sent",
+				         __FUNCTION__);
+				return FALSE;
+			}
+			status = rdg_process_service_message(rdg, s);
 			break;
 
 		default:

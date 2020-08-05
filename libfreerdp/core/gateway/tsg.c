@@ -1335,7 +1335,7 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			if (tsg->rpc && tsg->rpc->context && tsg->rpc->context->instance)
 			{
 				rc = IFCALLRESULT(TRUE, tsg->rpc->context->instance->PresentGatewayMessage,
-				                  tsg->rpc->context->instance, SwitchValue,
+				                  tsg->rpc->context->instance, GATEWAY_MESSAGE_CONSENT,
 				                  packetStringMessage.isDisplayMandatory != 0,
 				                  packetStringMessage.isConsentMandatory != 0,
 				                  packetStringMessage.msgBytes, packetStringMessage.msgBuffer);
@@ -1356,7 +1356,7 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			if (tsg->rpc && tsg->rpc->context && tsg->rpc->context->instance)
 			{
 				rc = IFCALLRESULT(TRUE, tsg->rpc->context->instance->PresentGatewayMessage,
-				                  tsg->rpc->context->instance, SwitchValue,
+				                  tsg->rpc->context->instance, GATEWAY_MESSAGE_SERVICE,
 				                  packetStringMessage.isDisplayMandatory != 0,
 				                  packetStringMessage.isConsentMandatory != 0,
 				                  packetStringMessage.msgBytes, packetStringMessage.msgBuffer);

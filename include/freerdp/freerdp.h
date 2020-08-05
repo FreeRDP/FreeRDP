@@ -70,6 +70,10 @@ extern "C"
 #define VERIFY_CERT_FLAG_MISMATCH 0x80
 #define VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1 0x100
 
+/* Message types used by gateway messaging callback */
+#define GATEWAY_MESSAGE_CONSENT 1
+#define GATEWAY_MESSAGE_SERVICE 2
+
 	typedef BOOL (*pContextNew)(freerdp* instance, rdpContext* context);
 	typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 
@@ -183,6 +187,7 @@ extern "C"
 	typedef BOOL (*pReceiveChannelData)(freerdp* instance, UINT16 channelId, const BYTE* data,
 	                                    size_t size, UINT32 flags, size_t totalSize);
 
+	/* type can be one of the GATEWAY_MESSAGE_ type defines */
 	typedef BOOL (*pPresentGatewayMessage)(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
 	                                       BOOL isConsentMandatory, size_t length,
 	                                       const WCHAR* message);

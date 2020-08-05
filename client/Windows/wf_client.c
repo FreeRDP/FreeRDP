@@ -638,6 +638,33 @@ fail:
 	}
 }
 
+static BOOL wf_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
+                                       BOOL isConsentMandatory, size_t length, const WCHAR* message)
+{
+	if (!isDisplayMandatory && !isConsentMandatory)
+		return TRUE;
+
+	/* special handling for consent messages (show modal dialog) */
+	if (type == GATEWAY_MESSAGE_CONSENT && isConsentMandatory)
+	{
+		int mbRes;
+		WCHAR* msg;
+
+		msg = wf_format_text(L"%.*s\n\nI understand and agree to the terms of this policy", length,
+		                     message);
+		mbRes = MessageBoxW(NULL, msg, L"Consent Message", MB_YESNO);
+		free(msg);
+
+		if (mbRes != IDYES)
+			return FALSE;
+	}
+	else
+		return client_cli_present_gateway_message(instance, type, isDisplayMandatory,
+		                                          isConsentMandatory, length, message);
+
+	return TRUE;
+}
+
 static DWORD WINAPI wf_input_thread(LPVOID arg)
 {
 	int status;
@@ -1025,11 +1052,13 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	{
 		instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
 		instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
+		instance->PresentGatewayMessage = client_cli_present_gateway_message;
 	}
 	else
 	{
 		instance->VerifyCertificateEx = wf_verify_certificate_ex;
 		instance->VerifyChangedCertificateEx = wf_verify_changed_certificate_ex;
+		instance->PresentGatewayMessage = wf_present_gateway_message;
 	}
 
 	return TRUE;
