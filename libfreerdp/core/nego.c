@@ -332,7 +332,8 @@ BOOL nego_transport_connect(rdpNego* nego)
 BOOL nego_transport_disconnect(rdpNego* nego)
 {
 	if (nego->TcpConnected)
-		transport_disconnect(nego->transport);
+		nego->transport->context->
+			update->io->TransportDisconnect(nego->transport);
 
 	nego->TcpConnected = FALSE;
 	nego->SecurityConnected = FALSE;

@@ -32,6 +32,7 @@ typedef BOOL (*pTLSConnect)(void* transport);
 typedef BOOL (*pProxyConnect)(rdpSettings* settings, void* bufferedBio, const char* proxyUsername,
                    const char* proxyPassword, const char* hostname, UINT16 port);
 typedef BOOL (*pTransportAttach)(void* transport, int sockfd);
+typedef BOOL (*pTransportDisconnect)(void* transport);
 
 typedef int (*pRead)(rdpContext* context, const uint8_t* buf, size_t buf_size);
 typedef int (*pWrite)(rdpContext* context, const uint8_t* buf, size_t buf_size);
@@ -60,6 +61,8 @@ struct rdp_io_update
 	 * current freerdp design */
 	pTransportAttach TransportAttach; /* 19 */
 
+	/* callback used to shutdown whole io operations */
+	pTransportDisconnect TransportDisconnect;
 
 	UINT32 paddingB[32 - 20]; /* 20 */
 

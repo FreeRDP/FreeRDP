@@ -1006,6 +1006,7 @@ void transport_register_default_io_callbacks(rdpUpdate* update)
 	io.TLSConnect = transport_connect_tls;
 	io.TransportAttach = transport_attach;
 	io.ProxyConnect = proxy_connect;
+	io.TransportDisconnect = transport_disconnect;
 	io.DataHandler = transport_io_data_handler;
 	io.Read = transport_io_data_read;
 	io.Write = transport_io_data_write;
@@ -1248,8 +1249,9 @@ void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode)
 	transport->NlaMode = NlaMode;
 }
 
-BOOL transport_disconnect(rdpTransport* transport)
+BOOL transport_disconnect(void* _transport)
 {
+	rdpTransport *transport = _transport;
 	BOOL status = TRUE;
 
 	if (!transport)
@@ -1351,7 +1353,7 @@ void transport_free(rdpTransport* transport)
 	if (!transport)
 		return;
 
-	transport_disconnect(transport);
+	transport->context->update->io->TransportDisconnect(transport);
 
 	if (transport->ReceiveBuffer)
 		Stream_Release(transport->ReceiveBuffer);

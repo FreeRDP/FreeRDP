@@ -735,7 +735,7 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 static void freerdp_peer_disconnect(freerdp_peer* client)
 {
 	rdpTransport* transport = client->context->rdp->transport;
-	transport_disconnect(transport);
+	client->context->update->io->TransportDisconnect(transport);
 }
 
 static BOOL freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId, const BYTE* data,
