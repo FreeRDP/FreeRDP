@@ -26,11 +26,11 @@
 
 #include <freerdp/types.h>
 
-typedef int (*pTCPConnect)(rdpContext* context, rdpSettings* settings, const char* hostname, int port,
-                        DWORD timeout);
+typedef int (*pTCPConnect)(rdpContext* context, rdpSettings* settings, const char* hostname,
+                           int port, DWORD timeout);
 typedef BOOL (*pTLSConnect)(void* transport);
 typedef BOOL (*pProxyConnect)(rdpSettings* settings, void* bufferedBio, const char* proxyUsername,
-                   const char* proxyPassword, const char* hostname, UINT16 port);
+                              const char* proxyPassword, const char* hostname, UINT16 port);
 typedef BOOL (*pTransportAttach)(void* transport, int sockfd);
 typedef BOOL (*pTransportDisconnect)(void* transport);
 
@@ -78,7 +78,6 @@ struct rdp_io_update
 	 * used if IO backed doing internal polling and reading
 	 * and just passing recieved data to freerdp */
 	pDataHandler DataHandler; /* 35 */
-
 
 	UINT32 paddingC[48 - 36]; /* 36 */
 };

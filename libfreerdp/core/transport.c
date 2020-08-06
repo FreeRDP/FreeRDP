@@ -262,7 +262,7 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 
 BOOL transport_connect_tls(void* _transport)
 {
-	rdpTransport *transport = _transport;
+	rdpTransport* transport = _transport;
 	int tlsStatus;
 	rdpTls* tls = NULL;
 	rdpContext* context = transport->context;
@@ -421,11 +421,11 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		    proxy_prepare(settings, &proxyHostname, &peerPort, &proxyUsername, &proxyPassword);
 
 		if (isProxyConnection)
-			sockfd = transport->context->update->io->TCPConnect(
-				context, settings, proxyHostname, peerPort, timeout);
+			sockfd = transport->context->update->io->TCPConnect(context, settings, proxyHostname,
+			                                                    peerPort, timeout);
 		else
-			sockfd = transport->context->update->io->TCPConnect(
-				context, settings, hostname, port, timeout);
+			sockfd = transport->context->update->io->TCPConnect(context, settings, hostname, port,
+			                                                    timeout);
 
 		if (sockfd < 0)
 			return FALSE;
@@ -436,7 +436,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		if (isProxyConnection)
 		{
 			if (!transport->context->update->io->ProxyConnect(
-				settings, transport->frontBio, proxyUsername, proxyPassword, hostname, port))
+			        settings, transport->frontBio, proxyUsername, proxyPassword, hostname, port))
 				return FALSE;
 		}
 
@@ -1198,7 +1198,6 @@ int transport_check_fds(rdpTransport* transport)
 		transport->haveMoreBytesToRead = FALSE;
 		ResetEvent(transport->rereadEvent);
 
-
 		received = transport->ReceiveBuffer;
 
 		/**
@@ -1251,7 +1250,7 @@ void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode)
 
 BOOL transport_disconnect(void* _transport)
 {
-	rdpTransport *transport = _transport;
+	rdpTransport* transport = _transport;
 	BOOL status = TRUE;
 
 	if (!transport)
