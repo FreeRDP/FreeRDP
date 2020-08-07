@@ -250,8 +250,7 @@ BOOL nego_security_connect(rdpNego* nego)
 		else if (nego->SelectedProtocol == PROTOCOL_SSL)
 		{
 			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_SSL");
-			nego->SecurityConnected =
-			    nego->transport->context->update->io->TLSConnect(nego->transport);
+			nego->SecurityConnected = transport_connect_tls(nego->transport);
 		}
 		else if (nego->SelectedProtocol == PROTOCOL_RDP)
 		{

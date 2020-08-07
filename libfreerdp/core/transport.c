@@ -260,7 +260,7 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 	return TRUE;
 }
 
-BOOL transport_connect_tls(void* _transport)
+transport_connect_tls_impl(void* _transport)
 {
 	rdpTransport* transport = _transport;
 	int tlsStatus;
@@ -314,6 +314,11 @@ BOOL transport_connect_tls(void* _transport)
 	return TRUE;
 }
 
+BOOL transport_connect_tls(rdpTransport* transport)
+{
+	return transport->context->update->io->TLSConnect(transport);
+}
+
 BOOL transport_connect_nla(rdpTransport* transport)
 {
 	rdpContext* context = transport->context;
@@ -321,7 +326,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	freerdp* instance = context->instance;
 	rdpRdp* rdp = context->rdp;
 
-	if (!context->update->io->TLSConnect(transport))
+	if (!transport_connect_tls(transport))
 		return FALSE;
 
 	if (!settings->Authentication)
@@ -1003,7 +1008,7 @@ void transport_register_default_io_callbacks(rdpUpdate* update)
 	rdpIoUpdate io = { 0 };
 	io.context = update->context;
 	io.TCPConnect = freerdp_tcp_connect_impl;
-	io.TLSConnect = transport_connect_tls;
+	io.TLSConnect = transport_connect_tls_impl;
 	io.TransportAttach = transport_attach;
 	io.ProxyConnect = proxy_connect;
 	io.TransportDisconnect = transport_disconnect;
