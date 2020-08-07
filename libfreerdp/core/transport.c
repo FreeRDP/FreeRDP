@@ -421,10 +421,10 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		    proxy_prepare(settings, &proxyHostname, &peerPort, &proxyUsername, &proxyPassword);
 
 		if (isProxyConnection)
-			sockfd = transport->context->update->io->TCPConnect(context, settings, proxyHostname,
+			sockfd = freerdp_tcp_connect(context, settings, proxyHostname,
 			                                                    peerPort, timeout);
 		else
-			sockfd = transport->context->update->io->TCPConnect(context, settings, hostname, port,
+			sockfd = freerdp_tcp_connect(context, settings, hostname, port,
 			                                                    timeout);
 
 		if (sockfd < 0)
@@ -1002,7 +1002,7 @@ void transport_register_default_io_callbacks(rdpUpdate* update)
 {
 	rdpIoUpdate io = { 0 };
 	io.context = update->context;
-	io.TCPConnect = freerdp_tcp_connect;
+	io.TCPConnect = freerdp_tcp_connect_impl;
 	io.TLSConnect = transport_connect_tls;
 	io.TransportAttach = transport_attach;
 	io.ProxyConnect = proxy_connect;

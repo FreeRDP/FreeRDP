@@ -1098,7 +1098,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 
 	if (settings->GatewayPort > UINT16_MAX)
 		return FALSE;
-	sockfd = rdg->context->update->io->TCPConnect(
+	sockfd = freerdp_tcp_connect(
 	    rdg->context, settings, peerAddress ? peerAddress : peerHostname, peerPort, timeout);
 
 	if (sockfd < 0)
