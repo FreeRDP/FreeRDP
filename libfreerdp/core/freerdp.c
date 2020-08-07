@@ -705,8 +705,6 @@ BOOL freerdp_context_new(freerdp* instance)
 
 	instance->context->abortEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-	transport_register_default_io_callbacks(rdp->update);
-
 	if (!instance->context->abortEvent)
 		goto fail;
 
