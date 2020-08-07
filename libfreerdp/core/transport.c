@@ -1199,11 +1199,9 @@ int transport_check_fds(rdpTransport* transport)
 			else
 			{
 				SetEvent(transport->rereadEvent);
-				transport->haveMoreBytesToRead = TRUE;
 			}
 			return status;
 		}
-		transport->haveMoreBytesToRead = FALSE;
 		ResetEvent(transport->rereadEvent);
 
 		received = transport->ReceiveBuffer;
@@ -1333,7 +1331,6 @@ rdpTransport* transport_new(rdpContext* context)
 	if (!transport->rereadEvent || transport->rereadEvent == INVALID_HANDLE_VALUE)
 		goto out_free_connectedEvent;
 
-	transport->haveMoreBytesToRead = FALSE;
 	transport->blocking = TRUE;
 	transport->GatewayEnabled = FALSE;
 	transport->layer = TRANSPORT_LAYER_TCP;

@@ -127,7 +127,6 @@ struct rdp_freerdp_peer
 
 	psPeerIsWriteBlocked IsWriteBlocked;
 	psPeerDrainOutputBuffer DrainOutputBuffer;
-	psPeerHasMoreToRead HasMoreToRead;
 	psPeerGetEventHandles GetEventHandles;
 	psPeerAdjustMonitorsLayout AdjustMonitorsLayout;
 	psPeerClientCapabilities ClientCapabilities;

@@ -76,7 +76,6 @@ struct rdp_transport
 	CRITICAL_SECTION WriteLock;
 	ULONG written;
 	HANDLE rereadEvent;
-	BOOL haveMoreBytesToRead;
 	wLog* log;
 };
 
