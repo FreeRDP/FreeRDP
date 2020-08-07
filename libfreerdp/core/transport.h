@@ -83,10 +83,12 @@ struct rdp_transport
 FREERDP_LOCAL wStream* transport_send_stream_init(rdpTransport* transport, int size);
 FREERDP_LOCAL BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port,
                                      DWORD timeout);
-FREERDP_LOCAL BOOL transport_attach(void* transport, int sockfd);
-FREERDP_LOCAL BOOL transport_disconnect(void* transport);
+FREERDP_LOCAL BOOL transport_attach_impl(rdpTransport* transport, int sockfd);
+FREERDP_LOCAL BOOL transport_attach(rdpTransport* transport, int sockfd);
+FREERDP_LOCAL BOOL transport_disconnect_impl(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_disconnect(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_connect_rdp(rdpTransport* transport);
-FREERDP_LOCAL BOOL transport_connect_tls_impl(void* transport);
+FREERDP_LOCAL BOOL transport_connect_tls_impl(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_connect_tls(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_connect_nla(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_accept_rdp(rdpTransport* transport);

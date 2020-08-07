@@ -26,13 +26,16 @@
 
 #include <freerdp/types.h>
 
+typedef struct rdp_transport rdpTransport;
+typedef struct bio_st BIO;
+
 typedef int (*pTCPConnect)(rdpContext* context, rdpSettings* settings, const char* hostname,
                            int port, DWORD timeout);
-typedef BOOL (*pTLSConnect)(void* transport);
-typedef BOOL (*pProxyConnect)(rdpSettings* settings, void* bufferedBio, const char* proxyUsername,
+typedef BOOL (*pTLSConnect)(rdpTransport* transport);
+typedef BOOL (*pProxyConnect)(rdpSettings* settings, BIO* bufferedBio, const char* proxyUsername,
                               const char* proxyPassword, const char* hostname, UINT16 port);
-typedef BOOL (*pTransportAttach)(void* transport, int sockfd);
-typedef BOOL (*pTransportDisconnect)(void* transport);
+typedef BOOL (*pTransportAttach)(rdpTransport* transport, int sockfd);
+typedef BOOL (*pTransportDisconnect)(rdpTransport* transport);
 
 typedef int (*pRead)(rdpContext* context, const uint8_t* buf, size_t buf_size);
 typedef int (*pWrite)(rdpContext* context, const uint8_t* buf, size_t buf_size);

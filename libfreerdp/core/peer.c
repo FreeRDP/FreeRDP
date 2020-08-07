@@ -735,7 +735,7 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 static void freerdp_peer_disconnect(freerdp_peer* client)
 {
 	rdpTransport* transport = client->context->rdp->transport;
-	client->context->update->io->TransportDisconnect(transport);
+	transport_disconnect(transport);
 }
 
 static BOOL freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId, const BYTE* data,
@@ -818,7 +818,7 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 		goto fail_error_description;
 	}
 
-	if (!rdp->update->io->TransportAttach(rdp->transport, client->sockfd))
+	if (!transport_attach(rdp->transport, client->sockfd))
 		goto fail_transport_attach;
 
 	rdp->transport->ReceiveCallback = peer_recv_callback;

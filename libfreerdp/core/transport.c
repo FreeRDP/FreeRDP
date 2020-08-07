@@ -225,9 +225,8 @@ wStream* transport_send_stream_init(rdpTransport* transport, int size)
 	return s;
 }
 
-BOOL transport_attach(void* _transport, int sockfd)
+BOOL transport_attach_impl(rdpTransport* transport, int sockfd)
 {
-	rdpTransport* transport = _transport;
 	BIO* socketBio = NULL;
 	BIO* bufferedBio;
 	socketBio = BIO_new(BIO_s_simple_socket());
@@ -254,15 +253,19 @@ fail:
 	return FALSE;
 }
 
+BOOL transport_attach(rdpTransport* transport, int sockfd)
+{
+	return transport->context->update->io->TransportAttach(transport, sockfd);
+}
+
 BOOL transport_connect_rdp(rdpTransport* transport)
 {
 	/* RDP encryption */
 	return TRUE;
 }
 
-transport_connect_tls_impl(void* _transport)
+transport_connect_tls_impl(rdpTransport* transport)
 {
-	rdpTransport* transport = _transport;
 	int tlsStatus;
 	rdpTls* tls = NULL;
 	rdpContext* context = transport->context;
@@ -435,7 +438,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		if (sockfd < 0)
 			return FALSE;
 
-		if (!transport->context->update->io->TransportAttach(transport, sockfd))
+		if (!transport_attach(transport, sockfd))
 			return FALSE;
 
 		if (isProxyConnection)
@@ -1009,9 +1012,9 @@ void transport_register_default_io_callbacks(rdpUpdate* update)
 	io.context = update->context;
 	io.TCPConnect = freerdp_tcp_connect_impl;
 	io.TLSConnect = transport_connect_tls_impl;
-	io.TransportAttach = transport_attach;
-	io.ProxyConnect = proxy_connect;
-	io.TransportDisconnect = transport_disconnect;
+	io.TransportAttach = transport_attach_impl;
+	io.ProxyConnect = proxy_connect_impl;
+	io.TransportDisconnect = transport_disconnect_impl;
 	io.DataHandler = transport_io_data_handler;
 	io.Read = transport_io_data_read;
 	io.Write = transport_io_data_write;
@@ -1253,9 +1256,8 @@ void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode)
 	transport->NlaMode = NlaMode;
 }
 
-BOOL transport_disconnect(void* _transport)
+BOOL transport_disconnect_impl(rdpTransport* transport)
 {
-	rdpTransport* transport = _transport;
 	BOOL status = TRUE;
 
 	if (!transport)
@@ -1288,6 +1290,12 @@ BOOL transport_disconnect(void* _transport)
 	transport->layer = TRANSPORT_LAYER_TCP;
 	return status;
 }
+
+BOOL transport_disconnect(rdpTransport* transport)
+{
+	return transport->context->update->io->TransportDisconnect(transport);
+}
+
 
 rdpTransport* transport_new(rdpContext* context)
 {
@@ -1357,7 +1365,7 @@ void transport_free(rdpTransport* transport)
 	if (!transport)
 		return;
 
-	transport->context->update->io->TransportDisconnect(transport);
+	transport_disconnect(transport);
 
 	if (transport->ReceiveBuffer)
 		Stream_Release(transport->ReceiveBuffer);
