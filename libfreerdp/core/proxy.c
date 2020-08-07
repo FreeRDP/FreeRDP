@@ -372,7 +372,7 @@ fail:
 }
 
 BOOL proxy_connect_impl(rdpSettings* settings, BIO* _bio, const char* proxyUsername,
-                   const char* proxyPassword, const char* hostname, UINT16 port)
+                        const char* proxyPassword, const char* hostname, UINT16 port)
 {
 	BIO* bufferedBio = _bio;
 	switch (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType))
@@ -396,9 +396,9 @@ BOOL proxy_connect_impl(rdpSettings* settings, BIO* _bio, const char* proxyUsern
 BOOL proxy_connect(rdpSettings* settings, BIO* bio, const char* proxyUsername,
                    const char* proxyPassword, const char* hostname, UINT16 port)
 {
-	freerdp *instance = settings->instance;
-	return instance->context->update->io->ProxyConnect(
-		settings, bio, proxyUsername, proxyPassword, hostname, port);
+	freerdp* instance = settings->instance;
+	return instance->context->update->io->ProxyConnect(settings, bio, proxyUsername, proxyPassword,
+	                                                   hostname, port);
 }
 
 static const char* get_response_header(char* response)

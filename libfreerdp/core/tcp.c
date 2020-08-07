@@ -1059,8 +1059,8 @@ static BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int soc
 	return TRUE;
 }
 
-int freerdp_tcp_connect_impl(rdpContext* context, rdpSettings* settings, const char* hostname, int port,
-                        DWORD timeout)
+int freerdp_tcp_connect_impl(rdpContext* context, rdpSettings* settings, const char* hostname,
+                             int port, DWORD timeout)
 {
 	int sockfd;
 	UINT32 optval;
@@ -1243,7 +1243,6 @@ int freerdp_tcp_connect_impl(rdpContext* context, rdpSettings* settings, const c
 
 	return sockfd;
 }
-
 
 int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* hostname, int port,
                         DWORD timeout)
