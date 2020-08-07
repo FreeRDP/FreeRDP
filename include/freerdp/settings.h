@@ -918,9 +918,10 @@ struct rdp_settings
 	ALIGN64 char* Domain;                  /* 23 */
 	ALIGN64 char* PasswordHash;            /* 24 */
 	ALIGN64 BOOL WaitForOutputBufferFlush; /* 25 */
-	ALIGN64 char* AcceptedCert;            /* 26 */
-	ALIGN64 UINT32 AcceptedCertLength;     /* 27 */
-	UINT64 padding0064[64 - 28];           /* 28 */
+	UINT64 padding0026[1];
+	ALIGN64 char* AcceptedCert;            /* 27 */
+	ALIGN64 UINT32 AcceptedCertLength;     /* 28 */
+	UINT64 padding0064[64 - 29];           /* 29 */
 	UINT64 padding0128[128 - 64];          /* 64 */
 
 	/**
