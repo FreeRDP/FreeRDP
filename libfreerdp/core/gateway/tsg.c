@@ -74,8 +74,7 @@ typedef struct _TSG_CAPABILITY_NAP
 	UINT32 capabilities;
 } TSG_CAPABILITY_NAP, *PTSG_CAPABILITY_NAP;
 
-typedef union
-{
+typedef union {
 	TSG_CAPABILITY_NAP tsgCapNap;
 } TSG_CAPABILITIES_UNION, *PTSG_CAPABILITIES_UNION;
 
@@ -177,8 +176,7 @@ typedef struct _TSG_PACKET_AUTH
 	BYTE* cookie;
 } TSG_PACKET_AUTH, *PTSG_PACKET_AUTH;
 
-typedef union
-{
+typedef union {
 	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
 	PTSG_PACKET_AUTH packetAuth;
 } TSG_INITIAL_PACKET_TYPE_UNION, *PTSG_INITIAL_PACKET_TYPE_UNION;
@@ -190,8 +188,7 @@ typedef struct TSG_PACKET_REAUTH
 	TSG_INITIAL_PACKET_TYPE_UNION tsgInitialPacket;
 } TSG_PACKET_REAUTH, *PTSG_PACKET_REAUTH;
 
-typedef union
-{
+typedef union {
 	PTSG_PACKET_HEADER packetHeader;
 	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
 	PTSG_PACKET_QUARCONFIGREQUEST packetQuarConfigRequest;

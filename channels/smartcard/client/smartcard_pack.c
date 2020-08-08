@@ -256,8 +256,7 @@ static LONG smartcard_ndr_write(wStream* s, const BYTE* data, UINT32 size, UINT3
 static LONG smartcard_ndr_write_state(wStream* s, const ReaderState_Return* data, UINT32 size,
                                       ndr_ptr_t type)
 {
-	union
-	{
+	union {
 		const ReaderState_Return* reader;
 		const BYTE* data;
 	} cnv;
@@ -269,8 +268,7 @@ static LONG smartcard_ndr_write_state(wStream* s, const ReaderState_Return* data
 static LONG smartcard_ndr_read_atrmask(wStream* s, LocateCards_ATRMask** data, size_t min,
                                        ndr_ptr_t type)
 {
-	union
-	{
+	union {
 		LocateCards_ATRMask** ppc;
 		BYTE** ppv;
 	} u;
@@ -280,8 +278,7 @@ static LONG smartcard_ndr_read_atrmask(wStream* s, LocateCards_ATRMask** data, s
 
 static LONG smartcard_ndr_read_fixed_string_a(wStream* s, CHAR** data, size_t min, ndr_ptr_t type)
 {
-	union
-	{
+	union {
 		CHAR** ppc;
 		BYTE** ppv;
 	} u;
@@ -291,8 +288,7 @@ static LONG smartcard_ndr_read_fixed_string_a(wStream* s, CHAR** data, size_t mi
 
 static LONG smartcard_ndr_read_fixed_string_w(wStream* s, WCHAR** data, size_t min, ndr_ptr_t type)
 {
-	union
-	{
+	union {
 		WCHAR** ppc;
 		BYTE** ppv;
 	} u;
@@ -302,8 +298,7 @@ static LONG smartcard_ndr_read_fixed_string_w(wStream* s, WCHAR** data, size_t m
 
 static LONG smartcard_ndr_read_a(wStream* s, CHAR** data, ndr_ptr_t type)
 {
-	union
-	{
+	union {
 		CHAR** ppc;
 		BYTE** ppv;
 	} u;
@@ -313,8 +308,7 @@ static LONG smartcard_ndr_read_a(wStream* s, CHAR** data, ndr_ptr_t type)
 
 static LONG smartcard_ndr_read_w(wStream* s, WCHAR** data, ndr_ptr_t type)
 {
-	union
-	{
+	union {
 		WCHAR** ppc;
 		BYTE** ppv;
 	} u;
@@ -324,8 +318,7 @@ static LONG smartcard_ndr_read_w(wStream* s, WCHAR** data, ndr_ptr_t type)
 
 static LONG smartcard_ndr_read_u(wStream* s, UUID** data)
 {
-	union
-	{
+	union {
 		UUID** ppc;
 		BYTE** ppv;
 	} u;
@@ -336,8 +329,7 @@ static LONG smartcard_ndr_read_u(wStream* s, UUID** data)
 static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL unicode)
 {
 	size_t index, length;
-	union
-	{
+	union {
 		const void* pv;
 		const char* sz;
 		const WCHAR* wz;
@@ -1221,8 +1213,7 @@ static void smartcard_trace_get_attrib_return(SMARTCARD_DEVICE* smartcard,
 	}
 	else if (dwAttrId == SCARD_ATTR_CURRENT_PROTOCOL_TYPE)
 	{
-		union
-		{
+		union {
 			BYTE* pb;
 			DWORD* pd;
 		} attr;

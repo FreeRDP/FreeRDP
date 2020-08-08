@@ -250,8 +250,7 @@ typedef struct
 {
 	SCARD_IO_REQUEST ioRequest;
 	BYTE bSw1, bSw2;
-	union
-	{
+	union {
 		SCARD_T0_COMMAND CmdBytes;
 		BYTE rgbHeader[5];
 	} DUMMYUNIONNAME;
@@ -473,8 +472,7 @@ typedef struct
 	DWORD dwShareMode;
 	DWORD dwPreferredProtocols;
 	READER_SEL_REQUEST_MATCH_TYPE MatchType;
-	union
-	{
+	union {
 		struct
 		{
 			DWORD cbReaderNameOffset;

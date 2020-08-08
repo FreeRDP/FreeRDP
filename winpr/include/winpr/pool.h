@@ -56,8 +56,7 @@ typedef struct _TP_CALLBACK_ENVIRON_V1
 	struct _ACTIVATION_CONTEXT* ActivationContext;
 	PTP_SIMPLE_CALLBACK FinalizationCallback;
 
-	union
-	{
+	union {
 		DWORD Flags;
 		struct
 		{
