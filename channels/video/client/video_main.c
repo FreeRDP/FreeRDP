@@ -76,6 +76,7 @@ struct _VIDEO_PLUGIN
 	VIDEO_LISTENER_CALLBACK* data_callback;
 
 	VideoClientContext* context;
+	BOOL initialized;
 };
 typedef struct _VIDEO_PLUGIN VIDEO_PLUGIN;
 
@@ -1035,6 +1036,11 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 	VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)plugin;
 	VIDEO_LISTENER_CALLBACK* callback;
 
+	if (video->initialized)
+	{
+		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", VIDEO_CONTROL_DVC_CHANNEL_NAME);
+		return ERROR_INVALID_DATA;
+	}
 	video->control_callback = callback =
 	    (VIDEO_LISTENER_CALLBACK*)calloc(1, sizeof(VIDEO_LISTENER_CALLBACK));
 	if (!callback)
@@ -1072,6 +1078,7 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 	if (status == CHANNEL_RC_OK)
 		video->dataListener->pInterface = video->wtsPlugin.pInterface;
 
+	video->initialized = status == CHANNEL_RC_OK;
 	return status;
 }
 

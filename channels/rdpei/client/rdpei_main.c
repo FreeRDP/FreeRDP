@@ -102,6 +102,7 @@ struct _RDPEI_PLUGIN
 	RDPINPUT_CONTACT_POINT* contactPoints;
 
 	rdpContext* rdpcontext;
+	BOOL initialized;
 };
 typedef struct _RDPEI_PLUGIN RDPEI_PLUGIN;
 
@@ -558,6 +559,12 @@ static UINT rdpei_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 {
 	UINT error;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)pPlugin;
+
+	if (rdpei->initialized)
+	{
+		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", RDPEI_DVC_CHANNEL_NAME);
+		return ERROR_INVALID_DATA;
+	}
 	rdpei->listener_callback = (RDPEI_LISTENER_CALLBACK*)calloc(1, sizeof(RDPEI_LISTENER_CALLBACK));
 
 	if (!rdpei->listener_callback)
@@ -579,6 +586,7 @@ static UINT rdpei_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 
 	rdpei->listener->pInterface = rdpei->iface.pInterface;
 
+	rdpei->initialized = TRUE;
 	return error;
 error_out:
 	free(rdpei->listener_callback);

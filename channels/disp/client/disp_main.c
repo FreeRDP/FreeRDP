@@ -72,6 +72,7 @@ struct _DISP_PLUGIN
 	UINT32 MaxNumMonitors;
 	UINT32 MaxMonitorAreaFactorA;
 	UINT32 MaxMonitorAreaFactorB;
+	BOOL initialized;
 };
 typedef struct _DISP_PLUGIN DISP_PLUGIN;
 
@@ -296,6 +297,11 @@ static UINT disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 {
 	UINT status;
 	DISP_PLUGIN* disp = (DISP_PLUGIN*)pPlugin;
+	if (disp->initialized)
+	{
+		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", DISP_DVC_CHANNEL_NAME);
+		return ERROR_INVALID_DATA;
+	}
 	disp->listener_callback = (DISP_LISTENER_CALLBACK*)calloc(1, sizeof(DISP_LISTENER_CALLBACK));
 
 	if (!disp->listener_callback)
@@ -310,6 +316,8 @@ static UINT disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 	status = pChannelMgr->CreateListener(pChannelMgr, DISP_DVC_CHANNEL_NAME, 0,
 	                                     &disp->listener_callback->iface, &(disp->listener));
 	disp->listener->pInterface = disp->iface.pInterface;
+
+	disp->initialized = status == CHANNEL_RC_OK;
 	return status;
 }
 
