@@ -794,7 +794,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleW(
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->AcquireCredentialsHandleW)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->AcquireCredentialsHandleW(pszPrincipal, pszPackage, fCredentialUse, pvLogonID,
 	                                          pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential,
@@ -821,7 +824,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleA(
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->AcquireCredentialsHandleA)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->AcquireCredentialsHandleA(pszPrincipal, pszPackage, fCredentialUse, pvLogonID,
 	                                          pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential,
@@ -854,7 +860,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_ExportSecurityContext(PCtxtHandle phConte
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->ExportSecurityContext)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->ExportSecurityContext(phContext, fFlags, pPackedContext, pToken);
 
@@ -883,7 +892,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_FreeCredentialsHandle(PCredHandle phCrede
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->FreeCredentialsHandle)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->FreeCredentialsHandle(phCredential);
 
@@ -914,7 +926,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextW(SEC_WCHAR* pszPack
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->ImportSecurityContextW)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->ImportSecurityContextW(pszPackage, pPackedContext, pToken, phContext);
 
@@ -945,7 +960,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextA(SEC_CHAR* pszPacka
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->ImportSecurityContextA)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->ImportSecurityContextA(pszPackage, pPackedContext, pToken, phContext);
 
@@ -975,7 +993,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesW(PCredHandle p
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->QueryCredentialsAttributesW)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->QueryCredentialsAttributesW(phCredential, ulAttribute, pBuffer);
 
@@ -1005,7 +1026,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesA(PCredHandle p
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->QueryCredentialsAttributesA)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->QueryCredentialsAttributesA(phCredential, ulAttribute, pBuffer);
 
@@ -1039,7 +1063,10 @@ winpr_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSe
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->AcceptSecurityContext)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status =
 	    table->AcceptSecurityContext(phCredential, phContext, pInput, fContextReq, TargetDataRep,
@@ -1071,7 +1098,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_ApplyControlToken(PCtxtHandle phContext,
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->ApplyControlToken)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->ApplyControlToken(phContext, pInput);
 
@@ -1101,7 +1131,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_CompleteAuthToken(PCtxtHandle phContext,
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->CompleteAuthToken)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->CompleteAuthToken(phContext, pToken);
 
@@ -1130,7 +1163,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_DeleteSecurityContext(PCtxtHandle phConte
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->DeleteSecurityContext)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->DeleteSecurityContext(phContext);
 
@@ -1168,7 +1204,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_ImpersonateSecurityContext(PCtxtHandle ph
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->ImpersonateSecurityContext)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->ImpersonateSecurityContext(phContext);
 
@@ -1200,7 +1239,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextW(
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->InitializeSecurityContextW)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->InitializeSecurityContextW(phCredential, phContext, pszTargetName, fContextReq,
 	                                           Reserved1, TargetDataRep, pInput, Reserved2,
@@ -1234,7 +1276,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextA(
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->InitializeSecurityContextA)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->InitializeSecurityContextA(phCredential, phContext, pszTargetName, fContextReq,
 	                                           Reserved1, TargetDataRep, pInput, Reserved2,
@@ -1266,7 +1311,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesW(PCtxtHandle phCon
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->QueryContextAttributesW)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->QueryContextAttributesW(phContext, ulAttribute, pBuffer);
 
@@ -1296,7 +1344,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesA(PCtxtHandle phCon
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->QueryContextAttributesA)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->QueryContextAttributesA(phContext, ulAttribute, pBuffer);
 
@@ -1326,7 +1377,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityContextToken(PCtxtHandle phC
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->QuerySecurityContextToken)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->QuerySecurityContextToken(phContext, phToken);
 
@@ -1357,7 +1411,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesW(PCtxtHandle phConte
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->SetContextAttributesW)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->SetContextAttributesW(phContext, ulAttribute, pBuffer, cbBuffer);
 
@@ -1388,7 +1445,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesA(PCtxtHandle phConte
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->SetContextAttributesA)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->SetContextAttributesA(phContext, ulAttribute, pBuffer, cbBuffer);
 
@@ -1417,7 +1477,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_RevertSecurityContext(PCtxtHandle phConte
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->RevertSecurityContext)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->RevertSecurityContext(phContext);
 
@@ -1450,7 +1513,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_DecryptMessage(PCtxtHandle phContext,
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->DecryptMessage)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->DecryptMessage(phContext, pMessage, MessageSeqNo, pfQOP);
 
@@ -1480,7 +1546,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_EncryptMessage(PCtxtHandle phContext, ULO
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->EncryptMessage)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->EncryptMessage(phContext, fQOP, pMessage, MessageSeqNo);
 
@@ -1510,7 +1579,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_MakeSignature(PCtxtHandle phContext, ULON
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->MakeSignature)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->MakeSignature(phContext, fQOP, pMessage, MessageSeqNo);
 
@@ -1541,7 +1613,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_VerifySignature(PCtxtHandle phContext,
 		return SEC_E_SECPKG_NOT_FOUND;
 
 	if (!table->VerifySignature)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = table->VerifySignature(phContext, pMessage, MessageSeqNo, pfQOP);
 
