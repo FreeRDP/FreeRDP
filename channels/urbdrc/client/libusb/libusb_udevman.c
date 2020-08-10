@@ -399,6 +399,36 @@ static IUDEVICE* udevman_get_udevice_by_UsbDevice(IUDEVMAN* idevman, UINT32 UsbD
 	return NULL;
 }
 
+static IUDEVICE* udevman_get_udevice_by_ChannelID(IUDEVMAN* idevman, UINT32 channelID)
+{
+	UDEVICE* pdev;
+	URBDRC_PLUGIN* urbdrc;
+
+	if (!idevman || !idevman->plugin)
+		return NULL;
+
+	/* Mask highest 2 bits, must be ignored */
+	urbdrc = (URBDRC_PLUGIN*)idevman->plugin;
+	idevman->loading_lock(idevman);
+	idevman->rewind(idevman);
+
+	while (idevman->has_next(idevman))
+	{
+		pdev = (UDEVICE*)idevman->get_next(idevman);
+
+		if (pdev->channelID == channelID)
+		{
+			idevman->loading_unlock(idevman);
+			return (IUDEVICE*)pdev;
+		}
+	}
+
+	idevman->loading_unlock(idevman);
+	WLog_Print(urbdrc->log, WLOG_WARN, "Failed to find a USB device mapped to channelID=%08" PRIx32,
+	           channelID);
+	return NULL;
+}
+
 static void udevman_loading_lock(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*)idevman;
@@ -786,6 +816,7 @@ static void udevman_load_interface(UDEVMAN* udevman)
 	udevman->iface.register_udevice = udevman_register_udevice;
 	udevman->iface.unregister_udevice = udevman_unregister_udevice;
 	udevman->iface.get_udevice_by_UsbDevice = udevman_get_udevice_by_UsbDevice;
+	udevman->iface.get_udevice_by_ChannelID = udevman_get_udevice_by_ChannelID;
 	/* Extension */
 	udevman->iface.isAutoAdd = udevman_is_auto_add;
 	/* Basic state */

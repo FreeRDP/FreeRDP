@@ -1088,10 +1088,28 @@ static int libusb_udev_is_already_send(IUDEVICE* idev)
 	return (pdev->status & URBDRC_DEVICE_ALREADY_SEND) ? 1 : 0;
 }
 
+/* This is called from channel cleanup code.
+ * Avoid double free, just remove the device and mark the channel closed. */
+static void libusb_udev_mark_channel_closed(IUDEVICE* idev)
+{
+	UDEVICE* pdev = (UDEVICE*)idev;
+	if (pdev && ((pdev->status & URBDRC_DEVICE_CHANNEL_CLOSED) == 0))
+	{
+		URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
+		const uint8_t busNr = idev->get_bus_number(idev);
+		const uint8_t devNr = idev->get_dev_number(idev);
+
+		pdev->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
+		urbdrc->udevman->unregister_udevice(urbdrc->udevman, busNr, devNr);
+	}
+}
+
+/* This is called by local events where the device is removed or in an error
+ * state. Remove the device from redirection and close the channel. */
 static void libusb_udev_channel_closed(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
-	if (pdev)
+	if (pdev && ((pdev->status & URBDRC_DEVICE_CHANNEL_CLOSED) == 0))
 	{
 		URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
 		const uint8_t busNr = idev->get_bus_number(idev);
@@ -1103,6 +1121,9 @@ static void libusb_udev_channel_closed(IUDEVICE* idev)
 			                       pdev->channelManager, pdev->channelID);
 
 		pdev->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
+
+		if (channel)
+			channel->Write(channel, 0, NULL, NULL);
 
 		urbdrc->udevman->unregister_udevice(urbdrc->udevman, busNr, devNr);
 	}
@@ -1481,6 +1502,7 @@ static void udev_load_interface(UDEVICE* pdev)
 	pdev->iface.isChannelClosed = libusb_udev_is_channel_closed;
 	pdev->iface.setAlreadySend = libusb_udev_set_already_send;
 	pdev->iface.setChannelClosed = libusb_udev_channel_closed;
+	pdev->iface.markChannelClosed = libusb_udev_mark_channel_closed;
 	pdev->iface.getPath = libusb_udev_get_path;
 	/* Transfer */
 	pdev->iface.isoch_transfer = libusb_udev_isoch_transfer;
