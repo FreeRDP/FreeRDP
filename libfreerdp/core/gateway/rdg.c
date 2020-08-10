@@ -244,7 +244,10 @@ static const char* capabilities_enum_to_string(UINT32 capabilities)
 
 static BOOL rdg_read_http_unicode_string(wStream* s, WCHAR** string, UINT16* lengthInBytes)
 {
-	WCHAR* str;
+	union {
+		BYTE* b;
+		WCHAR* w;
+	} str;
 	UINT16 strLenBytes;
 
 	/* Read length of the string */
@@ -253,7 +256,7 @@ static BOOL rdg_read_http_unicode_string(wStream* s, WCHAR** string, UINT16* len
 	Stream_Read_UINT16(s, strLenBytes);
 
 	/* Remember position of our string */
-	Stream_GetPointer(s, str);
+	Stream_GetPointer(s, str.b);
 
 	/* seek past the string - if this fails something is wrong */
 	if (!Stream_SafeSeek(s, strLenBytes))
@@ -261,7 +264,7 @@ static BOOL rdg_read_http_unicode_string(wStream* s, WCHAR** string, UINT16* len
 
 	/* return the string data (if wanted) */
 	if (string)
-		*string = str;
+		*string = str.w;
 	if (lengthInBytes)
 		*lengthInBytes = strLenBytes;
 
@@ -740,8 +743,6 @@ static BOOL rdg_process_tunnel_response_optional(rdpRdg* rdg, wStream* s, UINT16
 
 	if (fieldsPresent & HTTP_TUNNEL_RESPONSE_FIELD_SOH_REQ)
 	{
-		UINT16 certLen;
-
 		/* Seek over nonce (20 bytes) */
 		if (!Stream_SafeSeek(s, 20))
 		{
