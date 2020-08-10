@@ -463,7 +463,11 @@ SECURITY_STATUS SEC_ENTRY sspi_EnumerateSecurityPackagesW(ULONG* pcPackages,
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->EnumerateSecurityPackagesW))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->EnumerateSecurityPackagesW(pcPackages, ppPackageInfo);
 	WLog_Print(g_Log, WLOG_DEBUG, "EnumerateSecurityPackagesW: %s (0x%08" PRIX32 ")",
@@ -478,7 +482,11 @@ SECURITY_STATUS SEC_ENTRY sspi_EnumerateSecurityPackagesA(ULONG* pcPackages,
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiA && g_SspiA->EnumerateSecurityPackagesA))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiA->EnumerateSecurityPackagesA(pcPackages, ppPackageInfo);
 	WLog_Print(g_Log, WLOG_DEBUG, "EnumerateSecurityPackagesA: %s (0x%08" PRIX32 ")",
@@ -507,7 +515,11 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageNa
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->QuerySecurityPackageInfoW))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->QuerySecurityPackageInfoW(pszPackageName, ppPackageInfo);
 	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityPackageInfoW: %s (0x%08" PRIX32 ")",
@@ -522,7 +534,11 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoA(SEC_CHAR* pszPackageNam
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiA && g_SspiA->QuerySecurityPackageInfoA))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiA->QuerySecurityPackageInfoA(pszPackageName, ppPackageInfo);
 	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityPackageInfoA: %s (0x%08" PRIX32 ")",
@@ -541,7 +557,11 @@ SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleW(
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->AcquireCredentialsHandleW))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->AcquireCredentialsHandleW(pszPrincipal, pszPackage, fCredentialUse, pvLogonID,
 	                                            pAuthData, pGetKeyFn, pvGetKeyArgument,
@@ -560,7 +580,11 @@ SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleA(
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiA && g_SspiA->AcquireCredentialsHandleA))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiA->AcquireCredentialsHandleA(pszPrincipal, pszPackage, fCredentialUse, pvLogonID,
 	                                            pAuthData, pGetKeyFn, pvGetKeyArgument,
@@ -577,7 +601,11 @@ SECURITY_STATUS SEC_ENTRY sspi_ExportSecurityContext(PCtxtHandle phContext, ULON
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->ExportSecurityContext))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->ExportSecurityContext(phContext, fFlags, pPackedContext, pToken);
 	WLog_Print(g_Log, WLOG_DEBUG, "ExportSecurityContext: %s (0x%08" PRIX32 ")",
@@ -591,7 +619,11 @@ SECURITY_STATUS SEC_ENTRY sspi_FreeCredentialsHandle(PCredHandle phCredential)
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->FreeCredentialsHandle))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->FreeCredentialsHandle(phCredential);
 	WLog_Print(g_Log, WLOG_DEBUG, "FreeCredentialsHandle: %s (0x%08" PRIX32 ")",
@@ -607,7 +639,11 @@ SECURITY_STATUS SEC_ENTRY sspi_ImportSecurityContextW(SEC_WCHAR* pszPackage,
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->ImportSecurityContextW))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->ImportSecurityContextW(pszPackage, pPackedContext, pToken, phContext);
 	WLog_Print(g_Log, WLOG_DEBUG, "ImportSecurityContextW: %s (0x%08" PRIX32 ")",
@@ -623,7 +659,11 @@ SECURITY_STATUS SEC_ENTRY sspi_ImportSecurityContextA(SEC_CHAR* pszPackage,
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiA && g_SspiA->ImportSecurityContextA))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiA->ImportSecurityContextA(pszPackage, pPackedContext, pToken, phContext);
 	WLog_Print(g_Log, WLOG_DEBUG, "ImportSecurityContextA: %s (0x%08" PRIX32 ")",
@@ -638,7 +678,11 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryCredentialsAttributesW(PCredHandle phCredent
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->QueryCredentialsAttributesW))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->QueryCredentialsAttributesW(phCredential, ulAttribute, pBuffer);
 	WLog_Print(g_Log, WLOG_DEBUG, "QueryCredentialsAttributesW: %s (0x%08" PRIX32 ")",
@@ -653,7 +697,11 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryCredentialsAttributesA(PCredHandle phCredent
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiA && g_SspiA->QueryCredentialsAttributesA))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiA->QueryCredentialsAttributesA(phCredential, ulAttribute, pBuffer);
 	WLog_Print(g_Log, WLOG_DEBUG, "QueryCredentialsAttributesA: %s (0x%08" PRIX32 ")",
@@ -674,7 +722,11 @@ SECURITY_STATUS SEC_ENTRY sspi_AcceptSecurityContext(PCredHandle phCredential,
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->AcceptSecurityContext))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status =
 	    g_SspiW->AcceptSecurityContext(phCredential, phContext, pInput, fContextReq, TargetDataRep,
@@ -690,7 +742,11 @@ SECURITY_STATUS SEC_ENTRY sspi_ApplyControlToken(PCtxtHandle phContext, PSecBuff
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->ApplyControlToken))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->ApplyControlToken(phContext, pInput);
 	WLog_Print(g_Log, WLOG_DEBUG, "ApplyControlToken: %s (0x%08" PRIX32 ")",
@@ -704,7 +760,11 @@ SECURITY_STATUS SEC_ENTRY sspi_CompleteAuthToken(PCtxtHandle phContext, PSecBuff
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->CompleteAuthToken))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->CompleteAuthToken(phContext, pToken);
 	WLog_Print(g_Log, WLOG_DEBUG, "CompleteAuthToken: %s (0x%08" PRIX32 ")",
@@ -718,7 +778,11 @@ SECURITY_STATUS SEC_ENTRY sspi_DeleteSecurityContext(PCtxtHandle phContext)
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->DeleteSecurityContext))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->DeleteSecurityContext(phContext);
 	WLog_Print(g_Log, WLOG_DEBUG, "DeleteSecurityContext: %s (0x%08" PRIX32 ")",
@@ -732,7 +796,11 @@ SECURITY_STATUS SEC_ENTRY sspi_FreeContextBuffer(void* pvContextBuffer)
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->FreeContextBuffer))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->FreeContextBuffer(pvContextBuffer);
 	WLog_Print(g_Log, WLOG_DEBUG, "FreeContextBuffer: %s (0x%08" PRIX32 ")",
@@ -746,7 +814,11 @@ SECURITY_STATUS SEC_ENTRY sspi_ImpersonateSecurityContext(PCtxtHandle phContext)
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->ImpersonateSecurityContext))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->ImpersonateSecurityContext(phContext);
 	WLog_Print(g_Log, WLOG_DEBUG, "ImpersonateSecurityContext: %s (0x%08" PRIX32 ")",
@@ -763,7 +835,11 @@ SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextW(
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->InitializeSecurityContextW))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->InitializeSecurityContextW(
 	    phCredential, phContext, pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
@@ -782,7 +858,11 @@ SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextA(
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiA && g_SspiA->InitializeSecurityContextA))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiA->InitializeSecurityContextA(
 	    phCredential, phContext, pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
@@ -799,7 +879,11 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryContextAttributesW(PCtxtHandle phContext, UL
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->QueryContextAttributesW))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->QueryContextAttributesW(phContext, ulAttribute, pBuffer);
 	WLog_Print(g_Log, WLOG_DEBUG, "QueryContextAttributesW: %s (0x%08" PRIX32 ")",
@@ -814,7 +898,11 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryContextAttributesA(PCtxtHandle phContext, UL
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiA && g_SspiA->QueryContextAttributesA))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiA->QueryContextAttributesA(phContext, ulAttribute, pBuffer);
 	WLog_Print(g_Log, WLOG_DEBUG, "QueryContextAttributesA: %s (0x%08" PRIX32 ")",
@@ -828,7 +916,11 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityContextToken(PCtxtHandle phContext, 
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->QuerySecurityContextToken))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->QuerySecurityContextToken(phContext, phToken);
 	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityContextToken: %s (0x%08" PRIX32 ")",
@@ -843,7 +935,11 @@ SECURITY_STATUS SEC_ENTRY sspi_SetContextAttributesW(PCtxtHandle phContext, ULON
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->SetContextAttributesW))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->SetContextAttributesW(phContext, ulAttribute, pBuffer, cbBuffer);
 	WLog_Print(g_Log, WLOG_DEBUG, "SetContextAttributesW: %s (0x%08" PRIX32 ")",
@@ -858,7 +954,11 @@ SECURITY_STATUS SEC_ENTRY sspi_SetContextAttributesA(PCtxtHandle phContext, ULON
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiA && g_SspiA->SetContextAttributesA))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiA->SetContextAttributesA(phContext, ulAttribute, pBuffer, cbBuffer);
 	WLog_Print(g_Log, WLOG_DEBUG, "SetContextAttributesA: %s (0x%08" PRIX32 ")",
@@ -872,7 +972,11 @@ SECURITY_STATUS SEC_ENTRY sspi_RevertSecurityContext(PCtxtHandle phContext)
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->RevertSecurityContext))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->RevertSecurityContext(phContext);
 	WLog_Print(g_Log, WLOG_DEBUG, "RevertSecurityContext: %s (0x%08" PRIX32 ")",
@@ -889,7 +993,11 @@ SECURITY_STATUS SEC_ENTRY sspi_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->DecryptMessage))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->DecryptMessage(phContext, pMessage, MessageSeqNo, pfQOP);
 	WLog_Print(g_Log, WLOG_DEBUG, "DecryptMessage: %s (0x%08" PRIX32 ")",
@@ -904,7 +1012,11 @@ SECURITY_STATUS SEC_ENTRY sspi_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->EncryptMessage))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->EncryptMessage(phContext, fQOP, pMessage, MessageSeqNo);
 	WLog_Print(g_Log, WLOG_DEBUG, "EncryptMessage: %s (0x%08" PRIX32 ")",
@@ -919,7 +1031,11 @@ SECURITY_STATUS SEC_ENTRY sspi_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->MakeSignature))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->MakeSignature(phContext, fQOP, pMessage, MessageSeqNo);
 	WLog_Print(g_Log, WLOG_DEBUG, "MakeSignature: %s (0x%08" PRIX32 ")",
@@ -934,7 +1050,11 @@ SECURITY_STATUS SEC_ENTRY sspi_VerifySignature(PCtxtHandle phContext, PSecBuffer
 	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
 
 	if (!(g_SspiW && g_SspiW->VerifySignature))
+	{
+		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
+		           __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_SspiW->VerifySignature(phContext, pMessage, MessageSeqNo, pfQOP);
 	WLog_Print(g_Log, WLOG_DEBUG, "VerifySignature: %s (0x%08" PRIX32 ")",
