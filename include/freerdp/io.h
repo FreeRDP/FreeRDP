@@ -37,9 +37,9 @@ typedef BOOL (*pProxyConnect)(rdpSettings* settings, BIO* bufferedBio, const cha
 typedef BOOL (*pTransportAttach)(rdpTransport* transport, int sockfd);
 typedef BOOL (*pTransportDisconnect)(rdpTransport* transport);
 
-typedef int (*pRead)(rdpContext* context, const uint8_t* buf, size_t buf_size);
-typedef int (*pWrite)(rdpContext* context, const uint8_t* buf, size_t buf_size);
-typedef int (*pDataHandler)(rdpContext* context, const uint8_t* buf, size_t buf_size);
+typedef int (*pRead)(rdpContext* context, const BYTE* buf, size_t buf_size);
+typedef int (*pWrite)(rdpContext* context, const BYTE* buf, size_t buf_size);
+typedef int (*pDataHandler)(rdpContext* context, const BYTE* buf, size_t buf_size);
 
 struct rdp_io_update
 {

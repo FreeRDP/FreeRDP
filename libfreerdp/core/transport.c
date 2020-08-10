@@ -854,7 +854,7 @@ static BOOL transport_prepare_stream(rdpTransport* transport, wStream* s)
  * @param[in] buf_size size_t
  * @return count of bytes succesfully handled, -1 on error
  */
-static int transport_io_data_handler(rdpContext* context, const uint8_t* buf, size_t buf_size)
+static int transport_io_data_handler(rdpContext* context, const BYTE* buf, size_t buf_size)
 {
 	rdpTransport* transport = NULL;
 	wStream* pdu = NULL;
@@ -886,7 +886,7 @@ static int transport_io_data_handler(rdpContext* context, const uint8_t* buf, si
  * @param[in] buf_size size_t
  * @return count of bytes succesfully handled
  */
-static int transport_io_data_read(rdpContext* context, const uint8_t* buf, size_t buf_size)
+static int transport_io_data_read(rdpContext* context, const BYTE* buf, size_t buf_size)
 {
 	SSIZE_T status;
 	rdpTransport* transport = NULL;
