@@ -370,6 +370,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributesW(PCredHandle ph
 		return SEC_E_OK;
 	}
 
+	WLog_ERR(TAG, "[%s]: TODO: Implement", __FUNCTION__);
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -802,6 +803,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 		return ntlm_computeMicValue(context, (SecBuffer*)pBuffer);
 	}
 
+	WLog_ERR(TAG, "[%s]: TODO: Implement ulAttribute%08" PRIx32, __FUNCTION__, ulAttribute);
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -943,6 +945,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContex
 		return SEC_E_OK;
 	}
 
+	WLog_ERR(TAG, "[%s]: TODO: Implement ulAttribute=%08" PRIx32, __FUNCTION__, ulAttribute);
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -1157,6 +1160,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
                                                     PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
+	WLog_ERR(TAG, "[%s]: TODO: Implement", __FUNCTION__);
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -1164,6 +1168,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
                                                       PSecBufferDesc pMessage, ULONG MessageSeqNo,
                                                       PULONG pfQOP)
 {
+	WLog_ERR(TAG, "[%s]: TODO: Implement", __FUNCTION__);
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
