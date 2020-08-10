@@ -1018,14 +1018,13 @@ void transport_register_default_io_callbacks(rdpUpdate* update)
 	freerdp_set_transport_callbacks(update->context, &io);
 }
 
-void freerdp_set_transport_callbacks(rdpContext* context, void* io_callbacks)
+void freerdp_set_transport_callbacks(rdpContext* context, const rdpIoUpdate* io_callbacks)
 {
-	rdpIoUpdate* io = ((rdpIoUpdate*)io_callbacks);
+	*(context->update->io) = *io_callbacks;
 	/* NOTE: DataHandler should not be switched */
-	io->DataHandler = transport_io_data_handler;
+	context->update->io->DataHandler = transport_io_data_handler;
 	/* NOTE: add context ponter in case user forgot to do so */
-	io->context = context;
-	*(context->update->io) = *io;
+	context->update->io->context = context;
 }
 
 int transport_write(rdpTransport* transport, wStream* s)

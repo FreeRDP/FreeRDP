@@ -74,6 +74,8 @@ extern "C"
 #define GATEWAY_MESSAGE_CONSENT 1
 #define GATEWAY_MESSAGE_SERVICE 2
 
+	typedef struct rdp_io_update rdpIoUpdate;
+
 	typedef BOOL (*pContextNew)(freerdp* instance, rdpContext* context);
 	typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 
@@ -508,7 +510,7 @@ extern "C"
 	FREERDP_API const char* freerdp_get_logon_error_info_data(UINT32 data);
 
 	FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount);
-	FREERDP_API void freerdp_set_transport_callbacks(rdpContext* context, void* io_callbacks);
+	FREERDP_API void freerdp_set_transport_callbacks(rdpContext* context, const rdpIoUpdate* io_callbacks);
 
 	FREERDP_API BOOL freerdp_nla_impersonate(rdpContext* context);
 	FREERDP_API BOOL freerdp_nla_revert_to_self(rdpContext* context);
