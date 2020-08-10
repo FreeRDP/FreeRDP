@@ -482,6 +482,8 @@ static BOOL planar_subsample_expand(const BYTE* plane, size_t planeLength, UINT3
 {
 	size_t pos = 0;
 	UINT32 y;
+	WINPR_UNUSED(planeLength);
+
 	if (!plane || !deltaPlane)
 		return FALSE;
 
@@ -1195,7 +1197,8 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane, UINT32 width
 		{
 			INT32 delta = *srcPtr - *prevLinePtr;
 			s2c = (delta >= 0) ? (char)delta : (char)(~((BYTE)(-delta)) + 1);
-			s2c = (s2c >= 0) ? ((UINT32)s2c << 1) : (char)(((UINT32)(~((BYTE)s2c) + 1) << 1) - 1);
+			s2c = (s2c >= 0) ? (char)((UINT32)s2c << 1)
+			                 : (char)(((UINT32)(~((BYTE)s2c) + 1) << 1) - 1);
 			*outPtr = (BYTE)s2c;
 		}
 	}
