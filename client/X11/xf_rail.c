@@ -595,7 +595,7 @@ static xfRailIcon* RailIconCache_Lookup(xfRailIconCache* cache, UINT8 cacheId, U
  * in ARGB format (e.g., 0xFFFF0000L is opaque red), pixels are in normal,
  * left-to-right top-down order.
  */
-static BOOL convert_rail_icon(ICON_INFO* iconInfo, xfRailIcon* railIcon)
+static BOOL convert_rail_icon(const ICON_INFO* iconInfo, xfRailIcon* railIcon)
 {
 	BYTE* argbPixels = NULL;
 	BYTE* nextPixel;
