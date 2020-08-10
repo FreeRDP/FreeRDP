@@ -673,6 +673,11 @@ static UINT urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 	if (!urbdrc || !urbdrc->udevman)
 		return ERROR_INVALID_PARAMETER;
 
+	if (urbdrc->initialized)
+	{
+		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", URBDRC_CHANNEL_NAME);
+		return ERROR_INVALID_DATA;
+	}
 	udevman = urbdrc->udevman;
 	urbdrc->listener_callback =
 	    (URBDRC_LISTENER_CALLBACK*)calloc(1, sizeof(URBDRC_LISTENER_CALLBACK));
@@ -691,10 +696,12 @@ static UINT urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 	if (status != CHANNEL_RC_OK)
 		return status;
 
+	status = CHANNEL_RC_OK;
 	if (udevman->listener_created_callback)
-		return udevman->listener_created_callback(udevman);
+		status = udevman->listener_created_callback(udevman);
 
-	return CHANNEL_RC_OK;
+	urbdrc->initialized = status == CHANNEL_RC_OK;
+	return status;
 }
 
 /**

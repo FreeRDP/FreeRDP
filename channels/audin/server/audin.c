@@ -35,6 +35,7 @@
 #include <freerdp/codec/dsp.h>
 #include <freerdp/codec/audio.h>
 #include <freerdp/channels/wtsvc.h>
+#include <freerdp/channels/audin.h>
 #include <freerdp/server/audin.h>
 #include <freerdp/channels/log.h>
 
@@ -567,8 +568,8 @@ static BOOL audin_server_open(audin_server_context* context)
 			WTSFreeMemory(pSessionId);
 		}
 
-		audin->audin_channel =
-		    WTSVirtualChannelOpenEx(audin->SessionId, "AUDIO_INPUT", WTS_CHANNEL_OPTION_DYNAMIC);
+		audin->audin_channel = WTSVirtualChannelOpenEx(audin->SessionId, AUDIN_DVC_CHANNEL_NAME,
+		                                               WTS_CHANNEL_OPTION_DYNAMIC);
 
 		if (!audin->audin_channel)
 		{
