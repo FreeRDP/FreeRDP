@@ -468,6 +468,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesW(PCredHand
                                                                        ULONG ulAttribute,
                                                                        void* pBuffer)
 {
+	WLog_ERR(TAG, "[%s]: TODO: Implement", __FUNCTION__);
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -475,6 +476,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesA(PCredHand
                                                                        ULONG ulAttribute,
                                                                        void* pBuffer)
 {
+	WLog_ERR(TAG, "[%s]: TODO: Implement", __FUNCTION__);
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -506,7 +508,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_EncryptMessage(PCtxtHandle phContext,
 	if (context->sspiW->EncryptMessage)
 		status =
 		    context->sspiW->EncryptMessage(&(context->SubContext), fQOP, pMessage, MessageSeqNo);
-
+	else
+		WLog_WARN(TAG, "[%s] SSPI implementation of function is missing", __FUNCTION__);
 	return status;
 }
 
@@ -521,7 +524,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_DecryptMessage(PCtxtHandle phContext,
 	if (context->sspiW->DecryptMessage)
 		status =
 		    context->sspiW->DecryptMessage(&(context->SubContext), pMessage, MessageSeqNo, pfQOP);
-
+	else
+		WLog_WARN(TAG, "[%s] SSPI implementation of function is missing", __FUNCTION__);
 	return status;
 }
 
@@ -536,7 +540,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_MakeSignature(PCtxtHandle phContext, 
 	if (context->sspiW->MakeSignature)
 		status =
 		    context->sspiW->MakeSignature(&(context->SubContext), fQOP, pMessage, MessageSeqNo);
-
+	else
+		WLog_WARN(TAG, "[%s] SSPI implementation of function is missing", __FUNCTION__);
 	return status;
 }
 
@@ -551,7 +556,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_VerifySignature(PCtxtHandle phContext
 	if (context->sspiW->VerifySignature)
 		status =
 		    context->sspiW->VerifySignature(&(context->SubContext), pMessage, MessageSeqNo, pfQOP);
-
+	else
+		WLog_WARN(TAG, "[%s] SSPI implementation of function is missing", __FUNCTION__);
 	return status;
 }
 
