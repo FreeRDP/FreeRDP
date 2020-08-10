@@ -621,6 +621,12 @@ static UINT urbdrc_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 				UINT32 control = callback->channel_mgr->GetChannelId(callback->channel);
 				if (udevman->controlChannelId == control)
 					udevman->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
+				else
+				{ /* Need to notify the local backend the device is gone */
+					IUDEVICE* pdev = udevman->get_udevice_by_ChannelID(udevman, control);
+					if (pdev)
+						pdev->markChannelClosed(pdev);
+				}
 			}
 		}
 	}
