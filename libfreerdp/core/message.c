@@ -2804,6 +2804,8 @@ static int input_message_free_input_class(wMessage* msg, int type)
 {
 	int status = 0;
 
+	WINPR_UNUSED(msg);
+
 	switch (type)
 	{
 		case Input_SynchronizeEvent:
