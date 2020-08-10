@@ -441,7 +441,8 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 		if (isProxyConnection)
 		{
-			if (!proxy_connect(settings, transport->frontBio, proxyUsername, proxyPassword, hostname, port))
+			if (!proxy_connect(settings, transport->frontBio, proxyUsername, proxyPassword,
+			                   hostname, port))
 				return FALSE;
 		}
 
