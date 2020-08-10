@@ -415,7 +415,7 @@ static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChan
  */
 static UINT dvcman_init(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr)
 {
-	size_t i;
+	int i;
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	UINT error = CHANNEL_RC_OK;
 
@@ -483,7 +483,7 @@ static UINT dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
 static UINT dvcman_create_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr,
                                   UINT32 ChannelId, const char* ChannelName)
 {
-	size_t i;
+	int i;
 	BOOL bAccept;
 	DVCMAN_CHANNEL* channel;
 	DrdynvcClientContext* context;
@@ -1606,7 +1606,7 @@ static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 static UINT drdynvc_virtual_channel_event_attached(drdynvcPlugin* drdynvc)
 {
 	UINT error = CHANNEL_RC_OK;
-	size_t i;
+	int i;
 	DVCMAN* dvcman;
 
 	if (!drdynvc)
@@ -1638,7 +1638,7 @@ fail:
 static UINT drdynvc_virtual_channel_event_detached(drdynvcPlugin* drdynvc)
 {
 	UINT error = CHANNEL_RC_OK;
-	size_t i;
+	int i;
 	DVCMAN* dvcman;
 
 	if (!drdynvc)

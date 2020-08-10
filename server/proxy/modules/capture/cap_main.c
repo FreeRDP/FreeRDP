@@ -127,7 +127,7 @@ static BOOL capture_plugin_session_end(proxyData* pdata)
 	wStream* s;
 
 	socket = capture_plugin_get_socket(pdata);
-	if (socket == -1)
+	if ((INT64)socket == -1LL)
 		return FALSE;
 
 	s = capture_plugin_packet_new(SESSION_END_PDU_BASE_SIZE, MESSAGE_TYPE_SESSION_END);
@@ -191,7 +191,7 @@ static BOOL capture_plugin_client_end_paint(proxyData* pdata)
 		return TRUE;
 
 	socket = capture_plugin_get_socket(pdata);
-	if (socket == -1)
+	if ((INT64)socket == -1LL)
 		return FALSE;
 
 	if (!capture_plugin_send_frame(pc, socket, gdi->primary_buffer))
@@ -213,7 +213,7 @@ static BOOL capture_plugin_client_post_connect(proxyData* pdata)
 	rdpSettings* settings = pc->context.settings;
 
 	socket = capture_plugin_init_socket();
-	if (socket == -1)
+	if ((INT64)socket == -1LL)
 	{
 		WLog_ERR(TAG, "failed to establish a connection");
 		return FALSE;

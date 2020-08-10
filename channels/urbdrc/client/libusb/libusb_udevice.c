@@ -799,7 +799,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 			if ((ret <= 0) || (ret <= 4) || (slen <= 4) || (locale != LIBUSB_DT_STRING) ||
 			    (ret > UINT8_MAX))
 			{
-				char* msg = "SHORT_DESCRIPTOR";
+				const char* msg = "SHORT_DESCRIPTOR";
 				if (ret < 0)
 					msg = libusb_error_name(ret);
 				WLog_Print(urbdrc->log, WLOG_DEBUG,
@@ -841,7 +841,8 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 			sprintf_s(deviceLocation, sizeof(deviceLocation),
 			          "Port_#%04" PRIu8 ".Hub_#%04" PRIu8 "", device_address, bus_number);
 
-			len = strnlen(deviceLocation, MIN(sizeof(deviceLocation), inSize - 1));
+			len = strnlen(deviceLocation,
+			              MIN(sizeof(deviceLocation), (inSize > 0) ? inSize - 1U : 0));
 			for (i = 0; i < len; i++)
 				text[i] = (WCHAR)deviceLocation[i];
 			text[len++] = '\0';
