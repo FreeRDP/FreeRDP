@@ -1878,6 +1878,11 @@ static UINT rdpgfx_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 {
 	UINT error;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)pPlugin;
+	if (gfx->initialized)
+	{
+		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", RDPGFX_DVC_CHANNEL_NAME);
+		return ERROR_INVALID_DATA;
+	}
 	gfx->listener_callback = (RDPGFX_LISTENER_CALLBACK*)calloc(1, sizeof(RDPGFX_LISTENER_CALLBACK));
 
 	if (!gfx->listener_callback)
@@ -1893,6 +1898,8 @@ static UINT rdpgfx_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 	                                    &gfx->listener_callback->iface, &(gfx->listener));
 	gfx->listener->pInterface = gfx->iface.pInterface;
 	DEBUG_RDPGFX(gfx->log, "Initialize");
+
+	gfx->initialized = error == CHANNEL_RC_OK;
 	return error;
 }
 
