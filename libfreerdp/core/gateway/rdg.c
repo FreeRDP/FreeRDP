@@ -1427,7 +1427,7 @@ static BOOL rdg_process_keep_alive_packet(rdpRdg* rdg)
 
 static BOOL rdg_process_service_message(rdpRdg* rdg, wStream* s)
 {
-	const WCHAR* msg;
+	WCHAR* msg;
 	UINT16 msgLenBytes;
 	rdpContext* context = rdg->context;
 	assert(context);
