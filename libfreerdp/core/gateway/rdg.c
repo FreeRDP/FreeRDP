@@ -242,12 +242,9 @@ static const char* capabilities_enum_to_string(UINT32 capabilities)
 	return flags_to_string(capabilities, capabilities_enum, ARRAYSIZE(capabilities_enum));
 }
 
-static BOOL rdg_read_http_unicode_string(wStream* s, WCHAR** string, UINT16* lengthInBytes)
+static BOOL rdg_read_http_unicode_string(wStream* s, const WCHAR** string, UINT16* lengthInBytes)
 {
-	union {
-		BYTE* b;
-		WCHAR* w;
-	} str;
+	WCHAR* str;
 	UINT16 strLenBytes;
 
 	/* Read length of the string */
@@ -256,7 +253,7 @@ static BOOL rdg_read_http_unicode_string(wStream* s, WCHAR** string, UINT16* len
 	Stream_Read_UINT16(s, strLenBytes);
 
 	/* Remember position of our string */
-	Stream_GetPointer(s, str.b);
+	str = (WCHAR*)Stream_Pointer(s);
 
 	/* seek past the string - if this fails something is wrong */
 	if (!Stream_SafeSeek(s, strLenBytes))
@@ -264,7 +261,7 @@ static BOOL rdg_read_http_unicode_string(wStream* s, WCHAR** string, UINT16* len
 
 	/* return the string data (if wanted) */
 	if (string)
-		*string = str.w;
+		*string = str;
 	if (lengthInBytes)
 		*lengthInBytes = strLenBytes;
 
@@ -761,7 +758,7 @@ static BOOL rdg_process_tunnel_response_optional(rdpRdg* rdg, wStream* s, UINT16
 
 	if (fieldsPresent & HTTP_TUNNEL_RESPONSE_FIELD_CONSENT_MSG)
 	{
-		WCHAR* msg;
+		const WCHAR* msg;
 		UINT16 msgLenBytes;
 		rdpContext* context = rdg->context;
 
@@ -1428,7 +1425,7 @@ static BOOL rdg_process_keep_alive_packet(rdpRdg* rdg)
 
 static BOOL rdg_process_service_message(rdpRdg* rdg, wStream* s)
 {
-	WCHAR* msg;
+	const WCHAR* msg;
 	UINT16 msgLenBytes;
 	rdpContext* context = rdg->context;
 	assert(context);
