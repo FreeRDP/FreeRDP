@@ -165,7 +165,10 @@ UINT32 SSPI_GSSAPI sspi_gss_acquire_cred(UINT32* minor_status, sspi_gss_name_t d
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_acquire_cred))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_acquire_cred(minor_status, desired_name, time_req, desired_mechs,
 	                                    cred_usage, output_cred_handle, actual_mechs, time_rec);
@@ -180,7 +183,10 @@ UINT32 SSPI_GSSAPI sspi_gss_release_cred(UINT32* minor_status, sspi_gss_cred_id_
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_release_cred))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_release_cred(minor_status, cred_handle);
 	WLog_DBG(TAG, "gss_release_cred: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -199,7 +205,10 @@ UINT32 SSPI_GSSAPI sspi_gss_init_sec_context(
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_init_sec_context))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_init_sec_context(minor_status, claimant_cred_handle, context_handle,
 	                                        target_name, mech_type, req_flags, time_req,
@@ -221,7 +230,10 @@ UINT32 SSPI_GSSAPI sspi_gss_accept_sec_context(
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_accept_sec_context))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_accept_sec_context(
 	    minor_status, context_handle, acceptor_cred_handle, input_token_buffer, input_chan_bindings,
@@ -239,7 +251,10 @@ UINT32 SSPI_GSSAPI sspi_gss_process_context_token(UINT32* minor_status,
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_process_context_token))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_process_context_token(minor_status, context_handle, token_buffer);
 	WLog_DBG(TAG, "gss_process_context_token: %s (0x%08" PRIX32 ")",
@@ -255,7 +270,10 @@ UINT32 SSPI_GSSAPI sspi_gss_delete_sec_context(UINT32* minor_status,
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_delete_sec_context))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_delete_sec_context(minor_status, context_handle, output_token);
 	WLog_DBG(TAG, "gss_delete_sec_context: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -270,7 +288,10 @@ UINT32 SSPI_GSSAPI sspi_gss_context_time(UINT32* minor_status, sspi_gss_ctx_id_t
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_context_time))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_context_time(minor_status, context_handle, time_rec);
 	WLog_DBG(TAG, "gss_context_time: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -286,7 +307,10 @@ UINT32 SSPI_GSSAPI sspi_gss_get_mic(UINT32* minor_status, sspi_gss_ctx_id_t cont
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_get_mic))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status =
 	    g_GssApi->gss_get_mic(minor_status, context_handle, qop_req, message_buffer, message_token);
@@ -302,7 +326,10 @@ UINT32 SSPI_GSSAPI sspi_gss_verify_mic(UINT32* minor_status, sspi_gss_ctx_id_t c
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_verify_mic))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_verify_mic(minor_status, context_handle, message_buffer, message_token,
 	                                  qop_state);
@@ -319,7 +346,10 @@ UINT32 SSPI_GSSAPI sspi_gss_wrap(UINT32* minor_status, sspi_gss_ctx_id_t context
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_wrap))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_wrap(minor_status, context_handle, conf_req_flag, qop_req,
 	                            input_message_buffer, conf_state, output_message_buffer);
@@ -337,7 +367,10 @@ UINT32 SSPI_GSSAPI sspi_gss_unwrap(UINT32* minor_status, const sspi_gss_ctx_id_t
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_unwrap))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_unwrap(minor_status, context_handle, input_message_buffer,
 	                              output_message_buffer, conf_state, qop_state);
@@ -353,7 +386,10 @@ UINT32 SSPI_GSSAPI sspi_gss_display_status(UINT32* minor_status, UINT32 status_v
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_display_status))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_display_status(minor_status, status_value, status_type, mech_type,
 	                                      message_context, status_string);
@@ -368,7 +404,10 @@ UINT32 SSPI_GSSAPI sspi_gss_indicate_mechs(UINT32* minor_status, sspi_gss_OID_se
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_indicate_mechs))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_indicate_mechs(minor_status, mech_set);
 	WLog_DBG(TAG, "gss_indicate_mechs: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -383,7 +422,10 @@ UINT32 SSPI_GSSAPI sspi_gss_compare_name(UINT32* minor_status, sspi_gss_name_t n
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_compare_name))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_compare_name(minor_status, name1, name2, name_equal);
 	WLog_DBG(TAG, "gss_compare_name: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -399,7 +441,10 @@ UINT32 SSPI_GSSAPI sspi_gss_display_name(UINT32* minor_status, sspi_gss_name_t i
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_display_name))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status =
 	    g_GssApi->gss_display_name(minor_status, input_name, output_name_buffer, output_name_type);
@@ -415,7 +460,10 @@ UINT32 SSPI_GSSAPI sspi_gss_import_name(UINT32* minor_status, sspi_gss_buffer_t 
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_import_name))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status =
 	    g_GssApi->gss_import_name(minor_status, input_name_buffer, input_name_type, output_name);
@@ -429,7 +477,10 @@ UINT32 SSPI_GSSAPI sspi_gss_release_name(UINT32* minor_status, sspi_gss_name_t* 
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_release_name))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_release_name(minor_status, input_name);
 	WLog_DBG(TAG, "gss_release_name: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -443,7 +494,10 @@ UINT32 SSPI_GSSAPI sspi_gss_release_buffer(UINT32* minor_status, sspi_gss_buffer
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_release_buffer))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_release_buffer(minor_status, buffer);
 	WLog_DBG(TAG, "gss_release_buffer: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -457,7 +511,10 @@ UINT32 SSPI_GSSAPI sspi_gss_release_oid_set(UINT32* minor_status, sspi_gss_OID_s
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_release_oid_set))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_release_oid_set(minor_status, set);
 	WLog_DBG(TAG, "gss_release_oid_set: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -474,7 +531,10 @@ UINT32 SSPI_GSSAPI sspi_gss_inquire_cred(UINT32* minor_status, sspi_gss_cred_id_
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_inquire_cred))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_inquire_cred(minor_status, cred_handle, name, lifetime, cred_usage,
 	                                    mechanisms);
@@ -492,7 +552,10 @@ UINT32 SSPI_GSSAPI sspi_gss_inquire_context(UINT32* minor_status, sspi_gss_ctx_i
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_inquire_context))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status =
 	    g_GssApi->gss_inquire_context(minor_status, context_handle, src_name, targ_name,
@@ -510,7 +573,10 @@ UINT32 SSPI_GSSAPI sspi_gss_wrap_size_limit(UINT32* minor_status, sspi_gss_ctx_i
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_wrap_size_limit))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_wrap_size_limit(minor_status, context_handle, conf_req_flag, qop_req,
 	                                       req_output_size, max_input_size);
@@ -527,7 +593,10 @@ UINT32 SSPI_GSSAPI sspi_gss_import_name_object(UINT32* minor_status, void* input
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_import_name_object))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status =
 	    g_GssApi->gss_import_name_object(minor_status, input_name, input_name_type, output_name);
@@ -543,7 +612,10 @@ UINT32 SSPI_GSSAPI sspi_gss_export_name_object(UINT32* minor_status, sspi_gss_na
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_export_name_object))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status =
 	    g_GssApi->gss_export_name_object(minor_status, input_name, desired_name_type, output_name);
@@ -564,7 +636,10 @@ UINT32 SSPI_GSSAPI sspi_gss_add_cred(UINT32* minor_status, sspi_gss_cred_id_t in
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_add_cred))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_add_cred(
 	    minor_status, input_cred_handle, desired_name, desired_mech, cred_usage, initiator_time_req,
@@ -584,7 +659,10 @@ UINT32 SSPI_GSSAPI sspi_gss_inquire_cred_by_mech(UINT32* minor_status,
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_inquire_cred_by_mech))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_inquire_cred_by_mech(minor_status, cred_handle, mech_type, name,
 	                                            initiator_lifetime, acceptor_lifetime, cred_usage);
@@ -601,7 +679,10 @@ UINT32 SSPI_GSSAPI sspi_gss_export_sec_context(UINT32* minor_status,
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_export_sec_context))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_export_sec_context(minor_status, context_handle, interprocess_token);
 	WLog_DBG(TAG, "gss_export_sec_context: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -617,7 +698,10 @@ UINT32 SSPI_GSSAPI sspi_gss_import_sec_context(UINT32* minor_status,
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_import_sec_context))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_import_sec_context(minor_status, interprocess_token, context_handle);
 	WLog_DBG(TAG, "gss_import_sec_context: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -631,7 +715,10 @@ UINT32 SSPI_GSSAPI sspi_gss_release_oid(UINT32* minor_status, sspi_gss_OID* oid)
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_release_oid))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_release_oid(minor_status, oid);
 	WLog_DBG(TAG, "gss_release_oid: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status), status);
@@ -644,7 +731,10 @@ UINT32 SSPI_GSSAPI sspi_gss_create_empty_oid_set(UINT32* minor_status, sspi_gss_
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_create_empty_oid_set))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_create_empty_oid_set(minor_status, oid_set);
 	WLog_DBG(TAG, "gss_create_empty_oid_set: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -659,7 +749,10 @@ UINT32 SSPI_GSSAPI sspi_gss_add_oid_set_member(UINT32* minor_status, sspi_gss_OI
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_add_oid_set_member))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_add_oid_set_member(minor_status, member_oid, oid_set);
 	WLog_DBG(TAG, "gss_add_oid_set_member: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -674,7 +767,10 @@ UINT32 SSPI_GSSAPI sspi_gss_test_oid_set_member(UINT32* minor_status, sspi_gss_O
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_test_oid_set_member))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_test_oid_set_member(minor_status, member, set, present);
 	WLog_DBG(TAG, "gss_test_oid_set_member: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -689,7 +785,10 @@ UINT32 SSPI_GSSAPI sspi_gss_str_to_oid(UINT32* minor_status, sspi_gss_buffer_t o
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_str_to_oid))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_str_to_oid(minor_status, oid_str, oid);
 	WLog_DBG(TAG, "gss_str_to_oid: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status), status);
@@ -703,7 +802,10 @@ UINT32 SSPI_GSSAPI sspi_gss_oid_to_str(UINT32* minor_status, sspi_gss_OID oid,
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_oid_to_str))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_oid_to_str(minor_status, oid, oid_str);
 	WLog_DBG(TAG, "gss_oid_to_str: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status), status);
@@ -717,7 +819,10 @@ UINT32 SSPI_GSSAPI sspi_gss_inquire_names_for_mech(UINT32* minor_status, sspi_gs
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_inquire_names_for_mech))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_inquire_names_for_mech(minor_status, mechanism, name_types);
 	WLog_DBG(TAG, "gss_inquire_names_for_mech: %s (0x%08" PRIX32 ")",
@@ -733,7 +838,10 @@ UINT32 SSPI_GSSAPI sspi_gss_inquire_mechs_for_name(UINT32* minor_status,
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_inquire_mechs_for_name))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_inquire_mechs_for_name(minor_status, input_name, mech_types);
 	WLog_DBG(TAG, "gss_inquire_mechs_for_name: %s (0x%08" PRIX32 ")",
@@ -749,7 +857,10 @@ UINT32 SSPI_GSSAPI sspi_gss_sign(UINT32* minor_status, sspi_gss_ctx_id_t context
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_sign))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status =
 	    g_GssApi->gss_sign(minor_status, context_handle, qop_req, message_buffer, message_token);
@@ -765,7 +876,10 @@ UINT32 SSPI_GSSAPI sspi_gss_verify(UINT32* minor_status, sspi_gss_ctx_id_t conte
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_verify))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status =
 	    g_GssApi->gss_verify(minor_status, context_handle, message_buffer, token_buffer, qop_state);
@@ -782,7 +896,10 @@ UINT32 SSPI_GSSAPI sspi_gss_seal(UINT32* minor_status, sspi_gss_ctx_id_t context
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_seal))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_seal(minor_status, context_handle, conf_req_flag, qop_req,
 	                            input_message_buffer, conf_state, output_message_buffer);
@@ -799,7 +916,10 @@ UINT32 SSPI_GSSAPI sspi_gss_unseal(UINT32* minor_status, sspi_gss_ctx_id_t conte
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_unseal))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_unseal(minor_status, context_handle, input_message_buffer,
 	                              output_message_buffer, conf_state, qop_state);
@@ -814,7 +934,10 @@ UINT32 SSPI_GSSAPI sspi_gss_export_name(UINT32* minor_status, const sspi_gss_nam
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_export_name))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_export_name(minor_status, input_name, exported_name);
 	WLog_DBG(TAG, "gss_export_name: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status), status);
@@ -828,7 +951,10 @@ UINT32 SSPI_GSSAPI sspi_gss_duplicate_name(UINT32* minor_status, const sspi_gss_
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_duplicate_name))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_duplicate_name(minor_status, input_name, dest_name);
 	WLog_DBG(TAG, "gss_duplicate_name: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -845,7 +971,10 @@ UINT32 SSPI_GSSAPI sspi_gss_canonicalize_name(UINT32* minor_status,
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_canonicalize_name))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_canonicalize_name(minor_status, input_name, mech_type, output_name);
 	WLog_DBG(TAG, "gss_canonicalize_name: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
@@ -861,7 +990,10 @@ UINT32 SSPI_GSSAPI sspi_gss_pseudo_random(UINT32* minor_status, sspi_gss_ctx_id_
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_pseudo_random))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_pseudo_random(minor_status, context, prf_key, prf_in, desired_output_len,
 	                                     prf_out);
@@ -881,7 +1013,10 @@ UINT32 SSPI_GSSAPI sspi_gss_store_cred(UINT32* minor_status,
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_store_cred))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status =
 	    g_GssApi->gss_store_cred(minor_status, input_cred_handle, input_usage, desired_mech,
@@ -897,7 +1032,10 @@ UINT32 SSPI_GSSAPI sspi_gss_set_neg_mechs(UINT32* minor_status, sspi_gss_cred_id
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
 
 	if (!(g_GssApi && g_GssApi->gss_set_neg_mechs))
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
 		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
 
 	status = g_GssApi->gss_set_neg_mechs(minor_status, cred_handle, mech_set);
 	WLog_DBG(TAG, "gss_set_neg_mechs: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
