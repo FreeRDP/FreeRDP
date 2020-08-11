@@ -125,6 +125,7 @@ struct rdpsnd_plugin
 
 	HANDLE thread;
 	wMessageQueue* queue;
+	BOOL initialized;
 };
 
 static const char* rdpsnd_is_dyn_str(BOOL dynamic)
@@ -1528,6 +1529,11 @@ static UINT rdpsnd_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 {
 	UINT status;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)pPlugin;
+	if (rdpsnd->initialized)
+	{
+		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", RDPSND_DVC_CHANNEL_NAME);
+		return ERROR_INVALID_DATA;
+	}
 	rdpsnd->listener_callback =
 	    (RDPSND_LISTENER_CALLBACK*)calloc(1, sizeof(RDPSND_LISTENER_CALLBACK));
 
@@ -1543,7 +1549,10 @@ static UINT rdpsnd_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 	status = pChannelMgr->CreateListener(pChannelMgr, RDPSND_DVC_CHANNEL_NAME, 0,
 	                                     &rdpsnd->listener_callback->iface, &(rdpsnd->listener));
 	rdpsnd->listener->pInterface = rdpsnd->iface.pInterface;
-	return rdpsnd_virtual_channel_event_initialized(rdpsnd);
+	status = rdpsnd_virtual_channel_event_initialized(rdpsnd);
+
+	rdpsnd->initialized = status == CHANNEL_RC_OK;
+	return status;
 }
 
 /**
