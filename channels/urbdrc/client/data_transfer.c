@@ -454,11 +454,13 @@ static UINT urb_select_configuration(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* ca
 	if (MsConfig)
 		MsOutSize = MsConfig->MsOutSize;
 
-	if (MsOutSize > SIZE_MAX - 36)
-		return ERROR_INVALID_DATA;
-
 	if (MsOutSize > 0)
+	{
+		if ((size_t)MsOutSize > SIZE_MAX - 36)
+			return ERROR_INVALID_DATA;
+
 		out_size = 36 + MsOutSize;
+	}
 	else
 		out_size = 44;
 

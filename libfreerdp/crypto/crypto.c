@@ -110,15 +110,15 @@ static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, c
 	if (!input || (length < 0) || (exponent_size < 0) || !modulus || !exponent || !output)
 		return -1;
 
-	if (exponent_size > SIZE_MAX / 2)
+	if ((size_t)exponent_size > SIZE_MAX / 2)
 		return -1;
 
 	if (key_length >= SIZE_MAX / 2 - exponent_size)
 		return -1;
 
 	bufferSize = 2ULL * key_length + exponent_size;
-	if (length > bufferSize)
-		bufferSize = length;
+	if ((size_t)length > bufferSize)
+		bufferSize = (size_t)length;
 
 	input_reverse = (BYTE*)calloc(bufferSize, 1);
 
@@ -163,7 +163,7 @@ static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, c
 		goto fail;
 	crypto_reverse(output, output_length);
 
-	if (output_length < key_length)
+	if ((UINT32)output_length < key_length)
 		memset(output + output_length, 0, key_length - output_length);
 
 fail:

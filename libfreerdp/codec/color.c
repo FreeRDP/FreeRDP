@@ -241,6 +241,10 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* pDstData, UINT32 DstFormat, UINT32 
 			return FALSE;
 	}
 
+	/* Ensure we have enough source data bytes for image copy. */
+	if (cbBitsColor < nWidth * nHeight * GetBytesPerPixel(format))
+		return FALSE;
+
 	fill_gdi_palette_for_icon(colorTable, cbColorTable, &palette);
 	if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight, bitsColor,
 	                        format, 0, 0, 0, &palette, FREERDP_FLIP_VERTICAL))
@@ -576,6 +580,8 @@ static INLINE BOOL overlapping(const BYTE* pDstData, UINT32 nXDst, UINT32 nYDst,
 	const BYTE* pSrcStart = &pSrcData[nXSrc * srcBytesPerPixel + nYSrc * nSrcStep];
 	const BYTE* pSrcEnd = pSrcStart + nHeight * nSrcStep;
 
+	WINPR_UNUSED(nWidth);
+
 	if ((pDstStart >= pSrcStart) && (pDstStart <= pSrcEnd))
 		return TRUE;
 
@@ -771,8 +777,10 @@ BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT3
                          UINT32 nSrcWidth, UINT32 nSrcHeight)
 {
 	BOOL rc = FALSE;
+#if defined(SWSCALE_FOUND) || defined(CAIRO_FOUND)
 	const BYTE* src = &pSrcData[nXSrc * GetBytesPerPixel(SrcFormat) + nYSrc * nSrcStep];
 	BYTE* dst = &pDstData[nXDst * GetBytesPerPixel(DstFormat) + nYDst * nDstStep];
+#endif
 
 	/* direct copy is much faster than scaling, so check if we can simply copy... */
 	if ((nDstWidth == nSrcWidth) && (nDstHeight == nSrcHeight))

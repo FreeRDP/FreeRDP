@@ -2618,10 +2618,11 @@ BOOL update_write_cache_glyph_v2_order(wStream* s, const CACHE_GLYPH_V2_ORDER* c
 }
 static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BYTE bpp)
 {
-	INT32 x, y, k;
+	size_t x, k;
+	INT8 y;
 	BYTE byte = 0;
 	const BYTE* palette = Stream_Pointer(s) + 16;
-	const INT32 bytesPerPixel = ((bpp + 1) / 8);
+	const size_t bytesPerPixel = ((bpp + 1) / 8);
 
 	if (Stream_GetRemainingLength(s) < 16 + bytesPerPixel * 4)
 		return FALSE;
