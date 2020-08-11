@@ -158,7 +158,7 @@ static int extract_separated_substrings(const char* string, const char* separato
 		{
 			if (result != NULL)
 			{
-				result[i] = strndup(string, sublen);
+				result[i] = _strdup(string);
 			}
 
 			i++;
@@ -198,7 +198,7 @@ char** string_list_split_string(const char* string, const char* separator,
 			return NULL;
 		}
 
-		result[0] = strdup(string);
+		result[0] = _strdup(string);
 
 		if (result[0] == NULL)
 		{
