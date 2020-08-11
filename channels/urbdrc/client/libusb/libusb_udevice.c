@@ -94,6 +94,7 @@ static struct libusb_transfer* list_contains(wArrayList* list, UINT32 streamID)
 #if defined(HAVE_STREAM_ID_API)
 		const UINT32 currentID = libusb_transfer_get_stream_id(transfer);
 #else
+		const ASYNC_TRANSFER_USER_DATA* user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
 		const UINT32 currentID = user_data->streamID;
 #endif
 		if (currentID == streamID)
