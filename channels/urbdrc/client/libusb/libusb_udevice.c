@@ -81,6 +81,8 @@ struct _ASYNC_TRANSFER_USER_DATA
 #endif
 };
 
+static void request_free(void* value);
+
 static struct libusb_transfer* list_contains(wArrayList* list, UINT32 streamID)
 {
 	int x, count;
@@ -1222,7 +1224,6 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 		return -1;
 	}
 
-	iso_transfer->flags = LIBUSB_TRANSFER_FREE_TRANSFER;
 	/**  process URB_FUNCTION_IOSCH_TRANSFER */
 	libusb_fill_iso_transfer(iso_transfer, pdev->libusb_handle, EndpointAddress,
 	                         Stream_Pointer(user_data->data), BufferSize, NumberOfPackets,
@@ -1235,8 +1236,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 		WLog_Print(urbdrc->log, WLOG_WARN,
 		           "Failed to queue iso transfer, streamID %08" PRIx32 " already in use!",
 		           streamID);
-		async_transfer_user_data_free(user_data);
-		libusb_free_transfer(iso_transfer);
+		request_free(iso_transfer);
 		return -1;
 	}
 	return libusb_submit_transfer(iso_transfer);
@@ -1298,7 +1298,6 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL
 		async_transfer_user_data_free(user_data);
 		return -1;
 	}
-	transfer->flags = LIBUSB_TRANSFER_FREE_TRANSFER;
 
 	ep_desc = func_get_ep_desc(pdev->LibusbConfig, pdev->MsConfig, EndpointAddress);
 
@@ -1306,8 +1305,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL
 	{
 		WLog_Print(urbdrc->log, WLOG_ERROR, "func_get_ep_desc: endpoint 0x%" PRIx32 " not found",
 		           EndpointAddress);
-		libusb_free_transfer(transfer);
-		async_transfer_user_data_free(user_data);
+		request_free(transfer);
 		return -1;
 	}
 
@@ -1338,8 +1336,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL
 			           "urb_bulk_or_interrupt_transfer:"
 			           " other transfer type 0x%" PRIX32 "",
 			           transfer_type);
-			async_transfer_user_data_free(user_data);
-			libusb_free_transfer(transfer);
+			request_free(transfer);
 			return -1;
 	}
 
@@ -1349,8 +1346,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL
 	{
 		WLog_Print(urbdrc->log, WLOG_WARN,
 		           "Failed to queue transfer, streamID %08" PRIx32 " already in use!", streamID);
-		async_transfer_user_data_free(user_data);
-		libusb_free_transfer(transfer);
+		request_free(transfer);
 		return -1;
 	}
 	return libusb_submit_transfer(transfer);
@@ -1465,6 +1461,7 @@ static void udev_free(IUDEVICE* idev)
 
 	urbdrc = udev->urbdrc;
 
+	libusb_udev_cancel_all_transfer_request(&udev->iface);
 	if (udev->libusb_handle)
 	{
 		rc = libusb_reset_device(udev->libusb_handle);
@@ -1613,6 +1610,7 @@ static void request_free(void* value)
 	user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
 	async_transfer_user_data_free(user_data);
 	transfer->user_data = NULL;
+	libusb_free_transfer(transfer);
 }
 
 static IUDEVICE* udev_init(URBDRC_PLUGIN* urbdrc, libusb_context* context, LIBUSB_DEVICE* device,
@@ -1725,9 +1723,9 @@ static IUDEVICE* udev_init(URBDRC_PLUGIN* urbdrc, libusb_context* context, LIBUS
 		goto fail;
 
 	// deb_config_msg(pdev->libusb_dev, config_temp, devDescriptor->bNumConfigurations);
-	return (IUDEVICE*)pdev;
+	return &pdev->iface;
 fail:
-	pdev->iface.free((IUDEVICE*)pdev);
+	pdev->iface.free(&pdev->iface);
 	return NULL;
 }
 
