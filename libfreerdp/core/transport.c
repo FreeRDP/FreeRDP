@@ -478,16 +478,8 @@ BOOL transport_accept_nla(rdpTransport* transport)
 {
 	rdpSettings* settings = transport->settings;
 	freerdp* instance = (freerdp*)settings->instance;
-
-	if (!transport->tls)
-		transport->tls = tls_new(transport->settings);
-
-	transport->layer = TRANSPORT_LAYER_TLS;
-
-	if (!tls_accept(transport->tls, transport->frontBio, settings))
+	if (!transport_accept_tls(transport))
 		return FALSE;
-
-	transport->frontBio = transport->tls->bio;
 
 	/* Network Level Authentication */
 
