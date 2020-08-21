@@ -458,7 +458,7 @@ BOOL transport_accept_rdp(rdpTransport* transport)
 	return TRUE;
 }
 
-BOOL transport_accept_tls(rdpTransport* transport)
+static BOOL transport_accept_tls_impl(rdpTransport* transport)
 {
 	rdpSettings* settings = transport->settings;
 
@@ -472,6 +472,11 @@ BOOL transport_accept_tls(rdpTransport* transport)
 
 	transport->frontBio = transport->tls->bio;
 	return TRUE;
+}
+
+BOOL transport_accept_tls(rdpTransport* transport)
+{
+	return transport->context->update->io->TLSAccept(transport);
 }
 
 BOOL transport_accept_nla(rdpTransport* transport)
@@ -1002,6 +1007,7 @@ void transport_register_default_io_callbacks(rdpUpdate* update)
 	io.context = update->context;
 	io.TCPConnect = freerdp_tcp_connect_impl;
 	io.TLSConnect = transport_connect_tls_impl;
+	io.TLSAccept = transport_accept_tls_impl;
 	io.TransportAttach = transport_attach_impl;
 	io.ProxyConnect = proxy_connect_impl;
 	io.TransportDisconnect = transport_disconnect_impl;
