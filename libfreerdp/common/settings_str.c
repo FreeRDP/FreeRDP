@@ -231,7 +231,6 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_KeyboardType, 3, "FreeRDP_KeyboardType" },
 	{ FreeRDP_LargePointerFlag, 3, "FreeRDP_LargePointerFlag" },
 	{ FreeRDP_LoadBalanceInfoLength, 3, "FreeRDP_LoadBalanceInfoLength" },
-	{ FreeRDP_MaxTimeInCheckLoop, 3, "FreeRDP_MaxTimeInCheckLoop" },
 	{ FreeRDP_MonitorCount, 3, "FreeRDP_MonitorCount" },
 	{ FreeRDP_MonitorDefArraySize, 3, "FreeRDP_MonitorDefArraySize" },
 	{ FreeRDP_MonitorLocalShiftX, 3, "FreeRDP_MonitorLocalShiftX" },

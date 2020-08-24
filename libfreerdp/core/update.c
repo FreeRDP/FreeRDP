@@ -2908,6 +2908,9 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 	if (!update)
 		return NULL;
+	update->context = rdp->context;
+	if (update->context)
+		update->context->update = update;
 
 	update->log = WLog_Get("com.freerdp.core.update");
 	InitializeCriticalSection(&(update->mux));
@@ -2935,6 +2938,13 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 	if (!update->window)
 		goto fail;
+
+	update->io = (rdpIoUpdate*)calloc(1, sizeof(rdpIoUpdate));
+
+	if (!update->io)
+		goto fail;
+
+	transport_register_default_io_callbacks(update);
 
 	deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 	deleteList->sIndices = 64;
@@ -2979,11 +2989,8 @@ void update_free(rdpUpdate* update)
 
 		free(update->secondary);
 		free(update->altsec);
-
-		if (update->window)
-		{
-			free(update->window);
-		}
+		free(update->window);
+		free(update->io);
 
 		MessageQueue_Free(update->queue);
 		DeleteCriticalSection(&update->mux);

@@ -371,8 +371,8 @@ fail:
 	return rc;
 }
 
-BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* proxyUsername,
-                   const char* proxyPassword, const char* hostname, UINT16 port)
+BOOL proxy_connect_impl(rdpSettings* settings, BIO* bufferedBio, const char* proxyUsername,
+                        const char* proxyPassword, const char* hostname, UINT16 port)
 {
 	switch (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType))
 	{
@@ -390,6 +390,14 @@ BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* proxyUse
 			WLog_ERR(TAG, "Invalid internal proxy configuration");
 			return FALSE;
 	}
+}
+
+BOOL proxy_connect(rdpSettings* settings, BIO* bio, const char* proxyUsername,
+                   const char* proxyPassword, const char* hostname, UINT16 port)
+{
+	freerdp* instance = settings->instance;
+	return instance->context->update->io->ProxyConnect(settings, bio, proxyUsername, proxyPassword,
+	                                                   hostname, port);
 }
 
 static const char* get_response_header(char* response)

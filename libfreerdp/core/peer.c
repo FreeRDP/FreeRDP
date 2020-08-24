@@ -756,11 +756,6 @@ static int freerdp_peer_drain_output_buffer(freerdp_peer* peer)
 	return transport_drain_output_buffer(transport);
 }
 
-static BOOL freerdp_peer_has_more_to_read(freerdp_peer* peer)
-{
-	return peer->context->rdp->transport->haveMoreBytesToRead;
-}
-
 static LicenseCallbackResult freerdp_peer_nolicense(freerdp_peer* peer, wStream* s)
 {
 	rdpRdp* rdp = peer->context->rdp;
@@ -826,7 +821,6 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	transport_set_blocking_mode(rdp->transport, FALSE);
 	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
-	client->HasMoreToRead = freerdp_peer_has_more_to_read;
 	client->LicenseCallback = freerdp_peer_nolicense;
 	IFCALLRET(client->ContextNew, ret, client, client->context);
 
@@ -893,7 +887,6 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		client->SendChannelData = freerdp_peer_send_channel_data;
 		client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 		client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
-		client->HasMoreToRead = freerdp_peer_has_more_to_read;
 		client->VirtualChannelOpen = freerdp_peer_virtual_channel_open;
 		client->VirtualChannelClose = freerdp_peer_virtual_channel_close;
 		client->VirtualChannelWrite = freerdp_peer_virtual_channel_write;

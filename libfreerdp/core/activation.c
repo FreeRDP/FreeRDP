@@ -293,7 +293,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
 
-	for (timeout = 0; timeout < rdp->settings->TcpAckTimeout; timeout += 100)
+	for (timeout = 0; timeout < rdp->settings->TcpAckTimeout; timeout += 10)
 	{
 		if (rdp_check_fds(rdp) < 0)
 			return FALSE;
@@ -304,7 +304,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 		if (rdp->state == CONNECTION_STATE_ACTIVE)
 			return TRUE;
 
-		Sleep(100);
+		Sleep(10);
 	}
 
 	WLog_ERR(TAG, "Timeout waiting for activation");

@@ -40,6 +40,7 @@ typedef struct rdp_update rdpUpdate;
 #include <freerdp/altsec.h>
 #include <freerdp/window.h>
 #include <freerdp/pointer.h>
+#include <freerdp/io.h>
 
 /* Bitmap Updates */
 #define EX_COMPRESSED_BITMAP_HEADER_PRESENT 0x01
@@ -223,7 +224,8 @@ struct rdp_update
 	rdpSecondaryUpdate* secondary; /* 34 */
 	rdpAltSecUpdate* altsec;       /* 35 */
 	rdpWindowUpdate* window;       /* 36 */
-	UINT32 paddingC[48 - 37];      /* 37 */
+	rdpIoUpdate* io;               /* 37 */
+	UINT32 paddingC[48 - 38];      /* 38 */
 
 	pRefreshRect RefreshRect;       /* 48 */
 	pSuppressOutput SuppressOutput; /* 49 */
