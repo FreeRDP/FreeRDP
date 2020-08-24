@@ -242,7 +242,7 @@ static UINT urbdrc_process_io_control(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* c
 	Stream_Read_UINT32(s, OutputBufferSize);
 	Stream_Read_UINT32(s, RequestId);
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
-	out = urb_create_iocompletion(InterfaceId, MessageId, RequestId, OutputBufferSize);
+	out = urb_create_iocompletion(InterfaceId, MessageId, RequestId, OutputBufferSize + 4);
 
 	if (!out)
 		return ERROR_OUTOFMEMORY;
@@ -266,7 +266,11 @@ static UINT urbdrc_process_io_control(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* c
 
 			if (success)
 			{
-				Stream_Seek(out, OutputBufferSize);
+				if (!Stream_SafeSeek(out, OutputBufferSize))
+				{
+					Stream_Free(out, TRUE);
+					return ERROR_INVALID_DATA;
+				}
 
 				if (pdev->isExist(pdev) == 0)
 					Stream_Write_UINT32(out, 0);

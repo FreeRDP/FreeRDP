@@ -30,10 +30,12 @@
 
 #define TAG CHANNELS_TAG("drdynvc.client")
 
+static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId,
+                                 BOOL bSendClosePDU);
 static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr);
 static void dvcman_channel_free(void* channel);
 static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const BYTE* data,
-                               UINT32 dataSize);
+                               UINT32 dataSize, BOOL* close);
 static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s);
 
 static void dvcman_wtslistener_free(DVCMAN_LISTENER* listener)
@@ -446,6 +448,7 @@ fail:
 static UINT dvcman_write_channel(IWTSVirtualChannel* pChannel, ULONG cbSize, const BYTE* pBuffer,
                                  void* pReserved)
 {
+	BOOL close = FALSE;
 	UINT status;
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*)pChannel;
 
@@ -454,8 +457,12 @@ static UINT dvcman_write_channel(IWTSVirtualChannel* pChannel, ULONG cbSize, con
 		return CHANNEL_RC_BAD_CHANNEL;
 
 	EnterCriticalSection(&(channel->lock));
-	status = drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize);
+	status =
+	    drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize, &close);
 	LeaveCriticalSection(&(channel->lock));
+	/* Close delayed, it removes the channel struct */
+	if (close)
+		dvcman_close_channel(channel->dvcman->drdynvc->channel_mgr, channel->channel_id, TRUE);
 	return status;
 }
 
@@ -602,8 +609,8 @@ static UINT dvcman_open_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelManage
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId,
-                                 BOOL bSendClosePDU)
+UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId,
+                          BOOL bSendClosePDU)
 {
 	DVCMAN_CHANNEL* channel;
 	UINT error = CHANNEL_RC_OK;
@@ -802,7 +809,7 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const BYTE* data,
-                               UINT32 dataSize)
+                               UINT32 dataSize, BOOL* close)
 {
 	wStream* data_out;
 	size_t pos;
@@ -833,7 +840,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 
 	if (dataSize == 0)
 	{
-		dvcman_close_channel(drdynvc->channel_mgr, ChannelId, TRUE);
+		*close = TRUE;
 		Stream_Release(data_out);
 	}
 	else if (dataSize <= CHANNEL_CHUNK_LENGTH - pos)
