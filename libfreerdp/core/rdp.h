@@ -180,6 +180,7 @@ struct rdp_rdp
 	UINT64 outBytes;
 	UINT64 outPackets;
 	CRITICAL_SECTION critical;
+	rdpTransportIo* io;
 };
 
 FREERDP_LOCAL BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length);
@@ -223,6 +224,9 @@ FREERDP_LOCAL int rdp_check_fds(rdpRdp* rdp);
 FREERDP_LOCAL rdpRdp* rdp_new(rdpContext* context);
 FREERDP_LOCAL void rdp_reset(rdpRdp* rdp);
 FREERDP_LOCAL void rdp_free(rdpRdp* rdp);
+
+FREERDP_LOCAL const rdpTransportIo* rdp_get_io_callbacks(rdpRdp* rdp);
+FREERDP_LOCAL BOOL rdp_set_io_callbacks(rdpRdp* rdp, const rdpTransportIo* io_callbacks);
 
 #define RDP_TAG FREERDP_TAG("core.rdp")
 #ifdef WITH_DEBUG_RDP

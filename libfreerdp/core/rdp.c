@@ -1787,6 +1787,12 @@ rdpRdp* rdp_new(rdpContext* context)
 	if (!rdp->transport)
 		goto fail;
 
+	if (rdp->io && rdp->transport)
+	{
+		if (!transport_set_io_callbacks(rdp->transport, rdp->io))
+			goto fail;
+	}
+
 	rdp->license = license_new(rdp);
 
 	if (!rdp->license)
@@ -1906,6 +1912,8 @@ void rdp_reset(rdpRdp* rdp)
 	transport_free(rdp->transport);
 	fastpath_free(rdp->fastpath);
 	rdp->transport = transport_new(context);
+	if (rdp->io && rdp->transport)
+		transport_set_io_callbacks(rdp->transport, rdp->io);
 	rdp->license = license_new(rdp);
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);
@@ -1944,6 +1952,30 @@ void rdp_free(rdpRdp* rdp)
 		heartbeat_free(rdp->heartbeat);
 		multitransport_free(rdp->multitransport);
 		bulk_free(rdp->bulk);
+		free(rdp->io);
 		free(rdp);
 	}
+}
+
+const rdpTransportIo* rdp_get_io_callbacks(rdpRdp* rdp)
+{
+	if (!rdp)
+		return NULL;
+	return rdp->io;
+}
+
+BOOL rdp_set_io_callbacks(rdpRdp* rdp, const rdpTransportIo* io_callbacks)
+{
+	if (!rdp)
+		return FALSE;
+	free(rdp->io);
+	rdp->io = NULL;
+	if (io_callbacks)
+	{
+		rdp->io = malloc(sizeof(rdpTransportIo));
+		if (!rdp->io)
+			return FALSE;
+		*rdp->io = *io_callbacks;
+	}
+	return TRUE;
 }
