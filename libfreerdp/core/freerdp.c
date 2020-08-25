@@ -1121,3 +1121,17 @@ const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length)
 
 	return (const char*)nego_get_routing_token(context->rdp->nego, length);
 }
+
+const rdpTransportIo* freerdp_get_io_callbacks(freerdp* instance)
+{
+	if (!instance || !instance->context)
+		return NULL;
+	return rdp_get_io_callbacks(instance->context->rdp);
+}
+
+BOOL freerdp_set_io_callbacks(freerdp* instance, const rdpTransportIo* io_callbacks)
+{
+	if (!instance || !instance->context)
+		return FALSE;
+	return rdp_set_io_callbacks(instance->context->rdp, io_callbacks);
+}

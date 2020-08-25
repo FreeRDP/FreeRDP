@@ -29,8 +29,6 @@ typedef enum
 	TRANSPORT_LAYER_CLOSED
 } TRANSPORT_LAYER;
 
-typedef struct rdp_transport rdpTransport;
-
 #include "tcp.h"
 #include "nla.h"
 
@@ -52,33 +50,6 @@ typedef struct rdp_transport rdpTransport;
 #include <freerdp/settings.h>
 
 typedef int (*TransportRecv)(rdpTransport* transport, wStream* stream, void* extra);
-
-typedef int (*pTCPConnect)(rdpContext* context, rdpSettings* settings, const char* hostname,
-                           int port, DWORD timeout);
-typedef BOOL (*pTransportFkt)(rdpTransport* transport);
-typedef BOOL (*pTransportAttach)(rdpTransport* transport, int sockfd);
-
-typedef int (*pTransportRWFkt)(rdpTransport* transport, wStream* s);
-typedef int (*pDataHandler)(rdpContext* context, const BYTE* buf, size_t buf_size);
-
-typedef SSIZE_T (*pTransportRead)(rdpTransport* transport, BYTE* data, size_t bytes);
-
-struct rdp_transport_io
-{
-	pTCPConnect TCPConnect;
-	pTransportFkt RDPConnect;
-	pTransportFkt RDPAccept;
-	pTransportFkt TLSConnect;
-	pTransportFkt TLSAccept;
-	pTransportFkt NLAConnect;
-	pTransportFkt NLAAccept;
-	pTransportAttach TransportAttach;
-	pTransportFkt TransportDisconnect;
-	pTransportRWFkt ReadPdu;  /* Reads a whole PDU from the transport */
-	pTransportRWFkt WritePdu; /* Writes a whole PDU to the transport */
-	pTransportRead ReadBytes; /* Reads up to a requested amount of bytes from the transport */
-};
-typedef struct rdp_transport_io rdpTransportIo;
 
 struct rdp_transport
 {
