@@ -53,6 +53,33 @@ typedef struct rdp_transport rdpTransport;
 
 typedef int (*TransportRecv)(rdpTransport* transport, wStream* stream, void* extra);
 
+typedef int (*pTCPConnect)(rdpContext* context, rdpSettings* settings, const char* hostname,
+                           int port, DWORD timeout);
+typedef BOOL (*pTransportFkt)(rdpTransport* transport);
+typedef BOOL (*pTransportAttach)(rdpTransport* transport, int sockfd);
+
+typedef int (*pTransportRWFkt)(rdpTransport* transport, wStream* s);
+typedef int (*pDataHandler)(rdpContext* context, const BYTE* buf, size_t buf_size);
+
+typedef SSIZE_T (*pTransportRead)(rdpTransport* transport, BYTE* data, size_t bytes);
+
+struct rdp_transport_io
+{
+	pTCPConnect TCPConnect;
+	pTransportFkt RDPConnect;
+	pTransportFkt RDPAccept;
+	pTransportFkt TLSConnect;
+	pTransportFkt TLSAccept;
+	pTransportFkt NLAConnect;
+	pTransportFkt NLAAccept;
+	pTransportAttach TransportAttach;
+	pTransportFkt TransportDisconnect;
+	pTransportRWFkt ReadPdu;  /* Reads a whole PDU from the transport */
+	pTransportRWFkt WritePdu; /* Writes a whole PDU to the transport */
+	pTransportRead ReadBytes; /* Reads up to a requested amount of bytes from the transport */
+};
+typedef struct rdp_transport_io rdpTransportIo;
+
 struct rdp_transport
 {
 	TRANSPORT_LAYER layer;
@@ -77,6 +104,7 @@ struct rdp_transport
 	HANDLE rereadEvent;
 	BOOL haveMoreBytesToRead;
 	wLog* log;
+	rdpTransportIo io;
 };
 
 FREERDP_LOCAL wStream* transport_send_stream_init(rdpTransport* transport, int size);
@@ -109,6 +137,9 @@ FREERDP_LOCAL int transport_drain_output_buffer(rdpTransport* transport);
 FREERDP_LOCAL wStream* transport_receive_pool_take(rdpTransport* transport);
 FREERDP_LOCAL int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);
 
+FREERDP_LOCAL const rdpTransportIo* transport_get_io_callbacks(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_set_io_callbacks(rdpTransport* transport,
+                                              const rdpTransportIo* io_callbacks);
 FREERDP_LOCAL rdpTransport* transport_new(rdpContext* context);
 FREERDP_LOCAL void transport_free(rdpTransport* transport);
 
