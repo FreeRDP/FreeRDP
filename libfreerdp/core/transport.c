@@ -835,7 +835,11 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 		}
 	}
 
-	if (!Stream_EnsureCapacity(s, Stream_GetPosition(s) + pduLength))
+	if (!Stream_EnsureCapacity(s, pduLength))
+		return -1;
+
+	position = Stream_GetPosition(s);
+	if (position > pduLength)
 		return -1;
 
 	status = transport_read_layer_bytes(transport, s, pduLength - Stream_GetPosition(s));
