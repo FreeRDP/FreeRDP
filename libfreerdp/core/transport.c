@@ -508,25 +508,13 @@ static BOOL transport_default_accept_tls(rdpTransport* transport)
 
 BOOL transport_accept_nla(rdpTransport* transport)
 {
-	if (!transport)
-		return FALSE;
-	return IFCALLRESULT(FALSE, transport->io.NLAAccept, transport);
-}
 
-static BOOL transport_default_accept_nla(rdpTransport* transport)
-{
 	rdpSettings* settings = transport->settings;
 	freerdp* instance = (freerdp*)settings->instance;
-
-	if (!transport->tls)
-		transport->tls = tls_new(transport->settings);
-
-	transport->layer = TRANSPORT_LAYER_TLS;
-
-	if (!tls_accept(transport->tls, transport->frontBio, settings))
+	if (!transport)
 		return FALSE;
-
-	transport->frontBio = transport->tls->bio;
+	if (!IFCALLRESULT(FALSE, transport->io.TLSAccept, transport))
+		return FALSE;
 
 	/* Network Level Authentication */
 
@@ -1265,7 +1253,6 @@ rdpTransport* transport_new(rdpContext* context)
 	transport->io.NLAConnect = transport_default_connect_nla;
 	transport->io.RDPAccept = transport_default_accept_rdp;
 	transport->io.TLSAccept = transport_default_accept_tls;
-	transport->io.NLAAccept = transport_default_accept_nla;
 	transport->io.TransportAttach = transport_default_attach;
 	transport->io.TransportDisconnect = transport_default_disconnect;
 	transport->io.ReadPdu = transport_default_read_pdu;
