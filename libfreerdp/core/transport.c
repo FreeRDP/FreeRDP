@@ -335,17 +335,17 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 
 BOOL transport_connect_nla(rdpTransport* transport)
 {
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
+	freerdp* instance = NULL;
+	rdpRdp* rdp = NULL;
 	if (!transport)
 		return FALSE;
-	return IFCALLRESULT(FALSE, transport->io.NLAConnect, transport);
-}
 
-static BOOL transport_default_connect_nla(rdpTransport* transport)
-{
-	rdpContext* context = transport->context;
-	rdpSettings* settings = context->settings;
-	freerdp* instance = context->instance;
-	rdpRdp* rdp = context->rdp;
+	context = transport->context;
+	settings = context->settings;
+	instance = context->instance;
+	rdp = context->rdp;
 
 	if (!transport_connect_tls(transport))
 		return FALSE;
@@ -1250,7 +1250,6 @@ rdpTransport* transport_new(rdpContext* context)
 	transport->io.TCPConnect = freerdp_tcp_default_connect;
 	transport->io.RDPConnect = transport_default_connect_rdp;
 	transport->io.TLSConnect = transport_default_connect_tls;
-	transport->io.NLAConnect = transport_default_connect_nla;
 	transport->io.RDPAccept = transport_default_accept_rdp;
 	transport->io.TLSAccept = transport_default_accept_tls;
 	transport->io.TransportAttach = transport_default_attach;
