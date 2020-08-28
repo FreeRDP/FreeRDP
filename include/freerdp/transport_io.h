@@ -45,12 +45,8 @@ extern "C"
 	struct rdp_transport_io
 	{
 		pTCPConnect TCPConnect;
-		pTransportFkt RDPConnect;
-		pTransportFkt RDPAccept;
 		pTransportFkt TLSConnect;
 		pTransportFkt TLSAccept;
-		pTransportFkt NLAConnect;
-		pTransportFkt NLAAccept;
 		pTransportAttach TransportAttach;
 		pTransportFkt TransportDisconnect;
 		pTransportRWFkt ReadPdu;  /* Reads a whole PDU from the transport */
