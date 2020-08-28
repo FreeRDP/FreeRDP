@@ -264,11 +264,6 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 {
 	if (!transport)
 		return FALSE;
-	return IFCALLRESULT(FALSE, transport->io.RDPConnect, transport);
-}
-
-static BOOL transport_default_connect_rdp(rdpTransport* transport)
-{
 	/* RDP encryption */
 	return TRUE;
 }
@@ -474,11 +469,6 @@ BOOL transport_accept_rdp(rdpTransport* transport)
 {
 	if (!transport)
 		return FALSE;
-	return IFCALLRESULT(FALSE, transport->io.RDPAccept, transport);
-}
-
-static BOOL transport_default_accept_rdp(rdpTransport* transport)
-{
 	/* RDP encryption */
 	return TRUE;
 }
@@ -1248,9 +1238,7 @@ rdpTransport* transport_new(rdpContext* context)
 
 	// transport->io.DataHandler = transport_data_handler;
 	transport->io.TCPConnect = freerdp_tcp_default_connect;
-	transport->io.RDPConnect = transport_default_connect_rdp;
 	transport->io.TLSConnect = transport_default_connect_tls;
-	transport->io.RDPAccept = transport_default_accept_rdp;
 	transport->io.TLSAccept = transport_default_accept_tls;
 	transport->io.TransportAttach = transport_default_attach;
 	transport->io.TransportDisconnect = transport_default_disconnect;
