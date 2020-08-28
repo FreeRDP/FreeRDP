@@ -709,9 +709,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	return IFCALLRESULT(-1, transport->io.ReadPdu, transport, s);
 }
 
-static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
+SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplete)
 {
-	int status;
 	size_t position;
 	size_t pduLength;
 	BYTE* header;
@@ -723,22 +722,18 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 	if (!s)
 		return -1;
 
+	header = Stream_Buffer(s);
 	position = Stream_GetPosition(s);
 
-	/* Make sure there is enough space for the longest header within the stream */
-	if (!Stream_EnsureCapacity(s, 4))
-		return -1;
+	if (incomplete)
+		*incomplete = TRUE;
 
 	/* Make sure at least two bytes are read for further processing */
-	if (position < 2 && (status = transport_read_layer_bytes(transport, s, 2 - position)) != 1)
+	if (position < 2)
 	{
 		/* No data available at the moment */
-		return status;
+		return 0;
 	}
-
-	/* update position value for further checks */
-	position = Stream_GetPosition(s);
-	header = Stream_Buffer(s);
 
 	if (transport->NlaMode)
 	{
@@ -756,9 +751,8 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 				if ((header[1] & ~(0x80)) == 1)
 				{
 					/* check for header bytes already was readed in previous calls */
-					if (position < 3 &&
-					    (status = transport_read_layer_bytes(transport, s, 3 - position)) != 1)
-						return status;
+					if (position < 3)
+						return 0;
 
 					pduLength = header[2];
 					pduLength += 3;
@@ -766,9 +760,8 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 				else if ((header[1] & ~(0x80)) == 2)
 				{
 					/* check for header bytes already was readed in previous calls */
-					if (position < 4 &&
-					    (status = transport_read_layer_bytes(transport, s, 4 - position)) != 1)
-						return status;
+					if (position < 4)
+						return 0;
 
 					pduLength = (header[2] << 8) | header[3];
 					pduLength += 4;
@@ -792,14 +785,13 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 		{
 			/* TPKT header */
 			/* check for header bytes already was readed in previous calls */
-			if (position < 4 &&
-			    (status = transport_read_layer_bytes(transport, s, 4 - position)) != 1)
-				return status;
+			if (position < 4)
+				return 0;
 
 			pduLength = (header[2] << 8) | header[3];
 
 			/* min and max values according to ITU-T Rec. T.123 (01/2007) section 8 */
-			if (pduLength < 7 || pduLength > 0xFFFF)
+			if ((pduLength < 7) || (pduLength > 0xFFFF))
 			{
 				WLog_Print(transport->log, WLOG_ERROR, "tpkt - invalid pduLength: %" PRIdz,
 				           pduLength);
@@ -812,9 +804,8 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 			if (header[1] & 0x80)
 			{
 				/* check for header bytes already was readed in previous calls */
-				if (position < 3 &&
-				    (status = transport_read_layer_bytes(transport, s, 3 - position)) != 1)
-					return status;
+				if (position < 3)
+					return 0;
 
 				pduLength = ((header[1] & 0x7F) << 8) | header[2];
 			}
@@ -835,6 +826,41 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 		}
 	}
 
+	if (position > pduLength)
+		return -1;
+
+	if (incomplete)
+		*incomplete = position >= pduLength;
+
+	return pduLength;
+}
+
+static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
+{
+	BOOL incomplete;
+	SSIZE_T status;
+	size_t pduLength;
+	size_t position;
+
+	/* Read in pdu length */
+	status = transport_parse_pdu(transport, s, &incomplete);
+	while ((status == 0) && incomplete)
+	{
+		int rc;
+		if (!Stream_EnsureRemainingCapacity(s, 1))
+			return -1;
+		rc = transport_read_layer_bytes(transport, s, 1);
+		if (rc != 1)
+			return rc;
+		status = transport_parse_pdu(transport, s, &incomplete);
+	}
+
+	if (status < 0)
+		return -1;
+
+	pduLength = (size_t)status;
+
+	/* Read in rest of the PDU */
 	if (!Stream_EnsureCapacity(s, pduLength))
 		return -1;
 

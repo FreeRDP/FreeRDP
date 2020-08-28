@@ -48,6 +48,7 @@ typedef enum
 #include <time.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
+#include <freerdp/transport_io.h>
 
 typedef int (*TransportRecv)(rdpTransport* transport, wStream* stream, void* extra);
 

@@ -31,7 +31,6 @@ typedef struct rdp_graphics rdpGraphics;
 typedef struct rdp_metrics rdpMetrics;
 typedef struct rdp_codecs rdpCodecs;
 typedef struct rdp_transport rdpTransport; /* Opaque */
-typedef struct rdp_transport_io rdpTransportIo;
 
 typedef struct rdp_freerdp freerdp;
 typedef struct rdp_context rdpContext;
@@ -426,36 +425,8 @@ extern "C"
 	};
 	typedef struct rdp_channel_handles rdpChannelHandles;
 
-	typedef int (*pTCPConnect)(rdpContext* context, rdpSettings* settings, const char* hostname,
-	                           int port, DWORD timeout);
-	typedef BOOL (*pTransportFkt)(rdpTransport* transport);
-	typedef BOOL (*pTransportAttach)(rdpTransport* transport, int sockfd);
-	typedef int (*pTransportRWFkt)(rdpTransport* transport, wStream* s);
-	typedef SSIZE_T (*pTransportRead)(rdpTransport* transport, BYTE* data, size_t bytes);
-
-	struct rdp_transport_io
-	{
-		pTCPConnect TCPConnect;
-		pTransportFkt RDPConnect;
-		pTransportFkt RDPAccept;
-		pTransportFkt TLSConnect;
-		pTransportFkt TLSAccept;
-		pTransportFkt NLAConnect;
-		pTransportFkt NLAAccept;
-		pTransportAttach TransportAttach;
-		pTransportFkt TransportDisconnect;
-		pTransportRWFkt ReadPdu;  /* Reads a whole PDU from the transport */
-		pTransportRWFkt WritePdu; /* Writes a whole PDU to the transport */
-		pTransportRead ReadBytes; /* Reads up to a requested amount of bytes from the transport */
-	};
-	typedef struct rdp_transport_io rdpTransportIo;
-
 	FREERDP_API BOOL freerdp_context_new(freerdp* instance);
 	FREERDP_API void freerdp_context_free(freerdp* instance);
-
-	FREERDP_API const rdpTransportIo* freerdp_get_io_callbacks(freerdp* instance);
-	FREERDP_API BOOL freerdp_set_io_callbacks(freerdp* instance,
-	                                          const rdpTransportIo* io_callbacks);
 
 	FREERDP_API BOOL freerdp_connect(freerdp* instance);
 	FREERDP_API BOOL freerdp_abort_connect(freerdp* instance);
