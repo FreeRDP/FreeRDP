@@ -244,32 +244,16 @@ static void settings_load_hkey_local_machine(rdpSettings* settings)
 
 static BOOL settings_get_computer_name(rdpSettings* settings)
 {
-	DWORD nSize = 0;
-	CHAR* computerName;
-
-	if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) || GetLastError() != ERROR_MORE_DATA)
-		return FALSE;
-
-	computerName = calloc(nSize, sizeof(CHAR));
-
-	if (!computerName)
-		return FALSE;
+	CHAR computerName[256];
+	DWORD nSize = sizeof(computerName);
 
 	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
-	{
-		free(computerName);
 		return FALSE;
-	}
 
 	if (nSize > MAX_COMPUTERNAME_LENGTH)
 		computerName[MAX_COMPUTERNAME_LENGTH] = '\0';
 
-	settings->ComputerName = computerName;
-
-	if (!settings->ComputerName)
-		return FALSE;
-
-	return TRUE;
+	return freerdp_settings_set_string(settings, FreeRDP_ComputerName, computerName);
 }
 
 BOOL freerdp_settings_set_default_order_support(rdpSettings* settings)
