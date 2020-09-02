@@ -33,6 +33,15 @@ static char* certificate_path(void)
 	static const char dirsep = '/';
 #endif
 	static const char filename[] = "Test_x509_cert_info.pem";
+#ifdef TEST_SOURCE_DIR
+	const char* file = TEST_SOURCE_DIR;
+	const size_t flen = sizeof(filename) + sizeof(dirsep) + strlen(file) + sizeof(char);
+	char* result = calloc(1, flen);
+	if (!result)
+		return NULL;
+	_snprintf(result, flen - 1, "%s%c%s", file, dirsep, filename);
+	return result;
+#else
 	const char* file = __FILE__;
 	const char* last_dirsep = strrchr(file, dirsep);
 
@@ -52,6 +61,7 @@ static char* certificate_path(void)
 		/* No dirsep => relative path in same directory */
 		return _strdup(filename);
 	}
+#endif
 }
 
 static const certificate_test_t certificate_tests[] = {
