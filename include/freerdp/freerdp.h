@@ -30,6 +30,7 @@ typedef struct rdp_channels rdpChannels;
 typedef struct rdp_graphics rdpGraphics;
 typedef struct rdp_metrics rdpMetrics;
 typedef struct rdp_codecs rdpCodecs;
+typedef struct rdp_transport rdpTransport; /* Opaque */
 
 typedef struct rdp_freerdp freerdp;
 typedef struct rdp_context rdpContext;
