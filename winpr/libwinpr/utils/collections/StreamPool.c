@@ -218,6 +218,9 @@ out_fail:
 
 void StreamPool_Return(wStreamPool* pool, wStream* s)
 {
+	if (!s)
+		return;
+
 	if (pool->synchronized)
 		EnterCriticalSection(&pool->lock);
 
