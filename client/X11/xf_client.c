@@ -1887,9 +1887,9 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	if ((xfc->_NET_SUPPORTED != None) && (xfc->_NET_SUPPORTING_WM_CHECK != None))
 	{
-		Atom actual_type;
-		int actual_format;
-		unsigned long nitems, after;
+		Atom actual_type = 0;
+		int actual_format = 0;
+		unsigned long nitems = 0, after = 0;
 		unsigned char* data = NULL;
 		int status = XGetWindowProperty(xfc->display, RootWindowOfScreen(xfc->screen),
 		                                xfc->_NET_SUPPORTED, 0, 1024, False, XA_ATOM, &actual_type,
