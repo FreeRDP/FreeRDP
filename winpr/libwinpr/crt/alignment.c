@@ -177,7 +177,7 @@ void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t a
 			ZeroMemory(newMemblock, pNewMem->size);
 		}
 
-		return memblock;
+		return newMemblock;
 	}
 
 	pMem = WINPR_ALIGNED_MEM_STRUCT_FROM_PTR(memblock);
