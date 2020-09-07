@@ -38,11 +38,11 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	PROFILER_DEFINE(optProf)
 	PROFILER_CREATE(genericProf, "RGBToRGB_16s8u_P3AC4R-GENERIC")
 	PROFILER_CREATE(optProf, "RGBToRGB_16s8u_P3AC4R-OPTIMIZED")
-	r = _aligned_malloc(rgbStride * roi.height, 16);
-	g = _aligned_malloc(rgbStride * roi.height, 16);
-	b = _aligned_malloc(rgbStride * roi.height, 16);
-	out1 = _aligned_malloc(dstStride * roi.height, 16);
-	out2 = _aligned_malloc(dstStride * roi.height, 16);
+	r = _aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
+	g = _aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
+	b = _aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
+	out1 = _aligned_recalloc(NULL, 1, dstStride * roi.height, 16);
+	out2 = _aligned_recalloc(NULL, 1, dstStride * roi.height, 16);
 
 	if (!r || !g || !b || !out1 || !out2)
 		goto fail;

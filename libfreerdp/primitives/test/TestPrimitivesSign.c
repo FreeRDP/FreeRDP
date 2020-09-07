@@ -25,9 +25,9 @@
 static BOOL test_sign16s_func(void)
 {
 	pstatus_t status;
-	INT16 ALIGN(src[TEST_BUFFER_SIZE + 16]);
-	INT16 ALIGN(d1[TEST_BUFFER_SIZE + 16]);
-	INT16 ALIGN(d2[TEST_BUFFER_SIZE + 16]);
+	INT16 ALIGN(src[TEST_BUFFER_SIZE + 16]) = { 0 };
+	INT16 ALIGN(d1[TEST_BUFFER_SIZE + 16]) = { 0 };
+	INT16 ALIGN(d2[TEST_BUFFER_SIZE + 16]) = { 0 };
 	winpr_RAND((BYTE*)src, sizeof(src));
 	memset(d1, 0, sizeof(d1));
 	memset(d2, 0, sizeof(d2));
@@ -62,7 +62,8 @@ static BOOL test_sign16s_func(void)
 
 static int test_sign16s_speed(void)
 {
-	INT16 ALIGN(src[MAX_TEST_SIZE + 3]), ALIGN(dst[MAX_TEST_SIZE + 3]);
+	INT16 ALIGN(src[MAX_TEST_SIZE + 3]) = { 0 };
+	INT16 ALIGN(dst[MAX_TEST_SIZE + 3]) = { 0 };
 	winpr_RAND((BYTE*)src, sizeof(src));
 
 	if (!speed_test("sign16s", "aligned", g_Iterations, (speed_test_fkt)generic->sign_16s,
@@ -78,6 +79,9 @@ static int test_sign16s_speed(void)
 
 int TestPrimitivesSign(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	prim_test_setup(FALSE);
 
 	if (!test_sign16s_func())
