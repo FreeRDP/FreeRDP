@@ -420,7 +420,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->AllowCacheWaitingList = TRUE;
 	settings->BitmapCacheV2NumCells = 5;
 	settings->BitmapCacheV2CellInfo =
-	    (BITMAP_CACHE_V2_CELL_INFO*)malloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
+	    (BITMAP_CACHE_V2_CELL_INFO*)calloc(6, sizeof(BITMAP_CACHE_V2_CELL_INFO));
 
 	if (!settings->BitmapCacheV2CellInfo)
 		goto out_fail;
@@ -439,12 +439,12 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->RefreshRect = TRUE;
 	settings->SuppressOutput = TRUE;
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
-	settings->GlyphCache = malloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
+	settings->GlyphCache = calloc(10, sizeof(GLYPH_CACHE_DEFINITION));
 
 	if (!settings->GlyphCache)
 		goto out_fail;
 
-	settings->FragCache = malloc(sizeof(GLYPH_CACHE_DEFINITION));
+	settings->FragCache = calloc(1, sizeof(GLYPH_CACHE_DEFINITION));
 
 	if (!settings->FragCache)
 		goto out_fail;
@@ -527,21 +527,21 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	settings->DeviceArraySize = 16;
 	settings->DeviceArray =
-	    (RDPDR_DEVICE**)calloc(1, sizeof(RDPDR_DEVICE*) * settings->DeviceArraySize);
+	    (RDPDR_DEVICE**)calloc(settings->DeviceArraySize, sizeof(RDPDR_DEVICE*));
 
 	if (!settings->DeviceArray)
 		goto out_fail;
 
 	settings->StaticChannelArraySize = 16;
 	settings->StaticChannelArray =
-	    (ADDIN_ARGV**)calloc(1, sizeof(ADDIN_ARGV*) * settings->StaticChannelArraySize);
+	    (ADDIN_ARGV**)calloc(settings->StaticChannelArraySize, sizeof(ADDIN_ARGV*));
 
 	if (!settings->StaticChannelArray)
 		goto out_fail;
 
 	settings->DynamicChannelArraySize = 16;
 	settings->DynamicChannelArray =
-	    (ADDIN_ARGV**)calloc(1, sizeof(ADDIN_ARGV*) * settings->DynamicChannelArraySize);
+	    (ADDIN_ARGV**)calloc(settings->DynamicChannelArraySize, sizeof(ADDIN_ARGV*));
 
 	if (!settings->DynamicChannelArray)
 		goto out_fail;

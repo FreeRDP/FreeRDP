@@ -50,7 +50,8 @@ static BOOL test_and_32u_impl(const char* name, __andC_32u_t fkt, const UINT32* 
 
 static BOOL test_and_32u_func(void)
 {
-	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]), ALIGN(dst[FUNC_TEST_SIZE + 3]);
+	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = { 0 };
+	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = { 0 };
 
 	winpr_RAND((BYTE*)src, sizeof(src));
 
@@ -73,7 +74,8 @@ static BOOL test_and_32u_func(void)
 /* ------------------------------------------------------------------------- */
 static BOOL test_and_32u_speed(void)
 {
-	UINT32 ALIGN(src[MAX_TEST_SIZE + 3]), ALIGN(dst[MAX_TEST_SIZE + 3]);
+	UINT32 ALIGN(src[MAX_TEST_SIZE + 3]) = { 0 };
+	UINT32 ALIGN(dst[MAX_TEST_SIZE + 3]) = { 0 };
 
 	winpr_RAND((BYTE*)src, sizeof(src));
 
@@ -109,7 +111,8 @@ static BOOL check(const UINT32* src, const UINT32* dst, UINT32 size, UINT32 valu
 static BOOL test_or_32u_func(void)
 {
 	pstatus_t status;
-	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]), ALIGN(dst[FUNC_TEST_SIZE + 3]);
+	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = { 0 };
+	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = { 0 };
 
 	winpr_RAND((BYTE*)src, sizeof(src));
 
@@ -133,7 +136,8 @@ static BOOL test_or_32u_func(void)
 /* ------------------------------------------------------------------------- */
 static BOOL test_or_32u_speed(void)
 {
-	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]), ALIGN(dst[FUNC_TEST_SIZE + 3]);
+	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = { 0 };
+	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = { 0 };
 	char testStr[256];
 	testStr[0] = '\0';
 	winpr_RAND((BYTE*)src, sizeof(src));
@@ -147,6 +151,9 @@ static BOOL test_or_32u_speed(void)
 
 int TestPrimitivesAndOr(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	prim_test_setup(FALSE);
 
 	if (!test_and_32u_func())

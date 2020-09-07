@@ -25,9 +25,9 @@
 static BOOL test_copy8u_func(void)
 {
 	primitives_t* prims = primitives_get();
-	BYTE ALIGN(data[COPY_TESTSIZE + 15]);
+	BYTE ALIGN(data[COPY_TESTSIZE + 15]) = { 0 };
 	int i, soff;
-	BYTE ALIGN(dest[COPY_TESTSIZE + 15]);
+	BYTE ALIGN(dest[COPY_TESTSIZE + 15]) = { 0 };
 	winpr_RAND(data, sizeof(data));
 
 	for (soff = 0; soff < 16; ++soff)
