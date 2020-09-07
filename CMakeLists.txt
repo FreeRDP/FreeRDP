@@ -949,14 +949,13 @@ else()
 	set(FREERDP_PROXY_PLUGINDIR "${PROXY_PLUGINDIR}")
 endif()
 
+# Declare we have config.h, generated later on.
+add_definitions("-DHAVE_CONFIG_H")
+
 # Include directories
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-# Configure files
-add_definitions("-DHAVE_CONFIG_H")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # RPATH configuration
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
@@ -1072,6 +1071,9 @@ endif()
 if(WITH_SERVER)
 	add_subdirectory(server)
 endif()
+
+# Configure files - Add last so all symbols are defined
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # Packaging
 
