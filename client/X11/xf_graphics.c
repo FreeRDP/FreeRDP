@@ -235,8 +235,16 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	XcursorImage ci;
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;
+	rdpSettings* settings;
+	XcursorPixel* pixelBuffer;
+	size_t bufferSize;
 
 	if (!context || !pointer || !context->gdi)
+		return FALSE;
+
+	settings = xfc->context.settings;
+
+	if (!settings)
 		return FALSE;
 
 	if (!xfc->invert)
@@ -248,26 +256,55 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	ZeroMemory(&ci, sizeof(ci));
 	ci.version = XCURSOR_IMAGE_VERSION;
 	ci.size = sizeof(ci);
-	ci.width = pointer->width;
-	ci.height = pointer->height;
-	ci.xhot = pointer->xPos;
-	ci.yhot = pointer->yPos;
+	ci.width =
+	    pointer->width * 100 / (settings->PercentScreenUseWidth ? settings->PercentScreen : 100);
+	ci.height =
+	    pointer->height * 100 / (settings->PercentScreenUseHeight ? settings->PercentScreen : 100);
+	ci.xhot =
+	    pointer->xPos * 100 / (settings->PercentScreenUseWidth ? settings->PercentScreen : 100);
+	ci.yhot =
+	    pointer->yPos * 100 / (settings->PercentScreenUseHeight ? settings->PercentScreen : 100);
 	size = ci.height * ci.width * GetBytesPerPixel(CursorFormat);
+	bufferSize = pointer->height * pointer->width * GetBytesPerPixel(CursorFormat);
 
-	if (!(ci.pixels = (XcursorPixel*)_aligned_malloc(size, 16)))
+	if (!(pixelBuffer = (XcursorPixel*)_aligned_malloc(bufferSize, 16)))
 	{
 		xf_unlock_x11(xfc);
 		return FALSE;
 	}
 
 	if (!freerdp_image_copy_from_pointer_data(
-	        (BYTE*)ci.pixels, CursorFormat, 0, 0, 0, pointer->width, pointer->height,
+	        (BYTE*)pixelBuffer, CursorFormat, 0, 0, 0, pointer->width, pointer->height,
 	        pointer->xorMaskData, pointer->lengthXorMask, pointer->andMaskData,
 	        pointer->lengthAndMask, pointer->xorBpp, &context->gdi->palette))
 	{
-		_aligned_free(ci.pixels);
+		_aligned_free(pixelBuffer);
 		xf_unlock_x11(xfc);
 		return FALSE;
+	}
+
+	if (settings->PercentScreenUseWidth || settings->PercentScreenUseHeight)
+	{
+		if (!(ci.pixels = (XcursorPixel*)_aligned_malloc(size, 16)))
+		{
+			xf_unlock_x11(xfc);
+			return FALSE;
+		}
+
+		if (!freerdp_image_scale((BYTE*)ci.pixels, CursorFormat, 0, 0, 0, ci.width, ci.height,
+		                         (BYTE*)pixelBuffer, CursorFormat, 0, 0, 0, pointer->width,
+		                         pointer->height))
+		{
+			_aligned_free(ci.pixels);
+			xf_unlock_x11(xfc);
+			return FALSE;
+		}
+
+		_aligned_free(pixelBuffer);
+	}
+	else
+	{
+		ci.pixels = pixelBuffer;
 	}
 
 	xpointer->cursor = XcursorImageLoadCursor(xfc->display, &ci);
