@@ -157,7 +157,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	if (!config->TargetHost)
 		return FALSE;
 
-	config->UseLoadBalanceInfo = pf_config_get_bool(ini, "Target", "UseLoadBalanceInfo");
+	config->FixedTarget = pf_config_get_bool(ini, "Target", "FixedTarget");
 	return TRUE;
 }
 
@@ -307,7 +307,7 @@ void pf_server_config_print(proxyConfig* config)
 	CONFIG_PRINT_STR(config, Host);
 	CONFIG_PRINT_UINT16(config, Port);
 
-	if (!config->UseLoadBalanceInfo)
+	if (config->FixedTarget)
 	{
 		CONFIG_PRINT_SECTION("Target");
 		CONFIG_PRINT_STR(config, TargetHost);

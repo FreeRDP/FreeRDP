@@ -217,15 +217,8 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 */
 	LOG_INFO(TAG, pc, "Loading addins");
 
-	if (!config->UseLoadBalanceInfo)
-	{
-		/* if target is static (i.e fetched from config). make sure to use peer's load-balance info,
-		 * in order to support broker redirection.
-		 */
-
-		if (!pf_client_use_peer_load_balance_info(pc))
-			return FALSE;
-	}
+	if (!pf_client_use_peer_load_balance_info(pc))
+		return FALSE;
 
 	if (!pf_client_passthrough_channels_init(pc))
 		return FALSE;
