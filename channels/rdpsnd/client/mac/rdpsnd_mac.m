@@ -168,8 +168,8 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *form
 		return FALSE;
 
 	err = AudioUnitSetProperty(mac->engine.outputNode.audioUnit,
-							   kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global,
-							   0, &outputDeviceID, sizeof(outputDeviceID));
+	                           kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0,
+	                           &outputDeviceID, sizeof(outputDeviceID));
 	if (err)
 	{
 		rdpsnd_mac_release(mac);
@@ -188,7 +188,7 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *form
 	[mac->engine attachNode:mac->player];
 
 	[mac->engine connect:mac->player to:mac->engine.mainMixerNode format:nil];
-	
+
 	[mac->engine prepare];
 
 	if (![mac->engine startAndReturnError:&error])
@@ -271,16 +271,17 @@ static void rdpsnd_mac_start(rdpsndDevicePlugin *device)
 	{
 		if (!mac->engine.isRunning)
 		{
-			NSError* error;
-			
+			NSError *error;
+
 			if (![mac->engine startAndReturnError:&error])
 			{
 				device->Close(device);
-				WLog_ERR(TAG, "Failed to start audio player %s", [error.localizedDescription UTF8String]);
+				WLog_ERR(TAG, "Failed to start audio player %s",
+				         [error.localizedDescription UTF8String]);
 				return;
 			}
 		}
-		
+
 		[mac->player play];
 
 		mac->isPlaying = TRUE;
