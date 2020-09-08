@@ -61,6 +61,7 @@ typedef struct proxy_plugin
 	proxyFilterFn MouseEvent;
 	proxyFilterFn ClientChannelData; /* passthrough channels data */
 	proxyFilterFn ServerChannelData; /* passthrough channels data */
+	proxyFilterFn ServerFetchTargetAddr;
 } proxyPlugin;
 
 /*
@@ -111,6 +112,27 @@ typedef struct channel_data_event_info
 	const BYTE* data;
 	size_t data_len;
 } proxyChannelDataEventInfo;
+
+typedef enum proxy_fetch_target_method
+{
+	PROXY_FETCH_TARGET_METHOD_DEFAULT,
+	PROXY_FETCH_TARGET_METHOD_CONFIG,
+	PROXY_FETCH_TARGET_METHOD_LOAD_BALANCE_INFO,
+	PROXY_FETCH_TARGET_USE_CUSTOM_ADDR
+} ProxyFetchTargetMethod;
+
+typedef struct fetch_target_event_info
+{
+	/* out values */
+	char* target_address;
+	UINT16 target_port;
+
+	/*
+	 * If this value is set to true by a plugin, target info will be fetched from config and proxy
+	 * will connect any client to the same remote server.
+	 */
+	ProxyFetchTargetMethod fetch_method;
+} proxyFetchTargetEventInfo;
 #define WINPR_PACK_POP
 #include <winpr/pack.h>
 

@@ -39,12 +39,8 @@ static wArrayList* handles_list = NULL; /* list of module handles to free at shu
 
 typedef BOOL (*moduleEntryPoint)(proxyPluginsManager* plugins_manager);
 
-static const char* FILTER_TYPE_STRINGS[] = {
-	"KEYBOARD_EVENT",
-	"MOUSE_EVENT",
-	"CLIENT_CHANNEL_DATA",
-	"SERVER_CHANNEL_DATA",
-};
+static const char* FILTER_TYPE_STRINGS[] = { "KEYBOARD_EVENT", "MOUSE_EVENT", "CLIENT_CHANNEL_DATA",
+	                                         "SERVER_CHANNEL_DATA", "SERVER_FETCH_TARGET_ADDR" };
 
 static const char* HOOK_TYPE_STRINGS[] = {
 	"CLIENT_PRE_CONNECT",  "CLIENT_POST_CONNECT",  "CLIENT_LOGIN_FAILURE", "CLIENT_END_PAINT",
@@ -165,6 +161,11 @@ BOOL pf_modules_run_filter(PF_FILTER_TYPE type, proxyData* pdata, void* param)
 			case FILTER_TYPE_SERVER_PASSTHROUGH_CHANNEL_DATA:
 				IFCALLRET(plugin->ServerChannelData, result, pdata, param);
 				break;
+
+			case FILTER_TYPE_SERVER_FETCH_TARGET_ADDR:
+				IFCALLRET(plugin->ServerFetchTargetAddr, result, pdata, param);
+				break;
+
 			default:
 				WLog_ERR(TAG, "invalid filter called");
 		}

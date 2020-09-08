@@ -34,7 +34,7 @@ struct proxy_config
 	UINT16 Port;
 
 	/* target */
-	BOOL UseLoadBalanceInfo;
+	BOOL FixedTarget;
 	char* TargetHost;
 	UINT16 TargetPort;
 
