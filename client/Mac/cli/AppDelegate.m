@@ -199,6 +199,7 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 
 void AppDelegate_ConnectionResultEventHandler(void *ctx, ConnectionResultEventArgs *e)
 {
+	rdpContext *context = (rdpContext *)ctx;
 	NSLog(@"ConnectionResult event result:%d\n", e->result);
 
 	if (_singleDelegate)
@@ -206,11 +207,15 @@ void AppDelegate_ConnectionResultEventHandler(void *ctx, ConnectionResultEventAr
 		if (e->result != 0)
 		{
 			NSString *message = nil;
-
-			if (connectErrorCode == AUTHENTICATIONERROR)
+			DWORD code = freerdp_get_last_error(context);
+			switch (code)
 			{
-				message = [NSString
-				    stringWithFormat:@"%@", @"Authentication failure, check credentials."];
+				case FREERDP_ERROR_AUTHENTICATION_FAILED:
+					message = [NSString
+					    stringWithFormat:@"%@", @"Authentication failure, check credentials."];
+					break;
+				default:
+					break;
 			}
 
 			// Making sure this should be invoked on the main UI thread.
