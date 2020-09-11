@@ -55,8 +55,6 @@
 
 #define TAG FREERDP_TAG("core")
 
-/* connectErrorCode is 'extern' in error.h. See comment there.*/
-
 UINT freerdp_channel_add_init_handle_data(rdpChannelHandles* handles, void* pInitHandle,
                                           void* pUserData)
 {
@@ -163,7 +161,6 @@ BOOL freerdp_connect(freerdp* instance)
 
 	/* We always set the return code to 0 before we start the connect sequence*/
 	instance->ConnectionCallbackState = CLIENT_STATE_INITIAL;
-	connectErrorCode = 0;
 	freerdp_set_last_error_log(instance->context, FREERDP_ERROR_SUCCESS);
 	clearChannelError(instance->context);
 	ResetEvent(instance->context->abortEvent);
@@ -893,61 +890,6 @@ void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char
 	}
 
 	context->LastError = lastError;
-
-	switch (lastError)
-	{
-		case FREERDP_ERROR_PRE_CONNECT_FAILED:
-			connectErrorCode = PREECONNECTERROR;
-			break;
-
-		case FREERDP_ERROR_CONNECT_UNDEFINED:
-			connectErrorCode = UNDEFINEDCONNECTERROR;
-			break;
-
-		case FREERDP_ERROR_POST_CONNECT_FAILED:
-			connectErrorCode = POSTCONNECTERROR;
-			break;
-
-		case FREERDP_ERROR_DNS_ERROR:
-			connectErrorCode = DNSERROR;
-			break;
-
-		case FREERDP_ERROR_DNS_NAME_NOT_FOUND:
-			connectErrorCode = DNSNAMENOTFOUND;
-			break;
-
-		case FREERDP_ERROR_CONNECT_FAILED:
-			connectErrorCode = CONNECTERROR;
-			break;
-
-		case FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR:
-			connectErrorCode = MCSCONNECTINITIALERROR;
-			break;
-
-		case FREERDP_ERROR_TLS_CONNECT_FAILED:
-			connectErrorCode = TLSCONNECTERROR;
-			break;
-
-		case FREERDP_ERROR_AUTHENTICATION_FAILED:
-			connectErrorCode = AUTHENTICATIONERROR;
-			break;
-
-		case FREERDP_ERROR_INSUFFICIENT_PRIVILEGES:
-			connectErrorCode = INSUFFICIENTPRIVILEGESERROR;
-			break;
-
-		case FREERDP_ERROR_CONNECT_CANCELLED:
-			connectErrorCode = CANCELEDBYUSER;
-			break;
-
-		case FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED:
-			connectErrorCode = CONNECTERROR;
-			break;
-
-		case FREERDP_ERROR_CONNECT_TRANSPORT_FAILED:
-			connectErrorCode = CONNECTERROR;
-			break;
-	}
 }
 
 const char* freerdp_get_logon_error_info_type(UINT32 type)
