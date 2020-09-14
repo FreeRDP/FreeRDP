@@ -240,6 +240,13 @@ static BOOL update_pointer_cached(rdpContext* context, const POINTER_CACHED_UPDA
 	if (pointer != NULL)
 		return IFCALLRESULT(TRUE, pointer->Set, context, pointer);
 
+	if (context->instance->settings->IgnoreInvalidCachedPointerUpdates)
+	{
+		WLog_DBG(TAG, "ignored invalid pointer index (pointer not in cache):%" PRIu32 "",
+					pointer_cached->cacheIndex);
+		return TRUE;
+	}
+
 	return FALSE;
 }
 

@@ -1949,6 +1949,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->AllowUnanouncedOrdersFromServer = enable;
 		}
+		CommandLineSwitchCase(arg, "relax-cachedpointer-updates")
+		{
+			settings->IgnoreInvalidCachedPointerUpdates = enable;
+		}
 		CommandLineSwitchCase(arg, "restricted-admin")
 		{
 			settings->ConsoleSession = enable;

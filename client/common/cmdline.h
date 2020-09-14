@@ -289,6 +289,10 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	{ "relax-order-checks", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "relax-order-checks",
 	  "Do not check if a RDP order was announced during capability exchange, only use when "
 	  "connecting to a buggy server" },
+	{ "relax-cachedpointer-updates", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "relax-cachedpointer-updates",
+	  "Ignore pointer cache errors which can occur when the server sends a Fast-Path Cached "
+	  "Pointer Update with an invalid (not set) cache index. Only use when connecting to a "
+	  "buggy server" },
 	{ "restricted-admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "restrictedAdmin",
 	  "Restricted admin mode" },
 	{ "rfx", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "RemoteFX" },
