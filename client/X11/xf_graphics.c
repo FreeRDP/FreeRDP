@@ -386,6 +386,7 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
 #ifdef WITH_XCURSOR
+	UINT32 i;
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;
 
@@ -395,7 +396,7 @@ static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	free(xpointer->cursorWidths);
 	free(xpointer->cursorHeights);
 
-	for (int i = 0; i < xpointer->nCursors; i++)
+	for (i = 0; i < xpointer->nCursors; i++)
 	{
 		XFreeCursor(xfc->display, xpointer->cursors[i]);
 	}
