@@ -619,8 +619,8 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	    (dstFormatId == ClipboardGetFormatId(clipboard->system, "FileGroupDescriptorW")))
 	{
 		UINT error = NO_ERROR;
-		FILEDESCRIPTOR* file_array = (FILEDESCRIPTOR*)pDstData;
-		UINT32 file_count = DstSize / sizeof(FILEDESCRIPTOR);
+		FILEDESCRIPTORW* file_array = (FILEDESCRIPTORW*)pDstData;
+		UINT32 file_count = DstSize / sizeof(FILEDESCRIPTORW);
 		pDstData = NULL;
 		DstSize = 0;
 		error = cliprdr_serialize_file_list(file_array, file_count, &pDstData, &DstSize);

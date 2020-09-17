@@ -93,9 +93,9 @@ extern "C"
 #endif
 
 	FREERDP_API UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
-	                                         FILEDESCRIPTOR** file_descriptor_array,
+	                                         FILEDESCRIPTORW** file_descriptor_array,
 	                                         UINT32* file_descriptor_count);
-	FREERDP_API UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
+	FREERDP_API UINT cliprdr_serialize_file_list(const FILEDESCRIPTORW* file_descriptor_array,
 	                                             UINT32 file_descriptor_count, BYTE** format_data,
 	                                             UINT32* format_data_length);
 

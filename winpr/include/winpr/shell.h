@@ -36,7 +36,7 @@
 
 /* Shell clipboard formats */
 
-struct _FILEDESCRIPTOR
+struct _FILEDESCRIPTORW
 {
 	DWORD dwFlags;
 	BYTE clsid[16];
@@ -50,7 +50,8 @@ struct _FILEDESCRIPTOR
 	DWORD nFileSizeLow;
 	WCHAR cFileName[260];
 };
-typedef struct _FILEDESCRIPTOR FILEDESCRIPTOR;
+typedef struct _FILEDESCRIPTORW FILEDESCRIPTORW;
+typedef struct _FILEDESCRIPTORW FILEDESCRIPTOR;
 
 /* FILEDESCRIPTOR.dwFlags */
 #define FD_ATTRIBUTES 0x00000004
