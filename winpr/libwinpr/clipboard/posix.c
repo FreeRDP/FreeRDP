@@ -496,7 +496,7 @@ static BOOL process_uri_list(const char* data, size_t length, wArrayList* files)
 }
 
 static BOOL convert_local_file_to_filedescriptor(const struct posix_file* file,
-                                                 FILEDESCRIPTOR* descriptor)
+                                                 FILEDESCRIPTORW* descriptor)
 {
 	size_t remote_len = 0;
 	descriptor->dwFlags = FD_ATTRIBUTES | FD_FILESIZE | FD_SHOWPROGRESSUI;
@@ -526,11 +526,11 @@ static BOOL convert_local_file_to_filedescriptor(const struct posix_file* file,
 	return TRUE;
 }
 
-static FILEDESCRIPTOR* convert_local_file_list_to_filedescriptors(wArrayList* files)
+static FILEDESCRIPTORW* convert_local_file_list_to_filedescriptors(wArrayList* files)
 {
 	int i;
 	int count = 0;
-	FILEDESCRIPTOR* descriptors = NULL;
+	FILEDESCRIPTORW* descriptors = NULL;
 	count = ArrayList_Count(files);
 	descriptors = calloc(count, sizeof(descriptors[0]));
 
@@ -554,7 +554,7 @@ error:
 static void* convert_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 formatId,
                                                  const void* data, UINT32* pSize)
 {
-	FILEDESCRIPTOR* descriptors = NULL;
+	FILEDESCRIPTORW* descriptors = NULL;
 
 	if (!clipboard || !data || !pSize)
 		return NULL;
@@ -570,7 +570,7 @@ static void* convert_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 f
 	if (!descriptors)
 		return NULL;
 
-	*pSize = ArrayList_Count(clipboard->localFiles) * sizeof(FILEDESCRIPTOR);
+	*pSize = ArrayList_Count(clipboard->localFiles) * sizeof(FILEDESCRIPTORW);
 	clipboard->fileListSequenceNumber = clipboard->sequenceNumber;
 	return descriptors;
 }
@@ -578,7 +578,7 @@ static void* convert_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 f
 static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 formatId,
                                                  const void* data, UINT32* pSize)
 {
-	const FILEDESCRIPTOR* descriptors;
+	const FILEDESCRIPTORW* descriptors;
 	UINT32 nrDescriptors = 0;
 	size_t count, x, alloc, pos, baseLength = 0;
 	const char* src = (const char*)data;
@@ -600,12 +600,12 @@ static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 f
 		nrDescriptors = (UINT32)(src[3] << 24) | (UINT32)(src[2] << 16) | (UINT32)(src[1] << 8) |
 		                (src[0] & 0xFF);
 
-	count = (*pSize - 4) / sizeof(FILEDESCRIPTOR);
+	count = (*pSize - 4) / sizeof(FILEDESCRIPTORW);
 
 	if ((count < 1) || (count != nrDescriptors))
 		return NULL;
 
-	descriptors = (const FILEDESCRIPTOR*)&src[4];
+	descriptors = (const FILEDESCRIPTORW*)&src[4];
 
 	if (formatId != ClipboardGetFormatId(clipboard, "FileGroupDescriptorW"))
 		return NULL;
@@ -628,7 +628,7 @@ static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 f
 	for (x = 0; x < count; x++)
 	{
 		int rc;
-		const FILEDESCRIPTOR* cur = &descriptors[x];
+		const FILEDESCRIPTORW* cur = &descriptors[x];
 		size_t curLen = _wcsnlen(cur->cFileName, ARRAYSIZE(cur->cFileName));
 		char* curName = NULL;
 		rc = ConvertFromUnicode(CP_UTF8, 0, cur->cFileName, (int)curLen, &curName, 0, NULL, NULL);
