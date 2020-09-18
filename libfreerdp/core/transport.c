@@ -498,11 +498,14 @@ static BOOL transport_default_accept_tls(rdpTransport* transport)
 
 BOOL transport_accept_nla(rdpTransport* transport)
 {
-
-	rdpSettings* settings = transport->settings;
-	freerdp* instance = (freerdp*)settings->instance;
+	rdpSettings* settings;
+	freerdp* instance;
 	if (!transport)
 		return FALSE;
+	settings = transport->settings;
+	if (!settings)
+		return FALSE;
+	instance = (freerdp*)settings->instance;
 	if (!IFCALLRESULT(FALSE, transport->io.TLSAccept, transport))
 		return FALSE;
 
@@ -872,12 +875,16 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 	size_t length;
 	int status = -1;
 	int writtenlength = 0;
-	rdpRdp* rdp = transport->context->rdp;
+	rdpRdp* rdp;
 
 	if (!s)
 		return -1;
 
-	if (!transport)
+	if (!transport || !transport->context)
+		goto fail;
+
+	rdp = transport->context->rdp;
+	if (!rdp)
 		goto fail;
 
 	if (!transport->frontBio)
