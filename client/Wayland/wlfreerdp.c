@@ -44,22 +44,6 @@
 
 #define TAG CLIENT_TAG("wayland")
 
-static BOOL wl_begin_paint(rdpContext* context)
-{
-	rdpGdi* gdi;
-
-	if (!context || !context->gdi)
-		return FALSE;
-
-	gdi = context->gdi;
-
-	if (!gdi->primary)
-		return FALSE;
-
-	gdi->primary->hdc->hwnd->invalid->null = TRUE;
-	return TRUE;
-}
-
 static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw, INT32 ih)
 {
 	BOOL res = FALSE;
@@ -148,7 +132,13 @@ static BOOL wl_end_paint(rdpContext* context)
 	w = gdi->primary->hdc->hwnd->invalid->w;
 	h = gdi->primary->hdc->hwnd->invalid->h;
 	context_w = (wlfContext*)context;
-	return wl_update_buffer(context_w, x, y, w, h);
+	if(!wl_update_buffer(context_w, x, y, w, h)){
+		return FALSE;
+	}
+
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
+	gdi->primary->hdc->hwnd->ninvalid = 0;
+	return TRUE;
 }
 
 static BOOL wl_refresh_display(wlfContext* context)
@@ -267,7 +257,6 @@ static BOOL wl_post_connect(freerdp* instance)
 	UwacWindowSetFullscreenState(window, NULL, instance->context->settings->Fullscreen);
 	UwacWindowSetTitle(window, title);
 	UwacWindowSetOpaqueRegion(context->window, 0, 0, w, h);
-	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
 	instance->update->DesktopResize = wl_resize_display;
 	freerdp_keyboard_init(instance->context->settings->KeyboardLayout);
