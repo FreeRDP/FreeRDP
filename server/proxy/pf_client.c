@@ -449,6 +449,9 @@ static BOOL pf_client_connect(freerdp* instance)
 	if (pf_client_should_retry_without_nla(pc))
 		retry = pc->allow_next_conn_failure = TRUE;
 
+	LOG_INFO(TAG, pc, "connecting using security settings: rdp=%d, tls=%d, nla=%d",
+	         settings->RdpSecurity, settings->TlsSecurity, settings->NlaSecurity);
+
 	if (!freerdp_connect(instance))
 	{
 		if (!retry)

@@ -169,8 +169,22 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	pClientContext* pc;
 	rdpSettings* client_settings;
 	proxyData* pdata;
+	char** accepted_channels = NULL;
+	size_t accepted_channels_count;
+	size_t i;
+
 	ps = (pServerContext*)peer->context;
 	pdata = ps->pdata;
+
+	LOG_INFO(TAG, ps, "Accepted client: %s", peer->settings->ClientHostname);
+	accepted_channels = WTSGetAcceptedChannelNames(peer, &accepted_channels_count);
+	if (accepted_channels)
+	{
+		for (i = 0; i < accepted_channels_count; i++)
+			LOG_INFO(TAG, ps, "Accepted channel: %s", accepted_channels[i]);
+
+		free(accepted_channels);
+	}
 
 	pc = pf_context_create_client_context(peer->settings);
 	if (pc == NULL)
