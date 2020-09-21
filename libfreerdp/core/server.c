@@ -670,6 +670,28 @@ const char* WTSChannelGetName(freerdp_peer* client, UINT16 channel_id)
 	return (const char*)channel->Name;
 }
 
+char** WTSGetAcceptedChannelNames(freerdp_peer* client, size_t* count)
+{
+	rdpMcs* mcs;
+	char** names;
+	UINT32 index;
+
+	if (!client || !client->context || !count)
+		return NULL;
+
+	mcs = client->context->rdp->mcs;
+	*count = mcs->channelCount;
+
+	names = (char**)calloc(mcs->channelCount, sizeof(char*));
+	if (!names)
+		return NULL;
+
+	for (index = 0; index < mcs->channelCount; index++)
+		names[index] = mcs->channels[index].Name;
+
+	return names;
+}
+
 BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId,
                                                   BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
