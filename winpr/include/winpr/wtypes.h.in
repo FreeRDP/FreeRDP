@@ -268,6 +268,20 @@ typedef LONG HRESULT;
 typedef LONG SCODE;
 typedef SCODE* PSCODE;
 
+typedef struct _POINTL /* ptl  */
+{
+	LONG x;
+	LONG y;
+} POINTL, *PPOINTL;
+
+typedef struct tagSIZE
+{
+	LONG cx;
+	LONG cy;
+} SIZE, *PSIZE, *LPSIZE;
+
+typedef SIZE SIZEL;
+
 typedef struct _GUID
 {
 	UINT32 Data1;
@@ -275,6 +289,7 @@ typedef struct _GUID
 	UINT16 Data3;
 	BYTE Data4[8];
 } GUID, UUID, *PGUID, *LPGUID, *LPCGUID;
+typedef GUID CLSID;
 
 typedef struct _LUID
 {

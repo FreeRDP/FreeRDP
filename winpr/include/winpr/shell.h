@@ -35,8 +35,24 @@
 #else
 
 /* Shell clipboard formats */
-
 struct _FILEDESCRIPTORW
+{
+	DWORD dwFlags;
+	CLSID clsid;
+	SIZEL sizel;
+	POINTL pointl;
+	DWORD dwFileAttributes;
+	FILETIME ftCreationTime;
+	FILETIME ftLastAccessTime;
+	FILETIME ftLastWriteTime;
+	DWORD nFileSizeHigh;
+	DWORD nFileSizeLow;
+	WCHAR cFileName[260];
+};
+typedef struct _FILEDESCRIPTORW FILEDESCRIPTORW;
+
+/* Legacy definition, some types do not match the windows equivalent. */
+struct _FILEDESCRIPTOR
 {
 	DWORD dwFlags;
 	BYTE clsid[16];
@@ -50,8 +66,7 @@ struct _FILEDESCRIPTORW
 	DWORD nFileSizeLow;
 	WCHAR cFileName[260];
 };
-typedef struct _FILEDESCRIPTORW FILEDESCRIPTORW;
-typedef struct _FILEDESCRIPTORW FILEDESCRIPTOR;
+typedef struct _FILEDESCRIPTOR FILEDESCRIPTOR;
 
 /* FILEDESCRIPTOR.dwFlags */
 #define FD_ATTRIBUTES 0x00000004
