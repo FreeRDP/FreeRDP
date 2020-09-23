@@ -240,7 +240,7 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 	double xscale;
 	double yscale;
 	size_t size;
-	int cursorIndex = -1;
+	int cursorIndex = -1, i;
 
 	if (!context || !pointer || !context->gdi)
 		return FALSE;
@@ -255,7 +255,7 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 	xTargetSize = pointer->width * xscale;
 	yTargetSize = pointer->height * yscale;
 
-	for (int i = 0; i < xpointer->nCursors; i++)
+	for (i = 0; i < xpointer->nCursors; i++)
 	{
 		if (xpointer->cursorWidths[i] == xTargetSize && xpointer->cursorHeights[i] == yTargetSize)
 		{
