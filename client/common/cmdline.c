@@ -30,6 +30,7 @@
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
 #include <winpr/path.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/addin.h>
 #include <freerdp/settings.h>
@@ -1045,6 +1046,26 @@ BOOL freerdp_parse_username(const char* username, char** user, char** domain)
 	return TRUE;
 }
 
+static BOOL freerdp_replace_domain(const char** domain)
+{
+	if (!domain)
+		return FALSE;
+	/* No domain in use, ignore */
+	if (!*domain)
+		return TRUE;
+	/* Replace . with local hostname */
+	if (_stricmp(*domain, ".") == 0)
+	{
+		char buffer[256] = { 0 };
+		DWORD size = sizeof(buffer);
+		if (!GetComputerNameA(buffer, &size))
+			return FALSE;
+		free(*domain);
+		*domain = _strdup(buffer);
+		return *domain != NULL;
+	}
+	return TRUE;
+}
 BOOL freerdp_parse_hostname(const char* hostname, char** host, int* port)
 {
 	char* p;
@@ -3392,6 +3413,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
 
+	if (!freerdp_replace_domain(&settings->Domain))
+		return COMMAND_LINE_ERROR;
+	if (!freerdp_replace_domain(&settings->GatewayDomain))
+		return COMMAND_LINE_ERROR;
 	return status;
 }
 
