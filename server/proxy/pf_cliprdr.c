@@ -45,6 +45,7 @@ BOOL pf_server_cliprdr_init(pServerContext* ps)
 	cliprdr->streamFileClipEnabled = TRUE;
 	cliprdr->fileClipNoFilePaths = TRUE;
 	cliprdr->canLockClipData = TRUE;
+	cliprdr->hasHugeFileSupport = TRUE;
 
 	/* disable initialization sequence, for caps sync */
 	cliprdr->autoInitializationSequence = FALSE;
