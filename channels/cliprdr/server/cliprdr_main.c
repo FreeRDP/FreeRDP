@@ -453,6 +453,10 @@ static UINT cliprdr_server_receive_general_capability(CliprdrServerContext* cont
 	if (context->canLockClipData)
 		context->canLockClipData = (cap_set->generalFlags & CB_CAN_LOCK_CLIPDATA) ? TRUE : FALSE;
 
+	if (context->hasHugeFileSupport)
+		context->hasHugeFileSupport =
+		    (cap_set->generalFlags & CB_HUGE_FILE_SUPPORT_ENABLED) ? TRUE : FALSE;
+
 	return CHANNEL_RC_OK;
 }
 
@@ -776,6 +780,13 @@ static UINT cliprdr_server_receive_filecontents_request(CliprdrServerContext* co
 	if ((error = cliprdr_read_file_contents_request(s, &request)))
 		return error;
 
+	if (!context->hasHugeFileSupport)
+	{
+		if (request.nPositionHigh > 0)
+			return ERROR_INVALID_DATA;
+		if ((UINT64)request.nPositionLow + request.cbRequested > UINT32_MAX)
+			return ERROR_INVALID_DATA;
+	}
 	IFCALLRET(context->ClientFileContentsRequest, error, context, &request);
 
 	if (error)
@@ -947,6 +958,9 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
 
 	if (context->canLockClipData)
 		generalFlags |= CB_CAN_LOCK_CLIPDATA;
+
+	if (context->hasHugeFileSupport)
+		generalFlags |= CB_HUGE_FILE_SUPPORT_ENABLED;
 
 	capabilities.msgType = CB_CLIP_CAPS;
 	capabilities.msgFlags = 0;
