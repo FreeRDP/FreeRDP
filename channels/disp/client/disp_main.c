@@ -335,9 +335,9 @@ static UINT disp_plugin_terminated(IWTSPlugin* pPlugin)
 		IWTSVirtualChannelManager* mgr = disp->listener_callback->channel_mgr;
 		if (mgr)
 			IFCALL(mgr->DestroyListener, mgr, disp->listener);
+		free(disp->listener_callback);
 	}
 
-	free(disp->listener_callback);
 	free(disp->iface.pInterface);
 	free(pPlugin);
 	return CHANNEL_RC_OK;
