@@ -159,9 +159,14 @@ static void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity);
 
 #define ber_sizeof_sequence_octet_string(length) \
 	ber_sizeof_contextual_tag(ber_sizeof_octet_string(length)) + ber_sizeof_octet_string(length)
-#define ber_write_sequence_octet_string(stream, context, value, length)                \
-	ber_write_contextual_tag(stream, context, ber_sizeof_octet_string(length), TRUE) + \
-	    ber_write_octet_string(stream, value, length)
+
+static INLINE size_t ber_write_sequence_octet_string(wStream* stream, BYTE context,
+                                                     const BYTE* value, size_t length)
+{
+	size_t rv = ber_write_contextual_tag(stream, context, ber_sizeof_octet_string(length), TRUE);
+	rv += ber_write_octet_string(stream, value, length);
+	return rv;
+}
 
 /* CredSSP Client-To-Server Binding Hash\0 */
 static const BYTE ClientServerHashMagic[] = { 0x43, 0x72, 0x65, 0x64, 0x53, 0x53, 0x50, 0x20,
