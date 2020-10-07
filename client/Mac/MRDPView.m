@@ -418,7 +418,6 @@ DWORD WINAPI mac_client_thread(void *param)
 	{
 		flags = PTR_FLAGS_WHEEL;
 		units = fabsf(dy) * 120;
-        
 
 		if (dy < 0)
 			flags |= PTR_FLAGS_WHEEL_NEGATIVE;
@@ -434,20 +433,20 @@ DWORD WINAPI mac_client_thread(void *param)
 	else
 		return;
 
-    /* Wheel rotation steps:
-     *
-     * positive: 0 ... 0xFF  -> slow ... fast
-     * negative: 0 ... 0xFF  -> fast ... slow
-     */
-    UINT16 step = units;
-    if (step > 0xFF)
-        step = 0xFF;
+	/* Wheel rotation steps:
+	 *
+	 * positive: 0 ... 0xFF  -> slow ... fast
+	 * negative: 0 ... 0xFF  -> fast ... slow
+	 */
+	UINT16 step = units;
+	if (step > 0xFF)
+		step = 0xFF;
 
-    /* Negative rotation, so count down steps from top */
-    if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
-        step = 0xFF - step;
+	/* Negative rotation, so count down steps from top */
+	if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
+		step = 0xFF - step;
 
-    mf_scale_mouse_event(context, instance->input, flags | step, 0, 0);
+	mf_scale_mouse_event(context, instance->input, flags | step, 0, 0);
 }
 
 - (void)mouseDragged:(NSEvent *)event
