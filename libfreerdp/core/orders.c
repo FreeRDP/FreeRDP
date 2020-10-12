@@ -1816,54 +1816,46 @@ static BOOL update_read_fast_glyph_order(wStream* s, const ORDER_INFO* orderInfo
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_15)
 	{
+		const BYTE* src;
+		wStream sub;
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 
 		Stream_Read_UINT8(s, fastGlyph->cbData);
 
-		if (Stream_GetRemainingLength(s) < fastGlyph->cbData)
+		src = Stream_Pointer(s);
+		if (!Stream_SafeSeek(s, fastGlyph->cbData) || (fastGlyph->cbData == 0))
 			return FALSE;
 
-		CopyMemory(fastGlyph->data, Stream_Pointer(s), fastGlyph->cbData);
-		if (Stream_GetRemainingLength(s) < fastGlyph->cbData)
-			return FALSE;
+		CopyMemory(fastGlyph->data, src, fastGlyph->cbData);
+		Stream_StaticInit(&sub, fastGlyph->data, fastGlyph->cbData);
 
-		if (!Stream_SafeSeek(s, 1))
-			return FALSE;
+		Stream_Read_UINT8(&sub, glyph->cacheIndex);
 
 		if (fastGlyph->cbData > 1)
 		{
-			UINT32 new_cb;
-			/* parse optional glyph data */
-			glyph->cacheIndex = fastGlyph->data[0];
-
-			if (!update_read_2byte_signed(s, &glyph->x) ||
-			    !update_read_2byte_signed(s, &glyph->y) ||
-			    !update_read_2byte_unsigned(s, &glyph->cx) ||
-			    !update_read_2byte_unsigned(s, &glyph->cy))
+			if (!update_read_2byte_signed(&sub, &glyph->x) ||
+			    !update_read_2byte_signed(&sub, &glyph->y) ||
+			    !update_read_2byte_unsigned(&sub, &glyph->cx) ||
+			    !update_read_2byte_unsigned(&sub, &glyph->cy))
 				return FALSE;
 
-			glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
-			glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
-			new_cb = ((glyph->cx + 7) / 8) * glyph->cy;
-			new_cb += ((new_cb % 4) > 0) ? 4 - (new_cb % 4) : 0;
-
-			if (fastGlyph->cbData < new_cb)
-				return FALSE;
-
-			if (new_cb > 0)
+			glyph->cb = Stream_GetRemainingLength(&sub);
+			if (glyph->cb > 0)
 			{
-				BYTE* new_aj;
-				new_aj = (BYTE*)realloc(glyph->aj, new_cb);
+				BYTE* new_aj = (BYTE*)realloc(glyph->aj, glyph->cb);
 
 				if (!new_aj)
 					return FALSE;
 
 				glyph->aj = new_aj;
-				glyph->cb = new_cb;
-				Stream_Read(s, glyph->aj, glyph->cb);
+				Stream_Read(&sub, glyph->aj, glyph->cb);
 			}
-			Stream_Seek(s, fastGlyph->cbData - new_cb);
+			else
+			{
+				free(glyph->aj);
+				glyph->aj = NULL;
+			}
 		}
 	}
 
