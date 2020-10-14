@@ -83,6 +83,9 @@ typedef enum
 	FD_UNICODE = 0x80000000
 } FD_FLAGS;
 
+/* Deprecated, here for compatibility */
+#define FD_SHOWPROGRESSUI FD_PROGRESSUI
+
 /* FILEDESCRIPTOR.dwFileAttributes */
 #define FILE_ATTRIBUTE_READONLY 0x00000001
 #define FILE_ATTRIBUTE_HIDDEN 0x00000002
