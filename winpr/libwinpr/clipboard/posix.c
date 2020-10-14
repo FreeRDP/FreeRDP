@@ -502,7 +502,7 @@ static BOOL convert_local_file_to_filedescriptor(const struct posix_file* file,
                                                  FILEDESCRIPTORW* descriptor)
 {
 	size_t remote_len = 0;
-	descriptor->dwFlags = FD_ATTRIBUTES | FD_FILESIZE | FD_WRITESTIME | FD_SHOWPROGRESSUI;
+	descriptor->dwFlags = FD_ATTRIBUTES | FD_FILESIZE | FD_WRITETIME | FD_PROGRESSUI;
 
 	if (file->is_directory)
 	{
