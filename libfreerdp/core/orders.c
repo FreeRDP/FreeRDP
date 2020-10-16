@@ -1125,6 +1125,7 @@ static INLINE BOOL read_order_field_uint32(const ORDER_INFO* orderInfo, wStream*
 		return FALSE;
 
 	Stream_Read_UINT32(s, *target);
+	return TRUE;
 }
 
 static INLINE BOOL read_order_field_coord(const ORDER_INFO* orderInfo, wStream* s, UINT32 NO,
