@@ -944,6 +944,22 @@ static int _xf_error_handler(Display* d, XErrorEvent* ev)
 	return xf_error_handler(d, ev);
 }
 
+static int xf_error_printer(Display* d, XErrorEvent *ev)
+{
+	char buf[256];
+
+	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
+	/* Not satisfied WLog_ERR is safe here, as is done in xf_error_handler above */
+	fprintf(stderr, "X error %u on request %lu, request %u.%u, resource %lx: %s\n",
+			ev->error_code,
+			ev->serial,
+			ev->request_code,
+			ev->minor_code,
+			ev->resourceid,
+			buf);
+	return 0; /* Return value is not used */
+}
+
 static BOOL xf_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_sound)
 {
 	xfContext* xfc = (xfContext*)context;
@@ -1954,6 +1970,10 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 		WLog_INFO(TAG, "Enabling X11 debug mode.");
 		XSynchronize(xfc->display, TRUE);
 		_def_error_handler = XSetErrorHandler(_xf_error_handler);
+	}
+	else
+	{
+		_def_error_handler = XSetErrorHandler(xf_error_printer);
 	}
 
 	xf_check_extensions(xfc);
