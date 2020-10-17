@@ -41,6 +41,15 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
+static Window xf_get_window_from_context(xfContext *xfc)
+{
+	if (xfc->window)
+		return xfc->window->handle;
+	if (xfc->appWindow)
+		return xfc->appWindow->handle;
+	return 0;
+}
+
 BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 {
 	rdpGdi* gdi;
@@ -413,16 +422,17 @@ static BOOL xf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 {
 #ifdef WITH_XCURSOR
 	xfContext* xfc = (xfContext*)context;
+	Window window = xf_get_window_from_context(xfc);
 	xfc->pointer = (xfPointer*)pointer;
 
 	/* in RemoteApp mode, window can be null if none has had focus */
 
-	if (xfc->window)
+	if (window)
 	{
 		if (!_xf_Pointer_GetCursorForCurrentScale(context, pointer, &(xfc->pointer->cursor)))
 			return FALSE;
 		xf_lock_x11(xfc);
-		XDefineCursor(xfc->display, xfc->window->handle, xfc->pointer->cursor);
+		XDefineCursor(xfc->display, window, xfc->pointer->cursor);
 		xf_unlock_x11(xfc);
 	}
 #endif
@@ -433,6 +443,7 @@ static BOOL xf_Pointer_SetNull(rdpContext* context)
 {
 #ifdef WITH_XCURSOR
 	xfContext* xfc = (xfContext*)context;
+	Window window = xf_get_window_from_context(xfc);
 	static Cursor nullcursor = None;
 	xf_lock_x11(xfc);
 
@@ -451,8 +462,8 @@ static BOOL xf_Pointer_SetNull(rdpContext* context)
 
 	xfc->pointer = NULL;
 
-	if ((xfc->window) && (nullcursor != None))
-		XDefineCursor(xfc->display, xfc->window->handle, nullcursor);
+	if ((window) && (nullcursor != None))
+		XDefineCursor(xfc->display, window, nullcursor);
 
 	xf_unlock_x11(xfc);
 #endif
@@ -463,11 +474,12 @@ static BOOL xf_Pointer_SetDefault(rdpContext* context)
 {
 #ifdef WITH_XCURSOR
 	xfContext* xfc = (xfContext*)context;
+	Window window = xf_get_window_from_context(xfc);
 	xf_lock_x11(xfc);
 	xfc->pointer = NULL;
 
-	if (xfc->window)
-		XUndefineCursor(xfc->display, xfc->window->handle);
+	if (window)
+		XUndefineCursor(xfc->display, window);
 
 	xf_unlock_x11(xfc);
 #endif
@@ -477,26 +489,27 @@ static BOOL xf_Pointer_SetDefault(rdpContext* context)
 static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
 	xfContext* xfc = (xfContext*)context;
+	Window window = xf_get_window_from_context(xfc);
 	XWindowAttributes current;
 	XSetWindowAttributes tmp;
 	BOOL ret = FALSE;
 
-	if (!xfc->focused || !xfc->window)
+	if (!xfc->focused || !window)
 		return TRUE;
 
 	xf_lock_x11(xfc);
 
-	if (XGetWindowAttributes(xfc->display, xfc->window->handle, &current) == 0)
+	if (XGetWindowAttributes(xfc->display, window, &current) == 0)
 		goto out;
 
 	tmp.event_mask = (current.your_event_mask & ~(PointerMotionMask));
 
-	if (XChangeWindowAttributes(xfc->display, xfc->window->handle, CWEventMask, &tmp) == 0)
+	if (XChangeWindowAttributes(xfc->display, window, CWEventMask, &tmp) == 0)
 		goto out;
 
-	XWarpPointer(xfc->display, None, xfc->window->handle, 0, 0, 0, 0, x, y);
+	XWarpPointer(xfc->display, None, window, 0, 0, 0, 0, x, y);
 	tmp.event_mask = current.your_event_mask;
-	XChangeWindowAttributes(xfc->display, xfc->window->handle, CWEventMask, &tmp);
+	XChangeWindowAttributes(xfc->display, window, CWEventMask, &tmp);
 	ret = TRUE;
 out:
 	xf_unlock_x11(xfc);

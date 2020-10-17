@@ -136,7 +136,7 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat, UINT32
 
 static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y, UINT32 format)
 {
-#if 1
+#if 0
 	/**
 	 * Inverted pointer colors (where individual pixels can change their
 	 * color to accommodate the background behind them) only seem to be
@@ -298,6 +298,97 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* pDstData, UINT32 DstFormat, UINT32 
 	return TRUE;
 }
 
+static UINT32 freerdp_add_color_to_buffer(	unsigned *r,
+						unsigned *g,
+						unsigned *b,
+						unsigned *count,
+						BYTE *data,
+						UINT32 format)
+{
+	BYTE r_;
+	BYTE g_;
+	BYTE b_;
+	BYTE a_;
+
+	SplitColor(ReadColor(data, format), format, &r_, &g_, &b_, &a_, 0);
+	
+	if (a_ == 0xff)
+	{
+		*r += r_;
+		*g += g_;
+		*b += b_;
+		++*count;
+	}
+}
+
+
+static void freerdp_add_cursor_shadow(BYTE* pDstData, UINT32 DstFormat,
+				      UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+				      UINT32 nWidth, UINT32 nHeight)
+{
+	UINT32 pixWidth = GetBytesPerPixel(DstFormat);
+	UINT32 x;
+	UINT32 y;
+	UINT32 size = nDstStep * nHeight;
+	BYTE* pCopy;
+
+	if (pixWidth < 2)
+		return;
+
+	pCopy = (BYTE*)_aligned_malloc(size, 16);
+	memcpy(pCopy, pDstData + nYDst * nDstStep, size);
+
+	for (y = 0; y < nHeight; ++y)
+	{
+		BYTE *cur = pDstData + (nYDst + y) * nDstStep + nXDst * pixWidth;
+		BYTE *old = pCopy + (nYDst + y) * nDstStep + nXDst * pixWidth;
+		BYTE *up = old - nDstStep;
+		BYTE *down = old + nDstStep;
+		BYTE *left = old - pixWidth;
+		BYTE *right = old + pixWidth;
+
+		for (x = 0; x < nWidth; ++x)
+		{
+			BYTE a;
+
+			SplitColor(ReadColor(cur, DstFormat), DstFormat, 0, 0, 0, &a, 0);
+
+			if (a == 0)
+			{
+				unsigned	r = 0;
+				unsigned	g = 0;
+				unsigned	b = 0;
+				unsigned	count = 0;
+
+				if (y > 0)
+					freerdp_add_color_to_buffer(&r, &g, &b, &count, up, DstFormat);
+				if (y < nHeight - 1)
+					freerdp_add_color_to_buffer(&r, &g, &b, &count, down, DstFormat);
+				if (x > 0)
+					freerdp_add_color_to_buffer(&r, &g, &b, &count, left, DstFormat);
+				if (x < nWidth - 1)
+					freerdp_add_color_to_buffer(&r, &g, &b, &count, right, DstFormat);
+
+				if (count)
+					WriteColor(cur,
+						   DstFormat,
+						   FreeRDPGetColor(DstFormat,
+							   	   255 - r / count,
+								   255 - g / count,
+								   255 - b / count,
+								   0xff));
+			}
+			cur += pixWidth;
+			up += pixWidth;
+			down += pixWidth;
+			left += pixWidth;
+			right += pixWidth;
+		}
+	}
+
+	_aligned_free(pCopy);
+}
+
 static BOOL freerdp_image_copy_from_pointer_data_1bpp(BYTE* pDstData, UINT32 DstFormat,
                                                       UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
                                                       UINT32 nWidth, UINT32 nHeight,
@@ -317,6 +408,7 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(BYTE* pDstData, UINT32 Dst
 	UINT32 dstBytesPerPixel;
 	dstBitsPerPixel = GetBitsPerPixel(DstFormat);
 	dstBytesPerPixel = GetBytesPerPixel(DstFormat);
+	BOOL hasInversion = FALSE;
 
 	vFlip = (xorBpp == 1) ? FALSE : TRUE;
 	andStep = (nWidth + 7) / 8;
@@ -375,18 +467,30 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(BYTE* pDstData, UINT32 Dst
 			}
 
 			if (!andPixel && !xorPixel)
+			{
 				color = FreeRDPGetColor(DstFormat, 0, 0, 0, 0xFF); /* black */
+			}
 			else if (!andPixel && xorPixel)
+			{
 				color = FreeRDPGetColor(DstFormat, 0xFF, 0xFF, 0xFF, 0xFF); /* white */
+			}
 			else if (andPixel && !xorPixel)
+			{
 				color = FreeRDPGetColor(DstFormat, 0, 0, 0, 0); /* transparent */
+			}
 			else if (andPixel && xorPixel)
+			{
 				color = freerdp_image_inverted_pointer_color(x, y, DstFormat); /* inverted */
+				hasInversion = TRUE;
+			}
 
 			WriteColor(pDstPixel, DstFormat, color);
 			pDstPixel += GetBytesPerPixel(DstFormat);
 		}
 	}
+
+	if (hasInversion)
+		freerdp_add_cursor_shadow(pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight);
 
 	return TRUE;
 }
@@ -410,6 +514,7 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(BYTE* pDstData, UINT32 Dst
 	UINT32 xorBytesPerPixel;
 	dstBitsPerPixel = GetBitsPerPixel(DstFormat);
 	dstBytesPerPixel = GetBytesPerPixel(DstFormat);
+	BOOL hasInversion = FALSE;
 
 	vFlip = (xorBpp == 1) ? FALSE : TRUE;
 	andStep = (nWidth + 7) / 8;
@@ -505,9 +610,14 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(BYTE* pDstData, UINT32 Dst
 			if (andPixel)
 			{
 				if (xorPixel == 0xFF000000) /* black -> transparent */
+				{
 					xorPixel = 0x00000000;
+				}
 				else if (xorPixel == 0xFFFFFFFF) /* white -> inverted */
+				{
 					xorPixel = freerdp_image_inverted_pointer_color(x, y, PIXEL_FORMAT_ARGB32);
+					hasInversion = TRUE;
+				}
 			}
 
 			color = FreeRDPConvertColor(xorPixel, PIXEL_FORMAT_ARGB32, DstFormat, palette);
@@ -515,6 +625,9 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(BYTE* pDstData, UINT32 Dst
 			pDstPixel += GetBytesPerPixel(DstFormat);
 		}
 	}
+
+	if (hasInversion)
+		freerdp_add_cursor_shadow(pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight);
 
 	return TRUE;
 }
