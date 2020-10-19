@@ -18,17 +18,18 @@
 
 define_channel_client_subsystem("audin" "mac" "")
 FIND_LIBRARY(CORE_AUDIO CoreAudio)
+FIND_LIBRARY(AVFOUNDATION AVFoundation)
 FIND_LIBRARY(AUDIO_TOOL AudioToolbox)
 FIND_LIBRARY(APP_SERVICES ApplicationServices)
 
 set(${MODULE_PREFIX}_SRCS
-	audin_mac.c)
+	audin_mac.m)
 
 include_directories(..)
 include_directories(${MAC_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
-set(${MODULE_PREFIX}_LIBS freerdp ${CORE_AUDIO} ${AUDIO_TOOL} ${APP_SERVICES} winpr)
+set(${MODULE_PREFIX}_LIBS freerdp ${AVFOUNDATION} ${CORE_AUDIO} ${AUDIO_TOOL} ${APP_SERVICES} winpr)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
