@@ -551,7 +551,8 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	         "keyDown: keyCode: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s",
 	         keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
-	sync_keyboard_state(instance);
+    // See https://github.com/FreeRDP/FreeRDP/issues/4769
+    //sync_keyboard_state(instance);
 	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
 }
 
