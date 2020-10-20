@@ -864,8 +864,7 @@ BOOL mac_pre_connect(freerdp *instance)
 	if (!settings->ServerHostname)
 	{
 		WLog_ERR(TAG, "error: server hostname was not specified with /v:<server>[:port]");
-		[NSApp terminate:nil];
-		return -1;
+		return FALSE;
 	}
 
 	settings->OsMajorType = OSMAJORTYPE_MACINTOSH;

@@ -73,6 +73,10 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 
 		[window setTitle:winTitle];
 	}
+	else
+	{
+		[NSApp terminate:self];
+	}
 }
 
 - (void)applicationWillBecomeActive:(NSNotification *)notification
@@ -92,6 +96,7 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 	[mrdpView releaseResources];
 	_singleDelegate = nil;
 	NSLog(@"Stopped.\n");
+	[NSApp terminate:self];
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender
