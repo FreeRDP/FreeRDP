@@ -830,6 +830,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 				WLog_ERR(TAG, "devman_load_device_service failed!");
 				goto cleanup;
 			}
+			error = ERROR_DISK_CHANGE;
 		}
 	}
 
@@ -855,61 +856,30 @@ static void first_hotplug(rdpdrPlugin* rdpdr)
 static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
 	rdpdrPlugin* rdpdr;
-	int mfd;
-	fd_set rfds;
-	struct timeval tv;
-	int rv;
 	UINT error = 0;
 	DWORD status;
 	rdpdr = (rdpdrPlugin*)arg;
-	mfd = open("/proc/mounts", O_RDONLY, 0);
 
-	if (mfd < 0)
+	while (status = WaitForSingleObject(rdpdr->stopEvent, 1000) == WAIT_TIMEOUT)
 	{
-		WLog_ERR(TAG, "ERROR: Unable to open /proc/mounts.");
-		error = ERROR_INTERNAL_ERROR;
-		goto out;
-	}
-
-	FD_ZERO(&rfds);
-	FD_SET(mfd, &rfds);
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
-
-	while ((rv = select(mfd + 1, NULL, NULL, &rfds, &tv)) >= 0)
-	{
-		status = WaitForSingleObject(rdpdr->stopEvent, 0);
-
-		if (status == WAIT_FAILED)
+		error = handle_hotplug(rdpdr);
+		switch (error)
 		{
-			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", error);
-			goto out;
-		}
-
-		if (status == WAIT_OBJECT_0)
-			break;
-
-		if (FD_ISSET(mfd, &rfds))
-		{
-			/* file /proc/mounts changed, handle this */
-			if ((error = handle_hotplug(rdpdr)))
-			{
+			case ERROR_DISK_CHANGE:
+				rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+				break;
+			case CHANNEL_RC_OK:
+			case ERROR_OPEN_FAILED:
+			case ERROR_CALL_NOT_IMPLEMENTED:
+				break;
+			default:
 				WLog_ERR(TAG, "handle_hotplug failed with error %" PRIu32 "!", error);
 				goto out;
-			}
-			else
-				rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 		}
-
-		FD_ZERO(&rfds);
-		FD_SET(mfd, &rfds);
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
 	}
 
 out:
-
+	error = GetLastError();
 	if (error && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error, "drive_hotplug_thread_func reported an error");
 
