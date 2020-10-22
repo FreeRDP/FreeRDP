@@ -640,7 +640,7 @@ static pstatus_t general_RGBToYUV444_8u_P3AC4R(const BYTE* pSrc, UINT32 SrcForma
 }
 
 static INLINE pstatus_t general_RGBToYUV420_BGRX(const BYTE* pSrc, UINT32 srcStep, BYTE* pDst[3],
-                                                 UINT32 dstStep[3], const prim_size_t* roi)
+                                                 const UINT32 dstStep[3], const prim_size_t* roi)
 {
 	UINT32 x, y, i;
 	size_t x1 = 0, x2 = 4, x3 = srcStep, x4 = srcStep + 4;
@@ -706,7 +706,7 @@ static INLINE pstatus_t general_RGBToYUV420_BGRX(const BYTE* pSrc, UINT32 srcSte
 }
 
 static INLINE pstatus_t general_RGBToYUV420_RGBX(const BYTE* pSrc, UINT32 srcStep, BYTE* pDst[3],
-                                                 UINT32 dstStep[3], const prim_size_t* roi)
+                                                 const UINT32 dstStep[3], const prim_size_t* roi)
 {
 	UINT32 x, y, i;
 	size_t x1 = 0, x2 = 4, x3 = srcStep, x4 = srcStep + 4;
@@ -772,7 +772,7 @@ static INLINE pstatus_t general_RGBToYUV420_RGBX(const BYTE* pSrc, UINT32 srcSte
 }
 
 static INLINE pstatus_t general_RGBToYUV420_ANY(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-                                                BYTE* pDst[3], UINT32 dstStep[3],
+                                                BYTE* pDst[3], const UINT32 dstStep[3],
                                                 const prim_size_t* roi)
 {
 	const UINT32 bpp = GetBytesPerPixel(srcFormat);
@@ -849,7 +849,7 @@ static INLINE pstatus_t general_RGBToYUV420_ANY(const BYTE* pSrc, UINT32 srcForm
 }
 
 static pstatus_t general_RGBToYUV420_8u_P3AC4R(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-                                               BYTE* pDst[3], UINT32 dstStep[3],
+                                               BYTE* pDst[3], const UINT32 dstStep[3],
                                                const prim_size_t* roi)
 {
 	switch (srcFormat)

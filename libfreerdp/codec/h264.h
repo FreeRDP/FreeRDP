@@ -24,6 +24,22 @@
 #include <freerdp/api.h>
 #include <freerdp/codec/h264.h>
 
+typedef BOOL (*pfnH264SubsystemInit)(H264_CONTEXT* h264);
+typedef void (*pfnH264SubsystemUninit)(H264_CONTEXT* h264);
+
+typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize);
+typedef int (*pfnH264SubsystemCompress)(H264_CONTEXT* h264, const BYTE** pSrcYuv,
+                                        const UINT32* pStride, BYTE** ppDstData, UINT32* pDstSize);
+
+struct _H264_CONTEXT_SUBSYSTEM
+{
+	const char* name;
+	pfnH264SubsystemInit Init;
+	pfnH264SubsystemUninit Uninit;
+	pfnH264SubsystemDecompress Decompress;
+	pfnH264SubsystemCompress Compress;
+};
+
 FREERDP_LOCAL BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width,
                                         UINT32 height);
 
