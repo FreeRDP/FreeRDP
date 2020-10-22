@@ -28,6 +28,8 @@
 #include <libavcodec/avcodec.h>
 #include <libavutil/opt.h>
 
+#include "h264.h"
+
 #ifdef WITH_VAAPI
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(55, 9, 0)
 #include <libavutil/hwcontext.h>
