@@ -409,7 +409,7 @@ const char* GetSecurityStatusString(SECURITY_STATUS status)
 			return "SEC_I_NO_RENEGOTIATION";
 	}
 
-	return "SEC_E_UNKNOWN";
+	return NtStatus2Tag(status);
 }
 
 BOOL IsSecurityStatusError(SECURITY_STATUS status)

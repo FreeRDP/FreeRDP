@@ -1844,7 +1844,11 @@ const char* NtStatus2Tag(DWORD ntstatus)
 #if 1 /* Requires sorted struct */
 	size_t count = ARRAYSIZE(ntstatusmap);
 	size_t base = sizeof(ntstatusmap[0]);
-	return bsearch(&ntstatus, ntstatusmap, count, base, ntstatus_compare);
+	const struct ntstatus_map* found =
+	    bsearch(&ntstatus, ntstatusmap, count, base, ntstatus_compare);
+	if (!found)
+		return NULL;
+	return found->tag;
 #else
 	size_t x;
 	for (x = 0; x < ARRAYSIZE(ntstatusmap); x++)
