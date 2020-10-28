@@ -220,6 +220,8 @@ extern "C"
 #endif
 
 	FREERDP_API DWORD freerdp_keyboard_init(DWORD keyboardLayoutId);
+	FREERDP_API DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId,
+	                                           const char* keyboardRemappingList);
 	FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types);
 	FREERDP_API void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts);
 	FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutId);

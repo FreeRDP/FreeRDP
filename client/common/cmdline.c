@@ -1992,6 +1992,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			settings->KeyboardLayout = (UINT32)val;
 		}
+		CommandLineSwitchCase(arg, "kbd-remap")
+		{
+			if (!copy_value(arg->Value, &settings->KeyboardRemappingList))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
 		CommandLineSwitchCase(arg, "kbd-lang")
 		{
 			LONGLONG val;
