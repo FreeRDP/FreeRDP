@@ -36,9 +36,9 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 	const size_t SrcSize = step * h;
 	const float maxDiff = 4.0f * ((bpp < 24) ? 2.0f : 1.0f);
 	UINT32 DstSize = SrcSize;
-	BYTE* pSrcData = malloc(SrcSize);
-	BYTE* pDstData = malloc(SrcSize);
-	BYTE* tmp = malloc(SrcSize);
+	BYTE* pSrcData = calloc(1, SrcSize);
+	BYTE* pDstData = calloc(1, SrcSize);
+	BYTE* tmp = calloc(1, SrcSize);
 
 	if (!pSrcData || !pDstData || !tmp)
 		goto fail;

@@ -6,9 +6,12 @@ int TestSmartCardListReaders(int argc, char* argv[])
 {
 	LONG lStatus;
 	LPSTR pReader;
-	SCARDCONTEXT hSC;
+	SCARDCONTEXT hSC = 0;
 	LPSTR mszReaders = NULL;
 	DWORD cchReaders = SCARD_AUTOALLOCATE;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	lStatus = SCardEstablishContext(SCARD_SCOPE_USER, NULL, NULL, &hSC);
 
