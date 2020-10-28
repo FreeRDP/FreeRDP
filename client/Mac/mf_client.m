@@ -62,6 +62,7 @@ static int mfreerdp_client_stop(rdpContext *context)
 {
 	mfContext *mfc = (mfContext *)context;
 
+	freerdp_abort_connect(context->instance);
 	if (mfc->thread)
 	{
 		SetEvent(mfc->stopEvent);
@@ -97,7 +98,6 @@ static BOOL mfreerdp_client_new(freerdp *instance, rdpContext *context)
 	context->instance->LogonErrorInfo = mac_logon_error_info;
 	context->instance->settings = instance->settings;
 	settings = context->settings;
-	settings->AsyncUpdate = TRUE;
 	settings->AsyncInput = TRUE;
 	return TRUE;
 }
