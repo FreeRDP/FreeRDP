@@ -233,7 +233,7 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 	UINT32 CursorFormat;
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;
-	XcursorImage ci;
+	XcursorImage ci = { 0 };
 	rdpSettings* settings;
 	UINT32 xTargetSize;
 	UINT32 yTargetSize;
@@ -241,6 +241,7 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 	double yscale;
 	size_t size;
 	int cursorIndex = -1, i;
+	void* tmp;
 
 	if (!context || !pointer || !context->gdi)
 		return FALSE;
@@ -274,29 +275,34 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 
 		if (xpointer->nCursors == xpointer->mCursors)
 		{
+			void* tmp2;
 			xpointer->mCursors = (xpointer->mCursors == 0 ? 1 : xpointer->mCursors * 2);
 
-			if (!(xpointer->cursorWidths = (UINT32*)realloc(xpointer->cursorWidths,
-			                                                sizeof(UINT32) * xpointer->mCursors)))
+			tmp2 = realloc(xpointer->cursorWidths, sizeof(UINT32) * xpointer->mCursors);
+			if (!tmp2)
 			{
 				xf_unlock_x11(xfc);
 				return FALSE;
 			}
-			if (!(xpointer->cursorHeights = (UINT32*)realloc(xpointer->cursorHeights,
-			                                                 sizeof(UINT32) * xpointer->mCursors)))
+			xpointer->cursorWidths = tmp2;
+
+			tmp2 = realloc(xpointer->cursorHeights, sizeof(UINT32) * xpointer->mCursors);
+			if (!tmp2)
 			{
 				xf_unlock_x11(xfc);
 				return FALSE;
 			}
-			if (!(xpointer->cursors =
-			          (Cursor*)realloc(xpointer->cursors, sizeof(Cursor) * xpointer->mCursors)))
+			xpointer->cursorHeights = (UINT32*)tmp2;
+
+			tmp2 = realloc(xpointer->cursors, sizeof(Cursor) * xpointer->mCursors);
+			if (!tmp2)
 			{
 				xf_unlock_x11(xfc);
 				return FALSE;
 			}
+			xpointer->cursors = (Cursor*)tmp2;
 		}
 
-		ZeroMemory(&ci, sizeof(ci));
 		ci.version = XCURSOR_IMAGE_VERSION;
 		ci.size = sizeof(ci);
 		ci.width = xTargetSize;
@@ -305,11 +311,13 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 		ci.yhot = pointer->yPos * yscale;
 		size = ci.height * ci.width * GetBytesPerPixel(CursorFormat);
 
-		if (!(ci.pixels = (XcursorPixel*)_aligned_malloc(size, 16)))
+		tmp = _aligned_malloc(size, 16);
+		if (!tmp)
 		{
 			xf_unlock_x11(xfc);
 			return FALSE;
 		}
+		ci.pixels = (XcursorPixel*)tmp;
 
 		if (xscale != 1 || yscale != 1)
 		{
@@ -317,7 +325,7 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 			                         (BYTE*)xpointer->cursorPixels, CursorFormat, 0, 0, 0,
 			                         pointer->width, pointer->height))
 			{
-				_aligned_free(ci.pixels);
+				_aligned_free(tmp);
 				xf_unlock_x11(xfc);
 				return FALSE;
 			}
@@ -332,8 +340,8 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 		xpointer->cursorHeights[cursorIndex] = ci.height;
 		xpointer->cursors[cursorIndex] = XcursorImageLoadCursor(xfc->display, &ci);
 		xpointer->nCursors += 1;
-		if (xscale != 1 || yscale != 1)
-			_aligned_free(ci.pixels);
+
+		_aligned_free(tmp);
 
 		xf_unlock_x11(xfc);
 	}
