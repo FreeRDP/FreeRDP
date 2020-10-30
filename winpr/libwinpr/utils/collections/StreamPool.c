@@ -291,7 +291,7 @@ wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
 	wStream* s = NULL;
 	BOOL found = FALSE;
 
-	EnterCriticalSection(&pool->lock);
+	StreamPool_Lock(pool);
 
 	for (index = 0; index < pool->uSize; index++)
 	{
@@ -307,34 +307,6 @@ wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
 	StreamPool_Unlock(pool);
 
 	return (found) ? s : NULL;
-}
-
-/**
- * Find stream in pool and increment reference count
- */
-
-void StreamPool_AddRef(wStreamPool* pool, BYTE* ptr)
-{
-	wStream* s;
-
-	s = StreamPool_Find(pool, ptr);
-
-	if (s)
-		Stream_AddRef(s);
-}
-
-/**
- * Find stream in pool and decrement reference count
- */
-
-void StreamPool_Release(wStreamPool* pool, BYTE* ptr)
-{
-	wStream* s;
-
-	s = StreamPool_Find(pool, ptr);
-
-	if (s)
-		Stream_Release(s);
 }
 
 /**
