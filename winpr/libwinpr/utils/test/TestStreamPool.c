@@ -70,31 +70,6 @@ int TestStreamPool(int argc, char* argv[])
 
 	printf("%s\n", StreamPool_GetStatistics(pool, buffer, sizeof(buffer)));
 
-	StreamPool_AddRef(pool, s[2]->buffer + 1024);
-
-	StreamPool_AddRef(pool, s[3]->buffer + 1024);
-	StreamPool_AddRef(pool, s[3]->buffer + 1024 * 2);
-
-	StreamPool_AddRef(pool, s[4]->buffer + 1024);
-	StreamPool_AddRef(pool, s[4]->buffer + 1024 * 2);
-	StreamPool_AddRef(pool, s[4]->buffer + 1024 * 3);
-
-	printf("%s\n", StreamPool_GetStatistics(pool, buffer, sizeof(buffer)));
-
-	StreamPool_Release(pool, s[2]->buffer + 2048);
-	StreamPool_Release(pool, s[2]->buffer + 2048 * 2);
-
-	StreamPool_Release(pool, s[3]->buffer + 2048);
-	StreamPool_Release(pool, s[3]->buffer + 2048 * 2);
-	StreamPool_Release(pool, s[3]->buffer + 2048 * 3);
-
-	StreamPool_Release(pool, s[4]->buffer + 2048);
-	StreamPool_Release(pool, s[4]->buffer + 2048 * 2);
-	StreamPool_Release(pool, s[4]->buffer + 2048 * 3);
-	StreamPool_Release(pool, s[4]->buffer + 2048 * 4);
-
-	printf("%s\n", StreamPool_GetStatistics(pool, buffer, sizeof(buffer)));
-
 	StreamPool_Free(pool);
 
 	return 0;

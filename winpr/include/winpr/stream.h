@@ -405,8 +405,6 @@ extern "C"
 	WINPR_API void Stream_Release(wStream* s);
 
 	WINPR_API wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr);
-	WINPR_API void StreamPool_AddRef(wStreamPool* pool, BYTE* ptr);
-	WINPR_API void StreamPool_Release(wStreamPool* pool, BYTE* ptr);
 
 	WINPR_API void StreamPool_Clear(wStreamPool* pool);
 
