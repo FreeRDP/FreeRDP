@@ -730,6 +730,10 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 
+	MessageQueue_PostQuit(channels->queue, 0);
+
+	freerdp_channels_check_fds(channels, instance);
+
 	/* tell all libraries we are shutting down */
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
@@ -749,7 +753,6 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	}
 
 	channels->clientDataCount = 0;
-	MessageQueue_PostQuit(channels->queue, 0);
 
 	for (index = 0; index < channels->openDataCount; index++)
 	{

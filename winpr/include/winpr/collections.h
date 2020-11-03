@@ -477,6 +477,7 @@ extern "C"
 		int tail;
 		int size;
 		int capacity;
+		BOOL closed;
 		wMessage* array;
 		CRITICAL_SECTION lock;
 		HANDLE event;

@@ -75,6 +75,9 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 
 	EnterCriticalSection(&queue->lock);
 
+	if (queue->closed)
+		goto out;
+
 	if (queue->size == queue->capacity)
 	{
 		int old_capacity;
@@ -109,6 +112,9 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 
 	if (queue->size > 0)
 		SetEvent(queue->event);
+
+	if (message->id == WMQ_QUIT)
+		queue->closed = TRUE;
 
 	ret = TRUE;
 out:
