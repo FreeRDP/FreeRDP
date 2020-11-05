@@ -790,6 +790,9 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 	char* r;
 	int status;
 	size_t length;
+
+	file->password = _strdup(password);
+
 	p = strstr(buffer, "UPLOADINFO");
 
 	if (p)
@@ -1174,7 +1177,6 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 	free(file->filename);
 	free(file->password);
 	file->filename = _strdup(name);
-	file->password = _strdup(password);
 	fp = fopen(name, "r");
 
 	if (!fp)
