@@ -105,7 +105,7 @@ void Queue_Clear(wQueue* queue)
 
 	queue->size = 0;
 	queue->head = queue->tail = 0;
-
+	ResetEvent(queue->event);
 	if (queue->synchronized)
 		LeaveCriticalSection(&queue->lock);
 }
