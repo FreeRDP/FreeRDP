@@ -1400,15 +1400,23 @@ static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 		/* Disconnect remaining dynamic channels that the server did not.
 		 * This is required to properly shut down channels by calling the appropriate
 		 * event handlers. */
+		size_t count = 0;
 		DVCMAN* drdynvcMgr = (DVCMAN*)drdynvc->channel_mgr;
 
-		while (ArrayList_Count(drdynvcMgr->channels) > 0)
+		do
 		{
-			IWTSVirtualChannel* channel =
-			    (IWTSVirtualChannel*)ArrayList_GetItem(drdynvcMgr->channels, 0);
-			const UINT32 ChannelId = drdynvc->channel_mgr->GetChannelId(channel);
-			dvcman_close_channel(drdynvc->channel_mgr, ChannelId, FALSE);
-		}
+			ArrayList_Lock(drdynvcMgr->channels);
+			count = ArrayList_Count(drdynvcMgr->channels);
+			if (count > 0)
+			{
+				IWTSVirtualChannel* channel =
+				    (IWTSVirtualChannel*)ArrayList_GetItem(drdynvcMgr->channels, 0);
+				const UINT32 ChannelId = drdynvc->channel_mgr->GetChannelId(channel);
+				dvcman_close_channel(drdynvc->channel_mgr, ChannelId, FALSE);
+				count--;
+			}
+			ArrayList_Unlock(drdynvcMgr->channels);
+		} while (count > 0);
 	}
 
 	if (error && drdynvc->rdpcontext)
