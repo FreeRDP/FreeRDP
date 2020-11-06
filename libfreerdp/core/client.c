@@ -391,6 +391,8 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	hostname = instance->settings->ServerHostname;
 	hostnameLength = strlen(hostname);
 
+	MessageQueue_Clear(channels->queue);
+
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
 		ChannelConnectedEventArgs e;

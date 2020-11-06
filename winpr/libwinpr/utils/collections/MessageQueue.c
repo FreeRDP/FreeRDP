@@ -268,6 +268,7 @@ int MessageQueue_Clear(wMessageQueue* queue)
 		queue->size--;
 	}
 	ResetEvent(queue->event);
+	queue->closed = FALSE;
 
 	LeaveCriticalSection(&queue->lock);
 
