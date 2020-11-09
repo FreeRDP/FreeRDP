@@ -447,6 +447,7 @@ static BOOL pf_modules_free_handles_ArrayList_ForEachFkt(void* data, size_t inde
 	WINPR_UNUSED(ap);
 	if (handle)
 		FreeLibrary(handle);
+	return TRUE;
 }
 
 void pf_modules_free(void)
