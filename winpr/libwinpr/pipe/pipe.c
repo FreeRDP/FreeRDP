@@ -480,6 +480,10 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	int pipe_fd[2];
 	WINPR_PIPE* pReadPipe;
 	WINPR_PIPE* pWritePipe;
+
+	WINPR_UNUSED(lpPipeAttributes);
+	WINPR_UNUSED(nSize);
+
 	pipe_fd[0] = -1;
 	pipe_fd[1] = -1;
 
@@ -516,7 +520,7 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 
 static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
 {
-	int index;
+	size_t index;
 	NamedPipeServerSocketEntry* baseSocket;
 
 	if (!pNamedPipe)
@@ -559,12 +563,14 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
                         DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,
                         LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	int index;
+	size_t index;
 	char* lpPipePath;
 	struct sockaddr_un s;
 	WINPR_NAMED_PIPE* pNamedPipe = NULL;
 	int serverfd = -1;
 	NamedPipeServerSocketEntry* baseSocket = NULL;
+
+	WINPR_UNUSED(lpSecurityAttributes);
 
 	if (dwOpenMode & FILE_FLAG_OVERLAPPED)
 	{

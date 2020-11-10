@@ -860,7 +860,7 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 	DWORD status;
 	rdpdr = (rdpdrPlugin*)arg;
 
-	while (status = WaitForSingleObject(rdpdr->stopEvent, 1000) == WAIT_TIMEOUT)
+	while ((status = WaitForSingleObject(rdpdr->stopEvent, 1000)) == WAIT_TIMEOUT)
 	{
 		error = handle_hotplug(rdpdr);
 		switch (error)

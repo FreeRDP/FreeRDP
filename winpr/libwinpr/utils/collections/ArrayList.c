@@ -140,7 +140,7 @@ void* ArrayList_GetItem(wArrayList* arrayList, size_t index)
 {
 	void* obj = NULL;
 
-	if ((index >= 0) && (index < arrayList->size))
+	if (index < arrayList->size)
 	{
 		obj = arrayList->array[index];
 	}
@@ -154,7 +154,7 @@ void* ArrayList_GetItem(wArrayList* arrayList, size_t index)
 
 void ArrayList_SetItem(wArrayList* arrayList, size_t index, const void* obj)
 {
-	if ((index >= 0) && (index < arrayList->size))
+	if (index < arrayList->size)
 	{
 		if (arrayList->object.fnObjectNew)
 			arrayList->array[index] = arrayList->object.fnObjectNew(obj);
@@ -297,7 +297,7 @@ BOOL ArrayList_Insert(wArrayList* arrayList, size_t index, const void* obj)
 
 	ArrayList_Lock_Conditional(arrayList);
 
-	if ((index >= 0) && (index < arrayList->size))
+	if (index < arrayList->size)
 	{
 		if (!ArrayList_Shift(arrayList, index, 1))
 		{
@@ -358,7 +358,7 @@ BOOL ArrayList_RemoveAt(wArrayList* arrayList, size_t index)
 
 	ArrayList_Lock_Conditional(arrayList);
 
-	if ((index >= 0) && (index < arrayList->size))
+	if (index < arrayList->size)
 	{
 		if (arrayList->object.fnObjectFree)
 			arrayList->object.fnObjectFree(arrayList->array[index]);

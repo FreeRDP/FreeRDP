@@ -112,7 +112,7 @@ static void _Publish(rdpShadowMultiClientEvent* event)
 {
 	wArrayList* subscribers;
 	struct rdp_shadow_multiclient_subscriber* subscriber = NULL;
-	int i;
+	size_t i;
 
 	subscribers = event->subscribers;
 
