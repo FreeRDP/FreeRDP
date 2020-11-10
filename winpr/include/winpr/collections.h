@@ -485,7 +485,7 @@ extern "C"
 	{
 		const char* EventName;
 		wEventArgs EventArgs;
-		int EventHandlerCount;
+		size_t EventHandlerCount;
 		pEventHandler EventHandlers[MAX_EVENT_HANDLERS];
 	};
 	typedef struct _wEventType wEventType;

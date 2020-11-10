@@ -136,12 +136,14 @@ BOOL pf_modules_run_hook(PF_HOOK_TYPE type, proxyData* pdata)
 static BOOL pf_modules_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
-	PF_HOOK_TYPE type;
+	PF_FILTER_TYPE type;
 	proxyData* pdata;
 	void* param;
 	BOOL result = FALSE;
 
-	type = va_arg(ap, PF_HOOK_TYPE);
+	WINPR_UNUSED(index);
+
+	type = va_arg(ap, PF_FILTER_TYPE);
 	pdata = va_arg(ap, proxyData*);
 	param = va_arg(ap, void*);
 
@@ -308,7 +310,6 @@ BOOL pf_modules_is_plugin_loaded(const char* plugin_name)
 static BOOL pf_modules_print_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
-	const char* plugin_name = va_arg(ap, const char*);
 
 	WINPR_UNUSED(index);
 	WINPR_UNUSED(ap);
@@ -429,7 +430,6 @@ error:
 static BOOL pf_modules_free_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
-	const char* plugin_name = va_arg(ap, const char*);
 
 	WINPR_UNUSED(index);
 	WINPR_UNUSED(ap);

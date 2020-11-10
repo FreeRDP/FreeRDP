@@ -1998,7 +1998,7 @@ int shadow_client_boardcast_msg(rdpShadowServer* server, void* context, UINT32 t
 	wMessage message = { 0 };
 	rdpShadowClient* client = NULL;
 	int count = 0;
-	int index = 0;
+	size_t index = 0;
 	message.context = context;
 	message.id = type;
 	message.wParam = (void*)msg;
@@ -2029,7 +2029,7 @@ int shadow_client_boardcast_quit(rdpShadowServer* server, int nExitCode)
 {
 	wMessageQueue* queue = NULL;
 	int count = 0;
-	int index = 0;
+	size_t index = 0;
 	ArrayList_Lock(server->clients);
 
 	for (index = 0; index < ArrayList_Count(server->clients); index++)
