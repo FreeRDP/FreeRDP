@@ -34,11 +34,6 @@
 
 #define TAG CHANNELS_TAG("rdpei.client")
 
-#define RDPINPUT_CONTACT_STATE_INITIAL 0x0000
-#define RDPINPUT_CONTACT_STATE_ENGAGED 0x0001
-#define RDPINPUT_CONTACT_STATE_HOVERING 0x0002
-#define RDPINPUT_CONTACT_STATE_OUT_OF_RANGE 0x0003
-
 /**
  * Touch Contact State Transitions
  *
@@ -69,17 +64,22 @@
 
 struct _RDPINPUT_CONTACT_POINT
 {
-	int lastX;
-	int lastY;
 	BOOL dirty;
 	BOOL active;
-	UINT32 state;
-	UINT32 flags;
 	UINT32 contactId;
-	int externalId;
+	INT32 externalId;
 	RDPINPUT_CONTACT_DATA data;
 };
 typedef struct _RDPINPUT_CONTACT_POINT RDPINPUT_CONTACT_POINT;
+
+struct _RDPINPUT_PEN_CONTACT_POINT
+{
+	BOOL dirty;
+	BOOL active;
+	INT32 externalId;
+	RDPINPUT_PEN_CONTACT data;
+};
+typedef struct _RDPINPUT_PEN_CONTACT_POINT RDPINPUT_PEN_CONTACT_POINT;
 
 #ifdef WITH_DEBUG_DVC
 #define DEBUG_DVC(...) WLog_DBG(TAG, __VA_ARGS__)

@@ -33,13 +33,14 @@ enum
 	EVENTID_TOUCH = 0x0003,
 	EVENTID_SUSPEND_TOUCH = 0x0004,
 	EVENTID_RESUME_TOUCH = 0x0005,
-	EVENTID_DISMISS_HOVERING_CONTACT = 0x0006
+	EVENTID_DISMISS_HOVERING_CONTACT = 0x0006,
+	EVENTID_PEN = 0x0008
 };
 
-BOOL rdpei_read_2byte_unsigned(wStream* s, UINT32* value);
-BOOL rdpei_write_2byte_unsigned(wStream* s, UINT32 value);
-BOOL rdpei_read_2byte_signed(wStream* s, INT32* value);
-BOOL rdpei_write_2byte_signed(wStream* s, INT32 value);
+BOOL rdpei_read_2byte_unsigned(wStream* s, UINT16* value);
+BOOL rdpei_write_2byte_unsigned(wStream* s, UINT16 value);
+BOOL rdpei_read_2byte_signed(wStream* s, INT16* value);
+BOOL rdpei_write_2byte_signed(wStream* s, INT16 value);
 BOOL rdpei_read_4byte_unsigned(wStream* s, UINT32* value);
 BOOL rdpei_write_4byte_unsigned(wStream* s, UINT32 value);
 BOOL rdpei_read_4byte_signed(wStream* s, INT32* value);
@@ -49,5 +50,8 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value);
 
 void touch_event_reset(RDPINPUT_TOUCH_EVENT* event);
 void touch_frame_reset(RDPINPUT_TOUCH_FRAME* frame);
+
+void pen_event_reset(RDPINPUT_PEN_EVENT* event);
+void pen_frame_reset(RDPINPUT_PEN_FRAME* frame);
 
 #endif /* FREERDP_CHANNEL_RDPEI_COMMON_H */
