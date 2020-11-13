@@ -204,7 +204,6 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 									drive.Type = RDPDR_DTYP_FILESYSTEM;
 									drive.Path = drive_path;
-									drive_path[1] = '\0';
 									drive.automount = TRUE;
 									drive.Name = drive_name;
 									devman_load_device_service(rdpdr->devman,
@@ -579,7 +578,6 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 }
 
 #else
-
 
 static const char* automountLocations[] = { "/run/user/%lu/gvfs", "/run/media/%s", "/media/%s",
 	                                        "/media", "/mnt" };
