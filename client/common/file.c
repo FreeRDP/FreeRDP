@@ -2021,6 +2021,7 @@ rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags)
 	file->lines = NULL;
 	file->lineCount = 0;
 	file->lineSize = 32;
+	file->GatewayProfileUsageMethod = 1;
 	file->lines = (rdpFileLine*)calloc(file->lineSize, sizeof(rdpFileLine));
 
 	if (!file->lines)
