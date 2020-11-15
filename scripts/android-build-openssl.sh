@@ -19,6 +19,7 @@ function build {
 
     common_run export CC=clang
     common_run export PATH=$(${SCRIPT_PATH}/toolchains_path.py --ndk ${ANDROID_NDK}):$ORG_PATH
+    common_run export ANDROID_NDK
 
 	echo "CONFIG=$CONFIG"
 	echo "DST_PREFIX=$DST_PREFIX"

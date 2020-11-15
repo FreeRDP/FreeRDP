@@ -8,7 +8,8 @@ WITH_JPEG=0
 WITH_OPENH264=0
 WITH_OPENSSL=0
 
-SRC_DIR=$(pwd)
+SRC_DIR=$(dirname "${BASH_SOURCE[0]}")
+SRC_DIR=$(realpath "$SRC_DIR")
 BUILD_SRC=$(pwd)
 BUILD_DST=$(pwd)
 
