@@ -113,11 +113,10 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 	if (GetTickCount64() - xfDisp->lastSentDate < RESIZE_MIN_DELAY)
 		return TRUE;
 
-	xfDisp->lastSentDate = GetTickCount64();
-
 	if (!xf_disp_settings_changed(xfDisp))
 		return TRUE;
 
+	xfDisp->lastSentDate = GetTickCount64();
 	if (xfc->fullscreen && (settings->MonitorCount > 0))
 	{
 		if (xf_disp_sendLayout(xfDisp->disp, settings->MonitorDefArray, settings->MonitorCount) !=
@@ -134,8 +133,8 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 		layout.Orientation = settings->DesktopOrientation;
 		layout.DesktopScaleFactor = settings->DesktopScaleFactor;
 		layout.DeviceScaleFactor = settings->DeviceScaleFactor;
-		layout.PhysicalWidth = xfDisp->targetWidth;
-		layout.PhysicalHeight = xfDisp->targetHeight;
+		layout.PhysicalWidth = xfDisp->targetWidth / 75 * 25.4f;
+		layout.PhysicalHeight = xfDisp->targetHeight / 75 * 25.4f;
 
 		if (IFCALLRESULT(CHANNEL_RC_OK, xfDisp->disp->SendMonitorLayout, xfDisp->disp, 1,
 		                 &layout) != CHANNEL_RC_OK)
@@ -197,7 +196,7 @@ static void xf_disp_OnActivated(void* context, ActivatedEventArgs* e)
 
 	xfDisp->waitingResize = FALSE;
 
-	if (xfDisp->activated && !settings->Fullscreen)
+	if (xfDisp->activated && !xfc->fullscreen)
 	{
 		xf_disp_set_window_resizable(xfDisp);
 
