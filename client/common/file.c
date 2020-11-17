@@ -901,7 +901,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 			file->GatewayHostname = _strdup(settings->GatewayHostname);
 		else
 		{
-			int length = _scprintf("%s:%" PRIu16, settings->GatewayHostname, settings->GatewayPort);
+			int length = _scprintf("%s:%" PRIu32, settings->GatewayHostname, settings->GatewayPort);
 			if (length < 0)
 				return FALSE;
 
@@ -909,7 +909,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 			if (!file->GatewayHostname)
 				return FALSE;
 
-			if (sprintf_s(file->GatewayHostname, (size_t)length + 1, "%s:%" PRIu16,
+			if (sprintf_s(file->GatewayHostname, (size_t)length + 1, "%s:%" PRIu32,
 			              settings->GatewayHostname, settings->GatewayPort) < 0)
 				return FALSE;
 		}
