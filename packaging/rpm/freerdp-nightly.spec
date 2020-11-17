@@ -138,7 +138,11 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
 %endif
         -DCMAKE_INSTALL_LIBDIR=%{_lib}
 
+%if 0%{?fedora} > 32
+%cmake_build
+%else
 make %{?_smp_mflags}
+%endif
 
 %install
 %if %{defined suse_version}
@@ -146,8 +150,12 @@ make %{?_smp_mflags}
 %endif
 
 %if %{defined fedora} || %{defined rhel}
+%if 0%{?fedora} > 32
+%cmake_install
+%else
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
+%endif
 %endif 
 
 find %{buildroot} -name "*.a" -delete
