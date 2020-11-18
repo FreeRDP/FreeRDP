@@ -70,25 +70,44 @@ static BOOL certificate_line_is_comment(const char* line, size_t length)
 	return TRUE;
 }
 
+static void certificate_store_uninit(rdpCertificateStore* certificate_store)
+{
+	if (certificate_store)
+	{
+		free(certificate_store->path);
+		free(certificate_store->file);
+		free(certificate_store->legacy_file);
+		certificate_store->path = NULL;
+		certificate_store->file = NULL;
+		certificate_store->legacy_file = NULL;
+	}
+}
 static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 {
 	char* server_path = NULL;
 	rdpSettings* settings;
+	const char* ConfigPath;
+	if (!certificate_store)
+		return FALSE;
 	settings = certificate_store->settings;
 
-	if (!PathFileExistsA(settings->ConfigPath))
+	if (!settings)
+		return FALSE;
+	ConfigPath = settings->ConfigPath;
+	if (!ConfigPath)
+		return FALSE;
+	if (!PathFileExistsA(ConfigPath))
 	{
-		if (!PathMakePathA(settings->ConfigPath, 0))
+		if (!PathMakePathA(ConfigPath, 0))
 		{
-			WLog_ERR(TAG, "error creating directory '%s'", settings->ConfigPath);
+			WLog_ERR(TAG, "error creating directory '%s'", ConfigPath);
 			goto fail;
 		}
 
-		WLog_INFO(TAG, "creating directory %s", settings->ConfigPath);
+		WLog_INFO(TAG, "creating directory %s", ConfigPath);
 	}
 
-	if (!(certificate_store->path =
-	          GetCombinedPath(settings->ConfigPath, (char*)certificate_store_dir)))
+	if (!(certificate_store->path = GetCombinedPath(ConfigPath, (char*)certificate_store_dir)))
 		goto fail;
 
 	if (!PathFileExistsA(certificate_store->path))
@@ -102,7 +121,7 @@ static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 		WLog_INFO(TAG, "creating directory [%s]", certificate_store->path);
 	}
 
-	if (!(server_path = GetCombinedPath(settings->ConfigPath, (char*)certificate_server_dir)))
+	if (!(server_path = GetCombinedPath(ConfigPath, (char*)certificate_server_dir)))
 		goto fail;
 
 	if (!PathFileExistsA(server_path))
@@ -117,11 +136,11 @@ static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 	}
 
 	if (!(certificate_store->file =
-	          GetCombinedPath(settings->ConfigPath, (char*)certificate_known_hosts_file)))
+	          GetCombinedPath(ConfigPath, (char*)certificate_known_hosts_file)))
 		goto fail;
 
 	if (!(certificate_store->legacy_file =
-	          GetCombinedPath(settings->ConfigPath, (char*)certificate_legacy_hosts_file)))
+	          GetCombinedPath(ConfigPath, (char*)certificate_legacy_hosts_file)))
 		goto fail;
 
 	free(server_path);
@@ -129,10 +148,7 @@ static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 fail:
 	WLog_ERR(TAG, "certificate store initialization failed");
 	free(server_path);
-	free(certificate_store->path);
-	free(certificate_store->file);
-	certificate_store->path = NULL;
-	certificate_store->file = NULL;
+	certificate_store_uninit(certificate_store);
 	return FALSE;
 }
 
@@ -757,11 +773,9 @@ rdpCertificateStore* certificate_store_new(rdpSettings* settings)
 
 void certificate_store_free(rdpCertificateStore* certstore)
 {
+	certificate_store_uninit(certstore);
 	if (certstore != NULL)
 	{
-		free(certstore->path);
-		free(certstore->file);
-		free(certstore->legacy_file);
 		free(certstore);
 	}
 }

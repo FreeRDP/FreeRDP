@@ -685,7 +685,7 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 		                                  ':', '#'))
 		{
 			WLog_ERR(TAG, "Invalid device argument: \"%s\"", devices);
-			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			return FALSE;
 		}
 
 		if (add_by_addr)
@@ -714,7 +714,7 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 	return CHANNEL_RC_OK;
 }
 
-static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
+static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, const ADDIN_ARGV* args)
 {
 	int status;
 	LPSTR devices = NULL;
@@ -907,7 +907,7 @@ UINT freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS 
 	UINT rc;
 	UINT status;
 	UDEVMAN* udevman;
-	ADDIN_ARGV* args = pEntryPoints->args;
+	const ADDIN_ARGV* args = pEntryPoints->args;
 	udevman = (PUDEVMAN)calloc(1, sizeof(UDEVMAN));
 
 	if (!udevman)

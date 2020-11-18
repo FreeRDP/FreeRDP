@@ -118,13 +118,13 @@ FREERDP_LOCAL void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
 FREERDP_LOCAL void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
 FREERDP_LOCAL void nego_enable_ext(rdpNego* nego, BOOL enable_ext);
 FREERDP_LOCAL const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength);
-FREERDP_LOCAL BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken,
+FREERDP_LOCAL BOOL nego_set_routing_token(rdpNego* nego, const BYTE* RoutingToken,
                                           DWORD RoutingTokenLength);
-FREERDP_LOCAL BOOL nego_set_cookie(rdpNego* nego, char* cookie);
+FREERDP_LOCAL BOOL nego_set_cookie(rdpNego* nego, const char* cookie);
 FREERDP_LOCAL void nego_set_cookie_max_length(rdpNego* nego, UINT32 CookieMaxLength);
 FREERDP_LOCAL void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL SendPreconnectionPdu);
 FREERDP_LOCAL void nego_set_preconnection_id(rdpNego* nego, UINT32 PreconnectionId);
-FREERDP_LOCAL void nego_set_preconnection_blob(rdpNego* nego, char* PreconnectionBlob);
+FREERDP_LOCAL void nego_set_preconnection_blob(rdpNego* nego, const char* PreconnectionBlob);
 
 FREERDP_LOCAL UINT32 nego_get_selected_protocol(rdpNego* nego);
 FREERDP_LOCAL BOOL nego_set_selected_protocol(rdpNego* nego, UINT32 SelectedProtocol);

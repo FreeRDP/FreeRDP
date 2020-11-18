@@ -243,7 +243,7 @@ static BOOL path_make(const char* path, LPSECURITY_ATTRIBUTES lpAttributes)
 	return rc;
 }
 
-static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, char* hostname)
+static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, const char* hostname)
 {
 	char hash[41];
 	FILE* fp;

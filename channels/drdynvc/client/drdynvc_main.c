@@ -167,7 +167,7 @@ static IWTSPlugin* dvcman_get_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const 
 	return plugin;
 }
 
-static ADDIN_ARGV* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+static const ADDIN_ARGV* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	return ((DVCMAN_ENTRY_POINTS*)pEntryPoints)->args;
 }
@@ -280,7 +280,7 @@ fail:
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT dvcman_load_addin(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr,
-                              ADDIN_ARGV* args, rdpSettings* settings)
+                              const ADDIN_ARGV* args, rdpSettings* settings)
 {
 	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
@@ -1485,7 +1485,6 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	UINT error;
 	UINT32 status;
 	UINT32 index;
-	ADDIN_ARGV* args;
 	rdpSettings* settings;
 
 	WINPR_UNUSED(pData);
@@ -1509,7 +1508,7 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 	for (index = 0; index < settings->DynamicChannelCount; index++)
 	{
-		args = settings->DynamicChannelArray[index];
+		const ADDIN_ARGV* args = settings->DynamicChannelArray[index];
 		error = dvcman_load_addin(drdynvc, drdynvc->channel_mgr, args, settings);
 
 		if (CHANNEL_RC_OK != error)

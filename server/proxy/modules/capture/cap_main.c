@@ -270,6 +270,7 @@ static proxyPlugin demo_plugin = {
 	NULL,                               /* MouseEvent */
 	NULL,                               /* ClientChannelData */
 	NULL,                               /* ServerChannelData */
+	NULL                                /* ServerFetchTargetAddr */
 };
 
 BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager)

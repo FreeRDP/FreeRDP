@@ -46,7 +46,7 @@
 #define BB_RSA_SIGNATURE_BLOB 8
 
 FREERDP_LOCAL BOOL certificate_read_server_certificate(rdpCertificate* certificate,
-                                                       BYTE* server_cert, size_t length);
+                                                       const BYTE* server_cert, size_t length);
 
 FREERDP_LOCAL rdpCertificate* certificate_clone(rdpCertificate* certificate);
 
