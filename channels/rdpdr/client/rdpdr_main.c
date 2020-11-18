@@ -929,6 +929,7 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
  */
 static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 {
+	const char* name;
 	UINT32 index;
 	rdpSettings* settings;
 	UINT error = CHANNEL_RC_OK;
@@ -942,12 +943,13 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 
 	settings = (rdpSettings*)rdpdr->channelEntryPoints.pExtendedData;
 
-	if (settings->ClientHostname)
-		strncpy(rdpdr->computerName, settings->ClientHostname, sizeof(rdpdr->computerName) - 1);
-	else
-		strncpy(rdpdr->computerName, settings->ComputerName, sizeof(rdpdr->computerName) - 1);
+	name = freerdp_settings_get_string(settings, FreeRDP_ClientHostname);
+	if (!name)
+		name = freerdp_settings_get_string(settings, FreeRDP_ComputerName);
 
-	for (index = 0; index < settings->DeviceCount; index++)
+	strncpy(rdpdr->computerName, name, sizeof(rdpdr->computerName) - 1);
+
+	for (index = 0; index < freerdp_settings_get_uint32(settings, FreeRDP_DeviceCount); index++)
 	{
 		const RDPDR_DEVICE* device = settings->DeviceArray[index];
 

@@ -165,7 +165,12 @@ static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplic
 	BOOL restoreSigMask = FALSE;
 	numArgs = 0;
 	lpszEnvironmentBlock = NULL;
-	pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
+	/* https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessa
+	 */
+	if (lpCommandLine)
+		pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
+	else
+		pArgs = CommandLineToArgvA(lpApplicationName, &numArgs);
 
 	if (!pArgs)
 		return FALSE;

@@ -701,7 +701,8 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 		return FALSE;
 	}
 
-	gcc_write_client_data_blocks(client_data, mcs);
+	if (!gcc_write_client_data_blocks(client_data, mcs))
+		goto out;
 	gcc_CCrq = Stream_New(NULL, 1024);
 
 	if (!gcc_CCrq)
@@ -710,7 +711,8 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 		goto out;
 	}
 
-	gcc_write_conference_create_request(gcc_CCrq, client_data);
+	if (!gcc_write_conference_create_request(gcc_CCrq, client_data))
+		goto out;
 	length = Stream_GetPosition(gcc_CCrq) + 7;
 	s = Stream_New(NULL, 1024 + length);
 
@@ -825,7 +827,8 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 		goto out;
 	}
 
-	gcc_write_conference_create_response(gcc_CCrsp, server_data);
+	if (!gcc_write_conference_create_response(gcc_CCrsp, server_data))
+		goto out;
 	length = Stream_GetPosition(gcc_CCrsp) + 7;
 	s = Stream_New(NULL, length + 1024);
 

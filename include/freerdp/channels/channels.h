@@ -34,11 +34,12 @@ extern "C"
 #endif
 
 	FREERDP_API int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,
-	                                             PVIRTUALCHANNELENTRY entry, void* data);
+	                                             PVIRTUALCHANNELENTRY entry, const void* data);
 	FREERDP_API int freerdp_channels_client_load_ex(rdpChannels* channels, rdpSettings* settings,
-	                                                PVIRTUALCHANNELENTRYEX entryEx, void* data);
+	                                                PVIRTUALCHANNELENTRYEX entryEx,
+	                                                const void* data);
 	FREERDP_API int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings,
-	                                             const char* name, void* data);
+	                                             const char* name, const void* data);
 	FREERDP_API BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance,
 	                                          void** read_fds, int* read_count, void** write_fds,
 	                                          int* write_count);

@@ -68,18 +68,17 @@ static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
  */
 static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 {
-	char* name;
+	const char* name;
 	char* pass;
-	char* password;
+	const char* password;
 	rdpSettings* settings = remdesk->settings;
 
 	if (remdesk->ExpertBlob)
 		return CHANNEL_RC_OK;
 
-	if (settings->RemoteAssistancePassword)
-		password = settings->RemoteAssistancePassword;
-	else
-		password = settings->Password;
+	password = freerdp_settings_get_string(settings, FreeRDP_RemoteAssistancePassword);
+	if (!password)
+		password = freerdp_settings_get_string(settings, FreeRDP_Password);
 
 	if (!password)
 	{
@@ -87,13 +86,14 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	name = settings->Username;
+	name = freerdp_settings_get_string(settings, FreeRDP_Username);
 
 	if (!name)
 		name = "Expert";
 
 	remdesk->EncryptedPassStub = freerdp_assistance_encrypt_pass_stub(
-	    password, settings->RemoteAssistancePassStub, &(remdesk->EncryptedPassStubSize));
+	    password, freerdp_settings_get_string(settings, FreeRDP_RemoteAssistancePassStub),
+	    &(remdesk->EncryptedPassStubSize));
 
 	if (!remdesk->EncryptedPassStub)
 	{
@@ -334,7 +334,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	WCHAR* expertBlobW = NULL;
 	int cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
-	REMDESK_CTL_AUTHENTICATE_PDU pdu;
+	REMDESK_CTL_AUTHENTICATE_PDU pdu = { 0 };
 
 	if ((error = remdesk_generate_expert_blob(remdesk)))
 	{

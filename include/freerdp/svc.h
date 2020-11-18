@@ -46,7 +46,7 @@ struct _CHANNEL_ENTRY_POINTS_FREERDP
 
 	/* Extended Fields */
 	UINT32 MagicNumber;  /* identifies FreeRDP */
-	void* pExtendedData; /* extended initial data */
+	const void* pExtendedData; /* extended initial data */
 	void* pInterface;    /* channel callback interface, use after initialization */
 	rdpContext* context;
 };
@@ -64,7 +64,7 @@ struct _CHANNEL_ENTRY_POINTS_FREERDP_EX
 
 	/* Extended Fields */
 	UINT32 MagicNumber;  /* identifies FreeRDP */
-	void* pExtendedData; /* extended initial data */
+	const void* pExtendedData; /* extended initial data */
 	void* pInterface;    /* channel callback interface, use after initialization */
 	rdpContext* context;
 };

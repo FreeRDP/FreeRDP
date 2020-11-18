@@ -84,9 +84,9 @@ static int init_external_addin(Plugin* plugin)
 	}
 
 	// Execute plugin
-	if (!CreateProcess(NULL,
-	                   plugin->channelEntryPoints.pExtendedData, // command line
-	                   NULL,                                     // process security attributes
+	if (!CreateProcess(plugin->channelEntryPoints.pExtendedData,
+	                   NULL,         // command line
+	                   NULL,         // process security attributes
 	                   NULL,         // primary thread security attributes
 	                   TRUE,         // handles are inherited
 	                   0,            // creation flags
