@@ -462,7 +462,7 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* args)
+static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, const ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -516,7 +516,7 @@ static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* a
  */
 UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	AudinPulseDevice* pulse;
 	UINT error;
 	pulse = (AudinPulseDevice*)calloc(1, sizeof(AudinPulseDevice));

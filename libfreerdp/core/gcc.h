@@ -31,9 +31,9 @@
 #include <winpr/stream.h>
 
 FREERDP_LOCAL BOOL gcc_read_conference_create_request(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL void gcc_write_conference_create_request(wStream* s, wStream* userData);
+FREERDP_LOCAL BOOL gcc_write_conference_create_request(wStream* s, wStream* userData);
 FREERDP_LOCAL BOOL gcc_read_conference_create_response(wStream* s, rdpMcs* mcs);
-FREERDP_LOCAL void gcc_write_conference_create_response(wStream* s, wStream* userData);
+FREERDP_LOCAL BOOL gcc_write_conference_create_response(wStream* s, wStream* userData);
 FREERDP_LOCAL BOOL gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs);
 FREERDP_LOCAL BOOL gcc_write_server_data_blocks(wStream* s, rdpMcs* mcs);
 

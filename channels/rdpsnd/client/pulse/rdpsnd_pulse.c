@@ -535,7 +535,7 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -585,7 +585,7 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
  */
 UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	rdpsndPulsePlugin* pulse;
 	UINT ret;
 	pulse = (rdpsndPulsePlugin*)calloc(1, sizeof(rdpsndPulsePlugin));
@@ -605,7 +605,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 
 	if (args->argc > 1)
 	{
-		ret = rdpsnd_pulse_parse_addin_args((rdpsndDevicePlugin*)pulse, args);
+		ret = rdpsnd_pulse_parse_addin_args(&pulse->device, args);
 
 		if (ret != CHANNEL_RC_OK)
 		{

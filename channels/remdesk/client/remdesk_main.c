@@ -334,7 +334,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	WCHAR* expertBlobW = NULL;
 	int cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
-	REMDESK_CTL_AUTHENTICATE_PDU pdu;
+	REMDESK_CTL_AUTHENTICATE_PDU pdu = { 0 };
 
 	if ((error = remdesk_generate_expert_blob(remdesk)))
 	{

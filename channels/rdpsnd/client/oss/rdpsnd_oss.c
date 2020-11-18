@@ -386,7 +386,7 @@ static UINT rdpsnd_oss_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 	return 10; /* TODO: Get real latency in [ms] */
 }
 
-static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
 {
 	int status;
 	char *str_num, *eptr;
@@ -455,9 +455,8 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* a
  */
 UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
-	rdpsndOssPlugin* oss;
-	oss = (rdpsndOssPlugin*)calloc(1, sizeof(rdpsndOssPlugin));
+	const ADDIN_ARGV* args;
+	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)calloc(1, sizeof(rdpsndOssPlugin));
 
 	if (!oss)
 		return CHANNEL_RC_NO_MEMORY;
@@ -473,7 +472,11 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	oss->mixer_handle = -1;
 	oss->dev_unit = -1;
 	args = pEntryPoints->args;
-	rdpsnd_oss_parse_addin_args((rdpsndDevicePlugin*)oss, args);
+	if (rdpsnd_oss_parse_addin_args(&oss->device, args) < 0)
+	{
+		free(oss);
+		return ERROR_INVALID_PARAMETER;
+	}
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)oss);
 	return CHANNEL_RC_OK;
 }
