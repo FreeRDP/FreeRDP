@@ -13,6 +13,7 @@ install_manifest*.txt
 CTestTestfile.cmake
 *.pc
 Makefile
+!docs/Makefile
 Testing
 cmake_install.cmake
 CPackConfig.cmake

@@ -983,7 +983,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	CopyMemory(&buffer[offset], &request_pdu.auth_verifier.auth_type, 8);
 	offset += 8;
 	Buffers[0].BufferType = SECBUFFER_DATA | SECBUFFER_READONLY; /* auth_data */
-	Buffers[1].BufferType = SECBUFFER_TOKEN; /* signature */
+	Buffers[1].BufferType = SECBUFFER_TOKEN;                     /* signature */
 	Buffers[0].pvBuffer = buffer;
 	Buffers[0].cbBuffer = offset;
 	Buffers[1].cbBuffer = size;

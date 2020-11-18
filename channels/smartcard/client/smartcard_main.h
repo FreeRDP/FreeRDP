@@ -57,38 +57,38 @@
 #define SCARD_IOCTL_REMOVEREADERFROMGROUPA                \
 	RDP_SCARD_CTL_CODE(30) /* SCardRemoveReaderFromGroupA \
 	                        */
-#define SCARD_IOCTL_REMOVEREADERFROMGROUPW                                                    \
-	RDP_SCARD_CTL_CODE(31)                                     /* SCardRemoveReaderFromGroupW \
-	                                                            */
-#define SCARD_IOCTL_LOCATECARDSA RDP_SCARD_CTL_CODE(38)        /* SCardLocateCardsA */
-#define SCARD_IOCTL_LOCATECARDSW RDP_SCARD_CTL_CODE(39)        /* SCardLocateCardsW */
-#define SCARD_IOCTL_GETSTATUSCHANGEA RDP_SCARD_CTL_CODE(40)    /* SCardGetStatusChangeA */
-#define SCARD_IOCTL_GETSTATUSCHANGEW RDP_SCARD_CTL_CODE(41)    /* SCardGetStatusChangeW */
-#define SCARD_IOCTL_CANCEL RDP_SCARD_CTL_CODE(42)              /* SCardCancel */
-#define SCARD_IOCTL_CONNECTA RDP_SCARD_CTL_CODE(43)            /* SCardConnectA */
-#define SCARD_IOCTL_CONNECTW RDP_SCARD_CTL_CODE(44)            /* SCardConnectW */
-#define SCARD_IOCTL_RECONNECT RDP_SCARD_CTL_CODE(45)           /* SCardReconnect */
-#define SCARD_IOCTL_DISCONNECT RDP_SCARD_CTL_CODE(46)          /* SCardDisconnect */
-#define SCARD_IOCTL_BEGINTRANSACTION RDP_SCARD_CTL_CODE(47)    /* SCardBeginTransaction */
-#define SCARD_IOCTL_ENDTRANSACTION RDP_SCARD_CTL_CODE(48)      /* SCardEndTransaction */
-#define SCARD_IOCTL_STATE RDP_SCARD_CTL_CODE(49)               /* SCardState */
-#define SCARD_IOCTL_STATUSA RDP_SCARD_CTL_CODE(50)             /* SCardStatusA */
-#define SCARD_IOCTL_STATUSW RDP_SCARD_CTL_CODE(51)             /* SCardStatusW */
-#define SCARD_IOCTL_TRANSMIT RDP_SCARD_CTL_CODE(52)            /* SCardTransmit */
-#define SCARD_IOCTL_CONTROL RDP_SCARD_CTL_CODE(53)             /* SCardControl */
-#define SCARD_IOCTL_GETATTRIB RDP_SCARD_CTL_CODE(54)           /* SCardGetAttrib */
-#define SCARD_IOCTL_SETATTRIB RDP_SCARD_CTL_CODE(55)           /* SCardSetAttrib */
-#define SCARD_IOCTL_ACCESSSTARTEDEVENT RDP_SCARD_CTL_CODE(56)  /* SCardAccessStartedEvent */
-#define SCARD_IOCTL_RELEASETARTEDEVENT RDP_SCARD_CTL_CODE(57)  /* SCardReleaseStartedEvent */
-#define SCARD_IOCTL_LOCATECARDSBYATRA RDP_SCARD_CTL_CODE(58)   /* SCardLocateCardsByATRA */
-#define SCARD_IOCTL_LOCATECARDSBYATRW RDP_SCARD_CTL_CODE(59)   /* SCardLocateCardsByATRW */
-#define SCARD_IOCTL_READCACHEA RDP_SCARD_CTL_CODE(60)          /* SCardReadCacheA */
-#define SCARD_IOCTL_READCACHEW RDP_SCARD_CTL_CODE(61)          /* SCardReadCacheW */
-#define SCARD_IOCTL_WRITECACHEA RDP_SCARD_CTL_CODE(62)         /* SCardWriteCacheA */
-#define SCARD_IOCTL_WRITECACHEW RDP_SCARD_CTL_CODE(63)         /* SCardWriteCacheW */
-#define SCARD_IOCTL_GETTRANSMITCOUNT RDP_SCARD_CTL_CODE(64)    /* SCardGetTransmitCount */
-#define SCARD_IOCTL_GETREADERICON RDP_SCARD_CTL_CODE(65)       /* SCardGetReaderIconA */
-#define SCARD_IOCTL_GETDEVICETYPEID RDP_SCARD_CTL_CODE(66)     /* SCardGetDeviceTypeIdA */
+#define SCARD_IOCTL_REMOVEREADERFROMGROUPW                                                   \
+	RDP_SCARD_CTL_CODE(31)                                    /* SCardRemoveReaderFromGroupW \
+	                                                           */
+#define SCARD_IOCTL_LOCATECARDSA RDP_SCARD_CTL_CODE(38)       /* SCardLocateCardsA */
+#define SCARD_IOCTL_LOCATECARDSW RDP_SCARD_CTL_CODE(39)       /* SCardLocateCardsW */
+#define SCARD_IOCTL_GETSTATUSCHANGEA RDP_SCARD_CTL_CODE(40)   /* SCardGetStatusChangeA */
+#define SCARD_IOCTL_GETSTATUSCHANGEW RDP_SCARD_CTL_CODE(41)   /* SCardGetStatusChangeW */
+#define SCARD_IOCTL_CANCEL RDP_SCARD_CTL_CODE(42)             /* SCardCancel */
+#define SCARD_IOCTL_CONNECTA RDP_SCARD_CTL_CODE(43)           /* SCardConnectA */
+#define SCARD_IOCTL_CONNECTW RDP_SCARD_CTL_CODE(44)           /* SCardConnectW */
+#define SCARD_IOCTL_RECONNECT RDP_SCARD_CTL_CODE(45)          /* SCardReconnect */
+#define SCARD_IOCTL_DISCONNECT RDP_SCARD_CTL_CODE(46)         /* SCardDisconnect */
+#define SCARD_IOCTL_BEGINTRANSACTION RDP_SCARD_CTL_CODE(47)   /* SCardBeginTransaction */
+#define SCARD_IOCTL_ENDTRANSACTION RDP_SCARD_CTL_CODE(48)     /* SCardEndTransaction */
+#define SCARD_IOCTL_STATE RDP_SCARD_CTL_CODE(49)              /* SCardState */
+#define SCARD_IOCTL_STATUSA RDP_SCARD_CTL_CODE(50)            /* SCardStatusA */
+#define SCARD_IOCTL_STATUSW RDP_SCARD_CTL_CODE(51)            /* SCardStatusW */
+#define SCARD_IOCTL_TRANSMIT RDP_SCARD_CTL_CODE(52)           /* SCardTransmit */
+#define SCARD_IOCTL_CONTROL RDP_SCARD_CTL_CODE(53)            /* SCardControl */
+#define SCARD_IOCTL_GETATTRIB RDP_SCARD_CTL_CODE(54)          /* SCardGetAttrib */
+#define SCARD_IOCTL_SETATTRIB RDP_SCARD_CTL_CODE(55)          /* SCardSetAttrib */
+#define SCARD_IOCTL_ACCESSSTARTEDEVENT RDP_SCARD_CTL_CODE(56) /* SCardAccessStartedEvent */
+#define SCARD_IOCTL_RELEASETARTEDEVENT RDP_SCARD_CTL_CODE(57) /* SCardReleaseStartedEvent */
+#define SCARD_IOCTL_LOCATECARDSBYATRA RDP_SCARD_CTL_CODE(58)  /* SCardLocateCardsByATRA */
+#define SCARD_IOCTL_LOCATECARDSBYATRW RDP_SCARD_CTL_CODE(59)  /* SCardLocateCardsByATRW */
+#define SCARD_IOCTL_READCACHEA RDP_SCARD_CTL_CODE(60)         /* SCardReadCacheA */
+#define SCARD_IOCTL_READCACHEW RDP_SCARD_CTL_CODE(61)         /* SCardReadCacheW */
+#define SCARD_IOCTL_WRITECACHEA RDP_SCARD_CTL_CODE(62)        /* SCardWriteCacheA */
+#define SCARD_IOCTL_WRITECACHEW RDP_SCARD_CTL_CODE(63)        /* SCardWriteCacheW */
+#define SCARD_IOCTL_GETTRANSMITCOUNT RDP_SCARD_CTL_CODE(64)   /* SCardGetTransmitCount */
+#define SCARD_IOCTL_GETREADERICON RDP_SCARD_CTL_CODE(65)      /* SCardGetReaderIconA */
+#define SCARD_IOCTL_GETDEVICETYPEID RDP_SCARD_CTL_CODE(66)    /* SCardGetDeviceTypeIdA */
 
 typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
 

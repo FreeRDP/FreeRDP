@@ -2537,8 +2537,8 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, call->dwTimeOut);      /* dwTimeOut (4 bytes) */
-	Stream_Read_UINT32(s, call->cReaders);       /* cReaders (4 bytes) */
+	Stream_Read_UINT32(s, call->dwTimeOut); /* dwTimeOut (4 bytes) */
+	Stream_Read_UINT32(s, call->cReaders);  /* cReaders (4 bytes) */
 	if (!smartcard_ndr_pointer_read(s, &index, &ndrPtr))
 		return ERROR_INVALID_DATA;
 
@@ -2613,9 +2613,9 @@ LONG smartcard_pack_state_return(SMARTCARD_DEVICE* smartcard, wStream* s, const 
 	if (ret->ReturnCode != SCARD_S_SUCCESS)
 		return ret->ReturnCode;
 
-	Stream_Write_UINT32(s, ret->dwState);       /* dwState (4 bytes) */
-	Stream_Write_UINT32(s, ret->dwProtocol);    /* dwProtocol (4 bytes) */
-	Stream_Write_UINT32(s, ret->cbAtrLen);      /* cbAtrLen (4 bytes) */
+	Stream_Write_UINT32(s, ret->dwState);    /* dwState (4 bytes) */
+	Stream_Write_UINT32(s, ret->dwProtocol); /* dwProtocol (4 bytes) */
+	Stream_Write_UINT32(s, ret->cbAtrLen);   /* cbAtrLen (4 bytes) */
 	if (!smartcard_ndr_pointer_write(s, &index, ret->cbAtrLen))
 		return SCARD_E_NO_MEMORY;
 	return smartcard_ndr_write(s, ret->rgAtr, ret->cbAtrLen, 1, NDR_PTR_SIMPLE);
@@ -2675,10 +2675,10 @@ LONG smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, const
 	if (!Stream_EnsureRemainingCapacity(s, 44))
 		return SCARD_F_INTERNAL_ERROR;
 
-	Stream_Write_UINT32(s, ret->dwState);    /* dwState (4 bytes) */
-	Stream_Write_UINT32(s, ret->dwProtocol); /* dwProtocol (4 bytes) */
+	Stream_Write_UINT32(s, ret->dwState);            /* dwState (4 bytes) */
+	Stream_Write_UINT32(s, ret->dwProtocol);         /* dwProtocol (4 bytes) */
 	Stream_Write(s, ret->pbAtr, sizeof(ret->pbAtr)); /* pbAtr (32 bytes) */
-	Stream_Write_UINT32(s, ret->cbAtrLen);   /* cbAtrLen (4 bytes) */
+	Stream_Write_UINT32(s, ret->cbAtrLen);           /* cbAtrLen (4 bytes) */
 	return smartcard_ndr_write(s, ret->mszReaderNames, size, 1, NDR_PTR_SIMPLE);
 }
 
@@ -2755,8 +2755,8 @@ LONG smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, call->dwControlCode);     /* dwControlCode (4 bytes) */
-	Stream_Read_UINT32(s, call->cbInBufferSize);    /* cbInBufferSize (4 bytes) */
+	Stream_Read_UINT32(s, call->dwControlCode);                    /* dwControlCode (4 bytes) */
+	Stream_Read_UINT32(s, call->cbInBufferSize);                   /* cbInBufferSize (4 bytes) */
 	if (!smartcard_ndr_pointer_read(s, &index, &pvInBufferNdrPtr)) /* pvInBufferNdrPtr (4 bytes) */
 		return ERROR_INVALID_DATA;
 	Stream_Read_INT32(s, call->fpvOutBufferIsNULL); /* fpvOutBufferIsNULL (4 bytes) */
@@ -2828,13 +2828,13 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, ioSendPci.dwProtocol);     /* dwProtocol (4 bytes) */
-	Stream_Read_UINT32(s, ioSendPci.cbExtraBytes);   /* cbExtraBytes (4 bytes) */
+	Stream_Read_UINT32(s, ioSendPci.dwProtocol);   /* dwProtocol (4 bytes) */
+	Stream_Read_UINT32(s, ioSendPci.cbExtraBytes); /* cbExtraBytes (4 bytes) */
 	if (!smartcard_ndr_pointer_read(s, &index,
 	                                &pbExtraBytesNdrPtr)) /* pbExtraBytesNdrPtr (4 bytes) */
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, call->cbSendLength);       /* cbSendLength (4 bytes) */
+	Stream_Read_UINT32(s, call->cbSendLength); /* cbSendLength (4 bytes) */
 	if (!smartcard_ndr_pointer_read(s, &index,
 	                                &pbSendBufferNdrPtr)) /* pbSendBufferNdrPtr (4 bytes) */
 		return ERROR_INVALID_DATA;
@@ -3347,7 +3347,7 @@ LONG smartcard_unpack_locate_cards_by_atr_w_call(SMARTCARD_DEVICE* smartcard, wS
 	if (!smartcard_ndr_pointer_read(s, &index, &rgAtrMasksNdrPtr))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, call->cReaders);       /* cReaders (4 bytes) */
+	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
 	if (!smartcard_ndr_pointer_read(s, &index, &rgReaderStatesNdrPtr))
 		return ERROR_INVALID_DATA;
 

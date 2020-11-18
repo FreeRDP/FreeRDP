@@ -1,0 +1,107 @@
+digraph {
+    graph [rankdir="LR"];
+
+    subgraph cluster_4 {
+        label="Legend";
+        "Procedure"       [shape=rectangle;fillcolor=lightblue;style="bold,filled"];
+        "/option"         [shape=rectangle;fillcolor=yellow;style="rounded,filled"];
+        "Structure field" [shape=rectangle;style=""];
+        "Device"          [shape=rectangle;style="bold,rounded"];
+    };
+
+    node [shape=rectangle;fillcolor=white;style=""];
+        
+    // options
+    node [shape=rectangle;fillcolor=yellow;style="rounded,filled"];
+     rank = same; "/pkcs11module" "/smartcardlogon" "/pkcs11module" "/pin" "/card" "/csp" "/pkinit-anchors" "/start-time" "/lifetime" "/renewable-lifetime" "/T";
+
+    node [shape=rectangle;style=""];
+
+    subgraph cluster_0 {
+        label = "scquery certificate";
+        node [shape=record];
+        // (insert (format "{%s}" (mapconcat (lambda (field) (format "<%s>%s" field field)) '(slot_id token_label certificate_id certificate_label certificate_type issuer subject certificate_value key_type protected_authentication_path) "|")))
+        scquery_certificate [label="<slot_id>slot_id|<token_label>token_label|<certificate_id>certificate_id|<certificate_label>certificate_label|<certificate_type>certificate_type|<issuer>issuer|<subject>subject|<certificate_value>certificate_value|<key_type>key_type|<protected_authentication_path>protected_authentication_path"];
+	};
+
+    subgraph cluster_1 {
+        label = "RdpSettings";
+        node [shape=record];
+        // (insert (format "{%s}" (mapconcat (lambda (field) (format "<%s>%s" field field)) '(SmartcardLogon Pkcs11Module PinLoginRequired PinPadIsPresent Pin KeySpec CardName ReaderName ContainerName CspName UserHint DomainHint CredentialsType UserPrincipalName CanonicalizedUserHint IdCertificate IdCertificateLength PkinitIdentity PkinitAnchors SlotId TokenLabel TokenFlags KerberosStartTime KerberosLifeTime KerberosRenewableLifeTime Pkinit PkinitCertificate Krb5Trace) "|")))
+        rdpsettings [label="<SmartcardLogon>SmartcardLogon|<Pkcs11Module>Pkcs11Module|<PinLoginRequired>PinLoginRequired|<PinPadIsPresent>PinPadIsPresent|<Pin>Pin|<KeySpec>KeySpec|<CardName>CardName|<ReaderName>ReaderName|<ContainerName>ContainerName|<CspName>CspName|<UserHint>UserHint|<DomainHint>DomainHint|<CredentialsType>CredentialsType|<UserPrincipalName>UserPrincipalName|<CanonicalizedUserHint>CanonicalizedUserHint|<IdCertificate>IdCertificate|<IdCertificateLength>IdCertificateLength|<PkinitIdentity>PkinitIdentity|<PkinitAnchors>PkinitAnchors|<SlotId>SlotId|<TokenLabel>TokenLabel|<TokenFlags>TokenFlags|<KerberosStartTime>KerberosStartTime|<KerberosLifeTime>KerberosLifeTime|<KerberosRenewableLifeTime>KerberosRenewableLifeTime|<Pkinit>Pkinit|<PkinitCertificate>PkinitCertificate|<Krb5Trace>Krb5Trace"];
+	};
+
+    scquery_certificate;
+    rdpsettings;
+
+    "Card Reader" [shape=rectangle;style="bold,rounded"];
+    "Smartcard"   [shape=rectangle;style="bold,rounded"];
+
+    "Card Reader" -> scquery_certificate:slot_id:w;
+    "Card Reader" -> scquery_certificate:token_label:w;
+    "Card Reader" -> scquery_certificate:protected_authentication_path:w;
+    
+    "Smartcard"-> scquery_certificate:certificate_id:w;
+    "Smartcard"-> scquery_certificate:certificate_label:w;
+    "Smartcard"-> scquery_certificate:certificate_type:w;
+    "Smartcard"-> scquery_certificate:issuer:w;
+    "Smartcard"-> scquery_certificate:subject:w;
+    "Smartcard"-> scquery_certificate:certificate_value:w;
+    "Smartcard"-> scquery_certificate:key_type:w;
+
+
+    "/pkcs11module"       -> rdpsettings:Pkcs11Module;
+    "/smartcardlogon"     -> rdpsettings:SmartcardLogon;
+    "/smartcardlogon"     -> rdpsettings:CredentialsType;
+    
+    "/pin"                -> rdpsettings:Pin;
+    "/card"               -> rdpsettings:CardName;
+    "/csp"                -> rdpsettings:CspName;
+
+    "/pkinit-anchors"     -> rdpsettings:PkinitAnchors;
+    "/start-time"         -> rdpsettings:KerberosStartTime;
+    "/lifetime"           -> rdpsettings:KerberosLifeTime;
+    "/renewable-lifetime" -> rdpsettings:KerberosRenewableLifeTime;
+    "/T"                  -> rdpsettings:Krb5Trace;
+
+
+    node [shape=rectangle;fillcolor=lightblue;style="bold,filled"];
+    rdpsettings:Pkcs11Module -> find_x509_certificates;
+    rdpsettings:CardName     -> find_x509_certificates;
+    rdpsettings:ReaderName   -> find_x509_certificates;
+    find_x509_certificates   -> scquery_certificate [arrowhead=empty;style=dotted];
+
+    scquery_certificate:certificate_value -> extract_subject_alt_names -> rdpsettings:UserPrincipalName;
+
+    rdpsettings:Pin                   -> nla;
+    rdpsettings:KeySpec               -> nla;
+    rdpsettings:CardName              -> nla;
+    rdpsettings:ReaderName            -> nla;
+    rdpsettings:ContainerName         -> nla;
+    rdpsettings:CspName               -> nla;
+    rdpsettings:UserHint              -> nla;
+    rdpsettings:DomainHint            -> nla;
+    rdpsettings:CredentialsType       -> nla;
+    rdpsettings:UserPrincipalName     -> nla;
+    rdpsettings:CanonicalizedUserHint -> nla;
+    rdpsettings:IdCertificate         -> nla;
+    
+    pkinit -> rdpsettings:CanonicalizedUserHint;
+    rdpsettings:IdCertificate                      -> pkinit;
+    rdpsettings:IdCertificateLength                -> pkinit;
+    rdpsettings:PkinitIdentity                     -> pkinit;
+    rdpsettings:PkinitAnchors                      -> pkinit;
+    rdpsettings:SlotId                             -> pkinit;
+    rdpsettings:TokenLabel                         -> pkinit;
+    rdpsettings:TokenFlags                         -> pkinit;
+    rdpsettings:KerberosStartTime                  -> pkinit;
+    rdpsettings:KerberosLifeTime                   -> pkinit;
+    rdpsettings:KerberosRenewableLifeTime          -> pkinit;
+    rdpsettings:Krb5Trace                          -> pkinit;
+    
+    scquery_certificate -> "?1" -> rdpsettings:PkinitIdentity;
+    "?2" -> rdpsettings:CanonicalizedUserHint;
+    "?2" -> rdpsettings:TokenFlags;
+
+    "Note: this graph is outdated, it shows the old pkinit procedure.\nIt'll be updated as soon as possible with kinit." [shape=plaintext;fillcolor=white;style=""];
+}
