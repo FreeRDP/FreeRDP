@@ -1067,17 +1067,15 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 	em = Stream_GetPosition(s);
 	Stream_SetPosition(s, bm);
-	tpkt_write_header(s, length);
-	tpdu_write_connection_confirm(s, length - 5);
-	Stream_SetPosition(s, em);
-	Stream_SealLength(s);
-
-	if (transport_write(nego->transport, s) < 0)
+	status = tpkt_write_header(s, length);
+	if (status)
 	{
-		Stream_Free(s, TRUE);
-		return FALSE;
-	}
+		tpdu_write_connection_confirm(s, length - 5);
+		Stream_SetPosition(s, em);
+		Stream_SealLength(s);
 
+		status = (transport_write(nego->transport, s) >= 0);
+	}
 	Stream_Free(s, TRUE);
 
 	if (status)
