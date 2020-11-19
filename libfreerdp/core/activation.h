@@ -55,5 +55,6 @@ FREERDP_LOCAL BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s);
 
 FREERDP_LOCAL BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_server_accept_client_persistent_key_list_pdu(rdpRdp* rdp, wStream* s);
 
 #endif /* FREERDP_LIB_CORE_ACTIVATION_H */
