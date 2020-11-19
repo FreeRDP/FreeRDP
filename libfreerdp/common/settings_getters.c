@@ -3,6 +3,8 @@
 #include <freerdp/settings.h>
 #include <freerdp/log.h>
 
+#include "../core/settings.h"
+
 #define TAG FREERDP_TAG("common.settings")
 
 BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
@@ -1360,6 +1362,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_ExtEncryptionMethods:
 			return settings->ExtEncryptionMethods;
 
+		case FreeRDP_Floatbar:
+			return settings->Floatbar;
+
 		case FreeRDP_FrameAcknowledge:
 			return settings->FrameAcknowledge;
 
@@ -1739,6 +1744,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_ExtEncryptionMethods:
 			settings->ExtEncryptionMethods = val;
+			break;
+
+		case FreeRDP_Floatbar:
+			settings->Floatbar = val;
 			break;
 
 		case FreeRDP_FrameAcknowledge:
@@ -2164,6 +2173,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_AcceptedCert:
 			return settings->AcceptedCert;
 
+		case FreeRDP_ActionScript:
+			return settings->ActionScript;
+
 		case FreeRDP_AllowedTlsCiphers:
 			return settings->AllowedTlsCiphers;
 
@@ -2365,7 +2377,8 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 	}
 }
 
-BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* val, BOOL cleanup)
+BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* val, size_t len,
+                                  BOOL cleanup)
 {
 	if (!settings)
 		return FALSE;
@@ -2375,397 +2388,403 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 		case FreeRDP_AcceptedCert:
 			if (cleanup)
 				free(settings->AcceptedCert);
-			settings->AcceptedCert = (val ? _strdup(val) : NULL);
+			settings->AcceptedCert = (val ? strndup(val, len) : NULL);
 			return (!val || settings->AcceptedCert != NULL);
+
+		case FreeRDP_ActionScript:
+			if (cleanup)
+				free(settings->ActionScript);
+			settings->ActionScript = (val ? strndup(val, len) : NULL);
+			return (!val || settings->ActionScript != NULL);
 
 		case FreeRDP_AllowedTlsCiphers:
 			if (cleanup)
 				free(settings->AllowedTlsCiphers);
-			settings->AllowedTlsCiphers = (val ? _strdup(val) : NULL);
+			settings->AllowedTlsCiphers = (val ? strndup(val, len) : NULL);
 			return (!val || settings->AllowedTlsCiphers != NULL);
 
 		case FreeRDP_AlternateShell:
 			if (cleanup)
 				free(settings->AlternateShell);
-			settings->AlternateShell = (val ? _strdup(val) : NULL);
+			settings->AlternateShell = (val ? strndup(val, len) : NULL);
 			return (!val || settings->AlternateShell != NULL);
 
 		case FreeRDP_AssistanceFile:
 			if (cleanup)
 				free(settings->AssistanceFile);
-			settings->AssistanceFile = (val ? _strdup(val) : NULL);
+			settings->AssistanceFile = (val ? strndup(val, len) : NULL);
 			return (!val || settings->AssistanceFile != NULL);
 
 		case FreeRDP_AuthenticationServiceClass:
 			if (cleanup)
 				free(settings->AuthenticationServiceClass);
-			settings->AuthenticationServiceClass = (val ? _strdup(val) : NULL);
+			settings->AuthenticationServiceClass = (val ? strndup(val, len) : NULL);
 			return (!val || settings->AuthenticationServiceClass != NULL);
 
 		case FreeRDP_CertificateAcceptedFingerprints:
 			if (cleanup)
 				free(settings->CertificateAcceptedFingerprints);
-			settings->CertificateAcceptedFingerprints = (val ? _strdup(val) : NULL);
+			settings->CertificateAcceptedFingerprints = (val ? strndup(val, len) : NULL);
 			return (!val || settings->CertificateAcceptedFingerprints != NULL);
 
 		case FreeRDP_CertificateContent:
 			if (cleanup)
 				free(settings->CertificateContent);
-			settings->CertificateContent = (val ? _strdup(val) : NULL);
+			settings->CertificateContent = (val ? strndup(val, len) : NULL);
 			return (!val || settings->CertificateContent != NULL);
 
 		case FreeRDP_CertificateFile:
 			if (cleanup)
 				free(settings->CertificateFile);
-			settings->CertificateFile = (val ? _strdup(val) : NULL);
+			settings->CertificateFile = (val ? strndup(val, len) : NULL);
 			return (!val || settings->CertificateFile != NULL);
 
 		case FreeRDP_CertificateName:
 			if (cleanup)
 				free(settings->CertificateName);
-			settings->CertificateName = (val ? _strdup(val) : NULL);
+			settings->CertificateName = (val ? strndup(val, len) : NULL);
 			return (!val || settings->CertificateName != NULL);
 
 		case FreeRDP_ClientAddress:
 			if (cleanup)
 				free(settings->ClientAddress);
-			settings->ClientAddress = (val ? _strdup(val) : NULL);
+			settings->ClientAddress = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ClientAddress != NULL);
 
 		case FreeRDP_ClientDir:
 			if (cleanup)
 				free(settings->ClientDir);
-			settings->ClientDir = (val ? _strdup(val) : NULL);
+			settings->ClientDir = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ClientDir != NULL);
 
 		case FreeRDP_ClientHostname:
 			if (cleanup)
 				free(settings->ClientHostname);
-			settings->ClientHostname = (val ? _strdup(val) : NULL);
+			settings->ClientHostname = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ClientHostname != NULL);
 
 		case FreeRDP_ClientProductId:
 			if (cleanup)
 				free(settings->ClientProductId);
-			settings->ClientProductId = (val ? _strdup(val) : NULL);
+			settings->ClientProductId = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ClientProductId != NULL);
 
 		case FreeRDP_ComputerName:
 			if (cleanup)
 				free(settings->ComputerName);
-			settings->ComputerName = (val ? _strdup(val) : NULL);
+			settings->ComputerName = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ComputerName != NULL);
 
 		case FreeRDP_ConfigPath:
 			if (cleanup)
 				free(settings->ConfigPath);
-			settings->ConfigPath = (val ? _strdup(val) : NULL);
+			settings->ConfigPath = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ConfigPath != NULL);
 
 		case FreeRDP_ConnectionFile:
 			if (cleanup)
 				free(settings->ConnectionFile);
-			settings->ConnectionFile = (val ? _strdup(val) : NULL);
+			settings->ConnectionFile = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ConnectionFile != NULL);
 
 		case FreeRDP_CurrentPath:
 			if (cleanup)
 				free(settings->CurrentPath);
-			settings->CurrentPath = (val ? _strdup(val) : NULL);
+			settings->CurrentPath = (val ? strndup(val, len) : NULL);
 			return (!val || settings->CurrentPath != NULL);
 
 		case FreeRDP_Domain:
 			if (cleanup)
 				free(settings->Domain);
-			settings->Domain = (val ? _strdup(val) : NULL);
+			settings->Domain = (val ? strndup(val, len) : NULL);
 			return (!val || settings->Domain != NULL);
 
 		case FreeRDP_DrivesToRedirect:
 			if (cleanup)
 				free(settings->DrivesToRedirect);
-			settings->DrivesToRedirect = (val ? _strdup(val) : NULL);
+			settings->DrivesToRedirect = (val ? strndup(val, len) : NULL);
 			return (!val || settings->DrivesToRedirect != NULL);
 
 		case FreeRDP_DumpRemoteFxFile:
 			if (cleanup)
 				free(settings->DumpRemoteFxFile);
-			settings->DumpRemoteFxFile = (val ? _strdup(val) : NULL);
+			settings->DumpRemoteFxFile = (val ? strndup(val, len) : NULL);
 			return (!val || settings->DumpRemoteFxFile != NULL);
 
 		case FreeRDP_DynamicDSTTimeZoneKeyName:
 			if (cleanup)
 				free(settings->DynamicDSTTimeZoneKeyName);
-			settings->DynamicDSTTimeZoneKeyName = (val ? _strdup(val) : NULL);
+			settings->DynamicDSTTimeZoneKeyName = (val ? strndup(val, len) : NULL);
 			return (!val || settings->DynamicDSTTimeZoneKeyName != NULL);
 
 		case FreeRDP_GatewayAcceptedCert:
 			if (cleanup)
 				free(settings->GatewayAcceptedCert);
-			settings->GatewayAcceptedCert = (val ? _strdup(val) : NULL);
+			settings->GatewayAcceptedCert = (val ? strndup(val, len) : NULL);
 			return (!val || settings->GatewayAcceptedCert != NULL);
 
 		case FreeRDP_GatewayAccessToken:
 			if (cleanup)
 				free(settings->GatewayAccessToken);
-			settings->GatewayAccessToken = (val ? _strdup(val) : NULL);
+			settings->GatewayAccessToken = (val ? strndup(val, len) : NULL);
 			return (!val || settings->GatewayAccessToken != NULL);
 
 		case FreeRDP_GatewayDomain:
 			if (cleanup)
 				free(settings->GatewayDomain);
-			settings->GatewayDomain = (val ? _strdup(val) : NULL);
+			settings->GatewayDomain = (val ? strndup(val, len) : NULL);
 			return (!val || settings->GatewayDomain != NULL);
 
 		case FreeRDP_GatewayHostname:
 			if (cleanup)
 				free(settings->GatewayHostname);
-			settings->GatewayHostname = (val ? _strdup(val) : NULL);
+			settings->GatewayHostname = (val ? strndup(val, len) : NULL);
 			return (!val || settings->GatewayHostname != NULL);
 
 		case FreeRDP_GatewayPassword:
 			if (cleanup)
 				free(settings->GatewayPassword);
-			settings->GatewayPassword = (val ? _strdup(val) : NULL);
+			settings->GatewayPassword = (val ? strndup(val, len) : NULL);
 			return (!val || settings->GatewayPassword != NULL);
 
 		case FreeRDP_GatewayUsername:
 			if (cleanup)
 				free(settings->GatewayUsername);
-			settings->GatewayUsername = (val ? _strdup(val) : NULL);
+			settings->GatewayUsername = (val ? strndup(val, len) : NULL);
 			return (!val || settings->GatewayUsername != NULL);
 
 		case FreeRDP_HomePath:
 			if (cleanup)
 				free(settings->HomePath);
-			settings->HomePath = (val ? _strdup(val) : NULL);
+			settings->HomePath = (val ? strndup(val, len) : NULL);
 			return (!val || settings->HomePath != NULL);
 
 		case FreeRDP_ImeFileName:
 			if (cleanup)
 				free(settings->ImeFileName);
-			settings->ImeFileName = (val ? _strdup(val) : NULL);
+			settings->ImeFileName = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ImeFileName != NULL);
 
 		case FreeRDP_KerberosKdc:
 			if (cleanup)
 				free(settings->KerberosKdc);
-			settings->KerberosKdc = (val ? _strdup(val) : NULL);
+			settings->KerberosKdc = (val ? strndup(val, len) : NULL);
 			return (!val || settings->KerberosKdc != NULL);
 
 		case FreeRDP_KerberosRealm:
 			if (cleanup)
 				free(settings->KerberosRealm);
-			settings->KerberosRealm = (val ? _strdup(val) : NULL);
+			settings->KerberosRealm = (val ? strndup(val, len) : NULL);
 			return (!val || settings->KerberosRealm != NULL);
 
 		case FreeRDP_NtlmSamFile:
 			if (cleanup)
 				free(settings->NtlmSamFile);
-			settings->NtlmSamFile = (val ? _strdup(val) : NULL);
+			settings->NtlmSamFile = (val ? strndup(val, len) : NULL);
 			return (!val || settings->NtlmSamFile != NULL);
 
 		case FreeRDP_Password:
 			if (cleanup)
 				free(settings->Password);
-			settings->Password = (val ? _strdup(val) : NULL);
+			settings->Password = (val ? strndup(val, len) : NULL);
 			return (!val || settings->Password != NULL);
 
 		case FreeRDP_PasswordHash:
 			if (cleanup)
 				free(settings->PasswordHash);
-			settings->PasswordHash = (val ? _strdup(val) : NULL);
+			settings->PasswordHash = (val ? strndup(val, len) : NULL);
 			return (!val || settings->PasswordHash != NULL);
 
 		case FreeRDP_PlayRemoteFxFile:
 			if (cleanup)
 				free(settings->PlayRemoteFxFile);
-			settings->PlayRemoteFxFile = (val ? _strdup(val) : NULL);
+			settings->PlayRemoteFxFile = (val ? strndup(val, len) : NULL);
 			return (!val || settings->PlayRemoteFxFile != NULL);
 
 		case FreeRDP_PreconnectionBlob:
 			if (cleanup)
 				free(settings->PreconnectionBlob);
-			settings->PreconnectionBlob = (val ? _strdup(val) : NULL);
+			settings->PreconnectionBlob = (val ? strndup(val, len) : NULL);
 			return (!val || settings->PreconnectionBlob != NULL);
 
 		case FreeRDP_PrivateKeyContent:
 			if (cleanup)
 				free(settings->PrivateKeyContent);
-			settings->PrivateKeyContent = (val ? _strdup(val) : NULL);
+			settings->PrivateKeyContent = (val ? strndup(val, len) : NULL);
 			return (!val || settings->PrivateKeyContent != NULL);
 
 		case FreeRDP_PrivateKeyFile:
 			if (cleanup)
 				free(settings->PrivateKeyFile);
-			settings->PrivateKeyFile = (val ? _strdup(val) : NULL);
+			settings->PrivateKeyFile = (val ? strndup(val, len) : NULL);
 			return (!val || settings->PrivateKeyFile != NULL);
 
 		case FreeRDP_ProxyHostname:
 			if (cleanup)
 				free(settings->ProxyHostname);
-			settings->ProxyHostname = (val ? _strdup(val) : NULL);
+			settings->ProxyHostname = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ProxyHostname != NULL);
 
 		case FreeRDP_ProxyPassword:
 			if (cleanup)
 				free(settings->ProxyPassword);
-			settings->ProxyPassword = (val ? _strdup(val) : NULL);
+			settings->ProxyPassword = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ProxyPassword != NULL);
 
 		case FreeRDP_ProxyUsername:
 			if (cleanup)
 				free(settings->ProxyUsername);
-			settings->ProxyUsername = (val ? _strdup(val) : NULL);
+			settings->ProxyUsername = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ProxyUsername != NULL);
 
 		case FreeRDP_RDP2TCPArgs:
 			if (cleanup)
 				free(settings->RDP2TCPArgs);
-			settings->RDP2TCPArgs = (val ? _strdup(val) : NULL);
+			settings->RDP2TCPArgs = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RDP2TCPArgs != NULL);
 
 		case FreeRDP_RdpKeyContent:
 			if (cleanup)
 				free(settings->RdpKeyContent);
-			settings->RdpKeyContent = (val ? _strdup(val) : NULL);
+			settings->RdpKeyContent = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RdpKeyContent != NULL);
 
 		case FreeRDP_RdpKeyFile:
 			if (cleanup)
 				free(settings->RdpKeyFile);
-			settings->RdpKeyFile = (val ? _strdup(val) : NULL);
+			settings->RdpKeyFile = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RdpKeyFile != NULL);
 
 		case FreeRDP_RedirectionAcceptedCert:
 			if (cleanup)
 				free(settings->RedirectionAcceptedCert);
-			settings->RedirectionAcceptedCert = (val ? _strdup(val) : NULL);
+			settings->RedirectionAcceptedCert = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RedirectionAcceptedCert != NULL);
 
 		case FreeRDP_RedirectionDomain:
 			if (cleanup)
 				free(settings->RedirectionDomain);
-			settings->RedirectionDomain = (val ? _strdup(val) : NULL);
+			settings->RedirectionDomain = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RedirectionDomain != NULL);
 
 		case FreeRDP_RedirectionTargetFQDN:
 			if (cleanup)
 				free(settings->RedirectionTargetFQDN);
-			settings->RedirectionTargetFQDN = (val ? _strdup(val) : NULL);
+			settings->RedirectionTargetFQDN = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RedirectionTargetFQDN != NULL);
 
 		case FreeRDP_RedirectionTargetNetBiosName:
 			if (cleanup)
 				free(settings->RedirectionTargetNetBiosName);
-			settings->RedirectionTargetNetBiosName = (val ? _strdup(val) : NULL);
+			settings->RedirectionTargetNetBiosName = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RedirectionTargetNetBiosName != NULL);
 
 		case FreeRDP_RedirectionUsername:
 			if (cleanup)
 				free(settings->RedirectionUsername);
-			settings->RedirectionUsername = (val ? _strdup(val) : NULL);
+			settings->RedirectionUsername = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RedirectionUsername != NULL);
 
 		case FreeRDP_RemoteApplicationCmdLine:
 			if (cleanup)
 				free(settings->RemoteApplicationCmdLine);
-			settings->RemoteApplicationCmdLine = (val ? _strdup(val) : NULL);
+			settings->RemoteApplicationCmdLine = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RemoteApplicationCmdLine != NULL);
 
 		case FreeRDP_RemoteApplicationFile:
 			if (cleanup)
 				free(settings->RemoteApplicationFile);
-			settings->RemoteApplicationFile = (val ? _strdup(val) : NULL);
+			settings->RemoteApplicationFile = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RemoteApplicationFile != NULL);
 
 		case FreeRDP_RemoteApplicationGuid:
 			if (cleanup)
 				free(settings->RemoteApplicationGuid);
-			settings->RemoteApplicationGuid = (val ? _strdup(val) : NULL);
+			settings->RemoteApplicationGuid = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RemoteApplicationGuid != NULL);
 
 		case FreeRDP_RemoteApplicationIcon:
 			if (cleanup)
 				free(settings->RemoteApplicationIcon);
-			settings->RemoteApplicationIcon = (val ? _strdup(val) : NULL);
+			settings->RemoteApplicationIcon = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RemoteApplicationIcon != NULL);
 
 		case FreeRDP_RemoteApplicationName:
 			if (cleanup)
 				free(settings->RemoteApplicationName);
-			settings->RemoteApplicationName = (val ? _strdup(val) : NULL);
+			settings->RemoteApplicationName = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RemoteApplicationName != NULL);
 
 		case FreeRDP_RemoteApplicationProgram:
 			if (cleanup)
 				free(settings->RemoteApplicationProgram);
-			settings->RemoteApplicationProgram = (val ? _strdup(val) : NULL);
+			settings->RemoteApplicationProgram = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RemoteApplicationProgram != NULL);
 
 		case FreeRDP_RemoteApplicationWorkingDir:
 			if (cleanup)
 				free(settings->RemoteApplicationWorkingDir);
-			settings->RemoteApplicationWorkingDir = (val ? _strdup(val) : NULL);
+			settings->RemoteApplicationWorkingDir = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RemoteApplicationWorkingDir != NULL);
 
 		case FreeRDP_RemoteAssistancePassStub:
 			if (cleanup)
 				free(settings->RemoteAssistancePassStub);
-			settings->RemoteAssistancePassStub = (val ? _strdup(val) : NULL);
+			settings->RemoteAssistancePassStub = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RemoteAssistancePassStub != NULL);
 
 		case FreeRDP_RemoteAssistancePassword:
 			if (cleanup)
 				free(settings->RemoteAssistancePassword);
-			settings->RemoteAssistancePassword = (val ? _strdup(val) : NULL);
+			settings->RemoteAssistancePassword = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RemoteAssistancePassword != NULL);
 
 		case FreeRDP_RemoteAssistanceRCTicket:
 			if (cleanup)
 				free(settings->RemoteAssistanceRCTicket);
-			settings->RemoteAssistanceRCTicket = (val ? _strdup(val) : NULL);
+			settings->RemoteAssistanceRCTicket = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RemoteAssistanceRCTicket != NULL);
 
 		case FreeRDP_RemoteAssistanceSessionId:
 			if (cleanup)
 				free(settings->RemoteAssistanceSessionId);
-			settings->RemoteAssistanceSessionId = (val ? _strdup(val) : NULL);
+			settings->RemoteAssistanceSessionId = (val ? strndup(val, len) : NULL);
 			return (!val || settings->RemoteAssistanceSessionId != NULL);
 
 		case FreeRDP_ServerHostname:
 			if (cleanup)
 				free(settings->ServerHostname);
-			settings->ServerHostname = (val ? _strdup(val) : NULL);
+			settings->ServerHostname = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ServerHostname != NULL);
 
 		case FreeRDP_ShellWorkingDirectory:
 			if (cleanup)
 				free(settings->ShellWorkingDirectory);
-			settings->ShellWorkingDirectory = (val ? _strdup(val) : NULL);
+			settings->ShellWorkingDirectory = (val ? strndup(val, len) : NULL);
 			return (!val || settings->ShellWorkingDirectory != NULL);
 
 		case FreeRDP_TargetNetAddress:
 			if (cleanup)
 				free(settings->TargetNetAddress);
-			settings->TargetNetAddress = (val ? _strdup(val) : NULL);
+			settings->TargetNetAddress = (val ? strndup(val, len) : NULL);
 			return (!val || settings->TargetNetAddress != NULL);
 
 		case FreeRDP_Username:
 			if (cleanup)
 				free(settings->Username);
-			settings->Username = (val ? _strdup(val) : NULL);
+			settings->Username = (val ? strndup(val, len) : NULL);
 			return (!val || settings->Username != NULL);
 
 		case FreeRDP_WindowTitle:
 			if (cleanup)
 				free(settings->WindowTitle);
-			settings->WindowTitle = (val ? _strdup(val) : NULL);
+			settings->WindowTitle = (val ? strndup(val, len) : NULL);
 			return (!val || settings->WindowTitle != NULL);
 
 		case FreeRDP_WmClass:
 			if (cleanup)
 				free(settings->WmClass);
-			settings->WmClass = (val ? _strdup(val) : NULL);
+			settings->WmClass = (val ? strndup(val, len) : NULL);
 			return (!val || settings->WmClass != NULL);
 
 		default:
@@ -2775,12 +2794,20 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 	return TRUE;
 }
 
-BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* val)
+BOOL freerdp_settings_set_string_len(rdpSettings* settings, size_t id, const char* val, size_t len)
 {
-	return freerdp_settings_set_string_(settings, id, val, TRUE);
+	return freerdp_settings_set_string_(settings, id, val, len, TRUE);
 }
 
-const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id)
+BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* val)
+{
+	size_t len = 0;
+	if (val)
+		len = strlen(val);
+	return freerdp_settings_set_string_(settings, id, val, len, TRUE);
+}
+
+void* freerdp_settings_get_pointer_writable(const rdpSettings* settings, size_t id)
 {
 	if (!settings)
 		return FALSE;

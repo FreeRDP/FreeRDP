@@ -890,6 +890,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_TcpKeepAliveDelay (5192)
 #define FreeRDP_TcpKeepAliveInterval (5193)
 #define FreeRDP_TcpAckTimeout (5194)
+#define FreeRDP_ActionScript (5195)
+#define FreeRDP_Floatbar (5196)
 
 /**
  * FreeRDP Settings Data Structure
@@ -1540,7 +1542,9 @@ struct rdp_settings
 	ALIGN64 UINT32 TcpKeepAliveDelay;     /* 5192 */
 	ALIGN64 UINT32 TcpKeepAliveInterval;  /* 5193 */
 	ALIGN64 UINT32 TcpAckTimeout;         /* 5194 */
-	UINT64 padding5312[5312 - 5195];      /* 5195 */
+	ALIGN64 char* ActionScript;           /* 5195 */
+	ALIGN64 UINT32 Floatbar;              /* 5196 */
+	UINT64 padding5312[5312 - 5197];      /* 5197 */
 
 	/**
 	 * WARNING: End of ABI stable zone!
@@ -1559,8 +1563,6 @@ struct rdp_settings
 
 	ALIGN64 BYTE* SettingsModified; /* byte array marking fields that have been modified from their
 	                                   default value - currently UNUSED! */
-	ALIGN64 char* ActionScript;
-	ALIGN64 DWORD Floatbar;
 	ALIGN64 char* XSelectionAtom;
 };
 typedef struct rdp_settings rdpSettings;
@@ -1682,10 +1684,24 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_set_uint64(rdpSettings* settings, size_t id, UINT64 param);
 
 	FREERDP_API const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id);
+	FREERDP_API BOOL freerdp_settings_set_string_len(rdpSettings* settings, size_t id,
+	                                                 const char* param, size_t len);
 	FREERDP_API BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id,
 	                                             const char* param);
 
 	FREERDP_API const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id);
+	FREERDP_API void* freerdp_settings_get_pointer_writable(const rdpSettings* settings, size_t id);
+	FREERDP_API BOOL freerdp_settings_set_pointer(rdpSettings* settings, size_t id,
+	                                              const void* data);
+	FREERDP_API BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id,
+	                                                  const void* data, size_t len);
+
+	FREERDP_API const void* freerdp_settings_get_pointer_array(const rdpSettings* settings,
+	                                                           size_t id, size_t offset);
+	FREERDP_API void* freerdp_settings_get_pointer_array_writable(const rdpSettings* settings,
+	                                                              size_t id, size_t offset);
+	FREERDP_API BOOL freerdp_settings_set_pointer_array(rdpSettings* settings, size_t id,
+	                                                    size_t offset, const void* data);
 
 	FREERDP_API BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name,
 	                                                     const char* value);
