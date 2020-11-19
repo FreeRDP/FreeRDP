@@ -129,6 +129,8 @@ UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
  */
 UINT rdpgfx_write_header(wStream* s, const RDPGFX_HEADER* header)
 {
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return ERROR_INTERNAL_ERROR;
 	Stream_Write_UINT16(s, header->cmdId);     /* cmdId (2 bytes) */
 	Stream_Write_UINT16(s, header->flags);     /* flags (2 bytes) */
 	Stream_Write_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
