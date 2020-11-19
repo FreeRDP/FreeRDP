@@ -347,6 +347,12 @@ if(NOT IOS)
 	find_package(Threads REQUIRED)
 endif()
 
+if (IOS)
+	set(HAVE_STRNDUP 1)
+else()
+	CHECK_SYMBOL_EXISTS(strndup string.h HAVE_STRNDUP)
+endif()
+
 if(NOT WIN32)
 	CHECK_SYMBOL_EXISTS(pthread_mutex_timedlock pthread.h HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL)
 	if (NOT HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL)
