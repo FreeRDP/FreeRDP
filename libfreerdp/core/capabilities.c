@@ -410,7 +410,7 @@ static BOOL rdp_write_bitmap_capability_set(wStream* s, const rdpSettings* setti
 	 */
 
 	if ((settings->ColorDepth > UINT16_MAX) || (settings->DesktopWidth > UINT16_MAX) ||
-	    (settings->DesktopHeight > UINT16_MAX) || (settings->DesktopResize > UINT16_MAX))
+	    (settings->DesktopHeight > UINT16_MAX))
 		return FALSE;
 
 	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
