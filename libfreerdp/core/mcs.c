@@ -734,7 +734,8 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	if (length > UINT16_MAX)
 		goto out;
 	Stream_SetPosition(s, bm);
-	tpkt_write_header(s, (UINT16)length);
+	if (!tpkt_write_header(s, (UINT16)length))
+		goto out;
 	tpdu_write_data(s);
 	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
@@ -796,11 +797,11 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 BOOL mcs_send_connect_response(rdpMcs* mcs)
 {
 	size_t length;
-	int status;
-	wStream* s;
+	int status = -1;
+	wStream* s = NULL;
 	size_t bm, em;
-	wStream* gcc_CCrsp;
-	wStream* server_data;
+	wStream* gcc_CCrsp = NULL;
+	wStream* server_data = NULL;
 
 	if (!mcs)
 		return FALSE;
@@ -814,14 +815,14 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	}
 
 	if (!gcc_write_server_data_blocks(server_data, mcs))
-		goto error_data_blocks;
+		goto out;
 
 	gcc_CCrsp = Stream_New(NULL, 512 + Stream_Capacity(server_data));
 
 	if (!gcc_CCrsp)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		goto error_data_blocks;
+		goto out;
 	}
 
 	gcc_write_conference_create_response(gcc_CCrsp, server_data);
@@ -831,36 +832,31 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		goto error_stream_s;
+		goto out;
 	}
 
 	bm = Stream_GetPosition(s);
 	Stream_Seek(s, 7);
 
 	if (!mcs_write_connect_response(s, mcs, gcc_CCrsp))
-		goto error_write_connect_response;
+		goto out;
 
 	em = Stream_GetPosition(s);
 	length = (em - bm);
 	if (length > UINT16_MAX)
-		goto error_write_connect_response;
+		goto out;
 	Stream_SetPosition(s, bm);
-	tpkt_write_header(s, (UINT16)length);
+	if (!tpkt_write_header(s, (UINT16)length))
+		goto out;
 	tpdu_write_data(s);
 	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
 	status = transport_write(mcs->transport, s);
+out:
 	Stream_Free(s, TRUE);
 	Stream_Free(gcc_CCrsp, TRUE);
 	Stream_Free(server_data, TRUE);
 	return (status < 0) ? FALSE : TRUE;
-error_write_connect_response:
-	Stream_Free(s, TRUE);
-error_stream_s:
-	Stream_Free(gcc_CCrsp, TRUE);
-error_data_blocks:
-	Stream_Free(server_data, TRUE);
-	return FALSE;
 }
 
 /**

@@ -300,7 +300,8 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 totalLen
 			break;
 
 		case DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST:
-			/* TODO: notify server bitmap cache data */
+			if (!rdp_server_accept_client_persistent_key_list_pdu(client->context->rdp, s))
+				return FALSE;
 			break;
 
 		case DATA_PDU_TYPE_FONT_LIST:
@@ -385,6 +386,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 		client->settings->PduSource = pduSource;
 
+		WLog_DBG(TAG, "Received %s", pdu_type_to_str(pduType));
 		switch (pduType)
 		{
 			case PDU_TYPE_DATA:
@@ -424,9 +426,9 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		if (!freerdp_channel_peer_process(client, s, channelId))
 			return -1;
 	}
-
 	if (!tpkt_ensure_stream_consumed(s, length))
 		return -1;
+
 	return 0;
 }
 
