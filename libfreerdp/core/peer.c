@@ -276,8 +276,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 totalLen
 
 #ifdef WITH_DEBUG_RDP
 	WLog_DBG(TAG, "recv %s Data PDU (0x%02" PRIX8 "), length: %" PRIu16 "",
-	         type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type,
-	         length);
+	         data_pdu_type_to_string(type), type, length);
 #endif
 
 	switch (type)
