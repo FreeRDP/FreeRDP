@@ -127,6 +127,8 @@ static void rdp_write_capability_set_header(wStream* s, UINT16 length, UINT16 ty
 static size_t rdp_capability_set_start(wStream* s)
 {
 	size_t header = Stream_GetPosition(s);
+	if (Stream_GetRemainingCapacity(s) < CAPSET_HEADER_LENGTH)
+		return SIZE_MAX;
 	Stream_Zero(s, CAPSET_HEADER_LENGTH);
 	return header;
 }
@@ -1853,6 +1855,8 @@ static BOOL rdp_write_bitmap_cache_v2_capability_set(wStream* s, const rdpSettin
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
+	if (header > UINT16_MAX)
+		return FALSE;
 	cacheFlags = ALLOW_CACHE_WAITING_LIST_FLAG;
 
 	if (settings->BitmapCachePersistEnabled)
@@ -1963,6 +1967,8 @@ static BOOL rdp_write_virtual_channel_capability_set(wStream* s, const rdpSettin
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
+	if (header > UINT16_MAX)
+		return FALSE;
 	flags = VCCAPS_NO_COMPR;
 	Stream_Write_UINT32(s, flags);                             /* flags (4 bytes) */
 	Stream_Write_UINT32(s, settings->VirtualChannelChunkSize); /* VCChunkSize (4 bytes) */
@@ -2036,6 +2042,8 @@ static BOOL rdp_write_draw_nine_grid_cache_capability_set(wStream* s, const rdpS
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
+	if (header > UINT16_MAX)
+		return FALSE;
 	drawNineGridSupportLevel =
 	    (settings->DrawNineGridEnabled) ? DRAW_NINEGRID_SUPPORTED_V2 : DRAW_NINEGRID_NO_SUPPORT;
 	Stream_Write_UINT32(s, drawNineGridSupportLevel); /* drawNineGridSupportLevel (4 bytes) */
@@ -2140,6 +2148,8 @@ static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s, const rdpSet
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
+	if (header > UINT16_MAX)
+		return FALSE;
 	drawGDIPlusSupportLevel =
 	    (settings->DrawGdiPlusEnabled) ? DRAW_GDIPLUS_SUPPORTED : DRAW_GDIPLUS_DEFAULT;
 	drawGdiplusCacheLevel = (settings->DrawGdiPlusEnabled) ? DRAW_GDIPLUS_CACHE_LEVEL_ONE
@@ -2229,6 +2239,8 @@ static BOOL rdp_write_remote_programs_capability_set(wStream* s, const rdpSettin
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
+	if (header > UINT16_MAX)
+		return FALSE;
 	railSupportLevel = RAIL_LEVEL_SUPPORTED;
 
 	if (settings->RemoteApplicationSupportLevel & RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED)
@@ -2300,6 +2312,8 @@ static BOOL rdp_write_window_list_capability_set(wStream* s, const rdpSettings* 
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
+	if (header > UINT16_MAX)
+		return FALSE;
 	Stream_Write_UINT32(s, settings->RemoteWndSupportLevel); /* wndSupportLevel (4 bytes) */
 	Stream_Write_UINT8(s, settings->RemoteAppNumIconCaches); /* numIconCaches (1 byte) */
 	Stream_Write_UINT16(s,
@@ -2362,6 +2376,8 @@ static BOOL rdp_write_desktop_composition_capability_set(wStream* s, const rdpSe
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
+	if (header > UINT16_MAX)
+		return FALSE;
 	compDeskSupportLevel =
 	    (settings->AllowDesktopComposition) ? COMPDESK_SUPPORTED : COMPDESK_NOT_SUPPORTED;
 	Stream_Write_UINT16(s, compDeskSupportLevel); /* compDeskSupportLevel (2 bytes) */
@@ -2465,9 +2481,6 @@ static BOOL rdp_write_multifragment_update_capability_set(wStream* s, rdpSetting
 {
 	size_t header;
 
-	if (!Stream_EnsureRemainingCapacity(s, 32))
-		return FALSE;
-
 	if (settings->ServerMode && settings->MultifragMaxRequestSize == 0)
 	{
 		/**
@@ -2488,7 +2501,11 @@ static BOOL rdp_write_multifragment_update_capability_set(wStream* s, rdpSetting
 		settings->MultifragMaxRequestSize += 16384;
 	}
 
+	if (!Stream_EnsureRemainingCapacity(s, 32))
+		return FALSE;
 	header = rdp_capability_set_start(s);
+	if (header > UINT16_MAX)
+		return FALSE;
 	Stream_Write_UINT32(s, settings->MultifragMaxRequestSize); /* MaxRequestSize (4 bytes) */
 	return rdp_capability_set_finish(s, header, CAPSET_TYPE_MULTI_FRAGMENT_UPDATE);
 }
@@ -2553,6 +2570,8 @@ static BOOL rdp_write_large_pointer_capability_set(wStream* s, const rdpSettings
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
+	if (header > UINT16_MAX)
+		return FALSE;
 	largePointerSupportFlags =
 	    settings->LargePointerFlag & (LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384);
 	Stream_Write_UINT16(s, largePointerSupportFlags); /* largePointerSupportFlags (2 bytes) */
@@ -2612,6 +2631,8 @@ static BOOL rdp_write_surface_commands_capability_set(wStream* s, const rdpSetti
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
+	if (header > UINT16_MAX)
+		return FALSE;
 	cmdFlags = SURFCMDS_SET_SURFACE_BITS | SURFCMDS_STREAM_SURFACE_BITS;
 
 	if (settings->SurfaceFrameMarkerEnabled)
@@ -3073,6 +3094,8 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s, const rdpSettings
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
+	if (header > UINT16_MAX)
+		return FALSE;
 	bitmapCodecCount = 0;
 
 	if (settings->RemoteFxCodec)
