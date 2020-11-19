@@ -34,7 +34,7 @@
 
 #define TAG FREERDP_TAG("core.rdp")
 
-const char* DATA_PDU_TYPE_STRINGS[80] = {
+static const char* DATA_PDU_TYPE_STRINGS[80] = {
 	"?",
 	"?",      /* 0x00 - 0x01 */
 	"Update", /* 0x02 */
@@ -101,6 +101,13 @@ const char* DATA_PDU_TYPE_STRINGS[80] = {
 	"?",
 	"?" /* 0x41 - 0x46 */
 };
+
+const char* data_pdu_type_to_string(UINT8 type)
+{
+	if (type > ARRAYSIZE(DATA_PDU_TYPE_STRINGS))
+		return "???";
+	return DATA_PDU_TYPE_STRINGS[type];
+}
 
 static BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type, UINT16* channel_id);
 static void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type,
@@ -920,8 +927,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 	}
 
 	WLog_DBG(TAG, "recv %s Data PDU (0x%02" PRIX8 "), length: %" PRIu16 "",
-	         type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type,
-	         length);
+	         data_pdu_type_to_string(type), type, length);
 
 	switch (type)
 	{
