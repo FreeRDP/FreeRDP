@@ -421,14 +421,14 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 	}
 
 	AVAuthorizationStatus status =
-	    [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
+	    [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeAudio];
 	switch (status)
 	{
 		case AVAuthorizationStatusAuthorized:
 			mac->isAuthorized = TRUE;
 			break;
 		case AVAuthorizationStatusNotDetermined:
-			[AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo
+			[AVCaptureDevice requestAccessForMediaType:AVMediaTypeAudio
 			                         completionHandler:^(BOOL granted) {
 				                         if (granted == YES)
 				                         {
