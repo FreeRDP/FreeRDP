@@ -191,6 +191,10 @@ static INLINE YUV_PROCESS_WORK_PARAM pool_decode_param(const RECTANGLE_16* rect,
 
 static BOOL allocate_objects(PTP_WORK** work, void** params, size_t size, UINT32 count)
 {
+	if (count == 0)
+		return FALSE;
+
+	count *= 2;
 	{
 		PTP_WORK* tmp;
 		PTP_WORK* cur = *work;
@@ -198,12 +202,14 @@ static BOOL allocate_objects(PTP_WORK** work, void** params, size_t size, UINT32
 		if (!tmp)
 			return FALSE;
 		*work = tmp;
+		memset(tmp, 0, sizeof(PTP_WORK*) * count);
 	}
 	{
 		void* cur = *params;
 		void* tmp = realloc(cur, size * count);
 		if (!tmp)
 			return FALSE;
+		memset(tmp, 0, size * count);
 		*params = tmp;
 	}
 	return TRUE;
@@ -225,11 +231,16 @@ static BOOL submit_object(PTP_WORK* work_object, PTP_WORK_CALLBACK cb, const voi
 
 static void free_objects(PTP_WORK* work_objects, void* params, UINT32 waitCount)
 {
-	UINT32 i;
-	for (i = 0; i < waitCount; i++)
+	if (work_objects)
 	{
-		WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
-		CloseThreadpoolWork(work_objects[i]);
+		UINT32 i;
+		for (i = 0; i < waitCount; i++)
+		{
+			if (!work_objects[i])
+				continue;
+			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
+			CloseThreadpoolWork(work_objects[i]);
+		}
 	}
 
 	free(work_objects);
@@ -260,6 +271,17 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 
 	/* case where we use threads */
 	nobjects = (context->height + context->heightStep - 1) / context->heightStep;
+	for (x = 0; x < numRegionRects; x++)
+	{
+		const RECTANGLE_16* rect = &regionRects[x];
+		const UINT32 height = rect->bottom - rect->top;
+		const UINT32 steps = (height + context->heightStep / 2) / context->heightStep;
+
+		if (waitCount + steps >= nobjects)
+			nobjects *= 2;
+		waitCount += steps;
+	}
+
 	if (!allocate_objects(&work_objects, (void**)&params, sizeof(YUV_PROCESS_WORK_PARAM), nobjects))
 		goto fail;
 
@@ -268,14 +290,6 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 		const RECTANGLE_16* rect = &regionRects[x];
 		const UINT32 height = rect->bottom - rect->top;
 		const UINT32 steps = (height + context->heightStep / 2) / context->heightStep;
-
-		if (waitCount + steps >= nobjects)
-		{
-			nobjects *= 2;
-			if (!allocate_objects(&work_objects, (void**)&params, sizeof(YUV_PROCESS_WORK_PARAM),
-			                      nobjects))
-				goto fail;
-		}
 
 		for (y = 0; y < steps; y++)
 		{
@@ -589,6 +603,17 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 
 	/* case where we use threads */
 	nobjects = (context->height + context->heightStep - 1) / context->heightStep;
+	for (x = 0; x < numRegionRects; x++)
+	{
+		const RECTANGLE_16* rect = &regionRects[x];
+		const UINT32 height = rect->bottom - rect->top;
+		const UINT32 steps = (height + context->heightStep / 2) / context->heightStep;
+
+		if (waitCount + steps >= nobjects)
+			nobjects *= 2;
+		waitCount += steps;
+	}
+
 	if (!allocate_objects(&work_objects, (void**)&params, sizeof(YUV_ENCODE_WORK_PARAM), nobjects))
 		goto fail;
 
@@ -597,14 +622,6 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 		const RECTANGLE_16* rect = &regionRects[x];
 		const UINT32 height = rect->bottom - rect->top;
 		const UINT32 steps = (height + context->heightStep / 2) / context->heightStep;
-
-		if (waitCount + steps >= nobjects)
-		{
-			nobjects *= 2;
-			if (!allocate_objects(&work_objects, (void**)&params, sizeof(YUV_ENCODE_WORK_PARAM),
-			                      nobjects))
-				goto fail;
-		}
 
 		for (y = 0; y < steps; y++)
 		{
