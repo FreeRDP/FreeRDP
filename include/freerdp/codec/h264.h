@@ -51,16 +51,22 @@ struct _H264_CONTEXT
 	UINT32 NumberOfThreads;
 
 	UINT32 iStride[3];
+	BYTE* pOldYUVData[3];
 	BYTE* pYUVData[3];
 
 	UINT32 iYUV444Size[3];
 	UINT32 iYUV444Stride[3];
+	BYTE* pOldYUV444Data[3];
 	BYTE* pYUV444Data[3];
 
 	UINT32 numSystemData;
 	void* pSystemData;
 	H264_CONTEXT_SUBSYSTEM* subsystem;
 	YUV_CONTEXT* yuv;
+
+	BOOL encodingBuffer;
+	BOOL firstLumaFrameDone;
+	BOOL firstChromaFrameDone;
 
 	void* lumaData;
 	wLog* log;
@@ -70,9 +76,20 @@ extern "C"
 {
 #endif
 
+	static INLINE void free_h264_metablock(RDPGFX_H264_METABLOCK* meta)
+	{
+		RDPGFX_H264_METABLOCK m = { 0 };
+		if (!meta)
+			return;
+		free(meta->quantQualityVals);
+		free(meta->regionRects);
+		*meta = m;
+	}
+
 	FREERDP_API INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 	                                  UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
-	                                  BYTE** ppDstData, UINT32* pDstSize);
+	                                  const RECTANGLE_16* regionRect, BYTE** ppDstData,
+	                                  UINT32* pDstSize, RDPGFX_H264_METABLOCK* meta);
 
 	FREERDP_API INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
 	                                    BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
@@ -81,8 +98,10 @@ extern "C"
 
 	FREERDP_API INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 	                                  UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
-	                                  BYTE version, BYTE* op, BYTE** pDstData, UINT32* pDstSize,
-	                                  BYTE** pAuxDstData, UINT32* pAuxDstSize);
+	                                  BYTE version, const RECTANGLE_16* regionRect, BYTE* op,
+	                                  BYTE** pDstData, UINT32* pDstSize, BYTE** pAuxDstData,
+	                                  UINT32* pAuxDstSize, RDPGFX_H264_METABLOCK* meta,
+	                                  RDPGFX_H264_METABLOCK* auxMeta);
 
 	FREERDP_API INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op,
 	                                    const RECTANGLE_16* regionRects, UINT32 numRegionRect,
