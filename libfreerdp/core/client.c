@@ -1189,7 +1189,7 @@ static BOOL freerdp_channels_is_loaded_ex(rdpChannels* channels, PVIRTUALCHANNEL
 }
 
 int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,
-                                 PVIRTUALCHANNELENTRY entry, const void* data)
+                                 PVIRTUALCHANNELENTRY entry, void* data)
 {
 	int status;
 	CHANNEL_ENTRY_POINTS_FREERDP EntryPoints;
@@ -1237,7 +1237,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,
 }
 
 int freerdp_channels_client_load_ex(rdpChannels* channels, rdpSettings* settings,
-                                    PVIRTUALCHANNELENTRYEX entryEx, const void* data)
+                                    PVIRTUALCHANNELENTRYEX entryEx, void* data)
 {
 	int status;
 	void* pInitHandle = NULL;
@@ -1294,7 +1294,7 @@ int freerdp_channels_client_load_ex(rdpChannels* channels, rdpSettings* settings
  * called only from main thread
  */
 int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, const char* name,
-                                 const void* data)
+                                 void* data)
 {
 	PVIRTUALCHANNELENTRY entry;
 	entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);

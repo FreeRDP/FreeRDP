@@ -115,7 +115,7 @@ static UINT rdpsnd_proxy_play(rdpsndDevicePlugin* device, const BYTE* data, size
  */
 UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	rdpsndProxyPlugin* proxy;
 	pClientContext* pc;
 	proxy = (rdpsndProxyPlugin*)calloc(1, sizeof(rdpsndProxyPlugin));
