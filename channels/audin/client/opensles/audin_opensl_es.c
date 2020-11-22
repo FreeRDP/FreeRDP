@@ -215,7 +215,7 @@ static UINT audin_opensles_open(IAudinDevice* device, AudinReceive receive, void
 	opensles->user_data = user_data;
 	return CHANNEL_RC_OK;
 error_out:
-	audin_opensles_close(opensles);
+	audin_opensles_close(device);
 	return ERROR_INTERNAL_ERROR;
 }
 
@@ -244,7 +244,7 @@ UINT audin_opensles_close(IAudinDevice* device)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device, ADDIN_ARGV* args)
+static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device, const ADDIN_ARGV* args)
 {
 	UINT status;
 	DWORD flags;
@@ -301,7 +301,7 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device, ADDIN_A
  */
 UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	AudinOpenSLESDevice* opensles;
 	UINT error;
 	opensles = (AudinOpenSLESDevice*)calloc(1, sizeof(AudinOpenSLESDevice));

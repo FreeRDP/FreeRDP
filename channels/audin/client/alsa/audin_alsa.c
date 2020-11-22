@@ -350,7 +350,7 @@ static UINT audin_alsa_close(IAudinDevice* device)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* args)
+static UINT audin_alsa_parse_addin_args(AudinALSADevice* device, const ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -403,7 +403,7 @@ static UINT audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* arg
  */
 UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	AudinALSADevice* alsa;
 	UINT error;
 	alsa = (AudinALSADevice*)calloc(1, sizeof(AudinALSADevice));

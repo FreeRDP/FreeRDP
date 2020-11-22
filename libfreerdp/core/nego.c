@@ -46,7 +46,7 @@ struct rdp_nego
 	DWORD RoutingTokenLength;
 	BOOL SendPreconnectionPdu;
 	UINT32 PreconnectionId;
-	char* PreconnectionBlob;
+	const char* PreconnectionBlob;
 
 	NEGO_STATE state;
 	BOOL TcpConnected;
@@ -1299,7 +1299,7 @@ void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
  * @param RoutingTokenLength
  */
 
-BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength)
+BOOL nego_set_routing_token(rdpNego* nego, const BYTE* RoutingToken, DWORD RoutingTokenLength)
 {
 	if (RoutingTokenLength == 0)
 		return FALSE;
@@ -1321,7 +1321,7 @@ BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingToke
  * @param cookie
  */
 
-BOOL nego_set_cookie(rdpNego* nego, char* cookie)
+BOOL nego_set_cookie(rdpNego* nego, const char* cookie)
 {
 	if (nego->cookie)
 	{
@@ -1379,7 +1379,7 @@ void nego_set_preconnection_id(rdpNego* nego, UINT32 PreconnectionId)
  * @param blob
  */
 
-void nego_set_preconnection_blob(rdpNego* nego, char* PreconnectionBlob)
+void nego_set_preconnection_blob(rdpNego* nego, const char* PreconnectionBlob)
 {
 	nego->PreconnectionBlob = PreconnectionBlob;
 }

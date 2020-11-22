@@ -391,12 +391,14 @@ static UINT rail_recv_handshake_order(railPlugin* rail, wStream* s)
 static BOOL rail_is_feature_supported(const rdpContext* context, UINT32 featureMask)
 {
 	UINT32 supported, masked;
+	UINT32 level, mask;
 
 	if (!context || !context->settings)
 		return FALSE;
 
-	supported = context->settings->RemoteApplicationSupportLevel &
-	            context->settings->RemoteApplicationSupportMask;
+	level = freerdp_settings_get_uint32(context->settings, FreeRDP_RemoteApplicationSupportLevel);
+	mask = freerdp_settings_get_uint32(context->settings, FreeRDP_RemoteApplicationSupportMask);
+	supported = level & mask;
 	masked = (supported & featureMask);
 
 	if (masked != featureMask)

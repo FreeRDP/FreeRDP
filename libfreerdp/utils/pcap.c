@@ -98,7 +98,7 @@ static BOOL pcap_write_record(rdpPcap* pcap, pcap_record* record)
 	       (fwrite(record->data, record->length, 1, pcap->fp) == 1);
 }
 
-BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
+BOOL pcap_add_record(rdpPcap* pcap, const void* data, UINT32 length)
 {
 	pcap_record* record;
 	struct timeval tp;
@@ -126,7 +126,7 @@ BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 	if (pcap->record == NULL)
 		pcap->record = record;
 
-	record->data = data;
+	record->data = (void*)data;
 	record->length = length;
 	record->header.incl_len = length;
 	record->header.orig_len = length;
@@ -166,7 +166,7 @@ BOOL pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
 	return pcap_has_next_record(pcap) && pcap_read_record(pcap, record);
 }
 
-rdpPcap* pcap_open(char* name, BOOL write)
+rdpPcap* pcap_open(const char* name, BOOL write)
 {
 	rdpPcap* pcap;
 
@@ -174,7 +174,7 @@ rdpPcap* pcap_open(char* name, BOOL write)
 	if (!pcap)
 		goto fail;
 
-	pcap->name = name;
+	pcap->name = _strdup(name);
 	pcap->write = write;
 	pcap->record_count = 0;
 	pcap->fp = fopen(name, write ? "w+b" : "rb");
@@ -232,5 +232,6 @@ void pcap_close(rdpPcap* pcap)
 	if (pcap->fp != NULL)
 		fclose(pcap->fp);
 
+	free(pcap->name);
 	free(pcap);
 }

@@ -107,7 +107,7 @@ struct _AUDIN_PLUGIN
 	BOOL initialized;
 };
 
-static BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args);
+static BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args);
 
 static UINT audin_channel_write_and_free(AUDIN_CHANNEL_CALLBACK* callback, wStream* out,
                                          BOOL freeStream)
@@ -799,7 +799,7 @@ static UINT audin_register_device_plugin(IWTSPlugin* pPlugin, IAudinDevice* devi
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_load_device_plugin(AUDIN_PLUGIN* audin, char* name, ADDIN_ARGV* args)
+static UINT audin_load_device_plugin(AUDIN_PLUGIN* audin, const char* name, const ADDIN_ARGV* args)
 {
 	PFREERDP_AUDIN_DEVICE_ENTRY entry;
 	FREERDP_AUDIN_DEVICE_ENTRY_POINTS entryPoints;
@@ -868,7 +868,7 @@ static UINT audin_set_device_name(AUDIN_PLUGIN* audin, const char* device_name)
 	return CHANNEL_RC_OK;
 }
 
-BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args)
+BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -973,7 +973,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		char* device;
 	};
 	UINT error = CHANNEL_RC_INITIALIZATION_ERROR;
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	AUDIN_PLUGIN* audin;
 	struct SubsystemEntry entries[] =
 	{

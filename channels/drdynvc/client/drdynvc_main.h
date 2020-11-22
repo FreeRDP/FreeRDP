@@ -68,7 +68,7 @@ struct _DVCMAN_ENTRY_POINTS
 	IDRDYNVC_ENTRY_POINTS iface;
 
 	DVCMAN* dvcman;
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	rdpSettings* settings;
 };
 typedef struct _DVCMAN_ENTRY_POINTS DVCMAN_ENTRY_POINTS;

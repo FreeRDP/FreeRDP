@@ -188,7 +188,7 @@ out:
 	return ret;
 }
 
-static BOOL saveCal(rdpSettings* settings, const BYTE* data, int length, char* hostname)
+static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, const char* hostname)
 {
 	char hash[41];
 	FILE* fp;
