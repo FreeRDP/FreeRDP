@@ -126,13 +126,14 @@ struct _PresentationContext
 	UINT64 startTimeStamp;
 	UINT64 publishOffset;
 	H264_CONTEXT* h264;
-	YUV_CONTEXT* yuv;
 	wStream* currentSample;
 	UINT64 lastPublishTime, nextPublishTime;
 	volatile LONG refCounter;
 	BYTE* surfaceData;
 	VideoSurface* surface;
 };
+
+static void PresentationContext_unref(PresentationContext* presentation);
 
 static const char* video_command_name(BYTE cmd)
 {
@@ -145,28 +146,6 @@ static const char* video_command_name(BYTE cmd)
 		default:
 			return "<unknown>";
 	}
-}
-
-static BOOL yuv_to_rgb(PresentationContext* presentation, BYTE* dest)
-{
-	const BYTE* pYUVPoint[3];
-	H264_CONTEXT* h264 = presentation->h264;
-
-	BYTE** ppYUVData;
-	ppYUVData = h264->pYUVData;
-
-	pYUVPoint[0] = ppYUVData[0];
-	pYUVPoint[1] = ppYUVData[1];
-	pYUVPoint[2] = ppYUVData[2];
-
-	if (!yuv_context_decode(presentation->yuv, pYUVPoint, h264->iStride, PIXEL_FORMAT_BGRX32, dest,
-	                        h264->width * 4))
-	{
-		WLog_ERR(TAG, "error in yuv_to_rgb conversion");
-		return FALSE;
-	}
-
-	return TRUE;
 }
 
 static void video_client_context_set_geometry(VideoClientContext* video,
@@ -239,7 +218,7 @@ static PresentationContext* PresentationContext_new(VideoClientContext* video, B
 	if (!ret->h264)
 	{
 		WLog_ERR(TAG, "unable to create a h264 context");
-		goto error_h264;
+		goto fail;
 	}
 	h264_context_reset(ret->h264, width, height);
 
@@ -247,44 +226,28 @@ static PresentationContext* PresentationContext_new(VideoClientContext* video, B
 	if (!ret->currentSample)
 	{
 		WLog_ERR(TAG, "unable to create current packet stream");
-		goto error_currentSample;
+		goto fail;
 	}
 
 	ret->surfaceData = BufferPool_Take(priv->surfacePool, s);
 	if (!ret->surfaceData)
 	{
 		WLog_ERR(TAG, "unable to allocate surfaceData");
-		goto error_surfaceData;
+		goto fail;
 	}
 
 	ret->surface = video->createSurface(video, ret->surfaceData, x, y, width, height);
 	if (!ret->surface)
 	{
 		WLog_ERR(TAG, "unable to create surface");
-		goto error_surface;
+		goto fail;
 	}
 
-	ret->yuv = yuv_context_new(FALSE);
-	if (!ret->yuv)
-	{
-		WLog_ERR(TAG, "unable to create YUV decoder");
-		goto error_yuv;
-	}
-
-	yuv_context_reset(ret->yuv, width, height);
 	ret->refCounter = 1;
 	return ret;
 
-error_yuv:
-	video->deleteSurface(video, ret->surface);
-error_surface:
-	BufferPool_Return(priv->surfacePool, ret->surfaceData);
-error_surfaceData:
-	Stream_Free(ret->currentSample, TRUE);
-error_currentSample:
-	h264_context_free(ret->h264);
-error_h264:
-	free(ret);
+fail:
+	PresentationContext_unref(ret);
 	return NULL;
 }
 
@@ -296,7 +259,7 @@ static void PresentationContext_unref(PresentationContext* presentation)
 	if (!presentation)
 		return;
 
-	if (InterlockedDecrement(&presentation->refCounter) != 0)
+	if (InterlockedDecrement(&presentation->refCounter) > 0)
 		return;
 
 	geometry = presentation->geometry;
@@ -314,7 +277,6 @@ static void PresentationContext_unref(PresentationContext* presentation)
 	Stream_Free(presentation->currentSample, TRUE);
 	presentation->video->deleteSurface(presentation->video, presentation->surface);
 	BufferPool_Return(priv->surfacePool, presentation->surfaceData);
-	yuv_context_free(presentation->yuv);
 	free(presentation);
 }
 
@@ -756,6 +718,7 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA* data)
 	VideoClientContextPriv* priv = context->priv;
 	PresentationContext* presentation;
 	int status;
+	const UINT32 format = PIXEL_FORMAT_BGRX32;
 
 	presentation = priv->currentPresentation;
 	if (!presentation)
@@ -784,17 +747,9 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA* data)
 		H264_CONTEXT* h264 = presentation->h264;
 		UINT64 startTime = GetTickCount64(), timeAfterH264;
 		MAPPED_GEOMETRY* geom = presentation->geometry;
-
+		const RECTANGLE_16 rect = { 0, 0, presentation->SourceWidth, presentation->SourceHeight };
 		Stream_SealLength(presentation->currentSample);
 		Stream_SetPosition(presentation->currentSample, 0);
-
-		status = h264->subsystem->Decompress(h264, Stream_Pointer(presentation->currentSample),
-		                                     Stream_Length(presentation->currentSample));
-		if (status == 0)
-			return CHANNEL_RC_OK;
-
-		if (status < 0)
-			return CHANNEL_RC_OK;
 
 		timeAfterH264 = GetTickCount64();
 		if (data->SampleNumber == 1)
@@ -808,8 +763,13 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA* data)
 			int dropped = 0;
 
 			/* if the frame is to be published in less than 10 ms, let's consider it's now */
-			yuv_to_rgb(presentation, presentation->surfaceData);
+			status = avc420_decompress(h264, Stream_Pointer(presentation->currentSample),
+			                           Stream_Length(presentation->currentSample),
+			                           presentation->surfaceData, format, 0, rect.right,
+			                           rect.bottom, &rect, 1);
 
+			if (status < 0)
+				return CHANNEL_RC_OK;
 			context->showSurface(context, presentation->surface);
 
 			priv->publishedFrames++;
@@ -834,6 +794,7 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA* data)
 		else
 		{
 			BOOL enqueueResult;
+
 			VideoFrame* frame = calloc(1, sizeof(*frame));
 			if (!frame)
 			{
@@ -857,14 +818,13 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA* data)
 				return CHANNEL_RC_NO_MEMORY;
 			}
 
-			if (!yuv_to_rgb(presentation, frame->surfaceData))
-			{
-				WLog_ERR(TAG, "error during YUV->RGB conversion");
-				BufferPool_Return(priv->surfacePool, frame->surfaceData);
-				mappedGeometryUnref(geom);
-				free(frame);
-				return CHANNEL_RC_NO_MEMORY;
-			}
+			status =
+			    avc420_decompress(h264, Stream_Pointer(presentation->currentSample),
+			                      Stream_Length(presentation->currentSample), frame->surfaceData,
+			                      format, 0, rect.right, rect.bottom, &rect, 1);
+
+			if (status < 0)
+				return CHANNEL_RC_OK;
 
 			InterlockedIncrement(&presentation->refCounter);
 

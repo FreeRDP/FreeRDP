@@ -245,6 +245,7 @@ static int shadow_encoder_init_h264(rdpShadowEncoder* encoder)
 	encoder->h264->BitRate = encoder->server->h264BitRate;
 	encoder->h264->FrameRate = encoder->server->h264FrameRate;
 	encoder->h264->QP = encoder->server->h264QP;
+
 	encoder->codecs |= FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444;
 	return 1;
 fail:

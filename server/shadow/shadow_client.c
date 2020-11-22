@@ -828,9 +828,9 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 
 	if (settings->GfxAVC444 || settings->GfxAVC444v2)
 	{
-		RDPGFX_AVC444_BITMAP_STREAM avc444;
-		RECTANGLE_16 regionRect;
-		RDPGFX_H264_QUANT_QUALITY quantQualityVal;
+		INT32 rc;
+		RDPGFX_AVC444_BITMAP_STREAM avc444 = { 0 };
+		RECTANGLE_16 regionRect = { 0 };
 		BYTE version = settings->GfxAVC444v2 ? 2 : 1;
 
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_AVC444) < 0)
@@ -839,34 +839,33 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 			return FALSE;
 		}
 
-		if (avc444_compress(encoder->h264, pSrcData, cmd.format, nSrcStep, nWidth, nHeight, version,
-		                    &avc444.LC, &avc444.bitstream[0].data, &avc444.bitstream[0].length,
-		                    &avc444.bitstream[1].data, &avc444.bitstream[1].length) < 0)
+		regionRect.left = cmd.left;
+		regionRect.top = cmd.top;
+		regionRect.right = cmd.right;
+		regionRect.bottom = cmd.bottom;
+		rc = avc444_compress(encoder->h264, pSrcData, cmd.format, nSrcStep, nWidth, nHeight,
+		                     version, &regionRect, &avc444.LC, &avc444.bitstream[0].data,
+		                     &avc444.bitstream[0].length, &avc444.bitstream[1].data,
+		                     &avc444.bitstream[1].length, &avc444.bitstream[0].meta,
+		                     &avc444.bitstream[1].meta);
+		if (rc < 0)
 		{
 			WLog_ERR(TAG, "avc420_compress failed for avc444");
 			return FALSE;
 		}
 
-		regionRect.left = cmd.left;
-		regionRect.top = cmd.top;
-		regionRect.right = cmd.right;
-		regionRect.bottom = cmd.bottom;
-		quantQualityVal.qp = encoder->h264->QP;
-		quantQualityVal.r = 0;
-		quantQualityVal.p = 0;
-		quantQualityVal.qualityVal = 100 - quantQualityVal.qp;
-		avc444.bitstream[0].meta.numRegionRects = 1;
-		avc444.bitstream[0].meta.regionRects = &regionRect;
-		avc444.bitstream[0].meta.quantQualityVals = &quantQualityVal;
-		avc444.bitstream[1].meta.numRegionRects = 1;
-		avc444.bitstream[1].meta.regionRects = &regionRect;
-		avc444.bitstream[1].meta.quantQualityVals = &quantQualityVal;
-		avc444.cbAvc420EncodedBitstream1 = rdpgfx_estimate_h264_avc420(&avc444.bitstream[0]);
-		cmd.codecId = settings->GfxAVC444v2 ? RDPGFX_CODECID_AVC444v2 : RDPGFX_CODECID_AVC444;
-		cmd.extra = (void*)&avc444;
-		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, &cmd, &cmdstart,
-		          &cmdend);
+		/* rc > 0 means new data */
+		if (rc > 0)
+		{
+			avc444.cbAvc420EncodedBitstream1 = rdpgfx_estimate_h264_avc420(&avc444.bitstream[0]);
+			cmd.codecId = settings->GfxAVC444v2 ? RDPGFX_CODECID_AVC444v2 : RDPGFX_CODECID_AVC444;
+			cmd.extra = (void*)&avc444;
+			IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, &cmd, &cmdstart,
+			          &cmdend);
+		}
 
+		free_h264_metablock(&avc444.bitstream[0].meta);
+		free_h264_metablock(&avc444.bitstream[1].meta);
 		if (error)
 		{
 			WLog_ERR(TAG, "SurfaceFrameCommand failed with error %" PRIu32 "", error);
@@ -875,9 +874,9 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	}
 	else if (settings->GfxH264)
 	{
-		RDPGFX_AVC420_BITMAP_STREAM avc420;
+		INT32 rc;
+		RDPGFX_AVC420_BITMAP_STREAM avc420 = { 0 };
 		RECTANGLE_16 regionRect;
-		RDPGFX_H264_QUANT_QUALITY quantQualityVal;
 
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_AVC420) < 0)
 		{
@@ -885,28 +884,28 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 			return FALSE;
 		}
 
-		if (avc420_compress(encoder->h264, pSrcData, cmd.format, nSrcStep, nWidth, nHeight,
-		                    &avc420.data, &avc420.length) < 0)
+		regionRect.left = cmd.left;
+		regionRect.top = cmd.top;
+		regionRect.right = cmd.right;
+		regionRect.bottom = cmd.bottom;
+		rc = avc420_compress(encoder->h264, pSrcData, cmd.format, nSrcStep, nWidth, nHeight,
+		                     &regionRect, &avc420.data, &avc420.length, &avc420.meta);
+		if (rc < 0)
 		{
 			WLog_ERR(TAG, "avc420_compress failed");
 			return FALSE;
 		}
 
-		cmd.codecId = RDPGFX_CODECID_AVC420;
-		cmd.extra = (void*)&avc420;
-		regionRect.left = cmd.left;
-		regionRect.top = cmd.top;
-		regionRect.right = cmd.right;
-		regionRect.bottom = cmd.bottom;
-		quantQualityVal.qp = encoder->h264->QP;
-		quantQualityVal.r = 0;
-		quantQualityVal.p = 0;
-		quantQualityVal.qualityVal = 100 - quantQualityVal.qp;
-		avc420.meta.numRegionRects = 1;
-		avc420.meta.regionRects = &regionRect;
-		avc420.meta.quantQualityVals = &quantQualityVal;
-		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, &cmd, &cmdstart,
-		          &cmdend);
+		/* rc > 0 means new data */
+		if (rc > 0)
+		{
+			cmd.codecId = RDPGFX_CODECID_AVC420;
+			cmd.extra = (void*)&avc420;
+
+			IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, &cmd, &cmdstart,
+			          &cmdend);
+		}
+		free_h264_metablock(&avc420.meta);
 
 		if (error)
 		{

@@ -435,7 +435,8 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(const BYTE* src1, const BYTE* src2,
 }
 
 static pstatus_t ssse3_RGBToYUV420_BGRX(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-                                        BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
+                                        BYTE* pDst[3], const UINT32 dstStep[3],
+                                        const prim_size_t* roi)
 {
 	UINT32 y;
 	const BYTE* argb = pSrc;
@@ -477,7 +478,7 @@ static pstatus_t ssse3_RGBToYUV420_BGRX(const BYTE* pSrc, UINT32 srcFormat, UINT
 }
 
 static pstatus_t ssse3_RGBToYUV420(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-                                   BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
+                                   BYTE* pDst[3], const UINT32 dstStep[3], const prim_size_t* roi)
 {
 	switch (srcFormat)
 	{
