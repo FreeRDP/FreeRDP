@@ -668,14 +668,17 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 	SSL_CTX_set_max_proto_version(tls->ctx, 0); /* highest supported version by library */
 #endif
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
-	SSL_CTX_set_security_level(tls->ctx, settings->TlsSecLevel);
+	SSL_CTX_set_security_level(tls->ctx,
+	                           freerdp_settings_get_uint32(settings, FreeRDP_TlsSecLevel));
 #endif
 
-	if (settings->AllowedTlsCiphers)
+	if (freerdp_settings_get_string(settings, FreeRDP_AllowedTlsCiphers))
 	{
-		if (!SSL_CTX_set_cipher_list(tls->ctx, settings->AllowedTlsCiphers))
+		if (!SSL_CTX_set_cipher_list(
+		        tls->ctx, freerdp_settings_get_string(settings, FreeRDP_AllowedTlsCiphers)))
 		{
-			WLog_ERR(TAG, "SSL_CTX_set_cipher_list %s failed", settings->AllowedTlsCiphers);
+			WLog_ERR(TAG, "SSL_CTX_set_cipher_list %s failed",
+			         freerdp_settings_get_string(settings, FreeRDP_AllowedTlsCiphers));
 			return FALSE;
 		}
 	}
@@ -927,19 +930,22 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 	if (!tls_prepare(tls, underlying, SSLv23_server_method(), options, FALSE))
 		return FALSE;
 
-	if (settings->PrivateKeyFile)
+	if (freerdp_settings_get_string(settings, FreeRDP_PrivateKeyFile))
 	{
-		bio = BIO_new_file(settings->PrivateKeyFile, "rb");
+		bio = BIO_new_file(freerdp_settings_get_string(settings, FreeRDP_PrivateKeyFile), "rb");
 
 		if (!bio)
 		{
-			WLog_ERR(TAG, "BIO_new_file failed for private key %s", settings->PrivateKeyFile);
+			WLog_ERR(TAG, "BIO_new_file failed for private key %s",
+			         freerdp_settings_get_string(settings, FreeRDP_PrivateKeyFile));
 			return FALSE;
 		}
 	}
-	else if (settings->PrivateKeyContent)
+	else if (freerdp_settings_get_string(settings, FreeRDP_PrivateKeyContent))
 	{
-		bio = BIO_new_mem_buf(settings->PrivateKeyContent, strlen(settings->PrivateKeyContent));
+		bio = BIO_new_mem_buf(
+		    freerdp_settings_get_string(settings, FreeRDP_PrivateKeyContent),
+		    strlen(freerdp_settings_get_string(settings, FreeRDP_PrivateKeyContent)));
 
 		if (!bio)
 		{
@@ -969,19 +975,22 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 		return FALSE;
 	}
 
-	if (settings->CertificateFile)
+	if (freerdp_settings_get_string(settings, FreeRDP_CertificateFile))
 	{
-		bio = BIO_new_file(settings->CertificateFile, "rb");
+		bio = BIO_new_file(freerdp_settings_get_string(settings, FreeRDP_CertificateFile), "rb");
 
 		if (!bio)
 		{
-			WLog_ERR(TAG, "BIO_new_file failed for certificate %s", settings->CertificateFile);
+			WLog_ERR(TAG, "BIO_new_file failed for certificate %s",
+			         freerdp_settings_get_string(settings, FreeRDP_CertificateFile));
 			return FALSE;
 		}
 	}
-	else if (settings->CertificateContent)
+	else if (freerdp_settings_get_string(settings, FreeRDP_CertificateContent))
 	{
-		bio = BIO_new_mem_buf(settings->CertificateContent, strlen(settings->CertificateContent));
+		bio = BIO_new_mem_buf(
+		    freerdp_settings_get_string(settings, FreeRDP_CertificateContent),
+		    strlen(freerdp_settings_get_string(settings, FreeRDP_CertificateContent)));
 
 		if (!bio)
 		{
@@ -1131,32 +1140,34 @@ static BOOL is_redirected(rdpTls* tls)
 {
 	rdpSettings* settings = tls->settings;
 
-	if (LB_NOREDIRECT & settings->RedirectionFlags)
+	if (LB_NOREDIRECT & freerdp_settings_get_uint32(settings, FreeRDP_RedirectionFlags))
 		return FALSE;
 
-	return settings->RedirectionFlags != 0;
+	return freerdp_settings_get_uint32(settings, FreeRDP_RedirectionFlags) != 0;
 }
 
 static BOOL is_accepted(rdpTls* tls, const BYTE* pem, size_t length)
 {
 	rdpSettings* settings = tls->settings;
-	char* AccpetedKey;
+	const char* AccpetedKey;
 	UINT32 AcceptedKeyLength;
 
 	if (tls->isGatewayTransport)
 	{
-		AccpetedKey = settings->GatewayAcceptedCert;
-		AcceptedKeyLength = settings->GatewayAcceptedCertLength;
+		AccpetedKey = freerdp_settings_get_string(settings, FreeRDP_GatewayAcceptedCert);
+		AcceptedKeyLength =
+		    freerdp_settings_get_uint32(settings, FreeRDP_GatewayAcceptedCertLength);
 	}
 	else if (is_redirected(tls))
 	{
-		AccpetedKey = settings->RedirectionAcceptedCert;
-		AcceptedKeyLength = settings->RedirectionAcceptedCertLength;
+		AccpetedKey = freerdp_settings_get_string(settings, FreeRDP_RedirectionAcceptedCert);
+		AcceptedKeyLength =
+		    freerdp_settings_get_uint32(settings, FreeRDP_RedirectionAcceptedCertLength);
 	}
 	else
 	{
-		AccpetedKey = settings->AcceptedCert;
-		AcceptedKeyLength = settings->AcceptedCertLength;
+		AccpetedKey = freerdp_settings_get_string(settings, FreeRDP_AcceptedCert);
+		AcceptedKeyLength = freerdp_settings_get_uint32(settings, FreeRDP_AcceptedCertLength);
 	}
 
 	if (AcceptedKeyLength > 0)
@@ -1170,21 +1181,21 @@ static BOOL is_accepted(rdpTls* tls, const BYTE* pem, size_t length)
 
 	if (tls->isGatewayTransport)
 	{
-		free(settings->GatewayAcceptedCert);
-		settings->GatewayAcceptedCert = NULL;
-		settings->GatewayAcceptedCertLength = 0;
+		if (!!freerdp_settings_set_string(settings, FreeRDP_GatewayAcceptedCert, NULL) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_GatewayAcceptedCertLength, 0))
+			return FALSE;
 	}
 	else if (is_redirected(tls))
 	{
-		free(settings->RedirectionAcceptedCert);
-		settings->RedirectionAcceptedCert = NULL;
-		settings->RedirectionAcceptedCertLength = 0;
+		if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionAcceptedCert, NULL) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_RedirectionAcceptedCertLength, 0))
+			return FALSE;
 	}
 	else
 	{
-		free(settings->AcceptedCert);
-		settings->AcceptedCert = NULL;
-		settings->AcceptedCertLength = 0;
+		if (!freerdp_settings_set_string(settings, FreeRDP_AcceptedCert, NULL) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_AcceptedCertLength, 0))
+			return FALSE;
 	}
 
 	return FALSE;
@@ -1243,18 +1254,21 @@ static BOOL accept_cert(rdpTls* tls, const BYTE* pem, UINT32 length)
 
 	if (tls->isGatewayTransport)
 	{
-		settings->GatewayAcceptedCert = dupPem;
-		settings->GatewayAcceptedCertLength = length;
+		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAcceptedCert, dupPem) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_GatewayAcceptedCertLength, length))
+			return FALSE;
 	}
 	else if (is_redirected(tls))
 	{
-		settings->RedirectionAcceptedCert = dupPem;
-		settings->RedirectionAcceptedCertLength = length;
+		if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionAcceptedCert, dupPem) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_RedirectionAcceptedCertLength, length))
+			return FALSE;
 	}
 	else
 	{
-		settings->AcceptedCert = dupPem;
-		settings->AcceptedCertLength = length;
+		if (!freerdp_settings_set_string(settings, FreeRDP_AcceptedCert, dupPem) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_AcceptedCertLength, length))
+			return FALSE;
 	}
 
 	return TRUE;
@@ -1383,7 +1397,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 	int verification_status = -1;
 	BOOL hostname_match = FALSE;
 	rdpCertificateData* certificate_data = NULL;
-	freerdp* instance = (freerdp*)tls->settings->instance;
+	freerdp* instance =
+	    (freerdp*)freerdp_settings_get_pointer_writable(tls->settings, FreeRDP_instance);
 	BYTE* pemCert = NULL;
 	DWORD flags = VERIFY_CERT_FLAG_NONE;
 
@@ -1400,7 +1415,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 		goto end;
 	}
 
-	if (is_accepted_fingerprint(cert, tls->settings->CertificateAcceptedFingerprints))
+	if (is_accepted_fingerprint(cert, freerdp_settings_get_string(
+	                                      tls->settings, FreeRDP_CertificateAcceptedFingerprints)))
 	{
 		verification_status = 1;
 		goto end;
@@ -1416,7 +1432,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 		flags |= VERIFY_CERT_FLAG_REDIRECT;
 
 	/* Certificate management is done by the application */
-	if (tls->settings->ExternalCertificateManagement)
+	if (freerdp_settings_get_bool(tls->settings, FreeRDP_ExternalCertificateManagement))
 	{
 		if (instance->VerifyX509Certificate)
 			verification_status =
@@ -1434,15 +1450,17 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 		}
 	}
 	/* ignore certificate verification if user explicitly required it (discouraged) */
-	else if (tls->settings->IgnoreCertificate)
+	else if (freerdp_settings_get_bool(tls->settings, FreeRDP_IgnoreCertificate))
 		verification_status = 1; /* success! */
-	else if (!tls->isGatewayTransport && (tls->settings->AuthenticationLevel == 0))
+	else if (!tls->isGatewayTransport &&
+	         (freerdp_settings_get_uint32(tls->settings, FreeRDP_AuthenticationLevel) == 0))
 		verification_status = 1; /* success! */
 	else
 	{
 		/* if user explicitly specified a certificate name, use it instead of the hostname */
-		if (!tls->isGatewayTransport && tls->settings->CertificateName)
-			hostname = tls->settings->CertificateName;
+		if (!tls->isGatewayTransport &&
+		    freerdp_settings_get_string(tls->settings, FreeRDP_CertificateName))
+			hostname = freerdp_settings_get_string(tls->settings, FreeRDP_CertificateName);
 
 		/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
 		certificate_status = x509_verify_certificate(cert, tls->certificate_store->path);
@@ -1521,12 +1539,12 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					                                          dns_names, dns_names_count);
 
 				/* Automatically accept certificate on first use */
-				if (tls->settings->AutoAcceptCertificate)
+				if (freerdp_settings_get_bool(tls->settings, FreeRDP_AutoAcceptCertificate))
 				{
 					WLog_INFO(TAG, "No certificate stored, automatically accepting.");
 					accept_certificate = 1;
 				}
-				else if (tls->settings->AutoDenyCertificate)
+				else if (freerdp_settings_get_bool(tls->settings, FreeRDP_AutoDenyCertificate))
 				{
 					WLog_INFO(TAG, "No certificate stored, automatically denying.");
 					accept_certificate = 0;
@@ -1570,7 +1588,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 				                                 &old_subject, &old_issuer, &old_fingerprint))
 					WLog_WARN(TAG, "Failed to get certificate entry for %s:%d", hostname, port);
 
-				if (tls->settings->AutoDenyCertificate)
+				if (freerdp_settings_get_bool(tls->settings, FreeRDP_AutoDenyCertificate))
 				{
 					WLog_INFO(TAG, "No certificate stored, automatically denying.");
 					accept_certificate = 0;
@@ -1715,7 +1733,7 @@ rdpTls* tls_new(rdpSettings* settings)
 
 	tls->settings = settings;
 
-	if (!settings->ServerMode)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
 		tls->certificate_store = certificate_store_new(settings);
 

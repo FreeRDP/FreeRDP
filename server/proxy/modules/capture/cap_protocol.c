@@ -36,16 +36,17 @@ wStream* capture_plugin_create_session_info_packet(pClientContext* pc)
 	UINT16 username_length;
 	wStream* s = NULL;
 	rdpSettings* settings;
+	const char* Username;
 
 	if (!pc)
 		return NULL;
 
 	settings = pc->context.settings;
-
-	if (!settings || !settings->Username)
+	Username = freerdp_settings_get_string(settings, FreeRDP_Username);
+	if (!settings || !Username)
 		return NULL;
 
-	username_length = strlen(settings->Username);
+	username_length = strlen(Username);
 	if (username_length == 0)
 		return NULL;
 
@@ -55,10 +56,13 @@ wStream* capture_plugin_create_session_info_packet(pClientContext* pc)
 		return NULL;
 
 	Stream_Write_UINT16(s, username_length);                         /* username length (2 bytes) */
-	Stream_Write(s, settings->Username, username_length);            /* username */
-	Stream_Write_UINT32(s, settings->DesktopWidth);                  /* desktop width (4 bytes) */
-	Stream_Write_UINT32(s, settings->DesktopHeight);                 /* desktop height (4 bytes) */
-	Stream_Write_UINT32(s, settings->ColorDepth);                    /* color depth (4 bytes) */
+	Stream_Write(s, Username, username_length);                      /* username */
+	Stream_Write_UINT32(s, freerdp_settings_get_uint32(
+	                           settings, FreeRDP_DesktopWidth)); /* desktop width (4 bytes) */
+	Stream_Write_UINT32(s, freerdp_settings_get_uint32(
+	                           settings, FreeRDP_DesktopHeight)); /* desktop height (4 bytes) */
+	Stream_Write_UINT32(
+	    s, freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth)); /* color depth (4 bytes) */
 	Stream_Write(s, pc->pdata->session_id, PROXY_SESSION_ID_LENGTH); /* color depth (32 bytes) */
 	return s;
 }

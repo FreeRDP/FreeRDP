@@ -862,26 +862,25 @@ static UINT wf_rail_server_system_param(RailClientContext* context,
 static UINT wf_rail_server_handshake(RailClientContext* context,
                                      const RAIL_HANDSHAKE_ORDER* handshake)
 {
-	RAIL_EXEC_ORDER exec;
-	RAIL_SYSPARAM_ORDER sysparam;
-	RAIL_HANDSHAKE_ORDER clientHandshake;
-	RAIL_CLIENT_STATUS_ORDER clientStatus;
+	RAIL_EXEC_ORDER exec = { 0 };
+	RAIL_SYSPARAM_ORDER sysparam = { 0 };
+	RAIL_HANDSHAKE_ORDER clientHandshake = { 0 };
+	RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
 	wfContext* wfc = (wfContext*)context->custom;
 	rdpSettings* settings = wfc->context.settings;
+
 	clientHandshake.buildNumber = 0x00001DB0;
 	context->ClientHandshake(context, &clientHandshake);
-	ZeroMemory(&clientStatus, sizeof(RAIL_CLIENT_STATUS_ORDER));
 	clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
 	context->ClientInformation(context, &clientStatus);
 
-	if (settings->RemoteAppLanguageBarSupported)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteAppLanguageBarSupported))
 	{
 		RAIL_LANGBAR_INFO_ORDER langBarInfo;
 		langBarInfo.languageBarStatus = 0x00000008; /* TF_SFT_HIDDEN */
 		context->ClientLanguageBarInfo(context, &langBarInfo);
 	}
 
-	ZeroMemory(&sysparam, sizeof(RAIL_SYSPARAM_ORDER));
 	sysparam.params = 0;
 	sysparam.params |= SPI_MASK_SET_HIGH_CONTRAST;
 	sysparam.highContrast.colorScheme.string = NULL;
@@ -898,14 +897,15 @@ static UINT wf_rail_server_handshake(RailClientContext* context,
 	sysparam.params |= SPI_MASK_SET_WORK_AREA;
 	sysparam.workArea.left = 0;
 	sysparam.workArea.top = 0;
-	sysparam.workArea.right = settings->DesktopWidth;
-	sysparam.workArea.bottom = settings->DesktopHeight;
+	sysparam.workArea.right = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	sysparam.workArea.bottom = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 	sysparam.dragFullWindows = FALSE;
 	context->ClientSystemParam(context, &sysparam);
-	ZeroMemory(&exec, sizeof(RAIL_EXEC_ORDER));
-	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
-	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
-	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
+
+	exec.RemoteApplicationProgram =
+	    freerdp_settings_get_string_writable(settings, FreeRDP_RemoteApplicationProgram);
+	exec.RemoteApplicationWorkingDir =freerdp_settings_get_string_writable settings, FreeRDP_ShellWorkingDirectory);
+	exec.RemoteApplicationArguments = freerdp_settings_get_string_writable settings, FreeRDP_RemoteApplicationCmdLine);
 	context->ClientExecute(context, &exec);
 	return CHANNEL_RC_OK;
 }

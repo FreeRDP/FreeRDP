@@ -44,7 +44,6 @@ typedef struct
 	void* initHandle;
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
 	char buffer[16 * 1024];
-	char* commandline;
 } Plugin;
 
 static int init_external_addin(Plugin* plugin)
@@ -85,18 +84,17 @@ static int init_external_addin(Plugin* plugin)
 	}
 
 	// Execute plugin
-	plugin->commandline = _strdup(plugin->channelEntryPoints.pExtendedData);
-	if (!CreateProcessA(NULL,
-	                    plugin->commandline, // command line
-	                    NULL,                // process security attributes
-	                    NULL,                // primary thread security attributes
-	                    TRUE,                // handles are inherited
-	                    0,                   // creation flags
-	                    NULL,                // use parent's environment
-	                    NULL,                // use parent's current directory
-	                    &siStartInfo,        // STARTUPINFO pointer
-	                    &procInfo            // receives PROCESS_INFORMATION
-	                    ))
+	if (!CreateProcess(plugin->channelEntryPoints.pExtendedData,
+	                   NULL,         // command line
+	                   NULL,         // process security attributes
+	                   NULL,         // primary thread security attributes
+	                   TRUE,         // handles are inherited
+	                   0,            // creation flags
+	                   NULL,         // use parent's environment
+	                   NULL,         // use parent's current directory
+	                   &siStartInfo, // STARTUPINFO pointer
+	                   &procInfo     // receives PROCESS_INFORMATION
+	                   ))
 	{
 		WLog_ERR(TAG, "fork for addin");
 		return -1;
@@ -245,33 +243,6 @@ static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHa
 	}
 }
 
-static void channel_terminated(Plugin* plugin)
-{
-	if (debug)
-		puts("rdp2tcp terminated");
-
-	if (!plugin)
-		return;
-
-	if (plugin->copyThread)
-		TerminateThread(plugin->copyThread, 0);
-	if (plugin->writeComplete)
-		CloseHandle(plugin->writeComplete);
-
-	CloseHandle(plugin->hStdInputWrite);
-	CloseHandle(plugin->hStdOutputRead);
-	TerminateProcess(plugin->hProcess, 0);
-	CloseHandle(plugin->hProcess);
-	free(plugin->commandline);
-	free(plugin);
-}
-
-static void channel_initialized(Plugin* plugin)
-{
-	plugin->writeComplete = CreateEvent(NULL, TRUE, FALSE, NULL);
-	plugin->copyThread = CreateThread(NULL, 0, copyThread, plugin, 0, NULL);
-}
-
 static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInitHandle, UINT event,
                                                 LPVOID pData, UINT dataLength)
 {
@@ -279,13 +250,12 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 
 	switch (event)
 	{
-		case CHANNEL_EVENT_INITIALIZED:
-			channel_initialized(plugin);
-			break;
-
 		case CHANNEL_EVENT_CONNECTED:
 			if (debug)
 				puts("rdp2tcp connected");
+
+			plugin->writeComplete = CreateEvent(NULL, TRUE, FALSE, NULL);
+			plugin->copyThread = CreateThread(NULL, 0, copyThread, plugin, 0, NULL);
 
 			if (plugin->channelEntryPoints.pVirtualChannelOpenEx(
 			        pInitHandle, &plugin->openHandle, RDP2TCP_CHAN_NAME,
@@ -301,7 +271,20 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
-			channel_terminated(plugin);
+			if (debug)
+				puts("rdp2tcp terminated");
+
+			if (plugin->copyThread)
+			{
+				TerminateThread(plugin->copyThread, 0);
+				CloseHandle(plugin->writeComplete);
+			}
+
+			CloseHandle(plugin->hStdInputWrite);
+			CloseHandle(plugin->hStdOutputRead);
+			TerminateProcess(plugin->hProcess, 0);
+			CloseHandle(plugin->hProcess);
+			free(plugin);
 			break;
 	}
 }

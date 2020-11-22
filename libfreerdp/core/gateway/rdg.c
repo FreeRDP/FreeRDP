@@ -402,8 +402,9 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
 	{
-		PAACookieLen =
-		    ConvertToUnicode(CP_UTF8, 0, rdg->settings->GatewayAccessToken, -1, &PAACookie, 0);
+		PAACookieLen = ConvertToUnicode(
+		    CP_UTF8, 0, freerdp_settings_get_string(rdg->settings, FreeRDP_GatewayAccessToken), -1,
+		    &PAACookie, 0);
 
 		if (!PAACookie || (PAACookieLen < 0) || (PAACookieLen > UINT16_MAX / 2))
 		{
@@ -455,8 +456,9 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 	BOOL status;
 	WCHAR* clientName = NULL;
 	UINT32 packetSize;
-	int clientNameLen =
-	    ConvertToUnicode(CP_UTF8, 0, rdg->settings->ClientHostname, -1, &clientName, 0);
+	int clientNameLen = ConvertToUnicode(
+	    CP_UTF8, 0, freerdp_settings_get_string(rdg->settings, FreeRDP_ClientHostname), -1,
+	    &clientName, 0);
 
 	if (!clientName || (clientNameLen < 0) || (clientNameLen > UINT16_MAX / 2))
 	{
@@ -497,8 +499,9 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	wStream* s = NULL;
 	BOOL status = FALSE;
 	WCHAR* serverName = NULL;
-	int serverNameLen =
-	    ConvertToUnicode(CP_UTF8, 0, rdg->settings->ServerHostname, -1, &serverName, 0);
+	int serverNameLen = ConvertToUnicode(
+	    CP_UTF8, 0, freerdp_settings_get_string(rdg->settings, FreeRDP_ServerHostname), -1,
+	    &serverName, 0);
 	UINT32 packetSize = 16 + ((UINT32)serverNameLen) * 2;
 
 	if ((serverNameLen < 0) || (serverNameLen > UINT16_MAX / 2))
@@ -514,7 +517,8 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	Stream_Write_UINT32(s, packetSize);              /* PacketLength (4 bytes) */
 	Stream_Write_UINT8(s, 1);                        /* Number of resources. (1 byte) */
 	Stream_Write_UINT8(s, 0);                        /* Number of alternative resources (1 byte) */
-	Stream_Write_UINT16(s, (UINT16)rdg->settings->ServerPort); /* Resource port (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)freerdp_settings_get_uint32(
+	                           rdg->settings, FreeRDP_ServerPort)); /* Resource port (2 bytes) */
 	Stream_Write_UINT16(s, 3);                                 /* Protocol number (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)serverNameLen * 2);
 	Stream_Write_UTF16_String(s, serverName, (size_t)serverNameLen);
@@ -979,8 +983,10 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context)
 	rdpSettings* settings = context->settings;
 	freerdp* instance = context->instance;
 
-	if (!settings->GatewayPassword || !settings->GatewayUsername ||
-	    !strlen(settings->GatewayPassword) || !strlen(settings->GatewayUsername))
+	if (!freerdp_settings_get_string(settings, FreeRDP_GatewayPassword) ||
+	    !freerdp_settings_get_string(settings, FreeRDP_GatewayUsername) ||
+	    !strlen(freerdp_settings_get_string(settings, FreeRDP_GatewayPassword)) ||
+	    !strlen(freerdp_settings_get_string(settings, FreeRDP_GatewayUsername)))
 	{
 		if (freerdp_shall_disconnect(instance))
 			return FALSE;
@@ -992,40 +998,50 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context)
 		}
 		else
 		{
-			BOOL proceed =
-			    instance->GatewayAuthenticate(instance, &settings->GatewayUsername,
-			                                  &settings->GatewayPassword, &settings->GatewayDomain);
+			BOOL rc = TRUE;
+			;
+			char* user = _strdup(freerdp_settings_get_string(settings, FreeRDP_GatewayUsername));
+			char* pwd = _strdup(freerdp_settings_get_string(settings, FreeRDP_GatewayPassword));
+			char* domain = _strdup(freerdp_settings_get_string(settings, FreeRDP_GatewayDomain));
+			BOOL proceed = instance->GatewayAuthenticate(instance, &user, &pwd, &domain);
 
-			if (!proceed)
+			if (!freerdp_settings_set_string(settings, FreeRDP_Username, user) ||
+			    !freerdp_settings_set_string(settings, FreeRDP_GatewayDomain, domain) ||
+			    !freerdp_settings_set_string(settings, FreeRDP_GatewayPassword, pwd))
+				rc = FALSE;
+			free(user);
+			free(pwd);
+			free(domain);
+			if (!proceed || !rc)
 			{
 				freerdp_set_last_error_log(context,
 				                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return FALSE;
 			}
 
-			if (settings->GatewayUseSameCredentials)
+			if (freerdp_settings_get_bool(settings, FreeRDP_GatewayUseSameCredentials))
 			{
-				if (settings->GatewayUsername)
+				if (freerdp_settings_get_string(settings, FreeRDP_GatewayUsername))
 				{
-					free(settings->Username);
-
-					if (!(settings->Username = _strdup(settings->GatewayUsername)))
+					if (!(freerdp_settings_set_string(
+					        settings, FreeRDP_Username,
+					        freerdp_settings_get_string(settings, FreeRDP_GatewayUsername))))
 						return FALSE;
 				}
 
-				if (settings->GatewayDomain)
+				if (freerdp_settings_get_string(settings, FreeRDP_GatewayDomain))
 				{
-					free(settings->Domain);
-
-					if (!(settings->Domain = _strdup(settings->GatewayDomain)))
+					if (!(freerdp_settings_set_string(
+					        settings, FreeRDP_Domain,
+					        freerdp_settings_get_string(settings, FreeRDP_GatewayDomain))))
 						return FALSE;
 				}
 
-				if (settings->GatewayPassword)
+				if (freerdp_settings_get_string(settings, FreeRDP_GatewayPassword))
 				{
-					free(settings->Password);
-
-					if (!(settings->Password = _strdup(settings->GatewayPassword)))
+					if (!freerdp_settings_set_string(
+					        settings, FreeRDP_Password,
+					        freerdp_settings_get_string(settings, FreeRDP_GatewayPassword)))
 						return FALSE;
 				}
 			}
@@ -1048,11 +1064,14 @@ static BOOL rdg_ntlm_init(rdpRdg* rdg, rdpTls* tls)
 	if (!rdg_get_gateway_credentials(context))
 		return FALSE;
 
-	if (!ntlm_client_init(rdg->ntlm, TRUE, settings->GatewayUsername, settings->GatewayDomain,
-	                      settings->GatewayPassword, tls->Bindings))
+	if (!ntlm_client_init(
+	        rdg->ntlm, TRUE, freerdp_settings_get_string(settings, FreeRDP_GatewayUsername),
+	        freerdp_settings_get_string(settings, FreeRDP_GatewayDomain),
+	        freerdp_settings_get_string(settings, FreeRDP_GatewayPassword), tls->Bindings))
 		return FALSE;
 
-	if (!ntlm_client_make_spn(rdg->ntlm, _T("HTTP"), settings->GatewayHostname))
+	if (!ntlm_client_make_spn(rdg->ntlm, _T("HTTP"),
+	                          freerdp_settings_get_string(settings, FreeRDP_GatewayHostname)))
 		return FALSE;
 
 	if (!ntlm_authenticate(rdg->ntlm, &continueNeeded))
@@ -1088,13 +1107,13 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	BIO* socketBio = NULL;
 	BIO* bufferedBio = NULL;
 	rdpSettings* settings = rdg->settings;
-	const char* peerHostname = settings->GatewayHostname;
-	UINT16 peerPort = (UINT16)settings->GatewayPort;
+	const char* peerHostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+	UINT16 peerPort = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort);
 	const char *proxyUsername, *proxyPassword;
 	BOOL isProxyConnection =
 	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 
-	if (settings->GatewayPort > UINT16_MAX)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort) > UINT16_MAX)
 		return FALSE;
 
 	sockfd = freerdp_tcp_connect(rdg->context, settings, peerAddress ? peerAddress : peerHostname,
@@ -1128,7 +1147,8 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	if (isProxyConnection)
 	{
 		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword,
-		                   settings->GatewayHostname, (UINT16)settings->GatewayPort))
+		                   freerdp_settings_get_string(settings, FreeRDP_GatewayHostname),
+		                   (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort)))
 		{
 			BIO_free_all(bufferedBio);
 			return FALSE;
@@ -1141,8 +1161,8 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 		return FALSE;
 	}
 
-	tls->hostname = settings->GatewayHostname;
-	tls->port = (int)settings->GatewayPort;
+	tls->hostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+	tls->port = (int)freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort);
 	tls->isGatewayTransport = TRUE;
 	status = tls_connect(tls, bufferedBio);
 	if (status < 1)
@@ -1799,7 +1819,7 @@ rdpRdg* rdg_new(rdpContext* context)
 		rdg->settings = rdg->context->settings;
 		rdg->extAuth = HTTP_EXTENDED_AUTH_NONE;
 
-		if (rdg->settings->GatewayAccessToken)
+		if (freerdp_settings_get_string(rdg->settings, FreeRDP_GatewayAccessToken))
 			rdg->extAuth = HTTP_EXTENDED_AUTH_PAA;
 
 		UuidCreate(&rdg->guid);
@@ -1831,7 +1851,8 @@ rdpRdg* rdg_new(rdpContext* context)
 		    !http_context_set_pragma(rdg->http, "no-cache") ||
 		    !http_context_set_connection(rdg->http, "Keep-Alive") ||
 		    !http_context_set_user_agent(rdg->http, "MS-RDGateway/1.0") ||
-		    !http_context_set_host(rdg->http, rdg->settings->GatewayHostname) ||
+		    !http_context_set_host(
+		        rdg->http, freerdp_settings_get_string(rdg->settings, FreeRDP_GatewayHostname)) ||
 		    !http_context_set_rdg_connection_id(rdg->http, bracedUuid))
 		{
 			goto rdg_alloc_error;

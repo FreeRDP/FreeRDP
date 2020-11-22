@@ -102,12 +102,8 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	  "Client Build Number sent to server (influences smartcard behaviour, see [MS-RDPESC])" },
 	{ "client-hostname", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
 	  "Client Hostname to send to server" },
-	{ "clipboard", COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_OPTIONAL, "[use-selection:<atom>]",
-	  BoolValueTrue, NULL, -1, NULL,
-	  "Redirect clipboard.                       "
-	  " * use-selection:<atom>  ... (X11) Specify which X selection to access. Default is "
-	  "CLIPBOARD."
-	  " PRIMARY is the X-style middle-click selection." },
+	{ "clipboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	  "Redirect clipboard" },
 	{ "codec-cache", COMMAND_LINE_VALUE_REQUIRED, "[rfx|nsc|jpeg]", NULL, NULL, -1, NULL,
 	  "Bitmap codec cache" },
 	{ "compression", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, "z", "compression" },
@@ -180,7 +176,6 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "grab-keyboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Grab keyboard" },
-	{ "grab-mouse", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Grab mouse" },
 	{ "gt", COMMAND_LINE_VALUE_REQUIRED, "[rpc|http|auto]", NULL, NULL, -1, NULL,
 	  "Gateway transport type" },
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[[<domain>\\]<user>|<user>[@<domain>]]", NULL, NULL, -1,
@@ -211,9 +206,6 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	  "List keyboard layouts" },
 	{ "kbd-lang-list", COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
 	  "List keyboard languages" },
-	{ "kbd-remap", COMMAND_LINE_VALUE_REQUIRED,
-	  "List of <key>=<value>,... pairs to remap scancodes", NULL, NULL, -1, NULL,
-	  "Keyboard scancode remapping" },
 	{ "kbd-subtype", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL,
 	  "Keyboard subtype" },
 	{ "kbd-type", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL, "Keyboard type" },

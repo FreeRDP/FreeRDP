@@ -242,22 +242,28 @@ static int nla_client_init(rdpNla* nla)
 	WINPR_SAM_ENTRY* entry;
 	nla->state = NLA_STATE_INITIAL;
 
-	if (settings->RestrictedAdminModeRequired)
-		settings->DisableCredentialsDelegation = TRUE;
+	if (freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired))
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableCredentialsDelegation, TRUE))
+			return -1;
+	}
 
-	if (is_empty(settings->Username) ||
-	    (is_empty(settings->Password) && is_empty((const char*)settings->RedirectionPassword)))
+	if (is_empty(freerdp_settings_get_string(settings, FreeRDP_Username)) ||
+	    (is_empty(freerdp_settings_get_string(settings, FreeRDP_Password)) &&
+	     is_empty(freerdp_settings_get_pointer(settings, FreeRDP_RedirectionPassword))))
 	{
 		PromptPassword = TRUE;
 	}
 
-	if (PromptPassword && !is_empty(settings->Username))
+	if (PromptPassword && !is_empty(freerdp_settings_get_string(settings, FreeRDP_Username)))
 	{
 		sam = SamOpen(NULL, TRUE);
 
 		if (sam)
 		{
-			entry = SamLookupUserA(sam, settings->Username, strlen(settings->Username), NULL, 0);
+			entry = SamLookupUserA(sam, freerdp_settings_get_string(settings, FreeRDP_Username),
+			                       strlen(freerdp_settings_get_string(settings, FreeRDP_Username)),
+			                       NULL, 0);
 
 			if (entry)
 			{
@@ -277,9 +283,9 @@ static int nla_client_init(rdpNla* nla)
 
 	if (PromptPassword)
 	{
-		if (settings->RestrictedAdminModeRequired)
+		if (freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired))
 		{
-			if (!is_empty(settings->PasswordHash))
+			if (!is_empty(freerdp_settings_get_string(settings, FreeRDP_PasswordHash)))
 				PromptPassword = FALSE;
 		}
 	}
@@ -299,10 +305,20 @@ static int nla_client_init(rdpNla* nla)
 		}
 		else
 		{
-			BOOL proceed = instance->Authenticate(instance, &settings->Username,
-			                                      &settings->Password, &settings->Domain);
+			BOOL rc = TRUE;
+			char* user = _strdup(freerdp_settings_get_string(settings, FreeRDP_Username));
+			char* domain = _strdup(freerdp_settings_get_string(settings, FreeRDP_Domain));
+			char* password = _strdup(freerdp_settings_get_string(settings, FreeRDP_Password));
+			BOOL proceed = instance->Authenticate(instance, &user, &password, &domain);
 
-			if (!proceed)
+			if (!freerdp_settings_set_string(settings, FreeRDP_Username, user) ||
+			    !freerdp_settings_set_string(settings, FreeRDP_Domain, domain) ||
+			    !freerdp_settings_set_string(settings, FreeRDP_Password, password))
+				rc = FALSE;
+			free(user);
+			free(domain);
+			free(password);
+			if (!proceed || !rc)
 			{
 				freerdp_set_last_error_log(instance->context,
 				                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
@@ -311,33 +327,41 @@ static int nla_client_init(rdpNla* nla)
 		}
 	}
 
-	if (!settings->Username)
+	if (!freerdp_settings_get_string(settings, FreeRDP_Username))
 	{
 		nla_identity_free(nla->identity);
 		nla->identity = NULL;
 	}
 	else
 	{
-		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
+		if (freerdp_settings_get_pointer(settings, FreeRDP_RedirectionPassword) &&
+		    (freerdp_settings_get_uint32(settings, FreeRDP_RedirectionPasswordLength) > 0))
 		{
 			if (sspi_SetAuthIdentityWithUnicodePassword(
-			        nla->identity, settings->Username, settings->Domain,
-			        (UINT16*)settings->RedirectionPassword,
-			        settings->RedirectionPasswordLength / sizeof(WCHAR) - 1) < 0)
+			        nla->identity, freerdp_settings_get_string(settings, FreeRDP_Username),
+			        freerdp_settings_get_string(settings, FreeRDP_Domain),
+			        (UINT16*)freerdp_settings_get_pointer_writable(settings,
+			                                                       FreeRDP_RedirectionPassword),
+			        freerdp_settings_get_uint32(settings, FreeRDP_RedirectionPasswordLength) /
+			                sizeof(WCHAR) -
+			            1) < 0)
 				return -1;
 		}
 		else
 		{
 			BOOL usePassword = TRUE;
 
-			if (settings->RestrictedAdminModeRequired)
+			if (freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired))
 			{
-				if (settings->PasswordHash)
+				if (freerdp_settings_get_string(settings, FreeRDP_PasswordHash))
 				{
-					if (strlen(settings->PasswordHash) == 32)
+					if (strlen(freerdp_settings_get_string(settings, FreeRDP_PasswordHash)) == 32)
 					{
-						if (sspi_SetAuthIdentity(nla->identity, settings->Username,
-						                         settings->Domain, settings->PasswordHash) < 0)
+						if (sspi_SetAuthIdentity(
+						        nla->identity,
+						        freerdp_settings_get_string(settings, FreeRDP_Username),
+						        freerdp_settings_get_string(settings, FreeRDP_Domain),
+						        freerdp_settings_get_string(settings, FreeRDP_PasswordHash)) < 0)
 							return -1;
 
 						/**
@@ -353,8 +377,10 @@ static int nla_client_init(rdpNla* nla)
 
 			if (usePassword)
 			{
-				if (sspi_SetAuthIdentity(nla->identity, settings->Username, settings->Domain,
-				                         settings->Password) < 0)
+				if (sspi_SetAuthIdentity(
+				        nla->identity, freerdp_settings_get_string(settings, FreeRDP_Username),
+				        freerdp_settings_get_string(settings, FreeRDP_Domain),
+				        freerdp_settings_get_string(settings, FreeRDP_Password)) < 0)
 					return -1;
 			}
 		}
@@ -375,13 +401,15 @@ static int nla_client_init(rdpNla* nla)
 	}
 
 	CopyMemory(nla->PublicKey.pvBuffer, tls->PublicKey, tls->PublicKeyLength);
-	length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->ServerHostname);
+	length = sizeof(TERMSRV_SPN_PREFIX) +
+	         strlen(freerdp_settings_get_string(settings, FreeRDP_ServerHostname));
 	spn = (SEC_CHAR*)malloc(length + 1);
 
 	if (!spn)
 		return -1;
 
-	sprintf_s(spn, length + 1, "%s%s", TERMSRV_SPN_PREFIX, settings->ServerHostname);
+	sprintf_s(spn, length + 1, "%s%s", TERMSRV_SPN_PREFIX,
+	          freerdp_settings_get_string(settings, FreeRDP_ServerHostname));
 #ifdef UNICODE
 	nla->ServicePrincipalName = NULL;
 	ConvertToUnicode(CP_UTF8, 0, spn, -1, &nla->ServicePrincipalName, 0);
@@ -1689,7 +1717,8 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 		PasswordLength = nla->identity->PasswordLength;
 	}
 
-	if (nla->settings->DisableCredentialsDelegation && nla->identity)
+	if (freerdp_settings_get_bool(nla->settings, FreeRDP_DisableCredentialsDelegation) &&
+	    nla->identity)
 	{
 		/* TSPasswordCreds */
 		nla->identity->DomainLength = 0;
@@ -1716,7 +1745,8 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 
 	nla_write_ts_credentials(nla, s);
 
-	if (nla->settings->DisableCredentialsDelegation && nla->identity)
+	if (freerdp_settings_get_bool(nla->settings, FreeRDP_DisableCredentialsDelegation) &&
+	    nla->identity)
 	{
 		/* TSPasswordCreds */
 		nla->identity->DomainLength = DomainLength;
@@ -2355,16 +2385,16 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 
 	nla->instance = instance;
 	nla->settings = settings;
-	nla->server = settings->ServerMode;
+	nla->server = freerdp_settings_get_bool(settings, FreeRDP_ServerMode);
 	nla->transport = transport;
 	nla->sendSeqNum = 0;
 	nla->recvSeqNum = 0;
 	nla->version = 6;
 	SecInvalidateHandle(&nla->context);
 
-	if (settings->NtlmSamFile)
+	if (freerdp_settings_get_string(settings, FreeRDP_NtlmSamFile))
 	{
-		nla->SamFile = _strdup(settings->NtlmSamFile);
+		nla->SamFile = _strdup(freerdp_settings_get_string(settings, FreeRDP_NtlmSamFile));
 
 		if (!nla->SamFile)
 			goto cleanup;

@@ -209,7 +209,7 @@ static int mcs_initialize_client_channels(rdpMcs* mcs, rdpSettings* settings)
 	if (!mcs || !settings)
 		return -1;
 
-	mcs->channelCount = settings->ChannelCount;
+	mcs->channelCount = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
 
 	if (mcs->channelCount > mcs->channelMaxCount)
 		mcs->channelCount = mcs->channelMaxCount;
@@ -218,8 +218,12 @@ static int mcs_initialize_client_channels(rdpMcs* mcs, rdpSettings* settings)
 
 	for (index = 0; index < mcs->channelCount; index++)
 	{
-		CopyMemory(mcs->channels[index].Name, settings->ChannelDefArray[index].name, 8);
-		mcs->channels[index].options = settings->ChannelDefArray[index].options;
+		const CHANNEL_DEF* cur = (const CHANNEL_DEF*)freerdp_settings_get_pointer_array(
+		    settings, FreeRDP_ChannelDefArray, index);
+		if (!cur)
+			continue;
+		CopyMemory(mcs->channels[index].Name, cur->name, 8);
+		mcs->channels[index].options = cur->options;
 	}
 
 	return 0;
@@ -711,8 +715,7 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 		goto out;
 	}
 
-	if (!gcc_write_conference_create_request(gcc_CCrq, client_data))
-		goto out;
+	gcc_write_conference_create_request(gcc_CCrq, client_data);
 	length = Stream_GetPosition(gcc_CCrq) + 7;
 	s = Stream_New(NULL, 1024 + length);
 
@@ -736,8 +739,7 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	if (length > UINT16_MAX)
 		goto out;
 	Stream_SetPosition(s, bm);
-	if (!tpkt_write_header(s, (UINT16)length))
-		goto out;
+	tpkt_write_header(s, (UINT16)length);
 	tpdu_write_data(s);
 	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
@@ -799,11 +801,11 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 BOOL mcs_send_connect_response(rdpMcs* mcs)
 {
 	size_t length;
-	int status = -1;
-	wStream* s = NULL;
+	int status;
+	wStream* s;
 	size_t bm, em;
-	wStream* gcc_CCrsp = NULL;
-	wStream* server_data = NULL;
+	wStream* gcc_CCrsp;
+	wStream* server_data;
 
 	if (!mcs)
 		return FALSE;
@@ -817,49 +819,53 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	}
 
 	if (!gcc_write_server_data_blocks(server_data, mcs))
-		goto out;
+		goto error_data_blocks;
 
 	gcc_CCrsp = Stream_New(NULL, 512 + Stream_Capacity(server_data));
 
 	if (!gcc_CCrsp)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		goto out;
+		goto error_data_blocks;
 	}
 
-	if (!gcc_write_conference_create_response(gcc_CCrsp, server_data))
-		goto out;
+	gcc_write_conference_create_response(gcc_CCrsp, server_data);
 	length = Stream_GetPosition(gcc_CCrsp) + 7;
 	s = Stream_New(NULL, length + 1024);
 
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		goto out;
+		goto error_stream_s;
 	}
 
 	bm = Stream_GetPosition(s);
 	Stream_Seek(s, 7);
 
 	if (!mcs_write_connect_response(s, mcs, gcc_CCrsp))
-		goto out;
+		goto error_write_connect_response;
 
 	em = Stream_GetPosition(s);
 	length = (em - bm);
 	if (length > UINT16_MAX)
-		goto out;
+		goto error_write_connect_response;
 	Stream_SetPosition(s, bm);
-	if (!tpkt_write_header(s, (UINT16)length))
-		goto out;
+	tpkt_write_header(s, (UINT16)length);
 	tpdu_write_data(s);
 	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
 	status = transport_write(mcs->transport, s);
-out:
 	Stream_Free(s, TRUE);
 	Stream_Free(gcc_CCrsp, TRUE);
 	Stream_Free(server_data, TRUE);
 	return (status < 0) ? FALSE : TRUE;
+error_write_connect_response:
+	Stream_Free(s, TRUE);
+error_stream_s:
+	Stream_Free(gcc_CCrsp, TRUE);
+error_data_blocks:
+	Stream_Free(server_data, TRUE);
+	return FALSE;
 }
 
 /**

@@ -40,10 +40,6 @@ void wf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (!settings->SoftwareGdi)
-			WLog_WARN(TAG, "Channel " RDPGFX_DVC_CHANNEL_NAME
-			               " does not support hardware acceleration, using fallback.");
-
 		gdi_graphics_pipeline_init(wfc->context.gdi, (RdpgfxClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)

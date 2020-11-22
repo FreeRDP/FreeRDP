@@ -127,22 +127,19 @@ static void rdp_write_capability_set_header(wStream* s, UINT16 length, UINT16 ty
 static size_t rdp_capability_set_start(wStream* s)
 {
 	size_t header = Stream_GetPosition(s);
-	if (Stream_GetRemainingCapacity(s) < CAPSET_HEADER_LENGTH)
-		return SIZE_MAX;
 	Stream_Zero(s, CAPSET_HEADER_LENGTH);
 	return header;
 }
 
-static BOOL rdp_capability_set_finish(wStream* s, UINT16 header, UINT16 type)
+static void rdp_capability_set_finish(wStream* s, UINT16 header, UINT16 type)
 {
-	const size_t footer = Stream_GetPosition(s);
-	const size_t length = footer - header;
-	if ((Stream_Capacity(s) < header + 4ULL) || (length > UINT16_MAX))
-		return FALSE;
+	size_t footer;
+	size_t length;
+	footer = Stream_GetPosition(s);
+	length = footer - header;
 	Stream_SetPosition(s, header);
 	rdp_write_capability_set_header(s, (UINT16)length, type);
 	Stream_SetPosition(s, footer);
-	return TRUE;
 }
 
 /**
@@ -162,10 +159,14 @@ static BOOL rdp_read_general_capability_set(wStream* s, rdpSettings* settings)
 	if (Stream_GetRemainingLength(s) < 20)
 		return FALSE;
 
-	if (settings->ServerMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
-		Stream_Read_UINT16(s, settings->OsMajorType); /* osMajorType (2 bytes) */
-		Stream_Read_UINT16(s, settings->OsMinorType); /* osMinorType (2 bytes) */
+		UINT32 OsMajorType, OsMinorType;
+		Stream_Read_UINT16(s, OsMajorType); /* osMajorType (2 bytes) */
+		Stream_Read_UINT16(s, OsMinorType); /* osMinorType (2 bytes) */
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OsMajorType) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_OsMinorType, OsMinorType))
+			return FALSE;
 	}
 	else
 	{
@@ -182,16 +183,26 @@ static BOOL rdp_read_general_capability_set(wStream* s, rdpSettings* settings)
 	Stream_Seek_UINT16(s);                       /* generalCompressionLevel (2 bytes) */
 	Stream_Read_UINT8(s, refreshRectSupport);    /* refreshRectSupport (1 byte) */
 	Stream_Read_UINT8(s, suppressOutputSupport); /* suppressOutputSupport (1 byte) */
-	settings->NoBitmapCompressionHeader = (extraFlags & NO_BITMAP_COMPRESSION_HDR) ? TRUE : FALSE;
-	settings->LongCredentialsSupported = (extraFlags & LONG_CREDENTIALS_SUPPORTED) ? TRUE : FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NoBitmapCompressionHeader,
+	                               (extraFlags & NO_BITMAP_COMPRESSION_HDR) ? TRUE : FALSE))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_LongCredentialsSupported,
+	                               (extraFlags & LONG_CREDENTIALS_SUPPORTED) ? TRUE : FALSE))
+		return FALSE;
 
 	if (!(extraFlags & FASTPATH_OUTPUT_SUPPORTED))
-		settings->FastPathOutput = FALSE;
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_FastPathOutput, FALSE))
+			return FALSE;
+	}
 
 	if (!(extraFlags & ENC_SALTED_CHECKSUM))
-		settings->SaltedChecksum = FALSE;
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_SaltedChecksum, FALSE))
+			return FALSE;
+	}
 
-	if (!settings->ServerMode)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
 		/**
 		 * Note: refreshRectSupport and suppressOutputSupport are
@@ -199,10 +210,16 @@ static BOOL rdp_read_general_capability_set(wStream* s, rdpSettings* settings)
 		 * respective PDUs are supported. See MS-RDPBCGR 2.2.7.1.1
 		 */
 		if (!refreshRectSupport)
-			settings->RefreshRect = FALSE;
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RefreshRect, FALSE))
+				return FALSE;
+		}
 
 		if (!suppressOutputSupport)
-			settings->SuppressOutput = FALSE;
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_SuppressOutput, FALSE))
+				return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -219,6 +236,8 @@ static BOOL rdp_write_general_capability_set(wStream* s, const rdpSettings* sett
 {
 	size_t header;
 	UINT16 extraFlags;
+	const UINT32 OsMajorType = freerdp_settings_get_uint32(settings, FreeRDP_OsMajorType);
+	const UINT32 OsMinorType = freerdp_settings_get_uint32(settings, FreeRDP_OsMinorType);
 
 	if (!Stream_EnsureRemainingCapacity(s, 64))
 		return FALSE;
@@ -228,31 +247,31 @@ static BOOL rdp_write_general_capability_set(wStream* s, const rdpSettings* sett
 		return FALSE;
 	extraFlags = 0;
 
-	if (settings->LongCredentialsSupported)
+	if (freerdp_settings_get_bool(settings, FreeRDP_LongCredentialsSupported))
 		extraFlags |= LONG_CREDENTIALS_SUPPORTED;
 
-	if (settings->NoBitmapCompressionHeader)
+	if (freerdp_settings_get_bool(settings, FreeRDP_NoBitmapCompressionHeader))
 		extraFlags |= NO_BITMAP_COMPRESSION_HDR;
 
-	if (settings->AutoReconnectionEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled))
 		extraFlags |= AUTORECONNECT_SUPPORTED;
 
-	if (settings->FastPathOutput)
+	if (freerdp_settings_get_bool(settings, FreeRDP_FastPathOutput))
 		extraFlags |= FASTPATH_OUTPUT_SUPPORTED;
 
-	if (settings->SaltedChecksum)
+	if (freerdp_settings_get_bool(settings, FreeRDP_SaltedChecksum))
 		extraFlags |= ENC_SALTED_CHECKSUM;
 
-	if ((settings->OsMajorType > UINT16_MAX) || (settings->OsMinorType > UINT16_MAX))
+	if ((OsMajorType > UINT16_MAX) || (OsMinorType > UINT16_MAX))
 	{
 		WLog_ERR(TAG,
 		         "OsMajorType=%08" PRIx32 ", OsMinorType=%08" PRIx32
 		         " they need to be smaller %04" PRIx16,
-		         settings->OsMajorType, settings->OsMinorType, UINT16_MAX);
+		         OsMajorType, OsMinorType, UINT16_MAX);
 		return FALSE;
 	}
-	Stream_Write_UINT16(s, (UINT16)settings->OsMajorType); /* osMajorType (2 bytes) */
-	Stream_Write_UINT16(s, (UINT16)settings->OsMinorType); /* osMinorType (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)OsMajorType);     /* osMajorType (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)OsMinorType);     /* osMinorType (2 bytes) */
 	Stream_Write_UINT16(s, CAPS_PROTOCOL_VERSION);   /* protocolVersion (2 bytes) */
 	Stream_Write_UINT16(s, 0);                       /* pad2OctetsA (2 bytes) */
 	Stream_Write_UINT16(s, 0);                       /* generalCompressionTypes (2 bytes) */
@@ -260,9 +279,14 @@ static BOOL rdp_write_general_capability_set(wStream* s, const rdpSettings* sett
 	Stream_Write_UINT16(s, 0);                       /* updateCapabilityFlag (2 bytes) */
 	Stream_Write_UINT16(s, 0);                       /* remoteUnshareFlag (2 bytes) */
 	Stream_Write_UINT16(s, 0);                       /* generalCompressionLevel (2 bytes) */
-	Stream_Write_UINT8(s, settings->RefreshRect ? 1 : 0);    /* refreshRectSupport (1 byte) */
-	Stream_Write_UINT8(s, settings->SuppressOutput ? 1 : 0); /* suppressOutputSupport (1 byte) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_GENERAL);
+	Stream_Write_UINT8(s, freerdp_settings_get_bool(settings, FreeRDP_RefreshRect)
+	                          ? 1
+	                          : 0); /* refreshRectSupport (1 byte) */
+	Stream_Write_UINT8(s, freerdp_settings_get_bool(settings, FreeRDP_SuppressOutput)
+	                          ? 1
+	                          : 0); /* suppressOutputSupport (1 byte) */
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_GENERAL);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -343,33 +367,52 @@ static BOOL rdp_read_bitmap_capability_set(wStream* s, rdpSettings* settings)
 	Stream_Seek_UINT16(s);                        /* multipleRectangleSupport (2 bytes) */
 	Stream_Seek_UINT16(s);                        /* pad2OctetsB (2 bytes) */
 
-	if (!settings->ServerMode && (preferredBitsPerPixel != settings->ColorDepth))
+	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode) &&
+	    (preferredBitsPerPixel != freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth)))
 	{
 		/* The client must respect the actual color depth used by the server */
-		settings->ColorDepth = preferredBitsPerPixel;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, preferredBitsPerPixel))
+			return FALSE;
 	}
 
 	if (desktopResizeFlag == FALSE)
-		settings->DesktopResize = FALSE;
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DesktopResize, FALSE))
+			return FALSE;
+	}
 
-	if (!settings->ServerMode && settings->DesktopResize)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode) &&
+	    freerdp_settings_get_bool(settings, FreeRDP_DesktopResize))
 	{
 		/* The server may request a different desktop size during Deactivation-Reactivation sequence
 		 */
-		settings->DesktopWidth = desktopWidth;
-		settings->DesktopHeight = desktopHeight;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, desktopWidth) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, desktopHeight))
+			return FALSE;
 	}
 
-	if (settings->DrawAllowSkipAlpha)
-		settings->DrawAllowSkipAlpha = (drawingFlags & DRAW_ALLOW_SKIP_ALPHA) ? TRUE : FALSE;
+	if (freerdp_settings_get_bool(settings, FreeRDP_DrawAllowSkipAlpha))
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DrawAllowSkipAlpha,
+		                               (drawingFlags & DRAW_ALLOW_SKIP_ALPHA) ? TRUE : FALSE))
+			return FALSE;
+	}
 
-	if (settings->DrawAllowDynamicColorFidelity)
-		settings->DrawAllowDynamicColorFidelity =
-		    (drawingFlags & DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY) ? TRUE : FALSE;
+	if (freerdp_settings_get_bool(settings, FreeRDP_DrawAllowDynamicColorFidelity))
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DrawAllowDynamicColorFidelity,
+		                               (drawingFlags & DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY) ? TRUE
+		                                                                                  : FALSE))
+			return FALSE;
+	}
 
-	if (settings->DrawAllowColorSubsampling)
-		settings->DrawAllowColorSubsampling =
-		    (drawingFlags & DRAW_ALLOW_COLOR_SUBSAMPLING) ? TRUE : FALSE;
+	if (freerdp_settings_get_bool(settings, FreeRDP_DrawAllowColorSubsampling))
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DrawAllowColorSubsampling,
+		                               (drawingFlags & DRAW_ALLOW_COLOR_SUBSAMPLING) ? TRUE
+		                                                                             : FALSE))
+			return FALSE;
+	}
 
 	return TRUE;
 }
@@ -393,13 +436,13 @@ static BOOL rdp_write_bitmap_capability_set(wStream* s, const rdpSettings* setti
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	if (settings->DrawAllowSkipAlpha)
+	if (freerdp_settings_get_bool(settings, FreeRDP_DrawAllowSkipAlpha))
 		drawingFlags |= DRAW_ALLOW_SKIP_ALPHA;
 
-	if (settings->DrawAllowDynamicColorFidelity)
+	if (freerdp_settings_get_bool(settings, FreeRDP_DrawAllowDynamicColorFidelity))
 		drawingFlags |= DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY;
 
-	if (settings->DrawAllowColorSubsampling)
+	if (freerdp_settings_get_bool(settings, FreeRDP_DrawAllowColorSubsampling))
 		drawingFlags |= DRAW_ALLOW_COLOR_SUBSAMPLING; /* currently unimplemented */
 
 	/* While bitmap_decode.c now implements YCoCg, in turning it
@@ -411,12 +454,13 @@ static BOOL rdp_write_bitmap_capability_set(wStream* s, const rdpSettings* setti
 	 * appears consistent in its use.
 	 */
 
-	if ((settings->ColorDepth > UINT16_MAX) || (settings->DesktopWidth > UINT16_MAX) ||
-	    (settings->DesktopHeight > UINT16_MAX))
+	if ((freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) > UINT16_MAX) ||
+	    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) > UINT16_MAX) ||
+	    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) > UINT16_MAX))
 		return FALSE;
 
-	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
-		preferredBitsPerPixel = (UINT16)settings->ColorDepth;
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RdpVersion) >= RDP_VERSION_5_PLUS)
+		preferredBitsPerPixel = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth);
 	else
 		preferredBitsPerPixel = 8;
 
@@ -424,16 +468,20 @@ static BOOL rdp_write_bitmap_capability_set(wStream* s, const rdpSettings* setti
 	Stream_Write_UINT16(s, 1);                       /* receive1BitPerPixel (2 bytes) */
 	Stream_Write_UINT16(s, 1);                       /* receive4BitsPerPixel (2 bytes) */
 	Stream_Write_UINT16(s, 1);                       /* receive8BitsPerPixel (2 bytes) */
-	Stream_Write_UINT16(s, (UINT16)settings->DesktopWidth);  /* desktopWidth (2 bytes) */
-	Stream_Write_UINT16(s, (UINT16)settings->DesktopHeight); /* desktopHeight (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)freerdp_settings_get_uint32(
+	                           settings, FreeRDP_DesktopWidth)); /* desktopWidth (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)freerdp_settings_get_uint32(
+	                           settings, FreeRDP_DesktopHeight)); /* desktopHeight (2 bytes) */
 	Stream_Write_UINT16(s, 0);                       /* pad2Octets (2 bytes) */
-	Stream_Write_UINT16(s, (UINT16)settings->DesktopResize); /* desktopResizeFlag (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)freerdp_settings_get_bool(
+	                           settings, FreeRDP_DesktopResize)); /* desktopResizeFlag (2 bytes) */
 	Stream_Write_UINT16(s, 1);                       /* bitmapCompressionFlag (2 bytes) */
 	Stream_Write_UINT8(s, 0);                        /* highColorFlags (1 byte) */
 	Stream_Write_UINT8(s, drawingFlags);             /* drawingFlags (1 byte) */
 	Stream_Write_UINT16(s, 1);                       /* multipleRectangleSupport (2 bytes) */
 	Stream_Write_UINT16(s, 0);                       /* pad2OctetsB (2 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_BITMAP);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_BITMAP);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -527,8 +575,15 @@ static BOOL rdp_read_order_capability_set(wStream* s, rdpSettings* settings)
 
 	for (i = 0; i < 32; i++)
 	{
-		if (orderSupport[i] == FALSE)
-			settings->OrderSupport[i] = FALSE;
+		const BOOL* order = freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport, i);
+		if (!order)
+			return FALSE;
+		if (*order == FALSE)
+		{
+			const BOOL val = FALSE;
+			if (!freerdp_settings_set_pointer_array(settings, FreeRDP_OrderSupport, i, &val))
+				return FALSE;
+		}
 	}
 
 	if (orderFlags & ORDER_FLAGS_EXTRA_SUPPORT)
@@ -540,13 +595,23 @@ static BOOL rdp_read_order_capability_set(wStream* s, rdpSettings* settings)
 			FrameMarkerCommandEnabled = TRUE;
 	}
 
-	if (settings->BitmapCacheV3Enabled && BitmapCacheV3Enabled)
-		settings->BitmapCacheVersion = 3;
+	if (freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheV3Enabled) && BitmapCacheV3Enabled)
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_BitmapCacheVersion, 3))
+			return FALSE;
+	}
 	else
-		settings->BitmapCacheV3Enabled = FALSE;
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheV3Enabled, FALSE))
+			return FALSE;
+	}
 
-	if (settings->FrameMarkerCommandEnabled && !FrameMarkerCommandEnabled)
-		settings->FrameMarkerCommandEnabled = FALSE;
+	if (freerdp_settings_get_bool(settings, FreeRDP_FrameMarkerCommandEnabled) &&
+	    !FrameMarkerCommandEnabled)
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_FrameMarkerCommandEnabled, FALSE))
+			return FALSE;
+	}
 
 	return TRUE;
 }
@@ -572,19 +637,19 @@ static BOOL rdp_write_order_capability_set(wStream* s, const rdpSettings* settin
 	if (header > UINT16_MAX)
 		return FALSE;
 	/* see [MSDN-CP]: http://msdn.microsoft.com/en-us/library/dd317756 */
-	if (!settings->ServerMode)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 		textANSICodePage = CP_UTF8; /* Unicode (UTF-8) */
 
 	orderSupportExFlags = 0;
 	orderFlags = NEGOTIATE_ORDER_SUPPORT | ZERO_BOUNDS_DELTA_SUPPORT | COLOR_INDEX_SUPPORT;
 
-	if (settings->BitmapCacheV3Enabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheV3Enabled))
 	{
 		orderSupportExFlags |= CACHE_BITMAP_V3_SUPPORT;
 		orderFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
 	}
 
-	if (settings->FrameMarkerCommandEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_FrameMarkerCommandEnabled))
 	{
 		orderSupportExFlags |= ALTSEC_FRAME_MARKER_SUPPORT;
 		orderFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
@@ -598,7 +663,8 @@ static BOOL rdp_write_order_capability_set(wStream* s, const rdpSettings* settin
 	Stream_Write_UINT16(s, 1);                   /* maximumOrderLevel (2 bytes) */
 	Stream_Write_UINT16(s, 0);                   /* numberFonts (2 bytes) */
 	Stream_Write_UINT16(s, orderFlags);          /* orderFlags (2 bytes) */
-	Stream_Write(s, settings->OrderSupport, 32); /* orderSupport (32 bytes) */
+	Stream_Write(s, freerdp_settings_get_pointer(settings, FreeRDP_OrderSupport),
+	             32);                            /* orderSupport (32 bytes) */
 	Stream_Write_UINT16(s, 0);                   /* textFlags (2 bytes) */
 	Stream_Write_UINT16(s, orderSupportExFlags); /* orderSupportExFlags (2 bytes) */
 	Stream_Write_UINT32(s, 0);                   /* pad4OctetsB (4 bytes) */
@@ -607,7 +673,8 @@ static BOOL rdp_write_order_capability_set(wStream* s, const rdpSettings* settin
 	Stream_Write_UINT16(s, 0);                   /* pad2OctetsD (2 bytes) */
 	Stream_Write_UINT16(s, textANSICodePage);    /* textANSICodePage (2 bytes) */
 	Stream_Write_UINT16(s, 0);                   /* pad2OctetsE (2 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_ORDER);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_ORDER);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -755,7 +822,7 @@ static BOOL rdp_write_bitmap_cache_capability_set(wStream* s, const rdpSettings*
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	bpp = (settings->ColorDepth + 7) / 8;
+	bpp = (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) + 7) / 8;
 	if (bpp > UINT16_MAX)
 		return FALSE;
 	Stream_Write_UINT32(s, 0); /* pad1 (4 bytes) */
@@ -779,7 +846,8 @@ static BOOL rdp_write_bitmap_cache_capability_set(wStream* s, const rdpSettings*
 		return FALSE;
 	Stream_Write_UINT16(s, 1000); /* Cache2Entries (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)size); /* Cache2MaximumCellSize (2 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_BITMAP_CACHE);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_BITMAP_CACHE);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -869,7 +937,8 @@ static BOOL rdp_write_control_capability_set(wStream* s, const rdpSettings* sett
 	Stream_Write_UINT16(s, 0); /* remoteDetachFlag (2 bytes) */
 	Stream_Write_UINT16(s, 2); /* controlInterest (2 bytes) */
 	Stream_Write_UINT16(s, 2); /* detachInterest (2 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_CONTROL);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_CONTROL);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -939,7 +1008,8 @@ static BOOL rdp_write_window_activation_capability_set(wStream* s, const rdpSett
 	Stream_Write_UINT16(s, 0); /* helpKeyIndexFlag (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* helpExtendedKeyFlag (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* windowManagerKeyFlag (2 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_ACTIVATION);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_ACTIVATION);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -994,11 +1064,14 @@ static BOOL rdp_read_pointer_capability_set(wStream* s, rdpSettings* settings)
 		pointerCacheSize = 0;
 
 	if (colorPointerFlag == FALSE)
-		settings->ColorPointerFlag = FALSE;
-
-	if (settings->ServerMode)
 	{
-		settings->PointerCacheSize = pointerCacheSize;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_ColorPointerFlag, FALSE))
+			return FALSE;
+	}
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_PointerCacheSize, pointerCacheSize))
+			return FALSE;
 	}
 
 	return TRUE;
@@ -1022,20 +1095,24 @@ static BOOL rdp_write_pointer_capability_set(wStream* s, const rdpSettings* sett
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	if (settings->PointerCacheSize > UINT16_MAX)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_PointerCacheSize) > UINT16_MAX)
 		return FALSE;
 
-	colorPointerFlag = (settings->ColorPointerFlag) ? 1 : 0;
+	colorPointerFlag = (freerdp_settings_get_bool(settings, FreeRDP_ColorPointerFlag)) ? 1 : 0;
 	Stream_Write_UINT16(s, colorPointerFlag);           /* colorPointerFlag (2 bytes) */
-	Stream_Write_UINT16(s,
-	                    (UINT16)settings->PointerCacheSize); /* colorPointerCacheSize (2 bytes) */
+	Stream_Write_UINT16(
+	    s, (UINT16)freerdp_settings_get_uint32(
+	           settings, FreeRDP_PointerCacheSize)); /* colorPointerCacheSize (2 bytes) */
 
-	if (settings->LargePointerFlag)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_LargePointerFlag))
 	{
-		Stream_Write_UINT16(s, (UINT16)settings->PointerCacheSize); /* pointerCacheSize (2 bytes) */
+		Stream_Write_UINT16(
+		    s, (UINT16)freerdp_settings_get_uint32(
+		           settings, FreeRDP_PointerCacheSize)); /* pointerCacheSize (2 bytes) */
 	}
 
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_POINTER);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_POINTER);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -1096,10 +1173,11 @@ static BOOL rdp_write_share_capability_set(wStream* s, const rdpSettings* settin
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	nodeId = (settings->ServerMode) ? 0x03EA : 0;
+	nodeId = (freerdp_settings_get_bool(settings, FreeRDP_ServerMode)) ? 0x03EA : 0;
 	Stream_Write_UINT16(s, nodeId); /* nodeId (2 bytes) */
 	Stream_Write_UINT16(s, 0);      /* pad2Octets (2 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_SHARE);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_SHARE);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -1159,7 +1237,8 @@ static BOOL rdp_write_color_cache_capability_set(wStream* s, const rdpSettings* 
 		return FALSE;
 	Stream_Write_UINT16(s, 6); /* colorTableCacheSize (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* pad2Octets (2 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_COLOR_CACHE);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_COLOR_CACHE);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -1197,8 +1276,8 @@ static BOOL rdp_read_sound_capability_set(wStream* s, rdpSettings* settings)
 
 	Stream_Read_UINT16(s, soundFlags); /* soundFlags (2 bytes) */
 	Stream_Seek_UINT16(s);             /* pad2OctetsA (2 bytes) */
-	settings->SoundBeepsEnabled = (soundFlags & SOUND_BEEPS_FLAG) ? TRUE : FALSE;
-	return TRUE;
+	return freerdp_settings_set_bool(settings, FreeRDP_SoundBeepsEnabled,
+	                                 (soundFlags & SOUND_BEEPS_FLAG) ? TRUE : FALSE);
 }
 
 /**
@@ -1219,10 +1298,12 @@ static BOOL rdp_write_sound_capability_set(wStream* s, const rdpSettings* settin
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	soundFlags = (settings->SoundBeepsEnabled) ? SOUND_BEEPS_FLAG : 0;
+	soundFlags =
+	    (freerdp_settings_get_bool(settings, FreeRDP_SoundBeepsEnabled)) ? SOUND_BEEPS_FLAG : 0;
 	Stream_Write_UINT16(s, soundFlags); /* soundFlags (2 bytes) */
 	Stream_Write_UINT16(s, 0);          /* pad2OctetsA (2 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_SOUND);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_SOUND);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -1261,12 +1342,21 @@ static BOOL rdp_read_input_capability_set(wStream* s, rdpSettings* settings)
 	Stream_Read_UINT16(s, inputFlags); /* inputFlags (2 bytes) */
 	Stream_Seek_UINT16(s);             /* pad2OctetsA (2 bytes) */
 
-	if (settings->ServerMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
-		Stream_Read_UINT32(s, settings->KeyboardLayout);      /* keyboardLayout (4 bytes) */
-		Stream_Read_UINT32(s, settings->KeyboardType);        /* keyboardType (4 bytes) */
-		Stream_Read_UINT32(s, settings->KeyboardSubType);     /* keyboardSubType (4 bytes) */
-		Stream_Read_UINT32(s, settings->KeyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
+		UINT32 KeyboardLayout, KeyboardType, KeyboardSubType, KeyboardFunctionKey;
+
+		Stream_Read_UINT32(s, KeyboardLayout);      /* keyboardLayout (4 bytes) */
+		Stream_Read_UINT32(s, KeyboardType);        /* keyboardType (4 bytes) */
+		Stream_Read_UINT32(s, KeyboardSubType);     /* keyboardSubType (4 bytes) */
+		Stream_Read_UINT32(s, KeyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
+
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, KeyboardLayout) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardType, KeyboardType) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardSubType, KeyboardSubType) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardFunctionKey,
+		                                 KeyboardFunctionKey))
+			return FALSE;
 	}
 	else
 	{
@@ -1278,7 +1368,7 @@ static BOOL rdp_read_input_capability_set(wStream* s, rdpSettings* settings)
 
 	Stream_Seek(s, 64); /* imeFileName (64 bytes) */
 
-	if (!settings->ServerMode)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
 		if (inputFlags & INPUT_FLAG_FASTPATH_INPUT)
 		{
@@ -1291,17 +1381,27 @@ static BOOL rdp_read_input_capability_set(wStream* s, rdpSettings* settings)
 		else
 		{
 			/* server does not support fastpath input */
-			settings->FastPathInput = FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_FastPathInput, FALSE))
+				return FALSE;
 		}
 
 		if (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL)
-			settings->HasHorizontalWheel = TRUE;
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_HasHorizontalWheel, TRUE))
+				return FALSE;
+		}
 
 		if (inputFlags & INPUT_FLAG_UNICODE)
-			settings->UnicodeInput = TRUE;
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, TRUE))
+				return FALSE;
+		}
 
 		if (inputFlags & INPUT_FLAG_MOUSEX)
-			settings->HasExtendedMouseEvent = TRUE;
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_HasExtendedMouseEvent, TRUE))
+				return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -1327,29 +1427,35 @@ static BOOL rdp_write_input_capability_set(wStream* s, const rdpSettings* settin
 		return FALSE;
 	inputFlags = INPUT_FLAG_SCANCODES;
 
-	if (settings->FastPathInput)
+	if (freerdp_settings_get_bool(settings, FreeRDP_FastPathInput))
 	{
 		inputFlags |= INPUT_FLAG_FASTPATH_INPUT;
 		inputFlags |= INPUT_FLAG_FASTPATH_INPUT2;
 	}
 
-	if (settings->HasHorizontalWheel)
+	if (freerdp_settings_get_bool(settings, FreeRDP_HasHorizontalWheel))
 		inputFlags |= TS_INPUT_FLAG_MOUSE_HWHEEL;
 
-	if (settings->UnicodeInput)
+	if (freerdp_settings_get_bool(settings, FreeRDP_UnicodeInput))
 		inputFlags |= INPUT_FLAG_UNICODE;
 
-	if (settings->HasExtendedMouseEvent)
+	if (freerdp_settings_get_bool(settings, FreeRDP_HasExtendedMouseEvent))
 		inputFlags |= INPUT_FLAG_MOUSEX;
 
 	Stream_Write_UINT16(s, inputFlags);                    /* inputFlags (2 bytes) */
 	Stream_Write_UINT16(s, 0);                             /* pad2OctetsA (2 bytes) */
-	Stream_Write_UINT32(s, settings->KeyboardLayout);      /* keyboardLayout (4 bytes) */
-	Stream_Write_UINT32(s, settings->KeyboardType);        /* keyboardType (4 bytes) */
-	Stream_Write_UINT32(s, settings->KeyboardSubType);     /* keyboardSubType (4 bytes) */
-	Stream_Write_UINT32(s, settings->KeyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
+	Stream_Write_UINT32(s, freerdp_settings_get_uint32(
+	                           settings, FreeRDP_KeyboardLayout)); /* keyboardLayout (4 bytes) */
+	Stream_Write_UINT32(s, freerdp_settings_get_uint32(
+	                           settings, FreeRDP_KeyboardType)); /* keyboardType (4 bytes) */
+	Stream_Write_UINT32(s, freerdp_settings_get_uint32(
+	                           settings, FreeRDP_KeyboardSubType)); /* keyboardSubType (4 bytes) */
+	Stream_Write_UINT32(
+	    s, freerdp_settings_get_uint32(
+	           settings, FreeRDP_KeyboardFunctionKey));    /* keyboardFunctionKeys (4 bytes) */
 	Stream_Zero(s, 64);                                    /* imeFileName (64 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_INPUT);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_INPUT);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -1423,7 +1529,8 @@ static BOOL rdp_write_font_capability_set(wStream* s, const rdpSettings* setting
 		return FALSE;
 	Stream_Write_UINT16(s, FONTSUPPORT_FONTLIST); /* fontSupportFlags (2 bytes) */
 	Stream_Write_UINT16(s, 0);                    /* pad2Octets (2 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_FONT);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_FONT);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -1476,8 +1583,11 @@ static BOOL rdp_write_brush_capability_set(wStream* s, const rdpSettings* settin
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	Stream_Write_UINT32(s, settings->BrushSupportLevel); /* brushSupportLevel (4 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_BRUSH);
+	Stream_Write_UINT32(s,
+	                    freerdp_settings_get_uint32(
+	                        settings, FreeRDP_BrushSupportLevel)); /* brushSupportLevel (4 bytes) */
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_BRUSH);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -1500,11 +1610,23 @@ static BOOL rdp_print_brush_capability_set(wStream* s)
  * @msdn{cc240566}
  * @param s stream
  */
-static void rdp_read_cache_definition(wStream* s, GLYPH_CACHE_DEFINITION* cache_definition)
+static BOOL rdp_read_cache_definition(wStream* s, GLYPH_CACHE_DEFINITION* cache_definition)
 {
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
 	Stream_Read_UINT16(s, cache_definition->cacheEntries); /* cacheEntries (2 bytes) */
 	Stream_Read_UINT16(s,
 	                   cache_definition->cacheMaximumCellSize); /* cacheMaximumCellSize (2 bytes) */
+	return TRUE;
+}
+
+static BOOL rdp_read_cache_definition_settings(wStream* s, rdpSettings* settings, size_t settingsId,
+                                               size_t index)
+{
+	GLYPH_CACHE_DEFINITION cache = { 0 };
+	if (!rdp_read_cache_definition(s, &cache))
+		return FALSE;
+	return freerdp_settings_set_pointer_array(settings, settingsId, index, &cache);
 }
 
 /**
@@ -1512,11 +1634,24 @@ static void rdp_read_cache_definition(wStream* s, GLYPH_CACHE_DEFINITION* cache_
  * @msdn{cc240566}
  * @param s stream
  */
-static void rdp_write_cache_definition(wStream* s, GLYPH_CACHE_DEFINITION* cache_definition)
+static BOOL rdp_write_cache_definition(wStream* s, const GLYPH_CACHE_DEFINITION* cache_definition)
 {
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+		return FALSE;
 	Stream_Write_UINT16(s, cache_definition->cacheEntries); /* cacheEntries (2 bytes) */
 	Stream_Write_UINT16(
 	    s, cache_definition->cacheMaximumCellSize); /* cacheMaximumCellSize (2 bytes) */
+	return TRUE;
+}
+
+static BOOL rdp_write_cache_definition_settings(wStream* s, rdpSettings* settings,
+                                                size_t settingsId, size_t index)
+{
+	const GLYPH_CACHE_DEFINITION* cache =
+	    freerdp_settings_get_pointer_array(settings, settingsId, index);
+	if (!cache)
+		return FALSE;
+	return rdp_write_cache_definition(s, cache);
 }
 
 /**
@@ -1529,24 +1664,37 @@ static void rdp_write_cache_definition(wStream* s, GLYPH_CACHE_DEFINITION* cache
 
 static BOOL rdp_read_glyph_cache_capability_set(wStream* s, rdpSettings* settings)
 {
+	UINT32 GlyphSupportLevel;
+
 	if (Stream_GetRemainingLength(s) < 48)
 		return FALSE;
 
 	/* glyphCache (40 bytes) */
-	rdp_read_cache_definition(s, &(settings->GlyphCache[0])); /* glyphCache0 (4 bytes) */
-	rdp_read_cache_definition(s, &(settings->GlyphCache[1])); /* glyphCache1 (4 bytes) */
-	rdp_read_cache_definition(s, &(settings->GlyphCache[2])); /* glyphCache2 (4 bytes) */
-	rdp_read_cache_definition(s, &(settings->GlyphCache[3])); /* glyphCache3 (4 bytes) */
-	rdp_read_cache_definition(s, &(settings->GlyphCache[4])); /* glyphCache4 (4 bytes) */
-	rdp_read_cache_definition(s, &(settings->GlyphCache[5])); /* glyphCache5 (4 bytes) */
-	rdp_read_cache_definition(s, &(settings->GlyphCache[6])); /* glyphCache6 (4 bytes) */
-	rdp_read_cache_definition(s, &(settings->GlyphCache[7])); /* glyphCache7 (4 bytes) */
-	rdp_read_cache_definition(s, &(settings->GlyphCache[8])); /* glyphCache8 (4 bytes) */
-	rdp_read_cache_definition(s, &(settings->GlyphCache[9])); /* glyphCache9 (4 bytes) */
-	rdp_read_cache_definition(s, settings->FragCache);        /* fragCache (4 bytes) */
-	Stream_Read_UINT16(s, settings->GlyphSupportLevel);       /* glyphSupportLevel (2 bytes) */
+
+	rdp_read_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                   0); /* glyphCache0 (4 bytes) */
+	rdp_read_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                   1); /* glyphCache1 (4 bytes) */
+	rdp_read_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                   2); /* glyphCache2 (4 bytes) */
+	rdp_read_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                   3); /* glyphCache3 (4 bytes) */
+	rdp_read_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                   4); /* glyphCache4 (4 bytes) */
+	rdp_read_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                   5); /* glyphCache5 (4 bytes) */
+	rdp_read_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                   6); /* glyphCache6 (4 bytes) */
+	rdp_read_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                   7); /* glyphCache7 (4 bytes) */
+	rdp_read_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                   8); /* glyphCache8 (4 bytes) */
+	rdp_read_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                   9); /* glyphCache9 (4 bytes) */
+	rdp_read_cache_definition_settings(s, settings, FreeRDP_FragCache, 0); /* fragCache (4 bytes) */
+	Stream_Read_UINT16(s, GlyphSupportLevel);                 /* glyphSupportLevel (2 bytes) */
 	Stream_Seek_UINT16(s);                                    /* pad2Octets (2 bytes) */
-	return TRUE;
+	return freerdp_settings_set_uint32(settings, FreeRDP_GlyphSupportLevel, GlyphSupportLevel);
 }
 
 /**
@@ -1556,7 +1704,7 @@ static BOOL rdp_read_glyph_cache_capability_set(wStream* s, rdpSettings* setting
  * @param settings settings
  */
 
-static BOOL rdp_write_glyph_cache_capability_set(wStream* s, const rdpSettings* settings)
+static BOOL rdp_write_glyph_cache_capability_set(wStream* s, rdpSettings* settings)
 {
 	size_t header;
 
@@ -1566,23 +1714,38 @@ static BOOL rdp_write_glyph_cache_capability_set(wStream* s, const rdpSettings* 
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	if (settings->GlyphSupportLevel > UINT16_MAX)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_GlyphSupportLevel) > UINT16_MAX)
 		return FALSE;
 	/* glyphCache (40 bytes) */
-	rdp_write_cache_definition(s, &(settings->GlyphCache[0])); /* glyphCache0 (4 bytes) */
-	rdp_write_cache_definition(s, &(settings->GlyphCache[1])); /* glyphCache1 (4 bytes) */
-	rdp_write_cache_definition(s, &(settings->GlyphCache[2])); /* glyphCache2 (4 bytes) */
-	rdp_write_cache_definition(s, &(settings->GlyphCache[3])); /* glyphCache3 (4 bytes) */
-	rdp_write_cache_definition(s, &(settings->GlyphCache[4])); /* glyphCache4 (4 bytes) */
-	rdp_write_cache_definition(s, &(settings->GlyphCache[5])); /* glyphCache5 (4 bytes) */
-	rdp_write_cache_definition(s, &(settings->GlyphCache[6])); /* glyphCache6 (4 bytes) */
-	rdp_write_cache_definition(s, &(settings->GlyphCache[7])); /* glyphCache7 (4 bytes) */
-	rdp_write_cache_definition(s, &(settings->GlyphCache[8])); /* glyphCache8 (4 bytes) */
-	rdp_write_cache_definition(s, &(settings->GlyphCache[9])); /* glyphCache9 (4 bytes) */
-	rdp_write_cache_definition(s, settings->FragCache);        /* fragCache (4 bytes) */
-	Stream_Write_UINT16(s, (UINT16)settings->GlyphSupportLevel); /* glyphSupportLevel (2 bytes) */
+	if (!rdp_write_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                         0) || /* glyphCache0 (4 bytes) */
+	    !rdp_write_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                         1) || /* glyphCache1 (4 bytes) */
+	    !rdp_write_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                         2) || /* glyphCache2 (4 bytes) */
+	    !rdp_write_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                         3) || /* glyphCache3 (4 bytes) */
+	    !rdp_write_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                         4) || /* glyphCache4 (4 bytes) */
+	    !rdp_write_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                         5) || /* glyphCache5 (4 bytes) */
+	    !rdp_write_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                         6) || /* glyphCache6 (4 bytes) */
+	    !rdp_write_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                         7) || /* glyphCache7 (4 bytes) */
+	    !rdp_write_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                         8) || /* glyphCache8 (4 bytes) */
+	    !rdp_write_cache_definition_settings(s, settings, FreeRDP_GlyphCache,
+	                                         9) || /* glyphCache9 (4 bytes) */
+	    !rdp_write_cache_definition_settings(s, settings, FreeRDP_FragCache,
+	                                         0)) /* fragCache (4 bytes) */
+		return FALSE;
+	Stream_Write_UINT16(s,
+	                    (UINT16)freerdp_settings_get_uint32(
+	                        settings, FreeRDP_GlyphSupportLevel)); /* glyphSupportLevel (2 bytes) */
 	Stream_Write_UINT16(s, 0);                                 /* pad2Octets (2 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_GLYPH_CACHE);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_GLYPH_CACHE);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -1649,17 +1812,24 @@ static BOOL rdp_print_glyph_cache_capability_set(wStream* s)
 
 static BOOL rdp_read_offscreen_bitmap_cache_capability_set(wStream* s, rdpSettings* settings)
 {
-	UINT32 offscreenSupportLevel;
+	UINT32 offscreenSupportLevel, OffscreenCacheSize, OffscreenCacheEntries;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, offscreenSupportLevel);           /* offscreenSupportLevel (4 bytes) */
-	Stream_Read_UINT16(s, settings->OffscreenCacheSize);    /* offscreenCacheSize (2 bytes) */
-	Stream_Read_UINT16(s, settings->OffscreenCacheEntries); /* offscreenCacheEntries (2 bytes) */
+	Stream_Read_UINT16(s, OffscreenCacheSize);              /* offscreenCacheSize (2 bytes) */
+	Stream_Read_UINT16(s, OffscreenCacheEntries);           /* offscreenCacheEntries (2 bytes) */
 
 	if (offscreenSupportLevel & TRUE)
-		settings->OffscreenSupportLevel = TRUE;
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_OffscreenSupportLevel, TRUE))
+			return FALSE;
+	}
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OffscreenCacheSize, OffscreenCacheSize) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_OffscreenCacheEntries,
+	                                 OffscreenCacheEntries))
+		return FALSE;
 
 	return TRUE;
 }
@@ -1682,18 +1852,22 @@ static BOOL rdp_write_offscreen_bitmap_cache_capability_set(wStream* s, const rd
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	if (settings->OffscreenSupportLevel)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_OffscreenSupportLevel))
 	{
 		offscreenSupportLevel = 0x01;
 		Stream_Write_UINT32(s, offscreenSupportLevel);        /* offscreenSupportLevel (4 bytes) */
-		Stream_Write_UINT16(s, settings->OffscreenCacheSize); /* offscreenCacheSize (2 bytes) */
-		Stream_Write_UINT16(s,
-		                    settings->OffscreenCacheEntries); /* offscreenCacheEntries (2 bytes) */
+		Stream_Write_UINT16(
+		    s, freerdp_settings_get_uint32(
+		           settings, FreeRDP_OffscreenCacheSize)); /* offscreenCacheSize (2 bytes) */
+		Stream_Write_UINT16(
+		    s, freerdp_settings_get_uint32(
+		           settings, FreeRDP_OffscreenCacheEntries)); /* offscreenCacheEntries (2 bytes) */
 	}
 	else
 		Stream_Zero(s, 8);
 
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_OFFSCREEN_CACHE);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_OFFSCREEN_CACHE);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -1738,7 +1912,10 @@ static BOOL rdp_read_bitmap_cache_host_support_capability_set(wStream* s, rdpSet
 	Stream_Seek_UINT16(s);              /* pad2 (2 bytes) */
 
 	if (cacheVersion & BITMAP_CACHE_V2)
-		settings->BitmapCachePersistEnabled = TRUE;
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled, TRUE))
+			return FALSE;
+	}
 
 	return TRUE;
 }
@@ -1765,7 +1942,8 @@ static BOOL rdp_write_bitmap_cache_host_support_capability_set(wStream* s,
 	Stream_Write_UINT8(s, BITMAP_CACHE_V2); /* cacheVersion (1 byte) */
 	Stream_Write_UINT8(s, 0);               /* pad1 (1 byte) */
 	Stream_Write_UINT16(s, 0);              /* pad2 (2 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_BITMAP_CACHE_HOST_SUPPORT);
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_BITMAP_CACHE_HOST_SUPPORT);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -1802,15 +1980,20 @@ static void rdp_read_bitmap_cache_cell_info(wStream* s, BITMAP_CACHE_V2_CELL_INF
 }
 #endif
 
-static void rdp_write_bitmap_cache_cell_info(wStream* s, BITMAP_CACHE_V2_CELL_INFO* cellInfo)
+static BOOL rdp_write_bitmap_cache_cell_info(wStream* s, const BITMAP_CACHE_V2_CELL_INFO* cellInfo)
 {
 	UINT32 info;
 	/**
 	 * numEntries is in the first 31 bits, while the last bit (k)
 	 * is used to indicate a persistent bitmap cache.
 	 */
+	if (!s || !cellInfo)
+		return FALSE;
 	info = (cellInfo->numEntries | (cellInfo->persistent << 31));
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+		return FALSE;
 	Stream_Write_UINT32(s, info);
+	return TRUE;
 }
 
 /**
@@ -1848,35 +2031,35 @@ static BOOL rdp_read_bitmap_cache_v2_capability_set(wStream* s, rdpSettings* set
 
 static BOOL rdp_write_bitmap_cache_v2_capability_set(wStream* s, const rdpSettings* settings)
 {
-	size_t header;
+	size_t header, x;
 	UINT16 cacheFlags;
 
 	if (!Stream_EnsureRemainingCapacity(s, 64))
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	if (header > UINT16_MAX)
-		return FALSE;
 	cacheFlags = ALLOW_CACHE_WAITING_LIST_FLAG;
 
-	if (settings->BitmapCachePersistEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
 		cacheFlags |= PERSISTENT_KEYS_EXPECTED_FLAG;
 
 	Stream_Write_UINT16(s, cacheFlags);                     /* cacheFlags (2 bytes) */
 	Stream_Write_UINT8(s, 0);                               /* pad2 (1 byte) */
-	Stream_Write_UINT8(s, settings->BitmapCacheV2NumCells); /* numCellCaches (1 byte) */
-	rdp_write_bitmap_cache_cell_info(
-	    s, &settings->BitmapCacheV2CellInfo[0]); /* bitmapCache0CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(
-	    s, &settings->BitmapCacheV2CellInfo[1]); /* bitmapCache1CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(
-	    s, &settings->BitmapCacheV2CellInfo[2]); /* bitmapCache2CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(
-	    s, &settings->BitmapCacheV2CellInfo[3]); /* bitmapCache3CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(
-	    s, &settings->BitmapCacheV2CellInfo[4]); /* bitmapCache4CellInfo (4 bytes) */
+	Stream_Write_UINT8(
+	    s, freerdp_settings_get_uint32(settings,
+	                                   FreeRDP_BitmapCacheV2NumCells)); /* numCellCaches (1 byte) */
+	for (x = 0; x < 5; x++)
+	{
+		const BITMAP_CACHE_V2_CELL_INFO* current =
+		    (const BITMAP_CACHE_V2_CELL_INFO*)freerdp_settings_get_pointer_array(
+		        settings, FreeRDP_BitmapCacheV2CellInfo, x);
+		if (!rdp_write_bitmap_cache_cell_info(s, current)) /* bitmapCache0CellInfo (4 bytes) */
+			return FALSE;
+	}
+
 	Stream_Zero(s, 12);                          /* pad3 (12 bytes) */
-	return rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CACHE_V2);
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CACHE_V2);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -1945,8 +2128,11 @@ static BOOL rdp_read_virtual_channel_capability_set(wStream* s, rdpSettings* set
 	else
 		VCChunkSize = 1600;
 
-	if (settings->ServerMode != TRUE)
-		settings->VirtualChannelChunkSize = VCChunkSize;
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode) != TRUE)
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_VirtualChannelChunkSize, VCChunkSize))
+			return FALSE;
+	}
 
 	return TRUE;
 }
@@ -1967,12 +2153,13 @@ static BOOL rdp_write_virtual_channel_capability_set(wStream* s, const rdpSettin
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	if (header > UINT16_MAX)
-		return FALSE;
 	flags = VCCAPS_NO_COMPR;
 	Stream_Write_UINT32(s, flags);                             /* flags (4 bytes) */
-	Stream_Write_UINT32(s, settings->VirtualChannelChunkSize); /* VCChunkSize (4 bytes) */
-	return rdp_capability_set_finish(s, header, CAPSET_TYPE_VIRTUAL_CHANNEL);
+	Stream_Write_UINT32(s,
+	                    freerdp_settings_get_uint32(
+	                        settings, FreeRDP_VirtualChannelChunkSize)); /* VCChunkSize (4 bytes) */
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_VIRTUAL_CHANNEL);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -2009,19 +2196,26 @@ static BOOL rdp_print_virtual_channel_capability_set(wStream* s)
 
 static BOOL rdp_read_draw_nine_grid_cache_capability_set(wStream* s, rdpSettings* settings)
 {
-	UINT32 drawNineGridSupportLevel;
+	UINT32 drawNineGridSupportLevel, DrawNineGridCacheSize, DrawNineGridCacheEntries;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, drawNineGridSupportLevel);        /* drawNineGridSupportLevel (4 bytes) */
-	Stream_Read_UINT16(s, settings->DrawNineGridCacheSize); /* drawNineGridCacheSize (2 bytes) */
-	Stream_Read_UINT16(s,
-	                   settings->DrawNineGridCacheEntries); /* drawNineGridCacheEntries (2 bytes) */
+	Stream_Read_UINT16(s, DrawNineGridCacheSize);           /* drawNineGridCacheSize (2 bytes) */
+	Stream_Read_UINT16(s, DrawNineGridCacheEntries);        /* drawNineGridCacheEntries (2 bytes) */
 
 	if ((drawNineGridSupportLevel & DRAW_NINEGRID_SUPPORTED) ||
 	    (drawNineGridSupportLevel & DRAW_NINEGRID_SUPPORTED_V2))
-		settings->DrawNineGridEnabled = TRUE;
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DrawNineGridEnabled, TRUE))
+			return FALSE;
+	}
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DrawNineGridCacheSize,
+	                                 DrawNineGridCacheSize) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_DrawNineGridCacheEntries,
+	                                 DrawNineGridCacheEntries))
+		return FALSE;
 
 	return TRUE;
 }
@@ -2042,15 +2236,19 @@ static BOOL rdp_write_draw_nine_grid_cache_capability_set(wStream* s, const rdpS
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	if (header > UINT16_MAX)
-		return FALSE;
-	drawNineGridSupportLevel =
-	    (settings->DrawNineGridEnabled) ? DRAW_NINEGRID_SUPPORTED_V2 : DRAW_NINEGRID_NO_SUPPORT;
+	drawNineGridSupportLevel = (freerdp_settings_get_bool(settings, FreeRDP_DrawNineGridEnabled))
+	                               ? DRAW_NINEGRID_SUPPORTED_V2
+	                               : DRAW_NINEGRID_NO_SUPPORT;
 	Stream_Write_UINT32(s, drawNineGridSupportLevel); /* drawNineGridSupportLevel (4 bytes) */
-	Stream_Write_UINT16(s, settings->DrawNineGridCacheSize); /* drawNineGridCacheSize (2 bytes) */
 	Stream_Write_UINT16(
-	    s, settings->DrawNineGridCacheEntries); /* drawNineGridCacheEntries (2 bytes) */
-	return rdp_capability_set_finish(s, header, CAPSET_TYPE_DRAW_NINE_GRID_CACHE);
+	    s, freerdp_settings_get_uint32(
+	           settings, FreeRDP_DrawNineGridCacheSize)); /* drawNineGridCacheSize (2 bytes) */
+	Stream_Write_UINT16(
+	    s,
+	    freerdp_settings_get_uint32(
+	        settings, FreeRDP_DrawNineGridCacheEntries)); /* drawNineGridCacheEntries (2 bytes) */
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_DRAW_NINE_GRID_CACHE);
+	return TRUE;
 }
 
 static void rdp_write_gdiplus_cache_entries(wStream* s, UINT16 gce, UINT16 bce, UINT16 pce,
@@ -2123,10 +2321,16 @@ static BOOL rdp_read_draw_gdiplus_cache_capability_set(wStream* s, rdpSettings* 
 	Stream_Seek(s, 6);                              /* GdipImageCacheProperties (6 bytes) */
 
 	if (drawGDIPlusSupportLevel & DRAW_GDIPLUS_SUPPORTED)
-		settings->DrawGdiPlusEnabled = TRUE;
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DrawGdiPlusEnabled, TRUE))
+			return FALSE;
+	}
 
 	if (drawGdiplusCacheLevel & DRAW_GDIPLUS_CACHE_LEVEL_ONE)
-		settings->DrawGdiPlusCacheEnabled = TRUE;
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DrawGdiPlusCacheEnabled, TRUE))
+			return FALSE;
+	}
 
 	return TRUE;
 }
@@ -2148,12 +2352,12 @@ static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s, const rdpSet
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	if (header > UINT16_MAX)
-		return FALSE;
-	drawGDIPlusSupportLevel =
-	    (settings->DrawGdiPlusEnabled) ? DRAW_GDIPLUS_SUPPORTED : DRAW_GDIPLUS_DEFAULT;
-	drawGdiplusCacheLevel = (settings->DrawGdiPlusEnabled) ? DRAW_GDIPLUS_CACHE_LEVEL_ONE
-	                                                       : DRAW_GDIPLUS_CACHE_LEVEL_DEFAULT;
+	drawGDIPlusSupportLevel = (freerdp_settings_get_bool(settings, FreeRDP_DrawGdiPlusEnabled))
+	                              ? DRAW_GDIPLUS_SUPPORTED
+	                              : DRAW_GDIPLUS_DEFAULT;
+	drawGdiplusCacheLevel = (freerdp_settings_get_bool(settings, FreeRDP_DrawGdiPlusEnabled))
+	                            ? DRAW_GDIPLUS_CACHE_LEVEL_ONE
+	                            : DRAW_GDIPLUS_CACHE_LEVEL_DEFAULT;
 	Stream_Write_UINT32(s, drawGDIPlusSupportLevel);     /* drawGDIPlusSupportLevel (4 bytes) */
 	Stream_Write_UINT32(s, 0);                           /* GdipVersion (4 bytes) */
 	Stream_Write_UINT32(s, drawGdiplusCacheLevel);       /* drawGdiplusCacheLevel (4 bytes) */
@@ -2161,7 +2365,8 @@ static BOOL rdp_write_draw_gdiplus_cache_capability_set(wStream* s, const rdpSet
 	rdp_write_gdiplus_cache_chunk_size(s, 512, 2048, 1024, 64); /* GdipCacheChunkSize (8 bytes) */
 	rdp_write_gdiplus_image_cache_properties(s, 4096, 256,
 	                                         128); /* GdipImageCacheProperties (6 bytes) */
-	return rdp_capability_set_finish(s, header, CAPSET_TYPE_DRAW_GDI_PLUS);
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_DRAW_GDI_PLUS);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -2205,22 +2410,24 @@ static BOOL rdp_read_remote_programs_capability_set(wStream* s, rdpSettings* set
 
 	if ((railSupportLevel & RAIL_LEVEL_SUPPORTED) == 0)
 	{
-		if (settings->RemoteApplicationMode == TRUE)
+		if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode) == TRUE)
 		{
 			/* RemoteApp Failure! */
-			settings->RemoteApplicationMode = FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteApplicationMode, FALSE))
+				return FALSE;
 		}
 	}
 
 	/* 2.2.2.2.3 HandshakeEx PDU (TS_RAIL_ORDER_HANDSHAKE_EX)
 	 * the handshake ex pdu is supported when both, client and server announce
 	 * it OR if we are ready to begin enhanced remoteAPP mode. */
-	if (settings->RemoteApplicationMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
 		railSupportLevel |= RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
 
-	settings->RemoteApplicationSupportLevel =
-	    railSupportLevel & settings->RemoteApplicationSupportMask;
-	return TRUE;
+	return freerdp_settings_set_uint32(
+	    settings, FreeRDP_RemoteApplicationSupportLevel,
+	    railSupportLevel &
+	        freerdp_settings_get_uint32(settings, FreeRDP_RemoteApplicationSupportMask));
 }
 
 /**
@@ -2239,13 +2446,12 @@ static BOOL rdp_write_remote_programs_capability_set(wStream* s, const rdpSettin
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	if (header > UINT16_MAX)
-		return FALSE;
 	railSupportLevel = RAIL_LEVEL_SUPPORTED;
 
-	if (settings->RemoteApplicationSupportLevel & RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RemoteApplicationSupportLevel) &
+	    RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED)
 	{
-		if (settings->RemoteAppLanguageBarSupported)
+		if (freerdp_settings_get_bool(settings, FreeRDP_RemoteAppLanguageBarSupported))
 			railSupportLevel |= RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
 	}
 
@@ -2256,9 +2462,11 @@ static BOOL rdp_write_remote_programs_capability_set(wStream* s, const rdpSettin
 	railSupportLevel |= RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED;
 	railSupportLevel |= RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
 	/* Mask out everything the server does not support. */
-	railSupportLevel &= settings->RemoteApplicationSupportLevel;
+	railSupportLevel &=
+	    freerdp_settings_get_uint32(settings, FreeRDP_RemoteApplicationSupportLevel);
 	Stream_Write_UINT32(s, railSupportLevel); /* railSupportLevel (4 bytes) */
-	return rdp_capability_set_finish(s, header, CAPSET_TYPE_RAIL);
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_RAIL);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -2287,13 +2495,22 @@ static BOOL rdp_print_remote_programs_capability_set(wStream* s)
 
 static BOOL rdp_read_window_list_capability_set(wStream* s, rdpSettings* settings)
 {
+	UINT32 RemoteWndSupportLevel, RemoteAppNumIconCaches, RemoteAppNumIconCacheEntries;
+
 	if (Stream_GetRemainingLength(s) < 7)
 		return FALSE;
 
-	Stream_Read_UINT32(s, settings->RemoteWndSupportLevel); /* wndSupportLevel (4 bytes) */
-	Stream_Read_UINT8(s, settings->RemoteAppNumIconCaches); /* numIconCaches (1 byte) */
-	Stream_Read_UINT16(s,
-	                   settings->RemoteAppNumIconCacheEntries); /* numIconCacheEntries (2 bytes) */
+	Stream_Read_UINT32(s, RemoteWndSupportLevel);        /* wndSupportLevel (4 bytes) */
+	Stream_Read_UINT8(s, RemoteAppNumIconCaches);        /* numIconCaches (1 byte) */
+	Stream_Read_UINT16(s, RemoteAppNumIconCacheEntries); /* numIconCacheEntries (2 bytes) */
+
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteWndSupportLevel,
+	                                 RemoteWndSupportLevel) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_RemoteAppNumIconCaches,
+	                                 RemoteAppNumIconCaches) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_RemoteAppNumIconCacheEntries,
+	                                 RemoteAppNumIconCacheEntries))
+		return FALSE;
 	return TRUE;
 }
 
@@ -2312,13 +2529,17 @@ static BOOL rdp_write_window_list_capability_set(wStream* s, const rdpSettings* 
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	if (header > UINT16_MAX)
-		return FALSE;
-	Stream_Write_UINT32(s, settings->RemoteWndSupportLevel); /* wndSupportLevel (4 bytes) */
-	Stream_Write_UINT8(s, settings->RemoteAppNumIconCaches); /* numIconCaches (1 byte) */
-	Stream_Write_UINT16(s,
-	                    settings->RemoteAppNumIconCacheEntries); /* numIconCacheEntries (2 bytes) */
-	return rdp_capability_set_finish(s, header, CAPSET_TYPE_WINDOW);
+	Stream_Write_UINT32(
+	    s, freerdp_settings_get_uint32(
+	           settings, FreeRDP_RemoteWndSupportLevel)); /* wndSupportLevel (4 bytes) */
+	Stream_Write_UINT8(s,
+	                   freerdp_settings_get_uint32(
+	                       settings, FreeRDP_RemoteAppNumIconCaches)); /* numIconCaches (1 byte) */
+	Stream_Write_UINT16(
+	    s, freerdp_settings_get_uint32(
+	           settings, FreeRDP_RemoteAppNumIconCacheEntries)); /* numIconCacheEntries (2 bytes) */
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_WINDOW);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -2376,12 +2597,12 @@ static BOOL rdp_write_desktop_composition_capability_set(wStream* s, const rdpSe
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	if (header > UINT16_MAX)
-		return FALSE;
-	compDeskSupportLevel =
-	    (settings->AllowDesktopComposition) ? COMPDESK_SUPPORTED : COMPDESK_NOT_SUPPORTED;
+	compDeskSupportLevel = (freerdp_settings_get_bool(settings, FreeRDP_AllowDesktopComposition))
+	                           ? COMPDESK_SUPPORTED
+	                           : COMPDESK_NOT_SUPPORTED;
 	Stream_Write_UINT16(s, compDeskSupportLevel); /* compDeskSupportLevel (2 bytes) */
-	return rdp_capability_set_finish(s, header, CAPSET_TYPE_COMP_DESK);
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_COMP_DESK);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -2417,7 +2638,7 @@ static BOOL rdp_read_multifragment_update_capability_set(wStream* s, rdpSettings
 
 	Stream_Read_UINT32(s, multifragMaxRequestSize); /* MaxRequestSize (4 bytes) */
 
-	if (settings->ServerMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
 		/*
 		 * Special case: The client announces multifragment update support but sets the maximum
@@ -2430,21 +2651,25 @@ static BOOL rdp_read_multifragment_update_capability_set(wStream* s, rdpSettings
 		if (multifragMaxRequestSize < FASTPATH_MAX_PACKET_SIZE)
 			multifragMaxRequestSize = FASTPATH_FRAGMENT_SAFE_SIZE;
 
-		if (settings->RemoteFxCodec)
+		if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec))
 		{
 			/**
 			 * If we are using RemoteFX the client MUST use a value greater
 			 * than or equal to the value we've previously sent in the server to
 			 * client multi-fragment update capability set (MS-RDPRFX 1.5)
 			 */
-			if (multifragMaxRequestSize < settings->MultifragMaxRequestSize)
+			if (multifragMaxRequestSize <
+			    freerdp_settings_get_uint32(settings, FreeRDP_MultifragMaxRequestSize))
 			{
 				/**
 				 * If it happens to be smaller we honor the client's value but
 				 * have to disable RemoteFX
 				 */
-				settings->RemoteFxCodec = FALSE;
-				settings->MultifragMaxRequestSize = multifragMaxRequestSize;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+				                                 multifragMaxRequestSize))
+					return FALSE;
 			}
 			else
 			{
@@ -2453,7 +2678,9 @@ static BOOL rdp_read_multifragment_update_capability_set(wStream* s, rdpSettings
 		}
 		else
 		{
-			settings->MultifragMaxRequestSize = multifragMaxRequestSize;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+			                                 multifragMaxRequestSize))
+				return FALSE;
 		}
 	}
 	else
@@ -2463,8 +2690,13 @@ static BOOL rdp_read_multifragment_update_capability_set(wStream* s, rdpSettings
 		 * In RemoteFX mode we MUST do this but it might also be useful to
 		 * receive larger related bitmap updates.
 		 */
-		if (multifragMaxRequestSize > settings->MultifragMaxRequestSize)
-			settings->MultifragMaxRequestSize = multifragMaxRequestSize;
+		if (multifragMaxRequestSize >
+		    freerdp_settings_get_uint32(settings, FreeRDP_MultifragMaxRequestSize))
+		{
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+			                                 multifragMaxRequestSize))
+				return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -2481,7 +2713,11 @@ static BOOL rdp_write_multifragment_update_capability_set(wStream* s, rdpSetting
 {
 	size_t header;
 
-	if (settings->ServerMode && settings->MultifragMaxRequestSize == 0)
+	if (!Stream_EnsureRemainingCapacity(s, 32))
+		return FALSE;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode) &&
+	    freerdp_settings_get_uint32(settings, FreeRDP_MultifragMaxRequestSize) == 0)
 	{
 		/**
 		 * In server mode we prefer to use the highest useful request size that
@@ -2494,20 +2730,24 @@ static BOOL rdp_write_multifragment_update_capability_set(wStream* s, rdpSetting
 		 * greater than or equal to the value we're sending here.
 		 * See [MS-RDPRFX 1.5 capability #2]
 		 */
-		UINT32 tileNumX = (settings->DesktopWidth + 63) / 64;
-		UINT32 tileNumY = (settings->DesktopHeight + 63) / 64;
-		settings->MultifragMaxRequestSize = tileNumX * tileNumY * 16384;
+		const UINT32 tileNumX =
+		    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) + 63) / 64;
+		const UINT32 tileNumY =
+		    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) + 63) / 64;
+		const UINT32 requestSize = tileNumX * tileNumY * 16384;
+
 		/* and add room for headers, regions, frame markers, etc. */
-		settings->MultifragMaxRequestSize += 16384;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+		                                 requestSize + 16384))
+			return FALSE;
 	}
 
-	if (!Stream_EnsureRemainingCapacity(s, 32))
-		return FALSE;
 	header = rdp_capability_set_start(s);
-	if (header > UINT16_MAX)
-		return FALSE;
-	Stream_Write_UINT32(s, settings->MultifragMaxRequestSize); /* MaxRequestSize (4 bytes) */
-	return rdp_capability_set_finish(s, header, CAPSET_TYPE_MULTI_FRAGMENT_UPDATE);
+	Stream_Write_UINT32(
+	    s, freerdp_settings_get_uint32(
+	           settings, FreeRDP_MultifragMaxRequestSize)); /* MaxRequestSize (4 bytes) */
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_MULTI_FRAGMENT_UPDATE);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -2537,12 +2777,15 @@ static BOOL rdp_print_multifragment_update_capability_set(wStream* s)
 static BOOL rdp_read_large_pointer_capability_set(wStream* s, rdpSettings* settings)
 {
 	UINT16 largePointerSupportFlags;
-
+	UINT32 tmp;
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
 	Stream_Read_UINT16(s, largePointerSupportFlags); /* largePointerSupportFlags (2 bytes) */
-	settings->LargePointerFlag &= largePointerSupportFlags;
+	tmp = freerdp_settings_get_uint32(settings, FreeRDP_LargePointerFlag);
+	tmp &= largePointerSupportFlags;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_LargePointerFlag, tmp))
+		return FALSE;
 	if ((largePointerSupportFlags & ~(LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384)) != 0)
 	{
 		WLog_WARN(
@@ -2570,12 +2813,11 @@ static BOOL rdp_write_large_pointer_capability_set(wStream* s, const rdpSettings
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	if (header > UINT16_MAX)
-		return FALSE;
-	largePointerSupportFlags =
-	    settings->LargePointerFlag & (LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384);
+	largePointerSupportFlags = freerdp_settings_get_uint32(settings, FreeRDP_LargePointerFlag) &
+	                           (LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384);
 	Stream_Write_UINT16(s, largePointerSupportFlags); /* largePointerSupportFlags (2 bytes) */
-	return rdp_capability_set_finish(s, header, CAPSET_TYPE_LARGE_POINTER);
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_LARGE_POINTER);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -2610,9 +2852,10 @@ static BOOL rdp_read_surface_commands_capability_set(wStream* s, rdpSettings* se
 
 	Stream_Read_UINT32(s, cmdFlags); /* cmdFlags (4 bytes) */
 	Stream_Seek_UINT32(s);           /* reserved (4 bytes) */
-	settings->SurfaceCommandsEnabled = TRUE;
-	settings->SurfaceFrameMarkerEnabled = (cmdFlags & SURFCMDS_FRAME_MARKER) ? TRUE : FALSE;
-	return TRUE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SurfaceCommandsEnabled, TRUE))
+		return FALSE;
+	return freerdp_settings_set_bool(settings, FreeRDP_SurfaceFrameMarkerEnabled,
+	                                 (cmdFlags & SURFCMDS_FRAME_MARKER) ? TRUE : FALSE);
 }
 
 /**
@@ -2631,16 +2874,15 @@ static BOOL rdp_write_surface_commands_capability_set(wStream* s, const rdpSetti
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	if (header > UINT16_MAX)
-		return FALSE;
 	cmdFlags = SURFCMDS_SET_SURFACE_BITS | SURFCMDS_STREAM_SURFACE_BITS;
 
-	if (settings->SurfaceFrameMarkerEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_SurfaceFrameMarkerEnabled))
 		cmdFlags |= SURFCMDS_FRAME_MARKER;
 
 	Stream_Write_UINT32(s, cmdFlags); /* cmdFlags (4 bytes) */
 	Stream_Write_UINT32(s, 0);        /* reserved (4 bytes) */
-	return rdp_capability_set_finish(s, header, CAPSET_TYPE_SURFACE_COMMANDS);
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_SURFACE_COMMANDS);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -2774,7 +3016,7 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 		if (!Stream_SafeSeek(s, codecPropertiesLength))
 			return FALSE;
 
-		if (settings->ServerMode)
+		if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 		{
 			if (UuidEqual(&codecGuid, &CODEC_GUID_REMOTEFX, &rpc_status))
 			{
@@ -2782,14 +3024,20 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 				UINT32 rfxPropsLength;
 				UINT32 captureFlags;
 				guidRemoteFx = TRUE;
-				settings->RemoteFxCodecId = codecId;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxCodecId, codecId))
+					return FALSE;
 				if (Stream_GetRemainingLength(&sub) < 12)
 					return FALSE;
 				Stream_Read_UINT32(&sub, rfxPropsLength); /* length (4 bytes) */
 				Stream_Read_UINT32(&sub, captureFlags);   /* captureFlags (4 bytes) */
 				Stream_Read_UINT32(&sub, rfxCapsLength);  /* capsLength (4 bytes) */
-				settings->RemoteFxCaptureFlags = captureFlags;
-				settings->RemoteFxOnly = (captureFlags & CARDP_CAPS_CAPTURE_NON_CAC) ? TRUE : FALSE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxCaptureFlags,
+				                                 captureFlags))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxOnly,
+				                               (captureFlags & CARDP_CAPS_CAPTURE_NON_CAC) ? TRUE
+				                                                                           : FALSE))
+					return FALSE;
 
 				if (rfxCapsLength)
 				{
@@ -2887,7 +3135,8 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 				BYTE fAllowSubsampling;
 				BYTE fAllowDynamicFidelity;
 				guidNSCodec = TRUE;
-				settings->NSCodecId = codecId;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_NSCodecId, codecId))
+					return FALSE;
 				if (Stream_GetRemainingLength(&sub) < 3)
 					return FALSE;
 				Stream_Read_UINT8(&sub, fAllowDynamicFidelity); /* fAllowDynamicFidelity (1 byte) */
@@ -2900,9 +3149,13 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 				if (colorLossLevel > 7)
 					colorLossLevel = 7;
 
-				settings->NSCodecAllowDynamicColorFidelity = fAllowDynamicFidelity;
-				settings->NSCodecAllowSubsampling = fAllowSubsampling;
-				settings->NSCodecColorLossLevel = colorLossLevel;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodecAllowDynamicColorFidelity,
+				                               fAllowDynamicFidelity) ||
+				    !freerdp_settings_set_bool(settings, FreeRDP_NSCodecAllowSubsampling,
+				                               fAllowSubsampling) ||
+				    !freerdp_settings_set_uint32(settings, FreeRDP_NSCodecColorLossLevel,
+				                                 colorLossLevel))
+					return FALSE;
 			}
 			else if (UuidEqual(&codecGuid, &CODEC_GUID_IGNORE, &rpc_status))
 			{
@@ -2932,13 +3185,21 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 		bitmapCodecCount--;
 	}
 
-	if (settings->ServerMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
+		const BOOL NSCodec = freerdp_settings_get_bool(settings, FreeRDP_NSCodec);
+		const BOOL RemoteFxImageCodec =
+		    freerdp_settings_get_bool(settings, FreeRDP_RemoteFxImageCodec);
+		const BOOL RemoteFxCodec = freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec);
+
 		/* only enable a codec if we've announced/enabled it before */
-		settings->RemoteFxCodec = settings->RemoteFxCodec && guidRemoteFx;
-		settings->RemoteFxImageCodec = settings->RemoteFxImageCodec && guidRemoteFxImage;
-		settings->NSCodec = settings->NSCodec && guidNSCodec;
-		settings->JpegCodec = FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec,
+		                               RemoteFxCodec && guidRemoteFx) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_RemoteFxImageCodec,
+		                               RemoteFxImageCodec && guidRemoteFxImage) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_NSCodec, NSCodec && guidNSCodec) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_JpegCodec, FALSE))
+			return FALSE;
 	}
 
 	return TRUE;
@@ -2957,8 +3218,9 @@ static BOOL rdp_write_rfx_client_capability_container(wStream* s, const rdpSetti
 	if (!Stream_EnsureRemainingCapacity(s, 64))
 		return FALSE;
 
-	captureFlags = settings->RemoteFxOnly ? 0 : CARDP_CAPS_CAPTURE_NON_CAC;
-	codecMode = settings->RemoteFxCodecMode;
+	captureFlags =
+	    freerdp_settings_get_bool(settings, FreeRDP_RemoteFxOnly) ? 0 : CARDP_CAPS_CAPTURE_NON_CAC;
+	codecMode = freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecMode);
 	Stream_Write_UINT16(s, 49); /* codecPropertiesLength */
 	/* TS_RFX_CLNT_CAPS_CONTAINER */
 	Stream_Write_UINT32(s, 49);           /* length */
@@ -3002,9 +3264,10 @@ static BOOL rdp_write_nsc_client_capability_container(wStream* s, const rdpSetti
 	BYTE colorLossLevel;
 	BYTE fAllowSubsampling;
 	BYTE fAllowDynamicFidelity;
-	fAllowDynamicFidelity = settings->NSCodecAllowDynamicColorFidelity;
-	fAllowSubsampling = settings->NSCodecAllowSubsampling;
-	colorLossLevel = settings->NSCodecColorLossLevel;
+	fAllowDynamicFidelity =
+	    freerdp_settings_get_bool(settings, FreeRDP_NSCodecAllowDynamicColorFidelity);
+	fAllowSubsampling = freerdp_settings_get_bool(settings, FreeRDP_NSCodecAllowSubsampling);
+	colorLossLevel = freerdp_settings_get_uint32(settings, FreeRDP_NSCodecColorLossLevel);
 
 	if (colorLossLevel < 1)
 		colorLossLevel = 1;
@@ -3030,7 +3293,7 @@ static BOOL rdp_write_jpeg_client_capability_container(wStream* s, const rdpSett
 		return FALSE;
 
 	Stream_Write_UINT16(s, 1); /* codecPropertiesLength */
-	Stream_Write_UINT8(s, settings->JpegQuality);
+	Stream_Write_UINT8(s, freerdp_settings_get_uint32(settings, FreeRDP_JpegQuality));
 	return TRUE;
 }
 #endif
@@ -3094,33 +3357,31 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s, const rdpSettings
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	if (header > UINT16_MAX)
-		return FALSE;
 	bitmapCodecCount = 0;
 
-	if (settings->RemoteFxCodec)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec))
 		bitmapCodecCount++;
 
-	if (settings->NSCodec)
+	if (freerdp_settings_get_bool(settings, FreeRDP_NSCodec))
 		bitmapCodecCount++;
 
 #if defined(WITH_JPEG)
 
-	if (settings->JpegCodec)
+	if (freerdp_settings_get_bool(settings, FreeRDP_JpegCodec))
 		bitmapCodecCount++;
 
 #endif
 
-	if (settings->RemoteFxImageCodec)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxImageCodec))
 		bitmapCodecCount++;
 
 	Stream_Write_UINT8(s, bitmapCodecCount);
 
-	if (settings->RemoteFxCodec)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec))
 	{
 		rdp_write_bitmap_codec_guid(s, &CODEC_GUID_REMOTEFX); /* codecGUID */
 
-		if (settings->ServerMode)
+		if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 		{
 			Stream_Write_UINT8(s, 0); /* codecID is defined by the client */
 
@@ -3136,11 +3397,11 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s, const rdpSettings
 		}
 	}
 
-	if (settings->NSCodec)
+	if (freerdp_settings_get_bool(settings, FreeRDP_NSCodec))
 	{
 		rdp_write_bitmap_codec_guid(s, &CODEC_GUID_NSCODEC); /* codecGUID */
 
-		if (settings->ServerMode)
+		if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 		{
 			Stream_Write_UINT8(s, 0); /* codecID is defined by the client */
 
@@ -3158,11 +3419,11 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s, const rdpSettings
 
 #if defined(WITH_JPEG)
 
-	if (settings->JpegCodec)
+	if (freerdp_settings_get_bool(settings, FreeRDP_JpegCodec))
 	{
 		rdp_write_bitmap_codec_guid(s, &CODEC_GUID_JPEG); /* codecGUID */
 
-		if (settings->ServerMode)
+		if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 		{
 			Stream_Write_UINT8(s, 0); /* codecID is defined by the client */
 
@@ -3180,11 +3441,11 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s, const rdpSettings
 
 #endif
 
-	if (settings->RemoteFxImageCodec)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxImageCodec))
 	{
 		rdp_write_bitmap_codec_guid(s, &CODEC_GUID_IMAGE_REMOTEFX); /* codecGUID */
 
-		if (settings->ServerMode)
+		if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 		{
 			Stream_Write_UINT8(s, 0); /* codecID is defined by the client */
 
@@ -3200,7 +3461,8 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wStream* s, const rdpSettings
 		}
 	}
 
-	return rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CODECS);
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CODECS);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -3254,9 +3516,12 @@ static BOOL rdp_read_frame_acknowledge_capability_set(wStream* s, rdpSettings* s
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	if (settings->ServerMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
-		Stream_Read_UINT32(s, settings->FrameAcknowledge); /* (4 bytes) */
+		UINT32 FrameAcknowledge;
+		Stream_Read_UINT32(s, FrameAcknowledge); /* (4 bytes) */
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_FrameAcknowledge, FrameAcknowledge))
+			return FALSE;
 	}
 	else
 	{
@@ -3282,8 +3547,10 @@ static BOOL rdp_write_frame_acknowledge_capability_set(wStream* s, const rdpSett
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	Stream_Write_UINT32(s, settings->FrameAcknowledge); /* (4 bytes) */
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_FRAME_ACKNOWLEDGE);
+	Stream_Write_UINT32(
+	    s, freerdp_settings_get_uint32(settings, FreeRDP_FrameAcknowledge)); /* (4 bytes) */
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_FRAME_ACKNOWLEDGE);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -3325,10 +3592,12 @@ static BOOL rdp_write_bitmap_cache_v3_codec_id_capability_set(wStream* s,
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	if (settings->BitmapCacheV3CodecId > UINT8_MAX)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_BitmapCacheV3CodecId) > UINT8_MAX)
 		return FALSE;
-	Stream_Write_UINT8(s, (UINT8)settings->BitmapCacheV3CodecId);
-	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID);
+	Stream_Write_UINT8(s,
+	                   (UINT8)freerdp_settings_get_uint32(settings, FreeRDP_BitmapCacheV3CodecId));
+	rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID);
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -3565,8 +3834,13 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 {
 	BOOL treated;
 	size_t start, end, len;
+	BYTE* ReceivedCapabilities;
 	UINT16 count = numberCapabilities;
 
+	ReceivedCapabilities =
+	    freerdp_settings_get_pointer_writable(settings, FreeRDP_ReceivedCapabilities);
+	if (!ReceivedCapabilities)
+		return FALSE;
 	start = Stream_GetPosition(s);
 	while (numberCapabilities > 0 && Stream_GetRemainingLength(s) >= 4)
 	{
@@ -3583,7 +3857,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 
 		if (type < 32)
 		{
-			settings->ReceivedCapabilities[type] = TRUE;
+			ReceivedCapabilities[type] = TRUE;
 		}
 		else
 		{
@@ -3715,7 +3989,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 
 		if (!treated)
 		{
-			if (settings->ServerMode)
+			if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 			{
 				/* treating capabilities that are supposed to be send only from the client */
 				switch (type)
@@ -3849,7 +4123,7 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId, UIN
 	if (freerdp_shall_disconnect(rdp->instance))
 		return TRUE;
 
-	if (rdp->settings->UseRdpSecurityLayer)
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_UseRdpSecurityLayer))
 	{
 		if (!rdp_read_security_header(s, &securityFlags, length))
 			return FALSE;
@@ -3887,6 +4161,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	UINT16 numberCapabilities;
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
+	UINT32 ShareId;
 
 	if (!rdp_recv_get_active_header(rdp, s, &channelId, &length))
 		return FALSE;
@@ -3921,15 +4196,18 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
-	rdp->settings->PduSource = pduSource;
+	if (!freerdp_settings_set_uint32(rdp->settings, FreeRDP_PduSource, pduSource))
+		return FALSE;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Read_UINT32(s, rdp->settings->ShareId);     /* shareId (4 bytes) */
+	Stream_Read_UINT32(s, ShareId);                    /* shareId (4 bytes) */
 	Stream_Read_UINT16(s, lengthSourceDescriptor);     /* lengthSourceDescriptor (2 bytes) */
 	Stream_Read_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 
+	if (!freerdp_settings_set_uint32(rdp->settings, FreeRDP_ShareId, ShareId))
+		return FALSE;
 	if (!Stream_SafeSeek(s, lengthSourceDescriptor) ||
 	    Stream_GetRemainingLength(s) < 4) /* sourceDescriptor */
 		return FALSE;
@@ -3947,7 +4225,9 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	if (!Stream_SafeSeek(s, 4)) /* SessionId */
 		return FALSE;
 
-	rdp->update->secondary->glyph_v2 = (rdp->settings->GlyphSupportLevel > GLYPH_SUPPORT_FULL);
+	rdp->update->secondary->glyph_v2 =
+	    (freerdp_settings_get_uint32(rdp->settings, FreeRDP_GlyphSupportLevel) >
+	     GLYPH_SUPPORT_FULL);
 	return tpkt_ensure_stream_consumed(s, length);
 }
 
@@ -3960,7 +4240,8 @@ static BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 	if (!Stream_EnsureRemainingCapacity(s, 64))
 		return FALSE;
 
-	Stream_Write_UINT32(s, settings->ShareId); /* shareId (4 bytes) */
+	Stream_Write_UINT32(
+	    s, freerdp_settings_get_uint32(settings, FreeRDP_ShareId)); /* shareId (4 bytes) */
 	Stream_Write_UINT16(s, 4);                 /* lengthSourceDescriptor (2 bytes) */
 	lm = Stream_GetPosition(s);
 	Stream_Seek_UINT16(s);     /* lengthCombinedCapabilities (2 bytes) */
@@ -3988,7 +4269,7 @@ static BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 		return FALSE;
 	}
 
-	if (settings->BitmapCachePersistEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
 	{
 		numberCapabilities++;
 
@@ -3996,7 +4277,7 @@ static BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (settings->RemoteApplicationMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
 	{
 		numberCapabilities += 2;
 
@@ -4033,9 +4314,11 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 	if (!s)
 		return FALSE;
 
-	rdp->settings->ShareId = 0x10000 + rdp->mcs->userId;
-	status = rdp_write_demand_active(s, rdp->settings) &&
-	         rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->userId);
+	status =
+	    freerdp_settings_set_uint32(rdp->settings, FreeRDP_ShareId, 0x10000 + rdp->mcs->userId);
+	if (status)
+		status = rdp_write_demand_active(s, rdp->settings) &&
+		         rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->userId);
 	Stream_Release(s);
 	return status;
 }
@@ -4046,6 +4329,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
 	UINT16 numberCapabilities;
+	const BYTE* ReceivedCapabilities;
 	settings = rdp->settings;
 
 	if (Stream_GetRemainingLength(s) < 10)
@@ -4065,43 +4349,54 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities, lengthCombinedCapabilities))
 		return FALSE;
 
-	if (!settings->ReceivedCapabilities[CAPSET_TYPE_SURFACE_COMMANDS])
+	ReceivedCapabilities = freerdp_settings_get_pointer(settings, FreeRDP_ReceivedCapabilities);
+	if (!ReceivedCapabilities)
+		return FALSE;
+	if (!ReceivedCapabilities[CAPSET_TYPE_SURFACE_COMMANDS])
 	{
 		/* client does not support surface commands */
-		settings->SurfaceCommandsEnabled = FALSE;
-		settings->SurfaceFrameMarkerEnabled = FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_SurfaceCommandsEnabled, FALSE))
+			return FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_SurfaceFrameMarkerEnabled, FALSE))
+			return FALSE;
 	}
 
-	if (!settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
+	if (!ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
 	{
 		/* client does not support frame acks */
-		settings->FrameAcknowledge = 0;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_FrameAcknowledge, 0))
+			return FALSE;
 	}
 
-	if (!settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID])
+	if (!ReceivedCapabilities[CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID])
 	{
 		/* client does not support bitmap cache v3 */
-		settings->BitmapCacheV3Enabled = FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheV3Enabled, FALSE))
+			return FALSE;
 	}
 
-	if (!settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CODECS])
+	if (!ReceivedCapabilities[CAPSET_TYPE_BITMAP_CODECS])
 	{
 		/* client does not support bitmap codecs */
-		settings->RemoteFxCodec = FALSE;
-		settings->NSCodec = FALSE;
-		settings->JpegCodec = FALSE;
+		if (!!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, FALSE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_NSCodec, FALSE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_JpegCodec, FALSE))
+			return FALSE;
 	}
 
-	if (!settings->ReceivedCapabilities[CAPSET_TYPE_MULTI_FRAGMENT_UPDATE])
+	if (!ReceivedCapabilities[CAPSET_TYPE_MULTI_FRAGMENT_UPDATE])
 	{
 		/* client does not support multi fragment updates - make sure packages are not fragmented */
-		settings->MultifragMaxRequestSize = FASTPATH_FRAGMENT_SAFE_SIZE;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+		                                 FASTPATH_FRAGMENT_SAFE_SIZE))
+			return FALSE;
 	}
 
-	if (!settings->ReceivedCapabilities[CAPSET_TYPE_LARGE_POINTER])
+	if (!ReceivedCapabilities[CAPSET_TYPE_LARGE_POINTER])
 	{
 		/* client does not support large pointers */
-		settings->LargePointerFlag = 0;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_LargePointerFlag, 0))
+			return FALSE;
 	}
 
 	return tpkt_ensure_stream_consumed(s, pduLength);
@@ -4114,8 +4409,10 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 	UINT16 lengthSourceDescriptor;
 	size_t lengthCombinedCapabilities;
 	BOOL ret;
+	const BYTE* ReceivedCapabilities;
 	lengthSourceDescriptor = sizeof(SOURCE_DESCRIPTOR);
-	Stream_Write_UINT32(s, settings->ShareId);      /* shareId (4 bytes) */
+	Stream_Write_UINT32(
+	    s, freerdp_settings_get_uint32(settings, FreeRDP_ShareId)); /* shareId (4 bytes) */
 	Stream_Write_UINT16(s, 0x03EA);                 /* originatorId (2 bytes) */
 	Stream_Write_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 	lm = Stream_GetPosition(s);
@@ -4132,7 +4429,7 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 	    !rdp_write_order_capability_set(s, settings))
 		return FALSE;
 
-	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RdpVersion) >= RDP_VERSION_5_PLUS)
 		ret = rdp_write_bitmap_cache_v2_capability_set(s, settings);
 	else
 		ret = rdp_write_bitmap_cache_capability_set(s, settings);
@@ -4155,7 +4452,7 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 		return FALSE;
 	}
 
-	if (settings->OffscreenSupportLevel)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_OffscreenSupportLevel))
 	{
 		numberCapabilities++;
 
@@ -4163,17 +4460,19 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (settings->DrawNineGridEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_DrawNineGridEnabled))
 	{
 		numberCapabilities++;
 
 		if (!rdp_write_draw_nine_grid_cache_capability_set(s, settings))
 			return FALSE;
 	}
-
-	if (settings->ReceivedCapabilities[CAPSET_TYPE_LARGE_POINTER])
+	ReceivedCapabilities = freerdp_settings_get_pointer(settings, FreeRDP_ReceivedCapabilities);
+	if (!ReceivedCapabilities)
+		return FALSE;
+	if (ReceivedCapabilities[CAPSET_TYPE_LARGE_POINTER])
 	{
-		if (settings->LargePointerFlag)
+		if (freerdp_settings_get_uint32(settings, FreeRDP_LargePointerFlag))
 		{
 			numberCapabilities++;
 
@@ -4182,7 +4481,7 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 		}
 	}
 
-	if (settings->RemoteApplicationMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
 	{
 		numberCapabilities += 2;
 
@@ -4191,7 +4490,7 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (settings->ReceivedCapabilities[CAPSET_TYPE_MULTI_FRAGMENT_UPDATE])
+	if (ReceivedCapabilities[CAPSET_TYPE_MULTI_FRAGMENT_UPDATE])
 	{
 		numberCapabilities++;
 
@@ -4199,7 +4498,7 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (settings->ReceivedCapabilities[CAPSET_TYPE_SURFACE_COMMANDS])
+	if (ReceivedCapabilities[CAPSET_TYPE_SURFACE_COMMANDS])
 	{
 		numberCapabilities++;
 
@@ -4207,7 +4506,7 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CODECS])
+	if (ReceivedCapabilities[CAPSET_TYPE_BITMAP_CODECS])
 	{
 		numberCapabilities++;
 
@@ -4215,10 +4514,12 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (!settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
-		settings->FrameAcknowledge = 0;
-
-	if (settings->FrameAcknowledge)
+	if (!ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_FrameAcknowledge, 0))
+			return FALSE;
+	}
+	if (freerdp_settings_get_uint32(settings, FreeRDP_FrameAcknowledge))
 	{
 		numberCapabilities++;
 
@@ -4226,9 +4527,9 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID])
+	if (ReceivedCapabilities[CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID])
 	{
-		if (settings->BitmapCacheV3CodecId != 0)
+		if (freerdp_settings_get_uint32(settings, FreeRDP_BitmapCacheV3CodecId) != 0)
 		{
 			numberCapabilities++;
 

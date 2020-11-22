@@ -364,6 +364,11 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	if (!sshagent)
 	{
+		rdpSettings* settings = (rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints);
+		const freerdp* instance = freerdp_settings_get_pointer(settings, FreeRDP_instance);
+		if (!settings || !instance)
+			return ERROR_INTERNAL_ERROR;
+
 		sshagent = (SSHAGENT_PLUGIN*)calloc(1, sizeof(SSHAGENT_PLUGIN));
 
 		if (!sshagent)
@@ -376,9 +381,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		sshagent->iface.Connected = NULL;
 		sshagent->iface.Disconnected = NULL;
 		sshagent->iface.Terminated = sshagent_plugin_terminated;
-		sshagent->rdpcontext =
-		    ((freerdp*)((rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints))->instance)
-		        ->context;
+		sshagent->rdpcontext = instance->context;
+
 		status = pEntryPoints->RegisterPlugin(pEntryPoints, "sshagent", (IWTSPlugin*)sshagent);
 	}
 

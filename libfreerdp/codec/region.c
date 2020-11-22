@@ -74,17 +74,19 @@ struct _REGION16_DATA
 	long nbRects;
 };
 
+static REGION16_DATA empty_region = { 0, 0 };
+
 void region16_init(REGION16* region)
 {
 	assert(region);
 	ZeroMemory(region, sizeof(REGION16));
+	region->data = &empty_region;
 }
 
 int region16_n_rects(const REGION16* region)
 {
 	assert(region);
-	if (!region->data)
-		return 0;
+	assert(region->data);
 	return region->data->nbRects;
 }
 
@@ -146,7 +148,9 @@ BOOL rectangle_is_empty(const RECTANGLE_16* rect)
 
 BOOL region16_is_empty(const REGION16* region)
 {
-	return region16_n_rects(region) == 0;
+	assert(region);
+	assert(region->data);
+	return (region->data->nbRects == 0);
 }
 
 BOOL rectangles_equal(const RECTANGLE_16* r1, const RECTANGLE_16* r2)
@@ -175,9 +179,12 @@ BOOL rectangles_intersection(const RECTANGLE_16* r1, const RECTANGLE_16* r2, REC
 void region16_clear(REGION16* region)
 {
 	assert(region);
+	assert(region->data);
 
-	free(region->data);
-	region->data = NULL;
+	if ((region->data->size > 0) && (region->data != &empty_region))
+		free(region->data);
+
+	region->data = &empty_region;
 	ZeroMemory(&region->extents, sizeof(region->extents));
 }
 
@@ -197,17 +204,20 @@ static INLINE REGION16_DATA* allocateRegion(long nbItems)
 BOOL region16_copy(REGION16* dst, const REGION16* src)
 {
 	assert(dst);
+	assert(dst->data);
 	assert(src);
+	assert(src->data);
 
 	if (dst == src)
 		return TRUE;
 
 	dst->extents = src->extents;
 
-	free(dst->data);
+	if ((dst->data->size > 0) && (dst->data != &empty_region))
+		free(dst->data);
 
-	if (region16_is_empty(src))
-		dst->data = NULL;
+	if (src->data->size == 0)
+		dst->data = &empty_region;
 	else
 	{
 		dst->data = allocateRegion(src->data->nbRects);
@@ -463,7 +473,10 @@ static BOOL region16_simplify_bands(REGION16* region)
 		region->data = data;
 
 		if (!region->data)
+		{
+			region->data = &empty_region;
 			return FALSE;
+		}
 
 		region->data->nbRects = finalNbRects;
 		region->data->size = allocSize;
@@ -482,14 +495,13 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 	RECTANGLE_16* dstRect = NULL;
 	UINT32 usedRects, srcNbRects;
 	UINT16 topInterBand;
-
-	if (!src || !dst)
-		return FALSE;
-
+	assert(src);
+	assert(src->data);
+	assert(dst);
 	srcExtents = region16_extents(src);
 	dstExtents = region16_extents_noconst(dst);
 
-	if (region16_is_empty(src))
+	if (!region16_n_rects(src))
 	{
 		/* source is empty, so the union is rect */
 		dst->extents = *rect;
@@ -646,6 +658,9 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 		dstRect++;
 	}
 
+	if ((src == dst) && (src->data->size > 0) && (src->data != &empty_region))
+		free(src->data);
+
 	dstExtents->top = MIN(rect->top, srcExtents->top);
 	dstExtents->left = MIN(rect->left, srcExtents->left);
 	dstExtents->bottom = MAX(rect->bottom, srcExtents->bottom);
@@ -655,8 +670,6 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 	if (!tmpItems)
 		free(newItems);
 	newItems = tmpItems;
-
-	free(dst->data);
 	dst->data = newItems;
 
 	if (!dst->data)
@@ -707,7 +720,7 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 	UINT32 nbRects, usedRects;
 	RECTANGLE_16 common, newExtents;
 	assert(src);
-
+	assert(src->data);
 	srcPtr = region16_rects(src, &nbRects);
 
 	if (!nbRects)
@@ -770,7 +783,9 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 	newItems->nbRects = usedRects;
 	newItems->size = sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16));
 
-	free(dst->data);
+	if ((dst->data->size > 0) && (dst->data != &empty_region))
+		free(dst->data);
+
 	dst->data = realloc(newItems, newItems->size);
 
 	if (!dst->data)
@@ -787,6 +802,11 @@ void region16_uninit(REGION16* region)
 {
 	assert(region);
 
-	free(region->data);
-	region->data = NULL;
+	if (region->data)
+	{
+		if ((region->data->size > 0) && (region->data != &empty_region))
+			free(region->data);
+
+		region->data = NULL;
+	}
 }

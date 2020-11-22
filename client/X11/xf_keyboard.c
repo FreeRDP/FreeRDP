@@ -61,7 +61,8 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	char* keyCombination;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
-	xfc->actionScriptExists = PathFileExistsA(xfc->context.settings->ActionScript);
+	xfc->actionScriptExists =
+	    PathFileExistsA(freerdp_settings_get_string(xfc->context.settings, FreeRDP_ActionScript));
 
 	if (!xfc->actionScriptExists)
 		return FALSE;
@@ -75,7 +76,8 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	if (!obj)
 		return FALSE;
 	obj->fnObjectFree = free;
-	sprintf_s(command, sizeof(command), "%s key", xfc->context.settings->ActionScript);
+	sprintf_s(command, sizeof(command), "%s key",
+	          freerdp_settings_get_string(xfc->context.settings, FreeRDP_ActionScript));
 	keyScript = popen(command, "r");
 
 	if (!keyScript)
@@ -118,10 +120,12 @@ static void xf_keyboard_action_script_free(xfContext* xfc)
 BOOL xf_keyboard_init(xfContext* xfc)
 {
 	xf_keyboard_clear(xfc);
-	xfc->KeyboardLayout = xfc->context.settings->KeyboardLayout;
 	xfc->KeyboardLayout =
-	    freerdp_keyboard_init_ex(xfc->KeyboardLayout, xfc->context.settings->KeyboardRemappingList);
-	xfc->context.settings->KeyboardLayout = xfc->KeyboardLayout;
+	    freerdp_settings_get_uint32(xfc->context.settings, FreeRDP_KeyboardLayout);
+	xfc->KeyboardLayout = freerdp_keyboard_init(xfc->KeyboardLayout);
+	if (!freerdp_settings_set_uint32(xfc->context.settings, FreeRDP_KeyboardLayout,
+	                                 xfc->KeyboardLayout))
+		return FALSE;
 
 	if (xfc->modifierMap)
 		XFreeModifiermap(xfc->modifierMap);
@@ -432,7 +436,8 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	if (!match)
 		return 1;
 
-	sprintf_s(command, sizeof(command), "%s key %s", xfc->context.settings->ActionScript,
+	sprintf_s(command, sizeof(command), "%s key %s",
+	          freerdp_settings_get_string(xfc->context.settings, FreeRDP_ActionScript),
 	          combination);
 	keyScript = popen(command, "r");
 
@@ -525,7 +530,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 #if 0 /* set to 1 to enable multi touch gesture simulation via keyboard */
 #ifdef WITH_XRENDER
 
-	if (!xfc->remote_app && xfc->settings->MultiTouchGestures)
+    if (!xfc->remote_app && freerdp_settings_get_bool(xfc->settings, FreeRDP_MultiTouchGestures))
 	{
 		rdpContext* ctx = &xfc->context;
 

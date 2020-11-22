@@ -298,7 +298,7 @@ UINT freerdp_channels_attach(freerdp* instance)
 	rdpChannels* channels;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 	channels = instance->context->channels;
-	hostname = instance->settings->ServerHostname;
+	hostname = freerdp_settings_get_string(instance->settings, FreeRDP_ServerHostname);
 	hostnameLength = strlen(hostname);
 
 	for (index = 0; index < channels->clientDataCount; index++)
@@ -343,7 +343,7 @@ UINT freerdp_channels_detach(freerdp* instance)
 	rdpChannels* channels;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 	channels = instance->context->channels;
-	hostname = instance->settings->ServerHostname;
+	hostname = freerdp_settings_get_string(instance->settings, FreeRDP_ServerHostname);
 	hostnameLength = strlen(hostname);
 
 	for (index = 0; index < channels->clientDataCount; index++)
@@ -392,7 +392,7 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	size_t hostnameLength;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 	channels->connected = TRUE;
-	hostname = instance->settings->ServerHostname;
+	hostname = freerdp_settings_get_string(instance->settings, FreeRDP_ServerHostname);
 	hostnameLength = strlen(hostname);
 
 	for (index = 0; index < channels->clientDataCount; index++)
@@ -763,7 +763,7 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 
 	channels->openDataCount = 0;
 	channels->initDataCount = 0;
-	instance->settings->ChannelCount = 0;
+	freerdp_settings_set_uint32(instance->settings, FreeRDP_ChannelCount, 0);
 	g_Instance = NULL;
 }
 
@@ -834,12 +834,18 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
 		strncpy(pChannelOpenData->name, pChannelDef->name, CHANNEL_NAME_LEN);
 		pChannelOpenData->options = pChannelDef->options;
 
-		if (settings->ChannelCount < CHANNEL_MAX_COUNT)
+		if (freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount) < CHANNEL_MAX_COUNT)
 		{
-			CHANNEL_DEF* channel = &settings->ChannelDefArray[settings->ChannelCount];
-			strncpy(channel->name, pChannelDef->name, 7);
-			channel->options = pChannelDef->options;
-			settings->ChannelCount++;
+			UINT32 count;
+			CHANNEL_DEF channel = { 0 };
+
+			strncpy(channel.name, pChannelDef->name, 7);
+			channel.options = pChannelDef->options;
+
+			count = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
+			freerdp_settings_set_pointer_array(settings, FreeRDP_ChannelDefArray, count++,
+			                                   &channel);
+			freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, count);
 		}
 
 		channels->openDataCount++;
@@ -853,7 +859,6 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_
                                                  PCHANNEL_INIT_EVENT_FN pChannelInitEventProc)
 {
 	INT index;
-	CHANNEL_DEF* channel;
 	rdpSettings* settings;
 	PCHANNEL_DEF pChannelDef;
 	CHANNEL_INIT_DATA* pChannelInitData;
@@ -924,12 +929,19 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_
 		strncpy(pChannelOpenData->name, pChannelDef->name, CHANNEL_NAME_LEN);
 		pChannelOpenData->options = pChannelDef->options;
 
-		if (settings->ChannelCount < CHANNEL_MAX_COUNT)
+		if (freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount) < CHANNEL_MAX_COUNT)
 		{
-			channel = &settings->ChannelDefArray[settings->ChannelCount];
+			UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
+			CHANNEL_DEF* channel = freerdp_settings_get_pointer_array_writable(
+			    settings, FreeRDP_ChannelDefArray, count);
+			if (!channel)
+				return ERROR_INTERNAL_ERROR;
 			strncpy(channel->name, pChannelDef->name, 7);
 			channel->options = pChannelDef->options;
-			settings->ChannelCount++;
+
+			count++;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, count))
+				return ERROR_INTERNAL_ERROR;
 		}
 
 		channels->openDataCount++;
@@ -1218,7 +1230,8 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,
 	EntryPoints.pVirtualChannelWrite = FreeRDP_VirtualChannelWrite;
 	EntryPoints.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER;
 	EntryPoints.pExtendedData = data;
-	EntryPoints.context = ((freerdp*)settings->instance)->context;
+	EntryPoints.context =
+	    ((freerdp*)freerdp_settings_get_pointer_writable(settings, FreeRDP_instance))->context;
 	/* enable VirtualChannelInit */
 	channels->can_call_init = TRUE;
 	EnterCriticalSection(&channels->channelsLock);
@@ -1271,7 +1284,8 @@ int freerdp_channels_client_load_ex(rdpChannels* channels, rdpSettings* settings
 	EntryPointsEx.pVirtualChannelWriteEx = FreeRDP_VirtualChannelWriteEx;
 	EntryPointsEx.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER;
 	EntryPointsEx.pExtendedData = data;
-	EntryPointsEx.context = ((freerdp*)settings->instance)->context;
+	EntryPointsEx.context =
+	    ((freerdp*)freerdp_settings_get_pointer_writable(settings, FreeRDP_instance))->context;
 	/* enable VirtualChannelInit */
 	channels->can_call_init = TRUE;
 	EnterCriticalSection(&channels->channelsLock);

@@ -123,7 +123,7 @@ int xf_input_init(xfContext* xfc, Window window)
 		return -1;
 	}
 
-	if (xfc->context.settings->MultiTouchInput)
+	if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MultiTouchInput))
 		xfc->use_xinput = TRUE;
 
 	info = XIQueryDevice(xfc->display, XIAllDevices, &ndevices);
@@ -150,7 +150,7 @@ int xf_input_init(xfContext* xfc, Window window)
 			XIAnyClassInfo* class = dev->classes[j];
 			XITouchClassInfo* t = (XITouchClassInfo*)class;
 
-			if (xfc->context.settings->MultiTouchInput)
+			if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MultiTouchInput))
 			{
 				WLog_INFO(TAG, "%s (%d) \"%s\" id: %d", xf_input_get_class_string(class->type),
 				          class->type, dev->name, dev->deviceid);
@@ -164,7 +164,7 @@ int xf_input_init(xfContext* xfc, Window window)
 			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
 			    (strcmp(dev->name, "Virtual core pointer") != 0))
 			{
-				if (xfc->context.settings->MultiTouchInput)
+				if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MultiTouchInput))
 				{
 					WLog_INFO(TAG, "%s %s touch device (id: %d, mode: %d), supporting %d touches.",
 					          dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
@@ -648,12 +648,12 @@ int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 {
 #ifdef WITH_XI
 
-	if (xfc->context.settings->MultiTouchInput)
+	if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MultiTouchInput))
 	{
 		return xf_input_handle_event_remote(xfc, event);
 	}
 
-	if (xfc->context.settings->MultiTouchGestures)
+	if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MultiTouchGestures))
 	{
 		return xf_input_handle_event_local(xfc, event);
 	}

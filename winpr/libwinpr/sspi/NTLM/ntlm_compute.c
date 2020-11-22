@@ -26,6 +26,7 @@
 #include "ntlm.h"
 #include "../sspi.h"
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/sam.h>
 #include <winpr/ntlm.h>

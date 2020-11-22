@@ -118,8 +118,9 @@ static BOOL pf_client_passthrough_channels_init(pClientContext* pc)
 	rdpSettings* settings = pc->context.settings;
 	proxyConfig* config = pc->pdata->config;
 	size_t i;
-
-	if (settings->ChannelCount + config->PassthroughCount >= settings->ChannelDefArraySize)
+	UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
+	if (count + config->PassthroughCount >=
+	    freerdp_settings_get_uint32(settings, FreeRDP_ChannelDefArraySize))
 	{
 		LOG_ERR(TAG, pc, "too many channels");
 		return FALSE;
@@ -142,7 +143,10 @@ static BOOL pf_client_passthrough_channels_init(pClientContext* pc)
 		channel.options = CHANNEL_OPTION_INITIALIZED; /* TODO: Export to config. */
 		strncpy(channel.name, channel_name, CHANNEL_NAME_LEN);
 
-		settings->ChannelDefArray[settings->ChannelCount++] = channel;
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_ChannelDefArray, count++,
+		                                        &channel) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, count))
+			return FALSE;
 	}
 
 	return TRUE;
@@ -157,16 +161,8 @@ static BOOL pf_client_use_peer_load_balance_info(pClientContext* pc)
 	if (!lb_info)
 		return TRUE;
 
-	free(settings->LoadBalanceInfo);
-
-	settings->LoadBalanceInfoLength = lb_info_len;
-	settings->LoadBalanceInfo = malloc(settings->LoadBalanceInfoLength);
-
-	if (!settings->LoadBalanceInfo)
-		return FALSE;
-
-	CopyMemory(settings->LoadBalanceInfo, lb_info, settings->LoadBalanceInfoLength);
-	return TRUE;
+	return freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo, lb_info,
+	                                        lb_info_len);
 }
 
 static BOOL pf_client_pre_connect(freerdp* instance)
@@ -183,23 +179,22 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 *
 	 * Also, OrderSupport need to be zeroed, because it is currently not supported.
 	 */
-	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
-	ZeroMemory(settings->OrderSupport, 32);
+	freerdp_settings_set_uint32(settings, FreeRDP_GlyphSupportLevel, GLYPH_SUPPORT_NONE);
+	ZeroMemory(freerdp_settings_get_pointer_writable(settings, FreeRDP_OrderSupport), 32);
 
-	settings->SupportDynamicChannels = TRUE;
+	freerdp_settings_set_bool(settings, FreeRDP_SupportDynamicChannels, TRUE);
 
 	/* Multimon */
-	settings->UseMultimon = TRUE;
+	freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE);
 
 	/* Sound */
-	settings->AudioPlayback = FALSE;
-	settings->DeviceRedirection = TRUE;
+	freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, FALSE);
+	freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE);
 
 	/* Display control */
-	settings->SupportDisplayControl = config->DisplayControl;
-	settings->DynamicResolutionUpdate = config->DisplayControl;
-
-	settings->AutoReconnectionEnabled = TRUE;
+	freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, config->DisplayControl);
+	freerdp_settings_set_bool(settings, FreeRDP_DynamicResolutionUpdate, config->DisplayControl);
+	freerdp_settings_set_bool(settings, FreeRDP_AutoReconnectionEnabled, TRUE);
 
 	/**
 	 * Register the channel listeners.
@@ -315,7 +310,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	if (!pf_register_pointer(context->graphics))
 		return FALSE;
 
-	if (!settings->SoftwareGdi)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 	{
 		if (!pf_register_graphics(context->graphics))
 		{
@@ -398,7 +393,8 @@ static BOOL pf_client_should_retry_without_nla(pClientContext* pc)
 	rdpSettings* settings = pc->context.settings;
 	proxyConfig* config = pc->pdata->config;
 
-	if (!config->ClientAllowFallbackToTls || !settings->NlaSecurity)
+	if (!config->ClientAllowFallbackToTls ||
+	    !freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity))
 		return FALSE;
 
 	return config->ClientTlsSecurity || config->ClientRdpSecurity;
@@ -409,17 +405,18 @@ static void pf_client_set_security_settings(pClientContext* pc)
 	rdpSettings* settings = pc->context.settings;
 	proxyConfig* config = pc->pdata->config;
 
-	settings->RdpSecurity = config->ClientRdpSecurity;
-	settings->TlsSecurity = config->ClientTlsSecurity;
-	settings->NlaSecurity = FALSE;
+	freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, config->ClientRdpSecurity);
+	freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, config->ClientTlsSecurity);
+	freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE);
 
 	if (!config->ClientNlaSecurity)
 		return;
 
-	if (!settings->Username || !settings->Password)
+	if (!freerdp_settings_get_string(settings, FreeRDP_Username) ||
+	    !freerdp_settings_get_string(settings, FreeRDP_Password))
 		return;
 
-	settings->NlaSecurity = TRUE;
+	freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE);
 }
 
 static BOOL pf_client_connect_without_nla(pClientContext* pc)
@@ -428,7 +425,8 @@ static BOOL pf_client_connect_without_nla(pClientContext* pc)
 	rdpSettings* settings = pc->context.settings;
 
 	/* disable NLA */
-	settings->NlaSecurity = FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+		return FALSE;
 
 	/* do not allow next connection failure */
 	pc->allow_next_conn_failure = FALSE;
@@ -442,15 +440,18 @@ static BOOL pf_client_connect(freerdp* instance)
 	BOOL rc = FALSE;
 	BOOL retry = FALSE;
 
-	LOG_INFO(TAG, pc, "connecting using client info: Username: %s, Domain: %s", settings->Username,
-	         settings->Domain);
+	LOG_INFO(TAG, pc, "connecting using client info: Username: %s, Domain: %s",
+	         freerdp_settings_get_string(settings, FreeRDP_Username),
+	         freerdp_settings_get_string(settings, FreeRDP_Domain));
 
 	pf_client_set_security_settings(pc);
 	if (pf_client_should_retry_without_nla(pc))
 		retry = pc->allow_next_conn_failure = TRUE;
 
 	LOG_INFO(TAG, pc, "connecting using security settings: rdp=%d, tls=%d, nla=%d",
-	         settings->RdpSecurity, settings->TlsSecurity, settings->NlaSecurity);
+	         freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity),
+	         freerdp_settings_get_bool(settings, FreeRDP_TlsSecurity),
+	         freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity));
 
 	if (!freerdp_connect(instance))
 	{

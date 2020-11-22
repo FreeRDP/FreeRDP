@@ -125,7 +125,7 @@ void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEven
 	}
 	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
+		if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 			gdi_video_control_uninit(xfc->context.gdi, (VideoClientContext*)e->pInterface);
 		else
 			xf_video_control_uninit(xfc, (VideoClientContext*)e->pInterface);

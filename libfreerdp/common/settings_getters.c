@@ -2,7 +2,6 @@
 
 #include <freerdp/settings.h>
 #include <freerdp/log.h>
-
 #include "../core/settings.h"
 
 #define TAG FREERDP_TAG("common.settings")
@@ -229,9 +228,6 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 
 		case FreeRDP_GrabKeyboard:
 			return settings->GrabKeyboard;
-
-		case FreeRDP_GrabMouse:
-			return settings->GrabMouse;
 
 		case FreeRDP_HasExtendedMouseEvent:
 			return settings->HasExtendedMouseEvent;
@@ -805,10 +801,6 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_GrabKeyboard:
 			settings->GrabKeyboard = val;
-			break;
-
-		case FreeRDP_GrabMouse:
-			settings->GrabMouse = val;
 			break;
 
 		case FreeRDP_HasExtendedMouseEvent:
@@ -2266,9 +2258,6 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_KerberosRealm:
 			return settings->KerberosRealm;
 
-		case FreeRDP_KeyboardRemappingList:
-			return settings->KeyboardRemappingList;
-
 		case FreeRDP_NtlmSamFile:
 			return settings->NtlmSamFile;
 
@@ -2579,12 +2568,6 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 				free(settings->KerberosRealm);
 			settings->KerberosRealm = (val ? strndup(val, len) : NULL);
 			return (!val || settings->KerberosRealm != NULL);
-
-		case FreeRDP_KeyboardRemappingList:
-			if (cleanup)
-				free(settings->KeyboardRemappingList);
-			settings->KeyboardRemappingList = (val ? _strdup(val) : NULL);
-			return (!val || settings->KeyboardRemappingList != NULL);
 
 		case FreeRDP_NtlmSamFile:
 			if (cleanup)

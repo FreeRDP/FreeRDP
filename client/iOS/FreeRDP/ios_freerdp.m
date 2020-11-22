@@ -44,15 +44,7 @@ static void ios_OnChannelConnectedEventHandler(void *context, ChannelConnectedEv
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
-		{
-			gdi_graphics_pipeline_init(afc->_p.gdi, (RdpgfxClientContext *)e->pInterface);
-		}
-		else
-		{
-			WLog_WARN(TAG, "GFX without software GDI requested. "
-			               " This is not supported, add /gdi:sw");
-		}
+		gdi_graphics_pipeline_init(afc->_p.gdi, (RdpgfxClientContext *)e->pInterface);
 	}
 }
 
@@ -72,15 +64,7 @@ static void ios_OnChannelDisconnectedEventHandler(void *context, ChannelDisconne
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
-		{
-			gdi_graphics_pipeline_uninit(afc->_p.gdi, (RdpgfxClientContext *)e->pInterface);
-		}
-		else
-		{
-			WLog_WARN(TAG, "GFX without software GDI requested. "
-			               " This is not supported, add /gdi:sw");
-		}
+		gdi_graphics_pipeline_uninit(afc->_p.gdi, (RdpgfxClientContext *)e->pInterface);
 	}
 }
 
@@ -88,20 +72,27 @@ static BOOL ios_pre_connect(freerdp *instance)
 {
 	int rc;
 	rdpSettings *settings;
+	const char *Password;
 
 	if (!instance || !instance->settings)
 		return FALSE;
 
 	settings = instance->settings;
+	Password = freerdp_settings_get_string(settings, FreeRDP_Password);
 
-	settings->AutoLogonEnabled = settings->Password && (strlen(settings->Password) > 0);
+	if (!freerdp_settings_set_bool(settings, FreeRDP_AutoLogonEnabled,
+	                               Password && (strlen(Password) > 0)))
+		return FALSE;
 
 	// Verify screen width/height are sane
-	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
-	    (settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
+	if ((freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) < 64) ||
+	    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) < 64) ||
+	    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) > 4096) ||
+	    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) > 4096))
 	{
-		NSLog(@"%s: invalid dimensions %d %d", __func__, settings->DesktopWidth,
-		      settings->DesktopHeight);
+		NSLog(@"%s: invalid dimensions %d %d", __func__,
+		      freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		      freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 		return FALSE;
 	}
 

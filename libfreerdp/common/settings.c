@@ -1009,11 +1009,17 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 	{
 		case FreeRDP_RdpServerCertificate:
 			certificate_free(settings->RdpServerCertificate);
-			settings->RdpServerCertificate = data;
+			if (!data && (len == sizeof(rdpCertificate)))
+				settings->RdpServerCertificate = certificate_new();
+			else
+				settings->RdpServerCertificate = (rdpCertificate*)data;
 			return TRUE;
 		case FreeRDP_RdpServerRsaKey:
 			key_free(settings->RdpServerRsaKey);
-			settings->RdpServerRsaKey = (rdpRsaKey*)data;
+			if (!data && (len == sizeof(rdpRsaKey)))
+				settings->RdpServerRsaKey = key_new();
+			else
+				settings->RdpServerRsaKey = (rdpRsaKey*)data;
 			return TRUE;
 		case FreeRDP_RedirectionPassword:
 			return freerdp_settings_set_pointer_len_(settings, id,

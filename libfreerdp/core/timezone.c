@@ -89,7 +89,8 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 	if (Stream_GetRemainingLength(s) < 172)
 		return FALSE;
 
-	tz = settings->ClientTimeZone;
+	tz = (LPTIME_ZONE_INFORMATION)freerdp_settings_get_pointer_writable(settings,
+	                                                                    FreeRDP_ClientTimeZone);
 
 	if (!tz)
 		return FALSE;
@@ -115,8 +116,8 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 
 BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 {
-	LPTIME_ZONE_INFORMATION tz;
-	tz = settings->ClientTimeZone;
+	const LPTIME_ZONE_INFORMATION tz = (const LPTIME_ZONE_INFORMATION)freerdp_settings_get_pointer(
+	    settings, FreeRDP_ClientTimeZone);
 
 	if (!tz)
 		return FALSE;

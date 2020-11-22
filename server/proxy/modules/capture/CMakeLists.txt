@@ -27,6 +27,8 @@ add_library(${PLUGIN_NAME} MODULE
 	cap_protocol.h
 )
 
+target_link_libraries(${PLUGIN_NAME} freerdp)
+
 set_target_properties(${PLUGIN_NAME} PROPERTIES PREFIX "")
 set_target_properties(${PLUGIN_NAME} PROPERTIES NO_SONAME 1)
 set_target_properties(${PLUGIN_NAME} PROPERTIES

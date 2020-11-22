@@ -53,7 +53,8 @@ struct _xfDispContext
 	UINT32 lastSentDeviceScaleFactor;
 };
 
-static UINT xf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, int nmonitors);
+static UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors,
+                               size_t nmonitors);
 
 static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 {
@@ -65,13 +66,16 @@ static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 	if (xfDisp->lastSentHeight != xfDisp->targetHeight)
 		return TRUE;
 
-	if (xfDisp->lastSentDesktopOrientation != settings->DesktopOrientation)
+	if (xfDisp->lastSentDesktopOrientation !=
+	    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation))
 		return TRUE;
 
-	if (xfDisp->lastSentDesktopScaleFactor != settings->DesktopScaleFactor)
+	if (xfDisp->lastSentDesktopScaleFactor !=
+	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor))
 		return TRUE;
 
-	if (xfDisp->lastSentDeviceScaleFactor != settings->DeviceScaleFactor)
+	if (xfDisp->lastSentDeviceScaleFactor !=
+	    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor))
 		return TRUE;
 
 	if (xfDisp->fullscreen != xfDisp->xfc->fullscreen)
@@ -85,9 +89,12 @@ static BOOL xf_update_last_sent(xfDispContext* xfDisp)
 	rdpSettings* settings = xfDisp->xfc->context.settings;
 	xfDisp->lastSentWidth = xfDisp->targetWidth;
 	xfDisp->lastSentHeight = xfDisp->targetHeight;
-	xfDisp->lastSentDesktopOrientation = settings->DesktopOrientation;
-	xfDisp->lastSentDesktopScaleFactor = settings->DesktopScaleFactor;
-	xfDisp->lastSentDeviceScaleFactor = settings->DeviceScaleFactor;
+	xfDisp->lastSentDesktopOrientation =
+	    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
+	xfDisp->lastSentDesktopScaleFactor =
+	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+	xfDisp->lastSentDeviceScaleFactor =
+	    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 	xfDisp->fullscreen = xfDisp->xfc->fullscreen;
 	return TRUE;
 }
@@ -117,10 +124,11 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 		return TRUE;
 
 	xfDisp->lastSentDate = GetTickCount64();
-	if (xfc->fullscreen && (settings->MonitorCount > 0))
+	if (xfc->fullscreen && (freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) > 0))
 	{
-		if (xf_disp_sendLayout(xfDisp->disp, settings->MonitorDefArray, settings->MonitorCount) !=
-		    CHANNEL_RC_OK)
+		if (xf_disp_sendLayout(
+		        xfDisp->disp, freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray),
+		        freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount)) != CHANNEL_RC_OK)
 			return FALSE;
 	}
 	else
@@ -130,9 +138,10 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 		layout.Top = layout.Left = 0;
 		layout.Width = xfDisp->targetWidth;
 		layout.Height = xfDisp->targetHeight;
-		layout.Orientation = settings->DesktopOrientation;
-		layout.DesktopScaleFactor = settings->DesktopScaleFactor;
-		layout.DeviceScaleFactor = settings->DeviceScaleFactor;
+		layout.Orientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
+		layout.DesktopScaleFactor =
+		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 		layout.PhysicalWidth = xfDisp->targetWidth / 75 * 25.4f;
 		layout.PhysicalHeight = xfDisp->targetHeight / 75 * 25.4f;
 
@@ -220,7 +229,7 @@ static void xf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
 
 	xfDisp->waitingResize = FALSE;
 
-	if (xfDisp->activated && !settings->Fullscreen)
+	if (xfDisp->activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
 		xf_disp_set_window_resizable(xfDisp);
 		xf_disp_sendResize(xfDisp);
@@ -238,7 +247,7 @@ static void xf_disp_OnTimer(void* context, TimerEventArgs* e)
 	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
 		return;
 
-	if (!xfDisp->activated || settings->Fullscreen)
+	if (!xfDisp->activated || freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		return;
 
 	xf_disp_sendResize(xfDisp);
@@ -265,8 +274,10 @@ xfDispContext* xf_disp_new(xfContext* xfc)
 	}
 
 #endif
-	ret->lastSentWidth = ret->targetWidth = xfc->context.settings->DesktopWidth;
-	ret->lastSentHeight = ret->targetHeight = xfc->context.settings->DesktopHeight;
+	ret->lastSentWidth = ret->targetWidth =
+	    freerdp_settings_get_uint32(xfc->context.settings, FreeRDP_DesktopWidth);
+	ret->lastSentHeight = ret->targetHeight =
+	    freerdp_settings_get_uint32(xfc->context.settings, FreeRDP_DesktopHeight);
 	PubSub_SubscribeActivated(xfc->context.pubSub, xf_disp_OnActivated);
 	PubSub_SubscribeGraphicsReset(xfc->context.pubSub, xf_disp_OnGraphicsReset);
 	PubSub_SubscribeTimer(xfc->context.pubSub, xf_disp_OnTimer);
@@ -288,11 +299,11 @@ void xf_disp_free(xfDispContext* disp)
 	free(disp);
 }
 
-UINT xf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, int nmonitors)
+UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, size_t nmonitors)
 {
 	UINT ret = CHANNEL_RC_OK;
 	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts;
-	int i;
+	size_t i;
 	xfDispContext* xfDisp = (xfDispContext*)disp->custom;
 	rdpSettings* settings = xfDisp->xfc->context.settings;
 	layouts = calloc(nmonitors, sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
@@ -338,8 +349,10 @@ UINT xf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, int nmoni
 				break;
 		}
 
-		layouts[i].DesktopScaleFactor = settings->DesktopScaleFactor;
-		layouts[i].DeviceScaleFactor = settings->DeviceScaleFactor;
+		layouts[i].DesktopScaleFactor =
+		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+		layouts[i].DeviceScaleFactor =
+		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 	}
 
 	ret = IFCALLRESULT(CHANNEL_RC_OK, disp->SendMonitorLayout, disp, nmonitors, layouts);
@@ -376,8 +389,9 @@ BOOL xf_disp_handle_xevent(xfContext* xfc, const XEvent* event)
 
 #endif
 	xf_detect_monitors(xfc, &maxWidth, &maxHeight);
-	return xf_disp_sendLayout(xfDisp->disp, settings->MonitorDefArray, settings->MonitorCount) ==
-	       CHANNEL_RC_OK;
+	return xf_disp_sendLayout(
+	           xfDisp->disp, freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray),
+	           freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount)) == CHANNEL_RC_OK;
 }
 
 BOOL xf_disp_handle_configureNotify(xfContext* xfc, int width, int height)
@@ -409,7 +423,7 @@ static UINT xf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors
 	         maxNumMonitors, maxMonitorAreaFactorA, maxMonitorAreaFactorB);
 	xfDisp->activated = TRUE;
 
-	if (settings->Fullscreen)
+	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		return CHANNEL_RC_OK;
 
 	WLog_DBG(TAG, "DisplayControlCapsPdu: setting the window as resizable");
@@ -431,12 +445,12 @@ BOOL xf_disp_init(xfDispContext* xfDisp, DispClientContext* disp)
 	xfDisp->disp = disp;
 	disp->custom = (void*)xfDisp;
 
-	if (settings->DynamicResolutionUpdate)
+	if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 	{
 		disp->DisplayControlCaps = xf_DisplayControlCaps;
 #ifdef USABLE_XRANDR
 
-		if (settings->Fullscreen)
+		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		{
 			/* ask X11 to notify us of screen changes */
 			XRRSelectInput(xfDisp->xfc->display, DefaultRootWindow(xfDisp->xfc->display),

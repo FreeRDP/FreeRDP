@@ -295,10 +295,12 @@ out_free:
 
 - (void)connect
 {
+	UINT32 ColorDepth;
 	// Set Screen Size to automatic if widht or height are still 0
 	rdpSettings *settings = _freerdp->settings;
 
-	if (settings->DesktopWidth == 0 || settings->DesktopHeight == 0)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) == 0 ||
+	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) == 0)
 	{
 		CGSize size = CGSizeZero;
 
@@ -309,16 +311,17 @@ out_free:
 		{
 			[_params setInt:size.width forKey:@"width"];
 			[_params setInt:size.height forKey:@"height"];
-			settings->DesktopWidth = size.width;
-			settings->DesktopHeight = size.height;
+			freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, size.width);
+			freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, size.height);
 		}
 	}
 
 	// TODO: This is a hack to ensure connections to RDVH with 16bpp don't have an odd screen
 	// resolution width
 	//       Otherwise this could result in screen corruption ..
-	if (settings->ColorDepth <= 16)
-		settings->DesktopWidth &= (~1);
+	ColorDepth = freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth);
+	if (ColorDepth <= 16)
+		freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, ColorDepth & (~1));
 
 	[self performSelectorInBackground:@selector(runSession) withObject:nil];
 }
@@ -359,8 +362,8 @@ out_free:
 		/*        RECTANGLE_16 rec;
 		        rec.left = 0;
 		        rec.top = 0;
-		        rec.right = instance->settings->width;
-		        rec.bottom = instance->settings->height;
+		        rec.right =  freerdp_settings_get_uint32(instance->settings, FreeRDP_DesktopWidth);
+		        rec.bottom = freerdp_settings_get_uint32(instance->settings, FreeRDP_DesktopHeight);
 		*/
 		_suspended = NO;
 		//        instance->update->SuppressOutput(instance->context, 1, &rec);

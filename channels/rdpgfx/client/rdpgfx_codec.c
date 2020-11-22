@@ -123,7 +123,10 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 
 	return CHANNEL_RC_OK;
 error_out:
-	free_h264_metablock(meta);
+	free(meta->regionRects);
+	meta->regionRects = NULL;
+	free(meta->quantQualityVals);
+	meta->quantQualityVals = NULL;
 	return error;
 }
 
@@ -166,7 +169,8 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 			WLog_ERR(TAG, "context->SurfaceCommand failed with error %" PRIu32 "", error);
 	}
 
-	free_h264_metablock(&h264.meta);
+	free(h264.meta.regionRects);
+	free(h264.meta.quantQualityVals);
 	return error;
 }
 
@@ -255,8 +259,10 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 
 fail:
 	Stream_Free(s, FALSE);
-	free_h264_metablock(&h264.bitstream[0].meta);
-	free_h264_metablock(&h264.bitstream[1].meta);
+	free(h264.bitstream[0].meta.regionRects);
+	free(h264.bitstream[0].meta.quantQualityVals);
+	free(h264.bitstream[1].meta.regionRects);
+	free(h264.bitstream[1].meta.quantQualityVals);
 	return error;
 }
 

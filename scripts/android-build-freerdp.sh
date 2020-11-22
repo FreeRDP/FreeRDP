@@ -8,8 +8,7 @@ WITH_JPEG=0
 WITH_OPENH264=0
 WITH_OPENSSL=0
 
-SRC_DIR=$(dirname "${BASH_SOURCE[0]}")
-SRC_DIR=$(realpath "$SRC_DIR")
+SRC_DIR=$(pwd)
 BUILD_SRC=$(pwd)
 BUILD_DST=$(pwd)
 
@@ -36,11 +35,6 @@ do
 			;;
 		--openh264)
 			WITH_OPENH264=1
-			shift
-			;;
-		--openh264-ndk)
-			shift
-			ANDROID_NDK_OPENH264=$1
 			shift
 			;;
 		--openssl)
@@ -113,19 +107,11 @@ do
     fi
     if [ $WITH_OPENH264 -ne 0 ];
     then
-        if [ -z "$ANDROID_NDK_OPENH264" ]
-        then
-            echo
-            echo "Warning: Missing openh264-ndk, using $ANDROID_NDK" >&2
-            echo
-            ANDROID_NDK_OPENH264=$ANDROID_NDK
-        fi
         if [ $BUILD_DEPS -ne 0 ];
         then
             common_run bash $SCRIPT_PATH/android-build-openh264.sh \
                 --src $BUILD_SRC/openh264 --dst $BUILD_DST \
-                --sdk "$ANDROID_SDK" \
-                --ndk "$ANDROID_NDK_OPENH264" \
+                --ndk $ANDROID_NDK \
                 --arch $ARCH \
                 --target $NDK_TARGET \
                 --tag $OPENH264_TAG
@@ -140,7 +126,6 @@ do
         then
             common_run bash $SCRIPT_PATH/android-build-openssl.sh \
                 --src $BUILD_SRC/openssl --dst $BUILD_DST \
-                --sdk "$ANDROID_SDK" \
                 --ndk $ANDROID_NDK \
                 --arch $ARCH \
 		--target $NDK_TARGET \

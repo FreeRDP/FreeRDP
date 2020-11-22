@@ -198,17 +198,20 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, cons
 	size_t written;
 	BOOL ret = FALSE;
 
-	if (!PathFileExistsA(settings->ConfigPath))
+	if (!PathFileExistsA(freerdp_settings_get_string(settings, FreeRDP_ConfigPath)))
 	{
-		if (!PathMakePathA(settings->ConfigPath, 0))
+		if (!PathMakePathA(freerdp_settings_get_string(settings, FreeRDP_ConfigPath), 0))
 		{
-			WLog_ERR(TAG, "error creating directory '%s'", settings->ConfigPath);
+			WLog_ERR(TAG, "error creating directory '%s'",
+			         freerdp_settings_get_string(settings, FreeRDP_ConfigPath));
 			goto out;
 		}
-		WLog_INFO(TAG, "creating directory %s", settings->ConfigPath);
+		WLog_INFO(TAG, "creating directory %s",
+		          freerdp_settings_get_string(settings, FreeRDP_ConfigPath));
 	}
 
-	if (!(licenseStorePath = GetCombinedPath(settings->ConfigPath, licenseStore)))
+	if (!(licenseStorePath = GetCombinedPath(
+	          freerdp_settings_get_string(settings, FreeRDP_ConfigPath), licenseStore)))
 		goto out;
 
 	if (!PathFileExistsA(licenseStorePath))
@@ -271,7 +274,8 @@ static BYTE* loadCalFile(rdpSettings* settings, const char* hostname, int* dataL
 
 	sprintf_s(calFilename, sizeof(calFilename) - 1, "%s.cal", hash);
 
-	if (!(licenseStorePath = GetCombinedPath(settings->ConfigPath, licenseStore)))
+	if (!(licenseStorePath = GetCombinedPath(
+	          freerdp_settings_get_string(settings, FreeRDP_ConfigPath), licenseStore)))
 		return NULL;
 
 	if (!(calPath = GetCombinedPath(licenseStorePath, calFilename)))
@@ -422,7 +426,7 @@ static BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 	 * running in server mode! This flag seems to be incorrectly documented.
 	 */
 
-	if (!rdp->settings->ServerMode)
+	if (!freerdp_settings_get_bool(rdp->settings, FreeRDP_ServerMode))
 		flags |= EXTENDED_ERROR_MSG_SUPPORTED;
 
 	if (!license_write_preamble(s, type, flags, wMsgSize))
@@ -607,7 +611,7 @@ BOOL license_generate_hwid(rdpLicense* license)
 
 	ZeroMemory(license->HardwareId, HWID_LENGTH);
 
-	if (license->rdp->settings->OldLicenseBehaviour)
+	if (freerdp_settings_get_bool(license->rdp->settings, FreeRDP_OldLicenseBehaviour))
 	{
 		ZeroMemory(macAddress, sizeof(macAddress));
 		hashTarget = macAddress;
@@ -616,7 +620,8 @@ BOOL license_generate_hwid(rdpLicense* license)
 	else
 	{
 		wStream s;
-		const char* hostname = license->rdp->settings->ClientHostname;
+		const char* hostname =
+		    freerdp_settings_get_string(license->rdp->settings, FreeRDP_ClientHostname);
 		Stream_StaticInit(&s, license->HardwareId, 4);
 		Stream_Write_UINT32(&s, PLATFORMID);
 		Stream_Free(&s, TRUE);
@@ -645,8 +650,9 @@ static BOOL license_get_server_rsa_public_key(rdpLicense* license)
 
 	if (license->ServerCertificate->length < 1)
 	{
-		if (!certificate_read_server_certificate(license->certificate, settings->ServerCertificate,
-		                                         settings->ServerCertificateLength))
+		const BYTE* cert = freerdp_settings_get_pointer(settings, FreeRDP_ServerCertificate);
+		const UINT32 len = freerdp_settings_get_uint32(settings, FreeRDP_ServerCertificateLength);
+		if (!certificate_read_server_certificate(license->certificate, cert, len))
 			return FALSE;
 	}
 
@@ -1302,9 +1308,9 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	license->state = LICENSE_STATE_COMPLETED;
 
 	ret = TRUE;
-	if (!license->rdp->settings->OldLicenseBehaviour)
+	if (!freerdp_settings_get_bool(license->rdp->settings, FreeRDP_OldLicenseBehaviour))
 		ret = saveCal(license->rdp->settings, Stream_Pointer(licenseStream), cbLicenseInfo,
-		              license->rdp->settings->ClientHostname);
+		              freerdp_settings_get_string(license->rdp->settings, FreeRDP_ClientHostname));
 
 out_free_stream:
 	Stream_Free(licenseStream, FALSE);
@@ -1419,11 +1425,13 @@ BOOL license_answer_license_request(rdpLicense* license)
 	BYTE* license_data = NULL;
 	int license_size = 0;
 	BOOL status;
-	char* username;
+	const char* username;
 
-	if (!license->rdp->settings->OldLicenseBehaviour)
-		license_data = loadCalFile(license->rdp->settings, license->rdp->settings->ClientHostname,
-		                           &license_size);
+	if (!freerdp_settings_get_bool(license->rdp->settings, FreeRDP_OldLicenseBehaviour))
+		license_data =
+		    loadCalFile(license->rdp->settings,
+		                freerdp_settings_get_string(license->rdp->settings, FreeRDP_ClientHostname),
+		                &license_size);
 
 	if (license_data)
 	{
@@ -1460,15 +1468,17 @@ BOOL license_answer_license_request(rdpLicense* license)
 	s = license_send_stream_init(license);
 	if (!s)
 		return FALSE;
-	if (license->rdp->settings->Username != NULL)
-		username = license->rdp->settings->Username;
+	if (freerdp_settings_get_string(license->rdp->settings, FreeRDP_Username) != NULL)
+		username = freerdp_settings_get_string(license->rdp->settings, FreeRDP_Username);
 	else
 		username = "username";
 
 	license->ClientUserName->data = (BYTE*)username;
 	license->ClientUserName->length = strlen(username) + 1;
-	license->ClientMachineName->data = (BYTE*)license->rdp->settings->ClientHostname;
-	license->ClientMachineName->length = strlen(license->rdp->settings->ClientHostname) + 1;
+	license->ClientMachineName->data =
+	    (BYTE*)freerdp_settings_get_string(license->rdp->settings, FreeRDP_ClientHostname);
+	license->ClientMachineName->length =
+	    strlen(freerdp_settings_get_string(license->rdp->settings, FreeRDP_ClientHostname)) + 1;
 
 	status = license_write_new_license_request_packet(license, s);
 

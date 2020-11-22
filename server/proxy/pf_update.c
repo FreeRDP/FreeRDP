@@ -98,8 +98,12 @@ static BOOL pf_client_desktop_resize(rdpContext* context)
 	proxyData* pdata = pc->pdata;
 	rdpContext* ps = (rdpContext*)pdata->ps;
 	WLog_DBG(TAG, __FUNCTION__);
-	ps->settings->DesktopWidth = context->settings->DesktopWidth;
-	ps->settings->DesktopHeight = context->settings->DesktopHeight;
+	freerdp_settings_set_uint32(
+	    ps->settings, FreeRDP_DesktopWidth,
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth));
+	freerdp_settings_set_uint32(
+	    ps->settings, FreeRDP_DesktopHeight,
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopHeight));
 	return ps->update->DesktopResize(ps);
 }
 

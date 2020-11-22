@@ -82,11 +82,11 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		UINT32 KeyboardType, KeyboardSubType, KeyboardLayout, KeyboardFunctionKey;
 		UINT32 CookieMaxLength, BitmapCacheEnabled, OffscreenSupportLevel, OffscreenCacheSize,
 		    OffscreenCacheEntries;
-		BOOL ExtSecurity, NlaSecurity, TlsSecurity, RdpSecurity, MstscCookieMode;
+		BOOL ExtSecurity, NlaSecurity, TlsSecurity, RdpSecurity, MstscCookieMode, Fullscreen;
 
 		REG_QUERY_DWORD_VALUE(hKey, _T("DesktopWidth"), dwType, dwValue, dwSize, DesktopWidth);
 		REG_QUERY_DWORD_VALUE(hKey, _T("DesktopHeight"), dwType, dwValue, dwSize, DesktopHeight);
-		REG_QUERY_BOOL_VALUE(hKey, _T("Fullscreen"), dwType, dwValue, dwSize, settings->Fullscreen);
+		REG_QUERY_BOOL_VALUE(hKey, _T("Fullscreen"), dwType, dwValue, dwSize, Fullscreen);
 		REG_QUERY_DWORD_VALUE(hKey, _T("ColorDepth"), dwType, dwValue, dwSize, ColorDepth);
 		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardType"), dwType, dwValue, dwSize, KeyboardType);
 		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardSubType"), dwType, dwValue, dwSize,
@@ -117,6 +117,7 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardFunctionKey,
 		                                 KeyboardFunctionKey) ||
 		    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, KeyboardLayout) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_Fullscreen, Fullscreen) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheEnabled, BitmapCacheEnabled) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, ExtSecurity) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, NlaSecurity) ||
@@ -679,7 +680,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	settings_load_hkey_local_machine(settings);
 
-	settings->XSelectionAtom = NULL;
 	if (!freerdp_settings_set_string(settings, FreeRDP_ActionScript, "~/.config/freerdp/action.sh"))
 		goto out_fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SmartcardLogon, FALSE))
@@ -708,8 +708,6 @@ static void freerdp_settings_free_internal(rdpSettings* settings)
 	freerdp_dynamic_channel_collection_free(settings);
 
 	/* Extensions */
-	free(settings->XSelectionAtom);
-	settings->XSelectionAtom = NULL;
 
 	/* Free all strings, set other pointers NULL */
 	freerdp_settings_free_keys(settings, TRUE);
@@ -1054,9 +1052,6 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 	rc = freerdp_settings_set_string(_settings, FreeRDP_ActionScript,
 	                                 freerdp_settings_get_string(settings, FreeRDP_ActionScript));
 
-	if (settings->XSelectionAtom)
-		_settings->XSelectionAtom = _strdup(settings->XSelectionAtom);
-
 out_fail:
 	return rc;
 }
@@ -1097,7 +1092,6 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	_settings->StaticChannelArray = NULL;
 	_settings->DynamicChannelArray = NULL;
 
-	_settings->XSelectionAtom = NULL;
 	if (!rc)
 		goto out_fail;
 

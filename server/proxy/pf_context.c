@@ -112,6 +112,12 @@ BOOL pf_context_init_server_context(freerdp_peer* client)
 	return freerdp_peer_context_new(client);
 }
 
+static BOOL revert_string(rdpSettings* dst, const rdpSettings* src, size_t id)
+{
+	const char* srcStr = freerdp_settings_get_string(src, id);
+	return freerdp_settings_set_string(dst, id, srcStr);
+}
+
 BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 {
 	BOOL rc = FALSE;
@@ -124,45 +130,38 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 	if (!before_copy)
 		return FALSE;
 
-#define REVERT_STR_VALUE(name)                                          \
-	free(dst->name);                                                    \
-	dst->name = NULL;                                                   \
-	if (before_copy->name && !(dst->name = _strdup(before_copy->name))) \
-	goto out_fail
-
 	if (!freerdp_settings_copy(dst, src))
-	{
-		freerdp_settings_free(before_copy);
-		return FALSE;
-	}
+		goto out_fail;
 
 	/* keep original ServerMode value */
-	dst->ServerMode = before_copy->ServerMode;
+	if (!freerdp_settings_set_bool(dst, FreeRDP_ServerMode,
+	                               freerdp_settings_get_bool(before_copy, FreeRDP_ServerMode)))
+		goto out_fail;
 
 	/* revert some values that must not be changed */
-	REVERT_STR_VALUE(ConfigPath);
-	REVERT_STR_VALUE(PrivateKeyContent);
-	REVERT_STR_VALUE(RdpKeyContent);
-	REVERT_STR_VALUE(RdpKeyFile);
-	REVERT_STR_VALUE(PrivateKeyFile);
-	REVERT_STR_VALUE(CertificateFile);
-	REVERT_STR_VALUE(CertificateName);
-	REVERT_STR_VALUE(CertificateContent);
+	if (!revert_string(dst, src, FreeRDP_ConfigPath) ||
+	    !revert_string(dst, src, FreeRDP_PrivateKeyContent) ||
+	    !revert_string(dst, src, FreeRDP_RdpKeyContent) ||
+	    !revert_string(dst, src, FreeRDP_RdpKeyFile) ||
+	    !revert_string(dst, src, FreeRDP_PrivateKeyFile) ||
+	    !revert_string(dst, src, FreeRDP_CertificateFile) ||
+	    !revert_string(dst, src, FreeRDP_CertificateName) ||
+	    !revert_string(dst, src, FreeRDP_CertificateContent))
+		goto out_fail;
 
-	if (!dst->ServerMode)
+	if (!freerdp_settings_get_bool(dst, FreeRDP_ServerMode))
 	{
 		/* adjust instance pointer */
-		dst->instance = before_copy->instance;
+		const void* inst = freerdp_settings_get_pointer(before_copy, FreeRDP_instance);
+		if (!freerdp_settings_set_pointer(dst, FreeRDP_instance, inst))
+			goto out_fail;
 
 		/*
 		 * RdpServerRsaKey must be set to NULL if `dst` is client's context
 		 * it must be freed before setting it to NULL to avoid a memory leak!
 		 */
-
-		free(dst->RdpServerRsaKey->Modulus);
-		free(dst->RdpServerRsaKey->PrivateExponent);
-		free(dst->RdpServerRsaKey);
-		dst->RdpServerRsaKey = NULL;
+		if (!freerdp_settings_set_pointer_len(dst, FreeRDP_RdpServerRsaKey, NULL, 0))
+			goto out_fail;
 	}
 
 	rc = TRUE;

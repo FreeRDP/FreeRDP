@@ -343,7 +343,8 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	}
 
 	pdu.expertBlob = remdesk->ExpertBlob;
-	pdu.raConnectionString = remdesk->settings->RemoteAssistanceRCTicket;
+	pdu.raConnectionString =
+	    (char*)freerdp_settings_get_string(remdesk->settings, FreeRDP_RemoteAssistanceRCTicket);
 	status = ConvertToUnicode(CP_UTF8, 0, pdu.raConnectionString, -1, &raConnectionStringW, 0);
 
 	if (status <= 0)
@@ -401,8 +402,9 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 	wStream* s = NULL;
 	int cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
-	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu;
-	pdu.raConnectionString = remdesk->settings->RemoteAssistanceRCTicket;
+	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu = { 0 };
+	pdu.raConnectionString =
+	    (char*)freerdp_settings_get_string(remdesk->settings, FreeRDP_RemoteAssistanceRCTicket);
 	status = ConvertToUnicode(CP_UTF8, 0, pdu.raConnectionString, -1, &raConnectionStringW, 0);
 
 	if (status <= 0)

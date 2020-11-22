@@ -330,7 +330,7 @@ INLINE BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor, UINT32* color, 
 	if (!gdi || !color || !gdi->context || !gdi->context->settings)
 		return FALSE;
 
-	ColorDepth = gdi->context->settings->ColorDepth;
+	ColorDepth = freerdp_settings_get_uint32(gdi->context->settings, FreeRDP_ColorDepth);
 
 	switch (ColorDepth)
 	{
@@ -615,12 +615,14 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		case GDI_BS_PATTERN:
 		{
 			UINT32 brushFormat;
+			const UINT32 ColorDepth =
+			    freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth);
 
 			if (brush->bpp > 1)
 			{
 				UINT32 bpp = brush->bpp;
 
-				if ((bpp == 16) && (context->settings->ColorDepth == 15))
+				if ((bpp == 16) && (ColorDepth == 15))
 					bpp = 15;
 
 				brushFormat = gdi_get_pixel_format(bpp);
@@ -879,8 +881,10 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			if (brush->bpp > 1)
 			{
 				UINT32 bpp = brush->bpp;
+				const UINT32 ColorDepth =
+				    freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth);
 
-				if ((bpp == 16) && (context->settings->ColorDepth == 15))
+				if ((bpp == 16) && (ColorDepth == 15))
 					bpp = 15;
 
 				brushFormat = gdi_get_pixel_format(bpp);
@@ -976,6 +980,8 @@ static BOOL gdi_frame_marker(rdpContext* context, const FRAME_MARKER_ORDER* fram
 static BOOL gdi_surface_frame_marker(rdpContext* context,
                                      const SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
+	const UINT32 FrameAcknowledge =
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_FrameAcknowledge);
 	WLog_Print(context->gdi->log, WLOG_DEBUG, "frameId %" PRIu32 " frameAction %" PRIu32 "",
 	           surfaceFrameMarker->frameId, surfaceFrameMarker->frameAction);
 
@@ -985,7 +991,7 @@ static BOOL gdi_surface_frame_marker(rdpContext* context,
 			break;
 
 		case SURFACECMD_FRAMEACTION_END:
-			if (context->settings->FrameAcknowledge > 0)
+			if (FrameAcknowledge > 0)
 			{
 				IFCALL(context->update->SurfaceFrameAcknowledge, context,
 				       surfaceFrameMarker->frameId);
@@ -1251,7 +1257,8 @@ BOOL gdi_init(freerdp* instance, UINT32 format)
 BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
                  void (*pfree)(void*))
 {
-	UINT32 SrcFormat = gdi_get_pixel_format(instance->settings->ColorDepth);
+	const UINT32 ColorDepth = freerdp_settings_get_uint32(instance->settings, FreeRDP_ColorDepth);
+	UINT32 SrcFormat = gdi_get_pixel_format(ColorDepth);
 	rdpGdi* gdi = (rdpGdi*)calloc(1, sizeof(rdpGdi));
 	rdpContext* context = instance->context;
 
@@ -1265,8 +1272,8 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 		goto fail;
 
 	gdi->context = instance->context;
-	gdi->width = instance->settings->DesktopWidth;
-	gdi->height = instance->settings->DesktopHeight;
+	gdi->width = freerdp_settings_get_uint32(instance->settings, FreeRDP_DesktopWidth);
+	gdi->height = freerdp_settings_get_uint32(instance->settings, FreeRDP_DesktopHeight);
 	gdi->dstFormat = format;
 	/* default internal buffer format */
 	WLog_Print(gdi->log, WLOG_INFO, "Local framebuffer format  %s",
@@ -1342,7 +1349,7 @@ BOOL gdi_send_suppress_output(rdpGdi* gdi, BOOL suppress)
 	update = gdi->context->update;
 	rect.left = 0;
 	rect.top = 0;
-	rect.right = settings->DesktopWidth;
-	rect.bottom = settings->DesktopHeight;
+	rect.right = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	rect.bottom = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 	return update->SuppressOutput(gdi->context, !suppress, &rect);
 }

@@ -112,15 +112,24 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 	{
 		case PROXY_FETCH_TARGET_METHOD_DEFAULT:
 		case PROXY_FETCH_TARGET_METHOD_LOAD_BALANCE_INFO:
-			return pf_server_parse_target_from_routing_token(context, &settings->ServerHostname,
-			                                                 &settings->ServerPort);
+		{
+			BOOL rc;
+			UINT32 port = 0;
+			char* host = NULL;
+			if (!pf_server_parse_target_from_routing_token(context, &host, &port))
+				return FALSE;
 
+			rc = freerdp_settings_set_string(settings, FreeRDP_ServerHostname, host) &&
+			     freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, port);
+			free(host);
+			return rc;
+		}
 		case PROXY_FETCH_TARGET_METHOD_CONFIG:
 		{
-			settings->ServerPort = config->TargetPort > 0 ? 3389 : settings->ServerPort;
-			settings->ServerHostname = _strdup(config->TargetHost);
+			if (config->TargetPort > 0)
+				freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, config->TargetPort);
 
-			if (!settings->ServerHostname)
+			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, config->TargetHost))
 			{
 				LOG_ERR(TAG, ps, "strdup failed!");
 				return FALSE;
@@ -136,15 +145,14 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 				return FALSE;
 			}
 
-			settings->ServerHostname = _strdup(ev.target_address);
-			if (!settings->ServerHostname)
+			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, ev.target_address))
 			{
 				LOG_ERR(TAG, ps, "strdup failed!");
 				return FALSE;
 			}
 
 			free(ev.target_address);
-			settings->ServerPort = ev.target_port;
+			freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, ev.target_port);
 			return TRUE;
 		}
 		default:
@@ -176,7 +184,8 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	ps = (pServerContext*)peer->context;
 	pdata = ps->pdata;
 
-	LOG_INFO(TAG, ps, "Accepted client: %s", peer->settings->ClientHostname);
+	LOG_INFO(TAG, ps, "Accepted client: %s",
+	         freerdp_settings_get_string(peer->settings, FreeRDP_ClientHostname));
 	accepted_channels = WTSGetAcceptedChannelNames(peer, &accepted_channels_count);
 	if (accepted_channels)
 	{
@@ -204,8 +213,9 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 		return FALSE;
 	}
 
-	LOG_INFO(TAG, ps, "remote target is %s:%" PRIu16 "", client_settings->ServerHostname,
-	         client_settings->ServerPort);
+	LOG_INFO(TAG, ps, "remote target is %s:%" PRIu16 "",
+	         freerdp_settings_get_string(client_settings, FreeRDP_ServerHostname),
+	         freerdp_settings_get_uint32(client_settings, FreeRDP_ServerPort));
 
 	if (!pf_server_channels_init(ps))
 	{
@@ -228,8 +238,8 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 
 static BOOL pf_server_activate(freerdp_peer* peer)
 {
-	peer->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
-	return TRUE;
+	return freerdp_settings_set_uint32(peer->settings, FreeRDP_CompressionLevel,
+	                                   PACKET_COMPR_TYPE_RDP8);
 }
 
 static BOOL pf_server_adjust_monitor_layout(freerdp_peer* peer)
@@ -304,45 +314,53 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	config = pdata->config = server->config;
 
 	/* currently not supporting GDI orders */
-	ZeroMemory(settings->OrderSupport, 32);
+	ZeroMemory(freerdp_settings_get_pointer_writable(settings, FreeRDP_OrderSupport), 32);
 	peer->update->autoCalculateBitmapData = FALSE;
 
-	settings->SupportMonitorLayoutPdu = TRUE;
-	settings->SupportGraphicsPipeline = config->GFX;
-	settings->CertificateFile = _strdup("server.crt");
-	settings->PrivateKeyFile = _strdup("server.key");
-	settings->RdpKeyFile = _strdup("server.key");
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMonitorLayoutPdu, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, config->GFX) ||
+	    !freerdp_settings_set_string(settings, FreeRDP_CertificateFile, "server.crt") ||
+	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, "server.key") ||
+	    !freerdp_settings_set_string(settings, FreeRDP_RdpKeyFile, "server.key"))
+	{
+	}
 
 	if (config->RemoteApp)
 	{
-		settings->RemoteApplicationSupportLevel =
+		freerdp_settings_set_uint32(
+		    settings, FreeRDP_RemoteApplicationSupportLevel,
 		    RAIL_LEVEL_SUPPORTED | RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED |
-		    RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED | RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED |
-		    RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED |
-		    RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED | RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED |
-		    RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
-		settings->RemoteAppLanguageBarSupported = TRUE;
+		        RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED | RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED |
+		        RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED |
+		        RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED | RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED |
+		        RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
+		freerdp_settings_set_bool(settings, FreeRDP_RemoteAppLanguageBarSupported, TRUE);
 	}
 
-	if (!settings->CertificateFile || !settings->PrivateKeyFile || !settings->RdpKeyFile)
+	if (!freerdp_settings_get_string(settings, FreeRDP_CertificateFile) ||
+	    !freerdp_settings_get_string(settings, FreeRDP_PrivateKeyFile) ||
+	    !freerdp_settings_get_string(settings, FreeRDP_RdpKeyFile))
 	{
 		WLog_ERR(TAG, "Memory allocation failed (strdup)");
 		return FALSE;
 	}
 
-	settings->RdpSecurity = config->ServerRdpSecurity;
-	settings->TlsSecurity = config->ServerTlsSecurity;
-	settings->NlaSecurity = FALSE; /* currently NLA is not supported in proxy server */
-	settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
-	settings->ColorDepth = 32;
-	settings->SuppressOutput = TRUE;
-	settings->RefreshRect = TRUE;
-	settings->DesktopResize = TRUE;
+	freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, config->ServerRdpSecurity);
+	freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, config->ServerTlsSecurity);
+	freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity,
+	                          FALSE); /* currently NLA is not supported in proxy server */
+	freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
+	                            ENCRYPTION_LEVEL_CLIENT_COMPATIBLE);
+	freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32);
+	freerdp_settings_set_bool(settings, FreeRDP_SuppressOutput, TRUE);
+	freerdp_settings_set_bool(settings, FreeRDP_RefreshRect, TRUE);
+	freerdp_settings_set_bool(settings, FreeRDP_DesktopResize, TRUE);
 
 	peer->PostConnect = pf_server_post_connect;
 	peer->Activate = pf_server_activate;
 	peer->AdjustMonitorsLayout = pf_server_adjust_monitor_layout;
-	peer->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
+	freerdp_settings_set_uint32(peer->settings, FreeRDP_MultifragMaxRequestSize,
+	                            0xFFFFFF); /* FIXME */
 
 	/* virtual channels receive data hook */
 	server_receive_channel_data_original = peer->ReceiveChannelData;

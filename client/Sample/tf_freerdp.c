@@ -109,9 +109,10 @@ static BOOL tf_pre_connect(freerdp* instance)
 	rdpSettings* settings;
 	settings = instance->settings;
 	/* Optional OS identifier sent to server */
-	settings->OsMajorType = OSMAJORTYPE_UNIX;
-	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
-	/* settings->OrderSupport is initialized at this point.
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_UNIX) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_OsMinorType, OSMINORTYPE_NATIVE_XSERVER))
+		return FALSE;
+	/* settings::OrderSupport is initialized at this point.
 	 * Only override it if you plan to implement custom order
 	 * callbacks or deactiveate certain features. */
 	/* Register the channel listeners.
@@ -185,7 +186,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 	HANDLE handles[64];
 	BOOL rc = freerdp_connect(instance);
 
-	if (instance->settings->AuthenticationOnly)
+	if (freerdp_settings_get_bool(instance->settings, FreeRDP_AuthenticationOnly))
 	{
 		result = freerdp_get_last_error(instance->context);
 		freerdp_abort_connect(instance);

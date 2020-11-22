@@ -105,9 +105,10 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	area.right = x + w;
 	area.bottom = y + h;
 
-	if (!wlf_copy_image(gdi->primary_buffer, gdi->stride, gdi->width, gdi->height, data, stride,
-	                    geometry.width, geometry.height, &area,
-	                    context_w->context.settings->SmartSizing))
+	if (!wlf_copy_image(
+	        gdi->primary_buffer, gdi->stride, gdi->width, gdi->height, data, stride, geometry.width,
+	        geometry.height, &area,
+	        freerdp_settings_get_bool(context_w->context.settings, FreeRDP_SmartSizing)))
 		goto fail;
 
 	if (!wlf_scale_coordinates(&context_w->context, &x, &y, FALSE))
@@ -168,7 +169,8 @@ static BOOL wl_resize_display(rdpContext* context)
 	rdpGdi* gdi = context->gdi;
 	rdpSettings* settings = context->settings;
 
-	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
+	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
 		return FALSE;
 
 	return wl_refresh_display(wlc);
@@ -190,21 +192,23 @@ static BOOL wl_pre_connect(freerdp* instance)
 	if (!context || !settings)
 		return FALSE;
 
-	settings->OsMajorType = OSMAJORTYPE_UNIX;
-	settings->OsMinorType = OSMINORTYPE_NATIVE_WAYLAND;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_UNIX) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_OsMinorType, OSMINORTYPE_NATIVE_WAYLAND))
+		return FALSE;
 	PubSub_SubscribeChannelConnected(instance->context->pubSub, wlf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    wlf_OnChannelDisconnectedEventHandler);
 
-	if (settings->Fullscreen)
+	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
 		// Use the resolution of the first display output
 		output = UwacDisplayGetOutput(context->display, 0);
 
 		if ((output != NULL) && (UwacOutputGetResolution(output, &resolution) == UWAC_SUCCESS))
 		{
-			settings->DesktopWidth = (UINT32)resolution.width;
-			settings->DesktopHeight = (UINT32)resolution.height;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, resolution.width) ||
+			    !freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, resolution.height))
+				return FALSE;
 		}
 		else
 		{
@@ -224,7 +228,8 @@ static BOOL wl_post_connect(freerdp* instance)
 	UwacWindow* window;
 	wlfContext* context;
 	rdpSettings* settings;
-	char* title = "FreeRDP";
+	const char* title = "FreeRDP";
+	const char* WindowTitle;
 	UINT32 w, h;
 
 	if (!instance || !instance->context)
@@ -233,8 +238,9 @@ static BOOL wl_post_connect(freerdp* instance)
 	context = (wlfContext*)instance->context;
 	settings = instance->context->settings;
 
-	if (settings->WindowTitle)
-		title = settings->WindowTitle;
+	WindowTitle = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
+	if (WindowTitle)
+		title = WindowTitle;
 
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
@@ -250,13 +256,13 @@ static BOOL wl_post_connect(freerdp* instance)
 	w = (UINT32)gdi->width;
 	h = (UINT32)gdi->height;
 
-	if (settings->SmartSizing && !context->fullscreen)
+	if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) && !context->fullscreen)
 	{
-		if (settings->SmartSizingWidth > 0)
-			w = settings->SmartSizingWidth;
+		if (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth) > 0)
+			w = freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth);
 
-		if (settings->SmartSizingHeight > 0)
-			h = settings->SmartSizingHeight;
+		if (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight) > 0)
+			h = freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight);
 	}
 
 	context->window = window = UwacCreateWindowShm(context->display, w, h, WL_SHM_FORMAT_XRGB8888);
@@ -264,14 +270,15 @@ static BOOL wl_post_connect(freerdp* instance)
 	if (!window)
 		return FALSE;
 
-	UwacWindowSetFullscreenState(window, NULL, instance->context->settings->Fullscreen);
+	UwacWindowSetFullscreenState(
+	    window, NULL, freerdp_settings_get_bool(instance->context->settings, FreeRDP_Fullscreen));
 	UwacWindowSetTitle(window, title);
 	UwacWindowSetOpaqueRegion(context->window, 0, 0, w, h);
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
 	instance->update->DesktopResize = wl_resize_display;
-	freerdp_keyboard_init_ex(instance->context->settings->KeyboardLayout,
-	                         instance->context->settings->KeyboardRemappingList);
+	freerdp_keyboard_init(
+	    freerdp_settings_get_uint32(instance->context->settings, FreeRDP_KeyboardLayout));
 
 	if (!(context->disp = wlf_disp_new(context)))
 		return FALSE;
@@ -387,7 +394,7 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_KEYBOARD_ENTER:
-				if (instance->context->settings->GrabKeyboard)
+				if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_GrabKeyboard))
 					UwacSeatInhibitShortcuts(event.keyboard_enter_leave.seat, true);
 
 				if (!wlf_keyboard_enter(instance, &event.keyboard_enter_leave))
@@ -430,7 +437,7 @@ static BOOL handle_window_events(freerdp* instance)
 
 	settings = instance->settings;
 
-	if (!settings->AsyncInput)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AsyncInput))
 	{
 	}
 
@@ -633,7 +640,7 @@ int main(int argc, char* argv[])
 
 	if (status)
 	{
-		BOOL list = settings->ListMonitors;
+		BOOL list = freerdp_settings_get_bool(settings, FreeRDP_ListMonitors);
 		if (list)
 			wlf_list_monitors(wlc);
 
@@ -703,7 +710,7 @@ BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fro
 	if (!context || !px || !py || !context->gdi)
 		return FALSE;
 
-	if (!context->settings->SmartSizing)
+	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
 		return TRUE;
 
 	gdi = context->gdi;

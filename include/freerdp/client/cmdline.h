@@ -46,8 +46,10 @@ extern "C"
 	FREERDP_API BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	                                                           COMMAND_LINE_ARGUMENT_A* custom);
 
-	FREERDP_API BOOL freerdp_parse_username(const char* username, char** user, char** domain);
-	FREERDP_API BOOL freerdp_parse_hostname(const char* hostname, char** host, int* port);
+	FREERDP_API BOOL freerdp_parse_username(rdpSettings* settings, const char* username,
+	                                        size_t settingsUserId, size_t settingsDomainId);
+	FREERDP_API BOOL freerdp_parse_hostname(rdpSettings* settings, const char* hostname,
+	                                        size_t settingsHostId, size_t settingsPortId);
 	FREERDP_API BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type);
 
 	FREERDP_API BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count,

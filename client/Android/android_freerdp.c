@@ -74,7 +74,7 @@ static void android_OnChannelConnectedEventHandler(void* context, ChannelConnect
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
+		if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 		{
 			gdi_graphics_pipeline_init(afc->rdpCtx.gdi, (RdpgfxClientContext*)e->pInterface);
 		}
@@ -107,7 +107,7 @@ static void android_OnChannelDisconnectedEventHandler(void* context,
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
+		if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 		{
 			gdi_graphics_pipeline_uninit(afc->rdpCtx.gdi, (RdpgfxClientContext*)e->pInterface);
 		}
@@ -194,8 +194,9 @@ static BOOL android_desktop_resize(rdpContext* context)
 		return FALSE;
 
 	freerdp_callback("OnGraphicsResize", "(JIII)V", (jlong)context->instance,
-	                 context->settings->DesktopWidth, context->settings->DesktopHeight,
-	                 context->settings->ColorDepth);
+	                 freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth),
+	                 freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopHeight),
+	                 freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth));
 	return TRUE;
 }
 
@@ -324,8 +325,10 @@ static BOOL android_post_connect(freerdp* instance)
 	instance->update->BeginPaint = android_begin_paint;
 	instance->update->EndPaint = android_end_paint;
 	instance->update->DesktopResize = android_desktop_resize;
-	freerdp_callback("OnSettingsChanged", "(JIII)V", (jlong)instance, settings->DesktopWidth,
-	                 settings->DesktopHeight, settings->ColorDepth);
+	freerdp_callback("OnSettingsChanged", "(JIII)V", (jlong)instance,
+	                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
+	                 freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 	freerdp_callback("OnConnectionSuccess", "(J)V", (jlong)instance);
 	return TRUE;
 }
@@ -487,8 +490,8 @@ static int android_freerdp_run(freerdp* instance)
 	HANDLE inputThread = NULL;
 	const rdpSettings* settings = instance->context->settings;
 	rdpContext* context = instance->context;
-	BOOL async_input = settings->AsyncInput;
-	WLog_DBG(TAG, "AsyncInput=%" PRIu8 "", settings->AsyncInput);
+	BOOL async_input = freerdp_settings_get_bool(settings, FreeRDP_AsyncInput);
+	WLog_DBG(TAG, "AsyncInput=%" PRIu8 "", freerdp_settings_get_bool(settings, FreeRDP_AsyncInput));
 
 	if (async_input)
 	{

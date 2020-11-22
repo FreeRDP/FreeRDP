@@ -26,13 +26,16 @@
 
 #include "wf_settings.h"
 
-BOOL wf_settings_read_dword(HKEY key, LPCSTR subkey, LPTSTR name, DWORD* value)
+BOOL wf_settings_read_dword(HKEY key, LPCSTR subkey, LPTSTR name, UINT32* value)
 {
 	HKEY hKey;
 	LONG status;
 	DWORD dwType;
 	DWORD dwSize;
 	DWORD dwValue;
+
+	if (!value)
+		return FALSE;
 
 	status = RegOpenKeyExA(key, subkey, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -42,25 +45,27 @@ BOOL wf_settings_read_dword(HKEY key, LPCSTR subkey, LPTSTR name, DWORD* value)
 
 		status = RegQueryValueEx(hKey, name, NULL, &dwType, (BYTE*)&dwValue, &dwSize);
 
-		if (status == ERROR_SUCCESS)
-			*value = dwValue;
-
 		RegCloseKey(hKey);
 
-		return (status == ERROR_SUCCESS) ? TRUE : FALSE;
+		if (status != ERROR_SUCCESS)
+			return FALSE;
+		*value = dwValue;
+		return TRUE;
 	}
 
 	return FALSE;
 }
 
-BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, char** value)
+BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, rdpSettings* settings,
+                                   UINT32 id)
 {
+	BOOL rc = FALSE;
 	HKEY hKey;
 	int length;
 	LONG status;
 	DWORD dwType;
 	DWORD dwSize;
-	char* strA;
+	char* strA = NULL;
 	TCHAR* strX = NULL;
 
 	status = RegOpenKeyExA(key, subkey, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
@@ -92,13 +97,13 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, char** 
 		strA = (char*)malloc(length + 1);
 		WideCharToMultiByte(CP_UTF8, 0, strX, lstrlenW(strX), strA, length, NULL, NULL);
 		strA[length] = '\0';
-		free(strX);
+		rc = freerdp_settings_set_string(settings, id, strA);
 #else
-		strA = (char*)strX;
+		rc = freerdp_settings_set_string(settings, id, strX);
 #endif
-		*value = strA;
-		return TRUE;
 	}
 
-	return FALSE;
+	free(strX);
+	free(strA);
+	return rc;
 }

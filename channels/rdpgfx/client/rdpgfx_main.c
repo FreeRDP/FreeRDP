@@ -2060,7 +2060,8 @@ RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings)
 	}
 
 	gfx->settings = settings;
-	gfx->rdpcontext = ((freerdp*)gfx->settings->instance)->context;
+	gfx->rdpcontext =
+	    ((freerdp*)freerdp_settings_get_pointer(gfx->settings, FreeRDP_instance))->context;
 	gfx->SurfaceTable = HashTable_New(TRUE);
 
 	if (!gfx->SurfaceTable)
@@ -2070,14 +2071,14 @@ RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings)
 		return NULL;
 	}
 
-	gfx->ThinClient = gfx->settings->GfxThinClient;
-	gfx->SmallCache = gfx->settings->GfxSmallCache;
-	gfx->Progressive = gfx->settings->GfxProgressive;
-	gfx->ProgressiveV2 = gfx->settings->GfxProgressiveV2;
-	gfx->H264 = gfx->settings->GfxH264;
-	gfx->AVC444 = gfx->settings->GfxAVC444;
-	gfx->SendQoeAck = gfx->settings->GfxSendQoeAck;
-	gfx->capsFilter = gfx->settings->GfxCapsFilter;
+	gfx->ThinClient = freerdp_settings_get_bool(gfx->settings, FreeRDP_GfxThinClient);
+	gfx->SmallCache = freerdp_settings_get_bool(gfx->settings, FreeRDP_GfxSmallCache);
+	gfx->Progressive = freerdp_settings_get_bool(gfx->settings, FreeRDP_GfxProgressive);
+	gfx->ProgressiveV2 = freerdp_settings_get_bool(gfx->settings, FreeRDP_GfxProgressiveV2);
+	gfx->H264 = freerdp_settings_get_bool(gfx->settings, FreeRDP_GfxH264);
+	gfx->AVC444 = freerdp_settings_get_bool(gfx->settings, FreeRDP_GfxAVC444);
+	gfx->SendQoeAck = freerdp_settings_get_bool(gfx->settings, FreeRDP_GfxSendQoeAck);
+	gfx->capsFilter = freerdp_settings_get_uint32(gfx->settings, FreeRDP_GfxCapsFilter);
 
 	if (gfx->H264)
 		gfx->SmallCache = TRUE;

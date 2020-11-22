@@ -162,8 +162,10 @@ static BOOL mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 		goto fail_rfx_context;
 
 	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = client->settings->DesktopWidth;
-	context->rfx_context->height = client->settings->DesktopHeight;
+	context->rfx_context->width =
+	    freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopWidth);
+	context->rfx_context->height =
+	    freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopHeight);
 	rfx_context_set_pixel_format(context->rfx_context, PIXEL_FORMAT_BGRA32);
 
 	if (!(context->s = Stream_New(NULL, 0xFFFF)))
@@ -253,14 +255,14 @@ static BOOL mf_peer_post_connect(freerdp_peer* client)
 	// mfi->servscreen_height = 1800 / mfi->scale;
 	UINT32 bitsPerPixel = 32;
 
-	if ((settings->DesktopWidth != mfi->servscreen_width) ||
-	    (settings->DesktopHeight != mfi->servscreen_height))
+	if ((freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) != mfi->servscreen_width) ||
+	    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) != mfi->servscreen_height))
 	{
 	}
 
-	settings->DesktopWidth = mfi->servscreen_width;
-	settings->DesktopHeight = mfi->servscreen_height;
-	settings->ColorDepth = bitsPerPixel;
+	freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, mfi->servscreen_width);
+	freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, mfi->servscreen_height);
+	freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, bitsPerPixel);
 	client->update->DesktopResize(client->update->context);
 	mfi->mouse_down_left = FALSE;
 	mfi->mouse_down_right = FALSE;
@@ -283,8 +285,9 @@ static BOOL mf_peer_post_connect(freerdp_peer* client)
 static BOOL mf_peer_activate(freerdp_peer* client)
 {
 	mfPeerContext* context = (mfPeerContext*)client->context;
-	rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
-	                  client->settings->DesktopHeight);
+	rfx_context_reset(context->rfx_context,
+	                  freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopWidth),
+	                  freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopHeight));
 	context->activated = TRUE;
 	return TRUE;
 }
@@ -335,20 +338,18 @@ static void* mf_peer_main_loop(void* arg)
 	}
 
 	/* Initialize the real server settings here */
-	client->settings->CertificateFile = _strdup("server.crt");
-	client->settings->PrivateKeyFile = _strdup("server.key");
-
-	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile)
+	if (!freerdp_settings_set_string(client->settings, FreeRDP_CertificateFile, "server.crt") ||
+	    !freerdp_settings_set_string(client->settings, FreeRDP_PrivateKeyFile, "server.key"))
 	{
 		freerdp_peer_free(client);
 		return NULL;
 	}
 
-	client->settings->NlaSecurity = FALSE;
-	client->settings->RemoteFxCodec = TRUE;
-	client->settings->ColorDepth = 32;
-	client->settings->SuppressOutput = TRUE;
-	client->settings->RefreshRect = FALSE;
+	freerdp_settings_set_bool(client->settings, FreeRDP_NlaSecurity, FALSE);
+	freerdp_settings_set_bool(client->settings, FreeRDP_RemoteFxCodec, TRUE);
+	freerdp_settings_set_uint32(client->settings, FreeRDP_ColorDepth, 32);
+	freerdp_settings_set_bool(client->settings, FreeRDP_SuppressOutput, TRUE);
+	freerdp_settings_set_bool(client->settings, FreeRDP_RefreshRect, FALSE);
 	client->PostConnect = mf_peer_post_connect;
 	client->Activate = mf_peer_activate;
 	client->input->SynchronizeEvent = mf_peer_synchronize_event;

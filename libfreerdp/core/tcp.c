@@ -895,8 +895,8 @@ static void peer_free(t_peer* peer)
 	peer->s = INVALID_SOCKET;
 }
 
-static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT32* ports,
-                                     UINT32 count, int port, int timeout)
+static int freerdp_tcp_connect_multi(rdpContext* context, const char** hostnames,
+                                     const UINT32* ports, UINT32 count, int port, int timeout)
 {
 	UINT32 index;
 	UINT32 sindex = count;
@@ -1079,6 +1079,7 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 	int sockfd;
 	UINT32 optval;
 	socklen_t optlen;
+	BOOL IPv6Enabled = FALSE;
 	BOOL ipcSocket = FALSE;
 	BOOL useExternalDefinedSocket = FALSE;
 
@@ -1112,16 +1113,21 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 	{
 		sockfd = -1;
 
-		if (!settings->GatewayEnabled)
+		if (!freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled))
 		{
 			if (!freerdp_tcp_is_hostname_resolvable(context, hostname) ||
-			    settings->RemoteAssistanceMode)
+			    freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceMode))
 			{
-				if (settings->TargetNetAddressCount > 0)
+				const UINT32 TargetNetAddressCount =
+				    freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
+				if (TargetNetAddressCount > 0)
 				{
-					sockfd = freerdp_tcp_connect_multi(
-					    context, settings->TargetNetAddresses, settings->TargetNetPorts,
-					    settings->TargetNetAddressCount, port, timeout);
+					const UINT32* TargetNetPorts = (const UINT32*)freerdp_settings_get_pointer(
+					    settings, FreeRDP_TargetNetPorts);
+					const char** TargetNetAddresses = (const char**)freerdp_settings_get_pointer(
+					    settings, FreeRDP_TargetNetAddress);
+					sockfd = freerdp_tcp_connect_multi(context, TargetNetAddresses, TargetNetPorts,
+					                                   TargetNetAddressCount, port, timeout);
 				}
 			}
 		}
@@ -1145,7 +1151,7 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 			addr = result;
 
 			if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0) &&
-			    !settings->PreferIPv6OverIPv4)
+			    !freerdp_settings_get_bool(settings, FreeRDP_PreferIPv6OverIPv4))
 			{
 				while ((addr = addr->ai_next))
 				{
@@ -1190,10 +1196,9 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 		}
 	}
 
-	free(settings->ClientAddress);
-	settings->ClientAddress = freerdp_tcp_get_ip_address(sockfd, &settings->IPv6Enabled);
-
-	if (!settings->ClientAddress)
+	if (!freerdp_settings_set_string(settings, FreeRDP_ClientAddress,
+	                                 freerdp_tcp_get_ip_address(sockfd, &IPv6Enabled)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_IPv6Enabled, IPv6Enabled))
 	{
 		if (!useExternalDefinedSocket)
 			close(sockfd);

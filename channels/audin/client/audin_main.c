@@ -1036,9 +1036,13 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	audin->iface.Attached = audin_plugin_attached;
 	audin->iface.Detached = audin_plugin_detached;
 	args = pEntryPoints->GetPluginData(pEntryPoints);
-	audin->rdpcontext =
-	    ((freerdp*)((rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints))->instance)->context;
-
+	{
+		rdpSettings* settings = (rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints);
+		freerdp* instance = freerdp_settings_get_pointer_writable(settings, FreeRDP_instance);
+		if (!settings || !instance)
+			return ERROR_INTERNAL_ERROR;
+		audin->rdpcontext = instance->context;
+	}
 	if (args)
 	{
 		if (!audin_process_addin_args(audin, args))

@@ -707,7 +707,8 @@ wfFloatBar* wf_floatbar_new(wfContext* wfc, HINSTANCE window, DWORD flags)
 	if (!update_locked_state(floatbar))
 		goto fail;
 
-	if (!wf_floatbar_toggle_fullscreen(floatbar, wfc->context.settings->Fullscreen))
+	if (!wf_floatbar_toggle_fullscreen(
+	        floatbar, freerdp_settings_get_bool(wfc->context.settings, FreeRDP_Fullscreen)))
 		goto fail;
 
 	return floatbar;

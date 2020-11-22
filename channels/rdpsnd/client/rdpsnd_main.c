@@ -764,8 +764,7 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
-                                      const ADDIN_ARGV* args)
+static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, ADDIN_ARGV* args)
 {
 	PFREERDP_RDPSND_DEVICE_ENTRY entry;
 	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
@@ -810,7 +809,7 @@ static BOOL rdpsnd_set_device_name(rdpsndPlugin* rdpsnd, const char* device_name
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, const ADDIN_ARGV* args)
+static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -959,10 +958,10 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 #endif
 		{ "fake", "" }
 	};
-	const ADDIN_ARGV* args;
+	ADDIN_ARGV* args;
 	UINT status = ERROR_INTERNAL_ERROR;
 	rdpsnd->latency = 0;
-	args = (const ADDIN_ARGV*)rdpsnd->channelEntryPoints.pExtendedData;
+	args = (ADDIN_ARGV*)rdpsnd->channelEntryPoints.pExtendedData;
 
 	if (args)
 	{
@@ -1609,7 +1608,6 @@ UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			goto fail;
 
 		rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");
-		/* user data pointer is not const, cast to avoid warning. */
 		rdpsnd->channelEntryPoints.pExtendedData = (void*)pEntryPoints->GetPluginData(pEntryPoints);
 
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpsnd", &rdpsnd->iface);

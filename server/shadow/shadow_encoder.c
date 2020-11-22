@@ -163,14 +163,17 @@ static int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 	if (!nsc_context_reset(encoder->nsc, encoder->width, encoder->height))
 		goto fail;
 
-	if (!nsc_context_set_parameters(encoder->nsc, NSC_COLOR_LOSS_LEVEL,
-	                                settings->NSCodecColorLossLevel))
+	if (!nsc_context_set_parameters(
+	        encoder->nsc, NSC_COLOR_LOSS_LEVEL,
+	        freerdp_settings_get_uint32(settings, FreeRDP_NSCodecColorLossLevel)))
 		goto fail;
-	if (!nsc_context_set_parameters(encoder->nsc, NSC_ALLOW_SUBSAMPLING,
-	                                settings->NSCodecAllowSubsampling))
+	if (!nsc_context_set_parameters(
+	        encoder->nsc, NSC_ALLOW_SUBSAMPLING,
+	        freerdp_settings_get_bool(settings, FreeRDP_NSCodecAllowSubsampling)))
 		goto fail;
-	if (!nsc_context_set_parameters(encoder->nsc, NSC_DYNAMIC_COLOR_FIDELITY,
-	                                settings->NSCodecAllowDynamicColorFidelity))
+	if (!nsc_context_set_parameters(
+	        encoder->nsc, NSC_DYNAMIC_COLOR_FIDELITY,
+	        freerdp_settings_get_bool(settings, FreeRDP_NSCodecAllowDynamicColorFidelity)))
 		goto fail;
 	if (!nsc_context_set_parameters(encoder->nsc, NSC_COLOR_FORMAT, PIXEL_FORMAT_BGRX32))
 		goto fail;
@@ -187,7 +190,7 @@ static int shadow_encoder_init_planar(rdpShadowEncoder* encoder)
 	rdpContext* context = (rdpContext*)encoder->client;
 	rdpSettings* settings = context->settings;
 
-	if (settings->DrawAllowSkipAlpha)
+	if (freerdp_settings_get_bool(settings, FreeRDP_DrawAllowSkipAlpha))
 		planarFlags |= PLANAR_FORMAT_HEADER_NA;
 
 	planarFlags |= PLANAR_FORMAT_HEADER_RLE;
@@ -245,7 +248,6 @@ static int shadow_encoder_init_h264(rdpShadowEncoder* encoder)
 	encoder->h264->BitRate = encoder->server->h264BitRate;
 	encoder->h264->FrameRate = encoder->server->h264FrameRate;
 	encoder->h264->QP = encoder->server->h264QP;
-
 	encoder->codecs |= FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444;
 	return 1;
 fail:
@@ -393,7 +395,7 @@ int shadow_encoder_reset(rdpShadowEncoder* encoder)
 	encoder->maxFps = 32;
 	encoder->frameId = 0;
 	encoder->lastAckframeId = 0;
-	encoder->frameAck = settings->SurfaceFrameMarkerEnabled;
+	encoder->frameAck = freerdp_settings_get_bool(settings, FreeRDP_SurfaceFrameMarkerEnabled);
 	return 1;
 }
 

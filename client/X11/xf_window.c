@@ -174,8 +174,12 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		xfc->savedHeight = xfc->window->height;
 		xfc->savedPosX = xfc->window->left;
 		xfc->savedPosY = xfc->window->top;
-		startX = (settings->DesktopPosX != UINT32_MAX) ? settings->DesktopPosX : 0;
-		startY = (settings->DesktopPosY != UINT32_MAX) ? settings->DesktopPosY : 0;
+		startX = (freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX) != UINT32_MAX)
+		             ? freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX)
+		             : 0;
+		startY = (freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY) != UINT32_MAX)
+		             ? freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY)
+		             : 0;
 	}
 	else
 	{
@@ -188,22 +192,26 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	/* Determine the x,y starting location for the fullscreen window */
 	if (fullscreen)
 	{
+		const rdpMonitor* cur =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, 0);
 		/* Initialize startX and startY with reasonable values */
-		startX = xfc->context.settings->MonitorDefArray[0].x;
-		startY = xfc->context.settings->MonitorDefArray[0].y;
+		startX = cur->x;
+		startY = cur->y;
 
 		/* Search all monitors to find the lowest startX and startY values */
-		for (i = 0; i < xfc->context.settings->MonitorCount; i++)
+		for (i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); i++)
 		{
-			startX = MIN(startX, xfc->context.settings->MonitorDefArray[i].x);
-			startY = MIN(startY, xfc->context.settings->MonitorDefArray[i].y);
+			const rdpMonitor* cur =
+			    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, i);
+			startX = MIN(startX, cur->x);
+			startY = MIN(startY, cur->y);
 		}
 
 		/* Lastly apply any monitor shift(translation from remote to local coordinate system)
 		 *  to startX and startY values
 		 */
-		startX += xfc->context.settings->MonitorLocalShiftX;
-		startY += xfc->context.settings->MonitorLocalShiftY;
+		startX += freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftX);
+		startY += freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftY);
 	}
 
 	/*
@@ -212,7 +220,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	       - The window manager supports multiple monitor full screen
 	       - The user requested to use a single monitor to render the remote desktop
 	 */
-	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None || settings->MonitorCount == 1)
+	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None ||
+	    freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) == 1)
 	{
 		xf_ResizeDesktopWindow(xfc, window, width, height);
 
@@ -234,7 +243,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		}
 
 		/* Set monitor bounds */
-		if (settings->MonitorCount > 1)
+		if (freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) > 1)
 		{
 			xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
 			                   xfc->fullscreenMonitors.top, xfc->fullscreenMonitors.bottom,
@@ -477,7 +486,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 		return NULL;
 
 	settings = xfc->context.settings;
-	parentWindow = (Window)xfc->context.settings->ParentWindowId;
+	parentWindow = (Window)freerdp_settings_get_uint64(settings, FreeRDP_ParentWindowId);
 	window->width = width;
 	window->height = height;
 	window->decorations = xfc->decorations;
@@ -519,8 +528,8 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	{
 		classHints->res_name = "xfreerdp";
 
-		if (xfc->context.settings->WmClass)
-			classHints->res_class = xfc->context.settings->WmClass;
+		if (freerdp_settings_get_string(settings, FreeRDP_WmClass))
+			classHints->res_class = (char*)freerdp_settings_get_string(settings, FreeRDP_WmClass);
 		else
 			classHints->res_class = "xfreerdp";
 
@@ -564,16 +573,20 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	 * monitor instead of the upper-left monitor for remote app mode (which uses all monitors).
 	 * This extra call after the window is mapped will position the login window correctly
 	 */
-	if (xfc->context.settings->RemoteApplicationMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
 	{
 		XMoveWindow(xfc->display, window->handle, 0, 0);
 	}
-	else if (settings->DesktopPosX != UINT32_MAX && settings->DesktopPosY != UINT32_MAX)
+	else if (freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX) != UINT32_MAX &&
+	         freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY) != UINT32_MAX)
 	{
-		XMoveWindow(xfc->display, window->handle, settings->DesktopPosX, settings->DesktopPosY);
+		XMoveWindow(xfc->display, window->handle,
+		            freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX),
+		            freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY));
 	}
 
-	window->floatbar = xf_floatbar_new(xfc, window->handle, name, settings->Floatbar);
+	window->floatbar = xf_floatbar_new(xfc, window->handle, name,
+	                                   freerdp_settings_get_uint32(settings, FreeRDP_Floatbar));
 
 	if (xfc->_XWAYLAND_MAY_GRAB_KEYBOARD)
 		xf_SendClientEvent(xfc, window->handle, xfc->_XWAYLAND_MAY_GRAB_KEYBOARD, 1, 1);
@@ -601,7 +614,8 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int hei
 	XResizeWindow(xfc->display, window->handle, width, height);
 #ifdef WITH_XRENDER
 
-	if (!settings->SmartSizing && !settings->DynamicResolutionUpdate)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 #endif
 	{
 		if (!xfc->fullscreen)
@@ -789,11 +803,12 @@ int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 
 	if (class_hints)
 	{
+		const char* wm = freerdp_settings_get_string(xfc->context.settings, FreeRDP_WmClass);
 		char* class = NULL;
 
-		if (xfc->context.settings->WmClass)
+		if (wm)
 		{
-			class_hints->res_class = xfc->context.settings->WmClass;
+			class_hints->res_class = (char*)wm;
 		}
 		else
 		{
@@ -1062,7 +1077,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 
 	xf_lock_x11(xfc);
 
-	if (xfc->context.settings->SoftwareGdi)
+	if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_SoftwareGdi))
 	{
 		XPutImage(xfc->display, xfc->primary, appWindow->gc, xfc->image, ax, ay, ax, ay, width,
 		          height);

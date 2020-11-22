@@ -84,10 +84,12 @@ static DWORD WINAPI mac_client_thread(void *param);
 	NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
 	NSRect screenFrame = [screen frame];
 
-	if (instance->settings->Fullscreen)
+	if (freerdp_settings_get_bool(instance->settings, FreeRDP_Fullscreen))
 	{
-		instance->settings->DesktopWidth = screenFrame.size.width;
-		instance->settings->DesktopHeight = screenFrame.size.height;
+		freerdp_settings_set_uint32(instance->settings, FreeRDP_DesktopWidth,
+		                            screenFrame.size.width);
+		freerdp_settings_set_uint32(instance->settings, FreeRDP_DesktopHeight,
+		                            screenFrame.size.height);
 		[self enterFullScreenMode:[NSScreen mainScreen] withOptions:nil];
 	}
 	else
@@ -95,8 +97,8 @@ static DWORD WINAPI mac_client_thread(void *param);
 		[self exitFullScreenModeWithOptions:nil];
 	}
 
-	mfc->client_height = instance->settings->DesktopHeight;
-	mfc->client_width = instance->settings->DesktopWidth;
+	mfc->client_height = freerdp_settings_get_uint32(instance->settings, FreeRDP_DesktopHeight);
+	mfc->client_width = freerdp_settings_get_uint32(instance->settings, FreeRDP_DesktopWidth);
 
 	if (!(mfc->thread =
 	          CreateThread(NULL, 0, mac_client_thread, (void *)context, 0, &mfc->mainThreadId)))
@@ -165,7 +167,7 @@ DWORD WINAPI mac_client_thread(void *param)
 		nCount = 0;
 		events[nCount++] = mfc->stopEvent;
 
-		if (settings->AsyncInput)
+		if (freerdp_settings_get_bool(settings, FreeRDP_AsyncInput))
 		{
 			if (!(inputThread = CreateThread(NULL, 0, mac_client_input_thread, context, 0, NULL)))
 			{
@@ -213,7 +215,7 @@ DWORD WINAPI mac_client_thread(void *param)
 				break;
 			}
 
-			if (!settings->AsyncInput)
+			if (!freerdp_settings_get_bool(settings, FreeRDP_AsyncInput))
 			{
 				if (WaitForSingleObject(inputEvent, 0) == WAIT_OBJECT_0)
 				{
@@ -234,7 +236,7 @@ DWORD WINAPI mac_client_thread(void *param)
 		[view setIs_connected:0];
 		freerdp_disconnect(instance);
 
-		if (settings->AsyncInput && inputThread)
+		if (freerdp_settings_get_bool(settings, FreeRDP_AsyncInput) && inputThread)
 		{
 			wMessageQueue *inputQueue =
 			    freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
@@ -822,8 +824,7 @@ void mac_OnChannelConnectedEventHandler(void *context, ChannelConnectedEventArgs
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_init(mfc->context.gdi, (RdpgfxClientContext *)e->pInterface);
+		gdi_graphics_pipeline_init(mfc->context.gdi, (RdpgfxClientContext *)e->pInterface);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -844,8 +845,7 @@ void mac_OnChannelDisconnectedEventHandler(void *context, ChannelDisconnectedEve
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_uninit(mfc->context.gdi, (RdpgfxClientContext *)e->pInterface);
+		gdi_graphics_pipeline_uninit(mfc->context.gdi, (RdpgfxClientContext *)e->pInterface);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -864,14 +864,16 @@ BOOL mac_pre_connect(freerdp *instance)
 	instance->update->DesktopResize = mac_desktop_resize;
 	settings = instance->settings;
 
-	if (!settings->ServerHostname)
+	if (!freerdp_settings_get_string(settings, FreeRDP_ServerHostname))
 	{
 		WLog_ERR(TAG, "error: server hostname was not specified with /v:<server>[:port]");
 		return FALSE;
 	}
 
-	settings->OsMajorType = OSMAJORTYPE_MACINTOSH;
-	settings->OsMinorType = OSMINORTYPE_MACINTOSH;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_MACINTOSH) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_OsMinorType, OSMINORTYPE_MACINTOSH))
+		return FALSE;
+
 	PubSub_SubscribeChannelConnected(instance->context->pubSub, mac_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    mac_OnChannelDisconnectedEventHandler);
@@ -942,6 +944,7 @@ static BOOL mac_authenticate_int(NSString *title, freerdp *instance, char **user
 	mfContext *mfc = (mfContext *)instance->context;
 	MRDPView *view = (MRDPView *)mfc->view;
 	PasswordDialog *dialog = [PasswordDialog new];
+	dialog.settings = mfc->context.settings;
 	dialog.serverHostname = title;
 
 	if (*username)
@@ -994,21 +997,24 @@ static BOOL mac_authenticate_int(NSString *title, freerdp *instance, char **user
 
 BOOL mac_authenticate(freerdp *instance, char **username, char **password, char **domain)
 {
-	NSString *title =
-	    [NSString stringWithFormat:@"%@:%u",
-	                               [NSString stringWithCString:instance->settings->ServerHostname
-	                                                  encoding:NSUTF8StringEncoding],
-	                               instance -> settings -> ServerPort];
+	NSString *title = [NSString
+	    stringWithFormat:@"%@:%u",
+	                     [NSString stringWithCString:freerdp_settings_get_string(
+	                                                     instance->settings, FreeRDP_ServerHostname)
+	                                        encoding:NSUTF8StringEncoding],
+	                     freerdp_settings_get_uint32(instance->settings, FreeRDP_ServerPort)];
 	return mac_authenticate_int(title, instance, username, password, domain);
 }
 
 BOOL mac_gw_authenticate(freerdp *instance, char **username, char **password, char **domain)
 {
-	NSString *title =
-	    [NSString stringWithFormat:@"%@:%u",
-	                               [NSString stringWithCString:instance->settings->GatewayHostname
-	                                                  encoding:NSUTF8StringEncoding],
-	                               instance -> settings -> GatewayPort];
+	NSString *title = [NSString
+	    stringWithFormat:@"%@:%u",
+	                     [NSString
+	                         stringWithCString:freerdp_settings_get_string(instance->settings,
+	                                                                       FreeRDP_GatewayHostname)
+	                                  encoding:NSUTF8StringEncoding],
+	                     freerdp_settings_get_uint32(instance->settings, FreeRDP_GatewayPort)];
 	return mac_authenticate_int(title, instance, username, password, domain);
 }
 
@@ -1283,8 +1289,8 @@ BOOL mac_end_paint(rdpContext *context)
 
 	ww = mfc->client_width;
 	wh = mfc->client_height;
-	dw = mfc->context.settings->DesktopWidth;
-	dh = mfc->context.settings->DesktopHeight;
+	dw = freerdp_settings_get_uint32(mfc->context.settings, FreeRDP_DesktopWidth);
+	dh = freerdp_settings_get_uint32(mfc->context.settings, FreeRDP_DesktopHeight);
 
 	if ((!context) || (!context->gdi))
 		return FALSE;
@@ -1298,7 +1304,8 @@ BOOL mac_end_paint(rdpContext *context)
 	newDrawRect.size.width = invalid->w;
 	newDrawRect.size.height = invalid->h;
 
-	if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
+	if (freerdp_settings_get_bool(mfc->context.settings, FreeRDP_SmartSizing) &&
+	    (ww != dw || wh != dh))
 	{
 		newDrawRect.origin.y = newDrawRect.origin.y * wh / dh - 1;
 		newDrawRect.size.height = newDrawRect.size.height * wh / dh + 1;
@@ -1339,8 +1346,9 @@ BOOL mac_desktop_resize(rdpContext *context)
 	CGContextRef old_context = view->bitmap_context;
 	view->bitmap_context = NULL;
 	CGContextRelease(old_context);
-	mfc->width = settings->DesktopWidth;
-	mfc->height = settings->DesktopHeight;
+	mfc->width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	mfc->height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	;
 
 	if (!gdi_resize(context->gdi, mfc->width, mfc->height))
 		return FALSE;
@@ -1354,8 +1362,8 @@ BOOL mac_desktop_resize(rdpContext *context)
 	mfc->client_height = mfc->height;
 	[view setFrameSize:NSMakeSize(mfc->width, mfc->height)];
 	EventArgsInit(&e, "mfreerdp");
-	e.width = settings->DesktopWidth;
-	e.height = settings->DesktopHeight;
+	e.width = mfc->width;
+	e.height = mfc->height;
 	PubSub_OnResizeWindow(context->pubSub, context, &e);
 	return TRUE;
 }

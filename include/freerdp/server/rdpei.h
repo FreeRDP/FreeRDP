@@ -41,8 +41,7 @@ struct _rdpei_server_context
 
 	/** callbacks that can be set by the user */
 	UINT (*onClientReady)(RdpeiServerContext* context);
-	UINT (*onTouchEvent)(RdpeiServerContext* context, const RDPINPUT_TOUCH_EVENT* touchEvent);
-	UINT (*onPenEvent)(RdpeiServerContext* context, const RDPINPUT_PEN_EVENT* penEvent);
+	UINT (*onTouchEvent)(RdpeiServerContext* context, RDPINPUT_TOUCH_EVENT* touchEvent);
 	UINT (*onTouchReleased)(RdpeiServerContext* context, BYTE contactId);
 
 	void* user_data; /* user data, useful for callbacks */
@@ -60,8 +59,7 @@ extern "C"
 	FREERDP_API UINT rdpei_server_init(RdpeiServerContext* context);
 	FREERDP_API UINT rdpei_server_handle_messages(RdpeiServerContext* context);
 
-	FREERDP_API UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version,
-	                                            UINT32 features);
+	FREERDP_API UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version);
 	FREERDP_API UINT rdpei_server_suspend(RdpeiServerContext* context);
 	FREERDP_API UINT rdpei_server_resume(RdpeiServerContext* context);
 

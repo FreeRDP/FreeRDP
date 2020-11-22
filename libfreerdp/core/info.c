@@ -67,10 +67,11 @@ static struct
 	{ INFO_HIDEF_RAIL_SUPPORTED, "INFO_HIDEF_RAIL_SUPPORTED" },
 };
 
-static BOOL rdp_read_info_null_string(UINT32 flags, wStream* s, size_t cbLen, CHAR** dst,
-                                      size_t max)
+static BOOL rdp_read_info_null_string(rdpSettings* settings, size_t settingsId, UINT32 flags,
+                                      wStream* s, size_t cbLen, size_t max)
 {
 	CHAR* ret = NULL;
+	BOOL rc;
 
 	const BOOL unicode = flags & INFO_UNICODE;
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
@@ -110,9 +111,9 @@ static BOOL rdp_read_info_null_string(UINT32 flags, wStream* s, size_t cbLen, CH
 		}
 	}
 
-	free(*dst);
-	*dst = ret;
-	return TRUE;
+	rc = freerdp_settings_set_string(settings, settingsId, ret);
+	free(ret);
+	return rc;
 }
 
 static char* rdp_info_package_flags_description(UINT32 flags)
@@ -149,23 +150,25 @@ static char* rdp_info_package_flags_description(UINT32 flags)
 
 static BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 {
-	BYTE ClientRandom[32];
-	BYTE AutoReconnectRandom[32];
-	ARC_SC_PRIVATE_PACKET* serverCookie;
+	BYTE ClientRandom[32] = { 0 };
+	BYTE AutoReconnectRandom[32] = { 0 };
+	const ARC_SC_PRIVATE_PACKET* serverCookie;
 	ARC_CS_PRIVATE_PACKET* clientCookie;
-	rdpSettings* settings = rdp->settings;
-	serverCookie = settings->ServerAutoReconnectCookie;
-	clientCookie = settings->ClientAutoReconnectCookie;
+	rdpSettings* settings;
+	settings = rdp->settings;
+	serverCookie = freerdp_settings_get_pointer(settings, FreeRDP_ServerAutoReconnectCookie);
+	clientCookie =
+	    freerdp_settings_get_pointer_writable(settings, FreeRDP_ClientAutoReconnectCookie);
 	clientCookie->cbLen = 28;
 	clientCookie->version = serverCookie->version;
 	clientCookie->logonId = serverCookie->logonId;
-	ZeroMemory(clientCookie->securityVerifier, 16);
-	ZeroMemory(AutoReconnectRandom, sizeof(AutoReconnectRandom));
-	CopyMemory(AutoReconnectRandom, serverCookie->arcRandomBits, 16);
-	ZeroMemory(ClientRandom, sizeof(ClientRandom));
 
-	if (settings->SelectedProtocol == PROTOCOL_RDP)
-		CopyMemory(ClientRandom, settings->ClientRandom, settings->ClientRandomLength);
+	ZeroMemory(clientCookie->securityVerifier, 16);
+	CopyMemory(AutoReconnectRandom, serverCookie->arcRandomBits, 16);
+
+	if (freerdp_settings_get_uint32(settings, FreeRDP_SelectedProtocol) == PROTOCOL_RDP)
+		CopyMemory(ClientRandom, freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom),
+		           freerdp_settings_get_uint32(settings, FreeRDP_ClientRandomLength));
 
 	/* SecurityVerifier = HMAC_MD5(AutoReconnectRandom, ClientRandom) */
 
@@ -188,7 +191,8 @@ static BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon
 	BYTE* p;
 	ARC_SC_PRIVATE_PACKET* autoReconnectCookie;
 	rdpSettings* settings = rdp->settings;
-	autoReconnectCookie = settings->ServerAutoReconnectCookie;
+	autoReconnectCookie =
+	    freerdp_settings_get_pointer_writable(settings, FreeRDP_ServerAutoReconnectCookie);
 
 	if (Stream_GetRemainingLength(s) < 28)
 		return FALSE;
@@ -217,7 +221,7 @@ static BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon
 	info->LogonId = autoReconnectCookie->logonId;
 	CopyMemory(info->ArcRandomBits, p, 16);
 
-	if ((settings->PrintReconnectCookie))
+	if (freerdp_settings_get_bool(settings, FreeRDP_PrintReconnectCookie))
 	{
 		char* base64;
 		base64 = crypto_base64_encode((BYTE*)autoReconnectCookie, sizeof(ARC_SC_PRIVATE_PACKET));
@@ -239,7 +243,8 @@ static BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 {
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
 	rdpSettings* settings = rdp->settings;
-	autoReconnectCookie = settings->ClientAutoReconnectCookie;
+	autoReconnectCookie =
+	    freerdp_settings_get_pointer_writable(settings, FreeRDP_ClientAutoReconnectCookie);
 
 	if (Stream_GetRemainingLength(s) < 28)
 		return FALSE;
@@ -260,10 +265,10 @@ static BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 
 static void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 {
-	BYTE* p;
-	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
+	const BYTE* p;
+	const ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
 	rdpSettings* settings = rdp->settings;
-	autoReconnectCookie = settings->ClientAutoReconnectCookie;
+	autoReconnectCookie = freerdp_settings_get_pointer(settings, FreeRDP_ClientAutoReconnectCookie);
 	p = autoReconnectCookie->securityVerifier;
 	WLog_DBG(TAG,
 	         "ClientAutoReconnectCookie: Version: %" PRIu32 " LogonId: %" PRIu32 " ArcRandomBits: "
@@ -292,6 +297,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	UINT16 cbClientAddress;
 	UINT16 cbClientDir;
 	UINT16 cbAutoReconnectLen;
+	UINT32 PerformanceFlags;
 	rdpSettings* settings = rdp->settings;
 
 	if (Stream_GetRemainingLength(s) < 4)
@@ -314,15 +320,18 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
-	settings->IPv6Enabled = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? TRUE : FALSE);
+	if (!freerdp_settings_set_bool(settings, FreeRDP_IPv6Enabled,
+	                               (clientAddressFamily == ADDRESS_FAMILY_INET6 ? TRUE : FALSE)))
+		return FALSE;
 
 	if (Stream_GetRemainingLength(s) < cbClientAddress)
 		return FALSE;
 
-	if (!rdp_read_info_null_string(INFO_UNICODE, s, cbClientAddress, &settings->ClientAddress,
-	                               (settings->RdpVersion < RDP_VERSION_10_0) ? 64 : 80))
+	if (!rdp_read_info_null_string(
+	        settings, FreeRDP_ClientAddress, INFO_UNICODE, s, cbClientAddress,
+	        (freerdp_settings_get_uint32(settings, FreeRDP_RdpVersion) < RDP_VERSION_10_0) ? 64
+	                                                                                       : 80))
 		return FALSE;
-
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
@@ -336,7 +345,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	 * sets cbClientDir to 0.
 	 */
 
-	if (!rdp_read_info_null_string(INFO_UNICODE, s, cbClientDir, &settings->ClientDir, 512))
+	if (!rdp_read_info_null_string(settings, FreeRDP_ClientDir, INFO_UNICODE, s, cbClientDir, 512))
 		return FALSE;
 
 	/**
@@ -367,7 +376,9 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	Stream_Read_UINT32(s, settings->PerformanceFlags);
+	Stream_Read_UINT32(s, PerformanceFlags);
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_PerformanceFlags, PerformanceFlags))
+		return FALSE;
 	freerdp_performance_flags_split(settings);
 
 	/* optional: cbAutoReconnectLen (2 bytes) */
@@ -410,24 +421,33 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	WCHAR* clientDir = NULL;
 	UINT16 cbClientDir;
 	UINT16 cbAutoReconnectCookie;
+	const ARC_SC_PRIVATE_PACKET* cookie;
 	rdpSettings* settings;
 	if (!rdp || !rdp->settings || !s)
 		return FALSE;
 	settings = rdp->settings;
-	clientAddressFamily = settings->IPv6Enabled ? ADDRESS_FAMILY_INET6 : ADDRESS_FAMILY_INET;
-	rc = ConvertToUnicode(CP_UTF8, 0, settings->ClientAddress, -1, &clientAddress, 0);
+	cookie = (const ARC_SC_PRIVATE_PACKET*)freerdp_settings_get_pointer(
+	    settings, FreeRDP_ServerAutoReconnectCookie);
+	if (!cookie)
+		return FALSE;
+	clientAddressFamily = freerdp_settings_get_bool(settings, FreeRDP_IPv6Enabled)
+	                          ? ADDRESS_FAMILY_INET6
+	                          : ADDRESS_FAMILY_INET;
+	rc = ConvertToUnicode(CP_UTF8, 0, freerdp_settings_get_string(settings, FreeRDP_ClientAddress),
+	                      -1, &clientAddress, 0);
 	if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 		goto fail;
 	cbClientAddress = (UINT16)rc * 2;
 
-	rc = ConvertToUnicode(CP_UTF8, 0, settings->ClientDir, -1, &clientDir, 0);
+	rc = ConvertToUnicode(CP_UTF8, 0, freerdp_settings_get_string(settings, FreeRDP_ClientDir), -1,
+	                      &clientDir, 0);
 	if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 		goto fail;
 	cbClientDir = (UINT16)rc * 2;
 
-	if (settings->ServerAutoReconnectCookie->cbLen > UINT16_MAX)
+	if (cookie->cbLen > UINT16_MAX)
 		goto fail;
-	cbAutoReconnectCookie = (UINT16)settings->ServerAutoReconnectCookie->cbLen;
+	cbAutoReconnectCookie = (UINT16)cookie->cbLen;
 
 	Stream_Write_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
 	Stream_Write_UINT16(s, cbClientAddress + 2); /* cbClientAddress (2 bytes) */
@@ -445,7 +465,9 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	Stream_Write_UINT32(s, 0); /* clientSessionId (4 bytes), should be set to 0 */
 	freerdp_performance_flags_make(settings);
-	Stream_Write_UINT32(s, settings->PerformanceFlags); /* performanceFlags (4 bytes) */
+	Stream_Write_UINT32(
+	    s, freerdp_settings_get_uint32(settings,
+	                                   FreeRDP_PerformanceFlags)); /* performanceFlags (4 bytes) */
 	Stream_Write_UINT16(s, cbAutoReconnectCookie);      /* cbAutoReconnectCookie (2 bytes) */
 
 	if (cbAutoReconnectCookie > 0)
@@ -463,8 +485,8 @@ fail:
 	return ret;
 }
 
-static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, CHAR** dst,
-                                 size_t max)
+static BOOL rdp_read_info_string(rdpSettings* settings, size_t settingsId, UINT32 flags, wStream* s,
+                                 size_t cbLenNonNull, size_t max)
 {
 	union {
 		char c;
@@ -472,7 +494,7 @@ static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, 
 		BYTE b[2];
 	} terminator;
 	CHAR* ret = NULL;
-
+	BOOL rc;
 	const BOOL unicode = flags & INFO_UNICODE;
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
 
@@ -521,8 +543,9 @@ static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, 
 		return FALSE;
 	}
 
-	*dst = ret;
-	return TRUE;
+	rc = freerdp_settings_set_string(settings, settingsId, ret);
+	free(ret);
+	return rc;
 }
 
 /**
@@ -542,34 +565,51 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	UINT16 cbAlternateShell;
 	UINT16 cbWorkingDir;
 	UINT32 CompressionLevel;
+	UINT32 KeyboardCodePage;
 	rdpSettings* settings = rdp->settings;
 
 	if (Stream_GetRemainingLength(s) < 18)
 		return FALSE;
 
-	Stream_Read_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes ) */
+	Stream_Read_UINT32(s, KeyboardCodePage);           /* CodePage (4 bytes ) */
 	Stream_Read_UINT32(s, flags);                      /* flags (4 bytes) */
-	settings->AudioCapture = ((flags & INFO_AUDIOCAPTURE) ? TRUE : FALSE);
-	settings->AudioPlayback = ((flags & INFO_NOAUDIOPLAYBACK) ? FALSE : TRUE);
-	settings->AutoLogonEnabled = ((flags & INFO_AUTOLOGON) ? TRUE : FALSE);
-	settings->RemoteApplicationMode = ((flags & INFO_RAIL) ? TRUE : FALSE);
-	settings->HiDefRemoteApp = ((flags & INFO_HIDEF_RAIL_SUPPORTED) ? TRUE : FALSE);
-	settings->RemoteConsoleAudio = ((flags & INFO_REMOTECONSOLEAUDIO) ? TRUE : FALSE);
-	settings->CompressionEnabled = ((flags & INFO_COMPRESSION) ? TRUE : FALSE);
-	settings->LogonNotify = ((flags & INFO_LOGONNOTIFY) ? TRUE : FALSE);
-	settings->MouseHasWheel = ((flags & INFO_MOUSE_HAS_WHEEL) ? TRUE : FALSE);
-	settings->DisableCtrlAltDel = ((flags & INFO_DISABLECTRLALTDEL) ? TRUE : FALSE);
-	settings->ForceEncryptedCsPdu = ((flags & INFO_FORCE_ENCRYPTED_CS_PDU) ? TRUE : FALSE);
-	settings->PasswordIsSmartcardPin = ((flags & INFO_PASSWORD_IS_SC_PIN) ? TRUE : FALSE);
+
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardCodePage, KeyboardCodePage) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_AudioCapture,
+	                               ((flags & INFO_AUDIOCAPTURE) ? TRUE : FALSE)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback,
+	                               ((flags & INFO_NOAUDIOPLAYBACK) ? FALSE : TRUE)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_AutoLogonEnabled,
+	                               ((flags & INFO_AUTOLOGON) ? TRUE : FALSE)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteApplicationMode,
+	                               ((flags & INFO_RAIL) ? TRUE : FALSE)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_HiDefRemoteApp,
+	                               ((flags & INFO_HIDEF_RAIL_SUPPORTED) ? TRUE : FALSE)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteConsoleAudio,
+	                               ((flags & INFO_REMOTECONSOLEAUDIO) ? TRUE : FALSE)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_CompressionEnabled,
+	                               ((flags & INFO_COMPRESSION) ? TRUE : FALSE)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_LogonNotify,
+	                               ((flags & INFO_LOGONNOTIFY) ? TRUE : FALSE)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_MouseHasWheel,
+	                               ((flags & INFO_MOUSE_HAS_WHEEL) ? TRUE : FALSE)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_DisableCtrlAltDel,
+	                               ((flags & INFO_DISABLECTRLALTDEL) ? TRUE : FALSE)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_ForceEncryptedCsPdu,
+	                               ((flags & INFO_FORCE_ENCRYPTED_CS_PDU) ? TRUE : FALSE)) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_PasswordIsSmartcardPin,
+	                               ((flags & INFO_PASSWORD_IS_SC_PIN) ? TRUE : FALSE)))
+		return FALSE;
 
 	if (flags & INFO_COMPRESSION)
 	{
 		CompressionLevel = ((flags & 0x00001E00) >> 9);
-		settings->CompressionLevel = CompressionLevel;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_CompressionLevel, CompressionLevel))
+			return FALSE;
 	}
 
 	/* RDP 4 and 5 have smaller credential limits */
-	if (settings->RdpVersion < RDP_VERSION_5_PLUS)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RdpVersion) < RDP_VERSION_5_PLUS)
 		smallsize = TRUE;
 
 	Stream_Read_UINT16(s, cbDomain);         /* cbDomain (2 bytes) */
@@ -578,22 +618,22 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	Stream_Read_UINT16(s, cbAlternateShell); /* cbAlternateShell (2 bytes) */
 	Stream_Read_UINT16(s, cbWorkingDir);     /* cbWorkingDir (2 bytes) */
 
-	if (!rdp_read_info_string(flags, s, cbDomain, &settings->Domain, smallsize ? 52 : 512))
+	if (!rdp_read_info_string(settings, FreeRDP_Domain, flags, s, cbDomain, smallsize ? 52 : 512))
 		return FALSE;
 
-	if (!rdp_read_info_string(flags, s, cbUserName, &settings->Username, smallsize ? 44 : 512))
+	if (!rdp_read_info_string(settings, FreeRDP_Username, flags, s, cbUserName,
+	                          smallsize ? 44 : 512))
 		return FALSE;
 
-	if (!rdp_read_info_string(flags, s, cbPassword, &settings->Password, smallsize ? 32 : 512))
+	if (!rdp_read_info_string(settings, FreeRDP_Password, flags, s, cbPassword,
+	                          smallsize ? 32 : 512))
 		return FALSE;
 
-	if (!rdp_read_info_string(flags, s, cbAlternateShell, &settings->AlternateShell, 512))
+	if (!rdp_read_info_string(settings, FreeRDP_AlternateShell, flags, s, cbAlternateShell, 512))
 		return FALSE;
-
-	if (!rdp_read_info_string(flags, s, cbWorkingDir, &settings->ShellWorkingDirectory, 512))
+	if (!rdp_read_info_string(settings, FreeRDP_ShellWorkingDirectory, flags, s, cbWorkingDir, 512))
 		return FALSE;
-
-	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RdpVersion) >= RDP_VERSION_5_PLUS)
 		return rdp_read_extended_info_packet(rdp, s); /* extraInfo */
 
 	return tpkt_ensure_stream_consumed(s, tpktlength);
@@ -632,45 +672,46 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	        INFO_ENABLEWINDOWSKEY | INFO_DISABLECTRLALTDEL | INFO_MOUSE_HAS_WHEEL |
 	        INFO_FORCE_ENCRYPTED_CS_PDU;
 
-	if (settings->SmartcardLogon)
+	if (freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon))
 	{
 		flags |= INFO_AUTOLOGON;
 		flags |= INFO_PASSWORD_IS_SC_PIN;
 	}
 
-	if (settings->AudioCapture)
+	if (freerdp_settings_get_bool(settings, FreeRDP_AudioCapture))
 		flags |= INFO_AUDIOCAPTURE;
 
-	if (!settings->AudioPlayback)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AudioPlayback))
 		flags |= INFO_NOAUDIOPLAYBACK;
 
-	if (settings->VideoDisable)
+	if (freerdp_settings_get_bool(settings, FreeRDP_VideoDisable))
 		flags |= INFO_VIDEO_DISABLE;
 
-	if (settings->AutoLogonEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_AutoLogonEnabled))
 		flags |= INFO_AUTOLOGON;
 
-	if (settings->RemoteApplicationMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
 	{
-		if (settings->HiDefRemoteApp)
+		if (freerdp_settings_get_bool(settings, FreeRDP_HiDefRemoteApp))
 			flags |= INFO_HIDEF_RAIL_SUPPORTED;
 
 		flags |= INFO_RAIL;
 	}
 
-	if (settings->RemoteConsoleAudio)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteConsoleAudio))
 		flags |= INFO_REMOTECONSOLEAUDIO;
 
-	if (settings->CompressionEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_CompressionEnabled))
 	{
 		flags |= INFO_COMPRESSION;
-		flags |= ((settings->CompressionLevel << 9) & 0x00001E00);
+		flags |=
+		    ((freerdp_settings_get_uint32(settings, FreeRDP_CompressionLevel) << 9) & 0x00001E00);
 	}
 
-	if (settings->LogonNotify)
+	if (freerdp_settings_get_bool(settings, FreeRDP_LogonNotify))
 		flags |= INFO_LOGONNOTIFY;
 
-	if (settings->PasswordIsSmartcardPin)
+	if (freerdp_settings_get_bool(settings, FreeRDP_PasswordIsSmartcardPin))
 		flags |= INFO_PASSWORD_IS_SC_PIN;
 
 	{
@@ -683,9 +724,10 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	if (settings->Domain)
+	if (freerdp_settings_get_string(settings, FreeRDP_Domain))
 	{
-		const int rc = ConvertToUnicode(CP_UTF8, 0, settings->Domain, -1, &domainW, 0);
+		const int rc = ConvertToUnicode(
+		    CP_UTF8, 0, freerdp_settings_get_string(settings, FreeRDP_Domain), -1, &domainW, 0);
 		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 			goto fail;
 		cbDomain = (UINT16)rc * 2;
@@ -701,7 +743,8 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	/* user name provided by the expert for connecting to the novice computer */
 	{
-		const int rc = ConvertToUnicode(CP_UTF8, 0, settings->Username, -1, &userNameW, 0);
+		const int rc = ConvertToUnicode(
+		    CP_UTF8, 0, freerdp_settings_get_string(settings, FreeRDP_Username), -1, &userNameW, 0);
 		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 			goto fail;
 		cbUserName = (UINT16)rc * 2;
@@ -709,26 +752,32 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	/* excludes (!) the length of the mandatory null terminator */
 	cbUserName = cbUserName >= 2 ? cbUserName - 2 : cbUserName;
 
-	if (!settings->RemoteAssistanceMode)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceMode))
 	{
-		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
+		if (freerdp_settings_get_pointer(settings, FreeRDP_RedirectionPassword) &&
+		    freerdp_settings_get_uint32(settings, FreeRDP_RedirectionPasswordLength) > 0)
 		{
 			union {
 				BYTE* bp;
 				WCHAR* wp;
 			} ptrconv;
 
-			if (settings->RedirectionPasswordLength > UINT16_MAX)
+			if (freerdp_settings_get_uint32(settings, FreeRDP_RedirectionPasswordLength) >
+			    UINT16_MAX)
 				return FALSE;
 			usedPasswordCookie = TRUE;
 
-			ptrconv.bp = settings->RedirectionPassword;
+			ptrconv.bp =
+			    freerdp_settings_get_pointer_writable(settings, FreeRDP_RedirectionPassword);
 			passwordW = ptrconv.wp;
-			cbPassword = (UINT16)settings->RedirectionPasswordLength;
+			cbPassword =
+			    (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_RedirectionPasswordLength);
 		}
 		else
 		{
-			const int rc = ConvertToUnicode(CP_UTF8, 0, settings->Password, -1, &passwordW, 0);
+			const int rc = ConvertToUnicode(CP_UTF8, 0,
+			                                freerdp_settings_get_string(settings, FreeRDP_Password),
+			                                -1, &passwordW, 0);
 			if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 				goto fail;
 			cbPassword = (UINT16)rc * 2;
@@ -746,10 +795,11 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	/* excludes (!) the length of the mandatory null terminator */
 	cbPassword = cbPassword >= 2 ? cbPassword - 2 : cbPassword;
 
-	if (!settings->RemoteAssistanceMode)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceMode))
 	{
-		const int rc =
-		    ConvertToUnicode(CP_UTF8, 0, settings->AlternateShell, -1, &alternateShellW, 0);
+		const int rc = ConvertToUnicode(
+		    CP_UTF8, 0, freerdp_settings_get_string(settings, FreeRDP_AlternateShell), -1,
+		    &alternateShellW, 0);
 		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 			goto fail;
 		cbAlternateShell = (UINT16)rc * 2;
@@ -757,7 +807,7 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	else
 	{
 		int rc;
-		if (settings->RemoteAssistancePassStub)
+		if (freerdp_settings_get_string(settings, FreeRDP_RemoteAssistancePassStub))
 		{
 			/* This field MUST be filled with "*" */
 			rc = ConvertToUnicode(CP_UTF8, 0, "*", -1, &alternateShellW, 0);
@@ -765,8 +815,9 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		else
 		{
 			/* This field must contain the remote assistance password */
-			rc = ConvertToUnicode(CP_UTF8, 0, settings->RemoteAssistancePassword, -1,
-			                      &alternateShellW, 0);
+			rc = ConvertToUnicode(
+			    CP_UTF8, 0, freerdp_settings_get_string(settings, FreeRDP_RemoteAssistancePassword),
+			    -1, &alternateShellW, 0);
 		}
 		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 			goto fail;
@@ -776,10 +827,11 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	/* excludes (!) the length of the mandatory null terminator */
 	cbAlternateShell = cbAlternateShell >= 2 ? cbAlternateShell - 2 : cbAlternateShell;
 
-	if (!settings->RemoteAssistanceMode)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceMode))
 	{
-		const int rc =
-		    ConvertToUnicode(CP_UTF8, 0, settings->ShellWorkingDirectory, -1, &workingDirW, 0);
+		const int rc = ConvertToUnicode(
+		    CP_UTF8, 0, freerdp_settings_get_string(settings, FreeRDP_ShellWorkingDirectory), -1,
+		    &workingDirW, 0);
 		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 			goto fail;
 		cbWorkingDir = (UINT16)rc * 2;
@@ -787,8 +839,9 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	else
 	{
 		/* Remote Assistance Session Id */
-		const int rc =
-		    ConvertToUnicode(CP_UTF8, 0, settings->RemoteAssistanceSessionId, -1, &workingDirW, 0);
+		const int rc = ConvertToUnicode(
+		    CP_UTF8, 0, freerdp_settings_get_string(settings, FreeRDP_RemoteAssistanceSessionId),
+		    -1, &workingDirW, 0);
 		if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 			goto fail;
 		cbWorkingDir = (UINT16)rc * 2;
@@ -796,7 +849,8 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	/* excludes (!) the length of the mandatory null terminator */
 	cbWorkingDir = cbWorkingDir >= 2 ? cbWorkingDir - 2 : cbWorkingDir;
-	Stream_Write_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes) */
+	Stream_Write_UINT32(s, freerdp_settings_get_uint32(
+	                           settings, FreeRDP_KeyboardCodePage)); /* CodePage (4 bytes) */
 	Stream_Write_UINT32(s, flags);                      /* flags (4 bytes) */
 	Stream_Write_UINT16(s, cbDomain);                   /* cbDomain (2 bytes) */
 	Stream_Write_UINT16(s, cbUserName);                 /* cbUserName (2 bytes) */
@@ -841,7 +895,7 @@ fail:
 	if (!ret)
 		return FALSE;
 
-	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RdpVersion) >= RDP_VERSION_5_PLUS)
 		ret = rdp_write_extended_info_packet(rdp, s); /* extraInfo */
 
 	return TRUE;
@@ -869,7 +923,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 	if ((securityFlags & SEC_INFO_PKT) == 0)
 		return FALSE;
 
-	if (rdp->settings->UseRdpSecurityLayer)
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_UseRdpSecurityLayer))
 	{
 		if (securityFlags & SEC_REDIRECTION_PKT)
 		{

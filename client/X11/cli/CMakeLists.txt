@@ -24,7 +24,7 @@ set(${MODULE_PREFIX}_SRCS
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "xfreerdp" RUNTIME_OUTPUT_DIRECTORY "..")
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} xfreerdp-client freerdp-client)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} xfreerdp-client freerdp-client freerdp)
 
 if(OPENBSD)
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} ossaudio)

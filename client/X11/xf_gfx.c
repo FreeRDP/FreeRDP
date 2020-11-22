@@ -87,7 +87,8 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		}
 		else
 #ifdef WITH_XRENDER
-		    if (xfc->context.settings->SmartSizing || xfc->context.settings->MultiTouchGestures)
+		    if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_SmartSizing) ||
+		        freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MultiTouchGestures))
 		{
 			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image, nXSrc, nYSrc, nXDst,
 			          nYDst, dwidth, dheight);
@@ -403,7 +404,7 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 	rdpGdi* gdi = xfc->context.gdi;
 	gdi_graphics_pipeline_init(gdi, gfx);
 
-	if (!xfc->context.settings->SoftwareGdi)
+	if (!freerdp_settings_get_bool(xfc->context.settings, FreeRDP_SoftwareGdi))
 	{
 		gfx->UpdateSurfaces = xf_UpdateSurfaces;
 		gfx->CreateSurface = xf_CreateSurface;

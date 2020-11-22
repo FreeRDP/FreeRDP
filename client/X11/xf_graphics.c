@@ -61,7 +61,7 @@ BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 	if (!settings)
 		return FALSE;
 
-	switch (settings->ColorDepth)
+	switch (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth))
 	{
 		case 32:
 		case 24:
@@ -252,8 +252,14 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 	if (!settings)
 		return FALSE;
 
-	xscale = (settings->SmartSizing ? xfc->scaledWidth / (double)settings->DesktopWidth : 1);
-	yscale = (settings->SmartSizing ? xfc->scaledHeight / (double)settings->DesktopHeight : 1);
+	xscale = (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing)
+	              ? xfc->scaledWidth /
+	                    (double)freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth)
+	              : 1);
+	yscale = (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing)
+	              ? xfc->scaledHeight /
+	                    (double)freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)
+	              : 1);
 	xTargetSize = pointer->width * xscale;
 	yTargetSize = pointer->height * yscale;
 
