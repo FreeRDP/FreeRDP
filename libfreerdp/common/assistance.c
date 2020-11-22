@@ -1279,28 +1279,29 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
 			return FALSE;
 	}
 
-	settings->RemoteAssistanceMode = TRUE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteAssistanceMode, TRUE))
+		return FALSE;
 
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, file->MachinePorts[0]))
 		return FALSE;
 
 	freerdp_target_net_addresses_free(settings);
-	settings->TargetNetAddressCount = file->MachineCount;
+	freerdp_settings_set_uint32(settings, FreeRDP_TargetNetAddressCount, file->MachineCount);
 
-	if (settings->TargetNetAddressCount)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount) > 0)
 	{
-		settings->TargetNetAddresses = (char**)calloc(file->MachineCount, sizeof(char*));
-		settings->TargetNetPorts = (UINT32*)calloc(file->MachineCount, sizeof(UINT32));
-
-		if (!settings->TargetNetAddresses || !settings->TargetNetPorts)
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_TargetNetAddresses, NULL,
+		                                      file->MachineCount * sizeof(char*)) ||
+		    !freerdp_settings_set_pointer_len(settings, FreeRDP_TargetNetPorts, NULL,
+		                                      file->MachineCount * sizeof(char*)))
 			return FALSE;
 
-		for (i = 0; i < settings->TargetNetAddressCount; i++)
+		for (i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount); i++)
 		{
-			settings->TargetNetAddresses[i] = _strdup(file->MachineAddresses[i]);
-			settings->TargetNetPorts[i] = file->MachinePorts[i];
-
-			if (!settings->TargetNetAddresses[i])
+			if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses, i,
+			                                        file->MachineAddresses[i]) ||
+			    !freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetPorts, i,
+			                                        &file->MachinePorts[i]))
 				return FALSE;
 		}
 	}

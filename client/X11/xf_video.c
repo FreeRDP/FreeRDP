@@ -64,7 +64,8 @@ static BOOL xfVideoShowSurface(VideoClientContext* video, VideoSurface* surface)
 	xfContext* xfc = video->custom;
 #ifdef WITH_XRENDER
 
-	if (xfc->context.settings->SmartSizing || xfc->context.settings->MultiTouchGestures)
+	if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_SmartSizing) ||
+	    freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MultiTouchGestures))
 	{
 		XPutImage(xfc->display, xfc->primary, xfc->gc, xfSurface->image, 0, 0, surface->x,
 		          surface->y, surface->w, surface->h);

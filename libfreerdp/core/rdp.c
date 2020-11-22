@@ -34,7 +34,7 @@
 
 #define TAG FREERDP_TAG("core.rdp")
 
-static const char* DATA_PDU_TYPE_STRINGS[80] = {
+const char* DATA_PDU_TYPE_STRINGS[80] = {
 	"?",
 	"?",      /* 0x00 - 0x01 */
 	"Update", /* 0x02 */
@@ -102,17 +102,10 @@ static const char* DATA_PDU_TYPE_STRINGS[80] = {
 	"?" /* 0x41 - 0x46 */
 };
 
-const char* data_pdu_type_to_string(UINT8 type)
-{
-	if (type > ARRAYSIZE(DATA_PDU_TYPE_STRINGS))
-		return "???";
-	return DATA_PDU_TYPE_STRINGS[type];
-}
-
 static BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type, UINT16* channel_id);
-static BOOL rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type,
+static void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type,
                                            UINT16 channel_id);
-static BOOL rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id);
+static void rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id);
 
 /**
  * Read RDP Security Header.\n
@@ -199,18 +192,13 @@ BOOL rdp_read_share_control_header(wStream* s, UINT16* tpktLength, UINT16* remai
 	return TRUE;
 }
 
-BOOL rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type, UINT16 channel_id)
+void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type, UINT16 channel_id)
 {
-	if (length < RDP_PACKET_HEADER_MAX_LENGTH)
-		return FALSE;
-	if (Stream_GetRemainingCapacity(s) < 6)
-		return FALSE;
 	length -= RDP_PACKET_HEADER_MAX_LENGTH;
 	/* Share Control Header */
 	Stream_Write_UINT16(s, length);      /* totalLength */
 	Stream_Write_UINT16(s, type | 0x10); /* pduType */
 	Stream_Write_UINT16(s, channel_id);  /* pduSource */
-	return TRUE;
 }
 
 BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* shareId,
@@ -230,16 +218,11 @@ BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* 
 	return TRUE;
 }
 
-BOOL rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id)
+void rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id)
 {
-	const size_t headerLen = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SHARE_CONTROL_HEADER_LENGTH +
-	                         RDP_SHARE_DATA_HEADER_LENGTH;
-	if (length < headerLen)
-		return FALSE;
-	length -= headerLen;
-	if (Stream_GetRemainingCapacity(s) < 12)
-		return FALSE;
-
+	length -= RDP_PACKET_HEADER_MAX_LENGTH;
+	length -= RDP_SHARE_CONTROL_HEADER_LENGTH;
+	length -= RDP_SHARE_DATA_HEADER_LENGTH;
 	/* Share Data Header */
 	Stream_Write_UINT32(s, share_id);  /* shareId (4 bytes) */
 	Stream_Write_UINT8(s, 0);          /* pad1 (1 byte) */
@@ -248,7 +231,6 @@ BOOL rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 sh
 	Stream_Write_UINT8(s, type);       /* pduType2, Data PDU Type (1 byte) */
 	Stream_Write_UINT8(s, 0);          /* compressedType (1 byte) */
 	Stream_Write_UINT16(s, 0);         /* compressedLength (2 bytes) */
-	return TRUE;
 }
 
 static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
@@ -261,7 +243,8 @@ static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
 		if (!Stream_SafeSeek(s, 12))
 			return FALSE;
 
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+		    ENCRYPTION_METHOD_FIPS)
 		{
 			if (!Stream_SafeSeek(s, 4))
 				return FALSE;
@@ -400,8 +383,9 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	UINT16 initiator;
 	enum DomainMCSPDU MCSPDU;
 	enum DomainMCSPDU domainMCSPDU;
-	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataRequest
-	                                     : DomainMCSPDU_SendDataIndication;
+	MCSPDU = (freerdp_settings_get_bool(rdp->settings, FreeRDP_ServerMode))
+	             ? DomainMCSPDU_SendDataRequest
+	             : DomainMCSPDU_SendDataIndication;
 
 	*channelId = 0; /* Initialize in case of early abort */
 	if (!tpkt_read_header(s, length))
@@ -510,11 +494,13 @@ void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 {
 	int body_length;
 	enum DomainMCSPDU MCSPDU;
-	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataIndication
-	                                     : DomainMCSPDU_SendDataRequest;
+	MCSPDU = (freerdp_settings_get_bool(rdp->settings, FreeRDP_ServerMode))
+	             ? DomainMCSPDU_SendDataIndication
+	             : DomainMCSPDU_SendDataRequest;
 
 	if ((rdp->sec_flags & SEC_ENCRYPT) &&
-	    (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS))
+	    (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+	     ENCRYPTION_METHOD_FIPS))
 	{
 		int pad;
 		body_length = length - RDP_PACKET_HEADER_MAX_LENGTH - 16;
@@ -552,7 +538,8 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 
 		if (sec_flags & SEC_ENCRYPT)
 		{
-			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+			    ENCRYPTION_METHOD_FIPS)
 			{
 				data = Stream_Pointer(s) + 12;
 				length = length - (data - Stream_Buffer(s));
@@ -610,7 +597,8 @@ static UINT32 rdp_get_sec_bytes(rdpRdp* rdp, UINT16 sec_flags)
 	{
 		sec_bytes = 12;
 
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+		    ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
 	}
 	else if (rdp->sec_flags != 0 || sec_flags != 0)
@@ -680,8 +668,7 @@ BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id)
 	sec_bytes = rdp_get_sec_bytes(rdp, 0);
 	sec_hold = Stream_GetPosition(s);
 	Stream_Seek(s, sec_bytes);
-	if (!rdp_write_share_control_header(s, length - sec_bytes, type, channel_id))
-		return FALSE;
+	rdp_write_share_control_header(s, length - sec_bytes, type, channel_id);
 	Stream_SetPosition(s, sec_hold);
 
 	if (!rdp_security_stream_out(rdp, s, length, 0, &pad))
@@ -717,10 +704,9 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	sec_bytes = rdp_get_sec_bytes(rdp, 0);
 	sec_hold = Stream_GetPosition(s);
 	Stream_Seek(s, sec_bytes);
-	if (!rdp_write_share_control_header(s, length - sec_bytes, PDU_TYPE_DATA, channel_id))
-		goto fail;
-	if (!rdp_write_share_data_header(s, length - sec_bytes, type, rdp->settings->ShareId))
-		goto fail;
+	rdp_write_share_control_header(s, length - sec_bytes, PDU_TYPE_DATA, channel_id);
+	rdp_write_share_data_header(s, length - sec_bytes, type,
+	                            freerdp_settings_get_uint32(rdp->settings, FreeRDP_ShareId));
 	Stream_SetPosition(s, sec_hold);
 
 	if (!rdp_security_stream_out(rdp, s, length, 0, &pad))
@@ -941,7 +927,8 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 	}
 
 	WLog_DBG(TAG, "recv %s Data PDU (0x%02" PRIX8 "), length: %" PRIu16 "",
-	         data_pdu_type_to_string(type), type, length);
+	         type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type,
+	         length);
 
 	switch (type)
 	{
@@ -1195,7 +1182,8 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 		return FALSE;
 
 	length = *pLength;
-	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+	if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+	    ENCRYPTION_METHOD_FIPS)
 	{
 		UINT16 len;
 		BYTE version, pad;
@@ -1270,7 +1258,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 	return TRUE;
 }
 
-const char* pdu_type_to_str(UINT16 pduType)
+static const char* pdu_type_to_str(UINT16 pduType)
 {
 	static char buffer[1024] = { 0 };
 	switch (pduType)
@@ -1326,7 +1314,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		rdp->autodetect->bandwidthMeasureByteCount += length;
 	}
 
-	if (rdp->settings->UseRdpSecurityLayer)
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_UseRdpSecurityLayer))
 	{
 		if (!rdp_read_security_header(s, &securityFlags, &length))
 		{
@@ -1375,7 +1363,8 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			if (!Stream_SafeSeek(s, remain))
 				return -1;
 
-			rdp->settings->PduSource = pduSource;
+			if (!freerdp_settings_set_uint32(rdp->settings, FreeRDP_PduSource, pduSource))
+				return -1;
 			rdp->inPackets++;
 
 			switch (pduType)
@@ -1424,7 +1413,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	}
 	else if (rdp->mcs->messageChannelId && (channelId == rdp->mcs->messageChannelId))
 	{
-		if (!rdp->settings->UseRdpSecurityLayer)
+		if (!freerdp_settings_get_bool(rdp->settings, FreeRDP_UseRdpSecurityLayer))
 			if (!rdp_read_security_header(s, &securityFlags, NULL))
 				return -1;
 		rdp->inPackets++;
@@ -1538,7 +1527,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			{
 				transport_set_nla_mode(rdp->transport, FALSE);
 
-				if (rdp->settings->VmConnectMode)
+				if (freerdp_settings_get_bool(rdp->settings, FreeRDP_VmConnectMode))
 				{
 					if (!nego_set_state(rdp->nego, NEGO_STATE_NLA))
 						return -1;
@@ -1793,12 +1782,14 @@ rdpRdp* rdp_new(rdpContext* context)
 
 	if (context->instance)
 	{
-		rdp->settings->instance = context->instance;
+		if (!freerdp_settings_set_pointer(rdp->settings, FreeRDP_instance, context->instance))
+			goto fail;
 		context->instance->settings = rdp->settings;
 	}
 	else if (context->peer)
 	{
-		rdp->settings->instance = context->peer;
+		if (!freerdp_settings_set_pointer(rdp->settings, FreeRDP_instance, context->peer))
+			goto fail;
 		context->peer->settings = rdp->settings;
 	}
 
@@ -1907,24 +1898,10 @@ void rdp_reset(rdpRdp* rdp)
 		rdp->fips_decrypt = NULL;
 	}
 
-	if (settings->ServerRandom)
-	{
-		free(settings->ServerRandom);
-		settings->ServerRandom = NULL;
-		settings->ServerRandomLength = 0;
-	}
+	freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, NULL, 0);
+	freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, NULL, 0);
 
-	if (settings->ServerCertificate)
-	{
-		free(settings->ServerCertificate);
-		settings->ServerCertificate = NULL;
-	}
-
-	if (settings->ClientAddress)
-	{
-		free(settings->ClientAddress);
-		settings->ClientAddress = NULL;
-	}
+	freerdp_settings_set_string(settings, FreeRDP_ClientAddress, NULL);
 
 	mcs_free(rdp->mcs);
 	nego_free(rdp->nego);

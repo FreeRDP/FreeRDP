@@ -33,21 +33,61 @@
 
 #define TAG CLIENT_TAG("x11")
 
-static const char* error_code_names[] = { "RAIL_EXEC_S_OK",
-	                                      "RAIL_EXEC_E_HOOK_NOT_LOADED",
-	                                      "RAIL_EXEC_E_DECODE_FAILED",
-	                                      "RAIL_EXEC_E_NOT_IN_ALLOWLIST",
-	                                      "RAIL_EXEC_E_FILE_NOT_FOUND",
-	                                      "RAIL_EXEC_E_FAIL",
-	                                      "RAIL_EXEC_E_SESSION_LOCKED" };
+static const char* error_code_names(size_t code)
+{
+	switch (code)
+	{
+		case RAIL_EXEC_S_OK:
+			return "RAIL_EXEC_S_OK";
+		case RAIL_EXEC_E_HOOK_NOT_LOADED:
+			return "RAIL_EXEC_E_HOOK_NOT_LOADED";
+		case RAIL_EXEC_E_DECODE_FAILED:
+			return "RAIL_EXEC_E_DECODE_FAILED";
+		case RAIL_EXEC_E_NOT_IN_ALLOWLIST:
+			return "RAIL_EXEC_E_NOT_IN_ALLOWLIST";
+		case RAIL_EXEC_E_FILE_NOT_FOUND:
+			return "RAIL_EXEC_E_FILE_NOT_FOUND";
+		case RAIL_EXEC_E_FAIL:
+			return "RAIL_EXEC_E_FAIL";
+		case RAIL_EXEC_E_SESSION_LOCKED:
+			return "RAIL_EXEC_E_SESSION_LOCKED";
+		default:
+			return "RAIL_EXEC_UNKNOWN";
+	};
+}
 
 #ifdef WITH_DEBUG_RAIL
-static const char* movetype_names[] = {
-	"(invalid)",        "RAIL_WMSZ_LEFT",       "RAIL_WMSZ_RIGHT",
-	"RAIL_WMSZ_TOP",    "RAIL_WMSZ_TOPLEFT",    "RAIL_WMSZ_TOPRIGHT",
-	"RAIL_WMSZ_BOTTOM", "RAIL_WMSZ_BOTTOMLEFT", "RAIL_WMSZ_BOTTOMRIGHT",
-	"RAIL_WMSZ_MOVE",   "RAIL_WMSZ_KEYMOVE",    "RAIL_WMSZ_KEYSIZE"
-};
+static const char* movetype_names(size_t type)
+{
+	switch (type)
+	{
+
+		case RAIL_WMSZ_LEFT:
+			return "RAIL_WMSZ_LEFT";
+		case RAIL_WMSZ_RIGHT:
+			return "RAIL_WMSZ_RIGHT";
+		case RAIL_WMSZ_TOP:
+			return "RAIL_WMSZ_TOP";
+		case RAIL_WMSZ_TOPLEFT:
+			return "RAIL_WMSZ_TOPLEFT";
+		case RAIL_WMSZ_TOPRIGHT:
+			return "RAIL_WMSZ_TOPRIGHT";
+		case RAIL_WMSZ_BOTTOM:
+			return "RAIL_WMSZ_BOTTOM";
+		case RAIL_WMSZ_BOTTOMLEFT:
+			return "RAIL_WMSZ_BOTTOMLEFT";
+		case RAIL_WMSZ_BOTTOMRIGHT:
+			return "RAIL_WMSZ_BOTTOMRIGHT";
+		case RAIL_WMSZ_MOVE:
+			return "RAIL_WMSZ_MOVE";
+		case RAIL_WMSZ_KEYMOVE:
+			return "RAIL_WMSZ_KEYMOVE";
+		case RAIL_WMSZ_KEYSIZE:
+			return "RAIL_WMSZ_KEYSIZE";
+		default:
+			return "(invalid)";
+	};
+}
 #endif
 
 struct xf_rail_icon
@@ -530,8 +570,9 @@ static xfRailIconCache* RailIconCache_New(rdpSettings* settings)
 	if (!cache)
 		return NULL;
 
-	cache->numCaches = settings->RemoteAppNumIconCaches;
-	cache->numCacheEntries = settings->RemoteAppNumIconCacheEntries;
+	cache->numCaches = freerdp_settings_get_uint32(settings, FreeRDP_RemoteAppNumIconCaches);
+	cache->numCacheEntries =
+	    freerdp_settings_get_uint32(settings, FreeRDP_RemoteAppNumIconCacheEntries);
 	cache->entries = calloc(cache->numCaches * cache->numCacheEntries, sizeof(xfRailIcon));
 
 	if (!cache->entries)
@@ -797,7 +838,7 @@ static UINT xf_rail_server_execute_result(RailClientContext* context,
 	if (execResult->execResult != RAIL_EXEC_S_OK)
 	{
 		WLog_ERR(TAG, "RAIL exec error: execResult=%s NtError=0x%X\n",
-		         error_code_names[execResult->execResult], execResult->rawResult);
+		         error_code_names(execResult->execResult), execResult->rawResult);
 		freerdp_abort_connect(xfc->context.instance);
 	}
 	else
@@ -830,7 +871,7 @@ static UINT xf_rail_server_start_cmd(RailClientContext* context)
 	rdpSettings* settings = xfc->context.settings;
 	clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
 
-	if (settings->AutoReconnectionEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled))
 		clientStatus.flags |= TS_RAIL_CLIENTSTATUS_AUTORECONNECT;
 
 	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_ZORDER_SYNC;
@@ -843,7 +884,7 @@ static UINT xf_rail_server_start_cmd(RailClientContext* context)
 	if (status != CHANNEL_RC_OK)
 		return status;
 
-	if (settings->RemoteAppLanguageBarSupported)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteAppLanguageBarSupported))
 	{
 		RAIL_LANGBAR_INFO_ORDER langBarInfo;
 		langBarInfo.languageBarStatus = 0x00000008; /* TF_SFT_HIDDEN */
@@ -876,17 +917,20 @@ static UINT xf_rail_server_start_cmd(RailClientContext* context)
 	sysparam.params |= SPI_MASK_SET_WORK_AREA;
 	sysparam.workArea.left = 0;
 	sysparam.workArea.top = 0;
-	sysparam.workArea.right = settings->DesktopWidth;
-	sysparam.workArea.bottom = settings->DesktopHeight;
+	sysparam.workArea.right = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	sysparam.workArea.bottom = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 	sysparam.dragFullWindows = FALSE;
 	status = context->ClientSystemParam(context, &sysparam);
 
 	if (status != CHANNEL_RC_OK)
 		return status;
 
-	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
-	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
-	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
+	exec.RemoteApplicationProgram =
+	    (char*)freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram);
+	exec.RemoteApplicationWorkingDir =
+	    (char*)freerdp_settings_get_string(settings, FreeRDP_ShellWorkingDirectory);
+	exec.RemoteApplicationArguments =
+	    (char*)freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationCmdLine);
 	return context->ClientExecute(context, &exec);
 }
 /**
@@ -928,6 +972,11 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 	if (!appWindow)
 		return ERROR_INTERNAL_ERROR;
 
+#if defined(WITH_DEBUG_RAIL)
+	WLog_DBG(TAG, "LocalMove %s (windowid=%08" PRIx32 ", isstart=%u, x=%" PRIu32 ", y=%" PRIu32 ")",
+	         movetype_names(localMoveSize->moveSizeType), localMoveSize->windowId,
+	         localMoveSize->isMoveSizeStart, localMoveSize->posX, localMoveSize->posY);
+#endif
 	switch (localMoveSize->moveSizeType)
 	{
 		case RAIL_WMSZ_LEFT:

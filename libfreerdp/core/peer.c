@@ -129,7 +129,7 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 	if (peerChannel->channelFlags & WTS_CHANNEL_OPTION_DYNAMIC)
 		return -1; /* not yet supported */
 
-	maxChunkSize = rdp->settings->VirtualChannelChunkSize;
+	maxChunkSize = freerdp_settings_get_uint32(rdp->settings, FreeRDP_VirtualChannelChunkSize);
 	totalLength = length;
 	flags = CHANNEL_FLAG_FIRST;
 
@@ -142,7 +142,7 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 
 		if (length > maxChunkSize)
 		{
-			chunkSize = rdp->settings->VirtualChannelChunkSize;
+			chunkSize = freerdp_settings_get_uint32(rdp->settings, FreeRDP_VirtualChannelChunkSize);
 		}
 		else
 		{
@@ -200,28 +200,45 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 {
 	rdpRdp* rdp = client->context->rdp;
 	rdpSettings* settings = rdp->settings;
-	settings->ServerMode = TRUE;
-	settings->FrameAcknowledge = 0;
-	settings->LocalConnection = client->local;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_ServerMode, TRUE))
+		return FALSE;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_FrameAcknowledge, 0))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_LocalConnection, client->local))
+		return FALSE;
 	rdp->state = CONNECTION_STATE_INITIAL;
 
-	if (settings->RdpKeyFile)
+	if (freerdp_settings_get_string(settings, FreeRDP_RdpKeyFile))
 	{
-		settings->RdpServerRsaKey = key_new(settings->RdpKeyFile);
+		const char* file = freerdp_settings_get_string(settings, FreeRDP_RdpKeyFile);
 
-		if (!settings->RdpServerRsaKey)
+		if (!file || !freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, NULL,
+		                                               sizeof(rdpRsaKey)))
 		{
-			WLog_ERR(TAG, "invalid RDP key file %s", settings->RdpKeyFile);
+			WLog_ERR(TAG, "invalid RDP key file %s", file);
+			return FALSE;
+		}
+		if (!key_read_from_file(
+		        freerdp_settings_get_pointer_writable(settings, FreeRDP_RdpServerRsaKey), file))
+		{
+			WLog_ERR(TAG, "Failed to read RDP key file %s", file);
 			return FALSE;
 		}
 	}
-	else if (settings->RdpKeyContent)
+	else if (freerdp_settings_get_string(settings, FreeRDP_RdpKeyContent))
 	{
-		settings->RdpServerRsaKey = key_new_from_content(settings->RdpKeyContent, NULL);
+		const char* content = freerdp_settings_get_string(settings, FreeRDP_RdpKeyContent);
 
-		if (!settings->RdpServerRsaKey)
+		if (!content || !freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, NULL,
+		                                                  sizeof(rdpRsaKey)))
 		{
 			WLog_ERR(TAG, "invalid RDP key content");
+			return FALSE;
+		}
+		if (!key_read_from_content(
+		        freerdp_settings_get_pointer_writable(settings, FreeRDP_RdpServerRsaKey), content))
+		{
+			WLog_ERR(TAG, "failed to parse key content");
 			return FALSE;
 		}
 	}
@@ -276,7 +293,8 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 totalLen
 
 #ifdef WITH_DEBUG_RDP
 	WLog_DBG(TAG, "recv %s Data PDU (0x%02" PRIX8 "), length: %" PRIu16 "",
-	         data_pdu_type_to_string(type), type, length);
+	         type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type,
+	         length);
 #endif
 
 	switch (type)
@@ -300,8 +318,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 totalLen
 			break;
 
 		case DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST:
-			if (!rdp_server_accept_client_persistent_key_list_pdu(client->context->rdp, s))
-				return FALSE;
+			/* TODO: notify server bitmap cache data */
 			break;
 
 		case DATA_PDU_TYPE_FONT_LIST:
@@ -363,7 +380,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	if (freerdp_shall_disconnect(rdp->instance))
 		return 0;
 
-	if (rdp->settings->UseRdpSecurityLayer)
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_UseRdpSecurityLayer))
 	{
 		if (!rdp_read_security_header(s, &securityFlags, &length))
 			return -1;
@@ -384,9 +401,9 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		if (!rdp_read_share_control_header(s, &pduLength, &remain, &pduType, &pduSource))
 			return -1;
 
-		client->settings->PduSource = pduSource;
+		if (!freerdp_settings_set_uint32(client->settings, FreeRDP_PduSource, pduSource))
+			return -1;
 
-		WLog_DBG(TAG, "Received %s", pdu_type_to_str(pduType));
 		switch (pduType)
 		{
 			case PDU_TYPE_DATA:
@@ -415,10 +432,11 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	}
 	else if ((rdp->mcs->messageChannelId > 0) && (channelId == rdp->mcs->messageChannelId))
 	{
-		if (!rdp->settings->UseRdpSecurityLayer)
+		if (!freerdp_settings_get_bool(rdp->settings, FreeRDP_UseRdpSecurityLayer))
+		{
 			if (!rdp_read_security_header(s, &securityFlags, NULL))
 				return -1;
-
+		}
 		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	}
 	else
@@ -426,9 +444,9 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		if (!freerdp_channel_peer_process(client, s, channelId))
 			return -1;
 	}
+
 	if (!tpkt_ensure_stream_consumed(s, length))
 		return -1;
-
 	return 0;
 }
 
@@ -486,9 +504,13 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			}
 
 			SelectedProtocol = nego_get_selected_protocol(rdp->nego);
-			client->settings->NlaSecurity = (SelectedProtocol & PROTOCOL_HYBRID) ? TRUE : FALSE;
-			client->settings->TlsSecurity = (SelectedProtocol & PROTOCOL_SSL) ? TRUE : FALSE;
-			client->settings->RdpSecurity = (SelectedProtocol == PROTOCOL_RDP) ? TRUE : FALSE;
+			if (!freerdp_settings_set_bool(client->settings, FreeRDP_NlaSecurity,
+			                               (SelectedProtocol & PROTOCOL_HYBRID) ? TRUE : FALSE) ||
+			    !freerdp_settings_set_bool(client->settings, FreeRDP_TlsSecurity,
+			                               (SelectedProtocol & PROTOCOL_SSL) ? TRUE : FALSE) ||
+			    !freerdp_settings_set_bool(client->settings, FreeRDP_RdpSecurity,
+			                               (SelectedProtocol == PROTOCOL_RDP) ? TRUE : FALSE))
+				return -1;
 
 			if (SelectedProtocol & PROTOCOL_HYBRID)
 			{
@@ -553,7 +575,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT:
-			if (rdp->settings->UseRdpSecurityLayer)
+			if (freerdp_settings_get_bool(rdp->settings, FreeRDP_UseRdpSecurityLayer))
 			{
 				if (!rdp_server_establish_keys(rdp, s))
 				{

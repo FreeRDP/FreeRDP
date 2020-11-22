@@ -135,7 +135,7 @@ static BOOL input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UIN
 	if (!input || !input->context)
 		return FALSE;
 
-	if (!input->context->settings->UnicodeInput)
+	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_UnicodeInput))
 	{
 		WLog_WARN(TAG, "Unicode input not supported by server.");
 		return FALSE;
@@ -168,7 +168,7 @@ static BOOL input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT
 
 	rdp = input->context->rdp;
 
-	if (!input->context->settings->HasHorizontalWheel)
+	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasHorizontalWheel))
 	{
 		if (flags & PTR_FLAGS_HWHEEL)
 		{
@@ -204,7 +204,7 @@ static BOOL input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT1
 	if (!input || !input->context)
 		return FALSE;
 
-	if (!input->context->settings->HasExtendedMouseEvent)
+	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasExtendedMouseEvent))
 	{
 		WLog_WARN(TAG,
 		          "skip extended mouse event %" PRIu16 "x%" PRIu16 " flags=0x%04" PRIX16
@@ -312,7 +312,7 @@ static BOOL input_send_fastpath_unicode_keyboard_event(rdpInput* input, UINT16 f
 	if (!input || !input->context)
 		return FALSE;
 
-	if (!input->context->settings->UnicodeInput)
+	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_UnicodeInput))
 	{
 		WLog_WARN(TAG, "Unicode input not supported by server.");
 		return FALSE;
@@ -339,7 +339,7 @@ static BOOL input_send_fastpath_mouse_event(rdpInput* input, UINT16 flags, UINT1
 
 	rdp = input->context->rdp;
 
-	if (!input->context->settings->HasHorizontalWheel)
+	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasHorizontalWheel))
 	{
 		if (flags & PTR_FLAGS_HWHEEL)
 		{
@@ -369,7 +369,7 @@ static BOOL input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 fla
 	if (!input || !input->context)
 		return FALSE;
 
-	if (!input->context->settings->HasExtendedMouseEvent)
+	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasExtendedMouseEvent))
 	{
 		WLog_WARN(TAG,
 		          "skip extended mouse event %" PRIu16 "x%" PRIu16 " flags=0x%04" PRIX16
@@ -634,7 +634,7 @@ BOOL input_register_client_callbacks(rdpInput* input)
 	if (!settings)
 		return FALSE;
 
-	if (settings->FastPathInput)
+	if (freerdp_settings_get_bool(settings, FreeRDP_FastPathInput))
 	{
 		input->SynchronizeEvent = input_send_fastpath_synchronize_event;
 		input->KeyboardEvent = input_send_fastpath_keyboard_event;
@@ -655,7 +655,7 @@ BOOL input_register_client_callbacks(rdpInput* input)
 		input->FocusInEvent = input_send_focus_in_event;
 	}
 
-	input->asynchronous = settings->AsyncInput;
+	input->asynchronous = freerdp_settings_get_bool(settings, FreeRDP_AsyncInput);
 
 	if (input->asynchronous)
 	{

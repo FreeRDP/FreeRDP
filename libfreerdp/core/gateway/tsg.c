@@ -2010,19 +2010,34 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 	UINT64 looptimeout = timeout * 1000ULL;
 	DWORD nCount;
 	HANDLE events[64];
-	rdpRpc* rpc = tsg->rpc;
-	rdpSettings* settings = rpc->settings;
-	rdpTransport* transport = rpc->transport;
+	const char* ComputerName;
+	rdpRpc* rpc;
+	rdpSettings* settings;
+	rdpTransport* transport;
+	if (!tsg)
+		return FALSE;
+	rpc = tsg->rpc;
+	if (!rpc)
+		return FALSE;
+	settings = rpc->settings;
+	transport = rpc->transport;
+	if (!settings || !transport)
+		return FALSE;
+	ComputerName = freerdp_settings_get_string(settings, FreeRDP_ComputerName);
+
 	tsg->Port = port;
 	tsg->transport = transport;
 
-	if (!settings->GatewayPort)
-		settings->GatewayPort = 443;
+	if (freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort) == 0)
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_GatewayPort, 443))
+			return FALSE;
+	}
 
 	if (!tsg_set_hostname(tsg, hostname))
 		return FALSE;
 
-	if (!tsg_set_machine_name(tsg, settings->ComputerName))
+	if (!tsg_set_machine_name(tsg, ComputerName))
 		return FALSE;
 
 	if (!rpc_connect(rpc, timeout))

@@ -38,6 +38,7 @@
 - (IBAction)onOK:(NSObject *)sender;
 - (IBAction)onCancel:(NSObject *)sender;
 
+@property() void *settings;
 @property(retain) NSString *serverHostname;
 @property(retain) NSString *username;
 @property(retain) NSString *password;

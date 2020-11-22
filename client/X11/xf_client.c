@@ -136,14 +136,17 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 		return;
 	}
 
-	if (settings->DesktopWidth <= 0 || settings->DesktopHeight <= 0)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) <= 0 ||
+	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) <= 0)
 	{
 		WLog_ERR(TAG, "the window dimensions are invalid");
 		return;
 	}
 
-	xScalingFactor = settings->DesktopWidth / (double)xfc->scaledWidth;
-	yScalingFactor = settings->DesktopHeight / (double)xfc->scaledHeight;
+	xScalingFactor =
+	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) / (double)xfc->scaledWidth;
+	yScalingFactor =
+	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) / (double)xfc->scaledHeight;
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, 0);
 	/* Black out possible space between desktop and window borders */
@@ -213,8 +216,8 @@ BOOL xf_picture_transform_required(xfContext* xfc)
 	rdpSettings* settings = xfc->context.settings;
 
 	if ((xfc->offset_x != 0) || (xfc->offset_y != 0) ||
-	    (xfc->scaledWidth != (INT64)settings->DesktopWidth) ||
-	    (xfc->scaledHeight != (INT64)settings->DesktopHeight))
+	    (xfc->scaledWidth != (INT64)freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth)) ||
+	    (xfc->scaledHeight != (INT64)freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
 	{
 		return TRUE;
 	}
@@ -261,8 +264,10 @@ static BOOL xf_desktop_resize(rdpContext* context)
 		BOOL same = (xfc->primary == xfc->drawing) ? TRUE : FALSE;
 		XFreePixmap(xfc->display, xfc->primary);
 
-		if (!(xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, settings->DesktopWidth,
-		                                   settings->DesktopHeight, xfc->depth)))
+		if (!(xfc->primary = XCreatePixmap(
+		          xfc->display, xfc->drawable,
+		          freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		          freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), xfc->depth)))
 			return FALSE;
 
 		if (same)
@@ -271,29 +276,31 @@ static BOOL xf_desktop_resize(rdpContext* context)
 
 #ifdef WITH_XRENDER
 
-	if (!xfc->context.settings->SmartSizing)
+	if (!freerdp_settings_get_bool(xfc->context.settings, FreeRDP_SmartSizing))
 	{
-		xfc->scaledWidth = settings->DesktopWidth;
-		xfc->scaledHeight = settings->DesktopHeight;
+		xfc->scaledWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+		xfc->scaledHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 	}
 
 #endif
 
 	if (!xfc->fullscreen)
 	{
-		xf_ResizeDesktopWindow(xfc, xfc->window, settings->DesktopWidth, settings->DesktopHeight);
+		xf_ResizeDesktopWindow(xfc, xfc->window,
+		                       freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		                       freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	}
 	else
 	{
 #ifdef WITH_XRENDER
 
-		if (!xfc->context.settings->SmartSizing)
+		if (!freerdp_settings_get_bool(xfc->context.settings, FreeRDP_SmartSizing))
 #endif
 		{
 			/* Update the saved width and height values the window will be
 			 * resized to when toggling out of fullscreen */
-			xfc->savedWidth = settings->DesktopWidth;
-			xfc->savedHeight = settings->DesktopHeight;
+			xfc->savedWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+			xfc->savedHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 		}
 
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
@@ -382,7 +389,8 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 	BOOL ret = FALSE;
 	xf_lock_x11(xfc);
 
-	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
+	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
 		goto out;
 
 	if (xfc->image)
@@ -483,7 +491,8 @@ static BOOL xf_hw_desktop_resize(rdpContext* context)
 	BOOL ret = FALSE;
 	xf_lock_x11(xfc);
 
-	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
+	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
 		goto out;
 
 	ret = xf_desktop_resize(context);
@@ -525,18 +534,18 @@ static char* xf_window_get_title(rdpSettings* settings)
 	BOOL port;
 	char* windowTitle;
 	size_t size;
-	char* name;
+	const char* name;
 	const char* prefix = "FreeRDP:";
 
 	if (!settings)
 		return NULL;
 
-	name = settings->ServerHostname;
+	name = freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
 
-	if (settings->WindowTitle)
-		return _strdup(settings->WindowTitle);
+	if (freerdp_settings_get_string(settings, FreeRDP_WindowTitle))
+		return _strdup(freerdp_settings_get_string(settings, FreeRDP_WindowTitle));
 
-	port = (settings->ServerPort != 3389);
+	port = (freerdp_settings_get_uint32(settings, FreeRDP_ServerPort) != 3389);
 	/* Just assume a window title is never longer than a filename... */
 	size = strnlen(name, MAX_PATH) + 16;
 	windowTitle = calloc(size, sizeof(char));
@@ -547,7 +556,8 @@ static char* xf_window_get_title(rdpSettings* settings)
 	if (!port)
 		sprintf_s(windowTitle, size, "%s %s", prefix, name);
 	else
-		sprintf_s(windowTitle, size, "%s %s:%i", prefix, name, settings->ServerPort);
+		sprintf_s(windowTitle, size, "%s %s:%i", prefix, name,
+		          freerdp_settings_get_uint32(settings, FreeRDP_ServerPort));
 
 	return windowTitle;
 }
@@ -563,8 +573,8 @@ BOOL xf_create_window(xfContext* xfc)
 	settings = xfc->context.settings;
 	gdi = xfc->context.gdi;
 	ZeroMemory(&xevent, sizeof(xevent));
-	width = settings->DesktopWidth;
-	height = settings->DesktopHeight;
+	width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
 	if (!xfc->hdc)
 		if (!(xfc->hdc = gdi_CreateDC(gdi->dstFormat)))
@@ -590,13 +600,13 @@ BOOL xf_create_window(xfContext* xfc)
 
 #ifdef WITH_XRENDER
 
-		if (settings->SmartSizing && !xfc->fullscreen)
+		if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) && !xfc->fullscreen)
 		{
-			if (settings->SmartSizingWidth)
-				width = settings->SmartSizingWidth;
+			if (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth))
+				width = freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth);
 
-			if (settings->SmartSizingHeight)
-				height = settings->SmartSizingHeight;
+			if (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight))
+				height = freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight);
 
 			xfc->scaledWidth = width;
 			xfc->scaledHeight = height;
@@ -629,8 +639,10 @@ BOOL xf_create_window(xfContext* xfc)
 		xfc->gc = XCreateGC(xfc->display, xfc->drawable, GCGraphicsExposures, &gcv);
 
 	if (!xfc->primary)
-		xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, settings->DesktopWidth,
-		                             settings->DesktopHeight, xfc->depth);
+		xfc->primary =
+		    XCreatePixmap(xfc->display, xfc->drawable,
+		                  freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		                  freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), xfc->depth);
 
 	xfc->drawing = xfc->primary;
 
@@ -643,16 +655,19 @@ BOOL xf_create_window(xfContext* xfc)
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, BlackPixelOfScreen(xfc->screen));
-	XFillRectangle(xfc->display, xfc->primary, xfc->gc, 0, 0, settings->DesktopWidth,
-	               settings->DesktopHeight);
+	XFillRectangle(xfc->display, xfc->primary, xfc->gc, 0, 0,
+	               freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	               freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	XFlush(xfc->display);
 
 	if (!xfc->image)
 	{
 		rdpGdi* gdi = xfc->context.gdi;
 		xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-		                          (char*)gdi->primary_buffer, settings->DesktopWidth,
-		                          settings->DesktopHeight, xfc->scanline_pad, gdi->stride);
+		                          (char*)gdi->primary_buffer,
+		                          freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		                          freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
+		                          xfc->scanline_pad, gdi->stride);
 		xfc->image->byte_order = LSBFirst;
 		xfc->image->bitmap_bit_order = LSBFirst;
 	}
@@ -736,7 +751,8 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	}
 
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
-	xfc->decorations = (xfc->fullscreen) ? FALSE : settings->Decorations;
+	xfc->decorations =
+	    (xfc->fullscreen) ? FALSE : freerdp_settings_get_bool(settings, FreeRDP_Decorations);
 	xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
 	EventArgsInit(&e, "xfreerdp");
 	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
@@ -1121,10 +1137,8 @@ static void xf_button_map_init(xfContext* xfc)
 	x11_map[111] = 112;
 
 	/* query system for actual remapping */
-	if (xfc->context.settings->UnmapButtons)
-	{
+	if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_UnmapButtons))
 		xf_get_x11_button_map(xfc, x11_map);
-	}
 
 	/* iterate over all (mapped) physical buttons; for each of them */
 	/* find the logical button in X11, and assign to this the       */
@@ -1171,8 +1185,9 @@ static BOOL xf_pre_connect(freerdp* instance)
 	UINT32 maxHeight = 0;
 	settings = instance->settings;
 	channels = context->channels;
-	settings->OsMajorType = OSMAJORTYPE_UNIX;
-	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_UNIX) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_OsMinorType, OSMINORTYPE_NATIVE_XSERVER))
+		return FALSE;
 	PubSub_SubscribeChannelConnected(instance->context->pubSub, xf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    xf_OnChannelDisconnectedEventHandler);
@@ -1180,7 +1195,9 @@ static BOOL xf_pre_connect(freerdp* instance)
 	if (!freerdp_client_load_addins(channels, instance->settings))
 		return FALSE;
 
-	if (!settings->Username && !settings->CredentialsFromStdin && !settings->SmartcardLogon)
+	if (!freerdp_settings_get_string(settings, FreeRDP_Username) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_CredentialsFromStdin) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon))
 	{
 		int rc;
 		char login_name[MAX_PATH] = { 0 };
@@ -1193,19 +1210,18 @@ static BOOL xf_pre_connect(freerdp* instance)
 #endif
 		if (rc == 0)
 		{
-			settings->Username = _strdup(login_name);
-
-			if (!settings->Username)
+			if (!freerdp_settings_set_string(settings, FreeRDP_Username, login_name))
 				return FALSE;
 
-			WLog_INFO(TAG, "No user name set. - Using login name: %s", settings->Username);
+			WLog_INFO(TAG, "No user name set. - Using login name: %s",
+			          freerdp_settings_get_string(settings, FreeRDP_Username));
 		}
 	}
 
-	if (settings->AuthenticationOnly)
+	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 	{
 		/* Check +auth-only has a username and password. */
-		if (!settings->Password)
+		if (!freerdp_settings_get_string(settings, FreeRDP_Password))
 		{
 			WLog_INFO(TAG, "auth-only, but no password set. Please provide one.");
 			return FALSE;
@@ -1221,8 +1237,8 @@ static BOOL xf_pre_connect(freerdp* instance)
 
 	if (maxWidth && maxHeight)
 	{
-		settings->DesktopWidth = maxWidth;
-		settings->DesktopHeight = maxHeight;
+		freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, maxWidth);
+		freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, maxHeight);
 	}
 
 #ifdef WITH_XRENDER
@@ -1231,18 +1247,24 @@ static BOOL xf_pre_connect(freerdp* instance)
 	 * If /f is specified in combination with /smart-sizing:widthxheight then
 	 * we run the session in the /smart-sizing dimensions scaled to full screen
 	 */
-	if (settings->Fullscreen && settings->SmartSizing && settings->SmartSizingWidth &&
-	    settings->SmartSizingHeight)
+	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
+	    freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) &&
+	    (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth) > 0) &&
+	    (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight) > 0))
 	{
-		settings->DesktopWidth = settings->SmartSizingWidth;
-		settings->DesktopHeight = settings->SmartSizingHeight;
+		freerdp_settings_set_uint32(
+		    settings, FreeRDP_DesktopWidth,
+		    freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth));
+		freerdp_settings_set_uint32(
+		    settings, FreeRDP_DesktopHeight,
+		    freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight));
 	}
 
 #endif
-	xfc->fullscreen = settings->Fullscreen;
-	xfc->decorations = settings->Decorations;
-	xfc->grab_keyboard = settings->GrabKeyboard;
-	xfc->fullscreen_toggle = settings->ToggleFullscreen;
+	xfc->fullscreen = freerdp_settings_get_bool(settings, FreeRDP_Fullscreen);
+	xfc->decorations = freerdp_settings_get_bool(settings, FreeRDP_Decorations);
+	xfc->grab_keyboard = freerdp_settings_get_bool(settings, FreeRDP_GrabKeyboard);
+	xfc->fullscreen_toggle = freerdp_settings_get_bool(settings, FreeRDP_ToggleFullscreen);
 	xf_button_map_init(xfc);
 	return TRUE;
 }
@@ -1269,7 +1291,7 @@ static BOOL xf_post_connect(freerdp* instance)
 	if (!xf_register_pointer(context->graphics))
 		return FALSE;
 
-	if (!settings->SoftwareGdi)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 	{
 		if (!xf_register_graphics(context->graphics))
 		{
@@ -1286,28 +1308,30 @@ static BOOL xf_post_connect(freerdp* instance)
 	}
 
 #ifdef WITH_XRENDER
-	xfc->scaledWidth = settings->DesktopWidth;
-	xfc->scaledHeight = settings->DesktopHeight;
+	xfc->scaledWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	xfc->scaledHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 	xfc->offset_x = 0;
 	xfc->offset_y = 0;
 #endif
 
 	if (!xfc->xrenderAvailable)
 	{
-		if (settings->SmartSizing)
+		if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 		{
 			WLog_ERR(TAG, "XRender not available: disabling smart-sizing");
-			settings->SmartSizing = FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_SmartSizing, FALSE))
+				return FALSE;
 		}
 
-		if (settings->MultiTouchGestures)
+		if (freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
 		{
 			WLog_ERR(TAG, "XRender not available: disabling local multi-touch gestures");
-			settings->MultiTouchGestures = FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_MultiTouchGestures, FALSE))
+				return FALSE;
 		}
 	}
 
-	if (settings->RemoteApplicationMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
 		xfc->remote_app = TRUE;
 
 	if (!xf_create_window(xfc))
@@ -1316,7 +1340,7 @@ static BOOL xf_post_connect(freerdp* instance)
 		return FALSE;
 	}
 
-	if (settings->SoftwareGdi)
+	if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 	{
 		update->EndPaint = xf_sw_end_paint;
 		update->DesktopResize = xf_sw_desktop_resize;
@@ -1341,8 +1365,8 @@ static BOOL xf_post_connect(freerdp* instance)
 	}
 
 	EventArgsInit(&e, "xfreerdp");
-	e.width = settings->DesktopWidth;
-	e.height = settings->DesktopHeight;
+	e.width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	e.height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 	PubSub_OnResizeWindow(context->pubSub, xfc, &e);
 	return TRUE;
 }
@@ -1484,7 +1508,7 @@ static BOOL handle_window_events(freerdp* instance)
 
 	settings = instance->settings;
 
-	if (!settings->AsyncInput)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AsyncInput))
 	{
 		if (!xf_process_x_events(instance))
 		{
@@ -1542,7 +1566,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		goto end;
 
 	/* --authonly ? */
-	if (instance->settings->AuthenticationOnly)
+	if (freerdp_settings_get_bool(instance->settings, FreeRDP_AuthenticationOnly))
 	{
 		WLog_ERR(TAG, "Authentication only, exit status %" PRId32 "", !status);
 		goto disconnect;
@@ -1577,7 +1601,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		goto disconnect;
 	}
 
-	if (!settings->AsyncInput)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AsyncInput))
 	{
 		inputEvent = xfc->x11event;
 	}
@@ -1596,7 +1620,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		nCount = 0;
 		handles[nCount++] = timer;
 
-		if (!settings->AsyncInput)
+		if (!freerdp_settings_get_bool(settings, FreeRDP_AsyncInput))
 			handles[nCount++] = inputEvent;
 
 		/*
@@ -1663,7 +1687,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		}
 	}
 
-	if (settings->AsyncInput)
+	if (freerdp_settings_get_bool(settings, FreeRDP_AsyncInput))
 	{
 		WaitForSingleObject(inputThread, INFINITE);
 		CloseHandle(inputThread);
@@ -1740,7 +1764,8 @@ static void xf_ZoomingChangeEventHandler(void* context, ZoomingChangeEventArgs* 
 
 	xfc->scaledWidth = w;
 	xfc->scaledHeight = h;
-	xf_draw_screen(xfc, 0, 0, settings->DesktopWidth, settings->DesktopHeight);
+	xf_draw_screen(xfc, 0, 0, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	               freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 }
 
 static void xf_PanningChangeEventHandler(void* context, PanningChangeEventArgs* e)
@@ -1753,7 +1778,8 @@ static void xf_PanningChangeEventHandler(void* context, PanningChangeEventArgs* 
 
 	xfc->offset_x += e->dx;
 	xfc->offset_y += e->dy;
-	xf_draw_screen(xfc, 0, 0, settings->DesktopWidth, settings->DesktopHeight);
+	xf_draw_screen(xfc, 0, 0, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	               freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 }
 #endif
 
@@ -1780,7 +1806,7 @@ static int xfreerdp_client_start(rdpContext* context)
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings = context->settings;
 
-	if (!settings->ServerHostname)
+	if (!freerdp_settings_get_string(settings, FreeRDP_ServerHostname))
 	{
 		WLog_ERR(TAG, "error: server hostname was not specified with /v:<server>[:port]");
 		return -1;

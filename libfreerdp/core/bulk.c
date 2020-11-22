@@ -69,9 +69,8 @@ static INLINE const char* bulk_get_compression_flags_string(UINT32 flags)
 static UINT32 bulk_compression_level(rdpBulk* bulk)
 {
 	rdpSettings* settings = bulk->context->settings;
-	bulk->CompressionLevel = (settings->CompressionLevel >= PACKET_COMPR_TYPE_RDP61)
-	                             ? PACKET_COMPR_TYPE_RDP61
-	                             : settings->CompressionLevel;
+	const UINT32 level = freerdp_settings_get_uint32(settings, FreeRDP_CompressionLevel);
+	bulk->CompressionLevel = (level >= PACKET_COMPR_TYPE_RDP61) ? PACKET_COMPR_TYPE_RDP61 : level;
 	return bulk->CompressionLevel;
 }
 
@@ -314,7 +313,8 @@ rdpBulk* bulk_new(rdpContext* context)
 		bulk->ncrushSend = ncrush_context_new(TRUE);
 		bulk->xcrushRecv = xcrush_context_new(FALSE);
 		bulk->xcrushSend = xcrush_context_new(TRUE);
-		bulk->CompressionLevel = context->settings->CompressionLevel;
+		bulk->CompressionLevel =
+		    freerdp_settings_get_uint32(context->settings, FreeRDP_CompressionLevel);
 	}
 
 	return bulk;

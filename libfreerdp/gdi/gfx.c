@@ -76,10 +76,11 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	DesktopWidth = resetGraphics->width;
 	DesktopHeight = resetGraphics->height;
 
-	if ((DesktopWidth != settings->DesktopWidth) || (DesktopHeight != settings->DesktopHeight))
+	if ((DesktopWidth != freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth)) ||
+	    (DesktopHeight != freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
 	{
-		settings->DesktopWidth = DesktopWidth;
-		settings->DesktopHeight = DesktopHeight;
+		freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, DesktopWidth);
+		freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, DesktopHeight);
 
 		if (update)
 			update->DesktopResize(gdi->context);

@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 
 	if (status)
 	{
-		BOOL list = settings->ListMonitors;
+		BOOL list = freerdp_settings_get_bool(settings, FreeRDP_ListMonitors);
 		if (list)
 			xf_list_monitors(xfc);
 

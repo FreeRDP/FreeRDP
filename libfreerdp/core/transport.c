@@ -179,12 +179,16 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 					UINT32 kret = 0;
 #ifdef WITH_GSSAPI
 
-					if ((strlen(transport->settings->Domain) != 0) &&
-					    (strncmp(transport->settings->Domain, ".", 1) != 0))
+					if ((strlen(freerdp_settings_get_string(transport->settings, FreeRDP_Domain)) !=
+					     0) &&
+					    (strncmp(freerdp_settings_get_string(transport->settings, FreeRDP_Domain),
+					             ".", 1) != 0))
 					{
 						kret = transport_krb5_check_account(
-						    transport, transport->settings->Username, transport->settings->Domain,
-						    transport->settings->Password);
+						    transport,
+						    freerdp_settings_get_string(transport->settings, FreeRDP_Username),
+						    freerdp_settings_get_string(transport->settings, FreeRDP_Domain),
+						    freerdp_settings_get_string(transport->settings, FreeRDP_Password));
 					}
 					else
 #endif /* WITH_GSSAPI */
@@ -292,8 +296,8 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 	else
 		transport->layer = TRANSPORT_LAYER_TLS;
 
-	tls->hostname = settings->ServerHostname;
-	tls->port = settings->ServerPort;
+	tls->hostname = freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
+	tls->port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
 
 	if (tls->port == 0)
 		tls->port = 3389;
@@ -345,7 +349,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	if (!transport_connect_tls(transport))
 		return FALSE;
 
-	if (!settings->Authentication)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_Authentication))
 		return TRUE;
 
 	nla_free(rdp->nla);
@@ -356,10 +360,13 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 	transport_set_nla_mode(transport, TRUE);
 
-	if (settings->AuthenticationServiceClass)
+	if (freerdp_settings_get_string(settings, FreeRDP_AuthenticationServiceClass))
 	{
-		if (!nla_set_service_principal(rdp->nla, nla_make_spn(settings->AuthenticationServiceClass,
-		                                                      settings->ServerHostname)))
+		if (!nla_set_service_principal(
+		        rdp->nla,
+		        nla_make_spn(
+		            freerdp_settings_get_string(settings, FreeRDP_AuthenticationServiceClass),
+		            freerdp_settings_get_string(settings, FreeRDP_ServerHostname))))
 			return FALSE;
 	}
 
@@ -383,11 +390,11 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
 	rdpContext* context = transport->context;
-	BOOL rpcFallback = !settings->GatewayHttpTransport;
+	BOOL rpcFallback = !freerdp_settings_get_bool(settings, FreeRDP_GatewayHttpTransport);
 
 	if (transport->GatewayEnabled)
 	{
-		if (!status && settings->GatewayHttpTransport)
+		if (!status && freerdp_settings_get_bool(settings, FreeRDP_GatewayHttpTransport))
 		{
 			transport->rdg = rdg_new(context);
 
@@ -410,7 +417,8 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			}
 		}
 
-		if (!status && settings->GatewayRpcTransport && rpcFallback)
+		if (!status && freerdp_settings_get_bool(settings, FreeRDP_GatewayRpcTransport) &&
+		    rpcFallback)
 		{
 			transport->tsg = tsg_new(transport);
 
@@ -505,13 +513,13 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	settings = transport->settings;
 	if (!settings)
 		return FALSE;
-	instance = (freerdp*)settings->instance;
+	instance = (freerdp*)freerdp_settings_get_pointer_writable(settings, FreeRDP_instance);
 	if (!IFCALLRESULT(FALSE, transport->io.TLSAccept, transport))
 		return FALSE;
 
 	/* Network Level Authentication */
 
-	if (!settings->Authentication)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_Authentication))
 		return TRUE;
 
 	if (!transport->nla)
@@ -938,7 +946,8 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 			continue;
 		}
 
-		if (transport->blocking || transport->settings->WaitForOutputBufferFlush)
+		if (transport->blocking ||
+		    freerdp_settings_get_bool(transport->settings, FreeRDP_WaitForOutputBufferFlush))
 		{
 			while (BIO_write_blocked(transport->frontBio))
 			{
@@ -1097,7 +1106,7 @@ int transport_check_fds(rdpTransport* transport)
 		return -1;
 	}
 
-	dueDate = now + transport->settings->MaxTimeInCheckLoop;
+	dueDate = now + freerdp_settings_get_uint32(transport->settings, FreeRDP_MaxTimeInCheckLoop);
 
 	if (transport->haveMoreBytesToRead)
 	{

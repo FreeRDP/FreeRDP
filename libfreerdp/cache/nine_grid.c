@@ -130,8 +130,8 @@ rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings)
 	nine_grid->maxSize = 2560;
 	nine_grid->maxEntries = 256;
 
-	nine_grid->settings->DrawNineGridCacheSize = nine_grid->maxSize;
-	nine_grid->settings->DrawNineGridCacheEntries = nine_grid->maxEntries;
+	freerdp_settings_set_uint32(settings, FreeRDP_DrawNineGridCacheSize, nine_grid->maxSize);
+	freerdp_settings_set_uint32(settings, FreeRDP_DrawNineGridCacheEntries, nine_grid->maxEntries);
 
 	nine_grid->entries = (NINE_GRID_ENTRY*)calloc(nine_grid->maxEntries, sizeof(NINE_GRID_ENTRY));
 	if (!nine_grid->entries)

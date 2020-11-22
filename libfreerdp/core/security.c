@@ -530,9 +530,11 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 	rdpSettings* settings;
 	BOOL status;
 	settings = rdp->settings;
-	server_random = settings->ServerRandom;
+	server_random = freerdp_settings_get_pointer_writable(settings, FreeRDP_ServerRandom);
+	if (!server_random)
+		return FALSE;
 
-	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionMethods) == ENCRYPTION_METHOD_FIPS)
 	{
 		WINPR_DIGEST_CTX* sha1;
 		BYTE client_encrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1];
@@ -574,7 +576,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 
 		winpr_Digest_Free(sha1);
 
-		if (rdp->settings->ServerMode)
+		if (freerdp_settings_get_bool(rdp->settings, FreeRDP_ServerMode))
 		{
 			fips_expand_key_bits(client_encrypt_key_t, rdp->fips_decrypt_key);
 			fips_expand_key_bits(client_decrypt_key_t, rdp->fips_encrypt_key);
@@ -597,7 +599,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 
 	memcpy(rdp->sign_key, session_key_blob, 16);
 
-	if (rdp->settings->ServerMode)
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_ServerMode))
 	{
 		status = security_md5_16_32_32(&session_key_blob[16], client_random, server_random,
 		                               rdp->encrypt_key);
@@ -620,21 +622,23 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 	if (!status)
 		return FALSE;
 
-	if (settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionMethods) == ENCRYPTION_METHOD_40BIT)
 	{
 		memcpy(rdp->sign_key, salt, 3);
 		memcpy(rdp->decrypt_key, salt, 3);
 		memcpy(rdp->encrypt_key, salt, 3);
 		rdp->rc4_key_len = 8;
 	}
-	else if (settings->EncryptionMethods == ENCRYPTION_METHOD_56BIT)
+	else if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionMethods) ==
+	         ENCRYPTION_METHOD_56BIT)
 	{
 		memcpy(rdp->sign_key, salt, 1);
 		memcpy(rdp->decrypt_key, salt, 1);
 		memcpy(rdp->encrypt_key, salt, 1);
 		rdp->rc4_key_len = 8;
 	}
-	else if (settings->EncryptionMethods == ENCRYPTION_METHOD_128BIT)
+	else if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionMethods) ==
+	         ENCRYPTION_METHOD_128BIT)
 	{
 		rdp->rc4_key_len = 16;
 	}
@@ -702,9 +706,11 @@ static BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp
 	if (!winpr_RC4_Update(rc4, key_len, key, key))
 		goto out;
 
-	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
+	if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+	    ENCRYPTION_METHOD_40BIT)
 		memcpy(key, salt, 3);
-	else if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_56BIT)
+	else if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+	         ENCRYPTION_METHOD_56BIT)
 		memcpy(key, salt, 1);
 
 	result = TRUE;

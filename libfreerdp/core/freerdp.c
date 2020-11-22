@@ -96,11 +96,13 @@ BOOL freerdp_connect(freerdp* instance)
 	if (status)
 		status2 = freerdp_channels_pre_connect(instance->context->channels, instance);
 
-	if (settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout) ==
+	    KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
 	{
-		settings->KeyboardType = 7;
-		settings->KeyboardSubType = 2;
-		settings->KeyboardFunctionKey = 12;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardType, 7) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardSubType, 2) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardFunctionKey, 12))
+			return FALSE;
 	}
 
 	if (!status || (status2 != CHANNEL_RC_OK))
@@ -114,15 +116,16 @@ BOOL freerdp_connect(freerdp* instance)
 	status = rdp_client_connect(rdp);
 
 	/* --authonly tests the connection without a UI */
-	if (instance->settings->AuthenticationOnly)
+	if (freerdp_settings_get_bool(instance->settings, FreeRDP_AuthenticationOnly))
 	{
 		WLog_ERR(TAG, "Authentication only, exit status %" PRId32 "", !status);
 		goto freerdp_connect_finally;
 	}
 
-	if (instance->settings->DumpRemoteFx)
+	if (freerdp_settings_get_bool(settings, FreeRDP_DumpRemoteFx))
 	{
-		instance->update->pcap_rfx = pcap_open(instance->settings->DumpRemoteFxFile, TRUE);
+		instance->update->pcap_rfx = pcap_open(
+		    freerdp_settings_get_string(instance->settings, FreeRDP_DumpRemoteFxFile), TRUE);
 
 		if (instance->update->pcap_rfx)
 			instance->update->dump_rfx = TRUE;
@@ -155,13 +158,14 @@ BOOL freerdp_connect(freerdp* instance)
 		goto freerdp_connect_finally;
 	}
 
-	if (instance->settings->PlayRemoteFx)
+	if (freerdp_settings_get_bool(settings, FreeRDP_PlayRemoteFx))
 	{
 		wStream* s;
 		rdpUpdate* update;
 		pcap_record record;
 		update = instance->update;
-		update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
+		update->pcap_rfx =
+		    pcap_open(freerdp_settings_get_string(settings, FreeRDP_PlayRemoteFxFile), FALSE);
 		status = FALSE;
 
 		if (!update->pcap_rfx)
@@ -280,7 +284,7 @@ DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events, DWORD count
 	else
 		return 0;
 
-	if (context->settings->AsyncInput)
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_AsyncInput))
 	{
 		if (nCount >= count)
 			return 0;
@@ -325,7 +329,7 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 		return FALSE;
 	}
 
-	if (context->settings->AsyncInput)
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_AsyncInput))
 	{
 		int rc = freerdp_message_queue_process_pending_messages(context->instance,
 		                                                        FREERDP_INPUT_MESSAGE_QUEUE);
@@ -426,7 +430,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 	update_post_disconnect(instance->update);
 
-	if (instance->settings->AsyncInput)
+	if (freerdp_settings_get_bool(instance->settings, FreeRDP_AsyncInput))
 	{
 		wMessageQueue* inputQueue =
 		    freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);

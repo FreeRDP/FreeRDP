@@ -151,7 +151,7 @@ static BOOL update_write_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA*
 		if (bitmapData->compressed)
 			bitmapData->flags |= BITMAP_COMPRESSION;
 
-		if (update->context->settings->NoBitmapCompressionHeader)
+		if (freerdp_settings_get_bool(update->context->settings, FreeRDP_NoBitmapCompressionHeader))
 		{
 			bitmapData->flags |= NO_BITMAP_COMPRESSION_HDR;
 			bitmapData->cbCompMainBodySize = bitmapData->bitmapLength;
@@ -488,8 +488,9 @@ POINTER_COLOR_UPDATE* update_read_pointer_color(rdpUpdate* update, wStream* s, B
 	if (!pointer_color)
 		goto fail;
 
-	if (!_update_read_pointer_color(s, pointer_color, xorBpp,
-	                                update->context->settings->LargePointerFlag))
+	if (!_update_read_pointer_color(
+	        s, pointer_color, xorBpp,
+	        freerdp_settings_get_uint32(update->context->settings, FreeRDP_LargePointerFlag)))
 		goto fail;
 
 	return pointer_color;
@@ -640,8 +641,10 @@ POINTER_NEW_UPDATE* update_read_pointer_new(rdpUpdate* update, wStream* s)
 		goto fail;
 	}
 
-	if (!_update_read_pointer_color(s, &pointer_new->colorPtrAttr, pointer_new->xorBpp,
-	                                update->context->settings->LargePointerFlag)) /* colorPtrAttr */
+	if (!_update_read_pointer_color(
+	        s, &pointer_new->colorPtrAttr, pointer_new->xorBpp,
+	        freerdp_settings_get_uint32(update->context->settings,
+	                                    FreeRDP_LargePointerFlag))) /* colorPtrAttr */
 		goto fail;
 
 	return pointer_new;
@@ -885,7 +888,8 @@ void update_reset_state(rdpUpdate* update)
 
 BOOL update_post_connect(rdpUpdate* update)
 {
-	update->asynchronous = update->context->settings->AsyncUpdate;
+	update->asynchronous =
+	    freerdp_settings_get_bool(update->context->settings, FreeRDP_AsyncUpdate);
 
 	if (update->asynchronous)
 		if (!(update->proxy = update_message_proxy_new(update)))
@@ -899,7 +903,8 @@ BOOL update_post_connect(rdpUpdate* update)
 
 void update_post_disconnect(rdpUpdate* update)
 {
-	update->asynchronous = update->context->settings->AsyncUpdate;
+	update->asynchronous =
+	    freerdp_settings_get_bool(update->context->settings, FreeRDP_AsyncUpdate);
 
 	if (update->asynchronous)
 		update_message_proxy_free(update->proxy);
@@ -1130,7 +1135,7 @@ static BOOL update_send_refresh_rect(rdpContext* context, BYTE count, const RECT
 {
 	rdpRdp* rdp = context->rdp;
 
-	if (rdp->settings->RefreshRect)
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_RefreshRect))
 	{
 		wStream* s = rdp_data_pdu_init(rdp);
 
@@ -1163,7 +1168,7 @@ static BOOL update_send_suppress_output(rdpContext* context, BYTE allow, const R
 {
 	rdpRdp* rdp = context->rdp;
 
-	if (rdp->settings->SuppressOutput)
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_SuppressOutput))
 	{
 		wStream* s = rdp_data_pdu_init(rdp);
 
@@ -1288,8 +1293,9 @@ out_fail:
 static BOOL update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 {
 	rdpRdp* rdp = context->rdp;
-
-	if (rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
+	const BYTE* cap = freerdp_settings_get_pointer_array(
+	    rdp->settings, FreeRDP_ReceivedCapabilities, CAPSET_TYPE_FRAME_ACKNOWLEDGE);
+	if (cap && *cap)
 	{
 		wStream* s = rdp_data_pdu_init(rdp);
 
@@ -1354,8 +1360,9 @@ static BOOL update_send_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE*
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
-
-	if (!rdp->settings->ReceivedCapabilities[CAPSET_TYPE_SOUND])
+	const BYTE* cap = freerdp_settings_get_pointer_array(
+	    rdp->settings, FreeRDP_ReceivedCapabilities, CAPSET_TYPE_SOUND);
+	if (cap && !*cap)
 	{
 		return TRUE;
 	}
@@ -1630,7 +1637,7 @@ static BOOL update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	orderType = cache_bitmap_v2->compressed ? ORDER_TYPE_BITMAP_COMPRESSED_V2
 	                                        : ORDER_TYPE_BITMAP_UNCOMPRESSED_V2;
 
-	if (context->settings->NoBitmapCompressionHeader)
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_NoBitmapCompressionHeader))
 		cache_bitmap_v2->flags |= CBR2_NO_BITMAP_COMPRESSION_HDR;
 
 	update_check_flush(context, headerLength +
@@ -2138,7 +2145,7 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 		Stream_Read_UINT16(s, areas[index].bottom);
 	}
 
-	if (update->context->settings->RefreshRect)
+	if (freerdp_settings_get_bool(update->context->settings, FreeRDP_RefreshRect))
 		IFCALL(update->RefreshRect, update->context, numberOfAreas, areas);
 	else
 		WLog_Print(update->log, WLOG_WARN, "ignoring refresh rect request from client");
@@ -2171,7 +2178,7 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 		prect = &rect;
 	}
 
-	if (update->context->settings->SuppressOutput)
+	if (freerdp_settings_get_bool(update->context->settings, FreeRDP_SuppressOutput))
 		IFCALL(update->SuppressOutput, update->context, allowDisplayUpdates, prect);
 	else
 		WLog_Print(update->log, WLOG_WARN, "ignoring suppress output request from client");

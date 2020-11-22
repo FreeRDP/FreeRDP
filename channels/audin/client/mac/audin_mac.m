@@ -319,7 +319,7 @@ static UINT audin_mac_free(IAudinDevice *device)
 	return CHANNEL_RC_OK;
 }
 
-static UINT audin_mac_parse_addin_args(AudinMacDevice *device, ADDIN_ARGV *args)
+static UINT audin_mac_parse_addin_args(AudinMacDevice *device, const ADDIN_ARGV *args)
 {
 	DWORD errCode;
 	char errString[1024];
@@ -386,7 +386,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 {
 	DWORD errCode;
 	char errString[1024];
-	ADDIN_ARGV *args;
+	const ADDIN_ARGV *args;
 	AudinMacDevice *mac;
 	UINT error;
 	mac = (AudinMacDevice *)calloc(1, sizeof(AudinMacDevice));
@@ -421,14 +421,14 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 	}
 
 	AVAuthorizationStatus status =
-	    [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeAudio];
+	    [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
 	switch (status)
 	{
 		case AVAuthorizationStatusAuthorized:
 			mac->isAuthorized = TRUE;
 			break;
 		case AVAuthorizationStatusNotDetermined:
-			[AVCaptureDevice requestAccessForMediaType:AVMediaTypeAudio
+			[AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo
 			                         completionHandler:^(BOOL granted) {
 				                         if (granted == YES)
 				                         {

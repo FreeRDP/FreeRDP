@@ -273,6 +273,7 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	shwContext* shw;
 	rdpSettings* settings;
+	BYTE* OrderSupport;
 	shw = (shwContext*)instance->context;
 
 	if (!(shw->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
@@ -285,44 +286,49 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyX509Certificate = shw_verify_x509_certificate;
 	settings = instance->settings;
 	shw->settings = instance->context->settings;
-	settings->AsyncChannels = FALSE;
-	settings->AsyncUpdate = FALSE;
-	settings->AsyncInput = FALSE;
-	settings->IgnoreCertificate = TRUE;
-	settings->ExternalCertificateManagement = TRUE;
-	settings->RdpSecurity = TRUE;
-	settings->TlsSecurity = TRUE;
-	settings->NlaSecurity = FALSE;
-	settings->BitmapCacheEnabled = FALSE;
-	settings->BitmapCacheV3Enabled = FALSE;
-	settings->OffscreenSupportLevel = FALSE;
-	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
-	settings->BrushSupportLevel = FALSE;
-	ZeroMemory(settings->OrderSupport, 32);
-	settings->FrameMarkerCommandEnabled = TRUE;
-	settings->SurfaceFrameMarkerEnabled = TRUE;
-	settings->AltSecFrameMarkerSupport = TRUE;
-	settings->ColorDepth = 32;
-	settings->NSCodec = TRUE;
-	settings->RemoteFxCodec = TRUE;
-	settings->FastPathInput = TRUE;
-	settings->FastPathOutput = TRUE;
-	settings->LargePointerFlag = TRUE;
-	settings->CompressionEnabled = FALSE;
-	settings->AutoReconnectionEnabled = FALSE;
-	settings->NetworkAutoDetect = FALSE;
-	settings->SupportHeartbeatPdu = FALSE;
-	settings->SupportMultitransport = FALSE;
-	settings->ConnectionType = CONNECTION_TYPE_LAN;
-	settings->AllowFontSmoothing = TRUE;
-	settings->AllowDesktopComposition = TRUE;
-	settings->DisableWallpaper = FALSE;
-	settings->DisableFullWindowDrag = TRUE;
-	settings->DisableMenuAnims = TRUE;
-	settings->DisableThemes = FALSE;
-	settings->DeviceRedirection = TRUE;
-	settings->RedirectClipboard = TRUE;
-	settings->SupportDynamicChannels = TRUE;
+	OrderSupport = freerdp_settings_set_pointer_writable(settings, FreeRDP_OrderSupport);
+	if (!OrderSupport)
+		return FALSE;
+	memset(OrderSupport, 0, 32);
+
+	if(!freerdp_settings_set_bool(settings, FreeRDP_AsyncChannels, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_AsyncUpdate, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_AsyncInput, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_IgnoreCertificate, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_ExternalCertificateManagement, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheEnabled, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheV3Enabled, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_OffscreenSupportLevel, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_GlyphSupportLevel = GLYPH_SUPPORT_NONE;
+	!freerdp_settings_set_bool(settings, FreeRDP_BrushSupportLevel, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_FrameMarkerCommandEnabled, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_SurfaceFrameMarkerEnabled, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_AltSecFrameMarkerSupport, TRUE)||
+	!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32)||
+	!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_FastPathInput, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_FastPathOutput, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_LargePointerFlag, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_CompressionEnabled, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_AutoReconnectionEnabled, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_SupportHeartbeatPdu, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransport, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_ConnectionType = CONNECTION_TYPE_LAN;
+	!freerdp_settings_set_bool(settings, FreeRDP_AllowFontSmoothing, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_AllowDesktopComposition, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_DisableWallpaper, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_DisableFullWindowDrag, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_DisableMenuAnims, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_DisableThemes, FALSE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_RedirectClipboard, TRUE)||
+	!freerdp_settings_set_bool(settings, FreeRDP_SupportDynamicChannels, TRUE))
+    return FALSE;
 	return TRUE;
 }
 

@@ -55,13 +55,16 @@ static BOOL wlf_disp_settings_changed(wlfDispContext* wlfDisp)
 	if (wlfDisp->lastSentHeight != wlfDisp->targetHeight)
 		return TRUE;
 
-	if (wlfDisp->lastSentDesktopOrientation != settings->DesktopOrientation)
+	if (wlfDisp->lastSentDesktopOrientation !=
+	    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation))
 		return TRUE;
 
-	if (wlfDisp->lastSentDesktopScaleFactor != settings->DesktopScaleFactor)
+	if (wlfDisp->lastSentDesktopScaleFactor !=
+	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor))
 		return TRUE;
 
-	if (wlfDisp->lastSentDeviceScaleFactor != settings->DeviceScaleFactor)
+	if (wlfDisp->lastSentDeviceScaleFactor !=
+	    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor))
 		return TRUE;
 
 	if (wlfDisp->fullscreen != wlfDisp->wlc->fullscreen)
@@ -75,9 +78,12 @@ static BOOL wlf_update_last_sent(wlfDispContext* wlfDisp)
 	rdpSettings* settings = wlfDisp->wlc->context.settings;
 	wlfDisp->lastSentWidth = wlfDisp->targetWidth;
 	wlfDisp->lastSentHeight = wlfDisp->targetHeight;
-	wlfDisp->lastSentDesktopOrientation = settings->DesktopOrientation;
-	wlfDisp->lastSentDesktopScaleFactor = settings->DesktopScaleFactor;
-	wlfDisp->lastSentDeviceScaleFactor = settings->DeviceScaleFactor;
+	wlfDisp->lastSentDesktopOrientation =
+	    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
+	wlfDisp->lastSentDesktopScaleFactor =
+	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+	wlfDisp->lastSentDeviceScaleFactor =
+	    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 	wlfDisp->fullscreen = wlfDisp->wlc->fullscreen;
 	return TRUE;
 }
@@ -109,11 +115,11 @@ static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
 		return TRUE;
 
 	/* TODO: Multimonitor support for wayland
-	if (wlc->fullscreen && (settings->MonitorCount > 0))
+	if (wlc->fullscreen && (freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) > 0))
 	{
-	    if (wlf_disp_sendLayout(wlfDisp->disp, settings->MonitorDefArray,
-	                           settings->MonitorCount) != CHANNEL_RC_OK)
-	        return FALSE;
+	    if (wlf_disp_sendLayout(wlfDisp->disp, freerdp_settings_get_pointer(settings,
+	FreeRDP_MonitorDefArray), freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount)) !=
+	CHANNEL_RC_OK) return FALSE;
 	}
 	else
 	*/
@@ -123,9 +129,10 @@ static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
 		layout.Top = layout.Left = 0;
 		layout.Width = wlfDisp->targetWidth;
 		layout.Height = wlfDisp->targetHeight;
-		layout.Orientation = settings->DesktopOrientation;
-		layout.DesktopScaleFactor = settings->DesktopScaleFactor;
-		layout.DeviceScaleFactor = settings->DeviceScaleFactor;
+		layout.Orientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
+		layout.DesktopScaleFactor =
+		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 		layout.PhysicalWidth = wlfDisp->targetWidth;
 		layout.PhysicalHeight = wlfDisp->targetHeight;
 
@@ -176,7 +183,7 @@ static void wlf_disp_OnActivated(void* context, ActivatedEventArgs* e)
 
 	wlfDisp->waitingResize = FALSE;
 
-	if (wlfDisp->activated && !settings->Fullscreen)
+	if (wlfDisp->activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
 		wlf_disp_set_window_resizable(wlfDisp);
 
@@ -199,7 +206,7 @@ static void wlf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
 
 	wlfDisp->waitingResize = FALSE;
 
-	if (wlfDisp->activated && !settings->Fullscreen)
+	if (wlfDisp->activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
 		wlf_disp_set_window_resizable(wlfDisp);
 		wlf_disp_sendResize(wlfDisp);
@@ -216,7 +223,7 @@ static void wlf_disp_OnTimer(void* context, TimerEventArgs* e)
 	if (!wlf_disp_check_context(context, &wlc, &wlfDisp, &settings))
 		return;
 
-	if (!wlfDisp->activated || settings->Fullscreen)
+	if (!wlfDisp->activated || freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		return;
 
 	wlf_disp_sendResize(wlfDisp);
@@ -235,8 +242,10 @@ wlfDispContext* wlf_disp_new(wlfContext* wlc)
 		return NULL;
 
 	ret->wlc = wlc;
-	ret->lastSentWidth = ret->targetWidth = wlc->context.settings->DesktopWidth;
-	ret->lastSentHeight = ret->targetHeight = wlc->context.settings->DesktopHeight;
+	ret->lastSentWidth = ret->targetWidth =
+	    freerdp_settings_get_uint32(wlc->context.settings, FreeRDP_DesktopWidth);
+	ret->lastSentHeight = ret->targetHeight =
+	    freerdp_settings_get_uint32(wlc->context.settings, FreeRDP_DesktopHeight);
 	PubSub_SubscribeActivated(wlc->context.pubSub, wlf_disp_OnActivated);
 	PubSub_SubscribeGraphicsReset(wlc->context.pubSub, wlf_disp_OnGraphicsReset);
 	PubSub_SubscribeTimer(wlc->context.pubSub, wlf_disp_OnTimer);
@@ -308,8 +317,10 @@ UINT wlf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, size_t n
 				break;
 		}
 
-		layouts[i].DesktopScaleFactor = settings->DesktopScaleFactor;
-		layouts[i].DeviceScaleFactor = settings->DeviceScaleFactor;
+		layouts[i].DesktopScaleFactor =
+		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+		layouts[i].DeviceScaleFactor =
+		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 	}
 
 	ret = IFCALLRESULT(CHANNEL_RC_OK, disp->SendMonitorLayout, disp, nmonitors, layouts);
@@ -339,7 +350,7 @@ static UINT wlf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitor
 	         maxNumMonitors, maxMonitorAreaFactorA, maxMonitorAreaFactorB);
 	wlfDisp->activated = TRUE;
 
-	if (settings->Fullscreen)
+	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		return CHANNEL_RC_OK;
 
 	WLog_DBG(TAG, "DisplayControlCapsPdu: setting the window as resizable");
@@ -361,7 +372,7 @@ BOOL wlf_disp_init(wlfDispContext* wlfDisp, DispClientContext* disp)
 	wlfDisp->disp = disp;
 	disp->custom = (void*)wlfDisp;
 
-	if (settings->DynamicResolutionUpdate)
+	if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 	{
 		disp->DisplayControlCaps = wlf_DisplayControlCaps;
 	}

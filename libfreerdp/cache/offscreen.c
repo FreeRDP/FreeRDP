@@ -191,12 +191,14 @@ rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings)
 		return NULL;
 
 	offscreenCache->settings = settings;
-	offscreenCache->update = ((freerdp*)settings->instance)->update;
+	offscreenCache->update =
+	    ((freerdp*)freerdp_settings_get_pointer(settings, FreeRDP_instance))->update;
 	offscreenCache->currentSurface = SCREEN_BITMAP_SURFACE;
 	offscreenCache->maxSize = 7680;
 	offscreenCache->maxEntries = 2000;
-	settings->OffscreenCacheSize = offscreenCache->maxSize;
-	settings->OffscreenCacheEntries = offscreenCache->maxEntries;
+	freerdp_settings_set_uint32(settings, FreeRDP_OffscreenCacheSize, offscreenCache->maxSize);
+	freerdp_settings_set_uint32(settings, FreeRDP_OffscreenCacheEntries,
+	                            offscreenCache->maxEntries);
 	offscreenCache->entries = (rdpBitmap**)calloc(offscreenCache->maxEntries, sizeof(rdpBitmap*));
 
 	if (!offscreenCache->entries)

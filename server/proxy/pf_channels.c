@@ -195,7 +195,8 @@ BOOL pf_server_channels_init(pServerContext* ps)
 	rdpContext* client = (rdpContext*)ps->pdata->pc;
 	proxyConfig* config = ps->pdata->config;
 
-	if (context->settings->SupportGraphicsPipeline && config->GFX)
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_SupportGraphicsPipeline) &&
+	    config->GFX)
 	{
 		if (!pf_server_rdpgfx_init(ps))
 			return FALSE;
@@ -210,7 +211,8 @@ BOOL pf_server_channels_init(pServerContext* ps)
 	if (config->Clipboard &&
 	    WTSVirtualChannelManagerIsChannelJoined(ps->vcm, CLIPRDR_SVC_CHANNEL_NAME))
 	{
-		client->settings->RedirectClipboard = TRUE;
+		if (!freerdp_settings_set_bool(client->settings, FreeRDP_RedirectClipboard, TRUE))
+			return FALSE;
 
 		if (!pf_server_cliprdr_init(ps))
 			return FALSE;

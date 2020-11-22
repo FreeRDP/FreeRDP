@@ -327,7 +327,7 @@ endif()
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-shadow-subsystem freerdp-shadow winpr)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-shadow-subsystem freerdp-shadow freerdp winpr)
 
 target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${${MODULE_PREFIX}_LIBS})
 

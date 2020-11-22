@@ -1608,7 +1608,7 @@ UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			goto fail;
 
 		rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");
-		rdpsnd->channelEntryPoints.pExtendedData = pEntryPoints->GetPluginData(pEntryPoints);
+		rdpsnd->channelEntryPoints.pExtendedData = (void*)pEntryPoints->GetPluginData(pEntryPoints);
 
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpsnd", &rdpsnd->iface);
 	}

@@ -75,7 +75,6 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_GfxSmallCache,
 	FreeRDP_GfxThinClient,
 	FreeRDP_GrabKeyboard,
-	FreeRDP_GrabMouse,
 	FreeRDP_HasExtendedMouseEvent,
 	FreeRDP_HasHorizontalWheel,
 	FreeRDP_HasMonitorAttributes,
@@ -212,6 +211,7 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_EncryptionLevel,
 	FreeRDP_EncryptionMethods,
 	FreeRDP_ExtEncryptionMethods,
+	FreeRDP_Floatbar,
 	FreeRDP_FrameAcknowledge,
 	FreeRDP_GatewayAcceptedCertLength,
 	FreeRDP_GatewayCredentialsSource,
@@ -304,6 +304,7 @@ static const size_t uint64_list_indices[] = {
 #define have_string_list_indices
 static const size_t string_list_indices[] = {
 	FreeRDP_AcceptedCert,
+	FreeRDP_ActionScript,
 	FreeRDP_AllowedTlsCiphers,
 	FreeRDP_AlternateShell,
 	FreeRDP_AssistanceFile,

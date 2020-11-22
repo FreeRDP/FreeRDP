@@ -58,6 +58,8 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 	size_t chunkSize;
 	rdpMcs* mcs = rdp->mcs;
 	rdpMcsChannel* channel = NULL;
+	const UINT32 chunk =
+	    freerdp_settings_get_uint32(rdp->settings, FreeRDP_VirtualChannelChunkSize);
 
 	for (i = 0; i < mcs->channelCount; i++)
 	{
@@ -84,9 +86,9 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 		if (!s)
 			return FALSE;
 
-		if (left > rdp->settings->VirtualChannelChunkSize)
+		if (left > chunk)
 		{
-			chunkSize = rdp->settings->VirtualChannelChunkSize;
+			chunkSize = chunk;
 		}
 		else
 		{
@@ -94,7 +96,8 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 			flags |= CHANNEL_FLAG_LAST;
 		}
 
-		if (!rdp->settings->ServerMode && (channel->options & CHANNEL_OPTION_SHOW_PROTOCOL))
+		if (!freerdp_settings_get_bool(rdp->settings, FreeRDP_ServerMode) &&
+		    (channel->options & CHANNEL_OPTION_SHOW_PROTOCOL))
 		{
 			flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
 		}

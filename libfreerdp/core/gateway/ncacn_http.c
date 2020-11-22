@@ -142,8 +142,10 @@ BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel)
 	if (!tls || !ntlm || !instance || !settings)
 		return FALSE;
 
-	if (!settings->GatewayPassword || !settings->GatewayUsername ||
-	    !strlen(settings->GatewayPassword) || !strlen(settings->GatewayUsername))
+	if (!freerdp_settings_get_string(settings, FreeRDP_GatewayPassword) ||
+	    !freerdp_settings_get_string(settings, FreeRDP_GatewayUsername) ||
+	    !strlen(freerdp_settings_get_string(settings, FreeRDP_GatewayPassword)) ||
+	    !strlen(freerdp_settings_get_string(settings, FreeRDP_GatewayUsername)))
 	{
 		if (freerdp_shall_disconnect(instance))
 			return FALSE;
@@ -155,53 +157,67 @@ BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel)
 		}
 		else
 		{
-			BOOL proceed =
-			    instance->GatewayAuthenticate(instance, &settings->GatewayUsername,
-			                                  &settings->GatewayPassword, &settings->GatewayDomain);
+			BOOL rc = TRUE;
+			;
+			char* user = _strdup(freerdp_settings_get_string(settings, FreeRDP_GatewayUsername));
+			char* pwd = _strdup(freerdp_settings_get_string(settings, FreeRDP_GatewayPassword));
+			char* domain = _strdup(freerdp_settings_get_string(settings, FreeRDP_GatewayDomain));
+			BOOL proceed = instance->GatewayAuthenticate(instance, &user, &pwd, &domain);
 
-			if (!proceed)
+			if (!freerdp_settings_set_string(settings, FreeRDP_Username, user) ||
+			    !freerdp_settings_set_string(settings, FreeRDP_GatewayDomain, domain) ||
+			    !freerdp_settings_set_string(settings, FreeRDP_GatewayPassword, pwd))
+				rc = FALSE;
+			free(user);
+			free(pwd);
+			free(domain);
+
+			if (!proceed || !rc)
 			{
 				freerdp_set_last_error_log(context,
 				                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return TRUE;
 			}
 
-			if (settings->GatewayUseSameCredentials)
+			if (freerdp_settings_get_bool(settings, FreeRDP_GatewayUseSameCredentials))
 			{
-				if (settings->GatewayUsername)
+				if (freerdp_settings_get_string(settings, FreeRDP_GatewayUsername))
 				{
-					free(settings->Username);
-
-					if (!(settings->Username = _strdup(settings->GatewayUsername)))
+					if (!freerdp_settings_set_string(
+					        settings, FreeRDP_Username,
+					        freerdp_settings_get_string(settings, FreeRDP_GatewayUsername)))
 						return FALSE;
 				}
 
-				if (settings->GatewayDomain)
+				if (freerdp_settings_get_string(settings, FreeRDP_GatewayDomain))
 				{
-					free(settings->Domain);
-
-					if (!(settings->Domain = _strdup(settings->GatewayDomain)))
+					if (!freerdp_settings_set_string(
+					        settings, FreeRDP_Domain,
+					        freerdp_settings_get_string(settings, FreeRDP_GatewayDomain)))
 						return FALSE;
 				}
 
-				if (settings->GatewayPassword)
+				if (freerdp_settings_get_string(settings, FreeRDP_GatewayPassword))
 				{
-					free(settings->Password);
-
-					if (!(settings->Password = _strdup(settings->GatewayPassword)))
+					if (!freerdp_settings_set_string(
+					        settings, FreeRDP_Password,
+					        freerdp_settings_get_string(settings, FreeRDP_GatewayPassword)))
 						return FALSE;
 				}
 			}
 		}
 	}
 
-	if (!ntlm_client_init(ntlm, TRUE, settings->GatewayUsername, settings->GatewayDomain,
-	                      settings->GatewayPassword, tls->Bindings))
+	if (!ntlm_client_init(
+	        ntlm, TRUE, freerdp_settings_get_string(settings, FreeRDP_GatewayUsername),
+	        freerdp_settings_get_string(settings, FreeRDP_GatewayDomain),
+	        freerdp_settings_get_string(settings, FreeRDP_GatewayPassword), tls->Bindings))
 	{
 		return TRUE;
 	}
 
-	if (!ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname))
+	if (!ntlm_client_make_spn(ntlm, _T("HTTP"),
+	                          freerdp_settings_get_string(settings, FreeRDP_GatewayHostname)))
 	{
 		return TRUE;
 	}

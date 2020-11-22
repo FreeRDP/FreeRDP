@@ -82,8 +82,8 @@ finish:
 int TestKnownHosts(int argc, char* argv[])
 {
 	int rc = -1;
-	rdpSettings current;
-	rdpSettings legacy;
+	rdpSettings* current;
+	rdpSettings* legacy;
 	rdpCertificateData* data = NULL;
 	rdpCertificateStore* store = NULL;
 	char* currentFileV2 = NULL;
@@ -94,9 +94,17 @@ int TestKnownHosts(int argc, char* argv[])
 	char* fp = NULL;
 	char sname[8192];
 	char dname[8192];
+	char* currentConfigPath = NULL;
+	char* legacyConfigPath = NULL;
 	SYSTEMTIME systemTime;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+
+	current = freerdp_settings_new(0);
+	legacy = freerdp_settings_new(0);
+	if (!current || !legacy)
+		goto finish;
+
 	GetSystemTime(&systemTime);
 	sprintf_s(sname, sizeof(sname),
 	          "TestKnownHostsCurrent-%04" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16
@@ -109,28 +117,33 @@ int TestKnownHosts(int argc, char* argv[])
 	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour,
 	          systemTime.wMinute, systemTime.wSecond, systemTime.wMilliseconds);
 
-	current.ConfigPath = GetKnownSubPath(KNOWN_PATH_TEMP, sname);
-	legacy.ConfigPath = GetKnownSubPath(KNOWN_PATH_TEMP, dname);
+	currentConfigPath = GetKnownSubPath(KNOWN_PATH_TEMP, sname);
+	legacyConfigPath = GetKnownSubPath(KNOWN_PATH_TEMP, dname);
+	if (!currentConfigPath || !legacyConfigPath)
+		goto finish;
+	if (!freerdp_settings_set_string(current, FreeRDP_ConfigPath, currentConfigPath) ||
+	    !freerdp_settings_set_string(legacy, FreeRDP_ConfigPath, legacyConfigPath))
+		goto finish;
 
-	if (!PathFileExistsA(current.ConfigPath))
+	if (!PathFileExistsA(currentConfigPath))
 	{
-		if (!CreateDirectoryA(current.ConfigPath, NULL))
+		if (!CreateDirectoryA(currentConfigPath, NULL))
 		{
-			fprintf(stderr, "Could not create %s!\n", current.ConfigPath);
+			fprintf(stderr, "Could not create %s!\n", currentConfigPath);
 			goto finish;
 		}
 	}
 
-	if (!PathFileExistsA(legacy.ConfigPath))
+	if (!PathFileExistsA(legacyConfigPath))
 	{
-		if (!CreateDirectoryA(legacy.ConfigPath, NULL))
+		if (!CreateDirectoryA(legacyConfigPath, NULL))
 		{
-			fprintf(stderr, "Could not create %s!\n", legacy.ConfigPath);
+			fprintf(stderr, "Could not create %s!\n", legacyConfigPath);
 			goto finish;
 		}
 	}
 
-	currentFileV2 = GetCombinedPath(current.ConfigPath, "known_hosts2");
+	currentFileV2 = GetCombinedPath(currentConfigPath, "known_hosts2");
 
 	if (!currentFileV2)
 	{
@@ -138,7 +151,7 @@ int TestKnownHosts(int argc, char* argv[])
 		goto finish;
 	}
 
-	legacyFileV2 = GetCombinedPath(legacy.ConfigPath, "known_hosts2");
+	legacyFileV2 = GetCombinedPath(legacyConfigPath, "known_hosts2");
 
 	if (!legacyFileV2)
 	{
@@ -146,7 +159,7 @@ int TestKnownHosts(int argc, char* argv[])
 		goto finish;
 	}
 
-	legacyFile = GetCombinedPath(legacy.ConfigPath, "known_hosts");
+	legacyFile = GetCombinedPath(legacyConfigPath, "known_hosts");
 
 	if (!legacyFile)
 	{
@@ -154,7 +167,7 @@ int TestKnownHosts(int argc, char* argv[])
 		goto finish;
 	}
 
-	store = certificate_store_new(&current);
+	store = certificate_store_new(current);
 
 	if (!store)
 	{
@@ -285,7 +298,7 @@ int TestKnownHosts(int argc, char* argv[])
 
 	certificate_data_free(data);
 	certificate_store_free(store);
-	store = certificate_store_new(&legacy);
+	store = certificate_store_new(legacy);
 
 	if (!store)
 	{
@@ -326,8 +339,8 @@ int TestKnownHosts(int argc, char* argv[])
 
 	rc = 0;
 finish:
-	free(current.ConfigPath);
-	free(legacy.ConfigPath);
+	free(currentConfigPath);
+	free(legacyConfigPath);
 
 	if (store)
 		certificate_store_free(store);
@@ -335,11 +348,13 @@ finish:
 	if (data)
 		certificate_data_free(data);
 
+	freerdp_settings_free(current);
+	freerdp_settings_free(legacy);
 	DeleteFileA(currentFileV2);
-	// RemoveDirectoryA(current.ConfigPath);
+	// RemoveDirectoryA(currentConfigPath);
 	DeleteFileA(legacyFileV2);
 	DeleteFileA(legacyFile);
-	// RemoveDirectoryA(legacy.ConfigPath);
+	// RemoveDirectoryA(legacyConfigPath);
 	free(currentFileV2);
 	free(legacyFileV2);
 	free(legacyFile);

@@ -880,6 +880,10 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	if (!rdpei)
 	{
 		size_t size;
+		rdpSettings* settings = (rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints);
+		const freerdp* instance = freerdp_settings_get_pointer(settings, FreeRDP_instance);
+		if (!settings || !instance)
+			return ERROR_INTERNAL_ERROR;
 		rdpei = (RDPEI_PLUGIN*)calloc(1, sizeof(RDPEI_PLUGIN));
 
 		if (!rdpei)
@@ -899,9 +903,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		rdpei->maxTouchContacts = 10;
 		size = rdpei->maxTouchContacts * sizeof(RDPINPUT_CONTACT_POINT);
 		rdpei->contactPoints = (RDPINPUT_CONTACT_POINT*)calloc(1, size);
-		rdpei->rdpcontext =
-		    ((freerdp*)((rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints))->instance)
-		        ->context;
+		rdpei->rdpcontext = instance->context;
 
 		if (!rdpei->contactPoints)
 		{

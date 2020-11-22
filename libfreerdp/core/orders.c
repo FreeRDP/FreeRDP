@@ -188,7 +188,7 @@ static BOOL check_order_activated(wLog* log, rdpSettings* settings, const char* 
 {
 	if (!condition)
 	{
-		if (settings->AllowUnanouncedOrdersFromServer)
+		if (freerdp_settings_get_bool(settings, FreeRDP_AllowUnanouncedOrdersFromServer))
 		{
 			WLog_Print(log, WLOG_WARN,
 			           "%s - SERVER BUG: The support for this feature was not announced!",
@@ -222,16 +222,16 @@ static BOOL check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE ord
 	{
 		case ORDER_TYPE_CREATE_OFFSCREEN_BITMAP:
 		case ORDER_TYPE_SWITCH_SURFACE:
-			condition = settings->OffscreenSupportLevel != 0;
+			condition = freerdp_settings_get_uint32(settings, FreeRDP_OffscreenSupportLevel) != 0;
 			extendedMessage = "Adding +offscreen-cache might mitigate";
 			break;
 
 		case ORDER_TYPE_CREATE_NINE_GRID_BITMAP:
-			condition = settings->DrawNineGridEnabled;
+			condition = freerdp_settings_get_bool(settings, FreeRDP_DrawNineGridEnabled);
 			break;
 
 		case ORDER_TYPE_FRAME_MARKER:
-			condition = settings->FrameMarkerCommandEnabled;
+			condition = freerdp_settings_get_bool(settings, FreeRDP_FrameMarkerCommandEnabled);
 			break;
 
 		case ORDER_TYPE_GDIPLUS_FIRST:
@@ -240,11 +240,12 @@ static BOOL check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE ord
 		case ORDER_TYPE_GDIPLUS_CACHE_FIRST:
 		case ORDER_TYPE_GDIPLUS_CACHE_NEXT:
 		case ORDER_TYPE_GDIPLUS_CACHE_END:
-			condition = settings->DrawGdiPlusCacheEnabled;
+			condition = freerdp_settings_get_bool(settings, FreeRDP_DrawGdiPlusCacheEnabled);
 			break;
 
 		case ORDER_TYPE_WINDOW:
-			condition = settings->RemoteWndSupportLevel != WINDOW_LEVEL_NOT_SUPPORTED;
+			condition = freerdp_settings_get_uint32(settings, FreeRDP_RemoteWndSupportLevel) !=
+			            WINDOW_LEVEL_NOT_SUPPORTED;
 			break;
 
 		case ORDER_TYPE_STREAM_BITMAP_FIRST:
@@ -272,29 +273,31 @@ static BOOL check_secondary_order_supported(wLog* log, rdpSettings* settings, BY
 	{
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED:
 		case ORDER_TYPE_CACHE_BITMAP_COMPRESSED:
-			condition = settings->BitmapCacheEnabled;
+			condition = freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheEnabled);
 			extendedMessage = "Adding +bitmap-cache might mitigate";
 			break;
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
-			condition = settings->BitmapCacheEnabled;
+			condition = freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheEnabled);
 			extendedMessage = "Adding +bitmap-cache might mitigate";
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
-			condition = settings->BitmapCacheV3Enabled;
+			condition = freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheV3Enabled);
 			extendedMessage = "Adding +bitmap-cache might mitigate";
 			break;
 
 		case ORDER_TYPE_CACHE_COLOR_TABLE:
-			condition = (settings->OrderSupport[NEG_MEMBLT_INDEX] ||
-			             settings->OrderSupport[NEG_MEM3BLT_INDEX]);
+			condition = (*(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                        NEG_MEMBLT_INDEX) ||
+			             *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                        NEG_MEM3BLT_INDEX));
 			break;
 
 		case ORDER_TYPE_CACHE_GLYPH:
 		{
-			switch (settings->GlyphSupportLevel)
+			switch (freerdp_settings_get_uint32(settings, FreeRDP_GlyphSupportLevel))
 			{
 				case GLYPH_SUPPORT_PARTIAL:
 				case GLYPH_SUPPORT_FULL:
@@ -331,91 +334,113 @@ static BOOL check_primary_order_supported(wLog* log, rdpSettings* settings, UINT
 	switch (orderType)
 	{
 		case ORDER_TYPE_DSTBLT:
-			condition = settings->OrderSupport[NEG_DSTBLT_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_DSTBLT_INDEX);
 			break;
 
 		case ORDER_TYPE_SCRBLT:
-			condition = settings->OrderSupport[NEG_SCRBLT_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_SCRBLT_INDEX);
 			break;
 
 		case ORDER_TYPE_DRAW_NINE_GRID:
-			condition = settings->OrderSupport[NEG_DRAWNINEGRID_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_DRAWNINEGRID_INDEX);
 			break;
 
 		case ORDER_TYPE_MULTI_DRAW_NINE_GRID:
-			condition = settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_MULTI_DRAWNINEGRID_INDEX);
 			break;
 
 		case ORDER_TYPE_LINE_TO:
-			condition = settings->OrderSupport[NEG_LINETO_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_LINETO_INDEX);
 			break;
 
 		/* [MS-RDPEGDI] 2.2.2.2.1.1.2.5 OpaqueRect (OPAQUERECT_ORDER)
 		 * suggests that PatBlt and OpaqueRect imply each other. */
 		case ORDER_TYPE_PATBLT:
 		case ORDER_TYPE_OPAQUE_RECT:
-			condition = settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] ||
-			            settings->OrderSupport[NEG_PATBLT_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_OPAQUE_RECT_INDEX) ||
+			            *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_PATBLT_INDEX);
 			break;
 
 		case ORDER_TYPE_SAVE_BITMAP:
-			condition = settings->OrderSupport[NEG_SAVEBITMAP_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_SAVEBITMAP_INDEX);
 			break;
 
 		case ORDER_TYPE_MEMBLT:
-			condition = settings->OrderSupport[NEG_MEMBLT_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_MEMBLT_INDEX);
 			break;
 
 		case ORDER_TYPE_MEM3BLT:
-			condition = settings->OrderSupport[NEG_MEM3BLT_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_MEM3BLT_INDEX);
 			break;
 
 		case ORDER_TYPE_MULTI_DSTBLT:
-			condition = settings->OrderSupport[NEG_MULTIDSTBLT_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_MULTIDSTBLT_INDEX);
 			break;
 
 		case ORDER_TYPE_MULTI_PATBLT:
-			condition = settings->OrderSupport[NEG_MULTIPATBLT_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_MULTIPATBLT_INDEX);
 			break;
 
 		case ORDER_TYPE_MULTI_SCRBLT:
-			condition = settings->OrderSupport[NEG_MULTIDSTBLT_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_MULTIDSTBLT_INDEX);
 			break;
 
 		case ORDER_TYPE_MULTI_OPAQUE_RECT:
-			condition = settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_MULTIOPAQUERECT_INDEX);
 			break;
 
 		case ORDER_TYPE_FAST_INDEX:
-			condition = settings->OrderSupport[NEG_FAST_INDEX_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_FAST_INDEX_INDEX);
 			break;
 
 		case ORDER_TYPE_POLYGON_SC:
-			condition = settings->OrderSupport[NEG_POLYGON_SC_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_POLYGON_SC_INDEX);
 			break;
 
 		case ORDER_TYPE_POLYGON_CB:
-			condition = settings->OrderSupport[NEG_POLYGON_CB_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_POLYGON_CB_INDEX);
 			break;
 
 		case ORDER_TYPE_POLYLINE:
-			condition = settings->OrderSupport[NEG_POLYLINE_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_POLYLINE_INDEX);
 			break;
 
 		case ORDER_TYPE_FAST_GLYPH:
-			condition = settings->OrderSupport[NEG_FAST_GLYPH_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_FAST_GLYPH_INDEX);
 			break;
 
 		case ORDER_TYPE_ELLIPSE_SC:
-			condition = settings->OrderSupport[NEG_ELLIPSE_SC_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_ELLIPSE_SC_INDEX);
 			break;
 
 		case ORDER_TYPE_ELLIPSE_CB:
-			condition = settings->OrderSupport[NEG_ELLIPSE_CB_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_ELLIPSE_CB_INDEX);
 			break;
 
 		case ORDER_TYPE_GLYPH_INDEX:
-			condition = settings->OrderSupport[NEG_GLYPH_INDEX_INDEX];
+			condition = *(BOOL*)freerdp_settings_get_pointer_array(settings, FreeRDP_OrderSupport,
+			                                                       NEG_GLYPH_INDEX_INDEX);
 			break;
 
 		default:
@@ -3754,7 +3779,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 
 		case ORDER_TYPE_CACHE_GLYPH:
 		{
-			switch (settings->GlyphSupportLevel)
+			switch (freerdp_settings_get_uint32(settings, FreeRDP_GlyphSupportLevel))
 			{
 				case GLYPH_SUPPORT_PARTIAL:
 				case GLYPH_SUPPORT_FULL:

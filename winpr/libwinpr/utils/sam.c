@@ -271,7 +271,7 @@ void SamResetEntry(WINPR_SAM_ENTRY* entry)
 	ZeroMemory(entry->NtHash, sizeof(entry->NtHash));
 }
 
-WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, LPSTR Domain,
+WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPCSTR User, UINT32 UserLength, LPCSTR Domain,
                                 UINT32 DomainLength)
 {
 	size_t length;
@@ -325,7 +325,7 @@ out_fail:
 	return entry;
 }
 
-WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, LPWSTR Domain,
+WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPCWSTR User, UINT32 UserLength, LPCWSTR Domain,
                                 UINT32 DomainLength)
 {
 	size_t length;

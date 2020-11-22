@@ -200,8 +200,10 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 	if (!context->codecs)
 		return FALSE;
 
-	if (!freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL, settings->DesktopWidth,
-	                                   settings->DesktopHeight))
+	if (!freerdp_client_codecs_prepare(
+	        context->codecs, FREERDP_CODEC_ALL,
+	        freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	        freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
 		return FALSE;
 
 /* Runtime H264 detection. (only available if dynamic backend loading is defined)
@@ -210,9 +212,9 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 #if defined(WITH_GFX_H264) && defined(WITH_OPENH264_LOADING)
 	if (!context->codecs->h264)
 	{
-		settings->GfxH264 = FALSE;
-		settings->GfxAVC444 = FALSE;
-		settings->GfxAVC444v2 = FALSE;
+		freerdp_settings_get_bool(settings, FreeRDP_GfxH264) = FALSE;
+		freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444) = FALSE;
+		freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444) v2 = FALSE;
 	}
 #endif
 	return TRUE;
@@ -238,7 +240,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	if (!rdp_client_reset_codecs(rdp->context))
 		return FALSE;
 
-	if (settings->FIPSMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_FIPSMode))
 		flags |= WINPR_SSL_INIT_ENABLE_FIPS;
 
 	winpr_InitializeSSL(flags);
@@ -249,34 +251,38 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	 * algorithms */
 	/*      not allowed in FIPS for sensitive data. So, we disallow NLA when FIPS is required. */
 	/* 2. Forces the only supported RDP encryption method to be FIPS. */
-	if (settings->FIPSMode || winpr_FIPSMode())
+	if (freerdp_settings_get_bool(settings, FreeRDP_FIPSMode) || winpr_FIPSMode())
 	{
-		settings->NlaSecurity = FALSE;
-		settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+			return FALSE;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionMethods,
+		                                 ENCRYPTION_METHOD_FIPS))
+			return FALSE;
 	}
 
 	nego_init(rdp->nego);
-	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
+	nego_set_target(rdp->nego, freerdp_settings_get_string(settings, FreeRDP_ServerHostname),
+	                freerdp_settings_get_uint32(settings, FreeRDP_ServerPort));
 
-	if (settings->GatewayEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled))
 	{
-		char* user = NULL;
-		char* domain = NULL;
+		const char* user = NULL;
+		const char* domain = NULL;
 		char* cookie = NULL;
 		int user_length = 0;
 		int domain_length = 0;
 		int cookie_length = 0;
 
-		if (settings->Username)
+		if (freerdp_settings_get_string(settings, FreeRDP_Username))
 		{
-			user = settings->Username;
-			user_length = strlen(settings->Username);
+			user = freerdp_settings_get_string(settings, FreeRDP_Username);
+			user_length = strlen(freerdp_settings_get_string(settings, FreeRDP_Username));
 		}
 
-		if (settings->Domain)
-			domain = settings->Domain;
+		if (freerdp_settings_get_string(settings, FreeRDP_Domain))
+			domain = freerdp_settings_get_string(settings, FreeRDP_Domain);
 		else
-			domain = settings->ComputerName;
+			domain = freerdp_settings_get_string(settings, FreeRDP_ComputerName);
 
 		domain_length = strlen(domain);
 		cookie_length = domain_length + 1 + user_length;
@@ -289,7 +295,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		CharUpperBuffA(cookie, domain_length);
 		cookie[domain_length] = '\\';
 
-		if (settings->Username)
+		if (freerdp_settings_get_string(settings, FreeRDP_Username))
 			CopyMemory(&cookie[domain_length + 1], user, user_length);
 
 		cookie[cookie_length] = '\0';
@@ -298,34 +304,53 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	}
 	else
 	{
-		status = nego_set_cookie(rdp->nego, settings->Username);
+		status =
+		    nego_set_cookie(rdp->nego, freerdp_settings_get_string(settings, FreeRDP_Username));
 	}
 
 	if (!status)
 		return FALSE;
 
-	nego_set_send_preconnection_pdu(rdp->nego, settings->SendPreconnectionPdu);
-	nego_set_preconnection_id(rdp->nego, settings->PreconnectionId);
-	nego_set_preconnection_blob(rdp->nego, settings->PreconnectionBlob);
-	nego_set_negotiation_enabled(rdp->nego, settings->NegotiateSecurityLayer);
-	nego_set_restricted_admin_mode_required(rdp->nego, settings->RestrictedAdminModeRequired);
-	nego_set_gateway_enabled(rdp->nego, settings->GatewayEnabled);
-	nego_set_gateway_bypass_local(rdp->nego, settings->GatewayBypassLocal);
-	nego_enable_rdp(rdp->nego, settings->RdpSecurity);
-	nego_enable_tls(rdp->nego, settings->TlsSecurity);
-	nego_enable_nla(rdp->nego, settings->NlaSecurity);
-	nego_enable_ext(rdp->nego, settings->ExtSecurity);
+	nego_set_send_preconnection_pdu(
+	    rdp->nego, freerdp_settings_get_bool(settings, FreeRDP_SendPreconnectionPdu));
+	nego_set_preconnection_id(rdp->nego,
+	                          freerdp_settings_get_uint32(settings, FreeRDP_PreconnectionId));
+	nego_set_preconnection_blob(rdp->nego,
+	                            freerdp_settings_get_string(settings, FreeRDP_PreconnectionBlob));
+	nego_set_negotiation_enabled(
+	    rdp->nego, freerdp_settings_get_bool(settings, FreeRDP_NegotiateSecurityLayer));
+	nego_set_restricted_admin_mode_required(
+	    rdp->nego, freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired));
+	nego_set_gateway_enabled(rdp->nego,
+	                         freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled));
+	nego_set_gateway_bypass_local(rdp->nego,
+	                              freerdp_settings_get_bool(settings, FreeRDP_GatewayBypassLocal));
+	nego_enable_rdp(rdp->nego, freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity));
+	nego_enable_tls(rdp->nego, freerdp_settings_get_bool(settings, FreeRDP_TlsSecurity));
+	nego_enable_nla(rdp->nego, freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity));
+	nego_enable_ext(rdp->nego, freerdp_settings_get_bool(settings, FreeRDP_ExtSecurity));
 
-	if (settings->MstscCookieMode)
-		settings->CookieMaxLength = MSTSC_COOKIE_MAX_LENGTH;
-
-	nego_set_cookie_max_length(rdp->nego, settings->CookieMaxLength);
-
-	if (settings->LoadBalanceInfo && (settings->LoadBalanceInfoLength > 0))
+	if (freerdp_settings_get_bool(settings, FreeRDP_MstscCookieMode))
 	{
-		if (!nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo,
-		                            settings->LoadBalanceInfoLength))
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_CookieMaxLength,
+		                                 MSTSC_COOKIE_MAX_LENGTH))
 			return FALSE;
+	}
+
+	nego_set_cookie_max_length(rdp->nego,
+	                           freerdp_settings_get_uint32(settings, FreeRDP_CookieMaxLength));
+
+	{
+		const BYTE* LoadBalanceInfo =
+		    freerdp_settings_get_pointer(settings, FreeRDP_LoadBalanceInfo);
+		const size_t LoadBalanceInfoLength =
+		    freerdp_settings_get_uint32(settings, FreeRDP_LoadBalanceInfoLength);
+
+		if (LoadBalanceInfo && (LoadBalanceInfoLength > 0))
+		{
+			if (!nego_set_routing_token(rdp->nego, LoadBalanceInfo, LoadBalanceInfoLength))
+				return FALSE;
+		}
 	}
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO);
@@ -345,10 +370,14 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if ((SelectedProtocol & PROTOCOL_SSL) || (SelectedProtocol == PROTOCOL_RDP))
 	{
-		if ((settings->Username != NULL) &&
-		    ((settings->Password != NULL) ||
-		     (settings->RedirectionPassword != NULL && settings->RedirectionPasswordLength > 0)))
-			settings->AutoLogonEnabled = TRUE;
+		if ((freerdp_settings_get_string(settings, FreeRDP_Username) != NULL) &&
+		    ((freerdp_settings_get_string(settings, FreeRDP_Password) != NULL) ||
+		     ((freerdp_settings_get_pointer(settings, FreeRDP_RedirectionPassword) != NULL) &&
+		      (freerdp_settings_get_uint32(settings, FreeRDP_RedirectionPasswordLength) > 0))))
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_AutoLogonEnabled, TRUE))
+				return FALSE;
+		}
 	}
 
 	/* everything beyond this point is event-driven and non blocking */
@@ -362,7 +391,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			return FALSE;
 	}
 
-	for (timeout = 0; timeout < settings->TcpAckTimeout; timeout += 100)
+	for (timeout = 0; timeout < freerdp_settings_get_uint32(settings, FreeRDP_TcpAckTimeout);
+	     timeout += 100)
 	{
 		if (rdp_check_fds(rdp) < 0)
 		{
@@ -463,18 +493,15 @@ static BOOL rdp_client_redirect_resolvable(const char* host)
 
 static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)
 {
-	if (settings->RedirectionFlags & LB_TARGET_FQDN)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RedirectionFlags) & LB_TARGET_FQDN)
 	{
-		if (settings->GatewayEnabled ||
-		    rdp_client_redirect_resolvable(settings->RedirectionTargetFQDN))
+		if (freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled) ||
+		    rdp_client_redirect_resolvable(
+		        freerdp_settings_get_string(settings, FreeRDP_RedirectionTargetFQDN)))
 		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
-
-			if (!settings->ServerHostname)
-				return FALSE;
-
-			return TRUE;
+			return freerdp_settings_set_string(
+			    settings, FreeRDP_ServerHostname,
+			    freerdp_settings_get_string(settings, FreeRDP_RedirectionTargetFQDN));
 		}
 	}
 
@@ -483,15 +510,11 @@ static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)
 
 static BOOL rdp_client_redirect_try_ip(rdpSettings* settings)
 {
-	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RedirectionFlags) & LB_TARGET_NET_ADDRESS)
 	{
-		free(settings->ServerHostname);
-		settings->ServerHostname = _strdup(settings->TargetNetAddress);
-
-		if (!settings->ServerHostname)
-			return FALSE;
-
-		return TRUE;
+		return freerdp_settings_set_string(
+		    settings, FreeRDP_ServerHostname,
+		    freerdp_settings_get_string(settings, FreeRDP_TargetNetAddress));
 	}
 
 	return FALSE;
@@ -499,18 +522,15 @@ static BOOL rdp_client_redirect_try_ip(rdpSettings* settings)
 
 static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
 {
-	if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RedirectionFlags) & LB_TARGET_NETBIOS_NAME)
 	{
-		if (settings->GatewayEnabled ||
-		    rdp_client_redirect_resolvable(settings->RedirectionTargetNetBiosName))
+		if (freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled) ||
+		    rdp_client_redirect_resolvable(
+		        freerdp_settings_get_string(settings, FreeRDP_RedirectionTargetNetBiosName)))
 		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
-
-			if (!settings->ServerHostname)
-				return FALSE;
-
-			return TRUE;
+			return freerdp_settings_set_string(
+			    settings, FreeRDP_ServerHostname,
+			    freerdp_settings_get_string(settings, FreeRDP_RedirectionTargetNetBiosName));
 		}
 	}
 
@@ -533,19 +553,24 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	if (rdp_redirection_apply_settings(rdp) != 0)
 		return FALSE;
 
-	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RedirectionFlags) & LB_LOAD_BALANCE_INFO)
 	{
-		if (settings->LoadBalanceInfo && (settings->LoadBalanceInfoLength > 0))
+		const BYTE* LoadBalanceInfo =
+		    freerdp_settings_get_pointer(settings, FreeRDP_LoadBalanceInfo);
+		const size_t LoadBalanceInfoLength =
+		    freerdp_settings_get_uint32(settings, FreeRDP_LoadBalanceInfoLength);
+
+		if (LoadBalanceInfo && (LoadBalanceInfoLength > 0))
 		{
-			if (!nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo,
-			                            settings->LoadBalanceInfoLength))
+			if (!nego_set_routing_token(rdp->nego, LoadBalanceInfo, LoadBalanceInfoLength))
 				return FALSE;
 		}
 	}
 	else
 	{
 		BOOL haveRedirectAddress = FALSE;
-		UINT32 redirectionMask = settings->RedirectionPreferType;
+		UINT32 redirectionMask =
+		    freerdp_settings_get_uint32(settings, FreeRDP_RedirectionPreferType);
 
 		do
 		{
@@ -566,21 +591,19 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 		} while (!haveRedirectAddress && (redirectionMask != 0));
 	}
 
-	if (settings->RedirectionFlags & LB_USERNAME)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RedirectionFlags) & LB_USERNAME)
 	{
-		free(settings->Username);
-		settings->Username = _strdup(settings->RedirectionUsername);
-
-		if (!settings->Username)
+		if (!freerdp_settings_set_string(
+		        settings, FreeRDP_Username,
+		        freerdp_settings_get_string(settings, FreeRDP_RedirectionUsername)))
 			return FALSE;
 	}
 
-	if (settings->RedirectionFlags & LB_DOMAIN)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_RedirectionFlags) & LB_DOMAIN)
 	{
-		free(settings->Domain);
-		settings->Domain = _strdup(settings->RedirectionDomain);
-
-		if (!settings->Domain)
+		if (!freerdp_settings_set_string(
+		        settings, FreeRDP_Domain,
+		        freerdp_settings_get_string(settings, FreeRDP_RedirectionDomain)))
 			return FALSE;
 	}
 
@@ -615,7 +638,7 @@ static const BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xE
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
 	BYTE* mod;
-	BYTE* exp;
+	const BYTE* exp;
 	wStream* s;
 	UINT32 length;
 	UINT32 key_len;
@@ -623,26 +646,30 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	BOOL ret = FALSE;
 	rdpSettings* settings;
 	BYTE* crypt_client_random = NULL;
+	const rdpCertificate* cert;
 	settings = rdp->settings;
 
-	if (!settings->UseRdpSecurityLayer)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_UseRdpSecurityLayer))
 	{
 		/* no RDP encryption */
 		return TRUE;
 	}
 
 	/* encrypt client random */
-	free(settings->ClientRandom);
-	settings->ClientRandomLength = CLIENT_RANDOM_LENGTH;
-	settings->ClientRandom = malloc(settings->ClientRandomLength);
+	{
+		BYTE data[CLIENT_RANDOM_LENGTH];
+		winpr_RAND(data, sizeof(data));
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ClientRandom, data,
+		                                      CLIENT_RANDOM_LENGTH))
+			return FALSE;
+	}
 
-	if (!settings->ClientRandom)
+	cert = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerCertificate);
+	if (!cert)
 		return FALSE;
-
-	winpr_RAND(settings->ClientRandom, settings->ClientRandomLength);
-	key_len = settings->RdpServerCertificate->cert_info.ModulusLength;
-	mod = settings->RdpServerCertificate->cert_info.Modulus;
-	exp = settings->RdpServerCertificate->cert_info.exponent;
+	key_len = cert->cert_info.ModulusLength;
+	mod = cert->cert_info.Modulus;
+	exp = cert->cert_info.exponent;
 	/*
 	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
 	 * for details
@@ -652,8 +679,9 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (!crypt_client_random)
 		return FALSE;
 
-	crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, key_len, mod,
-	                          exp, crypt_client_random);
+	crypto_rsa_public_encrypt(freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom),
+	                          freerdp_settings_get_uint32(settings, FreeRDP_ClientRandomLength),
+	                          key_len, mod, exp, crypt_client_random);
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
 	s = Stream_New(NULL, length);
@@ -679,15 +707,15 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	rdp->do_crypt_license = TRUE;
 
 	/* now calculate encrypt / decrypt and update keys */
-	if (!security_establish_keys(settings->ClientRandom, rdp))
+	if (!security_establish_keys(freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom), rdp))
 		goto end;
 
 	rdp->do_crypt = TRUE;
 
-	if (settings->SaltedChecksum)
+	if (freerdp_settings_get_bool(settings, FreeRDP_SaltedChecksum))
 		rdp->do_secure_checksum = TRUE;
 
-	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionMethods) == ENCRYPTION_METHOD_FIPS)
 	{
 		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC, WINPR_ENCRYPT,
 		                                     rdp->fips_encrypt_key, fips_ivec);
@@ -745,8 +773,9 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	BYTE* mod;
 	BYTE* priv_exp;
 	BOOL ret = FALSE;
+	const rdpRsaKey* key;
 
-	if (!rdp->settings->UseRdpSecurityLayer)
+	if (!freerdp_settings_get_bool(rdp->settings, FreeRDP_UseRdpSecurityLayer))
 	{
 		/* No RDP Security. */
 		return TRUE;
@@ -781,7 +810,10 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) < rand_len)
 		return FALSE;
 
-	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
+	key = freerdp_settings_get_pointer(rdp->settings, FreeRDP_RdpServerRsaKey);
+	if (!key)
+		return FALSE;
+	key_len = key->ModulusLength;
 	client_random = malloc(key_len);
 
 	if (!client_random)
@@ -803,8 +835,8 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 
 	Stream_Read(s, crypt_client_random, rand_len);
-	mod = rdp->settings->RdpServerRsaKey->Modulus;
-	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
+	mod = key->Modulus;
+	priv_exp = key->PrivateExponent;
 
 	if (crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp,
 	                               client_random) <= 0)
@@ -813,8 +845,13 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		goto end;
 	}
 
-	rdp->settings->ClientRandom = client_random;
-	rdp->settings->ClientRandomLength = 32;
+	{
+		BOOL rc = freerdp_settings_set_pointer_len(rdp->settings, FreeRDP_ClientRandom,
+		                                           client_random, 32);
+		free(client_random);
+		if (!rc)
+			goto end;
+	}
 
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(client_random, rdp))
@@ -822,7 +859,8 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	rdp->do_crypt = TRUE;
 
-	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+	if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+	    ENCRYPTION_METHOD_FIPS)
 	{
 		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC, WINPR_ENCRYPT,
 		                                     rdp->fips_encrypt_key, fips_ivec);
@@ -1037,8 +1075,8 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	UINT16 width;
 	UINT16 height;
 	UINT16 length;
-	width = rdp->settings->DesktopWidth;
-	height = rdp->settings->DesktopHeight;
+	width = freerdp_settings_get_uint32(rdp->settings, FreeRDP_DesktopWidth);
+	height = freerdp_settings_get_uint32(rdp->settings, FreeRDP_DesktopHeight);
 	Stream_GetPointer(s, mark);
 
 	if (!rdp_recv_demand_active(rdp, s))
@@ -1076,7 +1114,8 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	 * The server may request a different desktop size during Deactivation-Reactivation sequence.
 	 * In this case, the UI should be informed and do actual window resizing at this point.
 	 */
-	if (width != rdp->settings->DesktopWidth || height != rdp->settings->DesktopHeight)
+	if ((width != freerdp_settings_get_uint32(rdp->settings, FreeRDP_DesktopWidth)) ||
+	    (height != freerdp_settings_get_uint32(rdp->settings, FreeRDP_DesktopHeight)))
 	{
 		BOOL status = TRUE;
 		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
@@ -1116,7 +1155,8 @@ int rdp_client_connect_finalize(rdpRdp* rdp)
 	 * host cache and a deactivation reactivation sequence is *not* in progress.
 	 */
 
-	if (!rdp->deactivation_reactivation && rdp->settings->BitmapCachePersistEnabled)
+	if (!rdp->deactivation_reactivation &&
+	    freerdp_settings_get_bool(rdp->settings, FreeRDP_BitmapCachePersistEnabled))
 	{
 		if (!rdp_send_client_persistent_key_list_pdu(rdp))
 			return -1;
@@ -1222,17 +1262,22 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	          (RequestedProtocols & PROTOCOL_SSL) ? 1 : 0,
 	          (RequestedProtocols == PROTOCOL_RDP) ? 1 : 0);
 	WLog_INFO(TAG, "Server Security: NLA:%" PRId32 " TLS:%" PRId32 " RDP:%" PRId32 "",
-	          settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
+	          freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity),
+	          freerdp_settings_get_bool(settings, FreeRDP_TlsSecurity),
+	          freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity));
 
-	if ((settings->NlaSecurity) && (RequestedProtocols & PROTOCOL_HYBRID))
+	if ((freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity)) &&
+	    (RequestedProtocols & PROTOCOL_HYBRID))
 	{
 		SelectedProtocol = PROTOCOL_HYBRID;
 	}
-	else if ((settings->TlsSecurity) && (RequestedProtocols & PROTOCOL_SSL))
+	else if ((freerdp_settings_get_bool(settings, FreeRDP_TlsSecurity)) &&
+	         (RequestedProtocols & PROTOCOL_SSL))
 	{
 		SelectedProtocol = PROTOCOL_SSL;
 	}
-	else if ((settings->RdpSecurity) && (RequestedProtocols == PROTOCOL_RDP))
+	else if ((freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity)) &&
+	         (RequestedProtocols == PROTOCOL_RDP))
 	{
 		SelectedProtocol = PROTOCOL_RDP;
 	}
@@ -1244,14 +1289,15 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 		 */
 		SelectedProtocol = PROTOCOL_FAILED_NEGO;
 
-		if (settings->RdpSecurity)
+		if (freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity))
 		{
 			WLog_ERR(TAG, "server supports only Standard RDP Security");
 			SelectedProtocol |= SSL_NOT_ALLOWED_BY_SERVER;
 		}
 		else
 		{
-			if (settings->NlaSecurity && !settings->TlsSecurity)
+			if (freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity) &&
+			    !freerdp_settings_get_bool(settings, FreeRDP_TlsSecurity))
 			{
 				WLog_WARN(TAG, "server supports only NLA Security");
 				SelectedProtocol |= HYBRID_REQUIRED_BY_SERVER;
@@ -1306,7 +1352,8 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 	if (!mcs_recv_connect_initial(mcs, s))
 		return FALSE;
 
-	WLog_INFO(TAG, "Accepted client: %s", rdp->settings->ClientHostname);
+	WLog_INFO(TAG, "Accepted client: %s",
+	          freerdp_settings_get_string(rdp->settings, FreeRDP_ClientHostname));
 	WLog_INFO(TAG, "Accepted channels:");
 
 	for (i = 0; i < mcs->channelCount; i++)
@@ -1393,7 +1440,7 @@ BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 	if (peer->ClientCapabilities && !peer->ClientCapabilities(peer))
 		return FALSE;
 
-	if (rdp->settings->SaltedChecksum)
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_SaltedChecksum))
 		rdp->do_secure_checksum = TRUE;
 
 	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);

@@ -68,9 +68,6 @@ struct xf_clipboard
 	Atom clipboard_atom;
 	Atom property_atom;
 
-	Atom timestamp_property_atom;
-	Time selection_ownership_timestamp;
-
 	Atom raw_transfer_atom;
 	Atom raw_format_list_atom;
 
@@ -114,7 +111,6 @@ struct xf_clipboard
 };
 
 static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard);
-static void xf_cliprdr_set_selection_owner(xfContext* xfc, xfClipboard* clipboard, Time timestamp);
 
 static void xf_cliprdr_check_owner(xfClipboard* clipboard)
 {
@@ -762,17 +758,6 @@ static void xf_cliprdr_provide_targets(xfClipboard* clipboard, const XSelectionE
 	}
 }
 
-static void xf_cliprdr_provide_timestamp(xfClipboard* clipboard, const XSelectionEvent* respond)
-{
-	xfContext* xfc = clipboard->xfc;
-
-	if (respond->property != None)
-	{
-		XChangeProperty(xfc->display, respond->requestor, respond->property, XA_INTEGER, 32,
-		                PropModeReplace, (BYTE*)&clipboard->selection_ownership_timestamp, 1);
-	}
-}
-
 static void xf_cliprdr_provide_data(xfClipboard* clipboard, const XSelectionEvent* respond,
                                     const BYTE* data, UINT32 size)
 {
@@ -864,9 +849,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 
 	if (xevent->target == clipboard->targets[0]) /* TIMESTAMP */
 	{
-		/* Someone else requests the selection's timestamp */
-		respond->property = xevent->property;
-		xf_cliprdr_provide_timestamp(clipboard, respond);
+		/* TODO */
 	}
 	else if (xevent->target == clipboard->targets[1]) /* TARGETS */
 	{
@@ -980,16 +963,6 @@ static BOOL xf_cliprdr_process_property_notify(xfClipboard* clipboard, const XPr
 		return TRUE;
 
 	xfc = clipboard->xfc;
-
-	if (xevent->atom == clipboard->timestamp_property_atom)
-	{
-		/* This is the response to the property change we did
-		 * in xf_cliprdr_prepare_to_set_selection_owner. Now
-		 * we can set ourselves as the selection owner. (See
-		 * comments in those functions below.) */
-		xf_cliprdr_set_selection_owner(xfc, clipboard, xevent->time);
-		return TRUE;
-	}
 
 	if (xevent->atom != clipboard->property_atom)
 		return FALSE; /* Not cliprdr-related */
@@ -1215,43 +1188,6 @@ static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-static void xf_cliprdr_prepare_to_set_selection_owner(xfContext* xfc, xfClipboard* clipboard)
-{
-	/*
-	 * When you're writing to the selection in response to a
-	 * normal X event like a mouse click or keyboard action, you
-	 * get the selection timestamp by copying the time field out
-	 * of that X event. Here, we're doing it on our own
-	 * initiative, so we have to _request_ the X server time.
-	 *
-	 * There isn't a GetServerTime request in the X protocol, so I
-	 * work around it by setting a property on our own window, and
-	 * waiting for a PropertyNotify event to come back telling me
-	 * it's been done - which will have a timestamp we can use.
-	 */
-
-	/* We have to set the property to some value, but it doesn't
-	 * matter what. Set it to its own name, which we have here
-	 * anyway! */
-	Atom value = clipboard->timestamp_property_atom;
-
-	XChangeProperty(xfc->display, xfc->drawable, clipboard->timestamp_property_atom, XA_ATOM, 32,
-	                PropModeReplace, (BYTE*)&value, 1);
-	XFlush(xfc->display);
-}
-
-static void xf_cliprdr_set_selection_owner(xfContext* xfc, xfClipboard* clipboard, Time timestamp)
-{
-	/*
-	 * Actually set ourselves up as the selection owner, now that
-	 * we have a timestamp to use.
-	 */
-
-	clipboard->selection_ownership_timestamp = timestamp;
-	XSetSelectionOwner(xfc->display, clipboard->clipboard_atom, xfc->drawable, timestamp);
-	XFlush(xfc->display);
-}
-
 /**
  * Function description
  *
@@ -1335,7 +1271,8 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 	}
 
 	ret = xf_cliprdr_send_client_format_list_response(clipboard, TRUE);
-	xf_cliprdr_prepare_to_set_selection_owner(xfc, clipboard);
+	XSetSelectionOwner(xfc->display, clipboard->clipboard_atom, xfc->drawable, CurrentTime);
+	XFlush(xfc->display);
 	return ret;
 }
 
@@ -1668,7 +1605,6 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	int i, n = 0;
 	rdpChannels* channels;
 	xfClipboard* clipboard;
-	const char* selectionAtom;
 
 	if (!(clipboard = (xfClipboard*)calloc(1, sizeof(xfClipboard))))
 	{
@@ -1683,19 +1619,14 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	clipboard->system = ClipboardCreate();
 	clipboard->requestedFormatId = -1;
 	clipboard->root_window = DefaultRootWindow(xfc->display);
-	selectionAtom = "CLIPBOARD";
-	if (xfc->context.settings->XSelectionAtom)
-		selectionAtom = xfc->context.settings->XSelectionAtom;
-	clipboard->clipboard_atom = XInternAtom(xfc->display, selectionAtom, FALSE);
+	clipboard->clipboard_atom = XInternAtom(xfc->display, "CLIPBOARD", FALSE);
 
 	if (clipboard->clipboard_atom == None)
 	{
-		WLog_ERR(TAG, "unable to get %s atom", selectionAtom);
+		WLog_ERR(TAG, "unable to get CLIPBOARD atom");
 		goto error;
 	}
 
-	clipboard->timestamp_property_atom =
-	    XInternAtom(xfc->display, "_FREERDP_TIMESTAMP_PROPERTY", FALSE);
 	clipboard->property_atom = XInternAtom(xfc->display, "_FREERDP_CLIPRDR", FALSE);
 	clipboard->raw_transfer_atom = XInternAtom(xfc->display, "_FREERDP_CLIPRDR_RAW", FALSE);
 	clipboard->raw_format_list_atom = XInternAtom(xfc->display, "_FREERDP_CLIPRDR_FORMATS", FALSE);

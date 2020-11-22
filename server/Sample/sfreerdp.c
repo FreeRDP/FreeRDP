@@ -181,14 +181,15 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	testPeerContext* context = (testPeerContext*)client->context;
 	BOOL ret = FALSE;
 
-	if (!client->settings->RemoteFxCodec && !client->settings->NSCodec)
+	if (!freerdp_settings_get_bool(client->settings, FreeRDP_RemoteFxCodec) &&
+	    !freerdp_settings_get_bool(client->settings, FreeRDP_NSCodec))
 		return FALSE;
 
 	s = test_peer_stream_init(context);
 	rect.x = 0;
 	rect.y = 0;
-	rect.width = client->settings->DesktopWidth;
-	rect.height = client->settings->DesktopHeight;
+	rect.width = freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopWidth);
+	rect.height = freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopHeight);
 	size = rect.width * rect.height * 3;
 
 	if (!(rgb_data = malloc(size)))
@@ -199,7 +200,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 
 	memset(rgb_data, 0xA0, size);
 
-	if (client->settings->RemoteFxCodec)
+	if (freerdp_settings_get_bool(client->settings, FreeRDP_RemoteFxCodec))
 	{
 		WLog_DBG(TAG, "Using RemoteFX codec");
 		if (!rfx_compose_message(context->rfx_context, s, &rect, 1, rgb_data, rect.width,
@@ -208,7 +209,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 			goto out;
 		}
 
-		cmd.bmp.codecID = client->settings->RemoteFxCodecId;
+		cmd.bmp.codecID = freerdp_settings_get_uint32(client->settings, FreeRDP_RemoteFxCodecId);
 		cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
 	}
 	else
@@ -216,7 +217,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 		WLog_DBG(TAG, "Using NSCodec");
 		nsc_compose_message(context->nsc_context, s, rgb_data, rect.width, rect.height,
 		                    rect.width * 3);
-		cmd.bmp.codecID = client->settings->NSCodecId;
+		cmd.bmp.codecID = freerdp_settings_get_uint32(client->settings, FreeRDP_NSCodecId);
 		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	}
 
@@ -248,7 +249,8 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 	BYTE* rgb_data = NULL;
 	int c;
 
-	if (!client->settings->RemoteFxCodec && !client->settings->NSCodec)
+	if (!freerdp_settings_get_bool(client->settings, FreeRDP_RemoteFxCodec) &&
+	    !freerdp_settings_get_bool(client->settings, FreeRDP_NSCodec))
 	{
 		WLog_ERR(TAG, "Client doesn't support RemoteFX or NSCodec");
 		return FALSE;
@@ -325,14 +327,14 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	rect.width = context->icon_width;
 	rect.height = context->icon_height;
 
-	if (client->settings->RemoteFxCodec)
+	if (freerdp_settings_get_bool(client->settings, FreeRDP_RemoteFxCodec))
 	{
-		cmd.bmp.codecID = client->settings->RemoteFxCodecId;
+		cmd.bmp.codecID = freerdp_settings_get_uint32(client->settings, FreeRDP_RemoteFxCodecId);
 		cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
 	}
 	else
 	{
-		cmd.bmp.codecID = client->settings->NSCodecId;
+		cmd.bmp.codecID = freerdp_settings_get_uint32(client->settings, FreeRDP_NSCodecId);
 		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	}
 
@@ -340,7 +342,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	{
 		s = test_peer_stream_init(context);
 
-		if (client->settings->RemoteFxCodec)
+		if (freerdp_settings_get_bool(client->settings, FreeRDP_RemoteFxCodec))
 			rfx_compose_message(context->rfx_context, s, &rect, 1, context->bg_data, rect.width,
 			                    rect.height, rect.width * 3);
 		else
@@ -362,7 +364,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 
 	s = test_peer_stream_init(context);
 
-	if (client->settings->RemoteFxCodec)
+	if (freerdp_settings_get_bool(client->settings, FreeRDP_RemoteFxCodec))
 		rfx_compose_message(context->rfx_context, s, &rect, 1, context->icon_data, rect.width,
 		                    rect.height, rect.width * 3);
 	else
@@ -535,33 +537,42 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	 * callback returns.
 	 */
 	WLog_DBG(TAG, "Client %s is activated (osMajorType %" PRIu32 " osMinorType %" PRIu32 ")",
-	         client->local ? "(local)" : client->hostname, client->settings->OsMajorType,
-	         client->settings->OsMinorType);
+	         client->local ? "(local)" : client->hostname,
+	         freerdp_settings_get_uint32(client->settings, FreeRDP_OsMajorType),
+	         freerdp_settings_get_uint32(client->settings, FreeRDP_OsMinorType));
 
-	if (client->settings->AutoLogonEnabled)
+	if (freerdp_settings_get_bool(client->settings, FreeRDP_AutoLogonEnabled))
 	{
 		WLog_DBG(TAG, " and wants to login automatically as %s\\%s",
-		         client->settings->Domain ? client->settings->Domain : "",
-		         client->settings->Username);
+		         freerdp_settings_get_string(client->settings, FreeRDP_Domain)
+		             ? freerdp_settings_get_string(client->settings, FreeRDP_Domain)
+		             : "",
+		         freerdp_settings_get_string(client->settings, FreeRDP_Username));
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
 
 	WLog_DBG(TAG, "");
 	WLog_DBG(TAG, "Client requested desktop: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "",
-	         client->settings->DesktopWidth, client->settings->DesktopHeight,
-	         client->settings->ColorDepth);
+	         freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopWidth),
+	         freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopHeight),
+	         freerdp_settings_get_uint32(client->settings, FreeRDP_ColorDepth));
 #if (SAMPLE_SERVER_USE_CLIENT_RESOLUTION == 1)
 
-	if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
-	                       client->settings->DesktopHeight))
+	if (!rfx_context_reset(context->rfx_context,
+	                       freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopWidth),
+	                       freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopHeight)))
 		return FALSE;
 
 	WLog_DBG(TAG, "Using resolution requested by client.");
 #else
-	client->settings->DesktopWidth = context->rfx_context->width;
-	client->settings->DesktopHeight = context->rfx_context->height;
-	WLog_DBG(TAG, "Resizing client to %" PRIu32 "x%" PRIu32 "", client->settings->DesktopWidth,
-	         client->settings->DesktopHeight);
+	if (!freerdp_settings_set_uint32(client->settings, FreeRDP_DesktopWidth,
+	                                 context->rfx_context->width) ||
+	    !freerdp_settings_set_uint32(client->settings, FreeRDP_DesktopHeight,
+	                                 context->rfx_context->height))
+		return FALSE;
+	WLog_DBG(TAG, "Resizing client to %" PRIu32 "x%" PRIu32 "",
+	         freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopWidth),
+	         freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopHeight));
 	client->update->DesktopResize(client->update->context);
 #endif
 
@@ -618,10 +629,13 @@ BOOL tf_peer_activate(freerdp_peer* client)
 {
 	testPeerContext* context = (testPeerContext*)client->context;
 	context->activated = TRUE;
-	// client->settings->CompressionLevel = PACKET_COMPR_TYPE_8K;
-	// client->settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
-	// client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
-	client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;
+	// freerdp_settings_set_uint32(client->settings, FreeRDP_CompressionLevel,
+	// PACKET_COMPR_TYPE_8K); freerdp_settings_set_uint32(client->settings,
+	// FreeRDP_CompressionLevel, PACKET_COMPR_TYPE_64K);
+	// freerdp_settings_set_uint32(client->settings, FreeRDP_CompressionLevel,
+	// PACKET_COMPR_TYPE_RDP6);
+	freerdp_settings_set_uint32(client->settings, FreeRDP_CompressionLevel,
+	                            PACKET_COMPR_TYPE_RDP61);
 
 	if (test_pcap_file != NULL)
 	{
@@ -653,19 +667,23 @@ BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 	if ((flags & 0x4000) && code == 0x22) /* 'g' key */
 	{
-		if (client->settings->DesktopWidth != 800)
+		if (freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopWidth) != 800)
 		{
-			client->settings->DesktopWidth = 800;
-			client->settings->DesktopHeight = 600;
+			freerdp_settings_set_uint32(client->settings, FreeRDP_DesktopWidth, 800);
+			freerdp_settings_set_uint32(client->settings, FreeRDP_DesktopHeight, 600);
 		}
 		else
 		{
-			client->settings->DesktopWidth = SAMPLE_SERVER_DEFAULT_WIDTH;
-			client->settings->DesktopHeight = SAMPLE_SERVER_DEFAULT_HEIGHT;
+			freerdp_settings_set_uint32(client->settings, FreeRDP_DesktopWidth,
+			                            SAMPLE_SERVER_DEFAULT_WIDTH);
+			freerdp_settings_set_uint32(client->settings, FreeRDP_DesktopHeight,
+			                            SAMPLE_SERVER_DEFAULT_HEIGHT);
 		}
 
-		if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
-		                       client->settings->DesktopHeight))
+		if (!rfx_context_reset(
+		        context->rfx_context,
+		        freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopWidth),
+		        freerdp_settings_get_uint32(client->settings, FreeRDP_DesktopHeight)))
 			return FALSE;
 
 		update->DesktopResize(update->context);
@@ -770,30 +788,31 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	}
 
 	/* Initialize the real server settings here */
-	client->settings->CertificateFile = _strdup("server.crt");
-	client->settings->PrivateKeyFile = _strdup("server.key");
-	client->settings->RdpKeyFile = _strdup("server.key");
-
-	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile ||
-	    !client->settings->RdpKeyFile)
+	if (!freerdp_settings_set_string(client->settings, FreeRDP_CertificateFile, "server.crt") ||
+	    !freerdp_settings_set_string(client->settings, FreeRDP_PrivateKeyFile, "server.key") ||
+	    !freerdp_settings_set_string(client->settings, FreeRDP_RdpKeyFile, "server.key"))
 	{
 		WLog_ERR(TAG, "Memory allocation failed (strdup)");
 		freerdp_peer_free(client);
 		return 0;
 	}
 
-	client->settings->RdpSecurity = TRUE;
-	client->settings->TlsSecurity = TRUE;
-	client->settings->NlaSecurity = FALSE;
-	client->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
-	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_HIGH; */
-	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_LOW; */
-	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_FIPS; */
-	client->settings->RemoteFxCodec = TRUE;
-	client->settings->NSCodec = TRUE;
-	client->settings->ColorDepth = 32;
-	client->settings->SuppressOutput = TRUE;
-	client->settings->RefreshRect = TRUE;
+	freerdp_settings_set_bool(client->settings, FreeRDP_RdpSecurity, TRUE);
+	freerdp_settings_set_bool(client->settings, FreeRDP_TlsSecurity, TRUE);
+	freerdp_settings_set_bool(client->settings, FreeRDP_NlaSecurity, FALSE);
+	freerdp_settings_set_uint32(client->settings, FreeRDP_EncryptionLevel,
+	                            ENCRYPTION_LEVEL_CLIENT_COMPATIBLE);
+	/* freerdp_settings_set_uint32(client->settings, FreeRDP_EncryptionLevel,
+	 * ENCRYPTION_LEVEL_HIGH); */
+	/* freerdp_settings_set_uint32(client->settings, FreeRDP_EncryptionLevel, ENCRYPTION_LEVEL_LOW
+	 * ); */
+	/* freerdp_settings_set_uint32(client->settings, FreeRDP_EncryptionLevel,
+	 * ENCRYPTION_LEVEL_FIPS); */
+	freerdp_settings_set_bool(client->settings, FreeRDP_RemoteFxCodec, TRUE);
+	freerdp_settings_set_bool(client->settings, FreeRDP_NSCodec, TRUE);
+	freerdp_settings_set_uint32(client->settings, FreeRDP_ColorDepth, 32);
+	freerdp_settings_set_bool(client->settings, FreeRDP_SuppressOutput, TRUE);
+	freerdp_settings_set_bool(client->settings, FreeRDP_RefreshRect, TRUE);
 	client->PostConnect = tf_peer_post_connect;
 	client->Activate = tf_peer_activate;
 	client->input->SynchronizeEvent = tf_peer_synchronize_event;
@@ -803,7 +822,8 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	client->input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
 	client->update->RefreshRect = tf_peer_refresh_rect;
 	client->update->SuppressOutput = tf_peer_suppress_output;
-	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
+	freerdp_settings_set_uint32(client->settings, FreeRDP_MultifragMaxRequestSize,
+	                            0xFFFFFF); /* FIXME */
 	client->Initialize(client);
 	context = (testPeerContext*)client->context;
 	WLog_INFO(TAG, "We've got a client %s", client->local ? "(local)" : client->hostname);

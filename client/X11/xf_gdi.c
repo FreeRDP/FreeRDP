@@ -365,7 +365,8 @@ static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			{
 				UINT32 bpp = brush->bpp;
 
-				if ((bpp == 16) && (context->settings->ColorDepth == 15))
+				if ((bpp == 16) &&
+				    (freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth) == 15))
 					bpp = 15;
 
 				Pixmap pattern = xf_brush_new(xfc, 8, 8, bpp, brush->data);
@@ -672,7 +673,8 @@ static BOOL xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			{
 				UINT32 bpp = brush->bpp;
 
-				if ((bpp == 16) && (context->settings->ColorDepth == 15))
+				if ((bpp == 16) &&
+				    (freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth) == 15))
 					bpp = 15;
 
 				pattern = xf_brush_new(xfc, 8, 8, bpp, brush->data);
@@ -847,7 +849,8 @@ static BOOL xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 		{
 			UINT32 bpp = brush->bpp;
 
-			if ((bpp == 16) && (context->settings->ColorDepth == 15))
+			if ((bpp == 16) &&
+			    (freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth) == 15))
 				bpp = 15;
 
 			pattern = xf_brush_new(xfc, 8, 8, bpp, brush->data);
@@ -919,7 +922,7 @@ static BOOL xf_gdi_surface_frame_marker(rdpContext* context,
 				                           xfc->frame_x2 - xfc->frame_x1,
 				                           xfc->frame_y2 - xfc->frame_y1);
 
-			if (settings->FrameAcknowledge > 0)
+			if (freerdp_settings_get_uint32(settings, FreeRDP_FrameAcknowledge) > 0)
 			{
 				IFCALL(xfc->context.update->SurfaceFrameAcknowledge, context,
 				       surface_frame_marker->frameId);

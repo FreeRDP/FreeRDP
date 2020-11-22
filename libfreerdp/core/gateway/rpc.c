@@ -419,7 +419,8 @@ static int rpc_channel_rpch_init(RpcClient* client, RpcChannel* channel, const c
 	    !http_context_set_cache_control(http, "no-cache") ||
 	    !http_context_set_connection(http, "Keep-Alive") ||
 	    !http_context_set_user_agent(http, "MSRPC") ||
-	    !http_context_set_host(http, settings->GatewayHostname) ||
+	    !http_context_set_host(http,
+	                           freerdp_settings_get_string(settings, FreeRDP_GatewayHostname)) ||
 	    !http_context_set_pragma(http, "ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
 	                                   "SessionId=fbd9c34f-397d-471d-a109-1b08cc554624"))
 		return -1;
@@ -640,6 +641,8 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	rdpSettings* settings;
 	const char* proxyUsername;
 	const char* proxyPassword;
+	const char* GatewayHostname;
+	UINT32 GatewayPort;
 
 	if (!channel || !channel->client || !channel->client->context ||
 	    !channel->client->context->settings)
@@ -649,6 +652,8 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	settings = context->settings;
 	proxyUsername = freerdp_settings_get_string(settings, FreeRDP_ProxyUsername);
 	proxyPassword = freerdp_settings_get_string(settings, FreeRDP_ProxyPassword);
+	GatewayHostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+	GatewayPort = freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort);
 	{
 		sockfd = freerdp_tcp_connect(context, settings, channel->client->host,
 		                             channel->client->port, timeout);
@@ -683,8 +688,8 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 
 	if (channel->client->isProxy)
 	{
-		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword,
-		                   settings->GatewayHostname, settings->GatewayPort))
+		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword, GatewayHostname,
+		                   GatewayPort))
 		{
 			BIO_free_all(bufferedBio);
 			return FALSE;
@@ -697,8 +702,8 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	if (!tls)
 		return FALSE;
 
-	tls->hostname = settings->GatewayHostname;
-	tls->port = settings->GatewayPort;
+	tls->hostname = GatewayHostname;
+	tls->port = GatewayPort;
 	tls->isGatewayTransport = TRUE;
 	tlsStatus = tls_connect(tls, bufferedBio);
 

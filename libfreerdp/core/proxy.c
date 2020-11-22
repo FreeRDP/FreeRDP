@@ -154,12 +154,14 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 	if (!no_proxy || !settings)
 		return FALSE;
 
-	if (inet_pton(AF_INET, settings->ServerHostname, &sa4.sin_addr) == 1)
+	if (inet_pton(AF_INET, freerdp_settings_get_string(settings, FreeRDP_ServerHostname),
+	              &sa4.sin_addr) == 1)
 		is_ipv4 = TRUE;
-	else if (inet_pton(AF_INET6, settings->ServerHostname, &sa6.sin6_addr) == 1)
+	else if (inet_pton(AF_INET6, freerdp_settings_get_string(settings, FreeRDP_ServerHostname),
+	                   &sa6.sin6_addr) == 1)
 		is_ipv6 = TRUE;
 
-	host_len = strlen(settings->ServerHostname);
+	host_len = strlen(freerdp_settings_get_string(settings, FreeRDP_ServerHostname));
 	copy = _strdup(no_proxy);
 
 	if (!copy)
@@ -173,7 +175,9 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 
 		if (currentlen > 0)
 		{
-			WLog_DBG(TAG, "%s => %s (%" PRIdz ")", settings->ServerHostname, current, currentlen);
+			WLog_DBG(TAG, "%s => %s (%" PRIdz ")",
+			         freerdp_settings_get_string(settings, FreeRDP_ServerHostname), current,
+			         currentlen);
 
 			/* detect left and right "*" wildcard */
 			if (current[0] == '*')
@@ -181,7 +185,8 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 				if (host_len >= currentlen)
 				{
 					const size_t offset = host_len + 1 - currentlen;
-					const char* name = settings->ServerHostname + offset;
+					const char* name =
+					    freerdp_settings_get_string(settings, FreeRDP_ServerHostname) + offset;
 
 					if (strncmp(current + 1, name, currentlen - 1) == 0)
 						result = TRUE;
@@ -189,7 +194,8 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 			}
 			else if (current[currentlen - 1] == '*')
 			{
-				if (strncmp(current, settings->ServerHostname, currentlen - 1) == 0)
+				if (strncmp(current, freerdp_settings_get_string(settings, FreeRDP_ServerHostname),
+				            currentlen - 1) == 0)
 					result = TRUE;
 			}
 			else if (current[0] ==
@@ -198,13 +204,15 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 				if (host_len > currentlen)
 				{
 					const size_t offset = host_len - currentlen;
-					const char* name = settings->ServerHostname + offset;
+					const char* name =
+					    freerdp_settings_get_string(settings, FreeRDP_ServerHostname) + offset;
 
 					if (strncmp(current, name, currentlen) == 0)
 						result = TRUE; /* right-aligned match for host names */
 				}
 			}
-			else if (strcmp(current, settings->ServerHostname) == 0)
+			else if (strcmp(current,
+			                freerdp_settings_get_string(settings, FreeRDP_ServerHostname)) == 0)
 				result = TRUE; /* exact match */
 			else if (is_ipv4 || is_ipv6)
 			{
@@ -239,7 +247,9 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 					else
 						WLog_WARN(TAG, "NO_PROXY invalid entry %s", current);
 				}
-				else if (strncmp(current, settings->ServerHostname, currentlen) == 0)
+				else if (strncmp(current,
+				                 freerdp_settings_get_string(settings, FreeRDP_ServerHostname),
+				                 currentlen) == 0)
 					result = TRUE; /* left-aligned match for IPs */
 			}
 		}

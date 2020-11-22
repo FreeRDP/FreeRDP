@@ -59,9 +59,9 @@ int main(int argc, char** argv)
 
 	settings = server->settings;
 
-	settings->NlaSecurity = FALSE;
-	settings->TlsSecurity = TRUE;
-	settings->RdpSecurity = TRUE;
+	freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE);
+	freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE);
+	freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE);
 
 #ifdef WITH_SHADOW_X11
 	server->authentication = TRUE;

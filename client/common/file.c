@@ -856,52 +856,66 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings)
 {
-	FILE_POPULATE_STRING(file->Domain, settings->Domain);
-	FILE_POPULATE_STRING(file->Username, settings->Username);
-	FILE_POPULATE_STRING(file->Password, settings->Password);
-	file->ServerPort = settings->ServerPort;
-	FILE_POPULATE_STRING(file->FullAddress, settings->ServerHostname);
-	FILE_POPULATE_STRING(file->AlternateFullAddress, settings->ServerHostname);
-	file->DesktopWidth = settings->DesktopWidth;
-	file->DesktopHeight = settings->DesktopHeight;
-	file->SessionBpp = settings->ColorDepth;
-	file->ConnectToConsole = settings->ConsoleSession;
-	file->NegotiateSecurityLayer = settings->NegotiateSecurityLayer;
-	file->EnableCredSSPSupport = settings->NlaSecurity;
-	FILE_POPULATE_STRING(file->AlternateShell, settings->AlternateShell);
-	if (settings->RemoteApplicationMode)
-		FILE_POPULATE_STRING(file->ShellWorkingDirectory, settings->RemoteApplicationWorkingDir);
+	size_t len;
+	FILE_POPULATE_STRING(file->Domain, freerdp_settings_get_string(settings, FreeRDP_Domain));
+	FILE_POPULATE_STRING(file->Username, freerdp_settings_get_string(settings, FreeRDP_Username));
+	FILE_POPULATE_STRING(file->Password, freerdp_settings_get_string(settings, FreeRDP_Password));
+	file->ServerPort = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
+	FILE_POPULATE_STRING(file->FullAddress,
+	                     freerdp_settings_get_string(settings, FreeRDP_ServerHostname));
+	FILE_POPULATE_STRING(file->AlternateFullAddress,
+	                     freerdp_settings_get_string(settings, FreeRDP_ServerHostname));
+	file->DesktopWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	file->DesktopHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	file->SessionBpp = freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth);
+	file->ConnectToConsole = freerdp_settings_get_bool(settings, FreeRDP_ConsoleSession);
+	file->NegotiateSecurityLayer =
+	    freerdp_settings_get_bool(settings, FreeRDP_NegotiateSecurityLayer);
+	file->EnableCredSSPSupport = freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity);
+	FILE_POPULATE_STRING(file->AlternateShell,
+	                     freerdp_settings_get_string(settings, FreeRDP_AlternateShell));
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
+		FILE_POPULATE_STRING(
+		    file->ShellWorkingDirectory,
+		    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationWorkingDir));
 	else
-		FILE_POPULATE_STRING(file->ShellWorkingDirectory, settings->ShellWorkingDirectory);
-	file->ConnectionType = settings->ConnectionType;
-	FILE_POPULATE_STRING(file->DrivesToRedirect, settings->DrivesToRedirect);
-	file->ScreenModeId = settings->Fullscreen ? 2 : 1;
+		FILE_POPULATE_STRING(file->ShellWorkingDirectory,
+		                     freerdp_settings_get_string(settings, FreeRDP_ShellWorkingDirectory));
+	file->ConnectionType = freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType);
+	FILE_POPULATE_STRING(file->DrivesToRedirect,
+	                     freerdp_settings_get_string(settings, FreeRDP_DrivesToRedirect));
+	file->ScreenModeId = freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) ? 2 : 1;
 
-	if (settings->LoadBalanceInfoLength)
+	len = freerdp_settings_get_uint32(settings, FreeRDP_LoadBalanceInfoLength);
+	if (len > 0)
 	{
-		file->LoadBalanceInfo = calloc(settings->LoadBalanceInfoLength + 1, 1);
+		file->LoadBalanceInfo = calloc(len + 1, 1);
 		if (!file->LoadBalanceInfo)
 			return FALSE;
-		memcpy(file->LoadBalanceInfo, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
+		memcpy(file->LoadBalanceInfo,
+		       freerdp_settings_get_pointer(settings, FreeRDP_LoadBalanceInfo), len);
 	}
 
-	if (settings->AudioPlayback)
+	if (freerdp_settings_get_bool(settings, FreeRDP_AudioPlayback))
 		file->AudioMode = AUDIO_MODE_REDIRECT;
-	else if (settings->RemoteConsoleAudio)
+	else if (freerdp_settings_get_bool(settings, FreeRDP_RemoteConsoleAudio))
 		file->AudioMode = AUDIO_MODE_PLAY_ON_SERVER;
 	else
 		file->AudioMode = AUDIO_MODE_NONE;
 
 	/* The gateway hostname should also contain a port specifier unless it is the default port 443
 	 */
-	if (settings->GatewayHostname)
+	if (freerdp_settings_get_string(settings, FreeRDP_GatewayHostname))
 	{
 		freerdp_client_file_string_check_free(file->GatewayHostname);
-		if (settings->GatewayPort == 443)
-			file->GatewayHostname = _strdup(settings->GatewayHostname);
+		if (freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort) == 443)
+			file->GatewayHostname =
+			    _strdup(freerdp_settings_get_string(settings, FreeRDP_GatewayHostname));
 		else
 		{
-			int length = _scprintf("%s:%" PRIu32, settings->GatewayHostname, settings->GatewayPort);
+			int length = _scprintf("%s:%" PRIu32,
+			                       freerdp_settings_get_string(settings, FreeRDP_GatewayHostname),
+			                       freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort));
 			if (length < 0)
 				return FALSE;
 
@@ -910,47 +924,67 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 				return FALSE;
 
 			if (sprintf_s(file->GatewayHostname, (size_t)length + 1, "%s:%" PRIu32,
-			              settings->GatewayHostname, settings->GatewayPort) < 0)
+			              freerdp_settings_get_string(settings, FreeRDP_GatewayHostname),
+			              freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort)) < 0)
 				return FALSE;
 		}
 		if (!file->GatewayHostname)
 			return FALSE;
 	}
 
-	file->AudioCaptureMode = settings->AudioCapture;
-	file->BitmapCachePersistEnable = settings->BitmapCachePersistEnabled;
-	file->Compression = settings->CompressionEnabled;
-	file->AuthenticationLevel = settings->AuthenticationLevel;
-	FILE_POPULATE_STRING(file->GatewayAccessToken, settings->GatewayAccessToken);
-	file->GatewayUsageMethod = settings->GatewayUsageMethod;
-	file->PromptCredentialOnce = settings->GatewayUseSameCredentials;
-	file->PromptForCredentials = settings->PromptForCredentials;
-	file->RemoteApplicationMode = settings->RemoteApplicationMode;
-	FILE_POPULATE_STRING(file->RemoteApplicationProgram, settings->RemoteApplicationProgram);
-	FILE_POPULATE_STRING(file->RemoteApplicationName, settings->RemoteApplicationName);
-	FILE_POPULATE_STRING(file->RemoteApplicationIcon, settings->RemoteApplicationIcon);
-	FILE_POPULATE_STRING(file->RemoteApplicationFile, settings->RemoteApplicationFile);
-	FILE_POPULATE_STRING(file->RemoteApplicationGuid, settings->RemoteApplicationGuid);
-	FILE_POPULATE_STRING(file->RemoteApplicationCmdLine, settings->RemoteApplicationCmdLine);
-	file->SpanMonitors = settings->SpanMonitors;
-	file->UseMultiMon = settings->UseMultimon;
-	file->AllowDesktopComposition = settings->AllowDesktopComposition;
-	file->AllowFontSmoothing = settings->AllowFontSmoothing;
-	file->DisableWallpaper = settings->DisableWallpaper;
-	file->DisableFullWindowDrag = settings->DisableFullWindowDrag;
-	file->DisableMenuAnims = settings->DisableMenuAnims;
-	file->DisableThemes = settings->DisableThemes;
-	file->BandwidthAutoDetect = (settings->ConnectionType >= 7) ? TRUE : FALSE;
-	file->NetworkAutoDetect = settings->NetworkAutoDetect ? 0 : 1;
-	file->AutoReconnectionEnabled = settings->AutoReconnectionEnabled;
-	file->RedirectSmartCards = settings->RedirectSmartCards;
-	file->RedirectClipboard = settings->RedirectClipboard;
-	file->RedirectPrinters = settings->RedirectPrinters;
-	file->RedirectDrives = settings->RedirectDrives;
-	file->RedirectComPorts = (settings->RedirectSerialPorts || settings->RedirectParallelPorts);
-	FILE_POPULATE_STRING(file->DrivesToRedirect, settings->DrivesToRedirect);
-	file->KeyboardHook = settings->KeyboardHook;
-	FILE_POPULATE_STRING(file->PreconnectionBlob, settings->PreconnectionBlob);
+	file->AudioCaptureMode = freerdp_settings_get_bool(settings, FreeRDP_AudioCapture);
+	file->BitmapCachePersistEnable =
+	    freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled);
+	file->Compression = freerdp_settings_get_bool(settings, FreeRDP_CompressionEnabled);
+	file->AuthenticationLevel = freerdp_settings_get_uint32(settings, FreeRDP_AuthenticationLevel);
+	FILE_POPULATE_STRING(file->GatewayAccessToken,
+	                     freerdp_settings_get_string(settings, FreeRDP_GatewayAccessToken));
+	file->GatewayUsageMethod = freerdp_settings_get_uint32(settings, FreeRDP_GatewayUsageMethod);
+	file->PromptCredentialOnce =
+	    freerdp_settings_get_bool(settings, FreeRDP_GatewayUseSameCredentials);
+	file->PromptForCredentials = freerdp_settings_get_bool(settings, FreeRDP_PromptForCredentials);
+	file->RemoteApplicationMode =
+	    freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode);
+	FILE_POPULATE_STRING(file->RemoteApplicationProgram,
+	                     freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram));
+	FILE_POPULATE_STRING(file->RemoteApplicationName,
+	                     freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationName));
+	FILE_POPULATE_STRING(file->RemoteApplicationIcon,
+	                     freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationIcon));
+	FILE_POPULATE_STRING(file->RemoteApplicationFile,
+	                     freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationFile));
+	FILE_POPULATE_STRING(file->RemoteApplicationGuid,
+	                     freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationGuid));
+	FILE_POPULATE_STRING(file->RemoteApplicationCmdLine,
+	                     freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationCmdLine));
+	file->SpanMonitors = freerdp_settings_get_bool(settings, FreeRDP_SpanMonitors);
+	file->UseMultiMon = freerdp_settings_get_bool(settings, FreeRDP_UseMultimon);
+	file->AllowDesktopComposition =
+	    freerdp_settings_get_bool(settings, FreeRDP_AllowDesktopComposition);
+	file->AllowFontSmoothing = freerdp_settings_get_bool(settings, FreeRDP_AllowFontSmoothing);
+	file->DisableWallpaper = freerdp_settings_get_bool(settings, FreeRDP_DisableWallpaper);
+	file->DisableFullWindowDrag =
+	    freerdp_settings_get_bool(settings, FreeRDP_DisableFullWindowDrag);
+	file->DisableMenuAnims = freerdp_settings_get_bool(settings, FreeRDP_DisableMenuAnims);
+	file->DisableThemes = freerdp_settings_get_bool(settings, FreeRDP_DisableThemes);
+	file->BandwidthAutoDetect =
+	    (freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType) >= 7) ? TRUE : FALSE;
+	file->NetworkAutoDetect =
+	    freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect ? 0 : 1);
+	file->NetworkAutoDetect = freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect);
+	file->AutoReconnectionEnabled =
+	    freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
+	file->RedirectSmartCards = freerdp_settings_get_bool(settings, FreeRDP_RedirectSmartCards);
+	file->RedirectClipboard = freerdp_settings_get_bool(settings, FreeRDP_RedirectClipboard);
+	file->RedirectPrinters = freerdp_settings_get_bool(settings, FreeRDP_RedirectPrinters);
+	file->RedirectDrives = freerdp_settings_get_bool(settings, FreeRDP_RedirectDrives);
+	file->RedirectComPorts = (freerdp_settings_get_bool(settings, FreeRDP_RedirectSerialPorts) ||
+	                          freerdp_settings_get_bool(settings, FreeRDP_RedirectParallelPorts));
+	FILE_POPULATE_STRING(file->DrivesToRedirect,
+	                     freerdp_settings_get_string(settings, FreeRDP_DrivesToRedirect));
+	file->KeyboardHook = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardHook);
+	FILE_POPULATE_STRING(file->PreconnectionBlob,
+	                     freerdp_settings_get_string(settings, FreeRDP_PreconnectionBlob));
 
 	return TRUE;
 }
@@ -1199,23 +1233,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t)file->Username))
 	{
-		char* user = NULL;
-		char* domain = NULL;
 
-		if (!freerdp_parse_username(file->Username, &user, &domain))
+		if (!freerdp_parse_username(settings, file->Username, FreeRDP_Username, FreeRDP_Domain))
 			return FALSE;
-
-		if (!freerdp_settings_set_string(settings, FreeRDP_Username, user))
-			return FALSE;
-
-		if (domain)
-		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_Domain, domain))
-				return FALSE;
-		}
-
-		free(user);
-		free(domain);
 	}
 
 	if (~((size_t)file->Password))
@@ -1236,22 +1256,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 		if (address)
 		{
-			int port = -1;
-			char* host = NULL;
-
-			if (!freerdp_parse_hostname(address, &host, &port))
+			if (!freerdp_parse_hostname(settings, address, FreeRDP_ServerHostname,
+			                            FreeRDP_ServerPort))
 				return FALSE;
-
-			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, host))
-				return FALSE;
-
-			free(host);
-
-			if (port > 0)
-			{
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, (UINT32)port))
-					return FALSE;
-			}
 		}
 	}
 
@@ -1410,12 +1417,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t)file->LoadBalanceInfo))
 	{
-		settings->LoadBalanceInfo = (BYTE*)_strdup(file->LoadBalanceInfo);
-
-		if (!settings->LoadBalanceInfo)
+		size_t len = 0;
+		if (file->LoadBalanceInfo)
+			len = strlen(file->LoadBalanceInfo);
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo,
+		                                      file->LoadBalanceInfo, len))
 			return FALSE;
-
-		settings->LoadBalanceInfoLength = (UINT32)strlen((char*)settings->LoadBalanceInfo);
 	}
 
 	if (~file->AuthenticationLevel)
@@ -1434,7 +1441,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 * connect). 2: If server authentication fails, show a warning and allow me to connect or
 		 * refuse the connection (Warn me). 3: No authentication requirement is specified.
 		 */
-		settings->AuthenticationLevel = file->AuthenticationLevel;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_AuthenticationLevel,
+		                                 file->AuthenticationLevel))
+			return FALSE;
 	}
 
 	if (~file->ConnectionType)
@@ -1485,22 +1494,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t)file->GatewayHostname))
 	{
-		int port = -1;
-		char* host = NULL;
-
-		if (!freerdp_parse_hostname(file->GatewayHostname, &host, &port))
+		if (!freerdp_parse_hostname(settings, file->GatewayHostname, FreeRDP_GatewayHostname,
+		                            FreeRDP_GatewayPort))
 			return FALSE;
-
-		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHostname, host))
-			return FALSE;
-
-		free(host);
-
-		if (port > 0)
-		{
-			if (!freerdp_settings_set_uint32(settings, FreeRDP_GatewayPort, (UINT32)port))
-				return FALSE;
-		}
 	}
 
 	if (~((size_t)file->GatewayAccessToken))
@@ -1813,14 +1809,18 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (file->argc > 1)
 	{
-		char* ConnectionFile = settings->ConnectionFile;
-		settings->ConnectionFile = NULL;
-
-		if (freerdp_client_settings_parse_command_line(settings, (int)file->argc, file->argv,
-		                                               FALSE) < 0)
+		BOOL rc;
+		char* ConnectionFile =
+		    _strdup(freerdp_settings_get_string(settings, FreeRDP_ConnectionFile));
+		rc = freerdp_settings_set_string(settings, FreeRDP_ConnectionFile, NULL);
+		if (rc)
+			rc = freerdp_client_settings_parse_command_line(settings, (int)file->argc, file->argv,
+			                                                FALSE) >= 0;
+		if (rc)
+			rc = freerdp_settings_set_string(settings, FreeRDP_ConnectionFile, ConnectionFile);
+		free(ConnectionFile);
+		if (!rc)
 			return FALSE;
-
-		settings->ConnectionFile = ConnectionFile;
 	}
 
 	if (setDefaultConnectionType)

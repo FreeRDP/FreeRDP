@@ -497,7 +497,7 @@ static UINT tsmf_plugin_terminated(IWTSPlugin* pPlugin)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT tsmf_process_addin_args(IWTSPlugin* pPlugin, ADDIN_ARGV* args)
+static UINT tsmf_process_addin_args(IWTSPlugin* pPlugin, const ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -574,6 +574,10 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	if (!tsmf)
 	{
+		rdpSettings* settings = (rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints);
+		const freerdp* instance = freerdp_settings_get_pointer(settings, FreeRDP_instance);
+		if (!settings || !instance)
+			return ERROR_INTERNAL_ERROR;
 		tsmf = (TSMF_PLUGIN*)calloc(1, sizeof(TSMF_PLUGIN));
 
 		if (!tsmf)
@@ -586,9 +590,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		tsmf->iface.Connected = NULL;
 		tsmf->iface.Disconnected = NULL;
 		tsmf->iface.Terminated = tsmf_plugin_terminated;
-		tsmf->rdpcontext =
-		    ((freerdp*)((rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints))->instance)
-		        ->context;
+		tsmf->rdpcontext = instance->context;
 		context = (TsmfClientContext*)calloc(1, sizeof(TsmfClientContext));
 
 		if (!context)
@@ -611,8 +613,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	if (status == CHANNEL_RC_OK)
 	{
-		status =
-		    tsmf_process_addin_args((IWTSPlugin*)tsmf, pEntryPoints->GetPluginData(pEntryPoints));
+		status = tsmf_process_addin_args(&tsmf->iface, pEntryPoints->GetPluginData(pEntryPoints));
 	}
 
 	return status;

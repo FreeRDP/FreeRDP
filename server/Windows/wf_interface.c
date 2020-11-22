@@ -157,8 +157,10 @@ BOOL wfreerdp_server_start(wfServer* server)
 	server->instance->PeerAccepted = wf_peer_accepted;
 	instance = server->instance;
 
-	wf_settings_read_dword(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("DefaultPort"), &server->port);
+	wf_settings_read_dword(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("DefaultPort"), settings,
+	                       FreeRDP_ServerPort);
 
+	server->port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
 	if (!instance->Open(instance, NULL, (UINT16)server->port))
 		return FALSE;
 

@@ -312,8 +312,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 				if (value)
 				{
-					if (!(options[j].Flags &
-					      (COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_VALUE_REQUIRED)))
+					if (options[j].Flags & (COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_VALUE_BOOL))
 					{
 						log_error(flags, "Failed at index %d [%s]: Unexpected value", i, argv[i]);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;

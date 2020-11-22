@@ -762,7 +762,7 @@ static BOOL urbdrc_register_udevman_addin(IWTSPlugin* pPlugin, IUDEVMAN* udevman
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, LPCSTR name, ADDIN_ARGV* args)
+static UINT urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, LPCSTR name, const ADDIN_ARGV* args)
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pPlugin;
 	PFREERDP_URBDRC_DEVICE_ENTRY entry;
@@ -949,7 +949,7 @@ BOOL del_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum, UINT1
 UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT status = 0;
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	URBDRC_PLUGIN* urbdrc;
 	urbdrc = (URBDRC_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, URBDRC_CHANNEL_NAME);
 	args = pEntryPoints->GetPluginData(pEntryPoints);

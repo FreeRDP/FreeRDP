@@ -72,15 +72,17 @@
 
 - (IBAction)onOK:(NSObject *)sender
 {
-	char *submittedUser = NULL;
-	char *submittedDomain = NULL;
-
+	rdpSettings *settings = self.settings;
 	if (freerdp_parse_username(
-	        [self.usernameText.stringValue cStringUsingEncoding:NSUTF8StringEncoding],
-	        &submittedUser, &submittedDomain))
+	        settings, [self.usernameText.stringValue cStringUsingEncoding:NSUTF8StringEncoding],
+	        FreeRDP_Username, FreeRDP_Domain))
 	{
-		self.username = [NSString stringWithCString:submittedUser encoding:NSUTF8StringEncoding];
-		self.domain = [NSString stringWithCString:submittedDomain encoding:NSUTF8StringEncoding];
+		self.username =
+		    [NSString stringWithCString:freerdp_settings_get_string(settings, FreeRDP_Username)
+		                       encoding:NSUTF8StringEncoding];
+		self.domain =
+		    [NSString stringWithCString:freerdp_settings_get_string(settings, FreeRDP_Domain)
+		                       encoding:NSUTF8StringEncoding];
 	}
 	else
 	{

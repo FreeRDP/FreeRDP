@@ -24,7 +24,6 @@
 #include "config.h"
 #endif
 
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 

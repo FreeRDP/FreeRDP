@@ -181,7 +181,8 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 	if (!obj)
 		return FALSE;
 	obj->fnObjectFree = free;
-	sprintf_s(command, sizeof(command), "%s xevent", xfc->context.settings->ActionScript);
+	sprintf_s(command, sizeof(command), "%s xevent",
+	          freerdp_settings_get_string(xfc->context.settings, FreeRDP_ActionScript));
 	actionScript = popen(command, "r");
 
 	if (!actionScript)
@@ -249,8 +250,9 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 	if (!match)
 		return FALSE;
 
-	sprintf_s(command, sizeof(command), "%s xevent %s %lu", xfc->context.settings->ActionScript,
-	          xeventName, (unsigned long)xfc->window->handle);
+	sprintf_s(command, sizeof(command), "%s xevent %s %lu",
+	          freerdp_settings_get_string(xfc->context.settings, FreeRDP_ActionScript), xeventName,
+	          (unsigned long)xfc->window->handle);
 	actionScript = popen(command, "r");
 
 	if (!actionScript)
@@ -281,8 +283,10 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 
 		if (xf_picture_transform_required(xfc))
 		{
-			double xScalingFactor = settings->DesktopWidth / (double)xfc->scaledWidth;
-			double yScalingFactor = settings->DesktopHeight / (double)xfc->scaledHeight;
+			double xScalingFactor = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) /
+			                        (double)xfc->scaledWidth;
+			double yScalingFactor = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) /
+			                        (double)xfc->scaledHeight;
 			*x = (int)((*x - xfc->offset_x) * xScalingFactor);
 			*y = (int)((*y - xfc->offset_y) * yScalingFactor);
 		}
@@ -298,12 +302,13 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 	int w, h;
 	rdpSettings* settings = xfc->context.settings;
 
-	if (!app && (settings->SmartSizing || settings->MultiTouchGestures))
+	if (!app && (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
+	             freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures)))
 	{
 		x = 0;
 		y = 0;
-		w = settings->DesktopWidth;
-		h = settings->DesktopHeight;
+		w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+		h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 	}
 	else
 	{
@@ -349,7 +354,7 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 	Window childWindow;
 	input = xfc->context.input;
 
-	if (!xfc->context.settings->MouseMotion)
+	if (!freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MouseMotion))
 	{
 		if ((state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
 			return TRUE;
@@ -660,22 +665,25 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 			xfc->offset_x = 0;
 			xfc->offset_y = 0;
 
-			if (xfc->context.settings->SmartSizing || xfc->context.settings->MultiTouchGestures)
+			if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_SmartSizing) ||
+			    freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MultiTouchGestures))
 			{
 				xfc->scaledWidth = xfc->window->width;
 				xfc->scaledHeight = xfc->window->height;
-				xf_draw_screen(xfc, 0, 0, settings->DesktopWidth, settings->DesktopHeight);
+				xf_draw_screen(xfc, 0, 0,
+				               freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+				               freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 			}
 			else
 			{
-				xfc->scaledWidth = settings->DesktopWidth;
-				xfc->scaledHeight = settings->DesktopHeight;
+				xfc->scaledWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+				xfc->scaledHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 			}
 
 #endif
 		}
 
-		if (settings->DynamicResolutionUpdate)
+		if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 		{
 			int alignedWidth, alignedHeight;
 			alignedWidth = (xfc->window->width / 2) * 2;
@@ -1074,7 +1082,7 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 			break;
 
 		default:
-			if (settings->SupportDisplayControl)
+			if (freerdp_settings_get_bool(settings, FreeRDP_SupportDisplayControl))
 				xf_disp_handle_xevent(xfc, event);
 
 			break;
