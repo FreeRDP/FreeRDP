@@ -119,7 +119,8 @@ BOOL xf_keyboard_init(xfContext* xfc)
 {
 	xf_keyboard_clear(xfc);
 	xfc->KeyboardLayout = xfc->context.settings->KeyboardLayout;
-	xfc->KeyboardLayout = freerdp_keyboard_init(xfc->KeyboardLayout);
+	xfc->KeyboardLayout =
+	    freerdp_keyboard_init_ex(xfc->KeyboardLayout, xfc->context.settings->KeyboardRemappingList);
 	xfc->context.settings->KeyboardLayout = xfc->KeyboardLayout;
 
 	if (xfc->modifierMap)
