@@ -104,7 +104,7 @@ static const char* DATA_PDU_TYPE_STRINGS[80] = {
 
 const char* data_pdu_type_to_string(UINT8 type)
 {
-	if (type > ARRAYSIZE(DATA_PDU_TYPE_STRINGS))
+	if (type >= ARRAYSIZE(DATA_PDU_TYPE_STRINGS))
 		return "???";
 	return DATA_PDU_TYPE_STRINGS[type];
 }
