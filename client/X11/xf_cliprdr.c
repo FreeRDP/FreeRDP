@@ -171,6 +171,7 @@ struct xf_clipboard
 	/* File clipping */
 	BOOL streams_supported;
 	BOOL file_formats_registered;
+	UINT32 file_capability_flags;
 #ifdef WITH_FUSE
 	/* FUSE related**/
 	HANDLE fuse_thread;
@@ -697,7 +698,8 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 		UINT32 file_count = DstSize / sizeof(FILEDESCRIPTORW);
 		pDstData = NULL;
 		DstSize = 0;
-		error = cliprdr_serialize_file_list(file_array, file_count, &pDstData, &DstSize);
+		error = cliprdr_serialize_file_list_ex(clipboard->file_capability_flags, file_array,
+		                                       file_count, &pDstData, &DstSize);
 
 		if (error)
 			WLog_ERR(TAG, "failed to serialize CLIPRDR_FILELIST: 0x%08X", error);
@@ -1189,6 +1191,7 @@ static UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
 		generalCapabilitySet.generalFlags |=
 		    CB_STREAM_FILECLIP_ENABLED | CB_FILECLIP_NO_FILE_PATHS | CB_HUGE_FILE_SUPPORT_ENABLED;
 
+	clipboard->file_capability_flags = generalCapabilitySet.generalFlags;
 	return clipboard->context->ClientCapabilities(clipboard->context, &capabilities);
 }
 
