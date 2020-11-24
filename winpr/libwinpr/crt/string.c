@@ -52,20 +52,13 @@ char* _strdup(const char* strSource)
 
 WCHAR* _wcsdup(const WCHAR* strSource)
 {
+	size_t len = _wcslen(strSource);
 	WCHAR* strDestination;
 
-	if (strSource == NULL)
-		return NULL;
-
-#if defined(__APPLE__) && defined(__MACH__) || defined(ANDROID) || defined(sun)
-	strDestination = malloc(wcslen((wchar_t*)strSource));
+	strDestination = calloc(len + 1, sizeof(WCHAR));
 
 	if (strDestination != NULL)
-		wcscpy((wchar_t*)strDestination, (const wchar_t*)strSource);
-
-#else
-	strDestination = (WCHAR*)wcsdup((wchar_t*)strSource);
-#endif
+		memcpy(strDestination, strSource, len * sizeof(WCHAR));
 
 	if (strDestination == NULL)
 		WLog_ERR(TAG, "wcsdup");

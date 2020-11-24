@@ -36,18 +36,36 @@
 #include "../cliprdr_common.h"
 
 #ifdef WITH_DEBUG_CLIPRDR
-static const char* const CB_MSG_TYPE_STRINGS[] = { "",
-	                                               "CB_MONITOR_READY",
-	                                               "CB_FORMAT_LIST",
-	                                               "CB_FORMAT_LIST_RESPONSE",
-	                                               "CB_FORMAT_DATA_REQUEST",
-	                                               "CB_FORMAT_DATA_RESPONSE",
-	                                               "CB_TEMP_DIRECTORY",
-	                                               "CB_CLIP_CAPS",
-	                                               "CB_FILECONTENTS_REQUEST",
-	                                               "CB_FILECONTENTS_RESPONSE",
-	                                               "CB_LOCK_CLIPDATA",
-	                                               "CB_UNLOCK_CLIPDATA" };
+static const char* CB_MSG_TYPE_STRINGS(UINT32 type)
+{
+	switch (type)
+	{
+		case CB_MONITOR_READY:
+			return "CB_MONITOR_READY";
+		case CB_FORMAT_LIST:
+			return "CB_FORMAT_LIST";
+		case CB_FORMAT_LIST_RESPONSE:
+			return "CB_FORMAT_LIST_RESPONSE";
+		case CB_FORMAT_DATA_REQUEST:
+			return "CB_FORMAT_DATA_REQUEST";
+		case CB_FORMAT_DATA_RESPONSE:
+			return "CB_FORMAT_DATA_RESPONSE";
+		case CB_TEMP_DIRECTORY:
+			return "CB_TEMP_DIRECTORY";
+		case CB_CLIP_CAPS:
+			return "CB_CLIP_CAPS";
+		case CB_FILECONTENTS_REQUEST:
+			return "CB_FILECONTENTS_REQUEST";
+		case CB_FILECONTENTS_RESPONSE:
+			return "CB_FILECONTENTS_RESPONSE";
+		case CB_LOCK_CLIPDATA:
+			return "CB_LOCK_CLIPDATA";
+		case CB_UNLOCK_CLIPDATA:
+			return "CB_UNLOCK_CLIPDATA";
+		default:
+			return "UNKNOWN";
+	}
+}
 #endif
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr)
@@ -445,7 +463,7 @@ static UINT cliprdr_order_recv(cliprdrPlugin* cliprdr, wStream* s)
 
 #ifdef WITH_DEBUG_CLIPRDR
 	WLog_DBG(TAG, "msgType: %s (%" PRIu16 "), msgFlags: %" PRIu16 " dataLen: %" PRIu32 "",
-	         CB_MSG_TYPE_STRINGS[msgType], msgType, msgFlags, dataLen);
+	         CB_MSG_TYPE_STRINGS(msgType), msgType, msgFlags, dataLen);
 	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), dataLen + 8);
 #endif
 
