@@ -495,6 +495,38 @@ static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* form
 	if (!rdpsnd || !format)
 		return FALSE;
 
+	/* Older windows RDP servers do not limit the send buffer, which can
+	 * cause quite a large amount of sound data buffered client side.
+	 * If e.g. sound is paused server side the client will keep playing
+	 * for a long time instead of pausing playback.
+	 *
+	 * To avoid this we check:
+	 *
+	 * 1. Is the sound sample received from a known format these servers
+	 *    support
+	 * 2. If it is calculate the size of the client side sound buffer
+	 * 3. If the buffer is too large silently drop the sample which will
+	 *    trigger a retransmit later on.
+	 *
+	 * This check must only be applied to these known formats, because
+	 * with newer and other formats the sample size can not be calculated
+	 * without decompressing the sample first.
+	 */
+	switch (format->wFormatTag)
+	{
+		case WAVE_FORMAT_PCM:
+		case WAVE_FORMAT_DVI_ADPCM:
+		case WAVE_FORMAT_ADPCM:
+		case WAVE_FORMAT_ALAW:
+		case WAVE_FORMAT_MULAW:
+			break;
+		case WAVE_FORMAT_MSG723:
+		case WAVE_FORMAT_GSM610:
+		case WAVE_FORMAT_AAC_MS:
+		default:
+			return FALSE;
+	}
+
 	audio_format_print(WLog_Get(TAG), WLOG_DEBUG, format);
 	bpf = format->nChannels * format->wBitsPerSample * format->nSamplesPerSec / 8;
 	if (bpf == 0)
@@ -634,9 +666,9 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 	rdpsnd->waveDataSize = BodySize - 12;
 	rdpsnd->wArrivalTime = GetTickCount64();
 	WLog_Print(rdpsnd->log, WLOG_DEBUG,
-	           "%s Wave2PDU: cBlockNo: %" PRIu8 " wFormatNo: %" PRIu16 ", align=%hu",
+	           "%s Wave2PDU: cBlockNo: %" PRIu8 " wFormatNo: %" PRIu16 " [%s] , align=%hu",
 	           rdpsnd_is_dyn_str(rdpsnd->dynamic), rdpsnd->cBlockNo, wFormatNo,
-	           format->nBlockAlign);
+	           audio_format_get_tag_string(format->wFormatTag), format->nBlockAlign);
 
 	if (!rdpsnd_ensure_device_is_open(rdpsnd, wFormatNo, format))
 		return ERROR_INTERNAL_ERROR;
