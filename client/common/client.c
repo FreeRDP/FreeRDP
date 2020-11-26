@@ -730,6 +730,7 @@ BOOL client_auto_reconnect(freerdp* instance)
 
 BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* instance))
 {
+	UINT32 error;
 	UINT32 maxRetries;
 	UINT32 numRetries = 0;
 	rdpSettings* settings;
@@ -741,11 +742,21 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 	maxRetries = settings->AutoReconnectMaxRetries;
 
 	/* Only auto reconnect on network disconnects. */
-	if (freerdp_error_info(instance) != 0)
-		return FALSE;
-
-	/* A network disconnect was detected */
-	WLog_INFO(TAG, "Network disconnect!");
+	error = freerdp_error_info(instance);
+	switch (error)
+	{
+		case ERRINFO_GRAPHICS_SUBSYSTEM_FAILED:
+			/* A network disconnect was detected */
+			WLog_WARN(TAG, "Disconnected by server hitting a bug or resource limit [%s]",
+			          freerdp_get_error_info_string(error));
+			break;
+		case ERRINFO_SUCCESS:
+			/* A network disconnect was detected */
+			WLog_INFO(TAG, "Network disconnect!");
+			break;
+		default:
+			return FALSE;
+	}
 
 	if (!settings->AutoReconnectionEnabled)
 	{
