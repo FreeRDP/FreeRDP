@@ -343,9 +343,17 @@ static UINT xf_cliprdr_send_data_request(xfClipboard* clipboard, UINT32 formatId
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT xf_cliprdr_send_data_response(xfClipboard* clipboard, BYTE* data, int size)
+static UINT xf_cliprdr_send_data_response(xfClipboard* clipboard, const BYTE* data, size_t size)
 {
 	CLIPRDR_FORMAT_DATA_RESPONSE response = { 0 };
+
+	/* No request currently pending, do not send a response. */
+	if (clipboard->requestedFormatId < 0)
+		return CHANNEL_RC_OK;
+
+	/* Request handled, reset to invalid */
+	clipboard->requestedFormatId = -1;
+
 	response.msgFlags = (data) ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
 	response.dataLen = size;
 	response.requestedFormatData = data;
@@ -599,17 +607,26 @@ static void xf_cliprdr_provide_server_format_list(xfClipboard* clipboard)
 	Stream_Free(formats, TRUE);
 }
 
-static void xf_cliprdr_get_requested_targets(xfClipboard* clipboard)
+static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FORMAT* formats,
+                                        UINT32 numFormats)
 {
-	UINT32 numFormats = 0;
-	CLIPRDR_FORMAT* formats = NULL;
 	CLIPRDR_FORMAT_LIST formatList = { 0 };
-	formats = xf_cliprdr_get_client_formats(clipboard, &numFormats);
 	formatList.msgFlags = CB_RESPONSE_OK;
 	formatList.numFormats = numFormats;
 	formatList.formats = formats;
 	formatList.msgType = CB_FORMAT_LIST;
-	clipboard->context->ClientFormatList(clipboard->context, &formatList);
+
+	/* Ensure all pending requests are answered. */
+	xf_cliprdr_send_data_response(clipboard, NULL, 0);
+	return clipboard->context->ClientFormatList(clipboard->context, &formatList);
+}
+
+static void xf_cliprdr_get_requested_targets(xfClipboard* clipboard)
+{
+	UINT32 numFormats = 0;
+	CLIPRDR_FORMAT* formats = NULL;
+	formats = xf_cliprdr_get_client_formats(clipboard, &numFormats);
+	xf_cliprdr_send_format_list(clipboard, formats, numFormats);
 	xf_cliprdr_free_formats(formats, numFormats);
 }
 
@@ -707,7 +724,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 		free(file_array);
 	}
 
-	xf_cliprdr_send_data_response(clipboard, pDstData, (int)DstSize);
+	xf_cliprdr_send_data_response(clipboard, pDstData, DstSize);
 	free(pDstData);
 }
 
@@ -722,6 +739,7 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 	unsigned long bytes_left;
 	xfCliprdrFormat* format;
 	xfContext* xfc = clipboard->xfc;
+
 	format = xf_cliprdr_get_client_format_by_id(clipboard, clipboard->requestedFormatId);
 
 	if (!format || (format->atom != target))
@@ -1204,7 +1222,6 @@ static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
 {
 	UINT32 i, numFormats;
 	CLIPRDR_FORMAT* formats = NULL;
-	CLIPRDR_FORMAT_LIST formatList = { 0 };
 	xfContext* xfc = clipboard->xfc;
 	UINT ret;
 	numFormats = clipboard->numClientFormats;
@@ -1224,11 +1241,7 @@ static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
 		formats[i].formatName = clipboard->clientFormats[i].formatName;
 	}
 
-	formatList.msgFlags = CB_RESPONSE_OK;
-	formatList.numFormats = numFormats;
-	formatList.formats = formats;
-	formatList.msgType = CB_FORMAT_LIST;
-	ret = clipboard->context->ClientFormatList(clipboard->context, &formatList);
+	ret = xf_cliprdr_send_format_list(clipboard, formats, numFormats);
 	free(formats);
 
 	if (clipboard->owner && clipboard->owner != xfc->drawable)
@@ -1613,10 +1626,10 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	else
 		format = xf_cliprdr_get_client_format_by_id(clipboard, formatId);
 
+	clipboard->requestedFormatId = rawTransfer ? CF_RAW : formatId;
 	if (!format)
 		return xf_cliprdr_send_data_response(clipboard, NULL, 0);
 
-	clipboard->requestedFormatId = rawTransfer ? CF_RAW : formatId;
 	XConvertSelection(xfc->display, clipboard->clipboard_atom, format->atom,
 	                  clipboard->property_atom, xfc->drawable, CurrentTime);
 	XFlush(xfc->display);
