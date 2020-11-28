@@ -220,9 +220,6 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 
 	priv->log = WLog_Get("com.freerdp.codec.rfx");
 	WLog_OpenAppender(priv->log);
-#ifdef WITH_DEBUG_RFX
-	WLog_SetLogLevel(priv->log, WLOG_DEBUG);
-#endif
 	priv->TilePool = ObjectPool_New(TRUE);
 
 	if (!priv->TilePool)
