@@ -273,27 +273,27 @@ static UINT read_pen_contact(RdpeiServerContext* context, wStream* s,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (contactData->fieldsPresent & PEN_CONTACT_PENFLAGS_PRESENT)
+	if (contactData->fieldsPresent & RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT)
 	{
 		if (!rdpei_read_4byte_unsigned(s, &contactData->penFlags))
 			return ERROR_INVALID_DATA;
 	}
-	if (contactData->fieldsPresent & PEN_CONTACT_PRESSURE_PRESENT)
+	if (contactData->fieldsPresent & RDPINPUT_PEN_CONTACT_PRESSURE_PRESENT)
 	{
 		if (!rdpei_read_4byte_unsigned(s, &contactData->pressure))
 			return ERROR_INVALID_DATA;
 	}
-	if (contactData->fieldsPresent & PEN_CONTACT_ROTATION_PRESENT)
+	if (contactData->fieldsPresent & RDPINPUT_PEN_CONTACT_ROTATION_PRESENT)
 	{
 		if (!rdpei_read_2byte_unsigned(s, &contactData->rotation))
 			return ERROR_INVALID_DATA;
 	}
-	if (contactData->fieldsPresent & PEN_CONTACT_TILTX_PRESENT)
+	if (contactData->fieldsPresent & RDPINPUT_PEN_CONTACT_TILTX_PRESENT)
 	{
 		if (!rdpei_read_2byte_signed(s, &contactData->tiltX))
 			return ERROR_INVALID_DATA;
 	}
-	if (contactData->fieldsPresent & PEN_CONTACT_TILTY_PRESENT)
+	if (contactData->fieldsPresent & RDPINPUT_PEN_CONTACT_TILTY_PRESENT)
 	{
 		if (!rdpei_read_2byte_signed(s, &contactData->tiltY))
 			return ERROR_INVALID_DATA;
