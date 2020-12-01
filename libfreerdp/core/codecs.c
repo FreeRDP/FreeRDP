@@ -29,8 +29,10 @@
 
 BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width, UINT32 height)
 {
-	if ((flags & FREERDP_CODEC_INTERLEAVED) && !codecs->interleaved)
+	if ((flags & FREERDP_CODEC_INTERLEAVED))
 	{
+		bitmap_interleaved_context_free(codecs->interleaved);
+
 		if (!(codecs->interleaved = bitmap_interleaved_context_new(FALSE)))
 		{
 			WLog_ERR(TAG, "Failed to create interleaved codec context");
@@ -38,8 +40,10 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 		}
 	}
 
-	if ((flags & FREERDP_CODEC_PLANAR) && !codecs->planar)
+	if ((flags & FREERDP_CODEC_PLANAR))
 	{
+		freerdp_bitmap_planar_context_free(codecs->planar);
+
 		if (!(codecs->planar = freerdp_bitmap_planar_context_new(FALSE, 64, 64)))
 		{
 			WLog_ERR(TAG, "Failed to create planar bitmap codec context");
@@ -47,8 +51,10 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 		}
 	}
 
-	if ((flags & FREERDP_CODEC_NSCODEC) && !codecs->nsc)
+	if ((flags & FREERDP_CODEC_NSCODEC))
 	{
+		nsc_context_free(codecs->nsc);
+
 		if (!(codecs->nsc = nsc_context_new()))
 		{
 			WLog_ERR(TAG, "Failed to create nsc codec context");
@@ -56,8 +62,10 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 		}
 	}
 
-	if ((flags & FREERDP_CODEC_REMOTEFX) && !codecs->rfx)
+	if ((flags & FREERDP_CODEC_REMOTEFX))
 	{
+		rfx_context_free(codecs->rfx);
+
 		if (!(codecs->rfx = rfx_context_new(FALSE)))
 		{
 			WLog_ERR(TAG, "Failed to create rfx codec context");
@@ -65,8 +73,10 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 		}
 	}
 
-	if ((flags & FREERDP_CODEC_CLEARCODEC) && !codecs->clear)
+	if ((flags & FREERDP_CODEC_CLEARCODEC))
 	{
+		clear_context_free(codecs->clear);
+
 		if (!(codecs->clear = clear_context_new(FALSE)))
 		{
 			WLog_ERR(TAG, "Failed to create clear codec context");
@@ -78,8 +88,10 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 	{
 	}
 
-	if ((flags & FREERDP_CODEC_PROGRESSIVE) && !codecs->progressive)
+	if ((flags & FREERDP_CODEC_PROGRESSIVE))
 	{
+		progressive_context_free(codecs->progressive);
+
 		if (!(codecs->progressive = progressive_context_new(FALSE)))
 		{
 			WLog_ERR(TAG, "Failed to create progressive codec context");
@@ -88,8 +100,10 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 	}
 
 #ifdef WITH_GFX_H264
-	if ((flags & (FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444)) && !codecs->h264)
+	if ((flags & (FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444)))
 	{
+		h264_context_free(codecs->h264);
+
 		if (!(codecs->h264 = h264_context_new(FALSE)))
 		{
 			WLog_ERR(TAG, "Failed to create h264 codec context");
