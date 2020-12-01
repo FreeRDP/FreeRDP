@@ -1468,8 +1468,15 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
                                    pcRdpgfxUnmapWindowForSurface unmap,
                                    pcRdpgfxUpdateSurfaceArea update)
 {
-	if (!gdi || !gfx)
+	rdpContext* context;
+
+	if (!gdi || !gfx || !gdi->context || !gdi->context->settings)
 		return FALSE;
+
+	context = gdi->context;
+	freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL,
+	                              context->settings->DesktopWidth,
+	                              context->settings->DesktopHeight);
 
 	gdi->gfx = gfx;
 	gfx->custom = (void*)gdi;
