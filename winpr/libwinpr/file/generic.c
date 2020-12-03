@@ -361,7 +361,6 @@ BOOL ReadFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	WLog_ERR(TAG, "ReadFileEx operation not implemented");
 	return FALSE;
-	return TRUE;
 }
 
 BOOL ReadFileScatter(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[], DWORD nNumberOfBytesToRead,
