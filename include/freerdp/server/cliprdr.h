@@ -94,7 +94,6 @@ struct _cliprdr_server_context
 	BOOL streamFileClipEnabled;
 	BOOL fileClipNoFilePaths;
 	BOOL canLockClipData;
-	BOOL hasHugeFileSupport;
 
 	psCliprdrOpen Open;
 	psCliprdrClose Close;
@@ -127,6 +126,7 @@ struct _cliprdr_server_context
 	rdpContext* rdpcontext;
 	BOOL autoInitializationSequence;
 	UINT32 lastRequestedFormatId;
+	BOOL hasHugeFileSupport;
 };
 
 #ifdef __cplusplus
