@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include(CheckFunctionExists)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(${MODULE_PREFIX}_COLLECTIONS_SRCS
@@ -137,10 +139,16 @@ endif()
 
 if(UNIX)
 	winpr_library_add_private(m)
-endif()
 
-if((FREEBSD) AND (NOT KFREEBSD))
-	winpr_library_add_private(execinfo)
+	set(CMAKE_REQUIRED_INCLUDES backtrace.h)
+	check_function_exists(backtrace BACKTRACE)
+	if (NOT BACKTRACE)
+		set(CMAKE_REQUIRED_LIBRARIES execinfo)
+		check_function_exists(backtrace EXECINFO)
+		if (EXECINFO)
+			winpr_library_add_private(execinfo)
+		endif()
+	endif()
 endif()
 
 if(WIN32)
