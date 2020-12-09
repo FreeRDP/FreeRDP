@@ -607,15 +607,10 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, const XEnterWindowEvent* event,
 	}
 	else
 	{
-		xfAppWindow* appWindow;
-		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 		/* keep track of which window has focus so that we can apply pointer updates */
-
-		if (appWindow)
-		{
-			xfc->appWindow = appWindow;
-		}
+		xfc->appWindow = appWindow;
 	}
 
 	return TRUE;
@@ -623,14 +618,19 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, const XEnterWindowEvent* event,
 
 static BOOL xf_event_LeaveNotify(xfContext* xfc, const XLeaveWindowEvent* event, BOOL app)
 {
-	WINPR_UNUSED(event);
-
 	if (!app)
 	{
 		xfc->mouse_active = FALSE;
 		XUngrabKeyboard(xfc->display, CurrentTime);
 	}
+	else
+	{
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
+		/* keep track of which window has focus so that we can apply pointer updates */
+		if (xfc->appWindow == appWindow)
+			xfc->appWindow = NULL;
+	}
 	return TRUE;
 }
 
