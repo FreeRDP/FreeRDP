@@ -811,7 +811,7 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 		return -1;
 
 	if (incomplete)
-		*incomplete = position >= pduLength;
+		*incomplete = position < pduLength;
 
 	return pduLength;
 }
