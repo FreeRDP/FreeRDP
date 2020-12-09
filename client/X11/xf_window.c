@@ -1079,6 +1079,9 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 	if (!appWindow)
 		return;
 
+	if (xfc->appWindow == appWindow)
+		xfc->appWindow = NULL;
+
 	if (appWindow->gc)
 		XFreeGC(xfc->display, appWindow->gc);
 
