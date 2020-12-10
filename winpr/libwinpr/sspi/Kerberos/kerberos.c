@@ -34,11 +34,9 @@
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
 
-#include "kerberos.h"
+#include <gss.h>
 
-#ifdef WITH_GSSAPI_HEIMDAL
-#include <krb5-protos.h>
-#endif
+#include "kerberos.h"
 
 #include "../sspi.h"
 #include "../../log.h"
@@ -54,9 +52,9 @@ struct _KRB_CONTEXT
 	UINT32 major_status;
 	UINT32 minor_status;
 	UINT32 actual_time;
-	sspi_gss_cred_id_t cred;
-	sspi_gss_ctx_id_t gss_ctx;
-	sspi_gss_name_t target_name;
+	gss_cred_id_t cred;
+	gss_ctx_id_t gss_ctx;
+	gss_name_t target_name;
 };
 
 static const char* KRB_PACKAGE_NAME = "Kerberos";
@@ -85,10 +83,11 @@ const SecPkgInfoW KERBEROS_SecPkgInfoW = {
 	KERBEROS_SecPkgInfoW_Comment /* Comment */
 };
 
-static sspi_gss_OID_desc g_SSPI_GSS_C_SPNEGO_KRB5 = {
-	9, (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02"
-};
-static sspi_gss_OID SSPI_GSS_C_SPNEGO_KRB5 = &g_SSPI_GSS_C_SPNEGO_KRB5;
+static gss_OID_desc g_SSPI_GSS_C_SPNEGO_KRB5 = { 9, (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
+static gss_OID SSPI_GSS_C_SPNEGO_KRB5 = &g_SSPI_GSS_C_SPNEGO_KRB5;
+
+static BOOL kerberos_SetContextServicePrincipalNameA(KRB_CONTEXT* context,
+                                                     SEC_CHAR* ServicePrincipalName);
 
 static KRB_CONTEXT* kerberos_ContextNew(void)
 {
@@ -100,8 +99,8 @@ static KRB_CONTEXT* kerberos_ContextNew(void)
 
 	context->minor_status = 0;
 	context->major_status = 0;
-	context->gss_ctx = SSPI_GSS_C_NO_CONTEXT;
-	context->cred = SSPI_GSS_C_NO_CREDENTIAL;
+	context->gss_ctx = GSS_C_NO_CONTEXT;
+	context->cred = GSS_C_NO_CREDENTIAL;
 	return context;
 }
 
@@ -112,16 +111,12 @@ static void kerberos_ContextFree(KRB_CONTEXT* context)
 	if (!context)
 		return;
 
-	if (context->target_name)
-	{
-		sspi_gss_release_name(&minor_status, &context->target_name);
-		context->target_name = NULL;
-	}
+	kerberos_SetContextServicePrincipalNameA(context, NULL);
 
 	if (context->gss_ctx)
 	{
-		sspi_gss_delete_sec_context(&minor_status, &context->gss_ctx, SSPI_GSS_C_NO_BUFFER);
-		context->gss_ctx = SSPI_GSS_C_NO_CONTEXT;
+		gss_delete_sec_context(&minor_status, &context->gss_ctx, GSS_C_NO_BUFFER);
+		context->gss_ctx = GSS_C_NO_CONTEXT;
 	}
 
 	free(context);
@@ -132,7 +127,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
@@ -140,7 +135,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCredential)
@@ -188,256 +183,82 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-static int kerberos_SetContextServicePrincipalNameA(KRB_CONTEXT* context,
-                                                    SEC_CHAR* ServicePrincipalName)
+static gss_name_t kerberos_get_service_name(const SEC_CHAR* ServicePrincipalName)
 {
 	char* p;
 	UINT32 major_status;
 	UINT32 minor_status;
+	gss_name_t target_name;
 	char* gss_name = NULL;
-	sspi_gss_buffer_desc name_buffer;
+	gss_buffer_desc name_buffer;
 
 	if (!ServicePrincipalName)
-	{
-		context->target_name = NULL;
-		return 1;
-	}
+		return NULL;
 
 	/* GSSAPI expects a SPN of type <service>@FQDN, let's construct it */
 	gss_name = _strdup(ServicePrincipalName);
 
 	if (!gss_name)
-		return -1;
+		return NULL;
 
 	p = strchr(gss_name, '/');
 
 	if (p)
 		*p = '@';
-
 	name_buffer.value = gss_name;
 	name_buffer.length = strlen(gss_name) + 1;
-	major_status = sspi_gss_import_name(&minor_status, &name_buffer,
-	                                    SSPI_GSS_C_NT_HOSTBASED_SERVICE, &(context->target_name));
+	major_status =
+	    gss_import_name(&minor_status, &name_buffer, GSS_C_NT_HOSTBASED_SERVICE, &target_name);
 	free(gss_name);
 
-	if (SSPI_GSS_ERROR(major_status))
+	if (GSS_ERROR(major_status))
 	{
 		WLog_ERR(TAG, "error: gss_import_name failed");
-		return -1;
+		return NULL;
 	}
 
-	return 1;
+	return target_name;
 }
 
-#ifdef WITH_GSSAPI
-static krb5_error_code KRB5_CALLCONV acquire_cred(krb5_context ctx, krb5_principal client,
-                                                  const char* password)
+static BOOL kerberos_SetContextServicePrincipalNameA(KRB_CONTEXT* context,
+                                                     SEC_CHAR* ServicePrincipalName)
 {
-	krb5_error_code ret;
-	krb5_creds creds;
-	krb5_deltat starttime = 0;
-	krb5_get_init_creds_opt* options = NULL;
-	krb5_ccache ccache;
-	krb5_init_creds_context init_ctx = NULL;
-
-	/* Get default ccache */
-	if ((ret = krb5_cc_default(ctx, &ccache)))
+	if (context->target_name)
 	{
-		WLog_ERR(TAG, "error while getting default ccache");
-		goto cleanup;
+		OM_uint32 minor_status;
+		gss_release_name(&minor_status, &context->target_name);
+		context->target_name = NULL;
 	}
-
-	if ((ret = krb5_cc_initialize(ctx, ccache, client)))
+	if (ServicePrincipalName)
 	{
-		WLog_ERR(TAG, "error: could not initialize ccache");
-		goto cleanup;
+		gss_name_t targetName = kerberos_get_service_name(ServicePrincipalName);
+		context->target_name = targetName;
 	}
-
-	memset(&creds, 0, sizeof(creds));
-
-	if ((ret = krb5_get_init_creds_opt_alloc(ctx, &options)))
-	{
-		WLog_ERR(TAG, "error while allocating options");
-		goto cleanup;
-	}
-
-	/* Set default options */
-	krb5_get_init_creds_opt_set_forwardable(options, 0);
-	krb5_get_init_creds_opt_set_proxiable(options, 0);
-#ifdef WITH_GSSAPI_MIT
-
-	/* for MIT we specify ccache output using an option */
-	if ((ret = krb5_get_init_creds_opt_set_out_ccache(ctx, options, ccache)))
-	{
-		WLog_ERR(TAG, "error while setting ccache output");
-		goto cleanup;
-	}
-
-#endif
-
-	if ((ret = krb5_init_creds_init(ctx, client, NULL, NULL, starttime, options, &init_ctx)))
-	{
-		WLog_ERR(TAG, "error krb5_init_creds_init failed");
-		goto cleanup;
-	}
-
-	if ((ret = krb5_init_creds_set_password(ctx, init_ctx, password)))
-	{
-		WLog_ERR(TAG, "error krb5_init_creds_set_password failed");
-		goto cleanup;
-	}
-
-	/* Get credentials */
-	if ((ret = krb5_init_creds_get(ctx, init_ctx)))
-	{
-		WLog_ERR(TAG, "error while getting credentials");
-		goto cleanup;
-	}
-
-	/* Retrieve credentials */
-	if ((ret = krb5_init_creds_get_creds(ctx, init_ctx, &creds)))
-	{
-		WLog_ERR(TAG, "error while retrieving credentials");
-		goto cleanup;
-	}
-
-#ifdef WITH_GSSAPI_HEIMDAL
-
-	/* For Heimdal, we use this function to store credentials */
-	if ((ret = krb5_init_creds_store(ctx, init_ctx, ccache)))
-	{
-		WLog_ERR(TAG, "error while storing credentials");
-		goto cleanup;
-	}
-
-#endif
-cleanup:
-	krb5_free_cred_contents(ctx, &creds);
-#ifdef HAVE_AT_LEAST_KRB_V1_13
-
-	/* MIT Kerberos version 1.13 at minimum.
-	 * For releases 1.12 and previous, krb5_get_init_creds_opt structure
-	 * is freed in krb5_init_creds_free() */
-	if (options)
-		krb5_get_init_creds_opt_free(ctx, options);
-
-#endif
-
-	if (init_ctx)
-		krb5_init_creds_free(ctx, init_ctx);
-
-	if (ccache)
-		krb5_cc_close(ctx, ccache);
-
-	return ret;
+	return context->target_name != NULL;
 }
 
-static int init_creds(LPCWSTR username, size_t username_len, LPCWSTR password, size_t password_len)
+static BOOL kerberos_TestGetCredentials(const SEC_CHAR* targetName)
 {
-	krb5_error_code ret = 0;
-	krb5_context ctx = NULL;
-	krb5_principal principal = NULL;
-	char* krb_name = NULL;
-	char* lusername = NULL;
-	char* lrealm = NULL;
-	char* lpassword = NULL;
-	int flags = 0;
-	char* pstr = NULL;
-	size_t krb_name_len = 0;
-	size_t lrealm_len = 0;
-	size_t lusername_len = 0;
-	int status = 0;
-	status = ConvertFromUnicode(CP_UTF8, 0, username, username_len, &lusername, 0, NULL, NULL);
+	OM_uint32 minStat;
+	gss_cred_id_t cred;
+	OM_uint32 majStat;
+	OM_uint32 ignored;
+	gss_name_t serviceName = kerberos_get_service_name(targetName);
+	if (!serviceName)
+		return FALSE;
 
-	if (status <= 0)
+	majStat = gss_acquire_cred(&minStat, serviceName, GSS_C_INDEFINITE, GSS_C_NO_OID_SET,
+	                           GSS_C_INITIATE, &cred, NULL, NULL);
+
+	gss_release_name(&ignored, &serviceName);
+	gss_release_cred(&ignored, &cred);
+
+	if (majStat != GSS_S_COMPLETE)
 	{
-		WLog_ERR(TAG, "Failed to convert username");
-		goto cleanup;
+		return FALSE;
 	}
-
-	status = ConvertFromUnicode(CP_UTF8, 0, password, password_len, &lpassword, 0, NULL, NULL);
-
-	if (status <= 0)
-	{
-		WLog_ERR(TAG, "Failed to convert password");
-		goto cleanup;
-	}
-
-	/* Could call krb5_init_secure_context, but it disallows user overrides */
-	ret = krb5_init_context(&ctx);
-
-	if (ret)
-	{
-		WLog_ERR(TAG, "error: while initializing Kerberos 5 library");
-		goto cleanup;
-	}
-
-	ret = krb5_get_default_realm(ctx, &lrealm);
-
-	if (ret)
-	{
-		WLog_WARN(TAG, "could not get Kerberos default realm");
-		goto cleanup;
-	}
-
-	lrealm_len = strlen(lrealm);
-	lusername_len = strlen(lusername);
-	krb_name_len = lusername_len + lrealm_len + 1; // +1 for '@'
-	krb_name = calloc(krb_name_len + 1, sizeof(char));
-
-	if (!krb_name)
-	{
-		WLog_ERR(TAG, "could not allocate memory for string rep of principal\n");
-		ret = -1;
-		goto cleanup;
-	}
-
-	/* Set buffer */
-	_snprintf(krb_name, krb_name_len + 1, "%s@%s", lusername, lrealm);
-#ifdef WITH_DEBUG_NLA
-	WLog_DBG(TAG, "copied string is %s\n", krb_name);
-#endif
-	pstr = strchr(lusername, '@');
-
-	if (pstr != NULL)
-		flags = KRB5_PRINCIPAL_PARSE_ENTERPRISE;
-
-	/* Use the specified principal name. */
-	ret = krb5_parse_name_flags(ctx, krb_name, flags, &principal);
-
-	if (ret)
-	{
-		WLog_ERR(TAG, "could not convert %s to principal", krb_name);
-		goto cleanup;
-	}
-
-	ret = acquire_cred(ctx, principal, lpassword);
-
-	if (ret)
-	{
-		WLog_ERR(TAG, "Kerberos credentials not found and could not be acquired");
-		goto cleanup;
-	}
-
-cleanup:
-	free(lusername);
-	free(lpassword);
-
-	if (krb_name)
-		free(krb_name);
-
-	if (lrealm)
-		krb5_free_default_realm(ctx, lrealm);
-
-	if (principal)
-		krb5_free_principal(ctx, principal);
-
-	if (ctx)
-		krb5_free_context(ctx);
-
-	return ret;
+	return TRUE;
 }
-#endif
 
 static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
     PCredHandle phCredential, PCtxtHandle phContext, SEC_CHAR* pszTargetName, ULONG fContextReq,
@@ -448,10 +269,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 	SSPI_CREDENTIALS* credentials;
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
-	sspi_gss_buffer_desc input_tok = { 0 };
-	sspi_gss_buffer_desc output_tok = { 0 };
-	sspi_gss_OID actual_mech;
-	sspi_gss_OID desired_mech;
+	gss_buffer_desc input_tok = { 0 };
+	gss_buffer_desc output_tok = { 0 };
+	gss_OID actual_mech;
+	gss_OID desired_mech;
 	UINT32 actual_services;
 	input_tok.length = 0;
 	output_tok.length = 0;
@@ -468,7 +289,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 		credentials = (SSPI_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
 		context->credentials = credentials;
 
-		if (kerberos_SetContextServicePrincipalNameA(context, pszTargetName) < 0)
+		if (!kerberos_SetContextServicePrincipalNameA(context, pszTargetName))
 		{
 			kerberos_ContextFree(context);
 			return SEC_E_INTERNAL_ERROR;
@@ -480,50 +301,20 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 	if (!pInput)
 	{
-#if defined(WITH_GSSAPI)
-		context->major_status = sspi_gss_init_sec_context(
+		context->major_status = gss_init_sec_context(
 		    &(context->minor_status), context->cred, &(context->gss_ctx), context->target_name,
-		    desired_mech, SSPI_GSS_C_MUTUAL_FLAG | SSPI_GSS_C_DELEG_FLAG, SSPI_GSS_C_INDEFINITE,
-		    SSPI_GSS_C_NO_CHANNEL_BINDINGS, &input_tok, &actual_mech, &output_tok, &actual_services,
+		    desired_mech, GSS_C_MUTUAL_FLAG | GSS_C_DELEG_FLAG, GSS_C_INDEFINITE,
+		    GSS_C_NO_CHANNEL_BINDINGS, &input_tok, &actual_mech, &output_tok, &actual_services,
 		    &(context->actual_time));
 
-		if (SSPI_GSS_ERROR(context->major_status))
+		if (GSS_ERROR(context->major_status))
 		{
 			/* GSSAPI failed because we do not have credentials */
-			if (context->major_status & SSPI_GSS_S_NO_CRED)
-			{
-				/* Then let's try to acquire credentials using login and password,
-				 * and only those two, means not with a smartcard.
-				 * If we use smartcard-logon, the credentials have already
-				 * been acquired by pkinit process. If not, returned error previously.
-				 */
-				if (init_creds(context->credentials->identity.User,
-				               context->credentials->identity.UserLength,
-				               context->credentials->identity.Password,
-				               context->credentials->identity.PasswordLength))
-					return SEC_E_NO_CREDENTIALS;
-
-				WLog_INFO(TAG, "Authenticated to Kerberos v5 via login/password");
-				/* retry GSSAPI call */
-				context->major_status = sspi_gss_init_sec_context(
-				    &(context->minor_status), context->cred, &(context->gss_ctx),
-				    context->target_name, desired_mech,
-				    SSPI_GSS_C_MUTUAL_FLAG | SSPI_GSS_C_DELEG_FLAG, SSPI_GSS_C_INDEFINITE,
-				    SSPI_GSS_C_NO_CHANNEL_BINDINGS, &input_tok, &actual_mech, &output_tok,
-				    &actual_services, &(context->actual_time));
-
-				if (SSPI_GSS_ERROR(context->major_status))
-				{
-					/* We can't use Kerberos */
-					WLog_ERR(TAG, "Init GSS security context failed : can't use Kerberos");
-					return SEC_E_INTERNAL_ERROR;
-				}
-			}
+			if (context->major_status & GSS_S_NO_CRED)
+				return SEC_E_NO_CREDENTIALS;
 		}
 
-#endif
-
-		if (context->major_status & SSPI_GSS_S_CONTINUE_NEEDED)
+		if (context->major_status & GSS_S_CONTINUE_NEEDED)
 		{
 			if (output_tok.length != 0)
 			{
@@ -543,7 +334,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 				CopyMemory(output_buffer->pvBuffer, output_tok.value, output_tok.length);
 				output_buffer->cbBuffer = output_tok.length;
-				sspi_gss_release_buffer(&(context->minor_status), &output_tok);
+				gss_release_buffer(&(context->minor_status), &output_tok);
 				return SEC_I_CONTINUE_NEEDED;
 			}
 		}
@@ -560,13 +351,13 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 		input_tok.value = input_buffer->pvBuffer;
 		input_tok.length = input_buffer->cbBuffer;
-		context->major_status = sspi_gss_init_sec_context(
+		context->major_status = gss_init_sec_context(
 		    &(context->minor_status), context->cred, &(context->gss_ctx), context->target_name,
-		    desired_mech, SSPI_GSS_C_MUTUAL_FLAG | SSPI_GSS_C_DELEG_FLAG, SSPI_GSS_C_INDEFINITE,
-		    SSPI_GSS_C_NO_CHANNEL_BINDINGS, &input_tok, &actual_mech, &output_tok, &actual_services,
+		    desired_mech, GSS_C_MUTUAL_FLAG | GSS_C_DELEG_FLAG, GSS_C_INDEFINITE,
+		    GSS_C_NO_CHANNEL_BINDINGS, &input_tok, &actual_mech, &output_tok, &actual_services,
 		    &(context->actual_time));
 
-		if (SSPI_GSS_ERROR(context->major_status))
+		if (GSS_ERROR(context->major_status))
 			return SEC_E_INTERNAL_ERROR;
 
 		if (output_tok.length == 0)
@@ -600,7 +391,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DeleteSecurityContext(PCtxtHandle phCo
 static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesW(PCtxtHandle phContext,
                                                                   ULONG ulAttribute, void* pBuffer)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext,
@@ -640,8 +431,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	UINT32 major_status;
 	UINT32 minor_status;
 	KRB_CONTEXT* context;
-	sspi_gss_buffer_desc input;
-	sspi_gss_buffer_desc output;
+	gss_buffer_desc input;
+	gss_buffer_desc output;
 	PSecBuffer data_buffer = NULL;
 	context = (KRB_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -659,21 +450,21 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 
 	input.value = data_buffer->pvBuffer;
 	input.length = data_buffer->cbBuffer;
-	major_status = sspi_gss_wrap(&minor_status, context->gss_ctx, TRUE, SSPI_GSS_C_QOP_DEFAULT,
-	                             &input, &conf_state, &output);
+	major_status = gss_wrap(&minor_status, context->gss_ctx, TRUE, GSS_C_QOP_DEFAULT, &input,
+	                        &conf_state, &output);
 
-	if (SSPI_GSS_ERROR(major_status))
+	if (GSS_ERROR(major_status))
 		return SEC_E_INTERNAL_ERROR;
 
 	if (conf_state == 0)
 	{
 		WLog_ERR(TAG, "error: gss_wrap confidentiality was not applied");
-		sspi_gss_release_buffer(&minor_status, &output);
+		gss_release_buffer(&minor_status, &output);
 		return SEC_E_INTERNAL_ERROR;
 	}
 
 	CopyMemory(data_buffer->pvBuffer, output.value, output.length);
-	sspi_gss_release_buffer(&minor_status, &output);
+	gss_release_buffer(&minor_status, &output);
 	return SEC_E_OK;
 }
 
@@ -686,8 +477,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	UINT32 major_status;
 	UINT32 minor_status;
 	KRB_CONTEXT* context;
-	sspi_gss_buffer_desc input_data;
-	sspi_gss_buffer_desc output;
+	gss_buffer_desc input_data;
+	gss_buffer_desc output;
 	PSecBuffer data_buffer_to_unwrap = NULL;
 	context = (KRB_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -707,34 +498,34 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	input_data.value = data_buffer_to_unwrap->pvBuffer;
 	input_data.length = data_buffer_to_unwrap->cbBuffer;
 	major_status =
-	    sspi_gss_unwrap(&minor_status, context->gss_ctx, &input_data, &output, &conf_state, NULL);
+	    gss_unwrap(&minor_status, context->gss_ctx, &input_data, &output, &conf_state, NULL);
 
-	if (SSPI_GSS_ERROR(major_status))
+	if (GSS_ERROR(major_status))
 		return SEC_E_INTERNAL_ERROR;
 
 	if (conf_state == 0)
 	{
 		WLog_ERR(TAG, "error: gss_unwrap confidentiality was not applied");
-		sspi_gss_release_buffer(&minor_status, &output);
+		gss_release_buffer(&minor_status, &output);
 		return SEC_E_INTERNAL_ERROR;
 	}
 
 	CopyMemory(data_buffer_to_unwrap->pvBuffer, output.value, output.length);
-	sspi_gss_release_buffer(&minor_status, &output);
+	gss_release_buffer(&minor_status, &output);
 	return SEC_E_OK;
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
                                                         PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
                                                           PSecBufferDesc pMessage,
                                                           ULONG MessageSeqNo, ULONG* pfQOP)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 const SecurityFunctionTableA KERBEROS_SecurityFunctionTableA = {

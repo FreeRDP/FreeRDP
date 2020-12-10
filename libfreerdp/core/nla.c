@@ -382,25 +382,11 @@ static int nla_client_init(rdpNla* nla)
 		return -1;
 
 	sprintf_s(spn, length + 1, "%s%s", TERMSRV_SPN_PREFIX, settings->ServerHostname);
-#ifdef UNICODE
-	nla->ServicePrincipalName = NULL;
-	ConvertToUnicode(CP_UTF8, 0, spn, -1, &nla->ServicePrincipalName, 0);
+	nla_set_service_principal(nla, spn);
 	free(spn);
-#else
-	nla->ServicePrincipalName = spn;
-#endif
+
 	nla->table = InitSecurityInterfaceEx(0);
-#ifdef WITH_GSSAPI /* KERBEROS SSP */
-	nla->status = nla->table->QuerySecurityPackageInfo(KERBEROS_SSP_NAME, &nla->pPackageInfo);
 
-	if (nla->status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "QuerySecurityPackageInfo status %s [0x%08" PRIX32 "]",
-		         GetSecurityStatusString(nla->status), nla->status);
-		return -1;
-	}
-
-#else /* NTLM SSP */
 	nla->status = nla->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &nla->pPackageInfo);
 
 	if (nla->status != SEC_E_OK)
@@ -410,7 +396,6 @@ static int nla_client_init(rdpNla* nla)
 		return -1;
 	}
 
-#endif
 	nla->cbMaxToken = nla->pPackageInfo->cbMaxToken;
 	nla->packageName = nla->pPackageInfo->Name;
 	WLog_DBG(TAG, "%s %" PRIu32 " : packageName=%ls ; cbMaxToken=%d", __FUNCTION__, __LINE__,
@@ -2498,7 +2483,16 @@ BOOL nla_set_service_principal(rdpNla* nla, LPSTR principal)
 	if (!nla || !principal)
 		return FALSE;
 
-	nla->ServicePrincipalName = principal;
+	free(nla->ServicePrincipalName);
+	nla->ServicePrincipalName = NULL;
+	if (principal)
+	{
+#ifdef UNICODE
+		ConvertToUnicode(CP_UTF8, 0, principal, -1, &nla->ServicePrincipalName, 0);
+#else
+		nla->ServicePrincipalName = _strdup(principal);
+#endif
+	}
 	return TRUE;
 }
 
