@@ -47,6 +47,10 @@ DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256];
 
 int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 {
+#if defined(_WIN32)
+	*keyboardLayoutId = (DWORD)GetKeyboardLayout(0) & 0x0000FFFF;
+#endif
+
 #ifdef WITH_X11
 	if (*keyboardLayoutId == 0)
 		freerdp_detect_keyboard_layout_from_xkb(keyboardLayoutId);
