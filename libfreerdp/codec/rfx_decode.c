@@ -62,7 +62,7 @@ static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 /* rfx_decode_ycbcr_to_rgb code now resides in the primitives library. */
 
 /* stride is bytes between rows in the output buffer. */
-BOOL rfx_decode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, BYTE* rgb_buffer, int stride)
+BOOL rfx_decode_rgb(RFX_CONTEXT* context, const RFX_TILE* tile, BYTE* rgb_buffer, UINT32 stride)
 {
 	BOOL rc = TRUE;
 	BYTE* pBuffer;

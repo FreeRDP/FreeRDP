@@ -183,16 +183,19 @@ extern "C"
 	FREERDP_API void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message);
 
 	FREERDP_API BOOL rfx_compose_message(RFX_CONTEXT* context, wStream* s, const RFX_RECT* rects,
-	                                     int num_rects, BYTE* image_data, int width, int height,
-	                                     int rowstride);
+	                                     size_t num_rects, const BYTE* image_data, UINT32 width,
+	                                     UINT32 height, UINT32 rowstride);
 
 	FREERDP_API RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
-	                                            int numRects, BYTE* data, int width, int height,
-	                                            int scanline);
+	                                            size_t numRects, const BYTE* data, UINT32 width,
+	                                            UINT32 height, size_t scanline);
+
 	FREERDP_API RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects,
-	                                             int numRects, BYTE* data, int width, int height,
-	                                             int scanline, int* numMessages, int maxDataSize);
-	FREERDP_API BOOL rfx_write_message(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message);
+	                                             size_t numRects, const BYTE* data, UINT32 width,
+	                                             UINT32 height, UINT32 scanline,
+	                                             size_t* numMessages, size_t maxDataSize);
+	FREERDP_API BOOL rfx_write_message(RFX_CONTEXT* context, wStream* s,
+	                                   const RFX_MESSAGE* message);
 
 	FREERDP_API BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height);
 
