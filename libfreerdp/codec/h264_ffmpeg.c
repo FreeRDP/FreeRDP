@@ -535,8 +535,30 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 		if (!sys->hwctx)
 		{
-			int ret =
-			    av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE, NULL, 0);
+			AVDictionary* av_opts = NULL;
+			char* vaapi_device = VAAPI_DEVICE;
+
+			if (h264->settings)
+			{
+				if (h264->settings->VAAPIDevice)
+				{
+					vaapi_device = h264->settings->VAAPIDevice;
+				}
+				if (h264->settings->VAAPIConnectionType &&
+				    av_dict_set(&av_opts, "connection_type", h264->settings->VAAPIConnectionType,
+				                0) < 0)
+				{
+					WLog_Print(h264->log, WLOG_WARN, "Could not specify VAAPI connection type");
+				}
+			}
+
+			int ret = av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, vaapi_device,
+			                                 av_opts, 0);
+
+			if (av_opts)
+			{
+				av_dict_free(&av_opts);
+			}
 
 			if (ret < 0)
 			{

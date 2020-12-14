@@ -568,6 +568,11 @@ BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 
 H264_CONTEXT* h264_context_new(BOOL Compressor)
 {
+	return h264_context_new_settings(Compressor, NULL);
+}
+
+H264_CONTEXT* h264_context_new_settings(BOOL Compressor, const rdpSettings* settings)
+{
 	H264_CONTEXT* h264;
 	h264 = (H264_CONTEXT*)calloc(1, sizeof(H264_CONTEXT));
 
@@ -581,6 +586,8 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 			h264->BitRate = 1000000;
 			h264->FrameRate = 30;
 		}
+
+		h264->settings = settings;
 
 		if (!h264_context_init(h264))
 		{

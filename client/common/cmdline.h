@@ -364,6 +364,11 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 #endif
 	{ "v", COMMAND_LINE_VALUE_REQUIRED, "<server>[:port]", NULL, NULL, -1, NULL,
 	  "Server hostname" },
+#ifdef WITH_VAAPI
+	{ "vaapi-connection-type", COMMAND_LINE_VALUE_OPTIONAL, "drm|x11|...", NULL, NULL, -1, NULL,
+	  "Connection type of the VAAPI device" },
+	{ "vaapi-device", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "VAAPI device" },
+#endif
 	{ "vc", COMMAND_LINE_VALUE_REQUIRED, "<channel>[,<options>]", NULL, NULL, -1, NULL,
 	  "Static virtual channel" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL,

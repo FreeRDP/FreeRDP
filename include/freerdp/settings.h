@@ -1151,22 +1151,22 @@ struct rdp_settings
 	UINT64 padding1408[1408 - 1346]; /* 1346 */
 
 	/* Server Certificate */
-	ALIGN64 BOOL IgnoreCertificate;               /* 1408 */
-	ALIGN64 char* CertificateName;                /* 1409 */
-	ALIGN64 char* CertificateFile;                /* 1410 */
-	ALIGN64 char* PrivateKeyFile;                 /* 1411 */
-	ALIGN64 char* RdpKeyFile;                     /* 1412 */
-	ALIGN64 rdpRsaKey* RdpServerRsaKey;           /* 1413 */
-	ALIGN64 rdpCertificate* RdpServerCertificate; /* 1414 */
-	ALIGN64 BOOL ExternalCertificateManagement;   /* 1415 */
-	ALIGN64 char* CertificateContent;             /* 1416 */
-	ALIGN64 char* PrivateKeyContent;              /* 1417 */
-	ALIGN64 char* RdpKeyContent;                  /* 1418 */
-	ALIGN64 BOOL AutoAcceptCertificate;           /* 1419 */
-	ALIGN64 BOOL AutoDenyCertificate;             /* 1420 */
+	ALIGN64 BOOL IgnoreCertificate;                /* 1408 */
+	ALIGN64 char* CertificateName;                 /* 1409 */
+	ALIGN64 char* CertificateFile;                 /* 1410 */
+	ALIGN64 char* PrivateKeyFile;                  /* 1411 */
+	ALIGN64 char* RdpKeyFile;                      /* 1412 */
+	ALIGN64 rdpRsaKey* RdpServerRsaKey;            /* 1413 */
+	ALIGN64 rdpCertificate* RdpServerCertificate;  /* 1414 */
+	ALIGN64 BOOL ExternalCertificateManagement;    /* 1415 */
+	ALIGN64 char* CertificateContent;              /* 1416 */
+	ALIGN64 char* PrivateKeyContent;               /* 1417 */
+	ALIGN64 char* RdpKeyContent;                   /* 1418 */
+	ALIGN64 BOOL AutoAcceptCertificate;            /* 1419 */
+	ALIGN64 BOOL AutoDenyCertificate;              /* 1420 */
 	ALIGN64 char* CertificateAcceptedFingerprints; /* 1421 */
 	UINT64 padding1472[1472 - 1422];               /* 1422 */
-	UINT64 padding1536[1536 - 1472];              /* 1472 */
+	UINT64 padding1536[1536 - 1472];               /* 1472 */
 
 	/**
 	 * User Interface
@@ -1562,6 +1562,9 @@ struct rdp_settings
 	ALIGN64 char* ActionScript;
 	ALIGN64 DWORD Floatbar;
 	ALIGN64 char* XSelectionAtom;
+
+	ALIGN64 char* VAAPIConnectionType;
+	ALIGN64 char* VAAPIDevice;
 };
 typedef struct rdp_settings rdpSettings;
 

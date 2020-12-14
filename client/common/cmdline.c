@@ -2371,6 +2371,16 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					return rc;
 			}
 		}
+		CommandLineSwitchCase(arg, "vaapi-connection-type")
+		{
+			if (!copy_value(arg->Value, &settings->VAAPIConnectionType))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "vaapi-device")
+		{
+			if (!copy_value(arg->Value, &settings->VAAPIDevice))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
 		CommandLineSwitchCase(arg, "shell")
 		{
 			if (!copy_value(arg->Value, &settings->AlternateShell))

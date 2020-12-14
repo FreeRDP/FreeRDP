@@ -973,6 +973,12 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		_settings->ActionScript = _strdup(settings->ActionScript);
 	if (settings->XSelectionAtom)
 		_settings->XSelectionAtom = _strdup(settings->XSelectionAtom);
+
+	if (settings->VAAPIConnectionType)
+		_settings->VAAPIConnectionType = _strdup(settings->VAAPIConnectionType);
+	if (settings->VAAPIDevice)
+		_settings->VAAPIDevice = _strdup(settings->VAAPIDevice);
+
 	rc = TRUE;
 out_fail:
 	return rc;
