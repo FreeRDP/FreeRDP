@@ -2466,7 +2466,7 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 	RFX_RECT* rects = NULL;
 	RFX_MESSAGE* message;
 
-	if (!progressive || !pSrcData || !ppDstData || !pDstSize || !invalidRegion)
+	if (!progressive || !pSrcData || !ppDstData || !pDstSize)
 	{
 		return -1;
 	}
@@ -2494,34 +2494,57 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 	if (SrcSize < Height * ScanLine)
 		return -4;
 
-	numRects = (Width + 63) / 64;
-	numRects *= (Height + 63) / 64;
+	if (!invalidRegion)
+	{
+		numRects = (Width + 63) / 64;
+		numRects *= (Height + 63) / 64;
+	}
+	else
+		numRects = region16_n_rects(invalidRegion);
+
+	if (numRects == 0)
+		return 0;
+
 	if (!Stream_EnsureCapacity(progressive->rects, numRects * sizeof(RFX_RECT)))
 		return -5;
 	rects = (RFX_RECT*)Stream_Buffer(progressive->rects);
+	if (invalidRegion)
+	{
+		RECTANGLE_16* r = region16_rects(invalidRegion, NULL);
+		for (x = 0; x < numRects; x++)
+		{
+			rects[x].x = r[x].left;
+			rects[x].y = r[x].top;
+			rects[x].width = r[x].right - r[x].left;
+			rects[x].height = r[x].bottom - r[x].top;
+		}
+	}
+	else
+	{
+		x = 0;
+		y = 0;
+		for (i = 0; i < numRects; i++)
+		{
+			RFX_RECT* r = &rects[i];
+			r->x = x;
+			r->y = y;
+			r->width = MIN(64, Width - x);
+			r->height = MIN(64, Height - y);
+
+			if (x + 64 >= Width)
+			{
+				y += 64;
+				x = 0;
+			}
+			else
+				x += 64;
+		}
+	}
 	s = progressive->buffer;
 	Stream_SetPosition(s, 0);
 
 	progressive->rfx_context->mode = RLGR1;
 
-	x = 0;
-	y = 0;
-	for (i = 0; i < numRects; i++)
-	{
-		RFX_RECT* r = &rects[i];
-		r->x = x;
-		r->y = y;
-		r->width = MIN(64, Width - x);
-		r->height = MIN(64, Height - y);
-
-		if (x + 64 >= Width)
-		{
-			y += 64;
-			x = 0;
-		}
-		else
-			x += 64;
-	}
 	message = rfx_encode_message(progressive->rfx_context, rects, numRects, pSrcData, Width, Height,
 	                             ScanLine);
 	if (!message)
