@@ -927,11 +927,11 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
                                             int nXSrc, int nYSrc, int nWidth, int nHeight)
 {
 	BOOL ret = TRUE;
-	int i;
+	size_t i;
 	BOOL first;
 	BOOL last;
 	wStream* s;
-	int numMessages;
+	size_t numMessages;
 	UINT32 frameId = 0;
 	rdpUpdate* update;
 	rdpContext* context = (rdpContext*)client;

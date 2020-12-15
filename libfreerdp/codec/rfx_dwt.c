@@ -27,7 +27,7 @@
 
 #include "rfx_dwt.h"
 
-void rfx_dwt_2d_decode_block(INT16* buffer, INT16* idwt, int subband_width)
+static void rfx_dwt_2d_decode_block(INT16* buffer, INT16* idwt, int subband_width)
 {
 	INT16 *dst, *l, *h;
 	INT16 *l_dst, *h_dst;
