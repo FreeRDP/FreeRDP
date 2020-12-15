@@ -190,6 +190,7 @@ static BOOL wf_desktop_resize(rdpContext* context)
 
 static BOOL wf_pre_connect(freerdp* instance)
 {
+	UINT32 rc;
 	wfContext* wfc;
 	int desktopWidth;
 	int desktopHeight;
@@ -256,8 +257,8 @@ static BOOL wf_pre_connect(freerdp* instance)
 	if (!freerdp_client_load_addins(context->channels, instance->settings))
 		return -1;
 
-	freerdp_set_param_uint32(settings, FreeRDP_KeyboardLayout,
-	                         (int)GetKeyboardLayout(0) & 0x0000FFFF);
+	rc = freerdp_keyboard_init(freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout));
+	freerdp_set_param_uint32(settings, FreeRDP_KeyboardLayout, rc);
 	PubSub_SubscribeChannelConnected(instance->context->pubSub, wf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    wf_OnChannelDisconnectedEventHandler);
