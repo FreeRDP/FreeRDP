@@ -47,6 +47,22 @@ DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256];
 
 int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 {
+#if defined(_WIN32)
+	CHAR name[KL_NAMELENGTH + 1] = { 0 };
+	if (GetKeyboardLayoutNameA(name))
+	{
+		ULONG rc;
+
+		errno = 0;
+		rc = strtoul(name, NULL, 16);
+		if (errno == 0)
+			*keyboardLayoutId = rc;
+	}
+
+	if (*keyboardLayoutId == 0)
+		*keyboardLayoutId = ((DWORD)GetKeyboardLayout(0) >> 16) & 0x0000FFFF;
+#endif
+
 #ifdef WITH_X11
 	if (*keyboardLayoutId == 0)
 		freerdp_detect_keyboard_layout_from_xkb(keyboardLayoutId);
