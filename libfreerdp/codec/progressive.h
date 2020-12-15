@@ -228,6 +228,9 @@ struct _PROGRESSIVE_CONTEXT
 
 	wHashTable* SurfaceContexts;
 	wLog* log;
+	wStream* buffer;
+	wStream* rects;
+	RFX_CONTEXT* rfx_context;
 };
 
 #endif /* INTERNAL_CODEC_PROGRESSIVE_H */

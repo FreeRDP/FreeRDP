@@ -823,11 +823,10 @@ static INLINE int progressive_rfx_dwt_2d_decode(PROGRESSIVE_CONTEXT* progressive
 	temp = (INT16*)BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
 	if (!temp)
 		return -2;
+
 	if (!extrapolate)
 	{
-		rfx_dwt_2d_decode_block(&buffer[3840], temp, 8);
-		rfx_dwt_2d_decode_block(&buffer[3072], temp, 16);
-		rfx_dwt_2d_decode_block(&buffer[0], temp, 32);
+		progressive->rfx_context->dwt_2d_decode(buffer, temp);
 	}
 	else
 	{
@@ -857,28 +856,40 @@ static INLINE int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progress
 	int status;
 	const primitives_t* prims = primitives_get();
 
-	if (!subbandDiff)
-		WLog_WARN(TAG, "PROGRESSIVE_BLOCK_CONTEXT::flags & RFX_SUBBAND_DIFFING not set");
-
-	status = rfx_rlgr_decode(RLGR1, data, length, buffer, 4096);
+	status = progressive->rfx_context->rlgr_decode(RLGR1, data, length, buffer, 4096);
 
 	if (status < 0)
 		return status;
 
 	CopyMemory(sign, buffer, 4096 * 2);
-
-	progressive_rfx_decode_block(prims, &buffer[0], 1023, shift->HL1);    /* HL1 */
-	progressive_rfx_decode_block(prims, &buffer[1023], 1023, shift->LH1); /* LH1 */
-	progressive_rfx_decode_block(prims, &buffer[2046], 961, shift->HH1);  /* HH1 */
-	progressive_rfx_decode_block(prims, &buffer[3007], 272, shift->HL2);  /* HL2 */
-	progressive_rfx_decode_block(prims, &buffer[3279], 272, shift->LH2);  /* LH2 */
-	progressive_rfx_decode_block(prims, &buffer[3551], 256, shift->HH2);  /* HH2 */
-	progressive_rfx_decode_block(prims, &buffer[3807], 72, shift->HL3);   /* HL3 */
-	progressive_rfx_decode_block(prims, &buffer[3879], 72, shift->LH3);   /* LH3 */
-	progressive_rfx_decode_block(prims, &buffer[3951], 64, shift->HH3);   /* HH3 */
-	rfx_differential_decode(&buffer[4015], 81);                           /* LL3 */
-	progressive_rfx_decode_block(prims, &buffer[4015], 81, shift->LL3);   /* LL3 */
-
+	if (!subbandDiff)
+	{
+		rfx_differential_decode(buffer + 4032, 64);
+		progressive_rfx_decode_block(prims, &buffer[0], 1024, shift->HL1);    /* HL1 */
+		progressive_rfx_decode_block(prims, &buffer[1024], 1024, shift->LH1); /* LH1 */
+		progressive_rfx_decode_block(prims, &buffer[2048], 1024, shift->HH1); /* HH1 */
+		progressive_rfx_decode_block(prims, &buffer[3072], 256, shift->HL2);  /* HL2 */
+		progressive_rfx_decode_block(prims, &buffer[3328], 256, shift->LH2);  /* LH2 */
+		progressive_rfx_decode_block(prims, &buffer[3584], 256, shift->HH2);  /* HH2 */
+		progressive_rfx_decode_block(prims, &buffer[3840], 64, shift->HL3);   /* HL3 */
+		progressive_rfx_decode_block(prims, &buffer[3904], 64, shift->LH3);   /* LH3 */
+		progressive_rfx_decode_block(prims, &buffer[3968], 64, shift->HH3);   /* HH3 */
+		progressive_rfx_decode_block(prims, &buffer[4032], 64, shift->LL3);   /* LL3 */
+	}
+	else
+	{
+		progressive_rfx_decode_block(prims, &buffer[0], 1023, shift->HL1);    /* HL1 */
+		progressive_rfx_decode_block(prims, &buffer[1023], 1023, shift->LH1); /* LH1 */
+		progressive_rfx_decode_block(prims, &buffer[2046], 961, shift->HH1);  /* HH1 */
+		progressive_rfx_decode_block(prims, &buffer[3007], 272, shift->HL2);  /* HL2 */
+		progressive_rfx_decode_block(prims, &buffer[3279], 272, shift->LH2);  /* LH2 */
+		progressive_rfx_decode_block(prims, &buffer[3551], 256, shift->HH2);  /* HH2 */
+		progressive_rfx_decode_block(prims, &buffer[3807], 72, shift->HL3);   /* HL3 */
+		progressive_rfx_decode_block(prims, &buffer[3879], 72, shift->LH3);   /* LH3 */
+		progressive_rfx_decode_block(prims, &buffer[3951], 64, shift->HH3);   /* HH3 */
+		rfx_differential_decode(&buffer[4015], 81);                           /* LL3 */
+		progressive_rfx_decode_block(prims, &buffer[4015], 81, shift->LL3);   /* LL3 */
+	}
 	return progressive_rfx_dwt_2d_decode(progressive, buffer, current, coeffDiff, extrapolate,
 	                                     FALSE);
 }
@@ -1008,7 +1019,6 @@ static INLINE int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progres
 	rc = progressive_rfx_decode_component(progressive, &shiftCr, tile->crData, tile->crLen,
 	                                      pSrcDst[2], pCurrent[2], pSign[2], diff, sub,
 	                                      extrapolate); /* Cr */
-
 	if (rc < 0)
 		goto fail;
 
@@ -2308,10 +2318,230 @@ fail:
 	return rc;
 }
 
-int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData, UINT32 SrcSize,
-                         BYTE** ppDstData, UINT32* pDstSize)
+static BOOL progressive_rfx_write_message_progressive_simple(RFX_CONTEXT* context, wStream* s,
+                                                             RFX_MESSAGE* msg)
 {
-	return -1;
+	UINT32 blockLen;
+	UINT32 i;
+	UINT32* qv;
+	RFX_TILE* tile;
+	UINT32 tilesDataSize;
+
+	if (context->mode != RLGR1)
+	{
+		WLog_ERR(TAG, "%s: error, RLGR1 mode is required!", __FUNCTION__);
+		return FALSE;
+	}
+
+	/* RFX_PROGRESSIVE_SYNC */
+	blockLen = 12;
+	if (!Stream_EnsureRemainingCapacity(s, blockLen))
+	{
+		return FALSE;
+	}
+	Stream_Write_UINT16(s, 0xCCC0);     /* blockType (2 bytes) */
+	Stream_Write_UINT32(s, blockLen);   /* blockLen (4 bytes) */
+	Stream_Write_UINT32(s, 0xCACCACCA); /* magic (4 bytes) */
+	Stream_Write_UINT16(s, 0x0100);     /* version (2 bytes) */
+
+	/* RFX_PROGRESSIVE_CONTEXT */
+	blockLen = 10;
+	if (!Stream_EnsureRemainingCapacity(s, blockLen))
+	{
+		return FALSE;
+	}
+	Stream_Write_UINT16(s, 0xCCC3); /* blockType (2 bytes) */
+	Stream_Write_UINT32(s, 10);     /* blockLen (4 bytes) */
+	Stream_Write_UINT8(s, 0);       /* ctxId (1 byte) */
+	Stream_Write_UINT16(s, 64);     /* tileSize (2 bytes) */
+	Stream_Write_UINT8(s, 0);       /* flags (1 byte) */
+
+	/* RFX_PROGRESSIVE_FRAME_BEGIN */
+	blockLen = 12;
+	if (!Stream_EnsureRemainingCapacity(s, blockLen))
+	{
+		return FALSE;
+	}
+	Stream_Write_UINT16(s, 0xCCC1);        /* blockType (2 bytes) */
+	Stream_Write_UINT32(s, blockLen);      /* blockLen (4 bytes) */
+	Stream_Write_UINT32(s, msg->frameIdx); /* frameIndex (4 bytes) */
+	Stream_Write_UINT16(s, 1);             /* regionCount (2 bytes) */
+
+	/* RFX_PROGRESSIVE_REGION */
+	blockLen = 18;
+	blockLen += msg->numRects * 8;
+	blockLen += msg->numQuant * 5;
+	tilesDataSize = msg->numTiles * 22;
+	for (i = 0; i < msg->numTiles; i++)
+	{
+		tile = msg->tiles[i];
+		tilesDataSize += tile->YLen + tile->CbLen + tile->CrLen;
+	}
+	blockLen += tilesDataSize;
+
+	if (!Stream_EnsureRemainingCapacity(s, blockLen))
+	{
+		return FALSE;
+	}
+	Stream_Write_UINT16(s, 0xCCC4);        /* blockType (2 bytes) */
+	Stream_Write_UINT32(s, blockLen);      /* blockLen (4 bytes) */
+	Stream_Write_UINT8(s, 64);             /* tileSize (1 byte) */
+	Stream_Write_UINT16(s, msg->numRects); /* numRects (2 bytes) */
+	Stream_Write_UINT8(s, msg->numQuant);  /* numQuant (1 byte) */
+	Stream_Write_UINT8(s, 0);              /* numProgQuant (1 byte) */
+	Stream_Write_UINT8(s, 0);              /* flags (1 byte) */
+	Stream_Write_UINT16(s, msg->numTiles); /* numTiles (2 bytes) */
+	Stream_Write_UINT32(s, tilesDataSize); /* tilesDataSize (4 bytes) */
+
+	for (i = 0; i < msg->numRects; i++)
+	{
+		/* TS_RFX_RECT */
+		Stream_Write_UINT16(s, msg->rects[i].x);      /* x (2 bytes) */
+		Stream_Write_UINT16(s, msg->rects[i].y);      /* y (2 bytes) */
+		Stream_Write_UINT16(s, msg->rects[i].width);  /* width (2 bytes) */
+		Stream_Write_UINT16(s, msg->rects[i].height); /* height (2 bytes) */
+	}
+
+	/**
+	 * Note: The RFX_COMPONENT_CODEC_QUANT structure differs from the
+	 * TS_RFX_CODEC_QUANT ([MS-RDPRFX] section 2.2.2.1.5) structure with respect
+	 * to the order of the bands.
+	 *             0    1    2   3     4    5    6    7    8    9
+	 * RDPRFX:   LL3, LH3, HL3, HH3, LH2, HL2, HH2, LH1, HL1, HH1
+	 * RDPEGFX:  LL3, HL3, LH3, HH3, HL2, LH2, HH2, HL1, LH1, HH1
+	 */
+	for (i = 0, qv = msg->quantVals; i < msg->numQuant; i++, qv += 10)
+	{
+		/* RFX_COMPONENT_CODEC_QUANT */
+		Stream_Write_UINT8(s, qv[0] + (qv[2] << 4)); /* LL3 (4-bit), HL3 (4-bit) */
+		Stream_Write_UINT8(s, qv[1] + (qv[3] << 4)); /* LH3 (4-bit), HH3 (4-bit) */
+		Stream_Write_UINT8(s, qv[5] + (qv[4] << 4)); /* HL2 (4-bit), LH2 (4-bit) */
+		Stream_Write_UINT8(s, qv[6] + (qv[8] << 4)); /* HH2 (4-bit), HL1 (4-bit) */
+		Stream_Write_UINT8(s, qv[7] + (qv[9] << 4)); /* LH1 (4-bit), HH1 (4-bit) */
+	}
+
+	for (i = 0; i < msg->numTiles; i++)
+	{
+		/* RFX_PROGRESSIVE_TILE_SIMPLE */
+		tile = msg->tiles[i];
+		blockLen = 22 + tile->YLen + tile->CbLen + tile->CrLen;
+		Stream_Write_UINT16(s, 0xCCC5);             /* blockType (2 bytes) */
+		Stream_Write_UINT32(s, blockLen);           /* blockLen (4 bytes) */
+		Stream_Write_UINT8(s, tile->quantIdxY);     /* quantIdxY (1 byte) */
+		Stream_Write_UINT8(s, tile->quantIdxCb);    /* quantIdxCb (1 byte) */
+		Stream_Write_UINT8(s, tile->quantIdxCr);    /* quantIdxCr (1 byte) */
+		Stream_Write_UINT16(s, tile->xIdx);         /* xIdx (2 bytes) */
+		Stream_Write_UINT16(s, tile->yIdx);         /* yIdx (2 bytes) */
+		Stream_Write_UINT8(s, 0);                   /* flags (1 byte) */
+		Stream_Write_UINT16(s, tile->YLen);         /* YLen (2 bytes) */
+		Stream_Write_UINT16(s, tile->CbLen);        /* CbLen (2 bytes) */
+		Stream_Write_UINT16(s, tile->CrLen);        /* CrLen (2 bytes) */
+		Stream_Write_UINT16(s, 0);                  /* tailLen (2 bytes) */
+		Stream_Write(s, tile->YData, tile->YLen);   /* YData */
+		Stream_Write(s, tile->CbData, tile->CbLen); /* CbData */
+		Stream_Write(s, tile->CrData, tile->CrLen); /* CrData */
+	}
+
+	/* RFX_PROGRESSIVE_FRAME_END */
+	blockLen = 6;
+	if (!Stream_EnsureRemainingCapacity(s, blockLen))
+	{
+		return FALSE;
+	}
+	Stream_Write_UINT16(s, 0xCCC2);   /* blockType (2 bytes) */
+	Stream_Write_UINT32(s, blockLen); /* blockLen (4 bytes) */
+
+	return TRUE;
+}
+
+int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData, UINT32 SrcSize,
+                         UINT32 SrcFormat, UINT32 Width, UINT32 Height, UINT32 ScanLine,
+                         const REGION16* invalidRegion, BYTE** ppDstData, UINT32* pDstSize)
+{
+	BOOL rc;
+	int res = -6;
+	wStream* s;
+	UINT32 i, numRects;
+	UINT32 x, y;
+	RFX_RECT* rects = NULL;
+	RFX_MESSAGE* message;
+
+	if (!progressive || !pSrcData || !ppDstData || !pDstSize || !invalidRegion)
+	{
+		return -1;
+	}
+
+	if (ScanLine == 0)
+	{
+		switch (SrcFormat)
+		{
+			case PIXEL_FORMAT_ABGR32:
+			case PIXEL_FORMAT_ARGB32:
+			case PIXEL_FORMAT_XBGR32:
+			case PIXEL_FORMAT_XRGB32:
+			case PIXEL_FORMAT_BGRA32:
+			case PIXEL_FORMAT_BGRX32:
+			case PIXEL_FORMAT_RGBA32:
+			case PIXEL_FORMAT_RGBX32:
+				ScanLine = Width * 4;
+				break;
+			default:
+				return -2;
+		}
+	}
+	if (ScanLine / Width != 4)
+		return -3;
+	if (SrcSize < Height * ScanLine)
+		return -4;
+
+	numRects = (Width + 63) / 64;
+	numRects *= (Height + 63) / 64;
+	if (!Stream_EnsureCapacity(progressive->rects, numRects * sizeof(RFX_RECT)))
+		return -5;
+	rects = (RFX_RECT*)Stream_Buffer(progressive->rects);
+	s = progressive->buffer;
+	Stream_SetPosition(s, 0);
+
+	progressive->rfx_context->mode = RLGR1;
+
+	x = 0;
+	y = 0;
+	for (i = 0; i < numRects; i++)
+	{
+		RFX_RECT* r = &rects[i];
+		r->x = x;
+		r->y = y;
+		r->width = MIN(64, Width - x);
+		r->height = MIN(64, Height - y);
+
+		if (x + 64 >= Width)
+		{
+			y += 64;
+			x = 0;
+		}
+		else
+			x += 64;
+	}
+	message = rfx_encode_message(progressive->rfx_context, rects, numRects, pSrcData, Width, Height,
+	                             ScanLine);
+	if (!message)
+	{
+		WLog_ERR(TAG, "failed to encode rfx message");
+		goto fail;
+	}
+
+	message->freeRects = TRUE;
+
+	rc = progressive_rfx_write_message_progressive_simple(progressive->rfx_context, s, message);
+	rfx_message_free(progressive->rfx_context, message);
+	if (!rc)
+		goto fail;
+
+	*pDstSize = Stream_GetPosition(s);
+	*ppDstData = Stream_Buffer(s);
+	res = 0;
+fail:
+	return res;
 }
 
 BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)
@@ -2324,22 +2554,38 @@ BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)
 
 PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 {
-	PROGRESSIVE_CONTEXT* progressive;
-	progressive = (PROGRESSIVE_CONTEXT*)calloc(1, sizeof(PROGRESSIVE_CONTEXT));
+	PROGRESSIVE_CONTEXT* progressive = (PROGRESSIVE_CONTEXT*)calloc(1, sizeof(PROGRESSIVE_CONTEXT));
 
-	if (progressive)
-	{
-		progressive->Compressor = Compressor;
-		progressive->bufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
+	if (!progressive)
+		return NULL;
 
-		ZeroMemory(&(progressive->quantProgValFull), sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
-		progressive->quantProgValFull.quality = 100;
-		progressive->SurfaceContexts = HashTable_New(TRUE);
-		progressive_context_reset(progressive);
-		progressive->log = WLog_Get(TAG);
-	}
+	progressive->Compressor = Compressor;
+	progressive->quantProgValFull.quality = 100;
+	progressive->log = WLog_Get(TAG);
+	if (!progressive->log)
+		goto fail;
+	progressive->rfx_context = rfx_context_new(Compressor);
+	if (!progressive->rfx_context)
+		goto fail;
+	progressive->buffer = Stream_New(NULL, 1024);
+	if (!progressive->buffer)
+		goto fail;
+	progressive->rects = Stream_New(NULL, 1024);
+	if (!progressive->rects)
+		goto fail;
+	progressive->bufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
+	if (!progressive->bufferPool)
+		goto fail;
+	progressive->SurfaceContexts = HashTable_New(TRUE);
+	if (!progressive->SurfaceContexts)
+		goto fail;
+	if (!progressive_context_reset(progressive))
+		goto fail;
 
 	return progressive;
+fail:
+	progressive_context_free(progressive);
+	return NULL;
 }
 
 void progressive_context_free(PROGRESSIVE_CONTEXT* progressive)
@@ -2351,6 +2597,10 @@ void progressive_context_free(PROGRESSIVE_CONTEXT* progressive)
 
 	if (!progressive)
 		return;
+
+	Stream_Free(progressive->buffer, TRUE);
+	Stream_Free(progressive->rects, TRUE);
+	rfx_context_free(progressive->rfx_context);
 
 	BufferPool_Free(progressive->bufferPool);
 

@@ -39,8 +39,9 @@ static wHashTable* create_channel_ids_map()
 }
 
 /* Proxy context initialization callback */
-static BOOL client_to_proxy_context_new(freerdp_peer* client, pServerContext* context)
+static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 {
+	pServerContext* context = (pServerContext*)ctx;
 	proxyServer* server = (proxyServer*)client->ContextExtra;
 	proxyConfig* config = server->config;
 
@@ -82,8 +83,9 @@ error:
 }
 
 /* Proxy context free callback */
-static void client_to_proxy_context_free(freerdp_peer* client, pServerContext* context)
+static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 {
+	pServerContext* context = (pServerContext*)ctx;
 	proxyServer* server;
 
 	if (!client || !context)
@@ -106,8 +108,8 @@ static void client_to_proxy_context_free(freerdp_peer* client, pServerContext* c
 BOOL pf_context_init_server_context(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(pServerContext);
-	client->ContextNew = (psPeerContextNew)client_to_proxy_context_new;
-	client->ContextFree = (psPeerContextFree)client_to_proxy_context_free;
+	client->ContextNew = client_to_proxy_context_new;
+	client->ContextFree = client_to_proxy_context_free;
 
 	return freerdp_peer_context_new(client);
 }
