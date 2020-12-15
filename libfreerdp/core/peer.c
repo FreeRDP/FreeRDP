@@ -819,8 +819,11 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 		goto fail_error_description;
 	}
 
-	if (!transport_attach(rdp->transport, client->sockfd))
-		goto fail_transport_attach;
+	if (client->sockfd != -1)
+	{
+		if (!transport_attach(rdp->transport, client->sockfd))
+			goto fail_transport_attach;
+	}
 
 	rdp->transport->ReceiveCallback = peer_recv_callback;
 	rdp->transport->ReceiveExtra = client;
@@ -878,7 +881,8 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 
 	option_value = TRUE;
 	option_len = sizeof(option_value);
-	setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&option_value, option_len);
+	if (sockfd != -1)
+		setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&option_value, option_len);
 
 	if (client)
 	{
