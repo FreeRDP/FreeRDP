@@ -37,8 +37,8 @@
 
 #include "rfx_decode.h"
 
-static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
-                                 const BYTE* data, int size, INT16* buffer)
+void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantization_values, const BYTE* data,
+                          int size, INT16* buffer)
 {
 	INT16* dwt_buffer;
 	dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
