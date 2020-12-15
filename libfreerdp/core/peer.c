@@ -823,11 +823,11 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	{
 		if (!transport_attach(rdp->transport, client->sockfd))
 			goto fail_transport_attach;
+		transport_set_blocking_mode(rdp->transport, FALSE);
 	}
 
 	rdp->transport->ReceiveCallback = peer_recv_callback;
 	rdp->transport->ReceiveExtra = client;
-	transport_set_blocking_mode(rdp->transport, FALSE);
 	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
 	client->HasMoreToRead = freerdp_peer_has_more_to_read;

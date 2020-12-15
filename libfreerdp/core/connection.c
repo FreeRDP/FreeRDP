@@ -1211,7 +1211,8 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
 	rdpNego* nego = rdp->nego;
-	transport_set_blocking_mode(rdp->transport, TRUE);
+	if (rdp->context->peer->sockfd != -1);
+		transport_set_blocking_mode(rdp->transport, TRUE);
 
 	if (!nego_read_request(nego, s))
 		return FALSE;
@@ -1293,7 +1294,8 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	if (!status)
 		return FALSE;
 
-	transport_set_blocking_mode(rdp->transport, FALSE);
+	if (rdp->context->peer->sockfd != -1);
+		transport_set_blocking_mode(rdp->transport, FALSE);
 	rdp_server_transition_to_state(rdp, CONNECTION_STATE_NEGO);
 	return TRUE;
 }
