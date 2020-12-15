@@ -76,6 +76,7 @@ struct _VIDEO_PLUGIN
 	VIDEO_LISTENER_CALLBACK* data_callback;
 
 	VideoClientContext* context;
+	rdpSettings* settings;
 	BOOL initialized;
 };
 typedef struct _VIDEO_PLUGIN VIDEO_PLUGIN;
@@ -219,7 +220,8 @@ error_frames:
 }
 
 static PresentationContext* PresentationContext_new(VideoClientContext* video, BYTE PresentationId,
-                                                    UINT32 x, UINT32 y, UINT32 width, UINT32 height)
+                                                    UINT32 x, UINT32 y, UINT32 width, UINT32 height,
+                                                    BOOL disable_threads)
 {
 	size_t s;
 	VideoClientContextPriv* priv = video->priv;
@@ -264,7 +266,7 @@ static PresentationContext* PresentationContext_new(VideoClientContext* video, B
 		goto error_surface;
 	}
 
-	ret->yuv = yuv_context_new(FALSE);
+	ret->yuv = yuv_context_new(FALSE, disable_threads);
 	if (!ret->yuv)
 	{
 		WLog_ERR(TAG, "unable to create YUV decoder");
@@ -406,7 +408,8 @@ static BOOL video_onMappedGeometryClear(MAPPED_GEOMETRY* geometry)
 	return TRUE;
 }
 
-static UINT video_PresentationRequest(VideoClientContext* video, TSMM_PRESENTATION_REQUEST* req)
+static UINT video_PresentationRequest(VideoClientContext* video, TSMM_PRESENTATION_REQUEST* req,
+                                      BOOL disable_threads)
 {
 	VideoClientContextPriv* priv = video->priv;
 	PresentationContext* presentation;
@@ -455,7 +458,7 @@ static UINT video_PresentationRequest(VideoClientContext* video, TSMM_PRESENTATI
 		WLog_DBG(TAG, "creating presentation 0x%x", req->PresentationId);
 		presentation = PresentationContext_new(
 		    video, req->PresentationId, geom->topLevelLeft + geom->left,
-		    geom->topLevelTop + geom->top, req->SourceWidth, req->SourceHeight);
+		    geom->topLevelTop + geom->top, req->SourceWidth, req->SourceHeight, disable_threads);
 		if (!presentation)
 		{
 			WLog_ERR(TAG, "unable to create presentation video");
@@ -498,7 +501,8 @@ static UINT video_PresentationRequest(VideoClientContext* video, TSMM_PRESENTATI
 	return ret;
 }
 
-static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStream* s)
+static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStream* s,
+                                             BOOL disable_threads)
 {
 	TSMM_PRESENTATION_REQUEST req;
 
@@ -542,7 +546,7 @@ static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStrea
 	         req.SourceHeight, req.ScaledWidth, req.ScaledHeight, req.hnsTimestampOffset,
 	         req.GeometryMappingId);
 
-	return video_PresentationRequest(context, &req);
+	return video_PresentationRequest(context, &req, disable_threads);
 }
 
 /**
@@ -575,7 +579,8 @@ static UINT video_control_on_data_received(IWTSVirtualChannelCallback* pChannelC
 	switch (packetType)
 	{
 		case TSMM_PACKET_TYPE_PRESENTATION_REQUEST:
-			ret = video_read_tsmm_presentation_req(context, s);
+			ret = video_read_tsmm_presentation_req(
+			    context, s, video->settings->ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS);
 			break;
 		default:
 			WLog_ERR(TAG, "not expecting packet type %" PRIu32 "", packetType);
@@ -1145,6 +1150,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			WLog_ERR(TAG, "calloc failed!");
 			return CHANNEL_RC_NO_MEMORY;
 		}
+
+		videoPlugin->settings = pEntryPoints->GetRdpSettings(pEntryPoints);
 
 		videoPlugin->wtsPlugin.Initialize = video_plugin_initialize;
 		videoPlugin->wtsPlugin.Connected = NULL;

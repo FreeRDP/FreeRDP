@@ -158,7 +158,7 @@ static BOOL mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 	if (!(context->info = mf_info_get_instance()))
 		return FALSE;
 
-	if (!(context->rfx_context = rfx_context_new(TRUE)))
+	if (!(context->rfx_context = rfx_context_new(TRUE, client->settings->ThreadingFlags)))
 		goto fail_rfx_context;
 
 	context->rfx_context->mode = RLGR3;

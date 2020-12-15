@@ -2167,7 +2167,8 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 	REGION16 clippingRects, updateRegion;
 	PROGRESSIVE_BLOCK_REGION* region = &progressive->region;
 	PROGRESSIVE_SURFACE_CONTEXT* surface = progressive_get_surface_data(progressive, surfaceId);
-	union {
+	union
+	{
 		const BYTE* cbp;
 		BYTE* bp;
 	} sconv;
@@ -2602,7 +2603,7 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 	progressive->log = WLog_Get(TAG);
 	if (!progressive->log)
 		goto fail;
-	progressive->rfx_context = rfx_context_new(Compressor);
+	progressive->rfx_context = rfx_context_new(Compressor, 0);
 	if (!progressive->rfx_context)
 		goto fail;
 	progressive->buffer = Stream_New(NULL, 1024);
