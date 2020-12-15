@@ -204,7 +204,8 @@ BOOL pf_modules_run_filter(PF_FILTER_TYPE type, proxyData* pdata, void* param)
  */
 static BOOL pf_modules_set_plugin_data(const char* plugin_name, proxyData* pdata, void* data)
 {
-	union {
+	union
+	{
 		const char* ccp;
 		char* cp;
 	} ccharconv;
@@ -233,7 +234,8 @@ static BOOL pf_modules_set_plugin_data(const char* plugin_name, proxyData* pdata
  */
 static void* pf_modules_get_plugin_data(const char* plugin_name, proxyData* pdata)
 {
-	union {
+	union
+	{
 		const char* ccp;
 		char* cp;
 	} ccharconv;

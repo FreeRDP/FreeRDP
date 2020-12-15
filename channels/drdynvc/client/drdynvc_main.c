@@ -691,7 +691,7 @@ static UINT dvcman_receive_channel_data_first(drdynvcPlugin* drdynvc,
  */
 static UINT dvcman_receive_channel_data(drdynvcPlugin* drdynvc,
                                         IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId,
-                                        wStream* data)
+                                        wStream* data, UINT32 ThreadingFlags)
 {
 	UINT status = CHANNEL_RC_OK;
 	DVCMAN_CHANNEL* channel;
@@ -1123,7 +1123,8 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int c
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
+static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s,
+                                       UINT32 ThreadingFlags)
 {
 	UINT status;
 	UINT32 Length;
@@ -1140,7 +1141,8 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
 	status = dvcman_receive_channel_data_first(drdynvc, drdynvc->channel_mgr, ChannelId, Length);
 
 	if (status == CHANNEL_RC_OK)
-		status = dvcman_receive_channel_data(drdynvc, drdynvc->channel_mgr, ChannelId, s);
+		status = dvcman_receive_channel_data(drdynvc, drdynvc->channel_mgr, ChannelId, s,
+		                                     ThreadingFlags);
 
 	if (status != CHANNEL_RC_OK)
 		status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId, TRUE);
@@ -1153,7 +1155,8 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
+static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s,
+                                 UINT32 ThreadingFlags)
 {
 	UINT32 ChannelId;
 	UINT status;
@@ -1164,7 +1167,8 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wSt
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	WLog_Print(drdynvc->log, WLOG_TRACE, "process_data: Sp=%d cbChId=%d, ChannelId=%" PRIu32 "", Sp,
 	           cbChId, ChannelId);
-	status = dvcman_receive_channel_data(drdynvc, drdynvc->channel_mgr, ChannelId, s);
+	status =
+	    dvcman_receive_channel_data(drdynvc, drdynvc->channel_mgr, ChannelId, s, ThreadingFlags);
 
 	if (status != CHANNEL_RC_OK)
 		status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId, TRUE);
@@ -1202,7 +1206,7 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cb
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s)
+static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 ThreadingFlags)
 {
 	int value;
 	int Cmd;
@@ -1227,10 +1231,10 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s)
 			return drdynvc_process_create_request(drdynvc, Sp, cbChId, s);
 
 		case DATA_FIRST_PDU:
-			return drdynvc_process_data_first(drdynvc, Sp, cbChId, s);
+			return drdynvc_process_data_first(drdynvc, Sp, cbChId, s, ThreadingFlags);
 
 		case DATA_PDU:
-			return drdynvc_process_data(drdynvc, Sp, cbChId, s);
+			return drdynvc_process_data(drdynvc, Sp, cbChId, s, ThreadingFlags);
 
 		case CLOSE_REQUEST_PDU:
 			return drdynvc_process_close_request(drdynvc, Sp, cbChId, s);
@@ -1350,6 +1354,7 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 
 static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 {
+	/* TODO: rewrite this */
 	wStream* data;
 	wMessage message;
 	UINT error = CHANNEL_RC_OK;
@@ -1382,9 +1387,10 @@ static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 
 		if (message.id == 0)
 		{
+			UINT32 ThreadingFlags = TRUE;
 			data = (wStream*)message.wParam;
 
-			if ((error = drdynvc_order_recv(drdynvc, data)))
+			if ((error = drdynvc_order_recv(drdynvc, data, ThreadingFlags)))
 			{
 				WLog_Print(drdynvc->log, WLOG_WARN,
 				           "drdynvc_order_recv failed with error %" PRIu32 "!", error);

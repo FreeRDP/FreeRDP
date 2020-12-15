@@ -35,6 +35,8 @@
 #include "rail_orders.h"
 #include "rail_main.h"
 
+#include "../../channels/client/addin.h"
+
 RailClientContext* rail_get_client_interface(railPlugin* rail)
 {
 	RailClientContext* pInterface;
@@ -513,68 +515,6 @@ static UINT rail_client_snap_arrange(RailClientContext* context, const RAIL_SNAP
 	return rail_send_client_snap_arrange_order(rail, snap);
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT rail_virtual_channel_event_data_received(railPlugin* rail, void* pData,
-                                                     UINT32 dataLength, UINT32 totalLength,
-                                                     UINT32 dataFlags)
-{
-	wStream* data_in;
-
-	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
-	{
-		return CHANNEL_RC_OK;
-	}
-
-	if (dataFlags & CHANNEL_FLAG_FIRST)
-	{
-		if (rail->data_in)
-			Stream_Free(rail->data_in, TRUE);
-
-		rail->data_in = Stream_New(NULL, totalLength);
-
-		if (!rail->data_in)
-		{
-			WLog_ERR(TAG, "Stream_New failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-	}
-
-	data_in = rail->data_in;
-
-	if (!Stream_EnsureRemainingCapacity(data_in, dataLength))
-	{
-		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	Stream_Write(data_in, pData, dataLength);
-
-	if (dataFlags & CHANNEL_FLAG_LAST)
-	{
-		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
-		{
-			WLog_ERR(TAG, "rail_plugin_process_received: read error");
-			return ERROR_INTERNAL_ERROR;
-		}
-
-		rail->data_in = NULL;
-		Stream_SealLength(data_in);
-		Stream_SetPosition(data_in, 0);
-
-		if (!MessageQueue_Post(rail->queue, NULL, 0, (void*)data_in, NULL))
-		{
-			WLog_ERR(TAG, "MessageQueue_Post failed!");
-			return ERROR_INTERNAL_ERROR;
-		}
-	}
-
-	return CHANNEL_RC_OK;
-}
-
 static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle,
                                                          UINT event, LPVOID pData,
                                                          UINT32 dataLength, UINT32 totalLength,
@@ -591,11 +531,15 @@ static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWO
 				WLog_ERR(TAG, "error no match");
 				return;
 			}
-			if ((error = rail_virtual_channel_event_data_received(rail, pData, dataLength,
-			                                                      totalLength, dataFlags)))
+
+			if ((error = channel_client_post_message(rail->MsgsHandle, pData, dataLength,
+			                                         totalLength, dataFlags)))
+			{
 				WLog_ERR(TAG,
-				         "rail_virtual_channel_event_data_received failed with error %" PRIu32 "!",
+				         "rail_virtual_channel_event_data_received"
+				         " failed with error %" PRIu32 "!",
 				         error);
+			}
 
 			break;
 
@@ -616,54 +560,6 @@ static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWO
 		                "rail_virtual_channel_open_event reported an error");
 
 	return;
-}
-
-static DWORD WINAPI rail_virtual_channel_client_thread(LPVOID arg)
-{
-	wStream* data;
-	wMessage message;
-	railPlugin* rail = (railPlugin*)arg;
-	UINT error = CHANNEL_RC_OK;
-
-	while (1)
-	{
-		if (!MessageQueue_Wait(rail->queue))
-		{
-			WLog_ERR(TAG, "MessageQueue_Wait failed!");
-			error = ERROR_INTERNAL_ERROR;
-			break;
-		}
-
-		if (!MessageQueue_Peek(rail->queue, &message, TRUE))
-		{
-			WLog_ERR(TAG, "MessageQueue_Peek failed!");
-			error = ERROR_INTERNAL_ERROR;
-			break;
-		}
-
-		if (message.id == WMQ_QUIT)
-			break;
-
-		if (message.id == 0)
-		{
-			data = (wStream*)message.wParam;
-			error = rail_order_recv(rail, data);
-			Stream_Free(data, TRUE);
-
-			if (error)
-			{
-				WLog_ERR(TAG, "rail_order_recv failed with error %" PRIu32 "!", error);
-				break;
-			}
-		}
-	}
-
-	if (error && rail->rdpcontext)
-		setChannelError(rail->rdpcontext, error,
-		                "rail_virtual_channel_client_thread reported an error");
-
-	ExitThread(error);
-	return error;
 }
 
 /**
@@ -694,23 +590,8 @@ static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 			WLog_ERR(TAG, "context->OnOpen failed with %s [%08" PRIX32 "]",
 			         WTSErrorToString(status), status);
 	}
-
-	rail->queue = MessageQueue_New(NULL);
-
-	if (!rail->queue)
-	{
-		WLog_ERR(TAG, "MessageQueue_New failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	if (!(rail->thread =
-	          CreateThread(NULL, 0, rail_virtual_channel_client_thread, (void*)rail, 0, NULL)))
-	{
-		WLog_ERR(TAG, "CreateThread failed!");
-		MessageQueue_Free(rail->queue);
-		rail->queue = NULL;
-		return ERROR_INTERNAL_ERROR;
-	}
+	rail->MsgsHandle =
+	    channel_client_create_handler(rail->rdpcontext, rail, rail_order_recv, "rail");
 
 	return CHANNEL_RC_OK;
 }
@@ -727,18 +608,8 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 	if (rail->OpenHandle == 0)
 		return CHANNEL_RC_OK;
 
-	if (MessageQueue_PostQuit(rail->queue, 0) &&
-	    (WaitForSingleObject(rail->thread, INFINITE) == WAIT_FAILED))
-	{
-		rc = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", rc);
-		return rc;
-	}
+	channel_client_quit_handler(rail->MsgsHandle);
 
-	MessageQueue_Free(rail->queue);
-	CloseHandle(rail->thread);
-	rail->queue = NULL;
-	rail->thread = NULL;
 	rc = rail->channelEntryPoints.pVirtualChannelCloseEx(rail->InitHandle, rail->OpenHandle);
 
 	if (CHANNEL_RC_OK != rc)
@@ -750,11 +621,6 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 
 	rail->OpenHandle = 0;
 
-	if (rail->data_in)
-	{
-		Stream_Free(rail->data_in, TRUE);
-		rail->data_in = NULL;
-	}
 
 	return CHANNEL_RC_OK;
 }

@@ -502,6 +502,9 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define PROXY_TYPE_SOCKS 2
 #define PROXY_TYPE_IGNORE 0xFFFF
 
+/* ThreadingFlags */
+#define THREADING_FLAGS_DISABLE_THREADS 0x00000001
+
 /* Settings */
 
 #ifdef __GNUC__
@@ -925,8 +928,13 @@ struct rdp_settings
 	ALIGN64 UINT32 MaxTimeInCheckLoop;     /* 26 */
 	ALIGN64 char* AcceptedCert;            /* 27 */
 	ALIGN64 UINT32 AcceptedCertLength;     /* 28 */
-	UINT64 padding0064[64 - 29];           /* 29 */
-	UINT64 padding0128[128 - 64];          /* 64 */
+
+	UINT64 padding0064[64 - 29]; /* 29 */
+
+	/* resource management related options */
+	ALIGN64 UINT32 ThreadingFlags; /* 64 */
+
+	UINT64 padding0128[128 - 65]; /* 65 */
 
 	/**
 	 * GCC User Data Blocks
@@ -1340,20 +1348,20 @@ struct rdp_settings
 
 	/* Input Capabilities */
 	ALIGN64 char* KeyboardRemappingList; /* 2622 */
-	ALIGN64 UINT32 KeyboardCodePage;    /* 2623 */
-	ALIGN64 UINT32 KeyboardLayout;      /* 2624 */
-	ALIGN64 UINT32 KeyboardType;        /* 2625 */
-	ALIGN64 UINT32 KeyboardSubType;     /* 2626 */
-	ALIGN64 UINT32 KeyboardFunctionKey; /* 2627 */
-	ALIGN64 char* ImeFileName;          /* 2628 */
-	ALIGN64 BOOL UnicodeInput;          /* 2629 */
-	ALIGN64 BOOL FastPathInput;         /* 2630 */
-	ALIGN64 BOOL MultiTouchInput;       /* 2631 */
-	ALIGN64 BOOL MultiTouchGestures;    /* 2632 */
-	ALIGN64 UINT32 KeyboardHook;        /* 2633 */
-	ALIGN64 BOOL HasHorizontalWheel;    /* 2634 */
-	ALIGN64 BOOL HasExtendedMouseEvent; /* 2635 */
-	UINT64 padding2688[2688 - 2636];    /* 2636 */
+	ALIGN64 UINT32 KeyboardCodePage;     /* 2623 */
+	ALIGN64 UINT32 KeyboardLayout;       /* 2624 */
+	ALIGN64 UINT32 KeyboardType;         /* 2625 */
+	ALIGN64 UINT32 KeyboardSubType;      /* 2626 */
+	ALIGN64 UINT32 KeyboardFunctionKey;  /* 2627 */
+	ALIGN64 char* ImeFileName;           /* 2628 */
+	ALIGN64 BOOL UnicodeInput;           /* 2629 */
+	ALIGN64 BOOL FastPathInput;          /* 2630 */
+	ALIGN64 BOOL MultiTouchInput;        /* 2631 */
+	ALIGN64 BOOL MultiTouchGestures;     /* 2632 */
+	ALIGN64 UINT32 KeyboardHook;         /* 2633 */
+	ALIGN64 BOOL HasHorizontalWheel;     /* 2634 */
+	ALIGN64 BOOL HasExtendedMouseEvent;  /* 2635 */
+	UINT64 padding2688[2688 - 2636];     /* 2636 */
 
 	/* Brush Capabilities */
 	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */
@@ -1564,6 +1572,7 @@ struct rdp_settings
 	                                   default value - currently UNUSED! */
 	ALIGN64 char* ActionScript;
 	ALIGN64 DWORD Floatbar;
+
 	ALIGN64 char* XSelectionAtom;
 };
 typedef struct rdp_settings rdpSettings;
@@ -1699,6 +1708,7 @@ extern "C"
 	FREERDP_API SSIZE_T freerdp_settings_get_type_for_name(const char* value);
 	FREERDP_API SSIZE_T freerdp_settings_get_type_for_key(size_t key);
 	FREERDP_API const char* freerdp_settings_get_name_for_key(size_t key);
+	FREERDP_API UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings);
 
 #ifdef __cplusplus
 }

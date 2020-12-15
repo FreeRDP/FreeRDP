@@ -466,7 +466,8 @@ fail:
 static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, CHAR** dst,
                                  size_t max)
 {
-	union {
+	union
+	{
 		char c;
 		WCHAR w;
 		BYTE b[2];
@@ -713,7 +714,8 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	{
 		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
 		{
-			union {
+			union
+			{
 				BYTE* bp;
 				WCHAR* wp;
 			} ptrconv;
@@ -916,7 +918,8 @@ static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 {
 	UINT32 cbDomain;
 	UINT32 cbUserName;
-	union {
+	union
+	{
 		BYTE* bp;
 		WCHAR* wp;
 	} ptrconv;

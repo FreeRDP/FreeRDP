@@ -478,7 +478,6 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 
 	WINPR_UNUSED(header);
 
-
 	WLog_DBG(TAG, "CliprdrClientCapabilities");
 	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;

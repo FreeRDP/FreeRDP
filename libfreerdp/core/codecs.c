@@ -65,8 +65,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 	if ((flags & FREERDP_CODEC_REMOTEFX))
 	{
 		rfx_context_free(codecs->rfx);
-
-		if (!(codecs->rfx = rfx_context_new(FALSE)))
+		if (!(codecs->rfx = rfx_context_new(FALSE, codecs->context->settings->ThreadingFlags)))
 		{
 			WLog_ERR(TAG, "Failed to create rfx codec context");
 			return FALSE;

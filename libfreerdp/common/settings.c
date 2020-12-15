@@ -925,3 +925,18 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 	}
 	return FALSE;
 }
+
+UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings)
+{
+	UINT32 flags = FREERDP_CODEC_ALL;
+	if (settings->RemoteFxCodec == FALSE)
+	{
+		flags &= ~FREERDP_CODEC_REMOTEFX;
+	}
+	if (settings->NSCodec == FALSE)
+	{
+		flags &= ~FREERDP_CODEC_NSCODEC;
+	}
+	/*TODO: check other codecs flags */
+	return flags;
+}
