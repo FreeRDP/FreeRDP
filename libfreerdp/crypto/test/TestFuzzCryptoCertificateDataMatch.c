@@ -5,7 +5,6 @@ extern int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 	rdpCertificateStore* certificate_store = NULL;
 	rdpCertificateData* certificate_data = NULL;
 	rdpSettings* settings;
-	int match = 0;
 
 	settings = freerdp_settings_new(0);
 	certificate_store = certificate_store_new(settings);
@@ -20,10 +19,10 @@ extern int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 	// FIXME:
 	garbage[size - 1] = '\0';
 	certificate_data = certificate_data_new(garbage, port, garbage, garbage, garbage);
-	match = certificate_data_match(certificate_store, certificate_data);
+	certificate_data_match(certificate_store, certificate_data);
 	certificate_data_free(certificate_data);
 	freerdp_settings_free(settings);
 	certificate_store_free(certificate_store);
 
-	return match;
+	return 0;
 }

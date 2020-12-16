@@ -14,5 +14,5 @@ extern int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 	crypto_base64_decode(data, data_size, &ntlmTokenData, &ntlmTokenLength);
 	free(ntlmTokenData);
 
-	return EXIT_SUCCESS;
+	return 0;
 }

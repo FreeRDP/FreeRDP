@@ -3,11 +3,11 @@
 
 extern int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {
-	bool pc = true, rc = false;
+	bool pc = true;
 	BYTE tag;
 	wStream* s = Stream_New((BYTE*)Data, Size);
-	rc = ber_read_application_tag(s, tag, &Size);
+	ber_read_application_tag(s, tag, &Size);
 	Stream_Free(s, FALSE);
 
-	return rc;
+	return 0;
 }

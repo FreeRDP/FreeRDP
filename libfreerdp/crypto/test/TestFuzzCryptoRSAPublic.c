@@ -13,10 +13,10 @@ extern int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 	exp = settings->RdpServerCertificate->cert_info.exponent;
 	crypt_client_random = calloc(key_len + 8, 1);
 	if (!crypt_client_random)
-		return EXIT_FAILURE;
+		return 0;
 	crypto_rsa_public_encrypt((BYTE*)Data, (int)Size, key_len, mod, exp, crypt_client_random);
 	crypto_rsa_public_decrypt((BYTE*)Data, (int)Size, key_len, mod, exp, crypt_client_random);
 	freerdp_settings_free(settings);
 
-	return EXIT_SUCCESS;
+	return 0;
 }

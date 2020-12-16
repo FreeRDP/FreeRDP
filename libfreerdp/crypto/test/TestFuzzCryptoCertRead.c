@@ -11,5 +11,5 @@ extern int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 	}
 	crypto_cert_read(data, data_size);
 
-	return EXIT_SUCCESS;
+	return 0;
 }
