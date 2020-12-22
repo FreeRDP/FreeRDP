@@ -1358,11 +1358,12 @@ static int rdg_write_data_packet(rdpRdg* rdg, const BYTE* buf, int isize)
 	return (int)size;
 }
 
-static BOOL rdg_process_close_packet(rdpRdg* rdg)
+static BOOL rdg_process_close_packet(rdpRdg* rdg, wStream* s)
 {
 	int status = -1;
-	size_t s;
+	size_t len;
 	wStream* sChunk;
+	UINT32 errorCode;
 	UINT32 packetSize = 12;
 	char chunkSize[11];
 	int chunkLen = sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIx32 "\r\n", packetSize);
@@ -1370,8 +1371,15 @@ static BOOL rdg_process_close_packet(rdpRdg* rdg)
 	if (chunkLen < 0)
 		return FALSE;
 
-	sChunk = Stream_New(NULL, (size_t)chunkLen + packetSize + 2);
+	/* Read error code */
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
+	Stream_Read_UINT32(s, errorCode);
 
+	if (errorCode != 0)
+		freerdp_set_last_error_log(rdg->context, errorCode);
+
+	sChunk = Stream_New(NULL, (size_t)chunkLen + packetSize + 2);
 	if (!sChunk)
 		return FALSE;
 
@@ -1382,10 +1390,10 @@ static BOOL rdg_process_close_packet(rdpRdg* rdg)
 	Stream_Write_UINT32(sChunk, 0);                               /* Status code */
 	Stream_Write(sChunk, "\r\n", 2);
 	Stream_SealLength(sChunk);
-	s = Stream_Length(sChunk);
+	len = Stream_Length(sChunk);
 
-	if (s <= INT_MAX)
-		status = tls_write_all(rdg->tlsIn, Stream_Buffer(sChunk), (int)s);
+	if (len <= INT_MAX)
+		status = tls_write_all(rdg->tlsIn, Stream_Buffer(sChunk), (int)len);
 
 	Stream_Free(sChunk, TRUE);
 	return (status < 0 ? FALSE : TRUE);
@@ -1502,7 +1510,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 	{
 		case PKT_TYPE_CLOSE_CHANNEL:
 			EnterCriticalSection(&rdg->writeSection);
-			status = rdg_process_close_packet(rdg);
+			status = rdg_process_close_packet(rdg, s);
 			LeaveCriticalSection(&rdg->writeSection);
 			break;
 
