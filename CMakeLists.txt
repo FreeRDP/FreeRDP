@@ -178,56 +178,6 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
 	endif()
 endif()
 
-option(BUILD_FUZZERS "Use BUILD_FUZZERS to build fuzzing tests" OFF)
-if(BUILD_FUZZERS)
-    if (NOT OSS_FUZZ)
-        add_compile_flags("C;CXX" -fsanitize=fuzzer-no-link)
-    endif()
-
-    if(OSS_FUZZ AND NOT DEFINED ENV{LIB_FUZZING_ENGINE})
-        message(SEND_ERROR
-            "OSS-Fuzz builds require the environment variable "
-            "LIB_FUZZING_ENGINE to be set. If you are seeing this "
-            "warning, it points to a deeper problem in the ossfuzz "
-            "build setup.")
-    endif()
-
-    if (CMAKE_COMPILER_IS_GNUCC)
-        message(FATAL_ERROR
-            "\n"
-            "Fuzzing is unsupported with GCC compiler. Use Clang:\n"
-            " $ CC=clang CXX=clang++ cmake . <...> -DBUILD_FUZZERS=ON && make -j\n"
-            "\n")
-    endif()
-
-    set(BUILD_TESTING ON)
-
-    # A special target with fuzzer and sanitizer flags.
-    add_library(fuzzer_config INTERFACE)
-
-    target_compile_options(
-        fuzzer_config
-        INTERFACE
-            $<$<NOT:$<BOOL:${OSS_FUZZ}>>:
-	    -fsanitize=fuzzer
-	    >
-	    $<$<BOOL:${OSS_FUZZ}>:
-	    ${CXX}
-	    ${CXXFLAGS}
-            >
-        )
-    target_link_libraries(
-        fuzzer_config
-        INTERFACE
-            $<$<NOT:$<BOOL:${OSS_FUZZ}>>:
-	    -fsanitize=fuzzer
-            >
-	    $<$<BOOL:${OSS_FUZZ}>:
-	    $ENV{LIB_FUZZING_ENGINE}
-	    >
-    )
-endif()
-
 if(BUILD_TESTING)
 	set(EXPORT_ALL_SYMBOLS TRUE)
 elseif(NOT DEFINED EXPORT_ALL_SYMBOLS)
