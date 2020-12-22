@@ -76,14 +76,11 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	DesktopWidth = resetGraphics->width;
 	DesktopHeight = resetGraphics->height;
 
-	if ((DesktopWidth != settings->DesktopWidth) || (DesktopHeight != settings->DesktopHeight))
-	{
-		settings->DesktopWidth = DesktopWidth;
-		settings->DesktopHeight = DesktopHeight;
+	settings->DesktopWidth = DesktopWidth;
+	settings->DesktopHeight = DesktopHeight;
 
-		if (update)
-			update->DesktopResize(gdi->context);
-	}
+	if (update)
+		update->DesktopResize(gdi->context);
 
 	context->GetSurfaceIds(context, &pSurfaceIds, &count);
 
