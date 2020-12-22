@@ -791,7 +791,11 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 	FILE* fp = NULL;
 	size_t read_size;
 	INT64 file_size;
-	fp = fopen(name, "r");
+	const char* fname = name;
+	if (_strnicmp(fname, "file://", 7) == 0)
+		fname = &name[7];
+
+	fp = fopen(fname, "r");
 
 	if (!fp)
 	{
