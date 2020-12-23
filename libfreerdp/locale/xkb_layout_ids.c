@@ -776,6 +776,7 @@ static const XKB_LAYOUT xkbLayouts[] = {
 	{ "gh", 0, gh_variants },                                /* Ghana */
 	{ "gn", 0, NULL },                                       /* Guinea */
 	{ "ge", KBD_GEORGIAN, ge_variants },                     /* Georgia */
+	{ "at", KBD_GERMAN, de_variants },                       /* Austria */
 	{ "de", KBD_GERMAN, de_variants },                       /* Germany */
 	{ "gr", KBD_GREEK, gr_variants },                        /* Greece */
 	{ "hu", KBD_HUNGARIAN, hu_variants },                    /* Hungary */
