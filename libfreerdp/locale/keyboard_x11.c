@@ -80,6 +80,11 @@ int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 
 			layout = beg;
 
+			/* if multiple languages are present we just take the first one */
+			pch = strchr(layout, ',');
+			if (pch)
+				*pch = '\0';
+
 			/* "variant" */
 			beg = strchr(end + 1, '"');
 			beg += 1;
@@ -123,6 +128,11 @@ int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 			*end = '\0';
 
 			layout = beg;
+
+			/* if multiple languages are present we just take the first one */
+			pch = strchr(layout, ',');
+			if (pch)
+				*pch = '\0';
 
 			/* "variant" */
 			beg = strchr(end + 1, '"');
