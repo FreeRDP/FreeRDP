@@ -479,14 +479,20 @@ static int xf_input_handle_event_local(xfContext* xfc, const XEvent* event)
 #ifdef WITH_DEBUG_X11
 static char* xf_input_touch_state_string(DWORD flags)
 {
-	if (flags & CONTACT_FLAG_DOWN)
-		return "TouchBegin";
-	else if (flags & CONTACT_FLAG_UPDATE)
-		return "TouchUpdate";
-	else if (flags & CONTACT_FLAG_UP)
-		return "TouchEnd";
+	if (flags & RDPINPUT_CONTACT_FLAG_DOWN)
+		return "RDPINPUT_CONTACT_FLAG_DOWN";
+	else if (flags & RDPINPUT_CONTACT_FLAG_UPDATE)
+		return "RDPINPUT_CONTACT_FLAG_UPDATE";
+	else if (flags & RDPINPUT_CONTACT_FLAG_UP)
+		return "RDPINPUT_CONTACT_FLAG_UP";
+	else if (flags & RDPINPUT_CONTACT_FLAG_INRANGE)
+		return "RDPINPUT_CONTACT_FLAG_INRANGE";
+	else if (flags & RDPINPUT_CONTACT_FLAG_INCONTACT)
+		return "RDPINPUT_CONTACT_FLAG_INCONTACT";
+	else if (flags & RDPINPUT_CONTACT_FLAG_CANCELED)
+		return "RDPINPUT_CONTACT_FLAG_CANCELED";
 	else
-		return "TouchUnknown";
+		return "RDPINPUT_CONTACT_FLAG_UNKNOWN";
 }
 #endif
 
