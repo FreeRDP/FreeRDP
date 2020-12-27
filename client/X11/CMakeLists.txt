@@ -226,6 +226,10 @@ if(WITH_XFIXES)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XFIXES_LIBRARIES})
 endif()
 
+find_package(FUSE REQUIRED)
+include_directories(${FUSE_INCLUDE_DIRS})
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${FUSE_LIBRARIES})
+
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client freerdp m)
