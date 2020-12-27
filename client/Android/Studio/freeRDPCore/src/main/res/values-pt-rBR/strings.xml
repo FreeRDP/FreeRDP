@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Button labels -->
+    <string name="yes">Sim</string>
+    <string name="no">Não</string>
+    <string name="cancel">Cancelar</string>
+    <string name="cont">Continuar</string>
+    <string name="login">Login</string>
+    <string name="logout">Sair</string>
+    <!-- Home menu items -->
+    <string name="menu_exit">Saída</string>
+    <string name="menu_about">Sobre</string>
+    <string name="menu_help">Ajuda</string>
+    <string name="menu_new_bookmark">Nova conexão</string>
+    <string name="menu_app_settings">Configurações</string>
+    <!-- Bookmark menu items -->
+    <string name="menu_title_bookmark">Conexão</string>
+    <string name="menu_connect">Conectar</string>
+    <string name="menu_edit">Editar</string>
+    <string name="menu_delete">Excluir</string>
+    <!-- Session menu items -->
+    <string name="menu_sys_keyboard">Teclado</string>
+    <string name="menu_ext_keyboard">Teclas de função</string>
+    <string name="menu_touch_pointer">Ponteiro de toque</string>
+    <string name="menu_home">início</string>
+    <string name="menu_disconnect">Desconectar</string>
+    <!-- List section headers -->
+    <string name="section_bookmarks">Conexões manuais</string>
+    <string name="section_active_sessions">Sessões ativas</string>
+    <!-- Search strings -->
+    <string name="search_hint">Conectar ao computador</string>
+    <!-- List placeholder labels -->
+    <string name="list_placeholder_login">Log in</string>
+    <string name="list_placeholder_no_servers">Nenhum servidor</string>
+    <string name="list_placeholder_connecting">Conectando &#8230;</string>
+    <string name="list_placeholder_disconnecting">Desconectando  &#8230;</string>
+    <string name="list_placeholder_connection_error">Conexão perdida</string>
+    <string name="list_placeholder_wrong_password">Senha incorreta</string>
+    <string name="list_placeholder_invalid_username">Nome de usuário inválido</string>
+    <string name="list_placeholder_add_bookmark">Adicionar conexão</string>
+    <!-- Bookmark settings strings -->
+    <string name="settings_cat_host">Host</string>
+    <string name="settings_label">Identificador</string>
+    <string name="settings_hostname">Nome de Host</string>
+    <string name="settings_port">Porta</string>
+    <string name="settings_cat_credentials">Credenciais</string>
+    <string name="settings_credentials">Credenciais</string>
+    <string name="settings_username">Nome de usuário</string>
+    <string name="settings_password">Senha</string>
+    <string name="settings_domain">Domínio</string>
+    <string name="settings_cat_settings">Configurações</string>
+    <string name="settings_screen">Tela</string>
+    <string name="settings_cat_screen">Configurações da tela</string>
+    <string name="settings_colors">Cores</string>
+    <string-array name="colors_array">
+        <item>Paleta de cores (8 Bit)</item>
+        <item>Definição alta (15 Bit)</item>
+        <item>Definição alta (16 Bit)</item>
+        <item>Definição real (24 Bit)</item>
+        <item>Definição máxima (32 Bit)</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="colors_values_array" translatable="false">
+        <item>8</item>
+        <item>15</item>
+        <item>16</item>
+        <item>24</item>
+        <item>32</item>
+    </string-array>
+    <string name="settings_resolution">Resolução</string>
+    <string name="resolution_automatic">Automática</string>
+    <string name="resolution_fit">Preencher a tela</string>
+    <string name="resolution_custom">Personalizada</string>
+    <string-array name="resolutions_array">
+        <item>Automática</item>
+        <item>Preencher a tela</item>
+        <item>Personalizada</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="resolutions_values_array" translatable="false">
+        <item>automatic</item>
+        <item>fitscreen</item>
+        <item>custom</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
+    </string-array>
+    <string name="settings_width">Largura</string>
+    <string name="settings_height">Altura</string>
+    <string name="settings_performance">Desempenho</string>
+    <string name="settings_cat_performance">Configurações de desempenho</string>
+    <string name="settings_perf_remotefx">RemoteFX</string>
+    <string name="settings_perf_gfx" translatable="false">GFX</string>
+    <string name="settings_perf_gfx_h264" translatable="false">H264</string>
+    <string name="settings_perf_wallpaper">Fundo da área de trabalho</string>
+    <string name="settings_perf_font_smoothing">Alisamento da fonte</string>
+    <string name="settings_perf_desktop_composition">Composição da área de trabalho</string>
+    <string name="settings_perf_full_window_drag">Conteúdo das janelas ao deslocar</string>
+    <string name="settings_perf_menu_animation">Animação do menu</string>
+    <string name="settings_perf_theming">Estilo visual</string>
+    <string name="settings_advanced">Avançado</string>
+    <string name="settings_cat_advanced">Configurações avançadas</string>
+    <string name="settings_enable_3g_settings">Configurações 3G</string>
+    <string name="settings_screen_3g">Tela 3G</string>
+    <string name="settings_performance_3g">Desempenho 3G</string>
+    <string name="settings_cat_gateway">Gateway</string>
+    <string name="settings_enable_gateway_settings">Ativar Gateway</string>
+    <string name="settings_gateway_settings">Configurações do Gateway</string>
+    <string name="settings_redirect_sdcard">Redirecionar SD card</string>
+    <string name="settings_redirect_sound">Redirecionar som</string>
+    <string-array name="redirect_sound_array">
+        <item>Não reproduzir</item>
+        <item>Reproduzir no servidor</item>
+        <item>Reproduzir no dispositivo</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="redirect_sound_values_array" translatable="false">
+        <item>2</item>
+        <item>1</item>
+        <item>0</item>
+    </string-array>
+    <string name="settings_redirect_microphone">Redirecionar microfone</string>
+    <string name="settings_security">Segurança</string>
+    <string-array name="security_array">
+        <item>Automática</item>
+        <item>RDP</item>
+        <item>TLS</item>
+        <item>NLA</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="security_values_array" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string name="settings_remote_program">Programa remoto</string>
+    <string name="settings_work_dir">Pasta de trabalho</string>
+    <string name="settings_async_channel">Canal Async</string>
+    <string name="settings_async_input">Async input</string>
+    <string name="settings_async_update">Atualização Async</string>
+    <string name="settings_console_mode">Modo Console</string>
+    <!-- App settings strings -->
+    <string name="settings_password_present">*******</string>
+    <string name="settings_password_empty">não definido</string>
+    <string name="settings_cat_ui">Interface do usuário</string>
+    <string name="settings_ui_hide_status_bar">Ocultar barra de status</string>
+    <string name="settings_ui_hide_action_bar">Ocultar barra de ação</string>
+    <string name="settings_ui_hide_zoom_controls">Ocultar controles de zoom</string>
+    <string name="settings_ui_swap_mouse_buttons">Trocar os botões do mouse</string>
+    <string name="settings_ui_invert_scrolling">Inverter a rolagem</string>
+    <string name="settings_ui_auto_scroll_touchpointer">Rolagem automática do ponteiro de toque</string>
+    <string name="settings_ui_ask_on_exit">Mostrar diálogo ao sair</string>
+    <string name="settings_cat_power">Economia de energia</string>
+    <string name="settings_cat_client">Cliente</string>
+    <string name="settings_power_disconnect_timeout">Fechar as conexões inativas</string>
+    <string name="settings_cat_security">Segurança</string>
+    <string name="settings_security_accept_certificates">Aceitar todos os certificados</string>
+    <string name="settings_security_clear_certificate_cache">Excluir o cache do certificado</string>
+    <string name="settings_description_after_minutes">Após %1$d minutos</string>
+    <string name="settings_description_disabled">Desativado</string>
+    <!-- Activity titles -->
+    <string name="title_bookmark_settings">Configurações de conexão</string>
+    <string name="title_application_settings">Configurações</string>
+    <string name="title_home">aFreeRDP - FreeRDP para Android</string>
+    <string name="title_create_shortcut">Conexões de RDP</string>
+    <string name="title_help">Ajuda</string>
+    <string name="title_about">Sobre</string>
+    <!-- Error message strings -->
+    <string name="error_bookmark_incomplete_title">Cancelar sem salvar?</string>
+    <string name="error_bookmark_incomplete">Clique no "Cancelar" para anular!\nClique no "Continuar" para completar os campos necessários!</string>
+    <string name="error_connection_failure">Não foi possível estabelecer uma conexão com o servidor!</string>
+    <!-- Info message strings -->
+    <string name="info_capabilities_changed">As configurações da tela mudaram para aquelas que são suportadas pelo servidor.</string>
+    <string name="info_reset_success">O Cache de certificados foi excluído.</string>
+    <string name="info_reset_failed">Não foi possível excluir o cache do certificado!</string>
+    <!-- Dialog strings -->
+    <string name="dlg_title_verify_certificate">Verificar o certificado</string>
+    <string name="dlg_msg_verify_certificate">A identidade do computador remoto não pode ser verificada. Você quer conectar de qualquer forma?</string>
+    <string name="dlg_title_credentials">Por favor, digite suas credenciais</string>
+    <string name="dlg_title_create_shortcut">Criar atalho</string>
+    <string name="dlg_msg_create_shortcut">Nome do atalho:</string>
+    <string name="dlg_msg_connecting">Conectando &#8230;</string>
+    <string name="dlg_msg_logging_in">Efetuando login &#8230;</string>
+    <string name="dlg_title_about">Sobre aFreeRDP</string>
+    <string name="dlg_title_create_bookmark_after_qc">Salvar as configurações da conexão?</string>
+    <string name="dlg_msg_create_bookmark_after_qc">Quer salvar as suas configurações da conexão não salvas?</string>
+    <string name="dlg_title_save_bookmark">Salvar conexão?</string>
+    <string name="dlg_save_bookmark">Quer salvar quaisquer alterações feitas nas configurações de conexão?</string>
+    <string name="dlg_dont_show_again">Não pergunte de novo</string>
+    <string name="dlg_title_exit">Sair do App?</string>
+    <string name="dlg_msg_exit">Tem certeza de que quer sair do App?</string>
+    <string name="dlg_title_clear_cert_cache">Excluir os certificados?</string>
+    <string name="dlg_msg_clear_cert_cache">Tem certeza de que quer excluir todos os seus certificados do cache?</string>
+    <string name="debug_level">Nível de depuração</string>
+    <string name="settings_debug">Ajustes de depuração</string>
+    <string name="preference_title_client">Cliente</string>
+    <string name="preference_key_client_name" translatable="false">preference_key_client_name</string>
+    <string name="preference_title_client_name">Nome do cliente</string>        
+</resources>
