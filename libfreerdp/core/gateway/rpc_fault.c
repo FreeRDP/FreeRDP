@@ -389,7 +389,8 @@ const char* rpc_error_to_string(UINT32 code)
 
 	for (index = 0; RPC_TSG_FAULT_CODES[index].name != NULL; index++)
 	{
-		if (RPC_TSG_FAULT_CODES[index].code == code)
+		if (RPC_TSG_FAULT_CODES[index].code == code ||
+		    RPC_TSG_FAULT_CODES[index].code == HRESULT_CODE(code))
 		{
 			sprintf_s(buffer, ARRAYSIZE(buffer), "%s [0x%08" PRIX32 "]",
 			          RPC_TSG_FAULT_CODES[index].name, code);
@@ -414,7 +415,8 @@ const char* rpc_error_to_category(UINT32 code)
 
 	for (index = 0; RPC_TSG_FAULT_CODES[index].category != NULL; index++)
 	{
-		if (RPC_TSG_FAULT_CODES[index].code == code)
+		if (RPC_TSG_FAULT_CODES[index].code == code ||
+		    RPC_TSG_FAULT_CODES[index].code == HRESULT_CODE(code))
 			return RPC_TSG_FAULT_CODES[index].category;
 	}
 
