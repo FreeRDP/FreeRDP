@@ -22,6 +22,7 @@
 #endif
 
 #define _FILE_OFFSET_BITS 64
+#define WIN32_FILETIME_TO_UNIX_EPOCH UINT64_C(11644473600)
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -52,6 +53,7 @@ struct posix_file
 	char* local_name;
 	WCHAR* remote_name;
 	BOOL is_directory;
+	UINT64 last_write_time;
 
 	int fd;
 	INT64 offset;
@@ -83,6 +85,7 @@ static struct posix_file* make_posix_file(const char* local_name, const WCHAR* r
 	}
 
 	file->is_directory = S_ISDIR(statbuf.st_mode);
+	file->last_write_time = (statbuf.st_mtime + WIN32_FILETIME_TO_UNIX_EPOCH) * 10 * 1000 * 1000;
 	file->size = statbuf.st_size;
 	return file;
 error:
@@ -499,7 +502,7 @@ static BOOL convert_local_file_to_filedescriptor(const struct posix_file* file,
                                                  FILEDESCRIPTORW* descriptor)
 {
 	size_t remote_len = 0;
-	descriptor->dwFlags = FD_ATTRIBUTES | FD_FILESIZE | FD_PROGRESSUI;
+	descriptor->dwFlags = FD_ATTRIBUTES | FD_FILESIZE | FD_WRITESTIME | FD_PROGRESSUI;
 
 	if (file->is_directory)
 	{
@@ -513,6 +516,9 @@ static BOOL convert_local_file_to_filedescriptor(const struct posix_file* file,
 		descriptor->nFileSizeLow = (file->size >> 0) & 0xFFFFFFFF;
 		descriptor->nFileSizeHigh = (file->size >> 32) & 0xFFFFFFFF;
 	}
+
+	descriptor->ftLastWriteTime.dwLowDateTime = (file->last_write_time >> 0) & 0xFFFFFFFF;
+	descriptor->ftLastWriteTime.dwHighDateTime = (file->last_write_time >> 32) & 0xFFFFFFFF;
 
 	remote_len = _wcslen(file->remote_name);
 
