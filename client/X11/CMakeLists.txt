@@ -227,7 +227,7 @@ if(WITH_XFIXES)
 endif()
 
 find_package(FUSE REQUIRED)
-include_directories(${FUSE_INCLUDE_DIRS})
+include_directories(${FUSE_INCLUDE_DIR})
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${FUSE_LIBRARIES})
 
 include_directories(${CMAKE_SOURCE_DIR}/resources)
