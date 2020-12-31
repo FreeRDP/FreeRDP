@@ -575,14 +575,20 @@ static void* convert_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 f
 	return descriptors;
 }
 
-static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 formatId,
-                                                 const void* data, UINT32* pSize)
+/* The universal converter from filedescriptors to different file lists */
+static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 formatId,
+                                                  const void* data, UINT32* pSize,
+                                                  const char* header, const char* lineprefix,
+                                                  const char* lineending)
 {
 	const FILEDESCRIPTORW* descriptors;
 	UINT32 nrDescriptors = 0;
 	size_t count, x, alloc, pos, baseLength = 0;
 	const char* src = (const char*)data;
 	char* dst;
+	size_t header_len = strlen(header);
+	size_t lineprefix_len = strlen(lineprefix);
+	size_t lineending_len = strlen(lineending);
 	size_t decoration_len;
 
 	if (!clipboard || !data || !pSize)
@@ -611,8 +617,9 @@ static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 f
 	if (formatId != ClipboardGetFormatId(clipboard, "FileGroupDescriptorW"))
 		return NULL;
 
-	decoration_len = strlen("file:///\n") + baseLength;
-	alloc = 0;
+	/* Plus 1 for '/' between basepath and filename*/
+	decoration_len = lineprefix_len + lineending_len + baseLength + 1;
+	alloc = header_len;
 
 	/* Get total size of file/folder names under first level folder only */
 	for (x = 0; x < count; x++)
@@ -634,7 +641,9 @@ static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 f
 	if (!dst)
 		return NULL;
 
-	pos = 0;
+	_snprintf(&dst[0], alloc, "%s", header);
+
+	pos = header_len;
 
 	for (x = 0; x < count; x++)
 	{
@@ -648,8 +657,8 @@ static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 f
 		char* curName = NULL;
 		rc = ConvertFromUnicode(CP_UTF8, 0, cur->cFileName, (int)curLen, &curName, 0, NULL, NULL);
 
-		rc = _snprintf(&dst[pos], alloc - pos, "file://%s/%s\n", clipboard->delegate.basePath,
-		               curName);
+		rc = _snprintf(&dst[pos], alloc - pos, "%s%s/%s%s", lineprefix,
+		               clipboard->delegate.basePath, curName, lineending);
 		free(curName);
 
 		if (rc < 0)
@@ -666,35 +675,26 @@ static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 f
 	return dst;
 }
 
+/* Prepend header of kde dolphin format to file list*/
+static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 formatId,
+                                                 const void* data, UINT32* pSize)
+{
+	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize, "",
+	                                            "file:", "\r\n");
+}
+
 /* Prepend header of common gnome format to file list*/
 static void* convert_filedescriptors_to_gnome_copied_files(wClipboard* clipboard, UINT32 formatId,
                                                            const void* data, UINT32* pSize)
 {
-	void* pDstData = convert_filedescriptors_to_uri_list(clipboard, formatId, data, pSize);
-	if (!pDstData)
-	{
-		return pDstData;
-	}
-	const char* header = "copy\n";
-	size_t header_len = strlen(header);
-	*pSize = *pSize + header_len;
-	char* pNewDstData = calloc(*pSize, sizeof(char));
-	_snprintf(pNewDstData, *pSize, "%s%s", header, (char*)pDstData);
-	free(pDstData);
-	return pNewDstData;
+	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize, "copy\n",
+	                                            "file://", "\n");
 }
 
 /* Prepend header of nautilus based filemanager's format to file list*/
 static void* convert_filedescriptors_to_nautilus_clipboard(wClipboard* clipboard, UINT32 formatId,
                                                            const void* data, UINT32* pSize)
 {
-	void* pDstData = convert_filedescriptors_to_uri_list(clipboard, formatId, data, pSize);
-	if (!pDstData)
-	{
-		return pDstData;
-	}
-	const char* header = "x-special/nautilus-clipboard\ncopy\n";
-	size_t header_len = strlen(header);
 	/*	Here Nemo (and Caja) have different behavior. They encounter error with the last \n . but
 	   nautilus needs it. So user have to skip Nemo's error dialog to continue. Caja has different
 	   TARGET , so it's easy to fix. see convert_filedescriptors_to_mate_copied_files
@@ -702,32 +702,29 @@ static void* convert_filedescriptors_to_nautilus_clipboard(wClipboard* clipboard
 	/*	see nautilus/src/nautilus-clipboard.c:convert_selection_data_to_str_list
 	    see nemo/libnemo-private/nemo-clipboard.c:nemo_clipboard_get_uri_list_from_selection_data
 	*/
-	*pSize = *pSize + header_len;
-	char* pNewDstData = calloc(*pSize, sizeof(char));
-	_snprintf(pNewDstData, *pSize, "%s%s", header, (char*)pDstData);
-	free(pDstData);
-	return pNewDstData;
+
+	return convert_filedescriptors_to_file_list(
+	    clipboard, formatId, data, pSize, "x-special/nautilus-clipboard\ncopy\n", "file://", "\n");
 }
 
 static void* convert_filedescriptors_to_mate_copied_files(wClipboard* clipboard, UINT32 formatId,
                                                           const void* data, UINT32* pSize)
 {
-	void* pDstData = convert_filedescriptors_to_uri_list(clipboard, formatId, data, pSize);
+
+	char* pDstData = (char*)convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize,
+	                                                             "copy\n", "file://", "\n");
 	if (!pDstData)
 	{
 		return pDstData;
 	}
-	const char* header = "copy\n";
-	size_t header_len = strlen(header);
-	/*  Drop last \n.
+	/*  Replace last \n with \0
 	    see
 	   mate-desktop/caja/libcaja-private/caja-clipboard.c:caja_clipboard_get_uri_list_from_selection_data
 	*/
-	*pSize = *pSize + header_len - 1;
-	char* pNewDstData = calloc(*pSize, sizeof(char));
-	_snprintf(pNewDstData, *pSize, "%s%s", header, (char*)pDstData);
-	free(pDstData);
-	return pNewDstData;
+
+	pDstData[*pSize - 1] = '\0';
+	*pSize = *pSize - 1;
+	return pDstData;
 }
 
 static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
@@ -747,7 +744,7 @@ static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 	        format: x-special/nautilus-clipboard\copy\n\file://path\n\0
 	    2. Kde Dolpin:
 	        TARGET: text/uri-list
-	        format: file://path\n\0
+	        format: file:path\n\0
 	    3. Gnome others (Unity/XFCE):
 	        TARGET: x-special/gnome-copied-files
 	        format: copy\nfile://path\n\0
