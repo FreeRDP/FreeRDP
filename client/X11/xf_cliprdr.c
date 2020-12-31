@@ -66,7 +66,11 @@ typedef struct xf_cliprdr_format xfCliprdrFormat;
 struct xf_cliprdr_fuse_stream
 {
 	UINT32 stream_id;
+	/* must be one of FILECONTENTS_SIZE or FILECONTENTS_RANGE*/
+	UINT32 req_type;
 	fuse_req_t req;
+	/*for FILECONTENTS_SIZE must be xfCliprdrFuseInode* */
+	void* req_data;
 };
 typedef struct xf_cliprdr_fuse_stream xfCliprdrFuseStream;
 
@@ -77,6 +81,7 @@ struct xf_cliprdr_fuse_inode
 	size_t lindex;
 	mode_t st_mode;
 	off_t st_size;
+	BOOL size_set;
 	struct timespec st_mtim;
 	char* name;
 	wArrayList* child_inos;
@@ -876,7 +881,7 @@ static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 		xfCliprdrFuseStream* stream;
 		ArrayList_Lock(clipboard->stream_list);
 		clipboard->current_stream_id = 0;
-		/* reply error to all req first */
+		/* reply error to all req first don't care request type*/
 		count = ArrayList_Count(clipboard->stream_list);
 		for (index = 0; index < count; index++)
 		{
@@ -1010,7 +1015,8 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 
 	if (!delayRespond)
 	{
-		union {
+		union
+		{
 			XEvent* ev;
 			XSelectionEvent* sev;
 		} conv;
@@ -1230,16 +1236,36 @@ static UINT xf_cliprdr_send_client_format_list_response(xfClipboard* clipboard, 
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT xf_cliprdr_send_client_file_contents(xfClipboard* clipboard, UINT32 streamId,
-                                                 UINT32 listIndex, UINT32 nPositionLow,
-                                                 UINT32 nPositionHigh, UINT32 cbRequested)
+                                                 UINT32 listIndex, UINT32 dwFlags,
+                                                 UINT32 nPositionLow, UINT32 nPositionHigh,
+                                                 UINT32 cbRequested)
 {
 	CLIPRDR_FILE_CONTENTS_REQUEST formatFileContentsRequest;
 	formatFileContentsRequest.streamId = streamId;
 	formatFileContentsRequest.listIndex = listIndex;
-	formatFileContentsRequest.dwFlags = FILECONTENTS_RANGE;
-	formatFileContentsRequest.nPositionHigh = nPositionHigh;
-	formatFileContentsRequest.nPositionLow = nPositionLow;
-	formatFileContentsRequest.cbRequested = cbRequested;
+	formatFileContentsRequest.dwFlags = dwFlags;
+	switch (dwFlags)
+	{
+		/*
+		 * [MS-RDPECLIP] 2.2.5.3 File Contents Request PDU (CLIPRDR_FILECONTENTS_REQUEST).
+		 *
+		 * A request for the size of the file identified by the lindex field. The size MUST be
+		 * returned as a 64-bit, unsigned integer. The cbRequested field MUST be set to
+		 * 0x00000008 and both the nPositionLow and nPositionHigh fields MUST be
+		 * set to 0x00000000.
+		 */
+		case FILECONTENTS_SIZE:
+			formatFileContentsRequest.cbRequested = sizeof(UINT64);
+			formatFileContentsRequest.nPositionHigh = 0;
+			formatFileContentsRequest.nPositionLow = 0;
+			break;
+		case FILECONTENTS_RANGE:
+			formatFileContentsRequest.cbRequested = cbRequested;
+			formatFileContentsRequest.nPositionHigh = nPositionHigh;
+			formatFileContentsRequest.nPositionLow = nPositionLow;
+			break;
+	}
+
 	formatFileContentsRequest.haveClipDataId = FALSE;
 	return clipboard->context->ClientFileContentsRequest(clipboard->context,
 	                                                     &formatFileContentsRequest);
@@ -1260,6 +1286,8 @@ xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
 	xfCliprdrFuseStream* stream;
 	xfClipboard* clipboard = (xfClipboard*)context->custom;
 	UINT32 stream_id = fileContentsResponse->streamId;
+	const BYTE* data = fileContentsResponse->requestedData;
+	size_t data_len = fileContentsResponse->cbRequested;
 
 	ArrayList_Lock(clipboard->stream_list);
 	count = ArrayList_Count(clipboard->stream_list);
@@ -1277,8 +1305,35 @@ xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
 	ArrayList_Unlock(clipboard->stream_list);
 	if (found)
 	{
-		fuse_reply_buf(stream->req, (const char*)fileContentsResponse->requestedData,
-		               fileContentsResponse->cbRequested);
+		switch (stream->req_type)
+		{
+			case FILECONTENTS_SIZE:
+				if (data_len != sizeof(UINT64))
+				{
+					break;
+				}
+
+				UINT32 size = (UINT32)(data[3] << 24) | (UINT32)(data[2] << 16) |
+				              (UINT32)(data[1] << 8) | (data[0] & 0xFF);
+				xfCliprdrFuseInode* ino = (xfCliprdrFuseInode*)stream->req_data;
+				ino->st_size = size;
+				ino->size_set = TRUE;
+				struct fuse_entry_param e;
+				memset(&e, 0, sizeof(e));
+				e.ino = ino->ino;
+				e.attr_timeout = 1.0;
+				e.entry_timeout = 1.0;
+				e.attr.st_ino = ino->ino;
+				e.attr.st_mode = ino->st_mode;
+				e.attr.st_nlink = 1;
+				e.attr.st_size = ino->st_size;
+				e.attr.st_mtime = ino->st_mtim.tv_sec;
+				fuse_reply_entry(stream->req, &e);
+				break;
+			case FILECONTENTS_RANGE:
+				fuse_reply_buf(stream->req, (const char*)data, data_len);
+				break;
+		}
 		ArrayList_RemoveAt(clipboard->stream_list, index);
 	}
 	return CHANNEL_RC_OK;
@@ -1597,6 +1652,8 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 					rootNode->st_mode = S_IFDIR | 0755;
 					rootNode->child_inos = ArrayList_New(TRUE);
 					rootNode->st_mtim.tv_sec = time(NULL);
+					rootNode->st_size = 0;
+					rootNode->size_set = TRUE;
 					ArrayList_Add(clipboard->ino_list, rootNode);
 
 					mapDir = HashTable_New(TRUE);
@@ -1644,29 +1701,51 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 							ArrayList_Add(parent->child_inos, (void*)inode->ino);
 							free(dirName);
 						}
-
+						/* TODO: check FD_ATTRIBUTES in dwFlags
+						    However if this flag is not valid how can we determine file/folder?
+						*/
 						if ((descriptors[lindex].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
 						{
 							inode->st_mode = S_IFDIR | 0755;
 							inode->child_inos = ArrayList_New(TRUE);
+							inode->st_size = 0;
+							inode->size_set = TRUE;
 							HashTable_Add(mapDir, _strdup(curName), inode);
 						}
 						else
 						{
 							inode->st_mode = S_IFREG | 0644;
+							if ((descriptors[lindex].dwFlags & FD_FILESIZE) != 0)
+							{
+								inode->st_size =
+								    (((UINT64)descriptors[lindex].nFileSizeHigh) << 32) |
+								    ((UINT64)descriptors[lindex].nFileSizeLow);
+								inode->size_set = TRUE;
+							}
+							else
+							{
+								inode->size_set = FALSE;
+							}
 						}
 
 						free(curName);
 
-						inode->st_size = (((UINT64)descriptors[lindex].nFileSizeHigh) << 32) |
-						                 ((UINT64)descriptors[lindex].nFileSizeLow);
-						ticks =
-						    (((UINT64)descriptors[lindex].ftLastWriteTime.dwHighDateTime << 32) |
-						     ((UINT64)descriptors[lindex].ftLastWriteTime.dwLowDateTime)) -
-						    116444736000000000;
-						inode->st_mtim.tv_sec = ticks / 10000000ULL;
-						/* tv_nsec Not used for now */
-						inode->st_mtim.tv_nsec = ticks % 10000000ULL;
+						if ((descriptors[lindex].dwFlags & FD_WRITESTIME) != 0)
+						{
+							ticks = (((UINT64)descriptors[lindex].ftLastWriteTime.dwHighDateTime
+							          << 32) |
+							         ((UINT64)descriptors[lindex].ftLastWriteTime.dwLowDateTime)) -
+							        116444736000000000;
+							inode->st_mtim.tv_sec = ticks / 10000000ULL;
+							/* tv_nsec Not used for now */
+							inode->st_mtim.tv_nsec = ticks % 10000000ULL;
+						}
+						else
+						{
+							inode->st_mtim.tv_sec = time(NULL);
+							inode->st_mtim.tv_nsec = 0;
+						}
+
 						ArrayList_Add(clipboard->ino_list, inode);
 					}
 
@@ -1788,7 +1867,8 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 	xf_cliprdr_provide_data(clipboard, clipboard->respond, pDstData, DstSize);
 	{
-		union {
+		union
+		{
 			XEvent* ev;
 			XSelectionEvent* sev;
 		} conv;
@@ -2102,7 +2182,9 @@ static void xf_cliprdr_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, of
 
 	ArrayList_Lock(clipboard->stream_list);
 	stream->req = req;
+	stream->req_type = FILECONTENTS_RANGE;
 	stream->stream_id = clipboard->current_stream_id;
+	stream->req_data = NULL;
 	clipboard->current_stream_id++;
 	ArrayList_Add(clipboard->stream_list, stream);
 	ArrayList_Unlock(clipboard->stream_list);
@@ -2110,8 +2192,8 @@ static void xf_cliprdr_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, of
 	UINT32 nPositionLow = (off >> 0) & 0xFFFFFFFF;
 	UINT32 nPositionHigh = (off >> 32) & 0xFFFFFFFF;
 
-	xf_cliprdr_send_client_file_contents(clipboard, stream->stream_id, node->lindex, nPositionLow,
-	                                     nPositionHigh, size);
+	xf_cliprdr_send_client_file_contents(clipboard, stream->stream_id, node->lindex,
+	                                     FILECONTENTS_RANGE, nPositionLow, nPositionHigh, size);
 }
 
 static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char* name)
@@ -2151,6 +2233,24 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 	ArrayList_Unlock(parent_node->child_inos);
 	if (found == TRUE)
 	{
+		if (child_node->size_set != TRUE)
+		{
+			xfCliprdrFuseStream* stream =
+			    (xfCliprdrFuseStream*)calloc(1, sizeof(xfCliprdrFuseStream));
+
+			ArrayList_Lock(clipboard->stream_list);
+			stream->req = req;
+			stream->req_type = FILECONTENTS_SIZE;
+			stream->stream_id = clipboard->current_stream_id;
+			stream->req_data = (void*)child_node;
+			clipboard->current_stream_id++;
+			ArrayList_Add(clipboard->stream_list, stream);
+			ArrayList_Unlock(clipboard->stream_list);
+
+			xf_cliprdr_send_client_file_contents(clipboard, stream->stream_id, child_node->lindex,
+			                                     FILECONTENTS_SIZE, 0, 0, 0);
+			return;
+		}
 		memset(&e, 0, sizeof(e));
 		e.ino = child_node->ino;
 		e.attr_timeout = 1.0;
