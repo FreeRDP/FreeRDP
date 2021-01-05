@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <time.h>
+#define WIN32_FILETIME_TO_UNIX_EPOCH_USEC UINT64_C(116444736000000000)
 
 #include <winpr/crt.h>
 #include <winpr/image.h>
@@ -91,8 +92,16 @@ typedef struct xf_cliprdr_fuse_inode xfCliprdrFuseInode;
 void xf_cliprdr_fuse_inode_free(void* obj)
 {
 	xfCliprdrFuseInode* inode = (xfCliprdrFuseInode*)obj;
+	if (!inode)
+		return;
+
 	free(inode->name);
 	ArrayList_Free(inode->child_inos);
+
+	inode->name = NULL;
+	inode->child_inos = NULL;
+	free(inode);
+	inode = NULL;
 }
 
 struct xf_clipboard
@@ -1284,6 +1293,7 @@ xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
 	UINT32 index;
 	BOOL found = FALSE;
 	xfCliprdrFuseStream* stream;
+	xfCliprdrFuseInode* ino;
 	xfClipboard* clipboard = (xfClipboard*)context->custom;
 	UINT32 stream_id = fileContentsResponse->streamId;
 	const BYTE* data = fileContentsResponse->requestedData;
@@ -1302,20 +1312,24 @@ xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
 			break;
 		}
 	}
-	ArrayList_Unlock(clipboard->stream_list);
+
 	if (found)
 	{
 		switch (stream->req_type)
 		{
 			case FILECONTENTS_SIZE:
-				if (data_len != sizeof(UINT64))
+				ino = (xfCliprdrFuseInode*)stream->req_data;
+				/** ino must be exists and fileContentsResponse->cbRequested should be 64bit */
+				if (!ino || data_len != sizeof(UINT64))
 				{
+					fuse_reply_err(stream->req, EIO);
 					break;
 				}
+				UINT64 size;
+				wStream* s = Stream_New((BYTE*)data, data_len);
+				Stream_Read_UINT64(s, size);
+				Stream_Free(s, FALSE);
 
-				UINT32 size = (UINT32)(data[3] << 24) | (UINT32)(data[2] << 16) |
-				              (UINT32)(data[1] << 8) | (data[0] & 0xFF);
-				xfCliprdrFuseInode* ino = (xfCliprdrFuseInode*)stream->req_data;
 				ino->st_size = size;
 				ino->size_set = TRUE;
 				struct fuse_entry_param e;
@@ -1336,6 +1350,7 @@ xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
 		}
 		ArrayList_RemoveAt(clipboard->stream_list, index);
 	}
+	ArrayList_Unlock(clipboard->stream_list);
 	return CHANNEL_RC_OK;
 }
 
@@ -1584,6 +1599,247 @@ static char* xf_cliprdr_fuse_split_basename(char* name, int len)
 }
 
 /**
+ * Generate inode list for fuse
+ *
+ * @return TRUE on success, FALSE on fail
+ */
+static BOOL xf_cliprdr_fuse_generate_list(xfClipboard* clipboard, const BYTE* data, UINT32 size)
+{
+	if (size < 4)
+	{
+		WLog_ERR(TAG, "size of format data response invalid");
+		return FALSE;
+	}
+
+	UINT32 nrDescriptors;
+	size_t count = (size - 4) / sizeof(FILEDESCRIPTORW);
+	wStream* s = Stream_New((BYTE*)data, size);
+	if (Stream_GetRemainingLength(s) < sizeof(UINT32))
+	{
+		WLog_ERR(TAG, "too short serialized format list");
+		return FALSE;
+	}
+
+	Stream_Read_UINT32(s, nrDescriptors);
+	if (count < 1 || count != nrDescriptors)
+	{
+		WLog_WARN(TAG, "format data response mismatch");
+		goto error;
+	}
+
+	size_t lindex;
+	wHashTable* mapDir;
+	/* prevent conflict between fuse_thread and this */
+	ArrayList_Lock(clipboard->ino_list);
+	xfCliprdrFuseInode* rootNode = (xfCliprdrFuseInode*)calloc(1, sizeof(xfCliprdrFuseInode));
+	if (!rootNode)
+	{
+		WLog_ERR(TAG, "fail to alloc rootNode");
+		goto error;
+	}
+	rootNode->ino = 1;
+	rootNode->parent_ino = 1;
+	rootNode->name = _strdup("/");
+	if (!rootNode->name)
+	{
+		goto error;
+	}
+	rootNode->st_mode = S_IFDIR | 0755;
+	rootNode->child_inos = ArrayList_New(TRUE);
+	if (!rootNode->child_inos || !rootNode->name)
+	{
+		xf_cliprdr_fuse_inode_free(rootNode);
+		WLog_ERR(TAG, "fail to alloc rootNode's member");
+		goto error;
+	}
+	rootNode->st_mtim.tv_sec = time(NULL);
+	rootNode->st_size = 0;
+	rootNode->size_set = TRUE;
+	if (ArrayList_Add(clipboard->ino_list, rootNode) < 0)
+	{
+		xf_cliprdr_fuse_inode_free(rootNode);
+		WLog_ERR(TAG, "fail to alloc rootNode to ino_list");
+		goto error;
+	}
+
+	mapDir = HashTable_New(TRUE);
+	if (!mapDir)
+	{
+		WLog_ERR(TAG, "fail to alloc hashtable");
+		goto error2;
+	}
+	mapDir->keyFree = HashTable_StringFree;
+	mapDir->keyClone = HashTable_StringClone;
+	mapDir->keyCompare = HashTable_StringCompare;
+	mapDir->hash = HashTable_StringHash;
+
+	FILEDESCRIPTORW* descriptor = (FILEDESCRIPTORW*)calloc(1, sizeof(FILEDESCRIPTORW));
+	if (!descriptor)
+	{
+		WLog_ERR(TAG, "fail to alloc FILEDESCRIPTORW");
+		goto error3;
+	}
+	char* curName;
+	char* dirName;
+	xfCliprdrFuseInode* inode;
+	/* here we assume that parent folder always appears before its children */
+	for (lindex = 0; lindex < count; lindex++)
+	{
+		Stream_Read(s, descriptor, sizeof(FILEDESCRIPTORW));
+		inode = (xfCliprdrFuseInode*)calloc(1, sizeof(xfCliprdrFuseInode));
+		if (!inode)
+		{
+			WLog_ERR(TAG, "fail to alloc ino");
+			goto error4;
+		}
+
+		size_t curLen = _wcsnlen(descriptor->cFileName, ARRAYSIZE(descriptor->cFileName));
+		curName = NULL;
+		int newLen = ConvertFromUnicode(CP_UTF8, 0, descriptor->cFileName, (int)curLen, &curName, 0,
+		                                NULL, NULL);
+		if (!curName)
+		{
+			goto error5;
+		}
+		char* split_point = xf_cliprdr_fuse_split_basename(curName, newLen);
+
+		char* baseName = NULL;
+		UINT64 ticks;
+		xfCliprdrFuseInode* parent;
+
+		dirName = NULL;
+
+		inode->lindex = lindex;
+		inode->ino = lindex + 2;
+
+		if (split_point == NULL)
+		{
+			baseName = _strdup(curName);
+			if (!baseName)
+			{
+				goto error6;
+			}
+			inode->parent_ino = 1;
+			inode->name = baseName;
+			if (ArrayList_Add(rootNode->child_inos, (void*)inode->ino) < 0)
+			{
+				goto error6;
+			}
+		}
+		else
+		{
+			dirName = calloc(split_point - curName + 1, sizeof(char));
+			if (!dirName)
+			{
+				goto error6;
+			}
+			_snprintf(dirName, split_point - curName + 1, "%s", curName);
+			/* drop last '\\' */
+			baseName = _strdup(split_point + 1);
+			if (!baseName)
+			{
+				goto error7;
+			}
+
+			parent = (xfCliprdrFuseInode*)HashTable_GetItemValue(mapDir, dirName);
+			if (!parent)
+			{
+				goto error7;
+			}
+			inode->parent_ino = parent->ino;
+			inode->name = baseName;
+			if (ArrayList_Add(parent->child_inos, (void*)inode->ino) < 0)
+			{
+				goto error7;
+			}
+			free(dirName);
+		}
+		/* TODO: check FD_ATTRIBUTES in dwFlags
+		    However if this flag is not valid how can we determine file/folder?
+		*/
+		if ((descriptor->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+		{
+			inode->st_mode = S_IFDIR | 0755;
+			inode->child_inos = ArrayList_New(TRUE);
+			if (!inode->child_inos)
+			{
+				goto error6;
+			}
+			inode->st_size = 0;
+			inode->size_set = TRUE;
+			char* tmpName = _strdup(curName);
+			if (!tmpName)
+			{
+				goto error6;
+			}
+			if (HashTable_Add(mapDir, tmpName, inode) < 0)
+			{
+				free(tmpName);
+				goto error6;
+			}
+		}
+		else
+		{
+			inode->st_mode = S_IFREG | 0644;
+			if ((descriptor->dwFlags & FD_FILESIZE) != 0)
+			{
+				inode->st_size = (((UINT64)descriptor->nFileSizeHigh) << 32) |
+				                 ((UINT64)descriptor->nFileSizeLow);
+				inode->size_set = TRUE;
+			}
+			else
+			{
+				inode->size_set = FALSE;
+			}
+		}
+
+		free(curName);
+
+		if ((descriptor->dwFlags & FD_WRITESTIME) != 0)
+		{
+			ticks = (((UINT64)descriptor->ftLastWriteTime.dwHighDateTime << 32) |
+			         ((UINT64)descriptor->ftLastWriteTime.dwLowDateTime)) -
+			        WIN32_FILETIME_TO_UNIX_EPOCH_USEC;
+			inode->st_mtim.tv_sec = ticks / 10000000ULL;
+			/* tv_nsec Not used for now */
+			inode->st_mtim.tv_nsec = ticks % 10000000ULL;
+		}
+		else
+		{
+			inode->st_mtim.tv_sec = time(NULL);
+			inode->st_mtim.tv_nsec = 0;
+		}
+
+		if (ArrayList_Add(clipboard->ino_list, inode) < 0)
+		{
+			goto error5;
+		}
+	}
+	ArrayList_Unlock(clipboard->ino_list);
+	free(descriptor);
+	HashTable_Free(mapDir);
+
+	Stream_Free(s, FALSE);
+	return TRUE;
+error7:
+	free(dirName);
+error6:
+	free(curName);
+error5:
+	xf_cliprdr_fuse_inode_free(inode);
+error4:
+	free(descriptor);
+error3:
+	HashTable_Free(mapDir);
+error2:
+	ArrayList_Clear(clipboard->ino_list);
+error:
+	ArrayList_Unlock(clipboard->ino_list);
+	Stream_Free(s, FALSE);
+	return FALSE;
+}
+
+/**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
@@ -1631,126 +1887,10 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 		if (strcmp(clipboard->data_format_name, "FileGroupDescriptorW") == 0)
 		{
 			/* Build inode table for FILEDESCRIPTORW*/
-			/* Avoid Crash on empty message*/
-			if (size >= 4)
+			if (xf_cliprdr_fuse_generate_list(clipboard, data, size) == FALSE)
 			{
-				UINT32 nrDescriptors = (UINT32)(data[3] << 24) | (UINT32)(data[2] << 16) |
-				                       (UINT32)(data[1] << 8) | (data[0] & 0xFF);
-				const FILEDESCRIPTORW* descriptors = (const FILEDESCRIPTORW*)&data[4];
-				size_t count = (size - 4) / sizeof(FILEDESCRIPTORW);
-
-				if (count >= 1 && count == nrDescriptors)
-				{
-					size_t lindex;
-					wHashTable* mapDir;
-					xfCliprdrFuseInode* rootNode =
-					    (xfCliprdrFuseInode*)calloc(1, sizeof(xfCliprdrFuseInode));
-
-					rootNode->ino = 1;
-					rootNode->parent_ino = 1;
-					rootNode->name = _strdup("/");
-					rootNode->st_mode = S_IFDIR | 0755;
-					rootNode->child_inos = ArrayList_New(TRUE);
-					rootNode->st_mtim.tv_sec = time(NULL);
-					rootNode->st_size = 0;
-					rootNode->size_set = TRUE;
-					ArrayList_Add(clipboard->ino_list, rootNode);
-
-					mapDir = HashTable_New(TRUE);
-					mapDir->keyFree = HashTable_StringFree;
-					mapDir->keyClone = HashTable_StringClone;
-					mapDir->keyCompare = HashTable_StringCompare;
-					mapDir->hash = HashTable_StringHash;
-
-					/* here we assume that parent folder always appears before its children */
-					for (lindex = 0; lindex < count; lindex++)
-					{
-						xfCliprdrFuseInode* inode =
-						    (xfCliprdrFuseInode*)calloc(1, sizeof(xfCliprdrFuseInode));
-						size_t curLen = _wcsnlen(descriptors[lindex].cFileName,
-						                         ARRAYSIZE(descriptors[lindex].cFileName));
-						char* curName = NULL;
-						int newLen = ConvertFromUnicode(CP_UTF8, 0, descriptors[lindex].cFileName,
-						                                (int)curLen, &curName, 0, NULL, NULL);
-						char* split_point = xf_cliprdr_fuse_split_basename(curName, newLen);
-						char* dirName = NULL;
-						char* baseName = NULL;
-						UINT64 ticks;
-						xfCliprdrFuseInode* parent;
-
-						inode->lindex = lindex;
-						inode->ino = lindex + 2;
-
-						if (split_point == NULL)
-						{
-							baseName = _strdup(curName);
-							inode->parent_ino = 1;
-							inode->name = baseName;
-							ArrayList_Add(rootNode->child_inos, (void*)inode->ino);
-						}
-						else
-						{
-							dirName = calloc(split_point - curName + 1, sizeof(char));
-							_snprintf(dirName, split_point - curName + 1, "%s", curName);
-							/* drop last '\\' */
-							baseName = _strdup(split_point + 1);
-
-							parent = (xfCliprdrFuseInode*)HashTable_GetItemValue(mapDir, dirName);
-							inode->parent_ino = parent->ino;
-							inode->name = baseName;
-							ArrayList_Add(parent->child_inos, (void*)inode->ino);
-							free(dirName);
-						}
-						/* TODO: check FD_ATTRIBUTES in dwFlags
-						    However if this flag is not valid how can we determine file/folder?
-						*/
-						if ((descriptors[lindex].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
-						{
-							inode->st_mode = S_IFDIR | 0755;
-							inode->child_inos = ArrayList_New(TRUE);
-							inode->st_size = 0;
-							inode->size_set = TRUE;
-							HashTable_Add(mapDir, _strdup(curName), inode);
-						}
-						else
-						{
-							inode->st_mode = S_IFREG | 0644;
-							if ((descriptors[lindex].dwFlags & FD_FILESIZE) != 0)
-							{
-								inode->st_size =
-								    (((UINT64)descriptors[lindex].nFileSizeHigh) << 32) |
-								    ((UINT64)descriptors[lindex].nFileSizeLow);
-								inode->size_set = TRUE;
-							}
-							else
-							{
-								inode->size_set = FALSE;
-							}
-						}
-
-						free(curName);
-
-						if ((descriptors[lindex].dwFlags & FD_WRITESTIME) != 0)
-						{
-							ticks = (((UINT64)descriptors[lindex].ftLastWriteTime.dwHighDateTime
-							          << 32) |
-							         ((UINT64)descriptors[lindex].ftLastWriteTime.dwLowDateTime)) -
-							        116444736000000000;
-							inode->st_mtim.tv_sec = ticks / 10000000ULL;
-							/* tv_nsec Not used for now */
-							inode->st_mtim.tv_nsec = ticks % 10000000ULL;
-						}
-						else
-						{
-							inode->st_mtim.tv_sec = time(NULL);
-							inode->st_mtim.tv_nsec = 0;
-						}
-
-						ArrayList_Add(clipboard->ino_list, inode);
-					}
-
-					HashTable_Free(mapDir);
-				}
+				/* just continue */
+				WLog_WARN(TAG, "fail to generate list for FILEDESCRIPTOR");
 			}
 
 			srcFormatId = ClipboardGetFormatId(clipboard->system, "FileGroupDescriptorW");
@@ -2008,6 +2148,13 @@ static UINT xf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
+/* For better understanding the relationship between ino and index of arraylist*/
+static inline xfCliprdrFuseInode* xf_cliprdr_get_inode(wArrayList* ino_list, fuse_ino_t ino)
+{
+	size_t list_index = ino - 1;
+	return (xfCliprdrFuseInode*)ArrayList_GetItem(ino_list, list_index);
+}
+
 static void xf_cliprdr_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi)
 {
 	double timeout = 0;
@@ -2017,10 +2164,10 @@ static void xf_cliprdr_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_
 	xfClipboard* clipboard = (xfClipboard*)fuse_req_userdata(req);
 
 	ArrayList_Lock(clipboard->ino_list);
-	node = (xfCliprdrFuseInode*)ArrayList_GetItem(clipboard->ino_list, ino - 1);
-	ArrayList_Unlock(clipboard->ino_list);
+	node = xf_cliprdr_get_inode(clipboard->ino_list, ino);
 	if (!node)
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, ENOENT);
 	}
 	else
@@ -2029,14 +2176,8 @@ static void xf_cliprdr_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_
 		stbuf.st_ino = ino;
 		stbuf.st_mode = node->st_mode;
 		stbuf.st_mtime = node->st_mtim.tv_sec;
-		if (ino == FUSE_ROOT_ID)
-		{
-			stbuf.st_nlink = 2;
-		}
-		else
-		{
-			stbuf.st_nlink = 1;
-		}
+		stbuf.st_nlink = 1;
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_attr(req, &stbuf, timeout);
 	}
 }
@@ -2048,22 +2189,25 @@ static void xf_cliprdr_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	size_t index;
 	size_t child_ino;
 	size_t direntry_len;
-	char* buf = (char*)calloc(size, sizeof(char));
+	char* buf;
+	struct stat stbuf;
 	size_t pos = 0;
 	xfCliprdrFuseInode* child_node;
 	xfCliprdrFuseInode* node;
 	xfClipboard* clipboard = (xfClipboard*)fuse_req_userdata(req);
 
 	ArrayList_Lock(clipboard->ino_list);
-	node = (xfCliprdrFuseInode*)ArrayList_GetItem(clipboard->ino_list, ino - 1);
-	ArrayList_Unlock(clipboard->ino_list);
+	node = xf_cliprdr_get_inode(clipboard->ino_list, ino);
+
 	if (!node || !node->child_inos)
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, ENOENT);
 		return;
 	}
 	else if ((node->st_mode & S_IFDIR) == 0)
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, ENOTDIR);
 		return;
 	}
@@ -2072,61 +2216,63 @@ static void xf_cliprdr_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	count = ArrayList_Count(node->child_inos);
 	if (count == 0 || count + 1 <= off)
 	{
+		ArrayList_Unlock(node->child_inos);
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_buf(req, NULL, 0);
+		return;
 	}
 	else
 	{
+		buf = (char*)calloc(size, sizeof(char));
+		if (!buf)
+		{
+			ArrayList_Unlock(node->child_inos);
+			ArrayList_Unlock(clipboard->ino_list);
+			fuse_reply_err(req, ENOMEM);
+			return;
+		}
 		for (index = off; index < count + 2; index++)
 		{
+			memset(&stbuf, 0, sizeof(stbuf));
 			if (index == 0)
 			{
-				struct stat stbuf;
 				stbuf.st_ino = ino;
-				direntry_len = fuse_add_direntry(req, NULL, 0, ".", NULL, index);
-				if (pos + direntry_len > size)
-				{
+				direntry_len = fuse_add_direntry(req, buf + pos, size - pos, ".", &stbuf, index);
+				if (direntry_len > size - pos)
 					break;
-				}
-				fuse_add_direntry(req, buf + pos, size - pos, ".", &stbuf, index);
 				pos += direntry_len;
 			}
 			else if (index == 1)
 			{
-				struct stat stbuf;
 				stbuf.st_ino = node->parent_ino;
-				direntry_len = fuse_add_direntry(req, NULL, 0, "..", NULL, index);
-				if (pos + direntry_len > size)
-				{
+				direntry_len = fuse_add_direntry(req, buf + pos, size - pos, "..", &stbuf, index);
+				if (direntry_len > size - pos)
 					break;
-				}
-				fuse_add_direntry(req, buf + pos, size - pos, "..", &stbuf, index);
 				pos += direntry_len;
 			}
 			else
 			{
+				/* execlude . and .. */
 				child_ino = (size_t)ArrayList_GetItem(node->child_inos, index - 2);
-				ArrayList_Lock(clipboard->ino_list);
-				child_node =
-				    (xfCliprdrFuseInode*)ArrayList_GetItem(clipboard->ino_list, child_ino - 1);
-				ArrayList_Unlock(clipboard->ino_list);
-				// child_node must exists?
-				direntry_len = fuse_add_direntry(req, NULL, 0, child_node->name, NULL, index);
-				if (pos + direntry_len > size)
-				{
+				/* previous lock for ino_list still work*/
+				child_node = xf_cliprdr_get_inode(clipboard->ino_list, child_ino);
+				if (!child_node)
 					break;
-				}
-
-				struct stat stbuf;
 				stbuf.st_ino = child_node->ino;
-				fuse_add_direntry(req, buf + pos, size - pos, child_node->name, &stbuf, index);
+				direntry_len =
+				    fuse_add_direntry(req, buf + pos, size - pos, child_node->name, &stbuf, index);
+				if (direntry_len > size - pos)
+					break;
 				pos += direntry_len;
 			}
 		}
 
+		ArrayList_Unlock(node->child_inos);
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_buf(req, buf, pos);
 		free(buf);
+		return;
 	}
-	ArrayList_Unlock(node->child_inos);
 }
 
 static void xf_cliprdr_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi)
@@ -2135,18 +2281,20 @@ static void xf_cliprdr_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_fil
 	xfClipboard* clipboard = (xfClipboard*)fuse_req_userdata(req);
 
 	ArrayList_Lock(clipboard->ino_list);
-	node = (xfCliprdrFuseInode*)ArrayList_GetItem(clipboard->ino_list, ino - 1);
-	ArrayList_Unlock(clipboard->ino_list);
+	node = xf_cliprdr_get_inode(clipboard->ino_list, ino);
 	if (!node)
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, ENOENT);
 	}
 	else if ((node->st_mode & S_IFDIR) != 0)
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, EISDIR);
 	}
 	else
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		/* Important for KDE to get file correctly*/
 		fi->direct_io = 1;
 		fuse_reply_open(req, fi);
@@ -2163,37 +2311,52 @@ static void xf_cliprdr_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, of
 	}
 	xfCliprdrFuseInode* node;
 	xfClipboard* clipboard = (xfClipboard*)fuse_req_userdata(req);
+	UINT32 lindex;
+	UINT32 stream_id;
 
 	ArrayList_Lock(clipboard->ino_list);
-	node = (xfCliprdrFuseInode*)ArrayList_GetItem(clipboard->ino_list, ino - 1);
-	ArrayList_Unlock(clipboard->ino_list);
+	node = xf_cliprdr_get_inode(clipboard->ino_list, ino);
 	if (!node)
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, ENONET);
 		return;
 	}
 	else if ((node->st_mode & S_IFDIR) != 0)
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, EISDIR);
 		return;
 	}
+	lindex = node->lindex;
+	ArrayList_Unlock(clipboard->ino_list);
 
 	xfCliprdrFuseStream* stream = (xfCliprdrFuseStream*)calloc(1, sizeof(xfCliprdrFuseStream));
-
+	if (!stream)
+	{
+		fuse_reply_err(req, ENOMEM);
+		return;
+	}
 	ArrayList_Lock(clipboard->stream_list);
 	stream->req = req;
 	stream->req_type = FILECONTENTS_RANGE;
 	stream->stream_id = clipboard->current_stream_id;
+	stream_id = stream->stream_id;
 	stream->req_data = NULL;
 	clipboard->current_stream_id++;
-	ArrayList_Add(clipboard->stream_list, stream);
+	if (ArrayList_Add(clipboard->stream_list, stream) < 0)
+	{
+		ArrayList_Unlock(clipboard->stream_list);
+		fuse_reply_err(req, ENOMEM);
+		return;
+	}
 	ArrayList_Unlock(clipboard->stream_list);
 
 	UINT32 nPositionLow = (off >> 0) & 0xFFFFFFFF;
 	UINT32 nPositionHigh = (off >> 32) & 0xFFFFFFFF;
 
-	xf_cliprdr_send_client_file_contents(clipboard, stream->stream_id, node->lindex,
-	                                     FILECONTENTS_RANGE, nPositionLow, nPositionHigh, size);
+	xf_cliprdr_send_client_file_contents(clipboard, stream_id, lindex, FILECONTENTS_RANGE,
+	                                     nPositionLow, nPositionHigh, size);
 }
 
 static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char* name)
@@ -2208,10 +2371,11 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 	xfClipboard* clipboard = (xfClipboard*)fuse_req_userdata(req);
 
 	ArrayList_Lock(clipboard->ino_list);
-	parent_node = (xfCliprdrFuseInode*)ArrayList_GetItem(clipboard->ino_list, parent - 1);
-	ArrayList_Unlock(clipboard->ino_list);
+	parent_node = xf_cliprdr_get_inode(clipboard->ino_list, parent);
+
 	if (!parent_node || !parent_node->child_inos)
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, ENOENT);
 		return;
 	}
@@ -2221,9 +2385,7 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 	for (index = 0; index < count; index++)
 	{
 		child_ino = (size_t)ArrayList_GetItem(parent_node->child_inos, index);
-		ArrayList_Lock(clipboard->ino_list);
-		child_node = (xfCliprdrFuseInode*)ArrayList_GetItem(clipboard->ino_list, child_ino - 1);
-		ArrayList_Unlock(clipboard->ino_list);
+		child_node = xf_cliprdr_get_inode(clipboard->ino_list, child_ino);
 		if (child_node && strcmp(name, child_node->name) == 0)
 		{
 			found = TRUE;
@@ -2233,37 +2395,58 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 	ArrayList_Unlock(parent_node->child_inos);
 	if (found == TRUE)
 	{
-		if (child_node->size_set != TRUE)
+		UINT32 stream_id;
+		BOOL size_set = child_node->size_set;
+		size_t lindex = child_node->lindex;
+		size_t ino = child_node->ino;
+		mode_t st_mode = child_node->st_mode;
+		off_t st_size = child_node->st_size;
+		time_t tv_sec = child_node->st_mtim.tv_sec;
+		ArrayList_Unlock(clipboard->ino_list);
+		if (size_set != TRUE)
 		{
 			xfCliprdrFuseStream* stream =
 			    (xfCliprdrFuseStream*)calloc(1, sizeof(xfCliprdrFuseStream));
-
+			if (!stream)
+			{
+				fuse_reply_err(req, ENOMEM);
+				return;
+			}
 			ArrayList_Lock(clipboard->stream_list);
 			stream->req = req;
 			stream->req_type = FILECONTENTS_SIZE;
 			stream->stream_id = clipboard->current_stream_id;
+			stream_id = stream->stream_id;
+			/* child_node is not guaranteed to be valid */
 			stream->req_data = (void*)child_node;
 			clipboard->current_stream_id++;
-			ArrayList_Add(clipboard->stream_list, stream);
+			if (ArrayList_Add(clipboard->stream_list, stream) < 0)
+			{
+				ArrayList_Unlock(clipboard->stream_list);
+				fuse_reply_err(req, ENOMEM);
+				return;
+			}
 			ArrayList_Unlock(clipboard->stream_list);
 
-			xf_cliprdr_send_client_file_contents(clipboard, stream->stream_id, child_node->lindex,
-			                                     FILECONTENTS_SIZE, 0, 0, 0);
+			xf_cliprdr_send_client_file_contents(clipboard, stream_id, lindex, FILECONTENTS_SIZE, 0,
+			                                     0, 0);
 			return;
 		}
 		memset(&e, 0, sizeof(e));
-		e.ino = child_node->ino;
+		e.ino = ino;
 		e.attr_timeout = 1.0;
 		e.entry_timeout = 1.0;
-		e.attr.st_ino = child_node->ino;
-		e.attr.st_mode = child_node->st_mode;
+		e.attr.st_ino = ino;
+		e.attr.st_mode = st_mode;
 		e.attr.st_nlink = 1;
-		e.attr.st_size = child_node->st_size;
-		e.attr.st_mtime = child_node->st_mtim.tv_sec;
+
+		e.attr.st_size = st_size;
+		e.attr.st_mtime = tv_sec;
 		fuse_reply_entry(req, &e);
 	}
 	else
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, ENOENT);
 	}
 }
@@ -2274,18 +2457,20 @@ static void xf_cliprdr_fuse_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_
 	xfClipboard* clipboard = (xfClipboard*)fuse_req_userdata(req);
 
 	ArrayList_Lock(clipboard->ino_list);
-	node = (xfCliprdrFuseInode*)ArrayList_GetItem(clipboard->ino_list, ino - 1);
-	ArrayList_Unlock(clipboard->ino_list);
+	node = xf_cliprdr_get_inode(clipboard->ino_list, ino);
 	if (!node)
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, ENOENT);
 	}
 	else if ((node->st_mode & S_IFDIR) == 0)
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, ENOTDIR);
 	}
 	else
 	{
+		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_open(req, fi);
 	}
 }
@@ -2312,6 +2497,12 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 	/* 10 is max length of DWORD string and 1 for \0 */
 	basePathSize = strlen(tmpPath) + strlen("/.xfreerdp.cliprdr.") + 11;
 	basePath = calloc(basePathSize, sizeof(char));
+	if (!basePath)
+	{
+		WLog_ERR(TAG, "Failed to alloc for basepath");
+		free(tmpPath);
+		return 0;
+	}
 	_snprintf(&basePath[0], basePathSize, "%s/.xfreerdp.cliprdr.%d", tmpPath,
 	          GetCurrentProcessId());
 	free(tmpPath);
@@ -2347,10 +2538,7 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 	}
 	fuse_opt_free_args(&args);
 
-	if (PathFileExistsA(clipboard->delegate->basePath))
-	{
-		RemoveDirectoryA(clipboard->delegate->basePath);
-	}
+	RemoveDirectoryA(clipboard->delegate->basePath);
 
 	ExitThread(0);
 	return 0;
@@ -2511,17 +2699,27 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 
 	clipboard->current_stream_id = 0;
 	clipboard->stream_list = ArrayList_New(TRUE);
+	if (!clipboard->stream_list)
+	{
+		WLog_ERR(TAG, "failed to allocate stream_list");
+		goto error;
+	}
 	wObject* obj = ArrayList_Object(clipboard->stream_list);
 	obj->fnObjectFree = free;
 
 	clipboard->ino_list = ArrayList_New(TRUE);
+	if (!clipboard->ino_list)
+	{
+		WLog_ERR(TAG, "failed to allocate stream_list");
+		goto error2;
+	}
 	obj = ArrayList_Object(clipboard->ino_list);
 	obj->fnObjectFree = xf_cliprdr_fuse_inode_free;
 
 	if (!(clipboard->fuse_thread =
 	          CreateThread(NULL, 0, xf_cliprdr_fuse_thread, clipboard, 0, NULL)))
 	{
-		goto error;
+		goto error3;
 	}
 
 	clipboard->delegate->ClipboardFileSizeSuccess = xf_cliprdr_clipboard_file_size_success;
@@ -2529,6 +2727,13 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	clipboard->delegate->ClipboardFileRangeSuccess = xf_cliprdr_clipboard_file_range_success;
 	clipboard->delegate->ClipboardFileRangeFailure = xf_cliprdr_clipboard_file_range_failure;
 	return clipboard;
+
+error3:
+
+	ArrayList_Free(clipboard->ino_list);
+error2:
+
+	ArrayList_Free(clipboard->stream_list);
 error:
 
 	for (i = 0; i < n; i++)
@@ -2575,7 +2780,8 @@ void xf_clipboard_free(xfClipboard* clipboard)
 		CloseHandle(clipboard->fuse_thread);
 	}
 
-	free(clipboard->delegate->basePath);
+	if (clipboard->delegate->basePath)
+		free(clipboard->delegate->basePath);
 
 	// fuse related
 	ArrayList_Free(clipboard->stream_list);
