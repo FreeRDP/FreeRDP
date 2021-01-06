@@ -31,13 +31,19 @@
 #include <X11/extensions/Xfixes.h>
 #endif
 
-#define FUSE_USE_VERSION 26
+#ifdef WITH_FUSE
+#define FUSE_USE_VERSION FUSE_API_VERSION
+#if FUSE_USE_VERSION >= 30
+#include <fuse3/fuse_lowlevel.h>
+#else
 #include <fuse/fuse_lowlevel.h>
+#endif
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <time.h>
 #define WIN32_FILETIME_TO_UNIX_EPOCH_USEC UINT64_C(116444736000000000)
+#endif
 
 #include <winpr/crt.h>
 #include <winpr/image.h>
@@ -64,6 +70,7 @@ struct xf_cliprdr_format
 };
 typedef struct xf_cliprdr_format xfCliprdrFormat;
 
+#ifdef WITH_FUSE
 struct xf_cliprdr_fuse_stream
 {
 	UINT32 stream_id;
@@ -103,6 +110,7 @@ void xf_cliprdr_fuse_inode_free(void* obj)
 	free(inode);
 	inode = NULL;
 }
+#endif
 
 struct xf_clipboard
 {
@@ -160,7 +168,7 @@ struct xf_clipboard
 	/* File clipping */
 	BOOL streams_supported;
 	BOOL file_formats_registered;
-
+#ifdef WITH_FUSE
 	/* FUSE related**/
 	HANDLE fuse_thread;
 	struct fuse_session* fuse_sess;
@@ -169,6 +177,7 @@ struct xf_clipboard
 	wArrayList* stream_list;
 	UINT32 current_stream_id;
 	wArrayList* ino_list;
+#endif
 };
 
 static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard);
@@ -882,7 +891,7 @@ static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 	}
 
 	clipboard->data_raw_length = 0;
-
+#ifdef WITH_FUSE
 	if (clipboard->stream_list)
 	{
 		size_t index;
@@ -905,6 +914,7 @@ static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 	{
 		ArrayList_Clear(clipboard->ino_list);
 	}
+#endif
 }
 
 static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
@@ -1239,6 +1249,7 @@ static UINT xf_cliprdr_send_client_format_list_response(xfClipboard* clipboard, 
 	return clipboard->context->ClientFormatListResponse(clipboard->context, &formatListResponse);
 }
 
+#ifdef WITH_FUSE
 /**
  * Function description
  *
@@ -1353,6 +1364,7 @@ xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
 	ArrayList_Unlock(clipboard->stream_list);
 	return CHANNEL_RC_OK;
 }
+#endif
 
 /**
  * Function description
@@ -1585,6 +1597,7 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
+#ifdef WITH_FUSE
 static char* xf_cliprdr_fuse_split_basename(char* name, int len)
 {
 	int s = len - 1;
@@ -1838,6 +1851,7 @@ error:
 	Stream_Free(s, FALSE);
 	return FALSE;
 }
+#endif
 
 /**
  * Function description
@@ -1886,12 +1900,14 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 		if (strcmp(clipboard->data_format_name, "FileGroupDescriptorW") == 0)
 		{
+#ifdef WITH_FUSE
 			/* Build inode table for FILEDESCRIPTORW*/
 			if (xf_cliprdr_fuse_generate_list(clipboard, data, size) == FALSE)
 			{
 				/* just continue */
 				WLog_WARN(TAG, "fail to generate list for FILEDESCRIPTOR");
 			}
+#endif
 
 			srcFormatId = ClipboardGetFormatId(clipboard->system, "FileGroupDescriptorW");
 			dstTargetFormat =
@@ -2148,6 +2164,7 @@ static UINT xf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
+#ifdef WITH_FUSE
 /* For better understanding the relationship between ino and index of arraylist*/
 static inline xfCliprdrFuseInode* xf_cliprdr_get_inode(wArrayList* ino_list, fuse_ino_t ino)
 {
@@ -2515,8 +2532,21 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 	}
 	clipboard->delegate->basePath = basePath;
 
-	struct fuse_chan* ch;
 	struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+#if FUSE_USE_VERSION >= 30
+	fuse_opt_add_arg(&args, clipboard->delegate->basePath);
+	if ((clipboard->fuse_sess = fuse_session_new(
+	         &args, &xf_cliprdr_fuse_oper, sizeof(xf_cliprdr_fuse_oper), (void*)clipboard)) != NULL)
+	{
+		if (0 == fuse_session_mount(clipboard->fuse_sess, clipboard->delegate->basePath))
+		{
+			fuse_session_loop(clipboard->fuse_sess);
+			fuse_session_unmount(clipboard->fuse_sess);
+		}
+		fuse_session_destroy(clipboard->fuse_sess);
+	}
+#else
+	struct fuse_chan* ch;
 	int err;
 
 	if ((ch = fuse_mount(clipboard->delegate->basePath, &args)) != NULL)
@@ -2525,17 +2555,14 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 		                                         sizeof(xf_cliprdr_fuse_oper), (void*)clipboard);
 		if (clipboard->fuse_sess != NULL)
 		{
-			if (fuse_set_signal_handlers(clipboard->fuse_sess) != -1)
-			{
-				fuse_session_add_chan(clipboard->fuse_sess, ch);
-				err = fuse_session_loop(clipboard->fuse_sess);
-				fuse_remove_signal_handlers(clipboard->fuse_sess);
-				fuse_session_remove_chan(ch);
-			}
+			fuse_session_add_chan(clipboard->fuse_sess, ch);
+			err = fuse_session_loop(clipboard->fuse_sess);
+			fuse_session_remove_chan(ch);
 			fuse_session_destroy(clipboard->fuse_sess);
 		}
 		fuse_unmount(clipboard->delegate->basePath, ch);
 	}
+#endif
 	fuse_opt_free_args(&args);
 
 	RemoveDirectoryA(clipboard->delegate->basePath);
@@ -2543,6 +2570,7 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 	ExitThread(0);
 	return 0;
 }
+#endif
 
 xfClipboard* xf_clipboard_new(xfContext* xfc)
 {
@@ -2697,6 +2725,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	clipboard->delegate = ClipboardGetDelegate(clipboard->system);
 	clipboard->delegate->custom = clipboard;
 
+#ifdef WITH_FUSE
 	clipboard->current_stream_id = 0;
 	clipboard->stream_list = ArrayList_New(TRUE);
 	if (!clipboard->stream_list)
@@ -2721,6 +2750,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	{
 		goto error3;
 	}
+#endif
 
 	clipboard->delegate->ClipboardFileSizeSuccess = xf_cliprdr_clipboard_file_size_success;
 	clipboard->delegate->ClipboardFileSizeFailure = xf_cliprdr_clipboard_file_size_failure;
@@ -2728,12 +2758,14 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	clipboard->delegate->ClipboardFileRangeFailure = xf_cliprdr_clipboard_file_range_failure;
 	return clipboard;
 
+#ifdef WITH_FUSE
 error3:
 
 	ArrayList_Free(clipboard->ino_list);
 error2:
 
 	ArrayList_Free(clipboard->stream_list);
+#endif
 error:
 
 	for (i = 0; i < n; i++)
@@ -2766,6 +2798,7 @@ void xf_clipboard_free(xfClipboard* clipboard)
 			free(clipboard->clientFormats[i].formatName);
 	}
 
+#ifdef WITH_FUSE
 	if (clipboard->fuse_thread)
 	{
 		if (clipboard->fuse_sess)
@@ -2786,6 +2819,7 @@ void xf_clipboard_free(xfClipboard* clipboard)
 	// fuse related
 	ArrayList_Free(clipboard->stream_list);
 	ArrayList_Free(clipboard->ino_list);
+#endif
 
 	ClipboardDestroy(clipboard->system);
 	free(clipboard->data);
@@ -2807,7 +2841,9 @@ void xf_cliprdr_init(xfContext* xfc, CliprdrClientContext* cliprdr)
 	cliprdr->ServerFormatDataRequest = xf_cliprdr_server_format_data_request;
 	cliprdr->ServerFormatDataResponse = xf_cliprdr_server_format_data_response;
 	cliprdr->ServerFileContentsRequest = xf_cliprdr_server_file_contents_request;
+#ifdef WITH_FUSE
 	cliprdr->ServerFileContentsResponse = xf_cliprdr_server_file_contents_response;
+#endif
 }
 
 void xf_cliprdr_uninit(xfContext* xfc, CliprdrClientContext* cliprdr)
