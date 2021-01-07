@@ -407,7 +407,10 @@ struct _RPC_FAULT_CODE
 };
 typedef struct _RPC_FAULT_CODE RPC_FAULT_CODE;
 
-#define DEFINE_RPC_FAULT_CODE(_code, cat) { _code, #_code, cat },
+#define DEFINE_RPC_FAULT_CODE(_code, cat) \
+	{                                     \
+		_code, #_code, cat                \
+	}
 
 #define nca_s_comm_failure 0x1C010001
 #define nca_s_op_rng_error 0x1C010002
