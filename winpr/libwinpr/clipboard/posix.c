@@ -40,6 +40,7 @@
 #include <winpr/shell.h>
 #include <winpr/string.h>
 #include <winpr/wlog.h>
+#include <winpr/print.h>
 
 #include "clipboard.h"
 #include "posix.h"
@@ -575,6 +576,35 @@ static void* convert_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 f
 	return descriptors;
 }
 
+static size_t count_special_chars(const WCHAR* str)
+{
+	size_t count = 0;
+	WCHAR* start = (WCHAR*)str;
+	while (*start)
+	{
+		if (*start == L'#' || *start == L'?' || *start == L'*' || *start == L'!' || *start == L'%')
+		{
+			count++;
+		}
+		start++;
+	}
+	return count;
+}
+
+static char* stop_at_special_chars(const char* str)
+{
+	char* start = (char*)str;
+	while (*start)
+	{
+		if (*start == '#' || *start == '?' || *start == '*' || *start == '!' || *start == '%')
+		{
+			return start;
+		}
+		start++;
+	}
+	return NULL;
+}
+
 /* The universal converter from filedescriptors to different file lists */
 static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 formatId,
                                                   const void* data, UINT32* pSize,
@@ -629,6 +659,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 			size_t curLen = _wcsnlen(descriptors[x].cFileName, ARRAYSIZE(descriptors[x].cFileName));
 			alloc += WideCharToMultiByte(CP_UTF8, 0, descriptors[x].cFileName, (int)curLen, NULL, 0,
 			                             NULL, NULL);
+			alloc += count_special_chars(descriptors[x].cFileName) * 2;
 			alloc += decoration_len;
 		}
 	}
@@ -655,21 +686,62 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 		const FILEDESCRIPTORW* cur = &descriptors[x];
 		size_t curLen = _wcsnlen(cur->cFileName, ARRAYSIZE(cur->cFileName));
 		char* curName = NULL;
+		char* stop_at = NULL;
+		char* previous_at = NULL;
 		rc = ConvertFromUnicode(CP_UTF8, 0, cur->cFileName, (int)curLen, &curName, 0, NULL, NULL);
 
-		rc = _snprintf(&dst[pos], alloc - pos, "%s%s/%s%s", lineprefix,
-		               clipboard->delegate.basePath, curName, lineending);
-		free(curName);
+		rc = _snprintf(&dst[pos], alloc - pos, "%s%s/", lineprefix, clipboard->delegate.basePath);
 
 		if (rc < 0)
 		{
 			free(dst);
 			return NULL;
 		}
+		pos += (size_t)rc;
+
+		previous_at = curName;
+		while ((stop_at = stop_at_special_chars(previous_at)) != NULL)
+		{
+			char* tmp = strndup(previous_at, stop_at - previous_at);
+			if (!tmp)
+			{
+				free(dst);
+				free(curName);
+				return NULL;
+			}
+			rc = _snprintf(&dst[pos], stop_at - previous_at + 1, "%s", tmp);
+			free(tmp);
+			if (rc < 0)
+			{
+				free(dst);
+				free(curName);
+				return NULL;
+			}
+			pos += (size_t)rc;
+			rc = _snprintf(&dst[pos], 4, "%%%x", *stop_at);
+			if (rc < 0)
+			{
+				free(dst);
+				free(curName);
+				return NULL;
+			}
+			pos += (size_t)rc;
+			previous_at = stop_at + 1;
+		}
+
+		rc = _snprintf(&dst[pos], alloc - pos, "%s%s", previous_at, lineending);
+		if (rc < 0)
+		{
+			free(dst);
+			free(curName);
+			return NULL;
+		}
+		free(curName);
 
 		pos += (size_t)rc;
 	}
 
+	winpr_HexDump(TAG, WLOG_DEBUG, (const BYTE*)dst, alloc);
 	*pSize = (UINT32)alloc;
 	clipboard->fileListSequenceNumber = clipboard->sequenceNumber;
 	return dst;
