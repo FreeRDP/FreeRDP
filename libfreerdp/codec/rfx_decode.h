@@ -24,7 +24,8 @@
 #include <freerdp/api.h>
 
 /* stride is bytes between rows in the output buffer. */
-FREERDP_LOCAL BOOL rfx_decode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, BYTE* rgb_buffer,
-                                  int stride);
-
+FREERDP_LOCAL BOOL rfx_decode_rgb(RFX_CONTEXT* context, const RFX_TILE* tile, BYTE* rgb_buffer,
+                                  UINT32 stride);
+FREERDP_LOCAL void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
+                                        const BYTE* data, int size, INT16* buffer);
 #endif /* FREERDP_LIB_CODEC_RFX_DECODE_H */
