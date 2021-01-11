@@ -163,7 +163,7 @@ int winpr_bitmap_write(const char* filename, const BYTE* data, int width, int he
 
 	bmp_header = winpr_bitmap_construct_header(width, height, bpp);
 	if (!bmp_header)
-		return -1;
+		goto fail;
 
 	if (fwrite(bmp_header, WINPR_IMAGE_BMP_HEADER_LEN, 1, fp) != 1 ||
 	    fwrite((void*)data, img_size, 1, fp) != 1)

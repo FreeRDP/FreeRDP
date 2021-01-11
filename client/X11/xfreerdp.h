@@ -190,6 +190,8 @@ struct xf_context
 
 	Atom UTF8_STRING;
 
+	Atom _XWAYLAND_MAY_GRAB_KEYBOARD;
+
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;
 	Atom _NET_CURRENT_DESKTOP;

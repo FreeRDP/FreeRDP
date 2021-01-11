@@ -34,8 +34,6 @@
 		ERRINFO_##_code, "ERRINFO_" #_code, ERRINFO_##_code##_STRING, category \
 	}
 
-int connectErrorCode;
-
 /* Protocol-independent codes */
 
 #define ERRINFO_RPC_INITIATED_DISCONNECT_STRING \
