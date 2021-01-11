@@ -87,7 +87,8 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 		                       0x80, 0x03, 0x80, 0x80, 0x80 } };
 #endif
 	const __m128i c128 = _mm_set1_epi16(128);
-	__m128i BGRX = _mm_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000);
+	__m128i BGRX = _mm_and_si128(_mm_loadu_si128(dst),
+	                             _mm_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000));
 	{
 		__m128i C, D, E;
 		/* Load Y values and expand to 32 bit */
