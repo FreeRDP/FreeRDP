@@ -2510,7 +2510,7 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 	rects = (RFX_RECT*)Stream_Buffer(progressive->rects);
 	if (invalidRegion)
 	{
-		RECTANGLE_16* r = region16_rects(invalidRegion, NULL);
+		const RECTANGLE_16* r = region16_rects(invalidRegion, NULL);
 		for (x = 0; x < numRects; x++)
 		{
 			rects[x].x = r[x].left;

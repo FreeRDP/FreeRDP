@@ -37,7 +37,7 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYT
 	const BYTE* sptr = pSrc;
 	INT16 Cg, Co, Y, T, R, G, B;
 	const DWORD formatSize = GetBytesPerPixel(DstFormat);
-	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
+	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, TRUE);
 	int cll = shift - 1; /* -1 builds in the /2's */
 	UINT32 srcPad = srcStep - (width * 4);
 	UINT32 dstPad = dstStep - (width * formatSize);
@@ -59,7 +59,7 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYT
 			B = T + Co;
 			G = Y + Cg;
 			R = T - Co;
-			dptr = (*writePixel)(dptr, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), A);
+			dptr = writePixel(dptr, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), A);
 		}
 
 		sptr += srcPad;
