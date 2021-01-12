@@ -809,6 +809,27 @@ extern "C"
 		return TRUE;
 	}
 
+	static INLINE BOOL WriteColorIgnoreAlpha(BYTE* dst, UINT32 format, UINT32 color)
+	{
+		switch (format)
+		{
+			case PIXEL_FORMAT_ABGR32:
+			case PIXEL_FORMAT_ARGB32:
+			{
+				const UINT32 tmp = (dst[0] << 24) | (color & 0x00FFFFFF);
+				return WriteColor(dst, format, tmp);
+			}
+			case PIXEL_FORMAT_BGRA32:
+			case PIXEL_FORMAT_RGBA32:
+			{
+				const UINT32 tmp = (dst[3]) | (color & 0xFFFFFF00);
+				return WriteColor(dst, format, tmp);
+			}
+			default:
+				return WriteColor(dst, format, color);
+		}
+	}
+
 	/***
 	 *
 	 * Converts a pixel in internal representation format srcFormat to internal

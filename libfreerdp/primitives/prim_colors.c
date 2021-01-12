@@ -60,7 +60,7 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const pSrc[3]
 			R = ((INT16)((CrR + Y) >> divisor) >> 5);
 			G = ((INT16)((Y - CbG - CrG) >> divisor) >> 5);
 			B = ((INT16)((CbB + Y) >> divisor) >> 5);
-			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0xFF);
+			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0);
 		}
 
 		pY += srcPad;
@@ -83,7 +83,7 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const pSrc
 	const INT16* pCr = pSrc[2];
 	const size_t srcPad = (srcStep - (roi->width * 2)) / 2;
 	const size_t dstPad = (dstStep - (roi->width * 4));
-	const fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
+	const fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
 	const DWORD formatSize = GetBytesPerPixel(DstFormat);
 
 	for (y = 0; y < roi->height; y++)
@@ -102,7 +102,7 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const pSrc
 			R = (INT64)((CrR + Y) >> (divisor + 5));
 			G = (INT64)((Y - CbG - CrG) >> (divisor + 5));
 			B = (INT64)((CbB + Y) >> (divisor + 5));
-			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0xFF);
+			pRGB = writePixel(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0);
 		}
 
 		pY += srcPad;
@@ -283,10 +283,10 @@ static INLINE void writeScanlineGeneric(BYTE* dst, DWORD formatSize, UINT32 DstF
                                         const INT16* r, const INT16* g, const INT16* b, DWORD width)
 {
 	DWORD x;
-	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
+	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
 
 	for (x = 0; x < width; x++)
-		dst = (*writePixel)(dst, formatSize, DstFormat, *r++, *g++, *b++, 0xFF);
+		dst = writePixel(dst, formatSize, DstFormat, *r++, *g++, *b++, 0);
 }
 
 static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
