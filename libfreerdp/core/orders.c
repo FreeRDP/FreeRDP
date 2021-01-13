@@ -1062,11 +1062,17 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 	return TRUE;
 }
 
+static BOOL order_field_flag_is_set(const ORDER_INFO* orderInfo, BYTE number)
+{
+	const UINT32 mask = (1UL << ((UINT32)number - 1UL));
+	const BOOL set = (orderInfo->fieldFlags & mask) != 0;
+	return set;
+}
+
 static INLINE BOOL read_order_field_byte(const ORDER_INFO* orderInfo, wStream* s, BYTE number,
                                          UINT32* target, BOOL optional)
 {
-	const BOOL set = orderInfo->fieldFlags & (1 << (number - 1));
-	if (!set)
+	if (!order_field_flag_is_set(orderInfo, number))
 		return TRUE;
 	if (Stream_GetRemainingLength(s) < 1)
 		return FALSE;
@@ -1077,8 +1083,7 @@ static INLINE BOOL read_order_field_byte(const ORDER_INFO* orderInfo, wStream* s
 static INLINE BOOL read_order_field_2bytes(const ORDER_INFO* orderInfo, wStream* s, BYTE number,
                                            UINT32* target1, UINT32* target2, BOOL optional)
 {
-	const BOOL set = orderInfo->fieldFlags & (1 << (number - 1));
-	if (!set)
+	if (!order_field_flag_is_set(orderInfo, number))
 		return TRUE;
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
@@ -1090,8 +1095,7 @@ static INLINE BOOL read_order_field_2bytes(const ORDER_INFO* orderInfo, wStream*
 static INLINE BOOL read_order_field_uint16(const ORDER_INFO* orderInfo, wStream* s, BYTE number,
                                            UINT32* target, BOOL optional)
 {
-	const BOOL set = orderInfo->fieldFlags & (1 << (number - 1));
-	if (!set)
+	if (!order_field_flag_is_set(orderInfo, number))
 		return TRUE;
 
 	if (Stream_GetRemainingLength(s) < 2)
@@ -1104,8 +1108,7 @@ static INLINE BOOL read_order_field_uint16(const ORDER_INFO* orderInfo, wStream*
 static INLINE BOOL read_order_field_int16(const ORDER_INFO* orderInfo, wStream* s, BYTE number,
                                           INT32* target, BOOL optional)
 {
-	const BOOL set = orderInfo->fieldFlags & (1 << (number - 1));
-	if (!set)
+	if (!order_field_flag_is_set(orderInfo, number))
 		return TRUE;
 
 	if (Stream_GetRemainingLength(s) < 2)
@@ -1118,8 +1121,7 @@ static INLINE BOOL read_order_field_int16(const ORDER_INFO* orderInfo, wStream* 
 static INLINE BOOL read_order_field_uint32(const ORDER_INFO* orderInfo, wStream* s, BYTE number,
                                            UINT32* target, BOOL optional)
 {
-	const BOOL set = orderInfo->fieldFlags & (1 << (number - 1));
-	if (!set)
+	if (!order_field_flag_is_set(orderInfo, number))
 		return TRUE;
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -1131,10 +1133,9 @@ static INLINE BOOL read_order_field_uint32(const ORDER_INFO* orderInfo, wStream*
 static INLINE BOOL read_order_field_coord(const ORDER_INFO* orderInfo, wStream* s, UINT32 NO,
                                           INT32* TARGET, BOOL optional)
 {
-	const BOOL set = (orderInfo->fieldFlags & (1 << (NO - 1)));
 	if (!TARGET || !orderInfo)
 		return FALSE;
-	if (!set)
+	if (!order_field_flag_is_set(orderInfo, NO))
 		return TRUE;
 
 	return update_read_coord(s, TARGET, orderInfo->deltaCoordinates);
@@ -1143,10 +1144,9 @@ static INLINE BOOL read_order_field_coord(const ORDER_INFO* orderInfo, wStream* 
 static INLINE BOOL read_order_field_color(const ORDER_INFO* orderInfo, wStream* s, UINT32 NO,
                                           UINT32* TARGET, BOOL optional)
 {
-	const BOOL set = (orderInfo->fieldFlags & (1 << (NO - 1)));
 	if (!TARGET || !orderInfo)
 		return FALSE;
-	if (!set)
+	if (!order_field_flag_is_set(orderInfo, NO))
 		return TRUE;
 
 	if (!update_read_color(s, TARGET))
@@ -3427,6 +3427,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	}
 
 	orderName = primary_order_string(orderInfo->orderType);
+	WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 
 	if (!check_primary_order_supported(update->log, settings, orderInfo->orderType, orderName))
 		return FALSE;
@@ -3677,6 +3678,10 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	Stream_Read_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Read_UINT16(s, extraFlags);  /* extraFlags (2 bytes) */
 	Stream_Read_UINT8(s, orderType);    /* orderType (1 byte) */
+
+	start = Stream_GetPosition(s);
+	name = secondary_order_string(orderType);
+	WLog_Print(update->log, WLOG_DEBUG, "Secondary Drawing Order %s", name);
 	/*
 	 * According to [MS-RDPEGDI] 2.2.2.2.1.2.1.1 the order length must be increased by 13 bytes
 	 * including the header. As we already read the header 7 left
@@ -3687,10 +3692,6 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 		           Stream_GetRemainingLength(s), orderLength + 7);
 		return FALSE;
 	}
-
-	start = Stream_GetPosition(s);
-	name = secondary_order_string(orderType);
-	WLog_Print(update->log, WLOG_DEBUG, "Secondary Drawing Order %s", name);
 
 	if (!check_secondary_order_supported(update->log, settings, orderType, name))
 		return FALSE;
