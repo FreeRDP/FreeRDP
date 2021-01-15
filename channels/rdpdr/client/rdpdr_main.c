@@ -734,6 +734,37 @@ static UINT handle_platform_mounts(hotplug_dev* dev_array, size_t* size)
 	return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+static BOOL device_already_plugged(rdpdrPlugin* rdpdr, const hotplug_dev* device)
+{
+	BOOL rc = FALSE;
+	int count, x;
+	ULONG_PTR* keys = NULL;
+
+	if (!rdpdr || !device)
+		return TRUE;
+	if (!device->to_add)
+		return TRUE;
+
+	ListDictionary_Lock(rdpdr->devman->devices);
+	count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
+	for (x = 0; x < count; x++)
+	{
+		DEVICE_DRIVE_EXT* device_ext =
+		    (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(rdpdr->devman->devices, (void*)keys[x]);
+
+		if (!device_ext || (device_ext->device.type != RDPDR_DTYP_FILESYSTEM) || !device_ext->path)
+			continue;
+		if (strcmp(device_ext->path, device->path) == 0)
+		{
+			rc = TRUE;
+			break;
+		}
+	}
+	free(keys);
+	ListDictionary_Unlock(rdpdr->devman->devices);
+	return rc;
+}
+
 /**
  * Function description
  *
@@ -804,7 +835,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	/* add new devices */
 	for (i = 0; i < size; i++)
 	{
-		if (dev_array[i].to_add)
+		if (!device_already_plugged(rdpdr, &dev_array[i]))
 		{
 			RDPDR_DRIVE drive = { 0 };
 			char* name;
