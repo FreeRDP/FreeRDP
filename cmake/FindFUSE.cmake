@@ -4,10 +4,9 @@
 #  FUSE_LIBRARIES   - List of libraries when using FUSE.
 #  FUSE_FOUND       - True if FUSE lib is found.
 
-# check if already in cache, be silent
-IF (FUSE_INCLUDE_DIR)
-    SET (FUSE_FIND_QUIETLY TRUE)
-ENDIF (FUSE_INCLUDE_DIR)
+unset(FUSE_LIBRARIES CACHE)
+unset(FUSE_INCLUDE_DIR CACHE)
+unset(FUSE_API_VERSION CACHE)
 
 include(FindPackageHandleStandardArgs)
 
@@ -78,6 +77,7 @@ else()
         find_fuse2()
     endif()
 endif()
+
 
 find_package_handle_standard_args ("FUSE" DEFAULT_MSG
     FUSE_LIBRARIES FUSE_INCLUDE_DIR FUSE_API_VERSION)
