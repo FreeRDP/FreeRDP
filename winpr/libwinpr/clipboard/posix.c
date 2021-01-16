@@ -665,6 +665,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 			size_t curLen = _wcsnlen(descriptors[x].cFileName, ARRAYSIZE(descriptors[x].cFileName));
 			alloc += WideCharToMultiByte(CP_UTF8, 0, descriptors[x].cFileName, (int)curLen, NULL, 0,
 			                             NULL, NULL);
+			/* # (1 char) -> %23 (3 chars) , the first char is replaced inplace */
 			alloc += count_special_chars(descriptors[x].cFileName) * 2;
 			alloc += decoration_len;
 		}
