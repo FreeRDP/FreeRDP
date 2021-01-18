@@ -2438,7 +2438,7 @@ static void xf_cliprdr_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, of
 {
 	if (ino < 2)
 	{
-		fuse_reply_err(req, ENONET);
+		fuse_reply_err(req, ENOENT);
 		return;
 	}
 	int err;
