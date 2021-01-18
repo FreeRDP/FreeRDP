@@ -464,6 +464,72 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 	return TRUE;
 }
 
+void freerdp_settings_dump(wLog* log, DWORD level, const rdpSettings* settings)
+{
+	size_t x;
+	for (x = 0; x < ARRAYSIZE(settings_map); x++)
+	{
+		const struct settings_str_entry* cur = &settings_map[x];
+		switch (cur->type)
+		{
+			case 0: /* bool */
+			{
+				BOOL sval = freerdp_settings_get_bool(settings, cur->id);
+				WLog_Print(log, level, "%s [BOOL]: %s", cur->str, sval ? "TRUE" : "FALSE");
+			}
+			break;
+			case 1: /* UINT16 */
+			{
+				UINT16 sval = freerdp_settings_get_uint16(settings, cur->id);
+				WLog_Print(log, level, "%s [UINT16]: %" PRIu16, cur->str, sval);
+			}
+			break;
+			case 2: /* INT16 */
+			{
+				INT16 sval = freerdp_settings_get_int16(settings, cur->id);
+				WLog_Print(log, level, "%s [INT16]: %" PRId16, cur->str, sval);
+			}
+			break;
+			case 3: /* UINT32 */
+			{
+				UINT32 sval = freerdp_settings_get_uint32(settings, cur->id);
+				WLog_Print(log, level, "%s [UINT32]: %" PRIu32, cur->str, sval);
+			}
+			break;
+			case 4: /* INT32 */
+			{
+				INT32 sval = freerdp_settings_get_int32(settings, cur->id);
+				WLog_Print(log, level, "%s [INT32]: %" PRId32, cur->str, sval);
+			}
+			break;
+			case 5: /* UINT64 */
+			{
+				UINT64 sval = freerdp_settings_get_uint64(settings, cur->id);
+				WLog_Print(log, level, "%s [UINT64]: %" PRIu64, cur->str, sval);
+			}
+			break;
+			case 6: /* INT64 */
+			{
+				INT64 sval = freerdp_settings_get_int64(settings, cur->id);
+				WLog_Print(log, level, "%s [INT64]: %" PRId64, cur->str, sval);
+			}
+			break;
+			case 7: /* strings */
+			{
+				const char* sval = freerdp_settings_get_string(settings, cur->id);
+				WLog_Print(log, level, "%s [STRING]: '%s'", cur->str, sval);
+			}
+			break;
+			case 8: /* pointer */
+			{
+				const void* sval = freerdp_settings_get_pointer(settings, cur->id);
+				WLog_Print(log, level, "%s [POINTER]: '%p'", cur->str, sval);
+			}
+			break;
+		}
+	}
+}
+
 void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup)
 {
 	size_t x;

@@ -23,6 +23,7 @@
 #define FREERDP_SETTINGS_H
 
 #include <winpr/timezone.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -1592,6 +1593,8 @@ extern "C"
 	FREERDP_API rdpSettings* freerdp_settings_clone(const rdpSettings* settings);
 	FREERDP_API BOOL freerdp_settings_copy(rdpSettings* dst, const rdpSettings* src);
 	FREERDP_API void freerdp_settings_free(rdpSettings* settings);
+
+	FREERDP_API void freerdp_settings_dump(wLog* log, DWORD level, const rdpSettings* settings);
 
 	FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument);
 	FREERDP_API int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous,
