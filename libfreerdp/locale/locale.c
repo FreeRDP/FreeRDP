@@ -3,6 +3,8 @@
  * Microsoft Locales
  *
  * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2021 Thincast Technologies GmbH
+ * Copyright 2021 Martin Fleisz <martin.fleisz@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +23,11 @@
 #include "config.h"
 #endif
 
+#if defined(__APPLE__)
+#include <CoreFoundation/CFString.h>
+#include <CoreFoundation/CFLocale.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,11 +39,15 @@
 
 #include <freerdp/locale/locale.h>
 
+#define LOCALE_LANGUAGE_LEN 4
+#define LOCALE_COUNTRY_LEN 10
+
 struct _SYSTEM_LOCALE
 {
-	char language[4]; /* Two or three letter language code */
-	char country[10]; /* Two or three letter country code (Sometimes with Cyrl_ prefix) */
-	DWORD code;       /* 32-bit unsigned integer corresponding to the locale */
+	char language[LOCALE_LANGUAGE_LEN]; /* Two or three letter language code */
+	char country[LOCALE_COUNTRY_LEN];   /* Two or three letter country code (Sometimes with Cyrl_
+	                                       prefix) */
+	DWORD code;                         /* 32-bit unsigned integer corresponding to the locale */
 };
 typedef struct _SYSTEM_LOCALE SYSTEM_LOCALE;
 
@@ -644,6 +655,31 @@ static const LOCALE_KEYBOARD_LAYOUTS LOCALE_KEYBOARD_LAYOUTS_TABLE[] = {
 
 static BOOL freerdp_get_system_language_and_country_codes(char* language, char* country)
 {
+#if defined(__APPLE__)
+	CFIndex strSize;
+	CFStringRef langRef, countryRef;
+	CFLocaleRef localeRef = CFLocaleCopyCurrent();
+	if (!localeRef)
+		return FALSE;
+
+	langRef = (CFStringRef)CFLocaleGetValue(localeRef, kCFLocaleLanguageCode);
+	countryRef = (CFStringRef)CFLocaleGetValue(localeRef, kCFLocaleCountryCode);
+	if (!langRef || !countryRef)
+	{
+		CFRelease(localeRef);
+		return FALSE;
+	}
+
+	if (!CFStringGetCString(langRef, language, LOCALE_LANGUAGE_LEN, kCFStringEncodingUTF8) ||
+	    !CFStringGetCString(countryRef, country, LOCALE_COUNTRY_LEN, kCFStringEncodingUTF8))
+	{
+		CFRelease(localeRef);
+		return FALSE;
+	}
+
+	CFRelease(localeRef);
+	return TRUE;
+#else
 	int dot;
 	DWORD nSize;
 	int underscore;
@@ -697,6 +733,7 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, char* 
 
 	free(env_lang);
 	return TRUE;
+#endif
 }
 
 static SYSTEM_LOCALE* freerdp_detect_system_locale(void)
