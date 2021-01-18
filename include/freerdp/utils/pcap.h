@@ -49,7 +49,11 @@ typedef struct _pcap_record pcap_record;
 struct _pcap_record
 {
 	pcap_record_header header;
-	void* data;
+	union
+	{
+		void* data;
+		const void* cdata;
+	};
 	UINT32 length;
 	pcap_record* next;
 };
@@ -76,7 +80,7 @@ extern "C"
 	FREERDP_API rdpPcap* pcap_open(char* name, BOOL write);
 	FREERDP_API void pcap_close(rdpPcap* pcap);
 
-	FREERDP_API BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length);
+	FREERDP_API BOOL pcap_add_record(rdpPcap* pcap, const void* data, UINT32 length);
 	FREERDP_API BOOL pcap_has_next_record(rdpPcap* pcap);
 	FREERDP_API BOOL pcap_get_next_record(rdpPcap* pcap, pcap_record* record);
 	FREERDP_API BOOL pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record);
