@@ -95,10 +95,10 @@ static BOOL pcap_read_record(rdpPcap* pcap, pcap_record* record)
 static BOOL pcap_write_record(rdpPcap* pcap, pcap_record* record)
 {
 	return pcap_write_record_header(pcap, &record->header) &&
-	       (fwrite(record->data, record->length, 1, pcap->fp) == 1);
+	       (fwrite(record->cdata, record->length, 1, pcap->fp) == 1);
 }
 
-BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
+BOOL pcap_add_record(rdpPcap* pcap, const void* data, UINT32 length)
 {
 	pcap_record* record;
 	struct timeval tp;
@@ -126,7 +126,7 @@ BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 	if (pcap->record == NULL)
 		pcap->record = record;
 
-	record->data = data;
+	record->cdata = data;
 	record->length = length;
 	record->header.incl_len = length;
 	record->header.orig_len = length;
