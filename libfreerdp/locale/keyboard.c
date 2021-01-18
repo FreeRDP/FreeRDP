@@ -32,6 +32,10 @@
 
 #include "liblocale.h"
 
+#if defined(__MACOSX__)
+#include "keyboard_apple.h"
+#endif
+
 #ifdef WITH_X11
 
 #include "keyboard_x11.h"
@@ -62,6 +66,11 @@ int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 
 	if (*keyboardLayoutId == 0)
 		*keyboardLayoutId = ((DWORD)GetKeyboardLayout(0) >> 16) & 0x0000FFFF;
+#endif
+
+#if defined(__MACOSX__)
+	if (*keyboardLayoutId == 0)
+		freerdp_detect_keyboard_layout_from_cf(keyboardLayoutId);
 #endif
 
 #ifdef WITH_X11
@@ -148,7 +157,7 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 	for (keycode = 0; keycode < ARRAYSIZE(VIRTUAL_SCANCODE_TO_X11_KEYCODE); keycode++)
 	{
 		VIRTUAL_SCANCODE_TO_X11_KEYCODE
-		    [RDP_SCANCODE_CODE(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode])]
+		[RDP_SCANCODE_CODE(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode])]
 		    [RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]) ? 1 : 0] = keycode;
 	}
 
