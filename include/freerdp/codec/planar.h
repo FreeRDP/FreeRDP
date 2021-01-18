@@ -97,6 +97,8 @@ struct _BITMAP_PLANAR_CONTEXT
 
 	BYTE* pTempData;
 	UINT32 nTempStep;
+
+	BOOL bgr;
 };
 
 #ifdef __cplusplus
@@ -115,6 +117,8 @@ extern "C"
 	FREERDP_API BITMAP_PLANAR_CONTEXT* freerdp_bitmap_planar_context_new(DWORD flags, UINT32 width,
 	                                                                     UINT32 height);
 	FREERDP_API void freerdp_bitmap_planar_context_free(BITMAP_PLANAR_CONTEXT* context);
+
+	FREERDP_API void freerdp_planar_switch_bgr(BITMAP_PLANAR_CONTEXT* planar, BOOL bgr);
 
 	FREERDP_API BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData,
 	                                   UINT32 SrcSize, UINT32 nSrcWidth, UINT32 nSrcHeight,
