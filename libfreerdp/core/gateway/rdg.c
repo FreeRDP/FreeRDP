@@ -313,6 +313,7 @@ static BOOL rdg_read_all(rdpTls* tls, BYTE* buffer, int size)
 			if (!BIO_should_retry(tls->bio))
 				return FALSE;
 
+			Sleep(10);
 			continue;
 		}
 
