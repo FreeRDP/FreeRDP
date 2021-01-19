@@ -244,7 +244,8 @@ int main(int argc, char* argv[])
 			if (text)
 				fprintf(fp, "%s", text);
 
-			if (arg->Flags == COMMAND_LINE_VALUE_BOOL)
+			if (arg->Flags & COMMAND_LINE_VALUE_BOOL &&
+			    (!arg->Default || arg->Default == BoolValueTrue))
 				fprintf(fp, " (default:%s)", arg->Default ? "on" : "off");
 			else if (arg->Default)
 			{

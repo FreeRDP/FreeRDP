@@ -147,13 +147,13 @@ static primitives_YUV_benchmark* primitives_YUV_benchmark_init(primitives_YUV_be
 	ret->outputStride = roi->width * 4;
 	ret->testedFormat = PIXEL_FORMAT_BGRA32;
 
-	ret->outputBuffer = malloc(ret->outputStride * roi->height);
+	ret->outputBuffer = calloc(ret->outputStride, roi->height);
 	if (!ret->outputBuffer)
 		goto fail;
 
 	for (i = 0; i < 3; i++)
 	{
-		BYTE* buf = ret->channels[i] = malloc(roi->width * roi->height);
+		BYTE* buf = ret->channels[i] = calloc(roi->width, roi->height);
 		if (!buf)
 			goto fail;
 
@@ -172,7 +172,7 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
                                          UINT64 runTime, UINT32* computations)
 {
 	ULONGLONG dueDate;
-	const BYTE* channels[3];
+	const BYTE* channels[3] = { 0 };
 	size_t i;
 	pstatus_t status;
 

@@ -41,6 +41,26 @@ struct _wStreamPool
 	size_t defaultSize;
 };
 
+/**
+ * Lock the stream pool
+ */
+
+static INLINE void StreamPool_Lock(wStreamPool* pool)
+{
+	if (pool->synchronized)
+		EnterCriticalSection(&pool->lock);
+}
+
+/**
+ * Unlock the stream pool
+ */
+
+static INLINE void StreamPool_Unlock(wStreamPool* pool)
+{
+	if (pool->synchronized)
+		LeaveCriticalSection(&pool->lock);
+}
+
 static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL usedOrAvailable)
 {
 	size_t new_cap = 0;
@@ -166,8 +186,7 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	SSIZE_T foundIndex;
 	wStream* s = NULL;
 
-	if (pool->synchronized)
-		EnterCriticalSection(&pool->lock);
+	StreamPool_Lock(pool);
 
 	if (size == 0)
 		size = pool->defaultSize;
@@ -206,8 +225,7 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	}
 
 out_fail:
-	if (pool->synchronized)
-		LeaveCriticalSection(&pool->lock);
+	StreamPool_Unlock(pool);
 
 	return s;
 }
@@ -221,33 +239,13 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 	if (!s)
 		return;
 
-	if (pool->synchronized)
-		EnterCriticalSection(&pool->lock);
+	StreamPool_Lock(pool);
 
 	StreamPool_EnsureCapacity(pool, 1, FALSE);
 	pool->aArray[(pool->aSize)++] = s;
 	StreamPool_RemoveUsed(pool, s);
 
-	if (pool->synchronized)
-		LeaveCriticalSection(&pool->lock);
-}
-
-/**
- * Lock the stream pool
- */
-
-static void StreamPool_Lock(wStreamPool* pool)
-{
-	EnterCriticalSection(&pool->lock);
-}
-
-/**
- * Unlock the stream pool
- */
-
-static void StreamPool_Unlock(wStreamPool* pool)
-{
-	LeaveCriticalSection(&pool->lock);
+	StreamPool_Unlock(pool);
 }
 
 /**
@@ -293,7 +291,7 @@ wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
 	wStream* s = NULL;
 	BOOL found = FALSE;
 
-	EnterCriticalSection(&pool->lock);
+	StreamPool_Lock(pool);
 
 	for (index = 0; index < pool->uSize; index++)
 	{
@@ -306,37 +304,9 @@ wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
 		}
 	}
 
-	LeaveCriticalSection(&pool->lock);
+	StreamPool_Unlock(pool);
 
 	return (found) ? s : NULL;
-}
-
-/**
- * Find stream in pool and increment reference count
- */
-
-void StreamPool_AddRef(wStreamPool* pool, BYTE* ptr)
-{
-	wStream* s;
-
-	s = StreamPool_Find(pool, ptr);
-
-	if (s)
-		Stream_AddRef(s);
-}
-
-/**
- * Find stream in pool and decrement reference count
- */
-
-void StreamPool_Release(wStreamPool* pool, BYTE* ptr)
-{
-	wStream* s;
-
-	s = StreamPool_Find(pool, ptr);
-
-	if (s)
-		Stream_Release(s);
 }
 
 /**
@@ -345,8 +315,7 @@ void StreamPool_Release(wStreamPool* pool, BYTE* ptr)
 
 void StreamPool_Clear(wStreamPool* pool)
 {
-	if (pool->synchronized)
-		EnterCriticalSection(&pool->lock);
+	StreamPool_Lock(pool);
 
 	while (pool->aSize > 0)
 	{
@@ -360,8 +329,7 @@ void StreamPool_Clear(wStreamPool* pool)
 		Stream_Free(pool->uArray[pool->uSize], TRUE);
 	}
 
-	if (pool->synchronized)
-		LeaveCriticalSection(&pool->lock);
+	StreamPool_Unlock(pool);
 }
 
 /**

@@ -43,6 +43,7 @@ int freerdp_handle_signals(void)
 #else
 
 #include <pthread.h>
+#include <winpr/debug.h>
 
 volatile sig_atomic_t terminal_needs_reset = 0;
 int terminal_fildes = 0;
@@ -53,8 +54,15 @@ static void fatal_handler(int signum)
 {
 	struct sigaction default_sigaction;
 	sigset_t this_mask;
-	WLog_INFO(TAG, "Caught signal '%s' [%d]", strsignal(signum), signum);
+	static BOOL recursive = FALSE;
 
+	if (!recursive)
+	{
+		recursive = TRUE;
+		WLog_ERR(TAG, "Caught signal '%s' [%d]", strsignal(signum), signum);
+
+		winpr_log_backtrace(TAG, WLOG_ERROR, 20);
+	}
 	if (terminal_needs_reset)
 		tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);
 

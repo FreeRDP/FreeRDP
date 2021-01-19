@@ -98,12 +98,16 @@ option(WITH_SERVER_INTERFACE "Build servers as a library with an interface" ON)
 option(WITH_DEBUG_ALL "Print all debug messages." OFF)
 
 if(WITH_DEBUG_ALL)
+    message(WARNING "WITH_DEBUG_ALL=ON, the build will be slow and might leak sensitive information, do not use with release builds!")
 	set(DEFAULT_DEBUG_OPTION "ON")
 else()
 	set(DEFAULT_DEBUG_OPTION "OFF")
 endif()
 
 option(WITH_DEBUG_CERTIFICATE "Print certificate related debug messages." ${DEFAULT_DEBUG_OPTION})
+if(WITH_DEBUG_CERTIFICATE)
+    message(WARNING "WITH_DEBUG_CERTIFICATE=ON, the build might leak sensitive information, do not use with release builds!")
+endif()
 option(WITH_DEBUG_CAPABILITIES "Print capability negotiation debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_CHANNELS "Print channel manager debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_CLIPRDR "Print clipboard redirection debug messages" ${DEFAULT_DEBUG_OPTION})
@@ -111,10 +115,25 @@ option(WITH_DEBUG_RDPGFX "Print RDPGFX debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_DVC "Print dynamic virtual channel debug messages." ${DEFAULT_DEBUG_OPTION})
 CMAKE_DEPENDENT_OPTION(WITH_DEBUG_TSMF "Print TSMF virtual channel debug messages." ${DEFAULT_DEBUG_OPTION} "CHANNEL_TSMF" OFF)
 option(WITH_DEBUG_KBD "Print keyboard related debug messages." ${DEFAULT_DEBUG_OPTION})
+if(WITH_DEBUG_KBD)
+    message(WARNING "WITH_DEBUG_KBD=ON, the build might leak sensitive information, do not use with release builds!")
+endif()
 option(WITH_DEBUG_LICENSE "Print license debug messages." ${DEFAULT_DEBUG_OPTION})
+if(WITH_DEBUG_LICENSE)
+    message(WARNING "WITH_DEBUG_LICENSE=ON, the build might leak sensitive information, do not use with release builds!")
+endif()
 option(WITH_DEBUG_NEGO "Print negotiation related debug messages." ${DEFAULT_DEBUG_OPTION})
+if(WITH_DEBUG_NEGO)
+    message(WARNING "WITH_DEBUG_NEGO=ON, the build might leak sensitive information, do not use with release builds!")
+endif()
 option(WITH_DEBUG_NLA "Print authentication related debug messages." ${DEFAULT_DEBUG_OPTION})
+if(WITH_DEBUG_NLA)
+    message(WARNING "WITH_DEBUG_NLA=ON, the build might leak sensitive information, do not use with release builds!")
+endif()
 option(WITH_DEBUG_NTLM "Print NTLM debug messages" ${DEFAULT_DEBUG_OPTION})
+if(WITH_DEBUG_NTLM)
+    message(WARNING "WITH_DEBUG_NTLM=ON, the build might leak sensitive information, do not use with release builds!")
+endif()
 option(WITH_DEBUG_TSG "Print Terminal Server Gateway debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_RAIL "Print RemoteApp debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_RDP "Print RDP debug messages" ${DEFAULT_DEBUG_OPTION})
@@ -160,3 +179,54 @@ endif(ANDROID)
 if (IOS)
 	include(ConfigOptionsiOS)
 endif(IOS)
+
+option(BUILD_FUZZERS "Use BUILD_FUZZERS to build fuzzing tests" OFF)
+
+if (BUILD_FUZZERS)
+    if (NOT OSS_FUZZ)
+        add_compile_flags("C;CXX" -fsanitize=fuzzer-no-link)
+    endif ()
+
+    if (OSS_FUZZ AND NOT DEFINED ENV{LIB_FUZZING_ENGINE})
+        message(SEND_ERROR
+            "OSS-Fuzz builds require the environment variable "
+            "LIB_FUZZING_ENGINE to be set. If you are seeing this "
+            "warning, it points to a deeper problem in the ossfuzz "
+            "build setup.")
+    endif ()
+
+    if (CMAKE_COMPILER_IS_GNUCC)
+        message(FATAL_ERROR
+            "\n"
+            "Fuzzing is unsupported with GCC compiler. Use Clang:\n"
+            " $ CC=clang CXX=clang++ cmake . <...> -DBUILD_FUZZERS=ON && make -j\n"
+            "\n")
+    endif ()
+
+    set(BUILD_TESTING ON)
+
+    # A special target with fuzzer and sanitizer flags.
+    add_library(fuzzer_config INTERFACE)
+
+    target_compile_options(
+        fuzzer_config
+        INTERFACE
+            $<$<NOT:$<BOOL:${OSS_FUZZ}>>:
+            -fsanitize=fuzzer
+            >
+            $<$<BOOL:${OSS_FUZZ}>:
+            ${CXX}
+            ${CXXFLAGS}
+            >
+        )
+    target_link_libraries(
+        fuzzer_config
+        INTERFACE
+            $<$<NOT:$<BOOL:${OSS_FUZZ}>>:
+            -fsanitize=fuzzer
+            >
+            $<$<BOOL:${OSS_FUZZ}>:
+            $ENV{LIB_FUZZING_ENGINE}
+            >
+    )
+endif()

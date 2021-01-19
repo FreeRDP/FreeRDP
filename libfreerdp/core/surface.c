@@ -46,8 +46,6 @@ static BOOL update_recv_surfcmd_bitmap_header_ex(wStream* s, TS_COMPRESSED_BITMA
 
 static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 {
-	size_t pos;
-
 	if (!s || !bmp)
 		return FALSE;
 
@@ -68,21 +66,14 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 		return FALSE;
 	}
 
-	memset(&bmp->exBitmapDataHeader, 0, sizeof(TS_COMPRESSED_BITMAP_HEADER_EX));
-
 	if (bmp->flags & EX_COMPRESSED_BITMAP_HEADER_PRESENT)
 	{
 		if (!update_recv_surfcmd_bitmap_header_ex(s, &bmp->exBitmapDataHeader))
 			return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < bmp->bitmapDataLength)
-		return FALSE;
-
-	pos = Stream_GetPosition(s) + bmp->bitmapDataLength;
 	bmp->bitmapData = Stream_Pointer(s);
-	Stream_SetPosition(s, pos);
-	return TRUE;
+	return Stream_SafeSeek(s, bmp->bitmapDataLength);
 }
 
 static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT16 cmdType)
@@ -114,7 +105,7 @@ fail:
 
 static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 {
-	SURFACE_FRAME_MARKER marker;
+	SURFACE_FRAME_MARKER marker = { 0 };
 
 	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
@@ -136,13 +127,13 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 
 int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 {
-	BYTE* mark;
 	UINT16 cmdType;
 
 	while (Stream_GetRemainingLength(s) >= 2)
 	{
 		const size_t start = Stream_GetPosition(s);
-		Stream_GetPointer(s, mark);
+		const BYTE* mark = Stream_Pointer(s);
+
 		Stream_Read_UINT16(s, cmdType);
 
 		switch (cmdType)

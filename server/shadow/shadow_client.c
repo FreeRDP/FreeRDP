@@ -927,11 +927,11 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
                                             int nXSrc, int nYSrc, int nWidth, int nHeight)
 {
 	BOOL ret = TRUE;
-	int i;
+	size_t i;
 	BOOL first;
 	BOOL last;
 	wStream* s;
-	int numMessages;
+	size_t numMessages;
 	UINT32 frameId = 0;
 	rdpUpdate* update;
 	rdpContext* context = (rdpContext*)client;
@@ -1998,7 +1998,7 @@ int shadow_client_boardcast_msg(rdpShadowServer* server, void* context, UINT32 t
 	wMessage message = { 0 };
 	rdpShadowClient* client = NULL;
 	int count = 0;
-	int index = 0;
+	size_t index = 0;
 	message.context = context;
 	message.id = type;
 	message.wParam = (void*)msg;
@@ -2029,7 +2029,7 @@ int shadow_client_boardcast_quit(rdpShadowServer* server, int nExitCode)
 {
 	wMessageQueue* queue = NULL;
 	int count = 0;
-	int index = 0;
+	size_t index = 0;
 	ArrayList_Lock(server->clients);
 
 	for (index = 0; index < ArrayList_Count(server->clients); index++)

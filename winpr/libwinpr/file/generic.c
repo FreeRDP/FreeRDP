@@ -238,7 +238,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	int i;
+	size_t i;
 
 	if (!lpFileName)
 		return INVALID_HANDLE_VALUE;
@@ -361,7 +361,6 @@ BOOL ReadFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	WLog_ERR(TAG, "ReadFileEx operation not implemented");
 	return FALSE;
-	return TRUE;
 }
 
 BOOL ReadFileScatter(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[], DWORD nNumberOfBytesToRead,

@@ -204,7 +204,6 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 									drive.Type = RDPDR_DTYP_FILESYSTEM;
 									drive.Path = drive_path;
-									drive_path[1] = '\0';
 									drive.automount = TRUE;
 									drive.Name = drive_name;
 									devman_load_device_service(rdpdr->devman,
@@ -580,7 +579,6 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 
 #else
 
-
 static const char* automountLocations[] = { "/run/user/%lu/gvfs", "/run/media/%s", "/media/%s",
 	                                        "/media", "/mnt" };
 
@@ -736,6 +734,37 @@ static UINT handle_platform_mounts(hotplug_dev* dev_array, size_t* size)
 	return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+static BOOL device_already_plugged(rdpdrPlugin* rdpdr, const hotplug_dev* device)
+{
+	BOOL rc = FALSE;
+	int count, x;
+	ULONG_PTR* keys = NULL;
+
+	if (!rdpdr || !device)
+		return TRUE;
+	if (!device->to_add)
+		return TRUE;
+
+	ListDictionary_Lock(rdpdr->devman->devices);
+	count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
+	for (x = 0; x < count; x++)
+	{
+		DEVICE_DRIVE_EXT* device_ext =
+		    (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(rdpdr->devman->devices, (void*)keys[x]);
+
+		if (!device_ext || (device_ext->device.type != RDPDR_DTYP_FILESYSTEM) || !device_ext->path)
+			continue;
+		if (strcmp(device_ext->path, device->path) == 0)
+		{
+			rc = TRUE;
+			break;
+		}
+	}
+	free(keys);
+	ListDictionary_Unlock(rdpdr->devman->devices);
+	return rc;
+}
+
 /**
  * Function description
  *
@@ -806,7 +835,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	/* add new devices */
 	for (i = 0; i < size; i++)
 	{
-		if (dev_array[i].to_add)
+		if (!device_already_plugged(rdpdr, &dev_array[i]))
 		{
 			RDPDR_DRIVE drive = { 0 };
 			char* name;
@@ -830,6 +859,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 				WLog_ERR(TAG, "devman_load_device_service failed!");
 				goto cleanup;
 			}
+			error = ERROR_DISK_CHANGE;
 		}
 	}
 
@@ -855,61 +885,30 @@ static void first_hotplug(rdpdrPlugin* rdpdr)
 static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
 	rdpdrPlugin* rdpdr;
-	int mfd;
-	fd_set rfds;
-	struct timeval tv;
-	int rv;
 	UINT error = 0;
 	DWORD status;
 	rdpdr = (rdpdrPlugin*)arg;
-	mfd = open("/proc/mounts", O_RDONLY, 0);
 
-	if (mfd < 0)
+	while ((status = WaitForSingleObject(rdpdr->stopEvent, 1000)) == WAIT_TIMEOUT)
 	{
-		WLog_ERR(TAG, "ERROR: Unable to open /proc/mounts.");
-		error = ERROR_INTERNAL_ERROR;
-		goto out;
-	}
-
-	FD_ZERO(&rfds);
-	FD_SET(mfd, &rfds);
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
-
-	while ((rv = select(mfd + 1, NULL, NULL, &rfds, &tv)) >= 0)
-	{
-		status = WaitForSingleObject(rdpdr->stopEvent, 0);
-
-		if (status == WAIT_FAILED)
+		error = handle_hotplug(rdpdr);
+		switch (error)
 		{
-			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", error);
-			goto out;
-		}
-
-		if (status == WAIT_OBJECT_0)
-			break;
-
-		if (FD_ISSET(mfd, &rfds))
-		{
-			/* file /proc/mounts changed, handle this */
-			if ((error = handle_hotplug(rdpdr)))
-			{
+			case ERROR_DISK_CHANGE:
+				rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+				break;
+			case CHANNEL_RC_OK:
+			case ERROR_OPEN_FAILED:
+			case ERROR_CALL_NOT_IMPLEMENTED:
+				break;
+			default:
 				WLog_ERR(TAG, "handle_hotplug failed with error %" PRIu32 "!", error);
 				goto out;
-			}
-			else
-				rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 		}
-
-		FD_ZERO(&rfds);
-		FD_SET(mfd, &rfds);
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
 	}
 
 out:
-
+	error = GetLastError();
 	if (error && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error, "drive_hotplug_thread_func reported an error");
 
@@ -1691,6 +1690,7 @@ static void queue_free(void* obj)
 static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pData,
                                                   UINT32 dataLength)
 {
+	wObject* obj;
 	UINT32 status;
 	status = rdpdr->channelEntryPoints.pVirtualChannelOpenEx(rdpdr->InitHandle, &rdpdr->OpenHandle,
 	                                                         rdpdr->channelDef.name,
@@ -1711,7 +1711,10 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	rdpdr->queue->object.fnObjectFree = queue_free;
+	obj = MessageQueue_Object(rdpdr->queue);
+	if (!obj)
+		return ERROR_INTERNAL_ERROR;
+	obj->fnObjectFree = queue_free;
 
 	if (!(rdpdr->thread =
 	          CreateThread(NULL, 0, rdpdr_virtual_channel_client_thread, (void*)rdpdr, 0, NULL)))

@@ -1041,6 +1041,7 @@ static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT1
 
 RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 {
+	wObject* obj;
 	RpcClient* client = (RpcClient*)calloc(1, sizeof(RpcClient));
 
 	if (!client)
@@ -1081,7 +1082,11 @@ RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 	if (!client->ClientCallList)
 		goto fail;
 
-	ArrayList_Object(client->ClientCallList)->fnObjectFree = rpc_array_client_call_free;
+	obj = ArrayList_Object(client->ClientCallList);
+	if (!obj)
+		goto fail;
+
+	obj->fnObjectFree = rpc_array_client_call_free;
 	return client;
 fail:
 	rpc_client_free(client);

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
@@ -36,7 +37,7 @@ extern "C"
 {
 #endif
 
-	typedef void* (*OBJECT_NEW_FN)(void* val);
+	typedef void* (*OBJECT_NEW_FN)(const void* val);
 	typedef void (*OBJECT_INIT_FN)(void* obj);
 	typedef void (*OBJECT_UNINIT_FN)(void* obj);
 	typedef void (*OBJECT_FREE_FN)(void* obj);
@@ -54,23 +55,6 @@ extern "C"
 
 	/* System.Collections.Queue */
 
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct _wQueue
-	{
-		int capacity;
-		int growthFactor;
-		BOOL synchronized;
-
-		int head;
-		int tail;
-		int size;
-		void** array;
-		CRITICAL_SECTION lock;
-		HANDLE event;
-
-		wObject object;
-	};
 	typedef struct _wQueue wQueue;
 
 	WINPR_API int Queue_Count(wQueue* queue);
@@ -80,11 +64,11 @@ extern "C"
 
 	WINPR_API HANDLE Queue_Event(wQueue* queue);
 
-#define Queue_Object(_queue) (&_queue->object)
+	WINPR_API wObject* Queue_Object(wQueue* queue);
 
 	WINPR_API void Queue_Clear(wQueue* queue);
 
-	WINPR_API BOOL Queue_Contains(wQueue* queue, void* obj);
+	WINPR_API BOOL Queue_Contains(wQueue* queue, const void* obj);
 
 	WINPR_API BOOL Queue_Enqueue(wQueue* queue, void* obj);
 	WINPR_API void* Queue_Dequeue(wQueue* queue);
@@ -116,25 +100,11 @@ extern "C"
 
 	/* System.Collections.ArrayList */
 
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct _wArrayList
-	{
-		int capacity;
-		int growthFactor;
-		BOOL synchronized;
-
-		int size;
-		void** array;
-		CRITICAL_SECTION lock;
-
-		wObject object;
-	};
 	typedef struct _wArrayList wArrayList;
 
-	WINPR_API int ArrayList_Capacity(wArrayList* arrayList);
-	WINPR_API int ArrayList_Count(wArrayList* arrayList);
-	WINPR_API int ArrayList_Items(wArrayList* arrayList, ULONG_PTR** ppItems);
+	WINPR_API size_t ArrayList_Capacity(wArrayList* arrayList);
+	WINPR_API size_t ArrayList_Count(wArrayList* arrayList);
+	WINPR_API size_t ArrayList_Items(wArrayList* arrayList, ULONG_PTR** ppItems);
 	WINPR_API BOOL ArrayList_IsFixedSized(wArrayList* arrayList);
 	WINPR_API BOOL ArrayList_IsReadOnly(wArrayList* arrayList);
 	WINPR_API BOOL ArrayList_IsSynchronized(wArrayList* arrayList);
@@ -142,28 +112,28 @@ extern "C"
 	WINPR_API void ArrayList_Lock(wArrayList* arrayList);
 	WINPR_API void ArrayList_Unlock(wArrayList* arrayList);
 
-	WINPR_API void* ArrayList_GetItem(wArrayList* arrayList, int index);
-	WINPR_API void ArrayList_SetItem(wArrayList* arrayList, int index, void* obj);
+	WINPR_API void* ArrayList_GetItem(wArrayList* arrayList, size_t index);
+	WINPR_API void ArrayList_SetItem(wArrayList* arrayList, size_t index, const void* obj);
 
-#define ArrayList_Object(_arrayList) (&_arrayList->object)
+	WINPR_API wObject* ArrayList_Object(wArrayList* arrayList);
 
-#define ArrayList_ForEach(_lst, _type, index, value)                                       \
-	for (index = 0;                                                                        \
-	     index < ArrayList_Count(_lst) && (value = (_type)ArrayList_GetItem(_lst, index)); \
-	     index++)
+	typedef BOOL(ArrayList_ForEachFkt)(void* data, size_t index, va_list ap);
+
+	WINPR_API BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...);
 
 	WINPR_API void ArrayList_Clear(wArrayList* arrayList);
-	WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, void* obj);
+	WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj);
 
 	WINPR_API int ArrayList_Add(wArrayList* arrayList, void* obj);
-	WINPR_API BOOL ArrayList_Insert(wArrayList* arrayList, int index, void* obj);
+	WINPR_API BOOL ArrayList_Insert(wArrayList* arrayList, size_t index, const void* obj);
 
-	WINPR_API BOOL ArrayList_Remove(wArrayList* arrayList, void* obj);
-	WINPR_API BOOL ArrayList_RemoveAt(wArrayList* arrayList, int index);
+	WINPR_API BOOL ArrayList_Remove(wArrayList* arrayList, const void* obj);
+	WINPR_API BOOL ArrayList_RemoveAt(wArrayList* arrayList, size_t index);
 
-	WINPR_API int ArrayList_IndexOf(wArrayList* arrayList, void* obj, int startIndex, int count);
-	WINPR_API int ArrayList_LastIndexOf(wArrayList* arrayList, void* obj, int startIndex,
-	                                    int count);
+	WINPR_API SSIZE_T ArrayList_IndexOf(wArrayList* arrayList, const void* obj, SSIZE_T startIndex,
+	                                    SSIZE_T count);
+	WINPR_API SSIZE_T ArrayList_LastIndexOf(wArrayList* arrayList, const void* obj,
+	                                        SSIZE_T startIndex, SSIZE_T count);
 
 	WINPR_API wArrayList* ArrayList_New(BOOL synchronized);
 	WINPR_API void ArrayList_Free(wArrayList* arrayList);
@@ -387,68 +357,27 @@ extern "C"
 
 	/* BufferPool */
 
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct _wBufferPoolItem
-	{
-		int size;
-		void* buffer;
-	};
-	typedef struct _wBufferPoolItem wBufferPoolItem;
-
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct _wBufferPool
-	{
-		int fixedSize;
-		DWORD alignment;
-		BOOL synchronized;
-		CRITICAL_SECTION lock;
-
-		int size;
-		int capacity;
-		void** array;
-
-		int aSize;
-		int aCapacity;
-		wBufferPoolItem* aArray;
-
-		int uSize;
-		int uCapacity;
-		wBufferPoolItem* uArray;
-	};
 	typedef struct _wBufferPool wBufferPool;
 
-	WINPR_API int BufferPool_GetPoolSize(wBufferPool* pool);
-	WINPR_API int BufferPool_GetBufferSize(wBufferPool* pool, void* buffer);
+	WINPR_API SSIZE_T BufferPool_GetPoolSize(wBufferPool* pool);
+	WINPR_API SSIZE_T BufferPool_GetBufferSize(wBufferPool* pool, const void* buffer);
 
-	WINPR_API void* BufferPool_Take(wBufferPool* pool, int bufferSize);
+	WINPR_API void* BufferPool_Take(wBufferPool* pool, SSIZE_T bufferSize);
 	WINPR_API BOOL BufferPool_Return(wBufferPool* pool, void* buffer);
 	WINPR_API void BufferPool_Clear(wBufferPool* pool);
 
-	WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment);
+	WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignment);
 	WINPR_API void BufferPool_Free(wBufferPool* pool);
 
 	/* ObjectPool */
 
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct _wObjectPool
-	{
-		int size;
-		int capacity;
-		void** array;
-		CRITICAL_SECTION lock;
-		wObject object;
-		BOOL synchronized;
-	};
 	typedef struct _wObjectPool wObjectPool;
 
 	WINPR_API void* ObjectPool_Take(wObjectPool* pool);
 	WINPR_API void ObjectPool_Return(wObjectPool* pool, void* obj);
 	WINPR_API void ObjectPool_Clear(wObjectPool* pool);
 
-#define ObjectPool_Object(_pool) (&_pool->object)
+	WINPR_API wObject* ObjectPool_Object(wObjectPool* pool);
 
 	WINPR_API wObjectPool* ObjectPool_New(BOOL synchronized);
 	WINPR_API void ObjectPool_Free(wObjectPool* pool);
@@ -469,29 +398,16 @@ extern "C"
 		MESSAGE_FREE_FN Free;
 	};
 
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct _wMessageQueue
-	{
-		int head;
-		int tail;
-		int size;
-		int capacity;
-		wMessage* array;
-		CRITICAL_SECTION lock;
-		HANDLE event;
-
-		wObject object;
-	};
 	typedef struct _wMessageQueue wMessageQueue;
 
 #define WMQ_QUIT 0xFFFFFFFF
 
+	WINPR_API wObject* MessageQueue_Object(wMessageQueue* queue);
 	WINPR_API HANDLE MessageQueue_Event(wMessageQueue* queue);
 	WINPR_API BOOL MessageQueue_Wait(wMessageQueue* queue);
-	WINPR_API int MessageQueue_Size(wMessageQueue* queue);
+	WINPR_API size_t MessageQueue_Size(wMessageQueue* queue);
 
-	WINPR_API BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message);
+	WINPR_API BOOL MessageQueue_Dispatch(wMessageQueue* queue, const wMessage* message);
 	WINPR_API BOOL MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam,
 	                                 void* lParam);
 	WINPR_API BOOL MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
@@ -569,7 +485,7 @@ extern "C"
 	{
 		const char* EventName;
 		wEventArgs EventArgs;
-		int EventHandlerCount;
+		size_t EventHandlerCount;
 		pEventHandler EventHandlers[MAX_EVENT_HANDLERS];
 	};
 	typedef struct _wEventType wEventType;
@@ -617,24 +533,13 @@ extern "C"
 
 #define DEFINE_EVENT_ENTRY(_name) { #_name, { sizeof(_name##EventArgs), NULL }, 0, { NULL } },
 
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct _wPubSub
-	{
-		CRITICAL_SECTION lock;
-		BOOL synchronized;
-
-		int size;
-		int count;
-		wEventType* events;
-	};
 	typedef struct _wPubSub wPubSub;
 
 	WINPR_API void PubSub_Lock(wPubSub* pubSub);
 	WINPR_API void PubSub_Unlock(wPubSub* pubSub);
 
-	WINPR_API wEventType* PubSub_GetEventTypes(wPubSub* pubSub, int* count);
-	WINPR_API void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, int count);
+	WINPR_API wEventType* PubSub_GetEventTypes(wPubSub* pubSub, size_t* count);
+	WINPR_API void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, size_t count);
 	WINPR_API wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName);
 
 	WINPR_API int PubSub_Subscribe(wPubSub* pubSub, const char* EventName,
@@ -649,28 +554,6 @@ extern "C"
 	WINPR_API void PubSub_Free(wPubSub* pubSub);
 
 	/* BipBuffer */
-
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct _wBipBlock
-	{
-		size_t index;
-		size_t size;
-	};
-	typedef struct _wBipBlock wBipBlock;
-
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct _wBipBuffer
-	{
-		size_t size;
-		BYTE* buffer;
-		size_t pageSize;
-		wBipBlock blockA;
-		wBipBlock blockB;
-		wBipBlock readR;
-		wBipBlock writeR;
-	};
 	typedef struct _wBipBuffer wBipBuffer;
 
 	WINPR_API BOOL BipBuffer_Grow(wBipBuffer* bb, size_t size);

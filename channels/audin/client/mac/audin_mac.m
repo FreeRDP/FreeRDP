@@ -33,12 +33,14 @@
 #include <winpr/debug.h>
 #include <winpr/cmdline.h>
 
+#import <AVFoundation/AVFoundation.h>
+
 #define __COREFOUNDATION_CFPLUGINCOM__ 1
 #define IUNKNOWN_C_GUTS   \
-	void* _reserved;      \
-	void* QueryInterface; \
-	void* AddRef;         \
-	void* Release
+	void *_reserved;      \
+	void *QueryInterface; \
+	void *AddRef;         \
+	void *Release
 
 #include <CoreAudio/CoreAudioTypes.h>
 #include <CoreAudio/CoreAudio.h>
@@ -72,17 +74,18 @@ typedef struct _AudinMacDevice
 	int dev_unit;
 
 	AudinReceive receive;
-	void* user_data;
+	void *user_data;
 
-	rdpContext* rdpcontext;
+	rdpContext *rdpcontext;
 
+	bool isAuthorized;
 	bool isOpen;
 	AudioQueueRef audioQueue;
 	AudioStreamBasicDescription audioFormat;
 	AudioQueueBufferRef audioBuffers[MAC_AUDIO_QUEUE_NUM_BUFFERS];
 } AudinMacDevice;
 
-static AudioFormatID audin_mac_get_format(const AUDIO_FORMAT* format)
+static AudioFormatID audin_mac_get_format(const AUDIO_FORMAT *format)
 {
 	switch (format->wFormatTag)
 	{
@@ -94,7 +97,7 @@ static AudioFormatID audin_mac_get_format(const AUDIO_FORMAT* format)
 	}
 }
 
-static AudioFormatFlags audin_mac_get_flags_for_format(const AUDIO_FORMAT* format)
+static AudioFormatFlags audin_mac_get_flags_for_format(const AUDIO_FORMAT *format)
 {
 	switch (format->wFormatTag)
 	{
@@ -106,9 +109,13 @@ static AudioFormatFlags audin_mac_get_flags_for_format(const AUDIO_FORMAT* forma
 	}
 }
 
-static BOOL audin_mac_format_supported(IAudinDevice* device, const AUDIO_FORMAT* format)
+static BOOL audin_mac_format_supported(IAudinDevice *device, const AUDIO_FORMAT *format)
 {
+	AudinMacDevice *mac = (AudinMacDevice *)device;
 	AudioFormatID req_fmt = 0;
+
+	if (!mac->isAuthorized)
+		return FALSE;
 
 	if (device == NULL || format == NULL)
 		return FALSE;
@@ -126,10 +133,13 @@ static BOOL audin_mac_format_supported(IAudinDevice* device, const AUDIO_FORMAT*
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_mac_set_format(IAudinDevice* device, const AUDIO_FORMAT* format,
+static UINT audin_mac_set_format(IAudinDevice *device, const AUDIO_FORMAT *format,
                                  UINT32 FramesPerPacket)
 {
-	AudinMacDevice* mac = (AudinMacDevice*)device;
+	AudinMacDevice *mac = (AudinMacDevice *)device;
+
+	if (!mac->isAuthorized)
+		return ERROR_INTERNAL_ERROR;
 
 	if (device == NULL || format == NULL)
 		return ERROR_INVALID_PARAMETER;
@@ -155,13 +165,13 @@ static UINT audin_mac_set_format(IAudinDevice* device, const AUDIO_FORMAT* forma
 	return CHANNEL_RC_OK;
 }
 
-static void mac_audio_queue_input_cb(void* aqData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer,
-                                     const AudioTimeStamp* inStartTime, UInt32 inNumPackets,
-                                     const AudioStreamPacketDescription* inPacketDesc)
+static void mac_audio_queue_input_cb(void *aqData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer,
+                                     const AudioTimeStamp *inStartTime, UInt32 inNumPackets,
+                                     const AudioStreamPacketDescription *inPacketDesc)
 {
-	AudinMacDevice* mac = (AudinMacDevice*)aqData;
+	AudinMacDevice *mac = (AudinMacDevice *)aqData;
 	UINT error = CHANNEL_RC_OK;
-	const BYTE* buffer = inBuffer->mAudioData;
+	const BYTE *buffer = inBuffer->mAudioData;
 	int buffer_size = inBuffer->mAudioDataByteSize;
 	(void)inAQ;
 	(void)inStartTime;
@@ -180,12 +190,15 @@ static void mac_audio_queue_input_cb(void* aqData, AudioQueueRef inAQ, AudioQueu
 	}
 }
 
-static UINT audin_mac_close(IAudinDevice* device)
+static UINT audin_mac_close(IAudinDevice *device)
 {
 	UINT errCode = CHANNEL_RC_OK;
 	char errString[1024];
 	OSStatus devStat;
-	AudinMacDevice* mac = (AudinMacDevice*)device;
+	AudinMacDevice *mac = (AudinMacDevice *)device;
+
+	if (!mac->isAuthorized)
+		return ERROR_INTERNAL_ERROR;
 
 	if (device == NULL)
 		return ERROR_INVALID_PARAMETER;
@@ -223,13 +236,17 @@ static UINT audin_mac_close(IAudinDevice* device)
 	return errCode;
 }
 
-static UINT audin_mac_open(IAudinDevice* device, AudinReceive receive, void* user_data)
+static UINT audin_mac_open(IAudinDevice *device, AudinReceive receive, void *user_data)
 {
-	AudinMacDevice* mac = (AudinMacDevice*)device;
+	AudinMacDevice *mac = (AudinMacDevice *)device;
 	DWORD errCode;
 	char errString[1024];
 	OSStatus devStat;
 	size_t index;
+
+	if (!mac->isAuthorized)
+		return ERROR_INTERNAL_ERROR;
+
 	mac->receive = receive;
 	mac->user_data = user_data;
 	devStat = AudioQueueNewInput(&(mac->audioFormat), mac_audio_queue_input_cb, mac, NULL,
@@ -285,9 +302,9 @@ err_out:
 	return CHANNEL_RC_INITIALIZATION_ERROR;
 }
 
-static UINT audin_mac_free(IAudinDevice* device)
+static UINT audin_mac_free(IAudinDevice *device)
 {
-	AudinMacDevice* mac = (AudinMacDevice*)device;
+	AudinMacDevice *mac = (AudinMacDevice *)device;
 	int error;
 
 	if (device == NULL)
@@ -302,19 +319,19 @@ static UINT audin_mac_free(IAudinDevice* device)
 	return CHANNEL_RC_OK;
 }
 
-static UINT audin_mac_parse_addin_args(AudinMacDevice* device, ADDIN_ARGV* args)
+static UINT audin_mac_parse_addin_args(AudinMacDevice *device, ADDIN_ARGV *args)
 {
 	DWORD errCode;
 	char errString[1024];
 	int status;
 	char *str_num, *eptr;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	COMMAND_LINE_ARGUMENT_A *arg;
 	COMMAND_LINE_ARGUMENT_A audin_mac_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                           NULL, NULL, -1, NULL, "audio device name" },
 		                                         { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
 
-	AudinMacDevice* mac = (AudinMacDevice*)device;
+	AudinMacDevice *mac = (AudinMacDevice *)device;
 
 	if (args->argc == 1)
 		return CHANNEL_RC_OK;
@@ -369,10 +386,10 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 {
 	DWORD errCode;
 	char errString[1024];
-	ADDIN_ARGV* args;
-	AudinMacDevice* mac;
+	ADDIN_ARGV *args;
+	AudinMacDevice *mac;
 	UINT error;
-	mac = (AudinMacDevice*)calloc(1, sizeof(AudinMacDevice));
+	mac = (AudinMacDevice *)calloc(1, sizeof(AudinMacDevice));
 
 	if (!mac)
 	{
@@ -397,10 +414,38 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 		goto error_out;
 	}
 
-	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*)mac)))
+	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice *)mac)))
 	{
 		WLog_ERR(TAG, "RegisterAudinDevice failed with error %" PRIu32 "!", error);
 		goto error_out;
+	}
+
+	AVAuthorizationStatus status =
+	    [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeAudio];
+	switch (status)
+	{
+		case AVAuthorizationStatusAuthorized:
+			mac->isAuthorized = TRUE;
+			break;
+		case AVAuthorizationStatusNotDetermined:
+			[AVCaptureDevice requestAccessForMediaType:AVMediaTypeAudio
+			                         completionHandler:^(BOOL granted) {
+				                         if (granted == YES)
+				                         {
+					                         mac->isAuthorized = TRUE;
+				                         }
+				                         else
+					                         WLog_WARN(TAG, "Microphone access denied by user");
+			                         }];
+			break;
+		case AVAuthorizationStatusRestricted:
+			WLog_WARN(TAG, "Microphone access restricted by policy");
+			break;
+		case AVAuthorizationStatusDenied:
+			WLog_WARN(TAG, "Microphone access denied by policy");
+			break;
+		default:
+			break;
 	}
 
 	return CHANNEL_RC_OK;

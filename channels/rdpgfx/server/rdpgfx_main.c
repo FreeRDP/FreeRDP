@@ -72,13 +72,17 @@ static INLINE UINT rdpgfx_server_packet_init_header(wStream* s, UINT16 cmdId, UI
  * @param s stream
  * @param start saved start pos of the packet in the stream
  */
-static INLINE void rdpgfx_server_packet_complete_header(wStream* s, size_t start)
+static INLINE BOOL rdpgfx_server_packet_complete_header(wStream* s, size_t start)
 {
-	size_t current = Stream_GetPosition(s);
+	const size_t current = Stream_GetPosition(s);
+	const size_t cap = Stream_Capacity(s);
+	if (cap < start + RDPGFX_HEADER_SIZE)
+		return FALSE;
 	/* Fill actual length */
 	Stream_SetPosition(s, start + RDPGFX_HEADER_SIZE - sizeof(UINT32));
 	Stream_Write_UINT32(s, current - start); /* pduLength (4 bytes) */
 	Stream_SetPosition(s, current);
+	return TRUE;
 }
 
 /**
@@ -360,15 +364,21 @@ static UINT rdpgfx_send_delete_surface_pdu(RdpgfxServerContext* context,
 	return rdpgfx_server_single_packet_send(context, s);
 }
 
-static INLINE void rdpgfx_write_start_frame_pdu(wStream* s, const RDPGFX_START_FRAME_PDU* pdu)
+static INLINE BOOL rdpgfx_write_start_frame_pdu(wStream* s, const RDPGFX_START_FRAME_PDU* pdu)
 {
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return FALSE;
 	Stream_Write_UINT32(s, pdu->timestamp); /* timestamp (4 bytes) */
 	Stream_Write_UINT32(s, pdu->frameId);   /* frameId (4 bytes) */
+	return TRUE;
 }
 
-static INLINE void rdpgfx_write_end_frame_pdu(wStream* s, const RDPGFX_END_FRAME_PDU* pdu)
+static INLINE BOOL rdpgfx_write_end_frame_pdu(wStream* s, const RDPGFX_END_FRAME_PDU* pdu)
 {
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+		return FALSE;
 	Stream_Write_UINT32(s, pdu->frameId); /* frameId (4 bytes) */
+	return TRUE;
 }
 
 /**
@@ -586,6 +596,8 @@ static UINT rdpgfx_write_surface_command(wStream* s, const RDPGFX_SURFACE_COMMAN
 	if (cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE ||
 	    cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE_V2)
 	{
+		if (!Stream_EnsureRemainingCapacity(s, 13 + cmd->length))
+			return ERROR_INTERNAL_ERROR;
 		/* Write RDPGFX_CMDID_WIRETOSURFACE_2 format for CAPROGRESSIVE */
 		Stream_Write_UINT16(s, cmd->surfaceId); /* surfaceId (2 bytes) */
 		Stream_Write_UINT16(s, cmd->codecId);   /* codecId (2 bytes) */
@@ -597,6 +609,8 @@ static UINT rdpgfx_write_surface_command(wStream* s, const RDPGFX_SURFACE_COMMAN
 	else
 	{
 		/* Write RDPGFX_CMDID_WIRETOSURFACE_1 format for others */
+		if (!Stream_EnsureRemainingCapacity(s, 17))
+			return ERROR_INTERNAL_ERROR;
 		Stream_Write_UINT16(s, cmd->surfaceId); /* surfaceId (2 bytes) */
 		Stream_Write_UINT16(s, cmd->codecId);   /* codecId (2 bytes) */
 		Stream_Write_UINT8(s, pixelFormat);     /* pixelFormat (1 byte) */
@@ -623,6 +637,8 @@ static UINT rdpgfx_write_surface_command(wStream* s, const RDPGFX_SURFACE_COMMAN
 		{
 			havc444 = (RDPGFX_AVC444_BITMAP_STREAM*)cmd->extra;
 			havc420 = &(havc444->bitstream[0]); /* avc420EncodedBitstreamInfo (4 bytes) */
+			if (!Stream_EnsureRemainingCapacity(s, 4))
+				return ERROR_INTERNAL_ERROR;
 			Stream_Write_UINT32(s, havc444->cbAvc420EncodedBitstream1 | (havc444->LC << 30UL));
 			/* avc420EncodedBitstream1 */
 			error = rdpgfx_write_h264_avc420(s, havc420);
@@ -648,14 +664,19 @@ static UINT rdpgfx_write_surface_command(wStream* s, const RDPGFX_SURFACE_COMMAN
 		}
 		else
 		{
+			if (!Stream_EnsureRemainingCapacity(s, cmd->length))
+				return ERROR_INTERNAL_ERROR;
 			Stream_Write(s, cmd->data, cmd->length);
 		}
 
 		/* Fill actual bitmap data length */
 		bitmapDataLength = Stream_GetPosition(s) - bitmapDataStart;
 		Stream_SetPosition(s, bitmapDataStart - sizeof(UINT32));
+		if (!Stream_EnsureRemainingCapacity(s, 4))
+			return ERROR_INTERNAL_ERROR;
 		Stream_Write_UINT32(s, bitmapDataLength); /* bitmapDataLength (4 bytes) */
-		Stream_Seek(s, bitmapDataLength);
+		if (!Stream_SafeSeek(s, bitmapDataLength))
+			return ERROR_INTERNAL_ERROR;
 	}
 
 	return error;
@@ -745,8 +766,9 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 			goto error;
 		}
 
-		rdpgfx_write_start_frame_pdu(s, startFrame);
-		rdpgfx_server_packet_complete_header(s, position);
+		if (!rdpgfx_write_start_frame_pdu(s, startFrame) ||
+		    !rdpgfx_server_packet_complete_header(s, position))
+			goto error;
 	}
 
 	/* Write RDPGFX_CMDID_WIRETOSURFACE_1 or RDPGFX_CMDID_WIRETOSURFACE_2 */
@@ -768,7 +790,8 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 		goto error;
 	}
 
-	rdpgfx_server_packet_complete_header(s, position);
+	if (!rdpgfx_server_packet_complete_header(s, position))
+		goto error;
 
 	/* Write end frame if exists */
 	if (endFrame)
@@ -782,8 +805,9 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 			goto error;
 		}
 
-		rdpgfx_write_end_frame_pdu(s, endFrame);
-		rdpgfx_server_packet_complete_header(s, position);
+		if (!rdpgfx_write_end_frame_pdu(s, endFrame) ||
+		    !rdpgfx_server_packet_complete_header(s, position))
+			goto error;
 	}
 
 	return rdpgfx_server_packet_send(context, s);

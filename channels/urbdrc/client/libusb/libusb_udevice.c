@@ -1744,12 +1744,11 @@ size_t udev_new_by_id(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UINT16 idVendo
 
 	WLog_Print(urbdrc->log, WLOG_INFO, "VID: 0x%04" PRIX16 ", PID: 0x%04" PRIX16 "", idVendor,
 	           idProduct);
-	array = (UDEVICE**)calloc(16, sizeof(UDEVICE*));
+	total_device = libusb_get_device_list(ctx, &libusb_list);
+	array = (UDEVICE**)calloc(total_device, sizeof(UDEVICE*));
 
 	if (!array)
-		return 0;
-
-	total_device = libusb_get_device_list(ctx, &libusb_list);
+		goto fail;
 
 	for (i = 0; i < total_device; i++)
 	{
@@ -1768,6 +1767,7 @@ size_t udev_new_by_id(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UINT16 idVendo
 		free(descriptor);
 	}
 
+fail:
 	libusb_free_device_list(libusb_list, 1);
 	*devArray = (IUDEVICE**)array;
 	return num;

@@ -25,6 +25,57 @@
 
 #include <winpr/collections.h>
 
+/* WARNING: Do not access structs directly, the API will be reworked
+ * to make this opaque. */
+struct _wBufferPoolItem
+{
+	SSIZE_T size;
+	void* buffer;
+};
+typedef struct _wBufferPoolItem wBufferPoolItem;
+
+/* WARNING: Do not access structs directly, the API will be reworked
+ * to make this opaque. */
+struct _wBufferPool
+{
+	SSIZE_T fixedSize;
+	DWORD alignment;
+	BOOL synchronized;
+	CRITICAL_SECTION lock;
+
+	SSIZE_T size;
+	SSIZE_T capacity;
+	void** array;
+
+	SSIZE_T aSize;
+	SSIZE_T aCapacity;
+	wBufferPoolItem* aArray;
+
+	SSIZE_T uSize;
+	SSIZE_T uCapacity;
+	wBufferPoolItem* uArray;
+};
+
+static BOOL BufferPool_Lock(wBufferPool* pool)
+{
+	if (!pool)
+		return FALSE;
+
+	if (pool->synchronized)
+		EnterCriticalSection(&pool->lock);
+	return TRUE;
+}
+
+static BOOL BufferPool_Unlock(wBufferPool* pool)
+{
+	if (!pool)
+		return FALSE;
+
+	if (pool->synchronized)
+		LeaveCriticalSection(&pool->lock);
+	return TRUE;
+}
+
 /**
  * C equivalent of the C# BufferManager Class:
  * http://msdn.microsoft.com/en-us/library/ms405814.aspx
@@ -41,10 +92,14 @@ static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
 		if (pool->aSize + count > pool->aCapacity)
 		{
 			wBufferPoolItem* newArray;
-			int newCapacity = pool->aCapacity * 2;
+			SSIZE_T newCapacity = pool->aCapacity * 2;
 
-			newArray =
-			    (wBufferPoolItem*)realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
+			if (pool->alignment > 0)
+				newArray = (wBufferPoolItem*)_aligned_realloc(
+				    pool->aArray, sizeof(wBufferPoolItem) * newCapacity, pool->alignment);
+			else
+				newArray =
+				    (wBufferPoolItem*)realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
 			if (!newArray)
 				return FALSE;
 			pool->aArray = newArray;
@@ -70,9 +125,14 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
 	{
 		if (pool->uSize + count > pool->uCapacity)
 		{
-			int newUCapacity = pool->uCapacity * 2;
-			wBufferPoolItem* newUArray =
-			    (wBufferPoolItem*)realloc(pool->uArray, sizeof(wBufferPoolItem) * newUCapacity);
+			SSIZE_T newUCapacity = pool->uCapacity * 2;
+			wBufferPoolItem* newUArray;
+			if (pool->alignment > 0)
+				newUArray = (wBufferPoolItem*)_aligned_realloc(
+				    pool->uArray, sizeof(wBufferPoolItem) * newUCapacity, pool->alignment);
+			else
+				newUArray =
+				    (wBufferPoolItem*)realloc(pool->uArray, sizeof(wBufferPoolItem) * newUCapacity);
 			if (!newUArray)
 				return FALSE;
 			pool->uCapacity = newUCapacity;
@@ -96,12 +156,11 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
  * Get the buffer pool size
  */
 
-int BufferPool_GetPoolSize(wBufferPool* pool)
+SSIZE_T BufferPool_GetPoolSize(wBufferPool* pool)
 {
-	int size;
+	SSIZE_T size;
 
-	if (pool->synchronized)
-		EnterCriticalSection(&pool->lock);
+	BufferPool_Lock(pool);
 
 	if (pool->fixedSize)
 	{
@@ -114,8 +173,7 @@ int BufferPool_GetPoolSize(wBufferPool* pool)
 		size = pool->uSize;
 	}
 
-	if (pool->synchronized)
-		LeaveCriticalSection(&pool->lock);
+	BufferPool_Unlock(pool);
 
 	return size;
 }
@@ -124,14 +182,13 @@ int BufferPool_GetPoolSize(wBufferPool* pool)
  * Get the size of a pooled buffer
  */
 
-int BufferPool_GetBufferSize(wBufferPool* pool, void* buffer)
+SSIZE_T BufferPool_GetBufferSize(wBufferPool* pool, const void* buffer)
 {
-	int size = 0;
-	int index = 0;
+	SSIZE_T size = 0;
+	SSIZE_T index = 0;
 	BOOL found = FALSE;
 
-	if (pool->synchronized)
-		EnterCriticalSection(&pool->lock);
+	BufferPool_Lock(pool);
 
 	if (pool->fixedSize)
 	{
@@ -154,8 +211,7 @@ int BufferPool_GetBufferSize(wBufferPool* pool, void* buffer)
 		}
 	}
 
-	if (pool->synchronized)
-		LeaveCriticalSection(&pool->lock);
+	BufferPool_Unlock(pool);
 
 	return (found) ? size : -1;
 }
@@ -164,17 +220,16 @@ int BufferPool_GetBufferSize(wBufferPool* pool, void* buffer)
  * Gets a buffer of at least the specified size from the pool.
  */
 
-void* BufferPool_Take(wBufferPool* pool, int size)
+void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 {
-	int index;
-	int maxSize;
-	int maxIndex;
-	int foundIndex;
+	SSIZE_T index;
+	SSIZE_T maxSize;
+	SSIZE_T maxIndex;
+	SSIZE_T foundIndex;
 	BOOL found = FALSE;
 	void* buffer = NULL;
 
-	if (pool->synchronized)
-		EnterCriticalSection(&pool->lock);
+	BufferPool_Lock(pool);
 
 	if (pool->fixedSize)
 	{
@@ -283,8 +338,7 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 		(pool->uSize)++;
 	}
 
-	if (pool->synchronized)
-		LeaveCriticalSection(&pool->lock);
+	BufferPool_Unlock(pool);
 
 	return buffer;
 
@@ -294,8 +348,7 @@ out_error:
 	else
 		free(buffer);
 out_error_no_free:
-	if (pool->synchronized)
-		LeaveCriticalSection(&pool->lock);
+	BufferPool_Unlock(pool);
 	return NULL;
 }
 
@@ -305,12 +358,12 @@ out_error_no_free:
 
 BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 {
+	BOOL rc = FALSE;
 	int size = 0;
 	int index = 0;
 	BOOL found = FALSE;
 
-	if (pool->synchronized)
-		EnterCriticalSection(&pool->lock);
+	BufferPool_Lock(pool);
 
 	if (pool->fixedSize)
 	{
@@ -369,14 +422,10 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 		}
 	}
 
-	if (pool->synchronized)
-		LeaveCriticalSection(&pool->lock);
-	return TRUE;
-
+	rc = TRUE;
 out_error:
-	if (pool->synchronized)
-		LeaveCriticalSection(&pool->lock);
-	return FALSE;
+	BufferPool_Unlock(pool);
+	return rc;
 }
 
 /**
@@ -385,8 +434,7 @@ out_error:
 
 void BufferPool_Clear(wBufferPool* pool)
 {
-	if (pool->synchronized)
-		EnterCriticalSection(&pool->lock);
+	BufferPool_Lock(pool);
 
 	if (pool->fixedSize)
 	{
@@ -427,15 +475,14 @@ void BufferPool_Clear(wBufferPool* pool)
 		}
 	}
 
-	if (pool->synchronized)
-		LeaveCriticalSection(&pool->lock);
+	BufferPool_Unlock(pool);
 }
 
 /**
  * Construction, Destruction
  */
 
-wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
+wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignment)
 {
 	wBufferPool* pool = NULL;
 
@@ -488,9 +535,7 @@ wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 	return pool;
 
 out_error:
-	if (pool->synchronized)
-		DeleteCriticalSection(&pool->lock);
-	free(pool);
+	BufferPool_Free(pool);
 	return NULL;
 }
 

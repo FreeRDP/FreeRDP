@@ -217,15 +217,8 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 */
 	LOG_INFO(TAG, pc, "Loading addins");
 
-	if (!config->UseLoadBalanceInfo)
-	{
-		/* if target is static (i.e fetched from config). make sure to use peer's load-balance info,
-		 * in order to support broker redirection.
-		 */
-
-		if (!pf_client_use_peer_load_balance_info(pc))
-			return FALSE;
-	}
+	if (!pf_client_use_peer_load_balance_info(pc))
+		return FALSE;
 
 	if (!pf_client_passthrough_channels_init(pc))
 		return FALSE;
@@ -455,6 +448,9 @@ static BOOL pf_client_connect(freerdp* instance)
 	pf_client_set_security_settings(pc);
 	if (pf_client_should_retry_without_nla(pc))
 		retry = pc->allow_next_conn_failure = TRUE;
+
+	LOG_INFO(TAG, pc, "connecting using security settings: rdp=%d, tls=%d, nla=%d",
+	         settings->RdpSecurity, settings->TlsSecurity, settings->NlaSecurity);
 
 	if (!freerdp_connect(instance))
 	{

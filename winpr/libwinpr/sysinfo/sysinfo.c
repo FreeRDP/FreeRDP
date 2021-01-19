@@ -414,7 +414,7 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 {
 	char* dot;
 	size_t length;
-	char hostname[256];
+	char hostname[256] = { 0 };
 
 	if (!lpnSize)
 	{
@@ -447,7 +447,7 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize)
 {
 	size_t length;
-	char hostname[256];
+	char hostname[256] = { 0 };
 
 	if (!lpnSize)
 	{

@@ -44,7 +44,7 @@ typedef struct _XF_MODIFIER_KEYS XF_MODIFIER_KEYS;
 
 BOOL xf_keyboard_init(xfContext* xfc);
 void xf_keyboard_free(xfContext* xfc);
-void xf_keyboard_clear(xfContext* xfc);
+
 void xf_keyboard_key_press(xfContext* xfc, BYTE keycode, KeySym keysym);
 void xf_keyboard_key_release(xfContext* xfc, BYTE keycode, KeySym keysym);
 void xf_keyboard_release_all_keypress(xfContext* xfc);

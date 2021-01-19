@@ -13,8 +13,8 @@ Build requirements
 For the Android port some additional dependencies need to be fulfilled:
 
 * for JNI
-- CMake >= 3.0
-- Android NDK (>= r9)
+- CMake >= 3.0 (install CMake from Android SDK. It is part of the SDK Tools)
+- Android NDK (>= r15c)
 
 * for the Java GUI
 - Android SDK
@@ -34,13 +34,10 @@ This will fetch sources from git and build OpenSSL, OpenH264, libJPEG.
 The native FreeRDP libraries will also be build.
 
 Currently the default script builds for:
-* armeabi
 * armeabi-v7a
 * x86
-* mips
 * arm64-v8a
 * x86_64
-* mips64
 
 When the script is finished the libraries are ready for android studio to
 be picked up in client/Android/Studio/freeRDPCore/src/main/jniLibs

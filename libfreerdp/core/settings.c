@@ -316,6 +316,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->Workarea = FALSE;
 	settings->Fullscreen = FALSE;
 	settings->GrabKeyboard = TRUE;
+	settings->GrabMouse = TRUE;
 	settings->Decorations = TRUE;
 	settings->RdpVersion = RDP_VERSION_10_7;
 	settings->ColorDepth = 16;
@@ -420,7 +421,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->AllowCacheWaitingList = TRUE;
 	settings->BitmapCacheV2NumCells = 5;
 	settings->BitmapCacheV2CellInfo =
-	    (BITMAP_CACHE_V2_CELL_INFO*)malloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
+	    (BITMAP_CACHE_V2_CELL_INFO*)calloc(6, sizeof(BITMAP_CACHE_V2_CELL_INFO));
 
 	if (!settings->BitmapCacheV2CellInfo)
 		goto out_fail;
@@ -439,12 +440,12 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->RefreshRect = TRUE;
 	settings->SuppressOutput = TRUE;
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
-	settings->GlyphCache = malloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
+	settings->GlyphCache = calloc(10, sizeof(GLYPH_CACHE_DEFINITION));
 
 	if (!settings->GlyphCache)
 		goto out_fail;
 
-	settings->FragCache = malloc(sizeof(GLYPH_CACHE_DEFINITION));
+	settings->FragCache = calloc(1, sizeof(GLYPH_CACHE_DEFINITION));
 
 	if (!settings->FragCache)
 		goto out_fail;
@@ -527,21 +528,21 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	settings->DeviceArraySize = 16;
 	settings->DeviceArray =
-	    (RDPDR_DEVICE**)calloc(1, sizeof(RDPDR_DEVICE*) * settings->DeviceArraySize);
+	    (RDPDR_DEVICE**)calloc(settings->DeviceArraySize, sizeof(RDPDR_DEVICE*));
 
 	if (!settings->DeviceArray)
 		goto out_fail;
 
 	settings->StaticChannelArraySize = 16;
 	settings->StaticChannelArray =
-	    (ADDIN_ARGV**)calloc(1, sizeof(ADDIN_ARGV*) * settings->StaticChannelArraySize);
+	    (ADDIN_ARGV**)calloc(settings->StaticChannelArraySize, sizeof(ADDIN_ARGV*));
 
 	if (!settings->StaticChannelArray)
 		goto out_fail;
 
 	settings->DynamicChannelArraySize = 16;
 	settings->DynamicChannelArray =
-	    (ADDIN_ARGV**)calloc(1, sizeof(ADDIN_ARGV*) * settings->DynamicChannelArraySize);
+	    (ADDIN_ARGV**)calloc(settings->DynamicChannelArraySize, sizeof(ADDIN_ARGV*));
 
 	if (!settings->DynamicChannelArray)
 		goto out_fail;
@@ -594,6 +595,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings_load_hkey_local_machine(settings);
 
 	settings->ActionScript = _strdup("~/.config/freerdp/action.sh");
+	settings->XSelectionAtom = NULL;
 	settings->SmartcardLogon = FALSE;
 	settings->TlsSecLevel = 1;
 	settings->OrderSupport = calloc(1, 32);
@@ -640,6 +642,8 @@ static void freerdp_settings_free_internal(rdpSettings* settings)
 	/* Extensions */
 	free(settings->ActionScript);
 	settings->ActionScript = NULL;
+	free(settings->XSelectionAtom);
+	settings->XSelectionAtom = NULL;
 
 	/* Free all strings, set other pointers NULL */
 	freerdp_settings_free_keys(settings, TRUE);
@@ -967,6 +971,8 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 
 	if (settings->ActionScript)
 		_settings->ActionScript = _strdup(settings->ActionScript);
+	if (settings->XSelectionAtom)
+		_settings->XSelectionAtom = _strdup(settings->XSelectionAtom);
 	rc = TRUE;
 out_fail:
 	return rc;
@@ -1008,6 +1014,7 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	_settings->StaticChannelArray = NULL;
 	_settings->DynamicChannelArray = NULL;
 	_settings->ActionScript = NULL;
+	_settings->XSelectionAtom = NULL;
 	if (!rc)
 		goto out_fail;
 

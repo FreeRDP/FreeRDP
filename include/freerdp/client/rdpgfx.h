@@ -150,7 +150,16 @@ struct _rdpgfx_client_context
 	PROFILER_DEFINE(SurfaceProfiler)
 };
 
-FREERDP_API RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings);
-FREERDP_API void rdpgfx_client_context_free(RdpgfxClientContext* context);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	FREERDP_API RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings);
+	FREERDP_API void rdpgfx_client_context_free(RdpgfxClientContext* context);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_RDPGFX_H */

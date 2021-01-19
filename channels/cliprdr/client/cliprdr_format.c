@@ -206,7 +206,7 @@ static FILETIME uint64_to_filetime(UINT64 value)
  * @returns 0 on success, otherwise a Win32 error code.
  */
 UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
-                             FILEDESCRIPTOR** file_descriptor_array, UINT32* file_descriptor_count)
+                             FILEDESCRIPTORW** file_descriptor_array, UINT32* file_descriptor_count)
 {
 	UINT result = NO_ERROR;
 	UINT32 i;
@@ -240,7 +240,7 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	}
 
 	*file_descriptor_count = count;
-	*file_descriptor_array = calloc(count, sizeof(FILEDESCRIPTOR));
+	*file_descriptor_array = calloc(count, sizeof(FILEDESCRIPTORW));
 	if (!*file_descriptor_array)
 	{
 		result = ERROR_NOT_ENOUGH_MEMORY;
@@ -251,7 +251,7 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	{
 		int c;
 		UINT64 lastWriteTime;
-		FILEDESCRIPTOR* file = &((*file_descriptor_array)[i]);
+		FILEDESCRIPTORW* file = &((*file_descriptor_array)[i]);
 
 		Stream_Read_UINT32(s, file->dwFlags);          /* flags (4 bytes) */
 		Stream_Seek(s, 32);                            /* reserved1 (32 bytes) */
@@ -288,7 +288,7 @@ out:
  *
  * @returns 0 on success, otherwise a Win32 error code.
  */
-UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
+UINT cliprdr_serialize_file_list(const FILEDESCRIPTORW* file_descriptor_array,
                                  UINT32 file_descriptor_count, BYTE** format_data,
                                  UINT32* format_data_length)
 {
@@ -309,7 +309,7 @@ UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
 	{
 		int c;
 		UINT64 lastWriteTime;
-		const FILEDESCRIPTOR* file = &file_descriptor_array[i];
+		const FILEDESCRIPTORW* file = &file_descriptor_array[i];
 
 		/*
 		 * There is a known issue with Windows server getting stuck in

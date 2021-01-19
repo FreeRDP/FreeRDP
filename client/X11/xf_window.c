@@ -123,11 +123,11 @@ static void xf_SetWindowTitleText(xfContext* xfc, Window window, const char* nam
  */
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...)
 {
-	XEvent xevent;
+	XEvent xevent = { 0 };
 	unsigned int i;
 	va_list argp;
 	va_start(argp, numArgs);
-	ZeroMemory(&xevent, sizeof(XEvent));
+
 	xevent.xclient.type = ClientMessage;
 	xevent.xclient.serial = 0;
 	xevent.xclient.send_event = False;
@@ -574,6 +574,10 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	}
 
 	window->floatbar = xf_floatbar_new(xfc, window->handle, name, settings->Floatbar);
+
+	if (xfc->_XWAYLAND_MAY_GRAB_KEYBOARD)
+		xf_SendClientEvent(xfc, window->handle, xfc->_XWAYLAND_MAY_GRAB_KEYBOARD, 1, 1);
+
 	return window;
 }
 
@@ -818,6 +822,9 @@ int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	             StructureNotifyMask | SubstructureNotifyMask | SubstructureRedirectMask |
 	             FocusChangeMask | PropertyChangeMask | ColormapChangeMask | OwnerGrabButtonMask;
 	XSelectInput(xfc->display, appWindow->handle, input_mask);
+
+	if (xfc->_XWAYLAND_MAY_GRAB_KEYBOARD)
+		xf_SendClientEvent(xfc, appWindow->handle, xfc->_XWAYLAND_MAY_GRAB_KEYBOARD, 1, 1);
 
 	return 1;
 }
@@ -1071,6 +1078,9 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 {
 	if (!appWindow)
 		return;
+
+	if (xfc->appWindow == appWindow)
+		xfc->appWindow = NULL;
 
 	if (appWindow->gc)
 		XFreeGC(xfc->display, appWindow->gc);

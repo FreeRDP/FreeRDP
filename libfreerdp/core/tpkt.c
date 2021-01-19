@@ -148,9 +148,12 @@ BOOL tpkt_ensure_stream_consumed_(wStream* s, UINT16 length, const char* fkt)
  * @param length
  */
 
-void tpkt_write_header(wStream* s, UINT16 length)
+BOOL tpkt_write_header(wStream* s, UINT16 length)
 {
+	if (Stream_GetRemainingCapacity(s) < 4)
+		return FALSE;
 	Stream_Write_UINT8(s, 3);          /* version */
 	Stream_Write_UINT8(s, 0);          /* reserved */
 	Stream_Write_UINT16_BE(s, length); /* length */
+	return TRUE;
 }

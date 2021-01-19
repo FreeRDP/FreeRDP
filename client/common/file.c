@@ -791,7 +791,11 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 	FILE* fp = NULL;
 	size_t read_size;
 	INT64 file_size;
-	fp = fopen(name, "r");
+	const char* fname = name;
+	if (_strnicmp(fname, "file://", 7) == 0)
+		fname = &name[7];
+
+	fp = fopen(fname, "r");
 
 	if (!fp)
 	{
@@ -869,7 +873,10 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->NegotiateSecurityLayer = settings->NegotiateSecurityLayer;
 	file->EnableCredSSPSupport = settings->NlaSecurity;
 	FILE_POPULATE_STRING(file->AlternateShell, settings->AlternateShell);
-	FILE_POPULATE_STRING(file->ShellWorkingDirectory, settings->ShellWorkingDirectory);
+	if (settings->RemoteApplicationMode)
+		FILE_POPULATE_STRING(file->ShellWorkingDirectory, settings->RemoteApplicationWorkingDir);
+	else
+		FILE_POPULATE_STRING(file->ShellWorkingDirectory, settings->ShellWorkingDirectory);
 	file->ConnectionType = settings->ConnectionType;
 	FILE_POPULATE_STRING(file->DrivesToRedirect, settings->DrivesToRedirect);
 	file->ScreenModeId = settings->Fullscreen ? 2 : 1;
@@ -889,9 +896,35 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	else
 		file->AudioMode = AUDIO_MODE_NONE;
 
+	/* The gateway hostname should also contain a port specifier unless it is the default port 443
+	 */
+	if (settings->GatewayHostname)
+	{
+		freerdp_client_file_string_check_free(file->GatewayHostname);
+		if (settings->GatewayPort == 443)
+			file->GatewayHostname = _strdup(settings->GatewayHostname);
+		else
+		{
+			int length = _scprintf("%s:%" PRIu32, settings->GatewayHostname, settings->GatewayPort);
+			if (length < 0)
+				return FALSE;
+
+			file->GatewayHostname = (char*)malloc((size_t)length + 1);
+			if (!file->GatewayHostname)
+				return FALSE;
+
+			if (sprintf_s(file->GatewayHostname, (size_t)length + 1, "%s:%" PRIu32,
+			              settings->GatewayHostname, settings->GatewayPort) < 0)
+				return FALSE;
+		}
+		if (!file->GatewayHostname)
+			return FALSE;
+	}
+
 	file->AudioCaptureMode = settings->AudioCapture;
+	file->BitmapCachePersistEnable = settings->BitmapCachePersistEnabled;
 	file->Compression = settings->CompressionEnabled;
-	FILE_POPULATE_STRING(file->GatewayHostname, settings->GatewayHostname);
+	file->AuthenticationLevel = settings->AuthenticationLevel;
 	FILE_POPULATE_STRING(file->GatewayAccessToken, settings->GatewayAccessToken);
 	file->GatewayUsageMethod = settings->GatewayUsageMethod;
 	file->PromptCredentialOnce = settings->GatewayUseSameCredentials;
@@ -905,13 +938,14 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	FILE_POPULATE_STRING(file->RemoteApplicationCmdLine, settings->RemoteApplicationCmdLine);
 	file->SpanMonitors = settings->SpanMonitors;
 	file->UseMultiMon = settings->UseMultimon;
+	file->AllowDesktopComposition = settings->AllowDesktopComposition;
 	file->AllowFontSmoothing = settings->AllowFontSmoothing;
 	file->DisableWallpaper = settings->DisableWallpaper;
 	file->DisableFullWindowDrag = settings->DisableFullWindowDrag;
 	file->DisableMenuAnims = settings->DisableMenuAnims;
 	file->DisableThemes = settings->DisableThemes;
 	file->BandwidthAutoDetect = (settings->ConnectionType >= 7) ? TRUE : FALSE;
-	file->NetworkAutoDetect = settings->NetworkAutoDetect;
+	file->NetworkAutoDetect = settings->NetworkAutoDetect ? 0 : 1;
 	file->AutoReconnectionEnabled = settings->AutoReconnectionEnabled;
 	file->RedirectSmartCards = settings->RedirectSmartCards;
 	file->RedirectClipboard = settings->RedirectClipboard;
@@ -1324,8 +1358,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t)file->ShellWorkingDirectory))
 	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_ShellWorkingDirectory,
-		                                 file->ShellWorkingDirectory))
+		/* ShellWorkingDir is used for either, shell working dir or remote app working dir */
+		size_t targetId = (~file->RemoteApplicationMode && file->RemoteApplicationMode != 0)
+		                      ? FreeRDP_RemoteApplicationWorkingDir
+		                      : FreeRDP_ShellWorkingDirectory;
+
+		if (!freerdp_settings_set_string(settings, targetId, file->ShellWorkingDirectory))
 			return FALSE;
 	}
 
@@ -1987,6 +2025,7 @@ rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags)
 	file->lines = NULL;
 	file->lineCount = 0;
 	file->lineSize = 32;
+	file->GatewayProfileUsageMethod = 1;
 	file->lines = (rdpFileLine*)calloc(file->lineSize, sizeof(rdpFileLine));
 
 	if (!file->lines)

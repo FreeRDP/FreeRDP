@@ -4,6 +4,7 @@
 #include <winpr/image.h>
 #include <winpr/print.h>
 #include <winpr/wlog.h>
+#include <winpr/image.h>
 #include <winpr/sysinfo.h>
 
 #include <freerdp/codec/region.h>
@@ -267,7 +268,7 @@ static int test_image_fill_unused_quarters(BYTE* pDstData, int nDstStep, int nWi
 	return 1;
 }
 
-static BYTE* test_progressive_load_file(char* path, char* file, size_t* size)
+static BYTE* test_progressive_load_file(const char* path, const char* file, size_t* size)
 {
 	FILE* fp;
 	BYTE* buffer;
@@ -1017,30 +1018,141 @@ static int test_progressive_ms_sample(char* ms_sample_path)
 	return 0;
 }
 
+static BOOL diff(BYTE a, BYTE b)
+{
+	BYTE big = MAX(a, b);
+	BYTE little = MIN(a, b);
+	if (big - little <= 0x25)
+		return TRUE;
+	return FALSE;
+}
+
+static BOOL colordiff(UINT32 format, UINT32 a, UINT32 b)
+{
+	BYTE ar, ag, ab, aa;
+	BYTE br, bg, bb, ba;
+	SplitColor(a, format, &ar, &ag, &ab, &aa, NULL);
+	SplitColor(b, format, &br, &bg, &bb, &ba, NULL);
+	if (!diff(aa, ba) || !diff(ar, br) || !diff(ag, bg) || !diff(ab, bb))
+		return FALSE;
+	return TRUE;
+}
+
+static BOOL test_encode_decode(const char* path)
+{
+	int x, y;
+	BOOL res = FALSE;
+	int rc;
+	BYTE* resultData = NULL;
+	BYTE* dstData = NULL;
+	UINT32 dstSize = 0;
+	UINT32 ColorFormat = PIXEL_FORMAT_BGRX32;
+	REGION16 invalidRegion = { 0 };
+	wImage* image = winpr_image_new();
+	wImage* dstImage = winpr_image_new();
+	char* name = GetCombinedPath(path, "progressive.bmp");
+	PROGRESSIVE_CONTEXT* progressiveEnc = progressive_context_new(TRUE);
+	PROGRESSIVE_CONTEXT* progressiveDec = progressive_context_new(FALSE);
+
+	region16_init(&invalidRegion);
+	if (!image || !dstImage || !name || !progressiveEnc || !progressiveDec)
+		goto fail;
+
+	rc = winpr_image_read(image, name);
+	if (rc <= 0)
+		goto fail;
+
+	resultData = calloc(image->scanline, image->height);
+	if (!resultData)
+		goto fail;
+
+	// Progressive encode
+	rc = progressive_compress(progressiveEnc, image->data, image->scanline * image->height,
+	                          ColorFormat, image->width, image->height, image->scanline, NULL,
+	                          &dstData, &dstSize);
+
+	// Progressive decode
+	rc = progressive_create_surface_context(progressiveDec, 0, image->width, image->height);
+	if (rc <= 0)
+		goto fail;
+
+	rc = progressive_decompress(progressiveDec, dstData, dstSize, resultData, ColorFormat,
+	                            image->scanline, 0, 0, &invalidRegion, 0);
+	if (rc < 0)
+		goto fail;
+
+	// Compare result
+	if (0) // Dump result image for manual inspection
+	{
+		*dstImage = *image;
+		dstImage->data = resultData;
+		winpr_image_write(dstImage, "/tmp/test.bmp");
+	}
+	for (y = 0; y < image->height; y++)
+	{
+		const BYTE* orig = &image->data[y * image->scanline];
+		const BYTE* dec = &resultData[y * image->scanline];
+		for (x = 0; x < image->width; x++)
+		{
+			const BYTE* po = &orig[x * 4];
+			const BYTE* pd = &dec[x * 4];
+
+			const DWORD a = ReadColor(po, ColorFormat);
+			const DWORD b = ReadColor(pd, ColorFormat);
+			if (!colordiff(ColorFormat, a, b))
+			{
+				printf("xxxxxxx [%u:%u] %08X != %08X\n", x, y, a, b);
+				goto fail;
+			}
+		}
+	}
+	res = TRUE;
+fail:
+	region16_uninit(&invalidRegion);
+	progressive_context_free(progressiveEnc);
+	progressive_context_free(progressiveDec);
+	winpr_image_free(image, TRUE);
+	winpr_image_free(dstImage, FALSE);
+	free(resultData);
+	free(name);
+	return res;
+}
+
 int TestFreeRDPCodecProgressive(int argc, char* argv[])
 {
+	int rc = -1;
 	char* ms_sample_path;
 	char name[8192];
 	SYSTEMTIME systemTime;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+
 	GetSystemTime(&systemTime);
 	sprintf_s(name, sizeof(name),
 	          "EGFX_PROGRESSIVE_MS_SAMPLE-%04" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16
 	          "%02" PRIu16 "%02" PRIu16 "%04" PRIu16,
 	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour,
 	          systemTime.wMinute, systemTime.wSecond, systemTime.wMilliseconds);
-	ms_sample_path = GetKnownSubPath(KNOWN_PATH_TEMP, name);
+	ms_sample_path = _strdup(CMAKE_CURRENT_SOURCE_DIR);
 
 	if (!ms_sample_path)
 	{
 		printf("Memory allocation failed\n");
-		return -1;
+		goto fail;
 	}
 
 	if (PathFileExistsA(ms_sample_path))
-		return test_progressive_ms_sample(ms_sample_path);
+	{
+		/*
+		if (test_progressive_ms_sample(ms_sample_path) < 0)
+		    goto fail;
+		    */
+		if (!test_encode_decode(ms_sample_path))
+			goto fail;
+		rc = 0;
+	}
 
+fail:
 	free(ms_sample_path);
-	return 0;
+	return rc;
 }

@@ -777,6 +777,13 @@ BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT3
                          UINT32 nSrcWidth, UINT32 nSrcHeight)
 {
 	BOOL rc = FALSE;
+
+	if (nDstStep == 0)
+		nDstStep = nDstWidth * GetBytesPerPixel(DstFormat);
+
+	if (nSrcStep == 0)
+		nSrcStep = nSrcWidth * GetBytesPerPixel(SrcFormat);
+
 #if defined(SWSCALE_FOUND) || defined(CAIRO_FOUND)
 	const BYTE* src = &pSrcData[nXSrc * GetBytesPerPixel(SrcFormat) + nYSrc * nSrcStep];
 	BYTE* dst = &pDstData[nXDst * GetBytesPerPixel(DstFormat) + nYDst * nDstStep];

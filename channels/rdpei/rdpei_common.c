@@ -27,7 +27,7 @@
 
 #include "rdpei_common.h"
 
-BOOL rdpei_read_2byte_unsigned(wStream* s, UINT32* value)
+BOOL rdpei_read_2byte_unsigned(wStream* s, UINT16* value)
 {
 	BYTE byte;
 
@@ -53,9 +53,12 @@ BOOL rdpei_read_2byte_unsigned(wStream* s, UINT32* value)
 	return TRUE;
 }
 
-BOOL rdpei_write_2byte_unsigned(wStream* s, UINT32 value)
+BOOL rdpei_write_2byte_unsigned(wStream* s, UINT16 value)
 {
 	BYTE byte;
+
+	if (!Stream_EnsureRemainingCapacity(s, 2))
+		return FALSE;
 
 	if (value > 0x7FFF)
 		return FALSE;
@@ -76,7 +79,7 @@ BOOL rdpei_write_2byte_unsigned(wStream* s, UINT32 value)
 	return TRUE;
 }
 
-BOOL rdpei_read_2byte_signed(wStream* s, INT32* value)
+BOOL rdpei_read_2byte_signed(wStream* s, INT16* value)
 {
 	BYTE byte;
 	BOOL negative;
@@ -105,10 +108,13 @@ BOOL rdpei_read_2byte_signed(wStream* s, INT32* value)
 	return TRUE;
 }
 
-BOOL rdpei_write_2byte_signed(wStream* s, INT32 value)
+BOOL rdpei_write_2byte_signed(wStream* s, INT16 value)
 {
 	BYTE byte;
 	BOOL negative = FALSE;
+
+	if (!Stream_EnsureRemainingCapacity(s, 2))
+		return FALSE;
 
 	if (value < 0)
 	{
@@ -198,6 +204,9 @@ BOOL rdpei_read_4byte_unsigned(wStream* s, UINT32* value)
 BOOL rdpei_write_4byte_unsigned(wStream* s, UINT32 value)
 {
 	BYTE byte;
+
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+		return FALSE;
 
 	if (value <= 0x3FUL)
 	{
@@ -299,6 +308,9 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 {
 	BYTE byte;
 	BOOL negative = FALSE;
+
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+		return FALSE;
 
 	if (value < 0)
 	{
@@ -478,6 +490,9 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 {
 	BYTE byte;
 
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return FALSE;
+
 	if (value <= 0x1FULL)
 	{
 		byte = value & 0x1F;
@@ -501,7 +516,7 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 		byte = (value & 0xFF);
 		Stream_Write_UINT8(s, byte);
 	}
-	else if (value <= 0x1FFFFFULL)
+	else if (value <= 0x1FFFFFFFULL)
 	{
 		byte = (value >> 24) & 0x1F;
 		byte |= (3 << 5);
@@ -513,7 +528,7 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 		byte = (value & 0xFF);
 		Stream_Write_UINT8(s, byte);
 	}
-	else if (value <= 0x1FFFFFFFULL)
+	else if (value <= 0x1FFFFFFFFFULL)
 	{
 		byte = (value >> 32) & 0x1F;
 		byte |= (4 << 5);
@@ -527,7 +542,7 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 		byte = (value & 0xFF);
 		Stream_Write_UINT8(s, byte);
 	}
-	else if (value <= 0x1FFFFFFFFFULL)
+	else if (value <= 0x1FFFFFFFFFFFULL)
 	{
 		byte = (value >> 40) & 0x1F;
 		byte |= (5 << 5);
@@ -543,7 +558,7 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 		byte = (value & 0xFF);
 		Stream_Write_UINT8(s, byte);
 	}
-	else if (value <= 0x1FFFFFFFFFFFULL)
+	else if (value <= 0x1FFFFFFFFFFFFFULL)
 	{
 		byte = (value >> 48) & 0x1F;
 		byte |= (6 << 5);
@@ -591,7 +606,7 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 
 void touch_event_reset(RDPINPUT_TOUCH_EVENT* event)
 {
-	int i;
+	UINT16 i;
 
 	for (i = 0; i < event->frameCount; i++)
 		touch_frame_reset(&event->frames[i]);
@@ -602,6 +617,25 @@ void touch_event_reset(RDPINPUT_TOUCH_EVENT* event)
 }
 
 void touch_frame_reset(RDPINPUT_TOUCH_FRAME* frame)
+{
+	free(frame->contacts);
+	frame->contacts = NULL;
+	frame->contactCount = 0;
+}
+
+void pen_event_reset(RDPINPUT_PEN_EVENT* event)
+{
+	UINT16 i;
+
+	for (i = 0; i < event->frameCount; i++)
+		pen_frame_reset(&event->frames[i]);
+
+	free(event->frames);
+	event->frames = NULL;
+	event->frameCount = 0;
+}
+
+void pen_frame_reset(RDPINPUT_PEN_FRAME* frame)
 {
 	free(frame->contacts);
 	frame->contacts = NULL;

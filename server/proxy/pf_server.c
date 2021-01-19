@@ -100,22 +100,58 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
                                       proxyConfig* config)
 {
 	pServerContext* ps = (pServerContext*)context;
+	proxyFetchTargetEventInfo ev = { 0 };
 
-	LOG_INFO(TAG, ps, "fetching target from %s",
-	         config->UseLoadBalanceInfo ? "load-balance-info" : "config");
+	ev.fetch_method = config->FixedTarget ? PROXY_FETCH_TARGET_METHOD_CONFIG
+	                                      : PROXY_FETCH_TARGET_METHOD_LOAD_BALANCE_INFO;
 
-	if (config->UseLoadBalanceInfo)
-		return pf_server_parse_target_from_routing_token(context, &settings->ServerHostname,
-		                                                 &settings->ServerPort);
-
-	/* use hardcoded target info from configuration */
-	if (!(settings->ServerHostname = _strdup(config->TargetHost)))
-	{
-		LOG_ERR(TAG, ps, "strdup failed!");
+	if (!pf_modules_run_filter(FILTER_TYPE_SERVER_FETCH_TARGET_ADDR, ps->pdata, &ev))
 		return FALSE;
+
+	switch (ev.fetch_method)
+	{
+		case PROXY_FETCH_TARGET_METHOD_DEFAULT:
+		case PROXY_FETCH_TARGET_METHOD_LOAD_BALANCE_INFO:
+			return pf_server_parse_target_from_routing_token(context, &settings->ServerHostname,
+			                                                 &settings->ServerPort);
+
+		case PROXY_FETCH_TARGET_METHOD_CONFIG:
+		{
+			settings->ServerPort = config->TargetPort > 0 ? 3389 : settings->ServerPort;
+			settings->ServerHostname = _strdup(config->TargetHost);
+
+			if (!settings->ServerHostname)
+			{
+				LOG_ERR(TAG, ps, "strdup failed!");
+				return FALSE;
+			}
+
+			return TRUE;
+		}
+		case PROXY_FETCH_TARGET_USE_CUSTOM_ADDR:
+		{
+			if (!ev.target_address)
+			{
+				WLog_ERR(TAG, "router: using CUSTOM_ADDR fetch method, but target_address == NULL");
+				return FALSE;
+			}
+
+			settings->ServerHostname = _strdup(ev.target_address);
+			if (!settings->ServerHostname)
+			{
+				LOG_ERR(TAG, ps, "strdup failed!");
+				return FALSE;
+			}
+
+			free(ev.target_address);
+			settings->ServerPort = ev.target_port;
+			return TRUE;
+		}
+		default:
+			WLog_WARN(TAG, "unknown target fetch method: %d", ev.fetch_method);
+			return FALSE;
 	}
 
-	settings->ServerPort = config->TargetPort > 0 ? 3389 : settings->ServerPort;
 	return TRUE;
 }
 
@@ -133,8 +169,22 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	pClientContext* pc;
 	rdpSettings* client_settings;
 	proxyData* pdata;
+	char** accepted_channels = NULL;
+	size_t accepted_channels_count;
+	size_t i;
+
 	ps = (pServerContext*)peer->context;
 	pdata = ps->pdata;
+
+	LOG_INFO(TAG, ps, "Accepted client: %s", peer->settings->ClientHostname);
+	accepted_channels = WTSGetAcceptedChannelNames(peer, &accepted_channels_count);
+	if (accepted_channels)
+	{
+		for (i = 0; i < accepted_channels_count; i++)
+			LOG_INFO(TAG, ps, "Accepted channel: %s", accepted_channels[i]);
+
+		free(accepted_channels);
+	}
 
 	pc = pf_context_create_client_context(peer->settings);
 	if (pc == NULL)
@@ -532,6 +582,7 @@ static void pf_server_clients_list_client_free(void* obj)
 
 proxyServer* pf_server_new(proxyConfig* config)
 {
+	wObject* obj;
 	proxyServer* server;
 
 	if (!config)
@@ -551,7 +602,8 @@ proxyServer* pf_server_new(proxyConfig* config)
 	if (!server->clients)
 		goto out;
 
-	server->clients->object.fnObjectFree = pf_server_clients_list_client_free;
+	obj = ArrayList_Object(server->clients);
+	obj->fnObjectFree = pf_server_clients_list_client_free;
 
 	server->waitGroup = CountdownEvent_New(0);
 	if (!server->waitGroup)
