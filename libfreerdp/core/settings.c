@@ -415,9 +415,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->DrawGdiPlusEnabled = FALSE;
 	settings->DrawAllowSkipAlpha = TRUE;
 	settings->DrawAllowColorSubsampling = TRUE;
-	/* [MS-RDPEGDI] 3.1.9.1.2 Color Space Conversion states that MS servers
-	 * send invalid YCoCg data if this flag is set, deactivate. */
-	settings->DrawAllowDynamicColorFidelity = FALSE;
+	settings->DrawAllowDynamicColorFidelity = TRUE;
 	settings->FrameMarkerCommandEnabled = TRUE;
 	settings->SurfaceFrameMarkerEnabled = TRUE;
 	settings->AllowCacheWaitingList = TRUE;
