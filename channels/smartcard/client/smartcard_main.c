@@ -209,6 +209,7 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 	 * Call SCardCancel on existing contexts, unblocking all outstanding SCardGetStatusChange calls.
 	 */
 
+	ListDictionary_Lock(smartcard->rgSCardContextList);
 	if (ListDictionary_Count(smartcard->rgSCardContextList) > 0)
 	{
 		pKeys = NULL;
@@ -232,11 +233,17 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 
 		free(pKeys);
 	}
+	ListDictionary_Unlock(smartcard->rgSCardContextList);
+
+	/* Put thread to sleep so that PC/SC can process the cancel requests. This fixes a race
+	 * condition that sometimes caused the pc/sc daemon to crash on MacOS (_xpc_api_misuse) */
+	Sleep(100);
 
 	/**
 	 * Call SCardReleaseContext on remaining contexts and remove them from rgSCardContextList.
 	 */
 
+	ListDictionary_Lock(smartcard->rgSCardContextList);
 	if (ListDictionary_Count(smartcard->rgSCardContextList) > 0)
 	{
 		pKeys = NULL;
@@ -269,6 +276,7 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 
 		free(pKeys);
 	}
+	ListDictionary_Unlock(smartcard->rgSCardContextList);
 }
 
 static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
