@@ -628,18 +628,19 @@ int main(int argc, char* argv[])
 	settings = context->settings;
 
 	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
-	status = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
-
 	if (status)
 	{
 		BOOL list = settings->ListMonitors;
+
+		freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
+
 		if (list)
 			wlf_list_monitors(wlc);
 
-		freerdp_client_context_free(context);
-		if (list)
-			return 0;
-		return status;
+		if (status <= COMMAND_LINE_STATUS_PRINT && status >= COMMAND_LINE_STATUS_PRINT_LAST)
+			rc = 0;
+
+		goto fail;
 	}
 
 	if (freerdp_client_start(context) != 0)
