@@ -701,7 +701,9 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 		return FALSE;
 	}
 
-	gcc_write_client_data_blocks(client_data, mcs);
+	if (!gcc_write_client_data_blocks(client_data, mcs))
+		goto out;
+
 	gcc_CCrq = Stream_New(NULL, 1024);
 
 	if (!gcc_CCrq)

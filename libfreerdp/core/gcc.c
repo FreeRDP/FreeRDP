@@ -53,9 +53,9 @@ static BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs);
 static BOOL gcc_write_server_network_data(wStream* s, rdpMcs* mcs);
 static void gcc_write_client_cluster_data(wStream* s, rdpMcs* mcs);
 static BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
-static void gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs);
 static BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
-static void gcc_write_client_monitor_extended_data(wStream* s, rdpMcs* mcs);
+static BOOL gcc_write_client_monitor_extended_data(wStream* s, rdpMcs* mcs);
 static BOOL gcc_read_client_message_channel_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
 static void gcc_write_client_message_channel_data(wStream* s, rdpMcs* mcs);
 static BOOL gcc_read_server_message_channel_data(wStream* s, rdpMcs* mcs);
@@ -469,7 +469,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
 	return TRUE;
 }
 
-void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
+BOOL gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 {
 	rdpSettings* settings = mcs->settings;
 	gcc_write_client_core_data(s, mcs);
@@ -483,8 +483,11 @@ void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 	{
 		if (settings->UseMultimon && !settings->SpanMonitors)
 		{
-			gcc_write_client_monitor_data(s, mcs);
-			gcc_write_client_monitor_extended_data(s, mcs);
+			if (!gcc_write_client_monitor_data(s, mcs))
+				return FALSE;
+
+			if (!gcc_write_client_monitor_extended_data(s, mcs))
+				return FALSE;
 		}
 
 		gcc_write_client_message_channel_data(s, mcs);
@@ -499,8 +502,11 @@ void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 			if (settings->ForceMultimon)
 			{
 				WLog_ERR(TAG, "Sending multi monitor information anyway (may break connectivity!)");
-				gcc_write_client_monitor_data(s, mcs);
-				gcc_write_client_monitor_extended_data(s, mcs);
+				if (!gcc_write_client_monitor_data(s, mcs))
+					return FALSE;
+
+				if (!gcc_write_client_monitor_extended_data(s, mcs))
+					return FALSE;
 			}
 			else
 			{
@@ -508,6 +514,8 @@ void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 			}
 		}
 	}
+
+	return TRUE;
 }
 
 BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
@@ -1788,7 +1796,7 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
  * @param settings rdp settings
  */
 
-void gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs)
+BOOL gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs)
 {
 	UINT32 i;
 	UINT16 length;
@@ -1799,6 +1807,9 @@ void gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs)
 	if (settings->MonitorCount > 1)
 	{
 		length = (20 * settings->MonitorCount) + 12;
+		if (!Stream_EnsureRemainingCapacity(s, length))
+			return FALSE;
+
 		gcc_write_user_data_header(s, CS_MONITOR, length);
 		Stream_Write_UINT32(s, 0);                      /* flags */
 		Stream_Write_UINT32(s, settings->MonitorCount); /* monitorCount */
@@ -1829,6 +1840,8 @@ void gcc_write_client_monitor_data(wStream* s, rdpMcs* mcs)
 			Stream_Write_UINT32(s, flags);  /* flags */
 		}
 	}
+
+	return TRUE;
 }
 
 BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
@@ -1875,7 +1888,7 @@ BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs, UINT16 block
 	return TRUE;
 }
 
-void gcc_write_client_monitor_extended_data(wStream* s, rdpMcs* mcs)
+BOOL gcc_write_client_monitor_extended_data(wStream* s, rdpMcs* mcs)
 {
 	UINT32 i;
 	UINT16 length;
@@ -1884,6 +1897,9 @@ void gcc_write_client_monitor_extended_data(wStream* s, rdpMcs* mcs)
 	if (settings->HasMonitorAttributes)
 	{
 		length = (20 * settings->MonitorCount) + 16;
+		if (!Stream_EnsureRemainingCapacity(s, length))
+			return FALSE;
+
 		gcc_write_user_data_header(s, CS_MONITOR_EX, length);
 		Stream_Write_UINT32(s, 0);                      /* flags */
 		Stream_Write_UINT32(s, 20);                     /* monitorAttributeSize */
@@ -1904,6 +1920,8 @@ void gcc_write_client_monitor_extended_data(wStream* s, rdpMcs* mcs)
 			    settings->MonitorDefArray[i].attributes.deviceScaleFactor); /* deviceScaleFactor */
 		}
 	}
+
+	return TRUE;
 }
 
 /**
