@@ -1403,14 +1403,14 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
 	{
 		freerdp_client_print_version();
-		return COMMAND_LINE_STATUS_PRINT_VERSION;
+		goto out;
 	}
 
 	if (status == COMMAND_LINE_STATUS_PRINT_BUILDCONFIG)
 	{
 		freerdp_client_print_version();
 		freerdp_client_print_buildconfig();
-		return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
+		goto out;
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
 	{
@@ -1465,15 +1465,19 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 			settings->ListMonitors = TRUE;
 		}
 
-		return COMMAND_LINE_STATUS_PRINT;
+		goto out;
 	}
 	else if (status < 0)
 	{
 		freerdp_client_print_command_line_help_ex(argc, argv, custom);
-		return COMMAND_LINE_STATUS_PRINT_HELP;
+		status = COMMAND_LINE_STATUS_PRINT_HELP;
+		goto out;
 	}
 
-	return 0;
+out:
+	if (status <= COMMAND_LINE_STATUS_PRINT && status >= COMMAND_LINE_STATUS_PRINT_LAST)
+		return 0;
+	return status;
 }
 
 static BOOL ends_with(const char* str, const char* ext)
