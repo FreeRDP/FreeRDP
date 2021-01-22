@@ -934,8 +934,9 @@ wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE ev
 	return s;
 }
 
-BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNumEvents)
+BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t iNumEvents)
 {
+	int state;
 	BOOL rc = FALSE;
 	rdpRdp* rdp;
 	UINT16 length;
@@ -944,8 +945,17 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 	if (!s)
 		return FALSE;
 
-	if (!fastpath || !fastpath->rdp)
+	if (!fastpath)
 		goto fail;
+
+	rdp = fastpath->rdp;
+	state = rdp_client_get_state(rdp);
+	if (state != CONNECTION_STATE_ACTIVE)
+	{
+		WLog_WARN(TAG, "[%s] called before activation [%s]", __FUNCTION__,
+		          rdp_client_connection_state_string(state));
+		goto fail;
+	}
 
 	/*
 	 *  A maximum of 15 events are allowed per request
@@ -955,7 +965,6 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 	if (iNumEvents > 15)
 		goto fail;
 
-	rdp = fastpath->rdp;
 	length = Stream_GetPosition(s);
 
 	if (length >= (2 << 14))
