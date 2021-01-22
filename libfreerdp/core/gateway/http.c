@@ -63,7 +63,7 @@ struct _http_request
 	char* Authorization;
 	size_t ContentLength;
 	char* Content;
-	char* TransferEncoding;
+	TRANSFER_ENCODING TransferEncoding;
 };
 
 struct _http_response
@@ -76,6 +76,7 @@ struct _http_response
 
 	size_t ContentLength;
 	const char* ContentType;
+	TRANSFER_ENCODING TransferEncoding;
 
 	size_t BodyLength;
 	BYTE* BodyContent;
@@ -342,16 +343,12 @@ BOOL http_request_set_auth_param(HttpRequest* request, const char* AuthParam)
 	return TRUE;
 }
 
-BOOL http_request_set_transfer_encoding(HttpRequest* request, const char* TransferEncoding)
+BOOL http_request_set_transfer_encoding(HttpRequest* request, TRANSFER_ENCODING TransferEncoding)
 {
-	if (!request || !TransferEncoding)
+	if (!request || TransferEncoding == TransferEncodingUnknown)
 		return FALSE;
 
-	free(request->TransferEncoding);
-	request->TransferEncoding = _strdup(TransferEncoding);
-
-	if (!request->TransferEncoding)
-		return FALSE;
+	request->TransferEncoding = TransferEncoding;
 
 	return TRUE;
 }
@@ -448,9 +445,14 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 			goto fail;
 	}
 
-	if (request->TransferEncoding)
+	if (request->TransferEncoding != TransferEncodingIdentity)
 	{
-		if (!http_encode_body_line(s, "Transfer-Encoding", request->TransferEncoding))
+		if (request->TransferEncoding == TransferEncodingChunked)
+		{
+			if (!http_encode_body_line(s, "Transfer-Encoding", "chunked"))
+				goto fail;
+		}
+		else
 			goto fail;
 	}
 	else
@@ -480,7 +482,12 @@ fail:
 
 HttpRequest* http_request_new(void)
 {
-	return (HttpRequest*)calloc(1, sizeof(HttpRequest));
+	HttpRequest* request = (HttpRequest*)calloc(1, sizeof(HttpRequest));
+	if (!request)
+		return NULL;
+
+	request->TransferEncoding = TransferEncodingIdentity;
+	return request;
 }
 
 void http_request_free(HttpRequest* request)
@@ -494,7 +501,6 @@ void http_request_free(HttpRequest* request)
 	free(request->Content);
 	free(request->Method);
 	free(request->URI);
-	free(request->TransferEncoding);
 	free(request);
 }
 
@@ -571,6 +577,15 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 
 		if (!response->ContentType)
 			return FALSE;
+	}
+	else if (_stricmp(name, "Transfer-Encoding") == 0)
+	{
+		if (_stricmp(value, "identity") == 0)
+			response->TransferEncoding = TransferEncodingIdentity;
+		else if (_stricmp(value, "chunked") == 0)
+			response->TransferEncoding = TransferEncodingChunked;
+		else
+			response->TransferEncoding = TransferEncodingUnknown;
 	}
 	else if (_stricmp(name, "WWW-Authenticate") == 0)
 	{
@@ -948,6 +963,8 @@ HttpResponse* http_response_new(void)
 
 	ListDictionary_KeyObject(response->Authenticates)->fnObjectEquals = strings_equals_nocase;
 	ListDictionary_ValueObject(response->Authenticates)->fnObjectEquals = strings_equals_nocase;
+
+	response->TransferEncoding = TransferEncodingIdentity;
 	return response;
 fail:
 	http_response_free(response);
@@ -1006,13 +1023,21 @@ SSIZE_T http_response_get_body_length(HttpResponse* response)
 	return (SSIZE_T)response->BodyLength;
 }
 
-const char* http_response_get_auth_token(HttpResponse* respone, const char* method)
+const char* http_response_get_auth_token(HttpResponse* response, const char* method)
 {
-	if (!respone || !method)
+	if (!response || !method)
 		return NULL;
 
-	if (!ListDictionary_Contains(respone->Authenticates, method))
+	if (!ListDictionary_Contains(response->Authenticates, method))
 		return NULL;
 
-	return ListDictionary_GetItemValue(respone->Authenticates, method);
+	return ListDictionary_GetItemValue(response->Authenticates, method);
+}
+
+TRANSFER_ENCODING http_response_get_transfer_encoding(HttpResponse* response)
+{
+	if (!response)
+		return TransferEncodingUnknown;
+
+	return response->TransferEncoding;
 }
