@@ -61,13 +61,10 @@ int main(int argc, char* argv[])
 	{
 		BOOL list = settings->ListMonitors;
 
-		freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
+		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
 
 		if (list)
 			xf_list_monitors(xfc);
-
-		if (status <= COMMAND_LINE_STATUS_PRINT && status >= COMMAND_LINE_STATUS_PRINT_LAST)
-			rc = 0;
 
 		goto out;
 	}
