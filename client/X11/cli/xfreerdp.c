@@ -34,6 +34,7 @@
 
 int main(int argc, char* argv[])
 {
+	int rc = 1;
 	int status;
 	HANDLE thread;
 	xfContext* xfc;
@@ -56,31 +57,31 @@ int main(int argc, char* argv[])
 	xfc = (xfContext*)context;
 
 	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
-
-	status = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
-
 	if (status)
 	{
 		BOOL list = settings->ListMonitors;
+
+		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
+
 		if (list)
 			xf_list_monitors(xfc);
 
-		freerdp_client_context_free(context);
-		if (list)
-			return 0;
-		return status;
+		goto out;
 	}
 
-	freerdp_client_start(context);
+	if (freerdp_client_start(context) != 0)
+		goto out;
 
 	thread = freerdp_client_get_thread(context);
 
 	WaitForSingleObject(thread, INFINITE);
 	GetExitCodeThread(thread, &dwExitCode);
+	rc = xf_exit_code_from_disconnect_reason(dwExitCode);
 
 	freerdp_client_stop(context);
 
+out:
 	freerdp_client_context_free(context);
 
-	return xf_exit_code_from_disconnect_reason(dwExitCode);
+	return rc;
 }
