@@ -1470,7 +1470,6 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 	else if (status < 0)
 	{
 		freerdp_client_print_command_line_help_ex(argc, argv, custom);
-		status = COMMAND_LINE_STATUS_PRINT_HELP;
 		goto out;
 	}
 
