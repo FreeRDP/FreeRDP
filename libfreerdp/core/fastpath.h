@@ -160,7 +160,7 @@ FREERDP_LOCAL wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath);
 FREERDP_LOCAL wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags,
                                                BYTE eventCode);
 FREERDP_LOCAL BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s,
-                                                    int iEventCount);
+                                                    size_t iEventCount);
 FREERDP_LOCAL BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s);
 
 FREERDP_LOCAL wStream* fastpath_update_pdu_init(rdpFastPath* fastpath);

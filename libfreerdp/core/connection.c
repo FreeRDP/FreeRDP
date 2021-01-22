@@ -1589,3 +1589,10 @@ const char* rdp_server_connection_state_string(int state)
 			return "UNKNOWN";
 	}
 }
+
+int rdp_client_get_state(rdpRdp* rdp)
+{
+	if (!rdp)
+		return -1;
+	return rdp->state;
+}
