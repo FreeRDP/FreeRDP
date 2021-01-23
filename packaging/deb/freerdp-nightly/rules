@@ -19,6 +19,7 @@ DEB_CMAKE_EXTRA_FLAGS :=  -DCMAKE_SKIP_RPATH=FALSE \
                           -DCHANNEL_URBDRC=ON \
                           -DCHANNEL_URBDRC_CLIENT=ON \
                           -DWITH_SERVER=ON \
+                          -DWITH_WAYLAND=ON \
                           -DWITH_CAIRO=ON \
                           -DBUILD_TESTING=OFF \
                           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
