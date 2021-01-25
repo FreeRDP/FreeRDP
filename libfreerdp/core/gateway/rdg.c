@@ -116,7 +116,7 @@ typedef struct
 	size_t nextOffset;
 	size_t headerFooterPos;
 	CHUNK_STATE state;
-	char* lenBuffer;
+	char lenBuffer[11];
 } rdg_http_encoding_chunked_context;
 
 typedef struct
@@ -124,7 +124,7 @@ typedef struct
 	TRANSFER_ENCODING httpTransferEncoding;
 	union _context
 	{
-		rdg_http_encoding_chunked_context* chunked;
+		rdg_http_encoding_chunked_context chunked;
 	} context;
 } rdg_http_encoding_context;
 
@@ -331,26 +331,26 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 	assert(encodingContext != NULL);
 	while (TRUE)
 	{
-		switch (encodingContext->context.chunked->state)
+		switch (encodingContext->context.chunked.state)
 		{
 			case ChunkStateData:
 			{
 				status = BIO_read(bio, pBuffer,
-				                  (size > encodingContext->context.chunked->nextOffset
-				                       ? encodingContext->context.chunked->nextOffset
+				                  (size > encodingContext->context.chunked.nextOffset
+				                       ? encodingContext->context.chunked.nextOffset
 				                       : size));
 				if (status <= 0)
 					return (effectiveDataLen > 0 ? effectiveDataLen : status);
 
-				encodingContext->context.chunked->nextOffset -= status;
-				if (encodingContext->context.chunked->nextOffset == 0)
+				encodingContext->context.chunked.nextOffset -= status;
+				if (encodingContext->context.chunked.nextOffset == 0)
 				{
-					encodingContext->context.chunked->state = ChunkStateFooter;
-					encodingContext->context.chunked->headerFooterPos = 0;
+					encodingContext->context.chunked.state = ChunkStateFooter;
+					encodingContext->context.chunked.headerFooterPos = 0;
 				}
 				effectiveDataLen += status;
 
-				if (status == size)
+				if ((size_t)status == size)
 					return effectiveDataLen;
 
 				pBuffer += status;
@@ -360,17 +360,17 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 			case ChunkStateFooter:
 			{
 				char _dummy[2];
-				assert(encodingContext->context.chunked->nextOffset == 0);
-				assert(encodingContext->context.chunked->headerFooterPos < 2);
+				assert(encodingContext->context.chunked.nextOffset == 0);
+				assert(encodingContext->context.chunked.headerFooterPos < 2);
 				status =
-				    BIO_read(bio, _dummy, 2 - encodingContext->context.chunked->headerFooterPos);
+				    BIO_read(bio, _dummy, 2 - encodingContext->context.chunked.headerFooterPos);
 				if (status >= 0)
 				{
-					encodingContext->context.chunked->headerFooterPos += status;
-					if (encodingContext->context.chunked->headerFooterPos == 2)
+					encodingContext->context.chunked.headerFooterPos += status;
+					if (encodingContext->context.chunked.headerFooterPos == 2)
 					{
-						encodingContext->context.chunked->state = ChunkStateLenghHeader;
-						encodingContext->context.chunked->headerFooterPos = 0;
+						encodingContext->context.chunked.state = ChunkStateLenghHeader;
+						encodingContext->context.chunked.headerFooterPos = 0;
 					}
 				}
 				else
@@ -381,44 +381,43 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 			{
 				BOOL _haveNewLine = FALSE;
 				size_t tmp;
-				assert(encodingContext->context.chunked->nextOffset == 0);
-				while (encodingContext->context.chunked->headerFooterPos < 10 && !_haveNewLine)
+				char* dst = &encodingContext->context.chunked
+				                 .lenBuffer[encodingContext->context.chunked.headerFooterPos];
+				assert(encodingContext->context.chunked.nextOffset == 0);
+				while (encodingContext->context.chunked.headerFooterPos < 10 && !_haveNewLine)
 				{
-					status = BIO_read(bio,
-					                  encodingContext->context.chunked->lenBuffer +
-					                      encodingContext->context.chunked->headerFooterPos,
-					                  1);
+					status = BIO_read(bio, dst, 1);
 					if (status >= 0)
 					{
-						if (encodingContext->context.chunked
-						        ->lenBuffer[encodingContext->context.chunked->headerFooterPos] ==
-						    '\n')
+						if (*dst == '\n')
 							_haveNewLine = TRUE;
-						encodingContext->context.chunked->headerFooterPos += status;
+						encodingContext->context.chunked.headerFooterPos += status;
+						dst += status;
 					}
 					else
 						return (effectiveDataLen > 0 ? effectiveDataLen : status);
 				}
-				encodingContext->context.chunked
-				    ->lenBuffer[encodingContext->context.chunked->headerFooterPos] = '\0';
+
+				*dst = '\0';
+
 				/* strtoul is tricky, error are reported via errno, we also need
 				 * to ensure the result does not overflow */
 				errno = 0;
-				tmp = strtoul(encodingContext->context.chunked->lenBuffer, NULL, 16);
+				tmp = strtoul(encodingContext->context.chunked.lenBuffer, NULL, 16);
 				if ((errno != 0) || (tmp > SIZE_MAX))
 					return -1;
-				encodingContext->context.chunked->nextOffset = tmp;
-				encodingContext->context.chunked->state = ChunkStateData;
+				encodingContext->context.chunked.nextOffset = tmp;
+				encodingContext->context.chunked.state = ChunkStateData;
 
-				if (encodingContext->context.chunked->nextOffset == 0)
+				if (encodingContext->context.chunked.nextOffset == 0)
 				{ // end of stream
 					int fd = BIO_get_fd(bio, NULL);
 					if (fd >= 0)
 						close(fd);
 
 					WLog_WARN(TAG, "cunked encoding end of stream received");
-					encodingContext->context.chunked->headerFooterPos = 0;
-					encodingContext->context.chunked->state = ChunkStateFooter;
+					encodingContext->context.chunked.headerFooterPos = 0;
+					encodingContext->context.chunked.state = ChunkStateFooter;
 				}
 			}
 			break;
@@ -449,13 +448,12 @@ static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
 static BOOL rdg_read_all(rdpTls* tls, BYTE* buffer, size_t size,
                          rdg_http_encoding_context* transferEncoding)
 {
-	int status;
-	int readCount = 0;
+	size_t readCount = 0;
 	BYTE* pBuffer = buffer;
 
 	while (readCount < size)
 	{
-		status = rdg_socket_read(tls->bio, pBuffer, size - readCount, transferEncoding);
+		int status = rdg_socket_read(tls->bio, pBuffer, size - readCount, transferEncoding);
 
 		if (status <= 0)
 		{
@@ -1398,12 +1396,9 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 		if (encoding == TransferEncodingChunked)
 		{
 			rdg->transferEncoding.httpTransferEncoding = TransferEncodingChunked;
-			rdg->transferEncoding.context.chunked = (rdg_http_encoding_chunked_context*)calloc(
-			    1, sizeof(rdg_http_encoding_chunked_context));
-			rdg->transferEncoding.context.chunked->nextOffset = 0;
-			rdg->transferEncoding.context.chunked->headerFooterPos = 0;
-			rdg->transferEncoding.context.chunked->state = ChunkStateLenghHeader;
-			rdg->transferEncoding.context.chunked->lenBuffer = (char*)calloc(11, sizeof(char));
+			rdg->transferEncoding.context.chunked.nextOffset = 0;
+			rdg->transferEncoding.context.chunked.headerFooterPos = 0;
+			rdg->transferEncoding.context.chunked.state = ChunkStateLenghHeader;
 		}
 		if (!rdg_skip_seed_payload(tls, bodyLength, &rdg->transferEncoding))
 		{
@@ -2060,12 +2055,6 @@ void rdg_free(rdpRdg* rdg)
 		BIO_free_all(rdg->frontBio);
 
 	DeleteCriticalSection(&rdg->writeSection);
-
-	if (rdg->transferEncoding.httpTransferEncoding == TransferEncodingChunked)
-	{
-		free(rdg->transferEncoding.context.chunked->lenBuffer);
-		free(rdg->transferEncoding.context.chunked);
-	}
 
 	free(rdg);
 }
