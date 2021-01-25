@@ -292,12 +292,26 @@ UINT cliprdr_serialize_file_list(const FILEDESCRIPTORW* file_descriptor_array,
                                  UINT32 file_descriptor_count, BYTE** format_data,
                                  UINT32* format_data_length)
 {
+	return cliprdr_serialize_file_list_ex(CB_STREAM_FILECLIP_ENABLED, file_descriptor_array,
+	                                      file_descriptor_count, format_data, format_data_length);
+}
+
+UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_descriptor_array,
+                                    UINT32 file_descriptor_count, BYTE** format_data,
+                                    UINT32* format_data_length)
+{
 	UINT result = NO_ERROR;
 	UINT32 i;
 	wStream* s = NULL;
 
 	if (!file_descriptor_array || !format_data || !format_data_length)
 		return ERROR_BAD_ARGUMENTS;
+
+	if ((flags & CB_STREAM_FILECLIP_ENABLED) == 0)
+	{
+		WLog_WARN(TAG, "No file clipboard support annouonced!");
+		return ERROR_BAD_ARGUMENTS;
+	}
 
 	s = Stream_New(NULL, 4 + file_descriptor_count * CLIPRDR_FILEDESCRIPTOR_SIZE);
 	if (!s)
@@ -318,11 +332,14 @@ UINT cliprdr_serialize_file_list(const FILEDESCRIPTORW* file_descriptor_array,
 		 *
 		 * https://support.microsoft.com/en-us/help/2258090
 		 */
-		if ((file->nFileSizeHigh > 0) || (file->nFileSizeLow >= CLIPRDR_MAX_FILE_SIZE))
+		if ((flags & CB_HUGE_FILE_SUPPORT_ENABLED) == 0)
 		{
-			WLog_ERR(TAG, "cliprdr does not support files over 2 GB");
-			result = ERROR_FILE_TOO_LARGE;
-			goto error;
+			if ((file->nFileSizeHigh > 0) || (file->nFileSizeLow >= CLIPRDR_MAX_FILE_SIZE))
+			{
+				WLog_ERR(TAG, "cliprdr does not support files over 2 GB");
+				result = ERROR_FILE_TOO_LARGE;
+				goto error;
+			}
 		}
 
 		Stream_Write_UINT32(s, file->dwFlags);          /* flags (4 bytes) */
