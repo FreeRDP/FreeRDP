@@ -231,7 +231,7 @@ static Pixmap xf_brush_new(xfContext* xfc, UINT32 width, UINT32 height, UINT32 b
 	if (data)
 	{
 		brushFormat = gdi_get_pixel_format(bpp);
-		cdata = (BYTE*)_aligned_malloc(width * height * 4, 16);
+		cdata = (BYTE*)_aligned_malloc(width * height * 4ULL, 16);
 		freerdp_image_copy(cdata, gdi->dstFormat, 0, 0, 0, width, height, data, brushFormat, 0, 0,
 		                   0, &xfc->context.gdi->palette, FREERDP_FLIP_NONE);
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0, (char*)cdata, width,
@@ -1066,7 +1066,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND*
 		case RDP_CODEC_ID_NONE:
 			pSrcData = cmd->bmp.bitmapData;
 			format = gdi_get_pixel_format(cmd->bmp.bpp);
-			size = cmd->bmp.width * cmd->bmp.height * GetBytesPerPixel(format);
+			size = cmd->bmp.width * cmd->bmp.height * GetBytesPerPixel(format) * 1ULL;
 			if (size > cmd->bmp.bitmapDataLength)
 			{
 				WLog_ERR(TAG, "Short nocodec message: got %" PRIu32 " bytes, require %" PRIuz,

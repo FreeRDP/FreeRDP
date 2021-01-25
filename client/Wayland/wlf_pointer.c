@@ -42,7 +42,7 @@ static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	if (!ptr)
 		return FALSE;
 
-	ptr->size = pointer->width * pointer->height * 4;
+	ptr->size = pointer->width * pointer->height * 4ULL;
 	ptr->data = _aligned_malloc(ptr->size, 16);
 
 	if (!ptr->data)
@@ -92,7 +92,7 @@ static BOOL wlf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 	    !wlf_scale_coordinates(context, &w, &h, FALSE))
 		return FALSE;
 
-	size = w * h * 4;
+	size = w * h * 4ULL;
 	data = malloc(size);
 
 	if (!data)
