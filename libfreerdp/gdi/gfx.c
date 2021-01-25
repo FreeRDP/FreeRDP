@@ -1160,10 +1160,7 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 		                        rectSrc->top, NULL, FREERDP_FLIP_NONE))
 			goto fail;
 
-		invalidRect.left = destPt->x;
-		invalidRect.top = destPt->y;
-		invalidRect.right = destPt->x + rectSrc->right;
-		invalidRect.bottom = destPt->y + rectSrc->bottom;
+		invalidRect = rect;
 		region16_union_rect(&surfaceDst->invalidRegion, &surfaceDst->invalidRegion, &invalidRect);
 		status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context,
 		                      surfaceDst->surfaceId, 1, &invalidRect);
@@ -1276,10 +1273,7 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 		                        FREERDP_FLIP_NONE))
 			goto fail;
 
-		invalidRect.left = destPt->x;
-		invalidRect.top = destPt->y;
-		invalidRect.right = destPt->x + cacheEntry->width;
-		invalidRect.bottom = destPt->y + cacheEntry->height;
+		invalidRect = rect;
 		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &invalidRect);
 		status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context,
 		                      surface->surfaceId, 1, &invalidRect);
