@@ -158,23 +158,22 @@ void winpr_CArrayDump(const char* tag, UINT32 level, const BYTE* data, int lengt
 	free(buffer);
 }
 
-char* winpr_BinToHexString(const BYTE* data, int length, BOOL space)
+char* winpr_BinToHexString(const BYTE* data, size_t length, BOOL space)
 {
-	int i;
+	size_t i;
 	int n;
 	char* p;
-	int ln, hn;
-	char bin2hex[] = "0123456789ABCDEF";
+	const char bin2hex[] = "0123456789ABCDEF";
 	n = space ? 3 : 2;
-	p = (char*)malloc((length + 1) * n);
+	p = (char*)malloc((length + 1ULL) * n);
 
 	if (!p)
 		return NULL;
 
 	for (i = 0; i < length; i++)
 	{
-		ln = data[i] & 0xF;
-		hn = (data[i] >> 4) & 0xF;
+		int ln = data[i] & 0xF;
+		int hn = (data[i] >> 4) & 0xF;
 		p[i * n] = bin2hex[hn];
 		p[(i * n) + 1] = bin2hex[ln];
 

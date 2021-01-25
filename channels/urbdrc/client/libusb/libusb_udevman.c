@@ -536,7 +536,7 @@ static BOOL device_is_filtered(struct libusb_device* dev,
 
 				for (x = 0; x < config->bNumInterfaces; x++)
 				{
-					uint8_t y;
+					int y;
 					const struct libusb_interface* ifc = &config->interface[x];
 					for (y = 0; y < ifc->num_altsetting; y++)
 					{

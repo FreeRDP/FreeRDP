@@ -532,7 +532,7 @@ static xfRailIconCache* RailIconCache_New(rdpSettings* settings)
 
 	cache->numCaches = settings->RemoteAppNumIconCaches;
 	cache->numCacheEntries = settings->RemoteAppNumIconCacheEntries;
-	cache->entries = calloc(cache->numCaches * cache->numCacheEntries, sizeof(xfRailIcon));
+	cache->entries = calloc(cache->numCaches * cache->numCacheEntries * 1ULL, sizeof(xfRailIcon));
 
 	if (!cache->entries)
 	{
@@ -602,7 +602,7 @@ static BOOL convert_rail_icon(const ICON_INFO* iconInfo, xfRailIcon* railIcon)
 	long* pixels;
 	int i;
 	int nelements;
-	argbPixels = calloc(iconInfo->width * iconInfo->height, 4);
+	argbPixels = calloc(iconInfo->width * iconInfo->height * 1ULL, 4);
 
 	if (!argbPixels)
 		goto error;
