@@ -52,6 +52,8 @@ FREERDP_LOCAL BOOL http_context_set_rdg_connection_id(HttpContext* context,
                                                       const char* RdgConnectionId);
 FREERDP_LOCAL BOOL http_context_set_rdg_auth_scheme(HttpContext* context,
                                                     const char* RdgAuthScheme);
+FREERDP_LOCAL BOOL http_context_enable_websocket_upgrade(HttpContext* context, BOOL enable);
+FREERDP_LOCAL BOOL http_context_is_websocket_upgrade_enabled(HttpContext* context);
 
 /* HTTP request */
 typedef struct _http_request HttpRequest;
@@ -85,5 +87,6 @@ FREERDP_LOCAL long http_response_get_status_code(HttpResponse* response);
 FREERDP_LOCAL SSIZE_T http_response_get_body_length(HttpResponse* response);
 FREERDP_LOCAL const char* http_response_get_auth_token(HttpResponse* response, const char* method);
 FREERDP_LOCAL TRANSFER_ENCODING http_response_get_transfer_encoding(HttpResponse* response);
+FREERDP_LOCAL BOOL http_response_is_websocket(HttpContext* http, HttpResponse* response);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_HTTP_H */
