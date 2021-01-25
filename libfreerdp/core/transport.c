@@ -260,22 +260,14 @@ fail:
 	return FALSE;
 }
 
-static BOOL is_empty(const char* str)
-{
-	if (!str)
-		return TRUE;
-	if (strlen(str) == 0)
-		return TRUE;
-	return FALSE;
-}
-
 static BOOL transport_prompt_for_password(rdpTransport* transport)
 {
 	rdpSettings* settings = transport->settings;
 	freerdp* instance = transport->context->instance;
 
-	if (is_empty(settings->Username) ||
-	    (is_empty(settings->Password) && is_empty((const char*)settings->RedirectionPassword)))
+	/* Ask for auth data if no or an empty username was specified or no password was given */
+	if ((settings->Username == NULL || strlen(settings->Username) == 0) ||
+	    (settings->Password == NULL && settings->RedirectionPassword == NULL))
 	{
 		/* If no callback is specified still continue connection */
 		if (!instance->Authenticate)
@@ -297,6 +289,10 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 {
 	if (!transport)
 		return FALSE;
+
+	if (!transport_prompt_for_password(transport))
+		return FALSE;
+
 	/* RDP encryption */
 	return TRUE;
 }
