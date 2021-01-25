@@ -3026,7 +3026,7 @@ size_t lodepng_get_raw_size(unsigned w, unsigned h, const LodePNGColorMode* colo
 /*in an idat chunk, each scanline is a multiple of 8 bits, unlike the lodepng output buffer*/
 static size_t lodepng_get_raw_size_idat(unsigned w, unsigned h, const LodePNGColorMode* color)
 {
-	return h * ((w * lodepng_get_bpp(color) + 7) / 8);
+	return h * ((w * lodepng_get_bpp(color) + 7ULL) / 8ULL);
 }
 #endif /*LODEPNG_COMPILE_DECODER*/
 #endif /*LODEPNG_COMPILE_PNG*/
@@ -3814,7 +3814,7 @@ unsigned lodepng_convert(unsigned char* out, const unsigned char* in, LodePNGCol
 {
 	size_t i;
 	ColorTree tree;
-	size_t numpixels = w * h;
+	size_t numpixels = w * h * 1ULL;
 
 	if (lodepng_color_mode_equal(mode_out, mode_in))
 	{
@@ -3917,7 +3917,7 @@ unsigned get_color_profile(LodePNGColorProfile* profile, const unsigned char* in
 	unsigned error = 0;
 	size_t i;
 	ColorTree tree;
-	size_t numpixels = w * h;
+	size_t numpixels = w * h * 1ULL;
 
 	unsigned colored_done = lodepng_is_greyscale_type(mode) ? 1 : 0;
 	unsigned alpha_done = lodepng_can_have_alpha(mode) ? 0 : 1;
@@ -4223,11 +4223,11 @@ static void Adam7_getpassvalues(unsigned passw[7], unsigned passh[7], size_t fil
 		/*if passw[i] is 0, it's 0 bytes, not 1 (no filtertype-byte)*/
 		filter_passstart[i + 1] =
 		    filter_passstart[i] +
-		    ((passw[i] && passh[i]) ? passh[i] * (1 + (passw[i] * bpp + 7) / 8) : 0);
+		    ((passw[i] && passh[i]) ? passh[i] * (1ULL + (passw[i] * bpp + 7ULL) / 8ULL) : 0);
 		/*bits padded if needed to fill full byte at end of each scanline*/
-		padded_passstart[i + 1] = padded_passstart[i] + passh[i] * ((passw[i] * bpp + 7) / 8);
+		padded_passstart[i + 1] = padded_passstart[i] + passh[i] * ((passw[i] * bpp + 7ULL) / 8ULL);
 		/*only padded at end of reduced image*/
-		passstart[i + 1] = passstart[i] + (passh[i] * passw[i] * bpp + 7) / 8;
+		passstart[i + 1] = passstart[i] + (passh[i] * passw[i] * bpp + 7ULL) / 8ULL;
 	}
 }
 
@@ -4538,7 +4538,7 @@ static unsigned postProcessScanlines(unsigned char* out, unsigned char* in, unsi
 		if (bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8)
 		{
 			CERROR_TRY_RETURN(unfilter(in, in, w, h, bpp));
-			removePaddingBits(out, in, w * bpp, ((w * bpp + 7) / 8) * 8, h);
+			removePaddingBits(out, in, w * bpp * 1ULL, ((w * bpp + 7ULL) / 8ULL) * 8ULL, h);
 		}
 		/*we can immediatly filter into the out buffer, no other steps needed*/
 		else
@@ -4563,8 +4563,9 @@ static unsigned postProcessScanlines(unsigned char* out, unsigned char* in, unsi
 				/*remove padding bits in scanlines; after this there still may be padding
 				bits between the different reduced images: each reduced image still starts nicely at
 				a byte*/
-				removePaddingBits(&in[passstart[i]], &in[padded_passstart[i]], passw[i] * bpp,
-				                  ((passw[i] * bpp + 7) / 8) * 8, passh[i]);
+				removePaddingBits(&in[passstart[i]], &in[padded_passstart[i]],
+				                  passw[i] * bpp * 1ULL, ((passw[i] * bpp + 7ULL) / 8ULL) * 8ULL,
+				                  passh[i]);
 			}
 		}
 
@@ -6049,12 +6050,12 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
 			/*non multiple of 8 bits per scanline, padding bits needed per scanline*/
 			if (bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8)
 			{
-				unsigned char* padded = (unsigned char*)calloc(h * ((w * bpp + 7) / 8), 1);
+				unsigned char* padded = (unsigned char*)calloc(h * ((w * bpp + 7ULL) / 8ULL), 1);
 				if (!padded)
 					error = 83; /*alloc fail*/
 				if (!error)
 				{
-					addPaddingBits(padded, in, ((w * bpp + 7) / 8) * 8, w * bpp, h);
+					addPaddingBits(padded, in, ((w * bpp + 7ULL) / 8ULL) * 8ULL, w * bpp * 1ULL, h);
 					error = filter(*out, padded, w, h, &info_png->color, settings);
 				}
 				free(padded);
@@ -6097,8 +6098,9 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
 					    padded_passstart[i + 1] - padded_passstart[i], sizeof(unsigned char));
 					if (!padded)
 						ERROR_BREAK(83); /*alloc fail*/
-					addPaddingBits(padded, &adam7[passstart[i]], ((passw[i] * bpp + 7) / 8) * 8,
-					               passw[i] * bpp, passh[i]);
+					addPaddingBits(padded, &adam7[passstart[i]],
+					               ((passw[i] * bpp + 7ULL) / 8ULL) * 8ULL, passw[i] * bpp * 1ULL,
+					               passh[i] * 1ULL);
 					error = filter(&(*out)[filter_passstart[i]], padded, passw[i], passh[i],
 					               &info_png->color, settings);
 					free(padded);

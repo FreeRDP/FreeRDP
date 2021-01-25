@@ -666,7 +666,7 @@ static void video_timer(VideoClientContext* video, UINT64 now)
 	presentation = frame->presentation;
 
 	priv->publishedFrames++;
-	memcpy(presentation->surfaceData, frame->surfaceData, frame->w * frame->h * 4);
+	memcpy(presentation->surfaceData, frame->surfaceData, frame->w * frame->h * 4ULL);
 
 	video->showSurface(video, presentation->surface);
 
@@ -848,7 +848,7 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA* data)
 			frame->w = presentation->SourceWidth;
 			frame->h = presentation->SourceHeight;
 
-			frame->surfaceData = BufferPool_Take(priv->surfacePool, frame->w * frame->h * 4);
+			frame->surfaceData = BufferPool_Take(priv->surfacePool, frame->w * frame->h * 4ULL);
 			if (!frame->surfaceData)
 			{
 				WLog_ERR(TAG, "unable to allocate frame data");

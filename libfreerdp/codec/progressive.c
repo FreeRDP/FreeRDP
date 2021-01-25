@@ -411,7 +411,7 @@ static INLINE BOOL progressive_tile_allocate(RFX_PROGRESSIVE_TILE* tile)
 	tile->stride = 4 * tile->width;
 
 	{
-		size_t dataLen = tile->stride * tile->height;
+		size_t dataLen = tile->stride * tile->height * 1ULL;
 		tile->data = (BYTE*)_aligned_malloc(dataLen, 16);
 	}
 
@@ -2291,7 +2291,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 
 	for (i = 0; i < surface->numUpdatedTiles; i++)
 	{
-		UINT32 nbUpdateRects;
+		UINT32 nbUpdateRects, j;
 		const RECTANGLE_16* updateRects;
 		RECTANGLE_16 updateRect;
 		RFX_PROGRESSIVE_TILE* tile = &surface->tiles[surface->updatedTileIndices[i]];

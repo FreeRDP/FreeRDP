@@ -40,7 +40,7 @@ extern "C"
 	WINPR_API void winpr_CArrayDump(const char* tag, UINT32 lvl, const BYTE* data, int length,
 	                                int width);
 
-	WINPR_API char* winpr_BinToHexString(const BYTE* data, int length, BOOL space);
+	WINPR_API char* winpr_BinToHexString(const BYTE* data, size_t length, BOOL space);
 
 	WINPR_API int wprintfx(const char* fmt, ...);
 	WINPR_API int wvprintfx(const char* fmt, va_list args);
