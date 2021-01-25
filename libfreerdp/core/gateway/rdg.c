@@ -148,7 +148,7 @@ struct rdp_rdg
 	int timeout;
 	UINT16 extAuth;
 	UINT16 reserved2;
-	rdg_http_encoding_context* transferEncoding;
+	rdg_http_encoding_context transferEncoding;
 };
 
 enum
@@ -484,7 +484,7 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 	if (!s)
 		return NULL;
 
-	if (!rdg_read_all(rdg->tlsOut, Stream_Buffer(s), header, rdg->transferEncoding))
+	if (!rdg_read_all(rdg->tlsOut, Stream_Buffer(s), header, &rdg->transferEncoding))
 	{
 		Stream_Free(s, TRUE);
 		return NULL;
@@ -501,7 +501,7 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 	}
 
 	if (!rdg_read_all(rdg->tlsOut, Stream_Buffer(s) + header, (int)packetLength - (int)header,
-	                  rdg->transferEncoding))
+	                  &rdg->transferEncoding))
 	{
 		Stream_Free(s, TRUE);
 		return NULL;
@@ -1321,6 +1321,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 	long statusCode;
 	SSIZE_T bodyLength;
 	long StatusCode;
+	TRANSFER_ENCODING encoding;
 
 	if (!rdg_tls_connect(rdg, tls, peerAddress, timeout))
 		return FALSE;
@@ -1377,6 +1378,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 
 	statusCode = http_response_get_status_code(response);
 	bodyLength = http_response_get_body_length(response);
+	encoding = http_response_get_transfer_encoding(response);
 	http_response_free(response);
 	WLog_DBG(TAG, "%s authorization result: %d", method, statusCode);
 
@@ -1393,17 +1395,17 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 
 	if (strcmp(method, "RDG_OUT_DATA") == 0)
 	{
-		if (http_response_get_transfer_encoding(response) == TransferEncodingChunked)
+		if (encoding == TransferEncodingChunked)
 		{
-			rdg->transferEncoding->httpTransferEncoding = TransferEncodingChunked;
-			rdg->transferEncoding->context.chunked = (rdg_http_encoding_chunked_context*)calloc(
+			rdg->transferEncoding.httpTransferEncoding = TransferEncodingChunked;
+			rdg->transferEncoding.context.chunked = (rdg_http_encoding_chunked_context*)calloc(
 			    1, sizeof(rdg_http_encoding_chunked_context));
-			rdg->transferEncoding->context.chunked->nextOffset = 0;
-			rdg->transferEncoding->context.chunked->headerFooterPos = 0;
-			rdg->transferEncoding->context.chunked->state = ChunkStateLenghHeader;
-			rdg->transferEncoding->context.chunked->lenBuffer = (char*)calloc(11, sizeof(char));
+			rdg->transferEncoding.context.chunked->nextOffset = 0;
+			rdg->transferEncoding.context.chunked->headerFooterPos = 0;
+			rdg->transferEncoding.context.chunked->state = ChunkStateLenghHeader;
+			rdg->transferEncoding.context.chunked->lenBuffer = (char*)calloc(11, sizeof(char));
 		}
-		if (!rdg_skip_seed_payload(tls, bodyLength, rdg->transferEncoding))
+		if (!rdg_skip_seed_payload(tls, bodyLength, &rdg->transferEncoding))
 		{
 			return FALSE;
 		}
@@ -1636,7 +1638,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 		while (readCount < payloadSize)
 		{
 			status = rdg_socket_read(rdg->tlsOut->bio, Stream_Pointer(s), payloadSize - readCount,
-			                         rdg->transferEncoding);
+			                         &rdg->transferEncoding);
 
 			if (status <= 0)
 			{
@@ -1710,7 +1712,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 		{
 			status = rdg_socket_read(rdg->tlsOut->bio, (BYTE*)(&header) + readCount,
 			                         (int)sizeof(RdgPacketHeader) - (int)readCount,
-			                         rdg->transferEncoding);
+			                         &rdg->transferEncoding);
 
 			if (status <= 0)
 			{
@@ -1746,7 +1748,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 		{
 			status =
 			    rdg_socket_read(rdg->tlsOut->bio, (BYTE*)(&rdg->packetRemainingCount) + readCount,
-			                    2 - (int)readCount, rdg->transferEncoding);
+			                    2 - (int)readCount, &rdg->transferEncoding);
 
 			if (status < 0)
 			{
@@ -1762,7 +1764,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 	}
 
 	readSize = (rdg->packetRemainingCount < size) ? rdg->packetRemainingCount : size;
-	status = rdg_socket_read(rdg->tlsOut->bio, buffer, readSize, rdg->transferEncoding);
+	status = rdg_socket_read(rdg->tlsOut->bio, buffer, readSize, &rdg->transferEncoding);
 
 	if (status <= 0)
 	{
@@ -2027,10 +2029,7 @@ rdpRdg* rdg_new(rdpContext* context)
 		BIO_set_data(rdg->frontBio, rdg);
 		InitializeCriticalSection(&rdg->writeSection);
 
-		rdg->transferEncoding =
-		    (rdg_http_encoding_context*)calloc(1, sizeof(rdg_http_encoding_context));
-
-		rdg->transferEncoding->httpTransferEncoding = TransferEncodingIdentity;
+		rdg->transferEncoding.httpTransferEncoding = TransferEncodingIdentity;
 	}
 
 	return rdg;
@@ -2054,12 +2053,11 @@ void rdg_free(rdpRdg* rdg)
 
 	DeleteCriticalSection(&rdg->writeSection);
 
-	if (rdg->transferEncoding->httpTransferEncoding == TransferEncodingChunked)
+	if (rdg->transferEncoding.httpTransferEncoding == TransferEncodingChunked)
 	{
-		free(rdg->transferEncoding->context.chunked->lenBuffer);
-		free(rdg->transferEncoding->context.chunked);
+		free(rdg->transferEncoding.context.chunked->lenBuffer);
+		free(rdg->transferEncoding.context.chunked);
 	}
-	free(rdg->transferEncoding);
 
 	free(rdg);
 }
