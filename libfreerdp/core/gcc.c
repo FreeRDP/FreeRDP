@@ -35,8 +35,8 @@
 
 static BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
 static BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
-static BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length);
-static BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length);
+static BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length);
+static BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length);
 static BOOL gcc_read_user_data_header(wStream* s, UINT16* type, UINT16* length);
 static void gcc_write_user_data_header(wStream* s, UINT16 type, UINT16 length);
 
@@ -379,7 +379,7 @@ void gcc_write_conference_create_response(wStream* s, wStream* userData)
 	                       0); /* array of server data blocks */
 }
 
-BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
+BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 {
 	UINT16 type;
 	UINT16 blockLength;
@@ -518,7 +518,7 @@ BOOL gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 	return TRUE;
 }
 
-BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
+BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 {
 	UINT16 type;
 	UINT16 offset = 0;
