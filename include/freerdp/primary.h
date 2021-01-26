@@ -462,6 +462,8 @@ typedef BOOL (*pPolygonSC)(rdpContext* context, const POLYGON_SC_ORDER* polygon_
 typedef BOOL (*pPolygonCB)(rdpContext* context, POLYGON_CB_ORDER* polygon_cb);
 typedef BOOL (*pEllipseSC)(rdpContext* context, const ELLIPSE_SC_ORDER* ellipse_sc);
 typedef BOOL (*pEllipseCB)(rdpContext* context, const ELLIPSE_CB_ORDER* ellipse_cb);
+typedef BOOL (*pOrderInfo)(rdpContext* context, const ORDER_INFO* order_info,
+                           const char* order_name);
 
 struct rdp_primary_update
 {
@@ -490,7 +492,9 @@ struct rdp_primary_update
 	pPolygonCB PolygonCB;                 /* 35 */
 	pEllipseSC EllipseSC;                 /* 36 */
 	pEllipseCB EllipseCB;                 /* 37 */
-	UINT32 paddingB[48 - 38];             /* 38 */
+	/* Statistics callback */
+	pOrderInfo OrderInfo;     /* 38 */
+	UINT32 paddingB[48 - 39]; /* 39 */
 
 	/* internal */
 
