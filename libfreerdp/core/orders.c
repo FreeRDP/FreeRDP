@@ -3464,6 +3464,10 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	if (!read_primary_order(update->log, orderName, s, orderInfo, primary))
 		return FALSE;
 
+	rc = IFCALLRESULT(TRUE, primary->OrderInfo, context, orderInfo, orderName);
+	if (!rc)
+		return FALSE;
+
 	switch (orderInfo->orderType)
 	{
 		case ORDER_TYPE_DSTBLT:
@@ -3682,6 +3686,11 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	start = Stream_GetPosition(s);
 	name = secondary_order_string(orderType);
 	WLog_Print(update->log, WLOG_DEBUG, "Secondary Drawing Order %s", name);
+	rc = IFCALLRESULT(FALSE, secondary->CacheOrderInfo, context, orderLength, extraFlags, orderType,
+	                  name);
+	if (!rc)
+		return FALSE;
+
 	/*
 	 * According to [MS-RDPEGDI] 2.2.2.2.1.2.1.1 the order length must be increased by 13 bytes
 	 * including the header. As we already read the header 7 left
@@ -3911,6 +3920,10 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s, BYTE flags)
 	rdpAltSecUpdate* altsec = update->altsec;
 	const char* orderName = altsec_order_string(orderType);
 	WLog_Print(update->log, WLOG_DEBUG, "Alternate Secondary Drawing Order %s", orderName);
+
+	rc = IFCALLRESULT(TRUE, altsec->DrawOrderInfo, context, orderType, orderName);
+	if (!rc)
+		return FALSE;
 
 	if (!check_alt_order_supported(update->log, settings, orderType, orderName))
 		return FALSE;
