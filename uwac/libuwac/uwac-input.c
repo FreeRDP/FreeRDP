@@ -168,6 +168,7 @@ static void keyboard_repeat_func(UwacTask* task, uint32_t events)
 
 		key->window = window;
 		key->sym = input->repeat_sym;
+		key->raw_key = input->repeat_key;
 		key->pressed = true;
 	}
 }
