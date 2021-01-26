@@ -187,6 +187,7 @@ typedef BOOL (*pDrawGdiPlusCacheNext)(rdpContext* context,
                                       const DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next);
 typedef BOOL (*pDrawGdiPlusCacheEnd)(rdpContext* context,
                                      const DRAW_GDIPLUS_CACHE_END_ORDER* draw_gdiplus_cache_end);
+typedef BOOL (*pDrawOrderInfo)(rdpContext* context, UINT8 orderType, const char* orderName);
 
 struct rdp_altsec_update
 {
@@ -205,7 +206,9 @@ struct rdp_altsec_update
 	pDrawGdiPlusCacheFirst DrawGdiPlusCacheFirst; /* 25 */
 	pDrawGdiPlusCacheNext DrawGdiPlusCacheNext;   /* 26 */
 	pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;     /* 27 */
-	UINT32 paddingB[32 - 28];                     /* 28 */
+	/* Statistics callback */
+	pDrawOrderInfo DrawOrderInfo; /* 28 */
+	UINT32 paddingB[32 - 29];     /* 29 */
 
 	/* internal */
 
