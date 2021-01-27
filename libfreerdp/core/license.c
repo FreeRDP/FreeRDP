@@ -217,6 +217,32 @@ static FILE* fopen_wrap(const char* path, const char* mode)
 #endif
 }
 
+static BOOL path_exists(const char* path)
+{
+	BOOL rc = FALSE;
+	WCHAR* wpath = NULL;
+	if (!path)
+		return FALSE;
+	if (ConvertToUnicode(CP_UTF8, 0, path, -1, &wpath, 0) <= 0)
+		return FALSE;
+	rc = PathFileExistsW(wpath);
+	free(wpath);
+	return rc;
+}
+
+static BOOL path_make(const char* path, LPSECURITY_ATTRIBUTES lpAttributes)
+{
+	BOOL rc = FALSE;
+	WCHAR* wpath = NULL;
+	if (!path)
+		return FALSE;
+	if (ConvertToUnicode(CP_UTF8, 0, path, -1, &wpath, 0) <= 0)
+		return FALSE;
+	rc = PathMakePathW(wpath, lpAttributes);
+	free(wpath);
+	return rc;
+}
+
 static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, char* hostname)
 {
 	char hash[41];
@@ -224,12 +250,14 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, char
 	char* licenseStorePath = NULL;
 	char filename[MAX_PATH], filenameNew[MAX_PATH];
 	char *filepath = NULL, *filepathNew = NULL;
+	WCHAR* wFilepathNew = NULL;
+	WCHAR* wFilepath = NULL;
 	size_t written;
 	BOOL ret = FALSE;
 
-	if (!PathFileExistsA(settings->ConfigPath))
+	if (!path_exists(settings->ConfigPath))
 	{
-		if (!PathMakePathA(settings->ConfigPath, 0))
+		if (!path_make(settings->ConfigPath, 0))
 		{
 			WLog_ERR(TAG, "error creating directory '%s'", settings->ConfigPath);
 			goto out;
@@ -240,9 +268,9 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, char
 	if (!(licenseStorePath = GetCombinedPath(settings->ConfigPath, licenseStore)))
 		goto out;
 
-	if (!PathFileExistsA(licenseStorePath))
+	if (!path_exists(licenseStorePath))
 	{
-		if (!PathMakePathA(licenseStorePath, 0))
+		if (!path_make(licenseStorePath, 0))
 		{
 			WLog_ERR(TAG, "error creating directory '%s'", licenseStorePath);
 			goto out;
@@ -260,6 +288,10 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, char
 
 	if (!(filepathNew = GetCombinedPath(licenseStorePath, filenameNew)))
 		goto out;
+	if (ConvertToUnicode(CP_UTF8, 0, filepathNew, -1, &wFilepathNew, 0) <= 0)
+		goto out;
+	if (ConvertToUnicode(CP_UTF8, 0, filepath, -1, &wFilepath, 0) <= 0)
+		goto out;
 
 	fp = fopen_wrap(filepathNew, "wb");
 	if (!fp)
@@ -270,14 +302,16 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, char
 
 	if (written != 1)
 	{
-		DeleteFileA(filepathNew);
+		DeleteFileW(wFilepathNew);
 		goto out;
 	}
 
-	ret = MoveFileExA(filepathNew, filepath, MOVEFILE_REPLACE_EXISTING);
+	ret = MoveFileExW(wFilepathNew, wFilepath, MOVEFILE_REPLACE_EXISTING);
 
 out:
+	free(wFilepathNew);
 	free(filepathNew);
+	free(wFilepath);
 	free(filepath);
 	free(licenseStorePath);
 	return ret;
@@ -1446,7 +1480,7 @@ BOOL license_answer_license_request(rdpLicense* license)
 {
 	wStream* s;
 	BYTE* license_data = NULL;
-	size_t license_size = 0;
+	int license_size = 0;
 	BOOL status;
 	char* username;
 

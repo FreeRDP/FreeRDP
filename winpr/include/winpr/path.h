@@ -312,6 +312,7 @@ extern "C"
 	WINPR_API char* GetCombinedPath(const char* basePath, const char* subPath);
 
 	WINPR_API BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes);
+	WINPR_API BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes);
 
 #if !defined(_WIN32) || defined(_UWP)
 
