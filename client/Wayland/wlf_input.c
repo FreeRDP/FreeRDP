@@ -176,7 +176,7 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 	 * positive: 0 ... 0xFF  -> slow ... fast
 	 * negative: 0 ... 0xFF  -> fast ... slow
 	 */
-	step = abs(direction);
+	step = 8 * abs(direction);
 	if (step > 0xFF)
 		step = 0xFF;
 
