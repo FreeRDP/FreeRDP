@@ -526,6 +526,60 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 #endif
 }
 
+BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
+{
+#if defined(_UWP)
+	return FALSE;
+#elif defined(_WIN32)
+	return (SHCreateDirectoryExW(NULL, path, lpAttributes) == ERROR_SUCCESS);
+#else
+	const WCHAR delim = PathGetSeparatorW(PATH_STYLE_NATIVE);
+	char* dup;
+	char* p;
+	BOOL result = TRUE;
+	/* we only operate on a non-null, absolute path */
+#if defined(__OS2__)
+
+	if (!path)
+		return FALSE;
+
+#else
+
+	if (!path || *path != delim)
+		return FALSE;
+
+#endif
+
+	if (ConvertFromUnicode(CP_UTF8, 0, path, -1, &dup, 0, NULL, NULL))
+		return FALSE;
+
+#ifdef __OS2__
+	p = (strlen(dup) > 3) && (dup[1] == L':') && (dup[2] == delim)) ? &dup[3] : dup;
+
+	while (p)
+#else
+	for (p = dup; p;)
+#endif
+	{
+		if ((p = strchr(p + 1, delim)))
+			*p = '\0';
+
+		if (mkdir(dup, 0777) != 0)
+			if (errno != EEXIST)
+			{
+				result = FALSE;
+				break;
+			}
+
+		if (p)
+			*p = delim;
+	}
+
+	free(dup);
+	return (result);
+#endif
+}
+
 #if !defined(_WIN32) || defined(_UWP)
 
 BOOL PathIsRelativeA(LPCSTR pszPath)
