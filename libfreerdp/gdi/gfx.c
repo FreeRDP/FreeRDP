@@ -936,7 +936,18 @@ static UINT
 gdi_DeleteEncodingContext(RdpgfxClientContext* context,
                           const RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext)
 {
-	return CHANNEL_RC_OK;
+	UINT rc = ERROR_INTERNAL_ERROR;
+	gdiGfxSurface* surface = NULL;
+	EnterCriticalSection(&context->mux);
+	surface = (gdiGfxSurface*)context->GetSurfaceData(context, deleteEncodingContext->surfaceId);
+	if (surface)
+	{
+		freerdp_client_codecs_reset(surface->codecs, FREERDP_CODEC_PROGRESSIVE, surface->width,
+		                            surface->height);
+	}
+	LeaveCriticalSection(&context->mux);
+
+	return rc;
 }
 
 /**

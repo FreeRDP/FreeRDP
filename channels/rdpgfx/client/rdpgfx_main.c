@@ -2037,38 +2037,51 @@ static void* rdpgfx_get_cache_slot_data(RdpgfxClientContext* context, UINT16 cac
 #define DVCPluginEntry FREERDP_API DVCPluginEntry
 #endif
 
-RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings)
+static void rdpgfx_free(RdpgfxClientContext* context, RDPGFX_PLUGIN* gfx)
 {
-	RDPGFX_PLUGIN* gfx;
-	RdpgfxClientContext* context;
+	if (gfx)
+	{
+		free_surfaces(context, gfx->SurfaceTable);
+		evict_cache_slots(context, gfx->MaxCacheSlots, gfx->CacheSlots);
+
+		if (gfx->listener_callback)
+		{
+			free(gfx->listener_callback);
+			gfx->listener_callback = NULL;
+		}
+
+		if (gfx->zgfx)
+		{
+			zgfx_context_free(gfx->zgfx);
+			gfx->zgfx = NULL;
+		}
+
+		HashTable_Free(gfx->SurfaceTable);
+	}
+
+	free(gfx);
+}
+
+static RDPGFX_PLUGIN* rdpgfx_new(RdpgfxClientContext* context, rdpSettings* settings)
+{
+	RDPGFX_PLUGIN* gfx = NULL;
 
 	gfx = (RDPGFX_PLUGIN*)calloc(1, sizeof(RDPGFX_PLUGIN));
 
 	if (!gfx)
-	{
-		WLog_ERR(TAG, "calloc failed!");
-		return NULL;
-	}
+		goto fail;
 
 	gfx->log = WLog_Get(TAG);
 
 	if (!gfx->log)
-	{
-		free(gfx);
-		WLog_ERR(TAG, "Failed to acquire reference to WLog %s", TAG);
-		return NULL;
-	}
+		goto fail;
 
 	gfx->settings = settings;
 	gfx->rdpcontext = ((freerdp*)gfx->settings->instance)->context;
 	gfx->SurfaceTable = HashTable_New(TRUE);
 
 	if (!gfx->SurfaceTable)
-	{
-		free(gfx);
-		WLog_ERR(TAG, "HashTable_New failed!");
-		return NULL;
-	}
+		goto fail;
 
 	gfx->ThinClient = gfx->settings->GfxThinClient;
 	gfx->SmallCache = gfx->settings->GfxSmallCache;
@@ -2083,16 +2096,28 @@ RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings)
 		gfx->SmallCache = TRUE;
 
 	gfx->MaxCacheSlots = gfx->SmallCache ? 4096 : 25600;
-	context = (RdpgfxClientContext*)calloc(1, sizeof(RdpgfxClientContext));
+	gfx->zgfx = zgfx_context_new(FALSE);
+
+	if (!gfx->zgfx)
+		goto fail;
+
+	gfx->iface.pInterface = (void*)context;
+	return gfx;
+fail:
+	rdpgfx_free(context, gfx);
+	return NULL;
+}
+
+RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings)
+{
+	RdpgfxClientContext* context = (RdpgfxClientContext*)calloc(1, sizeof(RdpgfxClientContext));
 
 	if (!context)
-	{
-		free(gfx);
-		WLog_ERR(TAG, "calloc failed!");
-		return NULL;
-	}
+		goto fail;
 
-	context->handle = (void*)gfx;
+	context->handle = rdpgfx_new(context, settings);
+	if (!context->handle)
+		goto fail;
 	context->GetSurfaceIds = rdpgfx_get_surface_ids;
 	context->SetSurfaceData = rdpgfx_set_surface_data;
 	context->GetSurfaceData = rdpgfx_get_surface_data;
@@ -2103,48 +2128,23 @@ RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings)
 	context->CacheImportOffer = rdpgfx_send_cache_import_offer_pdu;
 	context->QoeFrameAcknowledge = rdpgfx_send_qoe_frame_acknowledge_pdu;
 
-	gfx->iface.pInterface = (void*)context;
-	gfx->zgfx = zgfx_context_new(FALSE);
-
-	if (!gfx->zgfx)
-	{
-		free(gfx);
-		free(context);
-		WLog_ERR(TAG, "zgfx_context_new failed!");
-		return NULL;
-	}
-
 	return context;
+fail:
+	rdpgfx_client_context_free(context);
+	return NULL;
 }
 
 void rdpgfx_client_context_free(RdpgfxClientContext* context)
 {
-
 	RDPGFX_PLUGIN* gfx;
 
 	if (!context)
 		return;
 
 	gfx = (RDPGFX_PLUGIN*)context->handle;
+	rdpgfx_free(context, gfx);
 
-	free_surfaces(context, gfx->SurfaceTable);
-	evict_cache_slots(context, gfx->MaxCacheSlots, gfx->CacheSlots);
-
-	if (gfx->listener_callback)
-	{
-		free(gfx->listener_callback);
-		gfx->listener_callback = NULL;
-	}
-
-	if (gfx->zgfx)
-	{
-		zgfx_context_free(gfx->zgfx);
-		gfx->zgfx = NULL;
-	}
-
-	HashTable_Free(gfx->SurfaceTable);
 	free(context);
-	free(gfx);
 }
 
 /**
