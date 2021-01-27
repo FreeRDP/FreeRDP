@@ -188,7 +188,36 @@ out:
 	return ret;
 }
 
-static BOOL saveCal(rdpSettings* settings, const BYTE* data, int length, char* hostname)
+static FILE* fopen_wrap(const char* path, const char* mode)
+{
+#if defined(_WIN32)
+	{
+		errno_t err;
+		FILE* fp;
+		WCHAR* wCalPath = NULL;
+		WCHAR* wMode = NULL;
+		int status = ConvertToUnicode(CP_UTF8, 0, path, -1, &wCalPath, 0);
+		if (status <= 0)
+			return NULL;
+		status = ConvertToUnicode(CP_UTF8, 0, mode, -1, &wMode, 0);
+		if (status <= 0)
+		{
+			free(wCalPath);
+			return NULL;
+		}
+		err = _wfopen_s(&fp, wCalPath, wMode);
+		free(wCalPath);
+		free(wMode);
+		if (err != 0)
+			return NULL;
+		return fp;
+	}
+#else
+	return fopen(path, mode);
+#endif
+}
+
+static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, char* hostname)
 {
 	char hash[41];
 	FILE* fp;
@@ -232,7 +261,7 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, int length, char* h
 	if (!(filepathNew = GetCombinedPath(licenseStorePath, filenameNew)))
 		goto out;
 
-	fp = fopen(filepathNew, "wb");
+	fp = fopen_wrap(filepathNew, "wb");
 	if (!fp)
 		goto out;
 
@@ -241,11 +270,11 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, int length, char* h
 
 	if (written != 1)
 	{
-		DeleteFile(filepathNew);
+		DeleteFileA(filepathNew);
 		goto out;
 	}
 
-	ret = MoveFileEx(filepathNew, filepath, MOVEFILE_REPLACE_EXISTING);
+	ret = MoveFileExA(filepathNew, filepath, MOVEFILE_REPLACE_EXISTING);
 
 out:
 	free(filepathNew);
@@ -254,7 +283,7 @@ out:
 	return ret;
 }
 
-static BYTE* loadCalFile(rdpSettings* settings, const char* hostname, int* dataLen)
+static BYTE* loadCalFile(rdpSettings* settings, const char* hostname, size_t* dataLen)
 {
 	char *licenseStorePath = NULL, *calPath = NULL;
 	char calFilename[MAX_PATH];
@@ -277,7 +306,7 @@ static BYTE* loadCalFile(rdpSettings* settings, const char* hostname, int* dataL
 	if (!(calPath = GetCombinedPath(licenseStorePath, calFilename)))
 		goto error_path;
 
-	fp = fopen(calPath, "rb");
+	fp = fopen_wrap(calPath, "rb");
 	if (!fp)
 		goto error_open;
 
@@ -1417,7 +1446,7 @@ BOOL license_answer_license_request(rdpLicense* license)
 {
 	wStream* s;
 	BYTE* license_data = NULL;
-	int license_size = 0;
+	size_t license_size = 0;
 	BOOL status;
 	char* username;
 
