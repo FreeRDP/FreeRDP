@@ -1866,7 +1866,7 @@ static LONG smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	BOOL autoAllocate = FALSE;
 	LONG status;
 	DWORD cbAttrLen = 0;
-	LPBYTE* ppbAttr = NULL;
+	LPBYTE pbAttr = NULL;
 	GetAttrib_Return ret = { 0 };
 	IRP* irp = operation->irp;
 	const GetAttrib_Call* call = operation->call;
@@ -1874,7 +1874,7 @@ static LONG smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	if (!call->fpbAttrIsNULL)
 	{
 		autoAllocate = (call->cbAttrLen == SCARD_AUTOALLOCATE) ? TRUE : FALSE;
-		*ppbAttr = autoAllocate ? (LPBYTE) & (ret.pbAttr) : ret.pbAttr;
+		pbAttr = autoAllocate ? (LPBYTE) & (ret.pbAttr) : ret.pbAttr;
 		cbAttrLen = call->cbAttrLen;
 	}
 
@@ -1886,8 +1886,7 @@ static LONG smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 			return SCARD_E_NO_MEMORY;
 	}
 
-	ret.ReturnCode = SCardGetAttrib(operation->hCard, call->dwAttrId, *ppbAttr, &cbAttrLen);
-
+	ret.ReturnCode = SCardGetAttrib(operation->hCard, call->dwAttrId, pbAttr, &cbAttrLen);
 	log_status_error(TAG, "SCardGetAttrib", ret.ReturnCode);
 	ret.cbAttrLen = cbAttrLen;
 
