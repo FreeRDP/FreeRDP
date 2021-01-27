@@ -741,10 +741,16 @@ static BOOL device_already_plugged(rdpdrPlugin* rdpdr, const hotplug_dev* device
 	BOOL rc = FALSE;
 	int count, x;
 	ULONG_PTR* keys = NULL;
+	WCHAR* path = NULL;
+	int status;
 
 	if (!rdpdr || !device)
 		return TRUE;
 	if (!device->to_add)
+		return TRUE;
+
+	status = ConvertToUnicode(CP_UTF8, 0, device->path, -1, &path, 0);
+	if (status <= 0)
 		return TRUE;
 
 	ListDictionary_Lock(rdpdr->devman->devices);
@@ -756,13 +762,14 @@ static BOOL device_already_plugged(rdpdrPlugin* rdpdr, const hotplug_dev* device
 
 		if (!device_ext || (device_ext->device.type != RDPDR_DTYP_FILESYSTEM) || !device_ext->path)
 			continue;
-		if (strcmp(device_ext->path, device->path) == 0)
+		if (_wcscmp(device_ext->path, path) == 0)
 		{
 			rc = TRUE;
 			break;
 		}
 	}
 	free(keys);
+	free(path);
 	ListDictionary_Unlock(rdpdr->devman->devices);
 	return rc;
 }
