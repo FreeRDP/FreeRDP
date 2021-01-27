@@ -2457,22 +2457,25 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 	{
 		if (dwAttrId == SCARD_ATTR_VENDOR_NAME)
 		{
-			const char* vendorName;
+			if (pbAttr)
+			{
+				const char* vendorName;
 
-			/**
-			 * pcsc-lite adds a null terminator to the vendor name,
-			 * while WinSCard doesn't. Strip the null terminator.
-			 */
+				/**
+				 * pcsc-lite adds a null terminator to the vendor name,
+				 * while WinSCard doesn't. Strip the null terminator.
+				 */
 
-			if (pcbAttrLenAlloc)
-				vendorName = (char*)*conv.ppb;
-			else
-				vendorName = (char*)pbAttr;
+				if (pcbAttrLenAlloc)
+					vendorName = (char*)*conv.ppb;
+				else
+					vendorName = (char*)pbAttr;
 
-			if (vendorName)
-				*pcbAttrLen = strlen(vendorName);
-			else
-				*pcbAttrLen = 0;
+				if (vendorName)
+					*pcbAttrLen = strnlen(vendorName, *pcbAttrLen);
+				else
+					*pcbAttrLen = 0;
+			}
 		}
 	}
 	else
