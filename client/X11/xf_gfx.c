@@ -391,9 +391,6 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 
 	status = context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
 
-	if (codecs && codecs->progressive)
-		progressive_delete_surface_context(codecs->progressive, deleteSurface->surfaceId);
-
 	LeaveCriticalSection(&context->mux);
 	return status;
 }

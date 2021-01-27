@@ -811,7 +811,7 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* con
 		return ERROR_NOT_FOUND;
 	}
 
-	rc = progressive_create_surface_context(surface->codecs->progressive, cmd->surfaceId,
+	rc = progressive_create_surface_context(surface->codecs->progressive, cmd->contextId,
 	                                        surface->width, surface->height);
 
 	if (rc < 0)
@@ -823,7 +823,7 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* con
 	region16_init(&invalidRegion);
 	rc = progressive_decompress(surface->codecs->progressive, cmd->data, cmd->length, surface->data,
 	                            surface->format, surface->scanline, cmd->left, cmd->top,
-	                            &invalidRegion, cmd->surfaceId);
+	                            &invalidRegion, cmd->contextId);
 
 	if (rc < 0)
 	{
@@ -941,13 +941,12 @@ gdi_DeleteEncodingContext(RdpgfxClientContext* context,
 	EnterCriticalSection(&context->mux);
 	surface = (gdiGfxSurface*)context->GetSurfaceData(context, deleteEncodingContext->surfaceId);
 	if (surface)
-	{
-		freerdp_client_codecs_reset(surface->codecs, FREERDP_CODEC_PROGRESSIVE, surface->width,
-		                            surface->height);
-	}
+		progressive_delete_surface_context(surface->codecs->progressive,
+		                                   deleteEncodingContext->codecContextId);
+
 	LeaveCriticalSection(&context->mux);
 
-	return rc;
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -1045,10 +1044,6 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 	}
 
 	rc = context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
-
-	if (codecs && codecs->progressive)
-		progressive_delete_surface_context(codecs->progressive, deleteSurface->surfaceId);
-
 	LeaveCriticalSection(&context->mux);
 	return rc;
 }
