@@ -74,7 +74,8 @@ typedef struct _TSG_CAPABILITY_NAP
 	UINT32 capabilities;
 } TSG_CAPABILITY_NAP, *PTSG_CAPABILITY_NAP;
 
-typedef union {
+typedef union
+{
 	TSG_CAPABILITY_NAP tsgCapNap;
 } TSG_CAPABILITIES_UNION, *PTSG_CAPABILITIES_UNION;
 
@@ -176,7 +177,8 @@ typedef struct _TSG_PACKET_AUTH
 	BYTE* cookie;
 } TSG_PACKET_AUTH, *PTSG_PACKET_AUTH;
 
-typedef union {
+typedef union
+{
 	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
 	PTSG_PACKET_AUTH packetAuth;
 } TSG_INITIAL_PACKET_TYPE_UNION, *PTSG_INITIAL_PACKET_TYPE_UNION;
@@ -188,7 +190,8 @@ typedef struct TSG_PACKET_REAUTH
 	TSG_INITIAL_PACKET_TYPE_UNION tsgInitialPacket;
 } TSG_PACKET_REAUTH, *PTSG_PACKET_REAUTH;
 
-typedef union {
+typedef union
+{
 	PTSG_PACKET_HEADER packetHeader;
 	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
 	PTSG_PACKET_QUARCONFIGREQUEST packetQuarConfigRequest;
@@ -722,9 +725,9 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 	UINT32 SwitchValue;
 	UINT32 MessageSwitchValue = 0;
 	UINT32 IsMessagePresent;
-	UINT32 MsgBytes;
 	PTSG_PACKET_CAPABILITIES tsgCaps = NULL;
 	PTSG_PACKET_VERSIONCAPS versionCaps = NULL;
+	TSG_PACKET_STRING_MESSAGE packetStringMessage;
 	PTSG_PACKET_CAPS_RESPONSE packetCapsResponse = NULL;
 	PTSG_PACKET_QUARENC_RESPONSE packetQuarEncResponse = NULL;
 
@@ -874,9 +877,9 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 				if (Stream_GetRemainingLength(pdu->s) < 16)
 					goto fail;
 
-				Stream_Seek_UINT32(pdu->s); /* IsDisplayMandatory (4 bytes) */
-				Stream_Seek_UINT32(pdu->s); /* IsConsent Mandatory (4 bytes) */
-				Stream_Read_UINT32(pdu->s, MsgBytes);
+				Stream_Read_UINT32(pdu->s, packetStringMessage.isDisplayMandatory);
+				Stream_Read_UINT32(pdu->s, packetStringMessage.isConsentMandatory);
+				Stream_Read_UINT32(pdu->s, packetStringMessage.msgBytes);
 				Stream_Read_UINT32(pdu->s, Pointer);
 
 				if (Pointer)
@@ -889,15 +892,36 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 					Stream_Seek_UINT32(pdu->s); /* Length (4 bytes) */
 				}
 
-				if (MsgBytes > TSG_MESSAGING_MAX_MESSAGE_LENGTH)
+				if (packetStringMessage.msgBytes > TSG_MESSAGING_MAX_MESSAGE_LENGTH)
 				{
-					WLog_ERR(TAG, "Out of Spec Message Length %" PRIu32 "", MsgBytes);
+					WLog_ERR(TAG, "Out of Spec Message Length %" PRIu32 "",
+					         packetStringMessage.msgBytes);
 					goto fail;
 				}
 
-				if (!Stream_SafeSeek(pdu->s, MsgBytes))
+				packetStringMessage.msgBuffer = (WCHAR*)Stream_Pointer(pdu->s);
+				if (Stream_GetRemainingLength(pdu->s) < packetStringMessage.msgBytes)
+				{
+					WLog_ERR(TAG, "Unable to read message (%" PRIu32 " remaining %" PRId32 ")",
+					         packetStringMessage.msgBytes, Stream_GetRemainingLength(pdu->s));
 					goto fail;
+				}
 
+				if (tsg->rpc && tsg->rpc->context && tsg->rpc->context->instance)
+				{
+					rc = IFCALLRESULT(TRUE, tsg->rpc->context->instance->PresentGatewayMessage,
+					                  tsg->rpc->context->instance,
+					                  TSG_ASYNC_MESSAGE_CONSENT_MESSAGE
+					                      ? GATEWAY_MESSAGE_CONSENT
+					                      : TSG_ASYNC_MESSAGE_SERVICE_MESSAGE,
+					                  packetStringMessage.isDisplayMandatory != 0,
+					                  packetStringMessage.isConsentMandatory != 0,
+					                  packetStringMessage.msgBytes, packetStringMessage.msgBuffer);
+					if (!rc)
+						goto fail;
+				}
+
+				Stream_Seek(pdu->s, packetStringMessage.msgBytes);
 				break;
 
 			case TSG_ASYNC_MESSAGE_REAUTH:

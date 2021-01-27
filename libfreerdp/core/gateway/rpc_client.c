@@ -383,7 +383,8 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 				pdu->Type = PTYPE_RESPONSE;
 				pdu->CallId = rpc->StubCallId;
 				Stream_SealLength(pdu->s);
-				rpc_client_recv_pdu(rpc, pdu);
+				if (rpc_client_recv_pdu(rpc, pdu) < 0)
+					return -1;
 				rpc_pdu_reset(pdu);
 				rpc->StubFragCount = 0;
 				rpc->StubCallId = 0;
@@ -983,7 +984,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	CopyMemory(&buffer[offset], &request_pdu.auth_verifier.auth_type, 8);
 	offset += 8;
 	Buffers[0].BufferType = SECBUFFER_DATA | SECBUFFER_READONLY; /* auth_data */
-	Buffers[1].BufferType = SECBUFFER_TOKEN; /* signature */
+	Buffers[1].BufferType = SECBUFFER_TOKEN;                     /* signature */
 	Buffers[0].pvBuffer = buffer;
 	Buffers[0].cbBuffer = offset;
 	Buffers[1].cbBuffer = size;
