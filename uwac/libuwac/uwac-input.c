@@ -847,6 +847,24 @@ static void pointer_axis_discrete(void* data, struct wl_pointer* wl_pointer, uin
                                   int32_t discrete)
 {
 	/*UwacSeat *seat = data;*/
+	UwacPointerAxisEvent* event;
+	UwacSeat* seat = data;
+	UwacWindow* window = seat->pointer_focus;
+
+	if (!window)
+		return;
+
+	event =
+	    (UwacPointerAxisEvent*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_POINTER_AXIS_DISCRETE);
+	if (!event)
+		return;
+
+	event->seat = seat;
+	event->window = window;
+	event->x = seat->sx;
+	event->y = seat->sy;
+	event->axis = axis;
+	event->value = discrete;
 }
 
 static const struct wl_pointer_listener pointer_listener = {

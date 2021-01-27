@@ -356,6 +356,9 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_POINTER_AXIS:
+				break;
+
+			case UWAC_EVENT_POINTER_AXIS_DISCRETE:
 				if (!wlf_handle_pointer_axis(instance, &event.mouse_axis))
 					return FALSE;
 
