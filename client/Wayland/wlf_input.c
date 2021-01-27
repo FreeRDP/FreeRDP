@@ -137,9 +137,9 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 {
 	rdpInput* input;
 	UINT16 flags = 0;
-	int direction;
-	uint32_t step;
+	int32_t direction;
 	uint32_t x, y;
+	uint32_t i;
 
 	if (!instance || !ev || !instance->input)
 		return FALSE;
@@ -152,7 +152,7 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 
 	input = instance->input;
 
-	direction = wl_fixed_to_int(ev->value);
+	direction = ev->value;
 	switch (ev->axis)
 	{
 		case WL_POINTER_AXIS_VERTICAL_SCROLL:
@@ -176,17 +176,14 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 	 * positive: 0 ... 0xFF  -> slow ... fast
 	 * negative: 0 ... 0xFF  -> fast ... slow
 	 */
-	step = abs(direction);
-	if (step > 0xFF)
-		step = 0xFF;
+	for (i = 0; i < abs(direction); i++)
+	{
+		const uint32_t cflags = flags | 0x78;
+		if (!freerdp_input_send_mouse_event(input, cflags, (UINT16)x, (UINT16)y))
+			return FALSE;
+	}
 
-	/* Negative rotation, so count down steps from top */
-	if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
-		step = 0xFF - step;
-
-	flags |= step;
-
-	return freerdp_input_send_mouse_event(input, flags, (UINT16)x, (UINT16)y);
+	return TRUE;
 }
 
 BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
