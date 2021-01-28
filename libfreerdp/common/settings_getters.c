@@ -450,6 +450,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_SupportMultitransport:
 			return settings->SupportMultitransport;
 
+		case FreeRDP_SupportNetCharAutodetect:
+			return settings->SupportNetCharAutodetect;
+
 		case FreeRDP_SupportSSHAgentChannel:
 			return settings->SupportSSHAgentChannel;
 
@@ -1099,6 +1102,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_SupportMultitransport:
 			settings->SupportMultitransport = val;
+			break;
+
+		case FreeRDP_SupportNetCharAutodetect:
+			settings->SupportNetCharAutodetect = val;
 			break;
 
 		case FreeRDP_SupportSSHAgentChannel:

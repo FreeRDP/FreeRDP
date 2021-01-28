@@ -1147,6 +1147,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 		settings->DisableMenuAnims = FALSE;
 		settings->DisableThemes = FALSE;
 		settings->NetworkAutoDetect = TRUE;
+		settings->SupportNetCharAutodetect = TRUE;
 
 		/* Automatically activate GFX and RFX codec support */
 #ifdef WITH_GFX_H264

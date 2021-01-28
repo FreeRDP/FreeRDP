@@ -149,6 +149,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_SupportHeartbeatPdu,
 	FreeRDP_SupportMonitorLayoutPdu,
 	FreeRDP_SupportMultitransport,
+	FreeRDP_SupportNetCharAutodetect,
 	FreeRDP_SupportSSHAgentChannel,
 	FreeRDP_SupportStatusInfoPdu,
 	FreeRDP_SupportVideoOptimized,

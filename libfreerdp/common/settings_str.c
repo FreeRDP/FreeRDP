@@ -160,6 +160,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_SupportHeartbeatPdu, 0, "FreeRDP_SupportHeartbeatPdu" },
 	{ FreeRDP_SupportMonitorLayoutPdu, 0, "FreeRDP_SupportMonitorLayoutPdu" },
 	{ FreeRDP_SupportMultitransport, 0, "FreeRDP_SupportMultitransport" },
+	{ FreeRDP_SupportNetCharAutodetect, 0, "FreeRDP_SupportNetCharAutodetect" },
 	{ FreeRDP_SupportSSHAgentChannel, 0, "FreeRDP_SupportSSHAgentChannel" },
 	{ FreeRDP_SupportStatusInfoPdu, 0, "FreeRDP_SupportStatusInfoPdu" },
 	{ FreeRDP_SupportVideoOptimized, 0, "FreeRDP_SupportVideoOptimized" },

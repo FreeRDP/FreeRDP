@@ -869,9 +869,9 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	if ((clientColorDepth < settings->ColorDepth) || !settings->ServerMode)
 		settings->ColorDepth = clientColorDepth;
 
-	if (settings->NetworkAutoDetect)
-		settings->NetworkAutoDetect =
-		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT) ? TRUE : FALSE;
+	if (settings->SupportNetCharAutodetect)
+		settings->SupportNetCharAutodetect =
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT) ? TRUE : FALSE;
 
 	if (settings->SupportHeartbeatPdu)
 		settings->SupportHeartbeatPdu =
@@ -971,8 +971,8 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 		earlyCapabilityFlags |= RNS_UD_CS_WANT_32BPP_SESSION;
 	}
 
-	if (settings->NetworkAutoDetect)
-		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT;
+	if (settings->SupportNetCharAutodetect)
+		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT;
 
 	if (settings->SupportHeartbeatPdu)
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_HEARTBEAT_PDU;

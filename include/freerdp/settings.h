@@ -121,7 +121,7 @@ typedef enum
 #define RNS_UD_CS_STRONG_ASYMMETRIC_KEYS 0x0008
 #define RNS_UD_CS_VALID_CONNECTION_TYPE 0x0020
 #define RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU 0x0040
-#define RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT 0x0080
+#define RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT 0x0080
 #define RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL 0x0100
 #define RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE 0x0200
 #define RNS_UD_CS_SUPPORT_HEARTBEAT_PDU 0x0400
@@ -555,6 +555,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_DesktopOrientation (147)
 #define FreeRDP_DesktopScaleFactor (148)
 #define FreeRDP_DeviceScaleFactor (149)
+#define FreeRDP_SupportNetCharAutodetect (150)
 #define FreeRDP_UseRdpSecurityLayer (192)
 #define FreeRDP_EncryptionMethods (193)
 #define FreeRDP_ExtEncryptionMethods (194)
@@ -954,7 +955,8 @@ struct rdp_settings
 	ALIGN64 UINT16 DesktopOrientation;    /* 147 */
 	ALIGN64 UINT32 DesktopScaleFactor;    /* 148 */
 	ALIGN64 UINT32 DeviceScaleFactor;     /* 149 */
-	UINT64 padding0192[192 - 150];        /* 150 */
+	ALIGN64 BOOL SupportNetCharAutodetect; /* 150 */
+	UINT64 padding0192[192 - 151];         /* 151 */
 
 	/* Client/Server Security Data */
 	ALIGN64 BOOL UseRdpSecurityLayer;       /* 192 */

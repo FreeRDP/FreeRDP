@@ -59,6 +59,45 @@ typedef struct
 	UINT16 responseType;
 } AUTODETECT_RSP_PDU;
 
+static const char* autodetect_request_type_to_string(UINT32 requestType)
+{
+	switch (requestType)
+	{
+		case RDP_RTT_RESPONSE_TYPE:
+			return "RDP_RTT_RESPONSE_TYPE";
+		case RDP_BW_RESULTS_RESPONSE_TYPE_CONNECTTIME:
+			return "RDP_BW_RESULTS_RESPONSE_TYPE_CONNECTTIME";
+		case RDP_BW_RESULTS_RESPONSE_TYPE_CONTINUOUS:
+			return "RDP_BW_RESULTS_RESPONSE_TYPE_CONTINUOUS";
+		case RDP_RTT_REQUEST_TYPE_CONTINUOUS:
+			return "RDP_RTT_REQUEST_TYPE_CONTINUOUS";
+		case RDP_RTT_REQUEST_TYPE_CONNECTTIME:
+			return "RDP_RTT_REQUEST_TYPE_CONNECTTIME";
+		case RDP_BW_START_REQUEST_TYPE_CONTINUOUS:
+			return "RDP_BW_START_REQUEST_TYPE_CONTINUOUS";
+		case RDP_BW_START_REQUEST_TYPE_TUNNEL:
+			return "RDP_BW_START_REQUEST_TYPE_TUNNEL";
+		case RDP_BW_START_REQUEST_TYPE_CONNECTTIME:
+			return "RDP_BW_START_REQUEST_TYPE_CONNECTTIME";
+		case RDP_BW_PAYLOAD_REQUEST_TYPE:
+			return "RDP_BW_PAYLOAD_REQUEST_TYPE";
+		case RDP_BW_STOP_REQUEST_TYPE_CONNECTTIME:
+			return "RDP_BW_STOP_REQUEST_TYPE_CONNECTTIME";
+		case RDP_BW_STOP_REQUEST_TYPE_CONTINUOUS:
+			return "RDP_BW_STOP_REQUEST_TYPE_CONTINUOUS";
+		case RDP_BW_STOP_REQUEST_TYPE_TUNNEL:
+			return "RDP_BW_STOP_REQUEST_TYPE_TUNNEL";
+		case 0x0840:
+			return "RDP_NETCHAR_RESULTS_0x0840";
+		case 0x0880:
+			return "RDP_NETCHAR_RESULTS_0x0880";
+		case 0x08C0:
+			return "RDP_NETCHAR_RESULTS_0x08C0";
+		default:
+			return "UNKNOWN";
+	}
+}
+
 static BOOL autodetect_send_rtt_measure_request(rdpContext* context, UINT16 sequenceNumber,
                                                 UINT16 requestType)
 {
@@ -548,6 +587,15 @@ int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s)
 	         autodetectReqPdu.headerLength, autodetectReqPdu.headerTypeId,
 	         autodetectReqPdu.sequenceNumber, autodetectReqPdu.requestType);
 
+	if (!freerdp_settings_get_bool(rdp->settings, FreeRDP_SupportNetCharAutodetect))
+	{
+		WLog_ERR(AUTODETECT_TAG,
+		         "Received a [MS-RDPBCGR] 2.2.14.1.1 RTT Measure Request (RDP_RTT_REQUEST) [%s]"
+		         "message but support was not enabled",
+		         autodetect_request_type_to_string(autodetectReqPdu.requestType));
+		return -1;
+	}
+
 	if (autodetectReqPdu.headerTypeId != TYPE_ID_AUTODETECT_REQUEST)
 		return -1;
 
@@ -609,6 +657,15 @@ int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s)
 	         ", sequenceNumber=%" PRIu16 ", requestType=%04" PRIx16 "",
 	         autodetectRspPdu.headerLength, autodetectRspPdu.headerTypeId,
 	         autodetectRspPdu.sequenceNumber, autodetectRspPdu.responseType);
+
+	if (!freerdp_settings_get_bool(rdp->settings, FreeRDP_SupportNetCharAutodetect))
+	{
+		WLog_ERR(AUTODETECT_TAG,
+		         "Received a [MS-RDPBCGR] 2.2.14.2.1 RTT Measure Response (RDP_RTT_RESPONSE) [%s]"
+		         "message but support was not enabled",
+		         autodetect_request_type_to_string(autodetectRspPdu.responseType));
+		return -1;
+	}
 
 	if (autodetectRspPdu.headerTypeId != TYPE_ID_AUTODETECT_RESPONSE)
 		return -1;
