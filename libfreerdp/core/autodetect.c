@@ -597,7 +597,14 @@ int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s)
 	}
 
 	if (autodetectReqPdu.headerTypeId != TYPE_ID_AUTODETECT_REQUEST)
+	{
+		WLog_ERR(AUTODETECT_TAG,
+		         "Received a [MS-RDPBCGR] 2.2.14.1.1 RTT Measure Request (RDP_RTT_REQUEST) [%s]"
+		         "message with invalid headerTypeId=0x%04" PRIx16,
+		         autodetect_request_type_to_string(autodetectReqPdu.requestType),
+		         autodetectReqPdu.headerTypeId);
 		return -1;
+	}
 
 	switch (autodetectReqPdu.requestType)
 	{
@@ -668,7 +675,14 @@ int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s)
 	}
 
 	if (autodetectRspPdu.headerTypeId != TYPE_ID_AUTODETECT_RESPONSE)
+	{
+		WLog_ERR(AUTODETECT_TAG,
+		         "Received a [MS-RDPBCGR] 2.2.14.2.1 RTT Measure Response (RDP_RTT_RESPONSE) [%s]"
+		         "message with invalid headerTypeId=0x%04" PRIx16,
+		         autodetect_request_type_to_string(autodetectRspPdu.responseType),
+		         autodetectRspPdu.headerTypeId);
 		return -1;
+	}
 
 	switch (autodetectRspPdu.responseType)
 	{
