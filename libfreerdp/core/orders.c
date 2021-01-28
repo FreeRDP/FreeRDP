@@ -3686,7 +3686,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	start = Stream_GetPosition(s);
 	name = secondary_order_string(orderType);
 	WLog_Print(update->log, WLOG_DEBUG, "Secondary Drawing Order %s", name);
-	rc = IFCALLRESULT(FALSE, secondary->CacheOrderInfo, context, orderLength, extraFlags, orderType,
+	rc = IFCALLRESULT(TRUE, secondary->CacheOrderInfo, context, orderLength, extraFlags, orderType,
 	                  name);
 	if (!rc)
 		return FALSE;
