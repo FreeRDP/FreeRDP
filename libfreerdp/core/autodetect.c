@@ -30,13 +30,17 @@
 
 #define RDP_RTT_RESPONSE_TYPE 0x0000
 
-#define RDP_BW_START_REQUEST_TYPE_CONTINUOUS 0x0014
-#define RDP_BW_START_REQUEST_TYPE_TUNNEL 0x0114
-#define RDP_BW_START_REQUEST_TYPE_CONNECTTIME 0x1014
-#define RDP_BW_PAYLOAD_REQUEST_TYPE 0x0002
-#define RDP_BW_STOP_REQUEST_TYPE_CONNECTTIME 0x002B
-#define RDP_BW_STOP_REQUEST_TYPE_CONTINUOUS 0x0429
-#define RDP_BW_STOP_REQUEST_TYPE_TUNNEL 0x0629
+#define RDP_BW_START_REQUEST_TYPE_CONTINUOUS 0x0014U
+#define RDP_BW_START_REQUEST_TYPE_TUNNEL 0x0114U
+#define RDP_BW_START_REQUEST_TYPE_CONNECTTIME 0x1014U
+#define RDP_BW_PAYLOAD_REQUEST_TYPE 0x0002U
+#define RDP_BW_STOP_REQUEST_TYPE_CONNECTTIME 0x002BU
+#define RDP_BW_STOP_REQUEST_TYPE_CONTINUOUS 0x0429U
+#define RDP_BW_STOP_REQUEST_TYPE_TUNNEL 0x0629U
+
+#define RDP_NETCHAR_RESULTS_0x0840 0x0840U
+#define RDP_NETCHAR_RESULTS_0x0880 0x0880U
+#define RDP_NETCHAR_RESULTS_0x08C0 0x08C0U
 
 #define RDP_BW_RESULTS_RESPONSE_TYPE_CONNECTTIME 0x0003
 #define RDP_BW_RESULTS_RESPONSE_TYPE_CONTINUOUS 0x000B
@@ -87,11 +91,11 @@ static const char* autodetect_request_type_to_string(UINT32 requestType)
 			return "RDP_BW_STOP_REQUEST_TYPE_CONTINUOUS";
 		case RDP_BW_STOP_REQUEST_TYPE_TUNNEL:
 			return "RDP_BW_STOP_REQUEST_TYPE_TUNNEL";
-		case 0x0840:
+		case RDP_NETCHAR_RESULTS_0x0840:
 			return "RDP_NETCHAR_RESULTS_0x0840";
-		case 0x0880:
+		case RDP_NETCHAR_RESULTS_0x0880:
 			return "RDP_NETCHAR_RESULTS_0x0880";
-		case 0x08C0:
+		case RDP_NETCHAR_RESULTS_0x08C0:
 			return "RDP_NETCHAR_RESULTS_0x08C0";
 		default:
 			return "UNKNOWN";
@@ -334,7 +338,7 @@ static BOOL autodetect_send_netchar_result(rdpContext* context, UINT16 sequenceN
 		Stream_Write_UINT8(s, 0x12);                       /* headerLength (1 byte) */
 		Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST); /* headerTypeId (1 byte) */
 		Stream_Write_UINT16(s, sequenceNumber);            /* sequenceNumber (2 bytes) */
-		Stream_Write_UINT16(s, 0x08C0);                    /* requestType (2 bytes) */
+		Stream_Write_UINT16(s, RDP_NETCHAR_RESULTS_0x08C0); /* requestType (2 bytes) */
 		Stream_Write_UINT32(s, context->rdp->autodetect->netCharBaseRTT); /* baseRTT (4 bytes) */
 		Stream_Write_UINT32(s,
 		                    context->rdp->autodetect->netCharBandwidth); /* bandwidth (4 bytes) */
@@ -346,7 +350,7 @@ static BOOL autodetect_send_netchar_result(rdpContext* context, UINT16 sequenceN
 		Stream_Write_UINT8(s, 0x0E);                       /* headerLength (1 byte) */
 		Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST); /* headerTypeId (1 byte) */
 		Stream_Write_UINT16(s, sequenceNumber);            /* sequenceNumber (2 bytes) */
-		Stream_Write_UINT16(s, 0x0840);                    /* requestType (2 bytes) */
+		Stream_Write_UINT16(s, RDP_NETCHAR_RESULTS_0x0840); /* requestType (2 bytes) */
 		Stream_Write_UINT32(s, context->rdp->autodetect->netCharBaseRTT); /* baseRTT (4 bytes) */
 		Stream_Write_UINT32(s,
 		                    context->rdp->autodetect->netCharAverageRTT); /* averageRTT (4 bytes) */
@@ -527,7 +531,7 @@ static BOOL autodetect_recv_netchar_result(rdpRdp* rdp, wStream* s,
 
 	switch (autodetectReqPdu->requestType)
 	{
-		case 0x0840:
+		case RDP_NETCHAR_RESULTS_0x0840:
 
 			/* baseRTT and averageRTT fields are present (bandwidth field is not) */
 			if ((autodetectReqPdu->headerLength != 0x0E) || (Stream_GetRemainingLength(s) < 8))
@@ -537,7 +541,7 @@ static BOOL autodetect_recv_netchar_result(rdpRdp* rdp, wStream* s,
 			Stream_Read_UINT32(s, rdp->autodetect->netCharAverageRTT); /* averageRTT (4 bytes) */
 			break;
 
-		case 0x0880:
+		case RDP_NETCHAR_RESULTS_0x0880:
 
 			/* bandwidth and averageRTT fields are present (baseRTT field is not) */
 			if ((autodetectReqPdu->headerLength != 0x0E) || (Stream_GetRemainingLength(s) < 8))
@@ -547,7 +551,7 @@ static BOOL autodetect_recv_netchar_result(rdpRdp* rdp, wStream* s,
 			Stream_Read_UINT32(s, rdp->autodetect->netCharAverageRTT); /* averageRTT (4 bytes) */
 			break;
 
-		case 0x08C0:
+		case RDP_NETCHAR_RESULTS_0x08C0:
 
 			/* baseRTT, bandwidth, and averageRTT fields are present */
 			if ((autodetectReqPdu->headerLength != 0x12) || (Stream_GetRemainingLength(s) < 12))
@@ -633,9 +637,9 @@ int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s)
 			success = autodetect_recv_bandwidth_measure_stop(rdp, s, &autodetectReqPdu);
 			break;
 
-		case 0x0840:
-		case 0x0880:
-		case 0x08C0:
+		case RDP_NETCHAR_RESULTS_0x0840:
+		case RDP_NETCHAR_RESULTS_0x0880:
+		case RDP_NETCHAR_RESULTS_0x08C0:
 			/* Network Characteristics Result (RDP_NETCHAR_RESULT) - MS-RDPBCGR 2.2.14.1.5 */
 			success = autodetect_recv_netchar_result(rdp, s, &autodetectReqPdu);
 			break;
