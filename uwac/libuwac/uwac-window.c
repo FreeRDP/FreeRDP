@@ -176,8 +176,6 @@ static void xdg_handle_surface_configure(void* data, struct xdg_surface* xdg_sur
                                          uint32_t serial)
 {
 	xdg_surface_ack_configure(xdg_surface, serial);
-	UwacWindow* window = (UwacWindow*)data;
-	wl_surface_commit(window->surface);
 }
 
 static const struct xdg_surface_listener xdg_surface_listener = {
