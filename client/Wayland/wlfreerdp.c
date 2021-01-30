@@ -415,6 +415,11 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 
 				break;
 
+			case UWAC_EVENT_CLOSE:
+				context->closed = TRUE;
+
+				break;
+
 			default:
 				break;
 		}
@@ -482,6 +487,12 @@ static int wlfreerdp_run(freerdp* instance)
 		if (!handle_uwac_events(instance, context->display))
 		{
 			WLog_Print(context->log, WLOG_ERROR, "error handling UWAC events");
+			break;
+		}
+
+		if (context->closed)
+		{
+			WLog_Print(context->log, WLOG_INFO, "Closed from Wayland");
 			break;
 		}
 
