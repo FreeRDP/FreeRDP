@@ -180,6 +180,8 @@ struct uwac_seat
 		xkb_mod_mask_t control_mask;
 		xkb_mod_mask_t alt_mask;
 		xkb_mod_mask_t shift_mask;
+		xkb_mod_mask_t caps_mask;
+		xkb_mod_mask_t num_mask;
 	} xkb;
 	uint32_t modifiers;
 	int32_t repeat_rate_sec, repeat_rate_nsec;
