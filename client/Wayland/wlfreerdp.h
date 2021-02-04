@@ -43,6 +43,7 @@ struct wlf_context
 
 	BOOL fullscreen;
 	BOOL closed;
+	BOOL focusing;
 
 	/* Channels */
 	RdpeiClientContext* rdpei;
