@@ -397,6 +397,12 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 
 				break;
 
+			case UWAC_EVENT_KEYBOARD_MODIFIERS:
+				if (!wlf_keyboard_modifiers(instance, &event.keyboard_modifiers))
+					return FALSE;
+
+				break;
+
 			case UWAC_EVENT_CONFIGURE:
 				if (!wlf_disp_handle_configure(context->disp, event.configure.width,
 				                               event.configure.height))

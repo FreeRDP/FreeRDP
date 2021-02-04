@@ -205,13 +205,34 @@ BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
 
 BOOL wlf_keyboard_enter(freerdp* instance, const UwacKeyboardEnterLeaveEvent* ev)
 {
+	if (!instance || !ev || !instance->input)
+		return FALSE;
+
+	((wlfContext*)instance->context)->focusing = TRUE;
+	return TRUE;
+}
+
+BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent* ev)
+{
 	rdpInput* input;
+	uint32_t syncFlags;
 
 	if (!instance || !ev || !instance->input)
 		return FALSE;
 
 	input = instance->input;
-	return freerdp_input_send_focus_in_event(input, 0) &&
+	syncFlags = 0;
+
+	if (ev->modifiers & UWAC_MOD_CAPS_MASK)
+		syncFlags |= KBD_SYNC_CAPS_LOCK;
+	if (ev->modifiers & UWAC_MOD_NUM_MASK)
+		syncFlags |= KBD_SYNC_NUM_LOCK;
+
+	if (!((wlfContext*)instance->context)->focusing)
+		return TRUE;
+
+	((wlfContext*)instance->context)->focusing = FALSE;
+	return freerdp_input_send_focus_in_event(input, syncFlags) &&
 	       freerdp_input_send_mouse_event(input, PTR_FLAGS_MOVE, 0, 0);
 }
 

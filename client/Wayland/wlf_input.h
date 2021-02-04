@@ -36,5 +36,6 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev);
 
 BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev);
 BOOL wlf_keyboard_enter(freerdp* instance, const UwacKeyboardEnterLeaveEvent* ev);
+BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent* ev);
 
 #endif /* FREERDP_CLIENT_WAYLAND_INPUT_H */
