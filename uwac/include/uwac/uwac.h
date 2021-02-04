@@ -62,6 +62,8 @@ enum
 	UWAC_MOD_SHIFT_MASK = 0x01,
 	UWAC_MOD_ALT_MASK = 0x02,
 	UWAC_MOD_CONTROL_MASK = 0x04,
+	UWAC_MOD_CAPS_MASK = 0x08,
+	UWAC_MOD_NUM_MASK = 0x10,
 };
 
 /** @brief a position */
@@ -91,6 +93,7 @@ enum
 	UWAC_EVENT_POINTER_BUTTONS,
 	UWAC_EVENT_POINTER_AXIS,
 	UWAC_EVENT_KEYBOARD_ENTER,
+	UWAC_EVENT_KEYBOARD_MODIFIERS,
 	UWAC_EVENT_KEY,
 	UWAC_EVENT_TOUCH_FRAME_BEGIN,
 	UWAC_EVENT_TOUCH_UP,
@@ -143,6 +146,13 @@ struct uwac_keyboard_enter_event
 	UwacSeat* seat;
 };
 typedef struct uwac_keyboard_enter_event UwacKeyboardEnterLeaveEvent;
+
+struct uwac_keyboard_modifiers_event
+{
+	int type;
+	uint32_t modifiers;
+};
+typedef struct uwac_keyboard_modifiers_event UwacKeyboardModifiersEvent;
 
 struct uwac_pointer_enter_event
 {
@@ -276,6 +286,7 @@ union uwac_event {
 	UwacPointerButtonEvent mouse_button;
 	UwacPointerAxisEvent mouse_axis;
 	UwacKeyboardEnterLeaveEvent keyboard_enter_leave;
+	UwacKeyboardModifiersEvent keyboard_modifiers;
 	UwacClipboardEvent clipboard;
 	UwacKeyEvent key;
 	UwacTouchFrameBegin touchFrameBegin;
