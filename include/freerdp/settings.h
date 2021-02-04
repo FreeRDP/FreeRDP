@@ -120,7 +120,7 @@ typedef enum
 #define RNS_UD_CS_STRONG_ASYMMETRIC_KEYS 0x0008
 #define RNS_UD_CS_VALID_CONNECTION_TYPE 0x0020
 #define RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU 0x0040
-#define RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT 0x0080
+#define RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT 0x0080
 #define RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL 0x0100
 #define RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE 0x0200
 #define RNS_UD_CS_SUPPORT_HEARTBEAT_PDU 0x0400
@@ -189,14 +189,14 @@ typedef enum
 #define NEG_MEMBLT_INDEX 0x03
 #define NEG_MEM3BLT_INDEX 0x04
 #define NEG_ATEXTOUT_INDEX 0x05
-#define NEG_AEXTTEXTOUT_INDEX 0x06  /* Must be ignored */
+#define NEG_AEXTTEXTOUT_INDEX 0x06 /* Must be ignored */
 #define NEG_DRAWNINEGRID_INDEX 0x07 /* Must be ignored */
 #define NEG_LINETO_INDEX 0x08
 #define NEG_MULTI_DRAWNINEGRID_INDEX 0x09
 #define NEG_OPAQUE_RECT_INDEX 0x0A /* Must be ignored */
 #define NEG_SAVEBITMAP_INDEX 0x0B
-#define NEG_WTEXTOUT_INDEX 0x0C   /* Must be ignored */
-#define NEG_MEMBLT_V2_INDEX 0x0D  /* Must be ignored */
+#define NEG_WTEXTOUT_INDEX 0x0C  /* Must be ignored */
+#define NEG_MEMBLT_V2_INDEX 0x0D /* Must be ignored */
 #define NEG_MEM3BLT_V2_INDEX 0x0E /* Must be ignored */
 #define NEG_MULTIDSTBLT_INDEX 0x0F
 #define NEG_MULTIPATBLT_INDEX 0x10
@@ -1150,22 +1150,22 @@ struct rdp_settings
 	UINT64 padding1408[1408 - 1346]; /* 1346 */
 
 	/* Server Certificate */
-	ALIGN64 BOOL IgnoreCertificate;               /* 1408 */
-	ALIGN64 char* CertificateName;                /* 1409 */
-	ALIGN64 char* CertificateFile;                /* 1410 */
-	ALIGN64 char* PrivateKeyFile;                 /* 1411 */
-	ALIGN64 char* RdpKeyFile;                     /* 1412 */
-	ALIGN64 rdpRsaKey* RdpServerRsaKey;           /* 1413 */
-	ALIGN64 rdpCertificate* RdpServerCertificate; /* 1414 */
-	ALIGN64 BOOL ExternalCertificateManagement;   /* 1415 */
-	ALIGN64 char* CertificateContent;             /* 1416 */
-	ALIGN64 char* PrivateKeyContent;              /* 1417 */
-	ALIGN64 char* RdpKeyContent;                  /* 1418 */
-	ALIGN64 BOOL AutoAcceptCertificate;           /* 1419 */
-	ALIGN64 BOOL AutoDenyCertificate;             /* 1420 */
+	ALIGN64 BOOL IgnoreCertificate;                /* 1408 */
+	ALIGN64 char* CertificateName;                 /* 1409 */
+	ALIGN64 char* CertificateFile;                 /* 1410 */
+	ALIGN64 char* PrivateKeyFile;                  /* 1411 */
+	ALIGN64 char* RdpKeyFile;                      /* 1412 */
+	ALIGN64 rdpRsaKey* RdpServerRsaKey;            /* 1413 */
+	ALIGN64 rdpCertificate* RdpServerCertificate;  /* 1414 */
+	ALIGN64 BOOL ExternalCertificateManagement;    /* 1415 */
+	ALIGN64 char* CertificateContent;              /* 1416 */
+	ALIGN64 char* PrivateKeyContent;               /* 1417 */
+	ALIGN64 char* RdpKeyContent;                   /* 1418 */
+	ALIGN64 BOOL AutoAcceptCertificate;            /* 1419 */
+	ALIGN64 BOOL AutoDenyCertificate;              /* 1420 */
 	ALIGN64 char* CertificateAcceptedFingerprints; /* 1421 */
 	UINT64 padding1472[1472 - 1422];               /* 1422 */
-	UINT64 padding1536[1536 - 1472];              /* 1472 */
+	UINT64 padding1536[1536 - 1472];               /* 1472 */
 
 	/**
 	 * User Interface

@@ -43,6 +43,10 @@
 
 #define RDP_NETCHAR_SYNC_RESPONSE_TYPE 0x0018
 
+#define RDP_NETCHAR_RESULTS_0x0840 0x0840U
+#define RDP_NETCHAR_RESULTS_0x0880 0x0880U
+#define RDP_NETCHAR_RESULTS_0x08C0 0x08C0U
+
 typedef struct
 {
 	UINT8 headerLength;
@@ -58,6 +62,45 @@ typedef struct
 	UINT16 sequenceNumber;
 	UINT16 responseType;
 } AUTODETECT_RSP_PDU;
+
+static const char* autodetect_request_type_to_string(UINT32 requestType)
+{
+	switch (requestType)
+	{
+		case RDP_RTT_RESPONSE_TYPE:
+			return "RDP_RTT_RESPONSE_TYPE";
+		case RDP_BW_RESULTS_RESPONSE_TYPE_CONNECTTIME:
+			return "RDP_BW_RESULTS_RESPONSE_TYPE_CONNECTTIME";
+		case RDP_BW_RESULTS_RESPONSE_TYPE_CONTINUOUS:
+			return "RDP_BW_RESULTS_RESPONSE_TYPE_CONTINUOUS";
+		case RDP_RTT_REQUEST_TYPE_CONTINUOUS:
+			return "RDP_RTT_REQUEST_TYPE_CONTINUOUS";
+		case RDP_RTT_REQUEST_TYPE_CONNECTTIME:
+			return "RDP_RTT_REQUEST_TYPE_CONNECTTIME";
+		case RDP_BW_START_REQUEST_TYPE_CONTINUOUS:
+			return "RDP_BW_START_REQUEST_TYPE_CONTINUOUS";
+		case RDP_BW_START_REQUEST_TYPE_TUNNEL:
+			return "RDP_BW_START_REQUEST_TYPE_TUNNEL";
+		case RDP_BW_START_REQUEST_TYPE_CONNECTTIME:
+			return "RDP_BW_START_REQUEST_TYPE_CONNECTTIME";
+		case RDP_BW_PAYLOAD_REQUEST_TYPE:
+			return "RDP_BW_PAYLOAD_REQUEST_TYPE";
+		case RDP_BW_STOP_REQUEST_TYPE_CONNECTTIME:
+			return "RDP_BW_STOP_REQUEST_TYPE_CONNECTTIME";
+		case RDP_BW_STOP_REQUEST_TYPE_CONTINUOUS:
+			return "RDP_BW_STOP_REQUEST_TYPE_CONTINUOUS";
+		case RDP_BW_STOP_REQUEST_TYPE_TUNNEL:
+			return "RDP_BW_STOP_REQUEST_TYPE_TUNNEL";
+		case RDP_NETCHAR_RESULTS_0x0840:
+			return "RDP_NETCHAR_RESULTS_0x0840";
+		case RDP_NETCHAR_RESULTS_0x0880:
+			return "RDP_NETCHAR_RESULTS_0x0880";
+		case RDP_NETCHAR_RESULTS_0x08C0:
+			return "RDP_NETCHAR_RESULTS_0x08C0";
+		default:
+			return "UNKNOWN";
+	}
+}
 
 static BOOL autodetect_send_rtt_measure_request(rdpContext* context, UINT16 sequenceNumber,
                                                 UINT16 requestType)
@@ -292,10 +335,10 @@ static BOOL autodetect_send_netchar_result(rdpContext* context, UINT16 sequenceN
 
 	if (context->rdp->autodetect->netCharBandwidth > 0)
 	{
-		Stream_Write_UINT8(s, 0x12);                       /* headerLength (1 byte) */
-		Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST); /* headerTypeId (1 byte) */
-		Stream_Write_UINT16(s, sequenceNumber);            /* sequenceNumber (2 bytes) */
-		Stream_Write_UINT16(s, 0x08C0);                    /* requestType (2 bytes) */
+		Stream_Write_UINT8(s, 0x12);                        /* headerLength (1 byte) */
+		Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST);  /* headerTypeId (1 byte) */
+		Stream_Write_UINT16(s, sequenceNumber);             /* sequenceNumber (2 bytes) */
+		Stream_Write_UINT16(s, RDP_NETCHAR_RESULTS_0x08C0); /* requestType (2 bytes) */
 		Stream_Write_UINT32(s, context->rdp->autodetect->netCharBaseRTT); /* baseRTT (4 bytes) */
 		Stream_Write_UINT32(s,
 		                    context->rdp->autodetect->netCharBandwidth); /* bandwidth (4 bytes) */
@@ -304,10 +347,10 @@ static BOOL autodetect_send_netchar_result(rdpContext* context, UINT16 sequenceN
 	}
 	else
 	{
-		Stream_Write_UINT8(s, 0x0E);                       /* headerLength (1 byte) */
-		Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST); /* headerTypeId (1 byte) */
-		Stream_Write_UINT16(s, sequenceNumber);            /* sequenceNumber (2 bytes) */
-		Stream_Write_UINT16(s, 0x0840);                    /* requestType (2 bytes) */
+		Stream_Write_UINT8(s, 0x0E);                        /* headerLength (1 byte) */
+		Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST);  /* headerTypeId (1 byte) */
+		Stream_Write_UINT16(s, sequenceNumber);             /* sequenceNumber (2 bytes) */
+		Stream_Write_UINT16(s, RDP_NETCHAR_RESULTS_0x0840); /* requestType (2 bytes) */
 		Stream_Write_UINT32(s, context->rdp->autodetect->netCharBaseRTT); /* baseRTT (4 bytes) */
 		Stream_Write_UINT32(s,
 		                    context->rdp->autodetect->netCharAverageRTT); /* averageRTT (4 bytes) */
@@ -488,7 +531,7 @@ static BOOL autodetect_recv_netchar_result(rdpRdp* rdp, wStream* s,
 
 	switch (autodetectReqPdu->requestType)
 	{
-		case 0x0840:
+		case RDP_NETCHAR_RESULTS_0x0840:
 
 			/* baseRTT and averageRTT fields are present (bandwidth field is not) */
 			if ((autodetectReqPdu->headerLength != 0x0E) || (Stream_GetRemainingLength(s) < 8))
@@ -498,7 +541,7 @@ static BOOL autodetect_recv_netchar_result(rdpRdp* rdp, wStream* s,
 			Stream_Read_UINT32(s, rdp->autodetect->netCharAverageRTT); /* averageRTT (4 bytes) */
 			break;
 
-		case 0x0880:
+		case RDP_NETCHAR_RESULTS_0x0880:
 
 			/* bandwidth and averageRTT fields are present (baseRTT field is not) */
 			if ((autodetectReqPdu->headerLength != 0x0E) || (Stream_GetRemainingLength(s) < 8))
@@ -508,7 +551,7 @@ static BOOL autodetect_recv_netchar_result(rdpRdp* rdp, wStream* s,
 			Stream_Read_UINT32(s, rdp->autodetect->netCharAverageRTT); /* averageRTT (4 bytes) */
 			break;
 
-		case 0x08C0:
+		case RDP_NETCHAR_RESULTS_0x08C0:
 
 			/* baseRTT, bandwidth, and averageRTT fields are present */
 			if ((autodetectReqPdu->headerLength != 0x12) || (Stream_GetRemainingLength(s) < 12))
@@ -548,8 +591,24 @@ int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s)
 	         autodetectReqPdu.headerLength, autodetectReqPdu.headerTypeId,
 	         autodetectReqPdu.sequenceNumber, autodetectReqPdu.requestType);
 
-	if (autodetectReqPdu.headerTypeId != TYPE_ID_AUTODETECT_REQUEST)
+	if (!rdp->settings->NetworkAutoDetect)
+	{
+		WLog_ERR(AUTODETECT_TAG,
+		         "Received a [MS-RDPBCGR] 2.2.14.1.1 RTT Measure Request (RDP_RTT_REQUEST) [%s] "
+		         "message but support was not enabled",
+		         autodetect_request_type_to_string(autodetectReqPdu.requestType));
 		return -1;
+	}
+
+	if (autodetectReqPdu.headerTypeId != TYPE_ID_AUTODETECT_REQUEST)
+	{
+		WLog_ERR(AUTODETECT_TAG,
+		         "Received a [MS-RDPBCGR] 2.2.14.1.1 RTT Measure Request (RDP_RTT_REQUEST) [%s] "
+		         "message with invalid headerTypeId=0x%04" PRIx16,
+		         autodetect_request_type_to_string(autodetectReqPdu.requestType),
+		         autodetectReqPdu.headerTypeId);
+		return -1;
+	}
 
 	switch (autodetectReqPdu.requestType)
 	{
@@ -578,9 +637,9 @@ int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s)
 			success = autodetect_recv_bandwidth_measure_stop(rdp, s, &autodetectReqPdu);
 			break;
 
-		case 0x0840:
-		case 0x0880:
-		case 0x08C0:
+		case RDP_NETCHAR_RESULTS_0x0840:
+		case RDP_NETCHAR_RESULTS_0x0880:
+		case RDP_NETCHAR_RESULTS_0x08C0:
 			/* Network Characteristics Result (RDP_NETCHAR_RESULT) - MS-RDPBCGR 2.2.14.1.5 */
 			success = autodetect_recv_netchar_result(rdp, s, &autodetectReqPdu);
 			break;
@@ -610,8 +669,24 @@ int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s)
 	         autodetectRspPdu.headerLength, autodetectRspPdu.headerTypeId,
 	         autodetectRspPdu.sequenceNumber, autodetectRspPdu.responseType);
 
-	if (autodetectRspPdu.headerTypeId != TYPE_ID_AUTODETECT_RESPONSE)
+	if (!rdp->settings->NetworkAutoDetect)
+	{
+		WLog_ERR(AUTODETECT_TAG,
+		         "Received a [MS-RDPBCGR] 2.2.14.2.1 RTT Measure Response (RDP_RTT_RESPONSE) [%s] "
+		         "message but support was not enabled",
+		         autodetect_request_type_to_string(autodetectRspPdu.responseType));
 		return -1;
+	}
+
+	if (autodetectRspPdu.headerTypeId != TYPE_ID_AUTODETECT_RESPONSE)
+	{
+		WLog_ERR(AUTODETECT_TAG,
+		         "Received a [MS-RDPBCGR] 2.2.14.2.1 RTT Measure Response (RDP_RTT_RESPONSE) [%s] "
+		         "message with invalid headerTypeId=0x%04" PRIx16,
+		         autodetect_request_type_to_string(autodetectRspPdu.responseType),
+		         autodetectRspPdu.headerTypeId);
+		return -1;
+	}
 
 	switch (autodetectRspPdu.responseType)
 	{
