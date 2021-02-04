@@ -879,7 +879,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	if (settings->NetworkAutoDetect)
 		settings->NetworkAutoDetect =
-		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT) ? TRUE : FALSE;
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT) ? TRUE : FALSE;
 
 	if (settings->SupportHeartbeatPdu)
 		settings->SupportHeartbeatPdu =
@@ -962,12 +962,6 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 	supportedColorDepths = RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT;
 	earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU;
 
-	if (settings->NetworkAutoDetect)
-		settings->ConnectionType = CONNECTION_TYPE_AUTODETECT;
-
-	if (settings->RemoteFxCodec && !settings->NetworkAutoDetect)
-		settings->ConnectionType = CONNECTION_TYPE_LAN;
-
 	connectionType = settings->ConnectionType;
 
 	if (connectionType)
@@ -980,7 +974,7 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 	}
 
 	if (settings->NetworkAutoDetect)
-		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT;
+		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT;
 
 	if (settings->SupportHeartbeatPdu)
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_HEARTBEAT_PDU;
