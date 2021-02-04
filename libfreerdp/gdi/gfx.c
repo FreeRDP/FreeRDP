@@ -218,6 +218,7 @@ static UINT gdi_StartFrame(RdpgfxClientContext* context, const RDPGFX_START_FRAM
 {
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 	gdi->inGfxFrame = TRUE;
+	gdi->frameId = startFrame->frameId;
 	return CHANNEL_RC_OK;
 }
 
@@ -823,7 +824,7 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* con
 	region16_init(&invalidRegion);
 	rc = progressive_decompress(surface->codecs->progressive, cmd->data, cmd->length, surface->data,
 	                            surface->format, surface->scanline, cmd->left, cmd->top,
-	                            &invalidRegion, cmd->surfaceId);
+	                            &invalidRegion, cmd->surfaceId, gdi->frameId);
 
 	if (rc < 0)
 	{

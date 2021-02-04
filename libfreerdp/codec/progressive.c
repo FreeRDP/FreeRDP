@@ -396,6 +396,7 @@ static void progressive_surface_context_free(PROGRESSIVE_SURFACE_CONTEXT* surfac
 	}
 
 	free(surface->tiles);
+	free(surface->updatedTileIndices);
 	free(surface);
 }
 
@@ -449,8 +450,9 @@ static PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfa
 	surface->gridHeight = (height + (64 - height % 64)) / 64;
 	surface->gridSize = surface->gridWidth * surface->gridHeight;
 	surface->tiles = (RFX_PROGRESSIVE_TILE*)calloc(surface->gridSize, sizeof(RFX_PROGRESSIVE_TILE));
+	surface->updatedTileIndices = (UINT32*)calloc(surface->gridSize, sizeof(UINT32));
 
-	if (!surface->tiles)
+	if (!surface->tiles || !surface->updatedTileIndices)
 	{
 		free(surface);
 		return NULL;
@@ -542,8 +544,14 @@ static BOOL progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* surfac
 		         region->numTiles, region->usedTiles);
 		return FALSE;
 	}
+	if (surface->numUpdatedTiles >= surface->gridSize)
+	{
+		WLog_ERR(TAG, "Invalid total tile count, maximum %" PRIu32, surface->gridSize);
+		return FALSE;
+	}
 
 	region->tiles[region->usedTiles++] = t;
+	surface->updatedTileIndices[surface->numUpdatedTiles++] = (UINT32)zIdx;
 	return TRUE;
 }
 
@@ -1732,7 +1740,7 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, wS
 		}
 	}
 
-	return (int)end - start;
+	return (int)(end - start);
 }
 
 static INLINE INT32 progressive_wb_sync(PROGRESSIVE_CONTEXT* progressive, wStream* s,
@@ -2146,10 +2154,11 @@ static INLINE INT32 progressive_wb_region(PROGRESSIVE_CONTEXT* progressive, wStr
 
 INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData, UINT32 SrcSize,
                              BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
-                             UINT32 nYDst, REGION16* invalidRegion, UINT16 surfaceId)
+                             UINT32 nYDst, REGION16* invalidRegion, UINT16 surfaceId,
+                             UINT32 frameId)
 {
 	INT32 rc = 1;
-	UINT16 i, j;
+	UINT32 i, j;
 	UINT16 blockType;
 	UINT32 blockLen;
 	UINT32 count = 0;
@@ -2170,6 +2179,12 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 		WLog_Print(progressive->log, WLOG_ERROR, "ProgressiveRegion no surface for %" PRIu16,
 		           surfaceId);
 		return -1001;
+	}
+
+	if (surface->frameId != frameId)
+	{
+		surface->frameId = frameId;
+		surface->numUpdatedTiles = 0;
 	}
 
 	Stream_StaticInit(&ss, sconv.bp, SrcSize);
@@ -2274,12 +2289,12 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 		region16_union_rect(&clippingRects, &clippingRects, &clippingRect);
 	}
 
-	for (i = 0; i < region->numTiles; i++)
+	for (i = 0; i < surface->numUpdatedTiles; i++)
 	{
 		UINT32 nbUpdateRects;
 		const RECTANGLE_16* updateRects;
 		RECTANGLE_16 updateRect;
-		RFX_PROGRESSIVE_TILE* tile = region->tiles[i];
+		RFX_PROGRESSIVE_TILE* tile = &surface->tiles[surface->updatedTileIndices[i]];
 
 		updateRect.left = nXDst + tile->x;
 		updateRect.top = nYDst + tile->y;
