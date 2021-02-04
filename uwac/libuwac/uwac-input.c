@@ -231,6 +231,8 @@ static void keyboard_handle_keymap(void* data, struct wl_keyboard* keyboard, uin
 	input->xkb.control_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Control");
 	input->xkb.alt_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Mod1");
 	input->xkb.shift_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Shift");
+	input->xkb.caps_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Lock");
+	input->xkb.num_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Mod2");
 }
 
 static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32_t serial,
@@ -425,6 +427,7 @@ static void keyboard_handle_modifiers(void* data, struct wl_keyboard* keyboard, 
                                       uint32_t mods_locked, uint32_t group)
 {
 	UwacSeat* input = data;
+	UwacKeyboardModifiersEvent *event;
 	xkb_mod_mask_t mask;
 
 	/* If we're not using a keymap, then we don't handle PC-style modifiers */
@@ -433,7 +436,7 @@ static void keyboard_handle_modifiers(void* data, struct wl_keyboard* keyboard, 
 
 	xkb_state_update_mask(input->xkb.state, mods_depressed, mods_latched, mods_locked, 0, 0, group);
 	mask = xkb_state_serialize_mods(input->xkb.state,
-	                                XKB_STATE_MODS_DEPRESSED | XKB_STATE_MODS_LATCHED);
+	                                XKB_STATE_MODS_DEPRESSED | XKB_STATE_MODS_LATCHED | XKB_STATE_MODS_LOCKED);
 	input->modifiers = 0;
 	if (mask & input->xkb.control_mask)
 		input->modifiers |= UWAC_MOD_CONTROL_MASK;
@@ -441,6 +444,17 @@ static void keyboard_handle_modifiers(void* data, struct wl_keyboard* keyboard, 
 		input->modifiers |= UWAC_MOD_ALT_MASK;
 	if (mask & input->xkb.shift_mask)
 		input->modifiers |= UWAC_MOD_SHIFT_MASK;
+	if (mask & input->xkb.caps_mask)
+		input->modifiers |= UWAC_MOD_CAPS_MASK;
+	if (mask & input->xkb.num_mask)
+		input->modifiers |= UWAC_MOD_NUM_MASK;
+
+	event = (UwacKeyboardModifiersEvent*)UwacDisplayNewEvent(input->display,
+	                                                         UWAC_EVENT_KEYBOARD_MODIFIERS);
+	if (!event)
+		return;
+
+	event->modifiers = input->modifiers;
 }
 
 static void set_repeat_info(UwacSeat* input, int32_t rate, int32_t delay)
