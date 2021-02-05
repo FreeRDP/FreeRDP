@@ -421,7 +421,7 @@ static LONG smartcard_ListReaderGroupsW_Call(SMARTCARD_DEVICE* smartcard,
 	status = ret.ReturnCode =
 	    SCardListReaderGroupsW(operation->hContext, (LPWSTR)&mszGroups, &cchGroups);
 	ret.msz = (BYTE*)mszGroups;
-	ret.cBytes = cchGroups;
+	ret.cBytes = cchGroups * sizeof(WCHAR);
 
 	if (status != SCARD_S_SUCCESS)
 		return status;
@@ -1718,6 +1718,9 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 
 		ret.cbAtrLen = cbAtrLen;
 	}
+
+	/* SCardStatusW returns number of characters, we need number of bytes */
+	ret.cBytes *= sizeof(WCHAR);
 
 	status = smartcard_pack_status_return(smartcard, irp->output, &ret, TRUE);
 	if (status != SCARD_S_SUCCESS)
