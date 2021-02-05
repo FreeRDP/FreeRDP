@@ -2254,6 +2254,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_KerberosRealm:
 			return settings->KerberosRealm;
 
+		case FreeRDP_KeyboardRemappingList:
+			return settings->KeyboardRemappingList;
+
 		case FreeRDP_NtlmSamFile:
 			return settings->NtlmSamFile;
 
@@ -2557,6 +2560,12 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 				free(settings->KerberosRealm);
 			settings->KerberosRealm = (val ? _strdup(val) : NULL);
 			return (!val || settings->KerberosRealm != NULL);
+
+		case FreeRDP_KeyboardRemappingList:
+			if (cleanup)
+				free(settings->KeyboardRemappingList);
+			settings->KeyboardRemappingList = (val ? _strdup(val) : NULL);
+			return (!val || settings->KeyboardRemappingList != NULL);
 
 		case FreeRDP_NtlmSamFile:
 			if (cleanup)

@@ -46,8 +46,9 @@
 
 #endif
 
-DWORD VIRTUAL_SCANCODE_TO_X11_KEYCODE[256][2];
-DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256];
+static DWORD VIRTUAL_SCANCODE_TO_X11_KEYCODE[256][2] = { 0 };
+static DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256] = { 0 };
+static DWORD REMAPPING_TABLE[0x10000] = { 0 };
 
 int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 {
@@ -163,13 +164,60 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 	return keyboardLayoutId;
 }
 
+DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId, const char* keyboardRemappingList)
+{
+	DWORD rc = freerdp_keyboard_init(keyboardLayoutId);
+
+	memset(REMAPPING_TABLE, 0, sizeof(REMAPPING_TABLE));
+	if (keyboardRemappingList)
+	{
+		char* copy = _strdup(keyboardRemappingList);
+		char* context = NULL;
+		char* token;
+		if (!copy)
+			goto fail;
+		token = strtok_s(copy, ",", &context);
+		while (token)
+		{
+			DWORD key, value;
+			int rc = sscanf(token, "%" PRIu32 "=%" PRIu32, &key, &value);
+			if (rc != 2)
+				rc = sscanf(token, "%" PRIx32 "=%" PRIx32 "", &key, &value);
+			if (rc != 2)
+				rc = sscanf(token, "%" PRIu32 "=%" PRIx32, &key, &value);
+			if (rc != 2)
+				rc = sscanf(token, "%" PRIx32 "=%" PRIu32, &key, &value);
+			if (rc != 2)
+				goto fail;
+			if (key >= ARRAYSIZE(REMAPPING_TABLE))
+				goto fail;
+			REMAPPING_TABLE[key] = value;
+			token = strtok_s(NULL, ",", &context);
+		}
+	fail:
+		free(copy);
+	}
+	return rc;
+}
+
 DWORD freerdp_keyboard_get_rdp_scancode_from_x11_keycode(DWORD keycode)
 {
-	DEBUG_KBD("x11 keycode: %02" PRIX32 " -> rdp code: %02" PRIX8 "%s", keycode,
-	          RDP_SCANCODE_CODE(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]),
-	          RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]) ? " extended" : "");
+	const DWORD scancode = X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode];
+	const DWORD remapped = REMAPPING_TABLE[scancode];
+	DEBUG_KBD("x11 keycode: %02" PRIX32 " -> rdp code: [%04" PRIx16 "] %02" PRIX8 "%s", keycode,
+	          scancode, RDP_SCANCODE_CODE(scancode),
+	          RDP_SCANCODE_EXTENDED(scancode) ? " extended" : "");
 
-	return X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode];
+	if (remapped != 0)
+	{
+		DEBUG_KBD("remapped scancode: [%04" PRIx16 "] %02" PRIX8 "[%s] -> [%04" PRIx16 "] %02" PRIX8
+		          "[%s]",
+		          scancode, RDP_SCANCODE_CODE(scancode),
+		          RDP_SCANCODE_EXTENDED(scancode) ? " extended" : "", remapped,
+		          RDP_SCANCODE_CODE(remapped), RDP_SCANCODE_EXTENDED(remapped) ? " extended" : "");
+		return remapped;
+	}
+	return scancode;
 }
 
 DWORD freerdp_keyboard_get_x11_keycode_from_rdp_scancode(DWORD scancode, BOOL extended)

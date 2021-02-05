@@ -801,6 +801,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_BitmapCacheV2CellInfo (2502)
 #define FreeRDP_ColorPointerFlag (2560)
 #define FreeRDP_PointerCacheSize (2561)
+#define FreeRDP_KeyboardRemappingList (2622)
 #define FreeRDP_KeyboardCodePage (2623)
 #define FreeRDP_KeyboardLayout (2624)
 #define FreeRDP_KeyboardType (2625)
@@ -1335,9 +1336,10 @@ struct rdp_settings
 	/* Pointer Capabilities */
 	ALIGN64 BOOL ColorPointerFlag;   /* 2560 */
 	ALIGN64 UINT32 PointerCacheSize; /* 2561 */
-	UINT64 padding2624[2623 - 2562]; /* 2562 */
+	UINT64 padding2624[2622 - 2562]; /* 2562 */
 
 	/* Input Capabilities */
+	ALIGN64 char* KeyboardRemappingList; /* 2622 */
 	ALIGN64 UINT32 KeyboardCodePage;    /* 2623 */
 	ALIGN64 UINT32 KeyboardLayout;      /* 2624 */
 	ALIGN64 UINT32 KeyboardType;        /* 2625 */

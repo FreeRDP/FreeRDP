@@ -334,6 +334,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_ImeFileName,
 	FreeRDP_KerberosKdc,
 	FreeRDP_KerberosRealm,
+	FreeRDP_KeyboardRemappingList,
 	FreeRDP_NtlmSamFile,
 	FreeRDP_Password,
 	FreeRDP_PasswordHash,

@@ -270,7 +270,8 @@ static BOOL wl_post_connect(freerdp* instance)
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
 	instance->update->DesktopResize = wl_resize_display;
-	freerdp_keyboard_init(instance->context->settings->KeyboardLayout);
+	freerdp_keyboard_init_ex(instance->context->settings->KeyboardLayout,
+	                         instance->context->settings->KeyboardRemappingList);
 
 	if (!(context->disp = wlf_disp_new(context)))
 		return FALSE;
