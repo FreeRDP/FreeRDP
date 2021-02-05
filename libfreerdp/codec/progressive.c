@@ -2154,8 +2154,16 @@ static INLINE INT32 progressive_wb_region(PROGRESSIVE_CONTEXT* progressive, wStr
 
 INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData, UINT32 SrcSize,
                              BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
-                             UINT32 nYDst, REGION16* invalidRegion, UINT16 surfaceId,
-                             UINT32 frameId)
+                             UINT32 nYDst, REGION16* invalidRegion, UINT16 surfaceId)
+{
+	return progressive_decompress_ex(progressive, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
+	                                 nXDst, nYDst, invalidRegion, surfaceId, 0);
+}
+
+INT32 progressive_decompress_ex(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
+                                UINT32 SrcSize, BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
+                                UINT32 nXDst, UINT32 nYDst, REGION16* invalidRegion,
+                                UINT16 surfaceId, UINT32 frameId)
 {
 	INT32 rc = 1;
 	UINT32 i, j;
@@ -2470,8 +2478,14 @@ static BOOL progressive_rfx_write_message_progressive_simple(RFX_CONTEXT* contex
 }
 
 int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData, UINT32 SrcSize,
-                         UINT32 SrcFormat, UINT32 Width, UINT32 Height, UINT32 ScanLine,
-                         const REGION16* invalidRegion, BYTE** ppDstData, UINT32* pDstSize)
+                         BYTE** ppDstData, UINT32* pDstSize)
+{
+	return -1;
+}
+
+int progressive_compress_ex(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData, UINT32 SrcSize,
+                            UINT32 SrcFormat, UINT32 Width, UINT32 Height, UINT32 ScanLine,
+                            const REGION16* invalidRegion, BYTE** ppDstData, UINT32* pDstSize)
 {
 	BOOL rc;
 	int res = -6;

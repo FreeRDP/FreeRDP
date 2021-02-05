@@ -970,11 +970,11 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 		rect.width = nWidth;
 		rect.height = nHeight;
 
-		if (!(messages = rfx_encode_messages(
+		if (!(messages = rfx_encode_messages_ex(
 		          encoder->rfx, &rect, 1, pSrcData, settings->DesktopWidth, settings->DesktopHeight,
 		          nSrcStep, &numMessages, settings->MultifragMaxRequestSize)))
 		{
-			WLog_ERR(TAG, "rfx_encode_messages failed");
+			WLog_ERR(TAG, "rfx_encode_messages_ex failed");
 			return FALSE;
 		}
 

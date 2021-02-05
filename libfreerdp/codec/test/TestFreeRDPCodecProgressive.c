@@ -840,8 +840,8 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 	for (pass = 0; pass < count; pass++)
 	{
 		status =
-		    progressive_decompress(progressive, files[pass].buffer, files[pass].size, g_DstData,
-		                           PIXEL_FORMAT_XRGB32, g_DstStep, 0, 0, NULL, 0, 0);
+		    progressive_decompress_ex(progressive, files[pass].buffer, files[pass].size, g_DstData,
+		                              PIXEL_FORMAT_XRGB32, g_DstStep, 0, 0, NULL, 0, 0);
 		printf("ProgressiveDecompress: status: %d pass: %d\n", status, pass + 1);
 		region = &(progressive->region);
 
@@ -1068,17 +1068,17 @@ static BOOL test_encode_decode(const char* path)
 		goto fail;
 
 	// Progressive encode
-	rc = progressive_compress(progressiveEnc, image->data, image->scanline * image->height,
-	                          ColorFormat, image->width, image->height, image->scanline, NULL,
-	                          &dstData, &dstSize);
+	rc = progressive_compress_ex(progressiveEnc, image->data, image->scanline * image->height,
+	                             ColorFormat, image->width, image->height, image->scanline, NULL,
+	                             &dstData, &dstSize);
 
 	// Progressive decode
 	rc = progressive_create_surface_context(progressiveDec, 0, image->width, image->height);
 	if (rc <= 0)
 		goto fail;
 
-	rc = progressive_decompress(progressiveDec, dstData, dstSize, resultData, ColorFormat,
-	                            image->scanline, 0, 0, &invalidRegion, 0, 0);
+	rc = progressive_decompress_ex(progressiveDec, dstData, dstSize, resultData, ColorFormat,
+	                               image->scanline, 0, 0, &invalidRegion, 0, 0);
 	if (rc < 0)
 		goto fail;
 
