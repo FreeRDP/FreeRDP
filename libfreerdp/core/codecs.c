@@ -29,7 +29,7 @@
 
 BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width, UINT32 height)
 {
-	if ((flags & FREERDP_CODEC_INTERLEAVED))
+	if ((flags & FREERDP_CODEC_INTERLEAVED) && !codecs->interleaved)
 	{
 		bitmap_interleaved_context_free(codecs->interleaved);
 
@@ -40,7 +40,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 		}
 	}
 
-	if ((flags & FREERDP_CODEC_PLANAR))
+	if ((flags & FREERDP_CODEC_PLANAR) && !codecs->planar)
 	{
 		freerdp_bitmap_planar_context_free(codecs->planar);
 
@@ -51,7 +51,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 		}
 	}
 
-	if ((flags & FREERDP_CODEC_NSCODEC))
+	if ((flags & FREERDP_CODEC_NSCODEC) && !codecs->nsc)
 	{
 		nsc_context_free(codecs->nsc);
 
@@ -62,7 +62,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 		}
 	}
 
-	if ((flags & FREERDP_CODEC_REMOTEFX))
+	if ((flags & FREERDP_CODEC_REMOTEFX) && !codecs->rfx)
 	{
 		rfx_context_free(codecs->rfx);
 
@@ -73,7 +73,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 		}
 	}
 
-	if ((flags & FREERDP_CODEC_CLEARCODEC))
+	if ((flags & FREERDP_CODEC_CLEARCODEC) && !codecs->clear)
 	{
 		clear_context_free(codecs->clear);
 
@@ -84,11 +84,11 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 		}
 	}
 
-	if (flags & FREERDP_CODEC_ALPHACODEC)
+	if ((flags & FREERDP_CODEC_ALPHACODEC))
 	{
 	}
 
-	if ((flags & FREERDP_CODEC_PROGRESSIVE))
+	if ((flags & FREERDP_CODEC_PROGRESSIVE) && !codecs->progressive)
 	{
 		progressive_context_free(codecs->progressive);
 
@@ -100,7 +100,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 	}
 
 #ifdef WITH_GFX_H264
-	if ((flags & (FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444)))
+	if ((flags & (FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444)) && !codecs->h264)
 	{
 		h264_context_free(codecs->h264);
 
