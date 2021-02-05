@@ -520,12 +520,12 @@ struct rdp_gdi
 	BOOL graphicsReset; /* deprecated, remove with FreeRDP v3 */
 	BOOL suppressOutput;
 	UINT16 outputSurfaceId;
-	UINT32 frameId;
 	RdpgfxClientContext* gfx;
 	VideoClientContext* video;
 	GeometryClientContext* geometry;
 
 	wLog* log;
+	UINT32 frameId;
 };
 
 #ifdef __cplusplus
