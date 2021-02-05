@@ -60,8 +60,11 @@ extern "C"
 	FREERDP_API UINT rdpei_server_init(RdpeiServerContext* context);
 	FREERDP_API UINT rdpei_server_handle_messages(RdpeiServerContext* context);
 
-	FREERDP_API UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version,
-	                                            UINT32 features);
+	FREERDP_API WINPR_DEPRECATED(UINT rdpei_server_send_sc_ready(RdpeiServerContext* context,
+	                                                             UINT32 version));
+
+	FREERDP_API UINT rdpei_server_send_sc_ready_ex(RdpeiServerContext* context, UINT32 version,
+	                                               UINT32 features);
 	FREERDP_API UINT rdpei_server_suspend(RdpeiServerContext* context);
 	FREERDP_API UINT rdpei_server_resume(RdpeiServerContext* context);
 

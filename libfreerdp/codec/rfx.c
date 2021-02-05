@@ -1722,9 +1722,9 @@ free_messages:
 	return NULL;
 }
 
-RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, size_t numRects,
-                                 const BYTE* data, UINT32 width, UINT32 height, UINT32 scanline,
-                                 size_t* numMessages, size_t maxDataSize)
+RFX_MESSAGE* rfx_encode_messages_ex(RFX_CONTEXT* context, const RFX_RECT* rects, size_t numRects,
+                                    const BYTE* data, UINT32 width, UINT32 height, UINT32 scanline,
+                                    size_t* numMessages, size_t maxDataSize)
 {
 	RFX_MESSAGE* message;
 	RFX_MESSAGE* messageList;
@@ -1883,4 +1883,16 @@ BOOL rfx_compose_message(RFX_CONTEXT* context, wStream* s, const RFX_RECT* rects
 	message->freeRects = TRUE;
 	rfx_message_free(context, message);
 	return ret;
+}
+
+RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, int numRects,
+                                 const BYTE* data, int width, int height, int scanline,
+                                 int* numMessages, int maxDataSize)
+{
+	size_t tmp;
+	RFX_MESSAGE* msg = rfx_encode_messages_ex(context, rects, numRects, data, width, height,
+	                                          scanline, &tmp, maxDataSize);
+	if (numMessages)
+		*numMessages = tmp;
+	return msg;
 }

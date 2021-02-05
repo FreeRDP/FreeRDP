@@ -190,10 +190,14 @@ extern "C"
 	                                            size_t numRects, const BYTE* data, UINT32 width,
 	                                            UINT32 height, size_t scanline);
 
-	FREERDP_API RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects,
-	                                             size_t numRects, const BYTE* data, UINT32 width,
-	                                             UINT32 height, UINT32 scanline,
-	                                             size_t* numMessages, size_t maxDataSize);
+	FREERDP_API WINPR_DEPRECATED(RFX_MESSAGE* rfx_encode_messages(
+	    RFX_CONTEXT* context, const RFX_RECT* rects, int numRects, const BYTE* data, int width,
+	    int height, int scanline, int* numMessages, int maxDataSize));
+
+	FREERDP_API RFX_MESSAGE* rfx_encode_messages_ex(RFX_CONTEXT* context, const RFX_RECT* rects,
+	                                                size_t numRects, const BYTE* data, UINT32 width,
+	                                                UINT32 height, UINT32 scanline,
+	                                                size_t* numMessages, size_t maxDataSize);
 	FREERDP_API BOOL rfx_write_message(RFX_CONTEXT* context, wStream* s,
 	                                   const RFX_MESSAGE* message);
 

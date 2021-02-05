@@ -593,12 +593,17 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 	return error;
 }
 
+UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version)
+{
+	return rdpei_server_send_sc_ready_ex(context, version, 0);
+}
+
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UINT32 features)
+UINT rdpei_server_send_sc_ready_ex(RdpeiServerContext* context, UINT32 version, UINT32 features)
 {
 	ULONG written;
 	RdpeiServerPrivate* priv = context->priv;
