@@ -825,13 +825,13 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* con
 	}
 
 	region16_init(&invalidRegion);
-	rc = progressive_decompress(surface->codecs->progressive, cmd->data, cmd->length, surface->data,
-	                            surface->format, surface->scanline, cmd->left, cmd->top,
-	                            &invalidRegion, cmd->surfaceId, gdi->frameId);
+	rc = progressive_decompress_ex(surface->codecs->progressive, cmd->data, cmd->length,
+	                               surface->data, surface->format, surface->scanline, cmd->left,
+	                               cmd->top, &invalidRegion, cmd->surfaceId, gdi->frameId);
 
 	if (rc < 0)
 	{
-		WLog_ERR(TAG, "progressive_decompress failure: %" PRId32 "", rc);
+		WLog_ERR(TAG, "progressive_decompress_ex failure: %" PRId32 "", rc);
 		region16_uninit(&invalidRegion);
 		return ERROR_INTERNAL_ERROR;
 	}
