@@ -1,3 +1,33 @@
+# 2021-02-05 Version 2.3.0
+
+Important notes:
+* CMake option WITH_PROXY_MODULES is currently experimental, do not use in
+production.
+* The clipboard struct FILEDESCRIPTOR was replaced by FILEDESCRIPTORW with
+  proper data types. They are binary compatible and the former is kept for
+  compatibility but compilers will emit warnings.
+
+Noteworthy changes:
+* Progressive codec improvements. Reduces graphical glitches against windows
+and ogon servers
+* Fixed +glyph-cache, now working properly without disconnects
+* Huge file support in clipboard
+* XWayland support for xfreerdp (keyboard grabbing)
+* Improved wlfreerdp (wayland client)
+* Option to allow keyboard scancodes to be remapped manually
+
+Fixed issues:
+* #6626: Fixed parsing of FastGlyph order.
+* #6624: Added support for xwayland keyboard grab
+* #6492: Added clipboard CB_HUGE_FILE_SUPPORT_ENABLED flag
+* #6428: Improve NLA error code logging.
+* #6416: Http gateway message support
+* #6753: List of pull requests to backport for stable-next
+
+For a complete and detailed change log since the last release run:
+git log 2.2.0..2.3.0
+
+
 # 2020-07-20 Version 2.2.0
 
 Important notes:
