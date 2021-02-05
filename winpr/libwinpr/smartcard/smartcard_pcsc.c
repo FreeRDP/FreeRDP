@@ -2237,11 +2237,15 @@ static LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dwAttrI
 	if (!hContext)
 		return SCARD_E_INVALID_HANDLE;
 
-	if (!pbAttr || !pcbAttrLen)
+	if (!pcbAttrLen)
 		return SCARD_E_INVALID_PARAMETER;
 
 	if (*pcbAttrLen == SCARD_AUTOALLOCATE)
+	{
+		if (!pbAttr)
+			return SCARD_E_INVALID_PARAMETER;
 		pcbAttrLenAlloc = TRUE;
+	}
 
 	pcsc_cbAttrLen = pcbAttrLenAlloc ? PCSC_SCARD_AUTOALLOCATE : (PCSC_DWORD)*pcbAttrLen;
 
@@ -2252,17 +2256,18 @@ static LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dwAttrI
 
 		if (status == SCARD_S_SUCCESS)
 		{
-			*conv.ppb = (BYTE*)calloc(1, pcsc_cbAttrLen);
+			BYTE* tmp = (BYTE*)calloc(1, pcsc_cbAttrLen);
 
-			if (!*conv.ppb)
+			if (!tmp)
 				return SCARD_E_NO_MEMORY;
 
-			status = g_PCSC.pfnSCardGetAttrib(hCard, pcsc_dwAttrId, *conv.ppb, &pcsc_cbAttrLen);
+			status = g_PCSC.pfnSCardGetAttrib(hCard, pcsc_dwAttrId, tmp, &pcsc_cbAttrLen);
 
 			if (status != SCARD_S_SUCCESS)
-				free(*conv.ppb);
+				free(tmp);
 			else
-				PCSC_AddMemoryBlock(hContext, *conv.ppb);
+				PCSC_AddMemoryBlock(hContext, tmp);
+			*conv.ppb = tmp;
 		}
 	}
 	else
@@ -2298,6 +2303,8 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 	if (!hContext)
 		return SCARD_E_INVALID_HANDLE;
 
+	if (!pcbAttrLen)
+		return SCARD_E_INVALID_PARAMETER;
 	cbAttrLen = *pcbAttrLen;
 	*pcbAttrLen = SCARD_AUTOALLOCATE;
 	status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A,
@@ -2407,12 +2414,18 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 		BYTE** ppb;
 	} conv;
 
+	if (NULL == pcbAttrLen)
+		return SCARD_E_INVALID_PARAMETER;
+
 	conv.pb = pbAttr;
 
 	cbAttrLen = *pcbAttrLen;
 
 	if (*pcbAttrLen == SCARD_AUTOALLOCATE)
 	{
+		if (NULL == pbAttr)
+			return SCARD_E_INVALID_PARAMETER;
+
 		pcbAttrLenAlloc = TRUE;
 		*conv.ppb = NULL;
 	}
@@ -2444,22 +2457,25 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 	{
 		if (dwAttrId == SCARD_ATTR_VENDOR_NAME)
 		{
-			const char* vendorName;
+			if (pbAttr)
+			{
+				const char* vendorName;
 
-			/**
-			 * pcsc-lite adds a null terminator to the vendor name,
-			 * while WinSCard doesn't. Strip the null terminator.
-			 */
+				/**
+				 * pcsc-lite adds a null terminator to the vendor name,
+				 * while WinSCard doesn't. Strip the null terminator.
+				 */
 
-			if (pcbAttrLenAlloc)
-				vendorName = (char*)*conv.ppb;
-			else
-				vendorName = (char*)pbAttr;
+				if (pcbAttrLenAlloc)
+					vendorName = (char*)*conv.ppb;
+				else
+					vendorName = (char*)pbAttr;
 
-			if (vendorName)
-				*pcbAttrLen = strlen(vendorName);
-			else
-				*pcbAttrLen = 0;
+				if (vendorName)
+					*pcbAttrLen = strnlen(vendorName, *pcbAttrLen);
+				else
+					*pcbAttrLen = 0;
+			}
 		}
 	}
 	else
@@ -2852,7 +2868,9 @@ static LONG WINAPI PCSC_SCardGetDeviceTypeIdA(SCARDCONTEXT hContext, LPCSTR szRe
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szReaderName);
 	WINPR_UNUSED(pdwDeviceTypeId);
-	return SCARD_E_UNSUPPORTED_FEATURE;
+	if (pdwDeviceTypeId)
+		*pdwDeviceTypeId = SCARD_READER_TYPE_USB;
+	return SCARD_S_SUCCESS;
 }
 
 static LONG WINAPI PCSC_SCardGetDeviceTypeIdW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
@@ -2861,8 +2879,8 @@ static LONG WINAPI PCSC_SCardGetDeviceTypeIdW(SCARDCONTEXT hContext, LPCWSTR szR
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szReaderName);
 	if (pdwDeviceTypeId)
-		*pdwDeviceTypeId = 0;
-	return SCARD_E_UNSUPPORTED_FEATURE;
+		*pdwDeviceTypeId = SCARD_READER_TYPE_USB;
+	return SCARD_S_SUCCESS;
 }
 
 static LONG WINAPI PCSC_SCardGetReaderDeviceInstanceIdA(SCARDCONTEXT hContext, LPCSTR szReaderName,
