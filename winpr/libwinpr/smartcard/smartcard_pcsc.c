@@ -2289,8 +2289,6 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 	char* pbAttrA = NULL;
 	WCHAR* pbAttrW = NULL;
 	SCARDCONTEXT hContext;
-	char* friendlyNameA = NULL;
-	WCHAR* friendlyNameW = NULL;
 	LONG status = SCARD_S_SUCCESS;
 	union {
 		WCHAR** ppw;
@@ -2336,69 +2334,59 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 	}
 
 	length = strlen(namePCSC);
-	friendlyNameA = namePCSC;
-	namePCSC = NULL;
 
 	if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W)
 	{
+		WCHAR* friendlyNameW = NULL;
 		/* length here includes null terminator */
-		int rc = ConvertToUnicode(CP_UTF8, 0, (char*)friendlyNameA, -1, &friendlyNameW, 0);
-		free(friendlyNameA);
+		int rc = ConvertToUnicode(CP_UTF8, 0, (char*)namePCSC, -1, &friendlyNameW, 0);
 		if ((rc < 0) || (!friendlyNameW))
-		{
-			free(namePCSC);
-			return SCARD_E_NO_MEMORY;
-		}
-		length = (size_t)rc;
-
-		if (cbAttrLen == SCARD_AUTOALLOCATE)
-		{
-			*conv.ppw = friendlyNameW;
-			*pcbAttrLen = length * 2;
-			PCSC_AddMemoryBlock(hContext, *conv.ppb);
-		}
+			status = SCARD_E_NO_MEMORY;
 		else
 		{
-			if ((length * 2) > cbAttrLen)
+			length = (size_t)rc;
+
+			if (cbAttrLen == SCARD_AUTOALLOCATE)
 			{
-				free(friendlyNameW);
-				free(namePCSC);
-				return SCARD_E_INSUFFICIENT_BUFFER;
+				*conv.ppw = friendlyNameW;
+				*pcbAttrLen = length * 2;
+				PCSC_AddMemoryBlock(hContext, friendlyNameW);
 			}
 			else
 			{
-				CopyMemory(pbAttr, (BYTE*)friendlyNameW, (length * 2));
-				*pcbAttrLen = length * 2;
+				if ((length * 2) > cbAttrLen)
+					status = SCARD_E_INSUFFICIENT_BUFFER;
+				else
+				{
+					CopyMemory(pbAttr, (BYTE*)friendlyNameW, (length * 2));
+					*pcbAttrLen = length * 2;
+				}
 				free(friendlyNameW);
 			}
 		}
+		free(namePCSC);
 	}
 	else
 	{
 		if (cbAttrLen == SCARD_AUTOALLOCATE)
 		{
-			*conv.ppb = (BYTE*)friendlyNameA;
+			*conv.ppb = (BYTE*)namePCSC;
 			*pcbAttrLen = length;
-			PCSC_AddMemoryBlock(hContext, *conv.ppb);
+			PCSC_AddMemoryBlock(hContext, namePCSC);
 		}
 		else
 		{
 			if ((length + 1) > cbAttrLen)
-			{
-				free(friendlyNameA);
-				free(namePCSC);
-				return SCARD_E_INSUFFICIENT_BUFFER;
-			}
+				status = SCARD_E_INSUFFICIENT_BUFFER;
 			else
 			{
-				CopyMemory(pbAttr, (BYTE*)friendlyNameA, length + 1);
+				CopyMemory(pbAttr, (BYTE*)namePCSC, length + 1);
 				*pcbAttrLen = length;
-				free(friendlyNameA);
 			}
+			free(namePCSC);
 		}
 	}
 
-	free(namePCSC);
 	return status;
 }
 
