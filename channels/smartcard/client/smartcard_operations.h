@@ -112,7 +112,6 @@ typedef struct _longAndMultiString_Return
 
 typedef struct _longAndMultiString_Return ListReaders_Return;
 
-
 typedef struct _EstablishContext_Return
 {
 	LONG ReturnCode;
@@ -472,7 +471,6 @@ typedef struct _ReadCacheW_Call
 	ReadCache_Common Common;
 	/* [string] */ WCHAR* szLookupName;
 } ReadCacheW_Call;
-
 
 typedef struct _WriteCache_Common
 {

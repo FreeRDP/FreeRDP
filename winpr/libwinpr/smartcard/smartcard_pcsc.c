@@ -2209,7 +2209,6 @@ static LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, LPC
 	}
 
 	return PCSC_MapErrorCodeToWinSCard(status);
-	;
 }
 
 static LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr,

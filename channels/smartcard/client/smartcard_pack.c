@@ -3101,8 +3101,6 @@ LONG smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 	UINT32 cbRecvPci = ret->pioRecvPci ? ret->pioRecvPci->cbPciLength : 0;
 
 	smartcard_trace_transmit_return(smartcard, ret);
-	if (ret->ReturnCode != SCARD_S_SUCCESS)
-		return ret->ReturnCode;
 
 	if (!ret->pbRecvBuffer)
 		cbRecvLength = 0;
