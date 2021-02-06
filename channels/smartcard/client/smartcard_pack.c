@@ -3298,14 +3298,14 @@ LONG smartcard_unpack_set_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, S
 	Stream_Read_UINT32(s, call->dwAttrId);
 	Stream_Read_UINT32(s, call->cbAttrLen);
 
+	if (!smartcard_ndr_pointer_read(s, &index, &ndrPtr))
+		return ERROR_INVALID_DATA;
+
 	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 		return status;
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
 		return status;
-
-	if (!smartcard_ndr_pointer_read(s, &index, &ndrPtr))
-		return ERROR_INVALID_DATA;
 
 	if (ndrPtr)
 	{
