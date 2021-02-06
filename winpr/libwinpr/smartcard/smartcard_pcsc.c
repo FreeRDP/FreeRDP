@@ -1765,45 +1765,6 @@ static LONG WINAPI PCSC_SCardCancelTransaction(SCARDHANDLE hCard)
 	return SCARD_S_SUCCESS;
 }
 
-static LONG WINAPI PCSC_SCardState(SCARDHANDLE hCard, LPDWORD pdwState, LPDWORD pdwProtocol,
-                                   LPBYTE pbAtr, LPDWORD pcbAtrLen)
-{
-	PCSC_DWORD cchReaderLen;
-	SCARDCONTEXT hContext = 0;
-	LPSTR mszReaderNames = NULL;
-	PCSC_LONG status = SCARD_S_SUCCESS;
-	PCSC_SCARDHANDLE* pCard = NULL;
-	PCSC_DWORD pcsc_dwState = 0;
-	PCSC_DWORD pcsc_dwProtocol = 0;
-	PCSC_DWORD pcsc_cbAtrLen = (PCSC_DWORD)*pcbAtrLen;
-
-	if (!g_PCSC.pfnSCardStatus)
-		return PCSC_SCard_LogError("g_PCSC.pfnSCardStatus");
-
-	pCard = PCSC_GetCardHandleData(hCard);
-
-	if (!pCard)
-		return SCARD_E_INVALID_VALUE;
-
-	PCSC_WaitForCardAccess(0, hCard, pCard->shared);
-	hContext = PCSC_GetCardContextFromHandle(hCard);
-
-	if (!hContext)
-		return SCARD_E_INVALID_VALUE;
-
-	cchReaderLen = SCARD_AUTOALLOCATE;
-	status = g_PCSC.pfnSCardStatus(hCard, (LPSTR)&mszReaderNames, &cchReaderLen, &pcsc_dwState,
-	                               &pcsc_dwProtocol, pbAtr, &pcsc_cbAtrLen);
-
-	if (mszReaderNames)
-		PCSC_SCardFreeMemory_Internal(hContext, mszReaderNames);
-
-	*pdwState = (DWORD)pcsc_dwState;
-	*pdwProtocol = PCSC_ConvertProtocolsToWinSCard((DWORD)pcsc_dwProtocol);
-	*pcbAtrLen = (DWORD)pcsc_cbAtrLen;
-	return PCSC_MapErrorCodeToWinSCard(status);
-}
-
 /*
  * PCSC returns a string but Windows SCardStatus requires the return to be a multi string.
  * Therefore extra length checks and additional buffer allocation is required
@@ -1977,6 +1938,48 @@ out_fail:
 	free(tReader);
 	free(tATR);
 	return (LONG)status;
+}
+
+static LONG WINAPI PCSC_SCardState(SCARDHANDLE hCard, LPDWORD pdwState, LPDWORD pdwProtocol,
+                                   LPBYTE pbAtr, LPDWORD pcbAtrLen)
+{
+	DWORD cchReaderLen;
+	SCARDCONTEXT hContext = 0;
+	LPSTR mszReaderNames = NULL;
+	PCSC_LONG status = SCARD_S_SUCCESS;
+	PCSC_SCARDHANDLE* pCard = NULL;
+	DWORD pcsc_dwState = 0;
+	DWORD pcsc_dwProtocol = 0;
+	DWORD pcsc_cbAtrLen = 0;
+	if (pcbAtrLen)
+		pcsc_cbAtrLen = (PCSC_DWORD)*pcbAtrLen;
+
+	if (!g_PCSC.pfnSCardStatus)
+		return PCSC_SCard_LogError("g_PCSC.pfnSCardStatus");
+
+	pCard = PCSC_GetCardHandleData(hCard);
+
+	if (!pCard)
+		return SCARD_E_INVALID_VALUE;
+
+	PCSC_WaitForCardAccess(0, hCard, pCard->shared);
+	hContext = PCSC_GetCardContextFromHandle(hCard);
+
+	if (!hContext)
+		return SCARD_E_INVALID_VALUE;
+
+	cchReaderLen = SCARD_AUTOALLOCATE;
+	status = PCSC_SCardStatus_Internal(hCard, (LPSTR)&mszReaderNames, &cchReaderLen, &pcsc_dwState,
+	                                   &pcsc_dwProtocol, pbAtr, &pcsc_cbAtrLen, FALSE);
+
+	if (mszReaderNames)
+		PCSC_SCardFreeMemory_Internal(hContext, mszReaderNames);
+
+	*pdwState = (DWORD)pcsc_dwState;
+	*pdwProtocol = PCSC_ConvertProtocolsToWinSCard((DWORD)pcsc_dwProtocol);
+	if (pcbAtrLen)
+		*pcbAtrLen = (DWORD)pcsc_cbAtrLen;
+	return PCSC_MapErrorCodeToWinSCard(status);
 }
 
 static LONG WINAPI PCSC_SCardStatusA(SCARDHANDLE hCard, LPSTR mszReaderNames, LPDWORD pcchReaderLen,
