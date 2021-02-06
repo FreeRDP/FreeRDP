@@ -1706,6 +1706,9 @@ SCARDHANDLE smartcard_scard_handle_native_from_redir(SMARTCARD_DEVICE* smartcard
 	SCARDHANDLE hCard = 0;
 	WINPR_UNUSED(smartcard);
 
+	if (handle->cbHandle == 0)
+		return hCard;
+
 	if (handle->cbHandle != sizeof(ULONG_PTR))
 	{
 		WLog_WARN(TAG,

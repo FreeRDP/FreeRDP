@@ -2768,7 +2768,12 @@ static LONG WINAPI PCSC_SCardWriteCacheA(SCARDCONTEXT hContext, UUID* CardIdenti
 {
 	PCSC_CACHE_ITEM* data;
 	PCSC_SCARDCONTEXT* ctx = PCSC_GetCardContextData(hContext);
-	char* id = card_id_and_name_a(CardIdentifier, LookupName);
+	char* id;
+
+	if (!ctx)
+		return SCARD_E_FILE_NOT_FOUND;
+
+	id = card_id_and_name_a(CardIdentifier, LookupName);
 
 	if (!id)
 		return SCARD_E_NO_MEMORY;
@@ -2802,7 +2807,11 @@ static LONG WINAPI PCSC_SCardWriteCacheW(SCARDCONTEXT hContext, UUID* CardIdenti
 {
 	PCSC_CACHE_ITEM* data;
 	PCSC_SCARDCONTEXT* ctx = PCSC_GetCardContextData(hContext);
-	char* id = card_id_and_name_w(CardIdentifier, LookupName);
+	char* id;
+	if (!ctx)
+		return SCARD_E_FILE_NOT_FOUND;
+
+	id = card_id_and_name_w(CardIdentifier, LookupName);
 
 	if (!id)
 		return SCARD_E_NO_MEMORY;

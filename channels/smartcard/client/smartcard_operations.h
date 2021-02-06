@@ -285,14 +285,14 @@ typedef struct _Connect_Common
 
 typedef struct _ConnectA_Call
 {
-	/* [string] */ CHAR* szReader;
 	Connect_Common Common;
+	/* [string] */ CHAR* szReader;
 } ConnectA_Call;
 
 typedef struct _ConnectW_Call
 {
-	/* [string] */ WCHAR* szReader;
 	Connect_Common Common;
+	/* [string] */ WCHAR* szReader;
 } ConnectW_Call;
 
 typedef struct _Connect_Return
@@ -455,14 +455,14 @@ typedef struct _ReadCache_Common
 
 typedef struct _ReadCacheA_Call
 {
-	/* [string] */ char* szLookupName;
 	ReadCache_Common Common;
+	/* [string] */ char* szLookupName;
 } ReadCacheA_Call;
 
 typedef struct _ReadCacheW_Call
 {
-	/* [string] */ WCHAR* szLookupName;
 	ReadCache_Common Common;
+	/* [string] */ WCHAR* szLookupName;
 } ReadCacheW_Call;
 
 typedef struct _ReadCache_Return
@@ -483,15 +483,21 @@ typedef struct _WriteCache_Common
 
 typedef struct _WriteCacheA_Call
 {
-	/* [string] */ char* szLookupName;
 	WriteCache_Common Common;
+	/* [string] */ char* szLookupName;
 } WriteCacheA_Call;
 
 typedef struct _WriteCacheW_Call
 {
-	/* [string] */ WCHAR* szLookupName;
 	WriteCache_Common Common;
+	/* [string] */ WCHAR* szLookupName;
 } WriteCacheW_Call;
+
+typedef struct _Handles_Call
+{
+	REDIR_SCARDCONTEXT hContext;
+	REDIR_SCARDHANDLE hCard;
+} Handles_Call;
 
 #pragma pack(pop)
 
@@ -500,6 +506,7 @@ struct _SMARTCARD_OPERATION
 	IRP* irp;
 	union
 	{
+		Handles_Call handles;
 		Long_Call lng;
 		Context_Call context;
 		ContextAndStringA_Call contextAndStringA;
