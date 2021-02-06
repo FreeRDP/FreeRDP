@@ -22,6 +22,7 @@ set(${MODULE_PREFIX}_SRCS
 	smartcard_main.h
 	smartcard_pack.c
 	smartcard_pack.h
+	smartcard_operations.h
 	smartcard_operations.c)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DeviceServiceEntry")
