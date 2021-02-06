@@ -40,6 +40,19 @@
 #include "smartcard_operations.h"
 #include "smartcard_main.h"
 
+static LONG smartcard_call_to_operation_handle(SMARTCARD_DEVICE* smartcard,
+                                               SMARTCARD_OPERATION* operation)
+{
+	if (!smartcard || !operation)
+		return SCARD_E_INVALID_HANDLE;
+	operation->hContext =
+	    smartcard_scard_context_native_from_redir(smartcard, &(operation->call.handles.hContext));
+	operation->hCard =
+	    smartcard_scard_handle_native_from_redir(smartcard, &(operation->call.handles.hCard));
+
+	return SCARD_S_SUCCESS;
+}
+
 static LONG log_status_error(const char* tag, const char* what, LONG status)
 {
 	if (status != SCARD_S_SUCCESS)
@@ -219,19 +232,18 @@ static LONG smartcard_EstablishContext_Decode(SMARTCARD_DEVICE* smartcard,
                                               SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	EstablishContext_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 
 	irp = operation->irp;
-	status = smartcard_unpack_establish_context_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_establish_context_call(smartcard, irp->input,
+	                                                 &operation->call.establishContext);
 	if (status != SCARD_S_SUCCESS)
 	{
 		return log_status_error(TAG, "smartcard_unpack_establish_context_call", status);
 	}
-	operation->call.establishContext = call;
 
 	return SCARD_S_SUCCESS;
 }
@@ -285,19 +297,17 @@ static LONG smartcard_ReleaseContext_Decode(SMARTCARD_DEVICE* smartcard,
                                             SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	Context_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 
 	irp = operation->irp;
-	status = smartcard_unpack_context_call(smartcard, irp->input, &call, "ReleaseContext");
+	status = smartcard_unpack_context_call(smartcard, irp->input, &operation->call.context,
+	                                       "ReleaseContext");
 	if (status != SCARD_S_SUCCESS)
 		log_status_error(TAG, "smartcard_unpack_context_call", status);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.context = call;
 	return status;
 }
 
@@ -327,17 +337,15 @@ static LONG smartcard_IsValidContext_Decode(SMARTCARD_DEVICE* smartcard,
                                             SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	Context_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 
 	irp = operation->irp;
-	status = smartcard_unpack_context_call(smartcard, irp->input, &call, "IsValidContext");
+	status = smartcard_unpack_context_call(smartcard, irp->input, &operation->call.context,
+	                                       "IsValidContext");
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.context = call;
 	return status;
 }
 
@@ -355,17 +363,14 @@ static LONG smartcard_ListReaderGroupsA_Decode(SMARTCARD_DEVICE* smartcard,
                                                SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ListReaderGroups_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_list_reader_groups_call(smartcard, irp->input, &call, FALSE);
+	status = smartcard_unpack_list_reader_groups_call(smartcard, irp->input,
+	                                                  &operation->call.listReaderGroups, FALSE);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.listReaderGroups = call;
-	operation->call.listReaderGroups = call;
 	return status;
 }
 
@@ -401,16 +406,14 @@ static LONG smartcard_ListReaderGroupsW_Decode(SMARTCARD_DEVICE* smartcard,
                                                SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ListReaderGroups_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_list_reader_groups_call(smartcard, irp->input, &call, TRUE);
+	status = smartcard_unpack_list_reader_groups_call(smartcard, irp->input,
+	                                                  &operation->call.listReaderGroups, TRUE);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.listReaderGroups = call;
 	return status;
 }
 
@@ -535,16 +538,14 @@ static LONG smartcard_ListReadersA_Decode(SMARTCARD_DEVICE* smartcard,
                                           SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ListReaders_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_list_readers_call(smartcard, irp->input, &call, FALSE);
+	status = smartcard_unpack_list_readers_call(smartcard, irp->input, &operation->call.listReaders,
+	                                            FALSE);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.listReaders = call;
 	return status;
 }
 
@@ -594,16 +595,14 @@ static LONG smartcard_ListReadersW_Decode(SMARTCARD_DEVICE* smartcard,
                                           SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ListReaders_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_list_readers_call(smartcard, irp->input, &call, TRUE);
+	status = smartcard_unpack_list_readers_call(smartcard, irp->input, &operation->call.listReaders,
+	                                            TRUE);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.listReaders = call;
 	return status;
 }
 
@@ -611,16 +610,14 @@ static LONG smartcard_context_and_two_strings_a_Decode(SMARTCARD_DEVICE* smartca
                                                        SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ContextAndTwoStringA_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_context_and_two_strings_a_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_context_and_two_strings_a_call(smartcard, irp->input,
+	                                                         &operation->call.contextAndTwoStringA);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.contextAndTwoStringA = call;
 	return status;
 }
 
@@ -628,16 +625,14 @@ static LONG smartcard_context_and_two_strings_w_Decode(SMARTCARD_DEVICE* smartca
                                                        SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ContextAndTwoStringW_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_context_and_two_strings_w_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_context_and_two_strings_w_call(smartcard, irp->input,
+	                                                         &operation->call.contextAndTwoStringW);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.contextAndTwoStringW = call;
 	return status;
 }
 
@@ -645,16 +640,14 @@ static LONG smartcard_context_and_string_a_Decode(SMARTCARD_DEVICE* smartcard,
                                                   SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ContextAndStringA_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_context_and_string_a_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_context_and_string_a_call(smartcard, irp->input,
+	                                                    &operation->call.contextAndStringA);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.contextAndStringA = call;
 	return status;
 }
 
@@ -662,16 +655,14 @@ static LONG smartcard_context_and_string_w_Decode(SMARTCARD_DEVICE* smartcard,
                                                   SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ContextAndStringW_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_context_and_string_w_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_context_and_string_w_call(smartcard, irp->input,
+	                                                    &operation->call.contextAndStringW);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.contextAndStringW = call;
 	return status;
 }
 
@@ -679,16 +670,14 @@ static LONG smartcard_LocateCardsA_Decode(SMARTCARD_DEVICE* smartcard,
                                           SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	LocateCardsA_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_locate_cards_a_call(smartcard, irp->input, &call);
+	status =
+	    smartcard_unpack_locate_cards_a_call(smartcard, irp->input, &operation->call.locateCardsA);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.locateCardsA = call;
 	return status;
 }
 
@@ -696,16 +685,14 @@ static LONG smartcard_LocateCardsW_Decode(SMARTCARD_DEVICE* smartcard,
                                           SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	LocateCardsW_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_locate_cards_w_call(smartcard, irp->input, &call);
+	status =
+	    smartcard_unpack_locate_cards_w_call(smartcard, irp->input, &operation->call.locateCardsW);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.locateCardsW = call;
 	return status;
 }
 
@@ -1215,16 +1202,14 @@ static LONG smartcard_GetStatusChangeA_Decode(SMARTCARD_DEVICE* smartcard,
                                               SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	GetStatusChangeA_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_get_status_change_a_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_get_status_change_a_call(smartcard, irp->input,
+	                                                   &operation->call.getStatusChangeA);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.getStatusChangeA = call;
 	return status;
 }
 
@@ -1280,16 +1265,14 @@ static LONG smartcard_GetStatusChangeW_Decode(SMARTCARD_DEVICE* smartcard,
                                               SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	GetStatusChangeW_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_get_status_change_w_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_get_status_change_w_call(smartcard, irp->input,
+	                                                   &operation->call.getStatusChangeW);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.getStatusChangeW = call;
 	return status;
 }
 
@@ -1344,16 +1327,14 @@ static LONG smartcard_GetStatusChangeW_Call(SMARTCARD_DEVICE* smartcard,
 static LONG smartcard_Cancel_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	Context_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_context_call(smartcard, irp->input, &call, "Cancel");
+	status =
+	    smartcard_unpack_context_call(smartcard, irp->input, &operation->call.context, "Cancel");
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.context = call;
 	return status;
 }
 
@@ -1370,17 +1351,13 @@ static LONG smartcard_Cancel_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATI
 static LONG smartcard_ConnectA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ConnectA_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_connect_a_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_connect_a_call(smartcard, irp->input, &operation->call.connectA);
 
-	operation->hContext =
-	    smartcard_scard_context_native_from_redir(smartcard, &(call.Common.hContext));
-	operation->call.connectA = call;
 	return status;
 }
 
@@ -1417,17 +1394,13 @@ out_fail:
 static LONG smartcard_ConnectW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ConnectW_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_connect_w_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_connect_w_call(smartcard, irp->input, &operation->call.connectW);
 
-	operation->hContext =
-	    smartcard_scard_context_native_from_redir(smartcard, &(call.Common.hContext));
-	operation->call.connectW = call;
 	return status;
 }
 
@@ -1464,17 +1437,13 @@ out_fail:
 static LONG smartcard_Reconnect_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	Reconnect_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_reconnect_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_reconnect_call(smartcard, irp->input, &operation->call.reconnect);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.reconnect = call;
 	return status;
 }
 
@@ -1497,18 +1466,14 @@ static LONG smartcard_Reconnect_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 static LONG smartcard_Disconnect_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	HCardAndDisposition_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status =
-	    smartcard_unpack_hcard_and_disposition_call(smartcard, irp->input, &call, "Disconnect");
+	status = smartcard_unpack_hcard_and_disposition_call(
+	    smartcard, irp->input, &operation->call.hCardAndDisposition, "Disconnect");
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.hCardAndDisposition = call;
 	return status;
 }
 
@@ -1528,18 +1493,14 @@ static LONG smartcard_BeginTransaction_Decode(SMARTCARD_DEVICE* smartcard,
                                               SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	HCardAndDisposition_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_hcard_and_disposition_call(smartcard, irp->input, &call,
-	                                                     "BeginTransaction");
+	status = smartcard_unpack_hcard_and_disposition_call(
+	    smartcard, irp->input, &operation->call.hCardAndDisposition, "BeginTransaction");
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.hCardAndDisposition = call;
 	return status;
 }
 
@@ -1558,18 +1519,14 @@ static LONG smartcard_EndTransaction_Decode(SMARTCARD_DEVICE* smartcard,
                                             SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	HCardAndDisposition_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status =
-	    smartcard_unpack_hcard_and_disposition_call(smartcard, irp->input, &call, "EndTransaction");
+	status = smartcard_unpack_hcard_and_disposition_call(
+	    smartcard, irp->input, &operation->call.hCardAndDisposition, "EndTransaction");
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.hCardAndDisposition = call;
 	return status;
 }
 
@@ -1588,17 +1545,13 @@ static LONG smartcard_EndTransaction_Call(SMARTCARD_DEVICE* smartcard,
 static LONG smartcard_State_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	State_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_state_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_state_call(smartcard, irp->input, &operation->call.state);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.state = call;
 	return status;
 }
 
@@ -1622,17 +1575,13 @@ static LONG smartcard_State_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATIO
 static LONG smartcard_StatusA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	Status_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_status_call(smartcard, irp->input, &call, FALSE);
+	status = smartcard_unpack_status_call(smartcard, irp->input, &operation->call.status, FALSE);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.status = call;
 	return status;
 }
 
@@ -1684,17 +1633,13 @@ static LONG smartcard_StatusA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 static LONG smartcard_StatusW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	Status_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_status_call(smartcard, irp->input, &call, TRUE);
+	status = smartcard_unpack_status_call(smartcard, irp->input, &operation->call.status, TRUE);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.status = call;
 	return status;
 }
 
@@ -1746,17 +1691,13 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 static LONG smartcard_Transmit_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	Transmit_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_transmit_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_transmit_call(smartcard, irp->input, &operation->call.transmit);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.transmit = call;
 	return status;
 }
 
@@ -1802,17 +1743,13 @@ static LONG smartcard_Transmit_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 static LONG smartcard_Control_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	Control_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_control_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_control_call(smartcard, irp->input, &operation->call.control);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.control = call;
 	return status;
 }
 
@@ -1844,34 +1781,26 @@ static LONG smartcard_Control_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 static LONG smartcard_GetAttrib_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	GetAttrib_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_get_attrib_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_get_attrib_call(smartcard, irp->input, &operation->call.getAttrib);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.getAttrib = call;
 	return status;
 }
 
 static LONG smartcard_SetAttrib_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	SetAttrib_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_set_attrib_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_set_attrib_call(smartcard, irp->input, &operation->call.setAttrib);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.setAttrib = call;
 	return status;
 }
 
@@ -1930,7 +1859,6 @@ static LONG smartcard_SetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 static LONG smartcard_AccessStartedEvent_Decode(SMARTCARD_DEVICE* smartcard,
                                                 SMARTCARD_OPERATION* operation)
 {
-	Long_Call call = { 0 };
 	IRP* irp;
 	WINPR_UNUSED(smartcard);
 	irp = operation->irp;
@@ -1945,8 +1873,8 @@ static LONG smartcard_AccessStartedEvent_Decode(SMARTCARD_DEVICE* smartcard,
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
-	Stream_Read_INT32(irp->input, call.LongValue); /* Unused (4 bytes) */
-	operation->call.lng = call;
+	Stream_Read_INT32(irp->input, operation->call.lng.LongValue); /* Unused (4 bytes) */
+
 	return SCARD_S_SUCCESS;
 }
 
@@ -1969,16 +1897,14 @@ static LONG smartcard_LocateCardsByATRA_Decode(SMARTCARD_DEVICE* smartcard,
                                                SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	LocateCardsByATRA_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_locate_cards_by_atr_a_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_locate_cards_by_atr_a_call(smartcard, irp->input,
+	                                                     &operation->call.locateCardsByATRA);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.locateCardsByATRA = call;
 	return status;
 }
 
@@ -1986,51 +1912,41 @@ static LONG smartcard_LocateCardsByATRW_Decode(SMARTCARD_DEVICE* smartcard,
                                                SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	LocateCardsByATRW_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_locate_cards_by_atr_w_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_locate_cards_by_atr_w_call(smartcard, irp->input,
+	                                                     &operation->call.locateCardsByATRW);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.locateCardsByATRW = call;
 	return status;
 }
 
 static LONG smartcard_ReadCacheA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ReadCacheA_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_read_cache_a_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_read_cache_a_call(smartcard, irp->input, &operation->call.readCacheA);
 
-	operation->hContext =
-	    smartcard_scard_context_native_from_redir(smartcard, &(call.Common.hContext));
-	operation->call.readCacheA = call;
 	return status;
 }
 
 static LONG smartcard_ReadCacheW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	ReadCacheW_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
 
-	status = smartcard_unpack_read_cache_w_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_read_cache_w_call(smartcard, irp->input, &operation->call.readCacheW);
 
-	operation->hContext =
-	    smartcard_scard_context_native_from_redir(smartcard, &(call.Common.hContext));
-	operation->call.readCacheW = call;
 	return status;
 }
 
@@ -2038,17 +1954,14 @@ static LONG smartcard_WriteCacheA_Decode(SMARTCARD_DEVICE* smartcard,
                                          SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	WriteCacheA_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_write_cache_a_call(smartcard, irp->input, &call);
+	status =
+	    smartcard_unpack_write_cache_a_call(smartcard, irp->input, &operation->call.writeCacheA);
 
-	operation->hContext =
-	    smartcard_scard_context_native_from_redir(smartcard, &(call.Common.hContext));
-	operation->call.writeCacheA = call;
 	return status;
 }
 
@@ -2056,17 +1969,14 @@ static LONG smartcard_WriteCacheW_Decode(SMARTCARD_DEVICE* smartcard,
                                          SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	WriteCacheW_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_write_cache_w_call(smartcard, irp->input, &call);
+	status =
+	    smartcard_unpack_write_cache_w_call(smartcard, irp->input, &operation->call.writeCacheW);
 
-	operation->hContext =
-	    smartcard_scard_context_native_from_redir(smartcard, &(call.Common.hContext));
-	operation->call.writeCacheW = call;
 	return status;
 }
 
@@ -2074,17 +1984,14 @@ static LONG smartcard_GetTransmitCount_Decode(SMARTCARD_DEVICE* smartcard,
                                               SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	GetTransmitCount_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_get_transmit_count_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_get_transmit_count_call(smartcard, irp->input,
+	                                                  &operation->call.getTransmitCount);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-	operation->call.getTransmitCount = call;
 	return status;
 }
 
@@ -2102,17 +2009,15 @@ static LONG smartcard_GetReaderIcon_Decode(SMARTCARD_DEVICE* smartcard,
                                            SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	GetReaderIcon_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
 
-	status = smartcard_unpack_get_reader_icon_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_get_reader_icon_call(smartcard, irp->input,
+	                                               &operation->call.getReaderIcon);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.getReaderIcon = call;
 	return status;
 }
 
@@ -2120,16 +2025,14 @@ static LONG smartcard_GetDeviceTypeId_Decode(SMARTCARD_DEVICE* smartcard,
                                              SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	GetDeviceTypeId_Call call = { 0 };
 	IRP* irp;
 
 	if (!operation || !operation->irp)
 		return STATUS_NO_MEMORY;
 	irp = operation->irp;
-	status = smartcard_unpack_get_device_type_id_call(smartcard, irp->input, &call);
+	status = smartcard_unpack_get_device_type_id_call(smartcard, irp->input,
+	                                                  &operation->call.getDeviceTypeId);
 
-	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
-	operation->call.getDeviceTypeId = call;
 	return status;
 }
 
@@ -2483,6 +2386,8 @@ LONG smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard,
 			status = SCARD_F_INTERNAL_ERROR;
 			break;
 	}
+
+	smartcard_call_to_operation_handle(smartcard, operation);
 
 	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
 	    (ioControlCode != SCARD_IOCTL_RELEASETARTEDEVENT))
