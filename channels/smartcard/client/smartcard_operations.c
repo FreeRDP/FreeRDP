@@ -1150,7 +1150,7 @@ static LONG smartcard_GetTransmitCount_Call(SMARTCARD_DEVICE* smartcard,
 	GetTransmitCount_Return ret = { 0 };
 	IRP* irp = operation->irp;
 
-	ret.ReturnCode = SCardGetTransmitCount(operation->hContext, &ret.cTransmitCount);
+	ret.ReturnCode = SCardGetTransmitCount(operation->hCard, &ret.cTransmitCount);
 	log_status_error(TAG, "SCardGetTransmitCount", ret.ReturnCode);
 	status = smartcard_pack_get_transmit_count_return(smartcard, irp->output, &ret);
 	if (status != SCARD_S_SUCCESS)
@@ -1398,7 +1398,7 @@ static LONG smartcard_ConnectA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 		call->Common.dwPreferredProtocols = SCARD_PROTOCOL_Tx;
 	}
 
-	status = ret.ReturnCode =
+	ret.ReturnCode =
 	    SCardConnectA(operation->hContext, (char*)call->szReader, call->Common.dwShareMode,
 	                  call->Common.dwPreferredProtocols, &hCard, &ret.dwActiveProtocol);
 	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), operation->hContext);
@@ -1445,7 +1445,7 @@ static LONG smartcard_ConnectW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 		call->Common.dwPreferredProtocols = SCARD_PROTOCOL_Tx;
 	}
 
-	status = ret.ReturnCode =
+	ret.ReturnCode =
 	    SCardConnectW(operation->hContext, (WCHAR*)call->szReader, call->Common.dwShareMode,
 	                  call->Common.dwPreferredProtocols, &hCard, &ret.dwActiveProtocol);
 	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), operation->hContext);
@@ -2083,6 +2083,7 @@ static LONG smartcard_GetTransmitCount_Decode(SMARTCARD_DEVICE* smartcard,
 	status = smartcard_unpack_get_transmit_count_call(smartcard, irp->input, &call);
 
 	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
+	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
 	operation->call.getTransmitCount = call;
 	return status;
 }
