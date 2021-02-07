@@ -2287,8 +2287,8 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 {
 	size_t length = 0;
 	char* namePCSC = NULL;
-	DWORD cbAttrLen = 0;
 	char* pbAttrA = NULL;
+	DWORD cbAttrLen = 0;
 	WCHAR* pbAttrW = NULL;
 	SCARDCONTEXT hContext;
 	LONG status = SCARD_S_SUCCESS;
@@ -2312,7 +2312,6 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 
 	if (status != SCARD_S_SUCCESS)
 	{
-		pbAttrA = NULL;
 		*pcbAttrLen = SCARD_AUTOALLOCATE;
 		status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_W,
 		                                      (LPBYTE)&pbAttrW, pcbAttrLen);
@@ -2320,9 +2319,8 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 		if (status != SCARD_S_SUCCESS)
 			return status;
 
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)pbAttrW, (int)*pcbAttrLen, (char**)&pbAttrA, 0, NULL,
-		                   NULL);
-		namePCSC = pbAttrA;
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)pbAttrW, (int)*pcbAttrLen, (char**)&namePCSC, 0,
+		                   NULL, NULL);
 		PCSC_SCardFreeMemory_Internal(hContext, pbAttrW);
 	}
 	else
@@ -2382,7 +2380,7 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 				status = SCARD_E_INSUFFICIENT_BUFFER;
 			else
 			{
-				CopyMemory(pbAttr, (BYTE*)namePCSC, length + 1);
+				CopyMemory(pbAttr, namePCSC, length + 1);
 				*pcbAttrLen = length;
 			}
 			free(namePCSC);

@@ -2791,7 +2791,8 @@ LONG smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, G
 }
 
 LONG smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
-                                      const GetAttrib_Return* ret, DWORD dwAttrId)
+                                      const GetAttrib_Return* ret, DWORD dwAttrId,
+                                      DWORD cbAttrCallLen)
 {
 	LONG status;
 	DWORD cbAttrLen;
@@ -2802,10 +2803,12 @@ LONG smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 		return SCARD_F_INTERNAL_ERROR;
 
 	cbAttrLen = ret->cbAttrLen;
-	if (ret->ReturnCode == SCARD_E_INSUFFICIENT_BUFFER)
+	if (ret->ReturnCode != SCARD_S_SUCCESS)
 		cbAttrLen = 0;
 	if (cbAttrLen == SCARD_AUTOALLOCATE)
 		cbAttrLen = 0;
+	if (cbAttrCallLen < cbAttrLen)
+		cbAttrLen = cbAttrCallLen;
 	Stream_Write_UINT32(s, cbAttrLen); /* cbAttrLen (4 bytes) */
 	if (!smartcard_ndr_pointer_write(s, &index, cbAttrLen))
 		return SCARD_E_NO_MEMORY;
