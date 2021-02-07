@@ -2802,6 +2802,8 @@ LONG smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 		return SCARD_F_INTERNAL_ERROR;
 
 	cbAttrLen = ret->cbAttrLen;
+	if (ret->ReturnCode == SCARD_E_INSUFFICIENT_BUFFER)
+		cbAttrLen = 0;
 	if (cbAttrLen == SCARD_AUTOALLOCATE)
 		cbAttrLen = 0;
 	Stream_Write_UINT32(s, cbAttrLen); /* cbAttrLen (4 bytes) */
