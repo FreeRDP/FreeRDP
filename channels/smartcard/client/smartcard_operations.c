@@ -1813,23 +1813,24 @@ static LONG smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	if (!call->fpbAttrIsNULL)
 	{
 		autoAllocate = (call->cbAttrLen == SCARD_AUTOALLOCATE) ? TRUE : FALSE;
-		pbAttr = autoAllocate ? (LPBYTE) & (ret.pbAttr) : ret.pbAttr;
 		cbAttrLen = call->cbAttrLen;
-	}
+		if (cbAttrLen && !autoAllocate)
+		{
+			ret.pbAttr = (BYTE*)malloc(cbAttrLen);
 
-	if (cbAttrLen && !autoAllocate)
-	{
-		ret.pbAttr = (BYTE*)malloc(cbAttrLen);
+			if (!ret.pbAttr)
+				return SCARD_E_NO_MEMORY;
+		}
 
-		if (!ret.pbAttr)
-			return SCARD_E_NO_MEMORY;
+		pbAttr = autoAllocate ? (LPBYTE) & (ret.pbAttr) : ret.pbAttr;
 	}
 
 	ret.ReturnCode = SCardGetAttrib(operation->hCard, call->dwAttrId, pbAttr, &cbAttrLen);
 	log_status_error(TAG, "SCardGetAttrib", ret.ReturnCode);
 	ret.cbAttrLen = cbAttrLen;
 
-	status = smartcard_pack_get_attrib_return(smartcard, irp->output, &ret, call->dwAttrId);
+	status = smartcard_pack_get_attrib_return(smartcard, irp->output, &ret, call->dwAttrId,
+	                                          call->cbAttrLen);
 
 	if (autoAllocate)
 		SCardFreeMemory(operation->hContext, ret.pbAttr);
