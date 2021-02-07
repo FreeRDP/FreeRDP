@@ -383,13 +383,9 @@ static LONG smartcard_ListReaderGroupsA_Call(SMARTCARD_DEVICE* smartcard,
 	DWORD cchGroups = 0;
 	IRP* irp = operation->irp;
 	cchGroups = SCARD_AUTOALLOCATE;
-	status = ret.ReturnCode =
-	    SCardListReaderGroupsA(operation->hContext, (LPSTR)&mszGroups, &cchGroups);
+	ret.ReturnCode = SCardListReaderGroupsA(operation->hContext, (LPSTR)&mszGroups, &cchGroups);
 	ret.msz = (BYTE*)mszGroups;
 	ret.cBytes = cchGroups;
-
-	if (status != SCARD_S_SUCCESS)
-		return status;
 
 	status = smartcard_pack_list_reader_groups_return(smartcard, irp->output, &ret, FALSE);
 
