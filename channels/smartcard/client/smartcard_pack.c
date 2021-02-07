@@ -2373,8 +2373,9 @@ static LONG smartcard_unpack_reader_state_a(wStream* s, LPSCARD_READERSTATEA* pp
                                             UINT32 cReaders, UINT32* ptrIndex)
 {
 	UINT32 index, len;
-	LONG status = ERROR_INVALID_DATA;
+	LONG status = SCARD_E_NO_MEMORY;
 	LPSCARD_READERSTATEA rgReaderStates;
+	BOOL* states;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return status;
@@ -2386,12 +2387,14 @@ static LONG smartcard_unpack_reader_state_a(wStream* s, LPSCARD_READERSTATEA* pp
 		return status;
 	}
 	rgReaderStates = (LPSCARD_READERSTATEA)calloc(cReaders, sizeof(SCARD_READERSTATEA));
-
-	if (!rgReaderStates)
-		return STATUS_NO_MEMORY;
+	states = calloc(cReaders, sizeof(BOOL));
+	if (!rgReaderStates || !states)
+		goto fail;
+	status = ERROR_INVALID_DATA;
 
 	for (index = 0; index < cReaders; index++)
 	{
+		UINT32 ptr = UINT32_MAX;
 		LPSCARD_READERSTATEA readerState = &rgReaderStates[index];
 
 		if (Stream_GetRemainingLength(s) < 52)
@@ -2401,8 +2404,13 @@ static LONG smartcard_unpack_reader_state_a(wStream* s, LPSCARD_READERSTATEA* pp
 			goto fail;
 		}
 
-		if (!smartcard_ndr_pointer_read(s, ptrIndex, NULL))
-			goto fail;
+		if (!smartcard_ndr_pointer_read(s, ptrIndex, &ptr))
+		{
+			if (ptr != 0)
+				goto fail;
+		}
+		/* Ignore NULL length strings */
+		states[index] = ptr != 0;
 		Stream_Read_UINT32(s, readerState->dwCurrentState); /* dwCurrentState (4 bytes) */
 		Stream_Read_UINT32(s, readerState->dwEventState);   /* dwEventState (4 bytes) */
 		Stream_Read_UINT32(s, readerState->cbAtr);          /* cbAtr (4 bytes) */
@@ -2413,12 +2421,16 @@ static LONG smartcard_unpack_reader_state_a(wStream* s, LPSCARD_READERSTATEA* pp
 	{
 		LPSCARD_READERSTATEA readerState = &rgReaderStates[index];
 
+		/* Ignore empty strings */
+		if (!states[index])
+			continue;
 		status = smartcard_ndr_read_a(s, &readerState->szReader, NDR_PTR_FULL);
 		if (status != SCARD_S_SUCCESS)
 			goto fail;
 	}
 
 	*ppcReaders = rgReaderStates;
+	free(states);
 	return SCARD_S_SUCCESS;
 fail:
 	if (rgReaderStates)
@@ -2430,6 +2442,7 @@ fail:
 		}
 	}
 	free(rgReaderStates);
+	free(states);
 	return status;
 }
 
@@ -2437,8 +2450,9 @@ static LONG smartcard_unpack_reader_state_w(wStream* s, LPSCARD_READERSTATEW* pp
                                             UINT32 cReaders, UINT32* ptrIndex)
 {
 	UINT32 index, len;
-	LONG status = ERROR_INVALID_DATA;
+	LONG status = SCARD_E_NO_MEMORY;
 	LPSCARD_READERSTATEW rgReaderStates;
+	BOOL* states;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return status;
@@ -2451,12 +2465,15 @@ static LONG smartcard_unpack_reader_state_w(wStream* s, LPSCARD_READERSTATEW* pp
 	}
 
 	rgReaderStates = (LPSCARD_READERSTATEW)calloc(cReaders, sizeof(SCARD_READERSTATEW));
+	states = calloc(cReaders, sizeof(BOOL));
 
-	if (!rgReaderStates)
-		return STATUS_NO_MEMORY;
+	if (!rgReaderStates || !states)
+		goto fail;
 
+	status = ERROR_INVALID_DATA;
 	for (index = 0; index < cReaders; index++)
 	{
+		UINT32 ptr = UINT32_MAX;
 		LPSCARD_READERSTATEW readerState = &rgReaderStates[index];
 
 		if (Stream_GetRemainingLength(s) < 52)
@@ -2466,8 +2483,13 @@ static LONG smartcard_unpack_reader_state_w(wStream* s, LPSCARD_READERSTATEW* pp
 			goto fail;
 		}
 
-		if (!smartcard_ndr_pointer_read(s, ptrIndex, NULL))
-			goto fail;
+		if (!smartcard_ndr_pointer_read(s, ptrIndex, &ptr))
+		{
+			if (ptr != 0)
+				goto fail;
+		}
+		/* Ignore NULL length strings */
+		states[index] = ptr != 0;
 		Stream_Read_UINT32(s, readerState->dwCurrentState); /* dwCurrentState (4 bytes) */
 		Stream_Read_UINT32(s, readerState->dwEventState);   /* dwEventState (4 bytes) */
 		Stream_Read_UINT32(s, readerState->cbAtr);          /* cbAtr (4 bytes) */
@@ -2478,12 +2500,17 @@ static LONG smartcard_unpack_reader_state_w(wStream* s, LPSCARD_READERSTATEW* pp
 	{
 		LPSCARD_READERSTATEW readerState = &rgReaderStates[index];
 
+		/* Skip NULL pointers */
+		if (!states[index])
+			continue;
+
 		status = smartcard_ndr_read_w(s, &readerState->szReader, NDR_PTR_FULL);
 		if (status != SCARD_S_SUCCESS)
 			goto fail;
 	}
 
 	*ppcReaders = rgReaderStates;
+	free(states);
 	return SCARD_S_SUCCESS;
 fail:
 	if (rgReaderStates)
@@ -2495,6 +2522,7 @@ fail:
 		}
 	}
 	free(rgReaderStates);
+	free(states);
 	return status;
 }
 
