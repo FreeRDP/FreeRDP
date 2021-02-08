@@ -322,7 +322,8 @@ static BYTE* loadCalFile(rdpSettings* settings, const char* hostname, size_t* da
 	char *licenseStorePath = NULL, *calPath = NULL;
 	char calFilename[MAX_PATH];
 	char hash[41];
-	int length, status;
+	size_t length;
+	int status;
 	FILE* fp;
 	BYTE* ret = NULL;
 
@@ -1480,7 +1481,7 @@ BOOL license_answer_license_request(rdpLicense* license)
 {
 	wStream* s;
 	BYTE* license_data = NULL;
-	int license_size = 0;
+	size_t license_size = 0;
 	BOOL status;
 	char* username;
 
