@@ -71,6 +71,11 @@ extern "C"
 	BOOL firstActivation;
 	DEFINE_EVENT_END(Activated)
 
+	DEFINE_EVENT_BEGIN(ConnectionStateChange)
+	int state;
+	BOOL active;
+	DEFINE_EVENT_END(ConnectionStateChange)
+
 	DEFINE_EVENT_BEGIN(Terminate)
 	int code;
 	DEFINE_EVENT_END(Terminate)
