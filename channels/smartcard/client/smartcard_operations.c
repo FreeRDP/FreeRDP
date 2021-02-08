@@ -1275,6 +1275,7 @@ static LONG smartcard_GetStatusChangeW_Decode(SMARTCARD_DEVICE* smartcard,
 static LONG smartcard_GetStatusChangeW_Call(SMARTCARD_DEVICE* smartcard,
                                             SMARTCARD_OPERATION* operation)
 {
+	LONG status;
 	UINT32 index;
 	GetStatusChange_Return ret = { 0 };
 	LPSCARD_READERSTATEW rgReaderState = NULL;
@@ -1303,7 +1304,7 @@ static LONG smartcard_GetStatusChangeW_Call(SMARTCARD_DEVICE* smartcard,
 		           sizeof(ret.rgReaderStates[index].rgbAtr));
 	}
 
-	smartcard_pack_get_status_change_return(smartcard, irp->output, &ret, TRUE);
+	status = smartcard_pack_get_status_change_return(smartcard, irp->output, &ret, TRUE);
 
 	if (call->rgReaderStates)
 	{
@@ -1317,6 +1318,8 @@ static LONG smartcard_GetStatusChangeW_Call(SMARTCARD_DEVICE* smartcard,
 	}
 
 	free(ret.rgReaderStates);
+	if (status != SCARD_S_SUCCESS)
+		return status;
 	return ret.ReturnCode;
 }
 
@@ -2061,11 +2064,6 @@ static LONG smartcard_LocateCardsByATRA_Call(SMARTCARD_DEVICE* smartcard,
 	    SCardGetStatusChangeA(operation->hContext, 0x000001F4, states, call->cReaders);
 
 	log_status_error(TAG, "SCardGetStatusChangeA", status);
-	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED))
-	{
-		call->cReaders = 0;
-	}
-
 	for (i = 0; i < call->cAtrs; i++)
 	{
 		for (j = 0; j < call->cReaders; j++)
@@ -2108,8 +2106,6 @@ static LONG smartcard_LocateCardsByATRA_Call(SMARTCARD_DEVICE* smartcard,
 	free(states);
 
 	status = smartcard_pack_get_status_change_return(smartcard, irp->output, &ret, FALSE);
-	if (status != SCARD_S_SUCCESS)
-		return status;
 
 	if (call->rgReaderStates)
 	{
@@ -2129,6 +2125,8 @@ static LONG smartcard_LocateCardsByATRA_Call(SMARTCARD_DEVICE* smartcard,
 	}
 
 	free(ret.rgReaderStates);
+	if (status != SCARD_S_SUCCESS)
+		return status;
 	return ret.ReturnCode;
 }
 
