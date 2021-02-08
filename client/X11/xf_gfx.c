@@ -253,7 +253,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	if (!surface)
 		return CHANNEL_RC_NO_MEMORY;
 
-	surface->gdi.codecs = gdi->context->codecs;
+	surface->gdi.codecs = context->codecs;
 
 	if (!surface->gdi.codecs)
 	{

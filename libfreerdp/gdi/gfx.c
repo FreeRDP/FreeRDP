@@ -96,8 +96,7 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 
 	free(pSurfaceIds);
 
-	if (!freerdp_client_codecs_reset(gdi->context->codecs, FREERDP_CODEC_ALL, gdi->width,
-	                                 gdi->height))
+	if (!freerdp_client_codecs_reset(context->codecs, FREERDP_CODEC_ALL, gdi->width, gdi->height))
 		goto fail;
 
 	rc = CHANNEL_RC_OK;
@@ -950,14 +949,13 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
 	gdiGfxSurface* surface;
-	rdpGdi* gdi = (rdpGdi*)context->custom;
 	EnterCriticalSection(&context->mux);
 	surface = (gdiGfxSurface*)calloc(1, sizeof(gdiGfxSurface));
 
 	if (!surface)
 		goto fail;
 
-	surface->codecs = gdi->context->codecs;
+	surface->codecs = context->codecs;
 
 	if (!surface->codecs)
 	{
@@ -1472,9 +1470,6 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 		return FALSE;
 
 	context = gdi->context;
-	freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL,
-	                              context->settings->DesktopWidth,
-	                              context->settings->DesktopHeight);
 
 	gdi->gfx = gfx;
 	gfx->custom = (void*)gdi;
@@ -1499,6 +1494,12 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 	gfx->MapWindowForSurface = map;
 	gfx->UnmapWindowForSurface = unmap;
 	gfx->UpdateSurfaceArea = update;
+
+	gfx->codecs = codecs_new(context);
+	if (!gfx->codecs)
+		return FALSE;
+	freerdp_client_codecs_prepare(gfx->codecs, FREERDP_CODEC_ALL, context->settings->DesktopWidth,
+	                              context->settings->DesktopHeight);
 	InitializeCriticalSection(&gfx->mux);
 	PROFILER_CREATE(gfx->SurfaceProfiler, "GFX-PROFILER");
 
@@ -1522,6 +1523,7 @@ void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx)
 		return;
 
 	gfx->custom = NULL;
+	codecs_free(gfx->codecs);
 	DeleteCriticalSection(&gfx->mux);
 	PROFILER_PRINT_HEADER
 	PROFILER_PRINT(gfx->SurfaceProfiler)
