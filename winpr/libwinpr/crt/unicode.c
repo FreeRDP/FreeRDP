@@ -429,9 +429,8 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cb
 		{
 			free(*lpWideCharStr);
 			*lpWideCharStr = NULL;
+			status = 0;
 		}
-
-		status = 0;
 	}
 
 	return status;

@@ -411,6 +411,31 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	int ii;
 	size_t i;
 
+	/* Test static string buffers of differing sizes */
+	{
+		char name[] = "someteststring";
+		const WCHAR cmp[] = { L's', L'o', L'm', L'e', L't', L'e', L's', L't',
+			                  L's', L't', L'r', L'i', L'n', L'g', 0 };
+		WCHAR xname[128] = { 0 };
+		LPWSTR aname = NULL;
+		LPWSTR wname = &xname[0];
+		const size_t len = strnlen(name, ARRAYSIZE(name) - 1);
+		ii = ConvertToUnicode(CP_UTF8, 0, name, len, &wname, ARRAYSIZE(xname));
+		if (ii != len)
+			goto fail;
+
+		if (memcmp(wname, cmp, sizeof(cmp)) != 0)
+			goto fail;
+
+		ii = ConvertToUnicode(CP_UTF8, 0, name, len, &aname, 0);
+		if (ii != len)
+			goto fail;
+		ii = memcmp(aname, cmp, sizeof(cmp));
+		free(aname);
+		if (ii != 0)
+			goto fail;
+	}
+
 	/* Test unterminated unicode string:
 	 * ConvertToUnicode must always null-terminate, even if the src string isn't
 	 */
