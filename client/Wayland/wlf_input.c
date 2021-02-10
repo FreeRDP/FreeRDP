@@ -178,7 +178,10 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 	 */
 	for (i = 0; i < abs(direction); i++)
 	{
-		const uint32_t cflags = flags | 0x78;
+		uint32_t cflags = flags | 0x78;
+		/* Convert negative values to 9bit twos complement */
+		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
+			cflags = (flags & 0xFF00) | (0x100 - (cflags & 0xFF));
 		if (!freerdp_input_send_mouse_event(input, cflags, (UINT16)x, (UINT16)y))
 			return FALSE;
 	}
