@@ -207,7 +207,8 @@ static BOOL wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, 
 	if (delta < 0)
 	{
 		flags |= PTR_FLAGS_WHEEL_NEGATIVE;
-		delta = -delta;
+		/* 9bit twos complement, delta already negative */
+		delta = 0x100 + delta;
 	}
 
 	flags |= delta;
