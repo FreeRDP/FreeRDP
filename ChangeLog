@@ -1,4 +1,4 @@
-# 2021-02-05 Version 2.3.0
+# 2021-02-11 Version 2.3.0
 
 Important notes:
 * CMake option WITH_PROXY_MODULES is currently experimental, do not use in
@@ -8,6 +8,7 @@ production.
   compatibility but compilers will emit warnings.
 
 Noteworthy changes:
+* Websocket support for proxy connections
 * Progressive codec improvements. Reduces graphical glitches against windows
 and ogon servers
 * Fixed +glyph-cache, now working properly without disconnects
@@ -15,6 +16,10 @@ and ogon servers
 * XWayland support for xfreerdp (keyboard grabbing)
 * Improved wlfreerdp (wayland client)
 * Option to allow keyboard scancodes to be remapped manually
+* Improved mouse wheel behaviour when scrolling
+* Improved dynamic channel behaviour, more stable event detection
+* New connection state PubSub notification: Clients can now monitor current
+  connection state
 
 Fixed issues:
 * #6626: Fixed parsing of FastGlyph order.
