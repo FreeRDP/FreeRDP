@@ -760,7 +760,7 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 	assert(encodingContext != NULL);
 	while (TRUE)
 	{
-		switch (encodingContext->context.chunked.state)
+		switch (encodingContext->state)
 		{
 			case ChunkStateData:
 			{
