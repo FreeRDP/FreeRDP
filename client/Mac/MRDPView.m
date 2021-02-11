@@ -442,9 +442,10 @@ DWORD WINAPI mac_client_thread(void *param)
 	if (step > 0xFF)
 		step = 0xFF;
 
-	/* Negative rotation, so count down steps from top */
+	/* Negative rotation, so count down steps from top
+	 * 9bit twos complement */
 	if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
-		step = 0xFF - step;
+		step = 0x100 - step;
 
 	mf_scale_mouse_event(context, instance->input, flags | step, 0, 0);
 }

@@ -72,16 +72,6 @@
 
 @end
 
-/* Pointer Flags */
-#define PTR_FLAGS_WHEEL 0x0200
-#define PTR_FLAGS_WHEEL_NEGATIVE 0x0100
-#define PTR_FLAGS_MOVE 0x0800
-#define PTR_FLAGS_DOWN 0x8000
-#define PTR_FLAGS_BUTTON1 0x1000
-#define PTR_FLAGS_BUTTON2 0x2000
-#define PTR_FLAGS_BUTTON3 0x4000
-#define WheelRotationMask 0x01FF
-
 BOOL mac_pre_connect(freerdp *instance);
 BOOL mac_post_connect(freerdp *instance);
 void mac_post_disconnect(freerdp *instance);
