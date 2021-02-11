@@ -1772,8 +1772,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_PreconnectionBlob,
 		                                 file->PreconnectionBlob) ||
-		    !freerdp_settings_set_bool(settings, FreeRDP_SendPreconnectionPdu, TRUE) ||
-		    !freerdp_settings_set_bool(settings, FreeRDP_VmConnectMode, TRUE))
+		    !freerdp_settings_set_bool(settings, FreeRDP_SendPreconnectionPdu, TRUE))
 			return FALSE;
 	}
 
