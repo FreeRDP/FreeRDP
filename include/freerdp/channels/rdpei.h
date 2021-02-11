@@ -38,6 +38,9 @@ enum
 };
 
 /* Client Ready Flags */
+#define READY_FLAGS_SHOW_TOUCH_VISUALS 0x00000001          /* Deprecated */
+#define READY_FLAGS_DISABLE_TIMESTAMP_INJECTION 0x00000002 /* Deprecated */
+
 #define CS_READY_FLAGS_SHOW_TOUCH_VISUALS 0x00000001
 #define CS_READY_FLAGS_DISABLE_TIMESTAMP_INJECTION 0x00000002
 #define CS_READY_FLAGS_ENABLE_MULTIPEN_INJECTION 0x00000004
@@ -77,13 +80,18 @@ struct _RDPINPUT_CONTACT_DATA
 {
 	UINT32 contactId;
 	UINT16 fieldsPresent;
+	UINT16 reserved1;
 	INT32 x;
 	INT32 y;
 	UINT32 contactFlags;
 	INT16 contactRectLeft;
+	UINT16 reserved2;
 	INT16 contactRectTop;
+	UINT16 reserved3;
 	INT16 contactRectRight;
+	UINT16 reserved4;
 	INT16 contactRectBottom;
+	UINT16 reserved5;
 	UINT32 orientation;
 	UINT32 pressure;
 };
@@ -93,6 +101,7 @@ typedef struct _RDPINPUT_CONTACT_DATA RDPINPUT_CONTACT_DATA;
 struct _RDPINPUT_TOUCH_FRAME
 {
 	UINT16 contactCount;
+	UINT16 reserved1;
 	UINT64 frameOffset;
 	RDPINPUT_CONTACT_DATA* contacts;
 };
