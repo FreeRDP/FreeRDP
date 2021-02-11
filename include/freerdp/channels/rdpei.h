@@ -38,6 +38,9 @@ enum
 };
 
 /* Client Ready Flags */
+#define READY_FLAGS_SHOW_TOUCH_VISUALS 0x00000001          /* Deprecated */
+#define READY_FLAGS_DISABLE_TIMESTAMP_INJECTION 0x00000002 /* Deprecated */
+
 #define CS_READY_FLAGS_SHOW_TOUCH_VISUALS 0x00000001
 #define CS_READY_FLAGS_DISABLE_TIMESTAMP_INJECTION 0x00000002
 #define CS_READY_FLAGS_ENABLE_MULTIPEN_INJECTION 0x00000004
@@ -76,14 +79,14 @@ typedef enum
 struct _RDPINPUT_CONTACT_DATA
 {
 	UINT32 contactId;
-	UINT16 fieldsPresent;
+	UINT32 fieldsPresent;
 	INT32 x;
 	INT32 y;
 	UINT32 contactFlags;
-	INT16 contactRectLeft;
-	INT16 contactRectTop;
-	INT16 contactRectRight;
-	INT16 contactRectBottom;
+	INT32 contactRectLeft;
+	INT32 contactRectTop;
+	INT32 contactRectRight;
+	INT32 contactRectBottom;
 	UINT32 orientation;
 	UINT32 pressure;
 };
@@ -92,7 +95,7 @@ typedef struct _RDPINPUT_CONTACT_DATA RDPINPUT_CONTACT_DATA;
 /** @brief a frame containing contact points */
 struct _RDPINPUT_TOUCH_FRAME
 {
-	UINT16 contactCount;
+	UINT32 contactCount;
 	UINT64 frameOffset;
 	RDPINPUT_CONTACT_DATA* contacts;
 };

@@ -57,7 +57,6 @@ struct _rdpei_client_context
 	void* custom;
 
 	pcRdpeiGetVersion GetVersion;
-	pcRdpeiGetFeatures GetFeatures;
 
 	pcRdpeiAddContact AddContact;
 
@@ -65,14 +64,15 @@ struct _rdpei_client_context
 	pcRdpeiTouchUpdate TouchUpdate;
 	pcRdpeiTouchEnd TouchEnd;
 
+	pcRdpeiSuspendTouch SuspendTouch;
+	pcRdpeiResumeTouch ResumeTouch;
+
+	pcRdpeiGetFeatures GetFeatures;
 	pcRdpeiAddPen AddPen;
 
 	pcRdpeiPen PenBegin;
 	pcRdpeiPen PenUpdate;
 	pcRdpeiPen PenEnd;
-
-	pcRdpeiSuspendTouch SuspendTouch;
-	pcRdpeiResumeTouch ResumeTouch;
 };
 
 #endif /* FREERDP_CHANNEL_RDPEI_CLIENT_RDPEI_H */
