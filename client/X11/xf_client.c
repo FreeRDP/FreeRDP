@@ -299,8 +299,8 @@ static BOOL xf_desktop_resize(rdpContext* context)
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 		XSetForeground(xfc->display, xfc->gc, 0);
-		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, 0, 0, xfc->window->width,
-		               xfc->window->height);
+		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, 0, 0, settings->DesktopWidth,
+		               settings->DesktopHeight);
 	}
 
 	return TRUE;
