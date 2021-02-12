@@ -685,7 +685,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		if (!_settings->ServerRandom)
 			goto out_fail;
 
-		CopyMemory(_settings->ServerRandom, settings->ServerRandom, _settings->ServerRandomLength);
+		CopyMemory(_settings->ServerRandom, settings->ServerRandom, settings->ServerRandomLength);
 		_settings->ServerRandomLength = settings->ServerRandomLength;
 	}
 
@@ -696,7 +696,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		if (!_settings->ClientRandom)
 			goto out_fail;
 
-		CopyMemory(_settings->ClientRandom, settings->ClientRandom, _settings->ClientRandomLength);
+		CopyMemory(_settings->ClientRandom, settings->ClientRandom, settings->ClientRandomLength);
 		_settings->ClientRandomLength = settings->ClientRandomLength;
 	}
 
@@ -707,10 +707,11 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		if (!_settings->ServerCertificate)
 			goto out_fail;
 
-		CopyMemory(_settings->ServerCertificate, settings->ServerCertificate, _settings->ServerCertificateLength);
+		CopyMemory(_settings->ServerCertificate, settings->ServerCertificate,
+		           settings->ServerCertificateLength);
 		_settings->ServerCertificateLength = settings->ServerCertificateLength;
 	}
-	
+
 	if (settings->RdpServerCertificate)
 	{
 		_settings->RdpServerCertificate = certificate_clone(settings->RdpServerCertificate);
