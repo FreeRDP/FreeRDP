@@ -90,13 +90,19 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 			continue;
 		}
 
+		option_value = 1;
+
 		if (ai->ai_family == AF_INET)
 			sin_addr = &(((struct sockaddr_in*)ai->ai_addr)->sin_addr);
 		else
+		{
 			sin_addr = &(((struct sockaddr_in6*)ai->ai_addr)->sin6_addr);
+			if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&option_value,
+			               sizeof(option_value)) == -1)
+				WLog_ERR(TAG, "setsockopt");
+		}
 
 		inet_ntop(ai->ai_family, sin_addr, addr, sizeof(addr));
-		option_value = 1;
 
 		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void*)&option_value,
 		               sizeof(option_value)) == -1)
