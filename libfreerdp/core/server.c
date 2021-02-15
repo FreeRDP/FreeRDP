@@ -404,7 +404,6 @@ static BOOL WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, const 
                                   size_t size, UINT32 flags, size_t totalSize)
 {
 	UINT32 i;
-	BOOL status = FALSE;
 	rdpMcs* mcs = client->context->rdp->mcs;
 
 	for (i = 0; i < mcs->channelCount; i++)
@@ -414,12 +413,13 @@ static BOOL WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, const 
 			rdpPeerChannel* channel = (rdpPeerChannel*)mcs->channels[i].handle;
 
 			if (channel)
-				status = WTSProcessChannelData(channel, channelId, data, size, flags, totalSize);
-			break;
+				return WTSProcessChannelData(channel, channelId, data, size, flags, totalSize);
 		}
 	}
 
-	return status;
+	WLog_WARN(TAG, "[%s] unknown channelId %" PRIu16 " ignored", __FUNCTION__, channelId);
+
+	return TRUE;
 }
 
 void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* fds_count)
