@@ -421,14 +421,14 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 		LPWSTR wname = &xname[0];
 		const size_t len = strnlen(name, ARRAYSIZE(name) - 1);
 		ii = ConvertToUnicode(CP_UTF8, 0, name, len, &wname, ARRAYSIZE(xname));
-		if (ii != len)
+		if (ii != (SSIZE_T)len)
 			goto fail;
 
 		if (memcmp(wname, cmp, sizeof(cmp)) != 0)
 			goto fail;
 
 		ii = ConvertToUnicode(CP_UTF8, 0, name, len, &aname, 0);
-		if (ii != len)
+		if (ii != (SSIZE_T)len)
 			goto fail;
 		ii = memcmp(aname, cmp, sizeof(cmp));
 		free(aname);

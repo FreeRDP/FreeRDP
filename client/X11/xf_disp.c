@@ -144,7 +144,7 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 
 static BOOL xf_disp_queueResize(xfDispContext* xfDisp, UINT32 width, UINT32 height)
 {
-	if ((xfDisp->targetWidth == width) && (xfDisp->targetHeight == height))
+	if ((xfDisp->targetWidth == (INT64)width) && (xfDisp->targetHeight == (INT64)height))
 		return TRUE;
 	xfDisp->targetWidth = width;
 	xfDisp->targetHeight = height;
