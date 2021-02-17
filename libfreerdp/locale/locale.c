@@ -39,7 +39,7 @@
 
 #include <freerdp/locale/locale.h>
 
-#define LOCALE_LANGUAGE_LEN 4
+#define LOCALE_LANGUAGE_LEN 6
 #define LOCALE_COUNTRY_LEN 10
 
 struct _SYSTEM_LOCALE
@@ -739,8 +739,8 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, char* 
 static SYSTEM_LOCALE* freerdp_detect_system_locale(void)
 {
 	size_t i;
-	char language[4];
-	char country[10];
+	char language[LOCALE_LANGUAGE_LEN] = { 0 };
+	char country[LOCALE_COUNTRY_LEN] = { 0 };
 	SYSTEM_LOCALE* locale = NULL;
 	freerdp_get_system_language_and_country_codes(language, country);
 
@@ -784,8 +784,8 @@ const char* freerdp_get_system_locale_name_from_id(DWORD localeId)
 int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 {
 	size_t i, j;
-	char language[4];
-	char country[10];
+	char language[LOCALE_LANGUAGE_LEN] = { 0 };
+	char country[LOCALE_COUNTRY_LEN] = { 0 };
 	SYSTEM_LOCALE* locale;
 	freerdp_get_system_language_and_country_codes(language, country);
 

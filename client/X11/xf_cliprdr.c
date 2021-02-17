@@ -2435,7 +2435,7 @@ static void xf_cliprdr_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 
 	ArrayList_Lock(node->child_inos);
 	count = ArrayList_Count(node->child_inos);
-	if (count == 0 || count + 1 <= off)
+	if ((count == 0) || ((SSIZE_T)(count + 1) <= off))
 	{
 		ArrayList_Unlock(node->child_inos);
 		ArrayList_Unlock(clipboard->ino_list);

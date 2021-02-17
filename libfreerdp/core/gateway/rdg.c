@@ -355,7 +355,7 @@ static BOOL rdg_write_chunked(BIO* bio, wStream* sPacket)
 	status = BIO_write(bio, Stream_Buffer(sChunk), (int)len);
 	Stream_Free(sChunk, TRUE);
 
-	if (status != len)
+	if (status != (SSIZE_T)len)
 		return FALSE;
 
 	return TRUE;
@@ -429,7 +429,7 @@ static BOOL rdg_write_websocket(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opc
 	status = BIO_write(bio, Stream_Buffer(sWS), Stream_Length(sWS));
 	Stream_Free(sWS, TRUE);
 
-	if (status != fullLen)
+	if (status != (SSIZE_T)fullLen)
 		return FALSE;
 
 	return TRUE;
