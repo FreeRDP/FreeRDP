@@ -1445,7 +1445,10 @@ static LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext, DWO
 	{
 		if (!g_PnP_Notification)
 		{
-			if (0 == _stricmp(rgReaderStates[i].szReader, SMARTCARD_PNP_NOTIFICATION_A))
+			LPSCARD_READERSTATEA reader = &rgReaderStates[i];
+			if (!reader->szReader)
+				continue;
+			if (0 == _stricmp(reader->szReader, SMARTCARD_PNP_NOTIFICATION_A))
 			{
 				map[i] = -1; /* unmapped */
 				continue;
