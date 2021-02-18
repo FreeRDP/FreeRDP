@@ -1275,13 +1275,18 @@ static void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Sta
 {
 	char* mszReaderNamesA = NULL;
 	char buffer[1024];
+	DWORD cBytes;
 
 	WINPR_UNUSED(smartcard);
 
 	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))
 		return;
-
-	mszReaderNamesA = smartcard_convert_string_list(ret->mszReaderNames, ret->cBytes, unicode);
+	cBytes = ret->cBytes;
+	if (ret->ReturnCode != SCARD_S_SUCCESS)
+		cBytes = 0;
+	if (cBytes == SCARD_AUTOALLOCATE)
+		cBytes = 0;
+	mszReaderNamesA = smartcard_convert_string_list(ret->mszReaderNames, cBytes, unicode);
 
 	WLog_LVL(TAG, g_LogLevel, "Status%s_Return {", unicode ? "W" : "A");
 	WLog_LVL(TAG, g_LogLevel, "  ReturnCode: %s (0x%08" PRIX32 ")",
