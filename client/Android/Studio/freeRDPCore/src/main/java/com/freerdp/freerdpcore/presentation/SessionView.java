@@ -77,7 +77,7 @@ public class SessionView extends View
 
 	private void initSessionView(Context context)
 	{
-		invalidRegions = new Stack<Rect>();
+		invalidRegions = new Stack<>();
 		gestureDetector = new GestureDetector(context, new SessionGestureListener(), null, true);
 		doubleGestureDetector =
 		    new DoubleGestureDetector(context, null, new SessionDoubleGestureListener());

@@ -78,7 +78,7 @@ public class IntEditTextPreference extends EditTextPreference
 
 	@Override protected boolean persistString(String value)
 	{
-		return persistInt(Integer.valueOf(value));
+		return persistInt(Integer.parseInt(value));
 	}
 
 	@Override protected void onDialogClosed(boolean positiveResult)
@@ -90,7 +90,7 @@ public class IntEditTextPreference extends EditTextPreference
 				getEditText().setText("0");
 
 			// check bounds
-			int value = Integer.valueOf(getEditText().getText().toString());
+			int value = Integer.parseInt(getEditText().getText().toString());
 			if (value > bounds_max || value < bounds_min)
 				value = bounds_default;
 			getEditText().setText(String.valueOf(value));

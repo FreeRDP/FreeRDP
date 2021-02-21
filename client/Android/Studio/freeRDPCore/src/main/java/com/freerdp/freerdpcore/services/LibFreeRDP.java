@@ -188,7 +188,7 @@ public class LibFreeRDP
 		BookmarkBase.DebugSettings debug = bookmark.getDebugSettings();
 
 		String arg;
-		ArrayList<String> args = new ArrayList<String>();
+		ArrayList<String> args = new ArrayList<>();
 
 		args.add(TAG);
 		args.add("/gdi:sw");
@@ -343,7 +343,7 @@ public class LibFreeRDP
 
 		args.add("/cert-ignore");
 		args.add("/log-level:" + debug.getDebugLevel());
-		String[] arrayArgs = args.toArray(new String[args.size()]);
+		String[] arrayArgs = args.toArray(new String[0]);
 		return freerdp_parse_arguments(inst, arrayArgs);
 	}
 
@@ -410,7 +410,7 @@ public class LibFreeRDP
 			}
 		}
 
-		String[] arrayArgs = args.toArray(new String[args.size()]);
+		String[] arrayArgs = args.toArray(new String[0]);
 		return freerdp_parse_arguments(inst, arrayArgs);
 	}
 
