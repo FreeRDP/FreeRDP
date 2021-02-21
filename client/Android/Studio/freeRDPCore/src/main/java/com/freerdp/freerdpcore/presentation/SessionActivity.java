@@ -463,7 +463,7 @@ public class SessionActivity extends AppCompatActivity
 				// small screen device i.e. phone:
 				// Automatic uses the largest side length of the screen and
 				// makes a 16:10 resolution setting out of it
-				int screenMax = (screen_width > screen_height) ? screen_width : screen_height;
+				int screenMax = Math.max(screen_width, screen_height);
 				screenSettings.setHeight(screenMax);
 				screenSettings.setWidth((int)((float)screenMax * 1.6f));
 			}
@@ -598,14 +598,10 @@ public class SessionActivity extends AppCompatActivity
 		// check if any key is in the keycodes list
 
 		List<Keyboard.Key> keys = modifiersKeyboard.getKeys();
-		for (Iterator<Keyboard.Key> it = keys.iterator(); it.hasNext();)
-		{
+		for (Keyboard.Key curKey : keys) {
 			// if the key is a sticky key - just set it to off
-			Keyboard.Key curKey = it.next();
-			if (curKey.sticky)
-			{
-				switch (keyboardMapper.getModifierState(curKey.codes[0]))
-				{
+			if (curKey.sticky) {
+				switch (keyboardMapper.getModifierState(curKey.codes[0])) {
 					case KeyboardMapper.KEYSTATE_ON:
 						curKey.on = true;
 						curKey.pressed = false;
@@ -820,7 +816,7 @@ public class SessionActivity extends AppCompatActivity
 		else
 			bitmap = Bitmap.createBitmap(width, height, Config.RGB_565);
 
-		session.setSurface(new BitmapDrawable(bitmap));
+		session.setSurface(new BitmapDrawable(getResources(), bitmap));
 
 		if (session.getBookmark() == null)
 		{
@@ -862,7 +858,7 @@ public class SessionActivity extends AppCompatActivity
 			bitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888);
 		else
 			bitmap = Bitmap.createBitmap(width, height, Config.RGB_565);
-		session.setSurface(new BitmapDrawable(bitmap));
+		session.setSurface(new BitmapDrawable(getResources(), bitmap));
 
 		/*
 		 * since sessionView can only be modified from the UI thread any

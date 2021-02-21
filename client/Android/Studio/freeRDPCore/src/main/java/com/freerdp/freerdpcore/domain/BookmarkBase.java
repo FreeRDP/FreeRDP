@@ -621,8 +621,8 @@ public class BookmarkBase implements Parcelable, Cloneable
 			if (resolution.contains("x"))
 			{
 				String[] dimensions = resolution.split("x");
-				this.width = Integer.valueOf(dimensions[0]);
-				this.height = Integer.valueOf(dimensions[1]);
+				this.width = Integer.parseInt(dimensions[0]);
+				this.height = Integer.parseInt(dimensions[1]);
 				this.resolution = PREDEFINED;
 			}
 			else if (resolution.equalsIgnoreCase("custom"))

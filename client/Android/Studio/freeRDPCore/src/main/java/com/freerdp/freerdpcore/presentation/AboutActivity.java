@@ -70,19 +70,12 @@ public class AboutActivity extends AppCompatActivity
 
 		try
 		{
-			BufferedReader r = new BufferedReader(new InputStreamReader(getAssets().open(file)));
-			try
-			{
+			try (BufferedReader r = new BufferedReader(new InputStreamReader(getAssets().open(file)))) {
 				String line;
-				while ((line = r.readLine()) != null)
-				{
+				while ((line = r.readLine()) != null) {
 					total.append(line);
 					total.append("\n");
 				}
-			}
-			finally
-			{
-				r.close();
 			}
 		}
 		catch (IOException e)
