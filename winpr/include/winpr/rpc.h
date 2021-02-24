@@ -308,8 +308,7 @@ typedef struct _RPC_SECURITY_QOS_V2_W
 	unsigned long IdentityTracking;
 	unsigned long ImpersonationType;
 	unsigned long AdditionalSecurityInfoType;
-	union
-	{
+	union {
 		RPC_HTTP_TRANSPORT_CREDENTIALS_W* HttpCredentials;
 	} u;
 } RPC_SECURITY_QOS_V2_W, *PRPC_SECURITY_QOS_V2_W;
@@ -321,8 +320,7 @@ typedef struct _RPC_SECURITY_QOS_V2_A
 	unsigned long IdentityTracking;
 	unsigned long ImpersonationType;
 	unsigned long AdditionalSecurityInfoType;
-	union
-	{
+	union {
 		RPC_HTTP_TRANSPORT_CREDENTIALS_A* HttpCredentials;
 	} u;
 } RPC_SECURITY_QOS_V2_A, *PRPC_SECURITY_QOS_V2_A;
@@ -336,8 +334,7 @@ typedef struct _RPC_SECURITY_QOS_V3_W
 	unsigned long IdentityTracking;
 	unsigned long ImpersonationType;
 	unsigned long AdditionalSecurityInfoType;
-	union
-	{
+	union {
 		RPC_HTTP_TRANSPORT_CREDENTIALS_W* HttpCredentials;
 	} u;
 	void* Sid;
@@ -350,8 +347,7 @@ typedef struct _RPC_SECURITY_QOS_V3_A
 	unsigned long IdentityTracking;
 	unsigned long ImpersonationType;
 	unsigned long AdditionalSecurityInfoType;
-	union
-	{
+	union {
 		RPC_HTTP_TRANSPORT_CREDENTIALS_A* HttpCredentials;
 	} u;
 	void* Sid;
@@ -444,8 +440,7 @@ typedef struct _RPC_BINDING_HANDLE_TEMPLATE
 	unsigned long ProtocolSequence;
 	unsigned short* NetworkAddress;
 	unsigned short* StringEndpoint;
-	union
-	{
+	union {
 		unsigned short* Reserved;
 	} u1;
 	UUID ObjectUuid;

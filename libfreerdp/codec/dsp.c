@@ -61,8 +61,7 @@
 
 #if !defined(WITH_DSP_FFMPEG)
 
-union _ADPCM
-{
+union _ADPCM {
 	struct
 	{
 		INT16 last_sample[2];

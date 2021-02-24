@@ -168,8 +168,7 @@ extern "C"
 	{
 		ASN1uint32_t length;
 
-		union
-		{
+		union {
 			void* encoded;
 			void* value;
 		};
@@ -362,8 +361,7 @@ extern "C"
 	{
 		ASN1option_e eOption;
 
-		union
-		{
+		union {
 			ASN1encodingrule_e eRule;
 			ASN1uint32_t cbRequiredDecodedBufSize;
 

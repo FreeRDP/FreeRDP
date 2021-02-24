@@ -202,8 +202,7 @@ extern "C"
 		ULONG Version;
 		DWORD Flags;
 
-		union
-		{
+		union {
 			struct
 			{
 				HMODULE LocalizedReasonModule;
