@@ -699,14 +699,12 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	DWORD cchReaders = 0;
 	IRP* irp = operation->irp;
 	ListReaders_Call* call = &operation->call.listReaders;
-	union
-	{
+	union {
 		const BYTE* bp;
 		const char* sz;
 		const WCHAR* wz;
 	} string;
-	union
-	{
+	union {
 		WCHAR** ppw;
 		WCHAR* pw;
 		CHAR* pc;

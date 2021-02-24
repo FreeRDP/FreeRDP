@@ -75,8 +75,7 @@ extern "C"
 
 	typedef struct _SYSTEM_INFO
 	{
-		union
-		{
+		union {
 			DWORD dwOemId;
 
 			struct

@@ -95,6 +95,7 @@ static UINT rdpsnd_proxy_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	return GetTickCount() - start;
 }
 
+
 /**
  * Function description
  *

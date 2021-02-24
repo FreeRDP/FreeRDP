@@ -434,8 +434,7 @@ static void xf_input_touch_end(xfContext* xfc, XIDeviceEvent* event)
 
 static int xf_input_handle_event_local(xfContext* xfc, const XEvent* event)
 {
-	union
-	{
+	union {
 		const XGenericEventCookie* cc;
 		XGenericEventCookie* vc;
 	} cookie;
@@ -609,8 +608,7 @@ static int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
 
 static int xf_input_handle_event_remote(xfContext* xfc, const XEvent* event)
 {
-	union
-	{
+	union {
 		const XGenericEventCookie* cc;
 		XGenericEventCookie* vc;
 	} cookie;

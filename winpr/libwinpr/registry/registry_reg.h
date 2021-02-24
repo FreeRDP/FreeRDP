@@ -44,8 +44,7 @@ struct _reg_val
 	RegVal* prev;
 	RegVal* next;
 
-	union reg_data
-	{
+	union reg_data {
 		DWORD dword;
 		char* string;
 	} data;
