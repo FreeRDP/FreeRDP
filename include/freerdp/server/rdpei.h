@@ -42,10 +42,11 @@ struct _rdpei_server_context
 	/** callbacks that can be set by the user */
 	UINT (*onClientReady)(RdpeiServerContext* context);
 	UINT (*onTouchEvent)(RdpeiServerContext* context, const RDPINPUT_TOUCH_EVENT* touchEvent);
-	UINT (*onPenEvent)(RdpeiServerContext* context, const RDPINPUT_PEN_EVENT* penEvent);
 	UINT (*onTouchReleased)(RdpeiServerContext* context, BYTE contactId);
 
 	void* user_data; /* user data, useful for callbacks */
+
+	UINT (*onPenEvent)(RdpeiServerContext* context, const RDPINPUT_PEN_EVENT* penEvent);
 };
 
 #ifdef __cplusplus
