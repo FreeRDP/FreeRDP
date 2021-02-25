@@ -527,6 +527,7 @@ void winpr_log_backtrace_ex(wLog* log, DWORD level, DWORD size)
 		for (x = 0; x < used; x++)
 			WLog_Print(log, level, "%" PRIuz ": %s\n", x, msg[x]);
 	}
+	free(msg);
 
 	winpr_backtrace_free(stack);
 }
