@@ -598,10 +598,13 @@ public class SessionActivity extends AppCompatActivity
 		// check if any key is in the keycodes list
 
 		List<Keyboard.Key> keys = modifiersKeyboard.getKeys();
-		for (Keyboard.Key curKey : keys) {
+		for (Keyboard.Key curKey : keys)
+		{
 			// if the key is a sticky key - just set it to off
-			if (curKey.sticky) {
-				switch (keyboardMapper.getModifierState(curKey.codes[0])) {
+			if (curKey.sticky)
+			{
+				switch (keyboardMapper.getModifierState(curKey.codes[0]))
+				{
 					case KeyboardMapper.KEYSTATE_ON:
 						curKey.on = true;
 						curKey.pressed = false;
