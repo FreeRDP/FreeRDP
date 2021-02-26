@@ -1574,6 +1574,9 @@ struct rdp_settings
 	ALIGN64 DWORD Floatbar;
 
 	ALIGN64 char* XSelectionAtom;
+
+	ALIGN64 char* VAAPIConnectionType;
+	ALIGN64 char* VAAPIDevice;
 };
 typedef struct rdp_settings rdpSettings;
 
