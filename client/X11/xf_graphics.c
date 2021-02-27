@@ -305,14 +305,14 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 		ci.yhot = pointer->yPos * yscale;
 		size = ci.height * ci.width * GetBytesPerPixel(CursorFormat);
 
-		if (!(ci.pixels = (XcursorPixel*)_aligned_malloc(size, 16)))
-		{
-			xf_unlock_x11(xfc);
-			return FALSE;
-		}
-
 		if (xscale != 1 || yscale != 1)
 		{
+			if (!(ci.pixels = (XcursorPixel*)_aligned_malloc(size, 16)))
+			{
+				xf_unlock_x11(xfc);
+				return FALSE;
+			}
+
 			if (!freerdp_image_scale((BYTE*)ci.pixels, CursorFormat, 0, 0, 0, ci.width, ci.height,
 			                         (BYTE*)xpointer->cursorPixels, CursorFormat, 0, 0, 0,
 			                         pointer->width, pointer->height))
