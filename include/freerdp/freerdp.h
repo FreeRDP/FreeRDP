@@ -83,6 +83,7 @@ extern "C"
 	typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password,
 	                              char** domain);
 
+#if !defined(DEFINE_NO_DEPRECATED)
 	/** @brief Callback used if user interaction is required to accept
 	 *         an unknown certificate.
 	 *
@@ -100,7 +101,7 @@ extern "C"
 	typedef DWORD (*pVerifyCertificate)(freerdp* instance, const char* common_name,
 	                                    const char* subject, const char* issuer,
 	                                    const char* fingerprint, BOOL host_mismatch);
-
+#endif
 	/** @brief Callback used if user interaction is required to accept
 	 *         an unknown certificate.
 	 *
@@ -119,6 +120,7 @@ extern "C"
 	                                      const char* common_name, const char* subject,
 	                                      const char* issuer, const char* fingerprint, DWORD flags);
 
+#if !defined(DEFINE_NO_DEPRECATED)
 	/** @brief Callback used if user interaction is required to accept
 	 *         a changed certificate.
 	 *
@@ -139,6 +141,7 @@ extern "C"
 	                                           const char* subject, const char* issuer,
 	                                           const char* new_fingerprint, const char* old_subject,
 	                                           const char* old_issuer, const char* old_fingerprint);
+#endif
 
 	/** @brief Callback used if user interaction is required to accept
 	 *         a changed certificate.
@@ -361,14 +364,17 @@ extern "C"
 		                                                         Callback for authentication.
 		                                                         It is used to get the username/password when it was not
 		                                                         provided at connection time. */
-		ALIGN64 pVerifyCertificate VerifyCertificate;               /**< (offset 51)
-		                                                         Callback for certificate validation.
-		                                                         Used to verify that an unknown certificate is
-		           trusted. DEPRECATED: Use VerifyChangedCertificateEx*/
-		ALIGN64 pVerifyChangedCertificate VerifyChangedCertificate; /**< (offset 52)
-		                                                         Callback for changed certificate
-		                      validation. Used when a certificate differs from stored fingerprint.
-		                      DEPRECATED: Use VerifyChangedCertificateEx */
+#if !defined(DEFINE_NO_DEPRECATED)
+		WINPR_DEPRECATED(ALIGN64 pVerifyCertificate VerifyCertificate); /**< (offset 51)
+		                                           Callback for certificate validation.
+		                                           Used to verify that an unknown certificate is
+	 trusted. DEPRECATED: Use VerifyChangedCertificateEx*/
+		WINPR_DEPRECATED(
+		    ALIGN64 pVerifyChangedCertificate VerifyChangedCertificate); /**< (offset 52)
+		                                            Callback for changed certificate
+		         validation. Used when a certificate differs from stored fingerprint.
+		         DEPRECATED: Use VerifyChangedCertificateEx */
+#endif
 
 		ALIGN64 pVerifyX509Certificate
 		    VerifyX509Certificate; /**< (offset 53)  Callback for X509 certificate verification (PEM

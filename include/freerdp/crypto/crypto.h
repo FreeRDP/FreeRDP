@@ -67,6 +67,7 @@ extern "C"
 	FREERDP_API void crypto_cert_print_info(X509* xcert);
 	FREERDP_API void crypto_cert_free(CryptoCert cert);
 
+#if !defined(DEFINE_NO_DEPRECATED)
 	/*
 	Deprecated function names: crypto_cert_subject_alt_name and crypto_cert_subject_alt_name_free.
 	Use crypto_cert_get_dns_names and crypto_cert_dns_names_free instead.
@@ -74,8 +75,11 @@ extern "C"
 	Note: email and upn amongst others are also alt_names,
 	but the old crypto_cert_get_alt_names returned only the dns_names
 	*/
-	FREERDP_API char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths);
-	FREERDP_API void crypto_cert_subject_alt_name_free(int count, int* lengths, char** alt_names);
+	FREERDP_API WINPR_DEPRECATED(char** crypto_cert_subject_alt_name(X509* xcert, int* count,
+	                                                                 int** lengths));
+	FREERDP_API WINPR_DEPRECATED(void crypto_cert_subject_alt_name_free(int count, int* lengths,
+	                                                                    char** alt_names));
+#endif
 
 	FREERDP_API BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path);
 	FREERDP_API rdpCertificateData* crypto_get_certificate_data(X509* xcert, const char* hostname,

@@ -52,6 +52,7 @@ struct _FILEDESCRIPTORW
 };
 typedef struct _FILEDESCRIPTORW FILEDESCRIPTORW;
 
+#if !defined(DEFINE_NO_DEPRECATED)
 /* Legacy definition, some types do not match the windows equivalent. */
 struct _FILEDESCRIPTOR
 {
@@ -68,6 +69,7 @@ struct _FILEDESCRIPTOR
 	WCHAR cFileName[260];
 };
 typedef struct _FILEDESCRIPTOR FILEDESCRIPTOR;
+#endif
 
 /* FILEDESCRIPTOR.dwFlags */
 typedef enum
@@ -84,9 +86,11 @@ typedef enum
 	FD_UNICODE = 0x80000000
 } FD_FLAGS;
 
+#if !defined(DEFINE_NO_DEPRECATED)
 /* Deprecated, here for compatibility */
 #define FD_SHOWPROGRESSUI FD_PROGRESSUI
 #define FD_WRITESTIME FD_WRITETIME
+#endif
 
 /* FILEDESCRIPTOR.dwFileAttributes */
 #define FILE_ATTRIBUTE_READONLY 0x00000001

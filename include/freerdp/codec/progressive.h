@@ -37,20 +37,23 @@ extern "C"
 {
 #endif
 
+#if !defined(DEFINE_NO_DEPRECATED)
 	FREERDP_API WINPR_DEPRECATED(int progressive_compress(PROGRESSIVE_CONTEXT* progressive,
 	                                                      const BYTE* pSrcData, UINT32 SrcSize,
 	                                                      BYTE** ppDstData, UINT32* pDstSize));
+#endif
 
 	FREERDP_API int progressive_compress_ex(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 	                                        UINT32 SrcSize, UINT32 SrcFormat, UINT32 Width,
 	                                        UINT32 Height, UINT32 ScanLine,
 	                                        const REGION16* invalidRegion, BYTE** ppDstData,
 	                                        UINT32* pDstSize);
-
+#if !defined(DEFINE_NO_DEPRECATED)
 	FREERDP_API WINPR_DEPRECATED(INT32 progressive_decompress(
 	    PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
 	    UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, REGION16* invalidRegion,
 	    UINT16 surfaceId));
+#endif
 
 	FREERDP_API INT32 progressive_decompress_ex(PROGRESSIVE_CONTEXT* progressive,
 	                                            const BYTE* pSrcData, UINT32 SrcSize,

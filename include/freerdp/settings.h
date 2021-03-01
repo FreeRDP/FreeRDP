@@ -120,7 +120,9 @@ typedef enum
 #define RNS_UD_CS_STRONG_ASYMMETRIC_KEYS 0x0008
 #define RNS_UD_CS_VALID_CONNECTION_TYPE 0x0020
 #define RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU 0x0040
+#if !defined(DEFINE_NO_DEPRECATED)
 #define RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT 0x0080 /* DEPRECATED: Compatibility define */
+#endif
 #define RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT 0x0080
 #define RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL 0x0100
 #define RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE 0x0200
@@ -1634,6 +1636,7 @@ extern "C"
 	                                                     UINT32 GatewayEnabled,
 	                                                     UINT32 GatewayBypassLocal);
 
+#if !defined(DEFINE_NO_DEPRECATED)
 	/* DEPRECATED:
 	 * the functions freerdp_get_param_* and freerdp_set_param_* are deprecated.
 	 * use freerdp_settings_get_* and freerdp_settings_set_* as a replacement!
@@ -1660,6 +1663,7 @@ extern "C"
 	                                                            int id));
 	FREERDP_API WINPR_DEPRECATED(int freerdp_set_param_string(rdpSettings* settings, int id,
 	                                                          const char* param));
+#endif
 
 	FREERDP_API BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id);
 	FREERDP_API BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL param);

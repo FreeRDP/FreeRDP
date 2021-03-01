@@ -177,6 +177,7 @@ extern "C"
 	FREERDP_API const char* freerdp_get_error_info_name(UINT32 code);
 	FREERDP_API const char* freerdp_get_error_info_category(UINT32 code);
 
+#if !defined(DEFINE_NO_DEPRECATED)
 	/**
 	 * DEPRECATED!
 	 * This static variable holds an error code if the return value from connect is FALSE.
@@ -185,7 +186,7 @@ extern "C"
 	 * The value can hold one of the defined error codes below OR an error according to errno
 	 */
 
-	FREERDP_API extern int connectErrorCode;
+	FREERDP_API WINPR_DEPRECATED(extern int connectErrorCode);
 
 #define ERRORSTART 10000
 #define PREECONNECTERROR ERRORSTART + 1
@@ -201,6 +202,7 @@ extern "C"
 #define AUTHENTICATIONERROR ERRORSTART + 9
 #define INSUFFICIENTPRIVILEGESERROR ERRORSTART + 10
 #define CANCELEDBYUSER ERRORSTART + 11
+#endif
 
 	/**
 	 * FreeRDP Context Error Codes

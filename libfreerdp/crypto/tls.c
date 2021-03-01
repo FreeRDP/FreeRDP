@@ -1548,6 +1548,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					accept_certificate = instance->VerifyCertificateEx(
 					    instance, hostname, port, common_name, subject, issuer, fingerprint, flags);
 				}
+#if !defined(DEFINE_NO_DEPRECATED)
 				else if (instance->VerifyCertificate)
 				{
 					WLog_WARN(TAG, "The VerifyCertificate callback is deprecated, migrate your "
@@ -1555,6 +1556,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					accept_certificate = instance->VerifyCertificate(
 					    instance, common_name, subject, issuer, fingerprint, !hostname_match);
 				}
+#endif
 			}
 			else if (match == -1)
 			{
@@ -1594,6 +1596,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					    instance, hostname, port, common_name, subject, issuer, fingerprint,
 					    old_subject, old_issuer, old_fingerprint, flags | VERIFY_CERT_FLAG_CHANGED);
 				}
+#if !defined(DEFINE_NO_DEPRECATED)
 				else if (instance->VerifyChangedCertificate)
 				{
 					WLog_WARN(TAG, "The VerifyChangedCertificate callback is deprecated, migrate "
@@ -1602,6 +1605,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					    instance, common_name, subject, issuer, fingerprint, old_subject,
 					    old_issuer, old_fingerprint);
 				}
+#endif
 
 				free(old_subject);
 				free(old_issuer);

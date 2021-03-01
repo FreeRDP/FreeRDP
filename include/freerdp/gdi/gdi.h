@@ -517,7 +517,9 @@ struct rdp_gdi
 	void (*free)(void*);
 
 	BOOL inGfxFrame;
-	BOOL graphicsReset; /* deprecated, remove with FreeRDP v3 */
+#if !defined(DEFINE_NO_DEPRECATED)
+	WINPR_DEPRECATED(BOOL graphicsReset); /* deprecated, remove with FreeRDP v3 */
+#endif
 	BOOL suppressOutput;
 	UINT16 outputSurfaceId;
 	RdpgfxClientContext* gfx;

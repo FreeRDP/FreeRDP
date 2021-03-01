@@ -28,10 +28,14 @@ endif()
 set(${MODULE_PREFIX}_SRCS
 	client.c
 	cmdline.c
-	compatibility.c
-	compatibility.h
 	file.c
 	geometry.c)
+
+if(NOT DEFINE_NO_DEPRECATED)
+	list(APPEND ${MODULE_PREFIX}_SRCS
+		compatibility.c
+		compatibility.h)
+endif()
 
 foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})
 	get_filename_component(NINC ${FREERDP_CHANNELS_CLIENT_SRC} PATH)
