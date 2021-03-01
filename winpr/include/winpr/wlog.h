@@ -195,10 +195,12 @@ extern "C"
 	WINPR_API wLogLayout* WLog_GetLogLayout(wLog* log);
 	WINPR_API BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format);
 
+#if !defined(DEFINE_NO_DEPRECATED)
 	/** Deprecated */
 	WINPR_API WINPR_DEPRECATED(BOOL WLog_Init(void));
 	/** Deprecated */
 	WINPR_API WINPR_DEPRECATED(BOOL WLog_Uninit(void));
+#endif
 
 	typedef BOOL (*wLogCallbackMessage_t)(const wLogMessage* msg);
 	typedef BOOL (*wLogCallbackData_t)(const wLogMessage* msg);

@@ -6,6 +6,10 @@ Noteworthy changes:
 * Also add some more EXPERIMENTAL warnings to CMake flags as some were not
   clear enough.
 * Fixed a memory leak in xfreerdp (mouse pointer updates)
+* No longer activating some compile time debug options with -DWITH_DEBUG_ALL=ON
+  which might leak sensitive information.
+* Added -DDEFINE_NO_DEPRECATED for developers to detect use of deprecated
+  symbols
 
 For a complete and detailed change log since the last release run:
 git log 2.3.0..2.3.1

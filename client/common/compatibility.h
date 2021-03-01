@@ -23,8 +23,12 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
-FREERDP_LOCAL int freerdp_detect_old_command_line_syntax(int argc, char** argv, size_t* count);
-FREERDP_LOCAL int freerdp_client_parse_old_command_line_arguments(int argc, char** argv,
-                                                                  rdpSettings* settings);
+#if !defined(DEFINE_NO_DEPRECATED)
+FREERDP_LOCAL WINPR_DEPRECATED(int freerdp_detect_old_command_line_syntax(int argc, char** argv,
+                                                                          size_t* count));
+FREERDP_LOCAL
+WINPR_DEPRECATED(int freerdp_client_parse_old_command_line_arguments(int argc, char** argv,
+                                                                     rdpSettings* settings));
+#endif
 
 #endif /* FREERDP_CLIENT_COMMON_COMPATIBILITY_H */

@@ -1502,6 +1502,7 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 	InitializeCriticalSection(&gfx->mux);
 	PROFILER_CREATE(gfx->SurfaceProfiler, "GFX-PROFILER");
 
+#if !defined(DEFINE_NO_DEPRECATED)
 	/**
 	 * gdi->graphicsReset will be removed in FreeRDP v3 from public headers,
 	 * since the EGFX Reset Graphics PDU seems to be optional.
@@ -1509,6 +1510,7 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 	 * we simply initialize it with TRUE here for now.
 	 */
 	gdi->graphicsReset = TRUE;
+#endif
 
 	return TRUE;
 }

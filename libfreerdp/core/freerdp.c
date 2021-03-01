@@ -163,7 +163,9 @@ BOOL freerdp_connect(freerdp* instance)
 
 	/* We always set the return code to 0 before we start the connect sequence*/
 	instance->ConnectionCallbackState = CLIENT_STATE_INITIAL;
+#if !defined(DEFINE_NO_DEPRECATED)
 	connectErrorCode = 0;
+#endif
 	freerdp_set_last_error_log(instance->context, FREERDP_ERROR_SUCCESS);
 	clearChannelError(instance->context);
 	ResetEvent(instance->context->abortEvent);
@@ -894,6 +896,7 @@ void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char
 
 	context->LastError = lastError;
 
+#if !defined(DEFINE_NO_DEPRECATED)
 	switch (lastError)
 	{
 		case FREERDP_ERROR_PRE_CONNECT_FAILED:
@@ -948,6 +951,7 @@ void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char
 			connectErrorCode = CONNECTERROR;
 			break;
 	}
+#endif
 }
 
 const char* freerdp_get_logon_error_info_type(UINT32 type)

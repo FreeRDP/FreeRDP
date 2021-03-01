@@ -172,6 +172,8 @@ option(USE_VERSION_FROM_GIT_TAG "Extract FreeRDP version from git tag." OFF)
 option(WITH_CAIRO    "Use CAIRO image library for screen resizing" OFF)
 option(WITH_SWSCALE  "Use SWScale image library for screen resizing" OFF)
 
+option(DEFINE_NO_DEPRECATED "Compile without legacy functions and symbols" OFF)
+
 if (ANDROID)
 	include(ConfigOptionsAndroid)
 endif(ANDROID)

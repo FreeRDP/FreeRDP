@@ -89,6 +89,7 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	  "subsequent connections if the certificate does not match"
 	  " * fingerprints ... A list of certificate hashes that are accepted unconditionally for a "
 	  "connection" },
+#if !defined(DEFINE_NO_DEPRECATED)
 	{ "cert-deny", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 	  "[deprecated, use /cert:deny] Automatically abort connection for any certificate that can "
 	  "not be validated." },
@@ -98,6 +99,7 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	  "[deprecated, use /cert:name:<name>] Certificate name" },
 	{ "cert-tofu", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 	  "[deprecated, use /cert:tofu] Automatically accept certificate on first connect" },
+#endif
 	{ "client-build-number", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
 	  "Client Build Number sent to server (influences smartcard behaviour, see [MS-RDPESC])" },
 	{ "client-hostname", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
@@ -163,9 +165,11 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 #ifdef WITH_GFX_H264
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "[[RFX|AVC420|AVC444],mask:<value>]", NULL, NULL, -1,
 	  NULL, "RDP8 graphics pipeline" },
+#if !defined(DEFINE_NO_DEPRECATED)
 	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[[AVC420|AVC444],mask:<value>] [DEPRECATED] use /gfx:avc420 instead", NULL, NULL, -1, NULL,
 	  "RDP8.1 graphics pipeline using H264 codec" },
+#endif
 #else
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "RFX", NULL, NULL, -1, NULL, "RDP8 graphics pipeline" },
 #endif

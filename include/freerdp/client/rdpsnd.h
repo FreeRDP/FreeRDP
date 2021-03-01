@@ -52,7 +52,9 @@ struct rdpsnd_device_plugin
 	pcGetVolume GetVolume;
 	pcSetVolume SetVolume;
 	pcPlay Play;
+#if !defined(DEFINE_NO_DEPRECATED)
 	pcStart Start; /* Deprecated, unused. */
+#endif
 	pcClose Close;
 	pcFree Free;
 	pcDefaultFormat DefaultFormat;
