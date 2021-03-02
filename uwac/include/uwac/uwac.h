@@ -107,7 +107,8 @@ enum
 	UWAC_EVENT_CLIPBOARD_SELECT,
 	UWAC_EVENT_CLIPBOARD_OFFER,
 	UWAC_EVENT_OUTPUT_GEOMETRY,
-	UWAC_EVENT_POINTER_AXIS_DISCRETE
+	UWAC_EVENT_POINTER_AXIS_DISCRETE,
+	UWAC_EVENT_POINTER_FRAME
 };
 
 /** @brief window states */
@@ -194,6 +195,14 @@ struct uwac_pointer_axis_event
 	wl_fixed_t value;
 };
 typedef struct uwac_pointer_axis_event UwacPointerAxisEvent;
+
+struct uwac_pointer_frame_event
+{
+	int type;
+	UwacWindow* window;
+	UwacSeat* seat;
+};
+typedef struct uwac_pointer_frame_event UwacPointerFrameEvent;
 
 struct uwac_touch_frame_event
 {
@@ -286,6 +295,7 @@ union uwac_event {
 	UwacPointerMotionEvent mouse_motion;
 	UwacPointerButtonEvent mouse_button;
 	UwacPointerAxisEvent mouse_axis;
+	UwacPointerFrameEvent mouse_frame;
 	UwacKeyboardEnterLeaveEvent keyboard_enter_leave;
 	UwacKeyboardModifiersEvent keyboard_modifiers;
 	UwacClipboardEvent clipboard;
