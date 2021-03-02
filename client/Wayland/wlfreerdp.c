@@ -362,12 +362,22 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_POINTER_AXIS:
+				if (!wlf_handle_pointer_axis(instance, &event.mouse_axis))
+					return FALSE;
 				break;
 
 			case UWAC_EVENT_POINTER_AXIS_DISCRETE:
-				if (!wlf_handle_pointer_axis(instance, &event.mouse_axis))
+				if (!wlf_handle_pointer_axis_discrete(instance, &event.mouse_axis))
 					return FALSE;
+				break;
 
+			case UWAC_EVENT_POINTER_FRAME:
+				if (!wlf_handle_pointer_frame(instance, &event.mouse_frame))
+					return FALSE;
+				break;
+			case UWAC_EVENT_POINTER_SOURCE:
+				if (!wlf_handle_pointer_source(instance, &event.mouse_source))
+					return FALSE;
 				break;
 
 			case UWAC_EVENT_KEY:
@@ -561,8 +571,37 @@ static int wlf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	return 1;
 }
 
+static void wlf_client_free(freerdp* instance, rdpContext* context)
+{
+	wlfContext* wlf = (wlfContext*)instance->context;
+
+	if (!context)
+		return;
+
+	if (wlf->display)
+		UwacCloseDisplay(&wlf->display);
+
+	if (wlf->displayHandle)
+		CloseHandle(wlf->displayHandle);
+	ArrayList_Free(wlf->events);
+	DeleteCriticalSection(&wlf->critical);
+}
+
+static void* uwac_event_clone(const void* val)
+{
+	UwacEvent* copy;
+	UwacEvent* ev = (UwacEvent*)val;
+
+	copy = calloc(1, sizeof(UwacEvent));
+	if (!copy)
+		return NULL;
+	*copy = *ev;
+	return copy;
+}
+
 static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 {
+	wObject* obj;
 	UwacReturnCode status;
 	wlfContext* wfl = (wlfContext*)context;
 
@@ -590,24 +629,17 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	if (!wfl->displayHandle)
 		return FALSE;
 
+	wfl->events = ArrayList_New(FALSE);
+	if (!wfl->events)
+		return FALSE;
+
+	obj = ArrayList_Object(wfl->events);
+	obj->fnObjectNew = uwac_event_clone;
+	obj->fnObjectFree = free;
+
 	InitializeCriticalSection(&wfl->critical);
 
 	return TRUE;
-}
-
-static void wlf_client_free(freerdp* instance, rdpContext* context)
-{
-	wlfContext* wlf = (wlfContext*)instance->context;
-
-	if (!context)
-		return;
-
-	if (wlf->display)
-		UwacCloseDisplay(&wlf->display);
-
-	if (wlf->displayHandle)
-		CloseHandle(wlf->displayHandle);
-	DeleteCriticalSection(&wlf->critical);
 }
 
 static int wfl_client_start(rdpContext* context)
