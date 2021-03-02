@@ -1,3 +1,14 @@
+# 2021-XX-YY Version 2.3.2
+
+Noteworthy changes:
+
+Fixed issues:
+* #6848: Invalid format string in smartcard trace
+* #6846: Fixed static builds
+
+For a complete and detailed change log since the last release run:
+git log 2.3.1..2.3.2
+
 # 2021-03-01 Version 2.3.1
 
 Noteworthy changes:
