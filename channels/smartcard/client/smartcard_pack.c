@@ -1307,21 +1307,24 @@ static void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, const Sta
 static void smartcard_trace_state_return(SMARTCARD_DEVICE* smartcard, const State_Return* ret)
 {
 	char buffer[1024];
-
+	char* state;
 	WINPR_UNUSED(smartcard);
 
 	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))
 		return;
 
+	state = SCardGetReaderStateString(ret->dwState);
 	WLog_LVL(TAG, g_LogLevel, "Reconnect_Return {");
 	WLog_LVL(TAG, g_LogLevel, "  ReturnCode: %s (0x%08" PRIX32 ")",
 	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
-	WLog_LVL(TAG, g_LogLevel, "  dwState:    %s (0x%08" PRIX32 ")", ret->dwState);
-	WLog_LVL(TAG, g_LogLevel, "  dwProtocol: %s (0x%08" PRIX32 ")", ret->dwProtocol);
-	WLog_LVL(TAG, g_LogLevel, "  cbAtrLen:   %s (0x%08" PRIX32 ")", ret->cbAtrLen);
+	WLog_LVL(TAG, g_LogLevel, "  dwState:    %s (0x%08" PRIX32 ")", state, ret->dwState);
+	WLog_LVL(TAG, g_LogLevel, "  dwProtocol: %s (0x%08" PRIX32 ")",
+	         SCardGetProtocolString(ret->dwProtocol), ret->dwProtocol);
+	WLog_LVL(TAG, g_LogLevel, "  cbAtrLen:      (0x%08" PRIX32 ")", ret->cbAtrLen);
 	WLog_LVL(TAG, g_LogLevel, "  rgAtr:      %s",
 	         smartcard_array_dump(ret->rgAtr, sizeof(ret->rgAtr), buffer, sizeof(buffer)));
 	WLog_LVL(TAG, g_LogLevel, "}");
+	free(state);
 }
 
 static void smartcard_trace_reconnect_return(SMARTCARD_DEVICE* smartcard,
