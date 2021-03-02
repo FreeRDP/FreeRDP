@@ -53,6 +53,7 @@ struct wlf_context
 	wlfDispContext* disp;
 	wLog* log;
 	CRITICAL_SECTION critical;
+	wArrayList* events;
 };
 
 BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fromLocalToRDP);

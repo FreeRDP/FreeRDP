@@ -30,6 +30,9 @@ BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEven
 BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* ev);
 BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent* ev);
 BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev);
+BOOL wlf_handle_pointer_axis_discrete(freerdp* instance, const UwacPointerAxisEvent* ev);
+BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev);
+BOOL wlf_handle_pointer_source(freerdp* instance, const UwacPointerSourceEvent* ev);
 BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev);
 BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev);
 BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev);
