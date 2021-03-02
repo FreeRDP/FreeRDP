@@ -420,33 +420,38 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 		goto error_out;
 	}
 
-	AVAuthorizationStatus status =
-	    [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeAudio];
-	switch (status)
+#if defined(MAC_OS_X_VERSION_10_14)
+	if (@available(macOS 10.14, *))
 	{
-		case AVAuthorizationStatusAuthorized:
-			mac->isAuthorized = TRUE;
-			break;
-		case AVAuthorizationStatusNotDetermined:
-			[AVCaptureDevice requestAccessForMediaType:AVMediaTypeAudio
-			                         completionHandler:^(BOOL granted) {
-				                         if (granted == YES)
-				                         {
-					                         mac->isAuthorized = TRUE;
-				                         }
-				                         else
-					                         WLog_WARN(TAG, "Microphone access denied by user");
-			                         }];
-			break;
-		case AVAuthorizationStatusRestricted:
-			WLog_WARN(TAG, "Microphone access restricted by policy");
-			break;
-		case AVAuthorizationStatusDenied:
-			WLog_WARN(TAG, "Microphone access denied by policy");
-			break;
-		default:
-			break;
+		AVAuthorizationStatus status =
+		    [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeAudio];
+		switch (status)
+		{
+			case AVAuthorizationStatusAuthorized:
+				mac->isAuthorized = TRUE;
+				break;
+			case AVAuthorizationStatusNotDetermined:
+				[AVCaptureDevice requestAccessForMediaType:AVMediaTypeAudio
+				                         completionHandler:^(BOOL granted) {
+					                         if (granted == YES)
+					                         {
+						                         mac->isAuthorized = TRUE;
+					                         }
+					                         else
+						                         WLog_WARN(TAG, "Microphone access denied by user");
+				                         }];
+				break;
+			case AVAuthorizationStatusRestricted:
+				WLog_WARN(TAG, "Microphone access restricted by policy");
+				break;
+			case AVAuthorizationStatusDenied:
+				WLog_WARN(TAG, "Microphone access denied by policy");
+				break;
+			default:
+				break;
+		}
 	}
+#endif
 
 	return CHANNEL_RC_OK;
 error_out:
