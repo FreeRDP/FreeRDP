@@ -121,6 +121,7 @@ YUV_CONTEXT* yuv_context_new(BOOL encoder, UINT32 ThreadingFlags)
 	/** do it here to avoid a race condition between threads */
 	primitives_get();
 
+	ret->nthreads = 1;
 	if (!(ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
 	{
 		GetNativeSystemInfo(&sysInfos);
@@ -137,15 +138,6 @@ YUV_CONTEXT* yuv_context_new(BOOL encoder, UINT32 ThreadingFlags)
 			InitializeThreadpoolEnvironment(&ret->ThreadPoolEnv);
 			SetThreadpoolCallbackPool(&ret->ThreadPoolEnv, ret->threadPool);
 		}
-		else
-		{
-			ret->nthreads = 1;
-		}
-	}
-	else
-	{
-		ret->useThreads = FALSE;
-		ret->nthreads = 1;
 	}
 
 	return ret;
@@ -251,36 +243,29 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
                         const UINT32 iStride[3], UINT32 DstFormat, BYTE* dest, UINT32 nDstStep,
                         const RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
+	UINT32 steps;
 	BOOL rc = FALSE;
-	UINT32 x, y, nobjects;
+	UINT32 x, y;
 	PTP_WORK* work_objects = NULL;
 	YUV_PROCESS_WORK_PARAM* params = NULL;
-	UINT32 waitCount = 0;
+	UINT32 waitCount = 0, nobjects;
 	primitives_t* prims = primitives_get();
 
 	if (!context->useThreads || (primitives_flags(prims) & PRIM_FLAGS_HAVE_EXTGPU))
 	{
 		for (y = 0; y < numRegionRects; y++)
 		{
-			YUV_PROCESS_WORK_PARAM current = pool_decode_param(&regionRects[y], context, pYUVData,
-			                                                   iStride, DstFormat, dest, nDstStep);
+			const RECTANGLE_16* rect = &regionRects[y];
+			YUV_PROCESS_WORK_PARAM current =
+			    pool_decode_param(rect, context, pYUVData, iStride, DstFormat, dest, nDstStep);
 			cb(NULL, &current, NULL);
 		}
 		return TRUE;
 	}
 
 	/* case where we use threads */
-	nobjects = (context->height + context->heightStep - 1) / context->heightStep;
-	for (x = 0; x < numRegionRects; x++)
-	{
-		const RECTANGLE_16* rect = &regionRects[x];
-		const UINT32 height = rect->bottom - rect->top;
-		const UINT32 steps = (height + context->heightStep / 2) / context->heightStep;
-
-		if (waitCount + steps >= nobjects)
-			nobjects *= 2;
-		waitCount += steps;
-	}
+	steps = MAX((context->nthreads + numRegionRects / 2) / numRegionRects, 1);
+	nobjects = numRegionRects * steps;
 
 	if (!allocate_objects(&work_objects, (void**)&params, sizeof(YUV_PROCESS_WORK_PARAM), nobjects))
 		goto fail;
@@ -289,24 +274,26 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	{
 		const RECTANGLE_16* rect = &regionRects[x];
 		const UINT32 height = rect->bottom - rect->top;
-		const UINT32 steps = (height + context->heightStep / 2) / context->heightStep;
+
+		const UINT32 heightStep = (height + steps / 2) / steps;
 
 		for (y = 0; y < steps; y++)
 		{
 			YUV_PROCESS_WORK_PARAM* cur = &params[waitCount];
 			RECTANGLE_16 r = *rect;
-			r.top += y * context->heightStep;
+			r.top += y * heightStep;
+			r.bottom = r.top + heightStep;
+			if (r.bottom > rect->bottom)
+				r.bottom = rect->bottom;
 			*cur = pool_decode_param(&r, context, pYUVData, iStride, DstFormat, dest, nDstStep);
 			if (!submit_object(&work_objects[waitCount], cb, cur, context))
 				goto fail;
-
 			waitCount++;
 		}
 	}
-
 	rc = TRUE;
 fail:
-	free_objects(work_objects, params, waitCount);
+	free_objects(work_objects, params, nobjects);
 	return rc;
 }
 
@@ -410,6 +397,7 @@ static BOOL pool_decode_rect(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVDa
 		YUV_COMBINE_WORK_PARAM* current = &params[waitCount];
 		*current = pool_decode_rect_param(&regionRects[waitCount], context, type, pYUVData, iStride,
 		                                  pYUVDstData, iDstStride);
+
 		if (!submit_object(&work_objects[waitCount], cb, current, context))
 			goto fail;
 	}
