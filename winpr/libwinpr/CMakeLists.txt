@@ -17,6 +17,10 @@
 
 include(CheckFunctionExists)
 
+if (OPENBSD)
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L/usr/local/lib")
+endif()
+
 set(WINPR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(WINPR_SRCS "")
 set(WINPR_LIBS_PRIVATE "")
@@ -77,11 +81,14 @@ macro (winpr_definition_add)
      set (WINPR_DEFINITIONS ${WINPR_DEFINITIONS} PARENT_SCOPE)
 endmacro()
 
+if (!OpenBSD)
 set(CMAKE_REQUIRED_LIBRARIES rt)
 check_function_exists(timer_create TIMER_CREATE)
 check_function_exists(timer_delete TIMER_DELETE)
 check_function_exists(timer_settime TIMER_SETTIME)
 check_function_exists(timer_gettime TIMER_GETTIME)
+endif()
+
 if (TIMER_CREATE AND TIMER_DELETE AND TIMER_SETTIME AND TIMER_GETTIME)
     add_definitions(-DWITH_POSIX_TIMER)
 	winpr_library_add_private(rt)

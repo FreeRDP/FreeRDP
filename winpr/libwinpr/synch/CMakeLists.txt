@@ -28,7 +28,7 @@ winpr_module_add(
 	timer.c
 	wait.c)
 
-if(FREEBSD)
+if(EPOLLSHIM)
 	winpr_include_directory_add(${EPOLLSHIM_INCLUDE_DIR})
 	winpr_library_add_private(${EPOLLSHIM_LIBS})
 endif()

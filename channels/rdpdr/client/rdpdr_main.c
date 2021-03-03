@@ -111,7 +111,7 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 cou
 	return rdpdr_send(rdpdr, s);
 }
 
-#if defined(_UWP) || defined(__IOS__)
+#if defined(_UWP) || defined(__IOS__) || defined(__OpenBSD__)
 
 void first_hotplug(rdpdrPlugin* rdpdr)
 {
@@ -925,7 +925,7 @@ out:
 
 #endif
 
-#if !defined(_WIN32) && !defined(__IOS__)
+#if !defined(_WIN32) && !defined(__IOS__) && !defined(__OpenBSD__)
 /**
  * Function description
  *
