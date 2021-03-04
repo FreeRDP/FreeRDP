@@ -1,6 +1,7 @@
 # 2021-XX-YY Version 2.3.2
 
 Noteworthy changes:
+* Fixed autoreconnect printer backend loading
 
 Fixed issues:
 * #6848: Invalid format string in smartcard trace
