@@ -979,7 +979,7 @@ printer_DeviceServiceEntry
 
 	device = (RDPDR_PRINTER*)pEntryPoints->device;
 	name = device->Name;
-	driver_name = device->DriverName;
+	driver_name = _strdup(device->DriverName);
 
 	/* Secondary argument is one of the following:
 	 *
@@ -1016,7 +1016,7 @@ printer_DeviceServiceEntry
 	if (!driver)
 	{
 		WLog_ERR(TAG, "Could not get a printer driver!");
-		return CHANNEL_RC_INITIALIZATION_ERROR;
+		goto fail;
 	}
 
 	if (name && name[0])
@@ -1064,7 +1064,9 @@ printer_DeviceServiceEntry
 	}
 
 fail:
-	driver->ReleaseRef(driver);
+	free(driver_name);
+	if (driver)
+		driver->ReleaseRef(driver);
 
 	return error;
 }
