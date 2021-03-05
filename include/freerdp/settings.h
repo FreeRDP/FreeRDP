@@ -752,6 +752,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_GatewayAccessToken (1997)
 #define FreeRDP_GatewayAcceptedCert (1998)
 #define FreeRDP_GatewayAcceptedCertLength (1999)
+#define FreeRDP_GatewayHttpUseWebsockets (2000)
 #define FreeRDP_ProxyType (2015)
 #define FreeRDP_ProxyHostname (2016)
 #define FreeRDP_ProxyPort (2017)
@@ -1258,7 +1259,8 @@ struct rdp_settings
 	ALIGN64 char* GatewayAccessToken;         /* 1997 */
 	ALIGN64 char* GatewayAcceptedCert;        /* 1998 */
 	ALIGN64 UINT32 GatewayAcceptedCertLength; /* 1999 */
-	UINT64 padding2015[2015 - 2000];          /* 2000 */
+	ALIGN64 BOOL GatewayHttpUseWebsockets;    /* 2000 */
+	UINT64 padding2015[2015 - 2001];          /* 2001 */
 
 	/* Proxy */
 	ALIGN64 UINT32 ProxyType;        /* 2015 */
