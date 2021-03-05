@@ -330,7 +330,7 @@ static void CALLBACK yuv444_combine_work_callback(PTP_CALLBACK_INSTANCE instance
 	WINPR_UNUSED(instance);
 	WINPR_UNUSED(work);
 
-	if (!check_rect(context, rect, yuv->width, yuv->height))
+	if (!check_rect(param->context, rect, yuv->width, yuv->height))
 		return;
 
 	if (prims->YUV420CombineToYUV444(param->type, param->pYUVData, param->iStride, alignedWidth,
