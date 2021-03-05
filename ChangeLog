@@ -2,6 +2,7 @@
 
 Noteworthy changes:
 * Fixed autoreconnect printer backend loading
+* Fixed compilation on older mac os versions < 10.14
 
 Fixed issues:
 * #6848: Invalid format string in smartcard trace
