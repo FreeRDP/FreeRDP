@@ -1584,9 +1584,6 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_TcpKeepAliveRetries:
 			return settings->TcpKeepAliveRetries;
 
-		case FreeRDP_ThreadingFlags:
-			return settings->ThreadingFlags;
-
 		case FreeRDP_TlsSecLevel:
 			return settings->TlsSecLevel;
 
@@ -2043,10 +2040,6 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_TcpKeepAliveRetries:
 			settings->TcpKeepAliveRetries = val;
-			break;
-
-		case FreeRDP_ThreadingFlags:
-			settings->ThreadingFlags = val;
 			break;
 
 		case FreeRDP_TlsSecLevel:

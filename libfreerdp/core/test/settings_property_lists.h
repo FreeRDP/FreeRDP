@@ -286,7 +286,6 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_TcpKeepAliveDelay,
 	FreeRDP_TcpKeepAliveInterval,
 	FreeRDP_TcpKeepAliveRetries,
-	FreeRDP_ThreadingFlags,
 	FreeRDP_TlsSecLevel,
 	FreeRDP_VirtualChannelChunkSize,
 	FreeRDP_VirtualChannelCompressionFlags,
