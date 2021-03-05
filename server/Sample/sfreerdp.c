@@ -58,7 +58,7 @@ static BOOL test_dump_rfx_realtime = TRUE;
 static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 {
 	testPeerContext* context = (testPeerContext*)ctx;
-	if (!(context->rfx_context = rfx_context_new(TRUE, client->settings->ThreadingFlags)))
+	if (!(context->rfx_context = rfx_context_new(TRUE)))
 		goto fail_rfx_context;
 
 	if (!rfx_context_reset(context->rfx_context, SAMPLE_SERVER_DEFAULT_WIDTH,

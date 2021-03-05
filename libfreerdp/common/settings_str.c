@@ -289,7 +289,6 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_TcpKeepAliveDelay, 3, "FreeRDP_TcpKeepAliveDelay" },
 	{ FreeRDP_TcpKeepAliveInterval, 3, "FreeRDP_TcpKeepAliveInterval" },
 	{ FreeRDP_TcpKeepAliveRetries, 3, "FreeRDP_TcpKeepAliveRetries" },
-	{ FreeRDP_ThreadingFlags, 3, "FreeRDP_ThreadingFlags" },
 	{ FreeRDP_TlsSecLevel, 3, "FreeRDP_TlsSecLevel" },
 	{ FreeRDP_VirtualChannelChunkSize, 3, "FreeRDP_VirtualChannelChunkSize" },
 	{ FreeRDP_VirtualChannelCompressionFlags, 3, "FreeRDP_VirtualChannelCompressionFlags" },

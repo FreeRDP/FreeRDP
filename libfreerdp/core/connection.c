@@ -200,8 +200,8 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 	if (!context->codecs)
 		return FALSE;
 
-	if (!freerdp_client_codecs_prepare(context->codecs, freerdp_settings_get_codecs_flags(settings),
-	                                   settings->DesktopWidth, settings->DesktopHeight))
+	if (!freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL, settings->DesktopWidth,
+	                                   settings->DesktopHeight))
 		return FALSE;
 
 /* Runtime H264 detection. (only available if dynamic backend loading is defined)

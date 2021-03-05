@@ -44,9 +44,11 @@ struct rail_plugin
 	RailClientContext* context;
 
 	wLog* log;
+	HANDLE thread;
+	wStream* data_in;
 	void* InitHandle;
 	DWORD OpenHandle;
-	void* MsgsHandle;
+	wMessageQueue* queue;
 	rdpContext* rdpcontext;
 	DWORD channelBuildNumber;
 	DWORD channelFlags;

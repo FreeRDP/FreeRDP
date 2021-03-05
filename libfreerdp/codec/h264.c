@@ -658,7 +658,7 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	if (!h264_context_init(h264))
 		goto fail;
 
-	h264->yuv = yuv_context_new(Compressor, 0);
+	h264->yuv = yuv_context_new(Compressor);
 	if (!h264->yuv)
 		goto fail;
 
