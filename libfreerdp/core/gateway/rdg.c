@@ -1538,7 +1538,7 @@ DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count)
 			return 0;
 	}
 
-	if (rdg->tlsIn && rdg->tlsIn->bio)
+	if (!rdg->transferEncoding.isWebsocketTransport && rdg->tlsIn && rdg->tlsIn->bio)
 	{
 		if (events && (nCount < count))
 		{
@@ -2404,7 +2404,8 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	if (cmd == BIO_CTRL_FLUSH)
 	{
 		(void)BIO_flush(tlsOut->bio);
-		(void)BIO_flush(tlsIn->bio);
+		if (!rdg->transferEncoding.isWebsocketTransport)
+			(void)BIO_flush(tlsIn->bio);
 		status = 1;
 	}
 	else if (cmd == BIO_C_SET_NONBLOCK)
@@ -2419,6 +2420,10 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	else if (cmd == BIO_C_WRITE_BLOCKED)
 	{
 		BIO* bio = tlsIn->bio;
+
+		if (rdg->transferEncoding.isWebsocketTransport)
+			bio = tlsOut->bio;
+
 		status = BIO_write_blocked(bio);
 	}
 	else if (cmd == BIO_C_WAIT_READ)
@@ -2437,6 +2442,9 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	{
 		int timeout = (int)arg1;
 		BIO* bio = tlsIn->bio;
+
+		if (rdg->transferEncoding.isWebsocketTransport)
+			bio = tlsOut->bio;
 
 		if (BIO_write_blocked(bio))
 			status = BIO_wait_write(bio, timeout);
