@@ -68,7 +68,7 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 
 target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${FREERDP_CHANNELS_CLIENT_LIBS})
 if(OPENBSD)
-	target_link_libraries(${MODULE_NAME} ${PUBLIC_KEYWORD} ${${MODULE_PREFIX}_LIBS} ossaudio)
+	target_link_libraries(${MODULE_NAME} ${PUBLIC_KEYWORD} ${${MODULE_PREFIX}_LIBS} sndio)
 else()
 	target_link_libraries(${MODULE_NAME} ${PUBLIC_KEYWORD} ${${MODULE_PREFIX}_LIBS})
 endif()
