@@ -48,8 +48,7 @@ typedef struct _AudinSndioDevice
 	rdpContext* rdpcontext;
 } AudinSndioDevice;
 
-static BOOL audin_sndio_format_supported(IAudinDevice* device,
-    const AUDIO_FORMAT* format)
+static BOOL audin_sndio_format_supported(IAudinDevice* device, const AUDIO_FORMAT* format)
 {
 	if (device == NULL || format == NULL)
 		return FALSE;
@@ -63,7 +62,7 @@ static BOOL audin_sndio_format_supported(IAudinDevice* device,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT audin_sndio_set_format(IAudinDevice* device, AUDIO_FORMAT* format,
-    UINT32 FramesPerPacket)
+                                   UINT32 FramesPerPacket)
 {
 	AudinSndioDevice* sndio = (AudinSndioDevice*)device;
 
@@ -81,7 +80,7 @@ static UINT audin_sndio_set_format(IAudinDevice* device, AUDIO_FORMAT* format,
 
 static void* audin_sndio_thread_func(void* arg)
 {
-	struct sio_hdl *hdl;
+	struct sio_hdl* hdl;
 	struct sio_par par;
 	BYTE* buffer = NULL;
 	size_t n, nbytes;
@@ -96,35 +95,39 @@ static void* audin_sndio_thread_func(void* arg)
 	}
 
 	hdl = sio_open(SIO_DEVANY, SIO_REC, 0);
-	if (hdl == NULL) {
+	if (hdl == NULL)
+	{
 		WLog_ERR(TAG, "could not open audio device");
 		error = ERROR_INTERNAL_ERROR;
 		goto err_out;
-        }
+	}
 
 	sio_initpar(&par);
 	par.bits = sndio->format.wBitsPerSample;
 	par.rchan = sndio->format.nChannels;
 	par.rate = sndio->format.nSamplesPerSec;
-	if (!sio_setpar(hdl, &par)) {
+	if (!sio_setpar(hdl, &par))
+	{
 		WLog_ERR(TAG, "could not set audio parameters");
 		error = ERROR_INTERNAL_ERROR;
 		goto err_out;
-        }
-	if (!sio_getpar(hdl, &par)) {
+	}
+	if (!sio_getpar(hdl, &par))
+	{
 		WLog_ERR(TAG, "could not get audio parameters");
 		error = ERROR_INTERNAL_ERROR;
 		goto err_out;
-        }
+	}
 
-	if (!sio_start(hdl)) {
+	if (!sio_start(hdl))
+	{
 		WLog_ERR(TAG, "could not start audio device");
 		error = ERROR_INTERNAL_ERROR;
 		goto err_out;
-        }
+	}
 
-	nbytes = (sndio->FramesPerPacket * sndio->format.nChannels *
-	          (sndio->format.wBitsPerSample / 8));
+	nbytes =
+	    (sndio->FramesPerPacket * sndio->format.nChannels * (sndio->format.wBitsPerSample / 8));
 	buffer = (BYTE*)calloc((nbytes + sizeof(void*)), sizeof(BYTE));
 
 	if (buffer == NULL)
@@ -140,7 +143,7 @@ static void* audin_sndio_thread_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
 			goto err_out;
 		}
 
@@ -160,15 +163,14 @@ static void* audin_sndio_thread_func(void* arg)
 
 		if ((error = sndio->receive(&sndio->format, buffer, nbytes, sndio->user_data)))
 		{
-			WLog_ERR(TAG, "sndio->receive failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "sndio->receive failed with error %" PRIu32 "", error);
 			break;
 		}
 	}
 
 err_out:
 	if (error && sndio->rdpcontext)
-		setChannelError(sndio->rdpcontext, error,
-		                "audin_sndio_thread_func reported an error");
+		setChannelError(sndio->rdpcontext, error, "audin_sndio_thread_func reported an error");
 
 	if (hdl != NULL)
 	{
@@ -187,8 +189,7 @@ err_out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_sndio_open(IAudinDevice* device, AudinReceive receive,
-                           void* user_data)
+static UINT audin_sndio_open(IAudinDevice* device, AudinReceive receive, void* user_data)
 {
 	AudinSndioDevice* sndio = (AudinSndioDevice*)device;
 	sndio->receive = receive;
@@ -200,7 +201,8 @@ static UINT audin_sndio_open(IAudinDevice* device, AudinReceive receive,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (!(sndio->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)audin_sndio_thread_func, sndio, 0, NULL)))
+	if (!(sndio->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)audin_sndio_thread_func,
+	                                   sndio, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed");
 		CloseHandle(sndio->stopEvent);
@@ -231,7 +233,7 @@ static UINT audin_sndio_close(IAudinDevice* device)
 		if (WaitForSingleObject(sndio->thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
 			return error;
 		}
 
@@ -282,9 +284,10 @@ static UINT audin_sndio_parse_addin_args(AudinSndioDevice* device, ADDIN_ARGV* a
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinSndioDevice* sndio = (AudinSndioDevice*)device;
 	COMMAND_LINE_ARGUMENT_A audin_sndio_args[] = { { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, (const char**)args->argv,
-	                                    audin_sndio_args, flags, sndio, NULL, NULL);
+	flags =
+	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+	status = CommandLineParseArgumentsA(args->argc, (const char**)args->argv, audin_sndio_args,
+	                                    flags, sndio, NULL, NULL);
 
 	if (status < 0)
 		return ERROR_INVALID_PARAMETER;
@@ -303,9 +306,9 @@ static UINT audin_sndio_parse_addin_args(AudinSndioDevice* device, ADDIN_ARGV* a
 }
 
 #ifdef BUILTIN_CHANNELS
-#define freerdp_audin_client_subsystem_entry	sndio_freerdp_audin_client_subsystem_entry
+#define freerdp_audin_client_subsystem_entry sndio_freerdp_audin_client_subsystem_entry
 #else
-#define freerdp_audin_client_subsystem_entry	FREERDP_API freerdp_audin_client_subsystem_entry
+#define freerdp_audin_client_subsystem_entry FREERDP_API freerdp_audin_client_subsystem_entry
 #endif
 
 /**
@@ -342,10 +345,9 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 		}
 	}
 
-	if ((ret = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin,
-	             (IAudinDevice*) sndio)))
+	if ((ret = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*)sndio)))
 	{
-		WLog_ERR(TAG, "RegisterAudinDevice failed with error %"PRIu32"", ret);
+		WLog_ERR(TAG, "RegisterAudinDevice failed with error %" PRIu32 "", ret);
 		goto error;
 	}
 
