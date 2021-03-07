@@ -75,7 +75,7 @@
     <string-array name="resolutions_array">
         <item>自动</item>
         <item>适合屏幕</item>
-        <item>Custom</item>
+        <item>自定义</item>
         <item>640x480</item>
         <item>720x480</item>
         <item>800x600</item>
