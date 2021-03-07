@@ -42,7 +42,7 @@ struct rdpsnd_sndio_plugin
 {
 	rdpsndDevicePlugin device;
 
-	struct sio_hdl *hdl;
+	struct sio_hdl* hdl;
 	struct sio_par par;
 };
 
@@ -57,28 +57,32 @@ static BOOL rdpsnd_sndio_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
 		return TRUE;
 
 	sndio->hdl = sio_open(SIO_DEVANY, SIO_PLAY, 0);
-	if (sndio->hdl == NULL) {
+	if (sndio->hdl == NULL)
+	{
 		WLog_ERR(TAG, "could not open audio device");
-                return FALSE;
-        }
+		return FALSE;
+	}
 
 	sio_initpar(&sndio->par);
 	sndio->par.bits = format->wBitsPerSample;
 	sndio->par.pchan = format->nChannels;
 	sndio->par.rate = format->nSamplesPerSec;
-	if (!sio_setpar(sndio->hdl, &sndio->par)) {
+	if (!sio_setpar(sndio->hdl, &sndio->par))
+	{
 		WLog_ERR(TAG, "could not set audio parameters");
-                return FALSE;
-        }
-	if (!sio_getpar(sndio->hdl, &sndio->par)) {
+		return FALSE;
+	}
+	if (!sio_getpar(sndio->hdl, &sndio->par))
+	{
 		WLog_ERR(TAG, "could not get audio parameters");
-                return FALSE;
-        }
+		return FALSE;
+	}
 
-	if (!sio_start(sndio->hdl)) {
+	if (!sio_start(sndio->hdl))
+	{
 		WLog_ERR(TAG, "could not start audio device");
-                return FALSE;
-        }
+		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -90,7 +94,8 @@ static void rdpsnd_sndio_close(rdpsndDevicePlugin* device)
 	if (device == NULL)
 		return;
 
-	if (sndio->hdl != NULL) {
+	if (sndio->hdl != NULL)
+	{
 		sio_stop(sndio->hdl);
 		sio_close(sndio->hdl);
 		sndio->hdl = NULL;
@@ -152,9 +157,10 @@ static UINT rdpsnd_sndio_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 	COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndSndioPlugin* sndio = (rdpsndSndioPlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_sndio_args[] = { { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, (const char**)args->argv,
-	                                    rdpsnd_sndio_args, flags, sndio, NULL, NULL);
+	flags =
+	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+	status = CommandLineParseArgumentsA(args->argc, (const char**)args->argv, rdpsnd_sndio_args,
+	                                    flags, sndio, NULL, NULL);
 
 	if (status < 0)
 		return ERROR_INVALID_DATA;
