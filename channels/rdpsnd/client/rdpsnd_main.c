@@ -989,6 +989,9 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 #if defined(WITH_WINMM)
 		{ "winmm", "" },
 #endif
+#if defined(WITH_SNDIO)
+		{ "sndio", "" },
+#endif
 		{ "fake", "" }
 	};
 	const ADDIN_ARGV* args;

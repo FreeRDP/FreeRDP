@@ -56,3 +56,7 @@ endif()
 if(WITH_MACAUDIO)
 	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "mac" "")
 endif()
+
+if(WITH_SNDIO)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "sndio" "")
+endif()
