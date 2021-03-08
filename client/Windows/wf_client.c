@@ -41,6 +41,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 
+#include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/region.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
