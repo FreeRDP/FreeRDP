@@ -872,23 +872,6 @@ static DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 
 	WLog_DBG(TAG, "Keyboard thread exited.");
 	ExitThread(0);
-	return (DWORD)NULL;
-}
-
-static rdpSettings* freerdp_client_get_settings(wfContext* wfc)
-{
-	return wfc->context.settings;
-}
-
-static int freerdp_client_focus_in(wfContext* wfc)
-{
-	PostThreadMessage(wfc->mainThreadId, WM_SETFOCUS, 0, 1);
-	return 0;
-}
-
-static int freerdp_client_focus_out(wfContext* wfc)
-{
-	PostThreadMessage(wfc->mainThreadId, WM_KILLFOCUS, 0, 1);
 	return 0;
 }
 
