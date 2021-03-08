@@ -74,6 +74,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_GatewayBypassLocal, 0, "FreeRDP_GatewayBypassLocal" },
 	{ FreeRDP_GatewayEnabled, 0, "FreeRDP_GatewayEnabled" },
 	{ FreeRDP_GatewayHttpTransport, 0, "FreeRDP_GatewayHttpTransport" },
+	{ FreeRDP_GatewayHttpUseWebsockets, 0, "FreeRDP_GatewayHttpUseWebsockets" },
 	{ FreeRDP_GatewayRpcTransport, 0, "FreeRDP_GatewayRpcTransport" },
 	{ FreeRDP_GatewayUdpTransport, 0, "FreeRDP_GatewayUdpTransport" },
 	{ FreeRDP_GatewayUseSameCredentials, 0, "FreeRDP_GatewayUseSameCredentials" },
