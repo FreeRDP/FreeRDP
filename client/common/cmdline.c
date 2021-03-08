@@ -2246,15 +2246,29 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				settings->GatewayRpcTransport = TRUE;
 				settings->GatewayHttpTransport = FALSE;
 			}
-			else if (_stricmp(arg->Value, "http") == 0)
+			else
 			{
-				settings->GatewayRpcTransport = FALSE;
-				settings->GatewayHttpTransport = TRUE;
-			}
-			else if (_stricmp(arg->Value, "auto") == 0)
-			{
-				settings->GatewayRpcTransport = TRUE;
-				settings->GatewayHttpTransport = TRUE;
+				char* c = strchr(arg->Value, ',');
+				if (c)
+				{
+					*c++ = '\0';
+					if (_stricmp(c, "no-websockets") != 0)
+					{
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, FALSE);
+				}
+
+				if (_stricmp(arg->Value, "http") == 0)
+				{
+					settings->GatewayRpcTransport = FALSE;
+					settings->GatewayHttpTransport = TRUE;
+				}
+				else if (_stricmp(arg->Value, "auto") == 0)
+				{
+					settings->GatewayRpcTransport = TRUE;
+					settings->GatewayHttpTransport = TRUE;
+				}
 			}
 		}
 		CommandLineSwitchCase(arg, "gat")
