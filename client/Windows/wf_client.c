@@ -192,8 +192,8 @@ static BOOL wf_pre_connect(freerdp* instance)
 {
 	UINT32 rc;
 	wfContext* wfc;
-	int desktopWidth;
-	int desktopHeight;
+	UINT32 desktopWidth;
+	UINT32 desktopHeight;
 	rdpContext* context;
 	rdpSettings* settings;
 
