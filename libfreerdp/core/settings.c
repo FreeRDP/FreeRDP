@@ -185,8 +185,8 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 			GLYPH_CACHE_DEFINITION cache = { 0 };
 			TCHAR numentries[64] = { 0 };
 			TCHAR maxsize[64] = { 0 };
-			_sntprintf(numentries, ARRAYSIZE(numentries), "Cache%uNumEntries", x);
-			_sntprintf(maxsize, ARRAYSIZE(maxsize), "Cache%uMaxCellSize", x);
+			_sntprintf(numentries, ARRAYSIZE(numentries), _T("Cache%uNumEntries"), x);
+			_sntprintf(maxsize, ARRAYSIZE(maxsize), _T("Cache%uMaxCellSize"), x);
 
 			settings_reg_query_word_val(hKey, numentries, &cache.cacheEntries);
 			settings_reg_query_word_val(hKey, maxsize, &cache.cacheMaximumCellSize);
