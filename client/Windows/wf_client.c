@@ -371,8 +371,8 @@ static BOOL wf_post_connect(freerdp* instance)
 
 	if (!wfc->hwnd)
 	{
-		wfc->hwnd = CreateWindowEx((DWORD)NULL, wfc->wndClassName, wfc->window_title, dwStyle, 0, 0,
-		                           0, 0, wfc->hWndParent, NULL, wfc->hInstance, NULL);
+		wfc->hwnd = CreateWindowEx(0, wfc->wndClassName, wfc->window_title, dwStyle, 0, 0, 0, 0,
+		                           wfc->hWndParent, NULL, wfc->hInstance, NULL);
 		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR)wfc);
 	}
 
@@ -565,6 +565,8 @@ static DWORD wf_verify_certificate_ex(freerdp* instance, const char* host, UINT1
 	    flags & VERIFY_CERT_FLAG_MISMATCH ? "Yes" : "No");
 	caption = wf_format_text(L"Verify certificate for %S:%hu", host, port);
 
+	WINPR_UNUSED(instance);
+
 	if (!buffer || !caption)
 		goto fail;
 
@@ -619,6 +621,7 @@ static DWORD wf_verify_changed_certificate_ex(freerdp* instance, const char* hos
 	    flags & VERIFY_CERT_FLAG_MISMATCH ? "Yes" : "No", old_subject, old_issuer, old_fingerprint);
 	caption = wf_format_text(L"Verify certificate change for %S:%hu", host, port);
 
+	WINPR_UNUSED(instance);
 	if (!buffer || !caption)
 		goto fail;
 
@@ -1051,6 +1054,7 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 static void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
+	WINPR_UNUSED(instance);
 	if (!context)
 		return;
 }
