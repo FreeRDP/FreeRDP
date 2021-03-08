@@ -251,7 +251,8 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	UINT32 waitCount = 0, nobjects;
 	primitives_t* prims = primitives_get();
 
-	if (!context->useThreads || (primitives_flags(prims) & PRIM_FLAGS_HAVE_EXTGPU))
+	if (!context->useThreads || (primitives_flags(prims) & PRIM_FLAGS_HAVE_EXTGPU) ||
+	    TRUE) // TODO: Multithreadded decoding yields artifacts, deactivate for now
 	{
 		for (y = 0; y < numRegionRects; y++)
 		{
