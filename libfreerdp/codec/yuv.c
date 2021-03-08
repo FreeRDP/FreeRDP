@@ -275,8 +275,7 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 		const RECTANGLE_16* rect = &regionRects[x];
 		const UINT32 height = rect->bottom - rect->top;
 
-		const UINT32 heightStep = (height + steps / 2) / steps;
-
+		const UINT32 heightStep = MAX((height + steps / 2) / steps, 1);
 		for (y = 0; y < steps; y++)
 		{
 			YUV_PROCESS_WORK_PARAM* cur = &params[waitCount];
