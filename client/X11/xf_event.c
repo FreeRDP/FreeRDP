@@ -262,6 +262,37 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 	return TRUE;
 }
 
+void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
+{
+	rdpSettings* settings;
+	INT64 tx, ty;
+
+	if (!xfc || !xfc->context.settings || !y || !x)
+		return;
+
+	settings = xfc->context.settings;
+	tx = *x;
+	ty = *y;
+	if (!xfc->remote_app)
+	{
+#ifdef WITH_XRENDER
+
+		if (xf_picture_transform_required(xfc))
+		{
+			double xScalingFactor = xfc->scaledWidth / (double)settings->DesktopWidth;
+			double yScalingFactor = xfc->scaledHeight / (double)settings->DesktopHeight;
+			tx = ((tx + xfc->offset_x) * xScalingFactor);
+			ty = ((ty + xfc->offset_y) * yScalingFactor);
+		}
+
+#endif
+	}
+
+	CLAMP_COORDINATES(tx, ty);
+	*x = tx;
+	*y = ty;
+}
+
 void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 {
 	rdpSettings* settings;
