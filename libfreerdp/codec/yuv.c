@@ -251,7 +251,8 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	UINT32 waitCount = 0, nobjects;
 	primitives_t* prims = primitives_get();
 
-	if (!context->useThreads || (primitives_flags(prims) & PRIM_FLAGS_HAVE_EXTGPU))
+	if (!context->useThreads || (primitives_flags(prims) & PRIM_FLAGS_HAVE_EXTGPU) ||
+	    TRUE) // TODO: Multithreadded decoding yields artifacts, deactivate for now
 	{
 		for (y = 0; y < numRegionRects; y++)
 		{
@@ -275,13 +276,17 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 		const RECTANGLE_16* rect = &regionRects[x];
 		const UINT32 height = rect->bottom - rect->top;
 
-		const UINT32 heightStep = (height + steps / 2) / steps;
-
+		const UINT32 heightStep = MAX((height + steps / 2) / steps, 1);
 		for (y = 0; y < steps; y++)
 		{
 			YUV_PROCESS_WORK_PARAM* cur = &params[waitCount];
 			RECTANGLE_16 r = *rect;
 			r.top += y * heightStep;
+
+			/* If we have an odd bounding rectangle we might end up with < steps
+			 * workers. Check we do not exceed the bounding rectangle. */
+			if (r.top >= rect->bottom)
+				continue;
 			r.bottom = r.top + heightStep;
 			if (r.bottom > rect->bottom)
 				r.bottom = rect->bottom;
