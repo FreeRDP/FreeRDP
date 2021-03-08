@@ -37,6 +37,7 @@
 
 #include "xf_graphics.h"
 #include "xf_gdi.h"
+#include "xf_event.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
@@ -521,6 +522,8 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 	if (xfc->remote_app && !xfc->focused)
 		return TRUE;
 
+	xf_adjust_coordinates_to_screen(xfc, &x, &y);
+
 	xf_lock_x11(xfc);
 
 	rc = XGetWindowAttributes(xfc->display, handle, &current);
@@ -541,7 +544,7 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 
 	rc = XWarpPointer(xfc->display, None, handle, 0, 0, 0, 0, x, y);
 	if (rc == 0)
-		WLog_WARN(TAG, "xf_Pointer_SetPosition: XWrapPointer==%d", rc);
+		WLog_WARN(TAG, "xf_Pointer_SetPosition: XWarpPointer==%d", rc);
 	tmp.event_mask = current.your_event_mask;
 	rc = XChangeWindowAttributes(xfc->display, handle, CWEventMask, &tmp);
 	if (rc == 0)
