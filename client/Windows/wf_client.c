@@ -238,12 +238,12 @@ static BOOL wf_pre_connect(freerdp* instance)
 
 	if (desktopWidth != settings->DesktopWidth)
 	{
-		freerdp_set_param_uint32(settings, FreeRDP_DesktopWidth, desktopWidth);
+		freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, desktopWidth);
 	}
 
 	if (desktopHeight != settings->DesktopHeight)
 	{
-		freerdp_set_param_uint32(settings, FreeRDP_DesktopHeight, desktopHeight);
+		freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, desktopHeight);
 	}
 
 	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
@@ -258,7 +258,7 @@ static BOOL wf_pre_connect(freerdp* instance)
 		return -1;
 
 	rc = freerdp_keyboard_init(freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout));
-	freerdp_set_param_uint32(settings, FreeRDP_KeyboardLayout, rc);
+	freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, rc);
 	PubSub_SubscribeChannelConnected(instance->context->pubSub, wf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    wf_OnChannelDisconnectedEventHandler);
