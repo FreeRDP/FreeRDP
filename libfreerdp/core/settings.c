@@ -57,20 +57,6 @@ static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 #define GLYPH_CACHE_KEY CLIENT_KEY "\\GlyphCache"
 #define POINTER_CACHE_KEY CLIENT_KEY "\\PointerCache"
 
-static BOOL settings_reg_query_word_val(HKEY hKey, const TCHAR* sub, UINT16* value)
-{
-	DWORD dwType;
-	DWORD dwSize;
-	DWORD dwValue;
-
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, sub, NULL, &dwType, (BYTE*)&dwValue, &dwSize) != ERROR_SUCCESS)
-		return FALSE;
-
-	*value = dwValue;
-	return TRUE;
-}
-
 static BOOL settings_reg_query_dword_val(HKEY hKey, const TCHAR* sub, DWORD* value)
 {
 	DWORD dwType;
@@ -78,33 +64,39 @@ static BOOL settings_reg_query_dword_val(HKEY hKey, const TCHAR* sub, DWORD* val
 
 	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, sub, NULL, &dwType, (BYTE*)value, &dwSize) != ERROR_SUCCESS)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL settings_reg_query_word_val(HKEY hKey, const TCHAR* sub, UINT16* value)
+{
+	DWORD dwValue;
+
+	if (!settings_reg_query_dword_val(hKey, sub, &dwValue))
 		return FALSE;
 
+	*value = dwValue;
 	return TRUE;
 }
 
 static BOOL settings_reg_query_bool_val(HKEY hKey, const TCHAR* sub, BOOL* value)
 {
-	DWORD dwType;
-	DWORD dwSize;
 	DWORD dwValue;
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, sub, NULL, &dwType, (BYTE*)&dwValue, &dwSize) != ERROR_SUCCESS)
+	if (!settings_reg_query_dword_val(hKey, sub, &dwValue))
 		return FALSE;
-
 	*value = dwValue != 0;
 	return TRUE;
 }
 
 static BOOL settings_reg_query_dword(rdpSettings* settings, size_t id, HKEY hKey, const TCHAR* sub)
 {
-	DWORD dwType;
-	DWORD dwSize;
 	DWORD dwValue;
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, sub, NULL, &dwType, (BYTE*)&dwValue, &dwSize) != ERROR_SUCCESS)
+	if (!settings_reg_query_dword_val(hKey, sub, &dwValue))
 		return FALSE;
 
 	return freerdp_settings_set_uint32(settings, id, dwValue);
@@ -112,12 +104,9 @@ static BOOL settings_reg_query_dword(rdpSettings* settings, size_t id, HKEY hKey
 
 static BOOL settings_reg_query_bool(rdpSettings* settings, size_t id, HKEY hKey, const TCHAR* sub)
 {
-	DWORD dwType;
-	DWORD dwSize;
 	DWORD dwValue;
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, sub, NULL, &dwType, (BYTE*)&dwValue, &dwSize) != ERROR_SUCCESS)
+	if (!settings_reg_query_dword_val(hKey, sub, &dwValue))
 		return FALSE;
 
 	return freerdp_settings_set_bool(settings, id, dwValue != 0 ? TRUE : FALSE);
