@@ -129,7 +129,7 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 
 #elif _WIN32
 
-BOOL check_path(char* path)
+BOOL check_path(const char* path)
 {
 	UINT type = GetDriveTypeA(path);
 
@@ -243,6 +243,9 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 								{
 									device_ext = (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(
 									    rdpdr->devman->devices, (void*)keys[j]);
+
+									if (device_ext->device.type != RDPDR_DTYP_FILESYSTEM)
+										continue;
 
 									if (device_ext->path[0] == drive_name_upper ||
 									    device_ext->path[0] == drive_name_lower)
