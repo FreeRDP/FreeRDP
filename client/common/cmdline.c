@@ -120,6 +120,23 @@ static BOOL freerdp_sanitize_drive_name(char* name, const char* invalid, const c
 	return TRUE;
 }
 
+static char* name_from_path(const char* path)
+{
+	const char* name = "NULL";
+	if (path)
+	{
+		if (_strnicmp(path, "%", 2) == 0)
+			name = "home";
+		else if (_strnicmp(path, "*", 2) == 0)
+			name = "hotplug-all";
+		else if (_strnicmp(path, "DynamicDrives", 2) == 0)
+			name = "hotplug";
+		else
+			name = path;
+	}
+	return _strdup(name);
+}
+
 static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, const char* name)
 {
 	RDPDR_DRIVE* drive;
@@ -151,8 +168,10 @@ static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, co
 			goto fail;
 	}
 	else /* We need a name to send to the server. */
-	    if (!(drive->Name = _strdup(path)))
-		goto fail;
+	{
+		if (!(drive->Name = name_from_path(path)))
+			goto fail;
+	}
 
 	if (!path || !freerdp_sanitize_drive_name(drive->Name, "\\/", "__"))
 		goto fail;
@@ -3573,6 +3592,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			/* Syntax: Comma seperated list of the following entries:
 			 * '*'              ... Redirect all drives, including hotplug
 			 * 'DynamicDrives'  ... hotplug
+			 * '%'              ... user home directory
 			 * <label>(<path>)  ... One or more paths to redirect.
 			 * <path>(<label>)  ... One or more paths to redirect.
 			 * <path>           ... One or more paths to redirect.
