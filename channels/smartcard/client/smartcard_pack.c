@@ -349,6 +349,9 @@ static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL un
 	if (bytes < 1)
 		return NULL;
 
+	if (in == NULL)
+		return NULL;
+
 	if (unicode)
 	{
 		length = (bytes / sizeof(WCHAR)) - 1;
