@@ -5,6 +5,7 @@ Noteworthy changes:
 * Fixed compilation on older mac os versions < 10.14
 * Fixed mouse pointer move with smart-sizing
 * Added command line option to disable websocket gateway support
+* Fixed drive hotplugging issues with windows
 
 Fixed issues:
 * #6848: Invalid format string in smartcard trace
