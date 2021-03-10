@@ -2825,8 +2825,6 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	clientFormat = &clipboard->clientFormats[n++];
 	clientFormat->atom = XInternAtom(xfc->display, "UTF8_STRING", False);
 	clientFormat->formatId = CF_UNICODETEXT;
-	/* This line for nautilus based file managers, beacuse they use UTF8_STRING for file-list */
-	clientFormat->formatName = _strdup("FileGroupDescriptorW");
 
 	clientFormat = &clipboard->clientFormats[n++];
 	clientFormat->atom = XA_STRING;
