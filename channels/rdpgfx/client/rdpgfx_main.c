@@ -999,6 +999,19 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	cmd.data = pdu.bitmapData;
 	cmd.extra = NULL;
 
+	if (cmd.right < cmd.left)
+	{
+		WLog_Print(gfx->log, WLOG_ERROR, "RecvWireToSurface1Pdu right=%" PRIu32 " < left=%" PRIu32,
+		           cmd.right, cmd.left);
+		return ERROR_INVALID_DATA;
+	}
+	if (cmd.bottom < cmd.top)
+	{
+		WLog_Print(gfx->log, WLOG_ERROR, "RecvWireToSurface1Pdu bottom=%" PRIu32 " < top=%" PRIu32,
+		           cmd.bottom, cmd.top);
+		return ERROR_INVALID_DATA;
+	}
+
 	if ((error = rdpgfx_decode(gfx, &cmd)))
 		WLog_Print(gfx->log, WLOG_ERROR, "rdpgfx_decode failed with error %" PRIu32 "!", error);
 
