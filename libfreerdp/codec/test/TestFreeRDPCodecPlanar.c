@@ -3,6 +3,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
@@ -5650,11 +5651,126 @@ fail:
 	return rc;
 }
 
+static UINT32 prand(UINT32 max)
+{
+	UINT32 tmp;
+	if (max <= 1)
+		return 1;
+	winpr_RAND((BYTE*)&tmp, sizeof(tmp));
+	return tmp % (max - 1) + 1;
+}
+
+static BOOL FuzzPlanar(void)
+{
+	UINT32 x;
+	BOOL rc = FALSE;
+	const DWORD planarFlags = PLANAR_FORMAT_HEADER_NA | PLANAR_FORMAT_HEADER_RLE;
+	BITMAP_PLANAR_CONTEXT* planar = freerdp_bitmap_planar_context_new(planarFlags, 64, 64);
+
+	if (!planar)
+		goto fail;
+
+	for (x = 0; x < 10000; x++)
+	{
+		BYTE data[0x10000] = { 0 };
+		size_t dataSize = 0x10000;
+		BYTE dstData[0x10000] = { 0 };
+
+		UINT32 DstFormat;
+		UINT32 nDstStep;
+		UINT32 nXDst;
+		UINT32 nYDst;
+		UINT32 nDstWidth;
+		UINT32 nDstHeight;
+		BOOL invalid = TRUE;
+		do
+		{
+			switch (prand(17) - 1)
+			{
+				case 0:
+					DstFormat = PIXEL_FORMAT_RGB8;
+					break;
+				case 1:
+					DstFormat = PIXEL_FORMAT_BGR15;
+					break;
+				case 2:
+					DstFormat = PIXEL_FORMAT_RGB15;
+					break;
+				case 3:
+					DstFormat = PIXEL_FORMAT_ABGR15;
+					break;
+				case 4:
+					DstFormat = PIXEL_FORMAT_ABGR15;
+					break;
+				case 5:
+					DstFormat = PIXEL_FORMAT_BGR16;
+					break;
+				case 6:
+					DstFormat = PIXEL_FORMAT_RGB16;
+					break;
+				case 7:
+					DstFormat = PIXEL_FORMAT_BGR24;
+					break;
+				case 8:
+					DstFormat = PIXEL_FORMAT_RGB24;
+					break;
+				case 9:
+					DstFormat = PIXEL_FORMAT_BGRA32;
+					break;
+				case 10:
+					DstFormat = PIXEL_FORMAT_BGRX32;
+					break;
+				case 11:
+					DstFormat = PIXEL_FORMAT_RGBA32;
+					break;
+				case 12:
+					DstFormat = PIXEL_FORMAT_RGBX32;
+					break;
+				case 13:
+					DstFormat = PIXEL_FORMAT_ABGR32;
+					break;
+				case 14:
+					DstFormat = PIXEL_FORMAT_XBGR32;
+					break;
+				case 15:
+					DstFormat = PIXEL_FORMAT_ARGB32;
+					break;
+				case 16:
+					DstFormat = PIXEL_FORMAT_XRGB32;
+					break;
+				default:
+					break;
+			}
+			nDstStep = prand(sizeof(dstData));
+			nXDst = prand(nDstStep);
+			nYDst = prand(sizeof(dstData) / nDstStep);
+			nDstWidth = prand(nDstStep / GetBytesPerPixel(DstFormat));
+			nDstHeight = prand(sizeof(dstData) / nDstStep);
+			invalid = nXDst * GetBytesPerPixel(DstFormat) + (nYDst + nDstHeight) * nDstStep >
+			          sizeof(dstData);
+		} while (invalid);
+		printf("DstFormat=%s, nXDst=%" PRIu32 ", nYDst=%" PRIu32 ", nDstWidth=%" PRIu32
+		       ", nDstHeight=%" PRIu32 ", nDstStep=%" PRIu32 ", total size=%" PRIuz "\n",
+		       FreeRDPGetColorFormatName(DstFormat), nXDst, nYDst, nDstWidth, nDstHeight, nDstStep,
+		       sizeof(dstData));
+		planar_decompress(planar, data, dataSize, prand(4096), prand(4096), dstData, DstFormat,
+		                  nDstStep, nXDst, nYDst, nDstWidth, nDstHeight, prand(2));
+	}
+
+	rc = TRUE;
+fail:
+	freerdp_bitmap_planar_context_free(planar);
+	return rc;
+}
+
 int TestFreeRDPCodecPlanar(int argc, char* argv[])
 {
 	UINT32 x;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+
+	if (!FuzzPlanar())
+		return -2;
 
 	for (x = 0; x < colorFormatCount; x++)
 	{
