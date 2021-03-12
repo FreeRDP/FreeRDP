@@ -502,6 +502,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define PROXY_TYPE_SOCKS 2
 #define PROXY_TYPE_IGNORE 0xFFFF
 
+/* ThreadingFlags */
+#define THREADING_FLAGS_DISABLE_THREADS 0x00000001
 /* Settings */
 
 #ifdef __GNUC__
@@ -533,6 +535,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_MaxTimeInCheckLoop (26)
 #define FreeRDP_AcceptedCert (27)
 #define FreeRDP_AcceptedCertLength (28)
+#define FreeRDP_ThreadingFlags (64)
 #define FreeRDP_RdpVersion (128)
 #define FreeRDP_DesktopWidth (129)
 #define FreeRDP_DesktopHeight (130)
@@ -928,10 +931,11 @@ struct rdp_settings
 	ALIGN64 UINT32 MaxTimeInCheckLoop;     /* 26 */
 	ALIGN64 char* AcceptedCert;            /* 27 */
 	ALIGN64 UINT32 AcceptedCertLength;     /* 28 */
+	UINT64 padding0064[64 - 29];           /* 29 */
+	/* resource management related options */
+	ALIGN64 UINT32 ThreadingFlags; /* 64 */
 
-	UINT64 padding0064[64 - 29]; /* 29 */
-
-	UINT64 padding0128[128 - 64]; /* 64 */
+	UINT64 padding0128[128 - 65]; /* 65 */
 
 	/**
 	 * GCC User Data Blocks
@@ -1719,6 +1723,7 @@ extern "C"
 	FREERDP_API SSIZE_T freerdp_settings_get_type_for_name(const char* value);
 	FREERDP_API SSIZE_T freerdp_settings_get_type_for_key(size_t key);
 	FREERDP_API const char* freerdp_settings_get_name_for_key(size_t key);
+	FREERDP_API UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings);
 
 #ifdef __cplusplus
 }

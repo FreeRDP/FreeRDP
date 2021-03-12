@@ -111,7 +111,7 @@ void yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height)
 	context->heightStep = (height / context->nthreads);
 }
 
-YUV_CONTEXT* yuv_context_new(BOOL encoder)
+YUV_CONTEXT* yuv_context_new(BOOL encoder, UINT32 ThreadingFlags)
 {
 	SYSTEM_INFO sysInfos;
 	YUV_CONTEXT* ret = calloc(1, sizeof(*ret));
@@ -121,23 +121,23 @@ YUV_CONTEXT* yuv_context_new(BOOL encoder)
 	/** do it here to avoid a race condition between threads */
 	primitives_get();
 
-	GetNativeSystemInfo(&sysInfos);
-	ret->useThreads = (sysInfos.dwNumberOfProcessors > 1);
-	if (ret->useThreads)
+	ret->nthreads = 1;
+	if (!(ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
 	{
-		ret->nthreads = sysInfos.dwNumberOfProcessors;
-		ret->threadPool = CreateThreadpool(NULL);
-		if (!ret->threadPool)
+		GetNativeSystemInfo(&sysInfos);
+		ret->useThreads = (sysInfos.dwNumberOfProcessors > 1);
+		if (ret->useThreads)
 		{
-			goto error_threadpool;
-		}
+			ret->nthreads = sysInfos.dwNumberOfProcessors;
+			ret->threadPool = CreateThreadpool(NULL);
+			if (!ret->threadPool)
+			{
+				goto error_threadpool;
+			}
 
-		InitializeThreadpoolEnvironment(&ret->ThreadPoolEnv);
-		SetThreadpoolCallbackPool(&ret->ThreadPoolEnv, ret->threadPool);
-	}
-	else
-	{
-		ret->nthreads = 1;
+			InitializeThreadpoolEnvironment(&ret->ThreadPoolEnv);
+			SetThreadpoolCallbackPool(&ret->ThreadPoolEnv, ret->threadPool);
+		}
 	}
 
 	return ret;
@@ -308,6 +308,7 @@ static INLINE BOOL check_rect(const YUV_CONTEXT* yuv, const RECTANGLE_16* rect, 
 	/* Check, if the output rectangle is valid in decoded h264 frame. */
 	if ((rect->right > yuv->width) || (rect->left > yuv->width))
 		return FALSE;
+
 	if ((rect->top > yuv->height) || (rect->bottom > yuv->height))
 		return FALSE;
 
@@ -422,6 +423,7 @@ BOOL yuv444_context_decode(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVData
 	if (!pool_decode_rect(context, type, pYUVData, iStride, pYUVDstData, iDstStride, regionRects,
 	                      numRegionRects))
 		return FALSE;
+
 	pYUVCDstData[0] = pYUVDstData[0];
 	pYUVCDstData[1] = pYUVDstData[1];
 	pYUVCDstData[2] = pYUVDstData[2];
