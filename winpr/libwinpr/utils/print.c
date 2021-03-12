@@ -158,7 +158,7 @@ void winpr_CArrayDump(const char* tag, UINT32 level, const BYTE* data, int lengt
 	free(buffer);
 }
 
-char* winpr_BinToHexString(const BYTE* data, size_t length, BOOL space)
+char* winpr_BinToHexString(const BYTE* data, int length, BOOL space)
 {
 	size_t i;
 	int n;
