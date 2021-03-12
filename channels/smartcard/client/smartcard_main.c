@@ -180,6 +180,7 @@ void smartcard_context_free(void* pCtx)
 
 	/* cancel blocking calls like SCardGetStatusChange */
 	SCardCancel(pContext->hContext);
+	SCardReleaseContext(pContext->hContext);
 
 	if (MessageQueue_PostQuit(pContext->IrpQueue, 0) &&
 	    (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED))
@@ -237,7 +238,7 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 
 	/* Put thread to sleep so that PC/SC can process the cancel requests. This fixes a race
 	 * condition that sometimes caused the pc/sc daemon to crash on MacOS (_xpc_api_misuse) */
-	Sleep(100);
+	SleepEx(100, FALSE);
 
 	/**
 	 * Call SCardReleaseContext on remaining contexts and remove them from rgSCardContextList.
@@ -251,27 +252,7 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 
 		for (index = 0; index < keyCount; index++)
 		{
-			pContext = (SMARTCARD_CONTEXT*)ListDictionary_Remove(smartcard->rgSCardContextList,
-			                                                     (void*)pKeys[index]);
-
-			if (!pContext)
-				continue;
-
-			hContext = pContext->hContext;
-
-			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
-			{
-				SCardReleaseContext(hContext);
-
-				if (MessageQueue_PostQuit(pContext->IrpQueue, 0) &&
-				    (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED))
-					WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!",
-					         GetLastError());
-
-				CloseHandle(pContext->thread);
-				MessageQueue_Free(pContext->IrpQueue);
-				free(pContext);
-			}
+			ListDictionary_SetItemValue(smartcard->rgSCardContextList, (void*)pKeys[index], NULL);
 		}
 
 		free(pKeys);
