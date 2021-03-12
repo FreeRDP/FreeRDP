@@ -851,7 +851,9 @@ int TestFreeRDPCodecRemoteFX(int argc, char* argv[])
 	BYTE* dest = NULL;
 	size_t stride = FORMAT_SIZE * IMG_WIDTH;
 
-	context = rfx_context_new(FALSE);
+	/* use default threading options here, pass zero as
+	 * ThreadingFlags */
+	context = rfx_context_new(FALSE, 0);
 	if (!context)
 		goto fail;
 
