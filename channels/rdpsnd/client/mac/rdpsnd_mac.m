@@ -144,7 +144,7 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *form
 	OSStatus err;
 	NSError *error;
 	rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
-	AudioObjectPropertyAddress propertyAddress = { kAudioHardwarePropertyDefaultSystemOutputDevice,
+	AudioObjectPropertyAddress propertyAddress = { kAudioHardwarePropertyDefaultOutputDevice,
 		                                           kAudioObjectPropertyScopeGlobal,
 		                                           kAudioObjectPropertyElementMaster };
 
