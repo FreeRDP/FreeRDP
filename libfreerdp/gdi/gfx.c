@@ -42,6 +42,27 @@ static BOOL is_rect_valid(const RECTANGLE_16* rect, size_t width, size_t height)
 	return TRUE;
 }
 
+static BOOL is_within_surface(const gdiGfxSurface* surface, const RDPGFX_SURFACE_COMMAND* cmd)
+{
+	RECTANGLE_16 rect;
+	if (!surface || !cmd)
+		return FALSE;
+	rect.left = cmd->left;
+	rect.top = cmd->top;
+	rect.right = cmd->right;
+	rect.bottom = cmd->bottom;
+	if (!is_rect_valid(&rect, surface->width, surface->height))
+	{
+		WLog_ERR(TAG,
+		         "%s: Command rect %" PRIu32 "x" PRIu32 "-" PRIu32 "x" PRIu32
+		         " not within bounds of " PRIu32 "x" PRIu32,
+		         __FUNCTION__, rect.left, rect.top, cmd->width, cmd->height, surface->width,
+		         surface->height);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 static DWORD gfx_align_scanline(DWORD widthInBytes, DWORD alignment)
 {
 	const UINT32 align = alignment;
@@ -259,6 +280,9 @@ static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* co
 		return ERROR_NOT_FOUND;
 	}
 
+	if (!is_within_surface(surface, cmd))
+		return ERROR_INVALID_DATA;
+
 	if (!freerdp_image_copy(surface->data, surface->format, surface->scanline, cmd->left, cmd->top,
 	                        cmd->width, cmd->height, cmd->data, cmd->format, 0, 0, 0, NULL,
 	                        FREERDP_FLIP_NONE))
@@ -413,6 +437,9 @@ static UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context,
 	}
 
 	DstData = surface->data;
+
+	if (!is_within_surface(surface, cmd))
+		return ERROR_INVALID_DATA;
 
 	if (!planar_decompress(surface->codecs->planar, cmd->data, cmd->length, cmd->width, cmd->height,
 	                       DstData, surface->format, surface->scanline, cmd->left, cmd->top,
@@ -686,6 +713,9 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 		return ERROR_NOT_FOUND;
 	}
 
+	if (!is_within_surface(surface, cmd))
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT16(&s, alphaSig);
 	Stream_Read_UINT16(&s, compressed);
 
@@ -814,6 +844,9 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* con
 		         cmd->surfaceId);
 		return ERROR_NOT_FOUND;
 	}
+
+	if (!is_within_surface(surface, cmd))
+		return ERROR_INVALID_DATA;
 
 	rc = progressive_create_surface_context(surface->codecs->progressive, cmd->surfaceId,
 	                                        surface->width, surface->height);
