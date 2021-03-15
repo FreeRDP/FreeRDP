@@ -315,7 +315,7 @@ static BOOL android_post_connect(freerdp* instance)
 	update = instance->update;
 	settings = instance->settings;
 
-	if (!gdi_init(instance, PIXEL_FORMAT_RGBA32))
+	if (!gdi_init(instance, PIXEL_FORMAT_RGBX32))
 		return FALSE;
 
 	if (!android_register_pointer(instance->context->graphics))
@@ -894,7 +894,7 @@ static jboolean JNICALL jni_freerdp_update_graphics(JNIEnv* env, jclass cls, jlo
 	switch (info.format)
 	{
 		case ANDROID_BITMAP_FORMAT_RGBA_8888:
-			DstFormat = PIXEL_FORMAT_RGBA32;
+			DstFormat = PIXEL_FORMAT_RGBX32;
 			break;
 
 		case ANDROID_BITMAP_FORMAT_RGB_565:
