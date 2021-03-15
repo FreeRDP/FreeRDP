@@ -30,12 +30,20 @@ def getVersionName = { ->
 ext {
     versionName = properties.get('VERSION_NAME', getVersionName())
     versionCode = properties.get('VERSION_CODE', 100)
+    compileApi = properties.get('COMPILE_API', 30)
+    targetApi = properties.get('TARGET_API', 30)
+    minApi = properties.get('MIN_API', 21)
+    toolsVersion = properties.get('TOOLS_VERSION', '30.0.3')
 
     println '----------------- Project configuration -------------------'
     println 'VERSION_NAME:       ' + versionName
     println 'VERSION_CODE:       ' + versionCode
-    println 'RELEASE_STORE_FILE: '+ RELEASE_STORE_FILE
-    println 'RELEASE_KEY_ALIAS:  '+ RELEASE_KEY_ALIAS
+    println 'RELEASE_STORE_FILE: ' + RELEASE_STORE_FILE
+    println 'RELEASE_KEY_ALIAS:  ' + RELEASE_KEY_ALIAS
+    println 'compile API:        ' + compileApi
+    println 'target API:         ' + targetApi
+    println 'min API:            ' + minApi
+    println 'tools version:      ' + toolsVersion
     println '-----------------------------------------------------------'
 }
 
@@ -45,7 +53,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.2.1'
+        classpath 'com.android.tools.build:gradle:4.1.2'
     }
 }
 
