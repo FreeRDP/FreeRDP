@@ -1815,7 +1815,14 @@ static LONG smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 
 	if (!call->fpbAttrIsNULL)
 	{
-		autoAllocate = (call->cbAttrLen == SCARD_AUTOALLOCATE) ? TRUE : FALSE;
+		if (call->cbAttrLen == SCARD_AUTOALLOCATE)
+		{
+			ret.ReturnCode = SCardGetAttrib(operation->hCard, call->dwAttrId, NULL, &cbAttrLen);
+			log_status_error(TAG, "SCardGetAttrib [length]", ret.ReturnCode);
+			if (ret.ReturnCode != SCARD_S_SUCCESS)
+				goto fail;
+		}
+		// autoAllocate = (call->cbAttrLen == SCARD_AUTOALLOCATE) ? TRUE : FALSE;
 		cbAttrLen = call->cbAttrLen;
 		if (cbAttrLen && !autoAllocate)
 		{
@@ -1832,6 +1839,7 @@ static LONG smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	log_status_error(TAG, "SCardGetAttrib", ret.ReturnCode);
 	ret.cbAttrLen = cbAttrLen;
 
+fail:
 	status = smartcard_pack_get_attrib_return(smartcard, irp->output, &ret, call->dwAttrId,
 	                                          call->cbAttrLen);
 
