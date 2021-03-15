@@ -1,4 +1,4 @@
-# 2021-XX-YY Version 2.3.2
+# 2021-03-15 Version 2.3.2
 
 Noteworthy changes:
 * Fixed autoreconnect printer backend loading
@@ -9,6 +9,7 @@ Noteworthy changes:
 * Fixed smartcard issues on mac
 
 Fixed issues:
+* #6900: Transparency issues with aFreeRDP
 * #6848: Invalid format string in smartcard trace
 * #6846: Fixed static builds
 * #6888: Crash due to missing bounds checks
