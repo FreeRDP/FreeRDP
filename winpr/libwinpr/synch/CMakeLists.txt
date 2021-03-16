@@ -22,6 +22,8 @@ winpr_module_add(
 	event.c
 	init.c
 	mutex.c
+	pollset.c
+	pollset.h
 	semaphore.c
 	sleep.c
 	synch.h
