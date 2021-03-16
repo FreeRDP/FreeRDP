@@ -87,7 +87,7 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 		if (rc == WAIT_OBJECT_0)
 			break;
 
-		if (rc == 0x000000C0L) /* WAIT_IO_COMPLETION */
+		if (rc == WAIT_IO_COMPLETION)
 			continue;
 
 		printf("Failed to wait for completion event (%" PRIu32 ")\n", GetLastError());
