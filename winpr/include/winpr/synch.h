@@ -174,6 +174,7 @@ extern "C"
 
 #define WAIT_OBJECT_0 0x00000000L
 #define WAIT_ABANDONED 0x00000080L
+#define WAIT_IO_COMPLETION 0x000000C0L
 
 #ifndef WAIT_TIMEOUT
 #define WAIT_TIMEOUT 0x00000102L
@@ -202,7 +203,8 @@ extern "C"
 		ULONG Version;
 		DWORD Flags;
 
-		union {
+		union
+		{
 			struct
 			{
 				HMODULE LocalizedReasonModule;
