@@ -834,6 +834,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 		BYTE* pTempData = planar->pTempData;
 		UINT32 nTempStep = planar->nTempStep;
 		UINT32 nTotalHeight = planar->maxHeight;
+		BYTE* dst = &pDstData[nXDst * GetBytesPerPixel(DstFormat) + nYDst * nDstStep];
 
 		if (useAlpha)
 			TempFormat = PIXEL_FORMAT_BGRA32;
@@ -928,8 +929,8 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 				srcp++; /* pad */
 		}
 
-		if (prims->YCoCgToRGB_8u_AC4R(pTempData, nTempStep, pDstData, DstFormat, nDstStep, w, h,
-		                              cll, useAlpha) != PRIMITIVES_SUCCESS)
+		if (prims->YCoCgToRGB_8u_AC4R(pTempData, nTempStep, dst, DstFormat, nDstStep, w, h, cll,
+		                              useAlpha) != PRIMITIVES_SUCCESS)
 			return FALSE;
 	}
 
