@@ -2822,8 +2822,12 @@ LONG smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 		cbAttrLen = 0;
 	if (cbAttrLen == SCARD_AUTOALLOCATE)
 		cbAttrLen = 0;
-	if (cbAttrCallLen < cbAttrLen)
-		cbAttrLen = cbAttrCallLen;
+
+	if (ret->pbAttr)
+	{
+		if (cbAttrCallLen < cbAttrLen)
+			cbAttrLen = cbAttrCallLen;
+	}
 	Stream_Write_UINT32(s, cbAttrLen); /* cbAttrLen (4 bytes) */
 	if (!smartcard_ndr_pointer_write(s, &index, cbAttrLen))
 		return SCARD_E_NO_MEMORY;
