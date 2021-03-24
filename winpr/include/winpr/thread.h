@@ -213,6 +213,9 @@ extern "C"
 	WINPR_API HANDLE _GetCurrentThread(void);
 	WINPR_API DWORD GetCurrentThreadId(void);
 
+	typedef void (*PAPCFUNC)(ULONG_PTR Parameter);
+	WINPR_API DWORD QueueUserAPC(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData);
+
 	WINPR_API DWORD ResumeThread(HANDLE hThread);
 	WINPR_API DWORD SuspendThread(HANDLE hThread);
 	WINPR_API BOOL SwitchToThread(void);

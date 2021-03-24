@@ -1,7 +1,9 @@
+#ifndef _WIN32
 #include <errno.h>
 
 #include "pollset.h"
 #include <winpr/handle.h>
+#include <winpr/sysinfo.h>
 #include "../log.h"
 
 #define TAG WINPR_TAG("sync.pollset")
@@ -41,7 +43,9 @@ BOOL pollset_init(WINPR_POLL_SET* set, size_t nhandles)
 	if (!set->fdIndex)
 		return FALSE;
 
+	FD_ZERO(&set->rset_base);
 	FD_ZERO(&set->rset);
+	FD_ZERO(&set->wset_base);
 	FD_ZERO(&set->wset);
 	set->maxFd = 0;
 	set->nread = set->nwrite = 0;
@@ -65,8 +69,8 @@ void pollset_uninit(WINPR_POLL_SET* set)
 void pollset_reset(WINPR_POLL_SET* set)
 {
 #ifndef HAVE_POLL_H
-	FD_ZERO(&set->rset);
-	FD_ZERO(&set->wset);
+	FD_ZERO(&set->rset_base);
+	FD_ZERO(&set->wset_base);
 	set->maxFd = 0;
 	set->nread = set->nwrite = 0;
 #endif
@@ -88,13 +92,13 @@ BOOL pollset_add(WINPR_POLL_SET* set, int fd, ULONG mode)
 	FdIndex* fdIndex = &set->fdIndex[set->fillIndex];
 	if (mode & WINPR_FD_READ)
 	{
-		FD_SET(fd, &set->rset);
+		FD_SET(fd, &set->rset_base);
 		set->nread++;
 	}
 
 	if (mode & WINPR_FD_WRITE)
 	{
-		FD_SET(fd, &set->wset);
+		FD_SET(fd, &set->wset_base);
 		set->nwrite++;
 	}
 
@@ -110,35 +114,85 @@ BOOL pollset_add(WINPR_POLL_SET* set, int fd, ULONG mode)
 
 int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds)
 {
-	int ret;
-#ifdef HAVE_POLL_H
-	do
-	{
-		ret = poll(set->pollset, set->fillIndex, dwMilliseconds);
-	} while (ret < 0 && errno == EINTR);
-#else
-	struct timeval staticTimeout;
-	struct timeval* timeout;
+	int ret = 0;
+	UINT64 dueTime, now;
 
-	if (dwMilliseconds == INFINITE || dwMilliseconds == 0)
-	{
-		timeout = NULL;
-	}
+	now = GetTickCount64();
+	if (dwMilliseconds == INFINITE)
+		dueTime = 0xFFFFFFFFFFFFFFFF;
 	else
-	{
-		timeout = &staticTimeout;
-		timeout->tv_sec = dwMilliseconds / 1000;
-		timeout->tv_usec = (dwMilliseconds % 1000) * 1000;
-	}
+		dueTime = now + dwMilliseconds;
+
+#ifdef HAVE_POLL_H
+	int timeout;
 
 	do
 	{
-		ret = select(set->maxFd + 1, set->nread ? &set->rset : NULL,
-		             set->nwrite ? &set->wset : NULL, NULL, timeout);
-	} while (ret < 0 && errno == EINTR);
+		if (dwMilliseconds == INFINITE)
+			timeout = -1;
+		else
+			timeout = (int)(dueTime - now);
+
+		ret = poll(set->pollset, set->fillIndex, timeout);
+		if (ret >= 0)
+			return ret;
+
+		if (errno != EINTR)
+			return -1;
+
+		now = GetTickCount64();
+	} while (now < dueTime);
+
+#else
+	do
+	{
+		struct timeval staticTimeout;
+		struct timeval* timeout;
+
+		fd_set* rset = NULL;
+		fd_set* wset = NULL;
+
+		if (dwMilliseconds == INFINITE)
+		{
+			timeout = NULL;
+		}
+		else
+		{
+			long waitTime = (long)(dueTime - now);
+
+			timeout = &staticTimeout;
+			timeout->tv_sec = waitTime / 1000;
+			timeout->tv_usec = (waitTime % 1000) * 1000;
+		}
+
+		if (set->nread)
+		{
+			rset = &set->rset;
+			memcpy(rset, &set->rset_base, sizeof(*rset));
+		}
+
+		if (set->nwrite)
+		{
+			wset = &set->wset;
+			memcpy(wset, &set->wset_base, sizeof(*wset));
+		}
+
+		ret = select(set->maxFd + 1, rset, wset, NULL, timeout);
+		if (ret >= 0)
+			return ret;
+
+		if (errno != EINTR)
+			return -1;
+
+		now = GetTickCount64();
+
+	} while (now < dueTime);
+
+	FD_ZERO(&set->rset);
+	FD_ZERO(&set->wset);
 #endif
 
-	return ret;
+	return 0; /* timeout */
 }
 
 BOOL pollset_isSignaled(WINPR_POLL_SET* set, size_t idx)
@@ -166,3 +220,4 @@ BOOL pollset_isSignaled(WINPR_POLL_SET* set, size_t idx)
 	return FALSE;
 #endif
 }
+#endif
