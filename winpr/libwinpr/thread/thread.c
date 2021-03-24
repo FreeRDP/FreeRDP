@@ -4,6 +4,8 @@
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2015 Hewlett-Packard Development Company, L.P.
+ * Copyright 2021 David Fort <contact@hardening-consulting.com>
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,11 +91,13 @@
 #include <winpr/collections.h>
 
 #include "thread.h"
+#include "apc.h"
 
 #include "../handle/handle.h"
 #include "../log.h"
 #define TAG WINPR_TAG("thread")
 
+static WINPR_THREAD mainThread;
 static wListDictionary* thread_list = NULL;
 
 static BOOL ThreadCloseHandle(HANDLE handle);
@@ -119,7 +123,7 @@ static int ThreadGetFd(HANDLE handle)
 	if (!ThreadIsHandled(handle))
 		return -1;
 
-	return pThread->pipe_fd[0];
+	return pThread->event.fds[0];
 }
 
 static DWORD ThreadCleanupHandle(HANDLE handle)
@@ -224,58 +228,12 @@ static void dump_thread(WINPR_THREAD* thread)
  */
 static BOOL set_event(WINPR_THREAD* thread)
 {
-	int length;
-	BOOL status = FALSE;
-#ifdef HAVE_SYS_EVENTFD_H
-	eventfd_t val = 1;
-
-	do
-	{
-		length = eventfd_write(thread->pipe_fd[0], val);
-	} while ((length < 0) && (errno == EINTR));
-
-	status = (length == 0) ? TRUE : FALSE;
-#else
-
-	if (WaitForSingleObject(thread, 0) != WAIT_OBJECT_0)
-	{
-		length = write(thread->pipe_fd[1], "-", 1);
-
-		if (length == 1)
-			status = TRUE;
-	}
-	else
-	{
-		status = TRUE;
-	}
-
-#endif
-	return status;
+	return winpr_event_set(&thread->event);
 }
 
 static BOOL reset_event(WINPR_THREAD* thread)
 {
-	int length;
-	BOOL status = FALSE;
-#ifdef HAVE_SYS_EVENTFD_H
-	eventfd_t value;
-
-	do
-	{
-		length = eventfd_read(thread->pipe_fd[0], &value);
-	} while ((length < 0) && (errno == EINTR));
-
-	if ((length > 0) && (!status))
-		status = TRUE;
-
-#else
-	length = read(thread->pipe_fd[0], &length, 1);
-
-	if ((length == 1) && (!status))
-		status = TRUE;
-
-#endif
-	return status;
+	return winpr_event_reset(&thread->event);
 }
 
 static BOOL thread_compare(const void* a, const void* b)
@@ -284,6 +242,31 @@ static BOOL thread_compare(const void* a, const void* b)
 	const pthread_t* p2 = b;
 	BOOL rc = pthread_equal(*p1, *p2);
 	return rc;
+}
+
+static INIT_ONCE threads_InitOnce = INIT_ONCE_STATIC_INIT;
+static pthread_t mainThreadId;
+static DWORD currentThreadTlsIndex = TLS_OUT_OF_INDEXES;
+
+BOOL initializeThreads(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
+{
+	if (!apc_init(&mainThread.apc))
+	{
+		WLog_ERR(TAG, "failed to initialize APC");
+		goto out;
+	}
+
+	mainThread.Type = HANDLE_TYPE_THREAD;
+	mainThreadId = pthread_self();
+
+	currentThreadTlsIndex = TlsAlloc();
+	if (currentThreadTlsIndex == TLS_OUT_OF_INDEXES)
+	{
+		WLog_ERR(TAG, "Major bug, unable to allocate a TLS value for currentThread");
+	}
+
+out:
+	return TRUE;
 }
 
 /* Thread launcher function responsible for registering
@@ -298,6 +281,12 @@ static void* thread_launcher(void* arg)
 	if (!thread)
 	{
 		WLog_ERR(TAG, "Called with invalid argument %p", arg);
+		goto exit;
+	}
+
+	if (!TlsSetValue(currentThreadTlsIndex, thread))
+	{
+		WLog_ERR(TAG, "thread %d, unable to set current thread value", pthread_self());
 		goto exit;
 	}
 
@@ -329,6 +318,8 @@ exit:
 
 	if (thread)
 	{
+		apc_cleanupThread(thread);
+
 		if (!thread->exited)
 			thread->dwExitCode = rc;
 
@@ -404,36 +395,23 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	thread->create_stack = winpr_backtrace(20);
 	dump_thread(thread);
 #endif
-	thread->pipe_fd[0] = -1;
-	thread->pipe_fd[1] = -1;
-#ifdef HAVE_SYS_EVENTFD_H
-	thread->pipe_fd[0] = eventfd(0, EFD_NONBLOCK);
 
-	if (thread->pipe_fd[0] < 0)
+	if (!winpr_event_init(&thread->event))
 	{
-		WLog_ERR(TAG, "failed to create thread pipe fd 0");
-		goto error_pipefd0;
+		WLog_ERR(TAG, "failed to create event");
+		goto error_event;
 	}
 
-#else
-
-	if (pipe(thread->pipe_fd) < 0)
-	{
-		WLog_ERR(TAG, "failed to create thread pipe");
-		goto error_pipefd0;
-	}
-
-	{
-		int flags = fcntl(thread->pipe_fd[0], F_GETFL);
-		fcntl(thread->pipe_fd[0], F_SETFL, flags | O_NONBLOCK);
-	}
-
-#endif
-
-	if (pthread_mutex_init(&thread->mutex, 0) != 0)
+	if (pthread_mutex_init(&thread->mutex, NULL) != 0)
 	{
 		WLog_ERR(TAG, "failed to initialize thread mutex");
 		goto error_mutex;
+	}
+
+	if (!apc_init(&thread->apc))
+	{
+		WLog_ERR(TAG, "failed to initialize APC");
+		goto error_APC;
 	}
 
 	if (pthread_mutex_init(&thread->threadIsReadyMutex, NULL) != 0)
@@ -453,6 +431,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 
 	if (!thread_list)
 	{
+		InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, NULL, NULL);
 		thread_list = ListDictionary_New(TRUE);
 
 		if (!thread_list)
@@ -481,16 +460,12 @@ error_thread_list:
 error_thread_ready:
 	pthread_mutex_destroy(&thread->threadIsReadyMutex);
 error_thread_ready_mutex:
+	apc_uninit(&thread->apc);
+error_APC:
 	pthread_mutex_destroy(&thread->mutex);
 error_mutex:
-
-	if (thread->pipe_fd[1] >= 0)
-		close(thread->pipe_fd[1]);
-
-	if (thread->pipe_fd[0] >= 0)
-		close(thread->pipe_fd[0]);
-
-error_pipefd0:
+	winpr_event_uninit(&thread->event);
+error_event:
 	free(thread);
 	return NULL;
 }
@@ -499,28 +474,25 @@ void cleanup_handle(void* obj)
 {
 	int rc;
 	WINPR_THREAD* thread = (WINPR_THREAD*)obj;
-	rc = pthread_cond_destroy(&thread->threadIsReady);
 
+	if (!apc_uninit(&thread->apc))
+		WLog_ERR(TAG, "failed to destroy APC");
+
+	rc = pthread_cond_destroy(&thread->threadIsReady);
 	if (rc)
-		WLog_ERR(TAG, "failed to destroy a condition variable [%d] %s (%d)", rc, strerror(errno),
+		WLog_ERR(TAG, "failed to destroy thread->threadIsReady [%d] %s (%d)", rc, strerror(errno),
 		         errno);
 
 	rc = pthread_mutex_destroy(&thread->threadIsReadyMutex);
-
 	if (rc)
-		WLog_ERR(TAG, "failed to destroy a condition variable mutex [%d] %s (%d)", rc,
+		WLog_ERR(TAG, "failed to destroy thread->threadIsReadyMutex [%d] %s (%d)", rc,
 		         strerror(errno), errno);
 
 	rc = pthread_mutex_destroy(&thread->mutex);
-
 	if (rc)
-		WLog_ERR(TAG, "failed to destroy mutex [%d] %s (%d)", rc, strerror(errno), errno);
+		WLog_ERR(TAG, "failed to destroy thread->mutex [%d] %s (%d)", rc, strerror(errno), errno);
 
-	if (thread->pipe_fd[0] >= 0)
-		close(thread->pipe_fd[0]);
-
-	if (thread->pipe_fd[1] >= 0)
-		close(thread->pipe_fd[1]);
+	winpr_event_uninit(&thread->event);
 
 	if (thread_list && ListDictionary_Contains(thread_list, &thread->thread))
 		ListDictionary_Remove(thread_list, &thread->thread);
@@ -645,31 +617,28 @@ BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 	return TRUE;
 }
 
-HANDLE _GetCurrentThread(VOID)
+WINPR_THREAD* winpr_GetCurrentThread(VOID)
 {
-	HANDLE hdl = NULL;
-	pthread_t tid = pthread_self();
+	WINPR_THREAD* ret;
 
-	if (!thread_list)
-	{
-		WLog_ERR(TAG, "function called without existing thread list!");
-#if defined(WITH_DEBUG_THREADS)
-		DumpThreadHandles();
-#endif
-	}
-	else if (!ListDictionary_Contains(thread_list, &tid))
+	InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, NULL, NULL);
+	if (mainThreadId == pthread_self())
+		return (HANDLE)&mainThread;
+
+	ret = TlsGetValue(currentThreadTlsIndex);
+	if (!ret)
 	{
 		WLog_ERR(TAG, "function called, but no matching entry in thread list!");
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
 	}
-	else
-	{
-		hdl = ListDictionary_GetItemValue(thread_list, &tid);
-	}
+	return ret;
+}
 
-	return hdl;
+HANDLE _GetCurrentThread(VOID)
+{
+	return (HANDLE)winpr_GetCurrentThread();
 }
 
 DWORD GetCurrentThreadId(VOID)
@@ -679,6 +648,60 @@ DWORD GetCurrentThreadId(VOID)
 	/* Since pthread_t can be 64-bits on some systems, take just the    */
 	/* lower 32-bits of it for the thread ID returned by this function. */
 	return (DWORD)tid & 0xffffffffUL;
+}
+
+typedef struct
+{
+	WINPR_APC_ITEM apc;
+	PAPCFUNC completion;
+	ULONG_PTR completionArg;
+} UserApcItem;
+
+void userAPC(LPVOID arg)
+{
+	UserApcItem* userApc = (UserApcItem*)arg;
+
+	userApc->completion(userApc->completionArg);
+
+	userApc->apc.markedForRemove = TRUE;
+}
+
+DWORD QueueUserAPC(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData)
+{
+	ULONG Type;
+	WINPR_HANDLE* Object;
+	WINPR_THREAD* thread;
+	WINPR_APC_ITEM* apc;
+	UserApcItem* apcItem;
+
+	if (!pfnAPC)
+		return 1;
+
+	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
+	{
+		WLog_ERR(TAG, "hThread is not a thread");
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return (DWORD)0;
+	}
+	thread = (WINPR_THREAD*)Object;
+
+	apcItem = calloc(1, sizeof(*apcItem));
+	if (!apcItem)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return (DWORD)0;
+	}
+
+	apc = &apcItem->apc;
+	apc->type = APC_TYPE_USER;
+	apc->markedForFree = TRUE;
+	apc->alwaysSignaled = TRUE;
+	apc->completion = userAPC;
+	apc->completionArgs = apc;
+	apcItem->completion = pfnAPC;
+	apcItem->completionArg = dwData;
+	apc_register(hThread, apc);
+	return 1;
 }
 
 DWORD ResumeThread(HANDLE hThread)
