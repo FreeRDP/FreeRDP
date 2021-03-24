@@ -350,6 +350,10 @@ if(IPP_FOUND)
     endforeach()
 endif()
 
+if (${CMAKE_GENERATOR} MATCHES "MinGW Makefiles")
+	freerdp_library_add("msvcr100")
+endif()
+
 if(BUILD_TESTING AND NOT WIN32 AND NOT APPLE)
     add_subdirectory(primitives/test)
 endif()
