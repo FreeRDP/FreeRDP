@@ -26,6 +26,8 @@
 #include "config.h"
 #endif
 
+#ifndef _WIN32
+
 #ifdef HAVE_POLL_H
 #include <poll.h>
 #else
@@ -46,7 +48,9 @@ struct winpr_poll_set
 	BOOL isStatic;
 #else
 	FdIndex* fdIndex;
+	fd_set rset_base;
 	fd_set rset;
+	fd_set wset_base;
 	fd_set wset;
 	int nread, nwrite;
 	int maxFd;
@@ -63,5 +67,7 @@ void pollset_reset(WINPR_POLL_SET* set);
 BOOL pollset_add(WINPR_POLL_SET* set, int fd, ULONG mode);
 int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds);
 BOOL pollset_isSignaled(WINPR_POLL_SET* set, size_t idx);
+
+#endif
 
 #endif /* WINPR_LIBWINPR_SYNCH_POLLSET_H_ */

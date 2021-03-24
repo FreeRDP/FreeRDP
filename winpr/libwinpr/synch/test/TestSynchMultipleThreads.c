@@ -7,9 +7,7 @@
 
 static DWORD WINAPI test_thread(LPVOID arg)
 {
-	long timeout = rand();
-	timeout %= 1000;
-	timeout += 100;
+	long timeout = 100 + (rand() % 1000);
 	Sleep(timeout);
 	ExitThread(0);
 	return 0;
@@ -54,14 +52,16 @@ int TestSynchMultipleThreads(int argc, char* argv[])
 #define THREADS 24
 	DWORD rc = 0, ev, i;
 	HANDLE threads[THREADS];
+	DWORD ret;
 
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
 		return 1;
 
-	if (WaitForMultipleObjects(THREADS, threads, TRUE, 50) != WAIT_TIMEOUT)
+	ret = WaitForMultipleObjects(THREADS, threads, TRUE, 50);
+	if (ret != WAIT_TIMEOUT)
 	{
-		printf("WaitForMultipleObjects bWaitAll, timeout 50 failed\n");
+		printf("WaitForMultipleObjects bWaitAll, timeout 50 failed, ret=%d\n", ret);
 		rc = 2;
 	}
 
@@ -82,7 +82,6 @@ int TestSynchMultipleThreads(int argc, char* argv[])
 		return 5;
 
 	ev = WaitForMultipleObjects(THREADS, threads, FALSE, INFINITE);
-
 	if (ev > (WAIT_OBJECT_0 + THREADS))
 	{
 		printf("WaitForMultipleObjects INFINITE failed\n");
@@ -105,9 +104,10 @@ int TestSynchMultipleThreads(int argc, char* argv[])
 	if (start_threads(THREADS, threads))
 		return 9;
 
-	if (WaitForMultipleObjects(THREADS, threads, FALSE, 50) != WAIT_TIMEOUT)
+	ret = WaitForMultipleObjects(THREADS, threads, FALSE, 50);
+	if (ret != WAIT_TIMEOUT)
 	{
-		printf("WaitForMultipleObjects timeout 50 failed\n");
+		printf("WaitForMultipleObjects timeout 50 failed, ret=%d\n", ret);
 		rc = 10;
 	}
 
@@ -129,9 +129,10 @@ int TestSynchMultipleThreads(int argc, char* argv[])
 
 	for (i = 0; i < THREADS; i++)
 	{
-		if (WaitForMultipleObjects(THREADS, threads, FALSE, 0) != WAIT_TIMEOUT)
+		ret = WaitForMultipleObjects(THREADS, threads, FALSE, 0);
+		if (ret != WAIT_TIMEOUT)
 		{
-			printf("WaitForMultipleObjects timeout 50 failed\n");
+			printf("WaitForMultipleObjects timeout 50 failed, ret=%d\n", ret);
 			rc = 15;
 		}
 	}
