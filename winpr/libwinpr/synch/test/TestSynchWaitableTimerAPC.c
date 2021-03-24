@@ -35,6 +35,7 @@ static VOID CALLBACK TimerAPCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwT
 int TestSynchWaitableTimerAPC(int argc, char* argv[])
 {
 	int status = -1;
+	DWORD rc;
 	HANDLE hTimer = NULL;
 	BOOL bSuccess;
 	LARGE_INTEGER due;
@@ -50,40 +51,24 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 	}
 
 	hTimer = CreateWaitableTimer(NULL, FALSE, NULL);
-
 	if (!hTimer)
 		goto cleanup;
 
-	due.QuadPart = -15000000LL; /* 1.5 seconds */
+	due.QuadPart = -1000 * 1000LL; /* 1 seconds */
 	apcData.StartTime = GetTickCount();
-	bSuccess = SetWaitableTimer(hTimer, &due, 2000, TimerAPCProc, &apcData, FALSE);
+	bSuccess = SetWaitableTimer(hTimer, &due, 100, TimerAPCProc, &apcData, FALSE);
 
 	if (!bSuccess)
 		goto cleanup;
 
-	/**
-	 * See Remarks at
-	 * https://msdn.microsoft.com/en-us/library/windows/desktop/ms686786(v=vs.85).aspx The
-	 * SetWaitableTimer completion routine is executed by the thread that activates the timer using
-	 * SetWaitableTimer. However, the thread must be in an ALERTABLE state.
-	 */
-
-	/**
-	 * Note: On WIN32 we need to use WaitForSingleObjectEx with parameter bAlertable = TRUE
-	 * However, WinPR currently (May 2016) does not have a working WaitForSingleObjectEx
-	 *implementation but its non-WIN32 WaitForSingleObject implementations seem to be alertable by
-	 *WinPR's timer implementations.
-	 **/
+	/* nothing shall happen after 1.2 second, because thread is not in alertable state */
+	rc = WaitForSingleObject(g_Event, 1200);
+	if (rc != WAIT_TIMEOUT)
+		goto cleanup;
 
 	for (;;)
 	{
-		DWORD rc;
-#ifdef _WIN32
 		rc = WaitForSingleObjectEx(g_Event, INFINITE, TRUE);
-#else
-		rc = WaitForSingleObject(g_Event, INFINITE);
-#endif
-
 		if (rc == WAIT_OBJECT_0)
 			break;
 

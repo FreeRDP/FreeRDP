@@ -15,7 +15,8 @@ set(${MODULE_PREFIX}_TESTS
 	TestSynchMultipleThreads.c
 	TestSynchTimerQueue.c
 	TestSynchWaitableTimer.c
-	TestSynchWaitableTimerAPC.c)
+	TestSynchWaitableTimerAPC.c
+	TestSynchAPC.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
