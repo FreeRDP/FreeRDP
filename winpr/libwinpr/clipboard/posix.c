@@ -872,7 +872,7 @@ static UINT posix_file_get_range(struct posix_file* file, UINT64 offset, UINT32 
 
 out:
 
-	posix_file_read_close(file, FALSE);
+	posix_file_read_close(file, error != NO_ERROR);
 	return error;
 }
 
