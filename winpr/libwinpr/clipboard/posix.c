@@ -1016,7 +1016,9 @@ UINT posix_file_read_close(struct posix_file* file, BOOL force)
 	if (file->fd < 0)
 		return NO_ERROR;
 
-	if ((file->offset >= file->size) || force)
+	/* Always force close the file. Clipboard might open hundreds of files
+	 * so avoid caching to prevent running out of available file descriptors */
+	if ((file->offset >= file->size) || force || TRUE)
 	{
 		WLog_VRB(TAG, "close file %d", file->fd);
 
