@@ -94,6 +94,7 @@ error:
 	free(file);
 	return NULL;
 }
+static UINT posix_file_read_close(struct posix_file* file, BOOL force);
 
 static void free_posix_file(void* the_file)
 {
@@ -102,14 +103,7 @@ static void free_posix_file(void* the_file)
 	if (!file)
 		return;
 
-	if (file->fd >= 0)
-	{
-		if (close(file->fd) < 0)
-		{
-			int err = errno;
-			WLog_WARN(TAG, "failed to close fd %d: %s", file->fd, strerror(err));
-		}
-	}
+	posix_file_read_close(file, TRUE);
 
 	free(file->local_name);
 	free(file->remote_name);
@@ -836,12 +830,12 @@ error:
 	return ERROR_READ_FAULT;
 }
 
-static UINT posix_file_read_close(struct posix_file* file)
+UINT posix_file_read_close(struct posix_file* file, BOOL force)
 {
 	if (file->fd < 0)
 		return NO_ERROR;
 
-	if (file->offset == file->size)
+	if ((file->offset >= file->size) || force)
 	{
 		WLog_VRB(TAG, "close file %d", file->fd);
 
@@ -876,12 +870,9 @@ static UINT posix_file_get_range(struct posix_file* file, UINT64 offset, UINT32 
 	if (error)
 		goto out;
 
-	error = posix_file_read_close(file);
-
-	if (error)
-		goto out;
-
 out:
+
+	posix_file_read_close(file, FALSE);
 	return error;
 }
 
