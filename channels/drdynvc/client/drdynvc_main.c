@@ -28,6 +28,8 @@
 
 #include "drdynvc_main.h"
 
+#include "../../channels/client/addin.h"
+
 #define TAG CHANNELS_TAG("drdynvc.client")
 
 static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId,
@@ -691,7 +693,7 @@ static UINT dvcman_receive_channel_data_first(drdynvcPlugin* drdynvc,
  */
 static UINT dvcman_receive_channel_data(drdynvcPlugin* drdynvc,
                                         IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId,
-                                        wStream* data, UINT32 ThreadingFlags)
+                                        wStream* data)
 {
 	UINT status = CHANNEL_RC_OK;
 	DVCMAN_CHANNEL* channel;
@@ -1123,8 +1125,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int c
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s,
-                                       UINT32 ThreadingFlags)
+static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	UINT status;
 	UINT32 Length;
@@ -1141,8 +1142,7 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
 	status = dvcman_receive_channel_data_first(drdynvc, drdynvc->channel_mgr, ChannelId, Length);
 
 	if (status == CHANNEL_RC_OK)
-		status = dvcman_receive_channel_data(drdynvc, drdynvc->channel_mgr, ChannelId, s,
-		                                     ThreadingFlags);
+		status = dvcman_receive_channel_data(drdynvc, drdynvc->channel_mgr, ChannelId, s);
 
 	if (status != CHANNEL_RC_OK)
 		status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId, TRUE);
@@ -1155,8 +1155,7 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s,
-                                 UINT32 ThreadingFlags)
+static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	UINT32 ChannelId;
 	UINT status;
@@ -1168,7 +1167,7 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wSt
 	WLog_Print(drdynvc->log, WLOG_TRACE, "process_data: Sp=%d cbChId=%d, ChannelId=%" PRIu32 "", Sp,
 	           cbChId, ChannelId);
 	status =
-	    dvcman_receive_channel_data(drdynvc, drdynvc->channel_mgr, ChannelId, s, ThreadingFlags);
+	    dvcman_receive_channel_data(drdynvc, drdynvc->channel_mgr, ChannelId, s);
 
 	if (status != CHANNEL_RC_OK)
 		status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId, TRUE);
@@ -1206,8 +1205,9 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cb
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 ThreadingFlags)
+static UINT drdynvc_order_recv(LPVOID userdata, wStream* s)
 {
+	drdynvcPlugin* drdynvc = userdata;
 	int value;
 	int Cmd;
 	int Sp;
@@ -1231,10 +1231,10 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 Thread
 			return drdynvc_process_create_request(drdynvc, Sp, cbChId, s);
 
 		case DATA_FIRST_PDU:
-			return drdynvc_process_data_first(drdynvc, Sp, cbChId, s, ThreadingFlags);
+			return drdynvc_process_data_first(drdynvc, Sp, cbChId, s);
 
 		case DATA_PDU:
-			return drdynvc_process_data(drdynvc, Sp, cbChId, s, ThreadingFlags);
+			return drdynvc_process_data(drdynvc, Sp, cbChId, s);
 
 		case CLOSE_REQUEST_PDU:
 			return drdynvc_process_close_request(drdynvc, Sp, cbChId, s);
@@ -1245,70 +1245,6 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 Thread
 	}
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, void* pData,
-                                                        UINT32 dataLength, UINT32 totalLength,
-                                                        UINT32 dataFlags)
-{
-	wStream* data_in;
-
-	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
-	{
-		return CHANNEL_RC_OK;
-	}
-
-	if (dataFlags & CHANNEL_FLAG_FIRST)
-	{
-		DVCMAN* mgr = (DVCMAN*)drdynvc->channel_mgr;
-		if (drdynvc->data_in)
-			Stream_Release(drdynvc->data_in);
-
-		drdynvc->data_in = StreamPool_Take(mgr->pool, totalLength);
-	}
-
-	if (!(data_in = drdynvc->data_in))
-	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "StreamPool_Take failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	if (!Stream_EnsureRemainingCapacity(data_in, dataLength))
-	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
-		Stream_Release(drdynvc->data_in);
-		drdynvc->data_in = NULL;
-		return ERROR_INTERNAL_ERROR;
-	}
-
-	Stream_Write(data_in, pData, dataLength);
-
-	if (dataFlags & CHANNEL_FLAG_LAST)
-	{
-		const size_t cap = Stream_Capacity(data_in);
-		const size_t pos = Stream_GetPosition(data_in);
-		if (cap < pos)
-		{
-			WLog_Print(drdynvc->log, WLOG_ERROR, "drdynvc_plugin_process_received: read error");
-			return ERROR_INVALID_DATA;
-		}
-
-		drdynvc->data_in = NULL;
-		Stream_SealLength(data_in);
-		Stream_SetPosition(data_in, 0);
-
-		if (!MessageQueue_Post(drdynvc->queue, NULL, 0, (void*)data_in, NULL))
-		{
-			WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_Post failed!");
-			return ERROR_INTERNAL_ERROR;
-		}
-	}
-
-	return CHANNEL_RC_OK;
-}
 
 static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle,
                                                             UINT event, LPVOID pData,
@@ -1326,8 +1262,8 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 				WLog_ERR(TAG, "drdynvc_virtual_channel_open_event: error no match");
 				return;
 			}
-			if ((error = drdynvc_virtual_channel_event_data_received(drdynvc, pData, dataLength,
-			                                                         totalLength, dataFlags)))
+			if ((error = channel_client_post_message(drdynvc->MsgsHandle, pData, dataLength,
+			                                         totalLength, dataFlags)))
 				WLog_Print(drdynvc->log, WLOG_ERROR,
 				           "drdynvc_virtual_channel_event_data_received failed with error %" PRIu32
 				           "",
@@ -1352,99 +1288,6 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		                "drdynvc_virtual_channel_open_event reported an error");
 }
 
-static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
-{
-	/* TODO: rewrite this */
-	wStream* data;
-	wMessage message;
-	UINT error = CHANNEL_RC_OK;
-	drdynvcPlugin* drdynvc = (drdynvcPlugin*)arg;
-
-	if (!drdynvc)
-	{
-		ExitThread((DWORD)CHANNEL_RC_BAD_CHANNEL_HANDLE);
-		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
-	}
-
-	while (1)
-	{
-		if (!MessageQueue_Wait(drdynvc->queue))
-		{
-			WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_Wait failed!");
-			error = ERROR_INTERNAL_ERROR;
-			break;
-		}
-
-		if (!MessageQueue_Peek(drdynvc->queue, &message, TRUE))
-		{
-			WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_Peek failed!");
-			error = ERROR_INTERNAL_ERROR;
-			break;
-		}
-
-		if (message.id == WMQ_QUIT)
-			break;
-
-		if (message.id == 0)
-		{
-			UINT32 ThreadingFlags = TRUE;
-			data = (wStream*)message.wParam;
-
-			if ((error = drdynvc_order_recv(drdynvc, data, ThreadingFlags)))
-			{
-				WLog_Print(drdynvc->log, WLOG_WARN,
-				           "drdynvc_order_recv failed with error %" PRIu32 "!", error);
-			}
-
-			Stream_Release(data);
-		}
-	}
-
-	{
-		/* Disconnect remaining dynamic channels that the server did not.
-		 * This is required to properly shut down channels by calling the appropriate
-		 * event handlers. */
-		size_t count = 0;
-		DVCMAN* drdynvcMgr = (DVCMAN*)drdynvc->channel_mgr;
-
-		do
-		{
-			ArrayList_Lock(drdynvcMgr->channels);
-			count = ArrayList_Count(drdynvcMgr->channels);
-			if (count > 0)
-			{
-				IWTSVirtualChannel* channel =
-				    (IWTSVirtualChannel*)ArrayList_GetItem(drdynvcMgr->channels, 0);
-				const UINT32 ChannelId = drdynvc->channel_mgr->GetChannelId(channel);
-				dvcman_close_channel(drdynvc->channel_mgr, ChannelId, FALSE);
-				count--;
-			}
-			ArrayList_Unlock(drdynvcMgr->channels);
-		} while (count > 0);
-	}
-
-	if (error && drdynvc->rdpcontext)
-		setChannelError(drdynvc->rdpcontext, error,
-		                "drdynvc_virtual_channel_client_thread reported an error");
-
-	ExitThread((DWORD)error);
-	return error;
-}
-
-static void drdynvc_queue_object_free(void* obj)
-{
-	wStream* s;
-	wMessage* msg = (wMessage*)obj;
-
-	if (!msg || (msg->id != 0))
-		return;
-
-	s = (wStream*)msg->wParam;
-
-	if (s)
-		Stream_Release(s);
-}
-
 static UINT drdynvc_virtual_channel_event_initialized(drdynvcPlugin* drdynvc, LPVOID pData,
                                                       UINT32 dataLength)
 {
@@ -1455,18 +1298,6 @@ static UINT drdynvc_virtual_channel_event_initialized(drdynvcPlugin* drdynvc, LP
 	if (!drdynvc)
 		goto error;
 
-	drdynvc->queue = MessageQueue_New(NULL);
-
-	if (!drdynvc->queue)
-	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_New failed!");
-		goto error;
-	}
-
-	obj = MessageQueue_Object(drdynvc->queue);
-	if (!obj)
-		goto error;
-	obj->fnObjectFree = drdynvc_queue_object_free;
 	drdynvc->channel_mgr = dvcman_new(drdynvc);
 
 	if (!drdynvc->channel_mgr)
@@ -1526,16 +1357,11 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 		WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_init failed with error %" PRIu32 "!", error);
 		goto error;
 	}
+	drdynvc->MsgsHandle =
+	    channel_client_create_handler(drdynvc->rdpcontext, drdynvc, drdynvc_order_recv, "rail");
+
 
 	drdynvc->state = DRDYNVC_STATE_CAPABILITIES;
-
-	if (!(drdynvc->thread = CreateThread(NULL, 0, drdynvc_virtual_channel_client_thread,
-	                                     (void*)drdynvc, 0, NULL)))
-	{
-		error = ERROR_INTERNAL_ERROR;
-		WLog_Print(drdynvc->log, WLOG_ERROR, "CreateThread failed!");
-		goto error;
-	}
 
 error:
 	return error;
@@ -1556,26 +1382,36 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 	if (drdynvc->OpenHandle == 0)
 		return CHANNEL_RC_OK;
 
-	if (!MessageQueue_PostQuit(drdynvc->queue, 0))
+	/* Disconnect remaining dynamic channels that the server did not.
+	 * This is required to properly shut down channels by calling the appropriate
+	 * event handlers. */
+
 	{
-		status = GetLastError();
-		WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_PostQuit failed with error %" PRIu32 "",
-		           status);
-		return status;
+		size_t count = 0;
+		DVCMAN* drdynvcMgr = (DVCMAN*)drdynvc->channel_mgr;
+
+		do
+		{
+			ArrayList_Lock(drdynvcMgr->channels);
+			count = ArrayList_Count(drdynvcMgr->channels);
+			if (count > 0)
+			{
+				IWTSVirtualChannel* channel =
+					(IWTSVirtualChannel*)ArrayList_GetItem(drdynvcMgr->channels, 0);
+				const UINT32 ChannelId = drdynvc->channel_mgr->GetChannelId(channel);
+				dvcman_close_channel(drdynvc->channel_mgr, ChannelId, FALSE);
+				count--;
+			}
+			ArrayList_Unlock(drdynvcMgr->channels);
+		} while (count > 0);
 	}
 
-	if (WaitForSingleObject(drdynvc->thread, INFINITE) != WAIT_OBJECT_0)
-	{
-		status = GetLastError();
-		WLog_Print(drdynvc->log, WLOG_ERROR, "WaitForSingleObject failed with error %" PRIu32 "",
-		           status);
-		return status;
-	}
 
-	CloseHandle(drdynvc->thread);
-	drdynvc->thread = NULL;
+
+	channel_client_quit_handler(drdynvc->MsgsHandle);
+
 	status = drdynvc->channelEntryPoints.pVirtualChannelCloseEx(drdynvc->InitHandle,
-	                                                            drdynvc->OpenHandle);
+                                                            drdynvc->OpenHandle);
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -1584,14 +1420,7 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 	}
 
 	dvcman_clear(drdynvc, drdynvc->channel_mgr);
-	MessageQueue_Clear(drdynvc->queue);
 	drdynvc->OpenHandle = 0;
-
-	if (drdynvc->data_in)
-	{
-		Stream_Release(drdynvc->data_in);
-		drdynvc->data_in = NULL;
-	}
 
 	return status;
 }
@@ -1605,9 +1434,6 @@ static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 {
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
-
-	MessageQueue_Free(drdynvc->queue);
-	drdynvc->queue = NULL;
 
 	if (drdynvc->channel_mgr)
 	{
