@@ -1166,8 +1166,7 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wSt
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	WLog_Print(drdynvc->log, WLOG_TRACE, "process_data: Sp=%d cbChId=%d, ChannelId=%" PRIu32 "", Sp,
 	           cbChId, ChannelId);
-	status =
-	    dvcman_receive_channel_data(drdynvc, drdynvc->channel_mgr, ChannelId, s);
+	status = dvcman_receive_channel_data(drdynvc, drdynvc->channel_mgr, ChannelId, s);
 
 	if (status != CHANNEL_RC_OK)
 		status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId, TRUE);
@@ -1360,7 +1359,6 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	drdynvc->MsgsHandle =
 	    channel_client_create_handler(drdynvc->rdpcontext, drdynvc, drdynvc_order_recv, "rail");
 
-
 	drdynvc->state = DRDYNVC_STATE_CAPABILITIES;
 
 error:
@@ -1397,7 +1395,7 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 			if (count > 0)
 			{
 				IWTSVirtualChannel* channel =
-					(IWTSVirtualChannel*)ArrayList_GetItem(drdynvcMgr->channels, 0);
+				    (IWTSVirtualChannel*)ArrayList_GetItem(drdynvcMgr->channels, 0);
 				const UINT32 ChannelId = drdynvc->channel_mgr->GetChannelId(channel);
 				dvcman_close_channel(drdynvc->channel_mgr, ChannelId, FALSE);
 				count--;
@@ -1406,12 +1404,10 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 		} while (count > 0);
 	}
 
-
-
 	channel_client_quit_handler(drdynvc->MsgsHandle);
 
 	status = drdynvc->channelEntryPoints.pVirtualChannelCloseEx(drdynvc->InitHandle,
-                                                            drdynvc->OpenHandle);
+	                                                            drdynvc->OpenHandle);
 
 	if (status != CHANNEL_RC_OK)
 	{
