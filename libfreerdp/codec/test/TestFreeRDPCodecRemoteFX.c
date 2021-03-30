@@ -853,7 +853,7 @@ int TestFreeRDPCodecRemoteFX(int argc, char* argv[])
 
 	/* use default threading options here, pass zero as
 	 * ThreadingFlags */
-	context = rfx_context_new(FALSE, 0);
+	context = rfx_context_new(FALSE);
 	if (!context)
 		goto fail;
 
