@@ -195,7 +195,12 @@ static void rfx_encoder_tile_free(void* obj)
 	free(obj);
 }
 
-RFX_CONTEXT* rfx_context_new(BOOL encoder, UINT32 ThreadingFlags)
+RFX_CONTEXT* rfx_context_new(BOOL encoder)
+{
+	return rfx_context_new_ex(encoder, 0);
+}
+
+RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 {
 	HKEY hKey;
 	LONG status;
