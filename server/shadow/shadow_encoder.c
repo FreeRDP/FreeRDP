@@ -132,7 +132,7 @@ static int shadow_encoder_uninit_grid(rdpShadowEncoder* encoder)
 static int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 {
 	if (!encoder->rfx)
-		encoder->rfx = rfx_context_new(TRUE, encoder->server->settings->ThreadingFlags);
+		encoder->rfx = rfx_context_new_ex(TRUE, encoder->server->settings->ThreadingFlags);
 
 	if (!encoder->rfx)
 		goto fail;

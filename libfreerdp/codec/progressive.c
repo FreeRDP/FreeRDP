@@ -2603,7 +2603,7 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 	progressive->log = WLog_Get(TAG);
 	if (!progressive->log)
 		goto fail;
-	progressive->rfx_context = rfx_context_new(Compressor, 0);
+	progressive->rfx_context = rfx_context_new(Compressor);
 	if (!progressive->rfx_context)
 		goto fail;
 	progressive->buffer = Stream_New(NULL, 1024);
