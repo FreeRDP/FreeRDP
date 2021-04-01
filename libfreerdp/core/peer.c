@@ -819,12 +819,15 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 		goto fail_error_description;
 	}
 
-	if (!transport_attach(rdp->transport, client->sockfd))
-		goto fail_transport_attach;
+	if (client->sockfd != -1)
+	{
+		if (!transport_attach(rdp->transport, client->sockfd))
+			goto fail_transport_attach;
+		transport_set_blocking_mode(rdp->transport, FALSE);
+	}
 
 	rdp->transport->ReceiveCallback = peer_recv_callback;
 	rdp->transport->ReceiveExtra = client;
-	transport_set_blocking_mode(rdp->transport, FALSE);
 	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
 	client->HasMoreToRead = freerdp_peer_has_more_to_read;
@@ -878,7 +881,8 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 
 	option_value = TRUE;
 	option_len = sizeof(option_value);
-	setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&option_value, option_len);
+	if (sockfd != -1)
+		setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&option_value, option_len);
 
 	if (client)
 	{
