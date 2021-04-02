@@ -58,50 +58,76 @@ struct _YUV_ENCODE_WORK_PARAM
 };
 typedef struct _YUV_ENCODE_WORK_PARAM YUV_ENCODE_WORK_PARAM;
 
+static BOOL avc420_yuv_to_rgb(const BYTE* pYUVData[3], const UINT32 iStride[3],
+                              const RECTANGLE_16* rect, UINT32 nDstStep, BYTE* pDstData,
+                              DWORD DstFormat)
+{
+	primitives_t* prims = primitives_get();
+	prim_size_t roi;
+	const BYTE* pYUVPoint[3];
+	const INT32 width = rect->right - rect->left;
+	const INT32 height = rect->bottom - rect->top;
+	BYTE* pDstPoint = pDstData + rect->top * nDstStep + rect->left * GetBytesPerPixel(DstFormat);
+
+	pYUVPoint[0] = pYUVData[0] + rect->top * iStride[0] + rect->left;
+	pYUVPoint[1] = pYUVData[1] + rect->top / 2 * iStride[1] + rect->left / 2;
+	pYUVPoint[2] = pYUVData[2] + rect->top / 2 * iStride[2] + rect->left / 2;
+
+	roi.width = width;
+	roi.height = height;
+
+	if (prims->YUV420ToRGB_8u_P3AC4R(pYUVPoint, iStride, pDstPoint, nDstStep, DstFormat, &roi) !=
+	    PRIMITIVES_SUCCESS)
+		return FALSE;
+
+	return TRUE;
+}
+
+static BOOL avc444_yuv_to_rgb(const BYTE* pYUVData[3], const UINT32 iStride[3],
+                              const RECTANGLE_16* rect, UINT32 nDstStep, BYTE* pDstData,
+                              DWORD DstFormat)
+{
+	primitives_t* prims = primitives_get();
+	prim_size_t roi;
+	const BYTE* pYUVPoint[3];
+	const INT32 width = rect->right - rect->left;
+	const INT32 height = rect->bottom - rect->top;
+	BYTE* pDstPoint = pDstData + rect->top * nDstStep + rect->left * GetBytesPerPixel(DstFormat);
+
+	pYUVPoint[0] = pYUVData[0] + rect->top * iStride[0] + rect->left;
+	pYUVPoint[1] = pYUVData[1] + rect->top * iStride[1] + rect->left;
+	pYUVPoint[2] = pYUVData[2] + rect->top * iStride[2] + rect->left;
+
+	roi.width = width;
+	roi.height = height;
+
+	if (prims->YUV444ToRGB_8u_P3AC4R(pYUVPoint, iStride, pDstPoint, nDstStep, DstFormat, &roi) !=
+	    PRIMITIVES_SUCCESS)
+		return FALSE;
+
+	return TRUE;
+}
+
 static void CALLBACK yuv420_process_work_callback(PTP_CALLBACK_INSTANCE instance, void* context,
                                                   PTP_WORK work)
 {
-	prim_size_t roi;
 	YUV_PROCESS_WORK_PARAM* param = (YUV_PROCESS_WORK_PARAM*)context;
-	primitives_t* prims = primitives_get();
+	WINPR_UNUSED(instance);
+	WINPR_UNUSED(work);
 
-	const BYTE* pYUVData[3];
-	BYTE* dest = param->dest + param->rect.top * param->nDstStep +
-	             param->rect.left * GetBytesPerPixel(param->DstFormat);
-	pYUVData[0] = param->pYUVData[0] + param->iStride[0] * param->rect.top + param->rect.left;
-	pYUVData[1] =
-	    param->pYUVData[1] + param->iStride[1] * param->rect.top / 2 + param->rect.left / 2;
-	pYUVData[2] =
-	    param->pYUVData[2] + param->iStride[2] * param->rect.top / 2 + param->rect.left / 2;
-	roi.width = param->rect.right - param->rect.left;
-	roi.height = param->rect.bottom - param->rect.top;
-	if (prims->YUV420ToRGB_8u_P3AC4R(pYUVData, param->iStride, dest, param->nDstStep,
-	                                 param->DstFormat, &roi) != PRIMITIVES_SUCCESS)
-	{
-		WLog_ERR(TAG, "error when decoding lines");
-	}
+	avc420_yuv_to_rgb(param->pYUVData, param->iStride, &param->rect, param->nDstStep, param->dest,
+	                  param->DstFormat);
 }
 
 static void CALLBACK yuv444_process_work_callback(PTP_CALLBACK_INSTANCE instance, void* context,
                                                   PTP_WORK work)
 {
-	prim_size_t roi;
 	YUV_PROCESS_WORK_PARAM* param = (YUV_PROCESS_WORK_PARAM*)context;
-	primitives_t* prims = primitives_get();
+	WINPR_UNUSED(instance);
+	WINPR_UNUSED(work);
 
-	const BYTE* pYUVData[3];
-	BYTE* dest = param->dest + param->rect.top * param->nDstStep +
-	             param->rect.left * GetBytesPerPixel(param->DstFormat);
-	pYUVData[0] = param->pYUVData[0] + param->iStride[0] * param->rect.top + param->rect.left;
-	pYUVData[1] = param->pYUVData[1] + param->iStride[1] * param->rect.top + param->rect.left;
-	pYUVData[2] = param->pYUVData[2] + param->iStride[2] * param->rect.top + param->rect.left;
-	roi.width = param->rect.right - param->rect.left;
-	roi.height = param->rect.bottom - param->rect.top;
-	if (prims->YUV444ToRGB_8u_P3AC4R(pYUVData, param->iStride, dest, param->nDstStep,
-	                                 param->DstFormat, &roi) != PRIMITIVES_SUCCESS)
-	{
-		WLog_ERR(TAG, "error when decoding lines");
-	}
+	avc444_yuv_to_rgb(param->pYUVData, param->iStride, &param->rect, param->nDstStep, param->dest,
+	                  param->DstFormat);
 }
 
 void yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height)
