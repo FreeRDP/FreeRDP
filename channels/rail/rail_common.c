@@ -27,37 +27,63 @@
 
 #define TAG CHANNELS_TAG("rail.common")
 
-static const char* const RAIL_ORDER_TYPE_STRINGS[] = { "",
-	                                                   "Execute",
-	                                                   "Activate",
-	                                                   "System Parameters Update",
-	                                                   "System Command",
-	                                                   "Handshake",
-	                                                   "Notify Event",
-	                                                   "",
-	                                                   "Window Move",
-	                                                   "Local Move/Size",
-	                                                   "Min Max Info",
-	                                                   "Client Status",
-	                                                   "System Menu",
-	                                                   "Language Bar Info",
-	                                                   "Get Application ID Request",
-	                                                   "Get Application ID Response",
-	                                                   "Execute Result",
-	                                                   "",
-	                                                   "",
-	                                                   "",
-	                                                   "",
-	                                                   "",
-	                                                   "" };
-
 const char* rail_get_order_type_string(UINT16 orderType)
 {
-	UINT32 index = ((orderType & 0xF0) >> 3) + (orderType & 0x0F);
-	if (index >= ARRAYSIZE(RAIL_ORDER_TYPE_STRINGS))
-		return "UNKNOWN";
-
-	return RAIL_ORDER_TYPE_STRINGS[index];
+	static char buffer[64] = { 0 };
+	switch (orderType)
+	{
+		case TS_RAIL_ORDER_EXEC:
+			return "TS_RAIL_ORDER_EXEC";
+		case TS_RAIL_ORDER_ACTIVATE:
+			return "TS_RAIL_ORDER_ACTIVATE";
+		case TS_RAIL_ORDER_SYSPARAM:
+			return "TS_RAIL_ORDER_SYSPARAM";
+		case TS_RAIL_ORDER_SYSCOMMAND:
+			return "TS_RAIL_ORDER_SYSCOMMAND";
+		case TS_RAIL_ORDER_HANDSHAKE:
+			return "TS_RAIL_ORDER_HANDSHAKE";
+		case TS_RAIL_ORDER_NOTIFY_EVENT:
+			return "TS_RAIL_ORDER_NOTIFY_EVENT";
+		case TS_RAIL_ORDER_WINDOWMOVE:
+			return "TS_RAIL_ORDER_WINDOWMOVE";
+		case TS_RAIL_ORDER_LOCALMOVESIZE:
+			return "TS_RAIL_ORDER_LOCALMOVESIZE";
+		case TS_RAIL_ORDER_MINMAXINFO:
+			return "TS_RAIL_ORDER_MINMAXINFO";
+		case TS_RAIL_ORDER_CLIENTSTATUS:
+			return "TS_RAIL_ORDER_CLIENTSTATUS";
+		case TS_RAIL_ORDER_SYSMENU:
+			return "TS_RAIL_ORDER_SYSMENU";
+		case TS_RAIL_ORDER_LANGBARINFO:
+			return "TS_RAIL_ORDER_LANGBARINFO";
+		case TS_RAIL_ORDER_GET_APPID_REQ:
+			return "TS_RAIL_ORDER_GET_APPID_REQ";
+		case TS_RAIL_ORDER_GET_APPID_RESP:
+			return "TS_RAIL_ORDER_GET_APPID_RESP";
+		case TS_RAIL_ORDER_TASKBARINFO:
+			return "TS_RAIL_ORDER_TASKBARINFO";
+		case TS_RAIL_ORDER_LANGUAGEIMEINFO:
+			return "TS_RAIL_ORDER_LANGUAGEIMEINFO";
+		case TS_RAIL_ORDER_COMPARTMENTINFO:
+			return "TS_RAIL_ORDER_COMPARTMENTINFO";
+		case TS_RAIL_ORDER_HANDSHAKE_EX:
+			return "TS_RAIL_ORDER_HANDSHAKE_EX";
+		case TS_RAIL_ORDER_ZORDER_SYNC:
+			return "TS_RAIL_ORDER_ZORDER_SYNC";
+		case TS_RAIL_ORDER_CLOAK:
+			return "TS_RAIL_ORDER_CLOAK";
+		case TS_RAIL_ORDER_POWER_DISPLAY_REQUEST:
+			return "TS_RAIL_ORDER_POWER_DISPLAY_REQUEST";
+		case TS_RAIL_ORDER_SNAP_ARRANGE:
+			return "TS_RAIL_ORDER_SNAP_ARRANGE";
+		case TS_RAIL_ORDER_GET_APPID_RESP_EX:
+			return "TS_RAIL_ORDER_GET_APPID_RESP_EX";
+		case TS_RAIL_ORDER_EXEC_RESULT:
+			return "TS_RAIL_ORDER_EXEC_RESULT";
+		default:
+			_snprintf(buffer, sizeof(buffer), "UNKNOWN [0x%08" PRIx32 "]", orderType);
+			return buffer;
+	}
 }
 
 /**
