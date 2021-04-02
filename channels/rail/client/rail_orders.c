@@ -969,7 +969,7 @@ UINT rail_order_recv(railPlugin* rail, wStream* s)
 			return rail_recv_get_application_id_extended_response_order(rail, s);
 
 		default:
-			WLog_ERR(TAG, "Unknown RAIL PDU order reveived.");
+			WLog_ERR(TAG, "Unknown RAIL PDU order 0x%08" PRIx32 " received.", orderType);
 			return ERROR_INVALID_DATA;
 	}
 
