@@ -58,9 +58,9 @@ struct _YUV_ENCODE_WORK_PARAM
 };
 typedef struct _YUV_ENCODE_WORK_PARAM YUV_ENCODE_WORK_PARAM;
 
-static BOOL avc420_yuv_to_rgb(const BYTE* pYUVData[3], const UINT32 iStride[3],
-                              const RECTANGLE_16* rect, UINT32 nDstStep, BYTE* pDstData,
-                              DWORD DstFormat)
+static INLINE BOOL avc420_yuv_to_rgb(const BYTE* pYUVData[3], const UINT32 iStride[3],
+                                     const RECTANGLE_16* rect, UINT32 nDstStep, BYTE* pDstData,
+                                     DWORD DstFormat)
 {
 	primitives_t* prims = primitives_get();
 	prim_size_t roi;
@@ -83,9 +83,9 @@ static BOOL avc420_yuv_to_rgb(const BYTE* pYUVData[3], const UINT32 iStride[3],
 	return TRUE;
 }
 
-static BOOL avc444_yuv_to_rgb(const BYTE* pYUVData[3], const UINT32 iStride[3],
-                              const RECTANGLE_16* rect, UINT32 nDstStep, BYTE* pDstData,
-                              DWORD DstFormat)
+static INLINE BOOL avc444_yuv_to_rgb(const BYTE* pYUVData[3], const UINT32 iStride[3],
+                                     const RECTANGLE_16* rect, UINT32 nDstStep, BYTE* pDstData,
+                                     DWORD DstFormat)
 {
 	primitives_t* prims = primitives_get();
 	prim_size_t roi;
@@ -277,8 +277,7 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	UINT32 waitCount = 0, nobjects;
 	primitives_t* prims = primitives_get();
 
-	if (!context->useThreads || (primitives_flags(prims) & PRIM_FLAGS_HAVE_EXTGPU) ||
-	    TRUE) // TODO: Multithreadded decoding yields artifacts, deactivate for now
+	if (!context->useThreads || (primitives_flags(prims) & PRIM_FLAGS_HAVE_EXTGPU))
 	{
 		for (y = 0; y < numRegionRects; y++)
 		{
@@ -291,7 +290,7 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	}
 
 	/* case where we use threads */
-	steps = MAX((context->nthreads + numRegionRects / 2) / numRegionRects, 1);
+	steps = MAX((context->nthreads + numRegionRects / 2 + 1) / numRegionRects, 1);
 	nobjects = numRegionRects * steps;
 
 	if (!allocate_objects(&work_objects, (void**)&params, sizeof(YUV_PROCESS_WORK_PARAM), nobjects))
@@ -302,7 +301,7 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 		const RECTANGLE_16* rect = &regionRects[x];
 		const UINT32 height = rect->bottom - rect->top;
 
-		const UINT32 heightStep = MAX((height + steps / 2) / steps, 1);
+		const UINT32 heightStep = MAX((height + steps / 2 + 1) / steps, 1);
 		for (y = 0; y < steps; y++)
 		{
 			YUV_PROCESS_WORK_PARAM* cur = &params[waitCount];
@@ -311,11 +310,11 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 
 			/* If we have an odd bounding rectangle we might end up with < steps
 			 * workers. Check we do not exceed the bounding rectangle. */
-			if (r.top >= rect->bottom)
-				continue;
 			r.bottom = r.top + heightStep;
 			if (r.bottom > rect->bottom)
 				r.bottom = rect->bottom;
+			if (r.top >= rect->bottom)
+				continue;
 			*cur = pool_decode_param(&r, context, pYUVData, iStride, DstFormat, dest, nDstStep);
 			if (!submit_object(&work_objects[waitCount], cb, cur, context))
 				goto fail;
