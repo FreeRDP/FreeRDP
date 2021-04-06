@@ -115,8 +115,9 @@ static void CALLBACK yuv420_process_work_callback(PTP_CALLBACK_INSTANCE instance
 	WINPR_UNUSED(instance);
 	WINPR_UNUSED(work);
 
-	avc420_yuv_to_rgb(param->pYUVData, param->iStride, &param->rect, param->nDstStep, param->dest,
-	                  param->DstFormat);
+	if (!avc420_yuv_to_rgb(param->pYUVData, param->iStride, &param->rect, param->nDstStep,
+	                       param->dest, param->DstFormat))
+		WLog_WARN(TAG, "avc420_yuv_to_rgb failed");
 }
 
 static void CALLBACK yuv444_process_work_callback(PTP_CALLBACK_INSTANCE instance, void* context,
@@ -126,8 +127,9 @@ static void CALLBACK yuv444_process_work_callback(PTP_CALLBACK_INSTANCE instance
 	WINPR_UNUSED(instance);
 	WINPR_UNUSED(work);
 
-	avc444_yuv_to_rgb(param->pYUVData, param->iStride, &param->rect, param->nDstStep, param->dest,
-	                  param->DstFormat);
+	if (!avc444_yuv_to_rgb(param->pYUVData, param->iStride, &param->rect, param->nDstStep,
+	                       param->dest, param->DstFormat))
+		WLog_WARN(TAG, "avc444_yuv_to_rgb failed");
 }
 
 void yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height)
