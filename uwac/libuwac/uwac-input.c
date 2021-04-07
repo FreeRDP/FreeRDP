@@ -1135,12 +1135,15 @@ UwacReturnCode UwacSeatInhibitShortcuts(UwacSeat* s, bool inhibit)
 		return UWAC_ERROR_CLOSED;
 
 	if (s->keyboard_inhibitor)
+	{
 		zwp_keyboard_shortcuts_inhibitor_v1_destroy(s->keyboard_inhibitor);
+		s->keyboard_inhibitor = NULL;
+	}
 	if (inhibit && s->display && s->display->keyboard_inhibit_manager)
 		s->keyboard_inhibitor = zwp_keyboard_shortcuts_inhibit_manager_v1_inhibit_shortcuts(
 		    s->display->keyboard_inhibit_manager, s->keyboard_focus->surface, s->seat);
 
-	if (!s->keyboard_inhibitor)
+	if (inhibit && !s->keyboard_inhibitor)
 		return UWAC_ERROR_INTERNAL;
 	return UWAC_SUCCESS;
 }
