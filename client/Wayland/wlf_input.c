@@ -301,6 +301,9 @@ BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
 	if (!instance || !ev || !instance->input)
 		return FALSE;
 
+	if (instance->context->settings->GrabKeyboard && ev->raw_key == KEY_RIGHTCTRL)
+		wlf_handle_ungrab_key(instance, ev);
+
 	input = instance->input;
 	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(ev->raw_key + 8);
 
@@ -308,6 +311,17 @@ BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
 		return TRUE;
 
 	return freerdp_input_send_keyboard_event_ex(input, ev->pressed, rdp_scancode);
+}
+
+BOOL wlf_handle_ungrab_key(freerdp* instance, const UwacKeyEvent* ev)
+{
+	wlfContext* context;
+	if (!instance || !instance->context || !ev)
+		return FALSE;
+
+	context = (wlfContext*)instance->context;
+
+	return UwacSeatInhibitShortcuts(context->seat, false) == UWAC_SUCCESS;
 }
 
 BOOL wlf_keyboard_enter(freerdp* instance, const UwacKeyboardEnterLeaveEvent* ev)
@@ -339,6 +353,7 @@ BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent*
 		return TRUE;
 
 	((wlfContext*)instance->context)->focusing = FALSE;
+
 	return freerdp_input_send_focus_in_event(input, syncFlags) &&
 	       freerdp_input_send_mouse_event(input, PTR_FLAGS_MOVE, 0, 0);
 }
