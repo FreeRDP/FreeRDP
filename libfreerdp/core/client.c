@@ -266,6 +266,8 @@ UINT freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance)
 	int index;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 
+	MessageQueue_Clear(channels->queue);
+
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
 		pChannelClientData = &channels->clientDataList[index];
