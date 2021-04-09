@@ -196,9 +196,7 @@ struct rdp_file
 	size_t lineSize;
 	rdpFileLine* lines;
 
-	size_t argc;
-	char** argv;
-	size_t argSize;
+	ADDIN_ARGV* args;
 	void* context;
 
 	DWORD flags;
@@ -501,27 +499,7 @@ static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, c
 
 static BOOL freerdp_client_add_option(rdpFile* file, const char* option)
 {
-	while ((file->argc + 1) > file->argSize)
-	{
-		size_t new_size;
-		char** new_argv;
-		new_size = file->argSize * 2;
-		new_argv = (char**)realloc(file->argv, new_size * sizeof(char*));
-
-		if (!new_argv)
-			return FALSE;
-
-		file->argv = new_argv;
-		file->argSize = new_size;
-	}
-
-	file->argv[file->argc] = _strdup(option);
-
-	if (!file->argv[file->argc])
-		return FALSE;
-
-	(file->argc)++;
-	return TRUE;
+	return freerdp_addin_argv_add_argument(file->args, option);
 }
 
 static SSIZE_T freerdp_client_parse_rdp_file_add_line(rdpFile* file, const char* line,
@@ -865,36 +843,11 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 
 static char* freerdp_client_channel_args_to_string(const rdpSettings* settings, const char* channel)
 {
-	char* str = NULL;
-	size_t offset = 0, len = 1;
-	int x;
 	ADDIN_ARGV* args = freerdp_dynamic_channel_collection_find(settings, channel);
 	if (!args || (args->argc < 2))
 		return NULL;
 
-	for (x = 1; x < args->argc; x++)
-	{
-		int s = _snprintf(NULL, 0, ",%s", args->argv[x]);
-		if (s < 0)
-			return NULL;
-		len += (size_t)s;
-	}
-	str = calloc(len + 1, sizeof(CHAR));
-	if (!str)
-		return NULL;
-
-	for (x = 1; x < args->argc; x++)
-	{
-		int s = _snprintf(&str[offset], len - offset, "%s,", args->argv[x]);
-		if (s < 0)
-		{
-			free(str);
-			return NULL;
-		}
-		offset += (size_t)s;
-	}
-	str[offset - 1] = '\0';
-	return str;
+	return CommandLineToCommaSeparatedValues(args->argc - 1, args->argv + 1);
 }
 
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings)
@@ -1866,13 +1819,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			return FALSE;
 	}
 
-	if (file->argc > 1)
+	if (file->args->argc > 1)
 	{
 		char* ConnectionFile = settings->ConnectionFile;
 		settings->ConnectionFile = NULL;
 
-		if (freerdp_client_settings_parse_command_line(settings, (int)file->argc, file->argv,
-		                                               FALSE) < 0)
+		if (freerdp_client_settings_parse_command_line(settings, (int)file->args->argc,
+		                                               file->args->argv, FALSE) < 0)
 			return FALSE;
 
 		settings->ConnectionFile = ConnectionFile;
@@ -2072,21 +2025,14 @@ rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags)
 	file->flags = flags;
 
 	FillMemory(file, sizeof(rdpFile), 0xFF);
-	file->argv = NULL;
 	file->lines = NULL;
 	file->lineCount = 0;
 	file->lineSize = 32;
 	file->GatewayProfileUsageMethod = 1;
 	file->lines = (rdpFileLine*)calloc(file->lineSize, sizeof(rdpFileLine));
 
-	if (!file->lines)
-		goto fail;
-
-	file->argc = 0;
-	file->argSize = 32;
-	file->argv = (char**)calloc(file->argSize, sizeof(char*));
-
-	if (!file->argv)
+	file->args = freerdp_addin_argv_new(0, NULL);
+	if (!file->lines || !file->args)
 		goto fail;
 
 	if (!freerdp_client_add_option(file, "freerdp"))
@@ -2113,13 +2059,7 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 		}
 		free(file->lines);
 
-		if (file->argv)
-		{
-			size_t i;
-			for (i = 0; i < file->argc; i++)
-				free(file->argv[i]);
-		}
-		free(file->argv);
+		freerdp_addin_argv_free(file->args);
 
 		freerdp_client_file_string_check_free(file->Username);
 		freerdp_client_file_string_check_free(file->Domain);

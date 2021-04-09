@@ -165,6 +165,8 @@ extern "C"
 	WINPR_API char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list,
 	                                                        size_t* count);
 
+	WINPR_API char* CommandLineToCommaSeparatedValues(int argc, char* argv[]);
+
 #ifdef __cplusplus
 }
 #endif
