@@ -35,7 +35,8 @@ typedef struct _OVERLAPPED
 {
 	ULONG_PTR Internal;
 	ULONG_PTR InternalHigh;
-	union {
+	union
+	{
 		struct
 		{
 			DWORD Offset;

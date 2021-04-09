@@ -45,6 +45,8 @@
 #include <winpr/string.h>
 
 #include "file.h"
+#include "../io/io.h"
+#include "../thread/thread.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/file.h>
@@ -56,6 +58,230 @@
 #else
 #include <sys/statvfs.h>
 #endif
+
+UINT32 map_posix_err(int fs_errno)
+{
+	UINT32 rc;
+
+	/* try to return NTSTATUS version of error code */
+
+	switch (fs_errno)
+	{
+		case 0:
+			rc = STATUS_SUCCESS;
+			break;
+
+		case ENOTCONN:
+		case ENODEV:
+		case ENOTDIR:
+		case ENXIO:
+			rc = ERROR_FILE_NOT_FOUND;
+			break;
+
+		case EROFS:
+		case EPERM:
+		case EACCES:
+			rc = ERROR_ACCESS_DENIED;
+			break;
+
+		case ENOENT:
+			rc = ERROR_FILE_NOT_FOUND;
+			break;
+
+		case EBUSY:
+			rc = ERROR_BUSY_DRIVE;
+			break;
+
+		case EEXIST:
+			rc = ERROR_FILE_EXISTS;
+			break;
+
+		case EISDIR:
+			rc = STATUS_FILE_IS_A_DIRECTORY;
+			break;
+
+		case ENOTEMPTY:
+			rc = STATUS_DIRECTORY_NOT_EMPTY;
+			break;
+
+		default:
+			WLog_ERR(TAG, "Missing ERRNO mapping %s [%d]", strerror(fs_errno), fs_errno);
+			rc = STATUS_UNSUCCESSFUL;
+			break;
+	}
+
+	return rc;
+}
+
+typedef struct
+{
+	DWORD nNumberOfBytesToTreat;
+	LPVOID lpBuffer;
+	LPOVERLAPPED lpOverlapped;
+	LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine;
+} FileExOperation;
+
+static void readCompletion(LPVOID arg)
+{
+	FileExOperation* op;
+	WINPR_FILE* file = (WINPR_FILE*)arg;
+	DWORD threadId = GetCurrentThreadId();
+	PerThreadOverlap* threadOverlaps =
+	    HashTable_GetItemValue(file->overlaps.readOverlaps, &threadId);
+	int ret;
+	UINT64 offset;
+	DWORD dwErrorCode;
+	DWORD nBytesRead = 0;
+
+	if (!threadOverlaps)
+	{
+		WLog_ERR(TAG,
+		         "readCompletion called but can't find overlap context for the current thread");
+		return;
+	}
+
+	op = (FileExOperation*)Queue_Dequeue(threadOverlaps->pendingOperations);
+	if (!op)
+	{
+		WLog_ERR(TAG, "probably an error: readCompletion is called with no pending operation");
+		return;
+	}
+
+	offset = op->lpOverlapped->Offset + ((UINT64)op->lpOverlapped->OffsetHigh << 32);
+	if (fseek(file->fp, offset, SEEK_SET) >= 0)
+	{
+		ret = fread(op->lpBuffer, 1, op->nNumberOfBytesToTreat, file->fp);
+		if (ret <= 0)
+		{
+			if (feof(file->fp))
+				dwErrorCode = ERROR_SUCCESS;
+			else
+				dwErrorCode = ERROR_INTERNAL_ERROR;
+		}
+		else
+		{
+			dwErrorCode = ERROR_SUCCESS;
+			nBytesRead = ret;
+		}
+	}
+	else
+	{
+		dwErrorCode = map_posix_err(errno);
+	}
+
+	op->lpOverlapped->Internal = dwErrorCode;
+	op->lpOverlapped->InternalHigh = (ULONG_PTR)nBytesRead;
+	if (op->lpCompletionRoutine)
+		op->lpCompletionRoutine(dwErrorCode, nBytesRead, op->lpOverlapped);
+
+	threadOverlaps->freeOpFn(op);
+
+	if (!Queue_Count(threadOverlaps->pendingOperations))
+		apc_remove(&threadOverlaps->apc);
+}
+
+static INLINE PerThreadOverlap* ensureReadThreadOverlap(WINPR_FILE* file, DWORD threadId)
+{
+	BOOL created;
+	PerThreadOverlap* ret = ensureThreadOverlap(threadId, file->overlaps.readOverlaps, &created);
+	if (ret && created)
+	{
+		WINPR_APC_ITEM* apc = &ret->apc;
+		apc->type = APC_TYPE_READ_OVERLAPPED;
+		apc->pollFd = fileno(file->fp);
+		apc->pollMode = WINPR_FD_READ;
+		apc->completion = readCompletion;
+		apc->completionArgs = file;
+		ret->freeOpFn = free;
+	}
+	return ret;
+}
+
+static void writeCompletion(LPVOID arg)
+{
+	FileExOperation* op;
+	WINPR_FILE* file = (WINPR_FILE*)arg;
+	DWORD threadId = GetCurrentThreadId();
+	PerThreadOverlap* threadOverlaps =
+	    HashTable_GetItemValue(file->overlaps.writeOverlaps, &threadId);
+	int ret;
+	DWORD dwErrorCode;
+	DWORD nBytesWritten = 0;
+	long int offset;
+	int whence;
+
+	if (!threadOverlaps)
+	{
+		WLog_ERR(TAG,
+		         "writeCompletion called but can't find overlap context for the current thread");
+		return;
+	}
+
+	op = (FileExOperation*)Queue_Dequeue(threadOverlaps->pendingOperations);
+	if (!op)
+	{
+		WLog_ERR(TAG, "probably an error: writeCompletion is called with no pending operation");
+		return;
+	}
+
+	if (op->lpOverlapped->Offset == 0xFFFFFFFF && op->lpOverlapped->OffsetHigh == 0xFFFFFFFF)
+	{
+		offset = 0;
+		whence = SEEK_END;
+	}
+	else
+	{
+		offset = op->lpOverlapped->Offset + ((UINT64)op->lpOverlapped->OffsetHigh << 32);
+		whence = SEEK_SET;
+	}
+
+	if (fseek(file->fp, offset, whence) >= 0)
+	{
+		ret = fwrite(op->lpBuffer, 1, op->nNumberOfBytesToTreat, file->fp);
+		if (ret <= 0)
+		{
+			if (feof(file->fp))
+				dwErrorCode = ERROR_SUCCESS;
+			else
+				dwErrorCode = ERROR_INTERNAL_ERROR;
+		}
+		else
+		{
+			dwErrorCode = ERROR_SUCCESS;
+			nBytesWritten = ret;
+		}
+	}
+	else
+	{
+		dwErrorCode = map_posix_err(errno);
+	}
+
+	op->lpOverlapped->Internal = dwErrorCode;
+	op->lpOverlapped->InternalHigh = (ULONG_PTR)nBytesWritten;
+	if (op->lpCompletionRoutine)
+		op->lpCompletionRoutine(dwErrorCode, nBytesWritten, op->lpOverlapped);
+
+	threadOverlaps->freeOpFn(op);
+	if (!Queue_Count(threadOverlaps->pendingOperations))
+		apc_remove(&threadOverlaps->apc);
+}
+
+static INLINE PerThreadOverlap* ensureWriteThreadOverlap(WINPR_FILE* file, DWORD threadId)
+{
+	BOOL created;
+	PerThreadOverlap* ret = ensureThreadOverlap(threadId, file->overlaps.writeOverlaps, &created);
+	if (ret && created)
+	{
+		WINPR_APC_ITEM* apc = &ret->apc;
+		apc->type = APC_TYPE_WRITE_OVERLAPPED;
+		apc->pollFd = fileno(file->fp);
+		apc->pollMode = WINPR_FD_WRITE;
+		apc->completion = writeCompletion;
+		apc->completionArgs = file;
+		ret->freeOpFn = free;
+	}
+	return ret;
+}
 
 static BOOL FileIsHandled(HANDLE handle)
 {
@@ -95,6 +321,11 @@ static BOOL FileCloseHandle(HANDLE handle)
 			fclose(file->fp);
 			file->fp = NULL;
 		}
+	}
+
+	if (file->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
+	{
+		winpr_overlap_uninit(&file->overlaps);
 	}
 
 	free(file->lpFileName);
@@ -245,6 +476,61 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	return status;
 }
 
+static BOOL FileReadEx(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+                       LPOVERLAPPED lpOverlapped,
+                       LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+	WINPR_FILE* file;
+	WINPR_THREAD* thread = winpr_GetCurrentThread();
+	DWORD threadId = GetCurrentThreadId();
+	FileExOperation* readExOp;
+	PerThreadOverlap* readOverlaps;
+
+	if (!Object)
+		return FALSE;
+
+	file = (WINPR_FILE*)Object;
+	if (!(file->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
+	{
+		WLog_ERR(TAG, "file not opened with OVERLAPPED flag");
+		SetLastError(ERROR_INVALID_ACCESS);
+		return FALSE;
+	}
+
+	readOverlaps = ensureReadThreadOverlap(file, threadId);
+	if (!readOverlaps)
+	{
+		WLog_ERR(TAG, "unable to ensure read overlaps context for current thread");
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	readExOp = calloc(1, sizeof(*readExOp));
+	if (!readExOp)
+	{
+		WLog_ERR(TAG, "unable to create FileEx op");
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	apc_register(thread, &readOverlaps->apc);
+
+	readExOp->nNumberOfBytesToTreat = nNumberOfBytesToRead;
+	readExOp->lpBuffer = lpBuffer;
+	readExOp->lpOverlapped = lpOverlapped;
+	readExOp->lpCompletionRoutine = lpCompletionRoutine;
+	if (!Queue_Enqueue(readOverlaps->pendingOperations, readExOp))
+	{
+		WLog_ERR(TAG, "unable to push FileEx op in pending operations");
+		if (!Queue_Count(readOverlaps->pendingOperations))
+			apc_remove(&readOverlaps->apc);
+		free(readExOp);
+		return FALSE;
+	}
+	lpOverlapped->Internal = (ULONG_PTR)STATUS_PENDING;
+	return TRUE;
+}
+
 static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
                       LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
@@ -272,6 +558,59 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 	}
 
 	*lpNumberOfBytesWritten = io_status;
+	return TRUE;
+}
+
+static BOOL FileWriteEx(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
+                        LPOVERLAPPED lpOverlapped,
+                        LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+	WINPR_FILE* file;
+	WINPR_THREAD* thread = winpr_GetCurrentThread();
+	DWORD threadId = GetCurrentThreadId();
+	FileExOperation* writeExOp;
+	PerThreadOverlap* writeOverlaps;
+
+	if (!Object)
+		return FALSE;
+
+	file = (WINPR_FILE*)Object;
+	if (!(file->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
+	{
+		WLog_ERR(TAG, "file not opened with OVERLAPPED flag");
+		SetLastError(ERROR_INVALID_ACCESS);
+		return FALSE;
+	}
+
+	writeOverlaps = ensureWriteThreadOverlap(file, threadId);
+	if (!writeOverlaps)
+	{
+		WLog_ERR(TAG, "unable to ensure write overlaps context for current thread");
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	writeExOp = calloc(1, sizeof(*writeExOp));
+	if (!writeExOp)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	apc_register(thread, &writeOverlaps->apc);
+
+	writeExOp->nNumberOfBytesToTreat = nNumberOfBytesToWrite;
+	writeExOp->lpBuffer = (LPVOID)lpBuffer;
+	writeExOp->lpOverlapped = lpOverlapped;
+	writeExOp->lpCompletionRoutine = lpCompletionRoutine;
+	if (!Queue_Enqueue(writeOverlaps->pendingOperations, writeExOp))
+	{
+		if (!Queue_Count(writeOverlaps->pendingOperations))
+			apc_remove(&writeOverlaps->apc);
+		free(writeExOp);
+		return FALSE;
+	}
+	lpOverlapped->Internal = (ULONG_PTR)STATUS_PENDING;
 	return TRUE;
 }
 
@@ -480,6 +819,109 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 	return TRUE;
 }
 
+static void cancelPerThreadOverlapped(PerThreadOverlap* overlap)
+{
+	while (Queue_Count(overlap->pendingOperations))
+	{
+		FileExOperation* op = Queue_Dequeue(overlap->pendingOperations);
+		if (op)
+			op->lpOverlapped->Internal = (ULONG_PTR)ERROR_OPERATION_ABORTED;
+		overlap->freeOpFn(op);
+	}
+}
+
+BOOL FileCancelIo(HANDLE hFile)
+{
+	WINPR_FILE* file = (WINPR_FILE*)hFile;
+	DWORD threadId = GetCurrentThreadId();
+	PerThreadOverlap* overlap;
+
+	/* taking from the doc: Calling the CancelIo function with a file handle that
+	 * is not opened with FILE_FLAG_OVERLAPPED does nothing. */
+	if (!(file->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
+		return TRUE;
+
+	overlap = HashTable_GetItemValue(file->overlaps.readOverlaps, &threadId);
+	cancelPerThreadOverlapped(overlap);
+
+	overlap = HashTable_GetItemValue(file->overlaps.writeOverlaps, &threadId);
+	cancelPerThreadOverlapped(overlap);
+
+	return TRUE;
+}
+
+static DWORD cancelPerThreadOverlappedEx(PerThreadOverlap* overlap, LPOVERLAPPED lpOverlapped)
+{
+	int i, count;
+	DWORD ret = 0;
+
+	Queue_Lock(overlap->pendingOperations);
+	count = Queue_Count(overlap->pendingOperations);
+
+	for (i = 0; i < count; i++)
+	{
+		FileExOperation* op = Queue_Dequeue(overlap->pendingOperations);
+		if (op && (!lpOverlapped || op->lpOverlapped == lpOverlapped))
+		{
+			op->lpOverlapped->Internal = (ULONG_PTR)ERROR_OPERATION_ABORTED;
+			overlap->freeOpFn(op);
+			ret++;
+		}
+		else
+		{
+			Queue_Enqueue(overlap->pendingOperations, op);
+		}
+	}
+
+	if (!Queue_Count(overlap->pendingOperations))
+		apc_remove(&overlap->apc);
+
+	Queue_Unlock(overlap->pendingOperations);
+
+	return ret;
+}
+
+static DWORD cancelOverlappedTable(wHashTable* table, LPOVERLAPPED lpOverlapped)
+{
+	ULONG_PTR* keys;
+	int i, nkeys;
+	DWORD ret = 0;
+
+	nkeys = HashTable_GetKeys(table, &keys);
+	if (nkeys < 0)
+		return 0;
+
+	for (i = 0; i < nkeys; i++)
+	{
+		PerThreadOverlap* overlap = HashTable_GetItemValue(table, (void*)keys[i]);
+		ret += cancelPerThreadOverlappedEx(overlap, lpOverlapped);
+	}
+
+	free(keys);
+
+	return ret;
+}
+
+BOOL FileCancelIoEx(HANDLE hFile, LPOVERLAPPED lpOverlapped)
+{
+	WINPR_FILE* file = (WINPR_FILE*)hFile;
+	DWORD treated = 0;
+
+	/* taking from the doc: Calling the CancelIo function with a file handle that
+	 * is not opened with FILE_FLAG_OVERLAPPED does nothing. */
+	if (!(file->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
+		return TRUE;
+
+	treated = cancelOverlappedTable(file->overlaps.readOverlaps, lpOverlapped);
+	treated += cancelOverlappedTable(file->overlaps.writeOverlaps, lpOverlapped);
+
+	if (treated)
+		return TRUE;
+
+	SetLastError(ERROR_NOT_FOUND);
+	return FALSE;
+}
+
 static UINT64 FileTimeToUS(const FILETIME* ft)
 {
 	const UINT64 EPOCH_DIFF = 11644473600ULL * 1000000ULL;
@@ -589,11 +1031,11 @@ static HANDLE_OPS fileOps = { FileIsHandled,
 	                          FileGetFd,
 	                          NULL, /* CleanupHandle */
 	                          FileRead,
-	                          NULL, /* FileReadEx */
+	                          FileReadEx,
 	                          NULL, /* FileReadScatter */
 	                          FileWrite,
-	                          NULL, /* FileWriteEx */
-	                          NULL, /* FileWriteGather */
+	                          FileWriteEx, /* FileWriteEx */
+	                          NULL,        /* FileWriteGather */
 	                          FileGetFileSize,
 	                          NULL, /*  FlushFileBuffers */
 	                          FileSetEndOfFile,
@@ -603,26 +1045,25 @@ static HANDLE_OPS fileOps = { FileIsHandled,
 	                          FileLockFileEx,
 	                          FileUnlockFile,
 	                          FileUnlockFileEx,
-	                          FileSetFileTime };
+	                          FileSetFileTime,
+	                          FileCancelIo,
+	                          FileCancelIoEx };
 
-static HANDLE_OPS shmOps = {
-	FileIsHandled, FileCloseHandle,
-	FileGetFd,     NULL, /* CleanupHandle */
-	FileRead,      NULL, /* FileReadEx */
-	NULL,                /* FileReadScatter */
-	FileWrite,     NULL, /* FileWriteEx */
-	NULL,                /* FileWriteGather */
-	NULL,                /* FileGetFileSize */
-	NULL,                /*  FlushFileBuffers */
-	NULL,                /* FileSetEndOfFile */
-	NULL,                /* FileSetFilePointer */
-	NULL,                /* SetFilePointerEx */
-	NULL,                /* FileLockFile */
-	NULL,                /* FileLockFileEx */
-	NULL,                /* FileUnlockFile */
-	NULL,                /* FileUnlockFileEx */
-	NULL                 /* FileSetFileTime */
-};
+static HANDLE_OPS shmOps = { FileIsHandled, FileCloseHandle, FileGetFd, NULL, /* CleanupHandle */
+	                         FileRead,      FileReadEx,                       /* FileReadEx */
+	                         NULL,                                            /* FileReadScatter */
+	                         FileWrite,     FileWriteEx,     NULL,            /* FileWriteGather */
+	                         NULL,                                            /* FileGetFileSize */
+	                         NULL, /*  FlushFileBuffers */
+	                         NULL, /* FileSetEndOfFile */
+	                         NULL, /* FileSetFilePointer */
+	                         NULL, /* SetFilePointerEx */
+	                         NULL, /* FileLockFile */
+	                         NULL, /* FileLockFileEx */
+	                         NULL, /* FileUnlockFile */
+	                         NULL, /* FileUnlockFileEx */
+	                         NULL, /* FileSetFileTime */
+	                         FileCancelIo,  FileCancelIoEx };
 
 static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDisposition, BOOL* create)
 {
@@ -651,60 +1092,6 @@ static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDispositio
 	}
 }
 
-UINT32 map_posix_err(int fs_errno)
-{
-	UINT32 rc;
-
-	/* try to return NTSTATUS version of error code */
-
-	switch (fs_errno)
-	{
-		case 0:
-			rc = STATUS_SUCCESS;
-			break;
-
-		case ENOTCONN:
-		case ENODEV:
-		case ENOTDIR:
-		case ENXIO:
-			rc = ERROR_FILE_NOT_FOUND;
-			break;
-
-		case EROFS:
-		case EPERM:
-		case EACCES:
-			rc = ERROR_ACCESS_DENIED;
-			break;
-
-		case ENOENT:
-			rc = ERROR_FILE_NOT_FOUND;
-			break;
-
-		case EBUSY:
-			rc = ERROR_BUSY_DRIVE;
-			break;
-
-		case EEXIST:
-			rc = ERROR_FILE_EXISTS;
-			break;
-
-		case EISDIR:
-			rc = STATUS_FILE_IS_A_DIRECTORY;
-			break;
-
-		case ENOTEMPTY:
-			rc = STATUS_DIRECTORY_NOT_EMPTY;
-			break;
-
-		default:
-			WLog_ERR(TAG, "Missing ERRNO mapping %s [%d]", strerror(fs_errno), fs_errno);
-			rc = STATUS_UNSUCCESSFUL;
-			break;
-	}
-
-	return rc;
-}
-
 static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                               LPSECURITY_ATTRIBUTES lpSecurityAttributes,
                               DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
@@ -720,13 +1107,6 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 #endif
 	FILE* fp = NULL;
 	struct stat st;
-
-	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
-	{
-		WLog_ERR(TAG, "WinPR %s does not support the FILE_FLAG_OVERLAPPED flag", __FUNCTION__);
-		SetLastError(ERROR_NOT_SUPPORTED);
-		return INVALID_HANDLE_VALUE;
-	}
 
 	pFile = (WINPR_FILE*)calloc(1, sizeof(WINPR_FILE));
 	if (!pFile)
@@ -815,6 +1195,16 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 
 	setvbuf(fp, NULL, _IONBF, 0);
 
+	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
+	{
+		if (!winpr_overlap_init(&pFile->overlaps))
+		{
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			FileCloseHandle(pFile);
+			return INVALID_HANDLE_VALUE;
+		}
+	}
+
 #ifdef __sun
 	lock.l_start = 0;
 	lock.l_len = 0;
@@ -853,7 +1243,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		pFile->bLocked = TRUE;
 	}
 
-	if (fstat(fileno(pFile->fp), &st) == 0 && dwFlagsAndAttributes & FILE_ATTRIBUTE_READONLY)
+	if (fstat(fileno(pFile->fp), &st) == 0 && (dwFlagsAndAttributes & FILE_ATTRIBUTE_READONLY))
 	{
 		st.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
 		fchmod(fileno(pFile->fp), st.st_mode);

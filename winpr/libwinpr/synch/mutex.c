@@ -105,16 +105,30 @@ BOOL MutexCloseHandle(HANDLE handle)
 	return TRUE;
 }
 
-static HANDLE_OPS ops = { MutexIsHandled, MutexCloseHandle,
-	                      MutexGetFd,     NULL, /* CleanupHandle */
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL };
+static HANDLE_OPS ops = {
+	MutexIsHandled,
+	MutexCloseHandle,
+	MutexGetFd,
+	NULL, /* CleanupHandle */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL, /* CancelIo */
+	NULL  /* CancelIoEx */
+};
 
 HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)
 {

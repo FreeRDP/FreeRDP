@@ -32,7 +32,9 @@
 #ifndef _WIN32
 
 #include <stdio.h>
+
 #include "../handle/handle.h"
+#include "../io/io.h"
 
 struct winpr_file
 {
@@ -51,6 +53,8 @@ struct winpr_file
 	HANDLE hTemplateFile;
 
 	BOOL bLocked;
+
+	WINPR_OVERLAP_IMPL overlaps;
 };
 typedef struct winpr_file WINPR_FILE;
 

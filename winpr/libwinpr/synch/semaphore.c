@@ -112,26 +112,30 @@ BOOL SemaphoreCloseHandle(HANDLE handle)
 	return TRUE;
 }
 
-static HANDLE_OPS ops = { SemaphoreIsHandled,
-	                      SemaphoreCloseHandle,
-	                      SemaphoreGetFd,
-	                      SemaphoreCleanupHandle,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL };
+static HANDLE_OPS ops = {
+	SemaphoreIsHandled,
+	SemaphoreCloseHandle,
+	SemaphoreGetFd,
+	SemaphoreCleanupHandle,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL, /* CancelIo */
+	NULL  /* CancelIoEx */
+};
 
 HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount,
                         LONG lMaximumCount, LPCWSTR lpName)

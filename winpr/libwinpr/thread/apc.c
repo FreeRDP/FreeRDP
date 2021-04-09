@@ -61,6 +61,9 @@ void apc_register(WINPR_THREAD* thread, WINPR_APC_ITEM* addItem)
 	WINPR_APC_ITEM** nextp;
 	APC_QUEUE* apc = &thread->apc;
 
+	if (addItem->linked)
+		return;
+
 	pthread_mutex_lock(&apc->mutex);
 	if (apc->tail)
 	{
