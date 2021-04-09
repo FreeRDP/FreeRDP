@@ -621,7 +621,6 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 
 	rail->OpenHandle = 0;
 
-
 	return CHANNEL_RC_OK;
 }
 

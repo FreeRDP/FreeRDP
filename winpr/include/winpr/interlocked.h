@@ -86,7 +86,8 @@ extern "C"
 
 #ifdef _WIN64
 
-	typedef union DECLSPEC_ALIGN(16) _WINPR_SLIST_HEADER {
+	typedef union DECLSPEC_ALIGN(16) _WINPR_SLIST_HEADER
+	{
 		struct
 		{
 			ULONGLONG Alignment;
@@ -116,7 +117,8 @@ extern "C"
 
 #else /* _WIN64 */
 
-	typedef union _WINPR_SLIST_HEADER {
+	typedef union _WINPR_SLIST_HEADER
+	{
 		ULONGLONG Alignment;
 
 		struct

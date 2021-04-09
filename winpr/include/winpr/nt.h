@@ -1431,7 +1431,8 @@ typedef OBJECT_ATTRIBUTES* POBJECT_ATTRIBUTES;
 
 typedef struct _IO_STATUS_BLOCK
 {
-	union {
+	union
+	{
 #ifdef _WIN32
 		NTSTATUS Status;
 #else

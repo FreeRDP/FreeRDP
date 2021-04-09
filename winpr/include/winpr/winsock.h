@@ -178,7 +178,8 @@ struct sockaddr_in6_old
 	IN6_ADDR sin6_addr;
 };
 
-typedef union sockaddr_gen {
+typedef union sockaddr_gen
+{
 	struct sockaddr Address;
 	struct sockaddr_in AddressIn;
 	struct sockaddr_in6_old AddressIn6;
