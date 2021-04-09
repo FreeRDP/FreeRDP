@@ -136,6 +136,7 @@ struct rdp_file
 	DWORD RedirectPrinters;            /* redirectprinters */
 	DWORD RedirectComPorts;            /* redirectcomports */
 	DWORD RedirectSmartCards;          /* redirectsmartcards */
+	LPSTR RedirectCameras;             /* camerastoredirect */
 	DWORD RedirectClipboard;           /* redirectclipboard */
 	DWORD RedirectPosDevices;          /* redirectposdevices */
 	DWORD RedirectDirectX;             /* redirectdirectx */
@@ -431,6 +432,8 @@ static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, c
 		tmp = &file->AlternateFullAddress;
 	else if (_stricmp(name, "usbdevicestoredirect") == 0)
 		tmp = &file->UsbDevicesToRedirect;
+	else if (_stricmp(name, "camerastoredirect") == 0)
+		tmp = &file->RedirectCameras;
 	else if (_stricmp(name, "loadbalanceinfo") == 0)
 		tmp = &file->LoadBalanceInfo;
 	else if (_stricmp(name, "remoteapplicationname") == 0)
@@ -624,6 +627,8 @@ static BOOL trim_strings(rdpFile* file)
 	if (!trim(&file->FullAddress))
 		return FALSE;
 	if (!trim(&file->UsbDevicesToRedirect))
+		return FALSE;
+	if (!trim(&file->RedirectCameras))
 		return FALSE;
 	if (!trim(&file->LoadBalanceInfo))
 		return FALSE;
@@ -858,6 +863,40 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 		}                                                   \
 	} while (0)
 
+static char* freerdp_client_channel_args_to_string(const rdpSettings* settings, const char* channel)
+{
+	char* str = NULL;
+	size_t offset = 0, len = 1;
+	int x;
+	ADDIN_ARGV* args = freerdp_dynamic_channel_collection_find(settings, channel);
+	if (!args || (args->argc < 2))
+		return NULL;
+
+	for (x = 1; x < args->argc; x++)
+	{
+		int s = _snprintf(NULL, 0, ",%s", args->argv[x]);
+		if (s < 0)
+			return NULL;
+		len += (size_t)s;
+	}
+	str = calloc(len + 1, sizeof(CHAR));
+	if (!str)
+		return NULL;
+
+	for (x = 1; x < args->argc; x++)
+	{
+		int s = _snprintf(&str[offset], len - offset, "%s,", args->argv[x]);
+		if (s < 0)
+		{
+			free(str);
+			return NULL;
+		}
+		offset += (size_t)s;
+	}
+	str[offset - 1] = '\0';
+	return str;
+}
+
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings)
 {
 	FILE_POPULATE_STRING(file->Domain, settings->Domain);
@@ -948,6 +987,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->NetworkAutoDetect = settings->NetworkAutoDetect ? 0 : 1;
 	file->AutoReconnectionEnabled = settings->AutoReconnectionEnabled;
 	file->RedirectSmartCards = settings->RedirectSmartCards;
+	file->RedirectCameras = freerdp_client_channel_args_to_string(settings, "rdpecam");
 	file->RedirectClipboard = settings->RedirectClipboard;
 	file->RedirectPrinters = settings->RedirectPrinters;
 	file->RedirectDrives = settings->RedirectDrives;
@@ -1171,6 +1211,7 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	WRITE_SETTING_STR("full address:s:%s", file->FullAddress);
 	WRITE_SETTING_STR("alternate full address:s:%s", file->AlternateFullAddress);
 	WRITE_SETTING_STR("usbdevicestoredirect:s:%s", file->UsbDevicesToRedirect);
+	WRITE_SETTING_STR("camerastoredirect:s:%s", file->RedirectCameras);
 	WRITE_SETTING_STR("loadbalanceinfo:s:%s", file->LoadBalanceInfo);
 	WRITE_SETTING_STR("remoteapplicationname:s:%s", file->RemoteApplicationName);
 	WRITE_SETTING_STR("remoteapplicationicon:s:%s", file->RemoteApplicationIcon);
@@ -1800,6 +1841,17 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			return FALSE;
 	}
 
+	if (~((size_t)file->RedirectCameras))
+	{
+		BOOL status;
+		char** p;
+		size_t count;
+		p = CommandLineParseCommaSeparatedValuesEx("rdpecam", file->RedirectCameras, &count);
+		status = freerdp_client_add_dynamic_channel(settings, count, p);
+		free(p);
+		/* Ignore return */ WINPR_UNUSED(status);
+	}
+
 	if (~file->KeyboardHook)
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardHook, file->KeyboardHook))
@@ -2075,6 +2127,7 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 		freerdp_client_file_string_check_free(file->FullAddress);
 		freerdp_client_file_string_check_free(file->AlternateFullAddress);
 		freerdp_client_file_string_check_free(file->UsbDevicesToRedirect);
+		freerdp_client_file_string_check_free(file->RedirectCameras);
 		freerdp_client_file_string_check_free(file->LoadBalanceInfo);
 		freerdp_client_file_string_check_free(file->RemoteApplicationName);
 		freerdp_client_file_string_check_free(file->RemoteApplicationIcon);
