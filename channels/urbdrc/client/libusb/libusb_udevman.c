@@ -716,66 +716,67 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 
 static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, const ADDIN_ARGV* args)
 {
-	int status;
+	int x;
 	LPSTR devices = NULL;
-	COMMAND_LINE_ARGUMENT_A* arg;
-	COMMAND_LINE_ARGUMENT_A urbdrc_udevman_args[] = {
-		{ "dbg", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "debug" },
-		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<devices>", NULL, NULL, -1, NULL, "device list" },
-		{ "id", COMMAND_LINE_VALUE_OPTIONAL, "", NULL, BoolValueFalse, -1, NULL,
-		  "FLAG_ADD_BY_VID_PID" },
-		{ "addr", COMMAND_LINE_VALUE_OPTIONAL, "", NULL, BoolValueFalse, -1, NULL,
-		  "FLAG_ADD_BY_ADDR" },
-		{ "auto", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "FLAG_ADD_BY_AUTO" },
-		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-	};
 
-	status = CommandLineParseArgumentsA(args->argc, args->argv, urbdrc_udevman_args,
-	                                    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON,
-	                                    udevman, NULL, NULL);
-
-	if (status != CHANNEL_RC_OK)
-		return status;
-
-	arg = urbdrc_udevman_args;
-
-	do
+	for (x = 0; x < args->argc; x++)
 	{
-		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
-			continue;
-
-		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "dbg")
+		const char* arg = args->argv[x];
+		if (strcmp(arg, "dbg") == 0)
 		{
 			WLog_SetLogLevel(WLog_Get(TAG), WLOG_TRACE);
 		}
-		CommandLineSwitchCase(arg, "dev")
+		else if (_strnicmp(arg, "device:", 7) == 0)
 		{
-			devices = arg->Value;
+			/* Redirect all local devices */
+			const char* val = &arg[7];
+			const size_t len = strlen(val);
+			if (strcmp(val, "*") == 0)
+			{
+				udevman->flags |= UDEVMAN_FLAG_ADD_BY_AUTO;
+			}
+			else if (_strnicmp(arg, "USBInstanceID:", 14) == 0)
+			{
+				// TODO: Usb instance ID
+			}
+			else if ((val[0] == '{') && (val[len - 1] == '}'))
+			{
+				// TODO: Usb device class
+			}
 		}
-		CommandLineSwitchCase(arg, "id")
+		else if (_strnicmp(arg, "dev:", 4) == 0)
 		{
-			if (arg->Value)
-				udevman->devices_vid_pid = arg->Value;
+			devices = &arg[4];
+		}
+		else if (_strnicmp(arg, "id", 2) == 0)
+		{
+			const char* p = strchr(arg, ':');
+			if (p)
+				udevman->devices_vid_pid = p + 1;
 			else
 				udevman->flags = UDEVMAN_FLAG_ADD_BY_VID_PID;
 		}
-		CommandLineSwitchCase(arg, "addr")
+		else if (_strnicmp(arg, "addr", 4) == 0)
 		{
-			if (arg->Value)
-				udevman->devices_addr = arg->Value;
+			const char* p = strchr(arg, ':');
+			if (p)
+				udevman->devices_addr = p + 1;
 			else
 				udevman->flags = UDEVMAN_FLAG_ADD_BY_ADDR;
 		}
-		CommandLineSwitchCase(arg, "auto")
+		else if (strcmp(arg, "auto") == 0)
 		{
 			udevman->flags |= UDEVMAN_FLAG_ADD_BY_AUTO;
 		}
-		CommandLineSwitchDefault(arg)
+		else
 		{
+			const size_t len = strlen(arg);
+			if ((arg[0] == '{') && (arg[len - 1] == '}'))
+			{
+				// TODO: Check for  {Device Setup Class GUID}:
+			}
 		}
-		CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
-
+	}
 	if (devices)
 	{
 		if (udevman->flags & UDEVMAN_FLAG_ADD_BY_VID_PID)

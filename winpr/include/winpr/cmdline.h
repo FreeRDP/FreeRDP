@@ -166,6 +166,8 @@ extern "C"
 	                                                        size_t* count);
 
 	WINPR_API char* CommandLineToCommaSeparatedValues(int argc, char* argv[]);
+	WINPR_API char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[],
+	                                                    const char* filters[], size_t number);
 
 #ifdef __cplusplus
 }

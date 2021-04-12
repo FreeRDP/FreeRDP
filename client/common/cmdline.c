@@ -1831,6 +1831,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				UINT32 i;
 				char** p;
 				size_t count = 0;
+				UINT32* MonitorIds;
 				p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 
 				if (!p)
@@ -1839,16 +1840,22 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				if (count > 16)
 					count = 16;
 
-				settings->NumMonitorIds = (UINT32)count;
+				if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, NULL, count))
+				{
+					free(p);
+					return FALSE;
+				}
 
-				for (i = 0; i < settings->NumMonitorIds; i++)
+				MonitorIds =
+				    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorIds, 0);
+				for (i = 0; i < count; i++)
 				{
 					LONGLONG val;
 
 					if (!value_to_int(p[i], &val, 0, UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-					settings->MonitorIds[i] = (UINT32)val;
+					MonitorIds[i] = (UINT32)val;
 				}
 
 				free(p);
@@ -3773,7 +3780,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (settings->SupportGeometryTracking)
+	if (freerdp_settings_get_bool(settings, FreeRDP_SupportGeometryTracking))
 	{
 		char* p[1];
 		size_t count;
@@ -3784,7 +3791,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (settings->SupportVideoOptimized)
+	if (freerdp_settings_get_bool(settings, FreeRDP_SupportVideoOptimized))
 	{
 		char* p[1];
 		size_t count;

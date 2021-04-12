@@ -1008,7 +1008,7 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 }
 
 static BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, size_t id, SSIZE_T lenId,
-                                              const void* data, size_t len)
+                                              const void* data, size_t len, size_t size)
 {
 	BOOL rc;
 	void* copy;
@@ -1024,11 +1024,11 @@ static BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, size_t id, 
 
 	if (len == 0)
 		return TRUE;
-	copy = calloc(len, 1);
+	copy = calloc(len, size);
 	if (!copy)
 		return FALSE;
 	if (data)
-		memcpy(copy, data, len);
+		memcpy(copy, data, len * size);
 	rc = freerdp_settings_set_pointer(settings, id, copy);
 	if (!rc)
 	{
@@ -1062,23 +1062,23 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 			settings->RdpServerRsaKey = (rdpRsaKey*)data;
 			return TRUE;
 		case FreeRDP_RedirectionPassword:
-			return freerdp_settings_set_pointer_len_(settings, id,
-			                                         FreeRDP_RedirectionPasswordLength, data, len);
+			return freerdp_settings_set_pointer_len_(
+			    settings, id, FreeRDP_RedirectionPasswordLength, data, len, sizeof(char));
 		case FreeRDP_RedirectionTsvUrl:
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_RedirectionTsvUrlLength,
-			                                         data, len);
+			                                         data, len, sizeof(char));
 		case FreeRDP_LoadBalanceInfo:
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_LoadBalanceInfoLength,
-			                                         data, len);
+			                                         data, len, sizeof(char));
 		case FreeRDP_ServerRandom:
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_ServerRandomLength, data,
-			                                         len);
+			                                         len, sizeof(char));
 		case FreeRDP_ClientRandom:
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_ClientRandomLength, data,
-			                                         len);
+			                                         len, sizeof(char));
 		case FreeRDP_ServerCertificate:
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_ServerCertificateLength,
-			                                         data, len);
+			                                         data, len, sizeof(char));
 		case FreeRDP_TargetNetAddresses:
 			if (data == NULL)
 			{
@@ -1087,7 +1087,8 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 					return FALSE;
 			}
 			return freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetAddresses,
-			                                         FreeRDP_TargetNetAddressCount, data, len);
+			                                         FreeRDP_TargetNetAddressCount, data, len,
+			                                         sizeof(char));
 
 		case FreeRDP_TargetNetPorts:
 			if (data == NULL)
@@ -1097,19 +1098,24 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 					return FALSE;
 			}
 			return freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetPorts,
-			                                         FreeRDP_TargetNetAddressCount, data, len);
+			                                         FreeRDP_TargetNetAddressCount, data, len,
+			                                         sizeof(char));
 		case FreeRDP_ClientAutoReconnectCookie:
 		case FreeRDP_ServerAutoReconnectCookie:
 		case FreeRDP_ChannelDefArray:
 		case FreeRDP_MonitorDefArray:
-		case FreeRDP_MonitorIds:
 		case FreeRDP_ReceivedCapabilities:
 		case FreeRDP_OrderSupport:
 		case FreeRDP_ClientTimeZone:
 		case FreeRDP_BitmapCacheV2CellInfo:
 		case FreeRDP_GlyphCache:
 		case FreeRDP_FragCache:
-			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len);
+			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len, sizeof(char));
+
+		case FreeRDP_MonitorIds:
+			return freerdp_settings_set_pointer_len_(
+			    settings, FreeRDP_MonitorIds, FreeRDP_NumMonitorIds, data, len, sizeof(UINT32));
+
 		default:
 			if ((data == NULL) && (len == 0))
 			{
