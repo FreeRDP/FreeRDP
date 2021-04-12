@@ -1608,12 +1608,22 @@ extern "C"
 
 	FREERDP_API void freerdp_settings_dump(wLog* log, DWORD level, const rdpSettings* settings);
 
-	FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument);
-	FREERDP_API int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous,
-	                                               char* argument);
-	FREERDP_API int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value);
-	FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous,
-	                                                     char* option, char* value);
+	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* argv[]);
+	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args);
+	FREERDP_API void freerdp_addin_argv_free(ADDIN_ARGV* args);
+
+	FREERDP_API BOOL freerdp_addin_argv_add_argument(ADDIN_ARGV* args, const char* argument);
+	FREERDP_API BOOL freerdp_addin_argv_add_argument_ex(ADDIN_ARGV* args, const char* argument,
+	                                                    size_t len);
+	FREERDP_API BOOL freerdp_addin_argv_del_argument(ADDIN_ARGV* args, const char* argument);
+
+	FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, const char* argument);
+	FREERDP_API int freerdp_addin_replace_argument(ADDIN_ARGV* args, const char* previous,
+	                                               const char* argument);
+	FREERDP_API int freerdp_addin_set_argument_value(ADDIN_ARGV* args, const char* option,
+	                                                 const char* value);
+	FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, const char* previous,
+	                                                     const char* option, const char* value);
 
 	FREERDP_API BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
 	FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings,
@@ -1625,16 +1635,21 @@ extern "C"
 
 	FREERDP_API BOOL freerdp_static_channel_collection_add(rdpSettings* settings,
 	                                                       ADDIN_ARGV* channel);
+	FREERDP_API BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* name);
 	FREERDP_API ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings,
 	                                                               const char* name);
-	FREERDP_API ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel);
+	FREERDP_API WINPR_DEPRECATED(ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel));
+
 	FREERDP_API void freerdp_static_channel_collection_free(rdpSettings* settings);
 
 	FREERDP_API BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings,
 	                                                        ADDIN_ARGV* channel);
+	FREERDP_API BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings,
+	                                                        const char* name);
 	FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings,
 	                                                                const char* name);
-	FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel);
+
+	FREERDP_API WINPR_DEPRECATED(ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel));
 	FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 
 	FREERDP_API void freerdp_target_net_addresses_free(rdpSettings* settings);

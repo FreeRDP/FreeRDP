@@ -54,8 +54,10 @@ extern "C"
 	                                                   char** params);
 	FREERDP_API BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count,
 	                                                   char** params);
+	FREERDP_API BOOL freerdp_client_del_static_channel(rdpSettings* settings, const char* name);
 	FREERDP_API BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count,
 	                                                    char** params);
+	FREERDP_API BOOL freerdp_client_del_dynamic_channel(rdpSettings* settings, const char* name);
 
 #ifdef __cplusplus
 }

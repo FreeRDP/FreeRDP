@@ -291,7 +291,6 @@ static int freerdp_client_old_command_line_pre_filter(void* context, int index, 
 		char *a, *p;
 		int i, j, t;
 		int old_index;
-		ADDIN_ARGV* args;
 		old_index = index;
 		index++;
 		t = index;
@@ -299,20 +298,7 @@ static int freerdp_client_old_command_line_pre_filter(void* context, int index, 
 		if (index == argc)
 			return -1;
 
-		args = (ADDIN_ARGV*)malloc(sizeof(ADDIN_ARGV));
 
-		if (!args)
-			return -1;
-
-		args->argv = (char**)calloc(argc, sizeof(char*));
-
-		if (!args->argv)
-		{
-			free(args);
-			return -1;
-		}
-
-		args->argc = 1;
 
 		if ((index < argc - 1) && strcmp("--data", argv[index + 1]) == 0)
 		{
@@ -321,13 +307,15 @@ static int freerdp_client_old_command_line_pre_filter(void* context, int index, 
 
 			while ((index < argc) && (strcmp("--", argv[index]) != 0))
 			{
-				args_handled++;
-				args->argc = 1;
+				ADDIN_ARGV* args = freerdp_addin_argv_new(0, NULL);
 
-				if (!(args->argv[0] = _strdup(argv[t])))
+				if (!args)
+					return -1;
+				args_handled++;
+
+				if (!freerdp_addin_argv_add_argument(args, argv[t]))
 				{
-					free(args->argv);
-					free(args);
+					freerdp_addin_argv_free(args);
 					return -1;
 				}
 
@@ -355,34 +343,22 @@ static int freerdp_client_old_command_line_pre_filter(void* context, int index, 
 					{
 						length = (int)(p - a);
 
-						if (!(args->argv[j + 1] = (char*)malloc(length + 1)))
+						if (!freerdp_addin_argv_add_argument_ex(args, a, length))
 						{
-							for (; j >= 0; --j)
-								free(args->argv[j]);
-
-							free(args->argv);
-							free(args);
+							freerdp_addin_argv_free(args);
 							return -1;
 						}
 
-						CopyMemory(args->argv[j + 1], a, length);
-						args->argv[j + 1][length] = '\0';
 						p++;
 					}
 					else
 					{
-						if (!(args->argv[j + 1] = _strdup(a)))
+						if (!freerdp_addin_argv_add_argument(args, a))
 						{
-							for (; j >= 0; --j)
-								free(args->argv[j]);
-
-							free(args->argv);
-							free(args);
+							freerdp_addin_argv_free(args);
 							return -1;
 						}
 					}
-
-					args->argc++;
 				}
 
 				if (settings)
@@ -390,10 +366,7 @@ static int freerdp_client_old_command_line_pre_filter(void* context, int index, 
 					freerdp_client_old_process_plugin(settings, args);
 				}
 
-				for (j = 0; j < args->argc; j++)
-					free(args->argv[j]);
-
-				memset(args->argv, 0, argc * sizeof(char*));
+				freerdp_addin_argv_free(args);
 				index++;
 				i++;
 			}
@@ -402,20 +375,22 @@ static int freerdp_client_old_command_line_pre_filter(void* context, int index, 
 		{
 			if (settings)
 			{
-				if (!(args->argv[0] = _strdup(argv[t])))
+				ADDIN_ARGV* args = freerdp_addin_argv_new(0, NULL);
+
+				if (!args)
+					return -1;
+
+				if (!freerdp_addin_argv_add_argument(args, argv[t]))
 				{
-					free(args->argv);
-					free(args);
+					freerdp_addin_argv_free(args);
 					return -1;
 				}
 
 				args_handled = freerdp_client_old_process_plugin(settings, args);
-				free(args->argv[0]);
+				freerdp_addin_argv_free(args);
 			}
 		}
 
-		free(args->argv);
-		free(args);
 		return (index - old_index) + args_handled;
 	}
 

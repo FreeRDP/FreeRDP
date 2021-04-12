@@ -746,9 +746,13 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, char
 	return FALSE;
 }
 
+BOOL freerdp_client_del_static_channel(rdpSettings* settings, const char* name)
+{
+	return freerdp_static_channel_collection_del(settings, name);
+}
+
 BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count, char** params)
 {
-	int index;
 	ADDIN_ARGV* args;
 
 	if (!settings || !params || !params[0] || (count > INT_MAX))
@@ -757,49 +761,27 @@ BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count, char
 	if (freerdp_static_channel_collection_find(settings, params[0]))
 		return TRUE;
 
-	args = (ADDIN_ARGV*)calloc(1, sizeof(ADDIN_ARGV));
+	args = freerdp_addin_argv_new(count, (const char**)params);
 
 	if (!args)
 		return FALSE;
 
-	args->argc = (int)count;
-	args->argv = (char**)calloc((size_t)args->argc, sizeof(char*));
-
-	if (!args->argv)
-		goto error_argv;
-
-	for (index = 0; index < args->argc; index++)
-	{
-		args->argv[index] = _strdup(params[index]);
-
-		if (!args->argv[index])
-		{
-			for (--index; index >= 0; --index)
-				free(args->argv[index]);
-
-			goto error_argv_strdup;
-		}
-	}
-
 	if (!freerdp_static_channel_collection_add(settings, args))
-		goto error_argv_index;
+		goto fail;
 
 	return TRUE;
-error_argv_index:
-
-	for (index = 0; index < args->argc; index++)
-		free(args->argv[index]);
-
-error_argv_strdup:
-	free(args->argv);
-error_argv:
-	free(args);
+fail:
+	freerdp_addin_argv_free(args);
 	return FALSE;
+}
+
+BOOL freerdp_client_del_dynamic_channel(rdpSettings* settings, const char* name)
+{
+	return freerdp_dynamic_channel_collection_del(settings, name);
 }
 
 BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count, char** params)
 {
-	int index;
 	ADDIN_ARGV* args;
 
 	if (!settings || !params || !params[0] || (count > INT_MAX))
@@ -808,43 +790,18 @@ BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count, cha
 	if (freerdp_dynamic_channel_collection_find(settings, params[0]))
 		return TRUE;
 
-	args = (ADDIN_ARGV*)malloc(sizeof(ADDIN_ARGV));
+	args = freerdp_addin_argv_new(count, (const char**)params);
 
 	if (!args)
 		return FALSE;
 
-	args->argc = (int)count;
-	args->argv = (char**)calloc((size_t)args->argc, sizeof(char*));
-
-	if (!args->argv)
-		goto error_argv;
-
-	for (index = 0; index < args->argc; index++)
-	{
-		args->argv[index] = _strdup(params[index]);
-
-		if (!args->argv[index])
-		{
-			for (--index; index >= 0; --index)
-				free(args->argv[index]);
-
-			goto error_argv_strdup;
-		}
-	}
-
 	if (!freerdp_dynamic_channel_collection_add(settings, args))
-		goto error_argv_index;
+		goto fail;
 
 	return TRUE;
-error_argv_index:
 
-	for (index = 0; index < args->argc; index++)
-		free(args->argv[index]);
-
-error_argv_strdup:
-	free(args->argv);
-error_argv:
-	free(args);
+fail:
+	freerdp_addin_argv_free(args);
 	return FALSE;
 }
 
@@ -3503,7 +3460,6 @@ static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpS
 BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 {
 	UINT32 index;
-	ADDIN_ARGV* args;
 
 	if (settings->AudioPlayback)
 	{
@@ -3750,7 +3706,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	for (index = 0; index < settings->StaticChannelCount; index++)
 	{
-		args = settings->StaticChannelArray[index];
+		ADDIN_ARGV* args = settings->StaticChannelArray[index];
 
 		if (!freerdp_client_load_static_channel_addin(channels, settings, args->argv[0], args))
 			return FALSE;

@@ -558,3 +558,33 @@ char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count)
 {
 	return CommandLineParseCommaSeparatedValuesEx(NULL, list, count);
 }
+
+char* CommandLineToCommaSeparatedValues(int argc, char* argv[])
+{
+	int x;
+	char* str = NULL;
+	size_t offset = 0;
+	size_t size = argc + 1;
+	if ((argc <= 0) || !argv)
+		return NULL;
+
+	for (x = 0; x < argc; x++)
+		size += strlen(argv[x]);
+
+	str = calloc(size, sizeof(char));
+	if (!str)
+		return NULL;
+	for (x = 0; x < argc; x++)
+	{
+		int rc = _snprintf(&str[offset], size - offset, "%s,", argv[x]);
+		if (rc <= 0)
+		{
+			free(str);
+			return NULL;
+		}
+		offset += (size_t)rc;
+	}
+	if (offset > 0)
+		str[offset - 1] = '\0';
+	return str;
+}
