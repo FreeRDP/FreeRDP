@@ -561,6 +561,27 @@ char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count)
 
 char* CommandLineToCommaSeparatedValues(int argc, char* argv[])
 {
+	return CommandLineToCommaSeparatedValuesEx(argc, argv, NULL, 0);
+}
+
+static const char* filtered(const char* arg, const char* filters[], size_t number)
+{
+	size_t x;
+	if (number == 0)
+		return arg;
+	for (x = 0; x < number; x++)
+	{
+		const char* filter = filters[x];
+		size_t len = strlen(filter);
+		if (_strnicmp(arg, filter, len) == 0)
+			return &arg[len];
+	}
+	return NULL;
+}
+
+char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[], const char* filters[],
+                                          size_t number)
+{
 	int x;
 	char* str = NULL;
 	size_t offset = 0;
@@ -576,7 +597,11 @@ char* CommandLineToCommaSeparatedValues(int argc, char* argv[])
 		return NULL;
 	for (x = 0; x < argc; x++)
 	{
-		int rc = _snprintf(&str[offset], size - offset, "%s,", argv[x]);
+		int rc;
+		const char* arg = filtered(argv[x], filters, number);
+		if (!arg)
+			continue;
+		rc = _snprintf(&str[offset], size - offset, "%s,", arg);
 		if (rc <= 0)
 		{
 			free(str);

@@ -25,6 +25,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/string.h>
 #include <winpr/file.h>
 #include <winpr/synch.h>
 #include <winpr/library.h>
@@ -498,7 +499,7 @@ void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata, MsgHandler
 	}
 	internals->msg_handler = msg_handler;
 	internals->userdata = userdata;
-	internals->channel_name = strdup(channel_name);
+	internals->channel_name = _strdup(channel_name);
 	internals->ctx = ctx;
 	if (!(ctx->settings->ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
 	{

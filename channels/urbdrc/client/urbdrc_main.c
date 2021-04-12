@@ -804,6 +804,10 @@ static UINT urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, const ADDIN_ARGV* a
 	COMMAND_LINE_ARGUMENT_A urbdrc_args[] = {
 		{ "dbg", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "debug" },
 		{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "subsystem" },
+		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device list>", NULL, NULL, -1, NULL, "devices" },
+		{ "encode", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "encode" },
+		{ "quality", COMMAND_LINE_VALUE_REQUIRED, "<[0-2] -> [high-medium-low]>", NULL, NULL, -1,
+		  NULL, "quality" },
 		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 	};
 
