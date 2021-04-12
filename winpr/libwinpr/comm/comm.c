@@ -1179,6 +1179,7 @@ static HANDLE_OPS ops = { CommIsHandled, CommCloseHandle,
 	                      NULL,          NULL,
 	                      NULL,          NULL,
 	                      NULL,          NULL,
+	                      NULL,          NULL,
 	                      NULL,          NULL };
 
 /**

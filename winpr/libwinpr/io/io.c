@@ -47,12 +47,107 @@
 #include "../handle/handle.h"
 #include "../pipe/pipe.h"
 #include "../log.h"
+#include "io.h"
 
 #define TAG WINPR_TAG("io")
+
+static UINT32 hashtable_threadId_hash(DWORD* key)
+{
+	return (UINT32)*key;
+}
+
+static BOOL hashtable_threadId_compare(DWORD* key1, DWORD* key2)
+{
+	return *key1 == *key2;
+}
+
+void hashtable_perThread_free(PerThreadOverlap* value)
+{
+	apc_remove(&value->apc);
+	while (Queue_Count(value->pendingOperations))
+		value->freeOpFn(Queue_Dequeue(value->pendingOperations));
+	Queue_Free(value->pendingOperations);
+	free(value);
+}
+
+BOOL winpr_overlap_init(WINPR_OVERLAP_IMPL* over)
+{
+	int i;
+	wHashTable* hashtables[2];
+
+	hashtables[0] = over->readOverlaps = HashTable_New(TRUE);
+	if (!over->readOverlaps)
+		return FALSE;
+
+	hashtables[1] = over->writeOverlaps = HashTable_New(TRUE);
+	if (!over->writeOverlaps)
+	{
+		HashTable_Free(over->readOverlaps);
+		return FALSE;
+	}
+
+	for (i = 0; i < 2; i++)
+	{
+		hashtables[i]->hash = (HASH_TABLE_HASH_FN)hashtable_threadId_hash;
+		hashtables[i]->keyCompare = (HASH_TABLE_KEY_COMPARE_FN)hashtable_threadId_compare;
+		hashtables[i]->valueFree = (HASH_TABLE_VALUE_FREE_FN)hashtable_perThread_free;
+	}
+	return TRUE;
+}
+
+void winpr_overlap_uninit(WINPR_OVERLAP_IMPL* over)
+{
+	HashTable_Free(over->readOverlaps);
+	HashTable_Free(over->writeOverlaps);
+}
+
+PerThreadOverlap* ensureThreadOverlap(DWORD threadId, wHashTable* overlaps, BOOL* created)
+{
+	PerThreadOverlap* ret = HashTable_GetItemValue(overlaps, &threadId);
+	if (!ret)
+	{
+		ret = calloc(1, sizeof(PerThreadOverlap));
+		if (!ret)
+			return NULL;
+
+		ret->threadId = threadId;
+		ret->pendingOperations = Queue_New(TRUE, 0, 0);
+		if (!ret->pendingOperations)
+		{
+			free(ret);
+			return NULL;
+		}
+
+		if (HashTable_Add(overlaps, &ret->threadId, ret) < 0)
+		{
+			Queue_Free(ret->pendingOperations);
+			free(ret);
+			return NULL;
+		}
+		*created = TRUE;
+	}
+	else
+	{
+		*created = FALSE;
+	}
+	return ret;
+}
 
 BOOL GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
                          LPDWORD lpNumberOfBytesTransferred, BOOL bWait)
 {
+	if (!bWait)
+	{
+		if (lpOverlapped->Internal == (ULONG_PTR)STATUS_PENDING)
+		{
+			SetLastError(ERROR_IO_INCOMPLETE);
+			return FALSE;
+		}
+
+		*lpNumberOfBytesTransferred = (DWORD)lpOverlapped->InternalHigh;
+		return TRUE;
+	}
+
 #if 1
 	WLog_ERR(TAG, "%s: Not implemented", __FUNCTION__);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -184,15 +279,43 @@ BOOL PostQueuedCompletionStatus(HANDLE CompletionPort, DWORD dwNumberOfBytesTran
 
 BOOL CancelIo(HANDLE hFile)
 {
-	WLog_ERR(TAG, "%s: Not implemented", __FUNCTION__);
+	ULONG Type;
+	WINPR_HANDLE* handle;
+
+	if (hFile == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	if (!winpr_Handle_GetInfo(hFile, &Type, &handle))
+		return FALSE;
+
+	handle = (WINPR_HANDLE*)hFile;
+
+	if (handle->ops->CancelIo)
+		return handle->ops->CancelIo(handle);
+
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	WLog_ERR(TAG, "%s operation not implemented", __FUNCTION__);
 	return FALSE;
 }
 
 BOOL CancelIoEx(HANDLE hFile, LPOVERLAPPED lpOverlapped)
 {
-	WLog_ERR(TAG, "%s: Not implemented", __FUNCTION__);
+	ULONG Type;
+	WINPR_HANDLE* handle;
+
+	if (hFile == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	if (!winpr_Handle_GetInfo(hFile, &Type, &handle))
+		return FALSE;
+
+	handle = (WINPR_HANDLE*)hFile;
+
+	if (handle->ops->CancelIoEx)
+		return handle->ops->CancelIoEx(handle, lpOverlapped);
+
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	WLog_ERR(TAG, "%s operation not implemented", __FUNCTION__);
 	return FALSE;
 }
 

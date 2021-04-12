@@ -202,7 +202,9 @@ static HANDLE_OPS ops = {
 	NULL,                /* FileLockFileEx */
 	NULL,                /* FileUnlockFile */
 	NULL,                /* FileUnlockFileEx */
-	NULL                 /* SetFileTime */
+	NULL,                /* SetFileTime */
+	NULL,                /* CancelIo */
+	NULL                 /* CancelIoEx */
 };
 
 static BOOL NamedPipeIsHandled(HANDLE handle)
@@ -440,26 +442,30 @@ BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 	return TRUE;
 }
 
-static HANDLE_OPS namedOps = { NamedPipeIsHandled,
-	                           NamedPipeCloseHandle,
-	                           NamedPipeGetFd,
-	                           NULL, /* CleanupHandle */
-	                           NamedPipeRead,
-	                           NULL,
-	                           NULL,
-	                           NamedPipeWrite,
-	                           NULL,
-	                           NULL,
-	                           NULL,
-	                           NULL,
-	                           NULL,
-	                           NULL,
-	                           NULL,
-	                           NULL,
-	                           NULL,
-	                           NULL,
-	                           NULL,
-	                           NULL };
+static HANDLE_OPS namedOps = {
+	NamedPipeIsHandled,
+	NamedPipeCloseHandle,
+	NamedPipeGetFd,
+	NULL, /* CleanupHandle */
+	NamedPipeRead,
+	NULL,
+	NULL,
+	NamedPipeWrite,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL, /* CancelIo */
+	NULL  /* CancelIoEx */
+};
 
 static BOOL InitWinPRPipeModule()
 {

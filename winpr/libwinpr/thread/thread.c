@@ -157,26 +157,30 @@ static DWORD ThreadCleanupHandle(HANDLE handle)
 	return WAIT_OBJECT_0;
 }
 
-static HANDLE_OPS ops = { ThreadIsHandled,
-	                      ThreadCloseHandle,
-	                      ThreadGetFd,
-	                      ThreadCleanupHandle,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL };
+static HANDLE_OPS ops = {
+	ThreadIsHandled,
+	ThreadCloseHandle,
+	ThreadGetFd,
+	ThreadCleanupHandle,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL, /* CancelIo */
+	NULL  /* CancelIoEx */
+};
 
 static void dump_thread(WINPR_THREAD* thread)
 {

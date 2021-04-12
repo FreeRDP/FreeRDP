@@ -109,26 +109,30 @@ BOOL LogonUserCloseHandle(HANDLE handle)
 	return TRUE;
 }
 
-static HANDLE_OPS ops = { LogonUserIsHandled,
-	                      LogonUserCloseHandle,
-	                      LogonUserGetFd,
-	                      NULL, /* CleanupHandle */
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL };
+static HANDLE_OPS ops = {
+	LogonUserIsHandled,
+	LogonUserCloseHandle,
+	LogonUserGetFd,
+	NULL, /* CleanupHandle */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL, /* CancelIo */
+	NULL  /* CancelIoEx */
+};
 
 BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword, DWORD dwLogonType,
                 DWORD dwLogonProvider, PHANDLE phToken)

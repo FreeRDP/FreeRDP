@@ -505,26 +505,30 @@ static int ProcessGetFd(HANDLE handle)
 	return -1;
 }
 
-static HANDLE_OPS ops = { ProcessHandleIsHandle,
-	                      ProcessHandleCloseHandle,
-	                      ProcessGetFd,
-	                      NULL, /* CleanupHandle */
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL };
+static HANDLE_OPS ops = {
+	ProcessHandleIsHandle,
+	ProcessHandleCloseHandle,
+	ProcessGetFd,
+	NULL, /* CleanupHandle */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL, /* CancelIo */
+	NULL  /* CancelIoEx */
+};
 
 HANDLE CreateProcessHandle(pid_t pid)
 {

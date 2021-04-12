@@ -300,16 +300,30 @@ static BOOL timer_drain_fd(int fd)
 	return ret >= 0;
 }
 
-static HANDLE_OPS ops = { TimerIsHandled, TimerCloseHandle,
-	                      TimerGetFd,     TimerCleanupHandle,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL };
+static HANDLE_OPS ops = {
+	TimerIsHandled,
+	TimerCloseHandle,
+	TimerGetFd,
+	TimerCleanupHandle,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL, /* CancelIo */
+	NULL  /* CancelIoEx */
+};
 
 /**
  * Waitable Timer

@@ -145,7 +145,7 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	if (!Stream_SafeSeek(irp->input, PathLength)) /* Path (variable) */
 		return ERROR_INVALID_DATA;
 
-	assert(PathLength == 0);             /* MS-RDPESP 2.2.2.2 */
+	assert(PathLength == 0); /* MS-RDPESP 2.2.2.2 */
 #ifndef _WIN32
 	/* Windows 2012 server sends on a first call :
 	 *     DesiredAccess     = 0x00100080: SYNCHRONIZE | FILE_READ_ATTRIBUTES

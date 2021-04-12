@@ -123,7 +123,9 @@ static HANDLE_OPS ops = {
 	NULL, /* FileLockFileEx */
 	NULL, /* FileUnlockFile */
 	NULL, /* FileUnlockFileEx */
-	NULL  /* SetFileTime */
+	NULL, /* SetFileTime */
+	NULL, /* CancelIo */
+	NULL  /* CancelIoEx */
 };
 
 static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess,
