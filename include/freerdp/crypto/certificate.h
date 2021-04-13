@@ -45,7 +45,6 @@ struct rdp_certificate_store
 {
 	char* path;
 	char* file;
-	char* legacy_file;
 	rdpSettings* settings;
 	rdpCertificateData* certificate_data;
 };
