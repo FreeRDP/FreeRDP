@@ -1178,7 +1178,7 @@ static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 	BOOL continueNeeded = FALSE;
 	size_t len;
 	const char* token64 = NULL;
-	int ntlmTokenLength = 0;
+	size_t ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
 	long StatusCode;
 
@@ -1200,16 +1200,7 @@ static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
 
 	len = strlen(token64);
 
-	if (len > INT_MAX)
-		return FALSE;
-
-	crypto_base64_decode(token64, (int)len, &ntlmTokenData, &ntlmTokenLength);
-
-	if (ntlmTokenLength < 0)
-	{
-		free(ntlmTokenData);
-		return FALSE;
-	}
+	crypto_base64_decode(token64, len, &ntlmTokenData, &ntlmTokenLength);
 
 	if (ntlmTokenData && ntlmTokenLength)
 	{

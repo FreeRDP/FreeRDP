@@ -80,7 +80,7 @@ static char* get_printer_config_path(const rdpSettings* settings, const WCHAR* n
 {
 	const char* path = settings->ConfigPath;
 	char* dir = GetCombinedPath(path, "printers");
-	char* bname = crypto_base64_encode((const BYTE*)name, (int)length);
+	char* bname = crypto_base64_encode((const BYTE*)name, length);
 	char* config = GetCombinedPath(dir, bname);
 
 	if (config && !PathFileExistsA(config))
@@ -194,8 +194,8 @@ fail:
 
 	if (rc && (lowSize <= INT_MAX))
 	{
-		int blen = 0;
-		crypto_base64_decode(fdata, (int)lowSize, (BYTE**)data, &blen);
+		size_t blen = 0;
+		crypto_base64_decode(fdata, lowSize, (BYTE**)data, &blen);
 
 		if (*data && (blen > 0))
 			*length = (UINT32)blen;
