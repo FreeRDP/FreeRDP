@@ -700,6 +700,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_AutoAcceptCertificate (1419)
 #define FreeRDP_AutoDenyCertificate (1420)
 #define FreeRDP_CertificateAcceptedFingerprints (1421)
+#define FreeRDP_CertificateUseKnownHosts (1422)
+#define FreeRDP_CertificateCallbackPreferPEM (1423)
 #define FreeRDP_Workarea (1536)
 #define FreeRDP_Fullscreen (1537)
 #define FreeRDP_PercentScreen (1538)
@@ -1176,7 +1178,9 @@ struct rdp_settings
 	ALIGN64 BOOL AutoAcceptCertificate;            /* 1419 */
 	ALIGN64 BOOL AutoDenyCertificate;              /* 1420 */
 	ALIGN64 char* CertificateAcceptedFingerprints; /* 1421 */
-	UINT64 padding1472[1472 - 1422];               /* 1422 */
+	ALIGN64 BOOL CertificateUseKnownHosts;         /* 1422 */
+	ALIGN64 BOOL CertificateCallbackPreferPEM;     /* 1423 */
+	UINT64 padding1472[1472 - 1424];               /* 1424 */
 	UINT64 padding1536[1536 - 1472];               /* 1472 */
 
 	/**

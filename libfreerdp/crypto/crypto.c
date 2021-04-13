@@ -250,19 +250,27 @@ BYTE* crypto_cert_hash(X509* xcert, const char* hash, UINT32* length)
 	BYTE* fp;
 	const EVP_MD* md = EVP_get_digestbyname(hash);
 	if (!md)
+	{
+		WLog_ERR(TAG, "System does not support %s hash!", hash);
 		return NULL;
-	if (!length)
+	}
+	if (!xcert || !length)
+	{
+		WLog_ERR(TAG, "[%s] Invalid arugments: xcert=%p, length=%p", __FUNCTION__, xcert, length);
 		return NULL;
-	if (!xcert)
-		return NULL;
+	}
 
 	fp = calloc(fp_len, sizeof(BYTE));
 	if (!fp)
+	{
+		WLog_ERR(TAG, "[%s] could not allocate %" PRIuz " bytes", __FUNCTION__, fp_len);
 		return NULL;
+	}
 
 	if (X509_digest(xcert, md, fp, &fp_len) != 1)
 	{
 		free(fp);
+		WLog_ERR(TAG, "certificate does not have a %s hash!", hash);
 		return NULL;
 	}
 
@@ -276,7 +284,16 @@ char* crypto_cert_fingerprint_by_hash(X509* xcert, const char* hash)
 	BYTE* fp;
 	char* p;
 	char* fp_buffer;
-
+	if (!xcert)
+	{
+		WLog_ERR(TAG, "Invalid certificate %p", xcert);
+		return NULL;
+	}
+	if (!hash)
+	{
+		WLog_ERR(TAG, "Invalid certificate hash %p", hash);
+		return NULL;
+	}
 	fp = crypto_cert_hash(xcert, hash, &fp_len);
 	if (!fp)
 		return NULL;
@@ -322,7 +339,16 @@ static char* crypto_print_name(X509_NAME* name)
 
 char* crypto_cert_subject(X509* xcert)
 {
-	return crypto_print_name(X509_get_subject_name(xcert));
+	char* subject;
+	if (!xcert)
+	{
+		WLog_ERR(TAG, "Invalid certificate %p", xcert);
+		return NULL;
+	}
+	subject = crypto_print_name(X509_get_subject_name(xcert));
+	if (!subject)
+		WLog_ERR(TAG, "certificate does not have a subject!");
+	return subject;
 }
 
 char* crypto_cert_subject_common_name(X509* xcert, int* length)
@@ -799,7 +825,16 @@ char** crypto_cert_get_dns_names(X509* x509, int* count, int** lengths)
 
 char* crypto_cert_issuer(X509* xcert)
 {
-	return crypto_print_name(X509_get_issuer_name(xcert));
+	char* issuer;
+	if (!xcert)
+	{
+		WLog_ERR(TAG, "Invalid certificate %p", xcert);
+		return NULL;
+	}
+	issuer = crypto_print_name(X509_get_issuer_name(xcert));
+	if (!issuer)
+		WLog_ERR(TAG, "certificate does not have an issuer!");
+	return issuer;
 }
 
 static int verify_cb(int ok, X509_STORE_CTX* csc)
@@ -893,22 +928,24 @@ end:
 
 rdpCertificateData* crypto_get_certificate_data(X509* xcert, const char* hostname, UINT16 port)
 {
-	char* issuer;
-	char* subject;
-	char* fp;
-	rdpCertificateData* certdata;
-	fp = crypto_cert_fingerprint(xcert);
+	char* pem = NULL;
+	size_t length;
+	rdpCertificateData* certdata = NULL;
 
-	if (!fp)
-		return NULL;
-
-	issuer = crypto_cert_issuer(xcert);
-	subject = crypto_cert_subject(xcert);
-	certdata = certificate_data_new(hostname, port, issuer, subject, fp);
-	free(subject);
-	free(issuer);
-	free(fp);
+	pem = (char*)crypto_cert_pem(xcert, NULL, &length);
+	if (!pem)
+		goto fail;
+	certdata = certificate_data_new(hostname, port);
+	if (!certdata)
+		goto fail;
+	if (!certificate_data_set_pem(certdata, pem))
+		goto fail;
+	free(pem);
 	return certdata;
+fail:
+	certificate_data_free(certdata);
+	free(pem);
+	return NULL;
 }
 
 void crypto_cert_print_info(X509* xcert)
@@ -938,4 +975,136 @@ void crypto_cert_print_info(X509* xcert)
 out_free_issuer:
 	free(issuer);
 	free(subject);
+}
+
+BYTE* crypto_cert_pem(X509* xcert, STACK_OF(X509) * chain, size_t* plength)
+{
+	BIO* bio;
+	int status, count, x;
+	size_t offset;
+	size_t length = 0;
+	BOOL rc = FALSE;
+	BYTE* pemCert = NULL;
+
+	if (!xcert || !plength)
+		return NULL;
+
+	/**
+	 * Don't manage certificates internally, leave it up entirely to the external client
+	 * implementation
+	 */
+	bio = BIO_new(BIO_s_mem());
+
+	if (!bio)
+	{
+		WLog_ERR(TAG, "BIO_new() failure");
+		return NULL;
+	}
+
+	status = PEM_write_bio_X509(bio, xcert);
+
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
+		goto fail;
+	}
+
+	if (chain)
+	{
+		count = sk_X509_num(chain);
+		for (x = 0; x < count; x++)
+		{
+			X509* c = sk_X509_value(chain, x);
+			status = PEM_write_bio_X509(bio, c);
+			if (status < 0)
+			{
+				WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
+				goto fail;
+			}
+		}
+	}
+
+	offset = 0;
+	length = 2048;
+	pemCert = (BYTE*)malloc(length + 1);
+
+	if (!pemCert)
+	{
+		WLog_ERR(TAG, "error allocating pemCert");
+		goto fail;
+	}
+
+	status = BIO_read(bio, pemCert, length);
+
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "failed to read certificate");
+		goto fail;
+	}
+
+	offset += (size_t)status;
+
+	while (offset >= length)
+	{
+		int new_len;
+		BYTE* new_cert;
+		new_len = length * 2;
+		new_cert = (BYTE*)realloc(pemCert, new_len + 1);
+
+		if (!new_cert)
+			goto fail;
+
+		length = new_len;
+		pemCert = new_cert;
+		status = BIO_read(bio, &pemCert[offset], length - offset);
+
+		if (status < 0)
+			break;
+
+		offset += status;
+	}
+
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "failed to read certificate");
+		goto fail;
+	}
+
+	length = offset;
+	pemCert[length] = '\0';
+	*plength = length;
+	rc = TRUE;
+fail:
+
+	if (!rc)
+	{
+		free(pemCert);
+		pemCert = NULL;
+	}
+
+	BIO_free_all(bio);
+	return pemCert;
+}
+
+X509* crypto_cert_from_pem(const char* data, size_t len, BOOL fromFile)
+{
+	X509* x509 = NULL;
+	BIO* bio;
+	if (fromFile)
+		bio = BIO_new_file(data, "rb");
+	else
+		bio = BIO_new_mem_buf(data, len);
+
+	if (!bio)
+	{
+		WLog_ERR(TAG, "BIO_new failed for certificate");
+		return NULL;
+	}
+
+	x509 = PEM_read_bio_X509(bio, NULL, NULL, 0);
+	BIO_free_all(bio);
+	if (!x509)
+		WLog_ERR(TAG, "PEM_read_bio_X509 returned NULL [input length %" PRIuz "]", len);
+
+	return x509;
 }

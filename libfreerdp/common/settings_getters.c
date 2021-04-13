@@ -74,6 +74,12 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_BitmapCompressionDisabled:
 			return settings->BitmapCompressionDisabled;
 
+		case FreeRDP_CertificateCallbackPreferPEM:
+			return settings->CertificateCallbackPreferPEM;
+
+		case FreeRDP_CertificateUseKnownHosts:
+			return settings->CertificateUseKnownHosts;
+
 		case FreeRDP_ColorPointerFlag:
 			return settings->ColorPointerFlag;
 
@@ -600,6 +606,14 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_BitmapCompressionDisabled:
 			settings->BitmapCompressionDisabled = val;
+			break;
+
+		case FreeRDP_CertificateCallbackPreferPEM:
+			settings->CertificateCallbackPreferPEM = val;
+			break;
+
+		case FreeRDP_CertificateUseKnownHosts:
+			settings->CertificateUseKnownHosts = val;
 			break;
 
 		case FreeRDP_ColorPointerFlag:

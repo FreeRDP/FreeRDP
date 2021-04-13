@@ -3116,16 +3116,15 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "reconnect-cookie")
 		{
 			BYTE* base64 = NULL;
-			int length;
+			size_t length;
 			if (!arg->Value)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-			crypto_base64_decode((const char*)(arg->Value), (int)strlen(arg->Value), &base64,
-			                     &length);
+			crypto_base64_decode((const char*)(arg->Value), strlen(arg->Value), &base64, &length);
 
 			if ((base64 != NULL) && (length == sizeof(ARC_SC_PRIVATE_PACKET)))
 			{
-				memcpy(settings->ServerAutoReconnectCookie, base64, (size_t)length);
+				memcpy(settings->ServerAutoReconnectCookie, base64, length);
 			}
 			else
 			{

@@ -540,7 +540,6 @@ DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT
                                        const char* issuer, const char* fingerprint, DWORD flags)
 {
 	const char* type = "RDP-Server";
-
 	if (flags & VERIFY_CERT_FLAG_GATEWAY)
 		type = "RDP-Gateway";
 
@@ -551,7 +550,17 @@ DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT
 	printf("\tCommon Name: %s\n", common_name);
 	printf("\tSubject:     %s\n", subject);
 	printf("\tIssuer:      %s\n", issuer);
-	printf("\tThumbprint:  %s\n", fingerprint);
+	/* Newer versions of FreeRDP allow exposing the whole PEM by setting
+	 * FreeRDP_CertificateCallbackPreferPEM to TRUE
+	 */
+	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
+	{
+		printf("\t----------- Certificate --------------\n");
+		printf("%s\n", fingerprint);
+		printf("\t--------------------------------------\n");
+	}
+	else
+		printf("\tThumbprint:  %s\n", fingerprint);
 
 	printf("The above X.509 certificate could not be verified, possibly because you do not have\n"
 	       "the CA certificate in your certificate store, or the certificate has expired.\n"
@@ -641,12 +650,32 @@ DWORD client_cli_verify_changed_certificate_ex(freerdp* instance, const char* ho
 	printf("\tCommon Name: %s\n", common_name);
 	printf("\tSubject:     %s\n", subject);
 	printf("\tIssuer:      %s\n", issuer);
-	printf("\tThumbprint:  %s\n", fingerprint);
+	/* Newer versions of FreeRDP allow exposing the whole PEM by setting
+	 * FreeRDP_CertificateCallbackPreferPEM to TRUE
+	 */
+	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
+	{
+		printf("\t----------- Certificate --------------\n");
+		printf("%s\n", fingerprint);
+		printf("\t--------------------------------------\n");
+	}
+	else
+		printf("\tThumbprint:  %s\n", fingerprint);
 	printf("\n");
 	printf("Old Certificate details:\n");
 	printf("\tSubject:     %s\n", old_subject);
 	printf("\tIssuer:      %s\n", old_issuer);
-	printf("\tThumbprint:  %s\n", old_fingerprint);
+	/* Newer versions of FreeRDP allow exposing the whole PEM by setting
+	 * FreeRDP_CertificateCallbackPreferPEM to TRUE
+	 */
+	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
+	{
+		printf("\t----------- Certificate --------------\n");
+		printf("%s\n", old_fingerprint);
+		printf("\t--------------------------------------\n");
+	}
+	else
+		printf("\tThumbprint:  %s\n", old_fingerprint);
 	printf("\n");
 	if (flags & VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1)
 	{

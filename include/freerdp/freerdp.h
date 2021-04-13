@@ -70,6 +70,7 @@ extern "C"
 #define VERIFY_CERT_FLAG_CHANGED 0x40
 #define VERIFY_CERT_FLAG_MISMATCH 0x80
 #define VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1 0x100
+#define VERIFY_CERT_FLAG_FP_IS_PEM 0x200
 
 /* Message types used by gateway messaging callback */
 #define GATEWAY_MESSAGE_CONSENT 1
@@ -91,7 +92,8 @@ extern "C"
 	 *  @param common_name      The certificate registered hostname.
 	 *  @param subject          The common name of the certificate.
 	 *  @param issuer           The issuer of the certificate.
-	 *  @param fingerprint      The fingerprint of the certificate.
+	 *  @param fingerprint      The fingerprint of the certificate (old) or the certificate in PEM
+	 * format
 	 *  @param host_mismatch    A flag indicating the certificate
 	 *                          subject does not match the host connecting to.
 	 *
@@ -110,7 +112,8 @@ extern "C"
 	 *  @param common_name      The certificate registered hostname.
 	 *  @param subject          The common name of the certificate.
 	 *  @param issuer           The issuer of the certificate.
-	 *  @param fingerprint      The fingerprint of the certificate.
+	 *  @param fingerprint      The fingerprint of the certificate (old) or the certificate in PEM
+	 * format (VERIFY_CERT_FLAG_FP_IS_PEM set)
 	 *  @param flags            Flags of type VERIFY_CERT_FLAG*
 	 *
 	 *  @return 1 to accept and store a certificate, 2 to accept
@@ -149,10 +152,12 @@ extern "C"
 	 *  @param common_name      The certificate registered hostname.
 	 *  @param subject          The common name of the new certificate.
 	 *  @param issuer           The issuer of the new certificate.
-	 *  @param fingerprint      The fingerprint of the new certificate.
+	 *  @param fingerprint      The fingerprint of the new certificate (old) or the certificate in
+	 * PEM format (VERIFY_CERT_FLAG_FP_IS_PEM set)
 	 *  @param old_subject      The common name of the old certificate.
 	 *  @param old_issuer       The issuer of the new certificate.
-	 *  @param old_fingerprint  The fingerprint of the old certificate.
+	 *  @param old_fingerprint  The fingerprint of the old certificate (old) or the certificate in
+	 * PEM format (VERIFY_CERT_FLAG_FP_IS_PEM set)
 	 *  @param flags            Flags of type VERIFY_CERT_FLAG*
 	 *
 	 *  @return 1 to accept and store a certificate, 2 to accept
@@ -169,7 +174,7 @@ extern "C"
 	 *         a certificate.
 	 *
 	 *  @param instance         Pointer to the freerdp instance.
-	 *  @param data             Pointer to certificate data in PEM format.
+	 *  @param data             Pointer to certificate data (full chain) in PEM format.
 	 *  @param length           The length of the certificate data.
 	 *  @param hostname         The hostname connecting to.
 	 *  @param port             The port connecting to.

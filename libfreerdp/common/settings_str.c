@@ -34,6 +34,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_BitmapCachePersistEnabled, 0, "FreeRDP_BitmapCachePersistEnabled" },
 	{ FreeRDP_BitmapCacheV3Enabled, 0, "FreeRDP_BitmapCacheV3Enabled" },
 	{ FreeRDP_BitmapCompressionDisabled, 0, "FreeRDP_BitmapCompressionDisabled" },
+	{ FreeRDP_CertificateCallbackPreferPEM, 0, "FreeRDP_CertificateCallbackPreferPEM" },
+	{ FreeRDP_CertificateUseKnownHosts, 0, "FreeRDP_CertificateUseKnownHosts" },
 	{ FreeRDP_ColorPointerFlag, 0, "FreeRDP_ColorPointerFlag" },
 	{ FreeRDP_CompressionEnabled, 0, "FreeRDP_CompressionEnabled" },
 	{ FreeRDP_ConsoleSession, 0, "FreeRDP_ConsoleSession" },

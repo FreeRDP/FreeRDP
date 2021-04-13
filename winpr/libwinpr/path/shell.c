@@ -550,7 +550,7 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 
 #endif
 
-	if (ConvertFromUnicode(CP_UTF8, 0, path, -1, &dup, 0, NULL, NULL))
+	if (ConvertFromUnicode(CP_UTF8, 0, path, -1, &dup, 0, NULL, NULL) <= 0)
 		return FALSE;
 
 #ifdef __OS2__

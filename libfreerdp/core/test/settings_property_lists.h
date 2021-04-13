@@ -23,6 +23,8 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_BitmapCachePersistEnabled,
 	FreeRDP_BitmapCacheV3Enabled,
 	FreeRDP_BitmapCompressionDisabled,
+	FreeRDP_CertificateCallbackPreferPEM,
+	FreeRDP_CertificateUseKnownHosts,
 	FreeRDP_ColorPointerFlag,
 	FreeRDP_CompressionEnabled,
 	FreeRDP_ConsoleSession,
