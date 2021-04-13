@@ -38,7 +38,6 @@
 static const char certificate_store_dir[] = "certs";
 static const char certificate_server_dir[] = "server";
 static const char certificate_known_hosts_file[] = "known_hosts2";
-static const char certificate_legacy_hosts_file[] = "known_hosts";
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/certificate.h>
@@ -76,10 +75,8 @@ static void certificate_store_uninit(rdpCertificateStore* certificate_store)
 	{
 		free(certificate_store->path);
 		free(certificate_store->file);
-		free(certificate_store->legacy_file);
 		certificate_store->path = NULL;
 		certificate_store->file = NULL;
-		certificate_store->legacy_file = NULL;
 	}
 }
 static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
@@ -139,10 +136,6 @@ static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 	          GetCombinedPath(ConfigPath, (char*)certificate_known_hosts_file)))
 		goto fail;
 
-	if (!(certificate_store->legacy_file =
-	          GetCombinedPath(ConfigPath, (char*)certificate_legacy_hosts_file)))
-		goto fail;
-
 	free(server_path);
 	return TRUE;
 fail:
@@ -150,129 +143,6 @@ fail:
 	free(server_path);
 	certificate_store_uninit(certificate_store);
 	return FALSE;
-}
-
-static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
-                                         rdpCertificateData* certificate_data)
-{
-	HANDLE fp;
-	int match = 1;
-	char* data;
-	char* mdata;
-	char* pline;
-	char* hostname = NULL;
-	DWORD lowSize, highSize;
-	UINT64 size;
-	size_t length;
-	DWORD read;
-	/* Assure POSIX style paths, CreateFile expects either '/' or '\\' */
-	PathCchConvertStyleA(certificate_store->legacy_file, strlen(certificate_store->legacy_file),
-	                     PATH_STYLE_UNIX);
-	fp = CreateFileA(certificate_store->legacy_file, GENERIC_READ, FILE_SHARE_READ, NULL,
-	                 OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if (fp == INVALID_HANDLE_VALUE)
-		return match;
-
-	if ((lowSize = GetFileSize(fp, &highSize)) == INVALID_FILE_SIZE)
-	{
-		WLog_ERR(TAG, "GetFileSize(%s) returned %s [0x%08" PRIX32 "]",
-		         certificate_store->legacy_file, strerror(errno), GetLastError());
-		CloseHandle(fp);
-		return match;
-	}
-
-	size = (UINT64)lowSize | ((UINT64)highSize << 32);
-
-	if (size < 1)
-	{
-		CloseHandle(fp);
-		return match;
-	}
-
-	mdata = (char*)malloc(size + 2);
-
-	if (!mdata)
-	{
-		CloseHandle(fp);
-		return match;
-	}
-
-	data = mdata;
-
-	if (!ReadFile(fp, data, size, &read, NULL) || (read != size))
-	{
-		free(data);
-		CloseHandle(fp);
-		return match;
-	}
-
-	CloseHandle(fp);
-	data[size] = '\n';
-	data[size + 1] = '\0';
-	pline = StrSep(&data, "\r\n");
-
-	while (pline != NULL)
-	{
-		length = strlen(pline);
-
-		if (length > 0)
-		{
-			hostname = StrSep(&pline, " \t");
-
-			if (!hostname || !pline)
-				WLog_WARN(TAG, "Invalid %s entry %s %s!", certificate_legacy_hosts_file, hostname,
-				          pline);
-			else if (strcmp(hostname, certificate_data->hostname) == 0)
-			{
-				const int diff = strcmp(pline, certificate_data->fingerprint);
-				match = (diff == 0) ? 0 : -1;
-				break;
-			}
-		}
-
-		pline = StrSep(&data, "\r\n");
-	}
-
-	/* Found a valid fingerprint in legacy file,
-	 * copy to new file in new format. */
-	if (0 == match)
-	{
-		rdpCertificateData* data = certificate_data_new(hostname, certificate_data->port, NULL,
-		                                                NULL, certificate_data->fingerprint);
-
-		if (data)
-		{
-			free(data->subject);
-			free(data->issuer);
-			data->subject = NULL;
-			data->issuer = NULL;
-
-			if (certificate_data->subject)
-			{
-				data->subject = _strdup(certificate_data->subject);
-
-				if (!data->subject)
-					goto out;
-			}
-
-			if (certificate_data->issuer)
-			{
-				data->issuer = _strdup(certificate_data->issuer);
-
-				if (!data->issuer)
-					goto out;
-			}
-
-			match = certificate_data_print(certificate_store, data) ? 0 : 1;
-		}
-
-	out:
-		certificate_data_free(data);
-	}
-
-	free(mdata);
-	return match;
 }
 
 static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
@@ -304,8 +174,8 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 
 	if ((lowSize = GetFileSize(fp, &highSize)) == INVALID_FILE_SIZE)
 	{
-		WLog_ERR(TAG, "GetFileSize(%s) returned %s [0x%08" PRIX32 "]",
-		         certificate_store->legacy_file, strerror(errno), GetLastError());
+		WLog_ERR(TAG, "GetFileSize(%s) returned %s [0x%08" PRIX32 "]", certificate_store->file,
+		         strerror(errno), GetLastError());
 		CloseHandle(fp);
 		return match;
 	}
@@ -384,9 +254,6 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 
 	free(mdata);
 
-	if ((match != 0) && !found)
-		match = certificate_data_match_legacy(certificate_store, certificate_data);
-
 	return match;
 }
 
@@ -431,8 +298,8 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 
 	if ((lowSize = GetFileSize(fp, &highSize)) == INVALID_FILE_SIZE)
 	{
-		WLog_ERR(TAG, "GetFileSize(%s) returned %s [0x%08" PRIX32 "]",
-		         certificate_store->legacy_file, strerror(errno), GetLastError());
+		WLog_ERR(TAG, "GetFileSize(%s) returned %s [0x%08" PRIX32 "]", certificate_store->file,
+		         strerror(errno), GetLastError());
 		CloseHandle(fp);
 		return FALSE;
 	}
