@@ -93,8 +93,9 @@ exit:
 	return status;
 }
 
-static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus,
-                             const BYTE* exponent, int exponent_size, BYTE* output)
+static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_length,
+                                 const BYTE* modulus, const BYTE* exponent, size_t exponent_size,
+                                 BYTE* output)
 {
 	BN_CTX* ctx = NULL;
 	int output_length = -1;
@@ -107,7 +108,7 @@ static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, c
 	BIGNUM* y = NULL;
 	size_t bufferSize;
 
-	if (!input || (length < 0) || (exponent_size < 0) || !modulus || !exponent || !output)
+	if (!input || !modulus || !exponent || !output)
 		return -1;
 
 	if ((size_t)exponent_size > SIZE_MAX / 2)
@@ -181,59 +182,54 @@ fail_bn_ctx:
 	return output_length;
 }
 
-static int crypto_rsa_public(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus,
-                             const BYTE* exponent, BYTE* output)
+static int crypto_rsa_public(const BYTE* input, size_t length, size_t key_length,
+                             const BYTE* modulus, const BYTE* exponent, BYTE* output)
 {
 	return crypto_rsa_common(input, length, key_length, modulus, exponent, EXPONENT_MAX_SIZE,
 	                         output);
 }
 
-static int crypto_rsa_private(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus,
-                              const BYTE* private_exponent, BYTE* output)
+static int crypto_rsa_private(const BYTE* input, size_t length, size_t key_length,
+                              const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
 {
 	return crypto_rsa_common(input, length, key_length, modulus, private_exponent, key_length,
 	                         output);
 }
 
-int crypto_rsa_public_encrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus,
-                              const BYTE* exponent, BYTE* output)
+SSIZE_T crypto_rsa_public_encrypt(const BYTE* input, size_t length, size_t key_length,
+                                  const BYTE* modulus, const BYTE* exponent, BYTE* output)
 {
 	return crypto_rsa_public(input, length, key_length, modulus, exponent, output);
 }
 
-int crypto_rsa_public_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus,
-                              const BYTE* exponent, BYTE* output)
+SSIZE_T crypto_rsa_public_decrypt(const BYTE* input, size_t length, size_t key_length,
+                                  const BYTE* modulus, const BYTE* exponent, BYTE* output)
 {
 	return crypto_rsa_public(input, length, key_length, modulus, exponent, output);
 }
 
-int crypto_rsa_private_encrypt(const BYTE* input, int length, UINT32 key_length,
-                               const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
+SSIZE_T crypto_rsa_private_encrypt(const BYTE* input, size_t length, size_t key_length,
+                                   const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
 {
 	return crypto_rsa_private(input, length, key_length, modulus, private_exponent, output);
 }
 
-int crypto_rsa_private_decrypt(const BYTE* input, int length, UINT32 key_length,
-                               const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
+SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length, size_t key_length,
+                                   const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
 {
 	return crypto_rsa_private(input, length, key_length, modulus, private_exponent, output);
 }
 
-static int crypto_rsa_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus,
-                              const BYTE* private_exponent, BYTE* output)
+void crypto_reverse(BYTE* data, size_t length)
 {
-	return crypto_rsa_common(input, length, key_length, modulus, private_exponent, key_length,
-	                         output);
-}
+	size_t i, j;
 
-void crypto_reverse(BYTE* data, int length)
-{
-	int i, j;
-	BYTE temp;
+	if (length < 1)
+		return;
 
 	for (i = 0, j = length - 1; i < j; i++, j--)
 	{
-		temp = data[i];
+		const BYTE temp = data[i];
 		data[i] = data[j];
 		data[j] = temp;
 	}

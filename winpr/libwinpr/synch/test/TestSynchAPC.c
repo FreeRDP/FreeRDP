@@ -101,7 +101,6 @@ int TestSynchAPC(int argc, char* argv[])
 {
 	HANDLE thread = NULL;
 	UserApcArg userApcArg;
-	UncleanCloseData uncleanCloseData;
 
 	userApcArg.error = FALSE;
 	userApcArg.called = FALSE;

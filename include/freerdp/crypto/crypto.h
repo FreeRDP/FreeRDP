@@ -90,19 +90,19 @@ extern "C"
 	extern const BYTE tssk_privateExponent[];
 	extern const BYTE tssk_exponent[];
 
-	FREERDP_API int crypto_rsa_public_encrypt(const BYTE* input, int length, UINT32 key_length,
-	                                          const BYTE* modulus, const BYTE* exponent,
-	                                          BYTE* output);
-	FREERDP_API int crypto_rsa_public_decrypt(const BYTE* input, int length, UINT32 key_length,
-	                                          const BYTE* modulus, const BYTE* exponent,
-	                                          BYTE* output);
-	FREERDP_API int crypto_rsa_private_encrypt(const BYTE* input, int length, UINT32 key_length,
-	                                           const BYTE* modulus, const BYTE* private_exponent,
-	                                           BYTE* output);
-	FREERDP_API int crypto_rsa_private_decrypt(const BYTE* input, int length, UINT32 key_length,
-	                                           const BYTE* modulus, const BYTE* private_exponent,
-	                                           BYTE* output);
-	FREERDP_API void crypto_reverse(BYTE* data, int length);
+	FREERDP_API SSIZE_T crypto_rsa_public_encrypt(const BYTE* input, size_t length,
+	                                              size_t key_length, const BYTE* modulus,
+	                                              const BYTE* exponent, BYTE* output);
+	FREERDP_API SSIZE_T crypto_rsa_public_decrypt(const BYTE* input, size_t length,
+	                                              size_t key_length, const BYTE* modulus,
+	                                              const BYTE* exponent, BYTE* output);
+	FREERDP_API SSIZE_T crypto_rsa_private_encrypt(const BYTE* input, size_t length,
+	                                               size_t key_length, const BYTE* modulus,
+	                                               const BYTE* private_exponent, BYTE* output);
+	FREERDP_API SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length,
+	                                               size_t key_length, const BYTE* modulus,
+	                                               const BYTE* private_exponent, BYTE* output);
+	FREERDP_API void crypto_reverse(BYTE* data, size_t length);
 
 	FREERDP_API char* crypto_base64_encode(const BYTE* data, size_t length);
 	FREERDP_API void crypto_base64_decode(const char* enc_data, size_t length, BYTE** dec_data,
