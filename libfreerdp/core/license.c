@@ -747,9 +747,14 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
 	license->EncryptedPremasterSecret->length = PREMASTER_SECRET_LENGTH;
 #ifndef LICENSE_NULL_PREMASTER_SECRET
-	license->EncryptedPremasterSecret->length = crypto_rsa_public_encrypt(
-	    license->PremasterSecret, PREMASTER_SECRET_LENGTH, license->ModulusLength, license->Modulus,
-	    license->Exponent, EncryptedPremasterSecret);
+	{
+		SSIZE_T length = crypto_rsa_public_encrypt(
+		    license->PremasterSecret, PREMASTER_SECRET_LENGTH, license->ModulusLength,
+		    license->Modulus, license->Exponent, EncryptedPremasterSecret);
+		if ((length < 0) || (length > UINT16_MAX))
+			return FALSE;
+		license->EncryptedPremasterSecret->length = (UINT16)length;
+	}
 #endif
 	license->EncryptedPremasterSecret->data = EncryptedPremasterSecret;
 	return TRUE;
