@@ -2429,8 +2429,6 @@ static unsigned zlib_decompress(unsigned char** out, size_t* outsize, const unsi
 unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsigned char* in,
                                size_t insize, const LodePNGCompressSettings* settings)
 {
-	/*initially, *out must be NULL and outsize 0, if you just give some random *out
-	that's pointing to a non allocated buffer, this'll crash*/
 	ucvector outv;
 	size_t i;
 	unsigned error;
@@ -2448,8 +2446,7 @@ unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsig
 	unsigned FCHECK = 31 - CMFFLG % 31;
 	CMFFLG += FCHECK;
 
-	/*ucvector-controlled version of the output buffer, for dynamic array*/
-	ucvector_init_buffer(&outv, *out, *outsize);
+	ucvector_init(&outv);
 
 	if (!ucvector_push_back(&outv, (unsigned char)(CMFFLG / 256)))
 		return 83;
