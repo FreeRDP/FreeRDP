@@ -369,6 +369,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 	assert(NULL != context->priv->TilePool);
 	assert(NULL != context->priv->BufferPool);
 	priv = context->priv;
+	/* coverity[address_free] */
 	rfx_message_free(context, &context->currentMessage);
 	free(context->quants);
 	ObjectPool_Free(priv->TilePool);
