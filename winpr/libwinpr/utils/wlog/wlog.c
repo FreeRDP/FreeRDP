@@ -68,8 +68,9 @@ static wLog* WLog_New(LPCSTR name, wLog* rootLogger);
 static void WLog_Free(wLog* log);
 static LONG WLog_GetFilterLogLevel(wLog* log);
 static int WLog_ParseLogLevel(LPCSTR level);
-static BOOL WLog_ParseFilter(wLogFilter* filter, LPCSTR name);
-static BOOL WLog_ParseFilters(void);
+static BOOL WLog_ParseFilter(wLog* root, wLogFilter* filter, LPCSTR name);
+static BOOL WLog_ParseFilters(wLog* root);
+static wLog* WLog_Get_int(wLog* root, LPCSTR name);
 
 #if !defined(_WIN32)
 static void WLog_Uninit_(void) __attribute__((destructor));
@@ -105,7 +106,6 @@ static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, P
 		return FALSE;
 
 	g_RootLog->IsRoot = TRUE;
-	WLog_ParseFilters();
 	logAppenderType = WLOG_APPENDER_CONSOLE;
 	nSize = GetEnvironmentVariableA(appender, NULL, 0);
 
@@ -149,13 +149,15 @@ static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, P
 	if (!WLog_SetLogAppenderType(g_RootLog, logAppenderType))
 		goto fail;
 
+	if (!WLog_ParseFilters(g_RootLog))
+		goto fail;
+
 #if defined(_WIN32)
 	atexit(WLog_Uninit_);
 #endif
 	return TRUE;
 fail:
-	free(g_RootLog);
-	g_RootLog = NULL;
+	WLog_Uninit_();
 	return FALSE;
 }
 
@@ -473,7 +475,7 @@ static BOOL WLog_reset_log_filters(wLog* log)
 	return TRUE;
 }
 
-BOOL WLog_AddStringLogFilters(LPCSTR filter)
+static BOOL WLog_AddStringLogFilters_int(wLog* root, LPCSTR filter)
 {
 	DWORD pos;
 	DWORD size;
@@ -520,7 +522,7 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 
 		if (pos < size)
 		{
-			if (!WLog_ParseFilter(&g_Filters[pos++], filterStr))
+			if (!WLog_ParseFilter(root, &g_Filters[pos++], filterStr))
 			{
 				free(cp);
 				return FALSE;
@@ -538,7 +540,14 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 
 	g_FilterCount = size;
 	free(cp);
-	return WLog_reset_log_filters(WLog_GetRoot());
+	return WLog_reset_log_filters(root);
+}
+
+BOOL WLog_AddStringLogFilters(LPCSTR filter)
+{
+	/* Ensure logger is initialized */
+	wLog* root = WLog_GetRoot();
+	return WLog_AddStringLogFilters_int(root, filter);
 }
 
 static BOOL WLog_UpdateInheritLevel(wLog* log, DWORD logLevel)
@@ -612,7 +621,7 @@ int WLog_ParseLogLevel(LPCSTR level)
 	return iLevel;
 }
 
-BOOL WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
+BOOL WLog_ParseFilter(wLog* root, wLogFilter* filter, LPCSTR name)
 {
 	char* p;
 	char* q;
@@ -692,7 +701,7 @@ BOOL WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 	return TRUE;
 }
 
-BOOL WLog_ParseFilters(void)
+BOOL WLog_ParseFilters(wLog* root)
 {
 	LPCSTR filter = "WLOG_FILTER";
 	BOOL res = FALSE;
@@ -712,7 +721,7 @@ BOOL WLog_ParseFilters(void)
 		return FALSE;
 
 	if (GetEnvironmentVariableA(filter, env, nSize) == nSize - 1)
-		res = WLog_AddStringLogFilters(env);
+		res = WLog_AddStringLogFilters_int(root, env);
 
 	free(env);
 	return res;
@@ -952,13 +961,11 @@ static BOOL WLog_AddChild(wLog* parent, wLog* child)
 	return TRUE;
 }
 
-static wLog* WLog_FindChild(LPCSTR name)
+static wLog* WLog_FindChild(wLog* root, LPCSTR name)
 {
 	DWORD index;
-	wLog* root;
 	wLog* child = NULL;
 	BOOL found = FALSE;
-	root = WLog_GetRoot();
 
 	if (!root)
 		return NULL;
@@ -977,14 +984,12 @@ static wLog* WLog_FindChild(LPCSTR name)
 	return (found) ? child : NULL;
 }
 
-wLog* WLog_Get(LPCSTR name)
+static wLog* WLog_Get_int(wLog* root, LPCSTR name)
 {
 	wLog* log;
 
-	if (!(log = WLog_FindChild(name)))
+	if (!(log = WLog_FindChild(root, name)))
 	{
-		wLog* root = WLog_GetRoot();
-
 		if (!root)
 			return NULL;
 
@@ -999,6 +1004,12 @@ wLog* WLog_Get(LPCSTR name)
 	}
 
 	return log;
+}
+
+wLog* WLog_Get(LPCSTR name)
+{
+	wLog* root = WLog_GetRoot();
+	return WLog_Get_int(root, name);
 }
 
 BOOL WLog_Init(void)
