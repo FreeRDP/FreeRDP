@@ -1,4 +1,14 @@
+# 2021-XX-YY Version 2.X.Y
+
+Noteworthy changes:
+
+Fixed issues:
+* #6938: RAILS clipboard remote -> local
+
 # 2021-03-15 Version 2.3.2
+
+For a complete and detailed change log since the last release run:
+git log 2.3.2..2.X.Y
 
 Noteworthy changes:
 * Fixed autoreconnect printer backend loading
