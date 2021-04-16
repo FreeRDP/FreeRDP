@@ -1423,7 +1423,10 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 	}
 
 	ret = xf_cliprdr_send_client_format_list_response(clipboard, TRUE);
-	xf_cliprdr_prepare_to_set_selection_owner(xfc, clipboard);
+	if (xfc->remote_app)
+		xf_cliprdr_set_selection_owner(xfc, clipboard, CurrentTime);
+	else
+		xf_cliprdr_prepare_to_set_selection_owner(xfc, clipboard);
 	return ret;
 }
 
