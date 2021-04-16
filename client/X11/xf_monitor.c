@@ -158,6 +158,15 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	*pMaxWidth = settings->DesktopWidth;
 	*pMaxHeight = settings->DesktopHeight;
 
+	if (settings->ParentWindowId)
+	{
+		xfc->workArea.x = 0;
+		xfc->workArea.y = 0;
+		xfc->workArea.width = settings->DesktopWidth;
+		xfc->workArea.height = settings->DesktopHeight;
+		return TRUE;
+	}
+
 	/* get mouse location */
 	if (!XQueryPointer(xfc->display, DefaultRootWindow(xfc->display), &_dummy_w, &_dummy_w,
 	                   &mouse_x, &mouse_y, &_dummy_i, &_dummy_i, (void*)&_dummy_i))
