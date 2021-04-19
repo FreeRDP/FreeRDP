@@ -713,73 +713,28 @@ fail:
 
 BYTE* freerdp_assistance_hex_string_to_bin(const void* raw, size_t* size)
 {
-	size_t length;
-	BYTE* buffer;
-	size_t i;
-	const char* str = (const char*)raw;
-	length = strlen(str);
-
-	if ((length % 2) != 0)
+	BYTE* buffer = NULL;
+	size_t length, rc;
+	if (!raw || !size)
 		return NULL;
-
-	length /= 2;
-	*size = length;
-	buffer = (BYTE*)malloc(length);
-
+	*size = 0;
+	length = strlen(raw);
+	buffer = calloc(length, sizeof(BYTE));
 	if (!buffer)
 		return NULL;
-
-	for (i = 0; i < length; i++)
+	rc = winpr_HexStringToBinBuffer(raw, length, buffer, length);
+	if (rc == 0)
 	{
-		int hn, ln;
-		char c;
-		hn = ln = 0;
-		c = str[(i * 2) + 0];
-
-		if ((c >= '0') && (c <= '9'))
-			hn = c - '0';
-		else if ((c >= 'a') && (c <= 'f'))
-			hn = (c - 'a') + 10;
-		else if ((c >= 'A') && (c <= 'F'))
-			hn = (c - 'A') + 10;
-
-		c = str[(i * 2) + 1];
-
-		if ((c >= '0') && (c <= '9'))
-			ln = c - '0';
-		else if ((c >= 'a') && (c <= 'f'))
-			ln = (c - 'a') + 10;
-		else if ((c >= 'A') && (c <= 'F'))
-			ln = (c - 'A') + 10;
-
-		buffer[i] = ((hn << 4) | ln) & 0xFF;
+		free(buffer);
+		return NULL;
 	}
-
+	*size = rc;
 	return buffer;
 }
 
 char* freerdp_assistance_bin_to_hex_string(const void* raw, size_t size)
 {
-	size_t i;
-	char* p;
-	int ln, hn;
-	const char* data = (const char*)raw;
-	char bin2hex[] = "0123456789ABCDEF";
-	p = (char*)calloc((size + 1), 2);
-
-	if (!p)
-		return NULL;
-
-	for (i = 0; i < size; i++)
-	{
-		ln = data[i] & 0xF;
-		hn = (data[i] >> 4) & 0xF;
-		p[i * 2] = bin2hex[hn];
-		p[(i * 2) + 1] = bin2hex[ln];
-	}
-
-	p[size * 2] = '\0';
-	return p;
+	return winpr_BinToHexString(raw, size, FALSE);
 }
 
 int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* buffer, size_t size,
