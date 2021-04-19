@@ -169,29 +169,6 @@ static void SamLookupFinish(WINPR_SAM* sam)
 	sam->line = NULL;
 }
 
-static void HexStrToBin(const char* str, BYTE* bin, size_t length)
-{
-	size_t i;
-	CharUpperBuffA(str, length * 2);
-
-	for (i = 0; i < length; i++)
-	{
-		bin[i] = 0;
-
-		if ((str[i * 2] >= '0') && (str[i * 2] <= '9'))
-			bin[i] |= (str[i * 2] - '0') << 4;
-
-		if ((str[i * 2] >= 'A') && (str[i * 2] <= 'F'))
-			bin[i] |= (str[i * 2] - 'A' + 10) << 4;
-
-		if ((str[i * 2 + 1] >= '0') && (str[i * 2 + 1] <= '9'))
-			bin[i] |= (str[i * 2 + 1] - '0');
-
-		if ((str[i * 2 + 1] >= 'A') && (str[i * 2 + 1] <= 'F'))
-			bin[i] |= (str[i * 2 + 1] - 'A' + 10);
-	}
-}
-
 static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 {
 	char* p[5];
@@ -256,10 +233,10 @@ static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 		entry->Domain = NULL;
 
 	if (LmHashLength == 32)
-		HexStrToBin(p[2], (BYTE*)entry->LmHash, 16);
+		winpr_HexStringToBinBuffer(p[2], LmHashLength, entry->LmHash, sizeof(entry->LmHash));
 
 	if (NtHashLength == 32)
-		HexStrToBin(p[3], (BYTE*)entry->NtHash, 16);
+		winpr_HexStringToBinBuffer(p[3], NtHashLength, (BYTE*)entry->NtHash, sizeof(entry->NtHash));
 
 	return TRUE;
 }
