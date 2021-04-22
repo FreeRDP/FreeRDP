@@ -73,8 +73,6 @@ public class LibFreeRDP
 
 	private static native String freerdp_get_version();
 
-	private static native String freerdp_get_build_date();
-
 	private static native String freerdp_get_build_revision();
 
 	private static native String freerdp_get_build_config();

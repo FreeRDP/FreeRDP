@@ -233,7 +233,7 @@ int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, 
 	if (!freerdp_client_settings_post_process(settings))
 		status = -1;
 
-	WLog_DBG(TAG, "This is %s", freerdp_get_build_config());
+	WLog_DBG(TAG, "This is %s %s", freerdp_get_version_string(), freerdp_get_build_config());
 	return status;
 }
 

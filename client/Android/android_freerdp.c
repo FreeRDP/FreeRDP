@@ -1029,11 +1029,6 @@ static jstring JNICALL jni_freerdp_get_version(JNIEnv* env, jclass cls)
 	return (*env)->NewStringUTF(env, freerdp_get_version_string());
 }
 
-static jstring JNICALL jni_freerdp_get_build_date(JNIEnv* env, jclass cls)
-{
-	return (*env)->NewStringUTF(env, freerdp_get_build_date());
-}
-
 static jstring JNICALL jni_freerdp_get_build_revision(JNIEnv* env, jclass cls)
 {
 	return (*env)->NewStringUTF(env, freerdp_get_build_revision());
@@ -1047,7 +1042,6 @@ static jstring JNICALL jni_freerdp_get_build_config(JNIEnv* env, jclass cls)
 static JNINativeMethod methods[] = {
 	{ "freerdp_get_jni_version", "()Ljava/lang/String;", &jni_freerdp_get_jni_version },
 	{ "freerdp_get_version", "()Ljava/lang/String;", &jni_freerdp_get_version },
-	{ "freerdp_get_build_date", "()Ljava/lang/String;", &jni_freerdp_get_build_date },
 	{ "freerdp_get_build_revision", "()Ljava/lang/String;", &jni_freerdp_get_build_revision },
 	{ "freerdp_get_build_config", "()Ljava/lang/String;", &jni_freerdp_get_build_config },
 	{ "freerdp_get_last_error_string", "(J)Ljava/lang/String;",
