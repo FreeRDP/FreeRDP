@@ -344,6 +344,7 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 #if defined(TIMER_IMPL_DISPATCH) || defined(TIMER_IMPL_POSIX)
 		if (!winpr_event_init(&timer->event))
 			goto fail;
+		timer->fd = timer->event.fds[0];
 #endif
 
 #if defined(TIMER_IMPL_DISPATCH)
