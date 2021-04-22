@@ -51,13 +51,6 @@ const char* winpr_get_version_string(void)
 	return WINPR_VERSION_FULL;
 }
 
-const char* winpr_get_build_date(void)
-{
-	static char build_date[] = __DATE__ " " __TIME__;
-
-	return build_date;
-}
-
 const char* winpr_get_build_revision(void)
 {
 	return GIT_REVISION;

@@ -3427,7 +3427,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 }
 
 static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings* settings,
-                                                     char* name, void* data)
+                                                     const char* name, void* data)
 {
 	PVIRTUALCHANNELENTRY entry = NULL;
 	PVIRTUALCHANNELENTRYEX entryEx = NULL;

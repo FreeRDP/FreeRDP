@@ -511,12 +511,6 @@ const char* freerdp_get_version_string(void)
 	return FREERDP_VERSION_FULL;
 }
 
-const char* freerdp_get_build_date(void)
-{
-	static char build_date[] = __DATE__ " " __TIME__;
-	return build_date;
-}
-
 const char* freerdp_get_build_config(void)
 {
 	static const char build_config[] =
