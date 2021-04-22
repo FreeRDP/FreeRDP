@@ -88,7 +88,7 @@ BOOL winpr_event_init(WINPR_EVENT_IMPL* event)
 	return TRUE;
 
 out_error:
-	winpr_event_uninit(&event);
+	winpr_event_uninit(event);
 	return FALSE;
 #endif
 }
