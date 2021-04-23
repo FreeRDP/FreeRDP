@@ -27,11 +27,7 @@ static char* certificate_path(void)
 	where the tests are run. (ie. no chdir occurs between compilation and test running, or __FILE__
 	is an absolute path).
 	*/
-#if defined(_WIN32)
-	static const char dirsep = '\\';
-#else
 	static const char dirsep = '/';
-#endif
 	static const char filename[] = "Test_x509_cert_info.pem";
 #ifdef TEST_SOURCE_DIR
 	const char* file = TEST_SOURCE_DIR;
