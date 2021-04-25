@@ -113,11 +113,9 @@ struct drdynvc_plugin
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
 
 	wLog* log;
-	HANDLE thread;
-	wStream* data_in;
 	void* InitHandle;
+	void* MsgsHandle;
 	DWORD OpenHandle;
-	wMessageQueue* queue;
 
 	DRDYNVC_STATE state;
 	DrdynvcClientContext* context;
