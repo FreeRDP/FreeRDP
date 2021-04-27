@@ -54,7 +54,7 @@ static BOOL TestWaitForAll(void)
 {
 	BOOL rc = FALSE;
 	DWORD ret;
-	HANDLE threads[THREADS];
+	HANDLE threads[THREADS] = { 0 };
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
 	{
@@ -91,7 +91,7 @@ static BOOL TestWaitOne(void)
 {
 	BOOL rc = FALSE;
 	DWORD ret;
-	HANDLE threads[THREADS];
+	HANDLE threads[THREADS] = { 0 };
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
 	{
@@ -127,7 +127,7 @@ static BOOL TestWaitOneTimeout(void)
 {
 	BOOL rc = FALSE;
 	DWORD ret;
-	HANDLE threads[THREADS];
+	HANDLE threads[THREADS] = { 0 };
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
 	{
@@ -164,7 +164,7 @@ static BOOL TestWaitOneTimeoutMultijoin(void)
 {
 	BOOL rc = FALSE;
 	DWORD ret, i;
-	HANDLE threads[THREADS];
+	HANDLE threads[THREADS] = { 0 };
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
 	{
@@ -202,7 +202,7 @@ fail:
 
 static BOOL TestDetach(void)
 {
-	HANDLE threads[THREADS];
+	HANDLE threads[THREADS] = { 0 };
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
 	{
