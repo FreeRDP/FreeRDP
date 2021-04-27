@@ -327,7 +327,10 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	plugin->channelEntryPoints = *pEntryPointsEx;
 
 	if (init_external_addin(plugin) < 0)
+	{
+		free(plugin);
 		return FALSE;
+	}
 
 	strncpy(channelDef.name, RDP2TCP_CHAN_NAME, sizeof(channelDef.name));
 	channelDef.options =

@@ -81,9 +81,16 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 		new_len = length * 2;
 		if (new_len == 0)
 			new_len = 2048;
+
+		if (new_len > INT_MAX)
+		{
+			status = -1;
+			break;
+		}
+
 		new_str = (char*)realloc(x509_str, new_len);
 
-		if (!new_str || (new_len > INT_MAX))
+		if (!new_str)
 		{
 			status = -1;
 			break;

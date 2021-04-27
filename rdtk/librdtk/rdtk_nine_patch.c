@@ -394,6 +394,8 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 			else
 				winpr_image_free(image, TRUE);
 		}
+		else
+			winpr_image_free(image, TRUE);
 	}
 
 	if (!engine->textField9patch)
@@ -402,6 +404,7 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 		BYTE* data;
 		status = -1;
 		size = rdtk_get_embedded_resource_file("textfield_default.9.png", &data);
+		image = NULL;
 
 		if (size > 0)
 		{
@@ -420,6 +423,8 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 			else
 				winpr_image_free(image, TRUE);
 		}
+		else
+			winpr_image_free(image, TRUE);
 	}
 
 	return 1;

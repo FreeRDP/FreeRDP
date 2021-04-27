@@ -400,7 +400,7 @@ static BOOL freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 		{
 			WLog_ERR(TAG, "Failed to parse ASSISTANCE file: ConnectionString2 invalid field "
 			              "order for ID");
-			return -1;
+			goto out_fail;
 		}
 		length = q - p;
 		free(file->RASessionId);

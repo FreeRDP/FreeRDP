@@ -649,7 +649,10 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	}
 
 	if (rc != CHANNEL_RC_OK)
+	{
+		free(data);
 		return rc;
+	}
 
 	rc = wlf_cliprdr_send_data_response(clipboard, data, size);
 	free(data);

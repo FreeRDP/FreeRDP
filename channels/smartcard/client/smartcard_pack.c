@@ -406,7 +406,9 @@ static char* smartcard_msz_dump_w(const WCHAR* msz, size_t len, char* buffer, si
 {
 	char* sz = NULL;
 	ConvertFromUnicode(CP_UTF8, 0, msz, (int)len, &sz, 0, NULL, NULL);
-	return smartcard_msz_dump_a(sz, len, buffer, bufferLen);
+	smartcard_msz_dump_a(sz, len, buffer, bufferLen);
+	free(sz);
+	return buffer;
 }
 
 static char* smartcard_array_dump(const void* pd, size_t len, char* buffer, size_t bufferLen)

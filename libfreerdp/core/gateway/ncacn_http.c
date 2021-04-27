@@ -121,6 +121,7 @@ BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel, HttpResponse
 	if (ntlmTokenData && ntlmTokenLength)
 		return ntlm_client_set_input_buffer(ntlm, FALSE, ntlmTokenData, ntlmTokenLength);
 
+	free(ntlmTokenData);
 	return TRUE;
 }
 
@@ -274,5 +275,6 @@ BOOL rpc_ncacn_http_recv_out_channel_response(RpcChannel* outChannel, HttpRespon
 	if (ntlmTokenData && ntlmTokenLength)
 		return ntlm_client_set_input_buffer(ntlm, FALSE, ntlmTokenData, ntlmTokenLength);
 
+	free(ntlmTokenData);
 	return TRUE;
 }

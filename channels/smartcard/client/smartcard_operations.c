@@ -516,7 +516,10 @@ static DWORD filter_device_by_name_w(wLinkedList* list, LPWSTR* mszReaders, DWOR
 
 	/* When res==0, readers may have been set to NULL by ConvertFromUnicode */
 	if ((res < 0) || ((DWORD)res != cchReaders) || (readers == 0))
+	{
+		free(readers);
 		return 0;
+	}
 
 	free(*mszReaders);
 	*mszReaders = NULL;

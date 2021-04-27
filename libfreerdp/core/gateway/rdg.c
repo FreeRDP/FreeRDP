@@ -350,7 +350,10 @@ static BOOL rdg_write_chunked(BIO* bio, wStream* sPacket)
 	len = Stream_Length(sChunk);
 
 	if (len > INT_MAX)
+	{
+		Stream_Free(sChunk, TRUE);
 		return FALSE;
+	}
 
 	status = BIO_write(bio, Stream_Buffer(sChunk), (int)len);
 	Stream_Free(sChunk, TRUE);
@@ -2060,7 +2063,10 @@ static int rdg_write_chunked_data_packet(rdpRdg* rdg, const BYTE* buf, int isize
 	len = Stream_Length(sChunk);
 
 	if (len > INT_MAX)
+	{
+		Stream_Free(sChunk, TRUE);
 		return -1;
+	}
 
 	status = tls_write_all(rdg->tlsIn, Stream_Buffer(sChunk), (int)len);
 	Stream_Free(sChunk, TRUE);
