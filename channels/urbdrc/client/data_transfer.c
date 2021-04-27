@@ -552,7 +552,10 @@ static UINT urb_select_interface(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callba
 	MsInterface = msusb_msinterface_read(s);
 
 	if ((Stream_GetRemainingLength(s) < 4) || !MsInterface)
+	{
+		msusb_msinterface_free(MsInterface);
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, OutputBufferSize);
 	pdev->select_interface(pdev, MsInterface->InterfaceNumber, MsInterface->AlternateSetting);

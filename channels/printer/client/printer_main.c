@@ -109,7 +109,10 @@ static BOOL printer_write_setting(const char* path, prn_conf_t type, const void*
 	char* abs = GetCombinedPath(path, name);
 
 	if (!abs || (length > INT32_MAX))
+	{
+		free(abs);
 		return FALSE;
+	}
 
 	file = CreateFileA(abs, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	free(abs);

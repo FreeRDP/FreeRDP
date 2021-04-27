@@ -692,7 +692,7 @@ static int rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 				WLog_ERR(TAG,
 				         "rpc_client_nondefault_out_channel_recv: Unexpected message %08" PRIx32,
 				         nextOutChannel->State);
-				return -1;
+				status = -1;
 		}
 
 		http_response_free(response);

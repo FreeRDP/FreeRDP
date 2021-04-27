@@ -477,6 +477,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		{
 			if ((status = smartcard_irp_device_control_call(smartcard, operation)))
 			{
+				free(operation);
 				WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %" PRId32 "!",
 				         status);
 				return (UINT32)status;

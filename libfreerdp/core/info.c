@@ -719,7 +719,7 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 			} ptrconv;
 
 			if (settings->RedirectionPasswordLength > UINT16_MAX)
-				return FALSE;
+				goto fail;
 			usedPasswordCookie = TRUE;
 
 			ptrconv.bp = settings->RedirectionPassword;

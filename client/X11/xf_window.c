@@ -1119,7 +1119,10 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 		appWindow = xf_rail_get_window(xfc, *(UINT64*)pKeys[index]);
 
 		if (!appWindow)
+		{
+			free(pKeys);
 			return NULL;
+		}
 
 		if (appWindow->handle == wnd)
 		{
