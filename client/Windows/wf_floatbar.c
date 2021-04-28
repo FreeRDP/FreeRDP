@@ -357,18 +357,10 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 	int bottom = BACKGROUND_H - 1;
 	int right = BACKGROUND_W - 1;
 	const int angleOffset = BACKGROUND_H - 1;
-	TRIVERTEX triVertext[2] = { left,
-		                        top,
-		                        GetRValue(rgbTop) << 8,
-		                        GetGValue(rgbTop) << 8,
-		                        GetBValue(rgbTop) << 8,
-		                        0x0000,
-		                        right,
-		                        bottom,
-		                        GetRValue(rgbBottom) << 8,
-		                        GetGValue(rgbBottom) << 8,
-		                        GetBValue(rgbBottom) << 8,
-		                        0x0000 };
+	TRIVERTEX triVertext[2] = { { left, top, GetRValue(rgbTop) << 8, GetGValue(rgbTop) << 8,
+		                          GetBValue(rgbTop) << 8, 0x0000 },
+		                        { right, bottom, GetRValue(rgbBottom) << 8,
+		                          GetGValue(rgbBottom) << 8, GetBValue(rgbBottom) << 8, 0x0000 } };
 
 	if (!floatbar)
 		return FALSE;
