@@ -44,7 +44,7 @@
 
 #define TAG FREERDP_TAG("settings")
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4244)
 #endif
@@ -1112,6 +1112,6 @@ out_fail:
 	freerdp_settings_free(_settings);
 	return NULL;
 }
-#ifdef _WIN32
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif
