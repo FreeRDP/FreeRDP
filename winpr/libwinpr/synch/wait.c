@@ -217,7 +217,7 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 	else
 	{
 		int status;
-		WINPR_THREAD* thread;
+		WINPR_THREAD* thread = NULL;
 		BOOL isSet = FALSE;
 		size_t extraFds = 0;
 		DWORD ret;
@@ -313,7 +313,7 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 	int status;
 	ULONG Type;
 	WINPR_HANDLE* Object;
-	WINPR_THREAD* thread;
+	WINPR_THREAD* thread = NULL;
 	WINPR_POLL_SET pollset;
 	DWORD ret = WAIT_FAILED;
 	size_t extraFds = 0;
