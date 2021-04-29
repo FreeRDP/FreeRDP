@@ -508,7 +508,10 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 	}
 
 	h264->pSystemData = (void*)sys;
+
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 137, 100)
 	avcodec_register_all();
+#endif
 
 	if (!h264->Compressor)
 	{
