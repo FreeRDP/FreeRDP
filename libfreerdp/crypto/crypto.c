@@ -846,9 +846,7 @@ BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path
 	                    NULL);
 #endif
 
-	lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
-
-	if (lookup == NULL)
+	if (X509_STORE_set_default_paths(cert_ctx) != 1)
 		goto end;
 
 	lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
