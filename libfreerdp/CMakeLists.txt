@@ -115,6 +115,10 @@ foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
     add_subdirectory(${${MODULE_PREFIX}_SUBMODULE})
 endforeach()
 
+if (NOT WITH_DSP_FFMPEG AND NOT WITH_FAAC)
+    message(WARNING "Compiling without WITH_DSP_FFMPEG and WITH_FAAC, AAC encoder support disabled")
+endif ()
+
 ## cmake source properties are only seen by targets in the same CMakeLists.txt
 ## therefore primitives and codecs need to be defined here
 

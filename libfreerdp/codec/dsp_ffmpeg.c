@@ -270,6 +270,8 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
 			break;
 	}
 
+	context->context->max_b_frames = 1;
+	context->context->delay = 0;
 	context->context->channels = format->nChannels;
 	context->context->channel_layout = layout;
 	context->context->sample_rate = format->nSamplesPerSec;
