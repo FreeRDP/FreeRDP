@@ -74,8 +74,8 @@ struct _UDEVMAN
 	IUDEVICE* head; /* head device in linked list */
 	IUDEVICE* tail; /* tail device in linked list */
 
-	LPSTR devices_vid_pid;
-	LPSTR devices_addr;
+	LPCSTR devices_vid_pid;
+	LPCSTR devices_addr;
 	wArrayList* hotplug_vid_pids;
 	UINT16 flags;
 	UINT32 device_num;
@@ -717,7 +717,7 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, const ADDIN_ARGV* args)
 {
 	int x;
-	LPSTR devices = NULL;
+	LPCSTR devices = NULL;
 
 	for (x = 0; x < args->argc; x++)
 	{

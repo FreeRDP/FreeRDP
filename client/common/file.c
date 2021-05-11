@@ -2042,10 +2042,10 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		}
 		for (x = 0; x < count; x++)
 		{
-			UINT32 val;
+			unsigned long val;
 			errno = 0;
 			val = strtoul(args[x], NULL, 0);
-			if ((val == ULONG_MAX) && (errno != 0))
+			if ((val >= UINT32_MAX) && (errno != 0))
 			{
 				free(args);
 				free(list);

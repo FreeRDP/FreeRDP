@@ -162,7 +162,7 @@ static const BYTE testRdpFileUTF16[] = {
 	0x65, 0x00, 0x0d, 0x00, 0x0a, 0x00
 };
 
-const static char* camera_args[] = { "rdpecam",
+static const char* camera_args[] = { "rdpecam",
 	                                 "device:*",
 	                                 "device:\\?\\usb#vid_0bda&pid_58b0&mi",
 	                                 "device:-\\?\\usb#vid_0bdc&pid_58b1&mi",
@@ -170,7 +170,7 @@ const static char* camera_args[] = { "rdpecam",
 	                                 "quality:2" };
 
 #if defined(CHANNEL_URBDRC_CLIENT)
-const static char* urbdrc_args[] = { "urbdrc", "device:*", "device:USBInstanceID:someid",
+static const char* urbdrc_args[] = { "urbdrc", "device:*", "device:USBInstanceID:someid",
 	                                 "device:{72631e54-78a4-11d0-bcf7-00aa00b7b32a}" };
 #endif
 
