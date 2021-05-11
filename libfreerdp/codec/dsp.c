@@ -531,7 +531,6 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* context, const BYTE* sr
                                     wStream* out)
 {
 	const int16_t* inSamples = (const int16_t*)src;
-	int32_t* outSamples;
 	unsigned int bpp;
 	size_t nrSamples, x;
 	int rc;
@@ -539,28 +538,29 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 	if (!context || !src || !out)
 		return FALSE;
 
-	bpp = context->format.wBitsPerSample / 8 * context->format.nChannels;
+	bpp = context->format.wBitsPerSample / 8;
 	nrSamples = size / bpp;
 
-	if (!Stream_EnsureCapacity(context->buffer,
-	                           nrSamples * sizeof(int32_t) * context->format.nChannels))
+	if (!Stream_EnsureRemainingCapacity(context->buffer, nrSamples * sizeof(int16_t)))
 		return FALSE;
 
-	if (!Stream_EnsureRemainingCapacity(out, context->faacMaxOutputBytes))
-		return FALSE;
-
-	outSamples = (int32_t*)Stream_Buffer(context->buffer);
-
-	for (x = 0; x < nrSamples * context->format.nChannels; x++)
-		outSamples[x] = inSamples[x];
-
-	rc = faacEncEncode(context->faac, outSamples, nrSamples * context->format.nChannels,
-	                   Stream_Pointer(out), Stream_GetRemainingCapacity(out));
-
-	if (rc < 0)
-		return FALSE;
-	else if (rc > 0)
-		Stream_Seek(out, (size_t)rc);
+	for (x = 0; x < nrSamples; x++)
+	{
+		Stream_Write_INT16(context->buffer, inSamples[x]);
+		if (Stream_GetPosition(context->buffer) / bpp >= context->faacInputSamples)
+		{
+			if (!Stream_EnsureRemainingCapacity(out, context->faacMaxOutputBytes))
+				return FALSE;
+			rc = faacEncEncode(context->faac, (int32_t*)Stream_Buffer(context->buffer),
+			                   context->faacInputSamples, Stream_Pointer(out),
+			                   Stream_GetRemainingCapacity(out));
+			if (rc < 0)
+				return FALSE;
+			if (rc > 0)
+				Stream_Seek(out, (size_t)rc);
+			Stream_SetPosition(context->buffer, 0);
+		}
+	}
 
 	return TRUE;
 }
@@ -1282,7 +1282,7 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 				return TRUE;
 
 #endif
-#if defined(WITH_FAAC) && defined(WITH_DSP_EXPERIMENTAL)
+#if defined(WITH_FAAC)
 
 			if (encode)
 				return TRUE;
@@ -1326,7 +1326,11 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 			return FALSE;
 
 		cfg = faacEncGetCurrentConfiguration(context->faac);
-		cfg->bitRate = 10000;
+		cfg->inputFormat = FAAC_INPUT_16BIT;
+		cfg->outputFormat = 0;
+		cfg->mpegVersion = MPEG4;
+		cfg->useTns = 1;
+		cfg->bandWidth = targetFormat->nAvgBytesPerSec;
 		faacEncSetConfiguration(context->faac, cfg);
 	}
 
