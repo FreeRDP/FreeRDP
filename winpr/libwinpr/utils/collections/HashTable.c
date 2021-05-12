@@ -224,6 +224,14 @@ int HashTable_Add(wHashTable* table, void* key, void* value)
 
 	if (pair)
 	{
+		if (pair->markedForRemove)
+		{
+			/* this entry was set to be removed but will be recycled instead */
+			table->pendingRemoves--;
+			pair->markedForRemove = FALSE;
+			table->numOfElements++;
+		}
+
 		if (pair->key != key)
 		{
 			if (table->keyFree)
@@ -253,10 +261,11 @@ int HashTable_Add(wHashTable* table, void* key, void* value)
 			newPair->key = key;
 			newPair->value = value;
 			newPair->next = table->bucketArray[hashValue];
+			newPair->markedForRemove = FALSE;
 			table->bucketArray[hashValue] = newPair;
 			table->numOfElements++;
 
-			if (table->upperRehashThreshold > table->idealRatio)
+			if (!table->foreachRecursionLevel && table->upperRehashThreshold > table->idealRatio)
 			{
 				float elementToBucketRatio =
 				    (float)table->numOfElements / (float)table->numOfBuckets;
@@ -271,6 +280,15 @@ int HashTable_Add(wHashTable* table, void* key, void* value)
 		LeaveCriticalSection(&table->lock);
 
 	return status;
+}
+
+static void disposePair(wHashTable* table, wKeyValuePair* pair)
+{
+	if (table->keyFree)
+		table->keyFree(pair->key);
+
+	if (table->valueFree)
+		table->valueFree(pair->value);
 }
 
 /**
@@ -299,32 +317,37 @@ BOOL HashTable_Remove(wHashTable* table, void* key)
 	if (!pair)
 	{
 		status = FALSE;
+		goto out;
 	}
-	else
+
+	if (table->foreachRecursionLevel)
 	{
-		if (table->keyFree)
-			table->keyFree(pair->key);
-
-		if (table->valueFree)
-			table->valueFree(pair->value);
-
-		if (previousPair)
-			previousPair->next = pair->next;
-		else
-			table->bucketArray[hashValue] = pair->next;
-
-		free(pair);
+		/* if we are running a HashTable_Foreach, just mark the entry for removal */
+		pair->markedForRemove = TRUE;
+		table->pendingRemoves++;
 		table->numOfElements--;
-
-		if (table->lowerRehashThreshold > 0.0)
-		{
-			float elementToBucketRatio = (float)table->numOfElements / (float)table->numOfBuckets;
-
-			if (elementToBucketRatio < table->lowerRehashThreshold)
-				HashTable_Rehash(table, 0);
-		}
+		goto out;
 	}
 
+	disposePair(table, pair);
+
+	if (previousPair)
+		previousPair->next = pair->next;
+	else
+		table->bucketArray[hashValue] = pair->next;
+
+	free(pair);
+	table->numOfElements--;
+
+	if (!table->foreachRecursionLevel && table->lowerRehashThreshold > 0.0)
+	{
+		float elementToBucketRatio = (float)table->numOfElements / (float)table->numOfBuckets;
+
+		if (elementToBucketRatio < table->lowerRehashThreshold)
+			HashTable_Rehash(table, 0);
+	}
+
+out:
 	if (table->synchronized)
 		LeaveCriticalSection(&table->lock);
 
@@ -345,7 +368,7 @@ void* HashTable_GetItemValue(wHashTable* table, void* key)
 
 	pair = HashTable_Get(table, key);
 
-	if (pair)
+	if (pair && !pair->markedForRemove)
 		value = pair->value;
 
 	if (table->synchronized)
@@ -376,7 +399,7 @@ BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value)
 
 	pair = HashTable_Get(table, key);
 
-	if (!pair)
+	if (!pair || pair->markedForRemove)
 		status = FALSE;
 	else
 	{
@@ -413,21 +436,27 @@ void HashTable_Clear(wHashTable* table)
 		{
 			nextPair = pair->next;
 
-			if (table->keyFree)
-				table->keyFree(pair->key);
+			if (table->foreachRecursionLevel)
+			{
+				/* if we're in a foreach we just mark the entry for removal */
+				pair->markedForRemove = TRUE;
+				table->pendingRemoves++;
+			}
+			else
+			{
+				disposePair(table, pair);
 
-			if (table->valueFree)
-				table->valueFree(pair->value);
-
-			free(pair);
-			pair = nextPair;
+				free(pair);
+				pair = nextPair;
+			}
 		}
 
 		table->bucketArray[index] = NULL;
 	}
 
 	table->numOfElements = 0;
-	HashTable_Rehash(table, 5);
+	if (table->foreachRecursionLevel == 0)
+		HashTable_Rehash(table, 5);
 
 	if (table->synchronized)
 		LeaveCriticalSection(&table->lock);
@@ -478,7 +507,8 @@ int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 		while (pair)
 		{
 			nextPair = pair->next;
-			pKeys[iKey++] = (ULONG_PTR)pair->key;
+			if (!pair->markedForRemove)
+				pKeys[iKey++] = (ULONG_PTR)pair->key;
 			pair = nextPair;
 		}
 	}
@@ -490,6 +520,66 @@ int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 	return count;
 }
 
+BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg)
+{
+	BOOL ret = TRUE;
+	int index;
+	wKeyValuePair* pair;
+
+	if (!fn)
+		return FALSE;
+
+	if (table->synchronized)
+		EnterCriticalSection(&table->lock);
+
+	table->foreachRecursionLevel++;
+	for (index = 0; index < table->numOfBuckets; index++)
+	{
+		for (pair = table->bucketArray[index]; pair; pair = pair->next)
+		{
+			if (!pair->markedForRemove && !fn(pair->key, pair->value, arg))
+			{
+				ret = FALSE;
+				goto out;
+			}
+		}
+	}
+	table->foreachRecursionLevel--;
+
+	if (!table->foreachRecursionLevel && table->pendingRemoves)
+	{
+		/* if we're the last recursive foreach call, let's do the cleanup if needed */
+		wKeyValuePair** prevPtr;
+		for (index = 0; index < table->numOfBuckets; index++)
+		{
+			wKeyValuePair* nextPair;
+			prevPtr = &table->bucketArray[index];
+			for (pair = table->bucketArray[index]; pair;)
+			{
+				nextPair = pair->next;
+
+				if (pair->markedForRemove)
+				{
+					disposePair(table, pair);
+					free(pair);
+					*prevPtr = nextPair;
+				}
+				else
+				{
+					prevPtr = &pair->next;
+				}
+				pair = nextPair;
+			}
+		}
+		table->pendingRemoves = 0;
+	}
+
+out:
+	if (table->synchronized)
+		LeaveCriticalSection(&table->lock);
+	return ret;
+}
+
 /**
  * Determines whether the HashTable contains a specific key.
  */
@@ -497,11 +587,13 @@ int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 BOOL HashTable_Contains(wHashTable* table, void* key)
 {
 	BOOL status;
+	wKeyValuePair* pair;
 
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
 
-	status = (HashTable_Get(table, key) != NULL) ? TRUE : FALSE;
+	pair = HashTable_Get(table, key);
+	status = (pair && !pair->markedForRemove);
 
 	if (table->synchronized)
 		LeaveCriticalSection(&table->lock);
@@ -516,11 +608,13 @@ BOOL HashTable_Contains(wHashTable* table, void* key)
 BOOL HashTable_ContainsKey(wHashTable* table, void* key)
 {
 	BOOL status;
+	wKeyValuePair* pair;
 
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
 
-	status = (HashTable_Get(table, key) != NULL) ? TRUE : FALSE;
+	pair = HashTable_Get(table, key);
+	status = (pair && !pair->markedForRemove);
 
 	if (table->synchronized)
 		LeaveCriticalSection(&table->lock);
@@ -547,7 +641,7 @@ BOOL HashTable_ContainsValue(wHashTable* table, void* value)
 
 		while (pair)
 		{
-			if (table->valueCompare(value, pair->value))
+			if (!pair->markedForRemove && table->valueCompare(value, pair->value))
 			{
 				status = TRUE;
 				break;
