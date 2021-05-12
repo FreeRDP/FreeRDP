@@ -244,9 +244,17 @@ static BOOL winpr_enable_fips(DWORD flags)
 #else
 		WLog_DBG(TAG, "Ensuring openssl fips mode is ENabled");
 
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+		if (!EVP_default_properties_is_fips_enabled(NULL))
+#else
 		if (FIPS_mode() != 1)
+#endif
 		{
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+			if (EVP_set_default_properties(NULL, "fips=yes"))
+#else
 			if (FIPS_mode_set(1))
+#endif
 				WLog_INFO(TAG, "Openssl fips mode ENabled!");
 			else
 			{
