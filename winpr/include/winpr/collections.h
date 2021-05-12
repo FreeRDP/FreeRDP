@@ -239,6 +239,7 @@ extern "C"
 		void* value;
 
 		wKeyValuePair* next;
+		BOOL markedForRemove;
 	};
 
 	/* Reference Table */
@@ -330,8 +331,13 @@ extern "C"
 		HASH_TABLE_VALUE_CLONE_FN valueClone;
 		HASH_TABLE_KEY_FREE_FN keyFree;
 		HASH_TABLE_VALUE_FREE_FN valueFree;
+
+		DWORD foreachRecursionLevel;
+		DWORD pendingRemoves;
 	};
 	typedef struct _wHashTable wHashTable;
+
+	typedef BOOL (*HASH_TABLE_FOREACH_FN)(const void* key, void* value, void* arg);
 
 	WINPR_API int HashTable_Count(wHashTable* table);
 	WINPR_API int HashTable_Add(wHashTable* table, void* key, void* value);
@@ -343,6 +349,7 @@ extern "C"
 	WINPR_API void* HashTable_GetItemValue(wHashTable* table, void* key);
 	WINPR_API BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value);
 	WINPR_API int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys);
+	WINPR_API BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg);
 
 	WINPR_API UINT32 HashTable_PointerHash(void* pointer);
 	WINPR_API BOOL HashTable_PointerCompare(void* pointer1, void* pointer2);
