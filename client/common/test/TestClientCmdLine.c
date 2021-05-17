@@ -10,7 +10,7 @@ typedef BOOL (*validate_settings_pr)(rdpSettings* settings);
 
 #define printref() printf("%s:%d: in function %-40s:", __FILE__, __LINE__, __FUNCTION__)
 
-#define ERROR(format, ...)                      \
+#define TEST_ERROR(format, ...)                 \
 	do                                          \
 	{                                           \
 		fprintf(stderr, format, ##__VA_ARGS__); \
@@ -19,7 +19,7 @@ typedef BOOL (*validate_settings_pr)(rdpSettings* settings);
 		fflush(stdout);                         \
 	} while (0)
 
-#define FAILURE(format, ...)           \
+#define TEST_FAILURE(format, ...)      \
 	do                                 \
 	{                                  \
 		printref();                    \
@@ -51,7 +51,7 @@ static INLINE BOOL testcase(const char* name, char** argv, size_t argc, int expe
 
 	if (!settings)
 	{
-		ERROR("Test %s could not allocate settings!\n", name);
+		TEST_ERROR("Test %s could not allocate settings!\n", name);
 		return FALSE;
 	}
 
@@ -73,7 +73,7 @@ static INLINE BOOL testcase(const char* name, char** argv, size_t argc, int expe
 	}
 	else
 	{
-		FAILURE("Expected status %d,  got status %d\n", expected_return, status);
+		TEST_FAILURE("Expected status %d,  got status %d\n", expected_return, status);
 		return FALSE;
 	}
 
@@ -92,13 +92,13 @@ static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 
 	if (settings->RedirectSmartCards)
 	{
-		FAILURE("Expected RedirectSmartCards = FALSE,  but RedirectSmartCards = TRUE!\n");
+		TEST_FAILURE("Expected RedirectSmartCards = FALSE,  but RedirectSmartCards = TRUE!\n");
 		result = FALSE;
 	}
 
 	if (freerdp_device_collection_find_type(settings, RDPDR_DTYP_SMARTCARD))
 	{
-		FAILURE("Expected no SMARTCARD device, but found at least one!\n");
+		TEST_FAILURE("Expected no SMARTCARD device, but found at least one!\n");
 		result = FALSE;
 	}
 
@@ -250,7 +250,7 @@ int TestClientCmdLine(int argc, char* argv[])
 		              string_list_length((const char* const*)command_line),
 		              tests[i].expected_status, tests[i].validate_settings))
 		{
-			FAILURE("parsing arguments.\n");
+			TEST_FAILURE("parsing arguments.\n");
 			failure = 1;
 		}
 
