@@ -307,10 +307,7 @@ def write_setter_case(f, val, isString, isPointer):
         f.write('\t\t\tsettings->' + val + ' = val;\n')
         f.write('\t\t\tbreak;\n\n')
     else:
-        f.write('\t\t\tif (cleanup)\n')
-        f.write('\t\t\t\tfree(settings->' + val + ');\n')
-        f.write('\t\t\tsettings->' + val + ' = (val ? strndup(val, len) : NULL);\n')
-        f.write('\t\t\treturn (!val || settings->' + val + ' != NULL);\n\n')
+        f.write('\t\t\treturn update_string(&settings->' + val + ', val, len, cleanup);\n\n')
 
 def write_setter(f, entry_dict, entry_type, entry_name):
     isString = 'string' in entry_name
@@ -407,6 +404,19 @@ try:
         f.write('#include <freerdp/log.h>\n\n')
         f.write('#include "../core/settings.h"\n\n')
         f.write('#define TAG FREERDP_TAG("common.settings")\n\n')
+
+        f.write('static BOOL update_string(char** current, const char* next, size_t next_len, BOOL cleanup)\n')
+        f.write('{\n')
+        f.write('\tif (cleanup)\n')
+        f.write('\t{\n')
+        f.write('\t\tif (*current)\n')
+        f.write('\t\t\tmemset(*current, 0, strlen(*current));\n')
+        f.write('\t\tfree(*current);\n')
+        f.write('\t}\n')
+        f.write('\n')
+        f.write('\t*current = (next ? strndup(next, next_len) : NULL);\n')
+        f.write('\treturn !next || (*current != NULL);\n')
+        f.write('}\n\n')
 
         getter_list = dict(type_list)
         setter_list = dict(type_list)
