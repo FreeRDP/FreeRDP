@@ -270,7 +270,7 @@ void* shadow_multiclient_get_subscriber(rdpShadowMultiClientEvent* event)
 	subscriber->ref = event;
 	subscriber->pleaseHandle = FALSE;
 
-	if (ArrayList_Add(event->subscribers, subscriber) < 0)
+	if (!ArrayList_Add(event->subscribers, subscriber))
 		goto out_free;
 
 	WLog_VRB(TAG, "Get subscriber %p. Wait event %d. %d clients.\n", (void*)subscriber,

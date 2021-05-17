@@ -688,7 +688,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 		baseSocket->serverfd = serverfd;
 		baseSocket->references = 0;
 
-		if (ArrayList_Add(g_NamedPipeServerSockets, baseSocket) < 0)
+		if (!ArrayList_Add(g_NamedPipeServerSockets, baseSocket))
 		{
 			free(baseSocket->name);
 			goto out;

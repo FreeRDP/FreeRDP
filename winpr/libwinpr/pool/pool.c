@@ -137,7 +137,7 @@ static BOOL InitializeThreadpool(PTP_POOL pool)
 			goto fail_create_threads;
 		}
 
-		if (ArrayList_Add(pool->Threads, thread) < 0)
+		if (!ArrayList_Add(pool->Threads, thread))
 			goto fail_create_threads;
 	}
 
@@ -242,7 +242,7 @@ BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 			return FALSE;
 		}
 
-		if (ArrayList_Add(ptpp->Threads, thread) < 0)
+		if (!ArrayList_Add(ptpp->Threads, thread))
 			return FALSE;
 	}
 

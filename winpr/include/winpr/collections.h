@@ -124,7 +124,7 @@ extern "C"
 	WINPR_API void ArrayList_Clear(wArrayList* arrayList);
 	WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj);
 
-	WINPR_API int ArrayList_Add(wArrayList* arrayList, void* obj);
+	WINPR_API BOOL ArrayList_Add(wArrayList* arrayList, const void* obj);
 	WINPR_API BOOL ArrayList_Insert(wArrayList* arrayList, size_t index, const void* obj);
 
 	WINPR_API BOOL ArrayList_Remove(wArrayList* arrayList, const void* obj);

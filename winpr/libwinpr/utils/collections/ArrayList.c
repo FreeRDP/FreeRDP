@@ -269,9 +269,10 @@ BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj)
  * Adds an object to the end of the ArrayList.
  */
 
-int ArrayList_Add(wArrayList* arrayList, void* obj)
+BOOL ArrayList_Add(wArrayList* arrayList, const void* obj)
 {
-	int index = -1;
+	size_t index;
+	BOOL rc = FALSE;
 
 	ArrayList_Lock_Conditional(arrayList);
 
@@ -280,11 +281,12 @@ int ArrayList_Add(wArrayList* arrayList, void* obj)
 
 	index = arrayList->size++;
 	ArrayList_SetItem(arrayList, index, obj);
+	rc = TRUE;
 out:
 
 	ArrayList_Unlock_Conditional(arrayList);
 
-	return index;
+	return rc;
 }
 
 /*
