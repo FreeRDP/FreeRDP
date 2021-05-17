@@ -396,12 +396,15 @@ static PCSC_SCARDCONTEXT* PCSC_EstablishCardContext(SCARDCONTEXT hContext)
 	pContext->cache = HashTable_New(FALSE);
 	if (!pContext->cache)
 		goto errors;
+	if (!HashTable_SetupForStringData(pContext->cache, FALSE))
+		goto errors;
+	{
+		wObject* obj = HashTable_ValueObject(pContext->cache);
+		if (!obj)
+			goto errors;
+		obj->fnObjectFree = pcsc_cache_item_free;
+	}
 
-	pContext->cache->hash = HashTable_StringHash;
-	pContext->cache->keyCompare = HashTable_StringCompare;
-	pContext->cache->keyClone = HashTable_StringClone;
-	pContext->cache->keyFree = free;
-	pContext->cache->valueFree = pcsc_cache_item_free;
 	if (!g_CardContexts)
 	{
 		g_CardContexts = ListDictionary_New(TRUE);
@@ -415,6 +418,7 @@ static PCSC_SCARDCONTEXT* PCSC_EstablishCardContext(SCARDCONTEXT hContext)
 
 	return pContext;
 errors:
+	HashTable_Free(pContext->cache);
 	DeleteCriticalSection(&(pContext->lock));
 error_spinlock:
 	free(pContext);

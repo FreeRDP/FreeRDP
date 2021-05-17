@@ -1782,10 +1782,16 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 		WLog_ERR(TAG, "fail to alloc hashtable");
 		return FALSE;
 	}
-	mapDir->keyFree = HashTable_StringFree;
-	mapDir->keyClone = HashTable_StringClone;
-	mapDir->keyCompare = HashTable_StringCompare;
-	mapDir->hash = HashTable_StringHash;
+	if (!HashTable_SetHashFunction(mapDir, HashTable_StringHash))
+		goto error;
+	{
+		wObject* obj = HashTable_KeyObject(mapDir);
+		if (!obj)
+			goto error;
+		obj->fnObjectNew = HashTable_StringClone;
+		obj->fnObjectFree = HashTable_StringFree;
+		obj->fnObjectEquals = HashTable_StringCompare;
+	}
 
 	FILEDESCRIPTORW* descriptor = (FILEDESCRIPTORW*)calloc(1, sizeof(FILEDESCRIPTORW));
 	if (!descriptor)
