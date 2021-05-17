@@ -22,9 +22,12 @@ static int test_hash_table_pointer(void)
 	if (!table)
 		return -1;
 
-	HashTable_Add(table, key1, val1);
-	HashTable_Add(table, key2, val2);
-	HashTable_Add(table, key3, val3);
+	if (!HashTable_Add(table, key1, val1))
+		goto fail;
+	if (!HashTable_Add(table, key2, val2))
+		goto fail;
+	if (!HashTable_Add(table, key3, val3))
+		goto fail;
 	count = HashTable_Count(table);
 
 	if (count != 3)
@@ -33,7 +36,8 @@ static int test_hash_table_pointer(void)
 		goto fail;
 	}
 
-	HashTable_Remove(table, key2);
+	if (!HashTable_Remove(table, key2))
+		goto fail;
 	count = HashTable_Count(table);
 
 	if (count != 2)
@@ -42,7 +46,8 @@ static int test_hash_table_pointer(void)
 		goto fail;
 	}
 
-	HashTable_Remove(table, key3);
+	if (!HashTable_Remove(table, key3))
+		goto fail;
 	count = HashTable_Count(table);
 
 	if (count != 1)
@@ -51,7 +56,8 @@ static int test_hash_table_pointer(void)
 		goto fail;
 	}
 
-	HashTable_Remove(table, key1);
+	if (!HashTable_Remove(table, key1))
+		goto fail;
 	count = HashTable_Count(table);
 
 	if (count != 0)
@@ -60,9 +66,12 @@ static int test_hash_table_pointer(void)
 		goto fail;
 	}
 
-	HashTable_Add(table, key1, val1);
-	HashTable_Add(table, key2, val2);
-	HashTable_Add(table, key3, val3);
+	if (!HashTable_Add(table, key1, val1))
+		goto fail;
+	if (!HashTable_Add(table, key2, val2))
+		goto fail;
+	if (!HashTable_Add(table, key3, val3))
+		goto fail;
 	count = HashTable_Count(table);
 
 	if (count != 3)
@@ -95,7 +104,8 @@ static int test_hash_table_pointer(void)
 		goto fail;
 	}
 
-	HashTable_SetItemValue(table, key2, "apple");
+	if (!HashTable_SetItemValue(table, key2, "apple"))
+		goto fail;
 	value = (char*)HashTable_GetItemValue(table, key2);
 
 	if (strcmp(value, "apple") != 0)
@@ -142,22 +152,20 @@ static int test_hash_table_string(void)
 	int rc = -1;
 	int count;
 	char* value;
-	wHashTable* table;
-	table = HashTable_New(TRUE);
+	wHashTable* table = HashTable_New(TRUE);
 
 	if (!table)
 		return -1;
 
-	table->hash = HashTable_StringHash;
-	table->keyCompare = HashTable_StringCompare;
-	table->valueCompare = HashTable_StringCompare;
-	table->keyClone = HashTable_StringClone;
-	table->valueClone = HashTable_StringClone;
-	table->keyFree = HashTable_StringFree;
-	table->valueFree = HashTable_StringFree;
-	HashTable_Add(table, key1, val1);
-	HashTable_Add(table, key2, val2);
-	HashTable_Add(table, key3, val3);
+	if (!HashTable_SetupForStringData(table, TRUE))
+		goto fail;
+
+	if (!HashTable_Add(table, key1, val1))
+		goto fail;
+	if (!HashTable_Add(table, key2, val2))
+		goto fail;
+	if (!HashTable_Add(table, key3, val3))
+		goto fail;
 	count = HashTable_Count(table);
 
 	if (count != 3)
@@ -166,7 +174,8 @@ static int test_hash_table_string(void)
 		goto fail;
 	}
 
-	HashTable_Remove(table, key2);
+	if (!HashTable_Remove(table, key2))
+		goto fail;
 	count = HashTable_Count(table);
 
 	if (count != 2)
@@ -175,7 +184,8 @@ static int test_hash_table_string(void)
 		goto fail;
 	}
 
-	HashTable_Remove(table, key3);
+	if (!HashTable_Remove(table, key3))
+		goto fail;
 	count = HashTable_Count(table);
 
 	if (count != 1)
@@ -184,7 +194,8 @@ static int test_hash_table_string(void)
 		goto fail;
 	}
 
-	HashTable_Remove(table, key1);
+	if (!HashTable_Remove(table, key1))
+		goto fail;
 	count = HashTable_Count(table);
 
 	if (count != 0)
@@ -193,9 +204,12 @@ static int test_hash_table_string(void)
 		goto fail;
 	}
 
-	HashTable_Add(table, key1, val1);
-	HashTable_Add(table, key2, val2);
-	HashTable_Add(table, key3, val3);
+	if (!HashTable_Add(table, key1, val1))
+		goto fail;
+	if (!HashTable_Add(table, key2, val2))
+		goto fail;
+	if (!HashTable_Add(table, key3, val3))
+		goto fail;
 	count = HashTable_Count(table);
 
 	if (count != 3)
@@ -228,7 +242,8 @@ static int test_hash_table_string(void)
 		goto fail;
 	}
 
-	HashTable_SetItemValue(table, key2, "apple");
+	if (!HashTable_SetItemValue(table, key2, "apple"))
+		goto fail;
 	value = (char*)HashTable_GetItemValue(table, key2);
 
 	if (strcmp(value, "apple") != 0)
@@ -279,16 +294,19 @@ typedef struct
 	BOOL test3error;
 } ForeachData;
 
-BOOL foreachFn1(const void* key, void* value, void* arg)
+BOOL foreachFn1(const void* key, const void* value, void* arg)
 {
 	ForeachData* d = (ForeachData*)arg;
+	WINPR_UNUSED(key);
 	d->strlenCounter += strlen((const char*)value);
 	return TRUE;
 }
 
-BOOL foreachFn2(const void* key, void* value, void* arg)
+BOOL foreachFn2(const void* key, const void* value, void* arg)
 {
 	ForeachData* d = (ForeachData*)arg;
+	WINPR_UNUSED(key);
+	WINPR_UNUSED(value);
 	d->foreachCalls++;
 
 	if (d->foreachCalls == 2)
@@ -296,13 +314,14 @@ BOOL foreachFn2(const void* key, void* value, void* arg)
 	return TRUE;
 }
 
-BOOL foreachFn3(const void* key, void* value, void* arg)
+BOOL foreachFn3(const void* key, const void* value, void* arg)
 {
 	char* keyStr = (char*)key;
 
 	ForeachData* d = (ForeachData*)arg;
 	ForeachData d2;
 
+	WINPR_UNUSED(value);
 	if (strcmp(keyStr, "key1") == 0)
 	{
 		/* when we pass on key1, let's remove key2 and check that the value is not
@@ -356,13 +375,8 @@ int test_hash_foreach(void)
 	if (!table)
 		return -1;
 
-	table->hash = HashTable_StringHash;
-	table->keyCompare = HashTable_StringCompare;
-	table->valueCompare = HashTable_StringCompare;
-	table->keyClone = HashTable_StringClone;
-	table->valueClone = HashTable_StringClone;
-	table->keyFree = HashTable_StringFree;
-	table->valueFree = HashTable_StringFree;
+	if (!HashTable_SetupForStringData(table, TRUE))
+		goto out;
 
 	if (HashTable_Add(table, key1, val1) < 0 || HashTable_Add(table, key2, val2) < 0 ||
 	    HashTable_Add(table, key3, val3) < 0)
@@ -417,6 +431,9 @@ out:
 
 int TestHashTable(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (test_hash_table_pointer() < 0)
 		return 1;
 

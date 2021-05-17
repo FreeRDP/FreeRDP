@@ -1051,7 +1051,7 @@ static UINT xf_rail_server_get_appid_response(RailClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-static BOOL rail_window_key_equals(void* key1, void* key2)
+static BOOL rail_window_key_equals(const void* key1, const void* key2)
 {
 	const UINT64* k1 = (const UINT64*)key1;
 	const UINT64* k2 = (const UINT64*)key2;
@@ -1062,7 +1062,7 @@ static BOOL rail_window_key_equals(void* key1, void* key2)
 	return *k1 == *k2;
 }
 
-static UINT32 rail_window_key_hash(void* key)
+static UINT32 rail_window_key_hash(const void* key)
 {
 	const UINT64* k1 = (const UINT64*)key;
 	return (UINT32)*k1;
@@ -1101,18 +1101,30 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	if (!xfc->railWindows)
 		return 0;
 
-	xfc->railWindows->keyCompare = rail_window_key_equals;
-	xfc->railWindows->hash = rail_window_key_hash;
-	xfc->railWindows->valueFree = rail_window_free;
+	if (!HashTable_SetHashFunction(xfc->railWindows, rail_window_key_hash))
+		goto fail;
+	{
+		wObject* obj = HashTable_KeyObject(xfc->railWindows);
+		if (!obj)
+			goto fail;
+		obj->fnObjectEquals = rail_window_key_equals;
+	}
+	{
+		wObject* obj = HashTable_ValueObject(xfc->railWindows);
+		if (!obj)
+			goto fail;
+		obj->fnObjectFree = rail_window_free;
+	}
 	xfc->railIconCache = RailIconCache_New(xfc->context.settings);
 
 	if (!xfc->railIconCache)
 	{
-		HashTable_Free(xfc->railWindows);
-		return 0;
 	}
 
 	return 1;
+fail:
+	HashTable_Free(xfc->railWindows);
+	return 0;
 }
 
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
