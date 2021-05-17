@@ -246,8 +246,8 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 			mappedGeometry->refCounter = 1;
 			mappedGeometry->mappingId = id;
 
-			if (HashTable_Add(context->geometries, &(mappedGeometry->mappingId), mappedGeometry) <
-			    0)
+			if (HashTable_Insert(context->geometries, &(mappedGeometry->mappingId),
+			                     mappedGeometry) < 0)
 			{
 				WLog_ERR(TAG, "unable to register geometry 0x%" PRIx64 " in the table", id);
 				free(mappedGeometry);

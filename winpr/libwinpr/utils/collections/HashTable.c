@@ -268,7 +268,7 @@ size_t HashTable_Count(wHashTable* table)
  * Adds an element with the specified key and value into the HashTable.
  */
 
-BOOL HashTable_Add(wHashTable* table, const void* key, const void* value)
+BOOL HashTable_Insert(wHashTable* table, const void* key, const void* value)
 {
 	BOOL rc = FALSE;
 	UINT32 hashValue;

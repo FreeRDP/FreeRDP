@@ -215,9 +215,9 @@ static BOOL pf_modules_set_plugin_data(const char* plugin_name, proxyData* pdata
 	if (data == NULL) /* no need to store anything */
 		return FALSE;
 
-	if (HashTable_Add(pdata->modules_info, ccharconv.cp, data) < 0)
+	if (HashTable_Insert(pdata->modules_info, ccharconv.cp, data) < 0)
 	{
-		WLog_ERR(TAG, "[%s]: HashTable_Add failed!");
+		WLog_ERR(TAG, "[%s]: HashTable_Insert failed!");
 		return FALSE;
 	}
 

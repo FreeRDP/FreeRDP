@@ -357,7 +357,7 @@ static INLINE BOOL progressive_set_surface_data(PROGRESSIVE_CONTEXT* progressive
 	key = ((ULONG_PTR)surfaceId) + 1;
 
 	if (pData)
-		return HashTable_Add(progressive->SurfaceContexts, (void*)key, pData) >= 0;
+		return HashTable_Insert(progressive->SurfaceContexts, (void*)key, pData) >= 0;
 
 	HashTable_Remove(progressive->SurfaceContexts, (void*)key);
 	return TRUE;

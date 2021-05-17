@@ -22,11 +22,11 @@ static int test_hash_table_pointer(void)
 	if (!table)
 		return -1;
 
-	if (!HashTable_Add(table, key1, val1))
+	if (!HashTable_Insert(table, key1, val1))
 		goto fail;
-	if (!HashTable_Add(table, key2, val2))
+	if (!HashTable_Insert(table, key2, val2))
 		goto fail;
-	if (!HashTable_Add(table, key3, val3))
+	if (!HashTable_Insert(table, key3, val3))
 		goto fail;
 	count = HashTable_Count(table);
 
@@ -66,11 +66,11 @@ static int test_hash_table_pointer(void)
 		goto fail;
 	}
 
-	if (!HashTable_Add(table, key1, val1))
+	if (!HashTable_Insert(table, key1, val1))
 		goto fail;
-	if (!HashTable_Add(table, key2, val2))
+	if (!HashTable_Insert(table, key2, val2))
 		goto fail;
-	if (!HashTable_Add(table, key3, val3))
+	if (!HashTable_Insert(table, key3, val3))
 		goto fail;
 	count = HashTable_Count(table);
 
@@ -160,11 +160,11 @@ static int test_hash_table_string(void)
 	if (!HashTable_SetupForStringData(table, TRUE))
 		goto fail;
 
-	if (!HashTable_Add(table, key1, val1))
+	if (!HashTable_Insert(table, key1, val1))
 		goto fail;
-	if (!HashTable_Add(table, key2, val2))
+	if (!HashTable_Insert(table, key2, val2))
 		goto fail;
-	if (!HashTable_Add(table, key3, val3))
+	if (!HashTable_Insert(table, key3, val3))
 		goto fail;
 	count = HashTable_Count(table);
 
@@ -204,11 +204,11 @@ static int test_hash_table_string(void)
 		goto fail;
 	}
 
-	if (!HashTable_Add(table, key1, val1))
+	if (!HashTable_Insert(table, key1, val1))
 		goto fail;
-	if (!HashTable_Add(table, key2, val2))
+	if (!HashTable_Insert(table, key2, val2))
 		goto fail;
-	if (!HashTable_Add(table, key3, val3))
+	if (!HashTable_Insert(table, key3, val3))
 		goto fail;
 	count = HashTable_Count(table);
 
@@ -378,8 +378,8 @@ int test_hash_foreach(void)
 	if (!HashTable_SetupForStringData(table, TRUE))
 		goto out;
 
-	if (HashTable_Add(table, key1, val1) < 0 || HashTable_Add(table, key2, val2) < 0 ||
-	    HashTable_Add(table, key3, val3) < 0)
+	if (HashTable_Insert(table, key1, val1) < 0 || HashTable_Insert(table, key2, val2) < 0 ||
+	    HashTable_Insert(table, key3, val3) < 0)
 	{
 		retCode = -2;
 		goto out;

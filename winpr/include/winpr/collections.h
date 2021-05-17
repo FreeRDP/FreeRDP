@@ -296,7 +296,7 @@ extern "C"
 	typedef BOOL (*HASH_TABLE_FOREACH_FN)(const void* key, const void* value, void* arg);
 
 	WINPR_API size_t HashTable_Count(wHashTable* table);
-	WINPR_API BOOL HashTable_Add(wHashTable* table, const void* key, const void* value);
+	WINPR_API BOOL HashTable_Insert(wHashTable* table, const void* key, const void* value);
 	WINPR_API BOOL HashTable_Remove(wHashTable* table, const void* key);
 	WINPR_API void HashTable_Clear(wHashTable* table);
 	WINPR_API BOOL HashTable_Contains(wHashTable* table, const void* key);
@@ -328,7 +328,7 @@ extern "C"
 	{
 		wObject* obj;
 
-		if (!HashTable_SetHashFunction(table, HashTable_StringHash))
+		if (!HashTable_SetHashFunction(table, ))
 			return FALSE;
 
 		obj = HashTable_KeyObject(table);
