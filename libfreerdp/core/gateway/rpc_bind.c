@@ -266,7 +266,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	if (!clientCall)
 		goto fail;
 
-	if (!ArrayList_Add(rpc->client->ClientCallList, clientCall))
+	if (!ArrayList_Append(rpc->client->ClientCallList, clientCall))
 	{
 		rpc_client_call_free(clientCall);
 		goto fail;
@@ -410,7 +410,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	length = auth_3_pdu->header.frag_length;
 	clientCall = rpc_client_call_new(auth_3_pdu->header.call_id, 0);
 
-	if (ArrayList_Add(rpc->client->ClientCallList, clientCall))
+	if (ArrayList_Append(rpc->client->ClientCallList, clientCall))
 	{
 		status = rpc_in_channel_send_pdu(inChannel, buffer, length);
 	}

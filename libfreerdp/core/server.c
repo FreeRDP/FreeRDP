@@ -1218,7 +1218,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 
 	channel->channelId = InterlockedIncrement(&vcm->dvc_channel_id_seq);
 
-	if (!ArrayList_Add(vcm->dynamicVirtualChannels, channel))
+	if (!ArrayList_Append(vcm->dynamicVirtualChannels, channel))
 		goto fail;
 
 	s = Stream_New(NULL, 64);

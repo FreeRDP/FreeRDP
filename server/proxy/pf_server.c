@@ -348,7 +348,7 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	server_receive_channel_data_original = peer->ReceiveChannelData;
 	peer->ReceiveChannelData = pf_server_receive_channel_data_hook;
 
-	if (!ArrayList_Add(server->clients, pdata))
+	if (!ArrayList_Append(server->clients, pdata))
 		return FALSE;
 
 	CountdownEvent_AddCount(server->waitGroup, 1);

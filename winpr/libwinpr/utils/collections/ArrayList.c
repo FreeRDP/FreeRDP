@@ -269,7 +269,7 @@ BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj)
  * Adds an object to the end of the ArrayList.
  */
 
-BOOL ArrayList_Add(wArrayList* arrayList, const void* obj)
+BOOL ArrayList_Append(wArrayList* arrayList, const void* obj)
 {
 	size_t index;
 	BOOL rc = FALSE;

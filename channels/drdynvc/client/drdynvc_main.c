@@ -98,7 +98,7 @@ static UINT dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	if (ppListener)
 		*ppListener = (IWTSListener*)listener;
 
-	if (!ArrayList_Add(dvcman->listeners, listener))
+	if (!ArrayList_Append(dvcman->listeners, listener))
 		return ERROR_INTERNAL_ERROR;
 	return CHANNEL_RC_OK;
 }
@@ -129,9 +129,9 @@ static UINT dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const ch
 {
 	DVCMAN* dvcman = ((DVCMAN_ENTRY_POINTS*)pEntryPoints)->dvcman;
 
-	if (!ArrayList_Add(dvcman->plugin_names, _strdup(name)))
+	if (!ArrayList_Append(dvcman->plugin_names, _strdup(name)))
 		return ERROR_INTERNAL_ERROR;
-	if (!ArrayList_Add(dvcman->plugins, pPlugin))
+	if (!ArrayList_Append(dvcman->plugins, pPlugin))
 		return ERROR_INTERNAL_ERROR;
 
 	WLog_DBG(TAG, "register_plugin: num_plugins %d", ArrayList_Count(dvcman->plugins));
@@ -502,7 +502,7 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelMana
 	}
 
 	channel->status = ERROR_NOT_CONNECTED;
-	if (!ArrayList_Add(dvcman->channels, channel))
+	if (!ArrayList_Append(dvcman->channels, channel))
 		return ERROR_INTERNAL_ERROR;
 
 	ArrayList_Lock(dvcman->listeners);

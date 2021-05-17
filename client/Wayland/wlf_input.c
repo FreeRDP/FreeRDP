@@ -140,7 +140,7 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 		return FALSE;
 
 	context = (wlfContext*)instance->context;
-	ArrayList_Add(context->events, ev);
+	ArrayList_Append(context->events, ev);
 	return TRUE;
 }
 
@@ -151,7 +151,7 @@ BOOL wlf_handle_pointer_axis_discrete(freerdp* instance, const UwacPointerAxisEv
 		return FALSE;
 
 	context = (wlfContext*)instance->context;
-	ArrayList_Add(context->events, ev);
+	ArrayList_Append(context->events, ev);
 	return TRUE;
 }
 
@@ -289,7 +289,7 @@ BOOL wlf_handle_pointer_source(freerdp* instance, const UwacPointerSourceEvent* 
 		return FALSE;
 
 	context = (wlfContext*)instance->context;
-	ArrayList_Add(context->events, ev);
+	ArrayList_Append(context->events, ev);
 	return TRUE;
 }
 
