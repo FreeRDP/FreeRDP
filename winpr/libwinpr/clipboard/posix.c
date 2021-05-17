@@ -360,7 +360,7 @@ static BOOL add_file_to_list(const char* local_name, const WCHAR* remote_name, w
 	if (!file)
 		return FALSE;
 
-	if (!ArrayList_Add(files, file))
+	if (!ArrayList_Append(files, file))
 	{
 		free_posix_file(file);
 		return FALSE;

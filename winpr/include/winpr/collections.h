@@ -124,7 +124,7 @@ extern "C"
 	WINPR_API void ArrayList_Clear(wArrayList* arrayList);
 	WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj);
 
-	WINPR_API BOOL ArrayList_Add(wArrayList* arrayList, const void* obj);
+	WINPR_API BOOL ArrayList_Append(wArrayList* arrayList, const void* obj);
 	WINPR_API BOOL ArrayList_Insert(wArrayList* arrayList, size_t index, const void* obj);
 
 	WINPR_API BOOL ArrayList_Remove(wArrayList* arrayList, const void* obj);
@@ -328,7 +328,7 @@ extern "C"
 	{
 		wObject* obj;
 
-		if (!HashTable_SetHashFunction(table, ))
+		if (!HashTable_SetHashFunction(table, HashTable_StringHash))
 			return FALSE;
 
 		obj = HashTable_KeyObject(table);

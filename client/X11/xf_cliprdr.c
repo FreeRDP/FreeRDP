@@ -1831,7 +1831,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 				break;
 			inode->parent_ino = 1;
 			inode->name = baseName;
-			if (ArrayList_Add(rootNode->child_inos, (void*)inode->ino) < 0)
+			if (ArrayList_Append(rootNode->child_inos, (void*)inode->ino) < 0)
 				break;
 		}
 		else
@@ -1850,7 +1850,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 				break;
 			inode->parent_ino = parent->ino;
 			inode->name = baseName;
-			if (ArrayList_Add(parent->child_inos, (void*)inode->ino) < 0)
+			if (ArrayList_Append(parent->child_inos, (void*)inode->ino) < 0)
 				break;
 			free(dirName);
 			dirName = NULL;
@@ -1908,7 +1908,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 			inode->st_mtim.tv_nsec = 0;
 		}
 
-		if (ArrayList_Add(clipboard->ino_list, inode) < 0)
+		if (ArrayList_Append(clipboard->ino_list, inode) < 0)
 			break;
 	}
 	/* clean up incomplete ino_list*/
@@ -1960,7 +1960,7 @@ static BOOL xf_cliprdr_fuse_generate_list(xfClipboard* clipboard, const BYTE* da
 	ArrayList_Lock(clipboard->ino_list);
 	xfCliprdrFuseInode* rootNode = xf_cliprdr_fuse_create_root_node();
 
-	if (!rootNode || ArrayList_Add(clipboard->ino_list, rootNode) < 0)
+	if (!rootNode || ArrayList_Append(clipboard->ino_list, rootNode) < 0)
 	{
 		xf_cliprdr_fuse_inode_free(rootNode);
 		WLog_ERR(TAG, "fail to alloc rootNode to ino_list");
@@ -2386,7 +2386,7 @@ static int xf_cliprdr_fuse_util_add_stream_list(xfClipboard* clipboard, fuse_req
 	*stream_id = stream->stream_id;
 	stream->req_ino = 0;
 	clipboard->current_stream_id++;
-	if (ArrayList_Add(clipboard->stream_list, stream) < 0)
+	if (ArrayList_Append(clipboard->stream_list, stream) < 0)
 	{
 		err = ENOMEM;
 		goto error;
@@ -2632,7 +2632,7 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 		stream_id = stream->stream_id;
 		stream->req_ino = ino;
 		clipboard->current_stream_id++;
-		res = ArrayList_Add(clipboard->stream_list, stream);
+		res = ArrayList_Append(clipboard->stream_list, stream);
 		ArrayList_Unlock(clipboard->stream_list);
 		if (res < 0)
 		{

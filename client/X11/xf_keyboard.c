@@ -90,7 +90,7 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 		strtok_s(buffer, "\n", &context);
 		keyCombination = _strdup(buffer);
 
-		if (!keyCombination || !ArrayList_Add(xfc->keyCombinations, keyCombination))
+		if (!keyCombination || !ArrayList_Append(xfc->keyCombinations, keyCombination))
 		{
 			ArrayList_Free(xfc->keyCombinations);
 			xfc->actionScriptExists = FALSE;

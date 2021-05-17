@@ -950,7 +950,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	if (!clientCall)
 		goto fail;
 
-	if (!ArrayList_Add(rpc->client->ClientCallList, clientCall))
+	if (!ArrayList_Append(rpc->client->ClientCallList, clientCall))
 	{
 		rpc_client_call_free(clientCall);
 		goto fail;

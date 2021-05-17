@@ -200,11 +200,11 @@ static void _HandleCreatorsInit()
 	/*
 	 * Register all file handle creators.
 	 */
-	ArrayList_Add(_HandleCreators, GetNamedPipeClientHandleCreator());
+	ArrayList_Append(_HandleCreators, GetNamedPipeClientHandleCreator());
 #if defined __linux__ && !defined ANDROID
-	ArrayList_Add(_HandleCreators, GetCommHandleCreator());
+	ArrayList_Append(_HandleCreators, GetCommHandleCreator());
 #endif /* __linux__ && !defined ANDROID */
-	ArrayList_Add(_HandleCreators, GetFileHandleCreator());
+	ArrayList_Append(_HandleCreators, GetFileHandleCreator());
 }
 
 #ifdef HAVE_AIO_H

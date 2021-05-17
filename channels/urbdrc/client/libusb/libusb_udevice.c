@@ -1238,7 +1238,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 	set_stream_id_for_buffer(iso_transfer, streamID);
 	libusb_set_iso_packet_lengths(iso_transfer, iso_packet_size);
 
-	if (!ArrayList_Add(pdev->request_queue, iso_transfer))
+	if (!ArrayList_Append(pdev->request_queue, iso_transfer))
 	{
 		WLog_Print(urbdrc->log, WLOG_WARN,
 		           "Failed to queue iso transfer, streamID %08" PRIx32 " already in use!",
@@ -1349,7 +1349,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL
 
 	set_stream_id_for_buffer(transfer, streamID);
 
-	if (!ArrayList_Add(pdev->request_queue, transfer))
+	if (!ArrayList_Append(pdev->request_queue, transfer))
 	{
 		WLog_Print(urbdrc->log, WLOG_WARN,
 		           "Failed to queue transfer, streamID %08" PRIx32 " already in use!", streamID);
