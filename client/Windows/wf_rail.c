@@ -525,7 +525,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		}
 
 		SetWindowLongPtr(railWindow->hWnd, GWLP_USERDATA, (LONG_PTR)railWindow);
-		HashTable_Add(wfc->railWindows, (void*)(UINT_PTR)orderInfo->windowId, (void*)railWindow);
+		HashTable_Insert(wfc->railWindows, (void*)(UINT_PTR)orderInfo->windowId, (void*)railWindow);
 		free(titleW);
 		UpdateWindow(railWindow->hWnd);
 		return TRUE;

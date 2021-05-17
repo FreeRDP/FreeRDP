@@ -252,7 +252,7 @@ BOOL pf_server_channels_init(pServerContext* ps)
 			}
 
 			channel_id = (UINT64)WTSChannelGetId(ps->context.peer, channel_name);
-			HashTable_Add(ps->vc_ids, channel_name, (void*)channel_id);
+			HashTable_Insert(ps->vc_ids, channel_name, (void*)channel_id);
 		}
 	}
 

@@ -1173,7 +1173,7 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, UINT32 x, UINT32 y, U
 	appWindow->width = width;
 	appWindow->height = height;
 	xf_AppWindowCreate(xfc, appWindow);
-	HashTable_Add(xfc->railWindows, &appWindow->windowId, (void*)appWindow);
+	HashTable_Insert(xfc->railWindows, &appWindow->windowId, (void*)appWindow);
 	return appWindow;
 }
 

@@ -344,7 +344,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 		{
 			char* channel_name = config->Passthrough[i];
 			UINT64 channel_id = (UINT64)freerdp_channels_get_id_by_name(instance, channel_name);
-			HashTable_Add(pc->vc_ids, (void*)channel_name, (void*)channel_id);
+			HashTable_Insert(pc->vc_ids, (void*)channel_name, (void*)channel_id);
 		}
 	}
 

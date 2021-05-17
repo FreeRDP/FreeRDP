@@ -2803,7 +2803,7 @@ static LONG WINAPI PCSC_SCardWriteCacheA(SCARDCONTEXT hContext, UUID* CardIdenti
 	memcpy(data->data, Data, data->len);
 
 	HashTable_Remove(ctx->cache, id);
-	HashTable_Add(ctx->cache, id, data);
+	HashTable_Insert(ctx->cache, id, data);
 
 	return SCARD_S_SUCCESS;
 }
@@ -2841,7 +2841,7 @@ static LONG WINAPI PCSC_SCardWriteCacheW(SCARDCONTEXT hContext, UUID* CardIdenti
 	memcpy(data->data, Data, data->len);
 
 	HashTable_Remove(ctx->cache, id);
-	HashTable_Add(ctx->cache, id, data);
+	HashTable_Insert(ctx->cache, id, data);
 
 	return SCARD_S_SUCCESS;
 }
