@@ -193,7 +193,7 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 		strtok_s(buffer, "\n", &context);
 		xevent = _strdup(buffer);
 
-		if (!xevent || ArrayList_Add(xfc->xevents, xevent) < 0)
+		if (!xevent || !ArrayList_Add(xfc->xevents, xevent))
 		{
 			pclose(actionScript);
 			ArrayList_Free(xfc->xevents);

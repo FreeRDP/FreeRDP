@@ -18,7 +18,7 @@ int TestArrayList(int argc, char* argv[])
 
 	for (index = 0; index < elemsToInsert; index++)
 	{
-		if (ArrayList_Add(arrayList, (void*)index) < 0)
+		if (!ArrayList_Add(arrayList, (void*)index))
 			return -1;
 	}
 

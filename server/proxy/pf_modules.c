@@ -276,7 +276,7 @@ static BOOL pf_modules_register_plugin(proxyPlugin* plugin_to_register)
 	                       plugin_to_register))
 		return FALSE;
 
-	if (ArrayList_Add(plugins_list, plugin_to_register) < 0)
+	if (!ArrayList_Add(plugins_list, plugin_to_register))
 	{
 		WLog_ERR(TAG, "[%s]: failed adding plugin to list: %s", __FUNCTION__,
 		         plugin_to_register->name);
@@ -364,7 +364,7 @@ static BOOL pf_modules_load_module(const char* module_path)
 	}
 
 	/* save module handle for freeing the module later */
-	if (ArrayList_Add(handles_list, handle) < 0)
+	if (!ArrayList_Add(handles_list, handle))
 	{
 		WLog_ERR(TAG, "ArrayList_Add failed!");
 		return FALSE;

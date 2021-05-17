@@ -700,7 +700,7 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 				return CHANNEL_RC_NO_MEMORY;
 			idpair->vid = id1;
 			idpair->pid = id2;
-			if (ArrayList_Add(udevman->hotplug_vid_pids, idpair) == -1)
+			if (!ArrayList_Add(udevman->hotplug_vid_pids, idpair))
 			{
 				free(idpair);
 				return CHANNEL_RC_NO_MEMORY;
