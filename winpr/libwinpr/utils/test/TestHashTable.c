@@ -294,7 +294,7 @@ typedef struct
 	BOOL test3error;
 } ForeachData;
 
-BOOL foreachFn1(const void* key, const void* value, void* arg)
+BOOL foreachFn1(const void* key, void* value, void* arg)
 {
 	ForeachData* d = (ForeachData*)arg;
 	WINPR_UNUSED(key);
@@ -302,7 +302,7 @@ BOOL foreachFn1(const void* key, const void* value, void* arg)
 	return TRUE;
 }
 
-BOOL foreachFn2(const void* key, const void* value, void* arg)
+BOOL foreachFn2(const void* key, void* value, void* arg)
 {
 	ForeachData* d = (ForeachData*)arg;
 	WINPR_UNUSED(key);
@@ -314,7 +314,7 @@ BOOL foreachFn2(const void* key, const void* value, void* arg)
 	return TRUE;
 }
 
-BOOL foreachFn3(const void* key, const void* value, void* arg)
+BOOL foreachFn3(const void* key, void* value, void* arg)
 {
 	char* keyStr = (char*)key;
 
