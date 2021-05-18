@@ -401,7 +401,7 @@ int TestClientRdpFile(int argc, char* argv[])
 		printf("desktopscalefactor uses invalid default value %d", iValue);
 		goto fail;
 	}
-	if (freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor) != iValue)
+	if ((INT64)freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor) != iValue)
 	{
 		printf("FreeRDP_DesktopScaleFactor has invalid value");
 		goto fail;

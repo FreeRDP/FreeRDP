@@ -1069,7 +1069,7 @@ rdpCertificateStore* certificate_store_new(const rdpSettings* settings)
 
 	if (!certificate_store_init(certificate_store))
 	{
-		certificate_data_free(certificate_store);
+		certificate_store_free(certificate_store);
 		return NULL;
 	}
 
