@@ -53,7 +53,7 @@ const char* winpr_get_version_string(void)
 
 const char* winpr_get_build_revision(void)
 {
-	return GIT_REVISION;
+	return WINPR_GIT_REVISION;
 }
 
 const char* winpr_get_build_config(void)

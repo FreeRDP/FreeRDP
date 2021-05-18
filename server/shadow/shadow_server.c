@@ -124,7 +124,7 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 
 	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
 	{
-		WLog_INFO(TAG, "FreeRDP version %s (git %s)", FREERDP_VERSION_FULL, GIT_REVISION);
+		WLog_INFO(TAG, "FreeRDP version %s (git %s)", FREERDP_VERSION_FULL, FREERDP_GIT_REVISION);
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT_BUILDCONFIG)
