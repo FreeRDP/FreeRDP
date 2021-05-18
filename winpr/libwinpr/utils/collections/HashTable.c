@@ -79,14 +79,14 @@ BOOL HashTable_StringCompare(const void* string1, const void* string2)
 	if (!string1 || !string2)
 		return (string1 == string2);
 
-	return (strcmp((char*)string1, (char*)string2) == 0);
+	return (strcmp((const char*)string1, (const char*)string2) == 0);
 }
 
 UINT32 HashTable_StringHash(const void* key)
 {
 	UINT32 c;
 	UINT32 hash = 5381;
-	BYTE* str = (BYTE*)key;
+	const BYTE* str = (const BYTE*)key;
 
 	/* djb2 algorithm */
 	while ((c = *str++) != '\0')
@@ -105,7 +105,7 @@ void HashTable_StringFree(void* str)
 	free(str);
 }
 
-static BOOL HashTable_IsProbablePrime(size_t oddNumber)
+static INLINE BOOL HashTable_IsProbablePrime(size_t oddNumber)
 {
 	size_t i;
 
@@ -120,7 +120,7 @@ static BOOL HashTable_IsProbablePrime(size_t oddNumber)
 	return TRUE; /* maybe */
 }
 
-static size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
+static INLINE size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 {
 	size_t idealNumOfBuckets = table->numOfElements / (table->idealRatio);
 
@@ -135,7 +135,7 @@ static size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 	return idealNumOfBuckets;
 }
 
-static void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
+static INLINE void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
 {
 	size_t index;
 	UINT32 hashValue;
@@ -179,17 +179,21 @@ static void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
 	table->numOfBuckets = numOfBuckets;
 }
 
-static BOOL HashTable_Equals(wHashTable* table, const wKeyValuePair* pair, const void* key)
+static INLINE BOOL HashTable_Equals(wHashTable* table, const wKeyValuePair* pair, const void* key)
 {
 	if (!key || !pair || !table)
 		return FALSE;
 	return table->key.fnObjectEquals(key, pair->key);
 }
 
-static wKeyValuePair* HashTable_Get(wHashTable* table, const void* key)
+static INLINE wKeyValuePair* HashTable_Get(wHashTable* table, const void* key)
 {
 	UINT32 hashValue;
 	wKeyValuePair* pair;
+
+	if (!table || !key)
+		return NULL;
+
 	hashValue = table->hash(key) % table->numOfBuckets;
 	pair = table->bucketArray[hashValue];
 
@@ -257,6 +261,8 @@ static INLINE void setValue(wHashTable* table, wKeyValuePair* pair, const void* 
 
 size_t HashTable_Count(wHashTable* table)
 {
+	if (!table)
+		return 0;
 	return table->numOfElements;
 }
 
@@ -350,6 +356,9 @@ BOOL HashTable_Remove(wHashTable* table, const void* key)
 	wKeyValuePair* pair = NULL;
 	wKeyValuePair* previousPair = NULL;
 
+	if (!table || !key)
+		return FALSE;
+
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
 
@@ -409,6 +418,9 @@ void* HashTable_GetItemValue(wHashTable* table, const void* key)
 	void* value = NULL;
 	wKeyValuePair* pair;
 
+	if (!table || !key)
+		return NULL;
+
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
 
@@ -431,6 +443,9 @@ BOOL HashTable_SetItemValue(wHashTable* table, const void* key, const void* valu
 {
 	BOOL status = TRUE;
 	wKeyValuePair* pair;
+
+	if (!table || !key)
+		return FALSE;
 
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
@@ -459,6 +474,9 @@ void HashTable_Clear(wHashTable* table)
 	size_t index;
 	wKeyValuePair* pair;
 	wKeyValuePair* nextPair;
+
+	if (!table)
+		return;
 
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
@@ -508,6 +526,9 @@ size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 	wKeyValuePair* pair;
 	wKeyValuePair* nextPair;
 
+	if (!table)
+		return 0;
+
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
 
@@ -549,7 +570,10 @@ size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 	if (table->synchronized)
 		LeaveCriticalSection(&table->lock);
 
-	*ppKeys = pKeys;
+	if (ppKeys)
+		*ppKeys = pKeys;
+	else
+		free(pKeys);
 	return count;
 }
 
@@ -559,7 +583,7 @@ BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg)
 	size_t index;
 	wKeyValuePair* pair;
 
-	if (!fn)
+	if (!table || !fn)
 		return FALSE;
 
 	if (table->synchronized)
@@ -621,6 +645,9 @@ BOOL HashTable_Contains(wHashTable* table, const void* key)
 	BOOL status;
 	wKeyValuePair* pair;
 
+	if (!table || !key)
+		return FALSE;
+
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
 
@@ -641,6 +668,9 @@ BOOL HashTable_ContainsKey(wHashTable* table, const void* key)
 {
 	BOOL status;
 	wKeyValuePair* pair;
+
+	if (!table || !key)
+		return FALSE;
 
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
@@ -663,6 +693,9 @@ BOOL HashTable_ContainsValue(wHashTable* table, const void* value)
 	size_t index;
 	BOOL status = FALSE;
 	wKeyValuePair* pair;
+
+	if (!table || !value)
+		return FALSE;
 
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
