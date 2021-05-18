@@ -698,32 +698,31 @@ BOOL HashTable_ContainsValue(wHashTable* table, const void* value)
 
 wHashTable* HashTable_New(BOOL synchronized)
 {
-	wHashTable* table;
-	table = (wHashTable*)calloc(1, sizeof(wHashTable));
+	wHashTable* table = (wHashTable*)calloc(1, sizeof(wHashTable));
 
-	if (table)
-	{
-		table->synchronized = synchronized;
-		InitializeCriticalSectionAndSpinCount(&(table->lock), 4000);
-		table->numOfBuckets = 64;
-		table->numOfElements = 0;
-		table->bucketArray = (wKeyValuePair**)calloc(table->numOfBuckets, sizeof(wKeyValuePair*));
+	if (!table)
+		goto fail;
 
-		if (!table->bucketArray)
-		{
-			free(table);
-			return NULL;
-		}
+	table->synchronized = synchronized;
+	InitializeCriticalSectionAndSpinCount(&(table->lock), 4000);
+	table->numOfBuckets = 64;
+	table->numOfElements = 0;
+	table->bucketArray = (wKeyValuePair**)calloc(table->numOfBuckets, sizeof(wKeyValuePair*));
 
-		table->idealRatio = 3.0;
-		table->lowerRehashThreshold = 0.0;
-		table->upperRehashThreshold = 15.0;
-		table->hash = HashTable_PointerHash;
-		table->key.fnObjectEquals = HashTable_PointerCompare;
-		table->value.fnObjectEquals = HashTable_PointerCompare;
-	}
+	if (!table->bucketArray)
+		goto fail;
+
+	table->idealRatio = 3.0;
+	table->lowerRehashThreshold = 0.0;
+	table->upperRehashThreshold = 15.0;
+	table->hash = HashTable_PointerHash;
+	table->key.fnObjectEquals = HashTable_PointerCompare;
+	table->value.fnObjectEquals = HashTable_PointerCompare;
 
 	return table;
+fail:
+	HashTable_Free(table);
+	return NULL;
 }
 
 void HashTable_Free(wHashTable* table)
@@ -732,7 +731,10 @@ void HashTable_Free(wHashTable* table)
 	wKeyValuePair* pair;
 	wKeyValuePair* nextPair;
 
-	if (table)
+	if (!table)
+		return;
+
+	if (table->bucketArray)
 	{
 		for (index = 0; index < table->numOfBuckets; index++)
 		{
@@ -746,11 +748,11 @@ void HashTable_Free(wHashTable* table)
 				pair = nextPair;
 			}
 		}
-
-		DeleteCriticalSection(&(table->lock));
 		free(table->bucketArray);
-		free(table);
 	}
+	DeleteCriticalSection(&(table->lock));
+
+	free(table);
 }
 
 wObject* HashTable_KeyObject(wHashTable* table)

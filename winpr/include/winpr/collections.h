@@ -293,7 +293,7 @@ extern "C"
 
 	typedef struct _wHashTable wHashTable;
 
-	typedef BOOL (*HASH_TABLE_FOREACH_FN)(const void* key, const void* value, void* arg);
+	typedef BOOL (*HASH_TABLE_FOREACH_FN)(const void* key, void* value, void* arg);
 
 	WINPR_API size_t HashTable_Count(wHashTable* table);
 	WINPR_API BOOL HashTable_Insert(wHashTable* table, const void* key, const void* value);
