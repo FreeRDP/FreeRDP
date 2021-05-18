@@ -247,7 +247,7 @@ NSMutableArray *FilterHistory(NSArray *history, NSString *filterStr)
 #pragma mark Version Info
 NSString *TSXAppFullVersion()
 {
-	return [NSString stringWithUTF8String:GIT_REVISION];
+	return [NSString stringWithUTF8String:FREERDP_GIT_REVISION];
 }
 
 #pragma mark iPad/iPhone detection

@@ -524,7 +524,7 @@ const char* freerdp_get_build_config(void)
 
 const char* freerdp_get_build_revision(void)
 {
-	return GIT_REVISION;
+	return FREERDP_GIT_REVISION;
 }
 
 static wEventType FreeRDP_Events[] = {

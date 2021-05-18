@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
 
 	WLog_INFO(TAG, "freerdp-proxy version info:");
 	WLog_INFO(TAG, "\tFreeRDP version: %s", FREERDP_VERSION_FULL);
-	WLog_INFO(TAG, "\tGit commit: %s", GIT_REVISION);
+	WLog_INFO(TAG, "\tGit commit: %s", FREERDP_GIT_REVISION);
 	WLog_DBG(TAG, "\tBuild config: %s", freerdp_get_build_config());
 
 	if (argc >= 2)
