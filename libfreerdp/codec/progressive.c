@@ -2158,7 +2158,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
                              UINT32 frameId)
 {
 	INT32 rc = 1;
-	UINT32 i, j;
+	UINT32 i;
 	UINT16 blockType;
 	UINT32 blockLen;
 	UINT32 count = 0;

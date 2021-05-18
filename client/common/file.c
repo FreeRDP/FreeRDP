@@ -2034,7 +2034,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			free(args);
 			return FALSE;
 		}
-		list = freerdp_settings_get_pointer(settings, FreeRDP_MonitorIds);
+		list = freerdp_settings_get_pointer_writable(settings, FreeRDP_MonitorIds);
 		if (!list && (count > 0))
 		{
 			free(args);

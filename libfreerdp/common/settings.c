@@ -621,7 +621,7 @@ BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 	return freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelCount, count);
 }
 
-ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings, const char* name)
+ADDIN_ARGV* freerdp_dynamic_channel_collection_find(const rdpSettings* settings, const char* name)
 {
 	UINT32 index;
 	ADDIN_ARGV* channel;
@@ -1055,7 +1055,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 	{
 		case FreeRDP_RdpServerCertificate:
 			certificate_free(settings->RdpServerCertificate);
-			settings->RdpServerCertificate = data;
+			settings->RdpServerCertificate = (rdpCertificate*)data;
 			return TRUE;
 		case FreeRDP_RdpServerRsaKey:
 			key_free(settings->RdpServerRsaKey);

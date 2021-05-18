@@ -1650,7 +1650,7 @@ extern "C"
 	                                                        ADDIN_ARGV* channel);
 	FREERDP_API BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings,
 	                                                        const char* name);
-	FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings,
+	FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(const rdpSettings* settings,
 	                                                                const char* name);
 
 	FREERDP_API WINPR_DEPRECATED(ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel));

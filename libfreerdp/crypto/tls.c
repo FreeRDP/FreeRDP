@@ -1373,7 +1373,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 			size_t length = 0;
 			char* issuer = crypto_cert_issuer(cert->px509);
 			char* subject = crypto_cert_subject(cert->px509);
-			char* pem = crypto_cert_pem(cert->px509, NULL, &length);
+			char* pem = (char*)crypto_cert_pem(cert->px509, NULL, &length);
 
 			if (!pem)
 				goto end;
