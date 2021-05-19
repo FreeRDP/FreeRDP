@@ -1401,11 +1401,8 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[3];
-	XEvent xevent;
 	wMessage msg;
 	wMessageQueue* queue;
-	int pending_status = 1;
-	int process_status = 1;
 	freerdp* instance = (freerdp*)arg;
 	xfContext* xfc = (xfContext*)instance->context;
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
@@ -1434,26 +1431,7 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 
 				if (WaitForSingleObject(events[1], 0) == WAIT_OBJECT_0)
 				{
-					do
-					{
-						xf_lock_x11(xfc);
-						pending_status = XPending(xfc->display);
-						xf_unlock_x11(xfc);
-
-						if (pending_status)
-						{
-							xf_lock_x11(xfc);
-							ZeroMemory(&xevent, sizeof(xevent));
-							XNextEvent(xfc->display, &xevent);
-							process_status = xf_event_process(instance, &xevent);
-							xf_unlock_x11(xfc);
-
-							if (!process_status)
-								break;
-						}
-					} while (pending_status);
-
-					if (!process_status)
+					if (!xf_process_x_events(xfc->context.instance))
 					{
 						running = FALSE;
 						break;
@@ -1472,6 +1450,7 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 	}
 
 	MessageQueue_PostQuit(queue, 0);
+	freerdp_abort_connect(xfc->context.instance);
 	ExitThread(0);
 	return 0;
 }
