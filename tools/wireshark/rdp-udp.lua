@@ -289,13 +289,15 @@ function dissectV1(tvbuf, pktinfo, tree)
 			local versionVal = tvbuf:range(startAt, 2):uint()
 			startAt = startAt + 2
 			
-			if haveAck and versionVal == 0x101 then				
-				synexItem:add(pf_udp_synex_cookiehash, tvbuf:range(startAt, 32))
-				startAt = startAt + 32
-				
-				-- switch to UDP2
-				tableRecord.switchToUdp2 = pktinfo.number
-			end			
+			if versionVal == 0x101 then
+				if not haveAck	then
+					synexItem:add(pf_udp_synex_cookiehash, tvbuf:range(startAt, 32))
+					startAt = startAt + 32
+				else
+					-- switch to UDP2
+					tableRecord.switchToUdp2 = pktinfo.number
+				end
+			end
 		end
 		
 		local mask = RDPUDP_SYN + RDPUDP_ACK
