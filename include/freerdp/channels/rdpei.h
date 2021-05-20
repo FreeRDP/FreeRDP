@@ -37,11 +37,15 @@ enum
 	RDPINPUT_PROTOCOL_V300 = 0x00030000
 };
 
+/* Server feature flags */
+#define SC_READY_MULTIPEN_INJECTION_SUPPORTED 0x0001
+
 /* Client Ready Flags */
 #define CS_READY_FLAGS_SHOW_TOUCH_VISUALS 0x00000001
 #define CS_READY_FLAGS_DISABLE_TIMESTAMP_INJECTION 0x00000002
 #define CS_READY_FLAGS_ENABLE_MULTIPEN_INJECTION 0x00000004
 
+/* 2.2.3.3.1.1 RDPINPUT_TOUCH_CONTACT */
 #define CONTACT_DATA_CONTACTRECT_PRESENT 0x0001
 #define CONTACT_DATA_ORIENTATION_PRESENT 0x0002
 #define CONTACT_DATA_PRESSURE_PRESENT 0x0004
@@ -55,6 +59,20 @@ typedef enum
 	RDPINPUT_PEN_CONTACT_TILTY_PRESENT = 0x0010
 } RDPINPUT_PEN_FIELDS_PRESENT;
 
+/*
+ * Valid combinations of RDPINPUT_CONTACT_FLAGS:
+ *
+ * See [MS-RDPEI] 2.2.3.3.1.1 RDPINPUT_TOUCH_CONTACT and 3.1.1.1 Touch Contact State Transitions
+ *
+ * UP
+ * UP | CANCELED
+ * UPDATE
+ * UPDATE | CANCELED
+ * DOWN | INRANGE | INCONTACT
+ * UPDATE | INRANGE | INCONTACT
+ * UP | INRANGE
+ * UPDATE | INRANGE
+ */
 typedef enum
 {
 	RDPINPUT_CONTACT_FLAG_DOWN = 0x0001,
@@ -76,16 +94,16 @@ typedef enum
 struct _RDPINPUT_CONTACT_DATA
 {
 	UINT32 contactId;
-	UINT16 fieldsPresent;
+	UINT16 fieldsPresent; /* Mask of CONTACT_DATA_*_PRESENT values */
 	INT32 x;
 	INT32 y;
-	UINT32 contactFlags;
-	INT16 contactRectLeft;
-	INT16 contactRectTop;
-	INT16 contactRectRight;
-	INT16 contactRectBottom;
-	UINT32 orientation;
-	UINT32 pressure;
+	UINT32 contactFlags;     /* See RDPINPUT_CONTACT_FLAG*  */
+	INT16 contactRectLeft;   /* Present if CONTACT_DATA_CONTACTRECT_PRESENT */
+	INT16 contactRectTop;    /* Present if CONTACT_DATA_CONTACTRECT_PRESENT */
+	INT16 contactRectRight;  /* Present if CONTACT_DATA_CONTACTRECT_PRESENT */
+	INT16 contactRectBottom; /* Present if CONTACT_DATA_CONTACTRECT_PRESENT */
+	UINT32 orientation; /* Present if CONTACT_DATA_ORIENTATION_PRESENT, values in degree, [0-359] */
+	UINT32 pressure;    /* Present if CONTACT_DATA_PRESSURE_PRESENT, normalized value [0-1024] */
 };
 typedef struct _RDPINPUT_CONTACT_DATA RDPINPUT_CONTACT_DATA;
 
@@ -110,15 +128,17 @@ typedef struct _RDPINPUT_TOUCH_EVENT RDPINPUT_TOUCH_EVENT;
 struct _RDPINPUT_PEN_CONTACT
 {
 	UINT8 deviceId;
-	UINT16 fieldsPresent;
+	UINT16 fieldsPresent; /* Mask of RDPINPUT_PEN_FIELDS_PRESENT values */
 	INT32 x;
 	INT32 y;
-	UINT32 contactFlags;
-	UINT32 penFlags;
-	UINT32 pressure;
-	UINT16 rotation;
-	INT16 tiltX;
-	INT16 tiltY;
+	UINT32 contactFlags; /* See RDPINPUT_CONTACT_FLAG*  */
+	UINT32 penFlags;     /* Present if RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT, values see
+	                        RDPINPUT_PEN_FLAGS */
+	UINT16 rotation;     /* Present if RDPINPUT_PEN_CONTACT_ROTATION_PRESENT, In degree, [0-359] */
+	UINT32
+	pressure;    /* Present if RDPINPUT_PEN_CONTACT_PRESSURE_PRESENT, normalized value [0-1024] */
+	INT16 tiltX; /* Present if PEN_CONTACT_TILTX_PRESENT, range [-90, 90] */
+	INT16 tiltY; /* Present if PEN_CONTACT_TILTY_PRESENT, range [-90, 90] */
 };
 typedef struct _RDPINPUT_PEN_CONTACT RDPINPUT_PEN_CONTACT;
 
