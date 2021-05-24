@@ -454,6 +454,8 @@ static PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfa
 
 	if (!surface->tiles || !surface->updatedTileIndices)
 	{
+		free(surface->updatedTileIndices);
+		free(surface->tiles);
 		free(surface);
 		return NULL;
 	}
