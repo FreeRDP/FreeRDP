@@ -35,6 +35,7 @@
 typedef struct _rdpdr_server_context RdpdrServerContext;
 typedef struct _rdpdr_server_private RdpdrServerPrivate;
 
+#ifndef __MINGW32__
 struct _FILE_DIRECTORY_INFORMATION
 {
 	UINT32 NextEntryOffset;
@@ -49,6 +50,7 @@ struct _FILE_DIRECTORY_INFORMATION
 	char FileName[512];
 };
 typedef struct _FILE_DIRECTORY_INFORMATION FILE_DIRECTORY_INFORMATION;
+#endif
 
 typedef UINT (*psRdpdrStart)(RdpdrServerContext* context);
 typedef UINT (*psRdpdrStop)(RdpdrServerContext* context);
