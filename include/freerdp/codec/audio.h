@@ -69,6 +69,7 @@ typedef struct AUDIO_FORMAT AUDIO_FORMAT;
  * http://tools.ietf.org/html/rfc2361
  */
 
+#ifndef __MINGW32__
 #define WAVE_FORMAT_UNKNOWN 0x0000
 
 #ifndef WAVE_FORMAT_PCM
@@ -183,6 +184,7 @@ typedef struct AUDIO_FORMAT AUDIO_FORMAT;
 #define WAVE_FORMAT_NORRIS 0x1400
 #define WAVE_FORMAT_SOUNDSPACE_MUSICOMPRESS 0x1500
 #define WAVE_FORMAT_DVM 0x2000
+#endif /* !__MINGW32__ */
 #define WAVE_FORMAT_AAC_MS 0xA106
 
 /**
