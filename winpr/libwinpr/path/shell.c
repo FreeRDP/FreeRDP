@@ -614,3 +614,110 @@ BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath)
 #endif
 
 #endif
+
+BOOL winpr_MoveFile(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
+{
+#ifndef _WIN32
+	return MoveFileA(lpExistingFileName, lpNewFileName);
+#else
+	BOOL result = FALSE;
+	LPWSTR lpExistingFileNameW = NULL;
+	LPWSTR lpNewFileNameW = NULL;
+
+	if (!lpExistingFileName || !lpNewFileName)
+		return FALSE;
+
+	if (ConvertToUnicode(CP_UTF8, 0, lpExistingFileName, -1, &lpExistingFileNameW, 0) < 1)
+		goto cleanup;
+
+	if (ConvertToUnicode(CP_UTF8, 0, lpNewFileName, -1, &lpNewFileNameW, 0) < 1)
+		goto cleanup;
+
+	result = MoveFileW(lpExistingFileNameW, lpNewFileNameW);
+
+cleanup:
+	free(lpExistingFileNameW);
+	free(lpNewFileNameW);
+	return result;
+#endif
+}
+
+BOOL winpr_DeleteFile(const char* lpFileName)
+{
+#ifndef _WIN32
+	return DeleteFileA(lpFileName);
+#else
+	LPWSTR lpFileNameW = NULL;
+	BOOL result = FALSE;
+
+	if (lpFileName)
+	{
+		if (ConvertToUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameW, 0) < 1)
+			goto cleanup;
+	}
+
+	result = DeleteFileW(lpFileNameW);
+
+cleanup:
+	free(lpFileNameW);
+	return result;
+#endif
+}
+
+BOOL winpr_RemoveDirectory(LPCSTR lpPathName)
+{
+#ifndef _WIN32
+	return RemoveDirectoryA(lpPathName);
+#else
+	LPWSTR lpPathNameW = NULL;
+	BOOL result = FALSE;
+
+	if (lpPathName)
+	{
+		if (ConvertToUnicode(CP_UTF8, 0, lpPathName, -1, &lpPathNameW, 0) < 1)
+			goto cleanup;
+	}
+
+	result = RemoveDirectoryW(lpPathNameW);
+
+cleanup:
+	free(lpPathNameW);
+	return result;
+#endif
+}
+
+BOOL winpr_PathFileExists(const char* pszPath)
+{
+#ifndef _WIN32
+	return PathFileExistsA(pszPath);
+#else
+	WCHAR* pszPathW = NULL;
+	BOOL result = FALSE;
+
+	if (ConvertToUnicode(CP_UTF8, 0, pszPath, -1, &pszPathW, 0) < 1)
+		return FALSE;
+
+	result = PathFileExistsW(pszPathW);
+	free(pszPathW);
+
+	return result;
+#endif
+}
+
+BOOL winpr_PathMakePath(const char* path, LPSECURITY_ATTRIBUTES lpAttributes)
+{
+#ifndef _WIN32
+	return PathMakePathA(path, lpAttributes);
+#else
+	WCHAR* pathW = NULL;
+	BOOL result = FALSE;
+
+	if (ConvertToUnicode(CP_UTF8, 0, path, -1, &pathW, 0) < 1)
+		return FALSE;
+
+	result = SHCreateDirectoryExW(NULL, pathW, lpAttributes) == ERROR_SUCCESS;
+	free(pathW);
+
+	return result;
+#endif
+}

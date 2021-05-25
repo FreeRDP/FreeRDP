@@ -334,6 +334,12 @@ extern "C"
 
 #endif
 
+WINPR_API BOOL winpr_MoveFile(LPCSTR lpExistingFileName, LPCSTR lpNewFileName);
+WINPR_API BOOL winpr_DeleteFile(const char* lpFileName);
+WINPR_API BOOL winpr_RemoveDirectory(LPCSTR lpPathName);
+WINPR_API BOOL winpr_PathFileExists(const char* pszPath);
+WINPR_API BOOL winpr_PathMakePath(const char* path, LPSECURITY_ATTRIBUTES lpAttributes);
+
 #ifdef __cplusplus
 }
 #endif
