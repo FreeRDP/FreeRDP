@@ -96,15 +96,15 @@ static BOOL WLog_FileAppender_Open(wLog* log, wLogAppender* appender)
 			return FALSE;
 	}
 
-	if (!PathFileExistsA(fileAppender->FilePath))
+	if (!winpr_PathFileExists(fileAppender->FilePath))
 	{
-		if (!PathMakePathA(fileAppender->FilePath, 0))
+		if (!winpr_PathMakePath(fileAppender->FilePath, 0))
 			return FALSE;
 
 		UnixChangeFileMode(fileAppender->FilePath, 0xFFFF);
 	}
 
-	fileAppender->FileDescriptor = fopen(fileAppender->FullFileName, "a+");
+	fileAppender->FileDescriptor = winpr_fopen(fileAppender->FullFileName, "a+");
 
 	if (!fileAppender->FileDescriptor)
 		return FALSE;

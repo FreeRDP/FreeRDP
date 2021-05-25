@@ -29,6 +29,7 @@
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
+#include <winpr/file.h>
 #include <winpr/stream.h>
 
 #include "../../log.h"
@@ -187,7 +188,7 @@ static BOOL Pcap_Write_Record(wPcap* pcap, wPcapRecord* record)
 wPcap* Pcap_Open(char* name, BOOL write)
 {
 	wPcap* pcap = NULL;
-	FILE* pcap_fp = fopen(name, write ? "w+b" : "rb");
+	FILE* pcap_fp = winpr_fopen(name, write ? "w+b" : "rb");
 
 	if (!pcap_fp)
 	{

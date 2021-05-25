@@ -25,6 +25,8 @@
 
 #include "wlog/DataMessage.h"
 
+#include <winpr/file.h>
+
 #include "../../log.h"
 #define TAG WINPR_TAG("utils.wlog")
 
@@ -33,7 +35,7 @@ BOOL WLog_DataMessage_Write(char* filename, void* data, int length)
 	FILE* fp;
 	BOOL ret = TRUE;
 
-	fp = fopen(filename, "w+b");
+	fp = winpr_fopen(filename, "w+b");
 
 	if (!fp)
 	{
