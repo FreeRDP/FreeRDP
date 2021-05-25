@@ -109,6 +109,21 @@ message("FREERDP_VERSION=${FREERDP_VERSION_FULL}")
 
 set(FREERDP_INCLUDE_DIR "include/freerdp${FREERDP_VERSION_MAJOR}/")
 
+if(NOT DEFINED WITH_FREERDP)
+	set(WITH_FREERDP ON)
+endif()
+
+if(WINPR_ONLY)
+	set(WITH_FREERDP OFF)
+	set(WITH_CHANNELS OFF)
+	set(WITH_CLIENT OFF)
+	set(WITH_SERVER OFF)
+	set(WITH_RDTK OFF)
+	set(WITH_DOTNET OFF)
+	set(WITH_WAYLAND OFF)
+	set(WITH_CLIENT_COMMON OFF)
+endif()
+
 # Compatibility options
 if(DEFINED STATIC_CHANNELS)
 	message(WARNING "STATIC_CHANNELS is obsolete, please use BUILTIN_CHANNELS instead")
@@ -824,6 +839,29 @@ if(ANDROID)
 	set(OPENSLES_FEATURE_TYPE "REQUIRED")
 endif()
 
+if(WINPR_ONLY)
+	set(OPENSSL_FEATURE_TYPE "OPTIONAL")
+	set(MBEDTLS_FEATURE_TYPE "RECOMMENDED")
+	set(X11_FEATURE_TYPE "DISABLED")
+	set(WAYLAND_FEATURE_TYPE "DISABLED")
+	set(DIRECTFB_FEATURE_TYPE "DISABLED")
+	set(GSM_FEATURE_TYPE "DISABLED")
+	set(OSS_FEATURE_TYPE "DISABLED")
+	set(ALSA_FEATURE_TYPE "DISABLED")
+	set(PULSE_FEATURE_TYPE "DISABLED")
+	set(CUPS_FEATURE_TYPE "DISABLED")
+	set(PCSC_FEATURE_TYPE "DISABLED")
+	set(IPP_FEATURE_TYPE "DISABLED")
+	set(FFMPEG_FEATURE_TYPE "DISABLED")
+	set(VAAPI_FEATURE_TYPE "DISABLED")
+	set(JPEG_FEATURE_TYPE "DISABLED")
+	set(X264_FEATURE_TYPE "DISABLED")
+	set(OPENH264_FEATURE_TYPE "DISABLED")
+	set(GSTREAMER_1_0_FEATURE_TYPE "DISABLED")
+	set(GSTREAMER_0_10_FEATURE_TYPE "DISABLED")
+	set(OPENSLES_FEATURE_TYPE "DISABLED")
+endif()
+
 find_feature(X11 ${X11_FEATURE_TYPE} ${X11_FEATURE_PURPOSE} ${X11_FEATURE_DESCRIPTION})
 find_feature(Wayland ${WAYLAND_FEATURE_TYPE} ${WAYLAND_FEATURE_PURPOSE} ${WAYLAND_FEATURE_DESCRIPTION})
 
@@ -1013,10 +1051,6 @@ if(BUILD_TESTING)
 	endif()
 endif()
 
-# WinPR
-include_directories("${CMAKE_SOURCE_DIR}/winpr/include")
-include_directories("${CMAKE_BINARY_DIR}/winpr/include")
-
 if (${CMAKE_VERSION} VERSION_LESS 2.8.12)
 	set(PUBLIC_KEYWORD "")
 	set(PRIVATE_KEYWORD "")
@@ -1025,11 +1059,39 @@ else()
 	set(PRIVATE_KEYWORD "PRIVATE")
 endif()
 
-if(BUILD_SHARED_LIBS)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_DLL")
+if(NOT DEFINED WINPR_IMPORT)
+	set(WINPR_IMPORT OFF)
 endif()
 
-add_subdirectory(winpr)
+if(WINPR_IMPORT)
+	message(STATUS "Using imported WinPR")
+
+	find_path(WINPR_INCLUDE_DIR
+		NAMES winpr/winpr.h
+		PATH_SUFFIXES include/winpr2)
+
+	find_library(WINPR_LIBRARY
+		NAMES winpr2
+		PATH_SUFFIXES lib)
+
+	message(STATUS "WINPR: ${WINPR_INCLUDE_DIR} ${WINPR_LIBRARY}")
+
+	add_library(winpr STATIC IMPORTED)
+	set_property(TARGET winpr PROPERTY IMPORTED_LOCATION "${WINPR_LIBRARY}")
+	set_property(TARGET winpr PROPERTY INCLUDE_DIRECTORIES "${WINPR_INCLUDE_DIR}")
+
+	add_definitions(-DWINPR_EXPORTS)
+	include_directories(${WINPR_INCLUDE_DIR})
+else()
+	include_directories("${CMAKE_SOURCE_DIR}/winpr/include")
+	include_directories("${CMAKE_BINARY_DIR}/winpr/include")
+
+	if(BUILD_SHARED_LIBS)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_DLL")
+	endif()
+
+	add_subdirectory(winpr)
+endif()
 
 # Sub-directories
 
@@ -1040,9 +1102,10 @@ if(WITH_THIRD_PARTY)
 	endif()
 endif()
 
-add_subdirectory(include)
-
-add_subdirectory(libfreerdp)
+if(WITH_FREERDP)
+	add_subdirectory(include)
+	add_subdirectory(libfreerdp)
+endif()
 
 if (IOS)
 	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.0")
@@ -1053,13 +1116,14 @@ if (IOS)
 	endif()
 endif()
 
-# RdTk
-include_directories("${CMAKE_SOURCE_DIR}/rdtk/include")
-include_directories("${CMAKE_BINARY_DIR}/rdtk/include")
+if(WITH_RDTK)
+	include_directories("${CMAKE_SOURCE_DIR}/rdtk/include")
+	include_directories("${CMAKE_BINARY_DIR}/rdtk/include")
 
-add_subdirectory(rdtk)
+	add_subdirectory(rdtk)
+endif()
 
-if(WAYLAND_FOUND)
+if(WITH_WAYLAND AND WAYLAND_FOUND)
 	add_subdirectory(uwac)
 endif()
 
@@ -1080,7 +1144,7 @@ if(WITH_CHANNELS)
 endif()
 
 if(WITH_CLIENT_COMMON OR WITH_CLIENT)
-add_subdirectory(client)
+	add_subdirectory(client)
 endif()
 
 if(WITH_SERVER)

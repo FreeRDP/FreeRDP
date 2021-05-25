@@ -25,18 +25,17 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/ssl.h>
-#include <winpr/thread.h>
-#include <winpr/crypto.h>
 
 #ifdef WITH_OPENSSL
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "../log.h"
-#define TAG WINPR_TAG("utils.ssl")
+#include <freerdp/log.h>
 
-static BOOL g_winpr_openssl_initialized_by_winpr = FALSE;
+#define TAG FREERDP_TAG("crypto")
+
+static BOOL g_freerdp_openssl_initialized_by_winpr = FALSE;
 
 /**
  * Note from OpenSSL 1.1.0 "CHANGES":
@@ -48,34 +47,34 @@ static BOOL g_winpr_openssl_initialized_by_winpr = FALSE;
 
 #define WINPR_OPENSSL_LOCKING_REQUIRED 1
 
-static int g_winpr_openssl_num_locks = 0;
-static HANDLE* g_winpr_openssl_locks = NULL;
+static int g_freerdp_openssl_num_locks = 0;
+static HANDLE* g_freerdp_openssl_locks = NULL;
 
 struct CRYPTO_dynlock_value
 {
 	HANDLE mutex;
 };
 
-#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
-static unsigned long _winpr_openssl_id(void)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L)
+static unsigned long _freerdp_openssl_id(void)
 {
 	return (unsigned long)GetCurrentThreadId();
 }
 #endif
 
-static void _winpr_openssl_locking(int mode, int type, const char* file, int line)
+static void _freerdp_openssl_locking(int mode, int type, const char* file, int line)
 {
 	if (mode & CRYPTO_LOCK)
 	{
-		WaitForSingleObject(g_winpr_openssl_locks[type], INFINITE);
+		WaitForSingleObject(g_freerdp_openssl_locks[type], INFINITE);
 	}
 	else
 	{
-		ReleaseMutex(g_winpr_openssl_locks[type]);
+		ReleaseMutex(g_freerdp_openssl_locks[type]);
 	}
 }
 
-static struct CRYPTO_dynlock_value* _winpr_openssl_dynlock_create(const char* file, int line)
+static struct CRYPTO_dynlock_value* _freerdp_openssl_dynlock_create(const char* file, int line)
 {
 	struct CRYPTO_dynlock_value* dynlock;
 
@@ -91,8 +90,8 @@ static struct CRYPTO_dynlock_value* _winpr_openssl_dynlock_create(const char* fi
 	return dynlock;
 }
 
-static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* dynlock,
-                                        const char* file, int line)
+static void _freerdp_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* dynlock,
+                                          const char* file, int line)
 {
 	if (mode & CRYPTO_LOCK)
 	{
@@ -104,14 +103,14 @@ static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* d
 	}
 }
 
-static void _winpr_openssl_dynlock_destroy(struct CRYPTO_dynlock_value* dynlock, const char* file,
-                                           int line)
+static void _freerdp_openssl_dynlock_destroy(struct CRYPTO_dynlock_value* dynlock, const char* file,
+                                             int line)
 {
 	CloseHandle(dynlock->mutex);
 	free(dynlock);
 }
 
-static BOOL _winpr_openssl_initialize_locking(void)
+static BOOL _freerdp_openssl_initialize_locking(void)
 {
 	int i, count;
 
@@ -150,9 +149,9 @@ static BOOL _winpr_openssl_initialize_locking(void)
 				}
 			}
 
-			g_winpr_openssl_locks = locks;
-			g_winpr_openssl_num_locks = count;
-			CRYPTO_set_locking_callback(_winpr_openssl_locking);
+			g_freerdp_openssl_locks = locks;
+			g_freerdp_openssl_num_locks = count;
+			CRYPTO_set_locking_callback(_freerdp_openssl_locking);
 		}
 	}
 
@@ -165,13 +164,13 @@ static BOOL _winpr_openssl_initialize_locking(void)
 	}
 	else
 	{
-		CRYPTO_set_dynlock_create_callback(_winpr_openssl_dynlock_create);
-		CRYPTO_set_dynlock_lock_callback(_winpr_openssl_dynlock_lock);
-		CRYPTO_set_dynlock_destroy_callback(_winpr_openssl_dynlock_destroy);
+		CRYPTO_set_dynlock_create_callback(_freerdp_openssl_dynlock_create);
+		CRYPTO_set_dynlock_lock_callback(_freerdp_openssl_dynlock_lock);
+		CRYPTO_set_dynlock_destroy_callback(_freerdp_openssl_dynlock_destroy);
 	}
 
 	/* Use the deprecated CRYPTO_get_id_callback() if building against OpenSSL < 1.0.0 */
-#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L)
 
 	if (CRYPTO_get_id_callback())
 	{
@@ -179,51 +178,51 @@ static BOOL _winpr_openssl_initialize_locking(void)
 	}
 	else
 	{
-		CRYPTO_set_id_callback(_winpr_openssl_id);
+		CRYPTO_set_id_callback(_freerdp_openssl_id);
 	}
 
 #endif
 	return TRUE;
 }
 
-static BOOL _winpr_openssl_cleanup_locking(void)
+static BOOL _freerdp_openssl_cleanup_locking(void)
 {
 	/* undo our static locking modifications */
-	if (CRYPTO_get_locking_callback() == _winpr_openssl_locking)
+	if (CRYPTO_get_locking_callback() == _freerdp_openssl_locking)
 	{
 		int i;
 		CRYPTO_set_locking_callback(NULL);
 
-		for (i = 0; i < g_winpr_openssl_num_locks; i++)
+		for (i = 0; i < g_freerdp_openssl_num_locks; i++)
 		{
-			CloseHandle(g_winpr_openssl_locks[i]);
+			CloseHandle(g_freerdp_openssl_locks[i]);
 		}
 
-		g_winpr_openssl_num_locks = 0;
-		free(g_winpr_openssl_locks);
-		g_winpr_openssl_locks = NULL;
+		g_freerdp_openssl_num_locks = 0;
+		free(g_freerdp_openssl_locks);
+		g_freerdp_openssl_locks = NULL;
 	}
 
 	/* unset our dynamic locking callbacks */
 
-	if (CRYPTO_get_dynlock_create_callback() == _winpr_openssl_dynlock_create)
+	if (CRYPTO_get_dynlock_create_callback() == _freerdp_openssl_dynlock_create)
 	{
 		CRYPTO_set_dynlock_create_callback(NULL);
 	}
 
-	if (CRYPTO_get_dynlock_lock_callback() == _winpr_openssl_dynlock_lock)
+	if (CRYPTO_get_dynlock_lock_callback() == _freerdp_openssl_dynlock_lock)
 	{
 		CRYPTO_set_dynlock_lock_callback(NULL);
 	}
 
-	if (CRYPTO_get_dynlock_destroy_callback() == _winpr_openssl_dynlock_destroy)
+	if (CRYPTO_get_dynlock_destroy_callback() == _freerdp_openssl_dynlock_destroy)
 	{
 		CRYPTO_set_dynlock_destroy_callback(NULL);
 	}
 
-#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L)
 
-	if (CRYPTO_get_id_callback() == _winpr_openssl_id)
+	if (CRYPTO_get_id_callback() == _freerdp_openssl_id)
 	{
 		CRYPTO_set_id_callback(NULL);
 	}
@@ -234,42 +233,7 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 
 #endif /* OpenSSL < 1.1.0 */
 
-static BOOL winpr_enable_fips(DWORD flags)
-{
-	if (flags & WINPR_SSL_INIT_ENABLE_FIPS)
-	{
-#if (OPENSSL_VERSION_NUMBER < 0x10001000L) || defined(LIBRESSL_VERSION_NUMBER)
-		WLog_ERR(TAG, "OpenSSL FIPS mode not available on OpenSSL versions less than 1.0.1!");
-		return FALSE;
-#else
-		WLog_DBG(TAG, "Ensuring OpenSSL FIPS mode is enabled");
-
-#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-		if (!EVP_default_properties_is_fips_enabled(NULL))
-#else
-		if (FIPS_mode() != 1)
-#endif
-		{
-#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-			if (EVP_set_default_properties(NULL, "fips=yes"))
-#else
-			if (FIPS_mode_set(1))
-#endif
-				WLog_INFO(TAG, "OpenSSL FIPS mode enabled!");
-			else
-			{
-				WLog_ERR(TAG, "OpenSSL FIPS mode enable failed!");
-				return FALSE;
-			}
-		}
-
-#endif
-	}
-
-	return TRUE;
-}
-
-static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID* context)
+static BOOL CALLBACK _freerdp_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	DWORD flags = param ? *(PDWORD)param : WINPR_SSL_INIT_DEFAULT;
 
@@ -282,7 +246,7 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 
 	if (flags & WINPR_SSL_INIT_ENABLE_LOCKING)
 	{
-		if (!_winpr_openssl_initialize_locking())
+		if (!_freerdp_openssl_initialize_locking())
 		{
 			return FALSE;
 		}
@@ -305,35 +269,57 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 		return FALSE;
 
 #endif
-	g_winpr_openssl_initialized_by_winpr = TRUE;
-	return winpr_enable_fips(flags);
+	g_freerdp_openssl_initialized_by_winpr = TRUE;
+
+	if (flags & WINPR_SSL_INIT_ENABLE_FIPS)
+	{
+#if (OPENSSL_VERSION_NUMBER < 0x10001000L) || defined(LIBRESSL_VERSION_NUMBER)
+		WLog_ERR(TAG,
+		         "OpenSSL FIPS mode enable not available on OpenSSL versions less than 1.0.1!");
+#else
+		WLog_DBG(TAG, "Ensuring OpenSSL FIPS mode is enabled");
+
+		if (FIPS_mode() != 1)
+		{
+			if (FIPS_mode_set(1))
+				WLog_INFO(TAG, "OpenSSL FIPS mode enabled!");
+			else
+				WLog_ERR(TAG, "OpenSSL FIPS mode enable failed!");
+		}
+
+#endif
+	}
+
+	return TRUE;
 }
 
 /* exported functions */
 
-BOOL winpr_InitializeSSL(DWORD flags)
+BOOL freerdp_InitializeSSL(DWORD flags)
 {
+	if (winpr_OpenSSL())
+		return winpr_InitializeSSL(flags);
+
 	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
-
-	if (!InitOnceExecuteOnce(&once, _winpr_openssl_initialize, &flags, NULL))
-		return FALSE;
-
-	return winpr_enable_fips(flags);
+	return InitOnceExecuteOnce(&once, _freerdp_openssl_initialize, &flags, NULL);
 }
 
-BOOL winpr_CleanupSSL(DWORD flags)
+BOOL freerdp_CleanupSSL(DWORD flags)
 {
+	if (winpr_OpenSSL())
+		return winpr_CleanupSSL(flags);
+
 	if (flags & WINPR_SSL_CLEANUP_GLOBAL)
 	{
-		if (!g_winpr_openssl_initialized_by_winpr)
+		if (!g_freerdp_openssl_initialized_by_winpr)
 		{
 			WLog_WARN(TAG, "ssl was not initialized by winpr");
 			return FALSE;
 		}
 
-		g_winpr_openssl_initialized_by_winpr = FALSE;
+		g_freerdp_openssl_initialized_by_winpr = FALSE;
 #ifdef WINPR_OPENSSL_LOCKING_REQUIRED
-		_winpr_openssl_cleanup_locking();
+		_freerdp_openssl_cleanup_locking();
 #endif
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
 		CRYPTO_cleanup_all_ex_data();
@@ -360,8 +346,11 @@ BOOL winpr_CleanupSSL(DWORD flags)
 	return TRUE;
 }
 
-BOOL winpr_FIPSMode(void)
+BOOL freerdp_FIPSMode(void)
 {
+	if (winpr_OpenSSL())
+		return winpr_FIPSMode();
+
 #if (OPENSSL_VERSION_NUMBER < 0x10001000L) || defined(LIBRESSL_VERSION_NUMBER)
 	return FALSE;
 #else
@@ -369,29 +358,29 @@ BOOL winpr_FIPSMode(void)
 #endif
 }
 
-BOOL winpr_OpenSSL(void)
+BOOL freerdp_OpenSSL(void)
 {
 	return TRUE;
 }
 
 #else
 
-BOOL winpr_InitializeSSL(DWORD flags)
+BOOL freerdp_InitializeSSL(DWORD flags)
 {
 	return TRUE;
 }
 
-BOOL winpr_CleanupSSL(DWORD flags)
+BOOL freerdp_CleanupSSL(DWORD flags)
 {
 	return TRUE;
 }
 
-BOOL winpr_FIPSMode(void)
+BOOL freerdp_FIPSMode(void)
 {
 	return FALSE;
 }
 
-BOOL winpr_OpenSSL(void)
+BOOL freerdp_OpenSSL(void)
 {
 	return FALSE;
 }

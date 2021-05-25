@@ -1,9 +1,8 @@
 /**
- * WinPR: Windows Portable Runtime
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * OpenSSL Library Initialization
  *
- * Copyright 2014 Thincast Technologies GmbH
- * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,32 +17,25 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_SSL_H
-#define WINPR_SSL_H
+#ifndef FREERDP_SSL_H
+#define FREERDP_SSL_H
 
-#include <winpr/wtypes.h>
-
-#define WINPR_SSL_INIT_DEFAULT 0x00
-#define WINPR_SSL_INIT_ALREADY_INITIALIZED 0x01
-#define WINPR_SSL_INIT_ENABLE_LOCKING 0x2
-#define WINPR_SSL_INIT_ENABLE_FIPS 0x4
-
-#define WINPR_SSL_CLEANUP_GLOBAL 0x01
-#define WINPR_SSL_CLEANUP_THREAD 0x02
+#include <winpr/ssl.h>
+#include <freerdp/api.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	WINPR_API BOOL winpr_InitializeSSL(DWORD flags);
-	WINPR_API BOOL winpr_CleanupSSL(DWORD flags);
+	FREERDP_API BOOL freerdp_InitializeSSL(DWORD flags);
+	FREERDP_API BOOL freerdp_CleanupSSL(DWORD flags);
 
-	WINPR_API BOOL winpr_FIPSMode(void);
-	WINPR_API BOOL winpr_OpenSSL(void);
+	FREERDP_API BOOL freerdp_FIPSMode(void);
+	FREERDP_API BOOL freerdp_OpenSSL(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* WINPR_SSL_H */
+#endif /* FREERDP_SSL_H */

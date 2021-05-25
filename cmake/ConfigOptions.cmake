@@ -79,7 +79,13 @@ option(BUILTIN_CHANNELS "Combine all channels into their respective base library
 
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
-option(WITH_WINPR_TOOLS "Build WinPR helper binaries" ON)
+if(ANDROID OR IOS OR UWP)
+    set(DEFAULT_WINPR_TOOLS "OFF")
+else()
+    set(DEFAULT_WINPR_TOOLS "ON")
+endif()
+
+option(WITH_WINPR_TOOLS "Build WinPR helper binaries" ${DEFAULT_WINPR_TOOLS})
 
 CMAKE_DEPENDENT_OPTION(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON
 	"WITH_CLIENT_COMMON;WITH_CHANNELS" OFF)

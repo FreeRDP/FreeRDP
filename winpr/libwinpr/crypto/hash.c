@@ -416,7 +416,7 @@ BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 #if defined(WITH_OPENSSL)
 	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
 	return winpr_Digest_Init_Internal(ctx, evp);
-#else
+#elif defined(WITH_MBEDTLS)
 	return winpr_Digest_Init_Internal(ctx, md);
 #endif
 }

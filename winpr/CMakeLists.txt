@@ -135,11 +135,21 @@ else()
 		endif (HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL OR HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIB OR HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIBS)
 	endif()
 
-	set(OPENSSL_FEATURE_TYPE "OPTIONAL")
+	if(WITH_OPENSSL)
+		set(OPENSSL_FEATURE_TYPE "REQUIRED")
+	else()
+		set(OPENSSL_FEATURE_TYPE "OPTIONAL")
+	endif()
+
 	set(OPENSSL_FEATURE_PURPOSE "cryptography")
 	set(OPENSSL_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
 
-	set(MBEDTLS_FEATURE_TYPE "OPTIONAL")
+	if(WITH_MBEDTLS)
+		set(MBEDTLS_FEATURE_TYPE "REQUIRED")
+	else()
+		set(MBEDTLS_FEATURE_TYPE "OPTIONAL")
+	endif()
+	
 	set(MBEDTLS_FEATURE_PURPOSE "cryptography")
 	set(MBEDTLS_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
 
@@ -194,13 +204,17 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
+if(ANDROID OR IOS)
+	set(WITH_WINPR_TOOLS 0)
+endif()
+
+if(WITH_WINPR_TOOLS)
+	add_subdirectory(tools)
+endif()
+
 add_subdirectory(include)
 
 add_subdirectory(libwinpr)
-
-if(NOT ANDROID AND NOT IOS AND NOT UWP AND WITH_WINPR_TOOLS)
-	add_subdirectory(tools)
-endif()
 
 if(BUILD_TESTING)
 	add_subdirectory(test)
