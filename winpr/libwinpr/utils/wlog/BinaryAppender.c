@@ -70,14 +70,14 @@ static BOOL WLog_BinaryAppender_Open(wLog* log, wLogAppender* appender)
 			return FALSE;
 	}
 
-	if (!PathFileExistsA(binaryAppender->FilePath))
+	if (!winpr_PathFileExists(binaryAppender->FilePath))
 	{
-		if (!PathMakePathA(binaryAppender->FilePath, 0))
+		if (!winpr_PathMakePath(binaryAppender->FilePath, 0))
 			return FALSE;
 		UnixChangeFileMode(binaryAppender->FilePath, 0xFFFF);
 	}
 
-	binaryAppender->FileDescriptor = fopen(binaryAppender->FullFileName, "a+");
+	binaryAppender->FileDescriptor = winpr_fopen(binaryAppender->FullFileName, "a+");
 
 	if (!binaryAppender->FileDescriptor)
 		return FALSE;

@@ -41,9 +41,9 @@ char* WLog_Message_GetOutputFileName(int id, const char* ext)
 
 	FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
 
-	if (!PathFileExistsA(FilePath))
+	if (!winpr_PathFileExists(FilePath))
 	{
-		if (!PathMakePathA(FilePath, NULL))
+		if (!winpr_PathMakePath(FilePath, NULL))
 		{
 			free(FileName);
 			free(FilePath);
