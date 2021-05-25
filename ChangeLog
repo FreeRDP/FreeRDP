@@ -1,6 +1,8 @@
 # 2021-XX-YY Version 2.X.Y
 
 Noteworthy changes:
+* Backported multithreadded progressive decoder (#7036)
+* Backported clipboard fixes (#6924)
 
 Fixed issues:
 * #6938: RAILS clipboard remote -> local
