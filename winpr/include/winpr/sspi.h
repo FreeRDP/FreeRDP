@@ -34,6 +34,13 @@
 #include <sspi.h>
 #include <security.h>
 
+#if  defined(__MINGW32__) && !defined(SZ_ALG_MAX_SIZE)
+typedef struct _SecPkgContext_Bindings
+{
+    unsigned long BindingsLength;
+    _Field_size_bytes_(BindingsLength) SEC_CHANNEL_BINDINGS * Bindings;
+} SecPkgContext_Bindings, * PSecPkgContext_Bindings;
+#endif
 #endif
 
 #if !defined(_WIN32) || defined(_UWP)

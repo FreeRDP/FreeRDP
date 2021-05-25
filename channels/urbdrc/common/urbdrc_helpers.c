@@ -199,10 +199,10 @@ static const char* call_to_string_stub(BOOL client, UINT32 interfaceId, UINT32 f
 	return "QUERY_DEVICE_TEXT_RSP             [stub  |client]";
 }
 
-const char* call_to_string(BOOL client, UINT32 interface, UINT32 functionId)
+const char* call_to_string(BOOL client, UINT32 iface, UINT32 functionId)
 {
-	const UINT32 mask = (interface & STREAM_ID_MASK) >> 30;
-	const UINT32 interfaceId = interface & INTERFACE_ID_MASK;
+	const UINT32 mask = (iface & STREAM_ID_MASK) >> 30;
+	const UINT32 interfaceId = iface & INTERFACE_ID_MASK;
 
 	switch (mask)
 	{
