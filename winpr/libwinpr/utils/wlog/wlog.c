@@ -95,6 +95,16 @@ static void WLog_Uninit_(void)
 	g_RootLog = NULL;
 }
 
+void WLog_Lock(wLog* log)
+{
+	EnterCriticalSection(&log->lock);
+}
+
+void WLog_Unlock(wLog* log)
+{
+	LeaveCriticalSection(&log->lock);
+}
+
 static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
 {
 	char* env;
@@ -888,6 +898,8 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 			goto out_fail;
 	}
 
+	InitializeCriticalSectionAndSpinCount(&log->lock, 4000);
+
 	return log;
 out_fail:
 	free(log->Children);
@@ -910,6 +922,7 @@ void WLog_Free(wLog* log)
 		free(log->Names[0]);
 		free(log->Names);
 		free(log->Children);
+		DeleteCriticalSection(&log->lock);
 		free(log);
 	}
 }
@@ -924,6 +937,10 @@ wLog* WLog_GetRoot(void)
 
 static BOOL WLog_AddChild(wLog* parent, wLog* child)
 {
+	BOOL status = FALSE;
+
+	WLog_Lock(parent);
+
 	if (parent->ChildrenCount >= parent->ChildrenSize)
 	{
 		wLog** tmp;
@@ -946,7 +963,7 @@ static BOOL WLog_AddChild(wLog* parent, wLog* child)
 					free(parent->Children);
 
 				parent->Children = NULL;
-				return FALSE;
+				goto exit;
 			}
 
 			parent->Children = tmp;
@@ -954,11 +971,16 @@ static BOOL WLog_AddChild(wLog* parent, wLog* child)
 	}
 
 	if (!parent->Children)
-		return FALSE;
+		goto exit;
 
 	parent->Children[parent->ChildrenCount++] = child;
 	child->Parent = parent;
-	return TRUE;
+
+	WLog_Unlock(parent);
+
+	status = TRUE;
+exit:
+	return status;
 }
 
 static wLog* WLog_FindChild(wLog* root, LPCSTR name)
@@ -970,6 +992,8 @@ static wLog* WLog_FindChild(wLog* root, LPCSTR name)
 	if (!root)
 		return NULL;
 
+	WLog_Lock(root);
+
 	for (index = 0; index < root->ChildrenCount; index++)
 	{
 		child = root->Children[index];
@@ -980,6 +1004,8 @@ static wLog* WLog_FindChild(wLog* root, LPCSTR name)
 			break;
 		}
 	}
+
+	WLog_Unlock(root);
 
 	return (found) ? child : NULL;
 }
@@ -1019,5 +1045,25 @@ BOOL WLog_Init(void)
 
 BOOL WLog_Uninit(void)
 {
+	DWORD index;
+	wLog* child = NULL;
+	wLog* root = g_RootLog;
+
+	if (!root)
+		return FALSE;
+
+	WLog_Lock(root);
+
+	for (index = 0; index < root->ChildrenCount; index)
+	{
+		child = root->Children[index];
+		WLog_Free(child);
+	}
+
+	WLog_Unlock(root);
+
+	WLog_Free(root);
+	g_RootLog = NULL;
+
 	return TRUE;
 }
