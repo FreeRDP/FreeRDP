@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/wtypes.h>
+#include <winpr/file.h>
 #include <winpr/crt.h>
 #include <freerdp/log.h>
 
@@ -177,7 +178,7 @@ rdpPcap* pcap_open(const char* name, BOOL write)
 	pcap->name = _strdup(name);
 	pcap->write = write;
 	pcap->record_count = 0;
-	pcap->fp = fopen(name, write ? "w+b" : "rb");
+	pcap->fp = winpr_fopen(name, write ? "w+b" : "rb");
 
 	if (pcap->fp == NULL)
 		goto fail;

@@ -30,6 +30,7 @@
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
+#include <winpr/file.h>
 #include <winpr/crypto.h>
 
 #include <openssl/pem.h>
@@ -789,7 +790,7 @@ rdpRsaKey* key_new(const char* keyfile)
 	INT64 length;
 	char* buffer = NULL;
 	rdpRsaKey* key = NULL;
-	fp = fopen(keyfile, "rb");
+	fp = winpr_fopen(keyfile, "rb");
 
 	if (!fp)
 	{

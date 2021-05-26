@@ -24,6 +24,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/timezone.h>
 #include <winpr/crt.h>
+#include <winpr/file.h>
 #include "../log.h"
 
 #define TAG WINPR_TAG("timezone")
@@ -230,9 +231,9 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 	FILE* fp;
 	char* tzid = NULL;
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
-	fp = fopen("/var/db/zoneinfo", "r");
+	fp = winpr_fopen("/var/db/zoneinfo", "r");
 #else
-	fp = fopen("/etc/timezone", "r");
+	fp = winpr_fopen("/etc/timezone", "r");
 #endif
 
 	if (NULL == fp)

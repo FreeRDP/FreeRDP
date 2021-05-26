@@ -29,6 +29,7 @@
 #include <winpr/crt.h>
 #include <winpr/sam.h>
 #include <winpr/print.h>
+#include <winpr/file.h>
 
 #include "../log.h"
 
@@ -89,13 +90,13 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 		filename = WINPR_SAM_FILE;
 
 	if (readOnly)
-		fp = fopen(filename, "r");
+		fp = winpr_fopen(filename, "r");
 	else
 	{
-		fp = fopen(filename, "r+");
+		fp = winpr_fopen(filename, "r+");
 
 		if (!fp)
-			fp = fopen(filename, "w+");
+			fp = winpr_fopen(filename, "w+");
 	}
 
 	if (fp)

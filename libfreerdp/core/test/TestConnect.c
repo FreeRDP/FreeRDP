@@ -194,7 +194,7 @@ static int testSuccess(int port)
 	printf("Sample Server: %s\n", exe);
 	printf("Workspace: %s\n", wpath);
 
-	if (!PathFileExistsA(exe))
+	if (!winpr_PathFileExists(exe))
 		goto fail;
 
 	// Start sample server locally.

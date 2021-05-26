@@ -33,6 +33,7 @@
 #include <cups/cups.h>
 
 #include <winpr/crt.h>
+#include <winpr/file.h>
 #include <winpr/string.h>
 
 #include <freerdp/channels/rdpdr.h>
@@ -92,7 +93,7 @@ static UINT printer_cups_write_printjob(rdpPrintJob* printjob, const BYTE* data,
 	{
 		FILE* fp;
 
-		fp = fopen((const char*)cups_printjob->printjob_object, "a+b");
+		fp = winpr_fopen((const char*)cups_printjob->printjob_object, "a+b");
 
 		if (!fp)
 			return ERROR_INTERNAL_ERROR;

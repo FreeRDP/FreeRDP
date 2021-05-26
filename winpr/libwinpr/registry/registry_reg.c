@@ -28,6 +28,7 @@
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
+#include <winpr/file.h>
 
 #include "registry_reg.h"
 
@@ -414,14 +415,14 @@ Reg* reg_open(BOOL read_only)
 
 	if (reg->read_only)
 	{
-		reg->fp = fopen(reg->filename, "r");
+		reg->fp = winpr_fopen(reg->filename, "r");
 	}
 	else
 	{
-		reg->fp = fopen(reg->filename, "r+");
+		reg->fp = winpr_fopen(reg->filename, "r+");
 
 		if (!reg->fp)
-			reg->fp = fopen(reg->filename, "w+");
+			reg->fp = winpr_fopen(reg->filename, "w+");
 	}
 
 	if (!reg->fp)
