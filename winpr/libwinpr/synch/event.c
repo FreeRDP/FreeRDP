@@ -140,11 +140,16 @@ BOOL winpr_event_reset(WINPR_EVENT_IMPL* event)
 void winpr_event_uninit(WINPR_EVENT_IMPL* event)
 {
 	if (event->fds[0] != -1)
+	{
 		close(event->fds[0]);
-#ifndef HAVE_SYS_EVENTFD_H
+		event->fds[0] = -1;
+	}
+
 	if (event->fds[1] != -1)
+	{
 		close(event->fds[1]);
-#endif
+		event->fds[1] = -1;
+	}
 }
 
 static BOOL EventCloseHandle(HANDLE handle);
@@ -177,8 +182,13 @@ static BOOL EventCloseHandle_(WINPR_EVENT* event)
 	if (!event)
 		return FALSE;
 
-	if (!event->bAttached)
-		winpr_event_uninit(&event->impl);
+	if (event->bAttached)
+	{
+		// don't close attached file descriptor
+		event->impl.fds[0] = -1; // mark as invalid
+	}
+
+	winpr_event_uninit(&event->impl);
 
 	free(event->name);
 	free(event);
@@ -239,6 +249,8 @@ HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 	if (lpName)
 		event->name = strdup(lpName);
 
+	event->impl.fds[0] = -1;
+	event->impl.fds[1] = -1;
 	event->bAttached = FALSE;
 	event->bManualReset = bManualReset;
 	event->ops = &ops;
@@ -364,6 +376,8 @@ HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 
 	if (event)
 	{
+		event->impl.fds[0] = -1;
+		event->impl.fds[1] = -1;
 		event->bAttached = TRUE;
 		event->bManualReset = bManualReset;
 		winpr_event_init_from_fd(&event->impl, FileDescriptor);
