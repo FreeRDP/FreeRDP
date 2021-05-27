@@ -479,6 +479,14 @@ if(MSVC)
 
 endif()
 
+if(ANDROID)
+	# workaround for https://github.com/android-ndk/ndk/issues/243
+	string(REPLACE "-g " "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+	string(REPLACE "-g " "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+endif()
+
 if(WIN32)
 	add_definitions(-DUNICODE -D_UNICODE)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -607,6 +615,11 @@ if(ANDROID)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG} -gdwarf-3")
 	endif()
 	set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -llog")
+
+	# CMAKE_PREFIX_PATH detection is broken in most Android toolchain files
+	# Append it to CMAKE_FIND_ROOT_PATH and avoid potential duplicates
+	list(APPEND CMAKE_FIND_ROOT_PATH ${CMAKE_PREFIX_PATH})
+	list(REMOVE_DUPLICATES CMAKE_FIND_ROOT_PATH)
 
 	if (NOT FREERDP_EXTERNAL_PATH)
 		if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external/")
