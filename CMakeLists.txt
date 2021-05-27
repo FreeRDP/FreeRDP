@@ -521,10 +521,6 @@ if(WIN32)
 	endif()
 endif()
 
-if(IOS)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -isysroot ${CMAKE_IOS_SDK_ROOT} -g")
-endif()
-
 add_definitions(-DWINPR_EXPORTS -DFREERDP_EXPORTS)
 
 # Include files
@@ -1050,15 +1046,6 @@ endif()
 add_subdirectory(include)
 
 add_subdirectory(libfreerdp)
-
-if (IOS)
-	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.0")
-	if (IOS_PLATFORM MATCHES "SIMULATOR")
-		set(CMAKE_OSX_SYSROOT "iphonesimulator")
-	else()
-		set(CMAKE_OSX_SYSROOT "iphoneos")
-	endif()
-endif()
 
 # RdTk
 include_directories("${CMAKE_SOURCE_DIR}/rdtk/include")
