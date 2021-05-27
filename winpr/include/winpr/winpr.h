@@ -55,7 +55,9 @@
 #define WINPR_DEPRECATED(obj) obj
 #endif
 
-/* Thread local storage keyword define */
+// WARNING: *do not* use thread-local storage for new code because it is not portable
+// It is only used for VirtualChannelInit, and all FreeRDP channels use VirtualChannelInitEx
+// The old virtual channel API is only realistically used on Windows where TLS is available
 #if defined _WIN32 || defined __CYGWIN__
 #ifdef __GNUC__
 #define WINPR_TLS __thread
@@ -65,8 +67,8 @@
 #elif !defined(__IOS__)
 #define WINPR_TLS __thread
 #else
-#warning "Target iOS does not support Thread Local Storage!"
-#warning "Multi Instance support is disabled!"
+// thread-local storage is not supported on iOS
+// don't warn because it isn't actually used on iOS
 #define WINPR_TLS
 #endif
 
