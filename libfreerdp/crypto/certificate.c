@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -490,10 +491,41 @@ static int certificate_match_data_file(rdpCertificateStore* certificate_store,
 	return rc;
 }
 
+static BOOL useKnownHosts(rdpCertificateStore* certificate_store)
+{
+	BOOL use;
+	assert(certificate_store);
+
+	use = freerdp_settings_get_bool(certificate_store->settings, FreeRDP_CertificateUseKnownHosts);
+	WLog_INFO(TAG, "known_hosts=%d", use);
+	return use;
+}
+
+#define check_certificate_store_and_data(store, data) \
+	check_certificate_store_and_data_((store), (data), __FILE__, __FUNCTION__, __LINE__)
+static BOOL check_certificate_store_and_data_(const rdpCertificateStore* certificate_store,
+                                              const rdpCertificateData* certificate_data,
+                                              const char* file, const char* fkt, size_t line)
+{
+	if (!certificate_store)
+	{
+		WLog_ERR(TAG, "[%s, %s:%" PRIuz "] certificate_store=NULL", file, fkt, line);
+		return FALSE;
+	}
+	if (!certificate_data)
+	{
+		WLog_ERR(TAG, "[%s, %s:%" PRIuz "] certificate_data=NULL", file, fkt, line);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 int certificate_store_contains_data(rdpCertificateStore* certificate_store,
                                     const rdpCertificateData* certificate_data)
 {
-	if (freerdp_settings_get_bool(certificate_store->settings, FreeRDP_CertificateUseKnownHosts))
+	if (!check_certificate_store_and_data(certificate_store, certificate_data))
+		return -1;
+	if (useKnownHosts(certificate_store))
 	{
 		char* pem = NULL;
 		int rc =
@@ -570,8 +602,14 @@ static char* certificate_data_get_host_file_entry(const rdpCertificateData* data
 	const char* fingerprint = certificate_data_get_fingerprint(data);
 	char* pem = encode(certificate_data_get_pem(data));
 
-	if (!data || !hostname || !fingerprint || !subject || !issuer)
+	/* Issuer and subject may be NULL */
+	if (!data || !hostname || !fingerprint)
 		goto fail;
+
+	if (!subject)
+		subject = _strdup("");
+	if (!issuer)
+		issuer = _strdup("");
 
 	if (pem)
 		buffer = allocated_printf("%s %" PRIu16 " %s %s %s %s\n", hostname, port, fingerprint,
@@ -609,6 +647,7 @@ static BOOL certificate_data_replace_hosts_file(rdpCertificateStore* certificate
                                                 const rdpCertificateData* certificate_data,
                                                 BOOL remove, BOOL append)
 {
+	BOOL newfile = TRUE;
 	HANDLE fp = INVALID_HANDLE_VALUE;
 	BOOL rc = FALSE;
 	size_t length;
@@ -621,11 +660,14 @@ static BOOL certificate_data_replace_hosts_file(rdpCertificateStore* certificate
 	DWORD lowSize, highSize;
 	rdpCertificateData* copy = NULL;
 
-	fp = open_file(certificate_store->file, GENERIC_READ | GENERIC_WRITE, 0, OPEN_EXISTING,
+	fp = open_file(certificate_store->file, GENERIC_READ | GENERIC_WRITE, 0, OPEN_ALWAYS,
 	               FILE_ATTRIBUTE_NORMAL);
 
 	if (fp == INVALID_HANDLE_VALUE)
+	{
+		WLog_ERR(TAG, "failed to open known_hosts file %s, aborting", certificate_store->file);
 		return FALSE;
+	}
 
 	/* Create a copy, if a PEM was provided it will replace subject, issuer, fingerprint */
 	copy = certificate_data_new(certificate_data->hostname, certificate_data->port);
@@ -654,7 +696,11 @@ static BOOL certificate_data_replace_hosts_file(rdpCertificateStore* certificate
 
 	size = (UINT64)lowSize | ((UINT64)highSize << 32);
 
-	if (size < 1)
+	/* Newly created file, just write the new entry */
+	if (size > 0)
+		newfile = FALSE;
+
+	if (newfile)
 		goto fail;
 
 	data = (char*)malloc(size + 2);
@@ -731,8 +777,12 @@ static BOOL certificate_data_replace_hosts_file(rdpCertificateStore* certificate
 fail:
 	if (!rc && append)
 	{
-		char* line = certificate_data_get_host_file_entry(copy);
-		rc = write_line_and_free(certificate_store->file, fp, line);
+		if (fp != INVALID_HANDLE_VALUE)
+		{
+			char* line = certificate_data_get_host_file_entry(copy);
+			if (line)
+				rc = write_line_and_free(certificate_store->file, fp, line);
+		}
 	}
 
 	CloseHandle(fp);
@@ -781,7 +831,9 @@ static BOOL certificate_data_remove_file(rdpCertificateStore* certificate_store,
 BOOL certificate_store_remove_data(rdpCertificateStore* certificate_store,
                                    const rdpCertificateData* certificate_data)
 {
-	if (freerdp_settings_get_bool(certificate_store->settings, FreeRDP_CertificateUseKnownHosts))
+	if (!check_certificate_store_and_data(certificate_store, certificate_data))
+		return FALSE;
+	if (useKnownHosts(certificate_store))
 	{
 		/* Ignore return, if the entry was invalid just continue */
 		certificate_data_replace_hosts_file(certificate_store, certificate_data, TRUE, FALSE);
@@ -895,12 +947,11 @@ static BOOL update_from_pem(rdpCertificateData* data)
 	x1 = crypto_cert_from_pem(data->pem, strlen(data->pem), FALSE);
 	if (!x1)
 		goto fail;
+
+	/* Subject and issuer might be NULL */
 	subject = crypto_cert_subject(x1);
-	if (!subject)
-		goto fail;
 	issuer = crypto_cert_issuer(x1);
-	if (!issuer)
-		goto fail;
+
 	fingerprint = crypto_cert_fingerprint(x1);
 	if (!fingerprint)
 		goto fail;
@@ -919,7 +970,9 @@ fail:
 BOOL certificate_store_save_data(rdpCertificateStore* certificate_store,
                                  const rdpCertificateData* certificate_data)
 {
-	if (freerdp_settings_get_bool(certificate_store->settings, FreeRDP_CertificateUseKnownHosts))
+	if (!check_certificate_store_and_data(certificate_store, certificate_data))
+		return FALSE;
+	if (useKnownHosts(certificate_store))
 		return certificate_data_replace_hosts_file(certificate_store, certificate_data, TRUE, TRUE);
 	else
 		return certificate_data_write_to_file(certificate_store, certificate_data);
@@ -928,7 +981,7 @@ BOOL certificate_store_save_data(rdpCertificateStore* certificate_store,
 rdpCertificateData* certificate_store_load_data(rdpCertificateStore* certificate_store,
                                                 const char* host, UINT16 port)
 {
-	if (freerdp_settings_get_bool(certificate_store->settings, FreeRDP_CertificateUseKnownHosts))
+	if (useKnownHosts(certificate_store))
 	{
 		int rc;
 		rdpCertificateData* data = certificate_data_new(host, port);
@@ -1004,7 +1057,9 @@ UINT16 certificate_data_get_port(const rdpCertificateData* cert)
 BOOL certificate_data_set_pem(rdpCertificateData* cert, const char* pem)
 {
 	if (!cert)
+	{
 		return FALSE;
+	}
 	if (!duplicate(&cert->pem, pem))
 		return FALSE;
 	if (!pem)

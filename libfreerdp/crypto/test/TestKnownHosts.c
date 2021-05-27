@@ -308,6 +308,49 @@ finish:
 	return rc;
 }
 
+/* Test host add NULL subject, issuer current file. */
+static BOOL test_known_hosts_host_add_remove_null(rdpCertificateStore* store)
+{
+	BOOL rc = FALSE;
+	rdpCertificateData* data;
+
+	printf("%s\n", __FUNCTION__);
+
+	data = certificate_data_new("somehost", 1234);
+
+	if (!data)
+	{
+		fprintf(stderr, "Could not create certificate data!\n");
+		goto finish;
+	}
+	if (!certificate_data_set_subject(data, NULL) || !certificate_data_set_issuer(data, NULL) ||
+	    !certificate_data_set_fingerprint(data, "ff:aa:bb:cc"))
+		goto finish;
+
+	if (!certificate_store_save_data(store, data))
+	{
+		fprintf(stderr, "Could not add host to file!\n");
+		goto finish;
+	}
+
+	if (0 != certificate_store_contains_data(store, data))
+	{
+		fprintf(stderr, "Could not find host written in v2 file!\n");
+		goto finish;
+	}
+
+	if (!certificate_store_remove_data(store, data))
+	{
+		fprintf(stderr, "Could not remove host written in v2 file!\n");
+		goto finish;
+	}
+	rc = TRUE;
+finish:
+	printf("certificate_data_free %d\n", rc);
+	certificate_data_free(data);
+	return rc;
+}
+
 /* Test host replace current file. */
 static BOOL test_known_hosts_host_replace(rdpCertificateStore* store)
 {
@@ -353,14 +396,14 @@ static BOOL test_known_hosts_host_replace_invalid(rdpCertificateStore* store)
 	rdpCertificateData* data;
 
 	printf("%s\n", __FUNCTION__);
-	data = certificate_data_new("somehostXXXX", 1234);
+	data = certificate_data_new(NULL, 1234);
 
-	if (!data)
+	if (data)
 	{
-		fprintf(stderr, "Could not create certificate data!\n");
+		fprintf(stderr, "Could create invalid certificate data!\n");
 		goto finish;
 	}
-	if (!certificate_data_set_fingerprint(data, "ff:aa:bb:dd:ee"))
+	if (certificate_data_set_fingerprint(data, "ff:aa:bb:dd:ee"))
 		goto finish;
 
 	if (certificate_store_save_data(store, data))
@@ -378,6 +421,99 @@ static BOOL test_known_hosts_host_replace_invalid(rdpCertificateStore* store)
 finish:
 	printf("certificate_data_free %d\n", rc);
 	certificate_data_free(data);
+	return rc;
+}
+
+static BOOL test_known_hosts_file_emtpy_single(BOOL (*fkt)(rdpCertificateStore* store))
+{
+	BOOL rc = FALSE;
+	rdpSettings* settings = NULL;
+	rdpCertificateStore* store = NULL;
+	char* currentFileV2 = NULL;
+
+	printf("%s", __FUNCTION__);
+	if (!fkt)
+		return FALSE;
+
+	if (!setup_config(&settings))
+		goto finish;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateUseKnownHosts, TRUE))
+		goto finish;
+
+	currentFileV2 =
+	    GetCombinedPath(freerdp_settings_get_string(settings, FreeRDP_ConfigPath), "known_hosts2");
+
+	if (!currentFileV2)
+	{
+		fprintf(stderr, "Could not get file path!\n");
+		goto finish;
+	}
+
+	printf("certificate_store_new\n");
+	store = certificate_store_new(settings);
+
+	if (!store)
+	{
+		fprintf(stderr, "Could not create certificate store!\n");
+		goto finish;
+	}
+
+	rc = fkt(store);
+
+finish:
+	freerdp_settings_free(settings);
+
+	printf("certificate_store_free\n");
+	certificate_store_free(store);
+
+	DeleteFileA(currentFileV2);
+	free(currentFileV2);
+	return rc;
+}
+
+static BOOL test_known_hosts_file_empty(void)
+{
+	BOOL rc = FALSE;
+
+	if (test_known_hosts_file_emtpy_single(test_known_hosts_host_found))
+	{
+		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
+		goto finish;
+	}
+
+	if (!test_known_hosts_file_emtpy_single(test_known_hosts_host_not_found))
+	{
+		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
+		goto finish;
+	}
+
+	if (!test_known_hosts_file_emtpy_single(test_known_hosts_host_add))
+	{
+		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
+		goto finish;
+	}
+
+	if (!test_known_hosts_file_emtpy_single(test_known_hosts_host_add_remove_null))
+	{
+		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
+		goto finish;
+	}
+
+	if (!test_known_hosts_file_emtpy_single(test_known_hosts_host_replace))
+	{
+		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
+		goto finish;
+	}
+
+	if (!test_known_hosts_file_emtpy_single(test_known_hosts_host_replace_invalid))
+	{
+		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
+		goto finish;
+	}
+
+	rc = TRUE;
+finish:
+
 	return rc;
 }
 
@@ -422,6 +558,9 @@ static BOOL test_known_hosts_file(void)
 		goto finish;
 
 	if (!test_known_hosts_host_add(store))
+		goto finish;
+
+	if (!test_known_hosts_host_add_remove_null(store))
 		goto finish;
 
 	if (!test_known_hosts_host_replace(store))
@@ -680,6 +819,9 @@ int TestKnownHosts(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+	if (!test_known_hosts_file_empty())
+		return -1;
+
 	if (!test_known_hosts_file())
 		return -1;
 	if (!test_certs_dir(FALSE))
