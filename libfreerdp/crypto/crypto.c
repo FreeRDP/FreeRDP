@@ -939,6 +939,8 @@ rdpCertificateData* crypto_get_certificate_data(X509* xcert, const char* hostnam
 	free(pem);
 	return certdata;
 fail:
+	WLog_WARN(TAG, "Failed to extract PEM from X509=%p for host %s:%" PRIu16, xcert, hostname,
+	          port);
 	certificate_data_free(certdata);
 	free(pem);
 	return NULL;
@@ -1074,6 +1076,7 @@ fail:
 
 	if (!rc)
 	{
+		WLog_ERR(TAG, "Failed to extract PEM from certificate %p", xcert);
 		free(pemCert);
 		pemCert = NULL;
 	}

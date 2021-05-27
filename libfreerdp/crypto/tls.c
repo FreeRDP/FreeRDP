@@ -1334,6 +1334,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 		    x509_verify_certificate(cert, certificate_store_get_certs_path(tls->certificate_store));
 		/* verify certificate name match */
 		certificate_data = crypto_get_certificate_data(cert->px509, hostname, port);
+		if (!certificate_data)
+			goto end;
 		/* extra common name and alternative names */
 		common_name = crypto_cert_subject_common_name(cert->px509, &common_name_length);
 		dns_names = crypto_cert_get_dns_names(cert->px509, &dns_names_count, &dns_names_lengths);
