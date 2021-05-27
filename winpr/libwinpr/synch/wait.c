@@ -115,7 +115,10 @@ int _mach_safe_clock_gettime(int clk_id, struct timespec* t)
 
 #endif
 
-/* Drop in replacement for pthread_mutex_timedlock
+/**
+ * Drop in replacement for pthread_mutex_timedlock
+ * http://code.google.com/p/android/issues/detail?id=7807
+ * http://aleksmaus.blogspot.ca/2011/12/missing-pthreadmutextimedlock-on.html
  */
 #if !defined(HAVE_PTHREAD_MUTEX_TIMEDLOCK)
 #include <pthread.h>
@@ -127,7 +130,20 @@ static long long ts_difftime(const struct timespec* o, const struct timespec* n)
 	return newValue - oldValue;
 }
 
-static int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeout)
+#ifdef ANDROID
+#if (__ANDROID_API__ >= 21)
+#define CONST_NEEDED const
+#else
+#define CONST_NEEDED
+#endif
+#define STATIC_NEEDED
+#else /* ANDROID */
+#define CONST_NEEDED const
+#define STATIC_NEEDED static
+#endif
+
+STATIC_NEEDED int pthread_mutex_timedlock(pthread_mutex_t* mutex,
+                                          CONST_NEEDED struct timespec* timeout)
 {
 	struct timespec timenow;
 	struct timespec sleepytime;
