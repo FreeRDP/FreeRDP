@@ -32,7 +32,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/client/cliprdr.h>
 
-#include "../../channels/client/addin.h"
+#include "../../../channels/client/addin.h"
 
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"

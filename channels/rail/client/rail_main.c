@@ -35,7 +35,7 @@
 #include "rail_orders.h"
 #include "rail_main.h"
 
-#include "../../channels/client/addin.h"
+#include "../../../channels/client/addin.h"
 
 RailClientContext* rail_get_client_interface(railPlugin* rail)
 {
