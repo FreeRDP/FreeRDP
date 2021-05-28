@@ -234,7 +234,7 @@ static int mf_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSiz
 	IMFMediaBuffer* outputBuffer = NULL;
 	MFT_OUTPUT_DATA_BUFFER outputDataBuffer;
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*)h264->pSystemData;
-	INT32* iStride = h264->iStride;
+	UINT32* iStride = h264->iStride;
 	BYTE** pYUVData = h264->pYUVData;
 	hr = sys->MFCreateMemoryBuffer(SrcSize, &inputBuffer);
 

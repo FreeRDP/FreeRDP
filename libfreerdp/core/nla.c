@@ -2493,7 +2493,7 @@ BOOL nla_set_state(rdpNla* nla, NLA_STATE state)
 	return TRUE;
 }
 
-BOOL nla_set_service_principal(rdpNla* nla, LPSTR principal)
+BOOL nla_set_service_principal(rdpNla* nla, LPTSTR principal)
 {
 	if (!nla || !principal)
 		return FALSE;

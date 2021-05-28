@@ -50,7 +50,7 @@ typedef struct
 static int init_external_addin(Plugin* plugin)
 {
 	SECURITY_ATTRIBUTES saAttr;
-	STARTUPINFO siStartInfo;
+	STARTUPINFOA siStartInfo; /* Using ANSI type to match CreateProcessA */
 	PROCESS_INFORMATION procInfo;
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
 	saAttr.bInheritHandle = TRUE;

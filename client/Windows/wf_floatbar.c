@@ -125,7 +125,7 @@ static BOOL floatbar_animation(wfFloatBar* const floatbar, const BOOL show)
 
 	floatbar->animating = timer;
 
-	if (SetTimer(floatbar->hwnd, timer, USER_TIMER_MINIMUM, NULL) == NULL)
+	if (SetTimer(floatbar->hwnd, timer, USER_TIMER_MINIMUM, NULL) == 0)
 	{
 		DWORD err = GetLastError();
 		WLog_ERR(TAG, "SetTimer failed with %08" PRIx32, err);
@@ -142,7 +142,7 @@ static BOOL floatbar_trigger_hide(wfFloatBar* floatbar)
 
 	if (!floatbar->locked && floatbar->shown)
 	{
-		if (SetTimer(floatbar->hwnd, TIMER_HIDE, 3000, NULL) == NULL)
+		if (SetTimer(floatbar->hwnd, TIMER_HIDE, 3000, NULL) == 0)
 		{
 			DWORD err = GetLastError();
 			WLog_ERR(TAG, "SetTimer failed with %08" PRIx32, err);
