@@ -130,8 +130,11 @@ static void set_stream_id_for_buffer(struct libusb_transfer* transfer, UINT32 st
 	user_data->streamID = streamID;
 #endif
 }
-static BOOL log_libusb_result(wLog* log, DWORD lvl, const char* fmt, int error, ...)
+static BOOL log_libusb_result_(wLog* log, DWORD lvl, const char* fmt, const char* fkt,
+                               const char* file, size_t line, int error, ...)
 {
+	WINPR_UNUSED(file);
+
 	if (error < 0)
 	{
 		char buffer[8192] = { 0 };
@@ -140,11 +143,15 @@ static BOOL log_libusb_result(wLog* log, DWORD lvl, const char* fmt, int error, 
 		vsnprintf(buffer, sizeof(buffer), fmt, ap);
 		va_end(ap);
 
-		WLog_Print(log, lvl, "%s: error %s[%d]", buffer, libusb_error_name(error), error);
+		WLog_Print(log, lvl, "[%s:%" PRIuz "]: %s: error %s[%d]", fkt, line, buffer,
+		           libusb_error_name(error), error);
 		return TRUE;
 	}
 	return FALSE;
 }
+
+#define log_libusb_result(log, lvl, fmt, error, ...) \
+	log_libusb_result_((log), (lvl), (fmt), __FUNCTION__, __FILE__, __LINE__, error, ##__VA_ARGS__)
 
 const char* usb_interface_class_to_string(uint8_t class)
 {
