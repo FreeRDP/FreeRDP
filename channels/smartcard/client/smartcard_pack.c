@@ -2074,7 +2074,7 @@ LONG smartcard_pack_list_reader_groups_return(SMARTCARD_DEVICE* smartcard, wStre
 {
 	LONG status;
 	DWORD cBytes = ret->cBytes;
-	DWORD index = 0;
+	UINT32 index = 0;
 
 	smartcard_trace_list_reader_groups_return(smartcard, ret, unicode);
 	if (ret->ReturnCode != SCARD_S_SUCCESS)
@@ -2138,7 +2138,7 @@ LONG smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* s,
                                         const ListReaders_Return* ret, BOOL unicode)
 {
 	LONG status;
-	DWORD index = 0;
+	UINT32 index = 0;
 	UINT32 size = unicode ? sizeof(WCHAR) : sizeof(CHAR);
 
 	size *= ret->cBytes;
@@ -2687,7 +2687,7 @@ LONG smartcard_pack_state_return(SMARTCARD_DEVICE* smartcard, wStream* s, const 
 {
 	LONG status;
 	DWORD cbAtrLen = ret->cbAtrLen;
-	DWORD index = 0;
+	UINT32 index = 0;
 
 	smartcard_trace_state_return(smartcard, ret);
 	if (ret->ReturnCode != SCARD_S_SUCCESS)
@@ -2744,7 +2744,7 @@ LONG smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, const
                                   BOOL unicode)
 {
 	LONG status;
-	DWORD index = 0;
+	UINT32 index = 0;
 	DWORD cBytes = ret->cBytes;
 
 	smartcard_trace_status_return(smartcard, ret, unicode);
@@ -2813,7 +2813,7 @@ LONG smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 {
 	LONG status;
 	DWORD cbAttrLen;
-	DWORD index = 0;
+	UINT32 index = 0;
 	smartcard_trace_get_attrib_return(smartcard, ret, dwAttrId);
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
@@ -2892,7 +2892,7 @@ LONG smartcard_pack_control_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 {
 	LONG status;
 	DWORD cbDataLen = ret->cbOutBufferSize;
-	DWORD index = 0;
+	UINT32 index = 0;
 
 	smartcard_trace_control_return(smartcard, ret);
 	if (ret->ReturnCode != SCARD_S_SUCCESS)
@@ -3149,7 +3149,7 @@ LONG smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s,
                                     const Transmit_Return* ret)
 {
 	LONG status;
-	DWORD index = 0;
+	UINT32 index = 0;
 	LONG error;
 	UINT32 cbRecvLength = ret->cbRecvLength;
 	UINT32 cbRecvPci = ret->pioRecvPci ? ret->pioRecvPci->cbPciLength : 0;
@@ -3796,7 +3796,7 @@ LONG smartcard_pack_locate_cards_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 {
 	LONG status;
 	DWORD cbDataLen = ret->cReaders;
-	DWORD index = 0;
+	UINT32 index = 0;
 
 	smartcard_trace_locate_cards_return(smartcard, ret);
 	if (ret->ReturnCode != SCARD_S_SUCCESS)
@@ -3824,7 +3824,7 @@ LONG smartcard_pack_get_reader_icon_return(SMARTCARD_DEVICE* smartcard, wStream*
                                            const GetReaderIcon_Return* ret)
 {
 	LONG status;
-	DWORD index = 0;
+	UINT32 index = 0;
 	DWORD cbDataLen = ret->cbDataLen;
 	smartcard_trace_get_reader_icon_return(smartcard, ret);
 	if (ret->ReturnCode != SCARD_S_SUCCESS)
@@ -3868,7 +3868,7 @@ LONG smartcard_pack_read_cache_return(SMARTCARD_DEVICE* smartcard, wStream* s,
                                       const ReadCache_Return* ret)
 {
 	LONG status;
-	DWORD index = 0;
+	UINT32 index = 0;
 	DWORD cbDataLen = ret->cbDataLen;
 	smartcard_trace_read_cache_return(smartcard, ret);
 	if (ret->ReturnCode != SCARD_S_SUCCESS)

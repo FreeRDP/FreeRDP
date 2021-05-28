@@ -82,7 +82,7 @@ static UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s
 	size_t pos, size;
 	BOOL status;
 	UINT32 dataLen;
-	UINT32 written;
+	ULONG written;
 	pos = Stream_GetPosition(s);
 	if ((pos < 8) || (pos > UINT32_MAX))
 	{
