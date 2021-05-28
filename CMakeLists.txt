@@ -454,12 +454,6 @@ if(MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gd")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W3")
 
-	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		add_definitions(-D_AMD64_)
-	else()
-		add_definitions(-D_X86_)
-	endif()
-
 	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 

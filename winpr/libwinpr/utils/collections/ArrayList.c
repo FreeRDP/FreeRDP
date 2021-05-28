@@ -485,7 +485,7 @@ BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...)
 
 	ArrayList_Lock_Conditional(arrayList);
 	count = ArrayList_Count(arrayList);
-	va_start(ap, (void*)fkt);
+	va_start(ap, fkt);
 	for (index = 0; index < count; index++)
 	{
 		void* obj = ArrayList_GetItem(arrayList, index);
