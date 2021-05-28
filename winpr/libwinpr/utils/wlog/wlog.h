@@ -78,6 +78,7 @@ struct _wLog
 	wLog** Children;
 	DWORD ChildrenCount;
 	DWORD ChildrenSize;
+	CRITICAL_SECTION lock;
 };
 
 BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message);
