@@ -117,7 +117,7 @@ extern "C"
 
 	WINPR_API wObject* ArrayList_Object(wArrayList* arrayList);
 
-	typedef BOOL(ArrayList_ForEachFkt)(void* data, size_t index, va_list ap);
+	typedef BOOL(*ArrayList_ForEachFkt)(void* data, size_t index, va_list ap);
 
 	WINPR_API BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...);
 
