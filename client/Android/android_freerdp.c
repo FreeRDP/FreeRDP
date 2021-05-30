@@ -1093,7 +1093,10 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 	(*env)->RegisterNatives(env, activityClass, methods, sizeof(methods) / sizeof(methods[0]));
 	/* create global reference for class */
 	gJavaActivityClass = (*env)->NewGlobalRef(env, activityClass);
+
 	g_JavaVm = vm;
+	winpr_set_java_vm((void*)vm);
+
 	return init_callback_environment(vm, env);
 }
 

@@ -988,3 +988,20 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 #endif
 	return ret;
 }
+
+#ifdef ANDROID
+
+#include <jni.h>
+static JavaVM* g_JavaVM = NULL;
+
+void winpr_set_java_vm(void* vm)
+{
+	g_JavaVM = (JavaVM*)vm;
+}
+
+void* winpr_get_java_vm()
+{
+	return (void*)g_JavaVM;
+}
+
+#endif

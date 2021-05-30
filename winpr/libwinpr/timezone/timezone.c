@@ -151,18 +151,12 @@ static char* winpr_get_timezone_from_link(void)
 
 #if defined(ANDROID)
 #include <jni.h>
-static JavaVM* jniVm = NULL;
-
-JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
-{
-	jniVm = vm;
-	return JNI_VERSION_1_6;
-}
 
 static char* winpr_get_android_timezone_identifier(void)
 {
 	char* tzid = NULL;
 	JNIEnv* jniEnv;
+	JavaVM* jniVm = (JavaVM*)winpr_get_java_vm();
 
 	/* Preferred: Try to get identifier from java TimeZone class */
 	if (jniVm && ((*jniVm)->GetEnv(jniVm, (void**)&jniEnv, JNI_VERSION_1_6) == JNI_OK))
