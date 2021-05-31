@@ -44,7 +44,7 @@ static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 	for (i = 0; i < p->loops && gErrorCount == 0; i++)
 	{
 		/* simulate different execution times before the barrier */
-		Sleep(rand() % MAX_SLEEP_MS);
+		Sleep(1 + abs((rand() % MAX_SLEEP_MS)));
 		status = EnterSynchronizationBarrier(&gBarrier, p->flags);
 
 		// printf("Thread #%03u status: %s\n", tnum, status ? "TRUE" : "FALSE");
