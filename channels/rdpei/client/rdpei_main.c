@@ -368,6 +368,9 @@ static UINT rdpei_send_pen_frame(RdpeiClientContext* context, RDPINPUT_PEN_FRAME
 		return ERROR_INTERNAL_ERROR;
 
 	callback = rdpei->listener_callback->channel_callback;
+	/* Just ignore the event if the channel is not connected */
+	if (!callback)
+		return CHANNEL_RC_OK;
 
 	if (!rdpei->previousPenFrameTime && !rdpei->currentPenFrameTime)
 	{
@@ -872,6 +875,15 @@ static UINT rdpei_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 static UINT rdpei_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	RDPEI_CHANNEL_CALLBACK* callback = (RDPEI_CHANNEL_CALLBACK*)pChannelCallback;
+	if (callback)
+	{
+		RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)callback->plugin;
+		if (rdpei && rdpei->listener_callback)
+		{
+			if (rdpei->listener_callback->channel_callback == callback)
+				rdpei->listener_callback->channel_callback = NULL;
+		}
+	}
 	free(callback);
 	return CHANNEL_RC_OK;
 }
@@ -922,11 +934,9 @@ static UINT rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 	if (!pPlugin)
 		return ERROR_INVALID_PARAMETER;
 
-	if (rdpei && rdpei->listener_callback)
+	if (rdpei)
 	{
-		IWTSVirtualChannelManager* mgr = rdpei->listener_callback->channel_mgr;
-		if (mgr)
-			IFCALL(mgr->DestroyListener, mgr, rdpei->listener);
+		IWTSVirtualChannelManager* mgr = NULL;
 
 		rdpei->initialized = FALSE;
 		if (rdpei->event)
@@ -939,6 +949,12 @@ static UINT rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 		}
 		if (rdpei->event)
 			CloseHandle(rdpei->event);
+
+		if (rdpei->listener_callback)
+			mgr = rdpei->listener_callback->channel_mgr;
+
+		if (mgr)
+			IFCALL(mgr->DestroyListener, mgr, rdpei->listener);
 	}
 	DeleteCriticalSection(&rdpei->lock);
 	free(rdpei->listener_callback);
@@ -1026,11 +1042,16 @@ static UINT32 rdpei_get_features(RdpeiClientContext* context)
  */
 UINT rdpei_send_frame(RdpeiClientContext* context, RDPINPUT_TOUCH_FRAME* frame)
 {
-	UINT64 currentTime;
+	UINT64 currentTime = GetTickCount64();
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
-	RDPEI_CHANNEL_CALLBACK* callback = rdpei->listener_callback->channel_callback;
+	RDPEI_CHANNEL_CALLBACK* callback;
 	UINT error;
-	currentTime = GetTickCount64();
+
+	callback = rdpei->listener_callback->channel_callback;
+
+	/* Just ignore the event if the channel is not connected */
+	if (!callback)
+		return CHANNEL_RC_OK;
 
 	if (!rdpei->previousFrameTime && !rdpei->currentFrameTime)
 	{
