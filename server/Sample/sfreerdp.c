@@ -29,6 +29,7 @@
 #include <winpr/crt.h>
 #include <winpr/ssl.h>
 #include <winpr/synch.h>
+#include <winpr/file.h>
 #include <winpr/string.h>
 #include <winpr/path.h>
 #include <winpr/winsock.h>
@@ -254,7 +255,7 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 		return FALSE;
 	}
 
-	if ((fp = fopen("test_icon.ppm", "r")) == NULL)
+	if ((fp = winpr_fopen("test_icon.ppm", "r")) == NULL)
 	{
 		WLog_ERR(TAG, "Unable to open test icon");
 		return FALSE;

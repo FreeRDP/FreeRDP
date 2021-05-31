@@ -60,7 +60,7 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	char* keyCombination;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
-	xfc->actionScriptExists = PathFileExistsA(xfc->context.settings->ActionScript);
+	xfc->actionScriptExists = winpr_PathFileExists(xfc->context.settings->ActionScript);
 
 	if (!xfc->actionScriptExists)
 		return FALSE;

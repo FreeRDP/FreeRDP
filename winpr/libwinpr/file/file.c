@@ -766,7 +766,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 			}
 		}
 
-		fp = fopen(pFile->lpFileName, "ab");
+		fp = winpr_fopen(pFile->lpFileName, "ab");
 		if (!fp)
 		{
 			SetLastError(map_posix_err(errno));
@@ -800,7 +800,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	}
 
 	if (NULL == fp)
-		fp = fopen(pFile->lpFileName, mode);
+		fp = winpr_fopen(pFile->lpFileName, mode);
 
 	pFile->fp = fp;
 	if (!pFile->fp)

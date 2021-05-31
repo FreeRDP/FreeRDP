@@ -1034,7 +1034,8 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 
 	if (!delayRespond)
 	{
-		union {
+		union
+		{
 			XEvent* ev;
 			XSelectionEvent* sev;
 		} conv;
@@ -1614,7 +1615,8 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 	xf_cliprdr_provide_data(clipboard, clipboard->respond, pDstData, DstSize);
 	{
-		union {
+		union
+		{
 			XEvent* ev;
 			XSelectionEvent* sev;
 		} conv;

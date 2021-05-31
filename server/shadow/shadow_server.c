@@ -680,7 +680,7 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 
 		if (userLibraryPath)
 		{
-			if (!PathFileExistsA(userLibraryPath) && !PathMakePathA(userLibraryPath, 0))
+			if (!winpr_PathFileExists(userLibraryPath) && !winpr_PathMakePath(userLibraryPath, 0))
 			{
 				WLog_ERR(TAG, "Failed to create directory '%s'", userLibraryPath);
 				free(userLibraryPath);
@@ -691,8 +691,8 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 
 			if (userApplicationSupportPath)
 			{
-				if (!PathFileExistsA(userApplicationSupportPath) &&
-				    !PathMakePathA(userApplicationSupportPath, 0))
+				if (!winpr_PathFileExists(userApplicationSupportPath) &&
+				    !winpr_PathMakePath(userApplicationSupportPath, 0))
 				{
 					WLog_ERR(TAG, "Failed to create directory '%s'", userApplicationSupportPath);
 					free(userLibraryPath);
@@ -717,7 +717,7 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 
 		if (configHome)
 		{
-			if (!PathFileExistsA(configHome) && !PathMakePathA(configHome, 0))
+			if (!winpr_PathFileExists(configHome) && !winpr_PathMakePath(configHome, 0))
 			{
 				WLog_ERR(TAG, "Failed to create directory '%s'", configHome);
 				free(configHome);
@@ -743,7 +743,7 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	const char* makecert_argv[6] = { "makecert", "-rdp", "-live", "-silent", "-y", "5" };
 	int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
 
-	if (!PathFileExistsA(server->ConfigPath) && !PathMakePathA(server->ConfigPath, 0))
+	if (!winpr_PathFileExists(server->ConfigPath) && !winpr_PathMakePath(server->ConfigPath, 0))
 	{
 		WLog_ERR(TAG, "Failed to create directory '%s'", server->ConfigPath);
 		return FALSE;
@@ -752,7 +752,7 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	if (!(filepath = GetCombinedPath(server->ConfigPath, "shadow")))
 		return FALSE;
 
-	if (!PathFileExistsA(filepath) && !PathMakePathA(filepath, 0))
+	if (!winpr_PathFileExists(filepath) && !winpr_PathMakePath(filepath, 0))
 	{
 		if (!CreateDirectoryA(filepath, 0))
 		{
@@ -767,7 +767,8 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	if (!server->CertificateFile || !server->PrivateKeyFile)
 		goto out_fail;
 
-	if ((!PathFileExistsA(server->CertificateFile)) || (!PathFileExistsA(server->PrivateKeyFile)))
+	if ((!winpr_PathFileExists(server->CertificateFile)) ||
+	    (!winpr_PathFileExists(server->PrivateKeyFile)))
 	{
 		makecert = makecert_context_new();
 
@@ -780,13 +781,13 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 		if (makecert_context_set_output_file_name(makecert, "shadow") != 1)
 			goto out_fail;
 
-		if (!PathFileExistsA(server->CertificateFile))
+		if (!winpr_PathFileExists(server->CertificateFile))
 		{
 			if (makecert_context_output_certificate_file(makecert, filepath) != 1)
 				goto out_fail;
 		}
 
-		if (!PathFileExistsA(server->PrivateKeyFile))
+		if (!winpr_PathFileExists(server->PrivateKeyFile))
 		{
 			if (makecert_context_output_private_key_file(makecert, filepath) != 1)
 				goto out_fail;

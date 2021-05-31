@@ -27,6 +27,7 @@ freely, subject to the following restrictions:
 
 #include "lodepng.h"
 #include <winpr/wtypes.h>
+#include <winpr/file.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -367,7 +368,7 @@ unsigned lodepng_load_file(unsigned char** out, size_t* outsize, const char* fil
 	*out = 0;
 	*outsize = 0;
 
-	file = fopen(filename, "rb");
+	file = winpr_fopen(filename, "rb");
 	if (!file)
 		return 78;
 
@@ -397,7 +398,7 @@ unsigned lodepng_save_file(const unsigned char* buffer, size_t buffersize, const
 {
 	FILE* file;
 	int ret = 0;
-	file = fopen(filename, "wb");
+	file = winpr_fopen(filename, "wb");
 	if (!file)
 		return 79;
 	if (fwrite((char*)buffer, 1, buffersize, file) != buffersize)

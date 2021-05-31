@@ -126,7 +126,7 @@ static char* FindApplicationPath(char* application)
 	{
 		filename = GetCombinedPath(path, application);
 
-		if (PathFileExistsA(filename))
+		if (winpr_PathFileExists(filename))
 		{
 			break;
 		}

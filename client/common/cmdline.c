@@ -93,7 +93,7 @@ static BOOL freerdp_path_valid(const char* path, BOOL* special)
 	                ? TRUE
 	                : FALSE;
 	if (!isSpecial)
-		isPath = PathFileExistsA(path);
+		isPath = winpr_PathFileExists(path);
 
 	if (special)
 		*special = isSpecial;
@@ -151,9 +151,9 @@ static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, co
 	if (name)
 	{
 		/* Path was entered as secondary argument, swap */
-		if (PathFileExistsA(name))
+		if (winpr_PathFileExists(name))
 		{
-			if (!PathFileExistsA(path) || (!PathIsRelativeA(name) && PathIsRelativeA(path)))
+			if (!winpr_PathFileExists(path) || (!PathIsRelativeA(name) && PathIsRelativeA(path)))
 			{
 				const char* tmp = path;
 				path = name;
