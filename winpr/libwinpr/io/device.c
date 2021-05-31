@@ -135,7 +135,7 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
 	if (!DeviceBasePath)
 		return STATUS_NO_MEMORY;
 
-	if (!PathFileExistsA(DeviceBasePath))
+	if (!winpr_PathFileExists(DeviceBasePath))
 	{
 		if (mkdir(DeviceBasePath, S_IRUSR | S_IWUSR | S_IXUSR) != 0)
 		{
@@ -169,7 +169,7 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
 		return STATUS_NO_MEMORY;
 	}
 
-	if (PathFileExistsA(pDeviceObjectEx->DeviceFileName))
+	if (winpr_PathFileExists(pDeviceObjectEx->DeviceFileName))
 	{
 		if (unlink(pDeviceObjectEx->DeviceFileName) == -1)
 		{

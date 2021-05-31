@@ -630,7 +630,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 		if (!(lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA()))
 			goto out;
 
-		if (!PathFileExistsA(lpPipePath))
+		if (!winpr_PathFileExists(lpPipePath))
 		{
 			if (!CreateDirectoryA(lpPipePath, 0))
 			{
@@ -643,8 +643,8 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		free(lpPipePath);
 
-		if (PathFileExistsA(pNamedPipe->lpFilePath))
-			DeleteFileA(pNamedPipe->lpFilePath);
+		if (winpr_PathFileExists(pNamedPipe->lpFilePath))
+			winpr_DeleteFile(pNamedPipe->lpFilePath);
 
 		if ((serverfd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
@@ -836,7 +836,7 @@ BOOL WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut)
 	status = TRUE;
 	dwSleepInterval = 10;
 
-	while (!PathFileExistsA(lpFilePath))
+	while (!winpr_PathFileExists(lpFilePath))
 	{
 		Sleep(dwSleepInterval);
 		nWaitTime += dwSleepInterval;

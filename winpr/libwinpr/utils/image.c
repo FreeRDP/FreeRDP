@@ -154,7 +154,7 @@ int winpr_bitmap_write(const char* filename, const BYTE* data, int width, int he
 	UINT32 img_size = width * height * (bpp / 8);
 
 	int ret = -1;
-	fp = fopen(filename, "w+b");
+	fp = winpr_fopen(filename, "w+b");
 
 	if (!fp)
 	{

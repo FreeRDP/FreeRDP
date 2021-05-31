@@ -6,6 +6,7 @@
 #include <winpr/wlog.h>
 #include <winpr/image.h>
 #include <winpr/sysinfo.h>
+#include <winpr/file.h>
 
 #include <freerdp/codec/region.h>
 
@@ -278,7 +279,7 @@ static BYTE* test_progressive_load_file(const char* path, const char* file, size
 	if (!filename)
 		return NULL;
 
-	fp = fopen(filename, "r");
+	fp = winpr_fopen(filename, "r");
 	free(filename);
 
 	if (!fp)
@@ -1142,7 +1143,7 @@ int TestFreeRDPCodecProgressive(int argc, char* argv[])
 		goto fail;
 	}
 
-	if (PathFileExistsA(ms_sample_path))
+	if (winpr_PathFileExists(ms_sample_path))
 	{
 		/*
 		if (test_progressive_ms_sample(ms_sample_path) < 0)

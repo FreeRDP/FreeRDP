@@ -24,6 +24,8 @@
 #include <errno.h>
 #include <ctype.h>
 
+#include <winpr/file.h>
+
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
@@ -791,7 +793,7 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 	FILE* fp = NULL;
 	size_t read_size;
 	INT64 file_size;
-	fp = fopen(name, "r");
+	fp = winpr_fopen(name, "r");
 
 	if (!fp)
 	{
@@ -944,7 +946,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 		return FALSE;
 	}
 
-	fp = fopen(name, "w+b");
+	fp = winpr_fopen(name, "w+b");
 
 	if (fp)
 	{

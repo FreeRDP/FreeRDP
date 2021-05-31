@@ -29,6 +29,7 @@
 #include <winpr/print.h>
 #include <winpr/windows.h>
 #include <winpr/ssl.h>
+#include <winpr/file.h>
 
 #include <freerdp/log.h>
 #include <freerdp/client/file.h>
@@ -1177,7 +1178,7 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 
 	free(file->filename);
 	file->filename = _strdup(name);
-	fp = fopen(name, "r");
+	fp = winpr_fopen(name, "r");
 
 	if (!fp)
 	{

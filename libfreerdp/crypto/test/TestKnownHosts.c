@@ -34,12 +34,12 @@ static int prepare(const char* currentFileV2, const char* legacyFileV2, const ch
 	FILE* fl = NULL;
 	FILE* fc = NULL;
 	size_t i;
-	fc = fopen(currentFileV2, "w+");
+	fc = winpr_fopen(currentFileV2, "w+");
 
 	if (!fc)
 		goto finish;
 
-	fl = fopen(legacyFileV2, "w+");
+	fl = winpr_fopen(legacyFileV2, "w+");
 
 	if (!fl)
 		goto finish;
@@ -55,7 +55,7 @@ static int prepare(const char* currentFileV2, const char* legacyFileV2, const ch
 	fc = NULL;
 	fclose(fl);
 	fl = NULL;
-	fl = fopen(legacyFile, "w+");
+	fl = winpr_fopen(legacyFile, "w+");
 
 	if (!fl)
 		goto finish;

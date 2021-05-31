@@ -562,7 +562,7 @@ static int dump_test_certificate_files(void)
 	if (!fullpath)
 		return -1;
 
-	fp = fopen(fullpath, "w+");
+	fp = winpr_fopen(fullpath, "w+");
 	if (fp)
 	{
 		if (fwrite((void*)test_localhost_crt, sizeof(test_localhost_crt), 1, fp) != 1)
@@ -578,7 +578,7 @@ static int dump_test_certificate_files(void)
 	fullpath = GetCombinedPath("/tmp", "localhost.key");
 	if (!fullpath)
 		return -1;
-	fp = fopen(fullpath, "w+");
+	fp = winpr_fopen(fullpath, "w+");
 	if (fp && fwrite((void*)test_localhost_key, sizeof(test_localhost_key), 1, fp) != 1)
 		goto out_fail;
 
