@@ -221,7 +221,7 @@ static char* GetPath_XDG_CACHE_HOME(void)
 	{
 		path = GetCombinedPath(home, "cache");
 
-		if (!PathFileExistsA(path))
+		if (!winpr_PathFileExists(path))
 			if (!CreateDirectoryA(path, NULL))
 				path = NULL;
 	}
@@ -621,7 +621,7 @@ BOOL PathFileExistsW(LPCWSTR pszPath)
 	if (ConvertFromUnicode(CP_UTF8, 0, pszPath, -1, &lpFileNameA, 0, NULL, NULL) < 1)
 		return FALSE;
 
-	ret = PathFileExistsA(lpFileNameA);
+	ret = winpr_PathFileExists(lpFileNameA);
 	free(lpFileNameA);
 	return ret;
 }

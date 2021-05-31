@@ -125,7 +125,7 @@ static int prepare(const char* currentFileV2)
 		                    "otherurl\t3389\taa:bb:cc:dd\tsubject2\tissuer2\r" };
 	FILE* fc = NULL;
 	size_t i;
-	fc = fopen(currentFileV2, "w+");
+	fc = winpr_fopen(currentFileV2, "w+");
 
 	if (!fc)
 		goto finish;
@@ -168,7 +168,7 @@ static BOOL setup_config(rdpSettings** settings)
 	path = GetKnownSubPath(KNOWN_PATH_TEMP, sname);
 	if (!path)
 		goto fail;
-	if (!PathFileExistsA(path))
+	if (!winpr_PathFileExists(path))
 	{
 		if (!CreateDirectoryA(path, NULL))
 		{
@@ -576,7 +576,7 @@ finish:
 	printf("certificate_store_free\n");
 	certificate_store_free(store);
 
-	DeleteFileA(currentFileV2);
+	winpr_DeleteFile(currentFileV2);
 	free(currentFileV2);
 
 	return rc;

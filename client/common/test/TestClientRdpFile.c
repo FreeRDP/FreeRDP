@@ -573,11 +573,11 @@ int TestClientRdpFile(int argc, char* argv[])
 	rc = 0;
 fail:
 	if (utfname)
-		DeleteFileA(utfname);
+		winpr_DeleteFile(utfname);
 	if (uniname)
-		DeleteFileA(uniname);
+		winpr_DeleteFile(uniname);
 	if (base)
-		RemoveDirectoryA(base);
+		winpr_RemoveDirectory(base);
 	free(utfname);
 	free(uniname);
 	free(base);

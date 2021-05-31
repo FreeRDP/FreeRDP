@@ -25,6 +25,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/file.h>
 #include <winpr/print.h>
 
 #include "rdtk_engine.h"
@@ -154,7 +155,7 @@ static char* rdtk_font_load_descriptor_file(const char* filename, int* pSize)
 	FILE* fp = NULL;
 	size_t readSize;
 	size_t fileSize;
-	fp = fopen(filename, "r");
+	fp = winpr_fopen(filename, "r");
 
 	if (!fp)
 		return NULL;
@@ -611,10 +612,10 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 
 	sprintf_s(fontDescriptorFile, length + 8, "%s.xml", fontBaseFile);
 
-	if (!PathFileExistsA(fontImageFile))
+	if (!winpr_PathFileExists(fontImageFile))
 		goto cleanup;
 
-	if (!PathFileExistsA(fontDescriptorFile))
+	if (!winpr_PathFileExists(fontDescriptorFile))
 		goto cleanup;
 
 	font = (rdtkFont*)calloc(1, sizeof(rdtkFont));

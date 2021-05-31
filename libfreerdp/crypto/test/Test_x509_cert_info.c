@@ -1,3 +1,4 @@
+#include <winpr/file.h>
 #include <freerdp/crypto/crypto.h>
 
 typedef char* (*get_field_pr)(X509*);
@@ -87,7 +88,7 @@ static int TestCertificateFile(const char* certificate_path,
                                const certificate_test_t* certificate_tests, int count)
 {
 	X509* certificate;
-	FILE* certificate_file = fopen(certificate_path, "r");
+	FILE* certificate_file = winpr_fopen(certificate_path, "r");
 	int success = 0;
 	int i;
 

@@ -27,6 +27,7 @@
 #include <winpr/crypto.h>
 #include <winpr/shell.h>
 #include <winpr/path.h>
+#include <winpr/file.h>
 
 #include <freerdp/log.h>
 
@@ -188,61 +189,6 @@ out:
 	return ret;
 }
 
-static FILE* fopen_wrap(const char* path, const char* mode)
-{
-#if defined(_WIN32)
-	{
-		errno_t err;
-		FILE* fp;
-		WCHAR* wCalPath = NULL;
-		WCHAR* wMode = NULL;
-		int status = ConvertToUnicode(CP_UTF8, 0, path, -1, &wCalPath, 0);
-		if (status <= 0)
-			return NULL;
-		status = ConvertToUnicode(CP_UTF8, 0, mode, -1, &wMode, 0);
-		if (status <= 0)
-		{
-			free(wCalPath);
-			return NULL;
-		}
-		err = _wfopen_s(&fp, wCalPath, wMode);
-		free(wCalPath);
-		free(wMode);
-		if (err != 0)
-			return NULL;
-		return fp;
-	}
-#else
-	return fopen(path, mode);
-#endif
-}
-
-static BOOL path_exists(const char* path)
-{
-	BOOL rc = FALSE;
-	WCHAR* wpath = NULL;
-	if (!path)
-		return FALSE;
-	if (ConvertToUnicode(CP_UTF8, 0, path, -1, &wpath, 0) <= 0)
-		return FALSE;
-	rc = PathFileExistsW(wpath);
-	free(wpath);
-	return rc;
-}
-
-static BOOL path_make(const char* path, LPSECURITY_ATTRIBUTES lpAttributes)
-{
-	BOOL rc = FALSE;
-	WCHAR* wpath = NULL;
-	if (!path)
-		return FALSE;
-	if (ConvertToUnicode(CP_UTF8, 0, path, -1, &wpath, 0) <= 0)
-		return FALSE;
-	rc = PathMakePathW(wpath, lpAttributes);
-	free(wpath);
-	return rc;
-}
-
 static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, const char* hostname)
 {
 	char hash[41];
@@ -255,9 +201,9 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, cons
 	size_t written;
 	BOOL ret = FALSE;
 
-	if (!path_exists(settings->ConfigPath))
+	if (!winpr_PathFileExists(settings->ConfigPath))
 	{
-		if (!path_make(settings->ConfigPath, 0))
+		if (!winpr_PathMakePath(settings->ConfigPath, 0))
 		{
 			WLog_ERR(TAG, "error creating directory '%s'", settings->ConfigPath);
 			goto out;
@@ -268,9 +214,9 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, cons
 	if (!(licenseStorePath = GetCombinedPath(settings->ConfigPath, licenseStore)))
 		goto out;
 
-	if (!path_exists(licenseStorePath))
+	if (!winpr_PathFileExists(licenseStorePath))
 	{
-		if (!path_make(licenseStorePath, 0))
+		if (!winpr_PathMakePath(licenseStorePath, 0))
 		{
 			WLog_ERR(TAG, "error creating directory '%s'", licenseStorePath);
 			goto out;
@@ -293,7 +239,7 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, cons
 	if (ConvertToUnicode(CP_UTF8, 0, filepath, -1, &wFilepath, 0) <= 0)
 		goto out;
 
-	fp = fopen_wrap(filepathNew, "wb");
+	fp = winpr_fopen(filepathNew, "wb");
 	if (!fp)
 		goto out;
 
@@ -341,7 +287,7 @@ static BYTE* loadCalFile(rdpSettings* settings, const char* hostname, size_t* da
 	if (!(calPath = GetCombinedPath(licenseStorePath, calFilename)))
 		goto error_path;
 
-	fp = fopen_wrap(calPath, "rb");
+	fp = winpr_fopen(calPath, "rb");
 	if (!fp)
 		goto error_open;
 

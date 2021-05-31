@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 #include <winpr/string.h>
+#include <winpr/file.h>
 
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
@@ -808,7 +809,7 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 	if (_strnicmp(fname, "file://", 7) == 0)
 		fname = &name[7];
 
-	fp = fopen(fname, "r");
+	fp = winpr_fopen(fname, "r");
 
 	if (!fp)
 	{
@@ -1111,7 +1112,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 		return FALSE;
 	}
 
-	fp = fopen(name, "w+b");
+	fp = winpr_fopen(name, "w+b");
 
 	if (fp)
 	{

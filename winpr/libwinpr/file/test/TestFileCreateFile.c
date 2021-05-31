@@ -45,7 +45,7 @@ int TestFileCreateFile(int argc, char* argv[])
 		return -1;
 	}
 
-	if (!PathFileExistsA(name))
+	if (!winpr_PathFileExists(name))
 		rc = -1;
 
 	if (!WriteFile(handle, buffer, sizeof(buffer), &written, NULL))
@@ -81,10 +81,10 @@ int TestFileCreateFile(int argc, char* argv[])
 	if (!CloseHandle(handle))
 		rc = -1;
 
-	if (!DeleteFileA(name))
+	if (!winpr_DeleteFile(name))
 		rc = -1;
 
-	if (PathFileExistsA(name))
+	if (winpr_PathFileExists(name))
 		rc = -1;
 
 	free(name);

@@ -2705,7 +2705,7 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 	          GetCurrentProcessId());
 	free(tmpPath);
 
-	if (!PathFileExistsA(basePath) && !PathMakePathA(basePath, 0))
+	if (!winpr_PathFileExists(basePath) && !winpr_PathMakePath(basePath, 0))
 	{
 		WLog_ERR(TAG, "Failed to create directory '%s'", basePath);
 		free(basePath);
@@ -2746,7 +2746,7 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 #endif
 	fuse_opt_free_args(&args);
 
-	RemoveDirectoryA(clipboard->delegate->basePath);
+	winpr_RemoveDirectory(clipboard->delegate->basePath);
 
 	ExitThread(0);
 	return 0;
@@ -2999,7 +2999,7 @@ void xf_clipboard_free(xfClipboard* clipboard)
 			/* 	not elegant but works for umounting FUSE
 			    fuse_chan must receieve a oper buf to unblock fuse_session_receive_buf function.
 			*/
-			PathFileExistsA(clipboard->delegate->basePath);
+			winpr_PathFileExists(clipboard->delegate->basePath);
 		}
 		WaitForSingleObject(clipboard->fuse_thread, INFINITE);
 		CloseHandle(clipboard->fuse_thread);
