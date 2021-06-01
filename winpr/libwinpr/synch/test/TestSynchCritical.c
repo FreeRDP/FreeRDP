@@ -315,8 +315,11 @@ int TestSynchCritical(int argc, char* argv[])
 	DWORD dwDeadLockDetectionTimeMs;
 	DWORD i;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	dwDeadLockDetectionTimeMs =
-	    2 * TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS * TEST_SYNC_CRITICAL_TEST1_RUNS;
+	    6 * TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS * TEST_SYNC_CRITICAL_TEST1_RUNS;
 
 	printf("Deadlock will be assumed after %" PRIu32 " ms.\n", dwDeadLockDetectionTimeMs);
 
