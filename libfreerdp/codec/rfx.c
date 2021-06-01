@@ -155,18 +155,19 @@ static void rfx_tile_init(void* obj)
 
 static void* rfx_decoder_tile_new(const void* val)
 {
+	const size_t size = 4 * 64 * 64;
 	RFX_TILE* tile = NULL;
 	WINPR_UNUSED(val);
 
 	if (!(tile = (RFX_TILE*)calloc(1, sizeof(RFX_TILE))))
 		return NULL;
 
-	if (!(tile->data = (BYTE*)_aligned_malloc(4 * 64 * 64, 16)))
+	if (!(tile->data = (BYTE*)_aligned_malloc(size, 16)))
 	{
 		free(tile);
 		return NULL;
 	}
-
+	memset(tile->data, 0xff, size);
 	tile->allocated = TRUE;
 	return tile;
 }
