@@ -1146,7 +1146,7 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 				          contactIdlocal, p);
 				p = 359;
 			}
-			contact.orientation = va_arg(ap, UINT32);
+			contact.orientation = p;
 		}
 		if (fieldFlags & CONTACT_DATA_PRESSURE_PRESENT)
 		{
