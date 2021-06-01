@@ -211,7 +211,7 @@ static int testSuccess(int port)
 	if (!CreateProcessA(exe, commandLine, NULL, NULL, FALSE, 0, NULL, wpath, &si, &process))
 		goto fail;
 
-	Sleep(1 * 1000); /* let the server start */
+	Sleep(3 * 1000); /* let the server start */
 	r = runInstance(argc, clientArgs, NULL);
 
 	if (!TerminateProcess(process.hProcess, 0))
