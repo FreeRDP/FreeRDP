@@ -157,6 +157,7 @@ static BOOL test_bin_tohex_string_alloc(void)
 			goto fail;
 		if (memcmp(strbuffer1, str, sizeof(strbuffer1)) != 0)
 			goto fail;
+		free(str);
 		str = winpr_BinToHexString(binbuffer1, sizeof(binbuffer1), TRUE);
 		if (!str)
 			goto fail;
