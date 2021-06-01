@@ -414,6 +414,8 @@ static INLINE BOOL progressive_tile_allocate(RFX_PROGRESSIVE_TILE* tile)
 	{
 		size_t dataLen = tile->stride * tile->height * 1ULL;
 		tile->data = (BYTE*)_aligned_malloc(dataLen, 16);
+		if (tile->data)
+			memset(tile->data, 0xFF, dataLen);
 	}
 
 	{

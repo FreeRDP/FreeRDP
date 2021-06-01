@@ -109,7 +109,11 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	{
 		surface = (gdiGfxSurface*)context->GetSurfaceData(context, pSurfaceIds[index]);
 
-		if (!surface || !surface->outputMapped)
+		if (!surface)
+			continue;
+
+		memset(surface->data, 0xFF, surface->scanline * surface->height);
+		if (!surface->outputMapped)
 			continue;
 
 		region16_clear(&surface->invalidRegion);
@@ -858,6 +862,7 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* con
 	}
 
 	region16_init(&invalidRegion);
+
 	rc = progressive_decompress(surface->codecs->progressive, cmd->data, cmd->length, surface->data,
 	                            surface->format, surface->scanline, cmd->left, cmd->top,
 	                            &invalidRegion, cmd->surfaceId, gdi->frameId);
@@ -1032,6 +1037,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 		goto fail;
 	}
 
+	memset(surface->data, 0xFF, surface->scanline * surface->height);
 	surface->outputMapped = FALSE;
 	region16_init(&surface->invalidRegion);
 	rc = context->SetSurfaceData(context, surface->surfaceId, (void*)surface);
