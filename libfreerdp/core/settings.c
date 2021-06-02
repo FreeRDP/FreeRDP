@@ -547,11 +547,13 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings->DynamicChannelArray)
 		goto out_fail;
 
-	settings->TcpKeepAlive = TRUE;
-	settings->TcpKeepAliveRetries = 3;
-	settings->TcpKeepAliveDelay = 5;
-	settings->TcpKeepAliveInterval = 2;
-	settings->TcpAckTimeout = 9000;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_TcpKeepAlive, TRUE) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpKeepAliveRetries, 3) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpKeepAliveDelay, 5) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpKeepAliveInterval, 2) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpAckTimeout, 9000) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpConnectTimeout, 15000))
+		goto out_fail;
 
 	if (!settings->ServerMode)
 	{
