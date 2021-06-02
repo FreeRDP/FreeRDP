@@ -127,13 +127,13 @@ int TestPrimitivesYCoCg(int argc, char* argv[])
 			do
 			{
 				winpr_RAND((BYTE*)&w, sizeof(w));
-				w %= 2048;
+				w %= 2048 / 4;
 			} while (w < 16);
 
 			do
 			{
 				winpr_RAND((BYTE*)&h, sizeof(h));
-				h %= 2048;
+				h %= 2048 / 4;
 			} while (h < 16);
 
 			if (!test_YCoCgRToRGB_8u_AC4R_func(w, h))
@@ -141,8 +141,8 @@ int TestPrimitivesYCoCg(int argc, char* argv[])
 		}
 	}
 
-	/* Test once with full HD */
-	if (!test_YCoCgRToRGB_8u_AC4R_func(1920, 1080))
+	/* Test once with full HD/4 */
+	if (!test_YCoCgRToRGB_8u_AC4R_func(1920 / 4, 1080 / 4))
 		return 1;
 
 	return 0;

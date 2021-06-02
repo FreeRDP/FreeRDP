@@ -6,7 +6,7 @@
 
 static HANDLE s_sync = NULL;
 
-static int runInstance(int argc, char* argv[], freerdp** inst)
+static int runInstance(int argc, char* argv[], freerdp** inst, DWORD timeout)
 {
 	int rc = -1;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
@@ -23,6 +23,9 @@ static int runInstance(int argc, char* argv[], freerdp** inst)
 		*inst = context->instance;
 
 	if (freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE) < 0)
+		goto finish;
+
+	if (!freerdp_settings_set_uint32(context->settings, FreeRDP_TcpConnectTimeout, timeout))
 		goto finish;
 
 	if (!freerdp_client_load_addins(context->channels, context->settings))
@@ -52,14 +55,15 @@ finish:
 
 static int testTimeout(int port)
 {
+    const DWORD timeout = 200;
 	DWORD start, end, diff;
 	char arg1[] = "/v:192.0.2.1:XXXXX";
-	char* argv[] = { "test", "/v:192.0.2.1:XXXXX", NULL };
+	char* argv[] = { "test", "/v:192.0.2.1:XXXXX" };
 	int rc;
 	_snprintf(arg1, 18, "/v:192.0.2.1:%d", port);
 	argv[1] = arg1;
 	start = GetTickCount();
-	rc = runInstance(2, argv, NULL);
+	rc = runInstance(ARRAYSIZE(argv), argv, NULL, timeout);
 	end = GetTickCount();
 
 	if (rc != 1)
@@ -67,10 +71,10 @@ static int testTimeout(int port)
 
 	diff = end - start;
 
-	if (diff > 16000)
+	if (diff > 4 * timeout)
 		return -1;
 
-	if (diff < 14000)
+	if (diff < timeout)
 		return -1;
 
 	printf("%s: Success!\n", __FUNCTION__);
@@ -86,12 +90,12 @@ struct testThreadArgs
 static DWORD WINAPI testThread(LPVOID arg)
 {
 	char arg1[] = "/v:192.0.2.1:XXXXX";
-	char* argv[] = { "test", "/v:192.0.2.1:XXXXX", NULL };
+	char* argv[] = { "test", "/v:192.0.2.1:XXXXX" };
 	int rc;
 	struct testThreadArgs* args = arg;
 	_snprintf(arg1, 18, "/v:192.0.2.1:%d", args->port);
 	argv[1] = arg1;
-	rc = runInstance(2, argv, args->arg);
+	rc = runInstance(ARRAYSIZE(argv), argv, args->arg, 5000);
 
 	if (rc != 1)
 		ExitThread(-1);
@@ -125,7 +129,7 @@ static int testAbort(int port)
 	}
 
 	WaitForSingleObject(s_sync, INFINITE);
-	Sleep(1000); /* Wait until freerdp_connect has been called */
+	Sleep(100); /* Wait until freerdp_connect has been called */
 	freerdp_abort_connect(instance);
 	status = WaitForSingleObject(instance->context->abortEvent, 0);
 
@@ -211,8 +215,8 @@ static int testSuccess(int port)
 	if (!CreateProcessA(exe, commandLine, NULL, NULL, FALSE, 0, NULL, wpath, &si, &process))
 		goto fail;
 
-	Sleep(3 * 1000); /* let the server start */
-	r = runInstance(argc, clientArgs, NULL);
+	Sleep(600); /* let the server start */
+	r = runInstance(argc, clientArgs, NULL, 5000);
 
 	if (!TerminateProcess(process.hProcess, 0))
 		goto fail;

@@ -6,6 +6,8 @@
 
 static DWORD WINAPI thread_func(LPVOID arg)
 {
+	WINPR_UNUSED(arg);
+
 	/* exists of the thread the quickest as possible */
 	ExitThread(0);
 	return 0;
@@ -17,9 +19,12 @@ int TestThreadExitThread(int argc, char* argv[])
 	DWORD waitResult;
 	int i;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* FIXME: create some noise to better guaranty the test validity and
 	 * decrease the number of loops */
-	for (i = 0; i < 50000; i++)
+	for (i = 0; i < 5000; i++)
 	{
 		thread = CreateThread(NULL, 0, thread_func, NULL, 0, NULL);
 
@@ -29,7 +34,7 @@ int TestThreadExitThread(int argc, char* argv[])
 			return -1;
 		}
 
-		waitResult = WaitForSingleObject(thread, 1000);
+		waitResult = WaitForSingleObject(thread, 100);
 		if (waitResult != WAIT_OBJECT_0)
 		{
 			/* When the thread exits before the internal thread_list

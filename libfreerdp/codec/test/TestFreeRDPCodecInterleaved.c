@@ -133,7 +133,7 @@ static BOOL run_encode_decode(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
 	PROFILER_CREATE(profiler_comp, get_profiler_name(TRUE, bpp))
 	PROFILER_CREATE(profiler_decomp, get_profiler_name(FALSE, bpp))
 
-	for (x = 0; x < 500; x++)
+	for (x = 0; x < 50; x++)
 	{
 		if (!run_encode_decode_single(bpp, encoder, decoder
 #if defined(WITH_PROFILER)

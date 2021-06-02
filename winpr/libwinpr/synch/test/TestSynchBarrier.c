@@ -11,7 +11,7 @@ static SYNCHRONIZATION_BARRIER gBarrier;
 static HANDLE gStartEvent = NULL;
 static LONG gErrorCount = 0;
 
-#define MAX_SLEEP_MS 32
+#define MAX_SLEEP_MS 22
 
 struct test_params
 {
@@ -181,7 +181,7 @@ int TestSynchBarrier(int argc, char* argv[])
 	SYSTEM_INFO sysinfo;
 	DWORD dwMaxThreads;
 	DWORD dwMinThreads;
-	DWORD dwNumLoops = 200;
+	DWORD dwNumLoops = 10;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

@@ -54,15 +54,15 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 	if (!hTimer)
 		goto cleanup;
 
-	due.QuadPart = -1000 * 1000LL; /* 1 seconds */
+	due.QuadPart = -1000 * 100LL; /* 0.1 seconds */
 	apcData.StartTime = GetTickCount();
-	bSuccess = SetWaitableTimer(hTimer, &due, 100, TimerAPCProc, &apcData, FALSE);
+	bSuccess = SetWaitableTimer(hTimer, &due, 10, TimerAPCProc, &apcData, FALSE);
 
 	if (!bSuccess)
 		goto cleanup;
 
-	/* nothing shall happen after 1.2 second, because thread is not in alertable state */
-	rc = WaitForSingleObject(g_Event, 1200);
+	/* nothing shall happen after 0.12 second, because thread is not in alertable state */
+	rc = WaitForSingleObject(g_Event, 120);
 	if (rc != WAIT_TIMEOUT)
 		goto cleanup;
 

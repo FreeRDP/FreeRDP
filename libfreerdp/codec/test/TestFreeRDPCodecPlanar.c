@@ -5547,9 +5547,9 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 	       FreeRDPGetColorFormatName(dstFormat));
 	fflush(stdout);
 
-	for (j = 0; j < 100; j += 8)
+	for (j = 0; j < 32; j += 8)
 	{
-		for (i = 4; i < 64; i += 8)
+		for (i = 4; i < 32; i += 8)
 		{
 			UINT32 compressedSize;
 			const UINT32 fill = j;
@@ -5670,7 +5670,7 @@ static BOOL FuzzPlanar(void)
 	if (!planar)
 		goto fail;
 
-	for (x = 0; x < 10000; x++)
+	for (x = 0; x < 100; x++)
 	{
 		BYTE data[0x10000] = { 0 };
 		size_t dataSize = 0x10000;
