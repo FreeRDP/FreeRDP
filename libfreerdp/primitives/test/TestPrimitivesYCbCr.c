@@ -1720,6 +1720,8 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 	const primitives_t* generics = primitives_get_generic();
 	UINT32 x;
 
+	WINPR_UNUSED(argv);
+
 	if (argc < 2)
 	{
 		{
@@ -1757,13 +1759,13 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 			do
 			{
 				winpr_RAND((BYTE*)&roi.width, sizeof(roi.width));
-				roi.width %= 2048;
+				roi.width %= 2048 / 4;
 			} while (roi.width < 16);
 
 			do
 			{
 				winpr_RAND((BYTE*)&roi.height, sizeof(roi.height));
-				roi.height %= 2048;
+				roi.height %= 2048 / 4;
 			} while (roi.height < 16);
 
 			for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
@@ -1795,7 +1797,7 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 	/* Do a performance run with full HD */
 	else
 	{
-		prim_size_t roi = { 1928, 1080 };
+		prim_size_t roi = { 1928 / 8, 1080 / 8 };
 
 		for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 		{

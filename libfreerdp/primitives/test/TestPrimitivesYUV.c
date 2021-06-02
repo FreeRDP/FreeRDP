@@ -863,7 +863,7 @@ int TestPrimitivesYUV(int argc, char* argv[])
 	prim_test_setup(FALSE);
 	primitives_t* prims = primitives_get();
 
-	for (x = 0; x < 10; x++)
+	for (x = 0; x < 5; x++)
 	{
 		prim_size_t roi;
 

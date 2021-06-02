@@ -9,7 +9,7 @@
 
 static DWORD WINAPI test_thread(LPVOID arg)
 {
-	long timeout = 300 + (rand() % 1000);
+	long timeout = 30 + (rand() % 100);
 	WINPR_UNUSED(arg);
 	Sleep(timeout);
 	ExitThread(0);
@@ -62,7 +62,7 @@ static BOOL TestWaitForAll(void)
 		return FALSE;
 	}
 
-	ret = WaitForMultipleObjects(THREADS, threads, TRUE, 50);
+	ret = WaitForMultipleObjects(THREADS, threads, TRUE, 10);
 	if (ret != WAIT_TIMEOUT)
 	{
 		fprintf(stderr, "%s: WaitForMultipleObjects bWaitAll, timeout 50 failed, ret=%d\n",
@@ -135,7 +135,7 @@ static BOOL TestWaitOneTimeout(void)
 		return FALSE;
 	}
 
-	ret = WaitForMultipleObjects(THREADS, threads, FALSE, 50);
+	ret = WaitForMultipleObjects(THREADS, threads, FALSE, 10);
 	if (ret != WAIT_TIMEOUT)
 	{
 		fprintf(stderr, "%s: WaitForMultipleObjects timeout 50 failed, ret=%d\n", __FUNCTION__,
