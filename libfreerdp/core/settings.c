@@ -606,7 +606,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpKeepAliveRetries, 3) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpKeepAliveDelay, 5) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpKeepAliveInterval, 2) ||
-	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpAckTimeout, 9000))
+	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpAckTimeout, 9000) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpConnectTimeout, 15000))
 		goto out_fail;
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
