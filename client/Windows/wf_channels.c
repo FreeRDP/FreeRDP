@@ -57,6 +57,10 @@ void wf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
 	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		wfc->disp = (DispClientContext*)e->pInterface;
+	}
 }
 
 void wf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
@@ -81,5 +85,9 @@ void wf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEven
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
+	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		wfc->disp = NULL;
 	}
 }

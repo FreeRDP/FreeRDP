@@ -276,6 +276,11 @@ static void wf_add_system_menu(wfContext* wfc)
 		return;
 	}
 
+	if (wfc->context.settings->DynamicResolutionUpdate)
+	{
+		return;
+	}
+
 	hMenu = GetSystemMenu(wfc->hwnd, FALSE);
 	ZeroMemory(&item_info, sizeof(MENUITEMINFO));
 	item_info.fMask = MIIM_CHECKMARKS | MIIM_FTYPE | MIIM_ID | MIIM_STRING | MIIM_DATA;
@@ -899,7 +904,7 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 	// prevent infinite message loop
 	wfc->disablewindowtracking = TRUE;
 
-	if (wfc->context.settings->SmartSizing)
+	if (wfc->context.settings->SmartSizing || wfc->context.settings->DynamicResolutionUpdate)
 	{
 		wfc->xCurrentScroll = 0;
 		wfc->yCurrentScroll = 0;

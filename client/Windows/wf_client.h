@@ -134,6 +134,8 @@ extern "C"
 		RailClientContext* rail;
 		wHashTable* railWindows;
 		BOOL isConsole;
+
+		DispClientContext* disp;
 	};
 
 	/**
