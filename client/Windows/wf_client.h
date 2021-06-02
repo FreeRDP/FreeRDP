@@ -136,6 +136,8 @@ extern "C"
 		BOOL isConsole;
 
 		DispClientContext* disp;
+		UINT64 lastSentDate;
+		BOOL wasMaximized;
 	};
 
 	/**
