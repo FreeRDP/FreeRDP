@@ -39,6 +39,10 @@ static HWND g_focus_hWnd;
 #define X_POS(lParam) ((UINT16)(lParam & 0xFFFF))
 #define Y_POS(lParam) ((UINT16)((lParam >> 16) & 0xFFFF))
 
+#define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
+static UINT64 lastSentDate;
+static BOOL wasMaximized;
+
 static BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1,
                          int y1, DWORD rop);
 static BOOL wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
@@ -221,7 +225,8 @@ static void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 	// Holding the CTRL key down while resizing the window will force the desktop aspect ratio.
 	LPRECT rect;
 
-	if (settings->SmartSizing && (GetAsyncKeyState(VK_CONTROL) & 0x8000))
+	if ((settings->SmartSizing || settings->DynamicResolutionUpdate) &&
+	    (GetAsyncKeyState(VK_CONTROL) & 0x8000))
 	{
 		rect = (LPRECT)wParam;
 
@@ -249,6 +254,51 @@ static void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 				rect->left = rect->right - (settings->DesktopWidth * (rect->bottom - rect->top) /
 				                            settings->DesktopHeight);
 				break;
+		}
+	}
+}
+
+void wf_send_resize(wfContext* wfc)
+{
+	RECT windowRect;
+	DISPLAY_CONTROL_MONITOR_LAYOUT* layout;
+	int targetWidth = wfc->client_width;
+	int targetHeight = wfc->client_height;
+	rdpSettings* settings = wfc->context.settings;
+
+	if (settings->DynamicResolutionUpdate && wfc->disp != NULL)
+	{
+		if (GetTickCount64() - lastSentDate > RESIZE_MIN_DELAY)
+		{
+			if (wfc->fullscreen)
+			{
+				GetWindowRect(wfc->hwnd, &windowRect);
+				targetWidth = windowRect.right - windowRect.left;
+				targetHeight = windowRect.bottom - windowRect.top;
+			}
+			if (settings->SmartSizingWidth != targetWidth ||
+			    settings->SmartSizingHeight != targetHeight)
+			{
+				layout = calloc(1, sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
+				layout->Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
+				layout->Top = layout->Left = 0;
+				layout->Width = targetWidth;
+				layout->Height = targetHeight;
+				layout->Orientation = settings->DesktopOrientation;
+				layout->DesktopScaleFactor = settings->DesktopScaleFactor;
+				layout->DeviceScaleFactor = settings->DeviceScaleFactor;
+				layout->PhysicalWidth = targetWidth;
+				layout->PhysicalHeight = targetHeight;
+				if (IFCALLRESULT(CHANNEL_RC_OK, wfc->disp->SendMonitorLayout, wfc->disp, 1,
+				                 layout) != CHANNEL_RC_OK)
+				{
+					WLog_ERR("", "SendMonitorLayout failed.");
+				}
+				free(layout);
+				settings->SmartSizingWidth = targetWidth;
+				settings->SmartSizingHeight = targetHeight;
+			}
+			lastSentDate = GetTickCount64();
 		}
 	}
 }
@@ -287,7 +337,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			case WM_GETMINMAXINFO:
-				if (wfc->context.settings->SmartSizing)
+				if (wfc->context.settings->SmartSizing ||
+				    wfc->context.settings->DynamicResolutionUpdate)
 				{
 					processed = FALSE;
 				}
@@ -324,6 +375,11 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					wfc->client_x = windowRect.left;
 					wfc->client_y = windowRect.top;
 				}
+				else
+				{
+					wasMaximized = TRUE;
+					wf_send_resize(wfc);
+				}
 
 				if (wfc->client_width && wfc->client_height)
 				{
@@ -332,15 +388,25 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					// Workaround: when the window is maximized, the call to "ShowScrollBars"
 					// returns TRUE but has no effect.
 					if (wParam == SIZE_MAXIMIZED && !wfc->fullscreen)
+					{
 						SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, windowRect.right - windowRect.left,
 						             windowRect.bottom - windowRect.top,
 						             SWP_NOMOVE | SWP_FRAMECHANGED);
+						wasMaximized = TRUE;
+						wf_send_resize(wfc);
+					}
+					else if (wParam == SIZE_RESTORED && !wfc->fullscreen && wasMaximized)
+					{
+						wasMaximized = FALSE;
+						wf_send_resize(wfc);
+					}
 				}
 
 				break;
 
 			case WM_EXITSIZEMOVE:
 				wf_size_scrollbars(wfc, wfc->client_width, wfc->client_height);
+				wf_send_resize(wfc);
 				break;
 
 			case WM_ERASEBKGND:
