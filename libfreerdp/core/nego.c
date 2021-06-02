@@ -277,6 +277,9 @@ static BOOL nego_tcp_connect(rdpNego* nego)
 {
 	if (!nego->TcpConnected)
 	{
+		const UINT32 TcpConnectTimeout = freerdp_settings_get_uint32(
+		    nego->transport->context->settings, FreeRDP_TcpConnectTimeout);
+
 		if (nego->GatewayEnabled)
 		{
 			if (nego->GatewayBypassLocal)
@@ -286,20 +289,21 @@ static BOOL nego_tcp_connect(rdpNego* nego)
 				          "Detecting if host can be reached locally. - This might take some time.");
 				WLog_INFO(TAG, "To disable auto detection use /gateway-usage-method:direct");
 				transport_set_gateway_enabled(nego->transport, FALSE);
-				nego->TcpConnected =
-				    transport_connect(nego->transport, nego->hostname, nego->port, 1);
+				nego->TcpConnected = transport_connect(nego->transport, nego->hostname, nego->port,
+				                                       TcpConnectTimeout);
 			}
 
 			if (!nego->TcpConnected)
 			{
 				transport_set_gateway_enabled(nego->transport, TRUE);
-				nego->TcpConnected =
-				    transport_connect(nego->transport, nego->hostname, nego->port, 15);
+				nego->TcpConnected = transport_connect(nego->transport, nego->hostname, nego->port,
+				                                       TcpConnectTimeout);
 			}
 		}
 		else
 		{
-			nego->TcpConnected = transport_connect(nego->transport, nego->hostname, nego->port, 15);
+			nego->TcpConnected =
+			    transport_connect(nego->transport, nego->hostname, nego->port, TcpConnectTimeout);
 		}
 	}
 
