@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 
+#include <winpr/sysinfo.h>
 #include <freerdp/freerdp.h>
 
 #include "wf_client.h"
@@ -256,7 +257,7 @@ static void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 	}
 }
 
-void wf_send_resize(wfContext* wfc)
+static void wf_send_resize(wfContext* wfc)
 {
 	RECT windowRect;
 	DISPLAY_CONTROL_MONITOR_LAYOUT* layout;
