@@ -40,8 +40,6 @@ static HWND g_focus_hWnd;
 #define Y_POS(lParam) ((UINT16)((lParam >> 16) & 0xFFFF))
 
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
-static UINT64 lastSentDate;
-static BOOL wasMaximized;
 
 static BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1,
                          int y1, DWORD rop);
@@ -268,7 +266,7 @@ void wf_send_resize(wfContext* wfc)
 
 	if (settings->DynamicResolutionUpdate && wfc->disp != NULL)
 	{
-		if (GetTickCount64() - lastSentDate > RESIZE_MIN_DELAY)
+		if (GetTickCount64() - wfc->lastSentDate > RESIZE_MIN_DELAY)
 		{
 			if (wfc->fullscreen)
 			{
@@ -298,7 +296,7 @@ void wf_send_resize(wfContext* wfc)
 				settings->SmartSizingWidth = targetWidth;
 				settings->SmartSizingHeight = targetHeight;
 			}
-			lastSentDate = GetTickCount64();
+			wfc->lastSentDate = GetTickCount64();
 		}
 	}
 }
@@ -377,7 +375,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				}
 				else
 				{
-					wasMaximized = TRUE;
+					wfc->wasMaximized = TRUE;
 					wf_send_resize(wfc);
 				}
 
@@ -392,12 +390,12 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 						SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, windowRect.right - windowRect.left,
 						             windowRect.bottom - windowRect.top,
 						             SWP_NOMOVE | SWP_FRAMECHANGED);
-						wasMaximized = TRUE;
+						wfc->wasMaximized = TRUE;
 						wf_send_resize(wfc);
 					}
-					else if (wParam == SIZE_RESTORED && !wfc->fullscreen && wasMaximized)
+					else if (wParam == SIZE_RESTORED && !wfc->fullscreen && wfc->wasMaximized)
 					{
-						wasMaximized = FALSE;
+						wfc->wasMaximized = FALSE;
 						wf_send_resize(wfc);
 					}
 				}
