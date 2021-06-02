@@ -112,7 +112,7 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 		if (!surface)
 			continue;
 
-		memset(surface->data, 0xFF, surface->scanline * surface->height);
+		memset(surface->data, 0xFF, (size_t)surface->scanline * surface->height);
 		if (!surface->outputMapped)
 			continue;
 
@@ -1037,7 +1037,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 		goto fail;
 	}
 
-	memset(surface->data, 0xFF, surface->scanline * surface->height);
+	memset(surface->data, 0xFF, (size_t)surface->scanline * surface->height);
 	surface->outputMapped = FALSE;
 	region16_init(&surface->invalidRegion);
 	rc = context->SetSurfaceData(context, surface->surfaceId, (void*)surface);
