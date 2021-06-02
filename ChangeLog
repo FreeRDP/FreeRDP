@@ -8,6 +8,7 @@ Fixed issues:
 * #6938: RAILS clipboard remote -> local
 * #6985: Support newer FFMPEG builds
 * #6989: Use OpenSSL default certificate store settings
+* #7073: Planar alignment fixes
 
 # 2021-03-15 Version 2.3.2
 
