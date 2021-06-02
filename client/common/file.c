@@ -97,22 +97,22 @@ struct rdp_file
 	DWORD EnableSuperSpan;             /* enablesuperpan */
 	DWORD SuperSpanAccelerationFactor; /* superpanaccelerationfactor */
 
-	DWORD DesktopWidth;  /* desktopwidth */
-	DWORD DesktopHeight; /* desktopheight */
-	DWORD DesktopSizeId; /* desktop size id */
-	DWORD SessionBpp;    /* session bpp */
+	DWORD DesktopWidth;       /* desktopwidth */
+	DWORD DesktopHeight;      /* desktopheight */
+	DWORD DesktopSizeId;      /* desktop size id */
+	DWORD SessionBpp;         /* session bpp */
 	DWORD DesktopScaleFactor; /* desktopscalefactor */
 
 	DWORD Compression;       /* compression */
 	DWORD KeyboardHook;      /* keyboardhook */
 	DWORD DisableCtrlAltDel; /* disable ctrl+alt+del */
 
-	DWORD AudioMode;         /* audiomode */
-	DWORD AudioQualityMode;  /* audioqualitymode */
-	DWORD AudioCaptureMode;  /* audiocapturemode */
+	DWORD AudioMode;                             /* audiomode */
+	DWORD AudioQualityMode;                      /* audioqualitymode */
+	DWORD AudioCaptureMode;                      /* audiocapturemode */
 	DWORD EncodeRedirectedVideoCapture;          /* encode redirected video capture */
 	DWORD RedirectedVideoCaptureEncodingQuality; /* redirected video capture encoding quality */
-	DWORD VideoPlaybackMode; /* videoplaybackmode */
+	DWORD VideoPlaybackMode;                     /* videoplaybackmode */
 
 	DWORD ConnectionType; /* connection type */
 
@@ -869,7 +869,7 @@ static INLINE BOOL FILE_POPULATE_STRING(char** _target, const rdpSettings* _sett
 
 	str = freerdp_settings_get_string(_settings, _option);
 	freerdp_client_file_string_check_free(*_target);
-	*_target = NULL;
+	*_target = (void*)~((size_t)NULL);
 	if (str)
 	{
 		*_target = _strdup(str);
@@ -896,6 +896,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	size_t index;
 	UINT32 LoadBalanceInfoLength;
 	const char* GatewayHostname = NULL;
+	char* redirectCameras = NULL;
 
 	if (!FILE_POPULATE_STRING(&file->Domain, settings, FreeRDP_Domain) ||
 	    !FILE_POPULATE_STRING(&file->Username, settings, FreeRDP_Username) ||
@@ -1021,7 +1022,9 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->AutoReconnectionEnabled =
 	    freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
 	file->RedirectSmartCards = freerdp_settings_get_bool(settings, FreeRDP_RedirectSmartCards);
-	file->RedirectCameras = freerdp_client_channel_args_to_string(settings, "rdpecam", "device:");
+
+	redirectCameras = freerdp_client_channel_args_to_string(settings, "rdpecam", "device:");
+	if (redirectCameras)
 	{
 		char* str = freerdp_client_channel_args_to_string(settings, "rdpecam", "encode:");
 		file->EncodeRedirectedVideoCapture = 0;
@@ -1034,10 +1037,8 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 				file->EncodeRedirectedVideoCapture = val;
 		}
 		free(str);
-	}
-	{
-		char* str = freerdp_client_channel_args_to_string(settings, "rdpecam", "quality:");
 
+		str = freerdp_client_channel_args_to_string(settings, "rdpecam", "quality:");
 		file->RedirectedVideoCaptureEncodingQuality = 0;
 		if (str)
 		{
@@ -1050,6 +1051,8 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 			}
 		}
 		free(str);
+
+		file->RedirectCameras = redirectCameras;
 	}
 #ifdef CHANNEL_URBDRC_CLIENT
 	file->UsbDevicesToRedirect =
