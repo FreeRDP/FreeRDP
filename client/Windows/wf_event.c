@@ -260,7 +260,6 @@ static void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 static void wf_send_resize(wfContext* wfc)
 {
 	RECT windowRect;
-	DISPLAY_CONTROL_MONITOR_LAYOUT* layout;
 	int targetWidth = wfc->client_width;
 	int targetHeight = wfc->client_height;
 	rdpSettings* settings = wfc->context.settings;
@@ -278,22 +277,23 @@ static void wf_send_resize(wfContext* wfc)
 			if (settings->SmartSizingWidth != targetWidth ||
 			    settings->SmartSizingHeight != targetHeight)
 			{
-				layout = calloc(1, sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
-				layout->Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
-				layout->Top = layout->Left = 0;
-				layout->Width = targetWidth;
-				layout->Height = targetHeight;
-				layout->Orientation = settings->DesktopOrientation;
-				layout->DesktopScaleFactor = settings->DesktopScaleFactor;
-				layout->DeviceScaleFactor = settings->DeviceScaleFactor;
-				layout->PhysicalWidth = targetWidth;
-				layout->PhysicalHeight = targetHeight;
+				DISPLAY_CONTROL_MONITOR_LAYOUT layout = { 0 };
+
+				layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
+				layout.Top = layout.Left = 0;
+				layout.Width = targetWidth;
+				layout.Height = targetHeight;
+				layout.Orientation = settings->DesktopOrientation;
+				layout.DesktopScaleFactor = settings->DesktopScaleFactor;
+				layout.DeviceScaleFactor = settings->DeviceScaleFactor;
+				layout.PhysicalWidth = targetWidth;
+				layout.PhysicalHeight = targetHeight;
+
 				if (IFCALLRESULT(CHANNEL_RC_OK, wfc->disp->SendMonitorLayout, wfc->disp, 1,
-				                 layout) != CHANNEL_RC_OK)
+				                 &layout) != CHANNEL_RC_OK)
 				{
 					WLog_ERR("", "SendMonitorLayout failed.");
 				}
-				free(layout);
 				settings->SmartSizingWidth = targetWidth;
 				settings->SmartSizingHeight = targetHeight;
 			}
