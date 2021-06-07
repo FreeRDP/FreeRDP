@@ -19,7 +19,10 @@
 
 ## What you should be prepared for
 * fix issues found during the review phase
-* Joining IRC _#freerdp_ to talk to other developers or help them test your pull might accelerate acceptance
+* Joining our chat to talk to other developers or help them test your pull might accelerate acceptance
+  * Matrix room : #FreeRDP:matrix.org (main)
+  * XMPP channel: #FreeRDP#matrix.org@matrix.org (bridged)
+  * IRC channel : #freerdp @ irc.oftc.net (bridged)
 * Joining our mailing list <freerdp-devel@lists.sourceforge.net> may be helpful too.
 
 ## Please remove this text before submitting your pull!
