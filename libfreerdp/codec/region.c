@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <winpr/memory.h>
+#include <winpr/interlocked.h>
 #include <freerdp/log.h>
 #include <freerdp/codec/region.h>
 
@@ -70,16 +71,18 @@
 
 struct _REGION16_DATA
 {
+	volatile LONG refCount;
 	long size;
 	long nbRects;
 };
 
-static REGION16_DATA empty_region = { 0, 0 };
+static REGION16_DATA empty_region = { 1, 0, 0 };
 
 void region16_init(REGION16* region)
 {
 	assert(region);
 	ZeroMemory(region, sizeof(REGION16));
+	InterlockedIncrement(&empty_region.refCount);
 	region->data = &empty_region;
 }
 
@@ -101,7 +104,7 @@ const RECTANGLE_16* region16_rects(const REGION16* region, UINT32* nbRects)
 		return NULL;
 
 	data = region->data;
-
+	assert(data);
 	if (!data)
 		return NULL;
 
@@ -115,7 +118,7 @@ static INLINE RECTANGLE_16* region16_rects_noconst(REGION16* region)
 {
 	REGION16_DATA* data;
 	data = region->data;
-
+	assert(data);
 	if (!data)
 		return NULL;
 
@@ -181,9 +184,10 @@ void region16_clear(REGION16* region)
 	assert(region);
 	assert(region->data);
 
-	if ((region->data->size > 0) && (region->data != &empty_region))
+	if (InterlockedDecrement(&region->data->refCount) == 0)
 		free(region->data);
 
+	InterlockedIncrement(&empty_region.refCount);
 	region->data = &empty_region;
 	ZeroMemory(&region->extents, sizeof(region->extents));
 }
@@ -196,6 +200,7 @@ static INLINE REGION16_DATA* allocateRegion(long nbItems)
 	if (!ret)
 		return ret;
 
+	ret->refCount = 1;
 	ret->size = allocSize;
 	ret->nbRects = nbItems;
 	return ret;
@@ -213,11 +218,14 @@ BOOL region16_copy(REGION16* dst, const REGION16* src)
 
 	dst->extents = src->extents;
 
-	if ((dst->data->size > 0) && (dst->data != &empty_region))
+	if (InterlockedDecrement(&dst->data->refCount) == 0)
 		free(dst->data);
 
 	if (src->data->size == 0)
+	{
+		InterlockedIncrement(&empty_region.refCount);
 		dst->data = &empty_region;
+	}
 	else
 	{
 		dst->data = allocateRegion(src->data->nbRects);
@@ -226,6 +234,7 @@ BOOL region16_copy(REGION16* dst, const REGION16* src)
 			return FALSE;
 
 		CopyMemory(dst->data, src->data, src->data->size);
+		dst->data->refCount = 1;
 	}
 
 	return TRUE;
@@ -467,17 +476,24 @@ static BOOL region16_simplify_bands(REGION16* region)
 	{
 		REGION16_DATA* data;
 		size_t allocSize = sizeof(REGION16_DATA) + (finalNbRects * sizeof(RECTANGLE_16));
-		data = realloc(region->data, allocSize);
-		if (!data)
-			free(region->data);
-		region->data = data;
-
-		if (!region->data)
+		if (region->data->refCount == 1)
 		{
-			region->data = &empty_region;
-			return FALSE;
+			data = realloc(region->data, allocSize);
+			if (!data)
+			{
+				free(region->data);
+				return FALSE;
+			}
 		}
-
+		else
+		{
+			InterlockedDecrement(&region->data->refCount);
+			data = malloc(allocSize);
+			if (!data)
+				return FALSE;
+		}
+		region->data = data;
+		region->data->refCount = 1;
 		region->data->nbRects = finalNbRects;
 		region->data->size = allocSize;
 	}
@@ -668,7 +684,10 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 	newItems->size = sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16));
 	tmpItems = realloc(newItems, newItems->size);
 	if (!tmpItems)
+	{
 		free(newItems);
+		return FALSE;
+	}
 	newItems = tmpItems;
 	dst->data = newItems;
 
@@ -783,7 +802,7 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 	newItems->nbRects = usedRects;
 	newItems->size = sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16));
 
-	if ((dst->data->size > 0) && (dst->data != &empty_region))
+	if (InterlockedDecrement(&dst->data->refCount) == 0)
 		free(dst->data);
 
 	dst->data = realloc(newItems, newItems->size);
@@ -801,12 +820,10 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 void region16_uninit(REGION16* region)
 {
 	assert(region);
+	assert(region->data);
 
-	if (region->data)
-	{
-		if ((region->data->size > 0) && (region->data != &empty_region))
-			free(region->data);
+	if (InterlockedDecrement(&region->data->refCount) == 0)
+		free(region->data);
 
-		region->data = NULL;
-	}
+	region->data = NULL;
 }
