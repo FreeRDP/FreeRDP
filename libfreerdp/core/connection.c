@@ -251,7 +251,6 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	/* 2. Forces the only supported RDP encryption method to be FIPS. */
 	if (settings->FIPSMode || winpr_FIPSMode())
 	{
-		settings->NlaSecurity = FALSE;
 		settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
 	}
 

@@ -27,11 +27,6 @@
 #include "../sspi.h"
 #include "../../log.h"
 
-#ifdef WITH_GSSAPI
-#include <krb5.h>
-#include <gssapi.h>
-#endif
-
 typedef struct _KRB_CONTEXT KRB_CONTEXT;
 
 #endif /* FREERDP_SSPI_KERBEROS_PRIVATE_H */

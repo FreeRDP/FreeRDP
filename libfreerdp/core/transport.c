@@ -58,101 +58,6 @@
 
 #define BUFFER_SIZE 16384
 
-#ifdef WITH_GSSAPI
-
-#include <krb5.h>
-#include <winpr/library.h>
-static UINT32 transport_krb5_check_account(rdpTransport* transport, char* username, char* domain,
-                                           char* passwd)
-{
-	krb5_error_code ret;
-	krb5_context context = NULL;
-	krb5_principal principal = NULL;
-	char address[256];
-	krb5_ccache ccache;
-	krb5_init_creds_context ctx = NULL;
-	_snprintf(address, sizeof(address), "%s@%s", username, domain);
-
-	/* Create a krb5 library context */
-	if ((ret = krb5_init_context(&context)) != 0)
-		WLog_Print(transport->log, WLOG_ERROR, "krb5_init_context failed with error %d", (int)ret);
-	else if ((ret = krb5_parse_name_flags(context, address, 0, &principal)) != 0)
-		WLog_Print(transport->log, WLOG_ERROR, "krb5_parse_name_flags failed with error %d",
-		           (int)ret);
-	/* Find a credential cache with a specified client principal */
-	else if ((ret = krb5_cc_cache_match(context, principal, &ccache)) != 0)
-	{
-		if ((ret = krb5_cc_default(context, &ccache)) != 0)
-			WLog_Print(transport->log, WLOG_ERROR,
-			           "krb5 failed to resolve credentials cache with error %d", (int)ret);
-	}
-
-	if (ret != KRB5KDC_ERR_NONE)
-		goto out;
-	/* Create a context for acquiring initial credentials */
-	else if ((ret = krb5_init_creds_init(context, principal, NULL, NULL, 0, NULL, &ctx)) != 0)
-	{
-		WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_init returned error %d", (int)ret);
-		goto out;
-	}
-	/* Set a password for acquiring initial credentials */
-	else if ((ret = krb5_init_creds_set_password(context, ctx, passwd)) != 0)
-	{
-		WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_set_password returned error %d",
-		           ret);
-		goto out;
-	}
-
-	/* Acquire credentials using an initial credential context */
-	ret = krb5_init_creds_get(context, ctx);
-out:
-
-	switch (ret)
-	{
-		case KRB5KDC_ERR_NONE:
-			break;
-
-		case KRB5_KDC_UNREACH:
-			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get: KDC unreachable");
-			ret = FREERDP_ERROR_CONNECT_KDC_UNREACHABLE;
-			break;
-
-		case KRB5KRB_AP_ERR_BAD_INTEGRITY:
-		case KRB5KRB_AP_ERR_MODIFIED:
-		case KRB5KDC_ERR_PREAUTH_FAILED:
-		case KRB5_GET_IN_TKT_LOOP:
-			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get: Password incorrect");
-			ret = FREERDP_ERROR_AUTHENTICATION_FAILED;
-			break;
-
-		case KRB5KDC_ERR_KEY_EXP:
-			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get: Password has expired");
-			ret = FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED;
-			break;
-
-		case KRB5KDC_ERR_CLIENT_REVOKED:
-			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get: Password revoked");
-			ret = FREERDP_ERROR_CONNECT_CLIENT_REVOKED;
-			break;
-
-		case KRB5KDC_ERR_POLICY:
-			ret = FREERDP_ERROR_INSUFFICIENT_PRIVILEGES;
-			break;
-
-		default:
-			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get");
-			ret = FREERDP_ERROR_CONNECT_TRANSPORT_FAILED;
-			break;
-	}
-
-	if (ctx)
-		krb5_init_creds_free(context, ctx);
-
-	krb5_free_context(context);
-	return ret;
-}
-#endif /* WITH_GSSAPI */
-
 static void transport_ssl_cb(SSL* ssl, int where, int ret)
 {
 	if (where & SSL_CB_ALERT)
@@ -176,18 +81,8 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 			{
 				if (transport->NlaMode)
 				{
-					UINT32 kret = 0;
-#ifdef WITH_GSSAPI
-
-					if ((strlen(transport->settings->Domain) != 0) &&
-					    (strncmp(transport->settings->Domain, ".", 1) != 0))
-					{
-						kret = transport_krb5_check_account(
-						    transport, transport->settings->Username, transport->settings->Domain,
-						    transport->settings->Password);
-					}
-					else
-#endif /* WITH_GSSAPI */
+					UINT32 kret = GetLastError();
+					if (kret == 0)
 						kret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
 
 					freerdp_set_last_error_if_not(transport->context, kret);

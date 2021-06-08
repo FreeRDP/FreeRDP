@@ -17,6 +17,14 @@
 
 set(MODULE_PREFIX "WINPR_SSPI")
 
+if (WITH_GSSAPI)
+	find_library(GSS_LIBRARY NAMES gss REQUIRED)
+	find_path(GSS_INCLUDE_DIR NAMES gss.h REQUIRED)
+
+	winpr_include_directory_add(${GSS_INCLUDE_DIR})
+	winpr_library_add_private(${GSS_LIBRARY})
+endif()
+
 set(${MODULE_PREFIX}_NTLM_SRCS
 	NTLM/ntlm_av_pairs.c
 	NTLM/ntlm_av_pairs.h
@@ -27,9 +35,11 @@ set(${MODULE_PREFIX}_NTLM_SRCS
 	NTLM/ntlm.c
 	NTLM/ntlm.h)
 
-set(${MODULE_PREFIX}_KERBEROS_SRCS
-	Kerberos/kerberos.c
-	Kerberos/kerberos.h)
+if (WITH_GSSAPI)
+	set(${MODULE_PREFIX}_KERBEROS_SRCS
+		Kerberos/kerberos.c
+		Kerberos/kerberos.h)
+endif()
 
 set(${MODULE_PREFIX}_NEGOTIATE_SRCS
 	Negotiate/negotiate.c
@@ -49,8 +59,6 @@ set(${MODULE_PREFIX}_SRCS
 	sspi_winpr.c
 	sspi_winpr.h
 	sspi_export.c
-	sspi_gss.c
-	sspi_gss.h
 	sspi.c
 	sspi.h)
 

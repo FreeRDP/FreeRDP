@@ -28,6 +28,7 @@
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
 #include <winpr/endian.h>
+#include <winpr/ssl.h>
 #include <freerdp/build-config.h>
 
 #include "ntlm.h"
@@ -170,8 +171,7 @@ static NTLM_CONTEXT* ntlm_ContextNew(void)
 	DWORD dwType;
 	DWORD dwSize;
 	DWORD dwValue;
-	NTLM_CONTEXT* context;
-	context = (NTLM_CONTEXT*)calloc(1, sizeof(NTLM_CONTEXT));
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)calloc(1, sizeof(NTLM_CONTEXT));
 
 	if (!context)
 		return NULL;
@@ -397,6 +397,9 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 
 	if (!context)
 	{
+		if (winpr_FIPSMode())
+			return SEC_E_ALGORITHM_MISMATCH;
+
 		context = ntlm_ContextNew();
 
 		if (!context)
@@ -510,6 +513,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
 	if (!context)
 	{
+		if (winpr_FIPSMode())
+			return SEC_E_ALGORITHM_MISMATCH;
+
 		context = ntlm_ContextNew();
 
 		if (!context)

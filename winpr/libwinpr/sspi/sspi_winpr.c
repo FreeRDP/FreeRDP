@@ -43,10 +43,12 @@ extern const SecPkgInfoW NTLM_SecPkgInfoW;
 extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
 extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
 
+#if defined(WITH_GSSAPI)
 extern const SecPkgInfoA KERBEROS_SecPkgInfoA;
 extern const SecPkgInfoW KERBEROS_SecPkgInfoW;
 extern const SecurityFunctionTableA KERBEROS_SecurityFunctionTableA;
 extern const SecurityFunctionTableW KERBEROS_SecurityFunctionTableW;
+#endif
 
 extern const SecPkgInfoA NEGOTIATE_SecPkgInfoA;
 extern const SecPkgInfoW NEGOTIATE_SecPkgInfoW;
@@ -63,11 +65,17 @@ extern const SecPkgInfoW SCHANNEL_SecPkgInfoW;
 extern const SecurityFunctionTableA SCHANNEL_SecurityFunctionTableA;
 extern const SecurityFunctionTableW SCHANNEL_SecurityFunctionTableW;
 
-static const SecPkgInfoA* SecPkgInfoA_LIST[] = { &NTLM_SecPkgInfoA, &KERBEROS_SecPkgInfoA,
+static const SecPkgInfoA* SecPkgInfoA_LIST[] = { &NTLM_SecPkgInfoA,
+#if defined(WITH_GSSAPI)
+	                                             &KERBEROS_SecPkgInfoA,
+#endif
 	                                             &NEGOTIATE_SecPkgInfoA, &CREDSSP_SecPkgInfoA,
 	                                             &SCHANNEL_SecPkgInfoA };
 
-static const SecPkgInfoW* SecPkgInfoW_LIST[] = { &NTLM_SecPkgInfoW, &KERBEROS_SecPkgInfoW,
+static const SecPkgInfoW* SecPkgInfoW_LIST[] = { &NTLM_SecPkgInfoW,
+#if defined(WITH_GSSAPI)
+	                                             &KERBEROS_SecPkgInfoW,
+#endif
 	                                             &NEGOTIATE_SecPkgInfoW, &CREDSSP_SecPkgInfoW,
 	                                             &SCHANNEL_SecPkgInfoW };
 
@@ -90,21 +98,27 @@ typedef struct _SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME;
 
 static const SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME_LIST[] = {
 	{ "NTLM", &NTLM_SecurityFunctionTableA },
+#if defined(WITH_GSSAPI)
 	{ "Kerberos", &KERBEROS_SecurityFunctionTableA },
+#endif
 	{ "Negotiate", &NEGOTIATE_SecurityFunctionTableA },
 	{ "CREDSSP", &CREDSSP_SecurityFunctionTableA },
 	{ "Schannel", &SCHANNEL_SecurityFunctionTableA }
 };
 
 static const WCHAR NTLM_NAME_W[] = { 'N', 'T', 'L', 'M', '\0' };
+#if defined(WITH_GSSAPI)
 static const WCHAR KERBEROS_NAME_W[] = { 'K', 'e', 'r', 'b', 'e', 'r', 'o', 's', '\0' };
+#endif
 static const WCHAR NEGOTIATE_NAME_W[] = { 'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', '\0' };
 static const WCHAR CREDSSP_NAME_W[] = { 'C', 'r', 'e', 'd', 'S', 'S', 'P', '\0' };
 static const WCHAR SCHANNEL_NAME_W[] = { 'S', 'c', 'h', 'a', 'n', 'n', 'e', 'l', '\0' };
 
 static const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] = {
 	{ NTLM_NAME_W, &NTLM_SecurityFunctionTableW },
+#if defined(WITH_GSSAPI)
 	{ KERBEROS_NAME_W, &KERBEROS_SecurityFunctionTableW },
+#endif
 	{ NEGOTIATE_NAME_W, &NEGOTIATE_SecurityFunctionTableW },
 	{ CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW },
 	{ SCHANNEL_NAME_W, &SCHANNEL_SecurityFunctionTableW }

@@ -23,6 +23,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/ssl.h>
 #include <winpr/sspi.h>
 #include <winpr/tchar.h>
 
@@ -32,16 +33,35 @@
 #include "../log.h"
 #define TAG WINPR_TAG("negotiate")
 
+enum _NEGOTIATE_STATE
+{
+	NEGOTIATE_STATE_INITIAL,
+	NEGOTIATE_STATE_NEGOINIT,
+	NEGOTIATE_STATE_NEGORESP,
+	NEGOTIATE_STATE_FINAL
+};
+typedef enum _NEGOTIATE_STATE NEGOTIATE_STATE;
+
+struct _NEGOTIATE_CONTEXT
+{
+	NEGOTIATE_STATE state;
+	UINT32 NegotiateFlags;
+	PCtxtHandle auth_ctx;
+	SecBuffer NegoInitMessage;
+
+	CtxtHandle SubContext;
+
+	BOOL kerberos;
+	const SecurityFunctionTableA* sspiA;
+	const SecurityFunctionTableW* sspiW;
+};
+
 extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
 extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
 
+#if defined(WITH_GSSAPI)
 extern const SecurityFunctionTableA KERBEROS_SecurityFunctionTableA;
 extern const SecurityFunctionTableW KERBEROS_SecurityFunctionTableW;
-
-#ifdef WITH_GSSAPI
-static BOOL ErrorInitContextKerberos = FALSE;
-#else
-static BOOL ErrorInitContextKerberos = TRUE;
 #endif
 
 const SecPkgInfoA NEGOTIATE_SecPkgInfoA = {
@@ -68,20 +88,41 @@ const SecPkgInfoW NEGOTIATE_SecPkgInfoW = {
 	NEGOTIATE_SecPkgInfoW_Comment /* Comment */
 };
 
-static void negotiate_SetSubPackage(NEGOTIATE_CONTEXT* context, const TCHAR* name)
+static BOOL negotiate_SetSubPackage(NEGOTIATE_CONTEXT* context, const TCHAR* name)
 {
+	if (context->sspiA)
+		context->sspiA->DeleteSecurityContext(&(context->SubContext));
+	SecInvalidateHandle(&(context->SubContext));
+
+#if defined(WITH_GSSAPI)
 	if (_tcsnccmp(name, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0)
 	{
-		context->sspiA = (SecurityFunctionTableA*)&KERBEROS_SecurityFunctionTableA;
-		context->sspiW = (SecurityFunctionTableW*)&KERBEROS_SecurityFunctionTableW;
+		context->sspiA = &KERBEROS_SecurityFunctionTableA;
+		context->sspiW = &KERBEROS_SecurityFunctionTableW;
 		context->kerberos = TRUE;
+		return TRUE;
+	}
+	else
+#endif
+	    if (!winpr_FIPSMode())
+	{
+		context->sspiA = &NTLM_SecurityFunctionTableA;
+		context->sspiW = &NTLM_SecurityFunctionTableW;
+		context->kerberos = FALSE;
+		return TRUE;
 	}
 	else
 	{
-		context->sspiA = (SecurityFunctionTableA*)&NTLM_SecurityFunctionTableA;
-		context->sspiW = (SecurityFunctionTableW*)&NTLM_SecurityFunctionTableW;
+		context->sspiA = NULL;
+		context->sspiW = NULL;
 		context->kerberos = FALSE;
+		return FALSE;
 	}
+}
+
+static void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
+{
+	free(context);
 }
 
 static NEGOTIATE_CONTEXT* negotiate_ContextNew(void)
@@ -95,13 +136,12 @@ static NEGOTIATE_CONTEXT* negotiate_ContextNew(void)
 	context->NegotiateFlags = 0;
 	context->state = NEGOTIATE_STATE_INITIAL;
 	SecInvalidateHandle(&(context->SubContext));
-	negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
+	if (!negotiate_SetSubPackage(context, NTLM_SSP_NAME))
+	{
+		negotiate_ContextFree(context);
+		return NULL;
+	}
 	return context;
-}
-
-static void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
-{
-	free(context);
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
@@ -109,7 +149,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = SEC_E_INCOMPLETE_CREDENTIALS;
 	NEGOTIATE_CONTEXT* context;
 	context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -125,41 +165,40 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	}
 
 	/* if Kerberos has previously failed or WITH_GSSAPI is not defined, we use NTLM directly */
-	if (ErrorInitContextKerberos == FALSE)
+#if defined(WITH_GSSAPI)
+	if (!pInput)
 	{
-		if (!pInput)
-		{
-			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
-		}
+		if (!negotiate_SetSubPackage(context, KERBEROS_SSP_NAME))
+			return SEC_E_ALGORITHM_MISMATCH;
+	}
 
+	if (context->kerberos)
+	{
 		status = context->sspiW->InitializeSecurityContextW(
 		    phCredential, &(context->SubContext), pszTargetName, fContextReq, Reserved1,
 		    TargetDataRep, pInput, Reserved2, &(context->SubContext), pOutput, pfContextAttr,
 		    ptsExpiry);
 
-		if (status == SEC_E_NO_CREDENTIALS)
-		{
-			WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
-			ErrorInitContextKerberos = TRUE;
-			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_ContextFree(context);
+		if (status != SEC_E_NO_CREDENTIALS)
 			return status;
-		}
-	}
-	else
-	{
-		if (!pInput)
-		{
-			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_SetSubPackage(context, NTLM_SSP_NAME);
-		}
 
+		WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
+	}
+
+#endif
+	if (!pInput)
+	{
+		if (!negotiate_SetSubPackage(context, NTLM_SSP_NAME))
+			return status;
+	}
+
+	if (!context->kerberos)
+	{
 		status = context->sspiW->InitializeSecurityContextW(
 		    phCredential, &(context->SubContext), pszTargetName, fContextReq, Reserved1,
 		    TargetDataRep, pInput, Reserved2, &(context->SubContext), pOutput, pfContextAttr,
 		    ptsExpiry);
 	}
-
 	return status;
 }
 
@@ -168,7 +207,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = SEC_E_INCOMPLETE_CREDENTIALS;
 	NEGOTIATE_CONTEXT* context;
 	context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -184,41 +223,39 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 	}
 
 	/* if Kerberos has previously failed or WITH_GSSAPI is not defined, we use NTLM directly */
-	if (ErrorInitContextKerberos == FALSE)
+#if defined(WITH_GSSAPI)
+	if (!pInput)
 	{
-		if (!pInput)
-		{
-			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
-		}
+		if (!negotiate_SetSubPackage(context, KERBEROS_SSP_NAME))
+			return SEC_E_ALGORITHM_MISMATCH;
+	}
 
+	if (context->kerberos)
+	{
 		status = context->sspiA->InitializeSecurityContextA(
 		    phCredential, &(context->SubContext), pszTargetName, fContextReq, Reserved1,
 		    TargetDataRep, pInput, Reserved2, &(context->SubContext), pOutput, pfContextAttr,
 		    ptsExpiry);
 
-		if (status == SEC_E_NO_CREDENTIALS)
-		{
-			WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
-			ErrorInitContextKerberos = TRUE;
-			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_ContextFree(context);
+		if (status != SEC_E_NO_CREDENTIALS)
 			return status;
-		}
-	}
-	else
-	{
-		if (!pInput)
-		{
-			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_SetSubPackage(context, NTLM_SSP_NAME);
-		}
 
+		WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
+	}
+#endif
+	if (!pInput)
+	{
+		if (!negotiate_SetSubPackage(context, NTLM_SSP_NAME))
+			return status;
+	}
+
+	if (!context->kerberos)
+	{
 		status = context->sspiA->InitializeSecurityContextA(
 		    phCredential, &(context->SubContext), pszTargetName, fContextReq, Reserved1,
 		    TargetDataRep, pInput, Reserved2, &(context->SubContext), pOutput, pfContextAttr,
 		    ptsExpiry);
 	}
-
 	return status;
 }
 
@@ -242,7 +279,10 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*)NEGO_SSP_NAME);
 	}
 
-	negotiate_SetSubPackage(context, NTLM_SSP_NAME); /* server-side Kerberos not yet implemented */
+	if (!negotiate_SetSubPackage(context,
+	                             NTLM_SSP_NAME)) /* server-side Kerberos not yet implemented */
+		return SEC_E_ALGORITHM_MISMATCH;
+
 	status = context->sspiA->AcceptSecurityContext(
 	    phCredential, &(context->SubContext), pInput, fContextReq, TargetDataRep,
 	    &(context->SubContext), pOutput, pfContextAttr, ptsTimeStamp);
@@ -283,6 +323,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_DeleteSecurityContext(PCtxtHandle phC
 
 	if (context->sspiW->DeleteSecurityContext)
 		status = context->sspiW->DeleteSecurityContext(&(context->SubContext));
+	SecInvalidateHandle(&(context->SubContext));
 
 	negotiate_ContextFree(context);
 	return status;

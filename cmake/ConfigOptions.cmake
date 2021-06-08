@@ -159,7 +159,7 @@ option(WITH_DEBUG_SYMBOLS "Pack debug symbols to installer" OFF)
 option(WITH_CCACHE "Use ccache support if available" ON)
 option(WITH_CLANG_FORMAT "Detect clang-format. run 'cmake --build . --target clangformat' to format." ON)
 option(WITH_ICU "Use ICU for unicode conversion" OFF)
-option(WITH_GSSAPI "Compile support for kerberos authentication. (EXPERIMENTAL)" OFF)
+option(WITH_GSSAPI "Compile support for kerberos authentication." ON)
 
 option(WITH_DSP_EXPERIMENTAL "Enable experimental sound encoder/decoder formats" OFF)
 if (WITH_FFMPEG)
