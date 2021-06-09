@@ -265,6 +265,13 @@ BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj)
 	return rc;
 }
 
+int ArrayList_Add(wArrayList* arrayList, const void* obj)
+{
+	if (!ArrayList_Append(arrayList, obj))
+		return -1;
+	return ArrayList_Count(arrayList) - 1;
+}
+
 /**
  * Adds an object to the end of the ArrayList.
  */
