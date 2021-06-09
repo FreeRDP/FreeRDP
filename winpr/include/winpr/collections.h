@@ -124,6 +124,7 @@ extern "C"
 	WINPR_API void ArrayList_Clear(wArrayList* arrayList);
 	WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj);
 
+	WINPR_API WINPR_DEPRECATED(int ArrayList_Add(wArrayList* arrayList, const void* obj));
 	WINPR_API BOOL ArrayList_Append(wArrayList* arrayList, const void* obj);
 	WINPR_API BOOL ArrayList_Insert(wArrayList* arrayList, size_t index, const void* obj);
 
@@ -296,6 +297,8 @@ extern "C"
 	typedef BOOL (*HASH_TABLE_FOREACH_FN)(const void* key, void* value, void* arg);
 
 	WINPR_API size_t HashTable_Count(wHashTable* table);
+	WINPR_API WINPR_DEPRECATED(int HashTable_Add(wHashTable* table, const void* key,
+	                                             const void* value));
 	WINPR_API BOOL HashTable_Insert(wHashTable* table, const void* key, const void* value);
 	WINPR_API BOOL HashTable_Remove(wHashTable* table, const void* key);
 	WINPR_API void HashTable_Clear(wHashTable* table);
