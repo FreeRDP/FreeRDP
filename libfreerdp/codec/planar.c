@@ -33,7 +33,8 @@
 
 #define TAG FREERDP_TAG("codec")
 
-#define ALIGN(val, align) ((val) % (align) == 0) ? (val) : ((val) + (align) - (val) % (align))
+#define PLANAR_ALIGN(val, align) \
+	((val) % (align) == 0) ? (val) : ((val) + (align) - (val) % (align))
 
 static INLINE UINT32 planar_invert_format(BITMAP_PLANAR_CONTEXT* planar, BOOL alpha,
                                           UINT32 DstFormat)
@@ -1493,8 +1494,8 @@ BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* context, UINT32 
 		return FALSE;
 
 	context->bgr = FALSE;
-	context->maxWidth = ALIGN(width, 4);
-	context->maxHeight = ALIGN(height, 4);
+	context->maxWidth = PLANAR_ALIGN(width, 4);
+	context->maxHeight = PLANAR_ALIGN(height, 4);
 	context->maxPlaneSize = context->maxWidth * context->maxHeight;
 	context->nTempStep = context->maxWidth * 4;
 	free(context->planesBuffer);
