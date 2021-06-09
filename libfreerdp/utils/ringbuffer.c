@@ -25,7 +25,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
 #include <freerdp/log.h>
@@ -285,7 +285,7 @@ void ringbuffer_commit_read_bytes(RingBuffer* rb, size_t sz)
 	if (sz < 1)
 		return;
 
-	assert(rb->size - rb->freeSize >= sz);
+	WINPR_ASSERT(rb->size - rb->freeSize >= sz);
 	rb->readPtr = (rb->readPtr + sz) % rb->size;
 	rb->freeSize += sz;
 

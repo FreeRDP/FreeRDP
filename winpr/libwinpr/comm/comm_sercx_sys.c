@@ -22,7 +22,7 @@
 
 #if defined __linux__ && !defined ANDROID
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <termios.h>
 
 #include <winpr/wlog.h>

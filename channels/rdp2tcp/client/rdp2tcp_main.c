@@ -18,7 +18,7 @@
  */
 
 #include <stdio.h>
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <winpr/file.h>
 #include <winpr/pipe.h>
@@ -321,8 +321,8 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		return FALSE;
 
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
-	assert(pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX) &&
-	       pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER);
+	WINPR_ASSERT(pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX) &&
+	             pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER);
 	plugin->initHandle = pInitHandle;
 	plugin->channelEntryPoints = *pEntryPointsEx;
 

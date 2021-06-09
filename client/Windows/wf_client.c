@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
-#include <assert.h>
+#include <winpr/assert.h>
 #include <sys/types.h>
 
 #include <freerdp/log.h>
@@ -681,7 +681,7 @@ static DWORD WINAPI wf_input_thread(LPVOID arg)
 	wMessage message;
 	wMessageQueue* queue;
 	freerdp* instance = (freerdp*)arg;
-	assert(NULL != instance);
+	WINPR_ASSERT(NULL != instance);
 	status = 1;
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
 
@@ -852,7 +852,7 @@ static DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 	wfContext* wfc;
 	HHOOK hook_handle;
 	wfc = (wfContext*)lpParam;
-	assert(NULL != wfc);
+	WINPR_ASSERT(NULL != wfc);
 	hook_handle = SetWindowsHookEx(WH_KEYBOARD_LL, wf_ll_kbd_proc, wfc->hInstance, 0);
 
 	if (hook_handle)

@@ -25,7 +25,7 @@
 #endif
 
 #include <errno.h>
-#include <assert.h>
+#include <winpr/assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1001,8 +1001,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		{ NULL, NULL }
 	};
 	struct SubsystemEntry* entry = &entries[0];
-	assert(pEntryPoints);
-	assert(pEntryPoints->GetPlugin);
+	WINPR_ASSERT(pEntryPoints);
+	WINPR_ASSERT(pEntryPoints->GetPlugin);
 	audin = (AUDIN_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, "audin");
 
 	if (audin != NULL)

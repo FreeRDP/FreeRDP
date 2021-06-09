@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include "ntlm.h"
 #include "../sspi.h"
@@ -745,7 +745,7 @@ void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT
 	 * CHALLENGE_MESSAGE, AUTHENTICATE_MESSAGE) using the ExportedSessionKey
 	 */
 	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
-	assert(size >= WINPR_MD5_DIGEST_LENGTH);
+	WINPR_ASSERT(size >= WINPR_MD5_DIGEST_LENGTH);
 
 	if (!hmac)
 		return;

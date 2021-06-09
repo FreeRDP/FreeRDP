@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include "ntlm.h"
 #include "../sspi.h"
@@ -263,7 +263,7 @@ static BOOL ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTL
 	ntlm_av_pair_set_len(pAvPair, AvLen);
 	if (AvLen)
 	{
-		assert(Value != NULL);
+		WINPR_ASSERT(Value != NULL);
 		CopyMemory(ntlm_av_pair_get_value_pointer(pAvPair), Value, AvLen);
 	}
 

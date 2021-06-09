@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -678,7 +678,7 @@ static int rdg_websocket_read(BIO* bio, BYTE* pBuffer, size_t size,
 {
 	int status;
 	int effectiveDataLen = 0;
-	assert(encodingContext != NULL);
+	WINPR_ASSERT(encodingContext != NULL);
 	while (TRUE)
 	{
 		switch (encodingContext->state)
@@ -771,7 +771,7 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 {
 	int status;
 	int effectiveDataLen = 0;
-	assert(encodingContext != NULL);
+	WINPR_ASSERT(encodingContext != NULL);
 	while (TRUE)
 	{
 		switch (encodingContext->state)
@@ -802,8 +802,8 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 			case ChunkStateFooter:
 			{
 				char _dummy[2];
-				assert(encodingContext->nextOffset == 0);
-				assert(encodingContext->headerFooterPos < 2);
+				WINPR_ASSERT(encodingContext->nextOffset == 0);
+				WINPR_ASSERT(encodingContext->headerFooterPos < 2);
 				status = BIO_read(bio, _dummy, 2 - encodingContext->headerFooterPos);
 				if (status >= 0)
 				{
@@ -823,7 +823,7 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 				BOOL _haveNewLine = FALSE;
 				size_t tmp;
 				char* dst = &encodingContext->lenBuffer[encodingContext->headerFooterPos];
-				assert(encodingContext->nextOffset == 0);
+				WINPR_ASSERT(encodingContext->nextOffset == 0);
 				while (encodingContext->headerFooterPos < 10 && !_haveNewLine)
 				{
 					status = BIO_read(bio, dst, 1);
@@ -870,7 +870,7 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
                            rdg_http_encoding_context* encodingContext)
 {
-	assert(encodingContext != NULL);
+	WINPR_ASSERT(encodingContext != NULL);
 
 	if (encodingContext->isWebsocketTransport)
 	{
@@ -919,7 +919,7 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 	wStream* s;
 	const size_t header = sizeof(RdgPacketHeader);
 	size_t packetLength;
-	assert(header <= INT_MAX);
+	WINPR_ASSERT(header <= INT_MAX);
 	s = Stream_New(NULL, 1024);
 
 	if (!s)
@@ -1235,7 +1235,7 @@ static BOOL rdg_skip_seed_payload(rdpTls* tls, SSIZE_T lastResponseLength,
 	BYTE seed_payload[10];
 	const size_t size = sizeof(seed_payload);
 
-	assert(size < SSIZE_MAX);
+	WINPR_ASSERT(size < SSIZE_MAX);
 
 	/* Per [MS-TSGU] 3.3.5.1 step 4, after final OK response RDG server sends
 	 * random "seed" payload of limited size. In practice it's 10 bytes.
@@ -1343,8 +1343,8 @@ static BOOL rdg_process_tunnel_response_optional(rdpRdg* rdg, wStream* s, UINT16
 		UINT16 msgLenBytes;
 		rdpContext* context = rdg->context;
 
-		assert(context);
-		assert(context->instance);
+		WINPR_ASSERT(context);
+		WINPR_ASSERT(context->instance);
 
 		/* Read message string and invoke callback */
 		if (!rdg_read_http_unicode_string(s, &msg, &msgLenBytes))
@@ -1528,7 +1528,7 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count)
 {
 	DWORD nCount = 0;
-	assert(rdg != NULL);
+	WINPR_ASSERT(rdg != NULL);
 
 	if (rdg->tlsOut && rdg->tlsOut->bio)
 	{
@@ -1907,7 +1907,7 @@ BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback)
 	BOOL status;
 	SOCKET outConnSocket = 0;
 	char* peerAddress = NULL;
-	assert(rdg != NULL);
+	WINPR_ASSERT(rdg != NULL);
 	status =
 	    rdg_establish_data_connection(rdg, rdg->tlsOut, "RDG_OUT_DATA", NULL, timeout, rpcFallback);
 
@@ -2147,8 +2147,8 @@ static BOOL rdg_process_service_message(rdpRdg* rdg, wStream* s)
 	const WCHAR* msg;
 	UINT16 msgLenBytes;
 	rdpContext* context = rdg->context;
-	assert(context);
-	assert(context->instance);
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->instance);
 
 	/* Read message string */
 	if (!rdg_read_http_unicode_string(s, &msg, &msgLenBytes))
@@ -2179,7 +2179,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 	if (packetLength < sizeof(RdgPacketHeader))
 		return FALSE;
 
-	assert(sizeof(RdgPacketHeader) < INT_MAX);
+	WINPR_ASSERT(sizeof(RdgPacketHeader) < INT_MAX);
 
 	if (payloadSize)
 	{
@@ -2259,7 +2259,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 
 	if (!rdg->packetRemainingCount)
 	{
-		assert(sizeof(RdgPacketHeader) < INT_MAX);
+		WINPR_ASSERT(sizeof(RdgPacketHeader) < INT_MAX);
 
 		while (readCount < sizeof(RdgPacketHeader))
 		{

@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <string.h>
 #include <errno.h>
 
@@ -1584,7 +1584,7 @@ void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port
                                                int alt_names_count)
 {
 	int index;
-	assert(NULL != hostname);
+	WINPR_ASSERT(NULL != hostname);
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	WLog_ERR(TAG, "@           WARNING: CERTIFICATE NAME MISMATCH!           @");
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
@@ -1596,12 +1596,12 @@ void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port
 
 	if (alt_names_count > 0)
 	{
-		assert(NULL != alt_names);
+		WINPR_ASSERT(NULL != alt_names);
 		WLog_ERR(TAG, "Alternative names:");
 
 		for (index = 0; index < alt_names_count; index++)
 		{
-			assert(alt_names[index]);
+			WINPR_ASSERT(alt_names[index]);
 			WLog_ERR(TAG, "\t %s", alt_names[index]);
 		}
 	}

@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -145,7 +145,7 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	if (!Stream_SafeSeek(irp->input, PathLength)) /* Path (variable) */
 		return ERROR_INVALID_DATA;
 
-	assert(PathLength == 0);             /* MS-RDPESP 2.2.2.2 */
+	WINPR_ASSERT(PathLength == 0); /* MS-RDPESP 2.2.2.2 */
 #ifndef _WIN32
 	/* Windows 2012 server sends on a first call :
 	 *     DesiredAccess     = 0x00100080: SYNCHRONIZE | FILE_READ_ATTRIBUTES
@@ -157,9 +157,9 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	 * FILE_READ_EA | FILE_READ_DATA SharedAccess      = 0x00000007: FILE_SHARE_DELETE |
 	 * FILE_SHARE_WRITE | FILE_SHARE_READ CreateDisposition = 0x00000001: CREATE_NEW
 	 *
-	 * assert(DesiredAccess == (GENERIC_READ | GENERIC_WRITE));
-	 * assert(SharedAccess == 0);
-	 * assert(CreateDisposition == OPEN_EXISTING);
+	 * WINPR_ASSERT(DesiredAccess == (GENERIC_READ | GENERIC_WRITE));
+	 * WINPR_ASSERT(SharedAccess == 0);
+	 * WINPR_ASSERT(CreateDisposition == OPEN_EXISTING);
 	 *
 	 */
 	WLog_Print(serial->log, WLOG_DEBUG,
@@ -194,7 +194,7 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	/* GetCommState(serial->hComm, &dcb); */
 	/* dcb.fBinary = TRUE; */
 	/* SetCommState(serial->hComm, &dcb); */
-	assert(irp->FileId == 0);
+	WINPR_ASSERT(irp->FileId == 0);
 	irp->FileId = irp->devman->id_sequence++; /* FIXME: why not ((WINPR_COMM*)hComm)->fd? */
 	irp->IoStatus = STATUS_SUCCESS;
 	WLog_Print(serial->log, WLOG_DEBUG, "%s (DeviceId: %" PRIu32 ", FileId: %" PRIu32 ") created.",
@@ -256,7 +256,7 @@ static UINT serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	}
 
 	/* MS-RDPESP 3.2.5.1.4: If the Offset field is not set to 0, the value MUST be ignored
-	 * assert(Offset == 0);
+	 * WINPR_ASSERT(Offset == 0);
 	 */
 	WLog_Print(serial->log, WLOG_DEBUG, "reading %" PRIu32 " bytes from %s", Length,
 	           serial->device.name);
@@ -311,7 +311,7 @@ static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 		return ERROR_INVALID_DATA;
 
 	/* MS-RDPESP 3.2.5.1.5: The Offset field is ignored
-	 * assert(Offset == 0);
+	 * WINPR_ASSERT(Offset == 0);
 	 *
 	 * Using a serial printer, noticed though this field could be
 	 * set.
@@ -410,7 +410,7 @@ error_handle:
 	/* FIXME: find out whether it's required or not to get
 	 * BytesReturned == OutputBufferLength when
 	 * CommDeviceIoControl returns FALSE */
-	assert(OutputBufferLength == BytesReturned);
+	WINPR_ASSERT(OutputBufferLength == BytesReturned);
 	Stream_Write_UINT32(irp->output, BytesReturned); /* OutputBufferLength (4 bytes) */
 
 	if (BytesReturned > 0)
@@ -567,7 +567,7 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 				WLog_Print(serial->log, WLOG_WARN,
 				           "WaitForSingleObject, got an unexpected result=0x%" PRIX32 "\n",
 				           waitResult);
-				assert(FALSE);
+				WINPR_ASSERT(FALSE);
 			}
 
 			/* pending thread (but not yet terminating thread) if waitResult == WAIT_TIMEOUT */
@@ -603,8 +603,8 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 		WLog_Print(serial->log, WLOG_DEBUG,
 		           "IRP recall: IRP with the CompletionId=%" PRIu32 " not yet completed!",
 		           irp->CompletionId);
-		assert(FALSE); /* unimplemented */
-		/* TODO: asserts that previousIrpThread handles well
+		WINPR_ASSERT(FALSE); /* unimplemented */
+		/* TODO: WINPR_ASSERTs that previousIrpThread handles well
 		 * the same request by checking more details. Need an
 		 * access to the IRP object used by previousIrpThread
 		 */
@@ -626,12 +626,12 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 		WLog_Print(serial->log, WLOG_WARN,
 		           "Number of IRP threads threshold reached: %d, keep on anyway",
 		           ListDictionary_Count(serial->IrpThreads));
-		assert(FALSE); /* unimplemented */
-		               /* TODO: MAX_IRP_THREADS has been thought to avoid a
-		                * flooding of pending requests. Use
-		                * WaitForMultipleObjects() when available in winpr
-		                * for threads.
-		                */
+		WINPR_ASSERT(FALSE); /* unimplemented */
+		                     /* TODO: MAX_IRP_THREADS has been thought to avoid a
+		                      * flooding of pending requests. Use
+		                      * WaitForMultipleObjects() when available in winpr
+		                      * for threads.
+		                      */
 	}
 
 	/* error_handle to be used ... */
@@ -747,7 +747,7 @@ static DWORD WINAPI serial_thread_func(LPVOID arg)
 static UINT serial_irp_request(DEVICE* device, IRP* irp)
 {
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*)device;
-	assert(irp != NULL);
+	WINPR_ASSERT(irp != NULL);
 
 	if (irp == NULL)
 		return CHANNEL_RC_OK;
@@ -889,7 +889,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 				serial->ServerSerialDriverId = SerialDriverSerCx2Sys;
 			else
 			{
-				assert(FALSE);
+				WINPR_ASSERT(FALSE);
 				WLog_Print(serial->log, WLOG_DEBUG,
 				           "Unknown server's serial driver: %s. SerCx2 will be used", driver);
 				serial->ServerSerialDriverId = SerialDriverSerialSys;
@@ -910,7 +910,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			else
 			{
 				WLog_Print(serial->log, WLOG_DEBUG, "Unknown flag: %s", device->Permissive);
-				assert(FALSE);
+				WINPR_ASSERT(FALSE);
 			}
 		}
 

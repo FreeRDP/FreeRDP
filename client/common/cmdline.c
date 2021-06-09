@@ -24,7 +24,7 @@
 #endif
 
 #include <ctype.h>
-#include <assert.h>
+#include <winpr/assert.h>
 #include <errno.h>
 
 #include <winpr/crt.h>

@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <winpr/memory.h>
 #include <freerdp/log.h>
 #include <freerdp/codec/region.h>
@@ -78,15 +78,15 @@ static REGION16_DATA empty_region = { 0, 0 };
 
 void region16_init(REGION16* region)
 {
-	assert(region);
+	WINPR_ASSERT(region);
 	ZeroMemory(region, sizeof(REGION16));
 	region->data = &empty_region;
 }
 
 int region16_n_rects(const REGION16* region)
 {
-	assert(region);
-	assert(region->data);
+	WINPR_ASSERT(region);
+	WINPR_ASSERT(region->data);
 	return region->data->nbRects;
 }
 
@@ -148,8 +148,8 @@ BOOL rectangle_is_empty(const RECTANGLE_16* rect)
 
 BOOL region16_is_empty(const REGION16* region)
 {
-	assert(region);
-	assert(region->data);
+	WINPR_ASSERT(region);
+	WINPR_ASSERT(region->data);
 	return (region->data->nbRects == 0);
 }
 
@@ -178,8 +178,8 @@ BOOL rectangles_intersection(const RECTANGLE_16* r1, const RECTANGLE_16* r2, REC
 
 void region16_clear(REGION16* region)
 {
-	assert(region);
-	assert(region->data);
+	WINPR_ASSERT(region);
+	WINPR_ASSERT(region->data);
 
 	if ((region->data->size > 0) && (region->data != &empty_region))
 		free(region->data);
@@ -203,10 +203,10 @@ static INLINE REGION16_DATA* allocateRegion(long nbItems)
 
 BOOL region16_copy(REGION16* dst, const REGION16* src)
 {
-	assert(dst);
-	assert(dst->data);
-	assert(src);
-	assert(src->data);
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(dst->data);
+	WINPR_ASSERT(src);
+	WINPR_ASSERT(src->data);
 
 	if (dst == src)
 		return TRUE;
@@ -495,9 +495,9 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 	RECTANGLE_16* dstRect = NULL;
 	UINT32 usedRects, srcNbRects;
 	UINT16 topInterBand;
-	assert(src);
-	assert(src->data);
-	assert(dst);
+	WINPR_ASSERT(src);
+	WINPR_ASSERT(src->data);
+	WINPR_ASSERT(dst);
 	srcExtents = region16_extents(src);
 	dstExtents = region16_extents_noconst(dst);
 
@@ -719,8 +719,8 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 	RECTANGLE_16* dstPtr;
 	UINT32 nbRects, usedRects;
 	RECTANGLE_16 common, newExtents;
-	assert(src);
-	assert(src->data);
+	WINPR_ASSERT(src);
+	WINPR_ASSERT(src->data);
 	srcPtr = region16_rects(src, &nbRects);
 
 	if (!nbRects)
@@ -800,7 +800,7 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 
 void region16_uninit(REGION16* region)
 {
-	assert(region);
+	WINPR_ASSERT(region);
 
 	if (region->data)
 	{

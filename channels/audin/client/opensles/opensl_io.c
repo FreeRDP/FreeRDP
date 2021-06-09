@@ -27,7 +27,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include "audin_main.h"
 #include "opensl_io.h"
@@ -101,7 +101,7 @@ static SLresult openSLCreateEngine(OPENSL_STREAM* p)
 	}
 
 engine_end:
-	assert(SL_RESULT_SUCCESS == result);
+	WINPR_ASSERT(SL_RESULT_SUCCESS == result);
 	return result;
 }
 
@@ -111,7 +111,7 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 	SLresult result;
 	SLuint32 sr = p->sr;
 	SLuint32 channels = p->inchannels;
-	assert(!p->recorderObject);
+	WINPR_ASSERT(!p->recorderObject);
 
 	if (channels)
 	{
@@ -201,7 +201,7 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 			format_pcm.containerSize = 8;
 		}
 		else
-			assert(0);
+			WINPR_ASSERT(0);
 
 		SLDataSink audioSnk = { &loc_bq, &format_pcm };
 		// create audio recorder
@@ -211,14 +211,14 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 		result = (*p->engineEngine)
 		             ->CreateAudioRecorder(p->engineEngine, &(p->recorderObject), &audioSrc,
 		                                   &audioSnk, 1, id, req);
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (SL_RESULT_SUCCESS != result)
 			goto end_recopen;
 
 		// realize the audio recorder
 		result = (*p->recorderObject)->Realize(p->recorderObject, SL_BOOLEAN_FALSE);
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (SL_RESULT_SUCCESS != result)
 			goto end_recopen;
@@ -226,7 +226,7 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 		// get the record interface
 		result = (*p->recorderObject)
 		             ->GetInterface(p->recorderObject, SL_IID_RECORD, &(p->recorderRecord));
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (SL_RESULT_SUCCESS != result)
 			goto end_recopen;
@@ -235,7 +235,7 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 		result = (*p->recorderObject)
 		             ->GetInterface(p->recorderObject, SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
 		                            &(p->recorderBufferQueue));
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (SL_RESULT_SUCCESS != result)
 			goto end_recopen;
@@ -243,7 +243,7 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 		// register callback on the buffer queue
 		result = (*p->recorderBufferQueue)
 		             ->RegisterCallback(p->recorderBufferQueue, bqRecorderCallback, p);
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (SL_RESULT_SUCCESS != result)
 			goto end_recopen;

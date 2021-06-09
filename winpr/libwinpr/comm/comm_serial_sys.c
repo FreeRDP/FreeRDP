@@ -22,7 +22,7 @@
 
 #if defined __linux__ && !defined ANDROID
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -248,7 +248,7 @@ static BOOL _set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 				return FALSE;
 			}
 
-			assert(cfgetispeed(&futureState) == newSpeed);
+			WINPR_ASSERT(cfgetispeed(&futureState) == newSpeed);
 
 			if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &futureState) < 0)
 			{
@@ -922,7 +922,7 @@ static BOOL _set_dtr(WINPR_COMM* pComm)
 		return FALSE;
 
 	/* SERIAL_DTR_HANDSHAKE not supported as of today */
-	assert((handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE) == 0);
+	WINPR_ASSERT((handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE) == 0);
 
 	if (handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE)
 	{
@@ -940,7 +940,7 @@ static BOOL _clear_dtr(WINPR_COMM* pComm)
 		return FALSE;
 
 	/* SERIAL_DTR_HANDSHAKE not supported as of today */
-	assert((handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE) == 0);
+	WINPR_ASSERT((handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE) == 0);
 
 	if (handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE)
 	{
@@ -1154,7 +1154,7 @@ static BOOL _purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 				              strerror(errno));
 			}
 
-			assert(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_WRITE */
+			WINPR_ASSERT(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_WRITE */
 		}
 	}
 
@@ -1170,7 +1170,7 @@ static BOOL _purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 				              strerror(errno));
 			}
 
-			assert(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_READ */
+			WINPR_ASSERT(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_READ */
 		}
 	}
 
@@ -1398,7 +1398,7 @@ static void _consume_event(WINPR_COMM* pComm, ULONG* pOutputMask, ULONG event)
  */
 static BOOL _wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 {
-	assert(*pOutputMask == 0);
+	WINPR_ASSERT(*pOutputMask == 0);
 
 	EnterCriticalSection(&pComm->EventsLock);
 	pComm->PendingEvents |= SERIAL_EV_FREERDP_WAITING;
@@ -1427,7 +1427,7 @@ static BOOL _wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 			 *
 			 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
 			 */
-			assert(*pOutputMask == 0);
+			WINPR_ASSERT(*pOutputMask == 0);
 
 			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_WAITING;
 			LeaveCriticalSection(&pComm->EventsLock);
@@ -1563,7 +1563,7 @@ static BOOL _immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
 
 	result = CommWriteFile(pComm, pChar, 1, &nbBytesWritten, NULL);
 
-	assert(nbBytesWritten == 1);
+	WINPR_ASSERT(nbBytesWritten == 1);
 
 	return result;
 }
