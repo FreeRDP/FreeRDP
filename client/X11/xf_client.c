@@ -1636,7 +1636,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		if (!handle_window_events(instance))
 			break;
 
-		if ((status != WAIT_TIMEOUT) && (waitStatus == WAIT_OBJECT_0))
+		if ((waitStatus != WAIT_TIMEOUT) && (waitStatus == WAIT_OBJECT_0))
 		{
 			timerEvent.now = GetTickCount64();
 			PubSub_OnTimer(context->pubSub, context, &timerEvent);
