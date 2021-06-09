@@ -828,7 +828,7 @@ HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 			goto error_free;
 	}
 
-	if (HashTable_Insert(g_ServerHandles, (void*)(UINT_PTR)vcm->SessionId, (void*)vcm) < 0)
+	if (!HashTable_Insert(g_ServerHandles, (void*)(UINT_PTR)vcm->SessionId, (void*)vcm))
 		goto error_free;
 
 	queueCallbacks.fnObjectFree = wts_virtual_channel_manager_free_message;

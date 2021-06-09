@@ -1782,16 +1782,8 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 		WLog_ERR(TAG, "fail to alloc hashtable");
 		return FALSE;
 	}
-	if (!HashTable_SetHashFunction(mapDir, HashTable_StringHash))
+	if (!HashTable_SetupForStringData(mapDir, FALSE))
 		goto error;
-	{
-		wObject* obj = HashTable_KeyObject(mapDir);
-		if (!obj)
-			goto error;
-		obj->fnObjectNew = HashTable_StringClone;
-		obj->fnObjectFree = HashTable_StringFree;
-		obj->fnObjectEquals = HashTable_StringCompare;
-	}
 
 	FILEDESCRIPTORW* descriptor = (FILEDESCRIPTORW*)calloc(1, sizeof(FILEDESCRIPTORW));
 	if (!descriptor)
@@ -1831,7 +1823,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 				break;
 			inode->parent_ino = 1;
 			inode->name = baseName;
-			if (ArrayList_Append(rootNode->child_inos, (void*)inode->ino) < 0)
+			if (!ArrayList_Append(rootNode->child_inos, (void*)inode->ino))
 				break;
 		}
 		else
@@ -1850,7 +1842,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 				break;
 			inode->parent_ino = parent->ino;
 			inode->name = baseName;
-			if (ArrayList_Append(parent->child_inos, (void*)inode->ino) < 0)
+			if (!ArrayList_Append(parent->child_inos, (void*)inode->ino))
 				break;
 			free(dirName);
 			dirName = NULL;
@@ -1908,7 +1900,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 			inode->st_mtim.tv_nsec = 0;
 		}
 
-		if (ArrayList_Append(clipboard->ino_list, inode) < 0)
+		if (!ArrayList_Append(clipboard->ino_list, inode))
 			break;
 	}
 	/* clean up incomplete ino_list*/
@@ -1960,7 +1952,7 @@ static BOOL xf_cliprdr_fuse_generate_list(xfClipboard* clipboard, const BYTE* da
 	ArrayList_Lock(clipboard->ino_list);
 	xfCliprdrFuseInode* rootNode = xf_cliprdr_fuse_create_root_node();
 
-	if (!rootNode || ArrayList_Append(clipboard->ino_list, rootNode) < 0)
+	if (!rootNode || !ArrayList_Append(clipboard->ino_list, rootNode))
 	{
 		xf_cliprdr_fuse_inode_free(rootNode);
 		WLog_ERR(TAG, "fail to alloc rootNode to ino_list");
@@ -2386,7 +2378,7 @@ static int xf_cliprdr_fuse_util_add_stream_list(xfClipboard* clipboard, fuse_req
 	*stream_id = stream->stream_id;
 	stream->req_ino = 0;
 	clipboard->current_stream_id++;
-	if (ArrayList_Append(clipboard->stream_list, stream) < 0)
+	if (!ArrayList_Append(clipboard->stream_list, stream))
 	{
 		err = ENOMEM;
 		goto error;
@@ -2607,7 +2599,7 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 		return;
 	}
 
-	int res;
+	BOOL res;
 	UINT32 stream_id;
 	BOOL size_set = child_node->size_set;
 	size_t lindex = child_node->lindex;
@@ -2634,7 +2626,7 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 		clipboard->current_stream_id++;
 		res = ArrayList_Append(clipboard->stream_list, stream);
 		ArrayList_Unlock(clipboard->stream_list);
-		if (res < 0)
+		if (!res)
 		{
 			fuse_reply_err(req, ENOMEM);
 			return;
