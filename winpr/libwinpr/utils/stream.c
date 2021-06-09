@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
@@ -110,8 +110,8 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 
 void Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
 {
-	assert(s);
-	assert(buffer);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(buffer);
 
 	s->buffer = s->pointer = buffer;
 	s->capacity = s->length = size;

@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <winpr/file.h>
 #include <winpr/wlog.h>
@@ -209,7 +209,7 @@ static BOOL pf_modules_set_plugin_data(const char* plugin_name, proxyData* pdata
 		char* cp;
 	} ccharconv;
 
-	assert(plugin_name);
+	WINPR_ASSERT(plugin_name);
 
 	ccharconv.ccp = plugin_name;
 	if (data == NULL) /* no need to store anything */
@@ -237,8 +237,8 @@ static void* pf_modules_get_plugin_data(const char* plugin_name, proxyData* pdat
 		const char* ccp;
 		char* cp;
 	} ccharconv;
-	assert(plugin_name);
-	assert(pdata);
+	WINPR_ASSERT(plugin_name);
+	WINPR_ASSERT(pdata);
 	ccharconv.ccp = plugin_name;
 
 	return HashTable_GetItemValue(pdata->modules_info, ccharconv.cp);
@@ -246,7 +246,7 @@ static void* pf_modules_get_plugin_data(const char* plugin_name, proxyData* pdat
 
 static void pf_modules_abort_connect(proxyData* pdata)
 {
-	assert(pdata);
+	WINPR_ASSERT(pdata);
 	WLog_DBG(TAG, "%s is called!", __FUNCTION__);
 	proxy_data_abort_connect(pdata);
 }

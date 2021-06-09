@@ -17,7 +17,6 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
 #include <locale.h>
 
 #include <jni.h>

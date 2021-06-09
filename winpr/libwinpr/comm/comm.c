@@ -26,7 +26,7 @@
 
 #if defined __linux__ && !defined ANDROID
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -92,8 +92,8 @@ HANDLE_CREATOR* GetCommHandleCreator(void)
 static void _CommInit(void)
 {
 	/* NB: error management to be done outside of this function */
-	assert(_Log == NULL);
-	assert(_CommDevices == NULL);
+	WINPR_ASSERT(_Log == NULL);
+	WINPR_ASSERT(_CommDevices == NULL);
 	_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX + 1, sizeof(COMM_DEVICE*));
 
 	if (!_CommDevices)
@@ -107,7 +107,7 @@ static void _CommInit(void)
 	}
 
 	_Log = WLog_Get("com.winpr.comm");
-	assert(_Log != NULL);
+	WINPR_ASSERT(_Log != NULL);
 }
 
 /**

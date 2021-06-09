@@ -26,7 +26,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <float.h>
 
 #include <X11/Xlib.h>
@@ -844,7 +844,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
 	XWindowAttributes window_attributes;
-	assert(xfc->display);
+	WINPR_ASSERT(xfc->display);
 	pfs = XListPixmapFormats(xfc->display, &pf_count);
 
 	if (!pfs)
@@ -1806,11 +1806,11 @@ static Atom get_supported_atom(xfContext* xfc, const char* atomName)
 static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	xfContext* xfc = (xfContext*)instance->context;
-	assert(context);
-	assert(xfc);
-	assert(!xfc->display);
-	assert(!xfc->mutex);
-	assert(!xfc->x11event);
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(!xfc->display);
+	WINPR_ASSERT(!xfc->mutex);
+	WINPR_ASSERT(!xfc->x11event);
 	instance->PreConnect = xf_pre_connect;
 	instance->PostConnect = xf_post_connect;
 	instance->PostDisconnect = xf_post_disconnect;

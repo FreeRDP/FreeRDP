@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -42,7 +42,7 @@
 #include <io.h>
 #include <sys/stat.h>
 #else
-#include <assert.h>
+#include <winpr/assert.h>
 #include <pthread.h>
 #include <dirent.h>
 #include <libgen.h>
@@ -191,7 +191,7 @@ extern HANDLE_CREATOR* GetCommHandleCreator(void);
 
 static void _HandleCreatorsInit()
 {
-	assert(_HandleCreators == NULL);
+	WINPR_ASSERT(_HandleCreators == NULL);
 	_HandleCreators = ArrayList_New(TRUE);
 
 	if (!_HandleCreators)

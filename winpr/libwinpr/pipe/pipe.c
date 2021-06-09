@@ -42,7 +42,7 @@
 #include <errno.h>
 #include <sys/un.h>
 #include <sys/socket.h>
-#include <assert.h>
+#include <winpr/assert.h>
 #include <unistd.h>
 
 #ifdef HAVE_SYS_AIO_H
@@ -526,8 +526,8 @@ static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
 	if (!pNamedPipe)
 		return;
 
-	assert(pNamedPipe->name);
-	assert(g_NamedPipeServerSockets);
+	WINPR_ASSERT(pNamedPipe->name);
+	WINPR_ASSERT(g_NamedPipeServerSockets);
 	// WLog_VRB(TAG, "%p (%s)", (void*) pNamedPipe, pNamedPipe->name);
 	ArrayList_Lock(g_NamedPipeServerSockets);
 
@@ -535,12 +535,12 @@ static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
 	{
 		baseSocket =
 		    (NamedPipeServerSocketEntry*)ArrayList_GetItem(g_NamedPipeServerSockets, index);
-		assert(baseSocket->name);
+		WINPR_ASSERT(baseSocket->name);
 
 		if (!strcmp(baseSocket->name, pNamedPipe->name))
 		{
-			assert(baseSocket->references > 0);
-			assert(baseSocket->serverfd != -1);
+			WINPR_ASSERT(baseSocket->references > 0);
+			WINPR_ASSERT(baseSocket->serverfd != -1);
 
 			if (--baseSocket->references == 0)
 			{

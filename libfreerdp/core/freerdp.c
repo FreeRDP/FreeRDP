@@ -33,7 +33,7 @@
 #include "buildflags.h"
 #include "gateway/rpc_fault.h"
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
 #include <winpr/string.h>

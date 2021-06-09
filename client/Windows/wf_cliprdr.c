@@ -32,7 +32,7 @@
 #include <windows.h>
 #include <winuser.h>
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
 #include <winpr/tchar.h>

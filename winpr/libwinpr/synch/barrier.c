@@ -30,7 +30,7 @@
 
 #ifdef WINPR_SYNCHRONIZATION_BARRIER
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <winpr/sysinfo.h>
 #include <winpr/library.h>
 #include <winpr/interlocked.h>
@@ -175,7 +175,7 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 
 	remainingThreads = InterlockedDecrement((LONG*)&lpBarrier->Reserved1);
 
-	assert(remainingThreads >= 0);
+	WINPR_ASSERT(remainingThreads >= 0);
 
 	if (remainingThreads > 0)
 	{
