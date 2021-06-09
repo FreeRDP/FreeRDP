@@ -815,3 +815,29 @@ BOOL HashTable_SetHashFunction(wHashTable* table, HASH_TABLE_HASH_FN fn)
 	table->hash = fn;
 	return TRUE;
 }
+
+BOOL HashTable_SetupForStringData(wHashTable* table, BOOL stringValues)
+{
+	wObject* obj;
+
+	if (!HashTable_SetHashFunction(table, HashTable_StringHash))
+		return FALSE;
+
+	obj = HashTable_KeyObject(table);
+	if (!obj)
+		return FALSE;
+	obj->fnObjectEquals = HashTable_StringCompare;
+	obj->fnObjectNew = HashTable_StringClone;
+	obj->fnObjectFree = HashTable_StringFree;
+
+	if (stringValues)
+	{
+		obj = HashTable_ValueObject(table);
+		if (!obj)
+			return FALSE;
+		obj->fnObjectEquals = HashTable_StringCompare;
+		obj->fnObjectNew = HashTable_StringClone;
+		obj->fnObjectFree = HashTable_StringFree;
+	}
+	return TRUE;
+}
