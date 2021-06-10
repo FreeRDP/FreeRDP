@@ -21,6 +21,12 @@ project(WinPR C)
 
 set(CMAKE_COLOR_MAKEFILE ON)
 
+option(WITH_VERBOSE_WINPR_ASSERT "Compile with verbose WINPR_ASSERT." ON)
+
+if (WITH_VERBOSE_WINPR_ASSERT)
+    add_definitions(-DWITH_VERBOSE_WINPR_ASSERT)
+endif()
+
 if(FREERDP_VERSION)
 	set(FREERDP_BUILD 1)
 endif()
