@@ -26,6 +26,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/wlog.h>
 
+#if WITH_VERBOSE_WINPR_ASSERT
 #define WINPR_ASSERT(cond)                                                                   \
 	do                                                                                       \
 	{                                                                                        \
@@ -36,6 +37,12 @@
 			abort();                                                                         \
 		}                                                                                    \
 	} while (0)
+#else
+#define WINPR_ASSERT(cond) \
+	do                     \
+	{                      \
+	} while (0)
+#endif
 
 #ifdef __cplusplus
 extern "C"
