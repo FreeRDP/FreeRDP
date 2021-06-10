@@ -20,7 +20,7 @@
 
 cmake_minimum_required(VERSION 3.4)
 
-project(FreeRDP C CXX)
+project(FreeRDP C)
 
 if(NOT DEFINED VENDOR)
 	set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")
@@ -67,7 +67,6 @@ include(ConfigOptions)
 include(ComplexLibrary)
 include(FeatureSummary)
 include(CheckCCompilerFlag)
-include(CheckCXXCompilerFlag)
 include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 include(InstallFreeRDPMan)
@@ -130,17 +129,9 @@ endif(CMAKE_CROSSCOMPILING)
 
 find_program(CCACHE ccache)
 if(CCACHE AND WITH_CCACHE)
-	if(CMAKE_VERSION VERSION_GREATER 3.3.2)
-		if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
-			SET(CMAKE_C_COMPILER_LAUNCHER ${CCACHE})
-		endif(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
-		if(NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
-			SET(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
-		endif(NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
-	else()
-		set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE})
-		set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE})
-	endif()
+	if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
+		SET(CMAKE_C_COMPILER_LAUNCHER ${CCACHE})
+	endif(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
 endif(CCACHE AND WITH_CCACHE)
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/.source_version" )
@@ -170,13 +161,12 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-if(NOT DEFINED BUILD_SHARED_LIBS)
-	if(IOS)
-		set(BUILD_SHARED_LIBS OFF)
-	else()
-		set(BUILD_SHARED_LIBS ON)
-	endif()
+set(LIB_DEFAULT ON)
+if (IOS)
+	set(LIB_DEFAULT OFF)
 endif()
+option(BUILD_SHARED_LIBS "Build shared libraries" ${LIB_DEFAULT})
+option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 
 if(BUILD_TESTING)
 	set(EXPORT_ALL_SYMBOLS TRUE)
@@ -254,12 +244,6 @@ if(CMAKE_COMPILER_IS_GNUCC)
 		else()
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i686")
 		endif()
-	else()
-		if(CMAKE_POSITION_INDEPENDENT_CODE)
-			if(${CMAKE_VERSION} VERSION_LESS 2.8.9)
-				set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-			endif()
-		endif()
 	endif()
 
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
@@ -275,10 +259,6 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	CHECK_C_COMPILER_FLAG(-Wno-deprecated-declarations Wno-deprecated-declarations)
 	if(Wno-deprecated-declarations)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
-	endif()
-	CHECK_CXX_COMPILER_FLAG(-Wno-deprecated-declarations Wno-deprecated-declarationsCXX)
-	if(Wno-deprecated-declarationsCXX)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 	endif()
 
 	if(NOT EXPORT_ALL_SYMBOLS)
@@ -306,7 +286,6 @@ if(CMAKE_COMPILER_IS_GNUCC)
 		add_definitions(-DNDEBUG)
 	else()
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 	endif()
 endif()
 
@@ -319,11 +298,6 @@ if (CMAKE_GENERATOR MATCHES "Unix Makefile*")
 		if(Wno-builtin-macro-redefined)
 			set(CMAKE_C_FLAGS_${UPPER_BUILD_TYPE} "${CMAKE_C_FLAGS_${UPPER_BUILD_TYPE}} -Wno-builtin-macro-redefined -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
 		endif()
-
-		CHECK_CXX_COMPILER_FLAG (-Wno-builtin-macro-redefined Wno-builtin-macro-redefinedCXX)
-		if(Wno-builtin-macro-redefinedCXX)
-			set(CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE} "${CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE}} -Wno-builtin-macro-redefined -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
-		endif()
 	endif()
 endif()
 
@@ -335,10 +309,6 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
 	CHECK_C_COMPILER_FLAG(-Wno-deprecated-declarations Wno-deprecated-declarations)
 	if(Wno-deprecated-declarations)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
-	endif()
-	CHECK_CXX_COMPILER_FLAG(-Wno-deprecated-declarations Wno-deprecated-declarationsCXX)
-	if(Wno-deprecated-declarationsCXX)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 	endif()
 endif()
 
@@ -440,10 +410,6 @@ if(MSVC)
 	# NMake is otherwise complaining.
 	foreach (flags_var_to_scrub
 		CMAKE_C_FLAGS
-		CMAKE_CXX_FLAGS
-		CMAKE_CXX_FLAGS_RELEASE
-		CMAKE_CXX_FLAGS_RELWITHDEBINFO
-		CMAKE_CXX_FLAGS_MINSIZEREL
 		CMAKE_C_FLAGS_RELEASE
 		CMAKE_C_FLAGS_RELWITHDEBINFO
 		CMAKE_C_FLAGS_MINSIZEREL)
@@ -460,7 +426,6 @@ if(MSVC)
 	if(CMAKE_BUILD_TYPE STREQUAL "Release")
 	else()
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Zi")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi")
 	endif()
 
 endif()
@@ -468,9 +433,7 @@ endif()
 if(ANDROID)
 	# workaround for https://github.com/android-ndk/ndk/issues/243
 	string(REPLACE "-g " "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-	string(REPLACE "-g " "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 endif()
 
 if(WIN32)
@@ -515,7 +478,7 @@ if(WIN32)
 	endif()
 endif()
 
-add_definitions(-DWINPR_EXPORTS -DFREERDP_EXPORTS)
+add_definitions(-DFREERDP_EXPORTS)
 
 # Include files
 if(NOT IOS)
@@ -564,7 +527,6 @@ if(APPLE)
 
 	if (WITH_VERBOSE)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -v")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v")
 	endif()
 endif(APPLE)
 
@@ -1017,22 +979,21 @@ if(BUILD_TESTING)
 endif()
 
 # WinPR
-include_directories("${CMAKE_SOURCE_DIR}/winpr/include")
-include_directories("${CMAKE_BINARY_DIR}/winpr/include")
+if (FREERDP_UNIFIED_BUILD)
+	add_subdirectory(winpr)
+	if (WITH_WAYLAND)
+		add_subdirectory(uwac)
+	endif()
+	if (WITH_SERVER)
+		add_subdirectory(rdtk)
+	endif()
 
-if (${CMAKE_VERSION} VERSION_LESS 2.8.12)
-	set(PUBLIC_KEYWORD "")
-	set(PRIVATE_KEYWORD "")
+	include_directories(${CMAKE_SOURCE_DIR}/winpr/include)
+	include_directories(${CMAKE_BINARY_DIR}/winpr/include)
 else()
-	set(PUBLIC_KEYWORD "PUBLIC")
-	set(PRIVATE_KEYWORD "PRIVATE")
+	find_package(WinPR 3 REQUIRED)
+	include_directories(${WinPR_INCLUDE_DIR})
 endif()
-
-if(BUILD_SHARED_LIBS)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_DLL")
-endif()
-
-add_subdirectory(winpr)
 
 # Sub-directories
 
@@ -1046,16 +1007,6 @@ endif()
 add_subdirectory(include)
 
 add_subdirectory(libfreerdp)
-
-# RdTk
-include_directories("${CMAKE_SOURCE_DIR}/rdtk/include")
-include_directories("${CMAKE_BINARY_DIR}/rdtk/include")
-
-add_subdirectory(rdtk)
-
-if(WAYLAND_FOUND)
-	add_subdirectory(uwac)
-endif()
 
 if(BSD)
 	if(IS_DIRECTORY /usr/local/include)

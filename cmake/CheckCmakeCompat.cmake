@@ -24,19 +24,3 @@ endmacro()
 
 # Compatibility includes - order does matter!
 enable_cmake_compat(3.7.0)
-enable_cmake_compat(2.8.11)
-enable_cmake_compat(2.8.6)
-enable_cmake_compat(2.8.3)
-enable_cmake_compat(2.8.2)
-
-# GetGitRevisionDescription requires FindGit which was added in version 2.8.2
-# build won't fail but GIT_REVISION is set to n/a
-if(${CMAKE_VERSION} VERSION_LESS 2.8.2)
-	message(WARNING "GetGitRevisionDescription reqires (FindGit) cmake >= 2.8.2 to work properly - GIT_REVISION will be set to n/a")
-endif()
-
-# Since cmake 2.8.9 modules/library names without lib/.so can be used
-# for dependencies
-if(IOS AND ${CMAKE_VERSION} VERSION_LESS 2.8.9)
-	message(FATAL_ERROR "CMAKE version >= 2.8.9 required to build the IOS client")
-endif()

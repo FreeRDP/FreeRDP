@@ -1,0 +1,15 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=${prefix}/@RDTK_INCLUDE_DIR@
+libs=-lrdtk@RDTK_VERSION_MAJOR@
+
+Name: rdtk@RDTK_API_VERSION@ 
+Description: rdtk:
+URL: http://www.freerdp.com/
+Version: @RDTK_VERSION@
+Requires:
+Requires.private: winpr@WINPR_VERSION_MAJOR@
+Libs: -L${libdir} ${libs}
+Libs.private: 
+Cflags: -I${includedir}

@@ -51,7 +51,7 @@
 #include <string.h>
 #include <sys/epoll.h>
 
-#include "../config.h"
+#include "config.h"
 #include "uwac-os.h"
 #include "uwac-utils.h"
 

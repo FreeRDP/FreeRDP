@@ -4,7 +4,7 @@ libdir=@CMAKE_INSTALL_FULL_LIBDIR@
 includedir=${prefix}/@UWAC_INCLUDE_DIR@
 libs=-luwac@UWAC_VERSION_MAJOR@
 
-Name: uwac 
+Name: uwac@UWAC_API_VERSION@ 
 Description: uwac: using wayland as a client
 URL: http://www.freerdp.com/
 Version: @UWAC_VERSION@
