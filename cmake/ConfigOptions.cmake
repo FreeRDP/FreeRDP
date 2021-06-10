@@ -79,7 +79,7 @@ option(BUILTIN_CHANNELS "Combine all channels into their respective base library
 
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
-option(WITH_WINPR_TOOLS "Build WinPR helper binaries" ON)
+option(FREERDP_UNIFIED_BUILD "Build WinPR, uwac, RdTk and FreeRDP in one go" ON)
 
 CMAKE_DEPENDENT_OPTION(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON
 	"WITH_CLIENT_COMMON;WITH_CHANNELS" OFF)

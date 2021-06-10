@@ -64,10 +64,6 @@ macro(add_complex_library)
 
 endmacro(add_complex_library)
 
-if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
-	set(CMAKE_OBJECT_TARGET_SUPPORT 1)
-endif()
-
 function(create_object_cotarget target)
 
 	set(cotarget "${target}-objects")

@@ -1,7 +1,1 @@
-fullscreen-shell-client-protocol.h
-fullscreen-shell-protocol.c
-ivi-application-client-protocol.h
-ivi-application-protocol.c
-xdg-shell-client-protocol.h
-xdg-shell-protocol.c
-
+protocols/*

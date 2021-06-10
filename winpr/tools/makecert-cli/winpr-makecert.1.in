@@ -2,7 +2,7 @@
 \\$2 \(laURL: \\$1 \(ra\\$3
 ..
 .if \n[.g] .mso www.tmac
-.TH winpr\-makecert 1 2017-01-11 "@FREERDP_VERSION_FULL@" "FreeRDP"
+.TH winpr\-makecert 1 2017-01-11 "@WINPR_VERSION_FULL@" "FreeRDP"
 .SH NAME
 winpr\-makecert \- A tool to create X.509 certificates.
 .SH SYNOPSIS

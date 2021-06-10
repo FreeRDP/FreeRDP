@@ -78,6 +78,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, LPCSTR user, LPCSTR domain, LPCS
                       SecPkgContext_Bindings* Bindings)
 {
 	SECURITY_STATUS status;
+
 	ntlm->http = http;
 	ntlm->Bindings = Bindings;
 	ntlm->table = InitSecurityInterfaceEx(0);

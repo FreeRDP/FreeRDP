@@ -29,7 +29,7 @@
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
 #include <winpr/endian.h>
-#include <freerdp/build-config.h>
+#include <winpr/build-config.h>
 
 #include "ntlm.h"
 #include "ntlm_export.h"
@@ -40,7 +40,7 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.NTLM")
 
-#define WINPR_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\WinPR\\NTLM"
+#define WINPR_KEY "Software\\" WINPR_VENDOR_STRING "\\" WINPR_PRODUCT_STRING "\\WinPR\\NTLM"
 
 static char* NTLM_PACKAGE_NAME = "NTLM";
 
