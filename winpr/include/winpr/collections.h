@@ -57,7 +57,7 @@ extern "C"
 
 	typedef struct _wQueue wQueue;
 
-	WINPR_API int Queue_Count(wQueue* queue);
+	WINPR_API size_t Queue_Count(wQueue* queue);
 
 	WINPR_API void Queue_Lock(wQueue* queue);
 	WINPR_API void Queue_Unlock(wQueue* queue);
@@ -75,7 +75,7 @@ extern "C"
 
 	WINPR_API void* Queue_Peek(wQueue* queue);
 
-	WINPR_API wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor);
+	WINPR_API wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor);
 	WINPR_API void Queue_Free(wQueue* queue);
 
 	/* System.Collections.Stack */

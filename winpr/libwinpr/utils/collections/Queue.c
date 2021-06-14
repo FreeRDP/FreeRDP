@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <winpr/collections.h>
 
@@ -54,7 +55,7 @@ struct _wQueue
  * Gets the number of elements contained in the Queue.
  */
 
-int Queue_Count(wQueue* queue)
+size_t Queue_Count(wQueue* queue)
 {
 	size_t ret;
 
@@ -73,6 +74,7 @@ int Queue_Count(wQueue* queue)
 
 void Queue_Lock(wQueue* queue)
 {
+	WINPR_ASSERT(queue);
 	if (queue->synchronized)
 		EnterCriticalSection(&queue->lock);
 }
@@ -83,6 +85,7 @@ void Queue_Lock(wQueue* queue)
 
 void Queue_Unlock(wQueue* queue)
 {
+	WINPR_ASSERT(queue);
 	if (queue->synchronized)
 		LeaveCriticalSection(&queue->lock);
 }
@@ -93,13 +96,13 @@ void Queue_Unlock(wQueue* queue)
 
 HANDLE Queue_Event(wQueue* queue)
 {
+	WINPR_ASSERT(queue);
 	return queue->event;
 }
 
 wObject* Queue_Object(wQueue* queue)
 {
-	if (!queue)
-		return NULL;
+	WINPR_ASSERT(queue);
 	return &queue->object;
 }
 
@@ -158,8 +161,7 @@ BOOL Queue_Contains(wQueue* queue, const void* obj)
 
 static BOOL Queue_EnsureCapacity(wQueue* queue, size_t count)
 {
-	if (!queue)
-		return FALSE;
+	WINPR_ASSERT(queue);
 
 	if (queue->size + count >= queue->capacity)
 	{
@@ -264,7 +266,7 @@ static BOOL default_queue_equals(const void* obj1, const void* obj2)
  * Construction, Destruction
  */
 
-wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
+wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor)
 {
 	wObject* obj;
 	wQueue* queue = NULL;
@@ -277,11 +279,11 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 
 	queue->growthFactor = 2;
 	if (growthFactor > 0)
-		queue->growthFactor = growthFactor;
+		queue->growthFactor = (size_t)growthFactor;
 
 	if (capacity <= 0)
 		capacity = 32;
-	if (!Queue_EnsureCapacity(queue, capacity))
+	if (!Queue_EnsureCapacity(queue, (size_t)capacity))
 		goto fail;
 
 	queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
