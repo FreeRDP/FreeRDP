@@ -191,9 +191,7 @@ ATOM WINAPI RegisterClassExA(CONST WNDCLASSEXA* lpwcx)
 
 	_lpwcx = CloneWindowClass(lpwcx);
 
-	if (!ArrayList_Append(g_WindowClasses, (void*)_lpwcx))
-		return 0;
-	return ArrayList_Count(g_WindowClasses) - 1;
+	return ArrayList_Append(g_WindowClasses, (void*)_lpwcx);
 }
 
 ATOM WINAPI RegisterClassExW(CONST WNDCLASSEXW* lpwcx)

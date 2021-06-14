@@ -1861,7 +1861,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 			char* tmpName = _strdup(curName);
 			if (!tmpName)
 				break;
-			if (HashTable_Insert(mapDir, tmpName, inode) < 0)
+			if (!HashTable_Insert(mapDir, tmpName, inode))
 			{
 				free(tmpName);
 				break;
