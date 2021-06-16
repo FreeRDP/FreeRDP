@@ -1084,9 +1084,6 @@ RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 		goto fail;
 
 	obj = ArrayList_Object(client->ClientCallList);
-	if (!obj)
-		goto fail;
-
 	obj->fnObjectFree = rpc_array_client_call_free;
 	return client;
 fail:
