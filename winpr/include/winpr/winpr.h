@@ -49,10 +49,13 @@
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 #define WINPR_DEPRECATED(obj) __declspec(deprecated) obj
+#define WINPR_DEPRECATED_VAR(text, obj) __declspec(deprecated(text)) obj
 #elif defined(__GNUC__)
 #define WINPR_DEPRECATED(obj) obj __attribute__((deprecated))
+#define WINPR_DEPRECATED_VAR(text, obj) obj __attribute__((deprecated(text)))
 #else
 #define WINPR_DEPRECATED(obj) obj
+#define WINPR_DEPRECATED_VAR(text, obj) obj
 #endif
 
 // WARNING: *do not* use thread-local storage for new code because it is not portable
