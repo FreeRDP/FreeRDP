@@ -28,7 +28,7 @@
 #include "wlf_disp.h"
 #include "wlfreerdp.h"
 
-BOOL encomsp_toggle_control(EncomspClientContext* encomsp, BOOL control)
+static BOOL encomsp_toggle_control(EncomspClientContext* encomsp, BOOL control)
 {
 	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
 

@@ -262,7 +262,7 @@ static BOOL x11_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 {
 #ifdef WITH_XTEST
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
-	int button = 0;
+	unsigned int button = 0;
 	BOOL down = FALSE;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
@@ -737,7 +737,7 @@ static int x11_shadow_error_handler_for_capture(Display* display, XErrorEvent* e
 static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 {
 	int rc = 0;
-	int count;
+	size_t count;
 	int status;
 	int x, y;
 	int width, height;
