@@ -173,7 +173,7 @@ static void test_peer_end_frame(freerdp_peer* client)
 
 static BOOL test_peer_draw_background(freerdp_peer* client)
 {
-	int size;
+	size_t size;
 	wStream* s;
 	RFX_RECT rect;
 	BYTE* rgb_data;
@@ -387,7 +387,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 
 static BOOL test_sleep_tsdiff(UINT32* old_sec, UINT32* old_usec, UINT32 new_sec, UINT32 new_usec)
 {
-	INT32 sec, usec;
+	INT64 sec, usec;
 
 	if ((*old_sec == 0) && (*old_usec == 0))
 	{
@@ -415,15 +415,15 @@ static BOOL test_sleep_tsdiff(UINT32* old_sec, UINT32* old_usec, UINT32 new_sec,
 	}
 
 	if (sec > 0)
-		Sleep(sec * 1000);
+		Sleep((DWORD)sec * 1000);
 
 	if (usec > 0)
-		USleep(usec);
+		USleep((DWORD)usec);
 
 	return TRUE;
 }
 
-BOOL tf_peer_dump_rfx(freerdp_peer* client)
+static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 {
 	wStream* s;
 	UINT32 prev_seconds;
@@ -526,7 +526,7 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 	return 0;
 }
 
-BOOL tf_peer_post_connect(freerdp_peer* client)
+static BOOL tf_peer_post_connect(freerdp_peer* client)
 {
 	testPeerContext* context = (testPeerContext*)client->context;
 	/**
@@ -615,7 +615,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	return TRUE;
 }
 
-BOOL tf_peer_activate(freerdp_peer* client)
+static BOOL tf_peer_activate(freerdp_peer* client)
 {
 	testPeerContext* context = (testPeerContext*)client->context;
 	context->activated = TRUE;
@@ -637,14 +637,14 @@ BOOL tf_peer_activate(freerdp_peer* client)
 	return TRUE;
 }
 
-BOOL tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
+static BOOL tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	WINPR_UNUSED(input);
 	WLog_DBG(TAG, "Client sent a synchronize event (flags:0x%" PRIX32 ")", flags);
 	return TRUE;
 }
 
-BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	freerdp_peer* client = input->context->peer;
 	rdpUpdate* update = client->update;
@@ -695,7 +695,7 @@ BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	return TRUE;
 }
 
-BOOL tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+static BOOL tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	WINPR_UNUSED(input);
 	WLog_DBG(TAG,
@@ -704,7 +704,7 @@ BOOL tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	return TRUE;
 }
 
-BOOL tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+static BOOL tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	WINPR_UNUSED(flags);
 	// WLog_DBG(TAG, "Client sent a mouse event (flags:0x%04"PRIX16" pos:%"PRIu16",%"PRIu16")",
@@ -713,7 +713,7 @@ BOOL tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 	return TRUE;
 }
 
-BOOL tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+static BOOL tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	WINPR_UNUSED(flags);
 	// WLog_DBG(TAG, "Client sent an extended mouse event (flags:0x%04"PRIX16"
