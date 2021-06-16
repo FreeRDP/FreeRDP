@@ -140,8 +140,7 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 		return FALSE;
 
 	context = (wlfContext*)instance->context;
-	ArrayList_Append(context->events, ev);
-	return TRUE;
+	return ArrayList_Append(context->events, ev);
 }
 
 BOOL wlf_handle_pointer_axis_discrete(freerdp* instance, const UwacPointerAxisEvent* ev)
@@ -151,8 +150,7 @@ BOOL wlf_handle_pointer_axis_discrete(freerdp* instance, const UwacPointerAxisEv
 		return FALSE;
 
 	context = (wlfContext*)instance->context;
-	ArrayList_Append(context->events, ev);
-	return TRUE;
+	return ArrayList_Append(context->events, ev);
 }
 
 static BOOL wlf_handle_wheel(freerdp* instance, uint32_t x, uint32_t y, uint32_t axis,
@@ -289,8 +287,7 @@ BOOL wlf_handle_pointer_source(freerdp* instance, const UwacPointerSourceEvent* 
 		return FALSE;
 
 	context = (wlfContext*)instance->context;
-	ArrayList_Append(context->events, ev);
-	return TRUE;
+	return ArrayList_Append(context->events, ev);
 }
 
 BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
