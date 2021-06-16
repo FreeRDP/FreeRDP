@@ -71,7 +71,7 @@ struct _wLog
 	BOOL IsRoot;
 	BOOL inherit;
 	LPSTR* Names;
-	DWORD NameCount;
+	size_t NameCount;
 	wLogAppender* Appender;
 
 	wLog* Parent;

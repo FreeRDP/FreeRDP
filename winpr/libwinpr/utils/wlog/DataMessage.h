@@ -20,6 +20,6 @@
 #ifndef WINPR_WLOG_DATA_MESSAGE_PRIVATE_H
 #define WINPR_WLOG_DATA_MESSAGE_PRIVATE_H
 
-BOOL WLog_DataMessage_Write(char* filename, void* data, int length);
+BOOL WLog_DataMessage_Write(const char* filename, const void* data, size_t length);
 
 #endif /* WINPR_WLOG_DATA_MESSAGE_PRIVATE_H */

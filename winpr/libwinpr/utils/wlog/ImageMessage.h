@@ -20,6 +20,6 @@
 #ifndef WINPR_WLOG_IMAGE_MESSAGE_PRIVATE_H
 #define WINPR_WLOG_IMAGE_MESSAGE_PRIVATE_H
 
-BOOL WLog_ImageMessage_Write(char* filename, void* data, int width, int height, int bpp);
+BOOL WLog_ImageMessage_Write(char* filename, void* data, size_t width, size_t height, size_t bpp);
 
 #endif /* WINPR_WLOG_IMAGE_MESSAGE_PRIVATE_H */

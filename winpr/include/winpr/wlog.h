@@ -73,28 +73,28 @@ extern "C"
 		LPSTR PrefixString;
 
 		LPCSTR FormatString;
-		LPSTR TextString;
+		LPCSTR TextString;
 
-		DWORD LineNumber;    /* __LINE__ */
+		size_t LineNumber;   /* __LINE__ */
 		LPCSTR FileName;     /* __FILE__ */
 		LPCSTR FunctionName; /* __FUNCTION__ */
 
 		/* Data Message */
 
 		void* Data;
-		int Length;
+		size_t Length;
 
 		/* Image Message */
 
 		void* ImageData;
-		int ImageWidth;
-		int ImageHeight;
-		int ImageBpp;
+		size_t ImageWidth;
+		size_t ImageHeight;
+		size_t ImageBpp;
 
 		/* Packet Message */
 
 		void* PacketData;
-		int PacketLength;
+		size_t PacketLength;
 		DWORD PacketFlags;
 	};
 	typedef struct _wLogMessage wLogMessage;
@@ -105,9 +105,9 @@ extern "C"
 #define WLOG_PACKET_INBOUND 1
 #define WLOG_PACKET_OUTBOUND 2
 
-	WINPR_API BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, DWORD line,
+	WINPR_API BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, size_t line,
 	                                 const char* file, const char* function, ...);
-	WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, DWORD line,
+	WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line,
 	                                   const char* file, const char* function, va_list args);
 
 	WINPR_API wLog* WLog_GetRoot(void);

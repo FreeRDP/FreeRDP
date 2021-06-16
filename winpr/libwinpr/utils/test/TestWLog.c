@@ -15,6 +15,9 @@ int TestWLog(int argc, char* argv[])
 	char* wlog_file = NULL;
 	int result = 1;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (!(tmp_path = GetKnownPath(KNOWN_PATH_TEMP)))
 	{
 		fprintf(stderr, "Failed to get temporary directory!\n");
