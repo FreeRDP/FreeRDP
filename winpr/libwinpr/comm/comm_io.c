@@ -297,13 +297,13 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			WINPR_ASSERT(errno == EAGAIN);
 		}
 
-		if (event == FREERDP_PURGE_RXABORT)
+		if (event == WINPR_PURGE_RXABORT)
 		{
 			SetLastError(ERROR_CANCELLED);
 			goto return_false;
 		}
 
-		WINPR_ASSERT(event == FREERDP_PURGE_RXABORT); /* no other expected event so far */
+		WINPR_ASSERT(event == WINPR_PURGE_RXABORT); /* no other expected event so far */
 	}
 
 	if (FD_ISSET(pComm->fd_read, &read_set))
@@ -352,7 +352,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		*lpNumberOfBytesRead = nbRead;
 
 		EnterCriticalSection(&pComm->EventsLock);
-		if (pComm->PendingEvents & SERIAL_EV_FREERDP_WAITING)
+		if (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
 		{
 			if (pComm->eventChar != '\0' && memchr(lpBuffer, pComm->eventChar, nbRead))
 				pComm->PendingEvents |= SERIAL_EV_RXCHAR;
@@ -498,13 +498,13 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 				WINPR_ASSERT(errno == EAGAIN);
 			}
 
-			if (event == FREERDP_PURGE_TXABORT)
+			if (event == WINPR_PURGE_TXABORT)
 			{
 				SetLastError(ERROR_CANCELLED);
 				goto return_false;
 			}
 
-			WINPR_ASSERT(event == FREERDP_PURGE_TXABORT); /* no other expected event so far */
+			WINPR_ASSERT(event == WINPR_PURGE_TXABORT); /* no other expected event so far */
 		}
 
 		/* write_set */

@@ -1035,16 +1035,16 @@ static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 	 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
 	 */
 
-	if (pComm->PendingEvents & SERIAL_EV_FREERDP_WAITING)
+	if (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
 	{
 		/* FIXME: any doubt on reading PendingEvents out of a critical section? */
 
 		EnterCriticalSection(&pComm->EventsLock);
-		pComm->PendingEvents |= SERIAL_EV_FREERDP_STOP;
+		pComm->PendingEvents |= SERIAL_EV_WINPR_STOP;
 		LeaveCriticalSection(&pComm->EventsLock);
 
 		/* waiting the end of the pending _wait_on_mask() */
-		while (pComm->PendingEvents & SERIAL_EV_FREERDP_WAITING)
+		while (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
 			Sleep(10); /* 10ms */
 	}
 
@@ -1146,7 +1146,7 @@ static BOOL _purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 	{
 		/* Purges all write (IRP_MJ_WRITE) requests. */
 
-		if (eventfd_write(pComm->fd_write_event, FREERDP_PURGE_TXABORT) < 0)
+		if (eventfd_write(pComm->fd_write_event, WINPR_PURGE_TXABORT) < 0)
 		{
 			if (errno != EAGAIN)
 			{
@@ -1162,7 +1162,7 @@ static BOOL _purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 	{
 		/* Purges all read (IRP_MJ_READ) requests. */
 
-		if (eventfd_write(pComm->fd_read_event, FREERDP_PURGE_RXABORT) < 0)
+		if (eventfd_write(pComm->fd_read_event, WINPR_PURGE_RXABORT) < 0)
 		{
 			if (errno != EAGAIN)
 			{
@@ -1401,7 +1401,7 @@ static BOOL _wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 	WINPR_ASSERT(*pOutputMask == 0);
 
 	EnterCriticalSection(&pComm->EventsLock);
-	pComm->PendingEvents |= SERIAL_EV_FREERDP_WAITING;
+	pComm->PendingEvents |= SERIAL_EV_WINPR_WAITING;
 	LeaveCriticalSection(&pComm->EventsLock);
 
 	while (TRUE)
@@ -1410,7 +1410,7 @@ static BOOL _wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 		if (!_refresh_PendingEvents(pComm))
 		{
 			EnterCriticalSection(&pComm->EventsLock);
-			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_WAITING;
+			pComm->PendingEvents &= ~SERIAL_EV_WINPR_WAITING;
 			LeaveCriticalSection(&pComm->EventsLock);
 			return FALSE;
 		}
@@ -1418,9 +1418,9 @@ static BOOL _wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 		/* NB: ensure to leave the critical section before to return */
 		EnterCriticalSection(&pComm->EventsLock);
 
-		if (pComm->PendingEvents & SERIAL_EV_FREERDP_STOP)
+		if (pComm->PendingEvents & SERIAL_EV_WINPR_STOP)
 		{
-			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_STOP;
+			pComm->PendingEvents &= ~SERIAL_EV_WINPR_STOP;
 
 			/* pOutputMask must remain empty but should
 			 * not have been modified.
@@ -1429,7 +1429,7 @@ static BOOL _wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 			 */
 			WINPR_ASSERT(*pOutputMask == 0);
 
-			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_WAITING;
+			pComm->PendingEvents &= ~SERIAL_EV_WINPR_WAITING;
 			LeaveCriticalSection(&pComm->EventsLock);
 			return TRUE;
 		}
@@ -1455,7 +1455,7 @@ static BOOL _wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 			/* at least an event occurred */
 
 			EnterCriticalSection(&pComm->EventsLock);
-			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_WAITING;
+			pComm->PendingEvents &= ~SERIAL_EV_WINPR_WAITING;
 			LeaveCriticalSection(&pComm->EventsLock);
 			return TRUE;
 		}

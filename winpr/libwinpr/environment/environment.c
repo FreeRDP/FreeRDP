@@ -546,13 +546,15 @@ DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, 
 		return 0;
 
 	vLength = strlen(env);
+	if (vLength >= UINT32_MAX)
+		return 0;
 
 	if ((vLength + 1 > nSize) || (!lpBuffer))
-		return vLength + 1;
+		return (DWORD)vLength + 1;
 
 	CopyMemory(lpBuffer, env, vLength + 1);
 
-	return vLength;
+	return (DWORD)vLength;
 }
 
 BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue)

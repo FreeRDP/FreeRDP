@@ -1425,7 +1425,7 @@ BOOL CommCloseHandle(HANDLE handle)
 		return FALSE;
 	}
 
-	if (pComm->PendingEvents & SERIAL_EV_FREERDP_WAITING)
+	if (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
 	{
 		ULONG WaitMask = 0;
 		DWORD BytesReturned = 0;

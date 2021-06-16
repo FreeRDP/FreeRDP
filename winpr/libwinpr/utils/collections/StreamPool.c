@@ -107,21 +107,23 @@ static void StreamPool_ShiftUsed(wStreamPool* pool, size_t index, INT64 count)
 	WINPR_ASSERT(pool);
 	if (count > 0)
 	{
-		StreamPool_EnsureCapacity(pool, (size_t)count, TRUE);
+		const size_t pcount = (size_t)count;
+		StreamPool_EnsureCapacity(pool, pcount, TRUE);
 
-		MoveMemory(&pool->uArray[index + count], &pool->uArray[index],
+		MoveMemory(&pool->uArray[index + pcount], &pool->uArray[index],
 		           (pool->uSize - index) * sizeof(wStream*));
-		pool->uSize += count;
+		pool->uSize += pcount;
 	}
 	else if (count < 0)
 	{
-		if (pool->uSize - index + count > 0)
+		const size_t pcount = (size_t)-count;
+		if ((pool->uSize - index - pcount) > 0)
 		{
-			MoveMemory(&pool->uArray[index], &pool->uArray[index - count],
-			           (pool->uSize - index + count) * sizeof(wStream*));
+			MoveMemory(&pool->uArray[index], &pool->uArray[index + pcount],
+			           (pool->uSize - index - pcount) * sizeof(wStream*));
 		}
 
-		pool->uSize += count;
+		pool->uSize -= pcount;
 	}
 }
 
@@ -163,20 +165,24 @@ static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 cou
 	WINPR_ASSERT(pool);
 	if (count > 0)
 	{
-		StreamPool_EnsureCapacity(pool, (size_t)count, FALSE);
-		MoveMemory(&pool->aArray[index + count], &pool->aArray[index],
+		const size_t pcount = (size_t)count;
+
+		StreamPool_EnsureCapacity(pool, pcount, FALSE);
+		MoveMemory(&pool->aArray[index + pcount], &pool->aArray[index],
 		           (pool->aSize - index) * sizeof(wStream*));
-		pool->aSize += count;
+		pool->aSize += pcount;
 	}
 	else if (count < 0)
 	{
-		if (pool->aSize - index + count > 0)
+		const size_t pcount = (size_t)-count;
+
+		if ((pool->aSize - index - pcount) > 0)
 		{
-			MoveMemory(&pool->aArray[index], &pool->aArray[index - count],
-			           (pool->aSize - index + count) * sizeof(wStream*));
+			MoveMemory(&pool->aArray[index], &pool->aArray[index + pcount],
+			           (pool->aSize - index - pcount) * sizeof(wStream*));
 		}
 
-		pool->aSize += count;
+		pool->aSize -= pcount;
 	}
 }
 

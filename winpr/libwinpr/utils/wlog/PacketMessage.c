@@ -222,7 +222,7 @@ wPcap* Pcap_Open(char* name, BOOL write)
 	{
 		if (_fseeki64(pcap->fp, 0, SEEK_END) < 0)
 			goto out_fail;
-		pcap->file_size = _ftelli64(pcap->fp);
+		pcap->file_size = (SSIZE_T)_ftelli64(pcap->fp);
 		if (pcap->file_size < 0)
 			goto out_fail;
 		if (_fseeki64(pcap->fp, 0, SEEK_SET) < 0)

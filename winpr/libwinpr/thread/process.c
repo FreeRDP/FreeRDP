@@ -283,12 +283,20 @@ static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplic
 			}
 
 			if (token->UserId)
-				setuid((uid_t)token->UserId);
+			{
+				int rc = setuid((uid_t)token->UserId);
+				if (rc != 0)
+					goto finish;
+			}
 		}
 
 		/* TODO: add better cwd handling and error checking */
 		if (lpCurrentDirectory && strlen(lpCurrentDirectory) > 0)
-			chdir(lpCurrentDirectory);
+		{
+			int rc = chdir(lpCurrentDirectory);
+			if (rc != 0)
+				goto finish;
+		}
 
 		if (execve(filename, pArgs, envp) < 0)
 		{
