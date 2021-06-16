@@ -28,6 +28,7 @@
 
 BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 {
+	WINPR_ASSERT(s);
 	if (s->capacity < size)
 	{
 		size_t position;
