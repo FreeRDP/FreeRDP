@@ -826,7 +826,7 @@ BOOL HashTable_SetHashFunction(wHashTable* table, HASH_TABLE_HASH_FN fn)
 {
 	WINPR_ASSERT(table);
 	table->hash = fn;
-	return TRUE;
+	return fn != NULL;
 }
 
 BOOL HashTable_SetupForStringData(wHashTable* table, BOOL stringValues)
