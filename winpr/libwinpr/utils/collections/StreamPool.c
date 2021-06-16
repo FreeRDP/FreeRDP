@@ -47,6 +47,7 @@ struct _wStreamPool
 
 static INLINE void StreamPool_Lock(wStreamPool* pool)
 {
+	WINPR_ASSERT(pool);
 	if (pool->synchronized)
 		EnterCriticalSection(&pool->lock);
 }
@@ -57,6 +58,7 @@ static INLINE void StreamPool_Lock(wStreamPool* pool)
 
 static INLINE void StreamPool_Unlock(wStreamPool* pool)
 {
+	WINPR_ASSERT(pool);
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
 }
@@ -68,8 +70,7 @@ static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL used
 	size_t* size;
 	wStream*** array;
 
-	if (!pool)
-		return FALSE;
+	WINPR_ASSERT(pool);
 
 	cap = (usedOrAvailable) ? &pool->uCapacity : &pool->aCapacity;
 	size = (usedOrAvailable) ? &pool->uSize : &pool->aSize;
@@ -103,6 +104,7 @@ static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL used
 
 static void StreamPool_ShiftUsed(wStreamPool* pool, size_t index, INT64 count)
 {
+	WINPR_ASSERT(pool);
 	if (count > 0)
 	{
 		StreamPool_EnsureCapacity(pool, (size_t)count, TRUE);
@@ -142,6 +144,7 @@ static void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 	size_t index;
 	BOOL found = FALSE;
 
+	WINPR_ASSERT(pool);
 	for (index = 0; index < pool->uSize; index++)
 	{
 		if (pool->uArray[index] == s)
@@ -157,6 +160,7 @@ static void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 
 static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 count)
 {
+	WINPR_ASSERT(pool);
 	if (count > 0)
 	{
 		StreamPool_EnsureCapacity(pool, (size_t)count, FALSE);
@@ -236,6 +240,7 @@ out_fail:
 
 void StreamPool_Return(wStreamPool* pool, wStream* s)
 {
+	WINPR_ASSERT(pool);
 	if (!s)
 		return;
 
@@ -254,6 +259,7 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 
 void Stream_AddRef(wStream* s)
 {
+	WINPR_ASSERT(s);
 	if (s->pool)
 	{
 		StreamPool_Lock(s->pool);
@@ -270,6 +276,7 @@ void Stream_Release(wStream* s)
 {
 	DWORD count;
 
+	WINPR_ASSERT(s);
 	if (s->pool)
 	{
 		StreamPool_Lock(s->pool);
@@ -378,7 +385,9 @@ void StreamPool_Free(wStreamPool* pool)
 
 char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 {
-	if (!pool || !buffer || (size < 1))
+	WINPR_ASSERT(pool);
+
+	if (!buffer || (size < 1))
 		return NULL;
 	_snprintf(buffer, size - 1,
 	          "aSize    =%" PRIuz ", uSize    =%" PRIuz "aCapacity=%" PRIuz ", uCapacity=%" PRIuz,
