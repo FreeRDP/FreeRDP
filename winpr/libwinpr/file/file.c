@@ -240,7 +240,7 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	}
 
 	if (lpNumberOfBytesRead)
-		*lpNumberOfBytesRead = io_status;
+		*lpNumberOfBytesRead = (DWORD)io_status;
 
 	return status;
 }
@@ -271,7 +271,7 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 		return FALSE;
 	}
 
-	*lpNumberOfBytesWritten = io_status;
+	*lpNumberOfBytesWritten = (DWORD)io_status;
 	return TRUE;
 }
 

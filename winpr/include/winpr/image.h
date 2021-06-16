@@ -71,12 +71,12 @@ typedef struct _WINPR_BITMAP_CORE_HEADER WINPR_BITMAP_CORE_HEADER;
 struct _wImage
 {
 	int type;
-	int width;
-	int height;
+	UINT32 width;
+	UINT32 height;
 	BYTE* data;
-	int scanline;
-	int bitsPerPixel;
-	int bytesPerPixel;
+	UINT32 scanline;
+	UINT32 bitsPerPixel;
+	UINT32 bytesPerPixel;
 };
 typedef struct _wImage wImage;
 
@@ -94,7 +94,7 @@ extern "C"
 
 	WINPR_API int winpr_image_read_buffer(wImage* image, const BYTE* buffer, int size);
 
-	WINPR_API wImage* winpr_image_new();
+	WINPR_API wImage* winpr_image_new(void);
 	WINPR_API void winpr_image_free(wImage* image, BOOL bFreeBuffer);
 
 #ifdef __cplusplus

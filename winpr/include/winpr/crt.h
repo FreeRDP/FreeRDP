@@ -99,7 +99,7 @@ static INLINE UINT64 _byteswap_uint64(UINT64 _val)
 
 static INLINE UINT16 _byteswap_ushort(UINT16 _val)
 {
-	return (((_val) >> 8) | ((_val) << 8));
+	return (UINT16)(((_val) >> 8U) | ((_val) << 8U));
 }
 
 #endif

@@ -69,14 +69,14 @@ static BOOL writeBitmapInfoHeader(wStream* s, const WINPR_BITMAP_INFO_HEADER* bi
 		return FALSE;
 
 	Stream_Write_UINT32(s, bi->biSize);
-	Stream_Write_UINT32(s, bi->biWidth);
-	Stream_Write_UINT32(s, bi->biHeight);
+	Stream_Write_INT32(s, bi->biWidth);
+	Stream_Write_INT32(s, bi->biHeight);
 	Stream_Write_UINT16(s, bi->biPlanes);
 	Stream_Write_UINT16(s, bi->biBitCount);
 	Stream_Write_UINT32(s, bi->biCompression);
 	Stream_Write_UINT32(s, bi->biSizeImage);
-	Stream_Write_UINT32(s, bi->biXPelsPerMeter);
-	Stream_Write_UINT32(s, bi->biYPelsPerMeter);
+	Stream_Write_INT32(s, bi->biXPelsPerMeter);
+	Stream_Write_INT32(s, bi->biYPelsPerMeter);
 	Stream_Write_UINT32(s, bi->biClrUsed);
 	Stream_Write_UINT32(s, bi->biClrImportant);
 	return TRUE;

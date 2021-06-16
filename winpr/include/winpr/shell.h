@@ -80,8 +80,8 @@ typedef enum
 	FD_FILESIZE = 0x00000040,
 	FD_PROGRESSUI = 0x00004000,
 	FD_LINKUI = 0x00008000,
-	FD_UNICODE = 0x80000000
 } FD_FLAGS;
+#define FD_UNICODE 0x80000000
 
 /* Deprecated, here for compatibility */
 #define FD_SHOWPROGRESSUI FD_PROGRESSUI
