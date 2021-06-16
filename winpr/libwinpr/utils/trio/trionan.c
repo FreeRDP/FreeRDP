@@ -291,7 +291,7 @@ static TRIO_CONST unsigned char ieee_754_qnan_array[] = { 0x7F, 0xF8, 0x00, 0x00
 
 TRIO_PRIVATE_NAN double internal_make_double TRIO_ARGS1((values), TRIO_CONST unsigned char* values)
 {
-	TRIO_VOLATILE double result;
+	TRIO_VOLATILE double result = 0.0;
 	int i;
 
 	for (i = 0; i < (int)sizeof(double); i++)

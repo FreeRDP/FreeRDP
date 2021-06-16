@@ -600,12 +600,12 @@ static INLINE BYTE RGB2Y(BYTE R, BYTE G, BYTE B)
 
 static INLINE BYTE RGB2U(BYTE R, BYTE G, BYTE B)
 {
-	return ((-29 * R - 99 * G + 128 * B) >> 8) + 128;
+	return ((-29u * R - 99u * G + 128u * B) >> 8u) + 128u;
 }
 
 static INLINE BYTE RGB2V(INT32 R, INT32 G, INT32 B)
 {
-	return ((128L * R - 116 * G - 12 * B) >> 8) + 128;
+	return ((128lu * R - 116lu * G - 12lu * B) >> 8lu) + 128lu;
 }
 
 static pstatus_t general_RGBToYUV444_8u_P3AC4R(const BYTE* pSrc, UINT32 SrcFormat,

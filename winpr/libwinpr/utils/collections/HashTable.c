@@ -98,7 +98,7 @@ UINT32 HashTable_StringHash(const void* key)
 
 void* HashTable_StringClone(const void* str)
 {
-	return _strdup((char*)str);
+	return _strdup((const char*)str);
 }
 
 void HashTable_StringFree(void* str)
@@ -570,7 +570,7 @@ size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 		if (table->synchronized)
 			LeaveCriticalSection(&table->lock);
 
-		return -1;
+		return 0;
 	}
 
 	for (index = 0; index < table->numOfBuckets; index++)
