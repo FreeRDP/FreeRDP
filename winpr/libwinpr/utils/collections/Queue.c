@@ -295,8 +295,6 @@ wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor)
 		goto fail;
 
 	obj = Queue_Object(queue);
-	if (!obj)
-		goto fail;
 	obj->fnObjectEquals = default_queue_equals;
 
 	return queue;

@@ -400,8 +400,6 @@ static PCSC_SCARDCONTEXT* PCSC_EstablishCardContext(SCARDCONTEXT hContext)
 		goto errors;
 	{
 		wObject* obj = HashTable_ValueObject(pContext->cache);
-		if (!obj)
-			goto errors;
 		obj->fnObjectFree = pcsc_cache_item_free;
 	}
 

@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
+#include <winpr/assert.h>
 
 #include <winpr/collections.h>
 
@@ -51,8 +52,7 @@ struct _wMessageQueue
 
 wObject* MessageQueue_Object(wMessageQueue* queue)
 {
-	if (!queue)
-		return NULL;
+	WINPR_ASSERT(queue);
 	return &queue->object;
 }
 
@@ -62,6 +62,7 @@ wObject* MessageQueue_Object(wMessageQueue* queue)
 
 HANDLE MessageQueue_Event(wMessageQueue* queue)
 {
+	WINPR_ASSERT(queue);
 	return queue->event;
 }
 
@@ -71,6 +72,7 @@ HANDLE MessageQueue_Event(wMessageQueue* queue)
 
 size_t MessageQueue_Size(wMessageQueue* queue)
 {
+	WINPR_ASSERT(queue);
 	return queue->size;
 }
 
@@ -82,6 +84,7 @@ BOOL MessageQueue_Wait(wMessageQueue* queue)
 {
 	BOOL status = FALSE;
 
+	WINPR_ASSERT(queue);
 	if (WaitForSingleObject(queue->event, INFINITE) == WAIT_OBJECT_0)
 		status = TRUE;
 
@@ -90,8 +93,7 @@ BOOL MessageQueue_Wait(wMessageQueue* queue)
 
 static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 {
-	if (!queue)
-		return FALSE;
+	WINPR_ASSERT(queue);
 
 	if (queue->size + count >= queue->capacity)
 	{
@@ -124,7 +126,9 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, const wMessage* message)
 {
 	wMessage* dst;
 	BOOL ret = FALSE;
-	if (!queue || !message)
+	WINPR_ASSERT(queue);
+
+	if (!message)
 		return FALSE;
 
 	EnterCriticalSection(&queue->lock);
@@ -203,6 +207,7 @@ int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove)
 {
 	int status = 0;
 
+	WINPR_ASSERT(queue);
 	EnterCriticalSection(&queue->lock);
 
 	if (queue->size > 0)
@@ -276,8 +281,8 @@ int MessageQueue_Clear(wMessageQueue* queue)
 {
 	int status = 0;
 
-	if (!queue || !queue->event)
-		return -1;
+	WINPR_ASSERT(queue);
+	WINPR_ASSERT(queue->event);
 
 	EnterCriticalSection(&queue->lock);
 
