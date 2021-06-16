@@ -375,7 +375,7 @@ static BOOL WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 static UINT32 g_InboundSequenceNumber = 0;
 static UINT32 g_OutboundSequenceNumber = 0;
 
-BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
+BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flags)
 {
 	wTcpHeader tcp;
 	wIPv4Header ipv4;

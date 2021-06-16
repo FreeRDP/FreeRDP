@@ -357,7 +357,7 @@ BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent*
 
 BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 {
-	uint32_t x, y;
+	uint32_t x = 0, y = 0;
 	int i;
 	int touchId;
 	int contactId;

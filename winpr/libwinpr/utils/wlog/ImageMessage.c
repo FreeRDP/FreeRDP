@@ -26,7 +26,7 @@
 
 #include "wlog/ImageMessage.h"
 
-BOOL WLog_ImageMessage_Write(char* filename, void* data, int width, int height, int bpp)
+BOOL WLog_ImageMessage_Write(char* filename, void* data, size_t width, size_t height, size_t bpp)
 {
 	int status;
 

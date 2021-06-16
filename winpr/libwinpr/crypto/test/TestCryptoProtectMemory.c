@@ -9,15 +9,19 @@ static const char* SECRET_PASSWORD_TEST = "MySecretPassword123!";
 
 int TestCryptoProtectMemory(int argc, char* argv[])
 {
-	int cbPlainText;
-	int cbCipherText;
+	UINT32 cbPlainText;
+	UINT32 cbCipherText;
 	const char* pPlainText;
 	BYTE* pCipherText;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	pPlainText = SECRET_PASSWORD_TEST;
 	cbPlainText = strlen(pPlainText) + 1;
 	cbCipherText = cbPlainText +
 	               (CRYPTPROTECTMEMORY_BLOCK_SIZE - (cbPlainText % CRYPTPROTECTMEMORY_BLOCK_SIZE));
-	printf("cbPlainText: %d cbCipherText: %d\n", cbPlainText, cbCipherText);
+	printf("cbPlainText: %" PRIu32 " cbCipherText: %" PRIu32 "\n", cbPlainText, cbCipherText);
 	pCipherText = (BYTE*)malloc(cbCipherText);
 	if (!pCipherText)
 	{
@@ -34,8 +38,8 @@ int TestCryptoProtectMemory(int argc, char* argv[])
 		return -1;
 	}
 
-	printf("PlainText: %s (cbPlainText = %d, cbCipherText = %d)\n", pPlainText, cbPlainText,
-	       cbCipherText);
+	printf("PlainText: %s (cbPlainText = %" PRIu32 ", cbCipherText = %" PRIu32 ")\n", pPlainText,
+	       cbPlainText, cbCipherText);
 	winpr_HexDump("crypto.test", WLOG_DEBUG, pCipherText, cbCipherText);
 
 	if (!CryptUnprotectMemory(pCipherText, cbCipherText, CRYPTPROTECTMEMORY_SAME_PROCESS))
