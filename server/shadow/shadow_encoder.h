@@ -32,16 +32,16 @@ struct rdp_shadow_encoder
 	rdpShadowClient* client;
 	rdpShadowServer* server;
 
-	int width;
-	int height;
+	UINT32 width;
+	UINT32 height;
 	UINT32 codecs;
 
 	BYTE** grid;
-	int gridWidth;
-	int gridHeight;
+	UINT32 gridWidth;
+	UINT32 gridHeight;
 	BYTE* gridBuffer;
-	int maxTileWidth;
-	int maxTileHeight;
+	UINT32 maxTileWidth;
+	UINT32 maxTileHeight;
 
 	wStream* bs;
 

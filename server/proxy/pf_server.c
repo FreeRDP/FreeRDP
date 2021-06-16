@@ -272,7 +272,7 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 			if (!pf_modules_run_filter(FILTER_TYPE_SERVER_PASSTHROUGH_CHANNEL_DATA, pdata, &ev))
 				return FALSE;
 
-			client_channel_id = (UINT64)HashTable_GetItemValue(pc->vc_ids, (void*)channel_name);
+			client_channel_id = (UINT64)HashTable_GetItemValue(pc->vc_ids, channel_name);
 
 			return pc->context.instance->SendChannelData(pc->context.instance,
 			                                             (UINT16)client_channel_id, data, size);

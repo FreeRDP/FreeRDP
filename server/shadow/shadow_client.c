@@ -1009,7 +1009,8 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 			}
 
 			rfx_message_free(encoder->rfx, &messages[i]);
-			cmd.bmp.bitmapDataLength = Stream_GetPosition(s);
+			WINPR_ASSERT(Stream_GetPosition(s) <= UINT32_MAX);
+			cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 			cmd.bmp.bitmapData = Stream_Buffer(s);
 			first = (i == 0) ? TRUE : FALSE;
 			last = ((i + 1) == numMessages) ? TRUE : FALSE;
@@ -1051,7 +1052,8 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 		cmd.destBottom = cmd.destTop + nHeight;
 		cmd.bmp.width = nWidth;
 		cmd.bmp.height = nHeight;
-		cmd.bmp.bitmapDataLength = Stream_GetPosition(s);
+		WINPR_ASSERT(Stream_GetPosition(s) <= UINT32_MAX);
+		cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 		cmd.bmp.bitmapData = Stream_Buffer(s);
 		first = TRUE;
 		last = TRUE;

@@ -262,7 +262,7 @@ static int shadow_encoder_init(rdpShadowEncoder* encoder)
 	shadow_encoder_init_grid(encoder);
 
 	if (!encoder->bs)
-		encoder->bs = Stream_New(NULL, encoder->maxTileWidth * encoder->maxTileHeight * 4);
+		encoder->bs = Stream_New(NULL, encoder->maxTileWidth * encoder->maxTileHeight * 4ULL);
 
 	if (!encoder->bs)
 		return -1;

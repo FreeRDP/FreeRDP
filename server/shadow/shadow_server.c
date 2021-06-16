@@ -373,7 +373,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{
 		int index;
-		int numMonitors;
+		UINT32 numMonitors;
 		MONITOR_DEF monitors[16];
 		numMonitors = shadow_enum_monitors(monitors, 16);
 
@@ -382,10 +382,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			/* Select monitors */
 			long val = strtol(arg->Value, NULL, 0);
 
-			if ((val < 0) || (errno != 0) || (val >= numMonitors))
+			if ((val < 0) || (errno != 0) || ((UINT32)val >= numMonitors))
 				status = COMMAND_LINE_STATUS_PRINT;
 
-			server->selectedMonitor = val;
+			server->selectedMonitor = (int)val;
 		}
 		else
 		{

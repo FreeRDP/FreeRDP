@@ -27,6 +27,7 @@
 #include <signal.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/ssl.h>
 #include <winpr/synch.h>
 #include <winpr/file.h>
@@ -78,8 +79,8 @@ static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 	if (!(context->s = Stream_New(NULL, 65536)))
 		goto fail_stream_new;
 
-	context->icon_x = -1;
-	context->icon_y = -1;
+	context->icon_x = UINT32_MAX;
+	context->icon_y = UINT32_MAX;
 	context->vcm = WTSOpenServerA((LPSTR)client->context);
 
 	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
@@ -177,20 +178,31 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	wStream* s;
 	RFX_RECT rect;
 	BYTE* rgb_data;
+	const rdpSettings* settings;
 	rdpUpdate* update = client->update;
 	SURFACE_BITS_COMMAND cmd = { 0 };
-	testPeerContext* context = (testPeerContext*)client->context;
+	testPeerContext* context;
 	BOOL ret = FALSE;
 
-	if (!client->settings->RemoteFxCodec && !client->settings->NSCodec)
+	WINPR_ASSERT(client);
+	context = (testPeerContext*)client->context;
+	WINPR_ASSERT(context);
+
+	settings = client->settings;
+	WINPR_ASSERT(settings);
+
+	if (!settings->RemoteFxCodec && !client->settings->NSCodec)
 		return FALSE;
+
+	WINPR_ASSERT(settings->DesktopWidth <= UINT16_MAX);
+	WINPR_ASSERT(settings->DesktopHeight <= UINT16_MAX);
 
 	s = test_peer_stream_init(context);
 	rect.x = 0;
 	rect.y = 0;
-	rect.width = client->settings->DesktopWidth;
-	rect.height = client->settings->DesktopHeight;
-	size = rect.width * rect.height * 3;
+	rect.width = (UINT16)settings->DesktopWidth;
+	rect.height = (UINT16)settings->DesktopHeight;
+	size = rect.width * rect.height * 3ULL;
 
 	if (!(rgb_data = malloc(size)))
 	{
@@ -200,7 +212,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 
 	memset(rgb_data, 0xA0, size);
 
-	if (client->settings->RemoteFxCodec)
+	if (settings->RemoteFxCodec)
 	{
 		WLog_DBG(TAG, "Using RemoteFX codec");
 		if (!rfx_compose_message(context->rfx_context, s, &rect, 1, rgb_data, rect.width,
@@ -209,15 +221,17 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 			goto out;
 		}
 
-		cmd.bmp.codecID = client->settings->RemoteFxCodecId;
+		WINPR_ASSERT(settings->RemoteFxCodecId <= UINT16_MAX);
+		cmd.bmp.codecID = (UINT16)settings->RemoteFxCodecId;
 		cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
 	}
 	else
 	{
 		WLog_DBG(TAG, "Using NSCodec");
 		nsc_compose_message(context->nsc_context, s, rgb_data, rect.width, rect.height,
-		                    rect.width * 3);
-		cmd.bmp.codecID = client->settings->NSCodecId;
+		                    rect.width * 3ULL);
+		WINPR_ASSERT(settings->NSCodecId <= UINT16_MAX);
+		cmd.bmp.codecID = (UINT16)settings->NSCodecId;
 		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	}
 
@@ -229,7 +243,8 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	cmd.bmp.flags = 0;
 	cmd.bmp.width = rect.width;
 	cmd.bmp.height = rect.height;
-	cmd.bmp.bitmapDataLength = Stream_GetPosition(s);
+	WINPR_ASSERT(Stream_GetPosition(s) <= UINT32_MAX);
+	cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 	cmd.bmp.bitmapData = Stream_Buffer(s);
 	test_peer_begin_frame(client);
 	update->SurfaceBits(update->context, &cmd);
@@ -268,7 +283,7 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 	/* width height */
 	fgets(line, sizeof(line), fp);
 
-	if (sscanf(line, "%d %d", &context->icon_width, &context->icon_height) < 2)
+	if (sscanf(line, "%hu %hu", &context->icon_width, &context->icon_height) < 2)
 	{
 		WLog_ERR(TAG, "Problem while extracting width/height from the icon file");
 		goto out_fail;
@@ -303,18 +318,20 @@ out_fail:
 	return FALSE;
 }
 
-static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
+static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 {
 	wStream* s;
 	RFX_RECT rect;
 	rdpUpdate* update = client->update;
 	SURFACE_BITS_COMMAND cmd = { 0 };
-	testPeerContext* context = (testPeerContext*)client->context;
+	testPeerContext* context;
+
+	WINPR_ASSERT(client);
+	context = (testPeerContext*)client->context;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->update);
 
 	if (client->update->dump_rfx)
-		return;
-
-	if (!context)
 		return;
 
 	if (context->icon_width < 1 || !context->activated)
@@ -328,16 +345,18 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 
 	if (client->settings->RemoteFxCodec)
 	{
-		cmd.bmp.codecID = client->settings->RemoteFxCodecId;
+		WINPR_ASSERT(client->settings->RemoteFxCodecId <= UINT16_MAX);
+		cmd.bmp.codecID = (UINT16)client->settings->RemoteFxCodecId;
 		cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
 	}
 	else
 	{
-		cmd.bmp.codecID = client->settings->NSCodecId;
+		WINPR_ASSERT(client->settings->NSCodecId <= UINT16_MAX);
+		cmd.bmp.codecID = (UINT16)client->settings->NSCodecId;
 		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	}
 
-	if (context->icon_x >= 0)
+	if (context->icon_x != UINT32_MAX)
 	{
 		s = test_peer_stream_init(context);
 
@@ -356,7 +375,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 		cmd.bmp.flags = 0;
 		cmd.bmp.width = context->icon_width;
 		cmd.bmp.height = context->icon_height;
-		cmd.bmp.bitmapDataLength = Stream_GetPosition(s);
+		cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 		cmd.bmp.bitmapData = Stream_Buffer(s);
 		update->SurfaceBits(update->context, &cmd);
 	}
@@ -377,7 +396,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	cmd.bmp.bpp = 32;
 	cmd.bmp.width = context->icon_width;
 	cmd.bmp.height = context->icon_height;
-	cmd.bmp.bitmapDataLength = Stream_GetPosition(s);
+	cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 	cmd.bmp.bitmapData = Stream_Buffer(s);
 	update->SurfaceBits(update->context, &cmd);
 	context->icon_x = x;
@@ -503,7 +522,7 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 		Stream_SetPosition(s, 0);
 
 		if (WTSVirtualChannelRead(context->debug_channel, 0, (PCHAR)Stream_Buffer(s),
-		                          Stream_Capacity(s), &BytesReturned) == FALSE)
+		                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			if (BytesReturned == 0)
 				break;
@@ -511,7 +530,7 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 			Stream_EnsureRemainingCapacity(s, BytesReturned);
 
 			if (WTSVirtualChannelRead(context->debug_channel, 0, (PCHAR)Stream_Buffer(s),
-			                          Stream_Capacity(s), &BytesReturned) == FALSE)
+			                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 			{
 				/* should not happen */
 				break;
@@ -951,7 +970,7 @@ int main(int argc, char* argv[])
 
 			port = strtol(arg, NULL, 10);
 
-			if ((port < 1) || (port > 0xFFFF) || (errno != 0))
+			if ((port < 1) || (port > UINT16_MAX) || (errno != 0))
 				return -1;
 		}
 		else if (strncmp(arg, slocal_only, sizeof(slocal_only)) == 0)
@@ -986,7 +1005,8 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	if ((localOnly || instance->Open(instance, NULL, port)) && instance->OpenLocal(instance, file))
+	if ((localOnly || instance->Open(instance, NULL, (UINT16)port)) &&
+	    instance->OpenLocal(instance, file))
 	{
 		/* Entering the server main loop. In a real server the listener can be run in its own
 		 * thread. */

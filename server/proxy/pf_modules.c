@@ -109,6 +109,7 @@ static BOOL pf_modules_proxy_ArrayList_ForEachFkt(void* data, size_t index, va_l
 			IFCALLRET(plugin->ServerSessionEnd, ok, pdata);
 			break;
 
+		case HOOK_LAST:
 		default:
 			WLog_ERR(TAG, "invalid hook called");
 	}
@@ -171,6 +172,7 @@ static BOOL pf_modules_ArrayList_ForEachFkt(void* data, size_t index, va_list ap
 			IFCALLRET(plugin->ServerFetchTargetAddr, result, pdata, param);
 			break;
 
+		case FILTER_LAST:
 		default:
 			WLog_ERR(TAG, "invalid filter called");
 	}
