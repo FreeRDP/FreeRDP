@@ -44,7 +44,7 @@ typedef struct proxy_plugin
 	const char* name;        /* unique module name */
 	const char* description; /* module description */
 
-	BOOL (*PluginUnload)();
+	BOOL (*PluginUnload)(void);
 
 	/* proxy hooks. a module can set these function pointers to register hooks */
 	proxyHookFn ClientPreConnect;

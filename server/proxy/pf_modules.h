@@ -26,7 +26,6 @@
 
 #include "modules/modules_api.h"
 
-typedef enum _PF_FILTER_TYPE PF_FILTER_TYPE;
 enum _PF_FILTER_TYPE
 {
 	FILTER_TYPE_KEYBOARD,
@@ -38,8 +37,8 @@ enum _PF_FILTER_TYPE
 
 	FILTER_LAST
 };
+typedef enum _PF_FILTER_TYPE PF_FILTER_TYPE;
 
-typedef enum _PF_HOOK_TYPE PF_HOOK_TYPE;
 enum _PF_HOOK_TYPE
 {
 	HOOK_TYPE_CLIENT_PRE_CONNECT,
@@ -54,6 +53,7 @@ enum _PF_HOOK_TYPE
 
 	HOOK_LAST
 };
+typedef enum _PF_HOOK_TYPE PF_HOOK_TYPE;
 
 BOOL pf_modules_init(const char* root_dir, const char** modules, size_t count);
 BOOL pf_modules_is_plugin_loaded(const char* plugin_name);

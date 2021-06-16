@@ -42,10 +42,10 @@ struct test_peer_context
 	wStream* s;
 	BYTE* icon_data;
 	BYTE* bg_data;
-	int icon_width;
-	int icon_height;
-	int icon_x;
-	int icon_y;
+	UINT16 icon_width;
+	UINT16 icon_height;
+	UINT32 icon_x;
+	UINT32 icon_y;
 	BOOL activated;
 	HANDLE event;
 	HANDLE stopEvent;
