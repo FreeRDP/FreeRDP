@@ -1177,11 +1177,13 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 static UINT rdpei_touch_begin(RdpeiClientContext* context, INT32 externalId, INT32 x, INT32 y,
                               INT32* contactId)
 {
-	va_list ap;
-	return rdpei_touch_process(context, externalId,
-	                           RDPINPUT_CONTACT_FLAG_DOWN | RDPINPUT_CONTACT_FLAG_INRANGE |
-	                               RDPINPUT_CONTACT_FLAG_INCONTACT,
-	                           x, y, contactId, 0, ap);
+	UINT rc;
+	va_list ap = { 0 };
+	rc = rdpei_touch_process(context, externalId,
+	                         RDPINPUT_CONTACT_FLAG_DOWN | RDPINPUT_CONTACT_FLAG_INRANGE |
+	                             RDPINPUT_CONTACT_FLAG_INCONTACT,
+	                         x, y, contactId, 0, ap);
+	return rc;
 }
 
 /**
@@ -1192,11 +1194,13 @@ static UINT rdpei_touch_begin(RdpeiClientContext* context, INT32 externalId, INT
 static UINT rdpei_touch_update(RdpeiClientContext* context, INT32 externalId, INT32 x, INT32 y,
                                INT32* contactId)
 {
-	va_list ap;
-	return rdpei_touch_process(context, externalId,
-	                           RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
-	                               RDPINPUT_CONTACT_FLAG_INCONTACT,
-	                           x, y, contactId, 0, ap);
+	UINT rc;
+	va_list ap = { 0 };
+	rc = rdpei_touch_process(context, externalId,
+	                         RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
+	                             RDPINPUT_CONTACT_FLAG_INCONTACT,
+	                         x, y, contactId, 0, ap);
+	return rc;
 }
 
 /**
@@ -1207,15 +1211,17 @@ static UINT rdpei_touch_update(RdpeiClientContext* context, INT32 externalId, IN
 static UINT rdpei_touch_end(RdpeiClientContext* context, INT32 externalId, INT32 x, INT32 y,
                             INT32* contactId)
 {
-	va_list ap;
-	UINT error = rdpei_touch_process(context, externalId,
-	                                 RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
-	                                     RDPINPUT_CONTACT_FLAG_INCONTACT,
-	                                 x, y, contactId, 0, ap);
+	UINT error;
+	va_list ap = { 0 };
+	error = rdpei_touch_process(context, externalId,
+	                            RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
+	                                RDPINPUT_CONTACT_FLAG_INCONTACT,
+	                            x, y, contactId, 0, ap);
 	if (error != CHANNEL_RC_OK)
 		return error;
-	return rdpei_touch_process(context, externalId, RDPINPUT_CONTACT_FLAG_UP, x, y, contactId, 0,
-	                           ap);
+	error =
+	    rdpei_touch_process(context, externalId, RDPINPUT_CONTACT_FLAG_UP, x, y, contactId, 0, ap);
+	return error;
 }
 
 /**
@@ -1226,10 +1232,12 @@ static UINT rdpei_touch_end(RdpeiClientContext* context, INT32 externalId, INT32
 static UINT rdpei_touch_cancel(RdpeiClientContext* context, INT32 externalId, INT32 x, INT32 y,
                                INT32* contactId)
 {
-	va_list ap;
-	return rdpei_touch_process(context, externalId,
-	                           RDPINPUT_CONTACT_FLAG_UP | RDPINPUT_CONTACT_FLAG_CANCELED, x, y,
-	                           contactId, 0, ap);
+	UINT rc;
+	va_list ap = { 0 };
+	rc = rdpei_touch_process(context, externalId,
+	                         RDPINPUT_CONTACT_FLAG_UP | RDPINPUT_CONTACT_FLAG_CANCELED, x, y,
+	                         contactId, 0, ap);
+	return rc;
 }
 
 static UINT rdpei_touch_raw_event(RdpeiClientContext* context, INT32 externalId, INT32 x, INT32 y,
@@ -1398,10 +1406,14 @@ static UINT rdpei_pen_end(RdpeiClientContext* context, INT32 externalId, UINT32 
 	                          RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
 	                              RDPINPUT_CONTACT_FLAG_INCONTACT,
 	                          fieldFlags, x, y, ap);
+	va_end(ap);
 	if (error == CHANNEL_RC_OK)
+	{
+		va_start(ap, y);
 		error =
 		    rdpei_pen_process(context, externalId, RDPINPUT_CONTACT_FLAG_UP, fieldFlags, x, y, ap);
 	va_end(ap);
+	}
 	return error;
 }
 
