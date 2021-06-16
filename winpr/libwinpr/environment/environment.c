@@ -84,8 +84,6 @@ DWORD GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer)
 		free(cwd);
 		return length;
 	}
-
-	return 0;
 }
 
 DWORD GetCurrentDirectoryW(DWORD nBufferLength, LPWSTR lpBuffer)
