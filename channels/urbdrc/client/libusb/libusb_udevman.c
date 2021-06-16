@@ -918,8 +918,6 @@ UINT freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS 
 	if (!udevman->hotplug_vid_pids)
 		goto fail;
 	obj = ArrayList_Object(udevman->hotplug_vid_pids);
-	if (!obj)
-		goto fail;
 	obj->fnObjectFree = free;
 	obj->fnObjectEquals = udevman_vid_pid_pair_equals;
 

@@ -1105,14 +1105,10 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 		goto fail;
 	{
 		wObject* obj = HashTable_KeyObject(xfc->railWindows);
-		if (!obj)
-			goto fail;
 		obj->fnObjectEquals = rail_window_key_equals;
 	}
 	{
 		wObject* obj = HashTable_ValueObject(xfc->railWindows);
-		if (!obj)
-			goto fail;
 		obj->fnObjectFree = rail_window_free;
 	}
 	xfc->railIconCache = RailIconCache_New(xfc->context.settings);

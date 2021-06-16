@@ -158,8 +158,6 @@ rdpChannels* freerdp_channels_new(freerdp* instance)
 		goto error;
 
 	obj = MessageQueue_Object(channels->queue);
-	if (!obj)
-		goto error;
 	obj->fnObjectFree = channel_queue_free;
 
 	return channels;

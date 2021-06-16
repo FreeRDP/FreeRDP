@@ -72,8 +72,6 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 		return FALSE;
 
 	obj = ArrayList_Object(xfc->keyCombinations);
-	if (!obj)
-		return FALSE;
 	obj->fnObjectFree = free;
 	sprintf_s(command, sizeof(command), "%s key", xfc->context.settings->ActionScript);
 	keyScript = popen(command, "r");

@@ -178,8 +178,6 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 		return FALSE;
 
 	obj = ArrayList_Object(xfc->xevents);
-	if (!obj)
-		return FALSE;
 	obj->fnObjectFree = free;
 	sprintf_s(command, sizeof(command), "%s xevent", xfc->context.settings->ActionScript);
 	actionScript = popen(command, "r");

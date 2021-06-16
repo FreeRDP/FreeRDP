@@ -1722,8 +1722,6 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 	}
 
 	obj = MessageQueue_Object(rdpdr->queue);
-	if (!obj)
-		return ERROR_INTERNAL_ERROR;
 	obj->fnObjectFree = queue_free;
 
 	if (!(rdpdr->thread =

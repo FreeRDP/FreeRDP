@@ -1464,8 +1464,6 @@ static UINT drdynvc_virtual_channel_event_initialized(drdynvcPlugin* drdynvc, LP
 	}
 
 	obj = MessageQueue_Object(drdynvc->queue);
-	if (!obj)
-		goto error;
 	obj->fnObjectFree = drdynvc_queue_object_free;
 	drdynvc->channel_mgr = dvcman_new(drdynvc);
 
