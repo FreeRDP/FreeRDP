@@ -24,6 +24,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/file.h>
+#include <winpr/assert.h>
 #include <winpr/sysinfo.h>
 
 #include <winpr/synch.h>
@@ -73,7 +74,7 @@ static int TimerGetFd(HANDLE handle)
 
 static DWORD TimerCleanupHandle(HANDLE handle)
 {
-	int length;
+	SSIZE_T length;
 	UINT64 expirations;
 	WINPR_TIMER* timer = (WINPR_TIMER*)handle;
 
@@ -132,6 +133,7 @@ typedef struct
 static void TimerPostDelete_APC(LPVOID arg)
 {
 	TimerDeleter* deleter = (TimerDeleter*)arg;
+	WINPR_ASSERT(deleter);
 	free(deleter->timer);
 	deleter->apcItem.markedForFree = TRUE;
 	deleter->apcItem.markedForRemove = TRUE;
@@ -290,7 +292,7 @@ static int InitializeWaitableTimer(WINPR_TIMER* timer)
 static BOOL timer_drain_fd(int fd)
 {
 	UINT64 expr;
-	int ret;
+	SSIZE_T ret;
 
 	do
 	{
@@ -419,7 +421,7 @@ HANDLE CreateWaitableTimerExW(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCWSTR l
 static void timerAPC(LPVOID arg)
 {
 	WINPR_TIMER* timer = (WINPR_TIMER*)arg;
-
+	WINPR_ASSERT(timer);
 	if (!timer->lPeriod)
 	{
 		/* this is a one time shot timer with a completion, let's remove us from
@@ -666,21 +668,26 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
 
 static void timespec_add_ms(struct timespec* tspec, UINT32 ms)
 {
-	UINT64 ns = tspec->tv_nsec + (ms * 1000000);
-	tspec->tv_sec += (ns / 1000000000);
-	tspec->tv_nsec = (ns % 1000000000);
+	INT64 ns;
+	WINPR_ASSERT(tspec);
+	ns = tspec->tv_nsec + (ms * 1000000LL);
+	tspec->tv_sec += (ns / 1000000000LL);
+	tspec->tv_nsec = (ns % 1000000000LL);
 }
 
 static void timespec_gettimeofday(struct timespec* tspec)
 {
 	struct timeval tval;
+	WINPR_ASSERT(tspec);
 	gettimeofday(&tval, NULL);
 	tspec->tv_sec = tval.tv_sec;
 	tspec->tv_nsec = tval.tv_usec * 1000;
 }
 
-static int timespec_compare(const struct timespec* tspec1, const struct timespec* tspec2)
+static INT64 timespec_compare(const struct timespec* tspec1, const struct timespec* tspec2)
 {
+	WINPR_ASSERT(tspec1);
+	WINPR_ASSERT(tspec2);
 	if (tspec1->tv_sec == tspec2->tv_sec)
 		return (tspec1->tv_nsec - tspec2->tv_nsec);
 	else
@@ -689,6 +696,8 @@ static int timespec_compare(const struct timespec* tspec1, const struct timespec
 
 static void timespec_copy(struct timespec* dst, struct timespec* src)
 {
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(src);
 	dst->tv_sec = src->tv_sec;
 	dst->tv_nsec = src->tv_nsec;
 }
@@ -696,6 +705,9 @@ static void timespec_copy(struct timespec* dst, struct timespec* src)
 static void InsertTimerQueueTimer(WINPR_TIMER_QUEUE_TIMER** pHead, WINPR_TIMER_QUEUE_TIMER* timer)
 {
 	WINPR_TIMER_QUEUE_TIMER* node;
+
+	WINPR_ASSERT(pHead);
+	WINPR_ASSERT(timer);
 
 	if (!(*pHead))
 	{
@@ -735,6 +747,8 @@ static void RemoveTimerQueueTimer(WINPR_TIMER_QUEUE_TIMER** pHead, WINPR_TIMER_Q
 	WINPR_TIMER_QUEUE_TIMER* node;
 	WINPR_TIMER_QUEUE_TIMER* prevNode;
 
+	WINPR_ASSERT(pHead);
+	WINPR_ASSERT(timer);
 	if (timer == *pHead)
 	{
 		*pHead = timer->next;
@@ -772,6 +786,8 @@ static int FireExpiredTimerQueueTimers(WINPR_TIMER_QUEUE* timerQueue)
 {
 	struct timespec CurrentTime;
 	WINPR_TIMER_QUEUE_TIMER* node;
+
+	WINPR_ASSERT(timerQueue);
 
 	if (!timerQueue->activeHead)
 		return 0;
@@ -815,6 +831,7 @@ static void* TimerQueueThread(void* arg)
 	struct timespec timeout;
 	WINPR_TIMER_QUEUE* timerQueue = (WINPR_TIMER_QUEUE*)arg;
 
+	WINPR_ASSERT(timerQueue);
 	while (1)
 	{
 		pthread_mutex_lock(&(timerQueue->cond_mutex));
@@ -848,6 +865,7 @@ static void* TimerQueueThread(void* arg)
 
 static int StartTimerQueueThread(WINPR_TIMER_QUEUE* timerQueue)
 {
+	WINPR_ASSERT(timerQueue);
 	pthread_cond_init(&(timerQueue->cond), NULL);
 	pthread_mutex_init(&(timerQueue->cond_mutex), NULL);
 	pthread_mutex_init(&(timerQueue->mutex), NULL);

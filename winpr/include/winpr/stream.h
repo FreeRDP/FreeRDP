@@ -356,7 +356,7 @@ extern "C"
 	static INLINE size_t Stream_GetPosition(wStream* _s)
 	{
 		WINPR_ASSERT(_s);
-		return (_s->pointer - _s->buffer);
+		return (size_t)(_s->pointer - _s->buffer);
 	}
 
 	static INLINE void Stream_SetPosition(wStream* _s, size_t _p)
@@ -368,19 +368,19 @@ extern "C"
 	static INLINE void Stream_SealLength(wStream* _s)
 	{
 		WINPR_ASSERT(_s);
-		_s->length = (_s->pointer - _s->buffer);
+		_s->length = (size_t)(_s->pointer - _s->buffer);
 	}
 
 	static INLINE size_t Stream_GetRemainingCapacity(wStream* _s)
 	{
 		WINPR_ASSERT(_s);
-		return (_s->capacity - (_s->pointer - _s->buffer));
+		return (_s->capacity - (size_t)(_s->pointer - _s->buffer));
 	}
 
 	static INLINE size_t Stream_GetRemainingLength(wStream* _s)
 	{
 		WINPR_ASSERT(_s);
-		return (_s->length - (_s->pointer - _s->buffer));
+		return (_s->length - (size_t)(_s->pointer - _s->buffer));
 	}
 
 	static INLINE void Stream_Clear(wStream* _s)

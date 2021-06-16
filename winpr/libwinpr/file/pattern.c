@@ -85,9 +85,9 @@ LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags)
 
 static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName, LPCSTR lpX,
                                            size_t cchX, LPCSTR lpY, size_t cchY, LPCSTR lpWildcard,
-                                           LPSTR* ppMatchEnd)
+                                           LPCSTR* ppMatchEnd)
 {
-	LPSTR lpMatch;
+	LPCSTR lpMatch;
 
 	if (!lpFileName)
 		return FALSE;
@@ -130,13 +130,13 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
 		}
 		else
 		{
-			lpMatch = (LPSTR)&lpFileName[cchFileName];
+			lpMatch = &lpFileName[cchFileName];
 		}
 
 		/**
 		 * State 3: final state
 		 */
-		*ppMatchEnd = (LPSTR)&lpMatch[cchY];
+		*ppMatchEnd = &lpMatch[cchY];
 		return TRUE;
 	}
 	else if (*lpWildcard == '?')
@@ -179,13 +179,13 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
 			if ((cchX + 1) > cchFileName)
 				return FALSE;
 
-			lpMatch = (LPSTR)&lpFileName[cchX + 1];
+			lpMatch = &lpFileName[cchX + 1];
 		}
 
 		/**
 		 * State 3: final state
 		 */
-		*ppMatchEnd = (LPSTR)&lpMatch[cchY];
+		*ppMatchEnd = &lpMatch[cchY];
 		return TRUE;
 	}
 	else if (*lpWildcard == '~')
@@ -200,7 +200,7 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
 BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 {
 	BOOL match;
-	LPSTR lpTail;
+	LPCSTR lpTail;
 	size_t cchTail;
 	size_t cchPattern;
 	size_t cchFileName;
@@ -254,7 +254,7 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 
 	if (lpPattern[0] == '*')
 	{
-		lpTail = (LPSTR)&lpPattern[1];
+		lpTail = &lpPattern[1];
 		cchTail = strlen(lpTail);
 
 		if (!FilePatternFindNextWildcardA(lpTail, &dwFlags))
@@ -307,29 +307,29 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 
 	if (lpWildcard)
 	{
-		LPSTR lpX;
-		LPSTR lpY;
+		LPCSTR lpX;
+		LPCSTR lpY;
 		size_t cchX;
 		size_t cchY;
-		LPSTR lpMatchEnd = NULL;
-		LPSTR lpSubPattern;
+		LPCSTR lpMatchEnd = NULL;
+		LPCSTR lpSubPattern;
 		size_t cchSubPattern;
-		LPSTR lpSubFileName;
+		LPCSTR lpSubFileName;
 		size_t cchSubFileName;
 		size_t cchWildcard;
 		size_t cchNextWildcard;
 		cchSubPattern = cchPattern;
-		lpSubPattern = (LPSTR)lpPattern;
+		lpSubPattern = lpPattern;
 		cchSubFileName = cchFileName;
-		lpSubFileName = (LPSTR)lpFileName;
+		lpSubFileName = lpFileName;
 		cchWildcard = ((dwFlags & WILDCARD_DOS) ? 2 : 1);
 		lpNextWildcard = FilePatternFindNextWildcardA(&lpWildcard[cchWildcard], &dwNextFlags);
 
 		if (!lpNextWildcard)
 		{
-			lpX = (LPSTR)lpSubPattern;
+			lpX = lpSubPattern;
 			cchX = (lpWildcard - lpSubPattern);
-			lpY = (LPSTR)&lpSubPattern[cchX + cchWildcard];
+			lpY = &lpSubPattern[cchX + cchWildcard];
 			cchY = (cchSubPattern - (lpY - lpSubPattern));
 			match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName, lpX, cchX, lpY,
 			                                       cchY, lpWildcard, &lpMatchEnd);
@@ -341,9 +341,9 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 			{
 				cchSubFileName = cchFileName - (lpSubFileName - lpFileName);
 				cchNextWildcard = ((dwNextFlags & WILDCARD_DOS) ? 2 : 1);
-				lpX = (LPSTR)lpSubPattern;
+				lpX = lpSubPattern;
 				cchX = (lpWildcard - lpSubPattern);
-				lpY = (LPSTR)&lpSubPattern[cchX + cchWildcard];
+				lpY = &lpSubPattern[cchX + cchWildcard];
 				cchY = (lpNextWildcard - lpWildcard) - cchWildcard;
 				match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName, lpX, cchX,
 				                                       lpY, cchY, lpWildcard, &lpMatchEnd);

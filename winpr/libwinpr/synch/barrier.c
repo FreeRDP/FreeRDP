@@ -23,6 +23,7 @@
 #endif
 
 #include <winpr/synch.h>
+#include <winpr/assert.h>
 
 #include "synch.h"
 
@@ -125,12 +126,14 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 
 	GetNativeSystemInfo(&sysinfo);
 
-	lpBarrier->Reserved1 = lTotalThreads;
-	lpBarrier->Reserved2 = lTotalThreads;
+	WINPR_ASSERT(lTotalThreads >= 0);
+	lpBarrier->Reserved1 = (DWORD)lTotalThreads;
+	lpBarrier->Reserved2 = (DWORD)lTotalThreads;
 	lpBarrier->Reserved3[0] = (ULONG_PTR)hEvent0;
 	lpBarrier->Reserved3[1] = (ULONG_PTR)hEvent1;
 	lpBarrier->Reserved4 = sysinfo.dwNumberOfProcessors;
-	lpBarrier->Reserved5 = lSpinCount;
+	WINPR_ASSERT(lSpinCount >= 0);
+	lpBarrier->Reserved5 = (DWORD)lSpinCount;
 
 	return TRUE;
 }

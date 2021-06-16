@@ -63,7 +63,7 @@ static int SemaphoreGetFd(HANDLE handle)
 
 static DWORD SemaphoreCleanupHandle(HANDLE handle)
 {
-	int length;
+	SSIZE_T length;
 	WINPR_SEMAPHORE* sem = (WINPR_SEMAPHORE*)handle;
 
 	if (!SemaphoreIsHandled(handle))

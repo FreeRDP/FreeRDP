@@ -9,9 +9,9 @@
 #define TAG WINPR_TAG("sync.pollset")
 
 #ifdef HAVE_POLL_H
-static DWORD handle_mode_to_pollevent(ULONG mode)
+static UINT16 handle_mode_to_pollevent(ULONG mode)
 {
-	DWORD event = 0;
+	UINT16 event = 0;
 
 	if (mode & WINPR_FD_READ)
 		event |= POLLIN;

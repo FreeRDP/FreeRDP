@@ -266,7 +266,7 @@ DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
 #if defined(__linux__)
-	int status;
+	SSIZE_T status;
 	size_t length;
 	char path[64];
 
