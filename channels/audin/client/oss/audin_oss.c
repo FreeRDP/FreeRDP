@@ -68,9 +68,12 @@ typedef struct _AudinOSSDevice
 	rdpContext* rdpcontext;
 } AudinOSSDevice;
 
-#define OSS_LOG_ERR(_text, _error) \
-	if (_error != 0)               \
-		WLog_ERR(TAG, "%s: %i - %s\n", _text, _error, strerror(_error));
+#define OSS_LOG_ERR(_text, _error)                                           \
+	do                                                                       \
+	{                                                                        \
+		if (_error != 0)                                                     \
+			WLog_ERR(TAG, "%s: %i - %s\n", _text, _error, strerror(_error)); \
+	} while (0)
 
 static UINT32 audin_oss_get_format(const AUDIO_FORMAT* format)
 {
