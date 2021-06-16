@@ -121,8 +121,9 @@ static UINT audin_channel_write_and_free(AUDIN_CHANNEL_CALLBACK* callback, wStre
 		return ERROR_INTERNAL_ERROR;
 
 	Stream_SealLength(out);
-	error =
-	    callback->channel->Write(callback->channel, Stream_Length(out), Stream_Buffer(out), NULL);
+	WINPR_ASSERT(Stream_Length(out) <= ULONG_MAX);
+	error = callback->channel->Write(callback->channel, (ULONG)Stream_Length(out),
+	                                 Stream_Buffer(out), NULL);
 
 	if (freeStream)
 		Stream_Free(out, TRUE);

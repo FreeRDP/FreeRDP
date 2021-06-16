@@ -331,6 +331,8 @@ static void audin_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
 
+		case PA_STREAM_UNCONNECTED:
+		case PA_STREAM_CREATING:
 		default:
 			break;
 	}
