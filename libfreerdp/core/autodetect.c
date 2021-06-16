@@ -309,7 +309,6 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpRdp* rdp, UINT16 respon
 	         "sending Bandwidth Measure Results PDU -> timeDelta=%" PRIu64 ", byteCount=%" PRIu32
 	         "",
 	         timeDelta, rdp->autodetect->bandwidthMeasureByteCount);
-
 	Stream_Write_UINT8(s, 0x0E);                        /* headerLength (1 byte) */
 	Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_RESPONSE); /* headerTypeId (1 byte) */
 	Stream_Write_UINT16(s, sequenceNumber);             /* sequenceNumber (2 bytes) */
