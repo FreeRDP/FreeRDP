@@ -79,8 +79,8 @@
 
 ------------------------------------------------------------------------ */
 
-#ifndef FREERDP_UNICODE_CONVERT_UTF_H
-#define FREERDP_UNICODE_CONVERT_UTF_H
+#ifndef WINPR_UNICODE_CONVERT_UTF_H
+#define WINPR_UNICODE_CONVERT_UTF_H
 
 #include <winpr/wtypes.h>
 
@@ -147,4 +147,4 @@ extern "C"
 }
 #endif
 
-#endif /* FREERDP_UNICODE_CONVERT_UTF_H */
+#endif /* WINPR_UNICODE_CONVERT_UTF_H */

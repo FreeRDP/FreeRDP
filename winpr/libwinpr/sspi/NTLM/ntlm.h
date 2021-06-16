@@ -287,4 +287,4 @@ SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue);
 #define WITH_DEBUG_NTLM
 #endif
 
-#endif /* FREERDP_SSPI_NTLM_PRIVATE_H */
+#endif /* WINPR_SSPI_NTLM_PRIVATE_H */

@@ -1368,8 +1368,10 @@ TRIO_PRIVATE double TrioLogarithmBase TRIO_ARGS1((base), int base)
  * Description:
  *  Parse the qualifiers of a potential conversion specifier
  */
+#if __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
 TRIO_PRIVATE int TrioParseQualifiers TRIO_ARGS4((type, format, offset, parameter), int type,
                                                 TRIO_CONST char* format, int offset,
                                                 trio_parameter_t* parameter)
@@ -1659,7 +1661,9 @@ TRIO_PRIVATE int TrioParseQualifiers TRIO_ARGS4((type, format, offset, parameter
 
 	return 0;
 }
+#if __GNUC__
 #pragma GCC diagnostic pop
+#endif
 
 /*************************************************************************
  * TrioParseSpecifier
@@ -1667,8 +1671,10 @@ TRIO_PRIVATE int TrioParseQualifiers TRIO_ARGS4((type, format, offset, parameter
  * Description:
  *  Parse the specifier part of a potential conversion specifier
  */
+#if __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
 TRIO_PRIVATE int TrioParseSpecifier TRIO_ARGS4((type, format, offset, parameter), int type,
                                                TRIO_CONST char* format, int offset,
                                                trio_parameter_t* parameter)
@@ -1906,7 +1912,9 @@ TRIO_PRIVATE int TrioParseSpecifier TRIO_ARGS4((type, format, offset, parameter)
 
 	return 0;
 }
+#if __GNUC__
 #pragma GCC diagnostic pop
+#endif
 
 /*************************************************************************
  * TrioParse

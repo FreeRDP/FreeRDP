@@ -81,12 +81,12 @@ static void reg_load_start(Reg* reg)
 	if (file_size < 1)
 		return;
 
-	reg->buffer = (char*)malloc(file_size + 2);
+	reg->buffer = (char*)malloc((size_t)file_size + 2);
 
 	if (!reg->buffer)
 		return;
 
-	if (fread(reg->buffer, file_size, 1, reg->fp) != 1)
+	if (fread(reg->buffer, (size_t)file_size, 1, reg->fp) != 1)
 	{
 		free(reg->buffer);
 		reg->buffer = NULL;

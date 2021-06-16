@@ -41,8 +41,10 @@
 #include "utf.h"
 #include <winpr/endian.h>
 
+#if __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
 static const int halfShift = 10; /* used for shifting by 10 bits */
 
 static const DWORD halfBase = 0x0010000UL;
@@ -645,9 +647,9 @@ ConversionResult ConvertUTF8toUTF16(const BYTE** sourceStart, const BYTE* source
 			if (!computeLength)
 			{
 				WCHAR wchar;
-				wchar = (ch >> halfShift) + UNI_SUR_HIGH_START;
+				wchar = (WCHAR)((ch >> halfShift) + UNI_SUR_HIGH_START);
 				Data_Write_UINT16(&(*targetStart)[target++], wchar);
-				wchar = (ch & halfMask) + UNI_SUR_LOW_START;
+				wchar = (WCHAR)((ch & halfMask) + UNI_SUR_LOW_START);
 				Data_Write_UINT16(&(*targetStart)[target++], wchar);
 			}
 			else
@@ -876,4 +878,6 @@ ConversionResult ConvertUTF8toUTF32(const BYTE** sourceStart, const BYTE* source
     similarly unrolled loops.
 
    --------------------------------------------------------------------- */
+#if __GNUC__
 #pragma GCC diagnostic pop
+#endif

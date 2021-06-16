@@ -176,7 +176,12 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 			return NULL;
 
 		size = ConvertLineEndingToLF(pDstData, size);
-		*pSize = size;
+		if (size < 0)
+		{
+			free(pDstData);
+			return NULL;
+		}
+		*pSize = (UINT32)size;
 		return pDstData;
 	}
 	else if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) ||
@@ -184,6 +189,7 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 	         (formatId == ClipboardGetFormatId(clipboard, "TEXT")) ||
 	         (formatId == ClipboardGetFormatId(clipboard, "STRING")))
 	{
+		int rc;
 		size = (INT64)*pSize;
 		pDstData = (char*)malloc(size);
 
@@ -191,8 +197,13 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 			return NULL;
 
 		CopyMemory(pDstData, data, size);
-		size = ConvertLineEndingToLF((char*)pDstData, size);
-		*pSize = size;
+		rc = ConvertLineEndingToLF((char*)pDstData, (int)size);
+		if (rc < 0)
+		{
+			free(pDstData);
+			return NULL;
+		}
+		*pSize = (UINT32)rc;
 		return pDstData;
 	}
 
@@ -336,17 +347,20 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 
 		if (SrcSize > 2)
 		{
+			if (SrcSize > INT_MAX)
+				return NULL;
 			CopyMemory(bom, data, 2);
 
 			if ((bom[0] == 0xFE) && (bom[1] == 0xFF))
 			{
-				ByteSwapUnicode((WCHAR*)data, SrcSize / 2);
+				ByteSwapUnicode((WCHAR*)data, (int)(SrcSize / 2));
 			}
 
 			if ((bom[0] == 0xFF) && (bom[1] == 0xFE))
 			{
 				wstr = (WCHAR*)&((BYTE*)data)[2];
-				ConvertFromUnicode(CP_UTF8, 0, wstr, (SrcSize - 2) / 2, &pSrcData, 0, NULL, NULL);
+				ConvertFromUnicode(CP_UTF8, 0, wstr, (int)(SrcSize - 2) / 2, &pSrcData, 0, NULL,
+				                   NULL);
 			}
 		}
 
@@ -423,12 +437,12 @@ static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 format
 	char* str;
 	char* begStr;
 	char* endStr;
-	INT64 SrcSize;
 	long DstSize = -1;
 	BYTE* pDstData = NULL;
 
 	if (formatId == ClipboardGetFormatId(clipboard, "HTML Format"))
 	{
+		INT64 SrcSize;
 		str = (char*)data;
 		SrcSize = (INT64)*pSize;
 		begStr = strstr(str, "StartHTML:");
@@ -450,7 +464,7 @@ static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 format
 			return NULL;
 
 		DstSize = end - beg;
-		pDstData = (BYTE*)malloc(SrcSize - beg + 1);
+		pDstData = (BYTE*)malloc((size_t)(SrcSize - beg + 1));
 
 		if (!pDstData)
 			return NULL;

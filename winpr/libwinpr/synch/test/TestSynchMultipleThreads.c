@@ -5,7 +5,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-#define THREADS 24
+#define THREADS 8
 
 static DWORD WINAPI test_thread(LPVOID arg)
 {
@@ -22,7 +22,7 @@ static int start_threads(DWORD count, HANDLE* threads)
 
 	for (i = 0; i < count; i++)
 	{
-		threads[i] = CreateThread(NULL, 0, test_thread, NULL, 0, NULL);
+		threads[i] = CreateThread(NULL, 0, test_thread, NULL, CREATE_SUSPENDED, NULL);
 
 		if (!threads[i])
 		{
@@ -31,6 +31,8 @@ static int start_threads(DWORD count, HANDLE* threads)
 		}
 	}
 
+	for (i = 0; i < count; i++)
+		ResumeThread(threads[i]);
 	return 0;
 }
 
@@ -135,7 +137,7 @@ static BOOL TestWaitOneTimeout(void)
 		return FALSE;
 	}
 
-	ret = WaitForMultipleObjects(THREADS, threads, FALSE, 10);
+	ret = WaitForMultipleObjects(THREADS, threads, FALSE, 1);
 	if (ret != WAIT_TIMEOUT)
 	{
 		fprintf(stderr, "%s: WaitForMultipleObjects timeout 50 failed, ret=%d\n", __FUNCTION__,

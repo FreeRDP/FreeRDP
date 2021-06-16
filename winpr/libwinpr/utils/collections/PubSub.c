@@ -92,7 +92,7 @@ void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, size_t count)
 
 	while (pubSub->count + count >= pubSub->size)
 	{
-		int new_size;
+		size_t new_size;
 		wEventType* new_event;
 
 		new_size = pubSub->size * 2;

@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SSPI_KERBEROS_PRIVATE_H
-#define FREERDP_SSPI_KERBEROS_PRIVATE_H
+#ifndef WINPR_SSPI_KERBEROS_PRIVATE_H
+#define WINPR_SSPI_KERBEROS_PRIVATE_H
 
 #include <winpr/sspi.h>
 #include <winpr/windows.h>
@@ -34,4 +34,4 @@
 
 typedef struct _KRB_CONTEXT KRB_CONTEXT;
 
-#endif /* FREERDP_SSPI_KERBEROS_PRIVATE_H */
+#endif /* WINPR_SSPI_KERBEROS_PRIVATE_H */
