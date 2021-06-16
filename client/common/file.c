@@ -1164,8 +1164,10 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 	return (status == 0) ? TRUE : FALSE;
 }
 
+#if __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#endif
 static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* bufferSize,
                                                       const char* fmt, ...)
 {
@@ -1208,7 +1210,9 @@ static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* buf
 
 	return len;
 }
+#if __GNUC__
 #pragma GCC diagnostic pop
+#endif
 
 size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, size_t size)
 {

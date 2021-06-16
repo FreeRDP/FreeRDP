@@ -104,8 +104,8 @@ static DWORD shw_verify_certificate(freerdp* instance, const char* common_name, 
 	return 1;
 }
 
-static int shw_verify_x509_certificate(freerdp* instance, BYTE* data, int length,
-                                       const char* hostname, int port, DWORD flags)
+static int shw_verify_x509_certificate(freerdp* instance, const BYTE* data, size_t length,
+                                       const char* hostname, UINT16 port, DWORD flags)
 {
 	WLog_WARN(TAG, "Certificate checks not implemented, access granted to everyone!");
 	return 1;

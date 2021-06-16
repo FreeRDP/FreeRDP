@@ -74,7 +74,7 @@ static ULONG cast_from_size_(size_t size, const char* fkt, const char* file, int
 
 #define cast_from_size(size) cast_from_size_(size, __FUNCTION__, __FILE__, __LINE__)
 
-BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, LPCTSTR user, LPCTSTR domain, LPCTSTR password,
+BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, LPCSTR user, LPCSTR domain, LPCSTR password,
                       SecPkgContext_Bindings* Bindings)
 {
 	SECURITY_STATUS status;
@@ -135,15 +135,15 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, LPCTSTR user, LPCTSTR domain, LP
 	return TRUE;
 }
 
-BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, LPCTSTR hostname)
+BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCSTR ServiceClass, LPCSTR hostname)
 {
 	BOOL status = FALSE;
 	DWORD SpnLength = 0;
-	LPTSTR hostnameX = NULL;
 #ifdef UNICODE
+	LPWSTR hostnameX = NULL;
 	ConvertToUnicode(CP_UTF8, 0, hostname, -1, (LPWSTR*)&hostnameX, 0);
 #else
-	hostnameX = _strdup(hostname);
+	LPCSTR hostnameX = _strdup(hostname);
 #endif
 
 	if (!hostnameX)

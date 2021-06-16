@@ -636,7 +636,7 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(IDataObject* This, FO
 	}
 	else if (instance->m_pFormatEtc[idx].cfFormat == RegisterClipboardFormat(CFSTR_FILECONTENTS))
 	{
-		if (pFormatEtc->lindex < instance->m_nStreams)
+		if ((pFormatEtc->lindex >= 0) && ((ULONG)pFormatEtc->lindex < instance->m_nStreams))
 		{
 			pMedium->pstm = instance->m_pStream[pFormatEtc->lindex];
 			IDataObject_AddRef(instance->m_pStream[pFormatEtc->lindex]);
@@ -749,7 +749,6 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_EnumDAdvise(IDataObject* This
 static CliprdrDataObject* CliprdrDataObject_New(FORMATETC* fmtetc, STGMEDIUM* stgmed, ULONG count,
                                                 void* data)
 {
-	int i;
 	CliprdrDataObject* instance;
 	IDataObject* iDataObject;
 	instance = (CliprdrDataObject*)calloc(1, sizeof(CliprdrDataObject));
@@ -783,6 +782,7 @@ static CliprdrDataObject* CliprdrDataObject_New(FORMATETC* fmtetc, STGMEDIUM* st
 
 	if (count > 0)
 	{
+		ULONG i;
 		instance->m_pFormatEtc = (FORMATETC*)calloc(count, sizeof(FORMATETC));
 
 		if (!instance->m_pFormatEtc)

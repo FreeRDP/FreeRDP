@@ -192,10 +192,15 @@ static BOOL update_write_surfcmd_bitmap_ex(wStream* s, const TS_BITMAP_DATA_EX* 
 	if (!Stream_EnsureRemainingCapacity(s, 12))
 		return FALSE;
 
+	if (bmp->codecID > UINT8_MAX)
+	{
+		WLog_ERR(TAG, "Invalid TS_BITMAP_DATA_EX::codecID=0x%04" PRIx16 "", bmp->codecID);
+		return FALSE;
+	}
 	Stream_Write_UINT8(s, bmp->bpp);
 	Stream_Write_UINT8(s, bmp->flags);
 	Stream_Write_UINT8(s, 0); /* reserved1, reserved2 */
-	Stream_Write_UINT8(s, bmp->codecID);
+	Stream_Write_UINT8(s, (UINT8)bmp->codecID);
 	Stream_Write_UINT16(s, bmp->width);
 	Stream_Write_UINT16(s, bmp->height);
 	Stream_Write_UINT32(s, bmp->bitmapDataLength);

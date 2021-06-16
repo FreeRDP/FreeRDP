@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <freerdp/input.h>
 #include <freerdp/log.h>
@@ -299,7 +300,8 @@ static BOOL input_send_fastpath_keyboard_event(rdpInput* input, UINT16 flags, UI
 	if (!s)
 		return FALSE;
 
-	Stream_Write_UINT8(s, code); /* keyCode (1 byte) */
+	WINPR_ASSERT(code <= UINT8_MAX);
+	Stream_Write_UINT8(s, (UINT8)code); /* keyCode (1 byte) */
 	return fastpath_send_input_pdu(rdp->fastpath, s);
 }
 

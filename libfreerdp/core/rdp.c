@@ -1213,7 +1213,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 		length -= 12;
 		padLength = length - pad;
 
-		if ((length <= 0) || (padLength <= 0))
+		if ((length <= 0) || (padLength <= 0) || (padLength > UINT16_MAX))
 			return FALSE;
 
 		if (!security_fips_decrypt(Stream_Pointer(s), length, rdp))
@@ -1229,7 +1229,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 		}
 
 		Stream_SetLength(s, Stream_Length(s) - pad);
-		*pLength = padLength;
+		*pLength = (UINT16)padLength;
 		return TRUE;
 	}
 

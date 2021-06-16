@@ -62,7 +62,6 @@ int main(int argc, char* argv[])
 		// first the args that will cause the program to terminate
 		if (strcmp("--list-screens", argv[index]) == 0)
 		{
-			_TCHAR name[128];
 			int width;
 			int height;
 			int bpp;
@@ -72,7 +71,8 @@ int main(int argc, char* argv[])
 
 			for (i = 0;; i++)
 			{
-				if (get_screen_info(i, name, &width, &height, &bpp) != 0)
+				_TCHAR name[128] = { 0 };
+				if (get_screen_info(i, name, ARRAYSIZE(name), &width, &height, &bpp) != 0)
 				{
 					if ((width * height * bpp) == 0)
 						continue;
@@ -135,7 +135,6 @@ int main(int argc, char* argv[])
 
 	if (screen_selected == FALSE)
 	{
-		_TCHAR name[128];
 		int width;
 		int height;
 		int bpp;
@@ -146,7 +145,8 @@ int main(int argc, char* argv[])
 
 		for (i = 0;; i++)
 		{
-			if (get_screen_info(i, name, &width, &height, &bpp) != 0)
+			_TCHAR name[128] = { 0 };
+			if (get_screen_info(i, name, ARRAYSIZE(name), &width, &height, &bpp) != 0)
 			{
 				if ((width * height * bpp) == 0)
 					continue;
