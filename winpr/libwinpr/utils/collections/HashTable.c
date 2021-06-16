@@ -837,8 +837,7 @@ BOOL HashTable_SetupForStringData(wHashTable* table, BOOL stringValues)
 		return FALSE;
 
 	obj = HashTable_KeyObject(table);
-	if (!obj)
-		return FALSE;
+	WINPR_ASSERT(obj);
 	obj->fnObjectEquals = HashTable_StringCompare;
 	obj->fnObjectNew = HashTable_StringClone;
 	obj->fnObjectFree = HashTable_StringFree;
@@ -846,8 +845,7 @@ BOOL HashTable_SetupForStringData(wHashTable* table, BOOL stringValues)
 	if (stringValues)
 	{
 		obj = HashTable_ValueObject(table);
-		if (!obj)
-			return FALSE;
+		WINPR_ASSERT(obj);
 		obj->fnObjectEquals = HashTable_StringCompare;
 		obj->fnObjectNew = HashTable_StringClone;
 		obj->fnObjectFree = HashTable_StringFree;
