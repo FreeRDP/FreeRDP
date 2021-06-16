@@ -25,17 +25,19 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/wlog.h>
+#include <winpr/debug.h>
 
-#if WITH_VERBOSE_WINPR_ASSERT
-#define WINPR_ASSERT(cond)                                                                   \
-	do                                                                                       \
-	{                                                                                        \
-		if (!(cond))                                                                         \
-		{                                                                                    \
-			WLog_FATAL("com.freerdp.winpr.assert", "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, \
-			           __FUNCTION__, __LINE__);                                              \
-			abort();                                                                         \
-		}                                                                                    \
+#if defined(WITH_VERBOSE_WINPR_ASSERT) && (WITH_VERBOSE_WINPR_ASSERT != 0)
+#define WINPR_ASSERT(cond)                                                                     \
+	do                                                                                         \
+	{                                                                                          \
+		if (!(cond))                                                                           \
+		{                                                                                      \
+			const char* tag = "com.freerdp.winpr.assert";                                      \
+			WLog_FATAL(tag, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, __FUNCTION__, __LINE__); \
+			winpr_log_backtrace(tag, WLOG_FATAL, 20);                                          \
+			abort();                                                                           \
+		}                                                                                      \
 	} while (0)
 #else
 #define WINPR_ASSERT(cond) \
