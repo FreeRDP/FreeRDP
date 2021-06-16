@@ -75,7 +75,7 @@ BOOL per_write_length(wStream* s, UINT16 length)
 	{
 		if (!Stream_EnsureRemainingCapacity(s, 1))
 			return FALSE;
-		Stream_Write_UINT8(s, length);
+		Stream_Write_UINT8(s, (UINT8)length);
 	}
 	return TRUE;
 }

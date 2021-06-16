@@ -268,7 +268,7 @@ static BYTE* loadCalFile(rdpSettings* settings, const char* hostname, size_t* da
 	char *licenseStorePath = NULL, *calPath = NULL;
 	char calFilename[MAX_PATH];
 	char hash[41];
-	size_t length;
+	INT64 length;
 	int status;
 	FILE* fp;
 	BYTE* ret = NULL;
@@ -294,16 +294,18 @@ static BYTE* loadCalFile(rdpSettings* settings, const char* hostname, size_t* da
 	_fseeki64(fp, 0, SEEK_END);
 	length = _ftelli64(fp);
 	_fseeki64(fp, 0, SEEK_SET);
+	if (length < 0)
+		goto error_malloc;
 
-	ret = (BYTE*)malloc(length);
+	ret = (BYTE*)malloc((size_t)length);
 	if (!ret)
 		goto error_malloc;
 
-	status = fread(ret, length, 1, fp);
+	status = fread(ret, (size_t)length, 1, fp);
 	if (status <= 0)
 		goto error_read;
 
-	*dataLen = length;
+	*dataLen = (size_t)length;
 
 	fclose(fp);
 	free(calPath);

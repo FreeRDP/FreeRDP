@@ -1135,7 +1135,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) < (pdu.cacheEntriesCount * 12))
+	if (Stream_GetRemainingLength(s) < (pdu.cacheEntriesCount * 12ULL))
 	{
 		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;

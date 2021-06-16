@@ -640,8 +640,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				if (wParam == SYSCOMMAND_ID_SMARTSIZING)
 				{
 					HMENU hMenu = GetSystemMenu(wfc->hwnd, FALSE);
-					freerdp_set_param_bool(wfc->context.settings, FreeRDP_SmartSizing,
-					                       !wfc->context.settings->SmartSizing);
+					freerdp_settings_set_bool(wfc->context.settings, FreeRDP_SmartSizing,
+					                          !wfc->context.settings->SmartSizing);
 					CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING,
 					              wfc->context.settings->SmartSizing ? MF_CHECKED : MF_UNCHECKED);
 				}

@@ -202,7 +202,7 @@ BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel)
 		return TRUE;
 	}
 
-	if (!ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname))
+	if (!ntlm_client_make_spn(ntlm, "HTTP", settings->GatewayHostname))
 	{
 		return TRUE;
 	}

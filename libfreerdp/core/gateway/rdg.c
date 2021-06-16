@@ -1633,7 +1633,7 @@ static BOOL rdg_ntlm_init(rdpRdg* rdg, rdpTls* tls)
 	                      settings->GatewayPassword, tls->Bindings))
 		return FALSE;
 
-	if (!ntlm_client_make_spn(rdg->ntlm, _T("HTTP"), settings->GatewayHostname))
+	if (!ntlm_client_make_spn(rdg->ntlm, "HTTP", settings->GatewayHostname))
 		return FALSE;
 
 	if (!ntlm_authenticate(rdg->ntlm, &continueNeeded))

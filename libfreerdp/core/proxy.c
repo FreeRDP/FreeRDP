@@ -343,7 +343,7 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 		if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
 			return FALSE;
 
-		port = val;
+		port = (UINT16)val;
 	}
 	else
 	{

@@ -43,13 +43,12 @@
 
 #define SERVER_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\Server"
 
-cbCallback cbEvent;
+static cbCallback cbEvent = NULL;
 
-int get_screen_info(int id, _TCHAR* name, int* width, int* height, int* bpp)
+int get_screen_info(int id, _TCHAR* name, size_t length, int* width, int* height, int* bpp)
 {
-	DISPLAY_DEVICE dd;
+	DISPLAY_DEVICE dd = { 0 };
 
-	memset(&dd, 0, sizeof(DISPLAY_DEVICE));
 	dd.cb = sizeof(DISPLAY_DEVICE);
 
 	if (EnumDisplayDevices(NULL, id, &dd, 0) != 0)
@@ -57,7 +56,7 @@ int get_screen_info(int id, _TCHAR* name, int* width, int* height, int* bpp)
 		HDC dc;
 
 		if (name != NULL)
-			_stprintf(name, _T("%s (%s)"), dd.DeviceName, dd.DeviceString);
+			_stprintf_s(name, length, _T("%s (%s)"), dd.DeviceName, dd.DeviceString);
 
 		dc = CreateDC(dd.DeviceName, NULL, NULL, NULL);
 		*width = GetDeviceCaps(dc, HORZRES);

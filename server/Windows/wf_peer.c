@@ -97,7 +97,7 @@ static BOOL wf_peer_post_connect(freerdp_peer* client)
 	wfi = context->info;
 	settings = client->settings;
 
-	if ((get_screen_info(wfi->screenID, NULL, &wfi->servscreen_width, &wfi->servscreen_height,
+	if ((get_screen_info(wfi->screenID, NULL, 0, &wfi->servscreen_width, &wfi->servscreen_height,
 	                     &wfi->bitsPerPixel) == 0) ||
 	    (wfi->servscreen_width == 0) || (wfi->servscreen_height == 0) || (wfi->bitsPerPixel == 0))
 	{
