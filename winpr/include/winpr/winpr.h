@@ -54,7 +54,7 @@
 #elif defined(__GNUC__)
 #define WINPR_DEPRECATED(obj) obj __attribute__((deprecated))
 #define WINPR_DEPRECATED_VAR(text, obj) obj __attribute__((deprecated(text)))
-#define WINPR_NORETURN(obj) obj __attribute__((__noreturn__))
+#define WINPR_NORETURN(obj) __attribute__((__noreturn__)) obj
 #else
 #define WINPR_DEPRECATED(obj) obj
 #define WINPR_DEPRECATED_VAR(text, obj) obj

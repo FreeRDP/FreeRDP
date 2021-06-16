@@ -62,10 +62,15 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 
 	width = invalidRect.right - invalidRect.left;
 	height = invalidRect.bottom - invalidRect.top;
-	rdtk_surface_fill(surface, invalidRect.left, invalidRect.top, width, height, 0x3BB9FF);
+	WINPR_ASSERT(width <= UINT16_MAX);
+	WINPR_ASSERT(width >= 0);
+	WINPR_ASSERT(height <= UINT16_MAX);
+	WINPR_ASSERT(height >= 0);
+	rdtk_surface_fill(surface, invalidRect.left, invalidRect.top, (UINT16)width, (UINT16)height,
+	                  0x3BB9FF);
 
-	rdtk_label_draw(surface, invalidRect.left, invalidRect.top, width, height, NULL, "Welcome", 0,
-	                0);
+	rdtk_label_draw(surface, invalidRect.left, invalidRect.top, (UINT16)width, (UINT16)height, NULL,
+	                "Welcome", 0, 0);
 	// rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button");
 	// rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field");
 
