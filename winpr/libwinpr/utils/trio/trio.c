@@ -4732,8 +4732,8 @@ TRIO_PUBLIC int trio_asprintfv TRIO_ARGS3((result, format, args), char** result,
 /**
    Register new user-defined specifier.
 
-   @param callback
-   @param name
+   @param callback a function to call
+   @param name a name for the specifier
    @return Handle.
  */
 TRIO_PUBLIC trio_pointer_t trio_register TRIO_ARGS2((callback, name), trio_callback_t callback,

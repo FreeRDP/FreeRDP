@@ -98,7 +98,7 @@ struct xf_cliprdr_fuse_inode
 };
 typedef struct xf_cliprdr_fuse_inode xfCliprdrFuseInode;
 
-void xf_cliprdr_fuse_inode_free(void* obj)
+static void xf_cliprdr_fuse_inode_free(void* obj)
 {
 	xfCliprdrFuseInode* inode = (xfCliprdrFuseInode*)obj;
 	if (!inode)

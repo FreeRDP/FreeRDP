@@ -185,7 +185,6 @@
  */
 
 static int rdp_client_connect_finalize(rdpRdp* rdp);
-static BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp);
 
 static BOOL rdp_client_reset_codecs(rdpContext* context)
 {

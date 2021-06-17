@@ -19,6 +19,11 @@
 
 #include <freerdp/svc.h>
 
+/* The 'entry' function pointers have variable arguments. */
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-prototypes"
+#endif
 struct _STATIC_ENTRY
 {
 	const char* name;
@@ -49,3 +54,7 @@ struct _STATIC_ADDIN_TABLE
 	const STATIC_SUBSYSTEM_ENTRY* table;
 };
 typedef struct _STATIC_ADDIN_TABLE STATIC_ADDIN_TABLE;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

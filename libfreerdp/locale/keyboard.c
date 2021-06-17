@@ -50,7 +50,7 @@ static DWORD VIRTUAL_SCANCODE_TO_X11_KEYCODE[256][2] = { 0 };
 static DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256] = { 0 };
 static DWORD REMAPPING_TABLE[0x10000] = { 0 };
 
-int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
+static int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 {
 #if defined(_WIN32)
 	CHAR name[KL_NAMELENGTH + 1] = { 0 };

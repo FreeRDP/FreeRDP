@@ -169,7 +169,7 @@ BOOL rdp_send_server_control_cooperate_pdu(rdpRdp* rdp)
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->userId);
 }
 
-BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp)
+static BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp)
 {
 	wStream* s = rdp_data_pdu_init(rdp);
 	if (!s)

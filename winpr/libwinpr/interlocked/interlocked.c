@@ -223,7 +223,10 @@ USHORT QueryDepthSList(WINPR_PSLIST_HEADER ListHead)
 LONG InterlockedIncrement(LONG volatile* Addend)
 {
 #ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Watomic-implicit-seq-cst"
 	return __sync_add_and_fetch(Addend, 1);
+#pragma GCC diagnostic pop
 #else
 	return 0;
 #endif
@@ -232,7 +235,10 @@ LONG InterlockedIncrement(LONG volatile* Addend)
 LONG InterlockedDecrement(LONG volatile* Addend)
 {
 #ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Watomic-implicit-seq-cst"
 	return __sync_sub_and_fetch(Addend, 1);
+#pragma GCC diagnostic pop
 #else
 	return 0;
 #endif
@@ -241,6 +247,8 @@ LONG InterlockedDecrement(LONG volatile* Addend)
 LONG InterlockedExchange(LONG volatile* Target, LONG Value)
 {
 #ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Watomic-implicit-seq-cst"
 	return __sync_val_compare_and_swap(Target, *Target, Value);
 #else
 	return 0;
@@ -250,7 +258,10 @@ LONG InterlockedExchange(LONG volatile* Target, LONG Value)
 LONG InterlockedExchangeAdd(LONG volatile* Addend, LONG Value)
 {
 #ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Watomic-implicit-seq-cst"
 	return __sync_fetch_and_add(Addend, Value);
+#pragma GCC diagnostic pop
 #else
 	return 0;
 #endif
@@ -259,7 +270,10 @@ LONG InterlockedExchangeAdd(LONG volatile* Addend, LONG Value)
 LONG InterlockedCompareExchange(LONG volatile* Destination, LONG Exchange, LONG Comperand)
 {
 #ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Watomic-implicit-seq-cst"
 	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
+#pragma GCC diagnostic pop
 #else
 	return 0;
 #endif
@@ -269,7 +283,10 @@ PVOID InterlockedCompareExchangePointer(PVOID volatile* Destination, PVOID Excha
                                         PVOID Comperand)
 {
 #ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Watomic-implicit-seq-cst"
 	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
+#pragma GCC diagnostic pop
 #else
 	return 0;
 #endif
@@ -350,7 +367,10 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile* Destination, LONGLONG E
                                       LONGLONG Comperand)
 {
 #ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Watomic-implicit-seq-cst"
 	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
+#pragma GCC diagnostic pop
 #else
 	return 0;
 #endif

@@ -194,7 +194,7 @@ static void callback_done(void* data, struct wl_callback* callback, uint32_t ser
 
 static const struct wl_callback_listener callback_listener = { .done = callback_done };
 
-uint32_t get_serial(UwacSeat* s)
+static uint32_t get_serial(UwacSeat* s)
 {
 	struct wl_callback* callback;
 	uint32_t serial = 0;

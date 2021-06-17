@@ -216,7 +216,7 @@ fail:
 	return status;
 }
 
-UINT32 x11_pad_scanline(UINT32 scanline, UINT32 inPad)
+static UINT32 x11_pad_scanline(UINT32 scanline, UINT32 inPad)
 {
 	/* Ensure X11 alignment is met */
 	if (inPad > 0)
