@@ -38,10 +38,7 @@
 
 /* Authentication Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374731/ */
 
-extern const SecPkgInfoA NTLM_SecPkgInfoA;
-extern const SecPkgInfoW NTLM_SecPkgInfoW;
-extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
-extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
+#include "NTLM/ntlm_export.h"
 
 extern const SecPkgInfoA KERBEROS_SecPkgInfoA;
 extern const SecPkgInfoW KERBEROS_SecPkgInfoW;

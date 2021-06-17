@@ -737,7 +737,7 @@ struct rdp_rpc
 	UINT32 result;
 
 	rdpNtlm* ntlm;
-	int SendSeqNum;
+	size_t SendSeqNum;
 
 	RpcClient* client;
 

@@ -38,16 +38,12 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.NTLM")
 
-const char LM_MAGIC[] = "KGS!@#$%";
+static const char LM_MAGIC[] = "KGS!@#$%";
 
-static const char NTLM_CLIENT_SIGN_MAGIC[] =
-    "session key to client-to-server signing key magic constant";
-static const char NTLM_SERVER_SIGN_MAGIC[] =
-    "session key to server-to-client signing key magic constant";
-static const char NTLM_CLIENT_SEAL_MAGIC[] =
-    "session key to client-to-server sealing key magic constant";
-static const char NTLM_SERVER_SEAL_MAGIC[] =
-    "session key to server-to-client sealing key magic constant";
+static char NTLM_CLIENT_SIGN_MAGIC[] = "session key to client-to-server signing key magic constant";
+static char NTLM_SERVER_SIGN_MAGIC[] = "session key to server-to-client signing key magic constant";
+static char NTLM_CLIENT_SEAL_MAGIC[] = "session key to client-to-server sealing key magic constant";
+static char NTLM_SERVER_SEAL_MAGIC[] = "session key to server-to-client sealing key magic constant";
 
 static const BYTE NTLM_NULL_BUFFER[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
@@ -139,7 +135,7 @@ static int ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENG
 	if (size > UINT32_MAX)
 		return -1;
 
-	challenge->cbAvPairs = size;
+	challenge->cbAvPairs = (UINT32)size;
 	challenge->AvPairs = (NTLM_AV_PAIR*)malloc(challenge->cbAvPairs);
 
 	if (!challenge->AvPairs)
@@ -256,34 +252,35 @@ static int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 		WLog_ERR(TAG, "Error: Could not find user in SAM database");
 		return 0;
 	}
-
-	SamClose(sam);
-	return 1;
 }
 
 static int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
 {
 	int status;
-	int i, hn, ln;
+	int i;
 	char* PasswordHash = NULL;
-	UINT32 PasswordHashLength = 0;
+	INT64 PasswordHashLength = 0;
 	SSPI_CREDENTIALS* credentials = context->credentials;
 	/* Password contains a password hash of length (PasswordLength -
 	 * SSPI_CREDENTIALS_HASH_LENGTH_OFFSET) */
 	PasswordHashLength = credentials->identity.PasswordLength - SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
+	WINPR_ASSERT(PasswordHashLength >= 0);
+	WINPR_ASSERT(PasswordHashLength <= INT_MAX);
 	status = ConvertFromUnicode(CP_UTF8, 0, (LPCWSTR)credentials->identity.Password,
-	                            PasswordHashLength, &PasswordHash, 0, NULL, NULL);
+	                            (int)PasswordHashLength, &PasswordHash, 0, NULL, NULL);
 
 	if (status <= 0)
 		return -1;
 
-	CharUpperBuffA(PasswordHash, PasswordHashLength);
+	CharUpperBuffA(PasswordHash, (DWORD)PasswordHashLength);
 
 	for (i = 0; i < 32; i += 2)
 	{
-		hn = PasswordHash[i] > '9' ? PasswordHash[i] - 'A' + 10 : PasswordHash[i] - '0';
-		ln = PasswordHash[i + 1] > '9' ? PasswordHash[i + 1] - 'A' + 10 : PasswordHash[i + 1] - '0';
-		hash[i / 2] = (hn << 4) | ln;
+		BYTE hn =
+		    (BYTE)(PasswordHash[i] > '9' ? PasswordHash[i] - 'A' + 10 : PasswordHash[i] - '0');
+		BYTE ln = (BYTE)(PasswordHash[i + 1] > '9' ? PasswordHash[i + 1] - 'A' + 10
+		                                           : PasswordHash[i + 1] - '0');
+		hash[i / 2] = (BYTE)((hn << 4) | ln);
 	}
 
 	free(PasswordHash);
@@ -488,7 +485,7 @@ exit:
  * @param ciphertext cipher text
  */
 
-void ntlm_rc4k(BYTE* key, int length, BYTE* plaintext, BYTE* ciphertext)
+void ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext)
 {
 	WINPR_RC4_CTX* rc4 = winpr_RC4_New(key, 16);
 
@@ -597,10 +594,10 @@ void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
  * @param signing_key Destination signing key
  */
 
-static int ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign_magic,
+static int ntlm_generate_signing_key(BYTE* exported_session_key, const SecBuffer* sign_magic,
                                      BYTE* signing_key)
 {
-	int length;
+	size_t length;
 	BYTE* value;
 	length = WINPR_MD5_DIGEST_LENGTH + sign_magic->cbBuffer;
 	value = (BYTE*)malloc(length);
@@ -630,9 +627,7 @@ static int ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign
 
 void ntlm_generate_client_signing_key(NTLM_CONTEXT* context)
 {
-	SecBuffer signMagic;
-	signMagic.pvBuffer = (void*)NTLM_CLIENT_SIGN_MAGIC;
-	signMagic.cbBuffer = sizeof(NTLM_CLIENT_SIGN_MAGIC);
+	const SecBuffer signMagic = { sizeof(NTLM_CLIENT_SIGN_MAGIC), 0, NTLM_CLIENT_SIGN_MAGIC };
 	ntlm_generate_signing_key(context->ExportedSessionKey, &signMagic, context->ClientSigningKey);
 }
 
@@ -644,9 +639,7 @@ void ntlm_generate_client_signing_key(NTLM_CONTEXT* context)
 
 void ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
 {
-	SecBuffer signMagic;
-	signMagic.pvBuffer = (void*)NTLM_SERVER_SIGN_MAGIC;
-	signMagic.cbBuffer = sizeof(NTLM_SERVER_SIGN_MAGIC);
+	const SecBuffer signMagic = { sizeof(NTLM_SERVER_SIGN_MAGIC), 0, NTLM_SERVER_SIGN_MAGIC };
 	ntlm_generate_signing_key(context->ExportedSessionKey, &signMagic, context->ServerSigningKey);
 }
 
@@ -691,9 +684,7 @@ static int ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal
 
 void ntlm_generate_client_sealing_key(NTLM_CONTEXT* context)
 {
-	SecBuffer sealMagic;
-	sealMagic.pvBuffer = (void*)NTLM_CLIENT_SEAL_MAGIC;
-	sealMagic.cbBuffer = sizeof(NTLM_CLIENT_SEAL_MAGIC);
+	const SecBuffer sealMagic = { sizeof(NTLM_CLIENT_SEAL_MAGIC), 0, NTLM_CLIENT_SEAL_MAGIC };
 	ntlm_generate_signing_key(context->ExportedSessionKey, &sealMagic, context->ClientSealingKey);
 }
 
@@ -705,9 +696,7 @@ void ntlm_generate_client_sealing_key(NTLM_CONTEXT* context)
 
 void ntlm_generate_server_sealing_key(NTLM_CONTEXT* context)
 {
-	SecBuffer sealMagic;
-	sealMagic.pvBuffer = (void*)NTLM_SERVER_SEAL_MAGIC;
-	sealMagic.cbBuffer = sizeof(NTLM_SERVER_SEAL_MAGIC);
+	const SecBuffer sealMagic = { sizeof(NTLM_SERVER_SEAL_MAGIC), 0, NTLM_SERVER_SEAL_MAGIC };
 	ntlm_generate_signing_key(context->ExportedSessionKey, &sealMagic, context->ServerSealingKey);
 }
 

@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/ntlm.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
@@ -55,7 +56,8 @@ BOOL NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 	if (!(PasswordW = (LPWSTR)calloc(PasswordLength, 2)))
 		return FALSE;
 
-	MultiByteToWideChar(CP_ACP, 0, Password, PasswordLength, PasswordW, PasswordLength);
+	WINPR_ASSERT(PasswordLength <= INT_MAX);
+	MultiByteToWideChar(CP_ACP, 0, Password, (int)PasswordLength, PasswordW, (int)PasswordLength);
 
 	if (!NTOWFv1W(PasswordW, PasswordLength * 2, NtHash))
 		goto out_fail;
@@ -105,9 +107,12 @@ BOOL NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User, UINT32 UserLeng
 	if (!UserW || !DomainW || !PasswordW)
 		goto out_fail;
 
-	MultiByteToWideChar(CP_ACP, 0, User, UserLength, UserW, UserLength);
-	MultiByteToWideChar(CP_ACP, 0, Domain, DomainLength, DomainW, DomainLength);
-	MultiByteToWideChar(CP_ACP, 0, Password, PasswordLength, PasswordW, PasswordLength);
+	WINPR_ASSERT(UserLength <= INT_MAX);
+	WINPR_ASSERT(DomainLength <= INT_MAX);
+	WINPR_ASSERT(PasswordLength <= INT_MAX);
+	MultiByteToWideChar(CP_ACP, 0, User, (int)UserLength, UserW, (int)UserLength);
+	MultiByteToWideChar(CP_ACP, 0, Domain, (int)DomainLength, DomainW, (int)DomainLength);
+	MultiByteToWideChar(CP_ACP, 0, Password, (int)PasswordLength, PasswordW, (int)PasswordLength);
 
 	if (!NTOWFv2W(PasswordW, PasswordLength * 2, UserW, UserLength * 2, DomainW, DomainLength * 2,
 	              NtHash))
@@ -170,8 +175,10 @@ BOOL NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength, LPSTR Domai
 	if (!UserW || !DomainW)
 		goto out_fail;
 
-	MultiByteToWideChar(CP_ACP, 0, User, UserLength, UserW, UserLength);
-	MultiByteToWideChar(CP_ACP, 0, Domain, DomainLength, DomainW, DomainLength);
+	WINPR_ASSERT(UserLength <= INT_MAX);
+	WINPR_ASSERT(DomainLength <= INT_MAX);
+	MultiByteToWideChar(CP_ACP, 0, User, (int)UserLength, UserW, (int)UserLength);
+	MultiByteToWideChar(CP_ACP, 0, Domain, (int)DomainLength, DomainW, (int)DomainLength);
 
 	if (!NTOWFv2FromHashW(NtHashV1, UserW, UserLength * 2, DomainW, DomainLength * 2, NtHash))
 		goto out_fail;

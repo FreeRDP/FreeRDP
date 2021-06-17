@@ -82,7 +82,7 @@ DWORD GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer)
 
 		memcpy(lpBuffer, cwd, length + 1);
 		free(cwd);
-		return length;
+		return (DWORD)length;
 	}
 }
 
@@ -154,12 +154,12 @@ DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 	length = strlen(env);
 
 	if ((length + 1 > nSize) || (!lpBuffer))
-		return length + 1;
+		return (DWORD)length + 1;
 
 	CopyMemory(lpBuffer, env, length);
 	lpBuffer[length] = '\0';
 
-	return length;
+	return (DWORD)length;
 #else
 	SetLastError(ERROR_ENVVAR_NOT_FOUND);
 	return 0;

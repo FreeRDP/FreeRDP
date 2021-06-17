@@ -41,7 +41,7 @@ void ntlm_generate_timestamp(NTLM_CONTEXT* context);
 int ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
 int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);
 
-void ntlm_rc4k(BYTE* key, int length, BYTE* plaintext, BYTE* ciphertext);
+void ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext);
 void ntlm_generate_client_challenge(NTLM_CONTEXT* context);
 void ntlm_generate_server_challenge(NTLM_CONTEXT* context);
 void ntlm_generate_key_exchange_key(NTLM_CONTEXT* context);

@@ -289,7 +289,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 		{
 			CopyMemory(lpFilename, buffer, length);
 			lpFilename[length] = '\0';
-			return length;
+			return (DWORD)length;
 		}
 
 		CopyMemory(lpFilename, buffer, nSize - 1);

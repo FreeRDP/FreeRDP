@@ -143,7 +143,7 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCSTR ServiceClass, LPCSTR hostname)
 	LPWSTR hostnameX = NULL;
 	ConvertToUnicode(CP_UTF8, 0, hostname, -1, (LPWSTR*)&hostnameX, 0);
 #else
-	LPCSTR hostnameX = _strdup(hostname);
+	LPSTR hostnameX = _strdup(hostname);
 #endif
 
 	if (!hostnameX)
@@ -151,12 +151,7 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCSTR ServiceClass, LPCSTR hostname)
 
 	if (!ServiceClass)
 	{
-		ntlm->ServicePrincipalName = (LPTSTR)_tcsdup(hostnameX);
-		free(hostnameX);
-
-		if (!ntlm->ServicePrincipalName)
-			return FALSE;
-
+		ntlm->ServicePrincipalName = hostnameX;
 		return TRUE;
 	}
 

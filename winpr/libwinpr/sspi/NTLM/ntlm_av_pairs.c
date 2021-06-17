@@ -124,6 +124,7 @@ static INLINE BOOL ntlm_av_pair_get_id(const NTLM_AV_PAIR* pAvPair, size_t size,
 
 ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 {
+	size_t size;
 	size_t cbAvPair;
 	NTLM_AV_PAIR* pAvPair;
 
@@ -131,7 +132,9 @@ ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 	if (!pAvPair)
 		return 0;
 
-	return ((PBYTE)pAvPair - (PBYTE)pAvPairList) + sizeof(NTLM_AV_PAIR);
+	size = ((PBYTE)pAvPair - (PBYTE)pAvPairList) + sizeof(NTLM_AV_PAIR);
+	WINPR_ASSERT(size <= ULONG_MAX);
+	return (ULONG)size;
 }
 
 static INLINE BOOL ntlm_av_pair_get_len(const NTLM_AV_PAIR* pAvPair, size_t size, size_t* pAvLen)
@@ -259,7 +262,7 @@ static BOOL ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTL
 	if (!pAvPair || cbAvPair < 2 * sizeof(NTLM_AV_PAIR) + AvLen)
 		return FALSE;
 
-	ntlm_av_pair_set_id(pAvPair, AvId);
+	ntlm_av_pair_set_id(pAvPair, (UINT16)AvId);
 	ntlm_av_pair_set_len(pAvPair, AvLen);
 	if (AvLen)
 	{
@@ -286,8 +289,9 @@ static BOOL ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList
 	if (!ntlm_av_pair_get_len(pAvPair, cbAvPair, &avLen))
 		return FALSE;
 
+	WINPR_ASSERT(avLen <= UINT16_MAX);
 	return ntlm_av_pair_add(pAvPairList, cbAvPairList, pair,
-	                        ntlm_av_pair_get_value_pointer(pAvPair), avLen);
+	                        ntlm_av_pair_get_value_pointer(pAvPair), (UINT16)avLen);
 }
 
 static int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
@@ -454,7 +458,7 @@ static void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
 int ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 {
 	int rc = -1;
-	int length;
+	ULONG length;
 	ULONG AvPairsCount;
 	ULONG AvPairsLength;
 	NTLM_AV_PAIR* pAvPairList;
@@ -714,8 +718,10 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 
 	if (context->SendSingleHostData)
 	{
+		WINPR_ASSERT(context->SingleHostData.Size <= UINT16_MAX);
 		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvAvSingleHost,
-		                      (PBYTE)&context->SingleHostData, context->SingleHostData.Size))
+		                      (PBYTE)&context->SingleHostData,
+		                      (UINT16)context->SingleHostData.Size))
 			goto fail;
 	}
 
