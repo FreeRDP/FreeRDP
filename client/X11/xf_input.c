@@ -72,7 +72,7 @@ static double z_vector;
 static double px_vector;
 static double py_vector;
 
-const char* xf_input_get_class_string(int class)
+static const char* xf_input_get_class_string(int class)
 {
 	if (class == XIKeyClass)
 		return "XIKeyClass";

@@ -337,7 +337,7 @@ extern "C"
 	 *	handler is supposed to answer if the execution can continue. I can also be used
 	 *	to log things.
 	 *
-	 * @param handler
+	 * @param handler the error handling function to install
 	 */
 	UWAC_API void UwacInstallErrorHandler(UwacErrorHandler handler);
 

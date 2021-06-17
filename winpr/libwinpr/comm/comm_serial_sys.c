@@ -1609,7 +1609,7 @@ static SERIAL_DRIVER _SerialSys = {
 	.reset_device = _reset_device,
 };
 
-SERIAL_DRIVER* SerialSys_s()
+SERIAL_DRIVER* SerialSys_s(void)
 {
 	return &_SerialSys;
 }

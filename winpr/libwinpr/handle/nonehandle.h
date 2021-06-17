@@ -33,7 +33,7 @@ struct winpr_none_handle
 
 typedef struct winpr_none_handle WINPR_NONE_HANDLE;
 
-HANDLE CreateNoneHandle();
+HANDLE CreateNoneHandle(void);
 
 #endif /*_WIN32*/
 

@@ -248,7 +248,7 @@ static INIT_ONCE threads_InitOnce = INIT_ONCE_STATIC_INIT;
 static pthread_t mainThreadId;
 static DWORD currentThreadTlsIndex = TLS_OUT_OF_INDEXES;
 
-BOOL initializeThreads(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
+static BOOL initializeThreads(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
 {
 	if (!apc_init(&mainThread.apc))
 	{
@@ -657,7 +657,7 @@ typedef struct
 	ULONG_PTR completionArg;
 } UserApcItem;
 
-void userAPC(LPVOID arg)
+static void userAPC(LPVOID arg)
 {
 	UserApcItem* userApc = (UserApcItem*)arg;
 

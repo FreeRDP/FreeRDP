@@ -112,7 +112,7 @@ BOOL ArrayList_IsSynchronized(wArrayList* arrayList)
  * Lock access to the ArrayList
  */
 
-void ArrayList_Lock_Conditional(wArrayList* arrayList)
+static void ArrayList_Lock_Conditional(wArrayList* arrayList)
 {
 	WINPR_ASSERT(arrayList);
 	if (arrayList->synchronized)
@@ -129,7 +129,7 @@ void ArrayList_Lock(wArrayList* arrayList)
  * Unlock access to the ArrayList
  */
 
-void ArrayList_Unlock_Conditional(wArrayList* arrayList)
+static void ArrayList_Unlock_Conditional(wArrayList* arrayList)
 {
 	WINPR_ASSERT(arrayList);
 	if (arrayList->synchronized)
