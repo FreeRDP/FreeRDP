@@ -25,7 +25,8 @@ set(${MODULE_PREFIX}_NTLM_SRCS
 	NTLM/ntlm_message.c
 	NTLM/ntlm_message.h
 	NTLM/ntlm.c
-	NTLM/ntlm.h)
+	NTLM/ntlm.h
+	NTLM/ntlm_export.h)
 
 set(${MODULE_PREFIX}_KERBEROS_SRCS
 	Kerberos/kerberos.c

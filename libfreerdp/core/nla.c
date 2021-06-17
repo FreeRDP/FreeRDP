@@ -1190,7 +1190,7 @@ static int nla_server_authenticate(rdpNla* nla)
 			{
 				SECURITY_STATUS status;
 				status = nla->table->SetContextAttributes(
-				    &nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB, peer->ComputeNtlmHash, 0);
+				    &nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB, (void*)peer->ComputeNtlmHash, 0);
 
 				if (status != SEC_E_OK)
 				{

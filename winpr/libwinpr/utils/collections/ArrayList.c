@@ -285,7 +285,7 @@ int ArrayList_Add(wArrayList* arrayList, const void* obj)
 	WINPR_ASSERT(arrayList);
 	if (!ArrayList_Append(arrayList, obj))
 		return -1;
-	return ArrayList_Count(arrayList) - 1;
+	return (int)ArrayList_Count(arrayList) - 1;
 }
 
 /**

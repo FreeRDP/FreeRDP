@@ -164,7 +164,7 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDist
 		return INVALID_SET_FILE_POINTER;
 	}
 
-	return _ftelli64(pFile->fp);
+	return (DWORD)_ftelli64(pFile->fp);
 }
 
 static BOOL FileSetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove,
