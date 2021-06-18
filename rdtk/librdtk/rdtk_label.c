@@ -24,13 +24,14 @@
 
 #include "rdtk_label.h"
 
-int rdtk_label_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
-                    rdtkLabel* label, const char* text, int hAlign, int vAlign)
+int rdtk_label_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint16_t nWidth,
+                    uint16_t nHeight, rdtkLabel* label, const char* text, uint16_t hAlign,
+                    uint16_t vAlign)
 {
-	int offsetX;
-	int offsetY;
-	int textWidth;
-	int textHeight;
+	uint16_t offsetX;
+	uint16_t offsetY;
+	uint16_t textWidth;
+	uint16_t textHeight;
 	rdtkFont* font;
 	rdtkEngine* engine;
 
