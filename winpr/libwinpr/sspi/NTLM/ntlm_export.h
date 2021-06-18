@@ -21,9 +21,20 @@
 #ifndef WINPR_SSPI_NTLM_EXPORT_H
 #define WINPR_SSPI_NTLM_EXPORT_H
 
-extern const SecPkgInfoA NTLM_SecPkgInfoA;
-extern const SecPkgInfoW NTLM_SecPkgInfoW;
-extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
-extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
+#include <winpr/sspi.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	const SecPkgInfoA NTLM_SecPkgInfoA;
+	const SecPkgInfoW NTLM_SecPkgInfoW;
+	const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
+	const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
