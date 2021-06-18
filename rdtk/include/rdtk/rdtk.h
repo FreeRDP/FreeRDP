@@ -19,13 +19,8 @@
 #ifndef RDTK_H
 #define RDTK_H
 
+#include <stdint.h>
 #include <rdtk/api.h>
-
-#include <winpr/crt.h>
-#include <winpr/windows.h>
-
-#include <freerdp/codec/color.h>
-#include <freerdp/codec/region.h>
 
 typedef struct rdtk_engine rdtkEngine;
 typedef struct rdtk_font rdtkFont;
@@ -43,38 +38,40 @@ extern "C"
 
 	/* Engine */
 
-	RDTK_EXPORT rdtkEngine* rdtk_engine_new();
+	RDTK_EXPORT rdtkEngine* rdtk_engine_new(void);
 	RDTK_EXPORT void rdtk_engine_free(rdtkEngine* engine);
 
 	/* Surface */
 
-	RDTK_EXPORT int rdtk_surface_fill(rdtkSurface* surface, int x, int y, int width, int height,
-	                                  UINT32 color);
+	RDTK_EXPORT int rdtk_surface_fill(rdtkSurface* surface, uint16_t x, uint16_t y, uint16_t width,
+	                                  uint16_t height, uint32_t color);
 
-	RDTK_EXPORT rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int height,
-	                                          int scanline);
+	RDTK_EXPORT rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
+	                                          uint16_t height, uint32_t scanline);
 	RDTK_EXPORT void rdtk_surface_free(rdtkSurface* surface);
 
 	/* Font */
 
-	RDTK_EXPORT int rdtk_font_draw_text(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* font,
-	                                    const char* text);
+	RDTK_EXPORT int rdtk_font_draw_text(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst,
+	                                    rdtkFont* font, const char* text);
 
 	/* Button */
 
-	RDTK_EXPORT int rdtk_button_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
-	                                 int nHeight, rdtkButton* button, const char* text);
+	RDTK_EXPORT int rdtk_button_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst,
+	                                 uint16_t nWidth, uint16_t nHeight, rdtkButton* button,
+	                                 const char* text);
 
 	/* Label */
 
-	RDTK_EXPORT int rdtk_label_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
-	                                int nHeight, rdtkLabel* label, const char* text, int hAlign,
-	                                int vAlign);
+	RDTK_EXPORT int rdtk_label_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst,
+	                                uint16_t nWidth, uint16_t nHeight, rdtkLabel* label,
+	                                const char* text, uint16_t hAlign, uint16_t vAlign);
 
 	/* TextField */
 
-	RDTK_EXPORT int rdtk_text_field_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
-	                                     int nHeight, rdtkTextField* textField, const char* text);
+	RDTK_EXPORT int rdtk_text_field_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst,
+	                                     uint16_t nWidth, uint16_t nHeight,
+	                                     rdtkTextField* textField, const char* text);
 
 #ifdef __cplusplus
 }

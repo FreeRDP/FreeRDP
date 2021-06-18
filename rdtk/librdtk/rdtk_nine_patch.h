@@ -19,6 +19,7 @@
 #ifndef RDTK_NINE_PATCH_PRIVATE_H
 #define RDTK_NINE_PATCH_PRIVATE_H
 
+#include <stdint.h>
 #include <rdtk/rdtk.h>
 
 #include <winpr/image.h>
@@ -36,7 +37,7 @@ struct rdtk_nine_patch
 	int width;
 	int height;
 	int scanline;
-	BYTE* data;
+	uint8_t* data;
 
 	int scaleLeft;
 	int scaleRight;

@@ -20,7 +20,9 @@
 #include "config.h"
 #endif
 
-#include <freerdp/log.h>
+#include <stdint.h>
+
+#include <winpr/wlog.h>
 #include <rdtk/rdtk.h>
 
 #include <X11/Xlib.h>
@@ -36,7 +38,7 @@ int main(int argc, char** argv)
 	int x, y;
 	int width;
 	int height;
-	BYTE* buffer;
+	uint8_t* buffer;
 	int scanline;
 	int pf_count;
 	XEvent event;
@@ -100,7 +102,7 @@ int main(int argc, char** argv)
 		return 1;
 
 	scanline = width * 4;
-	buffer = (BYTE*)calloc(height, scanline);
+	buffer = (uint8_t*)calloc(height, scanline);
 	if (!buffer)
 		return 1;
 
