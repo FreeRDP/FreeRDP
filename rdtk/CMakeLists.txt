@@ -49,6 +49,15 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
 	set(BUILD_SHARED_LIBS ON)
 endif()
 
+if (NOT IOS)
+	check_include_files(stdbool.h WINPR_HAVE_STDBOOL_H)
+	if (NOT WINPR_HAVE_STDBOOL_H)
+		include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../compat/stdbool)
+	endif()
+else()
+	set(WINPR_HAVE_STDBOOL_H 1)
+endif()
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DRDTK_EXPORTS")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
