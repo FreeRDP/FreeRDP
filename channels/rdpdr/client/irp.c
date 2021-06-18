@@ -99,7 +99,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 			*error = CHANNEL_RC_OK;
 
 		return NULL;
-	};
+	}
 
 	irp = (IRP*)_aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
 

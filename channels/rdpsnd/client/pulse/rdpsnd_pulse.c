@@ -59,10 +59,8 @@ static void rdpsnd_pulse_get_sink_info(pa_context* c, const pa_sink_info* i, int
                                        void* userdata)
 {
 	uint8_t x;
-	UINT16 dwVolumeLeft = ((50 * 0xFFFF) / 100); /* 50% */
-	;
+	UINT16 dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
 	UINT16 dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
-	;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
 
 	if (!pulse || !c || !i)

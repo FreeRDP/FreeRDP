@@ -68,10 +68,11 @@ struct rdpsnd_oss_plugin
 };
 
 #define OSS_LOG_ERR(_text, _error)                                         \
+	do                                                                     \
 	{                                                                      \
 		if (_error != 0)                                                   \
 			WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error)); \
-	}
+	} while (0)
 
 static int rdpsnd_oss_get_format(const AUDIO_FORMAT* format)
 {
