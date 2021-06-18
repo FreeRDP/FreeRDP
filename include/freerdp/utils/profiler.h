@@ -63,7 +63,7 @@ extern "C"
 #define PROFILER_RENAME(prof, name) \
 	do                              \
 	{                               \
-	} while (0)
+	} while (0);
 
 #define PROFILER_DEFINE(prof)
 #define PROFILER_CREATE(prof, name) \

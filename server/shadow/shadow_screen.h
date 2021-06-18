@@ -28,8 +28,8 @@ struct rdp_shadow_screen
 {
 	rdpShadowServer* server;
 
-	int width;
-	int height;
+	UINT32 width;
+	UINT32 height;
 
 	CRITICAL_SECTION lock;
 	REGION16 invalidRegion;

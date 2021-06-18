@@ -134,7 +134,7 @@ struct rdp_shadow_server
 	BOOL mayInteract;
 	BOOL shareSubRect;
 	BOOL authentication;
-	int selectedMonitor;
+	UINT32 selectedMonitor;
 	RECTANGLE_16 subRect;
 
 	/* Codec settings */
@@ -156,11 +156,11 @@ struct rdp_shadow_surface
 {
 	rdpShadowServer* server;
 
-	int x;
-	int y;
-	int width;
-	int height;
-	int scanline;
+	UINT16 x;
+	UINT16 y;
+	UINT32 width;
+	UINT32 height;
+	UINT32 scanline;
 	DWORD format;
 	BYTE* data;
 
@@ -186,9 +186,9 @@ struct rdp_shadow_subsystem
 {
 	RDP_SHADOW_ENTRY_POINTS ep;
 	HANDLE event;
-	int numMonitors;
-	int captureFrameRate;
-	int selectedMonitor;
+	UINT32 numMonitors;
+	UINT32 captureFrameRate;
+	UINT32 selectedMonitor;
 	MONITOR_DEF monitors[16];
 	MONITOR_DEF virtualScreen;
 
@@ -321,7 +321,7 @@ extern "C"
 	                                            SHADOW_MSG_OUT* msg, void* lParam);
 	FREERDP_API int shadow_client_boardcast_quit(rdpShadowServer* server, int nExitCode);
 
-	FREERDP_API int shadow_encoder_preferred_fps(rdpShadowEncoder* encoder);
+	FREERDP_API UINT32 shadow_encoder_preferred_fps(rdpShadowEncoder* encoder);
 	FREERDP_API UINT32 shadow_encoder_inflight_frames(rdpShadowEncoder* encoder);
 
 	FREERDP_API BOOL shadow_screen_resize(rdpShadowScreen* screen);

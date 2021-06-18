@@ -177,7 +177,7 @@ UINT32 shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 	RDP_SHADOW_ENTRY_POINTS ep;
 
 	if (shadow_subsystem_load_entry_points(&ep) < 0)
-		return -1;
+		return 0;
 
 	numMonitors = ep.EnumMonitors(monitors, maxMonitors);
 
@@ -197,8 +197,8 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data(
 	UINT32 x, y;
 	BYTE* pSrc8;
 	BYTE* pDst8;
-	int xorStep;
-	int andStep;
+	UINT32 xorStep;
+	UINT32 andStep;
 	UINT32 andBit;
 	BYTE* andBits;
 	UINT32 andPixel;

@@ -33,6 +33,7 @@
 #include <X11/Xutil.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
 #include <winpr/image.h>
@@ -76,9 +77,11 @@ static int x11_shadow_pam_conv(int num_msg, const struct pam_message** msg,
 	int pam_status = PAM_CONV_ERR;
 	SHADOW_PAM_AUTH_DATA* appdata;
 	struct pam_response* response;
+	WINPR_ASSERT(num_msg >= 0);
 	appdata = (SHADOW_PAM_AUTH_DATA*)appdata_ptr;
+	WINPR_ASSERT(appdata);
 
-	if (!(response = (struct pam_response*)calloc(num_msg, sizeof(struct pam_response))))
+	if (!(response = (struct pam_response*)calloc((size_t)num_msg, sizeof(struct pam_response))))
 		return PAM_BUF_ERR;
 
 	for (index = 0; index < num_msg; index++)
@@ -122,7 +125,7 @@ out_fail:
 		}
 	}
 
-	memset(response, 0, sizeof(struct pam_response) * num_msg);
+	memset(response, 0, sizeof(struct pam_response) * (size_t)num_msg);
 	free(response);
 	*resp = NULL;
 	return pam_status;
@@ -294,8 +297,8 @@ static BOOL x11_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 			negative = TRUE;
 
 		button = (negative) ? 5 : 4;
-		XTestFakeButtonEvent(x11->display, button, True, CurrentTime);
-		XTestFakeButtonEvent(x11->display, button, False, CurrentTime);
+		XTestFakeButtonEvent(x11->display, button, True, (unsigned long)CurrentTime);
+		XTestFakeButtonEvent(x11->display, button, False, (unsigned long)CurrentTime);
 	}
 	else
 	{
@@ -592,15 +595,15 @@ static void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int
 
 static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 {
-	int x, y;
-	int nXSrc;
-	int nYSrc;
-	int nXDst;
-	int nYDst;
-	int nWidth;
-	int nHeight;
-	int nSrcStep;
-	int nDstStep;
+	UINT32 x, y;
+	UINT32 nXSrc;
+	UINT32 nYSrc;
+	UINT32 nXDst;
+	UINT32 nYDst;
+	UINT32 nWidth;
+	UINT32 nHeight;
+	UINT32 nSrcStep;
+	UINT32 nDstStep;
 	BYTE* pSrcData;
 	BYTE* pDstData;
 	BYTE A, R, G, B;
@@ -826,9 +829,14 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			y = extents->top;
 			width = extents->right - extents->left;
 			height = extents->bottom - extents->top;
+			WINPR_ASSERT(image);
+			WINPR_ASSERT(image->bytes_per_line >= 0);
+			WINPR_ASSERT(width >= 0);
+			WINPR_ASSERT(height >= 0);
 			success = freerdp_image_copy(surface->data, surface->format, surface->scanline, x, y,
-			                             width, height, (BYTE*)image->data, PIXEL_FORMAT_BGRX32,
-			                             image->bytes_per_line, x, y, NULL, FREERDP_FLIP_NONE);
+			                             (UINT32)width, (UINT32)height, (BYTE*)image->data,
+			                             PIXEL_FORMAT_BGRX32, (UINT32)image->bytes_per_line, x, y,
+			                             NULL, FREERDP_FLIP_NONE);
 			LeaveCriticalSection(&surface->lock);
 			if (!success)
 				goto fail_capture;
@@ -1339,8 +1347,10 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	virtualScreen = &(subsystem->common.virtualScreen);
 	virtualScreen->left = 0;
 	virtualScreen->top = 0;
-	virtualScreen->right = subsystem->width;
-	virtualScreen->bottom = subsystem->height;
+	WINPR_ASSERT(subsystem->width <= INT32_MAX);
+	WINPR_ASSERT(subsystem->height <= INT32_MAX);
+	virtualScreen->right = (INT32)subsystem->width;
+	virtualScreen->bottom = (INT32)subsystem->height;
 	virtualScreen->flags = 1;
 	WLog_INFO(TAG,
 	          "X11 Extensions: XFixes: %" PRId32 " Xinerama: %" PRId32 " XDamage: %" PRId32

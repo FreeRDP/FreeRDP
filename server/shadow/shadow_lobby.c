@@ -20,6 +20,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/assert.h>
 #include <rdtk/rdtk.h>
 
 #include "shadow.h"
@@ -52,8 +53,10 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 
 	invalidRect.left = 0;
 	invalidRect.top = 0;
-	invalidRect.right = lobby->width;
-	invalidRect.bottom = lobby->height;
+	WINPR_ASSERT(lobby->width <= UINT16_MAX);
+	WINPR_ASSERT(lobby->height <= UINT16_MAX);
+	invalidRect.right = (UINT16)lobby->width;
+	invalidRect.bottom = (UINT16)lobby->height;
 	if (server->shareSubRect)
 	{
 		/* If we have shared sub rect setting, only fill shared rect */
