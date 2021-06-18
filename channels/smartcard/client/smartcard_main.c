@@ -711,6 +711,7 @@ static UINT smartcard_irp_request(DEVICE* device, IRP* irp)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+extern UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints);
 UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	SMARTCARD_DEVICE* smartcard = NULL;

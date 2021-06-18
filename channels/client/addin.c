@@ -67,8 +67,7 @@ static void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABL
 void* freerdp_channels_client_find_static_entry(const char* name, const char* identifier)
 {
 	size_t index = 0;
-	STATIC_ENTRY_TABLE* pEntry;
-	pEntry = (STATIC_ENTRY_TABLE*)&CLIENT_STATIC_ENTRY_TABLES[index++];
+	const STATIC_ENTRY_TABLE* pEntry = &CLIENT_STATIC_ENTRY_TABLES[index++];
 
 	while (pEntry->table != NULL)
 	{
@@ -77,7 +76,7 @@ void* freerdp_channels_client_find_static_entry(const char* name, const char* id
 			return freerdp_channels_find_static_entry_in_table(pEntry, identifier);
 		}
 
-		pEntry = (STATIC_ENTRY_TABLE*)&CLIENT_STATIC_ENTRY_TABLES[index++];
+		pEntry = &CLIENT_STATIC_ENTRY_TABLES[index++];
 	}
 
 	return NULL;
