@@ -546,7 +546,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 				{
 					WLog_ERR(TAG, "audin_server_recv_data failed with error %" PRIu32 "!", error);
 					goto out_capacity;
-				};
+				}
 
 				break;
 
