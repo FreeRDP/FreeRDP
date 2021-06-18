@@ -362,9 +362,9 @@ error_mmap:
 	return ret;
 }
 
-static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, SSIZE_T* index)
+static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, ssize_t* index)
 {
-	SSIZE_T i;
+	ssize_t i;
 	int ret;
 
 	if (index)
@@ -629,7 +629,7 @@ static const struct wl_callback_listener frame_listener = { frame_done_cb };
 #ifdef HAVE_PIXMAN_REGION
 static void damage_surface(UwacWindow* window, UwacBuffer* buffer)
 {
-	UINT32 nrects, i;
+	int nrects, i;
 	const pixman_box32_t* box = pixman_region32_rectangles(&buffer->damage, &nrects);
 
 	for (i = 0; i < nrects; i++, box++)
@@ -641,7 +641,7 @@ static void damage_surface(UwacWindow* window, UwacBuffer* buffer)
 #else
 static void damage_surface(UwacWindow* window, UwacBuffer* buffer)
 {
-	UINT32 nrects, i;
+	uint32_t nrects, i;
 	const RECTANGLE_16* box = region16_rects(&buffer->damage, &nrects);
 
 	for (i = 0; i < nrects; i++, box++)
@@ -681,7 +681,12 @@ static void frame_done_cb(void* data, struct wl_callback* callback, uint32_t tim
 UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, uint32_t width,
                                    uint32_t height)
 {
-	UwacBuffer* buf = window->drawingBuffer;
+	UwacBuffer* buf;
+
+	if (window->drawingBufferIdx < 0)
+		return UWAC_ERROR_INTERNAL;
+
+	buf = &window->buffers[window->drawingBufferIdx];
 	if (!pixman_region32_union_rect(&buf->damage, &buf->damage, x, y, width, height))
 		return UWAC_ERROR_INTERNAL;
 
