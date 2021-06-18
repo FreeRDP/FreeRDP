@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/stream.h>
 
 #include <freerdp/types.h>
@@ -127,7 +128,7 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 	return CHANNEL_RC_OK;
 }
 
-#elif _WIN32
+#elif defined(_WIN32)
 
 BOOL check_path(const char* path)
 {
@@ -830,7 +831,8 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		if (!dev_found)
 		{
 			devman_unregister_device(rdpdr->devman, (void*)keys[j]);
-			ids[0] = keys[j];
+			WINPR_ASSERT(keys[j] <= UINT32_MAX);
+			ids[0] = (UINT32)keys[j];
 
 			if ((error = rdpdr_send_device_list_remove_request(rdpdr, 1, ids)))
 			{
@@ -1082,13 +1084,14 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 {
 	wStream* s;
 	WCHAR* computerNameW = NULL;
-	size_t computerNameLenW;
+	int computerNameLenW;
 
 	if (!rdpdr->computerName[0])
 		gethostname(rdpdr->computerName, sizeof(rdpdr->computerName) - 1);
 
-	computerNameLenW = ConvertToUnicode(CP_UTF8, 0, rdpdr->computerName, -1, &computerNameW, 0) * 2;
-	s = Stream_New(NULL, 16 + computerNameLenW + 2);
+	computerNameLenW = ConvertToUnicode(CP_UTF8, 0, rdpdr->computerName, -1, &computerNameW, 0);
+	WINPR_ASSERT(computerNameLenW >= 0);
+	s = Stream_New(NULL, 16U + (size_t)computerNameLenW * 2U + 2U);
 
 	if (!s)
 	{
@@ -1101,8 +1104,9 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	Stream_Write_UINT16(s, PAKID_CORE_CLIENT_NAME); /* PacketId (2 bytes) */
 	Stream_Write_UINT32(s, 1);                      /* unicodeFlag, 0 for ASCII and 1 for Unicode */
 	Stream_Write_UINT32(s, 0);                      /* codePage, must be set to zero */
-	Stream_Write_UINT32(s, computerNameLenW + 2);   /* computerNameLen, including null terminator */
-	Stream_Write(s, computerNameW, computerNameLenW);
+	Stream_Write_UINT32(s, (UINT32)computerNameLenW +
+	                           2U); /* computerNameLen, including null terminator */
+	Stream_Write(s, computerNameW, (size_t)computerNameLenW);
 	Stream_Write_UINT16(s, 0); /* null terminator */
 	free(computerNameW);
 	return rdpdr_send(rdpdr, s);
@@ -1205,7 +1209,8 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 					Stream_Seek_UINT8(s);
 			}
 
-			Stream_Write_UINT32(s, data_len);
+			WINPR_ASSERT(data_len <= UINT32_MAX);
+			Stream_Write_UINT32(s, (UINT32)data_len);
 
 			if (data_len > 0)
 				Stream_Write(s, Stream_Buffer(device->data), data_len);
@@ -1249,7 +1254,7 @@ static UINT dummy_irp_response(rdpdrPlugin* rdpdr, wStream* s)
 	Stream_Write_UINT16(output, PAKID_CORE_DEVICE_IOCOMPLETION); /* PacketId (2 bytes) */
 	Stream_Write_UINT32(output, DeviceId);                       /* DeviceId (4 bytes) */
 	Stream_Write_UINT32(output, CompletionId);                   /* CompletionId (4 bytes) */
-	Stream_Write_UINT32(output, STATUS_UNSUCCESSFUL);            /* IoStatus (4 bytes) */
+	Stream_Write_INT32(output, STATUS_UNSUCCESSFUL);             /* IoStatus (4 bytes) */
 
 	Stream_Zero(output, 256 - RDPDR_DEVICE_IO_RESPONSE_LENGTH);
 	// or usage
@@ -1702,6 +1707,10 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 {
 	wObject* obj;
 	UINT32 status;
+
+	WINPR_UNUSED(pData);
+	WINPR_UNUSED(dataLength);
+
 	status = rdpdr->channelEntryPoints.pVirtualChannelOpenEx(rdpdr->InitHandle, &rdpdr->OpenHandle,
 	                                                         rdpdr->channelDef.name,
 	                                                         rdpdr_virtual_channel_open_event_ex);
@@ -1848,6 +1857,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LP
 /* rdpdr is always built-in */
 #define VirtualChannelEntryEx rdpdr_VirtualChannelEntryEx
 
+extern BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID pInitHandle);
 BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID pInitHandle)
 {
 	UINT rc;
