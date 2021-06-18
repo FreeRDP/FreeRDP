@@ -54,7 +54,7 @@ static void data_offer_offer(void* data, struct wl_data_offer* data_offer,
 		else
 		{
 			event->seat = seat;
-			sprintf_s(event->mime, sizeof(event->mime), "%s", offered_mime_type);
+			snprintf(event->mime, sizeof(event->mime), "%s", offered_mime_type);
 		}
 	}
 }

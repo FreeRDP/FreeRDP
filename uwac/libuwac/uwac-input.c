@@ -23,7 +23,9 @@
 #include "uwac-utils.h"
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
@@ -71,8 +73,8 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 	wl_shm_pool_destroy(pool);
 
 	if (munmap(data, size) < 0)
-		fprintf(stderr, "%s: munmap(%p, %" PRIuz ") failed with [%d] %s\n", __FUNCTION__, data,
-		        size, errno, strerror(errno));
+		fprintf(stderr, "%s: munmap(%p, %zu) failed with [%d] %s\n", __func__, data, size, errno,
+		        strerror(errno));
 
 error_mmap:
 	close(fd);
@@ -1020,7 +1022,7 @@ UwacSeat* UwacSeatNew(UwacDisplay* d, uint32_t id, uint32_t version)
 	ret->xkb_context = xkb_context_new(0);
 	if (!ret->xkb_context)
 	{
-		fprintf(stderr, "%s: unable to allocate a xkb_context\n", __FUNCTION__);
+		fprintf(stderr, "%s: unable to allocate a xkb_context\n", __func__);
 		goto error_xkb_context;
 	}
 
@@ -1031,13 +1033,13 @@ UwacSeat* UwacSeatNew(UwacDisplay* d, uint32_t id, uint32_t version)
 	ret->repeat_timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
 	if (ret->repeat_timer_fd < 0)
 	{
-		fprintf(stderr, "%s: error creating repeat timer\n", __FUNCTION__);
+		fprintf(stderr, "%s: error creating repeat timer\n", __func__);
 		goto error_timer_fd;
 	}
 	ret->repeat_task.run = keyboard_repeat_func;
 	if (UwacDisplayWatchFd(d, ret->repeat_timer_fd, EPOLLIN, &ret->repeat_task) < 0)
 	{
-		fprintf(stderr, "%s: error polling repeat timer\n", __FUNCTION__);
+		fprintf(stderr, "%s: error polling repeat timer\n", __func__);
 		goto error_watch_timerfd;
 	}
 
