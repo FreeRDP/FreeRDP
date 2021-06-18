@@ -2126,7 +2126,6 @@ static LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard, LPCSCARD_IO_REQUEST pio
 	}
 
 	return PCSC_MapErrorCodeToWinSCard(status);
-	;
 }
 
 static LONG WINAPI PCSC_SCardGetTransmitCount(SCARDHANDLE hCard, LPDWORD pcTransmitCount)

@@ -35,7 +35,7 @@
 #define ALG_TYPE_RESERVED7 (7 << 9)
 #endif
 
-#if (NTDDI_VERSION <= 0x05010200)
+#if !defined(NTDDI_VERSION) || (NTDDI_VERSION <= 0x05010200)
 #define ALG_SID_SHA_256 12
 #define ALG_SID_SHA_384 13
 #define ALG_SID_SHA_512 14

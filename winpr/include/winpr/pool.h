@@ -97,7 +97,7 @@ logic tries to fix that.
 #ifdef _THREADPOOLAPISET_H_
 #define PTP_WIN32_IO_CALLBACK_DEFINED 1
 #else
-#if (_WIN32_WINNT >= 0x0600)
+#if defined(_WIN32_WINNT) && (_WIN32_WINNT >= 0x0600)
 #define PTP_WIN32_IO_CALLBACK_DEFINED 1
 #endif
 #endif

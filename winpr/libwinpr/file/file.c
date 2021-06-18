@@ -318,9 +318,9 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 	}
 
 	if (lpFileSizeHigh)
-		*lpFileSizeHigh = 0;
+		*lpFileSizeHigh = (UINT32)(size >> 32);
 
-	return size;
+	return size & 0xFFFFFFFFUL;
 }
 
 static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
