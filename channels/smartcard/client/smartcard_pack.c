@@ -355,11 +355,13 @@ static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL un
 	if (unicode)
 	{
 		length = (bytes / sizeof(WCHAR)) - 1;
+		WINPR_ASSERT(length < INT_MAX);
+
 		mszA = (char*)calloc(length + 1, sizeof(WCHAR));
 		if (!mszA)
 			return NULL;
-		if (ConvertFromUnicode(CP_UTF8, 0, string.wz, (int)length, &mszA, length + 1, NULL, NULL) !=
-		    (int)length)
+		if (ConvertFromUnicode(CP_UTF8, 0, string.wz, (int)length, &mszA, (int)length + 1, NULL,
+		                       NULL) != (int)length)
 		{
 			free(mszA);
 			return NULL;
@@ -1473,7 +1475,7 @@ static void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, const Co
 	WLog_LVL(TAG, g_LogLevel, "}");
 }
 
-void smartcard_trace_reconnect_call(SMARTCARD_DEVICE* smartcard, const Reconnect_Call* call)
+static void smartcard_trace_reconnect_call(SMARTCARD_DEVICE* smartcard, const Reconnect_Call* call)
 {
 	WINPR_UNUSED(smartcard);
 

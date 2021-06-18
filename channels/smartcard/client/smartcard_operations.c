@@ -2428,8 +2428,8 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 	LONG result;
 	UINT32 offset;
 	UINT32 ioControlCode;
-	UINT32 outputBufferLength;
-	UINT32 objectBufferLength;
+	size_t outputBufferLength;
+	size_t objectBufferLength;
 	irp = operation->irp;
 	ioControlCode = operation->ioControlCode;
 	/**
@@ -2684,14 +2684,19 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 	}
 
 	Stream_SealLength(irp->output);
-	outputBufferLength = Stream_Length(irp->output) - RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4;
+	outputBufferLength = Stream_Length(irp->output);
+	WINPR_ASSERT(outputBufferLength >= RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4U);
+	outputBufferLength -= RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4U;
+	WINPR_ASSERT(outputBufferLength >= RDPDR_DEVICE_IO_RESPONSE_LENGTH);
 	objectBufferLength = outputBufferLength - RDPDR_DEVICE_IO_RESPONSE_LENGTH;
+	WINPR_ASSERT(outputBufferLength <= UINT32_MAX);
+	WINPR_ASSERT(objectBufferLength <= UINT32_MAX);
 	Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH);
 	/* Device Control Response */
-	Stream_Write_UINT32(irp->output, outputBufferLength);      /* OutputBufferLength (4 bytes) */
+	Stream_Write_UINT32(irp->output, (UINT32)outputBufferLength); /* OutputBufferLength (4 bytes) */
 	smartcard_pack_common_type_header(smartcard, irp->output); /* CommonTypeHeader (8 bytes) */
-	smartcard_pack_private_type_header(smartcard, irp->output,
-	                                   objectBufferLength); /* PrivateTypeHeader (8 bytes) */
+	smartcard_pack_private_type_header(
+	    smartcard, irp->output, (UINT32)objectBufferLength); /* PrivateTypeHeader (8 bytes) */
 	Stream_Write_INT32(irp->output, result);                /* Result (4 bytes) */
 	Stream_SetPosition(irp->output, Stream_Length(irp->output));
 	return SCARD_S_SUCCESS;
