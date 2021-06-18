@@ -557,7 +557,7 @@ DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, 
 
 BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue)
 {
-	int length;
+	size_t length;
 	char* envstr;
 	char* newEB;
 
@@ -566,7 +566,7 @@ BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue)
 
 	if (lpValue)
 	{
-		length = (int)(strlen(lpName) + strlen(lpValue) + 2); /* +2 because of = and \0 */
+		length = (strlen(lpName) + strlen(lpValue) + 2);      /* +2 because of = and \0 */
 		envstr = (char*)malloc(length + 1);                   /* +1 because of closing \0 */
 
 		if (!envstr)
@@ -576,7 +576,7 @@ BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue)
 	}
 	else
 	{
-		length = (int)strlen(lpName) + 2;   /* +2 because of = and \0 */
+		length = strlen(lpName) + 2;        /* +2 because of = and \0 */
 		envstr = (char*)malloc(length + 1); /* +1 because of closing \0 */
 
 		if (!envstr)
