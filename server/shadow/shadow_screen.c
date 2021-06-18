@@ -29,8 +29,8 @@
 
 rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 {
-	int x, y;
-	int width, height;
+	INT64 x, y;
+	INT64 width, height;
 	rdpShadowScreen* screen;
 	rdpShadowSubsystem* subsystem;
 	MONITOR_DEF* primary;

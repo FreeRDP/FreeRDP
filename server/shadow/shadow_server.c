@@ -284,10 +284,13 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if ((x < 0) || (y < 0) || (w < 1) || (h < 1) || (errno != 0))
 				return -1;
 
-			server->subRect.left = x;
-			server->subRect.top = y;
-			server->subRect.right = x + w;
-			server->subRect.bottom = y + h;
+			if ((x > UINT16_MAX) || (y > UINT16_MAX) || (x + w > UINT16_MAX) ||
+			    (y + h > UINT16_MAX))
+				return -1;
+			server->subRect.left = (UINT16)x;
+			server->subRect.top = (UINT16)y;
+			server->subRect.right = (UINT16)(x + w);
+			server->subRect.bottom = (UINT16)(y + h);
 			server->shareSubRect = TRUE;
 		}
 		CommandLineSwitchCase(arg, "auth")
@@ -372,7 +375,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{
-		int index;
+		UINT32 index;
 		UINT32 numMonitors;
 		MONITOR_DEF monitors[16];
 		numMonitors = shadow_enum_monitors(monitors, 16);
@@ -385,7 +388,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if ((val < 0) || (errno != 0) || ((UINT32)val >= numMonitors))
 				status = COMMAND_LINE_STATUS_PRINT;
 
-			server->selectedMonitor = (int)val;
+			server->selectedMonitor = (UINT32)val;
 		}
 		else
 		{

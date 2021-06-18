@@ -23,8 +23,11 @@
 #include "shadow.h"
 
 #include "shadow_surface.h"
-#define ALIGN_SCREEN_SIZE(size, align) ((size + align - 1) & (~(align - 1)))
-rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y, int width, int height)
+#define ALIGN_SCREEN_SIZE(size, align) \
+	((((size) % (align)) != 0) ? ((size) + (align) - ((size) % (align))) : (size))
+
+rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, UINT16 x, UINT16 y, UINT32 width,
+                                     UINT32 height)
 {
 	rdpShadowSurface* surface;
 	surface = (rdpShadowSurface*)calloc(1, sizeof(rdpShadowSurface));
@@ -69,10 +72,11 @@ void shadow_surface_free(rdpShadowSurface* surface)
 	free(surface);
 }
 
-BOOL shadow_surface_resize(rdpShadowSurface* surface, int x, int y, int width, int height)
+BOOL shadow_surface_resize(rdpShadowSurface* surface, UINT16 x, UINT16 y, UINT32 width,
+                           UINT32 height)
 {
 	BYTE* buffer = NULL;
-	int scanline = ALIGN_SCREEN_SIZE(width, 4) * 4;
+	UINT32 scanline = ALIGN_SCREEN_SIZE(width, 4) * 4;
 
 	if (!surface)
 		return FALSE;

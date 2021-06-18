@@ -26,7 +26,7 @@
 
 #define TAG CLIENT_TAG("shadow")
 
-int shadow_encoder_preferred_fps(rdpShadowEncoder* encoder)
+UINT32 shadow_encoder_preferred_fps(rdpShadowEncoder* encoder)
 {
 	/* Return preferred fps calculated according to the last
 	 * sent frame id and last client-acknowledged frame id.
@@ -51,8 +51,7 @@ UINT32 shadow_encoder_inflight_frames(rdpShadowEncoder* encoder)
 UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 {
 	UINT32 frameId;
-	int inFlightFrames;
-	inFlightFrames = shadow_encoder_inflight_frames(encoder);
+	UINT32 inFlightFrames = shadow_encoder_inflight_frames(encoder);
 
 	/*
 	 * Calculate preferred fps according to how much frames are
@@ -80,9 +79,9 @@ UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 
 static int shadow_encoder_init_grid(rdpShadowEncoder* encoder)
 {
-	int i, j, k;
-	int tileSize;
-	int tileCount;
+	UINT32 i, j, k;
+	UINT32 tileSize;
+	UINT32 tileCount;
 	encoder->gridWidth = ((encoder->width + (encoder->maxTileWidth - 1)) / encoder->maxTileWidth);
 	encoder->gridHeight =
 	    ((encoder->height + (encoder->maxTileHeight - 1)) / encoder->maxTileHeight);
@@ -278,7 +277,7 @@ static int shadow_encoder_uninit_rfx(rdpShadowEncoder* encoder)
 		encoder->rfx = NULL;
 	}
 
-	encoder->codecs &= ~FREERDP_CODEC_REMOTEFX;
+	encoder->codecs &= (UINT32)~FREERDP_CODEC_REMOTEFX;
 	return 1;
 }
 
@@ -290,7 +289,7 @@ static int shadow_encoder_uninit_nsc(rdpShadowEncoder* encoder)
 		encoder->nsc = NULL;
 	}
 
-	encoder->codecs &= ~FREERDP_CODEC_NSCODEC;
+	encoder->codecs &= (UINT32)~FREERDP_CODEC_NSCODEC;
 	return 1;
 }
 
@@ -302,7 +301,7 @@ static int shadow_encoder_uninit_planar(rdpShadowEncoder* encoder)
 		encoder->planar = NULL;
 	}
 
-	encoder->codecs &= ~FREERDP_CODEC_PLANAR;
+	encoder->codecs &= (UINT32)~FREERDP_CODEC_PLANAR;
 	return 1;
 }
 
@@ -314,7 +313,7 @@ static int shadow_encoder_uninit_interleaved(rdpShadowEncoder* encoder)
 		encoder->interleaved = NULL;
 	}
 
-	encoder->codecs &= ~FREERDP_CODEC_INTERLEAVED;
+	encoder->codecs &= (UINT32)~FREERDP_CODEC_INTERLEAVED;
 	return 1;
 }
 
@@ -326,7 +325,7 @@ static int shadow_encoder_uninit_h264(rdpShadowEncoder* encoder)
 		encoder->h264 = NULL;
 	}
 
-	encoder->codecs &= ~(FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444);
+	encoder->codecs &= (UINT32) ~(FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444);
 	return 1;
 }
 

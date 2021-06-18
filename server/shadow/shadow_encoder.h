@@ -51,8 +51,8 @@ struct rdp_shadow_encoder
 	BITMAP_INTERLEAVED_CONTEXT* interleaved;
 	H264_CONTEXT* h264;
 
-	int fps;
-	int maxFps;
+	UINT32 fps;
+	UINT32 maxFps;
 	BOOL frameAck;
 	UINT32 frameId;
 	UINT32 lastAckframeId;
