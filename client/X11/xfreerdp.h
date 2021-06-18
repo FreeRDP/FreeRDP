@@ -322,8 +322,8 @@ enum XF_EXIT_CODE
 	XF_EXIT_UNKNOWN = 255,
 };
 
-#define xf_lock_x11(xfc) xf_lock_x11_(xfc, __FUNCTION__);
-#define xf_unlock_x11(xfc) xf_unlock_x11_(xfc, __FUNCTION__);
+#define xf_lock_x11(xfc) xf_lock_x11_(xfc, __FUNCTION__)
+#define xf_unlock_x11(xfc) xf_unlock_x11_(xfc, __FUNCTION__)
 
 void xf_lock_x11_(xfContext* xfc, const char* fkt);
 void xf_unlock_x11_(xfContext* xfc, const char* fkt);

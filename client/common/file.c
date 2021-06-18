@@ -1230,13 +1230,19 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 		totalSize += (size_t)res;                                                           \
 	}
 
-#define WRITE_SETTING_INT(fmt_, param_) \
-	if (~(param_))                      \
-	WRITE_SETTING_(fmt_, param_)
+#define WRITE_SETTING_INT(fmt_, param_)  \
+	do                                   \
+	{                                    \
+		if (~(param_))                   \
+			WRITE_SETTING_(fmt_, param_) \
+	} while (0)
 
-#define WRITE_SETTING_STR(fmt_, param_) \
-	if (~(size_t)(param_))              \
-	WRITE_SETTING_(fmt_, param_)
+#define WRITE_SETTING_STR(fmt_, param_)  \
+	do                                   \
+	{                                    \
+		if (~(size_t)(param_))           \
+			WRITE_SETTING_(fmt_, param_) \
+	} while (0)
 
 	/* integer parameters */
 	WRITE_SETTING_INT("use multimon:i:%" PRIu32, file->UseMultiMon);
