@@ -166,7 +166,7 @@ struct rdp_rdp
 	BYTE encrypt_key[16];
 	BYTE decrypt_update_key[16];
 	BYTE encrypt_update_key[16];
-	int rc4_key_len;
+	size_t rc4_key_len;
 	BYTE fips_sign_key[20];
 	BYTE fips_encrypt_key[24];
 	BYTE fips_decrypt_key[24];

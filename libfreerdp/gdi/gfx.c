@@ -1538,7 +1538,7 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 	freerdp_client_codecs_prepare(gfx->codecs, FREERDP_CODEC_ALL, context->settings->DesktopWidth,
 	                              context->settings->DesktopHeight);
 	InitializeCriticalSection(&gfx->mux);
-	PROFILER_CREATE(gfx->SurfaceProfiler, "GFX-PROFILER");
+	PROFILER_CREATE(gfx->SurfaceProfiler, "GFX-PROFILER")
 
 	/**
 	 * gdi->graphicsReset will be removed in FreeRDP v3 from public headers,

@@ -25,6 +25,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
+#include <winpr/assert.h>
 
 #include <freerdp/log.h>
 
@@ -1329,7 +1330,7 @@ const BYTE tssk_exponent[] = { 0x5b, 0x7b, 0x88, 0xc0 };
 BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 {
 	BYTE* sigData;
-	int expLen, keyLen, sigDataLen;
+	size_t expLen, keyLen, sigDataLen;
 	BYTE encryptedSignature[TSSK_KEY_LENGTH];
 	BYTE signature[sizeof(initial_signature)];
 	UINT32 headerLen, serverRandomLen, serverCertLen, wPublicKeyBlobLen;
@@ -1529,9 +1530,11 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	Stream_Write_UINT16(s, BB_RSA_KEY_BLOB);      /* wPublicKeyBlobType */
 	Stream_Write_UINT16(s, wPublicKeyBlobLen);    /* wPublicKeyBlobLen */
 	Stream_Write(s, "RSA1", 4);                   /* magic */
-	Stream_Write_UINT32(s, keyLen + 8);           /* keylen */
-	Stream_Write_UINT32(s, keyLen * 8);           /* bitlen */
-	Stream_Write_UINT32(s, keyLen - 1);           /* datalen */
+	WINPR_ASSERT(keyLen > 0);
+	WINPR_ASSERT(keyLen <= UINT32_MAX / 8);
+	Stream_Write_UINT32(s, (UINT32)keyLen + 8); /* keylen */
+	Stream_Write_UINT32(s, (UINT32)keyLen * 8); /* bitlen */
+	Stream_Write_UINT32(s, (UINT32)keyLen - 1); /* datalen */
 	Stream_Write(s, settings->RdpServerRsaKey->exponent, expLen);
 	Stream_Write(s, settings->RdpServerRsaKey->Modulus, keyLen);
 	Stream_Zero(s, 8);
