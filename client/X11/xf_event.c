@@ -153,7 +153,7 @@ static const char* x11_event_string(int event)
 
 		default:
 			return "UNKNOWN";
-	};
+	}
 }
 
 #ifdef WITH_DEBUG_X11
