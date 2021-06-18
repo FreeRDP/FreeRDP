@@ -1128,7 +1128,12 @@ static BOOL rdg_set_ntlm_auth_header(rdpNtlm* ntlm, HttpRequest* request)
 	char* base64NtlmToken = NULL;
 
 	if (ntlmToken)
-		base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, ntlmToken->cbBuffer);
+	{
+		if (ntlmToken->cbBuffer > INT_MAX)
+			return FALSE;
+
+		base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, (int)ntlmToken->cbBuffer);
+	}
 
 	if (base64NtlmToken)
 	{
