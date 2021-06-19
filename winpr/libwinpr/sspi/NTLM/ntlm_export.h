@@ -28,10 +28,10 @@ extern "C"
 {
 #endif
 
-	const SecPkgInfoA NTLM_SecPkgInfoA;
-	const SecPkgInfoW NTLM_SecPkgInfoW;
-	const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
-	const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
+	extern const SecPkgInfoA NTLM_SecPkgInfoA;
+	extern const SecPkgInfoW NTLM_SecPkgInfoW;
+	extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
+	extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
 
 #ifdef __cplusplus
 }
