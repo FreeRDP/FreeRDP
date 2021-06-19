@@ -159,6 +159,8 @@ extern "C"
 
 	WINPR_API COMMAND_LINE_ARGUMENT_A*
 	CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* argument);
+	WINPR_API COMMAND_LINE_ARGUMENT_W*
+	CommandLineFindNextArgumentW(COMMAND_LINE_ARGUMENT_W* argument);
 
 	WINPR_API char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count);
 
@@ -177,10 +179,12 @@ extern "C"
 #define CommandLineClearArguments CommandLineClearArgumentsW
 #define CommandLineParseArguments CommandLineParseArgumentsW
 #define CommandLineFindArgument CommandLineFindArgumentW
+#define CommandLineFindNextArgument CommandLineFindNextArgumentW
 #else
 #define CommandLineClearArguments CommandLineClearArgumentsA
 #define CommandLineParseArguments CommandLineParseArgumentsA
 #define CommandLineFindArgument CommandLineFindArgumentA
+#define CommandLineFindNextArgument CommandLineFindNextArgumentA
 #endif
 
 #endif /* WINPR_CMDLINE_H */
