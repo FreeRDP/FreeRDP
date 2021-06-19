@@ -39,7 +39,7 @@ set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Include our extra modules
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
 
 if((CMAKE_SYSTEM_NAME MATCHES "WindowsStore") AND (CMAKE_SYSTEM_VERSION MATCHES "10.0"))
 	set(UWP 1)
@@ -317,12 +317,12 @@ if (CMAKE_GENERATOR MATCHES "Unix Makefile*")
 		string(TOUPPER ${CMAKE_BUILD_TYPE} UPPER_BUILD_TYPE)
 		CHECK_C_COMPILER_FLAG (-Wno-builtin-macro-redefined Wno-builtin-macro-redefined)
 		if(Wno-builtin-macro-redefined)
-			set(CMAKE_C_FLAGS_${UPPER_BUILD_TYPE} "${CMAKE_C_FLAGS_${UPPER_BUILD_TYPE}} -Wno-builtin-macro-redefined -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
+			set(CMAKE_C_FLAGS_${UPPER_BUILD_TYPE} "${CMAKE_C_FLAGS_${UPPER_BUILD_TYPE}} -Wno-builtin-macro-redefined -D__FILE__='\"$(subst ${PROJECT_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
 		endif()
 
 		CHECK_CXX_COMPILER_FLAG (-Wno-builtin-macro-redefined Wno-builtin-macro-redefinedCXX)
 		if(Wno-builtin-macro-redefinedCXX)
-			set(CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE} "${CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE}} -Wno-builtin-macro-redefined -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
+			set(CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE} "${CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE}} -Wno-builtin-macro-redefined -D__FILE__='\"$(subst ${PROJECT_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
 		endif()
 	endif()
 endif()
@@ -369,11 +369,11 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
 	endif()
 
 	set(CMAKE_REQUIRED_LINK_OPTIONS_SAVED ${CMAKE_REQUIRED_LINK_OPTIONS})
-	file(WRITE ${CMAKE_BINARY_DIR}/foo.txt "")
+	file(WRITE ${PROJECT_BINARY_DIR}/foo.txt "")
 	if(WITH_SANITIZE_ADDRESS)
 		list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=address")
 		CHECK_C_COMPILER_FLAG ("-fsanitize=address" fsanitize-address)
-		CHECK_C_COMPILER_FLAG ("-fsanitize-blacklist=${CMAKE_BINARY_DIR}/foo.txt" fsanitize-blacklist)
+		CHECK_C_COMPILER_FLAG ("-fsanitize-blacklist=${PROJECT_BINARY_DIR}/foo.txt" fsanitize-blacklist)
 		CHECK_C_COMPILER_FLAG ("-fsanitize-address-use-after-scope" fsanitize-address-use-after-scope)
 
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
@@ -390,7 +390,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
 	elseif(WITH_SANITIZE_MEMORY)
 		list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=memory")
 		CHECK_C_COMPILER_FLAG ("-fsanitize=memory" fsanitize-memory)
-		CHECK_C_COMPILER_FLAG ("-fsanitize-blacklist=${CMAKE_BINARY_DIR}/foo.txt" fsanitize-blacklist)
+		CHECK_C_COMPILER_FLAG ("-fsanitize-blacklist=${PROJECT_BINARY_DIR}/foo.txt" fsanitize-blacklist)
 		CHECK_C_COMPILER_FLAG ("-fsanitize-memory-use-after-dtor" fsanitize-memory-use-after-dtor)
 		CHECK_C_COMPILER_FLAG ("-fsanitize-memory-track-origins" fsanitize-memory-track-origins)
 
@@ -412,7 +412,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
 	elseif(WITH_SANITIZE_THREAD)
 		list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=thread")
 		CHECK_C_COMPILER_FLAG ("-fsanitize=thread" fsanitize-thread)
-		CHECK_C_COMPILER_FLAG ("-fsanitize-blacklist=${CMAKE_BINARY_DIR}/foo.txt" fsanitize-blacklist)
+		CHECK_C_COMPILER_FLAG ("-fsanitize-blacklist=${PROJECT_BINARY_DIR}/foo.txt" fsanitize-blacklist)
 
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=thread")
 		if(fsanitize-blacklist)
@@ -422,7 +422,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=thread")
 	endif()
 
-	file(REMOVE ${CMAKE_BINARY_DIR}/foo.txt)
+	file(REMOVE ${PROJECT_BINARY_DIR}/foo.txt)
 	set(CMAKE_REQUIRED_LINK_OPTIONS ${CMAKE_REQUIRED_LINK_OPTIONS_SAVED})
 
 	if (WITH_NO_UNDEFINED)
@@ -481,9 +481,9 @@ if(WIN32)
 
 	set(CMAKE_USE_RELATIVE_PATH ON)
 	if (${CMAKE_GENERATOR} MATCHES "NMake Makefile*" OR ${CMAKE_GENERATOR} MATCHES "Ninja*" OR ${CMAKE_GENERATOR} MATCHES "Unix Makefiles")
-		set(CMAKE_PDB_BINARY_DIR ${CMAKE_BINARY_DIR})
+		set(CMAKE_PDB_BINARY_DIR ${PROJECT_BINARY_DIR})
 	elseif (${CMAKE_GENERATOR} MATCHES "Visual Studio*")
-		set(CMAKE_PDB_BINARY_DIR "${CMAKE_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
+		set(CMAKE_PDB_BINARY_DIR "${PROJECT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
 	else()
 		message(FATAL_ERROR "Unknown generator ${CMAKE_GENERATOR}")
 	endif()
@@ -624,7 +624,7 @@ if(ANDROID)
 
 	if (WITH_GPROF)
 		CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/gprof_generate.sh.cmake
-			${CMAKE_BINARY_DIR}/scripts/gprof_generate.sh @ONLY)
+			${PROJECT_BINARY_DIR}/scripts/gprof_generate.sh @ONLY)
 	endif(WITH_GPROF)
 endif()
 
@@ -962,7 +962,7 @@ set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp${FREERDP_VERSIO
 # Proxy plugins path
 if(NOT DEFINED PROXY_PLUGINDIR)
 	message("using default plugins location")
-  	set(FREERDP_PROXY_PLUGINDIR "${CMAKE_BINARY_DIR}/server/proxy/plugins")
+  	set(FREERDP_PROXY_PLUGINDIR "${PROJECT_BINARY_DIR}/server/proxy/plugins")
 else()
 	set(FREERDP_PROXY_PLUGINDIR "${PROXY_PLUGINDIR}")
 endif()
@@ -1010,15 +1010,15 @@ if(BUILD_TESTING)
 	enable_testing()
 
 	if(MSVC)
-		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+		set(TESTING_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 	else()
-		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
+		set(TESTING_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Testing")
 	endif()
 endif()
 
 # WinPR
-include_directories("${CMAKE_SOURCE_DIR}/winpr/include")
-include_directories("${CMAKE_BINARY_DIR}/winpr/include")
+include_directories("${PROJECT_SOURCE_DIR}/winpr/include")
+include_directories("${PROJECT_BINARY_DIR}/winpr/include")
 
 if (${CMAKE_VERSION} VERSION_LESS 2.8.12)
 	set(PUBLIC_KEYWORD "")
@@ -1049,7 +1049,7 @@ add_subdirectory(libfreerdp)
 
 # RdTk
 include_directories("${CMAKE_SOURCE_DIR}/rdtk/include")
-include_directories("${CMAKE_BINARY_DIR}/rdtk/include")
+include_directories("${PROJECT_BINARY_DIR}/rdtk/include")
 
 add_subdirectory(rdtk)
 

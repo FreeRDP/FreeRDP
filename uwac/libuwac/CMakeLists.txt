@@ -49,8 +49,8 @@ endif()
 include_directories(${WAYLAND_INCLUDE_DIR})
 include_directories(${XKBCOMMON_INCLUDE_DIR})
 include_directories("${CMAKE_SOURCE_DIR}/uwac/include")
-include_directories("${CMAKE_BINARY_DIR}/uwac/include")
-include_directories("${CMAKE_BINARY_DIR}/uwac/libuwac")
+include_directories("${PROJECT_BINARY_DIR}/uwac/include")
+include_directories("${PROJECT_BINARY_DIR}/uwac/libuwac")
 
 add_definitions(-DBUILD_IVI -DBUILD_FULLSCREEN_SHELL -DENABLE_XKBCOMMON)
 

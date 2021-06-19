@@ -68,7 +68,7 @@
 #
 # Example 1, append everything to a file:
 #   feature_summary(WHAT ALL
-#                   FILENAME ${CMAKE_BINARY_DIR}/all.log APPEND)
+#                   FILENAME ${PROJECT_BINARY_DIR}/all.log APPEND)
 #
 # Example 2, print the enabled features into the variable enabledFeaturesText, including QUIET packages:
 #   feature_summary(WHAT ENABLED_FEATURES

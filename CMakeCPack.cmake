@@ -95,8 +95,8 @@ set(CPACK_COMPONENT_GROUP_RUNTIME_DESCRIPTION "Runtime")
 set(CPACK_COMPONENT_GROUP_APPLICATIONS_DESCRIPTION "Applications")
 set(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "Development")
 
-configure_file("${CMAKE_SOURCE_DIR}/CMakeCPackOptions.cmake.in"
-	"${CMAKE_BINARY_DIR}/CMakeCPackOptions.cmake" @ONLY)
-set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/CMakeCPackOptions.cmake")
+configure_file("${PROJECT_SOURCE_DIR}/CMakeCPackOptions.cmake.in"
+	"${PROJECT_BINARY_DIR}/CMakeCPackOptions.cmake" @ONLY)
+set(CPACK_PROJECT_CONFIG_FILE "${PROJECT_BINARY_DIR}/CMakeCPackOptions.cmake")
 
 include(CPack)

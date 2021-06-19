@@ -170,9 +170,9 @@ else()
 	enable_testing()
 
 	if(MSVC)
-		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+		set(TESTING_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 	else()
-		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
+		set(TESTING_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Testing")
 	endif()
 endif()
 
