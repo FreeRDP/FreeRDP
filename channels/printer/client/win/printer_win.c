@@ -391,7 +391,7 @@ static rdpPrinter* printer_win_get_printer(rdpPrinterDriver* driver, const char*
 	if (name)
 	{
 		ConvertToUnicode(CP_UTF8, 0, name, -1, &nameW, 0);
-		if (!driverNameW)
+		if (!nameW)
 			return NULL;
 	}
 	if (driverName)
