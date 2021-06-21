@@ -821,6 +821,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_KeyboardHook (2633)
 #define FreeRDP_HasHorizontalWheel (2634)
 #define FreeRDP_HasExtendedMouseEvent (2635)
+#define FreeRDP_SuspendInput (2636)
 #define FreeRDP_BrushSupportLevel (2688)
 #define FreeRDP_GlyphSupportLevel (2752)
 #define FreeRDP_GlyphCache (2753)
@@ -1368,7 +1369,13 @@ struct rdp_settings
 	ALIGN64 UINT32 KeyboardHook;         /* 2633 */
 	ALIGN64 BOOL HasHorizontalWheel;     /* 2634 */
 	ALIGN64 BOOL HasExtendedMouseEvent;  /* 2635 */
-	UINT64 padding2688[2688 - 2636];     /* 2636 */
+
+	/** SuspendInput disables processing of keyboard/mouse/multitouch input.
+	 * If used by an implementation ensure proper state resync after reenabling
+	 * input
+	 */
+	ALIGN64 BOOL SuspendInput;           /* 2636 */
+	UINT64 padding2688[2688 - 2637];     /* 2637 */
 
 	/* Brush Capabilities */
 	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */

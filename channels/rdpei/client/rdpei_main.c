@@ -241,7 +241,8 @@ static UINT rdpei_send_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s, UINT16 
                            UINT32 pduLength)
 {
 	UINT status;
-	if (!callback || !s || !callback->channel || !callback->channel->Write)
+
+	if (!callback || !s || !callback->channel || !callback->channel->Write || !callback->plugin)
 		return ERROR_INTERNAL_ERROR;
 
 	Stream_SetPosition(s, 0);
@@ -366,6 +367,10 @@ static UINT rdpei_send_pen_frame(RdpeiClientContext* context, RDPINPUT_PEN_FRAME
 	rdpei = (RDPEI_PLUGIN*)context->handle;
 	if (!rdpei || !rdpei->listener_callback)
 		return ERROR_INTERNAL_ERROR;
+	if (!rdpei || !rdpei->rdpcontext)
+		return ERROR_INTERNAL_ERROR;
+	if (freerdp_settings_get_bool(rdpei->rdpcontext->settings, FreeRDP_SuspendInput))
+		return CHANNEL_RC_OK;
 
 	callback = rdpei->listener_callback->channel_callback;
 	/* Just ignore the event if the channel is not connected */
@@ -663,8 +668,15 @@ static UINT rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback,
 	UINT status;
 	wStream* s;
 	UINT32 pduLength;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)callback->plugin->pInterface;
+	if (!rdpei || !rdpei->rdpcontext)
+		return ERROR_INTERNAL_ERROR;
+	if (freerdp_settings_get_bool(rdpei->rdpcontext->settings, FreeRDP_SuspendInput))
+		return CHANNEL_RC_OK;
+
 	if (!frame)
 		return ERROR_INTERNAL_ERROR;
+
 	pduLength = 64 + (frame->contactCount * 64);
 	s = Stream_New(NULL, pduLength);
 
