@@ -1014,7 +1014,7 @@ static INLINE BOOL updateContextFormat(CLEAR_CONTEXT* clear, UINT32 DstFormat)
 		return FALSE;
 
 	clear->format = DstFormat;
-	return nsc_context_set_pixel_format(clear->nsc, DstFormat);
+	return nsc_context_set_parameters(clear->nsc, NSC_COLOR_FORMAT, DstFormat);
 }
 
 INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSize, UINT32 nWidth,
