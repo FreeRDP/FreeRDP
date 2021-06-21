@@ -492,6 +492,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_SurfaceFrameMarkerEnabled:
 			return settings->SurfaceFrameMarkerEnabled;
 
+		case FreeRDP_SuspendInput:
+			return settings->SuspendInput;
+
 		case FreeRDP_TcpKeepAlive:
 			return settings->TcpKeepAlive;
 
@@ -1159,6 +1162,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_SurfaceFrameMarkerEnabled:
 			settings->SurfaceFrameMarkerEnabled = val;
+			break;
+
+		case FreeRDP_SuspendInput:
+			settings->SuspendInput = val;
 			break;
 
 		case FreeRDP_TcpKeepAlive:

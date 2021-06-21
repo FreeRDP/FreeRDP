@@ -672,16 +672,22 @@ BOOL input_register_client_callbacks(rdpInput* input)
 
 BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->SynchronizeEvent, input, flags);
 }
 
 BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, flags, code);
 }
@@ -697,40 +703,55 @@ BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, UINT32 rdp
 
 BOOL freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->UnicodeKeyboardEvent, input, flags, code);
 }
 
 BOOL freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->MouseEvent, input, flags, x, y);
 }
 
 BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->ExtendedMouseEvent, input, flags, x, y);
 }
 
 BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->FocusInEvent, input, toggleStates);
 }
 
 BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->KeyboardPauseEvent, input);
 }

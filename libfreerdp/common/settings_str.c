@@ -169,6 +169,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_SuppressOutput, 0, "FreeRDP_SuppressOutput" },
 	{ FreeRDP_SurfaceCommandsEnabled, 0, "FreeRDP_SurfaceCommandsEnabled" },
 	{ FreeRDP_SurfaceFrameMarkerEnabled, 0, "FreeRDP_SurfaceFrameMarkerEnabled" },
+	{ FreeRDP_SuspendInput, 0, "FreeRDP_SuspendInput" },
 	{ FreeRDP_TcpKeepAlive, 0, "FreeRDP_TcpKeepAlive" },
 	{ FreeRDP_TlsSecurity, 0, "FreeRDP_TlsSecurity" },
 	{ FreeRDP_ToggleFullscreen, 0, "FreeRDP_ToggleFullscreen" },
