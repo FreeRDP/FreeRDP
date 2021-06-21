@@ -1000,7 +1000,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 	     index++)
 	{
 		_settings->StaticChannelArray[index] =
-		    freerdp_static_channel_clone(settings->StaticChannelArray[index]);
+		    freerdp_addin_argv_clone(settings->StaticChannelArray[index]);
 
 		if (!_settings->StaticChannelArray[index])
 			goto out_fail;
@@ -1038,7 +1038,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 	     index++)
 	{
 		_settings->DynamicChannelArray[index] =
-		    freerdp_dynamic_channel_clone(settings->DynamicChannelArray[index]);
+		    freerdp_addin_argv_clone(settings->DynamicChannelArray[index]);
 
 		if (!_settings->DynamicChannelArray[index])
 			goto out_fail;
