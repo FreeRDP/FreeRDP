@@ -339,12 +339,12 @@ static BOOL nla_complete_auth(rdpNla* nla, PSecBufferDesc pOutputBufferDesc)
 	if (!nla || !nla->table)
 	{
 		WLog_ERR(TAG, "[%s] nla->table=%p->%p", __FUNCTION__, nla, nla ? nla->table : NULL);
-		return SEC_E_INVALID_PARAMETER;
+		return FALSE;
 	}
 	if (!nla->table->CompleteAuthToken)
 	{
 		WLog_ERR(TAG, "[%s] CompleteAuthToken=%p", __FUNCTION__, nla->table->CompleteAuthToken);
-		return ERROR_INTERNAL_ERROR;
+		return FALSE;
 	}
 
 	nla->status = nla->table->CompleteAuthToken(&nla->context, pOutputBufferDesc);
