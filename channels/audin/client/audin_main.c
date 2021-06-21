@@ -251,7 +251,7 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 			continue;
 		}
 
-		if (freerdp_dsp_supports_format(&format, TRUE) ||
+		if (freerdp_dsp_supports_format(&format, TRUE) &&
 		    audin->device->FormatSupported(audin->device, &format))
 		{
 			/* Store the agreed format in the corresponding index */
