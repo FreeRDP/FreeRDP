@@ -51,7 +51,7 @@ if (WIN32 AND BUILD_SHARED_LIBS)
   endif()
 
   configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
     ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     @ONLY)
 

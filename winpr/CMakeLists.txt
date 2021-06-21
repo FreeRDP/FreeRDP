@@ -69,8 +69,8 @@ endif()
 
 # Soname versioning
 set(RAW_VERSION_STRING "3.0.0-dev")
-if(EXISTS "${CMAKE_SOURCE_DIR}/.source_tag")
-	file(READ ${CMAKE_SOURCE_DIR}/.source_tag RAW_VERSION_STRING)
+if(EXISTS "${PROJECT_SOURCE_DIR}/.source_tag")
+	file(READ ${PROJECT_SOURCE_DIR}/.source_tag RAW_VERSION_STRING)
 elseif(USE_VERSION_FROM_GIT_TAG)
 	git_get_exact_tag(_GIT_TAG --tags --always)
 	if (NOT ${_GIT_TAG} STREQUAL "n/a")
@@ -187,9 +187,9 @@ set(OPENSSL_FEATURE_TYPE "RECOMMENDED")
 	enable_testing()
 
 	if(MSVC)
-		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+		set(TESTING_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 	else()
-		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
+		set(TESTING_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Testing")
 endif()
 
 # Default to release build type

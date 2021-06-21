@@ -18,7 +18,7 @@
 
 macro(enable_cmake_compat CMVERSION)
 	if(${CMAKE_VERSION} VERSION_LESS ${CMVERSION})
-		LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/compat_${CMVERSION}/")
+		LIST(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/compat_${CMVERSION}/")
 	endif()
 endmacro()
 

@@ -49,7 +49,7 @@ if (WIN32 AND BUILD_SHARED_LIBS)
   set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${FREERDP_API_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
 
   configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
     ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     @ONLY)
 
