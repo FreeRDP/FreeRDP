@@ -58,8 +58,8 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	find_package(rdtk 0 REQUIRED)
 	include_directories(${RDTK_INCLUDE_DIR})
 else()
-	include_directories(${CMAKE_SOURCE_DIR}/rdtk/include)
-	include_directories(${CMAKE_BINARY_DIR}/rdtk/include)
+	include_directories(${PROJECT_SOURCE_DIR}/rdtk/include)
+	include_directories(${PROJECT_BINARY_DIR}/rdtk/include)
 endif()
 
 # On windows create dll version information.
@@ -72,7 +72,7 @@ if (WIN32)
   set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${FREERDP_API_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
 
   configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
     ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     @ONLY)
 
@@ -101,7 +101,7 @@ install(TARGETS ${MODULE_NAME} COMPONENT server EXPORT FreeRDP-ShadowTargets
 
 if (WITH_DEBUG_SYMBOLS AND MSVC)
 	get_target_property(OUTPUT_FILENAME ${MODULE_NAME} OUTPUT_NAME)
-	install(FILES ${CMAKE_BINARY_DIR}/${OUTPUT_FILENAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
+	install(FILES ${PROJECT_BINARY_DIR}/${OUTPUT_FILENAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
@@ -129,7 +129,7 @@ if (WIN32)
   set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
 
   configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
     ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     @ONLY)
 
@@ -309,7 +309,7 @@ install(TARGETS ${MODULE_NAME} COMPONENT server EXPORT FreeRDP-ShadowTargets
 
 if (WITH_DEBUG_SYMBOLS AND MSVC)
 	get_target_property(OUTPUT_FILENAME ${MODULE_NAME} OUTPUT_NAME)
-	install(FILES ${CMAKE_BINARY_DIR}/${OUTPUT_FILENAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	install(FILES ${PROJECT_BINARY_DIR}/${OUTPUT_FILENAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		COMPONENT symbols)
 endif()
 
@@ -332,7 +332,7 @@ if (WIN32)
   set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
 
   configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
     ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     @ONLY)
 
@@ -347,7 +347,7 @@ target_link_libraries(${MODULE_NAME} PRIVATE ${${MODULE_PREFIX}_LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
 if (WITH_DEBUG_SYMBOLS AND MSVC)
-	install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR}
+	install(FILES ${PROJECT_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR}
 		COMPONENT symbols)
 endif()
 

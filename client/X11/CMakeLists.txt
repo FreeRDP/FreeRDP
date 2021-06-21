@@ -239,7 +239,7 @@ if(WITH_FUSE)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${FUSE_LIBRARIES})
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/resources)
+include_directories(${PROJECT_SOURCE_DIR}/resources)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client freerdp m)
 if (NOT APPLE)

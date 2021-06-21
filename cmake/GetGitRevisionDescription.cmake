@@ -41,7 +41,7 @@ get_filename_component(_gitdescmoddir ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 function(get_git_head_revision _refspecvar _hashvar)
 
-	set(GIT_PARENT_DIR "${CMAKE_SOURCE_DIR}")
+	set(GIT_PARENT_DIR "${PROJECT_SOURCE_DIR}")
 	set(GIT_DIR "${GIT_PARENT_DIR}/.git")
 	while(NOT EXISTS "${GIT_DIR}")	# .git dir not found, search parent directories
 		set(GIT_PREVIOUS_PARENT "${GIT_PARENT_DIR}")
@@ -89,7 +89,7 @@ function(git_rev_parse _var)
 	endif()
 
 	execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse ${ARGN} ${hash}
-		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+		WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
 		RESULT_VARIABLE res
 		OUTPUT_VARIABLE out
 		ERROR_QUIET
@@ -117,7 +117,7 @@ function(git_describe _var)
 	endif()
 
 	execute_process(COMMAND "${GIT_EXECUTABLE}" describe ${hash} ${ARGN}
-		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+		WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
 		RESULT_VARIABLE res
 		OUTPUT_VARIABLE out
 		ERROR_QUIET

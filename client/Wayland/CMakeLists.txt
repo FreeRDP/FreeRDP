@@ -37,8 +37,8 @@ set(${MODULE_PREFIX}_SRCS
 	)
 
 if (FREERDP_UNIFIED_BUILD)
-	include_directories(${CMAKE_SOURCE_DIR}/uwac/include)
-	include_directories(${CMAKE_BINARY_DIR}/uwac/include)
+	include_directories(${PROJECT_SOURCE_DIR}/uwac/include)
+	include_directories(${PROJECT_BINARY_DIR}/uwac/include)
 else()
 	find_package(uwac 0 REQUIRED)
 	include_directories(${UWAC_INCLUDE_DIR})
