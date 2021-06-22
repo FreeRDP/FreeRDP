@@ -163,9 +163,11 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 #ifdef WITH_GFX_H264
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "[[RFX|AVC420|AVC444],mask:<value>]", NULL, NULL, -1,
 	  NULL, "RDP8 graphics pipeline" },
+#if defined(WITH_FREERDP_DEPRECATED)
 	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[[AVC420|AVC444],mask:<value>] [DEPRECATED] use /gfx:avc420 instead", NULL, NULL, -1, NULL,
 	  "RDP8.1 graphics pipeline using H264 codec" },
+#endif
 #else
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "RFX", NULL, NULL, -1, NULL, "RDP8 graphics pipeline" },
 #endif

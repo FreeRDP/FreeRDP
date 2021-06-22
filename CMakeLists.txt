@@ -108,6 +108,11 @@ message("FREERDP_VERSION=${FREERDP_VERSION_FULL}")
 
 set(FREERDP_INCLUDE_DIR "include/freerdp${FREERDP_VERSION_MAJOR}/")
 
+option(WITH_FREERDP_DEPRECATED "Build FreeRDP deprecated symbols" OFF)
+if (WITH_FREERDP_DEPRECATED)
+	add_definitions(-DWITH_FREERDP_DEPRECATED)
+endif()
+
 # Compatibility options
 if(DEFINED STATIC_CHANNELS)
 	message(WARNING "STATIC_CHANNELS is obsolete, please use BUILTIN_CHANNELS instead")
