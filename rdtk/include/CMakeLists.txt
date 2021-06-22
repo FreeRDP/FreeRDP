@@ -1,2 +1,2 @@
-file(GLOB RDTK_HEADERS "rdkt/*.h")
-install(FILES ${RDTK_HEADERS} DESTINATION include/rdkt${RDTK_API_VERSION}/rdkt COMPONENT headers)
+file(GLOB RDTK_HEADERS "rdtk/*.h")
+install(FILES ${RDTK_HEADERS} DESTINATION include/rdtk${RDTK_API_VERSION}/rdtk COMPONENT headers)
