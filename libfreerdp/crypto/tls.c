@@ -1435,6 +1435,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					if (!use_pem)
 						free(fp);
 				}
+#if defined(WITH_FREERDP_DEPRECATED)
 				else if (instance->VerifyCertificate)
 				{
 					char* fp = crypto_cert_fingerprint(cert->px509);
@@ -1444,6 +1445,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					                                                 issuer, fp, !hostname_match);
 					free(fp);
 				}
+#endif
 			}
 			else if (match == -1)
 			{
@@ -1500,6 +1502,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					if (!old_pem)
 						free(fp);
 				}
+#if defined(WITH_FREERDP_DEPRECATED)
 				else if (instance->VerifyChangedCertificate)
 				{
 					char* fp = crypto_cert_fingerprint(cert->px509);
@@ -1514,6 +1517,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					    old_fingerprint);
 					free(fp);
 				}
+#endif
 
 				certificate_data_free(stored_data);
 			}

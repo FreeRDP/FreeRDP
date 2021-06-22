@@ -35,6 +35,11 @@ endif()
 
 option(WITH_VERBOSE_WINPR_ASSERT "Compile with verbose WINPR_ASSERT." ON)
 option(WITH_WINPR_TOOLS "Build WinPR helper binaries" ON)
+option(WITH_WINPR_DEPRECATED "Build WinPR deprecated symbols" OFF)
+
+if (WITH_WINPR_DEPRECATED)
+	add_definitions(-DWITH_WINPR_DEPRECATED)
+endif()
 
 if (WITH_VERBOSE_WINPR_ASSERT)
     add_definitions(-DWITH_VERBOSE_WINPR_ASSERT)
@@ -182,7 +187,7 @@ set(OPENSSL_FEATURE_TYPE "RECOMMENDED")
 
 	# Configure files
 	add_definitions("-DHAVE_CONFIG_H")
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 	enable_testing()
 

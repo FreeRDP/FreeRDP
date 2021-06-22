@@ -32,6 +32,15 @@ public class LibFreeRDP
 
 	private static final LongSparseArray<Boolean> mInstanceState = new LongSparseArray<>();
 
+	public static final long VERIFY_CERT_FLAG_NONE = 0x00;
+	public static final long VERIFY_CERT_FLAG_LEGACY = 0x02;
+	public static final long VERIFY_CERT_FLAG_REDIRECT = 0x10;
+	public static final long VERIFY_CERT_FLAG_GATEWAY = 0x20;
+	public static final long VERIFY_CERT_FLAG_CHANGED = 0x40;
+	public static final long VERIFY_CERT_FLAG_MISMATCH = 0x80;
+	public static final long VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1 = 0x100;
+	public static final long VERIFY_CERT_FLAG_FP_IS_PEM = 0x200;
+
 	static
 	{
 		final String h264 = "openh264";
@@ -517,31 +526,34 @@ public class LibFreeRDP
 		return false;
 	}
 
-	private static int OnVerifyCertificate(long inst, String commonName, String subject,
-	                                       String issuer, String fingerprint, boolean hostMismatch)
+	private static int OnVerifyCertificateEx(long inst, String host, long port, String commonName,
+	                                       String subject, String issuer, String fingerprint,
+	                                       long flags)
 	{
 		SessionState s = GlobalApp.getSession(inst);
 		if (s == null)
 			return 0;
 		UIEventListener uiEventListener = s.getUIEventListener();
 		if (uiEventListener != null)
-			return uiEventListener.OnVerifiyCertificate(commonName, subject, issuer, fingerprint,
-			                                            hostMismatch);
+			return uiEventListener.OnVerifiyCertificateEx(host, port, commonName, subject, issuer,
+			                                              fingerprint, flags);
 		return 0;
 	}
 
-	private static int OnVerifyChangedCertificate(long inst, String commonName, String subject,
-	                                              String issuer, String fingerprint,
-	                                              String oldSubject, String oldIssuer,
-	                                              String oldFingerprint)
+	private static int OnVerifyChangedCertificateEx(long inst, String host, long port,
+	                                                String commonName, String subject,
+	                                                String issuer, String fingerprint,
+	                                                String oldSubject, String oldIssuer,
+	                                                String oldFingerprint, long flags)
 	{
 		SessionState s = GlobalApp.getSession(inst);
 		if (s == null)
 			return 0;
 		UIEventListener uiEventListener = s.getUIEventListener();
 		if (uiEventListener != null)
-			return uiEventListener.OnVerifyChangedCertificate(
-			    commonName, subject, issuer, fingerprint, oldSubject, oldIssuer, oldFingerprint);
+			return uiEventListener.OnVerifyChangedCertificateEx(host, port, commonName, subject,
+			                                                    issuer, fingerprint, oldSubject,
+			                                                    oldIssuer, oldFingerprint, flags);
 		return 0;
 	}
 
@@ -601,12 +613,12 @@ public class LibFreeRDP
 		boolean OnGatewayAuthenticate(StringBuilder username, StringBuilder domain,
 		                              StringBuilder password);
 
-		int OnVerifiyCertificate(String commonName, String subject, String issuer,
-		                         String fingerprint, boolean mismatch);
+		int OnVerifiyCertificateEx(String host, long port, String commonName, String subject, String issuer,
+		                         String fingerprint, long flags);
 
-		int OnVerifyChangedCertificate(String commonName, String subject, String issuer,
+		int OnVerifyChangedCertificateEx(String host, long port, String commonName, String subject, String issuer,
 		                               String fingerprint, String oldSubject, String oldIssuer,
-		                               String oldFingerprint);
+		                               String oldFingerprint, long flags);
 
 		void OnGraphicsUpdate(int x, int y, int width, int height);
 

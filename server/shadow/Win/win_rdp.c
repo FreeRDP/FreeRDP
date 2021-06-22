@@ -97,13 +97,6 @@ static BOOL shw_authenticate(freerdp* instance, char** username, char** password
 	return TRUE;
 }
 
-static DWORD shw_verify_certificate(freerdp* instance, const char* common_name, const char* subject,
-                                    const char* issuer, const char* fingerprint, BOOL host_mismatch)
-{
-	WLog_WARN(TAG, "Certificate checks not implemented, access granted to everyone!");
-	return 1;
-}
-
 static int shw_verify_x509_certificate(freerdp* instance, const BYTE* data, size_t length,
                                        const char* hostname, UINT16 port, DWORD flags)
 {
@@ -281,7 +274,6 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PreConnect = shw_pre_connect;
 	instance->PostConnect = shw_post_connect;
 	instance->Authenticate = shw_authenticate;
-	instance->VerifyCertificate = shw_verify_certificate;
 	instance->VerifyX509Certificate = shw_verify_x509_certificate;
 	settings = instance->settings;
 	shw->settings = instance->context->settings;
