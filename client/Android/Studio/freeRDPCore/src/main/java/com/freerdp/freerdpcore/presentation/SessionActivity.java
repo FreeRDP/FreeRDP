@@ -957,8 +957,8 @@ public class SessionActivity extends AppCompatActivity
 	}
 
 	@Override
-	public int OnVerifiyCertificate(String commonName, String subject, String issuer,
-	                                String fingerprint, boolean mismatch)
+	public int OnVerifiyCertificateEx(String host, long port, String commonName, String subject,
+	                                  String issuer, String fingerprint, long flags)
 	{
 		// see if global settings says accept all
 		if (ApplicationSettingsActivity.getAcceptAllCertificates(this))
@@ -969,8 +969,19 @@ public class SessionActivity extends AppCompatActivity
 
 		// set message
 		String msg = getResources().getString(R.string.dlg_msg_verify_certificate);
-		msg = msg + "\n\nSubject: " + subject + "\nIssuer: " + issuer +
-		      "\nFingerprint: " + fingerprint;
+		String type = "RDP-Server";
+		if ((flags & LibFreeRDP.VERIFY_CERT_FLAG_GATEWAY) != 0)
+			type = "RDP-Gateway";
+		if ((flags & LibFreeRDP.VERIFY_CERT_FLAG_REDIRECT) != 0)
+			type = "RDP-Redirect";
+		msg += "\n\n" + type + ": " + host + ":" + port;
+
+		msg += "\n\nSubject: " + subject + "\nIssuer: " + issuer;
+
+		if ((flags & LibFreeRDP.VERIFY_CERT_FLAG_FP_IS_PEM) != 0)
+			msg += "\nCertificate: " + fingerprint;
+		else
+			msg += "\nFingerprint: " + fingerprint;
 		dlgVerifyCertificate.setMessage(msg);
 
 		// start dialog in UI thread
@@ -992,9 +1003,10 @@ public class SessionActivity extends AppCompatActivity
 	}
 
 	@Override
-	public int OnVerifyChangedCertificate(String commonName, String subject, String issuer,
-	                                      String fingerprint, String oldSubject, String oldIssuer,
-	                                      String oldFingerprint)
+	public int OnVerifyChangedCertificateEx(String host, long port, String commonName,
+	                                        String subject, String issuer, String fingerprint,
+	                                        String oldSubject, String oldIssuer,
+	                                        String oldFingerprint, long flags)
 	{
 		// see if global settings says accept all
 		if (ApplicationSettingsActivity.getAcceptAllCertificates(this))
@@ -1005,8 +1017,17 @@ public class SessionActivity extends AppCompatActivity
 
 		// set message
 		String msg = getResources().getString(R.string.dlg_msg_verify_certificate);
-		msg = msg + "\n\nSubject: " + subject + "\nIssuer: " + issuer +
-		      "\nFingerprint: " + fingerprint;
+		String type = "RDP-Server";
+		if ((flags & LibFreeRDP.VERIFY_CERT_FLAG_GATEWAY) != 0)
+			type = "RDP-Gateway";
+		if ((flags & LibFreeRDP.VERIFY_CERT_FLAG_REDIRECT) != 0)
+			type = "RDP-Redirect";
+		msg += "\n\n" + type + ": " + host + ":" + port;
+		msg += "\n\nSubject: " + subject + "\nIssuer: " + issuer;
+		if ((flags & LibFreeRDP.VERIFY_CERT_FLAG_FP_IS_PEM) != 0)
+			msg += "\nCertificate: " + fingerprint;
+		else
+			msg += "\nFingerprint: " + fingerprint;
 		dlgVerifyCertificate.setMessage(msg);
 
 		// start dialog in UI thread
