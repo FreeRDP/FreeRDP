@@ -721,9 +721,10 @@ static UINT urb_bulk_or_interrupt_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
 	Stream_Read_UINT32(s, OutputBufferSize);
 	EndpointAddress = (PipeHandle & 0x000000ff);
 	/**  process TS_URB_BULK_OR_INTERRUPT_TRANSFER */
-	return pdev->bulk_or_interrupt_transfer(pdev, callback, MessageId, RequestId, EndpointAddress,
-	                                        TransferFlags, noAck, OutputBufferSize,
-	                                        urb_bulk_transfer_cb, 10000);
+	return pdev->bulk_or_interrupt_transfer(
+	    pdev, callback, MessageId, RequestId, EndpointAddress, TransferFlags, noAck,
+	    OutputBufferSize, (transferDir == USBD_TRANSFER_DIRECTION_OUT) ? Stream_Pointer(s) : NULL,
+	    urb_bulk_transfer_cb, 10000);
 }
 
 static void urb_isoch_transfer_cb(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, wStream* out,

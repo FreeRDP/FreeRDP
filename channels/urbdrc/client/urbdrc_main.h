@@ -134,7 +134,7 @@ struct _IUDEVICE
 	int (*bulk_or_interrupt_transfer)(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* callback,
 	                                  UINT32 MessageId, UINT32 RequestId, UINT32 EndpointAddress,
 	                                  UINT32 TransferFlags, BOOL NoAck, UINT32 BufferSize,
-	                                  t_isoch_transfer_cb cb, UINT32 Timeout);
+	                                  const BYTE* data, t_isoch_transfer_cb cb, UINT32 Timeout);
 
 	int (*select_configuration)(IUDEVICE* idev, UINT32 bConfigurationValue);
 
