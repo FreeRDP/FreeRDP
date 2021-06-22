@@ -193,8 +193,8 @@ const char* usb_interface_class_to_string(uint8_t class)
 
 static ASYNC_TRANSFER_USER_DATA* async_transfer_user_data_new(IUDEVICE* idev, UINT32 MessageId,
                                                               size_t offset, size_t BufferSize,
-                                                              size_t packetSize, BOOL NoAck,
-                                                              t_isoch_transfer_cb cb,
+                                                              const BYTE* data, size_t packetSize,
+                                                              BOOL NoAck, t_isoch_transfer_cb cb,
                                                               URBDRC_CHANNEL_CALLBACK* callback)
 {
 	ASYNC_TRANSFER_USER_DATA* user_data = calloc(1, sizeof(ASYNC_TRANSFER_USER_DATA));
@@ -210,14 +210,19 @@ static ASYNC_TRANSFER_USER_DATA* async_transfer_user_data_new(IUDEVICE* idev, UI
 		free(user_data);
 		return NULL;
 	}
+
 	Stream_Seek(user_data->data, offset); /* Skip header offset */
+	if (data)
+		memcpy(Stream_Pointer(user_data->data), data, BufferSize);
+	else
+		user_data->OutputBufferSize = BufferSize;
 
 	user_data->noack = NoAck;
 	user_data->cb = cb;
 	user_data->callback = callback;
 	user_data->idev = idev;
 	user_data->MessageId = MessageId;
-	user_data->OutputBufferSize = BufferSize;
+
 	user_data->queue = pdev->request_queue;
 
 	return user_data;
@@ -1197,8 +1202,8 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 		return -1;
 
 	urbdrc = pdev->urbdrc;
-	user_data = async_transfer_user_data_new(idev, MessageId, 48, BufferSize, outSize + 1024, NoAck,
-	                                         cb, callback);
+	user_data = async_transfer_user_data_new(idev, MessageId, 48, BufferSize, Buffer,
+	                                         outSize + 1024, NoAck, cb, callback);
 
 	if (!user_data)
 		return -1;
@@ -1206,12 +1211,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 	user_data->ErrorCount = ErrorCount;
 	user_data->StartFrame = StartFrame;
 
-	if (Buffer) /* We read data, prepare a bufffer */
-	{
-		user_data->OutputBufferSize = 0;
-		memmove(Stream_Pointer(user_data->data), Buffer, BufferSize);
-	}
-	else
+	if (!Buffer)
 		Stream_Seek(user_data->data, (NumberOfPackets * 12));
 
 	iso_packet_size = BufferSize / NumberOfPackets;
@@ -1270,7 +1270,7 @@ static BOOL libusb_udev_control_transfer(IUDEVICE* idev, UINT32 RequestId, UINT3
 static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* callback,
                                                   UINT32 MessageId, UINT32 RequestId,
                                                   UINT32 EndpointAddress, UINT32 TransferFlags,
-                                                  BOOL NoAck, UINT32 BufferSize,
+                                                  BOOL NoAck, UINT32 BufferSize, const BYTE* data,
                                                   t_isoch_transfer_cb cb, UINT32 Timeout)
 {
 	UINT32 transfer_type;
@@ -1286,7 +1286,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, URBDRC_CHANNEL
 
 	urbdrc = pdev->urbdrc;
 	user_data =
-	    async_transfer_user_data_new(idev, MessageId, 36, BufferSize, 0, NoAck, cb, callback);
+	    async_transfer_user_data_new(idev, MessageId, 36, BufferSize, data, 0, NoAck, cb, callback);
 
 	if (!user_data)
 		return -1;
