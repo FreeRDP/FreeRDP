@@ -993,6 +993,12 @@ if (FREERDP_UNIFIED_BUILD)
 else()
 	find_package(WinPR 3 REQUIRED)
 	include_directories(${WinPR_INCLUDE_DIR})
+
+	# We want to control the winpr assert for the whole project
+	option(WITH_VERBOSE_WINPR_ASSERT "Compile with verbose WINPR_ASSERT." ON)
+	if (WITH_VERBOSE_WINPR_ASSERT)
+		add_definitions(-DWITH_VERBOSE_WINPR_ASSERT)
+	endif()
 endif()
 
 # Sub-directories
