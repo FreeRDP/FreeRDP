@@ -58,6 +58,7 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 if (NOT IOS)
+	include(CheckIncludeFiles)
 	check_include_files(stdbool.h WINPR_HAVE_STDBOOL_H)
 	if (NOT WINPR_HAVE_STDBOOL_H)
 		include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../compat/stdbool)

@@ -53,6 +53,8 @@
 #include <freerdp/server/rdpgfx.h>
 #include <freerdp/server/disp.h>
 
+extern void freerdp_channels_dummy(void);
+
 void freerdp_channels_dummy(void)
 {
 	audin_server_context* audin;
