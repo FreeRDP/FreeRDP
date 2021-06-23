@@ -75,8 +75,8 @@ static const char* get_av_pair_string(UINT16 pair)
 			return "MsvAvSingleHost";
 		case MsvAvTargetName:
 			return "MsvAvTargetName";
-		case MsvChannelBindings:
-			return "MsvChannelBindings";
+		case MsvAvChannelBindings:
+			return "MsvAvChannelBindings";
 		default:
 			return "UNKNOWN";
 	}
@@ -639,7 +639,7 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		 * SEC_CHANNEL_BINDINGS structure
 		 * http://msdn.microsoft.com/en-us/library/windows/desktop/dd919963/
 		 */
-		AvPairsCount++; /* MsvChannelBindings */
+		AvPairsCount++; /* MsvAvChannelBindings */
 		AvPairsValueLength += 16;
 		ntlm_compute_channel_bindings(context);
 
@@ -727,8 +727,8 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 
 	if (!context->SuppressExtendedProtection)
 	{
-		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvChannelBindings,
-		                      context->ChannelBindingsHash, 16))
+		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo,
+		                      MsvAvChannelBindings, context->ChannelBindingsHash, 16))
 			goto fail;
 
 		if (context->ServicePrincipalName.Length > 0)
