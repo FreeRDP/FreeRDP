@@ -300,6 +300,17 @@ static BOOL x11_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 		XTestFakeButtonEvent(x11->display, button, True, (unsigned long)CurrentTime);
 		XTestFakeButtonEvent(x11->display, button, False, (unsigned long)CurrentTime);
 	}
+	else if (flags & PTR_FLAGS_HWHEEL)
+	{
+		BOOL negative = FALSE;
+
+		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
+			negative = TRUE;
+
+		button = (negative) ? 7 : 6;
+		XTestFakeButtonEvent(x11->display, button, True, (unsigned long)CurrentTime);
+		XTestFakeButtonEvent(x11->display, button, False, (unsigned long)CurrentTime);
+	}
 	else
 	{
 		if (flags & PTR_FLAGS_MOVE)

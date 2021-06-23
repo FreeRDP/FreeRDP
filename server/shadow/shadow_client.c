@@ -1785,6 +1785,9 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	UpdateEvent = shadow_multiclient_getevent(UpdateSubscriber);
 	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(client->vcm);
 
+	freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, TRUE);
+	freerdp_settings_set_bool(settings, FreeRDP_HasHorizontalWheel, TRUE);
+	freerdp_settings_set_bool(settings, FreeRDP_HasExtendedMouseEvent, TRUE);
 	while (1)
 	{
 		nCount = 0;
