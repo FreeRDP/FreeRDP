@@ -209,9 +209,7 @@ macro(add_channel_client_library _module_prefix _module_name _channel_name _dyna
     add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
     target_link_libraries(${_module_name} ${${_module_prefix}_LIBS})
 
-    if (NOT BUILTIN_CHANNELS)
-      client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
-    endif()
+    client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
   endif()
 endmacro(add_channel_client_library)
 
@@ -249,9 +247,7 @@ macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_
 
     add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
     target_link_libraries(${_module_name} ${${_module_prefix}_LIBS})
-    if (NOT BUILTIN_CHANNELS)
-      client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
-    endif()
+    client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
   endif()
 endmacro(add_channel_client_subsystem_library)
 
@@ -286,9 +282,7 @@ macro(add_channel_server_library _module_prefix _module_name _channel_name _dyna
     set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
     set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
     add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
-    if (NOT BUILTIN_CHANNELS)
-      server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
-    endif()
+    server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
   endif()
 endmacro(add_channel_server_library)
 
