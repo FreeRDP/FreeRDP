@@ -89,7 +89,7 @@ enum _NTLM_AV_ID
 	MsvAvTimestamp,
 	MsvAvSingleHost,
 	MsvAvTargetName,
-	MsvChannelBindings
+	MsvAvChannelBindings
 };
 typedef enum _NTLM_AV_ID NTLM_AV_ID;
 
