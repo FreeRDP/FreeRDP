@@ -163,7 +163,9 @@ macro(add_channel_client_subsystem _channel_prefix _channel_name _subsystem _typ
 endmacro(add_channel_client_subsystem)
 
 macro(channel_install _targets _destination _export_target)
-    install(TARGETS ${_targets} DESTINATION ${_destination} EXPORT ${_export_target})
+    if (NOT BUILTIN_CHANNELS OR NOT BUILD_SHARED_LIBS)
+        install(TARGETS ${_targets} DESTINATION ${_destination} EXPORT ${_export_target})
+    endif()
 endmacro(channel_install)
 
 macro(server_channel_install _targets _destination)
@@ -209,7 +211,9 @@ macro(add_channel_client_library _module_prefix _module_name _channel_name _dyna
     add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
     target_link_libraries(${_module_name} ${${_module_prefix}_LIBS})
 
-    client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
+    if (NOT BUILD_SHARED_LIBS)
+        client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
+    endif()
   endif()
 endmacro(add_channel_client_library)
 
@@ -247,7 +251,9 @@ macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_
 
     add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
     target_link_libraries(${_module_name} ${${_module_prefix}_LIBS})
-    client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
+    if (NOT BUILD_SHARED_LIBS)
+        client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
+    endif()
   endif()
 endmacro(add_channel_client_subsystem_library)
 
@@ -282,7 +288,9 @@ macro(add_channel_server_library _module_prefix _module_name _channel_name _dyna
     set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
     set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
     add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
-    server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
+    if (NOT BUILD_SHARED_LIBS)
+        server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
+    endif()
   endif()
 endmacro(add_channel_server_library)
 
