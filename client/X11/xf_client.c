@@ -1512,6 +1512,12 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		else if (freerdp_get_last_error(instance->context) ==
 		         FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED)
 			exit_code = XF_EXIT_NEGO_FAILURE;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_LOGON_FAILURE)
+ 			exit_code = XF_EXIT_LOGON_FAILURE;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT)
+ 			exit_code = XF_EXIT_ACCOUNT_LOCKED_OUT;
 		else
 			exit_code = XF_EXIT_CONN_FAILED;
 	}
@@ -1676,7 +1682,7 @@ end:
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 {
-	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_NEGO_FAILURE))
+	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_ACCOUNT_LOCKED_OUT))
 		return reason;
 	/* License error set */
 	else if (reason >= 0x100 && reason <= 0x10A)
