@@ -252,7 +252,7 @@ static INLINE void setValue(wHashTable* table, wKeyValuePair* pair, const void* 
 	if (!pair)
 		return;
 	disposeValue(table, pair->value);
-	if (table->key.fnObjectNew)
+	if (table->value.fnObjectNew)
 		pair->value = table->value.fnObjectNew(value);
 	else
 		pair->value = (void*)value;
