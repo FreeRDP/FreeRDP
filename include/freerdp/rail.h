@@ -252,7 +252,7 @@ enum SPI_MASK
 #define IME_STATE_OPEN 0x00000001
 
 /* ImeConvMode */
-#ifndef _IME_CMODES_
+#if !defined(_IME_CMODES_) && !defined(__MINGW32__)
 #define IME_CMODE_NATIVE 0x00000001
 #define IME_CMODE_KATAKANA 0x00000002
 #define IME_CMODE_FULLSHAPE 0x00000008
