@@ -25,7 +25,9 @@
 #include "wf_client.h"
 #include "wf_floatbar.h"
 #include "wf_gdi.h"
+#ifdef _MSC_VER
 #pragma comment(lib, "Msimg32.lib")
+#endif
 
 #define TAG CLIENT_TAG("windows.floatbar")
 

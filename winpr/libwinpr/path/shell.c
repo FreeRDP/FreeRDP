@@ -609,7 +609,7 @@ BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath)
 
 #else
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #pragma comment(lib, "shlwapi.lib")
 #endif
 
