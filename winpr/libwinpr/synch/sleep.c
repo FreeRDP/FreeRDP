@@ -117,9 +117,9 @@ VOID USleep(DWORD dwMicroseconds)
 #ifndef _WIN32
 	usleep(dwMicroseconds);
 #else
-	static LARGE_INTEGER freq = { 0, 0 };
-	LARGE_INTEGER t1 = { 0, 0 };
-	LARGE_INTEGER t2 = { 0, 0 };
+	static LARGE_INTEGER freq = { 0 };
+	LARGE_INTEGER t1 = { 0 };
+	LARGE_INTEGER t2 = { 0 };
 
 	QueryPerformanceCounter(&t1);
 
