@@ -82,7 +82,7 @@ static UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s
 	size_t pos, size;
 	BOOL status;
 	UINT32 dataLen;
-	UINT32 written;
+	ULONG written;
 	pos = Stream_GetPosition(s);
 	if ((pos < 8) || (pos > UINT32_MAX))
 	{
@@ -477,7 +477,6 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 	CLIPRDR_CAPABILITY_SET* capSet;
 
 	WINPR_UNUSED(header);
-
 
 	WLog_DBG(TAG, "CliprdrClientCapabilities");
 	if (Stream_GetRemainingLength(s) < 4)
