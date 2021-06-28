@@ -51,10 +51,6 @@
 #include <sys/select.h>
 #endif
 
-#ifdef HAVE_SYS_FILIO_H
-#include <sys/filio.h>
-#endif
-
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #ifndef SOL_TCP
 #define SOL_TCP IPPROTO_TCP
