@@ -72,7 +72,7 @@ endif()
 if (NOT IOS)
 	check_include_files(stdbool.h WINPR_HAVE_STDBOOL_H)
 	if (NOT WINPR_HAVE_STDBOOL_H)
-		include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../compat/stdbool)
+		include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/../compat/stdbool)
 	endif()
 else()
 	set(WINPR_HAVE_STDBOOL_H 1)
@@ -90,9 +90,13 @@ else()
 endif()
 
 SetFreeRDPCMakeInstallDir(RDTK_CMAKE_INSTALL_DIR "rdtk${RDTK_VERSION_MAJOR}")
-add_subdirectory(include)
+
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/templates)
+
 add_subdirectory(librdtk)
+add_subdirectory(include)
 add_subdirectory(templates)
+
 install(EXPORT rdtk DESTINATION ${RDTK_CMAKE_INSTALL_DIR})
 
 if(WITH_SAMPLE)
