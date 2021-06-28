@@ -303,12 +303,6 @@ else()
 	CHECK_SYMBOL_EXISTS(strndup string.h HAVE_STRNDUP)
 endif()
 
-if(NOT WIN32)
-	list(APPEND CMAKE_REQUIRED_LIBRARIES pthread)
-	check_symbol_exists(pthread_mutex_timedlock pthread.h HAVE_PTHREAD_MUTEX_TIMEDLOCK)
-	list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES pthread)
-endif()
-
 # Enable address sanitizer, where supported and when required
 if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
 	CHECK_C_COMPILER_FLAG ("-fno-omit-frame-pointer" fno-omit-frame-pointer)
