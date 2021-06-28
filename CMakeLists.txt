@@ -890,11 +890,6 @@ endif()
 # Declare we have config.h, generated later on.
 add_definitions("-DHAVE_CONFIG_H")
 
-# Include directories
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 # RPATH configuration
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -958,6 +953,11 @@ else()
 		add_definitions(-DWITH_VERBOSE_WINPR_ASSERT)
 	endif()
 endif()
+
+# Include directories
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Sub-directories
 
