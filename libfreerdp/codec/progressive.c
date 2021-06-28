@@ -2584,11 +2584,7 @@ fail:
 static BOOL progressive_rfx_write_message_progressive_simple(PROGRESSIVE_CONTEXT* progressive,
                                                              wStream* s, const RFX_MESSAGE* msg)
 {
-	UINT32 blockLen;
 	UINT32 i;
-	UINT32* qv;
-	RFX_TILE* tile;
-	UINT32 tilesDataSize;
 	RFX_CONTEXT* context;
 
 	WINPR_ASSERT(progressive);
@@ -2611,58 +2607,8 @@ static BOOL progressive_rfx_write_message_progressive_simple(PROGRESSIVE_CONTEXT
 	if (!progressive_write_frame_begin(progressive, s, msg))
 		return FALSE;
 
-	/* RFX_PROGRESSIVE_REGION */
-	blockLen = 18;
-	blockLen += msg->numRects * 8;
-	blockLen += msg->numQuant * 5;
-	tilesDataSize = msg->numTiles * 22;
-	for (i = 0; i < msg->numTiles; i++)
-	{
-		tile = msg->tiles[i];
-		tilesDataSize += tile->YLen + tile->CbLen + tile->CrLen;
-	}
-	blockLen += tilesDataSize;
-
-	if (!Stream_EnsureRemainingCapacity(s, blockLen))
-	{
+	if (!progressive_write_region(progressive, s, msg))
 		return FALSE;
-	}
-	Stream_Write_UINT16(s, 0xCCC4);        /* blockType (2 bytes) */
-	Stream_Write_UINT32(s, blockLen);      /* blockLen (4 bytes) */
-	Stream_Write_UINT8(s, 64);             /* tileSize (1 byte) */
-	Stream_Write_UINT16(s, msg->numRects); /* numRects (2 bytes) */
-	Stream_Write_UINT8(s, msg->numQuant);  /* numQuant (1 byte) */
-	Stream_Write_UINT8(s, 0);              /* numProgQuant (1 byte) */
-	Stream_Write_UINT8(s, 0);              /* flags (1 byte) */
-	Stream_Write_UINT16(s, msg->numTiles); /* numTiles (2 bytes) */
-	Stream_Write_UINT32(s, tilesDataSize); /* tilesDataSize (4 bytes) */
-
-	for (i = 0; i < msg->numRects; i++)
-	{
-		/* TS_RFX_RECT */
-		Stream_Write_UINT16(s, msg->rects[i].x);      /* x (2 bytes) */
-		Stream_Write_UINT16(s, msg->rects[i].y);      /* y (2 bytes) */
-		Stream_Write_UINT16(s, msg->rects[i].width);  /* width (2 bytes) */
-		Stream_Write_UINT16(s, msg->rects[i].height); /* height (2 bytes) */
-	}
-
-	/**
-	 * Note: The RFX_COMPONENT_CODEC_QUANT structure differs from the
-	 * TS_RFX_CODEC_QUANT ([MS-RDPRFX] section 2.2.2.1.5) structure with respect
-	 * to the order of the bands.
-	 *             0    1    2   3     4    5    6    7    8    9
-	 * RDPRFX:   LL3, LH3, HL3, HH3, LH2, HL2, HH2, LH1, HL1, HH1
-	 * RDPEGFX:  LL3, HL3, LH3, HH3, HL2, LH2, HH2, HL1, LH1, HH1
-	 */
-	for (i = 0, qv = msg->quantVals; i < msg->numQuant; i++, qv += 10)
-	{
-		/* RFX_COMPONENT_CODEC_QUANT */
-		Stream_Write_UINT8(s, qv[0] + (qv[2] << 4)); /* LL3 (4-bit), HL3 (4-bit) */
-		Stream_Write_UINT8(s, qv[1] + (qv[3] << 4)); /* LH3 (4-bit), HH3 (4-bit) */
-		Stream_Write_UINT8(s, qv[5] + (qv[4] << 4)); /* HL2 (4-bit), LH2 (4-bit) */
-		Stream_Write_UINT8(s, qv[6] + (qv[8] << 4)); /* HH2 (4-bit), HL1 (4-bit) */
-		Stream_Write_UINT8(s, qv[7] + (qv[9] << 4)); /* LH1 (4-bit), HH1 (4-bit) */
-	}
 
 	for (i = 0; i < msg->numTiles; i++)
 	{
