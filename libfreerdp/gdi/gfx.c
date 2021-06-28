@@ -60,6 +60,7 @@ static BOOL is_within_surface(const gdiGfxSurface* surface, const RDPGFX_SURFACE
 		         surface->height);
 		return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -275,6 +276,8 @@ static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* co
 	UINT status = CHANNEL_RC_OK;
 	gdiGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
+	DWORD bpp;
+	size_t size;
 	surface = (gdiGfxSurface*)context->GetSurfaceData(context, cmd->surfaceId);
 
 	if (!surface)
@@ -286,6 +289,15 @@ static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* co
 
 	if (!is_within_surface(surface, cmd))
 		return ERROR_INVALID_DATA;
+
+	bpp = GetBytesPerPixel(cmd->format);
+	size = bpp * cmd->width * cmd->height * 1ULL;
+	if (cmd->length < size)
+	{
+		WLog_ERR(TAG, "%s: Not enough data, got %" PRIu32 ", expected %" PRIuz, __FUNCTION__,
+		         cmd->length, size);
+		return ERROR_INVALID_DATA;
+	}
 
 	if (!freerdp_image_copy(surface->data, surface->format, surface->scanline, cmd->left, cmd->top,
 	                        cmd->width, cmd->height, cmd->data, cmd->format, 0, 0, 0, NULL,
