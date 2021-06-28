@@ -20,6 +20,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/assert.h>
+
 #include "shadow.h"
 
 #include "shadow_encoder.h"
@@ -252,6 +254,25 @@ fail:
 	return -1;
 }
 
+static int shadow_encoder_init_progressive(rdpShadowEncoder* encoder)
+{
+	WINPR_ASSERT(encoder);
+	if (!encoder->progressive)
+		encoder->progressive = progressive_context_new(TRUE);
+
+	if (!encoder->progressive)
+		goto fail;
+
+	if (!progressive_context_reset(encoder->progressive))
+		goto fail;
+
+	encoder->codecs |= FREERDP_CODEC_PROGRESSIVE;
+	return 1;
+fail:
+	progressive_context_free(encoder->progressive);
+	return -1;
+}
+
 static int shadow_encoder_init(rdpShadowEncoder* encoder)
 {
 	encoder->width = encoder->server->screen->width;
@@ -329,6 +350,19 @@ static int shadow_encoder_uninit_h264(rdpShadowEncoder* encoder)
 	return 1;
 }
 
+static int shadow_encoder_uninit_progressive(rdpShadowEncoder* encoder)
+{
+	WINPR_ASSERT(encoder);
+	if (encoder->progressive)
+	{
+		progressive_context_free(encoder->progressive);
+		encoder->progressive = NULL;
+	}
+
+	encoder->codecs &= (UINT32)~FREERDP_CODEC_PROGRESSIVE;
+	return 1;
+}
+
 static int shadow_encoder_uninit(rdpShadowEncoder* encoder)
 {
 	shadow_encoder_uninit_grid(encoder);
@@ -339,32 +373,18 @@ static int shadow_encoder_uninit(rdpShadowEncoder* encoder)
 		encoder->bs = NULL;
 	}
 
-	if (encoder->codecs & FREERDP_CODEC_REMOTEFX)
-	{
 		shadow_encoder_uninit_rfx(encoder);
-	}
 
-	if (encoder->codecs & FREERDP_CODEC_NSCODEC)
-	{
 		shadow_encoder_uninit_nsc(encoder);
-	}
 
-	if (encoder->codecs & FREERDP_CODEC_PLANAR)
-	{
 		shadow_encoder_uninit_planar(encoder);
-	}
 
-	if (encoder->codecs & FREERDP_CODEC_INTERLEAVED)
-	{
 		shadow_encoder_uninit_interleaved(encoder);
-	}
-
-	if (encoder->codecs & (FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444))
-	{
 		shadow_encoder_uninit_h264(encoder);
-	}
 
-	return 1;
+	    shadow_encoder_uninit_progressive(encoder);
+
+	    return 1;
 }
 
 int shadow_encoder_reset(rdpShadowEncoder* encoder)
@@ -441,6 +461,15 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 	{
 		WLog_DBG(TAG, "initializing H.264 encoder");
 		status = shadow_encoder_init_h264(encoder);
+
+		if (status < 0)
+			return -1;
+	}
+
+	if ((codecs & FREERDP_CODEC_PROGRESSIVE) && !(encoder->codecs & FREERDP_CODEC_PROGRESSIVE))
+	{
+		WLog_DBG(TAG, "initializing progressive encoder");
+		status = shadow_encoder_init_progressive(encoder);
 
 		if (status < 0)
 			return -1;
