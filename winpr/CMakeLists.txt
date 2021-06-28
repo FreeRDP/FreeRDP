@@ -190,7 +190,7 @@ set(OPENSSL_FEATURE_TYPE "RECOMMENDED")
     endif()
 
 	# Include directories
-	include_directories(${CMAKE_CURRENT_BINARY_DIR})
+	include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 	# Configure files
 	add_definitions("-DHAVE_CONFIG_H")
