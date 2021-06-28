@@ -50,6 +50,7 @@ struct rdp_shadow_encoder
 	BITMAP_PLANAR_CONTEXT* planar;
 	BITMAP_INTERLEAVED_CONTEXT* interleaved;
 	H264_CONTEXT* h264;
+	PROGRESSIVE_CONTEXT* progressive;
 
 	UINT32 fps;
 	UINT32 maxFps;
