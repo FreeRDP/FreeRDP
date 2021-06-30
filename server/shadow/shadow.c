@@ -79,6 +79,12 @@ int main(int argc, char** argv)
 		  "nla extended protocol security" },
 		{ "sam-file", COMMAND_LINE_VALUE_REQUIRED, "<file>", NULL, NULL, -1, NULL,
 		  "NTLM SAM file for NLA authentication" },
+		{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+		  "Allow GFX progressive codec" },
+		{ "gfx-avc420", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+		  "Allow GFX AVC420 codec" },
+		{ "gfx-avc444", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+		  "Allow GFX AVC444 codec" },
 		{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1,
 		  NULL, "Print version" },
 		{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL,
@@ -104,6 +110,15 @@ int main(int argc, char** argv)
 	settings->NlaSecurity = TRUE;
 	settings->TlsSecurity = TRUE;
 	settings->RdpSecurity = TRUE;
+
+	/* By default allow all GFX modes.
+	 * This can be changed with command line flags [+|-]gfx-CODEC
+	 */
+	freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE);
+	freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE);
+	freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE);
+	freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, TRUE);
+	freerdp_settings_set_bool(settings, FreeRDP_GfxProgressiveV2, TRUE);
 
 #ifdef WITH_SHADOW_X11
 	server->authentication = TRUE;

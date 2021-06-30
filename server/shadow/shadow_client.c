@@ -136,16 +136,27 @@ static INLINE void shadow_client_free_queued_message(void* obj)
 	}
 }
 
-static BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
+static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 {
 	const char bind_address[] = "bind-address,";
+	rdpShadowClient* client = (rdpShadowClient*)context;
 	rdpSettings* settings;
 	rdpShadowServer* server;
 	const wObject cb = { NULL, NULL, NULL, shadow_client_free_queued_message, NULL };
+
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(peer);
+
 	server = (rdpShadowServer*)peer->ContextExtra;
+	WINPR_ASSERT(server);
+
 	client->server = server;
 	client->subsystem = server->subsystem;
+	WINPR_ASSERT(client->subsystem);
+
 	settings = peer->settings;
+	WINPR_ASSERT(settings);
+
 	settings->ColorDepth = 32;
 	settings->NSCodec = TRUE;
 	settings->RemoteFxCodec = TRUE;
@@ -220,10 +231,16 @@ fail_cert_file:
 	return FALSE;
 }
 
-static void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
+static void shadow_client_context_free(freerdp_peer* peer, rdpContext* context)
 {
-	rdpShadowServer* server = client->server;
+	rdpShadowClient* client = (rdpShadowClient*)context;
+	rdpShadowServer* server;
+
+	WINPR_ASSERT(context);
 	WINPR_UNUSED(peer);
+	server = client->server;
+	WINPR_ASSERT(server);
+
 	ArrayList_Remove(server->clients, (void*)client);
 
 	if (client->encoder)
@@ -656,16 +673,27 @@ static BOOL shadow_are_caps_filtered(const rdpSettings* settings, UINT32 caps)
 	return TRUE;
 }
 
-static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, BOOL h264,
-                                            const RDPGFX_CAPSET* capsSets, UINT32 capsSetCount,
-                                            UINT32 capsVersion, UINT* rc)
+static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpShadowClient* client,
+                                            BOOL h264, const RDPGFX_CAPSET* capsSets,
+                                            UINT32 capsSetCount, UINT32 capsVersion, UINT* rc)
 {
-	UINT32 flags = 0;
 	UINT32 index;
-	rdpSettings* settings;
-	settings = context->rdpcontext->settings;
+	const rdpSettings* srvSettings;
+	rdpSettings* clientSettings;
 
-	if (shadow_are_caps_filtered(settings, capsVersion))
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(capsSets || (capsSetCount == 0));
+	WINPR_ASSERT(rc);
+
+	WINPR_ASSERT(context->rdpcontext);
+	srvSettings = context->rdpcontext->settings;
+	WINPR_ASSERT(srvSettings);
+
+	clientSettings = client->context.settings;
+	WINPR_ASSERT(clientSettings);
+
+	if (shadow_are_caps_filtered(srvSettings, capsVersion))
 		return FALSE;
 
 	for (index = 0; index < capsSetCount; index++)
@@ -674,25 +702,39 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, BOOL h
 
 		if (currentCaps->version == capsVersion)
 		{
+			UINT32 flags;
+			BOOL avc444v2 = FALSE;
+			BOOL avc444 = FALSE;
+			BOOL avc420 = FALSE;
+			BOOL progressive = FALSE;
 			RDPGFX_CAPSET caps = *currentCaps;
-			RDPGFX_CAPS_CONFIRM_PDU pdu;
+			RDPGFX_CAPS_CONFIRM_PDU pdu = { 0 };
 			pdu.capsSet = &caps;
 
-			if (settings)
-			{
-				flags = pdu.capsSet->flags;
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+			flags = pdu.capsSet->flags;
 
-				if (h264)
-					settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 =
-					    !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
-				else
-				{
-					settings->GfxAVC444v2 = settings->GfxAVC444 = settings->GfxH264 = FALSE;
-					pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
-				}
-			}
+			clientSettings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
 
+			avc444v2 = avc444 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+			if (!freerdp_settings_get_bool(srvSettings, FreeRDP_GfxAVC444v2) || !h264)
+				avc444v2 = FALSE;
+			freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, avc444v2);
+			if (!freerdp_settings_get_bool(srvSettings, FreeRDP_GfxAVC444) || !h264)
+				avc444 = FALSE;
+			freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, avc444);
+			if (!freerdp_settings_get_bool(srvSettings, FreeRDP_GfxH264) || !h264)
+				avc420 = FALSE;
+			freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, avc420);
+
+			progressive = freerdp_settings_get_bool(srvSettings, FreeRDP_GfxProgressive);
+			freerdp_settings_set_bool(clientSettings, FreeRDP_GfxProgressive, progressive);
+			progressive = freerdp_settings_get_bool(srvSettings, FreeRDP_GfxProgressiveV2);
+			freerdp_settings_set_bool(clientSettings, FreeRDP_GfxProgressiveV2, progressive);
+
+			if (!avc444v2 && !avc444 && !avc420)
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+
+			WINPR_ASSERT(context->CapsConfirm);
 			*rc = context->CapsConfirm(context, &pdu);
 			return TRUE;
 		}
@@ -711,50 +753,68 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 {
 	UINT16 index;
 	UINT rc = ERROR_INTERNAL_ERROR;
+	const rdpSettings* srvSettings;
+	rdpSettings* clientSettings;
 	BOOL h264 = FALSE;
-	rdpSettings* settings = context->rdpcontext->settings;
+
 	UINT32 flags = 0;
-	rdpShadowClient* client = (rdpShadowClient*)context->custom;
+	rdpShadowClient* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(capsAdvertise);
+
+	client = (rdpShadowClient*)context->custom;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(context->rdpcontext);
+
+	srvSettings = context->rdpcontext->settings;
+	WINPR_ASSERT(srvSettings);
+
+	clientSettings = client->context.settings;
+	WINPR_ASSERT(clientSettings);
 
 #ifdef WITH_GFX_H264
-	if (shadow_encoder_prepare(client->encoder, FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444) >= 0)
-		h264 = TRUE;
-
+	h264 =
+	    (shadow_encoder_prepare(client->encoder, FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444) >= 0);
+#else
+	freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, FALSE);
+	freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, FALSE);
+	freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
 #endif
 
 	/* Request full screen update for new gfx channel */
 	if (!shadow_client_refresh_rect(&client->context, 0, NULL))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets,
+	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_106, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets,
+	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_105, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets,
+	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_104, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets,
+	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_103, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets,
+	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_102, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets,
+	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_101, &rc))
 		return rc;
 
-	if (shadow_client_caps_test_version(context, h264, capsAdvertise->capsSets,
+	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_10, &rc))
 		return rc;
 
-	if (!shadow_are_caps_filtered(settings, RDPGFX_CAPVERSION_81))
+	if (!shadow_are_caps_filtered(srvSettings, RDPGFX_CAPVERSION_81))
 	{
 		for (index = 0; index < capsAdvertise->capsSetCount; index++)
 		{
@@ -766,29 +826,35 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				RDPGFX_CAPS_CONFIRM_PDU pdu;
 				pdu.capsSet = &caps;
 
-				if (settings)
-				{
 					flags = pdu.capsSet->flags;
-					settings->GfxAVC444v2 = settings->GfxAVC444 = FALSE;
-					settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
-					settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-#ifndef WITH_GFX_H264
-					settings->GfxH264 = FALSE;
-					pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_AVC420_ENABLED;
-#else
-					if (h264)
-						settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
-					else
-						settings->GfxH264 = FALSE;
-#endif
-				}
 
-				return context->CapsConfirm(context, &pdu);
+				    freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, FALSE);
+				    freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, FALSE);
+
+				    freerdp_settings_set_bool(clientSettings, FreeRDP_GfxThinClient,
+				                              (flags & RDPGFX_CAPS_FLAG_THINCLIENT));
+				    freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
+				                              (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE));
+
+#ifndef WITH_GFX_H264
+				    freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
+				    pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_AVC420_ENABLED;
+#else
+
+				    if (h264)
+					    freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264,
+					                              (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED));
+				    else
+					    freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
+#endif
+
+				    WINPR_ASSERT(context->CapsConfirm);
+				    return context->CapsConfirm(context, &pdu);
 			}
 		}
 	}
 
-	if (!shadow_are_caps_filtered(settings, RDPGFX_CAPVERSION_8))
+	if (!shadow_are_caps_filtered(srvSettings, RDPGFX_CAPVERSION_8))
 	{
 		for (index = 0; index < capsAdvertise->capsSetCount; index++)
 		{
@@ -799,14 +865,18 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				RDPGFX_CAPSET caps = *currentCaps;
 				RDPGFX_CAPS_CONFIRM_PDU pdu;
 				pdu.capsSet = &caps;
+				flags = pdu.capsSet->flags;
 
-				if (settings)
-				{
-					flags = pdu.capsSet->flags;
-					settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
-					settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-				}
+				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, FALSE);
+				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, FALSE);
+				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
 
+				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxThinClient,
+				                          (flags & RDPGFX_CAPS_FLAG_THINCLIENT));
+				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
+				                          (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE));
+
+				WINPR_ASSERT(context->CapsConfirm);
 				return context->CapsConfirm(context, &pdu);
 			}
 		}
@@ -829,13 +899,13 @@ static INLINE UINT32 rdpgfx_estimate_h264_avc420(RDPGFX_AVC420_BITMAP_STREAM* ha
  *
  * @return TRUE on success
  */
-static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* pSrcData,
+static BOOL shadow_client_send_surface_gfx(const rdpShadowClient* client, const BYTE* pSrcData,
                                            UINT32 nSrcStep, UINT16 nXSrc, UINT16 nYSrc,
                                            UINT16 nWidth, UINT16 nHeight)
 {
 	UINT error = CHANNEL_RC_OK;
-	rdpContext* context = (rdpContext*)client;
-	rdpSettings* settings;
+	const rdpContext* context = (const rdpContext*)client;
+	const rdpSettings* settings;
 	rdpShadowEncoder* encoder;
 	RDPGFX_SURFACE_COMMAND cmd;
 	RDPGFX_START_FRAME_PDU cmdstart;
@@ -965,7 +1035,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 			return FALSE;
 		}
 	}
-	else
+	else if (freerdp_settings_get_bool(settings, FreeRDP_GfxProgressive))
 	{
 		INT32 rc;
 		REGION16 region;
@@ -1004,6 +1074,21 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 			IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, &cmd, &cmdstart,
 			          &cmdend);
 		}
+
+		if (error)
+		{
+			WLog_ERR(TAG, "SurfaceFrameCommand failed with error %" PRIu32 "", error);
+			return FALSE;
+		}
+	}
+	else
+	{
+		cmd.data = pSrcData;
+		cmd.length = nSrcStep * nHeight;
+		cmd.codecId = RDPGFX_CODECID_UNCOMPRESSED;
+
+		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, &cmd, &cmdstart,
+		          &cmdend);
 
 		if (error)
 		{
@@ -2055,8 +2140,8 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 	server = (rdpShadowServer*)listener->info;
 	peer->ContextExtra = (void*)server;
 	peer->ContextSize = sizeof(rdpShadowClient);
-	peer->ContextNew = (psPeerContextNew)shadow_client_context_new;
-	peer->ContextFree = (psPeerContextFree)shadow_client_context_free;
+	peer->ContextNew = shadow_client_context_new;
+	peer->ContextFree = shadow_client_context_free;
 	peer->settings = freerdp_settings_clone(server->settings);
 
 	if (!freerdp_peer_context_new(peer))
