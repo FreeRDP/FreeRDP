@@ -633,7 +633,6 @@ static BOOL xf_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 widt
                                UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
 	xfContext* xfc = (xfContext*)context;
-	XRectangle rect;
 	XColor xbgcolor, xfgcolor;
 
 	if (!xf_decode_color(xfc, bgcolor, &xbgcolor))
@@ -642,10 +641,6 @@ static BOOL xf_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 widt
 	if (!xf_decode_color(xfc, fgcolor, &xfgcolor))
 		return FALSE;
 
-	rect.x = x;
-	rect.y = y;
-	rect.width = width;
-	rect.height = height;
 	xf_lock_x11(xfc);
 
 	if (!fOpRedundant)

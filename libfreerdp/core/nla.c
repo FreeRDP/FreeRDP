@@ -1144,7 +1144,6 @@ static int nla_server_authenticate(rdpNla* nla)
 
 	while (TRUE)
 	{
-		int rc = -1;
 		SecBuffer inputBuffer = { 0 };
 		SecBuffer outputBuffer = { 0 };
 		SecBufferDesc inputBufferDesc = { 0 };
@@ -1219,6 +1218,8 @@ static int nla_server_authenticate(rdpNla* nla)
 
 		if (nla->status == SEC_E_OK)
 		{
+			int rc = -1;
+
 			if (outputBuffer.cbBuffer != 0)
 			{
 				if (!nla_send(nla))
@@ -2219,7 +2220,7 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 
 int nla_server_recv(rdpNla* nla)
 {
-	int status;
+	int status = -1;
 	wStream* s = nla_server_recv_stream(nla);
 	if (!s)
 		goto fail;
