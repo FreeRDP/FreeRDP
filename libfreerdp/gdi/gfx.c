@@ -1573,6 +1573,7 @@ void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx)
 
 	gfx->custom = NULL;
 	codecs_free(gfx->codecs);
+	gfx->codecs = NULL;
 	DeleteCriticalSection(&gfx->mux);
 	PROFILER_PRINT_HEADER
 	PROFILER_PRINT(gfx->SurfaceProfiler)
