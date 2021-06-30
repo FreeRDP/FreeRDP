@@ -26,6 +26,7 @@ DEB_CMAKE_EXTRA_FLAGS :=  -DCMAKE_SKIP_RPATH=FALSE \
                           -DCMAKE_INSTALL_PREFIX=/opt/freerdp-nightly/ \
                           -DCMAKE_INSTALL_INCLUDEDIR=include \
                           -DCMAKE_INSTALL_LIBDIR=lib \
+                          -DNO_CMAKE_PACKAGE_REGISTRY=ON \
                           $(SANATIZE_ADDRESS) \
                           $(NULL)
 
