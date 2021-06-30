@@ -402,7 +402,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				attrs->physicalWidth = rrmonitors[i].mwidth;
 				attrs->physicalHeight = rrmonitors[i].mheight;
 				ret = XRRRotations(xfc->display, i, &rot);
-				attrs->orientation = rot;
+				attrs->orientation = ret;
 			}
 
 #endif

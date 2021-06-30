@@ -95,7 +95,6 @@ int xf_input_init(xfContext* xfc, Window window)
 	int ndevices;
 	int major = 2;
 	int minor = 2;
-	Status xstatus;
 	XIDeviceInfo* info;
 	XIEventMask evmasks[64];
 	int opcode, event, error;
@@ -196,7 +195,11 @@ int xf_input_init(xfContext* xfc, Window window)
 	XIFreeDeviceInfo(info);
 
 	if (nmasks > 0)
-		xstatus = XISelectEvents(xfc->display, window, evmasks, nmasks);
+	{
+		Status xstatus = XISelectEvents(xfc->display, window, evmasks, nmasks);
+		if (xstatus != 0)
+			WLog_WARN(TAG, "XISelectEvents returned %d", xstatus);
+	}
 
 	return 0;
 }

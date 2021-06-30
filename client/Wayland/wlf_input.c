@@ -443,7 +443,7 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 		return FALSE;
 
 	context = (wlfContext*)instance->context;
-	RdpeiClientContext* rdpei = ((wlfContext*)instance->context)->rdpei;
+	RdpeiClientContext* rdpei = context->rdpei;
 
 	// Emulate mouse click if touch is not possible, like in login screen
 	if (!rdpei)

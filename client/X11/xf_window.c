@@ -497,19 +497,27 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	}
 	else
 	{
-		void* mem;
-		ftruncate(window->shmid, sizeof(window->handle));
-		mem = mmap(0, sizeof(window->handle), PROT_READ | PROT_WRITE, MAP_SHARED, window->shmid, 0);
-
-		if (mem == MAP_FAILED)
+		int rc = ftruncate(window->shmid, sizeof(window->handle));
+		if (rc != 0)
 		{
-			DEBUG_X11("xf_CreateDesktopWindow: failed to assign pointer to the memory address - "
-			          "shmat()\n");
+			DEBUG_X11("%s: ftruncate failed with %s [%d]", __FUNCTION__, strerror(rc), rc);
 		}
 		else
 		{
-			window->xfwin = mem;
-			*window->xfwin = window->handle;
+			void* mem = mmap(0, sizeof(window->handle), PROT_READ | PROT_WRITE, MAP_SHARED,
+			                 window->shmid, 0);
+
+			if (mem == MAP_FAILED)
+			{
+				DEBUG_X11(
+				    "xf_CreateDesktopWindow: failed to assign pointer to the memory address - "
+				    "shmat()\n");
+			}
+			else
+			{
+				window->xfwin = mem;
+				*window->xfwin = window->handle;
+			}
 		}
 	}
 

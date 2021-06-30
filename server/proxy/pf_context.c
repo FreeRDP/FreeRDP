@@ -88,12 +88,9 @@ error:
 static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 {
 	pServerContext* context = (pServerContext*)ctx;
-	proxyServer* server;
 
 	if (!client || !context)
 		return;
-
-	server = (proxyServer*)client->ContextExtra;
 
 	WTSCloseServer((HANDLE)context->vcm);
 
