@@ -381,6 +381,8 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2,
 			                               arg->Value ? TRUE : FALSE))
 				return COMMAND_LINE_ERROR;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, arg->Value ? TRUE : FALSE))
+				return COMMAND_LINE_ERROR;
 		}
 		CommandLineSwitchDefault(arg)
 		{
