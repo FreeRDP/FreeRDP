@@ -330,6 +330,11 @@ static UINT rdpgfx_send_create_surface_pdu(RdpgfxServerContext* context,
 {
 	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_CREATESURFACE, 7);
 
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT((pdu->pixelFormat == GFX_PIXEL_FORMAT_XRGB_8888 0x20) ||
+	             (pdu->pixelFormat == GFX_PIXEL_FORMAT_ARGB_8888 0x21));
+
 	if (!s)
 	{
 		WLog_ERR(TAG, "rdpgfx_server_single_packet_new failed!");
