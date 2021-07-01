@@ -118,6 +118,7 @@ int main(int argc, char** argv)
 	/* By default allow all GFX modes.
 	 * This can be changed with command line flags [+|-]gfx-CODEC
 	 */
+	freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32);
 	freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE);
 	freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE);
 	freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE);
