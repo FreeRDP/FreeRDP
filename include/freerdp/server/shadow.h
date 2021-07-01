@@ -94,6 +94,7 @@ struct rdp_shadow_client
 
 	HANDLE thread;
 	BOOL activated;
+	BOOL first_frame;
 	BOOL inLobby;
 	BOOL mayView;
 	BOOL mayInteract;

@@ -72,6 +72,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_GfxAVC444,
 	FreeRDP_GfxAVC444v2,
 	FreeRDP_GfxH264,
+	FreeRDP_GfxPlanar,
 	FreeRDP_GfxProgressive,
 	FreeRDP_GfxProgressiveV2,
 	FreeRDP_GfxSendQoeAck,

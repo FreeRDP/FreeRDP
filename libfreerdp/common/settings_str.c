@@ -83,6 +83,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_GfxAVC444, 0, "FreeRDP_GfxAVC444" },
 	{ FreeRDP_GfxAVC444v2, 0, "FreeRDP_GfxAVC444v2" },
 	{ FreeRDP_GfxH264, 0, "FreeRDP_GfxH264" },
+	{ FreeRDP_GfxPlanar, 0, "FreeRDP_GfxPlanar" },
 	{ FreeRDP_GfxProgressive, 0, "FreeRDP_GfxProgressive" },
 	{ FreeRDP_GfxProgressiveV2, 0, "FreeRDP_GfxProgressiveV2" },
 	{ FreeRDP_GfxSendQoeAck, 0, "FreeRDP_GfxSendQoeAck" },

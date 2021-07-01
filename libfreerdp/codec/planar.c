@@ -943,7 +943,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 static INLINE BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format, UINT32 width,
                                               UINT32 height, UINT32 scanline, BYTE* planes[4])
 {
-	INT32 i, j, k;
+	INT64 i, j, k;
 	if ((width > INT32_MAX) || (height > INT32_MAX) || (scanline > INT32_MAX))
 		return FALSE;
 
@@ -952,11 +952,11 @@ static INLINE BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format, U
 	if (scanline == 0)
 		scanline = width * GetBytesPerPixel(format);
 
-	for (i = (INT32)height - 1; i >= 0; i--)
+	for (i = (INT64)height - 1; i >= 0; i--)
 	{
-		const BYTE* pixel = &data[(INT32)scanline * i];
+		const BYTE* pixel = &data[scanline * (UINT32)i];
 
-		for (j = 0; j < (INT32)width; j++)
+		for (j = 0; j < (INT64)width; j++)
 		{
 			const UINT32 color = ReadColor(pixel, format);
 			pixel += GetBytesPerPixel(format);
