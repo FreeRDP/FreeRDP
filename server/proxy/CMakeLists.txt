@@ -54,6 +54,8 @@ set(${MODULE_PREFIX}_SRCS
   pf_rdpsnd.c
   pf_rdpsnd.h
   pf_log.h
+  pf_dynamic_passthrough.c
+  pf_dynamic_passthrough.h
   )
 
 # On windows create dll version information.

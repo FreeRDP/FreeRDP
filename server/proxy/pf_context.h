@@ -33,11 +33,14 @@
 #include <freerdp/server/disp.h>
 #include <freerdp/server/cliprdr.h>
 #include <freerdp/server/rdpsnd.h>
+#include <freerdp/client/dynamic_passthrough.h>
+#include <freerdp/server/dynamic_passthrough.h>
 
 #include "pf_config.h"
 #include "pf_server.h"
 
 #define PROXY_SESSION_ID_LENGTH 32
+#define DYNAMIC_PASSTHROUGH_MAX_CHANNELS 32
 
 typedef struct proxy_data proxyData;
 
@@ -59,6 +62,8 @@ struct p_server_context
 	CliprdrServerContext* cliprdr;
 	RdpsndServerContext* rdpsnd;
 
+	wArrayList* dynamic_passthrough_channels;
+
 	HANDLE* vc_handles; /* static virtual channels open handles */
 	wHashTable* vc_ids; /* channel_name -> channel_id map */
 };
@@ -79,6 +84,8 @@ struct p_client_context
 	DispClientContext* disp;
 	CliprdrClientContext* cliprdr;
 	RailClientContext* rail;
+
+	wArrayList* dynamic_passthrough_channels;
 
 	/*
 	 * In a case when freerdp_connect fails,

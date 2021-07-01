@@ -26,10 +26,12 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+#include <freerdp/client/dynamic_passthrough.h>
 #include "drdynvc_main.h"
 
 #define TAG CHANNELS_TAG("drdynvc.client")
 
+static UINT dvcman_close_passthrough_channel(DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL* channel);
 static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId,
                                  BOOL bSendClosePDU);
 static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr);
@@ -505,6 +507,7 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelMana
 	if (!ArrayList_Append(dvcman->channels, channel))
 		return ERROR_INTERNAL_ERROR;
 
+	BOOL found = FALSE;
 	ArrayList_Lock(dvcman->listeners);
 	for (i = 0; i < ArrayList_Count(dvcman->listeners); i++)
 	{
@@ -512,6 +515,7 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelMana
 
 		if (strcmp(listener->channel_name, ChannelName) == 0)
 		{
+			found = TRUE;
 			IWTSVirtualChannelCallback* pCallback = NULL;
 			channel->iface.Write = dvcman_write_channel;
 			channel->iface.Close = dvcman_close_channel_iface;
@@ -555,6 +559,49 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelMana
 			}
 		}
 	}
+
+	if (!found)
+	{
+		DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL* dvc_channel =
+		    (DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL*)calloc(1,
+		                                                sizeof(DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL));
+		if (dvc_channel)
+		{
+			dvc_channel->dvcman_channel = channel;
+			dvc_channel->iface = &channel->iface;
+
+			DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL_CALLLBACK* callback =
+			    (DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL_CALLLBACK*)calloc(
+			        1, sizeof(DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL_CALLLBACK));
+			if (!callback)
+			{
+				WLog_Print(drdynvc->log, WLOG_ERROR,
+				           "dvcman_create_channel::callback calloc failed!");
+			}
+			else
+			{
+				callback->plugin = NULL;
+				callback->channel_mgr = pChannelMgr;
+				callback->channel = channel; 
+
+				dvc_channel->channel_callback = callback;
+				dvc_channel->disconnect = dvcman_close_passthrough_channel;
+				channel->channel_callback = callback;
+				channel->iface.Write = dvcman_write_channel;
+				channel->iface.Close = dvcman_close_channel_iface;
+				context = dvcman->drdynvc->context;
+				channel->status = CHANNEL_RC_OK;
+				IFCALLRET(context->OnChannelConnected, error, context, ChannelName, dvc_channel);
+				goto fail;
+			}
+		}
+		else
+		{
+			WLog_Print(drdynvc->log, WLOG_ERROR,
+			           "dvcman_create_channel::dvc_channel calloc failed!");
+		}
+	}
+
 	error = ERROR_INTERNAL_ERROR;
 fail:
 	ArrayList_Unlock(dvcman->listeners);
@@ -600,6 +647,13 @@ static UINT dvcman_open_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelManage
 	}
 
 	return CHANNEL_RC_OK;
+}
+
+UINT dvcman_close_passthrough_channel(DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL* channel)
+{
+	DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL_CALLLBACK* callback = channel->channel_callback;
+	UINT32 ChannelId = callback->channel_mgr->GetChannelId(channel->dvcman_channel);
+	return dvcman_close_channel(callback->channel_mgr, ChannelId, TRUE);
 }
 
 /**
@@ -702,7 +756,10 @@ static UINT dvcman_receive_channel_data(drdynvcPlugin* drdynvc,
 	{
 		/* Windows 8.1 tries to open channels not created.
 		 * Ignore cases like this. */
-		WLog_Print(drdynvc->log, WLOG_ERROR, "ChannelId %" PRIu32 " not found!", ChannelId);
+		/* Post passthrough channel disconnection some 
+		 * messages may still come through. Probably safe 
+		 * to ignore. */
+		WLog_Print(drdynvc->log, WLOG_DEBUG, "dvcman_receive_channel_data::ChannelId %" PRIu32 " not found!", ChannelId);
 		return CHANNEL_RC_OK;
 	}
 
@@ -731,7 +788,14 @@ static UINT dvcman_receive_channel_data(drdynvcPlugin* drdynvc,
 	}
 	else
 	{
-		status = channel->channel_callback->OnDataReceived(channel->channel_callback, data);
+		if (channel->channel_callback->OnDataReceived)
+		{
+			status = channel->channel_callback->OnDataReceived(channel->channel_callback, data);
+		}
+		else
+		{
+			status = ERROR_CALL_NOT_IMPLEMENTED;
+		}
 	}
 
 	return status;
