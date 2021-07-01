@@ -234,6 +234,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_GfxH264:
 			return settings->GfxH264;
 
+		case FreeRDP_GfxPlanar:
+			return settings->GfxPlanar;
+
 		case FreeRDP_GfxProgressive:
 			return settings->GfxProgressive;
 
@@ -818,6 +821,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_GfxH264:
 			settings->GfxH264 = val;
+			break;
+
+		case FreeRDP_GfxPlanar:
+			settings->GfxPlanar = val;
 			break;
 
 		case FreeRDP_GfxProgressive:

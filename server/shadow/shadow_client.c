@@ -138,6 +138,7 @@ static INLINE BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
 		return FALSE;
 	}
 
+	client->first_frame = TRUE;
 	return TRUE;
 }
 
@@ -797,6 +798,8 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 		if (currentCaps->version == capsVersion)
 		{
 			UINT32 flags;
+			BOOL planar = FALSE;
+			BOOL rfx = FALSE;
 			BOOL avc444v2 = FALSE;
 			BOOL avc444 = FALSE;
 			BOOL avc420 = FALSE;
@@ -824,6 +827,12 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 			freerdp_settings_set_bool(clientSettings, FreeRDP_GfxProgressive, progressive);
 			progressive = freerdp_settings_get_bool(srvSettings, FreeRDP_GfxProgressiveV2);
 			freerdp_settings_set_bool(clientSettings, FreeRDP_GfxProgressiveV2, progressive);
+
+			rfx = freerdp_settings_get_bool(srvSettings, FreeRDP_RemoteFxCodec);
+			freerdp_settings_set_bool(clientSettings, FreeRDP_RemoteFxCodec, rfx);
+
+			planar = freerdp_settings_get_bool(srvSettings, FreeRDP_GfxPlanar);
+			freerdp_settings_set_bool(clientSettings, FreeRDP_GfxPlanar, planar);
 
 			if (!avc444v2 && !avc444 && !avc420)
 				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
@@ -994,10 +1003,11 @@ static INLINE UINT32 rdpgfx_estimate_h264_avc420(RDPGFX_AVC420_BITMAP_STREAM* ha
  *
  * @return TRUE on success
  */
-static BOOL shadow_client_send_surface_gfx(const rdpShadowClient* client, const BYTE* pSrcData,
+static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* pSrcData,
                                            UINT32 nSrcStep, UINT32 SrcFormat, UINT16 nXSrc,
                                            UINT16 nYSrc, UINT16 nWidth, UINT16 nHeight)
 {
+	UINT32 id;
 	UINT error = CHANNEL_RC_OK;
 	const rdpContext* context = (const rdpContext*)client;
 	const rdpSettings* settings;
@@ -1015,6 +1025,12 @@ static BOOL shadow_client_send_surface_gfx(const rdpShadowClient* client, const 
 
 	if (!settings || !encoder)
 		return FALSE;
+
+	if (client->first_frame)
+	{
+		rfx_context_reset(encoder->rfx, nWidth, nHeight);
+		client->first_frame = FALSE;
+	}
 
 	cmdstart.frameId = shadow_encoder_create_frame_id(encoder);
 	GetSystemTime(&sTime);
@@ -1035,6 +1051,7 @@ static BOOL shadow_client_send_surface_gfx(const rdpShadowClient* client, const 
 	cmd.data = NULL;
 	cmd.extra = NULL;
 
+	id = freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecId);
 	if (settings->GfxAVC444 || settings->GfxAVC444v2)
 	{
 		INT32 rc;
@@ -1130,6 +1147,57 @@ static BOOL shadow_client_send_surface_gfx(const rdpShadowClient* client, const 
 			return FALSE;
 		}
 	}
+	else if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) && (id != 0))
+	{
+		BOOL rc;
+		wStream* s;
+		RECTANGLE_16 rect;
+
+		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_REMOTEFX) < 0)
+		{
+			WLog_ERR(TAG, "Failed to prepare encoder FREERDP_CODEC_REMOTEFX");
+			return FALSE;
+		}
+
+		s = Stream_New(NULL, 1024);
+		WINPR_ASSERT(s);
+
+		WINPR_ASSERT(cmd.left <= UINT16_MAX);
+		WINPR_ASSERT(cmd.top <= UINT16_MAX);
+		WINPR_ASSERT(cmd.right <= UINT16_MAX);
+		WINPR_ASSERT(cmd.bottom <= UINT16_MAX);
+		rect.left = (UINT16)cmd.left;
+		rect.top = (UINT16)cmd.top;
+		rect.right = (UINT16)cmd.right;
+		rect.bottom = (UINT16)cmd.bottom;
+
+		rc = rfx_compose_message(encoder->rfx, s, &rect, 1, pSrcData, nWidth, nHeight, nSrcStep);
+
+		if (!rc)
+		{
+			WLog_ERR(TAG, "rfx_compose_message failed");
+			Stream_Free(s, TRUE);
+			return FALSE;
+		}
+
+		/* rc > 0 means new data */
+		if (rc > 0)
+		{
+			cmd.codecId = RDPGFX_CODECID_CAVIDEO;
+			cmd.data = Stream_Buffer(s);
+			cmd.length = Stream_GetPosition(s);
+
+			IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, &cmd, &cmdstart,
+			          &cmdend);
+		}
+
+		Stream_Free(s, TRUE);
+		if (error)
+		{
+			WLog_ERR(TAG, "SurfaceFrameCommand failed with error %" PRIu32 "", error);
+			return FALSE;
+		}
+	}
 	else if (freerdp_settings_get_bool(settings, FreeRDP_GfxProgressive))
 	{
 		INT32 rc;
@@ -1176,6 +1244,47 @@ static BOOL shadow_client_send_surface_gfx(const rdpShadowClient* client, const 
 			return FALSE;
 		}
 	}
+	else if (freerdp_settings_get_bool(settings, FreeRDP_GfxPlanar))
+	{
+		BOOL rc;
+		const UINT32 w = cmd.right - cmd.left;
+		const UINT32 h = cmd.bottom - cmd.top;
+		const size_t step = w * GetBytesPerPixel(SrcFormat);
+		const size_t size = step * h;
+		BYTE* dst;
+
+		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_PLANAR) < 0)
+		{
+			WLog_ERR(TAG, "Failed to prepare encoder FREERDP_CODEC_PLANAR");
+			return FALSE;
+		}
+
+		rc = freerdp_bitmap_planar_context_reset(encoder->planar, w, h);
+		WINPR_ASSERT(rc);
+
+		dst = malloc(size);
+		WINPR_ASSERT(dst);
+		rc = freerdp_image_copy(dst, SrcFormat, step, 0, 0, w, h, pSrcData, SrcFormat, nSrcStep,
+		                        cmd.left, cmd.top, NULL, FREERDP_FLIP_VERTICAL);
+		WINPR_ASSERT(rc);
+
+		cmd.data = freerdp_bitmap_compress_planar(encoder->planar, dst, SrcFormat, w, h, step, NULL,
+		                                          &cmd.length);
+		WINPR_ASSERT(cmd.data || (cmd.length == 0));
+
+		free(dst);
+
+		cmd.codecId = RDPGFX_CODECID_PLANAR;
+
+		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, &cmd, &cmdstart,
+		          &cmdend);
+		free(cmd.data);
+		if (error)
+		{
+			WLog_ERR(TAG, "SurfaceFrameCommand failed with error %" PRIu32 "", error);
+			return FALSE;
+		}
+	}
 	else
 	{
 		BOOL rc;
@@ -1183,10 +1292,10 @@ static BOOL shadow_client_send_surface_gfx(const rdpShadowClient* client, const 
 		const UINT32 h = cmd.bottom - cmd.top;
 		const UINT32 length = w * 4 * h;
 		BYTE* data = malloc(length);
-		if (!data)
-			return FALSE;
 
-		rc = freerdp_image_copy(data, PIXEL_FORMAT_BGRA32, w * 4, 0, 0, w, h, pSrcData, SrcFormat,
+		WINPR_ASSERT(data);
+
+		rc = freerdp_image_copy(data, PIXEL_FORMAT_BGRA32, 0, 0, 0, w, h, pSrcData, SrcFormat,
 		                        nSrcStep, cmd.left, cmd.top, NULL, 0);
 		WINPR_ASSERT(rc);
 
@@ -1501,6 +1610,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 				UINT32 dstSize;
 				buffer = encoder->grid[k];
 				data = &pSrcData[(bitmap->destTop * nSrcStep) + (bitmap->destLeft * 4)];
+
 				buffer =
 				    freerdp_bitmap_compress_planar(encoder->planar, data, SrcFormat, bitmap->width,
 				                                   bitmap->height, nSrcStep, buffer, &dstSize);
