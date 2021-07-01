@@ -26,4 +26,11 @@
 #cmakedefine HAVE_STRNDUP
 #cmakedefine WITH_EVENTFD_READ_WRITE
 
+#cmakedefine WITH_NATIVE_SSPI
+#cmakedefine WITH_ICU
+
+#cmakedefine WITH_DEBUG_NTLM
+#cmakedefine WITH_DEBUG_THREADS
+#cmakedefine WITH_DEBUG_MUTEX
+
 #endif /* WINPR_CONFIG_H */
