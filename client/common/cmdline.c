@@ -2654,7 +2654,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "nsc")
 		{
-			settings->NSCodec = enable;
+			freerdp_settings_set_bool(settings, FreeRDP_NSCodec, enable);
 		}
 #if defined(WITH_JPEG)
 		CommandLineSwitchCase(arg, "jpeg")
@@ -3025,7 +3025,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 			else if (strcmp(arg->Value, "nsc") == 0)
 			{
-				settings->NSCodec = TRUE;
+				freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE);
 			}
 
 #if defined(WITH_JPEG)
@@ -3396,7 +3396,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 	freerdp_performance_flags_make(settings);
 
-	if (settings->RemoteFxCodec || settings->NSCodec || settings->SupportGraphicsPipeline)
+	if (settings->RemoteFxCodec || freerdp_settings_get_bool(settings, FreeRDP_NSCodec) ||
+	    settings->SupportGraphicsPipeline)
 	{
 		settings->FastPathOutput = TRUE;
 		settings->FrameMarkerCommandEnabled = TRUE;

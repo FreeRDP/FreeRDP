@@ -156,9 +156,11 @@ static INLINE void shadow_client_free_queued_message(void* obj)
 
 static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 {
+	BOOL NSCodec;
 	const char bind_address[] = "bind-address,";
 	rdpShadowClient* client = (rdpShadowClient*)context;
 	rdpSettings* settings;
+	const rdpSettings* srvSettings;
 	rdpShadowServer* server;
 	const wObject cb = { NULL, NULL, NULL, shadow_client_free_queued_message, NULL };
 
@@ -168,6 +170,9 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	server = (rdpShadowServer*)peer->ContextExtra;
 	WINPR_ASSERT(server);
 
+	srvSettings = server->settings;
+	WINPR_ASSERT(srvSettings);
+
 	client->server = server;
 	client->subsystem = server->subsystem;
 	WINPR_ASSERT(client->subsystem);
@@ -175,14 +180,15 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	settings = peer->settings;
 	WINPR_ASSERT(settings);
 
-	settings->ColorDepth = 32;
-	settings->NSCodec = TRUE;
-	settings->RemoteFxCodec = TRUE;
+	settings->ColorDepth = srvSettings->ColorDepth;
+	NSCodec = freerdp_settings_get_bool(srvSettings, FreeRDP_NSCodec);
+	freerdp_settings_set_bool(settings, FreeRDP_NSCodec, NSCodec);
+	settings->RemoteFxCodec = srvSettings->RemoteFxCodec;
 	settings->BitmapCacheV3Enabled = TRUE;
 	settings->FrameMarkerCommandEnabled = TRUE;
 	settings->SurfaceFrameMarkerEnabled = TRUE;
 	settings->SupportGraphicsPipeline = TRUE;
-	settings->GfxH264 = FALSE;
+	settings->GfxH264 = srvSettings->GfxH264;
 	settings->DrawAllowSkipAlpha = TRUE;
 	settings->DrawAllowColorSubsampling = TRUE;
 	settings->DrawAllowDynamicColorFidelity = TRUE;
@@ -196,7 +202,6 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 
 	if (!(settings->RdpKeyFile = _strdup(settings->PrivateKeyFile)))
 		goto fail_rdpkey_file;
-
 	if (server->ipcSocket && (strncmp(bind_address, server->ipcSocket,
 	                                  strnlen(bind_address, sizeof(bind_address))) != 0))
 	{
@@ -416,7 +421,12 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 		settings->ColorDepth = 16; /* disable 24bpp */
 
 	if (settings->MultifragMaxRequestSize < 0x3F0000)
-		settings->NSCodec = FALSE; /* NSCodec compressor does not support fragmentation yet */
+	{
+		BOOL rc = freerdp_settings_set_bool(
+		    settings, FreeRDP_NSCodec,
+		    FALSE); /* NSCodec compressor does not support fragmentation yet */
+		WINPR_ASSERT(rc);
+	}
 
 	WLog_INFO(TAG, "Client from %s is activated (%" PRIu32 "x%" PRIu32 "@%" PRIu32 ")",
 	          peer->hostname, settings->DesktopWidth, settings->DesktopHeight,
@@ -586,15 +596,6 @@ static BOOL shadow_client_activate(freerdp_peer* peer)
 
 	client = (rdpShadowClient*)peer->context;
 	WINPR_ASSERT(client);
-
-	if (settings->ClientDir && (strcmp(settings->ClientDir, "librdp") == 0))
-	{
-		/* Hack for Mac/iOS/Android Microsoft RDP clients */
-		settings->RemoteFxCodec = FALSE;
-		settings->NSCodec = FALSE;
-		settings->NSCodecAllowSubsampling = FALSE;
-		settings->SurfaceFrameMarkerEnabled = FALSE;
-	}
 
 	client->activated = TRUE;
 	client->inLobby = client->mayView ? FALSE : TRUE;
@@ -1336,6 +1337,7 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 	rdpSettings* settings;
 	rdpShadowEncoder* encoder;
 	SURFACE_BITS_COMMAND cmd = { 0 };
+	UINT32 nsID, rfxID;
 
 	if (!context || !pSrcData)
 		return FALSE;
@@ -1350,7 +1352,9 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 	if (encoder->frameAck)
 		frameId = shadow_encoder_create_frame_id(encoder);
 
-	if (settings->RemoteFxCodec)
+	nsID = freerdp_settings_get_uint32(settings, FreeRDP_NSCodecId);
+	rfxID = freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecId);
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) && (rfxID != 0))
 	{
 		RFX_RECT rect;
 		RFX_MESSAGE* messages;
@@ -1377,8 +1381,8 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 		}
 
 		cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
-		WINPR_ASSERT(settings->RemoteFxCodecId <= UINT16_MAX);
-		cmd.bmp.codecID = (UINT16)settings->RemoteFxCodecId;
+		WINPR_ASSERT(rfxID <= UINT16_MAX);
+		cmd.bmp.codecID = (UINT16)rfxID;
 		cmd.destLeft = 0;
 		cmd.destTop = 0;
 		cmd.destRight = settings->DesktopWidth;
@@ -1433,7 +1437,7 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 		free(messageRects);
 		free(messages);
 	}
-	else if (settings->NSCodec)
+	if (freerdp_settings_get_bool(settings, FreeRDP_NSCodec) && (nsID != 0))
 	{
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_NSCODEC) < 0)
 		{
@@ -1447,8 +1451,8 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 		nsc_compose_message(encoder->nsc, s, pSrcData, nWidth, nHeight, nSrcStep);
 		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 		cmd.bmp.bpp = 32;
-		WINPR_ASSERT(settings->NSCodecId <= UINT16_MAX);
-		cmd.bmp.codecID = (UINT16)settings->NSCodecId;
+		WINPR_ASSERT(nsID <= UINT16_MAX);
+		cmd.bmp.codecID = (UINT16)nsID;
 		cmd.destLeft = nXSrc;
 		cmd.destTop = nYSrc;
 		cmd.destRight = cmd.destLeft + nWidth;
@@ -1816,7 +1820,7 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 		ret = shadow_client_send_surface_gfx(client, pSrcData, nSrcStep, SrcFormat, 0, 0,
 		                                     (UINT16)nWidth, (UINT16)nHeight);
 	}
-	else if (settings->RemoteFxCodec || settings->NSCodec)
+	else if (settings->RemoteFxCodec || freerdp_settings_get_bool(settings, FreeRDP_NSCodec))
 	{
 		WINPR_ASSERT(nXSrc >= 0);
 		WINPR_ASSERT(nXSrc <= UINT16_MAX);

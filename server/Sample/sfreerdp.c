@@ -191,7 +191,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	settings = client->settings;
 	WINPR_ASSERT(settings);
 
-	if (!settings->RemoteFxCodec && !client->settings->NSCodec)
+	if (!settings->RemoteFxCodec && !freerdp_settings_get_bool(settings, FreeRDP_NSCodec))
 		return FALSE;
 
 	WINPR_ASSERT(settings->DesktopWidth <= UINT16_MAX);
@@ -264,7 +264,8 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 	BYTE* rgb_data = NULL;
 	int c;
 
-	if (!client->settings->RemoteFxCodec && !client->settings->NSCodec)
+	if (!client->settings->RemoteFxCodec &&
+	    !freerdp_settings_get_bool(client->settings, FreeRDP_NSCodec))
 	{
 		WLog_ERR(TAG, "Client doesn't support RemoteFX or NSCodec");
 		return FALSE;
@@ -810,7 +811,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_LOW; */
 	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_FIPS; */
 	client->settings->RemoteFxCodec = TRUE;
-	client->settings->NSCodec = TRUE;
+	freerdp_settings_set_bool(client->settings, FreeRDP_NSCodec, TRUE);
 	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
 	client->settings->RefreshRect = TRUE;

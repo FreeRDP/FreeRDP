@@ -776,7 +776,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		}
 		CommandLineSwitchCase(arg, "nsc")
 		{
-			settings->NSCodec = TRUE;
+			freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE);
 			WLog_WARN(TAG, "--nsc -> /nsc");
 		}
 		CommandLineSwitchCase(arg, "disable-wallpaper")
