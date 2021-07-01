@@ -60,13 +60,13 @@ static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 
 	WINPR_ASSERT(settings->DesktopWidth <= UINT16_MAX);
 	WINPR_ASSERT(settings->DesktopHeight <= UINT16_MAX);
-	createSurface.width = (UINT16)settings->DesktopWidth;
+	createSurface.width = (UINT16)settings->DesktopWidth + 64;
 	createSurface.height = (UINT16)settings->DesktopHeight;
 	createSurface.pixelFormat = GFX_PIXEL_FORMAT_XRGB_8888;
-	createSurface.surfaceId = 0;
+	createSurface.surfaceId = client->surfaceId;
 	surfaceToOutput.outputOriginX = 0;
 	surfaceToOutput.outputOriginY = 0;
-	surfaceToOutput.surfaceId = 0;
+	surfaceToOutput.surfaceId = client->surfaceId;
 	surfaceToOutput.reserved = 0;
 	IFCALLRET(context->CreateSurface, error, context, &createSurface);
 
@@ -98,7 +98,7 @@ static INLINE BOOL shadow_client_rdpgfx_release_surface(rdpShadowClient* client)
 	context = client->rdpgfx;
 	WINPR_ASSERT(context);
 
-	pdu.surfaceId = 0;
+	pdu.surfaceId = client->surfaceId++;
 	IFCALLRET(context->DeleteSurface, error, context, &pdu);
 
 	if (error)
@@ -173,6 +173,7 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	srvSettings = server->settings;
 	WINPR_ASSERT(srvSettings);
 
+	client->surfaceId = 1;
 	client->server = server;
 	client->subsystem = server->subsystem;
 	WINPR_ASSERT(client->subsystem);
@@ -1013,10 +1014,10 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	const rdpContext* context = (const rdpContext*)client;
 	const rdpSettings* settings;
 	rdpShadowEncoder* encoder;
-	RDPGFX_SURFACE_COMMAND cmd;
-	RDPGFX_START_FRAME_PDU cmdstart;
-	RDPGFX_END_FRAME_PDU cmdend;
-	SYSTEMTIME sTime;
+	RDPGFX_SURFACE_COMMAND cmd = { 0 };
+	RDPGFX_START_FRAME_PDU cmdstart = { 0 };
+	RDPGFX_END_FRAME_PDU cmdend = { 0 };
+	SYSTEMTIME sTime = { 0 };
 
 	if (!context || !pSrcData)
 		return FALSE;
@@ -1038,9 +1039,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	cmdstart.timestamp = (UINT32)(sTime.wHour << 22U | sTime.wMinute << 16U | sTime.wSecond << 10U |
 	                              sTime.wMilliseconds);
 	cmdend.frameId = cmdstart.frameId;
-	cmd.surfaceId = 0;
-	cmd.codecId = 0;
-	cmd.contextId = 0;
+	cmd.surfaceId = client->surfaceId;
 	cmd.format = PIXEL_FORMAT_BGRX32;
 	cmd.left = nXSrc;
 	cmd.top = nYSrc;
@@ -1048,9 +1047,6 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	cmd.bottom = cmd.top + nHeight;
 	cmd.width = nWidth;
 	cmd.height = nHeight;
-	cmd.length = 0;
-	cmd.data = NULL;
-	cmd.extra = NULL;
 
 	id = freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecId);
 	if (settings->GfxAVC444 || settings->GfxAVC444v2)
