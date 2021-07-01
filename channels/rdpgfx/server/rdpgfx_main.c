@@ -233,7 +233,6 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
                                            const RDPGFX_RESET_GRAPHICS_PDU* pdu)
 {
 	UINT32 index;
-	MONITOR_DEF* monitor;
 	wStream* s;
 
 	/* Check monitorCount. This ensures total size within 340 bytes) */
@@ -259,7 +258,7 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
 
 	for (index = 0; index < pdu->monitorCount; index++)
 	{
-		monitor = &(pdu->monitorDefArray[index]);
+		const MONITOR_DEF* monitor = &(pdu->monitorDefArray[index]);
 		Stream_Write_UINT32(s, monitor->left);   /* left (4 bytes) */
 		Stream_Write_UINT32(s, monitor->top);    /* top (4 bytes) */
 		Stream_Write_UINT32(s, monitor->right);  /* right (4 bytes) */
