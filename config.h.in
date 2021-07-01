@@ -28,10 +28,8 @@
 #cmakedefine WITH_NEON
 #cmakedefine WITH_IPP
 #cmakedefine WITH_CUPS
-#cmakedefine WITH_NATIVE_SSPI
 #cmakedefine WITH_JPEG
 #cmakedefine WITH_WIN8
-#cmakedefine WITH_ICU
 #cmakedefine WITH_RDPSND_DSOUND
 #cmakedefine HAVE_MATH_C99_LONG_DOUBLE
 
@@ -137,7 +135,6 @@
 #cmakedefine WITH_DEBUG_LICENSE
 #cmakedefine WITH_DEBUG_NEGO
 #cmakedefine WITH_DEBUG_NLA
-#cmakedefine WITH_DEBUG_NTLM
 #cmakedefine WITH_DEBUG_TSG
 #cmakedefine WITH_DEBUG_RAIL
 #cmakedefine WITH_DEBUG_RDP
@@ -149,9 +146,7 @@
 #cmakedefine WITH_DEBUG_SVC
 #cmakedefine WITH_DEBUG_RDPEI
 #cmakedefine WITH_DEBUG_TIMEZONE
-#cmakedefine WITH_DEBUG_THREADS
 #cmakedefine WITH_DEBUG_URBDRC
-#cmakedefine WITH_DEBUG_MUTEX
 #cmakedefine WITH_DEBUG_TRANSPORT
 #cmakedefine WITH_DEBUG_WND
 #cmakedefine WITH_DEBUG_X11
