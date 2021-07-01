@@ -99,6 +99,7 @@ struct rdp_shadow_client
 	BOOL mayView;
 	BOOL mayInteract;
 	BOOL suppressOutput;
+	UINT16 surfaceId;
 	wMessageQueue* MsgQueue;
 	CRITICAL_SECTION lock;
 	REGION16 invalidRegion;
