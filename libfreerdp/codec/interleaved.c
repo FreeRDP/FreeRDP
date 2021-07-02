@@ -127,12 +127,16 @@ static INLINE UINT32 ExtractCodeId(BYTE bOrderHdr)
 /**
  * Extract the run length of a compression order.
  */
-static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, UINT32* advance)
+static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const BYTE* pbEnd,
+                                      UINT32* advance)
 {
 	UINT32 runLength;
 	UINT32 ladvance;
 	ladvance = 1;
 	runLength = 0;
+
+	if (pbOrderHdr >= pbEnd)
+		return 0;
 
 	switch (code)
 	{
@@ -141,6 +145,8 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, UINT3
 
 			if (runLength == 0)
 			{
+				if (pbOrderHdr + 1 >= pbEnd)
+					return 0;
 				runLength = (*(pbOrderHdr + 1)) + 1;
 				ladvance += 1;
 			}
@@ -156,6 +162,9 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, UINT3
 
 			if (runLength == 0)
 			{
+				if (pbOrderHdr + 1 >= pbEnd)
+					return 0;
+
 				runLength = (*(pbOrderHdr + 1)) + 1;
 				ladvance += 1;
 			}
@@ -175,6 +184,9 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, UINT3
 			if (runLength == 0)
 			{
 				/* An extended (MEGA) run. */
+				if (pbOrderHdr + 1 >= pbEnd)
+					return 0;
+
 				runLength = (*(pbOrderHdr + 1)) + 32;
 				ladvance += 1;
 			}
@@ -188,6 +200,9 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, UINT3
 			if (runLength == 0)
 			{
 				/* An extended (MEGA) run. */
+				if (pbOrderHdr + 1 >= pbEnd)
+					return 0;
+
 				runLength = (*(pbOrderHdr + 1)) + 16;
 				ladvance += 1;
 			}
@@ -202,6 +217,9 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, UINT3
 		case MEGA_MEGA_FGBG_IMAGE:
 		case MEGA_MEGA_SET_FGBG_IMAGE:
 		case MEGA_MEGA_COLOR_IMAGE:
+			if (pbOrderHdr + 2 >= pbEnd)
+				return 0;
+
 			runLength = ((UINT16)pbOrderHdr[1]) | ((UINT16)(pbOrderHdr[2] << 8));
 			ladvance += 2;
 			break;
