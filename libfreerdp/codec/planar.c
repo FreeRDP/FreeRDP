@@ -24,6 +24,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/print.h>
 
 #include <freerdp/primitives.h>
@@ -940,32 +941,54 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 	return TRUE;
 }
 
-static INLINE BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format, UINT32 width,
-                                              UINT32 height, UINT32 scanline, BYTE* planes[4])
+static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* planar, const BYTE* data,
+                                              UINT32 format, UINT32 width, UINT32 height,
+                                              UINT32 scanline, BYTE* planes[4])
 {
-	INT64 i, j, k;
+	WINPR_ASSERT(planar);
+
 	if ((width > INT32_MAX) || (height > INT32_MAX) || (scanline > INT32_MAX))
 		return FALSE;
-
-	k = 0;
 
 	if (scanline == 0)
 		scanline = width * GetBytesPerPixel(format);
 
-	for (i = (INT64)height - 1; i >= 0; i--)
+	if (planar->topdown)
 	{
-		const BYTE* pixel = &data[scanline * (UINT32)i];
-
-		for (j = 0; j < (INT64)width; j++)
+		UINT32 i, j, k = 0;
+		for (i = 0; i < height; i++)
 		{
-			const UINT32 color = ReadColor(pixel, format);
-			pixel += GetBytesPerPixel(format);
-			SplitColor(color, format, &planes[1][k], &planes[2][k], &planes[3][k], &planes[0][k],
-			           NULL);
-			k++;
+			const BYTE* pixel = &data[scanline * (UINT32)i];
+
+			for (j = 0; j < width; j++)
+			{
+				const UINT32 color = ReadColor(pixel, format);
+				pixel += GetBytesPerPixel(format);
+				SplitColor(color, format, &planes[1][k], &planes[2][k], &planes[3][k],
+				           &planes[0][k], NULL);
+				k++;
+			}
 		}
 	}
+	else
+	{
+		INT64 i;
+		UINT32 j, k = 0;
 
+		for (i = (INT64)height - 1; i >= 0; i--)
+		{
+			const BYTE* pixel = &data[scanline * (UINT32)i];
+
+			for (j = 0; j < width; j++)
+			{
+				const UINT32 color = ReadColor(pixel, format);
+				pixel += GetBytesPerPixel(format);
+				SplitColor(color, format, &planes[1][k], &planes[2][k], &planes[3][k],
+				           &planes[0][k], NULL);
+				k++;
+			}
+		}
+	}
 	return TRUE;
 }
 
@@ -1330,7 +1353,8 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, const BYTE*
 	if (!context->AllowSkipAlpha)
 		format = planar_invert_format(context, TRUE, format);
 
-	if (!freerdp_split_color_planes(data, format, width, height, scanline, context->planes))
+	if (!freerdp_split_color_planes(context, data, format, width, height, scanline,
+	                                context->planes))
 		return NULL;
 
 	if (context->AllowRunLengthEncoding)
@@ -1560,5 +1584,12 @@ void freerdp_bitmap_planar_context_free(BITMAP_PLANAR_CONTEXT* context)
 
 void freerdp_planar_switch_bgr(BITMAP_PLANAR_CONTEXT* planar, BOOL bgr)
 {
+	WINPR_ASSERT(planar);
 	planar->bgr = bgr;
+}
+
+void freerdp_planar_topdown_image(BITMAP_PLANAR_CONTEXT* planar, BOOL topdown)
+{
+	WINPR_ASSERT(planar);
+	planar->topdown = topdown;
 }
