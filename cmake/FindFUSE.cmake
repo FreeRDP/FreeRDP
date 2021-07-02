@@ -30,7 +30,7 @@ macro(find_fuse2)
         file(READ "${FUSE_INCLUDE_DIR}/fuse/fuse_common.h" _FUSE_COMMON_H_CONTENTS)
         string(REGEX REPLACE "^(.*\n)?#define[ \t]+FUSE_MINOR_VERSION[ \t]+([0-9]+).*"
                 "\\2" FUSE_MINOR_VERSION ${_FUSE_COMMON_H_CONTENTS})
-        if( FUSE_MINOR_VERSION GREATER_EQUAL 6)
+        if( FUSE_MINOR_VERSION AND FUSE_MINOR_VERSION GREATER 5)
             set(FUSE_API_VERSION 26)
         else()
             set(FUSE_API_VERSION 21)
