@@ -342,8 +342,8 @@ static UINT rdpgfx_send_create_surface_pdu(RdpgfxServerContext* context,
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(pdu);
-	WINPR_ASSERT((pdu->pixelFormat == GFX_PIXEL_FORMAT_XRGB_8888 0x20) ||
-	             (pdu->pixelFormat == GFX_PIXEL_FORMAT_ARGB_8888 0x21));
+	WINPR_ASSERT((pdu->pixelFormat == GFX_PIXEL_FORMAT_XRGB_8888) ||
+	             (pdu->pixelFormat == GFX_PIXEL_FORMAT_ARGB_8888));
 
 	if (!s)
 	{
