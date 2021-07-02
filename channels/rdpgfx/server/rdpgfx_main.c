@@ -200,9 +200,17 @@ static INLINE UINT rdpgfx_server_single_packet_send(RdpgfxServerContext* context
 static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
                                          const RDPGFX_CAPS_CONFIRM_PDU* capsConfirm)
 {
-	RDPGFX_CAPSET* capsSet = capsConfirm->capsSet;
-	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_CAPSCONFIRM,
-	                                             RDPGFX_CAPSET_BASE_SIZE + capsSet->length);
+	wStream* s;
+	RDPGFX_CAPSET* capsSet;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(capsConfirm);
+
+	capsSet = capsConfirm->capsSet;
+	WINPR_ASSERT(capsSet);
+
+	s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_CAPSCONFIRM,
+	                                    RDPGFX_CAPSET_BASE_SIZE + capsSet->length);
 
 	if (!s)
 	{
@@ -210,6 +218,8 @@ static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
+	WLog_DBG(TAG, "[%s] CAPS version=0x%04" PRIx32 ", flags=0x%04" PRIx32 ", length=%" PRIu32,
+	         __FUNCTION__, capsSet->version, capsSet->flags, capsSet->length);
 	Stream_Write_UINT32(s, capsSet->version); /* version (4 bytes) */
 	Stream_Write_UINT32(s, capsSet->length);  /* capsDataLength (4 bytes) */
 
