@@ -51,12 +51,13 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 
 	region16_init(&(screen->invalidRegion));
 
+	WINPR_ASSERT(subsystem->selectedMonitor < ARRAYSIZE(subsystem->monitors));
 	primary = &(subsystem->monitors[subsystem->selectedMonitor]);
 
 	x = primary->left;
 	y = primary->top;
-	width = primary->right - primary->left;
-	height = primary->bottom - primary->top;
+	width = primary->right - primary->left + 1;
+	height = primary->bottom - primary->top + 1;
 
 	WINPR_ASSERT(x >= 0);
 	WINPR_ASSERT(x <= UINT16_MAX);
@@ -140,8 +141,8 @@ BOOL shadow_screen_resize(rdpShadowScreen* screen)
 
 	x = primary->left;
 	y = primary->top;
-	width = primary->right - primary->left;
-	height = primary->bottom - primary->top;
+	width = primary->right - primary->left + 1;
+	height = primary->bottom - primary->top + 1;
 
 	WINPR_ASSERT(x >= 0);
 	WINPR_ASSERT(x <= UINT16_MAX);

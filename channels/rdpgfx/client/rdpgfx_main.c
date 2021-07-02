@@ -1233,7 +1233,7 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback
 
 	Stream_Read_UINT16(s, pdu.destPtsCount); /* destPtsCount (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (size_t)(pdu.destPtsCount * 4))
+	if (Stream_GetRemainingLength(s) / 4ULL < pdu.destPtsCount)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "not enough data!");
 		return ERROR_INVALID_DATA;

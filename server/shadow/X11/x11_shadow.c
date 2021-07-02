@@ -707,7 +707,6 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 
 static BOOL x11_shadow_check_resize(x11ShadowSubsystem* subsystem)
 {
-	MONITOR_DEF* virtualScreen;
 	XWindowAttributes attr;
 	XLockDisplay(subsystem->display);
 	XGetWindowAttributes(subsystem->display, subsystem->root_window, &attr);
@@ -715,16 +714,18 @@ static BOOL x11_shadow_check_resize(x11ShadowSubsystem* subsystem)
 
 	if (attr.width != (INT64)subsystem->width || attr.height != (INT64)subsystem->height)
 	{
+		MONITOR_DEF* virtualScreen = &(subsystem->common.virtualScreen);
+
 		/* Screen size changed. Refresh monitor definitions and trigger screen resize */
 		subsystem->common.numMonitors = x11_shadow_enum_monitors(subsystem->common.monitors, 16);
 		shadow_screen_resize(subsystem->common.server->screen);
 		subsystem->width = attr.width;
 		subsystem->height = attr.height;
-		virtualScreen = &(subsystem->common.virtualScreen);
+
 		virtualScreen->left = 0;
 		virtualScreen->top = 0;
-		virtualScreen->right = subsystem->width;
-		virtualScreen->bottom = subsystem->height;
+		virtualScreen->right = subsystem->width - 1;
+		virtualScreen->bottom = subsystem->height - 1;
 		virtualScreen->flags = 1;
 		return TRUE;
 	}
@@ -1156,12 +1157,10 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 
 UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 {
-	int index;
 	Display* display;
 	int displayWidth;
 	int displayHeight;
 	int numMonitors = 0;
-	MONITOR_DEF* monitor;
 
 	if (!getenv("DISPLAY"))
 		setenv("DISPLAY", ":0", 1);
@@ -1181,7 +1180,6 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 		int major, minor;
 		int xinerama_event;
 		int xinerama_error;
-		XineramaScreenInfo* screen;
 		XineramaScreenInfo* screens;
 
 		if (XineramaQueryExtension(display, &xinerama_event, &xinerama_error) &&
@@ -1194,14 +1192,16 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 
 			if (screens && (numMonitors > 0))
 			{
+				UINT32 index;
 				for (index = 0; index < numMonitors; index++)
 				{
-					screen = &screens[index];
-					monitor = &monitors[index];
+					MONITOR_DEF* monitor = &monitors[index];
+					const XineramaScreenInfo* screen = &screens[index];
+
 					monitor->left = screen->x_org;
 					monitor->top = screen->y_org;
-					monitor->right = monitor->left + screen->width;
-					monitor->bottom = monitor->top + screen->height;
+					monitor->right = monitor->left + screen->width - 1;
+					monitor->bottom = monitor->top + screen->height - 1;
 					monitor->flags = (index == 0) ? 1 : 0;
 				}
 			}
@@ -1214,13 +1214,13 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 
 	if (numMonitors < 1)
 	{
-		index = 0;
+		MONITOR_DEF* monitor = &monitors[0];
 		numMonitors = 1;
-		monitor = &monitors[index];
+
 		monitor->left = 0;
 		monitor->top = 0;
-		monitor->right = displayWidth;
-		monitor->bottom = displayHeight;
+		monitor->right = displayWidth - 1;
+		monitor->bottom = displayHeight - 1;
 		monitor->flags = 1;
 	}
 
@@ -1240,7 +1240,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	XVisualInfo template;
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
-	MONITOR_DEF* virtualScreen;
+
 	x11ShadowSubsystem* subsystem = (x11ShadowSubsystem*)sub;
 
 	if (!subsystem)
@@ -1355,19 +1355,21 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	          CreateFileDescriptorEvent(NULL, FALSE, FALSE, subsystem->xfds, WINPR_FD_READ)))
 		return -1;
 
-	virtualScreen = &(subsystem->common.virtualScreen);
-	virtualScreen->left = 0;
-	virtualScreen->top = 0;
-	WINPR_ASSERT(subsystem->width <= INT32_MAX);
-	WINPR_ASSERT(subsystem->height <= INT32_MAX);
-	virtualScreen->right = (INT32)subsystem->width;
-	virtualScreen->bottom = (INT32)subsystem->height;
-	virtualScreen->flags = 1;
-	WLog_INFO(TAG,
-	          "X11 Extensions: XFixes: %" PRId32 " Xinerama: %" PRId32 " XDamage: %" PRId32
-	          " XShm: %" PRId32 "",
-	          subsystem->use_xfixes, subsystem->use_xinerama, subsystem->use_xdamage,
-	          subsystem->use_xshm);
+	{
+		MONITOR_DEF* virtualScreen = &(subsystem->common.virtualScreen);
+		virtualScreen->left = 0;
+		virtualScreen->top = 0;
+		WINPR_ASSERT(subsystem->width <= INT32_MAX);
+		WINPR_ASSERT(subsystem->height <= INT32_MAX);
+		virtualScreen->right = (INT32)subsystem->width - 1;
+		virtualScreen->bottom = (INT32)subsystem->height - 1;
+		virtualScreen->flags = 1;
+		WLog_INFO(TAG,
+		          "X11 Extensions: XFixes: %" PRId32 " Xinerama: %" PRId32 " XDamage: %" PRId32
+		          " XShm: %" PRId32 "",
+		          subsystem->use_xfixes, subsystem->use_xinerama, subsystem->use_xdamage,
+		          subsystem->use_xshm);
+	}
 	return 1;
 }
 
