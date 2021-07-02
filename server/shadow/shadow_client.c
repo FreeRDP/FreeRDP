@@ -60,7 +60,7 @@ static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 
 	WINPR_ASSERT(settings->DesktopWidth <= UINT16_MAX);
 	WINPR_ASSERT(settings->DesktopHeight <= UINT16_MAX);
-	createSurface.width = (UINT16)settings->DesktopWidth + 64;
+	createSurface.width = (UINT16)settings->DesktopWidth;
 	createSurface.height = (UINT16)settings->DesktopHeight;
 	createSurface.pixelFormat = GFX_PIXEL_FORMAT_XRGB_8888;
 	createSurface.surfaceId = client->surfaceId;
