@@ -1246,10 +1246,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 		BOOL rc;
 		const UINT32 w = cmd.right - cmd.left;
 		const UINT32 h = cmd.bottom - cmd.top;
-		const size_t step = w * GetBytesPerPixel(SrcFormat);
-		const size_t size = step * h;
-		BYTE* dst;
-
+		const BYTE* src = &pSrcData[cmd.top * nSrcStep + cmd.left * GetBytesPerPixel(SrcFormat)];
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_PLANAR) < 0)
 		{
 			WLog_ERR(TAG, "Failed to prepare encoder FREERDP_CODEC_PLANAR");
@@ -1258,18 +1255,11 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 
 		rc = freerdp_bitmap_planar_context_reset(encoder->planar, w, h);
 		WINPR_ASSERT(rc);
+		freerdp_planar_topdown_image(encoder->planar, TRUE);
 
-		dst = malloc(size);
-		WINPR_ASSERT(dst);
-		rc = freerdp_image_copy(dst, SrcFormat, step, 0, 0, w, h, pSrcData, SrcFormat, nSrcStep,
-		                        cmd.left, cmd.top, NULL, FREERDP_FLIP_VERTICAL);
-		WINPR_ASSERT(rc);
-
-		cmd.data = freerdp_bitmap_compress_planar(encoder->planar, dst, SrcFormat, w, h, step, NULL,
-		                                          &cmd.length);
+		cmd.data = freerdp_bitmap_compress_planar(encoder->planar, src, SrcFormat, w, h, nSrcStep,
+		                                          NULL, &cmd.length);
 		WINPR_ASSERT(cmd.data || (cmd.length == 0));
-
-		free(dst);
 
 		cmd.codecId = RDPGFX_CODECID_PLANAR;
 
