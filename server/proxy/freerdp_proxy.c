@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
 	if (argc >= 2)
 		config_path = argv[1];
 
-	config = pf_server_config_load(config_path);
+	config = pf_server_config_load_file(config_path);
 	if (!config)
 		goto fail;
 

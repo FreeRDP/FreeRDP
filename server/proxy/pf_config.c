@@ -239,7 +239,68 @@ static BOOL pf_config_load_gfx_settings(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
-proxyConfig* pf_server_config_load(const char* path)
+proxyConfig* server_config_load_ini(wIniFile* ini)
+{
+	proxyConfig* config = NULL;
+
+	config = calloc(1, sizeof(proxyConfig));
+	if (config)
+	{
+		if (!pf_config_load_server(ini, config))
+			goto out;
+
+		if (!pf_config_load_target(ini, config))
+			goto out;
+
+		if (!pf_config_load_channels(ini, config))
+			goto out;
+
+		if (!pf_config_load_input(ini, config))
+			goto out;
+
+		if (!pf_config_load_security(ini, config))
+			goto out;
+
+		if (!pf_config_load_modules(ini, config))
+			goto out;
+
+		if (!pf_config_load_clipboard(ini, config))
+			goto out;
+
+		if (!pf_config_load_gfx_settings(ini, config))
+			goto out;
+	}
+	return config;
+out:
+	pf_server_config_free(config);
+	return NULL;
+}
+
+proxyConfig* pf_server_config_load_buffer(const char* buffer)
+{
+	proxyConfig* config = NULL;
+	wIniFile* ini = IniFile_New();
+
+	if (!ini)
+	{
+		WLog_ERR(TAG, "[%s]: IniFile_New() failed!", __FUNCTION__);
+		return FALSE;
+	}
+
+	if (IniFile_ReadBuffer(ini, buffer) < 0)
+	{
+		WLog_ERR(TAG, "[%s] failed to parse ini: '%s'", __FUNCTION__, buffer);
+		goto out;
+	}
+
+	config = server_config_load_ini(ini);
+out:
+	IniFile_Free(ini);
+	return config;
+}
+
+
+proxyConfig* pf_server_config_load_file(const char* path)
 {
 	proxyConfig* config = NULL;
 	wIniFile* ini = IniFile_New();
@@ -256,39 +317,10 @@ proxyConfig* pf_server_config_load(const char* path)
 		goto out;
 	}
 
-	config = calloc(1, sizeof(proxyConfig));
-
-	if (!pf_config_load_server(ini, config))
-		goto out;
-
-	if (!pf_config_load_target(ini, config))
-		goto out;
-
-	if (!pf_config_load_channels(ini, config))
-		goto out;
-
-	if (!pf_config_load_input(ini, config))
-		goto out;
-
-	if (!pf_config_load_security(ini, config))
-		goto out;
-
-	if (!pf_config_load_modules(ini, config))
-		goto out;
-
-	if (!pf_config_load_clipboard(ini, config))
-		goto out;
-
-	if (!pf_config_load_gfx_settings(ini, config))
-		goto out;
-
-	IniFile_Free(ini);
-	return config;
-
+	config = server_config_load_ini(ini);
 out:
 	IniFile_Free(ini);
-	pf_server_config_free(config);
-	return NULL;
+	return config;
 }
 
 static void pf_server_config_print_list(char** list, size_t count)
