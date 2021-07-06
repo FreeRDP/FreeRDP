@@ -702,12 +702,14 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	DWORD cchReaders = 0;
 	IRP* irp = operation->irp;
 	ListReaders_Call* call = &operation->call.listReaders;
-	union {
+	union
+	{
 		const BYTE* bp;
 		const char* sz;
 		const WCHAR* wz;
 	} string;
-	union {
+	union
+	{
 		WCHAR** ppw;
 		WCHAR* pw;
 		CHAR* pc;
@@ -2686,7 +2688,7 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 	Stream_SealLength(irp->output);
 	outputBufferLength = Stream_Length(irp->output);
 	WINPR_ASSERT(outputBufferLength >= RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4U);
-	outputBufferLength -= RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4U;
+	outputBufferLength -= (RDPDR_DEVICE_IO_RESPONSE_LENGTH + 4U);
 	WINPR_ASSERT(outputBufferLength >= RDPDR_DEVICE_IO_RESPONSE_LENGTH);
 	objectBufferLength = outputBufferLength - RDPDR_DEVICE_IO_RESPONSE_LENGTH;
 	WINPR_ASSERT(outputBufferLength <= UINT32_MAX);
@@ -2694,10 +2696,10 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 	Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH);
 	/* Device Control Response */
 	Stream_Write_UINT32(irp->output, (UINT32)outputBufferLength); /* OutputBufferLength (4 bytes) */
-	smartcard_pack_common_type_header(smartcard, irp->output); /* CommonTypeHeader (8 bytes) */
+	smartcard_pack_common_type_header(smartcard, irp->output);    /* CommonTypeHeader (8 bytes) */
 	smartcard_pack_private_type_header(
 	    smartcard, irp->output, (UINT32)objectBufferLength); /* PrivateTypeHeader (8 bytes) */
-	Stream_Write_INT32(irp->output, result);                /* Result (4 bytes) */
+	Stream_Write_INT32(irp->output, result);                 /* Result (4 bytes) */
 	Stream_SetPosition(irp->output, Stream_Length(irp->output));
 	return SCARD_S_SUCCESS;
 }
