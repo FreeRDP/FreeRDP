@@ -490,7 +490,7 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 
 	*count = 0;
 
-	if (!list)
+	if (!list || strlen(list) == 0)
 	{
 		if (name)
 		{
