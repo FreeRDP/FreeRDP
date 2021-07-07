@@ -211,7 +211,12 @@ if(FAAC_FOUND)
 endif()
 
 if(WITH_NEON)
-    set_source_files_properties(${CODEC_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon -Wno-unused-variable" )
+    check_symbol_exists("_M_AMD64"     ""  MSVC_ARM64)
+    check_symbol_exists("__aarch64__"  ""  ARCH_ARM64)
+
+    if (NOT MSVC_ARM64 AND NOT ARCH_ARM64)
+        set_source_files_properties(${CODEC_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon" )
+    endif()
     set(CODEC_SRCS ${CODEC_SRCS} ${CODEC_NEON_SRCS})
 endif()
 
