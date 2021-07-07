@@ -407,7 +407,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	{
 		UINT32 index;
 		UINT32 numMonitors;
-		MONITOR_DEF monitors[16];
+		MONITOR_DEF monitors[16] = { 0 };
 		numMonitors = shadow_enum_monitors(monitors, 16);
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
@@ -422,17 +422,14 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		else
 		{
-			int width, height;
-			MONITOR_DEF* monitor;
-
 			/* List monitors */
 
 			for (index = 0; index < numMonitors; index++)
 			{
-				monitor = &monitors[index];
-				width = monitor->right - monitor->left;
-				height = monitor->bottom - monitor->top;
-				WLog_INFO(TAG, "      %s [%d] %dx%d\t+%" PRId32 "+%" PRId32 "",
+				const MONITOR_DEF* monitor = &monitors[index];
+				const INT64 width = monitor->right - monitor->left + 1;
+				const INT64 height = monitor->bottom - monitor->top + 1;
+				WLog_INFO(TAG, "      %s [%d] %" PRId64 "x%" PRId64 "\t+%" PRId32 "+%" PRId32 "",
 				          (monitor->flags == 1) ? "*" : " ", index, width, height, monitor->left,
 				          monitor->top);
 			}

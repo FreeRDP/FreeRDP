@@ -361,11 +361,7 @@ static INLINE BOOL shadow_client_recalc_desktop_size(rdpShadowClient* client)
 	WINPR_ASSERT(height >= 0);
 	WINPR_ASSERT(height <= UINT16_MAX);
 	if (settings->DesktopWidth != (UINT32)width || settings->DesktopHeight != (UINT32)height)
-	{
-		settings->DesktopWidth = (UINT16)width;
-		settings->DesktopHeight = (UINT16)height;
 		return TRUE;
-	}
 
 	return FALSE;
 }
@@ -390,9 +386,6 @@ static BOOL shadow_client_capabilities(freerdp_peer* peer)
 	if (!ret)
 		WLog_WARN(TAG, "subsystem->ClientCapabilities failed");
 
-	/* Recalculate desktop size regardless whether previous call fail
-	 * or not. Make sure we send correct width/height to client */
-	(void)shadow_client_recalc_desktop_size(client);
 	return ret;
 }
 
