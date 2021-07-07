@@ -1513,8 +1513,13 @@ static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->Close, rdpsnd->device);
 	freerdp_dsp_context_free(rdpsnd->dsp_context);
-	StreamPool_Return(rdpsnd->pool, rdpsnd->data_in);
-	StreamPool_Free(rdpsnd->pool);
+	rdpsnd->dsp_context = NULL;
+	if (rdpsnd->pool)
+	{
+		StreamPool_Return(rdpsnd->pool, rdpsnd->data_in);
+		StreamPool_Free(rdpsnd->pool);
+		rdpsnd->pool = NULL;
+	}
 
 	audio_formats_free(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
 	rdpsnd->NumberOfClientFormats = 0;
