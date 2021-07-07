@@ -398,10 +398,10 @@ static DWORD android_verify_certificate_ex(freerdp* instance, const char* host, 
 	jstring jstr3 = (*env)->NewStringUTF(env, issuer);
 	jstring jstr4 = (*env)->NewStringUTF(env, fingerprint);
 	jint res = freerdp_callback_int_result("OnVerifyCertificateEx",
-	                                       "(JLjava/lang/String;ILjava/lang/String;Ljava/lang/"
+	                                       "(JLjava/lang/String;JLjava/lang/String;Ljava/lang/"
 	                                       "String;Ljava/lang/String;Ljava/lang/String;J)I",
 	                                       (jlong)instance, jstr0, (jlong)port, jstr1, jstr2, jstr3,
-	                                       (jlong)flags);
+	                                       jstr4, (jlong)flags);
 
 	if (attached == JNI_TRUE)
 		jni_detach_thread();
