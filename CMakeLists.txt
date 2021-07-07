@@ -598,6 +598,12 @@ if(ANDROID)
 		set (WITH_NEON OFF)
 	endif()
 
+	if(ANDROID_ABI STREQUAL arm64-v8a)
+		# https://github.com/android/ndk/issues/910
+		add_definitions(-D__ARM_NEON)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=softfp")
+	endif()
+
 	if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 		add_definitions(-DNDK_DEBUG=1)
 
