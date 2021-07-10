@@ -229,6 +229,10 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 		if (!fullscreen)
 		{
+			/* Fix for Cinnamon WM see ISSUE 3666 */
+			if (startX == 0)
+				startX = 1;
+
 			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 		}
