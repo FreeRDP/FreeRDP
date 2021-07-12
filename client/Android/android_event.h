@@ -69,7 +69,7 @@ FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancod
 FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 flags, UINT16 key);
 FREERDP_LOCAL ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y);
 FREERDP_LOCAL ANDROID_EVENT* android_event_disconnect_new(void);
-FREERDP_LOCAL ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data, int data_length);
+FREERDP_LOCAL ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(const void* data, size_t data_length);
 
 FREERDP_LOCAL void android_event_free(ANDROID_EVENT* event);
 
