@@ -1299,7 +1299,6 @@ int UnixChangeFileMode(const char* filename, int flags)
 #else
 	int rc;
 	WCHAR* wfl = NULL;
-	int fl = 0;
 
 	if (ConvertToUnicode(CP_UTF8, 0, filename, -1, &wfl, 0) <= 0)
 		return -1;

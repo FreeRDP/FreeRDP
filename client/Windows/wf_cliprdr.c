@@ -1327,7 +1327,7 @@ UINT cliprdr_send_request_filecontents(wfClipboard* clipboard, const void* strea
 	if (!clipboard || !clipboard->context || !clipboard->context->ClientFileContentsRequest)
 		return ERROR_INTERNAL_ERROR;
 
-	fileContentsRequest.streamId = (UINT32)streamid;
+	fileContentsRequest.streamId = (UINT32)(ULONG_PTR)streamid;
 	fileContentsRequest.listIndex = index;
 	fileContentsRequest.dwFlags = flag;
 	fileContentsRequest.nPositionLow = positionlow;

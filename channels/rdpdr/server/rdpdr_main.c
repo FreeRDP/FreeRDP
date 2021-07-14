@@ -1329,16 +1329,16 @@ static UINT rdpdr_server_read_file_directory_information(wStream* s,
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT32(s, fdi->NextEntryOffset); /* NextEntryOffset (4 bytes) */
-	Stream_Read_UINT32(s, fdi->FileIndex);       /* FileIndex (4 bytes) */
-	Stream_Read_UINT64(s, fdi->CreationTime);    /* CreationTime (8 bytes) */
-	Stream_Read_UINT64(s, fdi->LastAccessTime);  /* LastAccessTime (8 bytes) */
-	Stream_Read_UINT64(s, fdi->LastWriteTime);   /* LastWriteTime (8 bytes) */
-	Stream_Read_UINT64(s, fdi->ChangeTime);      /* ChangeTime (8 bytes) */
-	Stream_Read_UINT64(s, fdi->EndOfFile);       /* EndOfFile (8 bytes) */
-	Stream_Read_UINT64(s, fdi->AllocationSize);  /* AllocationSize (8 bytes) */
-	Stream_Read_UINT32(s, fdi->FileAttributes);  /* FileAttributes (4 bytes) */
-	Stream_Read_UINT32(s, fileNameLength);       /* FileNameLength (4 bytes) */
+	Stream_Read_UINT32(s, fdi->NextEntryOffset);         /* NextEntryOffset (4 bytes) */
+	Stream_Read_UINT32(s, fdi->FileIndex);               /* FileIndex (4 bytes) */
+	Stream_Read_UINT64(s, fdi->CreationTime.QuadPart);   /* CreationTime (8 bytes) */
+	Stream_Read_UINT64(s, fdi->LastAccessTime.QuadPart); /* LastAccessTime (8 bytes) */
+	Stream_Read_UINT64(s, fdi->LastWriteTime.QuadPart);  /* LastWriteTime (8 bytes) */
+	Stream_Read_UINT64(s, fdi->ChangeTime.QuadPart);     /* ChangeTime (8 bytes) */
+	Stream_Read_UINT64(s, fdi->EndOfFile.QuadPart);      /* EndOfFile (8 bytes) */
+	Stream_Read_UINT64(s, fdi->AllocationSize.QuadPart); /* AllocationSize (8 bytes) */
+	Stream_Read_UINT32(s, fdi->FileAttributes);          /* FileAttributes (4 bytes) */
+	Stream_Read_UINT32(s, fileNameLength);               /* FileNameLength (4 bytes) */
 
 	if (Stream_GetRemainingLength(s) < fileNameLength)
 	{

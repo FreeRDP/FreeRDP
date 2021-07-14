@@ -480,8 +480,8 @@ static BOOL wf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	HBRUSH brush;
 	HBRUSH org_brush;
 	int org_bkmode;
-	UINT32 fgcolor;
-	UINT32 bgcolor;
+	COLORREF fgcolor;
+	COLORREF bgcolor;
 	COLORREF org_bkcolor;
 	COLORREF org_textcolor;
 	BOOL rc;
@@ -536,7 +536,7 @@ static BOOL wf_gdi_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER* opa
 {
 	RECT rect;
 	HBRUSH brush;
-	UINT32 brush_color;
+	COLORREF brush_color;
 	wfContext* wfc = (wfContext*)context;
 
 	if (!context || !opaque_rect)
@@ -566,7 +566,7 @@ static BOOL wf_gdi_multi_opaque_rect(rdpContext* context,
 	UINT32 i;
 	RECT rect;
 	HBRUSH brush;
-	UINT32 brush_color;
+	COLORREF brush_color;
 	wfContext* wfc = (wfContext*)context;
 
 	if (!context || !multi_opaque_rect)
@@ -600,7 +600,7 @@ static BOOL wf_gdi_line_to(rdpContext* context, const LINE_TO_ORDER* line_to)
 	HPEN pen;
 	HPEN org_pen;
 	int x, y, w, h;
-	UINT32 pen_color;
+	COLORREF pen_color;
 	wfContext* wfc = (wfContext*)context;
 
 	if (!context || !line_to)
@@ -634,7 +634,7 @@ static BOOL wf_gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	int org_rop2;
 	HPEN hpen;
 	HPEN org_hpen;
-	UINT32 pen_color;
+	COLORREF pen_color;
 	wfContext* wfc = (wfContext*)context;
 
 	if (!context || !polyline)

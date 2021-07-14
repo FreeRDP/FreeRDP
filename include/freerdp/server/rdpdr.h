@@ -35,20 +35,22 @@
 typedef struct _rdpdr_server_context RdpdrServerContext;
 typedef struct _rdpdr_server_private RdpdrServerPrivate;
 
+#ifndef __MINGW32__
 struct _FILE_DIRECTORY_INFORMATION
 {
 	UINT32 NextEntryOffset;
 	UINT32 FileIndex;
-	UINT64 CreationTime;
-	UINT64 LastAccessTime;
-	UINT64 LastWriteTime;
-	UINT64 ChangeTime;
-	UINT64 EndOfFile;
-	UINT64 AllocationSize;
+	LARGE_INTEGER CreationTime;
+	LARGE_INTEGER LastAccessTime;
+	LARGE_INTEGER LastWriteTime;
+	LARGE_INTEGER ChangeTime;
+	LARGE_INTEGER EndOfFile;
+	LARGE_INTEGER AllocationSize;
 	UINT32 FileAttributes;
 	char FileName[512];
 };
 typedef struct _FILE_DIRECTORY_INFORMATION FILE_DIRECTORY_INFORMATION;
+#endif
 
 typedef UINT (*psRdpdrStart)(RdpdrServerContext* context);
 typedef UINT (*psRdpdrStop)(RdpdrServerContext* context);

@@ -27,7 +27,7 @@
 #include <freerdp/utils/stopwatch.h>
 
 #ifdef _WIN32
-LARGE_INTEGER stopwatch_freq = { 0, 0 };
+LARGE_INTEGER stopwatch_freq = { 0 };
 #else
 #include <sys/time.h>
 #endif

@@ -406,7 +406,7 @@ typedef trio_longlong_t trio_int64_t;
  * Internal Definitions
  */
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4244)
 #endif
@@ -7189,6 +7189,6 @@ TRIO_PUBLIC TRIO_CONST char* trio_strerror TRIO_ARGS1((errorcode), int errorcode
 #endif
 }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif
