@@ -563,11 +563,13 @@ static BOOL rdg_websocket_reply_close(BIO* bio, wStream* s)
 	{
 		uint16_t data;
 		Stream_Read_UINT16(s, data);
-		Stream_Write_UINT16(s, data ^ maskingKey1);
+		Stream_Write_UINT16(closeFrame, data ^ maskingKey1);
 	}
 	Stream_SealLength(closeFrame);
 
 	status = BIO_write(bio, Stream_Buffer(closeFrame), Stream_Length(closeFrame));
+	Stream_Free(closeFrame, TRUE);
+
 	/* server MUST close socket now. The server is not allowed anymore to
 	 * send frames but if he does, nothing bad would happen */
 	if (status < 0)
