@@ -344,6 +344,20 @@ extern "C"
 #define PF_SSE_INSTRUCTIONS_AVAILABLE PF_XMMI_INSTRUCTIONS_AVAILABLE
 #define PF_SSE2_INSTRUCTIONS_AVAILABLE PF_XMMI64_INSTRUCTIONS_AVAILABLE
 
+#ifdef ANDROID
+
+	/*
+	 * Call winpr_set_java_vm() from JNI_OnLoad in a shared library:
+	 * JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
+	 * and then call winpr_get_java_vm to obtain the JavaVM* handle.
+	 * The functions use void* to avoid including jni.h in exported headers.
+	 */
+
+	WINPR_API void winpr_set_java_vm(void* vm);
+	WINPR_API void* winpr_get_java_vm();
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif
