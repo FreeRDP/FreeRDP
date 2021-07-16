@@ -283,9 +283,16 @@ static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, con
 static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 {
 	size_t i, j;
-	char* tzid;
+	char* tzid = NULL;
 
-	tzid = winpr_get_unix_timezone_identifier_from_file();
+	char* tzenv = getenv("TZ");
+	if (tzenv) {
+		tzid = strdup(tzenv);
+	}
+
+	if (tzid == NULL) {
+		tzid = winpr_get_unix_timezone_identifier_from_file();
+	}
 
 	if (tzid == NULL)
 		tzid = winpr_get_timezone_from_link();
