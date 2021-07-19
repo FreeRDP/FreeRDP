@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/environment.h>
 #include <winpr/wtypes.h>
 #include <winpr/timezone.h>
 #include <winpr/crt.h>
@@ -284,15 +285,21 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 {
 	size_t i, j;
 	char* tzid = NULL;
+	LPCSTR tz = "TZ";
 
-	char* tzenv = getenv("TZ");
-	if (tzenv) {
-		tzid = strdup(tzenv);
+	DWORD nSize = GetEnvironmentVariableA(tz, NULL, 0);
+	if (nSize)
+	{
+		tzid = (char*)malloc(nSize);
+		if (!GetEnvironmentVariableA(tz, tzid, nSize))
+		{
+			free(tzid);
+			tzid = NULL;
+		}
 	}
 
-	if (tzid == NULL) {
+	if (tzid == NULL)
 		tzid = winpr_get_unix_timezone_identifier_from_file();
-	}
 
 	if (tzid == NULL)
 		tzid = winpr_get_timezone_from_link();
