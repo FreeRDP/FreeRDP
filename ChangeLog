@@ -1,4 +1,4 @@
-# 2021-XX-YY Version 2.X.Y
+# 2021-07-20 Version 2.4.0
 
 Noteworthy changes:
 * Backported multithreadded progressive decoder (#7036)
