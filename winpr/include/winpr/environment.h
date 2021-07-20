@@ -134,6 +134,9 @@ extern "C"
 
 	WINPR_API char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock);
 
+	WINPR_API DWORD GetEnvironmentVariableX(const char* lpName, char* lpBuffer, DWORD nSize);
+	WINPR_API char* GetEnvAlloc(LPCSTR lpName);
+
 #ifdef __cplusplus
 }
 #endif
