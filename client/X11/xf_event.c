@@ -763,7 +763,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 	{
 		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
-		if (appWindow)
+		if (appWindow && (appWindow->rail_state == WINDOW_SHOW))
 		{
 			/* local restore event */
 			/* This is now handled as part of the PropertyNotify
