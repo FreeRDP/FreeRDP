@@ -849,7 +849,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	if (stat(lpFileName, &fileStat) >= 0)
+	if (lstat(lpFileName, &fileStat) >= 0)
 	{
 		isDir = (S_ISDIR(fileStat.st_mode) != 0);
 	}
@@ -1082,7 +1082,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			memcpy(fullpath + pathlen, pFileSearch->pDirent->d_name, namelen);
 			fullpath[pathlen + namelen] = 0;
 
-			if (stat(fullpath, &fileStat) != 0)
+			if (lstat(fullpath, &fileStat) != 0)
 			{
 				free(fullpath);
 				SetLastError(map_posix_err(errno));
