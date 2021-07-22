@@ -57,12 +57,16 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 	if (!(context->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL)))
 		goto error;
 
-	context->vc_handles = (HANDLE*)calloc(config->PassthroughCount, sizeof(HANDLE));
+	context->vc_handles = (HANDLE*)calloc(config->StaticPassthroughCount, sizeof(HANDLE));
 	if (!context->vc_handles)
 		goto error;
 
 	context->vc_ids = create_channel_ids_map();
 	if (!context->vc_ids)
+		goto error;
+
+	context->dynamic_passthrough_channels = ArrayList_New(TRUE);
+	if (!context->dynamic_passthrough_channels)
 		goto error;
 
 	return TRUE;
@@ -81,6 +85,8 @@ error:
 	context->vc_handles = NULL;
 	HashTable_Free(context->vc_ids);
 	context->vc_ids = NULL;
+	ArrayList_Free(context->dynamic_passthrough_channels);
+	context->dynamic_passthrough_channels = NULL;
 	return FALSE;
 }
 
@@ -102,6 +108,9 @@ static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 
 	HashTable_Free(context->vc_ids);
 	free(context->vc_handles);
+
+	ArrayList_Free(context->dynamic_passthrough_channels);
+	context->dynamic_passthrough_channels = NULL;
 }
 
 BOOL pf_context_init_server_context(freerdp_peer* client)
@@ -191,6 +200,10 @@ pClientContext* pf_context_create_client_context(rdpSettings* clientSettings)
 
 	pc->vc_ids = create_channel_ids_map();
 	if (!pc->vc_ids)
+		goto error;
+
+	pc->dynamic_passthrough_channels = ArrayList_New(TRUE);
+	if (!pc->dynamic_passthrough_channels)
 		goto error;
 
 	return pc;

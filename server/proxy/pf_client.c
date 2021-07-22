@@ -119,15 +119,15 @@ static BOOL pf_client_passthrough_channels_init(pClientContext* pc)
 	proxyConfig* config = pc->pdata->config;
 	size_t i;
 
-	if (settings->ChannelCount + config->PassthroughCount >= settings->ChannelDefArraySize)
+	if (settings->ChannelCount + config->StaticPassthroughCount >= settings->ChannelDefArraySize)
 	{
 		LOG_ERR(TAG, pc, "too many channels");
 		return FALSE;
 	}
 
-	for (i = 0; i < config->PassthroughCount; i++)
+	for (i = 0; i < config->StaticPassthroughCount; i++)
 	{
-		const char* channel_name = config->Passthrough[i];
+		const char* channel_name = config->StaticPassthrough[i];
 		CHANNEL_DEF channel = { 0 };
 
 		/* only connect connect this channel if already joined in peer connection */
@@ -250,9 +250,9 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 
 	const char* channel_name = freerdp_channels_get_name_by_id(instance, channelId);
 
-	for (i = 0; i < config->PassthroughCount; i++)
+	for (i = 0; i < config->StaticPassthroughCount; i++)
 	{
-		if (strncmp(channel_name, config->Passthrough[i], CHANNEL_NAME_LEN) == 0)
+		if (strncmp(channel_name, config->StaticPassthrough[i], CHANNEL_NAME_LEN) == 0)
 		{
 			proxyChannelDataEventInfo ev;
 			UINT64 server_channel_id;
@@ -340,9 +340,9 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	/* populate channel name -> channel ids map */
 	{
 		size_t i;
-		for (i = 0; i < config->PassthroughCount; i++)
+		for (i = 0; i < config->StaticPassthroughCount; i++)
 		{
-			char* channel_name = config->Passthrough[i];
+			char* channel_name = config->StaticPassthrough[i];
 			UINT64 channel_id = (UINT64)freerdp_channels_get_id_by_name(instance, channel_name);
 			HashTable_Insert(pc->vc_ids, (void*)channel_name, (void*)channel_id);
 		}
@@ -619,6 +619,7 @@ static void pf_client_context_free(freerdp* instance, rdpContext* context)
 		return;
 
 	HashTable_Free(pc->vc_ids);
+	ArrayList_Free(pc->dynamic_passthrough_channels);
 }
 
 static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)

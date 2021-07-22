@@ -30,6 +30,7 @@
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/disp.h>
+#include <freerdp/client/dynamic_passthrough.h>
 
 #include "pf_channels.h"
 #include "pf_client.h"
@@ -41,6 +42,7 @@
 #include "pf_log.h"
 #include "pf_modules.h"
 #include "pf_rdpsnd.h"
+#include "pf_dynamic_passthrough.h"
 
 #define TAG PROXY_TAG("channels")
 
@@ -56,6 +58,7 @@ void pf_channels_on_client_channel_connect(void* data, ChannelConnectedEventArgs
 	pClientContext* pc = (pClientContext*)data;
 	pServerContext* ps = pc->pdata->ps;
 	LOG_INFO(TAG, pc, "Channel connected: %s", e->name);
+	BOOL handled = true;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -87,7 +90,7 @@ void pf_channels_on_client_channel_connect(void* data, ChannelConnectedEventArgs
 
 		SetEvent(pc->pdata->gfx_server_ready);
 	}
-	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	else if (ps->pdata->config->DisplayControl && strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		UINT ret;
 
@@ -135,6 +138,40 @@ void pf_channels_on_client_channel_connect(void* data, ChannelConnectedEventArgs
 			WLog_ERR(TAG, "failed to open rdpsnd channel");
 			return;
 		}
+	}
+	/*process dynamic passthrough channels last*/
+	else if (e->pInterface)
+	{
+		DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL* channel =
+		    (DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL*)e->pInterface;
+
+		handled = strcmp("drdynvc", e->name) == 0;
+		/*sanity checks for passthrough setup*/
+		if (channel->iface && channel->iface->Write && channel->iface->Close)
+		{
+			for (int i = 0; i < ps->pdata->config->DynamicPassthroughCount; i++)
+			{
+				if (strcmp(e->name, ps->pdata->config->DynamicPassthrough[i]) == 0)
+				{
+					handled = TRUE;
+					pf_channels_wait_for_server_dynvc(ps);
+					pf_init_dynamic_passthrough(ps->pdata, e->name, channel);
+					break;
+				}
+			}
+		}
+	}
+	else
+	{
+		handled = FALSE;
+		for (int i = 0; i < ps->pdata->config->StaticPassthroughCount; i++)
+			if (strcmp(ps->pdata->config->StaticPassthrough[i], e->name) == 0)
+				handled = TRUE;
+	}
+
+	if (!handled)
+	{
+		LOG_WARN(TAG, pc, "Channel %s was connected but is being ignored.", e->name);
 	}
 }
 
@@ -187,6 +224,19 @@ void pf_channels_on_client_channel_disconnect(void* data, ChannelDisconnectedEve
 		if (ps->rdpsnd->Stop(ps->rdpsnd) != CHANNEL_RC_OK)
 			WLog_ERR(TAG, "failed to close rdpsnd server");
 	}
+	else if (e->pInterface)
+	{
+		DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL* channel =
+		    (DYNAMIC_PASSTHROUGH_DVCMAN_CHANNEL*)e->pInterface;
+		for (int i = 0; i < ps->pdata->config->DynamicPassthroughCount; i++)
+		{
+			if (strcmp(e->name, ps->pdata->config->DynamicPassthrough[i]) == 0)
+			{
+				pf_free_dynamic_passthrough(ps->pdata, e->name, channel);
+				break;
+			}
+		}
+	}
 }
 
 BOOL pf_server_channels_init(pServerContext* ps)
@@ -233,9 +283,9 @@ BOOL pf_server_channels_init(pServerContext* ps)
 		/* open static channels for passthrough */
 		size_t i;
 
-		for (i = 0; i < config->PassthroughCount; i++)
+		for (i = 0; i < config->StaticPassthroughCount; i++)
 		{
-			char* channel_name = config->Passthrough[i];
+			char* channel_name = config->StaticPassthrough[i];
 			UINT64 channel_id;
 
 			/* only open channel if client joined with it */
@@ -295,8 +345,12 @@ void pf_server_channels_free(pServerContext* ps)
 		/* close passthrough channels */
 		size_t i;
 
-		for (i = 0; i < ps->pdata->config->PassthroughCount; i++)
+		for (i = 0; i < ps->pdata->config->StaticPassthroughCount; i++)
 			WTSVirtualChannelClose(ps->vc_handles[i]);
+	}
+
+	{
+		pf_server_clear_dynamic_passthrough(ps->pdata);
 	}
 
 	pf_modules_run_hook(HOOK_TYPE_SERVER_CHANNELS_FREE, ps->pdata);

@@ -168,23 +168,40 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 	config->Clipboard = pf_config_get_bool(ini, "Channels", "Clipboard");
 	config->AudioOutput = pf_config_get_bool(ini, "Channels", "AudioOutput");
 	config->RemoteApp = pf_config_get_bool(ini, "Channels", "RemoteApp");
-	config->Passthrough = pf_config_parse_comma_separated_list(
-	    pf_config_get_str(ini, "Channels", "Passthrough"), &config->PassthroughCount);
+	config->StaticPassthrough = pf_config_parse_comma_separated_list(
+	    pf_config_get_str(ini, "Channels", "StaticPassthrough"), &config->StaticPassthroughCount);
 
 	{
 		/* validate channel name length */
 		size_t i;
 
-		for (i = 0; i < config->PassthroughCount; i++)
+		for (i = 0; i < config->StaticPassthroughCount; i++)
 		{
-			if (strlen(config->Passthrough[i]) > CHANNEL_NAME_LEN)
+			if (strlen(config->StaticPassthrough[i]) > CHANNEL_NAME_LEN)
 			{
-				WLog_ERR(TAG, "passthrough channel: %s: name too long!", config->Passthrough[i]);
+				WLog_ERR(TAG, "passthrough static channel: %s: name too long!",
+				         config->StaticPassthrough[i]);
 				return FALSE;
 			}
 		}
 	}
+	config->DynamicPassthrough = pf_config_parse_comma_separated_list(
+	    pf_config_get_str(ini, "Channels", "DynamicPassthrough"), &config->DynamicPassthroughCount);
 
+	{
+		/* validate channel name length */
+		size_t i;
+
+		for (i = 0; i < config->DynamicPassthroughCount; i++)
+		{
+			if (strlen(config->DynamicPassthrough[i]) > 255 )
+			{
+				WLog_ERR(TAG, "passthrough dynamic channel: %s: name too long!",
+				         config->DynamicPassthrough[i]);
+				return FALSE;
+			}
+		}
+	}
 	return TRUE;
 }
 
@@ -335,10 +352,16 @@ void pf_server_config_print(proxyConfig* config)
 	CONFIG_PRINT_BOOL(config, AudioOutput);
 	CONFIG_PRINT_BOOL(config, RemoteApp);
 
-	if (config->PassthroughCount)
+	if (config->StaticPassthrough)
 	{
 		WLog_INFO(TAG, "\tStatic Channels Proxy:");
-		pf_server_config_print_list(config->Passthrough, config->PassthroughCount);
+		pf_server_config_print_list(config->StaticPassthrough, config->StaticPassthroughCount);
+	}
+
+	if (config->DynamicPassthrough)
+	{
+		WLog_INFO(TAG, "\tDynamic Channels Proxy:");
+		pf_server_config_print_list(config->DynamicPassthrough, config->DynamicPassthroughCount);
 	}
 
 	CONFIG_PRINT_SECTION("Clipboard");
@@ -355,7 +378,8 @@ void pf_server_config_free(proxyConfig* config)
 	if (config == NULL)
 		return;
 
-	free(config->Passthrough);
+	free(config->StaticPassthrough);
+	free(config->DynamicPassthrough);
 	free(config->RequiredPlugins);
 	free(config->Modules);
 	free(config->TargetHost);
