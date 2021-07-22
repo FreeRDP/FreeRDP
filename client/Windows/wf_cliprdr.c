@@ -2363,6 +2363,8 @@ wf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 	{
 		if (fileContentsRequest->dwFlags == FILECONTENTS_SIZE)
 		{
+			if (clipboard->nFiles <= fileContentsRequest->listIndex)
+				goto error;
 			*((UINT32*)&pData[0]) =
 			    clipboard->fileDescriptor[fileContentsRequest->listIndex]->nFileSizeLow;
 			*((UINT32*)&pData[4]) =
@@ -2372,6 +2374,8 @@ wf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 		else if (fileContentsRequest->dwFlags == FILECONTENTS_RANGE)
 		{
 			BOOL bRet;
+			if (clipboard->nFiles <= fileContentsRequest->listIndex)
+				goto error;
 			bRet = wf_cliprdr_get_file_contents(
 			    clipboard->file_names[fileContentsRequest->listIndex], pData,
 			    fileContentsRequest->nPositionLow, fileContentsRequest->nPositionHigh, cbRequested,
