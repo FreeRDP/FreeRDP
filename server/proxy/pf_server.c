@@ -470,6 +470,8 @@ fail:
 	pf_server_channels_free(ps);
 	LOG_INFO(TAG, ps, "freeing proxy data");
 	ArrayList_Remove(server->clients, pdata);
+	if (server->config != pdata->config)
+		pf_server_config_free(pdata->config);
 	proxy_data_free(pdata);
 	freerdp_client_context_free(pc);
 	client->Close(client);
