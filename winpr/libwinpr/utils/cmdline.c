@@ -393,7 +393,334 @@ int CommandLineParseArgumentsW(int argc, LPWSTR* argv, COMMAND_LINE_ARGUMENT_W* 
                                DWORD flags, void* context, COMMAND_LINE_PRE_FILTER_FN_W preFilter,
                                COMMAND_LINE_POST_FILTER_FN_W postFilter)
 {
-	return 0;
+	int i, j;
+	int status;
+	int count;
+	size_t length;
+	BOOL notescaped;
+	const WCHAR* sigil;
+	size_t sigil_length;
+	WCHAR* keyword;
+	size_t keyword_length;
+	SSIZE_T keyword_index;
+	WCHAR* separator;
+	WCHAR* value;
+	int toggle;
+	status = 0;
+	notescaped = FALSE;
+
+	if (!argv)
+		return status;
+
+	if (argc == 1)
+	{
+		if (flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD)
+			status = 0;
+		else
+			status = COMMAND_LINE_STATUS_PRINT_HELP;
+
+		return status;
+	}
+
+	for (i = 1; i < argc; i++)
+	{
+		BOOL found = FALSE;
+		BOOL escaped = TRUE;
+
+		if (preFilter)
+		{
+			count = preFilter(context, i, argc, argv);
+
+			if (count < 0)
+			{
+				log_error(flags, "Failed for index %d [%S]: PreFilter rule could not be applied", i,
+				          argv[i])
+				status = COMMAND_LINE_ERROR;
+				return status;
+			}
+
+			if (count > 0)
+			{
+				i += (count - 1);
+				continue;
+			}
+		}
+
+		sigil = argv[i];
+		length = wcslen(argv[i]);
+
+		if ((sigil[0] == L'/') && (flags & COMMAND_LINE_SIGIL_SLASH))
+		{
+			sigil_length = 1;
+		}
+		else if ((sigil[0] == L'-') && (flags & COMMAND_LINE_SIGIL_DASH))
+		{
+			sigil_length = 1;
+
+			if (length > 2)
+			{
+				if ((sigil[1] == L'-') && (flags & COMMAND_LINE_SIGIL_DOUBLE_DASH))
+					sigil_length = 2;
+			}
+		}
+		else if ((sigil[0] == L'+') && (flags & COMMAND_LINE_SIGIL_PLUS_MINUS))
+		{
+			sigil_length = 1;
+		}
+		else if ((sigil[0] == L'-') && (flags & COMMAND_LINE_SIGIL_PLUS_MINUS))
+		{
+			sigil_length = 1;
+		}
+		else if (flags & COMMAND_LINE_SIGIL_NONE)
+		{
+			sigil_length = 0;
+		}
+		else if (flags & COMMAND_LINE_SIGIL_NOT_ESCAPED)
+		{
+			if (notescaped)
+			{
+				log_error(flags, "Failed at index %d [%S]: Unescaped sigil", i, argv[i]);
+				return COMMAND_LINE_ERROR;
+			}
+
+			sigil_length = 0;
+			escaped = FALSE;
+			notescaped = TRUE;
+		}
+		else
+		{
+			log_error(flags, "Failed at index %d [%S]: Invalid sigil", i, argv[i]);
+			return COMMAND_LINE_ERROR;
+		}
+
+		if ((sigil_length > 0) || (flags & COMMAND_LINE_SIGIL_NONE) ||
+			(flags & COMMAND_LINE_SIGIL_NOT_ESCAPED))
+		{
+			if (length < (sigil_length + 1))
+			{
+				if ((flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD))
+					continue;
+
+				return COMMAND_LINE_ERROR_NO_KEYWORD;
+			}
+
+			keyword_index = sigil_length;
+			keyword = &argv[i][keyword_index];
+			toggle = -1;
+
+			if (flags & COMMAND_LINE_SIGIL_ENABLE_DISABLE)
+			{
+				if (wcsncmp(keyword, L"enable-", 7) == 0)
+				{
+					toggle = TRUE;
+					keyword_index += 7;
+					keyword = &argv[i][keyword_index];
+				}
+				else if (wcsncmp(keyword, L"disable-", 8) == 0)
+				{
+					toggle = FALSE;
+					keyword_index += 8;
+					keyword = &argv[i][keyword_index];
+				}
+			}
+
+			separator = NULL;
+
+			if ((flags & COMMAND_LINE_SEPARATOR_COLON) && (!separator))
+				separator = wcschr(keyword, L':');
+
+			if ((flags & COMMAND_LINE_SEPARATOR_EQUAL) && (!separator))
+				separator = wcschr(keyword, L'=');
+
+			if (separator)
+			{
+				SSIZE_T separator_index = (separator - argv[i]);
+				SSIZE_T value_index = separator_index + 1;
+				keyword_length = (separator - keyword);
+				value = &argv[i][value_index];
+			}
+			else
+			{
+				keyword_length = (length - keyword_index);
+				value = NULL;
+			}
+
+			if (!escaped)
+				continue;
+
+			for (j = 0; options[j].Name != NULL; j++)
+			{
+				BOOL match = FALSE;
+
+				if (wcsncmp(options[j].Name, keyword, keyword_length) == 0)
+				{
+					if (wcslen(options[j].Name) == keyword_length)
+						match = TRUE;
+				}
+
+				if ((!match) && (options[j].Alias != NULL))
+				{
+					if (wcsncmp(options[j].Alias, keyword, keyword_length) == 0)
+					{
+						if (wcslen(options[j].Alias) == keyword_length)
+							match = TRUE;
+					}
+				}
+
+				if (!match)
+					continue;
+
+				found = match;
+				options[j].Index = i;
+
+				if ((flags & COMMAND_LINE_SEPARATOR_SPACE) && ((i + 1) < argc))
+				{
+					BOOL argument;
+					int value_present = 1;
+
+					if (flags & COMMAND_LINE_SIGIL_DASH)
+					{
+						if (wcsncmp(argv[i + 1], L"-", 1) == 0)
+							value_present = 0;
+					}
+
+					if (flags & COMMAND_LINE_SIGIL_DOUBLE_DASH)
+					{
+						if (wcsncmp(argv[i + 1], L"--", 2) == 0)
+							value_present = 0;
+					}
+
+					if (flags & COMMAND_LINE_SIGIL_SLASH)
+					{
+						if (wcsncmp(argv[i + 1], L"/", 1) == 0)
+							value_present = 0;
+					}
+
+					if ((options[j].Flags & COMMAND_LINE_VALUE_REQUIRED) ||
+					    (options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
+						argument = TRUE;
+					else
+						argument = FALSE;
+
+					if (value_present && argument)
+					{
+						i++;
+						value = argv[i];
+					}
+					else if (!value_present && (options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
+					{
+						value = NULL;
+					}
+					else if (!value_present && argument)
+					{
+						log_error(flags, "Failed at index %d [%S]: Argument required", i, argv[i]);
+						return COMMAND_LINE_ERROR;
+					}
+				}
+
+				if (!(flags & COMMAND_LINE_SEPARATOR_SPACE))
+				{
+					if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
+					{
+						log_error(flags, "Failed at index %d [%S]: Unexpected value", i, argv[i]);
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+				}
+				else
+				{
+					if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
+					{
+						i--;
+						value = NULL;
+					}
+				}
+
+				if (!value && (options[j].Flags & COMMAND_LINE_VALUE_REQUIRED))
+				{
+					log_error(flags, "Failed at index %d [%S]: Missing value", i, argv[i]);
+					status = COMMAND_LINE_ERROR_MISSING_VALUE;
+					return status;
+				}
+
+				options[j].Flags |= COMMAND_LINE_ARGUMENT_PRESENT;
+
+				if (value)
+				{
+					if (!(options[j].Flags &
+					      (COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_VALUE_REQUIRED)))
+					{
+						log_error(flags, "Failed at index %d [%S]: Unexpected value", i, argv[i]);
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+
+					options[j].Value = value;
+					options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+				}
+				else
+				{
+					if (options[j].Flags & COMMAND_LINE_VALUE_FLAG)
+					{
+						options[j].Value = (LPWSTR)1;
+						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+					}
+					else if (options[j].Flags & COMMAND_LINE_VALUE_BOOL)
+					{
+						if (flags & COMMAND_LINE_SIGIL_ENABLE_DISABLE)
+						{
+							if (toggle == -1)
+								options[j].Value = (LPWSTR)BoolValueTrue;
+							else if (!toggle)
+								options[j].Value = (LPWSTR)BoolValueFalse;
+							else
+								options[j].Value = (LPWSTR)BoolValueTrue;
+						}
+						else
+						{
+							if (sigil[0] == L'+')
+								options[j].Value = (LPWSTR)BoolValueTrue;
+							else if (sigil[0] == L'-')
+								options[j].Value = (LPWSTR)BoolValueFalse;
+							else
+								options[j].Value = (LPWSTR)BoolValueTrue;
+						}
+
+						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+					}
+				}
+
+				if (postFilter)
+				{
+					count = postFilter(context, &options[j]);
+
+					if (count < 0)
+					{
+						log_error(flags,
+						          "Failed at index %d [%S]: PostFilter rule could not be applied",
+						          i, argv[i]);
+						status = COMMAND_LINE_ERROR;
+						return status;
+					}
+				}
+
+				if (options[j].Flags & COMMAND_LINE_PRINT)
+					return COMMAND_LINE_STATUS_PRINT;
+				else if (options[j].Flags & COMMAND_LINE_PRINT_HELP)
+					return COMMAND_LINE_STATUS_PRINT_HELP;
+				else if (options[j].Flags & COMMAND_LINE_PRINT_VERSION)
+					return COMMAND_LINE_STATUS_PRINT_VERSION;
+				else if (options[j].Flags & COMMAND_LINE_PRINT_BUILDCONFIG)
+					return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
+			}
+
+			if (!found && (flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD) == 0)
+			{
+				log_error(flags, "Failed at index %d [%S]: Unexpected keyword", i, argv[i]);
+				return COMMAND_LINE_ERROR_NO_KEYWORD;
+			}
+		}
+	}
+
+	return status;
 }
 
 int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options)
@@ -463,6 +790,21 @@ COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* optio
 COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* argument)
 {
 	COMMAND_LINE_ARGUMENT_A* nextArgument;
+
+	if (!argument || !argument->Name)
+		return NULL;
+
+	nextArgument = &argument[1];
+
+	if (nextArgument->Name == NULL)
+		return NULL;
+
+	return nextArgument;
+}
+
+COMMAND_LINE_ARGUMENT_W* CommandLineFindNextArgumentW(COMMAND_LINE_ARGUMENT_W* argument)
+{
+	COMMAND_LINE_ARGUMENT_W* nextArgument;
 
 	if (!argument || !argument->Name)
 		return NULL;
