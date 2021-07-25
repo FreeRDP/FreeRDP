@@ -876,8 +876,8 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 			if (maxVert && maxHorz && !minimized &&
 			    (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED))
 			{
-				appWindow->rail_state = WINDOW_SHOW_MAXIMIZED;
-				xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MAXIMIZE);
+				//appWindow->rail_state = WINDOW_SHOW_MAXIMIZED;
+				//xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MAXIMIZE);
 			}
 			else if (minimized && (appWindow->rail_state != WINDOW_SHOW_MINIMIZED))
 			{
