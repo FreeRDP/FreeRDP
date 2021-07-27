@@ -14,7 +14,7 @@ Fixed issues:
 # 2021-03-15 Version 2.3.2
 
 For a complete and detailed change log since the last release run:
-git log 2.3.2..2.X.Y
+git log 2.3.2..2.4.0
 
 Noteworthy changes:
 * Fixed autoreconnect printer backend loading
