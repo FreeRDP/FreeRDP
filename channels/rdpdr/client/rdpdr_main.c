@@ -890,7 +890,17 @@ static void first_hotplug(rdpdrPlugin* rdpdr)
 
 	if ((error = handle_hotplug(rdpdr)))
 	{
-		WLog_ERR(TAG, "handle_hotplug failed with error %" PRIu32 "!", error);
+		switch (error)
+		{
+			case ERROR_DISK_CHANGE:
+			case CHANNEL_RC_OK:
+			case ERROR_OPEN_FAILED:
+			case ERROR_CALL_NOT_IMPLEMENTED:
+				break;
+			default:
+				WLog_ERR(TAG, "handle_hotplug failed with error %" PRIu32 "!", error);
+				break;
+		}
 	}
 }
 
