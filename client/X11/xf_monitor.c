@@ -263,7 +263,9 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		 */
 		if (!settings->NumMonitorIds)
 		{
-			settings->MonitorIds[0] = current_monitor;
+			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, &current_monitor,
+			                                      1))
+				return FALSE;
 		}
 
 		/* Always sets number of monitors from command-line to just 1.
