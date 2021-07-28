@@ -284,12 +284,14 @@ size_t HashTable_Count(wHashTable* table)
 /**
  * Adds an element with the specified key and value into the HashTable.
  */
+#if defined(WITH_WINPR_DEPRECATED)
 int HashTable_Add(wHashTable* table, const void* key, const void* value)
 {
 	if (!HashTable_Insert(table, key, value))
 		return -1;
 	return 0;
 }
+#endif
 
 BOOL HashTable_Insert(wHashTable* table, const void* key, const void* value)
 {

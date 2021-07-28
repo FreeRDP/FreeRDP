@@ -1049,6 +1049,7 @@ wLog* WLog_Get(LPCSTR name)
 	return WLog_Get_int(root, name);
 }
 
+#if defined(WITH_WINPR_DEPRECATED)
 BOOL WLog_Init(void)
 {
 	return WLog_GetRoot() != NULL;
@@ -1077,3 +1078,4 @@ BOOL WLog_Uninit(void)
 
 	return TRUE;
 }
+#endif

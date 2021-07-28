@@ -50,7 +50,7 @@ struct LanguageIdentifier
 	const char* SublanguageSymbol;
 };
 
-const struct LanguageIdentifier language_identifiers[] = {
+static const struct LanguageIdentifier language_identifiers[] = {
 	/* 	[Language identifier]		[Primary language]		[Prim. lang. identifier]		[Prim.
 	   lang. symbol]		[Sublanguage]		[Sublang. identifier]		[Sublang. symbol]	*/
 	{ "", 0xc00, "Default custom locale language", 0x0, "LANG_NEUTRAL",

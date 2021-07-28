@@ -280,6 +280,7 @@ BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj)
 	return rc;
 }
 
+#if defined(WITH_WINPR_DEPRECATED)
 int ArrayList_Add(wArrayList* arrayList, const void* obj)
 {
 	WINPR_ASSERT(arrayList);
@@ -287,6 +288,7 @@ int ArrayList_Add(wArrayList* arrayList, const void* obj)
 		return -1;
 	return (int)ArrayList_Count(arrayList) - 1;
 }
+#endif
 
 /**
  * Adds an object to the end of the ArrayList.

@@ -40,8 +40,6 @@
 #include <sys/syscall.h>
 #endif
 
-extern const char* WLOG_LEVELS[7];
-
 /**
  * Log Layout
  */

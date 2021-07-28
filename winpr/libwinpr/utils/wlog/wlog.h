@@ -81,6 +81,7 @@ struct _wLog
 	CRITICAL_SECTION lock;
 };
 
+extern const char* WLOG_LEVELS[7];
 BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message);
 
 #include "wlog/Layout.h"

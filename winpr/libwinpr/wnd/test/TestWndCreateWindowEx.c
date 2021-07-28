@@ -5,19 +5,19 @@
 #include <winpr/wtsapi.h>
 #include <winpr/library.h>
 
-const char* WM_WTS_STRINGS[] = { "",
-	                             "WTS_CONSOLE_CONNECT",
-	                             "WTS_CONSOLE_DISCONNECT",
-	                             "WTS_REMOTE_CONNECT",
-	                             "WTS_REMOTE_DISCONNECT",
-	                             "WTS_SESSION_LOGON",
-	                             "WTS_SESSION_LOGOFF",
-	                             "WTS_SESSION_LOCK",
-	                             "WTS_SESSION_UNLOCK",
-	                             "WTS_SESSION_REMOTE_CONTROL",
-	                             "WTS_SESSION_CREATE",
-	                             "WTS_SESSION_TERMINATE",
-	                             "" };
+static const char* WM_WTS_STRINGS[] = { "",
+	                                    "WTS_CONSOLE_CONNECT",
+	                                    "WTS_CONSOLE_DISCONNECT",
+	                                    "WTS_REMOTE_CONNECT",
+	                                    "WTS_REMOTE_DISCONNECT",
+	                                    "WTS_SESSION_LOGON",
+	                                    "WTS_SESSION_LOGOFF",
+	                                    "WTS_SESSION_LOCK",
+	                                    "WTS_SESSION_UNLOCK",
+	                                    "WTS_SESSION_REMOTE_CONTROL",
+	                                    "WTS_SESSION_CREATE",
+	                                    "WTS_SESSION_TERMINATE",
+	                                    "" };
 
 static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

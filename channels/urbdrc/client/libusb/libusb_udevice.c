@@ -85,7 +85,7 @@ static void request_free(void* value);
 
 static struct libusb_transfer* list_contains(wArrayList* list, UINT32 streamID)
 {
-	int x, count;
+	size_t x, count;
 	if (!list)
 		return NULL;
 	count = ArrayList_Count(list);
@@ -204,9 +204,13 @@ static ASYNC_TRANSFER_USER_DATA* async_transfer_user_data_new(IUDEVICE* idev, UI
                                                               BOOL NoAck, t_isoch_transfer_cb cb,
                                                               URBDRC_CHANNEL_CALLBACK* callback)
 {
-	ASYNC_TRANSFER_USER_DATA* user_data = calloc(1, sizeof(ASYNC_TRANSFER_USER_DATA));
+	ASYNC_TRANSFER_USER_DATA* user_data;
 	UDEVICE* pdev = (UDEVICE*)idev;
 
+	if (BufferSize > UINT32_MAX)
+		return NULL;
+
+	user_data = calloc(1, sizeof(ASYNC_TRANSFER_USER_DATA));
 	if (!user_data)
 		return NULL;
 
@@ -222,7 +226,7 @@ static ASYNC_TRANSFER_USER_DATA* async_transfer_user_data_new(IUDEVICE* idev, UI
 	if (data)
 		memcpy(Stream_Pointer(user_data->data), data, BufferSize);
 	else
-		user_data->OutputBufferSize = BufferSize;
+		user_data->OutputBufferSize = (UINT32)BufferSize;
 
 	user_data->noack = NoAck;
 	user_data->cb = cb;
@@ -1382,7 +1386,7 @@ static int func_cancel_xact_request(URBDRC_PLUGIN* urbdrc, struct libusb_transfe
 static void libusb_udev_cancel_all_transfer_request(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
-	int count, x;
+	size_t count, x;
 
 	if (!pdev || !pdev->request_queue || !pdev->urbdrc)
 		return;

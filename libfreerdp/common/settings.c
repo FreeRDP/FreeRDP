@@ -837,6 +837,7 @@ void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEn
 	freerdp_set_gateway_usage_method(settings, GatewayUsageMethod);
 }
 
+#if defined(WITH_FREERDP_DEPRECATED)
 BOOL freerdp_get_param_bool(const rdpSettings* settings, int id)
 {
 	return freerdp_settings_get_bool(settings, (size_t)id);
@@ -886,6 +887,7 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 {
 	return freerdp_settings_set_string(settings, (size_t)id, param) ? 0 : -1;
 }
+#endif
 
 static BOOL value_to_uint(const char* value, ULONGLONG* result, ULONGLONG min, ULONGLONG max)
 {
@@ -1263,6 +1265,7 @@ UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings)
 	return flags;
 }
 
+#if defined(WITH_FREERDP_DEPRECATED)
 ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel)
 {
 	return freerdp_addin_argv_clone(channel);
@@ -1272,3 +1275,4 @@ ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel)
 {
 	return freerdp_addin_argv_clone(channel);
 }
+#endif

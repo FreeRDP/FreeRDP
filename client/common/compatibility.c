@@ -287,7 +287,7 @@ static int freerdp_client_old_command_line_pre_filter(void* context, int index, 
 	if (strcmp("--plugin", argv[index]) == 0)
 	{
 		int args_handled = 0;
-		int length;
+		size_t length;
 		char *a, *p;
 		int i, j, t;
 		int old_index;
@@ -341,7 +341,7 @@ static int freerdp_client_old_command_line_pre_filter(void* context, int index, 
 
 					if (p != NULL)
 					{
-						length = (int)(p - a);
+						length = (size_t)(p - a);
 
 						if (!freerdp_addin_argv_add_argument_ex(args, a, length))
 						{

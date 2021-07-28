@@ -320,7 +320,7 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 	if (lpFileSizeHigh)
 		*lpFileSizeHigh = (UINT32)(size >> 32);
 
-	return size & 0xFFFFFFFFUL;
+	return (UINT32)(size & 0xFFFFFFFF);
 }
 
 static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
@@ -653,7 +653,7 @@ static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDispositio
 
 UINT32 map_posix_err(int fs_errno)
 {
-	UINT32 rc;
+	NTSTATUS rc;
 
 	/* try to return NTSTATUS version of error code */
 
@@ -702,7 +702,7 @@ UINT32 map_posix_err(int fs_errno)
 			break;
 	}
 
-	return rc;
+	return (UINT32)rc;
 }
 
 static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
@@ -868,7 +868,7 @@ static BOOL IsFileDevice(LPCTSTR lpDeviceName)
 	return TRUE;
 }
 
-HANDLE_CREATOR _FileHandleCreator = { IsFileDevice, FileCreateFileA };
+static HANDLE_CREATOR _FileHandleCreator = { IsFileDevice, FileCreateFileA };
 
 HANDLE_CREATOR* GetFileHandleCreator(void)
 {

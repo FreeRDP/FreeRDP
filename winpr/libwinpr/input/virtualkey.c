@@ -302,7 +302,7 @@ struct _XKB_KEYNAME
 };
 typedef struct _XKB_KEYNAME XKB_KEYNAME;
 
-XKB_KEYNAME XKB_KEYNAME_TABLE[] = {
+static XKB_KEYNAME XKB_KEYNAME_TABLE[] = {
 	{ "BKSP", VK_BACK },
 	{ "TAB", VK_TAB },
 	{ "RTRN", VK_RETURN },

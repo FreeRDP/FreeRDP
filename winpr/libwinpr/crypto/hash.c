@@ -44,6 +44,10 @@
  */
 
 #ifdef WITH_OPENSSL
+extern const EVP_MD* winpr_openssl_get_evp_md(WINPR_MD_TYPE md);
+#endif
+
+#ifdef WITH_OPENSSL
 const EVP_MD* winpr_openssl_get_evp_md(WINPR_MD_TYPE md)
 {
 	const char* name = winpr_md_type_to_string(md);

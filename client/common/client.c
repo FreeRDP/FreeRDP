@@ -503,6 +503,7 @@ static DWORD client_cli_accept_certificate(rdpSettings* settings)
  *  @param host_mismatch Indicates the certificate host does not match.
  *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
  */
+#if defined(WITH_FREERDP_DEPRECATED)
 DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name, const char* subject,
                                     const char* issuer, const char* fingerprint, BOOL host_mismatch)
 {
@@ -519,6 +520,7 @@ DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name, 
 	       "Please look at the OpenSSL documentation on how to add a private CA to the store.\n");
 	return client_cli_accept_certificate(instance->settings);
 }
+#endif
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
  *  when the connection requires it.
@@ -583,6 +585,7 @@ DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT
  *  @param old_fingerprint
  *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
  */
+#if defined(WITH_FREERDP_DEPRECATED)
 DWORD client_cli_verify_changed_certificate(freerdp* instance, const char* common_name,
                                             const char* subject, const char* issuer,
                                             const char* fingerprint, const char* old_subject,
@@ -610,6 +613,7 @@ DWORD client_cli_verify_changed_certificate(freerdp* instance, const char* commo
 	       "Please contact the administrator of the RDP server and clarify.\n");
 	return client_cli_accept_certificate(instance->settings);
 }
+#endif
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
  *  when a stored certificate does not match the remote counterpart.

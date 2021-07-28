@@ -244,8 +244,8 @@ static void NdrPrintExtFlags(INTERPRETER_OPT_FLAGS2 extFlags)
 		WLog_INFO(TAG, "HasNotify2, ");
 }
 
-CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat,
-                                 void** stackTop, void** fpuStack)
+static CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat,
+                                        void** stackTop, void** fpuStack)
 {
 	RPC_MESSAGE rpcMsg;
 	unsigned short procNum;
