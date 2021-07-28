@@ -98,6 +98,7 @@ void CommLog_Print(DWORD wlog_level, ...);
 
 BOOL CommIsHandled(HANDLE handle);
 BOOL CommCloseHandle(HANDLE handle);
+HANDLE_CREATOR* GetCommHandleCreator(void);
 
 #ifndef WITH_EVENTFD_READ_WRITE
 int eventfd_read(int fd, eventfd_t* value);

@@ -1067,7 +1067,7 @@ SECURITY_STATUS SEC_ENTRY sspi_VerifySignature(PCtxtHandle phContext, PSecBuffer
 	return status;
 }
 
-SecurityFunctionTableA sspi_SecurityFunctionTableA = {
+static const SecurityFunctionTableA sspi_SecurityFunctionTableA = {
 	1,                                /* dwVersion */
 	sspi_EnumerateSecurityPackagesA,  /* EnumerateSecurityPackages */
 	sspi_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
@@ -1098,7 +1098,7 @@ SecurityFunctionTableA sspi_SecurityFunctionTableA = {
 	sspi_SetContextAttributesA,       /* SetContextAttributes */
 };
 
-SecurityFunctionTableW sspi_SecurityFunctionTableW = {
+static const SecurityFunctionTableW sspi_SecurityFunctionTableW = {
 	1,                                /* dwVersion */
 	sspi_EnumerateSecurityPackagesW,  /* EnumerateSecurityPackages */
 	sspi_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */

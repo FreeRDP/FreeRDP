@@ -186,7 +186,7 @@ static pthread_once_t _HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 extern HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void);
 
 #if defined __linux__ && !defined ANDROID
-extern HANDLE_CREATOR* GetCommHandleCreator(void);
+#include "../comm/comm.h"
 #endif /* __linux__ && !defined ANDROID */
 
 static void _HandleCreatorsInit()

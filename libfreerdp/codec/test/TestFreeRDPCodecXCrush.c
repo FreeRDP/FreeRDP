@@ -42,7 +42,7 @@ static const BYTE TEST_ISLAND_DATA_XCRUSH[] =
     "\x03\xbb\x43\x7b\x6f\xa8\xe5\x8b\xd0\xf0\xe8\xde\xd8\xd8\xe7\xec"
     "\xf3\xa7\xe4\x7c\xa7\xe2\x9f\x01\x99\x4b\x80";
 
-int test_XCrushCompressBells()
+static int test_XCrushCompressBells(void)
 {
 	int status;
 	UINT32 Flags;
@@ -89,7 +89,7 @@ int test_XCrushCompressBells()
 	return 1;
 }
 
-int test_XCrushCompressIsland()
+static int test_XCrushCompressIsland(void)
 {
 	int status;
 	UINT32 Flags;

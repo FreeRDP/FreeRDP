@@ -168,10 +168,10 @@ static int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 	                                settings->NSCodecColorLossLevel))
 		goto fail;
 	if (!nsc_context_set_parameters(encoder->nsc, NSC_ALLOW_SUBSAMPLING,
-	                                settings->NSCodecAllowSubsampling))
+	                                (UINT32)settings->NSCodecAllowSubsampling))
 		goto fail;
 	if (!nsc_context_set_parameters(encoder->nsc, NSC_DYNAMIC_COLOR_FIDELITY,
-	                                settings->NSCodecAllowDynamicColorFidelity))
+	                                (UINT32)settings->NSCodecAllowDynamicColorFidelity))
 		goto fail;
 	if (!nsc_context_set_parameters(encoder->nsc, NSC_COLOR_FORMAT, PIXEL_FORMAT_BGRX32))
 		goto fail;

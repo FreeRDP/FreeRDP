@@ -430,11 +430,11 @@ const SecPkgInfoA SCHANNEL_SecPkgInfoA = {
 	"Schannel Security Package" /* Comment */
 };
 
-WCHAR SCHANNEL_SecPkgInfoW_Name[] = { 'S', 'c', 'h', 'a', 'n', 'n', 'e', 'l', '\0' };
+static WCHAR SCHANNEL_SecPkgInfoW_Name[] = { 'S', 'c', 'h', 'a', 'n', 'n', 'e', 'l', '\0' };
 
-WCHAR SCHANNEL_SecPkgInfoW_Comment[] = { 'S', 'c', 'h', 'a', 'n', 'n', 'e', 'l', ' ',
-	                                     'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ',
-	                                     'P', 'a', 'c', 'k', 'a', 'g', 'e', '\0' };
+static WCHAR SCHANNEL_SecPkgInfoW_Comment[] = { 'S', 'c', 'h', 'a', 'n', 'n', 'e', 'l', ' ',
+	                                            'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ',
+	                                            'P', 'a', 'c', 'k', 'a', 'g', 'e', '\0' };
 
 const SecPkgInfoW SCHANNEL_SecPkgInfoW = {
 	0x000107B3,                  /* fCapabilities */

@@ -26,7 +26,7 @@ typedef struct
 	BOOL called;
 } UserApcArg;
 
-void CALLBACK userApc(ULONG_PTR arg)
+static void CALLBACK userApc(ULONG_PTR arg)
 {
 	UserApcArg* userArg = (UserApcArg*)arg;
 	userArg->called = TRUE;

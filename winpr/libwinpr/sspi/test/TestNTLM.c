@@ -97,8 +97,8 @@ struct _TEST_NTLM_CLIENT
 };
 typedef struct _TEST_NTLM_CLIENT TEST_NTLM_CLIENT;
 
-int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* domain,
-                          const char* password)
+static int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* domain,
+                                 const char* password)
 {
 	SECURITY_STATUS status;
 	SecInvalidateHandle(&(ntlm->context));
@@ -141,7 +141,7 @@ int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* 
 	return 1;
 }
 
-void test_ntlm_client_uninit(TEST_NTLM_CLIENT* ntlm)
+static void test_ntlm_client_uninit(TEST_NTLM_CLIENT* ntlm)
 {
 	if (!ntlm)
 		return;
@@ -203,7 +203,7 @@ void test_ntlm_client_uninit(TEST_NTLM_CLIENT* ntlm)
  *                                           --------------
  */
 
-int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
+static int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 {
 	SECURITY_STATUS status;
 
@@ -264,7 +264,7 @@ int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 	return (status == SEC_I_CONTINUE_NEEDED) ? 1 : 0;
 }
 
-TEST_NTLM_CLIENT* test_ntlm_client_new()
+static TEST_NTLM_CLIENT* test_ntlm_client_new(void)
 {
 	TEST_NTLM_CLIENT* ntlm;
 	ntlm = (TEST_NTLM_CLIENT*)calloc(1, sizeof(TEST_NTLM_CLIENT));
@@ -275,7 +275,7 @@ TEST_NTLM_CLIENT* test_ntlm_client_new()
 	return ntlm;
 }
 
-void test_ntlm_client_free(TEST_NTLM_CLIENT* ntlm)
+static void test_ntlm_client_free(TEST_NTLM_CLIENT* ntlm)
 {
 	if (!ntlm)
 		return;
@@ -308,7 +308,7 @@ struct _TEST_NTLM_SERVER
 };
 typedef struct _TEST_NTLM_SERVER TEST_NTLM_SERVER;
 
-int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
+static int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 {
 	SECURITY_STATUS status;
 	ntlm->UseNtlmV2Hash = TRUE;
@@ -351,7 +351,7 @@ int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 	return 1;
 }
 
-void test_ntlm_server_uninit(TEST_NTLM_SERVER* ntlm)
+static void test_ntlm_server_uninit(TEST_NTLM_SERVER* ntlm)
 {
 	if (!ntlm)
 		return;
@@ -375,7 +375,7 @@ void test_ntlm_server_uninit(TEST_NTLM_SERVER* ntlm)
 	}
 }
 
-int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
+static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 {
 	SECURITY_STATUS status;
 	ntlm->inputBufferDesc.ulVersion = SECBUFFER_VERSION;
@@ -447,7 +447,7 @@ int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 	return (status == SEC_I_CONTINUE_NEEDED) ? 1 : 0;
 }
 
-TEST_NTLM_SERVER* test_ntlm_server_new()
+static TEST_NTLM_SERVER* test_ntlm_server_new(void)
 {
 	TEST_NTLM_SERVER* ntlm;
 	ntlm = (TEST_NTLM_SERVER*)calloc(1, sizeof(TEST_NTLM_SERVER));
@@ -458,7 +458,7 @@ TEST_NTLM_SERVER* test_ntlm_server_new()
 	return ntlm;
 }
 
-void test_ntlm_server_free(TEST_NTLM_SERVER* ntlm)
+static void test_ntlm_server_free(TEST_NTLM_SERVER* ntlm)
 {
 	if (!ntlm)
 		return;

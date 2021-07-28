@@ -347,7 +347,7 @@ BOOL per_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
  * @return
  */
 
-BOOL per_read_object_identifier(wStream* s, BYTE oid[6])
+BOOL per_read_object_identifier(wStream* s, const BYTE oid[6])
 {
 	BYTE t12;
 	UINT16 length;

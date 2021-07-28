@@ -4,7 +4,7 @@
 #include <winpr/stream.h>
 #include <winpr/bitstream.h>
 
-void BitStrGen()
+static void BitStrGen(void)
 {
 	DWORD i, j;
 	char str[64];

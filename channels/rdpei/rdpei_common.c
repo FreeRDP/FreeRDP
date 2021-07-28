@@ -376,7 +376,7 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 
 BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 {
-	BYTE byte;
+	UINT64 byte;
 	BYTE count;
 
 	if (Stream_GetRemainingLength(s) < 1)
@@ -396,85 +396,85 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 1:
-			*value = (byte & 0x1F) << 8;
+			*value = (byte & 0x1FU) << 8U;
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 2:
-			*value = (byte & 0x1F) << 16;
+			*value = (byte & 0x1FU) << 16U;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= (byte << 8U);
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 3:
-			*value = (byte & 0x1F) << 24;
+			*value = (byte & 0x1FU) << 24U;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 16);
+			*value |= (byte << 16U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= (byte << 8U);
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 4:
-			*value = ((UINT64)(byte & 0x1F)) << 32;
+			*value = ((byte & 0x1FU)) << 32U;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 24);
+			*value |= (byte << 24U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 16);
+			*value |= (byte << 16U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= (byte << 8U);
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 5:
-			*value = ((UINT64)(byte & 0x1F)) << 40;
+			*value = ((byte & 0x1FU)) << 40U;
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64)byte) << 32);
+			*value |= ((byte) << 32U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 24);
+			*value |= (byte << 24U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 16);
+			*value |= (byte << 16U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= (byte << 8U);
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 6:
-			*value = ((UINT64)(byte & 0x1F)) << 48;
+			*value = ((byte & 0x1FU)) << 48U;
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64)byte) << 40);
+			*value |= ((byte) << 40U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64)byte) << 32);
+			*value |= ((byte) << 32U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 24);
+			*value |= (byte << 24U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 16);
+			*value |= (byte << 16U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= (byte << 8U);
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 7:
-			*value = ((UINT64)(byte & 0x1F)) << 56;
+			*value = ((byte & 0x1FU)) << 56U;
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64)byte) << 48);
+			*value |= ((byte) << 48U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64)byte) << 40);
+			*value |= ((byte) << 40U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (((UINT64)byte) << 32);
+			*value |= ((byte) << 32U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 24);
+			*value |= (byte << 24U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 16);
+			*value |= (byte << 16U);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= (byte << 8U);
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;

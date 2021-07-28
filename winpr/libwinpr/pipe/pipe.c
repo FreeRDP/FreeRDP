@@ -154,7 +154,7 @@ static BOOL PipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	}
 
 	if (lpNumberOfBytesRead)
-		*lpNumberOfBytesRead = io_status;
+		*lpNumberOfBytesRead = (DWORD)io_status;
 
 	return status;
 }
@@ -182,7 +182,7 @@ static BOOL PipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 	if ((io_status < 0) && (errno == EWOULDBLOCK))
 		io_status = 0;
 
-	*lpNumberOfBytesWritten = io_status;
+	*lpNumberOfBytesWritten = (DWORD)io_status;
 	return TRUE;
 }
 
@@ -308,7 +308,7 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		}
 
 		if (lpNumberOfBytesRead)
-			*lpNumberOfBytesRead = io_status;
+			*lpNumberOfBytesRead = (DWORD)io_status;
 	}
 	else
 	{
@@ -395,7 +395,7 @@ BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 			}
 		}
 
-		*lpNumberOfBytesWritten = io_status;
+		*lpNumberOfBytesWritten = (DWORD)io_status;
 		return status;
 	}
 	else

@@ -213,7 +213,7 @@ static test tests[] = {
 #endif
 };
 
-void check_modified_arguments(test* test, char** command_line, int* rc)
+static void check_modified_arguments(test* test, char** command_line, int* rc)
 {
 	int k;
 	const char* expected_argument;

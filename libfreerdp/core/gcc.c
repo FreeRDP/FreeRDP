@@ -191,10 +191,10 @@ static DWORD rdp_version_common(DWORD serverVersion, DWORD clientVersion)
  * { itu-t(0) recommendation(0) t(20) t124(124) version(0) 1 }
  * v.1 of ITU-T Recommendation T.124 (Feb 1998): "Generic Conference Control"
  */
-BYTE t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
+static const BYTE t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
 
-BYTE h221_cs_key[4] = "Duca";
-BYTE h221_sc_key[4] = "McDn";
+static const BYTE h221_cs_key[4] = "Duca";
+static const BYTE h221_sc_key[4] = "McDn";
 
 /**
  * Read a GCC Conference Create Request.\n

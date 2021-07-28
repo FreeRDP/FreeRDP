@@ -28,8 +28,8 @@
 
 static int status = 0;
 
-LONG* pLoopCount = NULL;
-BOOL bStopTest = FALSE;
+static LONG* pLoopCount = NULL;
+static BOOL bStopTest = FALSE;
 
 static DWORD WINAPI test_error_thread(LPVOID arg)
 {

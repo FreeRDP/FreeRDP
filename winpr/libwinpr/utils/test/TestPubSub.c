@@ -15,12 +15,12 @@ int flags;
 int button;
 DEFINE_EVENT_END(MouseButton)
 
-void MouseMotionEventHandler(void* context, MouseMotionEventArgs* e)
+static void MouseMotionEventHandler(void* context, MouseMotionEventArgs* e)
 {
 	printf("MouseMotionEvent: x: %d y: %d\n", e->x, e->y);
 }
 
-void MouseButtonEventHandler(void* context, MouseButtonEventArgs* e)
+static void MouseButtonEventHandler(void* context, MouseButtonEventArgs* e)
 {
 	printf("MouseButtonEvent: x: %d y: %d flags: %d button: %d\n", e->x, e->y, e->flags, e->button);
 }

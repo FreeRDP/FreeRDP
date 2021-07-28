@@ -14,7 +14,7 @@ static char* val3 = "val3";
 static int test_hash_table_pointer(void)
 {
 	int rc = -1;
-	int count;
+	size_t count;
 	char* value;
 	wHashTable* table;
 	table = HashTable_New(TRUE);
@@ -32,7 +32,7 @@ static int test_hash_table_pointer(void)
 
 	if (count != 3)
 	{
-		printf("HashTable_Count: Expected : 3, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 3, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -42,7 +42,7 @@ static int test_hash_table_pointer(void)
 
 	if (count != 2)
 	{
-		printf("HashTable_Count: Expected : 2, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 2, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -52,7 +52,7 @@ static int test_hash_table_pointer(void)
 
 	if (count != 1)
 	{
-		printf("HashTable_Count: Expected : 1, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 1, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -62,7 +62,7 @@ static int test_hash_table_pointer(void)
 
 	if (count != 0)
 	{
-		printf("HashTable_Count: Expected : 0, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 0, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -76,7 +76,7 @@ static int test_hash_table_pointer(void)
 
 	if (count != 3)
 	{
-		printf("HashTable_Count: Expected : 3, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 3, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -137,7 +137,7 @@ static int test_hash_table_pointer(void)
 
 	if (count != 0)
 	{
-		printf("HashTable_Count: Expected : 0, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 0, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -150,7 +150,7 @@ fail:
 static int test_hash_table_string(void)
 {
 	int rc = -1;
-	int count;
+	size_t count;
 	char* value;
 	wHashTable* table = HashTable_New(TRUE);
 
@@ -170,7 +170,7 @@ static int test_hash_table_string(void)
 
 	if (count != 3)
 	{
-		printf("HashTable_Count: Expected : 3, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 3, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -180,7 +180,7 @@ static int test_hash_table_string(void)
 
 	if (count != 2)
 	{
-		printf("HashTable_Count: Expected : 3, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 3, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -190,7 +190,7 @@ static int test_hash_table_string(void)
 
 	if (count != 1)
 	{
-		printf("HashTable_Count: Expected : 1, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 1, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -200,7 +200,7 @@ static int test_hash_table_string(void)
 
 	if (count != 0)
 	{
-		printf("HashTable_Count: Expected : 0, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 0, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -214,7 +214,7 @@ static int test_hash_table_string(void)
 
 	if (count != 3)
 	{
-		printf("HashTable_Count: Expected : 3, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 3, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -275,7 +275,7 @@ static int test_hash_table_string(void)
 
 	if (count != 0)
 	{
-		printf("HashTable_Count: Expected : 0, Actual: %d\n", count);
+		printf("HashTable_Count: Expected : 0, Actual: %" PRIuz "\n", count);
 		goto fail;
 	}
 
@@ -294,7 +294,7 @@ typedef struct
 	BOOL test3error;
 } ForeachData;
 
-BOOL foreachFn1(const void* key, void* value, void* arg)
+static BOOL foreachFn1(const void* key, void* value, void* arg)
 {
 	ForeachData* d = (ForeachData*)arg;
 	WINPR_UNUSED(key);
@@ -302,7 +302,7 @@ BOOL foreachFn1(const void* key, void* value, void* arg)
 	return TRUE;
 }
 
-BOOL foreachFn2(const void* key, void* value, void* arg)
+static BOOL foreachFn2(const void* key, void* value, void* arg)
 {
 	ForeachData* d = (ForeachData*)arg;
 	WINPR_UNUSED(key);
@@ -314,9 +314,9 @@ BOOL foreachFn2(const void* key, void* value, void* arg)
 	return TRUE;
 }
 
-BOOL foreachFn3(const void* key, void* value, void* arg)
+static BOOL foreachFn3(const void* key, void* value, void* arg)
 {
-	char* keyStr = (char*)key;
+	const char* keyStr = (const char*)key;
 
 	ForeachData* d = (ForeachData*)arg;
 	ForeachData d2;
@@ -365,7 +365,7 @@ BOOL foreachFn3(const void* key, void* value, void* arg)
 	return TRUE;
 }
 
-int test_hash_foreach(void)
+static int test_hash_foreach(void)
 {
 	ForeachData foreachData;
 	wHashTable* table;

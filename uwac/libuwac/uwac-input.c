@@ -87,7 +87,7 @@ static void on_buffer_release(void* data, struct wl_buffer* wl_buffer)
 	wl_buffer_destroy(wl_buffer);
 }
 
-const struct wl_buffer_listener buffer_release_listener = { on_buffer_release };
+static const struct wl_buffer_listener buffer_release_listener = { on_buffer_release };
 
 static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 {
