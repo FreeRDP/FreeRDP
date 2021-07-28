@@ -95,6 +95,31 @@ static const char* rdpdr_device_type_string(UINT32 type)
 			return "UNKNOWN";
 	}
 }
+
+static BOOL device_foreach(rdpdrPlugin* rdpdr, BOOL abortOnFail,
+                           BOOL (*fkt)(ULONG_PTR key, void* element, void* data), void* data)
+{
+	BOOL rc = TRUE;
+	int count, x;
+	ULONG_PTR* keys = NULL;
+
+	ListDictionary_Lock(rdpdr->devman->devices);
+	count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
+	for (x = 0; x < count; x++)
+	{
+		void* element = ListDictionary_GetItemValue(rdpdr->devman->devices, (void*)keys[x]);
+		if (!fkt(keys[x], element, data))
+		{
+			rc = FALSE;
+			if (abortOnFail)
+				break;
+		}
+	}
+	free(keys);
+	ListDictionary_Unlock(rdpdr->devman->devices);
+	return rc;
+}
+
 /**
  * Function description
  *
@@ -773,11 +798,24 @@ static UINT handle_platform_mounts(hotplug_dev* dev_array, size_t* size)
 	return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+static BOOL device_not_plugged(ULONG_PTR key, void* element, void* data)
+{
+	const WCHAR* path = (const WCHAR*)data;
+	DEVICE_DRIVE_EXT* device_ext = (DEVICE_DRIVE_EXT*)element;
+
+	WINPR_UNUSED(key);
+	WINPR_ASSERT(path);
+
+	if (!device_ext || (device_ext->device.type != RDPDR_DTYP_FILESYSTEM) || !device_ext->path)
+		return TRUE;
+	if (_wcscmp(device_ext->path, path) != 0)
+		return TRUE;
+	return FALSE;
+}
+
 static BOOL device_already_plugged(rdpdrPlugin* rdpdr, const hotplug_dev* device)
 {
 	BOOL rc = FALSE;
-	int count, x;
-	ULONG_PTR* keys = NULL;
 	WCHAR* path = NULL;
 	int status;
 
@@ -792,25 +830,9 @@ static BOOL device_already_plugged(rdpdrPlugin* rdpdr, const hotplug_dev* device
 	if (status <= 0)
 		return TRUE;
 
-	ListDictionary_Lock(rdpdr->devman->devices);
-	count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
-	for (x = 0; x < count; x++)
-	{
-		DEVICE_DRIVE_EXT* device_ext =
-		    (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(rdpdr->devman->devices, (void*)keys[x]);
-
-		if (!device_ext || (device_ext->device.type != RDPDR_DTYP_FILESYSTEM) || !device_ext->path)
-			continue;
-		if (_wcscmp(device_ext->path, path) == 0)
-		{
-			rc = TRUE;
-			break;
-		}
-	}
-	free(keys);
+	rc = device_foreach(rdpdr, TRUE, device_not_plugged, path);
 	free(path);
-	ListDictionary_Unlock(rdpdr->devman->devices);
-	return rc;
+	return !rc;
 }
 
 /**
@@ -818,15 +840,80 @@ static BOOL device_already_plugged(rdpdrPlugin* rdpdr, const hotplug_dev* device
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+struct hotplug_delete_arg
+{
+	hotplug_dev* dev_array;
+	size_t dev_array_size;
+	rdpdrPlugin* rdpdr;
+};
+
+static BOOL hotplug_delete_foreach(ULONG_PTR key, void* element, void* data)
+{
+	int rc;
+	char* path = NULL;
+	BOOL dev_found = FALSE;
+	struct hotplug_delete_arg* arg = (struct hotplug_delete_arg*)data;
+	DEVICE_DRIVE_EXT* device_ext = (DEVICE_DRIVE_EXT*)element;
+
+	WINPR_ASSERT(arg);
+	WINPR_ASSERT(arg->rdpdr);
+	WINPR_ASSERT(arg->dev_array || (arg->dev_array_size == 0));
+
+	if (!device_ext || (device_ext->device.type != RDPDR_DTYP_FILESYSTEM) || !device_ext->path ||
+	    !device_ext->automount)
+		return TRUE;
+
+	rc = ConvertFromUnicode(CP_UTF8, 0, device_ext->path, -1, &path, 0, NULL, NULL);
+
+	if (!path)
+		return FALSE;
+
+	/* not plugable device */
+	if (isAutomountLocation(path))
+	{
+		size_t i;
+		for (i = 0; i < arg->dev_array_size; i++)
+		{
+			hotplug_dev* cur = &arg->dev_array[i];
+			if (strstr(path, cur->path) != NULL)
+			{
+				dev_found = TRUE;
+				cur->to_add = FALSE;
+				break;
+			}
+		}
+	}
+
+	free(path);
+
+	if (!dev_found)
+	{
+		UINT error;
+		UINT32 ids[1] = { key };
+
+		WINPR_ASSERT(arg->rdpdr->devman);
+		devman_unregister_device(arg->rdpdr->devman, (void*)key);
+		WINPR_ASSERT(key <= UINT32_MAX);
+
+		error = rdpdr_send_device_list_remove_request(arg->rdpdr, 1, ids);
+		if (error)
+		{
+			WLog_ERR(TAG, "rdpdr_send_device_list_remove_request failed with error %" PRIu32 "!",
+			         error);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 {
 	hotplug_dev dev_array[MAX_USB_DEVICES] = { 0 };
 	size_t i;
 	size_t size = 0;
-	int count, j;
-	ULONG_PTR* keys = NULL;
-	UINT32 ids[1];
 	UINT error = ERROR_SUCCESS;
+	struct hotplug_delete_arg arg = { dev_array, ARRAYSIZE(dev_array), rdpdr };
 
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(rdpdr->devman);
@@ -834,56 +921,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	error = handle_platform_mounts(dev_array, &size);
 
 	/* delete removed devices */
-	count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
-
-	for (j = 0; j < count; j++)
-	{
-		char* path = NULL;
-		BOOL dev_found = FALSE;
-		DEVICE_DRIVE_EXT* device_ext =
-		    (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(rdpdr->devman->devices, (void*)keys[j]);
-
-		if (!device_ext || (device_ext->device.type != RDPDR_DTYP_FILESYSTEM) ||
-		    !device_ext->path || !device_ext->automount)
-			continue;
-
-		ConvertFromUnicode(CP_UTF8, 0, device_ext->path, -1, &path, 0, NULL, NULL);
-
-		if (!path)
-			continue;
-
-		/* not plugable device */
-		if (isAutomountLocation(path))
-		{
-			for (i = 0; i < size; i++)
-			{
-				hotplug_dev* cur = &dev_array[i];
-				if (strstr(path, cur->path) != NULL)
-				{
-					dev_found = TRUE;
-					cur->to_add = FALSE;
-					break;
-				}
-			}
-		}
-
-		free(path);
-
-		if (!dev_found)
-		{
-			devman_unregister_device(rdpdr->devman, (void*)keys[j]);
-			WINPR_ASSERT(keys[j] <= UINT32_MAX);
-			ids[0] = (UINT32)keys[j];
-
-			if ((error = rdpdr_send_device_list_remove_request(rdpdr, 1, ids)))
-			{
-				WLog_ERR(TAG,
-				         "rdpdr_send_device_list_remove_request failed with error %" PRIu32 "!",
-				         error);
-				goto cleanup;
-			}
-		}
-	}
+	/* Ignore result */ device_foreach(rdpdr, FALSE, hotplug_delete_foreach, &arg);
 
 	/* add new devices */
 	for (i = 0; i < size; i++)
@@ -918,7 +956,6 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	}
 
 cleanup:
-	free(keys);
 
 	for (i = 0; i < size; i++)
 		free(dev_array[i].path);
@@ -1219,19 +1256,85 @@ static UINT rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+struct device_announce_arg
+{
+	rdpdrPlugin* rdpdr;
+	wStream* s;
+	BOOL userLoggedOn;
+	UINT32 count;
+};
+
+static BOOL device_announce(ULONG_PTR key, void* element, void* data)
+{
+	struct device_announce_arg* arg = data;
+	rdpdrPlugin* rdpdr;
+	DEVICE* device = (DEVICE*)element;
+
+	WINPR_UNUSED(key);
+
+	WINPR_ASSERT(arg);
+	WINPR_ASSERT(device);
+	WINPR_ASSERT(arg->rdpdr);
+	WINPR_ASSERT(arg->s);
+
+	rdpdr = arg->rdpdr;
+
+	/**
+	 * 1. versionMinor 0x0005 doesn't send PAKID_CORE_USER_LOGGEDON
+	 *    so all devices should be sent regardless of user_loggedon
+	 * 2. smartcard devices should be always sent
+	 * 3. other devices are sent only after user_loggedon
+	 */
+
+	if ((rdpdr->versionMinor == 0x0005) || (device->type == RDPDR_DTYP_SMARTCARD) ||
+	    arg->userLoggedOn)
+	{
+		size_t i;
+		size_t data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
+
+		if (!Stream_EnsureRemainingCapacity(arg->s, 20 + data_len))
+		{
+			Stream_Free(arg->s, TRUE);
+			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+			return FALSE;
+		}
+
+		Stream_Write_UINT32(arg->s, device->type); /* deviceType */
+		Stream_Write_UINT32(arg->s, device->id);   /* deviceID */
+		strncpy((char*)Stream_Pointer(arg->s), device->name, 8);
+
+		for (i = 0; i < 8; i++)
+		{
+			BYTE c;
+			Stream_Peek_UINT8(arg->s, c);
+
+			if (c > 0x7F)
+				Stream_Write_UINT8(arg->s, '_');
+			else
+				Stream_Seek_UINT8(arg->s);
+		}
+
+		WINPR_ASSERT(data_len <= UINT32_MAX);
+		Stream_Write_UINT32(arg->s, (UINT32)data_len);
+
+		if (data_len > 0)
+			Stream_Write(arg->s, Stream_Buffer(device->data), data_len);
+
+		arg->count++;
+		WLog_INFO(TAG,
+		          "registered [%09s] device #%" PRIu32 ": %s (type=%" PRIu32 " id=%" PRIu32 ")",
+		          rdpdr_device_type_string(device->type), arg->count, device->name, device->type,
+		          device->id);
+	}
+	return TRUE;
+}
+
 static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL userLoggedOn)
 {
-	int i;
-	BYTE c;
 	size_t pos;
-	int index;
 	wStream* s;
-	UINT32 count;
-	size_t data_len;
 	size_t count_pos;
-	DEVICE* device;
-	int keyCount;
-	ULONG_PTR* pKeys = NULL;
+	struct device_announce_arg arg = { 0 };
 
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(rdpdr->devman);
@@ -1247,67 +1350,17 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);                /* Component (2 bytes) */
 	Stream_Write_UINT16(s, PAKID_CORE_DEVICELIST_ANNOUNCE); /* PacketId (2 bytes) */
 	count_pos = Stream_GetPosition(s);
-	count = 0;
 	Stream_Seek_UINT32(s); /* deviceCount */
-	pKeys = NULL;
-	keyCount = ListDictionary_GetKeys(rdpdr->devman->devices, &pKeys);
 
-	for (index = 0; index < keyCount; index++)
-	{
-		device = (DEVICE*)ListDictionary_GetItemValue(rdpdr->devman->devices, (void*)pKeys[index]);
+	arg.rdpdr = rdpdr;
+	arg.userLoggedOn = userLoggedOn;
+	arg.s = s;
+	if (!device_foreach(rdpdr, TRUE, device_announce, &arg))
+		return ERROR_INVALID_DATA;
 
-		/**
-		 * 1. versionMinor 0x0005 doesn't send PAKID_CORE_USER_LOGGEDON
-		 *    so all devices should be sent regardless of user_loggedon
-		 * 2. smartcard devices should be always sent
-		 * 3. other devices are sent only after user_loggedon
-		 */
-
-		if ((rdpdr->versionMinor == 0x0005) || (device->type == RDPDR_DTYP_SMARTCARD) ||
-		    userLoggedOn)
-		{
-			data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
-
-			if (!Stream_EnsureRemainingCapacity(s, 20 + data_len))
-			{
-				free(pKeys);
-				Stream_Free(s, TRUE);
-				WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
-				return ERROR_INVALID_DATA;
-			}
-
-			Stream_Write_UINT32(s, device->type); /* deviceType */
-			Stream_Write_UINT32(s, device->id);   /* deviceID */
-			strncpy((char*)Stream_Pointer(s), device->name, 8);
-
-			for (i = 0; i < 8; i++)
-			{
-				Stream_Peek_UINT8(s, c);
-
-				if (c > 0x7F)
-					Stream_Write_UINT8(s, '_');
-				else
-					Stream_Seek_UINT8(s);
-			}
-
-			WINPR_ASSERT(data_len <= UINT32_MAX);
-			Stream_Write_UINT32(s, (UINT32)data_len);
-
-			if (data_len > 0)
-				Stream_Write(s, Stream_Buffer(device->data), data_len);
-
-			count++;
-			WLog_INFO(TAG,
-			          "registered [%09s] device #%" PRIu32 ": %s (type=%" PRIu32 " id=%" PRIu32 ")",
-			          rdpdr_device_type_string(device->type), count, device->name, device->type,
-			          device->id);
-		}
-	}
-
-	free(pKeys);
 	pos = Stream_GetPosition(s);
 	Stream_SetPosition(s, count_pos);
-	Stream_Write_UINT32(s, count);
+	Stream_Write_UINT32(s, arg.count);
 	Stream_SetPosition(s, pos);
 	Stream_SealLength(s);
 	return rdpdr_send(rdpdr, s);
@@ -1418,34 +1471,34 @@ static UINT rdpdr_process_component(rdpdrPlugin* rdpdr, UINT16 component, UINT16
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+static BOOL device_init(ULONG_PTR key, void* element, void* data)
+{
+	UINT error = CHANNEL_RC_OK;
+	DEVICE* device = element;
+
+	WINPR_UNUSED(key);
+	WINPR_UNUSED(data);
+
+	IFCALLRET(device->Init, error, device);
+
+	if (error != CHANNEL_RC_OK)
+	{
+		WLog_ERR(TAG, "Device init failed with %s", WTSErrorToString(error));
+		return FALSE;
+	}
+	return TRUE;
+}
+
 static UINT rdpdr_process_init(rdpdrPlugin* rdpdr)
 {
-	int index;
-	int keyCount;
-	DEVICE* device;
 	ULONG_PTR* pKeys = NULL;
-	UINT error = CHANNEL_RC_OK;
 	pKeys = NULL;
 
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(rdpdr->devman);
 
-	keyCount = ListDictionary_GetKeys(rdpdr->devman->devices, &pKeys);
-
-	for (index = 0; index < keyCount; index++)
-	{
-		device = (DEVICE*)ListDictionary_GetItemValue(rdpdr->devman->devices, (void*)pKeys[index]);
-		IFCALLRET(device->Init, error, device);
-
-		if (error != CHANNEL_RC_OK)
-		{
-			WLog_ERR(TAG, "Init failed!");
-			free(pKeys);
-			return error;
-		}
-	}
-
-	free(pKeys);
+	if (!device_foreach(rdpdr, TRUE, device_init, NULL))
+		return ERROR_INTERNAL_ERROR;
 	return CHANNEL_RC_OK;
 }
 
