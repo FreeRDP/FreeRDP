@@ -1071,7 +1071,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 			if (BIO_write_blocked(bio))
 				status = BIO_wait_write(bio, 100);
 			else if (BIO_read_blocked(bio))
-				status = BIO_wait_read(bio, 100);
+				return -2; /* Abort write, there is data that must be read */
 			else
 				USleep(100);
 
