@@ -920,7 +920,7 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 		goto error_out;
 	}
 
-	if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*)printer_dev)))
+	if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, &printer_dev->device)))
 	{
 		WLog_ERR(TAG, "RegisterDevice failed with error %" PRIu32 "!", error);
 		goto error_out;
