@@ -3534,6 +3534,8 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		tok = strtok_s(value, ";", &context);
 		if (!tok)
 		{
+			WLog_ERR(TAG, "DrivesToRedirect contains invalid data: '%s'",
+			         settings->DrivesToRedirect);
 			free(value);
 			return FALSE;
 		}
