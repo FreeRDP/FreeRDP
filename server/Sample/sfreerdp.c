@@ -330,7 +330,7 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 	WINPR_ASSERT(client);
 	context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
-	WINPR_ASSERT(context->update);
+	WINPR_ASSERT(client->update);
 
 	if (client->update->dump_rfx)
 		return;

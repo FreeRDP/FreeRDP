@@ -118,7 +118,7 @@ static INLINE BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
 	rdpSettings* settings;
 
 	WINPR_ASSERT(client);
-	WINPR_ASSERT(client->context);
+	WINPR_ASSERT(client->rdpgfx);
 
 	context = client->rdpgfx;
 	WINPR_ASSERT(context);
@@ -292,7 +292,6 @@ static INLINE void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 nu
 	rdpSettings* settings;
 
 	WINPR_ASSERT(client);
-	WINPR_ASSERT(client->context);
 	WINPR_ASSERT(rects || (numRects == 0));
 
 	settings = client->context.settings;

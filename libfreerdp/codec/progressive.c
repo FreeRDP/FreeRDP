@@ -2691,8 +2691,8 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 
 			WINPR_ASSERT(rect->x % 64 == 0);
 			WINPR_ASSERT(rect->y % 64 == 0);
-			WINPR_ASSERT(rect->width % 64 == 0);
-			WINPR_ASSERT(rect->height % 64 == 0);
+			WINPR_ASSERT(rect->width <= 64);
+			WINPR_ASSERT(rect->height <= 64);
 		}
 	}
 	else
@@ -2717,8 +2717,8 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 
 			WINPR_ASSERT(r->x % 64 == 0);
 			WINPR_ASSERT(r->y % 64 == 0);
-			WINPR_ASSERT(r->width % 64 == 0);
-			WINPR_ASSERT(r->height % 64 == 0);
+			WINPR_ASSERT(r->width <= 64);
+			WINPR_ASSERT(r->height <= 64);
 		}
 	}
 	s = progressive->buffer;
