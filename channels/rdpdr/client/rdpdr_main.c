@@ -77,6 +77,24 @@ struct _DEVICE_DRIVE_EXT
 	BOOL automount;
 };
 
+static const char* rdpdr_device_type_string(UINT32 type)
+{
+	switch (type)
+	{
+		case RDPDR_DTYP_SERIAL:
+			return "serial";
+		case RDPDR_DTYP_PRINT:
+			return "printer";
+		case RDPDR_DTYP_FILESYSTEM:
+			return "drive";
+		case RDPDR_DTYP_SMARTCARD:
+			return "smartcard";
+		case RDPDR_DTYP_PARALLEL:
+			return "parallel";
+		default:
+			return "UNKNOWN";
+	}
+}
 /**
  * Function description
  *
@@ -1279,8 +1297,10 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 				Stream_Write(s, Stream_Buffer(device->data), data_len);
 
 			count++;
-			WLog_INFO(TAG, "registered device #%" PRIu32 ": %s (type=%" PRIu32 " id=%" PRIu32 ")",
-			          count, device->name, device->type, device->id);
+			WLog_INFO(TAG,
+			          "registered [%09s] device #%" PRIu32 ": %s (type=%" PRIu32 " id=%" PRIu32 ")",
+			          rdpdr_device_type_string(device->type), count, device->name, device->type,
+			          device->id);
 		}
 	}
 
