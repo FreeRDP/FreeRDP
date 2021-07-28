@@ -23,6 +23,8 @@
 #include "config.h"
 #endif
 
+#include <stdarg.h>
+
 #include "rdp.h"
 #include "input.h"
 #include "update.h"
@@ -963,10 +965,13 @@ void clearChannelError(rdpContext* context)
 	ResetEvent(context->channelErrorEvent);
 }
 
-void setChannelError(rdpContext* context, UINT errorNum, char* description)
+void setChannelError(rdpContext* context, UINT errorNum, const char* format, ...)
 {
+	va_list ap;
+	va_start(ap, format);
 	context->channelErrorNum = errorNum;
-	strncpy(context->errorDescription, description, 499);
+	vsnprintf(context->errorDescription, 499, format, ap);
+	va_end(ap);
 	SetEvent(context->channelErrorEvent);
 }
 
