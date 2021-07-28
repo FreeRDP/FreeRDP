@@ -753,7 +753,7 @@ BOOL freerdp_client_del_static_channel(rdpSettings* settings, const char* name)
 
 BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count, char** params)
 {
-	ADDIN_ARGV* args;
+	ADDIN_ARGV* _args;
 
 	if (!settings || !params || !params[0] || (count > INT_MAX))
 		return FALSE;
@@ -761,17 +761,17 @@ BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count, char
 	if (freerdp_static_channel_collection_find(settings, params[0]))
 		return TRUE;
 
-	args = freerdp_addin_argv_new(count, (const char**)params);
+	_args = freerdp_addin_argv_new(count, (const char**)params);
 
-	if (!args)
+	if (!_args)
 		return FALSE;
 
-	if (!freerdp_static_channel_collection_add(settings, args))
+	if (!freerdp_static_channel_collection_add(settings, _args))
 		goto fail;
 
 	return TRUE;
 fail:
-	freerdp_addin_argv_free(args);
+	freerdp_addin_argv_free(_args);
 	return FALSE;
 }
 
@@ -782,7 +782,7 @@ BOOL freerdp_client_del_dynamic_channel(rdpSettings* settings, const char* name)
 
 BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count, char** params)
 {
-	ADDIN_ARGV* args;
+	ADDIN_ARGV* _args;
 
 	if (!settings || !params || !params[0] || (count > INT_MAX))
 		return FALSE;
@@ -790,18 +790,18 @@ BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count, cha
 	if (freerdp_dynamic_channel_collection_find(settings, params[0]))
 		return TRUE;
 
-	args = freerdp_addin_argv_new(count, (const char**)params);
+	_args = freerdp_addin_argv_new(count, (const char**)params);
 
-	if (!args)
+	if (!_args)
 		return FALSE;
 
-	if (!freerdp_dynamic_channel_collection_add(settings, args))
+	if (!freerdp_dynamic_channel_collection_add(settings, _args))
 		goto fail;
 
 	return TRUE;
 
 fail:
-	freerdp_addin_argv_free(args);
+	freerdp_addin_argv_free(_args);
 	return FALSE;
 }
 
@@ -1390,8 +1390,6 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
 	{
-		COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
-		memcpy(largs, args, sizeof(largs));
 		CommandLineParseArgumentsA(argc, argv, largs, 0x112, NULL, NULL, NULL);
 
 		arg = CommandLineFindArgumentA(largs, "kbd-lang-list");
@@ -1517,11 +1515,9 @@ static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* 
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int argc,
                                                          char** argv, BOOL allowUnknown)
 {
-	char* p;
 	char* user = NULL;
 	char* gwUser = NULL;
 	char* str;
-	size_t length;
 	int status;
 	BOOL ext = FALSE;
 	BOOL assist = FALSE;
@@ -1594,6 +1590,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "v")
 		{
+			char* p;
+
 			if (!arg->Value)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			free(settings->ServerHostname);
@@ -1608,6 +1606,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				if (p)
 				{
 					LONGLONG val;
+					size_t length;
 
 					if (!value_to_int(&p[1], &val, 1, UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -1629,6 +1628,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 			else /* ipv6 */
 			{
+				size_t length;
 				char* p2 = strchr(arg->Value, ']');
 
 				/* not a valid [] ipv6 addr found */
@@ -1736,6 +1736,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "size")
 		{
+			char* p;
 			if (!arg->Value)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			p = strchr(arg->Value, 'x');
@@ -2040,6 +2041,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
+				char* p;
 				if (!arg->Value)
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				p = strchr(arg->Value, ':');
@@ -2085,6 +2087,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
+				char* p;
 				char* atPtr;
 				if (!arg->Value)
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2167,6 +2170,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				if (p)
 				{
 					LONGLONG val;
+					size_t length;
 
 					if (!value_to_int(&p[1], &val, 0, UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -3713,9 +3717,9 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	for (index = 0; index < settings->StaticChannelCount; index++)
 	{
-		ADDIN_ARGV* args = settings->StaticChannelArray[index];
+		ADDIN_ARGV* _args = settings->StaticChannelArray[index];
 
-		if (!freerdp_client_load_static_channel_addin(channels, settings, args->argv[0], args))
+		if (!freerdp_client_load_static_channel_addin(channels, settings, _args->argv[0], _args))
 			return FALSE;
 	}
 
