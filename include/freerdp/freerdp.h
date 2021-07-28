@@ -516,7 +516,7 @@ fingerprint. DEPRECATED: Use VerifyChangedCertificateEx */
 	FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context);
 	FREERDP_API UINT getChannelError(rdpContext* context);
 	FREERDP_API const char* getChannelErrorDescription(rdpContext* context);
-	FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, char* description);
+	FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, const char* format, ...);
 	FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
 
 	FREERDP_API const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length);
