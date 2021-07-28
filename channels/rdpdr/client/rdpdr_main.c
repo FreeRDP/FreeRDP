@@ -118,7 +118,7 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 cou
 
 #if defined(_UWP) || defined(__IOS__)
 
-void first_hotplug(rdpdrPlugin* rdpdr)
+static void first_hotplug(rdpdrPlugin* rdpdr)
 {
 }
 
@@ -134,7 +134,7 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 
 #elif defined(_WIN32)
 
-BOOL check_path(const char* path)
+static BOOL check_path(const char* path)
 {
 	UINT type = GetDriveTypeA(path);
 
@@ -145,7 +145,7 @@ BOOL check_path(const char* path)
 	return GetVolumeInformationA(path, NULL, 0, NULL, NULL, NULL, NULL, 0);
 }
 
-void first_hotplug(rdpdrPlugin* rdpdr)
+static void first_hotplug(rdpdrPlugin* rdpdr)
 {
 	size_t i;
 	DWORD unitmask = GetLogicalDrives();
@@ -175,7 +175,7 @@ void first_hotplug(rdpdrPlugin* rdpdr)
 	}
 }
 
-LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	rdpdrPlugin* rdpdr;
 	PDEV_BROADCAST_HDR lpdb = (PDEV_BROADCAST_HDR)lParam;
@@ -552,7 +552,7 @@ static void drive_hotplug_fsevent_callback(ConstFSEventStreamRef streamRef,
 	}
 }
 
-void first_hotplug(rdpdrPlugin* rdpdr)
+static void first_hotplug(rdpdrPlugin* rdpdr)
 {
 	UINT error;
 
@@ -569,18 +569,31 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 	rdpdr = (rdpdrPlugin*)arg;
 	CFStringRef path = CFSTR("/Volumes/");
 	CFArrayRef pathsToWatch = CFArrayCreate(kCFAllocatorMalloc, (const void**)&path, 1, NULL);
-	FSEventStreamContext ctx;
-	ZeroMemory(&ctx, sizeof(ctx));
+	FSEventStreamContext ctx = { 0 };
+
 	ctx.info = arg;
+
+	WINPR_ASSERT(!rdpdr->stopEvent);
+	rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!rdpdr->stopEvent)
+		goto out;
+
 	fsev =
 	    FSEventStreamCreate(kCFAllocatorMalloc, drive_hotplug_fsevent_callback, &ctx, pathsToWatch,
 	                        kFSEventStreamEventIdSinceNow, 1, kFSEventStreamCreateFlagNone);
+
 	rdpdr->runLoop = CFRunLoopGetCurrent();
 	FSEventStreamScheduleWithRunLoop(fsev, rdpdr->runLoop, kCFRunLoopDefaultMode);
 	FSEventStreamStart(fsev);
 	CFRunLoopRun();
 	FSEventStreamStop(fsev);
 	FSEventStreamRelease(fsev);
+out:
+	if (rdpdr->stopEvent)
+	{
+		CloseHandle(rdpdr->stopEvent);
+		rdpdr->stopEvent = NULL;
+	}
 	ExitThread(CHANNEL_RC_OK);
 	return CHANNEL_RC_OK;
 }
@@ -826,10 +839,11 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		{
 			for (i = 0; i < size; i++)
 			{
-				if (strstr(path, dev_array[i].path) != NULL)
+				hotplug_dev* cur = &dev_array[i];
+				if (strstr(path, cur->path) != NULL)
 				{
 					dev_found = TRUE;
-					dev_array[i].to_add = FALSE;
+					cur->to_add = FALSE;
 					break;
 				}
 			}
@@ -856,13 +870,14 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	/* add new devices */
 	for (i = 0; i < size; i++)
 	{
-		if (!device_already_plugged(rdpdr, &dev_array[i]))
+		hotplug_dev* cur = &dev_array[i];
+		if (!device_already_plugged(rdpdr, cur))
 		{
 			RDPDR_DRIVE drive = { 0 };
 			char* name;
 
 			drive.Type = RDPDR_DTYP_FILESYSTEM;
-			drive.Path = dev_array[i].path;
+			drive.Path = cur->path;
 			drive.automount = TRUE;
 			name = strrchr(drive.Path, '/') + 1;
 			drive.Name = name;
@@ -922,6 +937,12 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 	rdpdr = (rdpdrPlugin*)arg;
 
 	WINPR_ASSERT(rdpdr);
+
+	WINPR_ASSERT(!rdpdr->stopEvent);
+	rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!rdpdr->stopEvent)
+		goto out;
+
 	while ((status = WaitForSingleObject(rdpdr->stopEvent, 1000)) == WAIT_TIMEOUT)
 	{
 		error = handle_hotplug(rdpdr);
@@ -943,7 +964,13 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 out:
 	error = GetLastError();
 	if (error && rdpdr->rdpcontext)
-		setChannelError(rdpdr->rdpcontext, error, "drive_hotplug_thread_func reported an error");
+		setChannelError(rdpdr->rdpcontext, error, "%s reported an error", __FUNCTION__);
+
+	if (rdpdr->stopEvent)
+	{
+		CloseHandle(rdpdr->stopEvent);
+		rdpdr->stopEvent = NULL;
+	}
 
 	ExitThread(error);
 	return error;
@@ -965,7 +992,10 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 
 	if (rdpdr->hotplugThread)
 	{
-		SetEvent(rdpdr->stopEvent);
+#if !defined(_WIN32)
+		if (rdpdr->stopEvent)
+			SetEvent(rdpdr->stopEvent);
+#endif
 #ifdef __MACOSX__
 		CFRunLoopStop(rdpdr->runLoop);
 #endif
@@ -978,8 +1008,6 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 		}
 
 		CloseHandle(rdpdr->hotplugThread);
-		CloseHandle(rdpdr->stopEvent);
-		rdpdr->stopEvent = NULL;
 		rdpdr->hotplugThread = NULL;
 	}
 
@@ -1026,29 +1054,24 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 			const RDPDR_DRIVE* drive = (const RDPDR_DRIVE*)device;
 			BOOL hotplugAll = strncmp(drive->Path, "*", 2) == 0;
 			BOOL hotplugLater = strncmp(drive->Path, DynamicDrives, sizeof(DynamicDrives)) == 0;
+
 			if (drive->Path && (hotplugAll || hotplugLater))
 			{
 				if (hotplugAll)
 					first_hotplug(rdpdr);
-#ifndef _WIN32
 
-				if (!(rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+				/* There might be multiple hotplug related device entries.
+				 * Ensure the thread is only started once
+				 */
+				if (!rdpdr->hotplugThread)
 				{
-					WLog_ERR(TAG, "CreateEvent failed!");
-					return ERROR_INTERNAL_ERROR;
-				}
-
-#endif
-
-				if (!(rdpdr->hotplugThread =
-				          CreateThread(NULL, 0, drive_hotplug_thread_func, rdpdr, 0, NULL)))
-				{
-					WLog_ERR(TAG, "CreateThread failed!");
-#ifndef _WIN32
-					CloseHandle(rdpdr->stopEvent);
-					rdpdr->stopEvent = NULL;
-#endif
-					return ERROR_INTERNAL_ERROR;
+					rdpdr->hotplugThread =
+					    CreateThread(NULL, 0, drive_hotplug_thread_func, rdpdr, 0, NULL);
+					if (!rdpdr->hotplugThread)
+					{
+						WLog_ERR(TAG, "CreateThread failed!");
+						return ERROR_INTERNAL_ERROR;
+					}
 				}
 
 				continue;
@@ -1740,15 +1763,18 @@ static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)
 						setChannelError(rdpdr->rdpcontext, error,
 						                "rdpdr_virtual_channel_client_thread reported an error");
 
-					ExitThread((DWORD)error);
-					return error;
+					goto fail;
 				}
 			}
 		}
 	}
 
-	ExitThread(0);
-	return 0;
+fail:
+	if ((error = drive_hotplug_thread_terminate(rdpdr)))
+		WLog_ERR(TAG, "drive_hotplug_thread_terminate failed with error %" PRIu32 "!", error);
+
+	ExitThread(error);
+	return error;
 }
 
 static void queue_free(void* obj)
@@ -1831,12 +1857,6 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 	CloseHandle(rdpdr->thread);
 	rdpdr->queue = NULL;
 	rdpdr->thread = NULL;
-
-	if ((error = drive_hotplug_thread_terminate(rdpdr)))
-	{
-		WLog_ERR(TAG, "drive_hotplug_thread_terminate failed with error %" PRIu32 "!", error);
-		return error;
-	}
 
 	error = rdpdr->channelEntryPoints.pVirtualChannelCloseEx(rdpdr->InitHandle, rdpdr->OpenHandle);
 
