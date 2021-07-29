@@ -27,6 +27,8 @@
 #include <assert.h>
 #include <errno.h>
 
+#include <assert.h>
+
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
 #include <winpr/path.h>
@@ -46,6 +48,8 @@
 #include "cmdline.h"
 
 #include <freerdp/log.h>
+
+#define WINPR_ASSERT(x) assert(x)
 #define TAG CLIENT_TAG("common.cmdline")
 
 static BOOL freerdp_client_print_codepages(const char* arg)
@@ -1567,6 +1571,28 @@ static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* 
 	return TRUE;
 }
 
+static BOOL prepare_default_settings(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* args,
+                                     BOOL rdp_file)
+{
+	size_t x;
+	const char* arguments[] = { "network", "gfx", "rfx", "bpp" };
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(args);
+
+	if (rdp_file)
+		return FALSE;
+
+	for (x = 0; x < ARRAYSIZE(arguments); x++)
+	{
+		const char* arg = arguments[x];
+		COMMAND_LINE_ARGUMENT_A* p = CommandLineFindArgumentA(args, arg);
+		if (p && (p->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+			return FALSE;
+	}
+
+	return freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT);
+}
+
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int argc,
                                                          char** argv, BOOL allowUnknown)
 {
@@ -1637,6 +1663,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 		if (status < 0)
 			return status;
+
+		prepare_default_settings(settings, largs, ext);
 	}
 
 	CommandLineFindArgumentA(largs, "v");
