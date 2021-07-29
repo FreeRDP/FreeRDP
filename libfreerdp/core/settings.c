@@ -630,35 +630,35 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		 * Custom builds use <Vendor>/<Product> as config folder. */
 		if (_stricmp(FREERDP_VENDOR_STRING, FREERDP_PRODUCT_STRING))
 		{
-			BOOL rc = TRUE;
+			BOOL res = TRUE;
 			base = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, FREERDP_VENDOR_STRING);
 
 			if (base)
 			{
 				char* combined = GetCombinedPath(base, FREERDP_PRODUCT_STRING);
-				rc = freerdp_settings_set_string(settings, FreeRDP_ConfigPath, combined);
+				res = freerdp_settings_set_string(settings, FreeRDP_ConfigPath, combined);
 				free(combined);
 			}
 
 			free(base);
-			if (!rc)
+			if (!res)
 				goto out_fail;
 		}
 		else
 		{
-			BOOL rc;
+			BOOL res;
 			size_t i;
-			char* path;
+			char* cpath;
 			char product[sizeof(FREERDP_PRODUCT_STRING)];
 			memset(product, 0, sizeof(product));
 
 			for (i = 0; i < sizeof(product); i++)
 				product[i] = tolower(FREERDP_PRODUCT_STRING[i]);
 
-			path = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
-			rc = freerdp_settings_set_string(settings, FreeRDP_ConfigPath, path);
-			free(path);
-			if (!rc)
+			cpath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
+			res = freerdp_settings_set_string(settings, FreeRDP_ConfigPath, cpath);
+			free(cpath);
+			if (!res)
 				goto out_fail;
 		}
 

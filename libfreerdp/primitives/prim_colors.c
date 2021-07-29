@@ -167,7 +167,7 @@ static pstatus_t general_yCbCrToRGB_16s16s_P3P3(const INT16* const pSrc[3], INT3
 			/* INT32 is used intentionally because we calculate
 			 * with shifted factors!
 			 */
-			INT32 y = (INT32)(*yptr++);
+			INT32 cy = (INT32)(*yptr++);
 			INT32 cb = (INT32)(*cbptr++);
 			INT32 cr = (INT32)(*crptr++);
 			INT64 r, g, b;
@@ -191,10 +191,10 @@ static pstatus_t general_yCbCrToRGB_16s16s_P3P3(const INT16* const pSrc[3], INT3
 			 * G: 0.344 << 16 = 22544, 0.714 << 16 = 46792
 			 * B: 1.770 << 16 = 115998
 			 */
-			y = (INT32)((UINT32)(y + 4096) << 16);
-			r = y + cr * 91947LL;
-			g = y - cb * 22544LL - cr * 46792LL;
-			b = y + cb * 115998LL;
+			cy = (INT32)((UINT32)(cy + 4096) << 16);
+			r = cy + cr * 91947LL;
+			g = cy - cb * 22544LL - cr * 46792LL;
+			b = cy + cb * 115998LL;
 			*rptr++ = CLIP(r >> 21);
 			*gptr++ = CLIP(g >> 21);
 			*bptr++ = CLIP(b >> 21);
@@ -260,10 +260,10 @@ static pstatus_t general_RGBToYCbCr_16s16s_P3P3(const INT16* const pSrc[3], INT3
 			 * Cr: 0.499813 << 15 = 16377, 0.418531 << 15 = 13714,
 			 *     0.081282 << 15 = 2663
 			 */
-			INT32 y = (r * 9798 + g * 19235 + b * 3735) >> 10;
+			INT32 cy = (r * 9798 + g * 19235 + b * 3735) >> 10;
 			INT32 cb = (r * -5535 + g * -10868 + b * 16403) >> 10;
 			INT32 cr = (r * 16377 + g * -13714 + b * -2663) >> 10;
-			*yptr++ = (INT16)MINMAX(y - 4096, -4096, 4095);
+			*yptr++ = (INT16)MINMAX(cy - 4096, -4096, 4095);
 			*cbptr++ = (INT16)MINMAX(cb, -4096, 4095);
 			*crptr++ = (INT16)MINMAX(cr, -4096, 4095);
 		}

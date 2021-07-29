@@ -177,7 +177,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	if (XRRQueryExtension(xfc->display, &major, &minor) &&
 	    (XRRQueryVersion(xfc->display, &major, &minor) == True) && (major * 100 + minor >= 105))
 	{
-		XRRMonitorInfo* rrmonitors =
+		XRRMonitorInfo* crrmonitors =
 		    XRRGetMonitors(xfc->display, DefaultRootWindow(xfc->display), 1, &vscreen->nmonitors);
 
 		if (vscreen->nmonitors > 16)
@@ -189,11 +189,13 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 			for (i = 0; i < vscreen->nmonitors; i++)
 			{
-				vscreen->monitors[i].area.left = rrmonitors[i].x;
-				vscreen->monitors[i].area.top = rrmonitors[i].y;
-				vscreen->monitors[i].area.right = rrmonitors[i].x + rrmonitors[i].width - 1;
-				vscreen->monitors[i].area.bottom = rrmonitors[i].y + rrmonitors[i].height - 1;
-				vscreen->monitors[i].primary = rrmonitors[i].primary > 0;
+				MONITOR_INFO* cur_vscreen = &vscreen->monitors[i];
+				const XRRMonitorInfo* cur_monitor = &crrmonitors[i];
+				cur_vscreen->area.left = cur_monitor->x;
+				cur_vscreen->area.top = cur_monitor->y;
+				cur_vscreen->area.right = cur_monitor->x + cur_monitor->width - 1;
+				cur_vscreen->area.bottom = cur_monitor->y + cur_monitor->height - 1;
+				cur_vscreen->primary = cur_monitor->primary > 0;
 			}
 		}
 

@@ -320,14 +320,14 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 
 			if (winpr_match_unix_timezone_identifier_with_list(tzid, wzid->tzid))
 			{
-				TIME_ZONE_ENTRY* timezone = (TIME_ZONE_ENTRY*)malloc(sizeof(TIME_ZONE_ENTRY));
+				TIME_ZONE_ENTRY* ctimezone = (TIME_ZONE_ENTRY*)malloc(sizeof(TIME_ZONE_ENTRY));
 				free(tzid);
 
-				if (!timezone)
+				if (!ctimezone)
 					return NULL;
 
-				*timezone = TimeZoneTable[i];
-				return timezone;
+				*ctimezone = TimeZoneTable[i];
+				return ctimezone;
 			}
 		}
 	}

@@ -50,7 +50,7 @@
 		UINT32 offBeatMask;                                                           \
 		const _type_* sptr = pSrc;                                                    \
 		_type_* dptr = pDst;                                                          \
-		size_t count;                                                                 \
+		int count;                                                                    \
 		if (val == 0)                                                                 \
 			return PRIMITIVES_SUCCESS;                                                \
 		if (val >= 16)                                                                \

@@ -1375,10 +1375,10 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 		if (!certificate_status || !hostname_match)
 		{
 			DWORD accept_certificate = 0;
-			size_t length = 0;
+			size_t pem_length = 0;
 			char* issuer = crypto_cert_issuer(cert->px509);
 			char* subject = crypto_cert_subject(cert->px509);
-			char* pem = (char*)crypto_cert_pem(cert->px509, NULL, &length);
+			char* pem = (char*)crypto_cert_pem(cert->px509, NULL, &pem_length);
 
 			if (!pem)
 				goto end;
@@ -1407,8 +1407,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 				}
 				else if (instance->VerifyX509Certificate)
 				{
-					int rc = instance->VerifyX509Certificate(instance, pemCert, length, hostname,
-					                                         port, flags);
+					int rc = instance->VerifyX509Certificate(instance, pemCert, pem_length,
+					                                         hostname, port, flags);
 
 					if (rc == 1)
 						accept_certificate = 1;
@@ -1467,8 +1467,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 				else if (instance->VerifyX509Certificate)
 				{
 					const int rc =
-					    instance->VerifyX509Certificate(instance, pemCert, length, hostname, port,
-					                                    flags | VERIFY_CERT_FLAG_CHANGED);
+					    instance->VerifyX509Certificate(instance, pemCert, pem_length, hostname,
+					                                    port, flags | VERIFY_CERT_FLAG_CHANGED);
 
 					if (rc == 1)
 						accept_certificate = 1;
