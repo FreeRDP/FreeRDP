@@ -55,6 +55,9 @@ int TestTypes(int argc, char* argv[])
 {
 	int status = 0;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	TEST_SIZEOF_TYPE(INT8)
 	TEST_SIZEOF_TYPE(UINT8)
 

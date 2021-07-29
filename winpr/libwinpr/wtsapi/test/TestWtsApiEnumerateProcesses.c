@@ -11,6 +11,9 @@ int TestWtsApiEnumerateProcesses(int argc, char* argv[])
 	HANDLE hServer;
 	PWTS_PROCESS_INFOA pProcessInfo;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 #ifndef _WIN32
 	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0))
 	{

@@ -12,6 +12,9 @@ int TestArrayList(int argc, char* argv[])
 	wArrayList* arrayList;
 	const size_t elemsToInsert = 10;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	arrayList = ArrayList_New(TRUE);
 	if (!arrayList)
 		return -1;

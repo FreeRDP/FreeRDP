@@ -58,6 +58,9 @@ int main(int argc, char** argv)
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	display = XOpenDisplay(NULL);
 
 	if (!display)

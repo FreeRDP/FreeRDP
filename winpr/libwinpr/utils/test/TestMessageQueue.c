@@ -29,6 +29,9 @@ int TestMessageQueue(int argc, char* argv[])
 	HANDLE thread;
 	wMessageQueue* queue;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (!(queue = MessageQueue_New(NULL)))
 	{
 		printf("failed to create message queue\n");

@@ -18,6 +18,7 @@ int TestFileFindNextFile(int argc, char* argv[])
 	LPTSTR BasePath;
 	WIN32_FIND_DATA FindData;
 	TCHAR FilePath[PATHCCH_MAX_CCH];
+	WINPR_UNUSED(argc);
 	str = argv[1];
 #ifdef UNICODE
 	length = MultiByteToWideChar(CP_UTF8, 0, str, strlen(str), NULL, 0);

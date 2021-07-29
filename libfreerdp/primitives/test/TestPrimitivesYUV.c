@@ -860,6 +860,8 @@ int TestPrimitivesYUV(int argc, char* argv[])
 	BOOL large = (argc > 1);
 	UINT32 x;
 	int rc = -1;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	prim_test_setup(FALSE);
 	primitives_t* prims = primitives_get();
 

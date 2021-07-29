@@ -11,6 +11,9 @@ int TestStreamPool(int argc, char* argv[])
 	wStreamPool* pool;
 	char buffer[8192];
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	pool = StreamPool_New(TRUE, BUFFER_SIZE);
 
 	s[0] = StreamPool_Take(pool, 0);

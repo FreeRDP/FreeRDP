@@ -13,6 +13,10 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 	DWORD length;
 	LPTCH lpszEnvironmentBlock = "SHELL=123\0test=1\0test1=2\0DISPLAY=WINPR_TEST_VALUE\0\0";
 	LPTCH lpszEnvironmentBlockNew = NULL;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	rc = -1;
 	/* Get length of an variable */
 	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "DISPLAY", NULL, 0);

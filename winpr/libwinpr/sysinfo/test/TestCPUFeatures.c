@@ -9,6 +9,10 @@
 	printf("\t" #feature ":  %s\n", IsProcessorFeaturePresentEx(feature) ? "yes" : "no")
 int TestCPUFeatures(int argc, char* argv[])
 {
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	printf("Base CPU Flags:\n");
 #ifdef _M_IX86_AMD64
 	TEST_FEATURE(PF_MMX_INSTRUCTIONS_AVAILABLE);

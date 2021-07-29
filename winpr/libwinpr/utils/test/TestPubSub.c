@@ -34,6 +34,9 @@ int TestPubSub(int argc, char* argv[])
 {
 	wPubSub* node;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	node = PubSub_New(TRUE);
 	if (!node)
 		return -1;

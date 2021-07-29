@@ -11,13 +11,13 @@ static const TCHAR testUserName2[] = _T("JohnDoe@LAB1");
 int TestCredUIParseUserName(int argc, char* argv[])
 {
 	DWORD status;
-	TCHAR User[CREDUI_MAX_USERNAME_LENGTH + 1];
-	TCHAR Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1];
+	TCHAR User[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+	TCHAR Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	/* Test LAB1\JohnDoe */
-
-	ZeroMemory(User, sizeof(User));
-	ZeroMemory(Domain, sizeof(Domain));
 
 	status = CredUIParseUserName(testUserName1, User, sizeof(User) / sizeof(TCHAR), Domain,
 	                             sizeof(Domain) / sizeof(TCHAR));

@@ -12,6 +12,10 @@ int TestEnvironmentMergeEnvironmentStrings(int argc, char* argv[])
 	LPTCH lpszEnvironmentBlock;
 	LPTCH lpsz2Merge = "SHELL=123\0test=1\0test1=2\0DISPLAY=:77\0\0";
 	LPTCH lpszMergedEnvironmentBlock;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	lpszEnvironmentBlock = GetEnvironmentStrings();
 	lpszMergedEnvironmentBlock = MergeEnvironmentStrings(lpszEnvironmentBlock, lpsz2Merge);
 	p = (TCHAR*)lpszMergedEnvironmentBlock;

@@ -17,6 +17,9 @@ int TestPathCchAppend(int argc, char* argv[])
 	TCHAR Path[PATHCCH_MAX_CCH];
 	size_t i;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* Base Path: Backslash, More Path: No Backslash */
 
 	_tcscpy(Path, testBasePathBackslash);

@@ -40,11 +40,13 @@ int TestWndWmCopyData(int argc, char* argv[])
 	HWND hWnd;
 	HMODULE hModule;
 	HINSTANCE hInstance;
-	WNDCLASSEX wndClassEx;
+	WNDCLASSEX wndClassEx = { 0 };
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	hModule = GetModuleHandle(NULL);
 
-	ZeroMemory(&wndClassEx, sizeof(WNDCLASSEX));
 	wndClassEx.cbSize = sizeof(WNDCLASSEX);
 	wndClassEx.style = 0;
 	wndClassEx.lpfnWndProc = TestWndProc;

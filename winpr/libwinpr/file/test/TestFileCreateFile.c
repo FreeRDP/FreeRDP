@@ -18,6 +18,8 @@ int TestFileCreateFile(int argc, char* argv[])
 	LPSTR name;
 	int rc = 0;
 	SYSTEMTIME systemTime;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	GetSystemTime(&systemTime);
 	sprintf_s(sname, sizeof(sname),
 	          "CreateFile-%04" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16

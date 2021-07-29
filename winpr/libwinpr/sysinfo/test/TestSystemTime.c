@@ -6,6 +6,9 @@ int TestSystemTime(int argc, char* argv[])
 {
 	SYSTEMTIME sTime;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	GetSystemTime(&sTime);
 
 	printf("GetSystemTime: wYear: %" PRIu16 " wMonth: %" PRIu16 " wDayOfWeek: %" PRIu16

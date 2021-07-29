@@ -331,6 +331,10 @@ static BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 
 int TestGetComputerName(int argc, char* argv[])
 {
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (!Test_GetComputerName())
 		return -1;
 

@@ -11,6 +11,9 @@ int TestBufferPool(int argc, char* argv[])
 	BYTE* Buffers[10];
 	int DefaultSize = 1234;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	pool = BufferPool_New(TRUE, -1, 16);
 	if (!pool)
 		return -1;

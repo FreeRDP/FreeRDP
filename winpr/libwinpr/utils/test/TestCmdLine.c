@@ -85,6 +85,9 @@ int TestCmdLine(int argc, char* argv[])
 		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 	};
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;
 	testArgc = string_list_length(testArgv);
 	command_line = string_list_copy(testArgv);

@@ -9,6 +9,10 @@ int TestQuerySecurityPackageInfo(int argc, char* argv[])
 	int rc;
 	SECURITY_STATUS status;
 	SecPkgInfo* pPackageInfo;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	sspi_GlobalInit();
 	status = QuerySecurityPackageInfo(NTLM_SSP_NAME, &pPackageInfo);
 

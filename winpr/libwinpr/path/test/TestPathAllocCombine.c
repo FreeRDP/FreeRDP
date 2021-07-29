@@ -17,6 +17,9 @@ int TestPathAllocCombine(int argc, char* argv[])
 	HRESULT status;
 	LPTSTR PathOut;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* Base Path: Backslash, More Path: No Backslash */
 
 	status = PathAllocCombine(testBasePathBackslash, testMorePathNoBackslash, 0, &PathOut);

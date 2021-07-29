@@ -15,6 +15,9 @@ int TestPathCchAddExtension(int argc, char* argv[])
 	HRESULT status;
 	TCHAR Path[PATHCCH_MAX_CCH];
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* Path: no extension, Extension: dot */
 
 	_tcscpy(Path, testPathNoExtension);

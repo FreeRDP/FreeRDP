@@ -53,8 +53,11 @@ void BitStrGen()
 int TestBitStream(int argc, char* argv[])
 {
 	wBitStream* bs;
-	BYTE buffer[1024];
-	ZeroMemory(buffer, sizeof(buffer));
+	BYTE buffer[1024] = { 0 };
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	bs = BitStream_New();
 	if (!bs)
 		return 1;

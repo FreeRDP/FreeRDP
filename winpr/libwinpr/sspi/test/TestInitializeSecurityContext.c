@@ -25,6 +25,10 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	PSecBuffer p_SecBuffer;
 	SecBuffer output_SecBuffer;
 	SecBufferDesc output_SecBuffer_desc;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	sspi_GlobalInit();
 	table = InitSecurityInterface();
 	status = QuerySecurityPackageInfo(NTLM_SSP_NAME, &pPackageInfo);

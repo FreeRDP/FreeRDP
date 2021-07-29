@@ -58,6 +58,10 @@ static int test_command_line_parsing_case(const char* line, const char** list)
 
 int TestThreadCommandLineToArgv(int argc, char* argv[])
 {
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	test_command_line_parsing_case(test_args_line_1, test_args_list_1);
 	test_command_line_parsing_case(test_args_line_2, test_args_list_2);
 	test_command_line_parsing_case(test_args_line_3, test_args_list_3);

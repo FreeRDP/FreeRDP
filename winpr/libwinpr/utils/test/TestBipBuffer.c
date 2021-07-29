@@ -7,6 +7,10 @@ int TestBipBuffer(int argc, char* argv[])
 	BYTE* data;
 	int rc = -1;
 	wBipBuffer* bb;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	bb = BipBuffer_New(1024);
 
 	if (!bb)

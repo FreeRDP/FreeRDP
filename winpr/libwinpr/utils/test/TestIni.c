@@ -47,6 +47,10 @@ int TestIni(int argc, char* argv[])
 	const char* sValue;
 	char** keyNames = NULL;
 	char** sectionNames = NULL;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* First Sample */
 	ini = IniFile_New();
 	if (!ini)

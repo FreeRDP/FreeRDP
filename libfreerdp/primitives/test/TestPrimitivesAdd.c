@@ -67,6 +67,10 @@ static BOOL test_add16s_speed(void)
 
 int TestPrimitivesAdd(int argc, char* argv[])
 {
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	prim_test_setup(FALSE);
 	if (!test_add16s_func())
 		return -1;

@@ -125,6 +125,10 @@ fail:
 
 int TestPoolWork(int argc, char* argv[])
 {
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (!test1())
 		return -1;
 

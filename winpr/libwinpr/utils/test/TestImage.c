@@ -296,5 +296,9 @@ static int test_image_png_to_bmp(void)
 int TestImage(int argc, char* argv[])
 {
 	int rc = test_image_png_to_bmp();
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	return rc;
 }
