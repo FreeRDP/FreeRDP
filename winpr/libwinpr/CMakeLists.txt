@@ -95,7 +95,7 @@ if (ANDROID)
 endif()
 
 # Level "1" API as defined for MinCore.lib
-set(WINPR_CORE synch locale library file comm pipe interlocked security
+set(WINPR_CORE synch library file comm pipe interlocked security
 	environment crypto registry credentials path io memory input shell
 	heap utils error timezone sysinfo pool handle thread)
 
