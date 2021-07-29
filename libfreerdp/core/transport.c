@@ -53,6 +53,7 @@
 #include "transport.h"
 #include "rdp.h"
 #include "proxy.h"
+#include "utils.h"
 
 #define TAG FREERDP_TAG("core.transport")
 
@@ -157,41 +158,20 @@ fail:
 	return FALSE;
 }
 
-static BOOL transport_prompt_for_password(rdpTransport* transport)
-{
-	rdpSettings* settings = transport->settings;
-	freerdp* instance = transport->context->instance;
-
-	/* Ask for auth data if no or an empty username was specified or no password was given */
-	if ((settings->Username == NULL || strlen(settings->Username) == 0) ||
-	    (settings->Password == NULL && settings->RedirectionPassword == NULL))
-	{
-		/* If no callback is specified still continue connection */
-		if (!instance->Authenticate)
-			return TRUE;
-
-		if (!instance->Authenticate(instance, &settings->Username, &settings->Password,
-		                            &settings->Domain))
-		{
-			freerdp_set_last_error_log(instance->context,
-			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
-			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
-
 BOOL transport_connect_rdp(rdpTransport* transport)
 {
 	if (!transport)
 		return FALSE;
 
-	if (!transport_prompt_for_password(transport))
-		return FALSE;
-
-	/* RDP encryption */
-	return TRUE;
+	switch (utils_authenticate(transport->context->instance, AUTH_RDP, FALSE))
+	{
+		case AUTH_SKIP:
+		case AUTH_SUCCESS:
+		case AUTH_NO_CREDENTIALS:
+			return TRUE;
+		default:
+			return FALSE;
+	}
 }
 
 BOOL transport_connect_tls(rdpTransport* transport)
@@ -202,8 +182,15 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	/* Only prompt for password if we use TLS (NLA also calls this function) */
 	if (transport->settings->SelectedProtocol == PROTOCOL_SSL)
 	{
-		if (!transport_prompt_for_password(transport))
-			return FALSE;
+		switch (utils_authenticate(transport->context->instance, AUTH_TLS, FALSE))
+		{
+			case AUTH_SKIP:
+			case AUTH_SUCCESS:
+			case AUTH_NO_CREDENTIALS:
+				break;
+			default:
+				return FALSE;
+		}
 	}
 
 	return IFCALLRESULT(FALSE, transport->io.TLSConnect, transport);

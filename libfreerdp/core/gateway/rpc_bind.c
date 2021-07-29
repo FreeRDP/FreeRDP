@@ -28,6 +28,7 @@
 #include "rpc_client.h"
 
 #include "rpc_bind.h"
+#include "../utils.h"
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 
@@ -104,6 +105,7 @@ const p_uuid_t BTFN_UUID = {
 
 int rpc_send_bind_pdu(rdpRpc* rpc)
 {
+	auth_status rc;
 	BOOL continueNeeded = FALSE;
 	int status = -1;
 	BYTE* buffer = NULL;
@@ -112,7 +114,6 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	RpcClientCall* clientCall;
 	p_cont_elem_t* p_cont_elem;
 	rpcconn_bind_hdr_t* bind_pdu = NULL;
-	BOOL promptPassword = FALSE;
 	rdpSettings* settings = rpc->settings;
 	freerdp* instance = (freerdp*)settings->instance;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
@@ -125,46 +126,18 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	if (!rpc->ntlm)
 		goto fail;
 
-	if ((!settings->GatewayPassword) || (!settings->GatewayUsername) ||
-	    (!strlen(settings->GatewayPassword)) || (!strlen(settings->GatewayUsername)))
+	rc = utils_authenticate_gateway(instance, GW_AUTH_RPC);
+	switch (rc)
 	{
-		promptPassword = TRUE;
-	}
-
-	if (promptPassword)
-	{
-		if (freerdp_shall_disconnect(instance))
-			return -1;
-
-		if (!instance->GatewayAuthenticate)
-		{
+		case AUTH_SUCCESS:
+		case AUTH_SKIP:
+			break;
+		case AUTH_NO_CREDENTIALS:
 			freerdp_set_last_error_log(instance->context,
 			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return 0;
-		}
-		else
-		{
-			BOOL proceed =
-			    instance->GatewayAuthenticate(instance, &settings->GatewayUsername,
-			                                  &settings->GatewayPassword, &settings->GatewayDomain);
-
-			if (!proceed)
-			{
-				freerdp_set_last_error_log(instance->context,
-				                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
-				return 0;
-			}
-
-			if (settings->GatewayUseSameCredentials)
-			{
-				settings->Username = _strdup(settings->GatewayUsername);
-				settings->Domain = _strdup(settings->GatewayDomain);
-				settings->Password = _strdup(settings->GatewayPassword);
-
-				if (!settings->Username || !settings->Domain || settings->Password)
-					goto fail;
-			}
-		}
+		default:
+			return -1;
 	}
 
 	if (!ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain,
