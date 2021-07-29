@@ -453,7 +453,8 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 	HANDLE ClientThread;
 	HANDLE ServerThread;
 	HANDLE hPipe;
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	/* Verify that CreateNamedPipe returns INVALID_HANDLE_VALUE on failure */
 	hPipe = CreateNamedPipeA(NULL, 0, 0, 0, 0, 0, 0, NULL);
 	if (hPipe != INVALID_HANDLE_VALUE)

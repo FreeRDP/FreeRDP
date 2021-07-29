@@ -309,6 +309,9 @@ int TestPrint(int argc, char* argv[])
 	int a, b;
 	float c, d;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/**
 	 * 7
 	 *   7

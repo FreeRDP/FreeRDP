@@ -16,6 +16,10 @@ int TestDsMakeSpn(int argc, char* argv[])
 	DWORD status;
 	DWORD SpnLength;
 	SpnLength = -1;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	status = DsMakeSpn(testServiceClass, testServiceName, NULL, 0, NULL, &SpnLength, NULL);
 
 	if (status != ERROR_INVALID_PARAMETER)

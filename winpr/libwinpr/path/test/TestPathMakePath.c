@@ -17,6 +17,9 @@ int TestPathMakePath(int argc, char* argv[])
 	char delim = PathGetSeparatorA(0);
 	char* base = GetKnownPath(KNOWN_PATH_TEMP);
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (!base)
 	{
 		fprintf(stderr, "Failed to get temporary directory!\n");

@@ -13,6 +13,9 @@ int TestPathCchAddBackslash(int argc, char* argv[])
 	HRESULT status;
 	TCHAR Path[PATHCCH_MAX_CCH];
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/**
 	 * PathCchAddBackslash returns S_OK if the function was successful,
 	 * S_FALSE if the path string already ends in a backslash,

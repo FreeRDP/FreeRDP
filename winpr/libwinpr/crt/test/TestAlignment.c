@@ -9,6 +9,9 @@ int TestAlignment(int argc, char* argv[])
 	size_t alignment;
 	size_t offset;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* Alignment should be 2^N where N is a positive integer */
 
 	alignment = 16;

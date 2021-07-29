@@ -17,7 +17,8 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 	LPCSTR SharedLibraryExtension;
 	CHAR LibraryPath[PATHCCH_MAX_CCH];
 	PCHAR p;
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	if (!GetModuleFileNameA(NULL, LibraryPath, PATHCCH_MAX_CCH))
 	{
 		printf("%s: GetModuleFilenameA failed: 0x%08" PRIX32 "\n", __FUNCTION__, GetLastError());

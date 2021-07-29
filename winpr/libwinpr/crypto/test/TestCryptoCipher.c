@@ -219,6 +219,10 @@ static BOOL test_crypto_cipher_key()
 
 int TestCryptoCipher(int argc, char* argv[])
 {
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	if (!test_crypto_cipher_aes_128_cbc())

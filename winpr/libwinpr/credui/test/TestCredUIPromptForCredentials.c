@@ -15,12 +15,13 @@ int TestCredUIPromptForCredentials(int argc, char* argv[])
 	BOOL fSave;
 	DWORD status;
 	DWORD dwFlags;
-	TCHAR UserName[CREDUI_MAX_USERNAME_LENGTH];
-	TCHAR Password[CREDUI_MAX_PASSWORD_LENGTH];
+	TCHAR UserName[CREDUI_MAX_USERNAME_LENGTH] = { 0 };
+	TCHAR Password[CREDUI_MAX_PASSWORD_LENGTH] = { 0 };
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	fSave = FALSE;
-	ZeroMemory(UserName, sizeof(UserName));
-	ZeroMemory(Password, sizeof(Password));
 	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
 
 	status = CredUIPromptForCredentials(&testUiInfo, testTargetName, NULL, 0, UserName,

@@ -23,6 +23,9 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 	TCHAR Path[PATHCCH_MAX_CCH];
 	int i;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/**
 	 * PathCchStripPrefix returns S_OK if the prefix was removed, S_FALSE if
 	 * the path did not have a prefix to remove, or an HRESULT failure code.

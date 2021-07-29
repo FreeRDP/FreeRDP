@@ -13,6 +13,10 @@ int TestEnvironmentSetEnvironmentVariable(int argc, char* argv[])
 	DWORD nSize;
 	LPSTR lpBuffer = NULL;
 	DWORD error = 0;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	SetEnvironmentVariableA(TEST_NAME, TEST_VALUE);
 	nSize = GetEnvironmentVariableA(TEST_NAME, NULL, 0);
 

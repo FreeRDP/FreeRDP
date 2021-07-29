@@ -17,6 +17,9 @@ int TestListDictionary(int argc, char* argv[])
 	char* value;
 	wListDictionary* list;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	list = ListDictionary_New(TRUE);
 	if (!list)
 		return -1;

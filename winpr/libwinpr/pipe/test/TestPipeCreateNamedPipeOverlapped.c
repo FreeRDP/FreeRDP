@@ -335,7 +335,8 @@ int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 	HANDLE ClientThread;
 	HANDLE ServerThread;
 	int result = -1;
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	FillMemory(SERVER_MESSAGE, PIPE_BUFFER_SIZE, 0xAA);
 	FillMemory(CLIENT_MESSAGE, PIPE_BUFFER_SIZE, 0xBB);
 

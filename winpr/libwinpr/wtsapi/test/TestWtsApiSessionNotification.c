@@ -10,6 +10,9 @@ int TestWtsApiSessionNotification(int argc, char* argv[])
 	BOOL bSuccess;
 	DWORD dwFlags;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 #ifndef _WIN32
 	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0))
 	{

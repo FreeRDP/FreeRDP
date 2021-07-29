@@ -7,7 +7,8 @@
 int TestFilePatternMatch(int argc, char* argv[])
 {
 	/* '*' expression */
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	if (!FilePatternMatchA("document.txt", "*"))
 	{
 		printf("FilePatternMatchA error: FileName: %s Pattern: %s\n", "document.txt", "*");

@@ -16,7 +16,8 @@ int TestInterlockedDList(int argc, char* argv[])
 	PLIST_ITEM pListItem;
 	WINPR_PLIST_ENTRY pListHead;
 	WINPR_PLIST_ENTRY pListEntry;
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	pListHead =
 	    (WINPR_PLIST_ENTRY)_aligned_malloc(sizeof(WINPR_LIST_ENTRY), MEMORY_ALLOCATION_ALIGNMENT);
 
