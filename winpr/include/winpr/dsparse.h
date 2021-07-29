@@ -98,18 +98,10 @@ extern "C"
 {
 #endif
 
-	WINPR_API DWORD DsCrackSpnW(LPCWSTR pszSpn, DWORD* pcServiceClass, LPWSTR ServiceClass,
-	                            DWORD* pcServiceName, LPWSTR ServiceName, DWORD* pcInstanceName,
-	                            LPWSTR InstanceName, USHORT* pInstancePort);
-
-	WINPR_API DWORD DsCrackSpnA(LPCSTR pszSpn, LPDWORD pcServiceClass, LPSTR ServiceClass,
-	                            LPDWORD pcServiceName, LPSTR ServiceName, LPDWORD pcInstanceName,
-	                            LPSTR InstanceName, USHORT* pInstancePort);
-
 #ifdef UNICODE
-#define DsCrackSpn DsCrackSpnW
+#define DsMakeSpn DsMakeSpnW
 #else
-#define DsCrackSpn DsCrackSpnA
+#define DsMakeSpn DsMakeSpnA
 #endif
 
 	WINPR_API DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName,
