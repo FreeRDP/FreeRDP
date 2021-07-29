@@ -44,6 +44,7 @@
 #include <winpr/registry.h>
 
 #include "nla.h"
+#include "utils.h"
 
 #define TAG FREERDP_TAG("core.nla")
 
@@ -530,15 +531,6 @@ void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
  * @param credssp
  */
 
-static BOOL is_empty(const char* str)
-{
-	if (!str)
-		return TRUE;
-	if (strlen(str) == 0)
-		return TRUE;
-	return FALSE;
-}
-
 static int nla_client_init(rdpNla* nla)
 {
 	char* spn;
@@ -554,13 +546,14 @@ static int nla_client_init(rdpNla* nla)
 	if (settings->RestrictedAdminModeRequired)
 		settings->DisableCredentialsDelegation = TRUE;
 
-	if (is_empty(settings->Username) ||
-	    (is_empty(settings->Password) && is_empty((const char*)settings->RedirectionPassword)))
+	if (utils_str_is_empty(settings->Username) ||
+	    (utils_str_is_empty(settings->Password) &&
+	     utils_str_is_empty((const char*)settings->RedirectionPassword)))
 	{
 		PromptPassword = TRUE;
 	}
 
-	if (PromptPassword && !is_empty(settings->Username))
+	if (PromptPassword && !utils_str_is_empty(settings->Username))
 	{
 		sam = SamOpen(NULL, TRUE);
 
@@ -597,25 +590,17 @@ static int nla_client_init(rdpNla* nla)
 
 	if (PromptPassword)
 	{
-		if (freerdp_shall_disconnect(instance))
-			return 0;
-		if (!instance->Authenticate)
+		switch (utils_authenticate(instance, AUTH_NLA, TRUE))
 		{
-			freerdp_set_last_error_log(instance->context,
-			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
-			return 0;
-		}
-		else
-		{
-			BOOL proceed = instance->Authenticate(instance, &settings->Username,
-			                                      &settings->Password, &settings->Domain);
-
-			if (!proceed)
-			{
+			case AUTH_SKIP:
+			case AUTH_SUCCESS:
+				break;
+			case AUTH_NO_CREDENTIALS:
 				freerdp_set_last_error_log(instance->context,
 				                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 				return 0;
-			}
+			default:
+				return 0;
 		}
 	}
 

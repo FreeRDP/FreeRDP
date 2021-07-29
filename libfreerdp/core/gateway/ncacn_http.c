@@ -29,6 +29,8 @@
 #include <winpr/dsparse.h>
 #include <winpr/winhttp.h>
 
+#include "../utils.h"
+
 #define TAG FREERDP_TAG("core.gateway.ntlm")
 
 static wStream* rpc_ntlm_http_request(HttpContext* http, const char* method, int contentLength,
@@ -131,6 +133,7 @@ BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel)
 	rdpNtlm* ntlm;
 	rdpSettings* settings;
 	freerdp* instance;
+	auth_status rc;
 
 	if (!context || !channel)
 		return FALSE;
@@ -143,57 +146,18 @@ BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel)
 	if (!tls || !ntlm || !instance || !settings)
 		return FALSE;
 
-	if (!settings->GatewayPassword || !settings->GatewayUsername ||
-	    !strlen(settings->GatewayPassword) || !strlen(settings->GatewayUsername))
+	rc = utils_authenticate_gateway(instance, GW_AUTH_HTTP);
+	switch (rc)
 	{
-		if (freerdp_shall_disconnect(instance))
-			return FALSE;
-
-		if (!instance->GatewayAuthenticate)
-		{
-			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+		case AUTH_SUCCESS:
+		case AUTH_SKIP:
+			break;
+		case AUTH_NO_CREDENTIALS:
+			freerdp_set_last_error_log(instance->context,
+			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return TRUE;
-		}
-		else
-		{
-			BOOL proceed =
-			    instance->GatewayAuthenticate(instance, &settings->GatewayUsername,
-			                                  &settings->GatewayPassword, &settings->GatewayDomain);
-
-			if (!proceed)
-			{
-				freerdp_set_last_error_log(context,
-				                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
-				return TRUE;
-			}
-
-			if (settings->GatewayUseSameCredentials)
-			{
-				if (settings->GatewayUsername)
-				{
-					free(settings->Username);
-
-					if (!(settings->Username = _strdup(settings->GatewayUsername)))
-						return FALSE;
-				}
-
-				if (settings->GatewayDomain)
-				{
-					free(settings->Domain);
-
-					if (!(settings->Domain = _strdup(settings->GatewayDomain)))
-						return FALSE;
-				}
-
-				if (settings->GatewayPassword)
-				{
-					free(settings->Password);
-
-					if (!(settings->Password = _strdup(settings->GatewayPassword)))
-						return FALSE;
-				}
-			}
-		}
+		default:
+			return FALSE;
 	}
 
 	if (!ntlm_client_init(ntlm, TRUE, settings->GatewayUsername, settings->GatewayDomain,
