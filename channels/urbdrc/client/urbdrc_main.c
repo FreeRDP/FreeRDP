@@ -424,10 +424,10 @@ static BOOL urbdrc_announce_devices(IUDEVMAN* udevman)
 		if (!pdev->isAlreadySend(pdev))
 		{
 			const UINT32 deviceId = pdev->get_UsbDevice(pdev);
-			UINT error =
+			UINT cerror =
 			    urdbrc_send_virtual_channel_add(udevman->plugin, get_channel(udevman), deviceId);
 
-			if (error != ERROR_SUCCESS)
+			if (cerror != ERROR_SUCCESS)
 				break;
 		}
 	}

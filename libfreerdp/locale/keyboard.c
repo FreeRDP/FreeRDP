@@ -166,7 +166,7 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 
 DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId, const char* keyboardRemappingList)
 {
-	DWORD rc = freerdp_keyboard_init(keyboardLayoutId);
+	DWORD res = freerdp_keyboard_init(keyboardLayoutId);
 
 	memset(REMAPPING_TABLE, 0, sizeof(REMAPPING_TABLE));
 	if (keyboardRemappingList)
@@ -197,7 +197,7 @@ DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId, const char* keyboardRemap
 	fail:
 		free(copy);
 	}
-	return rc;
+	return res;
 }
 
 DWORD freerdp_keyboard_get_rdp_scancode_from_x11_keycode(DWORD keycode)

@@ -372,7 +372,7 @@ fail:
 
 static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 {
-	BOOL rc = FALSE;
+	BOOL res = FALSE;
 	UINT32 x, y;
 	UINT32 awidth, aheight;
 	BYTE* yuv[3] = { 0 };
@@ -561,14 +561,14 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 		PROFILER_FREE(yuv444ToRGB)
 	}
 
-	rc = TRUE;
+	res = TRUE;
 fail:
 	free_padding(rgb, padding);
 	free_padding(rgb_dst, padding);
 	free_padding(yuv[0], padding);
 	free_padding(yuv[1], padding);
 	free_padding(yuv[2], padding);
-	return rc;
+	return res;
 }
 
 static BOOL allocate_yuv420(BYTE** planes, UINT32 width, UINT32 height, UINT32 padding)
@@ -668,7 +668,7 @@ static BOOL compare_yuv420(BYTE** planesA, BYTE** planesB, UINT32 width, UINT32 
 
 static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, UINT32 version)
 {
-	BOOL rc = FALSE;
+	BOOL res = FALSE;
 	UINT32 x, y, cnt;
 	UINT32 awidth, aheight;
 	BYTE* luma[3] = { 0 };
@@ -845,14 +845,14 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 			goto fail;
 	}
 
-	rc = TRUE;
+	res = TRUE;
 fail:
 	free_padding(rgb, padding);
 	free_yuv420(luma, padding);
 	free_yuv420(chroma, padding);
 	free_yuv420(lumaGeneric, padding);
 	free_yuv420(chromaGeneric, padding);
-	return rc;
+	return res;
 }
 
 int TestPrimitivesYUV(int argc, char* argv[])
@@ -869,9 +869,9 @@ int TestPrimitivesYUV(int argc, char* argv[])
 
 		if (argc > 1)
 		{
-			int rc = sscanf(argv[1], "%" PRIu32 "x%" PRIu32, &roi.width, &roi.height);
+			int crc = sscanf(argv[1], "%" PRIu32 "x%" PRIu32, &roi.width, &roi.height);
 
-			if (rc != 2)
+			if (crc != 2)
 			{
 				roi.width = 1920;
 				roi.height = 1080;

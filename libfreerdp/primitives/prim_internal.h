@@ -200,7 +200,7 @@ static INLINE fkt_writePixel getPixelWriteFunction(DWORD format, BOOL useAlpha)
 	}
 }
 
-static INLINE BYTE CLIP(INT32 X)
+static INLINE BYTE CLIP(INT64 X)
 {
 	if (X > 255L)
 		return 255L;
@@ -208,7 +208,7 @@ static INLINE BYTE CLIP(INT32 X)
 	if (X < 0L)
 		return 0L;
 
-	return X;
+	return (BYTE)X;
 }
 
 /**

@@ -636,12 +636,12 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		}
 		CommandLineSwitchCase(arg, "t")
 		{
-			unsigned long p = strtoul(arg->Value, NULL, 0);
+			unsigned long cp = strtoul(arg->Value, NULL, 0);
 
-			if ((errno != 0) || (p == 0) || (p > UINT16_MAX))
+			if ((errno != 0) || (cp == 0) || (cp > UINT16_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-			settings->ServerPort = p;
+			settings->ServerPort = cp;
 			WLog_WARN(TAG, "-t %s -> /port:%s", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "u")

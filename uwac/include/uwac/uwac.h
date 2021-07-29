@@ -294,7 +294,6 @@ struct uwac_output_geometry_event
 };
 typedef struct uwac_output_geometry_event UwacOutputGeometryEvent;
 
-/** @brief */
 union uwac_event {
 	int type;
 	UwacOutputNewEvent output_new;
@@ -477,10 +476,10 @@ extern "C"
 	 *	Sets the region that should be considered opaque to the compositor.
 	 *
 	 * @param window the UwacWindow
-	 * @param x
-	 * @param y
-	 * @param width
-	 * @param height
+	 * @param x The horizontal coordinate in pixels
+	 * @param y The vertical coordinate in pixels
+	 * @param width The width of the region
+	 * @param height The height of the region
 	 * @return UWAC_SUCCESS on success, an error otherwise
 	 */
 	UWAC_API UwacReturnCode UwacWindowSetOpaqueRegion(UwacWindow* window, uint32_t x, uint32_t y,
@@ -490,11 +489,11 @@ extern "C"
 	 *	Sets the region of the window that can trigger input events
 	 *
 	 * @param window the UwacWindow
-	 * @param x
-	 * @param y
-	 * @param width
-	 * @param height
-	 * @return
+	 * @param x The horizontal coordinate in pixels
+	 * @param y The vertical coordinate in pixels
+	 * @param width The width of the region
+	 * @param height The height of the region
+	 * @return UWAC_SUCCESS on success, an error otherwise
 	 */
 	UWAC_API UwacReturnCode UwacWindowSetInputRegion(UwacWindow* window, uint32_t x, uint32_t y,
 	                                                 uint32_t width, uint32_t height);
@@ -571,11 +570,11 @@ extern "C"
 	 */
 	UWAC_API void UwacWindowSetTitle(UwacWindow* window, const char* name);
 
-	/**
+	/** Dispatch the display
 	 *
-	 * @param display
-	 * @param timeout
-	 * @return
+	 * @param display The display to dispatch
+	 * @param timeout The maximum time to wait in milliseconds (-1 == infinite).
+	 * @return 1 for success, 0 if display not running, -1 on failure
 	 */
 	UWAC_API int UwacDisplayDispatch(UwacDisplay* display, int timeout);
 

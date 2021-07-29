@@ -189,7 +189,8 @@ static void* base64_decode(const char* s, size_t length, size_t* data_len)
 		q[2] = ((n[2] & 3) << 6) + n[3];
 	}
 
-	*data_len = outputLen;
+	if (data_len)
+		*data_len = outputLen;
 	data[outputLen] = '\0';
 
 	return data;

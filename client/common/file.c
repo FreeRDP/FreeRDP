@@ -695,15 +695,15 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 
 	if ((buffer[0] == BOM_UTF16_LE[0]) && (buffer[1] == BOM_UTF16_LE[1]))
 	{
-		int length;
+		int clength;
 		LPCWSTR uc = (LPCWSTR)(&buffer[2]);
 		size = size / 2 - 1;
 
 		if (size > INT_MAX)
 			return FALSE;
 
-		length = (int)size;
-		if (ConvertFromUnicode(CP_UTF8, 0, uc, length, &copy, 0, NULL, NULL) < 0)
+		clength = (int)size;
+		if (ConvertFromUnicode(CP_UTF8, 0, uc, clength, &copy, 0, NULL, NULL) < 0)
 		{
 			WLog_ERR(TAG, "Failed to convert RDP file from UCS2 to UTF8");
 			return FALSE;

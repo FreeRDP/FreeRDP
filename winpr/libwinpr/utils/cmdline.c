@@ -494,14 +494,14 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 	{
 		if (name)
 		{
-			size_t len = strlen(name);
-			p = (char**)calloc(2UL + len, sizeof(char*));
+			size_t clen = strlen(name);
+			p = (char**)calloc(2UL + clen, sizeof(char*));
 
 			if (p)
 			{
 				char* dst = (char*)&p[1];
 				p[0] = dst;
-				sprintf_s(dst, len + 1, "%s", name);
+				sprintf_s(dst, clen + 1, "%s", name);
 				*count = 1;
 				return p;
 			}

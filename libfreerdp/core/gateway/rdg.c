@@ -2402,10 +2402,10 @@ static int rdg_bio_gets(BIO* bio, char* str, int size)
 	return -2;
 }
 
-static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
+static long rdg_bio_ctrl(BIO* in_bio, int cmd, long arg1, void* arg2)
 {
 	long status = -1;
-	rdpRdg* rdg = (rdpRdg*)BIO_get_data(bio);
+	rdpRdg* rdg = (rdpRdg*)BIO_get_data(in_bio);
 	rdpTls* tlsOut = rdg->tlsOut;
 	rdpTls* tlsIn = rdg->tlsIn;
 
@@ -2422,42 +2422,42 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	}
 	else if (cmd == BIO_C_READ_BLOCKED)
 	{
-		BIO* bio = tlsOut->bio;
-		status = BIO_read_blocked(bio);
+		BIO* cbio = tlsOut->bio;
+		status = BIO_read_blocked(cbio);
 	}
 	else if (cmd == BIO_C_WRITE_BLOCKED)
 	{
-		BIO* bio = tlsIn->bio;
+		BIO* cbio = tlsIn->bio;
 
 		if (rdg->transferEncoding.isWebsocketTransport)
-			bio = tlsOut->bio;
+			cbio = tlsOut->bio;
 
-		status = BIO_write_blocked(bio);
+		status = BIO_write_blocked(cbio);
 	}
 	else if (cmd == BIO_C_WAIT_READ)
 	{
 		int timeout = (int)arg1;
-		BIO* bio = tlsOut->bio;
+		BIO* cbio = tlsOut->bio;
 
-		if (BIO_read_blocked(bio))
-			return BIO_wait_read(bio, timeout);
-		else if (BIO_write_blocked(bio))
-			return BIO_wait_write(bio, timeout);
+		if (BIO_read_blocked(cbio))
+			return BIO_wait_read(cbio, timeout);
+		else if (BIO_write_blocked(cbio))
+			return BIO_wait_write(cbio, timeout);
 		else
 			status = 1;
 	}
 	else if (cmd == BIO_C_WAIT_WRITE)
 	{
 		int timeout = (int)arg1;
-		BIO* bio = tlsIn->bio;
+		BIO* cbio = tlsIn->bio;
 
 		if (rdg->transferEncoding.isWebsocketTransport)
-			bio = tlsOut->bio;
+			cbio = tlsOut->bio;
 
-		if (BIO_write_blocked(bio))
-			status = BIO_wait_write(bio, timeout);
-		else if (BIO_read_blocked(bio))
-			status = BIO_wait_read(bio, timeout);
+		if (BIO_write_blocked(cbio))
+			status = BIO_wait_write(cbio, timeout);
+		else if (BIO_read_blocked(cbio))
+			status = BIO_wait_read(cbio, timeout);
 		else
 			status = 1;
 	}

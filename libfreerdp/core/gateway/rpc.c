@@ -279,9 +279,8 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 
 	if (header->common.ptype == PTYPE_REQUEST)
 	{
-		UINT32 sec_trailer_offset;
-		sec_trailer_offset = header->common.frag_length - header->common.auth_length - 8;
-		*length = sec_trailer_offset - *offset;
+		UINT32 csec_trailer_offset = header->common.frag_length - header->common.auth_length - 8;
+		*length = csec_trailer_offset - *offset;
 		return TRUE;
 	}
 

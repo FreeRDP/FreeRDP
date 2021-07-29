@@ -279,7 +279,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 		{
 			BYTE* pTmpData =
 			    &pDstData[(nXDstRel + x) * GetBytesPerPixel(DstFormat) + (nYDstRel + y) * nDstStep];
-			UINT32 color = palette[suiteIndex];
+			UINT32 ccolor = palette[suiteIndex];
 
 			if (suiteIndex > 127)
 			{
@@ -290,7 +290,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 			suiteIndex++;
 
 			if ((nXDstRel + x < nDstWidth) && (nYDstRel + y < nDstHeight))
-				WriteColor(pTmpData, DstFormat, color);
+				WriteColor(pTmpData, DstFormat, ccolor);
 
 			if (++x >= width)
 			{
@@ -609,7 +609,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 	while (suboffset < bandsByteCount)
 	{
-		BYTE r, g, b;
+		BYTE cr, cg, cb;
 		UINT16 xStart;
 		UINT16 xEnd;
 		UINT16 yStart;
@@ -632,11 +632,11 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 		Stream_Read_UINT16(s, xEnd);
 		Stream_Read_UINT16(s, yStart);
 		Stream_Read_UINT16(s, yEnd);
-		Stream_Read_UINT8(s, b);
-		Stream_Read_UINT8(s, g);
-		Stream_Read_UINT8(s, r);
+		Stream_Read_UINT8(s, cb);
+		Stream_Read_UINT8(s, cg);
+		Stream_Read_UINT8(s, cr);
 		suboffset += 11;
-		colorBkg = FreeRDPGetColor(clear->format, r, g, b, 0xFF);
+		colorBkg = FreeRDPGetColor(clear->format, cr, cg, cb, 0xFF);
 
 		if (xEnd < xStart)
 		{
@@ -658,7 +658,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 			CLEAR_VBAR_ENTRY* vBarEntry = NULL;
 			CLEAR_VBAR_ENTRY* vBarShortEntry;
 			BOOL vBarUpdate = FALSE;
-			const BYTE* pSrcPixel;
+			const BYTE* cpSrcPixel;
 
 			if (Stream_GetRemainingLength(s) < 2)
 			{
@@ -870,7 +870,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 			nXDstRel = nXDst + xStart;
 			nYDstRel = nYDst + yStart;
-			pSrcPixel = vBarEntry->pixels;
+			cpSrcPixel = vBarEntry->pixels;
 
 			if (i < nWidth)
 			{
@@ -883,13 +883,13 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				{
 					BYTE* pDstPixel8 = &pDstData[((nYDstRel + y) * nDstStep) +
 					                             ((nXDstRel + i) * GetBytesPerPixel(DstFormat))];
-					UINT32 color = ReadColor(pSrcPixel, clear->format);
+					UINT32 color = ReadColor(cpSrcPixel, clear->format);
 					color = FreeRDPConvertColor(color, clear->format, DstFormat, NULL);
 
 					if (!WriteColor(pDstPixel8, DstFormat, color))
 						return FALSE;
 
-					pSrcPixel += GetBytesPerPixel(clear->format);
+					cpSrcPixel += GetBytesPerPixel(clear->format);
 				}
 			}
 		}

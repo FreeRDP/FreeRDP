@@ -537,7 +537,7 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 	{
 		/* Cleaning up termitating and pending irp
 		 * threads. See also: irp_thread_func() */
-		HANDLE irpThread;
+		HANDLE cirpThread;
 		ULONG_PTR* ids;
 		int i, nbIds;
 		nbIds = ListDictionary_GetKeys(serial->IrpThreads, &ids);
@@ -547,17 +547,17 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 			/* Checking if ids[i] is terminating or pending */
 			DWORD waitResult;
 			ULONG_PTR id = ids[i];
-			irpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)id);
+			cirpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)id);
 			/* FIXME: not quite sure a zero timeout is a good thing to check whether a thread is
 			 * stil alived or not */
-			waitResult = WaitForSingleObject(irpThread, 0);
+			waitResult = WaitForSingleObject(cirpThread, 0);
 
 			if (waitResult == WAIT_OBJECT_0)
 			{
 				/* terminating thread */
 				/* WLog_Print(serial->log, WLOG_DEBUG, "IRP thread with CompletionId=%"PRIuz"
 				 * naturally died", id); */
-				CloseHandle(irpThread);
+				CloseHandle(cirpThread);
 				ListDictionary_Remove(serial->IrpThreads, (void*)id);
 				serial->IrpThreadToBeTerminatedCount--;
 			}
