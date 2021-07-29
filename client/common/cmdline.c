@@ -1913,7 +1913,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!value_to_int(arg->Value, &val, 0, UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-			switch (settings->ColorDepth)
+			switch (val)
 			{
 				case 32:
 				case 24:
