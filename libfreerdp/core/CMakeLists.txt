@@ -50,6 +50,8 @@ set(${MODULE_PREFIX}_GATEWAY_SRCS
 	${${MODULE_PREFIX}_GATEWAY_DIR}/ncacn_http.h)
 
 set(${MODULE_PREFIX}_SRCS
+	utils.c
+	utils.h
 	bulk.c
 	bulk.h
 	activation.c

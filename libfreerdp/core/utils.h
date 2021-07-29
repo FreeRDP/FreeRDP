@@ -27,4 +27,7 @@
 BOOL utils_reset_abort(rdpContext* context);
 BOOL utils_abort_connect(rdpContext* context);
 
+BOOL utils_str_is_empty(const char* str);
+BOOL utils_str_copy(const char* value, char** dst);
+
 #endif /* FREERDP_LIB_CORE_UTILS_H */

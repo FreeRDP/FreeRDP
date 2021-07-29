@@ -31,6 +31,19 @@
 
 #include "utils.h"
 
+BOOL utils_str_copy(const char* value, char** dst)
+{
+	WINPR_ASSERT(dst);
+
+	free(*dst);
+	*dst = NULL;
+	if (!value)
+		return TRUE;
+
+	(*dst) = _strdup(value);
+	return (*dst) != NULL;
+}
+
 BOOL utils_abort_connect(rdpContext* context)
 {
 	WINPR_ASSERT(context);
@@ -42,4 +55,13 @@ BOOL utils_reset_abort(rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	return ResetEvent(context->abortEvent);
+}
+
+BOOL utils_str_is_empty(const char* str)
+{
+	if (!str)
+		return TRUE;
+	if (strlen(str) == 0)
+		return TRUE;
+	return FALSE;
 }
