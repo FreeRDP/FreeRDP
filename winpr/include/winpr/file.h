@@ -30,6 +30,8 @@
 
 #ifndef _WIN32
 
+#include <stdio.h>
+
 #ifndef MAX_PATH
 #define MAX_PATH 260
 #endif
