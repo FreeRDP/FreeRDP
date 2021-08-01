@@ -364,6 +364,8 @@ BOOL winpr_FIPSMode(void)
 {
 #if (OPENSSL_VERSION_NUMBER < 0x10001000L) || defined(LIBRESSL_VERSION_NUMBER)
 	return FALSE;
+#elif defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+	return (EVP_default_properties_is_fips_enabled(NULL) == 1);
 #else
 	return (FIPS_mode() == 1);
 #endif
