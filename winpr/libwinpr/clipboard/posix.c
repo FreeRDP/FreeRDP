@@ -579,7 +579,7 @@ static void* convert_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 f
 static size_t count_special_chars(const WCHAR* str)
 {
 	size_t count = 0;
-	WCHAR* start = (WCHAR*)str;
+	const WCHAR* start = (const WCHAR*)str;
 	while (*start)
 	{
 		if (*start == L'#' || *start == L'?' || *start == L'*' || *start == L'!' || *start == L'%')
@@ -591,9 +591,9 @@ static size_t count_special_chars(const WCHAR* str)
 	return count;
 }
 
-static char* stop_at_special_chars(const char* str)
+static const char* stop_at_special_chars(const char* str)
 {
-	char* start = (char*)str;
+	const char* start = (const char*)str;
 	while (*start)
 	{
 		if (*start == '#' || *start == '?' || *start == '*' || *start == '!' || *start == '%')

@@ -247,7 +247,7 @@ static int rts_empty_command_write(BYTE* buffer)
 static SSIZE_T rts_padding_command_read(const BYTE* buffer, size_t length)
 {
 	UINT32 ConformanceCount;
-	ConformanceCount = *((UINT32*)&buffer[0]); /* ConformanceCount (4 bytes) */
+	ConformanceCount = *((const UINT32*)&buffer[0]); /* ConformanceCount (4 bytes) */
 	/* Padding (variable) */
 	return ConformanceCount + 4;
 }
@@ -297,7 +297,7 @@ static int rts_ance_command_write(BYTE* buffer)
 static SSIZE_T rts_client_address_command_read(const BYTE* buffer, size_t length)
 {
 	UINT32 AddressType;
-	AddressType = *((UINT32*)&buffer[0]); /* AddressType (4 bytes) */
+	AddressType = *((const UINT32*)&buffer[0]); /* AddressType (4 bytes) */
 
 	if (AddressType == 0)
 	{

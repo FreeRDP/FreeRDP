@@ -227,7 +227,7 @@ static BOOL xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL pr
 	return TRUE;
 }
 
-static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpPointer* pointer,
+static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer* pointer,
                                                  Cursor* cursor)
 {
 #ifdef WITH_XCURSOR
@@ -451,7 +451,7 @@ static BOOL xf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 #ifdef WITH_XCURSOR
 	xfContext* xfc = (xfContext*)context;
 	Window handle = xf_Pointer_get_window(xfc);
-	xfc->pointer = (xfPointer*)pointer;
+	xfc->pointer = (const xfPointer*)pointer;
 
 	/* in RemoteApp mode, window can be null if none has had focus */
 
@@ -566,12 +566,12 @@ out:
 }
 
 /* Glyph Class */
-static BOOL xf_Glyph_New(rdpContext* context, const rdpGlyph* glyph)
+static BOOL xf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 {
 	int scanline;
 	XImage* image;
-	xfGlyph* xf_glyph;
-	xf_glyph = (xfGlyph*)glyph;
+	xfGlyph* xf_glyph = (xfGlyph*)glyph;
+
 	xfContext* xfc = (xfContext*)context;
 	xf_lock_x11(xfc);
 	scanline = (glyph->cx + 7) / 8;
@@ -605,9 +605,9 @@ static void xf_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 static BOOL xf_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, INT32 y, INT32 w,
                           INT32 h, INT32 sx, INT32 sy, BOOL fOpRedundant)
 {
-	xfGlyph* xf_glyph;
+	const xfGlyph* xf_glyph = (const xfGlyph*)glyph;
 	xfContext* xfc = (xfContext*)context;
-	xf_glyph = (xfGlyph*)glyph;
+
 	xf_lock_x11(xfc);
 
 	if (!fOpRedundant)

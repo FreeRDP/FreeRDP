@@ -585,7 +585,7 @@ static void wlf_client_free(freerdp* instance, rdpContext* context)
 static void* uwac_event_clone(const void* val)
 {
 	UwacEvent* copy;
-	UwacEvent* ev = (UwacEvent*)val;
+	const UwacEvent* ev = (const UwacEvent*)val;
 
 	copy = calloc(1, sizeof(UwacEvent));
 	if (!copy)

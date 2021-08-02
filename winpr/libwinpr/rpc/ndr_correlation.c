@@ -55,7 +55,7 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	type = correlation_type & 0x0F;
 	conformance = correlation_type & 0xF0;
 	correlation_operator = pFormat[1];
-	offset = *(unsigned short*)&pFormat[2];
+	offset = *(const unsigned short*)&pFormat[2];
 
 	if (conformance == FC_NORMAL_CONFORMANCE)
 	{

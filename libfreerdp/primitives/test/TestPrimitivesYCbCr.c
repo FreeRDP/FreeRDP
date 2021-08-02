@@ -1528,8 +1528,8 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 	{
 		if (*actual != *expected)
 		{
-			const UINT32 pixel = *((UINT32*)&actual[-channel]);
-			const UINT32 ePixel = *((UINT32*)&expected[-channel]);
+			const UINT32 pixel = *((const UINT32*)&actual[-channel]);
+			const UINT32 ePixel = *((const UINT32*)&expected[-channel]);
 			const INT16 Y = TEST_Y_COMPONENT[index];
 			const INT16 Cb = TEST_CB_COMPONENT[index];
 			const INT16 Cr = TEST_CR_COMPONENT[index];
@@ -1569,7 +1569,7 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	float err[3];
 	BYTE* actual;
 	BYTE* actual1;
-	BYTE* expected;
+	const BYTE* expected;
 	int margin = 1;
 	INT16* pYCbCr[3] = { NULL, NULL, NULL };
 	const UINT32 srcStride = roi.width * 2;
@@ -1580,7 +1580,7 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	PROFILER_DEFINE(prof1)
 	PROFILER_DEFINE(prof2)
 	// return test_YCbCr_pixels();
-	expected = (BYTE*)TEST_XRGB_IMAGE;
+	expected = (const BYTE*)TEST_XRGB_IMAGE;
 	actual = _aligned_malloc(dstSize, 16);
 	actual1 = _aligned_malloc(dstSize, 16);
 	PROFILER_CREATE(prof, "yCbCrToRGB_16s8u")

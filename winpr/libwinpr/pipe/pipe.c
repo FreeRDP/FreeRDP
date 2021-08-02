@@ -123,7 +123,7 @@ static BOOL PipeCloseHandle(HANDLE handle)
 static BOOL PipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                      LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
-	int io_status;
+	SSIZE_T io_status;
 	WINPR_PIPE* pipe;
 	BOOL status = TRUE;
 
@@ -162,7 +162,7 @@ static BOOL PipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 static BOOL PipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
                       LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
-	int io_status;
+	SSIZE_T io_status;
 	WINPR_PIPE* pipe;
 
 	if (lpOverlapped)
@@ -263,7 +263,7 @@ static BOOL NamedPipeCloseHandle(HANDLE handle)
 BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                    LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
-	int io_status;
+	SSIZE_T io_status;
 	WINPR_NAMED_PIPE* pipe;
 	BOOL status = TRUE;
 
@@ -356,7 +356,7 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
                     LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
-	int io_status;
+	SSIZE_T io_status;
 	WINPR_NAMED_PIPE* pipe;
 	BOOL status = TRUE;
 

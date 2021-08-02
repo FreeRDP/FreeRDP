@@ -512,7 +512,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		if (FD_ISSET(pComm->fd_write, &write_set))
 		{
 			ssize_t nbWritten;
-			nbWritten = write(pComm->fd_write, ((BYTE*)lpBuffer) + (*lpNumberOfBytesWritten),
+			nbWritten = write(pComm->fd_write, ((const BYTE*)lpBuffer) + (*lpNumberOfBytesWritten),
 			                  nNumberOfBytesToWrite - (*lpNumberOfBytesWritten));
 
 			if (nbWritten < 0)

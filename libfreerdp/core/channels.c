@@ -294,7 +294,7 @@ static const WtsApiFunctionTable FreeRDP_WtsApiFunctionTable = {
 	FreeRDP_WTSStartRemoteControlSessionExA
 };
 
-PWtsApiFunctionTable FreeRDP_InitWtsApi(void)
+const PWtsApiFunctionTable FreeRDP_InitWtsApi(void)
 {
-	return (PWtsApiFunctionTable)&FreeRDP_WtsApiFunctionTable;
+	return &FreeRDP_WtsApiFunctionTable;
 }

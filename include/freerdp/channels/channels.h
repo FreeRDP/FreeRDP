@@ -56,7 +56,7 @@ extern "C"
 	FREERDP_API UINT16 freerdp_channels_get_id_by_name(freerdp* instance, const char* channel_name);
 	FREERDP_API const char* freerdp_channels_get_name_by_id(freerdp* instance, UINT16 channelId);
 
-	FREERDP_API PWtsApiFunctionTable FreeRDP_InitWtsApi(void);
+	FREERDP_API const PWtsApiFunctionTable FreeRDP_InitWtsApi(void);
 
 #ifdef __cplusplus
 }

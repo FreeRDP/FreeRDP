@@ -72,7 +72,7 @@ static void wlf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 static BOOL wlf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 {
 	wlfContext* wlf = (wlfContext*)context;
-	wlfPointer* ptr = (wlfPointer*)pointer;
+	const wlfPointer* ptr = (const wlfPointer*)pointer;
 	void* data;
 	UINT32 w, h, x, y;
 	size_t size;

@@ -105,17 +105,17 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* pSrc, UINT32 srcSt
 			if (onStride)
 			{
 				/* The faster path, 16-byte aligned load. */
-				R0 = _mm_load_si128((__m128i*)sptr);
+				R0 = _mm_load_si128((const __m128i*)sptr);
 				sptr += (128 / 8);
-				R1 = _mm_load_si128((__m128i*)sptr);
+				R1 = _mm_load_si128((const __m128i*)sptr);
 				sptr += (128 / 8);
 			}
 			else
 			{
 				/* Off-stride, slower LDDQU load. */
-				R0 = _mm_lddqu_si128((__m128i*)sptr);
+				R0 = _mm_lddqu_si128((const __m128i*)sptr);
 				sptr += (128 / 8);
-				R1 = _mm_lddqu_si128((__m128i*)sptr);
+				R1 = _mm_lddqu_si128((const __m128i*)sptr);
 				sptr += (128 / 8);
 			}
 
@@ -275,7 +275,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* pSrc, UINT32 sr
 		}
 
 		/* Each loop handles eight pixels at a time. */
-		onStride = (((ULONG_PTR)sptr & 0x0f) == 0) ? TRUE : FALSE;
+		onStride = (((const ULONG_PTR)sptr & 0x0f) == 0) ? TRUE : FALSE;
 
 		while (w >= 8)
 		{
@@ -284,17 +284,17 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* pSrc, UINT32 sr
 			if (onStride)
 			{
 				/* The faster path, 16-byte aligned load. */
-				R0 = _mm_load_si128((__m128i*)sptr);
+				R0 = _mm_load_si128((const __m128i*)sptr);
 				sptr += (128 / 8);
-				R1 = _mm_load_si128((__m128i*)sptr);
+				R1 = _mm_load_si128((const __m128i*)sptr);
 				sptr += (128 / 8);
 			}
 			else
 			{
 				/* Off-stride, slower LDDQU load. */
-				R0 = _mm_lddqu_si128((__m128i*)sptr);
+				R0 = _mm_lddqu_si128((const __m128i*)sptr);
 				sptr += (128 / 8);
-				R1 = _mm_lddqu_si128((__m128i*)sptr);
+				R1 = _mm_lddqu_si128((const __m128i*)sptr);
 				sptr += (128 / 8);
 			}
 

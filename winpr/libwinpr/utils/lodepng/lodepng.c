@@ -403,7 +403,7 @@ unsigned lodepng_save_file(const unsigned char* buffer, size_t buffersize, const
 	file = winpr_fopen(filename, "wb");
 	if (!file)
 		return 79;
-	if (fwrite((char*)buffer, 1, buffersize, file) != buffersize)
+	if (fwrite((const char*)buffer, 1, buffersize, file) != buffersize)
 		ret = 91;
 	fclose(file);
 	return ret;
@@ -4761,7 +4761,7 @@ static unsigned readChunk_zTXt(LodePNGInfo* info, const LodePNGDecompressSetting
 		length = chunkLength - string2_begin;
 		/*will fail if zlib error, e.g. if length is too small*/
 		error = zlib_decompress(&decoded.data, &decoded.size,
-		                        (unsigned char*)(&data[string2_begin]), length, zlibsettings);
+		                        (const unsigned char*)(&data[string2_begin]), length, zlibsettings);
 		if (error)
 			break;
 		if (!ucvector_push_back(&decoded, 0))
@@ -4858,8 +4858,8 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecompressSetting
 		if (compressed)
 		{
 			/*will fail if zlib error, e.g. if length is too small*/
-			error = zlib_decompress(&decoded.data, &decoded.size, (unsigned char*)(&data[begin]),
-			                        length, zlibsettings);
+			error = zlib_decompress(&decoded.data, &decoded.size,
+			                        (const unsigned char*)(&data[begin]), length, zlibsettings);
 			if (error)
 				break;
 			if (decoded.allocsize < decoded.size)
@@ -5454,8 +5454,8 @@ static unsigned addChunk_zTXt(ucvector* out, const char* keyword, const char* te
 	ucvector_push_back(&data, 0); /*0 termination char*/
 	ucvector_push_back(&data, 0); /*compression method: 0*/
 
-	error = zlib_compress(&compressed.data, &compressed.size, (unsigned char*)textstring, textsize,
-	                      zlibsettings);
+	error = zlib_compress(&compressed.data, &compressed.size, (const unsigned char*)textstring,
+	                      textsize, zlibsettings);
 	if (!error)
 	{
 		for (i = 0; i < compressed.size; i++)
@@ -5497,7 +5497,7 @@ static unsigned addChunk_iTXt(ucvector* out, unsigned compressed, const char* ke
 		ucvector compressed_data;
 		ucvector_init(&compressed_data);
 		error = zlib_compress(&compressed_data.data, &compressed_data.size,
-		                      (unsigned char*)textstring, textsize, zlibsettings);
+		                      (const unsigned char*)textstring, textsize, zlibsettings);
 		if (!error)
 		{
 			for (i = 0; i < compressed_data.size; i++)

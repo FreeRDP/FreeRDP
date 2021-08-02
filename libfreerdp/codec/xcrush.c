@@ -775,7 +775,7 @@ static int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UI
 	UINT16 MatchLength = 0;
 	UINT16 MatchOutputOffset = 0;
 	UINT32 MatchHistoryOffset = 0;
-	RDP61_MATCH_DETAILS* MatchDetails = NULL;
+	const RDP61_MATCH_DETAILS* MatchDetails = NULL;
 
 	if (SrcSize < 1)
 		return -1001;
@@ -802,8 +802,8 @@ static int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UI
 			return -1003;
 
 		Data_Read_UINT16(pSrcData, MatchCount);
-		MatchDetails = (RDP61_MATCH_DETAILS*)&pSrcData[2];
-		Literals = (BYTE*)&MatchDetails[MatchCount];
+		MatchDetails = (const RDP61_MATCH_DETAILS*)&pSrcData[2];
+		Literals = (const BYTE*)&MatchDetails[MatchCount];
 		OutputOffset = 0;
 
 		if (Literals > pSrcEnd)

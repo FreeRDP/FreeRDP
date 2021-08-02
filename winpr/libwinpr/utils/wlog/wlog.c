@@ -791,7 +791,7 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 	return log->FilterLevel;
 }
 
-static BOOL WLog_ParseName(wLog* log, LPCSTR name)
+static BOOL WLog_ParseName(wLog* log, LPSTR name)
 {
 	char* p;
 	size_t count;

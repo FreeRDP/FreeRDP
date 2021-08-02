@@ -571,7 +571,7 @@ static UINT rdpsnd_server_send_samples(RdpsndServerContext* context, const void*
 		CopyMemory(context->priv->out_buffer +
 		               (context->priv->out_pending_frames * context->priv->src_bytes_per_frame),
 		           buf, cframesize);
-		buf = (BYTE*)buf + cframesize;
+		buf = (const BYTE*)buf + cframesize;
 		nframes -= cframes;
 		context->priv->out_pending_frames += cframes;
 

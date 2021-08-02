@@ -91,7 +91,7 @@
 
 LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 {
-	char* p;
+	const char* p;
 	size_t length;
 	char* pBeg;
 	char* pEnd;
@@ -123,7 +123,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	{
 		size_t i;
 		size_t n;
-		char* pLastEnd = NULL;
+		const char* pLastEnd = NULL;
 		lpEscapedCmdLine = (char*)calloc(cmdLineLength + 1, sizeof(char));
 
 		if (!lpEscapedCmdLine)
@@ -132,8 +132,8 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 			return NULL;
 		}
 
-		p = (char*)lpCmdLine;
-		pLastEnd = (char*)lpCmdLine;
+		p = (const char*)lpCmdLine;
+		pLastEnd = (const char*)lpCmdLine;
 		pOutput = (char*)lpEscapedCmdLine;
 
 		while (p < &lpCmdLine[cmdLineLength])
@@ -185,7 +185,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	}
 
 	maxNumArgs = 2;
-	p = (char*)lpCmdLine;
+	p = (const char*)lpCmdLine;
 
 	while (p < lpCmdLine + cmdLineLength)
 	{
@@ -206,7 +206,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 	pArgs = (LPSTR*)buffer;
 	pOutput = (char*)&buffer[maxNumArgs * (sizeof(char*))];
-	p = (char*)lpCmdLine;
+	p = (const char*)lpCmdLine;
 
 	while (p < lpCmdLine + cmdLineLength)
 	{
