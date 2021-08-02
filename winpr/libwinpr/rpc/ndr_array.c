@@ -48,7 +48,7 @@ void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pM
 	unsigned short element_size;
 	type = pFormat[0];
 	alignment = pFormat[1] + 1;
-	element_size = *(unsigned short*)&pFormat[2];
+	element_size = *(const unsigned short*)&pFormat[2];
 
 	if (type != FC_CARRAY)
 	{

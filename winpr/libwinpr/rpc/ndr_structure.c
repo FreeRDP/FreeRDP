@@ -57,7 +57,7 @@ void NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	unsigned short memory_size;
 	type = pFormat[0];
 	alignment = pFormat[1] + 1;
-	memory_size = *(unsigned short*)&pFormat[2];
+	memory_size = *(const unsigned short*)&pFormat[2];
 	NdrpAlignLength(&(pStubMsg->BufferLength), alignment);
 	NdrpIncrementLength(&(pStubMsg->BufferLength), memory_size);
 	pFormat += 4;
@@ -227,7 +227,7 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	unsigned char type;
 	unsigned char alignment;
 	unsigned short memory_size;
-	unsigned char* pointer_layout;
+	const unsigned char* pointer_layout;
 	unsigned char* conformant_array_description;
 	unsigned short offset_to_pointer_layout;
 	unsigned short offset_to_conformant_array_description;
@@ -242,7 +242,7 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	}
 
 	alignment = pFormat[1] + 1;
-	memory_size = *(unsigned short*)&pFormat[2];
+	memory_size = *(const unsigned short*)&pFormat[2];
 	NdrpAlignLength(&(pStubMsg->BufferLength), alignment);
 
 	if (!pStubMsg->IgnoreEmbeddedPointers && !pStubMsg->PointerLength)
@@ -257,17 +257,17 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	}
 
 	pFormat += 4;
-	offset_to_conformant_array_description = *(unsigned short*)&pFormat[0];
+	offset_to_conformant_array_description = *(const unsigned short*)&pFormat[0];
 
 	if (offset_to_conformant_array_description)
 		conformant_array_description =
-		    (unsigned char*)pFormat + offset_to_conformant_array_description;
+		    (const unsigned char*)pFormat + offset_to_conformant_array_description;
 
 	pFormat += 2;
-	offset_to_pointer_layout = *(unsigned short*)&pFormat[0];
+	offset_to_pointer_layout = *(const unsigned short*)&pFormat[0];
 
 	if (offset_to_pointer_layout)
-		pointer_layout = (unsigned char*)pFormat + offset_to_pointer_layout;
+		pointer_layout = (const unsigned char*)pFormat + offset_to_pointer_layout;
 
 	pFormat += 2;
 	pStubMsg->Memory = pMemory;

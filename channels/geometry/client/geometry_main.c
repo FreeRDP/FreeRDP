@@ -80,8 +80,8 @@ static UINT32 mappedGeometryHash(const void* v)
 
 static BOOL mappedGeometryKeyCompare(const void* v1, const void* v2)
 {
-	const UINT64* g1 = (UINT64*)v1;
-	const UINT64* g2 = (UINT64*)v2;
+	const UINT64* g1 = (const UINT64*)v1;
+	const UINT64* g2 = (const UINT64*)v2;
 	return *g1 == *g2;
 }
 

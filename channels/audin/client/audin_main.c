@@ -804,11 +804,10 @@ static UINT audin_register_device_plugin(IWTSPlugin* pPlugin, IAudinDevice* devi
  */
 static UINT audin_load_device_plugin(AUDIN_PLUGIN* audin, const char* name, const ADDIN_ARGV* args)
 {
-	PFREERDP_AUDIN_DEVICE_ENTRY entry;
 	FREERDP_AUDIN_DEVICE_ENTRY_POINTS entryPoints;
 	UINT error;
-	entry = (PFREERDP_AUDIN_DEVICE_ENTRY)freerdp_load_channel_addin_entry("audin", (LPSTR)name,
-	                                                                      NULL, 0);
+	const PFREERDP_AUDIN_DEVICE_ENTRY entry =
+	    (const PFREERDP_AUDIN_DEVICE_ENTRY)freerdp_load_channel_addin_entry("audin", name, NULL, 0);
 
 	if (entry == NULL)
 	{

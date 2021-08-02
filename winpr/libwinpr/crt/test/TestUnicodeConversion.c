@@ -315,9 +315,9 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	 */
 
 	printf("Input UTF16 String:\n");
-	string_hexdump((BYTE*)src1, 19 * sizeof(WCHAR));
+	string_hexdump((const BYTE*)src1, 19 * sizeof(WCHAR));
 
-	i = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)src1, 16, &dst, 0, NULL, NULL);
+	i = ConvertFromUnicode(CP_UTF8, 0, (const WCHAR*)src1, 16, &dst, 0, NULL, NULL);
 	if (i != 16)
 	{
 		fprintf(stderr, "ConvertFromUnicode failure A1: unexpectedly returned %d instead of 16\n",
@@ -348,9 +348,9 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	/* Test null-terminated string */
 
 	printf("Input UTF16 String:\n");
-	string_hexdump((BYTE*)src2, (_wcslen((WCHAR*)src2) + 1) * sizeof(WCHAR));
+	string_hexdump((const BYTE*)src2, (_wcslen((const WCHAR*)src2) + 1) * sizeof(WCHAR));
 
-	i = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)src2, -1, &dst, 0, NULL, NULL);
+	i = ConvertFromUnicode(CP_UTF8, 0, (const WCHAR*)src2, -1, &dst, 0, NULL, NULL);
 	if (i != 17)
 	{
 		fprintf(stderr, "ConvertFromUnicode failure B1: unexpectedly returned %d instead of 17\n",
@@ -483,7 +483,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 		fprintf(stderr, "ConvertToUnicode failure B3: dst length is %" PRIuz " instead of 16\n", i);
 		goto fail;
 	}
-	if (_wcscmp(dst, (WCHAR*)cmp0))
+	if (_wcscmp(dst, (const WCHAR*)cmp0))
 	{
 		fprintf(stderr, "ConvertToUnicode failure B: data mismatch\n");
 		goto fail;

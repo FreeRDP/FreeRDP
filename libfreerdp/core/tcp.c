@@ -660,8 +660,8 @@ BIO_METHOD* BIO_s_buffered_socket(void)
 char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* pIPv6)
 {
 	char ipAddress[INET6_ADDRSTRLEN + 1] = { 0 };
-	struct sockaddr_in6* sockaddr_ipv6 = (struct sockaddr_in6*)addr;
-	struct sockaddr_in* sockaddr_ipv4 = (struct sockaddr_in*)addr;
+	const struct sockaddr_in6* sockaddr_ipv6 = (const struct sockaddr_in6*)addr;
+	const struct sockaddr_in* sockaddr_ipv4 = (const struct sockaddr_in*)addr;
 
 	if (addr == NULL)
 	{

@@ -516,7 +516,7 @@ HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
 
 HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 {
-	char* p = (char*)pszPath;
+	const char* p = (const char*)pszPath;
 
 	if (!pszPath || !cchPath || !ppszExt)
 		return E_INVALIDARG;

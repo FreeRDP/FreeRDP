@@ -2010,7 +2010,7 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	/* mask as much as possible with 32bit access */
 	for (streamPos = 0; streamPos + 4 <= isize; streamPos += 4)
 	{
-		uint32_t masked = *((uint32_t*)((BYTE*)buf + streamPos)) ^ maskingKey;
+		uint32_t masked = *((const uint32_t*)((const BYTE*)buf + streamPos)) ^ maskingKey;
 		Stream_Write_UINT32(sWS, masked);
 	}
 
@@ -2018,7 +2018,7 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	for (; streamPos < isize; streamPos++)
 	{
 		BYTE* partialMask = (BYTE*)(&maskingKey) + streamPos % 4;
-		BYTE masked = *((BYTE*)((BYTE*)buf + streamPos)) ^ *partialMask;
+		BYTE masked = *((const BYTE*)((const BYTE*)buf + streamPos)) ^ *partialMask;
 		Stream_Write_UINT8(sWS, masked);
 	}
 

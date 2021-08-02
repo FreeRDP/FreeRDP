@@ -1857,7 +1857,7 @@ TRIO_PRIVATE int TrioParseSpecifier TRIO_ARGS4((type, format, offset, parameter)
 		{
 			unsigned int max;
 			int without_namespace = TRUE;
-			char* tmpformat = (char*)&format[offset];
+			const char* tmpformat = (const char*)&format[offset];
 			int ch;
 
 			parameter->type = FORMAT_USER_DEFINED;
@@ -1893,7 +1893,7 @@ TRIO_PRIVATE int TrioParseSpecifier TRIO_ARGS4((type, format, offset, parameter)
 					if (max > MAX_USER_NAME)
 						max = MAX_USER_NAME;
 					trio_copy_max(parameter->user_defined.namespace, max, tmpformat);
-					tmpformat = (char*)&format[offset];
+					tmpformat = (const char*)&format[offset];
 				}
 			}
 

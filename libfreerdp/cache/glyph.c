@@ -141,7 +141,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 	UINT32 id;
 	UINT32 size;
 	UINT32 index = 0;
-	BYTE* fragments;
+	const BYTE* fragments;
 	rdpGraphics* graphics;
 	rdpGlyphCache* glyph_cache;
 	rdpGlyph* glyph;
@@ -245,7 +245,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 					return FALSE;
 
 				id = data[index++];
-				fragments = (BYTE*)glyph_cache_fragment_get(glyph_cache, id, &size);
+				fragments = (const BYTE*)glyph_cache_fragment_get(glyph_cache, id, &size);
 
 				if (fragments == NULL)
 					return FALSE;

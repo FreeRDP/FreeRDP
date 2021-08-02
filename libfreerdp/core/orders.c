@@ -2108,7 +2108,7 @@ BOOL update_write_cache_bitmap_order(wStream* s, const CACHE_BITMAP_ORDER* cache
 	{
 		if ((*flags & NO_BITMAP_COMPRESSION_HDR) == 0)
 		{
-			BYTE* bitmapComprHdr = (BYTE*)&(cache_bitmap->bitmapComprHdr);
+			const BYTE* bitmapComprHdr = (const BYTE*)&(cache_bitmap->bitmapComprHdr);
 			Stream_Write(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
 			bitmapLength -= 8;
 		}
@@ -2431,8 +2431,9 @@ BOOL update_write_cache_color_table_order(wStream* s,
                                           const CACHE_COLOR_TABLE_ORDER* cache_color_table,
                                           UINT16* flags)
 {
-	int i, inf;
-	UINT32* colorTable;
+	size_t i;
+	int inf;
+	const UINT32* colorTable;
 
 	if (cache_color_table->numberColors != 256)
 		return FALSE;
@@ -2444,9 +2445,9 @@ BOOL update_write_cache_color_table_order(wStream* s,
 
 	Stream_Write_UINT8(s, cache_color_table->cacheIndex);    /* cacheIndex (1 byte) */
 	Stream_Write_UINT16(s, cache_color_table->numberColors); /* numberColors (2 bytes) */
-	colorTable = (UINT32*)&cache_color_table->colorTable;
+	colorTable = (const UINT32*)&cache_color_table->colorTable;
 
-	for (i = 0; i < (int)cache_color_table->numberColors; i++)
+	for (i = 0; i < cache_color_table->numberColors; i++)
 	{
 		update_write_color_quad(s, colorTable[i]);
 	}

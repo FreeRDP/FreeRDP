@@ -55,7 +55,7 @@ static int test_XCrushCompressBells(void)
 	XCRUSH_CONTEXT* xcrush;
 	xcrush = xcrush_context_new(TRUE);
 	SrcSize = sizeof(TEST_BELLS_DATA) - 1;
-	pSrcData = (BYTE*)TEST_BELLS_DATA;
+	pSrcData = (const BYTE*)TEST_BELLS_DATA;
 	expectedSize = sizeof(TEST_BELLS_DATA_XCRUSH) - 1;
 	pDstData = OutputBuffer;
 	DstSize = sizeof(OutputBuffer);
@@ -102,7 +102,7 @@ static int test_XCrushCompressIsland(void)
 	XCRUSH_CONTEXT* xcrush;
 	xcrush = xcrush_context_new(TRUE);
 	SrcSize = sizeof(TEST_ISLAND_DATA) - 1;
-	pSrcData = (BYTE*)TEST_ISLAND_DATA;
+	pSrcData = (const BYTE*)TEST_ISLAND_DATA;
 	expectedSize = sizeof(TEST_ISLAND_DATA_XCRUSH) - 1;
 	pDstData = OutputBuffer;
 	DstSize = sizeof(OutputBuffer);

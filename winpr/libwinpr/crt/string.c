@@ -132,31 +132,31 @@ size_t _wcsnlen(const WCHAR* str, size_t max)
 
 WCHAR* _wcschr(const WCHAR* str, WCHAR c)
 {
-	WCHAR* p = (WCHAR*)str;
+	const WCHAR* p = (const WCHAR*)str;
 	WCHAR value;
 	Data_Write_UINT16(&value, c);
 
 	while (*p && (*p != value))
 		p++;
 
-	return ((*p == value) ? p : NULL);
+	return ((*p == value) ? (WCHAR*)p : NULL);
 }
 
 /* _wcsrchr -> wcsrchr */
 
 WCHAR* _wcsrchr(const WCHAR* str, WCHAR c)
 {
-	WCHAR* p;
+	const WCHAR* p;
 	WCHAR ch;
 
 	if (!str)
 		return NULL;
 
-	for (p = (WCHAR*)0; (ch = *str); str++)
+	for (p = (const WCHAR*)0; (ch = *str); str++)
 		if (ch == c)
-			p = (WCHAR*)str;
+			p = (const WCHAR*)str;
 
-	return p;
+	return (WCHAR*)p;
 }
 
 char* strtok_s(char* strToken, const char* strDelimit, char** context)
@@ -449,12 +449,12 @@ int lstrlenA(LPCSTR lpString)
 
 int lstrlenW(LPCWSTR lpString)
 {
-	LPWSTR p;
+	LPCWSTR p;
 
 	if (!lpString)
 		return 0;
 
-	p = (LPWSTR)lpString;
+	p = (LPCWSTR)lpString;
 
 	while (*p)
 		p++;

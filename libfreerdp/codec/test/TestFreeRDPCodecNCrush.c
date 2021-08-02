@@ -27,7 +27,7 @@ static BOOL test_NCrushCompressBells(void)
 		return rc;
 
 	SrcSize = sizeof(TEST_BELLS_DATA) - 1;
-	pSrcData = (BYTE*)TEST_BELLS_DATA;
+	pSrcData = (const BYTE*)TEST_BELLS_DATA;
 	expectedSize = sizeof(TEST_BELLS_NCRUSH) - 1;
 	pDstData = OutputBuffer;
 	DstSize = sizeof(OutputBuffer);
@@ -83,7 +83,7 @@ static BOOL test_NCrushDecompressBells(void)
 		return rc;
 
 	SrcSize = sizeof(TEST_BELLS_NCRUSH) - 1;
-	pSrcData = (BYTE*)TEST_BELLS_NCRUSH;
+	pSrcData = (const BYTE*)TEST_BELLS_NCRUSH;
 	Flags = PACKET_COMPRESSED | 2;
 	expectedSize = sizeof(TEST_BELLS_DATA) - 1;
 	status = ncrush_decompress(ncrush, pSrcData, SrcSize, &pDstData, &DstSize, Flags);

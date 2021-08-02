@@ -157,13 +157,14 @@ static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 	if (!ConfigPath)
 		return FALSE;
 	if (!(certificate_store->certs_path =
-	          GetCombinedPath(ConfigPath, (char*)certificate_store_dir)))
+	          GetCombinedPath(ConfigPath, (const char*)certificate_store_dir)))
 		goto fail;
-	certificate_store->server_path = GetCombinedPath(ConfigPath, (char*)certificate_server_dir);
+	certificate_store->server_path =
+	    GetCombinedPath(ConfigPath, (const char*)certificate_server_dir);
 	if (!certificate_store->server_path)
 		goto fail;
 	if (!(certificate_store->file =
-	          GetCombinedPath(ConfigPath, (char*)certificate_known_hosts_file)))
+	          GetCombinedPath(ConfigPath, (const char*)certificate_known_hosts_file)))
 		goto fail;
 	PathCchConvertStyleA(certificate_store->file, strlen(certificate_store->file), PATH_STYLE_UNIX);
 
@@ -560,7 +561,7 @@ static char* encode(const char* value)
 	if (!value)
 		return NULL;
 	len = strlen(value);
-	return (char*)crypto_base64_encode((BYTE*)value, len);
+	return (char*)crypto_base64_encode((const BYTE*)value, len);
 }
 
 static char* allocated_printf(const char* fmt, ...)

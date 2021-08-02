@@ -1211,7 +1211,7 @@ void xf_cliprdr_handle_xevent(xfContext* xfc, const XEvent* event)
 	if (clipboard->xfixes_supported &&
 	    event->type == XFixesSelectionNotify + clipboard->xfixes_event_base)
 	{
-		XFixesSelectionNotifyEvent* se = (XFixesSelectionNotifyEvent*)event;
+		const XFixesSelectionNotifyEvent* se = (const XFixesSelectionNotifyEvent*)event;
 
 		if (se->subtype == XFixesSetSelectionOwnerNotify)
 		{
@@ -2269,7 +2269,7 @@ static UINT xf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegate
 	response.msgFlags = CB_RESPONSE_OK;
 	response.streamId = request->streamId;
 	response.cbRequested = size;
-	response.requestedData = (BYTE*)data;
+	response.requestedData = (const BYTE*)data;
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 

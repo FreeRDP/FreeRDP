@@ -2246,7 +2246,7 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 	int status;
 	rdpTsg* tsg = (rdpTsg*)BIO_get_data(bio);
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
-	status = tsg_write(tsg, (BYTE*)buf, num);
+	status = tsg_write(tsg, (const BYTE*)buf, num);
 
 	if (status < 0)
 	{

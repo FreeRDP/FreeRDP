@@ -716,7 +716,7 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	if (!key)
 		return NULL;
 
-	bio = BIO_new_mem_buf((void*)keycontent, strlen(keycontent));
+	bio = BIO_new_mem_buf((const void*)keycontent, strlen(keycontent));
 
 	if (!bio)
 		goto out_free;
