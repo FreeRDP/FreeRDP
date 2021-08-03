@@ -29,6 +29,9 @@
 #include <openssl/rc4.h>
 #include <openssl/des.h>
 #include <openssl/evp.h>
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+#include <openssl/provider.h>
+#endif
 #endif
 
 #ifdef WITH_MBEDTLS
@@ -57,6 +60,12 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 
 	if (keylen > INT_MAX)
 		return NULL;
+
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+	if (OSSL_PROVIDER_load(NULL, "legacy") == NULL)
+		return NULL;
+#endif
+
 	if (!(ctx = (WINPR_RC4_CTX*)EVP_CIPHER_CTX_new()))
 		return NULL;
 
@@ -66,7 +75,12 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 		return NULL;
 
 	EVP_CIPHER_CTX_init((EVP_CIPHER_CTX*)ctx);
-	EVP_EncryptInit_ex((EVP_CIPHER_CTX*)ctx, evp, NULL, NULL, NULL);
+	if (EVP_EncryptInit_ex((EVP_CIPHER_CTX*)ctx, evp, NULL, NULL, NULL) != 1)
+	{
+		EVP_CIPHER_CTX_free ((EVP_CIPHER_CTX*)ctx);
+		return NULL;
+	}
+
 	/* EVP_CIPH_FLAG_NON_FIPS_ALLOW does not exist before openssl 1.0.1 */
 #if !(OPENSSL_VERSION_NUMBER < 0x10001000L)
 
@@ -75,7 +89,11 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 
 #endif
 	EVP_CIPHER_CTX_set_key_length((EVP_CIPHER_CTX*)ctx, (int)keylen);
-	EVP_EncryptInit_ex((EVP_CIPHER_CTX*)ctx, NULL, NULL, key, NULL);
+	if (EVP_EncryptInit_ex((EVP_CIPHER_CTX*)ctx, NULL, NULL, key, NULL) != 1)
+	{
+		EVP_CIPHER_CTX_free ((EVP_CIPHER_CTX*)ctx);
+		return NULL;
+	}
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 
 	if (!(ctx = (WINPR_RC4_CTX*)calloc(1, sizeof(mbedtls_arc4_context))))
