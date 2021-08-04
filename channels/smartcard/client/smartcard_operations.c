@@ -568,7 +568,7 @@ static LONG smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 
 	if (status != SCARD_S_SUCCESS)
 	{
-		return log_status_error(TAG, "SCardListReadersA", status);
+		log_status_error(TAG, "SCardListReadersA", status);
 	}
 
 	cchReaders = filter_device_by_name_a(smartcard->names, &mszReaders, cchReaders);
@@ -718,6 +718,7 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 
 	string.bp = call->mszGroups;
 	cchReaders = SCARD_AUTOALLOCATE;
+	ZeroMemory(&mszReaders, sizeof(mszReaders));
 	status = ret.ReturnCode =
 	    SCardListReadersW(operation->hContext, string.wz, (LPWSTR)&mszReaders.pw, &cchReaders);
 
@@ -728,7 +729,10 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	}
 
 	if (status != SCARD_S_SUCCESS)
-		return log_status_error(TAG, "SCardListReadersW", status);
+	{
+		log_status_error(TAG, "SCardListReadersW", status);
+		cchReaders = 0;
+	}
 
 	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders.pw, cchReaders);
 	ret.msz = mszReaders.pb;

@@ -205,16 +205,13 @@ static BOOL smartcard_ndr_pointer_write(wStream* s, UINT32* index, DWORD length)
 	return TRUE;
 }
 
-static LONG smartcard_ndr_write(wStream* s, const BYTE* data, UINT32 size, UINT32 elementSize,
+static LONG smartcard_ndr_write(wStream* s, const BYTE* data, UINT32 count, UINT32 elementSize,
                                 ndr_ptr_t type)
 {
 	const UINT32 offset = 0;
-	const UINT32 len = size;
-	const UINT32 dataLen = size * elementSize;
+	const UINT32 len = count;
+	const UINT32 dataLen = count * elementSize;
 	size_t required;
-
-	if (size == 0)
-		return SCARD_S_SUCCESS;
 
 	switch (type)
 	{
@@ -247,10 +244,15 @@ static LONG smartcard_ndr_write(wStream* s, const BYTE* data, UINT32 size, UINT3
 	}
 
 	if (data)
+	{
 		Stream_Write(s, data, dataLen);
+	}
 	else
-		Stream_Zero(s, dataLen);
-	return smartcard_pack_write_size_align(NULL, s, len, 4);
+	{
+		if (dataLen)
+			Stream_Zero(s, dataLen);
+	}
+	return smartcard_pack_write_size_align(NULL, s, dataLen, 4);
 }
 
 static LONG smartcard_ndr_write_state(wStream* s, const ReaderState_Return* data, UINT32 size,
