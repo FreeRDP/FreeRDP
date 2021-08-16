@@ -414,8 +414,8 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	/* Test static string buffers of differing sizes */
 	{
 		char name[] = "someteststring";
-		const WCHAR cmp[] = { L's', L'o', L'm', L'e', L't', L'e', L's', L't',
-			                  L's', L't', L'r', L'i', L'n', L'g', 0 };
+		const BYTE cmp[] = { 's', 0, 'o', 0, 'm', 0, 'e', 0, 't', 0, 'e', 0, 's', 0, 't', 0,
+				     's', 0, 't', 0, 'r', 0, 'i', 0, 'n', 0, 'g', 0, 0, 0 };
 		WCHAR xname[128] = { 0 };
 		LPWSTR aname = NULL;
 		LPWSTR wname = &xname[0];
