@@ -448,7 +448,7 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 
 	if (!supported)
 	{
-		if (!freerdp_dsp_context_reset(audin->dsp_context, audin->format))
+		if (!freerdp_dsp_context_reset(audin->dsp_context, audin->format, audin->FramesPerPacket))
 			return FALSE;
 	}
 

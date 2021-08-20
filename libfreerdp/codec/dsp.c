@@ -1305,7 +1305,8 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 #endif
 }
 
-BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* targetFormat)
+BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* targetFormat,
+                               UINT32 FramesPerPacket)
 {
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_context_reset(context, targetFormat);
