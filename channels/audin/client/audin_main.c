@@ -944,7 +944,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args)
 		{
 			unsigned long val = strtoul(arg->Value, NULL, 0);
 
-			if ((errno != 0) || (val > UINT16_MAX))
+			if ((errno != 0) || (val < UINT16_MAX))
 				audin->fixed_format->nChannels = val;
 		}
 		CommandLineSwitchDefault(arg)
