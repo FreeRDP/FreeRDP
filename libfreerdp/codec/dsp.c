@@ -64,6 +64,7 @@
 union _ADPCM {
 	struct
 	{
+		size_t packet_size;
 		INT16 last_sample[2];
 		INT16 last_step[2];
 	} ima;
@@ -722,10 +723,11 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYT
 	if (!Stream_EnsureRemainingCapacity(out, size))
 		return FALSE;
 
-	start = dst = Stream_Pointer(out);
+	start = Stream_Buffer(context->buffer);
+	dst = Stream_Pointer(context->buffer);
 	align = (context->format.nChannels > 1) ? 32 : 4;
 
-	while (size > align)
+	while (size >= align)
 	{
 		if ((dst - start) % context->format.nBlockAlign == 0)
 		{
@@ -770,9 +772,15 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYT
 			*dst++ = encoded;
 			size -= 4;
 		}
+
+		if (dst - start == context->adpcm.ima.packet_size)
+		{
+			Stream_Write(out, start, context->adpcm.ima.packet_size);
+			dst = Stream_Buffer(context->buffer);
+		}
 	}
 
-	Stream_SetPointer(out, dst);
+	Stream_SetPointer(context->buffer, dst);
 	return TRUE;
 }
 
@@ -1316,6 +1324,22 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 		return FALSE;
 
 	context->format = *targetFormat;
+
+	if (context->format.wFormatTag == WAVE_FORMAT_DVI_ADPCM)
+	{
+		size_t min_frame_data =
+		    context->format.wBitsPerSample * context->format.nChannels * FramesPerPacket * 1ULL;
+		size_t data_per_block = (context->format.nBlockAlign - 4 * context->format.nChannels) * 8;
+		size_t nb_block_per_packet = min_frame_data / data_per_block;
+
+		if (min_frame_data % data_per_block)
+			nb_block_per_packet++;
+
+		context->adpcm.ima.packet_size = nb_block_per_packet * context->format.nBlockAlign;
+		Stream_EnsureCapacity(context->buffer, context->adpcm.ima.packet_size);
+		Stream_SetPosition(context->buffer, 0);
+	}
+
 #if defined(WITH_FAAD2)
 	context->faadSetup = FALSE;
 #endif
