@@ -243,7 +243,11 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context, const BYTE* src, 
 	format.wBitsPerSample = 0;
 
 	if (audio_format_compatible(&format, &context->format))
+	{
+		*data = src;
+		*length = size;
 		return TRUE;
+	}
 
 #if defined(WITH_SOXR)
 	sbytes = srcChannels * srcBytesPerFrame;
@@ -264,10 +268,6 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context, const BYTE* src, 
 	*length = Stream_Length(context->resample);
 	return (error == 0) ? TRUE : FALSE;
 #else
-	WINPR_UNUSED(src);
-	WINPR_UNUSED(size);
-	WINPR_UNUSED(data);
-	WINPR_UNUSED(length);
 	WLog_ERR(TAG, "Missing resample support, recompile -DWITH_SOXR=ON or -DWITH_DSP_FFMPEG=ON");
 	return FALSE;
 #endif
