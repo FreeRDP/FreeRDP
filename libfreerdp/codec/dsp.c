@@ -84,8 +84,9 @@ struct _FREERDP_DSP_CONTEXT
 	ADPCM adpcm;
 	AUDIO_FORMAT format;
 
-	wStream* buffer;
+	wStream* channelmix;
 	wStream* resample;
+	wStream* buffer;
 
 #if defined(WITH_GSM)
 	gsm gsm;
@@ -145,7 +146,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 		return TRUE;
 	}
 
-	Stream_SetPosition(context->buffer, 0);
+	Stream_SetPosition(context->channelmix, 0);
 
 	/* Destination has more channels than source */
 	if (context->format.nChannels > srcFormat->nChannels)
@@ -153,21 +154,21 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 		switch (srcFormat->nChannels)
 		{
 			case 1:
-				if (!Stream_EnsureCapacity(context->buffer, size * 2))
+				if (!Stream_EnsureCapacity(context->channelmix, size * 2))
 					return FALSE;
 
 				for (x = 0; x < samples; x++)
 				{
 					for (y = 0; y < bpp; y++)
-						Stream_Write_UINT8(context->buffer, src[x * bpp + y]);
+						Stream_Write_UINT8(context->channelmix, src[x * bpp + y]);
 
 					for (y = 0; y < bpp; y++)
-						Stream_Write_UINT8(context->buffer, src[x * bpp + y]);
+						Stream_Write_UINT8(context->channelmix, src[x * bpp + y]);
 				}
 
-				Stream_SealLength(context->buffer);
-				*data = Stream_Buffer(context->buffer);
-				*length = Stream_Length(context->buffer);
+				Stream_SealLength(context->channelmix);
+				*data = Stream_Buffer(context->channelmix);
+				*length = Stream_Length(context->channelmix);
 				return TRUE;
 
 			case 2:  /* We only support stereo, so we can not handle this case. */
@@ -180,7 +181,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 	switch (srcFormat->nChannels)
 	{
 		case 2:
-			if (!Stream_EnsureCapacity(context->buffer, size / 2))
+			if (!Stream_EnsureCapacity(context->channelmix, size / 2))
 				return FALSE;
 
 			/* Simply drop second channel.
@@ -188,12 +189,12 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 			for (x = 0; x < samples; x++)
 			{
 				for (y = 0; y < bpp; y++)
-					Stream_Write_UINT8(context->buffer, src[2 * x * bpp + y]);
+					Stream_Write_UINT8(context->channelmix, src[2 * x * bpp + y]);
 			}
 
-			Stream_SealLength(context->buffer);
-			*data = Stream_Buffer(context->buffer);
-			*length = Stream_Length(context->buffer);
+			Stream_SealLength(context->channelmix);
+			*data = Stream_Buffer(context->channelmix);
+			*length = Stream_Length(context->channelmix);
 			return TRUE;
 
 		case 1:  /* Invalid, do we want to use a 0 channel sound? */
@@ -1026,14 +1027,19 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder)
 	if (!context)
 		return NULL;
 
-	context->buffer = Stream_New(NULL, 4096);
+	context->channelmix = Stream_New(NULL, 4096);
 
-	if (!context->buffer)
+	if (!context->channelmix)
 		goto fail;
 
 	context->resample = Stream_New(NULL, 4096);
 
 	if (!context->resample)
+		goto fail;
+
+	context->buffer = Stream_New(NULL, 4096);
+
+	if (!context->buffer)
 		goto fail;
 
 	context->encoder = encoder;
@@ -1096,8 +1102,9 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 
 	if (context)
 	{
-		Stream_Free(context->buffer, TRUE);
+		Stream_Free(context->channelmix, TRUE);
 		Stream_Free(context->resample, TRUE);
+		Stream_Free(context->buffer, TRUE);
 #if defined(WITH_GSM)
 		gsm_destroy(context->gsm);
 #endif
