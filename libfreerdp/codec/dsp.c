@@ -238,6 +238,7 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context, const BYTE* src, 
 	/* We want to ignore differences of source and destination format. */
 	format = *srcFormat;
 	format.wFormatTag = WAVE_FORMAT_UNKNOWN;
+	format.wBitsPerSample = 0;
 
 	if (audio_format_compatible(&format, &context->format))
 		return TRUE;
