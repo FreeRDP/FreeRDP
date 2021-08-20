@@ -421,6 +421,7 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 
 		format.wFormatTag = WAVE_FORMAT_PCM;
 		format.wBitsPerSample = 16;
+		format.cbSize = 0;
 		test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
 		if (!test)
 		{
