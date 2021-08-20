@@ -1270,6 +1270,7 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 #if defined(WITH_DSP_EXPERIMENTAL)
 
 		case WAVE_FORMAT_ADPCM:
+			return FALSE;
 		case WAVE_FORMAT_DVI_ADPCM:
 			return TRUE;
 #endif
