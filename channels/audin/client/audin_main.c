@@ -416,23 +416,19 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 	if (!supported)
 	{
 		/* Default sample rates supported by most backends. */
-		const UINT32 samplerates[] = { 96000, 48000, 44100, 22050 };
+		const UINT32 samplerates[] = { format.nSamplesPerSec, 96000, 48000, 44100, 22050 };
 		BOOL test = FALSE;
+		size_t x;
 
 		format.wFormatTag = WAVE_FORMAT_PCM;
 		format.wBitsPerSample = 16;
 		format.cbSize = 0;
-		test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
-		if (!test)
+		for (x = 0; x < ARRAYSIZE(samplerates); x++)
 		{
-			size_t x;
-			for (x = 0; x < ARRAYSIZE(samplerates); x++)
-			{
-				format.nSamplesPerSec = samplerates[x];
-				test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
-				if (test)
-					break;
-			}
+			format.nSamplesPerSec = samplerates[x];
+			test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
+			if (test)
+				break;
 		}
 		if (!test)
 			return FALSE;
