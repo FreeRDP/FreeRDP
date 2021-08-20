@@ -120,6 +120,9 @@ static BOOL audin_mac_format_supported(IAudinDevice *device, const AUDIO_FORMAT 
 	if (device == NULL || format == NULL)
 		return FALSE;
 
+	if (format->nChannels != 2)
+		return FALSE;
+
 	req_fmt = audin_mac_get_format(format);
 
 	if (req_fmt == 0)
