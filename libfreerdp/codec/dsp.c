@@ -138,7 +138,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 		return FALSE;
 
 	bpp = srcFormat->wBitsPerSample > 8 ? 2 : 1;
-	samples = size / bpp;
+	samples = size / bpp / srcFormat->nChannels;
 
 	if (context->format.nChannels == srcFormat->nChannels)
 	{
