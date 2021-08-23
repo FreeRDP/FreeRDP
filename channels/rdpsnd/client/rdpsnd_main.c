@@ -407,7 +407,7 @@ static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT32 wFormatNo,
 
 		if (!supported)
 		{
-			if (!freerdp_dsp_context_reset(rdpsnd->dsp_context, format))
+			if (!freerdp_dsp_context_reset(rdpsnd->dsp_context, format, 0u))
 				return FALSE;
 		}
 

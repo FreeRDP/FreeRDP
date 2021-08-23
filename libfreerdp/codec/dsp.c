@@ -64,6 +64,7 @@
 union _ADPCM {
 	struct
 	{
+		size_t packet_size;
 		INT16 last_sample[2];
 		INT16 last_step[2];
 	} ima;
@@ -84,8 +85,9 @@ struct _FREERDP_DSP_CONTEXT
 	ADPCM adpcm;
 	AUDIO_FORMAT format;
 
-	wStream* buffer;
+	wStream* channelmix;
 	wStream* resample;
+	wStream* buffer;
 
 #if defined(WITH_GSM)
 	gsm gsm;
@@ -136,7 +138,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 		return FALSE;
 
 	bpp = srcFormat->wBitsPerSample > 8 ? 2 : 1;
-	samples = size / bpp;
+	samples = size / bpp / srcFormat->nChannels;
 
 	if (context->format.nChannels == srcFormat->nChannels)
 	{
@@ -145,7 +147,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 		return TRUE;
 	}
 
-	Stream_SetPosition(context->buffer, 0);
+	Stream_SetPosition(context->channelmix, 0);
 
 	/* Destination has more channels than source */
 	if (context->format.nChannels > srcFormat->nChannels)
@@ -153,21 +155,21 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 		switch (srcFormat->nChannels)
 		{
 			case 1:
-				if (!Stream_EnsureCapacity(context->buffer, size * 2))
+				if (!Stream_EnsureCapacity(context->channelmix, size * 2))
 					return FALSE;
 
 				for (x = 0; x < samples; x++)
 				{
 					for (y = 0; y < bpp; y++)
-						Stream_Write_UINT8(context->buffer, src[x * bpp + y]);
+						Stream_Write_UINT8(context->channelmix, src[x * bpp + y]);
 
 					for (y = 0; y < bpp; y++)
-						Stream_Write_UINT8(context->buffer, src[x * bpp + y]);
+						Stream_Write_UINT8(context->channelmix, src[x * bpp + y]);
 				}
 
-				Stream_SealLength(context->buffer);
-				*data = Stream_Buffer(context->buffer);
-				*length = Stream_Length(context->buffer);
+				Stream_SealLength(context->channelmix);
+				*data = Stream_Buffer(context->channelmix);
+				*length = Stream_Length(context->channelmix);
 				return TRUE;
 
 			case 2:  /* We only support stereo, so we can not handle this case. */
@@ -180,7 +182,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 	switch (srcFormat->nChannels)
 	{
 		case 2:
-			if (!Stream_EnsureCapacity(context->buffer, size / 2))
+			if (!Stream_EnsureCapacity(context->channelmix, size / 2))
 				return FALSE;
 
 			/* Simply drop second channel.
@@ -188,12 +190,12 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 			for (x = 0; x < samples; x++)
 			{
 				for (y = 0; y < bpp; y++)
-					Stream_Write_UINT8(context->buffer, src[2 * x * bpp + y]);
+					Stream_Write_UINT8(context->channelmix, src[2 * x * bpp + y]);
 			}
 
-			Stream_SealLength(context->buffer);
-			*data = Stream_Buffer(context->buffer);
-			*length = Stream_Length(context->buffer);
+			Stream_SealLength(context->channelmix);
+			*data = Stream_Buffer(context->channelmix);
+			*length = Stream_Length(context->channelmix);
 			return TRUE;
 
 		case 1:  /* Invalid, do we want to use a 0 channel sound? */
@@ -238,9 +240,14 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context, const BYTE* src, 
 	/* We want to ignore differences of source and destination format. */
 	format = *srcFormat;
 	format.wFormatTag = WAVE_FORMAT_UNKNOWN;
+	format.wBitsPerSample = 0;
 
 	if (audio_format_compatible(&format, &context->format))
+	{
+		*data = src;
+		*length = size;
 		return TRUE;
+	}
 
 #if defined(WITH_SOXR)
 	sbytes = srcChannels * srcBytesPerFrame;
@@ -261,10 +268,6 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context, const BYTE* src, 
 	*length = Stream_Length(context->resample);
 	return (error == 0) ? TRUE : FALSE;
 #else
-	WINPR_UNUSED(src);
-	WINPR_UNUSED(size);
-	WINPR_UNUSED(data);
-	WINPR_UNUSED(length);
 	WLog_ERR(TAG, "Missing resample support, recompile -DWITH_SOXR=ON or -DWITH_DSP_FFMPEG=ON");
 	return FALSE;
 #endif
@@ -720,10 +723,11 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYT
 	if (!Stream_EnsureRemainingCapacity(out, size))
 		return FALSE;
 
-	start = dst = Stream_Pointer(out);
+	start = Stream_Buffer(context->buffer);
+	dst = Stream_Pointer(context->buffer);
 	align = (context->format.nChannels > 1) ? 32 : 4;
 
-	while (size > align)
+	while (size >= align)
 	{
 		if ((dst - start) % context->format.nBlockAlign == 0)
 		{
@@ -768,9 +772,15 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYT
 			*dst++ = encoded;
 			size -= 4;
 		}
+
+		if (dst - start == context->adpcm.ima.packet_size)
+		{
+			Stream_Write(out, start, context->adpcm.ima.packet_size);
+			dst = Stream_Buffer(context->buffer);
+		}
 	}
 
-	Stream_SetPointer(out, dst);
+	Stream_SetPointer(context->buffer, dst);
 	return TRUE;
 }
 
@@ -1025,14 +1035,19 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder)
 	if (!context)
 		return NULL;
 
-	context->buffer = Stream_New(NULL, 4096);
+	context->channelmix = Stream_New(NULL, 4096);
 
-	if (!context->buffer)
+	if (!context->channelmix)
 		goto fail;
 
 	context->resample = Stream_New(NULL, 4096);
 
 	if (!context->resample)
+		goto fail;
+
+	context->buffer = Stream_New(NULL, 4096);
+
+	if (!context->buffer)
 		goto fail;
 
 	context->encoder = encoder;
@@ -1095,8 +1110,9 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 
 	if (context)
 	{
-		Stream_Free(context->buffer, TRUE);
+		Stream_Free(context->channelmix, TRUE);
 		Stream_Free(context->resample, TRUE);
+		Stream_Free(context->buffer, TRUE);
 #if defined(WITH_GSM)
 		gsm_destroy(context->gsm);
 #endif
@@ -1254,6 +1270,7 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 #if defined(WITH_DSP_EXPERIMENTAL)
 
 		case WAVE_FORMAT_ADPCM:
+			return FALSE;
 		case WAVE_FORMAT_DVI_ADPCM:
 			return TRUE;
 #endif
@@ -1297,7 +1314,8 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 #endif
 }
 
-BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* targetFormat)
+BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* targetFormat,
+                               UINT32 FramesPerPacket)
 {
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_context_reset(context, targetFormat);
@@ -1307,6 +1325,22 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 		return FALSE;
 
 	context->format = *targetFormat;
+
+	if (context->format.wFormatTag == WAVE_FORMAT_DVI_ADPCM)
+	{
+		size_t min_frame_data =
+		    context->format.wBitsPerSample * context->format.nChannels * FramesPerPacket * 1ULL;
+		size_t data_per_block = (context->format.nBlockAlign - 4 * context->format.nChannels) * 8;
+		size_t nb_block_per_packet = min_frame_data / data_per_block;
+
+		if (min_frame_data % data_per_block)
+			nb_block_per_packet++;
+
+		context->adpcm.ima.packet_size = nb_block_per_packet * context->format.nBlockAlign;
+		Stream_EnsureCapacity(context->buffer, context->adpcm.ima.packet_size);
+		Stream_SetPosition(context->buffer, 0);
+	}
+
 #if defined(WITH_FAAD2)
 	context->faadSetup = FALSE;
 #endif

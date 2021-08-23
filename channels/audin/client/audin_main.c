@@ -416,22 +416,24 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 	if (!supported)
 	{
 		/* Default sample rates supported by most backends. */
-		const UINT32 samplerates[] = { 96000, 48000, 44100, 22050 };
+		const UINT32 samplerates[] = { format.nSamplesPerSec, 96000, 48000, 44100, 22050 };
 		BOOL test = FALSE;
+		size_t x;
 
 		format.wFormatTag = WAVE_FORMAT_PCM;
 		format.wBitsPerSample = 16;
-		test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
-		if (!test)
+		format.cbSize = 0;
+		for (x = 0; x < ARRAYSIZE(samplerates); x++)
 		{
-			size_t x;
-			for (x = 0; x < ARRAYSIZE(samplerates); x++)
-			{
-				format.nSamplesPerSec = samplerates[x];
-				test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
-				if (test)
-					break;
-			}
+			format.nSamplesPerSec = samplerates[x];
+			format.nChannels = audin->format->nChannels;
+			test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
+			if (test)
+				break;
+			format.nChannels = 3 - format.nChannels;
+			test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
+			if (test)
+				break;
 		}
 		if (!test)
 			return FALSE;
@@ -447,7 +449,7 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 
 	if (!supported)
 	{
-		if (!freerdp_dsp_context_reset(audin->dsp_context, audin->format))
+		if (!freerdp_dsp_context_reset(audin->dsp_context, audin->format, audin->FramesPerPacket))
 			return FALSE;
 	}
 
@@ -943,7 +945,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args)
 		{
 			unsigned long val = strtoul(arg->Value, NULL, 0);
 
-			if ((errno != 0) || (val > UINT16_MAX))
+			if ((errno != 0) || (val < UINT16_MAX))
 				audin->fixed_format->nChannels = val;
 		}
 		CommandLineSwitchDefault(arg)
