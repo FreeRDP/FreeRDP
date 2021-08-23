@@ -3664,22 +3664,24 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 {
 	BOOL rc = FALSE;
-	size_t start, end, pos, diff;
+	size_t start, end, pos, diff, rem;
 	BYTE orderType;
 	UINT16 extraFlags;
-	UINT16 orderLength;
+	INT16 orderLength;
+	INT32 orderLengthFull;
 	rdpContext* context = update->context;
 	rdpSettings* settings = context->settings;
 	rdpSecondaryUpdate* secondary = update->secondary;
 	const char* name;
 
-	if (Stream_GetRemainingLength(s) < 5)
+	rem = Stream_GetRemainingLength(s);
+	if (rem < 5)
 	{
 		WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) < 5");
 		return FALSE;
 	}
 
-	Stream_Read_UINT16(s, orderLength); /* orderLength (2 bytes) */
+	Stream_Read_INT16(s, orderLength);  /* orderLength (2 bytes signed) */
 	Stream_Read_UINT16(s, extraFlags);  /* extraFlags (2 bytes) */
 	Stream_Read_UINT8(s, orderType);    /* orderType (1 byte) */
 
@@ -3695,10 +3697,16 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	 * According to [MS-RDPEGDI] 2.2.2.2.1.2.1.1 the order length must be increased by 13 bytes
 	 * including the header. As we already read the header 7 left
 	 */
-	if (Stream_GetRemainingLength(s) < orderLength + 7U)
+	rem = Stream_GetRemainingLength(s);
+
+	/* orderLength might be negative without the adjusted header data.
+	 * Account for that here so all further checks operate on the correct value.
+	 */
+	orderLengthFull = orderLength + 7;
+	if ((orderLengthFull < 0) || (rem < (size_t)orderLengthFull))
 	{
-		WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) %" PRIuz " < %" PRIu16,
-		           Stream_GetRemainingLength(s), orderLength + 7);
+		WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) %" PRIuz " < %" PRId32,
+		           rem, orderLengthFull);
 		return FALSE;
 	}
 
@@ -3822,7 +3830,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 		WLog_Print(update->log, WLOG_ERROR, "SECONDARY ORDER %s failed", name);
 	}
 
-	end = start + orderLength + 7;
+	end = start + orderLengthFull;
 	pos = Stream_GetPosition(s);
 	if (pos > end)
 	{

@@ -172,7 +172,7 @@ typedef BOOL (*pCacheGlyph)(rdpContext* context, const CACHE_GLYPH_ORDER* cache_
 typedef BOOL (*pCacheGlyphV2)(rdpContext* context,
                               const CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
 typedef BOOL (*pCacheBrush)(rdpContext* context, const CACHE_BRUSH_ORDER* cache_brush_order);
-typedef BOOL (*pCacheOrderInfo)(rdpContext* context, UINT16 orderLength, UINT16 extraFlags,
+typedef BOOL (*pCacheOrderInfo)(rdpContext* context, INT16 orderLength, UINT16 extraFlags,
                                 UINT8 orderType, const char* orderName);
 
 struct rdp_secondary_update
