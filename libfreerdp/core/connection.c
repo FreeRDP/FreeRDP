@@ -908,7 +908,8 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 		{
 			if (mcs->channelCount > 0)
 			{
-				if (!mcs_send_channel_join_request(mcs, mcs->channels[0].ChannelId))
+				const rdpMcsChannel* cur = &mcs->channels[0];
+				if (!mcs_send_channel_join_request(mcs, cur->ChannelId))
 					return FALSE;
 
 				allJoined = FALSE;
@@ -924,7 +925,8 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 
 		if (mcs->channelCount > 0)
 		{
-			if (!mcs_send_channel_join_request(mcs, mcs->channels[0].ChannelId))
+			const rdpMcsChannel* cur = &mcs->channels[0];
+			if (!mcs_send_channel_join_request(mcs, cur->ChannelId))
 				return FALSE;
 
 			allJoined = FALSE;
@@ -934,19 +936,21 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 	{
 		for (i = 0; i < mcs->channelCount; i++)
 		{
-			if (mcs->channels[i].joined)
+			rdpMcsChannel* cur = &mcs->channels[i];
+			if (cur->joined)
 				continue;
 
-			if (mcs->channels[i].ChannelId != channelId)
+			if (cur->ChannelId != channelId)
 				return FALSE;
 
-			mcs->channels[i].joined = TRUE;
+			cur->joined = TRUE;
 			break;
 		}
 
 		if (i + 1 < mcs->channelCount)
 		{
-			if (!mcs_send_channel_join_request(mcs, mcs->channels[i + 1].ChannelId))
+			const rdpMcsChannel* cur = &mcs->channels[i + 1];
+			if (!mcs_send_channel_join_request(mcs, cur->ChannelId))
 				return FALSE;
 
 			allJoined = FALSE;
@@ -1327,7 +1331,8 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 
 	for (i = 0; i < mcs->channelCount; i++)
 	{
-		WLog_INFO(TAG, " %s", mcs->channels[i].Name);
+		rdpMcsChannel* cur = &mcs->channels[i];
+		WLog_INFO(TAG, " %s", cur->Name);
 	}
 
 	if (!mcs_send_connect_response(mcs))
@@ -1380,10 +1385,11 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 
 	for (i = 0; i < mcs->channelCount; i++)
 	{
-		if (mcs->channels[i].ChannelId == channelId)
-			mcs->channels[i].joined = TRUE;
+		rdpMcsChannel* cur = &mcs->channels[i];
+		if (cur->ChannelId == channelId)
+			cur->joined = TRUE;
 
-		if (!mcs->channels[i].joined)
+		if (!cur->joined)
 			allJoined = FALSE;
 	}
 
