@@ -334,7 +334,6 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 {
 	int i;
 	int peer_sockfd;
-	freerdp_peer* client = NULL;
 	int peer_addr_size;
 	struct sockaddr_storage peer_addr;
 	rdpListener* listener = (rdpListener*)instance->listener;
@@ -345,6 +344,8 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 	for (i = 0; i < listener->num_sockfds; i++)
 	{
+		freerdp_peer* client = NULL;
+
 		WSAResetEvent(listener->events[i]);
 		peer_addr_size = sizeof(peer_addr);
 		peer_sockfd = _accept(listener->sockfds[i], (struct sockaddr*)&peer_addr, &peer_addr_size);
@@ -366,7 +367,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 #endif
 			WLog_DBG(TAG, "accept");
-			free(client);
+			freerdp_peer_free(client);
 			return FALSE;
 		}
 
@@ -380,7 +381,6 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 		if (!freerdp_peer_set_local_and_hostname(client, &peer_addr))
 		{
-			closesocket((SOCKET)peer_sockfd);
 			freerdp_peer_free(client);
 			return FALSE;
 		}
@@ -390,7 +390,6 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 		if (!peer_accepted)
 		{
 			WLog_ERR(TAG, "PeerAccepted callback failed");
-			closesocket((SOCKET)peer_sockfd);
 			freerdp_peer_free(client);
 		}
 	}
