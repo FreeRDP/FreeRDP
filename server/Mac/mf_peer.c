@@ -28,6 +28,7 @@
 #include <freerdp/codec/color.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include "mf_peer.h"
 #include "mf_info.h"
@@ -318,15 +319,12 @@ static BOOL mf_peer_suppress_output(rdpContext* context, BYTE allow, const RECTA
 
 static void* mf_peer_main_loop(void* arg)
 {
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	void* rfds[32];
-	fd_set rfds_set;
 	mfPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*)arg;
-	memset(rfds, 0, sizeof(rfds));
+
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->settings);
+	WINPR_ASSERT(client->input);
 
 	if (!mf_peer_init(client))
 	{
@@ -363,43 +361,23 @@ static void* mf_peer_main_loop(void* arg)
 
 	while (1)
 	{
-		rcount = 0;
+		DWORD status;
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		DWORD count = client->GetEventHandles(handles, ARRAYSIZE(handles));
 
-		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
+		if ((count == 0) || (count == MAXIMUM_WAIT_OBJECTS))
 		{
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
-		if (mf_peer_get_fds(client, rfds, &rcount) != TRUE)
+		handles[count++] = WTSVirtualChannelManagerGetEventHandle(context->vcm);
+
+		status = WaitForMultipleObjects(handles, count, FALSE, INFINITE);
+		if (status == WAIT_FAILED)
 		{
+			WLog_ERR(TAG, "WaitForMultipleObjects failed");
 			break;
-		}
-
-		WTSVirtualChannelManagerGetFileDescriptor(context->vcm, rfds, &rcount);
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-
-		for (i = 0; i < rcount; i++)
-		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
-			break;
-
-		if (select(max_fds + 1, &rfds_set, NULL, NULL, NULL) == -1)
-		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINPROGRESS) ||
-			      (errno == EINTR))) /* signal occurred */
-			{
-				break;
-			}
 		}
 
 		if (client->CheckFileDescriptor(client) != TRUE)

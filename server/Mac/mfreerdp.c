@@ -34,6 +34,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/wtsapi.h>
+#include <winpr/assert.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
@@ -45,48 +46,27 @@
 
 static void mf_server_main_loop(freerdp_listener* instance)
 {
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	void* rfds[32];
-	fd_set rfds_set;
-
-	memset(rfds, 0, sizeof(rfds));
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->GetEventHandles);
+	WINPR_ASSERT(instance->CheckFileDescriptor);
 
 	while (1)
 	{
-		rcount = 0;
+		DWORD status;
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		DWORD count = instance->GetEventHandles(instance, handles, ARRAYSIZE(handles));
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
+		if (count == 0)
 		{
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-
-		for (i = 0; i < rcount; i++)
+		status = WaitForMultipleObjects(handles, count, FALSE, INFINITE);
+		if (status == WAIT_FAILED)
 		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
+			WLog_ERR(TAG, "WaitForMultipleObjects failed");
 			break;
-
-		if (select(max_fds + 1, &rfds_set, NULL, NULL, NULL) == -1)
-		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINPROGRESS) ||
-			      (errno == EINTR))) /* signal occurred */
-			{
-				break;
-			}
 		}
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)

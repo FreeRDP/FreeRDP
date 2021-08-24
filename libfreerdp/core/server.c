@@ -462,6 +462,7 @@ static BOOL WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, const 
 	return TRUE;
 }
 
+#if defined(WITH_FREERDP_DEPRECATED)
 void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* fds_count)
 {
 	void* fd;
@@ -493,6 +494,7 @@ void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* 
 
 #endif
 }
+#endif
 
 static BOOL WTSVirtualChannelManagerOpen(WTSVirtualChannelManager* vcm)
 {
