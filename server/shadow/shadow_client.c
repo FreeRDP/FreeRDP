@@ -195,13 +195,13 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	settings->DrawAllowDynamicColorFidelity = TRUE;
 	settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
 
-	if (!(settings->CertificateFile = _strdup(server->CertificateFile)))
+	if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, server->CertificateFile))
 		goto fail_cert_file;
 
-	if (!(settings->PrivateKeyFile = _strdup(server->PrivateKeyFile)))
+	if (!freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, server->PrivateKeyFile))
 		goto fail_privkey_file;
 
-	if (!(settings->RdpKeyFile = _strdup(settings->PrivateKeyFile)))
+	if (!freerdp_settings_set_string(settings, FreeRDP_RdpKeyFile, server->PrivateKeyFile))
 		goto fail_rdpkey_file;
 	if (server->ipcSocket && (strncmp(bind_address, server->ipcSocket,
 	                                  strnlen(bind_address, sizeof(bind_address))) != 0))
@@ -243,14 +243,11 @@ fail_message_queue:
 fail_open_server:
 	DeleteCriticalSection(&(client->lock));
 fail_client_lock:
-	free(settings->RdpKeyFile);
-	settings->RdpKeyFile = NULL;
+	freerdp_settings_set_string(settings, FreeRDP_RdpKeyFile, NULL);
 fail_rdpkey_file:
-	free(settings->PrivateKeyFile);
-	settings->PrivateKeyFile = NULL;
+	freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, NULL);
 fail_privkey_file:
-	free(settings->CertificateFile);
-	settings->CertificateFile = NULL;
+	freerdp_settings_set_string(settings, FreeRDP_CertificateFile, NULL);
 fail_cert_file:
 	return FALSE;
 }
