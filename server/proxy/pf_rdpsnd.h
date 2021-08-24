@@ -23,7 +23,7 @@
 #include <freerdp/client/rdpsnd.h>
 #include <freerdp/server/rdpsnd.h>
 
-#include "pf_context.h"
+#include <freerdp/server/proxy/proxy_context.h>
 
 BOOL pf_server_rdpsnd_init(pServerContext* ps);
 void pf_server_rdpsnd_free(pServerContext* ps);

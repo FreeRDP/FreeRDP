@@ -24,7 +24,7 @@
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/server/cliprdr.h>
 
-#include "pf_context.h"
+#include <freerdp/server/proxy/proxy_context.h>
 
 BOOL pf_server_cliprdr_init(pServerContext* ps);
 void pf_cliprdr_register_callbacks(CliprdrClientContext* cliprdr_client,

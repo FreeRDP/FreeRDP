@@ -34,7 +34,7 @@
 #include <freerdp/client/rdpsnd.h>
 
 #include "rdpsnd_main.h"
-#include "../../../../server/proxy/pf_context.h"
+#include <freerdp/server/proxy/proxy_context.h>
 
 typedef struct rdpsnd_proxy_plugin rdpsndProxyPlugin;
 

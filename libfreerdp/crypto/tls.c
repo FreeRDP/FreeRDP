@@ -893,6 +893,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 	BIO* bio;
 	EVP_PKEY* privkey;
 	X509* x509;
+
 	/**
 	 * SSL_OP_NO_SSLv2:
 	 *

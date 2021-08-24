@@ -1,6 +1,7 @@
 message("PRELOADING windows cache")
 set (CMAKE_BUILD_TYPE "Debug" CACHE STRING "build type")
 set (WITH_SERVER "ON" CACHE BOOL "Build server binaries")
+set (WITH_PROXY_MODULES "OFF" CACHE BOOL "Do not build proxy modules")
 set (CHANNEL_URBDRC OFF CACHE BOOL "USB redirection")
 set (BUILD_TESTING ON CACHE BOOL "build testing")
 set (WITH_SANITIZE_ADDRESS ON)

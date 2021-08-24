@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SERVER_PROXY_PFLOG_H
-#define FREERDP_SERVER_PROXY_PFLOG_H
+#ifndef FREERDP_SERVER_PROXY_LOG_H
+#define FREERDP_SERVER_PROXY_LOG_H
 
 #include <winpr/wlog.h>
 
@@ -34,17 +34,17 @@
  */
 
 /* log macros that prepends session id and function name tp the log message */
-#define LOG_INFO(_tag, _context, _format, ...)                                                \
+#define PROXY_LOG_INFO(_tag, _context, _format, ...)                                          \
 	WLog_INFO(TAG, "[SessionID=%s][%s]: " _format, _context->pdata->session_id, __FUNCTION__, \
 	          ##__VA_ARGS__)
-#define LOG_ERR(_tag, _context, _format, ...)                                                \
+#define PROXY_LOG_ERR(_tag, _context, _format, ...)                                          \
 	WLog_ERR(TAG, "[SessionID=%s][%s]: " _format, _context->pdata->session_id, __FUNCTION__, \
 	         ##__VA_ARGS__)
-#define LOG_DBG(_tag, _context, _format, ...)                                                \
+#define PROXY_LOG_DBG(_tag, _context, _format, ...)                                          \
 	WLog_DBG(TAG, "[SessionID=%s][%s]: " _format, _context->pdata->session_id, __FUNCTION__, \
 	         ##__VA_ARGS__)
-#define LOG_WARN(_tag, _context, _format, ...)                                                \
+#define PROXY_LOG_WARN(_tag, _context, _format, ...)                                          \
 	WLog_WARN(TAG, "[SessionID=%s][%s]: " _format, _context->pdata->session_id, __FUNCTION__, \
 	          ##__VA_ARGS__)
 
-#endif /* FREERDP_SERVER_PROXY_PFLOG_H */
+#endif /* FREERDP_SERVER_PROXY_LOG_H */

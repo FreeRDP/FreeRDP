@@ -25,7 +25,7 @@
 #include <freerdp/client/rail.h>
 #include <freerdp/server/rail.h>
 
-#include "pf_context.h"
+#include <freerdp/server/proxy/proxy_context.h>
 
 BOOL pf_rail_context_init(pServerContext* ps);
 void pf_rail_pipeline_init(RailClientContext* client, RailServerContext* server, proxyData* pdata);

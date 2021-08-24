@@ -18,8 +18,11 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
+#include <freerdp/server/proxy/proxy_log.h>
+
 #include "pf_cliprdr.h"
-#include "pf_log.h"
+#include <freerdp/server/proxy/proxy_config.h>
 
 #define TAG PROXY_TAG("cliprdr")
 #define TEXT_FORMATS_COUNT 2
@@ -30,6 +33,8 @@ static CLIPRDR_FORMAT g_text_formats[] = { { CF_TEXT, "\0" }, { CF_UNICODETEXT, 
 BOOL pf_server_cliprdr_init(pServerContext* ps)
 {
 	CliprdrServerContext* cliprdr;
+
+	WINPR_ASSERT(ps);
 	cliprdr = ps->cliprdr = cliprdr_server_context_new(ps->vcm);
 
 	if (!cliprdr)
@@ -66,6 +71,7 @@ static INLINE BOOL pf_cliprdr_is_text_format(UINT32 format)
 
 static INLINE void pf_cliprdr_create_text_only_format_list(CLIPRDR_FORMAT_LIST* list)
 {
+	WINPR_ASSERT(list);
 	list->msgFlags = CB_RESPONSE_OK;
 	list->msgType = CB_FORMAT_LIST;
 	list->dataLen = (4 + 1) * TEXT_FORMATS_COUNT;
@@ -77,10 +83,14 @@ static INLINE void pf_cliprdr_create_text_only_format_list(CLIPRDR_FORMAT_LIST* 
  * pf_cliprdr_is_copy_paste_valid returns TRUE if the length of the copied
  * text is valid according to the configuration value of `MaxTextLength`.
  */
-static BOOL pf_cliprdr_is_copy_paste_valid(proxyConfig* config,
+static BOOL pf_cliprdr_is_copy_paste_valid(const proxyConfig* config,
                                            const CLIPRDR_FORMAT_DATA_RESPONSE* pdu, UINT32 format)
 {
 	size_t copy_len;
+
+	WINPR_ASSERT(config);
+	WINPR_ASSERT(pdu);
+
 	if (config->MaxTextLength == 0)
 	{
 		/* no size limit */
@@ -126,6 +136,8 @@ static BOOL pf_cliprdr_is_copy_paste_valid(proxyConfig* config,
  */
 static INLINE void pf_cliprdr_create_failed_format_data_response(CLIPRDR_FORMAT_DATA_RESPONSE* dst)
 {
+	WINPR_ASSERT(dst);
+
 	dst->requestedFormatData = NULL;
 	dst->dataLen = 0;
 	dst->msgType = CB_FORMAT_DATA_RESPONSE;
@@ -136,8 +148,20 @@ static INLINE void pf_cliprdr_create_failed_format_data_response(CLIPRDR_FORMAT_
 static UINT pf_cliprdr_ClientCapabilities(CliprdrServerContext* context,
                                           const CLIPRDR_CAPABILITIES* capabilities)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrClientContext* client = pdata->pc->cliprdr;
+	proxyData* pdata;
+	CliprdrClientContext* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(capabilities);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->pc);
+
+	client = pdata->pc->cliprdr;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->ClientCapabilities);
+
 	WLog_VRB(TAG, __FUNCTION__);
 	return client->ClientCapabilities(client, capabilities);
 }
@@ -145,8 +169,20 @@ static UINT pf_cliprdr_ClientCapabilities(CliprdrServerContext* context,
 static UINT pf_cliprdr_TempDirectory(CliprdrServerContext* context,
                                      const CLIPRDR_TEMP_DIRECTORY* tempDirectory)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrClientContext* client = pdata->pc->cliprdr;
+	proxyData* pdata;
+	CliprdrClientContext* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(tempDirectory);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->pc);
+
+	client = pdata->pc->cliprdr;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->TempDirectory);
+
 	WLog_VRB(TAG, __FUNCTION__);
 	return client->TempDirectory(client, tempDirectory);
 }
@@ -154,13 +190,25 @@ static UINT pf_cliprdr_TempDirectory(CliprdrServerContext* context,
 static UINT pf_cliprdr_ClientFormatList(CliprdrServerContext* context,
                                         const CLIPRDR_FORMAT_LIST* formatList)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrClientContext* client = pdata->pc->cliprdr;
+	proxyData* pdata;
+	CliprdrClientContext* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatList);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->pc);
+
+	client = pdata->pc->cliprdr;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->ClientFormatList);
+
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (pdata->config->TextOnly)
 	{
-		CLIPRDR_FORMAT_LIST list;
+		CLIPRDR_FORMAT_LIST list = { 0 };
 		pf_cliprdr_create_text_only_format_list(&list);
 		return client->ClientFormatList(client, &list);
 	}
@@ -173,8 +221,20 @@ static UINT
 pf_cliprdr_ClientFormatListResponse(CliprdrServerContext* context,
                                     const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrClientContext* client = pdata->pc->cliprdr;
+	proxyData* pdata;
+	CliprdrClientContext* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatListResponse);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->pc);
+
+	client = pdata->pc->cliprdr;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->ClientFormatListResponse);
+
 	WLog_VRB(TAG, __FUNCTION__);
 	return client->ClientFormatListResponse(client, formatListResponse);
 }
@@ -182,8 +242,20 @@ pf_cliprdr_ClientFormatListResponse(CliprdrServerContext* context,
 static UINT pf_cliprdr_ClientLockClipboardData(CliprdrServerContext* context,
                                                const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrClientContext* client = pdata->pc->cliprdr;
+	proxyData* pdata;
+	CliprdrClientContext* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(lockClipboardData);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->pc);
+
+	client = pdata->pc->cliprdr;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->ClientLockClipboardData);
+
 	WLog_VRB(TAG, __FUNCTION__);
 	return client->ClientLockClipboardData(client, lockClipboardData);
 }
@@ -192,8 +264,20 @@ static UINT
 pf_cliprdr_ClientUnlockClipboardData(CliprdrServerContext* context,
                                      const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrClientContext* client = pdata->pc->cliprdr;
+	proxyData* pdata;
+	CliprdrClientContext* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(unlockClipboardData);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->pc);
+
+	client = pdata->pc->cliprdr;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->ClientUnlockClipboardData);
+
 	WLog_VRB(TAG, __FUNCTION__);
 	return client->ClientUnlockClipboardData(client, unlockClipboardData);
 }
@@ -201,18 +285,36 @@ pf_cliprdr_ClientUnlockClipboardData(CliprdrServerContext* context,
 static UINT pf_cliprdr_ClientFormatDataRequest(CliprdrServerContext* context,
                                                const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrClientContext* client = pdata->pc->cliprdr;
-	CliprdrServerContext* server = pdata->ps->cliprdr;
+	proxyData* pdata;
+	CliprdrClientContext* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatDataRequest);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->pc);
+
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (pdata->config->TextOnly && !pf_cliprdr_is_text_format(formatDataRequest->requestedFormatId))
 	{
-		CLIPRDR_FORMAT_DATA_RESPONSE resp;
+		CLIPRDR_FORMAT_DATA_RESPONSE resp = { 0 };
+		CliprdrServerContext* server;
+
+		WINPR_ASSERT(pdata->ps);
+		server = pdata->ps->cliprdr;
+		WINPR_ASSERT(server);
+		WINPR_ASSERT(server->ServerFormatDataResponse);
+
 		pf_cliprdr_create_failed_format_data_response(&resp);
 		return server->ServerFormatDataResponse(server, &resp);
 	}
 
+	client = pdata->pc->cliprdr;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->ClientFormatDataRequest);
 	return client->ClientFormatDataRequest(client, formatDataRequest);
 }
 
@@ -220,8 +322,21 @@ static UINT
 pf_cliprdr_ClientFormatDataResponse(CliprdrServerContext* context,
                                     const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrClientContext* client = pdata->pc->cliprdr;
+	proxyData* pdata;
+	CliprdrClientContext* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatDataResponse);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->pc);
+
+	client = pdata->pc->cliprdr;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->ClientFormatDataResponse);
+
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (pf_cliprdr_is_text_format(client->lastRequestedFormatId))
@@ -242,8 +357,21 @@ static UINT
 pf_cliprdr_ClientFileContentsRequest(CliprdrServerContext* context,
                                      const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrClientContext* client = pdata->pc->cliprdr;
+	proxyData* pdata;
+	CliprdrClientContext* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(fileContentsRequest);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->pc);
+
+	client = pdata->pc->cliprdr;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->ClientFileContentsRequest);
+
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (pdata->config->TextOnly)
@@ -256,8 +384,21 @@ static UINT
 pf_cliprdr_ClientFileContentsResponse(CliprdrServerContext* context,
                                       const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrClientContext* client = pdata->pc->cliprdr;
+	proxyData* pdata;
+	CliprdrClientContext* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(fileContentsResponse);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->pc);
+
+	client = pdata->pc->cliprdr;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->ClientFileContentsResponse);
+
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (pdata->config->TextOnly)
@@ -271,8 +412,21 @@ pf_cliprdr_ClientFileContentsResponse(CliprdrServerContext* context,
 static UINT pf_cliprdr_ServerCapabilities(CliprdrClientContext* context,
                                           const CLIPRDR_CAPABILITIES* capabilities)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrServerContext* server = pdata->ps->cliprdr;
+	CliprdrServerContext* server;
+	proxyData* pdata;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(capabilities);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->ps);
+
+	server = pdata->ps->cliprdr;
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->ServerCapabilities);
+
 	WLog_VRB(TAG, __FUNCTION__);
 	return server->ServerCapabilities(server, capabilities);
 }
@@ -280,8 +434,21 @@ static UINT pf_cliprdr_ServerCapabilities(CliprdrClientContext* context,
 static UINT pf_cliprdr_MonitorReady(CliprdrClientContext* context,
                                     const CLIPRDR_MONITOR_READY* monitorReady)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrServerContext* server = pdata->ps->cliprdr;
+	CliprdrServerContext* server;
+	proxyData* pdata;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(monitorReady);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->ps);
+
+	server = pdata->ps->cliprdr;
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->MonitorReady);
+
 	WLog_VRB(TAG, __FUNCTION__);
 	return server->MonitorReady(server, monitorReady);
 }
@@ -289,8 +456,21 @@ static UINT pf_cliprdr_MonitorReady(CliprdrClientContext* context,
 static UINT pf_cliprdr_ServerFormatList(CliprdrClientContext* context,
                                         const CLIPRDR_FORMAT_LIST* formatList)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrServerContext* server = pdata->ps->cliprdr;
+	CliprdrServerContext* server;
+	proxyData* pdata;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatList);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->ps);
+
+	server = pdata->ps->cliprdr;
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->ServerFormatList);
+
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (pdata->config->TextOnly)
@@ -307,8 +487,21 @@ static UINT
 pf_cliprdr_ServerFormatListResponse(CliprdrClientContext* context,
                                     const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrServerContext* server = pdata->ps->cliprdr;
+	CliprdrServerContext* server;
+	proxyData* pdata;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatListResponse);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->ps);
+
+	server = pdata->ps->cliprdr;
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->ServerFormatListResponse);
+
 	WLog_VRB(TAG, __FUNCTION__);
 	return server->ServerFormatListResponse(server, formatListResponse);
 }
@@ -316,8 +509,21 @@ pf_cliprdr_ServerFormatListResponse(CliprdrClientContext* context,
 static UINT pf_cliprdr_ServerLockClipboardData(CliprdrClientContext* context,
                                                const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrServerContext* server = pdata->ps->cliprdr;
+	CliprdrServerContext* server;
+	proxyData* pdata;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(lockClipboardData);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->ps);
+
+	server = pdata->ps->cliprdr;
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->ServerLockClipboardData);
+
 	WLog_VRB(TAG, __FUNCTION__);
 	return server->ServerLockClipboardData(server, lockClipboardData);
 }
@@ -326,8 +532,21 @@ static UINT
 pf_cliprdr_ServerUnlockClipboardData(CliprdrClientContext* context,
                                      const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrServerContext* server = pdata->ps->cliprdr;
+	CliprdrServerContext* server;
+	proxyData* pdata;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(unlockClipboardData);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->ps);
+
+	server = pdata->ps->cliprdr;
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->ServerUnlockClipboardData);
+
 	WLog_VRB(TAG, __FUNCTION__);
 	return server->ServerUnlockClipboardData(server, unlockClipboardData);
 }
@@ -335,19 +554,37 @@ pf_cliprdr_ServerUnlockClipboardData(CliprdrClientContext* context,
 static UINT pf_cliprdr_ServerFormatDataRequest(CliprdrClientContext* context,
                                                const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrServerContext* server = pdata->ps->cliprdr;
-	CliprdrClientContext* client = pdata->pc->cliprdr;
+	CliprdrServerContext* server;
+	proxyData* pdata;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatDataRequest);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (pdata->config->TextOnly && !pf_cliprdr_is_text_format(formatDataRequest->requestedFormatId))
 	{
 		/* proxy's client needs to return a failed response directly to the client */
-		CLIPRDR_FORMAT_DATA_RESPONSE resp;
+		CLIPRDR_FORMAT_DATA_RESPONSE resp = { 0 };
+		CliprdrClientContext* client;
+
+		WINPR_ASSERT(pdata->pc);
+		client = pdata->pc->cliprdr;
+		WINPR_ASSERT(client);
+		WINPR_ASSERT(client->ClientFormatDataResponse);
+
 		pf_cliprdr_create_failed_format_data_response(&resp);
 		return client->ClientFormatDataResponse(client, &resp);
 	}
 
+	WINPR_ASSERT(pdata->ps);
+	server = pdata->ps->cliprdr;
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->ServerFormatDataRequest);
 	return server->ServerFormatDataRequest(server, formatDataRequest);
 }
 
@@ -355,8 +592,21 @@ static UINT
 pf_cliprdr_ServerFormatDataResponse(CliprdrClientContext* context,
                                     const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrServerContext* server = pdata->ps->cliprdr;
+	CliprdrServerContext* server;
+	proxyData* pdata;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatDataResponse);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->ps);
+
+	server = pdata->ps->cliprdr;
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->ServerFormatDataResponse);
+
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (pf_cliprdr_is_text_format(server->lastRequestedFormatId))
@@ -377,8 +627,21 @@ static UINT
 pf_cliprdr_ServerFileContentsRequest(CliprdrClientContext* context,
                                      const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrServerContext* server = pdata->ps->cliprdr;
+	CliprdrServerContext* server;
+	proxyData* pdata;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(fileContentsRequest);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->ps);
+
+	server = pdata->ps->cliprdr;
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->ServerFileContentsRequest);
+
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (pdata->config->TextOnly)
@@ -391,8 +654,21 @@ static UINT
 pf_cliprdr_ServerFileContentsResponse(CliprdrClientContext* context,
                                       const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	CliprdrServerContext* server = pdata->ps->cliprdr;
+	CliprdrServerContext* server;
+	proxyData* pdata;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(fileContentsResponse);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->config);
+	WINPR_ASSERT(pdata->ps);
+
+	server = pdata->ps->cliprdr;
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->ServerFileContentsResponse);
+
 	WLog_VRB(TAG, __FUNCTION__);
 
 	if (pdata->config->TextOnly)
@@ -404,6 +680,10 @@ pf_cliprdr_ServerFileContentsResponse(CliprdrClientContext* context,
 void pf_cliprdr_register_callbacks(CliprdrClientContext* cliprdr_client,
                                    CliprdrServerContext* cliprdr_server, proxyData* pdata)
 {
+	WINPR_ASSERT(cliprdr_client);
+	WINPR_ASSERT(cliprdr_server);
+	WINPR_ASSERT(pdata);
+
 	/* Set server and client side references to proxy data */
 	cliprdr_server->custom = (void*)pdata;
 	cliprdr_client->custom = (void*)pdata;
