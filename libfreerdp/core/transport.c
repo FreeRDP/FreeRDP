@@ -1049,6 +1049,7 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 	return nCount;
 }
 
+#if defined(WITH_FREERDP_DEPRECATED)
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
 	DWORD index;
@@ -1069,6 +1070,7 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 
 	rfds[nCount] = GetEventWaitObject(transport->rereadEvent);
 }
+#endif
 
 BOOL transport_is_write_blocked(rdpTransport* transport)
 {

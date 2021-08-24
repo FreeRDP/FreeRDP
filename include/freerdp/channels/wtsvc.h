@@ -55,9 +55,11 @@ extern "C"
 	/**
 	 * WTSVirtualChannelManager functions are FreeRDP extensions to the API.
 	 */
-
-	FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds,
-	                                                           int* fds_count);
+#if defined(WITH_FREERDP_DEPRECATED)
+	FREERDP_API WINPR_DEPRECATED_VAR(
+	    "Use WTSVirtualChannelManagerGetEventHandle",
+	    void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* fds_count));
+#endif
 	FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer);
 	FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptorEx(HANDLE hServer, BOOL autoOpen);
 	FREERDP_API HANDLE WTSVirtualChannelManagerGetEventHandle(HANDLE hServer);

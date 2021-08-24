@@ -509,8 +509,12 @@ settings but before rdp_client_connect() to have it executed after the
 	FREERDP_API UINT freerdp_channels_attach(freerdp* instance);
 	FREERDP_API UINT freerdp_channels_detach(freerdp* instance);
 
-	FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds,
-	                                 int* wcount);
+#if defined(WITH_FREERDP_DEPRECATED)
+	FREERDP_API WINPR_DEPRECATED_VAR("Use freerdp_get_event_handles",
+	                                 BOOL freerdp_get_fds(freerdp* instance, void** rfds,
+	                                                      int* rcount, void** wfds, int* wcount));
+#endif
+
 	FREERDP_API BOOL freerdp_check_fds(freerdp* instance);
 
 	FREERDP_API DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events, DWORD count);
