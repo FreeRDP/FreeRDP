@@ -882,7 +882,7 @@ set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp${FREERDP_VERSIO
 # Proxy plugins path
 if(NOT DEFINED PROXY_PLUGINDIR)
 	message("using default plugins location")
-  	set(FREERDP_PROXY_PLUGINDIR "${PROJECT_BINARY_DIR}/server/proxy/plugins")
+	set(FREERDP_PROXY_PLUGINDIR "${FREERDP_PLUGIN_PATH}/proxy/")
 else()
 	set(FREERDP_PROXY_PLUGINDIR "${PROXY_PLUGINDIR}")
 endif()

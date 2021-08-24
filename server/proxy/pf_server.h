@@ -19,29 +19,24 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SERVER_PROXY_SERVER_H
-#define FREERDP_SERVER_PROXY_SERVER_H
+#ifndef _FREERDP_SERVER_PROXY_SERVER_H
+#define _FREERDP_SERVER_PROXY_SERVER_H
 
 #include <winpr/collections.h>
 #include <freerdp/listener.h>
 
-#include "pf_config.h"
+#include <freerdp/server/proxy/proxy_config.h>
+#include "proxy_modules.h"
 
-typedef struct proxy_server
+struct proxy_server
 {
+	proxyModule* module;
 	proxyConfig* config;
 
 	freerdp_listener* listener;
 	wArrayList* clients;        /* maintain a list of active sessions, for stats */
 	wCountdownEvent* waitGroup; /* wait group used for gracefull shutdown */
-	HANDLE thread;              /* main server thread - freerdp listener thread */
 	HANDLE stopEvent;           /* an event used to signal the main thread to stop */
-} proxyServer;
+};
 
-proxyServer* pf_server_new(proxyConfig* config);
-void pf_server_free(proxyServer* server);
-
-BOOL pf_server_start(proxyServer* server);
-void pf_server_stop(proxyServer* server);
-
-#endif /* FREERDP_SERVER_PROXY_SERVER_H */
+#endif /* _FREERDP_SERVER_PROXY_SERVER_H */

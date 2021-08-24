@@ -34,12 +34,13 @@
 #include <freerdp/server/cliprdr.h>
 #include <freerdp/server/rdpsnd.h>
 
-#include "pf_config.h"
-#include "pf_server.h"
+#include <freerdp/server/proxy/proxy_config.h>
 
 #define PROXY_SESSION_ID_LENGTH 32
 
 typedef struct proxy_data proxyData;
+typedef struct proxy_module proxyModule;
+typedef struct channel_data_event_info proxyChannelDataEventInfo;
 
 /**
  * Wraps rdpContext and holds the state for the proxy's server.
@@ -58,15 +59,14 @@ struct p_server_context
 	DispServerContext* disp;
 	CliprdrServerContext* cliprdr;
 	RdpsndServerContext* rdpsnd;
-
-	HANDLE* vc_handles; /* static virtual channels open handles */
-	wHashTable* vc_ids; /* channel_name -> channel_id map */
 };
 typedef struct p_server_context pServerContext;
 
 /**
  * Wraps rdpContext and holds the state for the proxy's client.
  */
+typedef struct p_client_context pClientContext;
+
 struct p_client_context
 {
 	rdpContext context;
@@ -91,16 +91,26 @@ struct p_client_context
 	 */
 	BOOL allow_next_conn_failure;
 
-	wHashTable* vc_ids; /* channel_name -> channel_id map */
+	BOOL connected; /* Set after client post_connect. */
+
+	pReceiveChannelData client_receive_channel_data_original;
+	wArrayList* cached_server_channel_data;
+	BOOL (*sendChannelData)(pClientContext* pc, const proxyChannelDataEventInfo* ev);
+
+	/* X509 specific */
+	char* remote_hostname;
+	wStream* remote_pem;
+	UINT16 remote_port;
+	UINT32 remote_flags;
 };
-typedef struct p_client_context pClientContext;
 
 /**
  * Holds data common to both sides of a proxy's session.
  */
 struct proxy_data
 {
-	proxyConfig* config;
+	proxyModule* module;
+	const proxyConfig* config;
 
 	pServerContext* ps;
 	pClientContext* pc;
@@ -113,6 +123,7 @@ struct proxy_data
 
 	/* used to external modules to store per-session info */
 	wHashTable* modules_info;
+	psPeerReceiveChannelData server_receive_channel_data_original;
 };
 
 BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src);

@@ -329,7 +329,6 @@ BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
 
 	return TRUE;
 }
-
 static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 {
 	int i;

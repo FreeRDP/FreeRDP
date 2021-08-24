@@ -17,16 +17,18 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
 #include <freerdp/server/disp.h>
+#include <freerdp/server/proxy/proxy_log.h>
 
 #include "pf_disp.h"
-#include "pf_log.h"
 
 #define TAG PROXY_TAG("disp")
 
 BOOL pf_server_disp_init(pServerContext* ps)
 {
 	DispServerContext* disp;
+	WINPR_ASSERT(ps);
 	disp = ps->disp = disp_server_context_new(ps->vcm);
 
 	if (!disp)
@@ -41,8 +43,20 @@ BOOL pf_server_disp_init(pServerContext* ps)
 static UINT pf_disp_monitor_layout(DispServerContext* context,
                                    const DISPLAY_CONTROL_MONITOR_LAYOUT_PDU* pdu)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	DispClientContext* client = (DispClientContext*)pdata->pc->disp;
+	proxyData* pdata;
+	DispClientContext* client;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(pdu);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->pc);
+
+	client = (DispClientContext*)pdata->pc->disp;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->SendMonitorLayout);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	return client->SendMonitorLayout(client, pdu->NumMonitors, pdu->Monitors);
 }
@@ -50,9 +64,21 @@ static UINT pf_disp_monitor_layout(DispServerContext* context,
 static UINT pf_disp_on_caps_control(DispClientContext* context, UINT32 MaxNumMonitors,
                                     UINT32 MaxMonitorAreaFactorA, UINT32 MaxMonitorAreaFactorB)
 {
-	proxyData* pdata = (proxyData*)context->custom;
-	DispServerContext* server = (DispServerContext*)pdata->ps->disp;
+	DispServerContext* server;
+	proxyData* pdata;
+
+	WINPR_ASSERT(context);
+
+	pdata = (proxyData*)context->custom;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(pdata->pc);
+
+	server = (DispServerContext*)pdata->ps->disp;
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->DisplayControlCaps);
+
 	WLog_DBG(TAG, __FUNCTION__);
+
 	/* Update caps of proxy's disp server */
 	server->MaxMonitorAreaFactorA = MaxMonitorAreaFactorA;
 	server->MaxMonitorAreaFactorB = MaxMonitorAreaFactorB;
@@ -64,6 +90,10 @@ static UINT pf_disp_on_caps_control(DispClientContext* context, UINT32 MaxNumMon
 void pf_disp_register_callbacks(DispClientContext* client, DispServerContext* server,
                                 proxyData* pdata)
 {
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(pdata);
+
 	client->custom = (void*)pdata;
 	server->custom = (void*)pdata;
 	/* client receives from server, forward using disp server to original client */

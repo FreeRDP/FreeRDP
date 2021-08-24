@@ -23,7 +23,7 @@
 #include <freerdp/client/disp.h>
 #include <freerdp/server/disp.h>
 
-#include "pf_context.h"
+#include <freerdp/server/proxy/proxy_context.h>
 
 BOOL pf_server_disp_init(pServerContext* ps);
 void pf_disp_register_callbacks(DispClientContext* client, DispServerContext* server,

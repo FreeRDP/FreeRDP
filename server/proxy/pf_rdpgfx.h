@@ -26,7 +26,7 @@
 #include <freerdp/server/rdpgfx.h>
 #include <freerdp/gdi/gfx.h>
 
-#include "pf_context.h"
+#include <freerdp/server/proxy/proxy_context.h>
 
 BOOL pf_server_rdpgfx_init(pServerContext* ps);
 void pf_rdpgfx_pipeline_init(RdpgfxClientContext* gfx, RdpgfxServerContext* server,

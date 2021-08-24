@@ -21,27 +21,41 @@
 
 #include <freerdp/display.h>
 #include <freerdp/session.h>
+#include <winpr/assert.h>
 #include <winpr/image.h>
 #include <winpr/sysinfo.h>
 
-#include "pf_modules.h"
+#include <freerdp/server/proxy/proxy_log.h>
+
 #include "pf_update.h"
-#include "pf_context.h"
-#include "pf_log.h"
+#include <freerdp/server/proxy/proxy_context.h>
+#include "proxy_modules.h"
 
 #define TAG PROXY_TAG("update")
 
 static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
 	pServerContext* ps = (pServerContext*)context;
-	rdpContext* pc = (rdpContext*)ps->pdata->pc;
+	rdpContext* pc;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->pdata);
+	pc = (rdpContext*)ps->pdata->pc;
+	WINPR_ASSERT(pc);
+	WINPR_ASSERT(pc->update);
+	WINPR_ASSERT(pc->update->RefreshRect);
 	return pc->update->RefreshRect(pc, count, areas);
 }
 
 static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
 	pServerContext* ps = (pServerContext*)context;
-	rdpContext* pc = (rdpContext*)ps->pdata->pc;
+	rdpContext* pc;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->pdata);
+	pc = (rdpContext*)ps->pdata->pc;
+	WINPR_ASSERT(pc);
+	WINPR_ASSERT(pc->update);
+	WINPR_ASSERT(pc->update->SuppressOutput);
 	return pc->update->SuppressOutput(pc, allow, area);
 }
 
@@ -54,8 +68,15 @@ static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow, const REC
 static BOOL pf_client_begin_paint(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->BeginPaint);
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->BeginPaint(ps);
 }
@@ -68,8 +89,15 @@ static BOOL pf_client_begin_paint(rdpContext* context)
 static BOOL pf_client_end_paint(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->EndPaint);
 
 	WLog_DBG(TAG, __FUNCTION__);
 
@@ -77,7 +105,7 @@ static BOOL pf_client_end_paint(rdpContext* context)
 	if (!ps->update->EndPaint(ps))
 		return FALSE;
 
-	if (!pf_modules_run_hook(HOOK_TYPE_CLIENT_END_PAINT, pdata))
+	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_CLIENT_END_PAINT, pdata, context))
 		return FALSE;
 
 	return TRUE;
@@ -86,8 +114,15 @@ static BOOL pf_client_end_paint(rdpContext* context)
 static BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmap)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->BitmapUpdate);
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->BitmapUpdate(ps, bitmap);
 }
@@ -95,8 +130,17 @@ static BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bi
 static BOOL pf_client_desktop_resize(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->DesktopResize);
+	WINPR_ASSERT(context->settings);
+	WINPR_ASSERT(ps->settings);
 	WLog_DBG(TAG, __FUNCTION__);
 	ps->settings->DesktopWidth = context->settings->DesktopWidth;
 	ps->settings->DesktopHeight = context->settings->DesktopHeight;
@@ -107,8 +151,13 @@ static BOOL pf_client_remote_monitors(rdpContext* context, UINT32 count,
                                       const MONITOR_DEF* monitors)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
 	WLog_DBG(TAG, __FUNCTION__);
 	return freerdp_display_send_monitor_layout(ps, count, monitors);
 }
@@ -117,8 +166,16 @@ static BOOL pf_client_send_pointer_system(rdpContext* context,
                                           const POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->pointer);
+	WINPR_ASSERT(ps->update->pointer->PointerSystem);
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->pointer->PointerSystem(ps, pointer_system);
 }
@@ -127,8 +184,16 @@ static BOOL pf_client_send_pointer_position(rdpContext* context,
                                             const POINTER_POSITION_UPDATE* pointerPosition)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->pointer);
+	WINPR_ASSERT(ps->update->pointer->PointerPosition);
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->pointer->PointerPosition(ps, pointerPosition);
 }
@@ -137,8 +202,16 @@ static BOOL pf_client_send_pointer_color(rdpContext* context,
                                          const POINTER_COLOR_UPDATE* pointer_color)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->pointer);
+	WINPR_ASSERT(ps->update->pointer->PointerColor);
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->pointer->PointerColor(ps, pointer_color);
 }
@@ -147,8 +220,16 @@ static BOOL pf_client_send_pointer_large(rdpContext* context,
                                          const POINTER_LARGE_UPDATE* pointer_large)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->pointer);
+	WINPR_ASSERT(ps->update->pointer->PointerLarge);
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->pointer->PointerLarge(ps, pointer_large);
 }
@@ -156,8 +237,16 @@ static BOOL pf_client_send_pointer_large(rdpContext* context,
 static BOOL pf_client_send_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->pointer);
+	WINPR_ASSERT(ps->update->pointer->PointerNew);
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->pointer->PointerNew(ps, pointer_new);
 }
@@ -166,18 +255,33 @@ static BOOL pf_client_send_pointer_cached(rdpContext* context,
                                           const POINTER_CACHED_UPDATE* pointer_cached)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->pointer);
+	WINPR_ASSERT(ps->update->pointer->PointerCached);
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->pointer->PointerCached(ps, pointer_cached);
 }
 
 static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* data)
 {
-	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = pc->pdata;
-	rdpContext* ps = (rdpContext*)pdata->ps;
 	logon_info* logonInfo = NULL;
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->SaveSessionInfo);
 
 	WLog_DBG(TAG, __FUNCTION__);
 
@@ -187,8 +291,8 @@ static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* 
 		case INFO_TYPE_LOGON_LONG:
 		{
 			logonInfo = (logon_info*)data;
-			LOG_INFO(TAG, pc, "client logon info: Username: %s, Domain: %s", logonInfo->username,
-			         logonInfo->domain);
+			PROXY_LOG_INFO(TAG, pc, "client logon info: Username: %s, Domain: %s",
+			               logonInfo->username, logonInfo->domain);
 			break;
 		}
 
@@ -202,7 +306,16 @@ static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* 
 static BOOL pf_client_server_status_info(rdpContext* context, UINT32 status)
 {
 	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->ServerStatusInfo);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->ServerStatusInfo(ps, status);
 }
@@ -210,7 +323,16 @@ static BOOL pf_client_server_status_info(rdpContext* context, UINT32 status)
 static BOOL pf_client_set_keyboard_indicators(rdpContext* context, UINT16 led_flags)
 {
 	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->SetKeyboardIndicators);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->SetKeyboardIndicators(ps, led_flags);
 }
@@ -219,7 +341,16 @@ static BOOL pf_client_set_keyboard_ime_status(rdpContext* context, UINT16 imeId,
                                               UINT32 imeConvMode)
 {
 	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->SetKeyboardImeStatus);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	return ps->update->SetKeyboardImeStatus(ps, imeId, imeState, imeConvMode);
 }
@@ -227,9 +358,19 @@ static BOOL pf_client_set_keyboard_ime_status(rdpContext* context, UINT16 imeId,
 static BOOL pf_client_window_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                     const WINDOW_STATE_ORDER* windowState)
 {
-	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	BOOL rc;
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->window);
+	WINPR_ASSERT(ps->update->window->WindowCreate);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	EnterCriticalSection(&ps->update->mux);
 	rc = ps->update->window->WindowCreate(ps, orderInfo, windowState);
@@ -240,9 +381,19 @@ static BOOL pf_client_window_create(rdpContext* context, const WINDOW_ORDER_INFO
 static BOOL pf_client_window_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                     const WINDOW_STATE_ORDER* windowState)
 {
-	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	BOOL rc;
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->window);
+	WINPR_ASSERT(ps->update->window->WindowUpdate);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	EnterCriticalSection(&ps->update->mux);
 	rc = ps->update->window->WindowUpdate(ps, orderInfo, windowState);
@@ -253,9 +404,19 @@ static BOOL pf_client_window_update(rdpContext* context, const WINDOW_ORDER_INFO
 static BOOL pf_client_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                   const WINDOW_ICON_ORDER* windowIcon)
 {
-	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	BOOL rc;
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->window);
+	WINPR_ASSERT(ps->update->window->WindowIcon);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	EnterCriticalSection(&ps->update->mux);
 	rc = ps->update->window->WindowIcon(ps, orderInfo, windowIcon);
@@ -266,9 +427,19 @@ static BOOL pf_client_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* 
 static BOOL pf_client_window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                          const WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
-	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	BOOL rc;
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->window);
+	WINPR_ASSERT(ps->update->window->WindowCachedIcon);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	EnterCriticalSection(&ps->update->mux);
 	rc = ps->update->window->WindowCachedIcon(ps, orderInfo, windowCachedIcon);
@@ -278,9 +449,19 @@ static BOOL pf_client_window_cached_icon(rdpContext* context, const WINDOW_ORDER
 
 static BOOL pf_client_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
-	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	BOOL rc;
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->window);
+	WINPR_ASSERT(ps->update->window->WindowDelete);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	EnterCriticalSection(&ps->update->mux);
 	rc = ps->update->window->WindowDelete(ps, orderInfo);
@@ -291,9 +472,19 @@ static BOOL pf_client_window_delete(rdpContext* context, const WINDOW_ORDER_INFO
 static BOOL pf_client_notify_icon_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                          const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
-	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	BOOL rc;
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->window);
+	WINPR_ASSERT(ps->update->window->NotifyIconCreate);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	EnterCriticalSection(&ps->update->mux);
 	rc = ps->update->window->NotifyIconCreate(ps, orderInfo, notifyIconState);
@@ -304,9 +495,19 @@ static BOOL pf_client_notify_icon_create(rdpContext* context, const WINDOW_ORDER
 static BOOL pf_client_notify_icon_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                          const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
-	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	BOOL rc;
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->window);
+	WINPR_ASSERT(ps->update->window->NotifyIconUpdate);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	EnterCriticalSection(&ps->update->mux);
 	rc = ps->update->window->NotifyIconUpdate(ps, orderInfo, notifyIconState);
@@ -316,9 +517,20 @@ static BOOL pf_client_notify_icon_update(rdpContext* context, const WINDOW_ORDER
 
 static BOOL pf_client_notify_icon_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
-	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	BOOL rc;
+
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->window);
+	WINPR_ASSERT(ps->update->window->NotifyIconDelete);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	EnterCriticalSection(&ps->update->mux);
 	rc = ps->update->window->NotifyIconDelete(ps, orderInfo);
@@ -329,9 +541,19 @@ static BOOL pf_client_notify_icon_delete(rdpContext* context, const WINDOW_ORDER
 static BOOL pf_client_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                         const MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
-	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	BOOL rc;
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->window);
+	WINPR_ASSERT(ps->update->window->MonitoredDesktop);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	EnterCriticalSection(&ps->update->mux);
 	rc = ps->update->window->MonitoredDesktop(ps, orderInfo, monitoredDesktop);
@@ -341,9 +563,19 @@ static BOOL pf_client_monitored_desktop(rdpContext* context, const WINDOW_ORDER_
 
 static BOOL pf_client_non_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
-	pClientContext* pc = (pClientContext*)context;
-	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	BOOL rc;
+	pClientContext* pc = (pClientContext*)context;
+	proxyData* pdata;
+	rdpContext* ps;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+	ps = (rdpContext*)pdata->ps;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->update);
+	WINPR_ASSERT(ps->update->window);
+	WINPR_ASSERT(ps->update->window->NonMonitoredDesktop);
+
 	WLog_DBG(TAG, __FUNCTION__);
 	EnterCriticalSection(&ps->update->mux);
 	rc = ps->update->window->NonMonitoredDesktop(ps, orderInfo);
@@ -353,12 +585,14 @@ static BOOL pf_client_non_monitored_desktop(rdpContext* context, const WINDOW_OR
 
 void pf_server_register_update_callbacks(rdpUpdate* update)
 {
+	WINPR_ASSERT(update);
 	update->RefreshRect = pf_server_refresh_rect;
 	update->SuppressOutput = pf_server_suppress_output;
 }
 
 void pf_client_register_update_callbacks(rdpUpdate* update)
 {
+	WINPR_ASSERT(update);
 	update->BeginPaint = pf_client_begin_paint;
 	update->EndPaint = pf_client_end_paint;
 	update->BitmapUpdate = pf_client_bitmap_update;

@@ -17,14 +17,20 @@
 # limitations under the License.
 #
 
-set(PLUGIN_NAME "proxy-demo-plugin")
+cmake_minimum_required(VERSION 3.4)
 
-add_library(${PLUGIN_NAME} MODULE
+project(proxy-demo-plugin VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_library(${PROJECT_NAME} MODULE
 	demo.cpp
 )
 
-set_target_properties(${PLUGIN_NAME} PROPERTIES CXX_STANDARD 11)
-set_target_properties(${PLUGIN_NAME} PROPERTIES PREFIX "")
-set_target_properties(${PLUGIN_NAME} PROPERTIES NO_SONAME 1)
-set_target_properties(${PLUGIN_NAME} PROPERTIES
-LIBRARY_OUTPUT_DIRECTORY "${FREERDP_PROXY_PLUGINDIR}")
+target_link_libraries(${PROJECT_NAME} winpr)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+set_target_properties(${PROJECT_NAME} PROPERTIES NO_SONAME 1)
+
+install(TARGETS ${PROJECT_NAME} DESTINATION ${FREERDP_PROXY_PLUGINDIR})

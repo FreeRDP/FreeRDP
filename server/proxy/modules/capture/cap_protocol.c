@@ -33,7 +33,7 @@ wStream* capture_plugin_packet_new(UINT32 payload_size, UINT16 type)
 
 wStream* capture_plugin_create_session_info_packet(pClientContext* pc)
 {
-	UINT16 username_length;
+	size_t username_length;
 	wStream* s = NULL;
 	rdpSettings* settings;
 
@@ -46,7 +46,7 @@ wStream* capture_plugin_create_session_info_packet(pClientContext* pc)
 		return NULL;
 
 	username_length = strlen(settings->Username);
-	if (username_length == 0)
+	if ((username_length == 0) || (username_length > UINT16_MAX))
 		return NULL;
 
 	s = capture_plugin_packet_new(SESSION_INFO_PDU_BASE_SIZE + username_length,

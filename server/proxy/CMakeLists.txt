@@ -18,13 +18,11 @@
 # limitations under the License.
 
 include(CMakeDependentOption)
-set(MODULE_NAME "freerdp-proxy")
+set(MODULE_NAME "freerdp-server-proxy")
 set(MODULE_PREFIX "FREERDP_SERVER_PROXY")
 
 set(${MODULE_PREFIX}_SRCS
-  freerdp_proxy.c
   pf_context.c
-  pf_context.h
   pf_channels.c
   pf_channels.h
   pf_client.c
@@ -44,17 +42,18 @@ set(${MODULE_PREFIX}_SRCS
   pf_gdi.c
   pf_gdi.h
   pf_config.c
-  pf_config.h
   pf_graphics.c
   pf_graphics.h
   pf_modules.c
-  pf_modules.h
   pf_cliprdr.c
   pf_cliprdr.h
   pf_rdpsnd.c
   pf_rdpsnd.h
-  pf_log.h
+  pf_utils.h
+  pf_utils.c
   )
+
+set(PROXY_APP_SRCS freerdp_proxy.c)
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
@@ -70,24 +69,61 @@ if (WIN32)
     @ONLY)
 
   set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+  list(APPEND PROXY_APP_SRCS ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
-add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREERDP_API_VERSION})
+
+if (WITH_LIBRARY_VERSIONING)
+  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rdpgfx-client)
+if (NOT BUILTIN_CHANNELS)
+    set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rdpgfx-client)
+    get_target_property(CUR_INSTALL_RPATH ${MODULE_NAME} INSTALL_RPATH)
+    if (NOT APPLE)
+        set(CUR_INSTALL_RPATH "${CUR_INSTALL_RPATH}:\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}/freerdp${FREERDP_VERSION_MAJOR}")
+    endif()
+    set_target_properties(${MODULE_NAME} PROPERTIES INSTALL_RPATH ${CUR_INSTALL_RPATH})
+endif()
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT server EXPORT FreeRDP-ProxyTargets)
 if (WITH_DEBUG_SYMBOLS AND MSVC)
-    install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT symbols)
+    install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
 endif()
+# pkg-config
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp-proxy.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-server-proxy${FREERDP_VERSION_MAJOR}.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp-server-proxy${FREERDP_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
+export(PACKAGE freerdp-proxy)
+
+SetFreeRDPCMakeInstallDir(FREERDP_PROXY_CMAKE_INSTALL_DIR "FreeRDP-Proxy${FREERDP_VERSION_MAJOR}")
+
+configure_package_config_file(FreeRDP-ProxyConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ProxyConfig.cmake
+	INSTALL_DESTINATION ${FREERDP_PROXY_CMAKE_INSTALL_DIR}
+	PATH_VARS FREERDP_INCLUDE_DIR)
+
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ProxyConfigVersion.cmake
+	VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ProxyConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ProxyConfigVersion.cmake
+	DESTINATION ${FREERDP_PROXY_CMAKE_INSTALL_DIR})
+install(EXPORT FreeRDP-ProxyTargets DESTINATION ${FREERDP_PROXY_CMAKE_INSTALL_DIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/proxy")
 
-CMAKE_DEPENDENT_OPTION(WITH_PROXY_MODULES "Compile proxy modules" OFF	"WITH_PROXY" OFF)
+option(WITH_PROXY_APP "Compile proxy application" ON)
+
+if (WITH_PROXY_APP)
+  add_subdirectory("cli")
+endif()
+
+option(WITH_PROXY_MODULES "Compile proxy modules" ON)
 if (WITH_PROXY_MODULES)
   add_subdirectory("modules")
 endif()
