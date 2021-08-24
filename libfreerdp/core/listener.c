@@ -295,16 +295,49 @@ static DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HAND
 	return listener->num_sockfds;
 }
 
+BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
+                                         const struct sockaddr_storage* peer_addr)
+{
+	void* sin_addr = NULL;
+	const BYTE localhost6_bytes[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(peer_addr);
+
+	if (peer_addr->ss_family == AF_INET)
+	{
+		sin_addr = &(((struct sockaddr_in*)&peer_addr)->sin_addr);
+
+		if ((*(UINT32*)sin_addr) == 0x0100007f)
+			client->local = TRUE;
+	}
+	else if (peer_addr->ss_family == AF_INET6)
+	{
+		sin_addr = &(((struct sockaddr_in6*)&peer_addr)->sin6_addr);
+
+		if (memcmp(sin_addr, localhost6_bytes, 16) == 0)
+			client->local = TRUE;
+	}
+
+#ifndef _WIN32
+	else if (peer_addr->ss_family == AF_UNIX)
+		client->local = TRUE;
+#endif
+
+	if (sin_addr)
+		inet_ntop(peer_addr->ss_family, sin_addr, client->hostname, sizeof(client->hostname));
+
+	return TRUE;
+}
+
 static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 {
 	int i;
-	void* sin_addr;
 	int peer_sockfd;
 	freerdp_peer* client = NULL;
 	int peer_addr_size;
 	struct sockaddr_storage peer_addr;
 	rdpListener* listener = (rdpListener*)instance->listener;
-	static const BYTE localhost6_bytes[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 	BOOL peer_accepted;
 
 	if (listener->num_sockfds < 1)
@@ -345,31 +378,12 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 			return FALSE;
 		}
 
-		sin_addr = NULL;
-
-		if (peer_addr.ss_family == AF_INET)
+		if (!freerdp_peer_set_local_and_hostname(client, &peer_addr))
 		{
-			sin_addr = &(((struct sockaddr_in*)&peer_addr)->sin_addr);
-
-			if ((*(UINT32*)sin_addr) == 0x0100007f)
-				client->local = TRUE;
+			closesocket((SOCKET)peer_sockfd);
+			freerdp_peer_free(client);
+			return FALSE;
 		}
-		else if (peer_addr.ss_family == AF_INET6)
-		{
-			sin_addr = &(((struct sockaddr_in6*)&peer_addr)->sin6_addr);
-
-			if (memcmp(sin_addr, localhost6_bytes, 16) == 0)
-				client->local = TRUE;
-		}
-
-#ifndef _WIN32
-		else if (peer_addr.ss_family == AF_UNIX)
-			client->local = TRUE;
-
-#endif
-
-		if (sin_addr)
-			inet_ntop(peer_addr.ss_family, sin_addr, client->hostname, sizeof(client->hostname));
 
 		IFCALLRET(instance->PeerAccepted, peer_accepted, instance, client);
 

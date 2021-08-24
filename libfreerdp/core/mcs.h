@@ -31,6 +31,7 @@ typedef struct rdp_mcs rdpMcs;
 #include <freerdp/types.h>
 
 #include <winpr/stream.h>
+#include <winpr/wtsapi.h>
 
 #define MCS_BASE_CHANNEL_ID 1001
 #define MCS_GLOBAL_CHANNEL_ID 1003
@@ -118,7 +119,7 @@ typedef struct
 
 struct rdp_mcs_channel
 {
-	char Name[8];
+	char Name[CHANNEL_NAME_LEN + 1];
 	UINT32 options;
 	int ChannelId;
 	BOOL joined;

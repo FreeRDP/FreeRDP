@@ -57,13 +57,14 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 	UINT32 flags;
 	size_t chunkSize;
 	rdpMcs* mcs = rdp->mcs;
-	rdpMcsChannel* channel = NULL;
+	const rdpMcsChannel* channel = NULL;
 
 	for (i = 0; i < mcs->channelCount; i++)
 	{
-		if (mcs->channels[i].ChannelId == channelId)
+		const rdpMcsChannel* cur = &mcs->channels[i];
+		if (cur->ChannelId == channelId)
 		{
-			channel = &mcs->channels[i];
+			channel = cur;
 			break;
 		}
 	}

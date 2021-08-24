@@ -1584,9 +1584,10 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		 *   of seven ANSI characters that uniquely identify the channel.
 		 * - options: a 32-bit, unsigned integer. Channel option flags
 		 */
-		Stream_Read(s, mcs->channels[i].Name, 8); /* name (8 bytes) */
+		rdpMcsChannel* channel = &mcs->channels[i];
+		Stream_Read(s, channel->Name, CHANNEL_NAME_LEN + 1); /* name (8 bytes) */
 
-		if (!memchr(mcs->channels[i].Name, 0, 8))
+		if (!memchr(channel->Name, 0, CHANNEL_NAME_LEN + 1))
 		{
 			WLog_ERR(
 			    TAG,
@@ -1594,8 +1595,8 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 			return FALSE;
 		}
 
-		Stream_Read_UINT32(s, mcs->channels[i].options); /* options (4 bytes) */
-		mcs->channels[i].ChannelId = mcs->baseChannelId++;
+		Stream_Read_UINT32(s, channel->options); /* options (4 bytes) */
+		channel->ChannelId = mcs->baseChannelId++;
 	}
 
 	return TRUE;
@@ -1624,8 +1625,9 @@ BOOL gcc_write_client_network_data(wStream* s, const rdpMcs* mcs)
 		for (i = 0; i < mcs->channelCount; i++)
 		{
 			/* CHANNEL_DEF */
-			Stream_Write(s, mcs->channels[i].Name, 8);        /* name (8 bytes) */
-			Stream_Write_UINT32(s, mcs->channels[i].options); /* options (4 bytes) */
+			rdpMcsChannel* channel = &mcs->channels[i];
+			Stream_Write(s, channel->Name, CHANNEL_NAME_LEN + 1); /* name (8 bytes) */
+			Stream_Write_UINT32(s, channel->options);             /* options (4 bytes) */
 		}
 	}
 	return TRUE;
@@ -1662,8 +1664,9 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 
 	for (i = 0; i < parsedChannelCount; i++)
 	{
+		rdpMcsChannel* channel = &mcs->channels[i];
 		Stream_Read_UINT16(s, channelId); /* channelId */
-		mcs->channels[i].ChannelId = channelId;
+		channel->ChannelId = channelId;
 	}
 
 	if (channelCount % 2 == 1)
@@ -1685,7 +1688,8 @@ BOOL gcc_write_server_network_data(wStream* s, const rdpMcs* mcs)
 
 	for (i = 0; i < mcs->channelCount; i++)
 	{
-		Stream_Write_UINT16(s, mcs->channels[i].ChannelId);
+		const rdpMcsChannel* channel = &mcs->channels[i];
+		Stream_Write_UINT16(s, channel->ChannelId);
 	}
 
 	if (mcs->channelCount % 2 == 1)

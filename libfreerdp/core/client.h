@@ -22,6 +22,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
+#include <winpr/wtsapi.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
@@ -52,7 +53,7 @@ typedef struct rdp_channel_client_data CHANNEL_CLIENT_DATA;
 
 struct rdp_channel_open_data
 {
-	char name[8];
+	char name[CHANNEL_NAME_LEN + 1];
 	int OpenHandle;
 	int options;
 	int flags;

@@ -791,12 +791,9 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	}
 
 	/* Initialize the real server settings here */
-	client->settings->CertificateFile = _strdup("server.crt");
-	client->settings->PrivateKeyFile = _strdup("server.key");
-	client->settings->RdpKeyFile = _strdup("server.key");
-
-	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile ||
-	    !client->settings->RdpKeyFile)
+	if (!freerdp_settings_set_string(client->settings, FreeRDP_CertificateFile, "server.crt") ||
+	    !freerdp_settings_set_string(client->settings, FreeRDP_PrivateKeyFile, "server.key") ||
+	    !freerdp_settings_set_string(client->settings, FreeRDP_RdpKeyFile, "server.key"))
 	{
 		WLog_ERR(TAG, "Memory allocation failed (strdup)");
 		freerdp_peer_free(client);

@@ -29,6 +29,7 @@
 
 #include <winpr/sspi.h>
 #include <winpr/ntlm.h>
+#include <winpr/winsock.h>
 
 typedef BOOL (*psPeerContextNew)(freerdp_peer* peer, rdpContext* context);
 typedef void (*psPeerContextFree)(freerdp_peer* peer, rdpContext* context);
@@ -145,6 +146,8 @@ extern "C"
 
 	FREERDP_API freerdp_peer* freerdp_peer_new(int sockfd);
 	FREERDP_API void freerdp_peer_free(freerdp_peer* client);
+	FREERDP_API BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
+	                                                     const struct sockaddr_storage* peer_addr);
 
 #ifdef __cplusplus
 }

@@ -55,7 +55,7 @@ static CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpCha
 	{
 		pChannelOpenData = &channels->openDataList[index];
 
-		if (strncmp(name, pChannelOpenData->name, CHANNEL_NAME_LEN) == 0)
+		if (strncmp(name, pChannelOpenData->name, CHANNEL_NAME_LEN + 1) == 0)
 			return pChannelOpenData;
 	}
 
@@ -66,7 +66,6 @@ static CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpCha
 static rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const char* name)
 {
 	UINT32 index;
-	rdpMcsChannel* channel = NULL;
 	rdpMcs* mcs = NULL;
 
 	if (!rdp)
@@ -76,9 +75,9 @@ static rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const c
 
 	for (index = 0; index < mcs->channelCount; index++)
 	{
-		channel = &mcs->channels[index];
+		rdpMcsChannel* channel = &mcs->channels[index];
 
-		if (strncmp(name, channel->Name, CHANNEL_NAME_LEN) == 0)
+		if (strncmp(name, channel->Name, CHANNEL_NAME_LEN + 1) == 0)
 		{
 			return channel;
 		}
@@ -471,9 +470,11 @@ BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdat
 
 	for (index = 0; index < mcs->channelCount; index++)
 	{
-		if (mcs->channels[index].ChannelId == channelId)
+		rdpMcsChannel* cur = &mcs->channels[index];
+
+		if (cur->ChannelId == channelId)
 		{
-			channel = &mcs->channels[index];
+			channel = cur;
 			break;
 		}
 	}
@@ -837,8 +838,9 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
 
 		if (settings->ChannelCount < CHANNEL_MAX_COUNT)
 		{
-			CHANNEL_DEF* channel = &settings->ChannelDefArray[settings->ChannelCount];
-			strncpy(channel->name, pChannelDef->name, 7);
+			CHANNEL_DEF* channel = freerdp_settings_get_pointer_array_writable(
+			    settings, FreeRDP_ChannelDefArray, settings->ChannelCount);
+			strncpy(channel->name, pChannelDef->name, CHANNEL_NAME_LEN);
 			channel->options = pChannelDef->options;
 			settings->ChannelCount++;
 		}
@@ -928,8 +930,9 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_
 
 		if (settings->ChannelCount < CHANNEL_MAX_COUNT)
 		{
-			channel = &settings->ChannelDefArray[settings->ChannelCount];
-			strncpy(channel->name, pChannelDef->name, 7);
+			channel = freerdp_settings_get_pointer_array_writable(settings, FreeRDP_ChannelDefArray,
+			                                                      settings->ChannelCount);
+			strncpy(channel->name, pChannelDef->name, CHANNEL_NAME_LEN);
 			channel->options = pChannelDef->options;
 			settings->ChannelCount++;
 		}
