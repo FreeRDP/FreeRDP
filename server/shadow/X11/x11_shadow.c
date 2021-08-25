@@ -753,7 +753,7 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 {
 	int rc = 0;
 	size_t count;
-	int status;
+	int status = -1;
 	int x, y;
 	int width, height;
 	XImage* image;
@@ -1192,7 +1192,7 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 
 			if (screens && (numMonitors > 0))
 			{
-				UINT32 index;
+				int index;
 				for (index = 0; index < numMonitors; index++)
 				{
 					MONITOR_DEF* monitor = &monitors[index];

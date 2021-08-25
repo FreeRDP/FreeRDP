@@ -609,6 +609,8 @@ static BOOL shadow_client_logon(freerdp_peer* peer, SEC_WINNT_AUTH_IDENTITY* ide
 	char* password = NULL;
 	rdpSettings* settings;
 
+	WINPR_UNUSED(automatic);
+
 	WINPR_ASSERT(peer);
 	WINPR_ASSERT(identity);
 
@@ -1138,7 +1140,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	{
 		BOOL rc;
 		wStream* s;
-		RECTANGLE_16 rect;
+		RFX_RECT rect;
 
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_REMOTEFX) < 0)
 		{
@@ -1153,10 +1155,10 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 		WINPR_ASSERT(cmd.top <= UINT16_MAX);
 		WINPR_ASSERT(cmd.right <= UINT16_MAX);
 		WINPR_ASSERT(cmd.bottom <= UINT16_MAX);
-		rect.left = (UINT16)cmd.left;
-		rect.top = (UINT16)cmd.top;
-		rect.right = (UINT16)cmd.right;
-		rect.bottom = (UINT16)cmd.bottom;
+		rect.x = (UINT16)cmd.left;
+		rect.y = (UINT16)cmd.top;
+		rect.width = (UINT16)cmd.right - cmd.left;
+		rect.height = (UINT16)cmd.bottom - cmd.top;
 
 		rc = rfx_compose_message(encoder->rfx, s, &rect, 1, pSrcData, nWidth, nHeight, nSrcStep);
 
@@ -1170,9 +1172,12 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 		/* rc > 0 means new data */
 		if (rc > 0)
 		{
+			const size_t pos = Stream_GetPosition(s);
+			WINPR_ASSERT(pos <= UINT32_MAX);
+
 			cmd.codecId = RDPGFX_CODECID_CAVIDEO;
 			cmd.data = Stream_Buffer(s);
-			cmd.length = Stream_GetPosition(s);
+			cmd.length = (UINT32)pos;
 
 			IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, &cmd, &cmdstart,
 			          &cmdend);
@@ -1920,7 +1925,7 @@ static INLINE BOOL shadow_client_no_surface_update(rdpShadowClient* client,
 	return shadow_client_surface_update(client, &(surface->invalidRegion));
 }
 
-static int shadow_client_subsystem_process_message(rdpShadowClient* client, const wMessage* message)
+static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* message)
 {
 	rdpContext* context = (rdpContext*)client;
 	rdpUpdate* update;
