@@ -322,8 +322,8 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 {
 	DWORD signalled;
 	DWORD polled;
-	DWORD* poll_map = NULL;
-	BOOL* signalled_handles = NULL;
+	DWORD poll_map[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	BOOL signalled_handles[MAXIMUM_WAIT_OBJECTS] = { FALSE };
 	int fd = -1;
 	DWORD index;
 	int status;
@@ -360,15 +360,6 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 		WLog_ERR(TAG, "unable to initialize pollset for nCount=%" PRIu32 " extraCount=%" PRIu32 "",
 		         nCount, extraFds);
 		return WAIT_FAILED;
-	}
-
-	if (bWaitAll)
-	{
-		signalled_handles = alloca(nCount * sizeof(BOOL));
-		memset(signalled_handles, FALSE, nCount * sizeof(BOOL));
-
-		poll_map = alloca(nCount * sizeof(DWORD));
-		memset(poll_map, 0, nCount * sizeof(DWORD));
 	}
 
 	signalled = 0;
