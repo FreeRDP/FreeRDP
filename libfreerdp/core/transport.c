@@ -981,8 +981,8 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
 	DWORD index;
 	DWORD nCount;
-	HANDLE events[64];
-	nCount = transport_get_event_handles(transport, events, 64);
+	HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	nCount = transport_get_event_handles(transport, events, ARRAYSIZE(events));
 	*rcount = nCount + 1;
 
 	for (index = 0; index < nCount; index++)

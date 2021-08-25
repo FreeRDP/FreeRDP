@@ -182,7 +182,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 	DWORD nCount;
 	DWORD status;
 	DWORD result = 0;
-	HANDLE handles[64];
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	BOOL rc = freerdp_connect(instance);
 
 	if (instance->settings->AuthenticationOnly)
@@ -202,7 +202,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 
 	while (!freerdp_shall_disconnect(instance))
 	{
-		nCount = freerdp_get_event_handles(instance->context, &handles[0], 64);
+		nCount = freerdp_get_event_handles(instance->context, handles, ARRAYSIZE(handles));
 
 		if (nCount == 0)
 		{

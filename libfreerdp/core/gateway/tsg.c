@@ -2033,7 +2033,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 {
 	UINT64 looptimeout = timeout * 1000ULL;
 	DWORD nCount;
-	HANDLE events[64];
+	HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	rdpRpc* rpc = tsg->rpc;
 	rdpSettings* settings = rpc->settings;
 	rdpTransport* transport = rpc->transport;
@@ -2055,7 +2055,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 		return FALSE;
 	}
 
-	nCount = tsg_get_event_handles(tsg, events, 64);
+	nCount = tsg_get_event_handles(tsg, events, ARRAYSIZE(events));
 
 	if (nCount == 0)
 		return FALSE;
