@@ -1489,7 +1489,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	DWORD exit_code = 0;
 	DWORD nCount;
 	DWORD waitStatus;
-	HANDLE handles[64];
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	xfContext* xfc;
 	freerdp* instance;
 	rdpContext* context;

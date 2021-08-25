@@ -465,7 +465,7 @@ static int wlfreerdp_run(freerdp* instance)
 {
 	wlfContext* context;
 	DWORD count;
-	HANDLE handles[64];
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	DWORD status = WAIT_ABANDONED;
 
 	if (!instance)
@@ -485,7 +485,8 @@ static int wlfreerdp_run(freerdp* instance)
 	while (!freerdp_shall_disconnect(instance))
 	{
 		handles[0] = context->displayHandle;
-		count = freerdp_get_event_handles(instance->context, &handles[1], 63) + 1;
+		count =
+		    freerdp_get_event_handles(instance->context, &handles[1], ARRAYSIZE(handles) - 1) + 1;
 
 		if (count <= 1)
 		{
