@@ -120,6 +120,7 @@ extern "C"
 	typedef BOOL (*ArrayList_ForEachFkt)(void* data, size_t index, va_list ap);
 
 	WINPR_API BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...);
+	WINPR_API BOOL ArrayList_ForEachAP(wArrayList* arrayList, ArrayList_ForEachFkt fkt, va_list ap);
 
 	WINPR_API void ArrayList_Clear(wArrayList* arrayList);
 	WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj);
