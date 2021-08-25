@@ -688,7 +688,7 @@ BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)
 static BOOL LoadAndInitialize(char* library)
 {
 	INIT_WTSAPI_FN pInitWtsApi;
-	g_WtsApiModule = LoadLibraryA(library);
+	g_WtsApiModule = LoadLibraryX(library);
 
 	if (!g_WtsApiModule)
 		return FALSE;
