@@ -34,6 +34,7 @@
 #include <freerdp/log.h>
 #include <freerdp/constants.h>
 #include <freerdp/server/channels.h>
+#include <freerdp/channels/drdynvc.h>
 
 #include "rdp.h"
 
@@ -507,8 +508,8 @@ static BOOL WTSVirtualChannelManagerOpen(WTSVirtualChannelManager* vcm)
 
 		/* Initialize drdynvc channel once and only once. */
 		vcm->drdynvc_state = DRDYNVC_STATE_INITIALIZED;
-		channel =
-		    (rdpPeerChannel*)WTSVirtualChannelOpen((HANDLE)vcm, WTS_CURRENT_SESSION, "drdynvc");
+		channel = (rdpPeerChannel*)WTSVirtualChannelOpen((HANDLE)vcm, WTS_CURRENT_SESSION,
+		                                                 DRDYNVC_SVC_CHANNEL_NAME);
 
 		if (channel)
 		{
@@ -1249,7 +1250,8 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 	for (index = 0; index < mcs->channelCount; index++)
 	{
 		rdpMcsChannel* mchannel = &mcs->channels[index];
-		if (mchannel->joined && (strncmp(mchannel->Name, "drdynvc", CHANNEL_NAME_LEN + 1) == 0))
+		if (mchannel->joined &&
+		    (strncmp(mchannel->Name, DRDYNVC_SVC_CHANNEL_NAME, CHANNEL_NAME_LEN + 1) == 0))
 		{
 			joined = TRUE;
 			break;

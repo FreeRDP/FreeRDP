@@ -27,6 +27,7 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/channels/drdynvc.h>
 
 #include "drdynvc_main.h"
 
@@ -121,7 +122,7 @@ static DWORD WINAPI drdynvc_server_thread(LPVOID arg)
 static UINT drdynvc_server_start(DrdynvcServerContext* context)
 {
 	context->priv->ChannelHandle =
-	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "drdynvc");
+	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, DRDYNVC_SVC_CHANNEL_NAME);
 
 	if (!context->priv->ChannelHandle)
 	{

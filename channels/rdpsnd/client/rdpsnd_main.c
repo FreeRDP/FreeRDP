@@ -805,8 +805,8 @@ static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
 	DWORD flags = FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX;
 	if (rdpsnd->dynamic)
 		flags = FREERDP_ADDIN_CHANNEL_DYNAMIC;
-	entry =
-	    (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_channel_addin_entry("rdpsnd", name, NULL, flags);
+	entry = (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_channel_addin_entry(RDPSND_DVC_CHANNEL_NAME,
+	                                                                       name, NULL, flags);
 
 	if (!entry)
 		return ERROR_INTERNAL_ERROR;
@@ -1422,7 +1422,7 @@ BOOL VCAPITYPE rdpsnd_VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, 
 
 	rdpsnd->attached = TRUE;
 	rdpsnd->channelDef.options = CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP;
-	sprintf_s(rdpsnd->channelDef.name, ARRAYSIZE(rdpsnd->channelDef.name), "rdpsnd");
+	sprintf_s(rdpsnd->channelDef.name, ARRAYSIZE(rdpsnd->channelDef.name), RDPSND_DVC_CHANNEL_NAME);
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&
@@ -1627,7 +1627,8 @@ static UINT rdpsnd_plugin_terminated(IWTSPlugin* pPlugin)
 UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT error = CHANNEL_RC_OK;
-	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)pEntryPoints->GetPlugin(pEntryPoints, "rdpsnd");
+	rdpsndPlugin* rdpsnd =
+	    (rdpsndPlugin*)pEntryPoints->GetPlugin(pEntryPoints, RDPSND_DVC_CHANNEL_NAME);
 
 	if (!rdpsnd)
 	{
@@ -1652,7 +1653,7 @@ UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		/* user data pointer is not const, cast to avoid warning. */
 		rdpsnd->channelEntryPoints.pExtendedData = (void*)pEntryPoints->GetPluginData(pEntryPoints);
 
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpsnd", &rdpsnd->iface);
+		error = pEntryPoints->RegisterPlugin(pEntryPoints, RDPSND_DVC_CHANNEL_NAME, &rdpsnd->iface);
 	}
 	else
 	{

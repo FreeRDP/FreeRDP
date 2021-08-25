@@ -26,6 +26,8 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+#include <freerdp/channels/drdynvc.h>
+
 #include "drdynvc_main.h"
 
 #define TAG CHANNELS_TAG("drdynvc.client")
@@ -1780,7 +1782,8 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 
 	drdynvc->channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP;
-	sprintf_s(drdynvc->channelDef.name, ARRAYSIZE(drdynvc->channelDef.name), "drdynvc");
+	sprintf_s(drdynvc->channelDef.name, ARRAYSIZE(drdynvc->channelDef.name),
+	          DRDYNVC_SVC_CHANNEL_NAME);
 	drdynvc->state = DRDYNVC_STATE_INITIAL;
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 

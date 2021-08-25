@@ -124,7 +124,7 @@ void pf_channels_on_client_channel_connect(void* data, ChannelConnectedEventArgs
 		pc->cliprdr = (CliprdrClientContext*)e->pInterface;
 		pf_cliprdr_register_callbacks(pc->cliprdr, ps->cliprdr, pc->pdata);
 	}
-	else if (strcmp(e->name, "rdpsnd") == 0)
+	else if (strcmp(e->name, RDPSND_DVC_CHANNEL_NAME) == 0)
 	{
 		/* sound is disabled */
 		if (ps->rdpsnd == NULL)
@@ -178,7 +178,7 @@ void pf_channels_on_client_channel_disconnect(void* data, ChannelDisconnectedEve
 
 		pc->cliprdr = NULL;
 	}
-	else if (strcmp(e->name, "rdpsnd") == 0)
+	else if (strcmp(e->name, RDPSND_DVC_CHANNEL_NAME) == 0)
 	{
 		/* sound is disabled */
 		if (ps->rdpsnd == NULL)
@@ -216,7 +216,8 @@ BOOL pf_server_channels_init(pServerContext* ps)
 			return FALSE;
 	}
 
-	if (config->AudioOutput && WTSVirtualChannelManagerIsChannelJoined(ps->vcm, "rdpsnd"))
+	if (config->AudioOutput &&
+	    WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RDPSND_DVC_CHANNEL_NAME))
 	{
 		if (!pf_server_rdpsnd_init(ps))
 			return FALSE;

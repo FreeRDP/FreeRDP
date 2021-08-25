@@ -31,6 +31,10 @@
 #include <freerdp/addin.h>
 #include <freerdp/settings.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/channels/drdynvc.h>
+#include <freerdp/channels/cliprdr.h>
+#include <freerdp/channels/encomsp.h>
+#include <freerdp/channels/rdpsnd.h>
 
 #include <freerdp/locale/keyboard.h>
 
@@ -180,7 +184,7 @@ static int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* 
 {
 	int args_handled = 0;
 
-	if (strcmp(args->argv[0], "cliprdr") == 0)
+	if (strcmp(args->argv[0], CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		args_handled++;
 		settings->RedirectClipboard = TRUE;
@@ -218,12 +222,12 @@ static int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* 
 			freerdp_client_add_device_channel(settings, args->argc - 1, &args->argv[1]);
 		}
 	}
-	else if (strcmp(args->argv[0], "drdynvc") == 0)
+	else if (strcmp(args->argv[0], DRDYNVC_SVC_CHANNEL_NAME) == 0)
 	{
 		args_handled++;
 		freerdp_client_add_dynamic_channel(settings, args->argc - 1, &args->argv[1]);
 	}
-	else if (strcmp(args->argv[0], "rdpsnd") == 0)
+	else if (strcmp(args->argv[0], RDPSND_DVC_CHANNEL_NAME) == 0)
 	{
 		args_handled++;
 
@@ -234,7 +238,7 @@ static int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* 
 		freerdp_addin_replace_argument_value(args, args->argv[1], "sys", args->argv[1]);
 		freerdp_client_add_static_channel(settings, args->argc, args->argv);
 	}
-	else if (strcmp(args->argv[0], "rail") == 0)
+	else if (strcmp(args->argv[0], RAIL_SVC_CHANNEL_NAME) == 0)
 	{
 		args_handled++;
 

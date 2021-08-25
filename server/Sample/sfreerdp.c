@@ -37,6 +37,7 @@
 
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/channels/drdynvc.h>
 
 #include <freerdp/constants.h>
 #include <freerdp/server/rdpsnd.h>
@@ -619,7 +620,7 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 		}
 	}
 
-	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpsnd"))
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, RDPSND_DVC_CHANNEL_NAME))
 	{
 		sf_peer_rdpsnd_init(context); /* Audio Output */
 	}
@@ -856,7 +857,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 			break;
 
 		/* Handle dynamic virtual channel intializations */
-		if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "drdynvc"))
+		if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, DRDYNVC_SVC_CHANNEL_NAME))
 		{
 			switch (WTSVirtualChannelManagerGetDrdynvcState(context->vcm))
 			{

@@ -95,12 +95,13 @@ static BOOL pf_client_load_rdpsnd(pClientContext* pc)
 	 * if AudioOutput is enabled in proxy and client connected with rdpsnd, use proxy as rdpsnd
 	 * backend. Otherwise, use sys:fake.
 	 */
-	if (!freerdp_static_channel_collection_find(context->settings, "rdpsnd"))
+	if (!freerdp_static_channel_collection_find(context->settings, RDPSND_DVC_CHANNEL_NAME))
 	{
 		char* params[2];
-		params[0] = "rdpsnd";
+		params[0] = RDPSND_DVC_CHANNEL_NAME;
 
-		if (config->AudioOutput && WTSVirtualChannelManagerIsChannelJoined(ps->vcm, "rdpsnd"))
+		if (config->AudioOutput &&
+		    WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RDPSND_DVC_CHANNEL_NAME))
 			params[1] = "sys:proxy";
 		else
 			params[1] = "sys:fake";

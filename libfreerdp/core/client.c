@@ -24,6 +24,7 @@
 #endif
 
 #include <freerdp/log.h>
+#include <freerdp/channels/drdynvc.h>
 
 #include "rdp.h"
 
@@ -423,8 +424,8 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 		PubSub_OnChannelConnected(instance->context->pubSub, instance->context, &e);
 	}
 
-	channels->drdynvc =
-	    (DrdynvcClientContext*)freerdp_channels_get_static_channel_interface(channels, "drdynvc");
+	channels->drdynvc = (DrdynvcClientContext*)freerdp_channels_get_static_channel_interface(
+	    channels, DRDYNVC_SVC_CHANNEL_NAME);
 
 	if (channels->drdynvc)
 	{
