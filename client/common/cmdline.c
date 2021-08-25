@@ -926,7 +926,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = CommandLineParseCommaSeparatedValuesEx(RDPSND_DVC_CHANNEL_NAME, arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValuesEx(RDPSND_CHANNEL_NAME, arg->Value, &count);
 		status = freerdp_client_add_static_channel(settings, count, p);
 		if (status)
 		{
@@ -3480,7 +3480,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->AudioPlayback)
 	{
-		char* p[] = { RDPSND_DVC_CHANNEL_NAME };
+		char* p[] = { RDPSND_CHANNEL_NAME };
 
 		if (!freerdp_client_add_static_channel(settings, ARRAYSIZE(p), p))
 			return FALSE;
@@ -3489,7 +3489,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	/* for audio playback also load the dynamic sound channel */
 	if (settings->AudioPlayback)
 	{
-		char* p[] = { RDPSND_DVC_CHANNEL_NAME };
+		char* p[] = { RDPSND_CHANNEL_NAME };
 
 		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
 			return FALSE;
@@ -3503,8 +3503,8 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if ((freerdp_static_channel_collection_find(settings, RDPSND_DVC_CHANNEL_NAME)) ||
-	    (freerdp_dynamic_channel_collection_find(settings, RDPSND_DVC_CHANNEL_NAME))
+	if ((freerdp_static_channel_collection_find(settings, RDPSND_CHANNEL_NAME)) ||
+	    (freerdp_dynamic_channel_collection_find(settings, RDPSND_CHANNEL_NAME))
 #if defined(CHANNEL_TSMF_CLIENT)
 	    || (freerdp_dynamic_channel_collection_find(settings, "tsmf"))
 #endif
@@ -3633,11 +3633,11 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "rdpdr", settings))
 			return FALSE;
 
-		if (!freerdp_static_channel_collection_find(settings, RDPSND_DVC_CHANNEL_NAME) &&
-		    !freerdp_dynamic_channel_collection_find(settings, RDPSND_DVC_CHANNEL_NAME))
+		if (!freerdp_static_channel_collection_find(settings, RDPSND_CHANNEL_NAME) &&
+		    !freerdp_dynamic_channel_collection_find(settings, RDPSND_CHANNEL_NAME))
 		{
 			char* params[2];
-			params[0] = RDPSND_DVC_CHANNEL_NAME;
+			params[0] = RDPSND_CHANNEL_NAME;
 			params[1] = "sys:fake";
 
 			if (!freerdp_client_add_static_channel(settings, 2, (char**)params))

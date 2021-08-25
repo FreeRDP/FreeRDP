@@ -31,7 +31,7 @@ int TestClientChannels(int argc, char* argv[])
 	freerdp_channels_addin_list_free(ppAddins);
 
 	printf("Enumerate rdpsnd\n");
-	ppAddins = freerdp_channels_list_addins(RDPSND_DVC_CHANNEL_NAME, NULL, NULL, dwFlags);
+	ppAddins = freerdp_channels_list_addins(RDPSND_CHANNEL_NAME, NULL, NULL, dwFlags);
 
 	for (index = 0; ppAddins[index] != NULL; index++)
 	{

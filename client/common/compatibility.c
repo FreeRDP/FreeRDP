@@ -227,7 +227,7 @@ static int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* 
 		args_handled++;
 		freerdp_client_add_dynamic_channel(settings, args->argc - 1, &args->argv[1]);
 	}
-	else if (strcmp(args->argv[0], RDPSND_DVC_CHANNEL_NAME) == 0)
+	else if (strcmp(args->argv[0], RDPSND_CHANNEL_NAME) == 0)
 	{
 		args_handled++;
 

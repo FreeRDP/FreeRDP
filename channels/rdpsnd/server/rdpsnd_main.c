@@ -674,7 +674,7 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 	RdpsndServerPrivate* priv = context->priv;
 	UINT error = ERROR_INTERNAL_ERROR;
 	priv->ChannelHandle =
-	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, RDPSND_DVC_CHANNEL_NAME);
+	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, RDPSND_CHANNEL_NAME);
 
 	if (!priv->ChannelHandle)
 	{
