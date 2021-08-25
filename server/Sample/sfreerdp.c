@@ -620,7 +620,7 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 		}
 	}
 
-	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, RDPSND_DVC_CHANNEL_NAME))
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, RDPSND_CHANNEL_NAME))
 	{
 		sf_peer_rdpsnd_init(context); /* Audio Output */
 	}
