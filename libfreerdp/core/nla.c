@@ -1021,7 +1021,7 @@ static int nla_server_init(rdpNla* nla)
 	{
 		HMODULE hSSPI;
 		INIT_SECURITY_INTERFACE pInitSecurityInterface;
-		hSSPI = LoadLibrary(nla->SspiModule);
+		hSSPI = LoadLibraryX(nla->SspiModule);
 
 		if (!hSSPI)
 		{

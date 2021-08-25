@@ -73,6 +73,18 @@ extern "C"
 
 #endif
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	WINPR_API HMODULE LoadLibraryX(LPCSTR lpLibFileName);
+	WINPR_API HMODULE LoadLibraryExX(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
+
+#ifdef __cplusplus
+}
+#endif
+
 #if !defined(_WIN32) && !defined(__CYGWIN__)
 
 #ifdef __cplusplus
