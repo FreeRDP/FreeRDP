@@ -912,8 +912,8 @@ static UINT cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr, LPVO
 		return status;
 	}
 
-	cliprdr->MsgsHandle = channel_client_create_handler(cliprdr->context->rdpcontext, cliprdr,
-	                                                    cliprdr_order_recv, "cliprdr");
+	cliprdr->MsgsHandle = channel_client_create_handler(
+	    cliprdr->context->rdpcontext, cliprdr, cliprdr_order_recv, CLIPRDR_SVC_CHANNEL_NAME);
 
 	return CHANNEL_RC_OK;
 }
@@ -1025,7 +1025,8 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 
 	cliprdr->channelDef.options = CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
 	                              CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL;
-	sprintf_s(cliprdr->channelDef.name, ARRAYSIZE(cliprdr->channelDef.name), "cliprdr");
+	sprintf_s(cliprdr->channelDef.name, ARRAYSIZE(cliprdr->channelDef.name),
+	          CLIPRDR_SVC_CHANNEL_NAME);
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&

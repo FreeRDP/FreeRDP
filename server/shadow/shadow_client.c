@@ -32,6 +32,7 @@
 #include <winpr/interlocked.h>
 
 #include <freerdp/log.h>
+#include <freerdp/channels/drdynvc.h>
 
 #include "shadow.h"
 
@@ -2185,7 +2186,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 		}
 		else
 		{
-			if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, "drdynvc"))
+			if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, DRDYNVC_SVC_CHANNEL_NAME))
 			{
 				switch (WTSVirtualChannelManagerGetDrdynvcState(client->vcm))
 				{

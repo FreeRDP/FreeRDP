@@ -1293,7 +1293,8 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 
 	encomsp->channelDef.options = CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
 	                              CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL;
-	sprintf_s(encomsp->channelDef.name, ARRAYSIZE(encomsp->channelDef.name), "encomsp");
+	sprintf_s(encomsp->channelDef.name, ARRAYSIZE(encomsp->channelDef.name),
+	          ENCOMSP_SVC_CHANNEL_NAME);
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&

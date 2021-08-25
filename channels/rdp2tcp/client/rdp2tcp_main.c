@@ -25,11 +25,10 @@
 #include <winpr/thread.h>
 
 #include <freerdp/svc.h>
-
-#define RDP2TCP_CHAN_NAME "rdp2tcp"
+#include <freerdp/channels/rdp2tcp.h>
 
 #include <freerdp/log.h>
-#define TAG CLIENT_TAG(RDP2TCP_CHAN_NAME)
+#define TAG CLIENT_TAG(RDP2TCP_DVC_CHANNEL_NAME)
 
 static int const debug = 0;
 
@@ -288,7 +287,7 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 				puts("rdp2tcp connected");
 
 			if (plugin->channelEntryPoints.pVirtualChannelOpenEx(
-			        pInitHandle, &plugin->openHandle, RDP2TCP_CHAN_NAME,
+			        pInitHandle, &plugin->openHandle, RDP2TCP_DVC_CHANNEL_NAME,
 			        VirtualChannelOpenEventEx) != CHANNEL_RC_OK)
 				return;
 
@@ -332,7 +331,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		return FALSE;
 	}
 
-	strncpy(channelDef.name, RDP2TCP_CHAN_NAME, sizeof(channelDef.name));
+	strncpy(channelDef.name, RDP2TCP_DVC_CHANNEL_NAME, sizeof(channelDef.name));
 	channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP;
 

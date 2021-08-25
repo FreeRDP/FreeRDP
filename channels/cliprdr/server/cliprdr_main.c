@@ -1215,7 +1215,8 @@ static UINT cliprdr_server_open(CliprdrServerContext* context)
 	void* buffer = NULL;
 	DWORD BytesReturned = 0;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*)context->handle;
-	cliprdr->ChannelHandle = WTSVirtualChannelOpen(cliprdr->vcm, WTS_CURRENT_SESSION, "cliprdr");
+	cliprdr->ChannelHandle =
+	    WTSVirtualChannelOpen(cliprdr->vcm, WTS_CURRENT_SESSION, CLIPRDR_SVC_CHANNEL_NAME);
 
 	if (!cliprdr->ChannelHandle)
 	{

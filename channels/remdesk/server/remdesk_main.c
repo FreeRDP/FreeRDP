@@ -702,7 +702,7 @@ out:
 static UINT remdesk_server_start(RemdeskServerContext* context)
 {
 	context->priv->ChannelHandle =
-	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "remdesk");
+	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, REMDESK_SVC_CHANNEL_NAME);
 
 	if (!context->priv->ChannelHandle)
 	{

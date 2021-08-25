@@ -34,6 +34,12 @@
 #include <freerdp/addin.h>
 #include <freerdp/settings.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/channels/drdynvc.h>
+#include <freerdp/channels/cliprdr.h>
+#include <freerdp/channels/encomsp.h>
+#include <freerdp/channels/rdp2tcp.h>
+#include <freerdp/channels/remdesk.h>
+#include <freerdp/channels/rdpsnd.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/utils/passphrase.h>
@@ -920,7 +926,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		char** p;
 		size_t count;
-		p = CommandLineParseCommaSeparatedValuesEx("rdpsnd", arg->Value, &count);
+		p = CommandLineParseCommaSeparatedValuesEx(RDPSND_DVC_CHANNEL_NAME, arg->Value, &count);
 		status = freerdp_client_add_static_channel(settings, count, p);
 		if (status)
 		{
@@ -3225,7 +3231,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!copy_value(arg->Value, &settings->ActionScript))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
-		CommandLineSwitchCase(arg, "rdp2tcp")
+		CommandLineSwitchCase(arg, RDP2TCP_DVC_CHANNEL_NAME)
 		{
 			free(settings->RDP2TCPArgs);
 
@@ -3474,7 +3480,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->AudioPlayback)
 	{
-		char* p[] = { "rdpsnd" };
+		char* p[] = { RDPSND_DVC_CHANNEL_NAME };
 
 		if (!freerdp_client_add_static_channel(settings, ARRAYSIZE(p), p))
 			return FALSE;
@@ -3483,7 +3489,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	/* for audio playback also load the dynamic sound channel */
 	if (settings->AudioPlayback)
 	{
-		char* p[] = { "rdpsnd" };
+		char* p[] = { RDPSND_DVC_CHANNEL_NAME };
 
 		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
 			return FALSE;
@@ -3497,8 +3503,8 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if ((freerdp_static_channel_collection_find(settings, "rdpsnd")) ||
-	    (freerdp_dynamic_channel_collection_find(settings, "rdpsnd"))
+	if ((freerdp_static_channel_collection_find(settings, RDPSND_DVC_CHANNEL_NAME)) ||
+	    (freerdp_dynamic_channel_collection_find(settings, RDPSND_DVC_CHANNEL_NAME))
 #if defined(CHANNEL_TSMF_CLIENT)
 	    || (freerdp_dynamic_channel_collection_find(settings, "tsmf"))
 #endif
@@ -3627,11 +3633,11 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "rdpdr", settings))
 			return FALSE;
 
-		if (!freerdp_static_channel_collection_find(settings, "rdpsnd") &&
-		    !freerdp_dynamic_channel_collection_find(settings, "rdpsnd"))
+		if (!freerdp_static_channel_collection_find(settings, RDPSND_DVC_CHANNEL_NAME) &&
+		    !freerdp_dynamic_channel_collection_find(settings, RDPSND_DVC_CHANNEL_NAME))
 		{
 			char* params[2];
-			params[0] = "rdpsnd";
+			params[0] = RDPSND_DVC_CHANNEL_NAME;
 			params[1] = "sys:fake";
 
 			if (!freerdp_client_add_static_channel(settings, 2, (char**)params))
@@ -3678,7 +3684,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->RedirectClipboard)
 	{
 		char* params[1];
-		params[0] = "cliprdr";
+		params[0] = CLIPRDR_SVC_CHANNEL_NAME;
 
 		if (!freerdp_client_add_static_channel(settings, 1, (char**)params))
 			return FALSE;
@@ -3700,19 +3706,21 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->EncomspVirtualChannel)
 	{
-		if (!freerdp_client_load_static_channel_addin(channels, settings, "encomsp", settings))
+		if (!freerdp_client_load_static_channel_addin(channels, settings, ENCOMSP_SVC_CHANNEL_NAME,
+		                                              settings))
 			return FALSE;
 	}
 
 	if (settings->RemdeskVirtualChannel)
 	{
-		if (!freerdp_client_load_static_channel_addin(channels, settings, "remdesk", settings))
+		if (!freerdp_client_load_static_channel_addin(channels, settings, REMDESK_SVC_CHANNEL_NAME,
+		                                              settings))
 			return FALSE;
 	}
 
 	if (settings->RDP2TCPArgs)
 	{
-		if (!freerdp_client_load_static_channel_addin(channels, settings, "rdp2tcp",
+		if (!freerdp_client_load_static_channel_addin(channels, settings, RDP2TCP_DVC_CHANNEL_NAME,
 		                                              settings->RDP2TCPArgs))
 			return FALSE;
 	}
@@ -3727,7 +3735,8 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->RemoteApplicationMode)
 	{
-		if (!freerdp_client_load_static_channel_addin(channels, settings, "rail", settings))
+		if (!freerdp_client_load_static_channel_addin(channels, settings, RAIL_SVC_CHANNEL_NAME,
+		                                              settings))
 			return FALSE;
 	}
 
@@ -3813,7 +3822,8 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->SupportDynamicChannels)
 	{
-		if (!freerdp_client_load_static_channel_addin(channels, settings, "drdynvc", settings))
+		if (!freerdp_client_load_static_channel_addin(channels, settings, DRDYNVC_SVC_CHANNEL_NAME,
+		                                              settings))
 			return FALSE;
 	}
 

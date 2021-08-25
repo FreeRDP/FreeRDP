@@ -590,8 +590,8 @@ static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 			WLog_ERR(TAG, "context->OnOpen failed with %s [%08" PRIX32 "]",
 			         WTSErrorToString(status), status);
 	}
-	rail->MsgsHandle =
-	    channel_client_create_handler(rail->rdpcontext, rail, rail_order_recv, "rail");
+	rail->MsgsHandle = channel_client_create_handler(rail->rdpcontext, rail, rail_order_recv,
+	                                                 RAIL_SVC_CHANNEL_NAME);
 
 	return CHANNEL_RC_OK;
 }
