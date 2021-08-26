@@ -844,6 +844,17 @@ static BOOL freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelI
 	return rdp_send_channel_data(client->context->rdp, channelId, data, size);
 }
 
+static BOOL freerdp_peer_send_channel_packet(freerdp_peer* client, UINT16 channelId,
+                                             size_t totalSize, UINT32 flags, const BYTE* data,
+                                             size_t chunkSize)
+{
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->context);
+	WINPR_ASSERT(client->context->rdp);
+	return rdp_channel_send_packet(client->context->rdp, channelId, totalSize, flags, data,
+	                               chunkSize);
+}
+
 static BOOL freerdp_peer_is_write_blocked(freerdp_peer* peer)
 {
 	rdpTransport* transport;
@@ -1013,6 +1024,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		client->Close = freerdp_peer_close;
 		client->Disconnect = freerdp_peer_disconnect;
 		client->SendChannelData = freerdp_peer_send_channel_data;
+		client->SendChannelPacket = freerdp_peer_send_channel_packet;
 		client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 		client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
 		client->HasMoreToRead = freerdp_peer_has_more_to_read;

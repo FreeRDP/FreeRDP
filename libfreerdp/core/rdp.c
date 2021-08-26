@@ -283,7 +283,12 @@ static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
 
 wStream* rdp_send_stream_init(rdpRdp* rdp)
 {
-	wStream* s = transport_send_stream_init(rdp->transport, 4096);
+	wStream* s;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->transport);
+
+	s = transport_send_stream_init(rdp->transport, 4096);
 
 	if (!s)
 		return NULL;
@@ -1680,6 +1685,12 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 BOOL rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_t size)
 {
 	return freerdp_channel_send(rdp, channelId, data, size);
+}
+
+BOOL rdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize, UINT32 flags,
+                             const BYTE* data, size_t chunkSize)
+{
+	return freerdp_channel_send_packet(rdp, channelId, totalSize, flags, data, chunkSize);
 }
 
 BOOL rdp_send_error_info(rdpRdp* rdp)

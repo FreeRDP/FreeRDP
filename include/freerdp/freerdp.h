@@ -197,6 +197,8 @@ extern "C"
 
 	typedef BOOL (*pSendChannelData)(freerdp* instance, UINT16 channelId, const BYTE* data,
 	                                 size_t size);
+	typedef BOOL (*pSendChannelPacket)(freerdp* instance, UINT16 channelId, size_t totalSize,
+	                                   UINT32 flags, const BYTE* data, size_t chunkSize);
 	typedef BOOL (*pReceiveChannelData)(freerdp* instance, UINT16 channelId, const BYTE* data,
 	                                    size_t size, UINT32 flags, size_t totalSize);
 
@@ -429,7 +431,14 @@ fingerprint. DEPRECATED: Use VerifyChangedCertificateEx */
 		    VerifyChangedCertificateEx; /**< (offset 67)
 		                         Callback for changed certificate validation.
 		                         Used when a certificate differs from stored fingerprint. */
-		UINT64 paddingE[80 - 68];       /* 68 */
+
+		ALIGN64 pSendChannelPacket
+		    SendChannelPacket;    /* (offset 68)
+		                           * Callback for sending RAW data to a channel. In contrast to
+		                           * SendChannelData data fragmentation    is up to the user and this
+		                           * function sends data as is with the provided flags.
+		                           */
+		UINT64 paddingE[80 - 69]; /* 69 */
 	};
 
 	struct rdp_channel_handles
