@@ -56,6 +56,8 @@ extern "C"
 	FREERDP_API CryptoCert crypto_cert_read(BYTE* data, UINT32 length);
 	FREERDP_API BYTE* crypto_cert_hash(X509* xcert, const char* hash, UINT32* length);
 	FREERDP_API char* crypto_cert_fingerprint_by_hash(X509* xcert, const char* hash);
+	FREERDP_API char* crypto_cert_fingerprint_by_hash_ex(X509* xcert, const char* hash,
+	                                                     BOOL separator);
 	FREERDP_API char* crypto_cert_fingerprint(X509* xcert);
 	FREERDP_API BYTE* crypto_cert_pem(X509* xcert, STACK_OF(X509) * chain, size_t* length);
 	FREERDP_API X509* crypto_cert_from_pem(const char* data, size_t length, BOOL fromFile);
