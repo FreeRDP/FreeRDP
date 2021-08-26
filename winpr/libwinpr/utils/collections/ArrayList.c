@@ -27,6 +27,10 @@
 #include <winpr/assert.h>
 #include <winpr/collections.h>
 
+#if defined(_WIN32) && (_MSC_VER < 1800)
+#define va_copy(dest, src) (dest = src)
+#endif
+
 struct _wArrayList
 {
 	size_t capacity;
