@@ -54,6 +54,8 @@ typedef BOOL (*psPeerClientCapabilities)(freerdp_peer* peer);
 
 typedef BOOL (*psPeerSendChannelData)(freerdp_peer* peer, UINT16 channelId, const BYTE* data,
                                       size_t size);
+typedef BOOL (*psPeerSendChannelPacket)(freerdp_peer* client, UINT16 channelId, size_t totalSize,
+                                        UINT32 flags, const BYTE* data, size_t chunkSize);
 typedef BOOL (*psPeerReceiveChannelData)(freerdp_peer* peer, UINT16 channelId, const BYTE* data,
                                          size_t size, UINT32 flags, size_t totalSize);
 
@@ -134,6 +136,8 @@ struct rdp_freerdp_peer
 	psPeerClientCapabilities ClientCapabilities;
 	psPeerComputeNtlmHash ComputeNtlmHash;
 	psPeerLicenseCallback LicenseCallback;
+
+	psPeerSendChannelPacket SendChannelPacket;
 };
 
 #ifdef __cplusplus
