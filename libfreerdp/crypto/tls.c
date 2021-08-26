@@ -1176,6 +1176,33 @@ static BOOL is_accepted(rdpTls* tls, const BYTE* pem, size_t length)
 	return FALSE;
 }
 
+static BOOL compare_fingerprint(const char* fp, const char* hash, CryptoCert cert, BOOL separator)
+{
+	BOOL equal;
+	char* strhash;
+
+	WINPR_ASSERT(fp);
+	WINPR_ASSERT(hash);
+	WINPR_ASSERT(cert);
+
+	strhash = crypto_cert_fingerprint_by_hash_ex(cert->px509, hash, separator);
+	if (!strhash)
+		return FALSE;
+
+	equal = (_stricmp(strhash, fp) == 0);
+	free(strhash);
+	return equal;
+}
+
+static BOOL compare_fingerprint_all(const char* fp, const char* hash, CryptoCert cert)
+{
+	if (compare_fingerprint(fp, hash, cert, FALSE))
+		return TRUE;
+	if (compare_fingerprint(fp, hash, cert, TRUE))
+		return TRUE;
+	return FALSE;
+}
+
 static BOOL is_accepted_fingerprint(CryptoCert cert, const char* CertificateAcceptedFingerprints)
 {
 	BOOL rc = FALSE;
@@ -1187,30 +1214,22 @@ static BOOL is_accepted_fingerprint(CryptoCert cert, const char* CertificateAcce
 		while (cur)
 		{
 			char* subcontext = NULL;
-			BOOL equal;
-			char* strhash;
 			const char* h = strtok_s(cur, ":", &subcontext);
 			const char* fp;
 
 			if (!h)
-				continue;
+				goto next;
 
 			fp = h + strlen(h) + 1;
 			if (!fp)
-				continue;
+				goto next;
 
-			strhash = crypto_cert_fingerprint_by_hash(cert->px509, h);
-			if (!strhash)
-				continue;
-
-			equal = (_stricmp(strhash, fp) == 0);
-			free(strhash);
-			if (equal)
+			if (compare_fingerprint_all(fp, h, cert))
 			{
 				rc = TRUE;
 				break;
 			}
-
+		next:
 			cur = strtok_s(NULL, ",", &context);
 		}
 		free(copy);

@@ -276,10 +276,15 @@ BYTE* crypto_cert_hash(X509* xcert, const char* hash, UINT32* length)
 
 char* crypto_cert_fingerprint_by_hash(X509* xcert, const char* hash)
 {
+	return crypto_cert_fingerprint_by_hash_ex(xcert, hash, 0);
+}
+
+char* crypto_cert_fingerprint_by_hash_ex(X509* xcert, const char* hash, BOOL separator)
+{
 	UINT32 fp_len, i;
+	size_t pos, size;
 	BYTE* fp;
-	char* p;
-	char* fp_buffer;
+	char* fp_buffer = NULL;
 	if (!xcert)
 	{
 		WLog_ERR(TAG, "Invalid certificate %p", xcert);
@@ -294,23 +299,35 @@ char* crypto_cert_fingerprint_by_hash(X509* xcert, const char* hash)
 	if (!fp)
 		return NULL;
 
-	fp_buffer = calloc(fp_len * 3 + 1, sizeof(char));
+	size = fp_len * 3 + 1;
+	fp_buffer = calloc(size, sizeof(char));
 	if (!fp_buffer)
 		goto fail;
 
-	p = fp_buffer;
+	pos = 0;
 
 	for (i = 0; i < (fp_len - 1); i++)
 	{
-		sprintf_s(p, (fp_len - i) * 3, "%02" PRIx8 ":", fp[i]);
-		p = &fp_buffer[(i + 1) * 3];
+		int rc;
+		char* p = &fp_buffer[pos];
+		if (separator)
+			rc = sprintf_s(p, size - pos, "%02" PRIx8 ":", fp[i]);
+		else
+			rc = sprintf_s(p, size - pos, "%02" PRIx8, fp[i]);
+		if (rc <= 0)
+			goto fail;
+		pos += (size_t)rc;
 	}
 
-	sprintf_s(p, (fp_len - i) * 3, "%02" PRIx8 "", fp[i]);
-fail:
+	sprintf_s(&fp_buffer[pos], size - pos, "%02" PRIx8 "", fp[i]);
+
 	free(fp);
 
 	return fp_buffer;
+fail:
+	free(fp);
+	free(fp_buffer);
+	return NULL;
 }
 
 static char* crypto_print_name(X509_NAME* name)
