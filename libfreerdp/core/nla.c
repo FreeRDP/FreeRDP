@@ -1098,7 +1098,7 @@ fail:
 	{
 		WLog_ERR(TAG, "nla_recv() error: %d", status);
 		Stream_Free(s, TRUE);
-		goto fail;
+		return NULL;
 	}
 
 	return s;
