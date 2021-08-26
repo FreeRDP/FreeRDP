@@ -526,7 +526,7 @@ static const SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const
 	return NULL;
 }
 
-static SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameA(const SEC_CHAR* Name)
+static const SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameA(const SEC_CHAR* Name)
 {
 	int status;
 	SEC_WCHAR* NameW = NULL;
@@ -829,7 +829,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_ExportSecurityContext(PCtxtHandle phConte
 {
 	SEC_CHAR* Name;
 	SECURITY_STATUS status;
-	SecurityFunctionTableW* table;
+	const SecurityFunctionTableW* table;
 	Name = (SEC_CHAR*)sspi_SecureHandleGetUpperPointer(phContext);
 
 	if (!Name)
@@ -895,7 +895,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextW(SEC_WCHAR* pszPack
 {
 	SEC_CHAR* Name;
 	SECURITY_STATUS status;
-	SecurityFunctionTableW* table;
+	const SecurityFunctionTableW* table;
 	Name = (SEC_CHAR*)sspi_SecureHandleGetUpperPointer(phContext);
 
 	if (!Name)
@@ -1173,7 +1173,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_ImpersonateSecurityContext(PCtxtHandle ph
 {
 	SEC_CHAR* Name;
 	SECURITY_STATUS status;
-	SecurityFunctionTableW* table;
+	const SecurityFunctionTableW* table;
 	Name = (SEC_CHAR*)sspi_SecureHandleGetUpperPointer(phContext);
 
 	if (!Name)
@@ -1208,7 +1208,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextW(
 {
 	SEC_CHAR* Name;
 	SECURITY_STATUS status;
-	SecurityFunctionTableW* table;
+	const SecurityFunctionTableW* table;
 	Name = (SEC_CHAR*)sspi_SecureHandleGetUpperPointer(phCredential);
 
 	if (!Name)
@@ -1280,7 +1280,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesW(PCtxtHandle phCon
 {
 	SEC_CHAR* Name;
 	SECURITY_STATUS status;
-	SecurityFunctionTableW* table;
+	const SecurityFunctionTableW* table;
 	Name = (SEC_CHAR*)sspi_SecureHandleGetUpperPointer(phContext);
 
 	if (!Name)
@@ -1346,7 +1346,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityContextToken(PCtxtHandle phC
 {
 	SEC_CHAR* Name;
 	SECURITY_STATUS status;
-	SecurityFunctionTableW* table;
+	const SecurityFunctionTableW* table;
 	Name = (SEC_CHAR*)sspi_SecureHandleGetUpperPointer(phContext);
 
 	if (!Name)
@@ -1380,7 +1380,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesW(PCtxtHandle phConte
 {
 	SEC_CHAR* Name;
 	SECURITY_STATUS status;
-	SecurityFunctionTableW* table;
+	const SecurityFunctionTableW* table;
 	Name = (SEC_CHAR*)sspi_SecureHandleGetUpperPointer(phContext);
 
 	if (!Name)
@@ -1446,7 +1446,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_RevertSecurityContext(PCtxtHandle phConte
 {
 	SEC_CHAR* Name;
 	SECURITY_STATUS status;
-	SecurityFunctionTableW* table;
+	const SecurityFunctionTableW* table;
 	Name = (SEC_CHAR*)sspi_SecureHandleGetUpperPointer(phContext);
 
 	if (!Name)

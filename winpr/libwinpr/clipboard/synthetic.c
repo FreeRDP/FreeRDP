@@ -229,7 +229,7 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 	}
 	else if (formatId == ClipboardGetFormatId(clipboard, "image/bmp"))
 	{
-		BITMAPFILEHEADER* pFileHeader;
+		const BITMAPFILEHEADER* pFileHeader;
 
 		if (SrcSize < (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER)))
 			return NULL;
@@ -290,7 +290,7 @@ static void* clipboard_synthesize_image_bmp(wClipboard* clipboard, UINT32 format
 	if (formatId == CF_DIB)
 	{
 		BYTE* pDst;
-		BITMAPINFOHEADER* pInfoHeader;
+		const BITMAPINFOHEADER* pInfoHeader;
 		BITMAPFILEHEADER* pFileHeader;
 
 		if (SrcSize < sizeof(BITMAPINFOHEADER))
@@ -353,7 +353,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 
 			if ((bom[0] == 0xFE) && (bom[1] == 0xFF))
 			{
-				ByteSwapUnicode((const WCHAR*)data, (int)(SrcSize / 2));
+				ByteSwapUnicode((WCHAR*)data, (int)(SrcSize / 2));
 			}
 
 			if ((bom[0] == 0xFF) && (bom[1] == 0xFE))
