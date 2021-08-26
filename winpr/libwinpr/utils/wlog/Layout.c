@@ -88,7 +88,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 			{
 				if ((p[0] == 'l') && (p[1] == 'v')) /* log level */
 				{
-					args[argc++] = (const void*)WLOG_LEVELS[message->Level];
+					args[argc++] = (void*)WLOG_LEVELS[message->Level];
 					format[index++] = '%';
 					format[index++] = 's';
 					p++;
@@ -120,7 +120,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 				}
 				else if ((p[0] == 'f') && (p[1] == 'n')) /* function */
 				{
-					args[argc++] = (const void*)message->FunctionName;
+					args[argc++] = (void*)message->FunctionName;
 					format[index++] = '%';
 					format[index++] = 's';
 					p++;

@@ -690,8 +690,8 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 		const FILEDESCRIPTORW* cur = &descriptors[x];
 		size_t curLen = _wcsnlen(cur->cFileName, ARRAYSIZE(cur->cFileName));
 		char* curName = NULL;
-		char* stop_at = NULL;
-		char* previous_at = NULL;
+		const char* stop_at = NULL;
+		const char* previous_at = NULL;
 		rc = ConvertFromUnicode(CP_UTF8, 0, cur->cFileName, (int)curLen, &curName, 0, NULL, NULL);
 
 		rc = _snprintf(&dst[pos], alloc - pos, "%s%s/", lineprefix, clipboard->delegate.basePath);

@@ -759,7 +759,7 @@ static const SYSTEM_LOCALE* freerdp_detect_system_locale(void)
 
 DWORD freerdp_get_system_locale_id(void)
 {
-	SYSTEM_LOCALE* locale;
+	const SYSTEM_LOCALE* locale;
 	locale = freerdp_detect_system_locale();
 
 	if (locale != NULL)
@@ -786,7 +786,7 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 	size_t i, j;
 	char language[LOCALE_LANGUAGE_LEN] = { 0 };
 	char country[LOCALE_COUNTRY_LEN] = { 0 };
-	SYSTEM_LOCALE* locale;
+	const SYSTEM_LOCALE* locale;
 	freerdp_get_system_language_and_country_codes(language, country);
 
 	if ((strcmp(language, "C") == 0) || (strcmp(language, "POSIX") == 0))

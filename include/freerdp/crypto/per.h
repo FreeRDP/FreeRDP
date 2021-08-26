@@ -47,7 +47,8 @@ extern "C"
 	FREERDP_API BOOL per_write_enumerated(wStream* s, BYTE enumerated, BYTE count);
 	FREERDP_API BOOL per_write_object_identifier(wStream* s, const BYTE oid[6]);
 	FREERDP_API BOOL per_read_object_identifier(wStream* s, const BYTE oid[6]);
-	FREERDP_API BOOL per_read_octet_string(wStream* s, BYTE* oct_str, UINT16 length, UINT16 min);
+	FREERDP_API BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length,
+	                                       UINT16 min);
 	FREERDP_API BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length,
 	                                        UINT16 min);
 	FREERDP_API BOOL per_read_numeric_string(wStream* s, int min);

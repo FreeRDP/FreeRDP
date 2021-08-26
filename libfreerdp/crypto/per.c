@@ -427,7 +427,7 @@ static void per_write_string(wStream* s, BYTE* str, int length)
  * @return
  */
 
-BOOL per_read_octet_string(wStream* s, BYTE* oct_str, UINT16 length, UINT16 min)
+BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
 {
 	UINT16 i;
 	UINT16 mlength;
