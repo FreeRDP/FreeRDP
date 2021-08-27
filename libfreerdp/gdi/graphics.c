@@ -215,7 +215,7 @@ static BOOL gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL p
 }
 
 /* Glyph Class */
-static BOOL gdi_Glyph_New(rdpContext* context, const rdpGlyph* glyph)
+static BOOL gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 {
 	BYTE* data;
 	gdiGlyph* gdi_glyph;

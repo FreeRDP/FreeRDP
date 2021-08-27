@@ -1490,14 +1490,14 @@ struct _WtsApiFunctionTable
 typedef struct _WtsApiFunctionTable WtsApiFunctionTable;
 typedef WtsApiFunctionTable* PWtsApiFunctionTable;
 
-typedef PWtsApiFunctionTable(CDECL* INIT_WTSAPI_FN)(void);
+typedef const WtsApiFunctionTable*(CDECL* INIT_WTSAPI_FN)(void);
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	WINPR_API BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table);
+	WINPR_API BOOL WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table);
 	WINPR_API const CHAR* WTSErrorToString(UINT error);
 	WINPR_API const CHAR* WTSSessionStateToString(WTS_CONNECTSTATE_CLASS state);
 

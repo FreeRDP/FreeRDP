@@ -601,7 +601,7 @@ static BOOL shadow_client_activate(freerdp_peer* peer)
 	return shadow_client_refresh_rect(&client->context, 0, NULL);
 }
 
-static BOOL shadow_client_logon(freerdp_peer* peer, SEC_WINNT_AUTH_IDENTITY* identity,
+static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* identity,
                                 BOOL automatic)
 {
 	char* user = NULL;

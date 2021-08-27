@@ -38,7 +38,7 @@ rdpBitmap* Bitmap_Alloc(rdpContext* context)
 
 	if (bitmap)
 	{
-		CopyMemory(bitmap, graphics->Bitmap_Prototype, sizeof(rdpBitmap));
+		*bitmap = *graphics->Bitmap_Prototype;
 		bitmap->data = NULL;
 	}
 
@@ -84,9 +84,13 @@ BOOL Bitmap_SetDimensions(rdpBitmap* bitmap, UINT16 width, UINT16 height)
 	return TRUE;
 }
 
-void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap)
+void graphics_register_bitmap(rdpGraphics* graphics, const rdpBitmap* bitmap)
 {
-	CopyMemory(graphics->Bitmap_Prototype, bitmap, sizeof(rdpBitmap));
+	WINPR_ASSERT(graphics);
+	WINPR_ASSERT(graphics->Bitmap_Prototype);
+	WINPR_ASSERT(bitmap);
+
+	*graphics->Bitmap_Prototype = *bitmap;
 }
 
 /* Pointer Class */
@@ -99,7 +103,7 @@ rdpPointer* Pointer_Alloc(rdpContext* context)
 
 	if (pointer)
 	{
-		CopyMemory(pointer, graphics->Pointer_Prototype, sizeof(rdpPointer));
+		*pointer = *graphics->Pointer_Prototype;
 	}
 
 	return pointer;
@@ -118,9 +122,13 @@ static BOOL Pointer_New(rdpContext* context, rdpPointer* pointer)
 }
 
 /* static method */
-void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
+void graphics_register_pointer(rdpGraphics* graphics, const rdpPointer* pointer)
 {
-	CopyMemory(graphics->Pointer_Prototype, pointer, sizeof(rdpPointer));
+	WINPR_ASSERT(graphics);
+	WINPR_ASSERT(graphics->Pointer_Prototype);
+	WINPR_ASSERT(pointer);
+
+	*graphics->Pointer_Prototype = *pointer;
 }
 
 /* Glyph Class */
@@ -170,9 +178,13 @@ rdpGlyph* Glyph_Alloc(rdpContext* context, INT32 x, INT32 y, UINT32 cx, UINT32 c
 	return glyph;
 }
 
-void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph)
+void graphics_register_glyph(rdpGraphics* graphics, const rdpGlyph* glyph)
 {
-	CopyMemory(graphics->Glyph_Prototype, glyph, sizeof(rdpGlyph));
+	WINPR_ASSERT(graphics);
+	WINPR_ASSERT(graphics->Glyph_Prototype);
+	WINPR_ASSERT(glyph);
+
+	*graphics->Glyph_Prototype = *glyph;
 }
 
 /* Graphics Module */
