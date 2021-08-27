@@ -92,7 +92,7 @@ static BOOL pf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 }
 
 /* Glyph Class */
-static BOOL pf_Glyph_New(rdpContext* context, const rdpGlyph* glyph)
+static BOOL pf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 {
 	return TRUE;
 }

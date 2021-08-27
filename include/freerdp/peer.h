@@ -48,7 +48,8 @@ typedef void (*psPeerDisconnect)(freerdp_peer* peer);
 typedef BOOL (*psPeerCapabilities)(freerdp_peer* peer);
 typedef BOOL (*psPeerPostConnect)(freerdp_peer* peer);
 typedef BOOL (*psPeerActivate)(freerdp_peer* peer);
-typedef BOOL (*psPeerLogon)(freerdp_peer* peer, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic);
+typedef BOOL (*psPeerLogon)(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* identity,
+                            BOOL automatic);
 typedef BOOL (*psPeerAdjustMonitorsLayout)(freerdp_peer* peer);
 typedef BOOL (*psPeerClientCapabilities)(freerdp_peer* peer);
 

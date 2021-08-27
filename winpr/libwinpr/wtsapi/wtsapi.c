@@ -46,7 +46,7 @@
 
 static HMODULE g_WtsApiModule = NULL;
 
-static PWtsApiFunctionTable g_WtsApi = NULL;
+static const WtsApiFunctionTable* g_WtsApi = NULL;
 
 #if defined(_WIN32)
 static HMODULE g_WtsApi32Module = NULL;
@@ -674,7 +674,7 @@ const CHAR* WTSSessionStateToString(WTS_CONNECTSTATE_CLASS state)
 	return "INVALID_STATE";
 }
 
-BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)
+BOOL WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table)
 {
 	/* Use InitOnceExecuteOnce here as well - otherwise a table set with this
 	   function is overriden on the first use of a WTS* API call (due to
@@ -777,7 +777,7 @@ static BOOL CALLBACK InitializeWtsApiStubs(PINIT_ONCE once, PVOID param, PVOID* 
 	WINPR_UNUSED(context);
 	if (param)
 	{
-		g_WtsApi = (PWtsApiFunctionTable)param;
+		g_WtsApi = (const WtsApiFunctionTable*)param;
 		return TRUE;
 	}
 

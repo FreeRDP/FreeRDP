@@ -141,7 +141,8 @@ static BOOL wf_peer_activate(freerdp_peer* client)
 	return TRUE;
 }
 
-static BOOL wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic)
+static BOOL wf_peer_logon(freerdp_peer* client, const SEC_WINNT_AUTH_IDENTITY* identity,
+                          BOOL automatic)
 {
 	wfreerdp_server_peer_callback_event(((rdpContext*)client->context)->peer->pId,
 	                                    FREERDP_SERVER_WIN_SRV_CALLBACK_EVENT_AUTH);
