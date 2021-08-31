@@ -1,0 +1,210 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "PPee RDP.ipynb",
+      "provenance": [],
+      "collapsed_sections": [],
+      "toc_visible": true,
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "accelerator": "GPU"
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/peepee23/ForRDP/blob/main/Colab%20RDP/PPee%20RDP.ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "t4yNp3KmLtZ6",
+        "cellView": "form"
+      },
+      "source": [
+        "#@title **Create User**\n",
+        "#@markdown Enter Username and Password\n",
+        "\n",
+        "import os\n",
+        "\n",
+        "username = \"user\" #@param {type:\"string\"}\n",
+        "password = \"root\" #@param {type:\"string\"}\n",
+        "\n",
+        "print(\"Creating User and Setting it up\")\n",
+        "\n",
+        "# Creation of user\n",
+        "os.system(f\"useradd -m {username}\")\n",
+        "\n",
+        "# Add user to sudo group\n",
+        "os.system(f\"adduser {username} sudo\")\n",
+        "    \n",
+        "# Set password of user to 'root'\n",
+        "os.system(f\"echo '{username}:{password}' | sudo chpasswd\")\n",
+        "\n",
+        "# Change default shell from sh to bash\n",
+        "os.system(\"sed -i 's/\\/bin\\/sh/\\/bin\\/bash/g' /etc/passwd\")\n",
+        "\n",
+        "print(\"User Created and Configured\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Q6bl1b0EifVG",
+        "cellView": "form"
+      },
+      "source": [
+        "#@title **Creat RDP**\n",
+        "#@markdown  It takes 2-5 minutes for installation\n",
+        "\n",
+        "import os\n",
+        "import subprocess\n",
+        "\n",
+        "#@markdown  Visit http://remotedesktop.google.com/headless and Copy the command after authentication\n",
+        "\n",
+        "CRP = \"\" #@param {type:\"string\"}\n",
+        "\n",
+        "#@markdown Enter a pin more or equal to 6 digits\n",
+        "Pin = 123456 #@param {type: \"integer\"}\n",
+        "\n",
+        "\n",
+        "class CRD:\n",
+        "    def __init__(self):\n",
+        "        os.system(\"apt update\")\n",
+        "        self.installCRD()\n",
+        "        self.installDesktopEnvironment()\n",
+        "        self.installGoogleChorme()\n",
+        "        self.finish()\n",
+        "\n",
+        "    @staticmethod\n",
+        "    def installCRD():\n",
+        "        print(\"Installing Chrome Remote Desktop\")\n",
+        "        subprocess.run(['wget', 'https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb'], stdout=subprocess.PIPE)\n",
+        "        subprocess.run(['dpkg', '--install', 'chrome-remote-desktop_current_amd64.deb'], stdout=subprocess.PIPE)\n",
+        "        subprocess.run(['apt', 'install', '--assume-yes', '--fix-broken'], stdout=subprocess.PIPE)\n",
+        "\n",
+        "    @staticmethod\n",
+        "    def installDesktopEnvironment():\n",
+        "        print(\"Installing Desktop Environment\")\n",
+        "        os.system(\"export DEBIAN_FRONTEND=noninteractive\")\n",
+        "        os.system(\"apt install --assume-yes xfce4 desktop-base xfce4-terminal\")\n",
+        "        os.system(\"bash -c 'echo \\\"exec /etc/X11/Xsession /usr/bin/xfce4-session\\\" > /etc/chrome-remote-desktop-session'\")\n",
+        "        os.system(\"apt remove --assume-yes gnome-terminal\")\n",
+        "        os.system(\"apt install --assume-yes xscreensaver\")\n",
+        "        os.system(\"systemctl disable lightdm.service\")\n",
+        "\n",
+        "    @staticmethod\n",
+        "    def installGoogleChorme():\n",
+        "        print(\"Installing Google Chrome\")\n",
+        "        subprocess.run([\"wget\", \"https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb\"], stdout=subprocess.PIPE)\n",
+        "        subprocess.run([\"dpkg\", \"--install\", \"google-chrome-stable_current_amd64.deb\"], stdout=subprocess.PIPE)\n",
+        "        subprocess.run(['apt', 'install', '--assume-yes', '--fix-broken'], stdout=subprocess.PIPE)\n",
+        "\n",
+        "    @staticmethod\n",
+        "    def finish():\n",
+        "        print(\"Finalizing\")\n",
+        "        os.system(f\"adduser {username} chrome-remote-desktop\")\n",
+        "        command = f\"{CRP} --pin={Pin}\"\n",
+        "        os.system(f\"su - {username} -c '{command}'\")\n",
+        "        os.system(\"service chrome-remote-desktop start\")\n",
+        "        print(\"Finished Succesfully\")\n",
+        "\n",
+        "\n",
+        "try:\n",
+        "    if username:\n",
+        "        if CRP == \"\":\n",
+        "            print(\"Please enter authcode from the given link\")\n",
+        "        elif len(str(Pin)) < 6:\n",
+        "            print(\"Enter a pin more or equal to 6 digits\")\n",
+        "        else:\n",
+        "            CRD()\n",
+        "except NameError as e:\n",
+        "    print(\"username variable not found\")\n",
+        "    print(\"Create a User First\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "cellView": "form",
+        "id": "OXsG6_pxeEFu"
+      },
+      "source": [
+        "#@title Package Installer { vertical-output: true }\n",
+        "run = True #@param {type:\"boolean\"}\n",
+        "#@markdown *Package management actions (gasp)*\n",
+        "action = \"Install\" #@param [\"Install\", \"Check Installed\", \"Remove\"] {allow-input: true}\n",
+        "\n",
+        "package = \"wget\" #@param {type:\"string\"}\n",
+        "system = \"apt\" #@param [\"apt\", \"\"]\n",
+        "\n",
+        "def install(package=package, system=system):\n",
+        "  if system == \"apt\":\n",
+        "    !apt --fix-broken install > /dev/null 2>&1\n",
+        "    !killall apt > /dev/null 2>&1\n",
+        "    !rm /var/lib/dpkg/lock-frontend\n",
+        "    !dpkg --configure -a > /dev/null 2>&1\n",
+        "\n",
+        "    !apt-get  install -o Dpkg::Options::=\"--force-confold\" --no-install-recommends -y $package\n",
+        "    \n",
+        "    !dpkg --configure -a > /dev/null 2>&1 \n",
+        "    !apt  update > /dev/null 2>&1\n",
+        "\n",
+        "    !apt install $package > /dev/null 2>&1\n",
+        "\n",
+        "def check_installed(package=package, system=system):\n",
+        "  if system == \"apt\":\n",
+        "    !apt list --installed | grep $package\n",
+        "\n",
+        "def remove(package=package, system=system):\n",
+        "  if system == \"apt\":\n",
+        "    !apt remove $package\n",
+        "\n",
+        "if run:\n",
+        "  if action == \"Install\":\n",
+        "    install()\n",
+        "  if action == \"Check Installed\":\n",
+        "    check_installed()\n",
+        "  if action == \"Remove\":\n",
+        "    remove()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "UoeBdz6_KE6a",
+        "cellView": "form"
+      },
+      "source": [
+        "#@title **Colab Shutdown**\n",
+        "\n",
+
+        "#@markdown To Sleep Colab\n",
+        "Sleep = True #@param {type:'boolean'}\n",
+        
+        "if Sleep:\n",
+        "    from time import sleep\n",
+        "    sleep(43200)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
