@@ -32,6 +32,10 @@ typedef struct xf_context xfContext;
 #include <X11/Xcursor/Xcursor.h>
 #endif
 
+#ifdef WITH_XI
+#include <X11/extensions/XInput2.h>
+#endif
+
 #include <freerdp/api.h>
 
 #include "xf_window.h"
@@ -119,6 +123,21 @@ typedef struct
 	int button;
 	UINT16 flags;
 } button_map;
+
+#if defined(WITH_XI)
+#define MAX_CONTACTS 20
+
+typedef struct touch_contact
+{
+	int id;
+	int count;
+	double pos_x;
+	double pos_y;
+	double last_x;
+	double last_y;
+
+} touchContact;
+#endif
 
 struct xf_context
 {
@@ -270,6 +289,18 @@ struct xf_context
 	UINT32 locked;
 	BOOL firstPressRightCtrl;
 	BOOL ungrabKeyboardWithRightCtrl;
+
+#if defined(WITH_XI)
+	touchContact contacts[MAX_CONTACTS];
+	int active_contacts;
+	int lastEvType;
+	XIDeviceEvent lastEvent;
+	double firstDist;
+	double lastDist;
+	double z_vector;
+	double px_vector;
+	double py_vector;
+#endif
 };
 
 BOOL xf_create_window(xfContext* xfc);

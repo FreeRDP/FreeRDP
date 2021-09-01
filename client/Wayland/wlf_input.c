@@ -23,6 +23,8 @@
 
 #include <linux/input.h>
 
+#include <winpr/assert.h>
+
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/client/rdpei.h>
 #include <uwac/uwac.h>
@@ -31,18 +33,6 @@
 #include "wlf_input.h"
 
 #define TAG CLIENT_TAG("wayland.input")
-
-#define MAX_CONTACTS 20
-
-typedef struct touch_contact
-{
-	int id;
-	double pos_x;
-	double pos_y;
-	BOOL emulate_mouse;
-} touchContact;
-
-static touchContact contacts[MAX_CONTACTS];
 
 static BOOL scale_signed_coordinates(rdpContext* context, int32_t* x, int32_t* y,
                                      BOOL fromLocalToRDP)
@@ -389,18 +379,20 @@ BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent*
 BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 {
 	int32_t x = 0, y = 0;
-	int i;
+	size_t i;
 	int touchId;
 	int contactId;
+	wlfContext* wlf;
 
 	if (!instance || !ev || !instance->context)
 		return FALSE;
 
+	wlf = (wlfContext*)instance->context;
 	touchId = ev->id;
 
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
-		touchContact* contact = &contacts[i];
+		touchContact* contact = &wlf->contacts[i];
 		if (contact->id == touchId)
 		{
 			contact->id = 0;
@@ -418,9 +410,9 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-	RdpeiClientContext* rdpei = ((wlfContext*)instance->context)->rdpei;
+	RdpeiClientContext* rdpei = wlf->rdpei;
 
-	if (contacts[i].emulate_mouse == TRUE)
+	if (wlf->contacts[i].emulate_mouse == TRUE)
 	{
 		UINT16 flags = 0;
 		flags |= PTR_FLAGS_BUTTON1;
@@ -436,6 +428,7 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 	if (!rdpei)
 		return FALSE;
 
+	WINPR_ASSERT(rdpei->TouchEnd);
 	rdpei->TouchEnd(rdpei, touchId, x, y, &contactId);
 
 	return TRUE;
@@ -447,23 +440,23 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 	int i;
 	int touchId;
 	int contactId;
-	wlfContext* context;
+	wlfContext* wlf;
 
 	if (!instance || !ev || !instance->context)
 		return FALSE;
-
+	wlf = (wlfContext*)instance->context;
 	x = ev->x;
 	y = ev->y;
 	touchId = ev->id;
 
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
-		if (contacts[i].id == 0)
+		if (wlf->contacts[i].id == 0)
 		{
-			contacts[i].id = touchId;
-			contacts[i].pos_x = x;
-			contacts[i].pos_y = y;
-			contacts[i].emulate_mouse = FALSE;
+			wlf->contacts[i].id = touchId;
+			wlf->contacts[i].pos_x = x;
+			wlf->contacts[i].pos_y = y;
+			wlf->contacts[i].emulate_mouse = FALSE;
 			break;
 		}
 	}
@@ -476,13 +469,13 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-	context = (wlfContext*)instance->context;
-	RdpeiClientContext* rdpei = context->rdpei;
+	RdpeiClientContext* rdpei = wlf->rdpei;
+	WINPR_ASSERT(rdpei);
 
 	// Emulate mouse click if touch is not possible, like in login screen
 	if (!rdpei)
 	{
-		contacts[i].emulate_mouse = TRUE;
+		wlf->contacts[i].emulate_mouse = TRUE;
 
 		UINT16 flags = 0;
 		flags |= PTR_FLAGS_DOWN;
@@ -496,6 +489,7 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 		return FALSE;
 	}
 
+	WINPR_ASSERT(rdpei->TouchBegin);
 	rdpei->TouchBegin(rdpei, touchId, x, y, &contactId);
 
 	return TRUE;
@@ -507,25 +501,26 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 	int i;
 	int touchId;
 	int contactId;
+	wlfContext* wlf;
 
 	if (!instance || !ev || !instance->context)
 		return FALSE;
-
+	wlf = (wlfContext*)instance->context;
 	x = ev->x;
 	y = ev->y;
 	touchId = ev->id;
 
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
-		if (contacts[i].id == touchId)
+		if (wlf->contacts[i].id == touchId)
 		{
-			if ((fabs(contacts[i].pos_x - x) < DBL_EPSILON) &&
-			    (fabs(contacts[i].pos_y - y) < DBL_EPSILON))
+			if ((fabs(wlf->contacts[i].pos_x - x) < DBL_EPSILON) &&
+			    (fabs(wlf->contacts[i].pos_y - y) < DBL_EPSILON))
 			{
 				return TRUE;
 			}
-			contacts[i].pos_x = x;
-			contacts[i].pos_y = y;
+			wlf->contacts[i].pos_x = x;
+			wlf->contacts[i].pos_y = y;
 			break;
 		}
 	}
@@ -540,7 +535,7 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 
 	RdpeiClientContext* rdpei = ((wlfContext*)instance->context)->rdpei;
 
-	if (contacts[i].emulate_mouse == TRUE)
+	if (wlf->contacts[i].emulate_mouse == TRUE)
 	{
 		return TRUE;
 	}
@@ -548,6 +543,7 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 	if (!rdpei)
 		return FALSE;
 
+	WINPR_ASSERT(rdpei->TouchUpdate);
 	rdpei->TouchUpdate(rdpei, touchId, x, y, &contactId);
 
 	return TRUE;
