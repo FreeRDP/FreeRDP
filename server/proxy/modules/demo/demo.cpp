@@ -3,6 +3,8 @@
  * FreeRDP Proxy Server Demo C++ Module
  *
  * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
+ * Copyright 2021 Armin Novak <anovak@thincast.com>
+ * Copyright 2021 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +36,7 @@ static BOOL demo_plugin_unload(proxyPlugin* plugin)
 
 	/* Here we have to free up our custom data storage. */
 	if (plugin)
-		free(plugin->custom);
+		delete (plugin->custom);
 
 	return TRUE;
 }
@@ -286,7 +288,7 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 		int somesetting;
 	};
 	struct demo_custom_data* custom;
-	proxyPlugin plugin;
+	proxyPlugin plugin = {};
 
 	plugin.name = plugin_name;
 	plugin.description = plugin_desc;
@@ -313,7 +315,7 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 	plugin.ServerPeerLogon = demo_server_peer_logon;
 	plugin.userdata = userdata;
 
-	custom = (struct demo_custom_data*)calloc(1, sizeof(struct demo_custom_data));
+	custom = new (struct demo_custom_data);
 	if (!custom)
 		return FALSE;
 
