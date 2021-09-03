@@ -65,7 +65,6 @@ extern "C"
 	 *         <0 -> Abort, an error occured
 	 */
 	FREERDP_API SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplete);
-
 	FREERDP_API rdpContext* transport_get_context(rdpTransport* transport);
 	FREERDP_API rdpTransport* freerdp_get_transport(rdpContext* context);
 

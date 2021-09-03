@@ -137,7 +137,6 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 wStream* transport_send_stream_init(rdpTransport* transport, size_t size)
 {
 	wStream* s;
-
 	WINPR_ASSERT(transport);
 
 	if (!(s = StreamPool_Take(transport->ReceivePool, size)))
@@ -1258,7 +1257,6 @@ rdpTransport* transport_new(rdpContext* context)
 	rdpTransport* transport = (rdpTransport*)calloc(1, sizeof(rdpTransport));
 
 	WINPR_ASSERT(context);
-
 	if (!transport)
 		return NULL;
 
