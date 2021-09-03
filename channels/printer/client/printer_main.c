@@ -300,6 +300,7 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	void* CachedPrinterConfigData = NULL;
 	UINT32 CachedFieldsLen = 0;
 	UINT32 PrinterNameLen = 0;
+	WCHAR* wptr = NULL;
 
 	if (!settings || !printer)
 		return FALSE;
@@ -359,6 +360,8 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	if (!Stream_EnsureRemainingCapacity(printer_dev->device.data, PrinterNameLen))
 		goto fail;
 
+	for (wptr = wname; (wptr = _wcschr(wptr, L'\\'));)
+		*wptr = L'_';
 	Stream_Write(printer_dev->device.data, wname, PrinterNameLen);
 
 	if (!Stream_EnsureRemainingCapacity(printer_dev->device.data, CachedFieldsLen))
