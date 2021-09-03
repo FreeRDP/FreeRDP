@@ -1472,10 +1472,11 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 		rdp->autodetect->bandwidthMeasureByteCount += length;
 	}
 
-	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
+	if (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_ENCRYPTED)
 	{
-		UINT16 flags =
-		    (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0;
+		UINT16 flags = (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_SECURE_CHECKSUM)
+		                   ? SEC_SECURE_CHECKSUM
+		                   : 0;
 
 		if (!rdp_decrypt(rdp, s, &length, flags))
 		{
