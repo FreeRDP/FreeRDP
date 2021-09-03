@@ -260,13 +260,13 @@ static int testSuccess(int port)
 		goto fail;
 
 	// Start sample server locally.
-	commandLineLen = strlen(exe) + strlen("--local-only --port=XXXXX") + 1;
+	commandLineLen = strlen(exe) + strlen("--port=XXXXX") + 1;
 	commandLine = malloc(commandLineLen);
 
 	if (!commandLine)
 		goto fail;
 
-	_snprintf(commandLine, commandLineLen, "%s --local-only --port=%d", exe, port);
+	_snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
 	memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 
