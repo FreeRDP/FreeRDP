@@ -857,6 +857,9 @@ void rdpsnd_server_context_reset(RdpsndServerContext* context)
 
 void rdpsnd_server_context_free(RdpsndServerContext* context)
 {
+	if (!context)
+		return;
+
 	if (context->priv->ChannelHandle)
 		WTSVirtualChannelClose(context->priv->ChannelHandle);
 
