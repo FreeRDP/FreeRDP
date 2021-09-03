@@ -66,8 +66,8 @@ FREERDP_LOCAL BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_client_connect_license(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_client_transition_to_state(rdpRdp* rdp, int state);
-FREERDP_LOCAL const char* rdp_client_connection_state_string(int state);
-FREERDP_LOCAL int rdp_client_get_state(rdpRdp* rdp);
+
+FREERDP_LOCAL int rdp_get_state(rdpRdp* rdp);
 
 FREERDP_LOCAL BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s);
@@ -78,6 +78,9 @@ FREERDP_LOCAL BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s, UIN
 FREERDP_LOCAL BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_server_reactivate(rdpRdp* rdp);
 FREERDP_LOCAL int rdp_server_transition_to_state(rdpRdp* rdp, int state);
-FREERDP_LOCAL const char* rdp_server_connection_state_string(int state);
+FREERDP_LOCAL const char* rdp_get_state_string(rdpRdp* rdp);
+FREERDP_LOCAL const char* rdp_state_string(int state);
+
+FREERDP_LOCAL const char* rdp_client_connection_state_string(int state);
 
 #endif /* FREERDP_LIB_CORE_CONNECTION_H */
