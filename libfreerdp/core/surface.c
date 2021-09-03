@@ -92,13 +92,7 @@ static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT
 	if (!update_recv_surfcmd_bitmap_ex(s, &cmd.bmp))
 		goto fail;
 
-	if (!update->SurfaceBits)
-	{
-		WLog_ERR(TAG, "Missing callback update->SurfaceBits");
-		goto fail;
-	}
-
-	return update->SurfaceBits(update->context, &cmd);
+	return IFCALLRESULT(TRUE, update->SurfaceBits, update->context, &cmd);
 fail:
 	return FALSE;
 }
