@@ -185,7 +185,7 @@
  */
 
 static int rdp_client_connect_finalize(rdpRdp* rdp);
-static BOOL rdp_set_state(rdpRdp* rdp, int state);
+static BOOL rdp_set_state(rdpRdp* rdp, CONNECTION_STATE state);
 
 static BOOL rdp_client_reset_codecs(rdpContext* context)
 {
@@ -1577,7 +1577,7 @@ const char* rdp_client_connection_state_string(int state)
 	}
 }
 
-const char* rdp_state_string(int state)
+const char* rdp_state_string(CONNECTION_STATE state)
 {
 	switch (state)
 	{
@@ -1616,13 +1616,13 @@ const char* rdp_state_string(int state)
 	}
 }
 
-int rdp_get_state(rdpRdp* rdp)
+CONNECTION_STATE rdp_get_state(rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 	return rdp->state;
 }
 
-BOOL rdp_set_state(rdpRdp* rdp, int state)
+BOOL rdp_set_state(rdpRdp* rdp, CONNECTION_STATE state)
 {
 	WINPR_ASSERT(rdp);
 	rdp->state = state;
