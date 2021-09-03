@@ -1322,3 +1322,10 @@ rdpContext* transport_get_context(rdpTransport* transport)
 	WINPR_ASSERT(transport);
 	return transport->context;
 }
+
+rdpTransport* freerdp_get_transport(rdpContext* context)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->rdp);
+	return context->rdp->transport;
+}
