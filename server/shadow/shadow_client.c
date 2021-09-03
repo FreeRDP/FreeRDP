@@ -2072,6 +2072,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	context = (rdpContext*)client;
 	peer = context->peer;
 	WINPR_ASSERT(peer);
+	WINPR_ASSERT(peer->context);
 
 	settings = peer->settings;
 	WINPR_ASSERT(settings);
@@ -2080,7 +2081,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	peer->PostConnect = shadow_client_post_connect;
 	peer->Activate = shadow_client_activate;
 	peer->Logon = shadow_client_logon;
-	shadow_input_register_callbacks(peer->input);
+	shadow_input_register_callbacks(peer->context->input);
 
 	rc = peer->Initialize(peer);
 	WINPR_ASSERT(rc);

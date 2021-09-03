@@ -262,11 +262,11 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	client->PostConnect = wf_peer_post_connect;
 	client->Activate = wf_peer_activate;
 	client->Logon = wf_peer_logon;
-	client->input->SynchronizeEvent = wf_peer_synchronize_event;
-	client->input->KeyboardEvent = wf_peer_keyboard_event;
-	client->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event;
-	client->input->MouseEvent = wf_peer_mouse_event;
-	client->input->ExtendedMouseEvent = wf_peer_extended_mouse_event;
+	client->context->input->SynchronizeEvent = wf_peer_synchronize_event;
+	client->context->input->KeyboardEvent = wf_peer_keyboard_event;
+	client->context->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event;
+	client->context->input->MouseEvent = wf_peer_mouse_event;
+	client->context->input->ExtendedMouseEvent = wf_peer_extended_mouse_event;
 
 	if (!client->Initialize(client))
 		goto fail_client_initialize;
@@ -281,10 +281,10 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	if (wfi->input_disabled)
 	{
 		WLog_INFO(TAG, "client input is disabled");
-		client->input->KeyboardEvent = wf_peer_keyboard_event_dummy;
-		client->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event_dummy;
-		client->input->MouseEvent = wf_peer_mouse_event_dummy;
-		client->input->ExtendedMouseEvent = wf_peer_extended_mouse_event_dummy;
+		client->context->input->KeyboardEvent = wf_peer_keyboard_event_dummy;
+		client->context->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event_dummy;
+		client->context->input->MouseEvent = wf_peer_mouse_event_dummy;
+		client->context->input->ExtendedMouseEvent = wf_peer_extended_mouse_event_dummy;
 	}
 
 	if (!(context->socketEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))

@@ -917,11 +917,15 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	client->settings->RefreshRect = TRUE;
 	client->PostConnect = tf_peer_post_connect;
 	client->Activate = tf_peer_activate;
-	client->input->SynchronizeEvent = tf_peer_synchronize_event;
-	client->input->KeyboardEvent = tf_peer_keyboard_event;
-	client->input->UnicodeKeyboardEvent = tf_peer_unicode_keyboard_event;
-	client->input->MouseEvent = tf_peer_mouse_event;
-	client->input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
+
+	WINPR_ASSERT(client->context);
+	WINPR_ASSERT(client->context->input);
+	client->context->input->SynchronizeEvent = tf_peer_synchronize_event;
+	client->context->input->KeyboardEvent = tf_peer_keyboard_event;
+	client->context->input->UnicodeKeyboardEvent = tf_peer_unicode_keyboard_event;
+	client->context->input->MouseEvent = tf_peer_mouse_event;
+	client->context->input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
+
 	client->update->RefreshRect = tf_peer_refresh_rect;
 	client->update->SuppressOutput = tf_peer_suppress_output;
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
