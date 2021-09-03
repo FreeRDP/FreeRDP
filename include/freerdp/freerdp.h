@@ -57,6 +57,8 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <freerdp/autodetect.h>
 #include <freerdp/heartbeat.h>
 
+typedef struct stream_dump_context rdpStreamDumpContext;
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -302,7 +304,9 @@ extern "C"
 		ALIGN64 int disconnectUltimatum;   /* 45 */
 		UINT64 paddingC[64 - 46];          /* 46 */
 
-		UINT64 paddingD[96 - 64];  /* 64 */
+		ALIGN64 rdpStreamDumpContext* dump; /* 64 */
+
+		UINT64 paddingD[96 - 65];  /* 65 */
 		UINT64 paddingE[128 - 96]; /* 96 */
 	};
 

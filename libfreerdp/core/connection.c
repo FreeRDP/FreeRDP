@@ -340,27 +340,31 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			return FALSE;
 	}
 
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO);
-
-	if (!nego_connect(rdp->nego))
+	if (!freerdp_settings_get_bool(settings, FreeRDP_TransportDumpReplay))
 	{
-		if (!freerdp_get_last_error(rdp->context))
+		rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO);
+
+		if (!nego_connect(rdp->nego))
 		{
-			freerdp_set_last_error_log(rdp->context, FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED);
-			WLog_ERR(TAG, "Error: protocol security negotiation or connection failure");
+			if (!freerdp_get_last_error(rdp->context))
+			{
+				freerdp_set_last_error_log(rdp->context,
+				                           FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED);
+				WLog_ERR(TAG, "Error: protocol security negotiation or connection failure");
+			}
+
+			return FALSE;
 		}
 
-		return FALSE;
-	}
+		SelectedProtocol = nego_get_selected_protocol(rdp->nego);
 
-	SelectedProtocol = nego_get_selected_protocol(rdp->nego);
-
-	if ((SelectedProtocol & PROTOCOL_SSL) || (SelectedProtocol == PROTOCOL_RDP))
-	{
-		if ((settings->Username != NULL) &&
-		    ((settings->Password != NULL) ||
-		     (settings->RedirectionPassword != NULL && settings->RedirectionPasswordLength > 0)))
-			settings->AutoLogonEnabled = TRUE;
+		if ((SelectedProtocol & PROTOCOL_SSL) || (SelectedProtocol == PROTOCOL_RDP))
+		{
+			if ((settings->Username != NULL) &&
+			    ((settings->Password != NULL) || (settings->RedirectionPassword != NULL &&
+			                                      settings->RedirectionPasswordLength > 0)))
+				settings->AutoLogonEnabled = TRUE;
+		}
 	}
 
 	/* everything beyond this point is event-driven and non blocking */

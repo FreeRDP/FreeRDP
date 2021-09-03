@@ -36,6 +36,9 @@
 #include <winpr/path.h>
 #include <winpr/winsock.h>
 
+#include <freerdp/streamdump.h>
+#include <freerdp/transport_io.h>
+
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/channels/drdynvc.h>
@@ -60,6 +63,7 @@ struct server_info
 {
 	BOOL test_dump_rfx_realtime;
 	const char* test_pcap_file;
+	const char* replay_dump;
 	const char* cert;
 	const char* key;
 };
@@ -877,6 +881,67 @@ static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow, const RECTA
 	return TRUE;
 }
 
+static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
+{
+	UINT64 ts = 0;
+	wStream* ls = NULL;
+	UINT64 last_ts = 0;
+	const struct server_info* info;
+	freerdp_peer* client;
+	CONNECTION_STATE state;
+	testPeerContext* peerCtx;
+	size_t offset = 0;
+	rdpContext* context = transport_get_context(transport);
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(s);
+
+	client = context->peer;
+	WINPR_ASSERT(client);
+
+	peerCtx = (testPeerContext*)client->context;
+	WINPR_ASSERT(peerCtx);
+	WINPR_ASSERT(peerCtx->io.WritePdu);
+
+	info = client->ContextExtra;
+	WINPR_ASSERT(info);
+
+	/* Let the client authenticate.
+	 * After that is done, we stop the normal operation and send
+	 * a previously recorded session PDU by PDU to the client.
+	 *
+	 * This is fragile and the connecting client needs to use the same
+	 * configuration as the one that recorded the session!
+	 */
+	WINPR_ASSERT(info);
+	state = freerdp_get_state(context);
+	if (state < CONNECTION_STATE_NEGO)
+		return peerCtx->io.WritePdu(transport, s);
+
+	ls = Stream_New(NULL, 4096);
+	if (!ls)
+		goto fail;
+
+	while (stream_dump_get(context, NULL, ls, &offset, &ts) > 0)
+	{
+		int rc;
+		if ((last_ts > 0) && (ts > last_ts))
+		{
+			UINT64 diff = ts - last_ts;
+			Sleep(diff);
+		}
+		last_ts = ts;
+		rc = peerCtx->io.WritePdu(transport, ls);
+		if (rc < 0)
+			goto fail;
+		Stream_SetPosition(ls, 0);
+	}
+
+fail:
+	Stream_Free(ls, TRUE);
+	return -1;
+}
+
 static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 {
 	BOOL rc;
@@ -909,6 +974,16 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 
 	/* Initialize the real server settings here */
 	WINPR_ASSERT(client->settings);
+	if (info->replay_dump)
+	{
+		if (!freerdp_settings_set_bool(client->settings, FreeRDP_TransportDumpReplay, TRUE) ||
+		    !freerdp_settings_set_string(client->settings, FreeRDP_TransportDumpFile,
+		                                 info->replay_dump))
+		{
+			freerdp_peer_free(client);
+			return 0;
+		}
+	}
 	if (!freerdp_settings_set_string(client->settings, FreeRDP_CertificateFile, cert) ||
 	    !freerdp_settings_set_string(client->settings, FreeRDP_PrivateKeyFile, key) ||
 	    !freerdp_settings_set_string(client->settings, FreeRDP_RdpKeyFile, key))
@@ -951,6 +1026,18 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 
 	context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
+
+	if (info->replay_dump)
+	{
+		const rdpTransportIo* cb = freerdp_get_io_callbacks(client->context);
+		rdpTransportIo replay;
+
+		WINPR_ASSERT(cb);
+		replay = *cb;
+		context->io = *cb;
+		replay.WritePdu = hook_peer_write_pdu;
+		freerdp_set_io_callbacks(client->context, &replay);
+	}
 
 	WLog_INFO(TAG, "We've got a client %s", client->local ? "(local)" : client->hostname);
 

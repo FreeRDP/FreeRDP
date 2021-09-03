@@ -30,6 +30,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/streamdump.h>
 #include <freerdp/utils/signal.h>
 
 #include <freerdp/client/file.h>
@@ -389,6 +390,9 @@ int main(int argc, char* argv[])
 		                                                       argv);
 		goto fail;
 	}
+
+	if (!stream_dump_register_handlers(context, CONNECTION_STATE_MCS_CONNECT))
+		goto fail;
 
 	if (freerdp_client_start(context) != 0)
 		goto fail;

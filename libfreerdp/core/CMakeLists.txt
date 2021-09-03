@@ -54,6 +54,7 @@ set(${MODULE_PREFIX}_SRCS
 	utils.h
 	bulk.c
 	bulk.h
+	streamdump.c
 	activation.c
 	activation.h
 	gcc.c

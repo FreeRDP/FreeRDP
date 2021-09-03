@@ -45,6 +45,7 @@
 #include <winpr/debug.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/streamdump.h>
 #include <freerdp/error.h>
 #include <freerdp/event.h>
 #include <freerdp/locale/keyboard.h>
@@ -684,6 +685,10 @@ BOOL freerdp_context_new(freerdp* instance)
 	if (!(context->channels = freerdp_channels_new(instance)))
 		goto fail;
 
+	context->dump = stream_dump_new();
+	if (!context->dump)
+		goto fail;
+
 	IFCALLRET(instance->ContextNew, ret, instance, instance->context);
 
 	if (ret)
@@ -744,6 +749,9 @@ void freerdp_context_free(freerdp* instance)
 
 	codecs_free(ctx->codecs);
 	ctx->codecs = NULL;
+
+	stream_dump_free(ctx->dump);
+	ctx->dump = NULL;
 
 	free(ctx);
 	instance->context = NULL;

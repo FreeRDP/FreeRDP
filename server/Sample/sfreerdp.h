@@ -28,6 +28,7 @@
 #include <freerdp/server/audin.h>
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/server/encomsp.h>
+#include <freerdp/transport_io.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -57,6 +58,8 @@ struct test_peer_context
 	UINT32 frame_id;
 	RdpsndServerContext* rdpsnd;
 	EncomspServerContext* encomsp;
+
+	rdpTransportIo io;
 };
 typedef struct test_peer_context testPeerContext;
 

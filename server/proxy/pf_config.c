@@ -546,6 +546,7 @@ fail:
 	IniFile_Free(ini);
 	return rc;
 }
+
 proxyConfig* pf_server_config_load_buffer(const char* buffer)
 {
 	proxyConfig* config = NULL;
@@ -775,7 +776,6 @@ BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config)
 	if (!pf_config_copy_string_list(&tmp->RequiredPlugins, &tmp->RequiredPluginsCount,
 	                                config->RequiredPlugins, config->RequiredPluginsCount))
 		goto fail;
-
 	if (!pf_config_copy_string(&tmp->CertificateFile, config->CertificateFile))
 		goto fail;
 	if (!pf_config_copy_string(&tmp->CertificateContent, config->CertificateContent))

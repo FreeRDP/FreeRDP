@@ -6,6 +6,7 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
 	TestVersion.c
+	TestStreamDump.c
 	TestSettings.c)
 
 if(WITH_SAMPLE AND WITH_SERVER)
