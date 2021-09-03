@@ -1817,10 +1817,14 @@ rdpRdp* rdp_new(rdpContext* context)
 	if (!rdp->transport)
 		goto fail;
 
-	if (rdp->io && rdp->transport)
 	{
-		if (!transport_set_io_callbacks(rdp->transport, rdp->io))
+		const rdpTransportIo* io = transport_get_io_callbacks(rdp->transport);
+		if (!io)
 			goto fail;
+		rdp->io = calloc(1, sizeof(rdpTransportIo));
+		if (!rdp->io)
+			goto fail;
+		*rdp->io = *io;
 	}
 
 	rdp->license = license_new(rdp);
@@ -2006,6 +2010,7 @@ BOOL rdp_set_io_callbacks(rdpRdp* rdp, const rdpTransportIo* io_callbacks)
 		if (!rdp->io)
 			return FALSE;
 		*rdp->io = *io_callbacks;
+		return transport_set_io_callbacks(rdp->transport, rdp->io);
 	}
 	return TRUE;
 }
