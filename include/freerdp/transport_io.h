@@ -66,6 +66,8 @@ extern "C"
 	 */
 	FREERDP_API SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplete);
 
+	FREERDP_API rdpContext* transport_get_context(rdpTransport* transport);
+
 #ifdef __cplusplus
 }
 #endif
