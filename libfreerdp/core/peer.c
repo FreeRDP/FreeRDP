@@ -525,10 +525,10 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 		return -1;
 	}
 
-	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
+	if (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_ENCRYPTED)
 	{
 		if (!rdp_decrypt(rdp, s, &length,
-		                 (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM)
+		                 (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_SECURE_CHECKSUM)
 		                     ? SEC_SECURE_CHECKSUM
 		                     : 0))
 			return -1;

@@ -140,18 +140,6 @@ struct _FASTPATH_UPDATE_HEADER
 };
 typedef struct _FASTPATH_UPDATE_HEADER FASTPATH_UPDATE_HEADER;
 
-struct rdp_fastpath
-{
-	rdpRdp* rdp;
-	wStream* fs;
-	BYTE encryptionFlags;
-	BYTE numberEvents;
-	wStream* updateData;
-	int fragmentation;
-};
-
-FREERDP_LOCAL UINT16 fastpath_header_length(wStream* s);
-FREERDP_LOCAL UINT16 fastpath_read_header(rdpFastPath* fastpath, wStream* s);
 FREERDP_LOCAL BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16* length);
 FREERDP_LOCAL int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s);
 FREERDP_LOCAL int fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s);
@@ -170,6 +158,7 @@ FREERDP_LOCAL BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCo
 
 FREERDP_LOCAL BOOL fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, UINT16 frameAction,
                                                       UINT32 frameId);
+FREERDP_LOCAL BYTE fastpath_get_encryption_flags(rdpFastPath* fastpath);
 
 FREERDP_LOCAL rdpFastPath* fastpath_new(rdpRdp* rdp);
 FREERDP_LOCAL void fastpath_free(rdpFastPath* fastpath);
