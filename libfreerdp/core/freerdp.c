@@ -1135,3 +1135,14 @@ const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length)
 
 	return (const char*)nego_get_routing_token(context->rdp->nego, length);
 }
+
+CONNECTION_STATE freerdp_get_state(rdpContext* context)
+{
+	WINPR_ASSERT(context);
+	return rdp_get_state(context->rdp);
+}
+
+const char* freerdp_state_string(CONNECTION_STATE state)
+{
+	return rdp_state_string(state);
+}
