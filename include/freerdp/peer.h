@@ -88,7 +88,6 @@ struct rdp_freerdp_peer
 	int sockfd;
 	char hostname[50];
 
-	rdpInput* input;
 	rdpUpdate* update;
 	rdpSettings* settings;
 	rdpAutoDetect* autodetect;

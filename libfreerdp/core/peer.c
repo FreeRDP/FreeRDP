@@ -926,17 +926,16 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	if (!(rdp = rdp_new(context)))
 		goto fail_rdp;
 
-	client->input = rdp->input;
 	client->update = rdp->update;
 	client->settings = rdp->settings;
 	client->autodetect = rdp->autodetect;
 	context->rdp = rdp;
-	context->input = client->input;
+	context->input = rdp->input;
 	context->update = client->update;
 	context->settings = client->settings;
 	context->autodetect = client->autodetect;
 	client->update->context = context;
-	client->input->context = context;
+	context->input->context = context;
 	client->autodetect->context = context;
 	update_register_server_callbacks(client->update);
 	autodetect_register_server_callbacks(client->autodetect);
