@@ -1282,7 +1282,7 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	if (!gdi_init_primary(gdi, stride, gdi->dstFormat, buffer, pfree))
 		goto fail;
 
-	if (!(context->cache = cache_new(instance->settings)))
+	if (!(context->cache = cache_new(instance->context)))
 		goto fail;
 
 	gdi_register_update_callbacks(instance->update);

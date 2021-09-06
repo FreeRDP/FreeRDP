@@ -53,9 +53,7 @@ struct rdp_bitmap_cache
 	UINT32 paddingB[32 - 18]; /* 18 */
 
 	/* internal */
-	rdpUpdate* update;
 	rdpContext* context;
-	rdpSettings* settings;
 };
 
 #ifdef __cplusplus
@@ -65,7 +63,7 @@ extern "C"
 
 	FREERDP_API void bitmap_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_API rdpBitmapCache* bitmap_cache_new(rdpSettings* settings);
+	FREERDP_API rdpBitmapCache* bitmap_cache_new(rdpContext* context);
 	FREERDP_API void bitmap_cache_free(rdpBitmapCache* bitmap_cache);
 
 #ifdef __cplusplus

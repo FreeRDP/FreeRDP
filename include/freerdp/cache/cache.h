@@ -50,7 +50,7 @@ extern "C"
 {
 #endif
 
-	FREERDP_API rdpCache* cache_new(rdpSettings* settings);
+	FREERDP_API rdpCache* cache_new(rdpContext* context);
 	FREERDP_API void cache_free(rdpCache* cache);
 
 #ifdef __cplusplus
