@@ -1220,7 +1220,7 @@ static BOOL xf_pre_connect(freerdp* instance)
 
 	xf_detect_monitors(xfc, &maxWidth, &maxHeight);
 
-	if (maxWidth && maxHeight)
+	if (maxWidth && maxHeight && !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 	{
 		settings->DesktopWidth = maxWidth;
 		settings->DesktopHeight = maxHeight;
