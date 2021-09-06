@@ -60,6 +60,8 @@ struct server_info
 {
 	BOOL test_dump_rfx_realtime;
 	const char* test_pcap_file;
+	const char* cert;
+	const char* key;
 };
 
 static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
@@ -877,14 +879,21 @@ static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow, const RECTA
 
 static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 {
+	BOOL rc;
 	DWORD error = CHANNEL_RC_OK;
 	HANDLE handles[32] = { 0 };
 	DWORD count;
 	DWORD status;
 	testPeerContext* context;
+	struct server_info* info;
 	freerdp_peer* client = (freerdp_peer*)arg;
+	const char* key = "server.key";
+	const char* cert = "server.crt";
 
 	WINPR_ASSERT(client);
+
+	info = client->ContextExtra;
+	WINPR_ASSERT(info);
 
 	if (!test_peer_init(client))
 	{
@@ -892,11 +901,16 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		return 0;
 	}
 
+	if (info->key)
+		key = info->key;
+	if (info->cert)
+		cert = info->cert;
+
 	/* Initialize the real server settings here */
 	WINPR_ASSERT(client->settings);
-	if (!freerdp_settings_set_string(client->settings, FreeRDP_CertificateFile, "server.crt") ||
-	    !freerdp_settings_set_string(client->settings, FreeRDP_PrivateKeyFile, "server.key") ||
-	    !freerdp_settings_set_string(client->settings, FreeRDP_RdpKeyFile, "server.key"))
+	if (!freerdp_settings_set_string(client->settings, FreeRDP_CertificateFile, cert) ||
+	    !freerdp_settings_set_string(client->settings, FreeRDP_PrivateKeyFile, key) ||
+	    !freerdp_settings_set_string(client->settings, FreeRDP_RdpKeyFile, key))
 	{
 		WLog_ERR(TAG, "Memory allocation failed (strdup)");
 		freerdp_peer_free(client);
@@ -931,7 +945,8 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 
 	WINPR_ASSERT(client->Initialize);
-	client->Initialize(client);
+	rc = client->Initialize(client);
+	WINPR_ASSERT(rc);
 
 	context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
@@ -1075,7 +1090,9 @@ static const struct
 	const char sfast[7];
 	const char sport[7];
 	const char slocal_only[13];
-} options = { "--pcap=", "--fast", "--port=", "--local-only" };
+	const char scert[7];
+	const char skey[6];
+} options = { "--pcap=", "--fast", "--port=", "--local-only", "--cert=", "--key=" };
 
 static WINPR_NORETURN(void usage(const char* app, const char* invalid))
 {
@@ -1127,6 +1144,18 @@ int main(int argc, char* argv[])
 		{
 			info.test_pcap_file = &arg[sizeof(options.spcap)];
 			if (!winpr_PathFileExists(info.test_pcap_file))
+				usage(app, arg);
+		}
+		else if (strncmp(arg, options.scert, sizeof(options.scert)) == 0)
+		{
+			info.cert = &arg[sizeof(options.scert)];
+			if (!winpr_PathFileExists(info.cert))
+				usage(app, arg);
+		}
+		else if (strncmp(arg, options.skey, sizeof(options.skey)) == 0)
+		{
+			info.key = &arg[sizeof(options.skey)];
+			if (!winpr_PathFileExists(info.key))
 				usage(app, arg);
 		}
 		else
