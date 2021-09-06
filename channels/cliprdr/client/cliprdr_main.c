@@ -25,6 +25,7 @@
 #endif
 
 #include <winpr/wtypes.h>
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
@@ -92,6 +93,10 @@ static UINT cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 	size_t pos;
 	UINT32 dataLen;
 	UINT status = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(cliprdr);
+	WINPR_ASSERT(s);
+
 	pos = Stream_GetPosition(s);
 	dataLen = pos - 8;
 	Stream_SetPosition(s, 4);
@@ -108,6 +113,7 @@ static UINT cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 	}
 	else
 	{
+		WINPR_ASSERT(cliprdr->channelEntryPoints.pVirtualChannelWriteEx);
 		status = cliprdr->channelEntryPoints.pVirtualChannelWriteEx(
 		    cliprdr->InitHandle, cliprdr->OpenHandle, Stream_Buffer(s),
 		    (UINT32)Stream_GetPosition(s), s);
@@ -160,6 +166,9 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(cliprdr);
+	WINPR_ASSERT(s);
 
 	if (!context)
 	{
@@ -219,6 +228,9 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT32
 	UINT16 capabilitySetType;
 	UINT error = CHANNEL_RC_OK;
 
+	WINPR_ASSERT(cliprdr);
+	WINPR_ASSERT(s);
+
 	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
 
@@ -270,6 +282,10 @@ static UINT cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UI
 	CLIPRDR_MONITOR_READY monitorReady;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(cliprdr);
+	WINPR_ASSERT(s);
+
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "MonitorReady");
 
 	if (!context->custom)
@@ -314,6 +330,10 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream
 	CLIPRDR_FILE_CONTENTS_REQUEST request;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(cliprdr);
+	WINPR_ASSERT(s);
+
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "FileContentsRequest");
 
 	if (!context->custom)
@@ -348,6 +368,10 @@ static UINT cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStrea
 	CLIPRDR_FILE_CONTENTS_RESPONSE response;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(cliprdr);
+	WINPR_ASSERT(s);
+
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "FileContentsResponse");
 
 	if (!context->custom)
@@ -382,6 +406,10 @@ static UINT cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UI
 	CLIPRDR_LOCK_CLIPBOARD_DATA lockClipboardData;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(cliprdr);
+	WINPR_ASSERT(s);
+
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "LockClipData");
 
 	if (!context->custom)
@@ -419,6 +447,10 @@ static UINT cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s, 
 	CLIPRDR_UNLOCK_CLIPBOARD_DATA unlockClipboardData;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(cliprdr);
+	WINPR_ASSERT(s);
+
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "UnlockClipData");
 
 	if (!context->custom)
@@ -454,6 +486,9 @@ static UINT cliprdr_order_recv(LPVOID userdata, wStream* s)
 	UINT16 msgFlags;
 	UINT32 dataLen;
 	UINT error;
+
+	WINPR_ASSERT(cliprdr);
+	WINPR_ASSERT(s);
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
@@ -567,7 +602,12 @@ static UINT cliprdr_client_capabilities(CliprdrClientContext* context,
 	wStream* s;
 	UINT32 flags;
 	const CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet;
-	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr;
+
+	WINPR_ASSERT(context);
+
+	cliprdr = (cliprdrPlugin*)context->handle;
+	WINPR_ASSERT(cliprdr);
 
 	s = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
 
@@ -622,7 +662,14 @@ static UINT cliprdr_temp_directory(CliprdrClientContext* context,
 	int length;
 	wStream* s;
 	WCHAR* wszTempDir = NULL;
-	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(tempDirectory);
+
+	cliprdr = (cliprdrPlugin*)context->handle;
+	WINPR_ASSERT(cliprdr);
+
 	s = cliprdr_packet_new(CB_TEMP_DIRECTORY, 0, 260 * sizeof(WCHAR));
 
 	if (!s)
@@ -657,7 +704,12 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
                                        const CLIPRDR_FORMAT_LIST* formatList)
 {
 	wStream* s;
-	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr;
+
+	WINPR_ASSERT(context);
+
+	cliprdr = (cliprdrPlugin*)context->handle;
+	WINPR_ASSERT(cliprdr);
 
 	s = cliprdr_packet_format_list_new(formatList, cliprdr->useLongFormatNames);
 	if (!s)
@@ -681,7 +733,14 @@ cliprdr_client_format_list_response(CliprdrClientContext* context,
                                     const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	wStream* s;
-	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatListResponse);
+
+	cliprdr = (cliprdrPlugin*)context->handle;
+	WINPR_ASSERT(cliprdr);
+
 	s = cliprdr_packet_new(CB_FORMAT_LIST_RESPONSE, formatListResponse->msgFlags, 0);
 
 	if (!s)
@@ -703,7 +762,14 @@ static UINT cliprdr_client_lock_clipboard_data(CliprdrClientContext* context,
                                                const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
 	wStream* s;
-	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(lockClipboardData);
+
+	cliprdr = (cliprdrPlugin*)context->handle;
+	WINPR_ASSERT(cliprdr);
+
 	s = cliprdr_packet_lock_clipdata_new(lockClipboardData);
 
 	if (!s)
@@ -727,7 +793,14 @@ cliprdr_client_unlock_clipboard_data(CliprdrClientContext* context,
                                      const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
 	wStream* s;
-	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(unlockClipboardData);
+
+	cliprdr = (cliprdrPlugin*)context->handle;
+	WINPR_ASSERT(cliprdr);
+
 	s = cliprdr_packet_unlock_clipdata_new(unlockClipboardData);
 
 	if (!s)
@@ -750,7 +823,13 @@ static UINT cliprdr_client_format_data_request(CliprdrClientContext* context,
                                                const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	wStream* s;
-	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatDataRequest);
+
+	cliprdr = (cliprdrPlugin*)context->handle;
+	WINPR_ASSERT(cliprdr);
 
 	s = cliprdr_packet_new(CB_FORMAT_DATA_REQUEST, 0, 4);
 
@@ -775,7 +854,13 @@ cliprdr_client_format_data_response(CliprdrClientContext* context,
                                     const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
 	wStream* s;
-	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatDataResponse);
+
+	cliprdr = (cliprdrPlugin*)context->handle;
+	WINPR_ASSERT(cliprdr);
 
 	s = cliprdr_packet_new(CB_FORMAT_DATA_RESPONSE, formatDataResponse->msgFlags,
 	                       formatDataResponse->dataLen);
@@ -801,8 +886,12 @@ cliprdr_client_file_contents_request(CliprdrClientContext* context,
                                      const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	wStream* s;
-	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr;
 
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(fileContentsRequest);
+
+	cliprdr = (cliprdrPlugin*)context->handle;
 	if (!cliprdr)
 		return ERROR_INTERNAL_ERROR;
 
@@ -838,7 +927,14 @@ cliprdr_client_file_contents_response(CliprdrClientContext* context,
                                       const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
 	wStream* s;
-	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(fileContentsResponse);
+
+	cliprdr = (cliprdrPlugin*)context->handle;
+	WINPR_ASSERT(cliprdr);
+
 	s = cliprdr_packet_file_contents_response_new(fileContentsResponse);
 
 	if (!s)
@@ -900,18 +996,23 @@ static VOID VCAPITYPE cliprdr_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 static UINT cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr, LPVOID pData,
                                                     UINT32 dataLength)
 {
+	DWORD status;
 	WINPR_ASSERT(cliprdr);
 	WINPR_ASSERT(cliprdr->context);
+
+	WINPR_ASSERT(cliprdr->channelEntryPoints.pVirtualChannelOpenEx);
+	status = cliprdr->channelEntryPoints.pVirtualChannelOpenEx(
+	    cliprdr->InitHandle, &cliprdr->OpenHandle, cliprdr->channelDef.name,
+	    cliprdr_virtual_channel_open_event_ex);
+	if (status != CHANNEL_RC_OK)
+		return status;
 
 	cliprdr->MsgsHandle = channel_client_create_handler(
 	    cliprdr->context->rdpcontext, cliprdr, cliprdr_order_recv, CLIPRDR_SVC_CHANNEL_NAME);
 	if (!cliprdr->MsgsHandle)
 		return ERROR_INTERNAL_ERROR;
 
-	WINPR_ASSERT(cliprdr->channelEntryPoints.pVirtualChannelOpenEx);
-	return cliprdr->channelEntryPoints.pVirtualChannelOpenEx(
-	    cliprdr->InitHandle, &cliprdr->OpenHandle, cliprdr->channelDef.name,
-	    cliprdr_virtual_channel_open_event_ex);
+	return status;
 }
 
 /**
@@ -923,11 +1024,15 @@ static UINT cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* cliprdr)
 {
 	UINT rc;
 
+	WINPR_ASSERT(cliprdr);
+
+	channel_client_quit_handler(cliprdr->MsgsHandle);
+	cliprdr->MsgsHandle = NULL;
+
 	if (cliprdr->OpenHandle == 0)
 		return CHANNEL_RC_OK;
 
-	channel_client_quit_handler(cliprdr->MsgsHandle);
-
+	WINPR_ASSERT(cliprdr->channelEntryPoints.pVirtualChannelCloseEx);
 	rc = cliprdr->channelEntryPoints.pVirtualChannelCloseEx(cliprdr->InitHandle,
 	                                                        cliprdr->OpenHandle);
 
@@ -950,6 +1055,8 @@ static UINT cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* cliprdr)
  */
 static UINT cliprdr_virtual_channel_event_terminated(cliprdrPlugin* cliprdr)
 {
+	WINPR_ASSERT(cliprdr);
+
 	cliprdr->InitHandle = 0;
 	free(cliprdr->context);
 	free(cliprdr);
@@ -1024,6 +1131,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	sprintf_s(cliprdr->channelDef.name, ARRAYSIZE(cliprdr->channelDef.name),
 	          CLIPRDR_SVC_CHANNEL_NAME);
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
+	WINPR_ASSERT(pEntryPointsEx);
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&
 	    (pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
