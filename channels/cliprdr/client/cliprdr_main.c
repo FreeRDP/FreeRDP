@@ -900,22 +900,18 @@ static VOID VCAPITYPE cliprdr_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 static UINT cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr, LPVOID pData,
                                                     UINT32 dataLength)
 {
-	UINT32 status;
-	status = cliprdr->channelEntryPoints.pVirtualChannelOpenEx(
-	    cliprdr->InitHandle, &cliprdr->OpenHandle, cliprdr->channelDef.name,
-	    cliprdr_virtual_channel_open_event_ex);
-
-	if (status != CHANNEL_RC_OK)
-	{
-		WLog_ERR(TAG, "pVirtualChannelOpen failed with %s [%08" PRIX32 "]",
-		         WTSErrorToString(status), status);
-		return status;
-	}
+	WINPR_ASSERT(cliprdr);
+	WINPR_ASSERT(cliprdr->context);
 
 	cliprdr->MsgsHandle = channel_client_create_handler(
 	    cliprdr->context->rdpcontext, cliprdr, cliprdr_order_recv, CLIPRDR_SVC_CHANNEL_NAME);
+	if (!cliprdr->MsgsHandle)
+		return ERROR_INTERNAL_ERROR;
 
-	return CHANNEL_RC_OK;
+	WINPR_ASSERT(cliprdr->channelEntryPoints.pVirtualChannelOpenEx);
+	return cliprdr->channelEntryPoints.pVirtualChannelOpenEx(
+	    cliprdr->InitHandle, &cliprdr->OpenHandle, cliprdr->channelDef.name,
+	    cliprdr_virtual_channel_open_event_ex);
 }
 
 /**
