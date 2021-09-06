@@ -182,6 +182,8 @@ static void closeChannel(Plugin* plugin)
 	if (debug)
 		puts("rdp2tcp closing channel");
 
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(plugin->channelEntryPoints.pVirtualChannelCloseEx);
 	plugin->channelEntryPoints.pVirtualChannelCloseEx(plugin->initHandle, plugin->openHandle);
 }
 

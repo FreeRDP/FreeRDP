@@ -1908,12 +1908,15 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 	if (rdpdr->OpenHandle == 0)
 		return CHANNEL_RC_OK;
 
-	if (MessageQueue_PostQuit(rdpdr->queue, 0) &&
-	    (WaitForSingleObject(rdpdr->thread, INFINITE) == WAIT_FAILED))
+	if (rdpdr->queue && rdpdr->thread)
 	{
-		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", error);
-		return error;
+		if (MessageQueue_PostQuit(rdpdr->queue, 0) &&
+		    (WaitForSingleObject(rdpdr->thread, INFINITE) == WAIT_FAILED))
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", error);
+			return error;
+		}
 	}
 
 	MessageQueue_Free(rdpdr->queue);
@@ -1921,6 +1924,7 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 	rdpdr->queue = NULL;
 	rdpdr->thread = NULL;
 
+	WINPR_ASSERT(rdpdr->channelEntryPoints.pVirtualChannelCloseEx);
 	error = rdpdr->channelEntryPoints.pVirtualChannelCloseEx(rdpdr->InitHandle, rdpdr->OpenHandle);
 
 	if (CHANNEL_RC_OK != error)

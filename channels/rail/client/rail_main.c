@@ -602,11 +602,11 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 {
 	UINT rc;
 
+	channel_client_quit_handler(rail->MsgsHandle);
 	if (rail->OpenHandle == 0)
 		return CHANNEL_RC_OK;
 
-	channel_client_quit_handler(rail->MsgsHandle);
-
+	WINPR_ASSERT(rail->channelEntryPoints.pVirtualChannelCloseEx);
 	rc = rail->channelEntryPoints.pVirtualChannelCloseEx(rail->InitHandle, rail->OpenHandle);
 
 	if (CHANNEL_RC_OK != rc)

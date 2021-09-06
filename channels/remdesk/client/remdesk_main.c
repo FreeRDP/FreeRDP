@@ -965,12 +965,9 @@ error_out:
  */
 static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 {
-	UINT rc;
+	UINT rc = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(remdesk);
-
-	if (remdesk->OpenHandle == 0)
-		return CHANNEL_RC_OK;
 
 	if (remdesk->queue && remdesk->thread)
 	{
@@ -983,26 +980,26 @@ static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 		}
 	}
 
+	if (remdesk->OpenHandle != 0)
+	{
+		WINPR_ASSERT(remdesk->channelEntryPoints.pVirtualChannelCloseEx);
+		rc = remdesk->channelEntryPoints.pVirtualChannelCloseEx(remdesk->InitHandle,
+		                                                        remdesk->OpenHandle);
+
+		if (CHANNEL_RC_OK != rc)
+		{
+			WLog_ERR(TAG, "pVirtualChannelCloseEx failed with %s [%08" PRIX32 "]",
+			         WTSErrorToString(rc), rc);
+		}
+
+		remdesk->OpenHandle = 0;
+	}
 	MessageQueue_Free(remdesk->queue);
 	CloseHandle(remdesk->thread);
-	remdesk->queue = NULL;
-	remdesk->thread = NULL;
-
-	WINPR_ASSERT(remdesk->channelEntryPoints.pVirtualChannelCloseEx);
-	rc = remdesk->channelEntryPoints.pVirtualChannelCloseEx(remdesk->InitHandle,
-	                                                        remdesk->OpenHandle);
-
-	if (CHANNEL_RC_OK != rc)
-	{
-		WLog_ERR(TAG, "pVirtualChannelCloseEx failed with %s [%08" PRIX32 "]", WTSErrorToString(rc),
-		         rc);
-	}
-
-	remdesk->OpenHandle = 0;
-
 	Stream_Free(remdesk->data_in, TRUE);
 	remdesk->data_in = NULL;
-
+	remdesk->queue = NULL;
+	remdesk->thread = NULL;
 	return rc;
 }
 

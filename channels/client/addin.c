@@ -608,28 +608,25 @@ UINT channel_client_quit_handler(void* MsgsHandle)
 
 	WINPR_ASSERT(internals->ctx);
 	WINPR_ASSERT(internals->ctx->settings);
+
 	if (!(internals->ctx->settings->ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
 	{
-		if (MessageQueue_PostQuit(internals->queue, 0) &&
-		    (WaitForSingleObject(internals->thread, INFINITE) == WAIT_FAILED))
+		if (internals->queue && internals->thread)
 		{
-			rc = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", rc);
-			return rc;
+			if (MessageQueue_PostQuit(internals->queue, 0) &&
+			    (WaitForSingleObject(internals->thread, INFINITE) == WAIT_FAILED))
+			{
+				rc = GetLastError();
+				WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", rc);
+				return rc;
+			}
 		}
 		MessageQueue_Free(internals->queue);
 		CloseHandle(internals->thread);
 	}
-	if (internals->data_in)
-	{
-		Stream_Free(internals->data_in, TRUE);
-		internals->data_in = NULL;
-	}
-	if (internals->channel_name)
-	{
-		free(internals->channel_name);
-	}
 
+	Stream_Free(internals->data_in, TRUE);
+	free(internals->channel_name);
 	free(internals);
 	return CHANNEL_RC_OK;
 }
