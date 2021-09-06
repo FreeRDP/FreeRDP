@@ -539,14 +539,79 @@ DWORD WINAPI GetFileAttributesW(LPCWSTR lpFileName)
 	return ret;
 }
 
+static char* append(char* buffer, size_t size, const char* append)
+{
+	const size_t len = strnlen(buffer, size);
+	if (len == 0)
+		_snprintf(buffer, size, "%s", append);
+	else
+	{
+		strcat(buffer, "|");
+		strcat(buffer, append);
+	}
+
+	return buffer;
+}
+
+static const char* flagsToStr(char* buffer, size_t size, DWORD flags)
+{
+	char strflags[32] = { 0 };
+	if (flags & FILE_ATTRIBUTE_READONLY)
+		append(buffer, size, "FILE_ATTRIBUTE_READONLY");
+	if (flags & FILE_ATTRIBUTE_HIDDEN)
+		append(buffer, size, "FILE_ATTRIBUTE_HIDDEN");
+	if (flags & FILE_ATTRIBUTE_SYSTEM)
+		append(buffer, size, "FILE_ATTRIBUTE_SYSTEM");
+	if (flags & FILE_ATTRIBUTE_DIRECTORY)
+		append(buffer, size, "FILE_ATTRIBUTE_DIRECTORY");
+	if (flags & FILE_ATTRIBUTE_ARCHIVE)
+		append(buffer, size, "FILE_ATTRIBUTE_ARCHIVE");
+	if (flags & FILE_ATTRIBUTE_DEVICE)
+		append(buffer, size, "FILE_ATTRIBUTE_DEVICE");
+	if (flags & FILE_ATTRIBUTE_NORMAL)
+		append(buffer, size, "FILE_ATTRIBUTE_NORMAL");
+	if (flags & FILE_ATTRIBUTE_TEMPORARY)
+		append(buffer, size, "FILE_ATTRIBUTE_TEMPORARY");
+	if (flags & FILE_ATTRIBUTE_SPARSE_FILE)
+		append(buffer, size, "FILE_ATTRIBUTE_SPARSE_FILE");
+	if (flags & FILE_ATTRIBUTE_REPARSE_POINT)
+		append(buffer, size, "FILE_ATTRIBUTE_REPARSE_POINT");
+	if (flags & FILE_ATTRIBUTE_COMPRESSED)
+		append(buffer, size, "FILE_ATTRIBUTE_COMPRESSED");
+	if (flags & FILE_ATTRIBUTE_OFFLINE)
+		append(buffer, size, "FILE_ATTRIBUTE_OFFLINE");
+	if (flags & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED)
+		append(buffer, size, "FILE_ATTRIBUTE_NOT_CONTENT_INDEXED");
+	if (flags & FILE_ATTRIBUTE_ENCRYPTED)
+		append(buffer, size, "FILE_ATTRIBUTE_ENCRYPTED");
+	if (flags & FILE_ATTRIBUTE_VIRTUAL)
+		append(buffer, size, "FILE_ATTRIBUTE_VIRTUAL");
+
+	_snprintf(strflags, sizeof(strflags), " [0x%08" PRIx32 "]", flags);
+	strcat(buffer, strflags);
+	return buffer;
+}
+
 BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 {
 	struct stat st;
+	int fd;
+	BOOL rc = FALSE;
 
-	if (stat(lpFileName, &st) != 0)
+	if (dwFileAttributes & ~FILE_ATTRIBUTE_READONLY)
 	{
-		return FALSE;
+		char buffer[8192] = { 0 };
+		const char* flags =
+		    flagsToStr(buffer, sizeof(buffer), dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
+		WLog_WARN(TAG, "[%s] Unsupported flags %s, ignoring!", __FUNCTION__, flags);
 	}
+
+	fd = open(lpFileName, O_RDONLY);
+	if (fd < 0)
+		return FALSE;
+
+	if (fstat(fd, &st) != 0)
+		goto fail;
 
 	if (dwFileAttributes & FILE_ATTRIBUTE_READONLY)
 	{
@@ -557,18 +622,27 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 		st.st_mode |= S_IWUSR;
 	}
 
-	if (chmod(lpFileName, st.st_mode) != 0)
-	{
-		return FALSE;
-	}
+	if (fchmod(fd, st.st_mode) != 0)
+		goto fail;
 
-	return TRUE;
+	rc = TRUE;
+fail:
+	close(fd);
+	return rc;
 }
 
 BOOL SetFileAttributesW(LPCWSTR lpFileName, DWORD dwFileAttributes)
 {
 	BOOL ret;
 	LPSTR lpCFileName;
+
+	if (dwFileAttributes & ~FILE_ATTRIBUTE_READONLY)
+	{
+		char buffer[8192] = { 0 };
+		const char* flags =
+		    flagsToStr(buffer, sizeof(buffer), dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
+		WLog_WARN(TAG, "[%s] Unsupported flags %s, ignoring!", __FUNCTION__, flags);
+	}
 
 	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpCFileName, 0, NULL, NULL) <= 0)
 	{
