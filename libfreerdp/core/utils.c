@@ -118,23 +118,14 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 		return AUTH_NO_CREDENTIALS;
 
 	if (instance->AuthenticateEx)
-		proceed =
-		    instance->AuthenticateEx(instance, &settings->GatewayUsername,
-		                             &settings->GatewayPassword, &settings->GatewayDomain, reason);
+		proceed = instance->AuthenticateEx(instance, &settings->Username, &settings->Password,
+		                                   &settings->Domain, reason);
 	else
-		proceed = instance->Authenticate(instance, &settings->GatewayUsername,
-		                                 &settings->GatewayPassword, &settings->GatewayDomain);
+		proceed = instance->Authenticate(instance, &settings->Username, &settings->Password,
+		                                 &settings->Domain);
 
 	if (!proceed)
 		return AUTH_NO_CREDENTIALS;
-
-	if (!instance->Authenticate(instance, &settings->Username, &settings->Password,
-	                            &settings->Domain))
-	{
-		freerdp_set_last_error_log(instance->context,
-		                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
-		return FALSE;
-	}
 
 	if (!utils_sync_credentials(settings, TRUE))
 		return AUTH_FAILED;
