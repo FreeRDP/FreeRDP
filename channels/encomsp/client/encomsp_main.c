@@ -1141,16 +1141,6 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
                                                     UINT32 dataLength)
 {
 	UINT32 status;
-	status = encomsp->channelEntryPoints.pVirtualChannelOpenEx(
-	    encomsp->InitHandle, &encomsp->OpenHandle, encomsp->channelDef.name,
-	    encomsp_virtual_channel_open_event_ex);
-
-	if (status != CHANNEL_RC_OK)
-	{
-		WLog_ERR(TAG, "pVirtualChannelOpen failed with %s [%08" PRIX32 "]",
-		         WTSErrorToString(status), status);
-		return status;
-	}
 
 	encomsp->queue = MessageQueue_New(NULL);
 
@@ -1168,7 +1158,9 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	return CHANNEL_RC_OK;
+	return encomsp->channelEntryPoints.pVirtualChannelOpenEx(
+	    encomsp->InitHandle, &encomsp->OpenHandle, encomsp->channelDef.name,
+	    encomsp_virtual_channel_open_event_ex);
 }
 
 /**

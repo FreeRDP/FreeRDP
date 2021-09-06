@@ -867,18 +867,9 @@ static DWORD WINAPI remdesk_virtual_channel_client_thread(LPVOID arg)
 static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVOID pData,
                                                     UINT32 dataLength)
 {
-	UINT32 status;
 	UINT error;
-	status = remdesk->channelEntryPoints.pVirtualChannelOpenEx(
-	    remdesk->InitHandle, &remdesk->OpenHandle, remdesk->channelDef.name,
-	    remdesk_virtual_channel_open_event_ex);
 
-	if (status != CHANNEL_RC_OK)
-	{
-		WLog_ERR(TAG, "pVirtualChannelOpenEx failed with %s [%08" PRIX32 "]",
-		         WTSErrorToString(status), status);
-		return status;
-	}
+	WINPR_ASSERT(remdesk);
 
 	remdesk->queue = MessageQueue_New(NULL);
 
@@ -899,7 +890,9 @@ static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVO
 		goto error_out;
 	}
 
-	return CHANNEL_RC_OK;
+	return remdesk->channelEntryPoints.pVirtualChannelOpenEx(
+	    remdesk->InitHandle, &remdesk->OpenHandle, remdesk->channelDef.name,
+	    remdesk_virtual_channel_open_event_ex);
 error_out:
 	MessageQueue_Free(remdesk->queue);
 	remdesk->queue = NULL;

@@ -286,6 +286,8 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 			if (debug)
 				puts("rdp2tcp connected");
 
+			WINPR_ASSERT(plugin);
+			WINPR_ASSERT(plugin->channelEntryPoints.pVirtualChannelOpenEx);
 			if (plugin->channelEntryPoints.pVirtualChannelOpenEx(
 			        pInitHandle, &plugin->openHandle, RDP2TCP_DVC_CHANNEL_NAME,
 			        VirtualChannelOpenEventEx) != CHANNEL_RC_OK)

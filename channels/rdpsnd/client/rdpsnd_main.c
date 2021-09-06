@@ -1189,16 +1189,7 @@ static UINT rdpsnd_virtual_channel_event_connected(rdpsndPlugin* rdpsnd, LPVOID 
 	WINPR_UNUSED(pData);
 	WINPR_UNUSED(dataLength);
 
-	status = rdpsnd->channelEntryPoints.pVirtualChannelOpenEx(
-	    rdpsnd->InitHandle, &rdpsnd->OpenHandle, rdpsnd->channelDef.name,
-	    rdpsnd_virtual_channel_open_event_ex);
-
-	if (status != CHANNEL_RC_OK)
-	{
-		WLog_ERR(TAG, "%s pVirtualChannelOpenEx failed with %s [%08" PRIX32 "]",
-		         rdpsnd_is_dyn_str(rdpsnd->dynamic), WTSErrorToString(status), status);
-		return status;
-	}
+	WINPR_ASSERT(rdpsnd);
 
 	rdpsnd->dsp_context = freerdp_dsp_context_new(FALSE);
 
@@ -1209,6 +1200,17 @@ static UINT rdpsnd_virtual_channel_event_connected(rdpsndPlugin* rdpsnd, LPVOID 
 
 	if (!rdpsnd->pool)
 		goto fail;
+
+	status = rdpsnd->channelEntryPoints.pVirtualChannelOpenEx(
+	    rdpsnd->InitHandle, &rdpsnd->OpenHandle, rdpsnd->channelDef.name,
+	    rdpsnd_virtual_channel_open_event_ex);
+
+	if (status != CHANNEL_RC_OK)
+	{
+		WLog_ERR(TAG, "%s pVirtualChannelOpenEx failed with %s [%08" PRIX32 "]",
+		         rdpsnd_is_dyn_str(rdpsnd->dynamic), WTSErrorToString(status), status);
+		goto fail;
+	}
 
 	return rdpsnd_process_connect(rdpsnd);
 fail:
