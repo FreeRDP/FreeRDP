@@ -148,8 +148,9 @@ static UINT remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msg
                                        UINT32 msgSize)
 {
 	ctlHeader->msgType = msgType;
-	sprintf_s(ctlHeader->ChannelName, ARRAYSIZE(ctlHeader->ChannelName), REMDESK_CHANNEL_CTL_NAME);
-	ctlHeader->DataLength = 4 + msgSize;
+	sprintf_s(ctlHeader->ch.ChannelName, ARRAYSIZE(ctlHeader->ch.ChannelName),
+	          REMDESK_CHANNEL_CTL_NAME);
+	ctlHeader->ch.DataLength = 4 + msgSize;
 	return CHANNEL_RC_OK;
 }
 
@@ -171,7 +172,7 @@ static UINT remdesk_send_ctl_result_pdu(RemdeskServerContext* context, UINT32 re
 		return error;
 	}
 
-	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
+	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
@@ -215,7 +216,7 @@ static UINT remdesk_send_ctl_version_info_pdu(RemdeskServerContext* context)
 
 	pdu.versionMajor = 1;
 	pdu.versionMinor = 2;
-	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
+	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
