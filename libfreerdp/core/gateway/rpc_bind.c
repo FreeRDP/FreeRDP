@@ -114,11 +114,29 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	RpcClientCall* clientCall;
 	p_cont_elem_t* p_cont_elem;
 	rpcconn_bind_hdr_t* bind_pdu = NULL;
-	rdpSettings* settings = rpc->settings;
-	freerdp* instance = (freerdp*)settings->instance;
-	RpcVirtualConnection* connection = rpc->VirtualConnection;
-	RpcInChannel* inChannel = connection->DefaultInChannel;
+	rdpContext* context;
+	rdpSettings* settings;
+	freerdp* instance;
+	RpcVirtualConnection* connection;
+	RpcInChannel* inChannel;
 	const SecBuffer* sbuffer = NULL;
+
+	WINPR_ASSERT(rpc);
+	context = transport_get_context(rpc->transport);
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	instance = context->instance;
+	WINPR_ASSERT(instance);
+
+	connection = rpc->VirtualConnection;
+	;
+	WINPR_ASSERT(connection);
+
+	inChannel = connection->DefaultInChannel;
+
 	WLog_DBG(TAG, "Sending Bind PDU");
 	ntlm_free(rpc->ntlm);
 	rpc->ntlm = ntlm_new();

@@ -741,8 +741,6 @@ struct rdp_rpc
 
 	RpcClient* client;
 
-	rdpContext* context;
-	rdpSettings* settings;
 	rdpTransport* transport;
 
 	UINT32 CallId;

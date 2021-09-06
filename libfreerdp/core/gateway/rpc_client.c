@@ -342,13 +342,17 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 			{
 				/* End of TsProxySetupReceivePipe */
 				TerminateEventArgs e;
+				rdpContext* context = transport_get_context(rpc->transport);
 				rdpTsg* tsg = transport_get_tsg(rpc->transport);
+
+				WINPR_ASSERT(context);
+
 				rpc->result = *((UINT32*)&buffer[StubOffset]);
-				freerdp_abort_connect(rpc->context->instance);
+				freerdp_abort_connect(context->instance);
 				tsg_set_state(tsg, TSG_STATE_TUNNEL_CLOSE_PENDING);
 				EventArgsInit(&e, "freerdp");
 				e.code = 0;
-				PubSub_OnTerminate(rpc->context->pubSub, rpc->context, &e);
+				PubSub_OnTerminate(context->pubSub, context, &e);
 				return 0;
 			}
 
@@ -556,7 +560,8 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 			if (statusCode == HTTP_STATUS_DENIED)
 			{
-				freerdp_set_last_error_if_not(rpc->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+				rdpContext* context = transport_get_context(rpc->transport);
+				freerdp_set_last_error_if_not(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 			}
 
 			http_response_free(response);
