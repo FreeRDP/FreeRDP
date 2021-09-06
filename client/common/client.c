@@ -353,13 +353,29 @@ out:
  *  @return TRUE if a password was successfully entered. See freerdp_passphrase_read() for more
  * details.
  */
-static BOOL client_cli_authenticate_raw(freerdp* instance, BOOL gateway, char** username,
+static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reason, char** username,
                                         char** password, char** domain)
 {
 	static const size_t password_size = 512;
 	const char* auth[] = { "Username: ", "Domain:   ", "Password: " };
 	const char* gw[] = { "GatewayUsername: ", "GatewayDomain:   ", "GatewayPassword: " };
-	const char** prompt = (gateway) ? gw : auth;
+	const char** prompt;
+
+	switch (reason)
+	{
+		case AUTH_NLA:
+		case AUTH_TLS:
+		case AUTH_RDP:
+			prompt = auth;
+			break;
+		case GW_AUTH_HTTP:
+		case GW_AUTH_RDG:
+		case GW_AUTH_RPC:
+			prompt = gw;
+			break;
+		default:
+			return FALSE;
+	}
 
 	if (!username || !password || !domain)
 		return FALSE;
@@ -423,6 +439,44 @@ fail:
 	return FALSE;
 }
 
+BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** password, char** domain,
+                                rdp_auth_reason reason)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(username);
+	WINPR_ASSERT(password);
+	WINPR_ASSERT(domain);
+
+	if (instance->settings->SmartcardLogon)
+	{
+		WLog_INFO(TAG, "Authentication via smartcard");
+		return TRUE;
+	}
+
+	switch (reason)
+	{
+		case AUTH_NLA:
+			break;
+		case AUTH_TLS:
+			if ((*username) && (*password))
+				return TRUE;
+			break;
+		case AUTH_RDP:
+			if ((*username) && (*password))
+				return TRUE;
+			break;
+		case GW_AUTH_HTTP:
+		case GW_AUTH_RDG:
+		case GW_AUTH_RPC:
+			break;
+		default:
+			return FALSE;
+	}
+
+	return client_cli_authenticate_raw(instance, reason, username, password, domain);
+}
+
+#if defined(WITH_FREERDP_DEPRECATED)
 BOOL client_cli_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
 	if (instance->settings->SmartcardLogon)
@@ -438,6 +492,7 @@ BOOL client_cli_gw_authenticate(freerdp* instance, char** username, char** passw
 {
 	return client_cli_authenticate_raw(instance, TRUE, username, password, domain);
 }
+#endif
 
 static DWORD client_cli_accept_certificate(rdpSettings* settings)
 {

@@ -100,12 +100,19 @@ extern "C"
 	FREERDP_API int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, int argc,
 	                                                              char* argv[]);
 
-	FREERDP_API BOOL client_cli_authenticate(freerdp* instance, char** username, char** password,
-	                                         char** domain);
-	FREERDP_API BOOL client_cli_gw_authenticate(freerdp* instance, char** username, char** password,
-	                                            char** domain);
+	FREERDP_API BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** password,
+	                                            char** domain, rdp_auth_reason reason);
 
 #if defined(WITH_FREERDP_DEPRECATED)
+	FREERDP_API WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",
+	                                 BOOL client_cli_authenticate(freerdp* instance,
+	                                                              char** username, char** password,
+	                                                              char** domain));
+	FREERDP_API
+	    WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",
+	                         BOOL client_cli_gw_authenticate(freerdp* instance, char** username,
+	                                                         char** password, char** domain));
+
 	FREERDP_API WINPR_DEPRECATED_VAR(
 	    "Use client_cli_verify_certificate_ex",
 	    DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name,
