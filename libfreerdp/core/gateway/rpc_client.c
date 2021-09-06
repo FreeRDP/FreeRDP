@@ -174,7 +174,12 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 {
 	int status = -1;
 	rpcconn_rts_hdr_t* rts;
-	rdpTsg* tsg = rpc->transport->tsg;
+	rdpTsg* tsg;
+
+	WINPR_ASSERT(rpc);
+	WINPR_ASSERT(pdu);
+
+	tsg = transport_get_tsg(rpc->transport);
 
 	if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 	{
@@ -337,9 +342,10 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 			{
 				/* End of TsProxySetupReceivePipe */
 				TerminateEventArgs e;
+				rdpTsg* tsg = transport_get_tsg(rpc->transport);
 				rpc->result = *((UINT32*)&buffer[StubOffset]);
 				freerdp_abort_connect(rpc->context->instance);
-				tsg_set_state(rpc->transport->tsg, TSG_STATE_TUNNEL_CLOSE_PENDING);
+				tsg_set_state(tsg, TSG_STATE_TUNNEL_CLOSE_PENDING);
 				EventArgsInit(&e, "freerdp");
 				e.code = 0;
 				PubSub_OnTerminate(rpc->context->pubSub, rpc->context, &e);

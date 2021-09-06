@@ -282,9 +282,7 @@ static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 	WINPR_ASSERT(client->context->rdp);
 
 	transport = client->context->rdp->transport;
-	WINPR_ASSERT(transport);
-
-	BIO_get_event(transport->frontBio, &hEvent);
+	hEvent = transport_get_front_bio(transport);
 	return hEvent;
 }
 
@@ -881,8 +879,7 @@ static BOOL freerdp_peer_has_more_to_read(freerdp_peer* peer)
 	WINPR_ASSERT(peer);
 	WINPR_ASSERT(peer->context);
 	WINPR_ASSERT(peer->context->rdp);
-	WINPR_ASSERT(peer->context->rdp->transport);
-	return peer->context->rdp->transport->haveMoreBytesToRead;
+	return transport_have_more_bytes_to_read(peer->context->rdp->transport);
 }
 
 static LicenseCallbackResult freerdp_peer_nolicense(freerdp_peer* peer, wStream* s)
@@ -949,8 +946,7 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	if (!transport_attach(rdp->transport, client->sockfd))
 		goto fail_transport_attach;
 
-	rdp->transport->ReceiveCallback = peer_recv_callback;
-	rdp->transport->ReceiveExtra = client;
+	transport_set_recv_callbacks(rdp->transport, peer_recv_callback, client);
 	transport_set_blocking_mode(rdp->transport, FALSE);
 	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;

@@ -104,11 +104,14 @@ static BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 
 BOOL nego_connect(rdpNego* nego)
 {
+	rdpContext* context;
 	rdpSettings* settings;
 	WINPR_ASSERT(nego);
-	WINPR_ASSERT(nego->transport);
-	settings = nego->transport->settings;
+	context = transport_get_context(nego->transport);
+	WINPR_ASSERT(context);
+	settings = context->settings;
 	WINPR_ASSERT(settings);
+
 	if (nego_get_state(nego) == NEGO_STATE_INITIAL)
 	{
 		if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX])
@@ -192,7 +195,8 @@ BOOL nego_connect(rdpNego* nego)
 
 			if (nego_get_state(nego) == NEGO_STATE_FAIL)
 			{
-				if (freerdp_get_last_error(nego->transport->context) == FREERDP_ERROR_SUCCESS)
+				if (freerdp_get_last_error(transport_get_context(nego->transport)) ==
+				    FREERDP_ERROR_SUCCESS)
 					WLog_ERR(TAG, "Protocol Security Negotiation Failure");
 
 				nego_set_state(nego, NEGO_STATE_FINAL);
@@ -283,11 +287,17 @@ BOOL nego_security_connect(rdpNego* nego)
 
 static BOOL nego_tcp_connect(rdpNego* nego)
 {
+	rdpContext* context;
 	WINPR_ASSERT(nego);
 	if (!nego->TcpConnected)
 	{
-		const UINT32 TcpConnectTimeout = freerdp_settings_get_uint32(
-		    nego->transport->context->settings, FreeRDP_TcpConnectTimeout);
+		UINT32 TcpConnectTimeout;
+
+		context = transport_get_context(nego->transport);
+		WINPR_ASSERT(context);
+
+		TcpConnectTimeout =
+		    freerdp_settings_get_uint32(context->settings, FreeRDP_TcpConnectTimeout);
 
 		if (nego->GatewayEnabled)
 		{
@@ -1076,14 +1086,17 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	BOOL status;
 	wStream* s;
 	BYTE flags;
+	rdpContext* context;
 	rdpSettings* settings;
 
 	WINPR_ASSERT(nego);
-	WINPR_ASSERT(nego->transport);
+	context = transport_get_context(nego->transport);
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
 
 	status = TRUE;
-	settings = nego->transport->settings;
-	WINPR_ASSERT(settings);
 
 	s = Stream_New(NULL, 512);
 
@@ -1496,10 +1509,12 @@ BOOL nego_set_state(rdpNego* nego, NEGO_STATE state)
 
 SEC_WINNT_AUTH_IDENTITY* nego_get_identity(rdpNego* nego)
 {
+	rdpNla* nla;
 	if (!nego)
 		return NULL;
 
-	return nla_get_identity(nego->transport->nla);
+	nla = transport_get_nla(nego->transport);
+	return nla_get_identity(nla);
 }
 
 void nego_free_nla(rdpNego* nego)
@@ -1507,8 +1522,7 @@ void nego_free_nla(rdpNego* nego)
 	if (!nego || !nego->transport)
 		return;
 
-	nla_free(nego->transport->nla);
-	nego->transport->nla = NULL;
+	transport_set_nla(nego->transport, NULL);
 }
 
 const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength)

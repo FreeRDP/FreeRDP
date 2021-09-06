@@ -177,7 +177,8 @@ BOOL freerdp_connect(freerdp* instance)
 		{
 			pcap_get_next_record_header(update->pcap_rfx, &record);
 
-			if (!(s = StreamPool_Take(rdp->transport->ReceivePool, record.length)))
+			s = transport_take_from_pool(rdp->transport, record.length);
+			if (!s)
 				break;
 
 			record.data = Stream_Buffer(s);
@@ -207,7 +208,8 @@ BOOL freerdp_connect(freerdp* instance)
 	if (rdp->errorInfo == ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES)
 		freerdp_set_last_error_log(instance->context, FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
 
-	SetEvent(rdp->transport->connectedEvent);
+	transport_set_connected_event(rdp->transport);
+
 freerdp_connect_finally:
 	EventArgsInit(&e, "freerdp");
 	e.result = status ? 0 : -1;
@@ -898,12 +900,9 @@ void freerdp_free(freerdp* instance)
 
 ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount)
 {
-	ULONG written = context->rdp->transport->written;
-
-	if (resetCount)
-		context->rdp->transport->written = 0;
-
-	return written;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->rdp);
+	return transport_get_bytes_sent(context->rdp->transport, resetCount);
 }
 
 BOOL freerdp_nla_impersonate(rdpContext* context)
@@ -919,7 +918,7 @@ BOOL freerdp_nla_impersonate(rdpContext* context)
 	if (!context->rdp->transport)
 		return FALSE;
 
-	nla = context->rdp->transport->nla;
+	nla = transport_get_nla(context->rdp->transport);
 	return nla_impersonate(nla);
 }
 
@@ -936,7 +935,7 @@ BOOL freerdp_nla_revert_to_self(rdpContext* context)
 	if (!context->rdp->transport)
 		return FALSE;
 
-	nla = context->rdp->transport->nla;
+	nla = transport_get_nla(context->rdp->transport);
 	return nla_revert_to_self(nla);
 }
 

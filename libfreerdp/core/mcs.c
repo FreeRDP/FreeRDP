@@ -692,12 +692,15 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	size_t bm, em;
 	wStream* gcc_CCrq = NULL;
 	wStream* client_data = NULL;
+	rdpContext* context;
 
 	if (!mcs)
 		return FALSE;
 
-	WINPR_ASSERT(mcs->transport);
-	mcs_initialize_client_channels(mcs, mcs->transport->settings);
+	context = transport_get_context(mcs->transport);
+	WINPR_ASSERT(context);
+
+	mcs_initialize_client_channels(mcs, context->settings);
 	client_data = Stream_New(NULL, 512);
 
 	if (!client_data)
@@ -1253,7 +1256,7 @@ BOOL mcs_client_begin(rdpMcs* mcs)
 	if (!mcs || !mcs->transport)
 		return FALSE;
 
-	context = mcs->transport->context;
+	context = transport_get_context(mcs->transport);
 
 	if (!context)
 		return FALSE;
