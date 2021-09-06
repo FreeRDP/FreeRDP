@@ -38,7 +38,7 @@ extern "C"
 
 	FREERDP_API void nine_grid_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_API rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings);
+	FREERDP_API rdpNineGridCache* nine_grid_cache_new(rdpContext* context);
 	FREERDP_API void nine_grid_cache_free(rdpNineGridCache* nine_grid);
 
 #ifdef __cplusplus

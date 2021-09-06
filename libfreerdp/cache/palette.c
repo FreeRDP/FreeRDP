@@ -90,14 +90,17 @@ void palette_cache_register_callbacks(rdpUpdate* update)
 	update->secondary->CacheColorTable = update_gdi_cache_color_table;
 }
 
-rdpPaletteCache* palette_cache_new(rdpSettings* settings)
+rdpPaletteCache* palette_cache_new(rdpContext* context)
 {
 	rdpPaletteCache* paletteCache;
+
+	WINPR_ASSERT(context);
+
 	paletteCache = (rdpPaletteCache*)calloc(1, sizeof(rdpPaletteCache));
 
 	if (paletteCache)
 	{
-		paletteCache->settings = settings;
+		paletteCache->context = context;
 		paletteCache->maxEntries = 6;
 		paletteCache->entries =
 		    (PALETTE_TABLE_ENTRY*)calloc(paletteCache->maxEntries, sizeof(PALETTE_TABLE_ENTRY));

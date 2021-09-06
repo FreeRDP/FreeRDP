@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <freerdp/freerdp.h>
 #include <winpr/stream.h>
@@ -545,6 +546,9 @@ static BOOL update_gdi_cache_glyph_v2(rdpContext* context, const CACHE_GLYPH_V2_
 rdpGlyph* glyph_cache_get(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index)
 {
 	rdpGlyph* glyph;
+
+	WINPR_ASSERT(glyphCache);
+
 	WLog_Print(glyphCache->log, WLOG_DEBUG, "GlyphCacheGet: id: %" PRIu32 " index: %" PRIu32 "", id,
 	           index);
 
@@ -554,6 +558,7 @@ rdpGlyph* glyph_cache_get(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index)
 		return NULL;
 	}
 
+	WINPR_ASSERT(glyphCache->glyphCache);
 	if (index > glyphCache->glyphCache[id].number)
 	{
 		WLog_ERR(TAG, "index %" PRIu32 " out of range for cache id: %" PRIu32 "", index, id);
@@ -573,12 +578,15 @@ BOOL glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyp
 {
 	rdpGlyph* prevGlyph;
 
+	WINPR_ASSERT(glyphCache);
+
 	if (id > 9)
 	{
 		WLog_ERR(TAG, "invalid glyph cache id: %" PRIu32 "", id);
 		return FALSE;
 	}
 
+	WINPR_ASSERT(glyphCache->glyphCache);
 	if (index >= glyphCache->glyphCache[id].number)
 	{
 		WLog_ERR(TAG, "invalid glyph cache index: %" PRIu32 " in cache id: %" PRIu32 "", index, id);
@@ -590,7 +598,10 @@ BOOL glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyp
 	prevGlyph = glyphCache->glyphCache[id].entries[index];
 
 	if (prevGlyph)
+	{
+		WINPR_ASSERT(prevGlyph->Free);
 		prevGlyph->Free(glyphCache->context, prevGlyph);
+	}
 
 	glyphCache->glyphCache[id].entries[index] = glyph;
 	return TRUE;
@@ -599,6 +610,9 @@ BOOL glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyp
 const void* glyph_cache_fragment_get(rdpGlyphCache* glyphCache, UINT32 index, UINT32* size)
 {
 	void* fragment;
+
+	WINPR_ASSERT(glyphCache);
+	WINPR_ASSERT(glyphCache->fragCache.entries);
 
 	if (index > 255)
 	{
@@ -622,6 +636,9 @@ BOOL glyph_cache_fragment_put(rdpGlyphCache* glyphCache, UINT32 index, UINT32 si
 {
 	void* prevFragment;
 	void* copy;
+
+	WINPR_ASSERT(glyphCache);
+	WINPR_ASSERT(glyphCache->fragCache.entries);
 
 	if (index > 255)
 	{
@@ -653,18 +670,24 @@ void glyph_cache_register_callbacks(rdpUpdate* update)
 	update->secondary->CacheGlyphV2 = update_gdi_cache_glyph_v2;
 }
 
-rdpGlyphCache* glyph_cache_new(rdpSettings* settings)
+rdpGlyphCache* glyph_cache_new(rdpContext* context)
 {
-	int i;
+	size_t i;
 	rdpGlyphCache* glyphCache;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
 	glyphCache = (rdpGlyphCache*)calloc(1, sizeof(rdpGlyphCache));
 
 	if (!glyphCache)
 		return NULL;
 
 	glyphCache->log = WLog_Get("com.freerdp.cache.glyph");
-	glyphCache->settings = settings;
-	glyphCache->context = ((freerdp*)settings->instance)->update->context;
+	glyphCache->context = context;
 
 	for (i = 0; i < 10; i++)
 	{
@@ -692,7 +715,7 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 {
 	if (glyphCache)
 	{
-		int i;
+		size_t i;
 		GLYPH_CACHE* cache = glyphCache->glyphCache;
 
 		for (i = 0; i < 10; i++)
@@ -735,7 +758,11 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 CACHE_GLYPH_ORDER* copy_cache_glyph_order(rdpContext* context, const CACHE_GLYPH_ORDER* glyph)
 {
 	size_t x;
-	CACHE_GLYPH_ORDER* dst = calloc(1, sizeof(CACHE_GLYPH_ORDER));
+	CACHE_GLYPH_ORDER* dst;
+
+	WINPR_ASSERT(context);
+
+	dst = calloc(1, sizeof(CACHE_GLYPH_ORDER));
 
 	if (!dst || !glyph)
 		goto fail;
@@ -797,7 +824,11 @@ CACHE_GLYPH_V2_ORDER* copy_cache_glyph_v2_order(rdpContext* context,
                                                 const CACHE_GLYPH_V2_ORDER* glyph)
 {
 	size_t x;
-	CACHE_GLYPH_V2_ORDER* dst = calloc(1, sizeof(CACHE_GLYPH_V2_ORDER));
+	CACHE_GLYPH_V2_ORDER* dst;
+
+	WINPR_ASSERT(context);
+
+	dst = calloc(1, sizeof(CACHE_GLYPH_V2_ORDER));
 
 	if (!dst || !glyph)
 		goto fail;
