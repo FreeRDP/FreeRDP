@@ -775,6 +775,7 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 		status = CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	else
 	{
+		WINPR_ASSERT(drdynvc->channelEntryPoints.pVirtualChannelWriteEx);
 		status = drdynvc->channelEntryPoints.pVirtualChannelWriteEx(
 		    drdynvc->InitHandle, drdynvc->OpenHandle, Stream_Buffer(s),
 		    (UINT32)Stream_GetPosition(s), s);
@@ -1499,6 +1500,7 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
+	WINPR_ASSERT(drdynvc->channelEntryPoints.pVirtualChannelOpenEx);
 	status = drdynvc->channelEntryPoints.pVirtualChannelOpenEx(
 	    drdynvc->InitHandle, &drdynvc->OpenHandle, drdynvc->channelDef.name,
 	    drdynvc_virtual_channel_open_event_ex);
@@ -1556,24 +1558,32 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 	if (drdynvc->OpenHandle == 0)
 		return CHANNEL_RC_OK;
 
-	if (!MessageQueue_PostQuit(drdynvc->queue, 0))
+	if (drdynvc->queue)
 	{
-		status = GetLastError();
-		WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_PostQuit failed with error %" PRIu32 "",
-		           status);
-		return status;
+		if (!MessageQueue_PostQuit(drdynvc->queue, 0))
+		{
+			status = GetLastError();
+			WLog_Print(drdynvc->log, WLOG_ERROR,
+			           "MessageQueue_PostQuit failed with error %" PRIu32 "", status);
+			return status;
+		}
 	}
 
-	if (WaitForSingleObject(drdynvc->thread, INFINITE) != WAIT_OBJECT_0)
+	if (drdynvc->thread)
 	{
-		status = GetLastError();
-		WLog_Print(drdynvc->log, WLOG_ERROR, "WaitForSingleObject failed with error %" PRIu32 "",
-		           status);
-		return status;
+		if (WaitForSingleObject(drdynvc->thread, INFINITE) != WAIT_OBJECT_0)
+		{
+			status = GetLastError();
+			WLog_Print(drdynvc->log, WLOG_ERROR,
+			           "WaitForSingleObject failed with error %" PRIu32 "", status);
+			return status;
+		}
+
+		CloseHandle(drdynvc->thread);
+		drdynvc->thread = NULL;
 	}
 
-	CloseHandle(drdynvc->thread);
-	drdynvc->thread = NULL;
+	WINPR_ASSERT(drdynvc->channelEntryPoints.pVirtualChannelCloseEx);
 	status = drdynvc->channelEntryPoints.pVirtualChannelCloseEx(drdynvc->InitHandle,
 	                                                            drdynvc->OpenHandle);
 
@@ -1584,7 +1594,8 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 	}
 
 	dvcman_clear(drdynvc, drdynvc->channel_mgr);
-	MessageQueue_Clear(drdynvc->queue);
+	if (drdynvc->queue)
+		MessageQueue_Clear(drdynvc->queue);
 	drdynvc->OpenHandle = 0;
 
 	if (drdynvc->data_in)
@@ -1811,6 +1822,8 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 	CopyMemory(&(drdynvc->channelEntryPoints), pEntryPoints,
 	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
 	drdynvc->InitHandle = pInitHandle;
+
+	WINPR_ASSERT(drdynvc->channelEntryPoints.pVirtualChannelInitEx);
 	rc = drdynvc->channelEntryPoints.pVirtualChannelInitEx(
 	    drdynvc, context, pInitHandle, &drdynvc->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
 	    drdynvc_virtual_channel_init_event_ex);

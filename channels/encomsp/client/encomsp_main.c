@@ -1175,18 +1175,23 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 	if (encomsp->OpenHandle == 0)
 		return CHANNEL_RC_OK;
 
-	if (MessageQueue_PostQuit(encomsp->queue, 0) &&
-	    (WaitForSingleObject(encomsp->thread, INFINITE) == WAIT_FAILED))
+	if (encomsp->queue && encomsp->thread)
 	{
-		rc = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", rc);
-		return rc;
+		if (MessageQueue_PostQuit(encomsp->queue, 0) &&
+		    (WaitForSingleObject(encomsp->thread, INFINITE) == WAIT_FAILED))
+		{
+			rc = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", rc);
+			return rc;
+		}
 	}
 
 	MessageQueue_Free(encomsp->queue);
 	CloseHandle(encomsp->thread);
 	encomsp->queue = NULL;
 	encomsp->thread = NULL;
+
+	WINPR_ASSERT(encomsp->channelEntryPoints.pVirtualChannelCloseEx);
 	rc = encomsp->channelEntryPoints.pVirtualChannelCloseEx(encomsp->InitHandle,
 	                                                        encomsp->OpenHandle);
 
