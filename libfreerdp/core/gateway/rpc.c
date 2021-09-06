@@ -649,8 +649,8 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	proxyUsername = freerdp_settings_get_string(settings, FreeRDP_ProxyUsername);
 	proxyPassword = freerdp_settings_get_string(settings, FreeRDP_ProxyPassword);
 	{
-		sockfd = freerdp_tcp_connect(context, settings, channel->client->host,
-		                             channel->client->port, timeout);
+		sockfd =
+		    freerdp_tcp_connect(context, channel->client->host, channel->client->port, timeout);
 
 		if (sockfd < 0)
 			return FALSE;
@@ -846,8 +846,9 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 	rpc->State = RPC_CLIENT_STATE_INITIAL;
 	rpc->transport = transport;
-	rpc->settings = transport->settings;
-	rpc->context = transport->context;
+	rpc->context = transport_get_context(transport);
+	WINPR_ASSERT(rpc->context);
+	rpc->settings = rpc->context->settings;
 	rpc->SendSeqNum = 0;
 	rpc->ntlm = ntlm_new();
 

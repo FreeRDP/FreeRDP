@@ -222,7 +222,6 @@ struct rdp_tsg
 	UINT32 TunnelId;
 	UINT32 ChannelId;
 	BOOL reauthSequence;
-	rdpSettings* settings;
 	rdpTransport* transport;
 	UINT64 ReauthTunnelContext;
 	CONTEXT_HANDLE TunnelContext;
@@ -2079,7 +2078,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 		if (!tsg_check_event_handles(tsg))
 		{
 			WLog_ERR(TAG, "tsg_check failure");
-			transport->layer = TRANSPORT_LAYER_CLOSED;
+			transport_set_layer(transport, TRANSPORT_LAYER_CLOSED);
 			return FALSE;
 		}
 	}
@@ -2148,7 +2147,7 @@ static int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 	rpc = tsg->rpc;
 
-	if (rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
+	if (transport_get_layer(rpc->transport) == TRANSPORT_LAYER_CLOSED)
 	{
 		WLog_ERR(TAG, "tsg_read error: connection lost");
 		return -1;
@@ -2161,10 +2160,10 @@ static int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		if (status < 0)
 			return -1;
 
-		if (!status && !rpc->transport->blocking)
+		if (!status && !transport_get_blocking(rpc->transport))
 			return 0;
 
-		if (rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
+		if (transport_get_layer(rpc->transport) == TRANSPORT_LAYER_CLOSED)
 		{
 			WLog_ERR(TAG, "tsg_read error: connection lost");
 			return -1;
@@ -2173,7 +2172,7 @@ static int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		if (status > 0)
 			break;
 
-		if (rpc->transport->blocking)
+		if (transport_get_blocking(rpc->transport))
 		{
 			while (WaitForSingleObject(rpc->client->PipeEvent, 0) != WAIT_OBJECT_0)
 			{
@@ -2183,7 +2182,7 @@ static int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 				WaitForSingleObject(rpc->client->PipeEvent, 100);
 			}
 		}
-	} while (rpc->transport->blocking);
+	} while (transport_get_blocking(rpc->transport));
 
 	return status;
 }
@@ -2195,7 +2194,7 @@ static int tsg_write(rdpTsg* tsg, const BYTE* data, UINT32 length)
 	if (!tsg || !data || !tsg->rpc || !tsg->rpc->transport)
 		return -1;
 
-	if (tsg->rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
+	if (transport_get_layer(tsg->rpc->transport) == TRANSPORT_LAYER_CLOSED)
 	{
 		WLog_ERR(TAG, "error, connection lost");
 		return -1;
@@ -2218,7 +2217,6 @@ rdpTsg* tsg_new(rdpTransport* transport)
 		return NULL;
 
 	tsg->transport = transport;
-	tsg->settings = transport->settings;
 	tsg->rpc = rpc_new(tsg->transport);
 
 	if (!tsg->rpc)

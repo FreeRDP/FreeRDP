@@ -1639,8 +1639,8 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	if (settings->GatewayPort > UINT16_MAX)
 		return FALSE;
 
-	sockfd = freerdp_tcp_connect(rdg->context, settings, peerAddress ? peerAddress : peerHostname,
-	                             peerPort, timeout);
+	sockfd = freerdp_tcp_connect(rdg->context, peerAddress ? peerAddress : peerHostname, peerPort,
+	                             timeout);
 
 	if (sockfd < 0)
 	{
@@ -1855,7 +1855,10 @@ static BOOL rdg_tunnel_connect(rdpRdg* rdg)
 
 		if (!status)
 		{
-			rdg->context->rdp->transport->layer = TRANSPORT_LAYER_CLOSED;
+			WINPR_ASSERT(rdg);
+			WINPR_ASSERT(rdg->context);
+			WINPR_ASSERT(rdg->context->rdp);
+			transport_set_layer(rdg->context->rdp->transport, TRANSPORT_LAYER_CLOSED);
 			return FALSE;
 		}
 	}
@@ -1893,7 +1896,10 @@ BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback)
 
 	if (!status)
 	{
-		rdg->context->rdp->transport->layer = TRANSPORT_LAYER_CLOSED;
+		WINPR_ASSERT(rdg);
+		WINPR_ASSERT(rdg->context);
+		WINPR_ASSERT(rdg->context->rdp);
+		transport_set_layer(rdg->context->rdp->transport, TRANSPORT_LAYER_CLOSED);
 		return FALSE;
 	}
 

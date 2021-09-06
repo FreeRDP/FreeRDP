@@ -1057,8 +1057,7 @@ static BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int soc
 	return TRUE;
 }
 
-int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* hostname, int port,
-                        DWORD timeout)
+int freerdp_tcp_connect(rdpContext* context, const char* hostname, int port, DWORD timeout)
 {
 	rdpTransport* transport;
 	if (!context || !context->rdp)
@@ -1066,7 +1065,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 	transport = context->rdp->transport;
 	if (!transport)
 		return -1;
-	return IFCALLRESULT(-1, transport->io.TCPConnect, context, settings, hostname, port, timeout);
+	return transport_tcp_connect(context->rdp->transport, hostname, port, timeout);
 }
 
 int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, const char* hostname,

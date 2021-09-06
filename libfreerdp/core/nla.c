@@ -653,7 +653,7 @@ static int nla_client_init(rdpNla* nla)
 		}
 	}
 
-	tls = nla->transport->tls;
+	tls = transport_get_tls(nla->transport);
 
 	if (!tls)
 	{
@@ -989,7 +989,7 @@ fail:
 
 static int nla_server_init(rdpNla* nla)
 {
-	rdpTls* tls = nla->transport->tls;
+	rdpTls* tls = transport_get_tls(nla->transport);
 
 	if (!nla_sec_buffer_alloc_from_data(&nla->PublicKey, tls->PublicKey, 0, tls->PublicKeyLength))
 	{

@@ -554,13 +554,17 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	}
 	else
 	{
+		rdpContext* context;
 		const size_t totalSize = Stream_GetPosition(fastpath->updateData);
 
-		WINPR_ASSERT(transport->settings);
-		if (totalSize > transport->settings->MultifragMaxRequestSize)
+		context = transport_get_context(transport);
+		WINPR_ASSERT(context);
+		WINPR_ASSERT(context->settings);
+
+		if (totalSize > context->settings->MultifragMaxRequestSize)
 		{
 			WLog_ERR(TAG, "Total size (%" PRIuz ") exceeds MultifragMaxRequestSize (%" PRIu32 ")",
-			         totalSize, transport->settings->MultifragMaxRequestSize);
+			         totalSize, context->settings->MultifragMaxRequestSize);
 			goto out_fail;
 		}
 
