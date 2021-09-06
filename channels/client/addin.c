@@ -605,6 +605,9 @@ UINT channel_client_quit_handler(void* MsgsHandle)
 		/* TODO: return some error here */
 		return CHANNEL_RC_OK;
 	}
+
+	WINPR_ASSERT(internals->ctx);
+	WINPR_ASSERT(internals->ctx->settings);
 	if (!(internals->ctx->settings->ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
 	{
 		if (MessageQueue_PostQuit(internals->queue, 0) &&
