@@ -839,16 +839,18 @@ BOOL rpc_connect(rdpRpc* rpc, int timeout)
 
 rdpRpc* rpc_new(rdpTransport* transport)
 {
-	rdpRpc* rpc = (rdpRpc*)calloc(1, sizeof(rdpRpc));
+	rdpContext* context = transport_get_context(transport);
+	rdpRpc* rpc;
+
+	WINPR_ASSERT(context);
+
+	rpc = (rdpRpc*)calloc(1, sizeof(rdpRpc));
 
 	if (!rpc)
 		return NULL;
 
 	rpc->State = RPC_CLIENT_STATE_INITIAL;
 	rpc->transport = transport;
-	rpc->context = transport_get_context(transport);
-	WINPR_ASSERT(rpc->context);
-	rpc->settings = rpc->context->settings;
 	rpc->SendSeqNum = 0;
 	rpc->ntlm = ntlm_new();
 
@@ -873,7 +875,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 	rpc->CurrentKeepAliveInterval = rpc->KeepAliveInterval;
 	rpc->CurrentKeepAliveTime = 0;
 	rpc->CallId = 2;
-	rpc->client = rpc_client_new(rpc->context, rpc->max_recv_frag);
+	rpc->client = rpc_client_new(context, rpc->max_recv_frag);
 
 	if (!rpc->client)
 		goto out_free;

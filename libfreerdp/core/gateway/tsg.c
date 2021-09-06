@@ -724,11 +724,19 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 	UINT32 SwitchValue;
 	UINT32 MessageSwitchValue = 0;
 	UINT32 IsMessagePresent;
+	rdpContext* context;
 	PTSG_PACKET_CAPABILITIES tsgCaps = NULL;
 	PTSG_PACKET_VERSIONCAPS versionCaps = NULL;
 	TSG_PACKET_STRING_MESSAGE packetStringMessage;
 	PTSG_PACKET_CAPS_RESPONSE packetCapsResponse = NULL;
 	PTSG_PACKET_QUARENC_RESPONSE packetQuarEncResponse = NULL;
+
+	WINPR_ASSERT(tsg);
+	WINPR_ASSERT(tsg->rpc);
+	WINPR_ASSERT(tsg->rpc->transport);
+
+	context = transport_get_context(tsg->rpc->transport);
+	WINPR_ASSERT(context);
 
 	if (!pdu)
 		return FALSE;
@@ -906,16 +914,15 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 					goto fail;
 				}
 
-				if (tsg->rpc && tsg->rpc->context && tsg->rpc->context->instance)
+				if (context->instance)
 				{
-					rc = IFCALLRESULT(TRUE, tsg->rpc->context->instance->PresentGatewayMessage,
-					                  tsg->rpc->context->instance,
-					                  TSG_ASYNC_MESSAGE_CONSENT_MESSAGE
-					                      ? GATEWAY_MESSAGE_CONSENT
-					                      : TSG_ASYNC_MESSAGE_SERVICE_MESSAGE,
-					                  packetStringMessage.isDisplayMandatory != 0,
-					                  packetStringMessage.isConsentMandatory != 0,
-					                  packetStringMessage.msgBytes, packetStringMessage.msgBuffer);
+					rc = IFCALLRESULT(
+					    TRUE, context->instance->PresentGatewayMessage, context->instance,
+					    TSG_ASYNC_MESSAGE_CONSENT_MESSAGE ? GATEWAY_MESSAGE_CONSENT
+					                                      : TSG_ASYNC_MESSAGE_SERVICE_MESSAGE,
+					    packetStringMessage.isDisplayMandatory != 0,
+					    packetStringMessage.isConsentMandatory != 0, packetStringMessage.msgBytes,
+					    packetStringMessage.msgBuffer);
 					if (!rc)
 						goto fail;
 				}
@@ -1301,10 +1308,17 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	UINT32 Pointer;
 	UINT32 SwitchValue;
 	TSG_PACKET packet;
+	rdpContext* context;
 	char* messageText = NULL;
 	TSG_PACKET_MSG_RESPONSE packetMsgResponse = { 0 };
 	TSG_PACKET_STRING_MESSAGE packetStringMessage = { 0 };
 	TSG_PACKET_REAUTH_MESSAGE packetReauthMessage = { 0 };
+
+	WINPR_ASSERT(tsg);
+	WINPR_ASSERT(tsg->rpc);
+
+	context = transport_get_context(tsg->rpc->transport);
+	WINPR_ASSERT(context);
 
 	/* This is an asynchronous response */
 
@@ -1355,10 +1369,10 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			WLog_INFO(TAG, "Consent Message: %s", messageText);
 			free(messageText);
 
-			if (tsg->rpc && tsg->rpc->context && tsg->rpc->context->instance)
+			if (context->instance)
 			{
-				rc = IFCALLRESULT(TRUE, tsg->rpc->context->instance->PresentGatewayMessage,
-				                  tsg->rpc->context->instance, GATEWAY_MESSAGE_CONSENT,
+				rc = IFCALLRESULT(TRUE, context->instance->PresentGatewayMessage, context->instance,
+				                  GATEWAY_MESSAGE_CONSENT,
 				                  packetStringMessage.isDisplayMandatory != 0,
 				                  packetStringMessage.isConsentMandatory != 0,
 				                  packetStringMessage.msgBytes, packetStringMessage.msgBuffer);
@@ -1376,10 +1390,10 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			WLog_INFO(TAG, "Service Message: %s", messageText);
 			free(messageText);
 
-			if (tsg->rpc && tsg->rpc->context && tsg->rpc->context->instance)
+			if (context->instance)
 			{
-				rc = IFCALLRESULT(TRUE, tsg->rpc->context->instance->PresentGatewayMessage,
-				                  tsg->rpc->context->instance, GATEWAY_MESSAGE_SERVICE,
+				rc = IFCALLRESULT(TRUE, context->instance->PresentGatewayMessage, context->instance,
+				                  GATEWAY_MESSAGE_SERVICE,
 				                  packetStringMessage.isDisplayMandatory != 0,
 				                  packetStringMessage.isConsentMandatory != 0,
 				                  packetStringMessage.msgBytes, packetStringMessage.msgBuffer);
@@ -2033,9 +2047,22 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 	UINT64 looptimeout = timeout * 1000ULL;
 	DWORD nCount;
 	HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
-	rdpRpc* rpc = tsg->rpc;
-	rdpSettings* settings = rpc->settings;
-	rdpTransport* transport = rpc->transport;
+	rdpRpc* rpc;
+	rdpContext* context;
+	rdpSettings* settings;
+	rdpTransport* transport;
+
+	WINPR_ASSERT(tsg);
+
+	rpc = tsg->rpc;
+	WINPR_ASSERT(rpc);
+
+	transport = rpc->transport;
+	context = transport_get_context(transport);
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+
 	tsg->Port = port;
 	tsg->transport = transport;
 
