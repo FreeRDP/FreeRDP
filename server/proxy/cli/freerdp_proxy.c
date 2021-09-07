@@ -110,7 +110,6 @@ int main(int argc, char* argv[])
 			status = 0;
 			goto fail;
 		    }
-
 		config_path = argv[1];
 	}
 
