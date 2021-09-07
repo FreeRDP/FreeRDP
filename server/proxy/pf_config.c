@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <winpr/crt.h>
+#include <winpr/path.h>
 #include <winpr/collections.h>
 #include <winpr/cmdline.h>
 
