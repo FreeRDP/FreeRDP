@@ -57,6 +57,10 @@
 #include <sys/statvfs.h>
 #endif
 
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
+
 static BOOL FileIsHandled(HANDLE handle)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)handle;
@@ -840,11 +844,11 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 #endif
 		{
 #ifdef __sun
-			WLog_ERR(TAG, "F_SETLKW failed with %s [0x%08X]",
+			WLog_ERR(TAG, "F_SETLKW failed with %s [0x%08X]", strerror(errno), errno);
 #else
-			WLog_ERR(TAG, "flock failed with %s [0x%08X]",
+			WLog_ERR(TAG, "flock failed with %s [0x%08X]", strerror(errno), errno);
 #endif
-			         strerror(errno), errno);
+
 			SetLastError(map_posix_err(errno));
 			FileCloseHandle(pFile);
 			return INVALID_HANDLE_VALUE;
@@ -940,12 +944,12 @@ BOOL GetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWO
 #define STATVFS statvfs
 #endif
 
-	struct STATVFS svfst;
+	struct STATVFS svfst = { 0 };
 	STATVFS(lpRootPathName, &svfst);
-	*lpSectorsPerCluster = svfst.f_frsize;
+	*lpSectorsPerCluster = (UINT32)MIN(svfst.f_frsize, UINT32_MAX);
 	*lpBytesPerSector = 1;
-	*lpNumberOfFreeClusters = svfst.f_bavail;
-	*lpTotalNumberOfClusters = svfst.f_blocks;
+	*lpNumberOfFreeClusters = (UINT32)MIN(svfst.f_bavail, UINT32_MAX);
+	*lpTotalNumberOfClusters = (UINT32)MIN(svfst.f_blocks, UINT32_MAX);
 	return TRUE;
 }
 

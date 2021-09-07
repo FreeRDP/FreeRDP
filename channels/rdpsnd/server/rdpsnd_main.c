@@ -548,11 +548,9 @@ static UINT rdpsnd_server_send_audio_pdu(RdpsndServerContext* context, UINT16 wT
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpsnd_server_send_samples(RdpsndServerContext* context, const void* buf, int nframes,
-                                       UINT16 wTimestamp)
+static UINT rdpsnd_server_send_samples(RdpsndServerContext* context, const void* buf,
+                                       size_t nframes, UINT16 wTimestamp)
 {
-	int cframes;
-	int cframesize;
 	UINT error = CHANNEL_RC_OK;
 	EnterCriticalSection(&context->priv->lock);
 
@@ -566,8 +564,9 @@ static UINT rdpsnd_server_send_samples(RdpsndServerContext* context, const void*
 
 	while (nframes > 0)
 	{
-		cframes = MIN(nframes, context->priv->out_frames - context->priv->out_pending_frames);
-		cframesize = cframes * context->priv->src_bytes_per_frame;
+		const size_t cframes =
+		    MIN(nframes, context->priv->out_frames - context->priv->out_pending_frames);
+		size_t cframesize = cframes * context->priv->src_bytes_per_frame;
 		CopyMemory(context->priv->out_buffer +
 		               (context->priv->out_pending_frames * context->priv->src_bytes_per_frame),
 		           buf, cframesize);

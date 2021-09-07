@@ -268,7 +268,7 @@ struct _SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES
 	SHADOW_MSG_OUT common;
 	AUDIO_FORMAT* audio_format;
 	void* buf;
-	int nFrames;
+	size_t nFrames;
 	UINT16 wTimestamp;
 };
 typedef struct _SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES;

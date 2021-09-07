@@ -36,7 +36,7 @@ typedef UINT (*psRdpsndServerInitialize)(RdpsndServerContext* context, BOOL ownT
 typedef UINT (*psRdpsndServerSelectFormat)(RdpsndServerContext* context,
                                            UINT16 client_format_index);
 typedef UINT (*psRdpsndServerSendSamples)(RdpsndServerContext* context, const void* buf,
-                                          int nframes, UINT16 wTimestamp);
+                                          size_t nframes, UINT16 wTimestamp);
 typedef UINT (*psRdpsndServerConfirmBlock)(RdpsndServerContext* context, BYTE confirmBlockNum,
                                            UINT16 wtimestamp);
 typedef UINT (*psRdpsndServerSetVolume)(RdpsndServerContext* context, int left, int right);
@@ -64,7 +64,7 @@ struct _rdpsnd_server_context
 	AUDIO_FORMAT* src_format;
 
 	/* Server audio latency, or buffer size, in milli-seconds. Set by server. */
-	int latency;
+	UINT32 latency;
 
 	/* Client supported formats. */
 	AUDIO_FORMAT* client_formats;
