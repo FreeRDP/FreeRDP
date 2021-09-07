@@ -1946,10 +1946,19 @@ BOOL rdp_reset(rdpRdp* rdp)
 	}
 
 	mcs_free(rdp->mcs);
+	rdp->mcs = NULL;
+
 	nego_free(rdp->nego);
+	rdp->nego = NULL;
+
 	license_free(rdp->license);
+	rdp->license = NULL;
+
 	transport_free(rdp->transport);
+	rdp->transport = NULL;
+
 	fastpath_free(rdp->fastpath);
+	rdp->fastpath = NULL;
 
 	rdp->transport = transport_new(context);
 	if (rdp->transport)
