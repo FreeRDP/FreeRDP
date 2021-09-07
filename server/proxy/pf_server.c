@@ -453,7 +453,6 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	DWORD tmp;
 	DWORD status;
 	pServerContext* ps;
-	rdpContext* pc;
 	proxyData* pdata;
 	freerdp_peer* client = (freerdp_peer*)arg;
 	proxyServer* server;

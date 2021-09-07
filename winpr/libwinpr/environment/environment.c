@@ -26,13 +26,11 @@
 #include <winpr/crt.h>
 #include <winpr/platform.h>
 #include <winpr/error.h>
+#include <winpr/string.h>
 
 #include <winpr/environment.h>
 
 #ifndef _WIN32
-
-#define stricmp strcasecmp
-#define strnicmp strncasecmp
 
 #include <winpr/crt.h>
 #include <winpr/platform.h>
