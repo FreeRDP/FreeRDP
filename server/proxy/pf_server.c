@@ -576,6 +576,25 @@ fail:
 
 	pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_SESSION_END, pdata, client);
 
+	if (pdata->client_thread)
+	{
+		if (pdata->pc)
+			freerdp_abort_connect(pdata->pc->context.instance);
+		/*
+		 * Wait for client thread to finish. No need to call CloseHandle() here, as
+		 * it is the responsibility of `proxy_data_free`.
+		 */
+		PROXY_LOG_DBG(TAG, pdata->pc, "waiting for client thread to finish");
+		WaitForSingleObject(pdata->client_thread, INFINITE);
+		PROXY_LOG_DBG(TAG, pdata->pc, "thread finished");
+
+		if (pdata->pc)
+		{
+			freerdp_client_context_free(&pdata->pc->context);
+			pdata->pc = NULL;
+		}
+	}
+
 	PROXY_LOG_INFO(TAG, ps, "freeing server's channels");
 	pf_server_channels_free(ps, client);
 	PROXY_LOG_INFO(TAG, ps, "freeing proxy data");
