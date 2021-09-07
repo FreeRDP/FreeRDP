@@ -111,8 +111,7 @@ struct proxy_plugin
 struct proxy_plugins_manager
 {
 	/* 0 used for registering a fresh new proxy plugin. */
-	BOOL(*RegisterPlugin)
-	(struct proxy_plugins_manager* mgr, const proxyPlugin* plugin);
+	BOOL (*RegisterPlugin)(struct proxy_plugins_manager* mgr, const proxyPlugin* plugin);
 
 	/* 1 used for setting plugin's per-session info. */
 	BOOL (*SetPluginData)(struct proxy_plugins_manager* mgr, const char*, proxyData*, void*);

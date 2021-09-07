@@ -328,7 +328,7 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 					return FALSE;
 
 				cmd = data[0] >> 4;
-				if (cmd == 0x01)
+				if (cmd == CREATE_REQUEST_PDU)
 				{
 					proxyChannelDataEventInfo dev;
 					size_t len, nameLen;
