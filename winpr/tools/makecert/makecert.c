@@ -78,6 +78,7 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 	while (offset >= length)
 	{
 		size_t new_len;
+		size_t readBytes = 0;
 		char* new_str;
 		new_len = length * 2;
 		if (new_len == 0)
@@ -99,12 +100,12 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 
 		length = new_len;
 		x509_str = new_str;
-		status = BIO_read(bio, &x509_str[offset], (int)length - 1);
+		status = BIO_read_ex(bio, &x509_str[offset], length - offset, &readBytes);
 
 		if (status < 0)
 			break;
 
-		offset += (size_t)status;
+		offset += (size_t)readBytes;
 	}
 
 	if (status < 0)
