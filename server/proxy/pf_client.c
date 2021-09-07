@@ -262,7 +262,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 }
 
 static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channelId,
-                                                const BYTE* data, size_t size, UINT32 flags,
+                                                const BYTE* xdata, size_t xsize, UINT32 flags,
                                                 size_t totalSize)
 {
 	const char* channel_name = freerdp_channels_get_name_by_id(instance, channelId);
@@ -273,7 +273,7 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	int pass;
 
 	WINPR_ASSERT(instance);
-	WINPR_ASSERT(data || (size == 0));
+	WINPR_ASSERT(xdata || (xsize == 0));
 
 	pc = (pClientContext*)instance->context;
 	WINPR_ASSERT(pc);
@@ -301,8 +301,8 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 
 			ev.channel_id = channelId;
 			ev.channel_name = channel_name;
-			ev.data = data;
-			ev.data_len = size;
+			ev.data = xdata;
+			ev.data_len = xsize;
 			ev.flags = flags;
 			ev.total_size = totalSize;
 
@@ -323,52 +323,53 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 			if ((flags & CHANNEL_FLAG_FIRST) &&
 			    (strncmp(channel_name, DRDYNVC_SVC_CHANNEL_NAME, CHANNEL_NAME_LEN + 1) == 0))
 			{
-				BYTE cmd;
-				if (size < 1)
+				BYTE cmd, first;
+				wStream s;
+
+				Stream_StaticInit(&s, xdata, xsize);
+				if (Stream_Length(&s) < 1)
 					return FALSE;
 
-				cmd = data[0] >> 4;
+				Stream_Read_UINT8(&s, first);
+				cmd = first >> 4;
+
 				if (cmd == CREATE_REQUEST_PDU)
 				{
 					proxyChannelDataEventInfo dev;
 					size_t len, nameLen;
 					const char* name;
 					UINT32 dynChannelId;
-					BYTE cbId = data[0] & 0x03;
+					BYTE cbId = first & 0x03;
 					switch (cbId)
 					{
 						case 0x00:
-							if (size < 2)
+							if (Stream_GetRemainingLength(&s) < 1)
 								return FALSE;
-							dynChannelId = data[1];
-							name = (const char*)&data[2];
-							nameLen = size - 2;
+							Stream_Read_UINT8(&s, dynChannelId);
 							break;
 						case 0x01:
-							if (size < 3)
+							if (Stream_GetRemainingLength(&s) < 2)
 								return FALSE;
-							dynChannelId = data[2] << 8 | data[1];
-							name = (const char*)&data[3];
-							nameLen = size - 3;
+							Stream_Read_UINT16(&s, dynChannelId);
 							break;
 						case 0x02:
-							if (size < 5)
+							if (Stream_GetRemainingLength(&s) < 4)
 								return FALSE;
-							dynChannelId = data[4] << 24 | data[3] << 16 | data[2] << 8 | data[1];
-							name = (const char*)&data[5];
-							nameLen = size - 5;
+							Stream_Read_UINT32(&s, dynChannelId);
 							break;
 						default:
 							return FALSE;
 					}
 
+					name = (const char*)Stream_Pointer(&s);
+					nameLen = Stream_GetRemainingLength(&s);
 					len = strnlen(name, nameLen);
 					if ((len == 0) || (len == nameLen))
 						return FALSE;
 					dev.channel_id = dynChannelId;
 					dev.channel_name = name;
-					dev.data = data;
-					dev.data_len = size;
+					dev.data = xdata;
+					dev.data_len = xsize;
 					dev.flags = flags;
 					dev.total_size = totalSize;
 
@@ -386,12 +387,12 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 			if (server_channel_id == 0)
 				return TRUE;
 			return ps->context.peer->SendChannelPacket(ps->context.peer, server_channel_id,
-			                                           totalSize, flags, data, size);
+			                                           totalSize, flags, xdata, xsize);
 		}
 		default:
 			WINPR_ASSERT(pc->client_receive_channel_data_original);
-			return pc->client_receive_channel_data_original(instance, channelId, data, size, flags,
-			                                                totalSize);
+			return pc->client_receive_channel_data_original(instance, channelId, xdata, xsize,
+			                                                flags, totalSize);
 	}
 }
 
