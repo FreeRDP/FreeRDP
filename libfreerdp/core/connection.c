@@ -391,7 +391,9 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 	if (!nego_disconnect(rdp->nego))
 		return FALSE;
 
-	rdp_reset(rdp);
+	if (!rdp_reset(rdp))
+		return FALSE;
+
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_INITIAL);
 
 	if (freerdp_channels_disconnect(context->channels, context->instance) != CHANNEL_RC_OK)

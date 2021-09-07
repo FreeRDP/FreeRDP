@@ -224,7 +224,7 @@ FREERDP_LOCAL int rdp_recv_callback(rdpTransport* transport, wStream* s, void* e
 FREERDP_LOCAL int rdp_check_fds(rdpRdp* rdp);
 
 FREERDP_LOCAL rdpRdp* rdp_new(rdpContext* context);
-FREERDP_LOCAL void rdp_reset(rdpRdp* rdp);
+FREERDP_LOCAL BOOL rdp_reset(rdpRdp* rdp);
 FREERDP_LOCAL void rdp_free(rdpRdp* rdp);
 
 FREERDP_LOCAL const rdpTransportIo* rdp_get_io_callbacks(rdpRdp* rdp);
