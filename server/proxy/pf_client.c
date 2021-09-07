@@ -688,7 +688,7 @@ static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
 	proxyData* pdata;
 	DWORD nCount = 0;
 	DWORD status;
-	HANDLE handles[65] = { 0 };
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 
 	WINPR_ASSERT(instance);
 	pc = (pClientContext*)instance->context;
@@ -822,28 +822,6 @@ static int pf_client_verify_X509_certificate(freerdp* instance, const BYTE* data
 	return 1;
 }
 
-static void* channel_data_copy(const void* obj)
-{
-	const proxyChannelDataEventInfo* src = obj;
-	proxyChannelDataEventInfo* dst;
-
-	WINPR_ASSERT(src);
-
-	dst = calloc(1, sizeof(proxyChannelDataEventInfo));
-	WINPR_ASSERT(dst);
-
-	*dst = *src;
-	if (src->channel_name)
-	{
-		dst->channel_name = _strdup(src->channel_name);
-		WINPR_ASSERT(dst->channel_name);
-	}
-	dst->data = malloc(src->data_len);
-	WINPR_ASSERT(dst->data);
-	memcpy((void*)dst->data, src->data, src->data_len);
-	return dst;
-}
-
 static void channel_data_free(void* obj)
 {
 	proxyChannelDataEventInfo* dst = obj;
@@ -853,6 +831,35 @@ static void channel_data_free(void* obj)
 		free((void*)dst->channel_name);
 		free(dst);
 	}
+}
+
+static void* channel_data_copy(const void* obj)
+{
+	const proxyChannelDataEventInfo* src = obj;
+	proxyChannelDataEventInfo* dst;
+
+	WINPR_ASSERT(src);
+
+	dst = calloc(1, sizeof(proxyChannelDataEventInfo));
+	if (!dst)
+		goto fail;
+
+	*dst = *src;
+	if (src->channel_name)
+	{
+		dst->channel_name = _strdup(src->channel_name);
+		if (!dst->channel_name)
+			goto fail;
+	}
+	dst->data = malloc(src->data_len);
+	if (!dst->data)
+		goto fail;
+	memcpy((void*)dst->data, src->data, src->data_len);
+	return dst;
+
+fail:
+	channel_data_free(dst);
+	return NULL;
 }
 
 static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
