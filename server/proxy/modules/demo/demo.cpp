@@ -25,6 +25,12 @@
 
 #define TAG MODULE_TAG("demo")
 
+struct demo_custom_data
+{
+	proxyPluginsManager* mgr;
+	int somesetting;
+};
+
 static constexpr char plugin_name[] = "demo";
 static constexpr char plugin_desc[] = "this is a test plugin";
 
@@ -36,7 +42,7 @@ static BOOL demo_plugin_unload(proxyPlugin* plugin)
 
 	/* Here we have to free up our custom data storage. */
 	if (plugin)
-		delete (plugin->custom);
+		delete static_cast<struct demo_custom_data*>(plugin->custom);
 
 	return TRUE;
 }
@@ -282,11 +288,6 @@ extern "C"
 
 BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
 {
-	struct demo_custom_data
-	{
-		proxyPluginsManager* mgr;
-		int somesetting;
-	};
 	struct demo_custom_data* custom;
 	proxyPlugin plugin = {};
 
