@@ -181,7 +181,8 @@ void yuv_context_free(YUV_CONTEXT* context)
 		return;
 	if (context->useThreads)
 	{
-		CloseThreadpool(context->threadPool);
+		if (context->threadPool)
+			CloseThreadpool(context->threadPool);
 		DestroyThreadpoolEnvironment(&context->ThreadPoolEnv);
 	}
 	free(context);
