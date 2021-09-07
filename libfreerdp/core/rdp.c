@@ -1894,7 +1894,7 @@ fail:
 	return NULL;
 }
 
-void rdp_reset(rdpRdp* rdp)
+BOOL rdp_reset(rdpRdp* rdp)
 {
 	rdpContext* context;
 	rdpSettings* settings;
@@ -1950,17 +1950,24 @@ void rdp_reset(rdpRdp* rdp)
 	license_free(rdp->license);
 	transport_free(rdp->transport);
 	fastpath_free(rdp->fastpath);
+
 	rdp->transport = transport_new(context);
-	if (rdp->io && rdp->transport)
-		transport_set_io_callbacks(rdp->transport, rdp->io);
+	if (rdp->transport)
+	{
+		if (rdp->io)
+			transport_set_io_callbacks(rdp->transport, rdp->io);
+
+		rdp->nego = nego_new(rdp->transport);
+		rdp->mcs = mcs_new(rdp->transport);
+		transport_set_layer(rdp->transport, TRANSPORT_LAYER_TCP);
+	}
 	rdp->license = license_new(rdp);
-	rdp->nego = nego_new(rdp->transport);
-	rdp->mcs = mcs_new(rdp->transport);
 	rdp->fastpath = fastpath_new(rdp);
-	transport_set_layer(rdp->transport, TRANSPORT_LAYER_TCP);
 	rdp->errorInfo = 0;
 	rdp->deactivation_reactivation = 0;
 	rdp->finalize_sc_pdus = 0;
+
+	return rdp->transport && rdp->nego && rdp->mcs && rdp->fastpath && rdp->license;
 }
 
 /**
