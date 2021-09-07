@@ -31,6 +31,11 @@
 
 #else
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #define DUMMYUNIONNAME u
 #define DUMMYUNIONNAME1 u1
 #define DUMMYUNIONNAME2 u2
@@ -953,6 +958,10 @@ extern "C++"
 
 #define CONTAINING_RECORD(address, type, field) \
 	((type*)((PCHAR)(address) - (ULONG_PTR)(&((type*)0)->field)))
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 #endif
 
