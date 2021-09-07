@@ -259,6 +259,9 @@ void proxy_data_free(proxyData* pdata)
 	if (pdata->modules_info)
 		HashTable_Free(pdata->modules_info);
 
+	if (pdata->pc)
+		freerdp_client_context_free(&pdata->pc->context);
+
 	free(pdata);
 }
 

@@ -127,10 +127,13 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 		case PROXY_FETCH_TARGET_METHOD_CONFIG:
 		{
 			WINPR_ASSERT(config);
-			settings->ServerPort = config->TargetPort > 0 ? 3389 : settings->ServerPort;
-			settings->ServerHostname = _strdup(config->TargetHost);
 
-			if (!settings->ServerHostname)
+			if (config->TargetPort > 0)
+				freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, config->TargetPort);
+			else
+				freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, 3389);
+
+			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, config->TargetHost))
 			{
 				PROXY_LOG_ERR(TAG, ps, "strdup failed!");
 				return FALSE;
@@ -558,16 +561,26 @@ fail:
 	PROXY_LOG_INFO(TAG, ps, "starting shutdown of connection");
 	PROXY_LOG_INFO(TAG, ps, "stopping proxy's client");
 
-	pc = (rdpContext*)pdata->pc;
-	freerdp_client_stop(pc);
+	if (pdata->client_thread)
+	{
+		if (pdata->pc)
+			freerdp_abort_connect(pdata->pc->context.instance);
+		/*
+		 * Wait for client thread to finish. No need to call CloseHandle() here, as
+		 * it is the responsibility of `proxy_data_free`.
+		 */
+		PROXY_LOG_DBG(TAG, pdata->pc, "waiting for client thread to finish");
+		WaitForSingleObject(pdata->client_thread, INFINITE);
+		PROXY_LOG_DBG(TAG, pdata->pc, "thread finished");
+	}
 
 	pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_SESSION_END, pdata, client);
+
 	PROXY_LOG_INFO(TAG, ps, "freeing server's channels");
 	pf_server_channels_free(ps, client);
 	PROXY_LOG_INFO(TAG, ps, "freeing proxy data");
 	ArrayList_Remove(server->clients, pdata);
 	proxy_data_free(pdata);
-	freerdp_client_context_free(pc);
 
 	WINPR_ASSERT(client->Close);
 	client->Close(client);

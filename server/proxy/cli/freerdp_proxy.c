@@ -69,6 +69,16 @@ static void pf_server_register_signal_handlers(void)
 #endif
 }
 
+static WINPR_NORETURN(void usage(const char* app))
+{
+	printf("Usage:\n");
+	printf("%s -h                               Display this help text.\n", app);
+	printf("%s --help                           Display this help text.\n", app);
+	printf("%s <config ini file>                Start the proxy with <config.ini>\n", app);
+	printf("%s --dump-config <config ini file>  Create a template <config.ini>\n", app);
+	exit(0);
+}
+
 int main(int argc, char* argv[])
 {
 	proxyConfig* config = NULL;
@@ -82,8 +92,27 @@ int main(int argc, char* argv[])
 	WLog_INFO(TAG, "\tGit commit: %s", FREERDP_GIT_REVISION);
 	WLog_DBG(TAG, "\tBuild config: %s", freerdp_get_build_config());
 
-	if (argc >= 2)
+	if (argc < 2)
+		usage(argv[0]);
+
+	{
+		const char* arg = argv[1];
+
+		if (_stricmp(arg, "-h") == 0)
+			usage(argv[0]);
+		else if (_stricmp(arg, "--help") == 0)
+			usage(argv[0]);
+		else if (_stricmp(arg, "--dump-config") == 0)
+		{
+			if (argc <= 2)
+				usage(argv[0]);
+			pf_server_config_dump(argv[2]);
+			status = 0;
+			goto fail;
+		    }
+
 		config_path = argv[1];
+	}
 
 	config = pf_server_config_load_file(config_path);
 	if (!config)

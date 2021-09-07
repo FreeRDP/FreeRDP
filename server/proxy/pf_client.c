@@ -681,18 +681,19 @@ out:
  * Connects RDP, loops while running and handles event and dispatch, cleans up
  * after the connection ends.
  */
-static DWORD WINAPI pf_client_thread_proc(LPVOID arg)
+static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 {
-	freerdp* instance = (freerdp*)arg;
-	pClientContext* pc;
+	freerdp* instance;
 	proxyData* pdata;
 	DWORD nCount = 0;
 	DWORD status;
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 
-	WINPR_ASSERT(instance);
-	pc = (pClientContext*)instance->context;
 	WINPR_ASSERT(pc);
+
+	instance = pc->context.instance;
+	WINPR_ASSERT(instance);
+
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
 	/*
@@ -904,17 +905,6 @@ static int pf_client_client_stop(rdpContext* context)
 	proxy_data_abort_connect(pdata);
 	freerdp_abort_connect(context->instance);
 
-	if (pdata->client_thread)
-	{
-		/*
-		 * Wait for client thread to finish. No need to call CloseHandle() here, as
-		 * it is the responsibility of `proxy_data_free`.
-		 */
-		PROXY_LOG_DBG(TAG, pc, "waiting for client thread to finish");
-		WaitForSingleObject(pdata->client_thread, INFINITE);
-		PROXY_LOG_DBG(TAG, pc, "thread finished");
-	}
-
 	return 0;
 }
 
@@ -938,11 +928,12 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
  */
 DWORD WINAPI pf_client_start(LPVOID arg)
 {
-	rdpContext* context = (rdpContext*)arg;
+	DWORD rc = 1;
+	pClientContext* pc = (pClientContext*)arg;
 
-	WINPR_ASSERT(context);
-	if (freerdp_client_start(context) != 0)
-		return 1;
-
-	return pf_client_thread_proc(context->instance);
+	WINPR_ASSERT(pc);
+	if (freerdp_client_start(&pc->context) == 0)
+		rc = pf_client_thread_proc(pc);
+	freerdp_client_stop(&pc->context);
+	return rc;
 }
