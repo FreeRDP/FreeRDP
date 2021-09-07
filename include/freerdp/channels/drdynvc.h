@@ -27,4 +27,13 @@
 
 #define DRDYNVC_SVC_CHANNEL_NAME "drdynvc"
 
+typedef enum
+{
+	CREATE_REQUEST_PDU = 0x01,
+	DATA_FIRST_PDU = 0x02,
+	DATA_PDU = 0x03,
+	CLOSE_REQUEST_PDU = 0x04,
+	CAPABILITY_REQUEST_PDU = 0x05
+} DynamicChannelPDU;
+
 #endif /* FREERDP_CHANNEL_DRDYNVC_H */
