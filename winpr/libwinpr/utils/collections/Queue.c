@@ -40,6 +40,7 @@ struct _wQueue
 	HANDLE event;
 
 	wObject object;
+	BOOL haveLock;
 };
 
 /**
@@ -283,15 +284,15 @@ wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor)
 
 	if (capacity <= 0)
 		capacity = 32;
+	if (!InitializeCriticalSectionAndSpinCount(&queue->lock, 4000))
+		goto fail;
+	queue->haveLock = TRUE;
 	if (!Queue_EnsureCapacity(queue, (size_t)capacity))
 		goto fail;
 
 	queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	if (!queue->event)
-		goto fail;
-
-	if (!InitializeCriticalSectionAndSpinCount(&queue->lock, 4000))
 		goto fail;
 
 	obj = Queue_Object(queue);
@@ -308,9 +309,12 @@ void Queue_Free(wQueue* queue)
 	if (!queue)
 		return;
 
-	Queue_Clear(queue);
+	if (queue->haveLock)
+	{
+		Queue_Clear(queue);
+		DeleteCriticalSection(&queue->lock);
+	}
 	CloseHandle(queue->event);
-	DeleteCriticalSection(&queue->lock);
 	free(queue->array);
 	free(queue);
 }
