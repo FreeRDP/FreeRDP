@@ -94,6 +94,13 @@ extern "C"
 #endif
 
 	/**
+	 * @brief pf_server_config_dump Dumps a default INI configuration file
+	 * @param file The file to write to. Existing files are truncated.
+	 * @return TRUE for success, FALSE if the file could not be written.
+	 */
+	FREERDP_API BOOL pf_server_config_dump(const char* file);
+
+	/**
 	 * @brief server_config_load_ini Create a proxyConfig from a already loaded
 	 * INI file.
 	 *

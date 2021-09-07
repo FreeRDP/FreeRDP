@@ -437,6 +437,116 @@ out:
 	return NULL;
 }
 
+BOOL pf_server_config_dump(const char* file)
+{
+	BOOL rc = FALSE;
+	wIniFile* ini = IniFile_New();
+	if (!ini)
+		return FALSE;
+
+	/* Proxy server configuration */
+	if (IniFile_SetKeyValueString(ini, "Server", "Host", "0.0.0.0") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueInt(ini, "Server", "Port", 3389) < 0)
+		goto fail;
+
+	/* Target configuration */
+	if (IniFile_SetKeyValueString(ini, "Target", "Host", "somehost.example.com") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueInt(ini, "Target", "Port", 3389) < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Target", "FixedTarget", "true") < 0)
+		goto fail;
+
+	/* Channel configuration */
+	if (IniFile_SetKeyValueString(ini, "Channels", "GFX", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Channels", "DisplayControl", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Channels", "Clipboard", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Channels", "AudioOutput", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Channels", "RemoteApp", "false") < 0)
+		goto fail;
+
+	if (IniFile_SetKeyValueString(ini, "Channels", "PassthroughIsBlacklist", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Channels", "Passthrough", "") < 0)
+		goto fail;
+
+	/* Input configuration */
+	if (IniFile_SetKeyValueString(ini, "Input", "Keyboard", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Input", "Mouse", "true") < 0)
+		goto fail;
+
+	/* Security settings */
+	if (IniFile_SetKeyValueString(ini, "Security", "ServerTlsSecurity", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Security", "ServerNlaSecurity", "false") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Security", "ServerRdpSecurity", "true") < 0)
+		goto fail;
+
+	if (IniFile_SetKeyValueString(ini, "Security", "ClientTlsSecurity", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Security", "ClientNlaSecurity", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Security", "ClientRdpSecurity", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Security", "ClientAllowFallbackToTls", "true") < 0)
+		goto fail;
+
+	/* Module configuration */
+	if (IniFile_SetKeyValueString(ini, "Plugins", "Modules", "module1,module2,...") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Plugins", "Required", "module1,module2,...") < 0)
+		goto fail;
+
+	/* Clipboard configuration */
+	if (IniFile_SetKeyValueString(ini, "Clipboard", "TextOnly", "false") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueInt(ini, "Clipboard", "MaxTextLength", 0) < 0)
+		goto fail;
+
+	/* GFX configuration */
+	if (IniFile_SetKeyValueString(ini, "GFXSettings", "DecodeGFX", "false") < 0)
+		goto fail;
+
+	/* Certificate configuration */
+	if (IniFile_SetKeyValueString(ini, "Certificates", "CertificateFile",
+	                              "<absolute path to some certificate file> OR") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Certificates", "CertificateContent",
+	                              "<Contents of some certificate file in PEM format>") < 0)
+		goto fail;
+
+	if (IniFile_SetKeyValueString(ini, "Certificates", "PrivateKeyFile",
+	                              "<absolute path to some private key file> OR") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Certificates", "PrivateKeyContent",
+	                              "<Contents of some private key file in PEM format>") < 0)
+		goto fail;
+
+	if (IniFile_SetKeyValueString(ini, "Certificates", "RdpKeyFile",
+	                              "<absolute path to some private key file> OR") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Certificates", "RdpKeyContent",
+	                              "<Contents of some private key file in PEM format>") < 0)
+		goto fail;
+
+	/* store configuration */
+	if (IniFile_WriteFile(ini, file) < 0)
+		goto fail;
+
+	rc = TRUE;
+
+fail:
+	IniFile_Free(ini);
+	return rc;
+}
+
 proxyConfig* pf_server_config_load_buffer(const char* buffer)
 {
 	proxyConfig* config = NULL;
