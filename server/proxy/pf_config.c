@@ -546,7 +546,6 @@ fail:
 	IniFile_Free(ini);
 	return rc;
 }
-
 proxyConfig* pf_server_config_load_buffer(const char* buffer)
 {
 	proxyConfig* config = NULL;
