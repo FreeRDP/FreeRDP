@@ -85,13 +85,13 @@ static pstatus_t ssse3_sign_16s(const INT16* pSrc, INT16* pDst, UINT32 len)
 			xmm1 = _mm_sign_epi16(xmm1, xmm5);
 			xmm2 = _mm_sign_epi16(xmm2, xmm6);
 			xmm3 = _mm_sign_epi16(xmm3, xmm7);
-			_mm_store_si128((const __m128i*)dptr, xmm0);
+			_mm_store_si128((__m128i*)dptr, xmm0);
 			dptr += 8;
-			_mm_store_si128((const __m128i*)dptr, xmm1);
+			_mm_store_si128((__m128i*)dptr, xmm1);
 			dptr += 8;
-			_mm_store_si128((const __m128i*)dptr, xmm2);
+			_mm_store_si128((__m128i*)dptr, xmm2);
 			dptr += 8;
-			_mm_store_si128((const __m128i*)dptr, xmm3);
+			_mm_store_si128((__m128i*)dptr, xmm3);
 			dptr += 8;
 		}
 	}
@@ -117,13 +117,13 @@ static pstatus_t ssse3_sign_16s(const INT16* pSrc, INT16* pDst, UINT32 len)
 			xmm1 = _mm_sign_epi16(xmm1, xmm5);
 			xmm2 = _mm_sign_epi16(xmm2, xmm6);
 			xmm3 = _mm_sign_epi16(xmm3, xmm7);
-			_mm_store_si128((const __m128i*)dptr, xmm0);
+			_mm_store_si128((__m128i*)dptr, xmm0);
 			dptr += 8;
-			_mm_store_si128((const __m128i*)dptr, xmm1);
+			_mm_store_si128((__m128i*)dptr, xmm1);
 			dptr += 8;
-			_mm_store_si128((const __m128i*)dptr, xmm2);
+			_mm_store_si128((__m128i*)dptr, xmm2);
 			dptr += 8;
-			_mm_store_si128((const __m128i*)dptr, xmm3);
+			_mm_store_si128((__m128i*)dptr, xmm3);
 			dptr += 8;
 		}
 	}

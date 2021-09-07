@@ -52,7 +52,7 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 {
 	char* str;
 	size_t length;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	if ((argc < 1) || !largs || !argv)
 		return -1;
 
@@ -152,7 +152,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	rdpSettings* settings = server->settings;
 
 	if ((argc < 2) || !argv || !cargs)

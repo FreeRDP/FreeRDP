@@ -124,7 +124,7 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 static int makecert_print_command_line_help(COMMAND_LINE_ARGUMENT_A* args, int argc, char** argv)
 {
 	char* str;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 
 	if (!argv || (argc < 1))
 		return -1;
@@ -280,7 +280,7 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context,
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 
 	if (!context || !argv || (argc < 0))
 		return -1;
@@ -838,7 +838,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	long serial = 0;
 	X509_NAME* name = NULL;
 	const EVP_MD* md = NULL;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	int ret;
 	ret = makecert_context_parse_arguments(context, args, argc, argv);
 

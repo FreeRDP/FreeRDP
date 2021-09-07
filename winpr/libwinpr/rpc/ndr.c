@@ -87,7 +87,7 @@ static void NdrPrintParamAttributes(PARAM_ATTRIBUTES attributes)
 }
 
 static void NdrProcessParam(PMIDL_STUB_MESSAGE pStubMsg, NDR_PHASE phase, unsigned char* pMemory,
-                            NDR_PARAM* param)
+                            const NDR_PARAM* param)
 {
 	unsigned char type;
 	PFORMAT_STRING pFormat;

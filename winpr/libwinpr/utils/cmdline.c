@@ -22,7 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
-
+#include <winpr/assert.h>
 #include <winpr/cmdline.h>
 
 #include "../log.h"
@@ -422,9 +422,13 @@ int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options)
 	return 0;
 }
 
-COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(COMMAND_LINE_ARGUMENT_A* options, LPCSTR Name)
+const COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(const COMMAND_LINE_ARGUMENT_A* options,
+                                                        LPCSTR Name)
 {
-	int i;
+	size_t i;
+
+	WINPR_ASSERT(options);
+	WINPR_ASSERT(Name);
 
 	for (i = 0; options[i].Name != NULL; i++)
 	{
@@ -441,9 +445,13 @@ COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(COMMAND_LINE_ARGUMENT_A* optio
 	return NULL;
 }
 
-COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* options, LPCWSTR Name)
+const COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(const COMMAND_LINE_ARGUMENT_W* options,
+                                                        LPCWSTR Name)
 {
-	int i;
+	size_t i;
+
+	WINPR_ASSERT(options);
+	WINPR_ASSERT(Name);
 
 	for (i = 0; options[i].Name != NULL; i++)
 	{
@@ -460,9 +468,9 @@ COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* optio
 	return NULL;
 }
 
-COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* argument)
+const COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(const COMMAND_LINE_ARGUMENT_A* argument)
 {
-	COMMAND_LINE_ARGUMENT_A* nextArgument;
+	const COMMAND_LINE_ARGUMENT_A* nextArgument;
 
 	if (!argument || !argument->Name)
 		return NULL;

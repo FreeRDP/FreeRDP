@@ -610,7 +610,7 @@ size_t pf_config_modules_count(const proxyConfig* config)
 const char** pf_config_modules(const proxyConfig* config)
 {
 	WINPR_ASSERT(config);
-	return config->Modules;
+	return (const char**)config->Modules;
 }
 
 static BOOL pf_config_copy_string(char** dst, const char* src)

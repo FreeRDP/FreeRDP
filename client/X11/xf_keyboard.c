@@ -142,27 +142,33 @@ void xf_keyboard_free(xfContext* xfc)
 	xf_keyboard_action_script_free(xfc);
 }
 
-void xf_keyboard_key_press(xfContext* xfc, BYTE keycode, KeySym keysym)
+void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym)
 {
-	if (keycode < 8)
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
+	if (event->keycode < 8)
 		return;
 
-	xfc->KeyboardState[keycode] = TRUE;
+	xfc->KeyboardState[event->keycode] = TRUE;
 
 	if (xf_keyboard_handle_special_keys(xfc, keysym))
 		return;
 
-	xf_keyboard_send_key(xfc, TRUE, keycode);
+	xf_keyboard_send_key(xfc, TRUE, event->keycode);
 }
 
-void xf_keyboard_key_release(xfContext* xfc, BYTE keycode, KeySym keysym)
+void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keysym)
 {
-	if (keycode < 8)
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
+	if (event->keycode < 8)
 		return;
 
-	xfc->KeyboardState[keycode] = FALSE;
+	xfc->KeyboardState[event->keycode] = FALSE;
 	xf_keyboard_handle_special_keys_release(xfc, keysym);
-	xf_keyboard_send_key(xfc, FALSE, keycode);
+	xf_keyboard_send_key(xfc, FALSE, event->keycode);
 }
 
 void xf_keyboard_release_all_keypress(xfContext* xfc)

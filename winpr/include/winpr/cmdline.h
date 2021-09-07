@@ -152,13 +152,13 @@ extern "C"
 	                                         void* context, COMMAND_LINE_PRE_FILTER_FN_W preFilter,
 	                                         COMMAND_LINE_POST_FILTER_FN_W postFilter);
 
-	WINPR_API COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(COMMAND_LINE_ARGUMENT_A* options,
-	                                                            LPCSTR Name);
-	WINPR_API COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* options,
-	                                                            LPCWSTR Name);
+	WINPR_API const COMMAND_LINE_ARGUMENT_A*
+	CommandLineFindArgumentA(const COMMAND_LINE_ARGUMENT_A* options, LPCSTR Name);
+	WINPR_API const COMMAND_LINE_ARGUMENT_W*
+	CommandLineFindArgumentW(const COMMAND_LINE_ARGUMENT_W* options, LPCWSTR Name);
 
-	WINPR_API COMMAND_LINE_ARGUMENT_A*
-	CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* argument);
+	WINPR_API const COMMAND_LINE_ARGUMENT_A*
+	CommandLineFindNextArgumentA(const COMMAND_LINE_ARGUMENT_A* argument);
 
 	WINPR_API char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count);
 
