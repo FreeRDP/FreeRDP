@@ -80,7 +80,8 @@ static const UINT32 rfx_default_quantization_values[] = { 6, 6, 6, 6, 7, 7, 8, 8
 
 static void rfx_profiler_create(RFX_CONTEXT* context)
 {
-	WINPR_UNUSED(context);
+	if (!context || !context->priv)
+		return;
 	PROFILER_CREATE(context->priv->prof_rfx_decode_rgb, "rfx_decode_rgb")
 	PROFILER_CREATE(context->priv->prof_rfx_decode_component, "rfx_decode_component")
 	PROFILER_CREATE(context->priv->prof_rfx_rlgr_decode, "rfx_rlgr_decode")
@@ -100,7 +101,8 @@ static void rfx_profiler_create(RFX_CONTEXT* context)
 
 static void rfx_profiler_free(RFX_CONTEXT* context)
 {
-	WINPR_UNUSED(context);
+	if (!context || !context->priv)
+		return;
 	PROFILER_FREE(context->priv->prof_rfx_decode_rgb)
 	PROFILER_FREE(context->priv->prof_rfx_decode_component)
 	PROFILER_FREE(context->priv->prof_rfx_rlgr_decode)
@@ -120,7 +122,8 @@ static void rfx_profiler_free(RFX_CONTEXT* context)
 
 static void rfx_profiler_print(RFX_CONTEXT* context)
 {
-	WINPR_UNUSED(context);
+	if (!context || !context->priv)
+		return;
 
 	PROFILER_PRINT_HEADER
 	PROFILER_PRINT(context->priv->prof_rfx_decode_rgb)
@@ -226,14 +229,14 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 	context->priv = priv = (RFX_CONTEXT_PRIV*)calloc(1, sizeof(RFX_CONTEXT_PRIV));
 
 	if (!priv)
-		goto error_priv;
+		goto fail;
 
 	priv->log = WLog_Get("com.freerdp.codec.rfx");
 	WLog_OpenAppender(priv->log);
 	priv->TilePool = ObjectPool_New(TRUE);
 
 	if (!priv->TilePool)
-		goto error_tilePool;
+		goto fail;
 
 	pool = ObjectPool_Object(priv->TilePool);
 	pool->fnObjectInit = rfx_tile_init;
@@ -265,7 +268,7 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 	priv->BufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
 
 	if (!priv->BufferPool)
-		goto error_BufferPool;
+		goto fail;
 
 	if (!(ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
 	{
@@ -321,14 +324,14 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 		priv->ThreadPool = CreateThreadpool(NULL);
 
 		if (!priv->ThreadPool)
-			goto error_threadPool;
+			goto fail;
 
 		InitializeThreadpoolEnvironment(&priv->ThreadPoolEnv);
 		SetThreadpoolCallbackPool(&priv->ThreadPoolEnv, priv->ThreadPool);
 
 		if (priv->MinThreadCount)
 			if (!SetThreadpoolThreadMinimum(priv->ThreadPool, priv->MinThreadCount))
-				goto error_threadPool_minimum;
+				goto fail;
 
 		if (priv->MaxThreadCount)
 			SetThreadpoolThreadMaximum(priv->ThreadPool, priv->MaxThreadCount);
@@ -349,16 +352,8 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 	context->state = RFX_STATE_SEND_HEADERS;
 	context->expectedDataBlockType = WBT_FRAME_BEGIN;
 	return context;
-error_threadPool_minimum:
-	CloseThreadpool(priv->ThreadPool);
-error_threadPool:
-	BufferPool_Free(priv->BufferPool);
-error_BufferPool:
-	ObjectPool_Free(priv->TilePool);
-error_tilePool:
-	free(priv);
-error_priv:
-	free(context);
+fail:
+	rfx_context_free(context);
 	return NULL;
 }
 
@@ -377,24 +372,28 @@ void rfx_context_free(RFX_CONTEXT* context)
 	/* coverity[address_free] */
 	rfx_message_free(context, &context->currentMessage);
 	free(context->quants);
-	ObjectPool_Free(priv->TilePool);
 	rfx_profiler_print(context);
 	rfx_profiler_free(context);
 
-	if (priv->UseThreads)
+	if (priv)
 	{
-		CloseThreadpool(context->priv->ThreadPool);
-		DestroyThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
-		free(priv->workObjects);
-		free(priv->tileWorkParams);
+		ObjectPool_Free(priv->TilePool);
+		if (priv->UseThreads)
+		{
+			if (priv->ThreadPool)
+				CloseThreadpool(priv->ThreadPool);
+			DestroyThreadpoolEnvironment(&priv->ThreadPoolEnv);
+			free(priv->workObjects);
+			free(priv->tileWorkParams);
 #ifdef WITH_PROFILER
 		WLog_VRB(TAG,
 		         "WARNING: Profiling results probably unusable with multithreaded RemoteFX codec!");
 #endif
-	}
+		}
 
-	BufferPool_Free(context->priv->BufferPool);
-	free(context->priv);
+		BufferPool_Free(priv->BufferPool);
+		free(priv);
+	}
 	free(context);
 }
 
