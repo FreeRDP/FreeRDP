@@ -392,7 +392,7 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_A
 	int status;
 	char *str_num, *eptr;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_oss_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                            NULL, NULL, -1, NULL, "device" },

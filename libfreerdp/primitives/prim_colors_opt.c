@@ -72,7 +72,8 @@ static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(const INT16* const pSrc[3], int src
                                              const prim_size_t* roi) /* region of interest */
 {
 	__m128i zero, max, r_cr, g_cb, g_cr, b_cb, c4096;
-	__m128i *y_buf, *cb_buf, *cr_buf, *r_buf, *g_buf, *b_buf;
+	const __m128i *y_buf, *cb_buf, *cr_buf;
+	__m128i *r_buf, *g_buf, *b_buf;
 	UINT32 yp;
 	int srcbump, dstbump, imax;
 
@@ -600,7 +601,8 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const pSrc[3], int src
                                              const prim_size_t* roi) /* region of interest */
 {
 	__m128i min, max, y_r, y_g, y_b, cb_r, cb_g, cb_b, cr_r, cr_g, cr_b;
-	__m128i *r_buf, *g_buf, *b_buf, *y_buf, *cb_buf, *cr_buf;
+	const __m128i *r_buf, *g_buf, *b_buf;
+	__m128i *y_buf, *cb_buf, *cr_buf;
 	UINT32 yp;
 	int srcbump, dstbump, imax;
 

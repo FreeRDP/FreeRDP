@@ -228,7 +228,7 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	unsigned char alignment;
 	unsigned short memory_size;
 	const unsigned char* pointer_layout;
-	unsigned char* conformant_array_description;
+	const unsigned char* conformant_array_description;
 	unsigned short offset_to_pointer_layout;
 	unsigned short offset_to_conformant_array_description;
 	type = pFormat[0];

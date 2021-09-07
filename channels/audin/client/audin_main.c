@@ -874,7 +874,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	UINT error;
 	COMMAND_LINE_ARGUMENT_A audin_args[] = {
 		{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "subsystem" },

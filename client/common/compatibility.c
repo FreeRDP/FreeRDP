@@ -413,7 +413,7 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, size_t* count)
 	DWORD flags;
 	int detect_status;
 	rdpSettings* settings;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(old_args)];
 	memcpy(largs, old_args, sizeof(old_args));
 
@@ -478,7 +478,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 	char* str;
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(old_args)];
 	memcpy(largs, old_args, sizeof(old_args));
 

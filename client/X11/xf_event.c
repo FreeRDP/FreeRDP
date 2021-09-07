@@ -506,7 +506,7 @@ static BOOL xf_event_KeyPress(xfContext* xfc, const XKeyEvent* event, BOOL app)
 	char str[256];
 	WINPR_UNUSED(app);
 	XLookupString((XKeyEvent*)event, str, sizeof(str), &keysym, NULL);
-	xf_keyboard_key_press(xfc, event->keycode, keysym);
+	xf_keyboard_key_press(xfc, event, keysym);
 	return TRUE;
 }
 
@@ -516,7 +516,7 @@ static BOOL xf_event_KeyRelease(xfContext* xfc, const XKeyEvent* event, BOOL app
 	char str[256];
 	WINPR_UNUSED(app);
 	XLookupString((XKeyEvent*)event, str, sizeof(str), &keysym, NULL);
-	xf_keyboard_key_release(xfc, event->keycode, keysym);
+	xf_keyboard_key_release(xfc, event, keysym);
 	return TRUE;
 }
 

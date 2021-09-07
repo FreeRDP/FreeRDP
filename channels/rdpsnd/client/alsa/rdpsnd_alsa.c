@@ -479,7 +479,7 @@ static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                             NULL, NULL, -1, NULL, "device" },

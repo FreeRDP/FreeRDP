@@ -846,7 +846,7 @@ static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, const ADDIN_ARGV* ar
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_args[] = {
 		{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "subsystem" },
 		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },

@@ -537,7 +537,7 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED,
 		                                              "<device>", NULL, NULL, -1, NULL, "device" },
