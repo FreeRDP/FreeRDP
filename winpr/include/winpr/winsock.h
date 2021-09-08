@@ -184,11 +184,20 @@ typedef union sockaddr_gen {
 	struct sockaddr_in6_old AddressIn6;
 } sockaddr_gen;
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #define _IFF_UP 0x00000001
 #define _IFF_BROADCAST 0x00000002
 #define _IFF_LOOPBACK 0x00000004
 #define _IFF_POINTTOPOINT 0x00000008
 #define _IFF_MULTICAST 0x00000010
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 struct _INTERFACE_INFO
 {

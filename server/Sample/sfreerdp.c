@@ -887,6 +887,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	testPeerContext* context;
 	struct server_info* info;
 	freerdp_peer* client = (freerdp_peer*)arg;
+
 	const char* key = "server.key";
 	const char* cert = "server.crt";
 
@@ -1094,16 +1095,26 @@ static const struct
 	const char skey[6];
 } options = { "--pcap=", "--fast", "--port=", "--local-only", "--cert=", "--key=" };
 
+static void print_entry(FILE* fp, const char* fmt, const char* what, size_t size)
+{
+	char buffer[32] = { 0 };
+	strncpy(buffer, what, MIN(size, sizeof(buffer)));
+	fprintf(fp, fmt, buffer);
+}
+
 static WINPR_NORETURN(void usage(const char* app, const char* invalid))
 {
 	FILE* fp = stdout;
+
 	fprintf(fp, "Invalid argument '%s'\n", invalid);
 	fprintf(fp, "Usage: %s <arg>[ <arg> ...]\n", app);
 	fprintf(fp, "Arguments:\n");
-	fprintf(fp, "\t%s<pcap file>\n", options.spcap);
-	fprintf(fp, "\t%s\n", options.sfast);
-	fprintf(fp, "\t%s<port>\n", options.sport);
-	fprintf(fp, "\t%s\n", options.slocal_only);
+	print_entry(fp, "\t%s<pcap file>\n", options.spcap, sizeof(options.spcap));
+	print_entry(fp, "\t%s<cert file>\n", options.scert, sizeof(options.scert));
+	print_entry(fp, "\t%s<key file>\n", options.skey, sizeof(options.skey));
+	print_entry(fp, "\t%s\n", options.sfast, sizeof(options.sfast));
+	print_entry(fp, "\t%s<port>\n", options.sport, sizeof(options.sport));
+	print_entry(fp, "\t%s\n", options.slocal_only, sizeof(options.slocal_only));
 	exit(-1);
 }
 

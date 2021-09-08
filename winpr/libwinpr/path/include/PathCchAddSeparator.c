@@ -1,7 +1,7 @@
 
 /*
 #define DEFINE_UNICODE		FALSE
-#define _PATH_SEPARATOR_CHR	'\\'
+#define CUR_PATH_SEPARATOR_CHR	'\\'
 #define PATH_CCH_ADD_SEPARATOR	PathCchAddBackslashA
 */
 
@@ -16,12 +16,12 @@ HRESULT PATH_CCH_ADD_SEPARATOR(PWSTR pszPath, size_t cchPath)
 
 	pszPathLength = lstrlenW(pszPath);
 
-	if (pszPath[pszPathLength - 1] == _PATH_SEPARATOR_CHR)
+	if (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR)
 		return S_FALSE;
 
 	if (cchPath > (pszPathLength + 1))
 	{
-		pszPath[pszPathLength] = _PATH_SEPARATOR_CHR;
+		pszPath[pszPathLength] = CUR_PATH_SEPARATOR_CHR;
 		pszPath[pszPathLength + 1] = '\0';
 
 		return S_OK;
@@ -41,12 +41,12 @@ HRESULT PATH_CCH_ADD_SEPARATOR(PSTR pszPath, size_t cchPath)
 
 	pszPathLength = lstrlenA(pszPath);
 
-	if (pszPath[pszPathLength - 1] == _PATH_SEPARATOR_CHR)
+	if (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR)
 		return S_FALSE;
 
 	if (cchPath > (pszPathLength + 1))
 	{
-		pszPath[pszPathLength] = _PATH_SEPARATOR_CHR;
+		pszPath[pszPathLength] = CUR_PATH_SEPARATOR_CHR;
 		pszPath[pszPathLength + 1] = '\0';
 
 		return S_OK;
@@ -59,6 +59,6 @@ HRESULT PATH_CCH_ADD_SEPARATOR(PSTR pszPath, size_t cchPath)
 
 /*
 #undef DEFINE_UNICODE
-#undef _PATH_SEPARATOR_CHR
+#undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR
 */

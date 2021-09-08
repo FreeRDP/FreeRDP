@@ -21,7 +21,17 @@
 #include "config.h"
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #define _FILE_OFFSET_BITS 64
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 #define WIN32_FILETIME_TO_UNIX_EPOCH UINT64_C(11644473600)
 
 #include <stddef.h>

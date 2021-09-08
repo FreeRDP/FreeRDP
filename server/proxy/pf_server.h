@@ -21,8 +21,8 @@
  * limitations under the License.
  */
 
-#ifndef _FREERDP_SERVER_PROXY_SERVER_H
-#define _FREERDP_SERVER_PROXY_SERVER_H
+#ifndef INT_FREERDP_SERVER_PROXY_SERVER_H
+#define INT_FREERDP_SERVER_PROXY_SERVER_H
 
 #include <winpr/collections.h>
 #include <freerdp/listener.h>
@@ -41,4 +41,4 @@ struct proxy_server
 	HANDLE stopEvent;           /* an event used to signal the main thread to stop */
 };
 
-#endif /* _FREERDP_SERVER_PROXY_SERVER_H */
+#endif /* FREERDP_SERVER_PROXY_SERVER_H */

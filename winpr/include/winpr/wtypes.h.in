@@ -76,6 +76,11 @@ typedef LONG_PTR SSIZE_T;
 #define VOID void
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifndef _WIN32
 
 #define CALLBACK
@@ -567,6 +572,10 @@ typedef const BYTE* LPCBYTE;
 #ifndef _WIN32
 #define _fseeki64(fp, offset, origin) fseeko(fp, offset, origin)
 #define _ftelli64(fp) ftello(fp)
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 #endif /* WINPR_WTYPES_H */
