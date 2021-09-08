@@ -215,7 +215,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPa
 	else
 		pszFilePath = _strdup(pszRelativeFilePath);
 
-	library = LoadLibraryA(pszFilePath);
+	library = LoadLibraryX(pszFilePath);
 
 	if (!library)
 		goto fail;

@@ -343,3 +343,33 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 }
 
 #endif
+
+HMODULE LoadLibraryX(LPCSTR lpLibFileName)
+{
+#if defined(_WIN32)
+	HMODULE hm = NULL;
+	WCHAR* wstr = NULL;
+	int rc = ConvertToUnicode(CP_UTF8, 0, lpLibFileName, -1, &wstr, 0);
+	if (rc > 0)
+		hm = LoadLibraryW(wstr);
+	free(wstr);
+	return hm;
+#else
+	return LoadLibraryA(lpLibFileName);
+#endif
+}
+
+HMODULE LoadLibraryExX(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
+{
+#if defined(_WIN32)
+	HMODULE hm = NULL;
+	WCHAR* wstr = NULL;
+	int rc = ConvertToUnicode(CP_UTF8, 0, lpLibFileName, -1, &wstr, 0);
+	if (rc > 0)
+		hm = LoadLibraryExW(wstr, hFile, dwFlags);
+	free(wstr);
+	return hm;
+#else
+	return LoadLibraryExA(lpLibFileName, hFile, dwFlags);
+#endif
+}

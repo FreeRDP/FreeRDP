@@ -1,6 +1,7 @@
 #include <winpr/sysinfo.h>
 #include <winpr/path.h>
 #include <winpr/crypto.h>
+#include <winpr/pipe.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/client/cmdline.h>
 
@@ -161,6 +162,61 @@ static int testAbort(int port)
 	return 0;
 }
 
+static char* concatenate(size_t count, ...)
+{
+	size_t x;
+	char* rc;
+	va_list ap;
+	va_start(ap, count);
+	rc = _strdup(va_arg(ap, char*));
+	for (x = 1; x < count; x++)
+	{
+		const char* cur = va_arg(ap, const char*);
+		char* tmp = GetCombinedPath(rc, cur);
+		free(rc);
+		rc = tmp;
+	}
+	va_end(ap);
+	return rc;
+}
+
+static BOOL prepare_certificates(const char* path)
+{
+	BOOL rc = FALSE;
+	char* exe = NULL;
+	DWORD status;
+	DWORD read_bytes;
+	STARTUPINFOA si = { 0 };
+	SECURITY_ATTRIBUTES saAttr = { 0 };
+	PROCESS_INFORMATION process = { 0 };
+	char commandLine[8192] = { 0 };
+
+	if (!path)
+		return FALSE;
+
+	exe = concatenate(5, TESTING_OUTPUT_DIRECTORY, "winpr", "tools", "makecert-cli",
+	                  "winpr-makecert");
+	if (!exe)
+		return FALSE;
+	_snprintf(commandLine, sizeof(commandLine), "%s -format crt -path . -n server", exe);
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = NULL;
+
+	rc = CreateProcessA(exe, commandLine, NULL, NULL, TRUE, 0, NULL, path, &si, &process);
+	free(exe);
+	if (!rc)
+		goto fail;
+	status = WaitForSingleObject(process.hProcess, 30000);
+	if (status != WAIT_OBJECT_0)
+		goto fail;
+	rc = TRUE;
+fail:
+	CloseHandle(process.hProcess);
+	CloseHandle(process.hThread);
+	return rc;
+}
+
 static int testSuccess(int port)
 {
 	int r;
@@ -175,15 +231,14 @@ static int testSuccess(int port)
 	char* path = NULL;
 	char* wpath = NULL;
 	char* exe = GetCombinedPath(TESTING_OUTPUT_DIRECTORY, "server");
-	char* wexe = GetCombinedPath(TESTING_SRC_DIRECTORY, "server");
 	_snprintf(arg1, 18, "/v:127.0.0.1:%d", port);
 	clientArgs[1] = arg1;
 
-	if (!exe || !wexe)
+	if (!exe)
 		goto fail;
 
 	path = GetCombinedPath(exe, "Sample");
-	wpath = GetCombinedPath(wexe, "Sample");
+	wpath = GetCombinedPath(exe, "Sample");
 	free(exe);
 	exe = NULL;
 
@@ -201,18 +256,21 @@ static int testSuccess(int port)
 	if (!winpr_PathFileExists(exe))
 		goto fail;
 
+	if (!prepare_certificates(wpath))
+		goto fail;
+
 	// Start sample server locally.
-	commandLineLen = strlen(exe) + strlen("--local-only --port=XXXXX") + 1;
+	commandLineLen = strlen(exe) + strlen("--port=XXXXX") + 1;
 	commandLine = malloc(commandLineLen);
 
 	if (!commandLine)
 		goto fail;
 
-	_snprintf(commandLine, commandLineLen, "%s --local-only --port=%d", exe, port);
+	_snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
 	memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 
-	if (!CreateProcessA(exe, commandLine, NULL, NULL, FALSE, 0, NULL, wpath, &si, &process))
+	if (!CreateProcessA(NULL, commandLine, NULL, NULL, FALSE, 0, NULL, wpath, &si, &process))
 		goto fail;
 
 	Sleep(600); /* let the server start */
@@ -232,7 +290,6 @@ static int testSuccess(int port)
 
 fail:
 	free(exe);
-	free(wexe);
 	free(path);
 	free(wpath);
 	free(commandLine);

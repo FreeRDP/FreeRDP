@@ -1472,10 +1472,11 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 		rdp->autodetect->bandwidthMeasureByteCount += length;
 	}
 
-	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
+	if (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_ENCRYPTED)
 	{
-		UINT16 flags =
-		    (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0;
+		UINT16 flags = (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_SECURE_CHECKSUM)
+		                   ? SEC_SECURE_CHECKSUM
+		                   : 0;
 
 		if (!rdp_decrypt(rdp, s, &length, flags))
 		{
@@ -1500,19 +1501,23 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 	int status = 0;
 	rdpRdp* rdp = (rdpRdp*)extra;
 
+	WINPR_ASSERT(transport);
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
 	/*
 	 * At any point in the connection sequence between when all
 	 * MCS channels have been joined and when the RDP connection
 	 * enters the active state, an auto-detect PDU can be received
 	 * on the MCS message channel.
 	 */
-	if ((rdp->state > CONNECTION_STATE_MCS_CHANNEL_JOIN) && (rdp->state < CONNECTION_STATE_ACTIVE))
+	if ((rdp_get_state(rdp) > CONNECTION_STATE_MCS_CHANNEL_JOIN) &&
+	    (rdp_get_state(rdp) < CONNECTION_STATE_ACTIVE))
 	{
 		if (rdp_client_connect_auto_detect(rdp, s))
 			return 0;
 	}
 
-	switch (rdp->state)
+	switch (rdp_get_state(rdp))
 	{
 		case CONNECTION_STATE_NLA:
 			if (nla_get_state(rdp->nla) < NLA_STATE_AUTH_INFO)
@@ -1520,7 +1525,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				if (nla_recv_pdu(rdp->nla, s) < 1)
 				{
 					WLog_ERR(TAG, "%s: %s - nla_recv_pdu() fail", __FUNCTION__,
-					         rdp_server_connection_state_string(rdp->state));
+					         rdp_get_state_string(rdp));
 					return -1;
 				}
 			}
@@ -1531,7 +1536,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				if (nego_get_state(rdp->nego) != NEGO_STATE_FINAL)
 				{
 					WLog_ERR(TAG, "%s: %s - nego_recv() fail", __FUNCTION__,
-					         rdp_server_connection_state_string(rdp->state));
+					         rdp_get_state_string(rdp));
 					return -1;
 				}
 
@@ -1571,7 +1576,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				if (!mcs_client_begin(rdp->mcs))
 				{
 					WLog_ERR(TAG, "%s: %s - mcs_client_begin() fail", __FUNCTION__,
-					         rdp_server_connection_state_string(rdp->state));
+					         rdp_get_state_string(rdp));
 					return -1;
 				}
 			}
@@ -1622,7 +1627,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				WLog_ERR(TAG,
 				         "%s: %s - "
 				         "rdp_client_connect_mcs_channel_join_confirm() fail",
-				         __FUNCTION__, rdp_server_connection_state_string(rdp->state));
+				         __FUNCTION__, rdp_get_state_string(rdp));
 				status = -1;
 			}
 
@@ -1633,7 +1638,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			if (status < 0)
 				WLog_DBG(TAG, "%s: %s - rdp_client_connect_license() - %i", __FUNCTION__,
-				         rdp_server_connection_state_string(rdp->state), status);
+				         rdp_get_state_string(rdp), status);
 
 			break;
 
@@ -1644,7 +1649,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				WLog_DBG(TAG,
 				         "%s: %s - "
 				         "rdp_client_connect_demand_active() - %i",
-				         __FUNCTION__, rdp_server_connection_state_string(rdp->state), status);
+				         __FUNCTION__, rdp_get_state_string(rdp), status);
 
 			break;
 
@@ -1659,7 +1664,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			if (status < 0)
 				WLog_DBG(TAG, "%s: %s - rdp_recv_pdu() - %i", __FUNCTION__,
-				         rdp_server_connection_state_string(rdp->state), status);
+				         rdp_get_state_string(rdp), status);
 
 			break;
 
@@ -1668,13 +1673,13 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			if (status < 0)
 				WLog_DBG(TAG, "%s: %s - rdp_recv_pdu() - %i", __FUNCTION__,
-				         rdp_server_connection_state_string(rdp->state), status);
+				         rdp_get_state_string(rdp), status);
 
 			break;
 
 		default:
-			WLog_ERR(TAG, "%s: %s state %d", __FUNCTION__,
-			         rdp_server_connection_state_string(rdp->state), rdp->state);
+			WLog_ERR(TAG, "%s: %s state %d", __FUNCTION__, rdp_get_state_string(rdp),
+			         rdp_get_state(rdp));
 			status = -1;
 			break;
 	}
@@ -1813,10 +1818,14 @@ rdpRdp* rdp_new(rdpContext* context)
 	if (!rdp->transport)
 		goto fail;
 
-	if (rdp->io && rdp->transport)
 	{
-		if (!transport_set_io_callbacks(rdp->transport, rdp->io))
+		const rdpTransportIo* io = transport_get_io_callbacks(rdp->transport);
+		if (!io)
 			goto fail;
+		rdp->io = calloc(1, sizeof(rdpTransportIo));
+		if (!rdp->io)
+			goto fail;
+		*rdp->io = *io;
 	}
 
 	rdp->license = license_new(rdp);
@@ -2002,6 +2011,7 @@ BOOL rdp_set_io_callbacks(rdpRdp* rdp, const rdpTransportIo* io_callbacks)
 		if (!rdp->io)
 			return FALSE;
 		*rdp->io = *io_callbacks;
+		return transport_set_io_callbacks(rdp->transport, rdp->io);
 	}
 	return TRUE;
 }

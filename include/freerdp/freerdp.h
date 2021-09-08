@@ -72,9 +72,38 @@ extern "C"
 #define VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1 0x100
 #define VERIFY_CERT_FLAG_FP_IS_PEM 0x200
 
+	typedef enum
+	{
+		CONNECTION_STATE_INITIAL,
+		CONNECTION_STATE_NEGO,
+		CONNECTION_STATE_NLA,
+		CONNECTION_STATE_MCS_CONNECT,
+		CONNECTION_STATE_MCS_ERECT_DOMAIN,
+		CONNECTION_STATE_MCS_ATTACH_USER,
+		CONNECTION_STATE_MCS_CHANNEL_JOIN,
+		CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT,
+		CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE,
+		CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT,
+		CONNECTION_STATE_LICENSING,
+		CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING,
+		CONNECTION_STATE_CAPABILITIES_EXCHANGE,
+		CONNECTION_STATE_FINALIZATION,
+		CONNECTION_STATE_ACTIVE
+	} CONNECTION_STATE;
+
 /* Message types used by gateway messaging callback */
 #define GATEWAY_MESSAGE_CONSENT 1
 #define GATEWAY_MESSAGE_SERVICE 2
+
+	typedef enum
+	{
+		AUTH_NLA,
+		AUTH_TLS,
+		AUTH_RDP,
+		GW_AUTH_HTTP,
+		GW_AUTH_RDG,
+		GW_AUTH_RPC
+	} rdp_auth_reason;
 
 	typedef BOOL (*pContextNew)(freerdp* instance, rdpContext* context);
 	typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
@@ -84,6 +113,8 @@ extern "C"
 	typedef void (*pPostDisconnect)(freerdp* instance);
 	typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password,
 	                              char** domain);
+	typedef BOOL (*pAuthenticateEx)(freerdp* instance, char** username, char** password,
+	                                char** domain, rdp_auth_reason reason);
 
 	/** @brief Callback used if user interaction is required to accept
 	 *         an unknown certificate.
@@ -431,14 +462,17 @@ fingerprint. DEPRECATED: Use VerifyChangedCertificateEx */
 		    VerifyChangedCertificateEx; /**< (offset 67)
 		                         Callback for changed certificate validation.
 		                         Used when a certificate differs from stored fingerprint. */
-
 		ALIGN64 pSendChannelPacket
 		    SendChannelPacket;    /* (offset 68)
 		                           * Callback for sending RAW data to a channel. In contrast to
 		                           * SendChannelData data fragmentation    is up to the user and this
 		                           * function sends data as is with the provided flags.
 		                           */
-		UINT64 paddingE[80 - 69]; /* 69 */
+		ALIGN64 pAuthenticateEx AuthenticateEx; /**< (offset 69)
+		                                 Callback for authentication.
+		                                 It is used to get the username/password. The reason
+		                                 argument tells why it was called.  */
+		UINT64 paddingE[80 - 70]; /* 70 */
 	};
 
 	struct rdp_channel_handles
@@ -529,6 +563,9 @@ fingerprint. DEPRECATED: Use VerifyChangedCertificateEx */
 	FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
 
 	FREERDP_API const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length);
+
+	FREERDP_API CONNECTION_STATE freerdp_get_state(rdpContext* context);
+	FREERDP_API const char* freerdp_state_string(CONNECTION_STATE state);
 
 #ifdef __cplusplus
 }

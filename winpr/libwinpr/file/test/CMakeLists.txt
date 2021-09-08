@@ -9,6 +9,7 @@ if (NOT WIN32)
 		TestFileCreateFile.c
 		TestFileDeleteFile.c
 		TestFileReadFile.c
+		TestSetFileAttributes.c
 		TestFileWriteFile.c
 		TestFilePatternMatch.c
 		TestFileFindFirstFile.c

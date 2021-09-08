@@ -3178,7 +3178,7 @@ int PCSC_InitializeSCardApi(void)
 	/* Disable pcsc-lite's (poor) blocking so we can handle it ourselves */
 	SetEnvironmentVariableA("PCSCLITE_NO_BLOCKING", "1");
 #ifdef __MACOSX__
-	g_PCSCModule = LoadLibraryA("/System/Library/Frameworks/PCSC.framework/PCSC");
+	g_PCSCModule = LoadLibraryX("/System/Library/Frameworks/PCSC.framework/PCSC");
 	OSXVersion = determineMacOSXVersion();
 
 	if (OSXVersion == 0)

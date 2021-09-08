@@ -350,7 +350,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	UINT16 lengthSourceDescriptor;
 	UINT32 timeout;
 
-	if (rdp->state == CONNECTION_STATE_ACTIVE)
+	if (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE)
 		rdp->deactivation_reactivation = TRUE;
 	else
 		rdp->deactivation_reactivation = FALSE;
@@ -390,7 +390,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 		if (freerdp_shall_disconnect(rdp->instance))
 			return TRUE;
 
-		if (rdp->state == CONNECTION_STATE_ACTIVE)
+		if (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE)
 			return TRUE;
 
 		Sleep(100);
