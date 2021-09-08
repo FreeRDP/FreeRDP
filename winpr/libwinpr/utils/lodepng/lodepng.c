@@ -1507,7 +1507,7 @@ typedef struct Hash
 
 static unsigned hash_init(Hash* hash, unsigned windowsize)
 {
-	unsigned i;
+	unsigned i = 0;
 	hash->head = (int*)calloc(sizeof(int), HASH_NUM_VALUES);
 	hash->val = (int*)calloc(sizeof(int), windowsize);
 	hash->chain = (unsigned short*)calloc(sizeof(unsigned short), windowsize);

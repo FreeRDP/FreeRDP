@@ -1094,7 +1094,7 @@ static int nla_server_authenticate(rdpNla* nla)
 {
 	int res = -1;
 	if (nla_server_init(nla) < 1)
-		goto fail;
+		goto fail_auth;
 
 	/* Client is starting, here es the state machine:
 	 *
@@ -1135,13 +1135,13 @@ static int nla_server_authenticate(rdpNla* nla)
 		inputBufferDesc.pBuffers = &inputBuffer;
 
 		if (nla_server_recv(nla) < 0)
-			goto fail;
+			goto fail_auth;
 
 		WLog_DBG(TAG, "Receiving Authentication Token");
 		if (!nla_sec_buffer_alloc_from_buffer(&inputBuffer, &nla->negoToken, 0))
 		{
 			WLog_ERR(TAG, "CredSSP: invalid negoToken!");
-			goto fail;
+			goto fail_auth;
 		}
 
 		outputBufferDesc.ulVersion = SECBUFFER_VERSION;
@@ -1149,7 +1149,7 @@ static int nla_server_authenticate(rdpNla* nla)
 		outputBufferDesc.pBuffers = &outputBuffer;
 
 		if (!nla_sec_buffer_alloc(&outputBuffer, nla->cbMaxToken))
-			goto fail;
+			goto fail_auth;
 
 		nla->status = nla->table->AcceptSecurityContext(
 		    &nla->credentials, nla->haveContext ? &nla->context : NULL, &inputBufferDesc,
@@ -1159,7 +1159,7 @@ static int nla_server_authenticate(rdpNla* nla)
 		         GetSecurityStatusString(nla->status), nla->status);
 
 		if (!nla_sec_buffer_alloc_from_buffer(&nla->negoToken, &outputBuffer, 0))
-			goto fail;
+			goto fail_auth;
 
 		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 		{
@@ -1193,7 +1193,7 @@ static int nla_server_authenticate(rdpNla* nla)
 			}
 
 			if (!nla_complete_auth(nla, &outputBufferDesc))
-				goto fail;
+				goto fail_auth;
 		}
 
 		if (nla->status == SEC_E_OK)

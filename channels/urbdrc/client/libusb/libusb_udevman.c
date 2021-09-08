@@ -862,7 +862,7 @@ static BOOL poll_libusb_events(UDEVMAN* udevman)
 
 static DWORD poll_thread(LPVOID lpThreadParameter)
 {
-	libusb_hotplug_callback_handle handle;
+	libusb_hotplug_callback_handle handle = 0;
 	UDEVMAN* udevman = (UDEVMAN*)lpThreadParameter;
 	BOOL hasHotplug = libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG);
 

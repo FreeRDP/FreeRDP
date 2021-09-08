@@ -220,9 +220,9 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	 * FC_END
 	 * [pointer_layout<>]
 	 */
-	ULONG_PTR MaxCount;
-	unsigned long Offset;
-	unsigned long ActualCount;
+	ULONG_PTR MaxCount = 0;
+	unsigned long Offset = 0;
+	unsigned long ActualCount = 0;
 	unsigned char* pMemoryCopy;
 	unsigned char type;
 	unsigned char alignment;
