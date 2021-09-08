@@ -748,11 +748,6 @@ static BOOL nla_client_send_token(rdpNla* nla, SecBufferDesc* token)
 	}
 
 	buffer = token->pBuffers;
-	if (buffer->cbBuffer < 1)
-	{
-		WLog_ERR(TAG, "[%s] token->pBuffers[0].cbBuffer=%" PRIu32, __FUNCTION__, buffer->cbBuffer);
-		goto fail;
-	}
 
 	if (!nla_sec_buffer_alloc_from_buffer(&nla->negoToken, &token->pBuffers[0], 0))
 		goto fail;
