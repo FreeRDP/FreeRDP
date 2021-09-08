@@ -616,11 +616,11 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 		UINT16 yEnd;
 		UINT32 colorBkg;
 		UINT16 vBarHeader;
-		UINT16 vBarYOn;
+		UINT16 vBarYOn = 0;
 		UINT16 vBarYOff;
 		UINT32 vBarCount;
 		UINT32 vBarPixelCount;
-		UINT32 vBarShortPixelCount;
+		UINT32 vBarShortPixelCount = 0;
 
 		if (Stream_GetRemainingLength(s) < 11)
 		{
@@ -656,7 +656,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 		{
 			UINT32 vBarHeight;
 			CLEAR_VBAR_ENTRY* vBarEntry = NULL;
-			CLEAR_VBAR_ENTRY* vBarShortEntry;
+			CLEAR_VBAR_ENTRY* vBarShortEntry = NULL;
 			BOOL vBarUpdate = FALSE;
 			const BYTE* cpSrcPixel;
 

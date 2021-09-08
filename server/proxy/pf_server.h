@@ -41,4 +41,4 @@ struct proxy_server
 	HANDLE stopEvent;           /* an event used to signal the main thread to stop */
 };
 
-#endif /* FREERDP_SERVER_PROXY_SERVER_H */
+#endif /* INT_FREERDP_SERVER_PROXY_SERVER_H */

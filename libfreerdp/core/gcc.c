@@ -1413,7 +1413,7 @@ const BYTE tssk_exponent[] = { 0x5b, 0x7b, 0x88, 0xc0 };
 BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 {
 	BYTE* sigData;
-	size_t expLen, keyLen, sigDataLen;
+	size_t expLen = 0, keyLen, sigDataLen;
 	BYTE encryptedSignature[TSSK_KEY_LENGTH];
 	BYTE signature[sizeof(initial_signature)];
 	UINT32 headerLen, serverRandomLen, serverCertLen, wPublicKeyBlobLen;

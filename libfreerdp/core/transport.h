@@ -113,8 +113,8 @@ FREERDP_LOCAL BOOL transport_set_connected_event(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_set_recv_callbacks(rdpTransport* transport, TransportRecv recv,
                                                 void* extra);
 
-FREERDP_LOCAL transport_tcp_connect(rdpTransport* transport, const char* hostname, int port,
-                                    DWORD timeout);
+FREERDP_LOCAL int transport_tcp_connect(rdpTransport* transport, const char* hostname, int port,
+                                        DWORD timeout);
 
 FREERDP_LOCAL rdpTransport* transport_new(rdpContext* context);
 FREERDP_LOCAL void transport_free(rdpTransport* transport);

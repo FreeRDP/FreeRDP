@@ -702,7 +702,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 {
 	BOOL bSuccess;
 	UINT32 SrcSize;
-	UINT32 DstSize;
+	UINT32 DstSize = 0;
 	UINT32 srcFormatId;
 	UINT32 dstFormatId;
 	BYTE* pDstData = NULL;
@@ -1393,7 +1393,7 @@ xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
 	UINT32 count;
 	UINT32 index;
 	BOOL found = FALSE;
-	xfCliprdrFuseStream* stream;
+	xfCliprdrFuseStream* stream = NULL;
 	xfCliprdrFuseInode* ino;
 	xfClipboard* clipboard = (xfClipboard*)context->custom;
 	UINT32 stream_id = fileContentsResponse->streamId;
@@ -1413,7 +1413,7 @@ xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
 			break;
 		}
 	}
-	if (!found)
+	if (!found || !stream)
 	{
 		ArrayList_Unlock(clipboard->stream_list);
 		return CHANNEL_RC_OK;
@@ -1775,7 +1775,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 	char* curName = NULL;
 	char* dirName = NULL;
 	char* baseName = NULL;
-	xfCliprdrFuseInode* inode;
+	xfCliprdrFuseInode* inode = NULL;
 	wHashTable* mapDir = HashTable_New(TRUE);
 	if (!mapDir)
 	{
@@ -2565,7 +2565,7 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 	BOOL found = FALSE;
 	struct fuse_entry_param e;
 	xfCliprdrFuseInode* parent_node;
-	xfCliprdrFuseInode* child_node;
+	xfCliprdrFuseInode* child_node = NULL;
 	xfClipboard* clipboard = (xfClipboard*)fuse_req_userdata(req);
 
 	ArrayList_Lock(clipboard->ino_list);
@@ -2592,7 +2592,7 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 	}
 	ArrayList_Unlock(parent_node->child_inos);
 
-	if (!found)
+	if (!found || !child_node)
 	{
 		ArrayList_Unlock(clipboard->ino_list);
 		fuse_reply_err(req, ENOENT);

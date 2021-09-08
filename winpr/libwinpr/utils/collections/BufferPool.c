@@ -225,7 +225,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 	SSIZE_T index;
 	SSIZE_T maxSize;
 	SSIZE_T maxIndex;
-	SSIZE_T foundIndex;
+	SSIZE_T foundIndex = -1;
 	BOOL found = FALSE;
 	void* buffer = NULL;
 
