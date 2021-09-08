@@ -434,7 +434,7 @@ BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height)
 static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 {
 	UINT32 magic;
-	context->decodedHeaderBlocks &= ~_RFX_DECODED_SYNC;
+	context->decodedHeaderBlocks &= ~RFX_DECODED_SYNC;
 
 	/* RFX_SYNC */
 	if (Stream_GetRemainingLength(s) < 6)
@@ -458,14 +458,14 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 	}
 
 	WLog_Print(context->priv->log, WLOG_DEBUG, "version 0x%08" PRIX32 "", context->version);
-	context->decodedHeaderBlocks |= _RFX_DECODED_SYNC;
+	context->decodedHeaderBlocks |= RFX_DECODED_SYNC;
 	return TRUE;
 }
 
 static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 {
 	BYTE numCodecs;
-	context->decodedHeaderBlocks &= ~_RFX_DECODED_VERSIONS;
+	context->decodedHeaderBlocks &= ~RFX_DECODED_VERSIONS;
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -499,7 +499,7 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 
 	WLog_Print(context->priv->log, WLOG_DEBUG, "id %" PRIu32 " version 0x%" PRIX32 ".",
 	           context->codec_id, context->codec_version);
-	context->decodedHeaderBlocks |= _RFX_DECODED_VERSIONS;
+	context->decodedHeaderBlocks |= RFX_DECODED_VERSIONS;
 	return TRUE;
 }
 
@@ -507,7 +507,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 {
 	BYTE channelId;
 	BYTE numChannels;
-	context->decodedHeaderBlocks &= ~_RFX_DECODED_CHANNELS;
+	context->decodedHeaderBlocks &= ~RFX_DECODED_CHANNELS;
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
@@ -557,7 +557,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 	WLog_Print(context->priv->log, WLOG_DEBUG,
 	           "numChannels %" PRIu8 " id %" PRIu8 ", %" PRIu16 "x%" PRIu16 ".", numChannels,
 	           channelId, context->width, context->height);
-	context->decodedHeaderBlocks |= _RFX_DECODED_CHANNELS;
+	context->decodedHeaderBlocks |= RFX_DECODED_CHANNELS;
 	return TRUE;
 }
 
@@ -566,7 +566,7 @@ static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 	BYTE ctxId;
 	UINT16 tileSize;
 	UINT16 properties;
-	context->decodedHeaderBlocks &= ~_RFX_DECODED_CONTEXT;
+	context->decodedHeaderBlocks &= ~RFX_DECODED_CONTEXT;
 
 	if (Stream_GetRemainingLength(s) < 5)
 	{
@@ -609,7 +609,7 @@ static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 			return FALSE;
 	}
 
-	context->decodedHeaderBlocks |= _RFX_DECODED_CONTEXT;
+	context->decodedHeaderBlocks |= RFX_DECODED_CONTEXT;
 	return TRUE;
 }
 
@@ -1075,7 +1075,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 			return FALSE;
 		}
 
-		if (blockType > WBT_CONTEXT && context->decodedHeaderBlocks != _RFX_DECODED_HEADERS)
+		if (blockType > WBT_CONTEXT && context->decodedHeaderBlocks != RFX_DECODED_HEADERS)
 		{
 			WLog_ERR(TAG, "%s: incomplete header blocks processing", __FUNCTION__);
 			return FALSE;

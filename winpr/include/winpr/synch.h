@@ -293,8 +293,17 @@ extern "C"
 	InitializeCriticalSectionAndSpinCount(lpCriticalSection, dwSpinCount)
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifndef _RTL_RUN_ONCE_DEF
 #define _RTL_RUN_ONCE_DEF
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #define RTL_RUN_ONCE_INIT \
 	{                     \

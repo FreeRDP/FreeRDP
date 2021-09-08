@@ -21,7 +21,16 @@
 #include "config.h"
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #define _NO_KSECDD_IMPORT_ 1
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #include <winpr/sspi.h>
 

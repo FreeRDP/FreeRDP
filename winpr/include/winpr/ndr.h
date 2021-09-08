@@ -25,7 +25,17 @@
 
 #ifndef _WIN32
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #define __RPC_WIN32__ 1
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 #define TARGET_IS_NT50_OR_LATER 1
 
 typedef union _CLIENT_CALL_RETURN {

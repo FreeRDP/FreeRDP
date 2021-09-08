@@ -55,9 +55,18 @@ typedef struct _SECURITY_INTEGER SECURITY_INTEGER;
 typedef SECURITY_INTEGER TimeStamp;
 typedef SECURITY_INTEGER* PTimeStamp;
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifndef __SECSTATUS_DEFINED__
 typedef LONG SECURITY_STATUS;
 #define __SECSTATUS_DEFINED__
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 struct _SecPkgInfoA
@@ -585,6 +594,11 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 
 #if !defined(_WIN32) || defined(_UWP)
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifndef _AUTH_IDENTITY_DEFINED
 #define _AUTH_IDENTITY_DEFINED
 
@@ -626,6 +640,10 @@ struct _SEC_WINNT_AUTH_IDENTITY
 typedef struct _SEC_WINNT_AUTH_IDENTITY SEC_WINNT_AUTH_IDENTITY;
 
 #endif /* _AUTH_IDENTITY_DEFINED */
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 struct _SecHandle
 {

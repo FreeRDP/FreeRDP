@@ -36,11 +36,20 @@
 
 #include <time.h>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifdef HAVE_UNISTD_H
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 500
 #endif
 #include <unistd.h>
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 VOID Sleep(DWORD dwMilliseconds)

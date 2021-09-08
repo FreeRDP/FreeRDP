@@ -24,6 +24,11 @@
 
 #include <winpr/wtypes.h>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 /*
  * Processor Architectures:
  * http://sourceforge.net/p/predef/wiki/Architectures/
@@ -286,5 +291,9 @@
 #endif
 
 #endif /* __BYTE_ORDER */
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #endif /* WINPR_PLATFORM_H */

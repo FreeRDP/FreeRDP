@@ -41,9 +41,8 @@ int main(int argc, char* argv[])
 	DWORD dwExitCode;
 	rdpContext* context;
 	rdpSettings* settings;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
 
-	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
 

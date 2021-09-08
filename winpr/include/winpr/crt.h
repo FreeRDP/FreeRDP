@@ -122,9 +122,18 @@ extern "C"
 
 /* Data Alignment */
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifndef _ERRNO_T_DEFINED
 #define _ERRNO_T_DEFINED
 typedef int errno_t;
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 #ifdef __cplusplus

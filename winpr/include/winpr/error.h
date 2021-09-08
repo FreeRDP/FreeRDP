@@ -129,10 +129,19 @@
 
 #define HRESULT_FROM_NT(x) ((HRESULT)((x) | FACILITY_NT_BIT))
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #define __HRESULT_FROM_WIN32(x)         \
 	((HRESULT)(x) <= 0 ? ((HRESULT)(x)) \
 	                   : ((HRESULT)(((x)&0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
 #define HRESULT_FROM_WIN32(x) __HRESULT_FROM_WIN32(x)
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #define HRESULT_SEVERITY(hr) (((hr) >> 31) & 0x1)
 

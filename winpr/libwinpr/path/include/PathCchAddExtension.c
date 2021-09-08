@@ -1,7 +1,7 @@
 
 /*
 #define DEFINE_UNICODE		FALSE
-#define _PATH_SEPARATOR_CHR	'\\'
+#define CUR_PATH_SEPARATOR_CHR	'\\'
 #define PATH_CCH_ADD_EXTENSION	PathCchAddExtensionA
 */
 
@@ -27,7 +27,7 @@ HRESULT PATH_CCH_ADD_EXTENSION(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
 	bExtDot = (pszExt[0] == '.') ? TRUE : FALSE;
 
 	pDot = wcsrchr(pszPath, '.');
-	pBackslash = wcsrchr(pszPath, _PATH_SEPARATOR_CHR);
+	pBackslash = wcsrchr(pszPath, CUR_PATH_SEPARATOR_CHR);
 
 	if (pDot && pBackslash)
 	{
@@ -69,7 +69,7 @@ HRESULT PATH_CCH_ADD_EXTENSION(PSTR pszPath, size_t cchPath, PCSTR pszExt)
 	bExtDot = (pszExt[0] == '.') ? TRUE : FALSE;
 
 	pDot = strrchr(pszPath, '.');
-	pBackslash = strrchr(pszPath, _PATH_SEPARATOR_CHR);
+	pBackslash = strrchr(pszPath, CUR_PATH_SEPARATOR_CHR);
 
 	if (pDot && pBackslash)
 	{
@@ -94,6 +94,6 @@ HRESULT PATH_CCH_ADD_EXTENSION(PSTR pszPath, size_t cchPath, PCSTR pszExt)
 
 /*
 #undef DEFINE_UNICODE
-#undef _PATH_SEPARATOR_CHR
+#undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_EXTENSION
 */

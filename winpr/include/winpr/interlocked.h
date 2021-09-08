@@ -78,9 +78,18 @@ extern "C"
 
 #else /* _WIN64 */
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #define WINPR_SLIST_ENTRY WINPR_SINGLE_LIST_ENTRY
 #define _WINPR_SLIST_ENTRY _WINPR_SINGLE_LIST_ENTRY
 #define WINPR_PSLIST_ENTRY WINPR_PSINGLE_LIST_ENTRY
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #endif /* _WIN64 */
 

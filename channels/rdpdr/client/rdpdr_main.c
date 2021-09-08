@@ -726,7 +726,7 @@ static UINT handle_platform_mounts_sun(hotplug_dev* dev_array, size_t* size)
 {
 	FILE* f;
 	struct mnttab ent;
-	f = fopen("/etc/mnttab", "r");
+	f = winpr_fopen("/etc/mnttab", "r");
 	if (f == NULL)
 	{
 		WLog_ERR(TAG, "fopen failed!");
@@ -771,7 +771,7 @@ static UINT handle_platform_mounts_linux(hotplug_dev* dev_array, size_t* size)
 {
 	FILE* f;
 	struct mntent* ent;
-	f = fopen("/proc/mounts", "r");
+	f = winpr_fopen("/proc/mounts", "r");
 	if (f == NULL)
 	{
 		WLog_ERR(TAG, "fopen failed!");

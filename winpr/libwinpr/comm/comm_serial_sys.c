@@ -48,7 +48,7 @@
 #define TTY_THRESHOLD_UNTHROTTLE 128
 #define N_TTY_BUF_SIZE 4096
 
-#define _BAUD_TABLE_END 0010020 /* __MAX_BAUD + 1 */
+#define BAUD_TABLE_END 0010020 /* __MAX_BAUD + 1 */
 
 /* 0: B* (Linux termios)
  * 1: CBR_* or actual baud rate
@@ -153,7 +153,7 @@ static const speed_t _BAUD_TABLE[][3] = {
 #ifdef B4000000
 	{ B4000000, 4000000, BAUD_USER }, /* __MAX_BAUD */
 #endif
-	{ _BAUD_TABLE_END, 0, 0 }
+	{ BAUD_TABLE_END, 0, 0 }
 };
 
 static BOOL _get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
@@ -200,7 +200,7 @@ static BOOL _get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 	                                SP_PARITY_CHECK | /*SP_RLSD |*/ SP_STOPBITS;
 
 	pProperties->dwSettableBaud = 0;
-	for (i = 0; _BAUD_TABLE[i][0] < _BAUD_TABLE_END; i++)
+	for (i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
 		pProperties->dwSettableBaud |= _BAUD_TABLE[i][2];
 	}
@@ -236,7 +236,7 @@ static BOOL _set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 		return FALSE;
 	}
 
-	for (i = 0; _BAUD_TABLE[i][0] < _BAUD_TABLE_END; i++)
+	for (i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
 		if (_BAUD_TABLE[i][1] == pBaudRate->BaudRate)
 		{
@@ -282,7 +282,7 @@ static BOOL _get_baud_rate(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate)
 
 	currentSpeed = cfgetispeed(&currentState);
 
-	for (i = 0; _BAUD_TABLE[i][0] < _BAUD_TABLE_END; i++)
+	for (i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
 		if (_BAUD_TABLE[i][0] == currentSpeed)
 		{
