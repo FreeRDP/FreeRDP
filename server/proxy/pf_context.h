@@ -94,6 +94,9 @@ struct p_client_context
 	UINT64 frames_count;
 
 	wHashTable* vc_ids; /* channel_name -> channel_id map */
+
+	BOOL input_state_sync_pending;
+	UINT32 input_state;
 };
 typedef struct p_client_context pClientContext;
 
