@@ -229,7 +229,17 @@ void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT3
 
 void brush_cache_register_callbacks(rdpUpdate* update)
 {
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache;
+
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(update->context);
+	WINPR_ASSERT(update->primary);
+	WINPR_ASSERT(update->secondary);
+
+	cache = update->context->cache;
+	WINPR_ASSERT(cache);
+	WINPR_ASSERT(cache->brush);
+
 	cache->brush->PatBlt = update->primary->PatBlt;
 	cache->brush->PolygonSC = update->primary->PolygonSC;
 	cache->brush->PolygonCB = update->primary->PolygonCB;

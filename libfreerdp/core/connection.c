@@ -1517,7 +1517,7 @@ const char* rdp_state_string(CONNECTION_STATE state)
 	}
 }
 
-CONNECTION_STATE rdp_get_state(rdpRdp* rdp)
+CONNECTION_STATE rdp_get_state(const rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 	return rdp->state;

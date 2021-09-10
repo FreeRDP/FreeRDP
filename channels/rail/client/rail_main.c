@@ -590,7 +590,6 @@ static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 	return rail->channelEntryPoints.pVirtualChannelOpenEx(rail->InitHandle, &rail->OpenHandle,
 	                                                      rail->channelDef.name,
 	                                                      rail_virtual_channel_open_event_ex);
-	;
 }
 
 /**

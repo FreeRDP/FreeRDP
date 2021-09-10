@@ -261,7 +261,15 @@ BOOL bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index, rdpB
 
 void bitmap_cache_register_callbacks(rdpUpdate* update)
 {
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache;
+
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(update->context);
+	WINPR_ASSERT(update->context->cache);
+
+	cache = update->context->cache;
+	WINPR_ASSERT(cache);
+
 	cache->bitmap->MemBlt = update->primary->MemBlt;
 	cache->bitmap->Mem3Blt = update->primary->Mem3Blt;
 	update->primary->MemBlt = update_gdi_memblt;

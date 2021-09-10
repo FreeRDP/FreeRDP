@@ -1112,7 +1112,18 @@ out:
 
 static void gdi_register_update_callbacks(rdpUpdate* update)
 {
-	rdpPrimaryUpdate* primary = update->primary;
+	rdpPrimaryUpdate* primary;
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(update->context);
+
+	settings = update->context->settings;
+	WINPR_ASSERT(settings);
+
+	primary = update->primary;
+	WINPR_ASSERT(primary);
+
 	update->Palette = gdi_palette_update;
 	update->SetBounds = gdi_set_bounds;
 	primary->DstBlt = gdi_dstblt;

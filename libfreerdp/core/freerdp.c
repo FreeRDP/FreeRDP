@@ -1008,7 +1008,7 @@ BOOL freerdp_set_io_callbacks(rdpContext* context, const rdpTransportIo* io_call
 	return rdp_set_io_callbacks(context->rdp, io_callbacks);
 }
 
-CONNECTION_STATE freerdp_get_state(rdpContext* context)
+CONNECTION_STATE freerdp_get_state(const rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	return rdp_get_state(context->rdp);
