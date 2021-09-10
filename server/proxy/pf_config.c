@@ -33,6 +33,16 @@
 #include <freerdp/server/proxy/proxy_config.h>
 #include <freerdp/server/proxy/proxy_log.h>
 
+#include <freerdp/channels/cliprdr.h>
+#include <freerdp/channels/rdpsnd.h>
+#include <freerdp/channels/audin.h>
+#include <freerdp/channels/rdpdr.h>
+#include <freerdp/channels/disp.h>
+#include <freerdp/channels/rail.h>
+#include <freerdp/channels/rdpei.h>
+
+#include "pf_utils.h"
+
 #define TAG PROXY_TAG("config")
 
 #define CONFIG_PRINT_SECTION(section) WLog_INFO(TAG, "\t%s:", section)
@@ -202,6 +212,8 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 	config->DisplayControl = pf_config_get_bool(ini, "Channels", "DisplayControl", TRUE);
 	config->Clipboard = pf_config_get_bool(ini, "Channels", "Clipboard", FALSE);
 	config->AudioOutput = pf_config_get_bool(ini, "Channels", "AudioOutput", TRUE);
+	config->AudioInput = pf_config_get_bool(ini, "Channels", "AudioInput", TRUE);
+	config->DeviceRedirection = pf_config_get_bool(ini, "Channels", "DeviceRedirection", TRUE);
 	config->RemoteApp = pf_config_get_bool(ini, "Channels", "RemoteApp", FALSE);
 	config->PassthroughIsBlacklist =
 	    pf_config_get_bool(ini, "Channels", "PassthroughIsBlacklist", FALSE);
@@ -232,6 +244,7 @@ static BOOL pf_config_load_input(wIniFile* ini, proxyConfig* config)
 	WINPR_ASSERT(config);
 	config->Keyboard = pf_config_get_bool(ini, "Input", "Keyboard", TRUE);
 	config->Mouse = pf_config_get_bool(ini, "Input", "Mouse", TRUE);
+	config->Multitouch = pf_config_get_bool(ini, "Input", "Multitouch", TRUE);
 	return TRUE;
 }
 
@@ -465,7 +478,11 @@ BOOL pf_server_config_dump(const char* file)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, "Channels", "Clipboard", "true") < 0)
 		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Channels", "AudioInput", "true") < 0)
+		goto fail;
 	if (IniFile_SetKeyValueString(ini, "Channels", "AudioOutput", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Channels", "DeviceRedirection", "true") < 0)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, "Channels", "RemoteApp", "false") < 0)
 		goto fail;
@@ -479,6 +496,8 @@ BOOL pf_server_config_dump(const char* file)
 	if (IniFile_SetKeyValueString(ini, "Input", "Keyboard", "true") < 0)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, "Input", "Mouse", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Input", "Multitouch", "true") < 0)
 		goto fail;
 
 	/* Security settings */
@@ -625,6 +644,7 @@ void pf_server_config_print(const proxyConfig* config)
 	CONFIG_PRINT_SECTION("Input");
 	CONFIG_PRINT_BOOL(config, Keyboard);
 	CONFIG_PRINT_BOOL(config, Mouse);
+	CONFIG_PRINT_BOOL(config, Multitouch);
 
 	CONFIG_PRINT_SECTION("Server Security");
 	CONFIG_PRINT_BOOL(config, ServerTlsSecurity);
@@ -641,6 +661,8 @@ void pf_server_config_print(const proxyConfig* config)
 	CONFIG_PRINT_BOOL(config, DisplayControl);
 	CONFIG_PRINT_BOOL(config, Clipboard);
 	CONFIG_PRINT_BOOL(config, AudioOutput);
+	CONFIG_PRINT_BOOL(config, AudioInput);
+	CONFIG_PRINT_BOOL(config, DeviceRedirection);
 	CONFIG_PRINT_BOOL(config, RemoteApp);
 	CONFIG_PRINT_BOOL(config, PassthroughIsBlacklist);
 
@@ -795,4 +817,220 @@ BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config)
 fail:
 	pf_server_config_free(tmp);
 	return FALSE;
+}
+
+struct config_plugin_data
+{
+	proxyPluginsManager* mgr;
+	const proxyConfig* config;
+};
+
+static const char config_plugin_name[] = "config";
+static const char config_plugin_desc[] =
+    "A plugin filtering according to proxy configuration file rules";
+
+static BOOL config_plugin_unload(proxyPlugin* plugin)
+{
+	WINPR_ASSERT(plugin);
+
+	/* Here we have to free up our custom data storage. */
+	if (plugin)
+	{
+		free(plugin->custom);
+		plugin->custom = NULL;
+	}
+
+	return TRUE;
+}
+
+static BOOL config_plugin_keyboard_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+{
+	BOOL rc;
+	const struct config_plugin_data* custom;
+	const proxyConfig* cfg;
+	const proxyKeyboardEventInfo* event_data = (const proxyKeyboardEventInfo*)(param);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(event_data);
+
+	WINPR_UNUSED(event_data);
+
+	custom = plugin->custom;
+	WINPR_ASSERT(custom);
+
+	cfg = custom->config;
+	WINPR_ASSERT(cfg);
+
+	rc = cfg->Keyboard;
+	WLog_DBG(TAG, "%s: %s", __FUNCTION__, rc ? "TRUE" : "FALSE");
+	return rc;
+}
+
+static BOOL config_plugin_mouse_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+{
+	BOOL rc;
+	const struct config_plugin_data* custom;
+	const proxyConfig* cfg;
+	const proxyMouseEventInfo* event_data = (const proxyMouseEventInfo*)(param);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(event_data);
+
+	WINPR_UNUSED(event_data);
+
+	custom = plugin->custom;
+	WINPR_ASSERT(custom);
+
+	cfg = custom->config;
+	WINPR_ASSERT(cfg);
+
+	rc = cfg->Mouse;
+	WLog_DBG(TAG, "%s: %s", __FUNCTION__, rc ? "TRUE" : "FALSE");
+	return rc;
+}
+
+static BOOL config_plugin_client_channel_data(proxyPlugin* plugin, proxyData* pdata, void* param)
+{
+	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
+
+	WLog_DBG(TAG, "%s: %s [0x%04" PRIx16 "] got %" PRIuz, __FUNCTION__, channel->channel_name,
+	         channel->channel_id, channel->data_len);
+	return TRUE;
+}
+
+static BOOL config_plugin_server_channel_data(proxyPlugin* plugin, proxyData* pdata, void* param)
+{
+	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
+
+	WLog_DBG(TAG, "%s: %s [0x%04" PRIx16 "] got %" PRIuz, __FUNCTION__, channel->channel_name,
+	         channel->channel_id, channel->data_len);
+	return TRUE;
+}
+
+static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
+{
+	int rc;
+	BOOL accept;
+	const struct config_plugin_data* custom;
+	const proxyConfig* cfg;
+	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
+
+	custom = plugin->custom;
+	WINPR_ASSERT(custom);
+
+	cfg = custom->config;
+	WINPR_ASSERT(cfg);
+
+	rc = pf_utils_channel_is_passthrough(cfg, channel->channel_name);
+	accept = rc > 0;
+	if (accept)
+	{
+		if (strncmp(RDPGFX_DVC_CHANNEL_NAME, channel->channel_name,
+		            sizeof(RDPGFX_DVC_CHANNEL_NAME)) == 0)
+			accept = cfg->GFX;
+		else if (strncmp(RDPSND_DVC_CHANNEL_NAME, channel->channel_name,
+		                 sizeof(RDPSND_DVC_CHANNEL_NAME)) == 0)
+			accept = cfg->AudioOutput;
+		else if (strncmp(RDPSND_LOSSY_DVC_CHANNEL_NAME, channel->channel_name,
+		                 sizeof(RDPSND_LOSSY_DVC_CHANNEL_NAME)) == 0)
+			accept = cfg->AudioOutput;
+		else if (strncmp(AUDIN_DVC_CHANNEL_NAME, channel->channel_name,
+		                 sizeof(AUDIN_DVC_CHANNEL_NAME)) == 0)
+			accept = cfg->AudioInput;
+		else if (strncmp(RDPEI_DVC_CHANNEL_NAME, channel->channel_name,
+		                 sizeof(RDPEI_DVC_CHANNEL_NAME)) == 0)
+			accept = cfg->Multitouch;
+	}
+
+	WLog_DBG(TAG, "%s: %s [0x%04" PRIx16 "]: %s", __FUNCTION__, channel->channel_name,
+	         channel->channel_id, accept ? "TRUE" : "FALSE");
+	return accept;
+}
+
+static BOOL config_plugin_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
+{
+	int rc;
+	BOOL accept;
+	const struct config_plugin_data* custom;
+	const proxyConfig* cfg;
+	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
+
+	custom = plugin->custom;
+	WINPR_ASSERT(custom);
+
+	cfg = custom->config;
+	WINPR_ASSERT(cfg);
+
+	rc = pf_utils_channel_is_passthrough(cfg, channel->channel_name);
+	accept = rc > 0;
+	if (accept)
+	{
+		if (strncmp(CLIPRDR_SVC_CHANNEL_NAME, channel->channel_name,
+		            sizeof(CLIPRDR_SVC_CHANNEL_NAME)) == 0)
+			accept = cfg->Clipboard;
+		else if (strncmp(RDPSND_CHANNEL_NAME, channel->channel_name, sizeof(RDPSND_CHANNEL_NAME)) ==
+		         0)
+			accept = cfg->AudioOutput;
+		else if (strncmp(RDPDR_SVC_CHANNEL_NAME, channel->channel_name,
+		                 sizeof(RDPDR_SVC_CHANNEL_NAME)) == 0)
+			accept = cfg->DeviceRedirection;
+		else if (strncmp(DISP_DVC_CHANNEL_NAME, channel->channel_name,
+		                 sizeof(DISP_DVC_CHANNEL_NAME)) == 0)
+			accept = cfg->DisplayControl;
+		else if (strncmp(RAIL_SVC_CHANNEL_NAME, channel->channel_name,
+		                 sizeof(RAIL_SVC_CHANNEL_NAME)) == 0)
+			accept = cfg->RemoteApp;
+	}
+
+	WLog_DBG(TAG, "%s: %s [static]: %s", __FUNCTION__, channel->channel_name,
+	         accept ? "TRUE" : "FALSE");
+	return accept;
+}
+
+BOOL pf_config_plugin(proxyPluginsManager* plugins_manager, void* userdata)
+{
+	struct config_plugin_data* custom;
+	proxyPlugin plugin = { 0 };
+
+	plugin.name = config_plugin_name;
+	plugin.description = config_plugin_desc;
+	plugin.PluginUnload = config_plugin_unload;
+
+	plugin.KeyboardEvent = config_plugin_keyboard_event;
+	plugin.MouseEvent = config_plugin_mouse_event;
+	plugin.ClientChannelData = config_plugin_client_channel_data;
+	plugin.ServerChannelData = config_plugin_server_channel_data;
+	plugin.ChannelCreate = config_plugin_channel_create;
+	plugin.DynamicChannelCreate = config_plugin_dynamic_channel_create;
+	plugin.userdata = userdata;
+
+	custom = calloc(1, sizeof(struct config_plugin_data));
+	if (!custom)
+		return FALSE;
+
+	custom->mgr = plugins_manager;
+	custom->config = userdata;
+
+	plugin.custom = custom;
+	plugin.userdata = userdata;
+
+	return plugins_manager->RegisterPlugin(plugins_manager, &plugin);
 }

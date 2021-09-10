@@ -212,9 +212,27 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	settings->UseMultimon = TRUE;
 
 	/* Sound */
-	settings->AudioPlayback = config->AudioOutput;
-	if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, "rdpdr"))
-		settings->DeviceRedirection = TRUE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_AudioCapture, config->AudioInput) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, config->AudioOutput) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection,
+	                               config->DeviceRedirection) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl,
+	                               config->DisplayControl) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteAssistanceMode, config->RemoteApp) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_MultiTouchInput, config->Multitouch))
+		return FALSE;
+
+	if (config->RemoteApp)
+	{
+		if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RAIL_SVC_CHANNEL_NAME))
+			settings->RemoteApplicationMode = TRUE;
+	}
+
+	if (config->DeviceRedirection)
+	{
+		if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RDPDR_SVC_CHANNEL_NAME))
+			settings->DeviceRedirection = TRUE;
+	}
 
 	/* Display control */
 	settings->SupportDisplayControl = config->DisplayControl;
@@ -223,8 +241,11 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, ENCOMSP_SVC_CHANNEL_NAME))
 		settings->EncomspVirtualChannel = TRUE;
 
-	if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, CLIPRDR_SVC_CHANNEL_NAME))
-		settings->RedirectClipboard = config->Clipboard;
+	if (config->Clipboard)
+	{
+		if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, CLIPRDR_SVC_CHANNEL_NAME))
+			settings->RedirectClipboard = config->Clipboard;
+	}
 
 	settings->AutoReconnectionEnabled = TRUE;
 
@@ -232,7 +253,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 * Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded.
 	 */
-	if (!config->PassthroughIsBlacklist || (config->PassthroughCount != 0))
+	if (!pf_utils_is_passthrough(config))
 	{
 		PubSub_SubscribeChannelConnected(instance->context->pubSub,
 		                                 pf_channels_on_client_channel_connect);
@@ -256,12 +277,53 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 		return FALSE;
 	}
 
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!pf_utils_is_passthrough(config))
 	{
-		PROXY_LOG_ERR(TAG, pc, "Failed to load addins");
-		return FALSE;
+		if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+		{
+			PROXY_LOG_ERR(TAG, pc, "Failed to load addins");
+			return FALSE;
+		}
 	}
+	else
+	{
+		/* Copy the current channel settings from the peer connection to the client. */
+		if (!freerdp_channels_from_mcs(settings, &ps->context))
+			return FALSE;
 
+		/* Filter out channels we do not want */
+		{
+			CHANNEL_DEF* channels = (CHANNEL_DEF*)freerdp_settings_get_pointer_array(
+			    settings, FreeRDP_ChannelDefArray, 0);
+			size_t x, size = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
+
+			WINPR_ASSERT(channels || (size == 0));
+
+			for (x = 0; x < size;)
+			{
+				CHANNEL_DEF* cur = &channels[x];
+				proxyChannelDataEventInfo dev = { 0 };
+
+				dev.channel_name = cur->name;
+				dev.flags = cur->options;
+
+				/* Filter out channels blocked by config */
+				if (!pf_modules_run_filter(pc->pdata->module,
+				                           FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_CREATE, pc->pdata,
+				                           &dev))
+				{
+					const size_t s = size - MIN(size, x + 1);
+					memmove(cur, &cur[1], sizeof(CHANNEL_DEF) * s);
+					size--;
+				}
+				else
+					x++;
+			}
+
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, x))
+				return FALSE;
+		}
+	}
 	return pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_PRE_CONNECT, pc->pdata, pc);
 }
 

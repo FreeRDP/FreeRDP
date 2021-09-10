@@ -456,7 +456,6 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	freerdp_peer* client = (freerdp_peer*)arg;
 	proxyServer* server;
 	size_t count;
-	BOOL rc;
 
 	WINPR_ASSERT(client);
 
@@ -465,8 +464,6 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 
 	count = ArrayList_Count(server->peer_list);
 
-	if (!rc)
-		goto out_free_peer;
 	if (!pf_context_init_server_context(client))
 		goto out_free_peer;
 
@@ -796,7 +793,6 @@ static void peer_free(void* obj)
 	 */
 	if (hdl != _GetCurrentThread())
 		WaitForSingleObject(hdl, INFINITE);
-
 	CloseHandle(hdl);
 }
 
@@ -909,17 +905,6 @@ BOOL pf_server_run(proxyServer* server)
 	WINPR_ASSERT(listener->Close);
 	listener->Close(listener);
 	return rc;
-}
-
-static BOOL disconnect_client(void* data, size_t index, va_list ap)
-{
-	proxyData* pdata = data;
-
-	WINPR_UNUSED(index);
-	WINPR_UNUSED(ap);
-
-	proxy_data_abort_connect(pdata);
-	return TRUE;
 }
 
 void pf_server_stop(proxyServer* server)

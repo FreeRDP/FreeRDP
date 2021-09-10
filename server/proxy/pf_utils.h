@@ -34,4 +34,6 @@
  */
 int pf_utils_channel_is_passthrough(const proxyConfig* config, const char* name);
 
+BOOL pf_utils_is_passthrough(const proxyConfig* config);
+
 #endif /* FREERDP_SERVER_PROXY_PFUTILS_H */
