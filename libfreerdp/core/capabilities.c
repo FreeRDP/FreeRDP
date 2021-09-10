@@ -1294,14 +1294,23 @@ static BOOL rdp_read_input_capability_set(wStream* s, rdpSettings* settings)
 			settings->FastPathInput = FALSE;
 		}
 
-		if (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL)
-			settings->HasHorizontalWheel = TRUE;
+		if (settings->HasHorizontalWheel)
+		{
+			if (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL)
+				settings->HasHorizontalWheel = TRUE;
+		}
 
-		if (inputFlags & INPUT_FLAG_UNICODE)
-			settings->UnicodeInput = TRUE;
+		if (settings->UnicodeInput)
+		{
+			if (inputFlags & INPUT_FLAG_UNICODE)
+				settings->UnicodeInput = TRUE;
+		}
 
-		if (inputFlags & INPUT_FLAG_MOUSEX)
-			settings->HasExtendedMouseEvent = TRUE;
+		if (settings->HasExtendedMouseEvent)
+		{
+			if (inputFlags & INPUT_FLAG_MOUSEX)
+				settings->HasExtendedMouseEvent = TRUE;
+		}
 	}
 
 	return TRUE;

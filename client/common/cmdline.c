@@ -1611,6 +1611,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	arg = largs;
 	errno = 0;
 
+	/* Disable unicode input unless requested. */
+	if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, FALSE))
+		return COMMAND_LINE_ERROR_MEMORY;
+
 	do
 	{
 		BOOL enable = arg->Value ? TRUE : FALSE;
@@ -2032,6 +2036,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			settings->KeyboardType = (UINT32)val;
+		}
+		CommandLineSwitchCase(arg, "kbd-unicode")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, enable))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 		CommandLineSwitchCase(arg, "kbd-subtype")
 		{
