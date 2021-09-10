@@ -50,7 +50,7 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 
 void xf_keyboard_release_all_keypress(xfContext* xfc);
 BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym);
-void xf_keyboard_send_key(xfContext* xfc, BOOL down, BYTE keycode);
+
 int xf_keyboard_read_keyboard_state(xfContext* xfc);
 BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, int keysym);
 UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc);
