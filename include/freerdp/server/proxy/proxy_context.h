@@ -102,6 +102,9 @@ struct p_client_context
 	wStream* remote_pem;
 	UINT16 remote_port;
 	UINT32 remote_flags;
+
+	BOOL input_state_sync_pending;
+	UINT32 input_state;
 };
 
 /**

@@ -29,6 +29,19 @@
 
 #include "proxy_modules.h"
 
+static BOOL pf_server_check_and_sync_input_state(pClientContext* pc)
+{
+	if (freerdp_get_state(&pc->context) < CONNECTION_STATE_ACTIVE)
+		return FALSE;
+	if (pc->input_state_sync_pending)
+	{
+		BOOL rc = freerdp_input_send_synchronize_event(pc->context.input, pc->input_state);
+		if (rc)
+			pc->input_state_sync_pending = FALSE;
+	}
+	return TRUE;
+}
+
 static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	pServerContext* ps;
@@ -41,7 +54,12 @@ static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 
 	pc = ps->pdata->pc;
 	WINPR_ASSERT(pc);
-	return freerdp_input_send_synchronize_event(pc->context.input, flags);
+
+	pc->input_state = flags;
+	pc->input_state_sync_pending = TRUE;
+
+	pf_server_check_and_sync_input_state(pc);
+	return TRUE;
 }
 
 static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -61,6 +79,9 @@ static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 	config = ps->pdata->config;
 	WINPR_ASSERT(config);
+
+	if (!pf_server_check_and_sync_input_state(pc))
+		return TRUE;
 
 	if (!config->Keyboard)
 		return TRUE;
@@ -91,6 +112,9 @@ static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT
 	config = ps->pdata->config;
 	WINPR_ASSERT(config);
 
+	if (!pf_server_check_and_sync_input_state(pc))
+		return TRUE;
+
 	if (!config->Keyboard)
 		return TRUE;
 
@@ -114,6 +138,9 @@ static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 
 	config = ps->pdata->config;
 	WINPR_ASSERT(config);
+
+	if (!pf_server_check_and_sync_input_state(pc))
+		return TRUE;
 
 	if (!config->Mouse)
 		return TRUE;
@@ -144,6 +171,9 @@ static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16
 
 	config = ps->pdata->config;
 	WINPR_ASSERT(config);
+
+	if (!pf_server_check_and_sync_input_state(pc))
+		return TRUE;
 
 	if (!config->Mouse)
 		return TRUE;
