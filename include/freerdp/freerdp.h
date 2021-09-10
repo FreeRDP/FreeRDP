@@ -564,7 +564,7 @@ fingerprint. DEPRECATED: Use VerifyChangedCertificateEx */
 
 	FREERDP_API const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length);
 
-	FREERDP_API CONNECTION_STATE freerdp_get_state(rdpContext* context);
+	FREERDP_API CONNECTION_STATE freerdp_get_state(const rdpContext* context);
 	FREERDP_API const char* freerdp_state_string(CONNECTION_STATE state);
 
 #ifdef __cplusplus

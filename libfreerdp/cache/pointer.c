@@ -306,7 +306,14 @@ BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer*
 
 void pointer_cache_register_callbacks(rdpUpdate* update)
 {
-	rdpPointerUpdate* pointer = update->pointer;
+	rdpPointerUpdate* pointer;
+
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(update->context);
+
+	pointer = update->pointer;
+	WINPR_ASSERT(pointer);
+
 	pointer->PointerPosition = update_pointer_position;
 	pointer->PointerSystem = update_pointer_system;
 	pointer->PointerColor = update_pointer_color;

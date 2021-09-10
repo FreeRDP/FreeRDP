@@ -39,6 +39,7 @@
 #include <freerdp/channels/channels.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/synch.h>
 #include <freerdp/log.h>
 
@@ -51,7 +52,16 @@
  * It can be used to reset invalidated areas. */
 static BOOL tf_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = context->gdi;
+	rdpGdi* gdi;
+
+	WINPR_ASSERT(context);
+
+	gdi = context->gdi;
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->primary);
+	WINPR_ASSERT(gdi->primary->hdc);
+	WINPR_ASSERT(gdi->primary->hdc->hwnd);
+	WINPR_ASSERT(gdi->primary->hdc->hwnd->invalid);
 	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	return TRUE;
 }
@@ -62,12 +72,35 @@ static BOOL tf_begin_paint(rdpContext* context)
  */
 static BOOL tf_end_paint(rdpContext* context)
 {
-	rdpGdi* gdi = context->gdi;
+	rdpGdi* gdi;
+
+	WINPR_ASSERT(context);
+
+	gdi = context->gdi;
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->primary);
+	WINPR_ASSERT(gdi->primary->hdc);
+	WINPR_ASSERT(gdi->primary->hdc->hwnd);
+	WINPR_ASSERT(gdi->primary->hdc->hwnd->invalid);
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return TRUE;
 
 	return TRUE;
+}
+
+static BOOL tf_desktop_resize(rdpContext* context)
+{
+	rdpGdi* gdi;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	gdi = context->gdi;
+	return gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight);
 }
 
 /* This function is called to output a System BEEP */
@@ -107,7 +140,12 @@ static BOOL tf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
 static BOOL tf_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
+
+	WINPR_ASSERT(instance);
+
 	settings = instance->settings;
+	WINPR_ASSERT(settings);
+
 	/* Optional OS identifier sent to server */
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
@@ -145,6 +183,7 @@ static BOOL tf_post_connect(freerdp* instance)
 	instance->update->BeginPaint = tf_begin_paint;
 	instance->update->EndPaint = tf_end_paint;
 	instance->update->PlaySound = tf_play_sound;
+	instance->update->DesktopResize = tf_desktop_resize;
 	instance->update->SetKeyboardIndicators = tf_keyboard_set_indicators;
 	instance->update->SetKeyboardImeStatus = tf_keyboard_set_ime_status;
 	return TRUE;
@@ -311,6 +350,8 @@ static int tf_client_stop(rdpContext* context)
 
 static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
+	WINPR_ASSERT(pEntryPoints);
+
 	ZeroMemory(pEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
 	pEntryPoints->Version = RDP_CLIENT_INTERFACE_VERSION;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);

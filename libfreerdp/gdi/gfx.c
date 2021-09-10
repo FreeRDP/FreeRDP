@@ -102,7 +102,10 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	settings->DesktopHeight = DesktopHeight;
 
 	if (update)
+	{
+		WINPR_ASSERT(update->DesktopResize);
 		update->DesktopResize(gdi->context);
+	}
 
 	context->GetSurfaceIds(context, &pSurfaceIds, &count);
 
@@ -258,8 +261,14 @@ static UINT gdi_StartFrame(RdpgfxClientContext* context, const RDPGFX_START_FRAM
  */
 static UINT gdi_EndFrame(RdpgfxClientContext* context, const RDPGFX_END_FRAME_PDU* endFrame)
 {
-	UINT status = CHANNEL_RC_NOT_INITIALIZED;
-	rdpGdi* gdi = (rdpGdi*)context->custom;
+	UINT status = CHANNEL_RC_OK;
+	rdpGdi* gdi;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(endFrame);
+
+	gdi = (rdpGdi*)context->custom;
+	WINPR_ASSERT(gdi);
 	IFCALLRET(context->UpdateSurfaces, status, context);
 	gdi->inGfxFrame = FALSE;
 	return status;
@@ -1514,11 +1523,13 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
                                    pcRdpgfxUpdateSurfaceArea update)
 {
 	rdpContext* context;
+	const rdpSettings* settings;
 
 	if (!gdi || !gfx || !gdi->context || !gdi->context->settings)
 		return FALSE;
 
 	context = gdi->context;
+	settings = gdi->context->settings;
 
 	gdi->gfx = gfx;
 	gfx->custom = (void*)gdi;
@@ -1547,8 +1558,8 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 	gfx->codecs = codecs_new(context);
 	if (!gfx->codecs)
 		return FALSE;
-	freerdp_client_codecs_prepare(gfx->codecs, FREERDP_CODEC_ALL, context->settings->DesktopWidth,
-	                              context->settings->DesktopHeight);
+	freerdp_client_codecs_prepare(gfx->codecs, FREERDP_CODEC_ALL, settings->DesktopWidth,
+	                              settings->DesktopHeight);
 	InitializeCriticalSection(&gfx->mux);
 	PROFILER_CREATE(gfx->SurfaceProfiler, "GFX-PROFILER")
 

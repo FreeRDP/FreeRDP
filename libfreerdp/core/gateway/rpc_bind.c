@@ -132,7 +132,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	WINPR_ASSERT(instance);
 
 	connection = rpc->VirtualConnection;
-	;
+
 	WINPR_ASSERT(connection);
 
 	inChannel = connection->DefaultInChannel;

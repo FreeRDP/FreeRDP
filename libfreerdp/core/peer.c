@@ -910,7 +910,7 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 		return FALSE;
 
 	if (!(context = (rdpContext*)calloc(1, client->ContextSize)))
-		goto fail_context;
+		goto fail;
 
 	client->context = context;
 	context->peer = client;
@@ -918,10 +918,10 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	context->settings = client->settings;
 
 	if (!(context->metrics = metrics_new(context)))
-		goto fail_metrics;
+		goto fail;
 
 	if (!(rdp = rdp_new(context)))
-		goto fail_rdp;
+		goto fail;
 
 	client->update = rdp->update;
 	client->settings = rdp->settings;
@@ -940,11 +940,11 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	if (!(context->errorDescription = calloc(1, 500)))
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		goto fail_error_description;
+		goto fail;
 	}
 
 	if (!transport_attach(rdp->transport, client->sockfd))
-		goto fail_transport_attach;
+		goto fail;
 
 	transport_set_recv_callbacks(rdp->transport, peer_recv_callback, client);
 	transport_set_blocking_mode(rdp->transport, FALSE);
@@ -957,18 +957,9 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	if (ret)
 		return TRUE;
 
+fail:
 	WLog_ERR(TAG, "ContextNew callback failed");
-fail_transport_attach:
-	free(context->errorDescription);
-fail_error_description:
-	rdp_free(client->context->rdp);
-fail_rdp:
-	metrics_free(context->metrics);
-fail_metrics:
-	free(client->context);
-fail_context:
-	client->context = NULL;
-	WLog_ERR(TAG, "Failed to create new peer context");
+	freerdp_peer_context_free(client);
 	return FALSE;
 }
 
@@ -981,14 +972,16 @@ void freerdp_peer_context_free(freerdp_peer* client)
 
 	if (client->context)
 	{
-		free(client->context->errorDescription);
-		client->context->errorDescription = NULL;
-		rdp_free(client->context->rdp);
-		client->context->rdp = NULL;
-		metrics_free(client->context->metrics);
-		client->context->metrics = NULL;
-		free(client->context);
-		client->context = NULL;
+		rdpContext* ctx = client->context;
+
+		free(ctx->errorDescription);
+		ctx->errorDescription = NULL;
+		rdp_free(ctx->rdp);
+		ctx->rdp = NULL;
+		metrics_free(ctx->metrics);
+		ctx->metrics = NULL;
+		free(ctx);
+		ctx = NULL;
 	}
 }
 
