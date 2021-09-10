@@ -241,6 +241,8 @@ extern "C"
 	freerdp_keyboard_get_matching_codepages(DWORD column, const char* filter, size_t* count);
 	FREERDP_API void freerdp_codepages_free(RDP_CODEPAGE*);
 
+	FREERDP_API const char* freerdp_keyboard_scancode_name(DWORD scancode);
+
 #ifdef __cplusplus
 }
 #endif

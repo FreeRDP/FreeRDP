@@ -286,6 +286,19 @@ BOOL freerdp_client_print_buildconfig(void)
 	return TRUE;
 }
 
+static void freerdp_client_print_scancodes(void)
+{
+	DWORD x;
+	printf("RDP scancodes and their name for use with /kbd-remap\n");
+
+	for (x = 0; x < UINT16_MAX; x++)
+	{
+		const char* name = freerdp_keyboard_scancode_name(x);
+		if (name)
+			printf("0x%04" PRIx16 "  --> %s\n", x, name);
+	}
+}
+
 static char* print_token(char* text, size_t start_offset, size_t* current, size_t limit,
                          const char delimiter)
 {
@@ -1445,6 +1458,13 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 			settings->ListMonitors = TRUE;
 		}
 
+		arg = CommandLineFindArgumentA(largs, "kbd-scancode-list");
+
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			freerdp_client_print_scancodes();
+			goto out;
+		}
 		goto out;
 	}
 	else if (status < 0)
