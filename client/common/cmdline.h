@@ -211,6 +211,8 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	  "Function key value" },
 	{ "kbd-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
 	  "List keyboard layouts" },
+	{ "kbd-scancode-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
+	  "List keyboard RDP scancodes" },
 	{ "kbd-lang-list", COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
 	  "List keyboard languages" },
 	{ "kbd-remap", COMMAND_LINE_VALUE_REQUIRED,
