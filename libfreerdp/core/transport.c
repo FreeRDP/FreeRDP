@@ -1445,6 +1445,7 @@ BOOL transport_set_recv_callbacks(rdpTransport* transport, TransportRecv recv, v
 	WINPR_ASSERT(transport);
 	transport->ReceiveCallback = recv;
 	transport->ReceiveExtra = extra;
+	return TRUE;
 }
 
 BOOL transport_get_blocking(rdpTransport* transport)
