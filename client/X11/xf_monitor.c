@@ -132,6 +132,7 @@ static BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 
 BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 {
+	BOOL rc = FALSE;
 	int nmonitors = 0;
 	int monitor_index = 0;
 	BOOL primaryMonitorFound = FALSE;
@@ -141,7 +142,6 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	Window _dummy_w;
 	int current_monitor = 0;
 	Screen* screen;
-	MONITOR_INFO* monitor;
 #if defined WITH_XINERAMA || defined WITH_XRANDR
 	int major, minor;
 #endif
@@ -177,7 +177,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	if (XRRQueryExtension(xfc->display, &major, &minor) &&
 	    (XRRQueryVersion(xfc->display, &major, &minor) == True) && (major * 100 + minor >= 105))
 	{
-		XRRMonitorInfo* crrmonitors =
+		rrmonitors =
 		    XRRGetMonitors(xfc->display, DefaultRootWindow(xfc->display), 1, &vscreen->nmonitors);
 
 		if (vscreen->nmonitors > 16)
@@ -190,7 +190,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			for (i = 0; i < vscreen->nmonitors; i++)
 			{
 				MONITOR_INFO* cur_vscreen = &vscreen->monitors[i];
-				const XRRMonitorInfo* cur_monitor = &crrmonitors[i];
+				const XRRMonitorInfo* cur_monitor = &rrmonitors[i];
 				cur_vscreen->area.left = cur_monitor->x;
 				cur_vscreen->area.top = cur_monitor->y;
 				cur_vscreen->area.right = cur_monitor->x + cur_monitor->width - 1;
@@ -199,7 +199,6 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			}
 		}
 
-		XRRFreeMonitors(rrmonitors);
 		useXRandr = TRUE;
 	}
 	else
@@ -267,7 +266,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		{
 			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, &current_monitor,
 			                                      1))
-				return FALSE;
+				goto fail;
 		}
 
 		/* Always sets number of monitors from command-line to just 1.
@@ -291,10 +290,10 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		*/
 		if ((settings->NumMonitorIds == 1) && (vscreen->nmonitors > current_monitor))
 		{
-			monitor = vscreen->monitors + current_monitor;
+			MONITOR_INFO* monitor = vscreen->monitors + current_monitor;
 
 			if (!monitor)
-				return FALSE;
+				goto fail;
 
 			xfc->workArea.x = monitor->area.left;
 			xfc->workArea.y = monitor->area.top;
@@ -328,7 +327,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		if (vscreen->nmonitors > 0)
 		{
 			if (!vscreen->monitors)
-				return FALSE;
+				goto fail;
 
 			*pMaxWidth = vscreen->monitors[current_monitor].area.right -
 			             vscreen->monitors[current_monitor].area.left + 1;
@@ -378,7 +377,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				continue;
 
 			if (!vscreen->monitors)
-				return FALSE;
+				goto fail;
 
 			settings->MonitorDefArray[nmonitors].x =
 			    (vscreen->monitors[i].area.left *
@@ -429,7 +428,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	{
 		INT32 width, height;
 		if (!vscreen->monitors)
-			return FALSE;
+			goto fail;
 
 		width = vscreen->monitors[current_monitor].area.right -
 		        vscreen->monitors[current_monitor].area.left + 1L;
@@ -576,11 +575,13 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	if (settings->MonitorCount)
 		settings->SupportMonitorLayoutPdu = TRUE;
 
+	rc = TRUE;
+fail:
 #ifdef USABLE_XRANDR
 
 	if (rrmonitors)
 		XRRFreeMonitors(rrmonitors);
 
 #endif
-	return TRUE;
+	return rc;
 }
