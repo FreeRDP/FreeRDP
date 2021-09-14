@@ -41,7 +41,6 @@ addons:
       - libgsm1-dev
       - libavcodec-dev
       - libavutil-dev
-      - libx264-dev
       - libxext-dev
       - ninja-build
       - libsystemd-dev
