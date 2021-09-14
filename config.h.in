@@ -51,7 +51,6 @@
 #cmakedefine WITH_FFMPEG
 #cmakedefine WITH_DSP_EXPERIMENTAL
 #cmakedefine WITH_DSP_FFMPEG
-#cmakedefine WITH_X264
 #cmakedefine WITH_OPENCL
 #cmakedefine WITH_MEDIA_FOUNDATION
 
