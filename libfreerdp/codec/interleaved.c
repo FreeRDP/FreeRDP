@@ -130,10 +130,8 @@ static INLINE UINT32 ExtractCodeId(BYTE bOrderHdr)
 static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const BYTE* pbEnd,
                                       UINT32* advance)
 {
-	UINT32 runLength;
-	UINT32 ladvance;
-	ladvance = 1;
-	runLength = 0;
+	UINT32 runLength = 0;
+	UINT32 ladvance = 1;
 
 	if (pbOrderHdr >= pbEnd)
 		return 0;

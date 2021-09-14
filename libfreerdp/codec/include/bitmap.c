@@ -100,7 +100,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 	PIXEL pixelA, pixelB;
 	UINT32 runLength;
 	UINT32 code;
-	UINT32 advance;
+	UINT32 advance = 0;
 	RLEEXTRA
 
 	if ((rowDelta == 0) || (rowDelta < width))
