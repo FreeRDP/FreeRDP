@@ -1,4 +1,5 @@
-opt/freerdp-nightly/lib/*.so.*
+opt/freerdp-nightly/lib/*.so*
+opt/freerdp-nightly/lib/freerdp3/proxy/*.so*
 opt/freerdp-nightly/bin
 opt/freerdp-nightly/share/man/man1/*.1*
 opt/freerdp-nightly/share/man/man7/wlog.7*
