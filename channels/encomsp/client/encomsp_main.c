@@ -24,6 +24,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/print.h>
 
 #include <freerdp/channels/log.h>
@@ -1140,7 +1141,7 @@ static DWORD WINAPI encomsp_virtual_channel_client_thread(LPVOID arg)
 static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVOID pData,
                                                     UINT32 dataLength)
 {
-	UINT32 status;
+	WINPR_ASSERT(encomsp);
 
 	encomsp->queue = MessageQueue_New(NULL);
 
