@@ -109,22 +109,24 @@ static BOOL upate_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskDa
 	WINPR_ASSERT(pointer);
 	if (lengthAndMask && andMaskData)
 	{
+		BYTE* tmp;
 		pointer->lengthAndMask = lengthAndMask;
-		pointer->andMaskData = (BYTE*)malloc(lengthAndMask);
-
-		if (!pointer->andMaskData)
+		tmp = (BYTE*)realloc(pointer->andMaskData, lengthAndMask);
+		if (!tmp)
 			return FALSE;
+		pointer->andMaskData = tmp;
 
 		CopyMemory(pointer->andMaskData, andMaskData, lengthAndMask);
 	}
 
 	if (lengthXorMask && xorMaskData)
 	{
+		BYTE* tmp;
 		pointer->lengthXorMask = lengthXorMask;
-		pointer->xorMaskData = (BYTE*)malloc(lengthXorMask);
-
-		if (!pointer->xorMaskData)
+		tmp = (BYTE*)realloc(pointer->xorMaskData, lengthXorMask);
+		if (!tmp)
 			return FALSE;
+		pointer->xorMaskData = tmp;
 
 		CopyMemory(pointer->xorMaskData, xorMaskData, lengthXorMask);
 	}
@@ -145,29 +147,29 @@ static BOOL update_pointer_color(rdpContext* context, const POINTER_COLOR_UPDATE
 
 	pointer = Pointer_Alloc(context);
 
-	if (pointer != NULL)
-	{
-		pointer->xorBpp = 24;
-		pointer->xPos = pointer_color->xPos;
-		pointer->yPos = pointer_color->yPos;
-		pointer->width = pointer_color->width;
-		pointer->height = pointer_color->height;
+	if (pointer == NULL)
+		return FALSE;
+	pointer->xorBpp = 24;
+	pointer->xPos = pointer_color->xPos;
+	pointer->yPos = pointer_color->yPos;
+	pointer->width = pointer_color->width;
+	pointer->height = pointer_color->height;
 
-		if (!upate_pointer_copy_andxor(pointer, pointer_color->andMaskData,
-		                               pointer_color->lengthAndMask, pointer_color->xorMaskData,
-		                               pointer_color->lengthXorMask))
-			goto out_fail;
+	if (!upate_pointer_copy_andxor(pointer, pointer_color->andMaskData,
+	                               pointer_color->lengthAndMask, pointer_color->xorMaskData,
+	                               pointer_color->lengthXorMask))
+		goto out_fail;
 
-		if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
-			goto out_fail;
+	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
+		goto out_fail;
 
-		if (!pointer_cache_put(cache->pointer, pointer_color->cacheIndex, pointer))
-			goto out_fail;
+	if (!pointer_cache_put(cache->pointer, pointer_color->cacheIndex, pointer))
+		goto out_fail;
 
-		return IFCALLRESULT(TRUE, pointer->Set, context, pointer);
-	}
+	if (!IFCALLRESULT(TRUE, pointer->Set, context, pointer))
+		goto out_fail;
 
-	return FALSE;
+	return TRUE;
 out_fail:
 	pointer_free(context, pointer);
 	return FALSE;
@@ -185,29 +187,29 @@ static BOOL update_pointer_large(rdpContext* context, const POINTER_LARGE_UPDATE
 	WINPR_ASSERT(cache);
 
 	pointer = Pointer_Alloc(context);
-	if (pointer != NULL)
-	{
-		pointer->xorBpp = pointer_large->xorBpp;
-		pointer->xPos = pointer_large->hotSpotX;
-		pointer->yPos = pointer_large->hotSpotY;
-		pointer->width = pointer_large->width;
-		pointer->height = pointer_large->height;
+	if (pointer == NULL)
+		return FALSE;
+	pointer->xorBpp = pointer_large->xorBpp;
+	pointer->xPos = pointer_large->hotSpotX;
+	pointer->yPos = pointer_large->hotSpotY;
+	pointer->width = pointer_large->width;
+	pointer->height = pointer_large->height;
 
-		if (!upate_pointer_copy_andxor(pointer, pointer_large->andMaskData,
-		                               pointer_large->lengthAndMask, pointer_large->xorMaskData,
-		                               pointer_large->lengthXorMask))
-			goto out_fail;
+	if (!upate_pointer_copy_andxor(pointer, pointer_large->andMaskData,
+	                               pointer_large->lengthAndMask, pointer_large->xorMaskData,
+	                               pointer_large->lengthXorMask))
+		goto out_fail;
 
-		if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
-			goto out_fail;
+	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
+		goto out_fail;
 
-		if (!pointer_cache_put(cache->pointer, pointer_large->cacheIndex, pointer))
-			goto out_fail;
+	if (!pointer_cache_put(cache->pointer, pointer_large->cacheIndex, pointer))
+		goto out_fail;
 
-		return IFCALLRESULT(TRUE, pointer->Set, context, pointer);
-	}
+	if (!IFCALLRESULT(TRUE, pointer->Set, context, pointer))
+		goto out_fail;
 
-	return FALSE;
+	return TRUE;
 out_fail:
 	pointer_free(context, pointer);
 	return FALSE;
@@ -243,7 +245,9 @@ static BOOL update_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* po
 	if (!pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer))
 		goto out_fail;
 
-	return IFCALLRESULT(TRUE, pointer->Set, context, pointer);
+	if (!IFCALLRESULT(TRUE, pointer->Set, context, pointer))
+		goto out_fail;
+	return TRUE;
 out_fail:
 	pointer_free(context, pointer);
 	return FALSE;
@@ -314,12 +318,15 @@ void pointer_cache_register_callbacks(rdpUpdate* update)
 	pointer = update->pointer;
 	WINPR_ASSERT(pointer);
 
-	pointer->PointerPosition = update_pointer_position;
-	pointer->PointerSystem = update_pointer_system;
-	pointer->PointerColor = update_pointer_color;
-	pointer->PointerLarge = update_pointer_large;
-	pointer->PointerNew = update_pointer_new;
-	pointer->PointerCached = update_pointer_cached;
+	if (!freerdp_settings_get_bool(update->context->settings, FreeRDP_DeactivateClientDecoding))
+	{
+		pointer->PointerPosition = update_pointer_position;
+		pointer->PointerSystem = update_pointer_system;
+		pointer->PointerColor = update_pointer_color;
+		pointer->PointerLarge = update_pointer_large;
+		pointer->PointerNew = update_pointer_new;
+		pointer->PointerCached = update_pointer_cached;
+	}
 }
 
 rdpPointerCache* pointer_cache_new(rdpContext* context)

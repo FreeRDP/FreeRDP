@@ -267,6 +267,7 @@ static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, wStream* s)
 	UINT16 updateType;
 	rdpUpdate* update;
 	rdpContext* context;
+	BOOL defaultReturn;
 
 	if (!fastpath || !s || !fastpath->rdp)
 		return FALSE;
@@ -277,6 +278,8 @@ static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, wStream* s)
 		return FALSE;
 
 	context = update->context;
+
+	defaultReturn = freerdp_settings_get_bool(context->settings, FreeRDP_DeactivateClientDecoding);
 
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
@@ -291,7 +294,7 @@ static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, wStream* s)
 			if (!bitmap_update)
 				return FALSE;
 
-			rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, bitmap_update);
+			rc = IFCALLRESULT(defaultReturn, update->BitmapUpdate, context, bitmap_update);
 			free_bitmap_update(context, bitmap_update);
 		}
 		break;
@@ -303,7 +306,7 @@ static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, wStream* s)
 			if (!palette_update)
 				return FALSE;
 
-			rc = IFCALLRESULT(FALSE, update->Palette, context, palette_update);
+			rc = IFCALLRESULT(defaultReturn, update->Palette, context, palette_update);
 			free_palette_update(context, palette_update);
 		}
 		break;
@@ -333,6 +336,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 	rdpUpdate* update;
 	rdpContext* context;
 	rdpPointerUpdate* pointer;
+	BOOL defaultReturn;
 
 	if (!fastpath || !fastpath->rdp || !s)
 		return -1;
@@ -353,6 +357,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 	          fastpath_update_to_string(updateCode), updateCode, Stream_GetRemainingLength(s));
 #endif
 
+	defaultReturn = freerdp_settings_get_bool(context->settings, FreeRDP_DeactivateClientDecoding);
 	switch (updateCode)
 	{
 		case FASTPATH_UPDATETYPE_ORDERS:
@@ -381,7 +386,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 		{
 			POINTER_SYSTEM_UPDATE pointer_system;
 			pointer_system.type = SYSPTR_NULL;
-			rc = IFCALLRESULT(FALSE, pointer->PointerSystem, context, &pointer_system);
+			rc = IFCALLRESULT(defaultReturn, pointer->PointerSystem, context, &pointer_system);
 		}
 		break;
 
@@ -389,7 +394,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 		{
 			POINTER_SYSTEM_UPDATE pointer_system;
 			pointer_system.type = SYSPTR_DEFAULT;
-			rc = IFCALLRESULT(FALSE, pointer->PointerSystem, context, &pointer_system);
+			rc = IFCALLRESULT(defaultReturn, pointer->PointerSystem, context, &pointer_system);
 		}
 		break;
 
@@ -399,7 +404,8 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 			if (pointer_position)
 			{
-				rc = IFCALLRESULT(FALSE, pointer->PointerPosition, context, pointer_position);
+				rc = IFCALLRESULT(defaultReturn, pointer->PointerPosition, context,
+				                  pointer_position);
 				free_pointer_position_update(context, pointer_position);
 			}
 		}
@@ -411,7 +417,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 			if (pointer_color)
 			{
-				rc = IFCALLRESULT(FALSE, pointer->PointerColor, context, pointer_color);
+				rc = IFCALLRESULT(defaultReturn, pointer->PointerColor, context, pointer_color);
 				free_pointer_color_update(context, pointer_color);
 			}
 		}
@@ -423,7 +429,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 			if (pointer_cached)
 			{
-				rc = IFCALLRESULT(FALSE, pointer->PointerCached, context, pointer_cached);
+				rc = IFCALLRESULT(defaultReturn, pointer->PointerCached, context, pointer_cached);
 				free_pointer_cached_update(context, pointer_cached);
 			}
 		}
@@ -435,7 +441,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 			if (pointer_new)
 			{
-				rc = IFCALLRESULT(FALSE, pointer->PointerNew, context, pointer_new);
+				rc = IFCALLRESULT(defaultReturn, pointer->PointerNew, context, pointer_new);
 				free_pointer_new_update(context, pointer_new);
 			}
 		}
@@ -447,7 +453,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 			if (pointer_large)
 			{
-				rc = IFCALLRESULT(FALSE, pointer->PointerLarge, context, pointer_large);
+				rc = IFCALLRESULT(defaultReturn, pointer->PointerLarge, context, pointer_large);
 				free_pointer_large_update(context, pointer_large);
 			}
 		}

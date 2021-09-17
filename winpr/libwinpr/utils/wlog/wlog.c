@@ -230,7 +230,7 @@ out:
 
 static BOOL WLog_Write(wLog* log, wLogMessage* message)
 {
-	BOOL status;
+	BOOL status = FALSE;
 	wLogAppender* appender;
 	appender = WLog_GetLogAppender(log);
 
@@ -239,20 +239,20 @@ static BOOL WLog_Write(wLog* log, wLogMessage* message)
 
 	if (!appender->active)
 		if (!WLog_OpenAppender(log))
-			return FALSE;
-
-	if (!appender->WriteMessage)
 		return FALSE;
 
 	EnterCriticalSection(&appender->lock);
 
-	if (appender->recursive)
-		status = log_recursion(message->FileName, message->FunctionName, message->LineNumber);
-	else
+	if (appender->WriteMessage)
 	{
-		appender->recursive = TRUE;
-		status = appender->WriteMessage(log, appender, message);
-		appender->recursive = FALSE;
+		if (appender->recursive)
+			status = log_recursion(message->FileName, message->FunctionName, message->LineNumber);
+		else
+		{
+			appender->recursive = TRUE;
+			status = appender->WriteMessage(log, appender, message);
+			appender->recursive = FALSE;
+		}
 	}
 
 	LeaveCriticalSection(&appender->lock);

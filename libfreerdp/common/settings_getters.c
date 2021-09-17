@@ -105,6 +105,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_CredentialsFromStdin:
 			return settings->CredentialsFromStdin;
 
+		case FreeRDP_DeactivateClientDecoding:
+			return settings->DeactivateClientDecoding;
+
 		case FreeRDP_Decorations:
 			return settings->Decorations;
 
@@ -648,6 +651,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_CredentialsFromStdin:
 			settings->CredentialsFromStdin = val;
+			break;
+
+		case FreeRDP_DeactivateClientDecoding:
+			settings->DeactivateClientDecoding = val;
 			break;
 
 		case FreeRDP_Decorations:
