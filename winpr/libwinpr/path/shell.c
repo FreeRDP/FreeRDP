@@ -412,35 +412,30 @@ char* GetEnvironmentSubPath(char* name, const char* path)
 
 char* GetCombinedPath(const char* basePath, const char* subPath)
 {
-	int length;
+	size_t length;
 	HRESULT status;
 	char* path = NULL;
-	char* subPathCpy;
+	char* subPathCpy = NULL;
 	int basePathLength = 0;
 	int subPathLength = 0;
 
 	if (basePath)
-		basePathLength = (int)strlen(basePath);
+		basePathLength = strlen(basePath);
 
 	if (subPath)
-		subPathLength = (int)strlen(subPath);
+		subPathLength = strlen(subPath);
 
 	length = basePathLength + subPathLength + 1;
-	path = (char*)malloc(length + 1);
+	path = (char*)calloc(1, length + 1);
 
 	if (!path)
-		return NULL;
+		goto fail;
 
 	if (basePath)
 		CopyMemory(path, basePath, basePathLength);
 
-	path[basePathLength] = '\0';
-
 	if (FAILED(PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE)))
-	{
-		free(path);
-		return NULL;
-	}
+		goto fail;
 
 	if (!subPath)
 		return path;
@@ -448,28 +443,22 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 	subPathCpy = _strdup(subPath);
 
 	if (!subPathCpy)
-	{
-		free(path);
-		return NULL;
-	}
+		goto fail;
 
 	if (FAILED(PathCchConvertStyleA(subPathCpy, subPathLength, PATH_STYLE_NATIVE)))
-	{
-		free(path);
-		free(subPathCpy);
-		return NULL;
-	}
+		goto fail;
 
 	status = NativePathCchAppendA(path, length + 1, subPathCpy);
-	free(subPathCpy);
-
 	if (FAILED(status))
-	{
-		free(path);
-		return NULL;
-	}
-	else
-		return path;
+		goto fail;
+
+	free(subPathCpy);
+	return path;
+
+fail:
+	free(path);
+	free(subPathCpy);
+	return NULL;
 }
 
 BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
