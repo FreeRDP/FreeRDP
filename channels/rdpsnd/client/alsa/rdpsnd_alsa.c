@@ -430,11 +430,14 @@ static BOOL rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
 {
 	UINT latency;
-	size_t offset;
+	size_t offset = 0;
 	int frame_size;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
-	offset = 0;
+	WINPR_ASSERT(alsa);
+	WINPR_ASSERT(data || (size == 0));
 	frame_size = alsa->actual_channels * alsa->aformat.wBitsPerSample / 8;
+	if (frame_size <= 0)
+		return 0;
 
 	while (offset < size)
 	{
