@@ -131,6 +131,7 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, const wMessage* message)
 	if (!message)
 		return FALSE;
 
+	WINPR_ASSERT(queue);
 	EnterCriticalSection(&queue->lock);
 
 	if (queue->closed)
