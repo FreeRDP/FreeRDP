@@ -178,6 +178,7 @@ static BOOL transport_default_attach(rdpTransport* transport, int sockfd)
 		goto fail;
 
 	bufferedBio = BIO_push(bufferedBio, socketBio);
+	WINPR_ASSERT(!transport->frontBio);
 	transport->frontBio = bufferedBio;
 	return TRUE;
 fail:
@@ -375,6 +376,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 			if (status)
 			{
+				WINPR_ASSERT(!transport->frontBio);
 				transport->frontBio = rdg_get_front_bio_and_take_ownership(transport->rdg);
 				BIO_set_nonblock(transport->frontBio, 0);
 				transport->layer = TRANSPORT_LAYER_TSG;
@@ -400,6 +402,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 			if (status)
 			{
+				WINPR_ASSERT(!transport->frontBio);
 				transport->frontBio = tsg_get_bio(transport->tsg);
 				transport->layer = TRANSPORT_LAYER_TSG;
 				status = TRUE;
@@ -885,14 +888,10 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 	if (!rdp)
 		goto fail;
 
-	if (!transport->frontBio)
-	{
-		transport->layer = TRANSPORT_LAYER_CLOSED;
-		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
-		goto fail;
-	}
-
 	EnterCriticalSection(&(transport->WriteLock));
+	if (!transport->frontBio)
+		goto out_cleanup;
+
 	length = Stream_GetPosition(s);
 	writtenlength = length;
 	Stream_SetPosition(s, 0);
@@ -1071,6 +1070,7 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 BOOL transport_is_write_blocked(rdpTransport* transport)
 {
 	WINPR_ASSERT(transport);
+	WINPR_ASSERT(transport->frontBio);
 	return BIO_write_blocked(transport->frontBio);
 }
 
@@ -1079,6 +1079,7 @@ int transport_drain_output_buffer(rdpTransport* transport)
 	BOOL status = FALSE;
 
 	WINPR_ASSERT(transport);
+	WINPR_ASSERT(transport->frontBio);
 	if (BIO_write_blocked(transport->frontBio))
 	{
 		if (BIO_flush(transport->frontBio) < 1)
@@ -1192,6 +1193,7 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 
 	transport->blocking = blocking;
 
+	WINPR_ASSERT(transport->frontBio);
 	if (!BIO_set_nonblock(transport->frontBio, blocking ? FALSE : TRUE))
 		return FALSE;
 
