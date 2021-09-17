@@ -352,6 +352,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 		if (peer_sockfd == -1)
 		{
+			char buffer[8192] = { 0 };
 #ifdef _WIN32
 			int wsa_error = WSAGetLastError();
 
@@ -365,7 +366,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 				continue;
 
 #endif
-			WLog_DBG(TAG, "accept");
+			WLog_WARN(TAG, "accept failed with %s", winpr_strerror(errno, buffer, sizeof(buffer)));
 			freerdp_peer_free(client);
 			return FALSE;
 		}
