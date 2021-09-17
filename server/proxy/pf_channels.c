@@ -81,8 +81,11 @@ void pf_channels_on_client_channel_connect(void* data, ChannelConnectedEventArgs
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
+		if (!ps->rail)
+			return;
 		pc->rail = (RailClientContext*)e->pInterface;
 
+		WINPR_ASSERT(ps->rail->Start);
 		if (ps->rail->Start(ps->rail) != CHANNEL_RC_OK)
 		{
 			WLog_ERR(TAG, "failed to start RAIL server");
@@ -94,9 +97,12 @@ void pf_channels_on_client_channel_connect(void* data, ChannelConnectedEventArgs
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		pf_channels_wait_for_server_dynvc(ps);
+		if (!ps->gfx)
+			return;
 		pc->gfx_proxy = (RdpgfxClientContext*)e->pInterface;
 		pf_rdpgfx_pipeline_init(pc->gfx_proxy, ps->gfx, pc->pdata);
 
+		WINPR_ASSERT(ps->gfx->Open);
 		if (!ps->gfx->Open(ps->gfx))
 		{
 			WLog_ERR(TAG, "failed to open GFX server");
@@ -109,6 +115,10 @@ void pf_channels_on_client_channel_connect(void* data, ChannelConnectedEventArgs
 	{
 		UINT ret;
 
+		if (!ps->disp)
+			return;
+
+		WINPR_ASSERT(ps->disp->Open);
 		ret = ps->disp->Open(ps->disp);
 		if (ret != CHANNEL_RC_OK)
 		{
@@ -133,6 +143,10 @@ void pf_channels_on_client_channel_connect(void* data, ChannelConnectedEventArgs
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
+		if (!ps->cliprdr)
+			return;
+
+		WINPR_ASSERT(ps->cliprdr->Start);
 		if (ps->cliprdr->Start(ps->cliprdr) != CHANNEL_RC_OK)
 		{
 			WLog_ERR(TAG, "failed to open cliprdr channel");
@@ -148,6 +162,7 @@ void pf_channels_on_client_channel_connect(void* data, ChannelConnectedEventArgs
 		if (ps->rdpsnd == NULL)
 			return;
 
+		WINPR_ASSERT(ps->rdpsnd->Initialize);
 		if (ps->rdpsnd->Initialize(ps->rdpsnd, TRUE) != CHANNEL_RC_OK)
 		{
 			WLog_ERR(TAG, "failed to open rdpsnd channel");

@@ -30,6 +30,7 @@
 #include <freerdp/server/proxy/proxy_context.h>
 
 /* Proxy context initialization callback */
+static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx);
 static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 {
 	pServerContext* context = (pServerContext*)ctx;
@@ -50,27 +51,24 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 	return TRUE;
 
 error:
-	WTSCloseServer((HANDLE)context->vcm);
-	context->vcm = NULL;
-
-	if (context->dynvcReady)
-	{
-		CloseHandle(context->dynvcReady);
-		context->dynvcReady = NULL;
-	}
+	client_to_proxy_context_free(client, ctx);
 
 	return FALSE;
 }
 
 /* Proxy context free callback */
-static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
+void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 {
 	pServerContext* context = (pServerContext*)ctx;
 
-	if (!client || !context)
+	WINPR_UNUSED(client);
+
+	if (!context)
 		return;
 
-	WTSCloseServer((HANDLE)context->vcm);
+	if (context->vcm && (context->vcm != INVALID_HANDLE_VALUE))
+		WTSCloseServer((HANDLE)context->vcm);
+	context->vcm = NULL;
 
 	if (context->dynvcReady)
 	{
@@ -270,6 +268,8 @@ void proxy_data_abort_connect(proxyData* pdata)
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(pdata->abort_event);
 	SetEvent(pdata->abort_event);
+	if (pdata->pc)
+		freerdp_abort_connect(pdata->pc->context.instance);
 }
 
 BOOL proxy_data_shall_disconnect(proxyData* pdata)

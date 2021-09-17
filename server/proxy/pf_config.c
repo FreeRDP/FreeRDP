@@ -266,8 +266,8 @@ static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 	const char* modules_to_load;
 	const char* required_modules;
 
-	modules_to_load = IniFile_GetKeyValueString(ini, "Plugins", "Modules");
-	required_modules = IniFile_GetKeyValueString(ini, "Plugins", "Required");
+	modules_to_load = pf_config_get_str(ini, "Plugins", "Modules", FALSE);
+	required_modules = pf_config_get_str(ini, "Plugins", "Required", FALSE);
 
 	WINPR_ASSERT(config);
 	config->Modules = pf_config_parse_comma_separated_list(modules_to_load, &config->ModulesCount);
