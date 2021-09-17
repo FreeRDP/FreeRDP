@@ -388,7 +388,8 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 
 			if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
 			{
-				WLog_ERR(TAG, "invalid event file descriptor");
+				WLog_ERR(TAG, "invalid event file descriptor at %" PRIu32, index);
+				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 				SetLastError(ERROR_INVALID_HANDLE);
 				goto out;
 			}
@@ -396,14 +397,16 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 			fd = winpr_Handle_getFd(Object);
 			if (fd == -1)
 			{
-				WLog_ERR(TAG, "invalid file descriptor");
+				WLog_ERR(TAG, "invalid file descriptor at %" PRIu32, index);
+				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 				SetLastError(ERROR_INVALID_HANDLE);
 				goto out;
 			}
 
 			if (!pollset_add(&pollset, fd, Object->Mode))
 			{
-				WLog_ERR(TAG, "unable to register fd in pollset");
+				WLog_ERR(TAG, "unable to register fd in pollset at %" PRIu32, index);
+				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 				SetLastError(ERROR_INVALID_HANDLE);
 				goto out;
 			}
@@ -415,6 +418,7 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 		if (bAlertable && !apc_collectFds(thread, &pollset, &autoSignaled))
 		{
 			WLog_ERR(TAG, "unable to register APC fds");
+			winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 			SetLastError(ERROR_INTERNAL_ERROR);
 			goto out;
 		}
