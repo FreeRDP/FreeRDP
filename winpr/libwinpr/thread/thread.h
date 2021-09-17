@@ -52,6 +52,8 @@ struct winpr_thread
 	pthread_mutex_t mutex;
 	pthread_mutex_t threadIsReadyMutex;
 	pthread_cond_t threadIsReady;
+	pthread_mutex_t threadReadyMutex;
+	pthread_cond_t threadReady;
 	LPTHREAD_START_ROUTINE lpStartAddress;
 	LPSECURITY_ATTRIBUTES lpThreadAttributes;
 	APC_QUEUE apc;
