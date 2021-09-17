@@ -1920,7 +1920,8 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 	}
 
 	MessageQueue_Free(rdpdr->queue);
-	CloseHandle(rdpdr->thread);
+	if (rdpdr->thread)
+		CloseHandle(rdpdr->thread);
 	rdpdr->queue = NULL;
 	rdpdr->thread = NULL;
 
@@ -1994,6 +1995,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LP
 
 		case CHANNEL_EVENT_TERMINATED:
 			rdpdr_virtual_channel_event_terminated(rdpdr);
+			rdpdr = NULL;
 			break;
 
 		case CHANNEL_EVENT_ATTACHED:
@@ -2003,7 +2005,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LP
 			break;
 	}
 
-	if (error && rdpdr->rdpcontext)
+	if (error && rdpdr && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error,
 		                "rdpdr_virtual_channel_init_event_ex reported an error");
 }
