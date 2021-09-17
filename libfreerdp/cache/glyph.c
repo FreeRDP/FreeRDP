@@ -668,11 +668,14 @@ void glyph_cache_register_callbacks(rdpUpdate* update)
 	WINPR_ASSERT(update->primary);
 	WINPR_ASSERT(update->secondary);
 
-	update->primary->GlyphIndex = update_gdi_glyph_index;
-	update->primary->FastIndex = update_gdi_fast_index;
-	update->primary->FastGlyph = update_gdi_fast_glyph;
-	update->secondary->CacheGlyph = update_gdi_cache_glyph;
-	update->secondary->CacheGlyphV2 = update_gdi_cache_glyph_v2;
+	if (!freerdp_settings_get_bool(update->context->settings, FreeRDP_DeactivateClientDecoding))
+	{
+		update->primary->GlyphIndex = update_gdi_glyph_index;
+		update->primary->FastIndex = update_gdi_fast_index;
+		update->primary->FastGlyph = update_gdi_fast_glyph;
+		update->secondary->CacheGlyph = update_gdi_cache_glyph;
+		update->secondary->CacheGlyphV2 = update_gdi_cache_glyph_v2;
+	}
 }
 
 rdpGlyphCache* glyph_cache_new(rdpContext* context)

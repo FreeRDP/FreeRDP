@@ -1124,6 +1124,8 @@ static void gdi_register_update_callbacks(rdpUpdate* update)
 	primary = update->primary;
 	WINPR_ASSERT(primary);
 
+	if (freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding))
+		return;
 	update->Palette = gdi_palette_update;
 	update->SetBounds = gdi_set_bounds;
 	primary->DstBlt = gdi_dstblt;

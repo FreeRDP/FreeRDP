@@ -40,6 +40,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_CompressionEnabled, 0, "FreeRDP_CompressionEnabled" },
 	{ FreeRDP_ConsoleSession, 0, "FreeRDP_ConsoleSession" },
 	{ FreeRDP_CredentialsFromStdin, 0, "FreeRDP_CredentialsFromStdin" },
+	{ FreeRDP_DeactivateClientDecoding, 0, "FreeRDP_DeactivateClientDecoding" },
 	{ FreeRDP_Decorations, 0, "FreeRDP_Decorations" },
 	{ FreeRDP_DesktopResize, 0, "FreeRDP_DesktopResize" },
 	{ FreeRDP_DeviceRedirection, 0, "FreeRDP_DeviceRedirection" },

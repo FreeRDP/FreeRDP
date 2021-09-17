@@ -292,12 +292,12 @@ extern "C"
 		ALIGN64 rdpCache* cache;           /* 35 */
 		ALIGN64 rdpChannels* channels;     /* 36 */
 		ALIGN64 rdpGraphics* graphics;     /* 37 */
-		ALIGN64 rdpInput* input;           /* 38 */
-		ALIGN64 rdpUpdate* update;         /* 39 */
-		ALIGN64 rdpSettings* settings;     /* 40 */
+		ALIGN64 rdpInput* input;           /* 38 owned by rdpRdp */
+		ALIGN64 rdpUpdate* update;         /* 39 owned by rdpRdp */
+		ALIGN64 rdpSettings* settings;     /* 40 owned by rdpRdp */
 		ALIGN64 rdpMetrics* metrics;       /* 41 */
 		ALIGN64 rdpCodecs* codecs;         /* 42 */
-		ALIGN64 rdpAutoDetect* autodetect; /* 43 */
+		ALIGN64 rdpAutoDetect* autodetect; /* 43 owned by rdpRdp */
 		ALIGN64 HANDLE abortEvent;         /* 44 */
 		ALIGN64 int disconnectUltimatum;   /* 45 */
 		UINT64 paddingC[64 - 46];          /* 46 */
@@ -346,22 +346,24 @@ extern "C"
 
 		UINT64 paddingA[16 - 2]; /* 2 */
 
-		ALIGN64 rdpInput* input; /* (offset 16)
-		                    Input handle for the connection.
-		                    Will be initialized by a call to freerdp_context_new() */
-		ALIGN64 rdpUpdate*
-		    update;                        /* (offset 17)
-		                              Update display parameters. Used to register display events callbacks and settings.
-		                              Will be initialized by a call to freerdp_context_new() */
+		ALIGN64 rdpInput* input;           /* (offset 16)
+		                              Input handle for the connection.
+		                                        Will be initialized by a call to freerdp_context_new()
+		             owned by rdpRdp */
+		ALIGN64 rdpUpdate* update;         /* (offset 17)
+		                              Update display parameters. Used to register display events callbacks
+		and settings.		 Will be initialized by a call to freerdp_context_new()		 owned by rdpRdp */
 		ALIGN64 rdpSettings* settings;     /**< (offset 18)
 		                                Pointer to a rdpSettings structure. Will be used to maintain the
 		                                required RDP	 settings.		              Will be
 		                                initialized by	 a call to freerdp_context_new()
+		                                owned by rdpRdp
 		                              */
 		ALIGN64 rdpAutoDetect* autodetect; /* (offset 19)
 		                                Auto-Detect handle for the connection.
-		                                Will be initialized by a call to freerdp_context_new() */
-		ALIGN64 rdpHeartbeat* heartbeat;   /* (offset 21) */
+		                                Will be initialized by a call to freerdp_context_new()
+owned by rdpRdp */
+		ALIGN64 rdpHeartbeat* heartbeat;   /* (offset 21) owned by rdpRdp*/
 
 		UINT64 paddingB[32 - 21]; /* 21 */
 

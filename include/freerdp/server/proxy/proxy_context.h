@@ -94,7 +94,7 @@ struct p_client_context
 	BOOL connected; /* Set after client post_connect. */
 
 	pReceiveChannelData client_receive_channel_data_original;
-	wArrayList* cached_server_channel_data;
+	wQueue* cached_server_channel_data;
 	BOOL (*sendChannelData)(pClientContext* pc, const proxyChannelDataEventInfo* ev);
 
 	/* X509 specific */

@@ -29,6 +29,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_CompressionEnabled,
 	FreeRDP_ConsoleSession,
 	FreeRDP_CredentialsFromStdin,
+	FreeRDP_DeactivateClientDecoding,
 	FreeRDP_Decorations,
 	FreeRDP_DesktopResize,
 	FreeRDP_DeviceRedirection,

@@ -228,12 +228,11 @@ out_free:
 
 static DWORD WINAPI rdpsnd_server_thread(LPVOID arg)
 {
-	DWORD nCount, status;
-	HANDLE events[8];
-	RdpsndServerContext* context;
+	DWORD nCount = 0, status;
+	HANDLE events[4] = { 0 };
+	RdpsndServerContext* context = (RdpsndServerContext*)arg;
 	UINT error = CHANNEL_RC_OK;
-	context = (RdpsndServerContext*)arg;
-	nCount = 0;
+	WINPR_ASSERT(context);
 	events[nCount++] = context->priv->channelEvent;
 	events[nCount++] = context->priv->StopEvent;
 
@@ -762,6 +761,8 @@ out_close:
 static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 {
 	UINT error = CHANNEL_RC_OK;
+	if (!context->priv->StopEvent)
+		return error;
 
 	if (context->priv->ownThread)
 	{
@@ -778,13 +779,24 @@ static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 
 			CloseHandle(context->priv->Thread);
 			CloseHandle(context->priv->StopEvent);
+			context->priv->Thread = NULL;
+			context->priv->StopEvent = NULL;
 		}
 	}
 
 	DeleteCriticalSection(&context->priv->lock);
 
 	if (context->priv->rdpsnd_pdu)
+	{
 		Stream_Free(context->priv->rdpsnd_pdu, TRUE);
+		context->priv->rdpsnd_pdu = NULL;
+	}
+
+	if (context->priv->ChannelHandle)
+	{
+		WTSVirtualChannelClose(context->priv->ChannelHandle);
+		context->priv->ChannelHandle = NULL;
+	}
 
 	return error;
 }
@@ -859,8 +871,7 @@ void rdpsnd_server_context_free(RdpsndServerContext* context)
 	if (!context)
 		return;
 
-	if (context->priv->ChannelHandle)
-		WTSVirtualChannelClose(context->priv->ChannelHandle);
+	rdpsnd_server_stop(context);
 
 	free(context->priv->out_buffer);
 
