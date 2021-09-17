@@ -981,8 +981,8 @@ void freerdp_peer_context_free(freerdp_peer* client)
 		metrics_free(ctx->metrics);
 		ctx->metrics = NULL;
 		free(ctx);
-		ctx = NULL;
 	}
+	client->context = NULL;
 }
 
 freerdp_peer* freerdp_peer_new(int sockfd)
