@@ -44,6 +44,9 @@ struct winpr_event
 	BOOL bAttached;
 	BOOL bManualReset;
 	char* name;
+#if defined(WITH_DEBUG_EVENTS)
+	void* create_stack;
+#endif
 };
 typedef struct winpr_event WINPR_EVENT;
 

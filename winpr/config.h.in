@@ -31,6 +31,7 @@
 
 #cmakedefine WITH_DEBUG_NTLM
 #cmakedefine WITH_DEBUG_THREADS
+#cmakedefine WITH_DEBUG_EVENTS
 #cmakedefine WITH_DEBUG_MUTEX
 
 #endif /* WINPR_CONFIG_H */

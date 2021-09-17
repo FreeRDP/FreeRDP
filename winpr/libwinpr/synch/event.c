@@ -51,6 +51,35 @@
 #include "event.h"
 #define TAG WINPR_TAG("synch.event")
 
+#if defined(WITH_DEBUG_EVENTS)
+static wArrayList* global_event_list = NULL;
+#endif
+
+static void dump_event(WINPR_EVENT* event, size_t index)
+{
+#if defined(WITH_DEBUG_EVENTS)
+	char** msg;
+	size_t used, i;
+#if 0
+	void* stack = winpr_backtrace(20);
+	WLog_DBG(TAG, "Called from:");
+	msg = winpr_backtrace_symbols(stack, &used);
+
+	for (i = 0; i < used; i++)
+		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
+
+	free(msg);
+	winpr_backtrace_free(stack);
+#endif
+	WLog_DBG(TAG, "Event handle created still not closed! [%" PRIuz ", %p]", index, event);
+	msg = winpr_backtrace_symbols(event->create_stack, &used);
+
+	for (i = 2; i < used; i++)
+		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
+
+	free(msg);
+#endif
+}
 #ifdef HAVE_SYS_EVENTFD_H
 #if !defined(WITH_EVENTFD_READ_WRITE)
 static int eventfd_read(int fd, eventfd_t* value)
@@ -190,6 +219,19 @@ static BOOL EventCloseHandle_(WINPR_EVENT* event)
 
 	winpr_event_uninit(&event->impl);
 
+#if defined(WITH_DEBUG_EVENTS)
+	if (global_event_list)
+	{
+		ArrayList_Remove(global_event_list, event);
+		if (ArrayList_Count(global_event_list) < 1)
+		{
+			ArrayList_Free(global_event_list);
+			global_event_list = NULL;
+		}
+	}
+
+	winpr_backtrace_free(event->create_stack);
+#endif
 	free(event->name);
 	free(event);
 	return TRUE;
@@ -268,6 +310,14 @@ HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 			goto fail;
 	}
 
+#if defined(WITH_DEBUG_EVENTS)
+	event->create_stack = winpr_backtrace(20);
+	if (!global_event_list)
+		global_event_list = ArrayList_New(TRUE);
+
+	if (global_event_list)
+		ArrayList_Append(global_event_list, event);
+#endif
 	return (HANDLE)event;
 fail:
 	EventCloseHandle_(event);
@@ -481,3 +531,42 @@ void* GetEventWaitObject(HANDLE hEvent)
 	return hEvent;
 #endif
 }
+#if defined(WITH_DEBUG_EVENTS)
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
+static BOOL dump_handle_list(void* data, size_t index, va_list ap)
+{
+	WINPR_EVENT* event = data;
+	dump_event(event, index);
+	return TRUE;
+}
+
+void DumpEventHandles_(const char* fkt, const char* file, size_t line)
+{
+	struct rlimit r = { 0 };
+	int rc = getrlimit(RLIMIT_NOFILE, &r);
+	if (rc >= 0)
+	{
+		rlim_t x;
+		size_t count = 0;
+		for (x = 0; x < r.rlim_cur; x++)
+		{
+			int flags = fcntl(x, F_GETFD);
+			if (flags >= 0)
+				count++;
+		}
+		WLog_INFO(TAG, "------- limits [%d/%d] open files %" PRIuz, r.rlim_cur, r.rlim_max, count);
+	}
+	WLog_DBG(TAG, "--------- Start dump [%s %s:%" PRIuz "]", fkt, file, line);
+	if (global_event_list)
+	{
+		ArrayList_Lock(global_event_list);
+		ArrayList_ForEach(global_event_list, dump_handle_list);
+		ArrayList_Unlock(global_event_list);
+	}
+	WLog_DBG(TAG, "--------- End dump   [%s %s:%" PRIuz "]", fkt, file, line);
+}
+#endif
