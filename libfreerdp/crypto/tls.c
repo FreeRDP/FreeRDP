@@ -656,6 +656,7 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 {
 	rdpSettings* settings = tls->settings;
 	tls->ctx = SSL_CTX_new(method);
+	tls->underlying = underlying;
 
 	if (!tls->ctx)
 	{
@@ -692,7 +693,6 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 	}
 
 	BIO_push(tls->bio, underlying);
-	tls->underlying = underlying;
 	return TRUE;
 }
 
@@ -1672,7 +1672,10 @@ void tls_free(rdpTls* tls)
 
 	/* tls->underlying is a stacked BIO under tls->bio.
 	 * BIO_free_all will free recursivly. */
-	BIO_free_all(tls->bio);
+	if (tls->bio)
+		BIO_free_all(tls->bio);
+	else if (tls->underlying)
+		BIO_free_all(tls->underlying);
 	tls->bio = NULL;
 	tls->underlying = NULL;
 
