@@ -734,6 +734,10 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	int index;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
+
+	WINPR_ASSERT(channels);
+	WINPR_ASSERT(instance);
+
 	MessageQueue_PostQuit(channels->queue, 0);
 	freerdp_channels_check_fds(channels, instance);
 
@@ -776,7 +780,6 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
 	INT index;
 	rdpSettings* settings;
 	CHANNEL_INIT_DATA* pChannelInitData;
-	CHANNEL_OPEN_DATA* pChannelOpenData;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 	rdpChannels* channels;
 
@@ -790,8 +793,10 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
 		return CHANNEL_RC_INITIALIZATION_ERROR;
 
 	pChannelInitData = (CHANNEL_INIT_DATA*)pInitHandle;
+	WINPR_ASSERT(pChannelInitData);
+
 	channels = pChannelInitData->channels;
-	pChannelInitData->pInterface = clientContext;
+	WINPR_ASSERT(channels);
 
 	if (!channels->can_call_init)
 		return CHANNEL_RC_NOT_IN_VIRTUALCHANNELENTRY;
@@ -816,23 +821,34 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
 		}
 	}
 
+	pChannelInitData->pInterface = clientContext;
 	pChannelClientData = &channels->clientDataList[channels->clientDataCount];
 	pChannelClientData->pChannelInitEventProcEx = pChannelInitEventProcEx;
 	pChannelClientData->pInitHandle = pInitHandle;
 	pChannelClientData->lpUserParam = lpUserParam;
 	channels->clientDataCount++;
+
+	WINPR_ASSERT(channels->instance);
+	WINPR_ASSERT(channels->instance->context);
 	settings = channels->instance->context->settings;
+	WINPR_ASSERT(settings);
 
 	for (index = 0; index < channelCount; index++)
 	{
 		const PCHANNEL_DEF pChannelDef = &pChannel[index];
-		pChannelOpenData = &channels->openDataList[channels->openDataCount];
+		CHANNEL_OPEN_DATA* pChannelOpenData = &channels->openDataList[channels->openDataCount];
+
+		WINPR_ASSERT(pChannelOpenData);
+
 		pChannelOpenData->OpenHandle = InterlockedIncrement(&g_OpenHandleSeq);
 		pChannelOpenData->channels = channels;
 		pChannelOpenData->lpUserParam = lpUserParam;
 		if (!HashTable_Insert(g_ChannelHandles, (void*)(UINT_PTR)pChannelOpenData->OpenHandle,
 		                      (void*)pChannelOpenData))
+		{
+			pChannelInitData->pInterface = NULL;
 			return CHANNEL_RC_INITIALIZATION_ERROR;
+		}
 		pChannelOpenData->flags = 1; /* init */
 		strncpy(pChannelOpenData->name, pChannelDef->name, CHANNEL_NAME_LEN);
 		pChannelOpenData->options = pChannelDef->options;
