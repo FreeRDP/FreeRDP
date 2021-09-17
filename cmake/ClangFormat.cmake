@@ -28,7 +28,7 @@ else()
 		"${_CLANG_FORMAT_VERSION}")
 
 	if (NOT CLANG_FORMAT_VERSION)
-		message(WARNING "problem parsing clang-fromat version for ${CLANG_FORMAT}")
+		message(WARNING "problem parsing clang-format version for ${CLANG_FORMAT}")
 		return()
 	endif()
 
