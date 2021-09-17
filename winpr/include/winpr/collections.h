@@ -70,10 +70,43 @@ extern "C"
 
 	WINPR_API BOOL Queue_Contains(wQueue* queue, const void* obj);
 
+	/** \brief Pushes a new element into the queue.
+	 *  If a fnObjectNew is set, the element is copied and the queue takes
+	 *  ownership of the memory, otherwise the ownership stays with the caller.
+	 *
+	 *  \param queue The queue to operate on
+	 *  \param obj A pointer to the object to queue
+	 *
+	 *  \return TRUE for success, FALSE if failed.
+	 */
 	WINPR_API BOOL Queue_Enqueue(wQueue* queue, void* obj);
+
+	/** \brief returns the element at the top of the queue. The element is removed from the queue,
+	 *  ownership of the element is passed on to the caller.
+	 *
+	 *  \param queue The queue to check
+	 *
+	 *  \return NULL if empty, a pointer to the memory on top of the queue otherwise.
+	 */
 	WINPR_API void* Queue_Dequeue(wQueue* queue);
 
+	/** \brief returns the element at the top of the queue. The element is not removed from the
+	 * queue, ownership of the element stays with the queue.
+	 *
+	 *  \param queue The queue to check
+	 *
+	 *  \return NULL if empty, a pointer to the memory on top of the queue otherwise.
+	 */
 	WINPR_API void* Queue_Peek(wQueue* queue);
+
+	/** \brief Removes the element at the top of the queue. If fnObjectFree is set, the element is
+	 * freed. This can be used in combination with Queue_Peek to handle an element and discard it
+	 * with this function afterward. An alternative is Queue_Dequeue with calling the appropriate
+	 * free function afterward.
+	 *
+	 *  \param queue The queue to operate on
+	 */
+	WINPR_API void Queue_Discard(wQueue* queue);
 
 	WINPR_API wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor);
 	WINPR_API void Queue_Free(wQueue* queue);
