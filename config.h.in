@@ -1,6 +1,8 @@
 #ifndef FREERDP_CONFIG_H
 #define FREERDP_CONFIG_H
 
+#include <winpr/config.h>
+
 /* Include files */
 #if defined(__APPLE__) && !defined(__IOS__)
 #cmakedefine01 HAVE_UNISTD_H
