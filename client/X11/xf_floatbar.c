@@ -183,7 +183,7 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 
 	xfc = floatbar->xfc;
 	status = XGetWindowAttributes(xfc->display, floatbar->root_window, &attr);
-	if (status != 0)
+	if (status == 0)
 	{
 		WLog_WARN(TAG, "XGetWindowAttributes returned %d", status);
 		return FALSE;
