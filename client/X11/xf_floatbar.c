@@ -185,7 +185,7 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 	status = XGetWindowAttributes(xfc->display, floatbar->root_window, &attr);
 	if (status == 0)
 	{
-		WLog_WARN(TAG, "XGetWindowAttributes returned %d", status);
+		WLog_WARN(TAG, "XGetWindowAttributes failed");
 		return FALSE;
 	}
 	floatbar->x = attr.x + attr.width / 2 - FLOATBAR_DEFAULT_WIDTH / 2;
