@@ -602,6 +602,7 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
 {
 	ULONG written;
 	RdpeiServerPrivate* priv = context->priv;
+	UINT32 pduLen = 4;
 
 	if (priv->automataState != STATE_INITIAL)
 	{
@@ -611,14 +612,17 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
 
 	Stream_SetPosition(priv->outputStream, 0);
 
-	if (!Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH + 4))
+	if (version >= RDPINPUT_PROTOCOL_V300)
+		pduLen += 4;
+
+	if (!Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH + pduLen))
 	{
 		WLog_ERR(TAG, "Stream_EnsureCapacity failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
 	Stream_Write_UINT16(priv->outputStream, EVENTID_SC_READY);
-	Stream_Write_UINT32(priv->outputStream, RDPINPUT_HEADER_LENGTH + 4);
+	Stream_Write_UINT32(priv->outputStream, RDPINPUT_HEADER_LENGTH + pduLen);
 	Stream_Write_UINT32(priv->outputStream, version);
 	if (version >= RDPINPUT_PROTOCOL_V300)
 		Stream_Write_UINT32(priv->outputStream, features);
