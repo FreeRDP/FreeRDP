@@ -1,4 +1,3 @@
-opt/freerdp-nightly/lib/*.so
 opt/freerdp-nightly/lib/pkgconfig
 opt/freerdp-nightly/lib/cmake
 opt/freerdp-nightly/include
