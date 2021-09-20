@@ -19,7 +19,7 @@ static BYTE CLIENT_MESSAGE[PIPE_BUFFER_SIZE];
 static BOOL bClientSuccess = FALSE;
 static BOOL bServerSuccess = FALSE;
 
-static HANDLE serverReadyEvent;
+static HANDLE serverReadyEvent = NULL;
 
 static LPTSTR lpszPipeName = _T("\\\\.\\pipe\\winpr_test_pipe_overlapped");
 
@@ -332,8 +332,8 @@ finish:
 
 int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 {
-	HANDLE ClientThread;
-	HANDLE ServerThread;
+	HANDLE ClientThread = NULL;
+	HANDLE ServerThread = NULL;
 	int result = -1;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -371,6 +371,13 @@ int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 		result = 0;
 
 out:
+
+	if (ClientThread)
+		CloseHandle(ClientThread);
+	if (ServerThread)
+		CloseHandle(ServerThread);
+	if (serverReadyEvent)
+		CloseHandle(serverReadyEvent);
 
 #ifndef _WIN32
 	if (result == 0)
