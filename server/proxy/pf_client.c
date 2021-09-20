@@ -732,7 +732,7 @@ static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 		UINT32 tmp = freerdp_get_event_handles(instance->context, &handles[nCount],
 		                                       ARRAYSIZE(handles) - nCount);
 
-		if ((tmp == 0) || (nCount + tmp > ARRAYSIZE(handles)))
+		if (tmp == 0)
 		{
 			PROXY_LOG_ERR(TAG, pc, "freerdp_get_event_handles failed!");
 			break;

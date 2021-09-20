@@ -505,7 +505,7 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 			tmp = client->GetEventHandles(client, &eventHandles[eventCount],
 			                              ARRAYSIZE(eventHandles) - eventCount);
 
-			if ((tmp == 0) || (tmp >= ARRAYSIZE(eventHandles) - 2))
+			if (tmp == 0)
 			{
 				WLog_ERR(TAG, "Failed to get FreeRDP transport event handles");
 				break;
@@ -787,8 +787,8 @@ static void peer_free(void* obj)
 {
 	HANDLE hdl = (HANDLE)obj;
 
-	// TODO: Stop thread
-
+	/* Threads have been notified about pending termination at this point.
+	 */
 	if (hdl != _GetCurrentThread())
 		WaitForSingleObject(hdl, INFINITE);
 	CloseHandle(hdl);
