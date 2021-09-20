@@ -593,7 +593,7 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
 
 VOID ExitThread(DWORD dwExitCode)
 {
-#if 0
+#if defined(WITH_THREAD_LIST)
 	DWORD rc;
 	pthread_t tid = pthread_self();
 
@@ -633,6 +633,8 @@ VOID ExitThread(DWORD dwExitCode)
 
 		pthread_exit((void*)(size_t)rc);
 	}
+#else
+	WINPR_UNUSED(dwExitCode);
 #endif
 }
 
