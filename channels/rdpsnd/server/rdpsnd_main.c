@@ -229,12 +229,14 @@ out_free:
 static DWORD WINAPI rdpsnd_server_thread(LPVOID arg)
 {
 	DWORD nCount = 0, status;
-	HANDLE events[4] = { 0 };
+	HANDLE events[2] = { 0 };
 	RdpsndServerContext* context = (RdpsndServerContext*)arg;
 	UINT error = CHANNEL_RC_OK;
 	WINPR_ASSERT(context);
 	events[nCount++] = context->priv->channelEvent;
 	events[nCount++] = context->priv->StopEvent;
+
+	WINPR_ASSERT(nCount <= ARRAYSIZE(events));
 
 	while (TRUE)
 	{
