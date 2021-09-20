@@ -121,7 +121,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	status = rdp_client_connect(rdp);
 
-	/* Pointers might have chanegd inbetween */
+	/* Pointers might have changed inbetween */
 	if (rdp && rdp->settings)
 	{
 		/* --authonly tests the connection without a UI */
@@ -728,13 +728,15 @@ void freerdp_context_free(freerdp* instance)
 	metrics_free(ctx->metrics);
 	ctx->metrics = NULL;
 
-	CloseHandle(ctx->channelErrorEvent);
+	if (ctx->channelErrorEvent)
+		CloseHandle(ctx->channelErrorEvent);
 	ctx->channelErrorEvent = NULL;
 
 	free(ctx->errorDescription);
 	ctx->errorDescription = NULL;
 
-	CloseHandle(ctx->abortEvent);
+	if (ctx->abortEvent)
+		CloseHandle(ctx->abortEvent);
 	ctx->abortEvent = NULL;
 
 	freerdp_channels_free(ctx->channels);
