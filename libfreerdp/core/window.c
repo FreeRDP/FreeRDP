@@ -359,33 +359,31 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 
 		Stream_Read_UINT16(s, windowState->numWindowRects); /* numWindowRects (2 bytes) */
 
-		if (windowState->numWindowRects == 0)
+		if (windowState->numWindowRects > 0)
 		{
-			return TRUE;
-		}
+			size = sizeof(RECTANGLE_16) * windowState->numWindowRects;
+			newRect = (RECTANGLE_16*)realloc(windowState->windowRects, size);
 
-		size = sizeof(RECTANGLE_16) * windowState->numWindowRects;
-		newRect = (RECTANGLE_16*)realloc(windowState->windowRects, size);
+			if (!newRect)
+			{
+				free(windowState->windowRects);
+				windowState->windowRects = NULL;
+				return FALSE;
+			}
 
-		if (!newRect)
-		{
-			free(windowState->windowRects);
-			windowState->windowRects = NULL;
-			return FALSE;
-		}
+			windowState->windowRects = newRect;
 
-		windowState->windowRects = newRect;
+			if (Stream_GetRemainingLength(s) < 8 * windowState->numWindowRects)
+				return FALSE;
 
-		if (Stream_GetRemainingLength(s) < 8 * windowState->numWindowRects)
-			return FALSE;
-
-		/* windowRects */
-		for (i = 0; i < windowState->numWindowRects; i++)
-		{
-			Stream_Read_UINT16(s, windowState->windowRects[i].left);   /* left (2 bytes) */
-			Stream_Read_UINT16(s, windowState->windowRects[i].top);    /* top (2 bytes) */
-			Stream_Read_UINT16(s, windowState->windowRects[i].right);  /* right (2 bytes) */
-			Stream_Read_UINT16(s, windowState->windowRects[i].bottom); /* bottom (2 bytes) */
+			/* windowRects */
+			for (i = 0; i < windowState->numWindowRects; i++)
+			{
+				Stream_Read_UINT16(s, windowState->windowRects[i].left);   /* left (2 bytes) */
+				Stream_Read_UINT16(s, windowState->windowRects[i].top);    /* top (2 bytes) */
+				Stream_Read_UINT16(s, windowState->windowRects[i].right);  /* right (2 bytes) */
+				Stream_Read_UINT16(s, windowState->windowRects[i].bottom); /* bottom (2 bytes) */
+			}
 		}
 	}
 
