@@ -416,8 +416,8 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 	HRESULT status;
 	char* path = NULL;
 	char* subPathCpy = NULL;
-	int basePathLength = 0;
-	int subPathLength = 0;
+	size_t basePathLength = 0;
+	size_t subPathLength = 0;
 
 	if (basePath)
 		basePathLength = strlen(basePath);
