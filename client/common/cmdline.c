@@ -2400,6 +2400,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->RedirectDrives = enable;
 		}
+		CommandLineSwitchCase(arg, "disable-output")
+		{
+			freerdp_settings_set_bool(settings, FreeRDP_DeactivateClientDecoding, enable);
+		}
 		CommandLineSwitchCase(arg, "home-drive")
 		{
 			settings->RedirectHomeDrive = enable;
