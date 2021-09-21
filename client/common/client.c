@@ -38,13 +38,25 @@
 
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
-	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(context);
+
+	pEntryPoints = instance->pClientEntryPoints;
+	WINPR_ASSERT(pEntryPoints);
 	return IFCALLRESULT(TRUE, pEntryPoints->ClientNew, instance, context);
 }
 
 static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 {
-	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(context);
+
+	pEntryPoints = instance->pClientEntryPoints;
+	WINPR_ASSERT(pEntryPoints);
 	IFCALL(pEntryPoints->ClientFree, instance, context);
 }
 
