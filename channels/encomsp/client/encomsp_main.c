@@ -100,7 +100,7 @@ static UINT encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) < (size_t)(str->cchString * 2))
+	if (Stream_GetRemainingLength(s) / sizeof(WCHAR) < str->cchString)
 	{
 		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;

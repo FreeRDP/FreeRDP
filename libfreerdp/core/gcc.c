@@ -1750,7 +1750,7 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 			parsedChannelCount = mcs->channelCount;
 	}
 
-	if (Stream_GetRemainingLength(s) < (size_t)channelCount * 2)
+	if (Stream_GetRemainingLength(s) / 2 < channelCount)
 		return FALSE;
 
 	for (i = 0; i < parsedChannelCount; i++)

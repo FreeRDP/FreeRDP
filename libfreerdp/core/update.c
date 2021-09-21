@@ -272,7 +272,7 @@ PALETTE_UPDATE* update_read_palette(rdpUpdate* update, wStream* s)
 	if (palette_update->number > 256)
 		palette_update->number = 256;
 
-	if (Stream_GetRemainingLength(s) < palette_update->number * 3)
+	if (Stream_GetRemainingLength(s) / 3 < palette_update->number)
 		goto fail;
 
 	/* paletteEntries */
@@ -2122,7 +2122,7 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 	Stream_Read_UINT8(s, numberOfAreas);
 	Stream_Seek(s, 3); /* pad3Octects */
 
-	if (Stream_GetRemainingLength(s) < ((size_t)numberOfAreas * 4 * 2))
+	if (Stream_GetRemainingLength(s) / 8 < numberOfAreas)
 		return FALSE;
 
 	areas = (RECTANGLE_16*)calloc(numberOfAreas, sizeof(RECTANGLE_16));

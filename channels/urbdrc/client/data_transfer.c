@@ -801,7 +801,7 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback
 	Stream_Read_UINT32(s, NumberOfPackets); /** NumberOfPackets */
 	Stream_Read_UINT32(s, ErrorCount);      /** ErrorCount */
 
-	if (Stream_GetRemainingLength(s) < NumberOfPackets * 12 + 4)
+	if (Stream_GetRemainingLength(s) < NumberOfPackets * 12ULL + 4ULL)
 		return ERROR_INVALID_DATA;
 
 	packetDescriptorData = Stream_Pointer(s);

@@ -556,7 +556,9 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_UNUSED(header);
-	if ((slength = Stream_GetRemainingLength(s)) < 260 * sizeof(WCHAR))
+
+	slength = Stream_GetRemainingLength(s);
+	if (slength / sizeof(WCHAR) < 260)
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength returned %" PRIuz " but should at least be 520",
 		         slength);

@@ -562,7 +562,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
 	Stream_Read_UINT32(s, pdu.height);       /* height (4 bytes) */
 	Stream_Read_UINT32(s, pdu.monitorCount); /* monitorCount (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (pdu.monitorCount * 20))
+	if (Stream_GetRemainingLength(s) / 20 < pdu.monitorCount)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "not enough data!");
 		return ERROR_INVALID_DATA;
@@ -682,7 +682,7 @@ static UINT rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback
 
 	Stream_Read_UINT16(s, pdu.importedEntriesCount); /* cacheSlot (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (size_t)(pdu.importedEntriesCount * 2))
+	if (Stream_GetRemainingLength(s) / 2 < pdu.importedEntriesCount)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "not enough data!");
 		return ERROR_INVALID_DATA;
@@ -1159,7 +1159,7 @@ static UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 
 	Stream_Read_UINT16(s, pdu.fillRectCount); /* fillRectCount (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (size_t)(pdu.fillRectCount * 8))
+	if (Stream_GetRemainingLength(s) / 8 < pdu.fillRectCount)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "not enough data!");
 		return ERROR_INVALID_DATA;
@@ -1352,7 +1352,7 @@ static UINT rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, 
 	Stream_Read_UINT16(s, pdu.surfaceId);    /* surfaceId (2 bytes) */
 	Stream_Read_UINT16(s, pdu.destPtsCount); /* destPtsCount (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (size_t)(pdu.destPtsCount * 4))
+	if (Stream_GetRemainingLength(s) / 4 < pdu.destPtsCount)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "not enough data!");
 		return ERROR_INVALID_DATA;

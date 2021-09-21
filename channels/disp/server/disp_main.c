@@ -152,7 +152,7 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) < DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE * pdu.NumMonitors)
+	if (Stream_GetRemainingLength(s) / DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE < pdu.NumMonitors)
 	{
 		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;

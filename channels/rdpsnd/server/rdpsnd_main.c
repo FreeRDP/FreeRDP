@@ -159,7 +159,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	Stream_Seek_UINT8(s);                               /* bPad */
 
 	/* this check is only a guess as cbSize can influence the size of a format record */
-	if (Stream_GetRemainingLength(s) < context->num_client_formats * 18ULL)
+	if (Stream_GetRemainingLength(s) / 18 < context->num_client_formats)
 	{
 		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;

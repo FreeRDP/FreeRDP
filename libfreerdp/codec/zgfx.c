@@ -409,7 +409,7 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 		Stream_Read_UINT16(stream, segmentCount);     /* segmentCount (2 bytes) */
 		Stream_Read_UINT32(stream, uncompressedSize); /* uncompressedSize (4 bytes) */
 
-		if (Stream_GetRemainingLength(stream) < segmentCount * sizeof(UINT32))
+		if (Stream_GetRemainingLength(stream) / sizeof(UINT32) < segmentCount)
 			goto fail;
 
 		pConcatenated = (BYTE*)malloc(uncompressedSize);
