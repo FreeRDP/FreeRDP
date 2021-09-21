@@ -348,6 +348,9 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 	  "SPN authentication service class" },
 	{ "ssh-agent", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "ssh-agent",
 	  "SSH Agent forwarding channel" },
+	{ "disable-output", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
+	  "Deactivate all graphics decoding in the client session. Useful for load tests with many "
+	  "simultaneous connections" },
 	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "Window title" },
 	{ "themes", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "themes" },
 	{ "timeout", COMMAND_LINE_VALUE_REQUIRED, "<time in ms>", "9000", NULL, -1, "timeout",
