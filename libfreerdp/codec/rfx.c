@@ -526,7 +526,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < (size_t)(numChannels * 5))
+	if (Stream_GetRemainingLength(s) / 5 < numChannels)
 	{
 		WLog_ERR(TAG, "RfxMessageChannels packet too small for numChannels=%" PRIu8 "",
 		         numChannels);
@@ -702,7 +702,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		return TRUE;
 	}
 
-	if (Stream_GetRemainingLength(s) < (size_t)(8 * message->numRects))
+	if (Stream_GetRemainingLength(s) / 8 < message->numRects)
 	{
 		WLog_ERR(TAG, "%s: packet too small for num_rects=%" PRIu16 "", __FUNCTION__,
 		         message->numRects);
@@ -830,7 +830,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	quants = context->quants = (UINT32*)pmem;
 
 	/* quantVals */
-	if (Stream_GetRemainingLength(s) < (size_t)(context->numQuant * 5))
+	if (Stream_GetRemainingLength(s) / 5 < context->numQuant)
 	{
 		WLog_ERR(TAG, "RfxMessageTileSet packet too small for num_quants=%" PRIu8 "",
 		         context->numQuant);

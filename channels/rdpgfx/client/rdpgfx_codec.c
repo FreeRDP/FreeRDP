@@ -56,7 +56,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 
 	Stream_Read_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (meta->numRegionRects * 8))
+	if (Stream_GetRemainingLength(s) / 8 < meta->numRegionRects)
 	{
 		WLog_ERR(TAG, "not enough data!");
 		goto error_out;
@@ -99,7 +99,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 		         index, regionRect->left, regionRect->top, regionRect->right, regionRect->bottom);
 	}
 
-	if (Stream_GetRemainingLength(s) < (meta->numRegionRects * 2))
+	if (Stream_GetRemainingLength(s) / 2 < meta->numRegionRects)
 	{
 		WLog_ERR(TAG, "not enough data!");
 		error = ERROR_INVALID_DATA;

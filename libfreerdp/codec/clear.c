@@ -157,7 +157,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 3ULL * paletteCount)
+	if (Stream_GetRemainingLength(s) / 3 < paletteCount)
 		return FALSE;
 
 	for (i = 0; i < paletteCount; i++)
@@ -718,7 +718,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					return FALSE;
 				}
 
-				if (Stream_GetRemainingLength(s) < (vBarShortPixelCount * 3))
+				if (Stream_GetRemainingLength(s) / 3 < vBarShortPixelCount)
 				{
 					WLog_ERR(TAG, "stream short %" PRIuz " [%" PRIu32 " expected]",
 					         Stream_GetRemainingLength(s), (vBarShortPixelCount * 3));

@@ -2409,7 +2409,7 @@ static CACHE_COLOR_TABLE_ORDER* update_read_cache_color_table_order(rdpUpdate* u
 		goto fail;
 	}
 
-	if (Stream_GetRemainingLength(s) < cache_color_table->numberColors * 4)
+	if (Stream_GetRemainingLength(s) / 4 < cache_color_table->numberColors)
 		goto fail;
 
 	colorTable = (UINT32*)&cache_color_table->colorTable;
@@ -2664,7 +2664,7 @@ static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BY
 	const BYTE* palette = Stream_Pointer(s) + 16;
 	const size_t bytesPerPixel = ((bpp + 1) / 8);
 
-	if (Stream_GetRemainingLength(s) < 16 + bytesPerPixel * 4)
+	if (Stream_GetRemainingLength(s) < 16ULL + bytesPerPixel * 4ULL)
 		return FALSE;
 
 	for (y = 7; y >= 0; y--)
@@ -2763,7 +2763,7 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 				/* uncompressed brush */
 				UINT32 scanline = (cache_brush->bpp / 8) * 8;
 
-				if (Stream_GetRemainingLength(s) < scanline * 8)
+				if (Stream_GetRemainingLength(s) / 8 < scanline)
 					goto fail;
 
 				for (i = 7; i >= 0; i--)
@@ -2889,7 +2889,7 @@ update_read_create_offscreen_bitmap_order(wStream* s,
 			deleteList->indices = new_indices;
 		}
 
-		if (Stream_GetRemainingLength(s) < 2 * deleteList->cIndices)
+		if (Stream_GetRemainingLength(s) / 2 < deleteList->cIndices)
 			return FALSE;
 
 		for (i = 0; i < deleteList->cIndices; i++)
