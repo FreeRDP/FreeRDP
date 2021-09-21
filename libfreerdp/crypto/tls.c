@@ -1504,9 +1504,11 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					const char* old_issuer = certificate_data_get_issuer(stored_data);
 					const char* old_fp = certificate_data_get_fingerprint(stored_data);
 					const char* old_pem = certificate_data_get_pem(stored_data);
+					const BOOL fpIsAllocated =
+					    !old_pem || !freerdp_settings_get_bool(
+					                    instance->settings, FreeRDP_CertificateCallbackPreferPEM);
 					char* fp;
-					if (old_pem && freerdp_settings_get_bool(instance->settings,
-					                                         FreeRDP_CertificateCallbackPreferPEM))
+					if (!fpIsAllocated)
 					{
 						cflags |= VERIFY_CERT_FLAG_FP_IS_PEM;
 						fp = pem;
@@ -1519,7 +1521,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					accept_certificate = instance->VerifyChangedCertificateEx(
 					    instance, hostname, port, common_name, subject, issuer, pem, old_subject,
 					    old_issuer, old_fp, cflags);
-					if (!old_pem)
+					if (fpIsAllocated)
 						free(fp);
 				}
 #if defined(WITH_FREERDP_DEPRECATED)
