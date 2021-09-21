@@ -137,11 +137,14 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 
 	free(pSurfaceIds);
 
-	if (!freerdp_client_codecs_reset(gdi->context->codecs,
-	                                 freerdp_settings_get_codecs_flags(settings), gdi->width,
-	                                 gdi->height))
+	if (!freerdp_settings_get_bool(gdi->context->settings, FreeRDP_DeactivateClientDecoding))
 	{
-		goto fail;
+		if (!freerdp_client_codecs_reset(gdi->context->codecs,
+		                                 freerdp_settings_get_codecs_flags(settings), gdi->width,
+		                                 gdi->height))
+		{
+			goto fail;
+		}
 	}
 
 	rc = CHANNEL_RC_OK;
@@ -1070,21 +1073,28 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
 	gdiGfxSurface* surface;
+	rdpGdi* gdi;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(createSurface);
+	gdi = (rdpGdi*)context->custom;
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->context);
 	EnterCriticalSection(&context->mux);
 	surface = (gdiGfxSurface*)calloc(1, sizeof(gdiGfxSurface));
 
 	if (!surface)
 		goto fail;
 
-	WINPR_ASSERT(context->codecs);
-	surface->codecs = context->codecs;
-
-	if (!surface->codecs)
+	if (!freerdp_settings_get_bool(gdi->context->settings, FreeRDP_DeactivateClientDecoding))
 	{
-		free(surface);
-		goto fail;
+		WINPR_ASSERT(context->codecs);
+		surface->codecs = context->codecs;
+
+		if (!surface->codecs)
+		{
+			free(surface);
+			goto fail;
+		}
 	}
 
 	surface->surfaceId = createSurface->surfaceId;
@@ -1635,6 +1645,12 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 	 * we simply initialize it with TRUE here for now.
 	 */
 	gdi->graphicsReset = TRUE;
+	if (freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding))
+	{
+		gfx->UpdateSurfaceArea = NULL;
+		gfx->UpdateSurfaces = NULL;
+		gfx->SurfaceCommand = NULL;
+	}
 	if (freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding))
 	{
 		gfx->UpdateSurfaceArea = NULL;
