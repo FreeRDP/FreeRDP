@@ -44,6 +44,7 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/channels/urbdrc.h>
+#include <freerdp/channels/rdpdr.h>
 
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
@@ -3689,7 +3690,8 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->DeviceRedirection)
 	{
-		if (!freerdp_client_load_static_channel_addin(channels, settings, "rdpdr", settings))
+		if (!freerdp_client_load_static_channel_addin(channels, settings, RDPDR_SVC_CHANNEL_NAME,
+		                                              settings))
 			return FALSE;
 
 		if (!freerdp_static_channel_collection_find(settings, RDPSND_CHANNEL_NAME) &&

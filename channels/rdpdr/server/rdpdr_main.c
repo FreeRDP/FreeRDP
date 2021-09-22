@@ -1272,7 +1272,7 @@ out:
 static UINT rdpdr_server_start(RdpdrServerContext* context)
 {
 	context->priv->ChannelHandle =
-	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "rdpdr");
+	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, RDPDR_SVC_CHANNEL_NAME);
 
 	if (!context->priv->ChannelHandle)
 	{
