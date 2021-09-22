@@ -569,6 +569,8 @@ fingerprint. DEPRECATED: Use VerifyChangedCertificateEx */
 	FREERDP_API CONNECTION_STATE freerdp_get_state(const rdpContext* context);
 	FREERDP_API const char* freerdp_state_string(CONNECTION_STATE state);
 
+	FREERDP_API BOOL freerdp_channels_from_mcs(rdpSettings* settings, const rdpContext* context);
+
 #ifdef __cplusplus
 }
 #endif
