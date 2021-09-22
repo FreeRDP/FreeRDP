@@ -33,10 +33,10 @@
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/channels/encomsp.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/channels/rdpsnd.h>
+#include <freerdp/channels/cliprdr.h>
+#include <freerdp/channels/channels.h>
 
-#include "pf_channels.h"
-#include "pf_gdi.h"
-#include "pf_graphics.h"
 #include "pf_client.h"
 #include <freerdp/server/proxy/proxy_context.h>
 #include "pf_update.h"
@@ -249,17 +249,6 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 
 	settings->AutoReconnectionEnabled = TRUE;
 
-	/**
-	 * Register the channel listeners.
-	 * They are required to set up / tear down channels if they are loaded.
-	 */
-	if (!pf_utils_is_passthrough(config))
-	{
-		PubSub_SubscribeChannelConnected(instance->context->pubSub,
-		                                 pf_channels_on_client_channel_connect);
-		PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-		                                    pf_channels_on_client_channel_disconnect);
-	}
 	PubSub_SubscribeErrorInfo(instance->context->pubSub, pf_client_on_error_info);
 	PubSub_SubscribeActivated(instance->context->pubSub, pf_client_on_activated);
 	/**
@@ -559,24 +548,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
 
-	if (!pf_register_pointer(context->graphics))
-		return FALSE;
-
-	if (!settings->SoftwareGdi)
-	{
-		if (!pf_register_graphics(context->graphics))
-		{
-			PROXY_LOG_ERR(TAG, pc, "failed to register graphics");
-			return FALSE;
-		}
-
-		pf_gdi_register_update_callbacks(update);
-		brush_cache_register_callbacks(update);
-		glyph_cache_register_callbacks(update);
-		bitmap_cache_register_callbacks(update);
-		offscreen_cache_register_callbacks(update);
-		palette_cache_register_callbacks(update);
-	}
+	WINPR_ASSERT(settings->SoftwareGdi);
 
 	pf_client_register_update_callbacks(update);
 
@@ -621,10 +593,6 @@ static void pf_client_post_disconnect(freerdp* instance)
 	pc->connected = FALSE;
 	pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_POST_CONNECT, pc->pdata, pc);
 
-	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
-	                                   pf_channels_on_client_channel_connect);
-	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
-	                                      pf_channels_on_client_channel_disconnect);
 	PubSub_UnsubscribeErrorInfo(instance->context->pubSub, pf_client_on_error_info);
 	gdi_free(instance);
 

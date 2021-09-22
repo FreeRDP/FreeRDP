@@ -24,15 +24,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/wtsvc.h>
-#include <freerdp/client/rdpei.h>
-#include <freerdp/client/rail.h>
-#include <freerdp/server/rail.h>
-#include <freerdp/client/rdpgfx.h>
-#include <freerdp/server/rdpgfx.h>
-#include <freerdp/client/disp.h>
-#include <freerdp/server/disp.h>
-#include <freerdp/server/cliprdr.h>
-#include <freerdp/server/rdpsnd.h>
 
 #include <freerdp/server/proxy/proxy_config.h>
 
@@ -53,12 +44,6 @@ struct p_server_context
 
 	HANDLE vcm;
 	HANDLE dynvcReady;
-
-	RailServerContext* rail;
-	RdpgfxServerContext* gfx;
-	DispServerContext* disp;
-	CliprdrServerContext* cliprdr;
-	RdpsndServerContext* rdpsnd;
 };
 typedef struct p_server_context pServerContext;
 
@@ -72,13 +57,6 @@ struct p_client_context
 	rdpContext context;
 
 	proxyData* pdata;
-
-	RdpeiClientContext* rdpei;
-	RdpgfxClientContext* gfx_proxy;
-	RdpgfxClientContext* gfx_decoder;
-	DispClientContext* disp;
-	CliprdrClientContext* cliprdr;
-	RailClientContext* rail;
 
 	/*
 	 * In a case when freerdp_connect fails,
