@@ -306,14 +306,14 @@ BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
 
 	if (peer_addr->ss_family == AF_INET)
 	{
-		sin_addr = &(((struct sockaddr_in*)&peer_addr)->sin_addr);
+		sin_addr = &(((struct sockaddr_in*)peer_addr)->sin_addr);
 
 		if ((*(UINT32*)sin_addr) == 0x0100007f)
 			client->local = TRUE;
 	}
 	else if (peer_addr->ss_family == AF_INET6)
 	{
-		sin_addr = &(((struct sockaddr_in6*)&peer_addr)->sin6_addr);
+		sin_addr = &(((struct sockaddr_in6*)peer_addr)->sin6_addr);
 
 		if (memcmp(sin_addr, localhost6_bytes, 16) == 0)
 			client->local = TRUE;
