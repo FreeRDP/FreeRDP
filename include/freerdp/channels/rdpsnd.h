@@ -26,5 +26,7 @@
 #include <freerdp/codec/audio.h>
 
 #define RDPSND_CHANNEL_NAME "rdpsnd"
+#define RDPSND_DVC_CHANNEL_NAME "AUDIO_PLAYBACK_DVC"
+#define RDPSND_LOSSY_DVC_CHANNEL_NAME "AUDIO_PLAYBACK_LOSSY_DVC"
 
 #endif /* FREERDP_CHANNEL_RDPSND_H */

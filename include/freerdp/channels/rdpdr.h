@@ -35,6 +35,8 @@
 
 #include <freerdp/freerdp.h>
 
+#define RDPDR_SVC_CHANNEL_NAME "rdpdr"
+
 #define RDPDR_DEVICE_IO_REQUEST_LENGTH 24
 #define RDPDR_DEVICE_IO_RESPONSE_LENGTH 16
 

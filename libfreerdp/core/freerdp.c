@@ -1086,3 +1086,9 @@ const char* freerdp_state_string(CONNECTION_STATE state)
 {
 	return rdp_state_string(state);
 }
+
+BOOL freerdp_channels_from_mcs(rdpSettings* settings, const rdpContext* context)
+{
+	WINPR_ASSERT(context);
+	return rdp_channels_from_mcs(settings, context->rdp);
+}

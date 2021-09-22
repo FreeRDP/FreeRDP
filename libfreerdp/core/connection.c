@@ -1561,3 +1561,31 @@ const char* rdp_get_state_string(rdpRdp* rdp)
 	int state = rdp_get_state(rdp);
 	return rdp_state_string(state);
 }
+
+BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp)
+{
+	size_t x;
+	const rdpMcs* mcs;
+
+	WINPR_ASSERT(rdp);
+
+	mcs = rdp->mcs;
+	WINPR_ASSERT(mcs);
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ChannelDefArray, NULL,
+	                                      mcs->channelCount))
+		return FALSE;
+
+	for (x = 0; x < mcs->channelCount; x++)
+	{
+		const rdpMcsChannel* mchannel = &mcs->channels[x];
+		CHANNEL_DEF cur = { 0 };
+
+		memcpy(cur.name, mchannel->Name, sizeof(cur.name));
+		cur.options = mchannel->options;
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_ChannelDefArray, x, &cur))
+			return FALSE;
+	}
+
+	return TRUE;
+}

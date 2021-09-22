@@ -1651,12 +1651,6 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 		gfx->UpdateSurfaces = NULL;
 		gfx->SurfaceCommand = NULL;
 	}
-	if (freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding))
-	{
-		gfx->UpdateSurfaceArea = NULL;
-		gfx->UpdateSurfaces = NULL;
-		gfx->SurfaceCommand = NULL;
-	}
 
 	return TRUE;
 }

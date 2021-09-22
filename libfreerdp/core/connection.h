@@ -64,4 +64,6 @@ FREERDP_LOCAL const char* rdp_get_state_string(rdpRdp* rdp);
 
 FREERDP_LOCAL const char* rdp_client_connection_state_string(int state);
 
+FREERDP_LOCAL BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp);
+
 #endif /* FREERDP_LIB_CORE_CONNECTION_H */
