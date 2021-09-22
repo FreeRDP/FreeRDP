@@ -1102,9 +1102,14 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 			return freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetPorts,
 			                                         FreeRDP_TargetNetAddressCount, data, len,
 			                                         sizeof(char));
+		case FreeRDP_ChannelDefArray:
+			if (!freerdp_settings_set_pointer_len_(settings, FreeRDP_ChannelDefArray,
+			                                       FreeRDP_ChannelDefArraySize, data, len,
+			                                       sizeof(CHANNEL_DEF)))
+				return FALSE;
+			return freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, len);
 		case FreeRDP_ClientAutoReconnectCookie:
 		case FreeRDP_ServerAutoReconnectCookie:
-		case FreeRDP_ChannelDefArray:
 		case FreeRDP_MonitorDefArray:
 		case FreeRDP_ReceivedCapabilities:
 		case FreeRDP_OrderSupport:
