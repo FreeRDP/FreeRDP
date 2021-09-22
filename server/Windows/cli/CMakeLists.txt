@@ -16,6 +16,7 @@
 # limitations under the License.
 
 set(MODULE_NAME "wfreerdp-server-cli")
+set(OUTPUT_NAME " wfreerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER_WINDOWS_CLI")
 
 include_directories(..)
@@ -40,7 +41,7 @@ set (${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "wfreerdp-server")
+set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${OUTPUT_NAME})
 
 set(${MODULE_PREFIX}_LIBS wfreerdp-server)
 
@@ -49,7 +50,7 @@ target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
 
 if (WITH_DEBUG_SYMBOLS AND MSVC)
-	install(FILES ${PROJECT_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT symbols)
+        install(FILES ${PROJECT_BINARY_DIR}/${OUTPUT_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT symbols)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Windows")
