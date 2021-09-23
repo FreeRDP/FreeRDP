@@ -1335,8 +1335,6 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 		}
 		else
 		{
-			ArrayList_Remove(vcm->dynamicVirtualChannels, channel);
-
 			if (channel->dvc_open_state == DVC_OPEN_STATE_SUCCEEDED)
 			{
 				ULONG written;
@@ -1355,18 +1353,8 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 					Stream_Free(s, TRUE);
 				}
 			}
+			ArrayList_Remove(vcm->dynamicVirtualChannels, channel);
 		}
-
-		if (channel->receiveData)
-			Stream_Free(channel->receiveData, TRUE);
-
-		if (channel->queue)
-		{
-			MessageQueue_Free(channel->queue);
-			channel->queue = NULL;
-		}
-
-		free(channel);
 	}
 
 	return ret;
