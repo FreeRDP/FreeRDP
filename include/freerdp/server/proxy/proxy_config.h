@@ -63,6 +63,8 @@ struct proxy_config
 	BOOL AudioInput;
 	BOOL RemoteApp;
 	BOOL DeviceRedirection;
+	BOOL VideoRedirection;
+	BOOL CameraRedirection;
 
 	BOOL PassthroughIsBlacklist;
 	char** Passthrough;

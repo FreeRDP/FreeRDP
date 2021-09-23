@@ -40,6 +40,9 @@
 #include <freerdp/channels/disp.h>
 #include <freerdp/channels/rail.h>
 #include <freerdp/channels/rdpei.h>
+#include <freerdp/channels/tsmf.h>
+#include <freerdp/channels/video.h>
+#include <freerdp/channels/rdpecam.h>
 
 #include "pf_utils.h"
 
@@ -214,6 +217,8 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 	config->AudioOutput = pf_config_get_bool(ini, "Channels", "AudioOutput", TRUE);
 	config->AudioInput = pf_config_get_bool(ini, "Channels", "AudioInput", TRUE);
 	config->DeviceRedirection = pf_config_get_bool(ini, "Channels", "DeviceRedirection", TRUE);
+	config->VideoRedirection = pf_config_get_bool(ini, "Channels", "VideoRedirection", TRUE);
+	config->CameraRedirection = pf_config_get_bool(ini, "Channels", "CameraRedirection", TRUE);
 	config->RemoteApp = pf_config_get_bool(ini, "Channels", "RemoteApp", FALSE);
 	config->PassthroughIsBlacklist =
 	    pf_config_get_bool(ini, "Channels", "PassthroughIsBlacklist", FALSE);
@@ -484,6 +489,10 @@ BOOL pf_server_config_dump(const char* file)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, "Channels", "DeviceRedirection", "true") < 0)
 		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Channels", "VideoRedirection", "true") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Channels", "CameraRedirection", "true") < 0)
+		goto fail;
 	if (IniFile_SetKeyValueString(ini, "Channels", "RemoteApp", "false") < 0)
 		goto fail;
 
@@ -663,6 +672,8 @@ void pf_server_config_print(const proxyConfig* config)
 	CONFIG_PRINT_BOOL(config, AudioOutput);
 	CONFIG_PRINT_BOOL(config, AudioInput);
 	CONFIG_PRINT_BOOL(config, DeviceRedirection);
+	CONFIG_PRINT_BOOL(config, VideoRedirection);
+	CONFIG_PRINT_BOOL(config, CameraRedirection);
 	CONFIG_PRINT_BOOL(config, RemoteApp);
 	CONFIG_PRINT_BOOL(config, PassthroughIsBlacklist);
 
@@ -954,6 +965,18 @@ static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData*
 		else if (strncmp(RDPEI_DVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(RDPEI_DVC_CHANNEL_NAME)) == 0)
 			accept = cfg->Multitouch;
+		else if (strncmp(TSMF_DVC_CHANNEL_NAME, channel->channel_name,
+		                 sizeof(TSMF_DVC_CHANNEL_NAME)) == 0)
+			accept = cfg->VideoRedirection;
+		else if (strncmp(VIDEO_CONTROL_DVC_CHANNEL_NAME, channel->channel_name,
+		                 sizeof(VIDEO_CONTROL_DVC_CHANNEL_NAME)) == 0)
+			accept = cfg->VideoRedirection;
+		else if (strncmp(VIDEO_DATA_DVC_CHANNEL_NAME, channel->channel_name,
+		                 sizeof(VIDEO_DATA_DVC_CHANNEL_NAME)) == 0)
+			accept = cfg->VideoRedirection;
+		else if (strncmp(RDPECAM_DVC_CHANNEL_NAME, channel->channel_name,
+		                 sizeof(RDPECAM_DVC_CHANNEL_NAME)) == 0)
+			accept = cfg->CameraRedirection;
 	}
 
 	WLog_DBG(TAG, "%s: %s [0x%04" PRIx16 "]: %s", __FUNCTION__, channel->channel_name,
