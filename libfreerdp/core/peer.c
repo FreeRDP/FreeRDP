@@ -30,6 +30,7 @@
 #include "certificate.h"
 
 #include <freerdp/log.h>
+#include <freerdp/streamdump.h>
 
 #include "rdp.h"
 #include "peer.h"
@@ -917,6 +918,9 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	context->ServerMode = TRUE;
 	context->settings = client->settings;
 
+	context->dump = stream_dump_new();
+	if (!context->dump)
+		goto fail;
 	if (!(context->metrics = metrics_new(context)))
 		goto fail;
 
@@ -954,8 +958,9 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	client->LicenseCallback = freerdp_peer_nolicense;
 	IFCALLRET(client->ContextNew, ret, client, client->context);
 
-	if (ret)
-		return TRUE;
+	if (!ret)
+		goto fail;
+	return TRUE;
 
 fail:
 	WLog_ERR(TAG, "ContextNew callback failed");
@@ -980,6 +985,8 @@ void freerdp_peer_context_free(freerdp_peer* client)
 		ctx->rdp = NULL;
 		metrics_free(ctx->metrics);
 		ctx->metrics = NULL;
+		stream_dump_free(ctx->dump);
+		ctx->dump = NULL;
 		free(ctx);
 	}
 	client->context = NULL;

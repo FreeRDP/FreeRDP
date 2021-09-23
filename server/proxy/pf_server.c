@@ -34,6 +34,7 @@
 #include <errno.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/streamdump.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/build-config.h>
@@ -46,10 +47,6 @@
 #include "pf_client.h"
 #include <freerdp/server/proxy/proxy_context.h>
 #include "pf_update.h"
-#include "pf_rdpgfx.h"
-#include "pf_disp.h"
-#include "pf_rail.h"
-#include "pf_channels.h"
 #include "proxy_modules.h"
 #include "pf_utils.h"
 
@@ -229,12 +226,6 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	PROXY_LOG_INFO(TAG, ps, "remote target is %s:%" PRIu16 "", client_settings->ServerHostname,
 	               client_settings->ServerPort);
 
-	if (!pf_server_channels_init(ps, peer))
-	{
-		PROXY_LOG_INFO(TAG, ps, "failed to initialize server's channels!");
-		return FALSE;
-	}
-
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_POST_CONNECT, pdata, peer))
 		return FALSE;
 
@@ -396,7 +387,7 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	settings->SupportMonitorLayoutPdu = TRUE;
 	settings->SupportGraphicsPipeline = config->GFX;
 
-	if ((config->PassthroughCount > 0) || config->PassthroughIsBlacklist)
+	if (pf_utils_is_passthrough(config))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeactivateClientDecoding, TRUE))
 			return FALSE;
@@ -445,6 +436,8 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	pdata->server_receive_channel_data_original = peer->ReceiveChannelData;
 	peer->ReceiveChannelData = pf_server_receive_channel_data_hook;
 
+	if (!stream_dump_register_handlers(peer->context, CONNECTION_STATE_NEGO))
+		return FALSE;
 	return TRUE;
 }
 
@@ -463,20 +456,14 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	freerdp_peer* client = (freerdp_peer*)arg;
 	proxyServer* server;
 	size_t count;
-	BOOL rc;
 
 	WINPR_ASSERT(client);
 
 	server = (proxyServer*)client->ContextExtra;
 	WINPR_ASSERT(server);
 
-	ArrayList_Lock(server->peer_list);
-	rc = ArrayList_Append(server->peer_list, _GetCurrentThread());
 	count = ArrayList_Count(server->peer_list);
-	ArrayList_Unlock(server->peer_list);
 
-	if (!rc)
-		goto out_free_peer;
 	if (!pf_context_init_server_context(client))
 		goto out_free_peer;
 
@@ -596,7 +583,6 @@ fail:
 
 
 	PROXY_LOG_INFO(TAG, ps, "freeing server's channels");
-	pf_server_channels_free(ps, client);
 
 	WINPR_ASSERT(client->Close);
 	client->Close(client);
@@ -613,10 +599,16 @@ out_free_peer:
 		WaitForSingleObject(pdata->client_thread, INFINITE);
 	}
 
-	ArrayList_Lock(server->peer_list);
-	ArrayList_Remove(server->peer_list, _GetCurrentThread());
-	count = ArrayList_Count(server->peer_list);
-	ArrayList_Unlock(server->peer_list);
+	/* If the server is shutting down the peer_list is already
+	 * locked and we should not try to remove it here but instead
+	 * let the  ArrayList_Clear handle that. */
+	if (WaitForSingleObject(server->stopEvent, 0) != WAIT_OBJECT_0)
+	{
+		ArrayList_Lock(server->peer_list);
+		ArrayList_Remove(server->peer_list, _GetCurrentThread());
+		count = ArrayList_Count(server->peer_list);
+		ArrayList_Unlock(server->peer_list);
+	}
 	PROXY_LOG_DBG(TAG, ps, "Removed peer, %" PRIuz " connected", count);
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
@@ -639,11 +631,17 @@ static BOOL pf_server_start_peer(freerdp_peer* client)
 	server = (proxyServer*)client->ContextExtra;
 	WINPR_ASSERT(server);
 
-	hThread = CreateThread(NULL, 0, pf_server_handle_peer, (void*)client, 0, NULL);
+	hThread = CreateThread(NULL, 0, pf_server_handle_peer, (void*)client, CREATE_SUSPENDED, NULL);
 	if (!hThread)
 		return FALSE;
 
-	return TRUE;
+	if (!ArrayList_Append(server->peer_list, hThread))
+	{
+		CloseHandle(hThread);
+		return FALSE;
+	}
+
+	return ResumeThread(hThread) == 0;
 }
 
 static BOOL pf_server_peer_accepted(freerdp_listener* listener, freerdp_peer* client)
@@ -739,10 +737,14 @@ BOOL pf_server_start_with_peer_socket(proxyServer* server, int peer_fd)
 {
 	struct sockaddr_storage peer_addr;
 	socklen_t len = sizeof(peer_addr);
-	freerdp_peer* client = freerdp_peer_new(peer_fd);
+	freerdp_peer* client = NULL;
 
 	WINPR_ASSERT(server);
 
+	if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
+		goto fail;
+
+	client = freerdp_peer_new(peer_fd);
 	if (!client)
 		goto fail;
 
@@ -839,6 +841,10 @@ proxyServer* pf_server_new(const proxyConfig* config)
 
 	server->listener->info = server;
 	server->listener->PeerAccepted = pf_server_peer_accepted;
+
+	if (!pf_modules_add(server->module, pf_config_plugin, (void*)config))
+		goto out;
+
 	return server;
 
 out:
@@ -899,17 +905,6 @@ BOOL pf_server_run(proxyServer* server)
 	WINPR_ASSERT(listener->Close);
 	listener->Close(listener);
 	return rc;
-}
-
-static BOOL disconnect_client(void* data, size_t index, va_list ap)
-{
-	proxyData* pdata = data;
-
-	WINPR_UNUSED(index);
-	WINPR_UNUSED(ap);
-
-	proxy_data_abort_connect(pdata);
-	return TRUE;
 }
 
 void pf_server_stop(proxyServer* server)

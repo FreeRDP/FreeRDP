@@ -200,6 +200,10 @@ static BOOL pf_modules_ArrayList_ForEachFkt(void* data, size_t index, va_list ap
 			result = IFCALLRESULT(TRUE, plugin->ServerChannelData, plugin, pdata, param);
 			break;
 
+		case FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_CREATE:
+			result = IFCALLRESULT(TRUE, plugin->ChannelCreate, plugin, pdata, param);
+			break;
+
 		case FILTER_TYPE_CLIENT_PASSTHROUGH_DYN_CHANNEL_CREATE:
 			result = IFCALLRESULT(TRUE, plugin->DynamicChannelCreate, plugin, pdata, param);
 			break;

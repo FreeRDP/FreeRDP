@@ -1,10 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Proxy Server
+ * Video Optimized Remoting Virtual Channel Extension
  *
- * Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
- * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
- * Copyright 2019 Idan Freiberg <speidy@gmail.com>
+ * Copyright 2021 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2021 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +18,10 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SERVER_PROXY_PFGRAPHICS_H
-#define FREERDP_SERVER_PROXY_PFGRAPHICS_H
+#ifndef FREERDP_CHANNEL_RDPECAM_H
+#define FREERDP_CHANNEL_RDPECAM_H
 
-#include <freerdp/freerdp.h>
-#include "pf_client.h"
+#define RDPECAM_DVC_CHANNEL_NAME "rdpecam"
+#define RDPECAM_CONTROL_DVC_CHANNEL_NAME "RDCamera_Device_Enumerator"
 
-BOOL pf_register_pointer(rdpGraphics* graphics);
-BOOL pf_register_graphics(rdpGraphics* graphics);
-
-#endif /* FREERDP_SERVER_PROXY_PFGRAPHICS_H */
+#endif /* FREERDP_CHANNEL_RDPECAM_H */

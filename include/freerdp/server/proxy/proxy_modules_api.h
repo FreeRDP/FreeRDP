@@ -87,8 +87,9 @@ struct proxy_plugin
 	proxyFilterFn DynamicChannelCreate;  /* 132 passthrough drdynvc channel create data */
 	proxyFilterFn ServerFetchTargetAddr; /* 133 */
 	proxyFilterFn ServerPeerLogon;       /* 134 */
+	proxyFilterFn ChannelCreate;         /* 135 passthrough drdynvc channel create data */
 
-	UINT64 reserved5[160 - 135]; /* 135-159 */
+	UINT64 reserved5[160 - 136]; /* 136-159 */
 
 	/* Runtime data fields */
 	proxyPluginsManager* mgr; /* 160 */ /** Set during plugin registration */

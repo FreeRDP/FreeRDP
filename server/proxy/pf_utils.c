@@ -53,3 +53,11 @@ int pf_utils_channel_is_passthrough(const proxyConfig* config, const char* name)
 		return 1;
 	return -1;
 }
+
+BOOL pf_utils_is_passthrough(const proxyConfig* config)
+{
+	WINPR_ASSERT(config);
+
+	/* TODO: For the time being only passthrough mode is supported. */
+	return TRUE;
+}

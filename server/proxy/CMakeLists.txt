@@ -25,32 +25,16 @@ set(MODULE_PREFIX "FREERDP_SERVER_PROXY")
 
 set(${MODULE_PREFIX}_SRCS
   pf_context.c
-  pf_channels.c
-  pf_channels.h
   pf_client.c
   pf_client.h
   pf_input.c
   pf_input.h
   pf_update.c
   pf_update.h
-  pf_rail.c
-  pf_rail.h
-  pf_rdpgfx.c
-  pf_rdpgfx.h
-  pf_disp.c
-  pf_disp.h
   pf_server.c
   pf_server.h
-  pf_gdi.c
-  pf_gdi.h
   pf_config.c
-  pf_graphics.c
-  pf_graphics.h
   pf_modules.c
-  pf_cliprdr.c
-  pf_cliprdr.h
-  pf_rdpsnd.c
-  pf_rdpsnd.h
   pf_utils.h
   pf_utils.c
   )

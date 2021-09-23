@@ -35,6 +35,7 @@ enum _PF_FILTER_TYPE
 	FILTER_TYPE_CLIENT_PASSTHROUGH_DYN_CHANNEL_CREATE, /* proxyChannelDataEventInfo */
 	FILTER_TYPE_SERVER_FETCH_TARGET_ADDR,              /* proxyFetchTargetEventInfo */
 	FILTER_TYPE_SERVER_PEER_LOGON,                     /* proxyServerPeerLogon */
+	FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_CREATE,     /* proxyChannelDataEventInfo */
 
 	FILTER_LAST
 };

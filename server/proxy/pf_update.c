@@ -604,6 +604,7 @@ void pf_client_register_update_callbacks(rdpUpdate* update)
 	update->ServerStatusInfo = pf_client_server_status_info;
 	update->SetKeyboardIndicators = pf_client_set_keyboard_indicators;
 	update->SetKeyboardImeStatus = pf_client_set_keyboard_ime_status;
+
 	/* Rail window updates */
 	update->window->WindowCreate = pf_client_window_create;
 	update->window->WindowUpdate = pf_client_window_update;
@@ -615,6 +616,7 @@ void pf_client_register_update_callbacks(rdpUpdate* update)
 	update->window->NotifyIconDelete = pf_client_notify_icon_delete;
 	update->window->MonitoredDesktop = pf_client_monitored_desktop;
 	update->window->NonMonitoredDesktop = pf_client_non_monitored_desktop;
+
 	/* Pointer updates */
 	update->pointer->PointerSystem = pf_client_send_pointer_system;
 	update->pointer->PointerPosition = pf_client_send_pointer_position;

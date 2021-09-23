@@ -24,6 +24,7 @@
 #include <winpr/ini.h>
 
 #include <freerdp/api.h>
+#include <freerdp/server/proxy/proxy_modules_api.h>
 
 typedef struct proxy_config proxyConfig;
 
@@ -41,6 +42,7 @@ struct proxy_config
 	/* input */
 	BOOL Keyboard;
 	BOOL Mouse;
+	BOOL Multitouch;
 
 	/* server security */
 	BOOL ServerTlsSecurity;
@@ -58,7 +60,11 @@ struct proxy_config
 	BOOL DisplayControl;
 	BOOL Clipboard;
 	BOOL AudioOutput;
+	BOOL AudioInput;
 	BOOL RemoteApp;
+	BOOL DeviceRedirection;
+	BOOL VideoRedirection;
+	BOOL CameraRedirection;
 
 	BOOL PassthroughIsBlacklist;
 	char** Passthrough;
@@ -185,6 +191,17 @@ extern "C"
 	 * @return TRUE for success, FALSE otherwise
 	 */
 	FREERDP_API BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config);
+
+	/**
+	 * @brief pf_config_plugin Register a proxy plugin handling event filtering
+	 * defined in the configuration.
+	 *
+	 * @param plugins_manager
+	 * @param userdata A proxyConfig* to use as reference
+	 *
+	 * @return  TRUE for success, FALSE for failure
+	 */
+	FREERDP_API BOOL pf_config_plugin(proxyPluginsManager* plugins_manager, void* userdata);
 
 #ifdef __cplusplus
 };

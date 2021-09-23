@@ -33,10 +33,10 @@
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/channels/encomsp.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/channels/rdpsnd.h>
+#include <freerdp/channels/cliprdr.h>
+#include <freerdp/channels/channels.h>
 
-#include "pf_channels.h"
-#include "pf_gdi.h"
-#include "pf_graphics.h"
 #include "pf_client.h"
 #include <freerdp/server/proxy/proxy_context.h>
 #include "pf_update.h"
@@ -212,9 +212,27 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	settings->UseMultimon = TRUE;
 
 	/* Sound */
-	settings->AudioPlayback = config->AudioOutput;
-	if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, "rdpdr"))
-		settings->DeviceRedirection = TRUE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_AudioCapture, config->AudioInput) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, config->AudioOutput) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection,
+	                               config->DeviceRedirection) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl,
+	                               config->DisplayControl) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteAssistanceMode, config->RemoteApp) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_MultiTouchInput, config->Multitouch))
+		return FALSE;
+
+	if (config->RemoteApp)
+	{
+		if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RAIL_SVC_CHANNEL_NAME))
+			settings->RemoteApplicationMode = TRUE;
+	}
+
+	if (config->DeviceRedirection)
+	{
+		if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RDPDR_SVC_CHANNEL_NAME))
+			settings->DeviceRedirection = TRUE;
+	}
 
 	/* Display control */
 	settings->SupportDisplayControl = config->DisplayControl;
@@ -223,22 +241,14 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, ENCOMSP_SVC_CHANNEL_NAME))
 		settings->EncomspVirtualChannel = TRUE;
 
-	if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, CLIPRDR_SVC_CHANNEL_NAME))
-		settings->RedirectClipboard = config->Clipboard;
+	if (config->Clipboard)
+	{
+		if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, CLIPRDR_SVC_CHANNEL_NAME))
+			settings->RedirectClipboard = config->Clipboard;
+	}
 
 	settings->AutoReconnectionEnabled = TRUE;
 
-	/**
-	 * Register the channel listeners.
-	 * They are required to set up / tear down channels if they are loaded.
-	 */
-	if (!config->PassthroughIsBlacklist || (config->PassthroughCount != 0))
-	{
-		PubSub_SubscribeChannelConnected(instance->context->pubSub,
-		                                 pf_channels_on_client_channel_connect);
-		PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-		                                    pf_channels_on_client_channel_disconnect);
-	}
 	PubSub_SubscribeErrorInfo(instance->context->pubSub, pf_client_on_error_info);
 	PubSub_SubscribeActivated(instance->context->pubSub, pf_client_on_activated);
 	/**
@@ -256,12 +266,53 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 		return FALSE;
 	}
 
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!pf_utils_is_passthrough(config))
 	{
-		PROXY_LOG_ERR(TAG, pc, "Failed to load addins");
-		return FALSE;
+		if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+		{
+			PROXY_LOG_ERR(TAG, pc, "Failed to load addins");
+			return FALSE;
+		}
 	}
+	else
+	{
+		/* Copy the current channel settings from the peer connection to the client. */
+		if (!freerdp_channels_from_mcs(settings, &ps->context))
+			return FALSE;
 
+		/* Filter out channels we do not want */
+		{
+			CHANNEL_DEF* channels = (CHANNEL_DEF*)freerdp_settings_get_pointer_array(
+			    settings, FreeRDP_ChannelDefArray, 0);
+			size_t x, size = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
+
+			WINPR_ASSERT(channels || (size == 0));
+
+			for (x = 0; x < size;)
+			{
+				CHANNEL_DEF* cur = &channels[x];
+				proxyChannelDataEventInfo dev = { 0 };
+
+				dev.channel_name = cur->name;
+				dev.flags = cur->options;
+
+				/* Filter out channels blocked by config */
+				if (!pf_modules_run_filter(pc->pdata->module,
+				                           FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_CREATE, pc->pdata,
+				                           &dev))
+				{
+					const size_t s = size - MIN(size, x + 1);
+					memmove(cur, &cur[1], sizeof(CHANNEL_DEF) * s);
+					size--;
+				}
+				else
+					x++;
+			}
+
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, x))
+				return FALSE;
+		}
+	}
 	return pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_PRE_CONNECT, pc->pdata, pc);
 }
 
@@ -497,24 +548,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
 
-	if (!pf_register_pointer(context->graphics))
-		return FALSE;
-
-	if (!settings->SoftwareGdi)
-	{
-		if (!pf_register_graphics(context->graphics))
-		{
-			PROXY_LOG_ERR(TAG, pc, "failed to register graphics");
-			return FALSE;
-		}
-
-		pf_gdi_register_update_callbacks(update);
-		brush_cache_register_callbacks(update);
-		glyph_cache_register_callbacks(update);
-		bitmap_cache_register_callbacks(update);
-		offscreen_cache_register_callbacks(update);
-		palette_cache_register_callbacks(update);
-	}
+	WINPR_ASSERT(settings->SoftwareGdi);
 
 	pf_client_register_update_callbacks(update);
 
@@ -559,10 +593,6 @@ static void pf_client_post_disconnect(freerdp* instance)
 	pc->connected = FALSE;
 	pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_POST_CONNECT, pc->pdata, pc);
 
-	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
-	                                   pf_channels_on_client_channel_connect);
-	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
-	                                      pf_channels_on_client_channel_disconnect);
 	PubSub_UnsubscribeErrorInfo(instance->context->pubSub, pf_client_on_error_info);
 	gdi_free(instance);
 

@@ -510,6 +510,12 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_ToggleFullscreen:
 			return settings->ToggleFullscreen;
 
+		case FreeRDP_TransportDump:
+			return settings->TransportDump;
+
+		case FreeRDP_TransportDumpReplay:
+			return settings->TransportDumpReplay;
+
 		case FreeRDP_UnicodeInput:
 			return settings->UnicodeInput;
 
@@ -1191,6 +1197,14 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_ToggleFullscreen:
 			settings->ToggleFullscreen = val;
+			break;
+
+		case FreeRDP_TransportDump:
+			settings->TransportDump = val;
+			break;
+
+		case FreeRDP_TransportDumpReplay:
+			settings->TransportDumpReplay = val;
 			break;
 
 		case FreeRDP_UnicodeInput:
@@ -2420,6 +2434,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_TargetNetAddress:
 			return settings->TargetNetAddress;
 
+		case FreeRDP_TransportDumpFile:
+			return settings->TransportDumpFile;
+
 		case FreeRDP_Username:
 			return settings->Username;
 
@@ -2636,6 +2653,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_TargetNetAddress:
 			return update_string(&settings->TargetNetAddress, val, len, cleanup);
+
+		case FreeRDP_TransportDumpFile:
+			return update_string(&settings->TransportDumpFile, val, len, cleanup);
 
 		case FreeRDP_Username:
 			return update_string(&settings->Username, val, len, cleanup);
