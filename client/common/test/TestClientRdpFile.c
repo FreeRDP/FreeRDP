@@ -8,6 +8,7 @@
 #include <winpr/crypto.h>
 
 #include <freerdp/client/file.h>
+#include <freerdp/channels/rdpecam.h>
 
 static const BYTE testRdpFileUTF16[] = {
 	0xff, 0xfe, 0x73, 0x00, 0x63, 0x00, 0x72, 0x00, 0x65, 0x00, 0x65, 0x00, 0x6e, 0x00, 0x20, 0x00,
@@ -162,7 +163,7 @@ static const BYTE testRdpFileUTF16[] = {
 	0x65, 0x00, 0x0d, 0x00, 0x0a, 0x00
 };
 
-static const char* camera_args[] = { "rdpecam",
+static const char* camera_args[] = { RDPECAM_DVC_CHANNEL_NAME,
 	                                 "device:*",
 	                                 "device:\\?\\usb#vid_0bda&pid_58b0&mi",
 	                                 "device:-\\?\\usb#vid_0bdc&pid_58b1&mi",
@@ -426,7 +427,7 @@ int TestClientRdpFile(int argc, char* argv[])
 			       iValue);
 			goto fail;
 		}
-		args = freerdp_dynamic_channel_collection_find(settings, "rdpecam");
+		args = freerdp_dynamic_channel_collection_find(settings, RDPECAM_DVC_CHANNEL_NAME);
 		if (!args)
 		{
 			printf("rdpecam channel was not loaded");

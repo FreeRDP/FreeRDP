@@ -32,6 +32,7 @@
 #include <freerdp/client/cmdline.h>
 
 #include <freerdp/channels/urbdrc.h>
+#include <freerdp/channels/rdpecam.h>
 
 /**
  * Remote Desktop Plus - Overview of .rdp file settings:
@@ -1023,10 +1024,12 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	    freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
 	file->RedirectSmartCards = freerdp_settings_get_bool(settings, FreeRDP_RedirectSmartCards);
 
-	redirectCameras = freerdp_client_channel_args_to_string(settings, "rdpecam", "device:");
+	redirectCameras =
+	    freerdp_client_channel_args_to_string(settings, RDPECAM_DVC_CHANNEL_NAME, "device:");
 	if (redirectCameras)
 	{
-		char* str = freerdp_client_channel_args_to_string(settings, "rdpecam", "encode:");
+		char* str =
+		    freerdp_client_channel_args_to_string(settings, RDPECAM_DVC_CHANNEL_NAME, "encode:");
 		file->EncodeRedirectedVideoCapture = 0;
 		if (str)
 		{
@@ -1038,7 +1041,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		}
 		free(str);
 
-		str = freerdp_client_channel_args_to_string(settings, "rdpecam", "quality:");
+		str = freerdp_client_channel_args_to_string(settings, RDPECAM_DVC_CHANNEL_NAME, "quality:");
 		file->RedirectedVideoCaptureEncodingQuality = 0;
 		if (str)
 		{
@@ -1994,7 +1997,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t)file->RedirectCameras))
 	{
 		BOOL status;
-		ADDIN_ARGV* args = rdp_file_to_args("rdpecam", file->RedirectCameras);
+		ADDIN_ARGV* args = rdp_file_to_args(RDPECAM_DVC_CHANNEL_NAME, file->RedirectCameras);
 		if (!args)
 			return FALSE;
 
