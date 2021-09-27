@@ -201,12 +201,10 @@ endif()
 	find_feature(MbedTLS ${MBEDTLS_FEATURE_TYPE} ${MBEDTLS_FEATURE_PURPOSE} ${MBEDTLS_FEATURE_DESCRIPTION})
 
 	if(OPENSSL_FOUND)
-		add_definitions("-DWITH_OPENSSL")
 		include_directories(${OPENSSL_INCLUDE_DIR})
 	endif()
 
 	if(MBEDTLS_FOUND)
-		add_definitions("-DWITH_MBEDTLS")
 		freerdp_include_directory_add(${MBEDTLS_INCLUDE_DIR})
 	endif()
 
