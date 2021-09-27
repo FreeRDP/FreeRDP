@@ -189,7 +189,7 @@ endif()
 		list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES pthread)
 	endif()
 
-set(OPENSSL_FEATURE_TYPE "RECOMMENDED")
+	set(OPENSSL_FEATURE_TYPE "RECOMMENDED")
 	set(OPENSSL_FEATURE_PURPOSE "cryptography")
 	set(OPENSSL_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
 
@@ -202,10 +202,12 @@ set(OPENSSL_FEATURE_TYPE "RECOMMENDED")
 
 	if(OPENSSL_FOUND)
 		add_definitions("-DWITH_OPENSSL")
+		include_directories(${OPENSSL_INCLUDE_DIR})
 	endif()
 
 	if(MBEDTLS_FOUND)
 		add_definitions("-DWITH_MBEDTLS")
+		freerdp_include_directory_add(${MBEDTLS_INCLUDE_DIR})
 	endif()
 
     if (NOT OPENSSL_FOUND AND NOT MBEDTLS_FOUND)

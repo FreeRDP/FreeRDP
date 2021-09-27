@@ -34,4 +34,14 @@
 #cmakedefine WITH_DEBUG_EVENTS
 #cmakedefine WITH_DEBUG_MUTEX
 
+#cmakedefine OPENSSL_FOUND
+#if defined(OPENSSL_FOUND)
+#define WITH_OPENSSL
+#endif
+
+#cmakedefine MBEDTLS_FOUND
+#if defined(MBEDTLS_FOUND)
+#define WITH_MBEDTLS
+#endif
+
 #endif /* WINPR_CONFIG_H */

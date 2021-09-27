@@ -25,12 +25,12 @@ winpr_module_add(
 
 if(OPENSSL_FOUND)
 	winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
-	winpr_library_add_private(${OPENSSL_LIBRARIES})
+	winpr_library_add_public(${OPENSSL_LIBRARIES})
 endif()
 
 if(MBEDTLS_FOUND)
 	winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
-	winpr_library_add_private(${MBEDTLS_LIBRARIES})
+	winpr_library_add_public(${MBEDTLS_LIBRARIES})
 endif()
 
 if(WIN32)
