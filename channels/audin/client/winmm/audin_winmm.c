@@ -368,6 +368,9 @@ static BOOL audin_winmm_format_supported(IAudinDevice* device, const AUDIO_FORMA
 	if (format->wFormatTag != WAVE_FORMAT_PCM)
 		return FALSE;
 
+	if (format->nChannels != 1)
+		return FALSE;
+
 	pwfx = (PWAVEFORMATEX)malloc(sizeof(WAVEFORMATEX) + format->cbSize);
 
 	if (!pwfx)
