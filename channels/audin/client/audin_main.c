@@ -427,10 +427,12 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 		{
 			format.nSamplesPerSec = samplerates[x];
 			format.nChannels = audin->format->nChannels;
+			format.nBlockAlign = 2 * format.nChannels;
 			test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
 			if (test)
 				break;
 			format.nChannels = 3 - format.nChannels;
+			format.nBlockAlign = 2 * format.nChannels;
 			test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
 			if (test)
 				break;
