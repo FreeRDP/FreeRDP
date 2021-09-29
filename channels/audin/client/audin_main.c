@@ -431,11 +431,14 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 			test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
 			if (test)
 				break;
-			format.nChannels = 3 - format.nChannels;
+			/* Try with different number of channels */
+			format.nChannels = format.nChannels == 1 ? 2 : 1;
 			format.nBlockAlign = 2 * format.nChannels;
 			test = IFCALLRESULT(FALSE, audin->device->FormatSupported, audin->device, &format);
 			if (test)
 				break;
+			/* Restore the original number of channel */
+			format.nChannels = format.nChannels == 1 ? 2 : 1;
 		}
 		if (!test)
 			return FALSE;
