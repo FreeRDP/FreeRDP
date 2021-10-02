@@ -63,6 +63,7 @@ include(FindPkgConfig)
 include(TestBigEndian)
 
 include(FindFeature)
+include(ShowCMakeVars)
 include(ConfigOptions)
 include(ComplexLibrary)
 include(FeatureSummary)
@@ -1019,3 +1020,11 @@ FOREACH(var ${res})
 ENDFOREACH()
 string(REPLACE ";" " " FREERDP_BUILD_CONFIG "${FREERDP_BUILD_CONFIG_LIST}")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/buildflags.h)
+
+message(STATUS "Intrinsic path configuration:")
+#ShowCMakeVars("^CMAKE_INSTALL_PREFIX")
+#ShowCMakeVars("^CMAKE_INSTALL_LIBDIR")
+ShowCMakeVars("^FREERDP_INSTALL_PREFIX|^FREERDP_LIBRARY_PATH|^FREERDP_PLUGIN_PATH")
+ShowCMakeVars("^FREERDP_ADDIN_PATH|^FREERDP_EXTENSION_PATH|^FREERDP_PROXY_PLUGINDIR")
+
+
