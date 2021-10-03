@@ -103,6 +103,8 @@ LPSTR freerdp_get_dynamic_addin_install_path(void)
 	needInstallPath = is_path_required(pszInstallPrefix, cchInstallPrefix);
 	needLibPath = is_path_required(pszAddinPath, cchAddinPath);
 
+	WLog_DBG(TAG, "freerdp_get_dynamic_addin_install_path <- pszInstallPrefix: %s, pszAddinPath: %s", pszInstallPrefix, pszAddinPath);
+
 	if (!needInstallPath && !needLibPath)
 		return NULL;
 
@@ -126,6 +128,8 @@ LPSTR freerdp_get_dynamic_addin_install_path(void)
 		}
 	}
 
+	WLog_DBG(TAG, "freerdp_get_dynamic_addin_install_path -> pszPath: %s", pszPath);
+
 	return pszPath;
 }
 
@@ -148,6 +152,8 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPa
 
 	if (!pszFileName || !pszEntryName)
 		goto fail;
+
+	WLog_DBG(TAG, "freerdp_load_dynamic_addin <- pszFileName: %s, pszPath: %s, pszEntryName: %s", pszFileName, pszPath, pszEntryName);
 
 	cchFileName = strlen(pszFileName);
 
