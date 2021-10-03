@@ -175,7 +175,6 @@ static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 	return TRUE;
 fail:
 	WLog_ERR(TAG, "certificate store initialization failed");
-	certificate_store_uninit(certificate_store);
 	return FALSE;
 }
 
