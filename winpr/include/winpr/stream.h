@@ -371,16 +371,22 @@ extern "C"
 		_s->length = (size_t)(_s->pointer - _s->buffer);
 	}
 
-	static INLINE size_t Stream_GetRemainingCapacity(wStream* _s)
+	static INLINE ssize_t Stream_GetRemainingCapacity(wStream* _s)
 	{
 		WINPR_ASSERT(_s);
 		return (_s->capacity - (size_t)(_s->pointer - _s->buffer));
 	}
 
-	static INLINE size_t Stream_GetRemainingLength(wStream* _s)
+	static INLINE ssize_t Stream_GetRemainingLength(wStream* _s)
 	{
 		WINPR_ASSERT(_s);
 		return (_s->length - (size_t)(_s->pointer - _s->buffer));
+	}
+
+	static INLINE BOOL Stream_Verify(wStream* _s)
+	{
+		WINPR_ASSERT(_s);
+		return Stream_GetRemainingLength(_s) >= 0 && Stream_GetRemainingCapacity(_s) >= 0;
 	}
 
 	static INLINE void Stream_Clear(wStream* _s)

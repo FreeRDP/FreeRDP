@@ -290,7 +290,10 @@ void Stream_Release(wStream* s)
 		StreamPool_Unlock(s->pool);
 
 		if (count == 0)
+		{
+			WINPR_SECURITY(Stream_Verify(s));
 			StreamPool_Return(s->pool, s);
+		}
 	}
 }
 

@@ -46,6 +46,18 @@
 	} while (0)
 #endif
 
+#define WINPR_SECURITY(cond)                                                                   \
+	do                                                                                         \
+	{                                                                                          \
+		if (!(cond))                                                                           \
+		{                                                                                      \
+			const char* tag = "com.freerdp.winpr.security";                                    \
+			WLog_FATAL(tag, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, __FUNCTION__, __LINE__); \
+			winpr_log_backtrace(tag, WLOG_FATAL, 20);                                          \
+			abort();                                                                           \
+		}                                                                                      \
+	} while (0)
+
 #ifdef __cplusplus
 extern "C"
 {

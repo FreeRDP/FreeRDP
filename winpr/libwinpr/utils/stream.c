@@ -126,6 +126,7 @@ void Stream_Free(wStream* s, BOOL bFreeBuffer)
 {
 	if (s)
 	{
+		WINPR_SECURITY(Stream_Verify(s));
 		if (bFreeBuffer && s->isOwner)
 			free(s->buffer);
 
