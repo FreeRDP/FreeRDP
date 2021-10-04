@@ -569,7 +569,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 
 BOOL tsmf_codec_check_media_type(const char* decoder_name, wStream* s)
 {
-	BYTE* m;
+	size_t pos;
 	BOOL ret = FALSE;
 	TS_AM_MEDIA_TYPE mediatype;
 
@@ -583,10 +583,10 @@ BOOL tsmf_codec_check_media_type(const char* decoder_name, wStream* s)
 			decoderAvailable = TRUE;
 	}
 
-	Stream_GetPointer(s, m);
+	pos = Stream_GetPosition(s);
 	if (decoderAvailable)
 		ret = tsmf_codec_parse_media_type(&mediatype, s);
-	Stream_SetPointer(s, m);
+	Stream_SetPosition(s, pos);
 
 	if (ret)
 	{
