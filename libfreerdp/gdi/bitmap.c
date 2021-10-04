@@ -52,14 +52,14 @@
  * @return pixel color
  */
 
-INLINE UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos)
+UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdc->selectedObject;
 	BYTE* data = &(hBmp->data[(nYPos * hBmp->scanline) + nXPos * GetBytesPerPixel(hBmp->format)]);
 	return ReadColor(data, hBmp->format);
 }
 
-INLINE BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
+BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
 {
 	UINT32 bpp = GetBytesPerPixel(hBmp->format);
 	return &hBmp->data[(Y * hBmp->width * bpp) + X * bpp];
@@ -82,7 +82,7 @@ static INLINE UINT32 gdi_SetPixelBmp(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y, UINT3
 	return crColor;
 }
 
-INLINE UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y, UINT32 crColor)
+UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y, UINT32 crColor)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdc->selectedObject;
 	return gdi_SetPixelBmp(hBmp, X, Y, crColor);
