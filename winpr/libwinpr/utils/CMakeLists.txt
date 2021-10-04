@@ -105,6 +105,7 @@ set(${MODULE_PREFIX}_SRCS
 	ntlm.c
 	image.c
 	print.c
+	stream.h
 	stream.c
 	strlst.c
 	debug.c

@@ -26,6 +26,8 @@
 
 #include <winpr/collections.h>
 
+#include "../stream.h"
+
 struct _wStreamPool
 {
 	size_t aSize;
@@ -253,8 +255,11 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 	StreamPool_Lock(pool);
 
 	StreamPool_EnsureCapacity(pool, 1, FALSE);
-	pool->aArray[(pool->aSize)++] = s;
-	StreamPool_RemoveUsed(pool, s);
+	{
+		Stream_EnsureValidity(s);
+		pool->aArray[(pool->aSize)++] = s;
+		StreamPool_RemoveUsed(pool, s);
+	}
 
 	StreamPool_Unlock(pool);
 }
