@@ -113,8 +113,13 @@ static void certificate_store_uninit(rdpCertificateStore* certificate_store)
 	if (certificate_store)
 	{
 		free(certificate_store->certs_path);
+		certificate_store->certs_path = NULL;
+
 		free(certificate_store->file);
+		certificate_store->file = NULL;
+
 		free(certificate_store->server_path);
+		certificate_store->server_path = NULL;
 	}
 }
 
@@ -147,22 +152,30 @@ static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 {
 	const rdpSettings* settings;
 	const char* ConfigPath;
+
 	if (!certificate_store)
 		return FALSE;
-	settings = certificate_store->settings;
 
+	settings = certificate_store->settings;
 	if (!settings)
 		return FALSE;
+
 	ConfigPath = settings->ConfigPath;
 	if (!ConfigPath)
 		return FALSE;
+
+	WINPR_ASSERT(!certificate_store->certs_path);
 	if (!(certificate_store->certs_path =
 	          GetCombinedPath(ConfigPath, (const char*)certificate_store_dir)))
 		goto fail;
+
+	WINPR_ASSERT(!certificate_store->server_path);
 	certificate_store->server_path =
 	    GetCombinedPath(ConfigPath, (const char*)certificate_server_dir);
 	if (!certificate_store->server_path)
 		goto fail;
+
+	WINPR_ASSERT(!certificate_store->file);
 	if (!(certificate_store->file =
 	          GetCombinedPath(ConfigPath, (const char*)certificate_known_hosts_file)))
 		goto fail;
