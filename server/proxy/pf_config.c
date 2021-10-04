@@ -226,21 +226,6 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 	config->Passthrough = pf_config_parse_comma_separated_list(
 	    pf_config_get_str(ini, "Channels", "Passthrough", FALSE), &config->PassthroughCount);
 
-	{
-		/* validate channel name length */
-		size_t i;
-
-		for (i = 0; i < config->PassthroughCount; i++)
-		{
-			const char* name = config->Passthrough[i];
-			if (strlen(name) > CHANNEL_NAME_LEN)
-			{
-				WLog_ERR(TAG, "passthrough channel: %s: name too long!", config->Passthrough[i]);
-				return FALSE;
-			}
-		}
-	}
-
 	return TRUE;
 }
 

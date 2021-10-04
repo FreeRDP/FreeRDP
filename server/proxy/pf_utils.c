@@ -35,7 +35,7 @@ int pf_utils_channel_is_passthrough(const proxyConfig* config, const char* name)
 	for (i = 0; i < config->PassthroughCount; i++)
 	{
 		const char* channel_name = config->Passthrough[i];
-		if (strncmp(name, channel_name, CHANNEL_NAME_LEN + 1) == 0)
+		if (strcmp(name, channel_name) == 0)
 		{
 			found = TRUE;
 			break;
