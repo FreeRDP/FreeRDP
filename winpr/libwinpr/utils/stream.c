@@ -26,6 +26,20 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+#include "stream.h"
+
+#define STREAM_ASSERT(cond)                                                                    \
+	do                                                                                         \
+	{                                                                                          \
+		if (!(cond))                                                                           \
+		{                                                                                      \
+			const char* tag = "com.freerdp.winpr.wStream";                                     \
+			WLog_FATAL(tag, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, __FUNCTION__, __LINE__); \
+			winpr_log_backtrace(tag, WLOG_FATAL, 20);                                          \
+			abort();                                                                           \
+		}                                                                                      \
+	} while (0)
+
 BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 {
 	WINPR_ASSERT(s);
@@ -122,10 +136,29 @@ void Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
 	s->isOwner = FALSE;
 }
 
+void Stream_EnsureValidity(wStream* s)
+{
+	size_t cur;
+
+	STREAM_ASSERT(s);
+	STREAM_ASSERT(s->pointer >= s->buffer);
+
+	cur = (size_t)(s->pointer - s->buffer);
+	STREAM_ASSERT(cur <= s->capacity);
+	STREAM_ASSERT(s->length <= s->capacity);
+
+	/* Length is only valid after a call to Stream_SealLength */
+	if (s->length > 0)
+	{
+		STREAM_ASSERT(cur <= s->length);
+	}
+}
+
 void Stream_Free(wStream* s, BOOL bFreeBuffer)
 {
 	if (s)
 	{
+		Stream_EnsureValidity(s);
 		if (bFreeBuffer && s->isOwner)
 			free(s->buffer);
 
