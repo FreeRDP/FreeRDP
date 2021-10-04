@@ -133,3 +133,56 @@ void Stream_Free(wStream* s, BOOL bFreeBuffer)
 			free(s);
 	}
 }
+
+BOOL Stream_SetLength(wStream* _s, size_t _l)
+{
+	if ((_l) > Stream_Capacity(_s))
+	{
+		_s->length = 0;
+		return FALSE;
+	}
+	_s->length = _l;
+	return TRUE;
+}
+
+BOOL Stream_SetPosition(wStream* _s, size_t _p)
+{
+	if ((_p) > Stream_Capacity(_s))
+	{
+		_s->pointer = _s->buffer;
+		return FALSE;
+	}
+	_s->pointer = _s->buffer + (_p);
+	return TRUE;
+}
+
+#if defined(WITH_WINPR_DEPRECATED)
+BOOL Stream_SetPointer(wStream* _s, BYTE* _p)
+{
+	WINPR_ASSERT(_s);
+	if (!_p || (_s->buffer > _p) || (_s->buffer + _s->capacity < _p))
+	{
+		_s->pointer = _s->buffer;
+		return FALSE;
+	}
+	_s->pointer = _p;
+	return TRUE;
+}
+
+BOOL Stream_SetBuffer(wStream* _s, BYTE* _b)
+{
+	WINPR_ASSERT(_s);
+	WINPR_ASSERT(_b);
+
+	_s->buffer = _b;
+	_s->pointer = _b;
+	return _s->buffer != NULL;
+}
+
+void Stream_SetCapacity(wStream* _s, size_t _c)
+{
+	WINPR_ASSERT(_s);
+	_s->capacity = _c;
+}
+
+#endif

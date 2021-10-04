@@ -1045,8 +1045,6 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 	if (!s)
 		return -2005;
 
-	Stream_SetLength(s, SrcSize);
-
 	if (Stream_GetRemainingLength(s) < 2)
 	{
 		WLog_ERR(TAG, "stream short %" PRIuz " [2 expected]", Stream_GetRemainingLength(s));

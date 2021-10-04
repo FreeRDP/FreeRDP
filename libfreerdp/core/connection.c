@@ -995,7 +995,7 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 {
-	BYTE* mark;
+	size_t pos;
 	UINT16 length;
 	UINT16 channelId;
 
@@ -1003,7 +1003,7 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 	if (rdp->mcs->messageChannelId != 0)
 	{
 		/* Process any MCS message channel PDUs. */
-		Stream_GetPointer(s, mark);
+		pos = Stream_GetPosition(s);
 
 		if (rdp_read_header(rdp, s, &length, &channelId))
 		{
@@ -1028,7 +1028,7 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 			}
 		}
 
-		Stream_SetPointer(s, mark);
+		Stream_SetPosition(s, pos);
 	}
 
 	return FALSE;
@@ -1058,19 +1058,21 @@ int rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 
 int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 {
-	BYTE* mark;
+	size_t pos;
 	UINT16 width;
 	UINT16 height;
 	UINT16 length;
 	width = rdp->settings->DesktopWidth;
 	height = rdp->settings->DesktopHeight;
-	Stream_GetPointer(s, mark);
+
+	pos = Stream_GetPosition(s);
 
 	if (!rdp_recv_demand_active(rdp, s))
 	{
 		int rc;
 		UINT16 channelId;
-		Stream_SetPointer(s, mark);
+
+		Stream_SetPosition(s, pos);
 		if (!rdp_recv_get_active_header(rdp, s, &channelId, &length))
 			return -1;
 		/* Was Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
