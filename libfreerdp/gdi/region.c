@@ -360,7 +360,7 @@ INLINE BOOL gdi_CRgnToRect(INT64 x, INT64 y, INT32 w, INT32 h, HGDI_RECT rect)
  * @param bottom y2
  */
 
-INLINE BOOL gdi_RgnToCRect(const HGDI_RGN rgn, INT32* left, INT32* top, INT32* right, INT32* bottom)
+BOOL gdi_RgnToCRect(const HGDI_RGN rgn, INT32* left, INT32* top, INT32* right, INT32* bottom)
 {
 	BOOL rc = TRUE;
 	if ((rgn->w < 0) || (rgn->h < 0))
