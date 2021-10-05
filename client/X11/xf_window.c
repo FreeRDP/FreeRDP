@@ -174,6 +174,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		xfc->savedHeight = xfc->window->height;
 		xfc->savedPosX = xfc->window->left;
 		xfc->savedPosY = xfc->window->top;
+
 		startX = (settings->DesktopPosX != UINT32_MAX) ? settings->DesktopPosX : 0;
 		startY = (settings->DesktopPosY != UINT32_MAX) ? settings->DesktopPosY : 0;
 	}
@@ -229,7 +230,11 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 		if (!fullscreen)
 		{
-			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
+			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN
+			 * Resize the window again, the previous call to xf_SendClientEvent might have
+			 * changed the window size (borders, ...)
+			 */
+			xf_ResizeDesktopWindow(xfc, window, width, height);
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 		}
 
