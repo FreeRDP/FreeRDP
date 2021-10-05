@@ -51,8 +51,8 @@ extern "C"
 	typedef struct _wStream wStream;
 
 	static INLINE size_t Stream_Capacity(wStream* _s);
-	static INLINE size_t Stream_GetRemainingCapacity(wStream* _s);
-	static INLINE size_t Stream_GetRemainingLength(wStream* _s);
+	WINPR_API size_t Stream_GetRemainingCapacity(wStream* _s);
+	WINPR_API size_t Stream_GetRemainingLength(wStream* _s);
 
 	WINPR_API BOOL Stream_EnsureCapacity(wStream* s, size_t size);
 	WINPR_API BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size);
@@ -393,58 +393,7 @@ extern "C"
 
 	WINPR_API BOOL Stream_SetPosition(wStream* _s, size_t _p);
 
-	static INLINE void Stream_SealLength(wStream* _s)
-	{
-		size_t cur;
-		WINPR_ASSERT(_s);
-		WINPR_ASSERT(_s->buffer <= _s->pointer);
-		cur = (size_t)(_s->pointer - _s->buffer);
-		WINPR_ASSERT(cur <= _s->capacity);
-		if (cur <= _s->capacity)
-			_s->length = cur;
-		else
-		{
-			const char* wTAG = "com.freerdp.winpr.wStream";
-			WLog_FATAL(wTAG, "wStream API misuse: stream was written out of bounds");
-			winpr_log_backtrace(wTAG, WLOG_FATAL, 20);
-			_s->length = 0;
-		}
-	}
-
-	static INLINE size_t Stream_GetRemainingCapacity(wStream* _s)
-	{
-		size_t cur;
-		WINPR_ASSERT(_s);
-		WINPR_ASSERT(_s->buffer <= _s->pointer);
-		cur = (size_t)(_s->pointer - _s->buffer);
-		WINPR_ASSERT(cur <= _s->capacity);
-		if (cur > _s->capacity)
-		{
-			const char* wTAG = "com.freerdp.winpr.wStream";
-			WLog_FATAL(wTAG, "wStream API misuse: stream was written out of bounds");
-			winpr_log_backtrace(wTAG, WLOG_FATAL, 20);
-			return 0;
-		}
-		return (_s->capacity - cur);
-	}
-
-	static INLINE size_t Stream_GetRemainingLength(wStream* _s)
-	{
-		size_t cur;
-		WINPR_ASSERT(_s);
-		WINPR_ASSERT(_s->buffer <= _s->pointer);
-		WINPR_ASSERT(_s->length <= _s->capacity);
-		cur = (size_t)(_s->pointer - _s->buffer);
-		WINPR_ASSERT(cur <= _s->length);
-		if (cur > _s->length)
-		{
-			const char* wTAG = "com.freerdp.winpr.wStream";
-			WLog_FATAL(wTAG, "wStream API misuse: stream was read out of bounds");
-			winpr_log_backtrace(wTAG, WLOG_FATAL, 20);
-			return 0;
-		}
-		return (_s->length - cur);
-	}
+	WINPR_API void Stream_SealLength(wStream* _s);
 
 	static INLINE void Stream_Clear(wStream* _s)
 	{
@@ -461,39 +410,8 @@ extern "C"
 		return TRUE;
 	}
 
-	static INLINE BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t length)
-	{
-		size_t x;
-
-		WINPR_ASSERT(s);
-		WINPR_ASSERT(dst);
-
-		if (Stream_GetRemainingLength(s) / sizeof(WCHAR) < length)
-			return FALSE;
-
-		for (x = 0; x < length; x++)
-			Stream_Read_UINT16(s, dst[x]);
-
-		return TRUE;
-	}
-
-	static INLINE BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t length)
-	{
-		size_t x;
-
-		WINPR_ASSERT(s);
-		WINPR_ASSERT(src || (length == 0));
-		if (!s || !src)
-			return FALSE;
-
-		if (Stream_GetRemainingCapacity(s) / sizeof(WCHAR) < length)
-			return FALSE;
-
-		for (x = 0; x < length; x++)
-			Stream_Write_UINT16(s, src[x]);
-
-		return TRUE;
-	}
+	WINPR_API BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t length);
+	WINPR_API BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t length);
 
 	/* StreamPool */
 

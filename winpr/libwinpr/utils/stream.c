@@ -27,17 +27,20 @@
 #include <winpr/stream.h>
 
 #include "stream.h"
+#include "../log.h"
 
-#define STREAM_ASSERT(cond)                                                                    \
-	do                                                                                         \
-	{                                                                                          \
-		if (!(cond))                                                                           \
-		{                                                                                      \
-			const char* tag = "com.freerdp.winpr.wStream";                                     \
-			WLog_FATAL(tag, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, __FUNCTION__, __LINE__); \
-			winpr_log_backtrace(tag, WLOG_FATAL, 20);                                          \
-			abort();                                                                           \
-		}                                                                                      \
+#define STREAM_TAG WINPR_TAG("wStream")
+
+#define STREAM_ASSERT(cond)                                                                \
+	do                                                                                     \
+	{                                                                                      \
+		if (!(cond))                                                                       \
+		{                                                                                  \
+			WLog_FATAL(STREAM_TAG, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, __FUNCTION__, \
+			           __LINE__);                                                          \
+			winpr_log_backtrace(STREAM_TAG, WLOG_FATAL, 20);                               \
+			abort();                                                                       \
+		}                                                                                  \
 	} while (0)
 
 BOOL Stream_EnsureCapacity(wStream* s, size_t size)
@@ -189,6 +192,23 @@ BOOL Stream_SetPosition(wStream* _s, size_t _p)
 	return TRUE;
 }
 
+void Stream_SealLength(wStream* _s)
+{
+	size_t cur;
+	WINPR_ASSERT(_s);
+	WINPR_ASSERT(_s->buffer <= _s->pointer);
+	cur = (size_t)(_s->pointer - _s->buffer);
+	WINPR_ASSERT(cur <= _s->capacity);
+	if (cur <= _s->capacity)
+		_s->length = cur;
+	else
+	{
+		WLog_FATAL(STREAM_TAG, "wStream API misuse: stream was written out of bounds");
+		winpr_log_backtrace(STREAM_TAG, WLOG_FATAL, 20);
+		_s->length = 0;
+	}
+}
+
 #if defined(WITH_WINPR_DEPRECATED)
 BOOL Stream_SetPointer(wStream* _s, BYTE* _p)
 {
@@ -219,3 +239,70 @@ void Stream_SetCapacity(wStream* _s, size_t _c)
 }
 
 #endif
+
+size_t Stream_GetRemainingCapacity(wStream* _s)
+{
+	size_t cur;
+	WINPR_ASSERT(_s);
+	WINPR_ASSERT(_s->buffer <= _s->pointer);
+	cur = (size_t)(_s->pointer - _s->buffer);
+	WINPR_ASSERT(cur <= _s->capacity);
+	if (cur > _s->capacity)
+	{
+		WLog_FATAL(STREAM_TAG, "wStream API misuse: stream was written out of bounds");
+		winpr_log_backtrace(STREAM_TAG, WLOG_FATAL, 20);
+		return 0;
+	}
+	return (_s->capacity - cur);
+}
+
+size_t Stream_GetRemainingLength(wStream* _s)
+{
+	size_t cur;
+	WINPR_ASSERT(_s);
+	WINPR_ASSERT(_s->buffer <= _s->pointer);
+	WINPR_ASSERT(_s->length <= _s->capacity);
+	cur = (size_t)(_s->pointer - _s->buffer);
+	WINPR_ASSERT(cur <= _s->length);
+	if (cur > _s->length)
+	{
+		WLog_FATAL(STREAM_TAG, "wStream API misuse: stream was read out of bounds");
+		winpr_log_backtrace(STREAM_TAG, WLOG_FATAL, 20);
+		return 0;
+	}
+	return (_s->length - cur);
+}
+
+BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t length)
+{
+	size_t x;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(src || (length == 0));
+	if (!s || !src)
+		return FALSE;
+
+	if (Stream_GetRemainingCapacity(s) / sizeof(WCHAR) < length)
+		return FALSE;
+
+	for (x = 0; x < length; x++)
+		Stream_Write_UINT16(s, src[x]);
+
+	return TRUE;
+}
+
+BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t length)
+{
+	size_t x;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(dst);
+
+	if (Stream_GetRemainingLength(s) / sizeof(WCHAR) < length)
+		return FALSE;
+
+	for (x = 0; x < length; x++)
+		Stream_Read_UINT16(s, dst[x]);
+
+	return TRUE;
+}
