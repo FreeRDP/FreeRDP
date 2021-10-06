@@ -120,6 +120,8 @@ int main(int argc, char* argv[])
 	pf_server_config_print(config);
 
 	server = pf_server_new(config);
+	pf_server_config_free(config);
+
 	if (!server)
 		goto fail;
 
@@ -133,7 +135,6 @@ int main(int argc, char* argv[])
 
 fail:
 	pf_server_free(server);
-	pf_server_config_free(config);
 
 	return status;
 }
