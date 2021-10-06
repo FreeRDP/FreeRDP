@@ -51,12 +51,12 @@ extern "C"
 	FREERDP_API BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type);
 
 	FREERDP_API BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count,
-	                                                   char** params);
+	                                                   const char** params);
 	FREERDP_API BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count,
-	                                                   char** params);
+	                                                   const char** params);
 	FREERDP_API BOOL freerdp_client_del_static_channel(rdpSettings* settings, const char* name);
 	FREERDP_API BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count,
-	                                                    char** params);
+	                                                    const char** params);
 	FREERDP_API BOOL freerdp_client_del_dynamic_channel(rdpSettings* settings, const char* name);
 
 #ifdef __cplusplus
