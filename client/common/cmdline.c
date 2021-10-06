@@ -447,8 +447,8 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
                                                COMMAND_LINE_ARGUMENT_A* custom)
 {
 	const char* name = "FreeRDP";
-	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
-	memcpy(largs, args, sizeof(args));
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)];
+	memcpy(largs, global_cmd_args, sizeof(global_cmd_args));
 
 	if (argc > 0)
 		name = argv[0];
@@ -1248,8 +1248,8 @@ static int freerdp_detect_windows_style_command_line_syntax(int argc, char** arg
 	DWORD flags;
 	int detect_status;
 	const COMMAND_LINE_ARGUMENT_A* arg;
-	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
-	memcpy(largs, args, sizeof(args));
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)];
+	memcpy(largs, global_cmd_args, sizeof(global_cmd_args));
 
 	flags = COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SILENCE_PARSER;
 	flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
@@ -1291,8 +1291,8 @@ static int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 	DWORD flags;
 	int detect_status;
 	const COMMAND_LINE_ARGUMENT_A* arg;
-	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
-	memcpy(largs, args, sizeof(args));
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)];
+	memcpy(largs, global_cmd_args, sizeof(global_cmd_args));
 
 	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SILENCE_PARSER;
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
@@ -1373,8 +1373,8 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
                                                          COMMAND_LINE_ARGUMENT_A* custom)
 {
 	const COMMAND_LINE_ARGUMENT_A* arg;
-	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
-	memcpy(largs, args, sizeof(args));
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)];
+	memcpy(largs, global_cmd_args, sizeof(global_cmd_args));
 
 	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
 	{
@@ -1554,8 +1554,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	BOOL promptForPassword = FALSE;
 	BOOL compatibility = FALSE;
 	const COMMAND_LINE_ARGUMENT_A* arg;
-	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(args)];
-	memcpy(largs, args, sizeof(args));
+	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)];
+	memcpy(largs, global_cmd_args, sizeof(global_cmd_args));
 
 	/* Command line detection fails if only a .rdp or .msrcIncident file
 	 * is supplied. Check this case first, only then try to detect

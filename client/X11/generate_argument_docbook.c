@@ -170,7 +170,7 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 
 int main(int argc, char* argv[])
 {
-	size_t elements = sizeof(args) / sizeof(args[0]);
+	size_t elements = sizeof(global_cmd_args) / sizeof(global_cmd_args[0]);
 	size_t x;
 	const char* fname = "xfreerdp-argument.1.xml";
 	FILE* fp = NULL;
@@ -198,7 +198,7 @@ int main(int argc, char* argv[])
 
 	for (x = 0; x < elements - 1; x++)
 	{
-		const COMMAND_LINE_ARGUMENT_A* arg = &args[x];
+		const COMMAND_LINE_ARGUMENT_A* arg = &global_cmd_args[x];
 		char* name = tr_esc_str((LPSTR)arg->Name, FALSE);
 		char* alias = tr_esc_str((LPSTR)arg->Alias, FALSE);
 		char* format = tr_esc_str(arg->Format, TRUE);
