@@ -810,8 +810,8 @@ proxyServer* pf_server_new(const proxyConfig* config)
 	if (!pf_config_clone(&server->config, config))
 		goto out;
 
-	server->module = pf_modules_new(FREERDP_PROXY_PLUGINDIR, pf_config_modules(config),
-	                                pf_config_modules_count(config));
+	server->module = pf_modules_new(FREERDP_PROXY_PLUGINDIR, pf_config_modules(server->config),
+	                                pf_config_modules_count(server->config));
 	if (!server->module)
 	{
 		WLog_ERR(TAG, "failed to initialize proxy modules!");
@@ -842,7 +842,7 @@ proxyServer* pf_server_new(const proxyConfig* config)
 	server->listener->info = server;
 	server->listener->PeerAccepted = pf_server_peer_accepted;
 
-	if (!pf_modules_add(server->module, pf_config_plugin, (void*)config))
+	if (!pf_modules_add(server->module, pf_config_plugin, (void*)server->config))
 		goto out;
 
 	return server;
