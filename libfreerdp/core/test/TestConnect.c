@@ -185,7 +185,6 @@ static BOOL prepare_certificates(const char* path)
 	BOOL rc = FALSE;
 	char* exe = NULL;
 	DWORD status;
-	DWORD read_bytes;
 	STARTUPINFOA si = { 0 };
 	SECURITY_ATTRIBUTES saAttr = { 0 };
 	PROCESS_INFORMATION process = { 0 };
