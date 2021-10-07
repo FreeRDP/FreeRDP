@@ -422,7 +422,7 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, size_t* count)
 	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SILENCE_PARSER;
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	flags |= COMMAND_LINE_SIGIL_NOT_ESCAPED;
-	settings = (rdpSettings*)calloc(1, sizeof(rdpSettings));
+	settings = freerdp_settings_new(0);
 
 	if (!settings)
 		return -1;
@@ -433,7 +433,7 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, size_t* count)
 
 	if (status < 0)
 	{
-		free(settings);
+		freerdp_settings_free(settings);
 		return status;
 	}
 
@@ -468,8 +468,7 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, size_t* count)
 			detect_status = 1;
 	}
 
-	free(settings->ServerHostname);
-	free(settings);
+	freerdp_settings_free(settings);
 	return detect_status;
 }
 int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSettings* settings)
