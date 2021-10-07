@@ -490,7 +490,7 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 	size_t nArgs;
 	size_t index;
 	size_t nCommas;
-	size_t prefix, len;
+	size_t prefix, len, namelen = 0;
 	nCommas = 0;
 
 	if (count == NULL)
@@ -535,7 +535,9 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 
 	prefix = (nArgs + 1UL) * sizeof(char*);
 	len = strlen(list);
-	p = (char**)calloc(len + prefix + 1, sizeof(char*));
+	if (name)
+		namelen = strlen(name);
+	p = (char**)calloc(len + prefix + 1 + namelen + 1, sizeof(char*));
 
 	if (!p)
 		return NULL;
@@ -544,7 +546,12 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 	memcpy(str, list, len);
 
 	if (name)
-		p[0] = (char*)name;
+	{
+		char* namestr = &((char*)p)[prefix + len + 1];
+		memcpy(namestr, name, namelen);
+
+		p[0] = namestr;
+	}
 
 	for (index = name ? 1 : 0; index < nArgs; index++)
 	{
