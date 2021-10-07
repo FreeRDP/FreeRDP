@@ -823,8 +823,13 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	SERIAL_DEVICE* serial;
 #endif /* __linux__ */
 	UINT error = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(pEntryPoints);
+
 	device = (RDPDR_SERIAL*)pEntryPoints->device;
-	name = device->Name;
+	WINPR_ASSERT(device);
+
+	name = device->device.Name;
 	path = device->Path;
 	driver = device->Driver;
 

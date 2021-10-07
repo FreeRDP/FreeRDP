@@ -982,7 +982,7 @@ printer_DeviceServiceEntry
 		return ERROR_INVALID_PARAMETER;
 
 	device = (RDPDR_PRINTER*)pEntryPoints->device;
-	name = device->Name;
+	name = device->device.Name;
 	driver_name = _strdup(device->DriverName);
 
 	/* Secondary argument is one of the following:

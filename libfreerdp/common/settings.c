@@ -208,15 +208,19 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, const char* previous,
 
 BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 {
-	if (!settings->DeviceArray)
-		return FALSE;
+	UINT32 count;
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(device);
 
-	if (freerdp_settings_get_uint32(settings, FreeRDP_DeviceArraySize) <
-	    (settings->DeviceCount + 1))
+	count = settings->DeviceCount + 1;
+	if (freerdp_settings_get_uint32(settings, FreeRDP_DeviceArraySize) < count)
 	{
 		UINT32 new_size;
 		RDPDR_DEVICE** new_array;
 		new_size = freerdp_settings_get_uint32(settings, FreeRDP_DeviceArraySize) * 2;
+		if (new_size == 0)
+			new_size = count * 2;
+
 		new_array =
 		    (RDPDR_DEVICE**)realloc(settings->DeviceArray, new_size * sizeof(RDPDR_DEVICE*));
 
@@ -267,215 +271,267 @@ RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 
 	return NULL;
 }
 
-RDPDR_DEVICE* freerdp_device_clone(RDPDR_DEVICE* device)
+RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[])
 {
-	if (device->Type == RDPDR_DTYP_FILESYSTEM)
+	size_t size;
+	union
 	{
-		RDPDR_DRIVE* drive = (RDPDR_DRIVE*)device;
-		RDPDR_DRIVE* _drive = (RDPDR_DRIVE*)calloc(1, sizeof(RDPDR_DRIVE));
+		RDPDR_DEVICE* base;
+		RDPDR_DRIVE* drive;
+		RDPDR_SERIAL* serial;
+		RDPDR_PRINTER* printer;
+		RDPDR_PARALLEL* parallel;
+		RDPDR_SMARTCARD* smartcard;
+	} device;
 
-		if (!_drive)
-			return NULL;
+	device.base = NULL;
+	WINPR_ASSERT(args || (count == 0));
 
-		_drive->Id = drive->Id;
-		_drive->Type = drive->Type;
-		_drive->Name = _strdup(drive->Name);
-
-		if (!_drive->Name)
-			goto out_fs_name_error;
-
-		_drive->Path = _strdup(drive->Path);
-
-		if (!_drive->Path)
-			goto out_fs_path_error;
-
-		return (RDPDR_DEVICE*)_drive;
-	out_fs_path_error:
-		free(_drive->Name);
-	out_fs_name_error:
-		free(_drive);
-		return NULL;
+	switch (Type)
+	{
+		case RDPDR_DTYP_PRINT:
+			size = sizeof(RDPDR_PRINTER);
+			break;
+		case RDPDR_DTYP_SERIAL:
+			size = sizeof(RDPDR_SERIAL);
+			break;
+		case RDPDR_DTYP_PARALLEL:
+			size = sizeof(RDPDR_PARALLEL);
+			break;
+		case RDPDR_DTYP_SMARTCARD:
+			size = sizeof(RDPDR_SMARTCARD);
+			break;
+		case RDPDR_DTYP_FILESYSTEM:
+			size = sizeof(RDPDR_DRIVE);
+			break;
+		default:
+			goto fail;
 	}
 
-	if (device->Type == RDPDR_DTYP_PRINT)
+	device.base = calloc(1, size);
+	if (!device.base)
+		goto fail;
+	device.base->Id = 0;
+	device.base->Type = Type;
+
+	if (count > 0)
 	{
-		RDPDR_PRINTER* printer = (RDPDR_PRINTER*)device;
-		RDPDR_PRINTER* _printer = (RDPDR_PRINTER*)calloc(1, sizeof(RDPDR_PRINTER));
+		device.base->Name = _strdup(args[1]);
+		if (!device.base->Name)
+			goto fail;
 
-		if (!_printer)
-			return NULL;
-
-		_printer->Id = printer->Id;
-		_printer->Type = printer->Type;
-
-		if (printer->Name)
+		switch (Type)
 		{
-			_printer->Name = _strdup(printer->Name);
+			case RDPDR_DTYP_PRINT:
+				if (count > 1)
+				{
+					device.printer->DriverName = _strdup(args[1]);
+					if (!device.printer->DriverName)
+						goto fail;
+				}
+				break;
+			case RDPDR_DTYP_SERIAL:
+				if (count > 1)
+				{
+					device.serial->Path = _strdup(args[1]);
+					if (!device.serial->Path)
+						goto fail;
+				}
 
-			if (!_printer->Name)
-				goto out_print_name_error;
+				if (count > 2)
+				{
+					device.serial->Driver = _strdup(args[2]);
+					if (!device.serial->Driver)
+						goto fail;
+				}
+
+				if (count > 3)
+				{
+					device.serial->Permissive = _strdup(args[1]);
+					if (!device.serial->Permissive)
+						goto fail;
+				}
+				size = sizeof(RDPDR_SERIAL);
+				break;
+			case RDPDR_DTYP_PARALLEL:
+				if (count > 1)
+				{
+					device.parallel->Path = _strdup(args[1]);
+					if (!device.serial->Path)
+						goto fail;
+				}
+				break;
+			case RDPDR_DTYP_SMARTCARD:
+				break;
+			case RDPDR_DTYP_FILESYSTEM:
+				if (count > 1)
+				{
+					device.drive->Path = _strdup(args[1]);
+					if (!device.drive->Path)
+						goto fail;
+				}
+				if (count > 2)
+					device.drive->automount = (args[2] == NULL) ? FALSE : TRUE;
+				break;
+			default:
+				goto fail;
 		}
+	}
+	return device.base;
 
-		if (printer->DriverName)
-		{
-			_printer->DriverName = _strdup(printer->DriverName);
+fail:
+	freerdp_device_free(device.base);
+	return NULL;
+}
 
-			if (!_printer->DriverName)
-				goto out_print_path_error;
-		}
+void freerdp_device_free(RDPDR_DEVICE* device)
+{
+	union
+	{
+		RDPDR_DEVICE* dev;
+		RDPDR_DRIVE* drive;
+		RDPDR_SERIAL* serial;
+		RDPDR_PRINTER* printer;
+		RDPDR_PARALLEL* parallel;
+		RDPDR_SMARTCARD* smartcard;
+	} cnv;
 
-		return (RDPDR_DEVICE*)_printer;
-	out_print_path_error:
-		free(_printer->Name);
-	out_print_name_error:
-		free(_printer);
+	cnv.dev = device;
+	if (!cnv.dev)
+		return;
+
+	switch (device->Type)
+	{
+		case RDPDR_DTYP_PRINT:
+			free(cnv.printer->DriverName);
+			break;
+		case RDPDR_DTYP_SERIAL:
+			free(cnv.serial->Path);
+			free(cnv.serial->Driver);
+			free(cnv.serial->Permissive);
+			break;
+		case RDPDR_DTYP_PARALLEL:
+			free(cnv.parallel->Path);
+			break;
+		case RDPDR_DTYP_SMARTCARD:
+			break;
+		case RDPDR_DTYP_FILESYSTEM:
+			free(cnv.drive->Path);
+			break;
+		default:
+			break;
+	}
+	free(cnv.dev->Name);
+	free(cnv.dev);
+}
+
+RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
+{
+	union
+	{
+		const RDPDR_DEVICE* dev;
+		const RDPDR_DRIVE* drive;
+		const RDPDR_SERIAL* serial;
+		const RDPDR_PRINTER* printer;
+		const RDPDR_PARALLEL* parallel;
+		const RDPDR_SMARTCARD* smartcard;
+	} src;
+
+	union
+	{
+		RDPDR_DEVICE* dev;
+		RDPDR_DRIVE* drive;
+		RDPDR_SERIAL* serial;
+		RDPDR_PRINTER* printer;
+		RDPDR_PARALLEL* parallel;
+		RDPDR_SMARTCARD* smartcard;
+	} copy;
+
+	WINPR_ASSERT(device);
+
+	src.dev = device;
+	copy.dev = freerdp_device_new(device->Id, device->Type, device->Name);
+	if (!copy.dev)
 		return NULL;
+
+	switch (device->Type)
+	{
+		case RDPDR_DTYP_FILESYSTEM:
+		{
+			if (src.drive->Path)
+				copy.drive->Path = _strdup(src.drive->Path);
+
+			if (!copy.drive->Path)
+				goto fail;
+		}
+		break;
+
+		case RDPDR_DTYP_PRINT:
+		{
+			if (copy.printer->DriverName)
+			{
+				copy.printer->DriverName = _strdup(src.printer->DriverName);
+
+				if (!copy.printer->DriverName)
+					goto fail;
+			}
+		}
+		break;
+
+		case RDPDR_DTYP_SMARTCARD:
+			break;
+
+		case RDPDR_DTYP_SERIAL:
+		{
+			if (copy.serial->Path)
+			{
+				copy.serial->Path = _strdup(src.serial->Path);
+
+				if (!copy.serial->Path)
+					goto fail;
+			}
+
+			if (copy.serial->Driver)
+			{
+				copy.serial->Driver = _strdup(src.serial->Driver);
+
+				if (!copy.serial->Driver)
+					goto fail;
+			}
+		}
+		break;
+
+		case RDPDR_DTYP_PARALLEL:
+		{
+			if (src.parallel->Path)
+				copy.parallel->Path = _strdup(src.parallel->Path);
+
+			if (!copy.parallel->Path)
+				goto fail;
+		}
+		break;
+		default:
+			WLog_ERR(TAG, "unknown device type %" PRIu32 "", device->Type);
+			break;
 	}
 
-	if (device->Type == RDPDR_DTYP_SMARTCARD)
-	{
-		RDPDR_SMARTCARD* smartcard = (RDPDR_SMARTCARD*)device;
-		RDPDR_SMARTCARD* _smartcard = (RDPDR_SMARTCARD*)calloc(1, sizeof(RDPDR_SMARTCARD));
+	return copy.dev;
 
-		if (!_smartcard)
-			return NULL;
-
-		_smartcard->Id = smartcard->Id;
-		_smartcard->Type = smartcard->Type;
-
-		if (smartcard->Name)
-		{
-			_smartcard->Name = _strdup(smartcard->Name);
-
-			if (!_smartcard->Name)
-				goto out_smartc_name_error;
-		}
-
-		return (RDPDR_DEVICE*)_smartcard;
-	out_smartc_name_error:
-		free(_smartcard);
-		return NULL;
-	}
-
-	if (device->Type == RDPDR_DTYP_SERIAL)
-	{
-		RDPDR_SERIAL* serial = (RDPDR_SERIAL*)device;
-		RDPDR_SERIAL* _serial = (RDPDR_SERIAL*)calloc(1, sizeof(RDPDR_SERIAL));
-
-		if (!_serial)
-			return NULL;
-
-		_serial->Id = serial->Id;
-		_serial->Type = serial->Type;
-
-		if (serial->Name)
-		{
-			_serial->Name = _strdup(serial->Name);
-
-			if (!_serial->Name)
-				goto out_serial_name_error;
-		}
-
-		if (serial->Path)
-		{
-			_serial->Path = _strdup(serial->Path);
-
-			if (!_serial->Path)
-				goto out_serial_path_error;
-		}
-
-		if (serial->Driver)
-		{
-			_serial->Driver = _strdup(serial->Driver);
-
-			if (!_serial->Driver)
-				goto out_serial_driver_error;
-		}
-
-		return (RDPDR_DEVICE*)_serial;
-	out_serial_driver_error:
-		free(_serial->Path);
-	out_serial_path_error:
-		free(_serial->Name);
-	out_serial_name_error:
-		free(_serial);
-		return NULL;
-	}
-
-	if (device->Type == RDPDR_DTYP_PARALLEL)
-	{
-		RDPDR_PARALLEL* parallel = (RDPDR_PARALLEL*)device;
-		RDPDR_PARALLEL* _parallel = (RDPDR_PARALLEL*)calloc(1, sizeof(RDPDR_PARALLEL));
-
-		if (!_parallel)
-			return NULL;
-
-		_parallel->Id = parallel->Id;
-		_parallel->Type = parallel->Type;
-
-		if (parallel->Name)
-		{
-			_parallel->Name = _strdup(parallel->Name);
-
-			if (!_parallel->Name)
-				goto out_parallel_name_error;
-		}
-
-		if (parallel->Path)
-		{
-			_parallel->Path = _strdup(parallel->Path);
-
-			if (!_parallel->Path)
-				goto out_parallel_path_error;
-		}
-
-		return (RDPDR_DEVICE*)_parallel;
-	out_parallel_path_error:
-		free(_parallel->Name);
-	out_parallel_name_error:
-		free(_parallel);
-		return NULL;
-	}
-
-	WLog_ERR(TAG, "unknown device type %" PRIu32 "", device->Type);
+fail:
+	freerdp_device_free(copy.dev);
 	return NULL;
 }
 
 void freerdp_device_collection_free(rdpSettings* settings)
 {
 	UINT32 index;
-	RDPDR_DEVICE* device;
+
+	WINPR_ASSERT(settings);
 
 	for (index = 0; index < settings->DeviceCount; index++)
 	{
-		device = (RDPDR_DEVICE*)settings->DeviceArray[index];
-
-		if (!device)
-			continue;
-
-		free(device->Name);
-
-		if (settings->DeviceArray[index]->Type == RDPDR_DTYP_FILESYSTEM)
-		{
-			free(((RDPDR_DRIVE*)device)->Path);
-		}
-		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_PRINT)
-		{
-		}
-		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_SMARTCARD)
-		{
-		}
-		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_SERIAL)
-		{
-			free(((RDPDR_SERIAL*)device)->Path);
-			free(((RDPDR_SERIAL*)device)->Driver);
-		}
-		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_PARALLEL)
-		{
-			free(((RDPDR_PARALLEL*)device)->Path);
-		}
-
-		free(device);
+		RDPDR_DEVICE* device = (RDPDR_DEVICE*)settings->DeviceArray[index];
+		freerdp_device_free(device);
 	}
 
 	free(settings->DeviceArray);
@@ -511,15 +567,19 @@ BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* na
 BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
 	UINT32 count;
-	if (!settings->StaticChannelArray)
-		return FALSE;
 
-	if (freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize) <
-	    (freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount) + 1))
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(channel);
+
+	count = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount) + 1;
+	if (freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize) < count)
 	{
 		UINT32 new_size;
 		ADDIN_ARGV** new_array;
 		new_size = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize) * 2;
+		if (new_size == 0)
+			new_size = count * 2;
+
 		new_array =
 		    (ADDIN_ARGV**)realloc(settings->StaticChannelArray, new_size * sizeof(ADDIN_ARGV*));
 
@@ -541,6 +601,9 @@ ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings, const 
 	UINT32 index;
 	ADDIN_ARGV* channel;
 
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(name);
+
 	for (index = 0; index < freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount);
 	     index++)
 	{
@@ -556,6 +619,9 @@ ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings, const 
 void freerdp_static_channel_collection_free(rdpSettings* settings)
 {
 	UINT32 i;
+
+	if (!settings)
+		return;
 
 	for (i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount); i++)
 	{
@@ -597,15 +663,18 @@ BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings, const char* n
 BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
 	UINT32 count;
-	if (!settings->DynamicChannelArray)
-		return FALSE;
 
-	if (freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize) <
-	    (freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount) + 1))
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(channel);
+
+	count = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount) + 1;
+	if (freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize) < count)
 	{
 		ADDIN_ARGV** new_array;
-		const size_t size =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize) * 2;
+		size_t size = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize) * 2;
+		if (size == 0)
+			size = count * 2;
+
 		new_array = realloc(settings->DynamicChannelArray, sizeof(ADDIN_ARGV*) * size);
 
 		if (!new_array)
@@ -625,6 +694,9 @@ ADDIN_ARGV* freerdp_dynamic_channel_collection_find(const rdpSettings* settings,
 {
 	UINT32 index;
 	ADDIN_ARGV* channel;
+
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(name);
 
 	for (index = 0; index < freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount);
 	     index++)

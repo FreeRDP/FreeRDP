@@ -47,6 +47,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -424,8 +425,13 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	RDPDR_PARALLEL* device;
 	PARALLEL_DEVICE* parallel;
 	UINT error;
+
+	WINPR_ASSERT(pEntryPoints);
+
 	device = (RDPDR_PARALLEL*)pEntryPoints->device;
-	name = device->Name;
+	WINPR_ASSERT(device);
+
+	name = device->device.Name;
 	path = device->Path;
 
 	if (!name || (name[0] == '*') || !path)
