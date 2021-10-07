@@ -300,13 +300,13 @@ def write_getter(f, entry_dict, entry_type, entry_name):
 def write_setter_case(f, val, isString, isPointer):
     f.write('\t\tcase FreeRDP_' + val + ':\n')
     if isPointer:
-        f.write('\t\t\tsettings->' + val + ' = (void*)val;\n')
+        f.write('\t\t\tsettings->' + val + ' = cnv.v;\n')
         f.write('\t\t\tbreak;\n\n')
     elif not isString:
-        f.write('\t\t\tsettings->' + val + ' = val;\n')
+        f.write('\t\t\tsettings->' + val + ' = cnv.c;\n')
         f.write('\t\t\tbreak;\n\n')
     else:
-        f.write('\t\t\treturn update_string(&settings->' + val + ', val, len, cleanup);\n\n')
+        f.write('\t\t\treturn update_string(&settings->' + val + ', cnv.cc, len, cleanup);\n\n')
 
 def write_setter(f, entry_dict, entry_type, entry_name):
     isString = 'string' in entry_name
@@ -328,7 +328,22 @@ def write_setter(f, entry_dict, entry_type, entry_name):
     else:
         f.write(')\n')
     f.write('{\n')
+    f.write('union\n')
+    f.write('{\n')
+    f.write('    void* v;\n')
+    f.write('    const void* cv;\n')
+    if not isPointer:
+        f.write('    ' + entry_type + ' c;\n')
+        f.write('    const ' + entry_type + ' cc;\n')
+    f.write('} cnv;\n')
+
     f.write('\tWINPR_ASSERT(settings);\n\n')
+    if isPointer:
+        f.write('\tcnv.cv = val;\n\n')
+    elif isString:
+        f.write('\tcnv.cc = val;\n\n')
+    else:
+        f.write('\tcnv.c = val;\n\n')
     f.write('\tswitch (id)\n')
     f.write('\t{\n')
     if values:
