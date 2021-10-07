@@ -686,9 +686,15 @@ fail:
 
 ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args)
 {
+	union
+	{
+		char** c;
+		const char** cc;
+	} cnv;
 	if (!args)
 		return NULL;
-	return freerdp_addin_argv_new(args->argc, (const char**)args->argv);
+	cnv.c = args->argv;
+	return freerdp_addin_argv_new(args->argc, cnv.cc);
 }
 
 void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
@@ -1050,6 +1056,13 @@ const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id)
 BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const void* data,
                                       size_t len)
 {
+	union
+	{
+		const void* cv;
+		void* v;
+	} cnv;
+
+	cnv.cv = data;
 	if (!settings)
 		return FALSE;
 
@@ -1057,11 +1070,11 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 	{
 		case FreeRDP_RdpServerCertificate:
 			certificate_free(settings->RdpServerCertificate);
-			settings->RdpServerCertificate = (rdpCertificate*)data;
+			settings->RdpServerCertificate = (rdpCertificate*)cnv.v;
 			return TRUE;
 		case FreeRDP_RdpServerRsaKey:
 			key_free(settings->RdpServerRsaKey);
-			settings->RdpServerRsaKey = (rdpRsaKey*)data;
+			settings->RdpServerRsaKey = (rdpRsaKey*)cnv.v;
 			return TRUE;
 		case FreeRDP_RedirectionPassword:
 			return freerdp_settings_set_pointer_len_(

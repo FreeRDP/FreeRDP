@@ -130,8 +130,7 @@ static BOOL pf_client_load_rdpsnd(pClientContext* pc)
 	 */
 	if (!freerdp_static_channel_collection_find(context->settings, RDPSND_CHANNEL_NAME))
 	{
-		char* params[2];
-		params[0] = RDPSND_CHANNEL_NAME;
+		const char* params[2] = { RDPSND_CHANNEL_NAME };
 
 		if (config->AudioOutput &&
 		    WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RDPSND_CHANNEL_NAME))
@@ -139,7 +138,7 @@ static BOOL pf_client_load_rdpsnd(pClientContext* pc)
 		else
 			params[1] = "sys:fake";
 
-		if (!freerdp_client_add_static_channel(context->settings, 2, (char**)params))
+		if (!freerdp_client_add_static_channel(context->settings, ARRAYSIZE(params), params))
 			return FALSE;
 	}
 
@@ -282,7 +281,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 
 		/* Filter out channels we do not want */
 		{
-			CHANNEL_DEF* channels = (CHANNEL_DEF*)freerdp_settings_get_pointer_array(
+			CHANNEL_DEF* channels = (CHANNEL_DEF*)freerdp_settings_get_pointer_array_writable(
 			    settings, FreeRDP_ChannelDefArray, 0);
 			size_t x, size = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
 

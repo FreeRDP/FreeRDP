@@ -78,7 +78,7 @@ static BOOL settings_reg_query_word_val(HKEY hKey, const TCHAR* sub, UINT16* val
 	if (!settings_reg_query_dword_val(hKey, sub, &dwValue))
 		return FALSE;
 
-	*value = dwValue;
+	*value = (UINT16)dwValue;
 	return TRUE;
 }
 

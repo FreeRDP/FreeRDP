@@ -1999,6 +1999,11 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t)file->RedirectCameras))
 	{
+		union
+		{
+			char** c;
+			const char** cc;
+		} cnv;
 		BOOL status;
 		ADDIN_ARGV* args = rdp_file_to_args(RDPECAM_DVC_CHANNEL_NAME, file->RedirectCameras);
 		if (!args)
@@ -2019,7 +2024,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			freerdp_addin_argv_add_argument(args, quality);
 		}
 
-		status = freerdp_client_add_dynamic_channel(settings, args->argc, args->argv);
+		cnv.c = args->argv;
+		status = freerdp_client_add_dynamic_channel(settings, args->argc, cnv.cc);
 		freerdp_addin_argv_free(args);
 		/* Ignore return */ WINPR_UNUSED(status);
 	}
@@ -2027,11 +2033,17 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 #ifdef CHANNEL_URBDRC_CLIENT
 	if (~((size_t)file->UsbDevicesToRedirect))
 	{
+		union
+		{
+			char** c;
+			const char** cc;
+		} cnv;
 		BOOL status;
 		ADDIN_ARGV* args = rdp_file_to_args(URBDRC_CHANNEL_NAME, file->UsbDevicesToRedirect);
 		if (!args)
 			return FALSE;
-		status = freerdp_client_add_dynamic_channel(settings, args->argc, args->argv);
+		cnv.c = args->argv;
+		status = freerdp_client_add_dynamic_channel(settings, args->argc, cnv.cc);
 		freerdp_addin_argv_free(args);
 		/* Ignore return */ WINPR_UNUSED(status);
 	}
