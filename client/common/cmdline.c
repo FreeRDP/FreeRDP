@@ -145,14 +145,8 @@ static char* name_from_path(const char* path)
 
 static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, const char* name)
 {
-	RDPDR_DRIVE* drive;
-
-	drive = (RDPDR_DRIVE*)calloc(1, sizeof(RDPDR_DRIVE));
-
-	if (!drive)
-		return FALSE;
-
-	drive->Type = RDPDR_DTYP_FILESYSTEM;
+	char* dname;
+	RDPDR_DEVICE* device = NULL;
 
 	if (name)
 	{
@@ -169,36 +163,37 @@ static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, co
 	}
 
 	if (name)
-	{
-		if (!(drive->Name = _strdup(name)))
-			goto fail;
-	}
+		dname = _strdup(name);
 	else /* We need a name to send to the server. */
-	{
-		if (!(drive->Name = name_from_path(path)))
-			goto fail;
-	}
+		dname = name_from_path(path);
 
-	if (!path || !freerdp_sanitize_drive_name(drive->Name, "\\/", "__"))
+	if (freerdp_sanitize_drive_name(dname, "\\/", "__"))
+	{
+		const char* args[] = { dname, path };
+		device = freerdp_device_new(RDPDR_DTYP_FILESYSTEM, ARRAYSIZE(args), args);
+	}
+	free(dname);
+	if (!device)
+		return FALSE;
+
+	if (!path)
 		goto fail;
 	else
 	{
 		BOOL isSpecial = FALSE;
 		BOOL isPath = freerdp_path_valid(path, &isSpecial);
 
-		if ((!isPath && !isSpecial) || !(drive->Path = _strdup(path)))
+		if (!isPath && !isSpecial)
 			goto fail;
 	}
 
-	if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*)drive))
+	if (!freerdp_device_collection_add(settings, device))
 		goto fail;
 
 	return TRUE;
 
 fail:
-	free(drive->Path);
-	free(drive->Name);
-	free(drive);
+	freerdp_device_free(device);
 	return FALSE;
 }
 
@@ -552,6 +547,10 @@ static int freerdp_client_command_line_pre_filter(void* context, int index, int 
 
 BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, const char** params)
 {
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(params);
+	WINPR_ASSERT(count > 0);
+
 	if (strcmp(params[0], "drive") == 0)
 	{
 		BOOL rc;
@@ -568,7 +567,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 	}
 	else if (strcmp(params[0], "printer") == 0)
 	{
-		RDPDR_PRINTER* printer;
+		RDPDR_DEVICE* printer;
 
 		if (count < 1)
 			return FALSE;
@@ -576,71 +575,36 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 		settings->RedirectPrinters = TRUE;
 		settings->DeviceRedirection = TRUE;
 
-		if (count > 1)
+		printer = freerdp_device_new(RDPDR_DTYP_PRINT, count - 1, &params[1]);
+		if (!printer)
+			return FALSE;
+
+		if (!freerdp_device_collection_add(settings, printer))
 		{
-			printer = (RDPDR_PRINTER*)calloc(1, sizeof(RDPDR_PRINTER));
-
-			if (!printer)
-				return FALSE;
-
-			printer->Type = RDPDR_DTYP_PRINT;
-
-			if (!(printer->Name = _strdup(params[1])))
-			{
-				free(printer);
-				return FALSE;
-			}
-
-			if (count > 2)
-			{
-				if (!(printer->DriverName = _strdup(params[2])))
-				{
-					free(printer->Name);
-					free(printer);
-					return FALSE;
-				}
-			}
-
-			if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*)printer))
-			{
-				free(printer->DriverName);
-				free(printer->Name);
-				free(printer);
-				return FALSE;
-			}
+			freerdp_device_free(printer);
+			return FALSE;
 		}
 
 		return TRUE;
 	}
 	else if (strcmp(params[0], "smartcard") == 0)
 	{
-		RDPDR_SMARTCARD* smartcard;
+		RDPDR_DEVICE* smartcard;
 
 		if (count < 1)
 			return FALSE;
 
 		settings->RedirectSmartCards = TRUE;
 		settings->DeviceRedirection = TRUE;
-		smartcard = (RDPDR_SMARTCARD*)calloc(1, sizeof(RDPDR_SMARTCARD));
+
+		smartcard = freerdp_device_new(RDPDR_DTYP_SMARTCARD, count - 1, &params[1]);
 
 		if (!smartcard)
 			return FALSE;
 
-		smartcard->Type = RDPDR_DTYP_SMARTCARD;
-
-		if (count > 1 && strlen(params[1]))
+		if (!freerdp_device_collection_add(settings, smartcard))
 		{
-			if (!(smartcard->Name = _strdup(params[1])))
-			{
-				free(smartcard);
-				return FALSE;
-			}
-		}
-
-		if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*)smartcard))
-		{
-			free(smartcard->Name);
-			free(smartcard);
+			freerdp_device_free(smartcard);
 			return FALSE;
 		}
 
@@ -648,69 +612,22 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 	}
 	else if (strcmp(params[0], "serial") == 0)
 	{
-		RDPDR_SERIAL* serial;
+		RDPDR_DEVICE* serial;
 
 		if (count < 1)
 			return FALSE;
 
 		settings->RedirectSerialPorts = TRUE;
 		settings->DeviceRedirection = TRUE;
-		serial = (RDPDR_SERIAL*)calloc(1, sizeof(RDPDR_SERIAL));
+
+		serial = freerdp_device_new(RDPDR_DTYP_SERIAL, count - 1, &params[1]);
 
 		if (!serial)
 			return FALSE;
 
-		serial->Type = RDPDR_DTYP_SERIAL;
-
-		if (count > 1)
+		if (!freerdp_device_collection_add(settings, serial))
 		{
-			if (!(serial->Name = _strdup(params[1])))
-			{
-				free(serial);
-				return FALSE;
-			}
-		}
-
-		if (count > 2)
-		{
-			if (!(serial->Path = _strdup(params[2])))
-			{
-				free(serial->Name);
-				free(serial);
-				return FALSE;
-			}
-		}
-
-		if (count > 3)
-		{
-			if (!(serial->Driver = _strdup(params[3])))
-			{
-				free(serial->Path);
-				free(serial->Name);
-				free(serial);
-				return FALSE;
-			}
-		}
-
-		if (count > 4)
-		{
-			if (!(serial->Permissive = _strdup(params[4])))
-			{
-				free(serial->Driver);
-				free(serial->Path);
-				free(serial->Name);
-				free(serial);
-				return FALSE;
-			}
-		}
-
-		if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*)serial))
-		{
-			free(serial->Permissive);
-			free(serial->Driver);
-			free(serial->Path);
-			free(serial->Name);
-			free(serial);
+			freerdp_device_free(serial);
 			return FALSE;
 		}
 
@@ -718,44 +635,22 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 	}
 	else if (strcmp(params[0], "parallel") == 0)
 	{
-		RDPDR_PARALLEL* parallel;
+		RDPDR_DEVICE* parallel;
 
 		if (count < 1)
 			return FALSE;
 
 		settings->RedirectParallelPorts = TRUE;
 		settings->DeviceRedirection = TRUE;
-		parallel = (RDPDR_PARALLEL*)calloc(1, sizeof(RDPDR_PARALLEL));
+
+		parallel = freerdp_device_new(RDPDR_DTYP_PARALLEL, count - 1, &params[1]);
 
 		if (!parallel)
 			return FALSE;
 
-		parallel->Type = RDPDR_DTYP_PARALLEL;
-
-		if (count > 1)
+		if (!freerdp_device_collection_add(settings, parallel))
 		{
-			if (!(parallel->Name = _strdup(params[1])))
-			{
-				free(parallel);
-				return FALSE;
-			}
-		}
-
-		if (count > 2)
-		{
-			if (!(parallel->Path = _strdup(params[2])))
-			{
-				free(parallel->Name);
-				free(parallel);
-				return FALSE;
-			}
-		}
-
-		if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*)parallel))
-		{
-			free(parallel->Path);
-			free(parallel->Name);
-			free(parallel);
+			freerdp_device_free(parallel);
 			return FALSE;
 		}
 
@@ -977,7 +872,11 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		settings->PasswordIsSmartcardPin = enable;
 	}
-	CommandLineSwitchEnd(arg) return status ? 1 : -1;
+	CommandLineSwitchEnd(arg)
+
+	        return status
+	    ? 1
+	    : -1;
 }
 
 BOOL freerdp_parse_username(const char* username, char** user, char** domain)
@@ -3709,37 +3608,35 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->RedirectSmartCards)
 	{
-		RDPDR_SMARTCARD* smartcard;
-
 		if (!freerdp_device_collection_find_type(settings, RDPDR_DTYP_SMARTCARD))
 		{
-			smartcard = (RDPDR_SMARTCARD*)calloc(1, sizeof(RDPDR_SMARTCARD));
+			RDPDR_DEVICE* smartcard = freerdp_device_new(RDPDR_DTYP_SMARTCARD, 0, NULL);
 
 			if (!smartcard)
 				return FALSE;
 
-			smartcard->Type = RDPDR_DTYP_SMARTCARD;
-
-			if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*)smartcard))
+			if (!freerdp_device_collection_add(settings, smartcard))
+			{
+				freerdp_device_free(smartcard);
 				return FALSE;
+			}
 		}
 	}
 
 	if (settings->RedirectPrinters)
 	{
-		RDPDR_PRINTER* printer;
-
 		if (!freerdp_device_collection_find_type(settings, RDPDR_DTYP_PRINT))
 		{
-			printer = (RDPDR_PRINTER*)calloc(1, sizeof(RDPDR_PRINTER));
+			RDPDR_DEVICE* printer = freerdp_device_new(RDPDR_DTYP_PRINT, 0, NULL);
 
 			if (!printer)
 				return FALSE;
 
-			printer->Type = RDPDR_DTYP_PRINT;
-
-			if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*)printer))
+			if (!freerdp_device_collection_add(settings, printer))
+			{
+				freerdp_device_free(printer);
 				return FALSE;
+			}
 		}
 	}
 

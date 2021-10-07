@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/path.h>
 #include <winpr/file.h>
 #include <winpr/string.h>
@@ -1017,7 +1018,12 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	char* bufdup;
 	char* devdup;
 #endif
+
+	WINPR_ASSERT(pEntryPoints);
+
 	drive = (RDPDR_DRIVE*)pEntryPoints->device;
+	WINPR_ASSERT(drive);
+
 #ifndef WIN32
 	sys_code_page = CP_UTF8;
 
@@ -1045,7 +1051,8 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		}
 	}
 
-	error = drive_register_drive_path(pEntryPoints, drive->Name, drive->Path, drive->automount);
+	error =
+	    drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path, drive->automount);
 #else
 	sys_code_page = GetACP();
 
@@ -1064,7 +1071,8 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			return CHANNEL_RC_NO_MEMORY;
 		}
 
-		error = drive_register_drive_path(pEntryPoints, drive->Name, drive->Path, drive->automount);
+		error = drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path,
+		                                  drive->automount);
 	}
 	else if (strcmp(drive->Path, "*") == 0)
 	{
@@ -1077,7 +1085,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			if (*dev > 'B')
 			{
 				/* Suppress disk drives A and B to avoid pesty messages */
-				len = sprintf_s(buf, sizeof(buf) - 4, "%s", drive->Name);
+				len = sprintf_s(buf, sizeof(buf) - 4, "%s", drive->device.Name);
 				buf[len] = '_';
 				buf[len + 1] = dev[0];
 				buf[len + 2] = 0;
@@ -1104,7 +1112,8 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	}
 	else
 	{
-		error = drive_register_drive_path(pEntryPoints, drive->Name, drive->Path, drive->automount);
+		error = drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path,
+		                                  drive->automount);
 	}
 
 #endif

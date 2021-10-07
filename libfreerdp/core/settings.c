@@ -584,28 +584,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings->ClientTimeZone)
 		goto out_fail;
 
-	freerdp_settings_set_uint32(settings, FreeRDP_DeviceArraySize, 16);
-	settings->DeviceArray = (RDPDR_DEVICE**)calloc(
-	    freerdp_settings_get_uint32(settings, FreeRDP_DeviceArraySize), sizeof(RDPDR_DEVICE*));
-
-	if (!settings->DeviceArray)
-		goto out_fail;
-
-	freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelArraySize, 16);
-	settings->StaticChannelArray = (ADDIN_ARGV**)calloc(
-	    freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize), sizeof(ADDIN_ARGV*));
-
-	if (!settings->StaticChannelArray)
-		goto out_fail;
-
-	freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelArraySize, 16);
-	settings->DynamicChannelArray =
-	    (ADDIN_ARGV**)calloc(freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize),
-	                         sizeof(ADDIN_ARGV*));
-
-	if (!settings->DynamicChannelArray)
-		goto out_fail;
-
 	if (!freerdp_settings_set_bool(settings, FreeRDP_TcpKeepAlive, TRUE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpKeepAliveRetries, 3) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpKeepAliveDelay, 5) ||
