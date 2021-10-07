@@ -968,8 +968,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		urbdrc->iface.Initialize = urbdrc_plugin_initialize;
 		urbdrc->iface.Terminated = urbdrc_plugin_terminated;
 		urbdrc->vchannel_status = INIT_CHANNEL_IN;
-		status =
-		    pEntryPoints->RegisterPlugin(pEntryPoints, URBDRC_CHANNEL_NAME, (IWTSPlugin*)urbdrc);
+		status = pEntryPoints->RegisterPlugin(pEntryPoints, URBDRC_CHANNEL_NAME, &urbdrc->iface);
 
 		if (status != CHANNEL_RC_OK)
 			goto fail;
@@ -988,7 +987,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	if (!urbdrc->subsystem && !urbdrc_set_subsystem(urbdrc, "libusb"))
 		goto fail;
 
-	return urbdrc_load_udevman_addin((IWTSPlugin*)urbdrc, urbdrc->subsystem, args);
+	return urbdrc_load_udevman_addin(&urbdrc->iface, urbdrc->subsystem, args);
 fail:
 	urbdrc_plugin_terminated(&urbdrc->iface);
 	return status;

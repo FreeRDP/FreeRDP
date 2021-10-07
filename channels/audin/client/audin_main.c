@@ -820,7 +820,7 @@ static UINT audin_load_device_plugin(AUDIN_PLUGIN* audin, const char* name, cons
 		return ERROR_INVALID_FUNCTION;
 	}
 
-	entryPoints.plugin = (IWTSPlugin*)audin;
+	entryPoints.plugin = &audin->iface;
 	entryPoints.pRegisterAudinDevice = audin_register_device_plugin;
 	entryPoints.args = args;
 	entryPoints.rdpcontext = audin->rdpcontext;
@@ -1100,11 +1100,11 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		goto out;
 	}
 
-	error = pEntryPoints->RegisterPlugin(pEntryPoints, "audin", (IWTSPlugin*)audin);
+	error = pEntryPoints->RegisterPlugin(pEntryPoints, "audin", &audin->iface);
 	if (error == CHANNEL_RC_OK)
 		return error;
 
 out:
-	audin_plugin_terminated((IWTSPlugin*)audin);
+	audin_plugin_terminated(&audin->iface);
 	return error;
 }

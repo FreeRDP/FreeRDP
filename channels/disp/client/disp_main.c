@@ -407,7 +407,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->handle = (void*)disp;
 		context->SendMonitorLayout = disp_send_monitor_layout;
 		disp->iface.pInterface = (void*)context;
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "disp", (IWTSPlugin*)disp);
+		error = pEntryPoints->RegisterPlugin(pEntryPoints, "disp", &disp->iface);
 	}
 	else
 	{

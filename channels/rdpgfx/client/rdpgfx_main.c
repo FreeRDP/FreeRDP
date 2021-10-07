@@ -2193,7 +2193,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		gfx->iface.Disconnected = NULL;
 		gfx->iface.Terminated = rdpgfx_plugin_terminated;
 
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpgfx", (IWTSPlugin*)gfx);
+		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpgfx", &gfx->iface);
 	}
 
 	return error;

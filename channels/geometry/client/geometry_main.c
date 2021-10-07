@@ -500,7 +500,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->handle = (void*)geometry;
 		geometry->iface.pInterface = (void*)context;
 		geometry->context = context;
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "geometry", (IWTSPlugin*)geometry);
+		error = pEntryPoints->RegisterPlugin(pEntryPoints, "geometry", &geometry->iface);
 	}
 	else
 	{
