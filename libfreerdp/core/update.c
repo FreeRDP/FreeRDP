@@ -2991,12 +2991,21 @@ void update_free(rdpUpdate* update)
 	}
 }
 
+void update_lock(rdpUpdate* update)
+{
+	WINPR_ASSERT(update);
+	EnterCriticalSection(&update->mux);
+}
+
+void update_unlock(rdpUpdate* update)
+{
+	WINPR_ASSERT(update);
+	LeaveCriticalSection(&update->mux);
+}
+
 BOOL update_begin_paint(rdpUpdate* update)
 {
-	if (!update)
-		return FALSE;
-
-	EnterCriticalSection(&update->mux);
+	update_lock(update);
 
 	if (!update->BeginPaint)
 		return TRUE;
@@ -3014,6 +3023,6 @@ BOOL update_end_paint(rdpUpdate* update)
 	if (update->EndPaint)
 		rc = update->EndPaint(update->context);
 
-	LeaveCriticalSection(&update->mux);
+	update_unlock(update);
 	return rc;
 }

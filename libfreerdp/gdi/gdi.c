@@ -27,6 +27,7 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <freerdp/api.h>
 #include <freerdp/log.h>
@@ -45,6 +46,7 @@
 #include "line.h"
 #include "gdi.h"
 #include "../core/graphics.h"
+#include "../core/update.h"
 
 #define TAG FREERDP_TAG("gdi")
 
@@ -1156,8 +1158,14 @@ static void gdi_register_update_callbacks(rdpUpdate* update)
 }
 
 static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format, BYTE* buffer,
-                             void (*pfree)(void*))
+                             void (*pfree)(void*), BOOL isLocked)
 {
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->context);
+	WINPR_ASSERT(gdi->context->update);
+	if (!isLocked)
+		update_lock(gdi->context->update);
+
 	gdi->primary = (gdiBitmap*)calloc(1, sizeof(gdiBitmap));
 
 	if (format > 0)
@@ -1210,6 +1218,7 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format, BYTE* bu
 	if (!gdi->drawing)
 		gdi->drawing = gdi->primary;
 
+	update_unlock(gdi->context->update);
 	return TRUE;
 fail_hwnd:
 	gdi_DeleteObject((HGDIOBJECT)gdi->primary->bitmap);
@@ -1219,6 +1228,7 @@ fail_hdc:
 	free(gdi->primary);
 	gdi->primary = NULL;
 fail_primary:
+	update_unlock(gdi->context->update);
 	return FALSE;
 }
 
@@ -1240,6 +1250,10 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT
 	    (!buffer || (gdi->primary_buffer == buffer)))
 		return TRUE;
 
+	WINPR_ASSERT(gdi->context);
+	WINPR_ASSERT(gdi->context->update);
+	update_lock(gdi->context->update);
+
 	if (gdi->drawing == gdi->primary)
 		gdi->drawing = NULL;
 
@@ -1248,7 +1262,7 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT
 	gdi_bitmap_free_ex(gdi->primary);
 	gdi->primary = NULL;
 	gdi->primary_buffer = NULL;
-	return gdi_init_primary(gdi, stride, format, buffer, pfree);
+	return gdi_init_primary(gdi, stride, format, buffer, pfree, TRUE);
 }
 
 /**
@@ -1292,7 +1306,7 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 
 	gdi->hdc->format = gdi->dstFormat;
 
-	if (!gdi_init_primary(gdi, stride, gdi->dstFormat, buffer, pfree))
+	if (!gdi_init_primary(gdi, stride, gdi->dstFormat, buffer, pfree, FALSE))
 		goto fail;
 
 	if (!(context->cache = cache_new(instance->context)))
