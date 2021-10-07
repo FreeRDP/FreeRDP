@@ -31,6 +31,8 @@
 #include "uwac-utils.h"
 #include "uwac-os.h"
 
+#include "config.h"
+
 #define UWAC_INITIAL_BUFFERS 3
 
 static int bppFromShmFormat(enum wl_shm_format format)
