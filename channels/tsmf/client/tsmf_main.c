@@ -606,7 +606,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			goto error_init;
 		}
 
-		status = pEntryPoints->RegisterPlugin(pEntryPoints, "tsmf", (IWTSPlugin*)tsmf);
+		status = pEntryPoints->RegisterPlugin(pEntryPoints, "tsmf", &tsmf->iface);
 	}
 
 	if (status == CHANNEL_RC_OK)

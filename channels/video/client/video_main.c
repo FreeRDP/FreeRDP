@@ -1135,7 +1135,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		videoPlugin->wtsPlugin.pInterface = (void*)videoContext;
 		videoPlugin->context = videoContext;
 
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "video", (IWTSPlugin*)videoPlugin);
+		error = pEntryPoints->RegisterPlugin(pEntryPoints, "video", &videoPlugin->wtsPlugin);
 	}
 	else
 	{

@@ -209,7 +209,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		echo->iface.Disconnected = NULL;
 		echo->iface.Terminated = echo_plugin_terminated;
 
-		status = pEntryPoints->RegisterPlugin(pEntryPoints, "echo", (IWTSPlugin*)echo);
+		status = pEntryPoints->RegisterPlugin(pEntryPoints, "echo", &echo->iface);
 	}
 
 	return status;

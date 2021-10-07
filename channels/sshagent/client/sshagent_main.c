@@ -379,7 +379,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		sshagent->rdpcontext =
 		    ((freerdp*)((rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints))->instance)
 		        ->context;
-		status = pEntryPoints->RegisterPlugin(pEntryPoints, "sshagent", (IWTSPlugin*)sshagent);
+		status = pEntryPoints->RegisterPlugin(pEntryPoints, "sshagent", &sshagent->iface);
 	}
 
 	return status;
