@@ -25,7 +25,7 @@ int TestCmdLine(int argc, char* argv[])
 	DWORD flags;
 	long width = 0;
 	long height = 0;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	int testArgc;
 	char** command_line;
 	COMMAND_LINE_ARGUMENT_A args[] = {
