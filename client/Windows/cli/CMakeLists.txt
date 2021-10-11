@@ -25,6 +25,14 @@ set(${MODULE_PREFIX}_SRCS
 	wfreerdp.h
 	../wfreerdp.rc)
 
+
+if(WITH_WIN_CONSOLE)
+  add_definitions("-DWITH_WIN_CONSOLE")
+  set(WIN32_GUI_FLAG "")
+else()
+  set(WIN32_GUI_FLAG "WIN32")
+endif()
+
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
 if (WIN32)
@@ -40,7 +48,7 @@ if (WIN32)
 
   set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
-add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
+add_executable(${MODULE_NAME} ${WIN32_GUI_FLAG} ${${MODULE_PREFIX}_SRCS})
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} wfreerdp-client)
 
