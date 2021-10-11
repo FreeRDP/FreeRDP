@@ -142,3 +142,10 @@ out:
 	LocalFree(args);
 	return ret;
 }
+
+#ifdef WITH_WIN_CONSOLE
+int main()
+{
+	return WinMain(NULL, NULL, NULL, 0);
+}
+#endif
