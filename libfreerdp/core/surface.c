@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include <winpr/assert.h>
+#include <assert.h>
 
 #include <freerdp/utils/pcap.h>
 #include <freerdp/log.h>
@@ -97,9 +97,9 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 static BOOL update_recv_surfcmd_is_rect_valid(const rdpContext* context,
                                               const SURFACE_BITS_COMMAND* cmd)
 {
-	WINPR_ASSERT(context);
-	WINPR_ASSERT(context->settings);
-	WINPR_ASSERT(cmd);
+	assert(context);
+	assert(context->settings);
+	assert(cmd);
 
 	/* We need a rectangle with left/top being smaller than right/bottom.
 	 * Also do not allow empty rectangles. */

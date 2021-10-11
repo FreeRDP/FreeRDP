@@ -24,7 +24,7 @@
 #include "config.h"
 #endif
 
-#include <winpr/assert.h>
+#include <assert.h>
 #include <winpr/crt.h>
 #include <winpr/ndr.h>
 #include <winpr/error.h>
@@ -224,7 +224,6 @@ struct rdp_tsg
 	UINT32 TunnelId;
 	UINT32 ChannelId;
 	BOOL reauthSequence;
-	rdpSettings* settings;
 	rdpTransport* transport;
 	UINT64 ReauthTunnelContext;
 	CONTEXT_HANDLE TunnelContext;
@@ -313,9 +312,9 @@ static BOOL tsg_print(char** buffer, size_t* len, const char* fmt, ...)
 static BOOL tsg_packet_header_to_string(char** buffer, size_t* length,
                                         const TSG_PACKET_HEADER* header)
 {
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(header);
+	assert(buffer);
+	assert(length);
+	assert(header);
 
 	return tsg_print(buffer, length,
 	                 "header { ComponentId=0x%04" PRIx16 ", PacketId=0x%04" PRIx16 " }",
@@ -325,9 +324,9 @@ static BOOL tsg_packet_header_to_string(char** buffer, size_t* length,
 static BOOL tsg_type_capability_nap_to_string(char** buffer, size_t* length,
                                               const TSG_CAPABILITY_NAP* cur)
 {
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(cur);
+	assert(buffer);
+	assert(length);
+	assert(cur);
 
 	return tsg_print(buffer, length, "%s { capabilities=0x%08" PRIx32 " }",
 	                 tsg_packet_id_to_string(TSG_CAPABILITY_TYPE_NAP), cur->capabilities);
@@ -338,9 +337,9 @@ static BOOL tsg_packet_capabilities_to_string(char** buffer, size_t* length,
 {
 	UINT32 x;
 
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(caps);
+	assert(buffer);
+	assert(length);
+	assert(caps);
 
 	if (!tsg_print(buffer, length, "capabilities { "))
 		return FALSE;
@@ -366,9 +365,9 @@ static BOOL tsg_packet_capabilities_to_string(char** buffer, size_t* length,
 static BOOL tsg_packet_versioncaps_to_string(char** buffer, size_t* length,
                                              const TSG_PACKET_VERSIONCAPS* caps)
 {
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(caps);
+	assert(buffer);
+	assert(length);
+	assert(caps);
 
 	if (!tsg_print(buffer, length, "versioncaps { "))
 		return FALSE;
@@ -394,9 +393,9 @@ static BOOL tsg_packet_versioncaps_to_string(char** buffer, size_t* length,
 static BOOL tsg_packet_quarconfigrequest_to_string(char** buffer, size_t* length,
                                                    const TSG_PACKET_QUARCONFIGREQUEST* caps)
 {
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(caps);
+	assert(buffer);
+	assert(length);
+	assert(caps);
 
 	if (!tsg_print(buffer, length, "quarconfigrequest { "))
 		return FALSE;
@@ -417,9 +416,9 @@ static BOOL tsg_packet_quarrequest_to_string(char** buffer, size_t* length,
 	char* name = NULL;
 	char* strdata = NULL;
 
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(caps);
+	assert(buffer);
+	assert(length);
+	assert(caps);
 
 	if (!tsg_print(buffer, length, "quarrequest { "))
 		return FALSE;
@@ -429,7 +428,9 @@ static BOOL tsg_packet_quarrequest_to_string(char** buffer, size_t* length,
 
 	if (caps->nameLength > 0)
 	{
-		if (ConvertFromUnicode(CP_UTF8, 0, caps->machineName, caps->nameLength, &name, 0, NULL,
+		if (caps->nameLength > INT_MAX)
+			return FALSE;
+		if (ConvertFromUnicode(CP_UTF8, 0, caps->machineName, (int)caps->nameLength, &name, 0, NULL,
 		                       NULL) < 0)
 			return FALSE;
 	}
@@ -457,8 +458,8 @@ static const char* tsg_bool_to_string(BOOL val)
 static const char* tsg_redirection_flags_to_string(char* buffer, size_t size,
                                                    const TSG_REDIRECTION_FLAGS* flags)
 {
-	WINPR_ASSERT(buffer || (size == 0));
-	WINPR_ASSERT(flags);
+	assert(buffer || (size == 0));
+	assert(flags);
 
 	_snprintf(buffer, size,
 	          "enableAllRedirections=%s,  disableAllRedirections=%s, driveRedirectionDisabled=%s, "
@@ -482,9 +483,9 @@ static BOOL tsg_packet_response_to_string(char** buffer, size_t* length,
 	char* strdata = NULL;
 	char tbuffer[8192] = { 0 };
 
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(caps);
+	assert(buffer);
+	assert(length);
+	assert(caps);
 
 	if (!tsg_print(buffer, length, "response { "))
 		return FALSE;
@@ -517,9 +518,9 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 	size_t size = ARRAYSIZE(tbuffer);
 	char* ptbuffer = tbuffer;
 
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(caps);
+	assert(buffer);
+	assert(length);
+	assert(caps);
 
 	if (!tsg_print(buffer, length, "quarenc_response { "))
 		return FALSE;
@@ -529,8 +530,10 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 
 	if (caps->certChainLen > 0)
 	{
-		if (ConvertFromUnicode(CP_UTF8, 0, caps->certChainData, caps->certChainLen, &strdata, 0,
-		                       NULL, NULL) <= 0)
+		if (caps->certChainLen > INT_MAX)
+			return FALSE;
+		if (ConvertFromUnicode(CP_UTF8, 0, caps->certChainData, (int)caps->certChainLen, &strdata,
+		                       0, NULL, NULL) <= 0)
 			return FALSE;
 	}
 
@@ -552,9 +555,9 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 static BOOL tsg_packet_message_response_to_string(char** buffer, size_t* length,
                                                   const TSG_PACKET_MSG_RESPONSE* caps)
 {
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(caps);
+	assert(buffer);
+	assert(length);
+	assert(caps);
 
 	if (!tsg_print(buffer, length, "msg_response { "))
 		return FALSE;
@@ -570,9 +573,9 @@ static BOOL tsg_packet_message_response_to_string(char** buffer, size_t* length,
 static BOOL tsg_packet_caps_response_to_string(char** buffer, size_t* length,
                                                const TSG_PACKET_CAPS_RESPONSE* caps)
 {
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(caps);
+	assert(buffer);
+	assert(length);
+	assert(caps);
 
 	if (!tsg_print(buffer, length, "caps_response { "))
 		return FALSE;
@@ -589,9 +592,9 @@ static BOOL tsg_packet_caps_response_to_string(char** buffer, size_t* length,
 static BOOL tsg_packet_message_request_to_string(char** buffer, size_t* length,
                                                  const TSG_PACKET_MSG_REQUEST* caps)
 {
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(caps);
+	assert(buffer);
+	assert(length);
+	assert(caps);
 
 	if (!tsg_print(buffer, length, "caps_message_request { "))
 		return FALSE;
@@ -606,9 +609,9 @@ static BOOL tsg_packet_auth_to_string(char** buffer, size_t* length, const TSG_P
 {
 	BOOL rc = FALSE;
 	char* strdata = NULL;
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(caps);
+	assert(buffer);
+	assert(length);
+	assert(caps);
 
 	if (!tsg_print(buffer, length, "caps_message_request { "))
 		return FALSE;
@@ -630,14 +633,14 @@ static BOOL tsg_packet_reauth_to_string(char** buffer, size_t* length,
                                         const TSG_PACKET_REAUTH* caps)
 {
 	BOOL rc = FALSE;
-	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(length);
-	WINPR_ASSERT(caps);
+	assert(buffer);
+	assert(length);
+	assert(caps);
 
 	if (!tsg_print(buffer, length, "caps_message_request { "))
 		return FALSE;
 
-	if (!tsg_print(buffer, length, " tunnelContext=0x%08" PRIx32 ", packetId=%s [0x%08" PRIx32 "]",
+	if (!tsg_print(buffer, length, " tunnelContext=0x%016" PRIx64 ", packetId=%s [0x%08" PRIx32 "]",
 	               caps->tunnelContext, tsg_packet_id_to_string(caps->packetId), caps->packetId))
 		return FALSE;
 
@@ -796,7 +799,7 @@ static int TsProxySendToServer(handle_t IDL_handle, const byte pRpcMessage[], UI
 {
 	wStream* s;
 	rdpTsg* tsg;
-	int length;
+	size_t length;
 	const byte* buffer1 = NULL;
 	const byte* buffer2 = NULL;
 	const byte* buffer3 = NULL;
@@ -832,7 +835,9 @@ static int TsProxySendToServer(handle_t IDL_handle, const byte pRpcMessage[], UI
 		totalDataBytes += lengths[2] + 4;
 	}
 
-	length = 28 + totalDataBytes;
+	length = 28ull + totalDataBytes;
+	if (length > INT_MAX)
+		return -1;
 	s = Stream_New(NULL, length);
 
 	if (!s)
@@ -868,7 +873,7 @@ static int TsProxySendToServer(handle_t IDL_handle, const byte pRpcMessage[], UI
 	if (!rpc_client_write_call(tsg->rpc, s, TsProxySendToServerOpnum))
 		return -1;
 
-	return length;
+	return (int)length;
 }
 
 /**
@@ -1021,11 +1026,18 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 	UINT32 SwitchValue;
 	UINT32 MessageSwitchValue = 0;
 	UINT32 IsMessagePresent;
+	rdpContext* context;
 	PTSG_PACKET_CAPABILITIES tsgCaps = NULL;
 	PTSG_PACKET_VERSIONCAPS versionCaps = NULL;
 	TSG_PACKET_STRING_MESSAGE packetStringMessage;
 	PTSG_PACKET_CAPS_RESPONSE packetCapsResponse = NULL;
 	PTSG_PACKET_QUARENC_RESPONSE packetQuarEncResponse = NULL;
+
+	assert(tsg);
+	assert(tsg->rpc);
+
+	context = tsg->rpc->context;
+	assert(context);
 
 	if (!pdu)
 		return FALSE;
@@ -1173,8 +1185,8 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 				if (Stream_GetRemainingLength(pdu->s) < 16)
 					goto fail;
 
-				Stream_Read_UINT32(pdu->s, packetStringMessage.isDisplayMandatory);
-				Stream_Read_UINT32(pdu->s, packetStringMessage.isConsentMandatory);
+				Stream_Read_INT32(pdu->s, packetStringMessage.isDisplayMandatory);
+				Stream_Read_INT32(pdu->s, packetStringMessage.isConsentMandatory);
 				Stream_Read_UINT32(pdu->s, packetStringMessage.msgBytes);
 				Stream_Read_UINT32(pdu->s, Pointer);
 
@@ -1203,16 +1215,15 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 					goto fail;
 				}
 
-				if (tsg->rpc && tsg->rpc->context && tsg->rpc->context->instance)
+				if (context->instance)
 				{
-					rc = IFCALLRESULT(TRUE, tsg->rpc->context->instance->PresentGatewayMessage,
-					                  tsg->rpc->context->instance,
-					                  TSG_ASYNC_MESSAGE_CONSENT_MESSAGE
-					                      ? GATEWAY_MESSAGE_CONSENT
-					                      : TSG_ASYNC_MESSAGE_SERVICE_MESSAGE,
-					                  packetStringMessage.isDisplayMandatory != 0,
-					                  packetStringMessage.isConsentMandatory != 0,
-					                  packetStringMessage.msgBytes, packetStringMessage.msgBuffer);
+					rc = IFCALLRESULT(
+					    TRUE, context->instance->PresentGatewayMessage, context->instance,
+					    TSG_ASYNC_MESSAGE_CONSENT_MESSAGE ? GATEWAY_MESSAGE_CONSENT
+					                                      : TSG_ASYNC_MESSAGE_SERVICE_MESSAGE,
+					    packetStringMessage.isDisplayMandatory != 0,
+					    packetStringMessage.isConsentMandatory != 0, packetStringMessage.msgBytes,
+					    packetStringMessage.msgBuffer);
 					if (!rc)
 						goto fail;
 				}
@@ -1375,16 +1386,19 @@ fail:
 
 static BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext)
 {
-	UINT32 pad;
+	size_t pad;
 	wStream* s;
 	size_t count;
-	UINT32 offset;
+	size_t offset;
 	rdpRpc* rpc;
 
 	if (!tsg || !tsg->rpc || !tunnelContext || !tsg->MachineName)
 		return FALSE;
 
 	count = _wcslen(tsg->MachineName) + 1;
+	if (count > UINT32_MAX)
+		return FALSE;
+
 	rpc = tsg->rpc;
 	WLog_DBG(TAG, "TsProxyAuthorizeTunnelWriteRequest");
 	s = Stream_New(NULL, 1024 + count * 2);
@@ -1401,13 +1415,13 @@ static BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunn
 	Stream_Write_UINT32(s, 0x00020000);                  /* PacketQuarRequestPtr (4 bytes) */
 	Stream_Write_UINT32(s, 0x00000000);                  /* Flags (4 bytes) */
 	Stream_Write_UINT32(s, 0x00020004);                  /* MachineNamePtr (4 bytes) */
-	Stream_Write_UINT32(s, count);                       /* NameLength (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)count);               /* NameLength (4 bytes) */
 	Stream_Write_UINT32(s, 0x00020008);                  /* DataPtr (4 bytes) */
 	Stream_Write_UINT32(s, 0);                           /* DataLength (4 bytes) */
 	/* MachineName */
-	Stream_Write_UINT32(s, count);                         /* MaxCount (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)count);                 /* MaxCount (4 bytes) */
 	Stream_Write_UINT32(s, 0);                             /* Offset (4 bytes) */
-	Stream_Write_UINT32(s, count);                         /* ActualCount (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)count);                 /* ActualCount (4 bytes) */
 	Stream_Write_UTF16_String(s, tsg->MachineName, count); /* Array */
 	/* 4-byte alignment */
 	offset = Stream_GetPosition(s);
@@ -1418,7 +1432,7 @@ static BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunn
 	return rpc_client_write_call(rpc, s, TsProxyAuthorizeTunnelOpnum);
 }
 
-static BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
+static BOOL TsProxyAuthorizeTunnelReadResponse(RPC_PDU* pdu)
 {
 	BOOL rc = FALSE;
 	UINT32 Pointer;
@@ -1480,25 +1494,24 @@ static BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	Stream_Seek_UINT32(pdu->s);                                  /* Reserved (4 bytes) */
 	Stream_Read_UINT32(pdu->s, Pointer);                         /* ResponseDataPtr (4 bytes) */
 	Stream_Read_UINT32(pdu->s, packetResponse->responseDataLen); /* ResponseDataLength (4 bytes) */
-	Stream_Read_UINT32(pdu->s, packetResponse->redirectionFlags
-	                               .enableAllRedirections); /* EnableAllRedirections (4 bytes) */
-	Stream_Read_UINT32(pdu->s, packetResponse->redirectionFlags
-	                               .disableAllRedirections); /* DisableAllRedirections (4 bytes) */
-	Stream_Read_UINT32(pdu->s,
-	                   packetResponse->redirectionFlags
-	                       .driveRedirectionDisabled); /* DriveRedirectionDisabled (4 bytes) */
-	Stream_Read_UINT32(pdu->s,
-	                   packetResponse->redirectionFlags
-	                       .printerRedirectionDisabled); /* PrinterRedirectionDisabled (4 bytes) */
-	Stream_Read_UINT32(pdu->s,
-	                   packetResponse->redirectionFlags
-	                       .portRedirectionDisabled); /* PortRedirectionDisabled (4 bytes) */
-	Stream_Read_UINT32(pdu->s, packetResponse->redirectionFlags.reserved); /* Reserved (4 bytes) */
-	Stream_Read_UINT32(
+	Stream_Read_INT32(pdu->s, packetResponse->redirectionFlags
+	                              .enableAllRedirections); /* EnableAllRedirections (4 bytes) */
+	Stream_Read_INT32(pdu->s, packetResponse->redirectionFlags
+	                              .disableAllRedirections); /* DisableAllRedirections (4 bytes) */
+	Stream_Read_INT32(pdu->s,
+	                  packetResponse->redirectionFlags
+	                      .driveRedirectionDisabled); /* DriveRedirectionDisabled (4 bytes) */
+	Stream_Read_INT32(pdu->s,
+	                  packetResponse->redirectionFlags
+	                      .printerRedirectionDisabled); /* PrinterRedirectionDisabled (4 bytes) */
+	Stream_Read_INT32(pdu->s, packetResponse->redirectionFlags
+	                              .portRedirectionDisabled); /* PortRedirectionDisabled (4 bytes) */
+	Stream_Read_INT32(pdu->s, packetResponse->redirectionFlags.reserved); /* Reserved (4 bytes) */
+	Stream_Read_INT32(
 	    pdu->s, packetResponse->redirectionFlags
 	                .clipboardRedirectionDisabled); /* ClipboardRedirectionDisabled (4 bytes) */
-	Stream_Read_UINT32(pdu->s, packetResponse->redirectionFlags
-	                               .pnpRedirectionDisabled); /* PnpRedirectionDisabled (4 bytes) */
+	Stream_Read_INT32(pdu->s, packetResponse->redirectionFlags
+	                              .pnpRedirectionDisabled);  /* PnpRedirectionDisabled (4 bytes) */
 	Stream_Read_UINT32(pdu->s, SizeValue);                   /* (4 bytes) */
 
 	if (SizeValue != packetResponse->responseDataLen)
@@ -1598,10 +1611,17 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	UINT32 Pointer;
 	UINT32 SwitchValue;
 	TSG_PACKET packet;
+	rdpContext* context;
 	char* messageText = NULL;
 	TSG_PACKET_MSG_RESPONSE packetMsgResponse = { 0 };
 	TSG_PACKET_STRING_MESSAGE packetStringMessage = { 0 };
 	TSG_PACKET_REAUTH_MESSAGE packetReauthMessage = { 0 };
+
+	assert(tsg);
+	assert(tsg->rpc);
+
+	context = tsg->rpc->context;
+	assert(context);
 
 	/* This is an asynchronous response */
 
@@ -1652,10 +1672,10 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			WLog_INFO(TAG, "Consent Message: %s", messageText);
 			free(messageText);
 
-			if (tsg->rpc && tsg->rpc->context && tsg->rpc->context->instance)
+			if (context->instance)
 			{
-				rc = IFCALLRESULT(TRUE, tsg->rpc->context->instance->PresentGatewayMessage,
-				                  tsg->rpc->context->instance, GATEWAY_MESSAGE_CONSENT,
+				rc = IFCALLRESULT(TRUE, context->instance->PresentGatewayMessage, context->instance,
+				                  GATEWAY_MESSAGE_CONSENT,
 				                  packetStringMessage.isDisplayMandatory != 0,
 				                  packetStringMessage.isConsentMandatory != 0,
 				                  packetStringMessage.msgBytes, packetStringMessage.msgBuffer);
@@ -1673,10 +1693,10 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			WLog_INFO(TAG, "Service Message: %s", messageText);
 			free(messageText);
 
-			if (tsg->rpc && tsg->rpc->context && tsg->rpc->context->instance)
+			if (context->instance)
 			{
-				rc = IFCALLRESULT(TRUE, tsg->rpc->context->instance->PresentGatewayMessage,
-				                  tsg->rpc->context->instance, GATEWAY_MESSAGE_SERVICE,
+				rc = IFCALLRESULT(TRUE, context->instance->PresentGatewayMessage, context->instance,
+				                  GATEWAY_MESSAGE_SERVICE,
 				                  packetStringMessage.isDisplayMandatory != 0,
 				                  packetStringMessage.isConsentMandatory != 0,
 				                  packetStringMessage.msgBytes, packetStringMessage.msgBuffer);
@@ -1728,6 +1748,8 @@ static BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnel
 
 	rpc = tsg->rpc;
 	count = _wcslen(tsg->Hostname) + 1;
+	if (count > UINT32_MAX)
+		return FALSE;
 	s = Stream_New(NULL, 60 + count * 2);
 
 	if (!s)
@@ -1747,15 +1769,15 @@ static BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnel
 	Stream_Write_UINT16(s, tsg->Port);                  /* PortNumber (0xD3D = 3389) (2 bytes) */
 	Stream_Write_UINT32(s, 0x00000001);                 /* NumResourceNames (4 bytes) */
 	Stream_Write_UINT32(s, 0x00020004);                 /* ResourceNamePtr (4 bytes) */
-	Stream_Write_UINT32(s, count);                      /* MaxCount (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)count);              /* MaxCount (4 bytes) */
 	Stream_Write_UINT32(s, 0);                          /* Offset (4 bytes) */
-	Stream_Write_UINT32(s, count);                      /* ActualCount (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)count);              /* ActualCount (4 bytes) */
 	Stream_Write_UTF16_String(s, tsg->Hostname, count); /* Array */
 	return rpc_client_write_call(rpc, s, TsProxyCreateChannelOpnum);
 }
 
-static BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
-                                             CONTEXT_HANDLE* channelContext, UINT32* channelId)
+static BOOL TsProxyCreateChannelReadResponse(RPC_PDU* pdu, CONTEXT_HANDLE* channelContext,
+                                             UINT32* channelId)
 {
 	BOOL rc = FALSE;
 	WLog_DBG(TAG, "TsProxyCreateChannelReadResponse");
@@ -1803,7 +1825,7 @@ static BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context
 	return rpc_client_write_call(rpc, s, TsProxyCloseChannelOpnum);
 }
 
-static BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* context)
+static BOOL TsProxyCloseChannelReadResponse(RPC_PDU* pdu, CONTEXT_HANDLE* context)
 {
 	BOOL rc = FALSE;
 	WLog_DBG(TAG, "TsProxyCloseChannelReadResponse");
@@ -1850,7 +1872,7 @@ static BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
 	return rpc_client_write_call(rpc, s, TsProxyCloseTunnelOpnum);
 }
 
-static BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* context)
+static BOOL TsProxyCloseTunnelReadResponse(RPC_PDU* pdu, CONTEXT_HANDLE* context)
 {
 	BOOL rc = FALSE;
 	WLog_DBG(TAG, "TsProxyCloseTunnelReadResponse");
@@ -2001,8 +2023,6 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 		return FALSE;
 
 	rpc = tsg->rpc;
-	Stream_SealLength(pdu->s);
-	Stream_SetPosition(pdu->s, 0);
 
 	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
 	{
@@ -2041,7 +2061,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			CONTEXT_HANDLE* TunnelContext;
 			TunnelContext = (tsg->reauthSequence) ? &tsg->NewTunnelContext : &tsg->TunnelContext;
 
-			if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
+			if (!TsProxyAuthorizeTunnelReadResponse(pdu))
 			{
 				WLog_ERR(TAG, "TsProxyAuthorizeTunnelReadResponse failure");
 				return FALSE;
@@ -2090,7 +2110,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			{
 				CONTEXT_HANDLE ChannelContext;
 
-				if (!TsProxyCreateChannelReadResponse(tsg, pdu, &ChannelContext, &tsg->ChannelId))
+				if (!TsProxyCreateChannelReadResponse(pdu, &ChannelContext, &tsg->ChannelId))
 				{
 					WLog_ERR(TAG, "TsProxyCreateChannelReadResponse failure");
 					return FALSE;
@@ -2163,7 +2183,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			{
 				CONTEXT_HANDLE ChannelContext;
 
-				if (!TsProxyCloseChannelReadResponse(tsg, pdu, &ChannelContext))
+				if (!TsProxyCloseChannelReadResponse(pdu, &ChannelContext))
 				{
 					WLog_ERR(TAG, "TsProxyCloseChannelReadResponse failure");
 					return FALSE;
@@ -2175,7 +2195,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			{
 				CONTEXT_HANDLE TunnelContext;
 
-				if (!TsProxyCloseTunnelReadResponse(tsg, pdu, &TunnelContext))
+				if (!TsProxyCloseTunnelReadResponse(pdu, &TunnelContext))
 				{
 					WLog_ERR(TAG, "TsProxyCloseTunnelReadResponse failure");
 					return FALSE;
@@ -2190,7 +2210,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 		{
 			CONTEXT_HANDLE ChannelContext;
 
-			if (!TsProxyCloseChannelReadResponse(tsg, pdu, &ChannelContext))
+			if (!TsProxyCloseChannelReadResponse(pdu, &ChannelContext))
 			{
 				WLog_ERR(TAG, "TsProxyCloseChannelReadResponse failure");
 				return FALSE;
@@ -2220,7 +2240,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 		{
 			CONTEXT_HANDLE TunnelContext;
 
-			if (!TsProxyCloseTunnelReadResponse(tsg, pdu, &TunnelContext))
+			if (!TsProxyCloseTunnelReadResponse(pdu, &TunnelContext))
 			{
 				WLog_ERR(TAG, "TsProxyCloseTunnelReadResponse failure");
 				return FALSE;
@@ -2329,10 +2349,25 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 {
 	UINT64 looptimeout = timeout * 1000ULL;
 	DWORD nCount;
-	HANDLE events[64];
-	rdpRpc* rpc = tsg->rpc;
-	rdpSettings* settings = rpc->settings;
-	rdpTransport* transport = rpc->transport;
+	HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	rdpRpc* rpc;
+	rdpContext* context;
+	rdpSettings* settings;
+	rdpTransport* transport;
+
+	assert(tsg);
+
+	rpc = tsg->rpc;
+	assert(rpc);
+
+	transport = rpc->transport;
+	assert(transport);
+
+	context = tsg->rpc->context;
+	assert(context);
+
+	settings = context->settings;
+
 	tsg->Port = port;
 	tsg->transport = transport;
 
@@ -2351,7 +2386,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 		return FALSE;
 	}
 
-	nCount = tsg_get_event_handles(tsg, events, 64);
+	nCount = tsg_get_event_handles(tsg, events, ARRAYSIZE(events));
 
 	if (nCount == 0)
 		return FALSE;
@@ -2434,7 +2469,7 @@ BOOL tsg_disconnect(rdpTsg* tsg)
  * @return < 0 on error; 0 if not enough data is available (non blocking mode); > 0 bytes to read
  */
 
-static int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
+static int tsg_read(rdpTsg* tsg, BYTE* data, size_t length)
 {
 	rdpRpc* rpc;
 	int status = 0;
@@ -2452,7 +2487,7 @@ static int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 	do
 	{
-		status = rpc_client_receive_pipe_read(rpc->client, data, (size_t)length);
+		status = rpc_client_receive_pipe_read(rpc->client, data, length);
 
 		if (status < 0)
 			return -1;
@@ -2502,7 +2537,7 @@ static int tsg_write(rdpTsg* tsg, const BYTE* data, UINT32 length)
 	if (status < 0)
 		return -1;
 
-	return length;
+	return (int)length;
 }
 
 rdpTsg* tsg_new(rdpTransport* transport)
@@ -2514,7 +2549,6 @@ rdpTsg* tsg_new(rdpTransport* transport)
 		return NULL;
 
 	tsg->transport = transport;
-	tsg->settings = transport->settings;
 	tsg->rpc = rpc_new(tsg->transport);
 
 	if (!tsg->rpc)
@@ -2542,7 +2576,10 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 	int status;
 	rdpTsg* tsg = (rdpTsg*)BIO_get_data(bio);
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
-	status = tsg_write(tsg, (BYTE*)buf, num);
+
+	if (num < 0)
+		return -1;
+	status = tsg_write(tsg, (const BYTE*)buf, (UINT32)num);
 
 	if (status < 0)
 	{
@@ -2574,7 +2611,7 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 	}
 
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
-	status = tsg_read(tsg, (BYTE*)buf, size);
+	status = tsg_read(tsg, (BYTE*)buf, (size_t)size);
 
 	if (status < 0)
 	{
@@ -2596,17 +2633,22 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 
 static int transport_bio_tsg_puts(BIO* bio, const char* str)
 {
+	WINPR_UNUSED(bio);
+	WINPR_UNUSED(str);
 	return 1;
 }
 
 static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
 {
+	WINPR_UNUSED(bio);
+	WINPR_UNUSED(str);
+	WINPR_UNUSED(size);
 	return 1;
 }
 
 static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
-	int status = -1;
+	long status = -1;
 	rdpTsg* tsg = (rdpTsg*)BIO_get_data(bio);
 	RpcVirtualConnection* connection = tsg->rpc->VirtualConnection;
 	RpcInChannel* inChannel = connection->DefaultInChannel;
@@ -2635,27 +2677,27 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 		case BIO_C_READ_BLOCKED:
 		{
-			BIO* bio = outChannel->common.bio;
-			status = BIO_read_blocked(bio);
+			BIO* cbio = outChannel->common.bio;
+			status = BIO_read_blocked(cbio);
 		}
 		break;
 
 		case BIO_C_WRITE_BLOCKED:
 		{
-			BIO* bio = inChannel->common.bio;
-			status = BIO_write_blocked(bio);
+			BIO* cbio = inChannel->common.bio;
+			status = BIO_write_blocked(cbio);
 		}
 		break;
 
 		case BIO_C_WAIT_READ:
 		{
 			int timeout = (int)arg1;
-			BIO* bio = outChannel->common.bio;
+			BIO* cbio = outChannel->common.bio;
 
-			if (BIO_read_blocked(bio))
-				return BIO_wait_read(bio, timeout);
-			else if (BIO_write_blocked(bio))
-				return BIO_wait_write(bio, timeout);
+			if (BIO_read_blocked(cbio))
+				return BIO_wait_read(cbio, timeout);
+			else if (BIO_write_blocked(cbio))
+				return BIO_wait_write(cbio, timeout);
 			else
 				status = 1;
 		}
@@ -2664,12 +2706,12 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		case BIO_C_WAIT_WRITE:
 		{
 			int timeout = (int)arg1;
-			BIO* bio = inChannel->common.bio;
+			BIO* cbio = inChannel->common.bio;
 
-			if (BIO_write_blocked(bio))
-				status = BIO_wait_write(bio, timeout);
-			else if (BIO_read_blocked(bio))
-				status = BIO_wait_read(bio, timeout);
+			if (BIO_write_blocked(cbio))
+				status = BIO_wait_write(cbio, timeout);
+			else if (BIO_read_blocked(cbio))
+				status = BIO_wait_read(cbio, timeout);
 			else
 				status = 1;
 		}
@@ -2684,6 +2726,7 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 static int transport_bio_tsg_new(BIO* bio)
 {
+	assert(bio);
 	BIO_set_init(bio, 1);
 	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	return 1;
@@ -2691,6 +2734,8 @@ static int transport_bio_tsg_new(BIO* bio)
 
 static int transport_bio_tsg_free(BIO* bio)
 {
+	assert(bio);
+	WINPR_UNUSED(bio);
 	return 1;
 }
 
