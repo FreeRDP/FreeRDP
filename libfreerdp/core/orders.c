@@ -1881,6 +1881,13 @@ static BOOL update_read_fast_glyph_order(wStream* s, const ORDER_INFO* orderInfo
 			    !update_read_2byte_unsigned(&sub, &glyph->cy))
 				return FALSE;
 
+			if ((glyph->cx == 0) || (glyph->cy == 0))
+			{
+				WLog_ERR(TAG, "GLYPH_DATA_V2::cx=%" PRIu32 ", GLYPH_DATA_V2::cy=%" PRIu32,
+				         glyph->cx, glyph->cy);
+				return FALSE;
+			}
+
 			glyph->cb = Stream_GetRemainingLength(&sub);
 			if (glyph->cb > 0)
 			{
