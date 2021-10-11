@@ -24,6 +24,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/tchar.h>
 #include <winpr/synch.h>
 #include <winpr/dsparse.h>
@@ -46,6 +47,7 @@
 #include "rpc_client.h"
 
 #include "rpc.h"
+#include "rts.h"
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 
@@ -88,8 +90,10 @@ static const char* PTYPE_STRINGS[] = { "PTYPE_REQUEST",       "PTYPE_PING",
  *
  */
 
-void rpc_pdu_header_print(rpcconn_hdr_t* header)
+void rpc_pdu_header_print(const rpcconn_hdr_t* header)
 {
+	WINPR_ASSERT(header);
+
 	WLog_INFO(TAG, "rpc_vers: %" PRIu8 "", header->common.rpc_vers);
 	WLog_INFO(TAG, "rpc_vers_minor: %" PRIu8 "", header->common.rpc_vers_minor);
 
@@ -139,26 +143,30 @@ void rpc_pdu_header_print(rpcconn_hdr_t* header)
 	}
 }
 
-void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_common_hdr_t* header)
+rpcconn_common_hdr_t rpc_pdu_header_init(const rdpRpc* rpc)
 {
-	header->rpc_vers = rpc->rpc_vers;
-	header->rpc_vers_minor = rpc->rpc_vers_minor;
-	header->packed_drep[0] = rpc->packed_drep[0];
-	header->packed_drep[1] = rpc->packed_drep[1];
-	header->packed_drep[2] = rpc->packed_drep[2];
-	header->packed_drep[3] = rpc->packed_drep[3];
+	rpcconn_common_hdr_t header = { 0 };
+	WINPR_ASSERT(rpc);
+
+	header.rpc_vers = rpc->rpc_vers;
+	header.rpc_vers_minor = rpc->rpc_vers_minor;
+	header.packed_drep[0] = rpc->packed_drep[0];
+	header.packed_drep[1] = rpc->packed_drep[1];
+	header.packed_drep[2] = rpc->packed_drep[2];
+	header.packed_drep[3] = rpc->packed_drep[3];
+	return header;
 }
 
-UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment)
+size_t rpc_offset_align(size_t* offset, size_t alignment)
 {
-	UINT32 pad;
+	size_t pad;
 	pad = *offset;
 	*offset = (*offset + alignment - 1) & ~(alignment - 1);
 	pad = *offset - pad;
 	return pad;
 }
 
-UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
+size_t rpc_offset_pad(size_t* offset, size_t pad)
 {
 	*offset += pad;
 	return pad;
@@ -239,63 +247,67 @@ UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
  *
  */
 
-BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* length)
+BOOL rpc_get_stub_data_info(const rpcconn_hdr_t* header, size_t* poffset, size_t* length)
 {
-	UINT32 alloc_hint = 0;
-	rpcconn_hdr_t* header;
+	size_t used = 0;
+	size_t offset = 0;
+	BOOL rc = FALSE;
 	UINT32 frag_length;
 	UINT32 auth_length;
-	UINT32 auth_pad_length;
+	UINT32 auth_pad_length = 0;
 	UINT32 sec_trailer_offset;
-	rpc_sec_trailer* sec_trailer;
-	*offset = RPC_COMMON_FIELDS_LENGTH;
-	header = ((rpcconn_hdr_t*)buffer);
+	const rpc_sec_trailer* sec_trailer = NULL;
+
+	WINPR_ASSERT(header);
+	WINPR_ASSERT(poffset);
+	WINPR_ASSERT(length);
+
+	offset = RPC_COMMON_FIELDS_LENGTH;
 
 	switch (header->common.ptype)
 	{
 		case PTYPE_RESPONSE:
-			*offset += 8;
-			rpc_offset_align(offset, 8);
-			alloc_hint = header->response.alloc_hint;
+			offset += 8;
+			rpc_offset_align(&offset, 8);
+			sec_trailer = &header->response.auth_verifier;
 			break;
 
 		case PTYPE_REQUEST:
-			*offset += 4;
-			rpc_offset_align(offset, 8);
-			alloc_hint = header->request.alloc_hint;
+			offset += 4;
+			rpc_offset_align(&offset, 8);
+			sec_trailer = &header->request.auth_verifier;
 			break;
 
 		case PTYPE_RTS:
-			*offset += 4;
+			offset += 4;
 			break;
 
 		default:
 			WLog_ERR(TAG, "Unknown PTYPE: 0x%02" PRIX8 "", header->common.ptype);
-			return FALSE;
-	}
-
-	if (!length)
-		return TRUE;
-
-	if (header->common.ptype == PTYPE_REQUEST)
-	{
-		UINT32 csec_trailer_offset = header->common.frag_length - header->common.auth_length - 8;
-		*length = csec_trailer_offset - *offset;
-		return TRUE;
+			goto fail;
 	}
 
 	frag_length = header->common.frag_length;
 	auth_length = header->common.auth_length;
+
+	if (poffset)
+		*poffset = offset;
+
+	/* The fragment must be larger than the authentication trailer */
+	used = offset + auth_length + 8ull;
+	if (sec_trailer)
+	{
+		auth_pad_length = sec_trailer->auth_pad_length;
+		used += sec_trailer->auth_pad_length;
+	}
+
+	if (frag_length < used)
+		goto fail;
+
+	if (!length)
+		return TRUE;
+
 	sec_trailer_offset = frag_length - auth_length - 8;
-	sec_trailer = (rpc_sec_trailer*)&buffer[sec_trailer_offset];
-	auth_pad_length = sec_trailer->auth_pad_length;
-#if 0
-	WLog_DBG(TAG,
-	         "sec_trailer: type: %"PRIu8" level: %"PRIu8" pad_length: %"PRIu8" reserved: %"PRIu8" context_id: %"PRIu32"",
-	         sec_trailer->auth_type, sec_trailer->auth_level,
-	         sec_trailer->auth_pad_length, sec_trailer->auth_reserved,
-	         sec_trailer->auth_context_id);
-#endif
 
 	/**
 	 * According to [MS-RPCE], auth_pad_length is the number of padding
@@ -309,18 +321,21 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 		         auth_length, (frag_length - (sec_trailer_offset + 8)));
 	}
 
-	*length = frag_length - auth_length - 24 - 8 - auth_pad_length;
-	return TRUE;
+	*length = sec_trailer_offset - auth_pad_length - offset;
+
+	rc = TRUE;
+fail:
+	return rc;
 }
 
 SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t length)
 {
 	int status;
 
-	if (!channel)
+	if (!channel || (length > INT32_MAX))
 		return -1;
 
-	status = BIO_read(channel->tls->bio, Stream_Pointer(s), length);
+	status = BIO_read(channel->tls->bio, Stream_Pointer(s), (INT32)length);
 
 	if (status > 0)
 	{
@@ -339,10 +354,10 @@ SSIZE_T rpc_channel_write(RpcChannel* channel, const BYTE* data, size_t length)
 {
 	int status;
 
-	if (!channel)
+	if (!channel || (length > INT32_MAX))
 		return -1;
 
-	status = tls_write_all(channel->tls, data, length);
+	status = tls_write_all(channel->tls, data, (INT32)length);
 	return status;
 }
 
@@ -628,7 +643,7 @@ static void rpc_virtual_connection_free(RpcVirtualConnection* connection)
 	free(connection);
 }
 
-static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
+static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 {
 	int sockfd;
 	rdpTls* tls;
@@ -718,7 +733,7 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	return TRUE;
 }
 
-static int rpc_in_channel_connect(RpcInChannel* inChannel, int timeout)
+static int rpc_in_channel_connect(RpcInChannel* inChannel, UINT32 timeout)
 {
 	rdpContext* context;
 
@@ -813,7 +828,7 @@ int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout)
 	return 1;
 }
 
-BOOL rpc_connect(rdpRpc* rpc, int timeout)
+BOOL rpc_connect(rdpRpc* rpc, UINT32 timeout)
 {
 	RpcInChannel* inChannel;
 	RpcOutChannel* outChannel;
