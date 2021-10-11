@@ -2868,6 +2868,13 @@ update_read_create_offscreen_bitmap_order(wStream* s,
 	Stream_Read_UINT16(s, create_offscreen_bitmap->cy); /* cy (2 bytes) */
 	deleteList = &(create_offscreen_bitmap->deleteList);
 
+	if ((create_offscreen_bitmap->cx == 0) || (create_offscreen_bitmap->cy == 0))
+	{
+		WLog_ERR(TAG, "Invalid OFFSCREEN_DELETE_LIST: cx=%" PRIu16 ", cy=%" PRIu16,
+		         create_offscreen_bitmap->cx, create_offscreen_bitmap->cy);
+		return FALSE;
+	}
+
 	if (deleteListPresent)
 	{
 		UINT32 i;
