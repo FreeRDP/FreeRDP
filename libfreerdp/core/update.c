@@ -99,6 +99,13 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 	Stream_Read_UINT16(s, bitmapData->flags);
 	Stream_Read_UINT16(s, bitmapData->bitmapLength);
 
+	if ((bitmapData->width == 0) || (bitmapData->height == 0))
+	{
+		WLog_ERR(TAG, "Invalid BITMAP_DATA: width=%" PRIu16 ", height=%" PRIu16, bitmapData->width,
+		         bitmapData->height);
+		return FALSE;
+	}
+
 	if (bitmapData->flags & BITMAP_COMPRESSION)
 	{
 		if (!(bitmapData->flags & NO_BITMAP_COMPRESSION_HDR))
