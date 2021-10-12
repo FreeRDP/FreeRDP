@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/ndr.h>
 #include <winpr/error.h>
@@ -39,13 +40,14 @@
 
 #define TAG FREERDP_TAG("core.gateway.tsg")
 
+#define TSG_CAPABILITY_TYPE_NAP 0x00000001
+
 #define TSG_PACKET_TYPE_HEADER 0x00004844
 #define TSG_PACKET_TYPE_VERSIONCAPS 0x00005643
 #define TSG_PACKET_TYPE_QUARCONFIGREQUEST 0x00005143
 #define TSG_PACKET_TYPE_QUARREQUEST 0x00005152
 #define TSG_PACKET_TYPE_RESPONSE 0x00005052
 #define TSG_PACKET_TYPE_QUARENC_RESPONSE 0x00004552
-#define TSG_CAPABILITY_TYPE_NAP 0x00000001
 #define TSG_PACKET_TYPE_CAPS_RESPONSE 0x00004350
 #define TSG_PACKET_TYPE_MSGREQUEST_PACKET 0x00004752
 #define TSG_PACKET_TYPE_MESSAGE_PACKET 0x00004750
@@ -310,15 +312,34 @@ static BOOL tsg_print(char** buffer, size_t* len, const char* fmt, ...)
 static BOOL tsg_packet_header_to_string(char** buffer, size_t* length,
                                         const TSG_PACKET_HEADER* header)
 {
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(header);
+
 	return tsg_print(buffer, length,
 	                 "header { ComponentId=0x%04" PRIx16 ", PacketId=0x%04" PRIx16 " }",
 	                 header->ComponentId, header->PacketId);
+}
+
+static BOOL tsg_type_capability_nap_to_string(char** buffer, size_t* length,
+                                              const TSG_CAPABILITY_NAP* cur)
+{
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(cur);
+
+	return tsg_print(buffer, length, "%s { capabilities=0x%08" PRIx32 " }",
+	                 tsg_packet_id_to_string(TSG_CAPABILITY_TYPE_NAP), cur->capabilities);
 }
 
 static BOOL tsg_packet_capabilities_to_string(char** buffer, size_t* length,
                                               const TSG_PACKET_CAPABILITIES* caps, UINT32 numCaps)
 {
 	UINT32 x;
+
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(caps);
 
 	if (!tsg_print(buffer, length, "capabilities { "))
 		return FALSE;
@@ -329,9 +350,7 @@ static BOOL tsg_packet_capabilities_to_string(char** buffer, size_t* length,
 		switch (cur->capabilityType)
 		{
 			case TSG_CAPABILITY_TYPE_NAP:
-				if (!tsg_print(buffer, length, "%s { capabilities=0x%08" PRIx32 " }",
-				               tsg_packet_id_to_string(cur->capabilityType),
-				               cur->tsgPacket.tsgCapNap.capabilities))
+				if (!tsg_type_capability_nap_to_string(buffer, length, &cur->tsgPacket.tsgCapNap))
 					return FALSE;
 				break;
 			default:
@@ -346,6 +365,10 @@ static BOOL tsg_packet_capabilities_to_string(char** buffer, size_t* length,
 static BOOL tsg_packet_versioncaps_to_string(char** buffer, size_t* length,
                                              const TSG_PACKET_VERSIONCAPS* caps)
 {
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(caps);
+
 	if (!tsg_print(buffer, length, "versioncaps { "))
 		return FALSE;
 	if (!tsg_packet_header_to_string(buffer, length, &caps->tsgHeader))
@@ -362,6 +385,277 @@ static BOOL tsg_packet_versioncaps_to_string(char** buffer, size_t* length,
 	               ", minorVersion=0x%04" PRIx16 ", quarantineCapabilities=0x%04" PRIx16,
 	               caps->numCapabilities, caps->majorVersion, caps->minorVersion,
 	               caps->quarantineCapabilities))
+		return FALSE;
+
+	return tsg_print(buffer, length, " }");
+}
+
+static BOOL tsg_packet_quarconfigrequest_to_string(char** buffer, size_t* length,
+                                                   const TSG_PACKET_QUARCONFIGREQUEST* caps)
+{
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(caps);
+
+	if (!tsg_print(buffer, length, "quarconfigrequest { "))
+		return FALSE;
+
+	if (!tsg_print(buffer, length, " "))
+		return FALSE;
+
+	if (!tsg_print(buffer, length, " flags=0x%08" PRIx32, caps->flags))
+		return FALSE;
+
+	return tsg_print(buffer, length, " }");
+}
+
+static BOOL tsg_packet_quarrequest_to_string(char** buffer, size_t* length,
+                                             const TSG_PACKET_QUARREQUEST* caps)
+{
+	BOOL rc = FALSE;
+	char* name = NULL;
+	char* strdata = NULL;
+
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(caps);
+
+	if (!tsg_print(buffer, length, "quarrequest { "))
+		return FALSE;
+
+	if (!tsg_print(buffer, length, " "))
+		return FALSE;
+
+	if (caps->nameLength > 0)
+	{
+		if (ConvertFromUnicode(CP_UTF8, 0, caps->machineName, caps->nameLength, &name, 0, NULL,
+		                       NULL) < 0)
+			return FALSE;
+	}
+
+	strdata = winpr_BinToHexString(caps->data, caps->dataLen, TRUE);
+	if (strdata || (caps->dataLen == 0))
+		rc = tsg_print(buffer, length,
+		               " flags=0x%08" PRIx32 ", machineName=%s [%" PRIu32 "], data[%" PRIu32 "]=%s",
+		               caps->flags, name, caps->nameLength, caps->dataLen, strdata);
+	free(name);
+	free(strdata);
+	if (!rc)
+		return FALSE;
+
+	return tsg_print(buffer, length, " }");
+}
+
+static const char* tsg_bool_to_string(BOOL val)
+{
+	if (val)
+		return "true";
+	return "false";
+}
+
+static const char* tsg_redirection_flags_to_string(char* buffer, size_t size,
+                                                   const TSG_REDIRECTION_FLAGS* flags)
+{
+	WINPR_ASSERT(buffer || (size == 0));
+	WINPR_ASSERT(flags);
+
+	_snprintf(buffer, size,
+	          "enableAllRedirections=%s,  disableAllRedirections=%s, driveRedirectionDisabled=%s, "
+	          "printerRedirectionDisabled=%s, portRedirectionDisabled=%s, reserved=%s, "
+	          "clipboardRedirectionDisabled=%s, pnpRedirectionDisabled=%s",
+	          tsg_bool_to_string(flags->enableAllRedirections),
+	          tsg_bool_to_string(flags->disableAllRedirections),
+	          tsg_bool_to_string(flags->driveRedirectionDisabled),
+	          tsg_bool_to_string(flags->printerRedirectionDisabled),
+	          tsg_bool_to_string(flags->portRedirectionDisabled),
+	          tsg_bool_to_string(flags->reserved),
+	          tsg_bool_to_string(flags->clipboardRedirectionDisabled),
+	          tsg_bool_to_string(flags->pnpRedirectionDisabled));
+	return buffer;
+}
+
+static BOOL tsg_packet_response_to_string(char** buffer, size_t* length,
+                                          const TSG_PACKET_RESPONSE* caps)
+{
+	BOOL rc = FALSE;
+	char* strdata = NULL;
+	char tbuffer[8192] = { 0 };
+
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(caps);
+
+	if (!tsg_print(buffer, length, "response { "))
+		return FALSE;
+
+	if (!tsg_print(buffer, length, " "))
+		return FALSE;
+
+	strdata = winpr_BinToHexString(caps->responseData, caps->responseDataLen, TRUE);
+	if (strdata || (caps->responseDataLen == 0))
+		rc = tsg_print(
+		    buffer, length,
+		    " flags=0x%08" PRIx32 ", reserved=0x%08" PRIx32 ", responseData[%" PRIu32
+		    "]=%s, redirectionFlags={ %s }",
+		    caps->flags, caps->reserved, caps->responseDataLen, strdata,
+		    tsg_redirection_flags_to_string(tbuffer, ARRAYSIZE(tbuffer), &caps->redirectionFlags));
+	free(strdata);
+	if (!rc)
+		return FALSE;
+
+	return tsg_print(buffer, length, " }");
+}
+
+static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
+                                                  const TSG_PACKET_QUARENC_RESPONSE* caps)
+{
+	BOOL rc = FALSE;
+	char* strdata = NULL;
+	RPC_CSTR uuid;
+	char tbuffer[8192] = { 0 };
+	size_t size = ARRAYSIZE(tbuffer);
+	char* ptbuffer = tbuffer;
+
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(caps);
+
+	if (!tsg_print(buffer, length, "quarenc_response { "))
+		return FALSE;
+
+	if (!tsg_print(buffer, length, " "))
+		return FALSE;
+
+	if (caps->certChainLen > 0)
+	{
+		if (ConvertFromUnicode(CP_UTF8, 0, caps->certChainData, caps->certChainLen, &strdata, 0,
+		                       NULL, NULL) <= 0)
+			return FALSE;
+	}
+
+	tsg_packet_versioncaps_to_string(&ptbuffer, &size, caps->versionCaps);
+	UuidToStringA(&caps->nonce, &uuid);
+	if (strdata || (caps->certChainLen == 0))
+		rc =
+		    tsg_print(buffer, length,
+		              " flags=0x%08" PRIx32 ", certChain[%" PRIu32 "]=%s, nonce=%s, versionCaps=%s",
+		              caps->flags, caps->certChainLen, strdata, uuid, tbuffer);
+	free(strdata);
+	free(uuid);
+	if (!rc)
+		return FALSE;
+
+	return tsg_print(buffer, length, " }");
+}
+
+static BOOL tsg_packet_message_response_to_string(char** buffer, size_t* length,
+                                                  const TSG_PACKET_MSG_RESPONSE* caps)
+{
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(caps);
+
+	if (!tsg_print(buffer, length, "msg_response { "))
+		return FALSE;
+
+	if (!tsg_print(buffer, length,
+	               " msgID=0x%08" PRIx32 ", msgType=0x%08" PRIx32 ", isMsgPresent=%" PRId32,
+	               caps->msgID, caps->msgType, caps->isMsgPresent))
+		return FALSE;
+
+	return tsg_print(buffer, length, " }");
+}
+
+static BOOL tsg_packet_caps_response_to_string(char** buffer, size_t* length,
+                                               const TSG_PACKET_CAPS_RESPONSE* caps)
+{
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(caps);
+
+	if (!tsg_print(buffer, length, "caps_response { "))
+		return FALSE;
+
+	if (!tsg_packet_quarenc_response_to_string(buffer, length, &caps->pktQuarEncResponse))
+		return FALSE;
+
+	if (!tsg_packet_message_response_to_string(buffer, length, &caps->pktConsentMessage))
+		return FALSE;
+
+	return tsg_print(buffer, length, " }");
+}
+
+static BOOL tsg_packet_message_request_to_string(char** buffer, size_t* length,
+                                                 const TSG_PACKET_MSG_REQUEST* caps)
+{
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(caps);
+
+	if (!tsg_print(buffer, length, "caps_message_request { "))
+		return FALSE;
+
+	if (!tsg_print(buffer, length, " maxMessagesPerBatch=%" PRIu32, caps->maxMessagesPerBatch))
+		return FALSE;
+
+	return tsg_print(buffer, length, " }");
+}
+
+static BOOL tsg_packet_auth_to_string(char** buffer, size_t* length, const TSG_PACKET_AUTH* caps)
+{
+	BOOL rc = FALSE;
+	char* strdata = NULL;
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(caps);
+
+	if (!tsg_print(buffer, length, "caps_message_request { "))
+		return FALSE;
+
+	if (!tsg_packet_versioncaps_to_string(buffer, length, &caps->tsgVersionCaps))
+		return FALSE;
+
+	strdata = winpr_BinToHexString(caps->cookie, caps->cookieLen, TRUE);
+	if (strdata || (caps->cookieLen == 0))
+		rc = tsg_print(buffer, length, " cookie[%" PRIu32 "]=%s", caps->cookieLen, strdata);
+	free(strdata);
+	if (!rc)
+		return FALSE;
+
+	return tsg_print(buffer, length, " }");
+}
+
+static BOOL tsg_packet_reauth_to_string(char** buffer, size_t* length,
+                                        const TSG_PACKET_REAUTH* caps)
+{
+	BOOL rc = FALSE;
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(length);
+	WINPR_ASSERT(caps);
+
+	if (!tsg_print(buffer, length, "caps_message_request { "))
+		return FALSE;
+
+	if (!tsg_print(buffer, length, " tunnelContext=0x%08" PRIx32 ", packetId=%s [0x%08" PRIx32 "]",
+	               caps->tunnelContext, tsg_packet_id_to_string(caps->packetId), caps->packetId))
+		return FALSE;
+
+	switch (caps->packetId)
+	{
+		case TSG_PACKET_TYPE_VERSIONCAPS:
+			rc = tsg_packet_versioncaps_to_string(buffer, length,
+			                                      caps->tsgInitialPacket.packetVersionCaps);
+			break;
+		case TSG_PACKET_TYPE_AUTH:
+			rc = tsg_packet_auth_to_string(buffer, length, caps->tsgInitialPacket.packetAuth);
+			break;
+		default:
+			rc = tsg_print(buffer, length, "TODO: Unhandled packet type %s [0x%08" PRIx32 "]",
+			               tsg_packet_id_to_string(caps->packetId), caps->packetId);
+			break;
+	}
+
+	if (!rc)
 		return FALSE;
 
 	return tsg_print(buffer, length, " }");
@@ -389,43 +683,45 @@ static const char* tsg_packet_to_string(const TSG_PACKET* packet)
 				goto fail;
 			break;
 		case TSG_PACKET_TYPE_QUARCONFIGREQUEST:
-			if (!tsg_print(&buffer, &len, "TODO"))
+			if (!tsg_packet_quarconfigrequest_to_string(&buffer, &len,
+			                                            packet->tsgPacket.packetQuarConfigRequest))
 				goto fail;
 			break;
 		case TSG_PACKET_TYPE_QUARREQUEST:
-			if (!tsg_print(&buffer, &len, "TODO"))
+			if (!tsg_packet_quarrequest_to_string(&buffer, &len,
+			                                      packet->tsgPacket.packetQuarRequest))
 				goto fail;
 			break;
 		case TSG_PACKET_TYPE_RESPONSE:
-			if (!tsg_print(&buffer, &len, "TODO"))
+			if (!tsg_packet_response_to_string(&buffer, &len, packet->tsgPacket.packetResponse))
 				goto fail;
 			break;
 		case TSG_PACKET_TYPE_QUARENC_RESPONSE:
-			if (!tsg_print(&buffer, &len, "TODO"))
-				goto fail;
-			break;
-		case TSG_CAPABILITY_TYPE_NAP:
-			if (!tsg_print(&buffer, &len, "TODO"))
+			if (!tsg_packet_quarenc_response_to_string(&buffer, &len,
+			                                           packet->tsgPacket.packetQuarEncResponse))
 				goto fail;
 			break;
 		case TSG_PACKET_TYPE_CAPS_RESPONSE:
-			if (!tsg_print(&buffer, &len, "TODO"))
+			if (!tsg_packet_caps_response_to_string(&buffer, &len,
+			                                        packet->tsgPacket.packetCapsResponse))
 				goto fail;
 			break;
 		case TSG_PACKET_TYPE_MSGREQUEST_PACKET:
-			if (!tsg_print(&buffer, &len, "TODO"))
+			if (!tsg_packet_message_request_to_string(&buffer, &len,
+			                                          packet->tsgPacket.packetMsgRequest))
 				goto fail;
 			break;
 		case TSG_PACKET_TYPE_MESSAGE_PACKET:
-			if (!tsg_print(&buffer, &len, "TODO"))
+			if (!tsg_packet_message_response_to_string(&buffer, &len,
+			                                           packet->tsgPacket.packetMsgResponse))
 				goto fail;
 			break;
 		case TSG_PACKET_TYPE_AUTH:
-			if (!tsg_print(&buffer, &len, "TODO"))
+			if (!tsg_packet_auth_to_string(&buffer, &len, packet->tsgPacket.packetAuth))
 				goto fail;
 			break;
 		case TSG_PACKET_TYPE_REAUTH:
-			if (!tsg_print(&buffer, &len, "TODO"))
+			if (!tsg_packet_reauth_to_string(&buffer, &len, packet->tsgPacket.packetReauth))
 				goto fail;
 			break;
 		default:
