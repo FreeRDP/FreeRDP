@@ -49,7 +49,6 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
 
-#include "compatibility.h"
 #include "cmdline.h"
 
 #include <freerdp/log.h>
@@ -1337,26 +1336,23 @@ static int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 
 static BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 {
-	int old_cli_status;
-	size_t old_cli_count;
 	int posix_cli_status;
 	size_t posix_cli_count;
 	int windows_cli_status;
 	size_t windows_cli_count;
-	BOOL compatibility = FALSE;
 	const BOOL ignoreUnknown = TRUE;
 	windows_cli_status = freerdp_detect_windows_style_command_line_syntax(
 	    argc, argv, &windows_cli_count, ignoreUnknown);
 	posix_cli_status =
 	    freerdp_detect_posix_style_command_line_syntax(argc, argv, &posix_cli_count, ignoreUnknown);
-	old_cli_status = freerdp_detect_old_command_line_syntax(argc, argv, &old_cli_count);
+
 	/* Default is POSIX syntax */
 	*flags = COMMAND_LINE_SEPARATOR_SPACE;
 	*flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	*flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
 
 	if (posix_cli_status <= COMMAND_LINE_STATUS_PRINT)
-		return compatibility;
+		return FALSE;
 
 	/* Check, if this may be windows style syntax... */
 	if ((windows_cli_count && (windows_cli_count >= posix_cli_count)) ||
@@ -1366,20 +1362,10 @@ static BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* fla
 		*flags = COMMAND_LINE_SEPARATOR_COLON;
 		*flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
 	}
-	else if (old_cli_status >= 0)
-	{
-		/* Ignore legacy parsing in case there is an error in the command line. */
-		if ((old_cli_status == 1) || ((old_cli_count > posix_cli_count) && (old_cli_status != -1)))
-		{
-			*flags = COMMAND_LINE_SEPARATOR_SPACE;
-			*flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
-			compatibility = TRUE;
-		}
-	}
 
-	WLog_DBG(TAG, "windows: %d/%d posix: %d/%d compat: %d/%d", windows_cli_status,
-	         windows_cli_count, posix_cli_status, posix_cli_count, old_cli_status, old_cli_count);
-	return compatibility;
+	WLog_DBG(TAG, "windows: %d/%d posix: %d/%d", windows_cli_status, windows_cli_count,
+	         posix_cli_status, posix_cli_count);
+	return FALSE;
 }
 
 int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int status, int argc,
@@ -1597,8 +1583,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 	if (compatibility)
 	{
-		WLog_WARN(TAG, "Using deprecated command-line interface!");
-		return freerdp_client_parse_old_command_line_arguments(argc, argv, settings);
+		WLog_WARN(TAG, "Unsupported command line syntax!");
+		return -1;
 	}
 	else
 	{
