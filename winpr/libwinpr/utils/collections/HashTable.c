@@ -246,12 +246,13 @@ static INLINE void setKey(wHashTable* table, wKeyValuePair* pair, const void* ke
 		pair->key = (void*)key;
 }
 
-static INLINE void setValue(wHashTable* table, wKeyValuePair* pair, const void* value)
+static INLINE void setValue(wHashTable* table, wKeyValuePair* pair, const void* value, BOOL disposePrevValue)
 {
 	WINPR_ASSERT(table);
 	if (!pair)
 		return;
-	disposeValue(table, pair->value);
+	if (disposePrevValue)
+		disposeValue(table, pair->value);
 	if (table->value.fnObjectNew)
 		pair->value = table->value.fnObjectNew(value);
 	else
@@ -330,7 +331,7 @@ BOOL HashTable_Insert(wHashTable* table, const void* key, const void* value)
 
 		if (pair->value != value)
 		{
-			setValue(table, pair, value);
+			setValue(table, pair, value, TRUE);
 		}
 		rc = TRUE;
 	}
@@ -341,7 +342,7 @@ BOOL HashTable_Insert(wHashTable* table, const void* key, const void* value)
 		if (newPair)
 		{
 			setKey(table, newPair, key);
-			setValue(table, newPair, value);
+			setValue(table, newPair, value, FALSE);
 			newPair->next = table->bucketArray[hashValue];
 			newPair->markedForRemove = FALSE;
 			table->bucketArray[hashValue] = newPair;
@@ -479,7 +480,7 @@ BOOL HashTable_SetItemValue(wHashTable* table, const void* key, const void* valu
 		status = FALSE;
 	else
 	{
-		setValue(table, pair, value);
+		setValue(table, pair, value, TRUE);
 	}
 
 	if (table->synchronized)
