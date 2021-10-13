@@ -88,6 +88,8 @@ RelWithDebInfo
 version.rc
 *.VC.db
 *.VC.opendb
+out
+.vs
 
 # Binaries
 *.a
