@@ -24,6 +24,7 @@
 
 #include "wf_rail.h"
 #include "wf_cliprdr.h"
+#include "wf_geometry.h"
 
 #include <freerdp/gdi/gfx.h>
 
@@ -61,6 +62,14 @@ void wf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	{
 		wfc->disp = (DispClientContext*)e->pInterface;
 	}
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		wf_geometry_init(wfc, (GeometryClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		wfc->video = (VideoClientContext*)e->pInterface;
+	}
 }
 
 void wf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
@@ -89,5 +98,13 @@ void wf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEven
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		wfc->disp = NULL;
+	}
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		wf_geometry_uninit(wfc, (GeometryClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		wfc->video = NULL;
 	}
 }
