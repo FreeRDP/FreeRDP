@@ -1359,6 +1359,11 @@ static BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* fla
 
 	WLog_DBG(TAG, "windows: %d/%d posix: %d/%d", windows_cli_status, windows_cli_count,
 	         posix_cli_status, posix_cli_count);
+	if ((posix_cli_count == 0) && (windows_cli_count == 0))
+	{
+		if ((posix_cli_status == COMMAND_LINE_ERROR) && (windows_cli_status == COMMAND_LINE_ERROR))
+			return TRUE;
+	}
 	return FALSE;
 }
 
@@ -1578,6 +1583,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	if (compatibility)
 	{
 		WLog_WARN(TAG, "Unsupported command line syntax!");
+		WLog_WARN(TAG, "FreeRDP 1.0 style syntax was dropped with version 3!");
 		return -1;
 	}
 	else
