@@ -38,13 +38,16 @@ static BOOL scale_signed_coordinates(rdpContext* context, int32_t* x, int32_t* y
                                      BOOL fromLocalToRDP)
 {
 	BOOL rc;
-	UINT32 ux = (UINT32)x;
-	UINT32 uy = (UINT32)y;
+	UINT32 ux;
+	UINT32 uy;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(x);
 	WINPR_ASSERT(y);
 	WINPR_ASSERT(*x >= 0);
 	WINPR_ASSERT(*y >= 0);
+
+	ux = (UINT32)*x;
+	uy = (UINT32)*y;
 	rc = wlf_scale_coordinates(context, &ux, &uy, fromLocalToRDP);
 	WINPR_ASSERT(ux < INT32_MAX);
 	WINPR_ASSERT(uy < INT32_MAX);
