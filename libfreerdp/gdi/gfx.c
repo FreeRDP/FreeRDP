@@ -777,13 +777,15 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	UINT16 alphaSig, compressed;
 	gdiGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
-	wStream s;
+	wStream buffer;
+	wStream* s;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cmd);
-	Stream_StaticInit(&s, cmd->data, cmd->length);
 
-	if (Stream_GetRemainingLength(&s) < 4)
+	s = Stream_StaticConstInit(&buffer, cmd->data, cmd->length);
+
+	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
 
 	surface = (gdiGfxSurface*)context->GetSurfaceData(context, cmd->surfaceId);
@@ -798,8 +800,8 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	if (!is_within_surface(surface, cmd))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT16(&s, alphaSig);
-	Stream_Read_UINT16(&s, compressed);
+	Stream_Read_UINT16(s, alphaSig);
+	Stream_Read_UINT16(s, compressed);
 
 	if (alphaSig != 0x414C)
 		return ERROR_INVALID_DATA;
@@ -808,19 +810,19 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	{
 		UINT32 x, y;
 
-		if (Stream_GetRemainingLength(&s) < cmd->height * cmd->width * 1ULL)
+		if (Stream_GetRemainingLength(s) < cmd->height * cmd->width * 1ULL)
 			return ERROR_INVALID_DATA;
 
 		for (y = cmd->top; y < cmd->top + cmd->height; y++)
 		{
-			BYTE* line = &surface->data[surface->scanline * y];
+			BYTE* line = surface->data[surface->scanline * y];
 
 			for (x = cmd->left; x < cmd->left + cmd->width; x++)
 			{
 				UINT32 color;
 				BYTE r, g, b, a;
 				BYTE* src = &line[x * GetBytesPerPixel(surface->format)];
-				Stream_Read_UINT8(&s, a);
+				Stream_Read_UINT8(s, a);
 				color = ReadColor(src, surface->format);
 				SplitColor(color, surface->format, &r, &g, &b, NULL, NULL);
 				color = FreeRDPGetColor(surface->format, r, g, b, a);
@@ -842,25 +844,25 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 			UINT32 count;
 			BYTE a;
 
-			if (Stream_GetRemainingLength(&s) < 2)
+			if (Stream_GetRemainingLength(s) < 2)
 				return ERROR_INVALID_DATA;
 
-			Stream_Read_UINT8(&s, a);
-			Stream_Read_UINT8(&s, count);
+			Stream_Read_UINT8(s, a);
+			Stream_Read_UINT8(s, count);
 
 			if (count >= 0xFF)
 			{
-				if (Stream_GetRemainingLength(&s) < 2)
+				if (Stream_GetRemainingLength(s) < 2)
 					return ERROR_INVALID_DATA;
 
-				Stream_Read_UINT16(&s, count);
+				Stream_Read_UINT16(s, count);
 
 				if (count >= 0xFFFF)
 				{
-					if (Stream_GetRemainingLength(&s) < 4)
+					if (Stream_GetRemainingLength(s) < 4)
 						return ERROR_INVALID_DATA;
 
-					Stream_Read_UINT32(&s, count);
+					Stream_Read_UINT32(s, count);
 				}
 			}
 

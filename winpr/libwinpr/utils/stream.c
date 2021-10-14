@@ -126,17 +126,33 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	return s;
 }
 
-void Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
+wStream* Stream_StaticConstInit(wStream* s, const BYTE* buffer, size_t size)
 {
+	union
+	{
+		BYTE* b;
+		const BYTE* cb;
+	} cnv;
+
+	cnv.cb = buffer;
+	return Stream_StaticInit(s, cnv.b, size);
+}
+
+wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
+{
+	const wStream empty = { 0 };
+
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(buffer);
 
+	*s = empty;
 	s->buffer = s->pointer = buffer;
 	s->capacity = s->length = size;
 	s->pool = NULL;
 	s->count = 0;
 	s->isAllocatedStream = FALSE;
 	s->isOwner = FALSE;
+	return s;
 }
 
 void Stream_EnsureValidity(wStream* s)

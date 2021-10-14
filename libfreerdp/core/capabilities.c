@@ -2771,7 +2771,9 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 	while (bitmapCodecCount > 0)
 	{
 		size_t rest;
-		wStream sub;
+		wStream subbuffer;
+		wStream* sub;
+
 		if (!rdp_read_bitmap_codec_guid(s, &codecGuid)) /* codecGuid (16 bytes) */
 			return FALSE;
 		if (Stream_GetRemainingLength(s) < 3)
@@ -2779,7 +2781,7 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 		Stream_Read_UINT8(s, codecId);                /* codecId (1 byte) */
 		Stream_Read_UINT16(s, codecPropertiesLength); /* codecPropertiesLength (2 bytes) */
 
-		Stream_StaticInit(&sub, Stream_Pointer(s), codecPropertiesLength);
+		sub = Stream_StaticInit(&subbuffer, Stream_Pointer(s), codecPropertiesLength);
 		if (!Stream_SafeSeek(s, codecPropertiesLength))
 			return FALSE;
 
@@ -2792,11 +2794,11 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 				UINT32 captureFlags;
 				guidRemoteFx = TRUE;
 				settings->RemoteFxCodecId = codecId;
-				if (Stream_GetRemainingLength(&sub) < 12)
+				if (Stream_GetRemainingLength(sub) < 12)
 					return FALSE;
-				Stream_Read_UINT32(&sub, rfxPropsLength); /* length (4 bytes) */
-				Stream_Read_UINT32(&sub, captureFlags);   /* captureFlags (4 bytes) */
-				Stream_Read_UINT32(&sub, rfxCapsLength);  /* capsLength (4 bytes) */
+				Stream_Read_UINT32(sub, rfxPropsLength); /* length (4 bytes) */
+				Stream_Read_UINT32(sub, captureFlags);   /* captureFlags (4 bytes) */
+				Stream_Read_UINT32(sub, rfxCapsLength);  /* capsLength (4 bytes) */
 				settings->RemoteFxCaptureFlags = captureFlags;
 				settings->RemoteFxOnly = (captureFlags & CARDP_CAPS_CAPTURE_NON_CAC) ? TRUE : FALSE;
 
@@ -2810,11 +2812,11 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 					UINT16 numIcaps;
 					UINT16 icapLen;
 					/* TS_RFX_CAPS */
-					if (Stream_GetRemainingLength(&sub) < 21)
+					if (Stream_GetRemainingLength(sub) < 21)
 						return FALSE;
-					Stream_Read_UINT16(&sub, blockType);  /* blockType (2 bytes) */
-					Stream_Read_UINT32(&sub, blockLen);   /* blockLen (4 bytes) */
-					Stream_Read_UINT16(&sub, numCapsets); /* numCapsets (2 bytes) */
+					Stream_Read_UINT16(sub, blockType);  /* blockType (2 bytes) */
+					Stream_Read_UINT32(sub, blockLen);   /* blockLen (4 bytes) */
+					Stream_Read_UINT16(sub, numCapsets); /* numCapsets (2 bytes) */
 
 					if (blockType != 0xCBC0)
 						return FALSE;
@@ -2826,12 +2828,12 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 						return FALSE;
 
 					/* TS_RFX_CAPSET */
-					Stream_Read_UINT16(&sub, blockType);  /* blockType (2 bytes) */
-					Stream_Read_UINT32(&sub, blockLen);   /* blockLen (4 bytes) */
-					Stream_Read_UINT8(&sub, rfxCodecId);  /* codecId (1 byte) */
-					Stream_Read_UINT16(&sub, capsetType); /* capsetType (2 bytes) */
-					Stream_Read_UINT16(&sub, numIcaps);   /* numIcaps (2 bytes) */
-					Stream_Read_UINT16(&sub, icapLen);    /* icapLen (2 bytes) */
+					Stream_Read_UINT16(sub, blockType);  /* blockType (2 bytes) */
+					Stream_Read_UINT32(sub, blockLen);   /* blockLen (4 bytes) */
+					Stream_Read_UINT8(sub, rfxCodecId);  /* codecId (1 byte) */
+					Stream_Read_UINT16(sub, capsetType); /* capsetType (2 bytes) */
+					Stream_Read_UINT16(sub, numIcaps);   /* numIcaps (2 bytes) */
+					Stream_Read_UINT16(sub, icapLen);    /* icapLen (2 bytes) */
 
 					if (blockType != 0xCBC1)
 						return FALSE;
@@ -2851,14 +2853,14 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 						BYTE transformBits;
 						BYTE entropyBits;
 						/* TS_RFX_ICAP */
-						if (Stream_GetRemainingLength(&sub) < 8)
+						if (Stream_GetRemainingLength(sub) < 8)
 							return FALSE;
-						Stream_Read_UINT16(&sub, version);      /* version (2 bytes) */
-						Stream_Read_UINT16(&sub, tileSize);     /* tileSize (2 bytes) */
-						Stream_Read_UINT8(&sub, codecFlags);    /* flags (1 byte) */
-						Stream_Read_UINT8(&sub, colConvBits);   /* colConvBits (1 byte) */
-						Stream_Read_UINT8(&sub, transformBits); /* transformBits (1 byte) */
-						Stream_Read_UINT8(&sub, entropyBits);   /* entropyBits (1 byte) */
+						Stream_Read_UINT16(sub, version);      /* version (2 bytes) */
+						Stream_Read_UINT16(sub, tileSize);     /* tileSize (2 bytes) */
+						Stream_Read_UINT8(sub, codecFlags);    /* flags (1 byte) */
+						Stream_Read_UINT8(sub, colConvBits);   /* colConvBits (1 byte) */
+						Stream_Read_UINT8(sub, transformBits); /* transformBits (1 byte) */
+						Stream_Read_UINT8(sub, entropyBits);   /* entropyBits (1 byte) */
 
 						if (version == 0x0009)
 						{
@@ -2887,7 +2889,7 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 			{
 				/* Microsoft RDP servers ignore CODEC_GUID_IMAGE_REMOTEFX codec properties */
 				guidRemoteFxImage = TRUE;
-				if (!Stream_SafeSeek(&sub, codecPropertiesLength)) /* codecProperties */
+				if (!Stream_SafeSeek(sub, codecPropertiesLength)) /* codecProperties */
 					return FALSE;
 			}
 			else if (UuidEqual(&codecGuid, &CODEC_GUID_NSCODEC, &rpc_status))
@@ -2897,11 +2899,11 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 				BYTE fAllowDynamicFidelity;
 				guidNSCodec = TRUE;
 				settings->NSCodecId = codecId;
-				if (Stream_GetRemainingLength(&sub) < 3)
+				if (Stream_GetRemainingLength(sub) < 3)
 					return FALSE;
-				Stream_Read_UINT8(&sub, fAllowDynamicFidelity); /* fAllowDynamicFidelity (1 byte) */
-				Stream_Read_UINT8(&sub, fAllowSubsampling);     /* fAllowSubsampling (1 byte) */
-				Stream_Read_UINT8(&sub, colorLossLevel);        /* colorLossLevel (1 byte) */
+				Stream_Read_UINT8(sub, fAllowDynamicFidelity); /* fAllowDynamicFidelity (1 byte) */
+				Stream_Read_UINT8(sub, fAllowSubsampling);     /* fAllowSubsampling (1 byte) */
+				Stream_Read_UINT8(sub, colorLossLevel);        /* colorLossLevel (1 byte) */
 
 				if (colorLossLevel < 1)
 					colorLossLevel = 1;
@@ -2915,22 +2917,22 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 			}
 			else if (UuidEqual(&codecGuid, &CODEC_GUID_IGNORE, &rpc_status))
 			{
-				if (!Stream_SafeSeek(&sub, codecPropertiesLength)) /* codecProperties */
+				if (!Stream_SafeSeek(sub, codecPropertiesLength)) /* codecProperties */
 					return FALSE;
 			}
 			else
 			{
-				if (!Stream_SafeSeek(&sub, codecPropertiesLength)) /* codecProperties */
+				if (!Stream_SafeSeek(sub, codecPropertiesLength)) /* codecProperties */
 					return FALSE;
 			}
 		}
 		else
 		{
-			if (!Stream_SafeSeek(&sub, codecPropertiesLength)) /* codecProperties */
+			if (!Stream_SafeSeek(sub, codecPropertiesLength)) /* codecProperties */
 				return FALSE;
 		}
 
-		rest = Stream_GetRemainingLength(&sub);
+		rest = Stream_GetRemainingLength(sub);
 		if (rest > 0)
 		{
 			WLog_ERR(TAG,
@@ -3364,187 +3366,189 @@ static BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOO
 	while (numberCapabilities > 0)
 	{
 		size_t rest;
-		wStream sub;
+		wStream subBuffer;
+		wStream* sub;
+
 		if (!rdp_read_capability_set_header(s, &length, &type))
 			return FALSE;
 
 		WLog_INFO(TAG, "%s ", receiving ? "Receiving" : "Sending");
-		Stream_StaticInit(&sub, Stream_Pointer(s), length - 4);
+		sub = Stream_StaticInit(&subBuffer, Stream_Pointer(s), length - 4);
 		if (!Stream_SafeSeek(s, length - 4))
 			return FALSE;
 
 		switch (type)
 		{
 			case CAPSET_TYPE_GENERAL:
-				if (!rdp_print_general_capability_set(&sub))
+				if (!rdp_print_general_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP:
-				if (!rdp_print_bitmap_capability_set(&sub))
+				if (!rdp_print_bitmap_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_ORDER:
-				if (!rdp_print_order_capability_set(&sub))
+				if (!rdp_print_order_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CACHE:
-				if (!rdp_print_bitmap_cache_capability_set(&sub))
+				if (!rdp_print_bitmap_cache_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_CONTROL:
-				if (!rdp_print_control_capability_set(&sub))
+				if (!rdp_print_control_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_ACTIVATION:
-				if (!rdp_print_window_activation_capability_set(&sub))
+				if (!rdp_print_window_activation_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_POINTER:
-				if (!rdp_print_pointer_capability_set(&sub))
+				if (!rdp_print_pointer_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_SHARE:
-				if (!rdp_print_share_capability_set(&sub))
+				if (!rdp_print_share_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_COLOR_CACHE:
-				if (!rdp_print_color_cache_capability_set(&sub))
+				if (!rdp_print_color_cache_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_SOUND:
-				if (!rdp_print_sound_capability_set(&sub))
+				if (!rdp_print_sound_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_INPUT:
-				if (!rdp_print_input_capability_set(&sub))
+				if (!rdp_print_input_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_FONT:
-				if (!rdp_print_font_capability_set(&sub))
+				if (!rdp_print_font_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_BRUSH:
-				if (!rdp_print_brush_capability_set(&sub))
+				if (!rdp_print_brush_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_GLYPH_CACHE:
-				if (!rdp_print_glyph_cache_capability_set(&sub))
+				if (!rdp_print_glyph_cache_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_OFFSCREEN_CACHE:
-				if (!rdp_print_offscreen_bitmap_cache_capability_set(&sub))
+				if (!rdp_print_offscreen_bitmap_cache_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CACHE_HOST_SUPPORT:
-				if (!rdp_print_bitmap_cache_host_support_capability_set(&sub))
+				if (!rdp_print_bitmap_cache_host_support_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CACHE_V2:
-				if (!rdp_print_bitmap_cache_v2_capability_set(&sub))
+				if (!rdp_print_bitmap_cache_v2_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_VIRTUAL_CHANNEL:
-				if (!rdp_print_virtual_channel_capability_set(&sub))
+				if (!rdp_print_virtual_channel_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_DRAW_NINE_GRID_CACHE:
-				if (!rdp_print_draw_nine_grid_cache_capability_set(&sub))
+				if (!rdp_print_draw_nine_grid_cache_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_DRAW_GDI_PLUS:
-				if (!rdp_print_draw_gdiplus_cache_capability_set(&sub))
+				if (!rdp_print_draw_gdiplus_cache_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_RAIL:
-				if (!rdp_print_remote_programs_capability_set(&sub))
+				if (!rdp_print_remote_programs_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_WINDOW:
-				if (!rdp_print_window_list_capability_set(&sub))
+				if (!rdp_print_window_list_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_COMP_DESK:
-				if (!rdp_print_desktop_composition_capability_set(&sub))
+				if (!rdp_print_desktop_composition_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_MULTI_FRAGMENT_UPDATE:
-				if (!rdp_print_multifragment_update_capability_set(&sub))
+				if (!rdp_print_multifragment_update_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_LARGE_POINTER:
-				if (!rdp_print_large_pointer_capability_set(&sub))
+				if (!rdp_print_large_pointer_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_SURFACE_COMMANDS:
-				if (!rdp_print_surface_commands_capability_set(&sub))
+				if (!rdp_print_surface_commands_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CODECS:
-				if (!rdp_print_bitmap_codecs_capability_set(&sub))
+				if (!rdp_print_bitmap_codecs_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_FRAME_ACKNOWLEDGE:
-				if (!rdp_print_frame_acknowledge_capability_set(&sub))
+				if (!rdp_print_frame_acknowledge_capability_set(sub))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID:
-				if (!rdp_print_bitmap_cache_v3_codec_id_capability_set(&sub))
+				if (!rdp_print_bitmap_cache_v3_codec_id_capability_set(sub))
 					return FALSE;
 
 				break;
@@ -3554,7 +3558,7 @@ static BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOO
 				break;
 		}
 
-		rest = Stream_GetRemainingLength(&sub);
+		rest = Stream_GetRemainingLength(sub);
 		if (rest > 0)
 		{
 			WLog_WARN(TAG,
@@ -3583,11 +3587,12 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 		size_t rest;
 		UINT16 type;
 		UINT16 length;
-		wStream sub;
+		wStream subbuffer;
+		wStream* sub;
 
 		if (!rdp_read_capability_set_header(s, &length, &type))
 			return FALSE;
-		Stream_StaticInit(&sub, Stream_Pointer(s), length - 4);
+		sub = Stream_StaticInit(&subbuffer, Stream_Pointer(s), length - 4);
 		if (!Stream_SafeSeek(s, length - 4))
 			return FALSE;
 
@@ -3605,115 +3610,115 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 		switch (type)
 		{
 			case CAPSET_TYPE_GENERAL:
-				if (!rdp_read_general_capability_set(&sub, settings))
+				if (!rdp_read_general_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP:
-				if (!rdp_read_bitmap_capability_set(&sub, settings))
+				if (!rdp_read_bitmap_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_ORDER:
-				if (!rdp_read_order_capability_set(&sub, settings))
+				if (!rdp_read_order_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_POINTER:
-				if (!rdp_read_pointer_capability_set(&sub, settings))
+				if (!rdp_read_pointer_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_INPUT:
-				if (!rdp_read_input_capability_set(&sub, settings))
+				if (!rdp_read_input_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_VIRTUAL_CHANNEL:
-				if (!rdp_read_virtual_channel_capability_set(&sub, settings))
+				if (!rdp_read_virtual_channel_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_SHARE:
-				if (!rdp_read_share_capability_set(&sub, settings))
+				if (!rdp_read_share_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_COLOR_CACHE:
-				if (!rdp_read_color_cache_capability_set(&sub, settings))
+				if (!rdp_read_color_cache_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_FONT:
-				if (!rdp_read_font_capability_set(&sub, settings))
+				if (!rdp_read_font_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_DRAW_GDI_PLUS:
-				if (!rdp_read_draw_gdiplus_cache_capability_set(&sub, settings))
+				if (!rdp_read_draw_gdiplus_cache_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_RAIL:
-				if (!rdp_read_remote_programs_capability_set(&sub, settings))
+				if (!rdp_read_remote_programs_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_WINDOW:
-				if (!rdp_read_window_list_capability_set(&sub, settings))
+				if (!rdp_read_window_list_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_MULTI_FRAGMENT_UPDATE:
-				if (!rdp_read_multifragment_update_capability_set(&sub, settings))
+				if (!rdp_read_multifragment_update_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_LARGE_POINTER:
-				if (!rdp_read_large_pointer_capability_set(&sub, settings))
+				if (!rdp_read_large_pointer_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_COMP_DESK:
-				if (!rdp_read_desktop_composition_capability_set(&sub, settings))
+				if (!rdp_read_desktop_composition_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_SURFACE_COMMANDS:
-				if (!rdp_read_surface_commands_capability_set(&sub, settings))
+				if (!rdp_read_surface_commands_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CODECS:
-				if (!rdp_read_bitmap_codecs_capability_set(&sub, settings))
+				if (!rdp_read_bitmap_codecs_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_FRAME_ACKNOWLEDGE:
-				if (!rdp_read_frame_acknowledge_capability_set(&sub, settings))
+				if (!rdp_read_frame_acknowledge_capability_set(sub, settings))
 					return FALSE;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID:
-				if (!rdp_read_bitmap_cache_v3_codec_id_capability_set(&sub, settings))
+				if (!rdp_read_bitmap_cache_v3_codec_id_capability_set(sub, settings))
 					return FALSE;
 
 				break;
@@ -3731,55 +3736,55 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 				switch (type)
 				{
 					case CAPSET_TYPE_BITMAP_CACHE:
-						if (!rdp_read_bitmap_cache_capability_set(&sub, settings))
+						if (!rdp_read_bitmap_cache_capability_set(sub, settings))
 							return FALSE;
 
 						break;
 
 					case CAPSET_TYPE_BITMAP_CACHE_V2:
-						if (!rdp_read_bitmap_cache_v2_capability_set(&sub, settings))
+						if (!rdp_read_bitmap_cache_v2_capability_set(sub, settings))
 							return FALSE;
 
 						break;
 
 					case CAPSET_TYPE_BRUSH:
-						if (!rdp_read_brush_capability_set(&sub, settings))
+						if (!rdp_read_brush_capability_set(sub, settings))
 							return FALSE;
 
 						break;
 
 					case CAPSET_TYPE_GLYPH_CACHE:
-						if (!rdp_read_glyph_cache_capability_set(&sub, settings))
+						if (!rdp_read_glyph_cache_capability_set(sub, settings))
 							return FALSE;
 
 						break;
 
 					case CAPSET_TYPE_OFFSCREEN_CACHE:
-						if (!rdp_read_offscreen_bitmap_cache_capability_set(&sub, settings))
+						if (!rdp_read_offscreen_bitmap_cache_capability_set(sub, settings))
 							return FALSE;
 
 						break;
 
 					case CAPSET_TYPE_SOUND:
-						if (!rdp_read_sound_capability_set(&sub, settings))
+						if (!rdp_read_sound_capability_set(sub, settings))
 							return FALSE;
 
 						break;
 
 					case CAPSET_TYPE_CONTROL:
-						if (!rdp_read_control_capability_set(&sub, settings))
+						if (!rdp_read_control_capability_set(sub, settings))
 							return FALSE;
 
 						break;
 
 					case CAPSET_TYPE_ACTIVATION:
-						if (!rdp_read_window_activation_capability_set(&sub, settings))
+						if (!rdp_read_window_activation_capability_set(sub, settings))
 							return FALSE;
 
 						break;
 
 					case CAPSET_TYPE_DRAW_NINE_GRID_CACHE:
-						if (!rdp_read_draw_nine_grid_cache_capability_set(&sub, settings))
+						if (!rdp_read_draw_nine_grid_cache_capability_set(sub, settings))
 							return FALSE;
 
 						break;
@@ -3796,7 +3801,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 				switch (type)
 				{
 					case CAPSET_TYPE_BITMAP_CACHE_HOST_SUPPORT:
-						if (!rdp_read_bitmap_cache_host_support_capability_set(&sub, settings))
+						if (!rdp_read_bitmap_cache_host_support_capability_set(sub, settings))
 							return FALSE;
 
 						break;
@@ -3809,7 +3814,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 			}
 		}
 
-		rest = Stream_GetRemainingLength(&sub);
+		rest = Stream_GetRemainingLength(sub);
 		if (rest > 0)
 		{
 			WLog_ERR(TAG,
