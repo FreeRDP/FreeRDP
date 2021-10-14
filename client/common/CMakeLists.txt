@@ -28,8 +28,6 @@ endif()
 set(${MODULE_PREFIX}_SRCS
 	client.c
 	cmdline.c
-	compatibility.c
-	compatibility.h
 	file.c
 	geometry.c)
 
