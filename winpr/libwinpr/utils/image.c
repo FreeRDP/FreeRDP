@@ -103,21 +103,19 @@ static BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi)
 
 BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 {
+	BYTE* result = NULL;
 	WINPR_BITMAP_FILE_HEADER bf;
 	WINPR_BITMAP_INFO_HEADER bi;
-	wStream s;
+	wStream* s;
 	size_t imgSize;
-	BYTE* buffer = NULL;
 
 	imgSize = width * height * (bpp / 8);
 	if ((width > INT32_MAX) || (height > INT32_MAX) || (bpp > UINT16_MAX) || (imgSize > UINT32_MAX))
 		return NULL;
 
-	buffer = malloc(WINPR_IMAGE_BMP_HEADER_LEN);
-	if (!buffer)
+	s = Stream_New(NULL, WINPR_IMAGE_BMP_HEADER_LEN);
+	if (!s)
 		return NULL;
-
-	Stream_StaticInit(&s, buffer, WINPR_IMAGE_BMP_HEADER_LEN);
 
 	bf.bfType[0] = 'B';
 	bf.bfType[1] = 'M';
@@ -137,15 +135,16 @@ BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 	bi.biClrImportant = 0;
 	bi.biSize = (UINT32)sizeof(WINPR_BITMAP_INFO_HEADER);
 
-	if (!writeBitmapFileHeader(&s, &bf))
+	if (!writeBitmapFileHeader(s, &bf))
 		goto fail;
 
-	if (!writeBitmapInfoHeader(&s, &bi))
+	if (!writeBitmapInfoHeader(s, &bi))
 		goto fail;
 
-	return buffer;
+	result = Stream_Buffer(s);
 fail:
-	return NULL;
+	Stream_Free(s, result == 0);
+	return result;
 }
 
 /**

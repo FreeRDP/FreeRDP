@@ -903,7 +903,9 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	for (i = 0; i < message->numTiles; i++)
 	{
-		wStream sub;
+		wStream subBuffer;
+		wStream* sub;
+
 		if (!(tile = (RFX_TILE*)ObjectPool_Take(context->priv->TilePool)))
 		{
 			WLog_ERR(TAG, "RfxMessageTileSet failed to get tile from object pool");
@@ -922,17 +924,17 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			break;
 		}
 
-		Stream_StaticInit(&sub, Stream_Pointer(s), Stream_GetRemainingLength(s));
-		Stream_Read_UINT16(&sub,
+		sub = Stream_StaticInit(&subBuffer, Stream_Pointer(s), Stream_GetRemainingLength(s));
+		Stream_Read_UINT16(sub,
 		                   blockType); /* blockType (2 bytes), must be set to CBT_TILE (0xCAC3) */
-		Stream_Read_UINT32(&sub, blockLen); /* blockLen (4 bytes) */
+		Stream_Read_UINT32(sub, blockLen); /* blockLen (4 bytes) */
 
 		if (!Stream_SafeSeek(s, blockLen))
 		{
 			rc = FALSE;
 			break;
 		}
-		if ((blockLen < 6 + 13) || (Stream_GetRemainingLength(&sub) < blockLen - 6))
+		if ((blockLen < 6 + 13) || (Stream_GetRemainingLength(sub) < blockLen - 6))
 		{
 			WLog_ERR(TAG,
 			         "RfxMessageTileSet not enough bytes to read tile %d/%" PRIu16
@@ -950,28 +952,28 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			break;
 		}
 
-		Stream_Read_UINT8(&sub, tile->quantIdxY);  /* quantIdxY (1 byte) */
-		Stream_Read_UINT8(&sub, tile->quantIdxCb); /* quantIdxCb (1 byte) */
-		Stream_Read_UINT8(&sub, tile->quantIdxCr); /* quantIdxCr (1 byte) */
-		Stream_Read_UINT16(&sub, tile->xIdx);      /* xIdx (2 bytes) */
-		Stream_Read_UINT16(&sub, tile->yIdx);      /* yIdx (2 bytes) */
-		Stream_Read_UINT16(&sub, tile->YLen);      /* YLen (2 bytes) */
-		Stream_Read_UINT16(&sub, tile->CbLen);     /* CbLen (2 bytes) */
-		Stream_Read_UINT16(&sub, tile->CrLen);     /* CrLen (2 bytes) */
-		Stream_GetPointer(&sub, tile->YData);
-		if (!Stream_SafeSeek(&sub, tile->YLen))
+		Stream_Read_UINT8(sub, tile->quantIdxY);  /* quantIdxY (1 byte) */
+		Stream_Read_UINT8(sub, tile->quantIdxCb); /* quantIdxCb (1 byte) */
+		Stream_Read_UINT8(sub, tile->quantIdxCr); /* quantIdxCr (1 byte) */
+		Stream_Read_UINT16(sub, tile->xIdx);      /* xIdx (2 bytes) */
+		Stream_Read_UINT16(sub, tile->yIdx);      /* yIdx (2 bytes) */
+		Stream_Read_UINT16(sub, tile->YLen);      /* YLen (2 bytes) */
+		Stream_Read_UINT16(sub, tile->CbLen);     /* CbLen (2 bytes) */
+		Stream_Read_UINT16(sub, tile->CrLen);     /* CrLen (2 bytes) */
+		Stream_GetPointer(sub, tile->YData);
+		if (!Stream_SafeSeek(sub, tile->YLen))
 		{
 			rc = FALSE;
 			break;
 		}
-		Stream_GetPointer(&sub, tile->CbData);
-		if (!Stream_SafeSeek(&sub, tile->CbLen))
+		Stream_GetPointer(sub, tile->CbData);
+		if (!Stream_SafeSeek(sub, tile->CbLen))
 		{
 			rc = FALSE;
 			break;
 		}
-		Stream_GetPointer(&sub, tile->CrData);
-		if (!Stream_SafeSeek(&sub, tile->CrLen))
+		Stream_GetPointer(sub, tile->CrData);
+		if (!Stream_SafeSeek(sub, tile->CrLen))
 		{
 			rc = FALSE;
 			break;
@@ -1039,7 +1041,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 	REGION16 updateRegion;
 	UINT32 blockLen;
 	UINT32 blockType;
-	wStream inStream, *s = &inStream;
+	wStream inStream, *s;
 	BOOL ok = TRUE;
 	RFX_MESSAGE* message;
 
@@ -1048,13 +1050,14 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 
 	message = &context->currentMessage;
 
-	Stream_StaticInit(s, (BYTE*)data, length);
+	s = Stream_StaticConstInit(&inStream, data, length);
 
 	message->freeRects = TRUE;
 
 	while (ok && Stream_GetRemainingLength(s) > 6)
 	{
-		wStream subStream;
+		wStream subStreamBuffer;
+		wStream* subStream;
 		size_t extraBlockLen = 0;
 
 		/* RFX_BLOCKT */
@@ -1123,7 +1126,8 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 			}
 		}
 
-		Stream_StaticInit(&subStream, Stream_Pointer(s), blockLen - (6 + extraBlockLen));
+		subStream =
+		    Stream_StaticInit(&subStreamBuffer, Stream_Pointer(s), blockLen - (6 + extraBlockLen));
 		Stream_Seek(s, blockLen - (6 + extraBlockLen));
 
 		switch (blockType)
@@ -1133,19 +1137,19 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 			 * in the stream at a later stage. The header messages can be repeated.
 			 */
 			case WBT_SYNC:
-				ok = rfx_process_message_sync(context, &subStream);
+				ok = rfx_process_message_sync(context, subStream);
 				break;
 
 			case WBT_CONTEXT:
-				ok = rfx_process_message_context(context, &subStream);
+				ok = rfx_process_message_context(context, subStream);
 				break;
 
 			case WBT_CODEC_VERSIONS:
-				ok = rfx_process_message_codec_versions(context, &subStream);
+				ok = rfx_process_message_codec_versions(context, subStream);
 				break;
 
 			case WBT_CHANNELS:
-				ok = rfx_process_message_channels(context, &subStream);
+				ok = rfx_process_message_channels(context, subStream);
 				break;
 
 				/* Data messages:
@@ -1156,22 +1160,22 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 				 */
 
 			case WBT_FRAME_BEGIN:
-				ok = rfx_process_message_frame_begin(context, message, &subStream,
+				ok = rfx_process_message_frame_begin(context, message, subStream,
 				                                     &context->expectedDataBlockType);
 				break;
 
 			case WBT_REGION:
-				ok = rfx_process_message_region(context, message, &subStream,
+				ok = rfx_process_message_region(context, message, subStream,
 				                                &context->expectedDataBlockType);
 				break;
 
 			case WBT_EXTENSION:
-				ok = rfx_process_message_tileset(context, message, &subStream,
+				ok = rfx_process_message_tileset(context, message, subStream,
 				                                 &context->expectedDataBlockType);
 				break;
 
 			case WBT_FRAME_END:
-				ok = rfx_process_message_frame_end(context, message, &subStream,
+				ok = rfx_process_message_frame_end(context, message, subStream,
 				                                   &context->expectedDataBlockType);
 				break;
 

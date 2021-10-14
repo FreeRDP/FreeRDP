@@ -627,11 +627,12 @@ BOOL license_generate_hwid(rdpLicense* license)
 	}
 	else
 	{
-		wStream s;
+		wStream buffer;
+		wStream* s;
 		const char* hostname = license->rdp->settings->ClientHostname;
-		Stream_StaticInit(&s, license->HardwareId, 4);
-		Stream_Write_UINT32(&s, PLATFORMID);
-		Stream_Free(&s, TRUE);
+		s = Stream_StaticInit(&buffer, license->HardwareId, 4);
+		Stream_Write_UINT32(s, PLATFORMID);
+		Stream_Free(s, TRUE);
 
 		hashTarget = (const BYTE*)hostname;
 		targetLen = strlen(hostname);

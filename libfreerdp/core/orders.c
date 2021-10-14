@@ -1858,7 +1858,8 @@ static BOOL update_read_fast_glyph_order(wStream* s, const ORDER_INFO* orderInfo
 	if ((orderInfo->fieldFlags & ORDER_FIELD_15) != 0)
 	{
 		const BYTE* src;
-		wStream sub;
+		wStream subbuffer;
+		wStream* sub;
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 
@@ -1869,16 +1870,16 @@ static BOOL update_read_fast_glyph_order(wStream* s, const ORDER_INFO* orderInfo
 			return FALSE;
 
 		CopyMemory(fastGlyph->data, src, fastGlyph->cbData);
-		Stream_StaticInit(&sub, fastGlyph->data, fastGlyph->cbData);
+		sub = Stream_StaticInit(&subbuffer, fastGlyph->data, fastGlyph->cbData);
 
-		Stream_Read_UINT8(&sub, glyph->cacheIndex);
+		Stream_Read_UINT8(sub, glyph->cacheIndex);
 
 		if (fastGlyph->cbData > 1)
 		{
-			if (!update_read_2byte_signed(&sub, &glyph->x) ||
-			    !update_read_2byte_signed(&sub, &glyph->y) ||
-			    !update_read_2byte_unsigned(&sub, &glyph->cx) ||
-			    !update_read_2byte_unsigned(&sub, &glyph->cy))
+			if (!update_read_2byte_signed(sub, &glyph->x) ||
+			    !update_read_2byte_signed(sub, &glyph->y) ||
+			    !update_read_2byte_unsigned(sub, &glyph->cx) ||
+			    !update_read_2byte_unsigned(sub, &glyph->cy))
 				return FALSE;
 
 			if ((glyph->cx == 0) || (glyph->cy == 0))
@@ -1888,7 +1889,7 @@ static BOOL update_read_fast_glyph_order(wStream* s, const ORDER_INFO* orderInfo
 				return FALSE;
 			}
 
-			glyph->cb = Stream_GetRemainingLength(&sub);
+			glyph->cb = Stream_GetRemainingLength(sub);
 			if (glyph->cb > 0)
 			{
 				BYTE* new_aj = (BYTE*)realloc(glyph->aj, glyph->cb);
@@ -1897,7 +1898,7 @@ static BOOL update_read_fast_glyph_order(wStream* s, const ORDER_INFO* orderInfo
 					return FALSE;
 
 				glyph->aj = new_aj;
-				Stream_Read(&sub, glyph->aj, glyph->cb);
+				Stream_Read(sub, glyph->aj, glyph->cb);
 			}
 			else
 			{
