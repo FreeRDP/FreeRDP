@@ -815,7 +815,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 
 		for (y = cmd->top; y < cmd->top + cmd->height; y++)
 		{
-			BYTE* line = surface->data[surface->scanline * y];
+			BYTE* line = &surface->data[surface->scanline * y];
 
 			for (x = cmd->left; x < cmd->left + cmd->width; x++)
 			{
