@@ -582,7 +582,7 @@ ConversionResult ConvertUTF8toUTF16(const BYTE** sourceStart, const BYTE* source
 
 		ch -= offsetsFromUTF8[extraBytesToRead];
 
-		if ((target >= end) && (!computeLength))
+		if ((target * sizeof(WCHAR) >= end) && (!computeLength))
 		{
 			source -= (extraBytesToRead + 1); /* Back up source pointer! */
 			result = targetExhausted;
@@ -633,7 +633,7 @@ ConversionResult ConvertUTF8toUTF16(const BYTE** sourceStart, const BYTE* source
 		else
 		{
 			/* target is a character in range 0xFFFF - 0x10FFFF. */
-			if ((target + 1 >= end) && (!computeLength))
+			if (((target + 1) * sizeof(WCHAR) >= end) && (!computeLength))
 			{
 				source -= (extraBytesToRead + 1); /* Back up source pointer! */
 				result = targetExhausted;
