@@ -73,7 +73,6 @@ typedef struct _RPC_PDU
 #include "../tcp.h"
 #include "../transport.h"
 
-#include "rts.h"
 #include "http.h"
 #include "ntlm.h"
 
@@ -525,7 +524,8 @@ typedef struct
 	rpcconn_common_hdr_t header;
 } rpcconn_shutdown_hdr_t;
 
-typedef union {
+typedef union
+{
 	rpcconn_common_hdr_t common;
 	rpcconn_alter_context_hdr_t alter_context;
 	rpcconn_alter_context_response_hdr_t alter_context_response;
@@ -765,14 +765,14 @@ struct rdp_rpc
 	RpcVirtualConnection* VirtualConnection;
 };
 
-FREERDP_LOCAL void rpc_pdu_header_print(rpcconn_hdr_t* header);
-FREERDP_LOCAL void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_common_hdr_t* header);
+FREERDP_LOCAL void rpc_pdu_header_print(const rpcconn_hdr_t* header);
+FREERDP_LOCAL rpcconn_common_hdr_t rpc_pdu_header_init(const rdpRpc* rpc);
 
-FREERDP_LOCAL UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment);
-FREERDP_LOCAL UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad);
+FREERDP_LOCAL size_t rpc_offset_align(size_t* offset, size_t alignment);
+FREERDP_LOCAL size_t rpc_offset_pad(size_t* offset, size_t pad);
 
-FREERDP_LOCAL BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset,
-                                          UINT32* length);
+FREERDP_LOCAL BOOL rpc_get_stub_data_info(const rpcconn_hdr_t* header, size_t* offset,
+                                          size_t* length);
 
 FREERDP_LOCAL SSIZE_T rpc_channel_write(RpcChannel* channel, const BYTE* data, size_t length);
 
@@ -792,7 +792,7 @@ FREERDP_LOCAL BOOL rpc_virtual_connection_transition_to_state(rdpRpc* rpc,
                                                               RpcVirtualConnection* connection,
                                                               VIRTUAL_CONNECTION_STATE state);
 
-FREERDP_LOCAL BOOL rpc_connect(rdpRpc* rpc, int timeout);
+FREERDP_LOCAL BOOL rpc_connect(rdpRpc* rpc, UINT32 timeout);
 
 FREERDP_LOCAL rdpRpc* rpc_new(rdpTransport* transport);
 FREERDP_LOCAL void rpc_free(rdpRpc* rpc);

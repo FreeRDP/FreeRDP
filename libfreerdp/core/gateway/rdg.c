@@ -619,7 +619,6 @@ static int rdg_websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 
 			return status;
 		}
-		break;
 		case WebsocketPingOpcode:
 		{
 			if (encodingContext->responseStreamBuffer == NULL)
@@ -749,7 +748,6 @@ static int rdg_websocket_read(BIO* bio, BYTE* pBuffer, size_t size,
 				    TAG, "Websocket Server sends data with masking key. This is against RFC 6455.");
 				return -1;
 			}
-			break;
 			case WebSocketStatePayload:
 			{
 				status = rdg_websocket_handle_payload(bio, pBuffer, size, encodingContext);
@@ -889,7 +887,6 @@ static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
 		default:
 			return -1;
 	}
-	return -1; /* should not be reached */
 }
 
 static BOOL rdg_read_all(rdpTls* tls, BYTE* buffer, size_t size,
@@ -1572,6 +1569,7 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context)
 			freerdp_set_last_error_log(instance->context,
 			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return FALSE;
+		case AUTH_FAILED:
 		default:
 			return FALSE;
 	}
@@ -1808,7 +1806,6 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			rdg->transferEncoding.context.websocket.responseStreamBuffer = NULL;
 
 			return TRUE;
-			break;
 		default:
 			return FALSE;
 	}
@@ -2054,8 +2051,6 @@ static int rdg_write_data_packet(rdpRdg* rdg, const BYTE* buf, int isize)
 	}
 	else
 		return rdg_write_chunked_data_packet(rdg, buf, isize);
-
-	return -1;
 }
 
 static BOOL rdg_process_close_packet(rdpRdg* rdg, wStream* s)

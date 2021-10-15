@@ -76,7 +76,7 @@ fail:
 BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 {
 	wStream* s;
-	int status;
+	SSIZE_T status;
 	int contentLength;
 	BOOL continueNeeded = FALSE;
 	rdpNtlm* ntlm;
@@ -156,6 +156,7 @@ BOOL rpc_ncacn_http_ntlm_init(rdpContext* context, RpcChannel* channel)
 			freerdp_set_last_error_log(instance->context,
 			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return TRUE;
+		case AUTH_FAILED:
 		default:
 			return FALSE;
 	}

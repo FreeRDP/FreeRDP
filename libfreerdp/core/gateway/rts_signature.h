@@ -178,10 +178,10 @@ FREERDP_LOCAL extern const RtsPduSignature RTS_PDU_PING_SIGNATURE;
 FREERDP_LOCAL extern const RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE;
 FREERDP_LOCAL extern const RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE;
 
-FREERDP_LOCAL BOOL rts_match_pdu_signature(const RtsPduSignature* signature,
-                                           const rpcconn_rts_hdr_t* rts);
-FREERDP_LOCAL BOOL rts_extract_pdu_signature(RtsPduSignature* signature,
-                                             const rpcconn_rts_hdr_t* rts);
+FREERDP_LOCAL BOOL rts_match_pdu_signature(const RtsPduSignature* signature, wStream* s,
+                                           const rpcconn_hdr_t* header);
+FREERDP_LOCAL BOOL rts_extract_pdu_signature(RtsPduSignature* signature, wStream* s,
+                                             const rpcconn_hdr_t* header);
 FREERDP_LOCAL UINT32 rts_identify_pdu_signature(const RtsPduSignature* signature,
                                                 const RTS_PDU_SIGNATURE_ENTRY** entry);
 FREERDP_LOCAL BOOL rts_print_pdu_signature(const RtsPduSignature* signature);
