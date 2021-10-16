@@ -58,7 +58,7 @@ static wStream* disp_server_single_packet_new(UINT32 type, UINT32 length)
 	}
 
 	header.type = type;
-	header.length = length;
+	header.length = DISPLAY_CONTROL_HEADER_LENGTH + length;
 
 	if ((error = disp_write_header(s, &header)))
 	{
