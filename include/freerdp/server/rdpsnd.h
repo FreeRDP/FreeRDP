@@ -119,6 +119,9 @@ struct _rdpsnd_server_context
 	UINT16 clientVersion;
 
 	rdpContext* rdpcontext;
+
+	/* Server to request to use dynamic virtual channel. */
+	BOOL use_dynamic_virtual_channel;
 };
 
 #ifdef __cplusplus
