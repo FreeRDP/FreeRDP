@@ -673,13 +673,40 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 	DWORD bytesReturned;
 	RdpsndServerPrivate* priv = context->priv;
 	UINT error = ERROR_INTERNAL_ERROR;
-	priv->ChannelHandle =
-	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, RDPSND_CHANNEL_NAME);
+	PULONG pSessionId = NULL;
 
-	if (!priv->ChannelHandle)
+	priv->SessionId = WTS_CURRENT_SESSION;
+
+	if (context->use_dynamic_virtual_channel)
 	{
-		WLog_ERR(TAG, "WTSVirtualChannelOpen failed!");
-		return ERROR_INTERNAL_ERROR;
+		if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
+		                                (LPSTR*)&pSessionId, &bytesReturned))
+		{
+			priv->SessionId = (DWORD)*pSessionId;
+			WTSFreeMemory(pSessionId);
+			priv->ChannelHandle = (HANDLE)WTSVirtualChannelOpenEx(
+			    priv->SessionId, "AUDIO_PLAYBACK_DVC", WTS_CHANNEL_OPTION_DYNAMIC);
+			if (!priv->ChannelHandle)
+			{
+				WLog_ERR(TAG, "Open audio dynamic virtual channel (AUDIO_PLAYBACK_DVC) failed!");
+				return ERROR_INTERNAL_ERROR;
+			}
+		}
+		else
+		{
+			WLog_ERR(TAG, "WTSQuerySessionInformationA failed!");
+			return ERROR_INTERNAL_ERROR;
+		}
+	}
+	else
+	{
+		priv->ChannelHandle =
+		    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, RDPSND_CHANNEL_NAME);
+		if (!priv->ChannelHandle)
+		{
+			WLog_ERR(TAG, "Open audio static virtual channel (rdpsnd) failed!");
+			return ERROR_INTERNAL_ERROR;
+		}
 	}
 
 	if (!WTSVirtualChannelQuery(priv->ChannelHandle, WTSVirtualEventHandle, &buffer,

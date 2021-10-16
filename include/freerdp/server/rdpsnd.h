@@ -56,6 +56,9 @@ struct _rdpsnd_server_context
 	/* Server self-defined pointer. */
 	void* data;
 
+	/* Server to request to use dynamic virtual channel. */
+	BOOL use_dynamic_virtual_channel;
+
 	/* Server supported formats. Set by server. */
 	AUDIO_FORMAT* server_formats;
 	size_t num_server_formats;
