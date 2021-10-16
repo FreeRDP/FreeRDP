@@ -74,6 +74,15 @@ struct _RECTANGLE_16
 };
 typedef struct _RECTANGLE_16 RECTANGLE_16;
 
+struct _RECTANGLE_32
+{
+	UINT32 left;
+	UINT32 top;
+	UINT32 width;
+	UINT32 height;
+};
+typedef struct _RECTANGLE_32 RECTANGLE_32;
+
 /* Plugin events */
 
 #include <freerdp/message.h>
