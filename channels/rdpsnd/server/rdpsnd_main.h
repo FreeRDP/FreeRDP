@@ -39,6 +39,7 @@ struct _rdpsnd_server_private
 	HANDLE StopEvent;
 	HANDLE channelEvent;
 	void* ChannelHandle;
+	DWORD SessionId;
 
 	BOOL waitingHeader;
 	DWORD expectedBytes;
