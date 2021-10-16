@@ -230,11 +230,12 @@ static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd
 		return FALSE;
 
 	listener->sockfds[listener->num_sockfds] = fd;
-	listener->events[listener->num_sockfds] =
-	    CreateFileDescriptorEvent(NULL, FALSE, FALSE, fd, WINPR_FD_READ);
+	listener->events[listener->num_sockfds] = WSACreateEvent();
 
 	if (!listener->events[listener->num_sockfds])
 		return FALSE;
+
+	WSAEventSelect(fd, listener->events[listener->num_sockfds], FD_READ | FD_ACCEPT | FD_CLOSE);
 
 	listener->num_sockfds++;
 	WLog_INFO(TAG, "Listening on socket %d.", fd);
@@ -320,7 +321,7 @@ BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
 	}
 
 #ifndef _WIN32
-	else if (peer_addr->ss_family == AF_UNIX)
+	else if (peer_addr->ss_family == AF_UNIX || peer_addr->ss_family == AF_VSOCK)
 		client->local = TRUE;
 #endif
 
