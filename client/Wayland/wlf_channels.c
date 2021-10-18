@@ -23,6 +23,8 @@
 
 #include <freerdp/gdi/gfx.h>
 
+#include <freerdp/gdi/video.h>
+
 #include "wlf_channels.h"
 #include "wlf_cliprdr.h"
 #include "wlf_disp.h"
@@ -124,6 +126,18 @@ void wlf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs
 	{
 		wlf_disp_init(wlf->disp, (DispClientContext*)e->pInterface);
 	}
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_geometry_init(wlf->context.gdi, (GeometryClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_control_init(wlf->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_data_init(wlf->context.gdi, (VideoClientContext*)e->pInterface);
+	}
 }
 
 void wlf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
@@ -152,5 +166,17 @@ void wlf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEve
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		wlf_disp_uninit(wlf->disp, (DispClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_geometry_uninit(wlf->context.gdi, (GeometryClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_control_uninit(wlf->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_data_uninit(wlf->context.gdi, (VideoClientContext*)e->pInterface);
 	}
 }
