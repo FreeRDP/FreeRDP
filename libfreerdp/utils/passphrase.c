@@ -28,12 +28,13 @@
 
 #include <stdio.h>
 #include <io.h>
+#include <conio.h>
 
 char read_chr(int isTty)
 {
+	char chr;
 	if (isTty)
 		return _getch();
-	char chr;
 	if (scanf_s("%c", &chr, (UINT32)sizeof(char)) && !feof(stdin))
 		return chr;
 	return 0;
@@ -47,12 +48,14 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int 
 	const char CARRIAGERETURN = '\r';
 	const char SHOW_ASTERISK = TRUE;
 
+	size_t read_cnt = 0, chr;
+	char isTty;
+
 	if (from_stdin)
 	{
 		printf("%s ", prompt);
 		fflush(stdout);
-		size_t read_cnt = 0, chr;
-		char isTty = _isatty(_fileno(stdin));
+		isTty = _isatty(_fileno(stdin));
 		while (read_cnt < bufsiz - 1 && (chr = read_chr(isTty)) && chr != NEWLINE &&
 		       chr != CARRIAGERETURN)
 		{
