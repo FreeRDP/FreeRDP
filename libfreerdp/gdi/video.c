@@ -48,6 +48,10 @@ void gdi_video_geometry_init(rdpGdi* gdi, GeometryClientContext* geom)
 
 void gdi_video_geometry_uninit(rdpGdi* gdi, GeometryClientContext* geom)
 {
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(geom);
+	WINPR_UNUSED(gdi);
+	WINPR_UNUSED(geom);
 }
 
 static VideoSurface* gdiVideoCreateSurface(VideoClientContext* video, UINT32 x, UINT32 y,
@@ -61,7 +65,6 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, const VideoSurface* s
 {
 	BOOL rc = FALSE;
 	rdpGdi* gdi;
-	RECTANGLE_16 surfaceRect;
 	rdpUpdate* update;
 
 	WINPR_ASSERT(video);
@@ -73,11 +76,6 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, const VideoSurface* s
 
 	update = gdi->context->update;
 	WINPR_ASSERT(update);
-
-	surfaceRect.left = surface->x;
-	surfaceRect.top = surface->y;
-	surfaceRect.right = surface->x + surface->w;
-	surfaceRect.bottom = surface->y + surface->h;
 
 	if (!update_begin_paint(update))
 		goto fail;
