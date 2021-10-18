@@ -1825,7 +1825,13 @@ fail:
 
 static void queue_free(void* obj)
 {
-	wStream* s = obj;
+	wStream* s;
+	wMessage* msg = (wMessage*)obj;
+
+	if (!msg || (msg->id != 0))
+		return;
+
+	s = (wStream*)msg->wParam;
 	WINPR_ASSERT(s);
 	Stream_Free(s, TRUE);
 }
