@@ -378,13 +378,13 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 			    (strncmp(channel_name, DRDYNVC_SVC_CHANNEL_NAME, CHANNEL_NAME_LEN + 1) == 0))
 			{
 				BYTE cmd, first;
-				wStream s;
+				wStream *s, sbuffer;
 
-				Stream_StaticInit(&s, xdata, xsize);
-				if (Stream_Length(&s) < 1)
+				s = Stream_StaticConstInit(&sbuffer, xdata, xsize);
+				if (Stream_Length(s) < 1)
 					return FALSE;
 
-				Stream_Read_UINT8(&s, first);
+				Stream_Read_UINT8(s, first);
 				cmd = first >> 4;
 
 				if (cmd == CREATE_REQUEST_PDU)
@@ -397,26 +397,26 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 					switch (cbId)
 					{
 						case 0x00:
-							if (Stream_GetRemainingLength(&s) < 1)
+							if (Stream_GetRemainingLength(s) < 1)
 								return FALSE;
-							Stream_Read_UINT8(&s, dynChannelId);
+							Stream_Read_UINT8(s, dynChannelId);
 							break;
 						case 0x01:
-							if (Stream_GetRemainingLength(&s) < 2)
+							if (Stream_GetRemainingLength(s) < 2)
 								return FALSE;
-							Stream_Read_UINT16(&s, dynChannelId);
+							Stream_Read_UINT16(s, dynChannelId);
 							break;
 						case 0x02:
-							if (Stream_GetRemainingLength(&s) < 4)
+							if (Stream_GetRemainingLength(s) < 4)
 								return FALSE;
-							Stream_Read_UINT32(&s, dynChannelId);
+							Stream_Read_UINT32(s, dynChannelId);
 							break;
 						default:
 							return FALSE;
 					}
 
-					name = (const char*)Stream_Pointer(&s);
-					nameLen = Stream_GetRemainingLength(&s);
+					name = (const char*)Stream_Pointer(s);
+					nameLen = Stream_GetRemainingLength(s);
 					len = strnlen(name, nameLen);
 					if ((len == 0) || (len == nameLen))
 						return FALSE;
