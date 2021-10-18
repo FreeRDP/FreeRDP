@@ -32,6 +32,8 @@ struct _wQueue
 	size_t growthFactor;
 	BOOL synchronized;
 
+	BYTE padding[4];
+
 	size_t head;
 	size_t tail;
 	size_t size;
@@ -41,6 +43,8 @@ struct _wQueue
 
 	wObject object;
 	BOOL haveLock;
+
+	BYTE padding2[4];
 };
 
 /**
