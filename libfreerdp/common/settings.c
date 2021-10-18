@@ -446,14 +446,16 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 		RDPDR_PARALLEL* parallel;
 		RDPDR_SMARTCARD* smartcard;
 	} copy;
-
+	const char* args[] = { device->Name };
 	WINPR_ASSERT(device);
 
 	src.dev = device;
-	copy.dev = freerdp_device_new(device->Id, device->Type, device->Name);
+
+	copy.dev = freerdp_device_new(device->Type, ARRAYSIZE(args), args);
 	if (!copy.dev)
 		return NULL;
 
+	copy.dev->Id = device->Id;
 	switch (device->Type)
 	{
 		case RDPDR_DTYP_FILESYSTEM:
