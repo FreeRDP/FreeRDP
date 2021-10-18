@@ -39,6 +39,14 @@
 void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
 {
 	xfContext* xfc = (xfContext*)context;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(e);
+	WINPR_ASSERT(e->name);
+
+	settings = xfc->context.settings;
+	WINPR_ASSERT(settings);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -76,7 +84,10 @@ void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	}
 	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
 	{
-		xf_video_control_init(xfc, (VideoClientContext*)e->pInterface);
+		if (settings->SoftwareGdi)
+			gdi_video_control_init(xfc->context.gdi, (VideoClientContext*)e->pInterface);
+		else
+			xf_video_control_init(xfc, (VideoClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
 	{
@@ -87,7 +98,14 @@ void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
 {
 	xfContext* xfc = (xfContext*)context;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(e);
+	WINPR_ASSERT(e->name);
+
+	settings = xfc->context.settings;
+	WINPR_ASSERT(settings);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{

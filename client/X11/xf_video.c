@@ -31,37 +31,45 @@ typedef struct
 	XImage* image;
 } xfVideoSurface;
 
-static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, BYTE* data, UINT32 x, UINT32 y,
+static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, UINT32 x, UINT32 y,
                                           UINT32 width, UINT32 height)
 {
-	xfContext* xfc = (xfContext*)video->custom;
-	xfVideoSurface* ret = calloc(1, sizeof(*ret));
+	xfContext* xfc;
+	xfVideoSurface* ret;
 
+	WINPR_ASSERT(video);
+	ret = (xfVideoSurface*)VideoClient_CreateCommonContext(sizeof(xfContext), x, y, width, height);
 	if (!ret)
 		return NULL;
 
-	ret->base.data = data;
-	ret->base.x = x;
-	ret->base.y = y;
-	ret->base.w = width;
-	ret->base.h = height;
-	ret->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0, (char*)data, width,
-	                          height, 8, width * 4);
+	xfc = (xfContext*)video->custom;
+	WINPR_ASSERT(xfc);
+
+	ret->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+	                          (char*)ret->base.data, width, height, 8, ret->base.scanline);
 
 	if (!ret->image)
 	{
 		WLog_ERR(TAG, "unable to create surface image");
-		free(ret);
+		VideoClient_DestroyCommonContext(&ret->base);
 		return NULL;
 	}
 
 	return &ret->base;
 }
 
-static BOOL xfVideoShowSurface(VideoClientContext* video, VideoSurface* surface)
+static BOOL xfVideoShowSurface(VideoClientContext* video, const VideoSurface* surface,
+                               UINT32 destinationWidth, UINT32 destinationHeight)
 {
-	xfVideoSurface* xfSurface = (xfVideoSurface*)surface;
-	xfContext* xfc = video->custom;
+	const xfVideoSurface* xfSurface = (const xfVideoSurface*)surface;
+	xfContext* xfc;
+
+	WINPR_ASSERT(video);
+	WINPR_ASSERT(xfSurface);
+
+	xfc = video->custom;
+	WINPR_ASSERT(xfc);
+
 #ifdef WITH_XRENDER
 
 	if (xfc->context.settings->SmartSizing || xfc->context.settings->MultiTouchGestures)
@@ -89,16 +97,25 @@ static BOOL xfVideoDeleteSurface(VideoClientContext* video, VideoSurface* surfac
 	if (xfSurface)
 		XFree(xfSurface->image);
 
-	free(surface);
+	VideoClient_DestroyCommonContext(surface);
 	return TRUE;
 }
+
 void xf_video_control_init(xfContext* xfc, VideoClientContext* video)
 {
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(video);
+
 	gdi_video_control_init(xfc->context.gdi, video);
-	video->custom = xfc;
-	video->createSurface = xfVideoCreateSurface;
-	video->showSurface = xfVideoShowSurface;
-	video->deleteSurface = xfVideoDeleteSurface;
+
+	/* X11 needs to be able to handle 32bpp colors directly. */
+	if (xfc->depth >= 24)
+	{
+		video->custom = xfc;
+		video->createSurface = xfVideoCreateSurface;
+		video->showSurface = xfVideoShowSurface;
+		video->deleteSurface = xfVideoDeleteSurface;
+	}
 }
 
 void xf_video_control_uninit(xfContext* xfc, VideoClientContext* video)
