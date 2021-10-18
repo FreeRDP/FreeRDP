@@ -500,6 +500,14 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 				if (!copy.serial->Driver)
 					goto fail;
 			}
+
+			if (copy.serial->Permissive)
+			{
+				copy.serial->Permissive = _strdup(src.serial->Permissive);
+
+				if (!copy.serial->Permissive)
+					goto fail;
+			}
 		}
 		break;
 
