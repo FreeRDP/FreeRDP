@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/synch.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
@@ -110,6 +111,7 @@ struct _VideoFrame
 	UINT64 hnsDuration;
 	MAPPED_GEOMETRY* geometry;
 	UINT32 w, h;
+	UINT32 scanline;
 	BYTE* surfaceData;
 	PresentationContext* presentation;
 };
@@ -119,7 +121,6 @@ struct _PresentationContext
 {
 	VideoClientContext* video;
 	BYTE PresentationId;
-	UINT32 SourceWidth, SourceHeight;
 	UINT32 ScaledWidth, ScaledHeight;
 	MAPPED_GEOMETRY* geometry;
 
@@ -129,11 +130,12 @@ struct _PresentationContext
 	wStream* currentSample;
 	UINT64 lastPublishTime, nextPublishTime;
 	volatile LONG refCounter;
-	BYTE* surfaceData;
 	VideoSurface* surface;
 };
 
 static void PresentationContext_unref(PresentationContext* presentation);
+static void VideoClientContextPriv_free(VideoClientContextPriv* priv);
+
 static const char* video_command_name(BYTE cmd)
 {
 	switch (cmd)
@@ -150,12 +152,17 @@ static const char* video_command_name(BYTE cmd)
 static void video_client_context_set_geometry(VideoClientContext* video,
                                               GeometryClientContext* geometry)
 {
+	WINPR_ASSERT(video);
+	WINPR_ASSERT(video->priv);
 	video->priv->geometry = geometry;
 }
 
 static VideoClientContextPriv* VideoClientContextPriv_new(VideoClientContext* video)
 {
-	VideoClientContextPriv* ret = calloc(1, sizeof(*ret));
+	VideoClientContextPriv* ret;
+
+	WINPR_ASSERT(video);
+	ret = calloc(1, sizeof(*ret));
 	if (!ret)
 		return NULL;
 
@@ -163,20 +170,20 @@ static VideoClientContextPriv* VideoClientContextPriv_new(VideoClientContext* vi
 	if (!ret->frames)
 	{
 		WLog_ERR(TAG, "unable to allocate frames queue");
-		goto error_frames;
+		goto fail;
 	}
 
 	ret->surfacePool = BufferPool_New(FALSE, 0, 16);
 	if (!ret->surfacePool)
 	{
 		WLog_ERR(TAG, "unable to create surface pool");
-		goto error_surfacePool;
+		goto fail;
 	}
 
 	if (!InitializeCriticalSectionAndSpinCount(&ret->framesLock, 4 * 1000))
 	{
 		WLog_ERR(TAG, "unable to initialize frames lock");
-		goto error_spinlock;
+		goto fail;
 	}
 
 	ret->video = video;
@@ -187,22 +194,23 @@ static VideoClientContextPriv* VideoClientContextPriv_new(VideoClientContext* vi
 	ret->lastSentRate = 30;
 	return ret;
 
-error_spinlock:
-	BufferPool_Free(ret->surfacePool);
-error_surfacePool:
-	Queue_Free(ret->frames);
-error_frames:
-	free(ret);
+fail:
+	VideoClientContextPriv_free(ret);
 	return NULL;
 }
 
 static PresentationContext* PresentationContext_new(VideoClientContext* video, BYTE PresentationId,
                                                     UINT32 x, UINT32 y, UINT32 width, UINT32 height)
 {
-	size_t s;
-	VideoClientContextPriv* priv = video->priv;
+	size_t s = width * height * 4ULL;
+	VideoClientContextPriv* priv;
 	PresentationContext* ret;
-	s = width * height * 4ULL;
+
+	WINPR_ASSERT(video);
+
+	priv = video->priv;
+	WINPR_ASSERT(priv);
+
 	if (s > INT32_MAX)
 		return NULL;
 
@@ -228,14 +236,7 @@ static PresentationContext* PresentationContext_new(VideoClientContext* video, B
 		goto fail;
 	}
 
-	ret->surfaceData = BufferPool_Take(priv->surfacePool, s);
-	if (!ret->surfaceData)
-	{
-		WLog_ERR(TAG, "unable to allocate surfaceData");
-		goto fail;
-	}
-
-	ret->surface = video->createSurface(video, ret->surfaceData, x, y, width, height);
+	ret->surface = video->createSurface(video, x, y, width, height);
 	if (!ret->surface)
 	{
 		WLog_ERR(TAG, "unable to create surface");
@@ -252,7 +253,6 @@ fail:
 
 static void PresentationContext_unref(PresentationContext* presentation)
 {
-	VideoClientContextPriv* priv;
 	MAPPED_GEOMETRY* geometry;
 
 	if (!presentation)
@@ -270,34 +270,83 @@ static void PresentationContext_unref(PresentationContext* presentation)
 		mappedGeometryUnref(geometry);
 	}
 
-	priv = presentation->video->priv;
-
 	h264_context_free(presentation->h264);
 	Stream_Free(presentation->currentSample, TRUE);
 	presentation->video->deleteSurface(presentation->video, presentation->surface);
-	BufferPool_Return(priv->surfacePool, presentation->surfaceData);
 	free(presentation);
 }
 
 static void VideoFrame_free(VideoFrame** pframe)
 {
-	VideoFrame* frame = *pframe;
+	VideoFrame* frame;
+
+	WINPR_ASSERT(pframe);
+	frame = *pframe;
+	if (!frame)
+		return;
 
 	mappedGeometryUnref(frame->geometry);
+
+	WINPR_ASSERT(frame->presentation);
+	WINPR_ASSERT(frame->presentation->video);
+	WINPR_ASSERT(frame->presentation->video->priv);
 	BufferPool_Return(frame->presentation->video->priv->surfacePool, frame->surfaceData);
 	PresentationContext_unref(frame->presentation);
 	free(frame);
 	*pframe = NULL;
 }
 
-static void VideoClientContextPriv_free(VideoClientContextPriv* priv)
+static VideoFrame* VideoFrame_new(VideoClientContextPriv* priv, PresentationContext* presentation,
+                                  MAPPED_GEOMETRY* geom)
 {
+	VideoFrame* frame;
+	const VideoSurface* surface;
+
+	WINPR_ASSERT(priv);
+	WINPR_ASSERT(presentation);
+	WINPR_ASSERT(geom);
+
+	surface = presentation->surface;
+	WINPR_ASSERT(surface);
+
+	frame = calloc(1, sizeof(VideoFrame));
+	if (!frame)
+		goto fail;
+
+	mappedGeometryRef(geom);
+	frame->presentation = presentation;
+	frame->publishTime = presentation->lastPublishTime;
+	frame->geometry = geom;
+	frame->w = surface->alignedWidth;
+	frame->h = surface->alignedHeight;
+	frame->scanline = surface->scanline;
+
+	frame->surfaceData = BufferPool_Take(priv->surfacePool, frame->scanline * frame->h * 1ull);
+	if (!frame->surfaceData)
+		goto fail;
+
+	return frame;
+
+fail:
+	VideoFrame_free(&frame);
+	return NULL;
+}
+
+void VideoClientContextPriv_free(VideoClientContextPriv* priv)
+{
+	if (!priv)
+		return;
+
 	EnterCriticalSection(&priv->framesLock);
-	while (Queue_Count(priv->frames))
+
+	if (priv->frames)
 	{
-		VideoFrame* frame = Queue_Dequeue(priv->frames);
-		if (frame)
-			VideoFrame_free(&frame);
+		while (Queue_Count(priv->frames))
+		{
+			VideoFrame* frame = Queue_Dequeue(priv->frames);
+			if (frame)
+				VideoFrame_free(&frame);
+		}
 	}
 
 	Queue_Free(priv->frames);
@@ -315,11 +364,17 @@ static void VideoClientContextPriv_free(VideoClientContextPriv* priv)
 static UINT video_control_send_presentation_response(VideoClientContext* context,
                                                      TSMM_PRESENTATION_RESPONSE* resp)
 {
-	BYTE buf[12];
+	BYTE buf[12] = { 0 };
 	wStream* s;
-	VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)context->handle;
+	VIDEO_PLUGIN* video;
 	IWTSVirtualChannel* channel;
 	UINT ret;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(resp);
+
+	video = (VIDEO_PLUGIN*)context->handle;
+	WINPR_ASSERT(video);
 
 	s = Stream_New(buf, 12);
 	if (!s)
@@ -340,8 +395,15 @@ static UINT video_control_send_presentation_response(VideoClientContext* context
 
 static BOOL video_onMappedGeometryUpdate(MAPPED_GEOMETRY* geometry)
 {
-	PresentationContext* presentation = (PresentationContext*)geometry->custom;
-	RDP_RECT* r = &geometry->geometry.boundingRect;
+	PresentationContext* presentation;
+	RDP_RECT* r;
+
+	WINPR_ASSERT(geometry);
+
+	presentation = (PresentationContext*)geometry->custom;
+	WINPR_ASSERT(presentation);
+
+	r = &geometry->geometry.boundingRect;
 	WLog_DBG(TAG, "geometry updated topGeom=(%d,%d-%dx%d) geom=(%d,%d-%dx%d) rects=(%d,%d-%dx%d)",
 	         geometry->topLevelLeft, geometry->topLevelTop,
 	         geometry->topLevelRight - geometry->topLevelLeft,
@@ -360,18 +422,27 @@ static BOOL video_onMappedGeometryUpdate(MAPPED_GEOMETRY* geometry)
 
 static BOOL video_onMappedGeometryClear(MAPPED_GEOMETRY* geometry)
 {
-	PresentationContext* presentation = (PresentationContext*)geometry->custom;
+	PresentationContext* presentation;
+
+	WINPR_ASSERT(geometry);
+
+	presentation = (PresentationContext*)geometry->custom;
+	WINPR_ASSERT(presentation);
 
 	mappedGeometryUnref(presentation->geometry);
 	presentation->geometry = NULL;
 	return TRUE;
 }
 
-static UINT video_PresentationRequest(VideoClientContext* video, TSMM_PRESENTATION_REQUEST* req)
+static UINT video_PresentationRequest(VideoClientContext* video,
+                                      const TSMM_PRESENTATION_REQUEST* req)
 {
 	VideoClientContextPriv* priv = video->priv;
 	PresentationContext* presentation;
 	UINT ret = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(video);
+	WINPR_ASSERT(req);
 
 	presentation = priv->currentPresentation;
 
@@ -428,8 +499,6 @@ static UINT video_PresentationRequest(VideoClientContext* video, TSMM_PRESENTATI
 
 		priv->currentPresentation = presentation;
 		presentation->video = video;
-		presentation->SourceWidth = req->SourceWidth;
-		presentation->SourceHeight = req->SourceHeight;
 		presentation->ScaledWidth = req->ScaledWidth;
 		presentation->ScaledHeight = req->ScaledHeight;
 
@@ -461,7 +530,10 @@ static UINT video_PresentationRequest(VideoClientContext* video, TSMM_PRESENTATI
 
 static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStream* s)
 {
-	TSMM_PRESENTATION_REQUEST req;
+	TSMM_PRESENTATION_REQUEST req = { 0 };
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(s);
 
 	if (Stream_GetRemainingLength(s) < 60)
 	{
@@ -519,8 +591,14 @@ static UINT video_control_on_data_received(IWTSVirtualChannelCallback* pChannelC
 	UINT ret = CHANNEL_RC_OK;
 	UINT32 cbSize, packetType;
 
+	WINPR_ASSERT(callback);
+	WINPR_ASSERT(s);
+
 	video = (VIDEO_PLUGIN*)callback->plugin;
+	WINPR_ASSERT(video);
+
 	context = (VideoClientContext*)video->wtsPlugin.pInterface;
+	WINPR_ASSERT(context);
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
@@ -548,16 +626,22 @@ static UINT video_control_on_data_received(IWTSVirtualChannelCallback* pChannelC
 }
 
 static UINT video_control_send_client_notification(VideoClientContext* context,
-                                                   TSMM_CLIENT_NOTIFICATION* notif)
+                                                   const TSMM_CLIENT_NOTIFICATION* notif)
 {
 	BYTE buf[100];
 	wStream* s;
-	VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)context->handle;
+	VIDEO_PLUGIN* video;
 	IWTSVirtualChannel* channel;
 	UINT ret;
 	UINT32 cbSize;
 
-	s = Stream_New(buf, 30);
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(notif);
+
+	video = (VIDEO_PLUGIN*)context->handle;
+	WINPR_ASSERT(video);
+
+	s = Stream_New(buf, 32);
 	if (!s)
 		return CHANNEL_RC_NO_MEMORY;
 
@@ -588,7 +672,13 @@ static UINT video_control_send_client_notification(VideoClientContext* context,
 	Stream_Write_UINT32(s, cbSize);
 	Stream_Free(s, FALSE);
 
+	WINPR_ASSERT(video->control_callback);
+	WINPR_ASSERT(video->control_callback->channel_callback);
+
 	channel = video->control_callback->channel_callback->channel;
+	WINPR_ASSERT(channel);
+	WINPR_ASSERT(channel->Write);
+
 	ret = channel->Write(channel, cbSize, buf, NULL);
 
 	return ret;
@@ -597,8 +687,13 @@ static UINT video_control_send_client_notification(VideoClientContext* context,
 static void video_timer(VideoClientContext* video, UINT64 now)
 {
 	PresentationContext* presentation;
-	VideoClientContextPriv* priv = video->priv;
+	VideoClientContextPriv* priv;
 	VideoFrame *peekFrame, *frame = NULL;
+
+	WINPR_ASSERT(video);
+
+	priv = video->priv;
+	WINPR_ASSERT(priv);
 
 	EnterCriticalSection(&priv->framesLock);
 	do
@@ -627,9 +722,11 @@ static void video_timer(VideoClientContext* video, UINT64 now)
 	presentation = frame->presentation;
 
 	priv->publishedFrames++;
-	memcpy(presentation->surfaceData, frame->surfaceData, frame->w * frame->h * 4ULL);
+	memcpy(presentation->surface->data, frame->surfaceData, frame->scanline * frame->h * 1ull);
 
-	video->showSurface(video, presentation->surface);
+	WINPR_ASSERT(video->showSurface);
+	video->showSurface(video, presentation->surface, presentation->ScaledWidth,
+	                   presentation->ScaledHeight);
 
 	VideoFrame_free(&frame);
 
@@ -680,6 +777,8 @@ treat_feedback:
 			if (computedRate != priv->lastSentRate)
 			{
 				TSMM_CLIENT_NOTIFICATION notif;
+
+				WINPR_ASSERT(priv->currentPresentation);
 				notif.PresentationId = priv->currentPresentation->PresentationId;
 				notif.NotificationType = TSMM_CLIENT_NOTIFICATION_TYPE_FRAMERATE_OVERRIDE;
 				if (computedRate == XF_VIDEO_UNLIMITED_RATE)
@@ -712,12 +811,17 @@ treat_feedback:
 	}
 }
 
-static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA* data)
+static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* data)
 {
-	VideoClientContextPriv* priv = context->priv;
+	VideoClientContextPriv* priv;
 	PresentationContext* presentation;
 	int status;
-	const UINT32 format = PIXEL_FORMAT_BGRX32;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(data);
+
+	priv = context->priv;
+	WINPR_ASSERT(priv);
 
 	presentation = priv->currentPresentation;
 	if (!presentation)
@@ -743,11 +847,12 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA* data)
 
 	if (data->CurrentPacketIndex == data->PacketsInSample)
 	{
+		VideoSurface* surface = presentation->surface;
 		H264_CONTEXT* h264 = presentation->h264;
 		UINT64 startTime = GetTickCount64(), timeAfterH264;
 		MAPPED_GEOMETRY* geom = presentation->geometry;
 
-		const RECTANGLE_16 rect = { 0, 0, presentation->SourceWidth, presentation->SourceHeight };
+		const RECTANGLE_16 rect = { 0, 0, surface->alignedWidth, surface->alignedHeight };
 		Stream_SealLength(presentation->currentSample);
 		Stream_SetPosition(presentation->currentSample, 0);
 
@@ -764,13 +869,16 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA* data)
 
 			/* if the frame is to be published in less than 10 ms, let's consider it's now */
 			status = avc420_decompress(h264, Stream_Pointer(presentation->currentSample),
-			                           Stream_Length(presentation->currentSample),
-			                           presentation->surfaceData, format, 0, rect.right,
-			                           rect.bottom, &rect, 1);
+			                           Stream_Length(presentation->currentSample), surface->data,
+			                           surface->format, surface->scanline, surface->alignedWidth,
+			                           surface->alignedHeight, &rect, 1);
 
 			if (status < 0)
 				return CHANNEL_RC_OK;
-			context->showSurface(context, presentation->surface);
+
+			WINPR_ASSERT(context->showSurface);
+			context->showSurface(context, presentation->surface, presentation->ScaledWidth,
+			                     presentation->ScaledHeight);
 
 			priv->publishedFrames++;
 
@@ -794,34 +902,17 @@ static UINT video_VideoData(VideoClientContext* context, TSMM_VIDEO_DATA* data)
 		else
 		{
 			BOOL enqueueResult;
-			VideoFrame* frame = calloc(1, sizeof(*frame));
+			VideoFrame* frame = VideoFrame_new(priv, presentation, geom);
 			if (!frame)
 			{
 				WLog_ERR(TAG, "unable to create frame");
 				return CHANNEL_RC_NO_MEMORY;
 			}
-			mappedGeometryRef(geom);
 
-			frame->presentation = presentation;
-			frame->publishTime = presentation->lastPublishTime;
-			frame->geometry = geom;
-			frame->w = presentation->SourceWidth;
-			frame->h = presentation->SourceHeight;
-
-			frame->surfaceData = BufferPool_Take(priv->surfacePool, frame->w * frame->h * 4ULL);
-			if (!frame->surfaceData)
-			{
-				WLog_ERR(TAG, "unable to allocate frame data");
-				mappedGeometryUnref(geom);
-				free(frame);
-				return CHANNEL_RC_NO_MEMORY;
-			}
-
-			status =
-			    avc420_decompress(h264, Stream_Pointer(presentation->currentSample),
-			                      Stream_Length(presentation->currentSample), frame->surfaceData,
-			                      format, 0, rect.right, rect.bottom, &rect, 1);
-
+			status = avc420_decompress(h264, Stream_Pointer(presentation->currentSample),
+			                           Stream_Length(presentation->currentSample),
+			                           frame->surfaceData, surface->format, surface->scanline,
+			                           surface->alignedWidth, surface->alignedHeight, &rect, 1);
 			if (status < 0)
 				return CHANNEL_RC_OK;
 

@@ -19,6 +19,8 @@
 
 #include "../core/update.h"
 
+#include <winpr/assert.h>
+
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 #include <freerdp/gdi/gdi.h>
@@ -27,20 +29,19 @@
 
 #define TAG FREERDP_TAG("video")
 
-typedef struct
-{
-	VideoSurface base;
-	UINT32 scanline;
-	BYTE* image;
-} gdiVideoSurface;
-
 void gdi_video_geometry_init(rdpGdi* gdi, GeometryClientContext* geom)
 {
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(geom);
+
 	gdi->geometry = geom;
 
 	if (gdi->video)
 	{
 		VideoClientContext* video = gdi->video;
+
+		WINPR_ASSERT(video);
+		WINPR_ASSERT(video->setGeometry);
 		video->setGeometry(video, gdi->geometry);
 	}
 }
@@ -49,42 +50,30 @@ void gdi_video_geometry_uninit(rdpGdi* gdi, GeometryClientContext* geom)
 {
 }
 
-static VideoSurface* gdiVideoCreateSurface(VideoClientContext* video, BYTE* data, UINT32 x,
-                                           UINT32 y, UINT32 width, UINT32 height)
+static VideoSurface* gdiVideoCreateSurface(VideoClientContext* video, UINT32 x, UINT32 y,
+                                           UINT32 width, UINT32 height)
 {
-	rdpGdi* gdi = (rdpGdi*)video->custom;
-	gdiVideoSurface* ret = calloc(1, sizeof(*ret));
-	UINT32 bpp;
-
-	if (!ret)
-		return NULL;
-
-	bpp = GetBytesPerPixel(gdi->dstFormat);
-	ret->base.data = data;
-	ret->base.x = x;
-	ret->base.y = y;
-	ret->base.w = width;
-	ret->base.h = height;
-	ret->scanline = width * bpp;
-	ret->image = _aligned_malloc(ret->scanline * height * 1ULL, 16);
-
-	if (!ret->image)
-	{
-		WLog_ERR(TAG, "unable to create surface image");
-		free(ret);
-		return NULL;
-	}
-
-	return &ret->base;
+	return VideoClient_CreateCommonContext(sizeof(VideoSurface), x, y, width, height);
 }
 
-static BOOL gdiVideoShowSurface(VideoClientContext* video, VideoSurface* surface)
+static BOOL gdiVideoShowSurface(VideoClientContext* video, const VideoSurface* surface,
+                                UINT32 destinationWidth, UINT32 destinationHeight)
 {
 	BOOL rc = FALSE;
-	rdpGdi* gdi = (rdpGdi*)video->custom;
-	gdiVideoSurface* gdiSurface = (gdiVideoSurface*)surface;
+	rdpGdi* gdi;
 	RECTANGLE_16 surfaceRect;
-	rdpUpdate* update = gdi->context->update;
+	rdpUpdate* update;
+
+	WINPR_ASSERT(video);
+	WINPR_ASSERT(surface);
+
+	gdi = (rdpGdi*)video->custom;
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->context);
+
+	update = gdi->context->update;
+	WINPR_ASSERT(update);
+
 	surfaceRect.left = surface->x;
 	surfaceRect.top = surface->y;
 	surfaceRect.right = surface->x + surface->w;
@@ -101,16 +90,20 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, VideoSurface* surface
 		const UINT32 nYSrc = surface->y;
 		const UINT32 nXDst = nXSrc;
 		const UINT32 nYDst = nYSrc;
-		const UINT32 width = (surface->w + surface->x < (UINT32)gdi->width)
-		                         ? surface->w
+		const UINT32 width = (destinationWidth + surface->x < (UINT32)gdi->width)
+		                         ? destinationWidth
 		                         : (UINT32)gdi->width - surface->x;
-		const UINT32 height = (surface->h + surface->y < (UINT32)gdi->height)
-		                          ? surface->h
+		const UINT32 height = (destinationHeight + surface->y < (UINT32)gdi->height)
+		                          ? destinationHeight
 		                          : (UINT32)gdi->height - surface->y;
 
-		if (!freerdp_image_copy(gdi->primary_buffer, gdi->primary->hdc->format, gdi->stride, nXDst,
-		                        nYDst, width, height, surface->data, gdi->primary->hdc->format,
-		                        gdiSurface->scanline, 0, 0, NULL, FREERDP_FLIP_NONE))
+		WINPR_ASSERT(gdi->primary_buffer);
+		WINPR_ASSERT(gdi->primary);
+		WINPR_ASSERT(gdi->primary->hdc);
+
+		if (!freerdp_image_scale(gdi->primary_buffer, gdi->primary->hdc->format, gdi->stride, nXDst,
+		                         nYDst, width, height, surface->data, surface->format,
+		                         surface->scanline, 0, 0, surface->w, surface->h))
 			goto fail;
 
 		if ((nXDst > INT32_MAX) || (nYDst > INT32_MAX) || (width > INT32_MAX) ||
@@ -132,16 +125,16 @@ fail:
 
 static BOOL gdiVideoDeleteSurface(VideoClientContext* video, VideoSurface* surface)
 {
-	gdiVideoSurface* gdiSurface = (gdiVideoSurface*)surface;
-
-	if (gdiSurface)
-		_aligned_free(gdiSurface->image);
-
-	free(gdiSurface);
+	WINPR_UNUSED(video);
+	VideoClient_DestroyCommonContext(surface);
 	return TRUE;
 }
+
 void gdi_video_control_init(rdpGdi* gdi, VideoClientContext* video)
 {
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(video);
+
 	gdi->video = video;
 	video->custom = gdi;
 	video->createSurface = gdiVideoCreateSurface;
@@ -152,13 +145,19 @@ void gdi_video_control_init(rdpGdi* gdi, VideoClientContext* video)
 
 void gdi_video_control_uninit(rdpGdi* gdi, VideoClientContext* video)
 {
+	WINPR_ASSERT(gdi);
 	gdi->video = NULL;
 }
 
 static void gdi_video_timer(void* context, TimerEventArgs* timer)
 {
 	rdpContext* ctx = (rdpContext*)context;
-	rdpGdi* gdi = ctx->gdi;
+	rdpGdi* gdi;
+
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(timer);
+
+	gdi = ctx->gdi;
 
 	if (gdi && gdi->video)
 		gdi->video->timer(gdi->video, timer->now);
@@ -166,10 +165,50 @@ static void gdi_video_timer(void* context, TimerEventArgs* timer)
 
 void gdi_video_data_init(rdpGdi* gdi, VideoClientContext* video)
 {
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->context);
 	PubSub_SubscribeTimer(gdi->context->pubSub, gdi_video_timer);
 }
 
 void gdi_video_data_uninit(rdpGdi* gdi, VideoClientContext* context)
 {
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->context);
 	PubSub_UnsubscribeTimer(gdi->context->pubSub, gdi_video_timer);
+}
+
+VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y, UINT32 w, UINT32 h)
+{
+	VideoSurface* ret;
+
+	WINPR_ASSERT(size >= sizeof(VideoSurface));
+
+	ret = calloc(1, size);
+	if (!ret)
+		return NULL;
+
+	ret->format = PIXEL_FORMAT_BGRX32;
+	ret->x = x;
+	ret->y = y;
+	ret->w = w;
+	ret->h = h;
+	ret->alignedWidth = ret->w + 32 - ret->w % 16;
+	ret->alignedHeight = ret->h + 32 - ret->h % 16;
+
+	ret->scanline = ret->alignedWidth * GetBytesPerPixel(ret->format);
+	ret->data = _aligned_malloc(ret->scanline * ret->alignedHeight * 1ULL, 64);
+	if (!ret->data)
+		goto fail;
+	return ret;
+fail:
+	VideoClient_DestroyCommonContext(ret);
+	return NULL;
+}
+
+void VideoClient_DestroyCommonContext(VideoSurface* surface)
+{
+	if (!surface)
+		return;
+	_aligned_free(surface->data);
+	free(surface);
 }
