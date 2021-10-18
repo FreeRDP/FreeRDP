@@ -879,10 +879,10 @@ static BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 
 	for (monitor = monitorDefArray, index = 0; index < monitorCount; index++, monitor++)
 	{
-		Stream_Read_UINT32(s, monitor->left);   /* left (4 bytes) */
-		Stream_Read_UINT32(s, monitor->top);    /* top (4 bytes) */
-		Stream_Read_UINT32(s, monitor->right);  /* right (4 bytes) */
-		Stream_Read_UINT32(s, monitor->bottom); /* bottom (4 bytes) */
+		Stream_Read_INT32(s, monitor->left);    /* left (4 bytes) */
+		Stream_Read_INT32(s, monitor->top);     /* top (4 bytes) */
+		Stream_Read_INT32(s, monitor->right);   /* right (4 bytes) */
+		Stream_Read_INT32(s, monitor->bottom);  /* bottom (4 bytes) */
 		Stream_Read_UINT32(s, monitor->flags);  /* flags (4 bytes) */
 	}
 
@@ -1781,7 +1781,6 @@ rdpRdp* rdp_new(rdpContext* context)
 {
 	rdpRdp* rdp;
 	DWORD flags;
-	BOOL newSettings = FALSE;
 	rdp = (rdpRdp*)calloc(1, sizeof(rdpRdp));
 
 	if (!rdp)
@@ -1801,8 +1800,6 @@ rdpRdp* rdp_new(rdpContext* context)
 
 		if (!context->settings)
 			goto fail;
-
-		newSettings = TRUE;
 	}
 
 	rdp->settings = context->settings;
