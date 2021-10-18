@@ -316,7 +316,7 @@ RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[])
 
 	if (count > 0)
 	{
-		device.base->Name = _strdup(args[1]);
+		device.base->Name = _strdup(args[0]);
 		if (!device.base->Name)
 			goto fail;
 
