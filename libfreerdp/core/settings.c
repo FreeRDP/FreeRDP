@@ -1052,6 +1052,7 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	_settings->LoadBalanceInfo = NULL;
 	_settings->ServerRandom = NULL;
 	_settings->ClientRandom = NULL;
+	_settings->ServerCertificate = NULL;
 	_settings->RdpServerCertificate = NULL;
 	_settings->RdpServerRsaKey = NULL;
 	_settings->ChannelDefArray = NULL;
