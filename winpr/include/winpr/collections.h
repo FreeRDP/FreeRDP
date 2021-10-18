@@ -79,7 +79,7 @@ extern "C"
 	 *
 	 *  \return TRUE for success, FALSE if failed.
 	 */
-	WINPR_API BOOL Queue_Enqueue(wQueue* queue, void* obj);
+	WINPR_API BOOL Queue_Enqueue(wQueue* queue, const void* obj);
 
 	/** \brief returns the element at the top of the queue. The element is removed from the queue,
 	 *  ownership of the element is passed on to the caller.

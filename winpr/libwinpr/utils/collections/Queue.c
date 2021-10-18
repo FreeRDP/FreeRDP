@@ -194,7 +194,7 @@ static BOOL Queue_EnsureCapacity(wQueue* queue, size_t count)
  * Adds an object to the end of the Queue.
  */
 
-BOOL Queue_Enqueue(wQueue* queue, void* obj)
+BOOL Queue_Enqueue(wQueue* queue, const void* obj)
 {
 	BOOL ret = TRUE;
 
@@ -206,7 +206,15 @@ BOOL Queue_Enqueue(wQueue* queue, void* obj)
 	if (queue->object.fnObjectNew)
 		queue->array[queue->tail] = queue->object.fnObjectNew(obj);
 	else
-		queue->array[queue->tail] = obj;
+	{
+		union
+		{
+			const void* cv;
+			void* v;
+		} cnv;
+		cnv.cv = obj;
+		queue->array[queue->tail] = cnv.v;
+	}
 	queue->tail = (queue->tail + 1) % queue->capacity;
 	queue->size++;
 	SetEvent(queue->event);
