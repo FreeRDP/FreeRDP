@@ -47,7 +47,6 @@ BOOL utils_str_copy(const char* value, char** dst)
 auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason)
 {
 	rdpSettings* settings;
-	rdpContext* context;
 	BOOL prompt = FALSE;
 	BOOL proceed;
 
@@ -56,7 +55,6 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 	WINPR_ASSERT(instance->settings);
 
 	settings = instance->settings;
-	context = instance->context;
 
 	if (freerdp_shall_disconnect(instance))
 		return AUTH_FAILED;
@@ -91,7 +89,6 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL override)
 {
 	rdpSettings* settings;
-	rdpContext* context;
 	BOOL prompt = !override;
 	BOOL proceed;
 
@@ -100,7 +97,6 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 	WINPR_ASSERT(instance->settings);
 
 	settings = instance->settings;
-	context = instance->context;
 
 	if (freerdp_shall_disconnect(instance))
 		return AUTH_FAILED;
