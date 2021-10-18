@@ -852,6 +852,12 @@ static void wts_virtual_channel_manager_free_message(void* obj)
 
 static void channel_free(rdpPeerChannel* channel);
 
+static void array_channel_free(void* ptr)
+{
+	rdpPeerChannel* channel = ptr;
+	channel_free(channel);
+}
+
 HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 {
 	rdpContext* context;
@@ -908,7 +914,7 @@ HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 	{
 		wObject* obj = ArrayList_Object(vcm->dynamicVirtualChannels);
 		WINPR_ASSERT(obj);
-		obj->fnObjectFree = channel_free;
+		obj->fnObjectFree = array_channel_free;
 	}
 	client->ReceiveChannelData = WTSReceiveChannelData;
 	hServer = (HANDLE)vcm;
@@ -943,7 +949,6 @@ VOID WINAPI FreeRDP_WTSCloseServer(HANDLE hServer)
 	{
 		HashTable_Remove(g_ServerHandles, (void*)(UINT_PTR)vcm->SessionId);
 
-		ArrayList_Clear(vcm->dynamicVirtualChannels);
 		ArrayList_Free(vcm->dynamicVirtualChannels);
 
 		if (vcm->drdynvc_channel)
@@ -1160,7 +1165,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 	rdpMcs* mcs;
 	rdpMcsChannel* joined_channel = NULL;
 	freerdp_peer* client;
-	rdpPeerChannel* channel;
+	rdpPeerChannel* channel = NULL;
 	WTSVirtualChannelManager* vcm;
 	HANDLE hChannelHandle = NULL;
 	vcm = (WTSVirtualChannelManager*)hServer;
@@ -1330,6 +1335,9 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 			if (channel->index < mcs->channelCount)
 			{
 				rdpMcsChannel* cur = &mcs->channels[channel->index];
+				rdpPeerChannel* peerChannel = (rdpPeerChannel*)cur->handle;
+				if (peerChannel)
+					channel_free(peerChannel);
 				cur->handle = NULL;
 			}
 		}
