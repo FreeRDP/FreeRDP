@@ -730,8 +730,14 @@ BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32
 {
 	UINT32 x, y;
 	const UINT32 bpp = GetBytesPerPixel(DstFormat);
-	BYTE* pFirstDstLine = &pDstData[nYDst * nDstStep];
-	BYTE* pFirstDstLineXOffset = &pFirstDstLine[nXDst * bpp];
+	BYTE* pFirstDstLine;
+	BYTE* pFirstDstLineXOffset;
+
+	if (nDstStep == 0)
+		nDstStep = (nXDst + nWidth) * GetBytesPerPixel(DstFormat);
+
+	pFirstDstLine = &pDstData[nYDst * nDstStep];
+	pFirstDstLineXOffset = &pFirstDstLine[nXDst * bpp];
 
 	for (x = 0; x < nWidth; x++)
 	{
