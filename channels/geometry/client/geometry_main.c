@@ -438,8 +438,11 @@ static UINT geometry_plugin_terminated(IWTSPlugin* pPlugin)
 
 static void mappedGeometryUnref_void(void* arg)
 {
-	MAPPED_GEOMETRY* g = (MAPPED_GEOMETRY*)arg;
-	mappedGeometryUnref(g);
+	if (arg)
+	{
+		MAPPED_GEOMETRY* g = (MAPPED_GEOMETRY*)arg;
+		mappedGeometryUnref(g);
+	}
 }
 
 /**
