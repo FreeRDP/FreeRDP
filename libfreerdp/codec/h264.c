@@ -43,6 +43,7 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 {
 	size_t x;
 	BOOL isNull = FALSE;
+	UINT32 pheight = height;
 
 	if (!h264)
 		return FALSE;
@@ -53,8 +54,8 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 	if (stride % 16 != 0)
 		stride += 16 - stride % 16;
 
-	if (height % 16 != 0)
-		height += 16 - height % 16;
+	if (pheight % 16 != 0)
+		pheight += 16 - pheight % 16;
 
 	for (x = 0; x < 3; x++)
 	{
@@ -73,8 +74,8 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 
 		for (x = 0; x < 3; x++)
 		{
-			BYTE* tmp1 = _aligned_recalloc(h264->pYUVData[x], h264->iStride[x], height, 16);
-			BYTE* tmp2 = _aligned_recalloc(h264->pOldYUVData[x], h264->iStride[x], height, 16);
+			BYTE* tmp1 = _aligned_recalloc(h264->pYUVData[x], h264->iStride[x], pheight, 16);
+			BYTE* tmp2 = _aligned_recalloc(h264->pOldYUVData[x], h264->iStride[x], pheight, 16);
 			if (tmp1)
 				h264->pYUVData[x] = tmp1;
 			if (tmp2)
