@@ -65,7 +65,6 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 	if (isNull || (width != h264->width) || (height != h264->height) ||
 	    (stride != h264->iStride[0]))
 	{
-
 		h264->iStride[0] = stride;
 		h264->iStride[1] = (stride + 1) / 2;
 		h264->iStride[2] = (stride + 1) / 2;
