@@ -277,8 +277,6 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 		iStride[0] = sys->videoFrame->linesize[0];
 		iStride[1] = sys->videoFrame->linesize[1];
 		iStride[2] = sys->videoFrame->linesize[2];
-		h264->width = sys->videoFrame->width;
-		h264->height = sys->videoFrame->height;
 	}
 	else
 		return -2;
