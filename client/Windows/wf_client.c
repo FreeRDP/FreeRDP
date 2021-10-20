@@ -122,7 +122,7 @@ static BOOL wf_end_paint(rdpContext* context)
 #ifdef WITH_PROGRESS_BAR
 		if (m_pTaskBarlist)
 		{
-			m_pTaskBarlist->lpVtbl->SetProgressState(m_pTaskBarlist, wfc->hwnd, TBPF_NORMAL);
+			m_pTaskBarlist->lpVtbl->SetProgressState(m_pTaskBarlist, wfc->hwnd, TBPF_NOPROGRESS);
 		}
 #endif
 
@@ -252,7 +252,7 @@ static BOOL wf_pre_connect(freerdp* instance)
 	}
 
 	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
-	    (settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
+	    (settings->DesktopWidth > 8192) || (settings->DesktopHeight > 8192))
 	{
 		WLog_ERR(TAG, "invalid dimensions %lu %lu", settings->DesktopWidth,
 		         settings->DesktopHeight);

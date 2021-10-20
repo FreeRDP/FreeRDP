@@ -58,7 +58,7 @@ if (WIN32 AND BUILD_SHARED_LIBS)
   set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
-option(WITH_WIN_CONSOLE "Build ${MODULE_NAME} with console support" ON)
+option(WITH_WIN_CONSOLE "Build ${MODULE_NAME} with console support" OFF)
 if(WITH_WIN_CONSOLE)
   add_definitions("-DWITH_WIN_CONSOLE")
   set(WIN32_GUI_FLAG "")
