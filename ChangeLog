@@ -1,4 +1,4 @@
-# 2021-10-15 Version 2.4.1
+# 2021-10-20 Version 2.4.1
 
 Noteworthy changes:
 * Refactored RPC gateway parsing code
@@ -8,6 +8,10 @@ Noteworthy changes:
 Fixed issues:
 * #7363: Length checks in ConvertUTF8toUTF16
 * #7349: Added checks for bitmap width and heigth values
+
+Important notes:
+* CVE-2021-41159: Improper client input validation for gateway connections allows to overwrite memory
+* CVE-2021-41160: Improper region checks in all clients allow out of bound write to memory
 
 For a complete and detailed change log since the last release run:
 git log 2.4.0..2.4.1
