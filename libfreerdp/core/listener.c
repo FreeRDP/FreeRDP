@@ -321,7 +321,11 @@ BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
 	}
 
 #ifndef _WIN32
+#ifdef AF_VSOCK
 	else if (peer_addr->ss_family == AF_UNIX || peer_addr->ss_family == AF_VSOCK)
+#else
+	else if (peer_addr->ss_family == AF_UNIX)
+#endif
 		client->local = TRUE;
 #endif
 

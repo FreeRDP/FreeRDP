@@ -82,7 +82,6 @@ struct _GFXREDIR_CAPS_HEADER
 	UINT32 signature;       // GFXREDIR_CAPS_SIGNATURE
 	UINT32 version;         // GFXREDIR_CAPS_VERSION
 	UINT32 length;          // GFXREDIR_CAPS_HEADER_SIZE + size of capsData
-	const BYTE capsData[0]; // GFXREDIR_CAPS_HEADER.length - GFXREDIR_CAPS_HEADER_SIZE
 };
 
 typedef struct _GFXREDIR_CAPS_HEADER GFXREDIR_CAPS_HEADER;
