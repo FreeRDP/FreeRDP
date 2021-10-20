@@ -254,7 +254,7 @@ struct rdp_update
 
 	wStream* us;
 	UINT16 numberOrders;
-	UINT16 offsetOrders; /* the offset to patch numberOrders in the stream */
+	size_t offsetOrders; /* the offset to patch numberOrders in the stream */
 	BOOL combineUpdates;
 	rdpBounds currentBounds;
 	rdpBounds previousBounds;
