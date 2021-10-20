@@ -37,6 +37,8 @@
 #include <sys/types.h>
 #include <io.h>
 
+#include <shobjidl.h>
+
 #include <freerdp/log.h>
 #include <freerdp/event.h>
 #include <freerdp/freerdp.h>
@@ -59,6 +61,10 @@
 #include "resource.h"
 
 #define TAG CLIENT_TAG("windows")
+
+#ifdef WITH_PROGRESS_BAR
+ITaskbarList3* m_pTaskBarlist;
+#endif
 
 static BOOL wf_has_console(void)
 {
@@ -108,6 +114,22 @@ static BOOL wf_end_paint(rdpContext* context)
 	}
 
 	region16_uninit(&invalidRegion);
+
+	if (!wfc->is_shown)
+	{
+		wfc->is_shown = true;
+
+#ifdef WITH_PROGRESS_BAR
+		if (m_pTaskBarlist)
+		{
+			m_pTaskBarlist->lpVtbl->SetProgressState(m_pTaskBarlist, wfc->hwnd, TBPF_NORMAL);
+		}
+#endif
+
+		ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
+		WLog_INFO(TAG, "Window is shown!");
+		fflush(stdout);
+	}
 	return TRUE;
 }
 
@@ -372,7 +394,13 @@ static BOOL wf_post_connect(freerdp* instance)
 	e.embed = FALSE;
 	e.handle = (void*)wfc->hwnd;
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
-	ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
+#ifdef WITH_PROGRESS_BAR
+	if (m_pTaskBarlist)
+	{
+		ShowWindow(wfc->hwnd, SW_SHOWMINIMIZED);
+		m_pTaskBarlist->lpVtbl->SetProgressState(m_pTaskBarlist, wfc->hwnd, TBPF_INDETERMINATE);
+	}
+#endif
 	UpdateWindow(wfc->hwnd);
 	instance->update->BeginPaint = wf_begin_paint;
 	instance->update->DesktopResize = wf_desktop_resize;
@@ -1022,12 +1050,22 @@ static BOOL wfreerdp_client_global_init(void)
 	WSAStartup(0x101, &wsaData);
 
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
+
+#ifdef WITH_PROGRESS_BAR
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	CoCreateInstance(&CLSID_TaskbarList, NULL, CLSCTX_ALL, &IID_ITaskbarList3,
+	                 (void**)&m_pTaskBarlist);
+#endif
 	return TRUE;
 }
 
 static void wfreerdp_client_global_uninit(void)
 {
 	WSACleanup();
+
+#ifdef WITH_PROGRESS_BAR
+	CoUninitialize();
+#endif
 }
 
 static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)

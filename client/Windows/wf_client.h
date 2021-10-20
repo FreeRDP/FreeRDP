@@ -98,6 +98,7 @@ extern "C"
 		HCURSOR hDefaultCursor;
 
 		HWND hwnd;
+		BOOL is_shown;
 		POINT diff;
 
 		wfBitmap* primary;
