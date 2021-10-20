@@ -63,7 +63,7 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 			fprintf(
 			    stderr,
 			    "Color value  mismatch R[%02X %02X], G[%02X %02X], B[%02X %02X] at position %lu\n",
-			    sR, dR, sG, dG, sA, dA, x);
+			    sR, dR, sG, dG, sB, dB, x);
 			return FALSE;
 		}
 
@@ -953,7 +953,7 @@ int TestPrimitivesYUV(int argc, char* argv[])
 			goto end;
 		}
 
-		printf("---------------------- END --------------------------\n");
+		printf("---------------------- END --------------------------\n");	
 	}
 
 	rc = 0;
