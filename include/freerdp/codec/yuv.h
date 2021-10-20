@@ -33,19 +33,19 @@ extern "C"
 #endif
 
 	FREERDP_API BOOL yuv420_context_decode(YUV_CONTEXT* context, const BYTE* pYUVData[3],
-	                                       const UINT32 iStride[3], DWORD DstFormat, BYTE* dest,
-	                                       UINT32 nDstStep, const RECTANGLE_16* regionRects,
-	                                       UINT32 numRegionRects);
+	                                       const UINT32 iStride[3], UINT32 yuvHeight,
+	                                       DWORD DstFormat, BYTE* dest, UINT32 nDstStep,
+	                                       const RECTANGLE_16* regionRects, UINT32 numRegionRects);
 	FREERDP_API BOOL yuv420_context_encode(YUV_CONTEXT* context, const BYTE* rgbData,
 	                                       UINT32 srcStep, UINT32 srcFormat,
 	                                       const UINT32 iStride[3], BYTE* yuvData[3],
 	                                       const RECTANGLE_16* regionRects, UINT32 numRegionRects);
 
 	FREERDP_API BOOL yuv444_context_decode(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVData[3],
-	                                       const UINT32 iStride[3], BYTE* pYUVDstData[3],
-	                                       const UINT32 iDstStride[3], DWORD DstFormat, BYTE* dest,
-	                                       UINT32 nDstStep, const RECTANGLE_16* regionRects,
-	                                       UINT32 numRegionRects);
+	                                       const UINT32 iStride[3], UINT32 srcYuvHeight,
+	                                       BYTE* pYUVDstData[3], const UINT32 iDstStride[3],
+	                                       DWORD DstFormat, BYTE* dest, UINT32 nDstStep,
+	                                       const RECTANGLE_16* regionRects, UINT32 numRegionRects);
 	FREERDP_API BOOL yuv444_context_encode(YUV_CONTEXT* context, BYTE version, const BYTE* pSrcData,
 	                                       UINT32 nSrcStep, UINT32 SrcFormat,
 	                                       const UINT32 iStride[3], BYTE* pYUVLumaData[3],
