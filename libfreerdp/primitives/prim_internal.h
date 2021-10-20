@@ -211,14 +211,14 @@ static INLINE BYTE CLIP(INT64 X)
 	return (BYTE)X;
 }
 
-/**
- * | R |   ( | 256     0    403 | |    Y    | )
- * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
- * | B |   ( | 256   475      0 | | V - 128 | )
+/** 
+ * | R |   ( | 298     0    409 | | Y -  16 | )
+ * | G | = ( | 298   -100  -208 | | U - 128 | ) >> 8
+ * | B |   ( | 298    517    0  | | V - 128 | )
  */
 static INLINE INT32 C(INT32 Y)
 {
-	return (Y)-0L;
+	return (Y)-16L;
 }
 
 static INLINE INT32 D(INT32 U)
@@ -233,21 +233,21 @@ static INLINE INT32 E(INT32 V)
 
 static INLINE BYTE YUV2R(INT32 Y, INT32 U, INT32 V)
 {
-	const INT32 r = (256L * C(Y) + 0L * D(U) + 403L * E(V));
+	const INT32 r = (298L * C(Y) + 0L * D(U) + 409L * E(V));
 	const INT32 r8 = r >> 8L;
 	return CLIP(r8);
 }
 
 static INLINE BYTE YUV2G(INT32 Y, INT32 U, INT32 V)
 {
-	const INT32 g = (256L * C(Y) - 48L * D(U) - 120L * E(V));
+	const INT32 g = (298L * C(Y) - 100L * D(U) - 208L * E(V));
 	const INT32 g8 = g >> 8L;
 	return CLIP(g8);
 }
 
 static INLINE BYTE YUV2B(INT32 Y, INT32 U, INT32 V)
 {
-	const INT32 b = (256L * C(Y) + 475L * D(U) + 0L * E(V));
+	const INT32 b = (298L * C(Y) + 517L * D(U) + 0L * E(V));
 	const INT32 b8 = b >> 8L;
 	return CLIP(b8);
 }

@@ -39,13 +39,19 @@
 
 static primitives_t* generic = NULL;
 
+/**
+ * | R |   ( | 298     0    409 | | Y -  16 | )
+ * | G | = ( | 298   -100  -208 | | U - 128 | ) >> 8
+ * | B |   ( | 298    517    0  | | V - 128 | )
+ */
+
 static INLINE uint8x8_t neon_YUV2R(int32x4_t Ch, int32x4_t Cl, int16x4_t Dh, int16x4_t Dl,
                                    int16x4_t Eh, int16x4_t El)
 {
-	/* R = (256 * Y + 403 * (V - 128)) >> 8 */
-	const int16x4_t c403 = vdup_n_s16(403);
-	const int32x4_t CEh = vmlal_s16(Ch, Eh, c403);
-	const int32x4_t CEl = vmlal_s16(Cl, El, c403);
+	/* R = (298 * (Y - 16)  + 409 * (V - 128)) >> 8 */
+	const int16x4_t c409 = vdup_n_s16(409);
+	const int32x4_t CEh = vmlal_s16(Ch, Eh, c409);
+	const int32x4_t CEl = vmlal_s16(Cl, El, c409);
 	const int32x4_t Rh = vrshrq_n_s32(CEh, 8);
 	const int32x4_t Rl = vrshrq_n_s32(CEl, 8);
 	const int16x8_t R = vcombine_s16(vqmovn_s32(Rl), vqmovn_s32(Rh));
@@ -55,13 +61,13 @@ static INLINE uint8x8_t neon_YUV2R(int32x4_t Ch, int32x4_t Cl, int16x4_t Dh, int
 static INLINE uint8x8_t neon_YUV2G(int32x4_t Ch, int32x4_t Cl, int16x4_t Dh, int16x4_t Dl,
                                    int16x4_t Eh, int16x4_t El)
 {
-	/* G = (256L * Y -  48 * (U - 128) - 120 * (V - 128)) >> 8 */
-	const int16x4_t c48 = vdup_n_s16(48);
-	const int16x4_t c120 = vdup_n_s16(120);
-	const int32x4_t CDh = vmlsl_s16(Ch, Dh, c48);
-	const int32x4_t CDl = vmlsl_s16(Cl, Dl, c48);
-	const int32x4_t CDEh = vmlsl_s16(CDh, Eh, c120);
-	const int32x4_t CDEl = vmlsl_s16(CDl, El, c120);
+	/* G = (298 * (Y - 16) -  100 * (U - 128) - 208 * (V - 128)) >> 8 */
+	const int16x4_t c100 = vdup_n_s16(100);
+	const int16x4_t c208 = vdup_n_s16(208);
+	const int32x4_t CDh = vmlsl_s16(Ch, Dh, c100);
+	const int32x4_t CDl = vmlsl_s16(Cl, Dl, c100);
+	const int32x4_t CDEh = vmlsl_s16(CDh, Eh, c208);
+	const int32x4_t CDEl = vmlsl_s16(CDl, El, c208);
 	const int32x4_t Gh = vrshrq_n_s32(CDEh, 8);
 	const int32x4_t Gl = vrshrq_n_s32(CDEl, 8);
 	const int16x8_t G = vcombine_s16(vqmovn_s32(Gl), vqmovn_s32(Gh));
@@ -71,10 +77,10 @@ static INLINE uint8x8_t neon_YUV2G(int32x4_t Ch, int32x4_t Cl, int16x4_t Dh, int
 static INLINE uint8x8_t neon_YUV2B(int32x4_t Ch, int32x4_t Cl, int16x4_t Dh, int16x4_t Dl,
                                    int16x4_t Eh, int16x4_t El)
 {
-	/* B = (256L * Y + 475 * (U - 128)) >> 8*/
-	const int16x4_t c475 = vdup_n_s16(475);
-	const int32x4_t CDh = vmlal_s16(Ch, Dh, c475);
-	const int32x4_t CDl = vmlal_s16(Ch, Dl, c475);
+	/* B = (298 * (Y - 16) + 517 * (U - 128)) >> 8*/
+	const int16x4_t c517 = vdup_n_s16(517);
+	const int32x4_t CDh = vmlal_s16(Ch, Dh, c517);
+	const int32x4_t CDl = vmlal_s16(Ch, Dl, c517);
 	const int32x4_t Bh = vrshrq_n_s32(CDh, 8);
 	const int32x4_t Bl = vrshrq_n_s32(CDl, 8);
 	const int16x8_t B = vcombine_s16(vqmovn_s32(Bl), vqmovn_s32(Bh));
@@ -86,40 +92,43 @@ static INLINE BYTE* neon_YuvToRgbPixel(BYTE* pRGB, int16x8_t Y, int16x8_t D, int
                                        const uint8_t aPos)
 {
 	uint8x8x4_t bgrx;
-	const int32x4_t Ch = vmulq_n_s32(vmovl_s16(vget_high_s16(Y)), 256); /* Y * 256 */
-	const int32x4_t Cl = vmulq_n_s32(vmovl_s16(vget_low_s16(Y)), 256);  /* Y * 256 */
+	const int32x4_t c16 = vmovl_s16(vdup_n_s16(16));
+	const int32x4_t Yh = vsub_s16(vget_high_s16(Y), vget_high_s16(c16));
+	const int32x4_t Yl = vsub_s16(vget_low_s16(Y), vget_low_s16(c16));
+	const int32x4_t Ch = vmulq_n_s32(vmovl_s16(Yh), 298); /* Y * 298 */
+	const int32x4_t Cl = vmulq_n_s32(vmovl_s16(Yl), 298); /* Y * 298 */
 	const int16x4_t Dh = vget_high_s16(D);
 	const int16x4_t Dl = vget_low_s16(D);
 	const int16x4_t Eh = vget_high_s16(E);
 	const int16x4_t El = vget_low_s16(E);
 	{
-		/* B = (256L * Y + 475 * (U - 128)) >> 8*/
-		const int16x4_t c475 = vdup_n_s16(475);
-		const int32x4_t CDh = vmlal_s16(Ch, Dh, c475);
-		const int32x4_t CDl = vmlal_s16(Cl, Dl, c475);
+		/* B = (298 * (Y - 16) + 517 * (U - 128)) >> 8*/
+		const int16x4_t c517 = vdup_n_s16(517);
+		const int32x4_t CDh = vmlal_s16(Ch, Dh, c517);
+		const int32x4_t CDl = vmlal_s16(Cl, Dl, c517);
 		const int32x4_t Bh = vrshrq_n_s32(CDh, 8);
 		const int32x4_t Bl = vrshrq_n_s32(CDl, 8);
 		const int16x8_t B = vcombine_s16(vqmovn_s32(Bl), vqmovn_s32(Bh));
 		bgrx.val[bPos] = vqmovun_s16(B);
 	}
 	{
-		/* G = (256L * Y -  48 * (U - 128) - 120 * (V - 128)) >> 8 */
-		const int16x4_t c48 = vdup_n_s16(48);
-		const int16x4_t c120 = vdup_n_s16(120);
-		const int32x4_t CDh = vmlsl_s16(Ch, Dh, c48);
-		const int32x4_t CDl = vmlsl_s16(Cl, Dl, c48);
-		const int32x4_t CDEh = vmlsl_s16(CDh, Eh, c120);
-		const int32x4_t CDEl = vmlsl_s16(CDl, El, c120);
+		/* G = (298 * (Y - 16) -  100 * (U - 128) - 208 * (V - 128)) >> 8 */
+		const int16x4_t c100 = vdup_n_s16(100);
+		const int16x4_t c208 = vdup_n_s16(208);
+		const int32x4_t CDh = vmlsl_s16(Ch, Dh, c100);
+		const int32x4_t CDl = vmlsl_s16(Cl, Dl, c100);
+		const int32x4_t CDEh = vmlsl_s16(CDh, Eh, c208);
+		const int32x4_t CDEl = vmlsl_s16(CDl, El, c208);
 		const int32x4_t Gh = vrshrq_n_s32(CDEh, 8);
 		const int32x4_t Gl = vrshrq_n_s32(CDEl, 8);
 		const int16x8_t G = vcombine_s16(vqmovn_s32(Gl), vqmovn_s32(Gh));
 		bgrx.val[gPos] = vqmovun_s16(G);
 	}
 	{
-		/* R = (256 * Y + 403 * (V - 128)) >> 8 */
-		const int16x4_t c403 = vdup_n_s16(403);
-		const int32x4_t CEh = vmlal_s16(Ch, Eh, c403);
-		const int32x4_t CEl = vmlal_s16(Cl, El, c403);
+		/* R = (298 * (Y - 16) + 409 * (V - 128)) >> 8 */
+		const int16x4_t c409 = vdup_n_s16(409);
+		const int32x4_t CEh = vmlal_s16(Ch, Eh, c409);
+		const int32x4_t CEl = vmlal_s16(Cl, El, c409);
 		const int32x4_t Rh = vrshrq_n_s32(CEh, 8);
 		const int32x4_t Rl = vrshrq_n_s32(CEl, 8);
 		const int16x8_t R = vcombine_s16(vqmovn_s32(Rl), vqmovn_s32(Rh));
