@@ -301,14 +301,15 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE* const* pSrc, const UINT
  * rounded to 127
  */
 
-#define BGRX_Y_FACTORS _mm_set_epi8(0, 27, 92, 9, 0, 27, 92, 9, 0, 27, 92, 9, 0, 27, 92, 9)
+#define BGRX_Y_FACTORS _mm_set_epi8(0, 66, 129, 25, 0, 66, 129, 25, 0, 66, 129, 25, 0, 66, 129, 25)
 #define BGRX_U_FACTORS \
-	_mm_set_epi8(0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127)
+	_mm_set_epi8(0, -38, -74, 112, 0, -38, -74, 112, 0, -38, -74, 112, 0, -38, -74, 112)
 #define BGRX_V_FACTORS \
-	_mm_set_epi8(0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12)
+	_mm_set_epi8(0, 112, -94, -18, 0, 112, -94, -18, 0, 112, -94, -18, 0, 112, -94, -18)
+#define CONST16_FACTORS _mm_set1_epi8(-16)
 #define CONST128_FACTORS _mm_set1_epi8(-128)
 
-#define Y_SHIFT 7
+#define Y_SHIFT 8
 #define U_SHIFT 8
 #define V_SHIFT 8
 
@@ -319,13 +320,13 @@ globals directly the functions below could be passed pointers to the correct vec
 depending on the source picture format.
 
 PRIM_ALIGN_128 static const BYTE rgbx_y_factors[] = {
-      27,  92,   9,   0,  27,  92,   9,   0,  27,  92,   9,   0,  27,  92,   9,   0
+    66, 129, 25, 0, 66, 129, 25, 0, 66, 129, 25, 0, 66, 129, 25
 };
 PRIM_ALIGN_128 static const BYTE rgbx_u_factors[] = {
-     -15, -49,  64,   0, -15, -49,  64,   0, -15, -49,  64,   0, -15, -49,  64,   0
+    -38, -74, 112, 0, -38, -74, 112, 0, -38, -74, 112, 0, -38, -74, 112
 };
 PRIM_ALIGN_128 static const BYTE rgbx_v_factors[] = {
-      64, -58,  -6,   0,  64, -58,  -6,   0,  64, -58,  -6,   0,  64, -58,  -6,   0
+    112, -94, -18, 0, 112, -94, -18, 0, 112, -94, -18, 0, 112, -94, -18
 };
 */
 
@@ -336,6 +337,7 @@ static INLINE void ssse3_RGBToYUV420_BGRX_Y(const BYTE* src, BYTE* dst, UINT32 w
 	UINT32 x;
 	__m128i x0, x1, x2, x3;
 	const __m128i y_factors = BGRX_Y_FACTORS;
+	const __m128i vector16 = CONST16_FACTORS;
 	const __m128i* argb = (const __m128i*)src;
 	__m128i* ydst = (__m128i*)dst;
 
@@ -359,6 +361,8 @@ static INLINE void ssse3_RGBToYUV420_BGRX_Y(const BYTE* src, BYTE* dst, UINT32 w
 		x2 = _mm_srli_epi16(x2, Y_SHIFT);
 		/* pack the 16 words into bytes */
 		x0 = _mm_packus_epi16(x0, x2);
+		/* add 16 */
+		x0 = _mm_sub_epi8(x0, vector16);
 		/* save to y plane */
 		_mm_storeu_si128(ydst++, x0);
 	}
