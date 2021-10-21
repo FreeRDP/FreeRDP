@@ -127,7 +127,7 @@ static BOOL device_foreach(rdpdrPlugin* rdpdr, BOOL abortOnFail,
  */
 static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL userLoggedOn);
 
-static BOOL rdpdr_load_drive(rdpdrPlugin* rdpdr, const char* path, const char* name, BOOL automount)
+static BOOL rdpdr_load_drive(rdpdrPlugin* rdpdr, const char* name, const char* path, BOOL automount)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
 	union
