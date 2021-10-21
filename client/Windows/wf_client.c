@@ -37,7 +37,9 @@
 #include <sys/types.h>
 #include <io.h>
 
+#ifdef WITH_PROGRESS_BAR
 #include <shobjidl.h>
+#endif
 
 #include <freerdp/log.h>
 #include <freerdp/event.h>
@@ -61,10 +63,6 @@
 #include "resource.h"
 
 #define TAG CLIENT_TAG("windows")
-
-#ifdef WITH_PROGRESS_BAR
-ITaskbarList3* m_pTaskBarlist;
-#endif
 
 static BOOL wf_has_console(void)
 {
@@ -117,12 +115,13 @@ static BOOL wf_end_paint(rdpContext* context)
 
 	if (!wfc->is_shown)
 	{
-		wfc->is_shown = true;
+		wfc->is_shown = TRUE;
 
 #ifdef WITH_PROGRESS_BAR
-		if (m_pTaskBarlist)
+		if (wfc->taskBarList)
 		{
-			m_pTaskBarlist->lpVtbl->SetProgressState(m_pTaskBarlist, wfc->hwnd, TBPF_NOPROGRESS);
+			wfc->taskBarList->lpVtbl->SetProgressState(wfc->taskBarList, wfc->hwnd,
+			                                           TBPF_NOPROGRESS);
 		}
 #endif
 
@@ -249,14 +248,6 @@ static BOOL wf_pre_connect(freerdp* instance)
 	if (desktopHeight != settings->DesktopHeight)
 	{
 		freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, desktopHeight);
-	}
-
-	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
-	    (settings->DesktopWidth > 8192) || (settings->DesktopHeight > 8192))
-	{
-		WLog_ERR(TAG, "invalid dimensions %lu %lu", settings->DesktopWidth,
-		         settings->DesktopHeight);
-		return FALSE;
 	}
 
 	if (!freerdp_client_load_addins(context->channels, instance->settings))
@@ -395,10 +386,10 @@ static BOOL wf_post_connect(freerdp* instance)
 	e.handle = (void*)wfc->hwnd;
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
 #ifdef WITH_PROGRESS_BAR
-	if (m_pTaskBarlist)
+	if (wfc->taskBarList)
 	{
 		ShowWindow(wfc->hwnd, SW_SHOWMINIMIZED);
-		m_pTaskBarlist->lpVtbl->SetProgressState(m_pTaskBarlist, wfc->hwnd, TBPF_INDETERMINATE);
+		wfc->taskBarList->lpVtbl->SetProgressState(wfc->taskBarList, wfc->hwnd, TBPF_INDETERMINATE);
 	}
 #endif
 	UpdateWindow(wfc->hwnd);
@@ -811,6 +802,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 					continue;
 
 				WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
+				fflush(stdout);
 				break;
 			}
 		}
@@ -1051,21 +1043,12 @@ static BOOL wfreerdp_client_global_init(void)
 
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 
-#ifdef WITH_PROGRESS_BAR
-	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-	CoCreateInstance(&CLSID_TaskbarList, NULL, CLSCTX_ALL, &IID_ITaskbarList3,
-	                 (void**)&m_pTaskBarlist);
-#endif
 	return TRUE;
 }
 
 static void wfreerdp_client_global_uninit(void)
 {
 	WSACleanup();
-
-#ifdef WITH_PROGRESS_BAR
-	CoUninitialize();
-#endif
 }
 
 static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
@@ -1098,6 +1081,12 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 		instance->VerifyChangedCertificateEx = wf_verify_changed_certificate_ex;
 		instance->PresentGatewayMessage = wf_present_gateway_message;
 	}
+	
+#ifdef WITH_PROGRESS_BAR
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	CoCreateInstance(&CLSID_TaskbarList, NULL, CLSCTX_ALL, &IID_ITaskbarList3,
+	                 (void**)&wfc->taskBarList);
+#endif
 
 	return TRUE;
 }
@@ -1107,6 +1096,10 @@ static void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 	WINPR_UNUSED(instance);
 	if (!context)
 		return;
+
+#ifdef WITH_PROGRESS_BAR
+	CoUninitialize();
+#endif
 }
 
 static int wfreerdp_client_start(rdpContext* context)
