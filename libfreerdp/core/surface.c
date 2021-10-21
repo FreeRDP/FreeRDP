@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include <freerdp/utils/pcap.h>
 #include <freerdp/log.h>
 
@@ -62,6 +64,13 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 	Stream_Read_UINT16(s, bmp->height);
 	Stream_Read_UINT32(s, bmp->bitmapDataLength);
 
+	if ((bmp->width == 0) || (bmp->height == 0))
+	{
+		WLog_ERR(TAG, "invalid size value width=%" PRIu16 ", height=%" PRIu16, bmp->width,
+		         bmp->height);
+		return FALSE;
+	}
+
 	if ((bmp->bpp < 1) || (bmp->bpp > 32))
 	{
 		WLog_ERR(TAG, "invalid bpp value %" PRIu32 "", bmp->bpp);
@@ -85,6 +94,39 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 	return TRUE;
 }
 
+static BOOL update_recv_surfcmd_is_rect_valid(const rdpContext* context,
+                                              const SURFACE_BITS_COMMAND* cmd)
+{
+	assert(context);
+	assert(context->settings);
+	assert(cmd);
+
+	/* We need a rectangle with left/top being smaller than right/bottom.
+	 * Also do not allow empty rectangles. */
+	if ((cmd->destTop >= cmd->destBottom) || (cmd->destLeft >= cmd->destRight))
+	{
+		WLog_WARN(TAG,
+		          "Empty surface bits command rectangle: %" PRIu16 "x%" PRIu16 "-%" PRIu16
+		          "x%" PRIu16,
+		          cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom);
+		return FALSE;
+	}
+
+	/* The rectangle needs to fit into our session size */
+	if ((cmd->destRight > context->settings->DesktopWidth) ||
+	    (cmd->destBottom > context->settings->DesktopHeight))
+	{
+		WLog_WARN(TAG,
+		          "Invalid surface bits command rectangle: %" PRIu16 "x%" PRIu16 "-%" PRIu16
+		          "x%" PRIu16 " does not fit %" PRIu32 "x%" PRIu32,
+		          cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
+		          context->settings->DesktopWidth, context->settings->DesktopHeight);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT16 cmdType)
 {
 	SURFACE_BITS_COMMAND cmd = { 0 };
@@ -97,6 +139,9 @@ static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT
 	Stream_Read_UINT16(s, cmd.destTop);
 	Stream_Read_UINT16(s, cmd.destRight);
 	Stream_Read_UINT16(s, cmd.destBottom);
+
+	if (!update_recv_surfcmd_is_rect_valid(update->context, &cmd))
+		goto fail;
 
 	if (!update_recv_surfcmd_bitmap_ex(s, &cmd.bmp))
 		goto fail;

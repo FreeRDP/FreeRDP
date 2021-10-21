@@ -1881,6 +1881,13 @@ static BOOL update_read_fast_glyph_order(wStream* s, const ORDER_INFO* orderInfo
 			    !update_read_2byte_unsigned(&sub, &glyph->cy))
 				return FALSE;
 
+			if ((glyph->cx == 0) || (glyph->cy == 0))
+			{
+				WLog_ERR(TAG, "GLYPH_DATA_V2::cx=%" PRIu32 ", GLYPH_DATA_V2::cy=%" PRIu32,
+				         glyph->cx, glyph->cy);
+				return FALSE;
+			}
+
 			glyph->cb = Stream_GetRemainingLength(&sub);
 			if (glyph->cb > 0)
 			{
@@ -2866,6 +2873,13 @@ update_read_create_offscreen_bitmap_order(wStream* s,
 	Stream_Read_UINT16(s, create_offscreen_bitmap->cx); /* cx (2 bytes) */
 	Stream_Read_UINT16(s, create_offscreen_bitmap->cy); /* cy (2 bytes) */
 	deleteList = &(create_offscreen_bitmap->deleteList);
+
+	if ((create_offscreen_bitmap->cx == 0) || (create_offscreen_bitmap->cy == 0))
+	{
+		WLog_ERR(TAG, "Invalid OFFSCREEN_DELETE_LIST: cx=%" PRIu16 ", cy=%" PRIu16,
+		         create_offscreen_bitmap->cx, create_offscreen_bitmap->cy);
+		return FALSE;
+	}
 
 	if (deleteListPresent)
 	{
