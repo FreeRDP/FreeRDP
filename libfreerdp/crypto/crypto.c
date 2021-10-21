@@ -276,7 +276,7 @@ BYTE* crypto_cert_hash(X509* xcert, const char* hash, UINT32* length)
 
 char* crypto_cert_fingerprint_by_hash(X509* xcert, const char* hash)
 {
-	return crypto_cert_fingerprint_by_hash_ex(xcert, hash, 0);
+	return crypto_cert_fingerprint_by_hash_ex(xcert, hash, TRUE);
 }
 
 char* crypto_cert_fingerprint_by_hash_ex(X509* xcert, const char* hash, BOOL separator)

@@ -1519,7 +1519,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 						fp = crypto_cert_fingerprint(cert->px509);
 					}
 					accept_certificate = instance->VerifyChangedCertificateEx(
-					    instance, hostname, port, common_name, subject, issuer, pem, old_subject,
+					    instance, hostname, port, common_name, subject, issuer, fp, old_subject,
 					    old_issuer, old_fp, cflags);
 					if (fpIsAllocated)
 						free(fp);
