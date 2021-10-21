@@ -26,6 +26,10 @@
 
 #include <winpr/collections.h>
 
+#ifdef WITH_PROGRESS_BAR
+#include <shobjidl.h>
+#endif
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
@@ -99,6 +103,7 @@ extern "C"
 
 		HWND hwnd;
 		BOOL is_shown;
+		ITaskbarList3* taskBarList;
 		POINT diff;
 
 		wfBitmap* primary;
