@@ -581,7 +581,7 @@ fail:
 /* https://stackoverflow.com/questions/7340504/whats-the-correct-way-to-verify-an-ssl-certificate-in-win32
  */
 
-void wf_report_error(char* wszMessage, DWORD dwErrCode)
+static void wf_report_error(char* wszMessage, DWORD dwErrCode)
 {
 	LPSTR pwszMsgBuf = NULL;
 
@@ -619,10 +619,10 @@ void wf_report_error(char* wszMessage, DWORD dwErrCode)
 static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char* subject,
                                             const char* issuer, const char* fingerprint)
 {
-	char derPubKey[2048];
-	size_t derPubKeyLen = 2048;
+	size_t derPubKeyLen;
+	char* derPubKey;
 
-	HRESULT hr = S_OK;
+	HRESULT hr = CRYPT_E_NOT_FOUND;
 
 	DWORD dwChainFlags = CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
 	PCCERT_CONTEXT pCert = NULL;
@@ -636,6 +636,14 @@ static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char*
 	CERT_CHAIN_POLICY_PARA ChainPolicy = { 0 };
 	CERT_CHAIN_POLICY_STATUS PolicyStatus = { 0 };
 	CERT_CHAIN_ENGINE_CONFIG EngineConfig = { 0 };
+
+	derPubKeyLen = strlen(fingerprint);
+	derPubKey = calloc(derPubKeyLen, sizeof(char));
+	if (NULL == derPubKey)
+	{
+		WLog_ERR(TAG, "Could not allocate derPubKey");
+		goto CleanUp;
+	}
 
 	/*
 	 * Convert from PEM format to DER format - removes header and footer and decodes from base64
@@ -670,7 +678,6 @@ static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char*
 	if (NULL == pCert)
 	{
 		WLog_ERR(TAG, "FAILED: Certificate could not be parsed.");
-		hr = CRYPT_E_NOT_FOUND;
 		goto CleanUp;
 	}
 
@@ -723,11 +730,16 @@ static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char*
 	{
 		wf_report_error("CertVerifyCertificateChainPolicy: Chain Status", PolicyStatus.dwError);
 		hr = PolicyStatus.dwError;
-
 		// Instruction: If the PolicyStatus.dwError is CRYPT_E_NO_REVOCATION_CHECK or
 		// CRYPT_E_REVOCATION_OFFLINE, it indicates errors in obtaining
 		//				revocation information. These can be ignored since the retrieval of
 		// revocation information depends on network availability
+
+		if (PolicyStatus.dwError == CRYPT_E_NO_REVOCATION_CHECK ||
+		    PolicyStatus.dwError == CRYPT_E_REVOCATION_OFFLINE)
+		{
+			hr = S_OK;
+		}
 
 		goto CleanUp;
 	}
@@ -742,6 +754,11 @@ CleanUp:
 		WLog_INFO(TAG, "CertVerifyCertificateChainPolicy failed for %s (%s) issued by %s",
 		          common_name, subject, issuer);
 		wf_report_error(NULL, hr);
+	}
+
+	if (NULL != derPubKey)
+	{
+		free(derPubKey);
 	}
 
 	if (NULL != pChainContext)
@@ -785,6 +802,10 @@ static DWORD wf_verify_certificate_ex(freerdp* instance, const char* host, UINT1
                                       const char* common_name, const char* subject,
                                       const char* issuer, const char* fingerprint, DWORD flags)
 {
+	WCHAR* buffer;
+	WCHAR* caption;
+	int what = IDCANCEL;
+
 #ifdef WITH_WINDOWS_CERT_STORE
 	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM && !(flags & VERIFY_CERT_FLAG_MISMATCH))
 	{
@@ -794,10 +815,6 @@ static DWORD wf_verify_certificate_ex(freerdp* instance, const char* host, UINT1
 		}
 	}
 #endif
-
-	WCHAR* buffer;
-	WCHAR* caption;
-	int what = IDCANCEL;
 
 	buffer = wf_format_text(
 	    L"Certificate details:\n"
