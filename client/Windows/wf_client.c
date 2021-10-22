@@ -41,6 +41,10 @@
 #include <shobjidl.h>
 #endif
 
+#ifdef WITH_WINDOWS_CERT_STORE
+#include <wincrypt.h>
+#endif
+
 #include <freerdp/log.h>
 #include <freerdp/event.h>
 #include <freerdp/freerdp.h>
@@ -569,10 +573,228 @@ fail:
 	return NULL;
 }
 
+#ifdef WITH_WINDOWS_CERT_STORE
+/* https://stackoverflow.com/questions/1231178/load-an-pem-encoded-x-509-certificate-into-windows-cryptoapi/3803333#3803333
+ */
+/* https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/security/cryptoapi/peertrust/cpp/peertrust.cpp
+ */
+/* https://stackoverflow.com/questions/7340504/whats-the-correct-way-to-verify-an-ssl-certificate-in-win32
+ */
+
+void wf_report_error(char* wszMessage, DWORD dwErrCode)
+{
+	LPSTR pwszMsgBuf = NULL;
+
+	if (NULL != wszMessage && 0 != *wszMessage)
+	{
+		WLog_ERR(TAG, "%s", wszMessage);
+	}
+
+	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+	               NULL,                                      // Location of message
+	                                                          //  definition ignored
+	               dwErrCode,                                 // Message identifier for
+	                                                          //  the requested message
+	               MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Language identifier for
+	                                                          //  the requested message
+	               (LPSTR)&pwszMsgBuf,                        // Buffer that receives
+	                                                          //  the formatted message
+	               0,                                         // Size of output buffer
+	                                                          //  not needed as allocate
+	                                                          //  buffer flag is set
+	               NULL                                       // Array of insert values
+	);
+
+	if (NULL != pwszMsgBuf)
+	{
+		WLog_ERR(TAG, "Error: 0x%08x (%d) %s", dwErrCode, dwErrCode, pwszMsgBuf);
+		LocalFree(pwszMsgBuf);
+	}
+	else
+	{
+		WLog_ERR(TAG, "Error: 0x%08x (%d)", dwErrCode, dwErrCode);
+	}
+}
+
+static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char* subject,
+                                            const char* issuer, const char* fingerprint)
+{
+	char derPubKey[2048];
+	size_t derPubKeyLen = 2048;
+
+	HRESULT hr = S_OK;
+
+	DWORD dwChainFlags = CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
+	PCCERT_CONTEXT pCert = NULL;
+	HCERTSTORE hStore = NULL;
+	HCERTCHAINENGINE hChainEngine = NULL;
+	PCCERT_CHAIN_CONTEXT pChainContext = NULL;
+
+	CERT_ENHKEY_USAGE EnhkeyUsage = { 0 };
+	CERT_USAGE_MATCH CertUsage = { 0 };
+	CERT_CHAIN_PARA ChainPara = { 0 };
+	CERT_CHAIN_POLICY_PARA ChainPolicy = { 0 };
+	CERT_CHAIN_POLICY_STATUS PolicyStatus = { 0 };
+	CERT_CHAIN_ENGINE_CONFIG EngineConfig = { 0 };
+
+	/*
+	 * Convert from PEM format to DER format - removes header and footer and decodes from base64
+	 */
+	if (!CryptStringToBinaryA(fingerprint, 0, CRYPT_STRING_BASE64HEADER, derPubKey, &derPubKeyLen,
+	                          NULL, NULL))
+	{
+		WLog_ERR(TAG, "CryptStringToBinary failed. Err: %d", GetLastError());
+		goto CleanUp;
+	}
+
+	//---------------------------------------------------------
+	// Initialize data structures for chain building.
+
+	EnhkeyUsage.cUsageIdentifier = 0;
+	EnhkeyUsage.rgpszUsageIdentifier = NULL;
+
+	CertUsage.dwType = USAGE_MATCH_TYPE_AND;
+	CertUsage.Usage = EnhkeyUsage;
+
+	ChainPara.cbSize = sizeof(ChainPara);
+	ChainPara.RequestedUsage = CertUsage;
+
+	ChainPolicy.cbSize = sizeof(ChainPolicy);
+
+	PolicyStatus.cbSize = sizeof(PolicyStatus);
+
+	EngineConfig.cbSize = sizeof(EngineConfig);
+	EngineConfig.dwUrlRetrievalTimeout = 0;
+
+	pCert = CertCreateCertificateContext(X509_ASN_ENCODING, derPubKey, derPubKeyLen);
+	if (NULL == pCert)
+	{
+		WLog_ERR(TAG, "FAILED: Certificate could not be parsed.");
+		hr = CRYPT_E_NOT_FOUND;
+		goto CleanUp;
+	}
+
+	dwChainFlags |= CERT_CHAIN_ENABLE_PEER_TRUST;
+
+	// When this flag is set, end entity certificates in the
+	// Trusted People store are trusted without doing any chain building
+	// This optimizes the chain building process.
+
+	//---------------------------------------------------------
+	// Create chain engine.
+
+	if (!CertCreateCertificateChainEngine(&EngineConfig, &hChainEngine))
+	{
+		hr = HRESULT_FROM_WIN32(GetLastError());
+		goto CleanUp;
+	}
+
+	//-------------------------------------------------------------------
+	// Build a chain using CertGetCertificateChain
+
+	if (!CertGetCertificateChain(hChainEngine, // use the default chain engine
+	                             pCert,        // pointer to the end certificate
+	                             NULL,         // use the default time
+	                             NULL,         // search no additional stores
+	                             &ChainPara,   // use AND logic and enhanced key usage
+	                                           //  as indicated in the ChainPara
+	                                           //  data structure
+	                             dwChainFlags,
+	                             NULL,            // currently reserved
+	                             &pChainContext)) // return a pointer to the chain created
+	{
+		hr = HRESULT_FROM_WIN32(GetLastError());
+		goto CleanUp;
+	}
+
+	//---------------------------------------------------------------
+	// Verify that the chain complies with policy
+
+	if (!CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, // use the base policy
+	                                      pChainContext,          // pointer to the chain
+	                                      &ChainPolicy,
+	                                      &PolicyStatus)) // return a pointer to the policy status
+	{
+		hr = HRESULT_FROM_WIN32(GetLastError());
+		goto CleanUp;
+	}
+
+	if (PolicyStatus.dwError != S_OK)
+	{
+		wf_report_error("CertVerifyCertificateChainPolicy: Chain Status", PolicyStatus.dwError);
+		hr = PolicyStatus.dwError;
+
+		// Instruction: If the PolicyStatus.dwError is CRYPT_E_NO_REVOCATION_CHECK or
+		// CRYPT_E_REVOCATION_OFFLINE, it indicates errors in obtaining
+		//				revocation information. These can be ignored since the retrieval of
+		// revocation information depends on network availability
+
+		goto CleanUp;
+	}
+
+	WLog_INFO(TAG, "CertVerifyCertificateChainPolicy succeeded for %s (%s) issued by %s", common_name, subject, issuer);
+
+	hr = S_OK;
+CleanUp:
+
+	if (FAILED(hr))
+	{
+		WLog_INFO(TAG, "CertVerifyCertificateChainPolicy failed for %s (%s) issued by %s",
+		          common_name, subject, issuer);
+		wf_report_error(NULL, hr);
+	}
+
+	if (NULL != pChainContext)
+	{
+		CertFreeCertificateChain(pChainContext);
+	}
+
+	if (NULL != hChainEngine)
+	{
+		CertFreeCertificateChainEngine(hChainEngine);
+	}
+
+	if (NULL != pCert)
+	{
+		CertFreeCertificateContext(pCert);
+	}
+
+	return (DWORD)hr;
+}
+#endif
+
+static DWORD wf_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
+                                          const char* common_name, const char* subject,
+                                          const char* issuer, const char* fingerprint, DWORD flags)
+{
+#ifdef WITH_WINDOWS_CERT_STORE
+	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM && !(flags & VERIFY_CERT_FLAG_MISMATCH))
+	{
+		if (wf_is_x509_certificate_trusted(common_name, subject, issuer, fingerprint) == S_OK)
+		{
+			return 1;
+		}
+	}
+#endif
+
+	return client_cli_verify_certificate_ex(instance, host, port, common_name, subject, issuer,
+	                                        fingerprint, flags);
+}
+
 static DWORD wf_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
                                       const char* common_name, const char* subject,
                                       const char* issuer, const char* fingerprint, DWORD flags)
 {
+#ifdef WITH_WINDOWS_CERT_STORE
+	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM && !(flags & VERIFY_CERT_FLAG_MISMATCH))
+	{
+		if (wf_is_x509_certificate_trusted(common_name, subject, issuer, fingerprint) == S_OK)
+		{
+			return 1;
+		}
+	}
+#endif
+
 	WCHAR* buffer;
 	WCHAR* caption;
 	int what = IDCANCEL;
@@ -1069,9 +1291,14 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PostDisconnect = wf_post_disconnect;
 	instance->Authenticate = wf_authenticate;
 	instance->GatewayAuthenticate = wf_gw_authenticate;
+
+#ifdef WITH_WINDOWS_CERT_STORE
+	freerdp_settings_set_bool(instance->settings, FreeRDP_CertificateCallbackPreferPEM, TRUE);
+#endif
+
 	if (wfc->isConsole)
 	{
-		instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
+		instance->VerifyCertificateEx = wf_cli_verify_certificate_ex;
 		instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 		instance->PresentGatewayMessage = client_cli_present_gateway_message;
 	}

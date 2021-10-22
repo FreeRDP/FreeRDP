@@ -58,6 +58,11 @@ if (WIN32 AND BUILD_SHARED_LIBS)
   set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
+option(WITH_WINDOWS_CERT_STORE "Build ${MODULE_NAME} with additional certificate validation against windows certificate store" ON)
+if(WITH_WINDOWS_CERT_STORE)
+  add_definitions("-DWITH_WINDOWS_CERT_STORE")
+endif()
+
 option(WITH_WIN_CONSOLE "Build ${MODULE_NAME} with console support" OFF)
 if(WITH_WIN_CONSOLE)
   add_definitions("-DWITH_WIN_CONSOLE")
