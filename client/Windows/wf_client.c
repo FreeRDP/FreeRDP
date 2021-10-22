@@ -756,10 +756,7 @@ CleanUp:
 		wf_report_error(NULL, hr);
 	}
 
-	if (NULL != derPubKey)
-	{
-		free(derPubKey);
-	}
+  free(derPubKey);
 
 	if (NULL != pChainContext)
 	{
