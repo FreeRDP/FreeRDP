@@ -1386,7 +1386,6 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	return CHANNEL_RC_OK;
 error_out:
 	free(context);
-	free(rdpei->contactPoints);
 	free(rdpei);
 	return error;
 }
