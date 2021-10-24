@@ -75,7 +75,7 @@ ASN1error_e ASN1_CreateEncoder(ASN1module_t pModule, ASN1encoding_t* ppEncoderIn
 	if (pModule && ppEncoderInfo)
 	{
 		*ppEncoderInfo = 0;
-		encoder = (ASN1encoding_t)calloc(1, sizeof(struct ASN1encoding_s));
+		encoder = (ASN1encoding_t)calloc(2, sizeof(struct ASN1encoding_s));
 
 		if (encoder)
 		{
