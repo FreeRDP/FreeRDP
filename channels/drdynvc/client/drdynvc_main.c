@@ -1520,7 +1520,9 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 		error = dvcman_load_addin(drdynvc, drdynvc->channel_mgr, args, settings);
 
 		if (CHANNEL_RC_OK != error)
-			goto error;
+		{
+			WLog_ERR(TAG, "Failed to load channel %s", args->argv[0]);
+		}
 	}
 
 	if ((error = dvcman_init(drdynvc, drdynvc->channel_mgr)))
