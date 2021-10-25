@@ -85,7 +85,7 @@ static WCHAR* printer_win_get_printjob_name(size_t id)
 	int rc;
 
 	tt = time(NULL);
-	t = localtime_s(&tt, &tres);
+	t = localtime_s(&tres, &tt);
 
 	str = calloc(len, sizeof(WCHAR));
 	if (!str)
