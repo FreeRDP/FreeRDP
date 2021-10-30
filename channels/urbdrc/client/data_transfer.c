@@ -1795,8 +1795,10 @@ UINT urbdrc_process_udev_data_transfer(URBDRC_CHANNEL_CALLBACK* callback, URBDRC
 		goto fail;
 	}
 
+#ifndef _WIN32
 	/* USB kernel driver detach!! */
 	pdev->detach_kernel_driver(pdev);
+#endif
 
 	switch (FunctionId)
 	{

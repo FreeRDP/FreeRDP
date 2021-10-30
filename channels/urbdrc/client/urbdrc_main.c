@@ -256,8 +256,10 @@ static UINT urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVI
 	size_t cchCompatIds;
 	UINT32 bcdUSB;
 	InterfaceId = ((STREAM_ID_PROXY << 30) | CLIENT_DEVICE_SINK);
+#ifndef _WIN32
 	/* USB kernel driver detach!! */
 	pdev->detach_kernel_driver(pdev);
+#endif
 	{
 		const UINT16 idVendor = (UINT16)pdev->query_device_descriptor(pdev, ID_VENDOR);
 		const UINT16 idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
