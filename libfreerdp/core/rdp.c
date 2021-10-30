@@ -737,7 +737,6 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	WLog_DBG(TAG, "%s: sending data (type=0x%x size=%" PRIuz " channelId=%" PRIu16 ")",
 	         __FUNCTION__, type, Stream_Length(s), channel_id);
 
-	rdp->outPackets++;
 	if (transport_write(rdp->transport, s) < 0)
 		goto fail;
 

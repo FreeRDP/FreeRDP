@@ -899,6 +899,7 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 	if (length > 0)
 	{
 		rdp->outBytes += length;
+		rdp->outPackets++;
 		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length, WLOG_PACKET_OUTBOUND);
 	}
 
