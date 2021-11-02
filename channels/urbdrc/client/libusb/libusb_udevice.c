@@ -1482,8 +1482,8 @@ static void udev_free(IUDEVICE* idev)
 		log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_reset_device", rc);
 	}
 
-	/* release all interface and  attach kernel driver */
 #ifndef _WIN32
+	/* release all interface and  attach kernel driver */
 	udev->iface.attach_kernel_driver(idev);
 #endif
 	ArrayList_Free(udev->request_queue);
