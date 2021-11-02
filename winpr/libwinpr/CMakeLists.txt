@@ -104,7 +104,7 @@ foreach(DIR ${WINPR_CORE})
 	source_group("${DIR}" REGULAR_EXPRESSION "${DIR}/.*\\.[ch]")
 endforeach()
 
-set(WINPR_LEVEL2 winsock sspi winhttp asn1 sspicli crt bcrypt rpc credui
+set(WINPR_LEVEL2 winsock sspi winhttp sspicli crt bcrypt rpc credui
 	wtsapi dsparse wnd smartcard nt clipboard)
 
 foreach(DIR ${WINPR_LEVEL2})
