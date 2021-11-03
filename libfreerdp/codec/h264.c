@@ -667,7 +667,8 @@ void h264_context_free(H264_CONTEXT* h264)
 	if (h264)
 	{
 		size_t x;
-		h264->subsystem->Uninit(h264);
+		if (h264->subsystem)
+			h264->subsystem->Uninit(h264);
 
 		for (x = 0; x < 3; x++)
 		{

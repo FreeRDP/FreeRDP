@@ -786,7 +786,7 @@ static DWORD wf_cli_verify_certificate_ex(freerdp* instance, const char* host, U
 	{
 		if (wf_is_x509_certificate_trusted(common_name, subject, issuer, fingerprint) == S_OK)
 		{
-			return 1;
+			return 2;
 		}
 	}
 #endif
@@ -808,7 +808,7 @@ static DWORD wf_verify_certificate_ex(freerdp* instance, const char* host, UINT1
 	{
 		if (wf_is_x509_certificate_trusted(common_name, subject, issuer, fingerprint) == S_OK)
 		{
-			return 1;
+			return 2;
 		}
 	}
 #endif
