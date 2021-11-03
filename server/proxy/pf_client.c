@@ -695,12 +695,12 @@ static BOOL pf_client_connect(freerdp* instance)
 
 	if (!freerdp_connect(instance))
 	{
+		pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_LOGIN_FAILURE, pc->pdata, pc);
+
 		if (!retry)
 			goto out;
 
 		PROXY_LOG_ERR(TAG, pc, "failed to connect with NLA. retrying to connect without NLA");
-		pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_LOGIN_FAILURE, pc->pdata, pc);
-
 		if (!pf_client_connect_without_nla(pc))
 		{
 			PROXY_LOG_ERR(TAG, pc, "pf_client_connect_without_nla failed!");
