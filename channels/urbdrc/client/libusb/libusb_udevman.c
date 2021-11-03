@@ -195,6 +195,12 @@ static size_t udevman_register_udevice(IUDEVMAN* idevman, BYTE bus_number, BYTE 
 		/* register all device that match pid vid */
 		num = udev_new_by_id(urbdrc, udevman->context, idVendor, idProduct, &devArray);
 
+		if (num == 0)
+		{
+			WLog_Print(urbdrc->log, WLOG_WARN,
+			           "Could not find or redirect any usb devices by id %04x:%04x", idVendor, idProduct);
+		}
+
 		for (i = 0; i < num; i++)
 		{
 			UINT32 id;
@@ -835,7 +841,7 @@ static BOOL poll_libusb_events(UDEVMAN* udevman)
 {
 	int rc = LIBUSB_SUCCESS;
 	struct timeval tv = { 0, 500 };
-	if (libusb_try_lock_events(udevman->context))
+	if (libusb_try_lock_events(udevman->context) == 0)
 	{
 		if (libusb_event_handling_ok(udevman->context))
 		{
@@ -924,7 +930,7 @@ UINT freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS 
 	udevman->next_device_id = BASE_USBDEVICE_NUM;
 	udevman->iface.plugin = pEntryPoints->plugin;
 	rc = libusb_init(&udevman->context);
-
+	
 	if (rc != LIBUSB_SUCCESS)
 		goto fail;
 
