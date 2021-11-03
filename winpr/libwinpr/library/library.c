@@ -129,7 +129,8 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 
 	if (!library)
 	{
-		WLog_ERR(TAG, "%s failed with %s", __FUNCTION__, dlerror());
+		const char* err = dlerror();
+		WLog_ERR(TAG, "%s failed with %s", __FUNCTION__, err);
 		return NULL;
 	}
 

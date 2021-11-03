@@ -992,7 +992,7 @@ static int test_MppcCompressBufferRdp5(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	BYTE* pDstData;
@@ -1042,7 +1042,7 @@ static int test_MppcDecompressBufferRdp5(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	MPPC_CONTEXT* mppc;
