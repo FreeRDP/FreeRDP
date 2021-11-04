@@ -453,7 +453,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
 	{
-		int i;
+		size_t i;
 		UINT32 count;
 		UINT32 targetNetAddressesLength;
 
@@ -470,7 +470,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 		WLog_DBG(TAG, "TargetNetAddressesCount: %" PRIu32 "", redirection->TargetNetAddressesCount);
 
-		for (i = 0; i < (int)count; i++)
+		for (i = 0; i < count; i++)
 		{
 			if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddresses[i]), 80))
 				return FALSE;
