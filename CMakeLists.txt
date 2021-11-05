@@ -109,6 +109,12 @@ message("FREERDP_VERSION=${FREERDP_VERSION_FULL}")
 
 set(FREERDP_INCLUDE_DIR "include/freerdp${FREERDP_VERSION_MAJOR}/")
 
+option(WITH_SMARTCARD_EMULATE "Emulate smartcards instead of redirecting readers" OFF)
+if (WITH_SMARTCARD_EMULATE)
+    add_definitions(-DWITH_SMARTCARD_EMULATE)
+    find_package(ZLIB REQUIRED)
+endif()
+
 option(WITH_FREERDP_DEPRECATED "Build FreeRDP deprecated symbols" OFF)
 if (WITH_FREERDP_DEPRECATED)
 	add_definitions(-DWITH_FREERDP_DEPRECATED)

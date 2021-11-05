@@ -34,6 +34,10 @@
 
 #include "smartcard_operations.h"
 
+#if defined(WITH_SMARTCARD_EMULATE)
+#include <freerdp/emulate/scard/smartcard_emulate.h>
+#endif
+
 #define TAG CHANNELS_TAG("smartcard.client")
 
 typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
@@ -59,6 +63,9 @@ struct _SMARTCARD_DEVICE
 	wListDictionary* rgOutstandingMessages;
 	rdpContext* rdpcontext;
 	wLinkedList* names;
+#if defined(WITH_SMARTCARD_EMULATE)
+	SmartcardEmulationContext* emulation;
+#endif
 };
 
 SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTEXT hContext);

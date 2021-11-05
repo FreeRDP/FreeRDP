@@ -103,6 +103,7 @@ else()
 endif()
 
 set(${MODULE_PREFIX}_SUBMODULES
+    emu
     utils
     common
     gdi

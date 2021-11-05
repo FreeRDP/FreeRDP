@@ -2500,6 +2500,12 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_ShellWorkingDirectory:
 			return settings->ShellWorkingDirectory;
 
+		case FreeRDP_SmartcardCertificate:
+			return settings->SmartcardCertificate;
+
+		case FreeRDP_SmartcardPrivateKey:
+			return settings->SmartcardPrivateKey;
+
 		case FreeRDP_TargetNetAddress:
 			return settings->TargetNetAddress;
 
@@ -2728,6 +2734,12 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_ShellWorkingDirectory:
 			return update_string(&settings->ShellWorkingDirectory, cnv.cc, len, cleanup);
+
+		case FreeRDP_SmartcardCertificate:
+			return update_string(&settings->SmartcardCertificate, cnv.cc, len, cleanup);
+
+		case FreeRDP_SmartcardPrivateKey:
+			return update_string(&settings->SmartcardPrivateKey, cnv.cc, len, cleanup);
 
 		case FreeRDP_TargetNetAddress:
 			return update_string(&settings->TargetNetAddress, cnv.cc, len, cleanup);
