@@ -711,7 +711,9 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (!settings->RemoteAssistanceMode)
 	{
-		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
+		/* Ignore redirection password if we´re using smartcard and have the pin as password */
+		if (((flags & INFO_PASSWORD_IS_SC_PIN) == 0) && settings->RedirectionPassword &&
+		    (settings->RedirectionPasswordLength > 0))
 		{
 			union {
 				BYTE* bp;
