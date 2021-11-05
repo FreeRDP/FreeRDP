@@ -29,7 +29,7 @@ def getVersionName = { ->
 
 ext {
     versionName = properties.get('VERSION_NAME', getVersionName())
-    versionCode = properties.get('VERSION_CODE', 22)
+    versionCode = properties.get('VERSION_CODE', 25)
     compileApi = properties.get('COMPILE_API', 30)
     targetApi = properties.get('TARGET_API', 30)
     minApi = properties.get('MIN_API', 21)
