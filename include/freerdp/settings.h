@@ -674,6 +674,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_Password51Length (1281)
 #define FreeRDP_SmartcardLogon (1282)
 #define FreeRDP_PromptForCredentials (1283)
+#define FreeRDP_SmartcardCertificate (1285)
+#define FreeRDP_SmartcardPrivateKey (1286)
 #define FreeRDP_KerberosKdc (1344)
 #define FreeRDP_KerberosRealm (1345)
 #define FreeRDP_IgnoreCertificate (1408)
@@ -1153,7 +1155,12 @@ struct rdp_settings
 	ALIGN64 UINT32 Password51Length;   /* 1281 */
 	ALIGN64 BOOL SmartcardLogon;       /* 1282 */
 	ALIGN64 BOOL PromptForCredentials; /* 1283 */
-	UINT64 padding1344[1344 - 1284];   /* 1284 */
+
+	/* Settings used for smartcard emulation */
+	UINT64 padding1284[1285 - 1284];     /* 1284 */
+	ALIGN64 char* SmartcardCertificate;  /* 1285 */
+	ALIGN64 char* SmartcardPrivateKey;   /* 1286 */
+	UINT64 padding1344[1344 - 1287];     /* 1287 */
 
 	/* Kerberos Authentication */
 	ALIGN64 char* KerberosKdc;       /* 1344 */

@@ -378,6 +378,8 @@ static const size_t string_list_indices[] = {
 	FreeRDP_RemoteAssistanceSessionId,
 	FreeRDP_ServerHostname,
 	FreeRDP_ShellWorkingDirectory,
+	FreeRDP_SmartcardCertificate,
+	FreeRDP_SmartcardPrivateKey,
 	FreeRDP_TargetNetAddress,
 	FreeRDP_TransportDumpFile,
 	FreeRDP_Username,

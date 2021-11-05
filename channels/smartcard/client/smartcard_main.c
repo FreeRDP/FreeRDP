@@ -36,6 +36,14 @@
 
 #define CAST_FROM_DEVICE(device) cast_device_from(device, __FUNCTION__, __FILE__, __LINE__)
 
+#if defined(WITH_SMARTCARD_EMULATE)
+#include <freerdp/emulate/scard/smartcard_emulate.h>
+#define str(x) #x
+#define wrap(smartcard, fkt, ...) Emulate_##fkt(smartcard->emulation, ##__VA_ARGS__)
+#else
+#define wrap(smartcard, fkt, ...) fkt(__VA_ARGS__)
+#endif
+
 static SMARTCARD_DEVICE* sSmartcard = NULL;
 
 static SMARTCARD_DEVICE* cast_device_from(DEVICE* device, const char* fkt, const char* file,
@@ -152,7 +160,7 @@ SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTE
 	if (!pContext->IrpQueue)
 	{
 		WLog_ERR(TAG, "MessageQueue_New failed!");
-		goto error_irpqueue;
+		goto fail;
 	}
 
 	pContext->thread = CreateThread(NULL, 0, smartcard_context_thread, pContext, 0, NULL);
@@ -160,14 +168,12 @@ SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTE
 	if (!pContext->thread)
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
-		goto error_thread;
+		goto fail;
 	}
 
 	return pContext;
-error_thread:
-	MessageQueue_Free(pContext->IrpQueue);
-error_irpqueue:
-	free(pContext);
+fail:
+	smartcard_context_free(pContext);
 	return NULL;
 }
 
@@ -179,15 +185,20 @@ void smartcard_context_free(void* pCtx)
 		return;
 
 	/* cancel blocking calls like SCardGetStatusChange */
-	SCardCancel(pContext->hContext);
-	SCardReleaseContext(pContext->hContext);
+	wrap(pContext->smartcard, SCardCancel, pContext->hContext);
 
-	if (MessageQueue_PostQuit(pContext->IrpQueue, 0) &&
-	    (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED))
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", GetLastError());
+	if (pContext->IrpQueue)
+	{
+		if (MessageQueue_PostQuit(pContext->IrpQueue, 0))
+		{
+			if (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED)
+				WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", GetLastError());
 
-	CloseHandle(pContext->thread);
-	MessageQueue_Free(pContext->IrpQueue);
+			CloseHandle(pContext->thread);
+		}
+		MessageQueue_Free(pContext->IrpQueue);
+	}
+	wrap(pContext->smartcard, SCardReleaseContext, pContext->hContext);
 	free(pContext);
 }
 
@@ -226,9 +237,9 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 
 			hContext = pContext->hContext;
 
-			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
+			if (wrap(smartcard, SCardIsValidContext, hContext) == SCARD_S_SUCCESS)
 			{
-				SCardCancel(hContext);
+				wrap(smartcard, SCardCancel, hContext);
 			}
 		}
 
@@ -278,8 +289,11 @@ static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 	Queue_Free(smartcard->CompletedIrpQueue);
 
 	if (smartcard->StartedEvent)
-		SCardReleaseStartedEvent();
+		wrap(smartcard, SCardReleaseStartedEvent);
 
+#if defined(WITH_SMARTCARD_EMULATE)
+	Emulate_Free(smartcard->emulation);
+#endif
 	free(smartcard);
 	return CHANNEL_RC_OK;
 }
@@ -290,7 +304,6 @@ static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
  */
 static UINT smartcard_free(DEVICE* device)
 {
-	UINT error;
 	SMARTCARD_DEVICE* smartcard = CAST_FROM_DEVICE(device);
 
 	if (!smartcard)
@@ -309,7 +322,7 @@ static UINT smartcard_free(DEVICE* device)
 		if (MessageQueue_PostQuit(smartcard->IrpQueue, 0) &&
 		    (WaitForSingleObject(smartcard->thread, INFINITE) == WAIT_FAILED))
 		{
-			error = GetLastError();
+			DWORD error = GetLastError();
 			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", error);
 			return error;
 		}
@@ -780,6 +793,11 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			goto fail;
 		}
 
+#if defined(WITH_SMARTCARD_EMULATE)
+		smartcard->emulation = Emulate_New(smartcard->rdpcontext->settings);
+		if (!smartcard->emulation)
+			goto fail;
+#endif
 		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, &smartcard->device)))
 		{
 			WLog_ERR(TAG, "RegisterDevice failed!");

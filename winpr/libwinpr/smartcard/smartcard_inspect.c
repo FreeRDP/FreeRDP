@@ -32,6 +32,41 @@
 
 #include "smartcard_inspect.h"
 
+#include "../log.h"
+#define TAG WINPR_TAG("smartcard.inspect")
+
+#define xstr(s) str(s)
+#define str(s) #s
+
+#define SCARDAPI_STUB_CALL_LONG(status, _name, ...)                                      \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                          \
+	{                                                                                    \
+		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p", \
+		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : NULL);                \
+		status = SCARD_E_NO_SERVICE;                                                     \
+	}                                                                                    \
+	else                                                                                 \
+		status = g_SCardApi->pfn##_name(__VA_ARGS__)
+
+#define SCARDAPI_STUB_CALL_HANDLE(status, _name, ...)                                    \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                          \
+	{                                                                                    \
+		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p", \
+		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : NULL);                \
+		status = NULL;                                                                   \
+	}                                                                                    \
+	else                                                                                 \
+		status = g_SCardApi->pfn##_name(__VA_ARGS__)
+
+#define SCARDAPI_STUB_CALL_VOID(_name, ...)                                              \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                          \
+	{                                                                                    \
+		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p", \
+		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : NULL);                \
+	}                                                                                    \
+	else                                                                                 \
+		g_SCardApi->pfn##_name(__VA_ARGS__)
+
 static const DWORD g_LogLevel = WLOG_DEBUG;
 static wLog* g_Log = NULL;
 
@@ -49,7 +84,8 @@ static LONG WINAPI Inspect_SCardEstablishContext(DWORD dwScope, LPCVOID pvReserv
 	WLog_Print(g_Log, g_LogLevel, "SCardEstablishContext { dwScope: %s (0x%08" PRIX32 ")",
 	           SCardGetScopeString(dwScope), dwScope);
 
-	status = g_SCardApi->pfnSCardEstablishContext(dwScope, pvReserved1, pvReserved2, phContext);
+	SCARDAPI_STUB_CALL_LONG(status, SCardEstablishContext, dwScope, pvReserved1, pvReserved2,
+	                        phContext);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardEstablishContext } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -63,7 +99,7 @@ static LONG WINAPI Inspect_SCardReleaseContext(SCARDCONTEXT hContext)
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReleaseContext { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardReleaseContext(hContext);
+	SCARDAPI_STUB_CALL_LONG(status, SCardReleaseContext, hContext);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReleaseContext } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -77,7 +113,7 @@ static LONG WINAPI Inspect_SCardIsValidContext(SCARDCONTEXT hContext)
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIsValidContext { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardIsValidContext(hContext);
+	SCARDAPI_STUB_CALL_LONG(status, SCardIsValidContext, hContext);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIsValidContext } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -92,7 +128,7 @@ static LONG WINAPI Inspect_SCardListReaderGroupsA(SCARDCONTEXT hContext, LPSTR m
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListReaderGroupsA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardListReaderGroupsA(hContext, mszGroups, pcchGroups);
+	SCARDAPI_STUB_CALL_LONG(status, SCardListReaderGroupsA, hContext, mszGroups, pcchGroups);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListReaderGroupsA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -107,7 +143,7 @@ static LONG WINAPI Inspect_SCardListReaderGroupsW(SCARDCONTEXT hContext, LPWSTR 
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListReaderGroupsW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardListReaderGroupsW(hContext, mszGroups, pcchGroups);
+	SCARDAPI_STUB_CALL_LONG(status, SCardListReaderGroupsW, hContext, mszGroups, pcchGroups);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListReaderGroupsW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -122,7 +158,8 @@ static LONG WINAPI Inspect_SCardListReadersA(SCARDCONTEXT hContext, LPCSTR mszGr
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardListReadersA(hContext, mszGroups, mszReaders, pcchReaders);
+	SCARDAPI_STUB_CALL_LONG(status, SCardListReadersA, hContext, mszGroups, mszReaders,
+	                        pcchReaders);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -136,7 +173,8 @@ static LONG WINAPI Inspect_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszG
 	LONG status;
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardListReadersW(hContext, mszGroups, mszReaders, pcchReaders);
+	SCARDAPI_STUB_CALL_LONG(status, SCardListReadersW, hContext, mszGroups, mszReaders,
+	                        pcchReaders);
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
 
@@ -151,8 +189,8 @@ static LONG WINAPI Inspect_SCardListCardsA(SCARDCONTEXT hContext, LPCBYTE pbAtr,
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListCardsA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardListCardsA(hContext, pbAtr, rgquidInterfaces, cguidInterfaceCount,
-	                                        mszCards, pcchCards);
+	SCARDAPI_STUB_CALL_LONG(status, SCardListCardsA, hContext, pbAtr, rgquidInterfaces,
+	                        cguidInterfaceCount, mszCards, pcchCards);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListCardsA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -168,8 +206,8 @@ static LONG WINAPI Inspect_SCardListCardsW(SCARDCONTEXT hContext, LPCBYTE pbAtr,
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListCardsW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardListCardsW(hContext, pbAtr, rgquidInterfaces, cguidInterfaceCount,
-	                                        mszCards, pcchCards);
+	SCARDAPI_STUB_CALL_LONG(status, SCardListCardsW, hContext, pbAtr, rgquidInterfaces,
+	                        cguidInterfaceCount, mszCards, pcchCards);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListCardsW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -184,8 +222,8 @@ static LONG WINAPI Inspect_SCardListInterfacesA(SCARDCONTEXT hContext, LPCSTR sz
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListInterfacesA { hContext: %p", (void*)hContext);
 
-	status =
-	    g_SCardApi->pfnSCardListInterfacesA(hContext, szCard, pguidInterfaces, pcguidInterfaces);
+	SCARDAPI_STUB_CALL_LONG(status, SCardListInterfacesA, hContext, szCard, pguidInterfaces,
+	                        pcguidInterfaces);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListInterfacesA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -200,8 +238,8 @@ static LONG WINAPI Inspect_SCardListInterfacesW(SCARDCONTEXT hContext, LPCWSTR s
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListInterfacesW { hContext: %p", (void*)hContext);
 
-	status =
-	    g_SCardApi->pfnSCardListInterfacesW(hContext, szCard, pguidInterfaces, pcguidInterfaces);
+	SCARDAPI_STUB_CALL_LONG(status, SCardListInterfacesW, hContext, szCard, pguidInterfaces,
+	                        pcguidInterfaces);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListInterfacesW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -216,7 +254,7 @@ static LONG WINAPI Inspect_SCardGetProviderIdA(SCARDCONTEXT hContext, LPCSTR szC
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetProviderIdA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetProviderIdA(hContext, szCard, pguidProviderId);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetProviderIdA, hContext, szCard, pguidProviderId);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetProviderIdA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -231,7 +269,7 @@ static LONG WINAPI Inspect_SCardGetProviderIdW(SCARDCONTEXT hContext, LPCWSTR sz
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetProviderIdW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetProviderIdW(hContext, szCard, pguidProviderId);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetProviderIdW, hContext, szCard, pguidProviderId);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetProviderIdW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -247,8 +285,8 @@ static LONG WINAPI Inspect_SCardGetCardTypeProviderNameA(SCARDCONTEXT hContext, 
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetCardTypeProviderNameA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetCardTypeProviderNameA(hContext, szCardName, dwProviderId,
-	                                                      szProvider, pcchProvider);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetCardTypeProviderNameA, hContext, szCardName,
+	                        dwProviderId, szProvider, pcchProvider);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetCardTypeProviderNameA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -264,8 +302,8 @@ static LONG WINAPI Inspect_SCardGetCardTypeProviderNameW(SCARDCONTEXT hContext, 
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetCardTypeProviderNameW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetCardTypeProviderNameW(hContext, szCardName, dwProviderId,
-	                                                      szProvider, pcchProvider);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetCardTypeProviderNameW, hContext, szCardName,
+	                        dwProviderId, szProvider, pcchProvider);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetCardTypeProviderNameW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -279,7 +317,7 @@ static LONG WINAPI Inspect_SCardIntroduceReaderGroupA(SCARDCONTEXT hContext, LPC
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderGroupA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardIntroduceReaderGroupA(hContext, szGroupName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardIntroduceReaderGroupA, hContext, szGroupName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderGroupA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -293,7 +331,7 @@ static LONG WINAPI Inspect_SCardIntroduceReaderGroupW(SCARDCONTEXT hContext, LPC
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderGroupW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardIntroduceReaderGroupW(hContext, szGroupName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardIntroduceReaderGroupW, hContext, szGroupName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderGroupW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -307,7 +345,7 @@ static LONG WINAPI Inspect_SCardForgetReaderGroupA(SCARDCONTEXT hContext, LPCSTR
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderGroupA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardForgetReaderGroupA(hContext, szGroupName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardForgetReaderGroupA, hContext, szGroupName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderGroupA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -321,7 +359,7 @@ static LONG WINAPI Inspect_SCardForgetReaderGroupW(SCARDCONTEXT hContext, LPCWST
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderGroupW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardForgetReaderGroupW(hContext, szGroupName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardForgetReaderGroupW, hContext, szGroupName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderGroupW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -336,7 +374,7 @@ static LONG WINAPI Inspect_SCardIntroduceReaderA(SCARDCONTEXT hContext, LPCSTR s
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardIntroduceReaderA(hContext, szReaderName, szDeviceName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardIntroduceReaderA, hContext, szReaderName, szDeviceName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -351,7 +389,7 @@ static LONG WINAPI Inspect_SCardIntroduceReaderW(SCARDCONTEXT hContext, LPCWSTR 
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardIntroduceReaderW(hContext, szReaderName, szDeviceName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardIntroduceReaderW, hContext, szReaderName, szDeviceName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -365,7 +403,7 @@ static LONG WINAPI Inspect_SCardForgetReaderA(SCARDCONTEXT hContext, LPCSTR szRe
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardForgetReaderA(hContext, szReaderName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardForgetReaderA, hContext, szReaderName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -379,7 +417,7 @@ static LONG WINAPI Inspect_SCardForgetReaderW(SCARDCONTEXT hContext, LPCWSTR szR
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardForgetReaderW(hContext, szReaderName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardForgetReaderW, hContext, szReaderName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -394,7 +432,7 @@ static LONG WINAPI Inspect_SCardAddReaderToGroupA(SCARDCONTEXT hContext, LPCSTR 
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAddReaderToGroupA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardAddReaderToGroupA(hContext, szReaderName, szGroupName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardAddReaderToGroupA, hContext, szReaderName, szGroupName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAddReaderToGroupA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -409,7 +447,7 @@ static LONG WINAPI Inspect_SCardAddReaderToGroupW(SCARDCONTEXT hContext, LPCWSTR
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAddReaderToGroupW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardAddReaderToGroupW(hContext, szReaderName, szGroupName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardAddReaderToGroupW, hContext, szReaderName, szGroupName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAddReaderToGroupW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -424,7 +462,8 @@ static LONG WINAPI Inspect_SCardRemoveReaderFromGroupA(SCARDCONTEXT hContext, LP
 
 	WLog_Print(g_Log, g_LogLevel, "SCardRemoveReaderFromGroupA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardRemoveReaderFromGroupA(hContext, szReaderName, szGroupName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardRemoveReaderFromGroupA, hContext, szReaderName,
+	                        szGroupName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardRemoveReaderFromGroupA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -439,7 +478,8 @@ static LONG WINAPI Inspect_SCardRemoveReaderFromGroupW(SCARDCONTEXT hContext, LP
 
 	WLog_Print(g_Log, g_LogLevel, "SCardRemoveReaderFromGroupW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardRemoveReaderFromGroupW(hContext, szReaderName, szGroupName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardRemoveReaderFromGroupW, hContext, szReaderName,
+	                        szGroupName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardRemoveReaderFromGroupW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -456,9 +496,9 @@ static LONG WINAPI Inspect_SCardIntroduceCardTypeA(SCARDCONTEXT hContext, LPCSTR
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceCardTypeA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardIntroduceCardTypeA(hContext, szCardName, pguidPrimaryProvider,
-	                                                rgguidInterfaces, dwInterfaceCount, pbAtr,
-	                                                pbAtrMask, cbAtrLen);
+	SCARDAPI_STUB_CALL_LONG(status, SCardIntroduceCardTypeA, hContext, szCardName,
+	                        pguidPrimaryProvider, rgguidInterfaces, dwInterfaceCount, pbAtr,
+	                        pbAtrMask, cbAtrLen);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceCardTypeA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -475,9 +515,9 @@ static LONG WINAPI Inspect_SCardIntroduceCardTypeW(SCARDCONTEXT hContext, LPCWST
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceCardTypeW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardIntroduceCardTypeW(hContext, szCardName, pguidPrimaryProvider,
-	                                                rgguidInterfaces, dwInterfaceCount, pbAtr,
-	                                                pbAtrMask, cbAtrLen);
+	SCARDAPI_STUB_CALL_LONG(status, SCardIntroduceCardTypeW, hContext, szCardName,
+	                        pguidPrimaryProvider, rgguidInterfaces, dwInterfaceCount, pbAtr,
+	                        pbAtrMask, cbAtrLen);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceCardTypeW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -492,8 +532,8 @@ static LONG WINAPI Inspect_SCardSetCardTypeProviderNameA(SCARDCONTEXT hContext, 
 
 	WLog_Print(g_Log, g_LogLevel, "SCardSetCardTypeProviderNameA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardSetCardTypeProviderNameA(hContext, szCardName, dwProviderId,
-	                                                      szProvider);
+	SCARDAPI_STUB_CALL_LONG(status, SCardSetCardTypeProviderNameA, hContext, szCardName,
+	                        dwProviderId, szProvider);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardSetCardTypeProviderNameA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -508,8 +548,8 @@ static LONG WINAPI Inspect_SCardSetCardTypeProviderNameW(SCARDCONTEXT hContext, 
 
 	WLog_Print(g_Log, g_LogLevel, "SCardSetCardTypeProviderNameA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardSetCardTypeProviderNameW(hContext, szCardName, dwProviderId,
-	                                                      szProvider);
+	SCARDAPI_STUB_CALL_LONG(status, SCardSetCardTypeProviderNameW, hContext, szCardName,
+	                        dwProviderId, szProvider);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardSetCardTypeProviderNameW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -523,7 +563,7 @@ static LONG WINAPI Inspect_SCardForgetCardTypeA(SCARDCONTEXT hContext, LPCSTR sz
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetCardTypeA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardForgetCardTypeA(hContext, szCardName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardForgetCardTypeA, hContext, szCardName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetCardTypeA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -537,7 +577,7 @@ static LONG WINAPI Inspect_SCardForgetCardTypeW(SCARDCONTEXT hContext, LPCWSTR s
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetCardTypeW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardForgetCardTypeW(hContext, szCardName);
+	SCARDAPI_STUB_CALL_LONG(status, SCardForgetCardTypeW, hContext, szCardName);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetCardTypeW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -551,7 +591,7 @@ static LONG WINAPI Inspect_SCardFreeMemory(SCARDCONTEXT hContext, LPVOID pvMem)
 
 	WLog_Print(g_Log, g_LogLevel, "SCardFreeMemory { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardFreeMemory(hContext, pvMem);
+	SCARDAPI_STUB_CALL_LONG(status, SCardFreeMemory, hContext, pvMem);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardFreeMemory } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -565,7 +605,7 @@ static HANDLE WINAPI Inspect_SCardAccessStartedEvent(void)
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAccessStartedEvent {");
 
-	hEvent = g_SCardApi->pfnSCardAccessStartedEvent();
+	SCARDAPI_STUB_CALL_HANDLE(hEvent, SCardAccessStartedEvent);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAccessStartedEvent } hEvent: %p", hEvent);
 
@@ -576,7 +616,7 @@ static void WINAPI Inspect_SCardReleaseStartedEvent(void)
 {
 	WLog_Print(g_Log, g_LogLevel, "SCardReleaseStartedEvent {");
 
-	g_SCardApi->pfnSCardReleaseStartedEvent();
+	SCARDAPI_STUB_CALL_VOID(SCardReleaseStartedEvent);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReleaseStartedEvent }");
 }
@@ -588,7 +628,8 @@ static LONG WINAPI Inspect_SCardLocateCardsA(SCARDCONTEXT hContext, LPCSTR mszCa
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardLocateCardsA(hContext, mszCards, rgReaderStates, cReaders);
+	SCARDAPI_STUB_CALL_LONG(status, SCardLocateCardsA, hContext, mszCards, rgReaderStates,
+	                        cReaders);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -603,7 +644,8 @@ static LONG WINAPI Inspect_SCardLocateCardsW(SCARDCONTEXT hContext, LPCWSTR mszC
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardLocateCardsW(hContext, mszCards, rgReaderStates, cReaders);
+	SCARDAPI_STUB_CALL_LONG(status, SCardLocateCardsW, hContext, mszCards, rgReaderStates,
+	                        cReaders);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -619,8 +661,8 @@ static LONG WINAPI Inspect_SCardLocateCardsByATRA(SCARDCONTEXT hContext, LPSCARD
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsByATRA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardLocateCardsByATRA(hContext, rgAtrMasks, cAtrs, rgReaderStates,
-	                                               cReaders);
+	SCARDAPI_STUB_CALL_LONG(status, SCardLocateCardsByATRA, hContext, rgAtrMasks, cAtrs,
+	                        rgReaderStates, cReaders);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsByATRA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -636,8 +678,8 @@ static LONG WINAPI Inspect_SCardLocateCardsByATRW(SCARDCONTEXT hContext, LPSCARD
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsByATRW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardLocateCardsByATRW(hContext, rgAtrMasks, cAtrs, rgReaderStates,
-	                                               cReaders);
+	SCARDAPI_STUB_CALL_LONG(status, SCardLocateCardsByATRW, hContext, rgAtrMasks, cAtrs,
+	                        rgReaderStates, cReaders);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsByATRW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -653,7 +695,8 @@ static LONG WINAPI Inspect_SCardGetStatusChangeA(SCARDCONTEXT hContext, DWORD dw
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetStatusChangeA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetStatusChangeA(hContext, dwTimeout, rgReaderStates, cReaders);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetStatusChangeA, hContext, dwTimeout, rgReaderStates,
+	                        cReaders);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetStatusChangeA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -669,7 +712,8 @@ static LONG WINAPI Inspect_SCardGetStatusChangeW(SCARDCONTEXT hContext, DWORD dw
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetStatusChangeW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetStatusChangeW(hContext, dwTimeout, rgReaderStates, cReaders);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetStatusChangeW, hContext, dwTimeout, rgReaderStates,
+	                        cReaders);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetStatusChangeW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -683,7 +727,7 @@ static LONG WINAPI Inspect_SCardCancel(SCARDCONTEXT hContext)
 
 	WLog_Print(g_Log, g_LogLevel, "SCardCancel { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardCancel(hContext);
+	SCARDAPI_STUB_CALL_LONG(status, SCardCancel, hContext);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardCancel } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -699,8 +743,8 @@ static LONG WINAPI Inspect_SCardConnectA(SCARDCONTEXT hContext, LPCSTR szReader,
 
 	WLog_Print(g_Log, g_LogLevel, "SCardConnectA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardConnectA(hContext, szReader, dwShareMode, dwPreferredProtocols,
-	                                      phCard, pdwActiveProtocol);
+	SCARDAPI_STUB_CALL_LONG(status, SCardConnectA, hContext, szReader, dwShareMode,
+	                        dwPreferredProtocols, phCard, pdwActiveProtocol);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardConnectA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -716,8 +760,8 @@ static LONG WINAPI Inspect_SCardConnectW(SCARDCONTEXT hContext, LPCWSTR szReader
 
 	WLog_Print(g_Log, g_LogLevel, "SCardConnectW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardConnectW(hContext, szReader, dwShareMode, dwPreferredProtocols,
-	                                      phCard, pdwActiveProtocol);
+	SCARDAPI_STUB_CALL_LONG(status, SCardConnectW, hContext, szReader, dwShareMode,
+	                        dwPreferredProtocols, phCard, pdwActiveProtocol);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardConnectW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -733,8 +777,8 @@ static LONG WINAPI Inspect_SCardReconnect(SCARDHANDLE hCard, DWORD dwShareMode,
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReconnect { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardReconnect(hCard, dwShareMode, dwPreferredProtocols,
-	                                       dwInitialization, pdwActiveProtocol);
+	SCARDAPI_STUB_CALL_LONG(status, SCardReconnect, hCard, dwShareMode, dwPreferredProtocols,
+	                        dwInitialization, pdwActiveProtocol);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReconnect } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -748,7 +792,7 @@ static LONG WINAPI Inspect_SCardDisconnect(SCARDHANDLE hCard, DWORD dwDispositio
 
 	WLog_Print(g_Log, g_LogLevel, "SCardDisconnect { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardDisconnect(hCard, dwDisposition);
+	SCARDAPI_STUB_CALL_LONG(status, SCardDisconnect, hCard, dwDisposition);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardDisconnect } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -762,7 +806,7 @@ static LONG WINAPI Inspect_SCardBeginTransaction(SCARDHANDLE hCard)
 
 	WLog_Print(g_Log, g_LogLevel, "SCardBeginTransaction { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardBeginTransaction(hCard);
+	SCARDAPI_STUB_CALL_LONG(status, SCardBeginTransaction, hCard);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardBeginTransaction } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -776,7 +820,7 @@ static LONG WINAPI Inspect_SCardEndTransaction(SCARDHANDLE hCard, DWORD dwDispos
 
 	WLog_Print(g_Log, g_LogLevel, "SCardEndTransaction { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardEndTransaction(hCard, dwDisposition);
+	SCARDAPI_STUB_CALL_LONG(status, SCardEndTransaction, hCard, dwDisposition);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardEndTransaction } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -790,7 +834,7 @@ static LONG WINAPI Inspect_SCardCancelTransaction(SCARDHANDLE hCard)
 
 	WLog_Print(g_Log, g_LogLevel, "SCardCancelTransaction { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardCancelTransaction(hCard);
+	SCARDAPI_STUB_CALL_LONG(status, SCardCancelTransaction, hCard);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardCancelTransaction } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -805,7 +849,7 @@ static LONG WINAPI Inspect_SCardState(SCARDHANDLE hCard, LPDWORD pdwState, LPDWO
 
 	WLog_Print(g_Log, g_LogLevel, "SCardState { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardState(hCard, pdwState, pdwProtocol, pbAtr, pcbAtrLen);
+	SCARDAPI_STUB_CALL_LONG(status, SCardState, hCard, pdwState, pdwProtocol, pbAtr, pcbAtrLen);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardState } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -821,8 +865,8 @@ static LONG WINAPI Inspect_SCardStatusA(SCARDHANDLE hCard, LPSTR mszReaderNames,
 
 	WLog_Print(g_Log, g_LogLevel, "SCardStatusA { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardStatusA(hCard, mszReaderNames, pcchReaderLen, pdwState,
-	                                     pdwProtocol, pbAtr, pcbAtrLen);
+	SCARDAPI_STUB_CALL_LONG(status, SCardStatusA, hCard, mszReaderNames, pcchReaderLen, pdwState,
+	                        pdwProtocol, pbAtr, pcbAtrLen);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardStatusA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -838,8 +882,8 @@ static LONG WINAPI Inspect_SCardStatusW(SCARDHANDLE hCard, LPWSTR mszReaderNames
 
 	WLog_Print(g_Log, g_LogLevel, "SCardStatusW { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardStatusW(hCard, mszReaderNames, pcchReaderLen, pdwState,
-	                                     pdwProtocol, pbAtr, pcbAtrLen);
+	SCARDAPI_STUB_CALL_LONG(status, SCardStatusW, hCard, mszReaderNames, pcchReaderLen, pdwState,
+	                        pdwProtocol, pbAtr, pcbAtrLen);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardStatusW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -856,8 +900,8 @@ static LONG WINAPI Inspect_SCardTransmit(SCARDHANDLE hCard, LPCSCARD_IO_REQUEST 
 
 	WLog_Print(g_Log, g_LogLevel, "SCardTransmit { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardTransmit(hCard, pioSendPci, pbSendBuffer, cbSendLength, pioRecvPci,
-	                                      pbRecvBuffer, pcbRecvLength);
+	SCARDAPI_STUB_CALL_LONG(status, SCardTransmit, hCard, pioSendPci, pbSendBuffer, cbSendLength,
+	                        pioRecvPci, pbRecvBuffer, pcbRecvLength);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardTransmit } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -871,7 +915,7 @@ static LONG WINAPI Inspect_SCardGetTransmitCount(SCARDHANDLE hCard, LPDWORD pcTr
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetTransmitCount { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardGetTransmitCount(hCard, pcTransmitCount);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetTransmitCount, hCard, pcTransmitCount);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetTransmitCount } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -887,8 +931,8 @@ static LONG WINAPI Inspect_SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, 
 
 	WLog_Print(g_Log, g_LogLevel, "SCardControl { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardControl(hCard, dwControlCode, lpInBuffer, cbInBufferSize,
-	                                     lpOutBuffer, cbOutBufferSize, lpBytesReturned);
+	SCARDAPI_STUB_CALL_LONG(status, SCardControl, hCard, dwControlCode, lpInBuffer, cbInBufferSize,
+	                        lpOutBuffer, cbOutBufferSize, lpBytesReturned);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardControl } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -903,7 +947,7 @@ static LONG WINAPI Inspect_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPB
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetAttrib { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardGetAttrib(hCard, dwAttrId, pbAttr, pcbAttrLen);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetAttrib, hCard, dwAttrId, pbAttr, pcbAttrLen);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetAttrib } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -918,7 +962,7 @@ static LONG WINAPI Inspect_SCardSetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPC
 
 	WLog_Print(g_Log, g_LogLevel, "SCardSetAttrib { hCard: %p", (void*)hCard);
 
-	status = g_SCardApi->pfnSCardSetAttrib(hCard, dwAttrId, pbAttr, cbAttrLen);
+	SCARDAPI_STUB_CALL_LONG(status, SCardSetAttrib, hCard, dwAttrId, pbAttr, cbAttrLen);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardSetAttrib } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -932,7 +976,7 @@ static LONG WINAPI Inspect_SCardUIDlgSelectCardA(LPOPENCARDNAMEA_EX pDlgStruc)
 
 	WLog_Print(g_Log, g_LogLevel, "SCardUIDlgSelectCardA {");
 
-	status = g_SCardApi->pfnSCardUIDlgSelectCardA(pDlgStruc);
+	SCARDAPI_STUB_CALL_LONG(status, SCardUIDlgSelectCardA, pDlgStruc);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardUIDlgSelectCardA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -946,7 +990,7 @@ static LONG WINAPI Inspect_SCardUIDlgSelectCardW(LPOPENCARDNAMEW_EX pDlgStruc)
 
 	WLog_Print(g_Log, g_LogLevel, "SCardUIDlgSelectCardW {");
 
-	status = g_SCardApi->pfnSCardUIDlgSelectCardW(pDlgStruc);
+	SCARDAPI_STUB_CALL_LONG(status, SCardUIDlgSelectCardW, pDlgStruc);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardUIDlgSelectCardW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -960,7 +1004,7 @@ static LONG WINAPI Inspect_GetOpenCardNameA(LPOPENCARDNAMEA pDlgStruc)
 
 	WLog_Print(g_Log, g_LogLevel, "GetOpenCardNameA {");
 
-	status = g_SCardApi->pfnGetOpenCardNameA(pDlgStruc);
+	SCARDAPI_STUB_CALL_LONG(status, GetOpenCardNameA, pDlgStruc);
 
 	WLog_Print(g_Log, g_LogLevel, "GetOpenCardNameA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -974,7 +1018,7 @@ static LONG WINAPI Inspect_GetOpenCardNameW(LPOPENCARDNAMEW pDlgStruc)
 
 	WLog_Print(g_Log, g_LogLevel, "GetOpenCardNameW {");
 
-	status = g_SCardApi->pfnGetOpenCardNameW(pDlgStruc);
+	SCARDAPI_STUB_CALL_LONG(status, GetOpenCardNameW, pDlgStruc);
 
 	WLog_Print(g_Log, g_LogLevel, "GetOpenCardNameW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -988,7 +1032,7 @@ static LONG WINAPI Inspect_SCardDlgExtendedError(void)
 
 	WLog_Print(g_Log, g_LogLevel, "SCardDlgExtendedError {");
 
-	status = g_SCardApi->pfnSCardDlgExtendedError();
+	SCARDAPI_STUB_CALL_LONG(status, SCardDlgExtendedError);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardDlgExtendedError } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -1004,8 +1048,8 @@ static LONG WINAPI Inspect_SCardReadCacheA(SCARDCONTEXT hContext, UUID* CardIden
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReadCacheA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardReadCacheA(hContext, CardIdentifier, FreshnessCounter, LookupName,
-	                                        Data, DataLen);
+	SCARDAPI_STUB_CALL_LONG(status, SCardReadCacheA, hContext, CardIdentifier, FreshnessCounter,
+	                        LookupName, Data, DataLen);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReadCacheA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -1021,8 +1065,8 @@ static LONG WINAPI Inspect_SCardReadCacheW(SCARDCONTEXT hContext, UUID* CardIden
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReadCacheW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardReadCacheW(hContext, CardIdentifier, FreshnessCounter, LookupName,
-	                                        Data, DataLen);
+	SCARDAPI_STUB_CALL_LONG(status, SCardReadCacheW, hContext, CardIdentifier, FreshnessCounter,
+	                        LookupName, Data, DataLen);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReadCacheW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -1038,8 +1082,8 @@ static LONG WINAPI Inspect_SCardWriteCacheA(SCARDCONTEXT hContext, UUID* CardIde
 
 	WLog_Print(g_Log, g_LogLevel, "SCardWriteCacheA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardWriteCacheA(hContext, CardIdentifier, FreshnessCounter, LookupName,
-	                                         Data, DataLen);
+	SCARDAPI_STUB_CALL_LONG(status, SCardWriteCacheA, hContext, CardIdentifier, FreshnessCounter,
+	                        LookupName, Data, DataLen);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardWriteCacheA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -1055,8 +1099,8 @@ static LONG WINAPI Inspect_SCardWriteCacheW(SCARDCONTEXT hContext, UUID* CardIde
 
 	WLog_Print(g_Log, g_LogLevel, "SCardWriteCacheW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardWriteCacheW(hContext, CardIdentifier, FreshnessCounter, LookupName,
-	                                         Data, DataLen);
+	SCARDAPI_STUB_CALL_LONG(status, SCardWriteCacheW, hContext, CardIdentifier, FreshnessCounter,
+	                        LookupName, Data, DataLen);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardWriteCacheW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -1071,7 +1115,7 @@ static LONG WINAPI Inspect_SCardGetReaderIconA(SCARDCONTEXT hContext, LPCSTR szR
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderIconA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetReaderIconA(hContext, szReaderName, pbIcon, pcbIcon);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetReaderIconA, hContext, szReaderName, pbIcon, pcbIcon);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderIconA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -1086,7 +1130,7 @@ static LONG WINAPI Inspect_SCardGetReaderIconW(SCARDCONTEXT hContext, LPCWSTR sz
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderIconW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetReaderIconW(hContext, szReaderName, pbIcon, pcbIcon);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetReaderIconW, hContext, szReaderName, pbIcon, pcbIcon);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderIconW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -1101,7 +1145,7 @@ static LONG WINAPI Inspect_SCardGetDeviceTypeIdA(SCARDCONTEXT hContext, LPCSTR s
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetDeviceTypeIdA { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetDeviceTypeIdA(hContext, szReaderName, pdwDeviceTypeId);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetDeviceTypeIdA, hContext, szReaderName, pdwDeviceTypeId);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetDeviceTypeIdA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -1116,7 +1160,7 @@ static LONG WINAPI Inspect_SCardGetDeviceTypeIdW(SCARDCONTEXT hContext, LPCWSTR 
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetDeviceTypeIdW { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetDeviceTypeIdW(hContext, szReaderName, pdwDeviceTypeId);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetDeviceTypeIdW, hContext, szReaderName, pdwDeviceTypeId);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetDeviceTypeIdW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -1134,8 +1178,8 @@ static LONG WINAPI Inspect_SCardGetReaderDeviceInstanceIdA(SCARDCONTEXT hContext
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderDeviceInstanceIdA { hContext: %p",
 	           (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetReaderDeviceInstanceIdA(
-	    hContext, szReaderName, szDeviceInstanceId, pcchDeviceInstanceId);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetReaderDeviceInstanceIdA, hContext, szReaderName,
+	                        szDeviceInstanceId, pcchDeviceInstanceId);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderDeviceInstanceIdA } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -1153,8 +1197,8 @@ static LONG WINAPI Inspect_SCardGetReaderDeviceInstanceIdW(SCARDCONTEXT hContext
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderDeviceInstanceIdW { hContext: %p",
 	           (void*)hContext);
 
-	status = g_SCardApi->pfnSCardGetReaderDeviceInstanceIdW(
-	    hContext, szReaderName, szDeviceInstanceId, pcchDeviceInstanceId);
+	SCARDAPI_STUB_CALL_LONG(status, SCardGetReaderDeviceInstanceIdW, hContext, szReaderName,
+	                        szDeviceInstanceId, pcchDeviceInstanceId);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderDeviceInstanceIdW } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
@@ -1172,8 +1216,8 @@ static LONG WINAPI Inspect_SCardListReadersWithDeviceInstanceIdA(SCARDCONTEXT hC
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersWithDeviceInstanceIdA { hContext: %p",
 	           (void*)hContext);
 
-	status = g_SCardApi->pfnSCardListReadersWithDeviceInstanceIdA(hContext, szDeviceInstanceId,
-	                                                              mszReaders, pcchReaders);
+	SCARDAPI_STUB_CALL_LONG(status, SCardListReadersWithDeviceInstanceIdA, hContext,
+	                        szDeviceInstanceId, mszReaders, pcchReaders);
 
 	WLog_Print(g_Log, g_LogLevel,
 	           "SCardListReadersWithDeviceInstanceIdA } status: %s (0x%08" PRIX32 ")",
@@ -1192,8 +1236,8 @@ static LONG WINAPI Inspect_SCardListReadersWithDeviceInstanceIdW(SCARDCONTEXT hC
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersWithDeviceInstanceIdW { hContext: %p",
 	           (void*)hContext);
 
-	status = g_SCardApi->pfnSCardListReadersWithDeviceInstanceIdW(hContext, szDeviceInstanceId,
-	                                                              mszReaders, pcchReaders);
+	SCARDAPI_STUB_CALL_LONG(status, SCardListReadersWithDeviceInstanceIdW, hContext,
+	                        szDeviceInstanceId, mszReaders, pcchReaders);
 
 	WLog_Print(g_Log, g_LogLevel,
 	           "SCardListReadersWithDeviceInstanceIdW } status: %s (0x%08" PRIX32 ")",
@@ -1208,7 +1252,7 @@ static LONG WINAPI Inspect_SCardAudit(SCARDCONTEXT hContext, DWORD dwEvent)
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAudit { hContext: %p", (void*)hContext);
 
-	status = g_SCardApi->pfnSCardAudit(hContext, dwEvent);
+	SCARDAPI_STUB_CALL_LONG(status, SCardAudit, hContext, dwEvent);
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAudit } status: %s (0x%08" PRIX32 ")",
 	           SCardGetErrorString(status), status);
