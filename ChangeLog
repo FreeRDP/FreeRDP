@@ -1,3 +1,15 @@
+# 20xx-xx-xx Version 2.x.x
+
+Noteworthy changes:
+* Fixed smartcard login in case a redirection occurs the pin was lost
+
+Fixed issues:
+
+Important notes:
+
+For a complete and detailed change log since the last release run:
+git log 2.4.1..2.x.x
+
 # 2021-10-20 Version 2.4.1
 
 Noteworthy changes:
