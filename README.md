@@ -21,7 +21,7 @@ Mailing list: https://lists.sourceforge.net/lists/listinfo/freerdp-devel
 ## Microsoft Open Specifications
 
 Information regarding the Microsoft Open Specifications can be found at:
-http://www.microsoft.com/openspecifications/
+https://www.microsoft.com/openspecifications/
 
 A list of reference documentation is maintained here:
 https://github.com/FreeRDP/FreeRDP/wiki/Reference-Documentation
