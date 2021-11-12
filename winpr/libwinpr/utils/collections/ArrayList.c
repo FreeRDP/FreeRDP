@@ -27,7 +27,7 @@
 #include <winpr/assert.h>
 #include <winpr/collections.h>
 
-#if defined(_WIN32) && (_MSC_VER < 1800)
+#if defined(_WIN32) && (_MSC_VER < 1800) && !defined(__MINGW32__)
 #define va_copy(dest, src) (dest = src)
 #endif
 

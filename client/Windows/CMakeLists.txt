@@ -35,8 +35,8 @@ set(${MODULE_PREFIX}_SRCS
 	wf_client.h
 	wf_floatbar.c
 	wf_floatbar.h
-	wfreerdp.rc
-	resource.h)
+	resource/wfreerdp.rc
+	resource/resource.h)
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt

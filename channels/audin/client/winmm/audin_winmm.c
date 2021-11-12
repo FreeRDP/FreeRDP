@@ -37,6 +37,11 @@
 
 #include "audin_main.h"
 
+/* fix missing definitions in mingw */
+#ifndef WAVE_MAPPED_DEFAULT_COMMUNICATION_DEVICE
+#define  WAVE_MAPPED_DEFAULT_COMMUNICATION_DEVICE   0x0010
+#endif
+
 typedef struct _AudinWinmmDevice
 {
 	IAudinDevice iface;

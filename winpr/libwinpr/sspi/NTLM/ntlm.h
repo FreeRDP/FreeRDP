@@ -77,6 +77,20 @@ enum _NTLM_STATE
 };
 typedef enum _NTLM_STATE NTLM_STATE;
 
+#ifdef __MINGW32__
+typedef MSV1_0_AVID NTLM_AV_ID;
+
+#if __MINGW64_VERSION_MAJOR < 9
+enum {
+	MsvAvTimestamp = MsvAvFlags + 1,
+	MsvAvRestrictions,
+	MsvAvTargetName,
+	MsvAvChannelBindings,
+	MsvAvSingleHost = MsvAvRestrictions
+};
+
+#endif
+#else
 enum _NTLM_AV_ID
 {
 	MsvAvEOL,
@@ -92,6 +106,7 @@ enum _NTLM_AV_ID
 	MsvAvChannelBindings
 };
 typedef enum _NTLM_AV_ID NTLM_AV_ID;
+#endif /* __MINGW32__ */
 
 struct _NTLM_AV_PAIR
 {

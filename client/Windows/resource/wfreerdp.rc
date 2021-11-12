@@ -1,0 +1,14 @@
+
+#include "resource.h"
+
+IDI_ICON1              ICON                    "FreeRDP.ico"
+IDB_MINIMIZE           BITMAP                  "minimize.bmp"
+IDB_MINIMIZE_ACT       BITMAP                  "minimize_active.bmp"
+IDB_LOCK               BITMAP                  "lock.bmp"
+IDB_LOCK_ACT           BITMAP                  "lock_active.bmp"
+IDB_UNLOCK             BITMAP                  "unlock.bmp"
+IDB_UNLOCK_ACT         BITMAP                  "unlock_active.bmp"
+IDB_CLOSE              BITMAP                  "close.bmp"
+IDB_CLOSE_ACT          BITMAP                  "close_active.bmp"
+IDB_RESTORE            BITMAP                  "restore.bmp"
+IDB_RESTORE_ACT        BITMAP                  "restore_active.bmp"
