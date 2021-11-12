@@ -64,7 +64,7 @@
 
 #include "wf_client.h"
 
-#include "resource.h"
+#include "resource/resource.h"
 
 #define TAG CLIENT_TAG("windows")
 

@@ -222,6 +222,41 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 
 #endif
 
+/* ============== some definitions missing in mingw ========================*/
+#ifndef SEC_E_INVALID_PARAMETER
+#define SEC_E_INVALID_PARAMETER (SECURITY_STATUS)0x8009035DL
+#endif
+
+#ifndef SEC_E_DELEGATION_POLICY
+#define SEC_E_DELEGATION_POLICY (SECURITY_STATUS)0x8009035EL
+#endif
+
+#ifndef SEC_E_POLICY_NLTM_ONLY
+#define SEC_E_POLICY_NLTM_ONLY (SECURITY_STATUS)0x8009035FL
+#endif
+
+#ifndef SEC_E_NO_CONTEXT
+#define SEC_E_NO_CONTEXT (SECURITY_STATUS)0x80090361L
+#endif
+
+#ifndef SEC_E_PKU2U_CERT_FAILURE
+#define SEC_E_PKU2U_CERT_FAILURE (SECURITY_STATUS)0x80090362L
+#endif
+
+#ifndef SEC_E_MUTUAL_AUTH_FAILED
+#define SEC_E_MUTUAL_AUTH_FAILED (SECURITY_STATUS)0x80090363L
+#endif
+
+#ifndef SEC_I_SIGNATURE_NEEDED
+#define SEC_I_SIGNATURE_NEEDED (SECURITY_STATUS)0x0009035CL
+#endif
+
+#ifndef SEC_I_NO_RENEGOTIATION
+#define SEC_I_NO_RENEGOTIATION (SECURITY_STATUS)0x00090360L
+#endif
+
+/* ==================================================================================== */
+
 #define SECURITY_NATIVE_DREP 0x00000010
 #define SECURITY_NETWORK_DREP 0x00000000
 
@@ -333,13 +368,6 @@ struct _SEC_CHANNEL_BINDINGS
 	UINT32 dwApplicationDataOffset;
 };
 typedef struct _SEC_CHANNEL_BINDINGS SEC_CHANNEL_BINDINGS;
-
-struct _SecPkgContext_Bindings
-{
-	UINT32 BindingsLength;
-	SEC_CHANNEL_BINDINGS* Bindings;
-};
-typedef struct _SecPkgContext_Bindings SecPkgContext_Bindings;
 
 struct _SecPkgContext_EapKeyBlock
 {
@@ -484,6 +512,16 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 #endif
 
 #endif
+
+#if !defined(_WIN32) || defined(_UWP) || defined(__MINGW32__)
+struct _SecPkgContext_Bindings
+{
+	UINT32 BindingsLength;
+	SEC_CHANNEL_BINDINGS* Bindings;
+};
+typedef struct _SecPkgContext_Bindings SecPkgContext_Bindings;
+#endif
+
 
 /* InitializeSecurityContext Flags */
 

@@ -27,6 +27,15 @@
 
 #include <winerror.h>
 
+/* mingw is possibly missing some definitions */
+#ifndef RPC_S_PROXY_ACCESS_DENIED
+#define RPC_S_PROXY_ACCESS_DENIED 0x000006C1
+#endif
+
+#ifndef RPC_S_COOKIE_AUTH_FAILED
+#define RPC_S_COOKIE_AUTH_FAILED 0x00000729
+#endif
+
 #else
 
 #ifndef NO_ERROR

@@ -20,10 +20,10 @@
 #include <winpr/crt.h>
 #include <winpr/windows.h>
 
-#include "resource.h"
-
 #include "wf_client.h"
 #include "wf_floatbar.h"
+
+#include "resource/resource.h"
 #include "wf_gdi.h"
 #ifdef _MSC_VER
 #pragma comment(lib, "Msimg32.lib")

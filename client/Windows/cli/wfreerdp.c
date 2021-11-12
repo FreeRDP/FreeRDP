@@ -36,7 +36,7 @@
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
 
-#include "resource.h"
+#include "../resource/resource.h"
 
 #include "wf_client.h"
 

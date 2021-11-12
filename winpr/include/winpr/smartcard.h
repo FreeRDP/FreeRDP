@@ -115,6 +115,24 @@
 
 #endif
 
+/* ------------------------ missing definition with mingw --------------------*/
+#ifndef SCARD_E_PIN_CACHE_EXPIRED
+#define SCARD_E_PIN_CACHE_EXPIRED (HRESULT)(0x80100032L)
+#endif
+
+#ifndef SCARD_E_NO_PIN_CACHE
+#define SCARD_E_NO_PIN_CACHE (HRESULT)(0x80100033L)
+#endif
+
+#ifndef SCARD_E_READ_ONLY_CARD
+#define SCARD_E_READ_ONLY_CARD (HRESULT)(0x80100034L)
+#endif
+
+#ifndef SCARD_W_CACHE_ITEM_TOO_BIG
+#define SCARD_W_CACHE_ITEM_TOO_BIG (HRESULT)(0x80100072L)
+#endif
+/* -------------------------------------------------------------------------- */
+
 #define SCARD_ATR_LENGTH 33
 
 #define SCARD_PROTOCOL_UNDEFINED 0x00000000u
