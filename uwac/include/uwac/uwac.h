@@ -551,10 +551,18 @@ extern "C"
 	UWAC_API void UwacWindowSetTitle(UwacWindow* window, const char* name);
 
 	/**
+	 *	Sets the app id of the UwacWindow
 	 *
-	 * @param display
-	 * @param timeout
-	 * @return
+	 * @param window the UwacWindow
+	 * @param app_id app id
+	 */
+	UWAC_API void UwacWindowSetAppId(UwacWindow* window, const char* app_id);
+
+	/** Dispatch the display
+	 *
+	 * @param display The display to dispatch
+	 * @param timeout The maximum time to wait in milliseconds (-1 == infinite).
+	 * @return 1 for success, 0 if display not running, -1 on failure
 	 */
 	UWAC_API int UwacDisplayDispatch(UwacDisplay* display, int timeout);
 
