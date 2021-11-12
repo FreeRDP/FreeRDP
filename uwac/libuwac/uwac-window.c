@@ -816,3 +816,9 @@ void UwacWindowSetTitle(UwacWindow* window, const char* name)
 	else if (window->shell_surface)
 		wl_shell_surface_set_title(window->shell_surface, name);
 }
+
+void UwacWindowSetAppId(UwacWindow* window, const char* app_id)
+{
+	if (window->xdg_toplevel)
+		xdg_toplevel_set_app_id(window->xdg_toplevel, app_id);
+}
