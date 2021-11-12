@@ -227,6 +227,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	wlfContext* context;
 	rdpSettings* settings;
 	char* title = "FreeRDP";
+	char* app_id = "wlfreerdp";
 	UINT32 w, h;
 
 	if (!instance || !instance->context)
@@ -268,6 +269,7 @@ static BOOL wl_post_connect(freerdp* instance)
 
 	UwacWindowSetFullscreenState(window, NULL, instance->context->settings->Fullscreen);
 	UwacWindowSetTitle(window, title);
+	UwacWindowSetAppId(window, app_id);
 	UwacWindowSetOpaqueRegion(context->window, 0, 0, w, h);
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
