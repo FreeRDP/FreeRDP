@@ -249,16 +249,10 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	win_printer->printer.backend = &win_driver->driver;
 	win_printer->printer.id = win_driver->id_sequence++;
 	if (ConvertFromUnicode(CP_UTF8, 0, name, -1, &win_printer->printer.name, 0, NULL, NULL) < 1)
-	{
-		free(win_printer);
-		return NULL;
-	}
+		goto fail;
 
 	if (!win_printer->printer.name)
-	{
-		free(win_printer);
-		return NULL;
-	}
+		goto fail;
 	win_printer->printer.is_default = is_default;
 
 	win_printer->printer.CreatePrintJob = printer_win_create_printjob;
@@ -267,35 +261,21 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	win_printer->printer.ReleaseRef = printer_win_release_ref_printer;
 
 	if (!OpenPrinter(name, &(win_printer->hPrinter), NULL))
-	{
-		free(win_printer->printer.name);
-		free(win_printer);
-		return NULL;
-	}
+		goto fail;
 
 	/* How many memory should be allocated for printer data */
 	GetPrinter(win_printer->hPrinter, 2, (LPBYTE)prninfo, 0, &needed);
 	if (needed == 0)
-	{
-		free(win_printer->printer.name);
-		free(win_printer);
-		return NULL;
-	}
+		goto fail;
 
 	prninfo = (PRINTER_INFO_2*)GlobalAlloc(GPTR, needed);
 	if (!prninfo)
-	{
-		free(win_printer->printer.name);
-		free(win_printer);
-		return NULL;
-	}
+		goto fail;
 
 	if (!GetPrinter(win_printer->hPrinter, 2, (LPBYTE)prninfo, needed, &needed))
 	{
 		GlobalFree(prninfo);
-		free(win_printer->printer.name);
-		free(win_printer);
-		return NULL;
+		goto fail;
 	}
 
 	if (drivername)
@@ -304,17 +284,17 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	else
 		status = ConvertFromUnicode(CP_UTF8, 0, prninfo->pDriverName, -1,
 		                            &win_printer->printer.driver, 0, NULL, NULL);
+	GlobalFree(prninfo);
 	if (!win_printer->printer.driver || (status <= 0))
-	{
-		GlobalFree(prninfo);
-		free(win_printer->printer.name);
-		free(win_printer);
-		return NULL;
-	}
+		goto fail;
 
 	win_printer->printer.AddRef(&win_printer->printer);
 	win_printer->printer.backend->AddRef(win_printer->printer.backend);
 	return &win_printer->printer;
+
+fail:
+	printer_win_free_printer(&win_printer->printer);
+	return NULL;
 }
 
 static void printer_win_release_enum_printers(rdpPrinter** printers)
