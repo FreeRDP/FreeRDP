@@ -317,6 +317,7 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 	int i;
 	PRINTER_INFO_2* prninfo = NULL;
 	DWORD needed, returned;
+	BOOL haveDefault = FALSE;
 
 	/* find required size for the buffer */
 	EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS, NULL, 2, NULL, 0, &needed,
@@ -353,8 +354,13 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 			printers = NULL;
 			break;
 		}
+		if (current->is_default)
+			haveDefault = TRUE;
 		printers[num_printers++] = current;
 	}
+
+	if (!haveDefault && (returned > 0))
+		printers[0]->is_default = TRUE;
 
 	GlobalFree(prninfo);
 	return printers;
