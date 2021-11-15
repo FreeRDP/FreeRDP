@@ -208,10 +208,15 @@ static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 
 	if (pointer->xorBpp == 1)
 	{
-		BYTE* pdata = (BYTE*)_aligned_malloc(pointer->lengthAndMask + pointer->lengthXorMask, 16);
+		BYTE* pdata = NULL;
 
-		if (!pdata)
-			goto fail;
+		if ((pointer->lengthAndMask > 0) || (pointer->lengthXorMask > 0))
+		{
+			pdata = (BYTE*)_aligned_malloc(pointer->lengthAndMask + pointer->lengthXorMask, 16);
+
+			if (!pdata)
+				goto fail;
+		}
 
 		CopyMemory(pdata, pointer->andMaskData, pointer->lengthAndMask);
 		CopyMemory(pdata + pointer->lengthAndMask, pointer->xorMaskData, pointer->lengthXorMask);
@@ -222,12 +227,17 @@ static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 	else
 	{
 		UINT32 srcFormat;
-		BYTE* pdata = (BYTE*)_aligned_malloc(pointer->lengthAndMask, 16);
+		BYTE* pdata = NULL;
 
-		if (!pdata)
-			goto fail;
+		if (pointer->lengthAndMask > 0)
+		{
+			pdata = (BYTE*)_aligned_malloc(pointer->lengthAndMask, 16);
 
-		flip_bitmap(pointer->andMaskData, pdata, (pointer->width + 7) / 8, pointer->height);
+			if (!pdata)
+				goto fail;
+			flip_bitmap(pointer->andMaskData, pdata, (pointer->width + 7) / 8, pointer->height);
+		}
+
 		info.hbmMask = CreateBitmap(pointer->width, pointer->height, 1, 1, pdata);
 		_aligned_free(pdata);
 
