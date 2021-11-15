@@ -272,21 +272,15 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 	cups_printer->printer.id = cups_driver->id_sequence++;
 	cups_printer->printer.name = _strdup(name);
 	if (!cups_printer->printer.name)
-	{
-		free(cups_printer);
-		return NULL;
-	}
+		goto fail;
 
 	if (driverName)
 		cups_printer->printer.driver = _strdup(driverName);
 	else
 		cups_printer->printer.driver = _strdup("MS Publisher Imagesetter");
 	if (!cups_printer->printer.driver)
-	{
-		free(cups_printer->printer.name);
-		free(cups_printer);
-		return NULL;
-	}
+		goto fail;
+
 	cups_printer->printer.is_default = is_default;
 
 	cups_printer->printer.CreatePrintJob = printer_cups_create_printjob;
@@ -297,6 +291,10 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 	cups_printer->printer.AddRef(&cups_printer->printer);
 	cups_printer->printer.backend->AddRef(cups_printer->printer.backend);
 	return &cups_printer->printer;
+
+fail:
+	printer_cups_free_printer(&cups_printer->printer);
+	return NULL;
 }
 
 static void printer_cups_release_enum_printers(rdpPrinter** printers)
@@ -320,6 +318,7 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	cups_dest_t* dest;
 	int num_dests;
 	int i;
+	BOOL haveDefault = FALSE;
 
 	num_dests = cupsGetDests(&dests);
 	printers = (rdpPrinter**)calloc(num_dests + 1, sizeof(rdpPrinter*));
@@ -341,10 +340,16 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 				break;
 			}
 
+			if (current->is_default)
+				haveDefault = TRUE;
+
 			printers[num_printers++] = current;
 		}
 	}
 	cupsFreeDests(num_dests, dests);
+
+	if (!haveDefault && (num_dests > 0))
+		printers[0]->is_default = TRUE;
 
 	return printers;
 }
