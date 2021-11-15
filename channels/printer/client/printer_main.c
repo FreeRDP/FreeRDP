@@ -1042,10 +1042,11 @@ printer_DeviceServiceEntry
 			goto fail;
 		}
 
-		if ((error = printer_register(pEntryPoints, printer)))
+		error = printer_register(pEntryPoints, printer);
+		printer->ReleaseRef(printer);
+		if (error)
 		{
 			WLog_ERR(TAG, "printer_register failed with error %" PRIu32 "!", error);
-			printer->ReleaseRef(printer);
 			goto fail;
 		}
 	}
