@@ -970,8 +970,12 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		urbdrc->vchannel_status = INIT_CHANNEL_IN;
 		status = pEntryPoints->RegisterPlugin(pEntryPoints, URBDRC_CHANNEL_NAME, &urbdrc->iface);
 
+		/* After we register the plugin free will be taken care of by dynamic channel */
 		if (status != CHANNEL_RC_OK)
+		{
+			free(urbdrc);
 			goto fail;
+		}
 
 		urbdrc->log = WLog_Get(TAG);
 
@@ -989,7 +993,6 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	return urbdrc_load_udevman_addin(&urbdrc->iface, urbdrc->subsystem, args);
 fail:
-	urbdrc_plugin_terminated(&urbdrc->iface);
 	return status;
 }
 
