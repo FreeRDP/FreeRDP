@@ -781,6 +781,7 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback
                                UINT32 RequestField, UINT32 MessageId, IUDEVMAN* udevman,
                                int transferDir)
 {
+	int rc;
 	UINT32 EndpointAddress;
 	UINT32 PipeHandle, TransferFlags, StartFrame, NumberOfPackets;
 	UINT32 ErrorCount, OutputBufferSize;
@@ -807,11 +808,15 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback
 	packetDescriptorData = Stream_Pointer(s);
 	Stream_Seek(s, NumberOfPackets * 12);
 	Stream_Read_UINT32(s, OutputBufferSize);
-	return pdev->isoch_transfer(
+	rc = pdev->isoch_transfer(
 	    pdev, callback, MessageId, RequestId, EndpointAddress, TransferFlags, StartFrame,
 	    ErrorCount, noAck, packetDescriptorData, NumberOfPackets, OutputBufferSize,
 	    (transferDir == USBD_TRANSFER_DIRECTION_OUT) ? Stream_Pointer(s) : NULL,
 	    urb_isoch_transfer_cb, 2000);
+
+	if (rc < 0)
+		return ERROR_INTERNAL_ERROR;
+	return (UINT)rc;
 }
 
 static UINT urb_control_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
@@ -1755,8 +1760,8 @@ static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLB
 	if (error)
 	{
 		WLog_Print(urbdrc->log, WLOG_WARN,
-		           "USB transfer request URB Function %08" PRIx32 " failed with %08" PRIx32,
-		           URB_Function, error);
+		           "USB transfer request URB Function '%s' [0x%08x] failed with %08" PRIx32,
+		           urb_function_string(URB_Function), URB_Function, error);
 	}
 
 	return error;
