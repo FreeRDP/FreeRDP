@@ -1500,6 +1500,11 @@ static void udev_free(IUDEVICE* idev)
 		log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_reset_device", rc);
 	}
 
+	/* HACK: We need to wait until the cancel transfer has been processed by
+	 * poll_libusb_events
+	 */
+	Sleep(100);
+
 	/* release all interface and  attach kernel driver */
 	udev->iface.attach_kernel_driver(idev);
 	ArrayList_Free(udev->request_queue);
