@@ -246,7 +246,7 @@ static BOOL winpr_enable_fips(DWORD flags)
 		WLog_ERR(TAG, "Openssl fips mode not available on openssl versions less than 1.0.1!");
 		return FALSE;
 #else
-		WLog_DBG(TAG, "Ensuring openssl fips mode is ENabled");
+		WLog_DBG(TAG, "Ensuring openssl fips mode is enabled");
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
 		OSSL_PROVIDER_load(NULL, "fips");
@@ -260,10 +260,10 @@ static BOOL winpr_enable_fips(DWORD flags)
 #else
 			if (FIPS_mode_set(1))
 #endif
-				WLog_INFO(TAG, "Openssl fips mode ENabled!");
+				WLog_INFO(TAG, "Openssl fips mode enabled!");
 			else
 			{
-				WLog_ERR(TAG, "Openssl fips mode ENable failed!");
+				WLog_ERR(TAG, "Openssl fips mode enable failed!");
 				return FALSE;
 			}
 		}
