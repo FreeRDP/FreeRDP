@@ -33,6 +33,10 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+#include <openssl/provider.h>
+#endif
+
 #include "../log.h"
 #define TAG WINPR_TAG("utils.ssl")
 
@@ -245,6 +249,7 @@ static BOOL winpr_enable_fips(DWORD flags)
 		WLog_DBG(TAG, "Ensuring openssl fips mode is enabled");
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+		OSSL_PROVIDER_load(NULL, "fips");
 		if (!EVP_default_properties_is_fips_enabled(NULL))
 #else
 		if (FIPS_mode() != 1)
@@ -305,6 +310,13 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 		return FALSE;
 
 #endif
+
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+	/* The legacy provider is needed for MD4. */
+	OSSL_PROVIDER_load(NULL, "legacy");
+	OSSL_PROVIDER_load(NULL, "default");
+#endif
+
 	g_winpr_openssl_initialized_by_winpr = TRUE;
 	return TRUE;
 }
