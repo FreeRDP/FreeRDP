@@ -2680,11 +2680,6 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 			rect->y = r->top;
 			rect->width = r->right - r->left;
 			rect->height = r->bottom - r->top;
-
-			WINPR_ASSERT(rect->x % 64 == 0);
-			WINPR_ASSERT(rect->y % 64 == 0);
-			WINPR_ASSERT(rect->width <= 64);
-			WINPR_ASSERT(rect->height <= 64);
 		}
 	}
 	else
