@@ -306,7 +306,7 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 
 #endif
 	g_winpr_openssl_initialized_by_winpr = TRUE;
-	return winpr_enable_fips(flags);
+	return TRUE;
 }
 
 /* exported functions */
