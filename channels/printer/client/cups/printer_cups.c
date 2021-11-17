@@ -381,7 +381,6 @@ static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 		if (uniq_cups_driver == cups_driver)
 			uniq_cups_driver = NULL;
 		free(cups_driver);
-		cups_driver = NULL;
 	}
 	else
 		cups_driver->references--;
@@ -408,8 +407,9 @@ FREERDP_API rdpPrinterDriver* freerdp_printer_client_subsystem_entry(void)
 		uniq_cups_driver->driver.ReleaseRef = printer_cups_release_ref_driver;
 
 		uniq_cups_driver->id_sequence = 1;
-		uniq_cups_driver->driver.AddRef(&uniq_cups_driver->driver);
 	}
+
+	uniq_cups_driver->driver.AddRef(&uniq_cups_driver->driver);
 
 	return &uniq_cups_driver->driver;
 }
