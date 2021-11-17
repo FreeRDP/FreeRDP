@@ -1191,5 +1191,7 @@ UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t l
 	{
 		seat->pointer_type = 1;
 	}
+	if (seat && !seat->default_cursor)
+		return UWAC_SUCCESS;
 	return set_cursor_image(seat, seat->display->serial);
 }
