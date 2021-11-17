@@ -438,8 +438,9 @@ FREERDP_API rdpPrinterDriver* freerdp_printer_client_subsystem_entry(void)
 		win_driver->driver.ReleaseRef = printer_win_release_ref_driver;
 
 		win_driver->id_sequence = 1;
-		win_driver->driver.AddRef(&win_driver->driver);
 	}
+
+	win_driver->driver.AddRef(&win_driver->driver);
 
 	return &win_driver->driver;
 }
