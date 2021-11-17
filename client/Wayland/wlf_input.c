@@ -473,7 +473,6 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 		return FALSE;
 
 	RdpeiClientContext* rdpei = wlf->rdpei;
-	WINPR_ASSERT(rdpei);
 
 	// Emulate mouse click if touch is not possible, like in login screen
 	if (!rdpei)
@@ -491,6 +490,8 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 
 		return FALSE;
 	}
+
+	WINPR_ASSERT(rdpei);
 
 	WINPR_ASSERT(rdpei->TouchBegin);
 	rdpei->TouchBegin(rdpei, touchId, x, y, &contactId);
