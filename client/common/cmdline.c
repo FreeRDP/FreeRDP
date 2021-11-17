@@ -980,6 +980,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 		settings->DisableFullWindowDrag = TRUE;
 		settings->DisableMenuAnims = TRUE;
 		settings->DisableThemes = TRUE;
+		settings->NetworkAutoDetect = FALSE;
 	}
 	else if (type == CONNECTION_TYPE_BROADBAND_LOW)
 	{
@@ -989,6 +990,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 		settings->DisableFullWindowDrag = TRUE;
 		settings->DisableMenuAnims = TRUE;
 		settings->DisableThemes = FALSE;
+		settings->NetworkAutoDetect = FALSE;
 	}
 	else if (type == CONNECTION_TYPE_SATELLITE)
 	{
@@ -998,6 +1000,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 		settings->DisableFullWindowDrag = TRUE;
 		settings->DisableMenuAnims = TRUE;
 		settings->DisableThemes = FALSE;
+		settings->NetworkAutoDetect = FALSE;
 	}
 	else if (type == CONNECTION_TYPE_BROADBAND_HIGH)
 	{
@@ -1007,6 +1010,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 		settings->DisableFullWindowDrag = TRUE;
 		settings->DisableMenuAnims = TRUE;
 		settings->DisableThemes = FALSE;
+		settings->NetworkAutoDetect = FALSE;
 	}
 	else if (type == CONNECTION_TYPE_WAN)
 	{
@@ -1016,6 +1020,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 		settings->DisableFullWindowDrag = FALSE;
 		settings->DisableMenuAnims = FALSE;
 		settings->DisableThemes = FALSE;
+		settings->NetworkAutoDetect = FALSE;
 	}
 	else if (type == CONNECTION_TYPE_LAN)
 	{
@@ -1025,6 +1030,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 		settings->DisableFullWindowDrag = FALSE;
 		settings->DisableMenuAnims = FALSE;
 		settings->DisableThemes = FALSE;
+		settings->NetworkAutoDetect = FALSE;
 	}
 	else if (type == CONNECTION_TYPE_AUTODETECT)
 	{
