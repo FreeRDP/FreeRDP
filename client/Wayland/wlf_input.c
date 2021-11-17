@@ -422,10 +422,7 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 
 		WINPR_ASSERT(x <= UINT16_MAX);
 		WINPR_ASSERT(y <= UINT16_MAX);
-		if ((flags & ~PTR_FLAGS_DOWN) != 0)
-			return freerdp_input_send_mouse_event(instance->input, flags, (UINT16)x, (UINT16)y);
-
-		return TRUE;
+		return freerdp_input_send_mouse_event(instance->input, flags, (UINT16)x, (UINT16)y);
 	}
 
 	if (!rdpei)
@@ -481,14 +478,12 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 
 		UINT16 flags = 0;
 		flags |= PTR_FLAGS_DOWN;
+		flags |= PTR_FLAGS_MOVE;
 		flags |= PTR_FLAGS_BUTTON1;
 
 		WINPR_ASSERT(x <= UINT16_MAX);
 		WINPR_ASSERT(y <= UINT16_MAX);
-		if ((flags & ~PTR_FLAGS_DOWN) != 0)
-			return freerdp_input_send_mouse_event(instance->input, flags, (UINT16)x, (UINT16)y);
-
-		return FALSE;
+		return freerdp_input_send_mouse_event(instance->input, flags, (UINT16)x, (UINT16)y);
 	}
 
 	WINPR_ASSERT(rdpei);
@@ -541,7 +536,12 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 
 	if (wlf->contacts[i].emulate_mouse == TRUE)
 	{
-		return TRUE;
+		UINT16 flags = 0;
+		flags |= PTR_FLAGS_MOVE;
+
+		WINPR_ASSERT(x <= UINT16_MAX);
+		WINPR_ASSERT(y <= UINT16_MAX);
+		return freerdp_input_send_mouse_event(instance->input, flags, (UINT16)x, (UINT16)y);
 	}
 
 	if (!rdpei)
