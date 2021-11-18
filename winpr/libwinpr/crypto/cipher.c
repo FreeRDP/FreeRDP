@@ -29,9 +29,6 @@
 #include <openssl/rc4.h>
 #include <openssl/des.h>
 #include <openssl/evp.h>
-#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-#include <openssl/provider.h>
-#endif
 #endif
 
 #ifdef WITH_MBEDTLS
@@ -60,11 +57,6 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 
 	if (keylen > INT_MAX)
 		return NULL;
-
-#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-	if (OSSL_PROVIDER_load(NULL, "legacy") == NULL)
-		return NULL;
-#endif
 
 	if (!(ctx = (WINPR_RC4_CTX*)EVP_CIPHER_CTX_new()))
 		return NULL;
