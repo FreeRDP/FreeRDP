@@ -3,6 +3,7 @@
 Noteworthy changes:
 * Fixed smartcard login in case a redirection occurs the pin was lost
 * Backported LibreSSL compatibility patches
+* Backported signal handler backtrace
 
 Fixed issues:
 
