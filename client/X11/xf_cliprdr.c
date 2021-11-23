@@ -2314,6 +2314,7 @@ static int xf_cliprdr_fuse_util_stat(xfClipboard* clipboard, fuse_ino_t ino, str
 	stbuf->st_mode = node->st_mode;
 	stbuf->st_mtime = node->st_mtim.tv_sec;
 	stbuf->st_nlink = 1;
+	stbuf->st_size = node->st_size;
 error:
 	ArrayList_Unlock(clipboard->ino_list);
 	return err;
