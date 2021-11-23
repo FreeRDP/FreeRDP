@@ -70,7 +70,16 @@
 
 static BOOL wf_has_console(void)
 {
-	return _isatty(_fileno(stdin));
+#ifdef WITH_WIN_CONSOLE
+	int file = _fileno(stdin);
+	int tty = _isatty(file);
+#else
+	int file = -1;
+	int tty = 0;
+#endif
+
+	WLog_INFO(TAG, "Detected stdin=%d -> %s mode", file, tty ? "console" : "gui");
+	return tty;
 }
 
 static BOOL wf_end_paint(rdpContext* context)
