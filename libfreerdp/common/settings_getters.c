@@ -17,6 +17,12 @@ static BOOL update_string(char** current, const char* next, size_t next_len, BOO
 		free(*current);
 	}
 
+	if (!next && (next_len > 0))
+	{
+		*current = calloc(next_len, 1);
+		return (*current != NULL);
+	}
+
 	*current = (next ? strndup(next, next_len) : NULL);
 	return !next || (*current != NULL);
 }
