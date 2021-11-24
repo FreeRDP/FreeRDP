@@ -336,8 +336,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Scale remote desktop to window size" },
 	{ "smartcard", COMMAND_LINE_VALUE_OPTIONAL, "<str>[,<str>...]", NULL, NULL, -1, NULL,
 	  "Redirect the smartcard devices containing any of the <str> in their names." },
-	{ "smartcard-logon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
-	  "Activates Smartcard Logon authentication. (EXPERIMENTAL: NLA not supported)" },
+	{ "smartcard-logon", COMMAND_LINE_VALUE_OPTIONAL, "[cert:<path>,key:<key>]", NULL, NULL, -1,
+	  NULL,
+	  "Activates Smartcard (optional certificate) Logon authentication. (EXPERIMENTAL: NLA not "
+	  "supported)" },
 	{ "sound", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>,][latency:<"
 	  "latency>,][quality:<quality>]",
