@@ -329,7 +329,7 @@ static UINT audin_mac_parse_addin_args(AudinMacDevice *device, const ADDIN_ARGV 
 	int status;
 	char *str_num, *eptr;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A *arg;
+	const COMMAND_LINE_ARGUMENT_A *arg;
 	COMMAND_LINE_ARGUMENT_A audin_mac_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                           NULL, NULL, -1, NULL, "audio device name" },
 		                                         { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
