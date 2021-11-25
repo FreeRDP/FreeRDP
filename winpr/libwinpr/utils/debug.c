@@ -45,7 +45,10 @@
 #include <winpr/wlog.h>
 #include <winpr/debug.h>
 
+#ifndef MIN
 #define MIN(a, b) (a) < (b) ? (a) : (b)
+#endif
+
 #define TAG "com.winpr.utils.debug"
 #define LOGT(...)                                           \
 	do                                                      \
