@@ -478,10 +478,6 @@ if(APPLE)
 		endif()
 		set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_IOS_EXTERNAL_SSL_PATH})
 		set_property(GLOBAL PROPERTY XCODE_ATTRIBUTE_SKIP_INSTALL YES)
-	else(IOS)
-		if(NOT DEFINED CMAKE_OSX_ARCHITECTURES)
-			set(CMAKE_OSX_ARCHITECTURES i386 x86_64)
-		endif()
 	endif(IOS)
 
 # Temporarily disabled, causes the cmake script to be reexecuted, causing the compilation to fail.
