@@ -167,7 +167,7 @@ typedef void* PVOID, *LPVOID, *PVOID64, *LPVOID64;
 typedef __int32 BOOL;
 #else /* __APPLE__ */
 /* ensure compatibility with objc libraries */
-#if (TARGET_OS_IPHONE && __LP64__)  ||  TARGET_OS_WATCH
+#if (defined(TARGET_OS_IPHONE) && defined(__LP64__))  || defined(TARGET_OS_WATCH)
 typedef bool BOOL;
 #else
 typedef signed char BOOL;
