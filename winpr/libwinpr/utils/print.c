@@ -33,7 +33,9 @@
 
 #include "../log.h"
 
+#ifndef MIN
 #define MIN(a, b) (a) < (b) ? (a) : (b)
+#endif
 
 void winpr_HexDump(const char* tag, UINT32 level, const BYTE* data, size_t length)
 {
