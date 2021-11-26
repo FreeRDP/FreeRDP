@@ -303,7 +303,7 @@ typedef struct _LUID
 } LUID, *PLUID;
 
 typedef GUID IID;
-typedef IID* REFIID;
+typedef IID* REF_IID;
 
 #ifdef UNICODE
 #define _T(x)	L ## x

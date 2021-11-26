@@ -182,7 +182,7 @@ static BOOL try_open_clipboard(HWND hwnd)
  * IStream
  */
 
-static HRESULT STDMETHODCALLTYPE CliprdrStream_QueryInterface(IStream* This, REFIID riid,
+static HRESULT STDMETHODCALLTYPE CliprdrStream_QueryInterface(IStream* This, REF_IID riid,
                                                               void** ppvObject)
 {
 	if (IsEqualIID(riid, &IID_IStream) || IsEqualIID(riid, &IID_IUnknown))
@@ -514,7 +514,7 @@ static LONG cliprdr_lookup_format(CliprdrDataObject* instance, FORMATETC* pForma
 	return -1;
 }
 
-static HRESULT STDMETHODCALLTYPE CliprdrDataObject_QueryInterface(IDataObject* This, REFIID riid,
+static HRESULT STDMETHODCALLTYPE CliprdrDataObject_QueryInterface(IDataObject* This, REF_IID riid,
                                                                   void** ppvObject)
 {
 	(void)This;
@@ -880,7 +880,7 @@ static void cliprdr_format_deep_copy(FORMATETC* dest, FORMATETC* source)
 }
 
 static HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_QueryInterface(IEnumFORMATETC* This,
-                                                                     REFIID riid, void** ppvObject)
+                                                                     REF_IID riid, void** ppvObject)
 {
 	(void)This;
 

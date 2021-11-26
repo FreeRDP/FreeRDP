@@ -184,7 +184,7 @@ const char* GetRDPSessionEventString(DISPID id)
 
 static HRESULT STDMETHODCALLTYPE
 Shadow_IRDPSessionEvents_QueryInterface(__RPC__in _IRDPSessionEvents* This,
-                                        /* [in] */ __RPC__in REFIID riid,
+                                        /* [in] */ __RPC__in REF_IID riid,
                                         /* [annotation][iid_is][out] */
                                         _COM_Outptr_ void** ppvObject)
 {
@@ -239,7 +239,7 @@ Shadow_IRDPSessionEvents_GetTypeInfo(__RPC__in _IRDPSessionEvents* This,
 
 static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_GetIDsOfNames(
     __RPC__in _IRDPSessionEvents* This,
-    /* [in] */ __RPC__in REFIID riid,
+    /* [in] */ __RPC__in REF_IID riid,
     /* [size_is][in] */ __RPC__in_ecount_full(cNames) LPOLESTR* rgszNames,
     /* [range][in] */ __RPC__in_range(0, 16384) UINT cNames,
     /* [in] */ LCID lcid,
@@ -253,7 +253,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(_IRDPSessionEve
                                                                  /* [annotation][in] */
                                                                  _In_ DISPID dispIdMember,
                                                                  /* [annotation][in] */
-                                                                 _In_ REFIID riid,
+                                                                 _In_ REF_IID riid,
                                                                  /* [annotation][in] */
                                                                  _In_ LCID lcid,
                                                                  /* [annotation][in] */
