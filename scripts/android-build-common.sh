@@ -248,7 +248,7 @@ function common_update {
 
 	if [[ ! -f "$TARFILE" ]];
 	then
-		common_run wget -O "$TARFILE" "$SCM_URL/archive/$SCM_TAG.tar.gz"
+		common_run wget -O "$TARFILE" "$SCM_URL/$SCM_TAG.tar.gz"
 	fi
 
 	if [[ -d $BUILD_SRC ]];

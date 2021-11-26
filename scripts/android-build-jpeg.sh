@@ -1,5 +1,5 @@
 #!/bin/bash
-SCM_URL=https://github.com/akallabeth/jpeg8d
+SCM_URL=https://github.com/akallabeth/jpeg8d/archive
 SCM_TAG=master
 
 source $(dirname "${BASH_SOURCE[0]}")/android-build-common.sh
@@ -38,3 +38,4 @@ common_update $SCM_URL $SCM_TAG $BUILD_SRC
 build
 
 common_copy $BUILD_SRC $BUILD_DST
+common_copy $BUILD_SRC $BUILD_DST/"${BUILD_ARCH}"
