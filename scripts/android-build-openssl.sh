@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCM_URL=https://github.com/openssl/openssl
+SCM_URL=https://www.openssl.org/source
 SCM_TAG=master
 
 COMPILER=4.9
