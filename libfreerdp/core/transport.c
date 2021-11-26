@@ -593,6 +593,9 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 		int r = (int)((tr > INT_MAX) ? INT_MAX : tr);
 		int status = BIO_read(transport->frontBio, data + read, r);
 
+		if (freerdp_shall_disconnect(context->instance))
+			return -1;
+
 		if (status <= 0)
 		{
 			if (!transport->frontBio || !BIO_should_retry(transport->frontBio))
