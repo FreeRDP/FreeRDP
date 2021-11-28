@@ -292,6 +292,7 @@ static BOOL android_register_pointer(rdpGraphics* graphics)
 	if (!graphics)
 		return FALSE;
 
+	memset(&pointer, 0, sizeof(rdpPointer));
 	pointer.size = sizeof(pointer);
 	pointer.New = android_Pointer_New;
 	pointer.Free = android_Pointer_Free;
