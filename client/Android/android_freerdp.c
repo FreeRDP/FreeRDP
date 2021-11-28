@@ -288,7 +288,7 @@ static BOOL android_Pointer_SetDefault(rdpContext* context)
 
 static BOOL android_register_pointer(rdpGraphics* graphics)
 {
-	rdpPointer pointer;
+	rdpPointer pointer = { 0 };
 
 	if (!graphics)
 		return FALSE;
