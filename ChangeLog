@@ -4,8 +4,10 @@ Noteworthy changes:
 * Fixed smartcard login in case a redirection occurs the pin was lost
 * Backported LibreSSL compatibility patches
 * Backported signal handler backtrace
+* Backported OpenSSL 3.0 support
 
 Fixed issues:
+* Backport #7466: Android android_register_pointer missing initialization
 
 Important notes:
 
