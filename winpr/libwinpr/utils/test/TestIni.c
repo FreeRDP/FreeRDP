@@ -157,5 +157,5 @@ fail:
 	free(keyNames);
 	free(sectionNames);
 	IniFile_Free(ini);
-	return 0;
+	return rc;
 }

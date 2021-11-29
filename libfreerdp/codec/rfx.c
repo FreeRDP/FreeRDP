@@ -899,114 +899,118 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	/* tiles */
 	close_cnt = 0;
-	rc = TRUE;
+	rc = FALSE;
 
-	for (i = 0; i < message->numTiles; i++)
+	if (Stream_GetRemainingLength(s) >= tilesDataSize)
 	{
-		wStream subBuffer;
-		wStream* sub;
+		rc = TRUE;
+		for (i = 0; i < message->numTiles; i++)
+		{
+			wStream subBuffer;
+			wStream* sub;
 
-		if (!(tile = (RFX_TILE*)ObjectPool_Take(context->priv->TilePool)))
-		{
-			WLog_ERR(TAG, "RfxMessageTileSet failed to get tile from object pool");
-			rc = FALSE;
-			break;
-		}
-
-		message->tiles[i] = tile;
-
-		/* RFX_TILE */
-		if (Stream_GetRemainingLength(s) < 6)
-		{
-			WLog_ERR(TAG, "RfxMessageTileSet packet too small to read tile %d/%" PRIu16 "", i,
-			         message->numTiles);
-			rc = FALSE;
-			break;
-		}
-
-		sub = Stream_StaticInit(&subBuffer, Stream_Pointer(s), Stream_GetRemainingLength(s));
-		Stream_Read_UINT16(sub,
-		                   blockType); /* blockType (2 bytes), must be set to CBT_TILE (0xCAC3) */
-		Stream_Read_UINT32(sub, blockLen); /* blockLen (4 bytes) */
-
-		if (!Stream_SafeSeek(s, blockLen))
-		{
-			rc = FALSE;
-			break;
-		}
-		if ((blockLen < 6 + 13) || (Stream_GetRemainingLength(sub) < blockLen - 6))
-		{
-			WLog_ERR(TAG,
-			         "RfxMessageTileSet not enough bytes to read tile %d/%" PRIu16
-			         " with blocklen=%" PRIu32 "",
-			         i, message->numTiles, blockLen);
-			rc = FALSE;
-			break;
-		}
-
-		if (blockType != CBT_TILE)
-		{
-			WLog_ERR(TAG, "unknown block type 0x%" PRIX32 ", expected CBT_TILE (0xCAC3).",
-			         blockType);
-			rc = FALSE;
-			break;
-		}
-
-		Stream_Read_UINT8(sub, tile->quantIdxY);  /* quantIdxY (1 byte) */
-		Stream_Read_UINT8(sub, tile->quantIdxCb); /* quantIdxCb (1 byte) */
-		Stream_Read_UINT8(sub, tile->quantIdxCr); /* quantIdxCr (1 byte) */
-		Stream_Read_UINT16(sub, tile->xIdx);      /* xIdx (2 bytes) */
-		Stream_Read_UINT16(sub, tile->yIdx);      /* yIdx (2 bytes) */
-		Stream_Read_UINT16(sub, tile->YLen);      /* YLen (2 bytes) */
-		Stream_Read_UINT16(sub, tile->CbLen);     /* CbLen (2 bytes) */
-		Stream_Read_UINT16(sub, tile->CrLen);     /* CrLen (2 bytes) */
-		Stream_GetPointer(sub, tile->YData);
-		if (!Stream_SafeSeek(sub, tile->YLen))
-		{
-			rc = FALSE;
-			break;
-		}
-		Stream_GetPointer(sub, tile->CbData);
-		if (!Stream_SafeSeek(sub, tile->CbLen))
-		{
-			rc = FALSE;
-			break;
-		}
-		Stream_GetPointer(sub, tile->CrData);
-		if (!Stream_SafeSeek(sub, tile->CrLen))
-		{
-			rc = FALSE;
-			break;
-		}
-		tile->x = tile->xIdx * 64;
-		tile->y = tile->yIdx * 64;
-
-		if (context->priv->UseThreads)
-		{
-			if (!params)
+			if (!(tile = (RFX_TILE*)ObjectPool_Take(context->priv->TilePool)))
 			{
+				WLog_ERR(TAG, "RfxMessageTileSet failed to get tile from object pool");
 				rc = FALSE;
 				break;
 			}
 
-			params[i].context = context;
-			params[i].tile = message->tiles[i];
+			message->tiles[i] = tile;
 
-			if (!(work_objects[i] =
-			          CreateThreadpoolWork(rfx_process_message_tile_work_callback,
-			                               (void*)&params[i], &context->priv->ThreadPoolEnv)))
+			/* RFX_TILE */
+			if (Stream_GetRemainingLength(s) < 6)
 			{
-				WLog_ERR(TAG, "CreateThreadpoolWork failed.");
+				WLog_ERR(TAG, "RfxMessageTileSet packet too small to read tile %d/%" PRIu16 "", i,
+				         message->numTiles);
 				rc = FALSE;
 				break;
 			}
 
-			SubmitThreadpoolWork(work_objects[i]);
-			close_cnt = i + 1;
-		}
-		else
-		{
-			rfx_decode_rgb(context, tile, tile->data, 64 * 4);
+			sub = Stream_StaticInit(&subBuffer, Stream_Pointer(s), Stream_GetRemainingLength(s));
+			Stream_Read_UINT16(
+			    sub, blockType); /* blockType (2 bytes), must be set to CBT_TILE (0xCAC3) */
+			Stream_Read_UINT32(sub, blockLen); /* blockLen (4 bytes) */
+
+			if (!Stream_SafeSeek(s, blockLen))
+			{
+				rc = FALSE;
+				break;
+			}
+			if ((blockLen < 6 + 13) || (Stream_GetRemainingLength(sub) < blockLen - 6))
+			{
+				WLog_ERR(TAG,
+				         "RfxMessageTileSet not enough bytes to read tile %d/%" PRIu16
+				         " with blocklen=%" PRIu32 "",
+				         i, message->numTiles, blockLen);
+				rc = FALSE;
+				break;
+			}
+
+			if (blockType != CBT_TILE)
+			{
+				WLog_ERR(TAG, "unknown block type 0x%" PRIX32 ", expected CBT_TILE (0xCAC3).",
+				         blockType);
+				rc = FALSE;
+				break;
+			}
+
+			Stream_Read_UINT8(sub, tile->quantIdxY);  /* quantIdxY (1 byte) */
+			Stream_Read_UINT8(sub, tile->quantIdxCb); /* quantIdxCb (1 byte) */
+			Stream_Read_UINT8(sub, tile->quantIdxCr); /* quantIdxCr (1 byte) */
+			Stream_Read_UINT16(sub, tile->xIdx);      /* xIdx (2 bytes) */
+			Stream_Read_UINT16(sub, tile->yIdx);      /* yIdx (2 bytes) */
+			Stream_Read_UINT16(sub, tile->YLen);      /* YLen (2 bytes) */
+			Stream_Read_UINT16(sub, tile->CbLen);     /* CbLen (2 bytes) */
+			Stream_Read_UINT16(sub, tile->CrLen);     /* CrLen (2 bytes) */
+			Stream_GetPointer(sub, tile->YData);
+			if (!Stream_SafeSeek(sub, tile->YLen))
+			{
+				rc = FALSE;
+				break;
+			}
+			Stream_GetPointer(sub, tile->CbData);
+			if (!Stream_SafeSeek(sub, tile->CbLen))
+			{
+				rc = FALSE;
+				break;
+			}
+			Stream_GetPointer(sub, tile->CrData);
+			if (!Stream_SafeSeek(sub, tile->CrLen))
+			{
+				rc = FALSE;
+				break;
+			}
+			tile->x = tile->xIdx * 64;
+			tile->y = tile->yIdx * 64;
+
+			if (context->priv->UseThreads)
+			{
+				if (!params)
+				{
+					rc = FALSE;
+					break;
+				}
+
+				params[i].context = context;
+				params[i].tile = message->tiles[i];
+
+				if (!(work_objects[i] =
+				          CreateThreadpoolWork(rfx_process_message_tile_work_callback,
+				                               (void*)&params[i], &context->priv->ThreadPoolEnv)))
+				{
+					WLog_ERR(TAG, "CreateThreadpoolWork failed.");
+					rc = FALSE;
+					break;
+				}
+
+				SubmitThreadpoolWork(work_objects[i]);
+				close_cnt = i + 1;
+			}
+			else
+			{
+				rfx_decode_rgb(context, tile, tile->data, 64 * 4);
+			}
 		}
 	}
 

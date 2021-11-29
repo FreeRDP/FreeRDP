@@ -1111,7 +1111,6 @@ BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channelId)
 
 BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId)
 {
-	BOOL status;
 	UINT16 length;
 	BYTE result;
 	UINT16 initiator;
@@ -1121,7 +1120,6 @@ BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId)
 	if (!mcs || !s || !channelId)
 		return FALSE;
 
-	status = TRUE;
 	MCSPDU = DomainMCSPDU_ChannelJoinConfirm;
 	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, &length))
 		return FALSE;
