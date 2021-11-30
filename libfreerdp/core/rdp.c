@@ -360,6 +360,9 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 		}
 		else
 			WLog_ERR(TAG, "%s missing context=%p", __FUNCTION__, context);
+
+		/* Ensure the connection is terminated */
+		freerdp_abort_connect(context->instance);
 	}
 	else
 	{
