@@ -591,6 +591,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 		{
 			status = ntlm_read_ChallengeMessage(context, input_buffer);
 
+			if (status != SEC_I_CONTINUE_NEEDED)
+				return status;
+
 			if (!pOutput)
 				return SEC_E_INVALID_TOKEN;
 
