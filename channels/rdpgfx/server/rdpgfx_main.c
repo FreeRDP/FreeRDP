@@ -1393,12 +1393,10 @@ static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
 	RdpgfxServerContext* context = (RdpgfxServerContext*)arg;
 	RdpgfxServerPrivate* priv = context->priv;
 	DWORD status;
-	DWORD nCount;
-	void* buffer;
-	HANDLE events[8];
+	DWORD nCount = 0;
+	HANDLE events[8] = { 0 };
 	UINT error = CHANNEL_RC_OK;
-	buffer = NULL;
-	nCount = 0;
+
 	events[nCount++] = priv->stopEvent;
 	events[nCount++] = priv->channelEvent;
 
