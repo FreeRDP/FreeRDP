@@ -484,7 +484,7 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			break;
 	}
 
-	return CHANNEL_RC_OK;
+	return error;
 }
 
 /**
