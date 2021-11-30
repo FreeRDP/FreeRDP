@@ -296,6 +296,7 @@ BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s)
 {
 	BYTE flags;
 	size_t count = 0;
+	size_t total = 0;
 	UINT16 cache, x;
 
 	WINPR_ASSERT(s);
@@ -311,10 +312,28 @@ BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s)
 	}
 
 	/* Skip totalEntriesCacheX */
-	if (!Stream_SafeSeek(s, 10))
+	for (x = 0; x < 5; x++)
+	{
+		UINT16 tmp;
+		Stream_Read_UINT16(s, tmp);
+		total += tmp;
+	}
+
+	if (total > 262144)
+	{
+		WLog_ERR(TAG,
+		         "TS_BITMAPCACHE_PERSISTENT_LIST_PDU::totalEntriesCacheX exceeds 262144 entries");
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, flags);
+	if ((flags & ~(PERSIST_LAST_PDU | PERSIST_FIRST_PDU)) != 0)
+	{
+		WLog_ERR(TAG,
+		         "TS_BITMAPCACHE_PERSISTENT_LIST_PDU::bBitMask has an invalid value of 0x%02" PRIx8,
+		         flags);
+		return FALSE;
+	}
 
 	/* Skip padding */
 	if (!Stream_SafeSeek(s, 3))
