@@ -1565,6 +1565,9 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 					{
 						Stream_Read_UINT32(s, deviceId);
 						Stream_Read_UINT32(s, status);
+
+						if (status != 0)
+							devman_unregister_device(rdpdr->devman, (void*)((size_t)deviceId));
 						error = CHANNEL_RC_OK;
 					}
 
