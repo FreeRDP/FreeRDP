@@ -255,12 +255,20 @@ static UINT remdesk_recv_ctl_version_info_pdu(RemdeskServerContext* context, wSt
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+		WLog_ERR(TAG, "REMOTEDESKTOP_CTL_VERSIONINFO_PACKET missing data, got %" PRIuz,
+		         Stream_GetRemainingLength(s));
 		return ERROR_INVALID_DATA;
 	}
 
 	Stream_Read_UINT32(s, versionMajor); /* versionMajor (4 bytes) */
 	Stream_Read_UINT32(s, versionMinor); /* versionMinor (4 bytes) */
+	if ((versionMajor != 1) || (versionMinor != 2))
+	{
+		WLog_ERR(TAG, "REMOTEDESKTOP_CTL_VERSIONINFO_PACKET invalid version %" PRIu32 ".%" PRIu32,
+		         versionMajor, versionMinor);
+		return ERROR_INVALID_DATA;
+	}
+
 	return CHANNEL_RC_OK;
 }
 
