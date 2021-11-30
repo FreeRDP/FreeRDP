@@ -847,14 +847,6 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 			return FALSE;
 	}
 
-	/* Skip over optional RDP_NEG_CORRELATION_INFO
-	 *  see MS-RDPBCGR 2.2.1.1.2 RDP Correlation Info (RDP_NEG_CORRELATION_INFO)
-	 */
-	if (Stream_GetRemainingLength(s) >= 36)
-	{
-		Stream_Seek(s, 36);
-	}
-
 	return tpkt_ensure_stream_consumed(s, length);
 }
 
@@ -986,6 +978,69 @@ fail:
  * @param s
  */
 
+static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
+{
+	UINT8 type, flags, x;
+	UINT16 length;
+	BYTE correlationId[16] = { 0 };
+
+	if (Stream_GetRemainingLength(s) < 36)
+	{
+		WLog_ERR(TAG, "RDP_NEG_REQ::flags CORRELATION_INFO_PRESENT but data is missing");
+		return FALSE;
+	}
+
+	Stream_Read_UINT8(s, type);
+	if (type != TYPE_RDP_CORRELATION_INFO)
+	{
+		WLog_ERR(TAG, "(RDP_NEG_CORRELATION_INFO::type != TYPE_RDP_CORRELATION_INFO");
+		return FALSE;
+	}
+	Stream_Read_UINT8(s, flags);
+	if (flags != 0)
+	{
+		WLog_ERR(TAG, "(RDP_NEG_CORRELATION_INFO::flags != 0");
+		return FALSE;
+	}
+	Stream_Read_UINT16(s, length);
+	if (length != 36)
+	{
+		WLog_ERR(TAG, "(RDP_NEG_CORRELATION_INFO::length != 36");
+		return FALSE;
+	}
+
+	Stream_Read(s, correlationId, sizeof(correlationId));
+	if ((correlationId[0] == 0x00) || (correlationId[0] == 0xF4))
+	{
+		WLog_ERR(TAG, "(RDP_NEG_CORRELATION_INFO::correlationId[0] has invalid value 0x%02" PRIx8,
+		         correlationId[0]);
+		return FALSE;
+	}
+	for (x = 0; x < ARRAYSIZE(correlationId); x++)
+	{
+		if (correlationId[x] == 0x0D)
+		{
+			WLog_ERR(TAG,
+			         "(RDP_NEG_CORRELATION_INFO::correlationId[%" PRIu8
+			         "] has invalid value 0x%02" PRIx8,
+			         x, correlationId[x]);
+			return FALSE;
+		}
+	}
+	Stream_Seek(s, 16); /* skip reserved bytes */
+
+	WLog_INFO(TAG,
+	          "RDP_NEG_CORRELATION_INFO::correlationId = { %02 " PRIx8 ", %02" PRIx8 ", %02" PRIx8
+	          ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8
+	          ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8
+	          ", %02" PRIx8 " }",
+	          correlationId[0], correlationId[1], correlationId[2], correlationId[3],
+	          correlationId[4], correlationId[5], correlationId[6], correlationId[7],
+	          correlationId[8], correlationId[9], correlationId[10], correlationId[11],
+	          correlationId[12], correlationId[13], correlationId[14], correlationId[15]);
+	return TRUE;
+}
+
 BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 {
 	BYTE flags;
@@ -997,8 +1052,36 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 	if (Stream_GetRemainingLength(s) < 7)
 		return FALSE;
 	Stream_Read_UINT8(s, flags);
+	if ((flags & ~(RESTRICTED_ADMIN_MODE_REQUIRED | REDIRECTED_AUTHENTICATION_MODE_REQUIRED |
+	               CORRELATION_INFO_PRESENT)) != 0)
+	{
+		WLog_ERR(TAG, "RDP_NEG_REQ::flags invalid value 0x%02" PRIx8, flags);
+		return FALSE;
+	}
+	if (flags & RESTRICTED_ADMIN_MODE_REQUIRED)
+		WLog_INFO(TAG, "RDP_NEG_REQ::flags RESTRICTED_ADMIN_MODE_REQUIRED");
+
+	if (flags & REDIRECTED_AUTHENTICATION_MODE_REQUIRED)
+	{
+		WLog_ERR(TAG, "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED: FreeRDP does "
+		              "not support Remote Credential Guard");
+		return FALSE;
+	}
+
 	Stream_Read_UINT16(s, length);
+	if (length != 8)
+	{
+		WLog_ERR(TAG, "RDP_NEG_REQ::length != 8");
+		return FALSE;
+	}
 	Stream_Read_UINT32(s, nego->RequestedProtocols);
+
+	if (flags & CORRELATION_INFO_PRESENT)
+	{
+		if (!nego_process_correlation_info(nego, s))
+			return FALSE;
+	}
+
 	WLog_DBG(TAG, "RDP_NEG_REQ: RequestedProtocol: 0x%08" PRIX32 "", nego->RequestedProtocols);
 	nego_set_state(nego, NEGO_STATE_FINAL);
 	return TRUE;
@@ -1009,24 +1092,63 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
  * @param nego
  * @param s
  */
+static void pipecat(char* buffer, BOOL* first, const char* what)
+{
+	WINPR_ASSERT(first);
+
+	if (!*first)
+		strcat(buffer, "|");
+	*first = FALSE;
+	strcat(buffer, what);
+}
+
+static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
+{
+	BOOL first = TRUE;
+	static char buffer[1024] = { 0 };
+
+	_snprintf(buffer, ARRAYSIZE(buffer), "[0x%02" PRIx32 "] ", flags);
+	if (flags & EXTENDED_CLIENT_DATA_SUPPORTED)
+		pipecat(buffer, &first, "EXTENDED_CLIENT_DATA_SUPPORTED");
+	if (flags & DYNVC_GFX_PROTOCOL_SUPPORTED)
+		pipecat(buffer, &first, "DYNVC_GFX_PROTOCOL_SUPPORTED");
+	if (flags & RDP_NEGRSP_RESERVED)
+		pipecat(buffer, &first, "RDP_NEGRSP_RESERVED");
+	if (flags & RESTRICTED_ADMIN_MODE_SUPPORTED)
+		pipecat(buffer, &first, "RESTRICTED_ADMIN_MODE_SUPPORTED");
+	if (flags & REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)
+		pipecat(buffer, &first, "REDIRECTED_AUTHENTICATION_MODE_SUPPORTED");
+	if ((flags &
+	     ~(EXTENDED_CLIENT_DATA_SUPPORTED | DYNVC_GFX_PROTOCOL_SUPPORTED | RDP_NEGRSP_RESERVED |
+	       RESTRICTED_ADMIN_MODE_SUPPORTED | REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)))
+		pipecat(buffer, &first, "UNKNOWN");
+	return buffer;
+}
 
 BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 {
 	UINT16 length;
-	WLog_DBG(TAG, "RDP_NEG_RSP");
 
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
 
 	if (Stream_GetRemainingLength(s) < 7)
 	{
-		WLog_ERR(TAG, "Invalid RDP_NEG_RSP");
+		WLog_ERR(TAG, "RDP_NEG_RSP short data %" PRIuz, Stream_GetRemainingLength(s));
 		nego_set_state(nego, NEGO_STATE_FAIL);
 		return FALSE;
 	}
 
 	Stream_Read_UINT8(s, nego->flags);
+	WLog_INFO(TAG, "RDP_NEG_RSP::flags = { %s }", nego_rdp_neg_rsp_flags_str(nego->flags));
+
 	Stream_Read_UINT16(s, length);
+	if (length != 8)
+	{
+		WLog_ERR(TAG, "RDP_NEG_RSP::length != 8");
+		nego_set_state(nego, NEGO_STATE_FAIL);
+		return FALSE;
+	}
 	Stream_Read_UINT32(s, nego->SelectedProtocol);
 	nego_set_state(nego, NEGO_STATE_FINAL);
 	return TRUE;
@@ -1049,9 +1171,22 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 
 	WLog_DBG(TAG, "RDP_NEG_FAILURE");
 	if (Stream_GetRemainingLength(s) < 7)
+	{
+		WLog_ERR(TAG, "RDP_NEG_FAILURE short data %" PRIuz, Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 	Stream_Read_UINT8(s, flags);
+	if (flags != 0)
+	{
+		WLog_WARN(TAG, "RDP_NEG_FAILURE::flags = 0x02" PRIx8, flags);
+		return FALSE;
+	}
 	Stream_Read_UINT16(s, length);
+	if (length != 8)
+	{
+		WLog_ERR(TAG, "RDP_NEG_FAILURE::length != 8");
+		return FALSE;
+	}
 	Stream_Read_UINT32(s, failureCode);
 
 	switch (failureCode)
