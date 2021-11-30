@@ -38,8 +38,6 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.NTLM")
 
-static const char LM_MAGIC[] = "KGS!@#$%";
-
 static char NTLM_CLIENT_SIGN_MAGIC[] = "session key to client-to-server signing key magic constant";
 static char NTLM_SERVER_SIGN_MAGIC[] = "session key to server-to-client signing key magic constant";
 static char NTLM_CLIENT_SEAL_MAGIC[] = "session key to client-to-server sealing key magic constant";
