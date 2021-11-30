@@ -71,6 +71,8 @@ static UINT irp_complete(IRP* irp)
 	Stream_SetPosition(irp->output, pos);
 
 	error = rdpdr_send(rdpdr, irp->output);
+	if (error)
+		return error;
 	irp->output = NULL;
 
 	return irp_free(irp);
