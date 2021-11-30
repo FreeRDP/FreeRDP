@@ -858,7 +858,7 @@ static BOOL hotplug_delete_foreach(ULONG_PTR key, void* element, void* data)
 
 	rc = ConvertFromUnicode(CP_UTF8, 0, device_ext->path, -1, &path, 0, NULL, NULL);
 
-	if (!path)
+	if ((rc <= 0) || !path)
 		return FALSE;
 
 	/* not plugable device */
@@ -1464,9 +1464,6 @@ static BOOL device_init(ULONG_PTR key, void* element, void* data)
 
 static UINT rdpdr_process_init(rdpdrPlugin* rdpdr)
 {
-	ULONG_PTR* pKeys = NULL;
-	pKeys = NULL;
-
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(rdpdr->devman);
 

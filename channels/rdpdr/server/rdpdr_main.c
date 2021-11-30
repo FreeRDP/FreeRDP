@@ -300,6 +300,30 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 	Stream_Read_UINT32(s, extraFlags1); /* extraFlags1 (4 bytes) */
 	Stream_Seek_UINT32(s); /* extraFlags2 (4 bytes), must be set to zero, reserved for future use */
 
+	if (VersionMajor != RDPDR_MAJOR_RDP_VERSION)
+	{
+		WLog_ERR(TAG, "unsupported RDPDR version %" PRIu16 ".%" PRIu16, VersionMajor, VersionMinor);
+		return ERROR_INVALID_DATA;
+	}
+
+	switch (VersionMinor)
+	{
+		case RDPDR_MINOR_RDP_VERSION_13:
+			break;
+		case RDPDR_MINOR_RDP_VERSION_6_X:
+			break;
+		case RDPDR_MINOR_RDP_VERSION_5_2:
+			break;
+		case RDPDR_MINOR_RDP_VERSION_5_1:
+			break;
+		case RDPDR_MINOR_RDP_VERSION_5_0:
+			break;
+		default:
+			WLog_WARN(TAG, "unsupported RDPDR minor version %" PRIu16 ".%" PRIu16, VersionMajor,
+			          VersionMinor);
+			break;
+	}
+
 	if (header->Version == GENERAL_CAPABILITY_VERSION_02)
 	{
 		if (Stream_GetRemainingLength(s) < 4)
