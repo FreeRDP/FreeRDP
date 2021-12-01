@@ -35,6 +35,10 @@
 
 #define TAG FREERDP_TAG("core.info")
 
+#define logonInfoV2Size (2 + 4 + 4 + 4 + 4)
+#define logonInfoV2ReservedSize 558
+#define logonInfoV2TotalSize (logonInfoV2Size + logonInfoV2ReservedSize)
+
 static const char* const INFO_TYPE_LOGON_STRINGS[4] = { "Logon Info V1", "Logon Info V2",
 	                                                    "Logon Plain Notify",
 	                                                    "Logon Extended Info" };
@@ -1005,26 +1009,25 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	UINT32 Size;
 	UINT32 cbDomain;
 	UINT32 cbUserName;
-	const size_t logonInfoV2Size = 576;
 
 	WINPR_UNUSED(rdp);
 	ZeroMemory(info, sizeof(*info));
 
-	if (Stream_GetRemainingLength(s) < logonInfoV2Size)
+	if (Stream_GetRemainingLength(s) < logonInfoV2TotalSize)
 		return FALSE;
 
 	Stream_Read_UINT16(s, Version);         /* Version (2 bytes) */
 	if (Version != SAVE_SESSION_PDU_VERSION_ONE)
 		return FALSE;
 
-	Stream_Read_UINT32(s, Size);            /* Size (4 bytes) */
-	if (Size != 18)
+	Stream_Read_UINT32(s, Size); /* Size (4 bytes) */
+	if (Size != logonInfoV2Size)
 		return FALSE;
 
 	Stream_Read_UINT32(s, info->sessionId); /* SessionId (4 bytes) */
 	Stream_Read_UINT32(s, cbDomain);        /* cbDomain (4 bytes) */
 	Stream_Read_UINT32(s, cbUserName);      /* cbUserName (4 bytes) */
-	Stream_Seek(s, 558);                    /* pad (558 bytes) */
+	Stream_Seek(s, logonInfoV2ReservedSize); /* pad (558 bytes) */
 
 	/* cbDomain is the size in bytes of the Unicode character data in the Domain field.
 	 * The size of the mandatory null terminator is include in this value.
@@ -1323,16 +1326,15 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 
 static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 {
-	UINT32 Size = 2 + 4 + 4 + 4 + 4 + 558;
 	size_t domainLen, usernameLen;
 	int len;
 	WCHAR* wString = NULL;
 
-	if (!Stream_EnsureRemainingCapacity(s, Size))
+	if (!Stream_EnsureRemainingCapacity(s, logonInfoV2TotalSize))
 		return FALSE;
 
 	Stream_Write_UINT16(s, SAVE_SESSION_PDU_VERSION_ONE);
-	Stream_Write_UINT32(s, Size);
+	Stream_Write_UINT32(s, logonInfoV2Size);
 	Stream_Write_UINT32(s, info->sessionId);
 	domainLen = strlen(info->domain);
 	if (domainLen > UINT32_MAX)
@@ -1342,7 +1344,7 @@ static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 	if (usernameLen > UINT32_MAX)
 		return FALSE;
 	Stream_Write_UINT32(s, (UINT32)(usernameLen + 1) * 2);
-	Stream_Seek(s, 558);
+	Stream_Seek(s, logonInfoV2ReservedSize);
 	len = ConvertToUnicode(CP_UTF8, 0, info->domain, -1, &wString, 0);
 
 	if (len < 0)
