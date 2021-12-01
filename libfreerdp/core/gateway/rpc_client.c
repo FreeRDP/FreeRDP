@@ -918,7 +918,7 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 	if (status <= 0)
 		return -1;
 
-	Stream_StaticInit(&s, buffer, length);
+	Stream_StaticConstInit(&s, buffer, length);
 	if (!rts_read_common_pdu_header(&s, &header))
 		return -1;
 

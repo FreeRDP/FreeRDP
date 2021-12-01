@@ -873,8 +873,8 @@ static int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UI
 	return 1;
 }
 
-int xcrush_decompress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
-                      UINT32* pDstSize, UINT32 flags)
+int xcrush_decompress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize,
+                      BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	int status = 0;
 	UINT32 DstSize = 0;
@@ -980,13 +980,13 @@ static int xcrush_compress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT
 	return 1;
 }
 
-int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
+int xcrush_compress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
                     UINT32* pDstSize, UINT32* pFlags)
 {
 	int status = 0;
 	UINT32 DstSize = 0;
 	BYTE* pDstData = NULL;
-	BYTE* CompressedData = NULL;
+	const BYTE* CompressedData = NULL;
 	UINT32 CompressedDataSize = 0;
 	BYTE* OriginalData = NULL;
 	UINT32 OriginalDataSize = 0;
