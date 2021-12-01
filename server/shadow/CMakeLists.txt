@@ -7,7 +7,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#	 http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -58,6 +58,9 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	find_package(rdtk 0 REQUIRED)
 	include_directories(${RDTK_INCLUDE_DIR})
 else()
+	if (NOT WITH_RDTK)
+		message(FATAL_ERROR "-DWITH_RDTK=ON is required for unified FreeRDP build with shadow server")
+	endif()
 	include_directories(${PROJECT_SOURCE_DIR}/rdtk/include)
 	include_directories(${PROJECT_BINARY_DIR}/rdtk/include)
 endif()
@@ -72,9 +75,9 @@ if (WIN32)
   set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${FREERDP_API_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
 
   configure_file(
-    ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-    @ONLY)
+	${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+	${CMAKE_CURRENT_BINARY_DIR}/version.rc
+	@ONLY)
 
   set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
@@ -95,9 +98,9 @@ if (WITH_LIBRARY_VERSIONING)
 endif()
 
 install(TARGETS ${MODULE_NAME} COMPONENT server EXPORT FreeRDP-ShadowTargets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if (WITH_DEBUG_SYMBOLS AND MSVC)
 	get_target_property(OUTPUT_FILENAME ${MODULE_NAME} OUTPUT_NAME)
@@ -129,9 +132,9 @@ if (WIN32)
   set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
 
   configure_file(
-    ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-    @ONLY)
+	${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+	${CMAKE_CURRENT_BINARY_DIR}/version.rc
+	@ONLY)
 
   set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
@@ -303,9 +306,9 @@ if (WITH_LIBRARY_VERSIONING)
 endif()
 
 install(TARGETS ${MODULE_NAME} COMPONENT server EXPORT FreeRDP-ShadowTargets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if (WITH_DEBUG_SYMBOLS AND MSVC)
 	get_target_property(OUTPUT_FILENAME ${MODULE_NAME} OUTPUT_NAME)
@@ -332,9 +335,9 @@ if (WIN32)
   set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
 
   configure_file(
-    ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-    @ONLY)
+	${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+	${CMAKE_CURRENT_BINARY_DIR}/version.rc
+	@ONLY)
 
   set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
