@@ -740,7 +740,7 @@ static int test_MppcCompressBellsRdp5(void)
 	int status;
 	UINT32 Flags;
 	UINT32 SrcSize;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 DstSize;
 	BYTE* pDstData;
 	MPPC_CONTEXT* mppc;
@@ -792,7 +792,7 @@ static int test_MppcCompressBellsRdp4(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	BYTE* pDstData;
@@ -845,7 +845,7 @@ static int test_MppcDecompressBellsRdp5(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	MPPC_CONTEXT* mppc;
@@ -892,7 +892,7 @@ static int test_MppcDecompressBellsRdp4(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	MPPC_CONTEXT* mppc;
@@ -940,7 +940,7 @@ static int test_MppcCompressIslandRdp5(void)
 	int status;
 	UINT32 Flags;
 	UINT32 SrcSize;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 DstSize;
 	BYTE* pDstData;
 	MPPC_CONTEXT* mppc;

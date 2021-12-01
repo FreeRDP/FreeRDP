@@ -47,7 +47,7 @@ static int test_XCrushCompressBells(void)
 	int status;
 	UINT32 Flags;
 	UINT32 SrcSize;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 DstSize;
 	BYTE* pDstData;
 	UINT32 expectedSize;
@@ -94,7 +94,7 @@ static int test_XCrushCompressIsland(void)
 	int status;
 	UINT32 Flags;
 	UINT32 SrcSize;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 DstSize;
 	BYTE* pDstData;
 	UINT32 expectedSize;

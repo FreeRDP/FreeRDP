@@ -1990,8 +1990,8 @@ static INLINE void NCrushWriteFinish(BYTE** DstPtr, UINT32 accumulator)
 	*(*DstPtr)++ = (accumulator >> 8) & 0xFF;
 }
 
-int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
-                      UINT32* pDstSize, UINT32 flags)
+int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize,
+                      BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	UINT32 index;
 	UINT32 bits;
@@ -2446,7 +2446,7 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 	return 1;
 }
 
-int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
+int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
                     UINT32* pDstSize, UINT32* pFlags)
 {
 	BYTE Literal;

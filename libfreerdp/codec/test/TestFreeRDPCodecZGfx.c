@@ -28,7 +28,7 @@ static int test_ZGfxCompressFox(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData = NULL;
+	const BYTE* pSrcData = NULL;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	BYTE* pDstData = NULL;
@@ -80,7 +80,7 @@ static int test_ZGfxDecompressFoxSingle(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	BYTE* pDstData = NULL;
@@ -132,7 +132,7 @@ static int test_ZGfxDecompressFoxMultipart(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	BYTE* pDstData = NULL;

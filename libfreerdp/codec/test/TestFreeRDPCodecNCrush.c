@@ -16,7 +16,7 @@ static BOOL test_NCrushCompressBells(void)
 	int status;
 	UINT32 Flags;
 	UINT32 SrcSize;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 DstSize;
 	BYTE* pDstData;
 	UINT32 expectedSize;
@@ -72,7 +72,7 @@ static BOOL test_NCrushDecompressBells(void)
 	BOOL rc = FALSE;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	UINT32 expectedSize;
