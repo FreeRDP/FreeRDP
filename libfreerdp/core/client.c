@@ -1263,7 +1263,7 @@ int freerdp_channels_client_load_ex(rdpChannels* channels, rdpSettings* settings
 {
 	int status;
 	void* pInitHandle = NULL;
-	CHANNEL_ENTRY_POINTS_FREERDP_EX EntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX EntryPointsEx = { 0 };
 	CHANNEL_INIT_DATA* pChannelInitData = NULL;
 	CHANNEL_CLIENT_DATA* pChannelClientData = NULL;
 
@@ -1284,7 +1284,6 @@ int freerdp_channels_client_load_ex(rdpChannels* channels, rdpSettings* settings
 	pChannelInitData = &(channels->initDataList[channels->initDataCount++]);
 	pInitHandle = pChannelInitData;
 	pChannelInitData->channels = channels;
-	ZeroMemory(&EntryPointsEx, sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
 	EntryPointsEx.cbSize = sizeof(EntryPointsEx);
 	EntryPointsEx.protocolVersion = VIRTUAL_CHANNEL_VERSION_WIN2000;
 	EntryPointsEx.pVirtualChannelInitEx = FreeRDP_VirtualChannelInitEx;
