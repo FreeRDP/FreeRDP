@@ -212,6 +212,27 @@ static IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager* 
 	return channel;
 }
 
+static IWTSVirtualChannel* dvcman_find_channel_by_name(IWTSVirtualChannelManager* pChannelMgr,
+                                                       const char* name)
+{
+	size_t index;
+	IWTSVirtualChannel* channel = NULL;
+	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
+	ArrayList_Lock(dvcman->channels);
+	for (index = 0; index < ArrayList_Count(dvcman->channels); index++)
+	{
+		DVCMAN_CHANNEL* cur = (DVCMAN_CHANNEL*)ArrayList_GetItem(dvcman->channels, index);
+		if (strcmp(cur->channel_name, name) == 0)
+		{
+			channel = &cur->iface;
+			break;
+		}
+	}
+
+	ArrayList_Unlock(dvcman->channels);
+	return channel;
+}
+
 static void dvcman_plugin_terminate(void* plugin)
 {
 	IWTSPlugin* pPlugin = plugin;
@@ -316,6 +337,12 @@ static DVCMAN_CHANNEL* dvcman_channel_new(drdynvcPlugin* drdynvc,
 		WLog_Print(drdynvc->log, WLOG_ERROR,
 		           "Protocol error: Duplicated ChannelId %" PRIu32 " (%s)!", ChannelId,
 		           ChannelName);
+		return NULL;
+	}
+
+	if (dvcman_find_channel_by_name(pChannelMgr, ChannelName))
+	{
+		WLog_Print(drdynvc->log, WLOG_ERROR, "Channel %s already open!", ChannelName);
 		return NULL;
 	}
 
