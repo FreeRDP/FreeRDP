@@ -521,6 +521,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			goto EXCEPTION;
 		}
 
+		WLog_Print(h264->log, WLOG_INFO, "Using libav decoder [%s]", sys->codecDecoder->name);
 		sys->codecDecoderContext = avcodec_alloc_context3(sys->codecDecoder);
 
 		if (!sys->codecDecoderContext)

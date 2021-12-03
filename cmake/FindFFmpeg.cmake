@@ -8,14 +8,15 @@
 set(REQUIRED_AVCODEC_VERSION 0.8)
 set(REQUIRED_AVCODEC_API_VERSION 53.25.0)
 
-include(FindPkgConfig)
-
-if (PKG_CONFIG_FOUND)
-	pkg_check_modules(AVCODEC libavcodec)
-	pkg_check_modules(AVUTIL libavutil)
-	pkg_check_modules(AVRESAMPLE libavresample)
-	pkg_check_modules(SWRESAMPLE libswresample)
-endif(PKG_CONFIG_FOUND)
+if (UNIX AND NOT ANDROID)
+  find_package(PkgConfig QUIET)
+  if (PKG_CONFIG_FOUND)
+    pkg_check_modules(AVCODEC libavcodec)
+    pkg_check_modules(AVUTIL libavutil)
+    pkg_check_modules(AVRESAMPLE libavresample)
+    pkg_check_modules(SWRESAMPLE libswresample)
+  endif(PKG_CONFIG_FOUND)
+endif (UNIX AND NOT ANDROID)
 
 # avcodec
 find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h PATHS ${AVCODEC_INCLUDE_DIRS})

@@ -614,6 +614,7 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 		if (subsystem->Init(h264))
 		{
 			h264->subsystem = subsystem;
+			WLog_Print(h264->log, WLOG_INFO, "using h264 subsystem [%s]", subsystem->name);
 			return TRUE;
 		}
 	}
