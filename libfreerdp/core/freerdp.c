@@ -471,6 +471,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 	if (!instance || !instance->context)
 		return FALSE;
 
+	freerdp_abort_connect(instance);
 	rdp = instance->context->rdp;
 
 	if (!rdp_client_disconnect(rdp))
