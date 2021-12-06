@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#ifndef _WIN32
 #include <winpr/bcrypt.h>
 
 /**
@@ -111,3 +112,5 @@ NTSTATUS BCryptDecrypt(BCRYPT_KEY_HANDLE hKey, PUCHAR pbInput, ULONG cbInput, VO
 {
 	return 0;
 }
+
+#endif /* _WIN32 */
