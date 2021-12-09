@@ -98,7 +98,7 @@ void* LinkedList_Last(wLinkedList* list)
  * Determines whether the LinkedList contains a specific value.
  */
 
-BOOL LinkedList_Contains(wLinkedList* list, void* value)
+BOOL LinkedList_Contains(wLinkedList* list, const void* value)
 {
 	wLinkedListNode* item;
 	OBJECT_EQUALS_FN keyEquals;
@@ -174,7 +174,7 @@ void LinkedList_Clear(wLinkedList* list)
 	list->count = 0;
 }
 
-static wLinkedListNode* LinkedList_Create(wLinkedList* list, void* value)
+static wLinkedListNode* LinkedList_Create(wLinkedList* list, const void* value)
 {
 	wLinkedListNode* node;
 
@@ -187,7 +187,7 @@ static wLinkedListNode* LinkedList_Create(wLinkedList* list, void* value)
 	if (list->object.fnObjectNew)
 		node->value = list->object.fnObjectNew(value);
 	else
-		node->value = value;
+		node->value = (void*)value;
 
 	if (list->object.fnObjectInit)
 		list->object.fnObjectInit(node);
@@ -198,7 +198,7 @@ static wLinkedListNode* LinkedList_Create(wLinkedList* list, void* value)
  * Adds a new node containing the specified value at the start of the LinkedList.
  */
 
-BOOL LinkedList_AddFirst(wLinkedList* list, void* value)
+BOOL LinkedList_AddFirst(wLinkedList* list, const void* value)
 {
 	wLinkedListNode* node = LinkedList_Create(list, value);
 
@@ -224,7 +224,7 @@ BOOL LinkedList_AddFirst(wLinkedList* list, void* value)
  * Adds a new node containing the specified value at the end of the LinkedList.
  */
 
-BOOL LinkedList_AddLast(wLinkedList* list, void* value)
+BOOL LinkedList_AddLast(wLinkedList* list, const void* value)
 {
 	wLinkedListNode* node = LinkedList_Create(list, value);
 
@@ -250,7 +250,7 @@ BOOL LinkedList_AddLast(wLinkedList* list, void* value)
  * Removes the first occurrence of the specified value from the LinkedList.
  */
 
-BOOL LinkedList_Remove(wLinkedList* list, void* value)
+BOOL LinkedList_Remove(wLinkedList* list, const void* value)
 {
 	wLinkedListNode* node;
 	OBJECT_EQUALS_FN keyEquals;
