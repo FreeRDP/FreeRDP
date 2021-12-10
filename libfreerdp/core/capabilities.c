@@ -72,7 +72,7 @@ static const char* get_capability_name(UINT16 type)
 }
 
 #ifdef WITH_DEBUG_CAPABILITIES
-static BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOOL receiving);
+static BOOL rdp_print_capability_sets(wStream* s, size_t start, BOOL receiving);
 #endif
 
 /* CODEC_GUID_REMOTEFX: 0x76772F12BD724463AFB3B73C9C6F7886 */
@@ -3358,10 +3358,29 @@ static BOOL rdp_print_bitmap_cache_v3_codec_id_capability_set(wStream* s)
 	return TRUE;
 }
 
-static BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOOL receiving)
+BOOL rdp_print_capability_sets(wStream* s, size_t start, BOOL receiving)
 {
+	BOOL rc = FALSE;
 	UINT16 type;
 	UINT16 length;
+	UINT16 numberCapabilities;
+
+	size_t pos = Stream_GetPosition(s);
+
+	Stream_SetPosition(s, start);
+	if (receiving)
+	{
+		if (Stream_GetRemainingLength(s) < 4)
+			goto fail;
+	}
+	else
+	{
+		if (Stream_GetRemainingCapacity(s) < 4)
+			goto fail;
+	}
+
+	Stream_Read_UINT16(s, numberCapabilities);
+	Stream_Seek(s, 2);
 
 	while (numberCapabilities > 0)
 	{
@@ -3370,186 +3389,186 @@ static BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOO
 		wStream* sub;
 
 		if (!rdp_read_capability_set_header(s, &length, &type))
-			return FALSE;
+			goto fail;
 
 		WLog_INFO(TAG, "%s ", receiving ? "Receiving" : "Sending");
 		sub = Stream_StaticInit(&subBuffer, Stream_Pointer(s), length - 4);
 		if (!Stream_SafeSeek(s, length - 4))
-			return FALSE;
+			goto fail;
 
 		switch (type)
 		{
 			case CAPSET_TYPE_GENERAL:
 				if (!rdp_print_general_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP:
 				if (!rdp_print_bitmap_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_ORDER:
 				if (!rdp_print_order_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CACHE:
 				if (!rdp_print_bitmap_cache_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_CONTROL:
 				if (!rdp_print_control_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_ACTIVATION:
 				if (!rdp_print_window_activation_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_POINTER:
 				if (!rdp_print_pointer_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_SHARE:
 				if (!rdp_print_share_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_COLOR_CACHE:
 				if (!rdp_print_color_cache_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_SOUND:
 				if (!rdp_print_sound_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_INPUT:
 				if (!rdp_print_input_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_FONT:
 				if (!rdp_print_font_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_BRUSH:
 				if (!rdp_print_brush_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_GLYPH_CACHE:
 				if (!rdp_print_glyph_cache_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_OFFSCREEN_CACHE:
 				if (!rdp_print_offscreen_bitmap_cache_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CACHE_HOST_SUPPORT:
 				if (!rdp_print_bitmap_cache_host_support_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CACHE_V2:
 				if (!rdp_print_bitmap_cache_v2_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_VIRTUAL_CHANNEL:
 				if (!rdp_print_virtual_channel_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_DRAW_NINE_GRID_CACHE:
 				if (!rdp_print_draw_nine_grid_cache_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_DRAW_GDI_PLUS:
 				if (!rdp_print_draw_gdiplus_cache_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_RAIL:
 				if (!rdp_print_remote_programs_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_WINDOW:
 				if (!rdp_print_window_list_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_COMP_DESK:
 				if (!rdp_print_desktop_composition_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_MULTI_FRAGMENT_UPDATE:
 				if (!rdp_print_multifragment_update_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_LARGE_POINTER:
 				if (!rdp_print_large_pointer_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_SURFACE_COMMANDS:
 				if (!rdp_print_surface_commands_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CODECS:
 				if (!rdp_print_bitmap_codecs_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_FRAME_ACKNOWLEDGE:
 				if (!rdp_print_frame_acknowledge_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
 			case CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID:
 				if (!rdp_print_bitmap_cache_v3_codec_id_capability_set(sub))
-					return FALSE;
+					goto fail;
 
 				break;
 
@@ -3570,16 +3589,27 @@ static BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOO
 		numberCapabilities--;
 	}
 
-	return TRUE;
+	rc = TRUE;
+fail:
+	Stream_SetPosition(s, pos);
+	return rc;
 }
 #endif
 
-static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCapabilities,
-                                     UINT16 totalLength)
+static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 totalLength)
 {
 	BOOL treated;
-	size_t start, end, len;
-	UINT16 count = numberCapabilities;
+	size_t capstart, start, end, len;
+	UINT16 numberCapabilities;
+	UINT16 count;
+
+	capstart = Stream_GetPosition(s);
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
+
+	Stream_Read_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
+	Stream_Seek(s, 2);                         /* pad2Octets (2 bytes) */
+	count = numberCapabilities;
 
 	start = Stream_GetPosition(s);
 	while (numberCapabilities > 0 && Stream_GetRemainingLength(s) >= 4)
@@ -3838,12 +3868,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 n
 	}
 
 #ifdef WITH_DEBUG_CAPABILITIES
-	{
-		Stream_SetPosition(s, start);
-		numberCapabilities = count;
-		rdp_print_capability_sets(s, numberCapabilities, TRUE);
-		Stream_SetPosition(s, end);
-	}
+	rdp_print_capability_sets(s, capstart, TRUE);
 #endif
 
 	if (len > totalLength)
@@ -3899,7 +3924,6 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	UINT16 pduType;
 	UINT16 pduSource;
 	UINT16 length;
-	UINT16 numberCapabilities;
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
 
@@ -3949,11 +3973,8 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	    Stream_GetRemainingLength(s) < 4) /* sourceDescriptor */
 		return FALSE;
 
-	Stream_Read_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
-	Stream_Seek(s, 2);                         /* pad2Octets (2 bytes) */
-
 	/* capabilitySets */
-	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities, lengthCombinedCapabilities))
+	if (!rdp_read_capability_sets(s, rdp->settings, lengthCombinedCapabilities))
 	{
 		WLog_ERR(TAG, "rdp_read_capability_sets failed");
 		return FALSE;
@@ -4030,10 +4051,7 @@ static BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 	Stream_SetPosition(s, bm);                          /* go back to numberCapabilities */
 	Stream_Write_UINT16(s, numberCapabilities);         /* numberCapabilities (2 bytes) */
 #ifdef WITH_DEBUG_CAPABILITIES
-	Stream_Seek_UINT16(s);
-	rdp_print_capability_sets(s, numberCapabilities, FALSE);
-	Stream_SetPosition(s, bm);
-	Stream_Seek_UINT16(s);
+	rdp_print_capability_sets(s, bm, FALSE);
 #endif
 	Stream_SetPosition(s, em);
 	Stream_Write_UINT32(s, 0); /* sessionId */
@@ -4060,7 +4078,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 	rdpSettings* settings;
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
-	UINT16 numberCapabilities;
+
 	settings = rdp->settings;
 
 	if (Stream_GetRemainingLength(s) < 10)
@@ -4075,9 +4093,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 		return FALSE;
 
 	Stream_Seek(s, lengthSourceDescriptor);    /* sourceDescriptor */
-	Stream_Read_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
-	Stream_Seek(s, 2);                         /* pad2Octets (2 bytes) */
-	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities, lengthCombinedCapabilities))
+	if (!rdp_read_capability_sets(s, rdp->settings, lengthCombinedCapabilities))
 		return FALSE;
 
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_SURFACE_COMMANDS])
@@ -4262,10 +4278,7 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 	Stream_SetPosition(s, bm);                          /* go back to numberCapabilities */
 	Stream_Write_UINT16(s, numberCapabilities);         /* numberCapabilities (2 bytes) */
 #ifdef WITH_DEBUG_CAPABILITIES
-	Stream_Seek_UINT16(s);
-	rdp_print_capability_sets(s, numberCapabilities, FALSE);
-	Stream_SetPosition(s, bm);
-	Stream_Seek_UINT16(s);
+	rdp_print_capability_sets(s, bm, FALSE);
 #endif
 	Stream_SetPosition(s, em);
 
