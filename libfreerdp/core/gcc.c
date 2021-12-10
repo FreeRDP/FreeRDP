@@ -692,7 +692,8 @@ BOOL gcc_write_user_data_header(wStream* s, UINT16 type, UINT16 length)
 
 BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 {
-	char* str = NULL;
+	char strbuffer[65] = { 0 };
+	char* strptr = strbuffer;
 	UINT32 version;
 	BYTE connectionType = 0;
 	UINT32 clientColorDepth;
@@ -728,16 +729,15 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	Stream_Read_UINT32(s, settings->ClientBuild);    /* ClientBuild (4 bytes) */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
-	if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)Stream_Pointer(s), 32 / 2, &str, 0, NULL, NULL) < 1)
+	if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)Stream_Pointer(s), 32 / 2, &strptr,
+	                       ARRAYSIZE(strbuffer), NULL, NULL) < 1)
 	{
 		WLog_ERR(TAG, "failed to convert client host name");
 		return FALSE;
 	}
 
 	Stream_Seek(s, 32);
-	free(settings->ClientHostname);
-	settings->ClientHostname = str;
-	str = NULL;
+	freerdp_settings_set_string(settings, FreeRDP_ClientHostname, strbuffer);
 	Stream_Read_UINT32(s, settings->KeyboardType);        /* KeyboardType (4 bytes) */
 	Stream_Read_UINT32(s, settings->KeyboardSubType);     /* KeyboardSubType (4 bytes) */
 	Stream_Read_UINT32(s, settings->KeyboardFunctionKey); /* KeyboardFunctionKey (4 bytes) */
@@ -795,16 +795,15 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		if (blockLength < 64)
 			break;
 
-		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)Stream_Pointer(s), 64 / 2, &str, 0, NULL, NULL) <
-		    1)
+		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)Stream_Pointer(s), 64 / 2, &strptr,
+		                       ARRAYSIZE(strbuffer), NULL, NULL) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert the client product identifier");
 			return FALSE;
 		}
 
 		Stream_Seek(s, 64); /* clientDigProductId (64 bytes) */
-		free(settings->ClientProductId);
-		settings->ClientProductId = str;
+		freerdp_settings_set_string(settings, FreeRDP_ClientProductId, strbuffer);
 		blockLength -= 64;
 
 		if (blockLength < 1)
