@@ -68,8 +68,8 @@ struct proxy_plugin
 	proxyHookFn ClientX509Certificate; /* 71 custom=rdpContext* */
 	proxyHookFn ClientLoginFailure;    /* 72 custom=rdpContext* */
 	proxyHookFn ClientEndPaint;        /* 73 custom=rdpContext* */
-
-	UINT64 reserved3[96 - 74]; /* 74-95 */
+	proxyHookFn ClientRedirect;        /* 74 custom=rdpContext* */
+	UINT64 reserved3[96 - 75];         /* 75-95 */
 
 	proxyHookFn ServerPostConnect;  /* 96  custom=freerdp_peer* */
 	proxyHookFn ServerPeerActivate; /* 97  custom=freerdp_peer* */

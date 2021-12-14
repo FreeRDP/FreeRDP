@@ -33,6 +33,23 @@ typedef struct proxy_data proxyData;
 typedef struct proxy_module proxyModule;
 typedef struct channel_data_event_info proxyChannelDataEventInfo;
 
+typedef struct _InterceptContextMapEntry
+{
+	void (*free)(struct _InterceptContextMapEntry*);
+} InterceptContextMapEntry;
+
+/* All proxy interception channels derive from this base struct
+ * and set their cleanup function accordingly. */
+static INLINE void intercept_context_entry_free(void* obj)
+{
+	InterceptContextMapEntry* entry = obj;
+	if (!entry)
+		return;
+	if (!entry->free)
+		return;
+	entry->free(entry);
+}
+
 /**
  * Wraps rdpContext and holds the state for the proxy's server.
  */
@@ -44,6 +61,8 @@ struct p_server_context
 
 	HANDLE vcm;
 	HANDLE dynvcReady;
+
+	wHashTable* interceptContextMap;
 };
 typedef struct p_server_context pServerContext;
 
@@ -83,6 +102,16 @@ struct p_client_context
 
 	BOOL input_state_sync_pending;
 	UINT32 input_state;
+
+	wHashTable* interceptContextMap;
+	UINT32 computerNameLen;
+	BOOL computerNameUnicode;
+	union
+	{
+		WCHAR* wc;
+		char* c;
+		void* v;
+	} computerName;
 };
 
 /**

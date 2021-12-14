@@ -35,7 +35,7 @@ typedef struct _scard_call_context scard_call_context;
 
 FREERDP_API scard_call_context* smartcard_call_context_new(const rdpSettings* settings);
 FREERDP_API void smartcard_call_context_free(scard_call_context* ctx);
-FREERDP_API BOOL smartcard_call_context_signal_stop(scard_call_context* ctx);
+FREERDP_API BOOL smartcard_call_context_signal_stop(scard_call_context* ctx, BOOL reset);
 FREERDP_API BOOL smartcard_call_context_add(scard_call_context* ctx, const char* name);
 FREERDP_API BOOL smartcard_call_cancel_context(scard_call_context* ctx, SCARDCONTEXT context);
 FREERDP_API BOOL smartcard_call_cancel_all_context(scard_call_context* ctx);

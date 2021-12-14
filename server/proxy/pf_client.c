@@ -44,6 +44,8 @@
 #include <freerdp/server/proxy/proxy_config.h>
 #include "proxy_modules.h"
 #include "pf_utils.h"
+#include "channels/pf_channel_rdpdr.h"
+#include "channels/pf_channel_smartcard.h"
 
 #define TAG PROXY_TAG("client")
 
@@ -130,13 +132,7 @@ static BOOL pf_client_load_rdpsnd(pClientContext* pc)
 	 */
 	if (!freerdp_static_channel_collection_find(context->settings, RDPSND_CHANNEL_NAME))
 	{
-		const char* params[2] = { RDPSND_CHANNEL_NAME };
-
-		if (config->AudioOutput &&
-		    WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RDPSND_CHANNEL_NAME))
-			params[1] = "sys:proxy";
-		else
-			params[1] = "sys:fake";
+		const char* params[2] = { RDPSND_CHANNEL_NAME, "sys:fake" };
 
 		if (!freerdp_client_add_static_channel(context->settings, ARRAYSIZE(params), params))
 			return FALSE;
@@ -173,6 +169,64 @@ static BOOL pf_client_use_peer_load_balance_info(pClientContext* pc)
 
 	CopyMemory(settings->LoadBalanceInfo, lb_info, settings->LoadBalanceInfoLength);
 	return TRUE;
+}
+
+static BOOL str_is_empty(const char* str)
+{
+	if (!str)
+		return TRUE;
+	if (strlen(str) == 0)
+		return TRUE;
+	return FALSE;
+}
+
+static BOOL pf_client_use_proxy_smartcard_auth(const rdpSettings* settings)
+{
+	BOOL enable = freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon);
+	const char* key = freerdp_settings_get_string(settings, FreeRDP_SmartcardPrivateKey);
+	const char* cert = freerdp_settings_get_string(settings, FreeRDP_SmartcardCertificate);
+
+	if (!enable)
+		return FALSE;
+
+	if (str_is_empty(key))
+		return FALSE;
+
+	if (str_is_empty(cert))
+		return FALSE;
+
+	return TRUE;
+}
+
+static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings* settings,
+                                                     const char* name, void* data)
+{
+	PVIRTUALCHANNELENTRY entry = NULL;
+	PVIRTUALCHANNELENTRYEX entryEx = NULL;
+	entryEx = (PVIRTUALCHANNELENTRYEX)(void*)freerdp_load_channel_addin_entry(
+	    name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX);
+
+	if (!entryEx)
+		entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
+
+	if (entryEx)
+	{
+		if (freerdp_channels_client_load_ex(channels, settings, entryEx, data) == 0)
+		{
+			WLog_INFO(TAG, "loading channelEx %s", name);
+			return TRUE;
+		}
+	}
+	else if (entry)
+	{
+		if (freerdp_channels_client_load(channels, settings, entry, data) == 0)
+		{
+			WLog_INFO(TAG, "loading channel %s", name);
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }
 
 static BOOL pf_client_pre_connect(freerdp* instance)
@@ -217,7 +271,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	                               config->DeviceRedirection) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl,
 	                               config->DisplayControl) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteAssistanceMode, config->RemoteApp) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteApplicationMode, config->RemoteApp) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_MultiTouchInput, config->Multitouch))
 		return FALSE;
 
@@ -275,6 +329,13 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	}
 	else
 	{
+		if (!pf_channel_rdpdr_client_new(pc))
+			return FALSE;
+#if defined(WITH_PROXY_EMULATE_SMARTCARD)
+		if (!pf_channel_smartcard_client_new(pc))
+			return FALSE;
+#endif
+
 		/* Copy the current channel settings from the peer connection to the client. */
 		if (!freerdp_channels_from_mcs(settings, &ps->context))
 			return FALSE;
@@ -315,6 +376,125 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	return pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_PRE_CONNECT, pc->pdata, pc);
 }
 
+static BOOL pf_client_receive_channel_passthrough(proxyData* pdata, UINT16 channelId,
+                                                  const char* channel_name, const BYTE* xdata,
+                                                  size_t xsize, UINT32 flags, size_t totalSize)
+{
+	proxyChannelDataEventInfo ev;
+	UINT16 server_channel_id;
+	pServerContext* ps;
+
+	WINPR_ASSERT(pdata);
+
+	ps = pdata->ps;
+	WINPR_ASSERT(ps);
+
+	ev.channel_id = channelId;
+	ev.channel_name = channel_name;
+	ev.data = xdata;
+	ev.data_len = xsize;
+	ev.flags = flags;
+	ev.total_size = totalSize;
+
+	if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA, pdata,
+	                           &ev))
+		return TRUE; /* Silently drop */
+
+	/* Dynamic channels need special treatment
+	 *
+	 * We need to check every message with CHANNEL_FLAG_FIRST set if it
+	 * is a CREATE_REQUEST_PDU (0x01) and extract channelId and name
+	 * from it.
+	 *
+	 * To avoid issues with (misbehaving) clients assume all packets
+	 * that do not have at least a length of 1 byte and all incomplete
+	 * CREATE_REQUEST_PDU (0x01) packets as invalid.
+	 */
+	if ((flags & CHANNEL_FLAG_FIRST) &&
+	    (strncmp(channel_name, DRDYNVC_SVC_CHANNEL_NAME, CHANNEL_NAME_LEN + 1) == 0))
+	{
+		BYTE cmd, first;
+		wStream *s, sbuffer;
+
+		s = Stream_StaticConstInit(&sbuffer, xdata, xsize);
+		if (Stream_Length(s) < 1)
+			return FALSE;
+
+		Stream_Read_UINT8(s, first);
+		cmd = first >> 4;
+
+		if (cmd == CREATE_REQUEST_PDU)
+		{
+			proxyChannelDataEventInfo dev;
+			size_t len, nameLen;
+			const char* name;
+			UINT32 dynChannelId;
+			BYTE cbId = first & 0x03;
+			switch (cbId)
+			{
+				case 0x00:
+					if (Stream_GetRemainingLength(s) < 1)
+						return FALSE;
+					Stream_Read_UINT8(s, dynChannelId);
+					break;
+				case 0x01:
+					if (Stream_GetRemainingLength(s) < 2)
+						return FALSE;
+					Stream_Read_UINT16(s, dynChannelId);
+					break;
+				case 0x02:
+					if (Stream_GetRemainingLength(s) < 4)
+						return FALSE;
+					Stream_Read_UINT32(s, dynChannelId);
+					break;
+				default:
+					return FALSE;
+			}
+
+			name = (const char*)Stream_Pointer(s);
+			nameLen = Stream_GetRemainingLength(s);
+			len = strnlen(name, nameLen);
+			if ((len == 0) || (len == nameLen))
+				return FALSE;
+			dev.channel_id = dynChannelId;
+			dev.channel_name = name;
+			dev.data = xdata;
+			dev.data_len = xsize;
+			dev.flags = flags;
+			dev.total_size = totalSize;
+
+			if (!pf_modules_run_filter(
+			        pdata->module, FILTER_TYPE_CLIENT_PASSTHROUGH_DYN_CHANNEL_CREATE, pdata, &dev))
+				return TRUE; /* Silently drop */
+		}
+	}
+	server_channel_id = WTSChannelGetId(ps->context.peer, channel_name);
+
+	/* Ignore messages for channels that can not be mapped.
+	 * The client might not have enabled support for this specific channel,
+	 * so just drop the message. */
+	if (server_channel_id == 0)
+		return TRUE;
+	return ps->context.peer->SendChannelPacket(ps->context.peer, server_channel_id, totalSize,
+	                                           flags, xdata, xsize);
+}
+
+static BOOL pf_client_receive_channel_intercept(proxyData* pdata, UINT16 channelId,
+                                                const char* channel_name, const BYTE* xdata,
+                                                size_t xsize, UINT32 flags, size_t totalSize)
+{
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel_name);
+
+	if (strcmp(channel_name, RDPDR_SVC_CHANNEL_NAME) == 0)
+		return pf_channel_rdpdr_client_handle(pdata->pc, channelId, channel_name, xdata, xsize,
+		                                      flags, totalSize);
+
+	WLog_ERR(TAG, "[%s]: Channel %s [0x%04" PRIx16 "] intercept mode not implemented, aborting",
+	         __FUNCTION__, channel_name, channelId);
+	return FALSE;
+}
+
 static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channelId,
                                                 const BYTE* xdata, size_t xsize, UINT32 flags,
                                                 size_t totalSize)
@@ -324,7 +504,7 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	pServerContext* ps;
 	proxyData* pdata;
 	const proxyConfig* config;
-	int pass;
+	pf_utils_channel_mode pass;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(xdata || (xsize == 0));
@@ -342,107 +522,19 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	config = pdata->config;
 	WINPR_ASSERT(config);
 
-	pass = pf_utils_channel_is_passthrough(config, channel_name);
+	pass = pf_utils_get_channel_mode(config, channel_name);
 
 	switch (pass)
 	{
-		case 0:
+		case PF_UTILS_CHANNEL_BLOCK:
 			return TRUE; /* Silently drop */
-		case 1:
-		{
-			proxyChannelDataEventInfo ev;
-			UINT16 server_channel_id;
-
-			ev.channel_id = channelId;
-			ev.channel_name = channel_name;
-			ev.data = xdata;
-			ev.data_len = xsize;
-			ev.flags = flags;
-			ev.total_size = totalSize;
-
-			if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA,
-			                           pdata, &ev))
-				return TRUE; /* Silently drop */
-
-			/* Dynamic channels need special treatment
-			 *
-			 * We need to check every message with CHANNEL_FLAG_FIRST set if it
-			 * is a CREATE_REQUEST_PDU (0x01) and extract channelId and name
-			 * from it.
-			 *
-			 * To avoid issues with (misbehaving) clients assume all packets
-			 * that do not have at least a length of 1 byte and all incomplete
-			 * CREATE_REQUEST_PDU (0x01) packets as invalid.
-			 */
-			if ((flags & CHANNEL_FLAG_FIRST) &&
-			    (strncmp(channel_name, DRDYNVC_SVC_CHANNEL_NAME, CHANNEL_NAME_LEN + 1) == 0))
-			{
-				BYTE cmd, first;
-				wStream *s, sbuffer;
-
-				s = Stream_StaticConstInit(&sbuffer, xdata, xsize);
-				if (Stream_Length(s) < 1)
-					return FALSE;
-
-				Stream_Read_UINT8(s, first);
-				cmd = first >> 4;
-
-				if (cmd == CREATE_REQUEST_PDU)
-				{
-					proxyChannelDataEventInfo dev;
-					size_t len, nameLen;
-					const char* name;
-					UINT32 dynChannelId;
-					BYTE cbId = first & 0x03;
-					switch (cbId)
-					{
-						case 0x00:
-							if (Stream_GetRemainingLength(s) < 1)
-								return FALSE;
-							Stream_Read_UINT8(s, dynChannelId);
-							break;
-						case 0x01:
-							if (Stream_GetRemainingLength(s) < 2)
-								return FALSE;
-							Stream_Read_UINT16(s, dynChannelId);
-							break;
-						case 0x02:
-							if (Stream_GetRemainingLength(s) < 4)
-								return FALSE;
-							Stream_Read_UINT32(s, dynChannelId);
-							break;
-						default:
-							return FALSE;
-					}
-
-					name = (const char*)Stream_Pointer(s);
-					nameLen = Stream_GetRemainingLength(s);
-					len = strnlen(name, nameLen);
-					if ((len == 0) || (len == nameLen))
-						return FALSE;
-					dev.channel_id = dynChannelId;
-					dev.channel_name = name;
-					dev.data = xdata;
-					dev.data_len = xsize;
-					dev.flags = flags;
-					dev.total_size = totalSize;
-
-					if (!pf_modules_run_filter(pdata->module,
-					                           FILTER_TYPE_CLIENT_PASSTHROUGH_DYN_CHANNEL_CREATE,
-					                           pdata, &dev))
-						return TRUE; /* Silently drop */
-				}
-			}
-			server_channel_id = WTSChannelGetId(ps->context.peer, channel_name);
-
-			/* Ignore messages for channels that can not be mapped.
-			 * The client might not have enabled support for this specific channel,
-			 * so just drop the message. */
-			if (server_channel_id == 0)
-				return TRUE;
-			return ps->context.peer->SendChannelPacket(ps->context.peer, server_channel_id,
-			                                           totalSize, flags, xdata, xsize);
-		}
+		case PF_UTILS_CHANNEL_PASSTHROUGH:
+			return pf_client_receive_channel_passthrough(pdata, channelId, channel_name, xdata,
+			                                             xsize, flags, totalSize);
+		case PF_UTILS_CHANNEL_INTERCEPT:
+			return pf_client_receive_channel_intercept(pdata, channelId, channel_name, xdata, xsize,
+			                                           flags, totalSize);
+		case PF_UTILS_CHANNEL_NOT_HANDLED:
 		default:
 			WINPR_ASSERT(pc->client_receive_channel_data_original);
 			return pc->client_receive_channel_data_original(instance, channelId, xdata, xsize,
@@ -494,10 +586,9 @@ static BOOL sendQueuedChannelData(pClientContext* pc)
 				rc = TRUE;
 			else
 			{
-				WINPR_ASSERT(pc->context.instance->SendChannelPacket);
-				rc = pc->context.instance->SendChannelPacket(pc->context.instance, channelId,
-				                                             ev->total_size, ev->flags, ev->data,
-				                                             ev->data_len);
+				WINPR_ASSERT(pc->context.instance->SendChannelData);
+				rc = pc->context.instance->SendChannelData(pc->context.instance, channelId,
+				                                           ev->data, ev->data_len);
 			}
 			channel_data_free(ev);
 		}
@@ -589,8 +680,14 @@ static void pf_client_post_disconnect(freerdp* instance)
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
 
+#if defined(WITH_PROXY_EMULATE_SMARTCARD)
+	pf_channel_smartcard_client_free(pc);
+#endif
+
+	pf_channel_rdpdr_client_free(pc);
+
 	pc->connected = FALSE;
-	pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_POST_CONNECT, pc->pdata, pc);
+	pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_POST_DISCONNECT, pc->pdata, pc);
 
 	PubSub_UnsubscribeErrorInfo(instance->context->pubSub, pf_client_on_error_info);
 	gdi_free(instance);
@@ -598,6 +695,30 @@ static void pf_client_post_disconnect(freerdp* instance)
 	/* Only close the connection if NLA fallback process is done */
 	if (!pc->allow_next_conn_failure)
 		proxy_data_abort_connect(pdata);
+}
+
+static BOOL pf_client_redirect(freerdp* instance)
+{
+	pClientContext* pc;
+	proxyData* pdata;
+
+	if (!instance)
+		return FALSE;
+
+	if (!instance->context)
+		return FALSE;
+
+	pc = (pClientContext*)instance->context;
+	WINPR_ASSERT(pc);
+	pdata = pc->pdata;
+	WINPR_ASSERT(pdata);
+
+#if defined(WITH_PROXY_EMULATE_SMARTCARD)
+	pf_channel_smartcard_client_reset(pc);
+#endif
+	pf_channel_rdpdr_client_reset(pc);
+
+	return pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_REDIRECT, pc->pdata, pc);
 }
 
 /*
@@ -639,6 +760,14 @@ static void pf_client_set_security_settings(pClientContext* pc)
 	settings->RdpSecurity = config->ClientRdpSecurity;
 	settings->TlsSecurity = config->ClientTlsSecurity;
 	settings->NlaSecurity = config->ClientNlaSecurity;
+
+	/* Smartcard authentication currently does not work with NLA */
+	if (pf_client_use_proxy_smartcard_auth(settings))
+	{
+		freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE);
+		freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE);
+		freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards, TRUE);
+	}
 
 	if (!config->ClientNlaSecurity)
 		return;
@@ -827,6 +956,8 @@ static void pf_client_context_free(freerdp* instance, rdpContext* context)
 	Queue_Free(pc->cached_server_channel_data);
 	Stream_Free(pc->remote_pem, TRUE);
 	free(pc->remote_hostname);
+	free(pc->computerName.v);
+	HashTable_Free(pc->interceptContextMap);
 }
 
 static int pf_client_verify_X509_certificate(freerdp* instance, const BYTE* data, size_t length,
@@ -914,6 +1045,7 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 	instance->PreConnect = pf_client_pre_connect;
 	instance->PostConnect = pf_client_post_connect;
 	instance->PostDisconnect = pf_client_post_disconnect;
+	instance->Redirect = pf_client_redirect;
 	instance->LogonErrorInfo = pf_logon_error_info;
 	instance->VerifyX509Certificate = pf_client_verify_X509_certificate;
 
@@ -929,6 +1061,18 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 	WINPR_ASSERT(obj);
 	obj->fnObjectNew = channel_data_copy;
 	obj->fnObjectFree = channel_data_free;
+
+	pc->interceptContextMap = HashTable_New(FALSE);
+	if (!pc->interceptContextMap)
+		return FALSE;
+
+	if (!HashTable_SetupForStringData(pc->interceptContextMap, FALSE))
+		return FALSE;
+
+	obj = HashTable_ValueObject(pc->interceptContextMap);
+	WINPR_ASSERT(obj);
+	obj->fnObjectFree = intercept_context_entry_free;
+
 	return TRUE;
 }
 
