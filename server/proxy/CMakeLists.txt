@@ -41,6 +41,8 @@ set(${MODULE_PREFIX}_SRCS
 
 set(PROXY_APP_SRCS freerdp_proxy.c)
 
+add_subdirectory("channels")
+
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
 if (WIN32)
@@ -58,7 +60,7 @@ if (WIN32)
   list(APPEND PROXY_APP_SRCS ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS} $<TARGET_OBJECTS:pf_channels>)
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREERDP_API_VERSION})
 
 if (WITH_LIBRARY_VERSIONING)
@@ -112,4 +114,9 @@ endif()
 option(WITH_PROXY_MODULES "Compile proxy modules" ON)
 if (WITH_PROXY_MODULES)
   add_subdirectory("modules")
+endif()
+
+option(WITH_PROXY_EMULATE_SMARTCARD "Compile proxy smartcard emulation" OFF)
+if (WITH_PROXY_EMULATE_SMARTCARD)
+    add_definitions("-DWITH_PROXY_EMULATE_SMARTCARD")
 endif()

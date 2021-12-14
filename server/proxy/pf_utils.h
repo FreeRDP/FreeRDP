@@ -30,9 +30,20 @@
  * @param config The proxy configuration to check against. Must NOT be NULL.
  * @param name The name of the channel. Must NOT be NULL.
  * @return -1 if the channel is not handled, 0 if the channel should be ignored,
- *         1 if the channel should be passed.
+ *         1 if the channel should be passed, 2 the channel will be intercepted
+ *         e.g. proxy client and server are termination points and data passed
+ *         between.
  */
-int pf_utils_channel_is_passthrough(const proxyConfig* config, const char* name);
+typedef enum
+{
+	PF_UTILS_CHANNEL_NOT_HANDLED,
+	PF_UTILS_CHANNEL_BLOCK,
+	PF_UTILS_CHANNEL_PASSTHROUGH,
+	PF_UTILS_CHANNEL_INTERCEPT,
+} pf_utils_channel_mode;
+
+pf_utils_channel_mode pf_utils_get_channel_mode(const proxyConfig* config, const char* name);
+const char* pf_utils_channel_mode_string(pf_utils_channel_mode mode);
 
 BOOL pf_utils_is_passthrough(const proxyConfig* config);
 

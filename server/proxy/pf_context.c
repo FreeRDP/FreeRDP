@@ -29,10 +29,13 @@
 #include "pf_client.h"
 #include <freerdp/server/proxy/proxy_context.h>
 
+#include "channels/pf_channel_rdpdr.h"
+
 /* Proxy context initialization callback */
 static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx);
 static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 {
+	wObject* obj;
 	pServerContext* context = (pServerContext*)ctx;
 
 	WINPR_ASSERT(client);
@@ -47,6 +50,15 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 
 	if (!(context->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL)))
 		goto error;
+
+	context->interceptContextMap = HashTable_New(FALSE);
+	if (!context->interceptContextMap)
+		goto error;
+	if (!HashTable_SetupForStringData(context->interceptContextMap, FALSE))
+		goto error;
+	obj = HashTable_ValueObject(context->interceptContextMap);
+	WINPR_ASSERT(obj);
+	obj->fnObjectFree = intercept_context_entry_free;
 
 	return TRUE;
 
@@ -66,15 +78,17 @@ void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 	if (!context)
 		return;
 
-	if (context->vcm && (context->vcm != INVALID_HANDLE_VALUE))
-		WTSCloseServer((HANDLE)context->vcm);
-	context->vcm = NULL;
-
 	if (context->dynvcReady)
 	{
 		CloseHandle(context->dynvcReady);
 		context->dynvcReady = NULL;
 	}
+
+	HashTable_Free(context->interceptContextMap);
+
+	if (context->vcm && (context->vcm != INVALID_HANDLE_VALUE))
+		WTSCloseServer((HANDLE)context->vcm);
+	context->vcm = NULL;
 }
 
 BOOL pf_context_init_server_context(freerdp_peer* client)

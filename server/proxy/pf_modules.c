@@ -87,6 +87,8 @@ static const char* pf_modules_get_hook_type_string(PF_HOOK_TYPE result)
 			return "HOOK_TYPE_CLIENT_POST_CONNECT";
 		case HOOK_TYPE_CLIENT_POST_DISCONNECT:
 			return "HOOK_TYPE_CLIENT_POST_DISCONNECT";
+		case HOOK_TYPE_CLIENT_REDIRECT:
+			return "HOOK_TYPE_CLIENT_REDIRECT";
 		case HOOK_TYPE_CLIENT_VERIFY_X509:
 			return "HOOK_TYPE_CLIENT_VERIFY_X509";
 		case HOOK_TYPE_CLIENT_LOGIN_FAILURE:
@@ -140,6 +142,10 @@ static BOOL pf_modules_proxy_ArrayList_ForEachFkt(void* data, size_t index, va_l
 
 		case HOOK_TYPE_CLIENT_POST_CONNECT:
 			ok = IFCALLRESULT(TRUE, plugin->ClientPostConnect, plugin, pdata, custom);
+			break;
+
+		case HOOK_TYPE_CLIENT_REDIRECT:
+			ok = IFCALLRESULT(TRUE, plugin->ClientRedirect, plugin, pdata, custom);
 			break;
 
 		case HOOK_TYPE_CLIENT_POST_DISCONNECT:

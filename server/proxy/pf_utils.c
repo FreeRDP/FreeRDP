@@ -22,15 +22,29 @@
 #include <winpr/string.h>
 #include <winpr/wtsapi.h>
 
+#include <freerdp/server/proxy/proxy_log.h>
 #include "pf_utils.h"
 
-int pf_utils_channel_is_passthrough(const proxyConfig* config, const char* name)
+#define TAG PROXY_TAG("utils")
+
+pf_utils_channel_mode pf_utils_get_channel_mode(const proxyConfig* config, const char* name)
 {
+	pf_utils_channel_mode rc = PF_UTILS_CHANNEL_NOT_HANDLED;
 	size_t i;
 	BOOL found = FALSE;
 
 	WINPR_ASSERT(config);
 	WINPR_ASSERT(name);
+
+	for (i = 0; i < config->InterceptCount; i++)
+	{
+		const char* channel_name = config->Intercept[i];
+		if (strcmp(name, channel_name) == 0)
+		{
+			rc = PF_UTILS_CHANNEL_INTERCEPT;
+			goto end;
+		}
+	}
 
 	for (i = 0; i < config->PassthroughCount; i++)
 	{
@@ -45,13 +59,16 @@ int pf_utils_channel_is_passthrough(const proxyConfig* config, const char* name)
 	if (found)
 	{
 		if (config->PassthroughIsBlacklist)
-			return 0;
-		return 1;
+			rc = PF_UTILS_CHANNEL_BLOCK;
+		else
+			rc = PF_UTILS_CHANNEL_PASSTHROUGH;
 	}
+	else if (config->PassthroughIsBlacklist)
+		rc = PF_UTILS_CHANNEL_PASSTHROUGH;
 
-	if (config->PassthroughIsBlacklist)
-		return 1;
-	return -1;
+end:
+	WLog_DBG(TAG, "%s -> %s", name, pf_utils_channel_mode_string(rc));
+	return rc;
 }
 
 BOOL pf_utils_is_passthrough(const proxyConfig* config)
@@ -60,4 +77,20 @@ BOOL pf_utils_is_passthrough(const proxyConfig* config)
 
 	/* TODO: For the time being only passthrough mode is supported. */
 	return TRUE;
+}
+
+const char* pf_utils_channel_mode_string(pf_utils_channel_mode mode)
+{
+	switch (mode)
+	{
+		case PF_UTILS_CHANNEL_BLOCK:
+			return "blocked";
+		case PF_UTILS_CHANNEL_PASSTHROUGH:
+			return "passthrough";
+		case PF_UTILS_CHANNEL_INTERCEPT:
+			return "intercepted";
+		case PF_UTILS_CHANNEL_NOT_HANDLED:
+		default:
+			return "ignored";
+	}
 }

@@ -69,6 +69,8 @@ struct proxy_config
 	BOOL PassthroughIsBlacklist;
 	char** Passthrough;
 	size_t PassthroughCount;
+	char** Intercept;
+	size_t InterceptCount;
 
 	/* clipboard specific settings */
 	BOOL TextOnly;

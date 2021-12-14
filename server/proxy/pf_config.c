@@ -222,9 +222,10 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 	config->RemoteApp = pf_config_get_bool(ini, "Channels", "RemoteApp", FALSE);
 	config->PassthroughIsBlacklist =
 	    pf_config_get_bool(ini, "Channels", "PassthroughIsBlacklist", FALSE);
-
 	config->Passthrough = pf_config_parse_comma_separated_list(
 	    pf_config_get_str(ini, "Channels", "Passthrough", FALSE), &config->PassthroughCount);
+	config->Intercept = pf_config_parse_comma_separated_list(
+	    pf_config_get_str(ini, "Channels", "Intercept", FALSE), &config->InterceptCount);
 
 	return TRUE;
 }
@@ -485,6 +486,8 @@ BOOL pf_server_config_dump(const char* file)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, "Channels", "Passthrough", "") < 0)
 		goto fail;
+	if (IniFile_SetKeyValueString(ini, "Channels", "Intercept", "") < 0)
+		goto fail;
 
 	/* Input configuration */
 	if (IniFile_SetKeyValueString(ini, "Input", "Keyboard", "true") < 0)
@@ -668,6 +671,12 @@ void pf_server_config_print(const proxyConfig* config)
 		pf_server_config_print_list(config->Passthrough, config->PassthroughCount);
 	}
 
+	if (config->InterceptCount)
+	{
+		WLog_INFO(TAG, "\tStatic Channels Proxy-Intercept:");
+		pf_server_config_print_list(config->Intercept, config->InterceptCount);
+	}
+
 	CONFIG_PRINT_SECTION("Clipboard");
 	CONFIG_PRINT_BOOL(config, TextOnly);
 	if (config->MaxTextLength > 0)
@@ -701,6 +710,7 @@ void pf_server_config_free(proxyConfig* config)
 		return;
 
 	free(config->Passthrough);
+	free(config->Intercept);
 	free(config->RequiredPlugins);
 	free(config->Modules);
 	free(config->TargetHost);
@@ -787,6 +797,9 @@ BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config)
 
 	if (!pf_config_copy_string_list(&tmp->Passthrough, &tmp->PassthroughCount, config->Passthrough,
 	                                config->PassthroughCount))
+		goto fail;
+	if (!pf_config_copy_string_list(&tmp->Intercept, &tmp->InterceptCount, config->Intercept,
+	                                config->InterceptCount))
 		goto fail;
 	if (!pf_config_copy_string_list(&tmp->Modules, &tmp->ModulesCount, config->Modules,
 	                                config->ModulesCount))
@@ -883,7 +896,6 @@ static BOOL config_plugin_mouse_event(proxyPlugin* plugin, proxyData* pdata, voi
 	WINPR_ASSERT(cfg);
 
 	rc = cfg->Mouse;
-	WLog_DBG(TAG, "%s: %s", __FUNCTION__, rc ? "TRUE" : "FALSE");
 	return rc;
 }
 
@@ -915,7 +927,7 @@ static BOOL config_plugin_server_channel_data(proxyPlugin* plugin, proxyData* pd
 
 static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	int rc;
+	pf_utils_channel_mode rc;
 	BOOL accept;
 	const struct config_plugin_data* custom;
 	const proxyConfig* cfg;
@@ -931,8 +943,21 @@ static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData*
 	cfg = custom->config;
 	WINPR_ASSERT(cfg);
 
-	rc = pf_utils_channel_is_passthrough(cfg, channel->channel_name);
-	accept = rc > 0;
+	rc = pf_utils_get_channel_mode(cfg, channel->channel_name);
+	switch (rc)
+	{
+
+		case PF_UTILS_CHANNEL_INTERCEPT:
+		case PF_UTILS_CHANNEL_PASSTHROUGH:
+			accept = TRUE;
+			break;
+		case PF_UTILS_CHANNEL_BLOCK:
+		case PF_UTILS_CHANNEL_NOT_HANDLED:
+		default:
+			accept = FALSE;
+			break;
+	}
+
 	if (accept)
 	{
 		if (strncmp(RDPGFX_DVC_CHANNEL_NAME, channel->channel_name,
@@ -971,7 +996,7 @@ static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData*
 
 static BOOL config_plugin_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	int rc;
+	pf_utils_channel_mode rc;
 	BOOL accept;
 	const struct config_plugin_data* custom;
 	const proxyConfig* cfg;
@@ -987,8 +1012,19 @@ static BOOL config_plugin_channel_create(proxyPlugin* plugin, proxyData* pdata, 
 	cfg = custom->config;
 	WINPR_ASSERT(cfg);
 
-	rc = pf_utils_channel_is_passthrough(cfg, channel->channel_name);
-	accept = rc > 0;
+	rc = pf_utils_get_channel_mode(cfg, channel->channel_name);
+	switch (rc)
+	{
+		case PF_UTILS_CHANNEL_INTERCEPT:
+		case PF_UTILS_CHANNEL_PASSTHROUGH:
+			accept = TRUE;
+			break;
+		case PF_UTILS_CHANNEL_BLOCK:
+		case PF_UTILS_CHANNEL_NOT_HANDLED:
+		default:
+			accept = FALSE;
+			break;
+	}
 	if (accept)
 	{
 		if (strncmp(CLIPRDR_SVC_CHANNEL_NAME, channel->channel_name,

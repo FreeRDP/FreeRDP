@@ -39,6 +39,8 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/build-config.h>
 
+#include <freerdp/channels/rdpdr.h>
+
 #include <freerdp/server/proxy/proxy_server.h>
 #include <freerdp/server/proxy/proxy_log.h>
 
@@ -49,8 +51,15 @@
 #include "pf_update.h"
 #include "proxy_modules.h"
 #include "pf_utils.h"
+#include "channels/pf_channel_rdpdr.h"
 
 #define TAG PROXY_TAG("server")
+
+typedef struct
+{
+	HANDLE thread;
+	freerdp_peer* client;
+} peer_thread_args;
 
 static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char** target,
                                                       DWORD* port)
@@ -229,6 +238,18 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_POST_CONNECT, pdata, peer))
 		return FALSE;
 
+	switch (pf_utils_get_channel_mode(ps->pdata->config, RDPDR_SVC_CHANNEL_NAME))
+	{
+		case PF_UTILS_CHANNEL_INTERCEPT:
+			if (!pf_channel_rdpdr_server_new(ps))
+				return FALSE;
+			if (!pf_channel_rdpdr_server_announce(ps))
+				return FALSE;
+			break;
+		default:
+			break;
+	}
+
 	/* Start a proxy's client in it's own thread */
 	if (!(pdata->client_thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
 	{
@@ -290,6 +311,22 @@ static BOOL pf_server_adjust_monitor_layout(freerdp_peer* peer)
 	return TRUE;
 }
 
+static BOOL pf_server_receive_channel_intercept(proxyData* pdata, UINT16 channelId,
+                                                const char* channel_name, const BYTE* data,
+                                                size_t size, UINT32 flags, size_t totalSize)
+{
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel_name);
+
+	if (strcmp(channel_name, RDPDR_SVC_CHANNEL_NAME) == 0)
+		return pf_channel_rdpdr_server_handle(pdata->ps, channelId, channel_name, data, size, flags,
+		                                      totalSize);
+
+	WLog_ERR(TAG, "[%s]: Channel %s [0x%04" PRIx16 "] intercept mode not implemented, aborting",
+	         __FUNCTION__, channel_name, channelId);
+	return FALSE;
+}
+
 static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 channelId,
                                                 const BYTE* data, size_t size, UINT32 flags,
                                                 size_t totalSize)
@@ -298,7 +335,7 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	pClientContext* pc;
 	proxyData* pdata;
 	const proxyConfig* config;
-	int pass;
+	pf_utils_channel_mode pass;
 	const char* channel_name = WTSChannelGetName(peer, channelId);
 
 	WINPR_ASSERT(peer);
@@ -320,12 +357,12 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	if (!pc)
 		goto original_cb;
 
-	pass = pf_utils_channel_is_passthrough(config, channel_name);
+	pass = pf_utils_get_channel_mode(config, channel_name);
 	switch (pass)
 	{
-		case 0:
+		case PF_UTILS_CHANNEL_BLOCK:
 			return TRUE;
-		case 1:
+		case PF_UTILS_CHANNEL_PASSTHROUGH:
 		{
 			proxyChannelDataEventInfo ev;
 
@@ -342,6 +379,9 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 
 			return IFCALLRESULT(TRUE, pc->sendChannelData, pc, &ev);
 		}
+		case PF_UTILS_CHANNEL_INTERCEPT:
+			return pf_server_receive_channel_intercept(pdata, channelId, channel_name, data, size,
+			                                           flags, totalSize);
 		default:
 			break;
 	}
@@ -453,10 +493,14 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	DWORD status;
 	pServerContext* ps = NULL;
 	proxyData* pdata = NULL;
-	freerdp_peer* client = (freerdp_peer*)arg;
+	freerdp_peer* client;
 	proxyServer* server;
 	size_t count;
+	peer_thread_args* args = arg;
 
+	WINPR_ASSERT(args);
+
+	client = args->client;
 	WINPR_ASSERT(client);
 
 	server = (proxyServer*)client->ContextExtra;
@@ -599,13 +643,9 @@ out_free_peer:
 		WaitForSingleObject(pdata->client_thread, INFINITE);
 	}
 
-	/* If the server is shutting down the peer_list is already
-	 * locked and we should not try to remove it here but instead
-	 * let the  ArrayList_Clear handle that. */
-	if (WaitForSingleObject(server->stopEvent, 0) != WAIT_OBJECT_0)
 	{
 		ArrayList_Lock(server->peer_list);
-		ArrayList_Remove(server->peer_list, _GetCurrentThread());
+		ArrayList_Remove(server->peer_list, args->thread);
 		count = ArrayList_Count(server->peer_list);
 		ArrayList_Unlock(server->peer_list);
 	}
@@ -617,6 +657,7 @@ out_free_peer:
 #if defined(WITH_DEBUG_EVENTS)
 	DumpEventHandles();
 #endif
+	free(args);
 	ExitThread(0);
 	return 0;
 }
@@ -625,23 +666,28 @@ static BOOL pf_server_start_peer(freerdp_peer* client)
 {
 	HANDLE hThread;
 	proxyServer* server;
+	peer_thread_args* args = calloc(1, sizeof(peer_thread_args));
+	if (!args)
+		return FALSE;
 
 	WINPR_ASSERT(client);
+	args->client = client;
 
 	server = (proxyServer*)client->ContextExtra;
 	WINPR_ASSERT(server);
 
-	hThread = CreateThread(NULL, 0, pf_server_handle_peer, (void*)client, CREATE_SUSPENDED, NULL);
+	hThread = CreateThread(NULL, 0, pf_server_handle_peer, args, CREATE_SUSPENDED, NULL);
 	if (!hThread)
 		return FALSE;
 
+	args->thread = hThread;
 	if (!ArrayList_Append(server->peer_list, hThread))
 	{
 		CloseHandle(hThread);
 		return FALSE;
 	}
 
-	return ResumeThread(hThread) == 0;
+	return ResumeThread(hThread) != (DWORD)-1;
 }
 
 static BOOL pf_server_peer_accepted(freerdp_listener* listener, freerdp_peer* client)
@@ -788,11 +834,6 @@ static BOOL are_all_required_modules_loaded(proxyModule* module, const proxyConf
 static void peer_free(void* obj)
 {
 	HANDLE hdl = (HANDLE)obj;
-
-	/* Threads have been notified about pending termination at this point.
-	 */
-	if (hdl != _GetCurrentThread())
-		WaitForSingleObject(hdl, INFINITE);
 	CloseHandle(hdl);
 }
 
@@ -830,7 +871,7 @@ proxyServer* pf_server_new(const proxyConfig* config)
 	if (!server->listener)
 		goto out;
 
-	server->peer_list = ArrayList_New(TRUE);
+	server->peer_list = ArrayList_New(FALSE);
 	if (!server->peer_list)
 		goto out;
 
@@ -925,6 +966,17 @@ void pf_server_free(proxyServer* server)
 
 	pf_server_stop(server);
 
+	while (ArrayList_Count(server->peer_list) > 0)
+	{
+		/* pf_server_stop triggers the threads to shut down.
+		 * loop here until all of them stopped.
+		 *
+		 * This must be done before ArrayList_Free otherwise the thread removal
+		 * in pf_server_handle_peer will deadlock due to both threads trying to
+		 * lock the list.
+		 */
+		Sleep(100);
+	}
 	ArrayList_Free(server->peer_list);
 	freerdp_listener_free(server->listener);
 
