@@ -34,10 +34,13 @@
 #include <winpr/assert.h>
 #include <winpr/stream.h>
 
+#include <winpr/print.h>
+
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/utils/rdpdr_utils.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -1362,16 +1365,9 @@ static UINT dummy_irp_response(rdpdrPlugin* rdpdr, wStream* s)
 	Stream_Read_UINT32(s, FileId);       /* FileId (4 bytes) */
 	Stream_Read_UINT32(s, CompletionId); /* CompletionId (4 bytes) */
 
-	Stream_Write_UINT16(output, RDPDR_CTYP_CORE);                /* Component (2 bytes) */
-	Stream_Write_UINT16(output, PAKID_CORE_DEVICE_IOCOMPLETION); /* PacketId (2 bytes) */
-	Stream_Write_UINT32(output, DeviceId);                       /* DeviceId (4 bytes) */
-	Stream_Write_UINT32(output, CompletionId);                   /* CompletionId (4 bytes) */
-	Stream_Write_UINT32(output, (UINT32)STATUS_UNSUCCESSFUL);    /* IoStatus (4 bytes) */
-
-	Stream_Zero(output, 256 - RDPDR_DEVICE_IO_RESPONSE_LENGTH);
-	// or usage
-	// Stream_Write_UINT32(output, 0); /* Length */
-	// Stream_Write_UINT8(output, 0);  /* Padding */
+	if (!rdpdr_write_iocompletion_header(output, DeviceId, CompletionId,
+	                                     (UINT32)STATUS_UNSUCCESSFUL))
+		return CHANNEL_RC_NO_MEMORY;
 
 	return rdpdr_send(rdpdr, output);
 }
@@ -1488,6 +1484,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 	if (!rdpdr || !s)
 		return CHANNEL_RC_NULL_DATA;
 
+	rdpdr_dump_received_packet(s, "rdpdr-channel");
 	if (Stream_GetRemainingLength(s) >= 4)
 	{
 		Stream_Read_UINT16(s, component); /* Component (2 bytes) */
@@ -1630,9 +1627,10 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	}
 	else
 	{
+		const size_t pos = Stream_GetPosition(s);
+		rdpdr_dump_send_packet(s, "rdpdr-channel");
 		status = plugin->channelEntryPoints.pVirtualChannelWriteEx(
-		    plugin->InitHandle, plugin->OpenHandle, Stream_Buffer(s), (UINT32)Stream_GetPosition(s),
-		    s);
+		    plugin->InitHandle, plugin->OpenHandle, Stream_Buffer(s), pos, s);
 	}
 
 	if (status != CHANNEL_RC_OK)

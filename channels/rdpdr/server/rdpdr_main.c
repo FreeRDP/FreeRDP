@@ -78,6 +78,7 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 	Stream_Free(s, TRUE);
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
+
 /**
  * Function description
  *

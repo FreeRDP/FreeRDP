@@ -41,6 +41,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/utils/rdpdr_utils.h>
 
 #define TAG CHANNELS_TAG("serial.client")
 
@@ -447,9 +448,8 @@ error_handle:
 static UINT serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 {
 	UINT error = CHANNEL_RC_OK;
-	WLog_Print(serial->log, WLOG_DEBUG,
-	           "IRP MajorFunction: 0x%08" PRIX32 " MinorFunction: 0x%08" PRIX32 "\n",
-	           irp->MajorFunction, irp->MinorFunction);
+	WLog_Print(serial->log, WLOG_DEBUG, "IRP MajorFunction: s, MinorFunction: 0x%08" PRIX32 "\n",
+	           rdpdr_irp_string(irp->MajorFunction), irp->MinorFunction);
 
 	switch (irp->MajorFunction)
 	{
