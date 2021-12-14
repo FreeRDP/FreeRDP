@@ -1,11 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Smartcard Device Service Virtual Channel
+ * Smartcard Redirection Virtual Channel
  *
- * Copyright 2011 O.S. Systems Software Ltda.
- * Copyright 2011 Eduardo Fiss Beloni <beloni@ossystems.com.br>
- * Copyright 2015 Thincast Technologies GmbH
- * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2021 Armin Novak <anovak@thincast.com>
+ * Copyright 2021 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +18,11 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_SMARTCARD_OPERATIONS_MAIN_H
-#define FREERDP_CHANNEL_SMARTCARD_OPERATIONS_MAIN_H
+#ifndef FREERDP_CHANNEL_SCARD_H
+#define FREERDP_CHANNEL_SCARD_H
 
 #include <winpr/crt.h>
+#include <winpr/smartcard.h>
 
 #define RDP_SCARD_CTL_CODE(code) \
 	CTL_CODE(FILE_DEVICE_FILE_SYSTEM, (code), METHOD_BUFFERED, FILE_ANY_ACCESS)
@@ -493,54 +492,4 @@ typedef struct _WriteCacheW_Call
 	/* [string] */ WCHAR* szLookupName;
 } WriteCacheW_Call;
 
-struct _SMARTCARD_OPERATION
-{
-	IRP* irp;
-	union
-	{
-		Handles_Call handles;
-		Long_Call lng;
-		Context_Call context;
-		ContextAndStringA_Call contextAndStringA;
-		ContextAndStringW_Call contextAndStringW;
-		ContextAndTwoStringA_Call contextAndTwoStringA;
-		ContextAndTwoStringW_Call contextAndTwoStringW;
-		EstablishContext_Call establishContext;
-		ListReaderGroups_Call listReaderGroups;
-		ListReaders_Call listReaders;
-		GetStatusChangeA_Call getStatusChangeA;
-		LocateCardsA_Call locateCardsA;
-		LocateCardsW_Call locateCardsW;
-		LocateCards_ATRMask locateCardsATRMask;
-		LocateCardsByATRA_Call locateCardsByATRA;
-		LocateCardsByATRW_Call locateCardsByATRW;
-		GetStatusChangeW_Call getStatusChangeW;
-		GetReaderIcon_Call getReaderIcon;
-		GetDeviceTypeId_Call getDeviceTypeId;
-		Connect_Common_Call connect;
-		ConnectA_Call connectA;
-		ConnectW_Call connectW;
-		Reconnect_Call reconnect;
-		HCardAndDisposition_Call hCardAndDisposition;
-		State_Call state;
-		Status_Call status;
-		SCardIO_Request scardIO;
-		Transmit_Call transmit;
-		GetTransmitCount_Call getTransmitCount;
-		Control_Call control;
-		GetAttrib_Call getAttrib;
-		SetAttrib_Call setAttrib;
-		ReadCache_Common readCache;
-		ReadCacheA_Call readCacheA;
-		ReadCacheW_Call readCacheW;
-		WriteCache_Common writeCache;
-		WriteCacheA_Call writeCacheA;
-		WriteCacheW_Call writeCacheW;
-	} call;
-	UINT32 ioControlCode;
-	SCARDCONTEXT hContext;
-	SCARDHANDLE hCard;
-};
-typedef struct _SMARTCARD_OPERATION SMARTCARD_OPERATION;
-
-#endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_OPERATIONS_H */
+#endif /* FREERDP_CHANNEL_SCARD_H */

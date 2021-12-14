@@ -32,7 +32,8 @@
 #include <winpr/smartcard.h>
 #include <winpr/collections.h>
 
-#include "smartcard_operations.h"
+#include <freerdp/utils/smartcard_operations.h>
+#include <freerdp/utils/smartcard_call.h>
 
 #if defined(WITH_SMARTCARD_EMULATE)
 #include <freerdp/emulate/scard/smartcard_emulate.h>
@@ -56,25 +57,10 @@ struct _SMARTCARD_DEVICE
 	DEVICE device;
 
 	HANDLE thread;
-	HANDLE StartedEvent;
+	scard_call_context* callctx;
 	wMessageQueue* IrpQueue;
-	wQueue* CompletedIrpQueue;
-	wListDictionary* rgSCardContextList;
 	wListDictionary* rgOutstandingMessages;
 	rdpContext* rdpcontext;
-	wLinkedList* names;
-#if defined(WITH_SMARTCARD_EMULATE)
-	SmartcardEmulationContext* emulation;
-#endif
 };
-
-SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTEXT hContext);
-void smartcard_context_free(void* pContext);
-
-LONG smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard,
-                                         SMARTCARD_OPERATION* operation);
-LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation);
-
-#include "smartcard_pack.h"
 
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H */
