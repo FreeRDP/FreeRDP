@@ -948,3 +948,35 @@ char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer, size_t le
 		winpr_str_append("RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED", buffer, length, "|");
 	return buffer;
 }
+
+BOOL freerdp_target_net_addresses_copy(rdpSettings* settings, char** addresses, UINT32 count)
+{
+	UINT32 i;
+
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(addresses);
+
+	freerdp_target_net_addresses_free(settings);
+
+	settings->TargetNetAddressCount = count;
+	settings->TargetNetAddresses = (char**)calloc(settings->TargetNetAddressCount, sizeof(char*));
+
+	if (!settings->TargetNetAddresses)
+	{
+		freerdp_target_net_addresses_free(settings);
+		return FALSE;
+	}
+
+	for (i = 0; i < settings->TargetNetAddressCount; i++)
+	{
+		settings->TargetNetAddresses[i] = _strdup(addresses[i]);
+
+		if (!settings->TargetNetAddresses[i])
+		{
+			freerdp_target_net_addresses_free(settings);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
