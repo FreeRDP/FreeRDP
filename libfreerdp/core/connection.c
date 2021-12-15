@@ -606,6 +606,9 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 			return FALSE;
 	}
 
+	if (!IFCALLRESULT(TRUE, rdp->instance->Redirect, rdp->instance))
+		return FALSE;
+
 	status = rdp_client_connect(rdp);
 
 	if (status)

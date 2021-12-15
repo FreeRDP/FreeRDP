@@ -112,6 +112,7 @@ extern "C"
 
 	typedef BOOL (*pPreConnect)(freerdp* instance);
 	typedef BOOL (*pPostConnect)(freerdp* instance);
+	typedef BOOL (*pRedirect)(freerdp* instance);
 	typedef void (*pPostDisconnect)(freerdp* instance);
 	typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password,
 	                              char** domain);
@@ -409,10 +410,10 @@ owned by rdpRdp */
 		              Can be set before calling freerdp_connect() to have it executed after the
 		              actual connection has succeeded. Must be set to NULL if not needed. */
 
-		ALIGN64 pAuthenticate Authenticate;                         /**< (offset 50)
-		                                                         Callback for authentication.
-		                                                         It is used to get the username/password when it was not
-		                                                         provided at connection time. */
+		ALIGN64 pAuthenticate Authenticate; /**< (offset 50)
+		                                 Callback for authentication.
+		                                 It is used to get the username/password when it was not
+		                                 provided at connection time. */
 #if defined(WITH_FREERDP_DEPRECATED)
 		ALIGN64 pVerifyCertificate VerifyCertificate;               /**< (offset 51)
     Callback for certificate validation.
@@ -446,7 +447,13 @@ fingerprint. DEPRECATED: Use VerifyChangedCertificateEx */
 		                                  Callback for gateway consent messages.
 		                                  It is used to present consent messages to the user. */
 
-		UINT64 paddingD[64 - 58]; /* 58 */
+		ALIGN64 pRedirect
+		    Redirect;             /**< (offset 59)
+		                          Callback for redirect operations.
+		                          Can be set after rdp_client_disconnect_and_clear and applying redirection
+settings but before rdp_client_connect() to have it executed after the
+		                          actual connection has succeeded. Must be set to NULL if not needed. */
+		UINT64 paddingD[64 - 59]; /* 59 */
 
 		ALIGN64 pSendChannelData
 		    SendChannelData; /* (offset 64)
@@ -469,16 +476,16 @@ fingerprint. DEPRECATED: Use VerifyChangedCertificateEx */
 		                         Callback for changed certificate validation.
 		                         Used when a certificate differs from stored fingerprint. */
 		ALIGN64 pSendChannelPacket
-		    SendChannelPacket;    /* (offset 68)
-		                           * Callback for sending RAW data to a channel. In contrast to
-		                           * SendChannelData data fragmentation    is up to the user and this
-		                           * function sends data as is with the provided flags.
-		                           */
+		    SendChannelPacket;                  /* (offset 68)
+		                                         * Callback for sending RAW data to a channel. In contrast to
+		                                         * SendChannelData data fragmentation    is up to the user and this
+		                                         * function sends data as is with the provided flags.
+		                                         */
 		ALIGN64 pAuthenticateEx AuthenticateEx; /**< (offset 69)
 		                                 Callback for authentication.
 		                                 It is used to get the username/password. The reason
 		                                 argument tells why it was called.  */
-		UINT64 paddingE[80 - 70]; /* 70 */
+		UINT64 paddingE[80 - 70];               /* 70 */
 	};
 
 	struct rdp_channel_handles
