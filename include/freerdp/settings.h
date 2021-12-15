@@ -1236,16 +1236,16 @@ struct rdp_settings
 	UINT64 padding1856[1856 - 1795]; /* 1795 */
 
 	/* Recording */
-	ALIGN64 BOOL DumpRemoteFx;       /* 1856 */
-	ALIGN64 BOOL PlayRemoteFx;       /* 1857 */
-	ALIGN64 char* DumpRemoteFxFile;  /* 1858 */
-	ALIGN64 char* PlayRemoteFxFile;  /* 1859 */
-	ALIGN64 BOOL TransportDump;      /* 1860 */
-	ALIGN64 char* TransportDumpFile; /* 1861 */
+	ALIGN64 BOOL DumpRemoteFx;             /* 1856 */
+	ALIGN64 BOOL PlayRemoteFx;             /* 1857 */
+	ALIGN64 char* DumpRemoteFxFile;        /* 1858 */
+	ALIGN64 char* PlayRemoteFxFile;        /* 1859 */
+	ALIGN64 BOOL TransportDump;            /* 1860 */
+	ALIGN64 char* TransportDumpFile;       /* 1861 */
 	ALIGN64 BOOL TransportDumpReplay;      /* 1862 */
 	ALIGN64 BOOL DeactivateClientDecoding; /* 1863 */
 	UINT64 padding1920[1920 - 1864];       /* 1864 */
-	UINT64 padding1984[1984 - 1920]; /* 1920 */
+	UINT64 padding1984[1984 - 1920];       /* 1920 */
 
 	/**
 	 * Gateway
@@ -1373,8 +1373,8 @@ struct rdp_settings
 	 * If used by an implementation ensure proper state resync after reenabling
 	 * input
 	 */
-	ALIGN64 BOOL SuspendInput;           /* 2636 */
-	UINT64 padding2688[2688 - 2637];     /* 2637 */
+	ALIGN64 BOOL SuspendInput;       /* 2636 */
+	UINT64 padding2688[2688 - 2637]; /* 2637 */
 
 	/* Brush Capabilities */
 	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */
@@ -1675,6 +1675,8 @@ extern "C"
 	FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 
 	FREERDP_API void freerdp_target_net_addresses_free(rdpSettings* settings);
+	FREERDP_API BOOL freerdp_target_net_addresses_copy(rdpSettings* settings, char** addresses,
+	                                                   UINT32 count);
 
 	FREERDP_API void freerdp_performance_flags_make(rdpSettings* settings);
 	FREERDP_API void freerdp_performance_flags_split(rdpSettings* settings);
