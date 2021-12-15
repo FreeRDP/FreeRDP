@@ -153,15 +153,10 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
 	{
 		/* LoadBalanceInfo may not contain a null terminator */
-		free(settings->LoadBalanceInfo);
-		settings->LoadBalanceInfoLength = redirection->LoadBalanceInfoLength;
-		settings->LoadBalanceInfo = (BYTE*)malloc(settings->LoadBalanceInfoLength);
-
-		if (!settings->LoadBalanceInfo)
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo,
+		                                      redirection->LoadBalanceInfo,
+		                                      redirection->LoadBalanceInfoLength))
 			return -1;
-
-		CopyMemory(settings->LoadBalanceInfo, redirection->LoadBalanceInfo,
-		           settings->LoadBalanceInfoLength);
 	}
 	else
 	{
@@ -169,116 +164,66 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 		 * Free previous LoadBalanceInfo, if any, otherwise it may end up
 		 * being reused for the redirected session, which is not what we want.
 		 */
-		free(settings->LoadBalanceInfo);
-		settings->LoadBalanceInfo = NULL;
-		settings->LoadBalanceInfoLength = 0;
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo, NULL, 0))
+			return -1;
 	}
 
 	if (settings->RedirectionFlags & LB_TARGET_FQDN)
 	{
-		free(settings->RedirectionTargetFQDN);
-		settings->RedirectionTargetFQDN = _strdup(redirection->TargetFQDN);
-
-		if (!settings->RedirectionTargetFQDN)
+		if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionTargetFQDN,
+		                                 redirection->TargetFQDN))
 			return -1;
 	}
 
 	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 	{
-		free(settings->TargetNetAddress);
-		settings->TargetNetAddress = _strdup(redirection->TargetNetAddress);
-
-		if (!settings->TargetNetAddress)
+		if (!freerdp_settings_set_string(settings, FreeRDP_TargetNetAddress,
+		                                 redirection->TargetNetAddress))
 			return -1;
 	}
 
 	if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 	{
-		free(settings->RedirectionTargetNetBiosName);
-		settings->RedirectionTargetNetBiosName = _strdup(redirection->TargetNetBiosName);
-
-		if (!settings->RedirectionTargetNetBiosName)
+		if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionTargetNetBiosName,
+		                                 redirection->TargetNetBiosName))
 			return -1;
 	}
 
 	if (settings->RedirectionFlags & LB_USERNAME)
 	{
-		free(settings->RedirectionUsername);
-		settings->RedirectionUsername = _strdup(redirection->Username);
-
-		if (!settings->RedirectionUsername)
+		if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionUsername,
+		                                 redirection->Username))
 			return -1;
 	}
 
 	if (settings->RedirectionFlags & LB_DOMAIN)
 	{
-		free(settings->RedirectionDomain);
-		settings->RedirectionDomain = _strdup(redirection->Domain);
-
-		if (!settings->RedirectionDomain)
+		if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionDomain, redirection->Domain))
 			return -1;
 	}
 
 	if (settings->RedirectionFlags & LB_PASSWORD)
 	{
 		/* Password may be a cookie without a null terminator */
-		free(settings->RedirectionPassword);
-		settings->RedirectionPasswordLength = redirection->PasswordLength;
-		/* For security reasons we'll allocate an additional zero WCHAR at the
-		 * end of the buffer that is not included in RedirectionPasswordLength
-		 */
-		settings->RedirectionPassword =
-		    (BYTE*)calloc(1, settings->RedirectionPasswordLength + sizeof(WCHAR));
-
-		if (!settings->RedirectionPassword)
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionPassword,
+		                                      redirection->Password, redirection->PasswordLength))
 			return -1;
 
-		CopyMemory(settings->RedirectionPassword, redirection->Password,
-		           settings->RedirectionPasswordLength);
 	}
 
 	if (settings->RedirectionFlags & LB_CLIENT_TSV_URL)
 	{
 		/* TsvUrl may not contain a null terminator */
-		free(settings->RedirectionTsvUrl);
-		settings->RedirectionTsvUrlLength = redirection->TsvUrlLength;
-		settings->RedirectionTsvUrl = (BYTE*)malloc(settings->RedirectionTsvUrlLength);
-
-		if (!settings->RedirectionTsvUrl)
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionTsvUrl,
+		                                      redirection->TsvUrl, redirection->TsvUrlLength))
 			return -1;
-
-		CopyMemory(settings->RedirectionTsvUrl, redirection->TsvUrl,
-		           settings->RedirectionTsvUrlLength);
 	}
 
 	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESSES)
 	{
-		UINT32 i;
-		freerdp_target_net_addresses_free(settings);
-		settings->TargetNetAddressCount = redirection->TargetNetAddressesCount;
-		settings->TargetNetAddresses =
-		    (char**)calloc(settings->TargetNetAddressCount, sizeof(char*));
-
-		if (!settings->TargetNetAddresses)
-		{
-			settings->TargetNetAddressCount = 0;
+		if (!freerdp_target_net_addresses_copy(settings, redirection->TargetNetAddresses,
+		                                       redirection->TargetNetAddressesCount))
 			return -1;
-		}
-
-		for (i = 0; i < settings->TargetNetAddressCount; i++)
-		{
-			settings->TargetNetAddresses[i] = _strdup(redirection->TargetNetAddresses[i]);
-
-			if (!settings->TargetNetAddresses[i])
-			{
-				UINT32 j;
-
-				for (j = 0; j < i; j++)
-					free(settings->TargetNetAddresses[j]);
-
-				return -1;
-			}
-		}
 	}
 
 	return 0;

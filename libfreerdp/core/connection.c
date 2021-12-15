@@ -592,19 +592,17 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 	if (settings->RedirectionFlags & LB_USERNAME)
 	{
-		free(settings->Username);
-		settings->Username = _strdup(settings->RedirectionUsername);
-
-		if (!settings->Username)
+		if (!freerdp_settings_set_string(
+		        settings, FreeRDP_Username,
+		        freerdp_settings_get_string(settings, FreeRDP_RedirectionUsername)))
 			return FALSE;
 	}
 
 	if (settings->RedirectionFlags & LB_DOMAIN)
 	{
-		free(settings->Domain);
-		settings->Domain = _strdup(settings->RedirectionDomain);
-
-		if (!settings->Domain)
+		if (!freerdp_settings_set_string(
+		        settings, FreeRDP_Domain,
+		        freerdp_settings_get_string(settings, FreeRDP_RedirectionDomain)))
 			return FALSE;
 	}
 
