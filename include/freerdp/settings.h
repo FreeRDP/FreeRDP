@@ -1635,6 +1635,8 @@ extern "C"
 	FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 
 	FREERDP_API void freerdp_target_net_addresses_free(rdpSettings* settings);
+	FREERDP_API BOOL freerdp_target_net_addresses_copy(rdpSettings* settings, char** addresses,
+	                                                   UINT32 count);
 
 	FREERDP_API void freerdp_performance_flags_make(rdpSettings* settings);
 	FREERDP_API void freerdp_performance_flags_split(rdpSettings* settings);
