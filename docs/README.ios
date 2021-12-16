@@ -50,7 +50,7 @@ Building
 
 Run the following commands in the top level FreeRDP directory:
 
-cmake -DCMAKE_TOOLCHAIN_FILE=cmake/iOSToolchain.cmake -GXcode
+cmake -DCMAKE_TOOLCHAIN_FILE=cmake/ios.toolchain.cmake -GXcode
 
 This command will create a XCode project in the FreeRDP root folder called FreeRDP.xcodeproj.
 Open the project in XCode and modify, build or run the app. 
@@ -82,7 +82,7 @@ cmake variables
 ===============
 
 CMAKE_TOOLCHAIN_FILE
-* the toolchain file to use must be cmake/iOSToolchain.cmake
+* the toolchain file to use must be cmake/ios.toolchain.cmake
 
 IOS_PLATFORM (OS (default), SIMULATOR)
 * the platform for which to build iFreeRDP. OS compiles for iOS devices (using armv7 and armv7s ABIs) and SIMULATOR compiles for the iOS Simulator (i386)
