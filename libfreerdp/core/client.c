@@ -23,6 +23,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/assert.h>
+
 #include <freerdp/log.h>
 #include <freerdp/channels/drdynvc.h>
 
@@ -570,38 +572,45 @@ BOOL freerdp_channels_process_message_free(wMessage* message, DWORD type)
 
 static BOOL freerdp_channels_process_message(freerdp* instance, wMessage* message)
 {
-	if (message->id == WMQ_QUIT)
-	{
-		return FALSE;
-	}
+	BOOL ret = TRUE;
+	BOOL rc = FALSE;
 
-	if (message->id == 0)
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(message);
+
+	if (message->id == WMQ_QUIT)
+		goto fail;
+	else if (message->id == 0)
 	{
 		rdpMcsChannel* channel;
 		CHANNEL_OPEN_DATA* pChannelOpenData;
 		CHANNEL_OPEN_EVENT* item = (CHANNEL_OPEN_EVENT*)message->wParam;
 
 		if (!item)
-			return FALSE;
+			goto fail;
 
 		pChannelOpenData = item->pChannelOpenData;
 		if (pChannelOpenData->flags != 2)
 		{
 			freerdp_channels_process_message_free(message, CHANNEL_EVENT_WRITE_CANCELLED);
-			return FALSE;
+			goto fail;
 		}
 		channel =
 		    freerdp_channels_find_channel_by_name(instance->context->rdp, pChannelOpenData->name);
 
 		if (channel)
-			instance->SendChannelData(instance, channel->ChannelId, item->Data, item->DataLength);
+			ret = instance->SendChannelData(instance, channel->ChannelId, item->Data,
+			                                item->DataLength);
 	}
 
 	if (!freerdp_channels_process_message_free(message, CHANNEL_EVENT_WRITE_COMPLETE))
-		return FALSE;
+		goto fail;
 
+	rc = ret;
+
+fail:
 	IFCALL(message->Free, message);
-	return TRUE;
+	return rc;
 }
 
 /**
