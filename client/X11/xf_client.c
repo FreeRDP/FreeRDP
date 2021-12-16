@@ -815,8 +815,6 @@ void xf_lock_x11_(xfContext* xfc, const char* fkt)
 	else
 		XLockDisplay(xfc->display);
 
-	if (xfc->locked)
-		WLog_WARN(TAG, "%s:\t[%" PRIu32 "] recursive lock from %s", __FUNCTION__, xfc->locked, fkt);
 	xfc->locked++;
 	WLog_VRB(TAG, "%s:\t[%" PRIu32 "] from %s", __FUNCTION__, xfc->locked, fkt);
 }
