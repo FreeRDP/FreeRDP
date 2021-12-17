@@ -1390,15 +1390,25 @@ static UINT
 xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
                                          const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
-	UINT32 count;
-	UINT32 index;
+	size_t count;
+	size_t index;
 	BOOL found = FALSE;
 	xfCliprdrFuseStream* stream = NULL;
 	xfCliprdrFuseInode* ino;
-	xfClipboard* clipboard = (xfClipboard*)context->custom;
-	UINT32 stream_id = fileContentsResponse->streamId;
-	const BYTE* data = fileContentsResponse->requestedData;
-	size_t data_len = fileContentsResponse->cbRequested;
+	UINT32 stream_id;
+	const BYTE* data;
+	size_t data_len;
+	xfClipboard* clipboard;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(fileContentsResponse);
+
+	clipboard = context->custom;
+	WINPR_ASSERT(clipboard);
+
+	stream_id = fileContentsResponse->streamId;
+	data = fileContentsResponse->requestedData;
+	data_len = fileContentsResponse->cbRequested;
 
 	ArrayList_Lock(clipboard->stream_list);
 	count = ArrayList_Count(clipboard->stream_list);
@@ -1485,8 +1495,14 @@ xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
 static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context,
                                      const CLIPRDR_MONITOR_READY* monitorReady)
 {
-	xfClipboard* clipboard = (xfClipboard*)context->custom;
 	UINT ret;
+	xfClipboard* clipboard;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(monitorReady);
+
+	clipboard = context->custom;
+	WINPR_ASSERT(clipboard);
 
 	WINPR_UNUSED(monitorReady);
 
@@ -1509,15 +1525,24 @@ static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context,
                                            const CLIPRDR_CAPABILITIES* capabilities)
 {
 	UINT32 i;
-	const CLIPRDR_CAPABILITY_SET* caps;
 	const CLIPRDR_GENERAL_CAPABILITY_SET* generalCaps;
-	const BYTE* capsPtr = (const BYTE*)capabilities->capabilitySets;
-	xfClipboard* clipboard = (xfClipboard*)context->custom;
+	const BYTE* capsPtr;
+	xfClipboard* clipboard;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(capabilities);
+
+	clipboard = context->custom;
+	WINPR_ASSERT(clipboard);
+
+	capsPtr = (const BYTE*)capabilities->capabilitySets;
+	WINPR_ASSERT(capsPtr);
+
 	clipboard->streams_supported = FALSE;
 
 	for (i = 0; i < capabilities->cCapabilitiesSets; i++)
 	{
-		caps = (const CLIPRDR_CAPABILITY_SET*)capsPtr;
+		const CLIPRDR_CAPABILITY_SET* caps = (const CLIPRDR_CAPABILITY_SET*)capsPtr;
 
 		if (caps->capabilitySetType == CB_CAPSTYPE_GENERAL)
 		{
@@ -1582,9 +1607,19 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 {
 	UINT32 i;
 	int j;
-	xfClipboard* clipboard = (xfClipboard*)context->custom;
-	xfContext* xfc = clipboard->xfc;
+	xfContext* xfc;
 	UINT ret;
+	xfClipboard* clipboard;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatList);
+
+	clipboard = context->custom;
+	WINPR_ASSERT(clipboard);
+
+	xfc = clipboard->xfc;
+	WINPR_ASSERT(xfc);
+
 	xf_clipboard_formats_free(clipboard);
 	xf_cliprdr_clear_cached_data(clipboard);
 	clipboard->data_format_id = -1;
@@ -1688,9 +1723,21 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 {
 	BOOL rawTransfer;
 	const xfCliprdrFormat* format = NULL;
-	UINT32 formatId = formatDataRequest->requestedFormatId;
-	xfClipboard* clipboard = (xfClipboard*)context->custom;
-	xfContext* xfc = clipboard->xfc;
+	UINT32 formatId;
+	xfContext* xfc;
+	xfClipboard* clipboard;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatDataRequest);
+
+	clipboard = context->custom;
+	WINPR_ASSERT(clipboard);
+
+	xfc = clipboard->xfc;
+	WINPR_ASSERT(xfc);
+
+	formatId = formatDataRequest->requestedFormatId;
+
 	rawTransfer = xf_cliprdr_is_raw_transfer_available(clipboard);
 
 	if (rawTransfer)
@@ -1986,10 +2033,22 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	UINT32 dstFormatId;
 	const xfCliprdrFormat* dstTargetFormat;
 	BOOL nullTerminated = FALSE;
-	UINT32 size = formatDataResponse->dataLen;
-	const BYTE* data = formatDataResponse->requestedFormatData;
-	xfClipboard* clipboard = (xfClipboard*)context->custom;
-	xfContext* xfc = clipboard->xfc;
+	UINT32 size;
+	const BYTE* data;
+	xfContext* xfc;
+	xfClipboard* clipboard;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatDataResponse);
+
+	clipboard = context->custom;
+	WINPR_ASSERT(clipboard);
+
+	xfc = clipboard->xfc;
+	WINPR_ASSERT(xfc);
+
+	size = formatDataResponse->dataLen;
+	data = formatDataResponse->requestedFormatData;
 
 	if (formatDataResponse->msgFlags == CB_RESPONSE_FAIL)
 	{
@@ -2206,7 +2265,13 @@ xf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
                                         const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	UINT error = NO_ERROR;
-	xfClipboard* clipboard = context->custom;
+	xfClipboard* clipboard;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(fileContentsRequest);
+
+	clipboard = context->custom;
+	WINPR_ASSERT(clipboard);
 
 	/*
 	 * MS-RDPECLIP 2.2.5.3 File Contents Request PDU (CLIPRDR_FILECONTENTS_REQUEST):

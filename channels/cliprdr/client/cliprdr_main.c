@@ -193,12 +193,6 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 	cliprdr->hasHugeFileSupport = (generalFlags & CB_HUGE_FILE_SUPPORT_ENABLED);
 	cliprdr->capabilitiesReceived = TRUE;
 
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	capabilities.msgType = CB_CLIP_CAPS;
 	capabilities.cCapabilitiesSets = 1;
 	capabilities.capabilitySets = (CLIPRDR_CAPABILITY_SET*)&(generalCapabilitySet);
@@ -288,12 +282,6 @@ static UINT cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "MonitorReady");
 
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	if (!cliprdr->capabilitiesReceived)
 	{
 		/**
@@ -336,12 +324,6 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "FileContentsRequest");
 
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	request.msgType = CB_FILECONTENTS_REQUEST;
 	request.msgFlags = flags;
 	request.dataLen = length;
@@ -374,12 +356,6 @@ static UINT cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStrea
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "FileContentsResponse");
 
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	response.msgType = CB_FILECONTENTS_RESPONSE;
 	response.msgFlags = flags;
 	response.dataLen = length;
@@ -411,12 +387,6 @@ static UINT cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UI
 	WINPR_ASSERT(s);
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "LockClipData");
-
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -452,12 +422,6 @@ static UINT cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s, 
 	WINPR_ASSERT(s);
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "UnlockClipData");
-
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
 
 	if ((error = cliprdr_read_unlock_clipdata(s, &unlockClipboardData)))
 		return error;
