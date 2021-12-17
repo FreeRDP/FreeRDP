@@ -46,7 +46,7 @@ struct _H264_CONTEXT
 
 	H264_RATECONTROL_MODE RateControlMode;
 	UINT32 BitRate;
-	FLOAT FrameRate;
+	UINT32 FrameRate;
 	UINT32 QP;
 	UINT32 NumberOfThreads;
 

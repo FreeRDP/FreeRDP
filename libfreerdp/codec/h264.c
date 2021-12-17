@@ -120,23 +120,31 @@ static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
                                     RDPGFX_H264_METABLOCK* meta, size_t count)
 {
 	size_t x;
-	if (!meta)
+
+	/* [MS-RDPEGFX] 2.2.4.4.2 RDPGFX_AVC420_QUANT_QUALITY */
+	if (!meta || (QP > UINT8_MAX))
 		return FALSE;
 
 	meta->regionRects = rectangles;
 	if (count == 0)
 		return TRUE;
 
+	if (count > UINT32_MAX)
+		return FALSE;
+
 	meta->quantQualityVals = calloc(count, sizeof(RDPGFX_H264_QUANT_QUALITY));
 
 	if (!meta->quantQualityVals || !meta->regionRects)
 		return FALSE;
-	meta->numRegionRects = count;
+	meta->numRegionRects = (UINT32)count;
 	for (x = 0; x < count; x++)
 	{
 		RDPGFX_H264_QUANT_QUALITY* cur = &meta->quantQualityVals[x];
-		cur->qp = QP;
-		cur->qualityVal = 100 - QP;
+		cur->qp = (UINT8)QP;
+
+		/* qpVal bit 6 and 7 are flags, so mask them out here.
+		 * qualityVal is [0-100] so 100 - qpVal [0-64] is always in range */
+		cur->qualityVal = 100 - (QP & 0x3F);
 	}
 	return TRUE;
 }
@@ -202,10 +210,12 @@ static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE
 			for (x = regionRect->left; x < regionRect->right; x += 64)
 			{
 				RECTANGLE_16 rect;
-				rect.left = regionRect->left + x;
-				rect.top = regionRect->top + y;
-				rect.right = MIN(regionRect->left + x + 64, regionRect->right);
-				rect.bottom = MIN(regionRect->top + y + 64, regionRect->bottom);
+				rect.left = (UINT16)MIN(UINT16_MAX, regionRect->left + x);
+				rect.top = (UINT16)MIN(UINT16_MAX, regionRect->top + y);
+				rect.right =
+				    (UINT16)MIN(UINT16_MAX, MIN(regionRect->left + x + 64, regionRect->right));
+				rect.bottom =
+				    (UINT16)MIN(UINT16_MAX, MIN(regionRect->top + y + 64, regionRect->bottom));
 				if (diff_tile(&rect, pYUVData, pOldYUVData, iStride))
 					rectangles[count++] = rect;
 			}
@@ -450,7 +460,7 @@ static BOOL avc444_process_rects(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 	pYUVDstData[0] = ppYUVDstData[0];
 	pYUVDstData[1] = ppYUVDstData[1];
 	pYUVDstData[2] = ppYUVDstData[2];
-	if (!yuv444_context_decode(h264->yuv, type, pYUVData, piStride, h264->height, pYUVDstData,
+	if (!yuv444_context_decode(h264->yuv, (BYTE)type, pYUVData, piStride, h264->height, pYUVDstData,
 	                           piDstStride, DstFormat, pDstData, nDstStep, rects, nrRects))
 		return FALSE;
 
