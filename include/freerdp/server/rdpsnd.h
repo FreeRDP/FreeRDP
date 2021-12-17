@@ -39,7 +39,7 @@ typedef UINT (*psRdpsndServerSendSamples)(RdpsndServerContext* context, const vo
                                           size_t nframes, UINT16 wTimestamp);
 typedef UINT (*psRdpsndServerConfirmBlock)(RdpsndServerContext* context, BYTE confirmBlockNum,
                                            UINT16 wtimestamp);
-typedef UINT (*psRdpsndServerSetVolume)(RdpsndServerContext* context, int left, int right);
+typedef UINT (*psRdpsndServerSetVolume)(RdpsndServerContext* context, UINT16 left, UINT16 right);
 typedef UINT (*psRdpsndServerClose)(RdpsndServerContext* context);
 
 typedef void (*psRdpsndServerActivated)(RdpsndServerContext* context);

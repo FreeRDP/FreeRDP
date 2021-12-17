@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
@@ -595,23 +596,32 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpsnd_server_set_volume(RdpsndServerContext* context, int left, int right)
+static UINT rdpsnd_server_set_volume(RdpsndServerContext* context, UINT16 left, UINT16 right)
 {
-	size_t pos;
+	size_t len;
 	BOOL status;
 	ULONG written;
-	wStream* s = context->priv->rdpsnd_pdu;
+	wStream* s;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+
+	s = context->priv->rdpsnd_pdu;
+	WINPR_ASSERT(s);
+
+	Stream_SetPosition(s, 0);
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return ERROR_NOT_ENOUGH_MEMORY;
+
 	Stream_Write_UINT8(s, SNDC_SETVOLUME);
 	Stream_Write_UINT8(s, 0);
-	Stream_Seek_UINT16(s);
+	Stream_Write_UINT16(s, 4); /* Payload length */
 	Stream_Write_UINT16(s, left);
 	Stream_Write_UINT16(s, right);
-	pos = Stream_GetPosition(s);
-	Stream_SetPosition(s, 2);
-	Stream_Write_UINT16(s, pos - 4);
-	Stream_SetPosition(s, pos);
+	len = Stream_GetPosition(s);
+
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR)Stream_Buffer(s),
-	                                Stream_GetPosition(s), &written);
+	                                (ULONG)len, &written);
 	Stream_SetPosition(s, 0);
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
