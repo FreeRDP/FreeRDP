@@ -1965,6 +1965,7 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
+	WLog_DBG(TAG, "[%s] MonitorCount=%" PRIu32, __FUNCTION__, settings->MonitorCount);
 	if (settings->MonitorCount > 1)
 	{
 		length = (20 * settings->MonitorCount) + 12;
@@ -1994,6 +1995,10 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 			const UINT32 right = left + current->width - 1;
 			const UINT32 bottom = top + current->height - 1;
 			const UINT32 flags = current->is_primary ? MONITOR_PRIMARY : 0;
+			WLog_DBG(TAG,
+			         "[%s] Monitor[%" PRIu32 "]: top=%" PRIu32 ", left=%" PRIu32 ", bottom=%" PRIu32
+			         ", right=%" PRIu32 ", flags" PRIu32,
+			         __FUNCTION__, i, top, left, bottom, right, flags);
 			Stream_Write_UINT32(s, left);   /* left */
 			Stream_Write_UINT32(s, top);    /* top */
 			Stream_Write_UINT32(s, right);  /* right */
@@ -2001,6 +2006,7 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 			Stream_Write_UINT32(s, flags);  /* flags */
 		}
 	}
+	WLog_DBG(TAG, "[%s] FINISHED" PRIu32, __FUNCTION__);
 	return TRUE;
 }
 
