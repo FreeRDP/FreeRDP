@@ -275,9 +275,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		char* user = NULL;
 		char* domain = NULL;
 		char* cookie = NULL;
-		int user_length = 0;
-		int domain_length = 0;
-		int cookie_length = 0;
+		size_t user_length = 0;
+		size_t domain_length = 0;
+		size_t cookie_length = 0;
 
 		if (settings->Username)
 		{
@@ -392,6 +392,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	}
 
 	WLog_ERR(TAG, "Timeout waiting for activation");
+	freerdp_set_last_error_if_not(rdp->context, FREERDP_ERROR_CONNECT_ACTIVATION_TIMEOUT);
 	return FALSE;
 }
 
@@ -1565,7 +1566,7 @@ BOOL rdp_set_state(rdpRdp* rdp, CONNECTION_STATE state)
 
 const char* rdp_get_state_string(rdpRdp* rdp)
 {
-	int state = rdp_get_state(rdp);
+	CONNECTION_STATE state = rdp_get_state(rdp);
 	return rdp_state_string(state);
 }
 

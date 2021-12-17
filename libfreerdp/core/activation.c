@@ -485,6 +485,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	}
 
 	WLog_ERR(TAG, "Timeout waiting for activation");
+	freerdp_set_last_error_if_not(rdp->context, FREERDP_ERROR_CONNECT_ACTIVATION_TIMEOUT);
 	return FALSE;
 }
 
