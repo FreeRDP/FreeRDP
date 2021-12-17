@@ -121,7 +121,7 @@ struct rdp_mcs_channel
 {
 	char Name[CHANNEL_NAME_LEN + 1];
 	UINT32 options;
-	int ChannelId;
+	UINT16 ChannelId;
 	BOOL joined;
 	void* handle;
 };
