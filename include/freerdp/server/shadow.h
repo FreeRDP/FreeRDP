@@ -143,7 +143,7 @@ struct rdp_shadow_server
 	RLGR_MODE rfxMode;
 	H264_RATECONTROL_MODE h264RateControlMode;
 	UINT32 h264BitRate;
-	FLOAT h264FrameRate;
+	UINT32 h264FrameRate;
 	UINT32 h264QP;
 
 	char* ipcSocket;
