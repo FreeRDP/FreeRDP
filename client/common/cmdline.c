@@ -2121,12 +2121,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				if (p)
 				{
 					LONGLONG val;
-					size_t length;
 
 					if (!value_to_int(&p[1], &val, 0, UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-					length = (size_t)(p - cur);
 					if (!freerdp_settings_set_uint16(settings, FreeRDP_ProxyPort, (UINT16)val))
 						return FALSE;
 					*p = '\0';
