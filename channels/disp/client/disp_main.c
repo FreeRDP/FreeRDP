@@ -81,9 +81,9 @@ typedef struct _DISP_PLUGIN DISP_PLUGIN;
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback,
-                                                         UINT32 NumMonitors,
-                                                         DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
+static UINT
+disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback, UINT32 NumMonitors,
+                                             const DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
 	UINT status;
 	wStream* s;
@@ -115,49 +115,46 @@ static UINT disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* 
 
 	Stream_Write_UINT32(s, MonitorLayoutSize); /* MonitorLayoutSize (4 bytes) */
 	Stream_Write_UINT32(s, NumMonitors);       /* NumMonitors (4 bytes) */
-	WLog_DBG(TAG, "disp_send_display_control_monitor_layout_pdu: NumMonitors=%" PRIu32 "",
-	         NumMonitors);
+	WLog_DBG(TAG, "%s: NumMonitors=%" PRIu32 "", __FUNCTION__, NumMonitors);
 
 	for (index = 0; index < NumMonitors; index++)
 	{
-		Monitors[index].Width -= (Monitors[index].Width % 2);
+		DISPLAY_CONTROL_MONITOR_LAYOUT current = Monitors[index];
+		current.Width -= (current.Width % 2);
 
-		if (Monitors[index].Width < 200)
-			Monitors[index].Width = 200;
+		if (current.Width < 200)
+			current.Width = 200;
 
-		if (Monitors[index].Width > 8192)
-			Monitors[index].Width = 8192;
+		if (current.Width > 8192)
+			current.Width = 8192;
 
-		if (Monitors[index].Width % 2)
-			Monitors[index].Width++;
+		if (current.Width % 2)
+			current.Width++;
 
-		if (Monitors[index].Height < 200)
-			Monitors[index].Height = 200;
+		if (current.Height < 200)
+			current.Height = 200;
 
-		if (Monitors[index].Height > 8192)
-			Monitors[index].Height = 8192;
+		if (current.Height > 8192)
+			current.Height = 8192;
 
-		Stream_Write_UINT32(s, Monitors[index].Flags);          /* Flags (4 bytes) */
-		Stream_Write_UINT32(s, Monitors[index].Left);           /* Left (4 bytes) */
-		Stream_Write_UINT32(s, Monitors[index].Top);            /* Top (4 bytes) */
-		Stream_Write_UINT32(s, Monitors[index].Width);          /* Width (4 bytes) */
-		Stream_Write_UINT32(s, Monitors[index].Height);         /* Height (4 bytes) */
-		Stream_Write_UINT32(s, Monitors[index].PhysicalWidth);  /* PhysicalWidth (4 bytes) */
-		Stream_Write_UINT32(s, Monitors[index].PhysicalHeight); /* PhysicalHeight (4 bytes) */
-		Stream_Write_UINT32(s, Monitors[index].Orientation);    /* Orientation (4 bytes) */
-		Stream_Write_UINT32(s,
-		                    Monitors[index].DesktopScaleFactor); /* DesktopScaleFactor (4 bytes) */
-		Stream_Write_UINT32(s, Monitors[index].DeviceScaleFactor); /* DeviceScaleFactor (4 bytes) */
+		Stream_Write_UINT32(s, current.Flags);              /* Flags (4 bytes) */
+		Stream_Write_UINT32(s, current.Left);               /* Left (4 bytes) */
+		Stream_Write_UINT32(s, current.Top);                /* Top (4 bytes) */
+		Stream_Write_UINT32(s, current.Width);              /* Width (4 bytes) */
+		Stream_Write_UINT32(s, current.Height);             /* Height (4 bytes) */
+		Stream_Write_UINT32(s, current.PhysicalWidth);      /* PhysicalWidth (4 bytes) */
+		Stream_Write_UINT32(s, current.PhysicalHeight);     /* PhysicalHeight (4 bytes) */
+		Stream_Write_UINT32(s, current.Orientation);        /* Orientation (4 bytes) */
+		Stream_Write_UINT32(s, current.DesktopScaleFactor); /* DesktopScaleFactor (4 bytes) */
+		Stream_Write_UINT32(s, current.DeviceScaleFactor);  /* DeviceScaleFactor (4 bytes) */
 		WLog_DBG(TAG,
 		         "\t%d : Flags: 0x%08" PRIX32 " Left/Top: (%" PRId32 ",%" PRId32 ") W/H=%" PRIu32
 		         "x%" PRIu32 ")",
-		         index, Monitors[index].Flags, Monitors[index].Left, Monitors[index].Top,
-		         Monitors[index].Width, Monitors[index].Height);
+		         index, current.Flags, current.Left, current.Top, current.Width, current.Height);
 		WLog_DBG(TAG,
 		         "\t   PhysicalWidth: %" PRIu32 " PhysicalHeight: %" PRIu32 " Orientation: %" PRIu32
 		         "",
-		         Monitors[index].PhysicalWidth, Monitors[index].PhysicalHeight,
-		         Monitors[index].Orientation);
+		         current.PhysicalWidth, current.PhysicalHeight, current.Orientation);
 	}
 
 out:
