@@ -47,12 +47,6 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	formatList.msgType = CB_FORMAT_LIST;
 	formatList.msgFlags = msgFlags;
 	formatList.dataLen = dataLen;
@@ -88,12 +82,6 @@ UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatListResponse");
 
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	formatListResponse.msgType = CB_FORMAT_LIST_RESPONSE;
 	formatListResponse.msgFlags = msgFlags;
 	formatListResponse.dataLen = dataLen;
@@ -118,12 +106,6 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 	UINT error = CHANNEL_RC_OK;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataRequest");
-
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
 
 	formatDataRequest.msgType = CB_FORMAT_DATA_REQUEST;
 	formatDataRequest.msgFlags = msgFlags;
@@ -153,12 +135,6 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 	UINT error = CHANNEL_RC_OK;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataResponse");
-
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
 
 	formatDataResponse.msgType = CB_FORMAT_DATA_RESPONSE;
 	formatDataResponse.msgFlags = msgFlags;
