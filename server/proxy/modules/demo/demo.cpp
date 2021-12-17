@@ -127,6 +127,16 @@ static BOOL demo_client_end_paint(proxyPlugin* plugin, proxyData* pdata, void* c
 	return TRUE;
 }
 
+static BOOL demo_client_redirect(proxyPlugin* plugin, proxyData* pdata, void* custom)
+{
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(custom);
+
+	WLog_INFO(TAG, "%s", __FUNCTION__);
+	return TRUE;
+}
+
 static BOOL demo_server_post_connect(proxyPlugin* plugin, proxyData* pdata, void* custom)
 {
 	WINPR_ASSERT(plugin);
@@ -302,6 +312,7 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 	plugin.ClientX509Certificate = demo_client_x509_certificate;
 	plugin.ClientLoginFailure = demo_client_login_failure;
 	plugin.ClientEndPaint = demo_client_end_paint;
+	plugin.ClientRedirect = demo_client_redirect;
 	plugin.ServerPostConnect = demo_server_post_connect;
 	plugin.ServerPeerActivate = demo_server_peer_activate;
 	plugin.ServerChannelsInit = demo_server_channels_init;
