@@ -423,7 +423,7 @@ const char* GetSecurityStatusString(SECURITY_STATUS status)
 			return "SEC_I_NO_RENEGOTIATION";
 	}
 
-	return NtStatus2Tag(status);
+	return NtStatus2Tag((DWORD)status);
 }
 
 BOOL IsSecurityStatusError(SECURITY_STATUS status)
@@ -1075,68 +1075,6 @@ SECURITY_STATUS SEC_ENTRY sspi_VerifySignature(PCtxtHandle phContext, PSecBuffer
 	           GetSecurityStatusString(status), status);
 	return status;
 }
-
-static const SecurityFunctionTableA sspi_SecurityFunctionTableA = {
-	1,                                /* dwVersion */
-	sspi_EnumerateSecurityPackagesA,  /* EnumerateSecurityPackages */
-	sspi_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
-	sspi_AcquireCredentialsHandleA,   /* AcquireCredentialsHandle */
-	sspi_FreeCredentialsHandle,       /* FreeCredentialsHandle */
-	NULL,                             /* Reserved2 */
-	sspi_InitializeSecurityContextA,  /* InitializeSecurityContext */
-	sspi_AcceptSecurityContext,       /* AcceptSecurityContext */
-	sspi_CompleteAuthToken,           /* CompleteAuthToken */
-	sspi_DeleteSecurityContext,       /* DeleteSecurityContext */
-	sspi_ApplyControlToken,           /* ApplyControlToken */
-	sspi_QueryContextAttributesA,     /* QueryContextAttributes */
-	sspi_ImpersonateSecurityContext,  /* ImpersonateSecurityContext */
-	sspi_RevertSecurityContext,       /* RevertSecurityContext */
-	sspi_MakeSignature,               /* MakeSignature */
-	sspi_VerifySignature,             /* VerifySignature */
-	sspi_FreeContextBuffer,           /* FreeContextBuffer */
-	sspi_QuerySecurityPackageInfoA,   /* QuerySecurityPackageInfo */
-	NULL,                             /* Reserved3 */
-	NULL,                             /* Reserved4 */
-	sspi_ExportSecurityContext,       /* ExportSecurityContext */
-	sspi_ImportSecurityContextA,      /* ImportSecurityContext */
-	NULL,                             /* AddCredentials */
-	NULL,                             /* Reserved8 */
-	sspi_QuerySecurityContextToken,   /* QuerySecurityContextToken */
-	sspi_EncryptMessage,              /* EncryptMessage */
-	sspi_DecryptMessage,              /* DecryptMessage */
-	sspi_SetContextAttributesA,       /* SetContextAttributes */
-};
-
-static const SecurityFunctionTableW sspi_SecurityFunctionTableW = {
-	1,                                /* dwVersion */
-	sspi_EnumerateSecurityPackagesW,  /* EnumerateSecurityPackages */
-	sspi_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
-	sspi_AcquireCredentialsHandleW,   /* AcquireCredentialsHandle */
-	sspi_FreeCredentialsHandle,       /* FreeCredentialsHandle */
-	NULL,                             /* Reserved2 */
-	sspi_InitializeSecurityContextW,  /* InitializeSecurityContext */
-	sspi_AcceptSecurityContext,       /* AcceptSecurityContext */
-	sspi_CompleteAuthToken,           /* CompleteAuthToken */
-	sspi_DeleteSecurityContext,       /* DeleteSecurityContext */
-	sspi_ApplyControlToken,           /* ApplyControlToken */
-	sspi_QueryContextAttributesW,     /* QueryContextAttributes */
-	sspi_ImpersonateSecurityContext,  /* ImpersonateSecurityContext */
-	sspi_RevertSecurityContext,       /* RevertSecurityContext */
-	sspi_MakeSignature,               /* MakeSignature */
-	sspi_VerifySignature,             /* VerifySignature */
-	sspi_FreeContextBuffer,           /* FreeContextBuffer */
-	sspi_QuerySecurityPackageInfoW,   /* QuerySecurityPackageInfo */
-	NULL,                             /* Reserved3 */
-	NULL,                             /* Reserved4 */
-	sspi_ExportSecurityContext,       /* ExportSecurityContext */
-	sspi_ImportSecurityContextW,      /* ImportSecurityContext */
-	NULL,                             /* AddCredentials */
-	NULL,                             /* Reserved8 */
-	sspi_QuerySecurityContextToken,   /* QuerySecurityContextToken */
-	sspi_EncryptMessage,              /* EncryptMessage */
-	sspi_DecryptMessage,              /* DecryptMessage */
-	sspi_SetContextAttributesW,       /* SetContextAttributes */
-};
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
