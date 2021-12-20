@@ -52,7 +52,7 @@ static int test_command_line_parsing_case(const char* line, const char** list)
 		printf("argv[%d] = %s\n", i, pArgs[i]);
 	}
 
-	HeapFree(GetProcessHeap(), 0, pArgs);
+	free(pArgs);
 
 	return 0;
 }

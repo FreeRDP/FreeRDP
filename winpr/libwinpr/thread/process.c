@@ -336,11 +336,7 @@ finish:
 		pthread_sigmask(SIG_SETMASK, &oldSigMask, NULL);
 
 	free(filename);
-
-	if (pArgs)
-	{
-		HeapFree(GetProcessHeap(), 0, pArgs);
-	}
+	free(pArgs);
 
 	if (lpszEnvironmentBlock)
 		FreeEnvironmentStrings(lpszEnvironmentBlock);

@@ -28,7 +28,6 @@
 
 #include <winpr/spec.h>
 #include <winpr/string.h>
-#include <winpr/heap.h>
 
 #ifndef _WIN32
 
