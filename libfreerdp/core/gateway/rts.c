@@ -24,7 +24,6 @@
 #include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
-#include <winpr/winhttp.h>
 
 #include <freerdp/log.h>
 
