@@ -3,6 +3,7 @@
 JPEG_TAG=master
 OPENH264_TAG=master
 OPENSSL_TAG=master
+FFMPEG_TAG=n4.4.1
 
 WITH_JPEG=0
 WITH_OPENH264=0
@@ -46,10 +47,6 @@ do
 			;;
 		--ffmpeg)
 			WITH_FFMPEG=1
-			shift
-			;;
-		--ffmpeg-path)
-			FFMPEG_PATH="$2"
 			shift
 			;;
 		--openssl)
@@ -145,10 +142,17 @@ do
     fi
 	if [ $WITH_FFMPEG -ne 0 ];
     then
+		if [ $BUILD_DEPS -ne 0 ];
+        then
+            common_run bash $SCRIPT_PATH/android-build-ffmpeg.sh \
+                --src $BUILD_SRC/ffmpeg --dst $BUILD_DST \
+                --sdk "$ANDROID_SDK" \
+                --ndk "$ANDROID_NDK" \
+                --arch $ARCH \
+                --target $NDK_TARGET \
+                --tag $FFMPEG_TAG
+        fi
 		CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_FFMPEG=ON"
-		CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DAVCODEC_INCLUDE_DIRS=$FFMPEG_PATH/$ARCH/include -DAVCODEC_LIBRARY_DIRS=$FFMPEG_PATH/$ARCH/lib"
-		CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DAVUTIL_INCLUDE_DIRS=$FFMPEG_PATH/$ARCH/include -DAVUTIL_LIBRARY_DIRS=$FFMPEG_PATH/$ARCH/lib"
-		CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DSWRESAMPLE_INCLUDE_DIRS=$FFMPEG_PATH/$ARCH/include -DSWRESAMPLE_LIBRARY_DIRS=$FFMPEG_PATH/$ARCH/lib"
 	else
         CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_FFMPEG=OFF"
     fi
