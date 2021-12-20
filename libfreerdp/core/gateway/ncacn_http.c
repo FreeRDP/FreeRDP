@@ -27,7 +27,6 @@
 #include <winpr/tchar.h>
 #include <winpr/stream.h>
 #include <winpr/dsparse.h>
-#include <winpr/winhttp.h>
 
 #include "../utils.h"
 
