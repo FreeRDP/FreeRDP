@@ -96,7 +96,7 @@ endif()
 
 # Level "1" API as defined for MinCore.lib
 set(WINPR_CORE synch library file comm pipe interlocked security
-	environment crypto registry credentials path io memory ncrypt input shell
+	environment crypto registry path io memory ncrypt input shell
 	heap utils error timezone sysinfo pool handle thread)
 
 foreach(DIR ${WINPR_CORE})
