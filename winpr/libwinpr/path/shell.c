@@ -29,7 +29,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/platform.h>
-#include <winpr/heap.h>
 #include <winpr/file.h>
 #include <winpr/tchar.h>
 #include <winpr/environment.h>

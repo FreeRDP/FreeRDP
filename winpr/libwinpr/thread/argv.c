@@ -22,7 +22,6 @@
 #endif
 
 #include <winpr/crt.h>
-#include <winpr/heap.h>
 #include <winpr/handle.h>
 
 #include <winpr/thread.h>
@@ -195,7 +194,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	}
 
 	maxBufferSize = (maxNumArgs * (sizeof(char*))) + (cmdLineLength + 1);
-	buffer = (char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, maxBufferSize);
+	buffer = calloc(maxBufferSize, sizeof(WCHAR));
 
 	if (!buffer)
 	{

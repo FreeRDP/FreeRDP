@@ -36,7 +36,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 		return -1;
 	}
 
-	HeapFree(GetProcessHeap(), 0, PathOut);
+	free(PathOut);
 
 	/* Base Path: Backslash, More Path: Backslash */
 
@@ -55,7 +55,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 		return -1;
 	}
 
-	HeapFree(GetProcessHeap(), 0, PathOut);
+	free(PathOut);
 
 	/* Base Path: No Backslash, More Path: Backslash */
 
@@ -74,7 +74,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 		return -1;
 	}
 
-	HeapFree(GetProcessHeap(), 0, PathOut);
+	free(PathOut);
 
 	/* Base Path: No Backslash, More Path: No Backslash */
 
@@ -92,7 +92,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 		return -1;
 	}
 
-	HeapFree(GetProcessHeap(), 0, PathOut);
+	free(PathOut);
 
 	return 0;
 }

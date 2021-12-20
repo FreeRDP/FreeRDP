@@ -22,7 +22,6 @@
 #endif
 
 #include <winpr/crt.h>
-#include <winpr/heap.h>
 #include <winpr/tchar.h>
 
 #include <winpr/path.h>
