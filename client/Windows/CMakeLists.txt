@@ -95,7 +95,7 @@ endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} msimg32)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} msimg32 credui)
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_CLIENT_INTERFACE)
