@@ -455,8 +455,6 @@ typedef struct _RPC_BINDING_HANDLE_TEMPLATE
 #define RPC_CALL_STATUS_CANCELLED 0x02
 #define RPC_CALL_STATUS_DISCONNECTED 0x03
 
-#include <winpr/ndr.h>
-
 #ifdef __cplusplus
 extern "C"
 {

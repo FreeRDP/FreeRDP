@@ -26,7 +26,6 @@
 
 #include <winpr/assert.h>
 #include <winpr/crt.h>
-#include <winpr/ndr.h>
 #include <winpr/error.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
