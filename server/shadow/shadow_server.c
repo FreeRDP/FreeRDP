@@ -26,7 +26,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/ssl.h>
-#include <winpr/wnd.h>
 #include <winpr/path.h>
 #include <winpr/cmdline.h>
 #include <winpr/winsock.h>

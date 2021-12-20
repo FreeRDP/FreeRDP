@@ -22,25 +22,17 @@
 
 #include <winpr/crt.h>
 #include <winpr/ssl.h>
-#include <winpr/wnd.h>
 #include <winpr/path.h>
 #include <winpr/cmdline.h>
 #include <winpr/winsock.h>
 
 #include <winpr/tools/makecert.h>
 
-#ifdef _WIN32
-static BOOL g_MessagePump = TRUE;
-#else
-static BOOL g_MessagePump = FALSE;
-#endif
-
 #include <freerdp/server/shadow.h>
 #define TAG SERVER_TAG("shadow")
 
 int main(int argc, char** argv)
 {
-	MSG msg;
 	int status = 0;
 	DWORD dwExitCode;
 	rdpSettings* settings;
@@ -151,14 +143,16 @@ int main(int argc, char** argv)
 		goto fail_server_start;
 	}
 
-	if (g_MessagePump)
+#ifdef _WIN32
 	{
+		MSG msg = { 0 };
 		while (GetMessage(&msg, 0, 0, 0))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
 	}
+#endif
 
 	WaitForSingleObject(server->thread, INFINITE);
 
