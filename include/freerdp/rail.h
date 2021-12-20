@@ -21,7 +21,6 @@
 #ifndef FREERDP_RAIL_GLOBAL_H
 #define FREERDP_RAIL_GLOBAL_H
 
-#include <winpr/wnd.h>
 #include <winpr/windows.h>
 
 #include <freerdp/types.h>
