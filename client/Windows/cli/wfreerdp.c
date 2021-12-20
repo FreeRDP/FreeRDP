@@ -26,7 +26,6 @@
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
-#include <winpr/credui.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>

@@ -26,7 +26,6 @@
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
-#include <winpr/credui.h>
 
 #include <errno.h>
 #include <stdio.h>
