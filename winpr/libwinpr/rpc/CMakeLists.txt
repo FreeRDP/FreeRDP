@@ -36,7 +36,7 @@ winpr_module_add(
 	ndr_structure.h
 	ndr_union.c
 	ndr_union.h
-	midl.c)
+)
 
 winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
 
