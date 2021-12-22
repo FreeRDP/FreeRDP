@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include <winpr/wtypes.h>
+#include <assert.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
 
@@ -52,25 +53,45 @@ static struct reg_data_type REG_DATA_TYPE_TABLE[] = { { "\"", 1, REG_SZ },
 	                                                  { "hex:", 4, REG_BINARY },
 	                                                  { "hex(2):\"", 8, REG_EXPAND_SZ },
 	                                                  { "hex(7):\"", 8, REG_MULTI_SZ },
-	                                                  { "hex(b):\"", 8, REG_QWORD },
-	                                                  { NULL, 0, 0 } };
+	                                                  { "hex(b):\"", 8, REG_QWORD } };
 
-static char* REG_DATA_TYPE_STRINGS[] = { "REG_NONE",
-	                                     "REG_SZ",
-	                                     "REG_EXPAND_SZ",
-	                                     "REG_BINARY",
-	                                     "REG_DWORD",
-	                                     "REG_DWORD_BIG_ENDIAN",
-	                                     "REG_LINK",
-	                                     "REG_MULTI_SZ",
-	                                     "REG_RESOURCE_LIST",
-	                                     "REG_FULL_RESOURCE_DESCRIPTOR",
-	                                     "REG_RESOURCE_REQUIREMENTS_LIST",
-	                                     "REG_QWORD" };
+static char* reg_data_type_string(DWORD type)
+{
+	switch (type)
+	{
+		case REG_NONE:
+			return "REG_NONE";
+		case REG_SZ:
+			return "REG_SZ";
+		case REG_EXPAND_SZ:
+			return "REG_EXPAND_SZ";
+		case REG_BINARY:
+			return "REG_BINARY";
+		case REG_DWORD:
+			return "REG_DWORD";
+		case REG_DWORD_BIG_ENDIAN:
+			return "REG_DWORD_BIG_ENDIAN";
+		case REG_LINK:
+			return "REG_LINK";
+		case REG_MULTI_SZ:
+			return "REG_MULTI_SZ";
+		case REG_RESOURCE_LIST:
+			return "REG_RESOURCE_LIST";
+		case REG_FULL_RESOURCE_DESCRIPTOR:
+			return "REG_FULL_RESOURCE_DESCRIPTOR";
+		case REG_RESOURCE_REQUIREMENTS_LIST:
+			return "REG_RESOURCE_REQUIREMENTS_LIST";
+		case REG_QWORD:
+			return "REG_QWORD";
+		default:
+			return "REG_UNKNOWN";
+	}
+}
 
 static void reg_load_start(Reg* reg)
 {
 	INT64 file_size;
+	assert(reg);
 	_fseeki64(reg->fp, 0, SEEK_END);
 	file_size = _ftelli64(reg->fp);
 	_fseeki64(reg->fp, 0, SEEK_SET);
@@ -81,12 +102,12 @@ static void reg_load_start(Reg* reg)
 	if (file_size < 1)
 		return;
 
-	reg->buffer = (char*)malloc(file_size + 2);
+	reg->buffer = (char*)malloc((size_t)file_size + 2);
 
 	if (!reg->buffer)
 		return;
 
-	if (fread(reg->buffer, file_size, 1, reg->fp) != 1)
+	if (fread(reg->buffer, (size_t)file_size, 1, reg->fp) != 1)
 	{
 		free(reg->buffer);
 		reg->buffer = NULL;
@@ -113,12 +134,16 @@ static void reg_load_finish(Reg* reg)
 static RegVal* reg_load_value(Reg* reg, RegKey* key)
 {
 	int index;
-	char* p[5];
-	int length;
-	char* name;
+	char* p[5] = { 0 };
+	size_t length;
+	char* name = NULL;
 	char* type;
 	char* data;
-	RegVal* value;
+	RegVal* value = NULL;
+
+	assert(reg);
+	assert(key);
+
 	p[0] = reg->line + 1;
 	p[1] = strstr(p[0], "\"=");
 	p[2] = p[1] + 2;
@@ -131,65 +156,81 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 
 	data = p[3] + 1;
 	length = p[1] - p[0];
-	name = (char*)malloc(length + 1);
+	if (length < 1)
+		goto fail;
+
+	name = (char*)calloc(length + 1, sizeof(char));
 
 	if (!name)
-		return NULL;
+		goto fail;
 
 	memcpy(name, p[0], length);
-	name[length] = '\0';
-	value = (RegVal*)malloc(sizeof(RegVal));
+	value = (RegVal*)calloc(1, sizeof(RegVal));
 
 	if (!value)
-	{
-		free(name);
-		return NULL;
-	}
+		goto fail;
 
 	value->name = name;
 	value->type = REG_NONE;
 	value->next = value->prev = NULL;
 
-	for (index = 0; REG_DATA_TYPE_TABLE[index].length > 0; index++)
+	for (index = 0; index < ARRAYSIZE(REG_DATA_TYPE_TABLE); index++)
 	{
-		if (strncmp(type, REG_DATA_TYPE_TABLE[index].tag, REG_DATA_TYPE_TABLE[index].length) == 0)
+		const struct reg_data_type* current = &REG_DATA_TYPE_TABLE[index];
+		assert(current->tag);
+		assert(current->length > 0);
+		assert(current->type != REG_NONE);
+
+		if (strncmp(type, current->tag, current->length) == 0)
 		{
-			value->type = REG_DATA_TYPE_TABLE[index].type;
+			value->type = current->type;
 			break;
 		}
 	}
 
-	if (value->type == REG_DWORD)
+	switch (value->type)
 	{
-		unsigned long val;
-		errno = 0;
-		val = strtoul(data, NULL, 16);
-
-		if ((errno != 0) || (val > UINT32_MAX))
+		case REG_DWORD:
 		{
-			free(value);
-			free(name);
-			return NULL;
+			unsigned long val;
+			errno = 0;
+			val = strtoul(data, NULL, 16);
+
+			if ((errno != 0) || (val > UINT32_MAX))
+				goto fail;
+
+			value->data.dword = (DWORD)val;
 		}
-
-		value->data.dword = val;
-	}
-	else if (value->type == REG_SZ)
-	{
-		p[4] = strchr(data, '"');
-		p[4][0] = '\0';
-		value->data.string = _strdup(data);
-
-		if (!value->data.string)
+		break;
+		case REG_SZ:
 		{
-			free(value);
-			free(name);
-			return NULL;
+			size_t len, cmp;
+			char* end;
+			char* start = strchr(data, '"');
+			if (!start)
+				goto fail;
+
+			/* Check for terminating quote, check it is the last symbol */
+			len = strlen(start);
+			end = strchr(start + 1, '"');
+			if (!end)
+				goto fail;
+			cmp = end - start + 1;
+			if (len != cmp)
+				goto fail;
+			if (start[0] == '"')
+				start++;
+			if (end[0] == '"')
+				end[0] = '\0';
+			value->data.string = _strdup(start);
+
+			if (!value->data.string)
+				goto fail;
 		}
-	}
-	else
-	{
-		WLog_ERR(TAG, "unimplemented format: %s", REG_DATA_TYPE_STRINGS[value->type]);
+		break;
+		default:
+			WLog_ERR(TAG, "unimplemented format: %s", reg_data_type_string(value->type));
+			break;
 	}
 
 	if (!key->values)
@@ -210,6 +251,11 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 	}
 
 	return value;
+
+fail:
+	free(value);
+	free(name);
+	return NULL;
 }
 
 static BOOL reg_load_has_next_line(Reg* reg)
@@ -233,6 +279,7 @@ static char* reg_load_get_next_line(Reg* reg)
 
 static char* reg_load_peek_next_line(Reg* reg)
 {
+	assert(reg);
 	return reg->next_line;
 }
 
@@ -241,7 +288,10 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 	char* name;
 	char* path;
 	char* save;
-	int length;
+	size_t length;
+	assert(reg);
+	assert(key);
+	assert(subkey);
 	path = _strdup(subkey->name);
 
 	if (!path)
@@ -277,6 +327,8 @@ static RegKey* reg_load_key(Reg* reg, RegKey* key)
 	int length;
 	char* line;
 	RegKey* subkey;
+	assert(reg);
+	assert(key);
 	p[0] = reg->line + 1;
 	p[1] = strrchr(p[0], ']');
 	subkey = (RegKey*)malloc(sizeof(RegKey));
@@ -354,6 +406,8 @@ static void reg_load(Reg* reg)
 
 static void reg_unload_value(Reg* reg, RegVal* value)
 {
+	assert(reg);
+	assert(value);
 	if (value->type == REG_DWORD)
 	{
 	}
@@ -363,7 +417,7 @@ static void reg_unload_value(Reg* reg, RegVal* value)
 	}
 	else
 	{
-		WLog_ERR(TAG, "unimplemented format: %s", REG_DATA_TYPE_STRINGS[value->type]);
+		WLog_ERR(TAG, "unimplemented format: %s", reg_data_type_string(value->type));
 	}
 
 	free(value);
@@ -373,6 +427,8 @@ static void reg_unload_key(Reg* reg, RegKey* key)
 {
 	RegVal* pValue;
 	RegVal* pValueNext;
+	assert(reg);
+	assert(key);
 	pValue = key->values;
 
 	while (pValue != NULL)
@@ -390,6 +446,7 @@ static void reg_unload(Reg* reg)
 {
 	RegKey* pKey;
 	RegKey* pKeyNext;
+	assert(reg);
 	pKey = reg->root_key->subkeys;
 
 	while (pKey != NULL)
