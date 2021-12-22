@@ -34,7 +34,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <winpr/crt.h>
+#include <assert.h>
 
 #include "registry_reg.h"
 
@@ -271,24 +273,48 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD
 	RegKey* key;
 	RegVal* pValue;
 
+	WINPR_UNUSED(lpReserved);
+
 	key = (RegKey*)hKey;
+	assert(key);
+
 	pValue = key->values;
 
 	while (pValue != NULL)
 	{
 		if (strcmp(pValue->name, lpValueName) == 0)
 		{
+			if (lpType)
+				*lpType = pValue->type;
+
 			if (pValue->type == REG_DWORD)
 			{
 				DWORD* pData = (DWORD*)lpData;
 
-				if (pData != NULL)
+				if (lpcbData)
 				{
-					*pData = pValue->data.dword;
+					DWORD size = *lpcbData;
+					*lpcbData = sizeof(DWORD);
+					if (pData)
+					{
+						if (size < *lpcbData)
+							return ERROR_MORE_DATA;
+					}
 				}
 
-				*lpcbData = sizeof(DWORD);
+				if (pData != NULL)
+				{
+					DWORD size;
+					assert(lpcbData);
 
+					size = *lpcbData;
+					*lpcbData = sizeof(DWORD);
+					if (size < sizeof(DWORD))
+						return ERROR_MORE_DATA;
+					*pData = pValue->data.dword;
+				}
+				else if (lpcbData != NULL)
+					*lpcbData = sizeof(DWORD);
 				return ERROR_SUCCESS;
 			}
 			else if (pValue->type == REG_SZ)
@@ -300,11 +326,18 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD
 
 				if (pData != NULL)
 				{
+					DWORD size;
+					assert(lpcbData);
+
+					size = *lpcbData;
+					*lpcbData = length;
+					if (size < length)
+						return ERROR_MORE_DATA;
 					memcpy(pData, pValue->data.string, length);
 					pData[length] = '\0';
 				}
-
-				*lpcbData = (UINT32)length;
+				else if (lpcbData)
+					*lpcbData = (UINT32)length;
 
 				return ERROR_SUCCESS;
 			}
