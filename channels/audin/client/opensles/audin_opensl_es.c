@@ -248,7 +248,7 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device, const A
 {
 	UINT status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*)device;
 	COMMAND_LINE_ARGUMENT_A audin_opensles_args[] = {
 		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL,
