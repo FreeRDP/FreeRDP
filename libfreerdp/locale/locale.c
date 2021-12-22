@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/environment.h>
 
 #include "liblocale.h"
@@ -653,86 +654,98 @@ static const LOCALE_KEYBOARD_LAYOUTS LOCALE_KEYBOARD_LAYOUTS_TABLE[] = {
 	{ XHOSA, { 0x00000409, 0x00000409, 0x0, 0x0, 0x0 } },
 };
 
-static BOOL freerdp_get_system_language_and_country_codes(char* language, char* country)
+static BOOL freerdp_get_system_language_and_country_codes(char* language, size_t languageLen,
+                                                          char* country, size_t countryLen)
 {
+	WINPR_ASSERT(language);
+	WINPR_ASSERT(languageLen > 0);
+	WINPR_ASSERT(country);
+	WINPR_ASSERT(countryLen);
+
 #if defined(__APPLE__)
-	CFIndex strSize;
-	CFStringRef langRef, countryRef;
-	CFLocaleRef localeRef = CFLocaleCopyCurrent();
-	if (!localeRef)
-		return FALSE;
-
-	langRef = (CFStringRef)CFLocaleGetValue(localeRef, kCFLocaleLanguageCode);
-	countryRef = (CFStringRef)CFLocaleGetValue(localeRef, kCFLocaleCountryCode);
-	if (!langRef || !countryRef)
 	{
-		CFRelease(localeRef);
-		return FALSE;
-	}
+		CFIndex strSize;
+		CFStringRef langRef, countryRef;
+		CFLocaleRef localeRef = CFLocaleCopyCurrent();
+		if (!localeRef)
+			return FALSE;
 
-	if (!CFStringGetCString(langRef, language, LOCALE_LANGUAGE_LEN, kCFStringEncodingUTF8) ||
-	    !CFStringGetCString(countryRef, country, LOCALE_COUNTRY_LEN, kCFStringEncodingUTF8))
-	{
-		CFRelease(localeRef);
-		return FALSE;
-	}
+		langRef = (CFStringRef)CFLocaleGetValue(localeRef, kCFLocaleLanguageCode);
+		countryRef = (CFStringRef)CFLocaleGetValue(localeRef, kCFLocaleCountryCode);
+		if (!langRef || !countryRef)
+		{
+			CFRelease(localeRef);
+			return FALSE;
+		}
 
-	CFRelease(localeRef);
-	return TRUE;
+		if (!CFStringGetCString(langRef, language, languageLen, kCFStringEncodingUTF8) ||
+		    !CFStringGetCString(countryRef, country, countryLen, kCFStringEncodingUTF8))
+		{
+			CFRelease(localeRef);
+			return FALSE;
+		}
+
+		CFRelease(localeRef);
+		return TRUE;
+	}
 #else
-	int dot;
-	DWORD nSize;
-	int underscore;
-	char* env_lang = NULL;
-	LPCSTR lang = "LANG";
-	/* LANG = <language>_<country>.<encoding> */
-	nSize = GetEnvironmentVariableA(lang, NULL, 0);
-
-	if (!nSize)
-		return FALSE; /* LANG environment variable was not set */
-
-	env_lang = (char*)malloc(nSize);
-
-	if (!env_lang)
-		return FALSE;
-
-	if (GetEnvironmentVariableA(lang, env_lang, nSize) !=
-	    nSize - 1) /* Get locale from environment variable LANG */
 	{
+		int dot;
+		DWORD nSize;
+		int underscore;
+		char* env_lang = NULL;
+		LPCSTR lang = "LANG";
+		/* LANG = <language>_<country>.<encoding> */
+		nSize = GetEnvironmentVariableA(lang, NULL, 0);
+
+		if (!nSize)
+			return FALSE; /* LANG environment variable was not set */
+
+		env_lang = (char*)malloc(nSize);
+
+		if (!env_lang)
+			return FALSE;
+
+		if (GetEnvironmentVariableA(lang, env_lang, nSize) !=
+		    nSize - 1) /* Get locale from environment variable LANG */
+		{
+			free(env_lang);
+			return FALSE;
+		}
+
+		underscore = strcspn(env_lang, "_");
+
+		if (underscore > 3)
+		{
+			free(env_lang);
+			return FALSE; /* The language name should not be more than 3 letters long */
+		}
+		else
+		{
+			/* Get language code */
+			size_t len = MIN(languageLen - 1, underscore);
+			strncpy(language, env_lang, len);
+			language[len] = '\0';
+		}
+
+		dot = strcspn(env_lang, ".");
+
+		/* Get country code */
+		if (dot > underscore)
+		{
+			size_t len = MIN(countryLen - 1, dot - underscore - 1);
+			strncpy(country, &env_lang[underscore + 1], len);
+			country[len] = '\0';
+		}
+		else
+		{
+			free(env_lang);
+			return FALSE; /* Invalid locale */
+		}
+
 		free(env_lang);
-		return FALSE;
+		return TRUE;
 	}
-
-	underscore = strcspn(env_lang, "_");
-
-	if (underscore > 3)
-	{
-		free(env_lang);
-		return FALSE; /* The language name should not be more than 3 letters long */
-	}
-	else
-	{
-		/* Get language code */
-		strncpy(language, env_lang, underscore);
-		language[underscore] = '\0';
-	}
-
-	dot = strcspn(env_lang, ".");
-
-	/* Get country code */
-	if (dot > underscore)
-	{
-		strncpy(country, &env_lang[underscore + 1], dot - underscore - 1);
-		country[dot - underscore - 1] = '\0';
-	}
-	else
-	{
-		free(env_lang);
-		return FALSE; /* Invalid locale */
-	}
-
-	free(env_lang);
-	return TRUE;
 #endif
 }
 
@@ -742,14 +755,17 @@ static const SYSTEM_LOCALE* freerdp_detect_system_locale(void)
 	char language[LOCALE_LANGUAGE_LEN] = { 0 };
 	char country[LOCALE_COUNTRY_LEN] = { 0 };
 	const SYSTEM_LOCALE* locale = NULL;
-	freerdp_get_system_language_and_country_codes(language, country);
+
+	freerdp_get_system_language_and_country_codes(language, ARRAYSIZE(language), country,
+	                                              ARRAYSIZE(country));
 
 	for (i = 0; i < ARRAYSIZE(SYSTEM_LOCALE_TABLE); i++)
 	{
-		if ((strcmp(language, SYSTEM_LOCALE_TABLE[i].language) == 0) &&
-		    (strcmp(country, SYSTEM_LOCALE_TABLE[i].country) == 0))
+		const SYSTEM_LOCALE* current = &SYSTEM_LOCALE_TABLE[i];
+
+		if ((strcmp(language, current->language) == 0) && (strcmp(country, current->country) == 0))
 		{
-			locale = (const SYSTEM_LOCALE*)&SYSTEM_LOCALE_TABLE[i];
+			locale = current;
 			break;
 		}
 	}
@@ -774,8 +790,10 @@ const char* freerdp_get_system_locale_name_from_id(DWORD localeId)
 
 	for (index = 0; index < ARRAYSIZE(LOCALE_NAME_TABLE); index++)
 	{
-		if (localeId == LOCALE_NAME_TABLE[index].localeId)
-			return LOCALE_NAME_TABLE[index].name;
+		const LOCALE_NAME* const current = &LOCALE_NAME_TABLE[index];
+
+		if (localeId == current->localeId)
+			return current->name;
 	}
 
 	return NULL;
@@ -787,7 +805,9 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 	char language[LOCALE_LANGUAGE_LEN] = { 0 };
 	char country[LOCALE_COUNTRY_LEN] = { 0 };
 	const SYSTEM_LOCALE* locale;
-	freerdp_get_system_language_and_country_codes(language, country);
+
+	freerdp_get_system_language_and_country_codes(language, ARRAYSIZE(language), country,
+	                                              ARRAYSIZE(country));
 
 	if ((strcmp(language, "C") == 0) || (strcmp(language, "POSIX") == 0))
 	{
@@ -804,22 +824,24 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 
 	for (i = 0; i < ARRAYSIZE(LOCALE_KEYBOARD_LAYOUTS_TABLE); i++)
 	{
-		if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].locale == locale->code)
+		const LOCALE_KEYBOARD_LAYOUTS* const current = &LOCALE_KEYBOARD_LAYOUTS_TABLE[i];
+
+		if (current->locale == locale->code)
 		{
 			/* Locale found in list of default keyboard layouts */
 			for (j = 0; j < 5; j++)
 			{
-				if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j] == ENGLISH_UNITED_STATES)
+				if (current->keyboardLayouts[j] == ENGLISH_UNITED_STATES)
 				{
 					continue; /* Skip, try to get a more localized keyboard layout */
 				}
-				else if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j] == 0)
+				else if (current->keyboardLayouts[j] == 0)
 				{
 					break; /* No more keyboard layouts */
 				}
 				else
 				{
-					*keyboardLayoutId = LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j];
+					*keyboardLayoutId = current->keyboardLayouts[j];
 					return 0;
 				}
 			}
