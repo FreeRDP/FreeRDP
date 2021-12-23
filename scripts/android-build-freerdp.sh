@@ -3,10 +3,12 @@
 JPEG_TAG=master
 OPENH264_TAG=master
 OPENSSL_TAG=master
+FFMPEG_TAG=n4.4.1
 
 WITH_JPEG=0
 WITH_OPENH264=0
 WITH_OPENSSL=0
+WITH_FFMPEG=0
 
 SRC_DIR=$(dirname "${BASH_SOURCE[0]}")
 SRC_DIR=$(realpath "$SRC_DIR")
@@ -41,6 +43,10 @@ do
 		--openh264-ndk)
 			shift
 			ANDROID_NDK_OPENH264=$1
+			shift
+			;;
+		--ffmpeg)
+			WITH_FFMPEG=1
 			shift
 			;;
 		--openssl)
@@ -133,6 +139,22 @@ do
         CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_OPENH264=ON"
     else
         CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_OPENH264=OFF"
+    fi
+	if [ $WITH_FFMPEG -ne 0 ];
+    then
+		if [ $BUILD_DEPS -ne 0 ];
+        then
+            common_run bash $SCRIPT_PATH/android-build-ffmpeg.sh \
+                --src $BUILD_SRC/ffmpeg --dst $BUILD_DST \
+                --sdk "$ANDROID_SDK" \
+                --ndk "$ANDROID_NDK" \
+                --arch $ARCH \
+                --target $NDK_TARGET \
+                --tag $FFMPEG_TAG
+        fi
+		CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_FFMPEG=ON"
+	else
+        CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_FFMPEG=OFF"
     fi
     if [ $WITH_OPENSSL -ne 0 ];
     then

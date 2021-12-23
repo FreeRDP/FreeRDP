@@ -997,6 +997,9 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 #if defined(WITH_MACAUDIO)
 		{ "mac", "default" },
 #endif
+#if defined(WITH_IOSAUDIO)
+		{ "ios", "default" },
+#endif
 #if defined(WITH_SNDIO)
 		{ "sndio", "default" },
 #endif
