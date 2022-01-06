@@ -326,7 +326,6 @@ static LPWSTR convertKeyType(CK_KEY_TYPE k)
 	}
 #undef ALGO_CASE
 
-	// ConvertToUnicode(CP_UTF8, 0, (LPCSTR)r, -1, &ret, 0);
 	return _wcsdup(r);
 }
 
