@@ -78,6 +78,49 @@ SECURITY_STATUS winpr_NCryptDefault_dtor(NCryptBaseHandle* h)
 	return ERROR_SUCCESS;
 }
 
+SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
+                                           NCryptProviderName** ppProviderList, DWORD dwFlags)
+{
+	static const WCHAR emptyComment[] = { 0 };
+	NCryptProviderName* ret;
+	size_t stringAllocSize = 0;
+	LPWSTR strPtr;
+	size_t copyAmount;
+
+	*wProviderCount = 0;
+	*ppProviderList = NULL;
+
+#ifdef WITH_PKCS11
+	*wProviderCount += 1;
+	stringAllocSize += (_wcslen(MS_SCARD_PROV) + 1) * 2;
+	stringAllocSize += sizeof(emptyComment);
+#endif
+
+	if (!*wProviderCount)
+		return ERROR_SUCCESS;
+
+	ret = malloc(*wProviderCount * sizeof(NCryptProviderName) + stringAllocSize);
+	if (!ret)
+		return NTE_NO_MEMORY;
+
+	strPtr = (LPWSTR)(ret + *wProviderCount);
+
+#ifdef WITH_PKCS11
+	ret->pszName = strPtr;
+	copyAmount = (_wcslen(MS_SCARD_PROV) + 1) * 2;
+	memcpy(strPtr, MS_SCARD_PROV, copyAmount);
+	strPtr += copyAmount / 2;
+
+	ret->pszComment = strPtr;
+	copyAmount = sizeof(emptyComment);
+	memcpy(strPtr, emptyComment, copyAmount);
+
+	*ppProviderList = ret;
+#endif
+
+	return ERROR_SUCCESS;
+}
+
 SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider, LPCWSTR pszProviderName,
                                           DWORD dwFlags)
 {

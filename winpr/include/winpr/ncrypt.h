@@ -36,30 +36,84 @@ typedef ULONG_PTR NCRYPT_HANDLE;
 typedef ULONG_PTR NCRYPT_PROV_HANDLE;
 typedef ULONG_PTR NCRYPT_KEY_HANDLE;
 
-#define MS_KEY_STORAGE_PROVIDER                                                       \
-	(const WCHAR*)"M\x00i\x00c\x00r\x00o\x00s\x00o\x00f\x00t\x00 "                    \
-	              "\x00S\x00o\x00f\x00t\x00w\x00a\x00r\x00e\x00 \x00K\x00e\x00y\x00 " \
-	              "\x00S\x00t\x00o\x00r\x00a\x00g\x00e\x00 "                          \
-	              "\x00P\x00r\x00o\x00v\x00i\x00d\x00e\x00r\x00\x00"
-#define MS_SMART_CARD_KEY_STORAGE_PROVIDER                                                       \
-	(const WCHAR*)"M\x00i\x00c\x00r\x00o\x00s\x00o\x00f\x00t\x00 \x00S\x00m\x00a\x00r\x00t\x00 " \
-	              "\x00C\x00a\x00r\x00d\x00 \x00K\x00e\x00y\x00 "                                \
-	              "\x00S\x00t\x00o\x00r\x00a\x00g\x00e\x00 "                                     \
-	              "\x00P\x00r\x00o\x00v\x00i\x00d\x00e\x00r\x00"
-#define MS_SCARD_PROV                                                                       \
-	(const WCHAR*)"M\x00i\x00c\x00r\x00o\x00s\x00o\x00f\x00t\x00 \x00B\x00a\x00s\x00e\x00 " \
-	              "\x00S\x00m\x00a\x00r\x00t\x00 \x00C\x00a\x00r\x00d\x00 "                 \
-	              "\x00C\x00r\x00y\x00p\x00t\x00o\x00 "                                     \
-	              "\x00P\x00r\x00o\x00v\x00i\x00d\x00e\x00r\x00\x00"
-#define MS_PLATFORM_KEY_STORAGE_PROVIDER                           \
-	(const WCHAR*)"M\x00i\x00c\x00r\x00o\x00s\x00o\x00f\x00t\x00 " \
-	              "\x00P\x00l\x00a\x00t\x00f\x00o\x00r\x00m\x00 "  \
-	              "\x00C\x00r\x00y\x00p\x00t\x00o\x00 "            \
-	              "\x00P\x00r\x00o\x00v\x00i\x00d\x00e\x00r\x00\x00"
+#define MS_KEY_STORAGE_PROVIDER                   \
+	(const WCHAR*)"M\x00i\x00"                    \
+	              "c\x00r\x00o\x00s\x00o\x00"     \
+	              "f\x00t\x00 "                   \
+	              "\x00S\x00o\x00"                \
+	              "f\x00t\x00w\x00"               \
+	              "a\x00r\x00"                    \
+	              "e\x00 \x00K\x00"               \
+	              "e\x00y\x00 "                   \
+	              "\x00S\x00t\x00o\x00r\x00"      \
+	              "a\x00g\x00"                    \
+	              "e\x00 "                        \
+	              "\x00P\x00r\x00o\x00v\x00i\x00" \
+	              "d\x00"                         \
+	              "e\x00r\x00\x00"
+#define MS_SMART_CARD_KEY_STORAGE_PROVIDER        \
+	(const WCHAR*)"M\x00i\x00"                    \
+	              "c\x00r\x00o\x00s\x00o\x00"     \
+	              "f\x00t\x00 \x00S\x00m\x00"     \
+	              "a\x00r\x00t\x00 "              \
+	              "\x00"                          \
+	              "C\x00"                         \
+	              "a\x00r\x00"                    \
+	              "d\x00 \x00K\x00"               \
+	              "e\x00y\x00 "                   \
+	              "\x00S\x00t\x00o\x00r\x00"      \
+	              "a\x00g\x00"                    \
+	              "e\x00 "                        \
+	              "\x00P\x00r\x00o\x00v\x00i\x00" \
+	              "d\x00"                         \
+	              "e\x00r\x00"
 
-#define NCRYPT_CERTIFICATE_PROPERTY                                                              \
-	(const WCHAR*)"S\x00m\x00a\x00r\x00t\x00C\x00a\x00r\x00d\x00K\x00e\x00y\x00C\x00e\x00r\x00t" \
-	              "\x00i\x00f\x00i\x00c\x00a\x00t\x00e\x00\x00"
+#define MS_SCARD_PROV_A "Microsoft Base Smart Card Crypto Provider"
+#define MS_SCARD_PROV                                \
+	(const WCHAR*)("M\x00i\x00"                      \
+	               "c\x00r\x00o\x00s\x00o\x00"       \
+	               "f\x00t\x00 \x00"                 \
+	               "B\x00"                           \
+	               "a\x00s\x00"                      \
+	               "e\x00 "                          \
+	               "\x00S\x00m\x00"                  \
+	               "a\x00r\x00t\x00 \x00"            \
+	               "C\x00"                           \
+	               "a\x00r\x00"                      \
+	               "d\x00 "                          \
+	               "\x00"                            \
+	               "C\x00r\x00y\x00p\x00t\x00o\x00 " \
+	               "\x00P\x00r\x00o\x00v\x00i\x00"   \
+	               "d\x00"                           \
+	               "e\x00r\x00\x00")
+
+#define MS_PLATFORM_KEY_STORAGE_PROVIDER            \
+	(const WCHAR*)"M\x00i\x00"                      \
+	              "c\x00r\x00o\x00s\x00o\x00"       \
+	              "f\x00t\x00 "                     \
+	              "\x00P\x00l\x00"                  \
+	              "a\x00t\x00"                      \
+	              "f\x00o\x00r\x00m\x00 "           \
+	              "\x00"                            \
+	              "C\x00r\x00y\x00p\x00t\x00o\x00 " \
+	              "\x00P\x00r\x00o\x00v\x00i\x00"   \
+	              "d\x00"                           \
+	              "e\x00r\x00\x00"
+
+#define NCRYPT_CERTIFICATE_PROPERTY \
+	(const WCHAR*)"S\x00m\x00"      \
+	              "a\x00r\x00t\x00" \
+	              "C\x00"           \
+	              "a\x00r\x00"      \
+	              "d\x00K\x00"      \
+	              "e\x00y\x00"      \
+	              "C\x00"           \
+	              "e\x00r\x00t"     \
+	              "\x00i\x00"       \
+	              "f\x00i\x00"      \
+	              "c\x00"           \
+	              "a\x00t\x00"      \
+	              "e\x00\x00"
 
 #define NCRYPT_MACHINE_KEY_FLAG 0x20
 #define NCRYPT_SILENT_FLAG 0x40
@@ -73,10 +127,20 @@ typedef struct NCryptKeyName
 	DWORD dwFlags;
 } NCryptKeyName;
 
+/** @brief a provider name descriptor */
+typedef struct NCryptProviderName
+{
+	LPWSTR pszName;
+	LPWSTR pszComment;
+} NCryptProviderName;
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
+	                                           NCryptProviderName** ppProviderList, DWORD dwFlags);
 
 	SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider,
 	                                          LPCWSTR pszProviderName, DWORD dwFlags);
