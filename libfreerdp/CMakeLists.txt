@@ -244,6 +244,11 @@ if(WIN32 AND WITH_MEDIA_FOUNDATION)
     set(CODEC_SRCS ${CODEC_SRCS} codec/h264_mf.c)
 endif()
 
+if(ANDROID AND WITH_MEDIACODEC)
+    set(CODEC_SRCS ${CODEC_SRCS} codec/h264_mediacodec.c)
+    freerdp_library_add("libmediandk.so")
+endif()
+
 freerdp_module_add(${CODEC_SRCS})
 
 if(BUILD_TESTING)
