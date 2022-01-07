@@ -55,6 +55,7 @@
 #cmakedefine WITH_DSP_FFMPEG
 #cmakedefine WITH_OPENCL
 #cmakedefine WITH_MEDIA_FOUNDATION
+#cmakedefine WITH_MEDIACODEC
 
 #cmakedefine WITH_VAAPI
 
