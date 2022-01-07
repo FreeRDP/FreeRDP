@@ -164,6 +164,8 @@ option(WITH_SWSCALE  "Use SWScale image library for screen resizing" OFF)
 
 if (ANDROID)
 	include(ConfigOptionsAndroid)
+else()
+    option(WITH_MEDIACODEC "Use MediaCodec API" OFF)
 endif(ANDROID)
 
 if (IOS)
