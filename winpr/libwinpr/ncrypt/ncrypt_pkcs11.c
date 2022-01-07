@@ -398,10 +398,10 @@ static size_t parseHex(const char* str, const char* end, CK_BYTE* target)
 static SECURITY_STATUS parseKeyName(LPCWSTR pszKeyName, CK_SLOT_ID* slotId, CK_BYTE* id,
                                     CK_ULONG* idLen)
 {
-	char asciiKeyName[128];
+	char asciiKeyName[128] = { 0 };
 	char* pos;
 
-	if (WideCharToMultiByte(CP_UTF8, 0, pszKeyName, _wcslen(pszKeyName), asciiKeyName,
+	if (WideCharToMultiByte(CP_UTF8, 0, pszKeyName, _wcslen(pszKeyName) + 1, asciiKeyName,
 	                        sizeof(asciiKeyName), "?", FALSE) <= 0)
 		return NTE_BAD_KEY;
 
@@ -447,10 +447,40 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 	CK_SLOT_ID currentSlot;
 	CK_SESSION_HANDLE currentSession = (CK_SESSION_HANDLE)NULL;
 	NCryptKeyName* keyName = NULL;
+	char slotFilterBuffer[65] = { 0 };
+	char* slotFilter = NULL;
+	size_t slotFilterLen = 0;
 
 	ret = checkNCryptHandle((NCRYPT_HANDLE)hProvider, WINPR_NCRYPT_PROVIDER);
 	if (ret != ERROR_SUCCESS)
 		return ret;
+
+	if (pszScope)
+	{
+		/*
+		 * check whether pszScope is of the form \\.\<reader name>\ for filtering by
+		 * card reader
+		 */
+		char asciiScope[128 + 6] = { 0 };
+		int asciiScopeLen;
+
+		if (WideCharToMultiByte(CP_UTF8, 0, pszScope, _wcslen(pszScope) + 1, asciiScope,
+		                        sizeof(asciiScope)-1, "?", NULL) <= 0)
+			return NTE_INVALID_PARAMETER;
+
+		if (strstr(asciiScope, "\\\\.\\") != asciiScope)
+			return NTE_INVALID_PARAMETER;
+
+		asciiScopeLen = strnlen(asciiScope, sizeof(asciiScope));
+		if (asciiScope[asciiScopeLen - 1] != '\\')
+			return NTE_INVALID_PARAMETER;
+
+		asciiScope[asciiScopeLen - 1] = 0;
+
+		strncpy(slotFilterBuffer, &asciiScope[4], sizeof(slotFilterBuffer));
+		slotFilter = slotFilterBuffer;
+		slotFilterLen = asciiScopeLen - 5;
+	}
 
 	if (!state)
 	{
@@ -496,6 +526,10 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 			                                 { CKA_ID, privKey->id, privKey->idLen } };
 		CK_ULONG ncertObjects;
 		CK_OBJECT_HANDLE certObject;
+
+		/* check the reader filter if any */
+		if (slotFilter && memcmp(privKey->slotInfo.slotDescription, slotFilter, slotFilterLen) != 0)
+			continue;
 
 		if (!currentSession || (currentSlot != privKey->slotId))
 		{
