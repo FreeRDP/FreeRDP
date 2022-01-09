@@ -914,7 +914,7 @@ UINT rail_order_recv(LPVOID userdata, wStream* s)
 	railPlugin* rail = userdata;
 	UINT16 orderType;
 	UINT16 orderLength;
-	UINT error;
+	UINT error = CHANNEL_RC_OK;
 
 	if (!rail || !s)
 		return ERROR_INVALID_PARAMETER;
@@ -931,50 +931,70 @@ UINT rail_order_recv(LPVOID userdata, wStream* s)
 	switch (orderType)
 	{
 		case TS_RAIL_ORDER_HANDSHAKE:
-			return rail_recv_handshake_order(rail, s);
+			error = rail_recv_handshake_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_HANDSHAKE_EX:
-			return rail_recv_handshake_ex_order(rail, s);
+			error = rail_recv_handshake_ex_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_EXEC_RESULT:
-			return rail_recv_exec_result_order(rail, s);
+			error = rail_recv_exec_result_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_SYSPARAM:
-			return rail_recv_server_sysparam_order(rail, s);
+			error = rail_recv_server_sysparam_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_MINMAXINFO:
-			return rail_recv_server_minmaxinfo_order(rail, s);
+			error = rail_recv_server_minmaxinfo_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_LOCALMOVESIZE:
-			return rail_recv_server_localmovesize_order(rail, s);
+			error = rail_recv_server_localmovesize_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_GET_APPID_RESP:
-			return rail_recv_server_get_appid_resp_order(rail, s);
+			error = rail_recv_server_get_appid_resp_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_LANGBARINFO:
-			return rail_recv_langbar_info_order(rail, s);
+			error = rail_recv_langbar_info_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_TASKBARINFO:
-			return rail_recv_taskbar_info_order(rail, s);
+			error = rail_recv_taskbar_info_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_ZORDER_SYNC:
-			return rail_recv_zorder_sync_order(rail, s);
+			error = rail_recv_zorder_sync_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_CLOAK:
-			return rail_recv_cloak_order(rail, s);
+			error = rail_recv_cloak_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_POWER_DISPLAY_REQUEST:
-			return rail_recv_power_display_request_order(rail, s);
+			error = rail_recv_power_display_request_order(rail, s);
+			break;
 
 		case TS_RAIL_ORDER_GET_APPID_RESP_EX:
-			return rail_recv_get_application_id_extended_response_order(rail, s);
+			error = rail_recv_get_application_id_extended_response_order(rail, s);
+			break;
 
 		default:
 			WLog_ERR(TAG, "Unknown RAIL PDU order 0x%08" PRIx32 " received.", orderType);
 			return ERROR_INVALID_DATA;
 	}
 
-	return CHANNEL_RC_OK;
+	if (error != CHANNEL_RC_OK)
+	{
+		WLog_Print(rail->log, WLOG_ERROR, "Failed to process rail %s PDU, length:%" PRIu16 "",
+		           rail_get_order_type_string(orderType), orderLength);
+	}
+
+	Stream_Free(s, TRUE);
+	return error;
 }
 
 /**
