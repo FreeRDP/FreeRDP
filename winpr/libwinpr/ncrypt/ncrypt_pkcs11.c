@@ -86,20 +86,17 @@ static CK_ATTRIBUTE private_key_filter[] = {
 	{ CKA_KEY_TYPE, &object_ktype_rsa, sizeof(object_ktype_rsa) }
 };
 
-#if 0
-/**
- * @return the real length of string padded with pad
- *
- */
-static size_t padded_strlen(const char *str, size_t maxlen, char pad)
-{
-	size_t ret = strnlen(str, maxlen);
 
-	while ((ret > 0)  && str[ret-1] == pad)
-		ret--;
-	return ret;
+static void fix_padded_string(char *str, size_t maxlen)
+{
+	char *ptr = str + maxlen-1;
+
+	while (ptr > str && *ptr == ' ')
+		ptr--;
+	ptr++;
+	*ptr = 0;
 }
-#endif
+
 
 static BOOL attributes_have_unallocated_buffers(CK_ATTRIBUTE_PTR attributes, CK_ULONG count)
 {
@@ -617,15 +614,29 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 	CK_ATTRIBUTE* objectFilter = certificateFilter;
 	CK_ULONG objectFilterLen = ARRAY_LENGTH(certificateFilter);
 
-	if (property == NCRYPT_PROPERTY_UNKNOWN)
-		return NTE_NOT_SUPPORTED;
-
-	/* TODO: shall adjust objectFilter and objectFilterLen depending on requested
-	 * the property when we add new ones */
 	switch (property)
 	{
 		case NCRYPT_PROPERTY_CERTIFICATE:
 			break;
+		case NCRYPT_PROPERTY_READER: {
+			CK_SLOT_INFO slotInfo;
+
+			rv = provider->p11->C_GetSlotInfo(keyHandle->slotId, &slotInfo);
+			if (rv != CKR_OK)
+				return NTE_BAD_KEY;
+
+			fix_padded_string((char*)slotInfo.slotDescription, sizeof(slotInfo.slotDescription));
+			*pcbResult = 2 * (strlen((char*)slotInfo.slotDescription) + 1);
+			if (pbOutput)
+			{
+				if(cbOutput < *pcbResult)
+					return NTE_NO_MEMORY;
+
+				MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)slotInfo.slotDescription, -1, (LPWSTR)pbOutput, cbOutput);
+			}
+			return ERROR_SUCCESS;
+		}
+		case NCRYPT_PROPERTY_UNKNOWN:
 		default:
 			return NTE_NOT_SUPPORTED;
 	}
