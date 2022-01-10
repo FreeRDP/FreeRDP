@@ -316,7 +316,8 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 		{
 			size_t length = strlen(name);
 			name += length + 1;
-			subkey->subname = _strdup(name);
+			if (name)
+				subkey->subname = _strdup(name);
 
 			/* TODO: free allocated memory in error case */
 			if (!subkey->subname)
@@ -425,15 +426,10 @@ static void reg_unload_value(Reg* reg, RegVal* value)
 
 	switch (value->type)
 	{
-		case REG_DWORD:
-		{
-		}
-		break;
 		case REG_SZ:
 			free(value->data.string);
 			break;
 		default:
-			WLog_ERR(TAG, "unimplemented format: %s", reg_data_type_string(value->type));
 			break;
 	}
 
