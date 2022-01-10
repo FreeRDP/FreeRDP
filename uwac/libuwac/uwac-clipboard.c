@@ -153,7 +153,6 @@ UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s)
 
 	if (rc != UWAC_SUCCESS)
 		return rc;
-
 	event = (UwacClipboardEvent*)UwacDisplayNewEvent(s->display, UWAC_EVENT_CLIPBOARD_AVAILABLE);
 
 	if (!event)
@@ -237,6 +236,7 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 	if (!seat || !mime || !size || !seat->offer)
 		return NULL;
 
+	*size = 0;
 	if (pipe(pipefd) != 0)
 		return NULL;
 
@@ -272,6 +272,10 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 	close(pipefd[0]);
 	close(pipefd[1]);
 
-	*size = pos + 1;
+	if (alloc > 0)
+	{
+		data[pos] = '\0';
+		*size = pos + 1;
+	}
 	return data;
 }
