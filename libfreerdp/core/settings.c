@@ -248,7 +248,7 @@ static void settings_load_hkey_local_machine(rdpSettings* settings)
 
 static BOOL settings_get_computer_name(rdpSettings* settings)
 {
-	CHAR computerName[256];
+	CHAR computerName[256] = { 0 };
 	DWORD nSize = sizeof(computerName);
 
 	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
