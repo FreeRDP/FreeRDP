@@ -457,17 +457,19 @@ static void reg_unload(Reg* reg)
 	RegKey* pKey;
 
 	WINPR_ASSERT(reg);
-	WINPR_ASSERT(reg->root_key);
-	pKey = reg->root_key->subkeys;
-
-	while (pKey != NULL)
+	if (reg->root_key)
 	{
-		RegKey* pKeyNext = pKey->next;
-		reg_unload_key(reg, pKey);
-		pKey = pKeyNext;
-	}
+		pKey = reg->root_key->subkeys;
 
-	free(reg->root_key);
+		while (pKey != NULL)
+		{
+			RegKey* pKeyNext = pKey->next;
+			reg_unload_key(reg, pKey);
+			pKey = pKeyNext;
+		}
+
+		free(reg->root_key);
+	}
 }
 
 Reg* reg_open(BOOL read_only)
