@@ -50,7 +50,7 @@ extern "C"
 	{                                 \
 		profiler_free(prof);          \
 		prof = profiler_create(name); \
-	} while (0)
+	} while (0);
 #define PROFILER_DEFINE(prof) PROFILER* prof;
 #define PROFILER_CREATE(prof, name) prof = profiler_create(name);
 #define PROFILER_FREE(prof) profiler_free(prof);

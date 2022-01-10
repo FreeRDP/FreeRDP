@@ -723,8 +723,10 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 			if (cnv < 0)
 				return ERROR_INTERNAL_ERROR;
 
-			size = (UINT32)cnv;
 			data = cdata;
+			size = 0;
+			if (cnv > 0)
+				size = (UINT32)strnlen(data, (size_t)cnv);
 			break;
 
 		default:
