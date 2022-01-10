@@ -126,7 +126,8 @@ SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider, LPCWST
 {
 
 #ifdef WITH_PKCS11
-	if (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0)
+	if (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0 ||
+		_wcscmp(pszProviderName, MS_SCARD_PROV) == 0)
 	{
 		static LPCSTR openscPaths[] = { "/usr/lib/x86_64-linux-gnu/pkcs11/opensc-pkcs11.so", NULL };
 
@@ -187,6 +188,10 @@ static NCryptKeyGetPropertyEnum propertyStringToEnum(LPCWSTR pszProperty)
 	if (_wcscmp(pszProperty, NCRYPT_CERTIFICATE_PROPERTY) == 0)
 	{
 		return NCRYPT_PROPERTY_CERTIFICATE;
+	}
+	else if(_wcscmp(pszProperty, NCRYPT_READER_PROPERTY) == 0)
+	{
+		return NCRYPT_PROPERTY_READER;
 	}
 
 	return NCRYPT_PROPERTY_UNKNOWN;
