@@ -294,9 +294,9 @@ static char* reg_load_peek_next_line(Reg* reg)
 
 static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 {
-	char* name;
-	char* path;
-	char* save;
+	char* name = NULL;
+	char* path = NULL;
+	char* save = NULL;
 
 	WINPR_ASSERT(reg);
 	WINPR_ASSERT(key);
@@ -314,10 +314,8 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 	{
 		if (strcmp(key->name, name) == 0)
 		{
-			size_t length = strlen(name);
-			name += length + 1;
-			if (name)
-				subkey->subname = _strdup(name);
+			if (save)
+				subkey->subname = _strdup(save);
 
 			/* TODO: free allocated memory in error case */
 			if (!subkey->subname)
