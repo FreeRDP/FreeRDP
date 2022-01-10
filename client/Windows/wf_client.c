@@ -117,6 +117,18 @@ static BOOL wf_end_paint(rdpContext* context)
 		updateRect.top = extents->top;
 		updateRect.right = extents->right;
 		updateRect.bottom = extents->bottom;
+
+		if (wfc->xScrollVisible)
+		{
+			updateRect.left -= MIN(updateRect.left, wfc->xCurrentScroll);
+			updateRect.right -= MIN(updateRect.right, wfc->xCurrentScroll);
+		}
+		if (wfc->yScrollVisible)
+		{
+			updateRect.top -= MIN(updateRect.top, wfc->yCurrentScroll);
+			updateRect.bottom -= MIN(updateRect.bottom, wfc->yCurrentScroll);
+		}
+
 		InvalidateRect(wfc->hwnd, &updateRect, FALSE);
 
 		if (wfc->rail)
