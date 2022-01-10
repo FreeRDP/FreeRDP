@@ -136,14 +136,14 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	int nmonitors = 0;
 	int monitor_index = 0;
 	BOOL primaryMonitorFound = FALSE;
-	VIRTUAL_SCREEN* vscreen;
-	rdpSettings* settings;
-	int mouse_x, mouse_y, _dummy_i;
-	Window _dummy_w;
+	VIRTUAL_SCREEN* vscreen = NULL;
+	rdpSettings* settings = NULL;
+	int mouse_x = 0, mouse_y = 0, _dummy_i = 0;
+	Window _dummy_w = 0;
 	int current_monitor = 0;
-	Screen* screen;
+	Screen* screen = NULL;
 #if defined WITH_XINERAMA || defined WITH_XRANDR
-	int major, minor;
+	int major = 0, minor = 0;
 #endif
 #if defined(USABLE_XRANDR)
 	XRRMonitorInfo* rrmonitors = NULL;

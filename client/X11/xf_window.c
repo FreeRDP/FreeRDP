@@ -345,9 +345,9 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int length,
                           unsigned long* nitems, unsigned long* bytes, BYTE** prop)
 {
-	int status;
-	Atom actual_type;
-	int actual_format;
+	int status = 0;
+	Atom actual_type = None;
+	int actual_format = 0;
 
 	if (property == None)
 		return FALSE;

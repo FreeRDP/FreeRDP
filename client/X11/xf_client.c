@@ -834,14 +834,13 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 static BOOL xf_get_pixmap_info(xfContext* xfc)
 {
 	int i;
-	int vi_count;
-	int pf_count;
-	XVisualInfo* vi;
-	XVisualInfo* vis;
-	XVisualInfo tpl;
-	XPixmapFormatValues* pf;
-	XPixmapFormatValues* pfs;
-	XWindowAttributes window_attributes;
+	int vi_count = 0;
+	int pf_count = 0;
+	XVisualInfo* vi = NULL;
+	XVisualInfo* vis = NULL;
+	XVisualInfo tpl = { 0 };
+	XPixmapFormatValues* pfs = NULL;
+	XWindowAttributes window_attributes = { 0 };
 	WINPR_ASSERT(xfc->display);
 	pfs = XListPixmapFormats(xfc->display, &pf_count);
 
@@ -853,7 +852,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 
 	for (i = 0; i < pf_count; i++)
 	{
-		pf = pfs + i;
+		const XPixmapFormatValues* pf = &pfs[i];
 
 		if (pf->depth == xfc->depth)
 		{
@@ -863,7 +862,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	}
 
 	XFree(pfs);
-	ZeroMemory(&tpl, sizeof(tpl));
+
 	tpl.class = TrueColor;
 	tpl.screen = xfc->screen_number;
 
@@ -1953,7 +1952,8 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 		if ((status == Success) && (actual_type == XA_ATOM) && (actual_format == 32))
 		{
 			xfc->supportedAtomCount = nitems;
-			xfc->supportedAtoms = calloc(nitems, sizeof(Atom));
+			xfc->supportedAtoms = calloc(xfc->supportedAtomCount, sizeof(Atom));
+			WINPR_ASSERT(xfc->supportedAtoms);
 			memcpy(xfc->supportedAtoms, data, nitems * sizeof(Atom));
 		}
 

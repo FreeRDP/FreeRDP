@@ -375,7 +375,7 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line, const 
 			}
 			else
 			{
-				char formattedLogMessage[WLOG_MAX_STRING_SIZE];
+				char formattedLogMessage[WLOG_MAX_STRING_SIZE] = { 0 };
 
 				if (wvsnprintfx(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message.FormatString,
 				                args) < 0)
