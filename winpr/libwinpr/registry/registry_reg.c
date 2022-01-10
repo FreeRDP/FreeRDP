@@ -36,12 +36,14 @@
 #include "../log.h"
 #define TAG WINPR_TAG("registry")
 
+#define WINPR_ASSERT assert
+
 #define WINPR_HKLM_HIVE "/etc/winpr/HKLM.reg"
 
 struct reg_data_type
 {
 	char* tag;
-	int length;
+	size_t length;
 	DWORD type;
 };
 
@@ -88,35 +90,36 @@ static char* reg_data_type_string(DWORD type)
 	}
 }
 
-static void reg_load_start(Reg* reg)
+static BOOL reg_load_start(Reg* reg)
 {
+	char* buffer;
 	INT64 file_size;
-	assert(reg);
+
+	WINPR_ASSERT(reg);
+	WINPR_ASSERT(reg->fp);
+
 	_fseeki64(reg->fp, 0, SEEK_END);
 	file_size = _ftelli64(reg->fp);
 	_fseeki64(reg->fp, 0, SEEK_SET);
 	reg->line = NULL;
 	reg->next_line = NULL;
-	reg->buffer = NULL;
 
 	if (file_size < 1)
-		return;
+		return FALSE;
 
-	reg->buffer = (char*)malloc((size_t)file_size + 2);
+	buffer = (char*)realloc(reg->buffer, (size_t)file_size + 2);
 
-	if (!reg->buffer)
-		return;
+	if (!buffer)
+		return FALSE;
+	reg->buffer = buffer;
 
 	if (fread(reg->buffer, (size_t)file_size, 1, reg->fp) != 1)
-	{
-		free(reg->buffer);
-		reg->buffer = NULL;
-		return;
-	}
+		return FALSE;
 
 	reg->buffer[file_size] = '\n';
 	reg->buffer[file_size + 1] = '\0';
 	reg->next_line = strtok(reg->buffer, "\n");
+	return TRUE;
 }
 
 static void reg_load_finish(Reg* reg)
@@ -133,7 +136,7 @@ static void reg_load_finish(Reg* reg)
 
 static RegVal* reg_load_value(Reg* reg, RegKey* key)
 {
-	int index;
+	size_t index;
 	char* p[5] = { 0 };
 	size_t length;
 	char* name = NULL;
@@ -141,11 +144,15 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 	char* data;
 	RegVal* value = NULL;
 
-	assert(reg);
-	assert(key);
+	WINPR_ASSERT(reg);
+	WINPR_ASSERT(key);
+	WINPR_ASSERT(reg->line);
 
 	p[0] = reg->line + 1;
 	p[1] = strstr(p[0], "\"=");
+	if (!p[1])
+		return NULL;
+
 	p[2] = p[1] + 2;
 	type = p[2];
 
@@ -154,8 +161,11 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 	else
 		p[3] = strchr(p[2], ':');
 
+	if (!p[3])
+		return NULL;
+
 	data = p[3] + 1;
-	length = p[1] - p[0];
+	length = (size_t)(p[1] - p[0]);
 	if (length < 1)
 		goto fail;
 
@@ -172,14 +182,13 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 
 	value->name = name;
 	value->type = REG_NONE;
-	value->next = value->prev = NULL;
 
 	for (index = 0; index < ARRAYSIZE(REG_DATA_TYPE_TABLE); index++)
 	{
 		const struct reg_data_type* current = &REG_DATA_TYPE_TABLE[index];
-		assert(current->tag);
-		assert(current->length > 0);
-		assert(current->type != REG_NONE);
+		WINPR_ASSERT(current->tag);
+		WINPR_ASSERT(current->length > 0);
+		WINPR_ASSERT(current->type != REG_NONE);
 
 		if (strncmp(type, current->tag, current->length) == 0)
 		{
@@ -279,7 +288,7 @@ static char* reg_load_get_next_line(Reg* reg)
 
 static char* reg_load_peek_next_line(Reg* reg)
 {
-	assert(reg);
+	WINPR_ASSERT(reg);
 	return reg->next_line;
 }
 
@@ -288,10 +297,12 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 	char* name;
 	char* path;
 	char* save;
-	size_t length;
-	assert(reg);
-	assert(key);
-	assert(subkey);
+
+	WINPR_ASSERT(reg);
+	WINPR_ASSERT(key);
+	WINPR_ASSERT(subkey);
+	WINPR_ASSERT(subkey->name);
+
 	path = _strdup(subkey->name);
 
 	if (!path)
@@ -303,7 +314,7 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 	{
 		if (strcmp(key->name, name) == 0)
 		{
-			length = strlen(name);
+			size_t length = strlen(name);
 			name += length + 1;
 			subkey->subname = _strdup(name);
 
@@ -324,21 +335,24 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 static RegKey* reg_load_key(Reg* reg, RegKey* key)
 {
 	char* p[2];
-	int length;
-	char* line;
+	size_t length;
 	RegKey* subkey;
-	assert(reg);
-	assert(key);
+
+	WINPR_ASSERT(reg);
+	WINPR_ASSERT(key);
+
+	WINPR_ASSERT(reg->line);
 	p[0] = reg->line + 1;
 	p[1] = strrchr(p[0], ']');
-	subkey = (RegKey*)malloc(sizeof(RegKey));
+	if (!p[1])
+		return NULL;
+
+	subkey = (RegKey*)calloc(1, sizeof(RegKey));
 
 	if (!subkey)
 		return NULL;
 
-	subkey->values = NULL;
-	subkey->prev = subkey->next = NULL;
-	length = p[1] - p[0];
+	length = (size_t)(p[1] - p[0]);
 	subkey->name = (char*)malloc(length + 1);
 
 	if (!subkey->name)
@@ -352,7 +366,7 @@ static RegKey* reg_load_key(Reg* reg, RegKey* key)
 
 	while (reg_load_has_next_line(reg))
 	{
-		line = reg_load_peek_next_line(reg);
+		char* line = reg_load_peek_next_line(reg);
 
 		if (line[0] == '[')
 			break;
@@ -406,18 +420,21 @@ static void reg_load(Reg* reg)
 
 static void reg_unload_value(Reg* reg, RegVal* value)
 {
-	assert(reg);
-	assert(value);
-	if (value->type == REG_DWORD)
+	WINPR_ASSERT(reg);
+	WINPR_ASSERT(value);
+
+	switch (value->type)
 	{
-	}
-	else if (value->type == REG_SZ)
-	{
-		free(value->data.string);
-	}
-	else
-	{
-		WLog_ERR(TAG, "unimplemented format: %s", reg_data_type_string(value->type));
+		case REG_DWORD:
+		{
+		}
+		break;
+		case REG_SZ:
+			free(value->data.string);
+			break;
+		default:
+			WLog_ERR(TAG, "unimplemented format: %s", reg_data_type_string(value->type));
+			break;
 	}
 
 	free(value);
@@ -426,14 +443,15 @@ static void reg_unload_value(Reg* reg, RegVal* value)
 static void reg_unload_key(Reg* reg, RegKey* key)
 {
 	RegVal* pValue;
-	RegVal* pValueNext;
-	assert(reg);
-	assert(key);
+
+	WINPR_ASSERT(reg);
+	WINPR_ASSERT(key);
+
 	pValue = key->values;
 
 	while (pValue != NULL)
 	{
-		pValueNext = pValue->next;
+		RegVal* pValueNext = pValue->next;
 		reg_unload_value(reg, pValue);
 		pValue = pValueNext;
 	}
@@ -445,13 +463,14 @@ static void reg_unload_key(Reg* reg, RegKey* key)
 static void reg_unload(Reg* reg)
 {
 	RegKey* pKey;
-	RegKey* pKeyNext;
-	assert(reg);
+
+	WINPR_ASSERT(reg);
+	WINPR_ASSERT(reg->root_key);
 	pKey = reg->root_key->subkeys;
 
 	while (pKey != NULL)
 	{
-		pKeyNext = pKey->next;
+		RegKey* pKeyNext = pKey->next;
 		reg_unload_key(reg, pKey);
 		pKey = pKeyNext;
 	}
@@ -461,8 +480,7 @@ static void reg_unload(Reg* reg)
 
 Reg* reg_open(BOOL read_only)
 {
-	Reg* reg;
-	reg = (Reg*)malloc(sizeof(Reg));
+	Reg* reg = (Reg*)calloc(1, sizeof(Reg));
 
 	if (!reg)
 		return NULL;
@@ -471,9 +489,7 @@ Reg* reg_open(BOOL read_only)
 	reg->filename = WINPR_HKLM_HIVE;
 
 	if (reg->read_only)
-	{
 		reg->fp = winpr_fopen(reg->filename, "r");
-	}
 	else
 	{
 		reg->fp = winpr_fopen(reg->filename, "r+");
@@ -483,25 +499,22 @@ Reg* reg_open(BOOL read_only)
 	}
 
 	if (!reg->fp)
-	{
-		free(reg);
-		return NULL;
-	}
+		goto fail;
 
-	reg->root_key = (RegKey*)malloc(sizeof(RegKey));
+	reg->root_key = (RegKey*)calloc(1, sizeof(RegKey));
 
 	if (!reg->root_key)
-	{
-		fclose(reg->fp);
-		free(reg);
-		return NULL;
-	}
+		goto fail;
 
 	reg->root_key->values = NULL;
 	reg->root_key->subkeys = NULL;
 	reg->root_key->name = "HKEY_LOCAL_MACHINE";
 	reg_load(reg);
 	return reg;
+
+fail:
+	reg_close(reg);
+	return NULL;
 }
 
 void reg_close(Reg* reg)

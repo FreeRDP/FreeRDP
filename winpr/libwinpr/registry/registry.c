@@ -42,12 +42,10 @@
 
 static Reg* instance = NULL;
 
-static Reg* RegGetInstance()
+static Reg* RegGetInstance(void)
 {
 	if (!instance)
-	{
 		instance = reg_open(1);
-	}
 
 	return instance;
 }
@@ -215,18 +213,23 @@ LONG RegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesir
 
 LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
 {
-	Reg* reg;
 	RegKey* pKey;
-	reg = RegGetInstance();
+	Reg* reg = RegGetInstance();
 
 	if (!reg)
 		return -1;
 
+	if (hKey != HKEY_LOCAL_MACHINE)
+		return ERROR_FILE_NOT_FOUND;
+
+	WINPR_ASSERT(reg->root_key);
 	pKey = reg->root_key->subkeys;
 
 	while (pKey != NULL)
 	{
-		if (_stricmp(pKey->subname, lpSubKey) == 0)
+		WINPR_ASSERT(lpSubKey);
+
+		if (pKey->subname && (_stricmp(pKey->subname, lpSubKey) == 0))
 		{
 			*phkResult = (HKEY)pKey;
 			return ERROR_SUCCESS;
