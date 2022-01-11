@@ -1453,7 +1453,7 @@ static BOOL read_pem_file(rdpSettings* settings, size_t id, const char* file)
 {
 	INT64 s;
 	int rs;
-	size_t r, fr;
+	size_t fr;
 	char* ptr;
 	BOOL rc = FALSE;
 	FILE* fp = winpr_fopen(file, "r");
