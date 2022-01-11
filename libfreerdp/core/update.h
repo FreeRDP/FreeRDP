@@ -88,7 +88,6 @@ typedef struct
 typedef struct
 {
 	rdpPrimaryUpdate common;
-	/* internal */
 
 	ORDER_INFO order_info;
 	DSTBLT_ORDER dstblt;
@@ -114,6 +113,12 @@ typedef struct
 	ELLIPSE_SC_ORDER ellipse_sc;
 	ELLIPSE_CB_ORDER ellipse_cb;
 } rdp_primary_update_internal;
+
+typedef struct
+{
+	rdpSecondaryUpdate common;
+	BOOL glyph_v2;
+} rdp_secondary_update_internal;
 
 static INLINE rdp_update_internal* update_cast(rdpUpdate* update)
 {
@@ -147,6 +152,19 @@ static INLINE rdp_primary_update_internal* primary_update_cast(rdpPrimaryUpdate*
 	{
 		rdpPrimaryUpdate* pub;
 		rdp_primary_update_internal* internal;
+	} cnv;
+
+	WINPR_ASSERT(update);
+	cnv.pub = update;
+	return cnv.internal;
+}
+
+static INLINE rdp_secondary_update_internal* secondary_update_cast(rdpSecondaryUpdate* update)
+{
+	union
+	{
+		rdpSecondaryUpdate* pub;
+		rdp_secondary_update_internal* internal;
 	} cnv;
 
 	WINPR_ASSERT(update);

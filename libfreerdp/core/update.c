@@ -3046,6 +3046,8 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	const wObject cb = { NULL, NULL, NULL, update_free_queued_message, NULL };
 	rdp_update_internal* update;
 	rdp_altsec_update_internal* altsec;
+	rdp_primary_update_internal* primary;
+	rdp_secondary_update_internal* secondary;
 	OFFSCREEN_DELETE_LIST* deleteList;
 	WINPR_UNUSED(rdp);
 	update = (rdp_update_internal*)calloc(1, sizeof(rdp_update_internal));
@@ -3060,15 +3062,17 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	if (!update->common.pointer)
 		goto fail;
 
-	update->common.primary = (rdpPrimaryUpdate*)calloc(1, sizeof(rdpPrimaryUpdate));
+	primary = (rdp_primary_update_internal*)calloc(1, sizeof(rdp_primary_update_internal));
 
-	if (!update->common.primary)
+	if (!primary)
 		goto fail;
+	update->common.primary = &primary->common;
 
-	update->common.secondary = (rdpSecondaryUpdate*)calloc(1, sizeof(rdpSecondaryUpdate));
+	secondary = (rdp_secondary_update_internal*)calloc(1, sizeof(rdp_secondary_update_internal));
 
-	if (!update->common.secondary)
+	if (!secondary)
 		goto fail;
+	update->common.secondary = &secondary->common;
 
 	altsec = (rdp_altsec_update_internal*)calloc(1, sizeof(rdp_altsec_update_internal));
 
