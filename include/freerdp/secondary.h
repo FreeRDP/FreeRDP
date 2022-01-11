@@ -190,10 +190,6 @@ struct rdp_secondary_update
 	/* Statistics callback */
 	pCacheOrderInfo CacheOrderInfo; /* 23 */
 	UINT32 paddingE[32 - 24];       /* 24 */
-
-	/* internal */
-
-	BOOL glyph_v2;
 };
 typedef struct rdp_secondary_update rdpSecondaryUpdate;
 

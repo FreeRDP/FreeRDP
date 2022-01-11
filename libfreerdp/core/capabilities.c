@@ -3972,7 +3972,11 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	if (!Stream_SafeSeek(s, 4)) /* SessionId */
 		return FALSE;
 
-	rdp->update->secondary->glyph_v2 = (rdp->settings->GlyphSupportLevel > GLYPH_SUPPORT_FULL);
+	{
+		rdp_secondary_update_internal* secondary = secondary_update_cast(rdp->update->secondary);
+		secondary->glyph_v2 = (rdp->settings->GlyphSupportLevel > GLYPH_SUPPORT_FULL);
+	}
+
 	return tpkt_ensure_stream_consumed(s, length);
 }
 
