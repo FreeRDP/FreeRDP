@@ -145,14 +145,16 @@ fail:
 static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 {
 	SURFACE_FRAME_MARKER marker = { 0 };
+	rdp_update_internal* up = update_cast(update);
+
+	WINPR_ASSERT(s);
 
 	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
 	Stream_Read_UINT16(s, marker.frameAction);
 	Stream_Read_UINT32(s, marker.frameId);
-	WLog_Print(update->log, WLOG_DEBUG,
-	           "SurfaceFrameMarker: action: %s (%" PRIu32 ") id: %" PRIu32 "",
+	WLog_Print(up->log, WLOG_DEBUG, "SurfaceFrameMarker: action: %s (%" PRIu32 ") id: %" PRIu32 "",
 	           (!marker.frameAction) ? "Begin" : "End", marker.frameAction, marker.frameId);
 
 	if (!update->SurfaceFrameMarker)
@@ -167,6 +169,9 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 {
 	UINT16 cmdType;
+	rdp_update_internal* up = update_cast(update);
+
+	WINPR_ASSERT(s);
 
 	while (Stream_GetRemainingLength(s) >= 2)
 	{
@@ -195,12 +200,12 @@ int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 				return -1;
 		}
 
-		if (update->dump_rfx)
+		if (up->dump_rfx)
 		{
 			const size_t size = Stream_GetPosition(s) - start;
 			/* TODO: treat return values */
-			pcap_add_record(update->pcap_rfx, mark, size);
-			pcap_flush(update->pcap_rfx);
+			pcap_add_record(up->pcap_rfx, mark, size);
+			pcap_flush(up->pcap_rfx);
 		}
 	}
 

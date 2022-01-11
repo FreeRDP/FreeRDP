@@ -125,6 +125,8 @@ BOOL freerdp_connect(freerdp* instance)
 	/* Pointers might have changed inbetween */
 	if (rdp && rdp->settings)
 	{
+		rdp_update_internal* up = update_cast(rdp->update);
+
 		/* --authonly tests the connection without a UI */
 		if (rdp->settings->AuthenticationOnly)
 		{
@@ -134,10 +136,10 @@ BOOL freerdp_connect(freerdp* instance)
 
 		if (rdp->settings->DumpRemoteFx)
 		{
-			rdp->update->pcap_rfx = pcap_open(rdp->settings->DumpRemoteFxFile, TRUE);
+			up->pcap_rfx = pcap_open(rdp->settings->DumpRemoteFxFile, TRUE);
 
-			if (rdp->update->pcap_rfx)
-				rdp->update->dump_rfx = TRUE;
+			if (up->pcap_rfx)
+				up->dump_rfx = TRUE;
 		}
 	}
 
@@ -171,9 +173,10 @@ BOOL freerdp_connect(freerdp* instance)
 	if (instance->settings->PlayRemoteFx)
 	{
 		wStream* s;
-		rdpUpdate* update;
+		rdp_update_internal* update = update_cast(instance->update);
 		pcap_record record;
-		update = instance->update;
+
+		WINPR_ASSERT(update);
 		update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
 		status = FALSE;
 
@@ -197,14 +200,14 @@ BOOL freerdp_connect(freerdp* instance)
 			Stream_SetLength(s, record.length);
 			Stream_SetPosition(s, 0);
 
-			if (!update_begin_paint(update))
+			if (!update_begin_paint(&update->common))
 				status = FALSE;
 			else
 			{
-				if (update_recv_surfcmds(update, s) < 0)
+				if (update_recv_surfcmds(&update->common, s) < 0)
 					status = FALSE;
 
-				if (!update_end_paint(update))
+				if (!update_end_paint(&update->common))
 					status = FALSE;
 			}
 
@@ -380,9 +383,11 @@ wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id)
 	switch (id)
 	{
 		case FREERDP_UPDATE_MESSAGE_QUEUE:
-			WINPR_ASSERT(instance->update);
-			queue = instance->update->queue;
-			break;
+		{
+			rdp_update_internal* update = update_cast(instance->update);
+			queue = update->queue;
+		}
+		break;
 
 		case FREERDP_INPUT_MESSAGE_QUEUE:
 			WINPR_ASSERT(instance->input);
@@ -467,6 +472,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 {
 	BOOL rc = TRUE;
 	rdpRdp* rdp;
+	rdp_update_internal* up;
 
 	if (!instance || !instance->context)
 		return FALSE;
@@ -476,6 +482,8 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 	if (!rdp_client_disconnect(rdp))
 		rc = FALSE;
+
+	up = update_cast(rdp->update);
 
 	update_post_disconnect(instance->update);
 
@@ -488,11 +496,11 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 	IFCALL(instance->PostDisconnect, instance);
 
-	if (instance->update->pcap_rfx)
+	if (up->pcap_rfx)
 	{
-		instance->update->dump_rfx = FALSE;
-		pcap_close(instance->update->pcap_rfx);
-		instance->update->pcap_rfx = NULL;
+		up->dump_rfx = FALSE;
+		pcap_close(up->pcap_rfx);
+		up->pcap_rfx = NULL;
 	}
 
 	freerdp_channels_close(instance->context->channels, instance);

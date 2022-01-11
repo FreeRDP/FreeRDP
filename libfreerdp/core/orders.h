@@ -268,18 +268,18 @@ FREERDP_LOCAL BOOL update_write_cache_glyph_v2_order(wStream* s,
                                                      const CACHE_GLYPH_V2_ORDER* cache_glyph_v2,
                                                      UINT16* flags);
 
-FREERDP_LOCAL int update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush,
-                                                       UINT16* flags);
+FREERDP_LOCAL size_t update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush,
+                                                          UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_brush_order(wStream* s,
                                                   const CACHE_BRUSH_ORDER* cache_brush_order,
                                                   UINT16* flags);
 
-FREERDP_LOCAL int update_approximate_create_offscreen_bitmap_order(
+FREERDP_LOCAL size_t update_approximate_create_offscreen_bitmap_order(
     const CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap);
 FREERDP_LOCAL BOOL update_write_create_offscreen_bitmap_order(
     wStream* s, const CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap);
 
-FREERDP_LOCAL int
+FREERDP_LOCAL size_t
 update_approximate_switch_surface_order(const SWITCH_SURFACE_ORDER* switch_surface);
 FREERDP_LOCAL BOOL update_write_switch_surface_order(wStream* s,
                                                      const SWITCH_SURFACE_ORDER* switch_surface);
