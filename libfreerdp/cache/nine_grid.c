@@ -51,8 +51,6 @@ struct rdp_nine_grid_cache
 	NINE_GRID_ENTRY* entries; /* 18 */
 	UINT32 paddingB[32 - 19]; /* 19 */
 
-	/* internal */
-
 	rdpContext* context;
 };
 

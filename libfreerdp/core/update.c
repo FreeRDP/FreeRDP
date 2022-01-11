@@ -855,10 +855,9 @@ void update_reset_state(rdpUpdate* update)
 {
 	rdp_update_internal* up = update_cast(update);
 	rdpPrimaryUpdate* primary = update->primary;
-	rdpAltSecUpdate* altsec = update->altsec;
+	rdp_altsec_update_internal* altsec = altsec_update_cast(update->altsec);
 
 	WINPR_ASSERT(primary);
-	WINPR_ASSERT(altsec);
 
 	if (primary->fast_glyph.glyphData.aj)
 	{
@@ -894,22 +893,25 @@ void update_reset_state(rdpUpdate* update)
 	if (!up->initialState)
 	{
 		altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
-		IFCALL(altsec->SwitchSurface, update->context, &(altsec->switch_surface));
+		IFCALL(altsec->common.SwitchSurface, update->context, &(altsec->switch_surface));
 	}
 }
 
 BOOL update_post_connect(rdpUpdate* update)
 {
 	rdp_update_internal* up = update_cast(update);
+	rdp_altsec_update_internal* altsec = altsec_update_cast(update->altsec);
 
+	WINPR_ASSERT(update->context);
+	WINPR_ASSERT(update->context->settings);
 	up->asynchronous = update->context->settings->AsyncUpdate;
 
 	if (up->asynchronous)
 		if (!(up->proxy = update_message_proxy_new(update)))
 			return FALSE;
 
-	update->altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
-	IFCALL(update->altsec->SwitchSurface, update->context, &(update->altsec->switch_surface));
+	altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
+	IFCALL(update->altsec->SwitchSurface, update->context, &(altsec->switch_surface));
 	up->initialState = FALSE;
 	return TRUE;
 }
@@ -3043,6 +3045,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 {
 	const wObject cb = { NULL, NULL, NULL, update_free_queued_message, NULL };
 	rdp_update_internal* update;
+	rdp_altsec_update_internal* altsec;
 	OFFSCREEN_DELETE_LIST* deleteList;
 	WINPR_UNUSED(rdp);
 	update = (rdp_update_internal*)calloc(1, sizeof(rdp_update_internal));
@@ -3067,17 +3070,18 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	if (!update->common.secondary)
 		goto fail;
 
-	update->common.altsec = (rdpAltSecUpdate*)calloc(1, sizeof(rdpAltSecUpdate));
+	altsec = (rdp_altsec_update_internal*)calloc(1, sizeof(rdp_altsec_update_internal));
 
-	if (!update->common.altsec)
+	if (!altsec)
 		goto fail;
 
+	update->common.altsec = &altsec->common;
 	update->common.window = (rdpWindowUpdate*)calloc(1, sizeof(rdpWindowUpdate));
 
 	if (!update->common.window)
 		goto fail;
 
-	deleteList = &(update->common.altsec->create_offscreen_bitmap.deleteList);
+	deleteList = &(altsec->create_offscreen_bitmap.deleteList);
 	deleteList->sIndices = 64;
 	deleteList->indices = calloc(deleteList->sIndices, 2);
 
@@ -3104,7 +3108,8 @@ void update_free(rdpUpdate* update)
 	if (update != NULL)
 	{
 		rdp_update_internal* up = update_cast(update);
-		OFFSCREEN_DELETE_LIST* deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
+		rdp_altsec_update_internal* altsec = altsec_update_cast(update->altsec);
+		OFFSCREEN_DELETE_LIST* deleteList = &(altsec->create_offscreen_bitmap.deleteList);
 
 		if (deleteList)
 			free(deleteList->indices);

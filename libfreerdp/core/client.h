@@ -89,8 +89,6 @@ typedef struct rdp_channel_init_data CHANNEL_INIT_DATA;
 
 struct rdp_channels
 {
-	/* internal */
-
 	int clientDataCount;
 	CHANNEL_CLIENT_DATA clientDataList[CHANNEL_MAX_COUNT];
 
