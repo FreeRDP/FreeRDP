@@ -2920,68 +2920,52 @@ void update_message_proxy_free(rdpUpdateProxy* message)
 
 static BOOL input_message_SynchronizeEvent(rdpInput* input, UINT32 flags)
 {
-	if (!input)
-		return FALSE;
-
-	return MessageQueue_Post(input->queue, (void*)input, MakeMessageId(Input, SynchronizeEvent),
+	rdp_input_internal* in = input_cast(input);
+	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, SynchronizeEvent),
 	                         (void*)(size_t)flags, NULL);
 }
 
 static BOOL input_message_KeyboardEvent(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	if (!input)
-		return FALSE;
-
-	return MessageQueue_Post(input->queue, (void*)input, MakeMessageId(Input, KeyboardEvent),
+	rdp_input_internal* in = input_cast(input);
+	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, KeyboardEvent),
 	                         (void*)(size_t)flags, (void*)(size_t)code);
 }
 
 static BOOL input_message_UnicodeKeyboardEvent(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	if (!input)
-		return FALSE;
-
-	return MessageQueue_Post(input->queue, (void*)input, MakeMessageId(Input, UnicodeKeyboardEvent),
+	rdp_input_internal* in = input_cast(input);
+	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, UnicodeKeyboardEvent),
 	                         (void*)(size_t)flags, (void*)(size_t)code);
 }
 
 static BOOL input_message_MouseEvent(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	UINT32 pos = (x << 16) | y;
-
-	if (!input)
-		return FALSE;
-
-	return MessageQueue_Post(input->queue, (void*)input, MakeMessageId(Input, MouseEvent),
+	rdp_input_internal* in = input_cast(input);
+	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, MouseEvent),
 	                         (void*)(size_t)flags, (void*)(size_t)pos);
 }
 
 static BOOL input_message_ExtendedMouseEvent(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	UINT32 pos = (x << 16) | y;
-
-	if (!input)
-		return FALSE;
-
-	return MessageQueue_Post(input->queue, (void*)input, MakeMessageId(Input, ExtendedMouseEvent),
+	rdp_input_internal* in = input_cast(input);
+	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, ExtendedMouseEvent),
 	                         (void*)(size_t)flags, (void*)(size_t)pos);
 }
 
 static BOOL input_message_FocusInEvent(rdpInput* input, UINT16 toggleStates)
 {
-	if (!input)
-		return FALSE;
-
-	return MessageQueue_Post(input->queue, (void*)input, MakeMessageId(Input, FocusInEvent),
+	rdp_input_internal* in = input_cast(input);
+	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, FocusInEvent),
 	                         (void*)(size_t)toggleStates, NULL);
 }
 
 static BOOL input_message_KeyboardPauseEvent(rdpInput* input)
 {
-	if (!input)
-		return FALSE;
-
-	return MessageQueue_Post(input->queue, (void*)input, MakeMessageId(Input, KeyboardPauseEvent),
+	rdp_input_internal* in = input_cast(input);
+	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, KeyboardPauseEvent),
 	                         NULL, NULL);
 }
 
@@ -3154,8 +3138,9 @@ int input_message_queue_process_message(rdpInput* input, wMessage* message)
 	int status;
 	int msgClass;
 	int msgType;
+	rdp_input_internal* in = input_cast(input);
 
-	if (!input || !message)
+	if (!message)
 		return -1;
 
 	if (message->id == WMQ_QUIT)
@@ -3163,7 +3148,7 @@ int input_message_queue_process_message(rdpInput* input, wMessage* message)
 
 	msgClass = GetMessageClass(message->id);
 	msgType = GetMessageType(message->id);
-	status = input_message_process_class(input->proxy, message, msgClass, msgType);
+	status = input_message_process_class(in->proxy, message, msgClass, msgType);
 	input_message_free_class(message, msgClass, msgType);
 
 	if (status < 0)
@@ -3178,13 +3163,14 @@ int input_message_queue_process_pending_messages(rdpInput* input)
 	int status;
 	wMessage message;
 	wMessageQueue* queue;
+	rdp_input_internal* in = input_cast(input);
 
-	if (!input || !input->queue)
+	if (!in->queue)
 		return -1;
 
 	count = 0;
 	status = 1;
-	queue = input->queue;
+	queue = in->queue;
 
 	while (MessageQueue_Peek(queue, &message, TRUE))
 	{
