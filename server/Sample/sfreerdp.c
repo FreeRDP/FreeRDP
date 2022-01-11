@@ -373,7 +373,7 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 	update = client->update;
 	WINPR_ASSERT(update);
 
-	if (client->update->dump_rfx)
+	if (freerdp_settings_get_bool(client->settings, FreeRDP_DumpRemoteFx))
 		return;
 
 	if (context->icon_width < 1 || !context->activated)
@@ -723,7 +723,7 @@ static BOOL tf_peer_activate(freerdp_peer* client)
 
 	if (info->test_pcap_file != NULL)
 	{
-		client->update->dump_rfx = TRUE;
+		freerdp_settings_set_bool(client->settings, FreeRDP_DumpRemoteFx, TRUE);
 
 		if (!tf_peer_dump_rfx(client))
 			return FALSE;
