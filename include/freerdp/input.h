@@ -87,12 +87,6 @@ struct rdp_input
 	pKeyboardPauseEvent KeyboardPauseEvent;     /* 22 */
 
 	UINT32 paddingB[32 - 23]; /* 23 */
-
-	/* Internal */
-
-	BOOL asynchronous;
-	rdpInputProxy* proxy;
-	wMessageQueue* queue;
 };
 
 #ifdef __cplusplus

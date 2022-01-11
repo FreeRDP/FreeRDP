@@ -627,8 +627,9 @@ BOOL input_recv(rdpInput* input, wStream* s)
 BOOL input_register_client_callbacks(rdpInput* input)
 {
 	rdpSettings* settings;
+	rdp_input_internal* in = input_cast(input);
 
-	if (!input || !input->context)
+	if (!input->context)
 		return FALSE;
 
 	settings = input->context->settings;
@@ -657,13 +658,13 @@ BOOL input_register_client_callbacks(rdpInput* input)
 		input->FocusInEvent = input_send_focus_in_event;
 	}
 
-	input->asynchronous = settings->AsyncInput;
+	in->asynchronous = settings->AsyncInput;
 
-	if (input->asynchronous)
+	if (in->asynchronous)
 	{
-		input->proxy = input_message_proxy_new(input);
+		in->proxy = input_message_proxy_new(input);
 
-		if (!input->proxy)
+		if (!in->proxy)
 			return FALSE;
 	}
 
@@ -773,8 +774,9 @@ static void input_free_queued_message(void* obj)
 rdpInput* input_new(rdpRdp* rdp)
 {
 	const wObject cb = { NULL, NULL, NULL, input_free_queued_message, NULL };
-	rdpInput* input;
-	input = (rdpInput*)calloc(1, sizeof(rdpInput));
+	rdp_input_internal* input = (rdp_input_internal*)calloc(1, sizeof(rdp_input_internal));
+
+	WINPR_UNUSED(rdp);
 
 	if (!input)
 		return NULL;
@@ -794,10 +796,11 @@ void input_free(rdpInput* input)
 {
 	if (input != NULL)
 	{
-		if (input->asynchronous)
-			input_message_proxy_free(input->proxy);
+		rdp_input_internal* in = input_cast(input);
+		if (in->asynchronous)
+			input_message_proxy_free(in->proxy);
 
-		MessageQueue_Free(input->queue);
-		free(input);
+		MessageQueue_Free(in->queue);
+		free(in);
 	}
 }

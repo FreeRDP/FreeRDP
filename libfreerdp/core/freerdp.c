@@ -390,9 +390,11 @@ wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id)
 		break;
 
 		case FREERDP_INPUT_MESSAGE_QUEUE:
-			WINPR_ASSERT(instance->input);
-			queue = instance->input->queue;
-			break;
+		{
+			rdp_input_internal* input = input_cast(instance->input);
+			queue = input->queue;
+		}
+		break;
 	}
 
 	return queue;
