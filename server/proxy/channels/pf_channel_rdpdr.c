@@ -1251,9 +1251,9 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 		default:
 			WLog_ERR(TAG,
 			         "[%s]: Channel %s [0x%04" PRIx16
-			         "] we´ve reached an impossible state %s! [%s] aliens invaded!",
+			         "] we´ve reached an impossible state %s! aliens invaded!",
 			         __FUNCTION__, channel_name, channelId,
-			         rdpdr_client_state_to_string(rdpdr->state), rdpdr_packetid_string(packetid));
+			         rdpdr_client_state_to_string(rdpdr->state));
 			return FALSE;
 	}
 

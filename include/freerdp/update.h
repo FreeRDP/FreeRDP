@@ -237,7 +237,23 @@ struct rdp_update
 	pSurfaceFrameAcknowledge SurfaceFrameAcknowledge; /* 68 */
 	pSaveSessionInfo SaveSessionInfo;                 /* 69 */
 	pServerStatusInfo ServerStatusInfo;               /* 70 */
-	UINT32 paddingE[80 - 71];                         /* 71 */
+	/* if autoCalculateBitmapData is set to TRUE, the server automatically
+	 * fills BITMAP_DATA struct members: flags, cbCompMainBodySize and cbCompFirstRowSize.
+	 */
+	BOOL autoCalculateBitmapData; /* 71 */
+	UINT32 paddingE[80 - 72];     /* 72 */
 };
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	FREERDP_API void rdp_update_lock(rdpUpdate* update);
+	FREERDP_API void rdp_update_unlock(rdpUpdate* update);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UPDATE_H */

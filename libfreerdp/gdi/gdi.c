@@ -1164,7 +1164,7 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format, BYTE* bu
 	WINPR_ASSERT(gdi->context);
 	WINPR_ASSERT(gdi->context->update);
 	if (!isLocked)
-		update_lock(gdi->context->update);
+		rdp_update_lock(gdi->context->update);
 
 	gdi->primary = (gdiBitmap*)calloc(1, sizeof(gdiBitmap));
 
@@ -1218,7 +1218,7 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format, BYTE* bu
 	if (!gdi->drawing)
 		gdi->drawing = gdi->primary;
 
-	update_unlock(gdi->context->update);
+	rdp_update_unlock(gdi->context->update);
 	return TRUE;
 fail_hwnd:
 	gdi_DeleteObject((HGDIOBJECT)gdi->primary->bitmap);
@@ -1228,7 +1228,7 @@ fail_hdc:
 	free(gdi->primary);
 	gdi->primary = NULL;
 fail_primary:
-	update_unlock(gdi->context->update);
+	rdp_update_unlock(gdi->context->update);
 	return FALSE;
 }
 
@@ -1252,7 +1252,7 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT
 
 	WINPR_ASSERT(gdi->context);
 	WINPR_ASSERT(gdi->context->update);
-	update_lock(gdi->context->update);
+	rdp_update_lock(gdi->context->update);
 
 	if (gdi->drawing == gdi->primary)
 		gdi->drawing = NULL;

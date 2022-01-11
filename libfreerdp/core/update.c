@@ -152,7 +152,7 @@ static BOOL update_write_bitmap_data(rdpUpdate* update_pub, wStream* s, BITMAP_D
 	if (!Stream_EnsureRemainingCapacity(s, 64 + bitmapData->bitmapLength))
 		return FALSE;
 
-	if (update->autoCalculateBitmapData)
+	if (update->common.autoCalculateBitmapData)
 	{
 		bitmapData->flags = 0;
 		bitmapData->cbCompFirstRowSize = 0;
@@ -3095,7 +3095,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	deleteList->cIndices = 0;
 	update->common.SuppressOutput = update_send_suppress_output;
 	update->initialState = TRUE;
-	update->autoCalculateBitmapData = TRUE;
+	update->common.autoCalculateBitmapData = TRUE;
 	update->queue = MessageQueue_New(&cb);
 
 	if (!update->queue)
@@ -3143,13 +3143,13 @@ void update_free(rdpUpdate* update)
 	}
 }
 
-void update_lock(rdpUpdate* update)
+void rdp_update_lock(rdpUpdate* update)
 {
 	rdp_update_internal* up = update_cast(update);
 	EnterCriticalSection(&up->mux);
 }
 
-void update_unlock(rdpUpdate* update)
+void rdp_update_unlock(rdpUpdate* update)
 {
 	rdp_update_internal* up = update_cast(update);
 	LeaveCriticalSection(&up->mux);
@@ -3157,7 +3157,7 @@ void update_unlock(rdpUpdate* update)
 
 BOOL update_begin_paint(rdpUpdate* update)
 {
-	update_lock(update);
+	rdp_update_lock(update);
 
 	if (!update->BeginPaint)
 		return TRUE;
@@ -3175,6 +3175,6 @@ BOOL update_end_paint(rdpUpdate* update)
 	if (update->EndPaint)
 		rc = update->EndPaint(update->context);
 
-	update_unlock(update);
+	rdp_update_unlock(update);
 	return rc;
 }

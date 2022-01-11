@@ -62,14 +62,15 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 		{
 			fprintf(
 			    stderr,
-			    "Color value  mismatch R[%02X %02X], G[%02X %02X], B[%02X %02X] at position %lu\n",
+			    "Color value  mismatch R[%02X %02X], G[%02X %02X], B[%02X %02X] at position %" PRIuz
+			    "\n",
 			    sR, dR, sG, dG, sA, dA, x);
 			return FALSE;
 		}
 
 		if (dA != fill)
 		{
-			fprintf(stderr, "[%s] Invalid destination alpha value %02X at position %lu\n",
+			fprintf(stderr, "[%s] Invalid destination alpha value %02X at position %" PRIuz "\n",
 			        use444 ? "AVC444" : "AVC420", dA, x);
 			return FALSE;
 		}

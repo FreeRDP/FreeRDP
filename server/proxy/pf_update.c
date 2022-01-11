@@ -374,9 +374,9 @@ static BOOL pf_client_window_create(rdpContext* context, const WINDOW_ORDER_INFO
 	WINPR_ASSERT(ps->update->window->WindowCreate);
 
 	WLog_DBG(TAG, __FUNCTION__);
-	EnterCriticalSection(&ps->update->mux);
+	rdp_update_lock(ps->update);
 	rc = ps->update->window->WindowCreate(ps, orderInfo, windowState);
-	LeaveCriticalSection(&ps->update->mux);
+	rdp_update_unlock(ps->update);
 	return rc;
 }
 
@@ -397,9 +397,9 @@ static BOOL pf_client_window_update(rdpContext* context, const WINDOW_ORDER_INFO
 	WINPR_ASSERT(ps->update->window->WindowUpdate);
 
 	WLog_DBG(TAG, __FUNCTION__);
-	EnterCriticalSection(&ps->update->mux);
+	rdp_update_lock(ps->update);
 	rc = ps->update->window->WindowUpdate(ps, orderInfo, windowState);
-	LeaveCriticalSection(&ps->update->mux);
+	rdp_update_unlock(ps->update);
 	return rc;
 }
 
@@ -420,9 +420,9 @@ static BOOL pf_client_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* 
 	WINPR_ASSERT(ps->update->window->WindowIcon);
 
 	WLog_DBG(TAG, __FUNCTION__);
-	EnterCriticalSection(&ps->update->mux);
+	rdp_update_lock(ps->update);
 	rc = ps->update->window->WindowIcon(ps, orderInfo, windowIcon);
-	LeaveCriticalSection(&ps->update->mux);
+	rdp_update_unlock(ps->update);
 	return rc;
 }
 
@@ -443,9 +443,9 @@ static BOOL pf_client_window_cached_icon(rdpContext* context, const WINDOW_ORDER
 	WINPR_ASSERT(ps->update->window->WindowCachedIcon);
 
 	WLog_DBG(TAG, __FUNCTION__);
-	EnterCriticalSection(&ps->update->mux);
+	rdp_update_lock(ps->update);
 	rc = ps->update->window->WindowCachedIcon(ps, orderInfo, windowCachedIcon);
-	LeaveCriticalSection(&ps->update->mux);
+	rdp_update_unlock(ps->update);
 	return rc;
 }
 
@@ -465,9 +465,9 @@ static BOOL pf_client_window_delete(rdpContext* context, const WINDOW_ORDER_INFO
 	WINPR_ASSERT(ps->update->window->WindowDelete);
 
 	WLog_DBG(TAG, __FUNCTION__);
-	EnterCriticalSection(&ps->update->mux);
+	rdp_update_lock(ps->update);
 	rc = ps->update->window->WindowDelete(ps, orderInfo);
-	LeaveCriticalSection(&ps->update->mux);
+	rdp_update_unlock(ps->update);
 	return rc;
 }
 
@@ -488,9 +488,9 @@ static BOOL pf_client_notify_icon_create(rdpContext* context, const WINDOW_ORDER
 	WINPR_ASSERT(ps->update->window->NotifyIconCreate);
 
 	WLog_DBG(TAG, __FUNCTION__);
-	EnterCriticalSection(&ps->update->mux);
+	rdp_update_lock(ps->update);
 	rc = ps->update->window->NotifyIconCreate(ps, orderInfo, notifyIconState);
-	LeaveCriticalSection(&ps->update->mux);
+	rdp_update_unlock(ps->update);
 	return rc;
 }
 
@@ -511,9 +511,9 @@ static BOOL pf_client_notify_icon_update(rdpContext* context, const WINDOW_ORDER
 	WINPR_ASSERT(ps->update->window->NotifyIconUpdate);
 
 	WLog_DBG(TAG, __FUNCTION__);
-	EnterCriticalSection(&ps->update->mux);
+	rdp_update_lock(ps->update);
 	rc = ps->update->window->NotifyIconUpdate(ps, orderInfo, notifyIconState);
-	LeaveCriticalSection(&ps->update->mux);
+	rdp_update_unlock(ps->update);
 	return rc;
 }
 
@@ -534,9 +534,9 @@ static BOOL pf_client_notify_icon_delete(rdpContext* context, const WINDOW_ORDER
 	WINPR_ASSERT(ps->update->window->NotifyIconDelete);
 
 	WLog_DBG(TAG, __FUNCTION__);
-	EnterCriticalSection(&ps->update->mux);
+	rdp_update_lock(ps->update);
 	rc = ps->update->window->NotifyIconDelete(ps, orderInfo);
-	LeaveCriticalSection(&ps->update->mux);
+	rdp_update_unlock(ps->update);
 	return rc;
 }
 
@@ -557,9 +557,9 @@ static BOOL pf_client_monitored_desktop(rdpContext* context, const WINDOW_ORDER_
 	WINPR_ASSERT(ps->update->window->MonitoredDesktop);
 
 	WLog_DBG(TAG, __FUNCTION__);
-	EnterCriticalSection(&ps->update->mux);
+	rdp_update_lock(ps->update);
 	rc = ps->update->window->MonitoredDesktop(ps, orderInfo, monitoredDesktop);
-	LeaveCriticalSection(&ps->update->mux);
+	rdp_update_unlock(ps->update);
 	return rc;
 }
 
@@ -579,9 +579,9 @@ static BOOL pf_client_non_monitored_desktop(rdpContext* context, const WINDOW_OR
 	WINPR_ASSERT(ps->update->window->NonMonitoredDesktop);
 
 	WLog_DBG(TAG, __FUNCTION__);
-	EnterCriticalSection(&ps->update->mux);
+	rdp_update_lock(ps->update);
 	rc = ps->update->window->NonMonitoredDesktop(ps, orderInfo);
-	LeaveCriticalSection(&ps->update->mux);
+	rdp_update_unlock(ps->update);
 	return rc;
 }
 
