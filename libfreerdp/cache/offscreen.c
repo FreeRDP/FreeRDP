@@ -42,8 +42,6 @@ struct rdp_offscreen_cache
 	rdpBitmap** entries;   /* 2 */
 	UINT32 currentSurface; /* 3 */
 
-	/* internal */
-
 	rdpContext* context;
 };
 

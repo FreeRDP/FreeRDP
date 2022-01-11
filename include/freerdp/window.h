@@ -285,8 +285,6 @@ struct rdp_window_update
 	pMonitoredDesktop MonitoredDesktop;       /* 24 */
 	pNonMonitoredDesktop NonMonitoredDesktop; /* 25 */
 	UINT32 paddingB[32 - 26];                 /* 26 */
-
-	/* internal */
 };
 typedef struct rdp_window_update rdpWindowUpdate;
 

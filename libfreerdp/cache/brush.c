@@ -57,8 +57,6 @@ struct rdp_brush_cache
 	BRUSH_ENTRY* monoEntries; /* 19 */
 	UINT32 paddingB[32 - 20]; /* 20 */
 
-	/* internal */
-
 	rdpContext* context;
 };
 

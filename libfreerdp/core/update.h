@@ -42,8 +42,6 @@ typedef struct
 {
 	rdpUpdate common;
 
-	/* internal */
-
 	wLog* log;
 
 	BOOL dump_rfx;
@@ -69,12 +67,43 @@ typedef struct
 	BOOL autoCalculateBitmapData;
 } rdp_update_internal;
 
+typedef struct
+{
+	rdpAltSecUpdate common;
+
+	CREATE_OFFSCREEN_BITMAP_ORDER create_offscreen_bitmap;
+	SWITCH_SURFACE_ORDER switch_surface;
+	CREATE_NINE_GRID_BITMAP_ORDER create_nine_grid_bitmap;
+	FRAME_MARKER_ORDER frame_marker;
+	STREAM_BITMAP_FIRST_ORDER stream_bitmap_first;
+	STREAM_BITMAP_NEXT_ORDER stream_bitmap_next;
+	DRAW_GDIPLUS_CACHE_FIRST_ORDER draw_gdiplus_cache_first;
+	DRAW_GDIPLUS_CACHE_NEXT_ORDER draw_gdiplus_cache_next;
+	DRAW_GDIPLUS_CACHE_END_ORDER draw_gdiplus_cache_end;
+	DRAW_GDIPLUS_FIRST_ORDER draw_gdiplus_first;
+	DRAW_GDIPLUS_NEXT_ORDER draw_gdiplus_next;
+	DRAW_GDIPLUS_END_ORDER draw_gdiplus_end;
+} rdp_altsec_update_internal;
+
 static INLINE rdp_update_internal* update_cast(rdpUpdate* update)
 {
 	union
 	{
 		rdpUpdate* pub;
 		rdp_update_internal* internal;
+	} cnv;
+
+	WINPR_ASSERT(update);
+	cnv.pub = update;
+	return cnv.internal;
+}
+
+static INLINE rdp_altsec_update_internal* altsec_update_cast(rdpAltSecUpdate* update)
+{
+	union
+	{
+		rdpAltSecUpdate* pub;
+		rdp_altsec_update_internal* internal;
 	} cnv;
 
 	WINPR_ASSERT(update);
