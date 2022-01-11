@@ -222,12 +222,12 @@ LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesire
 	if (hKey != HKEY_LOCAL_MACHINE)
 		return ERROR_FILE_NOT_FOUND;
 
-	WINPR_ASSERT(reg->root_key);
+	assert(reg->root_key);
 	pKey = reg->root_key->subkeys;
 
 	while (pKey != NULL)
 	{
-		WINPR_ASSERT(lpSubKey);
+		assert(lpSubKey);
 
 		if (pKey->subname && (_stricmp(pKey->subname, lpSubKey) == 0))
 		{
