@@ -2025,6 +2025,7 @@ static CACHE_BITMAP_ORDER* update_read_cache_bitmap_order(rdpUpdate* update, wSt
                                                           BOOL compressed, UINT16 flags)
 {
 	CACHE_BITMAP_ORDER* cache_bitmap;
+	rdp_update_internal* up = update_cast(update);
 
 	if (!update || !s)
 		return NULL;
@@ -2045,8 +2046,7 @@ static CACHE_BITMAP_ORDER* update_read_cache_bitmap_order(rdpUpdate* update, wSt
 
 	if ((cache_bitmap->bitmapBpp < 1) || (cache_bitmap->bitmapBpp > 32))
 	{
-		WLog_Print(update->log, WLOG_ERROR, "invalid bitmap bpp %" PRIu32 "",
-		           cache_bitmap->bitmapBpp);
+		WLog_Print(up->log, WLOG_ERROR, "invalid bitmap bpp %" PRIu32 "", cache_bitmap->bitmapBpp);
 		goto fail;
 	}
 
@@ -2306,6 +2306,7 @@ static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* updat
 	UINT32 new_len;
 	BYTE* new_data;
 	CACHE_BITMAP_V3_ORDER* cache_bitmap_v3;
+	rdp_update_internal* up = update_cast(update);
 
 	if (!update || !s)
 		return NULL;
@@ -2333,7 +2334,7 @@ static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* updat
 
 	if ((bitmapData->bpp < 1) || (bitmapData->bpp > 32))
 	{
-		WLog_Print(update->log, WLOG_ERROR, "invalid bpp value %" PRIu32 "", bitmapData->bpp);
+		WLog_Print(up->log, WLOG_ERROR, "invalid bpp value %" PRIu32 "", bitmapData->bpp);
 		goto fail;
 	}
 
@@ -2708,6 +2709,7 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 	BOOL rc;
 	BYTE iBitmapFormat;
 	BOOL compressed = FALSE;
+	rdp_update_internal* up = update_cast(update);
 	CACHE_BRUSH_ORDER* cache_brush = calloc(1, sizeof(CACHE_BRUSH_ORDER));
 
 	if (!cache_brush)
@@ -2736,7 +2738,7 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 		{
 			if (cache_brush->length != 8)
 			{
-				WLog_Print(update->log, WLOG_ERROR, "incompatible 1bpp brush of length:%" PRIu32 "",
+				WLog_Print(up->log, WLOG_ERROR, "incompatible 1bpp brush of length:%" PRIu32 "",
 				           cache_brush->length);
 				goto fail;
 			}
@@ -2787,10 +2789,15 @@ fail:
 	free_cache_brush_order(update->context, cache_brush);
 	return NULL;
 }
-int update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush, UINT16* flags)
+
+size_t update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush, UINT16* flags)
 {
+	WINPR_UNUSED(cache_brush);
+	WINPR_UNUSED(flags);
+
 	return 64;
 }
+
 BOOL update_write_cache_brush_order(wStream* s, const CACHE_BRUSH_ORDER* cache_brush, UINT16* flags)
 {
 	int i;
@@ -2919,12 +2926,20 @@ update_read_create_offscreen_bitmap_order(wStream* s,
 
 	return TRUE;
 }
-int update_approximate_create_offscreen_bitmap_order(
+
+size_t update_approximate_create_offscreen_bitmap_order(
     const CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
-	const OFFSCREEN_DELETE_LIST* deleteList = &(create_offscreen_bitmap->deleteList);
+	const OFFSCREEN_DELETE_LIST* deleteList;
+
+	WINPR_ASSERT(create_offscreen_bitmap);
+
+	deleteList = &(create_offscreen_bitmap->deleteList);
+	WINPR_ASSERT(deleteList);
+
 	return 32 + deleteList->cIndices * 2;
 }
+
 BOOL update_write_create_offscreen_bitmap_order(
     wStream* s, const CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
@@ -2968,13 +2983,13 @@ static BOOL update_read_switch_surface_order(wStream* s, SWITCH_SURFACE_ORDER* s
 	Stream_Read_UINT16(s, switch_surface->bitmapId); /* bitmapId (2 bytes) */
 	return TRUE;
 }
-int update_approximate_switch_surface_order(const SWITCH_SURFACE_ORDER* switch_surface)
+size_t update_approximate_switch_surface_order(const SWITCH_SURFACE_ORDER* switch_surface)
 {
 	return 2;
 }
 BOOL update_write_switch_surface_order(wStream* s, const SWITCH_SURFACE_ORDER* switch_surface)
 {
-	int inf = update_approximate_switch_surface_order(switch_surface);
+	size_t inf = update_approximate_switch_surface_order(switch_surface);
 
 	if (!Stream_EnsureRemainingCapacity(s, inf))
 		return FALSE;
@@ -3425,12 +3440,23 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 {
 	BYTE field;
 	BOOL rc = FALSE;
+	rdp_update_internal* up = update_cast(update);
 	rdpContext* context = update->context;
 	rdpPrimaryUpdate* primary = update->primary;
-	ORDER_INFO* orderInfo = &(primary->order_info);
-	rdpSettings* settings = context->settings;
+	ORDER_INFO* orderInfo;
+	rdpSettings* settings;
 	const char* orderName;
 	BOOL defaultReturn;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(primary);
+
+	orderInfo = &(primary->order_info);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
 
 	defaultReturn = freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding);
 
@@ -3438,7 +3464,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 		{
-			WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) < 1");
+			WLog_Print(up->log, WLOG_ERROR, "Stream_GetRemainingLength(s) < 1");
 			return FALSE;
 		}
 
@@ -3446,9 +3472,9 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	}
 
 	orderName = primary_order_string(orderInfo->orderType);
-	WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+	WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 
-	if (!check_primary_order_supported(update->log, settings, orderInfo->orderType, orderName))
+	if (!check_primary_order_supported(up->log, settings, orderInfo->orderType, orderName))
 		return FALSE;
 
 	field = get_primary_drawing_order_field_bytes(orderInfo->orderType, &rc);
@@ -3457,7 +3483,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	if (!update_read_field_flags(s, &(orderInfo->fieldFlags), flags, field))
 	{
-		WLog_Print(update->log, WLOG_ERROR, "update_read_field_flags() failed");
+		WLog_Print(up->log, WLOG_ERROR, "update_read_field_flags() failed");
 		return FALSE;
 	}
 
@@ -3467,7 +3493,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		{
 			if (!update_read_bounds(s, &orderInfo->bounds))
 			{
-				WLog_Print(update->log, WLOG_ERROR, "update_read_bounds() failed");
+				WLog_Print(up->log, WLOG_ERROR, "update_read_bounds() failed");
 				return FALSE;
 			}
 		}
@@ -3480,7 +3506,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? TRUE : FALSE;
 
-	if (!read_primary_order(update->log, orderName, s, orderInfo, primary))
+	if (!read_primary_order(up->log, orderName, s, orderInfo, primary))
 		return FALSE;
 
 	rc = IFCALLRESULT(TRUE, primary->OrderInfo, context, orderInfo, orderName);
@@ -3491,7 +3517,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	{
 		case ORDER_TYPE_DSTBLT:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
 			           orderName, gdi_rop3_code_string(primary->dstblt.bRop),
 			           gdi_rop3_code(primary->dstblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->DstBlt, context, &primary->dstblt);
@@ -3500,7 +3526,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_PATBLT:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
 			           orderName, gdi_rop3_code_string(primary->patblt.bRop),
 			           gdi_rop3_code(primary->patblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->PatBlt, context, &primary->patblt);
@@ -3509,7 +3535,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_SCRBLT:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
 			           orderName, gdi_rop3_code_string(primary->scrblt.bRop),
 			           gdi_rop3_code(primary->scrblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->ScrBlt, context, &primary->scrblt);
@@ -3518,14 +3544,14 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_OPAQUE_RECT:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->OpaqueRect, context, &primary->opaque_rect);
 		}
 		break;
 
 		case ORDER_TYPE_DRAW_NINE_GRID:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->DrawNineGrid, context,
 			                  &primary->draw_nine_grid);
 		}
@@ -3533,7 +3559,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_MULTI_DSTBLT:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
 			           orderName, gdi_rop3_code_string(primary->multi_dstblt.bRop),
 			           gdi_rop3_code(primary->multi_dstblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->MultiDstBlt, context, &primary->multi_dstblt);
@@ -3542,7 +3568,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_MULTI_PATBLT:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
 			           orderName, gdi_rop3_code_string(primary->multi_patblt.bRop),
 			           gdi_rop3_code(primary->multi_patblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->MultiPatBlt, context, &primary->multi_patblt);
@@ -3551,7 +3577,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_MULTI_SCRBLT:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
 			           orderName, gdi_rop3_code_string(primary->multi_scrblt.bRop),
 			           gdi_rop3_code(primary->multi_scrblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->MultiScrBlt, context, &primary->multi_scrblt);
@@ -3560,7 +3586,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_MULTI_OPAQUE_RECT:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->MultiOpaqueRect, context,
 			                  &primary->multi_opaque_rect);
 		}
@@ -3568,7 +3594,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_MULTI_DRAW_NINE_GRID:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->MultiDrawNineGrid, context,
 			                  &primary->multi_draw_nine_grid);
 		}
@@ -3576,21 +3602,21 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_LINE_TO:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->LineTo, context, &primary->line_to);
 		}
 		break;
 
 		case ORDER_TYPE_POLYLINE:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->Polyline, context, &primary->polyline);
 		}
 		break;
 
 		case ORDER_TYPE_MEMBLT:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
 			           orderName, gdi_rop3_code_string(primary->memblt.bRop),
 			           gdi_rop3_code(primary->memblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->MemBlt, context, &primary->memblt);
@@ -3599,7 +3625,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_MEM3BLT:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s rop=%s [0x%08" PRIx32 "]",
 			           orderName, gdi_rop3_code_string(primary->mem3blt.bRop),
 			           gdi_rop3_code(primary->mem3blt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->Mem3Blt, context, &primary->mem3blt);
@@ -3608,68 +3634,68 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_SAVE_BITMAP:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->SaveBitmap, context, &primary->save_bitmap);
 		}
 		break;
 
 		case ORDER_TYPE_GLYPH_INDEX:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->GlyphIndex, context, &primary->glyph_index);
 		}
 		break;
 
 		case ORDER_TYPE_FAST_INDEX:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->FastIndex, context, &primary->fast_index);
 		}
 		break;
 
 		case ORDER_TYPE_FAST_GLYPH:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->FastGlyph, context, &primary->fast_glyph);
 		}
 		break;
 
 		case ORDER_TYPE_POLYGON_SC:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->PolygonSC, context, &primary->polygon_sc);
 		}
 		break;
 
 		case ORDER_TYPE_POLYGON_CB:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->PolygonCB, context, &primary->polygon_cb);
 		}
 		break;
 
 		case ORDER_TYPE_ELLIPSE_SC:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->EllipseSC, context, &primary->ellipse_sc);
 		}
 		break;
 
 		case ORDER_TYPE_ELLIPSE_CB:
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
+			WLog_Print(up->log, WLOG_DEBUG, "Primary Drawing Order %s", orderName);
 			rc = IFCALLRESULT(defaultReturn, primary->EllipseCB, context, &primary->ellipse_cb);
 		}
 		break;
 
 		default:
-			WLog_Print(update->log, WLOG_WARN, "Primary Drawing Order %s not supported", orderName);
+			WLog_Print(up->log, WLOG_WARN, "Primary Drawing Order %s not supported", orderName);
 			break;
 	}
 
 	if (!rc)
 	{
-		WLog_Print(update->log, WLOG_WARN, "Primary Drawing Order %s failed", orderName);
+		WLog_Print(up->log, WLOG_WARN, "Primary Drawing Order %s failed", orderName);
 		return FALSE;
 	}
 
@@ -3689,6 +3715,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	UINT16 extraFlags;
 	INT16 orderLength;
 	INT32 orderLengthFull;
+	rdp_update_internal* up = update_cast(update);
 	rdpContext* context = update->context;
 	rdpSettings* settings = context->settings;
 	rdpSecondaryUpdate* secondary = update->secondary;
@@ -3700,7 +3727,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	rem = Stream_GetRemainingLength(s);
 	if (rem < 5)
 	{
-		WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) < 5");
+		WLog_Print(up->log, WLOG_ERROR, "Stream_GetRemainingLength(s) < 5");
 		return FALSE;
 	}
 
@@ -3710,7 +3737,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 
 	start = Stream_GetPosition(s);
 	name = secondary_order_string(orderType);
-	WLog_Print(update->log, WLOG_DEBUG, "Secondary Drawing Order %s", name);
+	WLog_Print(up->log, WLOG_DEBUG, "Secondary Drawing Order %s", name);
 	rc = IFCALLRESULT(TRUE, secondary->CacheOrderInfo, context, orderLength, extraFlags, orderType,
 	                  name);
 	if (!rc)
@@ -3728,12 +3755,12 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	orderLengthFull = orderLength + 7;
 	if ((orderLengthFull < 0) || (rem < (size_t)orderLengthFull))
 	{
-		WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) %" PRIuz " < %" PRId32,
-		           rem, orderLengthFull);
+		WLog_Print(up->log, WLOG_ERROR, "Stream_GetRemainingLength(s) %" PRIuz " < %" PRId32, rem,
+		           orderLengthFull);
 		return FALSE;
 	}
 
-	if (!check_secondary_order_supported(update->log, settings, orderType, name))
+	if (!check_secondary_order_supported(up->log, settings, orderType, name))
 		return FALSE;
 
 	switch (orderType)
@@ -3844,28 +3871,28 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 			break;
 
 		default:
-			WLog_Print(update->log, WLOG_WARN, "SECONDARY ORDER %s not supported", name);
+			WLog_Print(up->log, WLOG_WARN, "SECONDARY ORDER %s not supported", name);
 			break;
 	}
 
 	if (!rc)
 	{
-		WLog_Print(update->log, WLOG_ERROR, "SECONDARY ORDER %s failed", name);
+		WLog_Print(up->log, WLOG_ERROR, "SECONDARY ORDER %s failed", name);
 	}
 
 	end = start + orderLengthFull;
 	pos = Stream_GetPosition(s);
 	if (pos > end)
 	{
-		WLog_Print(update->log, WLOG_WARN, "SECONDARY_ORDER %s: read %" PRIuz "bytes too much",
-		           name, pos - end);
+		WLog_Print(up->log, WLOG_WARN, "SECONDARY_ORDER %s: read %" PRIuz "bytes too much", name,
+		           pos - end);
 		return FALSE;
 	}
 	diff = end - pos;
 	if (diff > 0)
 	{
-		WLog_Print(update->log, WLOG_DEBUG,
-		           "SECONDARY_ORDER %s: read %" PRIuz "bytes short, skipping", name, diff);
+		WLog_Print(up->log, WLOG_DEBUG, "SECONDARY_ORDER %s: read %" PRIuz "bytes short, skipping",
+		           name, diff);
 		if (!Stream_SafeSeek(s, diff))
 			return FALSE;
 	}
@@ -3946,17 +3973,18 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s, BYTE flags)
 {
 	BYTE orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
 	BOOL rc = FALSE;
+	rdp_update_internal* up = update_cast(update);
 	rdpContext* context = update->context;
 	rdpSettings* settings = context->settings;
 	rdpAltSecUpdate* altsec = update->altsec;
 	const char* orderName = altsec_order_string(orderType);
-	WLog_Print(update->log, WLOG_DEBUG, "Alternate Secondary Drawing Order %s", orderName);
+	WLog_Print(up->log, WLOG_DEBUG, "Alternate Secondary Drawing Order %s", orderName);
 
 	rc = IFCALLRESULT(TRUE, altsec->DrawOrderInfo, context, orderType, orderName);
 	if (!rc)
 		return FALSE;
 
-	if (!check_alt_order_supported(update->log, settings, orderType, orderName))
+	if (!check_alt_order_supported(up->log, settings, orderType, orderName))
 		return FALSE;
 
 	if (!read_altsec_order(s, orderType, altsec))
@@ -4030,8 +4058,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	if (!rc)
 	{
-		WLog_Print(update->log, WLOG_WARN, "Alternate Secondary Drawing Order %s failed",
-		           orderName);
+		WLog_Print(up->log, WLOG_WARN, "Alternate Secondary Drawing Order %s failed", orderName);
 	}
 
 	return rc;
@@ -4040,10 +4067,11 @@ BOOL update_recv_order(rdpUpdate* update, wStream* s)
 {
 	BOOL rc;
 	BYTE controlFlags;
+	rdp_update_internal* up = update_cast(update);
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
-		WLog_Print(update->log, WLOG_ERROR, "Stream_GetRemainingLength(s) < 1");
+		WLog_Print(up->log, WLOG_ERROR, "Stream_GetRemainingLength(s) < 1");
 		return FALSE;
 	}
 
@@ -4057,7 +4085,7 @@ BOOL update_recv_order(rdpUpdate* update, wStream* s)
 		rc = update_recv_primary_order(update, s, controlFlags);
 
 	if (!rc)
-		WLog_Print(update->log, WLOG_ERROR, "order flags %02" PRIx8 " failed", controlFlags);
+		WLog_Print(up->log, WLOG_ERROR, "order flags %02" PRIx8 " failed", controlFlags);
 
 	return rc;
 }

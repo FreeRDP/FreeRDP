@@ -23,6 +23,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <freerdp/log.h>
 
@@ -703,9 +704,16 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
                                           WINDOW_ORDER_INFO* orderInfo)
 {
+	rdp_update_internal* up = update_cast(update);
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
+
 	BOOL result = TRUE;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(window);
+	WINPR_ASSERT(orderInfo);
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -719,7 +727,7 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 
 		if (result)
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "WindowIcon windowId=0x%" PRIx32 "",
+			WLog_Print(up->log, WLOG_DEBUG, "WindowIcon windowId=0x%" PRIx32 "",
 			           orderInfo->windowId);
 			IFCALLRET(window->WindowIcon, result, context, orderInfo, &window_icon);
 		}
@@ -734,7 +742,7 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 
 		if (result)
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "WindowCachedIcon windowId=0x%" PRIx32 "",
+			WLog_Print(up->log, WLOG_DEBUG, "WindowCachedIcon windowId=0x%" PRIx32 "",
 			           orderInfo->windowId);
 			IFCALLRET(window->WindowCachedIcon, result, context, orderInfo, &window_cached_icon);
 		}
@@ -742,8 +750,7 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
 		update_read_window_delete_order(s, orderInfo);
-		WLog_Print(update->log, WLOG_DEBUG, "WindowDelete windowId=0x%" PRIx32 "",
-		           orderInfo->windowId);
+		WLog_Print(up->log, WLOG_DEBUG, "WindowDelete windowId=0x%" PRIx32 "", orderInfo->windowId);
 		IFCALLRET(window->WindowDelete, result, context, orderInfo);
 	}
 	else
@@ -755,12 +762,12 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 		{
 			if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
 			{
-				dump_window_state_order(update->log, "WindowCreate", orderInfo, &windowState);
+				dump_window_state_order(up->log, "WindowCreate", orderInfo, &windowState);
 				IFCALLRET(window->WindowCreate, result, context, orderInfo, &windowState);
 			}
 			else
 			{
-				dump_window_state_order(update->log, "WindowUpdate", orderInfo, &windowState);
+				dump_window_state_order(up->log, "WindowUpdate", orderInfo, &windowState);
 				IFCALLRET(window->WindowUpdate, result, context, orderInfo, &windowState);
 			}
 
@@ -837,9 +844,15 @@ static void update_read_notification_icon_delete_order(wStream* s, WINDOW_ORDER_
 static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream* s,
                                                      WINDOW_ORDER_INFO* orderInfo)
 {
+	rdp_update_internal* up = update_cast(update);
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
 	BOOL result = TRUE;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(window);
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
@@ -850,7 +863,7 @@ static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream*
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
 		update_read_notification_icon_delete_order(s, orderInfo);
-		WLog_Print(update->log, WLOG_DEBUG, "NotifyIconDelete");
+		WLog_Print(up->log, WLOG_DEBUG, "NotifyIconDelete");
 		IFCALLRET(window->NotifyIconDelete, result, context, orderInfo);
 	}
 	else
@@ -863,12 +876,12 @@ static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream*
 
 		if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "NotifyIconCreate");
+			WLog_Print(up->log, WLOG_DEBUG, "NotifyIconCreate");
 			IFCALLRET(window->NotifyIconCreate, result, context, orderInfo, &notify_icon_state);
 		}
 		else
 		{
-			WLog_Print(update->log, WLOG_DEBUG, "NotifyIconUpdate");
+			WLog_Print(up->log, WLOG_DEBUG, "NotifyIconUpdate");
 			IFCALLRET(window->NotifyIconUpdate, result, context, orderInfo, &notify_icon_state);
 		}
 	fail:
@@ -962,14 +975,20 @@ static void dump_monitored_desktop(wLog* log, const char* msg, const WINDOW_ORDE
 static BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s,
                                            WINDOW_ORDER_INFO* orderInfo)
 {
+	rdp_update_internal* up = update_cast(update);
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
 	BOOL result = TRUE;
 
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(window);
+
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_NONE)
 	{
 		update_read_desktop_non_monitored_order(s, orderInfo);
-		WLog_Print(update->log, WLOG_DEBUG, "NonMonitoredDesktop, windowId=0x%" PRIx32 "",
+		WLog_Print(up->log, WLOG_DEBUG, "NonMonitoredDesktop, windowId=0x%" PRIx32 "",
 		           orderInfo->windowId);
 		IFCALLRET(window->NonMonitoredDesktop, result, context, orderInfo);
 	}
@@ -980,7 +999,7 @@ static BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s,
 
 		if (result)
 		{
-			dump_monitored_desktop(update->log, "ActivelyMonitoredDesktop", orderInfo,
+			dump_monitored_desktop(up->log, "ActivelyMonitoredDesktop", orderInfo,
 			                       &monitored_desktop);
 			IFCALLRET(window->MonitoredDesktop, result, context, orderInfo, &monitored_desktop);
 		}
@@ -1010,11 +1029,13 @@ BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)
 	size_t remaining;
 	UINT16 orderSize;
 	WINDOW_ORDER_INFO orderInfo = { 0 };
+	rdp_update_internal* up = update_cast(update);
+
 	remaining = Stream_GetRemainingLength(s);
 
 	if (remaining < 6)
 	{
-		WLog_Print(update->log, WLOG_ERROR, "Stream short");
+		WLog_Print(up->log, WLOG_ERROR, "Stream short");
 		return FALSE;
 	}
 
@@ -1023,7 +1044,7 @@ BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)
 
 	if (remaining + 1 < orderSize)
 	{
-		WLog_Print(update->log, WLOG_ERROR, "Stream short orderSize");
+		WLog_Print(up->log, WLOG_ERROR, "Stream short orderSize");
 		return FALSE;
 	}
 
@@ -1041,7 +1062,7 @@ BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)
 		rc = update_recv_desktop_info_order(update, s, &orderInfo);
 
 	if (!rc)
-		WLog_Print(update->log, WLOG_ERROR, "windoworder flags %08" PRIx32 " failed",
+		WLog_Print(up->log, WLOG_ERROR, "windoworder flags %08" PRIx32 " failed",
 		           orderInfo.fieldFlags);
 
 	return rc;

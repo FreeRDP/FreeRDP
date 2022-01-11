@@ -38,6 +38,50 @@
 #define BITMAP_COMPRESSION 0x0001
 #define NO_BITMAP_COMPRESSION_HDR 0x0400
 
+typedef struct
+{
+	rdpUpdate common;
+
+	/* internal */
+
+	wLog* log;
+
+	BOOL dump_rfx;
+	BOOL play_rfx;
+	rdpPcap* pcap_rfx;
+	BOOL initialState;
+
+	BOOL asynchronous;
+	rdpUpdateProxy* proxy;
+	wMessageQueue* queue;
+
+	wStream* us;
+	UINT16 numberOrders;
+	size_t offsetOrders; /* the offset to patch numberOrders in the stream */
+	BOOL combineUpdates;
+	rdpBounds currentBounds;
+	rdpBounds previousBounds;
+	CRITICAL_SECTION mux;
+
+	/* if autoCalculateBitmapData is set to TRUE, the server automatically
+	 * fills BITMAP_DATA struct members: flags, cbCompMainBodySize and cbCompFirstRowSize.
+	 */
+	BOOL autoCalculateBitmapData;
+} rdp_update_internal;
+
+static INLINE rdp_update_internal* update_cast(rdpUpdate* update)
+{
+	union
+	{
+		rdpUpdate* pub;
+		rdp_update_internal* internal;
+	} cnv;
+
+	WINPR_ASSERT(update);
+	cnv.pub = update;
+	return cnv.internal;
+}
+
 FREERDP_LOCAL rdpUpdate* update_new(rdpRdp* rdp);
 FREERDP_LOCAL void update_free(rdpUpdate* update);
 FREERDP_LOCAL void update_reset_state(rdpUpdate* update);

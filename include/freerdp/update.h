@@ -238,32 +238,6 @@ struct rdp_update
 	pSaveSessionInfo SaveSessionInfo;                 /* 69 */
 	pServerStatusInfo ServerStatusInfo;               /* 70 */
 	UINT32 paddingE[80 - 71];                         /* 71 */
-
-	/* internal */
-
-	wLog* log;
-
-	BOOL dump_rfx;
-	BOOL play_rfx;
-	rdpPcap* pcap_rfx;
-	BOOL initialState;
-
-	BOOL asynchronous;
-	rdpUpdateProxy* proxy;
-	wMessageQueue* queue;
-
-	wStream* us;
-	UINT16 numberOrders;
-	size_t offsetOrders; /* the offset to patch numberOrders in the stream */
-	BOOL combineUpdates;
-	rdpBounds currentBounds;
-	rdpBounds previousBounds;
-	CRITICAL_SECTION mux;
-
-	/* if autoCalculateBitmapData is set to TRUE, the server automatically
-	 * fills BITMAP_DATA struct members: flags, cbCompMainBodySize and cbCompFirstRowSize.
-	 */
-	BOOL autoCalculateBitmapData;
 };
 
 #endif /* FREERDP_UPDATE_H */
