@@ -85,6 +85,36 @@ typedef struct
 	DRAW_GDIPLUS_END_ORDER draw_gdiplus_end;
 } rdp_altsec_update_internal;
 
+typedef struct
+{
+	rdpPrimaryUpdate common;
+	/* internal */
+
+	ORDER_INFO order_info;
+	DSTBLT_ORDER dstblt;
+	PATBLT_ORDER patblt;
+	SCRBLT_ORDER scrblt;
+	OPAQUE_RECT_ORDER opaque_rect;
+	DRAW_NINE_GRID_ORDER draw_nine_grid;
+	MULTI_DSTBLT_ORDER multi_dstblt;
+	MULTI_PATBLT_ORDER multi_patblt;
+	MULTI_SCRBLT_ORDER multi_scrblt;
+	MULTI_OPAQUE_RECT_ORDER multi_opaque_rect;
+	MULTI_DRAW_NINE_GRID_ORDER multi_draw_nine_grid;
+	LINE_TO_ORDER line_to;
+	POLYLINE_ORDER polyline;
+	MEMBLT_ORDER memblt;
+	MEM3BLT_ORDER mem3blt;
+	SAVE_BITMAP_ORDER save_bitmap;
+	GLYPH_INDEX_ORDER glyph_index;
+	FAST_INDEX_ORDER fast_index;
+	FAST_GLYPH_ORDER fast_glyph;
+	POLYGON_SC_ORDER polygon_sc;
+	POLYGON_CB_ORDER polygon_cb;
+	ELLIPSE_SC_ORDER ellipse_sc;
+	ELLIPSE_CB_ORDER ellipse_cb;
+} rdp_primary_update_internal;
+
 static INLINE rdp_update_internal* update_cast(rdpUpdate* update)
 {
 	union
@@ -104,6 +134,19 @@ static INLINE rdp_altsec_update_internal* altsec_update_cast(rdpAltSecUpdate* up
 	{
 		rdpAltSecUpdate* pub;
 		rdp_altsec_update_internal* internal;
+	} cnv;
+
+	WINPR_ASSERT(update);
+	cnv.pub = update;
+	return cnv.internal;
+}
+
+static INLINE rdp_primary_update_internal* primary_update_cast(rdpPrimaryUpdate* update)
+{
+	union
+	{
+		rdpPrimaryUpdate* pub;
+		rdp_primary_update_internal* internal;
 	} cnv;
 
 	WINPR_ASSERT(update);

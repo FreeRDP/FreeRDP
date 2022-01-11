@@ -854,7 +854,7 @@ fail:
 void update_reset_state(rdpUpdate* update)
 {
 	rdp_update_internal* up = update_cast(update);
-	rdpPrimaryUpdate* primary = update->primary;
+	rdp_primary_update_internal* primary = primary_update_cast(update->primary);
 	rdp_altsec_update_internal* altsec = altsec_update_cast(update->altsec);
 
 	WINPR_ASSERT(primary);
@@ -3118,14 +3118,15 @@ void update_free(rdpUpdate* update)
 
 		if (update->primary)
 		{
-			free(update->primary->polyline.points);
-			free(update->primary->polygon_sc.points);
-			free(update->primary->fast_glyph.glyphData.aj);
-			free(update->primary);
+			rdp_primary_update_internal* primary = primary_update_cast(update->primary);
+			free(primary->polyline.points);
+			free(primary->polygon_sc.points);
+			free(primary->fast_glyph.glyphData.aj);
+			free(primary);
 		}
 
 		free(update->secondary);
-		free(update->altsec);
+		free(altsec);
 
 		if (update->window)
 		{
