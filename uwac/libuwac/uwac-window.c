@@ -485,6 +485,22 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 
 	wl_surface_set_user_data(w->surface, w);
 
+#if BUILD_IVI
+	if (display->ivi_application)
+	{
+		w->ivi_surface = ivi_application_surface_create(display->ivi_application, 1, w->surface);
+		assert(w->ivi_surface);
+		ivi_surface_add_listener(w->ivi_surface, &ivi_surface_listener, w);
+	} else
+#endif
+#if BUILD_FULLSCREEN_SHELL
+	if (display->fullscreen_shell)
+	{
+		zwp_fullscreen_shell_v1_present_surface(display->fullscreen_shell, w->surface,
+                                                 ZWP_FULLSCREEN_SHELL_V1_PRESENT_METHOD_CENTER,
+                                                 NULL);
+	} else
+#endif
 	if (display->xdg_base)
 	{
 		w->xdg_surface = xdg_wm_base_get_xdg_surface(display->xdg_base, w->surface);
@@ -509,22 +525,6 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 		wl_surface_commit(w->surface);
 		wl_display_roundtrip(w->display->display);
 	}
-#if BUILD_IVI
-	else if (display->ivi_application)
-	{
-		w->ivi_surface = ivi_application_surface_create(display->ivi_application, 1, w->surface);
-		assert(w->ivi_surface);
-		ivi_surface_add_listener(w->ivi_surface, &ivi_surface_listener, w);
-	}
-#endif
-#if BUILD_FULLSCREEN_SHELL
-	else if (display->fullscreen_shell)
-	{
-		zwp_fullscreen_shell_v1_present_surface(display->fullscreen_shell, w->surface,
-		                                        ZWP_FULLSCREEN_SHELL_V1_PRESENT_METHOD_CENTER,
-		                                        NULL);
-	}
-#endif
 	else
 	{
 		w->shell_surface = wl_shell_get_shell_surface(display->shell, w->surface);
