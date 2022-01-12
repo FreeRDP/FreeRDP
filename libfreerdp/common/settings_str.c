@@ -285,6 +285,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_StaticChannelCount, 3, "FreeRDP_StaticChannelCount" },
 	{ FreeRDP_TargetNetAddressCount, 3, "FreeRDP_TargetNetAddressCount" },
 	{ FreeRDP_TcpAckTimeout, 3, "FreeRDP_TcpAckTimeout" },
+	{ FreeRDP_TcpConnectTimeout, 3, "FreeRDP_TcpConnectTimeout" },
 	{ FreeRDP_TcpKeepAliveDelay, 3, "FreeRDP_TcpKeepAliveDelay" },
 	{ FreeRDP_TcpKeepAliveInterval, 3, "FreeRDP_TcpKeepAliveInterval" },
 	{ FreeRDP_TcpKeepAliveRetries, 3, "FreeRDP_TcpKeepAliveRetries" },

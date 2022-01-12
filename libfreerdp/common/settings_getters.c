@@ -1570,6 +1570,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_TcpAckTimeout:
 			return settings->TcpAckTimeout;
 
+		case FreeRDP_TcpConnectTimeout:
+			return settings->TcpConnectTimeout;
+
 		case FreeRDP_TcpKeepAliveDelay:
 			return settings->TcpKeepAliveDelay;
 
@@ -2019,6 +2022,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_TcpAckTimeout:
 			settings->TcpAckTimeout = val;
+			break;
+
+		case FreeRDP_TcpConnectTimeout:
+			settings->TcpConnectTimeout = val;
 			break;
 
 		case FreeRDP_TcpKeepAliveDelay:

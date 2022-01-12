@@ -801,14 +801,14 @@ static BOOL freerdp_tcp_is_hostname_resolvable(rdpContext* context, const char* 
 }
 
 static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct sockaddr* addr,
-                                        socklen_t addrlen, int timeout)
+                                        socklen_t addrlen, UINT32 timeout)
 {
 	BOOL rc = FALSE;
 	HANDLE handles[2];
 	int status = 0;
 	int count = 0;
 	u_long arg = 0;
-	DWORD tout = (timeout > 0) ? (DWORD)timeout * 1000U : INFINITE;
+	DWORD tout = (timeout > 0) ? timeout : INFINITE;
 
 	handles[count] = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -894,7 +894,7 @@ static void peer_free(t_peer* peer)
 }
 
 static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT32* ports,
-                                     UINT32 count, int port, int timeout)
+                                     UINT32 count, UINT16 port, UINT32 timeout)
 {
 	UINT32 index;
 	UINT32 sindex = count;

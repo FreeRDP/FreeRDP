@@ -331,12 +331,15 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_FRAME_DONE:
+			{
+				UwacReturnCode r;
 				EnterCriticalSection(&context->critical);
-				rc = UwacWindowSubmitBuffer(context->window, false);
+				r = UwacWindowSubmitBuffer(context->window, false);
 				LeaveCriticalSection(&context->critical);
-				if (rc != UWAC_SUCCESS)
+				if (r != UWAC_SUCCESS)
 					return FALSE;
-				break;
+			}
+			    break;
 
 			case UWAC_EVENT_POINTER_ENTER:
 				if (!wlf_handle_pointer_enter(instance, &event.mouse_enter_leave))
