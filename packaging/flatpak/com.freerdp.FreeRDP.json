@@ -1,7 +1,7 @@
 {
     "app-id": "com.freerdp.FreeRDP",
     "runtime": "org.freedesktop.Platform",
-    "runtime-version": "19.08",
+    "runtime-version": "21.08",
     "sdk": "org.freedesktop.Sdk",
     "build-options" : {
         "cflags": "-O2 -g",
@@ -14,11 +14,11 @@
         /* X11 + XShm access */
         "--share=ipc",
         "--socket=x11",
-        "--socket=fallback-x11",
         /* Needs to talk to the network */
         "--share=network",
         /* Play sounds redirected from guests */
         "--socket=pulseaudio",
+        "--socket=cups",
         /* Wayland access */
         "--socket=wayland",
         /* Allow rw access to download folder */
@@ -27,7 +27,7 @@
     "add-build-extensions": {
       "org.freedesktop.Platform.ffmpeg-full": {
         "directory": "lib/ffmpeg",
-        "version": "19.08",
+        "version": "21.08",
         "add-ld-path": "."
       },
       "org.freedesktop.Platform.openh264": {
@@ -45,8 +45,8 @@
         "sources": [
         {
             "type": "archive",
-            "url": "https://xorg.freedesktop.org/releases/individual/app/xprop-1.2.4.tar.bz2",
-            "sha256": "8c77fb096e46c60032b7e2bde9492c3ffcc18734f50b395085a5f10bfd3cf753"
+            "url": "https://xorg.freedesktop.org/releases/individual/app/xprop-1.2.5.tar.bz2",
+            "sha256": "9b92ed0316bf2486121d8bac88bd1878f16b43bd335f18009b1f941f1eca93a1"
         }
         ]
     },
@@ -57,8 +57,7 @@
             {
                 "type": "git",
                 "url": "https://github.com/libusb/libusb.git",
-                "tag": "v1.0.23",
-                "commit": "e782eeb2514266f6738e242cdcb18e3ae1ed06fa"
+                "tag": "v1.0.24"
             }
         ]
     },
@@ -75,8 +74,7 @@
             {
                 "type": "git",
                 "url": "https://github.com/LudovicRousseau/PCSC.git",
-                "tag": "pcsc-1.9.0",
-                "commit": "e796a0f12fbefa459bff0d25e27089615fa91f21"
+                "tag": "1.9.5"
             }
         ]
     },
@@ -107,6 +105,7 @@
         "-DWITH_MANPAGES:BOOL=OFF",
         "-DWITH_GSSAPI:BOOL=OFF",
         "-DWITH_PCSC:BOOL=ON",
+        "-DWITH_SWSCALE:BOOL=ON",
         "-DWITH_SERVER:BOOL=ON",
         "-DWITH_SAMPLE:BOOL=ON",
         "-DWITH_CUPS:BOOL=ON",
