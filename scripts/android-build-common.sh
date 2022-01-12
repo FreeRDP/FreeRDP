@@ -83,7 +83,7 @@ function common_parse_arguments {
 		key="$1"
 		case $key in
 		    --conf)
-            source "$2"
+            source "$2" || exit 1
             shift
             ;;
 
