@@ -1294,23 +1294,16 @@ static BOOL rdp_read_input_capability_set(wStream* s, rdpSettings* settings)
 			settings->FastPathInput = FALSE;
 		}
 
+		/* Note: These settings have split functionality:
+		 * 1. If disabled in client pre_connect, it can disable announcing the feature
+		 * 2. If enabled in client pre_connect, override it with the server announced support flag.
+		 */
 		if (settings->HasHorizontalWheel)
-		{
-			if (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL)
-				settings->HasHorizontalWheel = TRUE;
-		}
-
+			settings->HasHorizontalWheel = (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL) ? TRUE : FALSE;
 		if (settings->UnicodeInput)
-		{
-			if (inputFlags & INPUT_FLAG_UNICODE)
-				settings->UnicodeInput = TRUE;
-		}
-
+			settings->UnicodeInput = (inputFlags & INPUT_FLAG_UNICODE) ? TRUE : FALSE;
 		if (settings->HasExtendedMouseEvent)
-		{
-			if (inputFlags & INPUT_FLAG_MOUSEX)
-				settings->HasExtendedMouseEvent = TRUE;
-		}
+			settings->HasExtendedMouseEvent = (inputFlags & INPUT_FLAG_MOUSEX) ? TRUE : FALSE;
 	}
 
 	return TRUE;
