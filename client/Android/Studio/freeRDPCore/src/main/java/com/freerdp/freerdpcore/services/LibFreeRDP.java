@@ -23,27 +23,19 @@ import com.freerdp.freerdpcore.domain.ManualBookmark;
 import com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class LibFreeRDP
 {
 	private static final String TAG = "LibFreeRDP";
 	private static EventListener listener;
-	private static boolean mHasH264 = true;
+	private static boolean mHasH264 = false;
 
 	private static final LongSparseArray<Boolean> mInstanceState = new LongSparseArray<>();
 
-	static
+	private static boolean tryLoad(String[] libraries)
 	{
-		final String h264 = "openh264";
-		final String[] libraries = { h264,
-			                         "freerdp-openssl",
-			                         "ssl",
-			                         "crypto",
-			                         "jpeg",
-			                         "winpr2",
-			                         "freerdp2",
-			                         "freerdp-client2",
-			                         "freerdp-android2" };
+		boolean success = false;
 		final String LD_PATH = System.getProperty("java.library.path");
 
 		for (String lib : libraries)
@@ -52,15 +44,37 @@ public class LibFreeRDP
 			{
 				Log.v(TAG, "Trying to load library " + lib + " from LD_PATH: " + LD_PATH);
 				System.loadLibrary(lib);
+				success = true;
 			}
 			catch (UnsatisfiedLinkError e)
 			{
 				Log.e(TAG, "Failed to load library " + lib + ": " + e.toString());
-				if (lib.equals(h264))
-				{
-					mHasH264 = false;
-				}
+				success = false;
+				break;
 			}
+		}
+
+		return success;
+	}
+
+	private static boolean tryLoad(String library)
+				{
+		return tryLoad(new String[] { library });
+				}
+	static
+	{
+		mHasH264 = tryLoad("openh264");
+		if (!mHasH264)
+			mHasH264 = tryLoad("avcodec");
+
+		try
+		{
+			System.loadLibrary("freerdp-android3");
+			}
+		catch (UnsatisfiedLinkError e)
+		{
+			Log.e(TAG, "Failed to load library: " + e.toString());
+			throw e;
 		}
 	}
 
