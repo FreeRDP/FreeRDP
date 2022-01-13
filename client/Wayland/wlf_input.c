@@ -273,7 +273,7 @@ BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev
 #if defined(WL_POINTER_AXIS_SOURCE_WHEEL_TILT_SINCE_VERSION)
 				case WL_POINTER_AXIS_SOURCE_WHEEL_TILT:
 #endif
-					if (ev->type == UWAC_EVENT_POINTER_AXIS_DISCRETE)
+					if (cev->type == UWAC_EVENT_POINTER_AXIS_DISCRETE)
 					{
 						/* Get the number of steps, multiply by default step width of 120 */
 						int32_t val = cev->mouse_axis.value * 0x78;
