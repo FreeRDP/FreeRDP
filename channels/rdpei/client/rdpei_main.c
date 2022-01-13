@@ -668,7 +668,11 @@ static UINT rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback,
 	UINT status;
 	wStream* s;
 	UINT32 pduLength;
-	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)callback->plugin;
+	RDPEI_PLUGIN* rdpei;
+
+	WINPR_ASSERT(callback);
+
+	rdpei = (RDPEI_PLUGIN*)callback->plugin;
 	if (!rdpei || !rdpei->rdpcontext)
 		return ERROR_INTERNAL_ERROR;
 	if (freerdp_settings_get_bool(rdpei->rdpcontext->settings, FreeRDP_SuspendInput))
@@ -769,7 +773,7 @@ static UINT rdpei_recv_suspend_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStre
 
 	if (!callback || !callback->plugin)
 		return ERROR_INTERNAL_ERROR;
-	rdpei = (RdpeiClientContext*)callback->plugin;
+	rdpei = (RdpeiClientContext*)callback->plugin->pInterface;
 	if (!rdpei)
 		return ERROR_INTERNAL_ERROR;
 
@@ -792,7 +796,7 @@ static UINT rdpei_recv_resume_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStrea
 	UINT error = CHANNEL_RC_OK;
 	if (!s || !callback || !callback->plugin)
 		return ERROR_INTERNAL_ERROR;
-	rdpei = (RdpeiClientContext*)callback->plugin;
+	rdpei = (RdpeiClientContext*)callback->plugin->pInterface;
 	if (!rdpei)
 		return ERROR_INTERNAL_ERROR;
 
