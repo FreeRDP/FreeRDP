@@ -834,6 +834,7 @@ VOID DumpThreadHandles(void)
 	winpr_backtrace_free(stack);
 	WLog_DBG(TAG, "---------------- Start Dumping thread handles -----------");
 
+#if defined(WITH_THREAD_LIST)
 	if (!thread_list)
 	{
 		WLog_DBG(TAG, "All threads properly shut down and disposed of.");
@@ -877,6 +878,7 @@ VOID DumpThreadHandles(void)
 		free(keys);
 		ListDictionary_Unlock(thread_list);
 	}
+#endif
 
 	WLog_DBG(TAG, "---------------- End Dumping thread handles -------------");
 }

@@ -103,17 +103,18 @@ void ntlm_write_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo)
  * VERSION @msdn{cc236654}
  * @param s
  */
-
+#ifdef WITH_DEBUG_NTLM
 void ntlm_print_version_info(NTLM_VERSION_INFO* versionInfo)
 {
-	WLog_INFO(TAG, "VERSION ={");
-	WLog_INFO(TAG, "\tProductMajorVersion: %" PRIu8 "", versionInfo->ProductMajorVersion);
-	WLog_INFO(TAG, "\tProductMinorVersion: %" PRIu8 "", versionInfo->ProductMinorVersion);
-	WLog_INFO(TAG, "\tProductBuild: %" PRIu16 "", versionInfo->ProductBuild);
-	WLog_INFO(TAG, "\tReserved: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "", versionInfo->Reserved[0],
-	          versionInfo->Reserved[1], versionInfo->Reserved[2]);
-	WLog_INFO(TAG, "\tNTLMRevisionCurrent: 0x%02" PRIX8 "", versionInfo->NTLMRevisionCurrent);
+	WLog_VRB(TAG, "VERSION ={");
+	WLog_VRB(TAG, "\tProductMajorVersion: %" PRIu8 "", versionInfo->ProductMajorVersion);
+	WLog_VRB(TAG, "\tProductMinorVersion: %" PRIu8 "", versionInfo->ProductMinorVersion);
+	WLog_VRB(TAG, "\tProductBuild: %" PRIu16 "", versionInfo->ProductBuild);
+	WLog_VRB(TAG, "\tReserved: 0x%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "", versionInfo->Reserved[0],
+	         versionInfo->Reserved[1], versionInfo->Reserved[2]);
+	WLog_VRB(TAG, "\tNTLMRevisionCurrent: 0x%02" PRIX8 "", versionInfo->NTLMRevisionCurrent);
 }
+#endif
 
 static int ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* challenge)
 {
@@ -217,7 +218,7 @@ static int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	if (entry)
 	{
 #ifdef WITH_DEBUG_NTLM
-		WLog_DBG(TAG, "NTLM Hash:");
+		WLog_VRB(TAG, "NTLM Hash:");
 		winpr_HexDump(TAG, WLOG_DEBUG, entry->NtHash, 16);
 #endif
 		NTOWFv2FromHashW(entry->NtHash, (LPWSTR)credentials->identity.User,
@@ -234,7 +235,7 @@ static int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	if (entry)
 	{
 #ifdef WITH_DEBUG_NTLM
-		WLog_DBG(TAG, "NTLM Hash:");
+		WLog_VRB(TAG, "NTLM Hash:");
 		winpr_HexDump(TAG, WLOG_DEBUG, entry->NtHash, 16);
 #endif
 		NTOWFv2FromHashW(entry->NtHash, (LPWSTR)credentials->identity.User,
@@ -292,23 +293,23 @@ static int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 
 	if (credentials)
 	{
-		WLog_DBG(TAG, "Password (length = %" PRIu32 ")", credentials->identity.PasswordLength * 2);
-		winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*)credentials->identity.Password,
+		WLog_VRB(TAG, "Password (length = %" PRIu32 ")", credentials->identity.PasswordLength * 2);
+		winpr_HexDump(TAG, WLOG_TRACE, (BYTE*)credentials->identity.Password,
 		              credentials->identity.PasswordLength * 2);
-		WLog_DBG(TAG, "Username (length = %" PRIu32 ")", credentials->identity.UserLength * 2);
-		winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*)credentials->identity.User,
+		WLog_VRB(TAG, "Username (length = %" PRIu32 ")", credentials->identity.UserLength * 2);
+		winpr_HexDump(TAG, WLOG_TRACE, (BYTE*)credentials->identity.User,
 		              credentials->identity.UserLength * 2);
-		WLog_DBG(TAG, "Domain (length = %" PRIu32 ")", credentials->identity.DomainLength * 2);
-		winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*)credentials->identity.Domain,
+		WLog_VRB(TAG, "Domain (length = %" PRIu32 ")", credentials->identity.DomainLength * 2);
+		winpr_HexDump(TAG, WLOG_TRACE, (BYTE*)credentials->identity.Domain,
 		              credentials->identity.DomainLength * 2);
 	}
 	else
-		WLog_DBG(TAG, "Strange, NTLM_CONTEXT is missing valid credentials...");
+		WLog_VRB(TAG, "Strange, NTLM_CONTEXT is missing valid credentials...");
 
-	WLog_DBG(TAG, "Workstation (length = %" PRIu16 ")", context->Workstation.Length);
-	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*)context->Workstation.Buffer, context->Workstation.Length);
-	WLog_DBG(TAG, "NTOWFv2, NTLMv2 Hash");
-	winpr_HexDump(TAG, WLOG_DEBUG, context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH);
+	WLog_VRB(TAG, "Workstation (length = %" PRIu16 ")", context->Workstation.Length);
+	winpr_HexDump(TAG, WLOG_TRACE, (BYTE*)context->Workstation.Buffer, context->Workstation.Length);
+	WLog_VRB(TAG, "NTOWFv2, NTLMv2 Hash");
+	winpr_HexDump(TAG, WLOG_TRACE, context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH);
 #endif
 
 	if (memcmp(context->NtlmV2Hash, NTLM_NULL_BUFFER, 16) != 0)
@@ -440,8 +441,8 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	/* Reserved3 (4 bytes) */
 	CopyMemory(&blob[28], TargetInfo->pvBuffer, TargetInfo->cbBuffer);
 #ifdef WITH_DEBUG_NTLM
-	WLog_DBG(TAG, "NTLMv2 Response Temp Blob");
-	winpr_HexDump(TAG, WLOG_DEBUG, ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
+	WLog_VRB(TAG, "NTLMv2 Response Temp Blob");
+	winpr_HexDump(TAG, WLOG_TRACE, ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 #endif
 
 	/* Concatenate server challenge with temp */
