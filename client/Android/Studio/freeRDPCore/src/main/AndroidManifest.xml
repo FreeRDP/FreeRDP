@@ -22,6 +22,7 @@
         <meta-data android:name="com.samsung.android.keepalive.density" android:value="true"/>
         <!-- Activity to create shortcuts -->
         <activity
+            android:exported="true"
             android:name=".presentation.ShortcutsActivity"
             android:label="@string/title_create_shortcut"
             android:theme="@style/Theme.Main">
@@ -49,6 +50,7 @@
         </activity-alias>
 
         <activity
+            android:exported="true"
             android:name=".presentation.BookmarkActivity"
             android:label="@string/title_bookmark_settings"
             android:theme="@style/Theme.Settings">
@@ -61,11 +63,13 @@
             </intent-filter>
         </activity>
         <activity
+            android:exported="true"
             android:name=".presentation.ApplicationSettingsActivity"
             android:label="@string/title_application_settings"
             android:theme="@style/Theme.Settings"
             android:windowSoftInputMode="stateHidden" />
         <activity
+            android:exported="true"
             android:name=".presentation.SessionActivity"
             android:theme="@style/Theme.Main"
             android:configChanges="orientation|keyboard|keyboardHidden|screenSize|smallestScreenSize|density|screenLayout|navigation"
@@ -83,15 +87,18 @@
             </intent-filter>
         </activity>
         <activity
+            android:exported="true"
             android:name=".presentation.AboutActivity"
             android:label="@string/title_about"
             android:theme="@style/Theme.Main" />
         <activity
+            android:exported="true"
             android:name=".presentation.HelpActivity"
             android:label="@string/title_help"
             android:theme="@style/Theme.Main" />
 
         <receiver
+            android:exported="true"
             android:name=".application.NetworkStateReceiver"
             android:enabled="true">
             <intent-filter>

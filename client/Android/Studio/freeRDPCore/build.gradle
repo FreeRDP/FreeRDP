@@ -8,8 +8,6 @@ android {
         minSdkVersion rootProject.ext.minApi
         targetSdkVersion rootProject.ext.targetApi
         vectorDrawables.useSupportLibrary = true
-        versionCode = rootProject.ext.versionCode
-        versionName = rootProject.ext.versionName
     }
 
     buildTypes {
@@ -22,6 +20,11 @@ android {
             renderscriptDebuggable true
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    ndkVersion '23.1.7779620'
 }
 
 dependencies {
