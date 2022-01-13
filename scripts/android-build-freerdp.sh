@@ -152,7 +152,7 @@ do
                 --target $NDK_TARGET \
                 --tag $FFMPEG_TAG
         fi
-		CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_FFMPEG=ON"
+		CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_FFMPEG=ON -DWITH_SWCALE=ON"
 	else
         CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_FFMPEG=OFF"
     fi
