@@ -78,7 +78,7 @@ public class LibFreeRDP
 
 		try
 		{
-			System.loadLibrary("freerdp-android3");
+			System.loadLibrary("freerdp-android");
 		}
 		catch (UnsatisfiedLinkError e)
 		{
