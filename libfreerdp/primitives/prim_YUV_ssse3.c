@@ -48,37 +48,23 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 	/* Visual Studio 2010 doesn't like _mm_set_epi32 in array initializer list */
 	/* Note: This also applies to Visual Studio 2013 before Update 4 */
 #if !defined(_MSC_VER) || (_MSC_VER > 1600)
-	const __m128i mapY[] = { _mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
-		                     _mm_set_epi32(0x80800780, 0x80800680, 0x80800580, 0x80800480),
-		                     _mm_set_epi32(0x80800B80, 0x80800A80, 0x80800980, 0x80800880),
-		                     _mm_set_epi32(0x80800F80, 0x80800E80, 0x80800D80, 0x80800C80) };
-	const __m128i mapUV[] = { _mm_set_epi32(0x80038002, 0x80018000, 0x80808080, 0x80808080),
-		                      _mm_set_epi32(0x80078006, 0x80058004, 0x80808080, 0x80808080),
-		                      _mm_set_epi32(0x800B800A, 0x80098008, 0x80808080, 0x80808080),
-		                      _mm_set_epi32(0x800F800E, 0x800D800C, 0x80808080, 0x80808080) };
+	const __m128i reorderMap[] = { _mm_set_epi32(0x80038002, 0x80018000, 0x80808080, 0x80808080),
+		                           _mm_set_epi32(0x80078006, 0x80058004, 0x80808080, 0x80808080),
+		                           _mm_set_epi32(0x800B800A, 0x80098008, 0x80808080, 0x80808080),
+		                           _mm_set_epi32(0x800F800E, 0x800D800C, 0x80808080, 0x80808080) };
 	const __m128i mask[] = { _mm_set_epi32(0x80038080, 0x80028080, 0x80018080, 0x80008080),
 		                     _mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
 		                     _mm_set_epi32(0x80808003, 0x80808002, 0x80808001, 0x80808000) };
 #else
 	/* Note: must be in little-endian format ! */
-	const __m128i mapY[] = { { 0x80, 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80,
-		                       0x80, 0x80, 0x03, 0x80, 0x80 },
-		                     { 0x80, 0x04, 0x80, 0x80, 0x80, 0x05, 0x80, 0x80, 0x80, 0x06, 0x80,
-		                       0x80, 0x80, 0x07, 0x80, 0x80 },
-		                     { 0x80, 0x08, 0x80, 0x80, 0x80, 0x09, 0x80, 0x80, 0x80, 0x0a, 0x80,
-		                       0x80, 0x80, 0x0b, 0x80, 0x80 },
-		                     { 0x80, 0x0c, 0x80, 0x80, 0x80, 0x0d, 0x80, 0x80, 0x80, 0x0e, 0x80,
-		                       0x80, 0x80, 0x0f, 0x80, 0x80 }
-
-	};
-	const __m128i mapUV[] = { { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00, 0x80, 0x01,
-		                        0x80, 0x02, 0x80, 0x03, 0x80 },
-		                      { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x04, 0x80, 0x05,
-		                        0x80, 0x06, 0x80, 0x07, 0x80 },
-		                      { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x08, 0x80, 0x09,
-		                        0x80, 0x0a, 0x80, 0x0b, 0x80 },
-		                      { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x0c, 0x80, 0x0d,
-		                        0x80, 0x0e, 0x80, 0x0f, 0x80 } };
+	const __m128i reorderMap[] = { { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00, 0x80,
+		                             0x01, 0x80, 0x02, 0x80, 0x03, 0x80 },
+		                           { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x04, 0x80,
+		                             0x05, 0x80, 0x06, 0x80, 0x07, 0x80 },
+		                           { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x08, 0x80,
+		                             0x09, 0x80, 0x0a, 0x80, 0x0b, 0x80 },
+		                           { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x0c, 0x80,
+		                             0x0d, 0x80, 0x0e, 0x80, 0x0f, 0x80 } };
 	const __m128i mask[] = { { 0x80, 0x80, 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02,
 		                       0x80, 0x80, 0x80, 0x03, 0x80 },
 		                     { 0x80, 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80,
@@ -87,63 +73,73 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 		                       0x80, 0x03, 0x80, 0x80, 0x80 } };
 #endif
 	const __m128i c128 = _mm_set1_epi16(128);
+	const __m128i c16 = _mm_set1_epi16(16);
 	__m128i BGRX = _mm_and_si128(_mm_loadu_si128(dst),
 	                             _mm_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000));
 	{
 		__m128i C, D, E;
 		/* Load Y values and expand to 32 bit */
 		{
-			C = _mm_shuffle_epi8(Yraw, mapY[pos]); /* Reorder and multiply by 256 */
+			const __m128i Y = _mm_shuffle_epi8(Yraw, reorderMap[pos]); /* Reorder dcba */
+			C = _mm_sub_epi16(Y, c16);                                 /* C = Y - 16 */
 		}
 		/* Load U values and expand to 32 bit */
 		{
-			const __m128i U = _mm_shuffle_epi8(Uraw, mapUV[pos]); /* Reorder dcba */
-			D = _mm_sub_epi16(U, c128);                           /* D = U - 128 */
+			const __m128i U = _mm_shuffle_epi8(Uraw, reorderMap[pos]); /* Reorder dcba */
+			D = _mm_sub_epi16(U, c128);                                /* D = U - 128 */
 		}
 		/* Load V values and expand to 32 bit */
 		{
-			const __m128i V = _mm_shuffle_epi8(Vraw, mapUV[pos]); /* Reorder dcba */
-			E = _mm_sub_epi16(V, c128);                           /* E = V - 128 */
+			const __m128i V = _mm_shuffle_epi8(Vraw, reorderMap[pos]); /* Reorder dcba */
+			E = _mm_sub_epi16(V, c128);                                /* E = V - 128 */
 		}
-		/* Get the R value */
+
+		/* Multiply C by 298 */
 		{
-			const __m128i c403 = _mm_set1_epi16(403);
-			const __m128i e403 =
-			    _mm_unpackhi_epi16(_mm_mullo_epi16(E, c403), _mm_mulhi_epi16(E, c403));
-			const __m128i Rs = _mm_add_epi32(C, e403);
-			const __m128i R32 = _mm_srai_epi32(Rs, 8);
-			const __m128i R16 = _mm_packs_epi32(R32, _mm_setzero_si128());
-			const __m128i R = _mm_packus_epi16(R16, _mm_setzero_si128());
-			const __m128i packed = _mm_shuffle_epi8(R, mask[0]);
-			BGRX = _mm_or_si128(BGRX, packed);
-		}
-		/* Get the G value */
-		{
-			const __m128i c48 = _mm_set1_epi16(48);
-			const __m128i d48 =
-			    _mm_unpackhi_epi16(_mm_mullo_epi16(D, c48), _mm_mulhi_epi16(D, c48));
-			const __m128i c120 = _mm_set1_epi16(120);
-			const __m128i e120 =
-			    _mm_unpackhi_epi16(_mm_mullo_epi16(E, c120), _mm_mulhi_epi16(E, c120));
-			const __m128i de = _mm_add_epi32(d48, e120);
-			const __m128i Gs = _mm_sub_epi32(C, de);
-			const __m128i G32 = _mm_srai_epi32(Gs, 8);
-			const __m128i G16 = _mm_packs_epi32(G32, _mm_setzero_si128());
-			const __m128i G = _mm_packus_epi16(G16, _mm_setzero_si128());
-			const __m128i packed = _mm_shuffle_epi8(G, mask[1]);
-			BGRX = _mm_or_si128(BGRX, packed);
-		}
-		/* Get the B value */
-		{
-			const __m128i c475 = _mm_set1_epi16(475);
-			const __m128i d475 =
-			    _mm_unpackhi_epi16(_mm_mullo_epi16(D, c475), _mm_mulhi_epi16(D, c475));
-			const __m128i Bs = _mm_add_epi32(C, d475);
-			const __m128i B32 = _mm_srai_epi32(Bs, 8);
-			const __m128i B16 = _mm_packs_epi32(B32, _mm_setzero_si128());
-			const __m128i B = _mm_packus_epi16(B16, _mm_setzero_si128());
-			const __m128i packed = _mm_shuffle_epi8(B, mask[2]);
-			BGRX = _mm_or_si128(BGRX, packed);
+			const __m128i c298 = _mm_set1_epi16(298);
+			const __m128i y298 =
+			    _mm_unpackhi_epi16(_mm_mullo_epi16(C, c298), _mm_mulhi_epi16(C, c298));
+
+			/* Get the R value */
+			{
+				const __m128i c409 = _mm_set1_epi16(409);
+				const __m128i e409 =
+				    _mm_unpackhi_epi16(_mm_mullo_epi16(E, c409), _mm_mulhi_epi16(E, c409));
+				const __m128i Rs = _mm_add_epi32(y298, e409);
+				const __m128i R32 = _mm_srai_epi32(Rs, 8);
+				const __m128i R16 = _mm_packs_epi32(R32, _mm_setzero_si128());
+				const __m128i R = _mm_packus_epi16(R16, _mm_setzero_si128());
+				const __m128i packed = _mm_shuffle_epi8(R, mask[0]);
+				BGRX = _mm_or_si128(BGRX, packed);
+			}
+			/* Get the G value */
+			{
+				const __m128i c100 = _mm_set1_epi16(100);
+				const __m128i d100 =
+				    _mm_unpackhi_epi16(_mm_mullo_epi16(D, c100), _mm_mulhi_epi16(D, c100));
+				const __m128i c208 = _mm_set1_epi16(208);
+				const __m128i e208 =
+				    _mm_unpackhi_epi16(_mm_mullo_epi16(E, c208), _mm_mulhi_epi16(E, c208));
+				const __m128i de = _mm_add_epi32(d100, e208);
+				const __m128i Gs = _mm_sub_epi32(y298, de);
+				const __m128i G32 = _mm_srai_epi32(Gs, 8);
+				const __m128i G16 = _mm_packs_epi32(G32, _mm_setzero_si128());
+				const __m128i G = _mm_packus_epi16(G16, _mm_setzero_si128());
+				const __m128i packed = _mm_shuffle_epi8(G, mask[1]);
+				BGRX = _mm_or_si128(BGRX, packed);
+			}
+			/* Get the B value */
+			{
+				const __m128i c517 = _mm_set1_epi16(517);
+				const __m128i d517 =
+				    _mm_unpackhi_epi16(_mm_mullo_epi16(D, c517), _mm_mulhi_epi16(D, c517));
+				const __m128i Bs = _mm_add_epi32(y298, d517);
+				const __m128i B32 = _mm_srai_epi32(Bs, 8);
+				const __m128i B16 = _mm_packs_epi32(B32, _mm_setzero_si128());
+				const __m128i B = _mm_packus_epi16(B16, _mm_setzero_si128());
+				const __m128i packed = _mm_shuffle_epi8(B, mask[2]);
+				BGRX = _mm_or_si128(BGRX, packed);
+			}
 		}
 	}
 	_mm_storeu_si128(dst++, BGRX);
@@ -308,14 +304,38 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE* const* pSrc, const UINT
  * rounded to 127
  */
 
-#define BGRX_Y_FACTORS _mm_set_epi8(0, 27, 92, 9, 0, 27, 92, 9, 0, 27, 92, 9, 0, 27, 92, 9)
-#define BGRX_U_FACTORS \
-	_mm_set_epi8(0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127)
-#define BGRX_V_FACTORS \
-	_mm_set_epi8(0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12)
-#define CONST128_FACTORS _mm_set1_epi8(-128)
+/**
+ * Note (alexandru-bagu)
+ * The most accurate RDP color profile seems to be the transformation for "BT.601" as described in
+ * https://en.wikipedia.org/wiki/YUV#Studio_swing_for_BT.601
+ * The actual values for both conversions (RGB->YUV and YUV->RGB) can be found here:
+ * https://en.wikipedia.org/wiki/YUV#Y.E2.80.B2UV444_to_RGB888_conversion
+ *
+ * RGB to YUV formula:
+ * | Y |    ( ( |  66   129     25 | | R | )   | 128 | )        |  16 |
+ * | U | =  ( ( | -38   -74    112 | | G | ) + | 128 | ) >> 8 + | 128 |
+ * | V |    ( ( | 112   -94    -18 | | B | )   | 128 | )        | 128 |
+ *
+ * As with the previous values because of SSSE3 implementation requirements (more specifically
+ * the function `_mm_maddubs_epi16` which requires the second parameter to be signed) the values
+ * for computing Y had to be rounded 129 to 127 however that is not enough as
+ * `_mm_maddubs_epi16` also uses Saturate16 which means calculations cannot go over 32385 (127*255)
+ * meaning if we have G=255 we would already reach the saturation limit. A solution is to make sure
+ * the multiplication and additions do go over 32385 by splitting the operations in two.
+ */
 
-#define Y_SHIFT 7
+#define BGRX_Y_FACTORS _mm_set_epi8(0, 66, 100, 25, 0, 66, 100, 25, 0, 66, 100, 25, 0, 66, 100, 25)
+#define BGRX_Y_FACTORS_SKEW _mm_set_epi8(0, 0, -29, 0, 0, 0, -29, 0, 0, 0, -29, 0, 0, 0, -29, 0)
+
+#define BGRX_U_FACTORS \
+	_mm_set_epi8(0, -38, -74, 112, 0, -38, -74, 112, 0, -38, -74, 112, 0, -38, -74, 112)
+#define BGRX_V_FACTORS \
+	_mm_set_epi8(0, 112, -94, -18, 0, 112, -94, -18, 0, 112, -94, -18, 0, 112, -94, -18)
+#define CONST16_FACTORS _mm_set1_epi8(-16)
+#define CONST128_FACTORS _mm_set1_epi8(-128)
+#define CONST128_FACTORS_INT16 _mm_set_epi16(-128, -128, -128, -128, -128, -128, -128, -128)
+
+#define Y_SHIFT 8
 #define U_SHIFT 8
 #define V_SHIFT 8
 
@@ -326,23 +346,62 @@ globals directly the functions below could be passed pointers to the correct vec
 depending on the source picture format.
 
 PRIM_ALIGN_128 static const BYTE rgbx_y_factors[] = {
-      27,  92,   9,   0,  27,  92,   9,   0,  27,  92,   9,   0,  27,  92,   9,   0
+    66, 100, 25, 0, 66, 100, 25, 0, 66, 100, 25, 0, 66, 100, 25
+};
+PRIM_ALIGN_128 static const BYTE rgbx_y_factors_skew[] = {
+    0, 29, 0, 0, 0, 29, 0, 0, 0, 29, 0,, 0, 0, 29, 0
 };
 PRIM_ALIGN_128 static const BYTE rgbx_u_factors[] = {
-     -15, -49,  64,   0, -15, -49,  64,   0, -15, -49,  64,   0, -15, -49,  64,   0
+    -38, -74, 112, 0, -38, -74, 112, 0, -38, -74, 112, 0, -38, -74, 112
 };
 PRIM_ALIGN_128 static const BYTE rgbx_v_factors[] = {
-      64, -58,  -6,   0,  64, -58,  -6,   0,  64, -58,  -6,   0,  64, -58,  -6,   0
+    112, -94, -18, 0, 112, -94, -18, 0, 112, -94, -18, 0, 112, -94, -18
 };
 */
 
-/* compute the luma (Y) component from a single rgb source line */
+static INLINE __m128i ssse3_RGBToYUV420_BGRX_Y_Component(__m128i px14, __m128i px58,
+                                                         const __m128i* y_factors,
+                                                         const __m128i* y_factors_skew,
+                                                         const __m128i* vector128_int16)
+{
+	return _mm_srli_epi16(
+	    _mm_sub_epi16(_mm_hadd_epi16(_mm_sub_epi16(_mm_maddubs_epi16(px14, *y_factors),
+	                                               _mm_maddubs_epi16(px14, *y_factors_skew)),
+	                                 _mm_sub_epi16(_mm_maddubs_epi16(px58, *y_factors),
+	                                               _mm_maddubs_epi16(px58, *y_factors_skew))),
+	                  *vector128_int16),
+	    Y_SHIFT);
+}
 
+static INLINE __m128i ssse3_RGBToYUV420_BGRX_U_Component(__m128i px14, __m128i px58,
+                                                         const __m128i* u_factors,
+                                                         const __m128i* vector128_int16)
+{
+	return _mm_srli_epi16(_mm_sub_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(px14, *u_factors),
+	                                                   _mm_maddubs_epi16(px58, *u_factors)),
+	                                    *vector128_int16),
+	                      U_SHIFT);
+}
+
+static INLINE __m128i ssse3_RGBToYUV420_BGRX_V_Component(__m128i px14, __m128i px58,
+                                                         const __m128i* v_factors,
+                                                         const __m128i* vector128_int16)
+{
+	return _mm_srli_epi16(_mm_sub_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(px14, *v_factors),
+	                                                   _mm_maddubs_epi16(px58, *v_factors)),
+	                                    *vector128_int16),
+	                      V_SHIFT);
+}
+
+/* compute the luma (Y) component from a single rgb source line */
 static INLINE void ssse3_RGBToYUV420_BGRX_Y(const BYTE* src, BYTE* dst, UINT32 width)
 {
 	UINT32 x;
 	__m128i x0, x1, x2, x3;
+	const __m128i y_factors_skew = BGRX_Y_FACTORS_SKEW;
 	const __m128i y_factors = BGRX_Y_FACTORS;
+	const __m128i vector16 = CONST16_FACTORS;
+	const __m128i vector128_int16 = CONST128_FACTORS_INT16;
 	const __m128i* argb = (const __m128i*)src;
 	__m128i* ydst = (__m128i*)dst;
 
@@ -353,19 +412,18 @@ static INLINE void ssse3_RGBToYUV420_BGRX_Y(const BYTE* src, BYTE* dst, UINT32 w
 		x1 = _mm_load_si128(argb++); // 2nd 4 pixels
 		x2 = _mm_load_si128(argb++); // 3rd 4 pixels
 		x3 = _mm_load_si128(argb++); // 4th 4 pixels
-		/* multiplications and subtotals */
-		x0 = _mm_maddubs_epi16(x0, y_factors);
-		x1 = _mm_maddubs_epi16(x1, y_factors);
-		x2 = _mm_maddubs_epi16(x2, y_factors);
-		x3 = _mm_maddubs_epi16(x3, y_factors);
-		/* the total sums */
-		x0 = _mm_hadd_epi16(x0, x1);
-		x2 = _mm_hadd_epi16(x2, x3);
-		/* shift the results */
-		x0 = _mm_srli_epi16(x0, Y_SHIFT);
-		x2 = _mm_srli_epi16(x2, Y_SHIFT);
-		/* pack the 16 words into bytes */
+		                             /* multiplications and subtotals */
+
+		x0 = ssse3_RGBToYUV420_BGRX_Y_Component(x0, x1, &y_factors, &y_factors_skew,
+		                                        &vector128_int16);
+
+		x2 = ssse3_RGBToYUV420_BGRX_Y_Component(x2, x3, &y_factors, &y_factors_skew,
+		                                        &vector128_int16);
 		x0 = _mm_packus_epi16(x0, x2);
+
+		/* add 16 */
+		x0 = _mm_sub_epi8(x0, vector16);
+
 		/* save to y plane */
 		_mm_storeu_si128(ydst++, x0);
 	}
@@ -380,7 +438,9 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(const BYTE* src1, const BYTE* src2,
 	const __m128i u_factors = BGRX_U_FACTORS;
 	const __m128i v_factors = BGRX_V_FACTORS;
 	const __m128i vector128 = CONST128_FACTORS;
-	__m128i x0, x1, x2, x3, x4, x5;
+	const __m128i vector128_int16 = CONST128_FACTORS_INT16;
+
+	__m128i x0, x1, x2, x3, x4;
 	const __m128i* rgb1 = (const __m128i*)src1;
 	const __m128i* rgb2 = (const __m128i*)src2;
 	__m64* udst = (__m64*)dst1;
@@ -413,19 +473,11 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(const BYTE* src1, const BYTE* src2,
 		x4 = _mm_castps_si128(_mm_shuffle_ps(_mm_castsi128_ps(x2), _mm_castsi128_ps(x3), 0x88));
 		x1 = _mm_castps_si128(_mm_shuffle_ps(_mm_castsi128_ps(x2), _mm_castsi128_ps(x3), 0xdd));
 		x1 = _mm_avg_epu8(x1, x4);
-		/* multiplications and subtotals */
-		x2 = _mm_maddubs_epi16(x0, u_factors);
-		x3 = _mm_maddubs_epi16(x1, u_factors);
-		x4 = _mm_maddubs_epi16(x0, v_factors);
-		x5 = _mm_maddubs_epi16(x1, v_factors);
-		/* the total sums */
-		x0 = _mm_hadd_epi16(x2, x3);
-		x1 = _mm_hadd_epi16(x4, x5);
-		/* shift the results */
-		x0 = _mm_srai_epi16(x0, U_SHIFT);
-		x1 = _mm_srai_epi16(x1, V_SHIFT);
-		/* pack the 16 words into bytes */
-		x0 = _mm_packs_epi16(x0, x1);
+
+		x2 = ssse3_RGBToYUV420_BGRX_U_Component(x0, x1, &u_factors, &vector128_int16);
+		x3 = ssse3_RGBToYUV420_BGRX_V_Component(x0, x1, &v_factors, &vector128_int16);
+
+		x0 = _mm_packus_epi16(x2, x3);
 		/* add 128 */
 		x0 = _mm_sub_epi8(x0, vector128);
 		/* the lower 8 bytes go to the u plane */
@@ -508,6 +560,9 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(const BYTE* srcEven, con
 	const __m128i u_factors = BGRX_U_FACTORS;
 	const __m128i v_factors = BGRX_V_FACTORS;
 	const __m128i vector128 = CONST128_FACTORS;
+	const __m128i vector16 = CONST16_FACTORS;
+	const __m128i vector128_int16 = CONST128_FACTORS_INT16;
+	const __m128i y_factors_skew = BGRX_Y_FACTORS_SKEW;
 
 	for (x = 0; x < width; x += 16)
 	{
@@ -522,20 +577,16 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(const BYTE* srcEven, con
 		const __m128i xo4 = _mm_load_si128(argbOdd++);  // 4th 4 pixels
 		{
 			/* Y: multiplications with subtotals and horizontal sums */
-			const __m128i ye1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, y_factors),
-			                                                  _mm_maddubs_epi16(xe2, y_factors)),
-			                                   Y_SHIFT);
-			const __m128i ye2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, y_factors),
-			                                                  _mm_maddubs_epi16(xe4, y_factors)),
-			                                   Y_SHIFT);
-			const __m128i ye = _mm_packus_epi16(ye1, ye2);
-			const __m128i yo1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, y_factors),
-			                                                  _mm_maddubs_epi16(xo2, y_factors)),
-			                                   Y_SHIFT);
-			const __m128i yo2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, y_factors),
-			                                                  _mm_maddubs_epi16(xo4, y_factors)),
-			                                   Y_SHIFT);
-			const __m128i yo = _mm_packus_epi16(yo1, yo2);
+			const __m128i ye1 = ssse3_RGBToYUV420_BGRX_Y_Component(
+			    xe1, xe2, &y_factors, &y_factors_skew, &vector128_int16);
+			const __m128i ye2 = ssse3_RGBToYUV420_BGRX_Y_Component(
+			    xe3, xe4, &y_factors, &y_factors_skew, &vector128_int16);
+			const __m128i ye = _mm_sub_epi8(_mm_packus_epi16(ye1, ye2), vector16);
+			const __m128i yo1 = ssse3_RGBToYUV420_BGRX_Y_Component(
+			    xo1, xo2, &y_factors, &y_factors_skew, &vector128_int16);
+			const __m128i yo2 = ssse3_RGBToYUV420_BGRX_Y_Component(
+			    xo3, xo4, &y_factors, &y_factors_skew, &vector128_int16);
+			const __m128i yo = _mm_sub_epi8(_mm_packus_epi16(yo1, yo2), vector16);
 			/* store y [b1] */
 			_mm_storeu_si128((__m128i*)b1Even, ye);
 			b1Even += 16;
@@ -556,27 +607,19 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(const BYTE* srcEven, con
 			__m128i ue, uo = { 0 };
 			{
 				const __m128i ue1 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
-				                                  _mm_maddubs_epi16(xe2, u_factors)),
-				                   U_SHIFT);
+				    ssse3_RGBToYUV420_BGRX_U_Component(xe1, xe2, &u_factors, &vector128_int16);
 				const __m128i ue2 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, u_factors),
-				                                  _mm_maddubs_epi16(xe4, u_factors)),
-				                   U_SHIFT);
-				ue = _mm_sub_epi8(_mm_packs_epi16(ue1, ue2), vector128);
+				    ssse3_RGBToYUV420_BGRX_U_Component(xe3, xe4, &u_factors, &vector128_int16);
+				ue = _mm_sub_epi8(_mm_packus_epi16(ue1, ue2), vector128);
 			}
 
 			if (b1Odd)
 			{
 				const __m128i uo1 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, u_factors),
-				                                  _mm_maddubs_epi16(xo2, u_factors)),
-				                   U_SHIFT);
+				    ssse3_RGBToYUV420_BGRX_U_Component(xo1, xo2, &u_factors, &vector128_int16);
 				const __m128i uo2 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, u_factors),
-				                                  _mm_maddubs_epi16(xo4, u_factors)),
-				                   U_SHIFT);
-				uo = _mm_sub_epi8(_mm_packs_epi16(uo1, uo2), vector128);
+				    ssse3_RGBToYUV420_BGRX_U_Component(xo3, xo4, &u_factors, &vector128_int16);
+				uo = _mm_sub_epi8(_mm_packus_epi16(uo1, uo2), vector128);
 			}
 
 			/* Now we need the following storage distribution:
@@ -631,27 +674,19 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(const BYTE* srcEven, con
 			__m128i ve, vo = { 0 };
 			{
 				const __m128i ve1 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),
-				                                  _mm_maddubs_epi16(xe2, v_factors)),
-				                   V_SHIFT);
+				    ssse3_RGBToYUV420_BGRX_V_Component(xe1, xe2, &v_factors, &vector128_int16);
 				const __m128i ve2 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, v_factors),
-				                                  _mm_maddubs_epi16(xe4, v_factors)),
-				                   V_SHIFT);
-				ve = _mm_sub_epi8(_mm_packs_epi16(ve1, ve2), vector128);
+				    ssse3_RGBToYUV420_BGRX_V_Component(xe3, xe4, &v_factors, &vector128_int16);
+				ve = _mm_sub_epi8(_mm_packus_epi16(ve1, ve2), vector128);
 			}
 
 			if (b1Odd)
 			{
 				const __m128i vo1 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, v_factors),
-				                                  _mm_maddubs_epi16(xo2, v_factors)),
-				                   V_SHIFT);
+				    ssse3_RGBToYUV420_BGRX_V_Component(xo1, xo2, &v_factors, &vector128_int16);
 				const __m128i vo2 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, v_factors),
-				                                  _mm_maddubs_epi16(xo4, v_factors)),
-				                   V_SHIFT);
-				vo = _mm_sub_epi8(_mm_packs_epi16(vo1, vo2), vector128);
+				    ssse3_RGBToYUV420_BGRX_V_Component(xo3, xo4, &v_factors, &vector128_int16);
+				vo = _mm_sub_epi8(_mm_packus_epi16(vo1, vo2), vector128);
 			}
 
 			/* Now we need the following storage distribution:
@@ -775,6 +810,13 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 	const __m128i vector128 = CONST128_FACTORS;
 	const __m128i* argbEven = (const __m128i*)srcEven;
 	const __m128i* argbOdd = (const __m128i*)srcOdd;
+	const __m128i y_factors = BGRX_Y_FACTORS;
+	const __m128i u_factors = BGRX_U_FACTORS;
+	const __m128i v_factors = BGRX_V_FACTORS;
+	const __m128i vector16 = CONST16_FACTORS;
+	const __m128i vector128_int16 = CONST128_FACTORS_INT16;
+	const __m128i y_factors_skew = BGRX_Y_FACTORS_SKEW;
+	const __m128i zero = _mm_setzero_si128();
 
 	for (x = 0; x < width; x += 16)
 	{
@@ -791,14 +833,11 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 		const __m128i xo4 = _mm_load_si128(argbOdd++);  /* 4th 4 pixels */
 		{
 			/* Y: multiplications with subtotals and horizontal sums */
-			const __m128i y_factors = BGRX_Y_FACTORS;
-			const __m128i ye1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, y_factors),
-			                                                  _mm_maddubs_epi16(xe2, y_factors)),
-			                                   Y_SHIFT);
-			const __m128i ye2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, y_factors),
-			                                                  _mm_maddubs_epi16(xe4, y_factors)),
-			                                   Y_SHIFT);
-			const __m128i ye = _mm_packus_epi16(ye1, ye2);
+			const __m128i ye1 = ssse3_RGBToYUV420_BGRX_Y_Component(
+			    xe1, xe2, &y_factors, &y_factors_skew, &vector128_int16);
+			const __m128i ye2 = ssse3_RGBToYUV420_BGRX_Y_Component(
+			    xe3, xe4, &y_factors, &y_factors_skew, &vector128_int16);
+			const __m128i ye = _mm_sub_epi8(_mm_packus_epi16(ye1, ye2), vector16);
 			/* store y [b1] */
 			_mm_storeu_si128((__m128i*)yLumaDstEven, ye);
 			yLumaDstEven += 16;
@@ -806,14 +845,11 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 
 		if (yLumaDstOdd)
 		{
-			const __m128i y_factors = BGRX_Y_FACTORS;
-			const __m128i yo1 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, y_factors),
-			                                                  _mm_maddubs_epi16(xo2, y_factors)),
-			                                   Y_SHIFT);
-			const __m128i yo2 = _mm_srli_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, y_factors),
-			                                                  _mm_maddubs_epi16(xo4, y_factors)),
-			                                   Y_SHIFT);
-			const __m128i yo = _mm_packus_epi16(yo1, yo2);
+			const __m128i yo1 = ssse3_RGBToYUV420_BGRX_Y_Component(
+			    xo1, xo2, &y_factors, &y_factors_skew, &vector128_int16);
+			const __m128i yo2 = ssse3_RGBToYUV420_BGRX_Y_Component(
+			    xo3, xo4, &y_factors, &y_factors_skew, &vector128_int16);
+			const __m128i yo = _mm_sub_epi8(_mm_packus_epi16(yo1, yo2), vector16);
 			_mm_storeu_si128((__m128i*)yLumaDstOdd, yo);
 			yLumaDstOdd += 16;
 		}
@@ -828,35 +864,29 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 			/* U: multiplications with subtotals and horizontal sums */
 			__m128i ue, uo, uavg;
 			{
-				const __m128i u_factors = BGRX_U_FACTORS;
 				const __m128i ue1 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
-				                                  _mm_maddubs_epi16(xe2, u_factors)),
-				                   U_SHIFT);
+				    ssse3_RGBToYUV420_BGRX_U_Component(xe1, xe2, &u_factors, &vector128_int16);
 				const __m128i ue2 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, u_factors),
-				                                  _mm_maddubs_epi16(xe4, u_factors)),
-				                   U_SHIFT);
-				const __m128i ueavg = _mm_hadd_epi16(ue1, ue2);
-				ue = _mm_sub_epi8(_mm_packs_epi16(ue1, ue2), vector128);
-				uavg = ueavg;
+				    ssse3_RGBToYUV420_BGRX_U_Component(xe3, xe4, &u_factors, &vector128_int16);
+				ue = _mm_sub_epi8(_mm_packus_epi16(ue1, ue2), vector128);
 			}
 			{
-				const __m128i u_factors = BGRX_U_FACTORS;
 				const __m128i uo1 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, u_factors),
-				                                  _mm_maddubs_epi16(xo2, u_factors)),
-				                   U_SHIFT);
+				    ssse3_RGBToYUV420_BGRX_U_Component(xo1, xo2, &u_factors, &vector128_int16);
 				const __m128i uo2 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, u_factors),
-				                                  _mm_maddubs_epi16(xo4, u_factors)),
-				                   U_SHIFT);
-				const __m128i uoavg = _mm_hadd_epi16(uo1, uo2);
-				uo = _mm_sub_epi8(_mm_packs_epi16(uo1, uo2), vector128);
-				uavg = _mm_add_epi16(uavg, uoavg);
-				uavg = _mm_srai_epi16(uavg, 2);
-				uavg = _mm_packs_epi16(uavg, uoavg);
-				uavg = _mm_sub_epi8(uavg, vector128);
+				    ssse3_RGBToYUV420_BGRX_U_Component(xo3, xo4, &u_factors, &vector128_int16);
+				uo = _mm_sub_epi8(_mm_packus_epi16(uo1, uo2), vector128);
+			}
+			{
+				const __m128i ueh = _mm_unpackhi_epi8(ue, zero);
+				const __m128i uoh = _mm_unpackhi_epi8(uo, zero);
+				const __m128i hi = _mm_add_epi16(ueh, uoh);
+				const __m128i uel = _mm_unpacklo_epi8(ue, zero);
+				const __m128i uol = _mm_unpacklo_epi8(uo, zero);
+				const __m128i lo = _mm_add_epi16(uel, uol);
+				const __m128i added = _mm_hadd_epi16(lo, hi);
+				const __m128i avg16 = _mm_srai_epi16(added, 2);
+				uavg = _mm_packus_epi16(avg16, avg16);
 			}
 			/* Now we need the following storage distribution:
 			 * 2x   2y    -> uLumaDst
@@ -913,35 +943,29 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 			/* V: multiplications with subtotals and horizontal sums */
 			__m128i ve, vo, vavg;
 			{
-				const __m128i v_factors = BGRX_V_FACTORS;
 				const __m128i ve1 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),
-				                                  _mm_maddubs_epi16(xe2, v_factors)),
-				                   V_SHIFT);
+				    ssse3_RGBToYUV420_BGRX_V_Component(xe1, xe2, &v_factors, &vector128_int16);
 				const __m128i ve2 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe3, v_factors),
-				                                  _mm_maddubs_epi16(xe4, v_factors)),
-				                   V_SHIFT);
-				const __m128i veavg = _mm_hadd_epi16(ve1, ve2);
-				ve = _mm_sub_epi8(_mm_packs_epi16(ve1, ve2), vector128);
-				vavg = veavg;
+				    ssse3_RGBToYUV420_BGRX_V_Component(xe3, xe4, &v_factors, &vector128_int16);
+				ve = _mm_sub_epi8(_mm_packus_epi16(ve1, ve2), vector128);
 			}
 			{
-				const __m128i v_factors = BGRX_V_FACTORS;
 				const __m128i vo1 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo1, v_factors),
-				                                  _mm_maddubs_epi16(xo2, v_factors)),
-				                   V_SHIFT);
+				    ssse3_RGBToYUV420_BGRX_V_Component(xo1, xo2, &v_factors, &vector128_int16);
 				const __m128i vo2 =
-				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xo3, v_factors),
-				                                  _mm_maddubs_epi16(xo4, v_factors)),
-				                   V_SHIFT);
-				const __m128i voavg = _mm_hadd_epi16(vo1, vo2);
-				vo = _mm_sub_epi8(_mm_packs_epi16(vo1, vo2), vector128);
-				vavg = _mm_add_epi16(vavg, voavg);
-				vavg = _mm_srai_epi16(vavg, 2);
-				vavg = _mm_packs_epi16(vavg, voavg);
-				vavg = _mm_sub_epi8(vavg, vector128);
+				    ssse3_RGBToYUV420_BGRX_V_Component(xo3, xo4, &v_factors, &vector128_int16);
+				vo = _mm_sub_epi8(_mm_packus_epi16(vo1, vo2), vector128);
+			}
+			{
+				const __m128i veh = _mm_unpackhi_epi8(ve, zero);
+				const __m128i voh = _mm_unpackhi_epi8(vo, zero);
+				const __m128i hi = _mm_add_epi16(veh, voh);
+				const __m128i vel = _mm_unpacklo_epi8(ve, zero);
+				const __m128i vol = _mm_unpacklo_epi8(vo, zero);
+				const __m128i lo = _mm_add_epi16(vel, vol);
+				const __m128i added = _mm_hadd_epi16(lo, hi);
+				const __m128i avg16 = _mm_srai_epi16(added, 2);
+				vavg = _mm_packus_epi16(avg16, avg16);
 			}
 			/* Now we need the following storage distribution:
 			 * 2x   2y    -> vLumaDst
