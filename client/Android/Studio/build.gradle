@@ -32,7 +32,7 @@ ext {
     versionCode = properties.get('VERSION_CODE', 100)
     compileApi = properties.get('COMPILE_API', 31)
     targetApi = properties.get('TARGET_API', 31)
-    minApi = properties.get('MIN_API', 21)
+    minApi = properties.get('MIN_API', 23)
     toolsVersion = properties.get('TOOLS_VERSION', '31.0.0')
 
     println '----------------- Project configuration -------------------'
