@@ -21,6 +21,11 @@ winpr_module_add(
 	ncrypt_pkcs11.c
 )
 
+if(WITH_PKCS11 AND NOT WIN32)
+	winpr_include_directory_add(${PKCS11_INCLUDE_DIR})
+	winpr_library_add_public(${PKCS11_LIBRARY})
+endif()
+
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
