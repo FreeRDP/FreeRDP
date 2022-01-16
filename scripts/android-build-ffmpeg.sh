@@ -171,7 +171,7 @@ do
         ;;
     esac
 
-	build
+	build $ARCH
 	common_run cp -L $BUILD_DST/$ARCH/lib/*.so  $BUILD_DST/$ARCH/
 
     common_run export PATH=$OLD_PATH
