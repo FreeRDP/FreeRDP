@@ -399,7 +399,7 @@ static SECURITY_STATUS parseKeyName(LPCWSTR pszKeyName, CK_SLOT_ID* slotId, CK_B
 	char* pos;
 
 	if (WideCharToMultiByte(CP_UTF8, 0, pszKeyName, _wcslen(pszKeyName) + 1, asciiKeyName,
-	                        sizeof(asciiKeyName), "?", FALSE) <= 0)
+	                        sizeof(asciiKeyName)-1, "?", FALSE) <= 0)
 		return NTE_BAD_KEY;
 
 	if (*asciiKeyName != '\\')
@@ -625,14 +625,16 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 			if (rv != CKR_OK)
 				return NTE_BAD_KEY;
 
-			fix_padded_string((char*)slotInfo.slotDescription, sizeof(slotInfo.slotDescription));
-			*pcbResult = 2 * (strlen((char*)slotInfo.slotDescription) + 1);
+			#define SLOT_DESC_SZ sizeof(slotInfo.slotDescription)
+			fix_padded_string((char*)slotInfo.slotDescription, SLOT_DESC_SZ);
+			*pcbResult = 2 * (strnlen((char*)slotInfo.slotDescription, SLOT_DESC_SZ) + 1);
 			if (pbOutput)
 			{
 				if(cbOutput < *pcbResult)
 					return NTE_NO_MEMORY;
 
-				MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)slotInfo.slotDescription, -1, (LPWSTR)pbOutput, cbOutput);
+				if (MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)slotInfo.slotDescription, -1, (LPWSTR)pbOutput, cbOutput) <= 0)
+					return NTE_NO_MEMORY;
 			}
 			return ERROR_SUCCESS;
 		}
@@ -772,11 +774,12 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 
 	while (*modulePaths)
 	{
+		WLog_DBG(TAG, "Trying pkcs11-helper module '%s'", *modulePaths);
 		ret->library = LoadLibrary(*modulePaths);
 		if (!ret->library)
 		{
 			status = NTE_PROV_DLL_NOT_FOUND;
-			continue;
+			goto out_load_library;
 		}
 
 		c_get_function_list = GetProcAddress(ret->library, "C_GetFunctionList");
@@ -800,11 +803,13 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 			goto out_lib_entry;
 		}
 
+		WLog_DBG(TAG, "module '%s' loaded", *modulePaths);
 		*phProvider = (NCRYPT_PROV_HANDLE)ret;
 		return ERROR_SUCCESS;
 
 	out_lib_entry:
 		FreeLibrary(ret->library);
+	out_load_library:
 		modulePaths++;
 	}
 
