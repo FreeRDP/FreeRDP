@@ -45,6 +45,8 @@
 	if (y < 0)                  \
 	y = 0
 
+static BOOL xf_send_button_event(xfContext* xfc, UINT16 mflags, INT32 x, INT32 y);
+
 static const char* x11_event_string(int event)
 {
 	switch (event)
@@ -396,7 +398,7 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 	}
 
 	xf_event_adjust_coordinates(xfc, &x, &y);
-	freerdp_input_send_mouse_event(input, PTR_FLAGS_MOVE, x, y);
+	xf_send_button_event(xfc, PTR_FLAGS_MOVE, x, y);
 
 	if (xfc->fullscreen && !app)
 	{
@@ -414,6 +416,93 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOO
 		return TRUE;
 
 	return xf_generic_MotionNotify(xfc, event->x, event->y, event->state, event->window, app);
+}
+
+static BOOL xf_send_wheel_event(xfContext* xfc, UINT16 mflags)
+{
+	WINPR_ASSERT(xfc);
+
+	if (xfc->ainput)
+	{
+		UINT64 flags = 0;
+		INT32 x = 0, y = 0;
+		if (mflags & PTR_FLAGS_WHEEL)
+		{
+			flags |= AINPUT_FLAGS_WHEEL;
+			x = flags & 0xff;
+			if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
+				x = -x;
+		}
+		if (mflags & PTR_FLAGS_HWHEEL)
+		{
+			flags |= AINPUT_FLAGS_HWHEEL;
+			y = flags & 0xff;
+			if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
+				y = -y;
+		}
+
+		WINPR_ASSERT(xfc->ainput->AInputSendInputEvent);
+		xfc->ainput->AInputSendInputEvent(xfc->ainput, flags, x, y);
+	}
+	else
+		freerdp_input_send_mouse_event(xfc->context.input, mflags, 0, 0);
+	return TRUE;
+}
+
+static BOOL xf_send_button_event(xfContext* xfc, UINT16 mflags, INT32 x, INT32 y)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(x >= 0);
+	WINPR_ASSERT(y >= 0);
+
+	if (xfc->ainput)
+	{
+		UINT64 flags = 0;
+
+		if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MouseUseRelativeMove))
+			flags |= AINPUT_FLAGS_REL;
+		if (mflags & PTR_FLAGS_DOWN)
+			flags |= AINPUT_FLAGS_DOWN;
+		if (mflags & PTR_FLAGS_BUTTON1)
+			flags |= AINPUT_FLAGS_BUTTON1;
+		if (mflags & PTR_FLAGS_BUTTON2)
+			flags |= AINPUT_FLAGS_BUTTON2;
+		if (mflags & PTR_FLAGS_BUTTON2)
+			flags |= AINPUT_FLAGS_BUTTON3;
+
+		ainput_send_diff_event(xfc->ainput, flags, x, y);
+	}
+	else
+	{
+		WINPR_ASSERT(x <= UINT16_MAX);
+		WINPR_ASSERT(y <= UINT16_MAX);
+		freerdp_input_send_mouse_event(xfc->context.input, mflags, (UINT16)x, (UINT16)y);
+	}
+	return TRUE;
+}
+
+static BOOL xf_send_extended_button_event(xfContext* xfc, UINT16 mflags, INT32 x, INT32 y)
+{
+	WINPR_ASSERT(xfc);
+
+	if (xfc->ainput)
+	{
+		UINT64 flags = 0;
+
+		if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MouseUseRelativeMove))
+			flags |= AINPUT_FLAGS_REL;
+		if (mflags & PTR_XFLAGS_DOWN)
+			flags |= AINPUT_FLAGS_DOWN;
+		if (mflags & PTR_XFLAGS_BUTTON1)
+			flags |= AINPUT_XFLAGS_BUTTON1;
+		if (mflags & PTR_XFLAGS_BUTTON2)
+			flags |= AINPUT_XFLAGS_BUTTON2;
+
+		ainput_send_diff_event(xfc->ainput, flags, x, y);
+	}
+	else
+		freerdp_input_send_extended_mouse_event(xfc->context.input, mflags, x, y);
+	return TRUE;
 }
 
 BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window window, BOOL app,
@@ -442,7 +531,7 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
 		if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
 		{
 			if (down)
-				freerdp_input_send_mouse_event(input, flags, 0, 0);
+				xf_send_wheel_event(xfc, flags);
 		}
 		else
 		{
@@ -475,9 +564,9 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
 			xf_event_adjust_coordinates(xfc, &x, &y);
 
 			if (extended)
-				freerdp_input_send_extended_mouse_event(input, flags, x, y);
+				xf_send_extended_button_event(xfc, flags, x, y);
 			else
-				freerdp_input_send_mouse_event(input, flags, x, y);
+				xf_send_button_event(xfc, flags, x, y);
 		}
 	}
 

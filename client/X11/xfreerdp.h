@@ -46,6 +46,10 @@ typedef struct xf_context xfContext;
 #include <freerdp/client/tsmf.h>
 #endif
 
+#if defined(CHANNEL_AINPUT_CLIENT)
+#include <freerdp/client/ainput.h>
+#endif
+
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
@@ -267,6 +271,10 @@ struct xf_context
 	/* Channels */
 #if defined(CHANNEL_TSMF_CLIENT)
 	TsmfClientContext* tsmf;
+#endif
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	AInputClientContext* ainput;
 #endif
 
 	xfClipboard* clipboard;

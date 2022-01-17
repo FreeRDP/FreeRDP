@@ -31,6 +31,9 @@
 #if defined(CHANNEL_TSMF_CLIENT)
 #include "xf_tsmf.h"
 #endif
+#if defined(CHANNEL_AINPUT_CLIENT)
+#include <freerdp/channels/ainput.h>
+#endif
 #include "xf_rail.h"
 #include "xf_cliprdr.h"
 #include "xf_disp.h"
@@ -47,6 +50,11 @@ void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 
 	settings = xfc->context.settings;
 	WINPR_ASSERT(settings);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
+		xfc->ainput = (AInputClientContext*)e->pInterface;
+#endif
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -106,6 +114,11 @@ void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEven
 
 	settings = xfc->context.settings;
 	WINPR_ASSERT(settings);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
+		xfc->ainput = NULL;
+#endif
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
