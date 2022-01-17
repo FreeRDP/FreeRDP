@@ -318,6 +318,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_MouseMotion:
 			return settings->MouseMotion;
 
+		case FreeRDP_MouseUseRelativeMove:
+			return settings->MouseUseRelativeMove;
+
 		case FreeRDP_MstscCookieMode:
 			return settings->MstscCookieMode;
 
@@ -948,6 +951,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_MouseMotion:
 			settings->MouseMotion = cnv.c;
+			break;
+
+		case FreeRDP_MouseUseRelativeMove:
+			settings->MouseUseRelativeMove = cnv.c;
 			break;
 
 		case FreeRDP_MstscCookieMode:
