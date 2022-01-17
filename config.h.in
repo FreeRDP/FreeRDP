@@ -133,6 +133,9 @@
 #cmakedefine CHANNEL_URBDRC
 #cmakedefine CHANNEL_URBDRC_CLIENT
 #cmakedefine CHANNEL_URBDRC_SERVER
+#cmakedefine CHANNEL_AINPUT
+#cmakedefine CHANNEL_AINPUT_CLIENT
+#cmakedefine CHANNEL_AINPUT_SERVER
 
 /* Debug */
 #cmakedefine WITH_DEBUG_CERTIFICATE

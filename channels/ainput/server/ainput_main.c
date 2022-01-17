@@ -1,10 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Echo Virtual Channel Extension
+ * Advanced Input Virtual Channel Extension
  *
- * Copyright 2014 Vic Lee
- * Copyright 2015 Thincast Technologies GmbH
- * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2022 Armin Novak <anovak@thincast.com>
+ * Copyright 2022 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,38 +27,39 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>
 
-#include <freerdp/server/echo.h>
-#include <freerdp/channels/echo.h>
+#include <freerdp/server/ainput.h>
+#include <freerdp/channels/ainput.h>
 #include <freerdp/channels/log.h>
 
-#define TAG CHANNELS_TAG("echo.server")
+#define TAG CHANNELS_TAG("ainput.server")
 
-typedef struct _echo_server
+typedef struct ainput_server_
 {
-	echo_server_context context;
+	ainput_server_context context;
 
 	BOOL opened;
 
 	HANDLE stopEvent;
 
 	HANDLE thread;
-	void* echo_channel;
+	void* ainput_channel;
 
 	DWORD SessionId;
 
-} echo_server;
+} ainput_server;
 
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT echo_server_open_channel(echo_server* echo)
+static UINT ainput_server_open_channel(ainput_server* ainput)
 {
 	DWORD Error;
 	HANDLE hEvent;
@@ -67,19 +67,21 @@ static UINT echo_server_open_channel(echo_server* echo)
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 
-	if (WTSQuerySessionInformationA(echo->context.vcm, WTS_CURRENT_SESSION, WTSSessionId,
+	WINPR_ASSERT(ainput);
+
+	if (WTSQuerySessionInformationA(ainput->context.vcm, WTS_CURRENT_SESSION, WTSSessionId,
 	                                (LPSTR*)&pSessionId, &BytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSQuerySessionInformationA failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	echo->SessionId = (DWORD)*pSessionId;
+	ainput->SessionId = (DWORD)*pSessionId;
 	WTSFreeMemory(pSessionId);
-	hEvent = WTSVirtualChannelManagerGetEventHandle(echo->context.vcm);
+	hEvent = WTSVirtualChannelManagerGetEventHandle(ainput->context.vcm);
 	StartTick = GetTickCount();
 
-	while (echo->echo_channel == NULL)
+	while (ainput->ainput_channel == NULL)
 	{
 		if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
 		{
@@ -88,10 +90,10 @@ static UINT echo_server_open_channel(echo_server* echo)
 			return Error;
 		}
 
-		echo->echo_channel = WTSVirtualChannelOpenEx(echo->SessionId, ECHO_DVC_CHANNEL_NAME,
-		                                             WTS_CHANNEL_OPTION_DYNAMIC);
+		ainput->ainput_channel = WTSVirtualChannelOpenEx(ainput->SessionId, AINPUT_DVC_CHANNEL_NAME,
+		                                                 WTS_CHANNEL_OPTION_DYNAMIC);
 
-		if (echo->echo_channel)
+		if (ainput->ainput_channel)
 			break;
 
 		Error = GetLastError();
@@ -103,31 +105,33 @@ static UINT echo_server_open_channel(echo_server* echo)
 			break;
 	}
 
-	return echo->echo_channel ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
+	return ainput->ainput_channel ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static DWORD WINAPI echo_server_thread_func(LPVOID arg)
+static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 {
 	wStream* s;
 	void* buffer;
 	DWORD nCount;
-	HANDLE events[8];
+	HANDLE events[8] = { 0 };
 	BOOL ready = FALSE;
 	HANDLE ChannelEvent;
 	DWORD BytesReturned = 0;
-	echo_server* echo = (echo_server*)arg;
+	ainput_server* ainput = (ainput_server*)arg;
 	UINT error;
 	DWORD status;
 
-	if ((error = echo_server_open_channel(echo)))
+	WINPR_ASSERT(ainput);
+
+	if ((error = ainput_server_open_channel(ainput)))
 	{
 		UINT error2 = 0;
-		WLog_ERR(TAG, "echo_server_open_channel failed with error %" PRIu32 "!", error);
-		IFCALLRET(echo->context.OpenResult, error2, &echo->context,
-		          ECHO_SERVER_OPEN_RESULT_NOTSUPPORTED);
+		WLog_ERR(TAG, "ainput_server_open_channel failed with error %" PRIu32 "!", error);
+		IFCALLRET(ainput->context.OpenResult, error2, &ainput->context,
+		          AINPUT_SERVER_OPEN_RESULT_NOTSUPPORTED);
 
 		if (error2)
-			WLog_ERR(TAG, "echo server's OpenResult callback failed with error %" PRIu32 "",
+			WLog_ERR(TAG, "ainput server's OpenResult callback failed with error %" PRIu32 "",
 			         error2);
 
 		goto out;
@@ -137,7 +141,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 	BytesReturned = 0;
 	ChannelEvent = NULL;
 
-	if (WTSVirtualChannelQuery(echo->echo_channel, WTSVirtualEventHandle, &buffer,
+	if (WTSVirtualChannelQuery(ainput->ainput_channel, WTSVirtualEventHandle, &buffer,
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
@@ -147,7 +151,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 	}
 
 	nCount = 0;
-	events[nCount++] = echo->stopEvent;
+	events[nCount++] = ainput->stopEvent;
 	events[nCount++] = ChannelEvent;
 
 	/* Wait for the client to confirm that the Graphics Pipeline dynamic channel is ready */
@@ -165,8 +169,8 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 
 		if (status == WAIT_OBJECT_0)
 		{
-			IFCALLRET(echo->context.OpenResult, error, &echo->context,
-			          ECHO_SERVER_OPEN_RESULT_CLOSED);
+			IFCALLRET(ainput->context.OpenResult, error, &ainput->context,
+			          AINPUT_SERVER_OPEN_RESULT_CLOSED);
 
 			if (error)
 				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
@@ -174,11 +178,11 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			break;
 		}
 
-		if (WTSVirtualChannelQuery(echo->echo_channel, WTSVirtualChannelReady, &buffer,
+		if (WTSVirtualChannelQuery(ainput->ainput_channel, WTSVirtualChannelReady, &buffer,
 		                           &BytesReturned) == FALSE)
 		{
-			IFCALLRET(echo->context.OpenResult, error, &echo->context,
-			          ECHO_SERVER_OPEN_RESULT_ERROR);
+			IFCALLRET(ainput->context.OpenResult, error, &ainput->context,
+			          AINPUT_SERVER_OPEN_RESULT_ERROR);
 
 			if (error)
 				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
@@ -191,7 +195,8 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 
 		if (ready)
 		{
-			IFCALLRET(echo->context.OpenResult, error, &echo->context, ECHO_SERVER_OPEN_RESULT_OK);
+			IFCALLRET(ainput->context.OpenResult, error, &ainput->context,
+			          AINPUT_SERVER_OPEN_RESULT_OK);
 
 			if (error)
 				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
@@ -205,7 +210,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		WTSVirtualChannelClose(echo->echo_channel);
+		WTSVirtualChannelClose(ainput->ainput_channel);
 		ExitThread(ERROR_NOT_ENOUGH_MEMORY);
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
@@ -225,7 +230,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			break;
 
 		Stream_SetPosition(s, 0);
-		WTSVirtualChannelRead(echo->echo_channel, 0, NULL, 0, &BytesReturned);
+		WTSVirtualChannelRead(ainput->ainput_channel, 0, NULL, 0, &BytesReturned);
 
 		if (BytesReturned < 1)
 			continue;
@@ -237,7 +242,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			break;
 		}
 
-		if (WTSVirtualChannelRead(echo->echo_channel, 0, (PCHAR)Stream_Buffer(s),
+		if (WTSVirtualChannelRead(ainput->ainput_channel, 0, (PCHAR)Stream_Buffer(s),
 		                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
@@ -245,7 +250,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			break;
 		}
 
-		IFCALLRET(echo->context.Response, error, &echo->context, (BYTE*)Stream_Buffer(s),
+		IFCALLRET(ainput->context.Receive, error, &ainput->context, (BYTE*)Stream_Buffer(s),
 		          BytesReturned);
 
 		if (error)
@@ -256,13 +261,13 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 	}
 
 	Stream_Free(s, TRUE);
-	WTSVirtualChannelClose(echo->echo_channel);
-	echo->echo_channel = NULL;
+	WTSVirtualChannelClose(ainput->ainput_channel);
+	ainput->ainput_channel = NULL;
 out:
 
-	if (error && echo->context.rdpcontext)
-		setChannelError(echo->context.rdpcontext, error,
-		                "echo_server_thread_func reported an error");
+	if (error && ainput->context.rdpcontext)
+		setChannelError(ainput->context.rdpcontext, error,
+		                "ainput_server_thread_func reported an error");
 
 	ExitThread(error);
 	return error;
@@ -273,23 +278,27 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT echo_server_open(echo_server_context* context)
+static UINT ainput_server_open(ainput_server_context* context)
 {
-	echo_server* echo = (echo_server*)context;
+	ainput_server* ainput = (ainput_server*)context;
 
-	if (echo->thread == NULL)
+	WINPR_ASSERT(ainput);
+
+	if (ainput->thread == NULL)
 	{
-		if (!(echo->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		ainput->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		if (!ainput->stopEvent)
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			return ERROR_INTERNAL_ERROR;
 		}
 
-		if (!(echo->thread = CreateThread(NULL, 0, echo_server_thread_func, (void*)echo, 0, NULL)))
+		ainput->thread = CreateThread(NULL, 0, ainput_server_thread_func, ainput, 0, NULL);
+		if (!ainput->thread)
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
-			CloseHandle(echo->stopEvent);
-			echo->stopEvent = NULL;
+			CloseHandle(ainput->stopEvent);
+			ainput->stopEvent = NULL;
 			return ERROR_INTERNAL_ERROR;
 		}
 	}
@@ -302,58 +311,50 @@ static UINT echo_server_open(echo_server_context* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT echo_server_close(echo_server_context* context)
+static UINT ainput_server_close(ainput_server_context* context)
 {
 	UINT error = CHANNEL_RC_OK;
-	echo_server* echo = (echo_server*)context;
+	ainput_server* ainput = (ainput_server*)context;
 
-	if (echo->thread)
+	WINPR_ASSERT(ainput);
+
+	if (ainput->thread)
 	{
-		SetEvent(echo->stopEvent);
+		SetEvent(ainput->stopEvent);
 
-		if (WaitForSingleObject(echo->thread, INFINITE) == WAIT_FAILED)
+		if (WaitForSingleObject(ainput->thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
 			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
 			return error;
 		}
 
-		CloseHandle(echo->thread);
-		CloseHandle(echo->stopEvent);
-		echo->thread = NULL;
-		echo->stopEvent = NULL;
+		CloseHandle(ainput->thread);
+		CloseHandle(ainput->stopEvent);
+		ainput->thread = NULL;
+		ainput->stopEvent = NULL;
 	}
 
 	return error;
 }
 
-static BOOL echo_server_request(echo_server_context* context, const BYTE* buffer, UINT32 length)
+ainput_server_context* ainput_server_context_new(HANDLE vcm)
 {
-	echo_server* echo = (echo_server*)context;
-	return WTSVirtualChannelWrite(echo->echo_channel, (PCHAR)buffer, length, NULL);
+	ainput_server* ainput = (ainput_server*)calloc(1, sizeof(ainput_server));
+
+	if (!ainput)
+		return NULL;
+
+	ainput->context.vcm = vcm;
+	ainput->context.Open = ainput_server_open;
+	ainput->context.Close = ainput_server_close;
+
+	return &ainput->context;
 }
 
-echo_server_context* echo_server_context_new(HANDLE vcm)
+void ainput_server_context_free(ainput_server_context* context)
 {
-	echo_server* echo;
-	echo = (echo_server*)calloc(1, sizeof(echo_server));
-
-	if (echo)
-	{
-		echo->context.vcm = vcm;
-		echo->context.Open = echo_server_open;
-		echo->context.Close = echo_server_close;
-		echo->context.Request = echo_server_request;
-	}
-	else
-		WLog_ERR(TAG, "calloc failed!");
-
-	return (echo_server_context*)echo;
-}
-
-void echo_server_context_free(echo_server_context* context)
-{
-	echo_server* echo = (echo_server*)context;
-	echo_server_close(context);
-	free(echo);
+	ainput_server* ainput = (ainput_server*)context;
+	ainput_server_close(context);
+	free(ainput);
 }
