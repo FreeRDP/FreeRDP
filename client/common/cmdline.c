@@ -46,6 +46,10 @@
 #include <freerdp/channels/urbdrc.h>
 #include <freerdp/channels/rdpdr.h>
 
+#if defined(CHANNEL_AINPUT_CLIENT)
+#include <freerdp/channels/ainput.h>
+#endif
+
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
 
@@ -3527,6 +3531,16 @@ static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpS
 BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 {
 	UINT32 index;
+
+	/* Always load FreeRDP advanced input dynamic channel */
+#if defined(CHANNEL_AINPUT_CLIENT)
+	{
+		const char* p[] = { AINPUT_DVC_CHANNEL_NAME };
+
+		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
+			return FALSE;
+	}
+#endif
 
 	if (settings->AudioPlayback)
 	{
