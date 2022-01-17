@@ -20,6 +20,10 @@
 #ifndef FREERDP_CLIENT_WAYLAND_FREERDP_H
 #define FREERDP_CLIENT_WAYLAND_FREERDP_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <freerdp/client/encomsp.h>
 #include <freerdp/client/rdpei.h>
 #include <freerdp/gdi/gfx.h>
@@ -27,6 +31,9 @@
 #include <freerdp/log.h>
 #include <winpr/wtypes.h>
 #include <uwac/uwac.h>
+#if defined(CHANNEL_AINPUT_CLIENT)
+#include <freerdp/client/ainput.h>
+#endif
 
 typedef struct wlf_context wlfContext;
 typedef struct wlf_clipboard wfClipboard;
@@ -61,6 +68,10 @@ struct wlf_context
 	EncomspClientContext* encomsp;
 	wfClipboard* clipboard;
 	wlfDispContext* disp;
+#if defined(CHANNEL_AINPUT_CLIENT)
+	AInputClientContext* ainput;
+#endif
+
 	wLog* log;
 	CRITICAL_SECTION critical;
 	wArrayList* events;

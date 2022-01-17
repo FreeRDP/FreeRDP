@@ -25,6 +25,10 @@
 
 #include <freerdp/gdi/video.h>
 
+#if defined(CHANNEL_AINPUT_CLIENT)
+#include <freerdp/channels/ainput.h>
+#endif
+
 #include "wlf_channels.h"
 #include "wlf_cliprdr.h"
 #include "wlf_disp.h"
@@ -103,6 +107,14 @@ void wlf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs
 {
 	wlfContext* wlf = (wlfContext*)context;
 
+	WINPR_ASSERT(wlf);
+	WINPR_ASSERT(e);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
+		wlf->ainput = (AInputClientContext*)e->pInterface;
+#endif
+
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		wlf->rdpei = (RdpeiClientContext*)e->pInterface;
@@ -143,6 +155,14 @@ void wlf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs
 void wlf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
 {
 	wlfContext* wlf = (wlfContext*)context;
+
+	WINPR_ASSERT(wlf);
+	WINPR_ASSERT(e);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
+		wlf->ainput = NULL;
+#endif
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
