@@ -98,6 +98,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_MouseAttached,
 	FreeRDP_MouseHasWheel,
 	FreeRDP_MouseMotion,
+	FreeRDP_MouseUseRelativeMove,
 	FreeRDP_MstscCookieMode,
 	FreeRDP_MultiTouchGestures,
 	FreeRDP_MultiTouchInput,
