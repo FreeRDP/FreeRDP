@@ -109,6 +109,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_MouseAttached, 0, "FreeRDP_MouseAttached" },
 	{ FreeRDP_MouseHasWheel, 0, "FreeRDP_MouseHasWheel" },
 	{ FreeRDP_MouseMotion, 0, "FreeRDP_MouseMotion" },
+	{ FreeRDP_MouseUseRelativeMove, 0, "FreeRDP_MouseUseRelativeMove" },
 	{ FreeRDP_MstscCookieMode, 0, "FreeRDP_MstscCookieMode" },
 	{ FreeRDP_MultiTouchGestures, 0, "FreeRDP_MultiTouchGestures" },
 	{ FreeRDP_MultiTouchInput, 0, "FreeRDP_MultiTouchInput" },
