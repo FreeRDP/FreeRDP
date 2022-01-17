@@ -375,9 +375,7 @@ static BOOL xf_event_VisibilityNotify(xfContext* xfc, const XVisibilityEvent* ev
 
 BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window window, BOOL app)
 {
-	rdpInput* input;
 	Window childWindow;
-	input = xfc->common.context.input;
 
 	if (!xfc->common.context.settings->MouseMotion)
 	{

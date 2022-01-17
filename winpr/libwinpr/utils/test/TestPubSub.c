@@ -25,8 +25,8 @@ static void MouseButtonEventHandler(void* context, const MouseButtonEventArgs* e
 	printf("MouseButtonEvent: x: %d y: %d flags: %d button: %d\n", e->x, e->y, e->flags, e->button);
 }
 
-static wEventType Node_Events[] = { DEFINE_EVENT_ENTRY(MouseMotion)
-	                                    DEFINE_EVENT_ENTRY(MouseButton) };
+static wEventType Node_Events[] = { DEFINE_EVENT_ENTRY(MouseMotion),
+	                                DEFINE_EVENT_ENTRY(MouseButton) };
 
 #define NODE_EVENT_COUNT (sizeof(Node_Events) / sizeof(wEventType))
 

@@ -24,11 +24,9 @@
 #include "config.h"
 #endif
 
-#include <winpr/windows.h>
-#include <freerdp/event.h>
-
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/event.h>
 
 #if defined(CHANNEL_AINPUT_CLIENT)
 #include <freerdp/client/ainput.h>
@@ -123,10 +121,12 @@ extern "C"
 	FREERDP_API BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** password,
 	                                            char** domain, rdp_auth_reason reason);
 
-	FREERDP_API void freerdp_client_OnChannelConnectedEventHandler(void* context,
-	                                                               const wEventArgs* e);
-	FREERDP_API void freerdp_client_OnChannelDisconnectedEventHandler(void* context,
-	                                                                  const wEventArgs* e);
+	FREERDP_API void
+	freerdp_client_OnChannelConnectedEventHandler(void* context,
+	                                              const struct _ChannelConnectedEventArgs* e);
+	FREERDP_API void
+	freerdp_client_OnChannelDisconnectedEventHandler(void* context,
+	                                                 const struct _ChannelDisconnectedEventArgs* e);
 
 #if defined(WITH_FREERDP_DEPRECATED)
 	FREERDP_API WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",

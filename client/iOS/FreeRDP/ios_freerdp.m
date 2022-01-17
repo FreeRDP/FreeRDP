@@ -28,7 +28,7 @@
 
 #pragma mark Connection helpers
 
-static void ios_OnChannelConnectedEventHandler(void *context, ChannelConnectedEventArgs *e)
+static void ios_OnChannelConnectedEventHandler(void *context, const ChannelConnectedEventArgs *e)
 {
 	rdpSettings *settings;
 	mfContext *afc;
@@ -56,7 +56,7 @@ static void ios_OnChannelConnectedEventHandler(void *context, ChannelConnectedEv
 	}
 }
 
-static void ios_OnChannelDisconnectedEventHandler(void *context, ChannelDisconnectedEventArgs *e)
+static void ios_OnChannelDisconnectedEventHandler(void *context, const ChannelDisconnectedEventArgs *e)
 {
 	rdpSettings *settings;
 	mfContext *afc;

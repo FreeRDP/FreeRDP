@@ -511,44 +511,49 @@ extern "C"
 	(_event_args)->e.Size = sizeof(*_event_args); \
 	(_event_args)->e.Sender = _sender
 
-#define DEFINE_EVENT_HANDLER(_name) \
-	typedef void (*p##_name##EventHandler)(void* context, const _name##EventArgs* e)
+#define DEFINE_EVENT_HANDLER(name) \
+	typedef void (*p##name##EventHandler)(void* context, const name##EventArgs* e)
 
-#define DEFINE_EVENT_RAISE(_name)                                                                 \
-	static INLINE int PubSub_On##_name(wPubSub* pubSub, void* context, const _name##EventArgs* e) \
+#define DEFINE_EVENT_RAISE(name)                                                                \
+	static INLINE int PubSub_On##name(wPubSub* pubSub, void* context, const name##EventArgs* e) \
+	{                                                                                           \
+		WINPR_ASSERT(e);                                                                        \
+		return PubSub_OnEvent(pubSub, #name, context, &e->e);                                   \
+	}
+
+#define DEFINE_EVENT_SUBSCRIBE(name)                                                              \
+	static INLINE int PubSub_Subscribe##name(wPubSub* pubSub, p##name##EventHandler EventHandler) \
 	{                                                                                             \
-		WINPR_ASSERT(e);                                                                          \
-		return PubSub_OnEvent(pubSub, #_name, context, &e->e);                                    \
+		return PubSub_Subscribe(pubSub, #name, (pEventHandler)EventHandler);                      \
 	}
 
-#define DEFINE_EVENT_SUBSCRIBE(_name)                                              \
-	static INLINE int PubSub_Subscribe##_name(wPubSub* pubSub,                     \
-	                                          p##_name##EventHandler EventHandler) \
+#define DEFINE_EVENT_UNSUBSCRIBE(name)                                             \
+	static INLINE int PubSub_Unsubscribe##name(wPubSub* pubSub,                    \
+	                                           p##name##EventHandler EventHandler) \
 	{                                                                              \
-		return PubSub_Subscribe(pubSub, #_name, (pEventHandler)EventHandler);      \
+		return PubSub_Unsubscribe(pubSub, #name, (pEventHandler)EventHandler);     \
 	}
 
-#define DEFINE_EVENT_UNSUBSCRIBE(_name)                                              \
-	static INLINE int PubSub_Unsubscribe##_name(wPubSub* pubSub,                     \
-	                                            p##_name##EventHandler EventHandler) \
-	{                                                                                \
-		return PubSub_Unsubscribe(pubSub, #_name, (pEventHandler)EventHandler);      \
-	}
-
-#define DEFINE_EVENT_BEGIN(_name) \
-	typedef struct                \
-	{                             \
+#define DEFINE_EVENT_BEGIN(name)      \
+	typedef struct _##name##EventArgs \
+	{                                 \
 		wEventArgs e;
 
-#define DEFINE_EVENT_END(_name)   \
-	}                             \
-	_name##EventArgs;             \
-	DEFINE_EVENT_HANDLER(_name);  \
-	DEFINE_EVENT_RAISE(_name)     \
-	DEFINE_EVENT_SUBSCRIBE(_name) \
-	DEFINE_EVENT_UNSUBSCRIBE(_name)
+#define DEFINE_EVENT_END(name)   \
+	}                            \
+	name##EventArgs;             \
+	DEFINE_EVENT_HANDLER(name);  \
+	DEFINE_EVENT_RAISE(name)     \
+	DEFINE_EVENT_SUBSCRIBE(name) \
+	DEFINE_EVENT_UNSUBSCRIBE(name)
 
-#define DEFINE_EVENT_ENTRY(_name) { #_name, { sizeof(_name##EventArgs), NULL }, 0, { NULL } },
+#define DEFINE_EVENT_ENTRY(name)                     \
+	{                                                \
+#name, { sizeof(name##EventArgs), NULL }, 0, \
+		{                                            \
+			NULL                                     \
+		}                                            \
+	}
 
 	typedef struct _wPubSub wPubSub;
 

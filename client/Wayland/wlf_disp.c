@@ -20,6 +20,8 @@
 
 #include <winpr/sysinfo.h>
 
+#include <winpr/collections.h>
+
 #include "wlf_disp.h"
 
 #define TAG CLIENT_TAG("wayland.disp")
@@ -250,9 +252,10 @@ void wlf_disp_free(wlfDispContext* disp)
 
 	if (disp->wlc)
 	{
-		PubSub_UnsubscribeActivated(disp->wlc->common.context.pubSub, wlf_disp_OnActivated);
-		PubSub_UnsubscribeGraphicsReset(disp->wlc->common.context.pubSub, wlf_disp_OnGraphicsReset);
-		PubSub_UnsubscribeTimer(disp->wlc->common.context.pubSub, wlf_disp_OnTimer);
+		wPubSub* pubSub = disp->wlc->common.context.pubSub;
+		PubSub_UnsubscribeActivated(pubSub, wlf_disp_OnActivated);
+		PubSub_UnsubscribeGraphicsReset(pubSub, wlf_disp_OnGraphicsReset);
+		PubSub_UnsubscribeTimer(pubSub, wlf_disp_OnTimer);
 	}
 
 	free(disp);

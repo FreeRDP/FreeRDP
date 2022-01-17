@@ -13,10 +13,10 @@
 #import <freerdp/client/cmdline.h>
 
 static AppDelegate *_singleDelegate = nil;
-void AppDelegate_ConnectionResultEventHandler(void *context, ConnectionResultEventArgs *e);
-void AppDelegate_ErrorInfoEventHandler(void *ctx, ErrorInfoEventArgs *e);
-void AppDelegate_EmbedWindowEventHandler(void *context, EmbedWindowEventArgs *e);
-void AppDelegate_ResizeWindowEventHandler(void *context, ResizeWindowEventArgs *e);
+void AppDelegate_ConnectionResultEventHandler(void *context, const ConnectionResultEventArgs *e);
+void AppDelegate_ErrorInfoEventHandler(void *ctx, const ErrorInfoEventArgs *e);
+void AppDelegate_EmbedWindowEventHandler(void *context, const EmbedWindowEventArgs *e);
+void AppDelegate_ResizeWindowEventHandler(void *context, const ResizeWindowEventArgs *e);
 void mac_set_view_size(rdpContext *context, MRDPView *view);
 
 @implementation AppDelegate
@@ -58,17 +58,19 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 		freerdp_client_start(context);
 		NSString *winTitle;
 
-		if (mfc->context.settings->WindowTitle && mfc->context.settings->WindowTitle[0])
+		if (mfc->common.context.settings->WindowTitle &&
+		    mfc->common.context.settings->WindowTitle[0])
 		{
-			winTitle = [[NSString alloc] initWithCString:mfc->context.settings->WindowTitle];
+			winTitle = [[NSString alloc] initWithCString:mfc->common.context.settings->WindowTitle];
 		}
 		else
 		{
 			winTitle = [[NSString alloc]
 			    initWithFormat:@"%@:%u",
-			                   [NSString stringWithCString:mfc->context.settings->ServerHostname
-			                                      encoding:NSUTF8StringEncoding],
-			                   mfc -> context.settings->ServerPort];
+			                   [NSString
+			                       stringWithCString:mfc->common.context.settings->ServerHostname
+			                                encoding:NSUTF8StringEncoding],
+			                   mfc -> common.context.settings->ServerPort];
 		}
 
 		[window setTitle:winTitle];
@@ -197,7 +199,7 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
  * On connection error, display message and quit application
  ***********************************************************************/
 
-void AppDelegate_ConnectionResultEventHandler(void *ctx, ConnectionResultEventArgs *e)
+void AppDelegate_ConnectionResultEventHandler(void *ctx, const ConnectionResultEventArgs *e)
 {
 	rdpContext *context = (rdpContext *)ctx;
 	NSLog(@"ConnectionResult event result:%d\n", e->result);
@@ -226,7 +228,7 @@ void AppDelegate_ConnectionResultEventHandler(void *ctx, ConnectionResultEventAr
 	}
 }
 
-void AppDelegate_ErrorInfoEventHandler(void *ctx, ErrorInfoEventArgs *e)
+void AppDelegate_ErrorInfoEventHandler(void *ctx, const ErrorInfoEventArgs *e)
 {
 	NSLog(@"ErrorInfo event code:%d\n", e->code);
 
@@ -249,7 +251,7 @@ void AppDelegate_ErrorInfoEventHandler(void *ctx, ErrorInfoEventArgs *e)
 	}
 }
 
-void AppDelegate_EmbedWindowEventHandler(void *ctx, EmbedWindowEventArgs *e)
+void AppDelegate_EmbedWindowEventHandler(void *ctx, const EmbedWindowEventArgs *e)
 {
 	rdpContext *context = (rdpContext *)ctx;
 
@@ -269,7 +271,7 @@ void AppDelegate_EmbedWindowEventHandler(void *ctx, EmbedWindowEventArgs *e)
 	}
 }
 
-void AppDelegate_ResizeWindowEventHandler(void *ctx, ResizeWindowEventArgs *e)
+void AppDelegate_ResizeWindowEventHandler(void *ctx, const ResizeWindowEventArgs *e)
 {
 	rdpContext *context = (rdpContext *)ctx;
 	fprintf(stderr, "ResizeWindowEventHandler: %d %d\n", e->width, e->height);

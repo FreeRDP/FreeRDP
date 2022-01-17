@@ -22,6 +22,9 @@
 #endif
 
 #include "mfreerdp.h"
+
+#include <winpr/assert.h>
+
 #include <freerdp/constants.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/client/cmdline.h>
@@ -62,14 +65,7 @@ static int mfreerdp_client_stop(rdpContext *context)
 {
 	mfContext *mfc = (mfContext *)context;
 
-	freerdp_abort_connect(context->instance);
-	if (mfc->thread)
-	{
-		SetEvent(mfc->stopEvent);
-		WaitForSingleObject(mfc->thread, INFINITE);
-		CloseHandle(mfc->thread);
-		mfc->thread = NULL;
-	}
+	freerdp_client_common_stop(context);
 
 	if (mfc->view_ownership)
 	{
@@ -86,7 +82,12 @@ static BOOL mfreerdp_client_new(freerdp *instance, rdpContext *context)
 {
 	mfContext *mfc;
 	rdpSettings *settings;
+
+	WINPR_ASSERT(instance);
+
 	mfc = (mfContext *)instance->context;
+	WINPR_ASSERT(mfc);
+
 	mfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
@@ -119,10 +120,10 @@ static void mf_scale_mouse_coordinates(mfContext *mfc, UINT16 *px, UINT16 *py)
 	UINT16 y = *py;
 	UINT32 ww = mfc->client_width;
 	UINT32 wh = mfc->client_height;
-	UINT32 dw = mfc->context.settings->DesktopWidth;
-	UINT32 dh = mfc->context.settings->DesktopHeight;
+	UINT32 dw = mfc->common.context.settings->DesktopWidth;
+	UINT32 dh = mfc->common.context.settings->DesktopHeight;
 
-	if (!mfc->context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
+	if (!mfc->common.context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
 	{
 		y = y + mfc->yCurrentScroll;
 		x = x + mfc->xCurrentScroll;
@@ -163,7 +164,7 @@ void mf_scale_mouse_event_ex(void *context, UINT16 flags, UINT16 x, UINT16 y)
 	freerdp_client_send_extended_button_event(&mfc->common, flags, x, y);
 }
 
-void mf_press_mouse_button(void *context, rdpInput *input, int button, int x, int y, BOOL down)
+void mf_press_mouse_button(void *context, int button, int x, int y, BOOL down)
 {
 	UINT16 flags = 0;
 	UINT16 xflags = 0;
@@ -177,23 +178,23 @@ void mf_press_mouse_button(void *context, rdpInput *input, int button, int x, in
 	switch (button)
 	{
 		case 0:
-			mf_scale_mouse_event(context, input, flags | PTR_FLAGS_BUTTON1, x, y);
+			mf_scale_mouse_event(context, flags | PTR_FLAGS_BUTTON1, x, y);
 			break;
 
 		case 1:
-			mf_scale_mouse_event(context, input, flags | PTR_FLAGS_BUTTON2, x, y);
+			mf_scale_mouse_event(context, flags | PTR_FLAGS_BUTTON2, x, y);
 			break;
 
 		case 2:
-			mf_scale_mouse_event(context, input, flags | PTR_FLAGS_BUTTON3, x, y);
+			mf_scale_mouse_event(context, flags | PTR_FLAGS_BUTTON3, x, y);
 			break;
 
 		case 3:
-			mf_scale_mouse_event_ex(context, input, xflags | PTR_XFLAGS_BUTTON1, x, y);
+			mf_scale_mouse_event_ex(context, xflags | PTR_XFLAGS_BUTTON1, x, y);
 			break;
 
 		case 4:
-			mf_scale_mouse_event_ex(context, input, xflags | PTR_XFLAGS_BUTTON2, x, y);
+			mf_scale_mouse_event_ex(context, xflags | PTR_XFLAGS_BUTTON2, x, y);
 			break;
 
 		default:
@@ -203,6 +204,8 @@ void mf_press_mouse_button(void *context, rdpInput *input, int button, int x, in
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS *pEntryPoints)
 {
+	WINPR_ASSERT(pEntryPoints);
+
 	pEntryPoints->Version = 1;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
 	pEntryPoints->GlobalInit = mfreerdp_client_global_init;

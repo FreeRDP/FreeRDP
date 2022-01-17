@@ -98,7 +98,7 @@ static DWORD WINAPI mac_client_thread(void *param);
 	mfc->client_height = instance->settings->DesktopHeight;
 	mfc->client_width = instance->settings->DesktopWidth;
 
-	if (!(mfc->thread =
+	if (!(mfc->common.thread =
 	          CreateThread(NULL, 0, mac_client_thread, (void *)context, 0, &mfc->mainThreadId)))
 	{
 		WLog_ERR(TAG, "failed to create client thread");
@@ -142,7 +142,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	{
 		int status;
 		DWORD rc;
-		HANDLE events[16];
+		HANDLE events[16] = { 0 };
 		HANDLE inputEvent;
 		HANDLE inputThread = NULL;
 		DWORD nCount;
@@ -318,7 +318,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int)loc.x;
 	int y = (int)loc.y;
-	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
+	mf_scale_mouse_event(context, PTR_FLAGS_MOVE, x, y);
 }
 
 - (void)mouseDown:(NSEvent *)event
@@ -331,7 +331,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int)loc.x;
 	int y = (int)loc.y;
-	mf_press_mouse_button(context, instance->input, 0, x, y, TRUE);
+	mf_press_mouse_button(context, 0, x, y, TRUE);
 }
 
 - (void)mouseUp:(NSEvent *)event
@@ -344,7 +344,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int)loc.x;
 	int y = (int)loc.y;
-	mf_press_mouse_button(context, instance->input, 0, x, y, FALSE);
+	mf_press_mouse_button(context, 0, x, y, FALSE);
 }
 
 - (void)rightMouseDown:(NSEvent *)event
@@ -357,7 +357,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int)loc.x;
 	int y = (int)loc.y;
-	mf_press_mouse_button(context, instance->input, 1, x, y, TRUE);
+	mf_press_mouse_button(context, 1, x, y, TRUE);
 }
 
 - (void)rightMouseUp:(NSEvent *)event
@@ -370,7 +370,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int)loc.x;
 	int y = (int)loc.y;
-	mf_press_mouse_button(context, instance->input, 1, x, y, FALSE);
+	mf_press_mouse_button(context, 1, x, y, FALSE);
 }
 
 - (void)otherMouseDown:(NSEvent *)event
@@ -384,7 +384,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	int x = (int)loc.x;
 	int y = (int)loc.y;
 	int pressed = [event buttonNumber];
-	mf_press_mouse_button(context, instance->input, pressed, x, y, TRUE);
+	mf_press_mouse_button(context, pressed, x, y, TRUE);
 }
 
 - (void)otherMouseUp:(NSEvent *)event
@@ -398,7 +398,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	int x = (int)loc.x;
 	int y = (int)loc.y;
 	int pressed = [event buttonNumber];
-	mf_press_mouse_button(context, instance->input, pressed, x, y, FALSE);
+	mf_press_mouse_button(context, pressed, x, y, FALSE);
 }
 
 - (void)scrollWheel:(NSEvent *)event
@@ -447,7 +447,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
 		step = 0x100 - step;
 
-	mf_scale_mouse_event(context, instance->input, flags | step, 0, 0);
+	mf_scale_mouse_event(context, flags | step, 0, 0);
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -461,7 +461,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	int x = (int)loc.x;
 	int y = (int)loc.y;
 	// send mouse motion event to RDP server
-	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
+	mf_scale_mouse_event(context, PTR_FLAGS_MOVE, x, y);
 }
 
 DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
@@ -816,7 +816,9 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 static void mac_OnChannelConnectedEventHandler(void *context, const ChannelConnectedEventArgs *e)
 {
 	mfContext *mfc = (mfContext *)context;
-	rdpSettings *settings = mfc->context.settings;
+
+	WINPR_ASSERT(mfc);
+	WINPR_ASSERT(e);
 
 	if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -833,7 +835,9 @@ static void mac_OnChannelDisconnectedEventHandler(void *context,
                                                   const ChannelDisconnectedEventArgs *e)
 {
 	mfContext *mfc = (mfContext *)context;
-	rdpSettings *settings = mfc->context.settings;
+
+	WINPR_ASSERT(mfc);
+	WINPR_ASSERT(e);
 
 	if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -1273,8 +1277,8 @@ BOOL mac_end_paint(rdpContext *context)
 
 	ww = mfc->client_width;
 	wh = mfc->client_height;
-	dw = mfc->context.settings->DesktopWidth;
-	dh = mfc->context.settings->DesktopHeight;
+	dw = mfc->common.context.settings->DesktopWidth;
+	dh = mfc->common.context.settings->DesktopHeight;
 
 	if ((!context) || (!context->gdi))
 		return FALSE;
@@ -1288,7 +1292,7 @@ BOOL mac_end_paint(rdpContext *context)
 	newDrawRect.size.width = invalid->w;
 	newDrawRect.size.height = invalid->h;
 
-	if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
+	if (mfc->common.context.settings->SmartSizing && (ww != dw || wh != dh))
 	{
 		newDrawRect.origin.y = newDrawRect.origin.y * wh / dh - 1;
 		newDrawRect.size.height = newDrawRect.size.height * wh / dh + 1;

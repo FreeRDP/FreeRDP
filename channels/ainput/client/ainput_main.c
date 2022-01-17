@@ -215,6 +215,11 @@ static UINT ainput_plugin_terminated(IWTSPlugin* pPlugin)
 		if (mgr)
 			IFCALL(mgr->DestroyListener, mgr, ainput->listener);
 	}
+	if (ainput)
+	{
+		free(ainput->listener_callback);
+		free(ainput->iface.pInterface);
+	}
 	free(ainput);
 
 	return CHANNEL_RC_OK;

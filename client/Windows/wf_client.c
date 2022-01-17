@@ -26,6 +26,7 @@
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -640,7 +641,7 @@ static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char*
                                             const char* issuer, const char* fingerprint)
 {
 	size_t derPubKeyLen;
-	char* derPubKey;
+	BYTE* derPubKey;
 
 	HRESULT hr = CRYPT_E_NOT_FOUND;
 
@@ -650,6 +651,7 @@ static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char*
 	HCERTCHAINENGINE hChainEngine = NULL;
 	PCCERT_CHAIN_CONTEXT pChainContext = NULL;
 
+	DWORD pubKeyLen;
 	CERT_ENHKEY_USAGE EnhkeyUsage = { 0 };
 	CERT_USAGE_MATCH CertUsage = { 0 };
 	CERT_CHAIN_PARA ChainPara = { 0 };
@@ -668,7 +670,8 @@ static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char*
 	/*
 	 * Convert from PEM format to DER format - removes header and footer and decodes from base64
 	 */
-	if (!CryptStringToBinaryA(fingerprint, 0, CRYPT_STRING_BASE64HEADER, derPubKey, &derPubKeyLen,
+	pubKeyLen = (DWORD)derPubKeyLen;
+	if (!CryptStringToBinaryA(fingerprint, 0, CRYPT_STRING_BASE64HEADER, derPubKey, &pubKeyLen,
 	                          NULL, NULL))
 	{
 		WLog_ERR(TAG, "CryptStringToBinary failed. Err: %d", GetLastError());
@@ -1411,7 +1414,7 @@ static int wfreerdp_client_stop(rdpContext* context)
 
 	WINPR_ASSERT(wfc);
 	PostThreadMessage(wfc->mainThreadId, WM_QUIT, 0, 0);
-	rc = freerdp_client_common_stop(&wfc->common);
+	rc = freerdp_client_common_stop(context);
 	wfc->mainThreadId = 0;
 
 	if (wfc->keyboardThread)
@@ -1428,6 +1431,8 @@ static int wfreerdp_client_stop(rdpContext* context)
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
+    WINPR_ASSERT(pEntryPoints);
+
 	pEntryPoints->Version = 1;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
 	pEntryPoints->GlobalInit = wfreerdp_client_global_init;

@@ -726,7 +726,11 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 {
 	rdpSettings* settings;
 	UINT32 ww, wh, dw, dh;
+
+	WINPR_ASSERT(wfc);
+
 	settings = wfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	if (!wfc->client_width)
 		wfc->client_width = settings->DesktopWidth;
@@ -745,7 +749,7 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 	if (!wh)
 		wh = dh;
 
-	if (wfc->fullscreen || !wfc->common.context.settings->SmartSizing || (ww == dw && wh == dh))
+	if (wfc->fullscreen || !settings->SmartSizing || (ww == dw && wh == dh))
 	{
 		return BitBlt(hdc, x, y, w, h, wfc->primary->hdc, x1, y1, SRCCOPY);
 	}

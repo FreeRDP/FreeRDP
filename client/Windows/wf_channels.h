@@ -20,6 +20,7 @@
 #define FREERDP_CLIENT_WIN_CHANNELS_H
 
 #include <freerdp/freerdp.h>
+#include <freerdp/client.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/rdpei.h>
 #include <freerdp/client/rdpgfx.h>

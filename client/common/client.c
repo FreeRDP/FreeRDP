@@ -917,9 +917,9 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 	return FALSE;
 }
 
-void freerdp_client_OnChannelConnectedEventHandler(void* context, const wEventArgs* ge)
+void freerdp_client_OnChannelConnectedEventHandler(void* context,
+                                                   const ChannelConnectedEventArgs* e)
 {
-	const ChannelConnectedEventArgs* e = (const ChannelConnectedEventArgs*)ge;
 	rdpClientContext* cctx = (rdpClientContext*)context;
 
 	WINPR_ASSERT(cctx);
@@ -962,9 +962,9 @@ void freerdp_client_OnChannelConnectedEventHandler(void* context, const wEventAr
 #endif
 }
 
-void freerdp_client_OnChannelDisconnectedEventHandler(void* context, const wEventArgs* ge)
+void freerdp_client_OnChannelDisconnectedEventHandler(void* context,
+                                                      const ChannelDisconnectedEventArgs* e)
 {
-	const ChannelDisconnectedEventArgs* e = (const ChannelDisconnectedEventArgs*)ge;
 	rdpClientContext* cctx = (rdpClientContext*)context;
 
 	WINPR_ASSERT(cctx);

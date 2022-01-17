@@ -91,7 +91,7 @@ static WCHAR* printer_win_get_printjob_name(size_t id)
 	if (!str)
 		return NULL;
 
-	rc = swprintf_s(str, len, L"FreeRDP Print %04d-%02d-%02d% 02d-%02d-%02d - Job %lu\0",
+	rc = swprintf_s(str, len, L"FreeRDP Print %04d-%02d-%02d% 02d-%02d-%02d - Job %" PRIuz "\0",
 	                t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec,
 	                id);
 
