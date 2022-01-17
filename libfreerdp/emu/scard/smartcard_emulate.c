@@ -462,7 +462,6 @@ LONG WINAPI Emulate_SCardIsValidContext(SmartcardEmulationContext* smartcard, SC
 	{
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
-		value->canceled = FALSE;
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
