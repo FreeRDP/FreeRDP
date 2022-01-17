@@ -896,7 +896,7 @@ wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 
 	InitializeCriticalSection(&clipboard->lock);
 	clipboard->wfc = wfc;
-	channels = wfc->context.channels;
+	channels = wfc->common.context.channels;
 	clipboard->log = WLog_Get(TAG);
 	clipboard->channels = channels;
 	clipboard->system = ClipboardCreate();

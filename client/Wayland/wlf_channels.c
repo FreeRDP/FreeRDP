@@ -21,14 +21,6 @@
 #include "config.h"
 #endif
 
-#include <freerdp/gdi/gfx.h>
-
-#include <freerdp/gdi/video.h>
-
-#if defined(CHANNEL_AINPUT_CLIENT)
-#include <freerdp/channels/ainput.h>
-#endif
-
 #include "wlf_channels.h"
 #include "wlf_cliprdr.h"
 #include "wlf_disp.h"
@@ -68,7 +60,7 @@ wlf_encomsp_participant_created(EncomspClientContext* context,
 		return ERROR_INVALID_PARAMETER;
 
 	wlf = (wlfContext*)context->custom;
-	settings = wlf->context.settings;
+	settings = wlf->common.context.settings;
 
 	if (!settings)
 		return ERROR_INVALID_PARAMETER;
@@ -103,27 +95,14 @@ static void wlf_encomsp_uninit(wlfContext* wlf, EncomspClientContext* encomsp)
 		wlf->encomsp = NULL;
 }
 
-void wlf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
+void wlf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)
 {
 	wlfContext* wlf = (wlfContext*)context;
 
 	WINPR_ASSERT(wlf);
 	WINPR_ASSERT(e);
 
-#if defined(CHANNEL_AINPUT_CLIENT)
-	if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
-		wlf->ainput = (AInputClientContext*)e->pInterface;
-#endif
-
-	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
-	{
-		wlf->rdpei = (RdpeiClientContext*)e->pInterface;
-	}
-	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_graphics_pipeline_init(wlf->context.gdi, (RdpgfxClientContext*)e->pInterface);
-	}
-	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
@@ -138,41 +117,18 @@ void wlf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs
 	{
 		wlf_disp_init(wlf->disp, (DispClientContext*)e->pInterface);
 	}
-	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_geometry_init(wlf->context.gdi, (GeometryClientContext*)e->pInterface);
-	}
-	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_control_init(wlf->context.gdi, (VideoClientContext*)e->pInterface);
-	}
-	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_data_init(wlf->context.gdi, (VideoClientContext*)e->pInterface);
-	}
+	else
+		freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
 
-void wlf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
+void wlf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e)
 {
 	wlfContext* wlf = (wlfContext*)context;
 
 	WINPR_ASSERT(wlf);
 	WINPR_ASSERT(e);
 
-#if defined(CHANNEL_AINPUT_CLIENT)
-	if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
-		wlf->ainput = NULL;
-#endif
-
-	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
-	{
-		wlf->rdpei = NULL;
-	}
-	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_graphics_pipeline_uninit(wlf->context.gdi, (RdpgfxClientContext*)e->pInterface);
-	}
-	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
@@ -187,16 +143,6 @@ void wlf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEve
 	{
 		wlf_disp_uninit(wlf->disp, (DispClientContext*)e->pInterface);
 	}
-	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_geometry_uninit(wlf->context.gdi, (GeometryClientContext*)e->pInterface);
-	}
-	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_control_uninit(wlf->context.gdi, (VideoClientContext*)e->pInterface);
-	}
-	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_data_uninit(wlf->context.gdi, (VideoClientContext*)e->pInterface);
-	}
+	else
+		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
 }

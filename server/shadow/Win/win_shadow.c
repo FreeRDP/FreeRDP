@@ -291,9 +291,17 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 		rdpGdi* gdi;
 		shwContext* shw;
 		rdpContext* context;
+
+		WINPR_ASSERT(subsystem);
 		shw = subsystem->shw;
-		context = &shw->context;
+		WINPR_ASSERT(shw);
+
+		context = &shw->common.context;
+		WINPR_ASSERT(context);
+
 		gdi = context->gdi;
+		WINPR_ASSERT(gdi);
+
 		pDstData = gdi->primary_buffer;
 		nDstStep = gdi->width * 4;
 		DstFormat = gdi->dstFormat;

@@ -46,6 +46,8 @@ struct _wPubSub
 
 wEventType* PubSub_GetEventTypes(wPubSub* pubSub, size_t* count)
 {
+	WINPR_ASSERT(pubSub);
+
 	if (count)
 		*count = pubSub->count;
 
@@ -58,12 +60,14 @@ wEventType* PubSub_GetEventTypes(wPubSub* pubSub, size_t* count)
 
 void PubSub_Lock(wPubSub* pubSub)
 {
+	WINPR_ASSERT(pubSub);
 	if (pubSub->synchronized)
 		EnterCriticalSection(&pubSub->lock);
 }
 
 void PubSub_Unlock(wPubSub* pubSub)
 {
+	WINPR_ASSERT(pubSub);
 	if (pubSub->synchronized)
 		LeaveCriticalSection(&pubSub->lock);
 }
@@ -72,6 +76,9 @@ wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
 {
 	size_t index;
 	wEventType* event = NULL;
+
+	WINPR_ASSERT(pubSub);
+	WINPR_ASSERT(EventName);
 
 	for (index = 0; index < pubSub->count; index++)
 	{
@@ -87,6 +94,9 @@ wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
 
 void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, size_t count)
 {
+	WINPR_ASSERT(pubSub);
+	WINPR_ASSERT(events || (count == 0));
+
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
 
@@ -115,6 +125,9 @@ int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler Event
 	wEventType* event;
 	int status = -1;
 
+	WINPR_ASSERT(pubSub);
+	WINPR_ASSERT(EventHandler);
+
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
 
@@ -141,6 +154,10 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler Eve
 	size_t index;
 	wEventType* event;
 	int status = -1;
+
+	WINPR_ASSERT(pubSub);
+	WINPR_ASSERT(EventName);
+	WINPR_ASSERT(EventHandler);
 
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
@@ -170,11 +187,14 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler Eve
 	return status;
 }
 
-int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEventArgs* e)
+int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, const wEventArgs* e)
 {
 	size_t index;
 	wEventType* event;
 	int status = -1;
+
+	WINPR_ASSERT(pubSub);
+	WINPR_ASSERT(e);
 
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);

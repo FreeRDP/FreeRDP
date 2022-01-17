@@ -46,10 +46,6 @@ typedef struct xf_context xfContext;
 #include <freerdp/client/tsmf.h>
 #endif
 
-#if defined(CHANNEL_AINPUT_CLIENT)
-#include <freerdp/client/ainput.h>
-#endif
-
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
@@ -145,8 +141,7 @@ typedef struct touch_contact
 
 struct xf_context
 {
-	rdpContext context;
-	DEFINE_RDP_CLIENT_COMMON();
+	rdpClientContext common;
 
 	GC gc;
 	int xfds;
@@ -273,14 +268,9 @@ struct xf_context
 	TsmfClientContext* tsmf;
 #endif
 
-#if defined(CHANNEL_AINPUT_CLIENT)
-	AInputClientContext* ainput;
-#endif
-
 	xfClipboard* clipboard;
 	CliprdrClientContext* cliprdr;
 	xfVideoContext* xfVideo;
-	RdpeiClientContext* rdpei;
 	EncomspClientContext* encomsp;
 	xfDispContext* xfDisp;
 

@@ -295,7 +295,7 @@ static void wf_add_system_menu(wfContext* wfc)
 		return;
 	}
 
-	if (wfc->context.settings->DynamicResolutionUpdate)
+	if (wfc->common.context.settings->DynamicResolutionUpdate)
 	{
 		return;
 	}
@@ -311,7 +311,7 @@ static void wf_add_system_menu(wfContext* wfc)
 	item_info.dwItemData = (ULONG_PTR)wfc;
 	InsertMenuItem(hMenu, 6, TRUE, &item_info);
 
-	if (wfc->context.settings->SmartSizing)
+	if (wfc->common.context.settings->SmartSizing)
 	{
 		CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING, MF_CHECKED);
 	}
@@ -488,9 +488,9 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 
 	if (!(username && *username && password && *password))
 	{
-		if (!wfc->isConsole && wfc->context.settings->CredentialsFromStdin)
+		if (!wfc->isConsole && wfc->common.context.settings->CredentialsFromStdin)
 			WLog_ERR(TAG, "Flag for stdin read present but stdin is redirected; using GUI");
-		if (wfc->isConsole && wfc->context.settings->CredentialsFromStdin)
+		if (wfc->isConsole && wfc->common.context.settings->CredentialsFromStdin)
 			status = CredUICmdLinePromptForCredentialsA(
 			    title, NULL, 0, UserName, CREDUI_MAX_USERNAME_LENGTH + 1, Password,
 			    CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
@@ -1187,7 +1187,8 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 	// prevent infinite message loop
 	wfc->disablewindowtracking = TRUE;
 
-	if (wfc->context.settings->SmartSizing || wfc->context.settings->DynamicResolutionUpdate)
+	if (wfc->common.context.settings->SmartSizing ||
+	    wfc->common.context.settings->DynamicResolutionUpdate)
 	{
 		wfc->xCurrentScroll = 0;
 		wfc->yCurrentScroll = 0;
@@ -1207,24 +1208,22 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 		BOOL horiz = wfc->xScrollVisible;
 		BOOL vert = wfc->yScrollVisible;
 
-		if (!horiz && client_width < wfc->context.settings->DesktopWidth)
+		if (!horiz && client_width < wfc->common.context.settings->DesktopWidth)
 		{
 			horiz = TRUE;
 		}
-		else if (horiz &&
-		         client_width >=
-		             wfc->context.settings->DesktopWidth /* - GetSystemMetrics(SM_CXVSCROLL)*/)
+		else if (horiz && client_width >= wfc->common.context.settings
+		                                      ->DesktopWidth /* - GetSystemMetrics(SM_CXVSCROLL)*/)
 		{
 			horiz = FALSE;
 		}
 
-		if (!vert && client_height < wfc->context.settings->DesktopHeight)
+		if (!vert && client_height < wfc->common.context.settings->DesktopHeight)
 		{
 			vert = TRUE;
 		}
-		else if (vert &&
-		         client_height >=
-		             wfc->context.settings->DesktopHeight /* - GetSystemMetrics(SM_CYHSCROLL)*/)
+		else if (vert && client_height >= wfc->common.context.settings
+		                                      ->DesktopHeight /* - GetSystemMetrics(SM_CYHSCROLL)*/)
 		{
 			vert = FALSE;
 		}
@@ -1259,12 +1258,12 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 			// The horizontal scrolling range is defined by
 			// (bitmap_width) - (client_width). The current horizontal
 			// scroll value remains within the horizontal scrolling range.
-			wfc->xMaxScroll = MAX(wfc->context.settings->DesktopWidth - client_width, 0);
+			wfc->xMaxScroll = MAX(wfc->common.context.settings->DesktopWidth - client_width, 0);
 			wfc->xCurrentScroll = MIN(wfc->xCurrentScroll, wfc->xMaxScroll);
 			si.cbSize = sizeof(si);
 			si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
 			si.nMin = wfc->xMinScroll;
-			si.nMax = wfc->context.settings->DesktopWidth;
+			si.nMax = wfc->common.context.settings->DesktopWidth;
 			si.nPage = client_width;
 			si.nPos = wfc->xCurrentScroll;
 			SetScrollInfo(wfc->hwnd, SB_HORZ, &si, TRUE);
@@ -1275,12 +1274,12 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 			// The vertical scrolling range is defined by
 			// (bitmap_height) - (client_height). The current vertical
 			// scroll value remains within the vertical scrolling range.
-			wfc->yMaxScroll = MAX(wfc->context.settings->DesktopHeight - client_height, 0);
+			wfc->yMaxScroll = MAX(wfc->common.context.settings->DesktopHeight - client_height, 0);
 			wfc->yCurrentScroll = MIN(wfc->yCurrentScroll, wfc->yMaxScroll);
 			si.cbSize = sizeof(si);
 			si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
 			si.nMin = wfc->yMinScroll;
-			si.nMax = wfc->context.settings->DesktopHeight;
+			si.nMax = wfc->common.context.settings->DesktopHeight;
 			si.nPage = client_height;
 			si.nPos = wfc->yCurrentScroll;
 			SetScrollInfo(wfc->hwnd, SB_VERT, &si, TRUE);
@@ -1396,9 +1395,10 @@ static int wfreerdp_client_start(rdpContext* context)
 	if (!wfc->keyboardThread)
 		return -1;
 
-	wfc->thread = CreateThread(NULL, 0, wf_client_thread, (void*)instance, 0, &wfc->mainThreadId);
+	wfc->common.thread =
+	    CreateThread(NULL, 0, wf_client_thread, (void*)instance, 0, &wfc->mainThreadId);
 
-	if (!wfc->thread)
+	if (!wfc->common.thread)
 		return -1;
 
 	return 0;
@@ -1406,16 +1406,13 @@ static int wfreerdp_client_start(rdpContext* context)
 
 static int wfreerdp_client_stop(rdpContext* context)
 {
+	int rc;
 	wfContext* wfc = (wfContext*)context;
 
-	if (wfc->thread)
-	{
-		PostThreadMessage(wfc->mainThreadId, WM_QUIT, 0, 0);
-		WaitForSingleObject(wfc->thread, INFINITE);
-		CloseHandle(wfc->thread);
-		wfc->thread = NULL;
-		wfc->mainThreadId = 0;
-	}
+	WINPR_ASSERT(wfc);
+	PostThreadMessage(wfc->mainThreadId, WM_QUIT, 0, 0);
+	rc = freerdp_client_common_stop(&wfc->common);
+	wfc->mainThreadId = 0;
 
 	if (wfc->keyboardThread)
 	{

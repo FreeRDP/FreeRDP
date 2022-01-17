@@ -813,48 +813,37 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	mfc->client_width = width;
 }
 
-void mac_OnChannelConnectedEventHandler(void *context, ChannelConnectedEventArgs *e)
+static void mac_OnChannelConnectedEventHandler(void *context, const ChannelConnectedEventArgs *e)
 {
 	mfContext *mfc = (mfContext *)context;
 	rdpSettings *settings = mfc->context.settings;
 
-	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
-	{
-	}
-	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
-	{
-		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_init(mfc->context.gdi, (RdpgfxClientContext *)e->pInterface);
-	}
-	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		mac_cliprdr_init(mfc, (CliprdrClientContext *)e->pInterface);
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
 	}
+	else
+		freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
 
-void mac_OnChannelDisconnectedEventHandler(void *context, ChannelDisconnectedEventArgs *e)
+static void mac_OnChannelDisconnectedEventHandler(void *context,
+                                                  const ChannelDisconnectedEventArgs *e)
 {
 	mfContext *mfc = (mfContext *)context;
 	rdpSettings *settings = mfc->context.settings;
 
-	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
-	{
-	}
-	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
-	{
-		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_uninit(mfc->context.gdi, (RdpgfxClientContext *)e->pInterface);
-	}
-	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		mac_cliprdr_uninit(mfc, (CliprdrClientContext *)e->pInterface);
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
 	}
+	else
+		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
 }
 
 BOOL mac_pre_connect(freerdp *instance)

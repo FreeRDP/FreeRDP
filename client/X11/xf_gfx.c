@@ -40,7 +40,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	UINT32 nbRects, x;
 	double sx, sy;
 	const RECTANGLE_16* rects;
-	gdi = xfc->context.gdi;
+	gdi = xfc->common.context.gdi;
 	surfaceX = surface->gdi.outputOriginX;
 	surfaceY = surface->gdi.outputOriginY;
 	surfaceRect.left = 0;
@@ -87,7 +87,8 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		}
 		else
 #ifdef WITH_XRENDER
-		    if (xfc->context.settings->SmartSizing || xfc->context.settings->MultiTouchGestures)
+		    if (xfc->common.context.settings->SmartSizing ||
+		        xfc->common.context.settings->MultiTouchGestures)
 		{
 			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image, nXSrc, nYSrc, nXDst,
 			          nYDst, dwidth, dheight);
@@ -166,7 +167,7 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 	RECTANGLE_16 surfaceRect;
 	RECTANGLE_16 intersection;
 	UINT16* pSurfaceIds = NULL;
-	RdpgfxClientContext* context = xfc->context.gdi->gfx;
+	RdpgfxClientContext* context = xfc->common.context.gdi->gfx;
 	invalidRect.left = x;
 	invalidRect.top = y;
 	invalidRect.right = x + width;
@@ -400,10 +401,10 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	rdpGdi* gdi = xfc->context.gdi;
+	rdpGdi* gdi = xfc->common.context.gdi;
 	gdi_graphics_pipeline_init(gdi, gfx);
 
-	if (!xfc->context.settings->SoftwareGdi)
+	if (!xfc->common.context.settings->SoftwareGdi)
 	{
 		gfx->UpdateSurfaces = xf_UpdateSurfaces;
 		gfx->CreateSurface = xf_CreateSurface;
@@ -413,6 +414,6 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	rdpGdi* gdi = xfc->context.gdi;
+	rdpGdi* gdi = xfc->common.context.gdi;
 	gdi_graphics_pipeline_uninit(gdi, gfx);
 }

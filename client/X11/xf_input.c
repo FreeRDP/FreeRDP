@@ -102,7 +102,7 @@ int xf_input_init(xfContext* xfc, Window window)
 		return -1;
 	}
 
-	if (xfc->context.settings->MultiTouchInput)
+	if (xfc->common.context.settings->MultiTouchInput)
 		xfc->use_xinput = TRUE;
 
 	info = XIQueryDevice(xfc->display, XIAllDevices, &ndevices);
@@ -129,7 +129,7 @@ int xf_input_init(xfContext* xfc, Window window)
 			XIAnyClassInfo* class = dev->classes[j];
 			XITouchClassInfo* t = (XITouchClassInfo*)class;
 
-			if (xfc->context.settings->MultiTouchInput)
+			if (xfc->common.context.settings->MultiTouchInput)
 			{
 				WLog_INFO(TAG, "%s (%d) \"%s\" id: %d", xf_input_get_class_string(class->type),
 				          class->type, dev->name, dev->deviceid);
@@ -143,7 +143,7 @@ int xf_input_init(xfContext* xfc, Window window)
 			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
 			    (strcmp(dev->name, "Virtual core pointer") != 0))
 			{
-				if (xfc->context.settings->MultiTouchInput)
+				if (xfc->common.context.settings->MultiTouchInput)
 				{
 					WLog_INFO(TAG, "%s %s touch device (id: %d, mode: %d), supporting %d touches.",
 					          dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
@@ -233,7 +233,7 @@ static void xf_input_detect_pan(xfContext* xfc)
 	rdpContext* ctx;
 
 	WINPR_ASSERT(xfc);
-	ctx = &xfc->context;
+	ctx = &xfc->common.context;
 	WINPR_ASSERT(ctx);
 
 	if (xfc->active_contacts != 2)
@@ -321,7 +321,7 @@ static void xf_input_detect_pinch(xfContext* xfc)
 	rdpContext* ctx;
 
 	WINPR_ASSERT(xfc);
-	ctx = &xfc->context;
+	ctx = &xfc->common.context;
 	WINPR_ASSERT(ctx);
 
 	if (xfc->active_contacts != 2)
@@ -557,7 +557,7 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 	int x, y;
 	int touchId;
 	int contactId;
-	RdpeiClientContext* rdpei = xfc->rdpei;
+	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
 		return 0;
@@ -660,12 +660,12 @@ int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 {
 #ifdef WITH_XI
 
-	if (xfc->context.settings->MultiTouchInput)
+	if (xfc->common.context.settings->MultiTouchInput)
 	{
 		return xf_input_handle_event_remote(xfc, event);
 	}
 
-	if (xfc->context.settings->MultiTouchGestures)
+	if (xfc->common.context.settings->MultiTouchGestures)
 	{
 		return xf_input_handle_event_local(xfc, event);
 	}

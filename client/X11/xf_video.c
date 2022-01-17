@@ -72,7 +72,8 @@ static BOOL xfVideoShowSurface(VideoClientContext* video, const VideoSurface* su
 
 #ifdef WITH_XRENDER
 
-	if (xfc->context.settings->SmartSizing || xfc->context.settings->MultiTouchGestures)
+	if (xfc->common.context.settings->SmartSizing ||
+	    xfc->common.context.settings->MultiTouchGestures)
 	{
 		XPutImage(xfc->display, xfc->primary, xfc->gc, xfSurface->image, 0, 0, surface->x,
 		          surface->y, surface->w, surface->h);
@@ -106,7 +107,7 @@ void xf_video_control_init(xfContext* xfc, VideoClientContext* video)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(video);
 
-	gdi_video_control_init(xfc->context.gdi, video);
+	gdi_video_control_init(xfc->common.context.gdi, video);
 
 	/* X11 needs to be able to handle 32bpp colors directly. */
 	if (xfc->depth >= 24)
@@ -120,5 +121,5 @@ void xf_video_control_init(xfContext* xfc, VideoClientContext* video)
 
 void xf_video_control_uninit(xfContext* xfc, VideoClientContext* video)
 {
-	gdi_video_control_uninit(xfc->context.gdi, video);
+	gdi_video_control_uninit(xfc->common.context.gdi, video);
 }

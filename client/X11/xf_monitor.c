@@ -116,7 +116,7 @@ int xf_list_monitors(xfContext* xfc)
 static BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 {
 	UINT32 index;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 
 	if (!settings->NumMonitorIds)
 		return TRUE;
@@ -150,10 +150,10 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	BOOL useXRandr = FALSE;
 #endif
 
-	if (!xfc || !pMaxWidth || !pMaxHeight || !xfc->context.settings)
+	if (!xfc || !pMaxWidth || !pMaxHeight || !xfc->common.context.settings)
 		return FALSE;
 
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 	vscreen = &xfc->vscreen;
 	*pMaxWidth = settings->DesktopWidth;
 	*pMaxHeight = settings->DesktopHeight;

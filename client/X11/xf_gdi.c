@@ -225,7 +225,7 @@ static Pixmap xf_brush_new(xfContext* xfc, UINT32 width, UINT32 height, UINT32 b
 	XImage* image;
 	rdpGdi* gdi;
 	UINT32 brushFormat;
-	gdi = xfc->context.gdi;
+	gdi = xfc->common.context.gdi;
 	bitmap = XCreatePixmap(xfc->display, xfc->drawable, width, height, xfc->depth);
 
 	if (data)
@@ -233,7 +233,7 @@ static Pixmap xf_brush_new(xfContext* xfc, UINT32 width, UINT32 height, UINT32 b
 		brushFormat = gdi_get_pixel_format(bpp);
 		cdata = (BYTE*)_aligned_malloc(width * height * 4ULL, 16);
 		freerdp_image_copy(cdata, gdi->dstFormat, 0, 0, 0, width, height, data, brushFormat, 0, 0,
-		                   0, &xfc->context.gdi->palette, FREERDP_FLIP_NONE);
+		                   0, &xfc->common.context.gdi->palette, FREERDP_FLIP_NONE);
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0, (char*)cdata, width,
 		                     height, xfc->scanline_pad, 0);
 		image->byte_order = LSBFirst;
@@ -898,7 +898,7 @@ static BOOL xf_gdi_surface_frame_marker(rdpContext* context,
 	rdpSettings* settings;
 	xfContext* xfc = (xfContext*)context;
 	BOOL ret = TRUE;
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 	xf_lock_x11(xfc);
 
 	switch (surface_frame_marker->frameAction)
@@ -921,7 +921,7 @@ static BOOL xf_gdi_surface_frame_marker(rdpContext* context,
 
 			if (settings->FrameAcknowledge > 0)
 			{
-				IFCALL(xfc->context.update->SurfaceFrameAcknowledge, context,
+				IFCALL(xfc->common.context.update->SurfaceFrameAcknowledge, context,
 				       surface_frame_marker->frameId);
 			}
 
@@ -1077,7 +1077,8 @@ static BOOL xf_gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND*
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride, cmd->destLeft,
 			                        cmd->destTop, cmd->bmp.width, cmd->bmp.height, pSrcData, format,
-			                        0, 0, 0, &xfc->context.gdi->palette, FREERDP_FLIP_VERTICAL))
+			                        0, 0, 0, &xfc->common.context.gdi->palette,
+			                        FREERDP_FLIP_VERTICAL))
 				goto fail;
 
 			region16_union_rect(&region, &region, &cmdRect);

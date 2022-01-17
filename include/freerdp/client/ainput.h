@@ -54,29 +54,7 @@ struct ainput_client_context
 	void* handle;
 	void* custom;
 
-	INT32 lastX;
-	INT32 lastY;
-
 	pcAInputSendInputEvent AInputSendInputEvent;
 };
-
-static INLINE BOOL ainput_send_diff_event(AInputClientContext* ainput, UINT64 flags, INT32 x,
-                                          INT32 y)
-{
-	UINT rc;
-	INT32 curX, curY;
-
-	WINPR_ASSERT(ainput);
-	WINPR_ASSERT(ainput->AInputSendInputEvent);
-
-	curX = x - ainput->lastX;
-	curY = y - ainput->lastY;
-	rc = ainput->AInputSendInputEvent(ainput, flags, curX, curY);
-
-	ainput->lastX = curX;
-	ainput->lastY = curY;
-
-	return rc == CHANNEL_RC_OK;
-}
 
 #endif /* FREERDP_CHANNEL_AINPUT_CLIENT_AINPUT_H */

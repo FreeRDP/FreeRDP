@@ -47,7 +47,7 @@ static UINT wlf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, s
 
 static BOOL wlf_disp_settings_changed(wlfDispContext* wlfDisp)
 {
-	rdpSettings* settings = wlfDisp->wlc->context.settings;
+	rdpSettings* settings = wlfDisp->wlc->common.context.settings;
 
 	if (wlfDisp->lastSentWidth != wlfDisp->targetWidth)
 		return TRUE;
@@ -72,7 +72,7 @@ static BOOL wlf_disp_settings_changed(wlfDispContext* wlfDisp)
 
 static BOOL wlf_update_last_sent(wlfDispContext* wlfDisp)
 {
-	rdpSettings* settings = wlfDisp->wlc->context.settings;
+	rdpSettings* settings = wlfDisp->wlc->common.context.settings;
 	wlfDisp->lastSentWidth = wlfDisp->targetWidth;
 	wlfDisp->lastSentHeight = wlfDisp->targetHeight;
 	wlfDisp->lastSentDesktopOrientation = settings->DesktopOrientation;
@@ -92,7 +92,7 @@ static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
 		return FALSE;
 
 	wlc = wlfDisp->wlc;
-	settings = wlc->context.settings;
+	settings = wlc->common.context.settings;
 
 	if (!settings)
 		return FALSE;
@@ -156,16 +156,16 @@ static BOOL wlf_disp_check_context(void* context, wlfContext** ppwlc, wlfDispCon
 	if (!(wlc->disp))
 		return FALSE;
 
-	if (!wlc->context.settings)
+	if (!wlc->common.context.settings)
 		return FALSE;
 
 	*ppwlc = wlc;
 	*ppwlfDisp = wlc->disp;
-	*ppSettings = wlc->context.settings;
+	*ppSettings = wlc->common.context.settings;
 	return TRUE;
 }
 
-static void wlf_disp_OnActivated(void* context, ActivatedEventArgs* e)
+static void wlf_disp_OnActivated(void* context, const ActivatedEventArgs* e)
 {
 	wlfContext* wlc;
 	wlfDispContext* wlfDisp;
@@ -187,7 +187,7 @@ static void wlf_disp_OnActivated(void* context, ActivatedEventArgs* e)
 	}
 }
 
-static void wlf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
+static void wlf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs* e)
 {
 	wlfContext* wlc;
 	wlfDispContext* wlfDisp;
@@ -206,7 +206,7 @@ static void wlf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
 	}
 }
 
-static void wlf_disp_OnTimer(void* context, TimerEventArgs* e)
+static void wlf_disp_OnTimer(void* context, const TimerEventArgs* e)
 {
 	wlfContext* wlc;
 	wlfDispContext* wlfDisp;
@@ -226,7 +226,7 @@ wlfDispContext* wlf_disp_new(wlfContext* wlc)
 {
 	wlfDispContext* ret;
 
-	if (!wlc || !wlc->context.settings || !wlc->context.pubSub)
+	if (!wlc || !wlc->common.context.settings || !wlc->common.context.pubSub)
 		return NULL;
 
 	ret = calloc(1, sizeof(wlfDispContext));
@@ -235,11 +235,11 @@ wlfDispContext* wlf_disp_new(wlfContext* wlc)
 		return NULL;
 
 	ret->wlc = wlc;
-	ret->lastSentWidth = ret->targetWidth = wlc->context.settings->DesktopWidth;
-	ret->lastSentHeight = ret->targetHeight = wlc->context.settings->DesktopHeight;
-	PubSub_SubscribeActivated(wlc->context.pubSub, wlf_disp_OnActivated);
-	PubSub_SubscribeGraphicsReset(wlc->context.pubSub, wlf_disp_OnGraphicsReset);
-	PubSub_SubscribeTimer(wlc->context.pubSub, wlf_disp_OnTimer);
+	ret->lastSentWidth = ret->targetWidth = wlc->common.context.settings->DesktopWidth;
+	ret->lastSentHeight = ret->targetHeight = wlc->common.context.settings->DesktopHeight;
+	PubSub_SubscribeActivated(wlc->common.context.pubSub, wlf_disp_OnActivated);
+	PubSub_SubscribeGraphicsReset(wlc->common.context.pubSub, wlf_disp_OnGraphicsReset);
+	PubSub_SubscribeTimer(wlc->common.context.pubSub, wlf_disp_OnTimer);
 	return ret;
 }
 
@@ -250,9 +250,9 @@ void wlf_disp_free(wlfDispContext* disp)
 
 	if (disp->wlc)
 	{
-		PubSub_UnsubscribeActivated(disp->wlc->context.pubSub, wlf_disp_OnActivated);
-		PubSub_UnsubscribeGraphicsReset(disp->wlc->context.pubSub, wlf_disp_OnGraphicsReset);
-		PubSub_UnsubscribeTimer(disp->wlc->context.pubSub, wlf_disp_OnTimer);
+		PubSub_UnsubscribeActivated(disp->wlc->common.context.pubSub, wlf_disp_OnActivated);
+		PubSub_UnsubscribeGraphicsReset(disp->wlc->common.context.pubSub, wlf_disp_OnGraphicsReset);
+		PubSub_UnsubscribeTimer(disp->wlc->common.context.pubSub, wlf_disp_OnTimer);
 	}
 
 	free(disp);
@@ -264,7 +264,7 @@ UINT wlf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, size_t n
 	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts;
 	size_t i;
 	wlfDispContext* wlfDisp = (wlfDispContext*)disp->custom;
-	rdpSettings* settings = wlfDisp->wlc->context.settings;
+	rdpSettings* settings = wlfDisp->wlc->common.context.settings;
 	layouts = calloc(nmonitors, sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
 
 	if (!layouts)
@@ -332,7 +332,7 @@ static UINT wlf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitor
 {
 	/* we're called only if dynamic resolution update is activated */
 	wlfDispContext* wlfDisp = (wlfDispContext*)disp->custom;
-	rdpSettings* settings = wlfDisp->wlc->context.settings;
+	rdpSettings* settings = wlfDisp->wlc->common.context.settings;
 	WLog_DBG(TAG,
 	         "DisplayControlCapsPdu: MaxNumMonitors: %" PRIu32 " MaxMonitorAreaFactorA: %" PRIu32
 	         " MaxMonitorAreaFactorB: %" PRIu32 "",
@@ -353,7 +353,7 @@ BOOL wlf_disp_init(wlfDispContext* wlfDisp, DispClientContext* disp)
 	if (!wlfDisp || !wlfDisp->wlc || !disp)
 		return FALSE;
 
-	settings = wlfDisp->wlc->context.settings;
+	settings = wlfDisp->wlc->common.context.settings;
 
 	if (!settings)
 		return FALSE;

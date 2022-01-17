@@ -140,7 +140,7 @@ static void mf_scale_mouse_coordinates(mfContext *mfc, UINT16 *px, UINT16 *py)
 	*py = y;
 }
 
-void mf_scale_mouse_event(void *context, rdpInput *input, UINT16 flags, UINT16 x, UINT16 y)
+void mf_scale_mouse_event(void *context, UINT16 flags, UINT16 x, UINT16 y)
 {
 	mfContext *mfc = (mfContext *)context;
 	MRDPView *view = (MRDPView *)mfc->view;
@@ -149,10 +149,10 @@ void mf_scale_mouse_event(void *context, rdpInput *input, UINT16 flags, UINT16 x
 
 	if ((flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL)) == 0)
 		mf_scale_mouse_coordinates(mfc, &x, &y);
-	freerdp_input_send_mouse_event(input, flags, x, y);
+	freerdp_client_send_button_event(&mfc->common, flags, x, y);
 }
 
-void mf_scale_mouse_event_ex(void *context, rdpInput *input, UINT16 flags, UINT16 x, UINT16 y)
+void mf_scale_mouse_event_ex(void *context, UINT16 flags, UINT16 x, UINT16 y)
 {
 	mfContext *mfc = (mfContext *)context;
 	MRDPView *view = (MRDPView *)mfc->view;
@@ -160,7 +160,7 @@ void mf_scale_mouse_event_ex(void *context, rdpInput *input, UINT16 flags, UINT1
 	y = [view frame].size.height - y;
 
 	mf_scale_mouse_coordinates(mfc, &x, &y);
-	freerdp_input_send_extended_mouse_event(input, flags, x, y);
+	freerdp_client_send_extended_button_event(&mfc->common, flags, x, y);
 }
 
 void mf_press_mouse_button(void *context, rdpInput *input, int button, int x, int y, BOOL down)

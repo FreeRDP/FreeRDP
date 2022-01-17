@@ -879,7 +879,7 @@ static UINT wf_rail_server_start_cmd(RailClientContext* context)
 	RAIL_SYSPARAM_ORDER sysparam = { 0 };
 	RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
 	wfContext* wfc = (wfContext*)context->custom;
-	rdpSettings* settings = wfc->context.settings;
+	rdpSettings* settings = wfc->common.context.settings;
 	clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
 
 	if (settings->AutoReconnectionEnabled)

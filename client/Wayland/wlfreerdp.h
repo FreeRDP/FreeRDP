@@ -51,7 +51,7 @@ typedef struct touch_contact
 
 struct wlf_context
 {
-	rdpContext context;
+	rdpClientContext common;
 
 	UwacDisplay* display;
 	HANDLE displayHandle;
@@ -63,14 +63,10 @@ struct wlf_context
 	BOOL focusing;
 
 	/* Channels */
-	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
 	wfClipboard* clipboard;
 	wlfDispContext* disp;
-#if defined(CHANNEL_AINPUT_CLIENT)
-	AInputClientContext* ainput;
-#endif
 
 	wLog* log;
 	CRITICAL_SECTION critical;

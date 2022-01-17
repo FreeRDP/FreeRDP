@@ -45,8 +45,6 @@
 	if (y < 0)                  \
 	y = 0
 
-static BOOL xf_send_button_event(xfContext* xfc, UINT16 mflags, INT32 x, INT32 y);
-
 static const char* x11_event_string(int event)
 {
 	switch (event)
@@ -181,7 +179,7 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 
 	obj = ArrayList_Object(xfc->xevents);
 	obj->fnObjectFree = free;
-	sprintf_s(command, sizeof(command), "%s xevent", xfc->context.settings->ActionScript);
+	sprintf_s(command, sizeof(command), "%s xevent", xfc->common.context.settings->ActionScript);
 	actionScript = popen(command, "r");
 
 	if (!actionScript)
@@ -249,8 +247,9 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 	if (!match)
 		return FALSE;
 
-	sprintf_s(command, sizeof(command), "%s xevent %s %lu", xfc->context.settings->ActionScript,
-	          xeventName, (unsigned long)xfc->window->handle);
+	sprintf_s(command, sizeof(command), "%s xevent %s %lu",
+	          xfc->common.context.settings->ActionScript, xeventName,
+	          (unsigned long)xfc->window->handle);
 	actionScript = popen(command, "r");
 
 	if (!actionScript)
@@ -271,10 +270,10 @@ void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
 	rdpSettings* settings;
 	INT64 tx, ty;
 
-	if (!xfc || !xfc->context.settings || !y || !x)
+	if (!xfc || !xfc->common.context.settings || !y || !x)
 		return;
 
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 	tx = *x;
 	ty = *y;
 	if (!xfc->remote_app)
@@ -301,10 +300,10 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 {
 	rdpSettings* settings;
 
-	if (!xfc || !xfc->context.settings || !y || !x)
+	if (!xfc || !xfc->common.context.settings || !y || !x)
 		return;
 
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 
 	if (!xfc->remote_app)
 	{
@@ -327,7 +326,7 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 {
 	int x, y;
 	int w, h;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 
 	if (!app && (settings->SmartSizing || settings->MultiTouchGestures))
 	{
@@ -346,7 +345,7 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 
 	if (!app)
 	{
-		if (xfc->context.gdi->gfx)
+		if (xfc->common.context.gdi->gfx)
 		{
 			xf_OutputExpose(xfc, x, y, w, h);
 			return TRUE;
@@ -378,9 +377,9 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 {
 	rdpInput* input;
 	Window childWindow;
-	input = xfc->context.input;
+	input = xfc->common.context.input;
 
-	if (!xfc->context.settings->MouseMotion)
+	if (!xfc->common.context.settings->MouseMotion)
 	{
 		if ((state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
 			return TRUE;
@@ -398,7 +397,7 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 	}
 
 	xf_event_adjust_coordinates(xfc, &x, &y);
-	xf_send_button_event(xfc, PTR_FLAGS_MOVE, x, y);
+	freerdp_client_send_button_event(&xfc->common, PTR_FLAGS_MOVE, (UINT16)x, (UINT16)y);
 
 	if (xfc->fullscreen && !app)
 	{
@@ -418,98 +417,10 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOO
 	return xf_generic_MotionNotify(xfc, event->x, event->y, event->state, event->window, app);
 }
 
-static BOOL xf_send_wheel_event(xfContext* xfc, UINT16 mflags)
-{
-	WINPR_ASSERT(xfc);
-
-	if (xfc->ainput)
-	{
-		UINT64 flags = 0;
-		INT32 x = 0, y = 0;
-		if (mflags & PTR_FLAGS_WHEEL)
-		{
-			flags |= AINPUT_FLAGS_WHEEL;
-			x = flags & 0xff;
-			if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
-				x = -x;
-		}
-		if (mflags & PTR_FLAGS_HWHEEL)
-		{
-			flags |= AINPUT_FLAGS_HWHEEL;
-			y = flags & 0xff;
-			if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
-				y = -y;
-		}
-
-		WINPR_ASSERT(xfc->ainput->AInputSendInputEvent);
-		xfc->ainput->AInputSendInputEvent(xfc->ainput, flags, x, y);
-	}
-	else
-		freerdp_input_send_mouse_event(xfc->context.input, mflags, 0, 0);
-	return TRUE;
-}
-
-static BOOL xf_send_button_event(xfContext* xfc, UINT16 mflags, INT32 x, INT32 y)
-{
-	WINPR_ASSERT(xfc);
-	WINPR_ASSERT(x >= 0);
-	WINPR_ASSERT(y >= 0);
-
-	if (xfc->ainput)
-	{
-		UINT64 flags = 0;
-
-		if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MouseUseRelativeMove))
-			flags |= AINPUT_FLAGS_REL;
-		if (mflags & PTR_FLAGS_DOWN)
-			flags |= AINPUT_FLAGS_DOWN;
-		if (mflags & PTR_FLAGS_BUTTON1)
-			flags |= AINPUT_FLAGS_BUTTON1;
-		if (mflags & PTR_FLAGS_BUTTON2)
-			flags |= AINPUT_FLAGS_BUTTON2;
-		if (mflags & PTR_FLAGS_BUTTON2)
-			flags |= AINPUT_FLAGS_BUTTON3;
-
-		ainput_send_diff_event(xfc->ainput, flags, x, y);
-	}
-	else
-	{
-		WINPR_ASSERT(x <= UINT16_MAX);
-		WINPR_ASSERT(y <= UINT16_MAX);
-		freerdp_input_send_mouse_event(xfc->context.input, mflags, (UINT16)x, (UINT16)y);
-	}
-	return TRUE;
-}
-
-static BOOL xf_send_extended_button_event(xfContext* xfc, UINT16 mflags, INT32 x, INT32 y)
-{
-	WINPR_ASSERT(xfc);
-
-	if (xfc->ainput)
-	{
-		UINT64 flags = 0;
-
-		if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_MouseUseRelativeMove))
-			flags |= AINPUT_FLAGS_REL;
-		if (mflags & PTR_XFLAGS_DOWN)
-			flags |= AINPUT_FLAGS_DOWN;
-		if (mflags & PTR_XFLAGS_BUTTON1)
-			flags |= AINPUT_XFLAGS_BUTTON1;
-		if (mflags & PTR_XFLAGS_BUTTON2)
-			flags |= AINPUT_XFLAGS_BUTTON2;
-
-		ainput_send_diff_event(xfc->ainput, flags, x, y);
-	}
-	else
-		freerdp_input_send_extended_mouse_event(xfc->context.input, mflags, x, y);
-	return TRUE;
-}
-
 BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window window, BOOL app,
                             BOOL down)
 {
 	UINT16 flags = 0;
-	rdpInput* input;
 	Window childWindow;
 	size_t i;
 
@@ -524,14 +435,12 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
 		}
 	}
 
-	input = xfc->context.input;
-
 	if (flags != 0)
 	{
 		if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
 		{
 			if (down)
-				xf_send_wheel_event(xfc, flags);
+				freerdp_client_send_wheel_event(&xfc->common, flags);
 		}
 		else
 		{
@@ -564,9 +473,10 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
 			xf_event_adjust_coordinates(xfc, &x, &y);
 
 			if (extended)
-				xf_send_extended_button_event(xfc, flags, x, y);
+				freerdp_client_send_extended_button_event(&xfc->common, flags, (UINT16)x,
+				                                          (UINT16)y);
 			else
-				xf_send_button_event(xfc, flags, x, y);
+				freerdp_client_send_button_event(&xfc->common, flags, (UINT16)x, (UINT16)y);
 		}
 	}
 
@@ -759,7 +669,7 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 	Window childWindow;
 	xfAppWindow* appWindow;
 	rdpSettings* settings;
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 
 	if (!app)
 	{
@@ -780,7 +690,8 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 			xfc->offset_x = 0;
 			xfc->offset_y = 0;
 
-			if (xfc->context.settings->SmartSizing || xfc->context.settings->MultiTouchGestures)
+			if (xfc->common.context.settings->SmartSizing ||
+			    xfc->common.context.settings->MultiTouchGestures)
 			{
 				xfc->scaledWidth = xfc->window->width;
 				xfc->scaledHeight = xfc->window->height;
@@ -847,7 +758,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 	xfAppWindow* appWindow;
 
 	if (!app)
-		gdi_send_suppress_output(xfc->context.gdi, FALSE);
+		gdi_send_suppress_output(xfc->common.context.gdi, FALSE);
 	else
 	{
 		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
@@ -873,7 +784,7 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, const XUnmapEvent* event, BOOL 
 	xf_keyboard_release_all_keypress(xfc);
 
 	if (!app)
-		gdi_send_suppress_output(xfc->context.gdi, TRUE);
+		gdi_send_suppress_output(xfc->common.context.gdi, TRUE);
 	else
 	{
 		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
@@ -982,7 +893,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 			}
 		}
 		else if (minimizedChanged)
-			gdi_send_suppress_output(xfc->context.gdi, minimized);
+			gdi_send_suppress_output(xfc->common.context.gdi, minimized);
 	}
 
 	return TRUE;
@@ -1082,7 +993,7 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 	BOOL status = TRUE;
 	xfAppWindow* appWindow;
 	xfContext* xfc = (xfContext*)instance->context;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 
 	if (xfc->remote_app)
 	{

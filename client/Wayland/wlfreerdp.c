@@ -94,7 +94,7 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	if (!data || (rc != UWAC_SUCCESS))
 		goto fail;
 
-	gdi = context_w->context.gdi;
+	gdi = context_w->common.context.gdi;
 
 	if (!gdi)
 		goto fail;
@@ -113,13 +113,13 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 
 	if (!wlf_copy_image(gdi->primary_buffer, gdi->stride, gdi->width, gdi->height, data, stride,
 	                    geometry.width, geometry.height, &area,
-	                    context_w->context.settings->SmartSizing))
+	                    context_w->common.context.settings->SmartSizing))
 		goto fail;
 
-	if (!wlf_scale_coordinates(&context_w->context, &x, &y, FALSE))
+	if (!wlf_scale_coordinates(&context_w->common.context, &x, &y, FALSE))
 		goto fail;
 
-	if (!wlf_scale_coordinates(&context_w->context, &w, &h, FALSE))
+	if (!wlf_scale_coordinates(&context_w->common.context, &w, &h, FALSE))
 		goto fail;
 
 	if (UwacWindowAddDamage(context_w->window, x, y, w, h) != UWAC_SUCCESS)
@@ -161,10 +161,10 @@ static BOOL wl_refresh_display(wlfContext* context)
 {
 	rdpGdi* gdi;
 
-	if (!context || !context->context.gdi)
+	if (!context || !context->common.context.gdi)
 		return FALSE;
 
-	gdi = context->context.gdi;
+	gdi = context->common.context.gdi;
 	return wl_update_buffer(context, 0, 0, gdi->width, gdi->height);
 }
 
@@ -569,7 +569,7 @@ static int wlfreerdp_run(freerdp* instance)
 		if ((status != WAIT_TIMEOUT) && (status == WAIT_OBJECT_0))
 		{
 			timerEvent.now = GetTickCount64();
-			PubSub_OnTimer(context->context.pubSub, context, &timerEvent);
+			PubSub_OnTimer(context->common.context.pubSub, context, &timerEvent);
 		}
 	}
 
@@ -684,12 +684,6 @@ static int wfl_client_start(rdpContext* context)
 	return 0;
 }
 
-static int wfl_client_stop(rdpContext* context)
-{
-	WINPR_UNUSED(context);
-	return 0;
-}
-
 static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	ZeroMemory(pEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
@@ -701,7 +695,7 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->ClientNew = wlf_client_new;
 	pEntryPoints->ClientFree = wlf_client_free;
 	pEntryPoints->ClientStart = wfl_client_start;
-	pEntryPoints->ClientStop = wfl_client_stop;
+	pEntryPoints->ClientStop = freerdp_client_common_stop;
 	return 0;
 }
 

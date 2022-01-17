@@ -57,7 +57,8 @@
 /* Defines the JNI version supported by this library. */
 #define FREERDP_JNI_VERSION "3.0.0-dev"
 
-static void android_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
+static void android_OnChannelConnectedEventHandler(void* context,
+                                                   const ChannelConnectedEventArgs* e)
 {
 	rdpSettings* settings;
 	androidContext* afc;
@@ -69,28 +70,18 @@ static void android_OnChannelConnectedEventHandler(void* context, ChannelConnect
 	}
 
 	afc = (androidContext*)context;
-	settings = afc->rdpCtx.settings;
+	settings = afc->common.context.settings;
 
-	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
-	{
-		if (settings->SoftwareGdi)
-		{
-			gdi_graphics_pipeline_init(afc->rdpCtx.gdi, (RdpgfxClientContext*)e->pInterface);
-		}
-		else
-		{
-			WLog_WARN(TAG, "GFX without software GDI requested. "
-			               " This is not supported, add /gdi:sw");
-		}
-	}
-	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		android_cliprdr_init(afc, (CliprdrClientContext*)e->pInterface);
 	}
+	else
+		freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
 
 static void android_OnChannelDisconnectedEventHandler(void* context,
-                                                      ChannelDisconnectedEventArgs* e)
+                                                      const ChannelDisconnectedEventArgs* e)
 {
 	rdpSettings* settings;
 	androidContext* afc;
@@ -102,24 +93,14 @@ static void android_OnChannelDisconnectedEventHandler(void* context,
 	}
 
 	afc = (androidContext*)context;
-	settings = afc->rdpCtx.settings;
+	settings = afc->common.context.settings;
 
-	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
-	{
-		if (settings->SoftwareGdi)
-		{
-			gdi_graphics_pipeline_uninit(afc->rdpCtx.gdi, (RdpgfxClientContext*)e->pInterface);
-		}
-		else
-		{
-			WLog_WARN(TAG, "GFX without software GDI requested. "
-			               " This is not supported, add /gdi:sw");
-		}
-	}
-	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		android_cliprdr_uninit(afc, (CliprdrClientContext*)e->pInterface);
 	}
+	else
+		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
 }
 
 static BOOL android_begin_paint(rdpContext* context)
@@ -151,7 +132,7 @@ static BOOL android_end_paint(rdpContext* context)
 	if (!gdi || !gdi->primary || !gdi->primary->hdc)
 		return FALSE;
 
-	hwnd = ctx->rdpCtx.gdi->primary->hdc->hwnd;
+	hwnd = ctx->common.context.gdi->primary->hdc->hwnd;
 
 	if (!hwnd)
 		return FALSE;

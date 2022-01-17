@@ -48,7 +48,7 @@ static void xf_keyboard_send_key(xfContext* xfc, BOOL down, const XKeyEvent* ev)
 static BOOL xf_sync_kbd_state(xfContext* xfc)
 {
 	const UINT32 syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
-	return freerdp_input_send_synchronize_event(xfc->context.input, syncFlags);
+	return freerdp_input_send_synchronize_event(xfc->common.context.input, syncFlags);
 }
 
 static void xf_keyboard_clear(xfContext* xfc)
@@ -63,7 +63,7 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	char* keyCombination;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
-	xfc->actionScriptExists = winpr_PathFileExists(xfc->context.settings->ActionScript);
+	xfc->actionScriptExists = winpr_PathFileExists(xfc->common.context.settings->ActionScript);
 
 	if (!xfc->actionScriptExists)
 		return FALSE;
@@ -75,7 +75,7 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 
 	obj = ArrayList_Object(xfc->keyCombinations);
 	obj->fnObjectFree = free;
-	sprintf_s(command, sizeof(command), "%s key", xfc->context.settings->ActionScript);
+	sprintf_s(command, sizeof(command), "%s key", xfc->common.context.settings->ActionScript);
 	keyScript = popen(command, "r");
 
 	if (!keyScript)
@@ -118,10 +118,10 @@ static void xf_keyboard_action_script_free(xfContext* xfc)
 BOOL xf_keyboard_init(xfContext* xfc)
 {
 	xf_keyboard_clear(xfc);
-	xfc->KeyboardLayout = xfc->context.settings->KeyboardLayout;
-	xfc->KeyboardLayout =
-	    freerdp_keyboard_init_ex(xfc->KeyboardLayout, xfc->context.settings->KeyboardRemappingList);
-	xfc->context.settings->KeyboardLayout = xfc->KeyboardLayout;
+	xfc->KeyboardLayout = xfc->common.context.settings->KeyboardLayout;
+	xfc->KeyboardLayout = freerdp_keyboard_init_ex(
+	    xfc->KeyboardLayout, xfc->common.context.settings->KeyboardRemappingList);
+	xfc->common.context.settings->KeyboardLayout = xfc->KeyboardLayout;
 
 	if (xfc->modifierMap)
 		XFreeModifiermap(xfc->modifierMap);
@@ -187,9 +187,10 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 			// release tab before releasing the windows key.
 			// this stops the start menu from opening on unfocus event.
 			if (rdp_scancode == RDP_SCANCODE_LWIN)
-				freerdp_input_send_keyboard_event_ex(xfc->context.input, FALSE, RDP_SCANCODE_TAB);
+				freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE,
+				                                     RDP_SCANCODE_TAB);
 
-			freerdp_input_send_keyboard_event_ex(xfc->context.input, FALSE, rdp_scancode);
+			freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE, rdp_scancode);
 			xfc->KeyboardState[keycode] = FALSE;
 		}
 	}
@@ -210,7 +211,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, const XKeyEvent* event)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 
-	input = xfc->context.input;
+	input = xfc->common.context.input;
 	WINPR_ASSERT(input);
 
 	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(event->keycode);
@@ -229,7 +230,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, const XKeyEvent* event)
 	else
 	{
 		BOOL rc;
-		if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_UnicodeInput))
+		if (freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_UnicodeInput))
 		{
 			wchar_t buffer[32] = { 0 };
 			int rc = 0;
@@ -402,7 +403,7 @@ void xf_keyboard_focus_in(xfContext* xfc)
 	if (!xfc->display || !xfc->window)
 		return;
 
-	input = xfc->context.input;
+	input = xfc->common.context.input;
 	syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
 	freerdp_input_send_focus_in_event(input, syncFlags);
 	xk_keyboard_update_modifier_keys(xfc);
@@ -479,7 +480,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	if (!match)
 		return 1;
 
-	sprintf_s(command, sizeof(command), "%s key %s", xfc->context.settings->ActionScript,
+	sprintf_s(command, sizeof(command), "%s key %s", xfc->common.context.settings->ActionScript,
 	          combination);
 	keyScript = popen(command, "r");
 
@@ -574,7 +575,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 	if (!xfc->remote_app && xfc->settings->MultiTouchGestures)
 	{
-		rdpContext* ctx = &xfc->context;
+		rdpContext* ctx = &xfc->common.context;
 
 		if (mod.Ctrl && mod.Alt)
 		{

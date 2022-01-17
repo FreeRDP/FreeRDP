@@ -128,7 +128,7 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	int x2;
 	int y2;
 	const char* filter;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 
 	if (xfc->scaledWidth <= 0 || xfc->scaledHeight <= 0)
 	{
@@ -210,7 +210,7 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 
 BOOL xf_picture_transform_required(xfContext* xfc)
 {
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 
 	if ((xfc->offset_x != 0) || (xfc->offset_y != 0) ||
 	    (xfc->scaledWidth != (INT64)settings->DesktopWidth) ||
@@ -271,7 +271,7 @@ static BOOL xf_desktop_resize(rdpContext* context)
 
 #ifdef WITH_XRENDER
 
-	if (!xfc->context.settings->SmartSizing)
+	if (!xfc->common.context.settings->SmartSizing)
 	{
 		xfc->scaledWidth = settings->DesktopWidth;
 		xfc->scaledHeight = settings->DesktopHeight;
@@ -287,7 +287,7 @@ static BOOL xf_desktop_resize(rdpContext* context)
 	{
 #ifdef WITH_XRENDER
 
-		if (!xfc->context.settings->SmartSizing)
+		if (!xfc->common.context.settings->SmartSizing)
 #endif
 		{
 			/* Update the saved width and height values the window will be
@@ -412,7 +412,7 @@ static BOOL xf_hw_end_paint(rdpContext* context)
 	UINT32 w, h;
 	xfContext* xfc = (xfContext*)context;
 
-	if (xfc->context.gdi->suppressOutput)
+	if (xfc->common.context.gdi->suppressOutput)
 		return TRUE;
 
 	if (!xfc->remote_app)
@@ -560,8 +560,8 @@ BOOL xf_create_window(xfContext* xfc)
 	char* windowTitle;
 	rdpGdi* gdi;
 	rdpSettings* settings;
-	settings = xfc->context.settings;
-	gdi = xfc->context.gdi;
+	settings = xfc->common.context.settings;
+	gdi = xfc->common.context.gdi;
 	ZeroMemory(&xevent, sizeof(xevent));
 	width = settings->DesktopWidth;
 	height = settings->DesktopHeight;
@@ -649,7 +649,7 @@ BOOL xf_create_window(xfContext* xfc)
 
 	if (!xfc->image)
 	{
-		rdpGdi* cgdi = xfc->context.gdi;
+		rdpGdi* cgdi = xfc->common.context.gdi;
 		xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 		                          (char*)cgdi->primary_buffer, settings->DesktopWidth,
 		                          settings->DesktopHeight, xfc->scanline_pad, cgdi->stride);
@@ -780,7 +780,7 @@ xf_encomsp_participant_created(EncomspClientContext* context,
 		return ERROR_INVALID_PARAMETER;
 
 	xfc = context->custom;
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 
 	if (!settings)
 		return ERROR_INVALID_PARAMETER;
@@ -1119,7 +1119,7 @@ static void xf_button_map_init(xfContext* xfc)
 	x11_map[111] = 112;
 
 	/* query system for actual remapping */
-	if (xfc->context.settings->UnmapButtons)
+	if (xfc->common.context.settings->UnmapButtons)
 	{
 		xf_get_x11_button_map(xfc, x11_map);
 	}
@@ -1428,7 +1428,7 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 
 				if (WaitForSingleObject(events[1], 0) == WAIT_OBJECT_0)
 				{
-					if (!xf_process_x_events(xfc->context.instance))
+					if (!xf_process_x_events(xfc->common.context.instance))
 					{
 						running = FALSE;
 						break;
@@ -1447,7 +1447,7 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 	}
 
 	MessageQueue_PostQuit(queue, 0);
-	freerdp_abort_connect(xfc->context.instance);
+	freerdp_abort_connect(xfc->common.context.instance);
 	ExitThread(0);
 	return 0;
 }
@@ -1766,7 +1766,7 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 	return reason;
 }
 
-static void xf_TerminateEventHandler(void* context, TerminateEventArgs* e)
+static void xf_TerminateEventHandler(void* context, const TerminateEventArgs* e)
 {
 	rdpContext* ctx = (rdpContext*)context;
 	WINPR_UNUSED(e);
@@ -1774,10 +1774,10 @@ static void xf_TerminateEventHandler(void* context, TerminateEventArgs* e)
 }
 
 #ifdef WITH_XRENDER
-static void xf_ZoomingChangeEventHandler(void* context, ZoomingChangeEventArgs* e)
+static void xf_ZoomingChangeEventHandler(void* context, const ZoomingChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*)context;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 	int w = xfc->scaledWidth + e->dx;
 	int h = xfc->scaledHeight + e->dy;
 
@@ -1798,10 +1798,10 @@ static void xf_ZoomingChangeEventHandler(void* context, ZoomingChangeEventArgs* 
 	xf_draw_screen(xfc, 0, 0, settings->DesktopWidth, settings->DesktopHeight);
 }
 
-static void xf_PanningChangeEventHandler(void* context, PanningChangeEventArgs* e)
+static void xf_PanningChangeEventHandler(void* context, const PanningChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*)context;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 
 	if (e->dx == 0 && e->dy == 0)
 		return;
@@ -1841,25 +1841,10 @@ static int xfreerdp_client_start(rdpContext* context)
 		return -1;
 	}
 
-	if (!(xfc->thread = CreateThread(NULL, 0, xf_client_thread, context->instance, 0, NULL)))
+	if (!(xfc->common.thread = CreateThread(NULL, 0, xf_client_thread, context->instance, 0, NULL)))
 	{
 		WLog_ERR(TAG, "failed to create client thread");
 		return -1;
-	}
-
-	return 0;
-}
-
-static int xfreerdp_client_stop(rdpContext* context)
-{
-	xfContext* xfc = (xfContext*)context;
-	freerdp_abort_connect(context->instance);
-
-	if (xfc->thread)
-	{
-		WaitForSingleObject(xfc->thread, INFINITE);
-		CloseHandle(xfc->thread);
-		xfc->thread = NULL;
 	}
 
 	return 0;
@@ -2092,6 +2077,6 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->ClientNew = xfreerdp_client_new;
 	pEntryPoints->ClientFree = xfreerdp_client_free;
 	pEntryPoints->ClientStart = xfreerdp_client_start;
-	pEntryPoints->ClientStop = xfreerdp_client_stop;
+	pEntryPoints->ClientStop = freerdp_client_common_stop;
 	return 0;
 }

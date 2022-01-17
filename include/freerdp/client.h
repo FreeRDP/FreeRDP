@@ -20,8 +20,23 @@
 #ifndef FREERDP_CLIENT_H
 #define FREERDP_CLIENT_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <winpr/windows.h>
+#include <freerdp/event.h>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+#include <freerdp/client/ainput.h>
+#endif
+
+#if defined(CHANNEL_RDPEI_CLIENT)
+#include <freerdp/client/rdpei.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -65,13 +80,18 @@ extern "C"
 	typedef int (*pRdpClientEntry)(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 	/* Common Client Interface */
-
-#define DEFINE_RDP_CLIENT_COMMON() HANDLE thread
-
 	struct rdp_client_context
 	{
 		rdpContext context;
-		DEFINE_RDP_CLIENT_COMMON();
+		HANDLE thread;
+#if defined(CHANNEL_AINPUT_CLIENT)
+		INT32 lastX, lastY;
+		AInputClientContext* ainput;
+#endif
+
+#if defined(CHANNEL_RDPEI_CLIENT)
+		RdpeiClientContext* rdpei;
+#endif
 	};
 
 	/* Common client functions */
@@ -103,15 +123,20 @@ extern "C"
 	FREERDP_API BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** password,
 	                                            char** domain, rdp_auth_reason reason);
 
+	FREERDP_API void freerdp_client_OnChannelConnectedEventHandler(void* context,
+	                                                               const wEventArgs* e);
+	FREERDP_API void freerdp_client_OnChannelDisconnectedEventHandler(void* context,
+	                                                                  const wEventArgs* e);
+
 #if defined(WITH_FREERDP_DEPRECATED)
 	FREERDP_API WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",
 	                                 BOOL client_cli_authenticate(freerdp* instance,
 	                                                              char** username, char** password,
 	                                                              char** domain));
 	FREERDP_API
-	    WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",
-	                         BOOL client_cli_gw_authenticate(freerdp* instance, char** username,
-	                                                         char** password, char** domain));
+	WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",
+	                     BOOL client_cli_gw_authenticate(freerdp* instance, char** username,
+	                                                     char** password, char** domain));
 
 	FREERDP_API WINPR_DEPRECATED_VAR(
 	    "Use client_cli_verify_certificate_ex",
@@ -147,6 +172,16 @@ extern "C"
 	FREERDP_API BOOL client_auto_reconnect(freerdp* instance);
 	FREERDP_API BOOL client_auto_reconnect_ex(freerdp* instance,
 	                                          BOOL (*window_events)(freerdp* instance));
+
+	FREERDP_API BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags);
+
+	FREERDP_API BOOL freerdp_client_send_button_event(rdpClientContext* cctx, UINT16 mflags,
+	                                                  UINT16 x, UINT16 y);
+
+	FREERDP_API BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx,
+	                                                           UINT16 mflags, UINT16 x, UINT16 y);
+
+	FREERDP_API int freerdp_client_common_stop(rdpContext* context);
 
 #ifdef __cplusplus
 }

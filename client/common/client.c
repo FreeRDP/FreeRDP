@@ -33,6 +33,29 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 
+#if defined(CHANNEL_AINPUT_CLIENT)
+#include <freerdp/client/ainput.h>
+#include <freerdp/channels/ainput.h>
+#endif
+
+#if defined(CHANNEL_VIDEO_CLIENT)
+#include <freerdp/client/video.h>
+#include <freerdp/channels/video.h>
+#include <freerdp/gdi/video.h>
+#endif
+
+#if defined(CHANNEL_RDPGFX_CLIENT)
+#include <freerdp/client/rdpgfx.h>
+#include <freerdp/channels/rdpgfx.h>
+#include <freerdp/gdi/gfx.h>
+#endif
+
+#if defined(CHANNEL_GEOMETRY_CLIENT)
+#include <freerdp/client/geometry.h>
+#include <freerdp/channels/geometry.h>
+#include <freerdp/gdi/video.h>
+#endif
+
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
 
@@ -892,4 +915,227 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 
 	WLog_ERR(TAG, "Maximum reconnect retries exceeded");
 	return FALSE;
+}
+
+void freerdp_client_OnChannelConnectedEventHandler(void* context, const wEventArgs* ge)
+{
+	const ChannelConnectedEventArgs* e = (const ChannelConnectedEventArgs*)ge;
+	rdpClientContext* cctx = (rdpClientContext*)context;
+
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT(e);
+
+	if (0)
+	{
+	}
+#if defined(CHANNEL_AINPUT_CLIENT)
+	else if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
+		cctx->ainput = (AInputClientContext*)e->pInterface;
+#endif
+#if defined(CHANNEL_RDPEI_CLIENT)
+	else if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		cctx->rdpei = (RdpeiClientContext*)e->pInterface;
+	}
+#endif
+#if defined(CHANNEL_RDPGFX_CLIENT)
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_graphics_pipeline_init(cctx->context.gdi, (RdpgfxClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_GEOMETRY_CLIENT)
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_geometry_init(cctx->context.gdi, (GeometryClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_VIDEO_CLIENT)
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_control_init(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_data_init(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+#endif
+}
+
+void freerdp_client_OnChannelDisconnectedEventHandler(void* context, const wEventArgs* ge)
+{
+	const ChannelDisconnectedEventArgs* e = (const ChannelDisconnectedEventArgs*)ge;
+	rdpClientContext* cctx = (rdpClientContext*)context;
+
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT(e);
+
+	if (0)
+	{
+	}
+#if defined(CHANNEL_AINPUT_CLIENT)
+	else if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
+		cctx->ainput = NULL;
+#endif
+#if defined(CHANNEL_RDPEI_CLIENT)
+	else if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		cctx->rdpei = NULL;
+	}
+#endif
+#if defined(CHANNEL_RDPGFX_CLIENT)
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_graphics_pipeline_uninit(cctx->context.gdi, (RdpgfxClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_GEOMETRY_CLIENT)
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_geometry_uninit(cctx->context.gdi, (GeometryClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_VIDEO_CLIENT)
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_control_uninit(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_data_uninit(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+#endif
+}
+
+BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
+{
+	WINPR_ASSERT(cctx);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (cctx->ainput)
+	{
+		UINT64 flags = 0;
+		INT32 x = 0, y = 0;
+		if (mflags & PTR_FLAGS_WHEEL)
+		{
+			flags |= AINPUT_FLAGS_WHEEL;
+			x = flags & 0xff;
+			if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
+				x = -x;
+		}
+		if (mflags & PTR_FLAGS_HWHEEL)
+		{
+			flags |= AINPUT_FLAGS_HWHEEL;
+			y = flags & 0xff;
+			if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
+				y = -y;
+		}
+
+		WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
+		cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, x, y);
+	}
+	else
+#endif
+		freerdp_input_send_mouse_event(cctx->context.input, mflags, 0, 0);
+	return TRUE;
+}
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+static INLINE BOOL ainput_send_diff_event(rdpClientContext* cctx, UINT64 flags, INT32 x, INT32 y)
+{
+	UINT rc;
+	INT32 curX, curY;
+
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT(cctx->ainput);
+	WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
+
+	curX = x - cctx->lastX;
+	curY = y - cctx->lastY;
+	rc = cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, curX, curY);
+
+	cctx->lastX = curX;
+	cctx->lastY = curY;
+
+	return rc == CHANNEL_RC_OK;
+}
+#endif
+
+BOOL freerdp_client_send_button_event(rdpClientContext* cctx, UINT16 mflags, UINT16 x, UINT16 y)
+{
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT(x >= 0);
+	WINPR_ASSERT(y >= 0);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (cctx->ainput)
+	{
+		UINT64 flags = 0;
+
+		if (freerdp_settings_get_bool(cctx->context.settings, FreeRDP_MouseUseRelativeMove))
+			flags |= AINPUT_FLAGS_REL;
+		if (mflags & PTR_FLAGS_DOWN)
+			flags |= AINPUT_FLAGS_DOWN;
+		if (mflags & PTR_FLAGS_BUTTON1)
+			flags |= AINPUT_FLAGS_BUTTON1;
+		if (mflags & PTR_FLAGS_BUTTON2)
+			flags |= AINPUT_FLAGS_BUTTON2;
+		if (mflags & PTR_FLAGS_BUTTON2)
+			flags |= AINPUT_FLAGS_BUTTON3;
+
+		ainput_send_diff_event(cctx, flags, x, y);
+	}
+	else
+#endif
+	{
+		WINPR_ASSERT(x <= UINT16_MAX);
+		WINPR_ASSERT(y <= UINT16_MAX);
+		freerdp_input_send_mouse_event(cctx->context.input, mflags, (UINT16)x, (UINT16)y);
+	}
+	return TRUE;
+}
+
+BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, UINT16 mflags, UINT16 x,
+                                               UINT16 y)
+{
+	WINPR_ASSERT(cctx);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (cctx->ainput)
+	{
+		UINT64 flags = 0;
+
+		if (freerdp_settings_get_bool(cctx->context.settings, FreeRDP_MouseUseRelativeMove))
+			flags |= AINPUT_FLAGS_REL;
+		if (mflags & PTR_XFLAGS_DOWN)
+			flags |= AINPUT_FLAGS_DOWN;
+		if (mflags & PTR_XFLAGS_BUTTON1)
+			flags |= AINPUT_XFLAGS_BUTTON1;
+		if (mflags & PTR_XFLAGS_BUTTON2)
+			flags |= AINPUT_XFLAGS_BUTTON2;
+
+		ainput_send_diff_event(cctx, flags, x, y);
+	}
+	else
+#endif
+		freerdp_input_send_extended_mouse_event(cctx->context.input, mflags, x, y);
+
+	return TRUE;
+}
+
+int freerdp_client_common_stop(rdpContext* context)
+{
+	rdpClientContext* cctx = (rdpClientContext*)context;
+	WINPR_ASSERT(cctx);
+
+	freerdp_abort_connect(cctx->context.instance);
+
+	if (cctx->thread)
+	{
+		WaitForSingleObject(cctx->thread, INFINITE);
+		CloseHandle(cctx->thread);
+		cctx->thread = NULL;
+	}
+
+	return 0;
 }
