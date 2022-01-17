@@ -25,6 +25,7 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+#define AINPUT_CHANNEL_NAME "ainput"
 #define AINPUT_DVC_CHANNEL_NAME "FreeRDP::Advanced::Input"
 
 #endif /* FREERDP_CHANNEL_AINPUT_H */

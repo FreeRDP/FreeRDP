@@ -3535,7 +3535,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	/* Always load FreeRDP advanced input dynamic channel */
 #if defined(CHANNEL_AINPUT_CLIENT)
 	{
-		const char* p[] = { AINPUT_DVC_CHANNEL_NAME };
+		const char* p[] = { AINPUT_CHANNEL_NAME };
 
 		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
 			return FALSE;

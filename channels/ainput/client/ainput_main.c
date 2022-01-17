@@ -257,7 +257,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->AInputSendInputEvent = ainput_send_input_event;
 		ainput->iface.pInterface = (void*)context;
 
-		status = pEntryPoints->RegisterPlugin(pEntryPoints, "ainput", &ainput->iface);
+		status = pEntryPoints->RegisterPlugin(pEntryPoints, AINPUT_CHANNEL_NAME, &ainput->iface);
 	}
 
 	return status;
