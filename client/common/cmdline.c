@@ -2930,6 +2930,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->GrabMouse = enable;
 		}
+		CommandLineSwitchCase(arg, "mouse-relative")
+		{
+			settings->MouseUseRelativeMove = enable;
+		}
 		CommandLineSwitchCase(arg, "unmap-buttons")
 		{
 			settings->UnmapButtons = enable;
