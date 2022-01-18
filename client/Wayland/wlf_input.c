@@ -73,7 +73,7 @@ BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEven
 	WINPR_ASSERT(x <= UINT16_MAX);
 	WINPR_ASSERT(y <= UINT16_MAX);
 	cctx = (rdpClientContext*)instance->context;
-	return freerdp_client_send_button_event(cctx, PTR_FLAGS_MOVE, (UINT16)x, (UINT16)y);
+	return freerdp_client_send_button_event(cctx, FALSE, PTR_FLAGS_MOVE, x, y);
 }
 
 BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* ev)
@@ -95,7 +95,7 @@ BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* 
 
 	WINPR_ASSERT(x <= UINT16_MAX);
 	WINPR_ASSERT(y <= UINT16_MAX);
-	return freerdp_client_send_button_event(cctx, PTR_FLAGS_MOVE, (UINT16)x, (UINT16)y);
+	return freerdp_client_send_button_event(cctx, FALSE, PTR_FLAGS_MOVE, x, y);
 }
 
 BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent* ev)
@@ -153,10 +153,10 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent*
 	WINPR_ASSERT(y <= UINT16_MAX);
 
 	if ((flags & ~PTR_FLAGS_DOWN) != 0)
-		return freerdp_client_send_button_event(cctx, flags, (UINT16)x, (UINT16)y);
+		return freerdp_client_send_button_event(cctx, FALSE, flags, x, y);
 
 	if ((xflags & ~PTR_XFLAGS_DOWN) != 0)
-		return freerdp_client_send_extended_button_event(cctx, xflags, (UINT16)x, (UINT16)y);
+		return freerdp_client_send_extended_button_event(cctx, FALSE, xflags, x, y);
 
 	return FALSE;
 }
@@ -426,7 +426,7 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 
 		WINPR_ASSERT(x <= UINT16_MAX);
 		WINPR_ASSERT(y <= UINT16_MAX);
-		return freerdp_client_send_button_event(&wlf->common, flags, (UINT16)x, (UINT16)y);
+		return freerdp_client_send_button_event(&wlf->common, FALSE, flags, x, y);
 	}
 
 	if (!rdpei)
@@ -487,7 +487,7 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 
 		WINPR_ASSERT(x <= UINT16_MAX);
 		WINPR_ASSERT(y <= UINT16_MAX);
-		return freerdp_client_send_button_event(&wlf->common, flags, (UINT16)x, (UINT16)y);
+		return freerdp_client_send_button_event(&wlf->common, FALSE, flags, x, y);
 	}
 
 	WINPR_ASSERT(rdpei);
@@ -545,7 +545,7 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 
 		WINPR_ASSERT(x <= UINT16_MAX);
 		WINPR_ASSERT(y <= UINT16_MAX);
-		return freerdp_client_send_button_event(&wlf->common, flags, (UINT16)x, (UINT16)y);
+		return freerdp_client_send_button_event(&wlf->common, FALSE, flags, x, y);
 	}
 
 	if (!rdpei)

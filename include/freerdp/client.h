@@ -83,7 +83,6 @@ extern "C"
 		rdpContext context;
 		HANDLE thread;
 #if defined(CHANNEL_AINPUT_CLIENT)
-		INT32 lastX, lastY;
 		AInputClientContext* ainput;
 #endif
 
@@ -175,11 +174,12 @@ extern "C"
 
 	FREERDP_API BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags);
 
-	FREERDP_API BOOL freerdp_client_send_button_event(rdpClientContext* cctx, UINT16 mflags,
-	                                                  UINT16 x, UINT16 y);
+	FREERDP_API BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative,
+	                                                  UINT16 mflags, INT32 x, INT32 y);
 
 	FREERDP_API BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx,
-	                                                           UINT16 mflags, UINT16 x, UINT16 y);
+	                                                           BOOL relative, UINT16 mflags,
+	                                                           INT32 x, INT32 y);
 
 	FREERDP_API int freerdp_client_common_stop(rdpContext* context);
 

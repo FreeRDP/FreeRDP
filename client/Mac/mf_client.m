@@ -150,7 +150,7 @@ void mf_scale_mouse_event(void *context, UINT16 flags, UINT16 x, UINT16 y)
 
 	if ((flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL)) == 0)
 		mf_scale_mouse_coordinates(mfc, &x, &y);
-	freerdp_client_send_button_event(&mfc->common, flags, x, y);
+	freerdp_client_send_button_event(&mfc->common, FALSE, flags, x, y);
 }
 
 void mf_scale_mouse_event_ex(void *context, UINT16 flags, UINT16 x, UINT16 y)
@@ -161,7 +161,7 @@ void mf_scale_mouse_event_ex(void *context, UINT16 flags, UINT16 x, UINT16 y)
 	y = [view frame].size.height - y;
 
 	mf_scale_mouse_coordinates(mfc, &x, &y);
-	freerdp_client_send_extended_button_event(&mfc->common, flags, x, y);
+	freerdp_client_send_extended_button_event(&mfc->common, FALSE, flags, x, y);
 }
 
 void mf_press_mouse_button(void *context, int button, int x, int y, BOOL down)
