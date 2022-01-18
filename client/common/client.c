@@ -1055,8 +1055,18 @@ static INLINE BOOL ainput_send_diff_event(rdpClientContext* cctx, UINT64 flags, 
 	WINPR_ASSERT(cctx->ainput);
 	WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
 
-	curX = x - cctx->lastX;
-	curY = y - cctx->lastY;
+	if (freerdp_settings_get_bool(cctx->context.settings, FreeRDP_MouseUseRelativeMove))
+	{
+		flags |= AINPUT_FLAGS_REL;
+
+		curX = x - cctx->lastX;
+		curY = y - cctx->lastY;
+	}
+	else
+	{
+		curX = x;
+		curY = y;
+	}
 	rc = cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, curX, curY);
 
 	cctx->lastX = curX;
@@ -1079,8 +1089,6 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, UINT16 mflags, UIN
 	{
 		UINT64 flags = 0;
 
-		if (freerdp_settings_get_bool(cctx->context.settings, FreeRDP_MouseUseRelativeMove))
-			flags |= AINPUT_FLAGS_REL;
 		if (mflags & PTR_FLAGS_DOWN)
 			flags |= AINPUT_FLAGS_DOWN;
 		if (mflags & PTR_FLAGS_BUTTON1)
@@ -1113,8 +1121,6 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, UINT16 mf
 	{
 		UINT64 flags = 0;
 
-		if (freerdp_settings_get_bool(cctx->context.settings, FreeRDP_MouseUseRelativeMove))
-			flags |= AINPUT_FLAGS_REL;
 		if (mflags & PTR_XFLAGS_DOWN)
 			flags |= AINPUT_FLAGS_DOWN;
 		if (mflags & PTR_XFLAGS_BUTTON1)
