@@ -54,6 +54,14 @@ typedef struct ainput_server_
 
 } ainput_server;
 
+static BOOL ainput_server_is_open(ainput_server_context* context)
+{
+	ainput_server* ainput = (ainput_server*)context;
+
+	WINPR_ASSERT(ainput);
+	return ainput->thread != NULL;
+}
+
 /**
  * Function description
  *
@@ -108,6 +116,50 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 	return ainput->ainput_channel ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
+static UINT ainput_server_send_version(ainput_server* ainput, wStream* s)
+{
+	ULONG written;
+	WINPR_ASSERT(ainput);
+	WINPR_ASSERT(s);
+
+	Stream_SetPosition(s, 0);
+	if (!Stream_EnsureCapacity(s, 10))
+		return ERROR_OUTOFMEMORY;
+
+	Stream_Write_UINT16(s, MSG_AINPUT_VERSION);
+	Stream_Write_UINT32(s, AINPUT_VERSION_MAJOR); /* Version (4 bytes) */
+	Stream_Write_UINT32(s, AINPUT_VERSION_MINOR); /* Version (4 bytes) */
+
+	WINPR_ASSERT(Stream_GetPosition(s) <= ULONG_MAX);
+	if (!WTSVirtualChannelWrite(ainput->ainput_channel, (PCHAR)Stream_Buffer(s),
+	                            (ULONG)Stream_GetPosition(s), &written))
+	{
+		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
+{
+	UINT error = CHANNEL_RC_OK;
+	UINT64 flags;
+	INT32 x, y;
+
+	WINPR_ASSERT(ainput);
+	WINPR_ASSERT(s);
+
+	if (Stream_GetRemainingLength(s) < 16)
+		return ERROR_NO_DATA;
+
+	Stream_Read_UINT64(s, flags);
+	Stream_Read_INT32(s, x);
+	Stream_Read_INT32(s, y);
+	IFCALLRET(ainput->context.MouseEvent, error, &ainput->context, flags, x, y);
+
+	return error;
+}
 static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 {
 	wStream* s;
@@ -125,15 +177,7 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 
 	if ((error = ainput_server_open_channel(ainput)))
 	{
-		UINT error2 = 0;
 		WLog_ERR(TAG, "ainput_server_open_channel failed with error %" PRIu32 "!", error);
-		IFCALLRET(ainput->context.OpenResult, error2, &ainput->context,
-		          AINPUT_SERVER_OPEN_RESULT_NOTSUPPORTED);
-
-		if (error2)
-			WLog_ERR(TAG, "ainput server's OpenResult callback failed with error %" PRIu32 "",
-			         error2);
-
 		goto out;
 	}
 
@@ -154,8 +198,6 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 	events[nCount++] = ainput->stopEvent;
 	events[nCount++] = ChannelEvent;
 
-	/* Wait for the client to confirm that the Graphics Pipeline dynamic channel is ready */
-
 	while (1)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, 100);
@@ -169,9 +211,6 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 
 		if (status == WAIT_OBJECT_0)
 		{
-			IFCALLRET(ainput->context.OpenResult, error, &ainput->context,
-			          AINPUT_SERVER_OPEN_RESULT_CLOSED);
-
 			if (error)
 				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
 
@@ -181,9 +220,6 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 		if (WTSVirtualChannelQuery(ainput->ainput_channel, WTSVirtualChannelReady, &buffer,
 		                           &BytesReturned) == FALSE)
 		{
-			IFCALLRET(ainput->context.OpenResult, error, &ainput->context,
-			          AINPUT_SERVER_OPEN_RESULT_ERROR);
-
 			if (error)
 				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
 
@@ -195,9 +231,6 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 
 		if (ready)
 		{
-			IFCALLRET(ainput->context.OpenResult, error, &ainput->context,
-			          AINPUT_SERVER_OPEN_RESULT_OK);
-
 			if (error)
 				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
 
@@ -215,8 +248,18 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
+	if (ready)
+	{
+		if ((error = ainput_server_send_version(ainput, s)))
+		{
+			WLog_ERR(TAG, "audin_server_send_version failed with error %" PRIu32 "!", error);
+			goto out_capacity;
+		}
+	}
+
 	while (ready)
 	{
+		UINT16 MessageId;
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
@@ -232,7 +275,7 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 		Stream_SetPosition(s, 0);
 		WTSVirtualChannelRead(ainput->ainput_channel, 0, NULL, 0, &BytesReturned);
 
-		if (BytesReturned < 1)
+		if (BytesReturned < 2)
 			continue;
 
 		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
@@ -250,8 +293,19 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 			break;
 		}
 
-		IFCALLRET(ainput->context.Receive, error, &ainput->context, (BYTE*)Stream_Buffer(s),
-		          BytesReturned);
+		Stream_SetLength(s, BytesReturned);
+		Stream_Read_UINT16(s, MessageId);
+
+		switch (MessageId)
+		{
+			case MSG_AINPUT_MOUSE:
+				error = ainput_server_recv_mouse_event(ainput, s);
+				break;
+
+			default:
+				WLog_ERR(TAG, "audin_server_thread_func: unknown MessageId %" PRIu8 "", MessageId);
+				break;
+		}
 
 		if (error)
 		{
@@ -260,10 +314,12 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 		}
 	}
 
+out_capacity:
 	Stream_Free(s, TRUE);
+
+out:
 	WTSVirtualChannelClose(ainput->ainput_channel);
 	ainput->ainput_channel = NULL;
-out:
 
 	if (error && ainput->context.rdpcontext)
 		setChannelError(ainput->context.rdpcontext, error,
@@ -347,6 +403,7 @@ ainput_server_context* ainput_server_context_new(HANDLE vcm)
 
 	ainput->context.vcm = vcm;
 	ainput->context.Open = ainput_server_open;
+	ainput->context.IsOpen = ainput_server_is_open;
 	ainput->context.Close = ainput_server_close;
 
 	return &ainput->context;
@@ -355,6 +412,7 @@ ainput_server_context* ainput_server_context_new(HANDLE vcm)
 void ainput_server_context_free(ainput_server_context* context)
 {
 	ainput_server* ainput = (ainput_server*)context;
-	ainput_server_close(context);
+	if (ainput)
+		ainput_server_close(context);
 	free(ainput);
 }

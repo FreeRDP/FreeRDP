@@ -35,11 +35,12 @@ typedef struct _ainput_server_context ainput_server_context;
 
 typedef UINT (*psAInputServerOpen)(ainput_server_context* context);
 typedef UINT (*psAInputServerClose)(ainput_server_context* context);
+typedef BOOL (*psAInputServerIsOpen)(ainput_server_context* context);
 
 typedef UINT (*psAInputServerOpenResult)(ainput_server_context* context,
                                          AINPUT_SERVER_OPEN_RESULT result);
-typedef UINT (*psAInputServerReceive)(ainput_server_context* context, const BYTE* buffer,
-                                      UINT32 length);
+typedef UINT (*psAInputServerMouseEvent)(ainput_server_context* context, UINT64 flags, INT32 x,
+                                         INT32 y);
 
 struct _ainput_server_context
 {
@@ -57,16 +58,17 @@ struct _ainput_server_context
 	 * Close the ainput channel.
 	 */
 	psAInputServerClose Close;
+	/**
+	 * Status of the ainput channel.
+	 */
+	psAInputServerIsOpen IsOpen;
 
 	/*** Callbacks registered by the server. ***/
+
 	/**
-	 * Indicate whether the channel is opened successfully.
+	 * Receive ainput mouse event PDU.
 	 */
-	psAInputServerOpenResult OpenResult;
-	/**
-	 * Receive ainput response PDU.
-	 */
-	psAInputServerReceive Receive;
+	psAInputServerMouseEvent MouseEvent;
 
 	rdpContext* rdpcontext;
 };

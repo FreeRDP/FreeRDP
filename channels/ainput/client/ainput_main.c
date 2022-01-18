@@ -63,6 +63,8 @@ struct AINPUT_PLUGIN_
 
 	AINPUT_LISTENER_CALLBACK* listener_callback;
 	IWTSListener* listener;
+	UINT32 MajorVersion;
+	UINT32 MinorVersion;
 	BOOL initialized;
 };
 
@@ -73,8 +75,32 @@ struct AINPUT_PLUGIN_
  */
 static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-	WINPR_UNUSED(pChannelCallback);
-	WINPR_UNUSED(data);
+	UINT16 type;
+	UINT error;
+	AINPUT_PLUGIN* ainput;
+	AINPUT_CHANNEL_CALLBACK* callback = (AINPUT_CHANNEL_CALLBACK*)pChannelCallback;
+
+	WINPR_ASSERT(callback);
+	WINPR_ASSERT(data);
+
+	ainput = (AINPUT_PLUGIN*)callback->plugin;
+	WINPR_ASSERT(ainput);
+
+	if (Stream_GetRemainingLength(data) < 2)
+		return ERROR_NO_DATA;
+	Stream_Read_UINT16(data, type);
+	switch (type)
+	{
+		case MSG_AINPUT_VERSION:
+			if (Stream_GetRemainingLength(data) < 8)
+				return ERROR_NO_DATA;
+			Stream_Read_UINT32(data, ainput->MajorVersion);
+			Stream_Read_UINT32(data, ainput->MinorVersion);
+			break;
+		default:
+			WLog_WARN(TAG, "Received unsupported message type 0x%04" PRIx16, type);
+			break;
+	}
 
 	return CHANNEL_RC_OK;
 }
@@ -94,12 +120,16 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 	WINPR_ASSERT(ainput);
 	WINPR_ASSERT(ainput->listener_callback);
 
+	if (ainput->MajorVersion != AINPUT_VERSION_MAJOR)
+	{
+		WLog_WARN(TAG, "Unsupported channel version %" PRIu32 ".%" PRIu32 ", aborting.",
+		          ainput->MajorVersion, ainput->MinorVersion);
+	}
 	callback = ainput->listener_callback->channel_callback;
 	WINPR_ASSERT(callback);
 
-	/* Event version header */
-	Stream_Write_UINT16(s, 1);
-	Stream_Write_UINT16(s, 0);
+	/* Message type */
+	Stream_Write_UINT16(s, MSG_AINPUT_MOUSE);
 
 	/* Event data */
 	Stream_Write_UINT64(s, flags);
@@ -158,6 +188,7 @@ static UINT ainput_on_new_channel_connection(IWTSListenerCallback* pListenerCall
 	callback->plugin = listener_callback->plugin;
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = pChannel;
+	listener_callback->channel_callback = callback;
 
 	*ppCallback = &callback->iface;
 
@@ -197,6 +228,7 @@ static UINT ainput_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 	status = pChannelMgr->CreateListener(pChannelMgr, AINPUT_DVC_CHANNEL_NAME, 0,
 	                                     &ainput->listener_callback->iface, &ainput->listener);
 
+	ainput->listener->pInterface = ainput->iface.pInterface;
 	ainput->initialized = status == CHANNEL_RC_OK;
 	return status;
 }
