@@ -1009,11 +1009,14 @@ void freerdp_client_OnChannelDisconnectedEventHandler(void* context,
 
 BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 {
+	BOOL handled = FALSE;
+
 	WINPR_ASSERT(cctx);
 
 #if defined(CHANNEL_AINPUT_CLIENT)
 	if (cctx->ainput)
 	{
+		UINT rc;
 		UINT64 flags = 0;
 		INT32 x = 0, y = 0;
 		if (mflags & PTR_FLAGS_WHEEL)
@@ -1032,10 +1035,12 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 		}
 
 		WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
-		cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, x, y);
+		rc = cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, x, y);
+		if (rc == CHANNEL_RC_OK)
+			handled = TRUE;
 	}
-	else
 #endif
+	if (!handled)
 		freerdp_input_send_mouse_event(cctx->context.input, mflags, 0, 0);
 	return TRUE;
 }
@@ -1063,6 +1068,8 @@ static INLINE BOOL ainput_send_diff_event(rdpClientContext* cctx, UINT64 flags, 
 
 BOOL freerdp_client_send_button_event(rdpClientContext* cctx, UINT16 mflags, UINT16 x, UINT16 y)
 {
+	BOOL handled = FALSE;
+
 	WINPR_ASSERT(cctx);
 	WINPR_ASSERT(x >= 0);
 	WINPR_ASSERT(y >= 0);
@@ -1083,10 +1090,11 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, UINT16 mflags, UIN
 		if (mflags & PTR_FLAGS_BUTTON2)
 			flags |= AINPUT_FLAGS_BUTTON3;
 
-		ainput_send_diff_event(cctx, flags, x, y);
+		handled = ainput_send_diff_event(cctx, flags, x, y);
 	}
-	else
 #endif
+
+	if (!handled)
 	{
 		WINPR_ASSERT(x <= UINT16_MAX);
 		WINPR_ASSERT(y <= UINT16_MAX);

@@ -124,6 +124,7 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 	{
 		WLog_WARN(TAG, "Unsupported channel version %" PRIu32 ".%" PRIu32 ", aborting.",
 		          ainput->MajorVersion, ainput->MinorVersion);
+		return CHANNEL_RC_UNSUPPORTED_VERSION;
 	}
 	callback = ainput->listener_callback->channel_callback;
 	WINPR_ASSERT(callback);
