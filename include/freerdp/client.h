@@ -123,10 +123,10 @@ extern "C"
 
 	FREERDP_API void
 	freerdp_client_OnChannelConnectedEventHandler(void* context,
-	                                              const struct _ChannelConnectedEventArgs* e);
+	                                              const ChannelConnectedEventArgs* e);
 	FREERDP_API void
 	freerdp_client_OnChannelDisconnectedEventHandler(void* context,
-	                                                 const struct _ChannelDisconnectedEventArgs* e);
+	                                                 const ChannelDisconnectedEventArgs* e);
 
 #if defined(WITH_FREERDP_DEPRECATED)
 	FREERDP_API WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",

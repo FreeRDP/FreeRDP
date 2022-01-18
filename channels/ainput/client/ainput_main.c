@@ -76,7 +76,6 @@ struct AINPUT_PLUGIN_
 static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	UINT16 type;
-	UINT error;
 	AINPUT_PLUGIN* ainput;
 	AINPUT_CHANNEL_CALLBACK* callback = (AINPUT_CHANNEL_CALLBACK*)pChannelCallback;
 

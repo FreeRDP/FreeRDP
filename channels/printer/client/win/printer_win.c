@@ -36,6 +36,9 @@
 
 #include <freerdp/client/printer.h>
 
+#define WIDEN_INT(x) L##x
+#define WIDEN(x) WIDEN_INT(x)
+
 #define PRINTER_TAG CHANNELS_TAG("printer.client")
 #ifdef WITH_DEBUG_WINPR
 #define DEBUG_WINPR(...) WLog_DBG(PRINTER_TAG, __VA_ARGS__)
@@ -91,9 +94,9 @@ static WCHAR* printer_win_get_printjob_name(size_t id)
 	if (!str)
 		return NULL;
 
-	rc = swprintf_s(str, len, L"FreeRDP Print %04d-%02d-%02d% 02d-%02d-%02d - Job %" PRIuz "\0",
-	                t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec,
-	                id);
+	rc = swprintf_s(
+	    str, len, WIDEN("FreeRDP Print %04d-%02d-%02d% 02d-%02d-%02d - Job %" PRIuz L"\0"),
+	    t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, id);
 
 	return str;
 }

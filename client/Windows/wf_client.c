@@ -46,7 +46,6 @@
 #endif
 
 #include <freerdp/log.h>
-#include <freerdp/event.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 
