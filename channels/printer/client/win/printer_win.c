@@ -95,7 +95,8 @@ static WCHAR* printer_win_get_printjob_name(size_t id)
 		return NULL;
 
 	rc = swprintf_s(
-	    str, len, WIDEN("FreeRDP Print %04d-%02d-%02d% 02d-%02d-%02d - Job %" PRIuz L"\0"),
+	    str, len,
+	    WIDEN("FreeRDP Print %04d-%02d-%02d% 02d-%02d-%02d - Job %") WIDEN(PRIuz) WIDEN("\0"),
 	    t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, id);
 
 	return str;
