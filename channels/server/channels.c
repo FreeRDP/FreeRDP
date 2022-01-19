@@ -53,6 +53,12 @@
 #include <freerdp/server/rdpgfx.h>
 #include <freerdp/server/disp.h>
 
+#if defined(CHANNEL_AINPUT_SERVER)
+#include <freerdp/server/ainput.h>
+#endif
+
+extern void freerdp_channels_dummy(void);
+
 void freerdp_channels_dummy(void)
 {
 	audin_server_context* audin;
@@ -91,6 +97,12 @@ void freerdp_channels_dummy(void)
 	rdpgfx_server_context_free(rdpgfx);
 	disp = disp_server_context_new(NULL);
 	disp_server_context_free(disp);
+#if defined(CHANNEL_AINPUT_SERVER)
+	{
+		ainput_server_context* ainput = ainput_server_context_new(NULL);
+		ainput_server_context_free(ainput);
+	}
+#endif
 }
 
 /**
