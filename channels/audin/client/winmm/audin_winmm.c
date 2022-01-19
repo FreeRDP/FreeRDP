@@ -452,11 +452,11 @@ static UINT audin_winmm_open(IAudinDevice* device, AudinReceive receive, void* u
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_winmm_parse_addin_args(AudinWinmmDevice* device, ADDIN_ARGV* args)
+static UINT audin_winmm_parse_addin_args(AudinWinmmDevice* device, const ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*)device;
 	COMMAND_LINE_ARGUMENT_A audin_winmm_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                             NULL, NULL, -1, NULL, "audio device name" },
@@ -502,7 +502,7 @@ static UINT audin_winmm_parse_addin_args(AudinWinmmDevice* device, ADDIN_ARGV* a
  */
 UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	AudinWinmmDevice* winmm;
 	UINT error;
 
