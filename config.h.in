@@ -67,6 +67,9 @@
 #cmakedefine WITH_RDPDR
 
 /* Channels */
+#cmakedefine CHANNEL_AINPUT
+#cmakedefine CHANNEL_AINPUT_CLIENT
+#cmakedefine CHANNEL_AINPUT_SERVER
 #cmakedefine CHANNEL_AUDIN
 #cmakedefine CHANNEL_AUDIN_CLIENT
 #cmakedefine CHANNEL_AUDIN_SERVER
