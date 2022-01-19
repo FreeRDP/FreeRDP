@@ -1740,7 +1740,4 @@ UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	}
 
 	return error;
-fail:
-	rdpsnd_plugin_terminated(&rdpsnd->iface);
-	return error;
 }
