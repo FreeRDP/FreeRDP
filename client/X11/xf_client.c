@@ -768,6 +768,7 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	if (xfc->debug)
 	{
 		XUngrabKeyboard(xfc->display, CurrentTime);
+		XUngrabPointer(xfc->display, CurrentTime);
 	}
 
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
@@ -976,6 +977,7 @@ static int _xf_error_handler(Display* d, XErrorEvent* ev)
 	 */
 
 	XUngrabKeyboard(d, CurrentTime);
+	XUngrabPointer(d, CurrentTime);
 	return xf_error_handler(d, ev);
 }
 
