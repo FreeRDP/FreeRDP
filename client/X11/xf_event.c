@@ -504,8 +504,38 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
 
 	return TRUE;
 }
+
+static BOOL xf_grab_mouse(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+
+	if (!xfc->window)
+		return FALSE;
+
+	if (freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_GrabMouse))
+	{
+		XGrabPointer(xfc->display, xfc->window->handle, False,
+		             ButtonPressMask | ButtonReleaseMask | PointerMotionMask | FocusChangeMask |
+		                 EnterWindowMask | LeaveWindowMask,
+		             GrabModeAsync, GrabModeAsync, xfc->window->handle, None, CurrentTime);
+	}
+	return TRUE;
+}
+
+static BOOL xf_grab_kbd(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+
+	if (!xfc->window)
+		return FALSE;
+
+	XGrabKeyboard(xfc->display, xfc->window->handle, TRUE, GrabModeAsync, GrabModeAsync,
+	              CurrentTime);
+	return TRUE;
+}
 static BOOL xf_event_ButtonPress(xfContext* xfc, const XButtonEvent* event, BOOL app)
 {
+	xf_grab_mouse(xfc);
 	if (xfc->use_xinput)
 		return TRUE;
 
@@ -514,6 +544,7 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, const XButtonEvent* event, BOOL
 
 static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BOOL app)
 {
+	xf_grab_mouse(xfc);
 	if (xfc->use_xinput)
 		return TRUE;
 
@@ -550,11 +581,9 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 
 	if (xfc->mouse_active && !app)
 	{
-		if (!xfc->window)
+		xf_grab_mouse(xfc);
+		if (!xf_grab_kbd(xfc))
 			return FALSE;
-
-		XGrabKeyboard(xfc->display, xfc->window->handle, TRUE, GrabModeAsync, GrabModeAsync,
-		              CurrentTime);
 	}
 
 	/* Release all keys, should already be done at FocusOut but might be missed
@@ -652,8 +681,7 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, const XEnterWindowEvent* event,
 			XSetInputFocus(xfc->display, xfc->window->handle, RevertToPointerRoot, CurrentTime);
 
 		if (xfc->focused)
-			XGrabKeyboard(xfc->display, xfc->window->handle, TRUE, GrabModeAsync, GrabModeAsync,
-			              CurrentTime);
+			xf_grab_kbd(xfc);
 	}
 	else
 	{
