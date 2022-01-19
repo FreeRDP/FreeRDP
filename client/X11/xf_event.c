@@ -426,6 +426,21 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 
 	return TRUE;
 }
+
+BOOL xf_generic_RawMotionNotify(xfContext* xfc, int x, int y, Window window, BOOL app)
+{
+	WINPR_ASSERT(xfc);
+
+	if (app)
+	{
+		WLog_ERR(TAG, "Relative mouse input is not supported with remoate app mode!");
+		return FALSE;
+	}
+
+	freerdp_client_send_button_event(&xfc->common, TRUE, PTR_FLAGS_MOVE, x, y);
+	return TRUE;
+}
+
 static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOOL app)
 {
 	WINPR_ASSERT(xfc);
@@ -1187,4 +1202,57 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 	xf_input_handle_event(xfc, event);
 	XSync(xfc->display, FALSE);
 	return status;
+}
+
+BOOL xf_generic_RawButtonEvent(xfContext* xfc, int button, BOOL app, BOOL down)
+{
+	UINT16 flags = 0;
+	size_t i;
+
+	if (app)
+		return FALSE;
+
+	for (i = 0; i < ARRAYSIZE(xfc->button_map); i++)
+	{
+		const button_map* cur = &xfc->button_map[i];
+
+		if (cur->button == button)
+		{
+			flags = cur->flags;
+			break;
+		}
+	}
+
+	if (flags != 0)
+	{
+		if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
+		{
+			if (down)
+				freerdp_client_send_wheel_event(&xfc->common, flags);
+		}
+		else
+		{
+			BOOL extended = FALSE;
+
+			if (flags & (PTR_XFLAGS_BUTTON1 | PTR_XFLAGS_BUTTON2))
+			{
+				extended = TRUE;
+
+				if (down)
+					flags |= PTR_XFLAGS_DOWN;
+			}
+			else if (flags & (PTR_FLAGS_BUTTON1 | PTR_FLAGS_BUTTON2 | PTR_FLAGS_BUTTON3))
+			{
+				if (down)
+					flags |= PTR_FLAGS_DOWN;
+			}
+
+			if (extended)
+				freerdp_client_send_extended_button_event(&xfc->common, TRUE, flags, 0, 0);
+			else
+				freerdp_client_send_button_event(&xfc->common, TRUE, flags, 0, 0);
+		}
+	}
+
+	return TRUE;
 }
