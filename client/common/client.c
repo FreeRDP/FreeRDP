@@ -1016,3 +1016,125 @@ void freerdp_client_OnChannelDisconnectedEventHandler(void* context,
 	}
 #endif
 }
+
+BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
+{
+	BOOL handled = FALSE;
+
+	WINPR_ASSERT(cctx);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (cctx->ainput)
+	{
+		UINT rc;
+		UINT64 flags = 0;
+		INT32 x = 0, y = 0;
+		if (mflags & PTR_FLAGS_WHEEL)
+		{
+			flags |= AINPUT_FLAGS_WHEEL;
+			x = flags & 0xff;
+			if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
+				x = -x;
+		}
+		if (mflags & PTR_FLAGS_HWHEEL)
+		{
+			flags |= AINPUT_FLAGS_WHEEL;
+			y = flags & 0xff;
+			if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
+				y = -y;
+		}
+
+		WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
+		rc = cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, x, y);
+		if (rc == CHANNEL_RC_OK)
+			handled = TRUE;
+	}
+#endif
+	if (!handled)
+		freerdp_input_send_mouse_event(cctx->context.input, mflags, 0, 0);
+	return TRUE;
+}
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+static INLINE BOOL ainput_send_diff_event(rdpClientContext* cctx, UINT64 flags, INT32 x, INT32 y)
+{
+	UINT rc;
+
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT(cctx->ainput);
+	WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
+
+	rc = cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, x, y);
+
+	return rc == CHANNEL_RC_OK;
+}
+#endif
+
+BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UINT16 mflags, INT32 x,
+                                      INT32 y)
+{
+	BOOL handled = FALSE;
+
+	WINPR_ASSERT(cctx);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (cctx->ainput)
+	{
+		UINT64 flags = 0;
+
+		if (relative)
+			flags |= AINPUT_FLAGS_REL;
+		if (mflags & PTR_FLAGS_DOWN)
+			flags |= AINPUT_FLAGS_DOWN;
+		if (mflags & PTR_FLAGS_BUTTON1)
+			flags |= AINPUT_FLAGS_BUTTON1;
+		if (mflags & PTR_FLAGS_BUTTON2)
+			flags |= AINPUT_FLAGS_BUTTON2;
+		if (mflags & PTR_FLAGS_BUTTON3)
+			flags |= AINPUT_FLAGS_BUTTON3;
+		if (mflags & PTR_FLAGS_MOVE)
+			flags |= AINPUT_FLAGS_MOVE;
+		handled = ainput_send_diff_event(cctx, flags, x, y);
+	}
+#endif
+
+	if (!handled)
+	{
+		const rdpSettings* settings = cctx->context.settings;
+		static INT64 lastX = 0;
+		static INT64 lastY = 0;
+
+		lastX = MIN(MAX(lastX + x, 0), settings->DesktopWidth);
+		lastY = MIN(MAX(lastY + y, 0), settings->DesktopHeight);
+		freerdp_input_send_mouse_event(cctx->context.input, mflags, (UINT16)lastX, (UINT16)lastY);
+	}
+	return TRUE;
+}
+
+BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL relative, UINT16 mflags,
+                                               INT32 x, INT32 y)
+{
+	WINPR_ASSERT(cctx);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (cctx->ainput)
+	{
+		UINT64 flags = 0;
+
+		if (relative)
+			flags |= AINPUT_FLAGS_REL;
+		if (mflags & PTR_XFLAGS_DOWN)
+			flags |= AINPUT_FLAGS_DOWN;
+		if (mflags & PTR_XFLAGS_BUTTON1)
+			flags |= AINPUT_XFLAGS_BUTTON1;
+		if (mflags & PTR_XFLAGS_BUTTON2)
+			flags |= AINPUT_XFLAGS_BUTTON2;
+
+		ainput_send_diff_event(cctx, flags, x, y);
+	}
+	else
+#endif
+		freerdp_input_send_extended_mouse_event(cctx->context.input, mflags, x, y);
+
+	return TRUE;
+}

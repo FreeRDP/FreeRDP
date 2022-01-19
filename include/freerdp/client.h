@@ -172,6 +172,15 @@ extern "C"
 	FREERDP_API BOOL client_auto_reconnect_ex(freerdp* instance,
 	                                          BOOL (*window_events)(freerdp* instance));
 
+	FREERDP_API BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags);
+
+	FREERDP_API BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative,
+	                                                  UINT16 mflags, INT32 x, INT32 y);
+
+	FREERDP_API BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx,
+	                                                           BOOL relative, UINT16 mflags,
+	                                                           INT32 x, INT32 y);
+
 	FREERDP_API int freerdp_client_common_stop(rdpContext* context);
 
 #ifdef __cplusplus
