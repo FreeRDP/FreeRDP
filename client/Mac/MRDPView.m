@@ -98,7 +98,7 @@ static DWORD WINAPI mac_client_thread(void *param);
 	mfc->client_height = instance->settings->DesktopHeight;
 	mfc->client_width = instance->settings->DesktopWidth;
 
-	if (!(mfc->thread =
+	if (!(mfc->common.thread =
 	          CreateThread(NULL, 0, mac_client_thread, (void *)context, 0, &mfc->mainThreadId)))
 	{
 		WLog_ERR(TAG, "failed to create client thread");
@@ -142,7 +142,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	{
 		int status;
 		DWORD rc;
-		HANDLE events[16];
+		HANDLE events[16] = { 0 };
 		HANDLE inputEvent;
 		HANDLE inputThread = NULL;
 		DWORD nCount;
@@ -807,6 +807,8 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 
 - (void)setScrollOffset:(int)xOffset y:(int)yOffset w:(int)width h:(int)height
 {
+	WINPR_ASSERT(mfc);
+
 	mfc->yCurrentScroll = yOffset;
 	mfc->xCurrentScroll = xOffset;
 	mfc->client_height = height;
@@ -815,8 +817,14 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 
 static void mac_OnChannelConnectedEventHandler(void *context, const ChannelConnectedEventArgs *e)
 {
+	rdpSettings *settings;
 	mfContext *mfc = (mfContext *)context;
-	rdpSettings *settings = mfc->context.settings;
+
+	WINPR_ASSERT(mfc);
+	WINPR_ASSERT(e);
+
+	settings = mfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -824,7 +832,8 @@ static void mac_OnChannelConnectedEventHandler(void *context, const ChannelConne
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_init(mfc->context.gdi, (RdpgfxClientContext *)e->pInterface);
+			gdi_graphics_pipeline_init(mfc->common.context.gdi,
+			                           (RdpgfxClientContext *)e->pInterface);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -838,8 +847,14 @@ static void mac_OnChannelConnectedEventHandler(void *context, const ChannelConne
 static void mac_OnChannelDisconnectedEventHandler(void *context,
                                                   const ChannelDisconnectedEventArgs *e)
 {
+	rdpSettings *settings;
 	mfContext *mfc = (mfContext *)context;
-	rdpSettings *settings = mfc->context.settings;
+
+	WINPR_ASSERT(mfc);
+	WINPR_ASSERT(e);
+
+	settings = mfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -847,7 +862,8 @@ static void mac_OnChannelDisconnectedEventHandler(void *context,
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_uninit(mfc->context.gdi, (RdpgfxClientContext *)e->pInterface);
+			gdi_graphics_pipeline_uninit(mfc->common.context.gdi,
+			                             (RdpgfxClientContext *)e->pInterface);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -861,10 +877,16 @@ static void mac_OnChannelDisconnectedEventHandler(void *context,
 BOOL mac_pre_connect(freerdp *instance)
 {
 	rdpSettings *settings;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->update);
+
 	instance->update->BeginPaint = mac_begin_paint;
 	instance->update->EndPaint = mac_end_paint;
 	instance->update->DesktopResize = mac_desktop_resize;
+
 	settings = instance->settings;
+	WINPR_ASSERT(settings);
 
 	if (!settings->ServerHostname)
 	{
@@ -1284,8 +1306,8 @@ BOOL mac_end_paint(rdpContext *context)
 
 	ww = mfc->client_width;
 	wh = mfc->client_height;
-	dw = mfc->context.settings->DesktopWidth;
-	dh = mfc->context.settings->DesktopHeight;
+	dw = mfc->common.context.settings->DesktopWidth;
+	dh = mfc->common.context.settings->DesktopHeight;
 
 	if ((!context) || (!context->gdi))
 		return FALSE;
@@ -1299,7 +1321,7 @@ BOOL mac_end_paint(rdpContext *context)
 	newDrawRect.size.width = invalid->w;
 	newDrawRect.size.height = invalid->h;
 
-	if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
+	if (mfc->common.context.settings->SmartSizing && (ww != dw || wh != dh))
 	{
 		newDrawRect.origin.y = newDrawRect.origin.y * wh / dh - 1;
 		newDrawRect.size.height = newDrawRect.size.height * wh / dh + 1;

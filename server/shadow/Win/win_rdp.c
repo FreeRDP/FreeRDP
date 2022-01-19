@@ -245,7 +245,7 @@ static int shw_freerdp_client_start(rdpContext* context)
 	freerdp* instance = context->instance;
 	shw = (shwContext*)context;
 
-	if (!(shw->thread = CreateThread(NULL, 0, shw_client_thread, instance, 0, NULL)))
+	if (!(shw->common.thread = CreateThread(NULL, 0, shw_client_thread, instance, 0, NULL)))
 	{
 		WLog_ERR(TAG, "Failed to create thread");
 		return -1;

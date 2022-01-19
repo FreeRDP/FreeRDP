@@ -889,14 +889,18 @@ static UINT wlf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegat
 wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 {
 	rdpChannels* channels;
-	wfClipboard* clipboard = (wfClipboard*)calloc(1, sizeof(wfClipboard));
+	wfClipboard* clipboard;
+
+	WINPR_ASSERT(wfc);
+
+	clipboard = (wfClipboard*)calloc(1, sizeof(wfClipboard));
 
 	if (!clipboard)
 		goto fail;
 
 	InitializeCriticalSection(&clipboard->lock);
 	clipboard->wfc = wfc;
-	channels = wfc->context.channels;
+	channels = wfc->common.context.channels;
 	clipboard->log = WLog_Get(TAG);
 	clipboard->channels = channels;
 	clipboard->system = ClipboardCreate();

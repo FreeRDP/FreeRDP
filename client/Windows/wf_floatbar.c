@@ -699,7 +699,7 @@ wfFloatBar* wf_floatbar_new(wfContext* wfc, HINSTANCE window, DWORD flags)
 	if (!update_locked_state(floatbar))
 		goto fail;
 
-	if (!wf_floatbar_toggle_fullscreen(floatbar, wfc->context.settings->Fullscreen))
+	if (!wf_floatbar_toggle_fullscreen(floatbar, wfc->common.context.settings->Fullscreen))
 		goto fail;
 
 	return floatbar;

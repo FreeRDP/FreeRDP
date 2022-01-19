@@ -29,8 +29,7 @@
 
 typedef struct
 {
-	rdpContext context;
-	DEFINE_RDP_CLIENT_COMMON();
+	rdpClientContext common;
 
 	void* view;
 	BOOL view_ownership;

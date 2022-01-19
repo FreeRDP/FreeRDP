@@ -30,8 +30,7 @@ typedef struct shw_context shwContext;
 
 struct shw_context
 {
-	rdpContext context;
-	DEFINE_RDP_CLIENT_COMMON();
+	rdpClientContext common;
 
 	HANDLE StopEvent;
 	freerdp* instance;

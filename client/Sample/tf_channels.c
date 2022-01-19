@@ -79,6 +79,7 @@ void tf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEven
 
 	WINPR_ASSERT(tf);
 	WINPR_ASSERT(e);
+
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		tf->rdpei = (RdpeiClientContext*)e->pInterface;
@@ -86,7 +87,7 @@ void tf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEven
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		RdpgfxClientContext* gfx = (RdpgfxClientContext*)e->pInterface;
-		gdi_graphics_pipeline_init(tf->context.gdi, gfx);
+		gdi_graphics_pipeline_init(tf->common.context.gdi, gfx);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -109,13 +110,14 @@ void tf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnect
 
 	WINPR_ASSERT(tf);
 	WINPR_ASSERT(e);
+
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		tf->rdpei = NULL;
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_graphics_pipeline_uninit(tf->context.gdi, (RdpgfxClientContext*)e->pInterface);
+		gdi_graphics_pipeline_uninit(tf->common.context.gdi, (RdpgfxClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{

@@ -71,19 +71,20 @@ static void android_OnChannelConnectedEventHandler(void* context,
 	}
 
 	afc = (androidContext*)context;
-	settings = afc->rdpCtx.settings;
+	settings = afc->common.context.settings;
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
 		{
-			gdi_graphics_pipeline_init(afc->rdpCtx.gdi, (RdpgfxClientContext*)e->pInterface);
+			gdi_graphics_pipeline_init(afc->common.context.gdi,
+			                           (RdpgfxClientContext*)e->pInterface);
 		}
-		else
-		{
-			WLog_WARN(TAG, "GFX without software GDI requested. "
-			               " This is not supported, add /gdi:sw");
-		}
+	else
+	{
+		WLog_WARN(TAG, "GFX without software GDI requested. "
+			           " This is not supported, add /gdi:sw");
+	}
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -104,19 +105,20 @@ static void android_OnChannelDisconnectedEventHandler(void* context,
 	}
 
 	afc = (androidContext*)context;
-	settings = afc->rdpCtx.settings;
+	settings = afc->common.context.settings;
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
 		{
-			gdi_graphics_pipeline_uninit(afc->rdpCtx.gdi, (RdpgfxClientContext*)e->pInterface);
+			gdi_graphics_pipeline_uninit(afc->common.context.gdi,
+			                             (RdpgfxClientContext*)e->pInterface);
 		}
-		else
-		{
-			WLog_WARN(TAG, "GFX without software GDI requested. "
-			               " This is not supported, add /gdi:sw");
-		}
+	else
+	{
+		WLog_WARN(TAG, "GFX without software GDI requested. "
+			           " This is not supported, add /gdi:sw");
+	}
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -153,7 +155,7 @@ static BOOL android_end_paint(rdpContext* context)
 	if (!gdi || !gdi->primary || !gdi->primary->hdc)
 		return FALSE;
 
-	hwnd = ctx->rdpCtx.gdi->primary->hdc->hwnd;
+	hwnd = ctx->common.context.gdi->primary->hdc->hwnd;
 
 	if (!hwnd)
 		return FALSE;
@@ -528,7 +530,7 @@ static int android_freerdp_run(freerdp* instance)
 		count += tmp;
 		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 
-		if ((status == WAIT_FAILED))
+		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForMultipleObjects failed with %" PRIu32 " [%08lX]", status,
 			         GetLastError());

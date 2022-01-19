@@ -64,7 +64,9 @@ wlf_encomsp_participant_created(EncomspClientContext* context,
 		return ERROR_INVALID_PARAMETER;
 
 	wlf = (wlfContext*)context->custom;
-	settings = wlf->context.settings;
+	WINPR_ASSERT(wlf);
+
+	settings = wlf->common.context.settings;
 
 	if (!settings)
 		return ERROR_INVALID_PARAMETER;
@@ -103,13 +105,16 @@ void wlf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 {
 	wlfContext* wlf = (wlfContext*)context;
 
+	WINPR_ASSERT(wlf);
+	WINPR_ASSERT(e);
+
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		wlf->rdpei = (RdpeiClientContext*)e->pInterface;
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_graphics_pipeline_init(wlf->context.gdi, (RdpgfxClientContext*)e->pInterface);
+		gdi_graphics_pipeline_init(wlf->common.context.gdi, (RdpgfxClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -128,15 +133,15 @@ void wlf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 	}
 	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_video_geometry_init(wlf->context.gdi, (GeometryClientContext*)e->pInterface);
+		gdi_video_geometry_init(wlf->common.context.gdi, (GeometryClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_video_control_init(wlf->context.gdi, (VideoClientContext*)e->pInterface);
+		gdi_video_control_init(wlf->common.context.gdi, (VideoClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_video_data_init(wlf->context.gdi, (VideoClientContext*)e->pInterface);
+		gdi_video_data_init(wlf->common.context.gdi, (VideoClientContext*)e->pInterface);
 	}
 }
 
@@ -144,13 +149,16 @@ void wlf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 {
 	wlfContext* wlf = (wlfContext*)context;
 
+	WINPR_ASSERT(wlf);
+	WINPR_ASSERT(e);
+
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		wlf->rdpei = NULL;
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_graphics_pipeline_uninit(wlf->context.gdi, (RdpgfxClientContext*)e->pInterface);
+		gdi_graphics_pipeline_uninit(wlf->common.context.gdi, (RdpgfxClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -169,14 +177,14 @@ void wlf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	}
 	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_video_geometry_uninit(wlf->context.gdi, (GeometryClientContext*)e->pInterface);
+		gdi_video_geometry_uninit(wlf->common.context.gdi, (GeometryClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_video_control_uninit(wlf->context.gdi, (VideoClientContext*)e->pInterface);
+		gdi_video_control_uninit(wlf->common.context.gdi, (VideoClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_video_data_uninit(wlf->context.gdi, (VideoClientContext*)e->pInterface);
+		gdi_video_data_uninit(wlf->common.context.gdi, (VideoClientContext*)e->pInterface);
 	}
 }

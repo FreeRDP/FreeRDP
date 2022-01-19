@@ -25,6 +25,7 @@
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
+#include <winpr/assert.h>
 #include <winpr/wlog.h>
 #include <winpr/print.h>
 
@@ -153,7 +154,13 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	Window root_window;
 	Window child_window;
 	RAIL_WINDOW_MOVE_ORDER windowMove;
-	rdpInput* input = xfc->context.input;
+	rdpInput* input;
+
+	WINPR_ASSERT(xfc);
+
+	input = xfc->common.context.input;
+	WINPR_ASSERT(input);
+
 	/*
 	 * For keyboard moves send and explicit update to RDP server
 	 */
@@ -792,13 +799,19 @@ static void xf_rail_register_update_callbacks(rdpUpdate* update)
 static UINT xf_rail_server_execute_result(RailClientContext* context,
                                           const RAIL_EXEC_RESULT_ORDER* execResult)
 {
-	xfContext* xfc = (xfContext*)context->custom;
+	xfContext* xfc;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(execResult);
+
+	xfc = (xfContext*)context->custom;
+	WINPR_ASSERT(xfc);
 
 	if (execResult->execResult != RAIL_EXEC_S_OK)
 	{
 		WLog_ERR(TAG, "RAIL exec error: execResult=%s NtError=0x%X\n",
 		         error_code_names[execResult->execResult], execResult->rawResult);
-		freerdp_abort_connect(xfc->context.instance);
+		freerdp_abort_connect(xfc->common.context.instance);
 	}
 	else
 	{
@@ -826,8 +839,17 @@ static UINT xf_rail_server_start_cmd(RailClientContext* context)
 	RAIL_EXEC_ORDER exec = { 0 };
 	RAIL_SYSPARAM_ORDER sysparam = { 0 };
 	RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
-	xfContext* xfc = (xfContext*)context->custom;
-	rdpSettings* settings = xfc->context.settings;
+	xfContext* xfc;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(context);
+
+	xfc = (xfContext*)context->custom;
+	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
 	clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
 
 	if (settings->AutoReconnectionEnabled)
@@ -1111,7 +1133,7 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 		wObject* obj = HashTable_ValueObject(xfc->railWindows);
 		obj->fnObjectFree = rail_window_free;
 	}
-	xfc->railIconCache = RailIconCache_New(xfc->context.settings);
+	xfc->railIconCache = RailIconCache_New(xfc->common.context.settings);
 
 	if (!xfc->railIconCache)
 	{

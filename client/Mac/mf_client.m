@@ -22,6 +22,9 @@
 #endif
 
 #include "mfreerdp.h"
+
+#include <winpr/assert.h>
+
 #include <freerdp/constants.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/client/cmdline.h>
@@ -65,12 +68,12 @@ static int mfreerdp_client_stop(rdpContext *context)
 	mfContext *mfc = (mfContext *)context;
 
 	freerdp_abort_connect(context->instance);
-	if (mfc->thread)
+	if (mfc->common.thread)
 	{
 		SetEvent(mfc->stopEvent);
-		WaitForSingleObject(mfc->thread, INFINITE);
-		CloseHandle(mfc->thread);
-		mfc->thread = NULL;
+		WaitForSingleObject(mfc->common.thread, INFINITE);
+		CloseHandle(mfc->common.thread);
+		mfc->common.thread = NULL;
 	}
 
 	if (mfc->view_ownership)
@@ -88,7 +91,12 @@ static BOOL mfreerdp_client_new(freerdp *instance, rdpContext *context)
 {
 	mfContext *mfc;
 	rdpSettings *settings;
+
+	WINPR_ASSERT(instance);
+
 	mfc = (mfContext *)instance->context;
+	WINPR_ASSERT(mfc);
+
 	mfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
@@ -121,10 +129,10 @@ static void mf_scale_mouse_coordinates(mfContext *mfc, UINT16 *px, UINT16 *py)
 	UINT16 y = *py;
 	UINT32 ww = mfc->client_width;
 	UINT32 wh = mfc->client_height;
-	UINT32 dw = mfc->context.settings->DesktopWidth;
-	UINT32 dh = mfc->context.settings->DesktopHeight;
+	UINT32 dw = mfc->common.context.settings->DesktopWidth;
+	UINT32 dh = mfc->common.context.settings->DesktopHeight;
 
-	if (!mfc->context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
+	if (!mfc->common.context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
 	{
 		y = y + mfc->yCurrentScroll;
 		x = x + mfc->xCurrentScroll;
@@ -205,6 +213,8 @@ void mf_press_mouse_button(void *context, rdpInput *input, int button, int x, in
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS *pEntryPoints)
 {
+	WINPR_ASSERT(pEntryPoints);
+
 	pEntryPoints->Version = 1;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
 	pEntryPoints->GlobalInit = mfreerdp_client_global_init;

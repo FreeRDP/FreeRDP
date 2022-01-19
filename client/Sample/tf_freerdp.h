@@ -30,7 +30,7 @@
 
 typedef struct
 {
-	rdpContext context;
+	rdpClientContext common;
 
 	/* Channels */
 	RdpeiClientContext* rdpei;

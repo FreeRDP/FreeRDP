@@ -66,12 +66,10 @@ extern "C"
 
 	/* Common Client Interface */
 
-#define DEFINE_RDP_CLIENT_COMMON() HANDLE thread
-
 	struct rdp_client_context
 	{
 		rdpContext context;
-		DEFINE_RDP_CLIENT_COMMON();
+		HANDLE thread;
 	};
 
 	/* Common client functions */

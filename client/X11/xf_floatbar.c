@@ -21,6 +21,8 @@
 #include <X11/extensions/shape.h>
 #include <X11/cursorfont.h>
 
+#include <winpr/assert.h>
+
 #include "xf_floatbar.h"
 #include "resource/close.xbm"
 #include "resource/lock.xbm"
@@ -98,7 +100,7 @@ static BOOL xf_floatbar_button_onclick_close(xfFloatbar* floatbar)
 	if (!floatbar)
 		return FALSE;
 
-	return freerdp_abort_connect(floatbar->xfc->context.instance);
+	return freerdp_abort_connect(floatbar->xfc->common.context.instance);
 }
 
 static BOOL xf_floatbar_button_onclick_minimize(xfFloatbar* floatbar)

@@ -74,8 +74,7 @@ extern "C"
 
 	struct wf_context
 	{
-		rdpContext context;
-		DEFINE_RDP_CLIENT_COMMON();
+		rdpClientContext common;
 
 		int offset_x;
 		int offset_y;

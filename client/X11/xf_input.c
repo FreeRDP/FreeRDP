@@ -76,9 +76,13 @@ int xf_input_init(xfContext* xfc, Window window)
 	XIDeviceInfo* info;
 	XIEventMask evmasks[64];
 	int opcode, event, error;
+	const rdpSettings* settings;
 	BYTE masks[8][XIMaskLen(XI_LASTEVENT)] = { 0 };
 
 	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	memset(xfc->contacts, 0, sizeof(xfc->contacts));
 	xfc->firstDist = -1.0;
@@ -102,7 +106,7 @@ int xf_input_init(xfContext* xfc, Window window)
 		return -1;
 	}
 
-	if (xfc->context.settings->MultiTouchInput)
+	if (settings->MultiTouchInput)
 		xfc->use_xinput = TRUE;
 
 	info = XIQueryDevice(xfc->display, XIAllDevices, &ndevices);
@@ -129,7 +133,7 @@ int xf_input_init(xfContext* xfc, Window window)
 			XIAnyClassInfo* class = dev->classes[j];
 			XITouchClassInfo* t = (XITouchClassInfo*)class;
 
-			if (xfc->context.settings->MultiTouchInput)
+			if (xfc->common.context.settings->MultiTouchInput)
 			{
 				WLog_INFO(TAG, "%s (%d) \"%s\" id: %d", xf_input_get_class_string(class->type),
 				          class->type, dev->name, dev->deviceid);
@@ -143,7 +147,7 @@ int xf_input_init(xfContext* xfc, Window window)
 			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
 			    (strcmp(dev->name, "Virtual core pointer") != 0))
 			{
-				if (xfc->context.settings->MultiTouchInput)
+				if (settings->MultiTouchInput)
 				{
 					WLog_INFO(TAG, "%s %s touch device (id: %d, mode: %d), supporting %d touches.",
 					          dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
@@ -233,7 +237,7 @@ static void xf_input_detect_pan(xfContext* xfc)
 	rdpContext* ctx;
 
 	WINPR_ASSERT(xfc);
-	ctx = &xfc->context;
+	ctx = &xfc->common.context;
 	WINPR_ASSERT(ctx);
 
 	if (xfc->active_contacts != 2)
@@ -321,7 +325,7 @@ static void xf_input_detect_pinch(xfContext* xfc)
 	rdpContext* ctx;
 
 	WINPR_ASSERT(xfc);
-	ctx = &xfc->context;
+	ctx = &xfc->common.context;
 	WINPR_ASSERT(ctx);
 
 	if (xfc->active_contacts != 2)
@@ -659,13 +663,18 @@ int xf_input_init(xfContext* xfc, Window window)
 int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 {
 #ifdef WITH_XI
+	const rdpSettings* settings;
+	WINPR_ASSERT(xfc);
 
-	if (xfc->context.settings->MultiTouchInput)
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	if (settings->MultiTouchInput)
 	{
 		return xf_input_handle_event_remote(xfc, event);
 	}
 
-	if (xfc->context.settings->MultiTouchGestures)
+	if (settings->MultiTouchGestures)
 	{
 		return xf_input_handle_event_local(xfc, event);
 	}

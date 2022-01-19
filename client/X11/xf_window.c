@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <winpr/assert.h>
 #include <winpr/thread.h>
 #include <winpr/crt.h>
 #include <winpr/string.h>
@@ -155,10 +156,16 @@ void xf_SetWindowMinimized(xfContext* xfc, xfWindow* window)
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 {
 	UINT32 i;
-	rdpSettings* settings = xfc->context.settings;
+	const rdpSettings* settings;
 	int startX, startY;
 	UINT32 width = window->width;
 	UINT32 height = window->height;
+
+	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
 	/* xfc->decorations is set by caller depending on settings and whether it is fullscreen or not
 	 */
 	window->decorations = xfc->decorations;
@@ -189,21 +196,21 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	if (fullscreen)
 	{
 		/* Initialize startX and startY with reasonable values */
-		startX = xfc->context.settings->MonitorDefArray[0].x;
-		startY = xfc->context.settings->MonitorDefArray[0].y;
+		startX = settings->MonitorDefArray[0].x;
+		startY = settings->MonitorDefArray[0].y;
 
 		/* Search all monitors to find the lowest startX and startY values */
-		for (i = 0; i < xfc->context.settings->MonitorCount; i++)
+		for (i = 0; i < settings->MonitorCount; i++)
 		{
-			startX = MIN(startX, xfc->context.settings->MonitorDefArray[i].x);
-			startY = MIN(startY, xfc->context.settings->MonitorDefArray[i].y);
+			startX = MIN(startX, settings->MonitorDefArray[i].x);
+			startY = MIN(startY, settings->MonitorDefArray[i].y);
 		}
 
 		/* Lastly apply any monitor shift(translation from remote to local coordinate system)
 		 *  to startX and startY values
 		 */
-		startX += xfc->context.settings->MonitorLocalShiftX;
-		startY += xfc->context.settings->MonitorLocalShiftY;
+		startX += settings->MonitorLocalShiftX;
+		startY += settings->MonitorLocalShiftY;
 	}
 
 	/*
@@ -480,8 +487,10 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	if (!window)
 		return NULL;
 
-	settings = xfc->context.settings;
-	parentWindow = (Window)xfc->context.settings->ParentWindowId;
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	parentWindow = (Window)settings->ParentWindowId;
 	window->width = width;
 	window->height = height;
 	window->decorations = xfc->decorations;
@@ -531,8 +540,8 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	{
 		classHints->res_name = "xfreerdp";
 
-		if (xfc->context.settings->WmClass)
-			classHints->res_class = xfc->context.settings->WmClass;
+		if (settings->WmClass)
+			classHints->res_class = settings->WmClass;
 		else
 			classHints->res_class = "xfreerdp";
 
@@ -576,7 +585,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	 * monitor instead of the upper-left monitor for remote app mode (which uses all monitors).
 	 * This extra call after the window is mapped will position the login window correctly
 	 */
-	if (xfc->context.settings->RemoteApplicationMode)
+	if (settings->RemoteApplicationMode)
 	{
 		XMoveWindow(xfc->display, window->handle, 0, 0);
 	}
@@ -601,7 +610,8 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int hei
 	if (!xfc || !window)
 		return;
 
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	if (!(size_hints = XAllocSizeHints()))
 		return;
@@ -779,6 +789,14 @@ int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	int input_mask;
 	XWMHints* InputModeHint;
 	XClassHint* class_hints;
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
 	xf_FixWindowCoordinates(xfc, &appWindow->x, &appWindow->y, &appWindow->width,
 	                        &appWindow->height);
 	appWindow->decorations = FALSE;
@@ -803,9 +821,9 @@ int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	{
 		char* class = NULL;
 
-		if (xfc->context.settings->WmClass)
+		if (settings->WmClass)
 		{
-			class_hints->res_class = xfc->context.settings->WmClass;
+			class_hints->res_class = settings->WmClass;
 		}
 		else
 		{
@@ -1056,6 +1074,12 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
                          int height)
 {
 	int ax, ay;
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	if (appWindow == NULL)
 		return;
@@ -1074,7 +1098,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 
 	xf_lock_x11(xfc);
 
-	if (xfc->context.settings->SoftwareGdi)
+	if (settings->SoftwareGdi)
 	{
 		XPutImage(xfc->display, xfc->primary, appWindow->gc, xfc->image, ax, ay, ax, ay, width,
 		          height);

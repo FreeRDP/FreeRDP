@@ -43,7 +43,7 @@ typedef struct
 
 typedef struct
 {
-	rdpContext context;
+	rdpClientContext common;
 
 	UwacDisplay* display;
 	HANDLE displayHandle;

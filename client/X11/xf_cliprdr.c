@@ -47,6 +47,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/image.h>
 #include <winpr/stream.h>
 #include <winpr/clipboard.h>
@@ -2822,6 +2823,9 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	const char* selectionAtom;
 	xfCliprdrFormat* clientFormat;
 
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(xfc->common.context.settings);
+
 	if (!(clipboard = (xfClipboard*)calloc(1, sizeof(xfClipboard))))
 	{
 		WLog_ERR(TAG, "failed to allocate xfClipboard data");
@@ -2836,8 +2840,8 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	clipboard->requestedFormatId = -1;
 	clipboard->root_window = DefaultRootWindow(xfc->display);
 	selectionAtom = "CLIPBOARD";
-	if (xfc->context.settings->XSelectionAtom)
-		selectionAtom = xfc->context.settings->XSelectionAtom;
+	if (xfc->common.context.settings->XSelectionAtom)
+		selectionAtom = xfc->common.context.settings->XSelectionAtom;
 	clipboard->clipboard_atom = XInternAtom(xfc->display, selectionAtom, FALSE);
 
 	if (clipboard->clipboard_atom == None)
