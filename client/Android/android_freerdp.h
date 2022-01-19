@@ -23,7 +23,7 @@
 
 struct android_context
 {
-	rdpContext rdpCtx;
+	rdpClientContext common;
 
 	ANDROID_EVENT_QUEUE* event_queue;
 	HANDLE thread;

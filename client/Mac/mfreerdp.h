@@ -32,8 +32,7 @@ typedef struct mf_context mfContext;
 
 struct mf_context
 {
-	rdpContext context;
-	DEFINE_RDP_CLIENT_COMMON();
+	rdpClientContext common;
 
 	void* view;
 	BOOL view_ownership;

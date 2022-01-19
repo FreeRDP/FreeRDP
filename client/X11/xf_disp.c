@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
 #include <winpr/sysinfo.h>
 #include <X11/Xutil.h>
 
@@ -63,7 +64,13 @@ static UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monito
 
 static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 {
-	rdpSettings* settings = xfDisp->xfc->context.settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(xfDisp);
+	WINPR_ASSERT(xfDisp->xfc);
+
+	settings = xfDisp->xfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	if (xfDisp->lastSentWidth != xfDisp->targetWidth)
 		return TRUE;
@@ -88,7 +95,14 @@ static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 
 static BOOL xf_update_last_sent(xfDispContext* xfDisp)
 {
-	rdpSettings* settings = xfDisp->xfc->context.settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(xfDisp);
+	WINPR_ASSERT(xfDisp->xfc);
+
+	settings = xfDisp->xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
 	xfDisp->lastSentWidth = xfDisp->targetWidth;
 	xfDisp->lastSentHeight = xfDisp->targetHeight;
 	xfDisp->lastSentDesktopOrientation = settings->DesktopOrientation;
@@ -108,7 +122,7 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 		return FALSE;
 
 	xfc = xfDisp->xfc;
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 
 	if (!settings)
 		return FALSE;
@@ -191,12 +205,12 @@ static BOOL xf_disp_check_context(void* context, xfContext** ppXfc, xfDispContex
 	if (!(xfc->xfDisp))
 		return FALSE;
 
-	if (!xfc->context.settings)
+	if (!xfc->common.context.settings)
 		return FALSE;
 
 	*ppXfc = xfc;
 	*ppXfDisp = xfc->xfDisp;
-	*ppSettings = xfc->context.settings;
+	*ppSettings = xfc->common.context.settings;
 	return TRUE;
 }
 
@@ -258,9 +272,16 @@ static void xf_disp_OnTimer(void* context, const TimerEventArgs* e)
 xfDispContext* xf_disp_new(xfContext* xfc)
 {
 	xfDispContext* ret;
+	const rdpSettings* settings;
+	wPubSub* pubSub;
 
-	if (!xfc || !xfc->context.settings || !xfc->context.pubSub)
-		return NULL;
+	WINPR_ASSERT(xfc);
+
+	pubSub = xfc->common.context.pubSub;
+	WINPR_ASSERT(pubSub);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	ret = calloc(1, sizeof(xfDispContext));
 
@@ -276,11 +297,11 @@ xfDispContext* xf_disp_new(xfContext* xfc)
 	}
 
 #endif
-	ret->lastSentWidth = ret->targetWidth = xfc->context.settings->DesktopWidth;
-	ret->lastSentHeight = ret->targetHeight = xfc->context.settings->DesktopHeight;
-	PubSub_SubscribeActivated(xfc->context.pubSub, xf_disp_OnActivated);
-	PubSub_SubscribeGraphicsReset(xfc->context.pubSub, xf_disp_OnGraphicsReset);
-	PubSub_SubscribeTimer(xfc->context.pubSub, xf_disp_OnTimer);
+	ret->lastSentWidth = ret->targetWidth = settings->DesktopWidth;
+	ret->lastSentHeight = ret->targetHeight = settings->DesktopHeight;
+	PubSub_SubscribeActivated(pubSub, xf_disp_OnActivated);
+	PubSub_SubscribeGraphicsReset(pubSub, xf_disp_OnGraphicsReset);
+	PubSub_SubscribeTimer(pubSub, xf_disp_OnTimer);
 	return ret;
 }
 
@@ -291,9 +312,10 @@ void xf_disp_free(xfDispContext* disp)
 
 	if (disp->xfc)
 	{
-		PubSub_UnsubscribeActivated(disp->xfc->context.pubSub, xf_disp_OnActivated);
-		PubSub_UnsubscribeGraphicsReset(disp->xfc->context.pubSub, xf_disp_OnGraphicsReset);
-		PubSub_UnsubscribeTimer(disp->xfc->context.pubSub, xf_disp_OnTimer);
+		wPubSub* pubSub = disp->xfc->common.context.pubSub;
+		PubSub_UnsubscribeActivated(pubSub, xf_disp_OnActivated);
+		PubSub_UnsubscribeGraphicsReset(pubSub, xf_disp_OnGraphicsReset);
+		PubSub_UnsubscribeTimer(pubSub, xf_disp_OnTimer);
 	}
 
 	free(disp);
@@ -315,7 +337,7 @@ UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, UIN
 	WINPR_ASSERT(xfDisp);
 	WINPR_ASSERT(xfDisp->xfc);
 
-	settings = xfDisp->xfc->context.settings;
+	settings = xfDisp->xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
 	layouts = calloc(nmonitors, sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
@@ -387,7 +409,7 @@ BOOL xf_disp_handle_xevent(xfContext* xfc, const XEvent* event)
 	if (!xfDisp)
 		return FALSE;
 
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 
 	if (!settings)
 		return FALSE;
@@ -425,8 +447,18 @@ static UINT xf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors
                                   UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB)
 {
 	/* we're called only if dynamic resolution update is activated */
-	xfDispContext* xfDisp = (xfDispContext*)disp->custom;
-	rdpSettings* settings = xfDisp->xfc->context.settings;
+	xfDispContext* xfDisp;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(disp);
+
+	xfDisp = (xfDispContext*)disp->custom;
+	WINPR_ASSERT(xfDisp);
+	WINPR_ASSERT(xfDisp->xfc);
+
+	settings = xfDisp->xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
 	WLog_DBG(TAG,
 	         "DisplayControlCapsPdu: MaxNumMonitors: %" PRIu32 " MaxMonitorAreaFactorA: %" PRIu32
 	         " MaxMonitorAreaFactorB: %" PRIu32 "",
@@ -447,7 +479,7 @@ BOOL xf_disp_init(xfDispContext* xfDisp, DispClientContext* disp)
 	if (!xfDisp || !xfDisp->xfc || !disp)
 		return FALSE;
 
-	settings = xfDisp->xfc->context.settings;
+	settings = xfDisp->xfc->common.context.settings;
 
 	if (!settings)
 		return FALSE;

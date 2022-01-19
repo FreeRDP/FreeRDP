@@ -30,7 +30,7 @@
 
 struct tf_context
 {
-	rdpContext context;
+	rdpClientContext common;
 
 	/* Channels */
 	RdpeiClientContext* rdpei;

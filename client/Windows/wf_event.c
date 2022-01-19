@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 
+#include <winpr/assert.h>
 #include <winpr/sysinfo.h>
 #include <freerdp/freerdp.h>
 
@@ -88,7 +89,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				if (!wfc || !p)
 					return 1;
 
-				input = wfc->context.input;
+				input = wfc->common.context.input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE)p->scanCode, p->flags & LLKHF_EXTENDED);
 				DEBUG_KBD("keydown %d scanCode 0x%08lX flags 0x%08lX vkCode 0x%08lX",
 				          (wParam == WM_KEYDOWN), p->scanCode, p->flags, p->vkCode);
@@ -167,7 +168,7 @@ void wf_event_focus_in(wfContext* wfc)
 	rdpInput* input;
 	POINT pt;
 	RECT rc;
-	input = wfc->context.input;
+	input = wfc->common.context.input;
 	syncFlags = 0;
 
 	if (GetKeyState(VK_NUMLOCK))
@@ -198,8 +199,13 @@ static BOOL wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, 
 	int delta;
 	UINT16 flags = 0;
 	rdpInput* input;
+
+	WINPR_ASSERT(wfc);
+
+	input = wfc->common.context.input;
+	WINPR_ASSERT(input);
+
 	DefWindowProc(hWnd, Msg, wParam, lParam);
-	input = wfc->context.input;
 	delta = ((signed short)HIWORD(wParam)); /* GET_WHEEL_DELTA_WPARAM(wParam); */
 
 	if (horizontal)
@@ -220,7 +226,7 @@ static BOOL wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, 
 
 static void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 {
-	rdpSettings* settings = wfc->context.settings;
+	rdpSettings* settings = wfc->common.context.settings;
 	// Holding the CTRL key down while resizing the window will force the desktop aspect ratio.
 	LPRECT rect;
 
@@ -262,7 +268,7 @@ static void wf_send_resize(wfContext* wfc)
 	RECT windowRect;
 	int targetWidth = wfc->client_width;
 	int targetHeight = wfc->client_height;
-	rdpSettings* settings = wfc->context.settings;
+	rdpSettings* settings = wfc->common.context.settings;
 
 	if (settings->DynamicResolutionUpdate && wfc->disp != NULL)
 	{
@@ -319,8 +325,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 	if (wfc != NULL)
 	{
-		rdpInput* input = wfc->context.input;
-		rdpSettings* settings = wfc->context.settings;
+		rdpInput* input = wfc->common.context.input;
+		rdpSettings* settings = wfc->common.context.settings;
 
 		switch (Msg)
 		{
@@ -336,8 +342,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			case WM_GETMINMAXINFO:
-				if (wfc->context.settings->SmartSizing ||
-				    wfc->context.settings->DynamicResolutionUpdate)
+				if (wfc->common.context.settings->SmartSizing ||
+				    wfc->common.context.settings->DynamicResolutionUpdate)
 				{
 					processed = FALSE;
 				}
@@ -640,10 +646,11 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				if (wParam == SYSCOMMAND_ID_SMARTSIZING)
 				{
 					HMENU hMenu = GetSystemMenu(wfc->hwnd, FALSE);
-					freerdp_settings_set_bool(wfc->context.settings, FreeRDP_SmartSizing,
-					                          !wfc->context.settings->SmartSizing);
+					freerdp_settings_set_bool(wfc->common.context.settings, FreeRDP_SmartSizing,
+					                          !wfc->common.context.settings->SmartSizing);
 					CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING,
-					              wfc->context.settings->SmartSizing ? MF_CHECKED : MF_UNCHECKED);
+					              wfc->common.context.settings->SmartSizing ? MF_CHECKED
+					                                                        : MF_UNCHECKED);
 				}
 				else
 				{
@@ -678,7 +685,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				g_flipping_in = TRUE;
 
 			g_focus_hWnd = hWnd;
-			freerdp_set_focus(wfc->context.instance);
+			freerdp_set_focus(wfc->common.context.instance);
 			break;
 
 		case WM_KILLFOCUS:
@@ -727,7 +734,10 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 {
 	rdpSettings* settings;
 	UINT32 ww, wh, dw, dh;
-	settings = wfc->context.settings;
+	WINPR_ASSERT(wfc);
+
+	settings = wfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	if (!wfc->client_width)
 		wfc->client_width = settings->DesktopWidth;
@@ -746,7 +756,7 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 	if (!wh)
 		wh = dh;
 
-	if (wfc->fullscreen || !wfc->context.settings->SmartSizing || (ww == dw && wh == dh))
+	if (wfc->fullscreen || !settings->SmartSizing || (ww == dw && wh == dh))
 	{
 		return BitBlt(hdc, x, y, w, h, wfc->primary->hdc, x1, y1, SRCCOPY);
 	}
@@ -763,13 +773,12 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 static BOOL wf_scale_mouse_pos(wfContext* wfc, UINT16* x, UINT16* y)
 {
 	int ww, wh, dw, dh;
-	rdpContext* context;
 	rdpSettings* settings;
 
 	if (!wfc || !x || !y)
 		return FALSE;
 
-	settings = wfc->context.settings;
+	settings = wfc->common.context.settings;
 
 	if (!settings)
 		return FALSE;
@@ -812,7 +821,7 @@ static BOOL wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, 
 	eventArgs.flags = flags;
 	eventArgs.x = x;
 	eventArgs.y = y;
-	PubSub_OnMouseEvent(wfc->context.pubSub, &wfc->context, &eventArgs);
+	PubSub_OnMouseEvent(wfc->common.context.pubSub, &wfc->common.context, &eventArgs);
 	return TRUE;
 }
 
@@ -837,7 +846,7 @@ static BOOL wf_scale_mouse_event_ex(wfContext* wfc, rdpInput* input, UINT16 flag
 	eventArgs.flags = flags;
 	eventArgs.x = x;
 	eventArgs.y = y;
-	PubSub_OnMouseEventEx(wfc->context.pubSub, &wfc->context, &eventArgs);
+	PubSub_OnMouseEventEx(wfc->common.context.pubSub, &wfc->common.context, &eventArgs);
 	return TRUE;
 }
 #endif

@@ -58,7 +58,7 @@ HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height, UINT32 srcFor
 
 	if (data)
 		freerdp_image_copy(cdata, dstFormat, 0, 0, 0, width, height, data, srcFormat, 0, 0, 0,
-		                   &wfc->context.gdi->palette, FREERDP_FLIP_NONE);
+		                   &wfc->common.context.gdi->palette, FREERDP_FLIP_NONE);
 
 	if (pdata)
 		*pdata = cdata;

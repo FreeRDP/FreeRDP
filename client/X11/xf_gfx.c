@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/assert.h>
 #include <freerdp/log.h>
 #include "xf_gfx.h"
 #include "xf_rail.h"
@@ -37,10 +38,20 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	UINT32 surfaceX, surfaceY;
 	RECTANGLE_16 surfaceRect;
 	rdpGdi* gdi;
+	const rdpSettings* settings;
 	UINT32 nbRects, x;
 	double sx, sy;
 	const RECTANGLE_16* rects;
-	gdi = xfc->context.gdi;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(surface);
+
+	gdi = xfc->common.context.gdi;
+	WINPR_ASSERT(gdi);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
 	surfaceX = surface->gdi.outputOriginX;
 	surfaceY = surface->gdi.outputOriginY;
 	surfaceRect.left = 0;
@@ -87,7 +98,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		}
 		else
 #ifdef WITH_XRENDER
-		    if (xfc->context.settings->SmartSizing || xfc->context.settings->MultiTouchGestures)
+		    if (settings->SmartSizing || settings->MultiTouchGestures)
 		{
 			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image, nXSrc, nYSrc, nXDst,
 			          nYDst, dwidth, dheight);
@@ -166,7 +177,14 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 	RECTANGLE_16 surfaceRect;
 	RECTANGLE_16 intersection;
 	UINT16* pSurfaceIds = NULL;
-	RdpgfxClientContext* context = xfc->context.gdi->gfx;
+	RdpgfxClientContext* context;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(xfc->common.context.gdi);
+
+	context = xfc->common.context.gdi->gfx;
+	WINPR_ASSERT(context);
+
 	invalidRect.left = x;
 	invalidRect.top = y;
 	invalidRect.right = x + width;
@@ -400,10 +418,19 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	rdpGdi* gdi = xfc->context.gdi;
+	rdpGdi* gdi;
+	const rdpSettings* settings;
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(gfx);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	gdi = xfc->common.context.gdi;
+
 	gdi_graphics_pipeline_init(gdi, gfx);
 
-	if (!xfc->context.settings->SoftwareGdi)
+	if (!settings->SoftwareGdi)
 	{
 		gfx->UpdateSurfaces = xf_UpdateSurfaces;
 		gfx->CreateSurface = xf_CreateSurface;
@@ -413,6 +440,10 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	rdpGdi* gdi = xfc->context.gdi;
+	rdpGdi* gdi;
+
+	WINPR_ASSERT(xfc);
+
+	gdi = xfc->common.context.gdi;
 	gdi_graphics_pipeline_uninit(gdi, gfx);
 }

@@ -31,6 +31,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/rfx.h>
@@ -52,12 +53,12 @@ BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 	if (!xfc || !color)
 		return FALSE;
 
-	gdi = xfc->context.gdi;
+	gdi = xfc->common.context.gdi;
 
 	if (!gdi)
 		return FALSE;
 
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 
 	if (!settings)
 		return FALSE;
@@ -248,7 +249,7 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 	if (!context || !pointer || !context->gdi)
 		return FALSE;
 
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 
 	if (!settings)
 		return FALSE;

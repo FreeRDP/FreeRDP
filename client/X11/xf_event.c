@@ -24,6 +24,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <winpr/assert.h>
+
 #include <freerdp/log.h>
 #include <freerdp/locale/keyboard.h>
 
@@ -172,6 +174,13 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 	FILE* actionScript;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
 	xfc->xevents = ArrayList_New(TRUE);
 
 	if (!xfc->xevents)
@@ -179,7 +188,7 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 
 	obj = ArrayList_Object(xfc->xevents);
 	obj->fnObjectFree = free;
-	sprintf_s(command, sizeof(command), "%s xevent", xfc->context.settings->ActionScript);
+	sprintf_s(command, sizeof(command), "%s xevent", settings->ActionScript);
 	actionScript = popen(command, "r");
 
 	if (!actionScript)
@@ -247,8 +256,9 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 	if (!match)
 		return FALSE;
 
-	sprintf_s(command, sizeof(command), "%s xevent %s %lu", xfc->context.settings->ActionScript,
-	          xeventName, (unsigned long)xfc->window->handle);
+	sprintf_s(command, sizeof(command), "%s xevent %s %lu",
+	          xfc->common.context.settings->ActionScript, xeventName,
+	          (unsigned long)xfc->window->handle);
 	actionScript = popen(command, "r");
 
 	if (!actionScript)
@@ -269,10 +279,10 @@ void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
 	rdpSettings* settings;
 	INT64 tx, ty;
 
-	if (!xfc || !xfc->context.settings || !y || !x)
+	if (!xfc || !xfc->common.context.settings || !y || !x)
 		return;
 
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 	tx = *x;
 	ty = *y;
 	if (!xfc->remote_app)
@@ -299,10 +309,10 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 {
 	rdpSettings* settings;
 
-	if (!xfc || !xfc->context.settings || !y || !x)
+	if (!xfc || !xfc->common.context.settings || !y || !x)
 		return;
 
-	settings = xfc->context.settings;
+	settings = xfc->common.context.settings;
 
 	if (!xfc->remote_app)
 	{
@@ -325,7 +335,13 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 {
 	int x, y;
 	int w, h;
-	rdpSettings* settings = xfc->context.settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	if (!app && (settings->SmartSizing || settings->MultiTouchGestures))
 	{
@@ -344,7 +360,7 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 
 	if (!app)
 	{
-		if (xfc->context.gdi->gfx)
+		if (xfc->common.context.gdi->gfx)
 		{
 			xf_OutputExpose(xfc, x, y, w, h);
 			return TRUE;
@@ -376,9 +392,14 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 {
 	rdpInput* input;
 	Window childWindow;
-	input = xfc->context.input;
 
-	if (!xfc->context.settings->MouseMotion)
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(xfc->common.context.settings);
+
+	input = xfc->common.context.input;
+	WINPR_ASSERT(input);
+
+	if (!xfc->common.context.settings->MouseMotion)
 	{
 		if ((state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
 			return TRUE;
@@ -407,6 +428,7 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 }
 static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOOL app)
 {
+	WINPR_ASSERT(xfc);
 	if (xfc->window)
 		xf_floatbar_set_root_y(xfc->window->floatbar, event->y);
 
@@ -424,6 +446,8 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
 	Window childWindow;
 	size_t i;
 
+	WINPR_ASSERT(xfc);
+
 	for (i = 0; i < ARRAYSIZE(xfc->button_map); i++)
 	{
 		const button_map* cur = &xfc->button_map[i];
@@ -435,7 +459,7 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
 		}
 	}
 
-	input = xfc->context.input;
+	input = xfc->common.context.input;
 
 	if (flags != 0)
 	{
@@ -669,8 +693,13 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 {
 	Window childWindow;
 	xfAppWindow* appWindow;
-	rdpSettings* settings;
-	settings = xfc->context.settings;
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	if (!app)
 	{
@@ -691,7 +720,7 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 			xfc->offset_x = 0;
 			xfc->offset_y = 0;
 
-			if (xfc->context.settings->SmartSizing || xfc->context.settings->MultiTouchGestures)
+			if (settings->SmartSizing || settings->MultiTouchGestures)
 			{
 				xfc->scaledWidth = xfc->window->width;
 				xfc->scaledHeight = xfc->window->height;
@@ -757,8 +786,9 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 {
 	xfAppWindow* appWindow;
 
+	WINPR_ASSERT(xfc);
 	if (!app)
-		gdi_send_suppress_output(xfc->context.gdi, FALSE);
+		gdi_send_suppress_output(xfc->common.context.gdi, FALSE);
 	else
 	{
 		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
@@ -781,10 +811,14 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 static BOOL xf_event_UnmapNotify(xfContext* xfc, const XUnmapEvent* event, BOOL app)
 {
 	xfAppWindow* appWindow;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
 	xf_keyboard_release_all_keypress(xfc);
 
 	if (!app)
-		gdi_send_suppress_output(xfc->context.gdi, TRUE);
+		gdi_send_suppress_output(xfc->common.context.gdi, TRUE);
 	else
 	{
 		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
@@ -800,6 +834,9 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, const XUnmapEvent* event, BOOL 
 
 static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event, BOOL app)
 {
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
 	/*
 	 * This section handles sending the appropriate commands to the rail server
 	 * when the window has been minimized, maximized, restored locally
@@ -893,7 +930,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 			}
 		}
 		else if (minimizedChanged)
-			gdi_send_suppress_output(xfc->context.gdi, minimized);
+			gdi_send_suppress_output(xfc->common.context.gdi, minimized);
 	}
 
 	return TRUE;
@@ -992,8 +1029,17 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 {
 	BOOL status = TRUE;
 	xfAppWindow* appWindow;
-	xfContext* xfc = (xfContext*)instance->context;
-	rdpSettings* settings = xfc->context.settings;
+	xfContext* xfc;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(event);
+
+	xfc = (xfContext*)instance->context;
+	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	if (xfc->remote_app)
 	{

@@ -44,7 +44,7 @@ typedef struct touch_contact
 
 struct wlf_context
 {
-	rdpContext context;
+	rdpClientContext common;
 
 	UwacDisplay* display;
 	HANDLE displayHandle;
