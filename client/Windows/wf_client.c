@@ -1412,16 +1412,13 @@ static int wfreerdp_client_start(rdpContext* context)
 
 static int wfreerdp_client_stop(rdpContext* context)
 {
+	int rc;
 	wfContext* wfc = (wfContext*)context;
 
-	if (wfc->common.thread)
-	{
-		PostThreadMessage(wfc->mainThreadId, WM_QUIT, 0, 0);
-		WaitForSingleObject(wfc->common.thread, INFINITE);
-		CloseHandle(wfc->common.thread);
-		wfc->common.thread = NULL;
-		wfc->mainThreadId = 0;
-	}
+	WINPR_ASSERT(wfc);
+	PostThreadMessage(wfc->mainThreadId, WM_QUIT, 0, 0);
+	rc = freerdp_client_common_stop(context);
+	wfc->mainThreadId = 0;
 
 	if (wfc->keyboardThread)
 	{
@@ -1434,6 +1431,7 @@ static int wfreerdp_client_stop(rdpContext* context)
 
 	return 0;
 }
+
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {

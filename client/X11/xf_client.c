@@ -1906,24 +1906,6 @@ static int xfreerdp_client_start(rdpContext* context)
 	return 0;
 }
 
-static int xfreerdp_client_stop(rdpContext* context)
-{
-	xfContext* xfc = (xfContext*)context;
-
-	WINPR_ASSERT(xfc);
-
-	freerdp_abort_connect(context->instance);
-
-	if (xfc->common.thread)
-	{
-		WaitForSingleObject(xfc->common.thread, INFINITE);
-		CloseHandle(xfc->common.thread);
-		xfc->common.thread = NULL;
-	}
-
-	return 0;
-}
-
 static Atom get_supported_atom(xfContext* xfc, const char* atomName)
 {
 	unsigned long i;
@@ -2151,6 +2133,6 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->ClientNew = xfreerdp_client_new;
 	pEntryPoints->ClientFree = xfreerdp_client_free;
 	pEntryPoints->ClientStart = xfreerdp_client_start;
-	pEntryPoints->ClientStop = xfreerdp_client_stop;
+	pEntryPoints->ClientStop = freerdp_client_common_stop;
 	return 0;
 }
