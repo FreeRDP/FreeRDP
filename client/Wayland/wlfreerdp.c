@@ -668,12 +668,6 @@ static int wfl_client_start(rdpContext* context)
 	return 0;
 }
 
-static int wfl_client_stop(rdpContext* context)
-{
-	WINPR_UNUSED(context);
-	return 0;
-}
-
 static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	ZeroMemory(pEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
@@ -685,7 +679,7 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->ClientNew = wlf_client_new;
 	pEntryPoints->ClientFree = wlf_client_free;
 	pEntryPoints->ClientStart = wfl_client_start;
-	pEntryPoints->ClientStop = wfl_client_stop;
+	pEntryPoints->ClientStop = freerdp_client_common_stop;
 	return 0;
 }
 

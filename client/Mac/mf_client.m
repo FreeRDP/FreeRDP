@@ -67,14 +67,7 @@ static int mfreerdp_client_stop(rdpContext *context)
 {
 	mfContext *mfc = (mfContext *)context;
 
-	freerdp_abort_connect(context->instance);
-	if (mfc->common.thread)
-	{
-		SetEvent(mfc->stopEvent);
-		WaitForSingleObject(mfc->common.thread, INFINITE);
-		CloseHandle(mfc->common.thread);
-		mfc->common.thread = NULL;
-	}
+	freerdp_client_common_stop(context);
 
 	if (mfc->view_ownership)
 	{

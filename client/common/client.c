@@ -886,3 +886,20 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 	WLog_ERR(TAG, "Maximum reconnect retries exceeded");
 	return FALSE;
 }
+
+int freerdp_client_common_stop(rdpContext* context)
+{
+	rdpClientContext* cctx = (rdpClientContext*)context;
+	WINPR_ASSERT(cctx);
+
+	freerdp_abort_connect(cctx->context.instance);
+
+	if (cctx->thread)
+	{
+		WaitForSingleObject(cctx->thread, INFINITE);
+		CloseHandle(cctx->thread);
+		cctx->thread = NULL;
+	}
+
+	return 0;
+}
