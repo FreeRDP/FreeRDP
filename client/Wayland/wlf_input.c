@@ -413,7 +413,7 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-	RdpeiClientContext* rdpei = wlf->rdpei;
+	RdpeiClientContext* rdpei = wlf->common.rdpei;
 
 	if (wlf->contacts[i].emulate_mouse == TRUE)
 	{
@@ -469,7 +469,7 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-	RdpeiClientContext* rdpei = wlf->rdpei;
+	RdpeiClientContext* rdpei = wlf->common.rdpei;
 
 	// Emulate mouse click if touch is not possible, like in login screen
 	if (!rdpei)
@@ -532,7 +532,7 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-	RdpeiClientContext* rdpei = ((wlfContext*)instance->context)->rdpei;
+	RdpeiClientContext* rdpei = ((wlfContext*)instance->context)->common.rdpei;
 
 	if (wlf->contacts[i].emulate_mouse == TRUE)
 	{

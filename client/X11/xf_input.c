@@ -561,7 +561,7 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 	int x, y;
 	int touchId;
 	int contactId;
-	RdpeiClientContext* rdpei = xfc->rdpei;
+	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
 		return 0;

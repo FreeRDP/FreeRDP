@@ -73,23 +73,12 @@ static void android_OnChannelConnectedEventHandler(void* context,
 	afc = (androidContext*)context;
 	settings = afc->common.context.settings;
 
-	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
-	{
-		if (settings->SoftwareGdi)
-		{
-			gdi_graphics_pipeline_init(afc->common.context.gdi,
-			                           (RdpgfxClientContext*)e->pInterface);
-		}
-	else
-	{
-		WLog_WARN(TAG, "GFX without software GDI requested. "
-			           " This is not supported, add /gdi:sw");
-	}
-	}
-	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		android_cliprdr_init(afc, (CliprdrClientContext*)e->pInterface);
-	}
+	    }
+	else
+		freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
 
 static void android_OnChannelDisconnectedEventHandler(void* context,
@@ -107,23 +96,12 @@ static void android_OnChannelDisconnectedEventHandler(void* context,
 	afc = (androidContext*)context;
 	settings = afc->common.context.settings;
 
-	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
-	{
-		if (settings->SoftwareGdi)
-		{
-			gdi_graphics_pipeline_uninit(afc->common.context.gdi,
-			                             (RdpgfxClientContext*)e->pInterface);
-		}
-	else
-	{
-		WLog_WARN(TAG, "GFX without software GDI requested. "
-			           " This is not supported, add /gdi:sw");
-	}
-	}
-	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		android_cliprdr_uninit(afc, (CliprdrClientContext*)e->pInterface);
-	}
+	    }
+	else
+		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
 }
 
 static BOOL android_begin_paint(rdpContext* context)
