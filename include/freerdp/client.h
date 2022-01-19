@@ -20,8 +20,20 @@
 #ifndef FREERDP_CLIENT_H
 #define FREERDP_CLIENT_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/event.h>
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+#include <freerdp/client/ainput.h>
+#endif
+
+#if defined(CHANNEL_RDPEI_CLIENT)
+#include <freerdp/client/rdpei.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -70,6 +82,13 @@ extern "C"
 	{
 		rdpContext context;
 		HANDLE thread;
+#if defined(CHANNEL_AINPUT_CLIENT)
+		AInputClientContext* ainput;
+#endif
+
+#if defined(CHANNEL_RDPEI_CLIENT)
+		RdpeiClientContext* rdpei;
+#endif
 	};
 
 	/* Common client functions */
@@ -100,6 +119,13 @@ extern "C"
 
 	FREERDP_API BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** password,
 	                                            char** domain, rdp_auth_reason reason);
+
+	FREERDP_API void
+	freerdp_client_OnChannelConnectedEventHandler(void* context,
+	                                              const ChannelConnectedEventArgs* e);
+	FREERDP_API void
+	freerdp_client_OnChannelDisconnectedEventHandler(void* context,
+	                                                 const ChannelDisconnectedEventArgs* e);
 
 #if defined(WITH_FREERDP_DEPRECATED)
 	FREERDP_API WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",
