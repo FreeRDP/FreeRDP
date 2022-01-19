@@ -46,6 +46,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/server/rdpsnd.h>
 
+#include "sf_ainput.h"
 #include "sf_audin.h"
 #include "sf_rdpsnd.h"
 #include "sf_encomsp.h"
@@ -94,6 +95,10 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 			WTSVirtualChannelClose(context->debug_channel);
 
 		sf_peer_audin_uninit(context);
+
+#if defined(CHANNEL_AINPUT_SERVER)
+		sf_peer_ainput_uninit(context);
+#endif
 
 		rdpsnd_server_context_free(context->rdpsnd);
 		encomsp_server_context_free(context->encomsp);
@@ -696,6 +701,11 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 
 	/* Dynamic Virtual Channels */
 	sf_peer_audin_init(context); /* Audio Input */
+
+#if defined(CHANNEL_AINPUT_SERVER)
+	sf_peer_ainput_init(context);
+#endif
+
 	/* Return FALSE here would stop the execution of the peer main loop. */
 	return TRUE;
 }
@@ -785,7 +795,7 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 		update->DesktopResize(update->context);
 		context->activated = FALSE;
 	}
-	else if ((flags & 0x4000) && code == 0x2E) /* 'c' key */
+	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_C) /* 'c' key */
 	{
 		if (context->debug_channel)
 		{
@@ -793,16 +803,22 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 			WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test2", 5, &written);
 		}
 	}
-	else if ((flags & 0x4000) && code == 0x2D) /* 'x' key */
+	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_X) /* 'x' key */
 	{
 		WINPR_ASSERT(client->Close);
 		client->Close(client);
 	}
-	else if ((flags & 0x4000) && code == 0x13) /* 'r' key */
+	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_R) /* 'r' key */
 	{
 		context->audin_open = !context->audin_open;
 	}
-	else if ((flags & 0x4000) && code == 0x1F) /* 's' key */
+#if defined(CHANNEL_AINPUT_SERVER)
+	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_I) /* 'i' key */
+	{
+		context->ainput_open = !context->ainput_open;
+	}
+#endif
+	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_S) /* 's' key */
 	{
 	}
 
@@ -1095,6 +1111,16 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 						else
 							sf_peer_audin_stop(context);
 					}
+
+#if defined(CHANNEL_AINPUT_SERVER)
+					if (sf_peer_ainput_running(context) != context->ainput_open)
+					{
+						if (!sf_peer_ainput_running(context))
+							sf_peer_ainput_start(context);
+						else
+							sf_peer_ainput_stop(context);
+					}
+#endif
 
 					break;
 

@@ -25,6 +25,9 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/channels/wtsvc.h>
+#if defined(CHANNEL_AINPUT_SERVER)
+#include <freerdp/server/ainput.h>
+#endif
 #include <freerdp/server/audin.h>
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/server/encomsp.h>
@@ -55,6 +58,10 @@ struct test_peer_context
 	HANDLE debug_channel_thread;
 	audin_server_context* audin;
 	BOOL audin_open;
+#if defined(CHANNEL_AINPUT_SERVER)
+	ainput_server_context* ainput;
+	BOOL ainput_open;
+#endif
 	UINT32 frame_id;
 	RdpsndServerContext* rdpsnd;
 	EncomspServerContext* encomsp;
