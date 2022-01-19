@@ -27,7 +27,7 @@
 int tf_on_channel_connected(freerdp* instance, const char* name, void* pInterface);
 int tf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface);
 
-void tf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e);
-void tf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e);
+void tf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e);
+void tf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e);
 
 #endif /* FREERDP_CLIENT_SAMPLE_CHANNELS_H */

@@ -1766,7 +1766,7 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 	return reason;
 }
 
-static void xf_TerminateEventHandler(void* context, TerminateEventArgs* e)
+static void xf_TerminateEventHandler(void* context, const TerminateEventArgs* e)
 {
 	rdpContext* ctx = (rdpContext*)context;
 	WINPR_UNUSED(e);
@@ -1774,7 +1774,7 @@ static void xf_TerminateEventHandler(void* context, TerminateEventArgs* e)
 }
 
 #ifdef WITH_XRENDER
-static void xf_ZoomingChangeEventHandler(void* context, ZoomingChangeEventArgs* e)
+static void xf_ZoomingChangeEventHandler(void* context, const ZoomingChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings = xfc->context.settings;
@@ -1798,7 +1798,7 @@ static void xf_ZoomingChangeEventHandler(void* context, ZoomingChangeEventArgs* 
 	xf_draw_screen(xfc, 0, 0, settings->DesktopWidth, settings->DesktopHeight);
 }
 
-static void xf_PanningChangeEventHandler(void* context, PanningChangeEventArgs* e)
+static void xf_PanningChangeEventHandler(void* context, const PanningChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings = xfc->context.settings;

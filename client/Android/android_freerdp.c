@@ -57,7 +57,8 @@
 /* Defines the JNI version supported by this library. */
 #define FREERDP_JNI_VERSION "3.0.0-dev"
 
-static void android_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
+static void android_OnChannelConnectedEventHandler(void* context,
+                                                   const ChannelConnectedEventArgs* e)
 {
 	rdpSettings* settings;
 	androidContext* afc;
@@ -90,7 +91,7 @@ static void android_OnChannelConnectedEventHandler(void* context, ChannelConnect
 }
 
 static void android_OnChannelDisconnectedEventHandler(void* context,
-                                                      ChannelDisconnectedEventArgs* e)
+                                                      const ChannelDisconnectedEventArgs* e)
 {
 	rdpSettings* settings;
 	androidContext* afc;

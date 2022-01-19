@@ -36,7 +36,7 @@
 #include "xf_disp.h"
 #include "xf_video.h"
 
-void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
+void xf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)
 {
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings;
@@ -95,7 +95,7 @@ void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	}
 }
 
-void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
+void xf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e)
 {
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings;

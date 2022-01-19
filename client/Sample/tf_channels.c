@@ -73,7 +73,7 @@ static UINT tf_update_surfaces(RdpgfxClientContext* context)
 	return CHANNEL_RC_OK;
 }
 
-void tf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
+void tf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)
 {
 	tfContext* tf = (tfContext*)context;
 
@@ -103,7 +103,7 @@ void tf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	}
 }
 
-void tf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
+void tf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e)
 {
 	tfContext* tf = (tfContext*)context;
 

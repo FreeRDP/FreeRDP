@@ -21,6 +21,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/print.h>
 #include <freerdp/log.h>
 
@@ -28,22 +29,29 @@
 
 #define TAG SERVER_TAG("shadow.win")
 
-static void shw_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
+static void shw_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)
 {
 	shwContext* shw = (shwContext*)context;
+	WINPR_ASSERT(e);
 	WLog_INFO(TAG, "OnChannelConnected: %s", e->name);
 }
 
-static void shw_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
+static void shw_OnChannelDisconnectedEventHandler(void* context,
+                                                  const ChannelDisconnectedEventArgs* e)
 {
 	shwContext* shw = (shwContext*)context;
+	WINPR_ASSERT(e);
 	WLog_INFO(TAG, "OnChannelDisconnected: %s", e->name);
 }
 
 static BOOL shw_begin_paint(rdpContext* context)
 {
 	shwContext* shw;
-	rdpGdi* gdi = context->gdi;
+	rdpGdi* gdi;
+
+	WINPR_ASSERT(context);
+	gdi = context->gdi;
+	WINPR_ASSERT(gdi);
 	shw = (shwContext*)context;
 	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
@@ -104,9 +112,10 @@ static int shw_verify_x509_certificate(freerdp* instance, const BYTE* data, size
 	return 1;
 }
 
-static void shw_OnConnectionResultEventHandler(void* context, ConnectionResultEventArgs* e)
+static void shw_OnConnectionResultEventHandler(void* context, const ConnectionResultEventArgs* e)
 {
 	shwContext* shw = (shwContext*)context;
+	WINPR_ASSERT(e);
 	WLog_INFO(TAG, "OnConnectionResult: %d", e->result);
 }
 

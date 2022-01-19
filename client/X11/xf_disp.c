@@ -213,7 +213,7 @@ static void xf_disp_OnActivated(void* context, ActivatedEventArgs* e)
 	}
 }
 
-static void xf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
+static void xf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs* e)
 {
 	xfContext* xfc;
 	xfDispContext* xfDisp;
@@ -231,7 +231,7 @@ static void xf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
 	}
 }
 
-static void xf_disp_OnTimer(void* context, TimerEventArgs* e)
+static void xf_disp_OnTimer(void* context, const TimerEventArgs* e)
 {
 	xfContext* xfc;
 	xfDispContext* xfDisp;

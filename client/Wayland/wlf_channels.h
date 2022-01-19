@@ -31,7 +31,7 @@
 int wlf_on_channel_connected(freerdp* instance, const char* name, void* pInterface);
 int wlf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface);
 
-void wlf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e);
-void wlf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e);
+void wlf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e);
+void wlf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e);
 
 #endif /* FREERDP_CLIENT_WAYLAND_CHANNELS_H */
