@@ -17,7 +17,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -28,6 +27,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
@@ -57,6 +57,7 @@ struct _KRB_CONTEXT
 	sspi_gss_cred_id_t cred;
 	sspi_gss_ctx_id_t gss_ctx;
 	sspi_gss_name_t target_name;
+	UINT32 trailerSize;
 };
 
 static const char* KRB_PACKAGE_NAME = "Kerberos";
@@ -230,8 +231,7 @@ static int kerberos_SetContextServicePrincipalNameA(KRB_CONTEXT* context,
 }
 
 #ifdef WITH_GSSAPI
-static krb5_error_code KRB5_CALLCONV acquire_cred(krb5_context ctx, krb5_principal client,
-                                                  const char* password)
+static krb5_error_code acquire_cred(krb5_context ctx, krb5_principal client, const char* password)
 {
 	krb5_error_code ret;
 	krb5_creds creds;
@@ -614,6 +614,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 
 	if (ulAttribute == SECPKG_ATTR_SIZES)
 	{
+		UINT32 major_status, minor_status, max_unwrapped;
+		KRB_CONTEXT* context = (KRB_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+
 		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*)pBuffer;
 		/* The MaxTokenSize by default is 12,000 bytes. This has been the default value
 		 * since Windows 2000 SP2 and still remains in Windows 7 and Windows 2008 R2.
@@ -622,8 +625,18 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 		ContextSizes->cbMaxToken = KERBEROS_SecPkgInfoA.cbMaxToken;
 		ContextSizes->cbMaxSignature = 0; /* means verify not supported */
 		ContextSizes->cbBlockSize = 0;    /* padding not used */
-		ContextSizes->cbSecurityTrailer =
-		    60; /* gss_wrap adds additional 60 bytes for encrypt message */
+
+		WINPR_ASSERT(context);
+
+		major_status = sspi_gss_wrap_size_limit(&minor_status, context->gss_ctx, TRUE,
+		                                        SSPI_GSS_C_QOP_DEFAULT, 12000, &max_unwrapped);
+		if (SSPI_GSS_ERROR(major_status))
+		{
+			WLog_ERR(TAG, "unable to compute the trailer size with gss_wrap_size_limit()");
+			return SEC_E_INTERNAL_ERROR;
+		}
+
+		context->trailerSize = ContextSizes->cbSecurityTrailer = (12000 - max_unwrapped);
 		return SEC_E_OK;
 	}
 
@@ -642,9 +655,13 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	KRB_CONTEXT* context;
 	sspi_gss_buffer_desc input;
 	sspi_gss_buffer_desc output;
+	BYTE* ptr;
+	size_t toCopy;
 	PSecBuffer data_buffer = NULL;
-	context = (KRB_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	PSecBuffer sig_buffer = NULL;
+	SECURITY_STATUS ret = SEC_E_OK;
 
+	context = (KRB_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
@@ -652,10 +669,23 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	{
 		if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA)
 			data_buffer = &pMessage->pBuffers[index];
+		else if (pMessage->pBuffers[index].BufferType == SECBUFFER_TOKEN)
+			sig_buffer = &pMessage->pBuffers[index];
 	}
 
-	if (!data_buffer)
+	if (!data_buffer || !sig_buffer)
+	{
+		WLog_ERR(TAG, "kerberos_EncryptMessage: our winPR emulation can only handle calls with a "
+		              "token AND a data buffer");
 		return SEC_E_INVALID_TOKEN;
+	}
+
+	if ((BYTE*)sig_buffer->pvBuffer + sig_buffer->cbBuffer != data_buffer->pvBuffer)
+	{
+		WLog_ERR(TAG, "kerberos_EncryptMessage: our winPR emulation expects token and data buffer "
+		              "to be contiguous");
+		return SEC_E_INVALID_TOKEN;
+	}
 
 	input.value = data_buffer->pvBuffer;
 	input.length = data_buffer->cbBuffer;
@@ -668,13 +698,36 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	if (conf_state == 0)
 	{
 		WLog_ERR(TAG, "error: gss_wrap confidentiality was not applied");
-		sspi_gss_release_buffer(&minor_status, &output);
-		return SEC_E_INTERNAL_ERROR;
+		ret = SEC_E_INTERNAL_ERROR;
+		goto out;
 	}
 
-	CopyMemory(data_buffer->pvBuffer, output.value, output.length);
+	if (output.length < context->trailerSize)
+	{
+		WLog_ERR(TAG, "error: output is smaller than expected trailerSize");
+		ret = SEC_E_INTERNAL_ERROR;
+		goto out;
+	}
+
+	/*
+	 * we artificially fill the sig buffer and data_buffer, even if gss_wrap() puts the
+	 * mic and message in the same place
+	 */
+	ptr = output.value;
+	CopyMemory(sig_buffer->pvBuffer, ptr, context->trailerSize);
+	ptr += context->trailerSize;
+
+	toCopy = output.length - context->trailerSize;
+	if (data_buffer->cbBuffer < toCopy)
+	{
+		ret = SEC_E_INTERNAL_ERROR;
+		goto out;
+	}
+	CopyMemory(data_buffer->pvBuffer, ptr, toCopy);
+
+out:
 	sspi_gss_release_buffer(&minor_status, &output);
-	return SEC_E_OK;
+	return ret;
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
@@ -688,7 +741,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	KRB_CONTEXT* context;
 	sspi_gss_buffer_desc input_data;
 	sspi_gss_buffer_desc output;
-	PSecBuffer data_buffer_to_unwrap = NULL;
+	PSecBuffer data_buffer_to_unwrap = NULL, sig_buffer = NULL;
 	context = (KRB_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -698,14 +751,27 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	{
 		if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA)
 			data_buffer_to_unwrap = &pMessage->pBuffers[index];
+		else if (pMessage->pBuffers[index].BufferType == SECBUFFER_TOKEN)
+			sig_buffer = &pMessage->pBuffers[index];
 	}
 
-	if (!data_buffer_to_unwrap)
+	if (!data_buffer_to_unwrap || !sig_buffer)
+	{
+		WLog_ERR(TAG, "kerberos_DecryptMessage: our winPR emulation can only handle calls with a "
+		              "token AND a data buffer");
 		return SEC_E_INVALID_TOKEN;
+	}
+
+	if ((BYTE*)sig_buffer->pvBuffer + sig_buffer->cbBuffer != data_buffer_to_unwrap->pvBuffer)
+	{
+		WLog_ERR(TAG, "kerberos_DecryptMessage: our winPR emulation expects token and data buffer "
+		              "to be contiguous");
+		return SEC_E_INVALID_TOKEN;
+	}
 
 	/* unwrap encrypted TLS key AND its signature */
-	input_data.value = data_buffer_to_unwrap->pvBuffer;
-	input_data.length = data_buffer_to_unwrap->cbBuffer;
+	input_data.value = sig_buffer->pvBuffer;
+	input_data.length = sig_buffer->cbBuffer + data_buffer_to_unwrap->cbBuffer;
 	major_status =
 	    sspi_gss_unwrap(&minor_status, context->gss_ctx, &input_data, &output, &conf_state, NULL);
 
