@@ -440,7 +440,7 @@ void xf_keyboard_focus_in(xfContext* xfc)
 		if (x >= 0 && x < xfc->window->width && y >= 0 && y < xfc->window->height)
 		{
 			xf_event_adjust_coordinates(xfc, &x, &y);
-			freerdp_input_send_mouse_event(input, PTR_FLAGS_MOVE, x, y);
+			freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_MOVE, x, y);
 		}
 	}
 }
