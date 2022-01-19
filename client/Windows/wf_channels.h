@@ -20,6 +20,7 @@
 #define FREERDP_CLIENT_WIN_CHANNELS_H
 
 #include <freerdp/freerdp.h>
+#include <freerdp/client.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/rdpei.h>
 #include <freerdp/client/rdpgfx.h>
@@ -29,7 +30,7 @@
 
 #include "wf_client.h"
 
-void wf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e);
-void wf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e);
+void wf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e);
+void wf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e);
 
 #endif /* FREERDP_CLIENT_WIN_CHANNELS_H */

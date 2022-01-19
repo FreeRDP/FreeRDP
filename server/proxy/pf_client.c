@@ -69,7 +69,7 @@ static BOOL proxy_server_reactivate(rdpContext* ps, const rdpContext* pc)
 	return TRUE;
 }
 
-static void pf_client_on_error_info(void* ctx, ErrorInfoEventArgs* e)
+static void pf_client_on_error_info(void* ctx, const ErrorInfoEventArgs* e)
 {
 	pClientContext* pc = (pClientContext*)ctx;
 	pServerContext* ps;
@@ -91,7 +91,7 @@ static void pf_client_on_error_info(void* ctx, ErrorInfoEventArgs* e)
 	freerdp_send_error_info(ps->context.rdp);
 }
 
-static void pf_client_on_activated(void* ctx, ActivatedEventArgs* e)
+static void pf_client_on_activated(void* ctx, const ActivatedEventArgs* e)
 {
 	pClientContext* pc = (pClientContext*)ctx;
 	pServerContext* ps;

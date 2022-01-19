@@ -31,7 +31,7 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("windows")
 
-void wf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
+void wf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)
 {
 	wfContext* wfc = (wfContext*)context;
 	rdpSettings* settings = wfc->context.settings;
@@ -76,7 +76,7 @@ void wf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	}
 }
 
-void wf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
+void wf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e)
 {
 	wfContext* wfc = (wfContext*)context;
 	rdpSettings* settings = wfc->context.settings;

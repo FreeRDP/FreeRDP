@@ -31,7 +31,7 @@
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 
-void xf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e);
-void xf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e);
+void xf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e);
+void xf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e);
 
 #endif /* FREERDP_CLIENT_X11_CHANNELS_H */

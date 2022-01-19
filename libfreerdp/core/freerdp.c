@@ -601,14 +601,14 @@ const char* freerdp_get_build_revision(void)
 }
 
 static wEventType FreeRDP_Events[] = {
-	DEFINE_EVENT_ENTRY(WindowStateChange) DEFINE_EVENT_ENTRY(ResizeWindow)
-	    DEFINE_EVENT_ENTRY(LocalResizeWindow) DEFINE_EVENT_ENTRY(EmbedWindow)
-	        DEFINE_EVENT_ENTRY(PanningChange) DEFINE_EVENT_ENTRY(ZoomingChange)
-	            DEFINE_EVENT_ENTRY(ErrorInfo) DEFINE_EVENT_ENTRY(Terminate)
-	                DEFINE_EVENT_ENTRY(ConnectionResult) DEFINE_EVENT_ENTRY(ChannelConnected)
-	                    DEFINE_EVENT_ENTRY(ChannelDisconnected) DEFINE_EVENT_ENTRY(MouseEvent)
-	                        DEFINE_EVENT_ENTRY(Activated) DEFINE_EVENT_ENTRY(Timer)
-	                            DEFINE_EVENT_ENTRY(GraphicsReset)
+	DEFINE_EVENT_ENTRY(WindowStateChange),   DEFINE_EVENT_ENTRY(ResizeWindow),
+	DEFINE_EVENT_ENTRY(LocalResizeWindow),   DEFINE_EVENT_ENTRY(EmbedWindow),
+	DEFINE_EVENT_ENTRY(PanningChange),       DEFINE_EVENT_ENTRY(ZoomingChange),
+	DEFINE_EVENT_ENTRY(ErrorInfo),           DEFINE_EVENT_ENTRY(Terminate),
+	DEFINE_EVENT_ENTRY(ConnectionResult),    DEFINE_EVENT_ENTRY(ChannelConnected),
+	DEFINE_EVENT_ENTRY(ChannelDisconnected), DEFINE_EVENT_ENTRY(MouseEvent),
+	DEFINE_EVENT_ENTRY(Activated),           DEFINE_EVENT_ENTRY(Timer),
+	DEFINE_EVENT_ENTRY(GraphicsReset)
 };
 
 /** Allocator function for a rdp context.

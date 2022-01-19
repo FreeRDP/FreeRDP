@@ -15,18 +15,18 @@ int flags;
 int button;
 DEFINE_EVENT_END(MouseButton)
 
-static void MouseMotionEventHandler(void* context, MouseMotionEventArgs* e)
+static void MouseMotionEventHandler(void* context, const MouseMotionEventArgs* e)
 {
 	printf("MouseMotionEvent: x: %d y: %d\n", e->x, e->y);
 }
 
-static void MouseButtonEventHandler(void* context, MouseButtonEventArgs* e)
+static void MouseButtonEventHandler(void* context, const MouseButtonEventArgs* e)
 {
 	printf("MouseButtonEvent: x: %d y: %d flags: %d button: %d\n", e->x, e->y, e->flags, e->button);
 }
 
-static wEventType Node_Events[] = { DEFINE_EVENT_ENTRY(MouseMotion)
-	                                    DEFINE_EVENT_ENTRY(MouseButton) };
+static wEventType Node_Events[] = { DEFINE_EVENT_ENTRY(MouseMotion),
+	                                DEFINE_EVENT_ENTRY(MouseButton) };
 
 #define NODE_EVENT_COUNT (sizeof(Node_Events) / sizeof(wEventType))
 
