@@ -187,7 +187,7 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	if ((appWindow->local_move.direction != _NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
 	    (appWindow->local_move.direction != _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
 	{
-		freerdp_input_send_mouse_event(input, PTR_FLAGS_BUTTON1, x, y);
+		freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_BUTTON1, x, y);
 	}
 
 	/*

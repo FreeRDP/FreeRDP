@@ -318,7 +318,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int)loc.x;
 	int y = (int)loc.y;
-	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
+	mf_scale_mouse_event(context, PTR_FLAGS_MOVE, x, y);
 }
 
 - (void)mouseDown:(NSEvent *)event
@@ -331,7 +331,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int)loc.x;
 	int y = (int)loc.y;
-	mf_press_mouse_button(context, instance->input, 0, x, y, TRUE);
+	mf_press_mouse_button(context, 0, x, y, TRUE);
 }
 
 - (void)mouseUp:(NSEvent *)event
@@ -344,7 +344,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int)loc.x;
 	int y = (int)loc.y;
-	mf_press_mouse_button(context, instance->input, 0, x, y, FALSE);
+	mf_press_mouse_button(context, 0, x, y, FALSE);
 }
 
 - (void)rightMouseDown:(NSEvent *)event
@@ -357,7 +357,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int)loc.x;
 	int y = (int)loc.y;
-	mf_press_mouse_button(context, instance->input, 1, x, y, TRUE);
+	mf_press_mouse_button(context, 1, x, y, TRUE);
 }
 
 - (void)rightMouseUp:(NSEvent *)event
@@ -370,7 +370,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int)loc.x;
 	int y = (int)loc.y;
-	mf_press_mouse_button(context, instance->input, 1, x, y, FALSE);
+	mf_press_mouse_button(context, 1, x, y, FALSE);
 }
 
 - (void)otherMouseDown:(NSEvent *)event
@@ -384,7 +384,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	int x = (int)loc.x;
 	int y = (int)loc.y;
 	int pressed = [event buttonNumber];
-	mf_press_mouse_button(context, instance->input, pressed, x, y, TRUE);
+	mf_press_mouse_button(context, pressed, x, y, TRUE);
 }
 
 - (void)otherMouseUp:(NSEvent *)event
@@ -398,7 +398,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	int x = (int)loc.x;
 	int y = (int)loc.y;
 	int pressed = [event buttonNumber];
-	mf_press_mouse_button(context, instance->input, pressed, x, y, FALSE);
+	mf_press_mouse_button(context, pressed, x, y, FALSE);
 }
 
 - (void)scrollWheel:(NSEvent *)event
@@ -447,7 +447,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
 		step = 0x100 - step;
 
-	mf_scale_mouse_event(context, instance->input, flags | step, 0, 0);
+	mf_scale_mouse_event(context, flags | step, 0, 0);
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -461,7 +461,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	int x = (int)loc.x;
 	int y = (int)loc.y;
 	// send mouse motion event to RDP server
-	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
+	mf_scale_mouse_event(context, PTR_FLAGS_MOVE, x, y);
 }
 
 DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)

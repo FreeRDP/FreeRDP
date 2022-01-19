@@ -417,7 +417,7 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 	}
 
 	xf_event_adjust_coordinates(xfc, &x, &y);
-	freerdp_input_send_mouse_event(input, PTR_FLAGS_MOVE, x, y);
+	freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_MOVE, x, y);
 
 	if (xfc->fullscreen && !app)
 	{
@@ -442,7 +442,6 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
                             BOOL down)
 {
 	UINT16 flags = 0;
-	rdpInput* input;
 	Window childWindow;
 	size_t i;
 
@@ -459,14 +458,12 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
 		}
 	}
 
-	input = xfc->common.context.input;
-
 	if (flags != 0)
 	{
 		if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
 		{
 			if (down)
-				freerdp_input_send_mouse_event(input, flags, 0, 0);
+				freerdp_client_send_wheel_event(&xfc->common, flags);
 		}
 		else
 		{
@@ -499,9 +496,9 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
 			xf_event_adjust_coordinates(xfc, &x, &y);
 
 			if (extended)
-				freerdp_input_send_extended_mouse_event(input, flags, x, y);
+				freerdp_client_send_extended_button_event(&xfc->common, FALSE, flags, x, y);
 			else
-				freerdp_input_send_mouse_event(input, flags, x, y);
+				freerdp_client_send_button_event(&xfc->common, FALSE, flags, x, y);
 		}
 	}
 
