@@ -202,6 +202,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 			ErrorInitContextKerberos = TRUE;
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
 			negotiate_ContextFree(context);
+			sspi_SecureHandleSetLowerPointer(phNewContext, NULL);
 			return status;
 		}
 	}
