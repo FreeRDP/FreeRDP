@@ -108,13 +108,8 @@ void wlf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 	WINPR_ASSERT(wlf);
 	WINPR_ASSERT(e);
 
-	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	if (FALSE)
 	{
-		wlf->rdpei = (RdpeiClientContext*)e->pInterface;
-	}
-	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_graphics_pipeline_init(wlf->common.context.gdi, (RdpgfxClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -131,18 +126,8 @@ void wlf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 	{
 		wlf_disp_init(wlf->disp, (DispClientContext*)e->pInterface);
 	}
-	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_geometry_init(wlf->common.context.gdi, (GeometryClientContext*)e->pInterface);
-	}
-	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_control_init(wlf->common.context.gdi, (VideoClientContext*)e->pInterface);
-	}
-	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_data_init(wlf->common.context.gdi, (VideoClientContext*)e->pInterface);
-	}
+	else
+		freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
 
 void wlf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e)
@@ -152,13 +137,8 @@ void wlf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	WINPR_ASSERT(wlf);
 	WINPR_ASSERT(e);
 
-	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	if (FALSE)
 	{
-		wlf->rdpei = NULL;
-	}
-	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_graphics_pipeline_uninit(wlf->common.context.gdi, (RdpgfxClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -175,16 +155,6 @@ void wlf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	{
 		wlf_disp_uninit(wlf->disp, (DispClientContext*)e->pInterface);
 	}
-	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_geometry_uninit(wlf->common.context.gdi, (GeometryClientContext*)e->pInterface);
-	}
-	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_control_uninit(wlf->common.context.gdi, (VideoClientContext*)e->pInterface);
-	}
-	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
-	{
-		gdi_video_data_uninit(wlf->common.context.gdi, (VideoClientContext*)e->pInterface);
-	}
+	else
+		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
 }

@@ -56,8 +56,6 @@ struct wlf_context
 	BOOL focusing;
 
 	/* Channels */
-	RdpeiClientContext* rdpei;
-	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
 	wfClipboard* clipboard;
 	wlfDispContext* disp;

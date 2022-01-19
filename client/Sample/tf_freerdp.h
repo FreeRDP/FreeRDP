@@ -33,8 +33,6 @@ struct tf_context
 	rdpClientContext common;
 
 	/* Channels */
-	RdpeiClientContext* rdpei;
-	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
 };
 typedef struct tf_context tfContext;
