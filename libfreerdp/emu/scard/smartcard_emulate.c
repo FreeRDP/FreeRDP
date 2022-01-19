@@ -95,6 +95,11 @@ typedef struct
 static SCardHandle* find_reader(SmartcardEmulationContext* smartcard, const void* szReader,
                                 BOOL unicode);
 
+
+const BYTE ATR[] = { 0x3b, 0xf7, 0x18, 0x00, 0x00, 0x80, 0x31, 0xfe, 0x45,
+		0x73, 0x66, 0x74, 0x65, 0x2d, 0x6e, 0x66, 0xc4
+};
+
 static BOOL scard_status_transition(SCardContext* context)
 {
 	WINPR_ASSERT(context);
@@ -107,23 +112,15 @@ static BOOL scard_status_transition(SCardContext* context)
 			SCARD_READERSTATEA* reader = &context->readerStateA[0];
 			reader->szReader = g_ReaderNameA;
 			reader->dwEventState = SCARD_STATE_PRESENT;
-			reader->cbAtr = 5;
-			reader->rgbAtr[0] = 0x3B;
-			reader->rgbAtr[1] = 0x80;
-			reader->rgbAtr[2] = 0x80;
-			reader->rgbAtr[3] = 0x01;
-			reader->rgbAtr[4] = 0x01;
+			reader->cbAtr = sizeof(ATR);
+			memcpy(reader->rgbAtr, ATR, sizeof(ATR));
 		}
 			{
 				SCARD_READERSTATEW* reader = &context->readerStateW[0];
 				reader->szReader = g_ReaderNameW;
 				reader->dwEventState = SCARD_STATE_PRESENT;
-				reader->cbAtr = 5;
-				reader->rgbAtr[0] = 0x3B;
-				reader->rgbAtr[1] = 0x80;
-				reader->rgbAtr[2] = 0x80;
-				reader->rgbAtr[3] = 0x01;
-				reader->rgbAtr[4] = 0x01;
+				reader->cbAtr = sizeof(ATR);
+				memcpy(reader->rgbAtr, ATR, sizeof(ATR));
 			}
 			context->readerState = 42;
 			break;
