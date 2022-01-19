@@ -33,6 +33,29 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 
+#if defined(CHANNEL_AINPUT_CLIENT)
+#include <freerdp/client/ainput.h>
+#include <freerdp/channels/ainput.h>
+#endif
+
+#if defined(CHANNEL_VIDEO_CLIENT)
+#include <freerdp/client/video.h>
+#include <freerdp/channels/video.h>
+#include <freerdp/gdi/video.h>
+#endif
+
+#if defined(CHANNEL_RDPGFX_CLIENT)
+#include <freerdp/client/rdpgfx.h>
+#include <freerdp/channels/rdpgfx.h>
+#include <freerdp/gdi/gfx.h>
+#endif
+
+#if defined(CHANNEL_GEOMETRY_CLIENT)
+#include <freerdp/client/geometry.h>
+#include <freerdp/channels/geometry.h>
+#include <freerdp/gdi/video.h>
+#endif
+
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
 
@@ -902,4 +925,94 @@ int freerdp_client_common_stop(rdpContext* context)
 	}
 
 	return 0;
+}
+
+void freerdp_client_OnChannelConnectedEventHandler(void* context,
+                                                   const ChannelConnectedEventArgs* e)
+{
+	rdpClientContext* cctx = (rdpClientContext*)context;
+
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT(e);
+
+	if (0)
+	{
+	}
+#if defined(CHANNEL_AINPUT_CLIENT)
+	else if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
+		cctx->ainput = (AInputClientContext*)e->pInterface;
+#endif
+#if defined(CHANNEL_RDPEI_CLIENT)
+	else if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		cctx->rdpei = (RdpeiClientContext*)e->pInterface;
+	}
+#endif
+#if defined(CHANNEL_RDPGFX_CLIENT)
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_graphics_pipeline_init(cctx->context.gdi, (RdpgfxClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_GEOMETRY_CLIENT)
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_geometry_init(cctx->context.gdi, (GeometryClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_VIDEO_CLIENT)
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_control_init(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_data_init(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+#endif
+}
+
+void freerdp_client_OnChannelDisconnectedEventHandler(void* context,
+                                                      const ChannelDisconnectedEventArgs* e)
+{
+	rdpClientContext* cctx = (rdpClientContext*)context;
+
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT(e);
+
+	if (0)
+	{
+	}
+#if defined(CHANNEL_AINPUT_CLIENT)
+	else if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
+		cctx->ainput = NULL;
+#endif
+#if defined(CHANNEL_RDPEI_CLIENT)
+	else if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		cctx->rdpei = NULL;
+	}
+#endif
+#if defined(CHANNEL_RDPGFX_CLIENT)
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_graphics_pipeline_uninit(cctx->context.gdi, (RdpgfxClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_GEOMETRY_CLIENT)
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_geometry_uninit(cctx->context.gdi, (GeometryClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_VIDEO_CLIENT)
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_control_uninit(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_data_uninit(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+#endif
 }
