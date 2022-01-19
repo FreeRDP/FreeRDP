@@ -36,8 +36,9 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y);
 void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y);
 
 BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window window, BOOL app);
-BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window window, BOOL app);
+BOOL xf_generic_RawMotionNotify(xfContext* xfc, int x, int y, Window window, BOOL app);
 BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window window, BOOL app,
                             BOOL down);
+BOOL xf_generic_RawButtonEvent(xfContext* xfc, int button, BOOL app, BOOL down);
 
 #endif /* FREERDP_CLIENT_X11_EVENT_H */
