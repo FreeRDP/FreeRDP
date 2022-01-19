@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <sys/mman.h>
+#include <errno.h>
 
 #include "uwac-priv.h"
 #include "uwac-utils.h"
@@ -486,9 +487,23 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 	wl_surface_set_user_data(w->surface, w);
 
 #if BUILD_IVI
+	uint32_t ivi_surface_id = 1;
+	char* env = getenv("IVI_SURFACE_ID");
+	if (env)
+	{
+		unsigned long val;
+		char* endp;
+
+		errno = 0;
+		val = strtoul(env, &endp, 10);
+
+		if (!errno && val != 0 && val != ULONG_MAX)
+			ivi_surface_id = val;
+	}
+
 	if (display->ivi_application)
 	{
-		w->ivi_surface = ivi_application_surface_create(display->ivi_application, 1, w->surface);
+		w->ivi_surface = ivi_application_surface_create(display->ivi_application, ivi_surface_id, w->surface);
 		assert(w->ivi_surface);
 		ivi_surface_add_listener(w->ivi_surface, &ivi_surface_listener, w);
 	} else
