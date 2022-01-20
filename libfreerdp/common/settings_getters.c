@@ -2527,6 +2527,231 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 	}
 }
 
+char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
+{
+	WINPR_ASSERT(settings);
+
+	switch (id)
+	{
+		case FreeRDP_AcceptedCert:
+			return settings->AcceptedCert;
+
+		case FreeRDP_ActionScript:
+			return settings->ActionScript;
+
+		case FreeRDP_AllowedTlsCiphers:
+			return settings->AllowedTlsCiphers;
+
+		case FreeRDP_AlternateShell:
+			return settings->AlternateShell;
+
+		case FreeRDP_AssistanceFile:
+			return settings->AssistanceFile;
+
+		case FreeRDP_AuthenticationServiceClass:
+			return settings->AuthenticationServiceClass;
+
+		case FreeRDP_CertificateAcceptedFingerprints:
+			return settings->CertificateAcceptedFingerprints;
+
+		case FreeRDP_CertificateContent:
+			return settings->CertificateContent;
+
+		case FreeRDP_CertificateFile:
+			return settings->CertificateFile;
+
+		case FreeRDP_CertificateName:
+			return settings->CertificateName;
+
+		case FreeRDP_ClientAddress:
+			return settings->ClientAddress;
+
+		case FreeRDP_ClientDir:
+			return settings->ClientDir;
+
+		case FreeRDP_ClientHostname:
+			return settings->ClientHostname;
+
+		case FreeRDP_ClientProductId:
+			return settings->ClientProductId;
+
+		case FreeRDP_ComputerName:
+			return settings->ComputerName;
+
+		case FreeRDP_ConfigPath:
+			return settings->ConfigPath;
+
+		case FreeRDP_ConnectionFile:
+			return settings->ConnectionFile;
+
+		case FreeRDP_CurrentPath:
+			return settings->CurrentPath;
+
+		case FreeRDP_Domain:
+			return settings->Domain;
+
+		case FreeRDP_DrivesToRedirect:
+			return settings->DrivesToRedirect;
+
+		case FreeRDP_DumpRemoteFxFile:
+			return settings->DumpRemoteFxFile;
+
+		case FreeRDP_DynamicDSTTimeZoneKeyName:
+			return settings->DynamicDSTTimeZoneKeyName;
+
+		case FreeRDP_GatewayAcceptedCert:
+			return settings->GatewayAcceptedCert;
+
+		case FreeRDP_GatewayAccessToken:
+			return settings->GatewayAccessToken;
+
+		case FreeRDP_GatewayDomain:
+			return settings->GatewayDomain;
+
+		case FreeRDP_GatewayHostname:
+			return settings->GatewayHostname;
+
+		case FreeRDP_GatewayPassword:
+			return settings->GatewayPassword;
+
+		case FreeRDP_GatewayUsername:
+			return settings->GatewayUsername;
+
+		case FreeRDP_HomePath:
+			return settings->HomePath;
+
+		case FreeRDP_ImeFileName:
+			return settings->ImeFileName;
+
+		case FreeRDP_KerberosKdc:
+			return settings->KerberosKdc;
+
+		case FreeRDP_KerberosRealm:
+			return settings->KerberosRealm;
+
+		case FreeRDP_KeyboardRemappingList:
+			return settings->KeyboardRemappingList;
+
+		case FreeRDP_NtlmSamFile:
+			return settings->NtlmSamFile;
+
+		case FreeRDP_Password:
+			return settings->Password;
+
+		case FreeRDP_PasswordHash:
+			return settings->PasswordHash;
+
+		case FreeRDP_PlayRemoteFxFile:
+			return settings->PlayRemoteFxFile;
+
+		case FreeRDP_PreconnectionBlob:
+			return settings->PreconnectionBlob;
+
+		case FreeRDP_PrivateKeyContent:
+			return settings->PrivateKeyContent;
+
+		case FreeRDP_PrivateKeyFile:
+			return settings->PrivateKeyFile;
+
+		case FreeRDP_ProxyHostname:
+			return settings->ProxyHostname;
+
+		case FreeRDP_ProxyPassword:
+			return settings->ProxyPassword;
+
+		case FreeRDP_ProxyUsername:
+			return settings->ProxyUsername;
+
+		case FreeRDP_RDP2TCPArgs:
+			return settings->RDP2TCPArgs;
+
+		case FreeRDP_RdpKeyContent:
+			return settings->RdpKeyContent;
+
+		case FreeRDP_RdpKeyFile:
+			return settings->RdpKeyFile;
+
+		case FreeRDP_RedirectionAcceptedCert:
+			return settings->RedirectionAcceptedCert;
+
+		case FreeRDP_RedirectionDomain:
+			return settings->RedirectionDomain;
+
+		case FreeRDP_RedirectionTargetFQDN:
+			return settings->RedirectionTargetFQDN;
+
+		case FreeRDP_RedirectionTargetNetBiosName:
+			return settings->RedirectionTargetNetBiosName;
+
+		case FreeRDP_RedirectionUsername:
+			return settings->RedirectionUsername;
+
+		case FreeRDP_RemoteApplicationCmdLine:
+			return settings->RemoteApplicationCmdLine;
+
+		case FreeRDP_RemoteApplicationFile:
+			return settings->RemoteApplicationFile;
+
+		case FreeRDP_RemoteApplicationGuid:
+			return settings->RemoteApplicationGuid;
+
+		case FreeRDP_RemoteApplicationIcon:
+			return settings->RemoteApplicationIcon;
+
+		case FreeRDP_RemoteApplicationName:
+			return settings->RemoteApplicationName;
+
+		case FreeRDP_RemoteApplicationProgram:
+			return settings->RemoteApplicationProgram;
+
+		case FreeRDP_RemoteApplicationWorkingDir:
+			return settings->RemoteApplicationWorkingDir;
+
+		case FreeRDP_RemoteAssistancePassStub:
+			return settings->RemoteAssistancePassStub;
+
+		case FreeRDP_RemoteAssistancePassword:
+			return settings->RemoteAssistancePassword;
+
+		case FreeRDP_RemoteAssistanceRCTicket:
+			return settings->RemoteAssistanceRCTicket;
+
+		case FreeRDP_RemoteAssistanceSessionId:
+			return settings->RemoteAssistanceSessionId;
+
+		case FreeRDP_ServerHostname:
+			return settings->ServerHostname;
+
+		case FreeRDP_ShellWorkingDirectory:
+			return settings->ShellWorkingDirectory;
+
+		case FreeRDP_SmartcardCertificate:
+			return settings->SmartcardCertificate;
+
+		case FreeRDP_SmartcardPrivateKey:
+			return settings->SmartcardPrivateKey;
+
+		case FreeRDP_TargetNetAddress:
+			return settings->TargetNetAddress;
+
+		case FreeRDP_TransportDumpFile:
+			return settings->TransportDumpFile;
+
+		case FreeRDP_Username:
+			return settings->Username;
+
+		case FreeRDP_WindowTitle:
+			return settings->WindowTitle;
+
+		case FreeRDP_WmClass:
+			return settings->WmClass;
+
+		default:
+			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
+			return FALSE;
+	}
+}
+
 BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* val, size_t len,
                                   BOOL cleanup)
 {
@@ -2776,7 +3001,7 @@ BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* v
 	return freerdp_settings_set_string_(settings, id, val, len, TRUE);
 }
 
-void* freerdp_settings_get_pointer_writable(const rdpSettings* settings, size_t id)
+void* freerdp_settings_get_pointer_writable(rdpSettings* settings, size_t id)
 {
 	WINPR_ASSERT(settings);
 

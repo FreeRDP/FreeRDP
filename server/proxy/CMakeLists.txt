@@ -41,6 +41,7 @@ set(${MODULE_PREFIX}_SRCS
 
 set(PROXY_APP_SRCS freerdp_proxy.c)
 
+option(WITH_PROXY_EMULATE_SMARTCARD "Compile proxy smartcard emulation" OFF)
 add_subdirectory("channels")
 
 # On windows create dll version information.
@@ -116,7 +117,3 @@ if (WITH_PROXY_MODULES)
   add_subdirectory("modules")
 endif()
 
-option(WITH_PROXY_EMULATE_SMARTCARD "Compile proxy smartcard emulation" OFF)
-if (WITH_PROXY_EMULATE_SMARTCARD)
-    add_definitions("-DWITH_PROXY_EMULATE_SMARTCARD")
-endif()

@@ -177,5 +177,6 @@
 
 /* Proxy */
 #cmakedefine WITH_PROXY_MODULES
+#cmakedefine WITH_PROXY_EMULATE_SMARTCARD
 
 #endif /* FREERDP_CONFIG_H */
