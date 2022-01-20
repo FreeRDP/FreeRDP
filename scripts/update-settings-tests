@@ -269,21 +269,7 @@ def write_getter_case(f, val):
     f.write('\t\tcase FreeRDP_' + val + ':\n')
     f.write('\t\t\treturn settings->' + val + ';\n\n')
 
-def write_getter(f, entry_dict, entry_type, entry_name):
-    isString = 'string' in entry_name
-    isPointer = 'pointer' in entry_name
-    values = get_values(entry_dict, entry_type)
-
-    if isPointer:
-        f.write('void*')
-    elif isString:
-        f.write('const ' + entry_type)
-    else:
-        f.write(entry_type)
-    if isPointer:
-        f.write(' freerdp_settings_get_pointer_writable(const rdpSettings* settings, size_t id)\n')
-    else:
-        f.write(' freerdp_settings_get_' + entry_name.lower() + '(const rdpSettings* settings, size_t id)\n')
+def write_getter_body(f, values):
     f.write('{\n')
     f.write('\tWINPR_ASSERT(settings);\n\n')
     f.write('\tswitch (id)\n')
@@ -296,6 +282,28 @@ def write_getter(f, entry_dict, entry_type, entry_name):
     f.write('\t\t\treturn FALSE;\n')
     f.write('\t}\n')
     f.write('}\n\n')
+
+def write_getter(f, entry_dict, entry_type, entry_name):
+    isString = 'string' in entry_name
+    isPointer = 'pointer' in entry_name
+    values = get_values(entry_dict, entry_type)
+
+    if isPointer:
+        f.write('void*')
+    elif isString:
+        f.write('const ' + entry_type)
+    else:
+        f.write(entry_type)
+
+    if isPointer:
+        f.write(' freerdp_settings_get_pointer_writable(rdpSettings* settings, size_t id)\n')
+    else:
+        f.write(' freerdp_settings_get_' + entry_name.lower() + '(const rdpSettings* settings, size_t id)\n')
+    write_getter_body(f, values)
+
+    if isString:
+        f.write('char* freerdp_settings_get_' + entry_name.lower() + '_writable(rdpSettings* settings, size_t id)\n')
+        write_getter_body(f, values)
 
 def write_setter_case(f, val, isString, isPointer):
     f.write('\t\tcase FreeRDP_' + val + ':\n')

@@ -1745,13 +1745,14 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_set_uint64(rdpSettings* settings, size_t id, UINT64 param);
 
 	FREERDP_API const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id);
+	FREERDP_API char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id);
 	FREERDP_API BOOL freerdp_settings_set_string_len(rdpSettings* settings, size_t id,
 	                                                 const char* param, size_t len);
 	FREERDP_API BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id,
 	                                             const char* param);
 
 	FREERDP_API const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id);
-	FREERDP_API void* freerdp_settings_get_pointer_writable(const rdpSettings* settings, size_t id);
+	FREERDP_API void* freerdp_settings_get_pointer_writable(rdpSettings* settings, size_t id);
 	FREERDP_API BOOL freerdp_settings_set_pointer(rdpSettings* settings, size_t id,
 	                                              const void* data);
 	FREERDP_API BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id,
