@@ -121,6 +121,16 @@ static BOOL pf_context_revert_str_settings(rdpSettings* dst, const rdpSettings* 
 	return TRUE;
 }
 
+void intercept_context_entry_free(void* obj)
+{
+	InterceptContextMapEntry* entry = obj;
+	if (!entry)
+		return;
+	if (!entry->free)
+		return;
+	entry->free(entry);
+}
+
 BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 {
 	BOOL rc = FALSE;
