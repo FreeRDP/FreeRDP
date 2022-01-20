@@ -81,14 +81,20 @@ extern "C"
 	struct rdp_client_context
 	{
 		rdpContext context;
-		HANDLE thread;
+		ALIGN64 HANDLE thread; /**< (offset 0) */
 #if defined(CHANNEL_AINPUT_CLIENT)
-		AInputClientContext* ainput;
+        ALIGN64 AInputClientContext* ainput; /**< (offset 1) */
+#else
+	    UINT64 reserved1;
 #endif
 
 #if defined(CHANNEL_RDPEI_CLIENT)
-		RdpeiClientContext* rdpei;
+        ALIGN64 RdpeiClientContext* rdpei; /**< (offset 2) */
+#else
+	    UINT64 reserved2;
 #endif
+
+        UINT64 reserved[128 - 3]; /**< (offset 3) */
 	};
 
 	/* Common client functions */
