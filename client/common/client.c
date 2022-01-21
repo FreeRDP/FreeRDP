@@ -1145,8 +1145,7 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 		if (mflags & PTR_XFLAGS_BUTTON2)
 			flags |= AINPUT_XFLAGS_BUTTON2;
 
-		ainput_send_diff_event(cctx, flags, x, y);
-		handled = TRUE;
+		handled = ainput_send_diff_event(cctx, flags, x, y);
 	}
 #endif
 
