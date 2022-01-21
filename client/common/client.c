@@ -1029,19 +1029,25 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 		UINT rc;
 		UINT64 flags = 0;
 		INT32 x = 0, y = 0;
+		INT32 value = mflags & 0xFF;
+
+		if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
+			value = -1 * (0x100 - value);
+
 		if (mflags & PTR_FLAGS_WHEEL)
 		{
 			flags |= AINPUT_FLAGS_WHEEL;
-			x = flags & 0xff;
-			if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
-				x = -x;
+			y = value;
 		}
+
+		/* We have discrete steps, scale this so we can also support high
+		 * resolution wheels. */
+		value *= 0x10000;
+
 		if (mflags & PTR_FLAGS_HWHEEL)
 		{
 			flags |= AINPUT_FLAGS_WHEEL;
-			y = flags & 0xff;
-			if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
-				y = -y;
+			x = value;
 		}
 
 		WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
