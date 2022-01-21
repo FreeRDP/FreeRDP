@@ -50,7 +50,7 @@
 
 #define MIN_FINGER_DIST 5
 
-static int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype);
+static int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype);
 
 static const char* xf_input_get_class_string(int class)
 {
@@ -429,7 +429,7 @@ static int xf_input_handle_event_local(xfContext* xfc, const XEvent* event)
 				break;
 
 			default:
-				xf_input_event(xfc, cookie.cc->data, cookie.cc->evtype);
+				xf_input_event(xfc, event, cookie.cc->data, cookie.cc->evtype);
 				break;
 		}
 	}
@@ -545,8 +545,21 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 	return 0;
 }
 
-int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
+int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype)
 {
+	Window w;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(xevent);
+	WINPR_ASSERT(event);
+
+	w = xevent->xany.window;
+	if (w != xfc->window)
+	{
+		if (!xfc->remote_app)
+			return 0;
+	}
+
 	xf_input_show_cursor(xfc);
 
 	switch (evtype)
@@ -613,7 +626,7 @@ static int xf_input_handle_event_remote(xfContext* xfc, const XEvent* event)
 				break;
 
 			default:
-				xf_input_event(xfc, cookie.cc->data, cookie.cc->evtype);
+				xf_input_event(xfc, event, cookie.cc->data, cookie.cc->evtype);
 				break;
 		}
 	}
