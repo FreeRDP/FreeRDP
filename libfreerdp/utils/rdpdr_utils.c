@@ -282,6 +282,7 @@ void rdpdr_dump_received_packet(wStream* s, const char* custom)
 		UINT32 MajorFunction = 0;
 		UINT32 MinorFunction = 0;
 		const size_t pos = Stream_GetPosition(s);
+		wLog* log = WLog_Get(TAG);
 
 		Stream_Read_UINT16(s, component);
 		Stream_Read_UINT16(s, packetid);
@@ -298,14 +299,14 @@ void rdpdr_dump_received_packet(wStream* s, const char* custom)
 					Stream_Read_UINT32(s, MajorFunction); /* MajorFunction (4 bytes) */
 					Stream_Read_UINT32(s, MinorFunction); /* MinorFunction (4 bytes) */
 
-					WLog_DBG(TAG,
-					         "[%s] receive [%s | %s] [0x%08" PRIx32 "] FileID=0x%08" PRIx32
-					         ", CompletionID=0x%08" PRIx32 ", MajorFunction=%s [0x%08" PRIx32
-					         "] -> %" PRIuz,
-					         custom, rdpdr_component_string(component),
-					         rdpdr_packetid_string(packetid), deviceID, FileId, CompletionId,
-					         rdpdr_irp_string(MajorFunction), MinorFunction, deviceID,
-					         Stream_Length(s));
+					WLog_Print(log, WLOG_DEBUG,
+					           "[%s] receive [%s | %s] [0x%08" PRIx32 "] FileID=0x%08" PRIx32
+					           ", CompletionID=0x%08" PRIx32 ", MajorFunction=%s [0x%08" PRIx32
+					           "] -> %" PRIuz,
+					           custom, rdpdr_component_string(component),
+					           rdpdr_packetid_string(packetid), deviceID, FileId, CompletionId,
+					           rdpdr_irp_string(MajorFunction), MinorFunction, deviceID,
+					           Stream_Length(s));
 					done = TRUE;
 				}
 			}
@@ -314,11 +315,11 @@ void rdpdr_dump_received_packet(wStream* s, const char* custom)
 
 		if (!done)
 		{
-			WLog_DBG(TAG, "[%s] receive [%s | %s] [0x%08" PRIx32 "] -> %" PRIuz, custom,
-			         rdpdr_component_string(component), rdpdr_packetid_string(packetid), deviceID,
-			         Stream_Length(s));
+			WLog_Print(log, WLOG_DEBUG, "[%s] receive [%s | %s] [0x%08" PRIx32 "] -> %" PRIuz,
+			           custom, rdpdr_component_string(component), rdpdr_packetid_string(packetid),
+			           deviceID, Stream_Length(s));
 		}
-		winpr_HexDump(TAG, WLOG_TRACE, Stream_Buffer(s), Stream_Length(s));
+		winpr_HexLogDump(log, WLOG_TRACE, Stream_Buffer(s), Stream_Length(s));
 	}
 
 	Stream_SetPosition(s, pos);
