@@ -61,6 +61,9 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 
 	char* buffer;
 
+	if (!WLog_IsLevelActive(log, lvl))
+		return;
+
 	if (!log || (maxlen < 0))
 		return;
 
