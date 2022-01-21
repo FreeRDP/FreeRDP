@@ -94,7 +94,9 @@ extern "C"
 	    UINT64 reserved2;
 #endif
 
-        UINT64 reserved[128 - 3]; /**< (offset 3) */
+		ALIGN64 INT32 lastX;      /**< (offset 3) */
+		ALIGN64 INT32 lastY;      /**< (offset 4) */
+		UINT64 reserved[128 - 5]; /**< (offset 5) */
 	};
 
 	/* Common client functions */
