@@ -1058,6 +1058,7 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 #endif
 	if (!handled)
 		freerdp_input_send_mouse_event(cctx->context.input, mflags, 0, 0);
+
 	return TRUE;
 }
 
@@ -1106,13 +1107,20 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 
 	if (!handled)
 	{
-		const rdpSettings* settings = cctx->context.settings;
-		static INT64 lastX = 0;
-		static INT64 lastY = 0;
-
-		lastX = MIN(MAX(lastX + x, 0), settings->DesktopWidth);
-		lastY = MIN(MAX(lastY + y, 0), settings->DesktopHeight);
-		freerdp_input_send_mouse_event(cctx->context.input, mflags, (UINT16)lastX, (UINT16)lastY);
+		if (relative)
+		{
+			cctx->lastX += x;
+			cctx->lastY += y;
+			WLog_WARN(TAG, "Relative mouse input but channel % not available, sending absolute!",
+			          AINPUT_DVC_CHANNEL_NAME);
+		}
+		else
+		{
+			cctx->lastX = x;
+			cctx->lastY = y;
+		}
+		freerdp_input_send_mouse_event(cctx->context.input, mflags, (UINT16)cctx->lastX,
+		                               (UINT16)cctx->lastY);
 	}
 	return TRUE;
 }
@@ -1120,6 +1128,7 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL relative, UINT16 mflags,
                                                INT32 x, INT32 y)
 {
+	BOOL handled = FALSE;
 	WINPR_ASSERT(cctx);
 
 #if defined(CHANNEL_AINPUT_CLIENT)
@@ -1137,10 +1146,27 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 			flags |= AINPUT_XFLAGS_BUTTON2;
 
 		ainput_send_diff_event(cctx, flags, x, y);
+		handled = TRUE;
 	}
-	else
 #endif
-		freerdp_input_send_extended_mouse_event(cctx->context.input, mflags, x, y);
+
+	if (!handled)
+	{
+		if (relative)
+		{
+			cctx->lastX += x;
+			cctx->lastY += y;
+			WLog_WARN(TAG, "Relative mouse input but channel % not available, sending absolute!",
+			          AINPUT_DVC_CHANNEL_NAME);
+		}
+		else
+		{
+			cctx->lastX = x;
+			cctx->lastY = y;
+		}
+		freerdp_input_send_extended_mouse_event(cctx->context.input, mflags, (UINT16)cctx->lastX,
+		                                        (UINT16)cctx->lastY);
+	}
 
 	return TRUE;
 }
