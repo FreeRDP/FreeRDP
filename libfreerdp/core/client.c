@@ -632,6 +632,7 @@ static int freerdp_channels_process_sync(rdpChannels* channels, freerdp* instanc
 /**
  * called only from main thread
  */
+#if defined(WITH_FREERDP_DEPRECATED)
 BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
                               int* read_count, void** write_fds, int* write_count)
 {
@@ -646,6 +647,7 @@ BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** r
 
 	return TRUE;
 }
+#endif
 
 void* freerdp_channels_get_static_channel_interface(rdpChannels* channels, const char* name)
 {

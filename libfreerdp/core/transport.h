@@ -67,7 +67,9 @@ FREERDP_LOCAL BOOL transport_accept_nla(rdpTransport* transport);
 FREERDP_LOCAL int transport_read_pdu(rdpTransport* transport, wStream* s);
 FREERDP_LOCAL int transport_write(rdpTransport* transport, wStream* s);
 
+#if defined(WITH_FREERDP_DEPRECATED)
 FREERDP_LOCAL void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
+#endif
 FREERDP_LOCAL int transport_check_fds(rdpTransport* transport);
 
 FREERDP_LOCAL DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events,

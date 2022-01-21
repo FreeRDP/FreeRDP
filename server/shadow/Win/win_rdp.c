@@ -23,6 +23,8 @@
 #include <winpr/crt.h>
 #include <winpr/assert.h>
 #include <winpr/print.h>
+#include <winpr/assert.h>
+
 #include <freerdp/log.h>
 
 #include "win_rdp.h"
@@ -156,21 +158,19 @@ static BOOL shw_post_connect(freerdp* instance)
 static DWORD WINAPI shw_client_thread(LPVOID arg)
 {
 	int index;
-	int rcount;
-	int wcount;
 	BOOL bSuccess;
-	void* rfds[32];
-	void* wfds[32];
-	int fds_count;
-	HANDLE fds[64];
 	shwContext* shw;
 	rdpContext* context;
 	rdpChannels* channels;
+
 	freerdp* instance = (freerdp*)arg;
-	ZeroMemory(rfds, sizeof(rfds));
-	ZeroMemory(wfds, sizeof(wfds));
+	WINPR_ASSERT(instance);
+
 	context = (rdpContext*)instance->context;
+	WINPR_ASSERT(context);
+
 	shw = (shwContext*)context;
+
 	bSuccess = freerdp_connect(instance);
 	WLog_INFO(TAG, "freerdp_connect: %d", bSuccess);
 
@@ -180,34 +180,24 @@ static DWORD WINAPI shw_client_thread(LPVOID arg)
 		return 0;
 	}
 
-	channels = instance->context->channels;
+	channels = context->channels;
+	WINPR_ASSERT(channels);
 
 	while (1)
 	{
-		rcount = 0;
-		wcount = 0;
+		DWORD status;
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		DWORD count = freerdp_get_event_handles(instance, handles, ARRAYSIZE(handles));
 
-		if (!freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount))
+		if ((count == 0) || (count == MAXIMUM_WAIT_OBJECTS))
 		{
-			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
+			WLog_ERR(TAG, "Failed to get FreeRDP event handles");
 			break;
 		}
 
-		if (!freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount))
-		{
-			WLog_ERR(TAG, "Failed to get channels file descriptor");
-			break;
-		}
+		handles[count++] = freerdp_channels_get_event_handle(instance);
 
-		fds_count = 0;
-
-		for (index = 0; index < rcount; index++)
-			fds[fds_count++] = rfds[index];
-
-		for (index = 0; index < wcount; index++)
-			fds[fds_count++] = wfds[index];
-
-		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
+		if (MsgWaitForMultipleObjects(count, handles, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "MsgWaitForMultipleObjects failure: 0x%08lX", GetLastError());
 			break;
