@@ -51,6 +51,10 @@ struct smartcard_emulation_context
 	wLog* log;
 	wHashTable* contexts;
 	wHashTable* handles;
+	BOOL configured;
+	const char* pem;
+	const char* key;
+	const char* pin;
 };
 
 #define MAX_EMULATED_READERS 1
@@ -2682,24 +2686,31 @@ BOOL Emulate_IsConfigured(SmartcardEmulationContext* context)
 {
 	BOOL rc = FALSE;
 	vgidsContext* vgids;
+	const char* pem = NULL;
+	const char* key = NULL;
+	const char* pin = NULL;
 
 	WINPR_ASSERT(context);
 
+	pem = freerdp_settings_get_string(context->settings, FreeRDP_SmartcardCertificate);
+	key = freerdp_settings_get_string(context->settings, FreeRDP_SmartcardPrivateKey);
+
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_PasswordIsSmartcardPin))
+		pin = freerdp_settings_get_string(context->settings, FreeRDP_Password);
+
+	/* Cache result only, if no initialization arguments changed. */
+	if ((context->pem == pem) && (context->key == key) && (context->pin == pin))
+		return context->configured;
+
+	context->pem = pem;
+	context->key = key;
+	context->pin = pin;
+
 	vgids = vgids_new();
 	if (vgids)
-	{
-		const char* pem =
-		    freerdp_settings_get_string(context->settings, FreeRDP_SmartcardCertificate);
-		const char* key =
-		    freerdp_settings_get_string(context->settings, FreeRDP_SmartcardPrivateKey);
-		const char* pin = NULL;
-
-		if (freerdp_settings_get_bool(context->settings, FreeRDP_PasswordIsSmartcardPin))
-			pin = freerdp_settings_get_string(context->settings, FreeRDP_Password);
-
-		rc = vgids_init(vgids, pem, key, pin);
-	}
-
+		rc = vgids_init(vgids, context->pem, context->key, context->pin);
 	vgids_free(vgids);
+
+	context->configured = rc;
 	return rc;
 }
