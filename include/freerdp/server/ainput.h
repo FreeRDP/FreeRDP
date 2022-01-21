@@ -22,6 +22,7 @@
 #define FREERDP_CHANNEL_AINPUT_SERVER_H
 
 #include <freerdp/channels/wtsvc.h>
+#include <freerdp/channels/ainput.h>
 
 typedef enum AINPUT_SERVER_OPEN_RESULT
 {
