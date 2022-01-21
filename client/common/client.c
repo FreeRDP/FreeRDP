@@ -1034,15 +1034,15 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 		if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
 			value = -1 * (0x100 - value);
 
+		/* We have discrete steps, scale this so we can also support high
+		 * resolution wheels. */
+		value *= 0x10000;
+
 		if (mflags & PTR_FLAGS_WHEEL)
 		{
 			flags |= AINPUT_FLAGS_WHEEL;
 			y = value;
 		}
-
-		/* We have discrete steps, scale this so we can also support high
-		 * resolution wheels. */
-		value *= 0x10000;
 
 		if (mflags & PTR_FLAGS_HWHEEL)
 		{
