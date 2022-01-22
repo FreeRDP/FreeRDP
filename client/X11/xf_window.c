@@ -55,6 +55,7 @@
 
 #include "xf_rail.h"
 #include "xf_input.h"
+#include "xf_keyboard.h"
 
 #define TAG CLIENT_TAG("x11")
 
@@ -893,7 +894,9 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 	appWindow->local_move.root_y = y;
 	appWindow->local_move.state = LMS_STARTING;
 	appWindow->local_move.direction = direction;
-	XUngrabPointer(xfc->display, CurrentTime);
+
+	xf_ungrab(xfc);
+
 	xf_SendClientEvent(
 	    xfc, appWindow->handle,
 	    xfc->_NET_WM_MOVERESIZE, /* request X window manager to initiate a local move */

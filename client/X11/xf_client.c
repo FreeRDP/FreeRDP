@@ -766,10 +766,7 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	  to allow keyboard usage on the debugger
 	*/
 	if (xfc->debug)
-	{
-		XUngrabKeyboard(xfc->display, CurrentTime);
-		XUngrabPointer(xfc->display, CurrentTime);
-	}
+		xf_ungrab(xfc);
 
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
 	xfc->decorations = (xfc->fullscreen) ? FALSE : settings->Decorations;

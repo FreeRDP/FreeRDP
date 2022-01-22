@@ -698,8 +698,7 @@ void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym)
 		}
 
 		xfc->mouse_active = FALSE;
-		XUngrabKeyboard(xfc->display, CurrentTime);
-		XUngrabPointer(xfc->display, CurrentTime);
+		xf_ungrab(xfc);
 	}
 
 	// ungrabbed
@@ -727,4 +726,12 @@ BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeSta
 	          ", imeConvMode=%08" PRIx32 ") ignored",
 	          imeId, imeState, imeConvMode);
 	return TRUE;
+}
+
+BOOL xf_ungrab(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+	XUngrabKeyboard(xfc->display, CurrentTime);
+	XUngrabPointer(xfc->display, CurrentTime);
+	xfc->mouse_grabbed = FALSE;
 }
