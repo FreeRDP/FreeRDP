@@ -34,6 +34,8 @@
 #include <freerdp/client/ainput.h>
 #include <freerdp/channels/ainput.h>
 
+#include "../common/ainput_common.h"
+
 #define TAG CHANNELS_TAG("ainput.client")
 
 typedef struct AINPUT_CHANNEL_CALLBACK_ AINPUT_CHANNEL_CALLBACK;
@@ -127,6 +129,12 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 	}
 	callback = ainput->listener_callback->channel_callback;
 	WINPR_ASSERT(callback);
+
+	{
+		char buffer[128] = { 0 };
+		WLog_VRB(TAG, "[%s] sending flags=%s, %" PRId32 "x%" PRId32, __FUNCTION__,
+		         ainput_flags_to_string(flags, buffer, sizeof(buffer)), x, y);
+	}
 
 	/* Message type */
 	Stream_Write_UINT16(s, MSG_AINPUT_MOUSE);
