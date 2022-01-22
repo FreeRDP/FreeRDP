@@ -444,11 +444,12 @@ BOOL xf_generic_RawMotionNotify(xfContext* xfc, int x, int y, Window window, BOO
 static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOOL app)
 {
 	WINPR_ASSERT(xfc);
+
+	if (xfc->xi_event || xfc->xi_rawevent)
+		return TRUE;
+
 	if (xfc->window)
 		xf_floatbar_set_root_y(xfc->window->floatbar, event->y);
-
-	if (xfc->use_xinput)
-		return TRUE;
 
 	return xf_generic_MotionNotify(xfc, event->x, event->y, event->state, event->window, app);
 }
@@ -533,6 +534,7 @@ static BOOL xf_grab_mouse(xfContext* xfc)
 		             ButtonPressMask | ButtonReleaseMask | PointerMotionMask | FocusChangeMask |
 		                 EnterWindowMask | LeaveWindowMask,
 		             GrabModeAsync, GrabModeAsync, xfc->window->handle, None, CurrentTime);
+		xfc->mouse_grabbed = TRUE;
 	}
 	return TRUE;
 }
@@ -551,18 +553,18 @@ static BOOL xf_grab_kbd(xfContext* xfc)
 static BOOL xf_event_ButtonPress(xfContext* xfc, const XButtonEvent* event, BOOL app)
 {
 	xf_grab_mouse(xfc);
-	if (xfc->use_xinput)
-		return TRUE;
 
+	if (xfc->xi_event || xfc->xi_rawevent)
+		return TRUE;
 	return xf_generic_ButtonEvent(xfc, event->x, event->y, event->button, event->window, app, TRUE);
 }
 
 static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BOOL app)
 {
 	xf_grab_mouse(xfc);
-	if (xfc->use_xinput)
-		return TRUE;
 
+	if (xfc->xi_event || xfc->xi_rawevent)
+		return TRUE;
 	return xf_generic_ButtonEvent(xfc, event->x, event->y, event->button, event->window, app,
 	                              FALSE);
 }

@@ -61,4 +61,6 @@ BOOL xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
 BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                 UINT32 imeConvMode);
 
+BOOL xf_ungrab(xfContext* xfc);
+
 #endif /* FREERDP_CLIENT_X11_XF_KEYBOARD_H */
