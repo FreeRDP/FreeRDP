@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
+#include <winpr/string.h>
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/ber.h>
@@ -322,9 +323,126 @@ size_t ber_write_octet_string(wStream* s, const BYTE* oct_str, size_t length)
 	return size;
 }
 
+size_t ber_write_contextual_octet_string(wStream* s, BYTE tag, const BYTE* oct_str, size_t length)
+{
+	size_t inner = ber_sizeof_octet_string(length);
+	size_t ret, r;
+
+	ret = ber_write_contextual_tag(s, tag, inner, TRUE);
+	if (!ret)
+		return 0;
+
+	r = ber_write_octet_string(s, oct_str, length);
+	if (!r)
+		return 0;
+	return ret + r;
+}
+
+size_t ber_write_char_to_unicode_octet_string(wStream* s, const char* str)
+{
+	size_t size = 0;
+	size_t length = strlen(str) + 1;
+	size += ber_write_universal_tag(s, BER_TAG_OCTET_STRING, FALSE);
+	size += ber_write_length(s, length * 2);
+	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR)Stream_Pointer(s), length * 2);
+	Stream_Seek(s, length * 2);
+	return size + length * 2;
+}
+
+size_t ber_write_contextual_unicode_octet_string(wStream* s, BYTE tag, LPWSTR str)
+{
+	size_t len = _wcslen(str) * 2;
+	size_t inner_len = ber_sizeof_octet_string(len);
+	size_t ret;
+
+	if (!Stream_EnsureRemainingCapacity(s, inner_len + 5))
+		return 0;
+
+	ret = ber_write_contextual_tag(s, tag, inner_len, TRUE);
+	return ret + ber_write_octet_string(s, (const BYTE*)str, len);
+}
+
+size_t ber_write_contextual_char_to_unicode_octet_string(wStream* s, BYTE tag, const char* str)
+{
+	size_t ret;
+	size_t len = strlen(str) * 2;
+	size_t inner_len = ber_sizeof_octet_string(len);
+
+	if (!Stream_EnsureRemainingCapacity(s, inner_len + 10))
+		return 0;
+
+	ret = ber_write_contextual_tag(s, tag, inner_len, TRUE);
+	ret += ber_write_universal_tag(s, BER_TAG_OCTET_STRING, FALSE);
+	ret += ber_write_length(s, len);
+	MultiByteToWideChar(CP_UTF8, 0, str, len, (LPWSTR)Stream_Pointer(s), len);
+	Stream_Seek(s, len);
+
+	return ret + len;
+}
+
+BOOL ber_read_unicode_octet_string(wStream* s, LPWSTR* str)
+{
+	LPWSTR ret = NULL;
+	size_t length;
+
+	if (!ber_read_octet_string_tag(s, &length))
+		return FALSE;
+
+	if (Stream_GetRemainingLength(s) < length)
+		return FALSE;
+
+	ret = calloc(1, length + 2);
+	if (!ret)
+		return FALSE;
+
+	memcpy(ret, Stream_Pointer(s), length);
+	ret[length / 2] = 0;
+	Stream_Seek(s, length);
+	*str = ret;
+	return TRUE;
+}
+
+BOOL ber_read_char_from_unicode_octet_string(wStream* s, char** str)
+{
+	size_t length, outLen;
+	char* ptr;
+
+	if (!ber_read_octet_string_tag(s, &length))
+		return FALSE;
+
+	if (Stream_GetRemainingLength(s) < length)
+		return FALSE;
+
+	outLen = (length / 2) + 1;
+	ptr = malloc(outLen);
+	if (!ptr)
+		return FALSE;
+	ptr[outLen - 1] = 0;
+
+	WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)Stream_Pointer(s), length, ptr, outLen, NULL, FALSE);
+	Stream_Seek(s, length);
+	*str = ptr;
+	return TRUE;
+}
+
 BOOL ber_read_octet_string_tag(wStream* s, size_t* length)
 {
 	return ber_read_universal_tag(s, BER_TAG_OCTET_STRING, FALSE) && ber_read_length(s, length);
+}
+
+BOOL ber_read_octet_string(wStream* s, BYTE** content, size_t* length)
+{
+	BYTE* ret;
+	if (!ber_read_octet_string_tag(s, length) || Stream_GetRemainingLength(s) < *length)
+		return FALSE;
+
+	ret = malloc(*length);
+	if (!ret)
+		return FALSE;
+
+	Stream_Read(s, ret, *length);
+	*content = ret;
+	return TRUE;
 }
 
 size_t ber_write_octet_string_tag(wStream* s, size_t length)
@@ -337,6 +455,12 @@ size_t ber_write_octet_string_tag(wStream* s, size_t length)
 size_t ber_sizeof_octet_string(size_t length)
 {
 	return 1 + _ber_sizeof_length(length) + length;
+}
+
+size_t ber_sizeof_contextual_octet_string(size_t length)
+{
+	size_t ret = ber_sizeof_octet_string(length);
+	return ber_sizeof_contextual_tag(ret) + ret;
 }
 
 /**
@@ -470,6 +594,17 @@ size_t ber_write_integer(wStream* s, UINT32 value)
 	return 0;
 }
 
+size_t ber_write_contextual_integer(wStream* s, BYTE tag, UINT32 value)
+{
+	size_t len = ber_sizeof_integer(value);
+	if (!Stream_EnsureRemainingCapacity(s, len + 5))
+		return 0;
+
+	len += ber_write_contextual_tag(s, tag, len, TRUE);
+	ber_write_integer(s, value);
+	return len;
+}
+
 size_t ber_sizeof_integer(UINT32 value)
 {
 	if (value < 0x80)
@@ -495,6 +630,12 @@ size_t ber_sizeof_integer(UINT32 value)
 	}
 
 	return 0;
+}
+
+size_t ber_sizeof_contextual_integer(UINT32 value)
+{
+	size_t intSize = ber_sizeof_integer(value);
+	return ber_sizeof_contextual_tag(intSize) + intSize;
 }
 
 BOOL ber_read_integer_length(wStream* s, size_t* length)

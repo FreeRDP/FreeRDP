@@ -1,0 +1,48 @@
+TSCredentials ::= SEQUENCE {
+	credType [0] INTEGER,
+	credentials [1] OCTET STRING
+}
+
+TSPasswordCreds ::= SEQUENCE {
+	domainName [0] OCTET STRING,
+	userName [1] OCTET STRING,
+	password [2] OCTET STRING
+}
+
+TSCspDataDetail ::= SEQUENCE {
+	keySpec [0] INTEGER,
+	cardName [1] OCTET STRING OPTIONAL,
+	readerName [2] OCTET STRING OPTIONAL,
+	containerName [3] OCTET STRING OPTIONAL,
+	cspName [4] OCTET STRING OPTIONAL
+}
+
+
+TSSmartCardCreds ::= SEQUENCE {
+	pin [0] OCTET STRING,
+	cspData [1] TSCspDataDetail,
+	userHint [2] OCTET STRING OPTIONAL,
+	domainHint [3] OCTET STRING OPTIONAL
+}
+
+TSRemoteGuardPackageCred ::= SEQUENCE {
+	packageName [0] OCTET STRING,
+	credBuffer [1] OCTET STRING,
+}
+
+TSRemoteGuardCreds ::= SEQUENCE {
+	logonCred [0] TSRemoteGuardPackageCred,
+	supplementalCreds [1] SEQUENCE OF TSRemoteGuardPackageCred OPTIONAL,
+}
+
+%options {
+	fieldOption TSCspDataDetail.cardName charInMemorySerializeToUnicode
+	fieldOption TSCspDataDetail.readerName charInMemorySerializeToUnicode
+	fieldOption TSCspDataDetail.containerName charInMemorySerializeToUnicode
+	fieldOption TSCspDataDetail.cspName charInMemorySerializeToUnicode
+	
+	fieldOption TSSmartCardCreds.pin charInMemorySerializeToUnicode
+	fieldOption TSSmartCardCreds.userHint charInMemorySerializeToUnicode
+	fieldOption TSSmartCardCreds.domainHint charInMemorySerializeToUnicode
+	prefix nla_
+}
