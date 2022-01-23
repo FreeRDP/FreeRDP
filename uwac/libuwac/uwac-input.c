@@ -781,14 +781,16 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 	UwacSeat* input = data;
 	UwacWindow* window = input->pointer_focus;
 
-	float sx = wl_fixed_to_double(sx_w);
-	float sy = wl_fixed_to_double(sy_w);
+	int sx_i = wl_fixed_to_int(sx_w);
+	int sy_i = wl_fixed_to_int(sy_w);
+	double sx_d = wl_fixed_to_double(sx_w);
+	double sy_d = wl_fixed_to_double(sy_w);
 
-	if (!window)
+	if (!window || (sx_i < 0) || (sy_i < 0))
 		return;
 
-	input->sx = sx;
-	input->sy = sy;
+	input->sx = sx_d;
+	input->sy = sy_d;
 
 	motion_event =
 	    (UwacPointerMotionEvent*)UwacDisplayNewEvent(input->display, UWAC_EVENT_POINTER_MOTION);
@@ -797,8 +799,8 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 
 	motion_event->seat = input;
 	motion_event->window = window;
-	motion_event->x = wl_fixed_to_int(sx_w);
-	motion_event->y = wl_fixed_to_int(sy_w);
+	motion_event->x = sx_i;
+	motion_event->y = sy_i;
 }
 
 static void pointer_handle_button(void* data, struct wl_pointer* pointer, uint32_t serial,
