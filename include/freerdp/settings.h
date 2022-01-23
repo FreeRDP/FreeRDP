@@ -661,6 +661,8 @@ typedef struct
 #define FreeRDP_PromptForCredentials (1283)
 #define FreeRDP_SmartcardCertificate (1285)
 #define FreeRDP_SmartcardPrivateKey (1286)
+#define FreeRDP_SmartcardPin (1287)
+#define FreeRDP_SmartcardEmulation (1288)
 #define FreeRDP_KerberosKdc (1344)
 #define FreeRDP_KerberosRealm (1345)
 #define FreeRDP_IgnoreCertificate (1408)
@@ -1146,7 +1148,9 @@ struct rdp_settings
 	UINT64 padding1284[1285 - 1284];    /* 1284 */
 	ALIGN64 char* SmartcardCertificate; /* 1285 */
 	ALIGN64 char* SmartcardPrivateKey;  /* 1286 */
-	UINT64 padding1344[1344 - 1287];    /* 1287 */
+	ALIGN64 char* SmartcardPin;         /* 1287 */
+	ALIGN64 BOOL SmartcardEmulation;    /* 1288 */
+	UINT64 padding1344[1344 - 1289];    /* 1289 */
 
 	/* Kerberos Authentication */
 	ALIGN64 char* KerberosKdc;       /* 1344 */

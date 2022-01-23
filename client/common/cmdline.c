@@ -1386,17 +1386,6 @@ static BOOL ends_with(const char* str, const char* ext)
 	return _strnicmp(&str[strLen - extLen], ext, extLen) == 0;
 }
 
-static void activate_smartcard_logon_rdp(rdpSettings* settings)
-{
-	settings->SmartcardLogon = TRUE;
-
-	settings->NlaSecurity = FALSE;
-	settings->TlsSecurity = TRUE;
-	settings->RedirectSmartCards = TRUE;
-	settings->DeviceRedirection = TRUE;
-	freerdp_settings_set_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
-}
-
 /**
  * parses a string value with the format <v1>x<v2>
  * @param input: input string
@@ -3273,13 +3262,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				const char** pc;
 			} ptr;
 
-			if (!settings->SmartcardLogon)
-				activate_smartcard_logon_rdp(settings);
-
+			settings->SmartcardLogon = TRUE;
 			ptr.p = CommandLineParseCommaSeparatedValuesEx("smartcard-logon", arg->Value, &count);
 			if (ptr.pc)
 			{
 				size_t x;
+				settings->SmartcardEmulation = TRUE;
 				for (x = 1; x < count; x++)
 				{
 					const char* cur = ptr.pc[x];
@@ -3296,6 +3284,15 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					{
 						const char* f = &cur[4];
 						if (!read_pem_file(settings, FreeRDP_SmartcardPrivateKey, f))
+						{
+							free(ptr.p);
+							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+						}
+					}
+					else if (strncmp("pin:", cur, 4) == 0)
+					{
+						settings->SmartcardPin = strdup(&cur[4]);
+						if (!settings->SmartcardPin)
 						{
 							free(ptr.p);
 							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
