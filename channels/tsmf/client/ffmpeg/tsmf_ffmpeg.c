@@ -615,7 +615,9 @@ static void tsmf_ffmpeg_free(ITSMFDecoder* decoder)
 static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
 static BOOL CALLBACK InitializeAvCodecs(PINIT_ONCE once, PVOID param, PVOID* context)
 {
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 10, 100)
 	avcodec_register_all();
+#endif
 	return TRUE;
 }
 

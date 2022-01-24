@@ -573,7 +573,9 @@ BOOL freerdp_dsp_ffmpeg_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 FREERDP_DSP_CONTEXT* freerdp_dsp_ffmpeg_context_new(BOOL encode)
 {
 	FREERDP_DSP_CONTEXT* context;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 10, 100)
 	avcodec_register_all();
+#endif
 	context = calloc(1, sizeof(FREERDP_DSP_CONTEXT));
 
 	if (!context)
