@@ -789,7 +789,7 @@ rdpInput* input_new(rdpRdp* rdp)
 		return NULL;
 	}
 
-	return input;
+	return &input->common;
 }
 
 void input_free(rdpInput* input)
