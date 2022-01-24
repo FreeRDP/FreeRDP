@@ -669,7 +669,9 @@ BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 	if (!context || !srcFormat || !data || !out || context->encoder)
 		return FALSE;
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(context->packet);
+#endif
 	context->packet->data = (uint8_t*)data;
 	context->packet->size = length;
 	return ffmpeg_decode(context->context, context->packet, context->frame, context->rcontext,
