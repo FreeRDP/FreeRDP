@@ -652,6 +652,7 @@ if(UNIX OR CYGWIN)
 	include(CheckFunctionExists)
 
 	check_function_exists(getlogin_r HAVE_GETLOGIN_R)
+	check_function_exists(getpwuid_r HAVE_GETPWUID_R)
 else()
 	set(X11_FEATURE_TYPE "DISABLED")
 	set(WAYLAND_FEATURE_TYPE "DISABLED")

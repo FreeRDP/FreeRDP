@@ -25,6 +25,7 @@
 #cmakedefine HAVE_VALGRIND_MEMCHECK_H
 #cmakedefine HAVE_EXECINFO_H
 #cmakedefine HAVE_GETLOGIN_R
+#cmakedefine HAVE_GETPWUID_R
 
 /* Features */
 #cmakedefine SWRESAMPLE_FOUND
