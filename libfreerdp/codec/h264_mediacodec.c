@@ -248,33 +248,40 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 
     while (true)
     {
-        inputBufferId = sys->fnAMediaCodec_dequeueInputBuffer(sys->decoder, -1);
-        if (inputBufferId < 0)
+        UINT32 inputBufferCurrnetOffset = 0;
+        while (inputBufferCurrnetOffset < SrcSize)
         {
-            WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_dequeueInputBuffer failed [%d]", inputBufferId);
-            // TODO: sleep?
-            continue;
-        }
+            UINT32 numberOfBytesToCopy = SrcSize - inputBufferCurrnetOffset;
+            inputBufferId = sys->fnAMediaCodec_dequeueInputBuffer(sys->decoder, -1);
+            if (inputBufferId < 0)
+            {
+                WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_dequeueInputBuffer failed [%d]", inputBufferId);
+                // TODO: sleep?
+                continue;
+            }
 
-        inputBuffer = sys->fnAMediaCodec_getInputBuffer(sys->decoder, inputBufferId, &inputBufferSize);
-        if (inputBuffer == NULL)
-        {
-            WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getInputBuffer failed");
-            return -1;
-        }
+            inputBuffer = sys->fnAMediaCodec_getInputBuffer(sys->decoder, inputBufferId, &inputBufferSize);
+            if (inputBuffer == NULL)
+            {
+                WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getInputBuffer failed");
+                return -1;
+            }
 
-        if (SrcSize > inputBufferSize)
-        {
-            WLog_Print(h264->log, WLOG_ERROR, "MediaCodec input buffer size is too small: got [%d] but wanted [%d]", inputBufferSize, SrcSize);
-            return -1;
-        }
+            if (numberOfBytesToCopy > inputBufferSize)
+            {
+                WLog_Print(h264->log, WLOG_WARN, "MediaCodec inputBufferSize: got [%d] but wanted [%d]", inputBufferSize, numberOfBytesToCopy);
+                numberOfBytesToCopy = inputBufferSize;
+            }
 
-        memcpy(inputBuffer, pSrcData, SrcSize);
-        status = sys->fnAMediaCodec_queueInputBuffer(sys->decoder, inputBufferId, 0, SrcSize, 0, 0);
-        if (status != AMEDIA_OK)
-        {
-            WLog_Print(h264->log, WLOG_ERROR, "Error AMediaCodec_queueInputBuffer %d", status);
-            return -1;
+            memcpy(inputBuffer, pSrcData + inputBufferCurrnetOffset, numberOfBytesToCopy);
+            inputBufferCurrnetOffset += numberOfBytesToCopy;
+
+            status = sys->fnAMediaCodec_queueInputBuffer(sys->decoder, inputBufferId, 0, numberOfBytesToCopy, 0, 0);
+            if (status != AMEDIA_OK)
+            {
+                WLog_Print(h264->log, WLOG_ERROR, "Error AMediaCodec_queueInputBuffer %d", status);
+                return -1;
+            }
         }
 
         while (true)
