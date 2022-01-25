@@ -582,13 +582,6 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 		i++;
 	}
 #endif
-#ifdef WITH_MEDIACODEC
-	{
-		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_mediacodec;
-		subSystems[i] = &g_Subsystem_mediacodec;
-		i++;
-	}
-#endif
 #ifdef WITH_OPENH264
 	{
 		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_OpenH264;
@@ -600,6 +593,13 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 	{
 		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec;
 		subSystems[i] = &g_Subsystem_libavcodec;
+		i++;
+	}
+#endif
+#ifdef WITH_MEDIACODEC
+	{
+		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_mediacodec;
+		subSystems[i] = &g_Subsystem_mediacodec;
 		i++;
 	}
 #endif
