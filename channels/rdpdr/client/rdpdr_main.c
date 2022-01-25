@@ -49,6 +49,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <pwd.h>
 #endif
 
 #ifdef __MACOSX__
@@ -639,6 +640,31 @@ out:
 
 #else
 
+static BOOL get_uname_from_uid(uid_t uid, char *name, size_t max_name_size)
+{
+        struct passwd pwd;
+        struct passwd *result;
+        char *buf;
+        size_t bufsize;
+        int s;
+
+        bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+        if (bufsize == -1)
+                bufsize = 16384;
+        buf = malloc(bufsize);
+        if (buf == NULL)
+                return FALSE;
+        s = getpwuid_r(uid, &pwd, buf, bufsize, &result);
+        if (result == NULL)
+        {
+                free(buf);
+                return FALSE;
+        }
+        strncpy(name, result->pw_name, max_name_size);
+        free(buf);
+        return TRUE;
+}
+
 static const char* automountLocations[] = { "/run/user/%lu/gvfs", "/run/media/%s", "/media/%s",
 	                                        "/media", "/mnt" };
 
@@ -650,12 +676,8 @@ static BOOL isAutomountLocation(const char* path)
 	uid_t uid = getuid();
 	char uname[MAX_PATH] = { 0 };
 
-#ifndef HAVE_GETLOGIN_R
-	strncpy(uname, getlogin(), sizeof(uname));
-#else
-	if (getlogin_r(uname, sizeof(uname)) != 0)
+	if (!get_uname_from_uid(uid, uname, MAX_PATH - 1))
 		return FALSE;
-#endif
 
 	if (!path)
 		return FALSE;
