@@ -581,8 +581,6 @@ if(UNIX OR CYGWIN)
 	set(WAYLAND_FEATURE_TYPE "RECOMMENDED")
 
 	include(CheckFunctionExists)
-
-	check_function_exists(getlogin_r HAVE_GETLOGIN_R)
 else()
 	set(X11_FEATURE_TYPE "DISABLED")
 	set(WAYLAND_FEATURE_TYPE "DISABLED")

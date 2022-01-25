@@ -6,7 +6,6 @@
 #cmakedefine HAVE_POLL_H
 #cmakedefine HAVE_SYSLOG_H
 #cmakedefine HAVE_JOURNALD_H
-#cmakedefine HAVE_GETLOGIN_R
 #cmakedefine HAVE_STRNDUP
 #cmakedefine HAVE_PIXMAN_REGION
 

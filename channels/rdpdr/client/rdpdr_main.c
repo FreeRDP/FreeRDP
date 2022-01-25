@@ -35,6 +35,7 @@
 #include <winpr/stream.h>
 
 #include <winpr/print.h>
+#include <winpr/sspicli.h>
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
@@ -646,16 +647,13 @@ static BOOL isAutomountLocation(const char* path)
 {
 	const size_t nrLocations = sizeof(automountLocations) / sizeof(automountLocations[0]);
 	size_t x;
-	char buffer[MAX_PATH];
+	char buffer[MAX_PATH] = { 0 };
 	uid_t uid = getuid();
 	char uname[MAX_PATH] = { 0 };
+	ULONG size = sizeof(uname) - 1;
 
-#ifndef HAVE_GETLOGIN_R
-	strncpy(uname, getlogin(), sizeof(uname));
-#else
-	if (getlogin_r(uname, sizeof(uname)) != 0)
+	if (!GetUserNameExA(NameSamCompatible, uname, &size))
 		return FALSE;
-#endif
 
 	if (!path)
 		return FALSE;

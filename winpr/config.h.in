@@ -23,6 +23,7 @@
 #cmakedefine HAVE_PTHREAD_MUTEX_TIMEDLOCK
 #cmakedefine HAVE_EXECINFO_H
 #cmakedefine HAVE_GETLOGIN_R
+#cmakedefine HAVE_GETPWUID_R
 #cmakedefine HAVE_STRNDUP
 #cmakedefine WITH_EVENTFD_READ_WRITE
 
