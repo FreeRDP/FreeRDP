@@ -158,6 +158,8 @@ if(NOT IOS)
 	if (HAVE_SYS_EVENTFD_H)
 		check_symbol_exists(eventfd_read sys/eventfd.h WITH_EVENTFD_READ_WRITE)
 	endif()
+
+	include(CheckFunctionExists)
 	check_function_exists(getlogin_r HAVE_GETLOGIN_R)
 	check_function_exists(getpwuid_r HAVE_GETPWUID_R)
 else()
