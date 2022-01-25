@@ -27,6 +27,8 @@
 #endif
 
 #include <winpr/assert.h>
+#include <winpr/sspicli.h>
+
 #include <float.h>
 
 #include <X11/Xlib.h>
@@ -1180,20 +1182,12 @@ static BOOL xf_pre_connect(freerdp* instance)
 
 	if (!settings->Username && !settings->CredentialsFromStdin && !settings->SmartcardLogon)
 	{
-		int rc;
 		char login_name[MAX_PATH] = { 0 };
+		ULONG size = sizeof(login_name) - 1;
 
-#ifdef HAVE_GETLOGIN_R
-		rc = getlogin_r(login_name, sizeof(login_name));
-#else
-		strncpy(login_name, getlogin(), sizeof(login_name));
-		rc = 0;
-#endif
-		if (rc == 0)
+		if (GetUserNameExA(NameSamCompatible, login_name, &size))
 		{
-			settings->Username = _strdup(login_name);
-
-			if (!settings->Username)
+			if (!freerdp_settings_set_string(settings, FreeRDP_Username, login_name))
 				return FALSE;
 
 			WLog_INFO(TAG, "No user name set. - Using login name: %s", settings->Username);

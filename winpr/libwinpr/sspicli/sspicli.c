@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/assert.h>
 #include <winpr/sspicli.h>
 
 /**
@@ -57,6 +58,12 @@
 #include <winpr/crt.h>
 
 #ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#if defined(HAVE_GETPWUID_R)
+#include <sys/types.h>
+#include <pwd.h>
 #include <unistd.h>
 #endif
 
@@ -200,30 +207,30 @@ BOOL LogonUserExW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword
 
 BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize)
 {
-	size_t length;
-	char login[MAX_PATH];
-
 	switch (NameFormat)
 	{
 		case NameSamCompatible:
-#ifndef HAVE_GETLOGIN_R
-			strncpy(login, getlogin(), sizeof(login));
-#else
-			if (getlogin_r(login, sizeof(login)) != 0)
+#if defined(HAVE_GETPWUID_R)
+		{
+			int rc;
+			struct passwd pwd = { 0 };
+			struct passwd* result = NULL;
+			uid_t uid = getuid();
+
+			rc = getpwuid_r(uid, &pwd, lpNameBuffer, *nSize, &result);
+			if (rc != 0)
 				return FALSE;
+			if (result == NULL)
+				return FALSE;
+		}
+#elif defined(HAVE_GETLOGIN_R)
+			if (getlogin_r(lpNameBuffer, *nSize) != 0)
+				return FALSE;
+#else
+			strncpy(lpNameBuffer, getlogin(), *nSize);
 #endif
-			length = strlen(login);
-
-			if (*nSize >= length)
-			{
-				CopyMemory(lpNameBuffer, login, length + 1);
-				return TRUE;
-			}
-			else
-			{
-				*nSize = length + 1;
-			}
-
+			if (*nSize > 1)
+				*nSize = strnlen(lpNameBuffer, *nSize - 1) + 1;
 			break;
 
 		case NameFullyQualifiedDN:
@@ -245,7 +252,29 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 
 BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize)
 {
-	return 0;
+	int res;
+	BOOL rc = FALSE;
+	char* name;
+
+	WINPR_ASSERT(nSize);
+	WINPR_ASSERT(lpNameBuffer);
+
+	name = calloc(1, *nSize + 1);
+	if (!name)
+		goto fail;
+
+	if (!GetUserNameExA(NameFormat, name, nSize))
+		goto fail;
+
+	res = ConvertToUnicode(CP_UTF8, 0, name, -1, &lpNameBuffer, *nSize);
+	if (res < 0)
+		goto fail;
+
+	*nSize = res + 1;
+	rc = TRUE;
+fail:
+	free(name);
+	return rc;
 }
 
 #endif
