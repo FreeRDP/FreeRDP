@@ -711,7 +711,7 @@ static void handle_mountpoint(hotplug_dev* dev_array, size_t* size, const char* 
 	if (isAutomountLocation(mountpoint) && (*size < MAX_USB_DEVICES))
 	{
 		dev_array[*size].path = _strdup(mountpoint);
-		dev_array[*size + 1].to_add = TRUE;
+		dev_array[*size].to_add = TRUE;
 		(*size)++;
 	}
 }
