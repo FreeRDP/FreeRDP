@@ -209,6 +209,9 @@ BOOL LogonUserExW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword
 
 BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize)
 {
+	WINPR_ASSERT(lpNameBuffer);
+	WINPR_ASSERT(nSize);
+
 	switch (NameFormat)
 	{
 		case NameSamCompatible:
@@ -231,9 +234,8 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 #else
 			strncpy(lpNameBuffer, getlogin(), *nSize);
 #endif
-			if (*nSize > 1)
-				*nSize = strnlen(lpNameBuffer, *nSize - 1) + 1;
-			break;
+			*nSize = strnlen(lpNameBuffer, *nSize);
+			return TRUE;
 
 		case NameFullyQualifiedDN:
 		case NameDisplay:
