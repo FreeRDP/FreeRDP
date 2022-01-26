@@ -521,13 +521,6 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 		i++;
 	}
 #endif
-#ifdef WITH_X264
-	{
-		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_x264;
-		subSystems[i] = &g_Subsystem_x264;
-		i++;
-	}
-#endif
 	return i > 0;
 }
 
