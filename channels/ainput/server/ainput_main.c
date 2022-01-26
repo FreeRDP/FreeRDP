@@ -37,6 +37,8 @@
 #include <freerdp/channels/ainput.h>
 #include <freerdp/channels/log.h>
 
+#include "../common/ainput_common.h"
+
 #define WINPR_ASSERT(x) assert(x)
 
 #define TAG CHANNELS_TAG("ainput.server")
@@ -146,19 +148,24 @@ static UINT ainput_server_send_version(ainput_server* ainput, wStream* s)
 static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
-	UINT64 flags;
+	UINT64 flags, time;
 	INT32 x, y;
+	char buffer[128] = { 0 };
 
 	WINPR_ASSERT(ainput);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 16)
+	if (Stream_GetRemainingLength(s) < 24)
 		return ERROR_NO_DATA;
 
+	Stream_Read_UINT64(s, time);
 	Stream_Read_UINT64(s, flags);
 	Stream_Read_INT32(s, x);
 	Stream_Read_INT32(s, y);
-	IFCALLRET(ainput->context.MouseEvent, error, &ainput->context, flags, x, y);
+
+	WLog_VRB(TAG, "[%s] received: time=0x%08" PRIx64 ", flags=%s, %" PRId32 "x%" PRId32,
+	         __FUNCTION__, time, ainput_flags_to_string(flags, buffer, sizeof(buffer)), x, y);
+	IFCALLRET(ainput->context.MouseEvent, error, &ainput->context, time, flags, x, y);
 
 	return error;
 }
