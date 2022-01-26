@@ -66,7 +66,6 @@ typedef struct _BITMAP_DATA BITMAP_DATA;
 
 struct _BITMAP_UPDATE
 {
-	UINT32 count;
 	UINT32 number;
 	BITMAP_DATA* rectangles;
 	BOOL skipCompression;
