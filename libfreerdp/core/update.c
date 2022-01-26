@@ -215,20 +215,10 @@ BITMAP_UPDATE* update_read_bitmap_update(rdpUpdate* update, wStream* s)
 	Stream_Read_UINT16(s, bitmapUpdate->number); /* numberRectangles (2 bytes) */
 	WLog_Print(up->log, WLOG_TRACE, "BitmapUpdate: %" PRIu32 "", bitmapUpdate->number);
 
-	if (bitmapUpdate->number > bitmapUpdate->count)
-	{
-		UINT32 count = bitmapUpdate->number * 2;
-		BITMAP_DATA* newdata =
-		    (BITMAP_DATA*)realloc(bitmapUpdate->rectangles, sizeof(BITMAP_DATA) * count);
+	bitmapUpdate->rectangles = (BITMAP_DATA*)calloc(bitmapUpdate->number, sizeof(BITMAP_DATA));
 
-		if (!newdata)
-			goto fail;
-
-		bitmapUpdate->rectangles = newdata;
-		ZeroMemory(&bitmapUpdate->rectangles[bitmapUpdate->count],
-		           sizeof(BITMAP_DATA) * (count - bitmapUpdate->count));
-		bitmapUpdate->count = count;
-	}
+	if (!bitmapUpdate->rectangles)
+		goto fail;
 
 	/* rectangles */
 	for (i = 0; i < bitmapUpdate->number; i++)
