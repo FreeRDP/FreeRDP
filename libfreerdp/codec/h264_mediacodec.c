@@ -255,7 +255,6 @@ static void set_mediacodec_format(H264_CONTEXT* h264, AMediaFormat** formatVaria
 
 	WINPR_ASSERT(h264);
 	WINPR_ASSERT(formatVariable);
-	WINPR_ASSERT(newFormat);
 
 	sys = (H264_CONTEXT_MEDIACODEC*)h264->pSystemData;
 	WINPR_ASSERT(sys);
