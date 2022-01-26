@@ -176,8 +176,6 @@ option(DEFINE_NO_DEPRECATED "Compile without legacy functions and symbols" OFF)
 
 if (ANDROID)
 	include(ConfigOptionsAndroid)
-else()
-    option(WITH_MEDIACODEC "Use MediaCodec API" OFF)
 endif(ANDROID)
 
 if (IOS)
