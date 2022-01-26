@@ -50,6 +50,8 @@ static INLINE const char* ainput_flags_to_string(UINT64 flags, char* buffer, siz
 {
 	char number[32] = { 0 };
 
+	if (flags & AINPUT_FLAGS_HAVE_REL)
+		ainput_append(buffer, size, "AINPUT_FLAGS_HAVE_REL", TRUE);
 	if (flags & AINPUT_FLAGS_WHEEL)
 		ainput_append(buffer, size, "AINPUT_FLAGS_WHEEL", TRUE);
 	if (flags & AINPUT_FLAGS_MOVE)

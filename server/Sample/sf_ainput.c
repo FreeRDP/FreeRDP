@@ -40,14 +40,14 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT sf_peer_ainput_mouse_event(ainput_server_context* context, UINT64 flags, INT32 x,
-                                       INT32 y)
+static UINT sf_peer_ainput_mouse_event(ainput_server_context* context, UINT64 timestamp,
+                                       UINT64 flags, INT32 x, INT32 y)
 {
 	/* TODO: Implement */
 	WINPR_ASSERT(context);
 
-	WLog_WARN(TAG, "%s not implemented: 0x%08" PRIx64 ", %" PRId32 "x%" PRId32, __FUNCTION__, flags,
-	          x, y);
+	WLog_WARN(TAG, "%s not implemented: 0x%08" PRIx64 ", 0x%08" PRIx64 ", %" PRId32 "x%" PRId32,
+	          __FUNCTION__, timestamp, flags, x, y);
 	return CHANNEL_RC_OK;
 }
 

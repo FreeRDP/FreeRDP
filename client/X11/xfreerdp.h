@@ -300,8 +300,6 @@ struct xf_context
 #endif
 	BOOL xi_rawevent;
 	BOOL xi_event;
-
-	BOOL mouse_grabbed;
 };
 
 BOOL xf_create_window(xfContext* xfc);

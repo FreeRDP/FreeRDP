@@ -437,7 +437,7 @@ void xf_keyboard_focus_in(xfContext* xfc)
 
 	if (XQueryPointer(xfc->display, xfc->window->handle, &w, &w, &d, &d, &x, &y, &state))
 	{
-		if (x >= 0 && x < xfc->window->width && y >= 0 && y < xfc->window->height)
+		if ((x >= 0) && (x < xfc->window->width) && (y >= 0) && (y < xfc->window->height))
 		{
 			xf_event_adjust_coordinates(xfc, &x, &y);
 			freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_MOVE, x, y);
@@ -733,5 +733,5 @@ BOOL xf_ungrab(xfContext* xfc)
 	WINPR_ASSERT(xfc);
 	XUngrabKeyboard(xfc->display, CurrentTime);
 	XUngrabPointer(xfc->display, CurrentTime);
-	xfc->mouse_grabbed = FALSE;
+	xfc->common.mouse_grabbed = FALSE;
 }

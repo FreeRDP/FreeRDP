@@ -41,6 +41,7 @@ typedef enum
 	AINPUT_FLAGS_DOWN = 0x0008,
 
 	AINPUT_FLAGS_REL = 0x0010,
+	AINPUT_FLAGS_HAVE_REL = 0x0020,
 
 	/* Pointer Flags */
 	AINPUT_FLAGS_BUTTON1 = 0x1000, /* left */
