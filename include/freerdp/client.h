@@ -83,20 +83,21 @@ extern "C"
 		rdpContext context;
 		ALIGN64 HANDLE thread; /**< (offset 0) */
 #if defined(CHANNEL_AINPUT_CLIENT)
-        ALIGN64 AInputClientContext* ainput; /**< (offset 1) */
+		ALIGN64 AInputClientContext* ainput; /**< (offset 1) */
 #else
 	    UINT64 reserved1;
 #endif
 
 #if defined(CHANNEL_RDPEI_CLIENT)
-        ALIGN64 RdpeiClientContext* rdpei; /**< (offset 2) */
+		ALIGN64 RdpeiClientContext* rdpei; /**< (offset 2) */
 #else
 	    UINT64 reserved2;
 #endif
 
-		ALIGN64 INT32 lastX;      /**< (offset 3) */
-		ALIGN64 INT32 lastY;      /**< (offset 4) */
-		UINT64 reserved[128 - 5]; /**< (offset 5) */
+		ALIGN64 INT32 lastX;        /**< (offset 3) */
+		ALIGN64 INT32 lastY;        /**< (offset 4) */
+		ALIGN64 BOOL mouse_grabbed; /** < (offset 5) */
+		UINT64 reserved[128 - 6];   /**< (offset 6) */
 	};
 
 	/* Common client functions */
@@ -141,9 +142,9 @@ extern "C"
 	                                                              char** username, char** password,
 	                                                              char** domain));
 	FREERDP_API
-	    WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",
-	                         BOOL client_cli_gw_authenticate(freerdp* instance, char** username,
-	                                                         char** password, char** domain));
+	WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",
+	                     BOOL client_cli_gw_authenticate(freerdp* instance, char** username,
+	                                                     char** password, char** domain));
 
 	FREERDP_API WINPR_DEPRECATED_VAR(
 	    "Use client_cli_verify_certificate_ex",
@@ -181,6 +182,9 @@ extern "C"
 	                                          BOOL (*window_events)(freerdp* instance));
 
 	FREERDP_API BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags);
+
+	FREERDP_API BOOL freerdp_client_send_mouse_event(rdpClientContext* cctx, UINT64 mflags, INT32 x,
+	                                                 INT32 y);
 
 	FREERDP_API BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative,
 	                                                  UINT16 mflags, INT32 x, INT32 y);

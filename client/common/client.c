@@ -1088,9 +1088,15 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 	if (cctx->ainput)
 	{
 		UINT64 flags = 0;
+		BOOL relativeInput =
+		    freerdp_settings_get_bool(cctx->context.settings, FreeRDP_MouseUseRelativeMove);
+
+		if (cctx->mouse_grabbed && relativeInput)
+			flags |= AINPUT_FLAGS_HAVE_REL;
 
 		if (relative)
 			flags |= AINPUT_FLAGS_REL;
+
 		if (mflags & PTR_FLAGS_DOWN)
 			flags |= AINPUT_FLAGS_DOWN;
 		if (mflags & PTR_FLAGS_BUTTON1)

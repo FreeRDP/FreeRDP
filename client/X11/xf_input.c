@@ -648,27 +648,24 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	{
 		case XI_ButtonPress:
 			xfc->xi_event = TRUE;
-			if (!xfc->xi_rawevent)
 				xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
 				                       event->event, xfc->remote_app, TRUE);
 			break;
 
 		case XI_ButtonRelease:
 			xfc->xi_event = TRUE;
-			if (!xfc->xi_rawevent)
 				xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
 				                       event->event, xfc->remote_app, FALSE);
 			break;
 
 		case XI_Motion:
 			xfc->xi_event = TRUE;
-			if (!xfc->xi_rawevent)
 				xf_generic_MotionNotify(xfc, (int)event->event_x, (int)event->event_y,
 				                        event->detail, event->event, xfc->remote_app);
 			break;
 		case XI_RawButtonPress:
 		case XI_RawButtonRelease:
-			xfc->xi_rawevent = xfc->mouse_grabbed &&
+			xfc->xi_rawevent = xfc->common.mouse_grabbed &&
 			                   freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove);
 
 			if (xfc->xi_rawevent)
@@ -679,7 +676,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 			}
 		break;
 		case XI_RawMotion:
-			xfc->xi_rawevent = xfc->mouse_grabbed &&
+			xfc->xi_rawevent = xfc->common.mouse_grabbed &&
 			                   freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove);
 
 			if (xfc->xi_rawevent)

@@ -40,8 +40,8 @@ typedef BOOL (*psAInputServerIsOpen)(ainput_server_context* context);
 
 typedef UINT (*psAInputServerOpenResult)(ainput_server_context* context,
                                          AINPUT_SERVER_OPEN_RESULT result);
-typedef UINT (*psAInputServerMouseEvent)(ainput_server_context* context, UINT64 flags, INT32 x,
-                                         INT32 y);
+typedef UINT (*psAInputServerMouseEvent)(ainput_server_context* context, UINT64 timestamp,
+                                         UINT64 flags, INT32 x, INT32 y);
 
 struct _ainput_server_context
 {

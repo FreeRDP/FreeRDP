@@ -28,6 +28,7 @@
 #include <winpr/crt.h>
 #include <winpr/assert.h>
 #include <winpr/stream.h>
+#include <winpr/sysinfo.h>
 
 #include "ainput_main.h"
 #include <freerdp/channels/log.h>
@@ -111,12 +112,14 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 	AINPUT_PLUGIN* ainput;
 	AINPUT_CHANNEL_CALLBACK* callback;
 	BYTE buffer[32] = { 0 };
+	UINT64 time;
 	wStream sbuffer = { 0 };
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(context);
 
+	time = GetTickCount64();
 	ainput = (AINPUT_PLUGIN*)context->handle;
 	WINPR_ASSERT(ainput);
 	WINPR_ASSERT(ainput->listener_callback);
@@ -132,14 +135,15 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 
 	{
 		char buffer[128] = { 0 };
-		WLog_VRB(TAG, "[%s] sending flags=%s, %" PRId32 "x%" PRId32, __FUNCTION__,
-		         ainput_flags_to_string(flags, buffer, sizeof(buffer)), x, y);
+		WLog_VRB(TAG, "[%s] sending timestamp=0x%08" PRIx64 ", flags=%s, %" PRId32 "x%" PRId32,
+		         __FUNCTION__, time, ainput_flags_to_string(flags, buffer, sizeof(buffer)), x, y);
 	}
 
 	/* Message type */
 	Stream_Write_UINT16(s, MSG_AINPUT_MOUSE);
 
 	/* Event data */
+	Stream_Write_UINT64(s, time);
 	Stream_Write_UINT64(s, flags);
 	Stream_Write_INT32(s, x);
 	Stream_Write_INT32(s, y);
