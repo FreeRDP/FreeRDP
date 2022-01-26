@@ -484,7 +484,7 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, RECTANGLE_16* regionRects,
 
 #define MAX_SUBSYSTEMS 10
 static INIT_ONCE subsystems_once = INIT_ONCE_STATIC_INIT;
-static H264_CONTEXT_SUBSYSTEM* subSystems[MAX_SUBSYSTEMS];
+static H264_CONTEXT_SUBSYSTEM* subSystems[MAX_SUBSYSTEMS] = { 0 };
 
 #if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
 extern H264_CONTEXT_SUBSYSTEM g_Subsystem_MF;
@@ -493,17 +493,17 @@ extern H264_CONTEXT_SUBSYSTEM g_Subsystem_MF;
 static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	int i = 0;
-	ZeroMemory(subSystems, sizeof(subSystems));
-#if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
-	{
-		subSystems[i] = &g_Subsystem_MF;
-		i++;
-	}
-#endif
+
 #ifdef WITH_MEDIACODEC
 	{
 		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_mediacodec;
 		subSystems[i] = &g_Subsystem_mediacodec;
+		i++;
+	}
+#endif
+#if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
+	{
+		subSystems[i] = &g_Subsystem_MF;
 		i++;
 	}
 #endif
