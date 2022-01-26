@@ -245,7 +245,7 @@ if(WIN32 AND WITH_MEDIA_FOUNDATION)
 endif()
 
 if(ANDROID AND WITH_MEDIACODEC)
-    set(CODEC_SRCS ${CODEC_SRCS} codec/h264_mediacodec.c)
+    list(APPEND CODEC_SRCS codec/h264_mediacodec.c)
 endif()
 
 freerdp_module_add(${CODEC_SRCS})
