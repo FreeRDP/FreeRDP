@@ -18,6 +18,7 @@
  */
 
 #include <winpr/wlog.h>
+#include <winpr/assert.h>
 #include <winpr/library.h>
 
 #include <freerdp/log.h>
