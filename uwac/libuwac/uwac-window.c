@@ -48,7 +48,8 @@ static int bppFromShmFormat(enum wl_shm_format format)
 
 static void buffer_release(void* data, struct wl_buffer* buffer)
 {
-	UwacBuffer* uwacBuffer = (UwacBuffer*)data;
+	UwacBufferReleaseData* releaseData = data;
+	UwacBuffer* uwacBuffer = &releaseData->window->buffers[releaseData->bufferIdx];
 	uwacBuffer->used = false;
 }
 
@@ -66,7 +67,10 @@ static void UwacWindowDestroyBuffers(UwacWindow* w)
 #else
 		region16_uninit(&buffer->damage);
 #endif
+		UwacBufferReleaseData* releaseData =
+		    (UwacBufferReleaseData*)wl_buffer_get_user_data(buffer->wayland_buffer);
 		wl_buffer_destroy(buffer->wayland_buffer);
+		free(releaseData);
 		munmap(buffer->data, buffer->size);
 	}
 
@@ -344,7 +348,8 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 
 	for (i = 0; i < nbuffers; i++)
 	{
-		UwacBuffer* buffer = &w->buffers[w->nbuffers + i];
+		int bufferIdx = w->nbuffers + i;
+		UwacBuffer* buffer = &w->buffers[bufferIdx];
 #ifdef HAVE_PIXMAN_REGION
 		pixman_region32_init(&buffer->damage);
 #else
@@ -354,7 +359,10 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 		buffer->size = allocSize;
 		buffer->wayland_buffer =
 		    wl_shm_pool_create_buffer(pool, allocSize * i, width, height, w->stride, format);
-		wl_buffer_add_listener(buffer->wayland_buffer, &buffer_listener, buffer);
+		UwacBufferReleaseData* listener_data = xmalloc(sizeof(UwacBufferReleaseData));
+		listener_data->window = w;
+		listener_data->bufferIdx = bufferIdx;
+		wl_buffer_add_listener(buffer->wayland_buffer, &buffer_listener, listener_data);
 	}
 
 	wl_shm_pool_destroy(pool);

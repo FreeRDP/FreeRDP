@@ -255,6 +255,14 @@ struct uwac_window
 	int pointer_current_cursor;
 };
 
+/**@brief data to pass to wl_buffer release listener */
+struct uwac_buffer_release_data
+{
+	UwacWindow* window;
+	int bufferIdx;
+};
+typedef struct uwac_buffer_release_data UwacBufferReleaseData;
+
 /* in uwa-display.c */
 UwacEvent* UwacDisplayNewEvent(UwacDisplay* d, int type);
 int UwacDisplayWatchFd(UwacDisplay* display, int fd, uint32_t events, UwacTask* task);
