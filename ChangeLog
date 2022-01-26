@@ -1,3 +1,20 @@
+# 2022-XX-YY Version 2.X.Y
+
+Noteworthy changes:
+* Android FFMPEG support
+
+Fixed issues:
+* Backported #7574: FFMPEG 5.0 support
+* Backported #7578: FFMPEG 5.0 support
+* Backported #7580: Fixed device hotplugging
+* Backported #7583: GetUserNameExA: Prefer getpwuid_r over getlogin_r over getlogin
+* Backported #7585: Android Mediacodec support
+
+Important notes:
+
+For a complete and detailed change log since the last release run:
+git log 2.5.0..2.X.Y
+
 # 2022-01-12 Version 2.5.0
 
 Noteworthy changes:
