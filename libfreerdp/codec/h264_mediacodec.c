@@ -29,29 +29,36 @@
 #include "h264.h"
 
 #define RESOLVE_MEDIANDK_FUNC(sys, name)                                          \
-	{                                                                             \
+	({                                                                            \
+		BOOL rc = TRUE;                                                           \
 		sys->fn##name = GetProcAddress(sys->mediandkLibrary, #name);              \
 		if (sys->fn##name == NULL)                                                \
 		{                                                                         \
 			WLog_Print(h264->log, WLOG_ERROR,                                     \
 			           "Error resolving function " #name " from libmediandk.so"); \
-			return -1;                                                            \
+			rc = FALSE;                                                           \
 		}                                                                         \
-	}
+		rc;                                                                       \
+	})
 
 #define RESOLVE_MEDIANDK_VARIABLE(sys, member, exported)                             \
-	{                                                                                \
+	({                                                                               \
+		BOOL rc = FALSE;                                                             \
 		const char** temp = GetProcAddress(sys->mediandkLibrary, exported);          \
 		if (temp == NULL)                                                            \
 		{                                                                            \
 			WLog_Print(h264->log, WLOG_ERROR,                                        \
 			           "Error resolving variable " exported " from libmediandk.so"); \
-			return -1;                                                               \
 		}                                                                            \
-		sys->member = *temp;                                                         \
-	}
+		else                                                                         \
+		{                                                                            \
+			sys->member = *temp;                                                     \
+			rc = TRUE;                                                               \
+		}                                                                            \
+		rc;                                                                          \
+	})
 
-typedef AMediaFormat* (*AMediaFormat_new_t)();
+typedef AMediaFormat* (*AMediaFormat_new_t)(void);
 typedef media_status_t (*AMediaFormat_delete_t)(AMediaFormat*);
 typedef const char* (*AMediaFormat_toString_t)(AMediaFormat*);
 typedef void (*AMediaFormat_setInt32_t)(AMediaFormat*, const char*, int32_t);
@@ -122,6 +129,7 @@ typedef struct _H264_CONTEXT_MEDIACODEC H264_CONTEXT_MEDIACODEC;
 
 static int load_libmediandk(H264_CONTEXT* h264)
 {
+	BOOL rc;
 	H264_CONTEXT_MEDIACODEC* sys;
 
 	WINPR_ASSERT(h264);
@@ -138,32 +146,83 @@ static int load_libmediandk(H264_CONTEXT* h264)
 		return -1;
 	}
 
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaFormat_new);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaFormat_delete);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaFormat_toString);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaFormat_setInt32);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaFormat_setString);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_createDecoderByType);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_delete);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_configure);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_start);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_stop);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_getInputBuffer);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_getOutputBuffer);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_dequeueInputBuffer);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_queueInputBuffer);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_dequeueOutputBuffer);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_getOutputFormat);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_releaseOutputBuffer);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_setParameters);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_getName);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_releaseName);
-	RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_getInputFormat);
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaFormat_new);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaFormat_delete);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaFormat_toString);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaFormat_setInt32);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaFormat_setString);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_createDecoderByType);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_delete);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_configure);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_start);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_stop);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_getInputBuffer);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_getOutputBuffer);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_dequeueInputBuffer);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_queueInputBuffer);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_dequeueOutputBuffer);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_getOutputFormat);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_releaseOutputBuffer);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_setParameters);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_getName);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_releaseName);
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_FUNC(sys, AMediaCodec_getInputFormat);
+	if (!rc)
+		return -1;
 
-	RESOLVE_MEDIANDK_VARIABLE(sys, gAMediaFormatKeyMime, "AMEDIAFORMAT_KEY_MIME");
-	RESOLVE_MEDIANDK_VARIABLE(sys, gAMediaFormatKeyWidth, "AMEDIAFORMAT_KEY_WIDTH");
-	RESOLVE_MEDIANDK_VARIABLE(sys, gAMediaFormatKeyHeight, "AMEDIAFORMAT_KEY_HEIGHT");
-	RESOLVE_MEDIANDK_VARIABLE(sys, gAMediaFormatKeyColorFormat, "AMEDIAFORMAT_KEY_COLOR_FORMAT");
+	rc = RESOLVE_MEDIANDK_VARIABLE(sys, gAMediaFormatKeyMime, "AMEDIAFORMAT_KEY_MIME");
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_VARIABLE(sys, gAMediaFormatKeyWidth, "AMEDIAFORMAT_KEY_WIDTH");
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_VARIABLE(sys, gAMediaFormatKeyHeight, "AMEDIAFORMAT_KEY_HEIGHT");
+	if (!rc)
+		return -1;
+	rc = RESOLVE_MEDIANDK_VARIABLE(sys, gAMediaFormatKeyColorFormat,
+	                               "AMEDIAFORMAT_KEY_COLOR_FORMAT");
+	if (!rc)
+		return -1;
 
 	return 0;
 }
@@ -541,7 +600,7 @@ static BOOL mediacodec_init(H264_CONTEXT* h264)
 	if (inputFormat == NULL)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getInputFormat failed");
-		return -1;
+		goto EXCEPTION;
 	}
 	set_mediacodec_format(h264, &sys->inputFormat, inputFormat);
 
@@ -557,7 +616,7 @@ static BOOL mediacodec_init(H264_CONTEXT* h264)
 	if (outputFormat == NULL)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getOutputFormat failed");
-		return -1;
+		goto EXCEPTION;
 	}
 	set_mediacodec_format(h264, &sys->outputFormat, outputFormat);
 
