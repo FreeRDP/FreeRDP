@@ -5,6 +5,7 @@ Noteworthy changes:
 * Updated android build dependencies
 
 Fixed issues:
+* Backported #7426: Wayland memory corruption
 * Backported #7293: Remove unused codec x264
 * Backported #7541: Allow resolutions larger 2048x2048
 * Backported #7574: FFMPEG 5.0 support
