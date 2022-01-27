@@ -345,7 +345,9 @@ static UINT audin_winmm_set_format(IAudinDevice* device, const AUDIO_FORMAT* for
 			if (ppwfx->nBlockAlign != 2)
 			{
 				ppwfx->nBlockAlign = 2;
+				ppwfx->nAvgBytesPerSec = ppwfx->nSamplesPerSec * ppwfx->nBlockAlign;
 			}
+
 			if (!test_format_supported(ppwfx))
 				return ERROR_INVALID_PARAMETER;
 			winmm->pwfx_cur = ppwfx;
