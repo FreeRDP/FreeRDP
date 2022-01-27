@@ -1535,7 +1535,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 	cols = (nWidth / 64) + ((nWidth % 64) ? 1 : 0);
 	k = 0;
 	totalBitmapSize = 0;
-	bitmapUpdate.count = bitmapUpdate.number = rows * cols;
+	bitmapUpdate.number = rows * cols;
 
 	if (!(bitmapData = (BITMAP_DATA*)calloc(bitmapUpdate.number, sizeof(BITMAP_DATA))))
 		return FALSE;
@@ -1613,8 +1613,8 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 		}
 	}
 
-	bitmapUpdate.count = bitmapUpdate.number = k;
-	updateSizeEstimate = totalBitmapSize + (k * bitmapUpdate.count) + 16;
+	bitmapUpdate.number = k;
+	updateSizeEstimate = totalBitmapSize + (k * bitmapUpdate.number) + 16;
 
 	if (updateSizeEstimate > maxUpdateSize)
 	{
@@ -1649,7 +1649,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 
 			if ((newUpdateSize >= maxUpdateSize) || (i + 1) >= k)
 			{
-				bitmapUpdate.count = bitmapUpdate.number = j;
+				bitmapUpdate.number = j;
 				IFCALLRET(update->BitmapUpdate, ret, context, &bitmapUpdate);
 
 				if (!ret)
