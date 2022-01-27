@@ -114,22 +114,24 @@ typedef ULONG_PTR NCRYPT_KEY_HANDLE;
 	              "c\x00"           \
 	              "a\x00t\x00"      \
 	              "e\x00\x00"
-#define NCRYPT_UNIQUE_NAME_PROPERTY \
-		(const WCHAR*)"U\x00n\x00i\x00q\x00u\x00" \
-		"e\x00 \x00N\x00" \
-		"a\x00m\x00" \
-		"e\x00\x00"
-#define NCRYPT_READER_PROPERTY \
-		(const WCHAR *)"S\x00m\x00" \
-		"a\x00r\x00t\x00" \
-		"C\x00" \
-		"a\x00r\x00" \
-		"d\x00R\x00" \
-		"e\x00" \
-		"a\x00" \
-		"d\x00" \
-		"e\x00r\x00\x00"
+#define NCRYPT_UNIQUE_NAME_PROPERTY           \
+	(const WCHAR*)"U\x00n\x00i\x00q\x00u\x00" \
+	              "e\x00 \x00N\x00"           \
+	              "a\x00m\x00"                \
+	              "e\x00\x00"
+#define NCRYPT_READER_PROPERTY      \
+	(const WCHAR*)"S\x00m\x00"      \
+	              "a\x00r\x00t\x00" \
+	              "C\x00"           \
+	              "a\x00r\x00"      \
+	              "d\x00R\x00"      \
+	              "e\x00"           \
+	              "a\x00"           \
+	              "d\x00"           \
+	              "e\x00r\x00\x00"
 
+/* winpr specific properties */
+#define NCRYPT_WINPR_SLOTID (const WCHAR*)"S\x00l\x00o\x00t\x00\x00"
 
 #define NCRYPT_MACHINE_KEY_FLAG 0x20
 #define NCRYPT_SILENT_FLAG 0x40

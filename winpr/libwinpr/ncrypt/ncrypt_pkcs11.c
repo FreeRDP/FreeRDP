@@ -102,7 +102,7 @@ static SECURITY_STATUS NCryptP11StorageProvider_dtor(NCRYPT_HANDLE handle)
 
 static void fix_padded_string(char *str, size_t maxlen)
 {
-	char *ptr = str + maxlen-1;
+	char* ptr = str + maxlen - 1;
 
 	while (ptr > str && *ptr == ' ')
 		ptr--;
@@ -429,7 +429,7 @@ static SECURITY_STATUS parseKeyName(LPCWSTR pszKeyName, CK_SLOT_ID* slotId, CK_B
 	char* pos;
 
 	if (WideCharToMultiByte(CP_UTF8, 0, pszKeyName, _wcslen(pszKeyName) + 1, asciiKeyName,
-	                        sizeof(asciiKeyName)-1, "?", FALSE) <= 0)
+	                        sizeof(asciiKeyName) - 1, "?", FALSE) <= 0)
 		return NTE_BAD_KEY;
 
 	if (*asciiKeyName != '\\')
@@ -481,7 +481,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		int asciiScopeLen;
 
 		if (WideCharToMultiByte(CP_UTF8, 0, pszScope, _wcslen(pszScope) + 1, asciiScope,
-		                        sizeof(asciiScope)-1, "?", NULL) <= 0)
+		                        sizeof(asciiScope) - 1, "?", NULL) <= 0)
 			return NTE_INVALID_PARAMETER;
 
 		if (strstr(asciiScope, "\\\\.\\") != asciiScope)
@@ -645,10 +645,12 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 	WINPR_ASSERT(provider);
 
 	switch (property)
+
 	{
 		case NCRYPT_PROPERTY_CERTIFICATE:
 			break;
-		case NCRYPT_PROPERTY_READER: {
+		case NCRYPT_PROPERTY_READER:
+		{
 			CK_SLOT_INFO slotInfo;
 
 			WINPR_ASSERT(provider->p11->C_GetSlotInfo);
@@ -656,16 +658,31 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 			if (rv != CKR_OK)
 				return NTE_BAD_KEY;
 
-			#define SLOT_DESC_SZ sizeof(slotInfo.slotDescription)
+#define SLOT_DESC_SZ sizeof(slotInfo.slotDescription)
 			fix_padded_string((char*)slotInfo.slotDescription, SLOT_DESC_SZ);
 			*pcbResult = 2 * (strnlen((char*)slotInfo.slotDescription, SLOT_DESC_SZ) + 1);
 			if (pbOutput)
 			{
-				if(cbOutput < *pcbResult)
+				if (cbOutput < *pcbResult)
 					return NTE_NO_MEMORY;
 
-				if (MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)slotInfo.slotDescription, -1, (LPWSTR)pbOutput, cbOutput) <= 0)
+				if (MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)slotInfo.slotDescription, -1,
+				                        (LPWSTR)pbOutput, cbOutput) <= 0)
 					return NTE_NO_MEMORY;
+			}
+			return ERROR_SUCCESS;
+		}
+		case NCRYPT_PROPERTY_SLOTID:
+		{
+			*pcbResult = 4;
+			if (pbOutput)
+			{
+				UINT32* ptr = (UINT32*)pbOutput;
+
+				if (cbOutput < 4)
+					return NTE_NO_MEMORY;
+
+				*ptr = keyHandle->slotId;
 			}
 			return ERROR_SUCCESS;
 		}

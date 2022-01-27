@@ -124,14 +124,13 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 	return ERROR_SUCCESS;
 }
 
-
 SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider, LPCWSTR pszProviderName,
                                           DWORD dwFlags)
 {
 
 #ifdef WITH_PKCS11
 	if (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0 ||
-		_wcscmp(pszProviderName, MS_SCARD_PROV) == 0)
+	    _wcscmp(pszProviderName, MS_SCARD_PROV) == 0)
 	{
 		return winpr_NCryptOpenStorageProviderEx(phProvider, pszProviderName, dwFlags, NULL);
 	}
@@ -188,9 +187,13 @@ static NCryptKeyGetPropertyEnum propertyStringToEnum(LPCWSTR pszProperty)
 	{
 		return NCRYPT_PROPERTY_CERTIFICATE;
 	}
-	else if(_wcscmp(pszProperty, NCRYPT_READER_PROPERTY) == 0)
+	else if (_wcscmp(pszProperty, NCRYPT_READER_PROPERTY) == 0)
 	{
 		return NCRYPT_PROPERTY_READER;
+	}
+	else if (_wcscmp(pszProperty, NCRYPT_WINPR_SLOTID) == 0)
+	{
+		return NCRYPT_PROPERTY_SLOTID;
 	}
 
 	return NCRYPT_PROPERTY_UNKNOWN;
