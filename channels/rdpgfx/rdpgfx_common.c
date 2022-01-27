@@ -1,4 +1,5 @@
 /**
+﻿/**
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Graphics Pipeline Extension
  *
@@ -119,6 +120,13 @@ UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
 	Stream_Read_UINT16(s, header->cmdId);     /* cmdId (2 bytes) */
 	Stream_Read_UINT16(s, header->flags);     /* flags (2 bytes) */
 	Stream_Read_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
+
+    if (header->pduLength < 8)
+    {
+        WLog_ERR(TAG, "header->pduLength %u less than 8!", header->pduLength);
+        return CHANNEL_RC_NO_MEMORY;
+    }
+
 	return CHANNEL_RC_OK;
 }
 
