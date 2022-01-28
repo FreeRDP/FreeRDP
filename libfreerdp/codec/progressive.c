@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/bitstream.h>
@@ -436,6 +437,36 @@ static INLINE BOOL progressive_tile_allocate(RFX_PROGRESSIVE_TILE* tile)
 	return rc;
 }
 
+static BOOL progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* surface)
+{
+	size_t oldIndex;
+
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(surface->gridSize > 0);
+
+	oldIndex = surface->gridSize;
+	if (surface->tiles)
+		surface->gridSize *= 2;
+
+	{
+		void* tmp = realloc(surface->tiles, surface->gridSize * sizeof(RFX_PROGRESSIVE_TILE));
+		if (!tmp)
+			return FALSE;
+		surface->tiles = tmp;
+		memset(&surface->tiles[oldIndex], 0,
+		       (surface->gridSize - oldIndex) * sizeof(RFX_PROGRESSIVE_TILE));
+	}
+	{
+		void* tmp = realloc(surface->updatedTileIndices, surface->gridSize * sizeof(UINT32));
+		if (!tmp)
+			return FALSE;
+		surface->updatedTileIndices = tmp;
+		memset(&surface->updatedTileIndices[oldIndex], 0,
+		       (surface->gridSize - oldIndex) * sizeof(UINT32));
+	}
+	return TRUE;
+}
+
 static PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfaceId, UINT32 width,
                                                                     UINT32 height)
 {
@@ -452,14 +483,10 @@ static PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfa
 	surface->gridWidth = (width + (64 - width % 64)) / 64;
 	surface->gridHeight = (height + (64 - height % 64)) / 64;
 	surface->gridSize = surface->gridWidth * surface->gridHeight;
-	surface->tiles = (RFX_PROGRESSIVE_TILE*)calloc(surface->gridSize, sizeof(RFX_PROGRESSIVE_TILE));
-	surface->updatedTileIndices = (UINT32*)calloc(surface->gridSize, sizeof(UINT32));
 
-	if (!surface->tiles || !surface->updatedTileIndices)
+	if (!progressive_allocate_tile_cache(surface))
 	{
-		free(surface->updatedTileIndices);
-		free(surface->tiles);
-		free(surface);
+		progressive_surface_context_free(surface);
 		return NULL;
 	}
 	for (x = 0; x < surface->gridSize; x++)
@@ -551,8 +578,8 @@ static BOOL progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* surfac
 	}
 	if (surface->numUpdatedTiles >= surface->gridSize)
 	{
-		WLog_ERR(TAG, "Invalid total tile count, maximum %" PRIu32, surface->gridSize);
-		return FALSE;
+		if (!progressive_allocate_tile_cache(surface))
+			return FALSE;
 	}
 
 	region->tiles[region->usedTiles++] = t;
