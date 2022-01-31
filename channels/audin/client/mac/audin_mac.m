@@ -156,13 +156,15 @@ static UINT audin_mac_set_format(IAudinDevice *device, const AUDIO_FORMAT *forma
 
 	if (format->wBitsPerSample == 0)
 		mac->audioFormat.mBitsPerChannel = 16;
-
-	mac->audioFormat.mBytesPerFrame = 0;
-	mac->audioFormat.mBytesPerPacket = 0;
+	
 	mac->audioFormat.mChannelsPerFrame = mac->format.nChannels;
+	mac->audioFormat.mFramesPerPacket = 1;
+
+	mac->audioFormat.mBytesPerFrame = mac->audioFormat.mChannelsPerFrame * (mac->audioFormat.mBitsPerChannel / 8);
+	mac->audioFormat.mBytesPerPacket = mac->audioFormat.mBytesPerFrame * mac->audioFormat.mFramesPerPacket;
+	
 	mac->audioFormat.mFormatFlags = audin_mac_get_flags_for_format(format);
 	mac->audioFormat.mFormatID = audin_mac_get_format(format);
-	mac->audioFormat.mFramesPerPacket = 1;
 	mac->audioFormat.mReserved = 0;
 	mac->audioFormat.mSampleRate = mac->format.nSamplesPerSec;
 	return CHANNEL_RC_OK;
