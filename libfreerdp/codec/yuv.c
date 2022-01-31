@@ -18,7 +18,7 @@ struct _YUV_CONTEXT
 	TP_CALLBACK_ENVIRON ThreadPoolEnv;
 };
 
-struct _YUV_PROCESS_WORK_PARAM
+struct s_YUV_PROCESS_WORK_PARAM
 {
 	YUV_CONTEXT* context;
 	const BYTE* pYUVData[3];
@@ -28,9 +28,9 @@ struct _YUV_PROCESS_WORK_PARAM
 	UINT32 nDstStep;
 	RECTANGLE_16 rect;
 };
-typedef struct _YUV_PROCESS_WORK_PARAM YUV_PROCESS_WORK_PARAM;
+typedef struct s_YUV_PROCESS_WORK_PARAM YUV_PROCESS_WORK_PARAM;
 
-struct _YUV_COMBINE_WORK_PARAM
+struct s_YUV_COMBINE_WORK_PARAM
 {
 	YUV_CONTEXT* context;
 	const BYTE* pYUVData[3];
@@ -40,9 +40,9 @@ struct _YUV_COMBINE_WORK_PARAM
 	RECTANGLE_16 rect;
 	BYTE type;
 };
-typedef struct _YUV_COMBINE_WORK_PARAM YUV_COMBINE_WORK_PARAM;
+typedef struct s_YUV_COMBINE_WORK_PARAM YUV_COMBINE_WORK_PARAM;
 
-struct _YUV_ENCODE_WORK_PARAM
+struct s_YUV_ENCODE_WORK_PARAM
 {
 	YUV_CONTEXT* context;
 	const BYTE* pSrcData;
@@ -56,7 +56,7 @@ struct _YUV_ENCODE_WORK_PARAM
 	BYTE* pYUVChromaData[3];
 	UINT32 iStride[3];
 };
-typedef struct _YUV_ENCODE_WORK_PARAM YUV_ENCODE_WORK_PARAM;
+typedef struct s_YUV_ENCODE_WORK_PARAM YUV_ENCODE_WORK_PARAM;
 
 static INLINE BOOL avc420_yuv_to_rgb(const BYTE* pYUVData[3], const UINT32 iStride[3],
                                      const RECTANGLE_16* rect, UINT32 nDstStep, BYTE* pDstData,
@@ -667,7 +667,7 @@ fail:
 }
 
 BOOL yuv420_context_encode(YUV_CONTEXT* context, const BYTE* pSrcData, UINT32 nSrcStep,
-                           UINT32 SrcFormat, const UINT32 iStride[], BYTE* pYUVData[],
+                           UINT32 SrcFormat, const UINT32 iStride[3], BYTE* pYUVData[3],
                            const RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
 	if (!context || !pSrcData || !iStride || !pYUVData || !regionRects)
@@ -678,8 +678,8 @@ BOOL yuv420_context_encode(YUV_CONTEXT* context, const BYTE* pSrcData, UINT32 nS
 }
 
 BOOL yuv444_context_encode(YUV_CONTEXT* context, BYTE version, const BYTE* pSrcData,
-                           UINT32 nSrcStep, UINT32 SrcFormat, const UINT32 iStride[],
-                           BYTE* pYUVLumaData[], BYTE* pYUVChromaData[],
+                           UINT32 nSrcStep, UINT32 SrcFormat, const UINT32 iStride[3],
+                           BYTE* pYUVLumaData[3], BYTE* pYUVChromaData[3],
                            const RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
 	PTP_WORK_CALLBACK cb;

@@ -43,7 +43,8 @@ struct _wlfDispContext
 	UINT32 lastSentDeviceScaleFactor;
 };
 
-static UINT wlf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, size_t nmonitors);
+static UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors,
+                                size_t nmonitors);
 
 static BOOL wlf_disp_settings_changed(wlfDispContext* wlfDisp)
 {
@@ -206,7 +207,7 @@ static void wlf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs
 	}
 }
 
-static void wlf_disp_OnTimer(void* context, TimerEventArgs* e)
+static void wlf_disp_OnTimer(void* context, const TimerEventArgs* e)
 {
 	wlfContext* wlc;
 	wlfDispContext* wlfDisp;
@@ -258,13 +259,25 @@ void wlf_disp_free(wlfDispContext* disp)
 	free(disp);
 }
 
-UINT wlf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, size_t nmonitors)
+UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, size_t nmonitors)
 {
 	UINT ret = CHANNEL_RC_OK;
 	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts;
 	size_t i;
-	wlfDispContext* wlfDisp = (wlfDispContext*)disp->custom;
-	rdpSettings* settings = wlfDisp->wlc->context.settings;
+	wlfDispContext* wlfDisp;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(disp);
+	WINPR_ASSERT(monitors);
+	WINPR_ASSERT(nmonitors > 0);
+
+	wlfDisp = (wlfDispContext*)disp->custom;
+	WINPR_ASSERT(wlfDisp);
+	WINPR_ASSERT(wlfDisp->wlc);
+
+	settings = wlfDisp->wlc->context.settings;
+	WINPR_ASSERT(settings);
+
 	layouts = calloc(nmonitors, sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
 
 	if (!layouts)
@@ -272,27 +285,30 @@ UINT wlf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, size_t n
 
 	for (i = 0; i < nmonitors; i++)
 	{
-		layouts[i].Flags = (monitors[i].is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
-		layouts[i].Left = monitors[i].x;
-		layouts[i].Top = monitors[i].y;
-		layouts[i].Width = monitors[i].width;
-		layouts[i].Height = monitors[i].height;
-		layouts[i].Orientation = ORIENTATION_LANDSCAPE;
-		layouts[i].PhysicalWidth = monitors[i].attributes.physicalWidth;
-		layouts[i].PhysicalHeight = monitors[i].attributes.physicalHeight;
+		const rdpMonitor* monitor = &monitors[i];
+		DISPLAY_CONTROL_MONITOR_LAYOUT* layout = &layouts[i];
 
-		switch (monitors[i].attributes.orientation)
+		layout->Flags = (monitor->is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
+		layout->Left = monitor->x;
+		layout->Top = monitor->y;
+		layout->Width = monitor->width;
+		layout->Height = monitor->height;
+		layout->Orientation = ORIENTATION_LANDSCAPE;
+		layout->PhysicalWidth = monitor->attributes.physicalWidth;
+		layout->PhysicalHeight = monitor->attributes.physicalHeight;
+
+		switch (monitor->attributes.orientation)
 		{
 			case 90:
-				layouts[i].Orientation = ORIENTATION_PORTRAIT;
+				layout->Orientation = ORIENTATION_PORTRAIT;
 				break;
 
 			case 180:
-				layouts[i].Orientation = ORIENTATION_LANDSCAPE_FLIPPED;
+				layout->Orientation = ORIENTATION_LANDSCAPE_FLIPPED;
 				break;
 
 			case 270:
-				layouts[i].Orientation = ORIENTATION_PORTRAIT_FLIPPED;
+				layout->Orientation = ORIENTATION_PORTRAIT_FLIPPED;
 				break;
 
 			case 0:
@@ -304,12 +320,12 @@ UINT wlf_disp_sendLayout(DispClientContext* disp, rdpMonitor* monitors, size_t n
 				 *
 				 * So we default to ORIENTATION_LANDSCAPE
 				 */
-				layouts[i].Orientation = ORIENTATION_LANDSCAPE;
+				layout->Orientation = ORIENTATION_LANDSCAPE;
 				break;
 		}
 
-		layouts[i].DesktopScaleFactor = settings->DesktopScaleFactor;
-		layouts[i].DeviceScaleFactor = settings->DeviceScaleFactor;
+		layout->DesktopScaleFactor = settings->DesktopScaleFactor;
+		layout->DeviceScaleFactor = settings->DeviceScaleFactor;
 	}
 
 	ret = IFCALLRESULT(CHANNEL_RC_OK, disp->SendMonitorLayout, disp, nmonitors, layouts);
