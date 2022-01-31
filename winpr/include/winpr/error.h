@@ -42,16 +42,16 @@
 #define NO_ERROR 0
 #endif
 
-#define E_UNEXPECTED (HRESULT)0x8000FFFFL
-#define E_NOTIMPL (HRESULT)0x80004001L
-#define E_OUTOFMEMORY (HRESULT)0x8007000EL
-#define E_INVALIDARG (HRESULT)0x80070057L
-#define E_NOINTERFACE (HRESULT)0x80004002L
-#define E_POINTER (HRESULT)0x80004003L
-#define E_HANDLE (HRESULT)0x80070006L
-#define E_ABORT (HRESULT)0x80004004L
-#define E_FAIL (HRESULT)0x80004005L
-#define E_ACCESSDENIED (HRESULT)0x80070005L
+#define E_UNEXPECTED 0x8000FFFFL
+#define E_NOTIMPL 0x80004001L
+#define E_OUTOFMEMORY 0x8007000EL
+#define E_INVALIDARG 0x80070057L
+#define E_NOINTERFACE 0x80004002L
+#define E_POINTER 0x80004003L
+#define E_HANDLE 0x80070006L
+#define E_ABORT 0x80004004L
+#define E_FAIL 0x80004005L
+#define E_ACCESSDENIED 0x80070005L
 
 #define CO_E_INIT_TLS 0x80004006
 #define CO_E_INIT_SHARED_ALLOCATOR 0x80004007
@@ -136,16 +136,15 @@
 #define HRESULT_CODE(hr) ((hr)&0xFFFF)
 #define HRESULT_FACILITY(hr) (((hr) >> 16) & 0x1FFF)
 
-#define HRESULT_FROM_NT(x) ((HRESULT)((x) | FACILITY_NT_BIT))
+#define HRESULT_FROM_NT(x) (((x) | FACILITY_NT_BIT))
 
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreserved-id-macro"
 #endif
 
-#define __HRESULT_FROM_WIN32(x)         \
-	((HRESULT)(x) <= 0 ? ((HRESULT)(x)) \
-	                   : ((HRESULT)(((x)&0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
+#define __HRESULT_FROM_WIN32(x) \
+	((x) <= 0 ? ((x)) : ((((x)&0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
 #define HRESULT_FROM_WIN32(x) __HRESULT_FROM_WIN32(x)
 
 #if defined(__clang__)
@@ -154,8 +153,8 @@
 
 #define HRESULT_SEVERITY(hr) (((hr) >> 31) & 0x1)
 
-#define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
-#define FAILED(hr) (((HRESULT)(hr)) < 0)
+#define SUCCEEDED(hr) (((hr)) >= 0)
+#define FAILED(hr) (((hr)) < 0)
 #define IS_ERROR(Status) (((unsigned long)(Status)) >> 31 == SEVERITY_ERROR)
 
 #define MAKE_HRESULT(sev, fac, code)                                         \
@@ -169,8 +168,8 @@
 #define MAKE_SCODE(sev, fac, code) \
 	((SCODE)(((unsigned long)(sev) << 31) | ((unsigned long)(fac) << 16) | ((unsigned long)(code))))
 
-#define S_OK ((HRESULT)0L)
-#define S_FALSE ((HRESULT)1L)
+#define S_OK (0L)
+#define S_FALSE (1L)
 
 /* System Error Codes (0-499) */
 
