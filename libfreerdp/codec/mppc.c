@@ -86,8 +86,8 @@ static const UINT32 MPPC_MATCH_TABLE[256] = {
 
 //#define DEBUG_MPPC	1
 
-int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
-                    UINT32* pDstSize, UINT32 flags)
+int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
+                    const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	BYTE Literal;
 	BYTE* SrcPtr;

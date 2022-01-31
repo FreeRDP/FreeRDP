@@ -129,7 +129,7 @@ static INLINE int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 S
 }
 #endif
 
-int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
+int bulk_decompress(rdpBulk* bulk, const BYTE* pSrcData, UINT32 SrcSize, const BYTE** ppDstData,
                     UINT32* pDstSize, UINT32 flags)
 {
 	UINT32 type;

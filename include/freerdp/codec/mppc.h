@@ -37,7 +37,7 @@ extern "C"
 	FREERDP_API int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
 	                              BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
 	FREERDP_API int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
-	                                BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
+	                                const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
 
 	FREERDP_API void mppc_set_compression_level(MPPC_CONTEXT* mppc, DWORD CompressionLevel);
 
