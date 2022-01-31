@@ -38,9 +38,7 @@ struct rdp_pointer_cache
 	rdpPointer** entries; /* 1 */
 
 	/* internal */
-
-	rdpUpdate* update;
-	rdpSettings* settings;
+	rdpContext* context;
 };
 
 #ifdef __cplusplus
@@ -50,7 +48,7 @@ extern "C"
 
 	FREERDP_API void pointer_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_API rdpPointerCache* pointer_cache_new(rdpSettings* settings);
+	FREERDP_API rdpPointerCache* pointer_cache_new(rdpContext* context);
 	FREERDP_API void pointer_cache_free(rdpPointerCache* pointer_cache);
 
 #ifdef __cplusplus

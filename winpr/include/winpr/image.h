@@ -71,12 +71,12 @@ typedef struct _WINPR_BITMAP_CORE_HEADER WINPR_BITMAP_CORE_HEADER;
 struct _wImage
 {
 	int type;
-	int width;
-	int height;
+	UINT32 width;
+	UINT32 height;
 	BYTE* data;
-	int scanline;
-	int bitsPerPixel;
-	int bytesPerPixel;
+	UINT32 scanline;
+	UINT32 bitsPerPixel;
+	UINT32 bytesPerPixel;
 };
 typedef struct _wImage wImage;
 
@@ -85,16 +85,16 @@ extern "C"
 {
 #endif
 
-	WINPR_API int winpr_bitmap_write(const char* filename, const BYTE* data, int width, int height,
-	                                 int bpp);
-	WINPR_API BYTE* winpr_bitmap_construct_header(int width, int height, int bpp);
+	WINPR_API int winpr_bitmap_write(const char* filename, const BYTE* data, size_t width,
+	                                 size_t height, size_t bpp);
+	WINPR_API BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp);
 
 	WINPR_API int winpr_image_write(wImage* image, const char* filename);
 	WINPR_API int winpr_image_read(wImage* image, const char* filename);
 
-	WINPR_API int winpr_image_read_buffer(wImage* image, const BYTE* buffer, int size);
+	WINPR_API int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size);
 
-	WINPR_API wImage* winpr_image_new();
+	WINPR_API wImage* winpr_image_new(void);
 	WINPR_API void winpr_image_free(wImage* image, BOOL bFreeBuffer);
 
 #ifdef __cplusplus

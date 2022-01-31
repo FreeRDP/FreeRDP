@@ -72,13 +72,16 @@ struct _GEOMETRY_PLUGIN
 };
 typedef struct _GEOMETRY_PLUGIN GEOMETRY_PLUGIN;
 
-static UINT32 mappedGeometryHash(UINT64* g)
+static UINT32 mappedGeometryHash(const void* v)
 {
+	const UINT64* g = (const UINT64*)v;
 	return (UINT32)((*g >> 32) + (*g & 0xffffffff));
 }
 
-static BOOL mappedGeometryKeyCompare(UINT64* g1, UINT64* g2)
+static BOOL mappedGeometryKeyCompare(const void* v1, const void* v2)
 {
+	const UINT64* g1 = (const UINT64*)v1;
+	const UINT64* g2 = (const UINT64*)v2;
 	return *g1 == *g2;
 }
 
@@ -243,8 +246,8 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 			mappedGeometry->refCounter = 1;
 			mappedGeometry->mappingId = id;
 
-			if (HashTable_Add(context->geometries, &(mappedGeometry->mappingId), mappedGeometry) <
-			    0)
+			if (!HashTable_Insert(context->geometries, &(mappedGeometry->mappingId),
+			                      mappedGeometry))
 			{
 				WLog_ERR(TAG, "unable to register geometry 0x%" PRIx64 " in the table", id);
 				free(mappedGeometry);
@@ -433,6 +436,12 @@ static UINT geometry_plugin_terminated(IWTSPlugin* pPlugin)
 	return CHANNEL_RC_OK;
 }
 
+static void mappedGeometryUnref_void(void* arg)
+{
+	MAPPED_GEOMETRY* g = (MAPPED_GEOMETRY*)arg;
+	mappedGeometryUnref(g);
+}
+
 /**
  * Channel Client Interface
  */
@@ -478,14 +487,20 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		}
 
 		context->geometries = HashTable_New(FALSE);
-		context->geometries->hash = (HASH_TABLE_HASH_FN)mappedGeometryHash;
-		context->geometries->keyCompare = (HASH_TABLE_KEY_COMPARE_FN)mappedGeometryKeyCompare;
-		context->geometries->valueFree = (HASH_TABLE_VALUE_FREE_FN)mappedGeometryUnref;
+		HashTable_SetHashFunction(context->geometries, mappedGeometryHash);
+		{
+			wObject* obj = HashTable_KeyObject(context->geometries);
+			obj->fnObjectEquals = mappedGeometryKeyCompare;
+		}
+		{
+			wObject* obj = HashTable_ValueObject(context->geometries);
+			obj->fnObjectFree = mappedGeometryUnref_void;
+		}
 
 		context->handle = (void*)geometry;
 		geometry->iface.pInterface = (void*)context;
 		geometry->context = context;
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "geometry", (IWTSPlugin*)geometry);
+		error = pEntryPoints->RegisterPlugin(pEntryPoints, "geometry", &geometry->iface);
 	}
 	else
 	{

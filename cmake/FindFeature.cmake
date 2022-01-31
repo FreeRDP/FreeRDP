@@ -1,3 +1,4 @@
+include(FeatureSummary)
 
 # types: DISABLED < RUNTIME < OPTIONAL < RECOMMENDED < REQUIRED
 

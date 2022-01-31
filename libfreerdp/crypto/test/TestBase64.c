@@ -22,7 +22,7 @@
 struct Encode64test
 {
 	const char* input;
-	int len;
+	size_t len;
 	const char* output;
 };
 
@@ -41,7 +41,7 @@ static const struct Encode64test encodeTests[] = {
 int TestBase64(int argc, char* argv[])
 {
 	int i, testNb = 0;
-	int outLen;
+	size_t outLen;
 	BYTE* decoded;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

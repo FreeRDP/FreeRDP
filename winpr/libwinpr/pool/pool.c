@@ -105,6 +105,7 @@ static void threads_close(void* thread)
 
 static BOOL InitializeThreadpool(PTP_POOL pool)
 {
+	BOOL rc = FALSE;
 	int index;
 	wObject* obj;
 	HANDLE thread;
@@ -116,16 +117,16 @@ static BOOL InitializeThreadpool(PTP_POOL pool)
 	pool->Maximum = 500;
 
 	if (!(pool->PendingQueue = Queue_New(TRUE, -1, -1)))
-		goto fail_queue_new;
+		goto fail;
 
 	if (!(pool->WorkComplete = CountdownEvent_New(0)))
-		goto fail_countdown_event;
+		goto fail;
 
 	if (!(pool->TerminateEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-		goto fail_terminate_event;
+		goto fail;
 
 	if (!(pool->Threads = ArrayList_New(TRUE)))
-		goto fail_thread_array;
+		goto fail;
 
 	obj = ArrayList_Object(pool->Threads);
 	obj->fnObjectFree = threads_close;
@@ -134,34 +135,23 @@ static BOOL InitializeThreadpool(PTP_POOL pool)
 	{
 		if (!(thread = CreateThread(NULL, 0, thread_pool_work_func, (void*)pool, 0, NULL)))
 		{
-			goto fail_create_threads;
+			goto fail;
 		}
 
-		if (ArrayList_Add(pool->Threads, thread) < 0)
-			goto fail_create_threads;
+		if (!ArrayList_Append(pool->Threads, thread))
+		{
+			CloseHandle(thread);
+			goto fail;
+		}
 	}
 
-	return TRUE;
+	rc = TRUE;
 
-fail_create_threads:
-	SetEvent(pool->TerminateEvent);
-	ArrayList_Free(pool->Threads);
-	pool->Threads = NULL;
-fail_thread_array:
-	CloseHandle(pool->TerminateEvent);
-	pool->TerminateEvent = NULL;
-fail_terminate_event:
-	CountdownEvent_Free(pool->WorkComplete);
-	pool->WorkComplete = NULL;
-fail_countdown_event:
-	Queue_Free(pool->PendingQueue);
-	pool->WorkComplete = NULL;
-fail_queue_new:
-
-	return FALSE;
+fail:
+	return rc;
 }
 
-PTP_POOL GetDefaultThreadpool()
+PTP_POOL GetDefaultThreadpool(void)
 {
 	PTP_POOL pool = NULL;
 
@@ -188,7 +178,7 @@ PTP_POOL winpr_CreateThreadpool(PVOID reserved)
 
 	if (!InitializeThreadpool(pool))
 	{
-		free(pool);
+		winpr_CloseThreadpool(pool);
 		return NULL;
 	}
 
@@ -212,17 +202,13 @@ VOID winpr_CloseThreadpool(PTP_POOL ptpp)
 	CountdownEvent_Free(ptpp->WorkComplete);
 	CloseHandle(ptpp->TerminateEvent);
 
-	if (ptpp == &DEFAULT_POOL)
 	{
-		ptpp->Threads = NULL;
-		ptpp->PendingQueue = NULL;
-		ptpp->WorkComplete = NULL;
-		ptpp->TerminateEvent = NULL;
+		TP_POOL empty = { 0 };
+		*ptpp = empty;
 	}
-	else
-	{
+
+	if (ptpp != &DEFAULT_POOL)
 		free(ptpp);
-	}
 }
 
 BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
@@ -242,8 +228,11 @@ BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 			return FALSE;
 		}
 
-		if (ArrayList_Add(ptpp->Threads, thread) < 0)
+		if (!ArrayList_Append(ptpp->Threads, thread))
+		{
+			CloseHandle(thread);
 			return FALSE;
+		}
 	}
 
 	return TRUE;

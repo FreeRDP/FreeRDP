@@ -174,6 +174,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		xfc->savedHeight = xfc->window->height;
 		xfc->savedPosX = xfc->window->left;
 		xfc->savedPosY = xfc->window->top;
+
 		startX = (settings->DesktopPosX != UINT32_MAX) ? settings->DesktopPosX : 0;
 		startY = (settings->DesktopPosY != UINT32_MAX) ? settings->DesktopPosY : 0;
 	}
@@ -229,7 +230,11 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 		if (!fullscreen)
 		{
-			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
+			/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN
+			 * Resize the window again, the previous call to xf_SendClientEvent might have
+			 * changed the window size (borders, ...)
+			 */
+			xf_ResizeDesktopWindow(xfc, window, width, height);
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 		}
 
@@ -340,9 +345,9 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int length,
                           unsigned long* nitems, unsigned long* bytes, BYTE** prop)
 {
-	int status;
-	Atom actual_type;
-	int actual_format;
+	int status = 0;
+	Atom actual_type = None;
+	int actual_format = 0;
 
 	if (property == None)
 		return FALSE;
@@ -497,19 +502,27 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	}
 	else
 	{
-		void* mem;
-		ftruncate(window->shmid, sizeof(window->handle));
-		mem = mmap(0, sizeof(window->handle), PROT_READ | PROT_WRITE, MAP_SHARED, window->shmid, 0);
-
-		if (mem == MAP_FAILED)
+		int rc = ftruncate(window->shmid, sizeof(window->handle));
+		if (rc != 0)
 		{
-			DEBUG_X11("xf_CreateDesktopWindow: failed to assign pointer to the memory address - "
-			          "shmat()\n");
+			DEBUG_X11("%s: ftruncate failed with %s [%d]", __FUNCTION__, strerror(rc), rc);
 		}
 		else
 		{
-			window->xfwin = mem;
-			*window->xfwin = window->handle;
+			void* mem = mmap(0, sizeof(window->handle), PROT_READ | PROT_WRITE, MAP_SHARED,
+			                 window->shmid, 0);
+
+			if (mem == MAP_FAILED)
+			{
+				DEBUG_X11(
+				    "xf_CreateDesktopWindow: failed to assign pointer to the memory address - "
+				    "shmat()\n");
+			}
+			else
+			{
+				window->xfwin = mem;
+				*window->xfwin = window->handle;
+			}
 		}
 	}
 
@@ -1119,7 +1132,10 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 		appWindow = xf_rail_get_window(xfc, *(UINT64*)pKeys[index]);
 
 		if (!appWindow)
+		{
+			free(pKeys);
 			return NULL;
+		}
 
 		if (appWindow->handle == wnd)
 		{

@@ -53,17 +53,17 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 {
 	DWORD i;
 	size_t left;
-	wStream* s;
 	UINT32 flags;
 	size_t chunkSize;
 	rdpMcs* mcs = rdp->mcs;
-	rdpMcsChannel* channel = NULL;
+	const rdpMcsChannel* channel = NULL;
 
 	for (i = 0; i < mcs->channelCount; i++)
 	{
-		if (mcs->channels[i].ChannelId == channelId)
+		const rdpMcsChannel* cur = &mcs->channels[i];
+		if (cur->ChannelId == channelId)
 		{
-			channel = &mcs->channels[i];
+			channel = cur;
 			break;
 		}
 	}
@@ -79,11 +79,6 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 
 	while (left > 0)
 	{
-		s = rdp_send_stream_init(rdp);
-
-		if (!s)
-			return FALSE;
-
 		if (left > rdp->settings->VirtualChannelChunkSize)
 		{
 			chunkSize = rdp->settings->VirtualChannelChunkSize;
@@ -99,19 +94,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 			flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
 		}
 
-		Stream_Write_UINT32(s, size);
-		Stream_Write_UINT32(s, flags);
-
-		if (!Stream_EnsureCapacity(s, chunkSize))
-		{
-			Stream_Release(s);
-			return FALSE;
-		}
-
-		Stream_Write(s, data, chunkSize);
-
-		/* WLog_DBG(TAG, "%s: sending data (flags=0x%x size=%d)", __FUNCTION__, flags, size); */
-		if (!rdp_send(rdp, s, channelId))
+		if (!freerdp_channel_send_packet(rdp, channelId, size, flags, data, chunkSize))
 			return FALSE;
 
 		data += chunkSize;
@@ -294,7 +277,30 @@ static const WtsApiFunctionTable FreeRDP_WtsApiFunctionTable = {
 	FreeRDP_WTSStartRemoteControlSessionExA
 };
 
-PWtsApiFunctionTable FreeRDP_InitWtsApi(void)
+const WtsApiFunctionTable* FreeRDP_InitWtsApi(void)
 {
-	return (PWtsApiFunctionTable)&FreeRDP_WtsApiFunctionTable;
+	return &FreeRDP_WtsApiFunctionTable;
+}
+
+BOOL freerdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize, UINT32 flags,
+                                 const BYTE* data, size_t chunkSize)
+{
+	wStream* s = rdp_send_stream_init(rdp);
+
+	if (!s)
+		return FALSE;
+
+	Stream_Write_UINT32(s, totalSize);
+	Stream_Write_UINT32(s, flags);
+
+	if (!Stream_EnsureCapacity(s, chunkSize))
+	{
+		Stream_Release(s);
+		return FALSE;
+	}
+
+	Stream_Write(s, data, chunkSize);
+
+	/* WLog_DBG(TAG, "%s: sending data (flags=0x%x size=%d)", __FUNCTION__, flags, size); */
+	return rdp_send(rdp, s, channelId);
 }

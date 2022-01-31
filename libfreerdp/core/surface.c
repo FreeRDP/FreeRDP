@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/assert.h>
+
 #include <freerdp/utils/pcap.h>
 #include <freerdp/log.h>
 
@@ -60,6 +62,13 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 	Stream_Read_UINT16(s, bmp->height);
 	Stream_Read_UINT32(s, bmp->bitmapDataLength);
 
+	if ((bmp->width == 0) || (bmp->height == 0))
+	{
+		WLog_ERR(TAG, "invalid size value width=%" PRIu16 ", height=%" PRIu16, bmp->width,
+		         bmp->height);
+		return FALSE;
+	}
+
 	if ((bmp->bpp < 1) || (bmp->bpp > 32))
 	{
 		WLog_ERR(TAG, "invalid bpp value %" PRIu32 "", bmp->bpp);
@@ -76,6 +85,39 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 	return Stream_SafeSeek(s, bmp->bitmapDataLength);
 }
 
+static BOOL update_recv_surfcmd_is_rect_valid(const rdpContext* context,
+                                              const SURFACE_BITS_COMMAND* cmd)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->settings);
+	WINPR_ASSERT(cmd);
+
+	/* We need a rectangle with left/top being smaller than right/bottom.
+	 * Also do not allow empty rectangles. */
+	if ((cmd->destTop >= cmd->destBottom) || (cmd->destLeft >= cmd->destRight))
+	{
+		WLog_WARN(TAG,
+		          "Empty surface bits command rectangle: %" PRIu16 "x%" PRIu16 "-%" PRIu16
+		          "x%" PRIu16,
+		          cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom);
+		return FALSE;
+	}
+
+	/* The rectangle needs to fit into our session size */
+	if ((cmd->destRight > context->settings->DesktopWidth) ||
+	    (cmd->destBottom > context->settings->DesktopHeight))
+	{
+		WLog_WARN(TAG,
+		          "Invalid surface bits command rectangle: %" PRIu16 "x%" PRIu16 "-%" PRIu16
+		          "x%" PRIu16 " does not fit %" PRIu32 "x%" PRIu32,
+		          cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
+		          context->settings->DesktopWidth, context->settings->DesktopHeight);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT16 cmdType)
 {
 	SURFACE_BITS_COMMAND cmd = { 0 };
@@ -89,16 +131,13 @@ static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT
 	Stream_Read_UINT16(s, cmd.destRight);
 	Stream_Read_UINT16(s, cmd.destBottom);
 
+	if (!update_recv_surfcmd_is_rect_valid(update->context, &cmd))
+		goto fail;
+
 	if (!update_recv_surfcmd_bitmap_ex(s, &cmd.bmp))
 		goto fail;
 
-	if (!update->SurfaceBits)
-	{
-		WLog_ERR(TAG, "Missing callback update->SurfaceBits");
-		goto fail;
-	}
-
-	return update->SurfaceBits(update->context, &cmd);
+	return IFCALLRESULT(TRUE, update->SurfaceBits, update->context, &cmd);
 fail:
 	return FALSE;
 }
@@ -106,14 +145,16 @@ fail:
 static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 {
 	SURFACE_FRAME_MARKER marker = { 0 };
+	rdp_update_internal* up = update_cast(update);
+
+	WINPR_ASSERT(s);
 
 	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
 	Stream_Read_UINT16(s, marker.frameAction);
 	Stream_Read_UINT32(s, marker.frameId);
-	WLog_Print(update->log, WLOG_DEBUG,
-	           "SurfaceFrameMarker: action: %s (%" PRIu32 ") id: %" PRIu32 "",
+	WLog_Print(up->log, WLOG_DEBUG, "SurfaceFrameMarker: action: %s (%" PRIu32 ") id: %" PRIu32 "",
 	           (!marker.frameAction) ? "Begin" : "End", marker.frameAction, marker.frameId);
 
 	if (!update->SurfaceFrameMarker)
@@ -128,6 +169,9 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 {
 	UINT16 cmdType;
+	rdp_update_internal* up = update_cast(update);
+
+	WINPR_ASSERT(s);
 
 	while (Stream_GetRemainingLength(s) >= 2)
 	{
@@ -156,12 +200,12 @@ int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 				return -1;
 		}
 
-		if (update->dump_rfx)
+		if (up->dump_rfx)
 		{
 			const size_t size = Stream_GetPosition(s) - start;
 			/* TODO: treat return values */
-			pcap_add_record(update->pcap_rfx, mark, size);
-			pcap_flush(update->pcap_rfx);
+			pcap_add_record(up->pcap_rfx, mark, size);
+			pcap_flush(up->pcap_rfx);
 		}
 	}
 
@@ -192,10 +236,15 @@ static BOOL update_write_surfcmd_bitmap_ex(wStream* s, const TS_BITMAP_DATA_EX* 
 	if (!Stream_EnsureRemainingCapacity(s, 12))
 		return FALSE;
 
+	if (bmp->codecID > UINT8_MAX)
+	{
+		WLog_ERR(TAG, "Invalid TS_BITMAP_DATA_EX::codecID=0x%04" PRIx16 "", bmp->codecID);
+		return FALSE;
+	}
 	Stream_Write_UINT8(s, bmp->bpp);
 	Stream_Write_UINT8(s, bmp->flags);
 	Stream_Write_UINT8(s, 0); /* reserved1, reserved2 */
-	Stream_Write_UINT8(s, bmp->codecID);
+	Stream_Write_UINT8(s, (UINT8)bmp->codecID);
 	Stream_Write_UINT16(s, bmp->width);
 	Stream_Write_UINT16(s, bmp->height);
 	Stream_Write_UINT32(s, bmp->bitmapDataLength);

@@ -331,6 +331,8 @@ static void audin_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
 
+		case PA_STREAM_UNCONNECTED:
+		case PA_STREAM_CREATING:
 		default:
 			break;
 	}
@@ -462,11 +464,11 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* args)
+static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, const ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	AudinPulseDevice* pulse = (AudinPulseDevice*)device;
 	COMMAND_LINE_ARGUMENT_A audin_pulse_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                             NULL, NULL, -1, NULL, "audio device name" },
@@ -516,7 +518,7 @@ static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* a
  */
 UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	AudinPulseDevice* pulse;
 	UINT error;
 	pulse = (AudinPulseDevice*)calloc(1, sizeof(AudinPulseDevice));

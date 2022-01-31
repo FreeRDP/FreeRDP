@@ -52,17 +52,14 @@ if(NOT WIN32)
 		"NOT WITH_VALGRIND_MEMCHECK; NOT WITH_SANITIZE_ADDRESS; NOT WITH_SANITIZE_MEMORY" OFF)
 else()
 	if(NOT UWP)
-		option(WITH_MEDIA_FOUNDATION "Enable H264 media foundation decoder." ON)
+		option(WITH_MEDIA_FOUNDATION "Enable H264 media foundation decoder." OFF)
 	endif()
 endif()
 
 if(WIN32 AND NOT UWP)
-	option(WITH_NATIVE_SSPI "Use native SSPI modules" ON)
 	option(WITH_WINMM "Use Windows Multimedia" ON)
 	option(WITH_WIN8 "Use Windows 8 libraries" OFF)
 endif()
-
-option(WITH_SMARTCARD_INSPECT "Enable SmartCard API Inspector" OFF)
 
 option(BUILD_TESTING "Build unit tests" OFF)
 CMAKE_DEPENDENT_OPTION(TESTS_WTSAPI_EXTRA "Build extra WTSAPI tests (interactive)" OFF "BUILD_TESTING" OFF)
@@ -79,7 +76,7 @@ option(BUILTIN_CHANNELS "Combine all channels into their respective base library
 
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
-option(WITH_WINPR_TOOLS "Build WinPR helper binaries" ON)
+option(FREERDP_UNIFIED_BUILD "Build WinPR, uwac, RdTk and FreeRDP in one go" ON)
 
 CMAKE_DEPENDENT_OPTION(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON
 	"WITH_CLIENT_COMMON;WITH_CHANNELS" OFF)
@@ -130,10 +127,6 @@ option(WITH_DEBUG_NLA "Print authentication related debug messages." ${DEFAULT_D
 if(WITH_DEBUG_NLA)
     message(WARNING "WITH_DEBUG_NLA=ON, the build might leak sensitive information, do not use with release builds!")
 endif()
-option(WITH_DEBUG_NTLM "Print NTLM debug messages" ${DEFAULT_DEBUG_OPTION})
-if(WITH_DEBUG_NTLM)
-    message(WARNING "WITH_DEBUG_NTLM=ON, the build might leak sensitive information, do not use with release builds!")
-endif()
 option(WITH_DEBUG_TSG "Print Terminal Server Gateway debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_RAIL "Print RemoteApp debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_RDP "Print RDP debug messages" ${DEFAULT_DEBUG_OPTION})
@@ -145,8 +138,6 @@ option(WITH_DEBUG_SCARD "Print smartcard debug messages" ${DEFAULT_DEBUG_OPTION}
 option(WITH_DEBUG_SND "Print rdpsnd debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_SVC "Print static virtual channel debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_TRANSPORT "Print transport debug messages." ${DEFAULT_DEBUG_OPTION})
-option(WITH_DEBUG_THREADS "Print thread debug messages, enables handle dump" ${DEFAULT_DEBUG_OPTION})
-option(WITH_DEBUG_MUTEX "Print mutex debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_TIMEZONE "Print timezone debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_WND "Print window order debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_X11_CLIPRDR "Print X11 clipboard redirection debug messages" ${DEFAULT_DEBUG_OPTION})
@@ -158,7 +149,6 @@ option(WITH_DEBUG_RINGBUFFER "Enable Ringbuffer debug messages" ${DEFAULT_DEBUG_
 option(WITH_DEBUG_SYMBOLS "Pack debug symbols to installer" OFF)
 option(WITH_CCACHE "Use ccache support if available" ON)
 option(WITH_CLANG_FORMAT "Detect clang-format. run 'cmake --build . --target clangformat' to format." ON)
-option(WITH_ICU "Use ICU for unicode conversion" OFF)
 option(WITH_GSSAPI "Compile support for kerberos authentication. (EXPERIMENTAL)" OFF)
 
 option(WITH_DSP_EXPERIMENTAL "Enable experimental sound encoder/decoder formats" OFF)
@@ -184,7 +174,7 @@ option(BUILD_FUZZERS "Use BUILD_FUZZERS to build fuzzing tests" OFF)
 
 if (BUILD_FUZZERS)
     if (NOT OSS_FUZZ)
-        add_compile_flags("C;CXX" -fsanitize=fuzzer-no-link)
+        add_compile_options(-fsanitize=fuzzer-no-link)
     endif ()
 
     if (OSS_FUZZ AND NOT DEFINED ENV{LIB_FUZZING_ENGINE})

@@ -16,5 +16,9 @@ int TestNtCurrentTeb(int argc, char* argv[])
 		return -1;
 	}
 #endif
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	return 0;
 }

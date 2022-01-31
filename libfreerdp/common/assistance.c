@@ -29,6 +29,7 @@
 #include <winpr/print.h>
 #include <winpr/windows.h>
 #include <winpr/ssl.h>
+#include <winpr/file.h>
 
 #include <freerdp/log.h>
 #include <freerdp/client/file.h>
@@ -400,7 +401,7 @@ static BOOL freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 		{
 			WLog_ERR(TAG, "Failed to parse ASSISTANCE file: ConnectionString2 invalid field "
 			              "order for ID");
-			return -1;
+			goto out_fail;
 		}
 		length = q - p;
 		free(file->RASessionId);
@@ -713,73 +714,28 @@ fail:
 
 BYTE* freerdp_assistance_hex_string_to_bin(const void* raw, size_t* size)
 {
-	size_t length;
-	BYTE* buffer;
-	size_t i;
-	const char* str = (const char*)raw;
-	length = strlen(str);
-
-	if ((length % 2) != 0)
+	BYTE* buffer = NULL;
+	size_t length, rc;
+	if (!raw || !size)
 		return NULL;
-
-	length /= 2;
-	*size = length;
-	buffer = (BYTE*)malloc(length);
-
+	*size = 0;
+	length = strlen(raw);
+	buffer = calloc(length, sizeof(BYTE));
 	if (!buffer)
 		return NULL;
-
-	for (i = 0; i < length; i++)
+	rc = winpr_HexStringToBinBuffer(raw, length, buffer, length);
+	if (rc == 0)
 	{
-		int hn, ln;
-		char c;
-		hn = ln = 0;
-		c = str[(i * 2) + 0];
-
-		if ((c >= '0') && (c <= '9'))
-			hn = c - '0';
-		else if ((c >= 'a') && (c <= 'f'))
-			hn = (c - 'a') + 10;
-		else if ((c >= 'A') && (c <= 'F'))
-			hn = (c - 'A') + 10;
-
-		c = str[(i * 2) + 1];
-
-		if ((c >= '0') && (c <= '9'))
-			ln = c - '0';
-		else if ((c >= 'a') && (c <= 'f'))
-			ln = (c - 'a') + 10;
-		else if ((c >= 'A') && (c <= 'F'))
-			ln = (c - 'A') + 10;
-
-		buffer[i] = ((hn << 4) | ln) & 0xFF;
+		free(buffer);
+		return NULL;
 	}
-
+	*size = rc;
 	return buffer;
 }
 
 char* freerdp_assistance_bin_to_hex_string(const void* raw, size_t size)
 {
-	size_t i;
-	char* p;
-	int ln, hn;
-	const char* data = (const char*)raw;
-	char bin2hex[] = "0123456789ABCDEF";
-	p = (char*)calloc((size + 1), 2);
-
-	if (!p)
-		return NULL;
-
-	for (i = 0; i < size; i++)
-	{
-		ln = data[i] & 0xF;
-		hn = (data[i] >> 4) & 0xF;
-		p[i * 2] = bin2hex[hn];
-		p[(i * 2) + 1] = bin2hex[ln];
-	}
-
-	p[size * 2] = '\0';
-	return p;
+	return winpr_BinToHexString(raw, size, FALSE);
 }
 
 int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* buffer, size_t size,
@@ -1167,7 +1123,11 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 	BYTE* buffer;
 	FILE* fp = NULL;
 	size_t readSize;
-	INT64 fileSize;
+	union
+	{
+		INT64 i64;
+		size_t s;
+	} fileSize;
 
 	if (!name)
 	{
@@ -1177,7 +1137,7 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 
 	free(file->filename);
 	file->filename = _strdup(name);
-	fp = fopen(name, "r");
+	fp = winpr_fopen(name, "r");
 
 	if (!fp)
 	{
@@ -1186,17 +1146,17 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 	}
 
 	_fseeki64(fp, 0, SEEK_END);
-	fileSize = _ftelli64(fp);
+	fileSize.i64 = _ftelli64(fp);
 	_fseeki64(fp, 0, SEEK_SET);
 
-	if (fileSize < 1)
+	if (fileSize.i64 < 1)
 	{
 		WLog_ERR(TAG, "Failed to read ASSISTANCE file %s ", name);
 		fclose(fp);
 		return -1;
 	}
 
-	buffer = (BYTE*)malloc(fileSize + 2);
+	buffer = (BYTE*)malloc(fileSize.s + 2);
 
 	if (!buffer)
 	{
@@ -1204,12 +1164,12 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 		return -1;
 	}
 
-	readSize = fread(buffer, fileSize, 1, fp);
+	readSize = fread(buffer, fileSize.s, 1, fp);
 
 	if (!readSize)
 	{
 		if (!ferror(fp))
-			readSize = fileSize;
+			readSize = fileSize.s;
 	}
 
 	fclose(fp);
@@ -1222,9 +1182,9 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 		return -1;
 	}
 
-	buffer[fileSize] = '\0';
-	buffer[fileSize + 1] = '\0';
-	status = freerdp_assistance_parse_file_buffer(file, (char*)buffer, fileSize, password);
+	buffer[fileSize.s] = '\0';
+	buffer[fileSize.s + 1] = '\0';
+	status = freerdp_assistance_parse_file_buffer(file, (char*)buffer, fileSize.s, password);
 	free(buffer);
 	return status;
 }

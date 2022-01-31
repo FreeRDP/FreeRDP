@@ -26,6 +26,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
+#include <freerdp/streamdump.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/client/cmdline.h>
 
@@ -34,15 +35,15 @@
 
 int main(int argc, char* argv[])
 {
+	int rc = 1;
 	int status;
 	HANDLE thread;
 	xfContext* xfc;
 	DWORD dwExitCode;
 	rdpContext* context;
 	rdpSettings* settings;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
 
-	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
 
@@ -56,31 +57,36 @@ int main(int argc, char* argv[])
 	xfc = (xfContext*)context;
 
 	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
-
-	status = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
-
 	if (status)
 	{
-		BOOL list = settings->ListMonitors;
+		BOOL list;
+
+		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
+
+		list = settings->ListMonitors;
+
 		if (list)
 			xf_list_monitors(xfc);
 
-		freerdp_client_context_free(context);
-		if (list)
-			return 0;
-		return status;
+		goto out;
 	}
 
-	freerdp_client_start(context);
+	if (!stream_dump_register_handlers(context, CONNECTION_STATE_MCS_CONNECT))
+		goto out;
+
+	if (freerdp_client_start(context) != 0)
+		goto out;
 
 	thread = freerdp_client_get_thread(context);
 
 	WaitForSingleObject(thread, INFINITE);
 	GetExitCodeThread(thread, &dwExitCode);
+	rc = xf_exit_code_from_disconnect_reason(dwExitCode);
 
 	freerdp_client_stop(context);
 
+out:
 	freerdp_client_context_free(context);
 
-	return xf_exit_code_from_disconnect_reason(dwExitCode);
+	return rc;
 }

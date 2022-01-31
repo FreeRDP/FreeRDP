@@ -56,7 +56,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 
 	Stream_Read_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (meta->numRegionRects * 8))
+	if (Stream_GetRemainingLength(s) / 8 < meta->numRegionRects)
 	{
 		WLog_ERR(TAG, "not enough data!");
 		goto error_out;
@@ -99,7 +99,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 		         index, regionRect->left, regionRect->top, regionRect->right, regionRect->bottom);
 	}
 
-	if (Stream_GetRemainingLength(s) < (meta->numRegionRects * 2))
+	if (Stream_GetRemainingLength(s) / 2 < meta->numRegionRects)
 	{
 		WLog_ERR(TAG, "not enough data!");
 		error = ERROR_INVALID_DATA;
@@ -123,10 +123,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 
 	return CHANNEL_RC_OK;
 error_out:
-	free(meta->regionRects);
-	meta->regionRects = NULL;
-	free(meta->quantQualityVals);
-	meta->quantQualityVals = NULL;
+	free_h264_metablock(meta);
 	return error;
 }
 
@@ -169,8 +166,7 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 			WLog_ERR(TAG, "context->SurfaceCommand failed with error %" PRIu32 "", error);
 	}
 
-	free(h264.meta.regionRects);
-	free(h264.meta.quantQualityVals);
+	free_h264_metablock(&h264.meta);
 	return error;
 }
 
@@ -259,10 +255,8 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 
 fail:
 	Stream_Free(s, FALSE);
-	free(h264.bitstream[0].meta.regionRects);
-	free(h264.bitstream[0].meta.quantQualityVals);
-	free(h264.bitstream[1].meta.regionRects);
-	free(h264.bitstream[1].meta.quantQualityVals);
+	free_h264_metablock(&h264.bitstream[0].meta);
+	free_h264_metablock(&h264.bitstream[1].meta);
 	return error;
 }
 

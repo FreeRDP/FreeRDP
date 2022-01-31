@@ -72,14 +72,14 @@ static void negotiate_SetSubPackage(NEGOTIATE_CONTEXT* context, const TCHAR* nam
 {
 	if (_tcsnccmp(name, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0)
 	{
-		context->sspiA = (SecurityFunctionTableA*)&KERBEROS_SecurityFunctionTableA;
-		context->sspiW = (SecurityFunctionTableW*)&KERBEROS_SecurityFunctionTableW;
+		context->sspiA = (const SecurityFunctionTableA*)&KERBEROS_SecurityFunctionTableA;
+		context->sspiW = (const SecurityFunctionTableW*)&KERBEROS_SecurityFunctionTableW;
 		context->kerberos = TRUE;
 	}
 	else
 	{
-		context->sspiA = (SecurityFunctionTableA*)&NTLM_SecurityFunctionTableA;
-		context->sspiW = (SecurityFunctionTableW*)&NTLM_SecurityFunctionTableW;
+		context->sspiA = (const SecurityFunctionTableA*)&NTLM_SecurityFunctionTableA;
+		context->sspiW = (const SecurityFunctionTableW*)&NTLM_SecurityFunctionTableW;
 		context->kerberos = FALSE;
 	}
 }
@@ -202,6 +202,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 			ErrorInitContextKerberos = TRUE;
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
 			negotiate_ContextFree(context);
+			sspi_SecureHandleSetLowerPointer(phNewContext, NULL);
 			return status;
 		}
 	}

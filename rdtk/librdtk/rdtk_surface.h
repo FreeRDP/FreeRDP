@@ -19,6 +19,8 @@
 #ifndef RDTK_SURFACE_PRIVATE_H
 #define RDTK_SURFACE_PRIVATE_H
 
+#include <stdint.h>
+#include <stdbool.h>
 #include <rdtk/rdtk.h>
 
 #include "rdtk_engine.h"
@@ -27,10 +29,10 @@ struct rdtk_surface
 {
 	rdtkEngine* engine;
 
-	int width;
-	int height;
-	int scanline;
-	BYTE* data;
-	BOOL owner;
+	uint16_t width;
+	uint16_t height;
+	uint32_t scanline;
+	uint8_t* data;
+	bool owner;
 };
 #endif /* RDTK_SURFACE_PRIVATE_H */

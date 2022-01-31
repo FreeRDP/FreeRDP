@@ -2,39 +2,39 @@
 #include <winpr/crt.h>
 #include <winpr/ini.h>
 
-const char TEST_INI_01[] = "; This is a sample .ini config file\n"
-                           "\n"
-                           "[first_section]\n"
-                           "one = 1\n"
-                           "five = 5\n"
-                           "animal = BIRD\n"
-                           "\n"
-                           "[second_section]\n"
-                           "path = \"/usr/local/bin\"\n"
-                           "URL = \"http://www.example.com/~username\"\n"
-                           "\n";
+static const char TEST_INI_01[] = "; This is a sample .ini config file\n"
+                                  "\n"
+                                  "[first_section]\n"
+                                  "one = 1\n"
+                                  "five = 5\n"
+                                  "animal = BIRD\n"
+                                  "\n"
+                                  "[second_section]\n"
+                                  "path = \"/usr/local/bin\"\n"
+                                  "URL = \"http://www.example.com/~username\"\n"
+                                  "\n";
 
-const char TEST_INI_02[] = "[FreeRDS]\n"
-                           "prefix=\"/usr/local\"\n"
-                           "bindir=\"bin\"\n"
-                           "sbindir=\"sbin\"\n"
-                           "libdir=\"lib\"\n"
-                           "datarootdir=\"share\"\n"
-                           "localstatedir=\"var\"\n"
-                           "sysconfdir=\"etc\"\n"
-                           "\n";
+static const char TEST_INI_02[] = "[FreeRDS]\n"
+                                  "prefix=\"/usr/local\"\n"
+                                  "bindir=\"bin\"\n"
+                                  "sbindir=\"sbin\"\n"
+                                  "libdir=\"lib\"\n"
+                                  "datarootdir=\"share\"\n"
+                                  "localstatedir=\"var\"\n"
+                                  "sysconfdir=\"etc\"\n"
+                                  "\n";
 
-const char TEST_INI_03[] = "[FreeRDS]\n"
-                           "prefix=\"/usr/local\"\n"
-                           "bindir=\"bin\"\n"
-                           "# some illegal string\n"
-                           "sbindir=\"sbin\"\n"
-                           "libdir=\"lib\"\n"
-                           "invalid key-value pair\n"
-                           "datarootdir=\"share\"\n"
-                           "localstatedir=\"var\"\n"
-                           "sysconfdir=\"etc\"\n"
-                           "\n";
+static const char TEST_INI_03[] = "[FreeRDS]\n"
+                                  "prefix=\"/usr/local\"\n"
+                                  "bindir=\"bin\"\n"
+                                  "# some illegal string\n"
+                                  "sbindir=\"sbin\"\n"
+                                  "libdir=\"lib\"\n"
+                                  "invalid key-value pair\n"
+                                  "datarootdir=\"share\"\n"
+                                  "localstatedir=\"var\"\n"
+                                  "sysconfdir=\"etc\"\n"
+                                  "\n";
 
 int TestIni(int argc, char* argv[])
 {
@@ -47,6 +47,10 @@ int TestIni(int argc, char* argv[])
 	const char* sValue;
 	char** keyNames = NULL;
 	char** sectionNames = NULL;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* First Sample */
 	ini = IniFile_New();
 	if (!ini)
@@ -153,5 +157,5 @@ fail:
 	free(keyNames);
 	free(sectionNames);
 	IniFile_Free(ini);
-	return 0;
+	return rc;
 }

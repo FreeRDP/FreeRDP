@@ -35,9 +35,6 @@
 static const GUID sCLSID_CMSH264DecoderMFT = {
 	0x62CE7E72, 0x4C71, 0x4d20, { 0xB1, 0x5D, 0x45, 0x28, 0x31, 0xA8, 0x7D, 0x9D }
 };
-static const GUID sCLSID_VideoProcessorMFT = {
-	0x88753b26, 0x5b24, 0x49bd, { 0xb2, 0xe7, 0x0c, 0x44, 0x5c, 0x78, 0xc9, 0x82 }
-};
 static const GUID sIID_IMFTransform = {
 	0xbf94c121, 0x5b05, 0x4e6f, { 0x80, 0x00, 0xba, 0x59, 0x89, 0x61, 0x41, 0x4d }
 };
@@ -53,17 +50,8 @@ static const GUID sMF_MT_DEFAULT_STRIDE = {
 static const GUID sMF_MT_SUBTYPE = {
 	0xf7e34c9a, 0x42e8, 0x4714, { 0xb7, 0x4b, 0xcb, 0x29, 0xd7, 0x2c, 0x35, 0xe5 }
 };
-static const GUID sMF_XVP_DISABLE_FRC = {
-	0x2c0afa19, 0x7a97, 0x4d5a, { 0x9e, 0xe8, 0x16, 0xd4, 0xfc, 0x51, 0x8d, 0x8c }
-};
 static const GUID sMFMediaType_Video = {
 	0x73646976, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 }
-};
-static const GUID sMFVideoFormat_RGB32 = {
-	22, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 }
-};
-static const GUID sMFVideoFormat_ARGB32 = {
-	21, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 }
 };
 static const GUID sMFVideoFormat_H264 = {
 	0x34363248, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71 }
@@ -77,46 +65,6 @@ static const GUID sIID_ICodecAPI = {
 static const GUID sCODECAPI_AVLowLatencyMode = {
 	0x9c27891a, 0xed7a, 0x40e1, { 0x88, 0xe8, 0xb2, 0x27, 0x27, 0xa0, 0x24, 0xee }
 };
-static const GUID sCODECAPI_AVDecVideoMaxCodedWidth = {
-	0x5ae557b8, 0x77af, 0x41f5, { 0x9f, 0xa6, 0x4d, 0xb2, 0xfe, 0x1d, 0x4b, 0xca }
-};
-static const GUID sCODECAPI_AVDecVideoMaxCodedHeight = {
-	0x7262a16a, 0xd2dc, 0x4e75, { 0x9b, 0xa8, 0x65, 0xc0, 0xc6, 0xd3, 0x2b, 0x13 }
-};
-
-#ifndef __IMFDXGIDeviceManager_FWD_DEFINED__
-#define __IMFDXGIDeviceManager_FWD_DEFINED__
-typedef interface IMFDXGIDeviceManager IMFDXGIDeviceManager;
-#endif /* __IMFDXGIDeviceManager_FWD_DEFINED__ */
-
-#ifndef __IMFDXGIDeviceManager_INTERFACE_DEFINED__
-#define __IMFDXGIDeviceManager_INTERFACE_DEFINED__
-
-typedef struct IMFDXGIDeviceManagerVtbl
-{
-	HRESULT(STDMETHODCALLTYPE* QueryInterface)
-	(IMFDXGIDeviceManager* This, REFIID riid, void** ppvObject);
-	ULONG(STDMETHODCALLTYPE* AddRef)(IMFDXGIDeviceManager* This);
-	ULONG(STDMETHODCALLTYPE* Release)(IMFDXGIDeviceManager* This);
-	HRESULT(STDMETHODCALLTYPE* CloseDeviceHandle)(IMFDXGIDeviceManager* This, HANDLE hDevice);
-	HRESULT(STDMETHODCALLTYPE* GetVideoService)
-	(IMFDXGIDeviceManager* This, HANDLE hDevice, REFIID riid, void** ppService);
-	HRESULT(STDMETHODCALLTYPE* LockDevice)
-	(IMFDXGIDeviceManager* This, HANDLE hDevice, REFIID riid, void** ppUnkDevice, BOOL fBlock);
-	HRESULT(STDMETHODCALLTYPE* OpenDeviceHandle)(IMFDXGIDeviceManager* This, HANDLE* phDevice);
-	HRESULT(STDMETHODCALLTYPE* ResetDevice)
-	(IMFDXGIDeviceManager* This, IUnknown* pUnkDevice, UINT resetToken);
-	HRESULT(STDMETHODCALLTYPE* TestDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice);
-	HRESULT(STDMETHODCALLTYPE* UnlockDevice)
-	(IMFDXGIDeviceManager* This, HANDLE hDevice, BOOL fSaveState);
-} IMFDXGIDeviceManagerVtbl;
-
-interface IMFDXGIDeviceManager
-{
-	CONST_VTBL struct IMFDXGIDeviceManagerVtbl* lpVtbl;
-};
-
-#endif /* __IMFDXGIDeviceManager_INTERFACE_DEFINED__ */
 
 typedef HRESULT(__stdcall* pfnMFStartup)(ULONG Version, DWORD dwFlags);
 typedef HRESULT(__stdcall* pfnMFShutdown)(void);
@@ -234,7 +182,7 @@ static int mf_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSiz
 	IMFMediaBuffer* outputBuffer = NULL;
 	MFT_OUTPUT_DATA_BUFFER outputDataBuffer;
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*)h264->pSystemData;
-	INT32* iStride = h264->iStride;
+	UINT32* iStride = h264->iStride;
 	BYTE** pYUVData = h264->pYUVData;
 	hr = sys->MFCreateMemoryBuffer(SrcSize, &inputBuffer);
 

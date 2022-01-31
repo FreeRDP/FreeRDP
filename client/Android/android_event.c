@@ -249,7 +249,7 @@ static void android_event_disconnect_free(ANDROID_EVENT* event)
 	free(event);
 }
 
-ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data, int data_length)
+ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(const void* data, size_t data_length)
 {
 	ANDROID_EVENT_CLIPBOARD* event;
 	event = (ANDROID_EVENT_CLIPBOARD*)calloc(1, sizeof(ANDROID_EVENT_CLIPBOARD));
@@ -261,7 +261,7 @@ ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data, int data_length
 
 	if (data)
 	{
-		event->data = malloc(data_length);
+		event->data = calloc(data_length + 1, sizeof(char));
 
 		if (!event->data)
 		{
@@ -270,7 +270,7 @@ ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data, int data_length
 		}
 
 		memcpy(event->data, data, data_length);
-		event->data_length = data_length;
+		event->data_length = data_length + 1;
 	}
 
 	return event;

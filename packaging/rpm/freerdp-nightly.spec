@@ -17,7 +17,7 @@
 %global __requires_exclude ^(libfreerdp.*|libwinpr).*$
 
 Name:           freerdp-nightly
-Version:        2.0
+Version:        3.0
 Release:        0
 License:        ASL 2.0
 Summary:        Free implementation of the Remote Desktop Protocol (RDP)
@@ -82,7 +82,11 @@ BuildRequires: gstreamer1-plugins-base-devel
 BuildRequires: libjpeg-turbo-devel
 %endif 
 
-%if 0%{?fedora} >= 21 || 0%{?rhel} >= 8
+%if 0%{?fedora} >= 33
+BuildRequires: wayland-devel
+%endif
+
+%if 0%{?rhel} >= 8
 BuildRequires: libwayland-client-devel
 %endif
 

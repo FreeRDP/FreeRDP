@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -106,7 +106,7 @@ static BOOL audin_opensles_format_supported(IAudinDevice* device, const AUDIO_FO
 		return FALSE;
 
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, format=%p", (void*)opensles, (void*)format);
-	assert(format);
+	WINPR_ASSERT(format);
 
 	switch (format->wFormatTag)
 	{
@@ -144,7 +144,7 @@ static UINT audin_opensles_set_format(IAudinDevice* device, const AUDIO_FORMAT* 
 
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, format=%p, FramesPerPacket=%" PRIu32 "",
 	           (void*)device, (void*)format, FramesPerPacket);
-	assert(format);
+	WINPR_ASSERT(format);
 
 	opensles->format = *format;
 
@@ -215,7 +215,7 @@ static UINT audin_opensles_open(IAudinDevice* device, AudinReceive receive, void
 	opensles->user_data = user_data;
 	return CHANNEL_RC_OK;
 error_out:
-	audin_opensles_close(opensles);
+	audin_opensles_close(device);
 	return ERROR_INTERNAL_ERROR;
 }
 
@@ -244,11 +244,11 @@ UINT audin_opensles_close(IAudinDevice* device)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device, ADDIN_ARGV* args)
+static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device, const ADDIN_ARGV* args)
 {
 	UINT status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*)device;
 	COMMAND_LINE_ARGUMENT_A audin_opensles_args[] = {
 		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL,
@@ -301,7 +301,7 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device, ADDIN_A
  */
 UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	AudinOpenSLESDevice* opensles;
 	UINT error;
 	opensles = (AudinOpenSLESDevice*)calloc(1, sizeof(AudinOpenSLESDevice));

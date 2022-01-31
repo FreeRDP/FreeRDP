@@ -56,7 +56,7 @@ BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* data)
 	 * means of accessing individual pixels in blitting operations
 	 */
 	scanline = (width + 7) / 8;
-	dstData = (BYTE*)_aligned_malloc(width * height, 16);
+	dstData = (BYTE*)_aligned_malloc(width * height * 1ULL, 16);
 
 	if (!dstData)
 		return NULL;
@@ -545,7 +545,7 @@ BOOL freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, UINT
 	for (y = nYDst; y < nHeight; y++)
 	{
 		BYTE* pDstLine = &pDstData[y * nDstStep + nXDst * dstBytesPerPixel];
-		memset(pDstLine, 0, dstBytesPerPixel * (nWidth - nXDst));
+		memset(pDstLine, 0, dstBytesPerPixel * (nWidth - nXDst) * 1ULL);
 	}
 
 	switch (xorBpp)
@@ -730,8 +730,14 @@ BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32
 {
 	UINT32 x, y;
 	const UINT32 bpp = GetBytesPerPixel(DstFormat);
-	BYTE* pFirstDstLine = &pDstData[nYDst * nDstStep];
-	BYTE* pFirstDstLineXOffset = &pFirstDstLine[nXDst * bpp];
+	BYTE* pFirstDstLine;
+	BYTE* pFirstDstLineXOffset;
+
+	if (nDstStep == 0)
+		nDstStep = (nXDst + nWidth) * GetBytesPerPixel(DstFormat);
+
+	pFirstDstLine = &pDstData[nYDst * nDstStep];
+	pFirstDstLineXOffset = &pFirstDstLine[nXDst * bpp];
 
 	for (x = 0; x < nWidth; x++)
 	{
@@ -742,7 +748,7 @@ BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32
 	for (y = 1; y < nHeight; y++)
 	{
 		BYTE* pDstLine = &pDstData[(y + nYDst) * nDstStep + nXDst * bpp];
-		memcpy(pDstLine, pFirstDstLineXOffset, nWidth * bpp);
+		memcpy(pDstLine, pFirstDstLineXOffset, nWidth * bpp * 1ULL);
 	}
 
 	return TRUE;

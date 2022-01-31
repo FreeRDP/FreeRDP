@@ -33,7 +33,9 @@
 
 #include "smartcard.h"
 
+#if defined(WITH_SMARTCARD_INSPECT)
 #include "smartcard_inspect.h"
+#endif
 
 static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
 static const SCardApiFunctionTable* g_SCardApi = NULL;
@@ -53,16 +55,24 @@ static const SCardApiFunctionTable* g_SCardApi = NULL;
 	}                                                                                    \
 	return g_SCardApi->pfn##_name(__VA_ARGS__)
 
-#define SCARDAPI_STUB_CALL_HANDLE(_name, ...)                                 \
-	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL); \
-	if (!g_SCardApi || !g_SCardApi->pfn##_name)                               \
-		return NULL;                                                          \
+#define SCARDAPI_STUB_CALL_HANDLE(_name, ...)                                            \
+	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL);            \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                          \
+	{                                                                                    \
+		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p", \
+		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : NULL);                \
+		return NULL;                                                                     \
+	}                                                                                    \
 	return g_SCardApi->pfn##_name(__VA_ARGS__)
 
-#define SCARDAPI_STUB_CALL_VOID(_name, ...)                                   \
-	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL); \
-	if (!g_SCardApi || !g_SCardApi->pfn##_name)                               \
-		return;                                                               \
+#define SCARDAPI_STUB_CALL_VOID(_name, ...)                                              \
+	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL);            \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                          \
+	{                                                                                    \
+		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p", \
+		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : NULL);                \
+		return;                                                                          \
+	}                                                                                    \
 	g_SCardApi->pfn##_name(__VA_ARGS__)
 
 /**
@@ -75,6 +85,7 @@ const SCARD_IO_REQUEST g_rgSCardRawPci = { SCARD_PROTOCOL_RAW, 8 };
 
 static BOOL CALLBACK InitializeSCardApiStubs(PINIT_ONCE once, PVOID param, PVOID* context)
 {
+#if defined(WITH_SMARTCARD_PCSC)
 #ifndef _WIN32
 
 	if (PCSC_InitializeSCardApi() >= 0)
@@ -86,7 +97,8 @@ static BOOL CALLBACK InitializeSCardApiStubs(PINIT_ONCE once, PVOID param, PVOID
 		g_SCardApi = WinSCard_GetSCardApiFunctionTable();
 
 #endif
-#ifdef WITH_SMARTCARD_INSPECT
+#endif
+#if defined(WITH_SMARTCARD_INSPECT)
 	g_SCardApi = Inspect_RegisterSCardApi(g_SCardApi);
 #endif
 	return TRUE;

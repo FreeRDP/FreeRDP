@@ -15,6 +15,9 @@ int TestPathIsUNCEx(int argc, char* argv[])
 	LPTSTR Server;
 	TCHAR Path[PATHCCH_MAX_CCH];
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* Path is UNC */
 
 	_tcscpy(Path, testPathUNC);

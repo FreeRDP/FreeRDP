@@ -13,7 +13,7 @@ package com.freerdp.freerdpcore.services;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.support.v4.util.LongSparseArray;
+import androidx.collection.LongSparseArray;
 import android.util.Log;
 
 import com.freerdp.freerdpcore.application.GlobalApp;
@@ -23,44 +23,88 @@ import com.freerdp.freerdpcore.domain.ManualBookmark;
 import com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class LibFreeRDP
 {
 	private static final String TAG = "LibFreeRDP";
 	private static EventListener listener;
-	private static boolean mHasH264 = true;
+	private static boolean mHasH264 = false;
 
 	private static final LongSparseArray<Boolean> mInstanceState = new LongSparseArray<>();
 
-	static
-	{
-		final String h264 = "openh264";
-		final String[] libraries = { h264,
-			                         "freerdp-openssl",
-			                         "ssl",
-			                         "crypto",
-			                         "jpeg",
-			                         "winpr3",
-			                         "freerdp3",
-			                         "freerdp-client3",
-			                         "freerdp-android3" };
-		final String LD_PATH = System.getProperty("java.library.path");
+	public static final long VERIFY_CERT_FLAG_NONE = 0x00;
+	public static final long VERIFY_CERT_FLAG_LEGACY = 0x02;
+	public static final long VERIFY_CERT_FLAG_REDIRECT = 0x10;
+	public static final long VERIFY_CERT_FLAG_GATEWAY = 0x20;
+	public static final long VERIFY_CERT_FLAG_CHANGED = 0x40;
+	public static final long VERIFY_CERT_FLAG_MISMATCH = 0x80;
+	public static final long VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1 = 0x100;
+	public static final long VERIFY_CERT_FLAG_FP_IS_PEM = 0x200;
 
+	private static boolean tryLoad(String[] libraries)
+	{
+		boolean success = false;
+		final String LD_PATH = System.getProperty("java.library.path");
 		for (String lib : libraries)
 		{
 			try
 			{
 				Log.v(TAG, "Trying to load library " + lib + " from LD_PATH: " + LD_PATH);
 				System.loadLibrary(lib);
+				success = true;
 			}
 			catch (UnsatisfiedLinkError e)
 			{
 				Log.e(TAG, "Failed to load library " + lib + ": " + e.toString());
-				if (lib.equals(h264))
-				{
-					mHasH264 = false;
-				}
+				success = false;
+				break;
 			}
+		}
+
+		return success;
+	}
+
+	private static boolean tryLoad(String library)
+	{
+		return tryLoad(new String[] { library });
+	}
+
+	static
+	{
+		try
+		{
+			System.loadLibrary("freerdp-android");
+			String version = freerdp_get_jni_version();
+			Pattern pattern = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+).*");
+			Matcher matcher = pattern.matcher(version);
+			if (!matcher.matches() || (matcher.groupCount() < 3))
+				throw new RuntimeException("APK broken: native library version " + version +
+				                           " does not meet requirements!");
+			int major = Integer.parseInt(Objects.requireNonNull(matcher.group(1)));
+			int minor = Integer.parseInt(Objects.requireNonNull(matcher.group(2)));
+			int patch = Integer.parseInt(Objects.requireNonNull(matcher.group(3)));
+
+			if (major > 2)
+				mHasH264 = freerdp_has_h264();
+			else if (minor > 5)
+				mHasH264 = freerdp_has_h264();
+			else if ((minor == 5) && (patch >= 1))
+				mHasH264 = freerdp_has_h264();
+			else
+				throw new RuntimeException("APK broken: native library version " + version +
+				                           " does not meet requirements!");
+			Log.i(TAG, "Successfully loaded native library. H264 is " +
+			               (mHasH264 ? "supported" : "not available"));
+		}
+		catch (UnsatisfiedLinkError e)
+		{
+			Log.e(TAG, "Failed to load library: " + e.toString());
+			throw e;
 		}
 	}
 
@@ -69,11 +113,11 @@ public class LibFreeRDP
 		return mHasH264;
 	}
 
+	private static native boolean freerdp_has_h264();
+
 	private static native String freerdp_get_jni_version();
 
 	private static native String freerdp_get_version();
-
-	private static native String freerdp_get_build_date();
 
 	private static native String freerdp_get_build_revision();
 
@@ -188,7 +232,7 @@ public class LibFreeRDP
 		BookmarkBase.DebugSettings debug = bookmark.getDebugSettings();
 
 		String arg;
-		ArrayList<String> args = new ArrayList<String>();
+		ArrayList<String> args = new ArrayList<>();
 
 		args.add(TAG);
 		args.add("/gdi:sw");
@@ -343,7 +387,7 @@ public class LibFreeRDP
 
 		args.add("/cert-ignore");
 		args.add("/log-level:" + debug.getDebugLevel());
-		String[] arrayArgs = args.toArray(new String[args.size()]);
+		String[] arrayArgs = args.toArray(new String[0]);
 		return freerdp_parse_arguments(inst, arrayArgs);
 	}
 
@@ -410,7 +454,7 @@ public class LibFreeRDP
 			}
 		}
 
-		String[] arrayArgs = args.toArray(new String[args.size()]);
+		String[] arrayArgs = args.toArray(new String[0]);
 		return freerdp_parse_arguments(inst, arrayArgs);
 	}
 
@@ -519,31 +563,34 @@ public class LibFreeRDP
 		return false;
 	}
 
-	private static int OnVerifyCertificate(long inst, String commonName, String subject,
-	                                       String issuer, String fingerprint, boolean hostMismatch)
+	private static int OnVerifyCertificateEx(long inst, String host, long port, String commonName,
+	                                       String subject, String issuer, String fingerprint,
+	                                       long flags)
 	{
 		SessionState s = GlobalApp.getSession(inst);
 		if (s == null)
 			return 0;
 		UIEventListener uiEventListener = s.getUIEventListener();
 		if (uiEventListener != null)
-			return uiEventListener.OnVerifiyCertificate(commonName, subject, issuer, fingerprint,
-			                                            hostMismatch);
+			return uiEventListener.OnVerifiyCertificateEx(host, port, commonName, subject, issuer,
+			                                              fingerprint, flags);
 		return 0;
 	}
 
-	private static int OnVerifyChangedCertificate(long inst, String commonName, String subject,
-	                                              String issuer, String fingerprint,
-	                                              String oldSubject, String oldIssuer,
-	                                              String oldFingerprint)
+	private static int OnVerifyChangedCertificateEx(long inst, String host, long port,
+	                                                String commonName, String subject,
+	                                                String issuer, String fingerprint,
+	                                                String oldSubject, String oldIssuer,
+	                                                String oldFingerprint, long flags)
 	{
 		SessionState s = GlobalApp.getSession(inst);
 		if (s == null)
 			return 0;
 		UIEventListener uiEventListener = s.getUIEventListener();
 		if (uiEventListener != null)
-			return uiEventListener.OnVerifyChangedCertificate(
-			    commonName, subject, issuer, fingerprint, oldSubject, oldIssuer, oldFingerprint);
+			return uiEventListener.OnVerifyChangedCertificateEx(host, port, commonName, subject,
+			                                                    issuer, fingerprint, oldSubject,
+			                                                    oldIssuer, oldFingerprint, flags);
 		return 0;
 	}
 
@@ -603,12 +650,12 @@ public class LibFreeRDP
 		boolean OnGatewayAuthenticate(StringBuilder username, StringBuilder domain,
 		                              StringBuilder password);
 
-		int OnVerifiyCertificate(String commonName, String subject, String issuer,
-		                         String fingerprint, boolean mismatch);
+		int OnVerifiyCertificateEx(String host, long port, String commonName, String subject, String issuer,
+		                         String fingerprint, long flags);
 
-		int OnVerifyChangedCertificate(String commonName, String subject, String issuer,
+		int OnVerifyChangedCertificateEx(String host, long port, String commonName, String subject, String issuer,
 		                               String fingerprint, String oldSubject, String oldIssuer,
-		                               String oldFingerprint);
+		                               String oldFingerprint, long flags);
 
 		void OnGraphicsUpdate(int x, int y, int width, int height);
 

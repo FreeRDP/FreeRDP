@@ -16,7 +16,8 @@ int TestPipeCreatePipe(int argc, char* argv[])
 	HANDLE hWritePipe;
 	BYTE readBuffer[BUFFER_SIZE];
 	BYTE writeBuffer[BUFFER_SIZE];
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	status = CreatePipe(&hReadPipe, &hWritePipe, NULL, BUFFER_SIZE * 2);
 
 	if (!status)

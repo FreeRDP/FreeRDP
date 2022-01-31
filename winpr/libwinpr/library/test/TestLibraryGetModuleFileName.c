@@ -10,7 +10,8 @@ int TestLibraryGetModuleFileName(int argc, char* argv[])
 {
 	char ModuleFileName[4096];
 	DWORD len;
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	/* Test insufficient buffer size behaviour */
 	SetLastError(ERROR_SUCCESS);
 	len = GetModuleFileNameA(NULL, ModuleFileName, 2);

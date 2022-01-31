@@ -137,7 +137,7 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
 			return NULL;
 
 		size = (int)*pSize;
-		crlfStr = ConvertLineEndingToCRLF((char*)data, &size);
+		crlfStr = ConvertLineEndingToCRLF((const char*)data, &size);
 
 		if (!crlfStr)
 			return NULL;
@@ -170,13 +170,18 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 	{
 		size_t wsize = _wcsnlen(data, (*pSize) / 2);
 		size =
-		    ConvertFromUnicode(CP_UTF8, 0, (LPWSTR)data, wsize, (CHAR**)&pDstData, 0, NULL, NULL);
+		    ConvertFromUnicode(CP_UTF8, 0, (LPCWSTR)data, wsize, (CHAR**)&pDstData, 0, NULL, NULL);
 
 		if (!pDstData)
 			return NULL;
 
 		size = ConvertLineEndingToLF(pDstData, size);
-		*pSize = size;
+		if (size < 0)
+		{
+			free(pDstData);
+			return NULL;
+		}
+		*pSize = (UINT32)size;
 		return pDstData;
 	}
 	else if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) ||
@@ -184,6 +189,7 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 	         (formatId == ClipboardGetFormatId(clipboard, "TEXT")) ||
 	         (formatId == ClipboardGetFormatId(clipboard, "STRING")))
 	{
+		int rc;
 		size = (INT64)*pSize;
 		pDstData = (char*)malloc(size);
 
@@ -191,8 +197,13 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 			return NULL;
 
 		CopyMemory(pDstData, data, size);
-		size = ConvertLineEndingToLF((char*)pDstData, size);
-		*pSize = size;
+		rc = ConvertLineEndingToLF((char*)pDstData, (int)size);
+		if (rc < 0)
+		{
+			free(pDstData);
+			return NULL;
+		}
+		*pSize = (UINT32)rc;
 		return pDstData;
 	}
 
@@ -218,12 +229,12 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 	}
 	else if (formatId == ClipboardGetFormatId(clipboard, "image/bmp"))
 	{
-		BITMAPFILEHEADER* pFileHeader;
+		const BITMAPFILEHEADER* pFileHeader;
 
 		if (SrcSize < (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER)))
 			return NULL;
 
-		pFileHeader = (BITMAPFILEHEADER*)data;
+		pFileHeader = (const BITMAPFILEHEADER*)data;
 
 		if (pFileHeader->bfType != 0x4D42)
 			return NULL;
@@ -234,7 +245,7 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 		if (!pDstData)
 			return NULL;
 
-		data = (void*)&((BYTE*)data)[sizeof(BITMAPFILEHEADER)];
+		data = (const void*)&((const BYTE*)data)[sizeof(BITMAPFILEHEADER)];
 		CopyMemory(pDstData, data, DstSize);
 		*pSize = DstSize;
 		return pDstData;
@@ -279,13 +290,13 @@ static void* clipboard_synthesize_image_bmp(wClipboard* clipboard, UINT32 format
 	if (formatId == CF_DIB)
 	{
 		BYTE* pDst;
-		BITMAPINFOHEADER* pInfoHeader;
+		const BITMAPINFOHEADER* pInfoHeader;
 		BITMAPFILEHEADER* pFileHeader;
 
 		if (SrcSize < sizeof(BITMAPINFOHEADER))
 			return NULL;
 
-		pInfoHeader = (BITMAPINFOHEADER*)data;
+		pInfoHeader = (const BITMAPINFOHEADER*)data;
 
 		if ((pInfoHeader->biBitCount < 1) || (pInfoHeader->biBitCount > 32))
 			return NULL;
@@ -332,21 +343,24 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		char* body;
 		BYTE bom[2];
 		char num[20];
-		WCHAR* wstr;
+		const WCHAR* wstr;
 
 		if (SrcSize > 2)
 		{
+			if (SrcSize > INT_MAX)
+				return NULL;
 			CopyMemory(bom, data, 2);
 
 			if ((bom[0] == 0xFE) && (bom[1] == 0xFF))
 			{
-				ByteSwapUnicode((WCHAR*)data, SrcSize / 2);
+				ByteSwapUnicode((WCHAR*)data, (int)(SrcSize / 2));
 			}
 
 			if ((bom[0] == 0xFF) && (bom[1] == 0xFE))
 			{
-				wstr = (WCHAR*)&((BYTE*)data)[2];
-				ConvertFromUnicode(CP_UTF8, 0, wstr, (SrcSize - 2) / 2, &pSrcData, 0, NULL, NULL);
+				wstr = (const WCHAR*)&((BYTE*)data)[2];
+				ConvertFromUnicode(CP_UTF8, 0, wstr, (int)(SrcSize - 2) / 2, &pSrcData, 0, NULL,
+				                   NULL);
 			}
 		}
 
@@ -420,16 +434,16 @@ static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 format
 {
 	long beg;
 	long end;
-	char* str;
+	const char* str;
 	char* begStr;
 	char* endStr;
-	INT64 SrcSize;
 	long DstSize = -1;
 	BYTE* pDstData = NULL;
 
 	if (formatId == ClipboardGetFormatId(clipboard, "HTML Format"))
 	{
-		str = (char*)data;
+		INT64 SrcSize;
+		str = (const char*)data;
 		SrcSize = (INT64)*pSize;
 		begStr = strstr(str, "StartHTML:");
 		endStr = strstr(str, "EndHTML:");
@@ -450,7 +464,7 @@ static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 format
 			return NULL;
 
 		DstSize = end - beg;
-		pDstData = (BYTE*)malloc(SrcSize - beg + 1);
+		pDstData = (BYTE*)malloc((size_t)(SrcSize - beg + 1));
 
 		if (!pDstData)
 			return NULL;

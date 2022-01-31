@@ -85,7 +85,7 @@ static BOOL BufferPool_Unlock(wBufferPool* pool)
  * Methods
  */
 
-static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
+static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, size_t index, int count)
 {
 	if (count > 0)
 	{
@@ -119,7 +119,7 @@ static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
 	return TRUE;
 }
 
-static BOOL BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
+static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count)
 {
 	if (count > 0)
 	{
@@ -225,7 +225,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 	SSIZE_T index;
 	SSIZE_T maxSize;
 	SSIZE_T maxIndex;
-	SSIZE_T foundIndex;
+	SSIZE_T foundIndex = -1;
 	BOOL found = FALSE;
 	void* buffer = NULL;
 
@@ -323,7 +323,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 
 		if (pool->uSize + 1 > pool->uCapacity)
 		{
-			int newUCapacity = pool->uCapacity * 2;
+			size_t newUCapacity = pool->uCapacity * 2;
 			wBufferPoolItem* newUArray =
 			    (wBufferPoolItem*)realloc(pool->uArray, sizeof(wBufferPoolItem) * newUCapacity);
 			if (!newUArray)
@@ -359,8 +359,8 @@ out_error_no_free:
 BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 {
 	BOOL rc = FALSE;
-	int size = 0;
-	int index = 0;
+	SSIZE_T size = 0;
+	SSIZE_T index = 0;
 	BOOL found = FALSE;
 
 	BufferPool_Lock(pool);
@@ -371,7 +371,7 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 
 		if ((pool->size + 1) >= pool->capacity)
 		{
-			int newCapacity = pool->capacity * 2;
+			SSIZE_T newCapacity = pool->capacity * 2;
 			void** newArray = (void**)realloc(pool->array, sizeof(void*) * newCapacity);
 			if (!newArray)
 				goto out_error;
@@ -406,7 +406,7 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 		{
 			if ((pool->aSize + 1) >= pool->aCapacity)
 			{
-				int newCapacity = pool->aCapacity * 2;
+				SSIZE_T newCapacity = pool->aCapacity * 2;
 				wBufferPoolItem* newArray =
 				    (wBufferPoolItem*)realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
 				if (!newArray)

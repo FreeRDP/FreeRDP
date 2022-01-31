@@ -33,7 +33,7 @@
  * Mac OS X
  */
 
-DWORD KEYCODE_TO_VKCODE_APPLE[256] = {
+static DWORD KEYCODE_TO_VKCODE_APPLE[256] = {
 	0,                    /* 0 */
 	0,                    /* 1 */
 	0,                    /* 2 */
@@ -301,7 +301,7 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] = {
 
 /* TODO: Finish Japanese Keyboard */
 
-DWORD KEYCODE_TO_VKCODE_EVDEV[256] = {
+static DWORD KEYCODE_TO_VKCODE_EVDEV[256] = {
 	0,             /* 0 */
 	0,             /* 1 */
 	0,             /* 2 */

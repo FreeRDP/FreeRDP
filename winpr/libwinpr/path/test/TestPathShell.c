@@ -18,6 +18,9 @@ int TestPathShell(int argc, char* argv[])
 	int rc = 0;
 	size_t x;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	for (x = 0; x < sizeof(paths) / sizeof(paths[0]); x++)
 	{
 		const int id = paths[x];

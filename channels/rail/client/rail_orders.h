@@ -29,7 +29,7 @@
 
 #define TAG CHANNELS_TAG("rail.client")
 
-UINT rail_order_recv(railPlugin* rail, wStream* s);
+UINT rail_order_recv(LPVOID userdata, wStream* s);
 UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType);
 
 UINT rail_send_handshake_order(railPlugin* rail, const RAIL_HANDSHAKE_ORDER* handshake);

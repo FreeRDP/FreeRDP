@@ -15,6 +15,9 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 	DWORD bytesReturned;
 	PWTS_SESSION_INFOA pSessionInfo;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 #ifndef _WIN32
 	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0))
 	{

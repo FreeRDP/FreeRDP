@@ -62,7 +62,7 @@ fail:
 	return rc;
 }
 
-int test_gdi_FillRect(void)
+static int test_gdi_FillRect(void)
 {
 	int rc = -1;
 	HGDI_DC hdc = NULL;

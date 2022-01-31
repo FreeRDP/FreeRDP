@@ -97,7 +97,7 @@ PTP_WORK winpr_CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLB
 #ifndef _WIN32
 
 		if (pcbe->CleanupGroup)
-			ArrayList_Add(pcbe->CleanupGroup->groups, work);
+			ArrayList_Append(pcbe->CleanupGroup->groups, work);
 
 #endif
 	}

@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
+#include <winpr/file.h>
 
 #include <winpr/ini.h>
 
@@ -117,9 +118,9 @@ static BOOL IniFile_Open_File(wIniFile* ini, const char* filename)
 		return FALSE;
 
 	if (ini->readOnly)
-		ini->fp = fopen(filename, "rb");
+		ini->fp = winpr_fopen(filename, "rb");
 	else
-		ini->fp = fopen(filename, "w+b");
+		ini->fp = winpr_fopen(filename, "w+b");
 
 	if (!ini->fp)
 		return FALSE;

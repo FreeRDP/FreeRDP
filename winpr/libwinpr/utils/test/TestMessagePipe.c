@@ -67,6 +67,9 @@ int TestMessagePipe(int argc, char* argv[])
 	wMessagePipe* EchoPipe = NULL;
 	int ret = 1;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (!(EchoPipe = MessagePipe_New()))
 	{
 		printf("failed to create message pipe\n");

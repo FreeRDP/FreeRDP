@@ -11,7 +11,7 @@ static SYNCHRONIZATION_BARRIER gBarrier;
 static HANDLE gStartEvent = NULL;
 static LONG gErrorCount = 0;
 
-#define MAX_SLEEP_MS 32
+#define MAX_SLEEP_MS 22
 
 struct test_params
 {
@@ -44,7 +44,7 @@ static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 	for (i = 0; i < p->loops && gErrorCount == 0; i++)
 	{
 		/* simulate different execution times before the barrier */
-		Sleep(rand() % MAX_SLEEP_MS);
+		Sleep(1 + abs((rand() % MAX_SLEEP_MS)));
 		status = EnterSynchronizationBarrier(&gBarrier, p->flags);
 
 		// printf("Thread #%03u status: %s\n", tnum, status ? "TRUE" : "FALSE");
@@ -181,7 +181,11 @@ int TestSynchBarrier(int argc, char* argv[])
 	SYSTEM_INFO sysinfo;
 	DWORD dwMaxThreads;
 	DWORD dwMinThreads;
-	DWORD dwNumLoops = 200;
+	DWORD dwNumLoops = 10;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	GetNativeSystemInfo(&sysinfo);
 	printf("%s: Number of processors: %" PRIu32 "\n", __FUNCTION__, sysinfo.dwNumberOfProcessors);
 	dwMinThreads = sysinfo.dwNumberOfProcessors;
@@ -193,7 +197,8 @@ int TestSynchBarrier(int argc, char* argv[])
 	/* Test invalid parameters */
 	if (InitializeSynchronizationBarrier(&gBarrier, 0, -1))
 	{
-		printf(
+		fprintf(
+		    stderr,
 		    "%s: InitializeSynchronizationBarrier unecpectedly succeeded with lTotalThreads = 0\n",
 		    __FUNCTION__);
 		return -1;
@@ -201,7 +206,8 @@ int TestSynchBarrier(int argc, char* argv[])
 
 	if (InitializeSynchronizationBarrier(&gBarrier, -1, -1))
 	{
-		printf(
+		fprintf(
+		    stderr,
 		    "%s: InitializeSynchronizationBarrier unecpectedly succeeded with lTotalThreads = -1\n",
 		    __FUNCTION__);
 		return -1;
@@ -209,23 +215,42 @@ int TestSynchBarrier(int argc, char* argv[])
 
 	if (InitializeSynchronizationBarrier(&gBarrier, 1, -2))
 	{
-		printf("%s: InitializeSynchronizationBarrier unecpectedly succeeded with lSpinCount = -2\n",
-		       __FUNCTION__);
+		fprintf(
+		    stderr,
+		    "%s: InitializeSynchronizationBarrier unecpectedly succeeded with lSpinCount = -2\n",
+		    __FUNCTION__);
 		return -1;
 	}
 
 	/* Functional tests */
 
 	if (!TestSynchBarrierWithFlags(0, dwMaxThreads, dwNumLoops))
+	{
+		fprintf(stderr,
+		        "%s: TestSynchBarrierWithFlags(0) unecpectedly succeeded with lTotalThreads = -1\n",
+		        __FUNCTION__);
 		return -1;
+	}
 
 	if (!TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY, dwMinThreads,
 	                               dwNumLoops))
+	{
+		fprintf(stderr,
+		        "%s: TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY) "
+		        "unecpectedly succeeded with lTotalThreads = -1\n",
+		        __FUNCTION__);
 		return -1;
+	}
 
 	if (!TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY, dwMaxThreads,
 	                               dwNumLoops))
+	{
+		fprintf(stderr,
+		        "%s: TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY) "
+		        "unecpectedly succeeded with lTotalThreads = -1\n",
+		        __FUNCTION__);
 		return -1;
+	}
 
 	printf("%s: Test successfully completed\n", __FUNCTION__);
 	return 0;

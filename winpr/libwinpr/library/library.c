@@ -129,7 +129,8 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 
 	if (!library)
 	{
-		WLog_ERR(TAG, "%s failed with %s", __FUNCTION__, dlerror());
+		const char* err = dlerror();
+		WLog_ERR(TAG, "%s failed with %s", __FUNCTION__, err);
 		return NULL;
 	}
 
@@ -266,7 +267,7 @@ DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
 #if defined(__linux__)
-	int status;
+	SSIZE_T status;
 	size_t length;
 	char path[64];
 
@@ -289,7 +290,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 		{
 			CopyMemory(lpFilename, buffer, length);
 			lpFilename[length] = '\0';
-			return length;
+			return (DWORD)length;
 		}
 
 		CopyMemory(lpFilename, buffer, nSize - 1);
@@ -343,3 +344,33 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 }
 
 #endif
+
+HMODULE LoadLibraryX(LPCSTR lpLibFileName)
+{
+#if defined(_WIN32)
+	HMODULE hm = NULL;
+	WCHAR* wstr = NULL;
+	int rc = ConvertToUnicode(CP_UTF8, 0, lpLibFileName, -1, &wstr, 0);
+	if (rc > 0)
+		hm = LoadLibraryW(wstr);
+	free(wstr);
+	return hm;
+#else
+	return LoadLibraryA(lpLibFileName);
+#endif
+}
+
+HMODULE LoadLibraryExX(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
+{
+#if defined(_WIN32)
+	HMODULE hm = NULL;
+	WCHAR* wstr = NULL;
+	int rc = ConvertToUnicode(CP_UTF8, 0, lpLibFileName, -1, &wstr, 0);
+	if (rc > 0)
+		hm = LoadLibraryExW(wstr, hFile, dwFlags);
+	free(wstr);
+	return hm;
+#else
+	return LoadLibraryExA(lpLibFileName, hFile, dwFlags);
+#endif
+}

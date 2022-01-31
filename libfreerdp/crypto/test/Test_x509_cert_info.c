@@ -1,3 +1,4 @@
+#include <winpr/file.h>
 #include <freerdp/crypto/crypto.h>
 
 typedef char* (*get_field_pr)(X509*);
@@ -27,11 +28,7 @@ static char* certificate_path(void)
 	where the tests are run. (ie. no chdir occurs between compilation and test running, or __FILE__
 	is an absolute path).
 	*/
-#if defined(_WIN32)
-	static const char dirsep = '\\';
-#else
 	static const char dirsep = '/';
-#endif
 	static const char filename[] = "Test_x509_cert_info.pem";
 #ifdef TEST_SOURCE_DIR
 	const char* file = TEST_SOURCE_DIR;
@@ -88,10 +85,10 @@ static const certificate_test_t certificate_tests[] = {
 };
 
 static int TestCertificateFile(const char* certificate_path,
-                               const certificate_test_t* certificate_tests, int count)
+                               const certificate_test_t* ccertificate_tests, int count)
 {
 	X509* certificate;
-	FILE* certificate_file = fopen(certificate_path, "r");
+	FILE* certificate_file = winpr_fopen(certificate_path, "r");
 	int success = 0;
 	int i;
 
@@ -115,23 +112,24 @@ static int TestCertificateFile(const char* certificate_path,
 	{
 		char* result;
 
-		if (certificate_tests[i].status == DISABLED)
+		if (ccertificate_tests[i].status == DISABLED)
 		{
 			continue;
 		}
 
-		result = (certificate_tests[i].get_field ? certificate_tests[i].get_field(certificate) : 0);
+		result =
+		    (ccertificate_tests[i].get_field ? ccertificate_tests[i].get_field(certificate) : 0);
 
 		if (result)
 		{
 			printf("%s: crypto got %-40s -> \"%s\"\n", __FUNCTION__,
-			       certificate_tests[i].field_description, result);
+			       ccertificate_tests[i].field_description, result);
 
-			if (0 != strcmp(result, certificate_tests[i].expected_result))
+			if (0 != strcmp(result, ccertificate_tests[i].expected_result))
 			{
 				printf("%s: failure: for %s, actual: \"%s\", expected \"%s\"\n", __FUNCTION__,
-				       certificate_tests[i].field_description, result,
-				       certificate_tests[i].expected_result);
+				       ccertificate_tests[i].field_description, result,
+				       ccertificate_tests[i].expected_result);
 				success = -1;
 			}
 
@@ -140,7 +138,7 @@ static int TestCertificateFile(const char* certificate_path,
 		else
 		{
 			printf("%s: failure: cannot get %s\n", __FUNCTION__,
-			       certificate_tests[i].field_description);
+			       ccertificate_tests[i].field_description);
 		}
 	}
 

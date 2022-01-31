@@ -12,7 +12,8 @@ int TestInterlockedAccess(int argc, char* argv[])
 	LONG* Destination;
 	LONGLONG oldValue64;
 	LONGLONG* Destination64;
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	/* InterlockedIncrement */
 
 	Addend = _aligned_malloc(sizeof(LONG), sizeof(LONG));

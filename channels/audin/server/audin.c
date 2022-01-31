@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -74,6 +75,8 @@ static UINT audin_server_select_format(audin_server_context* context, size_t cli
 {
 	audin_server* audin = (audin_server*)context;
 
+	WINPR_ASSERT(audin);
+
 	if (client_format_index >= context->num_client_formats)
 	{
 		WLog_ERR(TAG, "error in protocol: client_format_index >= context->num_client_formats!");
@@ -83,7 +86,7 @@ static UINT audin_server_select_format(audin_server_context* context, size_t cli
 	context->selected_client_format = (SSIZE_T)client_format_index;
 
 	if (!freerdp_dsp_context_reset(audin->dsp_context,
-	                               &audin->context.client_formats[client_format_index]))
+	                               &audin->context.client_formats[client_format_index], 0u))
 	{
 		WLog_ERR(TAG, "Failed to reset dsp context format!");
 		return ERROR_INTERNAL_ERROR;
@@ -105,11 +108,14 @@ static UINT audin_server_select_format(audin_server_context* context, size_t cli
 static UINT audin_server_send_version(audin_server* audin, wStream* s)
 {
 	ULONG written;
+	WINPR_ASSERT(audin);
+
 	Stream_Write_UINT8(s, MSG_SNDIN_VERSION);
 	Stream_Write_UINT32(s, 1); /* Version (4 bytes) */
 
+	WINPR_ASSERT(Stream_GetPosition(s) <= ULONG_MAX);
 	if (!WTSVirtualChannelWrite(audin->audin_channel, (PCHAR)Stream_Buffer(s),
-	                            Stream_GetPosition(s), &written))
+	                            (ULONG)Stream_GetPosition(s), &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		return ERROR_INTERNAL_ERROR;
@@ -127,6 +133,7 @@ static UINT audin_server_recv_version(audin_server* audin, wStream* s, UINT32 le
 {
 	UINT32 Version;
 
+	WINPR_ASSERT(audin);
 	if (length < 4)
 	{
 		WLog_ERR(TAG, "error parsing version info: expected at least 4 bytes, got %" PRIu32 "",
@@ -154,8 +161,11 @@ static UINT audin_server_send_formats(audin_server* audin, wStream* s)
 {
 	size_t i;
 	ULONG written;
+	WINPR_ASSERT(audin);
+
 	Stream_SetPosition(s, 0);
 	Stream_Write_UINT8(s, MSG_SNDIN_FORMATS);
+	WINPR_ASSERT(audin->context.num_server_formats <= UINT32_MAX);
 	Stream_Write_UINT32(s, audin->context.num_server_formats); /* NumFormats (4 bytes) */
 	Stream_Write_UINT32(s, 0); /* cbSizeFormatsPacket (4 bytes), client-to-server only */
 
@@ -173,8 +183,9 @@ static UINT audin_server_send_formats(audin_server* audin, wStream* s)
 		}
 	}
 
+	WINPR_ASSERT(Stream_GetPosition(s) <= ULONG_MAX);
 	return WTSVirtualChannelWrite(audin->audin_channel, (PCHAR)Stream_Buffer(s),
-	                              Stream_GetPosition(s), &written)
+	                              (ULONG)Stream_GetPosition(s), &written)
 	           ? CHANNEL_RC_OK
 	           : ERROR_INTERNAL_ERROR;
 }
@@ -189,6 +200,7 @@ static UINT audin_server_recv_formats(audin_server* audin, wStream* s, UINT32 le
 	size_t i;
 	UINT success = CHANNEL_RC_OK;
 
+	WINPR_ASSERT(audin);
 	if (length < 8)
 	{
 		WLog_ERR(TAG, "error parsing rec formats: expected at least 8 bytes, got %" PRIu32 "",
@@ -244,6 +256,7 @@ static UINT audin_server_send_open(audin_server* audin, wStream* s)
 {
 	ULONG written;
 
+	WINPR_ASSERT(audin);
 	if (audin->context.selected_client_format < 0)
 	{
 		WLog_ERR(TAG, "audin->context.selected_client_format = %d",
@@ -255,7 +268,10 @@ static UINT audin_server_send_open(audin_server* audin, wStream* s)
 	Stream_SetPosition(s, 0);
 	Stream_Write_UINT8(s, MSG_SNDIN_OPEN);
 	Stream_Write_UINT32(s, audin->context.frames_per_packet);      /* FramesPerPacket (4 bytes) */
-	Stream_Write_UINT32(s, audin->context.selected_client_format); /* initialFormat (4 bytes) */
+	WINPR_ASSERT(audin->context.selected_client_format >= 0);
+	WINPR_ASSERT(audin->context.selected_client_format <= UINT32_MAX);
+	Stream_Write_UINT32(
+	    s, (UINT32)audin->context.selected_client_format); /* initialFormat (4 bytes) */
 	/*
 	 * [MS-RDPEAI] 3.2.5.1.6
 	 * The second format specify the format that SHOULD be used to capture data from
@@ -268,8 +284,9 @@ static UINT audin_server_send_open(audin_server* audin, wStream* s)
 	Stream_Write_UINT16(s, 4);             /* nBlockAlign */
 	Stream_Write_UINT16(s, 16);            /* wBitsPerSample */
 	Stream_Write_UINT16(s, 0);             /* cbSize */
+	WINPR_ASSERT(Stream_GetPosition(s) <= ULONG_MAX);
 	return WTSVirtualChannelWrite(audin->audin_channel, (PCHAR)Stream_Buffer(s),
-	                              Stream_GetPosition(s), &written)
+	                              (ULONG)Stream_GetPosition(s), &written)
 	           ? CHANNEL_RC_OK
 	           : ERROR_INTERNAL_ERROR;
 }
@@ -284,6 +301,7 @@ static UINT audin_server_recv_open_reply(audin_server* audin, wStream* s, UINT32
 	UINT32 Result;
 	UINT success = CHANNEL_RC_OK;
 
+	WINPR_ASSERT(audin);
 	if (length < 4)
 	{
 		WLog_ERR(TAG, "error parsing version info: expected at least 4 bytes, got %" PRIu32 "",
@@ -308,12 +326,13 @@ static UINT audin_server_recv_open_reply(audin_server* audin, wStream* s, UINT32
 static UINT audin_server_recv_data(audin_server* audin, wStream* s, UINT32 length)
 {
 	AUDIO_FORMAT* format;
-	int sbytes_per_sample;
-	int sbytes_per_frame;
-	int frames;
+	size_t sbytes_per_sample;
+	size_t sbytes_per_frame;
+	size_t frames;
 	wStream* out;
 	UINT success = ERROR_INTERNAL_ERROR;
 
+	WINPR_ASSERT(audin);
 	if (audin->context.selected_client_format < 0)
 	{
 		WLog_ERR(TAG, "audin->context.selected_client_format = %d",
@@ -335,7 +354,7 @@ static UINT audin_server_recv_data(audin_server* audin, wStream* s, UINT32 lengt
 		dformat.wBitsPerSample = 16;
 		Stream_SealLength(out);
 		Stream_SetPosition(out, 0);
-		sbytes_per_sample = format->wBitsPerSample / 8;
+		sbytes_per_sample = format->wBitsPerSample / 8UL;
 		sbytes_per_frame = format->nChannels * sbytes_per_sample;
 		frames = Stream_Length(out) / sbytes_per_frame;
 		IFCALLRET(audin->context.ReceiveSamples, success, &audin->context, &dformat, out, frames);
@@ -366,6 +385,8 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
+
+	WINPR_ASSERT(audin);
 
 	if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualEventHandle, &buffer,
 	                           &BytesReturned) == TRUE)
@@ -460,8 +481,9 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 			break;
 
+		WINPR_ASSERT(Stream_Capacity(s) <= ULONG_MAX);
 		if (WTSVirtualChannelRead(audin->audin_channel, 0, (PCHAR)Stream_Buffer(s),
-		                          Stream_Capacity(s), &BytesReturned) == FALSE)
+		                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 			error = ERROR_INTERNAL_ERROR;
@@ -524,7 +546,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 				{
 					WLog_ERR(TAG, "audin_server_recv_data failed with error %" PRIu32 "!", error);
 					goto out_capacity;
-				};
+				}
 
 				break;
 
@@ -555,6 +577,7 @@ static BOOL audin_server_open(audin_server_context* context)
 {
 	audin_server* audin = (audin_server*)context;
 
+	WINPR_ASSERT(audin);
 	if (!audin->thread)
 	{
 		PULONG pSessionId = NULL;
@@ -603,15 +626,14 @@ static BOOL audin_server_is_open(audin_server_context* context)
 {
 	audin_server* audin = (audin_server*)context;
 
-	if (!audin)
-		return FALSE;
-
+	WINPR_ASSERT(audin);
 	return audin->thread != NULL;
 }
 
 static BOOL audin_server_close(audin_server_context* context)
 {
 	audin_server* audin = (audin_server*)context;
+	WINPR_ASSERT(audin);
 
 	if (audin->thread)
 	{

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <winpr/crt.h>
 #include <winpr/error.h>
+#include <winpr/print.h>
 #include <winpr/windows.h>
 
 /* Letters */
@@ -94,32 +95,20 @@ static BYTE ru_Administrator_upper[] = "\xd0\x90\xd0\x94\xd0\x9c\xd0\x98\xd0\x9d
 
 static void string_hexdump(const BYTE* data, size_t length)
 {
-	const BYTE* p = data;
-	size_t i, line, offset = 0;
+	size_t offset = 0;
+
+	char* str = winpr_BinToHexString(data, length, TRUE);
+	if (!str)
+		return;
 
 	while (offset < length)
 	{
-		printf("%04" PRIxz " ", offset);
-
-		line = length - offset;
-
-		if (line > 16)
-			line = 16;
-
-		for (i = 0; i < line; i++)
-			printf("%02" PRIx8 " ", p[i]);
-
-		for (; i < 16; i++)
-			printf("   ");
-
-		for (i = 0; i < line; i++)
-			printf("%c", (p[i] >= 0x20 && p[i] < 0x7F) ? (char)p[i] : '.');
-
-		printf("\n");
-
-		offset += line;
-		p += line;
+		const size_t diff = (length - offset) * 3;
+		printf("%04" PRIxz " %.*s\n", offset, diff, &str[offset]);
+		offset += 16;
 	}
+
+	free(str);
 }
 
 static int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr,
@@ -326,9 +315,9 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	 */
 
 	printf("Input UTF16 String:\n");
-	string_hexdump((BYTE*)src1, 19 * sizeof(WCHAR));
+	string_hexdump((const BYTE*)src1, 19 * sizeof(WCHAR));
 
-	i = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)src1, 16, &dst, 0, NULL, NULL);
+	i = ConvertFromUnicode(CP_UTF8, 0, (const WCHAR*)src1, 16, &dst, 0, NULL, NULL);
 	if (i != 16)
 	{
 		fprintf(stderr, "ConvertFromUnicode failure A1: unexpectedly returned %d instead of 16\n",
@@ -359,9 +348,9 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	/* Test null-terminated string */
 
 	printf("Input UTF16 String:\n");
-	string_hexdump((BYTE*)src2, (_wcslen((WCHAR*)src2) + 1) * sizeof(WCHAR));
+	string_hexdump((const BYTE*)src2, (_wcslen((const WCHAR*)src2) + 1) * sizeof(WCHAR));
 
-	i = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)src2, -1, &dst, 0, NULL, NULL);
+	i = ConvertFromUnicode(CP_UTF8, 0, (const WCHAR*)src2, -1, &dst, 0, NULL, NULL);
 	if (i != 17)
 	{
 		fprintf(stderr, "ConvertFromUnicode failure B1: unexpectedly returned %d instead of 17\n",
@@ -410,6 +399,31 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	WCHAR* dst = NULL;
 	int ii;
 	size_t i;
+
+	/* Test static string buffers of differing sizes */
+	{
+		char name[] = "someteststring";
+		const BYTE cmp[] = { 's', 0, 'o', 0, 'm', 0, 'e', 0, 't', 0, 'e', 0, 's', 0, 't', 0,
+				     's', 0, 't', 0, 'r', 0, 'i', 0, 'n', 0, 'g', 0, 0, 0 };
+		WCHAR xname[128] = { 0 };
+		LPWSTR aname = NULL;
+		LPWSTR wname = &xname[0];
+		const size_t len = strnlen(name, ARRAYSIZE(name) - 1);
+		ii = ConvertToUnicode(CP_UTF8, 0, name, len, &wname, ARRAYSIZE(xname));
+		if (ii != (SSIZE_T)len)
+			goto fail;
+
+		if (memcmp(wname, cmp, sizeof(cmp)) != 0)
+			goto fail;
+
+		ii = ConvertToUnicode(CP_UTF8, 0, name, len, &aname, 0);
+		if (ii != (SSIZE_T)len)
+			goto fail;
+		ii = memcmp(aname, cmp, sizeof(cmp));
+		free(aname);
+		if (ii != 0)
+			goto fail;
+	}
 
 	/* Test unterminated unicode string:
 	 * ConvertToUnicode must always null-terminate, even if the src string isn't
@@ -469,7 +483,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 		fprintf(stderr, "ConvertToUnicode failure B3: dst length is %" PRIuz " instead of 16\n", i);
 		goto fail;
 	}
-	if (_wcscmp(dst, (WCHAR*)cmp0))
+	if (_wcscmp(dst, (const WCHAR*)cmp0))
 	{
 		fprintf(stderr, "ConvertToUnicode failure B: data mismatch\n");
 		goto fail;

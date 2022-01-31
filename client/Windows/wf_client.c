@@ -26,21 +26,30 @@
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
-#include <winpr/credui.h>
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
-#include <assert.h>
+#include <winpr/assert.h>
 #include <sys/types.h>
+#include <io.h>
+
+#ifdef WITH_PROGRESS_BAR
+#include <shobjidl.h>
+#endif
+
+#ifdef WITH_WINDOWS_CERT_STORE
+#include <wincrypt.h>
+#endif
 
 #include <freerdp/log.h>
 #include <freerdp/event.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 
+#include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/region.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
@@ -54,32 +63,22 @@
 
 #include "wf_client.h"
 
-#include "resource.h"
+#include "resource/resource.h"
 
 #define TAG CLIENT_TAG("windows")
 
-static BOOL wf_create_console(void)
+static BOOL wf_has_console(void)
 {
-#if defined(WITH_WIN_CONSOLE)
-	if (!AttachConsole(ATTACH_PARENT_PROCESS))
-		return FALSE;
-
-	freopen("CONOUT$", "w", stdout);
-	freopen("CONOUT$", "w", stderr);
-	clearerr(stdout);
-	clearerr(stderr);
-	fflush(stdout);
-	fflush(stderr);
-
-	freopen("CONIN$", "r", stdin);
-	clearerr(stdin);
-
-	WLog_INFO(TAG, "Debug console created.");
-
-	return TRUE;
+#ifdef WITH_WIN_CONSOLE
+	int file = _fileno(stdin);
+	int tty = _isatty(file);
 #else
-	return FALSE;
+	int file = -1;
+	int tty = 0;
 #endif
+
+	WLog_INFO(TAG, "Detected stdin=%d -> %s mode", file, tty ? "console" : "gui");
+	return tty;
 }
 
 static BOOL wf_end_paint(rdpContext* context)
@@ -118,6 +117,18 @@ static BOOL wf_end_paint(rdpContext* context)
 		updateRect.top = extents->top;
 		updateRect.right = extents->right;
 		updateRect.bottom = extents->bottom;
+
+		if (wfc->xScrollVisible)
+		{
+			updateRect.left -= MIN(updateRect.left, wfc->xCurrentScroll);
+			updateRect.right -= MIN(updateRect.right, wfc->xCurrentScroll);
+		}
+		if (wfc->yScrollVisible)
+		{
+			updateRect.top -= MIN(updateRect.top, wfc->yCurrentScroll);
+			updateRect.bottom -= MIN(updateRect.bottom, wfc->yCurrentScroll);
+		}
+
 		InvalidateRect(wfc->hwnd, &updateRect, FALSE);
 
 		if (wfc->rail)
@@ -125,6 +136,23 @@ static BOOL wf_end_paint(rdpContext* context)
 	}
 
 	region16_uninit(&invalidRegion);
+
+	if (!wfc->is_shown)
+	{
+		wfc->is_shown = TRUE;
+
+#ifdef WITH_PROGRESS_BAR
+		if (wfc->taskBarList)
+		{
+			wfc->taskBarList->lpVtbl->SetProgressState(wfc->taskBarList, wfc->hwnd,
+			                                           TBPF_NOPROGRESS);
+		}
+#endif
+
+		ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
+		WLog_INFO(TAG, "Window is shown!");
+		fflush(stdout);
+	}
 	return TRUE;
 }
 
@@ -192,8 +220,8 @@ static BOOL wf_pre_connect(freerdp* instance)
 {
 	UINT32 rc;
 	wfContext* wfc;
-	int desktopWidth;
-	int desktopHeight;
+	UINT32 desktopWidth;
+	UINT32 desktopHeight;
 	rdpContext* context;
 	rdpSettings* settings;
 
@@ -238,27 +266,19 @@ static BOOL wf_pre_connect(freerdp* instance)
 
 	if (desktopWidth != settings->DesktopWidth)
 	{
-		freerdp_set_param_uint32(settings, FreeRDP_DesktopWidth, desktopWidth);
+		freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, desktopWidth);
 	}
 
 	if (desktopHeight != settings->DesktopHeight)
 	{
-		freerdp_set_param_uint32(settings, FreeRDP_DesktopHeight, desktopHeight);
-	}
-
-	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
-	    (settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
-	{
-		WLog_ERR(TAG, "invalid dimensions %lu %lu", settings->DesktopWidth,
-		         settings->DesktopHeight);
-		return FALSE;
+		freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, desktopHeight);
 	}
 
 	if (!freerdp_client_load_addins(context->channels, instance->settings))
 		return -1;
 
 	rc = freerdp_keyboard_init(freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout));
-	freerdp_set_param_uint32(settings, FreeRDP_KeyboardLayout, rc);
+	freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, rc);
 	PubSub_SubscribeChannelConnected(instance->context->pubSub, wf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    wf_OnChannelDisconnectedEventHandler);
@@ -271,6 +291,11 @@ static void wf_add_system_menu(wfContext* wfc)
 	MENUITEMINFO item_info;
 
 	if (wfc->fullscreen && !wfc->fullscreen_toggle)
+	{
+		return;
+	}
+
+	if (wfc->context.settings->DynamicResolutionUpdate)
 	{
 		return;
 	}
@@ -370,8 +395,8 @@ static BOOL wf_post_connect(freerdp* instance)
 
 	if (!wfc->hwnd)
 	{
-		wfc->hwnd = CreateWindowEx((DWORD)NULL, wfc->wndClassName, wfc->window_title, dwStyle, 0, 0,
-		                           0, 0, wfc->hWndParent, NULL, wfc->hInstance, NULL);
+		wfc->hwnd = CreateWindowEx(0, wfc->wndClassName, wfc->window_title, dwStyle, 0, 0, 0, 0,
+		                           wfc->hWndParent, NULL, wfc->hInstance, NULL);
 		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR)wfc);
 	}
 
@@ -384,7 +409,13 @@ static BOOL wf_post_connect(freerdp* instance)
 	e.embed = FALSE;
 	e.handle = (void*)wfc->hwnd;
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
-	ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
+#ifdef WITH_PROGRESS_BAR
+	if (wfc->taskBarList)
+	{
+		ShowWindow(wfc->hwnd, SW_SHOWMINIMIZED);
+		wfc->taskBarList->lpVtbl->SetProgressState(wfc->taskBarList, wfc->hwnd, TBPF_INDETERMINATE);
+	}
+#endif
 	UpdateWindow(wfc->hwnd);
 	instance->update->BeginPaint = wf_begin_paint;
 	instance->update->DesktopResize = wf_desktop_resize;
@@ -440,24 +471,49 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
 
 	if (username && *username)
-		strncpy(UserName, *username, CREDUI_MAX_USERNAME_LENGTH);
-	if (wfc->isConsole)
-		status = CredUICmdLinePromptForCredentialsA(
-		    title, NULL, 0, UserName, CREDUI_MAX_USERNAME_LENGTH + 1, Password,
-		    CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
-	else
-		status = CredUIPromptForCredentialsA(&wfUiInfo, title, NULL, 0, UserName,
-		                                     CREDUI_MAX_USERNAME_LENGTH + 1, Password,
-		                                     CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
-
-	if (status != NO_ERROR)
 	{
-		WLog_ERR(TAG, "CredUIPromptForCredentials unexpected status: 0x%08lX", status);
-		return FALSE;
+		strncpy(UserName, *username, CREDUI_MAX_USERNAME_LENGTH);
+		strncpy(User, UserName, CREDUI_MAX_USERNAME_LENGTH);
 	}
 
-	status = CredUIParseUserNameA(UserName, User, sizeof(User), Domain, sizeof(Domain));
-	// WLog_ERR(TAG, "User: %s Domain: %s Password: %s", User, Domain, Password);
+	if (password && *password)
+	{
+		strncpy(Password, *password, CREDUI_MAX_PASSWORD_LENGTH);
+	}
+
+	if (domain && *domain)
+	{
+		strncpy(Domain, *domain, CREDUI_MAX_DOMAIN_TARGET_LENGTH);
+	}
+
+	if (!(username && *username && password && *password))
+	{
+		if (!wfc->isConsole && wfc->context.settings->CredentialsFromStdin)
+			WLog_ERR(TAG, "Flag for stdin read present but stdin is redirected; using GUI");
+		if (wfc->isConsole && wfc->context.settings->CredentialsFromStdin)
+			status = CredUICmdLinePromptForCredentialsA(
+			    title, NULL, 0, UserName, CREDUI_MAX_USERNAME_LENGTH + 1, Password,
+			    CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
+		else
+			status = CredUIPromptForCredentialsA(&wfUiInfo, title, NULL, 0, UserName,
+			                                     CREDUI_MAX_USERNAME_LENGTH + 1, Password,
+			                                     CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
+
+		if (status != NO_ERROR)
+		{
+			WLog_ERR(TAG, "CredUIPromptForCredentials unexpected status: 0x%08lX", status);
+			return FALSE;
+		}
+
+		status = CredUIParseUserNameA(UserName, User, CREDUI_MAX_USERNAME_LENGTH, Domain,
+		                              CREDUI_MAX_DOMAIN_TARGET_LENGTH);
+		if (status != NO_ERROR)
+		{
+			WLog_ERR(TAG, "Failed to parse UserName: %s into User: %s Domain: %s", UserName, User,
+			         Domain);
+			return FALSE;
+		}
+	}
 	*username = _strdup(User);
 
 	if (!(*username))
@@ -537,6 +593,228 @@ fail:
 	return NULL;
 }
 
+#ifdef WITH_WINDOWS_CERT_STORE
+/* https://stackoverflow.com/questions/1231178/load-an-pem-encoded-x-509-certificate-into-windows-cryptoapi/3803333#3803333
+ */
+/* https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/security/cryptoapi/peertrust/cpp/peertrust.cpp
+ */
+/* https://stackoverflow.com/questions/7340504/whats-the-correct-way-to-verify-an-ssl-certificate-in-win32
+ */
+
+static void wf_report_error(char* wszMessage, DWORD dwErrCode)
+{
+	LPSTR pwszMsgBuf = NULL;
+
+	if (NULL != wszMessage && 0 != *wszMessage)
+	{
+		WLog_ERR(TAG, "%s", wszMessage);
+	}
+
+	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+	               NULL,                                      // Location of message
+	                                                          //  definition ignored
+	               dwErrCode,                                 // Message identifier for
+	                                                          //  the requested message
+	               MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Language identifier for
+	                                                          //  the requested message
+	               (LPSTR)&pwszMsgBuf,                        // Buffer that receives
+	                                                          //  the formatted message
+	               0,                                         // Size of output buffer
+	                                                          //  not needed as allocate
+	                                                          //  buffer flag is set
+	               NULL                                       // Array of insert values
+	);
+
+	if (NULL != pwszMsgBuf)
+	{
+		WLog_ERR(TAG, "Error: 0x%08x (%d) %s", dwErrCode, dwErrCode, pwszMsgBuf);
+		LocalFree(pwszMsgBuf);
+	}
+	else
+	{
+		WLog_ERR(TAG, "Error: 0x%08x (%d)", dwErrCode, dwErrCode);
+	}
+}
+
+static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char* subject,
+                                            const char* issuer, const char* fingerprint)
+{
+	size_t derPubKeyLen;
+	char* derPubKey;
+
+	HRESULT hr = CRYPT_E_NOT_FOUND;
+
+	DWORD dwChainFlags = CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
+	PCCERT_CONTEXT pCert = NULL;
+	HCERTSTORE hStore = NULL;
+	HCERTCHAINENGINE hChainEngine = NULL;
+	PCCERT_CHAIN_CONTEXT pChainContext = NULL;
+
+	CERT_ENHKEY_USAGE EnhkeyUsage = { 0 };
+	CERT_USAGE_MATCH CertUsage = { 0 };
+	CERT_CHAIN_PARA ChainPara = { 0 };
+	CERT_CHAIN_POLICY_PARA ChainPolicy = { 0 };
+	CERT_CHAIN_POLICY_STATUS PolicyStatus = { 0 };
+	CERT_CHAIN_ENGINE_CONFIG EngineConfig = { 0 };
+
+	derPubKeyLen = strlen(fingerprint);
+	derPubKey = calloc(derPubKeyLen, sizeof(char));
+	if (NULL == derPubKey)
+	{
+		WLog_ERR(TAG, "Could not allocate derPubKey");
+		goto CleanUp;
+	}
+
+	/*
+	 * Convert from PEM format to DER format - removes header and footer and decodes from base64
+	 */
+	if (!CryptStringToBinaryA(fingerprint, 0, CRYPT_STRING_BASE64HEADER, derPubKey, &derPubKeyLen,
+	                          NULL, NULL))
+	{
+		WLog_ERR(TAG, "CryptStringToBinary failed. Err: %d", GetLastError());
+		goto CleanUp;
+	}
+
+	//---------------------------------------------------------
+	// Initialize data structures for chain building.
+
+	EnhkeyUsage.cUsageIdentifier = 0;
+	EnhkeyUsage.rgpszUsageIdentifier = NULL;
+
+	CertUsage.dwType = USAGE_MATCH_TYPE_AND;
+	CertUsage.Usage = EnhkeyUsage;
+
+	ChainPara.cbSize = sizeof(ChainPara);
+	ChainPara.RequestedUsage = CertUsage;
+
+	ChainPolicy.cbSize = sizeof(ChainPolicy);
+
+	PolicyStatus.cbSize = sizeof(PolicyStatus);
+
+	EngineConfig.cbSize = sizeof(EngineConfig);
+	EngineConfig.dwUrlRetrievalTimeout = 0;
+
+	pCert = CertCreateCertificateContext(X509_ASN_ENCODING, derPubKey, derPubKeyLen);
+	if (NULL == pCert)
+	{
+		WLog_ERR(TAG, "FAILED: Certificate could not be parsed.");
+		goto CleanUp;
+	}
+
+	dwChainFlags |= CERT_CHAIN_ENABLE_PEER_TRUST;
+
+	// When this flag is set, end entity certificates in the
+	// Trusted People store are trusted without doing any chain building
+	// This optimizes the chain building process.
+
+	//---------------------------------------------------------
+	// Create chain engine.
+
+	if (!CertCreateCertificateChainEngine(&EngineConfig, &hChainEngine))
+	{
+		hr = HRESULT_FROM_WIN32(GetLastError());
+		goto CleanUp;
+	}
+
+	//-------------------------------------------------------------------
+	// Build a chain using CertGetCertificateChain
+
+	if (!CertGetCertificateChain(hChainEngine, // use the default chain engine
+	                             pCert,        // pointer to the end certificate
+	                             NULL,         // use the default time
+	                             NULL,         // search no additional stores
+	                             &ChainPara,   // use AND logic and enhanced key usage
+	                                           //  as indicated in the ChainPara
+	                                           //  data structure
+	                             dwChainFlags,
+	                             NULL,            // currently reserved
+	                             &pChainContext)) // return a pointer to the chain created
+	{
+		hr = HRESULT_FROM_WIN32(GetLastError());
+		goto CleanUp;
+	}
+
+	//---------------------------------------------------------------
+	// Verify that the chain complies with policy
+
+	if (!CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, // use the base policy
+	                                      pChainContext,          // pointer to the chain
+	                                      &ChainPolicy,
+	                                      &PolicyStatus)) // return a pointer to the policy status
+	{
+		hr = HRESULT_FROM_WIN32(GetLastError());
+		goto CleanUp;
+	}
+
+	if (PolicyStatus.dwError != S_OK)
+	{
+		wf_report_error("CertVerifyCertificateChainPolicy: Chain Status", PolicyStatus.dwError);
+		hr = PolicyStatus.dwError;
+		// Instruction: If the PolicyStatus.dwError is CRYPT_E_NO_REVOCATION_CHECK or
+		// CRYPT_E_REVOCATION_OFFLINE, it indicates errors in obtaining
+		//				revocation information. These can be ignored since the retrieval of
+		// revocation information depends on network availability
+
+		if (PolicyStatus.dwError == CRYPT_E_NO_REVOCATION_CHECK ||
+		    PolicyStatus.dwError == CRYPT_E_REVOCATION_OFFLINE)
+		{
+			hr = S_OK;
+		}
+
+		goto CleanUp;
+	}
+
+	WLog_INFO(TAG, "CertVerifyCertificateChainPolicy succeeded for %s (%s) issued by %s", common_name, subject, issuer);
+
+	hr = S_OK;
+CleanUp:
+
+	if (FAILED(hr))
+	{
+		WLog_INFO(TAG, "CertVerifyCertificateChainPolicy failed for %s (%s) issued by %s",
+		          common_name, subject, issuer);
+		wf_report_error(NULL, hr);
+	}
+
+  free(derPubKey);
+
+	if (NULL != pChainContext)
+	{
+		CertFreeCertificateChain(pChainContext);
+	}
+
+	if (NULL != hChainEngine)
+	{
+		CertFreeCertificateChainEngine(hChainEngine);
+	}
+
+	if (NULL != pCert)
+	{
+		CertFreeCertificateContext(pCert);
+	}
+
+	return (DWORD)hr;
+}
+#endif
+
+static DWORD wf_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
+                                          const char* common_name, const char* subject,
+                                          const char* issuer, const char* fingerprint, DWORD flags)
+{
+#ifdef WITH_WINDOWS_CERT_STORE
+	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM && !(flags & VERIFY_CERT_FLAG_MISMATCH))
+	{
+		if (wf_is_x509_certificate_trusted(common_name, subject, issuer, fingerprint) == S_OK)
+		{
+			return 2;
+		}
+	}
+#endif
+
+	return client_cli_verify_certificate_ex(instance, host, port, common_name, subject, issuer,
+	                                        fingerprint, flags);
+}
+
 static DWORD wf_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
                                       const char* common_name, const char* subject,
                                       const char* issuer, const char* fingerprint, DWORD flags)
@@ -544,6 +822,16 @@ static DWORD wf_verify_certificate_ex(freerdp* instance, const char* host, UINT1
 	WCHAR* buffer;
 	WCHAR* caption;
 	int what = IDCANCEL;
+
+#ifdef WITH_WINDOWS_CERT_STORE
+	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM && !(flags & VERIFY_CERT_FLAG_MISMATCH))
+	{
+		if (wf_is_x509_certificate_trusted(common_name, subject, issuer, fingerprint) == S_OK)
+		{
+			return 2;
+		}
+	}
+#endif
 
 	buffer = wf_format_text(
 	    L"Certificate details:\n"
@@ -563,6 +851,8 @@ static DWORD wf_verify_certificate_ex(freerdp* instance, const char* host, UINT1
 	    common_name, subject, issuer, fingerprint,
 	    flags & VERIFY_CERT_FLAG_MISMATCH ? "Yes" : "No");
 	caption = wf_format_text(L"Verify certificate for %S:%hu", host, port);
+
+	WINPR_UNUSED(instance);
 
 	if (!buffer || !caption)
 		goto fail;
@@ -618,6 +908,7 @@ static DWORD wf_verify_changed_certificate_ex(freerdp* instance, const char* hos
 	    flags & VERIFY_CERT_FLAG_MISMATCH ? "Yes" : "No", old_subject, old_issuer, old_fingerprint);
 	caption = wf_format_text(L"Verify certificate change for %S:%hu", host, port);
 
+	WINPR_UNUSED(instance);
 	if (!buffer || !caption)
 		goto fail;
 
@@ -672,7 +963,7 @@ static DWORD WINAPI wf_input_thread(LPVOID arg)
 	wMessage message;
 	wMessageQueue* queue;
 	freerdp* instance = (freerdp*)arg;
-	assert(NULL != instance);
+	WINPR_ASSERT(NULL != instance);
 	status = 1;
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
 
@@ -767,6 +1058,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 					continue;
 
 				WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
+				fflush(stdout);
 				break;
 			}
 		}
@@ -843,7 +1135,7 @@ static DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 	wfContext* wfc;
 	HHOOK hook_handle;
 	wfc = (wfContext*)lpParam;
-	assert(NULL != wfc);
+	WINPR_ASSERT(NULL != wfc);
 	hook_handle = SetWindowsHookEx(WH_KEYBOARD_LL, wf_ll_kbd_proc, wfc->hInstance, 0);
 
 	if (hook_handle)
@@ -871,23 +1163,6 @@ static DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 
 	WLog_DBG(TAG, "Keyboard thread exited.");
 	ExitThread(0);
-	return (DWORD)NULL;
-}
-
-static rdpSettings* freerdp_client_get_settings(wfContext* wfc)
-{
-	return wfc->context.settings;
-}
-
-static int freerdp_client_focus_in(wfContext* wfc)
-{
-	PostThreadMessage(wfc->mainThreadId, WM_SETFOCUS, 0, 1);
-	return 0;
-}
-
-static int freerdp_client_focus_out(wfContext* wfc)
-{
-	PostThreadMessage(wfc->mainThreadId, WM_KILLFOCUS, 0, 1);
 	return 0;
 }
 
@@ -912,7 +1187,7 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 	// prevent infinite message loop
 	wfc->disablewindowtracking = TRUE;
 
-	if (wfc->context.settings->SmartSizing)
+	if (wfc->context.settings->SmartSizing || wfc->context.settings->DynamicResolutionUpdate)
 	{
 		wfc->xCurrentScroll = 0;
 		wfc->yCurrentScroll = 0;
@@ -1023,6 +1298,7 @@ static BOOL wfreerdp_client_global_init(void)
 	WSAStartup(0x101, &wsaData);
 
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
+
 	return TRUE;
 }
 
@@ -1039,7 +1315,7 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	// AttachConsole and stdin do not work well.
 	// Use GUI input dialogs instead of command line ones.
-	wfc->isConsole = wf_create_console();
+	wfc->isConsole = wf_has_console();
 
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
@@ -1049,9 +1325,14 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PostDisconnect = wf_post_disconnect;
 	instance->Authenticate = wf_authenticate;
 	instance->GatewayAuthenticate = wf_gw_authenticate;
+
+#ifdef WITH_WINDOWS_CERT_STORE
+	freerdp_settings_set_bool(instance->settings, FreeRDP_CertificateCallbackPreferPEM, TRUE);
+#endif
+
 	if (wfc->isConsole)
 	{
-		instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
+		instance->VerifyCertificateEx = wf_cli_verify_certificate_ex;
 		instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 		instance->PresentGatewayMessage = client_cli_present_gateway_message;
 	}
@@ -1061,14 +1342,25 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 		instance->VerifyChangedCertificateEx = wf_verify_changed_certificate_ex;
 		instance->PresentGatewayMessage = wf_present_gateway_message;
 	}
+	
+#ifdef WITH_PROGRESS_BAR
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	CoCreateInstance(&CLSID_TaskbarList, NULL, CLSCTX_ALL, &IID_ITaskbarList3,
+	                 (void**)&wfc->taskBarList);
+#endif
 
 	return TRUE;
 }
 
 static void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
+	WINPR_UNUSED(instance);
 	if (!context)
 		return;
+
+#ifdef WITH_PROGRESS_BAR
+	CoUninitialize();
+#endif
 }
 
 static int wfreerdp_client_start(rdpContext* context)

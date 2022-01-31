@@ -42,12 +42,12 @@ static const BYTE TEST_ISLAND_DATA_XCRUSH[] =
     "\x03\xbb\x43\x7b\x6f\xa8\xe5\x8b\xd0\xf0\xe8\xde\xd8\xd8\xe7\xec"
     "\xf3\xa7\xe4\x7c\xa7\xe2\x9f\x01\x99\x4b\x80";
 
-int test_XCrushCompressBells()
+static int test_XCrushCompressBells(void)
 {
 	int status;
 	UINT32 Flags;
 	UINT32 SrcSize;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 DstSize;
 	BYTE* pDstData;
 	UINT32 expectedSize;
@@ -55,7 +55,7 @@ int test_XCrushCompressBells()
 	XCRUSH_CONTEXT* xcrush;
 	xcrush = xcrush_context_new(TRUE);
 	SrcSize = sizeof(TEST_BELLS_DATA) - 1;
-	pSrcData = (BYTE*)TEST_BELLS_DATA;
+	pSrcData = (const BYTE*)TEST_BELLS_DATA;
 	expectedSize = sizeof(TEST_BELLS_DATA_XCRUSH) - 1;
 	pDstData = OutputBuffer;
 	DstSize = sizeof(OutputBuffer);
@@ -89,12 +89,12 @@ int test_XCrushCompressBells()
 	return 1;
 }
 
-int test_XCrushCompressIsland()
+static int test_XCrushCompressIsland(void)
 {
 	int status;
 	UINT32 Flags;
 	UINT32 SrcSize;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 DstSize;
 	BYTE* pDstData;
 	UINT32 expectedSize;
@@ -102,7 +102,7 @@ int test_XCrushCompressIsland()
 	XCRUSH_CONTEXT* xcrush;
 	xcrush = xcrush_context_new(TRUE);
 	SrcSize = sizeof(TEST_ISLAND_DATA) - 1;
-	pSrcData = (BYTE*)TEST_ISLAND_DATA;
+	pSrcData = (const BYTE*)TEST_ISLAND_DATA;
 	expectedSize = sizeof(TEST_ISLAND_DATA_XCRUSH) - 1;
 	pDstData = OutputBuffer;
 	DstSize = sizeof(OutputBuffer);

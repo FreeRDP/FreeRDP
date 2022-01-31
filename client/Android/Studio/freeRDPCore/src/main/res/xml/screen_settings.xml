@@ -28,14 +28,14 @@
             android:title="@string/settings_width"
             android:singleLine="true"
             freerdp:bounds_default="640"
-            freerdp:bounds_max="2048"
+            freerdp:bounds_max="65536"
             freerdp:bounds_min="640" />
         <com.freerdp.freerdpcore.utils.IntEditTextPreference
             android:key="bookmark.height"
             android:title="@string/settings_height"
             android:singleLine="true"
             freerdp:bounds_default="480"
-            freerdp:bounds_max="2048"
+            freerdp:bounds_max="65536"
             freerdp:bounds_min="480" />
     </PreferenceCategory>
 </PreferenceScreen>

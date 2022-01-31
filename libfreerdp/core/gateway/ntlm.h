@@ -33,11 +33,10 @@ FREERDP_LOCAL void ntlm_free(rdpNtlm* ntlm);
 
 FREERDP_LOCAL BOOL ntlm_authenticate(rdpNtlm* ntlm, BOOL* pbContinueNeeded);
 
-FREERDP_LOCAL BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, LPCTSTR user,
-                                    LPCTSTR domain, LPCTSTR password,
-                                    SecPkgContext_Bindings* Bindings);
+FREERDP_LOCAL BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, LPCSTR user, LPCSTR domain,
+                                    LPCSTR password, SecPkgContext_Bindings* Bindings);
 
-FREERDP_LOCAL BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, LPCTSTR hostname);
+FREERDP_LOCAL BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCSTR ServiceClass, LPCSTR hostname);
 
 FREERDP_LOCAL SSIZE_T ntlm_client_query_auth_size(rdpNtlm* ntlm);
 FREERDP_LOCAL SSIZE_T ntlm_client_get_context_max_size(rdpNtlm* ntlm);

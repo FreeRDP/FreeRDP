@@ -26,7 +26,7 @@
 
 #if defined __linux__ && !defined ANDROID
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <errno.h>
 
 #include <winpr/wlog.h>
@@ -132,7 +132,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			break;
 	}
 
-	assert(pServerSerialDriver != NULL);
+	WINPR_ASSERT(pServerSerialDriver != NULL);
 
 	switch (dwIoControlCode)
 	{
@@ -150,7 +150,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_BAUD_RATE* pBaudRate = (SERIAL_BAUD_RATE*)lpInBuffer;
 
-				assert(nInBufferSize >= sizeof(SERIAL_BAUD_RATE));
+				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_BAUD_RATE));
 				if (nInBufferSize < sizeof(SERIAL_BAUD_RATE))
 				{
 					SetLastError(ERROR_INVALID_PARAMETER);
@@ -167,7 +167,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_BAUD_RATE* pBaudRate = (SERIAL_BAUD_RATE*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(SERIAL_BAUD_RATE));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(SERIAL_BAUD_RATE));
 				if (nOutBufferSize < sizeof(SERIAL_BAUD_RATE))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -188,7 +188,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				COMMPROP* pProperties = (COMMPROP*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(COMMPROP));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(COMMPROP));
 				if (nOutBufferSize < sizeof(COMMPROP))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -209,7 +209,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_CHARS* pSerialChars = (SERIAL_CHARS*)lpInBuffer;
 
-				assert(nInBufferSize >= sizeof(SERIAL_CHARS));
+				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_CHARS));
 				if (nInBufferSize < sizeof(SERIAL_CHARS))
 				{
 					SetLastError(ERROR_INVALID_PARAMETER);
@@ -226,7 +226,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_CHARS* pSerialChars = (SERIAL_CHARS*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(SERIAL_CHARS));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(SERIAL_CHARS));
 				if (nOutBufferSize < sizeof(SERIAL_CHARS))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -247,7 +247,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_LINE_CONTROL* pLineControl = (SERIAL_LINE_CONTROL*)lpInBuffer;
 
-				assert(nInBufferSize >= sizeof(SERIAL_LINE_CONTROL));
+				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_LINE_CONTROL));
 				if (nInBufferSize < sizeof(SERIAL_LINE_CONTROL))
 				{
 					SetLastError(ERROR_INVALID_PARAMETER);
@@ -264,7 +264,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_LINE_CONTROL* pLineControl = (SERIAL_LINE_CONTROL*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(SERIAL_LINE_CONTROL));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(SERIAL_LINE_CONTROL));
 				if (nOutBufferSize < sizeof(SERIAL_LINE_CONTROL))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -285,7 +285,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_HANDFLOW* pHandflow = (SERIAL_HANDFLOW*)lpInBuffer;
 
-				assert(nInBufferSize >= sizeof(SERIAL_HANDFLOW));
+				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_HANDFLOW));
 				if (nInBufferSize < sizeof(SERIAL_HANDFLOW))
 				{
 					SetLastError(ERROR_INVALID_PARAMETER);
@@ -302,7 +302,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_HANDFLOW* pHandflow = (SERIAL_HANDFLOW*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(SERIAL_HANDFLOW));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(SERIAL_HANDFLOW));
 				if (nOutBufferSize < sizeof(SERIAL_HANDFLOW))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -323,7 +323,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_TIMEOUTS* pHandflow = (SERIAL_TIMEOUTS*)lpInBuffer;
 
-				assert(nInBufferSize >= sizeof(SERIAL_TIMEOUTS));
+				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_TIMEOUTS));
 				if (nInBufferSize < sizeof(SERIAL_TIMEOUTS))
 				{
 					SetLastError(ERROR_INVALID_PARAMETER);
@@ -340,7 +340,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_TIMEOUTS* pHandflow = (SERIAL_TIMEOUTS*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(SERIAL_TIMEOUTS));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(SERIAL_TIMEOUTS));
 				if (nOutBufferSize < sizeof(SERIAL_TIMEOUTS))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -393,7 +393,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				ULONG* pRegister = (ULONG*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(ULONG));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -414,7 +414,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				ULONG* pWaitMask = (ULONG*)lpInBuffer;
 
-				assert(nInBufferSize >= sizeof(ULONG));
+				WINPR_ASSERT(nInBufferSize >= sizeof(ULONG));
 				if (nInBufferSize < sizeof(ULONG))
 				{
 					SetLastError(ERROR_INVALID_PARAMETER);
@@ -431,7 +431,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				ULONG* pWaitMask = (ULONG*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(ULONG));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -452,7 +452,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				ULONG* pOutputMask = (ULONG*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(ULONG));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -476,7 +476,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_QUEUE_SIZE* pQueueSize = (SERIAL_QUEUE_SIZE*)lpInBuffer;
 
-				assert(nInBufferSize >= sizeof(SERIAL_QUEUE_SIZE));
+				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_QUEUE_SIZE));
 				if (nInBufferSize < sizeof(SERIAL_QUEUE_SIZE))
 				{
 					SetLastError(ERROR_INVALID_PARAMETER);
@@ -493,7 +493,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				ULONG* pPurgeMask = (ULONG*)lpInBuffer;
 
-				assert(nInBufferSize >= sizeof(ULONG));
+				WINPR_ASSERT(nInBufferSize >= sizeof(ULONG));
 				if (nInBufferSize < sizeof(ULONG))
 				{
 					SetLastError(ERROR_INVALID_PARAMETER);
@@ -510,7 +510,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				SERIAL_STATUS* pCommstatus = (SERIAL_STATUS*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(SERIAL_STATUS));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(SERIAL_STATUS));
 				if (nOutBufferSize < sizeof(SERIAL_STATUS))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -563,7 +563,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				ULONG* pMask = (ULONG*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(ULONG));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -584,7 +584,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				ULONG* pSize = (ULONG*)lpOutBuffer;
 
-				assert(nOutBufferSize >= sizeof(ULONG));
+				WINPR_ASSERT(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -605,7 +605,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			{
 				UCHAR* pChar = (UCHAR*)lpInBuffer;
 
-				assert(nInBufferSize >= sizeof(UCHAR));
+				WINPR_ASSERT(nInBufferSize >= sizeof(UCHAR));
 				if (nInBufferSize < sizeof(UCHAR))
 				{
 					SetLastError(ERROR_INVALID_PARAMETER);

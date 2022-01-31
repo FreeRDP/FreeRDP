@@ -1,15 +1,21 @@
 
+#include <stdio.h>
+#include <stdint.h>
 #include <rdtk/rdtk.h>
+#include <winpr/error.h>
 
 int TestRdTkNinePatch(int argc, char* argv[])
 {
 	rdtkEngine* engine = NULL;
 	rdtkSurface* surface = NULL;
-	DWORD scanline;
-	DWORD width;
-	DWORD height;
-	BYTE* data = NULL;
+	uint32_t scanline;
+	uint32_t width;
+	uint32_t height;
+	uint8_t* data = NULL;
 	int ret = -1;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	if (!(engine = rdtk_engine_new()))
 	{

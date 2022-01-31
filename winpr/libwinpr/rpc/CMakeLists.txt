@@ -17,26 +17,7 @@
 
 winpr_module_add(
 	rpc.c
-	ndr.c
-	ndr_array.c
-	ndr_array.h
-	ndr_context.c
-	ndr_context.h
-	ndr_correlation.c
-	ndr_correlation.h
-	ndr_pointer.c
-	ndr_pointer.h
-	ndr_private.c
-	ndr_private.h
-	ndr_simple.c
-	ndr_simple.h
-	ndr_string.c
-	ndr_string.h
-	ndr_structure.c
-	ndr_structure.h
-	ndr_union.c
-	ndr_union.h
-	midl.c)
+)
 
 winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
 

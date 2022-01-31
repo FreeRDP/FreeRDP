@@ -37,7 +37,7 @@ public class RDPFileParser
 
 	private void init()
 	{
-		options = new HashMap<String, Object>();
+		options = new HashMap<>();
 	}
 
 	public void parse(String filename) throws IOException

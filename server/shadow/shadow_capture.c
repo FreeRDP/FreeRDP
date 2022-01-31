@@ -166,16 +166,22 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 	if (allEqual)
 		return 0;
 
-	rect->left = l * 16;
-	rect->top = t * 16;
-	rect->right = (r + 1) * 16;
-	rect->bottom = (b + 1) * 16;
+	WINPR_ASSERT(l * 16 <= UINT16_MAX);
+	WINPR_ASSERT(t * 16 <= UINT16_MAX);
+	WINPR_ASSERT((r + 1) * 16 <= UINT16_MAX);
+	WINPR_ASSERT((b + 1) * 16 <= UINT16_MAX);
+	rect->left = (UINT16)l * 16;
+	rect->top = (UINT16)t * 16;
+	rect->right = (UINT16)(r + 1) * 16;
+	rect->bottom = (UINT16)(b + 1) * 16;
 
+	WINPR_ASSERT(nWidth <= UINT16_MAX);
 	if (rect->right > nWidth)
-		rect->right = nWidth;
+		rect->right = (UINT16)nWidth;
 
+	WINPR_ASSERT(nHeight <= UINT16_MAX);
 	if (rect->bottom > nHeight)
-		rect->bottom = nHeight;
+		rect->bottom = (UINT16)nHeight;
 
 #ifdef WITH_DEBUG_SHADOW_CAPTURE
 	size_t size = ncol + 1;

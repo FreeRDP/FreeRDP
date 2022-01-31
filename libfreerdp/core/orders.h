@@ -198,88 +198,87 @@ FREERDP_LOCAL BOOL update_write_field_flags(wStream* s, UINT32 fieldFlags, BYTE 
 
 FREERDP_LOCAL BOOL update_write_bounds(wStream* s, ORDER_INFO* orderInfo);
 
-FREERDP_LOCAL int update_approximate_dstblt_order(ORDER_INFO* orderInfo,
-                                                  const DSTBLT_ORDER* dstblt);
+FREERDP_LOCAL size_t update_approximate_dstblt_order(ORDER_INFO* orderInfo,
+                                                     const DSTBLT_ORDER* dstblt);
 FREERDP_LOCAL BOOL update_write_dstblt_order(wStream* s, ORDER_INFO* orderInfo,
                                              const DSTBLT_ORDER* dstblt);
 
-FREERDP_LOCAL int update_approximate_patblt_order(ORDER_INFO* orderInfo, PATBLT_ORDER* patblt);
+FREERDP_LOCAL size_t update_approximate_patblt_order(ORDER_INFO* orderInfo, PATBLT_ORDER* patblt);
 FREERDP_LOCAL BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo,
                                              PATBLT_ORDER* patblt);
 
-FREERDP_LOCAL int update_approximate_scrblt_order(ORDER_INFO* orderInfo,
-                                                  const SCRBLT_ORDER* scrblt);
+FREERDP_LOCAL size_t update_approximate_scrblt_order(ORDER_INFO* orderInfo,
+                                                     const SCRBLT_ORDER* scrblt);
 FREERDP_LOCAL BOOL update_write_scrblt_order(wStream* s, ORDER_INFO* orderInfo,
                                              const SCRBLT_ORDER* scrblt);
 
-FREERDP_LOCAL int update_approximate_opaque_rect_order(ORDER_INFO* orderInfo,
-                                                       const OPAQUE_RECT_ORDER* opaque_rect);
+FREERDP_LOCAL size_t update_approximate_opaque_rect_order(ORDER_INFO* orderInfo,
+                                                          const OPAQUE_RECT_ORDER* opaque_rect);
 FREERDP_LOCAL BOOL update_write_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo,
                                                   const OPAQUE_RECT_ORDER* opaque_rect);
 
-FREERDP_LOCAL int update_approximate_line_to_order(ORDER_INFO* orderInfo,
-                                                   const LINE_TO_ORDER* line_to);
+FREERDP_LOCAL size_t update_approximate_line_to_order(ORDER_INFO* orderInfo,
+                                                      const LINE_TO_ORDER* line_to);
 FREERDP_LOCAL BOOL update_write_line_to_order(wStream* s, ORDER_INFO* orderInfo,
                                               const LINE_TO_ORDER* line_to);
 
-FREERDP_LOCAL int update_approximate_memblt_order(ORDER_INFO* orderInfo,
-                                                  const MEMBLT_ORDER* memblt);
+FREERDP_LOCAL size_t update_approximate_memblt_order(ORDER_INFO* orderInfo,
+                                                     const MEMBLT_ORDER* memblt);
 FREERDP_LOCAL BOOL update_write_memblt_order(wStream* s, ORDER_INFO* orderInfo,
                                              const MEMBLT_ORDER* memblt);
 
-FREERDP_LOCAL int update_approximate_glyph_index_order(ORDER_INFO* orderInfo,
-                                                       const GLYPH_INDEX_ORDER* glyph_index);
+FREERDP_LOCAL size_t update_approximate_glyph_index_order(ORDER_INFO* orderInfo,
+                                                          const GLYPH_INDEX_ORDER* glyph_index);
 FREERDP_LOCAL BOOL update_write_glyph_index_order(wStream* s, ORDER_INFO* orderInfo,
                                                   GLYPH_INDEX_ORDER* glyph_index);
 
-FREERDP_LOCAL int update_approximate_cache_bitmap_order(const CACHE_BITMAP_ORDER* cache_bitmap,
-                                                        BOOL compressed, UINT16* flags);
+FREERDP_LOCAL size_t update_approximate_cache_bitmap_order(const CACHE_BITMAP_ORDER* cache_bitmap,
+                                                           BOOL compressed, UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_bitmap_order(wStream* s,
                                                    const CACHE_BITMAP_ORDER* cache_bitmap_order,
                                                    BOOL compressed, UINT16* flags);
 
-FREERDP_LOCAL int update_approximate_cache_bitmap_v2_order(CACHE_BITMAP_V2_ORDER* cache_bitmap_v2,
-                                                           BOOL compressed, UINT16* flags);
+FREERDP_LOCAL size_t update_approximate_cache_bitmap_v2_order(
+    CACHE_BITMAP_V2_ORDER* cache_bitmap_v2, BOOL compressed, UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_bitmap_v2_order(wStream* s,
                                                       CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order,
                                                       BOOL compressed, UINT16* flags);
 
-FREERDP_LOCAL int update_approximate_cache_bitmap_v3_order(CACHE_BITMAP_V3_ORDER* cache_bitmap_v3,
-                                                           UINT16* flags);
+FREERDP_LOCAL size_t
+update_approximate_cache_bitmap_v3_order(CACHE_BITMAP_V3_ORDER* cache_bitmap_v3, UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_bitmap_v3_order(wStream* s,
                                                       CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order,
                                                       UINT16* flags);
 
-FREERDP_LOCAL int
-update_approximate_cache_color_table_order(const CACHE_COLOR_TABLE_ORDER* cache_color_table,
-                                           UINT16* flags);
+FREERDP_LOCAL size_t update_approximate_cache_color_table_order(
+    const CACHE_COLOR_TABLE_ORDER* cache_color_table, UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_color_table_order(
     wStream* s, const CACHE_COLOR_TABLE_ORDER* cache_color_table_order, UINT16* flags);
 
-FREERDP_LOCAL int update_approximate_cache_glyph_order(const CACHE_GLYPH_ORDER* cache_glyph,
-                                                       UINT16* flags);
+FREERDP_LOCAL size_t update_approximate_cache_glyph_order(const CACHE_GLYPH_ORDER* cache_glyph,
+                                                          UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_glyph_order(wStream* s,
                                                   const CACHE_GLYPH_ORDER* cache_glyph_order,
                                                   UINT16* flags);
 
-FREERDP_LOCAL int
+FREERDP_LOCAL size_t
 update_approximate_cache_glyph_v2_order(const CACHE_GLYPH_V2_ORDER* cache_glyph_v2, UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_glyph_v2_order(wStream* s,
                                                      const CACHE_GLYPH_V2_ORDER* cache_glyph_v2,
                                                      UINT16* flags);
 
-FREERDP_LOCAL int update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush,
-                                                       UINT16* flags);
+FREERDP_LOCAL size_t update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush,
+                                                          UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_brush_order(wStream* s,
                                                   const CACHE_BRUSH_ORDER* cache_brush_order,
                                                   UINT16* flags);
 
-FREERDP_LOCAL int update_approximate_create_offscreen_bitmap_order(
+FREERDP_LOCAL size_t update_approximate_create_offscreen_bitmap_order(
     const CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap);
 FREERDP_LOCAL BOOL update_write_create_offscreen_bitmap_order(
     wStream* s, const CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap);
 
-FREERDP_LOCAL int
+FREERDP_LOCAL size_t
 update_approximate_switch_surface_order(const SWITCH_SURFACE_ORDER* switch_surface);
 FREERDP_LOCAL BOOL update_write_switch_surface_order(wStream* s,
                                                      const SWITCH_SURFACE_ORDER* switch_surface);

@@ -23,6 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
+#include <winpr/collections.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -70,6 +72,11 @@ extern "C"
 	DEFINE_EVENT_BEGIN(Activated)
 	BOOL firstActivation;
 	DEFINE_EVENT_END(Activated)
+
+	DEFINE_EVENT_BEGIN(ConnectionStateChange)
+	int state;
+	BOOL active;
+	DEFINE_EVENT_END(ConnectionStateChange)
 
 	DEFINE_EVENT_BEGIN(Terminate)
 	int code;

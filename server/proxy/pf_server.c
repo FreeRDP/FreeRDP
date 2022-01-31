@@ -5,6 +5,8 @@
  * Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
  * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
  * Copyright 2019 Idan Freiberg <speidy@gmail.com>
+ * Copyright 2021 Armin Novak <anovak@thincast.com>
+ * Copyright 2021 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +21,12 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <winpr/crt.h>
 #include <winpr/ssl.h>
+#include <winpr/path.h>
 #include <winpr/synch.h>
 #include <winpr/string.h>
 #include <winpr/winsock.h>
@@ -28,24 +34,32 @@
 #include <errno.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/streamdump.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/build-config.h>
+
+#include <freerdp/channels/rdpdr.h>
+
+#include <freerdp/server/proxy/proxy_server.h>
+#include <freerdp/server/proxy/proxy_log.h>
 
 #include "pf_server.h"
-#include "pf_log.h"
-#include "pf_config.h"
+#include <freerdp/server/proxy/proxy_config.h>
 #include "pf_client.h"
-#include "pf_context.h"
+#include <freerdp/server/proxy/proxy_context.h>
 #include "pf_update.h"
-#include "pf_rdpgfx.h"
-#include "pf_disp.h"
-#include "pf_rail.h"
-#include "pf_channels.h"
-#include "pf_modules.h"
+#include "proxy_modules.h"
+#include "pf_utils.h"
+#include "channels/pf_channel_rdpdr.h"
 
 #define TAG PROXY_TAG("server")
 
-static psPeerReceiveChannelData server_receive_channel_data_original = NULL;
+typedef struct
+{
+	HANDLE thread;
+	freerdp_peer* client;
+} peer_thread_args;
 
 static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char** target,
                                                       DWORD* port)
@@ -64,7 +78,7 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char*
 
 	if ((routing_token_length <= prefix_len) || (routing_token_length >= TARGET_MAX))
 	{
-		LOG_ERR(TAG, ps, "invalid routing token length: %" PRIu32 "", routing_token_length);
+		PROXY_LOG_ERR(TAG, ps, "invalid routing token length: %" PRIu32 "", routing_token_length);
 		return FALSE;
 	}
 
@@ -97,15 +111,20 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char*
 }
 
 static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings,
-                                      proxyConfig* config)
+                                      const proxyConfig* config)
 {
 	pServerContext* ps = (pServerContext*)context;
 	proxyFetchTargetEventInfo ev = { 0 };
 
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->pdata);
+
 	ev.fetch_method = config->FixedTarget ? PROXY_FETCH_TARGET_METHOD_CONFIG
 	                                      : PROXY_FETCH_TARGET_METHOD_LOAD_BALANCE_INFO;
 
-	if (!pf_modules_run_filter(FILTER_TYPE_SERVER_FETCH_TARGET_ADDR, ps->pdata, &ev))
+	if (!pf_modules_run_filter(ps->pdata->module, FILTER_TYPE_SERVER_FETCH_TARGET_ADDR, ps->pdata,
+	                           &ev))
 		return FALSE;
 
 	switch (ev.fetch_method)
@@ -117,12 +136,16 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 
 		case PROXY_FETCH_TARGET_METHOD_CONFIG:
 		{
-			settings->ServerPort = config->TargetPort > 0 ? 3389 : settings->ServerPort;
-			settings->ServerHostname = _strdup(config->TargetHost);
+			WINPR_ASSERT(config);
 
-			if (!settings->ServerHostname)
+			if (config->TargetPort > 0)
+				freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, config->TargetPort);
+			else
+				freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, 3389);
+
+			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, config->TargetHost))
 			{
-				LOG_ERR(TAG, ps, "strdup failed!");
+				PROXY_LOG_ERR(TAG, ps, "strdup failed!");
 				return FALSE;
 			}
 
@@ -139,7 +162,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 			settings->ServerHostname = _strdup(ev.target_address);
 			if (!settings->ServerHostname)
 			{
-				LOG_ERR(TAG, ps, "strdup failed!");
+				PROXY_LOG_ERR(TAG, ps, "strdup failed!");
 				return FALSE;
 			}
 
@@ -173,15 +196,20 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	size_t accepted_channels_count;
 	size_t i;
 
-	ps = (pServerContext*)peer->context;
-	pdata = ps->pdata;
+	WINPR_ASSERT(peer);
 
-	LOG_INFO(TAG, ps, "Accepted client: %s", peer->settings->ClientHostname);
+	ps = (pServerContext*)peer->context;
+	WINPR_ASSERT(ps);
+
+	pdata = ps->pdata;
+	WINPR_ASSERT(pdata);
+
+	PROXY_LOG_INFO(TAG, ps, "Accepted client: %s", peer->settings->ClientHostname);
 	accepted_channels = WTSGetAcceptedChannelNames(peer, &accepted_channels_count);
 	if (accepted_channels)
 	{
 		for (i = 0; i < accepted_channels_count; i++)
-			LOG_INFO(TAG, ps, "Accepted channel: %s", accepted_channels[i]);
+			PROXY_LOG_INFO(TAG, ps, "Accepted channel: %s", accepted_channels[i]);
 
 		free(accepted_channels);
 	}
@@ -189,7 +217,7 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	pc = pf_context_create_client_context(peer->settings);
 	if (pc == NULL)
 	{
-		LOG_ERR(TAG, ps, "failed to create client context!");
+		PROXY_LOG_ERR(TAG, ps, "failed to create client context!");
 		return FALSE;
 	}
 
@@ -200,26 +228,32 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 
 	if (!pf_server_get_target_info(peer->context, client_settings, pdata->config))
 	{
-		LOG_INFO(TAG, ps, "pf_server_get_target_info failed!");
+		PROXY_LOG_INFO(TAG, ps, "pf_server_get_target_info failed!");
 		return FALSE;
 	}
 
-	LOG_INFO(TAG, ps, "remote target is %s:%" PRIu16 "", client_settings->ServerHostname,
-	         client_settings->ServerPort);
+	PROXY_LOG_INFO(TAG, ps, "remote target is %s:%" PRIu16 "", client_settings->ServerHostname,
+	               client_settings->ServerPort);
 
-	if (!pf_server_channels_init(ps))
+	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_POST_CONNECT, pdata, peer))
+		return FALSE;
+
+	switch (pf_utils_get_channel_mode(ps->pdata->config, RDPDR_SVC_CHANNEL_NAME))
 	{
-		LOG_INFO(TAG, ps, "failed to initialize server's channels!");
-		return FALSE;
+		case PF_UTILS_CHANNEL_INTERCEPT:
+			if (!pf_channel_rdpdr_server_new(ps))
+				return FALSE;
+			if (!pf_channel_rdpdr_server_announce(ps))
+				return FALSE;
+			break;
+		default:
+			break;
 	}
-
-	if (!pf_modules_run_hook(HOOK_TYPE_SERVER_POST_CONNECT, pdata))
-		return FALSE;
 
 	/* Start a proxy's client in it's own thread */
 	if (!(pdata->client_thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
 	{
-		LOG_ERR(TAG, ps, "failed to create client thread");
+		PROXY_LOG_ERR(TAG, ps, "failed to create client thread");
 		return FALSE;
 	}
 
@@ -228,27 +262,93 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 
 static BOOL pf_server_activate(freerdp_peer* peer)
 {
+	pServerContext* ps;
+	proxyData* pdata;
+
+	WINPR_ASSERT(peer);
+
+	ps = (pServerContext*)peer->context;
+	WINPR_ASSERT(ps);
+
+	pdata = ps->pdata;
+	WINPR_ASSERT(pdata);
+
+	WINPR_ASSERT(peer->settings);
 	peer->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
+	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_ACTIVATE, pdata, peer))
+		return FALSE;
+	return TRUE;
+}
+
+static BOOL pf_server_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* identity,
+                            BOOL automatic)
+{
+	pServerContext* ps;
+	proxyData* pdata;
+	proxyServerPeerLogon info = { 0 };
+
+	WINPR_ASSERT(peer);
+
+	ps = (pServerContext*)peer->context;
+	WINPR_ASSERT(ps);
+
+	pdata = ps->pdata;
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(peer->settings);
+	WINPR_ASSERT(identity);
+
+	info.identity = identity;
+	info.automatic = automatic;
+	if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_SERVER_PEER_LOGON, pdata, &info))
+		return FALSE;
 	return TRUE;
 }
 
 static BOOL pf_server_adjust_monitor_layout(freerdp_peer* peer)
 {
+	WINPR_ASSERT(peer);
 	/* proxy as is, there's no need to do anything here */
 	return TRUE;
+}
+
+static BOOL pf_server_receive_channel_intercept(proxyData* pdata, UINT16 channelId,
+                                                const char* channel_name, const BYTE* data,
+                                                size_t size, UINT32 flags, size_t totalSize)
+{
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel_name);
+
+	if (strcmp(channel_name, RDPDR_SVC_CHANNEL_NAME) == 0)
+		return pf_channel_rdpdr_server_handle(pdata->ps, channelId, channel_name, data, size, flags,
+		                                      totalSize);
+
+	WLog_ERR(TAG, "[%s]: Channel %s [0x%04" PRIx16 "] intercept mode not implemented, aborting",
+	         __FUNCTION__, channel_name, channelId);
+	return FALSE;
 }
 
 static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 channelId,
                                                 const BYTE* data, size_t size, UINT32 flags,
                                                 size_t totalSize)
 {
-	pServerContext* ps = (pServerContext*)peer->context;
-	pClientContext* pc = ps->pdata->pc;
-	proxyData* pdata = ps->pdata;
-	proxyConfig* config = pdata->config;
-	size_t i;
+	pServerContext* ps;
+	pClientContext* pc;
+	proxyData* pdata;
+	const proxyConfig* config;
+	pf_utils_channel_mode pass;
 	const char* channel_name = WTSChannelGetName(peer, channelId);
 
+	WINPR_ASSERT(peer);
+
+	ps = (pServerContext*)peer->context;
+	WINPR_ASSERT(ps);
+
+	pdata = ps->pdata;
+	WINPR_ASSERT(pdata);
+
+	pc = pdata->pc;
+	config = pdata->config;
+	WINPR_ASSERT(config);
 	/*
 	 * client side is not initialized yet, call original callback.
 	 * this is probably a drdynvc message between peer and proxy server,
@@ -257,50 +357,67 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	if (!pc)
 		goto original_cb;
 
-	for (i = 0; i < config->PassthroughCount; i++)
+	pass = pf_utils_get_channel_mode(config, channel_name);
+	switch (pass)
 	{
-		if (strncmp(channel_name, config->Passthrough[i], CHANNEL_NAME_LEN) == 0)
+		case PF_UTILS_CHANNEL_BLOCK:
+			return TRUE;
+		case PF_UTILS_CHANNEL_PASSTHROUGH:
 		{
 			proxyChannelDataEventInfo ev;
-			UINT64 client_channel_id;
 
 			ev.channel_id = channelId;
 			ev.channel_name = channel_name;
 			ev.data = data;
 			ev.data_len = size;
+			ev.flags = flags;
+			ev.total_size = totalSize;
 
-			if (!pf_modules_run_filter(FILTER_TYPE_SERVER_PASSTHROUGH_CHANNEL_DATA, pdata, &ev))
-				return FALSE;
+			if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_SERVER_PASSTHROUGH_CHANNEL_DATA,
+			                           pdata, &ev))
+				return TRUE; /* Silently ignore */
 
-			client_channel_id = (UINT64)HashTable_GetItemValue(pc->vc_ids, (void*)channel_name);
-
-			return pc->context.instance->SendChannelData(pc->context.instance,
-			                                             (UINT16)client_channel_id, data, size);
+			return IFCALLRESULT(TRUE, pc->sendChannelData, pc, &ev);
 		}
+		case PF_UTILS_CHANNEL_INTERCEPT:
+			return pf_server_receive_channel_intercept(pdata, channelId, channel_name, data, size,
+			                                           flags, totalSize);
+		default:
+			break;
 	}
 
 original_cb:
-	return server_receive_channel_data_original(peer, channelId, data, size, flags, totalSize);
+	WINPR_ASSERT(pdata->server_receive_channel_data_original);
+	return pdata->server_receive_channel_data_original(peer, channelId, data, size, flags,
+	                                                   totalSize);
 }
 
 static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 {
-	pServerContext* ps = (pServerContext*)peer->context;
-	rdpSettings* settings = peer->settings;
+	pServerContext* ps;
+	rdpSettings* settings;
 	proxyData* pdata;
-	proxyConfig* config;
+	const proxyConfig* config;
 	proxyServer* server;
 
+	WINPR_ASSERT(peer);
+
+	settings = peer->settings;
+	WINPR_ASSERT(settings);
+
+	ps = (pServerContext*)peer->context;
 	if (!ps)
 		return FALSE;
 
 	pdata = proxy_data_new();
 	if (!pdata)
 		return FALSE;
+	server = (proxyServer*)peer->ContextExtra;
+	WINPR_ASSERT(server);
 
 	proxy_data_set_server_context(pdata, ps);
-	server = (proxyServer*)peer->ContextExtra;
 
+	pdata->module = server->module;
 	config = pdata->config = server->config;
 
 	/* currently not supporting GDI orders */
@@ -309,9 +426,25 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 
 	settings->SupportMonitorLayoutPdu = TRUE;
 	settings->SupportGraphicsPipeline = config->GFX;
-	settings->CertificateFile = _strdup("server.crt");
-	settings->PrivateKeyFile = _strdup("server.key");
-	settings->RdpKeyFile = _strdup("server.key");
+
+	if (pf_utils_is_passthrough(config))
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DeactivateClientDecoding, TRUE))
+			return FALSE;
+	}
+
+	if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, config->CertificateFile) ||
+	    !freerdp_settings_set_string(settings, FreeRDP_CertificateContent,
+	                                 config->CertificateContent) ||
+	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, config->PrivateKeyFile) ||
+	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyContent,
+	                                 config->PrivateKeyContent) ||
+	    !freerdp_settings_set_string(settings, FreeRDP_RdpKeyFile, config->RdpKeyFile) ||
+	    !freerdp_settings_set_string(settings, FreeRDP_RdpKeyContent, config->RdpKeyContent))
+	{
+		WLog_ERR(TAG, "Memory allocation failed (strdup)");
+		return FALSE;
+	}
 
 	if (config->RemoteApp)
 	{
@@ -324,15 +457,9 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 		settings->RemoteAppLanguageBarSupported = TRUE;
 	}
 
-	if (!settings->CertificateFile || !settings->PrivateKeyFile || !settings->RdpKeyFile)
-	{
-		WLog_ERR(TAG, "Memory allocation failed (strdup)");
-		return FALSE;
-	}
-
 	settings->RdpSecurity = config->ServerRdpSecurity;
 	settings->TlsSecurity = config->ServerTlsSecurity;
-	settings->NlaSecurity = FALSE; /* currently NLA is not supported in proxy server */
+	settings->NlaSecurity = config->ServerNlaSecurity;
 	settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	settings->ColorDepth = 32;
 	settings->SuppressOutput = TRUE;
@@ -341,17 +468,16 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 
 	peer->PostConnect = pf_server_post_connect;
 	peer->Activate = pf_server_activate;
+	peer->Logon = pf_server_logon;
 	peer->AdjustMonitorsLayout = pf_server_adjust_monitor_layout;
 	peer->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 
 	/* virtual channels receive data hook */
-	server_receive_channel_data_original = peer->ReceiveChannelData;
+	pdata->server_receive_channel_data_original = peer->ReceiveChannelData;
 	peer->ReceiveChannelData = pf_server_receive_channel_data_hook;
 
-	if (ArrayList_Add(server->clients, pdata) < 0)
+	if (!stream_dump_register_handlers(peer->context, CONNECTION_STATE_NEGO))
 		return FALSE;
-
-	CountdownEvent_AddCount(server->waitGroup, 1);
 	return TRUE;
 }
 
@@ -362,16 +488,25 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
  */
 static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 {
-	HANDLE eventHandles[32];
-	HANDLE ChannelEvent;
-	DWORD eventCount;
+	HANDLE eventHandles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	DWORD tmp;
 	DWORD status;
-	pServerContext* ps;
-	rdpContext* pc;
-	proxyData* pdata;
-	freerdp_peer* client = (freerdp_peer*)arg;
-	proxyServer* server = (proxyServer*)client->ContextExtra;
+	pServerContext* ps = NULL;
+	proxyData* pdata = NULL;
+	freerdp_peer* client;
+	proxyServer* server;
+	size_t count;
+	peer_thread_args* args = arg;
+
+	WINPR_ASSERT(args);
+
+	client = args->client;
+	WINPR_ASSERT(client);
+
+	server = (proxyServer*)client->ContextExtra;
+	WINPR_ASSERT(server);
+
+	count = ArrayList_Count(server->peer_list);
 
 	if (!pf_context_init_server_context(client))
 		goto out_free_peer;
@@ -380,19 +515,26 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 		goto out_free_peer;
 
 	ps = (pServerContext*)client->context;
-	pdata = ps->pdata;
+	WINPR_ASSERT(ps);
+	PROXY_LOG_DBG(TAG, ps, "Added peer, %" PRIuz " connected", count);
 
+	pdata = ps->pdata;
+	WINPR_ASSERT(pdata);
+
+	WINPR_ASSERT(client->Initialize);
 	client->Initialize(client);
-	LOG_INFO(TAG, ps, "new connection: proxy address: %s, client address: %s", pdata->config->Host,
-	         client->hostname);
-	/* Main client event handling loop */
-	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(ps->vcm);
+
+	PROXY_LOG_INFO(TAG, ps, "new connection: proxy address: %s, client address: %s",
+	               pdata->config->Host, client->hostname);
 
 	while (1)
 	{
-		eventCount = 0;
+		HANDLE ChannelEvent = INVALID_HANDLE_VALUE;
+		DWORD eventCount = 0;
 		{
-			tmp = client->GetEventHandles(client, &eventHandles[eventCount], 32 - eventCount);
+			WINPR_ASSERT(client->GetEventHandles);
+			tmp = client->GetEventHandles(client, &eventHandles[eventCount],
+			                              ARRAYSIZE(eventHandles) - eventCount);
 
 			if (tmp == 0)
 			{
@@ -402,10 +544,17 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 
 			eventCount += tmp;
 		}
+		/* Main client event handling loop */
+		ChannelEvent = WTSVirtualChannelManagerGetEventHandle(ps->vcm);
+
+		WINPR_ASSERT(ChannelEvent && (ChannelEvent != INVALID_HANDLE_VALUE));
+		WINPR_ASSERT(pdata->abort_event && (pdata->abort_event != INVALID_HANDLE_VALUE));
 		eventHandles[eventCount++] = ChannelEvent;
 		eventHandles[eventCount++] = pdata->abort_event;
-		eventHandles[eventCount++] = WTSVirtualChannelManagerGetEventHandle(ps->vcm);
-		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, INFINITE);
+		eventHandles[eventCount++] = server->stopEvent;
+
+		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE,
+		                                1000); /* Do periodic polling to avoid client hang */
 
 		if (status == WAIT_FAILED)
 		{
@@ -413,6 +562,7 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 			break;
 		}
 
+		WINPR_ASSERT(client->CheckFileDescriptor);
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
 
@@ -429,6 +579,12 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 		if (proxy_data_shall_disconnect(pdata))
 		{
 			WLog_INFO(TAG, "abort event is set, closing connection with peer %s", client->hostname);
+			break;
+		}
+
+		if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
+		{
+			WLog_INFO(TAG, "Server shutting down, terminating peer");
 			break;
 		}
 
@@ -461,90 +617,104 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 
 fail:
 
-	pc = (rdpContext*)pdata->pc;
-	LOG_INFO(TAG, ps, "starting shutdown of connection");
-	LOG_INFO(TAG, ps, "stopping proxy's client");
-	freerdp_client_stop(pc);
-	pf_modules_run_hook(HOOK_TYPE_SERVER_SESSION_END, pdata);
-	LOG_INFO(TAG, ps, "freeing server's channels");
-	pf_server_channels_free(ps);
-	LOG_INFO(TAG, ps, "freeing proxy data");
-	ArrayList_Remove(server->clients, pdata);
-	proxy_data_free(pdata);
-	freerdp_client_context_free(pc);
+	PROXY_LOG_INFO(TAG, ps, "starting shutdown of connection");
+	PROXY_LOG_INFO(TAG, ps, "stopping proxy's client");
+
+	/* Abort the client. */
+	proxy_data_abort_connect(pdata);
+
+	pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_SESSION_END, pdata, client);
+
+
+	PROXY_LOG_INFO(TAG, ps, "freeing server's channels");
+
+	WINPR_ASSERT(client->Close);
 	client->Close(client);
+
+	WINPR_ASSERT(client->Disconnect);
 	client->Disconnect(client);
+
 out_free_peer:
+	PROXY_LOG_INFO(TAG, ps, "freeing proxy data");
+
+	if (pdata && pdata->client_thread)
+	{
+		proxy_data_abort_connect(pdata);
+		WaitForSingleObject(pdata->client_thread, INFINITE);
+	}
+
+	{
+		ArrayList_Lock(server->peer_list);
+		ArrayList_Remove(server->peer_list, args->thread);
+		count = ArrayList_Count(server->peer_list);
+		ArrayList_Unlock(server->peer_list);
+	}
+	PROXY_LOG_DBG(TAG, ps, "Removed peer, %" PRIuz " connected", count);
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
-	CountdownEvent_Signal(server->waitGroup, 1);
+	proxy_data_free(pdata);
+
+#if defined(WITH_DEBUG_EVENTS)
+	DumpEventHandles();
+#endif
+	free(args);
 	ExitThread(0);
 	return 0;
+}
+
+static BOOL pf_server_start_peer(freerdp_peer* client)
+{
+	HANDLE hThread;
+	proxyServer* server;
+	peer_thread_args* args = calloc(1, sizeof(peer_thread_args));
+	if (!args)
+		return FALSE;
+
+	WINPR_ASSERT(client);
+	args->client = client;
+
+	server = (proxyServer*)client->ContextExtra;
+	WINPR_ASSERT(server);
+
+	hThread = CreateThread(NULL, 0, pf_server_handle_peer, args, CREATE_SUSPENDED, NULL);
+	if (!hThread)
+		return FALSE;
+
+	args->thread = hThread;
+	if (!ArrayList_Append(server->peer_list, hThread))
+	{
+		CloseHandle(hThread);
+		return FALSE;
+	}
+
+	return ResumeThread(hThread) != (DWORD)-1;
 }
 
 static BOOL pf_server_peer_accepted(freerdp_listener* listener, freerdp_peer* client)
 {
-	HANDLE hThread;
+	WINPR_ASSERT(listener);
+	WINPR_ASSERT(client);
+
 	client->ContextExtra = listener->info;
 
-	if (!(hThread = CreateThread(NULL, 0, pf_server_handle_peer, (void*)client, 0, NULL)))
-		return FALSE;
-
-	CloseHandle(hThread);
-	return TRUE;
-}
-
-static DWORD WINAPI pf_server_mainloop(LPVOID arg)
-{
-	HANDLE eventHandles[32];
-	DWORD eventCount;
-	DWORD status;
-	proxyServer* server = (proxyServer*)arg;
-	freerdp_listener* listener = server->listener;
-
-	while (1)
-	{
-		eventCount = listener->GetEventHandles(listener, eventHandles, 32);
-
-		if (0 == eventCount)
-		{
-			WLog_ERR(TAG, "Failed to get FreeRDP event handles");
-			break;
-		}
-
-		eventHandles[eventCount++] = server->stopEvent;
-		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, INFINITE);
-
-		if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
-			break;
-
-		if (WAIT_FAILED == status)
-		{
-			WLog_ERR(TAG, "select failed");
-			break;
-		}
-
-		if (listener->CheckFileDescriptor(listener) != TRUE)
-		{
-			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
-			break;
-		}
-	}
-
-	listener->Close(listener);
-	ExitThread(0);
-	return 0;
+	return pf_server_start_peer(client);
 }
 
 BOOL pf_server_start(proxyServer* server)
 {
 	WSADATA wsaData;
+
+	WINPR_ASSERT(server);
+
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 		goto error;
 
+	WINPR_ASSERT(server->config);
+	WINPR_ASSERT(server->listener);
+	WINPR_ASSERT(server->listener->Open);
 	if (!server->listener->Open(server->listener, server->config->Host, server->config->Port))
 	{
 		switch (errno)
@@ -563,9 +733,44 @@ BOOL pf_server_start(proxyServer* server)
 		goto error;
 	}
 
-	server->thread = CreateThread(NULL, 0, pf_server_mainloop, (void*)server, 0, NULL);
-	if (!server->thread)
+	return TRUE;
+
+error:
+	WSACleanup();
+	return FALSE;
+}
+
+BOOL pf_server_start_from_socket(proxyServer* server, int socket)
+{
+	WSADATA wsaData;
+
+	WINPR_ASSERT(server);
+
+	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
+
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 		goto error;
+
+	WINPR_ASSERT(server->listener);
+	WINPR_ASSERT(server->listener->OpenFromSocket);
+	if (!server->listener->OpenFromSocket(server->listener, socket))
+	{
+		switch (errno)
+		{
+			case EADDRINUSE:
+				WLog_ERR(TAG, "failed to start listener: address already in use!");
+				break;
+			case EACCES:
+				WLog_ERR(TAG, "failed to start listener: insufficent permissions!");
+				break;
+			default:
+				WLog_ERR(TAG, "failed to start listener: errno=%d", errno);
+				break;
+		}
+
+		goto error;
+	}
 
 	return TRUE;
 
@@ -574,47 +779,113 @@ error:
 	return FALSE;
 }
 
-static void pf_server_clients_list_client_free(void* obj)
+BOOL pf_server_start_with_peer_socket(proxyServer* server, int peer_fd)
 {
-	proxyData* pdata = (proxyData*)obj;
-	proxy_data_abort_connect(pdata);
+	struct sockaddr_storage peer_addr;
+	socklen_t len = sizeof(peer_addr);
+	freerdp_peer* client = NULL;
+
+	WINPR_ASSERT(server);
+
+	if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
+		goto fail;
+
+	client = freerdp_peer_new(peer_fd);
+	if (!client)
+		goto fail;
+
+	if (getpeername(peer_fd, (struct sockaddr*)&peer_addr, &len) != 0)
+		goto fail;
+
+	if (!freerdp_peer_set_local_and_hostname(client, &peer_addr))
+		goto fail;
+
+	client->ContextExtra = server;
+
+	if (!pf_server_start_peer(client))
+		goto fail;
+
+	return TRUE;
+
+fail:
+	WLog_ERR(TAG, "PeerAccepted callback failed");
+	freerdp_peer_free(client);
+	return FALSE;
 }
 
-proxyServer* pf_server_new(proxyConfig* config)
+static BOOL are_all_required_modules_loaded(proxyModule* module, const proxyConfig* config)
+{
+	size_t i;
+
+	for (i = 0; i < pf_config_required_plugins_count(config); i++)
+	{
+		const char* plugin_name = pf_config_required_plugin(config, i);
+
+		if (!pf_modules_is_plugin_loaded(module, plugin_name))
+		{
+			WLog_ERR(TAG, "Required plugin '%s' is not loaded. stopping.", plugin_name);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+static void peer_free(void* obj)
+{
+	HANDLE hdl = (HANDLE)obj;
+	CloseHandle(hdl);
+}
+
+proxyServer* pf_server_new(const proxyConfig* config)
 {
 	wObject* obj;
 	proxyServer* server;
 
-	if (!config)
-		return NULL;
+	WINPR_ASSERT(config);
 
 	server = calloc(1, sizeof(proxyServer));
 	if (!server)
 		return NULL;
 
-	server->config = config;
+	if (!pf_config_clone(&server->config, config))
+		goto out;
+
+	server->module = pf_modules_new(FREERDP_PROXY_PLUGINDIR, pf_config_modules(server->config),
+	                                pf_config_modules_count(server->config));
+	if (!server->module)
+	{
+		WLog_ERR(TAG, "failed to initialize proxy modules!");
+		goto out;
+	}
+
+	pf_modules_list_loaded_plugins(server->module);
+	if (!are_all_required_modules_loaded(server->module, server->config))
+		goto out;
 
 	server->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (!server->stopEvent)
-		goto out;
-
-	server->clients = ArrayList_New(TRUE);
-	if (!server->clients)
-		goto out;
-
-	obj = ArrayList_Object(server->clients);
-	obj->fnObjectFree = pf_server_clients_list_client_free;
-
-	server->waitGroup = CountdownEvent_New(0);
-	if (!server->waitGroup)
 		goto out;
 
 	server->listener = freerdp_listener_new();
 	if (!server->listener)
 		goto out;
 
+	server->peer_list = ArrayList_New(FALSE);
+	if (!server->peer_list)
+		goto out;
+
+	obj = ArrayList_Object(server->peer_list);
+	WINPR_ASSERT(obj);
+
+	obj->fnObjectFree = peer_free;
+
 	server->listener->info = server;
 	server->listener->PeerAccepted = pf_server_peer_accepted;
+
+	if (!pf_modules_add(server->module, pf_config_plugin, (void*)server->config))
+		goto out;
+
 	return server;
 
 out:
@@ -622,24 +893,70 @@ out:
 	return NULL;
 }
 
+BOOL pf_server_run(proxyServer* server)
+{
+	BOOL rc = TRUE;
+	HANDLE eventHandles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	DWORD eventCount;
+	DWORD status;
+	freerdp_listener* listener;
+
+	WINPR_ASSERT(server);
+
+	listener = server->listener;
+	WINPR_ASSERT(listener);
+
+	while (1)
+	{
+		WINPR_ASSERT(listener->GetEventHandles);
+		eventCount = listener->GetEventHandles(listener, eventHandles, ARRAYSIZE(eventHandles));
+
+		if ((0 == eventCount) || (eventCount >= ARRAYSIZE(eventHandles)))
+		{
+			WLog_ERR(TAG, "Failed to get FreeRDP event handles");
+			break;
+		}
+
+		WINPR_ASSERT(server->stopEvent);
+		eventHandles[eventCount++] = server->stopEvent;
+		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, 1000);
+
+		if (WAIT_FAILED == status)
+			break;
+
+		if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
+			break;
+
+		if (WAIT_FAILED == status)
+		{
+			WLog_ERR(TAG, "select failed");
+			rc = FALSE;
+			break;
+		}
+
+		WINPR_ASSERT(listener->CheckFileDescriptor);
+		if (listener->CheckFileDescriptor(listener) != TRUE)
+		{
+			WLog_ERR(TAG, "Failed to accept new peer");
+			// TODO: Set out of resource error
+			continue;
+		}
+	}
+
+	WINPR_ASSERT(listener->Close);
+	listener->Close(listener);
+	return rc;
+}
+
 void pf_server_stop(proxyServer* server)
 {
-	HANDLE waitHandle = INVALID_HANDLE_VALUE;
 
 	if (!server)
 		return;
 
-	/* clear clients list, also disconnects every client */
-	ArrayList_Clear(server->clients);
-
-	/* block until all clients are disconnected */
-	waitHandle = CountdownEvent_WaitHandle(server->waitGroup);
-	if (WaitForSingleObject(waitHandle, INFINITE) != WAIT_OBJECT_0)
-		WLog_ERR(TAG, "[%s]: WaitForSingleObject failed!", __FUNCTION__);
 
 	/* signal main thread to stop and wait for the thread to exit */
 	SetEvent(server->stopEvent);
-	WaitForSingleObject(server->thread, INFINITE);
 }
 
 void pf_server_free(proxyServer* server)
@@ -647,15 +964,38 @@ void pf_server_free(proxyServer* server)
 	if (!server)
 		return;
 
+	pf_server_stop(server);
+
+	while (ArrayList_Count(server->peer_list) > 0)
+	{
+		/* pf_server_stop triggers the threads to shut down.
+		 * loop here until all of them stopped.
+		 *
+		 * This must be done before ArrayList_Free otherwise the thread removal
+		 * in pf_server_handle_peer will deadlock due to both threads trying to
+		 * lock the list.
+		 */
+		Sleep(100);
+	}
+	ArrayList_Free(server->peer_list);
 	freerdp_listener_free(server->listener);
-	ArrayList_Free(server->clients);
-	CountdownEvent_Free(server->waitGroup);
 
 	if (server->stopEvent)
 		CloseHandle(server->stopEvent);
 
-	if (server->thread)
-		CloseHandle(server->thread);
-
+	pf_server_config_free(server->config);
+	pf_modules_free(server->module);
 	free(server);
+
+#if defined(WITH_DEBUG_EVENTS)
+	DumpEventHandles();
+#endif
+}
+
+BOOL pf_server_add_module(proxyServer* server, proxyModuleEntryPoint ep, void* userdata)
+{
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(ep);
+
+	return pf_modules_add(server->module, ep, userdata);
 }

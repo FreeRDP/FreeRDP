@@ -21,8 +21,6 @@
 
 #include <winpr/spec.h>
 
-/* Don't do any export */
-#if 0
 #if defined _WIN32 || defined __CYGWIN__
 #ifdef RDTK_EXPORTS
 #ifdef __GNUC__
@@ -44,7 +42,5 @@
 #define RDTK_EXPORT
 #endif
 #endif
-#endif
-#define RDTK_EXPORT
 
 #endif /* RDTK_API_H */

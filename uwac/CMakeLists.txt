@@ -17,36 +17,81 @@
 
 # Soname versioning
 set(UWAC_VERSION_MAJOR "0")
-set(UWAC_VERSION_MINOR "1")
-set(UWAC_VERSION_REVISION "1")
+set(UWAC_VERSION_MINOR "2")
+set(UWAC_VERSION_REVISION "0")
 set(UWAC_VERSION "${UWAC_VERSION_MAJOR}.${UWAC_VERSION_MINOR}.${UWAC_VERSION_REVISION}")
 set(UWAC_VERSION_FULL "${UWAC_VERSION}")
 set(UWAC_API_VERSION "${UWAC_VERSION_MAJOR}")
 
-add_subdirectory(include)
-add_subdirectory(libuwac)
+if (NOT FREERDP_UNIFIED_BUILD)
+	cmake_minimum_required(VERSION 3.4)
+	project(uwac VERSION ${UWAC_VERSION} LANGUAGES C)
 
-set(UWAC_INCLUDE_DIR "include/uwac${UWAC_VERSION_MAJOR}")
-# cmake package
-if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
+	set(CMAKE_COLOR_MAKEFILE ON)
 
-	export(PACKAGE uwac)
+	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+    option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
+	option(BUILD_TESTING "Build library unit tests" ON)
+	option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
 
-	SetFreeRDPCMakeInstallDir(UWAC_CMAKE_INSTALL_DIR "uwac${UWAC_VERSION_MAJOR}")
-
-
-	configure_package_config_file(uwacConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/uwacConfig.cmake
-		INSTALL_DESTINATION ${UWAC_CMAKE_INSTALL_DIR}
-		PATH_VARS UWAC_INCLUDE_DIR)
-
-	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/uwacConfigVersion.cmake
-		VERSION ${UWAC_VERSION} COMPATIBILITY SameMajorVersion)
-
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/uwacConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/uwacConfigVersion.cmake
-		DESTINATION ${UWAC_CMAKE_INSTALL_DIR})
-
-	install(EXPORT uwac DESTINATION ${UWAC_CMAKE_INSTALL_DIR})
+    if(CMAKE_COMPILER_IS_GNUCC)
+        if(NOT EXPORT_ALL_SYMBOLS)
+            message(STATUS "GCC default symbol visibility: hidden")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+        endif()
+    endif()
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/uwac.pc.in ${CMAKE_CURRENT_BINARY_DIR}/uwac${UWAC_VERSION_MAJOR}.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/uwac${UWAC_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+option(HAVE_PIXMAN_REGION "Use PIXMAN or FreeRDP for region calculations" "NOT FREERDP_UNIFIED_BUILD")
+
+# Include our extra modules
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
+
+# Check for cmake compatibility (enable/disable features)
+include(FindFeature)
+include(SetFreeRDPCMakeInstallDir)
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirsWrapper)
+
+if (NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE Release)
+endif()
+
+if (NOT IOS)
+	include(CheckIncludeFiles)
+	check_include_files(stdbool.h WINPR_HAVE_STDBOOL_H)
+	if (NOT WINPR_HAVE_STDBOOL_H)
+		include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/../compat/stdbool)
+	endif()
+else()
+	set(WINPR_HAVE_STDBOOL_H 1)
+endif()
+
+# Find required libraries
+if (HAVE_PIXMAN_REGION)
+	include(FindPkgConfig)
+	pkg_check_modules(pixman REQUIRED pixman-1)
+	include_directories(${pixman_INCLUDE_DIRS})
+elseif (FREERDP_UNIFIED_BUILD)
+	include_directories(${PROJECT_SOURCE_DIR}/winpr/include)
+	include_directories(${PROJECT_BINARY_DIR}/winpr/include)
+	include_directories(${PROJECT_SOURCE_DIR}/include)
+	include_directories(${PROJECT_BINARY_DIR}/include)
+else()
+	find_package(WinPR 3 REQUIRED)
+	find_package(FreeRDP 3 REQUIRED)
+	include_directories(${WinPR_INCLUDE_DIR})
+	include_directories(${FreeRDP_INCLUDE_DIR})
+endif()
+
+set(WAYLAND_FEATURE_PURPOSE "Wayland")
+set(WAYLAND_FEATURE_DESCRIPTION "Wayland client")
+set(WAYLAND_FEATURE_TYPE "REQUIRED")
+find_feature(Wayland ${WAYLAND_FEATURE_TYPE} ${WAYLAND_FEATURE_PURPOSE} ${WAYLAND_FEATURE_DESCRIPTION})
+
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/templates)
+
+add_subdirectory(libuwac)
+add_subdirectory(include)
+add_subdirectory(templates)
+

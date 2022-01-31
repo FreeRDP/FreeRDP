@@ -6,6 +6,9 @@ int TestGetNativeSystemInfo(int argc, char* argv[])
 {
 	SYSTEM_INFO sysinfo;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	GetNativeSystemInfo(&sysinfo);
 
 	printf("SystemInfo:\n");

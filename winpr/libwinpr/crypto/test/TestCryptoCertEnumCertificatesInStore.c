@@ -20,6 +20,9 @@ int TestCryptoCertEnumCertificatesInStore(int argc, char* argv[])
 	HCERTSTORE hCertStore = NULL;
 	PCCERT_CONTEXT pCertContext = NULL;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/**
 	 * System Store Locations:
 	 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa388136/

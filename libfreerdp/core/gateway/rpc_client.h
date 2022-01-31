@@ -31,7 +31,8 @@ FREERDP_LOCAL RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT3
 FREERDP_LOCAL RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum);
 FREERDP_LOCAL void rpc_client_call_free(RpcClientCall* client_call);
 
-FREERDP_LOCAL int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length);
+FREERDP_LOCAL int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer,
+                                          size_t length);
 
 FREERDP_LOCAL int rpc_client_in_channel_recv(rdpRpc* rpc);
 FREERDP_LOCAL int rpc_client_out_channel_recv(rdpRpc* rpc);

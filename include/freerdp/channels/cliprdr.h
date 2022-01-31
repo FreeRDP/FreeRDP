@@ -101,6 +101,10 @@ extern "C"
 	FREERDP_API UINT cliprdr_serialize_file_list(const FILEDESCRIPTORW* file_descriptor_array,
 	                                             UINT32 file_descriptor_count, BYTE** format_data,
 	                                             UINT32* format_data_length);
+	FREERDP_API UINT cliprdr_serialize_file_list_ex(UINT32 flags,
+	                                                const FILEDESCRIPTORW* file_descriptor_array,
+	                                                UINT32 file_descriptor_count,
+	                                                BYTE** format_data, UINT32* format_data_length);
 
 #ifdef __cplusplus
 }

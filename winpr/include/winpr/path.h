@@ -312,6 +312,7 @@ extern "C"
 	WINPR_API char* GetCombinedPath(const char* basePath, const char* subPath);
 
 	WINPR_API BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes);
+	WINPR_API BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes);
 
 #if !defined(_WIN32) || defined(_UWP)
 
@@ -333,6 +334,12 @@ extern "C"
 #endif
 
 #endif
+
+	WINPR_API BOOL winpr_MoveFile(LPCSTR lpExistingFileName, LPCSTR lpNewFileName);
+	WINPR_API BOOL winpr_DeleteFile(const char* lpFileName);
+	WINPR_API BOOL winpr_RemoveDirectory(LPCSTR lpPathName);
+	WINPR_API BOOL winpr_PathFileExists(const char* pszPath);
+	WINPR_API BOOL winpr_PathMakePath(const char* path, LPSECURITY_ATTRIBUTES lpAttributes);
 
 #ifdef __cplusplus
 }

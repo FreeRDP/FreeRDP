@@ -77,7 +77,7 @@ extern "C"
 {
 #endif
 
-	FREERDP_API rdpPcap* pcap_open(char* name, BOOL write);
+	FREERDP_API rdpPcap* pcap_open(const char* name, BOOL write);
 	FREERDP_API void pcap_close(rdpPcap* pcap);
 
 	FREERDP_API BOOL pcap_add_record(rdpPcap* pcap, const void* data, UINT32 length);

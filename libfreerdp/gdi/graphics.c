@@ -52,7 +52,7 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32
 		return NULL;
 
 	nDstStep = nWidth * GetBytesPerPixel(gdi->dstFormat);
-	pDstData = _aligned_malloc(nHeight * nDstStep, 16);
+	pDstData = _aligned_malloc(nHeight * nDstStep * 1ULL, 16);
 
 	if (!pDstData)
 		return NULL;
@@ -215,7 +215,7 @@ static BOOL gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL p
 }
 
 /* Glyph Class */
-static BOOL gdi_Glyph_New(rdpContext* context, const rdpGlyph* glyph)
+static BOOL gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 {
 	BYTE* data;
 	gdiGlyph* gdi_glyph;
@@ -270,7 +270,7 @@ static void gdi_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, INT32 y, INT32 w,
                            INT32 h, INT32 sx, INT32 sy, BOOL fOpRedundant)
 {
-	gdiGlyph* gdi_glyph;
+	const gdiGlyph* gdi_glyph;
 	rdpGdi* gdi;
 	HGDI_BRUSH brush;
 	BOOL rc = FALSE;
@@ -279,7 +279,7 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, 
 		return FALSE;
 
 	gdi = context->gdi;
-	gdi_glyph = (gdiGlyph*)glyph;
+	gdi_glyph = (const gdiGlyph*)glyph;
 
 	if (!fOpRedundant && 0)
 	{

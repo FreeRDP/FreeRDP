@@ -23,7 +23,7 @@
 
 #if defined __linux__ && !defined ANDROID
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <errno.h>
 #include <termios.h>
 #include <unistd.h>
@@ -253,8 +253,8 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		biggestFd = pComm->fd_read_event;
 
 	FD_ZERO(&read_set);
-	assert(pComm->fd_read_event < FD_SETSIZE);
-	assert(pComm->fd_read < FD_SETSIZE);
+	WINPR_ASSERT(pComm->fd_read_event < FD_SETSIZE);
+	WINPR_ASSERT(pComm->fd_read < FD_SETSIZE);
 	FD_SET(pComm->fd_read_event, &read_set);
 	FD_SET(pComm->fd_read, &read_set);
 	nbFds = select(biggestFd + 1, &read_set, NULL, NULL, pTmaxTimeout);
@@ -283,8 +283,8 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		{
 			if (errno == EAGAIN)
 			{
-				assert(FALSE); /* not quite sure this should ever happen */
-				               /* keep on */
+				WINPR_ASSERT(FALSE); /* not quite sure this should ever happen */
+				                     /* keep on */
 			}
 			else
 			{
@@ -294,16 +294,16 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 				/* FIXME: goto return_false ? */
 			}
 
-			assert(errno == EAGAIN);
+			WINPR_ASSERT(errno == EAGAIN);
 		}
 
-		if (event == FREERDP_PURGE_RXABORT)
+		if (event == WINPR_PURGE_RXABORT)
 		{
 			SetLastError(ERROR_CANCELLED);
 			goto return_false;
 		}
 
-		assert(event == FREERDP_PURGE_RXABORT); /* no other expected event so far */
+		WINPR_ASSERT(event == WINPR_PURGE_RXABORT); /* no other expected event so far */
 	}
 
 	if (FD_ISSET(pComm->fd_read, &read_set))
@@ -336,7 +336,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			}
 			else
 			{
-				assert(FALSE);
+				WINPR_ASSERT(FALSE);
 				SetLastError(ERROR_IO_DEVICE);
 				goto return_false;
 			}
@@ -352,7 +352,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		*lpNumberOfBytesRead = nbRead;
 
 		EnterCriticalSection(&pComm->EventsLock);
-		if (pComm->PendingEvents & SERIAL_EV_FREERDP_WAITING)
+		if (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
 		{
 			if (pComm->eventChar != '\0' && memchr(lpBuffer, pComm->eventChar, nbRead))
 				pComm->PendingEvents |= SERIAL_EV_RXCHAR;
@@ -361,7 +361,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		goto return_true;
 	}
 
-	assert(FALSE);
+	WINPR_ASSERT(FALSE);
 	*lpNumberOfBytesRead = 0;
 return_false:
 	LeaveCriticalSection(&pComm->ReadLock);
@@ -454,8 +454,8 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 		FD_ZERO(&event_set);
 		FD_ZERO(&write_set);
-		assert(pComm->fd_write_event < FD_SETSIZE);
-		assert(pComm->fd_write < FD_SETSIZE);
+		WINPR_ASSERT(pComm->fd_write_event < FD_SETSIZE);
+		WINPR_ASSERT(pComm->fd_write < FD_SETSIZE);
 		FD_SET(pComm->fd_write_event, &event_set);
 		FD_SET(pComm->fd_write, &write_set);
 		nbFds = select(biggestFd + 1, &event_set, &write_set, NULL, pTmaxTimeout);
@@ -484,8 +484,8 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 			{
 				if (errno == EAGAIN)
 				{
-					assert(FALSE); /* not quite sure this should ever happen */
-					               /* keep on */
+					WINPR_ASSERT(FALSE); /* not quite sure this should ever happen */
+					                     /* keep on */
 				}
 				else
 				{
@@ -495,16 +495,16 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 					/* FIXME: goto return_false ? */
 				}
 
-				assert(errno == EAGAIN);
+				WINPR_ASSERT(errno == EAGAIN);
 			}
 
-			if (event == FREERDP_PURGE_TXABORT)
+			if (event == WINPR_PURGE_TXABORT)
 			{
 				SetLastError(ERROR_CANCELLED);
 				goto return_false;
 			}
 
-			assert(event == FREERDP_PURGE_TXABORT); /* no other expected event so far */
+			WINPR_ASSERT(event == WINPR_PURGE_TXABORT); /* no other expected event so far */
 		}
 
 		/* write_set */
@@ -512,7 +512,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		if (FD_ISSET(pComm->fd_write, &write_set))
 		{
 			ssize_t nbWritten;
-			nbWritten = write(pComm->fd_write, ((BYTE*)lpBuffer) + (*lpNumberOfBytesWritten),
+			nbWritten = write(pComm->fd_write, ((const BYTE*)lpBuffer) + (*lpNumberOfBytesWritten),
 			                  nNumberOfBytesToWrite - (*lpNumberOfBytesWritten));
 
 			if (nbWritten < 0)
@@ -534,7 +534,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 				}
 				else
 				{
-					assert(FALSE);
+					WINPR_ASSERT(FALSE);
 					SetLastError(ERROR_IO_DEVICE);
 					goto return_false;
 				}

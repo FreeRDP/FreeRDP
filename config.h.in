@@ -1,48 +1,38 @@
 #ifndef FREERDP_CONFIG_H
 #define FREERDP_CONFIG_H
 
+#include <winpr/config.h>
+
 /* Include files */
-#cmakedefine HAVE_FCNTL_H
 #if defined(__APPLE__) && !defined(__IOS__)
 #cmakedefine01 HAVE_UNISTD_H
 #else
 #cmakedefine HAVE_UNISTD_H
 #endif
 #cmakedefine HAVE_INTTYPES_H
-#cmakedefine HAVE_SYS_MODEM_H
-#cmakedefine HAVE_SYS_FILIO_H
-#cmakedefine HAVE_SYS_SELECT_H
-#cmakedefine HAVE_SYS_SOCKIO_H
-#cmakedefine HAVE_SYS_STRTIO_H
-#cmakedefine HAVE_SYS_EVENTFD_H
-#cmakedefine HAVE_SYS_TIMERFD_H
 #cmakedefine HAVE_TM_GMTOFF
-#cmakedefine HAVE_AIO_H
 #cmakedefine HAVE_POLL_H
 #cmakedefine HAVE_SYSLOG_H
 #cmakedefine HAVE_JOURNALD_H
-#cmakedefine HAVE_PTHREAD_MUTEX_TIMEDLOCK
 #cmakedefine HAVE_VALGRIND_MEMCHECK_H
 #cmakedefine HAVE_EXECINFO_H
-#cmakedefine HAVE_GETLOGIN_R
+#cmakedefine HAVE_STRNDUP
 
 /* Features */
 #cmakedefine SWRESAMPLE_FOUND
 #cmakedefine AVRESAMPLE_FOUND
 
 /* Options */
+#cmakedefine WITH_ADD_PLUGIN_TO_RPATH
 #cmakedefine WITH_PROFILER
 #cmakedefine WITH_GPROF
 #cmakedefine WITH_SSE2
 #cmakedefine WITH_NEON
 #cmakedefine WITH_IPP
 #cmakedefine WITH_CUPS
-#cmakedefine WITH_NATIVE_SSPI
 #cmakedefine WITH_JPEG
 #cmakedefine WITH_WIN8
-#cmakedefine WITH_ICU
 #cmakedefine WITH_RDPSND_DSOUND
-#cmakedefine WITH_EVENTFD_READ_WRITE
 #cmakedefine HAVE_MATH_C99_LONG_DOUBLE
 
 #cmakedefine WITH_WINMM
@@ -63,11 +53,14 @@
 #cmakedefine WITH_FFMPEG
 #cmakedefine WITH_DSP_EXPERIMENTAL
 #cmakedefine WITH_DSP_FFMPEG
-#cmakedefine WITH_X264
 #cmakedefine WITH_OPENCL
 #cmakedefine WITH_MEDIA_FOUNDATION
+#cmakedefine WITH_MEDIACODEC
 
 #cmakedefine WITH_VAAPI
+
+#cmakedefine WITH_CHANNEL_GFXREDIR
+#cmakedefine WITH_CHANNEL_RDPAPPLIST
 
 /* Plugins */
 #cmakedefine BUILTIN_CHANNELS
@@ -95,15 +88,27 @@
 #cmakedefine CHANNEL_ENCOMSP
 #cmakedefine CHANNEL_ENCOMSP_CLIENT
 #cmakedefine CHANNEL_ENCOMSP_SERVER
+#cmakedefine CHANNEL_GEOMETRY
+#cmakedefine CHANNEL_GEOMETRY_CLIENT
+#cmakedefine CHANNEL_GEOMETRY_SERVER
+#cmakedefine CHANNEL_GFXREDIR
+#cmakedefine CHANNEL_GFXREDIR_CLIENT
+#cmakedefine CHANNEL_GFXREDIR_SERVER
 #cmakedefine CHANNEL_PARALLEL
 #cmakedefine CHANNEL_PARALLEL_CLIENT
 #cmakedefine CHANNEL_PARALLEL_SERVER
 #cmakedefine CHANNEL_PRINTER
 #cmakedefine CHANNEL_PRINTER_CLIENT
 #cmakedefine CHANNEL_PRINTER_SERVER
+#cmakedefine CHANNEL_RDPEI
+#cmakedefine CHANNEL_RDPEI_CLIENT
+#cmakedefine CHANNEL_RDPEI_SERVER
 #cmakedefine CHANNEL_RAIL
 #cmakedefine CHANNEL_RAIL_CLIENT
 #cmakedefine CHANNEL_RAIL_SERVER
+#cmakedefine CHANNEL_RDPAPPLIST
+#cmakedefine CHANNEL_RDPAPPLIST_CLIENT
+#cmakedefine CHANNEL_RDPAPPLIST_SERVER
 #cmakedefine CHANNEL_RDPDR
 #cmakedefine CHANNEL_RDPDR_CLIENT
 #cmakedefine CHANNEL_RDPDR_SERVER
@@ -134,6 +139,9 @@
 #cmakedefine CHANNEL_URBDRC
 #cmakedefine CHANNEL_URBDRC_CLIENT
 #cmakedefine CHANNEL_URBDRC_SERVER
+#cmakedefine CHANNEL_VIDEO
+#cmakedefine CHANNEL_VIDEO_CLIENT
+#cmakedefine CHANNEL_VIDEO_SERVER
 
 /* Debug */
 #cmakedefine WITH_DEBUG_CERTIFICATE
@@ -147,7 +155,6 @@
 #cmakedefine WITH_DEBUG_LICENSE
 #cmakedefine WITH_DEBUG_NEGO
 #cmakedefine WITH_DEBUG_NLA
-#cmakedefine WITH_DEBUG_NTLM
 #cmakedefine WITH_DEBUG_TSG
 #cmakedefine WITH_DEBUG_RAIL
 #cmakedefine WITH_DEBUG_RDP
@@ -159,9 +166,7 @@
 #cmakedefine WITH_DEBUG_SVC
 #cmakedefine WITH_DEBUG_RDPEI
 #cmakedefine WITH_DEBUG_TIMEZONE
-#cmakedefine WITH_DEBUG_THREADS
 #cmakedefine WITH_DEBUG_URBDRC
-#cmakedefine WITH_DEBUG_MUTEX
 #cmakedefine WITH_DEBUG_TRANSPORT
 #cmakedefine WITH_DEBUG_WND
 #cmakedefine WITH_DEBUG_X11
@@ -172,5 +177,6 @@
 
 /* Proxy */
 #cmakedefine WITH_PROXY_MODULES
+#cmakedefine WITH_PROXY_EMULATE_SMARTCARD
 
 #endif /* FREERDP_CONFIG_H */

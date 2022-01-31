@@ -88,16 +88,17 @@ typedef struct winpr_comm WINPR_COMM;
 #define SERIAL_EV_RX80FULL 0x0400
 #define SERIAL_EV_EVENT1 0x0800
 #define SERIAL_EV_EVENT2 0x1000
-#define SERIAL_EV_FREERDP_WAITING 0x4000 /* bit today unused by other SERIAL_EV_* */
-#define SERIAL_EV_FREERDP_STOP 0x8000    /* bit today unused by other SERIAL_EV_* */
+#define SERIAL_EV_WINPR_WAITING 0x4000 /* bit today unused by other SERIAL_EV_* */
+#define SERIAL_EV_WINPR_STOP 0x8000    /* bit today unused by other SERIAL_EV_* */
 
-#define FREERDP_PURGE_TXABORT 0x00000001 /* abort pending transmission */
-#define FREERDP_PURGE_RXABORT 0x00000002 /* abort pending reception */
+#define WINPR_PURGE_TXABORT 0x00000001 /* abort pending transmission */
+#define WINPR_PURGE_RXABORT 0x00000002 /* abort pending reception */
 
 void CommLog_Print(DWORD wlog_level, ...);
 
 BOOL CommIsHandled(HANDLE handle);
 BOOL CommCloseHandle(HANDLE handle);
+HANDLE_CREATOR* GetCommHandleCreator(void);
 
 #ifndef WITH_EVENTFD_READ_WRITE
 int eventfd_read(int fd, eventfd_t* value);

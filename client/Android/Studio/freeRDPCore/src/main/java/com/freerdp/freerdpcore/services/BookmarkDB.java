@@ -89,10 +89,8 @@ public class BookmarkDB extends SQLiteOpenHelper
 	private static List<String> GetColumns(SQLiteDatabase db, String tableName)
 	{
 		List<String> ar = null;
-		Cursor c = null;
-		try
+		try (Cursor c = db.rawQuery("SELECT * FROM " + tableName + " LIMIT 1", null))
 		{
-			c = db.rawQuery("SELECT * FROM " + tableName + " LIMIT 1", null);
 			if (c != null)
 			{
 				ar = new ArrayList<>(Arrays.asList(c.getColumnNames()));
@@ -102,11 +100,6 @@ public class BookmarkDB extends SQLiteOpenHelper
 		{
 			Log.v(tableName, e.getMessage(), e);
 			e.printStackTrace();
-		}
-		finally
-		{
-			if (c != null)
-				c.close();
 		}
 		return ar;
 	}

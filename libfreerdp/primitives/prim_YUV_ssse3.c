@@ -169,9 +169,9 @@ static pstatus_t ssse3_YUV420ToRGB_BGRX(const BYTE* const* pSrc, const UINT32* s
 
 		for (x = 0; x < nWidth - pad; x += 16)
 		{
-			const __m128i Y = _mm_loadu_si128((__m128i*)YData);
-			const __m128i uRaw = _mm_loadu_si128((__m128i*)UData);
-			const __m128i vRaw = _mm_loadu_si128((__m128i*)VData);
+			const __m128i Y = _mm_loadu_si128((const __m128i*)YData);
+			const __m128i uRaw = _mm_loadu_si128((const __m128i*)UData);
+			const __m128i vRaw = _mm_loadu_si128((const __m128i*)VData);
 			const __m128i U = _mm_shuffle_epi8(uRaw, duplicate);
 			const __m128i V = _mm_shuffle_epi8(vRaw, duplicate);
 			YData += 16;
@@ -191,7 +191,7 @@ static pstatus_t ssse3_YUV420ToRGB_BGRX(const BYTE* const* pSrc, const UINT32* s
 			const BYTE r = YUV2R(Y, U, V);
 			const BYTE g = YUV2G(Y, U, V);
 			const BYTE b = YUV2B(Y, U, V);
-			dst = (__m128i*)writePixelBGRX((BYTE*)dst, 4, PIXEL_FORMAT_BGRX32, r, g, b, 0xFF);
+			dst = (__m128i*)writePixelBGRX((BYTE*)dst, 4, PIXEL_FORMAT_BGRX32, r, g, b, 0);
 
 			if (x % 2)
 			{
@@ -237,9 +237,9 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* const* pSrc, const
 
 		for (x = 0; x < nWidth - pad; x += 16)
 		{
-			__m128i Y = _mm_load_si128((__m128i*)YData);
-			__m128i U = _mm_load_si128((__m128i*)UData);
-			__m128i V = _mm_load_si128((__m128i*)VData);
+			__m128i Y = _mm_load_si128((const __m128i*)YData);
+			__m128i U = _mm_load_si128((const __m128i*)UData);
+			__m128i V = _mm_load_si128((const __m128i*)VData);
 			YData += 16;
 			UData += 16;
 			VData += 16;
@@ -257,7 +257,7 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* const* pSrc, const
 			const BYTE r = YUV2R(Y, U, V);
 			const BYTE g = YUV2G(Y, U, V);
 			const BYTE b = YUV2B(Y, U, V);
-			dst = (__m128i*)writePixelBGRX((BYTE*)dst, 4, PIXEL_FORMAT_BGRX32, r, g, b, 0xFF);
+			dst = (__m128i*)writePixelBGRX((BYTE*)dst, 4, PIXEL_FORMAT_BGRX32, r, g, b, 0);
 		}
 	}
 
@@ -436,7 +436,8 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(const BYTE* src1, const BYTE* src2,
 }
 
 static pstatus_t ssse3_RGBToYUV420_BGRX(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-                                        BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
+                                        BYTE* pDst[3], const UINT32 dstStep[3],
+                                        const prim_size_t* roi)
 {
 	UINT32 y;
 	const BYTE* argb = pSrc;
@@ -478,7 +479,7 @@ static pstatus_t ssse3_RGBToYUV420_BGRX(const BYTE* pSrc, UINT32 srcFormat, UINT
 }
 
 static pstatus_t ssse3_RGBToYUV420(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-                                   BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
+                                   BYTE* pDst[3], const UINT32 dstStep[3], const prim_size_t* roi)
 {
 	switch (srcFormat)
 	{
@@ -552,7 +553,7 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(const BYTE* srcEven, con
 			 *
 			 * We need to split these according to
 			 * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
-			__m128i ue, uo;
+			__m128i ue, uo = { 0 };
 			{
 				const __m128i ue1 =
 				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
@@ -627,7 +628,7 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(const BYTE* srcEven, con
 			 *
 			 * We need to split these according to
 			 * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
-			__m128i ve, vo;
+			__m128i ve, vo = { 0 };
 			{
 				const __m128i ve1 =
 				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),
@@ -1100,7 +1101,7 @@ static pstatus_t ssse3_LumaToYUV444(const BYTE* const pSrcRaw[3], const UINT32 s
 			const __m128i unpackLow =
 			    _mm_set_epi8(15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 8, 8);
 			{
-				const __m128i u = _mm_loadu_si128((__m128i*)&Um[x]);
+				const __m128i u = _mm_loadu_si128((const __m128i*)&Um[x]);
 				const __m128i uHigh = _mm_shuffle_epi8(u, unpackHigh);
 				const __m128i uLow = _mm_shuffle_epi8(u, unpackLow);
 				_mm_storeu_si128((__m128i*)&pU[2 * x], uHigh);
@@ -1109,7 +1110,7 @@ static pstatus_t ssse3_LumaToYUV444(const BYTE* const pSrcRaw[3], const UINT32 s
 				_mm_storeu_si128((__m128i*)&pU1[2 * x + 16], uLow);
 			}
 			{
-				const __m128i u = _mm_loadu_si128((__m128i*)&Vm[x]);
+				const __m128i u = _mm_loadu_si128((const __m128i*)&Vm[x]);
 				const __m128i uHigh = _mm_shuffle_epi8(u, unpackHigh);
 				const __m128i uLow = _mm_shuffle_epi8(u, unpackLow);
 				_mm_storeu_si128((__m128i*)&pV[2 * x], uHigh);
@@ -1144,8 +1145,8 @@ static INLINE void ssse3_filter(BYTE* pSrcDst, const BYTE* pSrc2)
 	const __m128i odd =
 	    _mm_set_epi8(0x80, 15, 0x80, 13, 0x80, 11, 0x80, 9, 0x80, 7, 0x80, 5, 0x80, 3, 0x80, 1);
 	const __m128i interleave = _mm_set_epi8(15, 7, 14, 6, 13, 5, 12, 4, 11, 3, 10, 2, 9, 1, 8, 0);
-	const __m128i u = _mm_loadu_si128((__m128i*)pSrcDst);
-	const __m128i u1 = _mm_loadu_si128((__m128i*)pSrc2);
+	const __m128i u = _mm_loadu_si128((const __m128i*)pSrcDst);
+	const __m128i u1 = _mm_loadu_si128((const __m128i*)pSrc2);
 	const __m128i uEven = _mm_shuffle_epi8(u, even);
 	const __m128i uEven4 = _mm_slli_epi16(uEven, 2);
 	const __m128i uOdd = _mm_shuffle_epi8(u, odd);
@@ -1281,14 +1282,14 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* const pSrcRaw[3], const UINT
 		for (x = 0; x < halfWidth - halfPad; x += 16)
 		{
 			{
-				const __m128i u = _mm_loadu_si128((__m128i*)&Ua[x]);
+				const __m128i u = _mm_loadu_si128((const __m128i*)&Ua[x]);
 				const __m128i u2 = _mm_unpackhi_epi8(u, zero);
 				const __m128i u1 = _mm_unpacklo_epi8(u, zero);
 				_mm_maskmoveu_si128(u1, mask, (char*)&pU[2 * x]);
 				_mm_maskmoveu_si128(u2, mask, (char*)&pU[2 * x + 16]);
 			}
 			{
-				const __m128i u = _mm_loadu_si128((__m128i*)&Va[x]);
+				const __m128i u = _mm_loadu_si128((const __m128i*)&Va[x]);
 				const __m128i u2 = _mm_unpackhi_epi8(u, zero);
 				const __m128i u1 = _mm_unpacklo_epi8(u, zero);
 				_mm_maskmoveu_si128(u1, mask, (char*)&pV[2 * x]);
@@ -1342,14 +1343,14 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* const pSrc[3], const UINT32 
 		for (x = 0; x < halfWidth - halfPad; x += 16)
 		{
 			{
-				const __m128i u = _mm_loadu_si128((__m128i*)&pYaU[x]);
+				const __m128i u = _mm_loadu_si128((const __m128i*)&pYaU[x]);
 				const __m128i u2 = _mm_unpackhi_epi8(zero, u);
 				const __m128i u1 = _mm_unpacklo_epi8(zero, u);
 				_mm_maskmoveu_si128(u1, mask, (char*)&pU[2 * x]);
 				_mm_maskmoveu_si128(u2, mask, (char*)&pU[2 * x + 16]);
 			}
 			{
-				const __m128i v = _mm_loadu_si128((__m128i*)&pYaV[x]);
+				const __m128i v = _mm_loadu_si128((const __m128i*)&pYaV[x]);
 				const __m128i v2 = _mm_unpackhi_epi8(zero, v);
 				const __m128i v1 = _mm_unpacklo_epi8(zero, v);
 				_mm_maskmoveu_si128(v1, mask, (char*)&pV[2 * x]);
@@ -1378,8 +1379,8 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* const pSrc[3], const UINT32 
 		for (x = 0; x < quaterWidth - quaterPad; x += 16)
 		{
 			{
-				const __m128i uU = _mm_loadu_si128((__m128i*)&pUaU[x]);
-				const __m128i uV = _mm_loadu_si128((__m128i*)&pVaU[x]);
+				const __m128i uU = _mm_loadu_si128((const __m128i*)&pUaU[x]);
+				const __m128i uV = _mm_loadu_si128((const __m128i*)&pVaU[x]);
 				const __m128i uHigh = _mm_unpackhi_epi8(uU, uV);
 				const __m128i uLow = _mm_unpacklo_epi8(uU, uV);
 				const __m128i u1 = _mm_shuffle_epi8(uLow, shuffle2);
@@ -1392,8 +1393,8 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* const pSrc[3], const UINT32 
 				_mm_maskmoveu_si128(u4, mask2, (char*)&pU[4 * x + 48]);
 			}
 			{
-				const __m128i vU = _mm_loadu_si128((__m128i*)&pUaV[x]);
-				const __m128i vV = _mm_loadu_si128((__m128i*)&pVaV[x]);
+				const __m128i vU = _mm_loadu_si128((const __m128i*)&pUaV[x]);
+				const __m128i vV = _mm_loadu_si128((const __m128i*)&pVaV[x]);
 				const __m128i vHigh = _mm_unpackhi_epi8(vU, vV);
 				const __m128i vLow = _mm_unpacklo_epi8(vU, vV);
 				const __m128i v1 = _mm_shuffle_epi8(vLow, shuffle2);

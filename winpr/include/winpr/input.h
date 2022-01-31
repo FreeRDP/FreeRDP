@@ -870,7 +870,7 @@ extern "C"
 	 * Functions
 	 */
 
-	WINPR_API char* GetVirtualKeyName(DWORD vkcode);
+	WINPR_API const char* GetVirtualKeyName(DWORD vkcode);
 	WINPR_API DWORD GetVirtualKeyCodeFromName(const char* vkname);
 	WINPR_API DWORD GetVirtualKeyCodeFromXkbKeyName(const char* xkbname);
 

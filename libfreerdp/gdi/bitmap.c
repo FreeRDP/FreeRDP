@@ -52,14 +52,14 @@
  * @return pixel color
  */
 
-INLINE UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos)
+UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdc->selectedObject;
 	BYTE* data = &(hBmp->data[(nYPos * hBmp->scanline) + nXPos * GetBytesPerPixel(hBmp->format)]);
 	return ReadColor(data, hBmp->format);
 }
 
-INLINE BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
+BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
 {
 	UINT32 bpp = GetBytesPerPixel(hBmp->format);
 	return &hBmp->data[(Y * hBmp->width * bpp) + X * bpp];
@@ -82,7 +82,7 @@ static INLINE UINT32 gdi_SetPixelBmp(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y, UINT3
 	return crColor;
 }
 
-INLINE UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y, UINT32 crColor)
+UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y, UINT32 crColor)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdc->selectedObject;
 	return gdi_SetPixelBmp(hBmp, X, Y, crColor);
@@ -147,7 +147,8 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 	hBitmap->format = hdc->format;
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
-	hBitmap->data = _aligned_malloc(nWidth * nHeight * GetBytesPerPixel(hBitmap->format), 16);
+	hBitmap->data =
+	    _aligned_malloc(nWidth * nHeight * GetBytesPerPixel(hBitmap->format) * 1ULL, 16);
 	hBitmap->free = _aligned_free;
 
 	if (!hBitmap->data)
@@ -213,8 +214,8 @@ static BOOL op_xor(UINT32* stack, UINT32* stackp)
 
 static UINT32 process_rop(UINT32 src, UINT32 dst, UINT32 pat, const char* rop, UINT32 format)
 {
-	DWORD stack[10] = { 0 };
-	DWORD stackp = 0;
+	UINT32 stack[10] = { 0 };
+	UINT32 stackp = 0;
 
 	while (*rop != '\0')
 	{
@@ -281,7 +282,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 
 	if (!dstp)
 	{
-		WLog_ERR(TAG, "dstp=%p", (void*)dstp);
+		WLog_ERR(TAG, "dstp=%p", (const void*)dstp);
 		return FALSE;
 	}
 
@@ -293,7 +294,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 
 		if (!srcp)
 		{
-			WLog_ERR(TAG, "srcp=%p", (void*)srcp);
+			WLog_ERR(TAG, "srcp=%p", (const void*)srcp);
 			return FALSE;
 		}
 
@@ -316,7 +317,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 
 				if (!patp)
 				{
-					WLog_ERR(TAG, "patp=%p", (void*)patp);
+					WLog_ERR(TAG, "patp=%p", (const void*)patp);
 					return FALSE;
 				}
 

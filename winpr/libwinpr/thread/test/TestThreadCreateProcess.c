@@ -32,6 +32,9 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	int ret = 0;
 	SECURITY_ATTRIBUTES saAttr;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	lpszEnvironmentBlock = GetEnvironmentStrings();
 
 	lpApplicationName = NULL;

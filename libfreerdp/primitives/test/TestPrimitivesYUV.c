@@ -14,6 +14,8 @@
 
 #define TAG __FILE__
 
+#define PADDING_FILL_VALUE 0x37
+
 /* YUV to RGB conversion is lossy, so consider every value only
  * differing by less than 2 abs equal. */
 static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
@@ -35,10 +37,13 @@ static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 	return TRUE;
 }
 
-static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 format)
+static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 format, BOOL use444)
 {
 	size_t x;
 	const UINT32 bpp = GetBytesPerPixel(format);
+	BYTE fill = PADDING_FILL_VALUE;
+	if (!ColorHasAlpha(format))
+		fill = 0xFF;
 
 	for (x = 0; x < size; x++)
 	{
@@ -57,14 +62,16 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 		{
 			fprintf(
 			    stderr,
-			    "Color value  mismatch R[%02X %02X], G[%02X %02X], B[%02X %02X] at position %lu",
+			    "Color value  mismatch R[%02X %02X], G[%02X %02X], B[%02X %02X] at position %" PRIuz
+			    "\n",
 			    sR, dR, sG, dG, sA, dA, x);
 			return FALSE;
 		}
 
-		if (dA != 0xFF)
+		if (dA != fill)
 		{
-			fprintf(stderr, "Invalid destination alpha value %02X at position %lu", dA, x);
+			fprintf(stderr, "[%s] Invalid destination alpha value %02X at position %" PRIuz "\n",
+			        use444 ? "AVC444" : "AVC420", dA, x);
 			return FALSE;
 		}
 	}
@@ -141,7 +148,7 @@ static void* set_padding(size_t size, size_t padding)
 		return NULL;
 
 	memset(&src[0], 'A', halfPad);
-	memset(&src[halfPad], 0, size);
+	memset(&src[halfPad], PADDING_FILL_VALUE, size);
 	memset(&src[halfPad + size], 'A', halfPad);
 	psrc = &src[halfPad];
 
@@ -366,7 +373,7 @@ fail:
 
 static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 {
-	BOOL rc = FALSE;
+	BOOL res = FALSE;
 	UINT32 x, y;
 	UINT32 awidth, aheight;
 	BYTE* yuv[3] = { 0 };
@@ -448,6 +455,8 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 		pstatus_t rc;
 		const UINT32 DstFormat = formats[x];
 		printf("Testing destination color format %s\n", FreeRDPGetColorFormatName(DstFormat));
+		memset(rgb_dst, PADDING_FILL_VALUE, size * sizeof(UINT32));
+
 		PROFILER_CREATE(rgbToYUV420, "RGBToYUV420")
 		PROFILER_CREATE(rgbToYUV444, "RGBToYUV444")
 		PROFILER_CREATE(yuv420ToRGB, "YUV420ToRGB")
@@ -543,7 +552,7 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 			BYTE* srgb = &rgb[y * stride];
 			BYTE* drgb = &rgb_dst[y * stride];
 
-			if (!similarRGB(srgb, drgb, roi.width, DstFormat))
+			if (!similarRGB(srgb, drgb, roi.width, DstFormat, use444))
 				goto fail;
 		}
 
@@ -553,14 +562,14 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 		PROFILER_FREE(yuv444ToRGB)
 	}
 
-	rc = TRUE;
+	res = TRUE;
 fail:
 	free_padding(rgb, padding);
 	free_padding(rgb_dst, padding);
 	free_padding(yuv[0], padding);
 	free_padding(yuv[1], padding);
 	free_padding(yuv[2], padding);
-	return rc;
+	return res;
 }
 
 static BOOL allocate_yuv420(BYTE** planes, UINT32 width, UINT32 height, UINT32 padding)
@@ -660,7 +669,7 @@ static BOOL compare_yuv420(BYTE** planesA, BYTE** planesB, UINT32 width, UINT32 
 
 static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, UINT32 version)
 {
-	BOOL rc = FALSE;
+	BOOL res = FALSE;
 	UINT32 x, y, cnt;
 	UINT32 awidth, aheight;
 	BYTE* luma[3] = { 0 };
@@ -837,14 +846,14 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 			goto fail;
 	}
 
-	rc = TRUE;
+	res = TRUE;
 fail:
 	free_padding(rgb, padding);
 	free_yuv420(luma, padding);
 	free_yuv420(chroma, padding);
 	free_yuv420(lumaGeneric, padding);
 	free_yuv420(chromaGeneric, padding);
-	return rc;
+	return res;
 }
 
 int TestPrimitivesYUV(int argc, char* argv[])
@@ -852,18 +861,20 @@ int TestPrimitivesYUV(int argc, char* argv[])
 	BOOL large = (argc > 1);
 	UINT32 x;
 	int rc = -1;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	prim_test_setup(FALSE);
 	primitives_t* prims = primitives_get();
 
-	for (x = 0; x < 10; x++)
+	for (x = 0; x < 5; x++)
 	{
 		prim_size_t roi;
 
 		if (argc > 1)
 		{
-			int rc = sscanf(argv[1], "%" PRIu32 "x%" PRIu32, &roi.width, &roi.height);
+			int crc = sscanf(argv[1], "%" PRIu32 "x%" PRIu32, &roi.width, &roi.height);
 
-			if (rc != 2)
+			if (crc != 2)
 			{
 				roi.width = 1920;
 				roi.height = 1080;

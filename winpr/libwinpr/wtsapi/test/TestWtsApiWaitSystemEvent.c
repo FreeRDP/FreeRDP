@@ -11,6 +11,9 @@ int TestWtsApiWaitSystemEvent(int argc, char* argv[])
 	DWORD eventMask;
 	DWORD eventFlags;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 #ifndef _WIN32
 	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0))
 	{

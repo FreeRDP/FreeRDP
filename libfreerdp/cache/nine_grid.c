@@ -51,9 +51,7 @@ struct rdp_nine_grid_cache
 	NINE_GRID_ENTRY* entries; /* 18 */
 	UINT32 paddingB[32 - 19]; /* 19 */
 
-	/* internal */
-
-	rdpSettings* settings;
+	rdpContext* context;
 };
 
 static void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index);
@@ -117,21 +115,27 @@ void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry)
 	nine_grid->entries[index].entry = entry;
 }
 
-rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings)
+rdpNineGridCache* nine_grid_cache_new(rdpContext* context)
 {
 	rdpNineGridCache* nine_grid;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
 
 	nine_grid = (rdpNineGridCache*)calloc(1, sizeof(rdpNineGridCache));
 	if (!nine_grid)
 		return NULL;
 
-	nine_grid->settings = settings;
+	nine_grid->context = context;
 
 	nine_grid->maxSize = 2560;
 	nine_grid->maxEntries = 256;
 
-	nine_grid->settings->DrawNineGridCacheSize = nine_grid->maxSize;
-	nine_grid->settings->DrawNineGridCacheEntries = nine_grid->maxEntries;
+	settings->DrawNineGridCacheSize = nine_grid->maxSize;
+	settings->DrawNineGridCacheEntries = nine_grid->maxEntries;
 
 	nine_grid->entries = (NINE_GRID_ENTRY*)calloc(nine_grid->maxEntries, sizeof(NINE_GRID_ENTRY));
 	if (!nine_grid->entries)

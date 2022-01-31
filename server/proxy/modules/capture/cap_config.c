@@ -75,7 +75,7 @@ BOOL capture_plugin_init_config(captureConfig* config)
 			return FALSE;
 		}
 
-		config->port = port;
+		config->port = (UINT16)port;
 		free(tmp);
 	}
 	else

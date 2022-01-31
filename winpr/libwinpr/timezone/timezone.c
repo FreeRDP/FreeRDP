@@ -21,9 +21,11 @@
 #include "config.h"
 #endif
 
+#include <winpr/environment.h>
 #include <winpr/wtypes.h>
 #include <winpr/timezone.h>
 #include <winpr/crt.h>
+#include <winpr/file.h>
 #include "../log.h"
 
 #define TAG WINPR_TAG("timezone")
@@ -53,46 +55,56 @@ static UINT64 winpr_windows_gmtime(void)
 
 static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 {
-	INT64 length;
-	char* tzid = NULL;
+	const INT CHUNK_SIZE = 32;
+	INT64 rc, read = 0, length = CHUNK_SIZE;
+	char *tmp, *tzid = NULL;
 
-	if (_fseeki64(fp, 0, SEEK_END) != 0)
-		return NULL;
-
-	length = _ftelli64(fp);
-
-	if (_fseeki64(fp, 0, SEEK_SET) != 0)
-		return NULL;
-
-	if (length < 2)
-		return NULL;
-
-	tzid = (char*)malloc((size_t)length + 1);
-
+	tzid = (char*)malloc(length);
 	if (!tzid)
 		return NULL;
 
-	if (fread(tzid, (size_t)length, 1, fp) != 1)
+	do
+	{
+		rc = fread(tzid + read, 1, length - read - 1, fp);
+		read += rc;
+
+		if (read < (length - 1))
+			break;
+
+		length += CHUNK_SIZE;
+		tmp = (char*)realloc(tzid, length);
+		if (!tmp)
+		{
+			free(tzid);
+			return NULL;
+		}
+
+		tzid = tmp;
+	} while (rc > 0);
+
+	if (ferror(fp))
 	{
 		free(tzid);
 		return NULL;
 	}
 
-	tzid[length] = '\0';
-
-	if (tzid[length - 1] == '\n')
-		tzid[length - 1] = '\0';
+	tzid[read] = '\0';
+	if (tzid[read - 1] == '\n')
+		tzid[read - 1] = '\0';
 
 	return tzid;
 }
 
-static char* winpr_get_timezone_from_link(void)
+static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 {
-	const char* links[] = { "/etc/localtime", "/etc/TZ" };
+	const char* _links[] = { "/etc/localtime", "/etc/TZ" };
 	size_t x;
-	ssize_t len;
-	char buf[1024];
-	char* tzid = NULL;
+
+	if (links == NULL)
+	{
+		links = _links;
+		count = ARRAYSIZE(_links);
+	}
 
 	/*
 	 * On linux distros such as Redhat or Archlinux, a symlink at /etc/localtime
@@ -101,42 +113,53 @@ static char* winpr_get_timezone_from_link(void)
 	 * Some distributions do have to symlink at /etc/TZ.
 	 */
 
-	for (x = 0; x < sizeof(links) / sizeof(links[0]); x++)
+	for (x = 0; x < count; x++)
 	{
+		char* tzid = NULL;
 		const char* link = links[x];
+		char* buf = realpath(link, NULL);
 
-		if ((len = readlink(link, buf, sizeof(buf) - 1)) != -1)
+		if (buf)
 		{
-			int num = 0;
-			size_t alloc;
-			SSIZE_T pos = len;
-			buf[len] = '\0';
+			size_t i;
+			size_t sep = 0;
+			size_t alloc = 0;
+			size_t pos = 0;
+			size_t len = pos = strlen(buf);
 
 			/* find the position of the 2nd to last "/" */
-
-			while (num < 2)
+			for (i = 1; i <= len; i++)
 			{
-				if (pos == 0)
+				const size_t curpos = len - i;
+				const char cur = buf[curpos];
+
+				if (cur == '/')
+					sep++;
+				if (sep >= 2)
+				{
+					alloc = i;
+					pos = len - i + 1;
 					break;
-
-				pos -= 1;
-
-				if (buf[pos] == '/')
-					num++;
+				}
 			}
 
-			if ((len < 0) || (pos < 0) || (pos > len))
-				return NULL;
+			if ((len == 0) || (sep != 2))
+				goto end;
 
-			alloc = (size_t)len - (size_t)pos;
-			tzid = (char*)malloc(alloc + 1);
+			tzid = (char*)calloc(alloc + 1, sizeof(char));
 
 			if (!tzid)
-				return NULL;
+				goto end;
 
-			strncpy(tzid, buf + pos + 1, alloc);
-			return tzid;
+			strncpy(tzid, &buf[pos], alloc);
+			WLog_INFO(TAG, "winpr_get_timezone_from_link: tzid: %s", tzid);
+			goto end;
 		}
+
+	end:
+		free(buf);
+		if (tzid)
+			return tzid;
 	}
 
 	return NULL;
@@ -230,9 +253,9 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 	FILE* fp;
 	char* tzid = NULL;
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
-	fp = fopen("/var/db/zoneinfo", "r");
+	fp = winpr_fopen("/var/db/zoneinfo", "r");
 #else
-	fp = fopen("/etc/timezone", "r");
+	fp = winpr_fopen("/etc/timezone", "r");
 #endif
 
 	if (NULL == fp)
@@ -240,6 +263,8 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 
 	tzid = winpr_read_unix_timezone_identifier_from_file(fp);
 	fclose(fp);
+	if (tzid != NULL)
+		WLog_INFO(TAG, "winpr_get_unix_timezone_identifier_from_file: tzid: %s", tzid);
 	return tzid;
 #endif
 }
@@ -275,15 +300,46 @@ static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, con
 static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 {
 	size_t i, j;
-	char* tzid;
+	char *tzid = NULL, *ntzid = NULL;
+	LPCSTR tz = "TZ";
 
-	tzid = winpr_get_unix_timezone_identifier_from_file();
+	DWORD nSize = GetEnvironmentVariableA(tz, NULL, 0);
+	if (nSize)
+	{
+		tzid = (char*)malloc(nSize);
+		if (!GetEnvironmentVariableA(tz, tzid, nSize))
+		{
+			free(tzid);
+			tzid = NULL;
+		}
+	}
 
 	if (tzid == NULL)
-		tzid = winpr_get_timezone_from_link();
+		tzid = winpr_get_unix_timezone_identifier_from_file();
+
+	if (tzid == NULL)
+	{
+		tzid = winpr_get_timezone_from_link(NULL, 0);
+	}
+	else
+	{
+		const char* zipath = "/usr/share/zoneinfo/";
+		char buf[1024] = { 0 };
+		const char* links[] = { buf };
+
+		snprintf(buf, ARRAYSIZE(buf), "%s%s", zipath, tzid);
+		ntzid = winpr_get_timezone_from_link(links, 1);
+		if (ntzid != NULL)
+		{
+			free(tzid);
+			tzid = ntzid;
+		}
+	}
 
 	if (tzid == NULL)
 		return NULL;
+
+	WLog_INFO(TAG, "tzid: %s", tzid);
 
 	for (i = 0; i < TimeZoneTableNrElements; i++)
 	{
@@ -298,14 +354,14 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 
 			if (winpr_match_unix_timezone_identifier_with_list(tzid, wzid->tzid))
 			{
-				TIME_ZONE_ENTRY* timezone = (TIME_ZONE_ENTRY*)malloc(sizeof(TIME_ZONE_ENTRY));
+				TIME_ZONE_ENTRY* ctimezone = (TIME_ZONE_ENTRY*)malloc(sizeof(TIME_ZONE_ENTRY));
 				free(tzid);
 
-				if (!timezone)
+				if (!ctimezone)
 					return NULL;
 
-				*timezone = TimeZoneTable[i];
-				return timezone;
+				*ctimezone = TimeZoneTable[i];
+				return ctimezone;
 			}
 		}
 	}

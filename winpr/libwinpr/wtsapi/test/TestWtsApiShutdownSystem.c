@@ -9,6 +9,9 @@ int TestWtsApiShutdownSystem(int argc, char* argv[])
 	HANDLE hServer;
 	DWORD ShutdownFlag;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 #ifndef _WIN32
 	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0))
 	{

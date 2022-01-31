@@ -26,7 +26,6 @@
 #include <stdbool.h>
 #include <uwac/uwac.h>
 
-/** @brief */
 struct uwac_touch_point
 {
 	uint32_t id;
@@ -37,24 +36,8 @@ typedef struct uwac_touch_point UwacTouchPoint;
 struct uwac_touch_automata;
 typedef struct uwac_touch_automata UwacTouchAutomata;
 
-/**
- *
- * @param automata
- */
 UWAC_API void UwacTouchAutomataInit(UwacTouchAutomata* automata);
-
-/**
- *
- * @param automata
- */
 UWAC_API void UwacTouchAutomataReset(UwacTouchAutomata* automata);
-
-/**
- *
- * @param automata
- * @param event
- * @return
- */
 UWAC_API bool UwacTouchAutomataInjectEvent(UwacTouchAutomata* automata, UwacEvent* event);
 
 #endif /* UWAC_TOOLS_H_ */

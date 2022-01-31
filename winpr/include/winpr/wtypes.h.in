@@ -76,6 +76,11 @@ typedef LONG_PTR SSIZE_T;
 #define VOID void
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifndef _WIN32
 
 #define CALLBACK
@@ -162,7 +167,7 @@ typedef void* PVOID, *LPVOID, *PVOID64, *LPVOID64;
 typedef __int32 BOOL;
 #else /* __APPLE__ */
 /* ensure compatibility with objc libraries */
-#if (TARGET_OS_IPHONE && __LP64__)  ||  TARGET_OS_WATCH
+#if (defined(TARGET_OS_IPHONE) && defined(__LP64__))  || defined(TARGET_OS_WATCH)
 typedef bool BOOL;
 #else
 typedef signed char BOOL;
@@ -567,6 +572,10 @@ typedef const BYTE* LPCBYTE;
 #ifndef _WIN32
 #define _fseeki64(fp, offset, origin) fseeko(fp, offset, origin)
 #define _ftelli64(fp) ftello(fp)
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 #endif /* WINPR_WTYPES_H */

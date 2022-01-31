@@ -302,7 +302,7 @@ struct _XKB_KEYNAME
 };
 typedef struct _XKB_KEYNAME XKB_KEYNAME;
 
-XKB_KEYNAME XKB_KEYNAME_TABLE[] = {
+static XKB_KEYNAME XKB_KEYNAME_TABLE[] = {
 	{ "BKSP", VK_BACK },
 	{ "TAB", VK_TAB },
 	{ "RTRN", VK_RETURN },
@@ -421,12 +421,12 @@ XKB_KEYNAME XKB_KEYNAME_TABLE[] = {
 	//	{ "LVL3",	0x54}
 };
 
-char* GetVirtualKeyName(DWORD vkcode)
+const char* GetVirtualKeyName(DWORD vkcode)
 {
-	char* vkname = NULL;
+	const char* vkname = NULL;
 
 	if (vkcode < ARRAYSIZE(VIRTUAL_KEY_CODE_TABLE))
-		vkname = (char*)VIRTUAL_KEY_CODE_TABLE[vkcode].name;
+		vkname = VIRTUAL_KEY_CODE_TABLE[vkcode].name;
 
 	if (!vkname)
 		vkname = "VK_NONE";

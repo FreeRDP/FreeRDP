@@ -1,4 +1,4 @@
-.TH winpr-hash 1 2017-01-11 "@FREERDP_VERSION_FULL@" "FreeRDP"
+.TH winpr-hash 1 2017-01-11 "@WINPR_VERSION_FULL@" "FreeRDP"
 .SH NAME
 winpr-hash \- NTLM hashing tool
 .SH SYNOPSIS

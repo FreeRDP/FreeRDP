@@ -103,6 +103,7 @@ else()
 endif()
 
 set(${MODULE_PREFIX}_SUBMODULES
+    emu
     utils
     common
     gdi
@@ -114,6 +115,10 @@ set(${MODULE_PREFIX}_SUBMODULES
 foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
     add_subdirectory(${${MODULE_PREFIX}_SUBMODULE})
 endforeach()
+
+if (NOT WITH_DSP_FFMPEG AND NOT WITH_FAAC)
+    message(WARNING "Compiling without WITH_DSP_FFMPEG and WITH_FAAC, AAC encoder support disabled")
+endif ()
 
 ## cmake source properties are only seen by targets in the same CMakeLists.txt
 ## therefore primitives and codecs need to be defined here
@@ -211,19 +216,19 @@ if(FAAC_FOUND)
 endif()
 
 if(WITH_NEON)
-    set_source_files_properties(${CODEC_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon -Wno-unused-variable" )
+    check_symbol_exists("_M_AMD64"     ""  MSVC_ARM64)
+    check_symbol_exists("__aarch64__"  ""  ARCH_ARM64)
+
+    if (NOT MSVC_ARM64 AND NOT ARCH_ARM64)
+        set_source_files_properties(${CODEC_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon" )
+    endif()
+
     set(CODEC_SRCS ${CODEC_SRCS} ${CODEC_NEON_SRCS})
 endif()
 
 if(WITH_JPEG)
     freerdp_include_directory_add(${JPEG_INCLUDE_DIR})
     freerdp_library_add(${JPEG_LIBRARIES})
-endif()
-
-if(WITH_X264)
-    set(CODEC_SRCS ${CODEC_SRCS} codec/h264_x264.c)
-    freerdp_include_directory_add(${X264_INCLUDE_DIR})
-    freerdp_library_add(${X264_LIBRARIES})
 endif()
 
 if(WITH_OPENH264)
@@ -242,6 +247,10 @@ endif()
 
 if(WIN32 AND WITH_MEDIA_FOUNDATION)
     set(CODEC_SRCS ${CODEC_SRCS} codec/h264_mf.c)
+endif()
+
+if(ANDROID AND WITH_MEDIACODEC)
+    list(APPEND CODEC_SRCS codec/h264_mediacodec.c)
 endif()
 
 freerdp_module_add(${CODEC_SRCS})
@@ -368,10 +377,10 @@ if (WIN32)
   set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
   set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
   set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
-  set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+  set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${FREERDP_API_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
 
   configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
     ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     @ONLY)
 
@@ -388,10 +397,17 @@ if (WITH_LIBRARY_VERSIONING)
     set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
 endif()
 
+if (MINGW)
+	freerdp_library_add(ucrt)
+endif()
 
-target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${LIBFREERDP_LIBS} winpr)
+target_link_libraries(${MODULE_NAME} PRIVATE ${LIBFREERDP_LIBS} winpr)
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
+install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT FreeRDPTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
     get_target_property(OUTPUT_FILENAME ${MODULE_NAME} OUTPUT_NAME)
     install(FILES ${CMAKE_PDB_BINARY_DIR}/${OUTPUT_FILENAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
@@ -403,22 +419,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp${FREERDP_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 ## cmake project
-if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
+export(PACKAGE freerdp)
 
-    export(PACKAGE freerdp)
+SetFreeRDPCMakeInstallDir(FREERDP_CMAKE_INSTALL_DIR "FreeRDP${FREERDP_VERSION_MAJOR}")
 
-    SetFreeRDPCMakeInstallDir(FREERDP_CMAKE_INSTALL_DIR "FreeRDP${FREERDP_VERSION_MAJOR}")
+configure_package_config_file(FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
+INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR}
+PATH_VARS FREERDP_INCLUDE_DIR)
 
-    configure_package_config_file(FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
-        INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR}
-        PATH_VARS FREERDP_INCLUDE_DIR)
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
+VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
 
-    write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
-        VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
+DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
 
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
-        DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
-
-    install(EXPORT FreeRDPTargets DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
-
-endif()
+install(EXPORT FreeRDPTargets DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})

@@ -22,7 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
-
+#include <winpr/assert.h>
 #include <winpr/cmdline.h>
 
 #include "../log.h"
@@ -422,9 +422,13 @@ int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options)
 	return 0;
 }
 
-COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(COMMAND_LINE_ARGUMENT_A* options, LPCSTR Name)
+const COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(const COMMAND_LINE_ARGUMENT_A* options,
+                                                        LPCSTR Name)
 {
-	int i;
+	size_t i;
+
+	WINPR_ASSERT(options);
+	WINPR_ASSERT(Name);
 
 	for (i = 0; options[i].Name != NULL; i++)
 	{
@@ -441,9 +445,13 @@ COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(COMMAND_LINE_ARGUMENT_A* optio
 	return NULL;
 }
 
-COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* options, LPCWSTR Name)
+const COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(const COMMAND_LINE_ARGUMENT_W* options,
+                                                        LPCWSTR Name)
 {
-	int i;
+	size_t i;
+
+	WINPR_ASSERT(options);
+	WINPR_ASSERT(Name);
 
 	for (i = 0; options[i].Name != NULL; i++)
 	{
@@ -460,9 +468,9 @@ COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* optio
 	return NULL;
 }
 
-COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* argument)
+const COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(const COMMAND_LINE_ARGUMENT_A* argument)
 {
-	COMMAND_LINE_ARGUMENT_A* nextArgument;
+	const COMMAND_LINE_ARGUMENT_A* nextArgument;
 
 	if (!argument || !argument->Name)
 		return NULL;
@@ -482,7 +490,7 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 	size_t nArgs;
 	size_t index;
 	size_t nCommas;
-	size_t prefix, len;
+	size_t prefix, len, namelen = 0;
 	nCommas = 0;
 
 	if (count == NULL)
@@ -490,18 +498,18 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 
 	*count = 0;
 
-	if (!list)
+	if (!list || strlen(list) == 0)
 	{
 		if (name)
 		{
-			size_t len = strlen(name);
-			p = (char**)calloc(2UL + len, sizeof(char*));
+			size_t clen = strlen(name);
+			p = (char**)calloc(2UL + clen, sizeof(char*));
 
 			if (p)
 			{
 				char* dst = (char*)&p[1];
 				p[0] = dst;
-				sprintf_s(dst, len + 1, "%s", name);
+				sprintf_s(dst, clen + 1, "%s", name);
 				*count = 1;
 				return p;
 			}
@@ -527,7 +535,9 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 
 	prefix = (nArgs + 1UL) * sizeof(char*);
 	len = strlen(list);
-	p = (char**)calloc(len + prefix + 1, sizeof(char*));
+	if (name)
+		namelen = strlen(name);
+	p = (char**)calloc(len + prefix + 1 + namelen + 1, sizeof(char*));
 
 	if (!p)
 		return NULL;
@@ -536,7 +546,12 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 	memcpy(str, list, len);
 
 	if (name)
-		p[0] = (char*)name;
+	{
+		char* namestr = &((char*)p)[prefix + len + 1];
+		memcpy(namestr, name, namelen);
+
+		p[0] = namestr;
+	}
 
 	for (index = name ? 1 : 0; index < nArgs; index++)
 	{
@@ -557,4 +572,59 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count)
 {
 	return CommandLineParseCommaSeparatedValuesEx(NULL, list, count);
+}
+
+char* CommandLineToCommaSeparatedValues(int argc, char* argv[])
+{
+	return CommandLineToCommaSeparatedValuesEx(argc, argv, NULL, 0);
+}
+
+static const char* filtered(const char* arg, const char* filters[], size_t number)
+{
+	size_t x;
+	if (number == 0)
+		return arg;
+	for (x = 0; x < number; x++)
+	{
+		const char* filter = filters[x];
+		size_t len = strlen(filter);
+		if (_strnicmp(arg, filter, len) == 0)
+			return &arg[len];
+	}
+	return NULL;
+}
+
+char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[], const char* filters[],
+                                          size_t number)
+{
+	int x;
+	char* str = NULL;
+	size_t offset = 0;
+	size_t size = argc + 1;
+	if ((argc <= 0) || !argv)
+		return NULL;
+
+	for (x = 0; x < argc; x++)
+		size += strlen(argv[x]);
+
+	str = calloc(size, sizeof(char));
+	if (!str)
+		return NULL;
+	for (x = 0; x < argc; x++)
+	{
+		int rc;
+		const char* arg = filtered(argv[x], filters, number);
+		if (!arg)
+			continue;
+		rc = _snprintf(&str[offset], size - offset, "%s,", arg);
+		if (rc <= 0)
+		{
+			free(str);
+			return NULL;
+		}
+		offset += (size_t)rc;
+	}
+	if (offset > 0)
+		str[offset - 1] = '\0';
+	return str;
 }

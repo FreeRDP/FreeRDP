@@ -5,6 +5,7 @@ set(MODULE_PREFIX "TEST_COMMON")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
+    TestAddinArgv.c
 	TestCommonAssistance.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

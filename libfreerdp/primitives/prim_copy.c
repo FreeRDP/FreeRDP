@@ -60,14 +60,14 @@ static BOOL memory_regions_overlap_2d(const BYTE* p1, int p1Step, int p1Size, co
 
 	if (p1m <= p2m)
 	{
-		ULONG_PTR p1mEnd = p1m + (height - 1) * p1Step + width * p1Size;
+		ULONG_PTR p1mEnd = p1m + (height - 1) * p1Step * 1ULL + width * p1Size * 1ULL;
 
 		if (p1mEnd > p2m)
 			return TRUE;
 	}
 	else
 	{
-		ULONG_PTR p2mEnd = p2m + (height - 1) * p2Step + width * p2Size;
+		ULONG_PTR p2mEnd = p2m + (height - 1) * p2Step * 1ULL + width * p2Size * 1ULL;
 
 		if (p2mEnd > p1m)
 			return TRUE;

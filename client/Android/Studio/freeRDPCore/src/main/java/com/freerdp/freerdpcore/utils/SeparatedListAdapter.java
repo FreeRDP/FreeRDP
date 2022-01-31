@@ -27,12 +27,12 @@ public class SeparatedListAdapter extends BaseAdapter
 {
 
 	public final static int TYPE_SECTION_HEADER = 0;
-	public final Map<String, Adapter> sections = new LinkedHashMap<String, Adapter>();
+	public final Map<String, Adapter> sections = new LinkedHashMap<>();
 	public final ArrayAdapter<String> headers;
 
 	public SeparatedListAdapter(Context context)
 	{
-		headers = new ArrayAdapter<String>(context, R.layout.list_header);
+		headers = new ArrayAdapter<>(context, R.layout.list_header);
 	}
 
 	public void addSection(String section, Adapter adapter)
@@ -197,7 +197,7 @@ public class SeparatedListAdapter extends BaseAdapter
 
 				// check if position inside this section
 				if (position >= curPos && position < (curPos + size))
-					return section.toString();
+					return section;
 
 				// otherwise jump into next section
 				curPos += size;

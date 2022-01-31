@@ -2,8 +2,6 @@
 # Generate .txt license file for CPack (PackageMaker requires a file extension)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LICENSE ${CMAKE_CURRENT_BINARY_DIR}/LICENSE.txt @ONLY)
 
-SET(CPACK_BINARY_ZIP "ON")
-
 # Workaround to remove c++ compiler macros and defines for Eclipse.
 # If c++ macros/defines are set __cplusplus is also set which causes
 # problems when compiling freerdp/jni. To prevent this problem we set the macros to "".
@@ -56,9 +54,9 @@ set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE.txt")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE.txt")
 
 set(CPACK_NSIS_MODIFY_PATH ON)
-set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Install.bmp")
-set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Icon_96px.ico")
-set(CPACK_NSIS_MUI_UNICON "${CMAKE_SOURCE_DIR}/resource\\\\FreeRDP_Icon_96px.ico")
+set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}/resources\\\\FreeRDP_Install.bmp")
+set(CPACK_NSIS_MUI_ICON "${PROJECT_SOURCE_DIR}/resources\\\\FreeRDP_Icon_96px.ico")
+set(CPACK_NSIS_MUI_UNICON "${PROJECT_SOURCE_DIR}/resource\\\\FreeRDP_Icon_96px.ico")
 
 set(CPACK_COMPONENTS_ALL client server libraries headers symbols tools)
 
@@ -95,8 +93,8 @@ set(CPACK_COMPONENT_GROUP_RUNTIME_DESCRIPTION "Runtime")
 set(CPACK_COMPONENT_GROUP_APPLICATIONS_DESCRIPTION "Applications")
 set(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "Development")
 
-configure_file("${CMAKE_SOURCE_DIR}/CMakeCPackOptions.cmake.in"
-	"${CMAKE_BINARY_DIR}/CMakeCPackOptions.cmake" @ONLY)
-set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/CMakeCPackOptions.cmake")
+configure_file("${PROJECT_SOURCE_DIR}/CMakeCPackOptions.cmake.in"
+	"${PROJECT_BINARY_DIR}/CMakeCPackOptions.cmake" @ONLY)
+set(CPACK_PROJECT_CONFIG_FILE "${PROJECT_BINARY_DIR}/CMakeCPackOptions.cmake")
 
 include(CPack)

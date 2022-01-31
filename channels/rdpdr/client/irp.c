@@ -31,6 +31,8 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+#include <freerdp/utils/rdpdr_utils.h>
+
 #include "rdpdr_main.h"
 #include "devman.h"
 #include "irp.h"
@@ -73,7 +75,8 @@ static UINT irp_complete(IRP* irp)
 	error = rdpdr_send(rdpdr, irp->output);
 	irp->output = NULL;
 
-	return irp_free(irp);
+	irp_free(irp);
+	return error;
 }
 
 IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
@@ -99,7 +102,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 			*error = CHANNEL_RC_OK;
 
 		return NULL;
-	};
+	}
 
 	irp = (IRP*)_aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
 
@@ -131,11 +134,15 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 			*error = CHANNEL_RC_NO_MEMORY;
 		return NULL;
 	}
-	Stream_Write_UINT16(irp->output, RDPDR_CTYP_CORE);                /* Component (2 bytes) */
-	Stream_Write_UINT16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION); /* PacketId (2 bytes) */
-	Stream_Write_UINT32(irp->output, DeviceId);                       /* DeviceId (4 bytes) */
-	Stream_Write_UINT32(irp->output, irp->CompletionId);              /* CompletionId (4 bytes) */
-	Stream_Write_UINT32(irp->output, 0);                              /* IoStatus (4 bytes) */
+
+	if (!rdpdr_write_iocompletion_header(irp->output, DeviceId, irp->CompletionId, 0))
+	{
+		Stream_Free(irp->output, TRUE);
+		_aligned_free(irp);
+		if (error)
+			*error = CHANNEL_RC_NO_MEMORY;
+		return NULL;
+	}
 
 	irp->Complete = irp_complete;
 	irp->Discard = irp_free;

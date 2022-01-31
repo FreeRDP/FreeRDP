@@ -86,7 +86,7 @@ public class FreeRDPSuggestionProvider extends ContentProvider
 		Object[] row = new Object[5];
 		for (BookmarkBase bookmark : bookmarks)
 		{
-			row[0] = new Long(bookmark.getId());
+			row[0] = bookmark.getId();
 			row[1] = bookmark.getLabel();
 			row[2] = bookmark.<ManualBookmark>get().getHostname();
 			row[3] = ConnectionReference.getManualBookmarkReference(bookmark.getId());
@@ -101,7 +101,7 @@ public class FreeRDPSuggestionProvider extends ContentProvider
 		Object[] row = new Object[5];
 		for (BookmarkBase bookmark : history)
 		{
-			row[0] = new Integer(1);
+			row[0] = 1;
 			row[1] = bookmark.getLabel();
 			row[2] = bookmark.getLabel();
 			row[3] = ConnectionReference.getHostnameReference(bookmark.getLabel());

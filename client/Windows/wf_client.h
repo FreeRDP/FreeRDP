@@ -26,6 +26,10 @@
 
 #include <winpr/collections.h>
 
+#ifdef WITH_PROGRESS_BAR
+#include <shobjidl.h>
+#endif
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
@@ -98,6 +102,8 @@ extern "C"
 		HCURSOR hDefaultCursor;
 
 		HWND hwnd;
+		BOOL is_shown;
+		ITaskbarList3* taskBarList;
 		POINT diff;
 
 		wfBitmap* primary;
@@ -134,6 +140,10 @@ extern "C"
 		RailClientContext* rail;
 		wHashTable* railWindows;
 		BOOL isConsole;
+
+		DispClientContext* disp;
+		UINT64 lastSentDate;
+		BOOL wasMaximized;
 	};
 
 	/**

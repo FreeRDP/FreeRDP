@@ -38,11 +38,9 @@ struct cliprdr_plugin
 	CliprdrClientContext* context;
 
 	wLog* log;
-	HANDLE thread;
-	wStream* data_in;
 	void* InitHandle;
 	DWORD OpenHandle;
-	wMessageQueue* queue;
+	void* MsgsHandle;
 
 	BOOL capabilitiesReceived;
 	BOOL useLongFormatNames;

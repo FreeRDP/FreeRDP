@@ -32,7 +32,7 @@
 #include <windows.h>
 #include <winuser.h>
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
@@ -636,7 +636,7 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(IDataObject* This, FO
 	}
 	else if (instance->m_pFormatEtc[idx].cfFormat == RegisterClipboardFormat(CFSTR_FILECONTENTS))
 	{
-		if (pFormatEtc->lindex < instance->m_nStreams)
+		if ((pFormatEtc->lindex >= 0) && ((ULONG)pFormatEtc->lindex < instance->m_nStreams))
 		{
 			pMedium->pstm = instance->m_pStream[pFormatEtc->lindex];
 			IDataObject_AddRef(instance->m_pStream[pFormatEtc->lindex]);
@@ -749,7 +749,6 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_EnumDAdvise(IDataObject* This
 static CliprdrDataObject* CliprdrDataObject_New(FORMATETC* fmtetc, STGMEDIUM* stgmed, ULONG count,
                                                 void* data)
 {
-	int i;
 	CliprdrDataObject* instance;
 	IDataObject* iDataObject;
 	instance = (CliprdrDataObject*)calloc(1, sizeof(CliprdrDataObject));
@@ -783,6 +782,7 @@ static CliprdrDataObject* CliprdrDataObject_New(FORMATETC* fmtetc, STGMEDIUM* st
 
 	if (count > 0)
 	{
+		ULONG i;
 		instance->m_pFormatEtc = (FORMATETC*)calloc(count, sizeof(FORMATETC));
 
 		if (!instance->m_pFormatEtc)
@@ -1300,12 +1300,15 @@ static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 static UINT cliprdr_send_data_request(wfClipboard* clipboard, UINT32 formatId)
 {
 	UINT rc;
+	UINT32 remoteFormatId;
 	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest;
 
 	if (!clipboard || !clipboard->context || !clipboard->context->ClientFormatDataRequest)
 		return ERROR_INTERNAL_ERROR;
 
-	formatDataRequest.requestedFormatId = formatId;
+	remoteFormatId = get_remote_format_id(clipboard, formatId);
+
+	formatDataRequest.requestedFormatId = remoteFormatId;
 	clipboard->requestedFormatId = formatId;
 	rc = clipboard->context->ClientFormatDataRequest(clipboard->context, &formatDataRequest);
 
@@ -1327,7 +1330,7 @@ UINT cliprdr_send_request_filecontents(wfClipboard* clipboard, const void* strea
 	if (!clipboard || !clipboard->context || !clipboard->context->ClientFileContentsRequest)
 		return ERROR_INTERNAL_ERROR;
 
-	fileContentsRequest.streamId = (UINT32)streamid;
+	fileContentsRequest.streamId = (UINT32)(ULONG_PTR)streamid;
 	fileContentsRequest.listIndex = index;
 	fileContentsRequest.dwFlags = flag;
 	fileContentsRequest.nPositionLow = positionlow;
@@ -2360,6 +2363,8 @@ wf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 	{
 		if (fileContentsRequest->dwFlags == FILECONTENTS_SIZE)
 		{
+			if (clipboard->nFiles <= fileContentsRequest->listIndex)
+				goto error;
 			*((UINT32*)&pData[0]) =
 			    clipboard->fileDescriptor[fileContentsRequest->listIndex]->nFileSizeLow;
 			*((UINT32*)&pData[4]) =
@@ -2369,6 +2374,8 @@ wf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 		else if (fileContentsRequest->dwFlags == FILECONTENTS_RANGE)
 		{
 			BOOL bRet;
+			if (clipboard->nFiles <= fileContentsRequest->listIndex)
+				goto error;
 			bRet = wf_cliprdr_get_file_contents(
 			    clipboard->file_names[fileContentsRequest->listIndex], pData,
 			    fileContentsRequest->nPositionLow, fileContentsRequest->nPositionHigh, cbRequested,

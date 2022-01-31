@@ -1,13 +1,13 @@
-# - Find XRANDR
-# Find the XRANDR libraries
+# - Find XRandR
+# Find the XRandR libraries
 #
 #  This module defines the following variables:
-#     XRANDR_FOUND        - true if XRANDR_INCLUDE_DIR & XRANDR_LIBRARY are found
-#     XRANDR_LIBRARIES    - Set when XRANDR_LIBRARY is found
-#     XRANDR_INCLUDE_DIRS - Set when XRANDR_INCLUDE_DIR is found
+#     XRandR_FOUND        - true if XRANDR_INCLUDE_DIR & XRANDR_LIBRARY are found
+#     XRandR_LIBRARIES    - Set when XRANDR_LIBRARY is found
+#     XRandR_INCLUDE_DIRS - Set when XRANDR_INCLUDE_DIR is found
 #
-#     XRANDR_INCLUDE_DIR  - where to find Xrandr.h, etc.
-#     XRANDR_LIBRARY      - the XRANDR library
+#     XRandR_INCLUDE_DIR  - where to find Xrandr.h, etc.
+#     XRandR_LIBRARY      - the XRANDR library
 #
 
 #=============================================================================
@@ -26,24 +26,24 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(XRANDR_INCLUDE_DIR NAMES X11/extensions/Xrandr.h
+find_path(XRandR_INCLUDE_DIR NAMES X11/extensions/Xrandr.h
           PATH_SUFFIXES X11/extensions
           PATHS /opt/X11/include
-          DOC "The XRANDR include directory"
+		  DOC "The XRandR include directory"
 )
 
-find_library(XRANDR_LIBRARY NAMES Xrandr
+find_library(XRandR_LIBRARY NAMES Xrandr
           PATHS /opt/X11/lib
-          DOC "The XRANDR library"
+		  DOC "The XRandR library"
 )
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(XRANDR DEFAULT_MSG XRANDR_LIBRARY XRANDR_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(XRandR DEFAULT_MSG XRandR_LIBRARY XRandR_INCLUDE_DIR)
 
-if(XRANDR_FOUND)
-  set( XRANDR_LIBRARIES ${XRANDR_LIBRARY} )
-  set( XRANDR_INCLUDE_DIRS ${XRANDR_INCLUDE_DIR} )
+if(XRandR_FOUND)
+  set( XRandR_LIBRARIES ${XRandR_LIBRARY} )
+  set( XRandR_INCLUDE_DIRS ${XRandR_INCLUDE_DIR} )
 endif()
 
-mark_as_advanced(XRANDR_INCLUDE_DIR XRANDR_LIBRARY)
+mark_as_advanced(XRandR_INCLUDE_DIR XRandR_LIBRARY)
 

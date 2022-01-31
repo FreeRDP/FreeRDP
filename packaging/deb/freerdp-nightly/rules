@@ -19,12 +19,15 @@ DEB_CMAKE_EXTRA_FLAGS :=  -DCMAKE_SKIP_RPATH=FALSE \
                           -DCHANNEL_URBDRC=ON \
                           -DCHANNEL_URBDRC_CLIENT=ON \
                           -DWITH_SERVER=ON \
+                          -DWITH_WAYLAND=ON \
                           -DWITH_CAIRO=ON \
+                          -DWITH_CCACHE=OFF \
                           -DBUILD_TESTING=OFF \
                           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
                           -DCMAKE_INSTALL_PREFIX=/opt/freerdp-nightly/ \
                           -DCMAKE_INSTALL_INCLUDEDIR=include \
                           -DCMAKE_INSTALL_LIBDIR=lib \
+                          -DNO_CMAKE_PACKAGE_REGISTRY=ON \
                           $(SANATIZE_ADDRESS) \
                           $(NULL)
 
@@ -42,7 +45,7 @@ override_dh_strip:
 
 override_dh_install:
 	mkdir -p debian/tmp/opt/freerdp-nightly/lib/cmake/
-	rm -rf debian/tmp/opt/freerdp-nightly/lib/freerdp2/*.a
+	rm -rf debian/tmp/opt/freerdp-nightly/lib/freerdp3/*.a
 
 	dh_install --fail-missing
 

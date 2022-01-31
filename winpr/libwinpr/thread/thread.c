@@ -4,6 +4,8 @@
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2015 Hewlett-Packard Development Company, L.P.
+ * Copyright 2021 David Fort <contact@hardening-consulting.com>
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +24,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <winpr/handle.h>
 
@@ -89,12 +91,17 @@
 #include <winpr/collections.h>
 
 #include "thread.h"
+#include "apc.h"
 
 #include "../handle/handle.h"
 #include "../log.h"
 #define TAG WINPR_TAG("thread")
 
+static WINPR_THREAD mainThread;
+
+#if defined(WITH_THREAD_LIST)
 static wListDictionary* thread_list = NULL;
+#endif
 
 static BOOL ThreadCloseHandle(HANDLE handle);
 static void cleanup_handle(void* obj);
@@ -119,7 +126,7 @@ static int ThreadGetFd(HANDLE handle)
 	if (!ThreadIsHandled(handle))
 		return -1;
 
-	return pThread->pipe_fd[0];
+	return pThread->event.fds[0];
 }
 
 static DWORD ThreadCleanupHandle(HANDLE handle)
@@ -214,7 +221,8 @@ static void dump_thread(WINPR_THREAD* thread)
 
 		free(msg);
 	}
-
+#else
+	WINPR_UNUSED(thread);
 #endif
 }
 
@@ -224,60 +232,15 @@ static void dump_thread(WINPR_THREAD* thread)
  */
 static BOOL set_event(WINPR_THREAD* thread)
 {
-	int length;
-	BOOL status = FALSE;
-#ifdef HAVE_SYS_EVENTFD_H
-	eventfd_t val = 1;
-
-	do
-	{
-		length = eventfd_write(thread->pipe_fd[0], val);
-	} while ((length < 0) && (errno == EINTR));
-
-	status = (length == 0) ? TRUE : FALSE;
-#else
-
-	if (WaitForSingleObject(thread, 0) != WAIT_OBJECT_0)
-	{
-		length = write(thread->pipe_fd[1], "-", 1);
-
-		if (length == 1)
-			status = TRUE;
-	}
-	else
-	{
-		status = TRUE;
-	}
-
-#endif
-	return status;
+	return winpr_event_set(&thread->event);
 }
 
 static BOOL reset_event(WINPR_THREAD* thread)
 {
-	int length;
-	BOOL status = FALSE;
-#ifdef HAVE_SYS_EVENTFD_H
-	eventfd_t value;
-
-	do
-	{
-		length = eventfd_read(thread->pipe_fd[0], &value);
-	} while ((length < 0) && (errno == EINTR));
-
-	if ((length > 0) && (!status))
-		status = TRUE;
-
-#else
-	length = read(thread->pipe_fd[0], &length, 1);
-
-	if ((length == 1) && (!status))
-		status = TRUE;
-
-#endif
-	return status;
+	return winpr_event_reset(&thread->event);
 }
 
+#if defined(WITH_THREAD_LIST)
 static BOOL thread_compare(const void* a, const void* b)
 {
 	const pthread_t* p1 = a;
@@ -285,12 +248,51 @@ static BOOL thread_compare(const void* a, const void* b)
 	BOOL rc = pthread_equal(*p1, *p2);
 	return rc;
 }
+#endif
+
+static INIT_ONCE threads_InitOnce = INIT_ONCE_STATIC_INIT;
+static pthread_t mainThreadId;
+static DWORD currentThreadTlsIndex = TLS_OUT_OF_INDEXES;
+
+static BOOL initializeThreads(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
+{
+	if (!apc_init(&mainThread.apc))
+	{
+		WLog_ERR(TAG, "failed to initialize APC");
+		goto out;
+	}
+
+	mainThread.Type = HANDLE_TYPE_THREAD;
+	mainThreadId = pthread_self();
+
+	currentThreadTlsIndex = TlsAlloc();
+	if (currentThreadTlsIndex == TLS_OUT_OF_INDEXES)
+	{
+		WLog_ERR(TAG, "Major bug, unable to allocate a TLS value for currentThread");
+	}
+
+#if defined(WITH_THREAD_LIST)
+	thread_list = ListDictionary_New(TRUE);
+
+	if (!thread_list)
+	{
+		WLog_ERR(TAG, "Couldn't create global thread list");
+		goto error_thread_list;
+	}
+
+	thread_list->objectKey.fnObjectEquals = thread_compare;
+#endif
+
+out:
+	return TRUE;
+}
 
 /* Thread launcher function responsible for registering
  * cleanup handlers and calling pthread_exit, if not done
  * in thread function. */
 static void* thread_launcher(void* arg)
 {
+	struct timespec waittime = { 1, 0 };
 	DWORD rc = 0;
 	WINPR_THREAD* thread = (WINPR_THREAD*)arg;
 	LPTHREAD_START_ROUTINE fkt;
@@ -298,6 +300,12 @@ static void* thread_launcher(void* arg)
 	if (!thread)
 	{
 		WLog_ERR(TAG, "Called with invalid argument %p", arg);
+		goto exit;
+	}
+
+	if (!TlsSetValue(currentThreadTlsIndex, thread))
+	{
+		WLog_ERR(TAG, "thread %d, unable to set current thread value", pthread_self());
 		goto exit;
 	}
 
@@ -310,30 +318,39 @@ static void* thread_launcher(void* arg)
 	if (pthread_mutex_lock(&thread->threadIsReadyMutex))
 		goto exit;
 
+	if (pthread_cond_signal(&thread->threadReady) != 0)
+	{
+		WLog_ERR(TAG, "The thread could not be made ready");
+		pthread_mutex_unlock(&thread->threadIsReadyMutex);
+		goto exit;
+	}
+	pthread_cond_timedwait(&thread->threadIsReady, &thread->threadIsReadyMutex, &waittime);
+
+#if defined(WITH_THREAD_LIST)
 	if (!ListDictionary_Contains(thread_list, &thread->thread))
 	{
-		if (pthread_cond_wait(&thread->threadIsReady, &thread->threadIsReadyMutex) != 0)
-		{
-			WLog_ERR(TAG, "The thread could not be made ready");
-			pthread_mutex_unlock(&thread->threadIsReadyMutex);
-			goto exit;
-		}
+		WLog_ERR(TAG, "Thread not in thread_list, startup failed!");
+		pthread_mutex_unlock(&thread->threadIsReadyMutex);
+		goto exit;
 	}
+#endif
 
 	if (pthread_mutex_unlock(&thread->threadIsReadyMutex))
 		goto exit;
 
-	assert(ListDictionary_Contains(thread_list, &thread->thread));
 	rc = fkt(thread->lpParameter);
 exit:
 
 	if (thread)
 	{
+		apc_cleanupThread(thread);
+
 		if (!thread->exited)
 			thread->dwExitCode = rc;
 
 		set_event(thread);
 
+		pthread_cond_signal(&thread->threadReady);
 		if (thread->detached || !thread->started)
 			cleanup_handle(thread);
 	}
@@ -343,6 +360,7 @@ exit:
 
 static BOOL winpr_StartThread(WINPR_THREAD* thread)
 {
+	struct timespec waittime = { 1, 0 };
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -353,28 +371,34 @@ static BOOL winpr_StartThread(WINPR_THREAD* thread)
 	thread->started = TRUE;
 	reset_event(thread);
 
-	if (pthread_create(&thread->thread, &attr, thread_launcher, thread))
+	if (pthread_mutex_lock(&thread->threadReadyMutex))
 		goto error;
 
-	if (pthread_mutex_lock(&thread->threadIsReadyMutex))
-		goto error;
-
+#if defined(WITH_THREAD_LIST)
 	if (!ListDictionary_Add(thread_list, &thread->thread, thread))
 	{
 		WLog_ERR(TAG, "failed to add the thread to the thread list");
-		pthread_mutex_unlock(&thread->threadIsReadyMutex);
+		pthread_mutex_unlock(&thread->threadReadyMutex);
 		goto error;
 	}
+#endif
+
+	if (pthread_create(&thread->thread, &attr, thread_launcher, thread))
+	{
+		pthread_mutex_unlock(&thread->threadReadyMutex);
+		goto error;
+	}
+
+	pthread_cond_timedwait(&thread->threadReady, &thread->threadReadyMutex, &waittime);
+
+	if (pthread_mutex_unlock(&thread->threadReadyMutex))
+		goto error;
 
 	if (pthread_cond_signal(&thread->threadIsReady) != 0)
 	{
 		WLog_ERR(TAG, "failed to signal the thread was ready");
-		pthread_mutex_unlock(&thread->threadIsReadyMutex);
 		goto error;
 	}
-
-	if (pthread_mutex_unlock(&thread->threadIsReadyMutex))
-		goto error;
 
 	pthread_attr_destroy(&attr);
 	dump_thread(thread);
@@ -389,8 +413,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
                     DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
 	HANDLE handle;
-	WINPR_THREAD* thread;
-	thread = (WINPR_THREAD*)calloc(1, sizeof(WINPR_THREAD));
+	WINPR_THREAD* thread = (WINPR_THREAD*)calloc(1, sizeof(WINPR_THREAD));
 
 	if (!thread)
 		return NULL;
@@ -404,94 +427,67 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	thread->create_stack = winpr_backtrace(20);
 	dump_thread(thread);
 #endif
-	thread->pipe_fd[0] = -1;
-	thread->pipe_fd[1] = -1;
-#ifdef HAVE_SYS_EVENTFD_H
-	thread->pipe_fd[0] = eventfd(0, EFD_NONBLOCK);
 
-	if (thread->pipe_fd[0] < 0)
+	if (!winpr_event_init(&thread->event))
 	{
-		WLog_ERR(TAG, "failed to create thread pipe fd 0");
-		goto error_pipefd0;
+		WLog_ERR(TAG, "failed to create event");
+		goto fail;
 	}
 
-#else
-
-	if (pipe(thread->pipe_fd) < 0)
-	{
-		WLog_ERR(TAG, "failed to create thread pipe");
-		goto error_pipefd0;
-	}
-
-	{
-		int flags = fcntl(thread->pipe_fd[0], F_GETFL);
-		fcntl(thread->pipe_fd[0], F_SETFL, flags | O_NONBLOCK);
-	}
-
-#endif
-
-	if (pthread_mutex_init(&thread->mutex, 0) != 0)
+	if (pthread_mutex_init(&thread->mutex, NULL) != 0)
 	{
 		WLog_ERR(TAG, "failed to initialize thread mutex");
-		goto error_mutex;
+		goto fail;
+	}
+
+	if (!apc_init(&thread->apc))
+	{
+		WLog_ERR(TAG, "failed to initialize APC");
+		goto fail;
 	}
 
 	if (pthread_mutex_init(&thread->threadIsReadyMutex, NULL) != 0)
 	{
 		WLog_ERR(TAG, "failed to initialize a mutex for a condition variable");
-		goto error_thread_ready_mutex;
+		goto fail;
+	}
+
+	if (pthread_mutex_init(&thread->threadReadyMutex, NULL) != 0)
+	{
+		WLog_ERR(TAG, "failed to initialize a mutex for a condition variable");
+		goto fail;
 	}
 
 	if (pthread_cond_init(&thread->threadIsReady, NULL) != 0)
 	{
 		WLog_ERR(TAG, "failed to initialize a condition variable");
-		goto error_thread_ready;
+		goto fail;
+	}
+	if (pthread_cond_init(&thread->threadReady, NULL) != 0)
+	{
+		WLog_ERR(TAG, "failed to initialize a condition variable");
+		goto fail;
 	}
 
 	WINPR_HANDLE_SET_TYPE_AND_MODE(thread, HANDLE_TYPE_THREAD, WINPR_FD_READ);
 	handle = (HANDLE)thread;
 
-	if (!thread_list)
-	{
-		thread_list = ListDictionary_New(TRUE);
-
-		if (!thread_list)
-		{
-			WLog_ERR(TAG, "Couldn't create global thread list");
-			goto error_thread_list;
-		}
-
-		thread_list->objectKey.fnObjectEquals = thread_compare;
-	}
+	InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, NULL, NULL);
 
 	if (!(dwCreationFlags & CREATE_SUSPENDED))
 	{
 		if (!winpr_StartThread(thread))
-			goto error_thread_list;
+			goto fail;
 	}
 	else
 	{
 		if (!set_event(thread))
-			goto error_thread_list;
+			goto fail;
 	}
 
 	return handle;
-error_thread_list:
-	pthread_cond_destroy(&thread->threadIsReady);
-error_thread_ready:
-	pthread_mutex_destroy(&thread->threadIsReadyMutex);
-error_thread_ready_mutex:
-	pthread_mutex_destroy(&thread->mutex);
-error_mutex:
-
-	if (thread->pipe_fd[1] >= 0)
-		close(thread->pipe_fd[1]);
-
-	if (thread->pipe_fd[0] >= 0)
-		close(thread->pipe_fd[0]);
-
-error_pipefd0:
-	free(thread);
+fail:
+	cleanup_handle(thread);
 	return NULL;
 }
 
@@ -499,32 +495,41 @@ void cleanup_handle(void* obj)
 {
 	int rc;
 	WINPR_THREAD* thread = (WINPR_THREAD*)obj;
-	rc = pthread_cond_destroy(&thread->threadIsReady);
+	if (!thread)
+		return;
 
+	if (!apc_uninit(&thread->apc))
+		WLog_ERR(TAG, "failed to destroy APC");
+
+	rc = pthread_cond_destroy(&thread->threadIsReady);
 	if (rc)
-		WLog_ERR(TAG, "failed to destroy a condition variable [%d] %s (%d)", rc, strerror(errno),
+		WLog_ERR(TAG, "failed to destroy thread->threadIsReady [%d] %s (%d)", rc, strerror(errno),
+		         errno);
+
+	rc = pthread_cond_destroy(&thread->threadReady);
+	if (rc)
+		WLog_ERR(TAG, "failed to destroy thread->threadReady [%d] %s (%d)", rc, strerror(errno),
 		         errno);
 
 	rc = pthread_mutex_destroy(&thread->threadIsReadyMutex);
-
 	if (rc)
-		WLog_ERR(TAG, "failed to destroy a condition variable mutex [%d] %s (%d)", rc,
+		WLog_ERR(TAG, "failed to destroy thread->threadIsReadyMutex [%d] %s (%d)", rc,
+		         strerror(errno), errno);
+
+	rc = pthread_mutex_destroy(&thread->threadReadyMutex);
+	if (rc)
+		WLog_ERR(TAG, "failed to destroy thread->threadReadyMutex [%d] %s (%d)", rc,
 		         strerror(errno), errno);
 
 	rc = pthread_mutex_destroy(&thread->mutex);
-
 	if (rc)
-		WLog_ERR(TAG, "failed to destroy mutex [%d] %s (%d)", rc, strerror(errno), errno);
+		WLog_ERR(TAG, "failed to destroy thread->mutex [%d] %s (%d)", rc, strerror(errno), errno);
 
-	if (thread->pipe_fd[0] >= 0)
-		close(thread->pipe_fd[0]);
+	winpr_event_uninit(&thread->event);
 
-	if (thread->pipe_fd[1] >= 0)
-		close(thread->pipe_fd[1]);
-
-	if (thread_list && ListDictionary_Contains(thread_list, &thread->thread))
-		ListDictionary_Remove(thread_list, &thread->thread);
-
+#if defined(WITH_THREAD_LIST)
+	ListDictionary_Remove(thread_list, &thread->thread);
+#endif
 #if defined(WITH_DEBUG_THREADS)
 
 	if (thread->create_stack)
@@ -541,6 +546,7 @@ BOOL ThreadCloseHandle(HANDLE handle)
 {
 	WINPR_THREAD* thread = (WINPR_THREAD*)handle;
 
+#if defined(WITH_THREAD_LIST)
 	if (!thread_list)
 	{
 		WLog_ERR(TAG, "Thread list does not exist, check call!");
@@ -554,6 +560,7 @@ BOOL ThreadCloseHandle(HANDLE handle)
 	else
 	{
 		ListDictionary_Lock(thread_list);
+#endif
 		dump_thread(thread);
 
 		if ((thread->started) && (WaitForSingleObject(thread, 0) != WAIT_OBJECT_0))
@@ -567,14 +574,10 @@ BOOL ThreadCloseHandle(HANDLE handle)
 			cleanup_handle(thread);
 		}
 
+#if defined(WITH_THREAD_LIST)
 		ListDictionary_Unlock(thread_list);
-
-		if (ListDictionary_Count(thread_list) < 1)
-		{
-			ListDictionary_Free(thread_list);
-			thread_list = NULL;
-		}
 	}
+#endif
 
 	return TRUE;
 }
@@ -590,6 +593,7 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
 
 VOID ExitThread(DWORD dwExitCode)
 {
+#if defined(WITH_THREAD_LIST)
 	DWORD rc;
 	pthread_t tid = pthread_self();
 
@@ -614,7 +618,7 @@ VOID ExitThread(DWORD dwExitCode)
 		WINPR_THREAD* thread;
 		ListDictionary_Lock(thread_list);
 		thread = ListDictionary_GetItemValue(thread_list, &tid);
-		assert(thread);
+		WINPR_ASSERT(thread);
 		thread->exited = TRUE;
 		thread->dwExitCode = dwExitCode;
 #if defined(WITH_DEBUG_THREADS)
@@ -629,6 +633,9 @@ VOID ExitThread(DWORD dwExitCode)
 
 		pthread_exit((void*)(size_t)rc);
 	}
+#else
+	WINPR_UNUSED(dwExitCode);
+#endif
 }
 
 BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
@@ -645,31 +652,28 @@ BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 	return TRUE;
 }
 
-HANDLE _GetCurrentThread(VOID)
+WINPR_THREAD* winpr_GetCurrentThread(VOID)
 {
-	HANDLE hdl = NULL;
-	pthread_t tid = pthread_self();
+	WINPR_THREAD* ret;
 
-	if (!thread_list)
-	{
-		WLog_ERR(TAG, "function called without existing thread list!");
-#if defined(WITH_DEBUG_THREADS)
-		DumpThreadHandles();
-#endif
-	}
-	else if (!ListDictionary_Contains(thread_list, &tid))
+	InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, NULL, NULL);
+	if (mainThreadId == pthread_self())
+		return (HANDLE)&mainThread;
+
+	ret = TlsGetValue(currentThreadTlsIndex);
+	if (!ret)
 	{
 		WLog_ERR(TAG, "function called, but no matching entry in thread list!");
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
 	}
-	else
-	{
-		hdl = ListDictionary_GetItemValue(thread_list, &tid);
-	}
+	return ret;
+}
 
-	return hdl;
+HANDLE _GetCurrentThread(VOID)
+{
+	return (HANDLE)winpr_GetCurrentThread();
 }
 
 DWORD GetCurrentThreadId(VOID)
@@ -679,6 +683,58 @@ DWORD GetCurrentThreadId(VOID)
 	/* Since pthread_t can be 64-bits on some systems, take just the    */
 	/* lower 32-bits of it for the thread ID returned by this function. */
 	return (DWORD)tid & 0xffffffffUL;
+}
+
+typedef struct
+{
+	WINPR_APC_ITEM apc;
+	PAPCFUNC completion;
+	ULONG_PTR completionArg;
+} UserApcItem;
+
+static void userAPC(LPVOID arg)
+{
+	UserApcItem* userApc = (UserApcItem*)arg;
+
+	userApc->completion(userApc->completionArg);
+
+	userApc->apc.markedForRemove = TRUE;
+}
+
+DWORD QueueUserAPC(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData)
+{
+	ULONG Type;
+	WINPR_HANDLE* Object;
+	WINPR_APC_ITEM* apc;
+	UserApcItem* apcItem;
+
+	if (!pfnAPC)
+		return 1;
+
+	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
+	{
+		WLog_ERR(TAG, "hThread is not a thread");
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return (DWORD)0;
+	}
+
+	apcItem = calloc(1, sizeof(*apcItem));
+	if (!apcItem)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return (DWORD)0;
+	}
+
+	apc = &apcItem->apc;
+	apc->type = APC_TYPE_USER;
+	apc->markedForFree = TRUE;
+	apc->alwaysSignaled = TRUE;
+	apc->completion = userAPC;
+	apc->completionArgs = apc;
+	apcItem->completion = pfnAPC;
+	apcItem->completionArg = dwData;
+	apc_register(hThread, apc);
+	return 1;
 }
 
 DWORD ResumeThread(HANDLE hThread)
@@ -778,6 +834,7 @@ VOID DumpThreadHandles(void)
 	winpr_backtrace_free(stack);
 	WLog_DBG(TAG, "---------------- Start Dumping thread handles -----------");
 
+#if defined(WITH_THREAD_LIST)
 	if (!thread_list)
 	{
 		WLog_DBG(TAG, "All threads properly shut down and disposed of.");
@@ -821,6 +878,7 @@ VOID DumpThreadHandles(void)
 		free(keys);
 		ListDictionary_Unlock(thread_list);
 	}
+#endif
 
 	WLog_DBG(TAG, "---------------- End Dumping thread handles -------------");
 }

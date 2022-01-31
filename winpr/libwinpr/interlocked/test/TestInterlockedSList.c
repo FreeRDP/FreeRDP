@@ -15,7 +15,8 @@ int TestInterlockedSList(int argc, char* argv[])
 	ULONG Count;
 	WINPR_PSLIST_ENTRY pFirstEntry;
 	WINPR_PSLIST_HEADER pListHead;
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	/* Initialize the list header to a MEMORY_ALLOCATION_ALIGNMENT boundary. */
 	pListHead = (WINPR_PSLIST_HEADER)_aligned_malloc(sizeof(WINPR_SLIST_HEADER),
 	                                                 MEMORY_ALLOCATION_ALIGNMENT);

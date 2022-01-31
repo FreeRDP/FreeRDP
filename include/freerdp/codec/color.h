@@ -106,7 +106,7 @@ extern "C"
 	 */
 	static INLINE DWORD AreColorFormatsEqualNoAlpha(DWORD first, DWORD second)
 	{
-		const DWORD mask = ~(8 << 12);
+		const DWORD mask = (DWORD) ~(8UL << 12UL);
 		return (first & mask) == (second & mask);
 	}
 
@@ -809,6 +809,27 @@ extern "C"
 		return TRUE;
 	}
 
+	static INLINE BOOL WriteColorIgnoreAlpha(BYTE* dst, UINT32 format, UINT32 color)
+	{
+		switch (format)
+		{
+			case PIXEL_FORMAT_ABGR32:
+			case PIXEL_FORMAT_ARGB32:
+			{
+				const UINT32 tmp = ((UINT32)dst[0] << 24ULL) | (color & 0x00FFFFFFULL);
+				return WriteColor(dst, format, tmp);
+			}
+			case PIXEL_FORMAT_BGRA32:
+			case PIXEL_FORMAT_RGBA32:
+			{
+				const UINT32 tmp = ((UINT32)dst[3]) | (color & 0xFFFFFF00ULL);
+				return WriteColor(dst, format, tmp);
+			}
+			default:
+				return WriteColor(dst, format, color);
+		}
+	}
+
 	/***
 	 *
 	 * Converts a pixel in internal representation format srcFormat to internal
@@ -847,8 +868,8 @@ extern "C"
 
 	/***
 	 *
-	 * @param nWidth    width to copy in pixels
-	 * @param nHeight   height to copy in pixels
+	 * @param width    width to copy in pixels
+	 * @param height   height to copy in pixels
 	 * @param data      source buffer, must be (nWidth + 7) / 8 bytes long
 	 *
 	 * @return          A buffer allocated with _aligned_malloc(width * height, 16)
@@ -893,7 +914,7 @@ extern "C"
 	 * @param bitsMask      icon's 1bpp image mask buffer
 	 * @param cbBitsMask    length of the image mask buffer in bytes
 	 * @param colorTable    icon's image color table
-	 * @param cbBitsColor   length of the image color table buffer in bytes
+	 * @param cbColorTable  length of the image color table buffer in bytes
 	 * @param bpp           color image data bits per pixel
 	 *
 	 * @return              TRUE if success, FALSE otherwise

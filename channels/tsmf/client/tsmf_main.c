@@ -497,7 +497,7 @@ static UINT tsmf_plugin_terminated(IWTSPlugin* pPlugin)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT tsmf_process_addin_args(IWTSPlugin* pPlugin, ADDIN_ARGV* args)
+static UINT tsmf_process_addin_args(IWTSPlugin* pPlugin, const ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -606,13 +606,12 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			goto error_init;
 		}
 
-		status = pEntryPoints->RegisterPlugin(pEntryPoints, "tsmf", (IWTSPlugin*)tsmf);
+		status = pEntryPoints->RegisterPlugin(pEntryPoints, "tsmf", &tsmf->iface);
 	}
 
 	if (status == CHANNEL_RC_OK)
 	{
-		status =
-		    tsmf_process_addin_args((IWTSPlugin*)tsmf, pEntryPoints->GetPluginData(pEntryPoints));
+		status = tsmf_process_addin_args(&tsmf->iface, pEntryPoints->GetPluginData(pEntryPoints));
 	}
 
 	return status;

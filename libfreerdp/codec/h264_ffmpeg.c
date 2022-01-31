@@ -28,6 +28,8 @@
 #include <libavcodec/avcodec.h>
 #include <libavutil/opt.h>
 
+#include "h264.h"
+
 #ifdef WITH_VAAPI
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(55, 9, 0)
 #include <libavutil/hwcontext.h>
@@ -77,7 +79,10 @@ struct _H264_CONTEXT_LIBAVCODEC
 	AVCodecContext* codecEncoderContext;
 	AVCodecParserContext* codecParser;
 	AVFrame* videoFrame;
-	AVPacket packet;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
+	AVPacket bufferpacket;
+#endif
+	AVPacket* packet;
 #ifdef WITH_VAAPI
 	AVBufferRef* hwctx;
 	AVFrame* hwVideoFrame;
@@ -161,8 +166,8 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 			break;
 	}
 
-	sys->codecEncoderContext->width = h264->width;
-	sys->codecEncoderContext->height = h264->height;
+	sys->codecEncoderContext->width = (int)MIN(INT32_MAX, h264->width);
+	sys->codecEncoderContext->height = (int)MIN(INT32_MAX, h264->height);
 	sys->codecEncoderContext->delay = 0;
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(56, 13, 100)
 	sys->codecEncoderContext->framerate = (AVRational){ h264->FrameRate, 1 };
@@ -189,12 +194,16 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
 	BYTE** pYUVData = h264->pYUVData;
 	UINT32* iStride = h264->iStride;
-	av_init_packet(&sys->packet);
-	sys->packet.data = (BYTE*)pSrcData;
-	sys->packet.size = SrcSize;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
+	av_init_packet(sys->packet);
+#else
+	sys->packet = av_packet_alloc();
+#endif
+	sys->packet->data = (BYTE*)pSrcData;
+	sys->packet->size = (int)MIN(SrcSize, INT32_MAX);
 	/* avcodec_decode_video2 is deprecated with libavcodec 57.48.101 */
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 48, 101)
-	status = avcodec_send_packet(sys->codecDecoderContext, &sys->packet);
+	status = avcodec_send_packet(sys->codecDecoderContext, sys->packet);
 
 	if (status < 0)
 	{
@@ -219,10 +228,10 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 #ifdef WITH_VAAPI
 	status = avcodec_decode_video2(sys->codecDecoderContext,
 	                               sys->hwctx ? sys->hwVideoFrame : sys->videoFrame, &gotFrame,
-	                               &sys->packet);
+	                               sys->packet);
 #else
 	status =
-	    avcodec_decode_video2(sys->codecDecoderContext, sys->videoFrame, &gotFrame, &sys->packet);
+	    avcodec_decode_video2(sys->codecDecoderContext, sys->videoFrame, &gotFrame, sys->packet);
 #endif
 #endif
 
@@ -272,11 +281,9 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 		pYUVData[0] = sys->videoFrame->data[0];
 		pYUVData[1] = sys->videoFrame->data[1];
 		pYUVData[2] = sys->videoFrame->data[2];
-		iStride[0] = sys->videoFrame->linesize[0];
-		iStride[1] = sys->videoFrame->linesize[1];
-		iStride[2] = sys->videoFrame->linesize[2];
-		h264->width = sys->videoFrame->width;
-		h264->height = sys->videoFrame->height;
+		iStride[0] = (UINT32)MAX(0, sys->videoFrame->linesize[0]);
+		iStride[1] = (UINT32)MAX(0, sys->videoFrame->linesize[1]);
+		iStride[2] = (UINT32)MAX(0, sys->videoFrame->linesize[2]);
 	}
 	else
 		return -2;
@@ -295,13 +302,17 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 		return -1;
 
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(55, 39, 100)
-	av_packet_unref(&sys->packet);
+	av_packet_unref(sys->packet);
 #else
-	av_free(sys->packet.data);
+	av_free(sys->packet->data);
 #endif
-	av_init_packet(&sys->packet);
-	sys->packet.data = NULL;
-	sys->packet.size = 0;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
+	av_init_packet(sys->packet);
+#else
+	sys->packet = av_packet_alloc();
+#endif
+	sys->packet->data = NULL;
+	sys->packet->size = 0;
 	sys->videoFrame->format = sys->codecEncoderContext->pix_fmt;
 	sys->videoFrame->width = sys->codecEncoderContext->width;
 	sys->videoFrame->height = sys->codecEncoderContext->height;
@@ -329,7 +340,7 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 		return -1;
 	}
 
-	status = avcodec_receive_packet(sys->codecEncoderContext, &sys->packet);
+	status = avcodec_receive_packet(sys->codecEncoderContext, sys->packet);
 
 	if (status < 0)
 	{
@@ -343,22 +354,22 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 
 	do
 	{
-		status = avcodec_encode_video2(sys->codecEncoderContext, &sys->packet, sys->videoFrame,
+		status = avcodec_encode_video2(sys->codecEncoderContext, sys->packet, sys->videoFrame,
 		                               &gotFrame);
 	} while ((status >= 0) && (gotFrame == 0));
 
 #else
-	sys->packet.size =
+	sys->packet->size =
 	    avpicture_get_size(sys->codecDecoderContext->pix_fmt, sys->codecDecoderContext->width,
 	                       sys->codecDecoderContext->height);
-	sys->packet.data = av_malloc(sys->packet.size);
+	sys->packet->data = av_malloc(sys->packet->size);
 
-	if (!sys->packet.data)
+	if (!sys->packet->data)
 		status = -1;
 	else
 	{
-		status = avcodec_encode_video(sys->codecDecoderContext, sys->packet.data, sys->packet.size,
-		                              sys->videoFrame);
+		status = avcodec_encode_video(sys->codecDecoderContext, sys->packet->data,
+		                              sys->packet->size, sys->videoFrame);
 	}
 
 #endif
@@ -370,8 +381,8 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 		return -1;
 	}
 
-	*ppDstData = sys->packet.data;
-	*pDstSize = sys->packet.size;
+	*ppDstData = sys->packet->data;
+	*pDstSize = (UINT32)MAX(0, sys->packet->size);
 
 	if (!gotFrame)
 	{
@@ -505,8 +516,15 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 		goto EXCEPTION;
 	}
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
+	sys->packet = &sys->bufferpacket;
+#endif
+
 	h264->pSystemData = (void*)sys;
+
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 10, 100)
 	avcodec_register_all();
+#endif
 
 	if (!h264->Compressor)
 	{

@@ -52,6 +52,11 @@ if(APPLE AND (NOT IOS))
 	freerdp_library_add(${CARBON})
 endif()
 
+if (APPLE)
+        FIND_LIBRARY(ç CoreFoundation REQUIRED)
+        freerdp_library_add(${CORE_FOUNDATION})
+endif()
+
 if(WITH_X11)
 	freerdp_definition_add(-DWITH_X11)
 	freerdp_include_directory_add(${X11_INCLUDE_DIRS})

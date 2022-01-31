@@ -126,7 +126,7 @@ static char* FindApplicationPath(char* application)
 	{
 		filename = GetCombinedPath(path, application);
 
-		if (PathFileExistsA(filename))
+		if (winpr_PathFileExists(filename))
 		{
 			break;
 		}
@@ -165,7 +165,12 @@ static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplic
 	BOOL restoreSigMask = FALSE;
 	numArgs = 0;
 	lpszEnvironmentBlock = NULL;
-	pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
+	/* https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessa
+	 */
+	if (lpCommandLine)
+		pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
+	else
+		pArgs = CommandLineToArgvA(lpApplicationName, &numArgs);
 
 	if (!pArgs)
 		return FALSE;
@@ -278,12 +283,20 @@ static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplic
 			}
 
 			if (token->UserId)
-				setuid((uid_t)token->UserId);
+			{
+				int rc = setuid((uid_t)token->UserId);
+				if (rc != 0)
+					goto finish;
+			}
 		}
 
 		/* TODO: add better cwd handling and error checking */
 		if (lpCurrentDirectory && strlen(lpCurrentDirectory) > 0)
-			chdir(lpCurrentDirectory);
+		{
+			int rc = chdir(lpCurrentDirectory);
+			if (rc != 0)
+				goto finish;
+		}
 
 		if (execve(filename, pArgs, envp) < 0)
 		{
@@ -323,11 +336,7 @@ finish:
 		pthread_sigmask(SIG_SETMASK, &oldSigMask, NULL);
 
 	free(filename);
-
-	if (pArgs)
-	{
-		HeapFree(GetProcessHeap(), 0, pArgs);
-	}
+	free(pArgs);
 
 	if (lpszEnvironmentBlock)
 		FreeEnvironmentStrings(lpszEnvironmentBlock);

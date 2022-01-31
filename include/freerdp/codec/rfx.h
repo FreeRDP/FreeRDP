@@ -120,11 +120,11 @@ extern "C"
 	};
 	typedef enum _RFX_STATE RFX_STATE;
 
-#define _RFX_DECODED_SYNC 0x00000001
-#define _RFX_DECODED_CONTEXT 0x00000002
-#define _RFX_DECODED_VERSIONS 0x00000004
-#define _RFX_DECODED_CHANNELS 0x00000008
-#define _RFX_DECODED_HEADERS 0x0000000F
+#define RFX_DECODED_SYNC 0x00000001
+#define RFX_DECODED_CONTEXT 0x00000002
+#define RFX_DECODED_VERSIONS 0x00000004
+#define RFX_DECODED_CHANNELS 0x00000008
+#define RFX_DECODED_HEADERS 0x0000000F
 
 	struct _RFX_CONTEXT
 	{
@@ -199,6 +199,7 @@ extern "C"
 
 	FREERDP_API BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height);
 
+	FREERDP_API RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags);
 	FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
 	FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
 

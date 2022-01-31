@@ -17,8 +17,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef _WINPR_VERSION_H_
-#define _WINPR_VERSION_H_
+#ifndef WINPR_VERSION_H_
+#define WINPR_VERSION_H_
 
 #define WINPR_VERSION_MAJOR ${WINPR_VERSION_MAJOR}
 #define WINPR_VERSION_MINOR ${WINPR_VERSION_MINOR}
@@ -27,6 +27,6 @@
 #define WINPR_API_VERSION "${WINPR_API_VERSION}"
 #define WINPR_VERSION "${WINPR_VERSION}"
 #define WINPR_VERSION_FULL "${WINPR_VERSION_FULL}"
-#define GIT_REVISION "${GIT_REVISION}"
+#define WINPR_GIT_REVISION "${GIT_REVISION}"
 
 #endif // _WINPR_VERSION_H_

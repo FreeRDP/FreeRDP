@@ -26,7 +26,6 @@
 
 #ifndef _WIN32
 
-#include <assert.h>
 #include <pthread.h>
 
 #include "../synch/synch.h"
@@ -39,7 +38,7 @@
 #include <unistd.h>
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include "../handle/handle.h"
 

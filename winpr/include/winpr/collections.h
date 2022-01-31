@@ -27,6 +27,7 @@
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -57,7 +58,7 @@ extern "C"
 
 	typedef struct _wQueue wQueue;
 
-	WINPR_API int Queue_Count(wQueue* queue);
+	WINPR_API size_t Queue_Count(wQueue* queue);
 
 	WINPR_API void Queue_Lock(wQueue* queue);
 	WINPR_API void Queue_Unlock(wQueue* queue);
@@ -70,12 +71,45 @@ extern "C"
 
 	WINPR_API BOOL Queue_Contains(wQueue* queue, const void* obj);
 
-	WINPR_API BOOL Queue_Enqueue(wQueue* queue, void* obj);
+	/** \brief Pushes a new element into the queue.
+	 *  If a fnObjectNew is set, the element is copied and the queue takes
+	 *  ownership of the memory, otherwise the ownership stays with the caller.
+	 *
+	 *  \param queue The queue to operate on
+	 *  \param obj A pointer to the object to queue
+	 *
+	 *  \return TRUE for success, FALSE if failed.
+	 */
+	WINPR_API BOOL Queue_Enqueue(wQueue* queue, const void* obj);
+
+	/** \brief returns the element at the top of the queue. The element is removed from the queue,
+	 *  ownership of the element is passed on to the caller.
+	 *
+	 *  \param queue The queue to check
+	 *
+	 *  \return NULL if empty, a pointer to the memory on top of the queue otherwise.
+	 */
 	WINPR_API void* Queue_Dequeue(wQueue* queue);
 
+	/** \brief returns the element at the top of the queue. The element is not removed from the
+	 * queue, ownership of the element stays with the queue.
+	 *
+	 *  \param queue The queue to check
+	 *
+	 *  \return NULL if empty, a pointer to the memory on top of the queue otherwise.
+	 */
 	WINPR_API void* Queue_Peek(wQueue* queue);
 
-	WINPR_API wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor);
+	/** \brief Removes the element at the top of the queue. If fnObjectFree is set, the element is
+	 * freed. This can be used in combination with Queue_Peek to handle an element and discard it
+	 * with this function afterward. An alternative is Queue_Dequeue with calling the appropriate
+	 * free function afterward.
+	 *
+	 *  \param queue The queue to operate on
+	 */
+	WINPR_API void Queue_Discard(wQueue* queue);
+
+	WINPR_API wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor);
 	WINPR_API void Queue_Free(wQueue* queue);
 
 	/* System.Collections.Stack */
@@ -117,14 +151,19 @@ extern "C"
 
 	WINPR_API wObject* ArrayList_Object(wArrayList* arrayList);
 
-	typedef BOOL(ArrayList_ForEachFkt)(void* data, size_t index, va_list ap);
+	typedef BOOL (*ArrayList_ForEachFkt)(void* data, size_t index, va_list ap);
 
 	WINPR_API BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...);
+	WINPR_API BOOL ArrayList_ForEachAP(wArrayList* arrayList, ArrayList_ForEachFkt fkt, va_list ap);
 
 	WINPR_API void ArrayList_Clear(wArrayList* arrayList);
 	WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj);
 
-	WINPR_API int ArrayList_Add(wArrayList* arrayList, void* obj);
+#if defined(WITH_WINPR_DEPRECATED)
+	WINPR_API WINPR_DEPRECATED(int ArrayList_Add(wArrayList* arrayList, const void* obj));
+#endif
+
+	WINPR_API BOOL ArrayList_Append(wArrayList* arrayList, const void* obj);
 	WINPR_API BOOL ArrayList_Insert(wArrayList* arrayList, size_t index, const void* obj);
 
 	WINPR_API BOOL ArrayList_Remove(wArrayList* arrayList, const void* obj);
@@ -208,13 +247,13 @@ extern "C"
 	WINPR_API void* LinkedList_First(wLinkedList* list);
 	WINPR_API void* LinkedList_Last(wLinkedList* list);
 
-	WINPR_API BOOL LinkedList_Contains(wLinkedList* list, void* value);
+	WINPR_API BOOL LinkedList_Contains(wLinkedList* list, const void* value);
 	WINPR_API void LinkedList_Clear(wLinkedList* list);
 
-	WINPR_API BOOL LinkedList_AddFirst(wLinkedList* list, void* value);
-	WINPR_API BOOL LinkedList_AddLast(wLinkedList* list, void* value);
+	WINPR_API BOOL LinkedList_AddFirst(wLinkedList* list, const void* value);
+	WINPR_API BOOL LinkedList_AddLast(wLinkedList* list, const void* value);
 
-	WINPR_API BOOL LinkedList_Remove(wLinkedList* list, void* value);
+	WINPR_API BOOL LinkedList_Remove(wLinkedList* list, const void* value);
 	WINPR_API void LinkedList_RemoveFirst(wLinkedList* list);
 	WINPR_API void LinkedList_RemoveLast(wLinkedList* list);
 
@@ -228,18 +267,6 @@ extern "C"
 	WINPR_API wObject* LinkedList_Object(wLinkedList* list);
 
 	/* System.Collections.Generic.KeyValuePair<TKey,TValue> */
-
-	typedef struct _wKeyValuePair wKeyValuePair;
-
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct _wKeyValuePair
-	{
-		void* key;
-		void* value;
-
-		wKeyValuePair* next;
-	};
 
 	/* Reference Table */
 
@@ -301,59 +328,48 @@ extern "C"
 
 	/* Hash Table */
 
-	typedef UINT32 (*HASH_TABLE_HASH_FN)(void* key);
-	typedef BOOL (*HASH_TABLE_KEY_COMPARE_FN)(void* key1, void* key2);
-	typedef BOOL (*HASH_TABLE_VALUE_COMPARE_FN)(void* value1, void* value2);
-	typedef void* (*HASH_TABLE_KEY_CLONE_FN)(void* key);
-	typedef void* (*HASH_TABLE_VALUE_CLONE_FN)(void* value);
-	typedef void (*HASH_TABLE_KEY_FREE_FN)(void* key);
-	typedef void (*HASH_TABLE_VALUE_FREE_FN)(void* value);
+	typedef UINT32 (*HASH_TABLE_HASH_FN)(const void* key);
 
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct _wHashTable
-	{
-		BOOL synchronized;
-		CRITICAL_SECTION lock;
-
-		int numOfBuckets;
-		int numOfElements;
-		float idealRatio;
-		float lowerRehashThreshold;
-		float upperRehashThreshold;
-		wKeyValuePair** bucketArray;
-
-		HASH_TABLE_HASH_FN hash;
-		HASH_TABLE_KEY_COMPARE_FN keyCompare;
-		HASH_TABLE_VALUE_COMPARE_FN valueCompare;
-		HASH_TABLE_KEY_CLONE_FN keyClone;
-		HASH_TABLE_VALUE_CLONE_FN valueClone;
-		HASH_TABLE_KEY_FREE_FN keyFree;
-		HASH_TABLE_VALUE_FREE_FN valueFree;
-	};
 	typedef struct _wHashTable wHashTable;
 
-	WINPR_API int HashTable_Count(wHashTable* table);
-	WINPR_API int HashTable_Add(wHashTable* table, void* key, void* value);
-	WINPR_API BOOL HashTable_Remove(wHashTable* table, void* key);
+	typedef BOOL (*HASH_TABLE_FOREACH_FN)(const void* key, void* value, void* arg);
+
+	WINPR_API size_t HashTable_Count(wHashTable* table);
+
+#if defined(WITH_WINPR_DEPRECATED)
+	WINPR_API WINPR_DEPRECATED(int HashTable_Add(wHashTable* table, const void* key,
+	                                             const void* value));
+#endif
+
+	WINPR_API BOOL HashTable_Insert(wHashTable* table, const void* key, const void* value);
+	WINPR_API BOOL HashTable_Remove(wHashTable* table, const void* key);
 	WINPR_API void HashTable_Clear(wHashTable* table);
-	WINPR_API BOOL HashTable_Contains(wHashTable* table, void* key);
-	WINPR_API BOOL HashTable_ContainsKey(wHashTable* table, void* key);
-	WINPR_API BOOL HashTable_ContainsValue(wHashTable* table, void* value);
-	WINPR_API void* HashTable_GetItemValue(wHashTable* table, void* key);
-	WINPR_API BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value);
-	WINPR_API int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys);
+	WINPR_API BOOL HashTable_Contains(wHashTable* table, const void* key);
+	WINPR_API BOOL HashTable_ContainsKey(wHashTable* table, const void* key);
+	WINPR_API BOOL HashTable_ContainsValue(wHashTable* table, const void* value);
+	WINPR_API void* HashTable_GetItemValue(wHashTable* table, const void* key);
+	WINPR_API BOOL HashTable_SetItemValue(wHashTable* table, const void* key, const void* value);
+	WINPR_API size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys);
+	WINPR_API BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg);
 
-	WINPR_API UINT32 HashTable_PointerHash(void* pointer);
-	WINPR_API BOOL HashTable_PointerCompare(void* pointer1, void* pointer2);
+	WINPR_API UINT32 HashTable_PointerHash(const void* pointer);
+	WINPR_API BOOL HashTable_PointerCompare(const void* pointer1, const void* pointer2);
 
-	WINPR_API UINT32 HashTable_StringHash(void* key);
-	WINPR_API BOOL HashTable_StringCompare(void* string1, void* string2);
-	WINPR_API void* HashTable_StringClone(void* str);
+	WINPR_API UINT32 HashTable_StringHash(const void* key);
+	WINPR_API BOOL HashTable_StringCompare(const void* string1, const void* string2);
+	WINPR_API void* HashTable_StringClone(const void* str);
 	WINPR_API void HashTable_StringFree(void* str);
 
 	WINPR_API wHashTable* HashTable_New(BOOL synchronized);
 	WINPR_API void HashTable_Free(wHashTable* table);
+
+	WINPR_API wObject* HashTable_KeyObject(wHashTable* table);
+	WINPR_API wObject* HashTable_ValueObject(wHashTable* table);
+
+	WINPR_API BOOL HashTable_SetHashFunction(wHashTable* table, HASH_TABLE_HASH_FN fn);
+
+	/* Utility function to setup hash table for strings */
+	WINPR_API BOOL HashTable_SetupForStringData(wHashTable* table, BOOL stringValues);
 
 	/* BufferPool */
 
@@ -477,7 +493,7 @@ extern "C"
 	};
 	typedef struct _wEventArgs wEventArgs;
 
-	typedef void (*pEventHandler)(void* context, wEventArgs* e);
+	typedef void (*pEventHandler)(void* context, const wEventArgs* e);
 
 #define MAX_EVENT_HANDLERS 32
 
@@ -490,48 +506,54 @@ extern "C"
 	};
 	typedef struct _wEventType wEventType;
 
-#define EventArgsInit(_event_args, _sender)                  \
-	memset(_event_args, 0, sizeof(*_event_args));            \
-	((wEventArgs*)_event_args)->Size = sizeof(*_event_args); \
-	((wEventArgs*)_event_args)->Sender = _sender
+#define EventArgsInit(_event_args, _sender)       \
+	memset(_event_args, 0, sizeof(*_event_args)); \
+	(_event_args)->e.Size = sizeof(*_event_args); \
+	(_event_args)->e.Sender = _sender
 
-#define DEFINE_EVENT_HANDLER(_name) \
-	typedef void (*p##_name##EventHandler)(void* context, _name##EventArgs* e)
+#define DEFINE_EVENT_HANDLER(name) \
+	typedef void (*p##name##EventHandler)(void* context, const name##EventArgs* e)
 
-#define DEFINE_EVENT_RAISE(_name)                                                           \
-	static INLINE int PubSub_On##_name(wPubSub* pubSub, void* context, _name##EventArgs* e) \
-	{                                                                                       \
-		return PubSub_OnEvent(pubSub, #_name, context, (wEventArgs*)e);                     \
+#define DEFINE_EVENT_RAISE(name)                                                                \
+	static INLINE int PubSub_On##name(wPubSub* pubSub, void* context, const name##EventArgs* e) \
+	{                                                                                           \
+		WINPR_ASSERT(e);                                                                        \
+		return PubSub_OnEvent(pubSub, #name, context, &e->e);                                   \
 	}
 
-#define DEFINE_EVENT_SUBSCRIBE(_name)                                              \
-	static INLINE int PubSub_Subscribe##_name(wPubSub* pubSub,                     \
-	                                          p##_name##EventHandler EventHandler) \
+#define DEFINE_EVENT_SUBSCRIBE(name)                                                              \
+	static INLINE int PubSub_Subscribe##name(wPubSub* pubSub, p##name##EventHandler EventHandler) \
+	{                                                                                             \
+		return PubSub_Subscribe(pubSub, #name, (pEventHandler)EventHandler);                      \
+	}
+
+#define DEFINE_EVENT_UNSUBSCRIBE(name)                                             \
+	static INLINE int PubSub_Unsubscribe##name(wPubSub* pubSub,                    \
+	                                           p##name##EventHandler EventHandler) \
 	{                                                                              \
-		return PubSub_Subscribe(pubSub, #_name, (pEventHandler)EventHandler);      \
+		return PubSub_Unsubscribe(pubSub, #name, (pEventHandler)EventHandler);     \
 	}
 
-#define DEFINE_EVENT_UNSUBSCRIBE(_name)                                              \
-	static INLINE int PubSub_Unsubscribe##_name(wPubSub* pubSub,                     \
-	                                            p##_name##EventHandler EventHandler) \
-	{                                                                                \
-		return PubSub_Unsubscribe(pubSub, #_name, (pEventHandler)EventHandler);      \
-	}
-
-#define DEFINE_EVENT_BEGIN(_name)      \
-	typedef struct _##_name##EventArgs \
-	{                                  \
+#define DEFINE_EVENT_BEGIN(name)      \
+	typedef struct _##name##EventArgs \
+	{                                 \
 		wEventArgs e;
 
-#define DEFINE_EVENT_END(_name)   \
-	}                             \
-	_name##EventArgs;             \
-	DEFINE_EVENT_HANDLER(_name);  \
-	DEFINE_EVENT_RAISE(_name)     \
-	DEFINE_EVENT_SUBSCRIBE(_name) \
-	DEFINE_EVENT_UNSUBSCRIBE(_name)
+#define DEFINE_EVENT_END(name)   \
+	}                            \
+	name##EventArgs;             \
+	DEFINE_EVENT_HANDLER(name);  \
+	DEFINE_EVENT_RAISE(name)     \
+	DEFINE_EVENT_SUBSCRIBE(name) \
+	DEFINE_EVENT_UNSUBSCRIBE(name)
 
-#define DEFINE_EVENT_ENTRY(_name) { #_name, { sizeof(_name##EventArgs), NULL }, 0, { NULL } },
+#define DEFINE_EVENT_ENTRY(name)                     \
+	{                                                \
+#name, { sizeof(name##EventArgs), NULL }, 0, \
+		{                                            \
+			NULL                                     \
+		}                                            \
+	}
 
 	typedef struct _wPubSub wPubSub;
 
@@ -548,7 +570,7 @@ extern "C"
 	                                 pEventHandler EventHandler);
 
 	WINPR_API int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context,
-	                             wEventArgs* e);
+	                             const wEventArgs* e);
 
 	WINPR_API wPubSub* PubSub_New(BOOL synchronized);
 	WINPR_API void PubSub_Free(wPubSub* pubSub);

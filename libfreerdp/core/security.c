@@ -82,8 +82,8 @@ static const BYTE fips_oddparity_table[256] = {
 	0xf1, 0xf1, 0xf2, 0xf2, 0xf4, 0xf4, 0xf7, 0xf7, 0xf8, 0xf8, 0xfb, 0xfb, 0xfd, 0xfd, 0xfe, 0xfe
 };
 
-static BOOL security_salted_hash(const BYTE* salt, const BYTE* input, int length, const BYTE* salt1,
-                                 const BYTE* salt2, BYTE* output)
+static BOOL security_salted_hash(const BYTE* salt, const BYTE* input, size_t length,
+                                 const BYTE* salt1, const BYTE* salt2, BYTE* output)
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
@@ -147,7 +147,7 @@ static BOOL security_premaster_hash(const char* input, int length, const BYTE* p
                                     BYTE* output)
 {
 	/* PremasterHash(Input) = SaltedHash(PremasterSecret, Input, ClientRandom, ServerRandom) */
-	return security_salted_hash(premaster_secret, (BYTE*)input, length, client_random,
+	return security_salted_hash(premaster_secret, (const BYTE*)input, length, client_random,
 	                            server_random, output);
 }
 
@@ -650,7 +650,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 	return TRUE;
 }
 
-static BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
+static BOOL security_key_update(BYTE* key, BYTE* update_key, size_t key_len, rdpRdp* rdp)
 {
 	BYTE sha1h[WINPR_SHA1_DIGEST_LENGTH];
 	WINPR_DIGEST_CTX* sha1 = NULL;

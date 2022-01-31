@@ -26,7 +26,6 @@
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
-#include <winpr/credui.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
@@ -36,7 +35,7 @@
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
 
-#include "resource.h"
+#include "../resource/resource.h"
 
 #include "wf_client.h"
 
@@ -107,7 +106,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (status)
 	{
-		freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
+		ret = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
 		goto out;
 	}
 
@@ -142,3 +141,10 @@ out:
 	LocalFree(args);
 	return ret;
 }
+
+#ifdef WITH_WIN_CONSOLE
+int main()
+{
+	return WinMain(NULL, NULL, NULL, 0);
+}
+#endif

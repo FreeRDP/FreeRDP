@@ -54,7 +54,7 @@ static void data_offer_offer(void* data, struct wl_data_offer* data_offer,
 		else
 		{
 			event->seat = seat;
-			sprintf_s(event->mime, sizeof(event->mime), "%s", offered_mime_type);
+			snprintf(event->mime, sizeof(event->mime), "%s", offered_mime_type);
 		}
 	}
 }
@@ -153,7 +153,6 @@ UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s)
 
 	if (rc != UWAC_SUCCESS)
 		return rc;
-
 	event = (UwacClipboardEvent*)UwacDisplayNewEvent(s->display, UWAC_EVENT_CLIPBOARD_AVAILABLE);
 
 	if (!event)
@@ -194,7 +193,7 @@ static void callback_done(void* data, struct wl_callback* callback, uint32_t ser
 
 static const struct wl_callback_listener callback_listener = { .done = callback_done };
 
-uint32_t get_serial(UwacSeat* s)
+static uint32_t get_serial(UwacSeat* s)
 {
 	struct wl_callback* callback;
 	uint32_t serial = 0;
@@ -237,6 +236,7 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 	if (!seat || !mime || !size || !seat->offer)
 		return NULL;
 
+	*size = 0;
 	if (pipe(pipefd) != 0)
 		return NULL;
 
@@ -272,6 +272,10 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 	close(pipefd[0]);
 	close(pipefd[1]);
 
-	*size = pos + 1;
+	if (alloc > 0)
+	{
+		data[pos] = '\0';
+		*size = pos + 1;
+	}
 	return data;
 }

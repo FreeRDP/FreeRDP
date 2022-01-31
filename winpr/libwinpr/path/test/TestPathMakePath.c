@@ -17,6 +17,9 @@ int TestPathMakePath(int argc, char* argv[])
 	char delim = PathGetSeparatorA(0);
 	char* base = GetKnownPath(KNOWN_PATH_TEMP);
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (!base)
 	{
 		fprintf(stderr, "Failed to get temporary directory!\n");
@@ -42,7 +45,7 @@ int TestPathMakePath(int argc, char* argv[])
 	}
 
 	printf("Creating path %s\n", path);
-	success = PathMakePathA(path, NULL);
+	success = winpr_PathMakePath(path, NULL);
 
 	if (!success)
 	{
@@ -51,7 +54,7 @@ int TestPathMakePath(int argc, char* argv[])
 		return -1;
 	}
 
-	success = PathFileExistsA(path);
+	success = winpr_PathFileExists(path);
 
 	if (!success)
 	{
@@ -62,9 +65,9 @@ int TestPathMakePath(int argc, char* argv[])
 
 	while (strlen(path) > baseLen)
 	{
-		if (!RemoveDirectoryA(path))
+		if (!winpr_RemoveDirectory(path))
 		{
-			fprintf(stderr, "RemoveDirectoryA %s failed!\n", path);
+			fprintf(stderr, "winpr_RemoveDirectory %s failed!\n", path);
 			free(path);
 			return -1;
 		}

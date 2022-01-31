@@ -87,7 +87,113 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_12[] = { {
 	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_14[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_13[] = { {
+	                                                             633031164000000000ULL,
+	                                                             0ULL,
+	                                                             60,
+	                                                             { 0, 10, 0, 5, 2, 0, 0, 0 },
+	                                                             { 0, 4, 0, 1, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             633346524000000000ULL,
+	                                                             633032028000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             633662748000000000ULL,
+	                                                             633347388000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             633978108000000000ULL,
+	                                                             633663612000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             634293468000000000ULL,
+	                                                             633978972000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             634608828000000000ULL,
+	                                                             634294332000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             634925052000000000ULL,
+	                                                             634609692000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             635240412000000000ULL,
+	                                                             634925916000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             635555772000000000ULL,
+	                                                             635241276000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             635871132000000000ULL,
+	                                                             635556636000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             636187356000000000ULL,
+	                                                             635871996000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             636502716000000000ULL,
+	                                                             636188220000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             636818076000000000ULL,
+	                                                             636503580000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             637133436000000000ULL,
+	                                                             636818940000000000ULL,
+	                                                             60,
+	                                                             { 0, 11, 0, 1, 2, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             637449660000000000ULL,
+	                                                             637134300000000000ULL,
+	                                                             60,
+	                                                             { 0, 1, 3, 1, 0, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         } };
+
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_15[] = { {
 	                                                             633031164000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -102,7 +208,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_14[] = { {
 	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_15[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_16[] = { {
 	                                                             633346524000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -194,7 +300,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_15[] = { {
 	                                                             { 0, 9, 6, 1, 22, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_16[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_17[] = { {
 	3155378076000000000ULL,
 	0ULL,
 	60,
@@ -202,7 +308,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_16[] = { {
 	{ 0, 4, 0, 1, 2, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_19[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_20[] = { {
 	                                                             635555772000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -217,7 +323,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_19[] = { {
 	                                                             { 0, 2, 0, 1, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_20[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_21[] = { {
 	                                                             633031164000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -232,7 +338,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_20[] = { {
 	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_21[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_22[] = { {
 	                                                             633031164000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -275,7 +381,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_21[] = { {
 	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_22[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_23[] = { {
 	                                                             632084220000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -353,7 +459,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_22[] = { {
 	                                                             { 0, 3, 0, 2, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_23[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_24[] = { {
 	                                                             633031164000000000ULL,
 	                                                             632716668000000000ULL,
 	                                                             60,
@@ -368,7 +474,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_23[] = { {
 	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_24[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_25[] = { {
 	                                                             635555772000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -411,7 +517,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_24[] = { {
 	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_25[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_26[] = { {
 	                                                             633662748000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -510,7 +616,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_25[] = { {
 	                                                             { 0, 10, 6, 1, 23, 59, 59, 999 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_26[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_27[] = { {
 	                                                             633031164000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -525,7 +631,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_26[] = { {
 	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_27[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_28[] = { {
 	                                                             633346524000000000ULL,
 	                                                             633032028000000000ULL,
 	                                                             30,
@@ -596,7 +702,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_27[] = { {
 	                                                             { 0, 1, 5, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_28[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_29[] = { {
 	                                                             632400444000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -709,7 +815,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_28[] = { {
 	                                                             { 0, 1, 2, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_30[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_31[] = { {
 	                                                             633346524000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -801,7 +907,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_30[] = { {
 	                                                             { 0, 9, 6, 1, 23, 59, 59, 999 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_31[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_32[] = { {
 	                                                             633031164000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -851,7 +957,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_31[] = { {
 	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_32[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_33[] = { {
 	                                                             634925052000000000ULL,
 	                                                             634609692000000000ULL,
 	                                                             60,
@@ -866,7 +972,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_32[] = { {
 	                                                             { 0, 1, 2, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_33[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_34[] = { {
 	                                                             632400444000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -979,7 +1085,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_33[] = { {
 	                                                             { 0, 1, 2, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_35[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_36[] = { {
 	                                                             633346524000000000ULL,
 	                                                             633032028000000000ULL,
 	                                                             60,
@@ -1001,7 +1107,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_35[] = { {
 	                                                             { 0, 1, 4, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_36[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_37[] = { {
 	                                                             632400444000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -1128,7 +1234,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_36[] = { {
 	                                                             { 0, 3, 6, 5, 22, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_37[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_38[] = { {
 	                                                             635555772000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -1143,7 +1249,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_37[] = { {
 	                                                             { 0, 1, 4, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_38[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_39[] = { {
 	                                                             633346524000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -1207,7 +1313,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_38[] = { {
 	                                                             { 0, 8, 6, 2, 23, 59, 59, 999 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_39[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_40[] = { {
 	                                                             633031164000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -1222,7 +1328,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_39[] = { {
 	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_40[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_41[] = { {
 	                                                             634608828000000000ULL,
 	                                                             634294332000000000ULL,
 	                                                             60,
@@ -1237,7 +1343,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_40[] = { {
 	                                                             { 0, 1, 0, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_42[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_43[] = { {
 	3155378076000000000ULL,
 	0ULL,
 	60,
@@ -1245,7 +1351,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_42[] = { {
 	{ 0, 3, 0, 5, 2, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_43[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_44[] = { {
 	3155378076000000000ULL,
 	0ULL,
 	60,
@@ -1253,7 +1359,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_43[] = { {
 	{ 0, 3, 0, 5, 0, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_46[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_47[] = { {
 	3155378076000000000ULL,
 	0ULL,
 	60,
@@ -1261,7 +1367,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_46[] = { {
 	{ 0, 3, 0, 5, 1, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_48[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_49[] = { {
 	                                                             636818076000000000ULL,
 	                                                             636503580000000000ULL,
 	                                                             -60,
@@ -1276,7 +1382,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_48[] = { {
 	                                                             { 0, 1, 2, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_49[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_50[] = { {
 	                                                             633662748000000000ULL,
 	                                                             633347388000000000ULL,
 	                                                             60,
@@ -1365,23 +1471,71 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_49[] = { {
 	                                                             637134300000000000ULL,
 	                                                             60,
 	                                                             { 0, 4, 0, 3, 3, 0, 0, 0 },
-	                                                             { 0, 5, 0, 4, 2, 0, 0, 0 },
+	                                                             { 0, 5, 0, 5, 2, 0, 0, 0 },
 	                                                         },
 	                                                         {
-	                                                             3155378076000000000ULL,
+	                                                             637765020000000000ULL,
 	                                                             637450524000000000ULL,
 	                                                             60,
 	                                                             { 0, 4, 0, 2, 3, 0, 0, 0 },
 	                                                             { 0, 5, 0, 3, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             638080380000000000ULL,
+	                                                             637765884000000000ULL,
+	                                                             60,
+	                                                             { 0, 3, 0, 5, 3, 0, 0, 0 },
+	                                                             { 0, 5, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             638395740000000000ULL,
+	                                                             638081244000000000ULL,
+	                                                             60,
+	                                                             { 0, 3, 0, 3, 3, 0, 0, 0 },
+	                                                             { 0, 4, 0, 4, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             638711964000000000ULL,
+	                                                             638396604000000000ULL,
+	                                                             60,
+	                                                             { 0, 3, 0, 2, 3, 0, 0, 0 },
+	                                                             { 0, 4, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             639027324000000000ULL,
+	                                                             638712828000000000ULL,
+	                                                             60,
+	                                                             { 0, 2, 0, 5, 3, 0, 0, 0 },
+	                                                             { 0, 4, 0, 1, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             639342684000000000ULL,
+	                                                             639028188000000000ULL,
+	                                                             60,
+	                                                             { 0, 2, 0, 3, 3, 0, 0, 0 },
+	                                                             { 0, 3, 0, 4, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             639658044000000000ULL,
+	                                                             639343548000000000ULL,
+	                                                             60,
+	                                                             { 0, 2, 0, 1, 3, 0, 0, 0 },
+	                                                             { 0, 3, 0, 2, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             639974268000000000ULL,
+	                                                             639658908000000000ULL,
+	                                                             60,
+	                                                             { 0, 1, 0, 4, 3, 0, 0, 0 },
+	                                                             { 0, 3, 0, 1, 2, 0, 0, 0 },
+	                                                         },
+	                                                         {
+	                                                             3155378076000000000ULL,
+	                                                             639975132000000000ULL,
+	                                                             60,
+	                                                             { 0, 1, 0, 2, 3, 0, 0, 0 },
+	                                                             { 0, 2, 0, 3, 2, 0, 0, 0 },
 	                                                         } };
-
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_50[] = { {
-	3155378076000000000ULL,
-	0ULL,
-	60,
-	{ 0, 10, 0, 5, 3, 0, 0, 0 },
-	{ 0, 3, 0, 5, 2, 0, 0, 0 },
-} };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_51[] = { {
 	3155378076000000000ULL,
@@ -1407,7 +1561,15 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_53[] = { {
 	{ 0, 3, 0, 5, 2, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_55[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_54[] = { {
+	3155378076000000000ULL,
+	0ULL,
+	60,
+	{ 0, 10, 0, 5, 3, 0, 0, 0 },
+	{ 0, 3, 0, 5, 2, 0, 0, 0 },
+} };
+
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_56[] = { {
 	                                                             634608828000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -1436,7 +1598,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_55[] = { {
 	                                                             { 0, 3, 4, 5, 23, 59, 59, 999 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_56[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_57[] = { {
 	3155378076000000000ULL,
 	0ULL,
 	60,
@@ -1444,7 +1606,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_56[] = { {
 	{ 0, 3, 0, 5, 3, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_57[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_58[] = { {
 	                                                             633978108000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -1536,7 +1698,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_57[] = { {
 	                                                             { 0, 3, 6, 5, 23, 59, 59, 999 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_58[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_59[] = { {
 	                                                             632715804000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -1586,7 +1748,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_58[] = { {
 	                                                             { 0, 5, 4, 3, 23, 59, 59, 999 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_59[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_60[] = { {
 	3155378076000000000ULL,
 	0ULL,
 	60,
@@ -1594,7 +1756,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_59[] = { {
 	{ 0, 3, 0, 5, 2, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_60[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_61[] = { {
 	                                                             632400444000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -1714,7 +1876,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_60[] = { {
 	                                                             { 0, 3, 5, 5, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_61[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_62[] = { {
 	                                                             634925052000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -1764,21 +1926,14 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_61[] = { {
 	                                                             { 0, 3, 6, 4, 1, 0, 0, 0 },
 	                                                         },
 	                                                         {
-	                                                             637133436000000000ULL,
+	                                                             3155378076000000000ULL,
 	                                                             636818940000000000ULL,
 	                                                             60,
-	                                                             { 0, 10, 6, 4, 1, 0, 0, 0 },
-	                                                             { 0, 3, 5, 5, 0, 0, 0, 0 },
-	                                                         },
-	                                                         {
-	                                                             3155378076000000000ULL,
-	                                                             637134300000000000ULL,
-	                                                             60,
 	                                                             { 0, 10, 6, 5, 1, 0, 0, 0 },
-	                                                             { 0, 3, 5, 4, 0, 0, 0, 0 },
+	                                                             { 0, 3, 5, 5, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_63[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_64[] = { {
 	3155378076000000000ULL,
 	0ULL,
 	60,
@@ -1786,7 +1941,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_63[] = { {
 	{ 0, 3, 0, 5, 3, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_64[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_65[] = { {
 	                                                             632400444000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -1927,7 +2082,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_64[] = { {
 	                                                             { 0, 3, 5, 4, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_65[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_66[] = { {
 	                                                             634293468000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -1963,7 +2118,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_65[] = { {
 	                                                             { 0, 1, 3, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_66[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_67[] = { {
 	                                                             636187356000000000ULL,
 	                                                             0ULL,
 	                                                             0,
@@ -1978,7 +2133,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_66[] = { {
 	                                                             { 0, 1, 0, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_67[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_68[] = { {
 	                                                             634925052000000000ULL,
 	                                                             634609692000000000ULL,
 	                                                             60,
@@ -1993,7 +2148,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_67[] = { {
 	                                                             { 0, 3, 5, 5, 1, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_68[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_69[] = { {
 	636502716000000000ULL,
 	0ULL,
 	60,
@@ -2001,7 +2156,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_68[] = { {
 	{ 0, 9, 0, 1, 2, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_69[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_70[] = { {
 	                                                             632400444000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2030,7 +2185,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_69[] = { {
 	                                                             { 0, 4, 0, 1, 3, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_70[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_71[] = { {
 	                                                             634293468000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2080,7 +2235,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_70[] = { {
 	                                                             { 0, 1, 5, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_72[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_73[] = { {
 	                                                             634293468000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2095,7 +2250,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_72[] = { {
 	                                                             { 0, 3, 0, 5, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_73[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_74[] = { {
 	                                                             634293468000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2131,7 +2286,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_73[] = { {
 	                                                             { 0, 1, 3, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_75[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_76[] = { {
 	                                                             632400444000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2265,7 +2420,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_75[] = { {
 	                                                             { 0, 3, 4, 3, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_77[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_78[] = { {
 	                                                             634293468000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2301,7 +2456,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_77[] = { {
 	                                                             { 0, 1, 5, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_78[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_79[] = { {
 	635871132000000000ULL,
 	0ULL,
 	60,
@@ -2309,7 +2464,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_78[] = { {
 	{ 0, 3, 0, 5, 4, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_79[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_80[] = { {
 	                                                             633978108000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2331,7 +2486,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_79[] = { {
 	                                                             { 0, 3, 0, 5, 2, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_80[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_81[] = { {
 	                                                             633662748000000000ULL,
 	                                                             633347388000000000ULL,
 	                                                             60,
@@ -2346,7 +2501,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_80[] = { {
 	                                                             { 0, 1, 4, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_81[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_82[] = { {
 	                                                             634293468000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2382,7 +2537,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_81[] = { {
 	                                                             { 0, 1, 5, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_83[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_84[] = { {
 	                                                             634293468000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2432,7 +2587,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_83[] = { {
 	                                                             { 0, 1, 1, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_84[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_85[] = { {
 	634608828000000000ULL,
 	0ULL,
 	60,
@@ -2440,7 +2595,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_84[] = { {
 	{ 0, 3, 0, 5, 2, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_87[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_88[] = { {
 	                                                             634293468000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2476,7 +2631,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_87[] = { {
 	                                                             { 0, 1, 3, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_88[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_89[] = { {
 	                                                             633662748000000000ULL,
 	                                                             633347388000000000ULL,
 	                                                             60,
@@ -2491,7 +2646,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_88[] = { {
 	                                                             { 0, 4, 2, 2, 23, 59, 59, 999 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_89[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_90[] = { {
 	                                                             636502716000000000ULL,
 	                                                             0ULL,
 	                                                             0,
@@ -2506,7 +2661,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_89[] = { {
 	                                                             { 0, 1, 1, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_94[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_95[] = { {
 	633978108000000000ULL,
 	633663612000000000ULL,
 	60,
@@ -2514,7 +2669,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_94[] = { {
 	{ 0, 6, 5, 3, 23, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_95[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_96[] = { {
 	                                                             634293468000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2550,7 +2705,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_95[] = { {
 	                                                             { 0, 1, 3, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_98[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_99[] = { {
 	                                                             634293468000000000ULL,
 	                                                             0ULL,
 	                                                             60,
@@ -2586,29 +2741,29 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_98[] = { {
 	                                                             { 0, 1, 5, 1, 0, 0, 0, 0 },
 	                                                         } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_99[] = { {
-	                                                             633031164000000000ULL,
-	                                                             0ULL,
-	                                                             60,
-	                                                             { 0, 9, 6, 5, 2, 0, 0, 0 },
-	                                                             { 0, 3, 6, 5, 2, 0, 0, 0 },
-	                                                         },
-	                                                         {
-	                                                             635871132000000000ULL,
-	                                                             635556636000000000ULL,
-	                                                             60,
-	                                                             { 0, 9, 5, 5, 23, 59, 59, 999 },
-	                                                             { 0, 3, 6, 5, 2, 0, 0, 0 },
-	                                                         },
-	                                                         {
-	                                                             636187356000000000ULL,
-	                                                             635871996000000000ULL,
-	                                                             60,
-	                                                             { 0, 9, 5, 4, 23, 59, 59, 999 },
-	                                                             { 0, 3, 6, 5, 2, 0, 0, 0 },
-	                                                         } };
-
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_100[] = { {
+	                                                              633031164000000000ULL,
+	                                                              0ULL,
+	                                                              60,
+	                                                              { 0, 9, 6, 5, 2, 0, 0, 0 },
+	                                                              { 0, 3, 6, 5, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              635871132000000000ULL,
+	                                                              635556636000000000ULL,
+	                                                              60,
+	                                                              { 0, 9, 5, 5, 23, 59, 59, 999 },
+	                                                              { 0, 3, 6, 5, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              636187356000000000ULL,
+	                                                              635871996000000000ULL,
+	                                                              60,
+	                                                              { 0, 9, 5, 4, 23, 59, 59, 999 },
+	                                                              { 0, 3, 6, 5, 2, 0, 0, 0 },
+	                                                          } };
+
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_101[] = { {
 	                                                              634293468000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -2644,7 +2799,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_100[] = { {
 	                                                              { 0, 1, 3, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_101[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_102[] = { {
 	                                                              634293468000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -2680,7 +2835,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_101[] = { {
 	                                                              { 0, 1, 5, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_102[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_103[] = { {
 	                                                              634293468000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -2716,7 +2871,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_102[] = { {
 	                                                              { 0, 1, 5, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_104[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_105[] = { {
 	                                                              634293468000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -2752,7 +2907,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_104[] = { {
 	                                                              { 0, 1, 3, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_106[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_107[] = { {
 	                                                              633031164000000000ULL,
 	                                                              632716668000000000ULL,
 	                                                              60,
@@ -2781,7 +2936,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_106[] = { {
 	                                                              { 0, 1, 4, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_108[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_109[] = { {
 	                                                              635871132000000000ULL,
 	                                                              635556636000000000ULL,
 	                                                              60,
@@ -2796,7 +2951,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_108[] = { {
 	                                                              { 0, 3, 6, 5, 2, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_110[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_111[] = { {
 	                                                              634293468000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -2846,7 +3001,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_110[] = { {
 	                                                              { 0, 1, 5, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_112[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_113[] = { {
 	                                                              635871132000000000ULL,
 	                                                              635556636000000000ULL,
 	                                                              30,
@@ -2875,7 +3030,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_112[] = { {
 	                                                              { 0, 1, 1, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_114[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_115[] = { {
 	                                                              634293468000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -2911,7 +3066,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_114[] = { {
 	                                                              { 0, 1, 3, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_115[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_116[] = { {
 	                                                              633346524000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -2926,27 +3081,12 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_115[] = { {
 	                                                              { 0, 10, 0, 1, 2, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_118[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_119[] = { {
 	                                                              633346524000000000ULL,
 	                                                              0ULL,
 	                                                              60,
 	                                                              { 0, 3, 0, 5, 3, 0, 0, 0 },
 	                                                              { 0, 10, 0, 5, 2, 0, 0, 0 },
-	                                                          },
-	                                                          {
-	                                                              3155378076000000000ULL,
-	                                                              633347388000000000ULL,
-	                                                              60,
-	                                                              { 0, 4, 0, 1, 3, 0, 0, 0 },
-	                                                              { 0, 10, 0, 1, 2, 0, 0, 0 },
-	                                                          } };
-
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_120[] = { {
-	                                                              633346524000000000ULL,
-	                                                              0ULL,
-	                                                              60,
-	                                                              { 0, 3, 0, 5, 3, 0, 0, 0 },
-	                                                              { 0, 10, 0, 1, 2, 0, 0, 0 },
 	                                                          },
 	                                                          {
 	                                                              3155378076000000000ULL,
@@ -2957,6 +3097,21 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_120[] = { {
 	                                                          } };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_121[] = { {
+	                                                              633346524000000000ULL,
+	                                                              0ULL,
+	                                                              60,
+	                                                              { 0, 3, 0, 5, 3, 0, 0, 0 },
+	                                                              { 0, 10, 0, 1, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              3155378076000000000ULL,
+	                                                              633347388000000000ULL,
+	                                                              60,
+	                                                              { 0, 4, 0, 1, 3, 0, 0, 0 },
+	                                                              { 0, 10, 0, 1, 2, 0, 0, 0 },
+	                                                          } };
+
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_122[] = { {
 	                                                              634293468000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -2992,7 +3147,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_121[] = { {
 	                                                              { 0, 1, 3, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_122[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_123[] = { {
 	                                                              632715804000000000ULL,
 	                                                              0ULL,
 	                                                              30,
@@ -3021,7 +3176,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_122[] = { {
 	                                                              { 0, 10, 0, 1, 2, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_123[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_124[] = { {
 	                                                              635240412000000000ULL,
 	                                                              0ULL,
 	                                                              0,
@@ -3036,7 +3191,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_123[] = { {
 	                                                              { 0, 12, 0, 5, 2, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_124[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_125[] = { {
 	                                                              634293468000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -3072,7 +3227,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_124[] = { {
 	                                                              { 0, 1, 3, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_125[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_126[] = { {
 	                                                              634293468000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -3122,7 +3277,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_125[] = { {
 	                                                              { 0, 1, 5, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_126[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_127[] = { {
 	                                                              635555772000000000ULL,
 	                                                              0ULL,
 	                                                              0,
@@ -3151,7 +3306,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_126[] = { {
 	                                                              { 0, 10, 0, 1, 2, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_127[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_128[] = { {
 	                                                              634293468000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -3187,7 +3342,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_127[] = { {
 	                                                              { 0, 1, 5, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_129[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_130[] = { {
 	                                                              633978108000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -3209,7 +3364,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_129[] = { {
 	                                                              { 0, 3, 0, 5, 2, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_130[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_131[] = { {
 	                                                              633031164000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -3231,7 +3386,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_130[] = { {
 	                                                              { 0, 9, 0, 5, 2, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_132[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_133[] = { {
 	                                                              633978108000000000ULL,
 	                                                              633663612000000000ULL,
 	                                                              60,
@@ -3316,14 +3471,70 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_132[] = { {
 	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
 	                                                          },
 	                                                          {
-	                                                              3155378076000000000ULL,
+	                                                              637765020000000000ULL,
 	                                                              637450524000000000ULL,
 	                                                              60,
 	                                                              { 0, 1, 0, 3, 3, 0, 0, 0 },
 	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              638080380000000000ULL,
+	                                                              637765884000000000ULL,
+	                                                              60,
+	                                                              { 0, 1, 0, 3, 3, 0, 0, 0 },
+	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              638395740000000000ULL,
+	                                                              638081244000000000ULL,
+	                                                              60,
+	                                                              { 0, 1, 0, 3, 3, 0, 0, 0 },
+	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              638711964000000000ULL,
+	                                                              638396604000000000ULL,
+	                                                              60,
+	                                                              { 0, 1, 0, 2, 3, 0, 0, 0 },
+	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              639027324000000000ULL,
+	                                                              638712828000000000ULL,
+	                                                              60,
+	                                                              { 0, 1, 0, 2, 3, 0, 0, 0 },
+	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              639342684000000000ULL,
+	                                                              639028188000000000ULL,
+	                                                              60,
+	                                                              { 0, 1, 0, 3, 3, 0, 0, 0 },
+	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              639658044000000000ULL,
+	                                                              639343548000000000ULL,
+	                                                              60,
+	                                                              { 0, 1, 0, 3, 3, 0, 0, 0 },
+	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              639974268000000000ULL,
+	                                                              639658908000000000ULL,
+	                                                              60,
+	                                                              { 0, 1, 0, 3, 3, 0, 0, 0 },
+	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
+	                                                          },
+	                                                          {
+	                                                              3155378076000000000ULL,
+	                                                              639975132000000000ULL,
+	                                                              60,
+	                                                              { 0, 1, 0, 2, 3, 0, 0, 0 },
+	                                                              { 0, 11, 0, 2, 2, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_133[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_134[] = { {
 	3155378076000000000ULL,
 	0ULL,
 	60,
@@ -3331,7 +3542,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_133[] = { {
 	{ 0, 3, 0, 5, 2, 0, 0, 0 },
 } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_134[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_135[] = { {
 	                                                              633031164000000000ULL,
 	                                                              0ULL,
 	                                                              60,
@@ -3353,7 +3564,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_134[] = { {
 	                                                              { 0, 9, 0, 5, 2, 45, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_136[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_137[] = { {
 	                                                              636187356000000000ULL,
 	                                                              635871996000000000ULL,
 	                                                              60,
@@ -3368,7 +3579,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_136[] = { {
 	                                                              { 0, 1, 0, 1, 0, 0, 0, 0 },
 	                                                          } };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_137[] = { {
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_138[] = { {
 	                                                              633978108000000000ULL,
 	                                                              0ULL,
 	                                                              0,
@@ -3425,165 +3636,167 @@ const TIME_ZONE_ENTRY TimeZoneTable[] = {
 	  1 },
 	{ "Mountain Standard Time", 420, TRUE, "(UTC-07:00) Mountain Time (US & Canada)",
 	  "Mountain Standard Time", "Mountain Daylight Time", TimeZoneRuleTable_12, 2 },
+	{ "Yukon Standard Time", 420, TRUE, "(UTC-07:00) Yukon", "Yukon Standard Time",
+	  "Yukon Daylight Time", TimeZoneRuleTable_13, 15 },
 	{ "Central America Standard Time", 360, FALSE, "(UTC-06:00) Central America",
 	  "Central America Standard Time", "Central America Daylight Time", NULL, 0 },
 	{ "Central Standard Time", 360, TRUE, "(UTC-06:00) Central Time (US & Canada)",
-	  "Central Standard Time", "Central Daylight Time", TimeZoneRuleTable_14, 2 },
+	  "Central Standard Time", "Central Daylight Time", TimeZoneRuleTable_15, 2 },
 	{ "Easter Island Standard Time", 360, TRUE, "(UTC-06:00) Easter Island",
-	  "Easter Island Standard Time", "Easter Island Daylight Time", TimeZoneRuleTable_15, 13 },
+	  "Easter Island Standard Time", "Easter Island Daylight Time", TimeZoneRuleTable_16, 13 },
 	{ "Central Standard Time (Mexico)", 360, TRUE,
 	  "(UTC-06:00) Guadalajara, Mexico City, Monterrey", "Central Standard Time (Mexico)",
-	  "Central Daylight Time (Mexico)", TimeZoneRuleTable_16, 1 },
+	  "Central Daylight Time (Mexico)", TimeZoneRuleTable_17, 1 },
 	{ "Canada Central Standard Time", 360, FALSE, "(UTC-06:00) Saskatchewan",
 	  "Canada Central Standard Time", "Canada Central Daylight Time", NULL, 0 },
 	{ "SA Pacific Standard Time", 300, FALSE, "(UTC-05:00) Bogota, Lima, Quito, Rio Branco",
 	  "SA Pacific Standard Time", "SA Pacific Daylight Time", NULL, 0 },
 	{ "Eastern Standard Time (Mexico)", 300, TRUE, "(UTC-05:00) Chetumal",
-	  "Eastern Standard Time (Mexico)", "Eastern Daylight Time (Mexico)", TimeZoneRuleTable_19, 2 },
+	  "Eastern Standard Time (Mexico)", "Eastern Daylight Time (Mexico)", TimeZoneRuleTable_20, 2 },
 	{ "Eastern Standard Time", 300, TRUE, "(UTC-05:00) Eastern Time (US & Canada)",
-	  "Eastern Standard Time", "Eastern Daylight Time", TimeZoneRuleTable_20, 2 },
+	  "Eastern Standard Time", "Eastern Daylight Time", TimeZoneRuleTable_21, 2 },
 	{ "Haiti Standard Time", 300, TRUE, "(UTC-05:00) Haiti", "Haiti Standard Time",
-	  "Haiti Daylight Time", TimeZoneRuleTable_21, 6 },
+	  "Haiti Daylight Time", TimeZoneRuleTable_22, 6 },
 	{ "Cuba Standard Time", 300, TRUE, "(UTC-05:00) Havana", "Cuba Standard Time",
-	  "Cuba Daylight Time", TimeZoneRuleTable_22, 11 },
+	  "Cuba Daylight Time", TimeZoneRuleTable_23, 11 },
 	{ "US Eastern Standard Time", 300, TRUE, "(UTC-05:00) Indiana (East)",
-	  "US Eastern Standard Time", "US Eastern Daylight Time", TimeZoneRuleTable_23, 2 },
+	  "US Eastern Standard Time", "US Eastern Daylight Time", TimeZoneRuleTable_24, 2 },
 	{ "Turks And Caicos Standard Time", 300, TRUE, "(UTC-05:00) Turks and Caicos",
-	  "Turks and Caicos Standard Time", "Turks and Caicos Daylight Time", TimeZoneRuleTable_24, 6 },
+	  "Turks and Caicos Standard Time", "Turks and Caicos Daylight Time", TimeZoneRuleTable_25, 6 },
 	{ "Paraguay Standard Time", 240, TRUE, "(UTC-04:00) Asuncion", "Paraguay Standard Time",
-	  "Paraguay Daylight Time", TimeZoneRuleTable_25, 14 },
+	  "Paraguay Daylight Time", TimeZoneRuleTable_26, 14 },
 	{ "Atlantic Standard Time", 240, TRUE, "(UTC-04:00) Atlantic Time (Canada)",
-	  "Atlantic Standard Time", "Atlantic Daylight Time", TimeZoneRuleTable_26, 2 },
+	  "Atlantic Standard Time", "Atlantic Daylight Time", TimeZoneRuleTable_27, 2 },
 	{ "Venezuela Standard Time", 240, TRUE, "(UTC-04:00) Caracas", "Venezuela Standard Time",
-	  "Venezuela Daylight Time", TimeZoneRuleTable_27, 10 },
+	  "Venezuela Daylight Time", TimeZoneRuleTable_28, 10 },
 	{ "Central Brazilian Standard Time", 240, TRUE, "(UTC-04:00) Cuiaba",
-	  "Central Brazilian Standard Time", "Central Brazilian Daylight Time", TimeZoneRuleTable_28,
+	  "Central Brazilian Standard Time", "Central Brazilian Daylight Time", TimeZoneRuleTable_29,
 	  16 },
 	{ "SA Western Standard Time", 240, FALSE, "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan",
 	  "SA Western Standard Time", "SA Western Daylight Time", NULL, 0 },
 	{ "Pacific SA Standard Time", 240, TRUE, "(UTC-04:00) Santiago", "Pacific SA Standard Time",
-	  "Pacific SA Daylight Time", TimeZoneRuleTable_30, 13 },
+	  "Pacific SA Daylight Time", TimeZoneRuleTable_31, 13 },
 	{ "Newfoundland Standard Time", 210, TRUE, "(UTC-03:30) Newfoundland",
-	  "Newfoundland Standard Time", "Newfoundland Daylight Time", TimeZoneRuleTable_31, 7 },
+	  "Newfoundland Standard Time", "Newfoundland Daylight Time", TimeZoneRuleTable_32, 7 },
 	{ "Tocantins Standard Time", 180, TRUE, "(UTC-03:00) Araguaina", "Tocantins Standard Time",
-	  "Tocantins Daylight Time", TimeZoneRuleTable_32, 2 },
+	  "Tocantins Daylight Time", TimeZoneRuleTable_33, 2 },
 	{ "E. South America Standard Time", 180, TRUE, "(UTC-03:00) Brasilia",
-	  "E. South America Standard Time", "E. South America Daylight Time", TimeZoneRuleTable_33,
+	  "E. South America Standard Time", "E. South America Daylight Time", TimeZoneRuleTable_34,
 	  16 },
 	{ "SA Eastern Standard Time", 180, FALSE, "(UTC-03:00) Cayenne, Fortaleza",
 	  "SA Eastern Standard Time", "SA Eastern Daylight Time", NULL, 0 },
 	{ "Argentina Standard Time", 180, TRUE, "(UTC-03:00) City of Buenos Aires",
-	  "Argentina Standard Time", "Argentina Daylight Time", TimeZoneRuleTable_35, 3 },
+	  "Argentina Standard Time", "Argentina Daylight Time", TimeZoneRuleTable_36, 3 },
 	{ "Greenland Standard Time", 180, TRUE, "(UTC-03:00) Greenland", "Greenland Standard Time",
-	  "Greenland Daylight Time", TimeZoneRuleTable_36, 18 },
+	  "Greenland Daylight Time", TimeZoneRuleTable_37, 18 },
 	{ "Montevideo Standard Time", 180, TRUE, "(UTC-03:00) Montevideo", "Montevideo Standard Time",
-	  "Montevideo Daylight Time", TimeZoneRuleTable_37, 2 },
+	  "Montevideo Daylight Time", TimeZoneRuleTable_38, 2 },
 	{ "Magallanes Standard Time", 180, TRUE, "(UTC-03:00) Punta Arenas", "Magallanes Standard Time",
-	  "Magallanes Daylight Time", TimeZoneRuleTable_38, 9 },
+	  "Magallanes Daylight Time", TimeZoneRuleTable_39, 9 },
 	{ "Saint Pierre Standard Time", 180, TRUE, "(UTC-03:00) Saint Pierre and Miquelon",
-	  "Saint Pierre Standard Time", "Saint Pierre Daylight Time", TimeZoneRuleTable_39, 2 },
+	  "Saint Pierre Standard Time", "Saint Pierre Daylight Time", TimeZoneRuleTable_40, 2 },
 	{ "Bahia Standard Time", 180, TRUE, "(UTC-03:00) Salvador", "Bahia Standard Time",
-	  "Bahia Daylight Time", TimeZoneRuleTable_40, 2 },
+	  "Bahia Daylight Time", TimeZoneRuleTable_41, 2 },
 	{ "UTC-02", 120, FALSE, "(UTC-02:00) Coordinated Universal Time-02", "UTC-02", "UTC-02", NULL,
 	  0 },
 	{ "Mid-Atlantic Standard Time", 120, TRUE, "(UTC-02:00) Mid-Atlantic - Old",
-	  "Mid-Atlantic Standard Time", "Mid-Atlantic Daylight Time", TimeZoneRuleTable_42, 1 },
+	  "Mid-Atlantic Standard Time", "Mid-Atlantic Daylight Time", TimeZoneRuleTable_43, 1 },
 	{ "Azores Standard Time", 60, TRUE, "(UTC-01:00) Azores", "Azores Standard Time",
-	  "Azores Daylight Time", TimeZoneRuleTable_43, 1 },
+	  "Azores Daylight Time", TimeZoneRuleTable_44, 1 },
 	{ "Cape Verde Standard Time", 60, FALSE, "(UTC-01:00) Cabo Verde Is.",
 	  "Cabo Verde Standard Time", "Cabo Verde Daylight Time", NULL, 0 },
 	{ "UTC", 0, FALSE, "(UTC) Coordinated Universal Time", "Coordinated Universal Time",
 	  "Coordinated Universal Time", NULL, 0 },
 	{ "GMT Standard Time", 0, TRUE, "(UTC+00:00) Dublin, Edinburgh, Lisbon, London",
-	  "GMT Standard Time", "GMT Daylight Time", TimeZoneRuleTable_46, 1 },
+	  "GMT Standard Time", "GMT Daylight Time", TimeZoneRuleTable_47, 1 },
 	{ "Greenwich Standard Time", 0, FALSE, "(UTC+00:00) Monrovia, Reykjavik",
 	  "Greenwich Standard Time", "Greenwich Daylight Time", NULL, 0 },
 	{ "Sao Tome Standard Time", 0, TRUE, "(UTC+00:00) Sao Tome", "Sao Tome Standard Time",
-	  "Sao Tome Daylight Time", TimeZoneRuleTable_48, 2 },
+	  "Sao Tome Daylight Time", TimeZoneRuleTable_49, 2 },
 	{ "Morocco Standard Time", 0, TRUE, "(UTC+01:00) Casablanca", "Morocco Standard Time",
-	  "Morocco Daylight Time", TimeZoneRuleTable_49, 14 },
+	  "Morocco Daylight Time", TimeZoneRuleTable_50, 22 },
 	{ "W. Europe Standard Time", -60, TRUE,
 	  "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna", "W. Europe Standard Time",
-	  "W. Europe Daylight Time", TimeZoneRuleTable_50, 1 },
+	  "W. Europe Daylight Time", TimeZoneRuleTable_51, 1 },
 	{ "Central Europe Standard Time", -60, TRUE,
 	  "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague",
-	  "Central Europe Standard Time", "Central Europe Daylight Time", TimeZoneRuleTable_51, 1 },
+	  "Central Europe Standard Time", "Central Europe Daylight Time", TimeZoneRuleTable_52, 1 },
 	{ "Romance Standard Time", -60, TRUE, "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris",
-	  "Romance Standard Time", "Romance Daylight Time", TimeZoneRuleTable_52, 1 },
+	  "Romance Standard Time", "Romance Daylight Time", TimeZoneRuleTable_53, 1 },
 	{ "Central European Standard Time", -60, TRUE, "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
-	  "Central European Standard Time", "Central European Daylight Time", TimeZoneRuleTable_53, 1 },
+	  "Central European Standard Time", "Central European Daylight Time", TimeZoneRuleTable_54, 1 },
 	{ "W. Central Africa Standard Time", -60, FALSE, "(UTC+01:00) West Central Africa",
 	  "W. Central Africa Standard Time", "W. Central Africa Daylight Time", NULL, 0 },
 	{ "Jordan Standard Time", -120, TRUE, "(UTC+02:00) Amman", "Jordan Standard Time",
-	  "Jordan Daylight Time", TimeZoneRuleTable_55, 4 },
+	  "Jordan Daylight Time", TimeZoneRuleTable_56, 4 },
 	{ "GTB Standard Time", -120, TRUE, "(UTC+02:00) Athens, Bucharest", "GTB Standard Time",
-	  "GTB Daylight Time", TimeZoneRuleTable_56, 1 },
+	  "GTB Daylight Time", TimeZoneRuleTable_57, 1 },
 	{ "Middle East Standard Time", -120, TRUE, "(UTC+02:00) Beirut", "Middle East Standard Time",
-	  "Middle East Daylight Time", TimeZoneRuleTable_57, 13 },
+	  "Middle East Daylight Time", TimeZoneRuleTable_58, 13 },
 	{ "Egypt Standard Time", -120, TRUE, "(UTC+02:00) Cairo", "Egypt Standard Time",
-	  "Egypt Daylight Time", TimeZoneRuleTable_58, 7 },
+	  "Egypt Daylight Time", TimeZoneRuleTable_59, 7 },
 	{ "E. Europe Standard Time", -120, TRUE, "(UTC+02:00) Chisinau", "E. Europe Standard Time",
-	  "E. Europe Daylight Time", TimeZoneRuleTable_59, 1 },
+	  "E. Europe Daylight Time", TimeZoneRuleTable_60, 1 },
 	{ "Syria Standard Time", -120, TRUE, "(UTC+02:00) Damascus", "Syria Standard Time",
-	  "Syria Daylight Time", TimeZoneRuleTable_60, 17 },
+	  "Syria Daylight Time", TimeZoneRuleTable_61, 17 },
 	{ "West Bank Standard Time", -120, TRUE, "(UTC+02:00) Gaza, Hebron",
-	  "West Bank Gaza Standard Time", "West Bank Gaza Daylight Time", TimeZoneRuleTable_61, 9 },
+	  "West Bank Gaza Standard Time", "West Bank Gaza Daylight Time", TimeZoneRuleTable_62, 8 },
 	{ "South Africa Standard Time", -120, FALSE, "(UTC+02:00) Harare, Pretoria",
 	  "South Africa Standard Time", "South Africa Daylight Time", NULL, 0 },
 	{ "FLE Standard Time", -120, TRUE, "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius",
-	  "FLE Standard Time", "FLE Daylight Time", TimeZoneRuleTable_63, 1 },
+	  "FLE Standard Time", "FLE Daylight Time", TimeZoneRuleTable_64, 1 },
 	{ "Israel Standard Time", -120, TRUE, "(UTC+02:00) Jerusalem", "Jerusalem Standard Time",
-	  "Jerusalem Daylight Time", TimeZoneRuleTable_64, 20 },
+	  "Jerusalem Daylight Time", TimeZoneRuleTable_65, 20 },
 	{ "Kaliningrad Standard Time", -120, TRUE, "(UTC+02:00) Kaliningrad",
-	  "Russia TZ 1 Standard Time", "Russia TZ 1 Daylight Time", TimeZoneRuleTable_65, 5 },
+	  "Russia TZ 1 Standard Time", "Russia TZ 1 Daylight Time", TimeZoneRuleTable_66, 5 },
 	{ "Sudan Standard Time", -120, TRUE, "(UTC+02:00) Khartoum", "Sudan Standard Time",
-	  "Sudan Daylight Time", TimeZoneRuleTable_66, 2 },
+	  "Sudan Daylight Time", TimeZoneRuleTable_67, 2 },
 	{ "Libya Standard Time", -120, TRUE, "(UTC+02:00) Tripoli", "Libya Standard Time",
-	  "Libya Daylight Time", TimeZoneRuleTable_67, 2 },
+	  "Libya Daylight Time", TimeZoneRuleTable_68, 2 },
 	{ "Namibia Standard Time", -120, TRUE, "(UTC+02:00) Windhoek", "Namibia Standard Time",
-	  "Namibia Daylight Time", TimeZoneRuleTable_68, 1 },
+	  "Namibia Daylight Time", TimeZoneRuleTable_69, 1 },
 	{ "Arabic Standard Time", -180, TRUE, "(UTC+03:00) Baghdad", "Arabic Standard Time",
-	  "Arabic Daylight Time", TimeZoneRuleTable_69, 4 },
+	  "Arabic Daylight Time", TimeZoneRuleTable_70, 4 },
 	{ "Turkey Standard Time", -180, TRUE, "(UTC+03:00) Istanbul", "Turkey Standard Time",
-	  "Turkey Daylight Time", TimeZoneRuleTable_70, 7 },
+	  "Turkey Daylight Time", TimeZoneRuleTable_71, 7 },
 	{ "Arab Standard Time", -180, FALSE, "(UTC+03:00) Kuwait, Riyadh", "Arab Standard Time",
 	  "Arab Daylight Time", NULL, 0 },
 	{ "Belarus Standard Time", -180, TRUE, "(UTC+03:00) Minsk", "Belarus Standard Time",
-	  "Belarus Daylight Time", TimeZoneRuleTable_72, 2 },
+	  "Belarus Daylight Time", TimeZoneRuleTable_73, 2 },
 	{ "Russian Standard Time", -180, TRUE, "(UTC+03:00) Moscow, St. Petersburg",
-	  "Russia TZ 2 Standard Time", "Russia TZ 2 Daylight Time", TimeZoneRuleTable_73, 5 },
+	  "Russia TZ 2 Standard Time", "Russia TZ 2 Daylight Time", TimeZoneRuleTable_74, 5 },
 	{ "E. Africa Standard Time", -180, FALSE, "(UTC+03:00) Nairobi", "E. Africa Standard Time",
 	  "E. Africa Daylight Time", NULL, 0 },
 	{ "Iran Standard Time", -210, TRUE, "(UTC+03:30) Tehran", "Iran Standard Time",
-	  "Iran Daylight Time", TimeZoneRuleTable_75, 19 },
+	  "Iran Daylight Time", TimeZoneRuleTable_76, 19 },
 	{ "Arabian Standard Time", -240, FALSE, "(UTC+04:00) Abu Dhabi, Muscat",
 	  "Arabian Standard Time", "Arabian Daylight Time", NULL, 0 },
 	{ "Astrakhan Standard Time", -240, TRUE, "(UTC+04:00) Astrakhan, Ulyanovsk",
-	  "Astrakhan Standard Time", "Astrakhan Daylight Time", TimeZoneRuleTable_77, 5 },
+	  "Astrakhan Standard Time", "Astrakhan Daylight Time", TimeZoneRuleTable_78, 5 },
 	{ "Azerbaijan Standard Time", -240, TRUE, "(UTC+04:00) Baku", "Azerbaijan Standard Time",
-	  "Azerbaijan Daylight Time", TimeZoneRuleTable_78, 1 },
+	  "Azerbaijan Daylight Time", TimeZoneRuleTable_79, 1 },
 	{ "Russia Time Zone 3", -240, TRUE, "(UTC+04:00) Izhevsk, Samara", "Russia TZ 3 Standard Time",
-	  "Russia TZ 3 Daylight Time", TimeZoneRuleTable_79, 3 },
+	  "Russia TZ 3 Daylight Time", TimeZoneRuleTable_80, 3 },
 	{ "Mauritius Standard Time", -240, TRUE, "(UTC+04:00) Port Louis", "Mauritius Standard Time",
-	  "Mauritius Daylight Time", TimeZoneRuleTable_80, 2 },
+	  "Mauritius Daylight Time", TimeZoneRuleTable_81, 2 },
 	{ "Saratov Standard Time", -240, TRUE, "(UTC+04:00) Saratov", "Saratov Standard Time",
-	  "Saratov Daylight Time", TimeZoneRuleTable_81, 5 },
+	  "Saratov Daylight Time", TimeZoneRuleTable_82, 5 },
 	{ "Georgian Standard Time", -240, FALSE, "(UTC+04:00) Tbilisi", "Georgian Standard Time",
 	  "Georgian Daylight Time", NULL, 0 },
 	{ "Volgograd Standard Time", -240, TRUE, "(UTC+04:00) Volgograd", "Volgograd Standard Time",
-	  "Volgograd Daylight Time", TimeZoneRuleTable_83, 7 },
+	  "Volgograd Daylight Time", TimeZoneRuleTable_84, 7 },
 	{ "Caucasus Standard Time", -240, TRUE, "(UTC+04:00) Yerevan", "Caucasus Standard Time",
-	  "Caucasus Daylight Time", TimeZoneRuleTable_84, 1 },
+	  "Caucasus Daylight Time", TimeZoneRuleTable_85, 1 },
 	{ "Afghanistan Standard Time", -270, FALSE, "(UTC+04:30) Kabul", "Afghanistan Standard Time",
 	  "Afghanistan Daylight Time", NULL, 0 },
 	{ "West Asia Standard Time", -300, FALSE, "(UTC+05:00) Ashgabat, Tashkent",
 	  "West Asia Standard Time", "West Asia Daylight Time", NULL, 0 },
 	{ "Ekaterinburg Standard Time", -300, TRUE, "(UTC+05:00) Ekaterinburg",
-	  "Russia TZ 4 Standard Time", "Russia TZ 4 Daylight Time", TimeZoneRuleTable_87, 5 },
+	  "Russia TZ 4 Standard Time", "Russia TZ 4 Daylight Time", TimeZoneRuleTable_88, 5 },
 	{ "Pakistan Standard Time", -300, TRUE, "(UTC+05:00) Islamabad, Karachi",
-	  "Pakistan Standard Time", "Pakistan Daylight Time", TimeZoneRuleTable_88, 2 },
+	  "Pakistan Standard Time", "Pakistan Daylight Time", TimeZoneRuleTable_89, 2 },
 	{ "Qyzylorda Standard Time", -300, TRUE, "(UTC+05:00) Qyzylorda", "Qyzylorda Standard Time",
-	  "Qyzylorda Daylight Time", TimeZoneRuleTable_89, 2 },
+	  "Qyzylorda Daylight Time", TimeZoneRuleTable_90, 2 },
 	{ "India Standard Time", -330, FALSE, "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi",
 	  "India Standard Time", "India Daylight Time", NULL, 0 },
 	{ "Sri Lanka Standard Time", -330, FALSE, "(UTC+05:30) Sri Jayawardenepura",
@@ -3593,93 +3806,93 @@ const TIME_ZONE_ENTRY TimeZoneTable[] = {
 	{ "Central Asia Standard Time", -360, FALSE, "(UTC+06:00) Astana", "Central Asia Standard Time",
 	  "Central Asia Daylight Time", NULL, 0 },
 	{ "Bangladesh Standard Time", -360, TRUE, "(UTC+06:00) Dhaka", "Bangladesh Standard Time",
-	  "Bangladesh Daylight Time", TimeZoneRuleTable_94, 1 },
+	  "Bangladesh Daylight Time", TimeZoneRuleTable_95, 1 },
 	{ "Omsk Standard Time", -360, TRUE, "(UTC+06:00) Omsk", "Omsk Standard Time",
-	  "Omsk Daylight Time", TimeZoneRuleTable_95, 5 },
+	  "Omsk Daylight Time", TimeZoneRuleTable_96, 5 },
 	{ "Myanmar Standard Time", -390, FALSE, "(UTC+06:30) Yangon (Rangoon)", "Myanmar Standard Time",
 	  "Myanmar Daylight Time", NULL, 0 },
 	{ "SE Asia Standard Time", -420, FALSE, "(UTC+07:00) Bangkok, Hanoi, Jakarta",
 	  "SE Asia Standard Time", "SE Asia Daylight Time", NULL, 0 },
 	{ "Altai Standard Time", -420, TRUE, "(UTC+07:00) Barnaul, Gorno-Altaysk",
-	  "Altai Standard Time", "Altai Daylight Time", TimeZoneRuleTable_98, 5 },
+	  "Altai Standard Time", "Altai Daylight Time", TimeZoneRuleTable_99, 5 },
 	{ "W. Mongolia Standard Time", -420, TRUE, "(UTC+07:00) Hovd", "W. Mongolia Standard Time",
-	  "W. Mongolia Daylight Time", TimeZoneRuleTable_99, 3 },
+	  "W. Mongolia Daylight Time", TimeZoneRuleTable_100, 3 },
 	{ "North Asia Standard Time", -420, TRUE, "(UTC+07:00) Krasnoyarsk",
-	  "Russia TZ 6 Standard Time", "Russia TZ 6 Daylight Time", TimeZoneRuleTable_100, 5 },
+	  "Russia TZ 6 Standard Time", "Russia TZ 6 Daylight Time", TimeZoneRuleTable_101, 5 },
 	{ "N. Central Asia Standard Time", -420, TRUE, "(UTC+07:00) Novosibirsk",
-	  "Novosibirsk Standard Time", "Novosibirsk Daylight Time", TimeZoneRuleTable_101, 5 },
+	  "Novosibirsk Standard Time", "Novosibirsk Daylight Time", TimeZoneRuleTable_102, 5 },
 	{ "Tomsk Standard Time", -420, TRUE, "(UTC+07:00) Tomsk", "Tomsk Standard Time",
-	  "Tomsk Daylight Time", TimeZoneRuleTable_102, 5 },
+	  "Tomsk Daylight Time", TimeZoneRuleTable_103, 5 },
 	{ "China Standard Time", -480, FALSE, "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi",
 	  "China Standard Time", "China Daylight Time", NULL, 0 },
 	{ "North Asia East Standard Time", -480, TRUE, "(UTC+08:00) Irkutsk",
-	  "Russia TZ 7 Standard Time", "Russia TZ 7 Daylight Time", TimeZoneRuleTable_104, 5 },
+	  "Russia TZ 7 Standard Time", "Russia TZ 7 Daylight Time", TimeZoneRuleTable_105, 5 },
 	{ "Singapore Standard Time", -480, FALSE, "(UTC+08:00) Kuala Lumpur, Singapore",
 	  "Malay Peninsula Standard Time", "Malay Peninsula Daylight Time", NULL, 0 },
 	{ "W. Australia Standard Time", -480, TRUE, "(UTC+08:00) Perth", "W. Australia Standard Time",
-	  "W. Australia Daylight Time", TimeZoneRuleTable_106, 4 },
+	  "W. Australia Daylight Time", TimeZoneRuleTable_107, 4 },
 	{ "Taipei Standard Time", -480, FALSE, "(UTC+08:00) Taipei", "Taipei Standard Time",
 	  "Taipei Daylight Time", NULL, 0 },
 	{ "Ulaanbaatar Standard Time", -480, TRUE, "(UTC+08:00) Ulaanbaatar",
-	  "Ulaanbaatar Standard Time", "Ulaanbaatar Daylight Time", TimeZoneRuleTable_108, 2 },
+	  "Ulaanbaatar Standard Time", "Ulaanbaatar Daylight Time", TimeZoneRuleTable_109, 2 },
 	{ "Aus Central W. Standard Time", -525, FALSE, "(UTC+08:45) Eucla",
 	  "Aus Central W. Standard Time", "Aus Central W. Daylight Time", NULL, 0 },
 	{ "Transbaikal Standard Time", -540, TRUE, "(UTC+09:00) Chita", "Transbaikal Standard Time",
-	  "Transbaikal Daylight Time", TimeZoneRuleTable_110, 7 },
+	  "Transbaikal Daylight Time", TimeZoneRuleTable_111, 7 },
 	{ "Tokyo Standard Time", -540, FALSE, "(UTC+09:00) Osaka, Sapporo, Tokyo",
 	  "Tokyo Standard Time", "Tokyo Daylight Time", NULL, 0 },
 	{ "North Korea Standard Time", -540, TRUE, "(UTC+09:00) Pyongyang", "North Korea Standard Time",
-	  "North Korea Daylight Time", TimeZoneRuleTable_112, 4 },
+	  "North Korea Daylight Time", TimeZoneRuleTable_113, 4 },
 	{ "Korea Standard Time", -540, FALSE, "(UTC+09:00) Seoul", "Korea Standard Time",
 	  "Korea Daylight Time", NULL, 0 },
 	{ "Yakutsk Standard Time", -540, TRUE, "(UTC+09:00) Yakutsk", "Russia TZ 8 Standard Time",
-	  "Russia TZ 8 Daylight Time", TimeZoneRuleTable_114, 5 },
+	  "Russia TZ 8 Daylight Time", TimeZoneRuleTable_115, 5 },
 	{ "Cen. Australia Standard Time", -570, TRUE, "(UTC+09:30) Adelaide",
-	  "Cen. Australia Standard Time", "Cen. Australia Daylight Time", TimeZoneRuleTable_115, 2 },
+	  "Cen. Australia Standard Time", "Cen. Australia Daylight Time", TimeZoneRuleTable_116, 2 },
 	{ "AUS Central Standard Time", -570, FALSE, "(UTC+09:30) Darwin", "AUS Central Standard Time",
 	  "AUS Central Daylight Time", NULL, 0 },
 	{ "E. Australia Standard Time", -600, FALSE, "(UTC+10:00) Brisbane",
 	  "E. Australia Standard Time", "E. Australia Daylight Time", NULL, 0 },
 	{ "AUS Eastern Standard Time", -600, TRUE, "(UTC+10:00) Canberra, Melbourne, Sydney",
-	  "AUS Eastern Standard Time", "AUS Eastern Daylight Time", TimeZoneRuleTable_118, 2 },
+	  "AUS Eastern Standard Time", "AUS Eastern Daylight Time", TimeZoneRuleTable_119, 2 },
 	{ "West Pacific Standard Time", -600, FALSE, "(UTC+10:00) Guam, Port Moresby",
 	  "West Pacific Standard Time", "West Pacific Daylight Time", NULL, 0 },
 	{ "Tasmania Standard Time", -600, TRUE, "(UTC+10:00) Hobart", "Tasmania Standard Time",
-	  "Tasmania Daylight Time", TimeZoneRuleTable_120, 2 },
+	  "Tasmania Daylight Time", TimeZoneRuleTable_121, 2 },
 	{ "Vladivostok Standard Time", -600, TRUE, "(UTC+10:00) Vladivostok",
-	  "Russia TZ 9 Standard Time", "Russia TZ 9 Daylight Time", TimeZoneRuleTable_121, 5 },
+	  "Russia TZ 9 Standard Time", "Russia TZ 9 Daylight Time", TimeZoneRuleTable_122, 5 },
 	{ "Lord Howe Standard Time", -630, TRUE, "(UTC+10:30) Lord Howe Island",
-	  "Lord Howe Standard Time", "Lord Howe Daylight Time", TimeZoneRuleTable_122, 4 },
+	  "Lord Howe Standard Time", "Lord Howe Daylight Time", TimeZoneRuleTable_123, 4 },
 	{ "Bougainville Standard Time", -660, TRUE, "(UTC+11:00) Bougainville Island",
-	  "Bougainville Standard Time", "Bougainville Daylight Time", TimeZoneRuleTable_123, 2 },
+	  "Bougainville Standard Time", "Bougainville Daylight Time", TimeZoneRuleTable_124, 2 },
 	{ "Russia Time Zone 10", -660, TRUE, "(UTC+11:00) Chokurdakh", "Russia TZ 10 Standard Time",
-	  "Russia TZ 10 Daylight Time", TimeZoneRuleTable_124, 5 },
+	  "Russia TZ 10 Daylight Time", TimeZoneRuleTable_125, 5 },
 	{ "Magadan Standard Time", -660, TRUE, "(UTC+11:00) Magadan", "Magadan Standard Time",
-	  "Magadan Daylight Time", TimeZoneRuleTable_125, 7 },
+	  "Magadan Daylight Time", TimeZoneRuleTable_126, 7 },
 	{ "Norfolk Standard Time", -660, TRUE, "(UTC+11:00) Norfolk Island", "Norfolk Standard Time",
-	  "Norfolk Daylight Time", TimeZoneRuleTable_126, 4 },
+	  "Norfolk Daylight Time", TimeZoneRuleTable_127, 4 },
 	{ "Sakhalin Standard Time", -660, TRUE, "(UTC+11:00) Sakhalin", "Sakhalin Standard Time",
-	  "Sakhalin Daylight Time", TimeZoneRuleTable_127, 5 },
+	  "Sakhalin Daylight Time", TimeZoneRuleTable_128, 5 },
 	{ "Central Pacific Standard Time", -660, FALSE, "(UTC+11:00) Solomon Is., New Caledonia",
 	  "Central Pacific Standard Time", "Central Pacific Daylight Time", NULL, 0 },
 	{ "Russia Time Zone 11", -720, TRUE, "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky",
-	  "Russia TZ 11 Standard Time", "Russia TZ 11 Daylight Time", TimeZoneRuleTable_129, 3 },
+	  "Russia TZ 11 Standard Time", "Russia TZ 11 Daylight Time", TimeZoneRuleTable_130, 3 },
 	{ "New Zealand Standard Time", -720, TRUE, "(UTC+12:00) Auckland, Wellington",
-	  "New Zealand Standard Time", "New Zealand Daylight Time", TimeZoneRuleTable_130, 3 },
+	  "New Zealand Standard Time", "New Zealand Daylight Time", TimeZoneRuleTable_131, 3 },
 	{ "UTC+12", -720, FALSE, "(UTC+12:00) Coordinated Universal Time+12", "UTC+12", "UTC+12", NULL,
 	  0 },
 	{ "Fiji Standard Time", -720, TRUE, "(UTC+12:00) Fiji", "Fiji Standard Time",
-	  "Fiji Daylight Time", TimeZoneRuleTable_132, 13 },
+	  "Fiji Daylight Time", TimeZoneRuleTable_133, 21 },
 	{ "Kamchatka Standard Time", -720, TRUE, "(UTC+12:00) Petropavlovsk-Kamchatsky - Old",
-	  "Kamchatka Standard Time", "Kamchatka Daylight Time", TimeZoneRuleTable_133, 1 },
+	  "Kamchatka Standard Time", "Kamchatka Daylight Time", TimeZoneRuleTable_134, 1 },
 	{ "Chatham Islands Standard Time", -765, TRUE, "(UTC+12:45) Chatham Islands",
-	  "Chatham Islands Standard Time", "Chatham Islands Daylight Time", TimeZoneRuleTable_134, 3 },
+	  "Chatham Islands Standard Time", "Chatham Islands Daylight Time", TimeZoneRuleTable_135, 3 },
 	{ "UTC+13", -780, FALSE, "(UTC+13:00) Coordinated Universal Time+13", "UTC+13", "UTC+13", NULL,
 	  0 },
 	{ "Tonga Standard Time", -780, TRUE, "(UTC+13:00) Nuku'alofa", "Tonga Standard Time",
-	  "Tonga Daylight Time", TimeZoneRuleTable_136, 2 },
+	  "Tonga Daylight Time", TimeZoneRuleTable_137, 2 },
 	{ "Samoa Standard Time", -780, TRUE, "(UTC+13:00) Samoa", "Samoa Standard Time",
-	  "Samoa Daylight Time", TimeZoneRuleTable_137, 4 },
+	  "Samoa Daylight Time", TimeZoneRuleTable_138, 4 },
 	{ "Line Islands Standard Time", -840, FALSE, "(UTC+14:00) Kiritimati Island",
 	  "Line Islands Standard Time", "Line Islands Daylight Time", NULL, 0 }
 };

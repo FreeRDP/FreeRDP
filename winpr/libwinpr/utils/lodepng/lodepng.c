@@ -27,6 +27,7 @@ freely, subject to the following restrictions:
 
 #include "lodepng.h"
 #include <winpr/wtypes.h>
+#include <winpr/file.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,18 +75,20 @@ Example: if(!uivector_resizev(&frequencies_ll, 286, 0)) ERROR_BREAK(83);
 
 /*Set error var to the error code, and return it.*/
 #define CERROR_RETURN_ERROR(errorvar, code) \
+	do                                      \
 	{                                       \
 		errorvar = code;                    \
 		return code;                        \
-	}
+	} while (0)
 
 /*Try the code, if it returns error, also return the error.*/
 #define CERROR_TRY_RETURN(call) \
+	do                          \
 	{                           \
 		unsigned error = call;  \
 		if (error)              \
 			return error;       \
-	}
+	} while (0)
 
 /*
 About uivector, ucvector and string:
@@ -367,7 +370,7 @@ unsigned lodepng_load_file(unsigned char** out, size_t* outsize, const char* fil
 	*out = 0;
 	*outsize = 0;
 
-	file = fopen(filename, "rb");
+	file = winpr_fopen(filename, "rb");
 	if (!file)
 		return 78;
 
@@ -397,10 +400,10 @@ unsigned lodepng_save_file(const unsigned char* buffer, size_t buffersize, const
 {
 	FILE* file;
 	int ret = 0;
-	file = fopen(filename, "wb");
+	file = winpr_fopen(filename, "wb");
 	if (!file)
 		return 79;
-	if (fwrite((char*)buffer, 1, buffersize, file) != buffersize)
+	if (fwrite((const char*)buffer, 1, buffersize, file) != buffersize)
 		ret = 91;
 	fclose(file);
 	return ret;
@@ -1065,7 +1068,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
 
 		bitlen_cl = (unsigned*)malloc(NUM_CODE_LENGTH_CODES * sizeof(unsigned));
 		if (!bitlen_cl)
-			ERROR_BREAK(83 /*alloc fail*/);
+			ERROR_BREAK(83 /*alloc fail*/)
 
 		for (i = 0; i < NUM_CODE_LENGTH_CODES; i++)
 		{
@@ -1083,7 +1086,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
 		bitlen_ll = (unsigned*)malloc(NUM_DEFLATE_CODE_SYMBOLS * sizeof(unsigned));
 		bitlen_d = (unsigned*)malloc(NUM_DISTANCE_SYMBOLS * sizeof(unsigned));
 		if (!bitlen_ll || !bitlen_d)
-			ERROR_BREAK(83 /*alloc fail*/);
+			ERROR_BREAK(83 /*alloc fail*/)
 		for (i = 0; i < NUM_DEFLATE_CODE_SYMBOLS; i++)
 			bitlen_ll[i] = 0;
 		for (i = 0; i < NUM_DISTANCE_SYMBOLS; i++)
@@ -1109,9 +1112,9 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
 				unsigned value;         /*set value to the previous code*/
 
 				if (*bp >= inbitlength)
-					ERROR_BREAK(50); /*error, bit pointer jumps past memory*/
+					ERROR_BREAK(50) /*error, bit pointer jumps past memory*/
 				if (i == 0)
-					ERROR_BREAK(54); /*can't repeat previous if i is 0*/
+					ERROR_BREAK(54) /*can't repeat previous if i is 0*/
 
 				replength += readBitsFromStream(bp, in, 2);
 
@@ -1123,7 +1126,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
 				for (n = 0; n < replength; n++)
 				{
 					if (i >= HLIT + HDIST)
-						ERROR_BREAK(13); /*error: i is larger than the amount of codes*/
+						ERROR_BREAK(13) /*error: i is larger than the amount of codes*/
 					if (i < HLIT)
 						bitlen_ll[i] = value;
 					else
@@ -1135,7 +1138,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
 			{
 				unsigned replength = 3; /*read in the bits that indicate repeat length*/
 				if (*bp >= inbitlength)
-					ERROR_BREAK(50); /*error, bit pointer jumps past memory*/
+					ERROR_BREAK(50) /*error, bit pointer jumps past memory*/
 
 				replength += readBitsFromStream(bp, in, 3);
 
@@ -1143,7 +1146,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
 				for (n = 0; n < replength; n++)
 				{
 					if (i >= HLIT + HDIST)
-						ERROR_BREAK(14); /*error: i is larger than the amount of codes*/
+						ERROR_BREAK(14) /*error: i is larger than the amount of codes*/
 
 					if (i < HLIT)
 						bitlen_ll[i] = 0;
@@ -1156,7 +1159,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
 			{
 				unsigned replength = 11; /*read in the bits that indicate repeat length*/
 				if (*bp >= inbitlength)
-					ERROR_BREAK(50); /*error, bit pointer jumps past memory*/
+					ERROR_BREAK(50) /*error, bit pointer jumps past memory*/
 
 				replength += readBitsFromStream(bp, in, 7);
 
@@ -1164,7 +1167,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
 				for (n = 0; n < replength; n++)
 				{
 					if (i >= HLIT + HDIST)
-						ERROR_BREAK(15); /*error: i is larger than the amount of codes*/
+						ERROR_BREAK(15) /*error: i is larger than the amount of codes*/
 
 					if (i < HLIT)
 						bitlen_ll[i] = 0;
@@ -1191,7 +1194,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
 			break;
 
 		if (bitlen_ll[256] == 0)
-			ERROR_BREAK(64); /*the length of the end code 256 must be larger than 0*/
+			ERROR_BREAK(64) /*the length of the end code 256 must be larger than 0*/
 
 		/*now we've finally got HLIT and HDIST, so generate the code trees, and the function is
 		 * done*/
@@ -1245,7 +1248,7 @@ static unsigned inflateHuffmanBlock(ucvector* out, const unsigned char* in, size
 			/*ucvector_push_back would do the same, but for some reason the two lines below run 10%
 			 * faster*/
 			if (!ucvector_resize(out, (*pos) + 1))
-				ERROR_BREAK(83 /*alloc fail*/);
+				ERROR_BREAK(83 /*alloc fail*/)
 			out->data[*pos] = (unsigned char)code_ll;
 			(*pos)++;
 		}
@@ -1262,7 +1265,7 @@ static unsigned inflateHuffmanBlock(ucvector* out, const unsigned char* in, size
 			/*part 2: get extra bits and add the value of that to length*/
 			numextrabits_l = LENGTHEXTRA[code_ll - FIRST_LENGTH_CODE_INDEX];
 			if (*bp >= inbitlength)
-				ERROR_BREAK(51); /*error, bit pointer will jump past memory*/
+				ERROR_BREAK(51) /*error, bit pointer will jump past memory*/
 			length += readBitsFromStream(bp, in, numextrabits_l);
 
 			/*part 3: get distance code*/
@@ -1285,18 +1288,18 @@ static unsigned inflateHuffmanBlock(ucvector* out, const unsigned char* in, size
 			/*part 4: get extra bits from distance*/
 			numextrabits_d = DISTANCEEXTRA[code_d];
 			if (*bp >= inbitlength)
-				ERROR_BREAK(51); /*error, bit pointer will jump past memory*/
+				ERROR_BREAK(51) /*error, bit pointer will jump past memory*/
 
 			distance += readBitsFromStream(bp, in, numextrabits_d);
 
 			/*part 5: fill in all the out[n] values based on the length and dist*/
 			start = (*pos);
 			if (distance > start)
-				ERROR_BREAK(52); /*too long backward distance*/
+				ERROR_BREAK(52) /*too long backward distance*/
 			backward = start - distance;
 
 			if (!ucvector_resize(out, (*pos) + length))
-				ERROR_BREAK(83 /*alloc fail*/);
+				ERROR_BREAK(83 /*alloc fail*/)
 			for (forward = 0; forward < length; forward++)
 			{
 				out->data[(*pos)] = out->data[backward];
@@ -1504,7 +1507,7 @@ typedef struct Hash
 
 static unsigned hash_init(Hash* hash, unsigned windowsize)
 {
-	unsigned i;
+	unsigned i = 0;
 	hash->head = (int*)calloc(sizeof(int), HASH_NUM_VALUES);
 	hash->val = (int*)calloc(sizeof(int), windowsize);
 	hash->chain = (unsigned short*)calloc(sizeof(unsigned short), windowsize);
@@ -1750,12 +1753,12 @@ static unsigned encodeLZ77(uivector* out, Hash* hash, const unsigned char* in, s
 			{
 				lazy = 0;
 				if (pos == 0)
-					ERROR_BREAK(81);
+					ERROR_BREAK(81)
 				if (length > lazylength + 1)
 				{
 					/*push the previous character as literal*/
 					if (!uivector_push_back(out, in[pos - 1]))
-						ERROR_BREAK(83 /*alloc fail*/);
+						ERROR_BREAK(83 /*alloc fail*/)
 				}
 				else
 				{
@@ -1769,20 +1772,20 @@ static unsigned encodeLZ77(uivector* out, Hash* hash, const unsigned char* in, s
 			}
 		}
 		if (length >= 3 && offset > windowsize)
-			ERROR_BREAK(86 /*too big (or overflown negative) offset*/);
+			ERROR_BREAK(86 /*too big (or overflown negative) offset*/)
 
 		/*encode it as length/distance pair or literal value*/
 		if (length < 3) /*only lengths of 3 or higher are supported as length/distance pair*/
 		{
 			if (!uivector_push_back(out, in[pos]))
-				ERROR_BREAK(83 /*alloc fail*/);
+				ERROR_BREAK(83 /*alloc fail*/)
 		}
 		else if (length < minmatch || (length == 3 && offset > 4096))
 		{
 			/*compensate for the fact that longer offsets have more extra bits, a
 			length of only 3 may be not worth it then*/
 			if (!uivector_push_back(out, in[pos]))
-				ERROR_BREAK(83 /*alloc fail*/);
+				ERROR_BREAK(83 /*alloc fail*/)
 		}
 		else
 		{
@@ -1962,18 +1965,18 @@ static unsigned deflateDynamic(ucvector* out, size_t* bp, Hash* hash, const unsi
 		else
 		{
 			if (!uivector_resize(&lz77_encoded, datasize))
-				ERROR_BREAK(83 /*alloc fail*/);
+				ERROR_BREAK(83 /*alloc fail*/)
 			if (!lz77_encoded.data)
-				ERROR_BREAK(83 /* alloc fail */);
+				ERROR_BREAK(83 /* alloc fail */)
 
 			for (i = datapos; i < dataend; i++)
 				lz77_encoded.data[i] = data[i]; /*no LZ77, but still will be Huffman compressed*/
 		}
 
 		if (!uivector_resizev(&frequencies_ll, 286, 0))
-			ERROR_BREAK(83 /*alloc fail*/);
+			ERROR_BREAK(83 /*alloc fail*/)
 		if (!uivector_resizev(&frequencies_d, 30, 0))
-			ERROR_BREAK(83 /*alloc fail*/);
+			ERROR_BREAK(83 /*alloc fail*/)
 
 		/*Count the frequencies of lit, len and dist codes*/
 		for (i = 0; i < lz77_encoded.size; i++)
@@ -1981,7 +1984,7 @@ static unsigned deflateDynamic(ucvector* out, size_t* bp, Hash* hash, const unsi
 			unsigned symbol;
 
 			if (!lz77_encoded.data)
-				ERROR_BREAK(83 /* alloc fail */);
+				ERROR_BREAK(83 /* alloc fail */)
 
 			symbol = lz77_encoded.data[i];
 			frequencies_ll.data[symbol]++;
@@ -2072,7 +2075,7 @@ static unsigned deflateDynamic(ucvector* out, size_t* bp, Hash* hash, const unsi
 		/*generate tree_cl, the huffmantree of huffmantrees*/
 
 		if (!uivector_resizev(&frequencies_cl, NUM_CODE_LENGTH_CODES, 0))
-			ERROR_BREAK(83 /*alloc fail*/);
+			ERROR_BREAK(83 /*alloc fail*/)
 		for (i = 0; i < bitlen_lld_e.size; i++)
 		{
 			frequencies_cl.data[bitlen_lld_e.data[i]]++;
@@ -2088,7 +2091,7 @@ static unsigned deflateDynamic(ucvector* out, size_t* bp, Hash* hash, const unsi
 			break;
 
 		if (!uivector_resize(&bitlen_cl, tree_cl.numcodes))
-			ERROR_BREAK(83 /*alloc fail*/);
+			ERROR_BREAK(83 /*alloc fail*/)
 		for (i = 0; i < tree_cl.numcodes && bitlen_cl.data; i++)
 		{
 			/*lenghts of code length tree is in the order as specified by deflate*/
@@ -2098,7 +2101,7 @@ static unsigned deflateDynamic(ucvector* out, size_t* bp, Hash* hash, const unsi
 		{
 			/*remove zeros at the end, but minimum size must be 4*/
 			if (!uivector_resize(&bitlen_cl, bitlen_cl.size - 1))
-				ERROR_BREAK(83 /*alloc fail*/);
+				ERROR_BREAK(83 /*alloc fail*/)
 		}
 		if (error || !bitlen_cl.data)
 			break;
@@ -2160,7 +2163,7 @@ static unsigned deflateDynamic(ucvector* out, size_t* bp, Hash* hash, const unsi
 		writeLZ77data(bp, out, &lz77_encoded, &tree_ll, &tree_d);
 		/*error: the length of the end code 256 must be larger than 0*/
 		if (HuffmanTree_getLength(&tree_ll, 256) == 0)
-			ERROR_BREAK(64);
+			ERROR_BREAK(64)
 
 		/*write the end code*/
 		addHuffmanSymbol(bp, out, HuffmanTree_getCode(&tree_ll, 256),
@@ -2429,8 +2432,6 @@ static unsigned zlib_decompress(unsigned char** out, size_t* outsize, const unsi
 unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsigned char* in,
                                size_t insize, const LodePNGCompressSettings* settings)
 {
-	/*initially, *out must be NULL and outsize 0, if you just give some random *out
-	that's pointing to a non allocated buffer, this'll crash*/
 	ucvector outv;
 	size_t i;
 	unsigned error;
@@ -2448,8 +2449,7 @@ unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsig
 	unsigned FCHECK = 31 - CMFFLG % 31;
 	CMFFLG += FCHECK;
 
-	/*ucvector-controlled version of the output buffer, for dynamic array*/
-	ucvector_init_buffer(&outv, *out, *outsize);
+	ucvector_init(&outv);
 
 	if (!ucvector_push_back(&outv, (unsigned char)(CMFFLG / 256)))
 		return 83;
@@ -3026,7 +3026,7 @@ size_t lodepng_get_raw_size(unsigned w, unsigned h, const LodePNGColorMode* colo
 /*in an idat chunk, each scanline is a multiple of 8 bits, unlike the lodepng output buffer*/
 static size_t lodepng_get_raw_size_idat(unsigned w, unsigned h, const LodePNGColorMode* color)
 {
-	return h * ((w * lodepng_get_bpp(color) + 7) / 8);
+	return h * ((w * lodepng_get_bpp(color) + 7ULL) / 8ULL);
 }
 #endif /*LODEPNG_COMPILE_DECODER*/
 #endif /*LODEPNG_COMPILE_PNG*/
@@ -3378,7 +3378,6 @@ static unsigned rgba8ToPixel(unsigned char* out, size_t i, const LodePNGColorMod
 	if (mode->colortype == LCT_GREY)
 	{
 		unsigned char grey = r; /*((unsigned short)r + g + b) / 3*/
-		;
 		if (mode->bitdepth == 8)
 			out[i] = grey;
 		else if (mode->bitdepth == 16)
@@ -3418,7 +3417,6 @@ static unsigned rgba8ToPixel(unsigned char* out, size_t i, const LodePNGColorMod
 	else if (mode->colortype == LCT_GREY_ALPHA)
 	{
 		unsigned char grey = r; /*((unsigned short)r + g + b) / 3*/
-		;
 		if (mode->bitdepth == 8)
 		{
 			out[i * 2 + 0] = grey;
@@ -3458,7 +3456,6 @@ static void rgba16ToPixel(unsigned char* out, size_t i, const LodePNGColorMode* 
 	if (mode->colortype == LCT_GREY)
 	{
 		unsigned short grey = r; /*((unsigned)r + g + b) / 3*/
-		;
 		out[i * 2 + 0] = (grey >> 8) & 255;
 		out[i * 2 + 1] = grey & 255;
 	}
@@ -3474,7 +3471,6 @@ static void rgba16ToPixel(unsigned char* out, size_t i, const LodePNGColorMode* 
 	else if (mode->colortype == LCT_GREY_ALPHA)
 	{
 		unsigned short grey = r; /*((unsigned)r + g + b) / 3*/
-		;
 		out[i * 4 + 0] = (grey >> 8) & 255;
 		out[i * 4 + 1] = grey & 255;
 		out[i * 4 + 2] = (a >> 8) & 255;
@@ -3814,7 +3810,7 @@ unsigned lodepng_convert(unsigned char* out, const unsigned char* in, LodePNGCol
 {
 	size_t i;
 	ColorTree tree;
-	size_t numpixels = w * h;
+	size_t numpixels = w * h * 1ULL;
 
 	if (lodepng_color_mode_equal(mode_out, mode_in))
 	{
@@ -3917,7 +3913,7 @@ unsigned get_color_profile(LodePNGColorProfile* profile, const unsigned char* in
 	unsigned error = 0;
 	size_t i;
 	ColorTree tree;
-	size_t numpixels = w * h;
+	size_t numpixels = w * h * 1ULL;
 
 	unsigned colored_done = lodepng_is_greyscale_type(mode) ? 1 : 0;
 	unsigned alpha_done = lodepng_can_have_alpha(mode) ? 0 : 1;
@@ -4223,11 +4219,11 @@ static void Adam7_getpassvalues(unsigned passw[7], unsigned passh[7], size_t fil
 		/*if passw[i] is 0, it's 0 bytes, not 1 (no filtertype-byte)*/
 		filter_passstart[i + 1] =
 		    filter_passstart[i] +
-		    ((passw[i] && passh[i]) ? passh[i] * (1 + (passw[i] * bpp + 7) / 8) : 0);
+		    ((passw[i] && passh[i]) ? passh[i] * (1ULL + (passw[i] * bpp + 7ULL) / 8ULL) : 0);
 		/*bits padded if needed to fill full byte at end of each scanline*/
-		padded_passstart[i + 1] = padded_passstart[i] + passh[i] * ((passw[i] * bpp + 7) / 8);
+		padded_passstart[i + 1] = padded_passstart[i] + passh[i] * ((passw[i] * bpp + 7ULL) / 8ULL);
 		/*only padded at end of reduced image*/
-		passstart[i + 1] = passstart[i] + (passh[i] * passw[i] * bpp + 7) / 8;
+		passstart[i + 1] = passstart[i] + (passh[i] * passw[i] * bpp + 7ULL) / 8ULL;
 	}
 }
 
@@ -4538,7 +4534,7 @@ static unsigned postProcessScanlines(unsigned char* out, unsigned char* in, unsi
 		if (bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8)
 		{
 			CERROR_TRY_RETURN(unfilter(in, in, w, h, bpp));
-			removePaddingBits(out, in, w * bpp, ((w * bpp + 7) / 8) * 8, h);
+			removePaddingBits(out, in, w * bpp * 1ULL, ((w * bpp + 7ULL) / 8ULL) * 8ULL, h);
 		}
 		/*we can immediatly filter into the out buffer, no other steps needed*/
 		else
@@ -4563,8 +4559,9 @@ static unsigned postProcessScanlines(unsigned char* out, unsigned char* in, unsi
 				/*remove padding bits in scanlines; after this there still may be padding
 				bits between the different reduced images: each reduced image still starts nicely at
 				a byte*/
-				removePaddingBits(&in[passstart[i]], &in[padded_passstart[i]], passw[i] * bpp,
-				                  ((passw[i] * bpp + 7) / 8) * 8, passh[i]);
+				removePaddingBits(&in[passstart[i]], &in[padded_passstart[i]],
+				                  passw[i] * bpp * 1ULL, ((passw[i] * bpp + 7ULL) / 8ULL) * 8ULL,
+				                  passh[i]);
 			}
 		}
 
@@ -4693,11 +4690,11 @@ static unsigned readChunk_tEXt(LodePNGInfo* info, const unsigned char* data, siz
 		/*even though it's not allowed by the standard, no error is thrown if
 		there's no null termination char, if the text is empty*/
 		if (length < 1 || length > 79)
-			CERROR_BREAK(error, 89); /*keyword too short or long*/
+			CERROR_BREAK(error, 89) /*keyword too short or long*/
 
 		key = (char*)malloc(length + 1);
 		if (!key)
-			CERROR_BREAK(error, 83); /*alloc fail*/
+			CERROR_BREAK(error, 83) /*alloc fail*/
 
 		key[length] = 0;
 		for (i = 0; i < length; i++)
@@ -4708,7 +4705,7 @@ static unsigned readChunk_tEXt(LodePNGInfo* info, const unsigned char* data, siz
 		length = chunkLength < string2_begin ? 0 : chunkLength - string2_begin;
 		str = (char*)malloc(length + 1);
 		if (!str)
-			CERROR_BREAK(error, 83); /*alloc fail*/
+			CERROR_BREAK(error, 83) /*alloc fail*/
 
 		str[length] = 0;
 		for (i = 0; i < length; i++)
@@ -4741,35 +4738,34 @@ static unsigned readChunk_zTXt(LodePNGInfo* info, const LodePNGDecompressSetting
 	while (!error) /*not really a while loop, only used to break on error*/
 	{
 		for (length = 0; length < chunkLength && data[length] != 0; length++)
-			;
 		if (length + 2 >= chunkLength)
-			CERROR_BREAK(error, 75); /*no null termination, corrupt?*/
+			CERROR_BREAK(error, 75) /*no null termination, corrupt?*/
 		if (length < 1 || length > 79)
-			CERROR_BREAK(error, 89); /*keyword too short or long*/
+			CERROR_BREAK(error, 89) /*keyword too short or long*/
 
 		key = (char*)malloc(length + 1);
 		if (!key)
-			CERROR_BREAK(error, 83); /*alloc fail*/
+			CERROR_BREAK(error, 83) /*alloc fail*/
 
 		key[length] = 0;
 		for (i = 0; i < length; i++)
 			key[i] = (char)data[i];
 
 		if (data[length + 1] != 0)
-			CERROR_BREAK(error, 72); /*the 0 byte indicating compression must be 0*/
+			CERROR_BREAK(error, 72) /*the 0 byte indicating compression must be 0*/
 
 		string2_begin = length + 2;
 		if (string2_begin > chunkLength)
-			CERROR_BREAK(error, 75); /*no null termination, corrupt?*/
+			CERROR_BREAK(error, 75) /*no null termination, corrupt?*/
 
 		length = chunkLength - string2_begin;
 		/*will fail if zlib error, e.g. if length is too small*/
 		error = zlib_decompress(&decoded.data, &decoded.size,
-		                        (unsigned char*)(&data[string2_begin]), length, zlibsettings);
+		                        (const unsigned char*)(&data[string2_begin]), length, zlibsettings);
 		if (error)
 			break;
 		if (!ucvector_push_back(&decoded, 0))
-			ERROR_BREAK(83);
+			ERROR_BREAK(83)
 
 		error = lodepng_add_text(info, key, (char*)decoded.data);
 
@@ -4800,19 +4796,19 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecompressSetting
 		it'd still fail with other error checks below if it's too short. This just gives a different
 		error code.*/
 		if (chunkLength < 5)
-			CERROR_BREAK(error, 30); /*iTXt chunk too short*/
+			CERROR_BREAK(error, 30) /*iTXt chunk too short*/
 
 		/*read the key*/
 		for (length = 0; length < chunkLength && data[length] != 0; length++)
 			;
 		if (length + 3 >= chunkLength)
-			CERROR_BREAK(error, 75); /*no null termination char, corrupt?*/
+			CERROR_BREAK(error, 75) /*no null termination char, corrupt?*/
 		if (length < 1 || length > 79)
-			CERROR_BREAK(error, 89); /*keyword too short or long*/
+			CERROR_BREAK(error, 89) /*keyword too short or long*/
 
 		key = (char*)malloc(length + 1);
 		if (!key)
-			CERROR_BREAK(error, 83); /*alloc fail*/
+			CERROR_BREAK(error, 83) /*alloc fail*/
 
 		key[length] = 0;
 		for (i = 0; i < length; i++)
@@ -4821,7 +4817,7 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecompressSetting
 		/*read the compression method*/
 		compressed = data[length + 1];
 		if (data[length + 2] != 0)
-			CERROR_BREAK(error, 72); /*the 0 byte indicating compression must be 0*/
+			CERROR_BREAK(error, 72) /*the 0 byte indicating compression must be 0*/
 
 		/*even though it's not allowed by the standard, no error is thrown if
 		there's no null termination char, if the text is empty for the next 3 texts*/
@@ -4834,7 +4830,7 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecompressSetting
 
 		langtag = (char*)malloc(length + 1);
 		if (!langtag)
-			CERROR_BREAK(error, 83); /*alloc fail*/
+			CERROR_BREAK(error, 83) /*alloc fail*/
 
 		langtag[length] = 0;
 		for (i = 0; i < length; i++)
@@ -4848,7 +4844,7 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecompressSetting
 
 		transkey = (char*)malloc(length + 1);
 		if (!transkey)
-			CERROR_BREAK(error, 83); /*alloc fail*/
+			CERROR_BREAK(error, 83) /*alloc fail*/
 
 		transkey[length] = 0;
 		for (i = 0; i < length; i++)
@@ -4862,19 +4858,19 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecompressSetting
 		if (compressed)
 		{
 			/*will fail if zlib error, e.g. if length is too small*/
-			error = zlib_decompress(&decoded.data, &decoded.size, (unsigned char*)(&data[begin]),
-			                        length, zlibsettings);
+			error = zlib_decompress(&decoded.data, &decoded.size,
+			                        (const unsigned char*)(&data[begin]), length, zlibsettings);
 			if (error)
 				break;
 			if (decoded.allocsize < decoded.size)
 				decoded.allocsize = decoded.size;
 			if (!ucvector_push_back(&decoded, 0))
-				CERROR_BREAK(error, 83 /*alloc fail*/);
+				CERROR_BREAK(error, 83 /*alloc fail*/)
 		}
 		else
 		{
 			if (!ucvector_resize(&decoded, length + 1))
-				CERROR_BREAK(error, 83 /*alloc fail*/);
+				CERROR_BREAK(error, 83 /*alloc fail*/)
 
 			decoded.data[length] = 0;
 			for (i = 0; i < length; i++)
@@ -4961,18 +4957,18 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h, LodePNG
 
 		/*error: size of the in buffer too small to contain next chunk*/
 		if ((size_t)((chunk - in) + 12) > insize || chunk < in)
-			CERROR_BREAK(state->error, 30);
+			CERROR_BREAK(state->error, 30)
 
 		/*length of the data of the chunk, excluding the length bytes, chunk type and CRC bytes*/
 		chunkLength = lodepng_chunk_length(chunk);
 		/*error: chunk length larger than the max PNG chunk size*/
 		if (chunkLength > 2147483647)
-			CERROR_BREAK(state->error, 63);
+			CERROR_BREAK(state->error, 63)
 
 		if ((size_t)((chunk - in) + chunkLength + 12) > insize || (chunk + chunkLength + 12) < in)
 		{
 			CERROR_BREAK(state->error,
-			             64); /*error: size of the in buffer too small to contain next chunk*/
+			             64) /*error: size of the in buffer too small to contain next chunk*/
 		}
 
 		data = lodepng_chunk_data_const(chunk);
@@ -4982,7 +4978,7 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h, LodePNG
 		{
 			size_t oldsize = idat.size;
 			if (!ucvector_resize(&idat, oldsize + chunkLength))
-				CERROR_BREAK(state->error, 83 /*alloc fail*/);
+				CERROR_BREAK(state->error, 83 /*alloc fail*/)
 			for (i = 0; i < chunkLength; i++)
 				idat.data[oldsize + i] = data[i];
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
@@ -5068,7 +5064,7 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h, LodePNG
 		{
 			/*error: unknown critical chunk (5th bit of first byte of chunk type is 0)*/
 			if (!lodepng_chunk_ancillary(chunk))
-				CERROR_BREAK(state->error, 69);
+				CERROR_BREAK(state->error, 69)
 
 			unknown = 1;
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
@@ -5087,7 +5083,7 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h, LodePNG
 		    !unknown) /*check CRC if wanted, only on known chunk types*/
 		{
 			if (lodepng_chunk_check_crc(chunk))
-				CERROR_BREAK(state->error, 57); /*invalid CRC*/
+				CERROR_BREAK(state->error, 57) /*invalid CRC*/
 		}
 
 		if (!IEND)
@@ -5458,8 +5454,8 @@ static unsigned addChunk_zTXt(ucvector* out, const char* keyword, const char* te
 	ucvector_push_back(&data, 0); /*0 termination char*/
 	ucvector_push_back(&data, 0); /*compression method: 0*/
 
-	error = zlib_compress(&compressed.data, &compressed.size, (unsigned char*)textstring, textsize,
-	                      zlibsettings);
+	error = zlib_compress(&compressed.data, &compressed.size, (const unsigned char*)textstring,
+	                      textsize, zlibsettings);
 	if (!error)
 	{
 		for (i = 0; i < compressed.size; i++)
@@ -5501,7 +5497,7 @@ static unsigned addChunk_iTXt(ucvector* out, unsigned compressed, const char* ke
 		ucvector compressed_data;
 		ucvector_init(&compressed_data);
 		error = zlib_compress(&compressed_data.data, &compressed_data.size,
-		                      (unsigned char*)textstring, textsize, zlibsettings);
+		                      (const unsigned char*)textstring, textsize, zlibsettings);
 		if (!error)
 		{
 			for (i = 0; i < compressed_data.size; i++)
@@ -6049,12 +6045,12 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
 			/*non multiple of 8 bits per scanline, padding bits needed per scanline*/
 			if (bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8)
 			{
-				unsigned char* padded = (unsigned char*)calloc(h * ((w * bpp + 7) / 8), 1);
+				unsigned char* padded = (unsigned char*)calloc(h * ((w * bpp + 7ULL) / 8ULL), 1);
 				if (!padded)
 					error = 83; /*alloc fail*/
 				if (!error)
 				{
-					addPaddingBits(padded, in, ((w * bpp + 7) / 8) * 8, w * bpp, h);
+					addPaddingBits(padded, in, ((w * bpp + 7ULL) / 8ULL) * 8ULL, w * bpp * 1ULL, h);
 					error = filter(*out, padded, w, h, &info_png->color, settings);
 				}
 				free(padded);
@@ -6096,9 +6092,10 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
 					unsigned char* padded = (unsigned char*)calloc(
 					    padded_passstart[i + 1] - padded_passstart[i], sizeof(unsigned char));
 					if (!padded)
-						ERROR_BREAK(83); /*alloc fail*/
-					addPaddingBits(padded, &adam7[passstart[i]], ((passw[i] * bpp + 7) / 8) * 8,
-					               passw[i] * bpp, passh[i]);
+						ERROR_BREAK(83) /*alloc fail*/
+					addPaddingBits(padded, &adam7[passstart[i]],
+					               ((passw[i] * bpp + 7ULL) / 8ULL) * 8ULL, passw[i] * bpp * 1ULL,
+					               passh[i] * 1ULL);
 					error = filter(&(*out)[filter_passstart[i]], padded, passw[i], passh[i],
 					               &info_png->color, settings);
 					free(padded);

@@ -15,6 +15,9 @@ int TestWLog(int argc, char* argv[])
 	char* wlog_file = NULL;
 	int result = 1;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (!(tmp_path = GetKnownPath(KNOWN_PATH_TEMP)))
 	{
 		fprintf(stderr, "Failed to get temporary directory!\n");
@@ -55,7 +58,7 @@ int TestWLog(int argc, char* argv[])
 	WLog_CloseAppender(root);
 
 	if ((wlog_file = GetCombinedPath(tmp_path, "test_w.log")))
-		DeleteFileA(wlog_file);
+		winpr_DeleteFile(wlog_file);
 
 	result = 0;
 out:

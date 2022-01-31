@@ -22,15 +22,17 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
 #include <winpr/endian.h>
-#include <freerdp/build-config.h>
+#include <winpr/build-config.h>
 
 #include "ntlm.h"
+#include "ntlm_export.h"
 #include "../sspi.h"
 
 #include "ntlm_message.h"
@@ -38,9 +40,9 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.NTLM")
 
-#define WINPR_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\WinPR\\NTLM"
+#define WINPR_KEY "Software\\" WINPR_VENDOR_STRING "\\" WINPR_PRODUCT_STRING "\\WinPR\\NTLM"
 
-static const char* NTLM_PACKAGE_NAME = "NTLM";
+static char* NTLM_PACKAGE_NAME = "NTLM";
 
 static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
@@ -589,6 +591,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 		{
 			status = ntlm_read_ChallengeMessage(context, input_buffer);
 
+			if (status != SEC_I_CONTINUE_NEEDED)
+				return status;
+
 			if (!pOutput)
 				return SEC_E_INVALID_TOKEN;
 
@@ -749,8 +754,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 
 		if (credentials->identity.UserLength > 0)
 		{
-			status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)credentials->identity.User,
-			                            credentials->identity.UserLength, &UserA, 256, NULL, NULL);
+			WINPR_ASSERT(credentials->identity.UserLength <= INT_MAX);
+			status =
+			    ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)credentials->identity.User,
+			                       (int)credentials->identity.UserLength, &UserA, 256, NULL, NULL);
 
 			if (status <= 0)
 				return SEC_E_INTERNAL_ERROR;
@@ -760,9 +767,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 
 		if (credentials->identity.DomainLength > 0)
 		{
-			status =
-			    ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)credentials->identity.Domain,
-			                       credentials->identity.DomainLength, &DomainA, 256, NULL, NULL);
+			WINPR_ASSERT(credentials->identity.DomainLength <= INT_MAX);
+			status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)credentials->identity.Domain,
+			                            (int)credentials->identity.DomainLength, &DomainA, 256,
+			                            NULL, NULL);
 
 			if (status <= 0)
 				return SEC_E_INTERNAL_ERROR;
@@ -965,7 +973,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULON
                                                      PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	ULONG index;
-	int length;
+	size_t length;
 	void* data;
 	UINT32 SeqNo;
 	UINT32 value;
@@ -1061,8 +1069,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULON
 static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
                                                      ULONG MessageSeqNo, PULONG pfQOP)
 {
-	int index;
-	int length;
+	ULONG index;
+	size_t length;
 	void* data;
 	UINT32 SeqNo;
 	UINT32 value;
@@ -1077,7 +1085,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 	SeqNo = (UINT32)MessageSeqNo;
 	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
-	for (index = 0; index < (int)pMessage->cBuffers; index++)
+	for (index = 0; index < pMessage->cBuffers; index++)
 	{
 		if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA)
 			data_buffer = &pMessage->pBuffers[index];

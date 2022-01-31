@@ -29,45 +29,48 @@
 
 #include "cache.h"
 
-rdpCache* cache_new(rdpSettings* settings)
+rdpCache* cache_new(rdpContext* context)
 {
 	rdpCache* cache;
+
+	WINPR_ASSERT(context);
+
 	cache = (rdpCache*)calloc(1, sizeof(rdpCache));
 
 	if (!cache)
 		return NULL;
 
-	cache->glyph = glyph_cache_new(settings);
+	cache->glyph = glyph_cache_new(context);
 
 	if (!cache->glyph)
 		goto error;
 
-	cache->brush = brush_cache_new(settings);
+	cache->brush = brush_cache_new(context);
 
 	if (!cache->brush)
 		goto error;
 
-	cache->pointer = pointer_cache_new(settings);
+	cache->pointer = pointer_cache_new(context);
 
 	if (!cache->pointer)
 		goto error;
 
-	cache->bitmap = bitmap_cache_new(settings);
+	cache->bitmap = bitmap_cache_new(context);
 
 	if (!cache->bitmap)
 		goto error;
 
-	cache->offscreen = offscreen_cache_new(settings);
+	cache->offscreen = offscreen_cache_new(context);
 
 	if (!cache->offscreen)
 		goto error;
 
-	cache->palette = palette_cache_new(settings);
+	cache->palette = palette_cache_new(context);
 
 	if (!cache->palette)
 		goto error;
 
-	cache->nine_grid = nine_grid_cache_new(settings);
+	cache->nine_grid = nine_grid_cache_new(context);
 
 	if (!cache->nine_grid)
 		goto error;

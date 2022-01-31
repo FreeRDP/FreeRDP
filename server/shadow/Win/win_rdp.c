@@ -21,29 +21,39 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/print.h>
+#include <winpr/assert.h>
+
 #include <freerdp/log.h>
 
 #include "win_rdp.h"
 
 #define TAG SERVER_TAG("shadow.win")
 
-static void shw_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
+static void shw_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)
 {
 	shwContext* shw = (shwContext*)context;
+	WINPR_ASSERT(e);
 	WLog_INFO(TAG, "OnChannelConnected: %s", e->name);
 }
 
-static void shw_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
+static void shw_OnChannelDisconnectedEventHandler(void* context,
+                                                  const ChannelDisconnectedEventArgs* e)
 {
 	shwContext* shw = (shwContext*)context;
+	WINPR_ASSERT(e);
 	WLog_INFO(TAG, "OnChannelDisconnected: %s", e->name);
 }
 
 static BOOL shw_begin_paint(rdpContext* context)
 {
 	shwContext* shw;
-	rdpGdi* gdi = context->gdi;
+	rdpGdi* gdi;
+
+	WINPR_ASSERT(context);
+	gdi = context->gdi;
+	WINPR_ASSERT(gdi);
 	shw = (shwContext*)context;
 	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
@@ -97,23 +107,17 @@ static BOOL shw_authenticate(freerdp* instance, char** username, char** password
 	return TRUE;
 }
 
-static DWORD shw_verify_certificate(freerdp* instance, const char* common_name, const char* subject,
-                                    const char* issuer, const char* fingerprint, BOOL host_mismatch)
+static int shw_verify_x509_certificate(freerdp* instance, const BYTE* data, size_t length,
+                                       const char* hostname, UINT16 port, DWORD flags)
 {
 	WLog_WARN(TAG, "Certificate checks not implemented, access granted to everyone!");
 	return 1;
 }
 
-static int shw_verify_x509_certificate(freerdp* instance, BYTE* data, int length,
-                                       const char* hostname, int port, DWORD flags)
-{
-	WLog_WARN(TAG, "Certificate checks not implemented, access granted to everyone!");
-	return 1;
-}
-
-static void shw_OnConnectionResultEventHandler(void* context, ConnectionResultEventArgs* e)
+static void shw_OnConnectionResultEventHandler(void* context, const ConnectionResultEventArgs* e)
 {
 	shwContext* shw = (shwContext*)context;
+	WINPR_ASSERT(e);
 	WLog_INFO(TAG, "OnConnectionResult: %d", e->result);
 }
 
@@ -154,21 +158,19 @@ static BOOL shw_post_connect(freerdp* instance)
 static DWORD WINAPI shw_client_thread(LPVOID arg)
 {
 	int index;
-	int rcount;
-	int wcount;
 	BOOL bSuccess;
-	void* rfds[32];
-	void* wfds[32];
-	int fds_count;
-	HANDLE fds[64];
 	shwContext* shw;
 	rdpContext* context;
 	rdpChannels* channels;
+
 	freerdp* instance = (freerdp*)arg;
-	ZeroMemory(rfds, sizeof(rfds));
-	ZeroMemory(wfds, sizeof(wfds));
+	WINPR_ASSERT(instance);
+
 	context = (rdpContext*)instance->context;
+	WINPR_ASSERT(context);
+
 	shw = (shwContext*)context;
+
 	bSuccess = freerdp_connect(instance);
 	WLog_INFO(TAG, "freerdp_connect: %d", bSuccess);
 
@@ -178,34 +180,24 @@ static DWORD WINAPI shw_client_thread(LPVOID arg)
 		return 0;
 	}
 
-	channels = instance->context->channels;
+	channels = context->channels;
+	WINPR_ASSERT(channels);
 
 	while (1)
 	{
-		rcount = 0;
-		wcount = 0;
+		DWORD status;
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		DWORD count = freerdp_get_event_handles(instance, handles, ARRAYSIZE(handles));
 
-		if (!freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount))
+		if ((count == 0) || (count == MAXIMUM_WAIT_OBJECTS))
 		{
-			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
+			WLog_ERR(TAG, "Failed to get FreeRDP event handles");
 			break;
 		}
 
-		if (!freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount))
-		{
-			WLog_ERR(TAG, "Failed to get channels file descriptor");
-			break;
-		}
+		handles[count++] = freerdp_channels_get_event_handle(instance);
 
-		fds_count = 0;
-
-		for (index = 0; index < rcount; index++)
-			fds[fds_count++] = rfds[index];
-
-		for (index = 0; index < wcount; index++)
-			fds[fds_count++] = wfds[index];
-
-		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
+		if (MsgWaitForMultipleObjects(count, handles, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "MsgWaitForMultipleObjects failure: 0x%08lX", GetLastError());
 			break;
@@ -281,7 +273,6 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PreConnect = shw_pre_connect;
 	instance->PostConnect = shw_post_connect;
 	instance->Authenticate = shw_authenticate;
-	instance->VerifyCertificate = shw_verify_certificate;
 	instance->VerifyX509Certificate = shw_verify_x509_certificate;
 	settings = instance->settings;
 	shw->settings = instance->context->settings;

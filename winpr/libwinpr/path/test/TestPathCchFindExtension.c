@@ -12,6 +12,9 @@ int TestPathCchFindExtension(int argc, char* argv[])
 	PCSTR pszTmp;
 	HRESULT hr;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* Test invalid args */
 
 	hr = PathCchFindExtensionA(NULL, sizeof(testPathExtension), &pszExt);

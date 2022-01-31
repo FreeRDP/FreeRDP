@@ -34,6 +34,9 @@ int TestString(int argc, char* argv[])
 	size_t length;
 	WCHAR* context;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 #ifdef __BIG_ENDIAN__
 	/* Be sure that we always use LE encoded string */
 	ByteSwapUnicode(testStringW, testStringW_Length);

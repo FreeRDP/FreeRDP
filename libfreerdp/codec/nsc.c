@@ -303,9 +303,14 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 }
 
 static void nsc_profiler_print(NSC_CONTEXT_PRIV* priv){
-	PROFILER_PRINT_HEADER PROFILER_PRINT(priv->prof_nsc_rle_decompress_data)
-	    PROFILER_PRINT(priv->prof_nsc_decode) PROFILER_PRINT(priv->prof_nsc_rle_compress_data)
-	        PROFILER_PRINT(priv->prof_nsc_encode) PROFILER_PRINT_FOOTER
+	WINPR_UNUSED(priv);
+
+	PROFILER_PRINT_HEADER
+	PROFILER_PRINT(priv->prof_nsc_rle_decompress_data)
+	PROFILER_PRINT(priv->prof_nsc_decode)
+	PROFILER_PRINT(priv->prof_nsc_rle_compress_data)
+	PROFILER_PRINT(priv->prof_nsc_encode)
+	PROFILER_PRINT_FOOTER
 }
 
 BOOL nsc_context_reset(NSC_CONTEXT* context, UINT32 width, UINT32 height)
@@ -379,10 +384,12 @@ void nsc_context_free(NSC_CONTEXT* context)
 	free(context);
 }
 
+#if defined(WITH_FREERDP_DEPRECATED)
 BOOL nsc_context_set_pixel_format(NSC_CONTEXT* context, UINT32 pixel_format)
 {
 	return nsc_context_set_parameters(context, NSC_COLOR_FORMAT, pixel_format);
 }
+#endif
 
 BOOL nsc_context_set_parameters(NSC_CONTEXT* context, NSC_PARAMETER what, UINT32 value)
 {

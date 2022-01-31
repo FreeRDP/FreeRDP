@@ -19,8 +19,12 @@ static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID* conte
 {
 	LONG calls = InterlockedIncrement(pTestOnceFunctionCalls) - 1;
 
+	WINPR_UNUSED(once);
+	WINPR_UNUSED(param);
+	WINPR_UNUSED(context);
+
 	/* simulate execution time */
-	Sleep(100 + rand() % 400);
+	Sleep(30 + rand() % 40);
 
 	if (calls < TEST_NUM_FAILURES)
 	{
@@ -40,6 +44,9 @@ static DWORD WINAPI TestThreadFunction(LPVOID lpParam)
 {
 	LONG calls;
 	BOOL ok;
+
+	WINPR_UNUSED(lpParam);
+
 	InterlockedIncrement(pTestThreadFunctionCalls);
 	if (WaitForSingleObject(hStartEvent, INFINITE) != WAIT_OBJECT_0)
 	{
@@ -64,6 +71,9 @@ int TestSynchInit(int argc, char* argv[])
 	DWORD dwCreatedThreads = 0;
 	DWORD i;
 	BOOL result = FALSE;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	pErrors = _aligned_malloc(sizeof(LONG), sizeof(LONG));
 	pTestThreadFunctionCalls = _aligned_malloc(sizeof(LONG), sizeof(LONG));

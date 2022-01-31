@@ -33,12 +33,7 @@ int TestVersion(int argc, char* argv[])
 	if (!git)
 		return -1;
 
-	if (strncmp(git, GIT_REVISION, sizeof(GIT_REVISION)))
-		return -1;
-
-	build = winpr_get_build_date();
-
-	if (!build)
+	if (strncmp(git, WINPR_GIT_REVISION, sizeof(WINPR_GIT_REVISION)))
 		return -1;
 
 	build = winpr_get_build_config();

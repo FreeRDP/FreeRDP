@@ -66,7 +66,6 @@ typedef struct _BITMAP_DATA BITMAP_DATA;
 
 struct _BITMAP_UPDATE
 {
-	UINT32 count;
 	UINT32 number;
 	BITMAP_DATA* rectangles;
 	BOOL skipCompression;
@@ -237,32 +236,23 @@ struct rdp_update
 	pSurfaceFrameAcknowledge SurfaceFrameAcknowledge; /* 68 */
 	pSaveSessionInfo SaveSessionInfo;                 /* 69 */
 	pServerStatusInfo ServerStatusInfo;               /* 70 */
-	UINT32 paddingE[80 - 71];                         /* 71 */
-
-	/* internal */
-
-	wLog* log;
-
-	BOOL dump_rfx;
-	BOOL play_rfx;
-	rdpPcap* pcap_rfx;
-	BOOL initialState;
-
-	BOOL asynchronous;
-	rdpUpdateProxy* proxy;
-	wMessageQueue* queue;
-
-	wStream* us;
-	UINT16 numberOrders;
-	BOOL combineUpdates;
-	rdpBounds currentBounds;
-	rdpBounds previousBounds;
-	CRITICAL_SECTION mux;
-
 	/* if autoCalculateBitmapData is set to TRUE, the server automatically
 	 * fills BITMAP_DATA struct members: flags, cbCompMainBodySize and cbCompFirstRowSize.
 	 */
-	BOOL autoCalculateBitmapData;
+	BOOL autoCalculateBitmapData; /* 71 */
+	UINT32 paddingE[80 - 72];     /* 72 */
 };
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	FREERDP_API void rdp_update_lock(rdpUpdate* update);
+	FREERDP_API void rdp_update_unlock(rdpUpdate* update);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UPDATE_H */

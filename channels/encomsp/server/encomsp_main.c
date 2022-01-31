@@ -298,7 +298,7 @@ out:
 static UINT encomsp_server_start(EncomspServerContext* context)
 {
 	context->priv->ChannelHandle =
-	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "encomsp");
+	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, ENCOMSP_SVC_CHANNEL_NAME);
 
 	if (!context->priv->ChannelHandle)
 		return CHANNEL_RC_BAD_CHANNEL;

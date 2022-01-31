@@ -17,6 +17,9 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
+#include <winpr/stream.h>
+
 #include <freerdp/log.h>
 
 #include "rts_signature.h"
@@ -276,90 +279,74 @@ static const RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_TABLE[] = {
 	{ RTS_PDU_PING, TRUE, &RTS_PDU_PING_SIGNATURE, "Ping" },
 	{ RTS_PDU_FLOW_CONTROL_ACK, TRUE, &RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE, "FlowControlAck" },
 	{ RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION, TRUE,
-	  &RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE, "FlowControlAckWithDestination" },
-
-	{ 0, FALSE, NULL, NULL }
+	  &RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE, "FlowControlAckWithDestination" }
 };
 
-BOOL rts_match_pdu_signature(const RtsPduSignature* signature, const rpcconn_rts_hdr_t* rts)
+BOOL rts_match_pdu_signature(const RtsPduSignature* signature, wStream* src,
+                             const rpcconn_hdr_t* header)
 {
-	UINT16 i;
-	int status;
-	const BYTE* buffer;
-	UINT32 length;
-	UINT32 offset;
-	UINT32 CommandType;
-	UINT32 CommandLength;
+	RtsPduSignature extracted = { 0 };
 
-	if (!signature || !rts)
+	WINPR_ASSERT(signature);
+	WINPR_ASSERT(src);
+
+	if (!rts_extract_pdu_signature(&extracted, src, header))
 		return FALSE;
 
-	if (rts->Flags != signature->Flags)
-		return FALSE;
-
-	if (rts->NumberOfCommands != signature->NumberOfCommands)
-		return FALSE;
-
-	buffer = (const BYTE*)rts;
-	offset = RTS_PDU_HEADER_LENGTH;
-	length = rts->header.frag_length - offset;
-
-	for (i = 0; i < rts->NumberOfCommands; i++)
-	{
-		CommandType = *((UINT32*)&buffer[offset]); /* CommandType (4 bytes) */
-		offset += 4;
-
-		if (CommandType != signature->CommandTypes[i])
-			return FALSE;
-
-		status = rts_command_length(CommandType, &buffer[offset], length);
-
-		if (status < 0)
-			return FALSE;
-
-		CommandLength = (UINT32)status;
-		offset += CommandLength;
-		length = rts->header.frag_length - offset;
-	}
-
-	return TRUE;
+	return memcmp(signature, &extracted, sizeof(extracted)) == 0;
 }
 
-BOOL rts_extract_pdu_signature(RtsPduSignature* signature, const rpcconn_rts_hdr_t* rts)
+BOOL rts_extract_pdu_signature(RtsPduSignature* signature, wStream* src,
+                               const rpcconn_hdr_t* header)
 {
-	int i;
-	int status;
-	BYTE* buffer;
-	UINT32 length;
-	UINT32 offset;
-	UINT32 CommandType;
-	UINT32 CommandLength;
+	BOOL rc = FALSE;
+	UINT16 i;
+	wStream tmp;
+	rpcconn_hdr_t rheader = { 0 };
+	const rpcconn_rts_hdr_t* rts;
 
-	if (!signature || !rts)
-		return FALSE;
+	WINPR_ASSERT(signature);
+	WINPR_ASSERT(src);
+
+	Stream_StaticInit(&tmp, Stream_Pointer(src), Stream_GetRemainingLength(src));
+	if (!header)
+	{
+		if (!rts_read_pdu_header(&tmp, &rheader))
+			goto fail;
+		header = &rheader;
+	}
+	rts = &header->rts;
+	if (rts->header.frag_length < sizeof(rpcconn_rts_hdr_t))
+		goto fail;
 
 	signature->Flags = rts->Flags;
 	signature->NumberOfCommands = rts->NumberOfCommands;
-	buffer = (BYTE*)rts;
-	offset = RTS_PDU_HEADER_LENGTH;
-	length = rts->header.frag_length - offset;
 
 	for (i = 0; i < rts->NumberOfCommands; i++)
 	{
-		CommandType = *((UINT32*)&buffer[offset]); /* CommandType (4 bytes) */
-		offset += 4;
-		signature->CommandTypes[i] = CommandType;
-		status = rts_command_length(CommandType, &buffer[offset], length);
+		UINT32 CommandType;
+		size_t CommandLength;
 
-		if (status < 0)
-			return FALSE;
+		if (Stream_GetRemainingLength(&tmp) < 4)
+			goto fail;
 
-		CommandLength = (UINT32)status;
-		offset += CommandLength;
-		length = rts->header.frag_length - offset;
+		Stream_Read_UINT32(&tmp, CommandType); /* CommandType (4 bytes) */
+
+		/* We only need this for comparison against known command types */
+		if (i < ARRAYSIZE(signature->CommandTypes))
+			signature->CommandTypes[i] = CommandType;
+
+		if (!rts_command_length(CommandType, &tmp, &CommandLength))
+			goto fail;
+		if (!Stream_SafeSeek(&tmp, CommandLength))
+			goto fail;
 	}
 
-	return TRUE;
+	rc = TRUE;
+fail:
+	rts_free_pdu_header(&rheader, FALSE);
+	Stream_Free(&tmp, FALSE);
+	return rc;
 }
 
 UINT32 rts_identify_pdu_signature(const RtsPduSignature* signature,
@@ -367,11 +354,15 @@ UINT32 rts_identify_pdu_signature(const RtsPduSignature* signature,
 {
 	size_t i, j;
 
-	for (i = 0; RTS_PDU_SIGNATURE_TABLE[i].SignatureId != 0; i++)
-	{
-		const RtsPduSignature* pSignature = RTS_PDU_SIGNATURE_TABLE[i].Signature;
+	if (entry)
+		*entry = NULL;
 
-		if (!RTS_PDU_SIGNATURE_TABLE[i].SignatureClient)
+	for (i = 0; i < ARRAYSIZE(RTS_PDU_SIGNATURE_TABLE); i++)
+	{
+		const RTS_PDU_SIGNATURE_ENTRY* current = &RTS_PDU_SIGNATURE_TABLE[i];
+		const RtsPduSignature* pSignature = current->Signature;
+
+		if (!current->SignatureClient)
 			continue;
 
 		if (signature->Flags != pSignature->Flags)
@@ -387,9 +378,9 @@ UINT32 rts_identify_pdu_signature(const RtsPduSignature* signature,
 		}
 
 		if (entry)
-			*entry = &RTS_PDU_SIGNATURE_TABLE[i];
+			*entry = current;
 
-		return RTS_PDU_SIGNATURE_TABLE[i].SignatureId;
+		return current->SignatureId;
 	}
 
 	return 0;

@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 
+#include <winpr/sysinfo.h>
 #include <freerdp/freerdp.h>
 
 #include "wf_client.h"
@@ -38,6 +39,8 @@ static HWND g_focus_hWnd;
 
 #define X_POS(lParam) ((UINT16)(lParam & 0xFFFF))
 #define Y_POS(lParam) ((UINT16)((lParam >> 16) & 0xFFFF))
+
+#define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
 static BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1,
                          int y1, DWORD rop);
@@ -207,7 +210,8 @@ static BOOL wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, 
 	if (delta < 0)
 	{
 		flags |= PTR_FLAGS_WHEEL_NEGATIVE;
-		delta = -delta;
+		/* 9bit twos complement, delta already negative */
+		delta = 0x100 + delta;
 	}
 
 	flags |= delta;
@@ -220,7 +224,8 @@ static void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 	// Holding the CTRL key down while resizing the window will force the desktop aspect ratio.
 	LPRECT rect;
 
-	if (settings->SmartSizing && (GetAsyncKeyState(VK_CONTROL) & 0x8000))
+	if ((settings->SmartSizing || settings->DynamicResolutionUpdate) &&
+	    (GetAsyncKeyState(VK_CONTROL) & 0x8000))
 	{
 		rect = (LPRECT)wParam;
 
@@ -248,6 +253,51 @@ static void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 				rect->left = rect->right - (settings->DesktopWidth * (rect->bottom - rect->top) /
 				                            settings->DesktopHeight);
 				break;
+		}
+	}
+}
+
+static void wf_send_resize(wfContext* wfc)
+{
+	RECT windowRect;
+	int targetWidth = wfc->client_width;
+	int targetHeight = wfc->client_height;
+	rdpSettings* settings = wfc->context.settings;
+
+	if (settings->DynamicResolutionUpdate && wfc->disp != NULL)
+	{
+		if (GetTickCount64() - wfc->lastSentDate > RESIZE_MIN_DELAY)
+		{
+			if (wfc->fullscreen)
+			{
+				GetWindowRect(wfc->hwnd, &windowRect);
+				targetWidth = windowRect.right - windowRect.left;
+				targetHeight = windowRect.bottom - windowRect.top;
+			}
+			if (settings->SmartSizingWidth != targetWidth ||
+			    settings->SmartSizingHeight != targetHeight)
+			{
+				DISPLAY_CONTROL_MONITOR_LAYOUT layout = { 0 };
+
+				layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
+				layout.Top = layout.Left = 0;
+				layout.Width = targetWidth;
+				layout.Height = targetHeight;
+				layout.Orientation = settings->DesktopOrientation;
+				layout.DesktopScaleFactor = settings->DesktopScaleFactor;
+				layout.DeviceScaleFactor = settings->DeviceScaleFactor;
+				layout.PhysicalWidth = targetWidth;
+				layout.PhysicalHeight = targetHeight;
+
+				if (IFCALLRESULT(CHANNEL_RC_OK, wfc->disp->SendMonitorLayout, wfc->disp, 1,
+				                 &layout) != CHANNEL_RC_OK)
+				{
+					WLog_ERR("", "SendMonitorLayout failed.");
+				}
+				settings->SmartSizingWidth = targetWidth;
+				settings->SmartSizingHeight = targetHeight;
+			}
+			wfc->lastSentDate = GetTickCount64();
 		}
 	}
 }
@@ -286,7 +336,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			case WM_GETMINMAXINFO:
-				if (wfc->context.settings->SmartSizing)
+				if (wfc->context.settings->SmartSizing ||
+				    wfc->context.settings->DynamicResolutionUpdate)
 				{
 					processed = FALSE;
 				}
@@ -323,6 +374,11 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					wfc->client_x = windowRect.left;
 					wfc->client_y = windowRect.top;
 				}
+				else
+				{
+					wfc->wasMaximized = TRUE;
+					wf_send_resize(wfc);
+				}
 
 				if (wfc->client_width && wfc->client_height)
 				{
@@ -331,15 +387,25 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					// Workaround: when the window is maximized, the call to "ShowScrollBars"
 					// returns TRUE but has no effect.
 					if (wParam == SIZE_MAXIMIZED && !wfc->fullscreen)
+					{
 						SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, windowRect.right - windowRect.left,
 						             windowRect.bottom - windowRect.top,
 						             SWP_NOMOVE | SWP_FRAMECHANGED);
+						wfc->wasMaximized = TRUE;
+						wf_send_resize(wfc);
+					}
+					else if (wParam == SIZE_RESTORED && !wfc->fullscreen && wfc->wasMaximized)
+					{
+						wfc->wasMaximized = FALSE;
+						wf_send_resize(wfc);
+					}
 				}
 
 				break;
 
 			case WM_EXITSIZEMOVE:
 				wf_size_scrollbars(wfc, wfc->client_width, wfc->client_height);
+				wf_send_resize(wfc);
 				break;
 
 			case WM_ERASEBKGND:
@@ -574,8 +640,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				if (wParam == SYSCOMMAND_ID_SMARTSIZING)
 				{
 					HMENU hMenu = GetSystemMenu(wfc->hwnd, FALSE);
-					freerdp_set_param_bool(wfc->context.settings, FreeRDP_SmartSizing,
-					                       !wfc->context.settings->SmartSizing);
+					freerdp_settings_set_bool(wfc->context.settings, FreeRDP_SmartSizing,
+					                          !wfc->context.settings->SmartSizing);
 					CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING,
 					              wfc->context.settings->SmartSizing ? MF_CHECKED : MF_UNCHECKED);
 				}

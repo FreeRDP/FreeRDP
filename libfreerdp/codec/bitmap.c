@@ -448,6 +448,7 @@ static INLINE UINT16 out_from_count_3(UINT16 in_count, wStream* in_s, const char
 	 ((!bicolor_spin && (pixel == bicolor1) && (last_pixel == bicolor2)) || \
 	  (bicolor_spin && (pixel == bicolor2) && (last_pixel == bicolor1))))
 #define RESET_COUNTS          \
+	do                        \
 	{                         \
 		bicolor_count = 0;    \
 		fill_count = 0;       \
@@ -456,7 +457,7 @@ static INLINE UINT16 out_from_count_3(UINT16 in_count, wStream* in_s, const char
 		fom_count = 0;        \
 		fom_mask_len = 0;     \
 		bicolor_spin = FALSE; \
-	}
+	} while (0)
 
 static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UINT32 height,
                                           wStream* s, UINT32 byte_limit, UINT32 start_line,

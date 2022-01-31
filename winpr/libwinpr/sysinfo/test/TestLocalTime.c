@@ -6,6 +6,9 @@ int TestLocalTime(int argc, char* argv[])
 {
 	SYSTEMTIME lTime;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	GetLocalTime(&lTime);
 
 	printf("GetLocalTime: wYear: %" PRIu16 " wMonth: %" PRIu16 " wDayOfWeek: %" PRIu16

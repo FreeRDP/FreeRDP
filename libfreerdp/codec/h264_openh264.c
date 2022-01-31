@@ -30,6 +30,8 @@
 #include "wels/codec_api.h"
 #include "wels/codec_ver.h"
 
+#include "h264.h"
+
 typedef void (*pWelsGetCodecVersionEx)(OpenH264Version* pVersion);
 
 typedef long (*pWelsCreateDecoder)(ISVCDecoder** ppDecoder);

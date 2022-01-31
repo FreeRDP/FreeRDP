@@ -112,7 +112,7 @@ extern "C"
 	FREERDP_API rdpPointer* Pointer_Alloc(rdpContext* context);
 
 	/* Glyph Class */
-	typedef BOOL (*pGlyph_New)(rdpContext* context, const rdpGlyph* glyph);
+	typedef BOOL (*pGlyph_New)(rdpContext* context, rdpGlyph* glyph);
 	typedef void (*pGlyph_Free)(rdpContext* context, rdpGlyph* glyph);
 	typedef BOOL (*pGlyph_Draw)(rdpContext* context, const rdpGlyph* glyph, INT32 x, INT32 y,
 	                            INT32 w, INT32 h, INT32 sx, INT32 sy, BOOL fOpRedundant);
@@ -158,9 +158,9 @@ extern "C"
 		UINT32 paddingA[16 - 4];       /* 4 */
 	};
 
-	FREERDP_API void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap);
-	FREERDP_API void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer);
-	FREERDP_API void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph);
+	FREERDP_API void graphics_register_bitmap(rdpGraphics* graphics, const rdpBitmap* bitmap);
+	FREERDP_API void graphics_register_pointer(rdpGraphics* graphics, const rdpPointer* pointer);
+	FREERDP_API void graphics_register_glyph(rdpGraphics* graphics, const rdpGlyph* glyph);
 
 	FREERDP_API rdpGraphics* graphics_new(rdpContext* context);
 	FREERDP_API void graphics_free(rdpGraphics* graphics);

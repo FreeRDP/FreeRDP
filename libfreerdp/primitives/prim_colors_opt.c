@@ -72,7 +72,8 @@ static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(const INT16* const pSrc[3], int src
                                              const prim_size_t* roi) /* region of interest */
 {
 	__m128i zero, max, r_cr, g_cb, g_cr, b_cb, c4096;
-	__m128i *y_buf, *cb_buf, *cr_buf, *r_buf, *g_buf, *b_buf;
+	const __m128i *y_buf, *cb_buf, *cr_buf;
+	__m128i *r_buf, *g_buf, *b_buf;
 	UINT32 yp;
 	int srcbump, dstbump, imax;
 
@@ -87,9 +88,9 @@ static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(const INT16* const pSrc[3], int src
 
 	zero = _mm_setzero_si128();
 	max = _mm_set1_epi16(255);
-	y_buf = (__m128i*)(pSrc[0]);
-	cb_buf = (__m128i*)(pSrc[1]);
-	cr_buf = (__m128i*)(pSrc[2]);
+	y_buf = (const __m128i*)(pSrc[0]);
+	cb_buf = (const __m128i*)(pSrc[1]);
+	cr_buf = (const __m128i*)(pSrc[2]);
 	r_buf = (__m128i*)(pDst[0]);
 	g_buf = (__m128i*)(pDst[1]);
 	b_buf = (__m128i*)(pDst[2]);
@@ -204,9 +205,9 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const pSrc[3], U
 	const __m128i g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
 	const __m128i b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
 	const __m128i c4096 = _mm_set1_epi16(4096);
-	const INT16* y_buf = (INT16*)pSrc[0];
-	const INT16* cb_buf = (INT16*)pSrc[1];
-	const INT16* cr_buf = (INT16*)pSrc[2];
+	const INT16* y_buf = (const INT16*)pSrc[0];
+	const INT16* cb_buf = (const INT16*)pSrc[1];
+	const INT16* cr_buf = (const INT16*)pSrc[2];
 	const UINT32 pad = roi->width % 16;
 	const UINT32 step = sizeof(__m128i) / sizeof(INT16);
 	const UINT32 imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
@@ -264,15 +265,15 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const pSrc[3], U
 			 */
 			/* y = (y_r_buf[i] + 4096) >> 2 */
 			__m128i y1, y2, cb1, cb2, cr1, cr2, r1, r2, g1, g2, b1, b2;
-			y1 = _mm_load_si128((__m128i*)y_buf);
+			y1 = _mm_load_si128((const __m128i*)y_buf);
 			y_buf += step;
 			y1 = _mm_add_epi16(y1, c4096);
 			y1 = _mm_srai_epi16(y1, 2);
 			/* cb = cb_g_buf[i]; */
-			cb1 = _mm_load_si128((__m128i*)cb_buf);
+			cb1 = _mm_load_si128((const __m128i*)cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			cr1 = _mm_load_si128((__m128i*)cr_buf);
+			cr1 = _mm_load_si128((const __m128i*)cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			r1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cr1, r_cr));
@@ -290,15 +291,15 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const pSrc[3], U
 			b1 = _mm_srai_epi16(b1, 3);
 			/* b_buf[i] = CLIP(b); */
 			_mm_between_epi16(b1, zero, max);
-			y2 = _mm_load_si128((__m128i*)y_buf);
+			y2 = _mm_load_si128((const __m128i*)y_buf);
 			y_buf += step;
 			y2 = _mm_add_epi16(y2, c4096);
 			y2 = _mm_srai_epi16(y2, 2);
 			/* cb = cb_g_buf[i]; */
-			cb2 = _mm_load_si128((__m128i*)cb_buf);
+			cb2 = _mm_load_si128((const __m128i*)cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			cr2 = _mm_load_si128((__m128i*)cr_buf);
+			cr2 = _mm_load_si128((const __m128i*)cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			r2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cr2, r_cr));
@@ -391,9 +392,9 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* const pSrc[3], U
 	const __m128i g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
 	const __m128i b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
 	const __m128i c4096 = _mm_set1_epi16(4096);
-	const INT16* y_buf = (INT16*)pSrc[0];
-	const INT16* cb_buf = (INT16*)pSrc[1];
-	const INT16* cr_buf = (INT16*)pSrc[2];
+	const INT16* y_buf = (const INT16*)pSrc[0];
+	const INT16* cb_buf = (const INT16*)pSrc[1];
+	const INT16* cr_buf = (const INT16*)pSrc[2];
 	const UINT32 pad = roi->width % 16;
 	const UINT32 step = sizeof(__m128i) / sizeof(INT16);
 	const UINT32 imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
@@ -451,15 +452,15 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* const pSrc[3], U
 			 */
 			/* y = (y_r_buf[i] + 4096) >> 2 */
 			__m128i y1, y2, cb1, cb2, cr1, cr2, r1, r2, g1, g2, b1, b2;
-			y1 = _mm_load_si128((__m128i*)y_buf);
+			y1 = _mm_load_si128((const __m128i*)y_buf);
 			y_buf += step;
 			y1 = _mm_add_epi16(y1, c4096);
 			y1 = _mm_srai_epi16(y1, 2);
 			/* cb = cb_g_buf[i]; */
-			cb1 = _mm_load_si128((__m128i*)cb_buf);
+			cb1 = _mm_load_si128((const __m128i*)cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			cr1 = _mm_load_si128((__m128i*)cr_buf);
+			cr1 = _mm_load_si128((const __m128i*)cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			r1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cr1, r_cr));
@@ -477,15 +478,15 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* const pSrc[3], U
 			b1 = _mm_srai_epi16(b1, 3);
 			/* b_buf[i] = CLIP(b); */
 			_mm_between_epi16(b1, zero, max);
-			y2 = _mm_load_si128((__m128i*)y_buf);
+			y2 = _mm_load_si128((const __m128i*)y_buf);
 			y_buf += step;
 			y2 = _mm_add_epi16(y2, c4096);
 			y2 = _mm_srai_epi16(y2, 2);
 			/* cb = cb_g_buf[i]; */
-			cb2 = _mm_load_si128((__m128i*)cb_buf);
+			cb2 = _mm_load_si128((const __m128i*)cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			cr2 = _mm_load_si128((__m128i*)cr_buf);
+			cr2 = _mm_load_si128((const __m128i*)cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			r2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cr2, r_cr));
@@ -600,7 +601,8 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const pSrc[3], int src
                                              const prim_size_t* roi) /* region of interest */
 {
 	__m128i min, max, y_r, y_g, y_b, cb_r, cb_g, cb_b, cr_r, cr_g, cr_b;
-	__m128i *r_buf, *g_buf, *b_buf, *y_buf, *cb_buf, *cr_buf;
+	const __m128i *r_buf, *g_buf, *b_buf;
+	__m128i *y_buf, *cb_buf, *cr_buf;
 	UINT32 yp;
 	int srcbump, dstbump, imax;
 
@@ -615,9 +617,9 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const pSrc[3], int src
 
 	min = _mm_set1_epi16(-128 * 32);
 	max = _mm_set1_epi16(127 * 32);
-	r_buf = (__m128i*)(pSrc[0]);
-	g_buf = (__m128i*)(pSrc[1]);
-	b_buf = (__m128i*)(pSrc[2]);
+	r_buf = (const __m128i*)(pSrc[0]);
+	g_buf = (const __m128i*)(pSrc[1]);
+	b_buf = (const __m128i*)(pSrc[2]);
 	y_buf = (__m128i*)(pDst[0]);
 	cb_buf = (__m128i*)(pDst[1]);
 	cr_buf = (__m128i*)(pDst[2]);
@@ -749,25 +751,25 @@ sse2_RGBToRGB_16s8u_P3AC4R_BGRX(const INT16* const pSrc[3], /* 16-bit R,G, and B
 			 */
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pb);
+				R0 = _mm_load_si128((const __m128i*)pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
-				R1 = _mm_load_si128((__m128i*)pb);
+				R1 = _mm_load_si128((const __m128i*)pb);
 				pb += 8;                      /* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pg);
+				R0 = _mm_load_si128((const __m128i*)pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
-				R1 = _mm_load_si128((__m128i*)pg);
+				R1 = _mm_load_si128((const __m128i*)pg);
 				pg += 8;                      /* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pr);
+				R0 = _mm_load_si128((const __m128i*)pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
-				R1 = _mm_load_si128((__m128i*)pr);
+				R1 = _mm_load_si128((const __m128i*)pr);
 				pr += 8;                      /* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
@@ -853,25 +855,25 @@ sse2_RGBToRGB_16s8u_P3AC4R_RGBX(const INT16* const pSrc[3], /* 16-bit R,G, and B
 			 */
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pb);
+				R0 = _mm_load_si128((const __m128i*)pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
-				R1 = _mm_load_si128((__m128i*)pb);
+				R1 = _mm_load_si128((const __m128i*)pb);
 				pb += 8;                      /* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pg);
+				R0 = _mm_load_si128((const __m128i*)pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
-				R1 = _mm_load_si128((__m128i*)pg);
+				R1 = _mm_load_si128((const __m128i*)pg);
 				pg += 8;                      /* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pr);
+				R0 = _mm_load_si128((const __m128i*)pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
-				R1 = _mm_load_si128((__m128i*)pr);
+				R1 = _mm_load_si128((const __m128i*)pr);
 				pr += 8;                      /* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
@@ -957,25 +959,25 @@ sse2_RGBToRGB_16s8u_P3AC4R_XBGR(const INT16* const pSrc[3], /* 16-bit R,G, and B
 			 */
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pb);
+				R0 = _mm_load_si128((const __m128i*)pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
-				R1 = _mm_load_si128((__m128i*)pb);
+				R1 = _mm_load_si128((const __m128i*)pb);
 				pb += 8;                      /* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pg);
+				R0 = _mm_load_si128((const __m128i*)pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
-				R1 = _mm_load_si128((__m128i*)pg);
+				R1 = _mm_load_si128((const __m128i*)pg);
 				pg += 8;                      /* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pr);
+				R0 = _mm_load_si128((const __m128i*)pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
-				R1 = _mm_load_si128((__m128i*)pr);
+				R1 = _mm_load_si128((const __m128i*)pr);
 				pr += 8;                      /* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
@@ -1061,25 +1063,25 @@ sse2_RGBToRGB_16s8u_P3AC4R_XRGB(const INT16* const pSrc[3], /* 16-bit R,G, and B
 			 */
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pb);
+				R0 = _mm_load_si128((const __m128i*)pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
-				R1 = _mm_load_si128((__m128i*)pb);
+				R1 = _mm_load_si128((const __m128i*)pb);
 				pb += 8;                      /* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pg);
+				R0 = _mm_load_si128((const __m128i*)pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
-				R1 = _mm_load_si128((__m128i*)pg);
+				R1 = _mm_load_si128((const __m128i*)pg);
 				pg += 8;                      /* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_load_si128((__m128i*)pr);
+				R0 = _mm_load_si128((const __m128i*)pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
-				R1 = _mm_load_si128((__m128i*)pr);
+				R1 = _mm_load_si128((const __m128i*)pr);
 				pr += 8;                      /* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}

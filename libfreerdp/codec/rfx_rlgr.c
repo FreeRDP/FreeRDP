@@ -50,6 +50,7 @@
 
 /* Returns the least number of bits required to represent a given value */
 #define GetMinBits(_val, _nbits) \
+	do                           \
 	{                            \
 		UINT32 _v = _val;        \
 		_nbits = 0;              \
@@ -58,13 +59,14 @@
 			_v >>= 1;            \
 			_nbits++;            \
 		}                        \
-	}
+	} while (0)
 
 /*
  * Update the passed parameter and clamp it to the range [0, KPMAX]
  * Return the value of parameter right-shifted by LSGR
  */
 #define UpdateParam(_param, _deltaP, _k) \
+	do                                   \
 	{                                    \
 		_param += _deltaP;               \
 		if (_param > KPMAX)              \
@@ -72,7 +74,7 @@
 		if (_param < 0)                  \
 			_param = 0;                  \
 		_k = (_param >> LSGR);           \
-	}
+	} while (0)
 
 static BOOL g_LZCNT = FALSE;
 
@@ -558,6 +560,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 
 /* Returns the next coefficient (a signed int) to encode, from the input stream */
 #define GetNextInput(_n)   \
+	do                     \
 	{                      \
 		if (data_size > 0) \
 		{                  \
@@ -568,19 +571,20 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 		{                  \
 			_n = 0;        \
 		}                  \
-	}
+	} while (0)
 
 /* Emit bitPattern to the output bitstream */
 #define OutputBits(numBits, bitPattern) rfx_bitstream_put_bits(bs, bitPattern, numBits)
 
 /* Emit a bit (0 or 1), count number of times, to the output bitstream */
 #define OutputBit(count, bit)                                    \
+	do                                                           \
 	{                                                            \
 		UINT16 _b = (bit ? 0xFFFF : 0);                          \
 		int _c = (count);                                        \
 		for (; _c > 0; _c -= 16)                                 \
 			rfx_bitstream_put_bits(bs, _b, (_c > 16 ? 16 : _c)); \
-	}
+	} while (0)
 
 /* Converts the input value to (2 * abs(input) - sign(input)), where sign(input) = (input < 0 ? 1 :
  * 0) and returns it */

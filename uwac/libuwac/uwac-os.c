@@ -27,7 +27,16 @@
  * Functions have been renamed just to prevent name clashes.
  */
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #define _GNU_SOURCE
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 #define USE_SHM
@@ -51,7 +60,7 @@
 #include <string.h>
 #include <sys/epoll.h>
 
-#include "../config.h"
+#include "config.h"
 #include "uwac-os.h"
 #include "uwac-utils.h"
 

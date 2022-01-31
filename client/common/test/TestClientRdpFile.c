@@ -1,4 +1,6 @@
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <stdio.h>
 #include <winpr/crt.h>
 #include <winpr/windows.h>
@@ -6,6 +8,7 @@
 #include <winpr/crypto.h>
 
 #include <freerdp/client/file.h>
+#include <freerdp/channels/rdpecam.h>
 
 static const BYTE testRdpFileUTF16[] = {
 	0xff, 0xfe, 0x73, 0x00, 0x63, 0x00, 0x72, 0x00, 0x65, 0x00, 0x65, 0x00, 0x6e, 0x00, 0x20, 0x00,
@@ -160,56 +163,76 @@ static const BYTE testRdpFileUTF16[] = {
 	0x65, 0x00, 0x0d, 0x00, 0x0a, 0x00
 };
 
-static char testRdpFileUTF8[] = "screen mode id:i:2\n"
-                                "use multimon:i:0\n"
-                                "desktopwidth:i:1920\n"
-                                "desktopheight:i:1080\n"
-                                "session bpp:i:32\n"
-                                "winposstr:s:0,1,553,211,1353,811\n"
-                                "compression:i:1\n"
-                                "keyboardhook:i:2\n"
-                                "audiocapturemode:i:0\n"
-                                "videoplaybackmode:i:1\n"
-                                "connection type:i:7\n"
-                                "networkautodetect:i:1\n"
-                                "bandwidthautodetect:i:1\n"
-                                "displayconnectionbar:i:1\n"
-                                "enableworkspacereconnect:i:0\n"
-                                "disable wallpaper:i:0\n"
-                                "allow font smoothing:i:0\n"
-                                "allow desktop composition:i:0\n"
-                                "disable full window drag:i:1\n"
-                                "disable menu anims:i:1\n"
-                                "disable themes:i:0\n"
-                                "disable cursor setting:i:0\n"
-                                "bitmapcachepersistenable:i:1\n"
-                                "full address:s:LAB1-W7-DM-01.lab1.awake.local\n"
-                                "alternate full address:s:LAB1-W7-DM-01.lab1.awake.global\n"
-                                "audiomode:i:0\n"
-                                "redirectprinters:i:1\n"
-                                "redirectcomports:i:0\n"
-                                "redirectsmartcards:i:1\n"
-                                "redirectclipboard:i:1\n"
-                                "redirectposdevices:i:0\n"
-                                "autoreconnection enabled:i:1\n"
-                                "authentication level:i:2\n"
-                                "prompt for credentials:i:0\n"
-                                "negotiate security layer:i:1\n"
-                                "remoteapplicationmode:i:0\n"
-                                "alternate shell:s:\n"
-                                "shell working directory:s:\n"
-                                "gatewayhostname:s:LAB1-W2K8R2-GW.lab1.awake.local\n"
-                                "gatewayusagemethod:i:1\n"
-                                "gatewaycredentialssource:i:0\n"
-                                "gatewayprofileusagemethod:i:1\n"
-                                "promptcredentialonce:i:1\n"
-                                "use redirection server name:i:0\n"
-                                "rdgiskdcproxy:i:0\n"
-                                "kdcproxyname:s:\n"
-                                "drivestoredirect:s:*\n"
-                                "username:s:LAB1\\JohnDoe\n"
-                                "vendor integer:i:123\n"
-                                "vendor string:s:microsoft\n";
+static const char* camera_args[] = { RDPECAM_DVC_CHANNEL_NAME,
+	                                 "device:*",
+	                                 "device:\\?\\usb#vid_0bda&pid_58b0&mi",
+	                                 "device:-\\?\\usb#vid_0bdc&pid_58b1&mi",
+	                                 "encode:1",
+	                                 "quality:2" };
+
+#if defined(CHANNEL_URBDRC_CLIENT)
+static const char* urbdrc_args[] = { "urbdrc", "device:*", "device:USBInstanceID:someid",
+	                                 "device:{72631e54-78a4-11d0-bcf7-00aa00b7b32a}" };
+#endif
+
+static char testRdpFileUTF8[] =
+    "screen mode id:i:2\n"
+    "use multimon:i:0\n"
+    "desktopwidth:i:1920\n"
+    "desktopheight:i:1080\n"
+    "dynamic resolution:i:1080\n"
+    "desktopscalefactor:i:1080\n"
+    "redirected video capture encoding quality:i:2\n"
+    "encode redirected video capture:i:1\n"
+    "camerastoredirect:s:*,\\?\\usb#vid_0bda&pid_58b0&mi,-\\?\\usb#vid_0bdc&pid_58b1&mi\n"
+    "usbdevicestoredirect:s:*,USBInstanceID:someid,{72631e54-78a4-11d0-bcf7-00aa00b7b32a}\n"
+    "selectedmonitors:s:3,2,42,23"
+    "session bpp:i:32\n"
+    "winposstr:s:0,1,553,211,1353,811\n"
+    "compression:i:1\n"
+    "keyboardhook:i:2\n"
+    "audiocapturemode:i:0\n"
+    "videoplaybackmode:i:2\n"
+    "connection type:i:7\n"
+    "networkautodetect:i:1\n"
+    "bandwidthautodetect:i:1\n"
+    "displayconnectionbar:i:1\n"
+    "enableworkspacereconnect:i:0\n"
+    "disable wallpaper:i:0\n"
+    "allow font smoothing:i:0\n"
+    "allow desktop composition:i:0\n"
+    "disable full window drag:i:1\n"
+    "disable menu anims:i:1\n"
+    "disable themes:i:0\n"
+    "disable cursor setting:i:0\n"
+    "bitmapcachepersistenable:i:1\n"
+    "full address:s:LAB1-W7-DM-01.lab1.awake.local\n"
+    "alternate full address:s:LAB1-W7-DM-01.lab1.awake.global\n"
+    "audiomode:i:0\n"
+    "redirectprinters:i:1\n"
+    "redirectcomports:i:0\n"
+    "redirectsmartcards:i:1\n"
+    "redirectclipboard:i:1\n"
+    "redirectposdevices:i:0\n"
+    "autoreconnection enabled:i:1\n"
+    "authentication level:i:2\n"
+    "prompt for credentials:i:0\n"
+    "negotiate security layer:i:1\n"
+    "remoteapplicationmode:i:0\n"
+    "alternate shell:s:\n"
+    "shell working directory:s:\n"
+    "gatewayhostname:s:LAB1-W2K8R2-GW.lab1.awake.local\n"
+    "gatewayusagemethod:i:1\n"
+    "gatewaycredentialssource:i:0\n"
+    "gatewayprofileusagemethod:i:1\n"
+    "promptcredentialonce:i:1\n"
+    "use redirection server name:i:0\n"
+    "rdgiskdcproxy:i:0\n"
+    "kdcproxyname:s:\n"
+    "drivestoredirect:s:*\n"
+    "username:s:LAB1\\JohnDoe\n"
+    "vendor integer:i:123\n"
+    "vendor string:s:microsoft\n";
 
 static char* append(const char* fmt, ...)
 {
@@ -241,6 +264,8 @@ int TestClientRdpFile(int argc, char* argv[])
 {
 	int rc = -1;
 	int iValue;
+	UINT32 uValue;
+	const UINT32* puValue;
 	const char* sValue;
 	char* utfname = NULL;
 	char* uniname = NULL;
@@ -360,6 +385,135 @@ int TestClientRdpFile(int argc, char* argv[])
 		goto fail;
 	}
 
+	iValue = freerdp_client_rdp_file_get_integer_option(file, "dynamic resolution");
+	if (iValue != 1080)
+	{
+		printf("dynamic resolution uses invalid default value %d", iValue);
+		goto fail;
+	}
+	if (!freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
+	{
+		printf("FreeRDP_DynamicResolutionUpdate has invalid value");
+		goto fail;
+	}
+	iValue = freerdp_client_rdp_file_get_integer_option(file, "desktopscalefactor");
+	if (iValue != 1080)
+	{
+		printf("desktopscalefactor uses invalid default value %d", iValue);
+		goto fail;
+	}
+	if ((INT64)freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor) != iValue)
+	{
+		printf("FreeRDP_DesktopScaleFactor has invalid value");
+		goto fail;
+	}
+
+	/* Check [MS-RDPECAM] related options */
+	{
+		int x;
+		ADDIN_ARGV* args;
+		iValue =
+		    freerdp_client_rdp_file_get_integer_option(file, "encode redirected video capture");
+		if (iValue != 1)
+		{
+			printf("encode redirected video capture uses invalid default value %d", iValue);
+			goto fail;
+		}
+		iValue = freerdp_client_rdp_file_get_integer_option(
+		    file, "redirected video capture encoding quality");
+		if (iValue != 2)
+		{
+			printf("redirected video capture encoding quality uses invalid default value %d",
+			       iValue);
+			goto fail;
+		}
+		args = freerdp_dynamic_channel_collection_find(settings, RDPECAM_DVC_CHANNEL_NAME);
+		if (!args)
+		{
+			printf("rdpecam channel was not loaded");
+			goto fail;
+		}
+		if (args->argc != 6)
+		{
+			printf("rdpecam channel was not loaded");
+			goto fail;
+		}
+
+		for (x = 0; x < args->argc; x++)
+		{
+			if (strcmp(args->argv[x], camera_args[x]) != 0)
+			{
+				printf("rdpecam invalid argument argv[%d]: %s", x, args->argv[x]);
+				goto fail;
+			}
+		}
+	}
+
+	/* Check [URBDRC] related options */
+#if defined(CHANNEL_URBDRC_CLIENT)
+	{
+		int x;
+		ADDIN_ARGV* args = freerdp_dynamic_channel_collection_find(settings, "urbdrc");
+		if (!args)
+		{
+			printf("urbdrc channel was not loaded");
+			goto fail;
+		}
+		if (args->argc != 4)
+		{
+			printf("urbdrc channel was not loaded");
+			goto fail;
+		}
+
+		for (x = 0; x < args->argc; x++)
+		{
+			if (strcmp(args->argv[x], urbdrc_args[x]) != 0)
+			{
+				printf("urbdrc invalid argument argv[%d]: %s", x, args->argv[x]);
+				goto fail;
+			}
+		}
+	}
+#endif
+
+	/* Validate selectedmonitors:s:3,2,42,23 */
+	uValue = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	if (uValue != 4)
+	{
+		printf("FreeRDP_NumMonitorIds has invalid value %" PRIu32, uValue);
+		goto fail;
+	}
+	puValue = (const UINT32*)freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, 0);
+	if (!puValue)
+	{
+		printf("FreeRDP_MonitorIds has invalid value %p", puValue);
+		goto fail;
+	}
+	if ((puValue[0] != 3) || (puValue[1] != 2) || (puValue[2] != 42) || (puValue[3] != 23))
+	{
+		printf("FreeRDP_MonitorIds has invalid values: [%" PRIu32 ",%" PRIu32 ",%" PRIu32
+		       ",%" PRIu32 "]",
+		       puValue[0], puValue[1], puValue[2], puValue[3]);
+		goto fail;
+	}
+
+	iValue = freerdp_client_rdp_file_get_integer_option(file, "videoplaybackmode");
+	if (iValue != 2)
+	{
+		printf("videoplaybackmode uses invalid default value %d", iValue);
+		goto fail;
+	}
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SupportVideoOptimized))
+	{
+		printf("FreeRDP_SupportVideoOptimized has invalid value");
+		goto fail;
+	}
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SupportGeometryTracking))
+	{
+		printf("FreeRDP_SupportGeometryTracking has invalid value");
+		goto fail;
+	}
+
 	iValue = freerdp_client_rdp_file_get_integer_option(file, "vendor integer");
 	if (iValue != 123)
 		goto fail;
@@ -420,11 +574,11 @@ int TestClientRdpFile(int argc, char* argv[])
 	rc = 0;
 fail:
 	if (utfname)
-		DeleteFileA(utfname);
+		winpr_DeleteFile(utfname);
 	if (uniname)
-		DeleteFileA(uniname);
+		winpr_DeleteFile(uniname);
 	if (base)
-		RemoveDirectoryA(base);
+		winpr_RemoveDirectory(base);
 	free(utfname);
 	free(uniname);
 	free(base);

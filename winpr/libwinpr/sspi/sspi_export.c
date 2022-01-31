@@ -36,6 +36,11 @@ typedef unsigned long ULONG;
 #endif
 typedef LONG SECURITY_STATUS;
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+#endif
+
 /**
  * Standard SSPI API
  */
@@ -318,3 +323,7 @@ SSPI_EXPORT SECURITY_STATUS SEC_ENTRY VerifySignature(void* phContext, void* pMe
 {
 	return sspi_VerifySignature(phContext, pMessage, MessageSeqNo, pfQOP);
 }
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

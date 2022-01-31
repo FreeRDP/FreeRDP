@@ -12,6 +12,9 @@ int TestEnumerateSecurityPackages(int argc, char* argv[])
 	SECURITY_STATUS status;
 	SecPkgInfo* pPackageInfo;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	sspi_GlobalInit();
 
 	status = EnumerateSecurityPackages(&cPackages, &pPackageInfo);

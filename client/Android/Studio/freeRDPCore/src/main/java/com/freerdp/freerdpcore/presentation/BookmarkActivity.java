@@ -280,7 +280,7 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 		// name of the main app in our library project.
 		ComponentName compName =
 		    new ComponentName(getPackageName(), BookmarkActivity.class.getName());
-		ArrayList<String> prefKeys = new ArrayList<String>();
+		ArrayList<String> prefKeys = new ArrayList<>();
 
 		prefKeys.add("bookmark.credentials");
 		prefKeys.add("bookmark.screen");

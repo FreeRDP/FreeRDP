@@ -26,13 +26,11 @@
 #include <winpr/crt.h>
 #include <winpr/platform.h>
 #include <winpr/error.h>
+#include <winpr/string.h>
 
 #include <winpr/environment.h>
 
 #ifndef _WIN32
-
-#define stricmp strcasecmp
-#define strnicmp strncasecmp
 
 #include <winpr/crt.h>
 #include <winpr/platform.h>
@@ -82,10 +80,8 @@ DWORD GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer)
 
 		memcpy(lpBuffer, cwd, length + 1);
 		free(cwd);
-		return length;
+		return (DWORD)length;
 	}
-
-	return 0;
 }
 
 DWORD GetCurrentDirectoryW(DWORD nBufferLength, LPWSTR lpBuffer)
@@ -156,12 +152,12 @@ DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 	length = strlen(env);
 
 	if ((length + 1 > nSize) || (!lpBuffer))
-		return length + 1;
+		return (DWORD)length + 1;
 
 	CopyMemory(lpBuffer, env, length);
 	lpBuffer[length] = '\0';
 
-	return length;
+	return (DWORD)length;
 #else
 	SetLastError(ERROR_ENVVAR_NOT_FOUND);
 	return 0;
@@ -546,18 +542,20 @@ DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, 
 		return 0;
 
 	vLength = strlen(env);
+	if (vLength >= UINT32_MAX)
+		return 0;
 
 	if ((vLength + 1 > nSize) || (!lpBuffer))
-		return vLength + 1;
+		return (DWORD)vLength + 1;
 
 	CopyMemory(lpBuffer, env, vLength + 1);
 
-	return vLength;
+	return (DWORD)vLength;
 }
 
 BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue)
 {
-	int length;
+	size_t length;
 	char* envstr;
 	char* newEB;
 
@@ -566,7 +564,7 @@ BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue)
 
 	if (lpValue)
 	{
-		length = (int)(strlen(lpName) + strlen(lpValue) + 2); /* +2 because of = and \0 */
+		length = (strlen(lpName) + strlen(lpValue) + 2);      /* +2 because of = and \0 */
 		envstr = (char*)malloc(length + 1);                   /* +1 because of closing \0 */
 
 		if (!envstr)
@@ -576,7 +574,7 @@ BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue)
 	}
 	else
 	{
-		length = (int)strlen(lpName) + 2;   /* +2 because of = and \0 */
+		length = strlen(lpName) + 2;        /* +2 because of = and \0 */
 		envstr = (char*)malloc(length + 1); /* +1 because of closing \0 */
 
 		if (!envstr)
@@ -645,3 +643,77 @@ char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
 
 	return envp;
 }
+
+#ifdef _WIN32
+
+// https://devblogs.microsoft.com/oldnewthing/20100203-00/?p=15083
+#define WINPR_MAX_ENVIRONMENT_LENGTH 2048
+
+DWORD GetEnvironmentVariableX(const char* lpName, char* lpBuffer, DWORD nSize)
+{
+	int status;
+	DWORD result = 0;
+	DWORD nSizeW = 0;
+	LPWSTR lpNameW = NULL;
+	LPWSTR lpBufferW = NULL;
+	LPSTR lpBufferA = lpBuffer;
+
+	if (ConvertToUnicode(CP_UTF8, 0, lpName, -1, &lpNameW, 0) < 1)
+		goto cleanup;
+
+	if (!lpBuffer)
+	{
+		char lpBufferMaxA[WINPR_MAX_ENVIRONMENT_LENGTH];
+		WCHAR lpBufferMaxW[WINPR_MAX_ENVIRONMENT_LENGTH];
+
+		// calling GetEnvironmentVariableX with a NULL buffer should return the expected size
+		// TODO: dynamically allocate the buffer, or use the theoretical limit of 32,768 characters
+
+		lpBufferA = lpBufferMaxA;
+		lpBufferW = lpBufferMaxW;
+		nSizeW = sizeof(lpBufferMaxW) / 2;
+
+		result = GetEnvironmentVariableW(lpNameW, lpBufferW, nSizeW);
+
+		status = ConvertFromUnicode(CP_UTF8, 0, lpBufferW, -1, &lpBufferA, sizeof(lpBufferMaxA),
+		                            NULL, NULL);
+
+		if (status > 0)
+			result = (DWORD)status;
+
+		return result;
+	}
+	else
+	{
+		nSizeW = nSize + 1;
+		lpBufferW = calloc(nSizeW, 2);
+
+		if (!lpBufferW)
+			goto cleanup;
+
+		result = GetEnvironmentVariableW(lpNameW, lpBufferW, nSizeW);
+
+		if (result == 0)
+			goto cleanup;
+
+		status = ConvertFromUnicode(CP_UTF8, 0, lpBufferW, -1, &lpBufferA, nSize, NULL, NULL);
+
+		if (status > 0)
+			result = (DWORD)(status - 1);
+	}
+
+cleanup:
+	free(lpBufferW);
+	free(lpNameW);
+
+	return result;
+}
+
+#else
+
+DWORD GetEnvironmentVariableX(const char* lpName, char* lpBuffer, DWORD nSize)
+{
+	return GetEnvironmentVariableA(lpName, lpBuffer, nSize);
+}
+
+#endif

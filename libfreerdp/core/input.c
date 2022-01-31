@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <freerdp/input.h>
 #include <freerdp/log.h>
@@ -299,7 +300,8 @@ static BOOL input_send_fastpath_keyboard_event(rdpInput* input, UINT16 flags, UI
 	if (!s)
 		return FALSE;
 
-	Stream_Write_UINT8(s, code); /* keyCode (1 byte) */
+	WINPR_ASSERT(code <= UINT8_MAX);
+	Stream_Write_UINT8(s, (UINT8)code); /* keyCode (1 byte) */
 	return fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
@@ -610,7 +612,7 @@ BOOL input_recv(rdpInput* input, wStream* s)
 	Stream_Seek(s, 2);                   /* pad2Octets (2 bytes) */
 
 	/* Each input event uses 6 exactly bytes. */
-	if (Stream_GetRemainingLength(s) < (size_t)(6 * numberEvents))
+	if (Stream_GetRemainingLength(s) / 6 < numberEvents)
 		return FALSE;
 
 	for (i = 0; i < numberEvents; i++)
@@ -625,8 +627,9 @@ BOOL input_recv(rdpInput* input, wStream* s)
 BOOL input_register_client_callbacks(rdpInput* input)
 {
 	rdpSettings* settings;
+	rdp_input_internal* in = input_cast(input);
 
-	if (!input || !input->context)
+	if (!input->context)
 		return FALSE;
 
 	settings = input->context->settings;
@@ -655,13 +658,13 @@ BOOL input_register_client_callbacks(rdpInput* input)
 		input->FocusInEvent = input_send_focus_in_event;
 	}
 
-	input->asynchronous = settings->AsyncInput;
+	in->asynchronous = settings->AsyncInput;
 
-	if (input->asynchronous)
+	if (in->asynchronous)
 	{
-		input->proxy = input_message_proxy_new(input);
+		in->proxy = input_message_proxy_new(input);
 
-		if (!input->proxy)
+		if (!in->proxy)
 			return FALSE;
 	}
 
@@ -670,16 +673,22 @@ BOOL input_register_client_callbacks(rdpInput* input)
 
 BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->SynchronizeEvent, input, flags);
 }
 
 BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, flags, code);
 }
@@ -695,40 +704,55 @@ BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, UINT32 rdp
 
 BOOL freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->UnicodeKeyboardEvent, input, flags, code);
 }
 
 BOOL freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->MouseEvent, input, flags, x, y);
 }
 
 BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->ExtendedMouseEvent, input, flags, x, y);
 }
 
 BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->FocusInEvent, input, toggleStates);
 }
 
 BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input)
 {
-	if (!input)
+	if (!input || !input->context)
 		return FALSE;
+
+	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->KeyboardPauseEvent, input);
 }
@@ -750,8 +774,9 @@ static void input_free_queued_message(void* obj)
 rdpInput* input_new(rdpRdp* rdp)
 {
 	const wObject cb = { NULL, NULL, NULL, input_free_queued_message, NULL };
-	rdpInput* input;
-	input = (rdpInput*)calloc(1, sizeof(rdpInput));
+	rdp_input_internal* input = (rdp_input_internal*)calloc(1, sizeof(rdp_input_internal));
+
+	WINPR_UNUSED(rdp);
 
 	if (!input)
 		return NULL;
@@ -764,17 +789,18 @@ rdpInput* input_new(rdpRdp* rdp)
 		return NULL;
 	}
 
-	return input;
+	return &input->common;
 }
 
 void input_free(rdpInput* input)
 {
 	if (input != NULL)
 	{
-		if (input->asynchronous)
-			input_message_proxy_free(input->proxy);
+		rdp_input_internal* in = input_cast(input);
+		if (in->asynchronous)
+			input_message_proxy_free(in->proxy);
 
-		MessageQueue_Free(input->queue);
-		free(input);
+		MessageQueue_Free(in->queue);
+		free(in);
 	}
 }

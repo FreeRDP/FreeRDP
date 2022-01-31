@@ -3,6 +3,7 @@
  * Synchronization Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2021 David Fort <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +24,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/file.h>
+#include <winpr/assert.h>
 #include <winpr/sysinfo.h>
 
 #include <winpr/synch.h>
@@ -34,11 +36,13 @@
 #include <signal.h>
 #endif
 
+#include "event.h"
 #include "synch.h"
 
 #ifndef _WIN32
 
 #include "../handle/handle.h"
+#include "../thread/thread.h"
 
 #include "../log.h"
 #define TAG WINPR_TAG("synch.timer")
@@ -70,7 +74,7 @@ static int TimerGetFd(HANDLE handle)
 
 static DWORD TimerCleanupHandle(HANDLE handle)
 {
-	int length;
+	SSIZE_T length;
 	UINT64 expirations;
 	WINPR_TIMER* timer = (WINPR_TIMER*)handle;
 
@@ -80,11 +84,15 @@ static DWORD TimerCleanupHandle(HANDLE handle)
 	if (timer->bManualReset)
 		return WAIT_OBJECT_0;
 
-	length = read(timer->fd, (void*)&expirations, sizeof(UINT64));
+#ifdef TIMER_IMPL_TIMERFD
+	do
+	{
+		length = read(timer->fd, (void*)&expirations, sizeof(UINT64));
+	} while (length < 0 && errno == EINTR);
 
 	if (length != 8)
 	{
-		if (length == -1)
+		if (length < 0)
 		{
 			switch (errno)
 			{
@@ -105,8 +113,30 @@ static DWORD TimerCleanupHandle(HANDLE handle)
 
 		return WAIT_FAILED;
 	}
+#else
+	if (!winpr_event_reset(&timer->event))
+	{
+		WLog_ERR(TAG, "timer reset() failure");
+		return WAIT_FAILED;
+	}
+#endif
 
 	return WAIT_OBJECT_0;
+}
+
+typedef struct
+{
+	WINPR_APC_ITEM apcItem;
+	WINPR_TIMER* timer;
+} TimerDeleter;
+
+static void TimerPostDelete_APC(LPVOID arg)
+{
+	TimerDeleter* deleter = (TimerDeleter*)arg;
+	WINPR_ASSERT(deleter);
+	free(deleter->timer);
+	deleter->apcItem.markedForFree = TRUE;
+	deleter->apcItem.markedForRemove = TRUE;
 }
 
 BOOL TimerCloseHandle(HANDLE handle)
@@ -117,96 +147,97 @@ BOOL TimerCloseHandle(HANDLE handle)
 	if (!TimerIsHandled(handle))
 		return FALSE;
 
-	if (!timer->lpArgToCompletionRoutine)
-	{
-#ifdef HAVE_SYS_TIMERFD_H
-
-		if (timer->fd != -1)
-			close(timer->fd);
-
+#ifdef TIMER_IMPL_TIMERFD
+	if (timer->fd != -1)
+		close(timer->fd);
 #endif
-	}
-	else
-	{
-#ifdef WITH_POSIX_TIMER
-		timer_delete(timer->tid);
-#endif
-	}
 
-#if defined(__APPLE__)
+#ifdef TIMER_IMPL_POSIX
+	timer_delete(timer->tid);
+#endif
+
+#ifdef TIMER_IMPL_DISPATCH
 	dispatch_release(timer->queue);
 	dispatch_release(timer->source);
-
-	if (timer->pipe[0] != -1)
-		close(timer->pipe[0]);
-
-	if (timer->pipe[1] != -1)
-		close(timer->pipe[1]);
-
 #endif
+
+#if defined(TIMER_IMPL_POSIX) || defined(TIMER_IMPL_DISPATCH)
+	winpr_event_uninit(&timer->event);
+#endif
+
 	free(timer->name);
+	if (timer->apcItem.linked)
+	{
+		TimerDeleter* deleter;
+		WINPR_APC_ITEM* apcItem;
+
+		switch (apc_remove(&timer->apcItem))
+		{
+			case APC_REMOVE_OK:
+				break;
+			case APC_REMOVE_DELAY_FREE:
+			{
+				WINPR_THREAD* thread = winpr_GetCurrentThread();
+				if (!thread)
+					return FALSE;
+
+				deleter = calloc(1, sizeof(*deleter));
+				if (!deleter)
+				{
+					WLog_ERR(TAG, "unable to allocate a timer deleter");
+					return TRUE;
+				}
+
+				deleter->timer = timer;
+				apcItem = &deleter->apcItem;
+				apcItem->type = APC_TYPE_HANDLE_FREE;
+				apcItem->alwaysSignaled = TRUE;
+				apcItem->completion = TimerPostDelete_APC;
+				apcItem->completionArgs = deleter;
+				apc_register(thread, apcItem);
+				return TRUE;
+			}
+			case APC_REMOVE_ERROR:
+			default:
+				WLog_ERR(TAG, "unable to remove timer from APC list");
+				break;
+		}
+	}
+
 	free(timer);
 	return TRUE;
 }
 
-#ifdef WITH_POSIX_TIMER
+#ifdef TIMER_IMPL_POSIX
 
-static BOOL g_WaitableTimerSignalHandlerInstalled = FALSE;
-
-static void WaitableTimerHandler(void* arg)
-{
-	WINPR_TIMER* timer = (WINPR_TIMER*)arg;
-
-	if (!timer)
-		return;
-
-	if (timer->pfnCompletionRoutine)
-	{
-		timer->pfnCompletionRoutine(timer->lpArgToCompletionRoutine, 0, 0);
-
-		if (timer->lPeriod)
-		{
-			timer->timeout.it_interval.tv_sec = (timer->lPeriod / 1000); /* seconds */
-			timer->timeout.it_interval.tv_nsec =
-			    ((timer->lPeriod % 1000) * 1000000); /* nanoseconds */
-
-			if ((timer_settime(timer->tid, 0, &(timer->timeout), NULL)) != 0)
-			{
-				WLog_ERR(TAG, "timer_settime");
-			}
-		}
-	}
-}
 static void WaitableTimerSignalHandler(int signum, siginfo_t* siginfo, void* arg)
 {
 	WINPR_TIMER* timer = siginfo->si_value.sival_ptr;
+	UINT64 data = 1;
 	WINPR_UNUSED(arg);
 
 	if (!timer || (signum != SIGALRM))
 		return;
 
-	WaitableTimerHandler(timer);
+	if (!winpr_event_set(&timer->event))
+		WLog_ERR(TAG, "error when notifying event");
 }
 
-static int InstallWaitableTimerSignalHandler(void)
+static INIT_ONCE TimerSignalHandler_InitOnce = INIT_ONCE_STATIC_INIT;
+
+static BOOL InstallTimerSignalHandler(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
 {
-	if (!g_WaitableTimerSignalHandlerInstalled)
-	{
-		struct sigaction action;
-		sigemptyset(&action.sa_mask);
-		sigaddset(&action.sa_mask, SIGALRM);
-		action.sa_flags = SA_RESTART | SA_SIGINFO;
-		action.sa_sigaction = WaitableTimerSignalHandler;
-		sigaction(SIGALRM, &action, NULL);
-		g_WaitableTimerSignalHandlerInstalled = TRUE;
-	}
-
-	return 0;
+	struct sigaction action;
+	sigemptyset(&action.sa_mask);
+	sigaddset(&action.sa_mask, SIGALRM);
+	action.sa_flags = SA_RESTART | SA_SIGINFO;
+	action.sa_sigaction = WaitableTimerSignalHandler;
+	sigaction(SIGALRM, &action, NULL);
+	return TRUE;
 }
-
 #endif
 
-#if defined(__APPLE__)
+#ifdef TIMER_IMPL_DISPATCH
 static void WaitableTimerHandler(void* arg)
 {
 	UINT64 data = 1;
@@ -215,10 +246,7 @@ static void WaitableTimerHandler(void* arg)
 	if (!timer)
 		return;
 
-	if (timer->pfnCompletionRoutine)
-		timer->pfnCompletionRoutine(timer->lpArgToCompletionRoutine, 0, 0);
-
-	if (write(timer->pipe[1], &data, sizeof(data)) != sizeof(data))
+	if (!winpr_event_set(&timer->event))
 		WLog_ERR(TAG, "failed to write to pipe");
 
 	if (timer->lPeriod == 0)
@@ -235,45 +263,43 @@ static int InitializeWaitableTimer(WINPR_TIMER* timer)
 {
 	int result = 0;
 
-	if (!timer->lpArgToCompletionRoutine)
+#ifdef TIMER_IMPL_TIMERFD
+	timer->fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+	if (timer->fd <= 0)
+		return -1;
+#elif defined(TIMER_IMPL_POSIX)
+	struct sigevent sigev;
+	InitOnceExecuteOnce(&TimerSignalHandler_InitOnce, InstallTimerSignalHandler, NULL, NULL);
+	ZeroMemory(&sigev, sizeof(struct sigevent));
+	sigev.sigev_notify = SIGEV_SIGNAL;
+	sigev.sigev_signo = SIGALRM;
+	sigev.sigev_value.sival_ptr = (void*)timer;
+
+	if ((timer_create(CLOCK_MONOTONIC, &sigev, &(timer->tid))) != 0)
 	{
-#ifdef HAVE_SYS_TIMERFD_H
-		timer->fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
-
-		if (timer->fd <= 0)
-			return -1;
-
-#elif defined(__APPLE__)
-#else
-		WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
-		result = -1;
-#endif
+		WLog_ERR(TAG, "timer_create");
+		return -1;
 	}
-	else
-	{
-#ifdef WITH_POSIX_TIMER
-		struct sigevent sigev;
-		InstallWaitableTimerSignalHandler();
-		ZeroMemory(&sigev, sizeof(struct sigevent));
-		sigev.sigev_notify = SIGEV_SIGNAL;
-		sigev.sigev_signo = SIGALRM;
-		sigev.sigev_value.sival_ptr = (void*)timer;
-
-		if ((timer_create(CLOCK_MONOTONIC, &sigev, &(timer->tid))) != 0)
-		{
-			WLog_ERR(TAG, "timer_create");
-			return -1;
-		}
-
-#elif defined(__APPLE__)
-#else
-		WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
-		result = -1;
+#elif !defined(TIMER_IMPL_DISPATCH)
+	WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
+	result = -1;
 #endif
-	}
 
 	timer->bInit = TRUE;
 	return result;
+}
+
+static BOOL timer_drain_fd(int fd)
+{
+	UINT64 expr;
+	SSIZE_T ret;
+
+	do
+	{
+		ret = read(fd, &expr, sizeof(expr));
+	} while (ret < 0 && errno == EINTR);
+
+	return ret >= 0;
 }
 
 static HANDLE_OPS ops = { TimerIsHandled, TimerCloseHandle,
@@ -317,11 +343,13 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 			timer->name = strdup(lpTimerName);
 
 		timer->ops = &ops;
-#if defined(__APPLE__)
-
-		if (pipe(timer->pipe) != 0)
+#if defined(TIMER_IMPL_DISPATCH) || defined(TIMER_IMPL_POSIX)
+		if (!winpr_event_init(&timer->event))
 			goto fail;
+		timer->fd = timer->event.fds[0];
+#endif
 
+#if defined(TIMER_IMPL_DISPATCH)
 		timer->queue = dispatch_queue_create(TAG, DISPATCH_QUEUE_SERIAL);
 
 		if (!timer->queue)
@@ -334,16 +362,12 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 
 		dispatch_set_context(timer->source, timer);
 		dispatch_source_set_event_handler_f(timer->source, WaitableTimerHandler);
-		timer->fd = timer->pipe[0];
-
-		if (fcntl(timer->fd, F_SETFL, O_NONBLOCK) < 0)
-			goto fail;
-
 #endif
 	}
 
 	return handle;
-#if defined(__APPLE__)
+
+#if defined(TIMER_IMPL_DISPATCH) || defined(TIMER_IMPL_POSIX)
 fail:
 	TimerCloseHandle(handle);
 	return NULL;
@@ -394,6 +418,36 @@ HANDLE CreateWaitableTimerExW(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCWSTR l
 	return handle;
 }
 
+static void timerAPC(LPVOID arg)
+{
+	WINPR_TIMER* timer = (WINPR_TIMER*)arg;
+	WINPR_ASSERT(timer);
+	if (!timer->lPeriod)
+	{
+		/* this is a one time shot timer with a completion, let's remove us from
+		  the APC list */
+		switch (apc_remove(&timer->apcItem))
+		{
+			case APC_REMOVE_OK:
+			case APC_REMOVE_DELAY_FREE:
+				break;
+			case APC_REMOVE_ERROR:
+			default:
+				WLog_ERR(TAG, "error removing the APC routine");
+		}
+	}
+
+	if (timer->pfnCompletionRoutine)
+		timer->pfnCompletionRoutine(timer->lpArgToCompletionRoutine, 0, 0);
+
+#ifdef TIMER_IMPL_TIMERFD
+	while (timer_drain_fd(timer->fd))
+		;
+#else
+	winpr_event_reset(&timer->event);
+#endif
+}
+
 BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPeriod,
                       PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine,
                       BOOL fResume)
@@ -401,13 +455,9 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 	ULONG Type;
 	WINPR_HANDLE* Object;
 	WINPR_TIMER* timer;
-#if defined(WITH_POSIX_TIMER) || defined(__APPLE__)
 	LONGLONG seconds = 0;
 	LONGLONG nanoseconds = 0;
-#ifdef HAVE_SYS_TIMERFD_H
 	int status = 0;
-#endif /* HAVE_SYS_TIMERFD_H */
-#endif /* WITH_POSIX_TIMER */
 
 	if (!winpr_Handle_GetInfo(hTimer, &Type, &Object))
 		return FALSE;
@@ -438,7 +488,7 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 			return FALSE;
 	}
 
-#ifdef WITH_POSIX_TIMER
+#if defined(TIMER_IMPL_TIMERFD) || defined(TIMER_IMPL_POSIX)
 	ZeroMemory(&(timer->timeout), sizeof(struct itimerspec));
 
 	if (lpDueTime->QuadPart < 0)
@@ -475,30 +525,24 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 		timer->timeout.it_value.tv_nsec = timer->timeout.it_interval.tv_nsec; /* nanoseconds */
 	}
 
-	if (!timer->pfnCompletionRoutine)
+#ifdef TIMER_IMPL_TIMERFD
+	status = timerfd_settime(timer->fd, 0, &(timer->timeout), NULL);
+	if (status)
 	{
-#ifdef HAVE_SYS_TIMERFD_H
-		status = timerfd_settime(timer->fd, 0, &(timer->timeout), NULL);
-
-		if (status)
-		{
-			WLog_ERR(TAG, "timerfd_settime failure: %d", status);
-			return FALSE;
-		}
-
+		WLog_ERR(TAG, "timerfd_settime failure: %d", status);
+		return FALSE;
+	}
+#else
+	status = timer_settime(timer->tid, 0, &(timer->timeout), NULL);
+	if (status != 0)
+	{
+		WLog_ERR(TAG, "timer_settime failure");
+		return FALSE;
+	}
 #endif
-	}
-	else
-	{
-		if ((timer_settime(timer->tid, 0, &(timer->timeout), NULL)) != 0)
-		{
-			WLog_ERR(TAG, "timer_settime");
-			return FALSE;
-		}
-	}
+#endif
 
-#elif defined(__APPLE__)
-
+#ifdef TIMER_IMPL_DISPATCH
 	if (lpDueTime->QuadPart < 0)
 	{
 		LONGLONG due = lpDueTime->QuadPart * (-1);
@@ -516,12 +560,9 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 		return FALSE;
 	}
 
+	if (!winpr_event_reset(&timer->event))
 	{
-		/* Clean out old data from FD */
-		BYTE buffer[32];
-
-		while (read(timer->fd, buffer, sizeof(buffer)) > 0)
-			;
+		WLog_ERR(TAG, "error when resetting timer event");
 	}
 
 	{
@@ -538,8 +579,36 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 		dispatch_resume(timer->source);
 		timer->running = TRUE;
 	}
-
 #endif
+
+	if (pfnCompletionRoutine)
+	{
+		WINPR_APC_ITEM* apcItem = &timer->apcItem;
+
+		/* install our APC routine that will call the completion */
+		apcItem->type = APC_TYPE_TIMER;
+		apcItem->alwaysSignaled = FALSE;
+		apcItem->pollFd = timer->fd;
+		apcItem->pollMode = WINPR_FD_READ;
+		apcItem->completion = timerAPC;
+		apcItem->completionArgs = timer;
+
+		if (!apcItem->linked)
+		{
+			WINPR_THREAD* thread = winpr_GetCurrentThread();
+			if (!thread)
+				return FALSE;
+
+			apc_register(thread, apcItem);
+		}
+	}
+	else
+	{
+		if (timer->apcItem.linked)
+		{
+			apc_remove(&timer->apcItem);
+		}
+	}
 	return TRUE;
 }
 
@@ -599,21 +668,26 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
 
 static void timespec_add_ms(struct timespec* tspec, UINT32 ms)
 {
-	UINT64 ns = tspec->tv_nsec + (ms * 1000000);
-	tspec->tv_sec += (ns / 1000000000);
-	tspec->tv_nsec = (ns % 1000000000);
+	INT64 ns;
+	WINPR_ASSERT(tspec);
+	ns = tspec->tv_nsec + (ms * 1000000LL);
+	tspec->tv_sec += (ns / 1000000000LL);
+	tspec->tv_nsec = (ns % 1000000000LL);
 }
 
 static void timespec_gettimeofday(struct timespec* tspec)
 {
 	struct timeval tval;
+	WINPR_ASSERT(tspec);
 	gettimeofday(&tval, NULL);
 	tspec->tv_sec = tval.tv_sec;
 	tspec->tv_nsec = tval.tv_usec * 1000;
 }
 
-static int timespec_compare(const struct timespec* tspec1, const struct timespec* tspec2)
+static INT64 timespec_compare(const struct timespec* tspec1, const struct timespec* tspec2)
 {
+	WINPR_ASSERT(tspec1);
+	WINPR_ASSERT(tspec2);
 	if (tspec1->tv_sec == tspec2->tv_sec)
 		return (tspec1->tv_nsec - tspec2->tv_nsec);
 	else
@@ -622,6 +696,8 @@ static int timespec_compare(const struct timespec* tspec1, const struct timespec
 
 static void timespec_copy(struct timespec* dst, struct timespec* src)
 {
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(src);
 	dst->tv_sec = src->tv_sec;
 	dst->tv_nsec = src->tv_nsec;
 }
@@ -629,6 +705,9 @@ static void timespec_copy(struct timespec* dst, struct timespec* src)
 static void InsertTimerQueueTimer(WINPR_TIMER_QUEUE_TIMER** pHead, WINPR_TIMER_QUEUE_TIMER* timer)
 {
 	WINPR_TIMER_QUEUE_TIMER* node;
+
+	WINPR_ASSERT(pHead);
+	WINPR_ASSERT(timer);
 
 	if (!(*pHead))
 	{
@@ -668,6 +747,8 @@ static void RemoveTimerQueueTimer(WINPR_TIMER_QUEUE_TIMER** pHead, WINPR_TIMER_Q
 	WINPR_TIMER_QUEUE_TIMER* node;
 	WINPR_TIMER_QUEUE_TIMER* prevNode;
 
+	WINPR_ASSERT(pHead);
+	WINPR_ASSERT(timer);
 	if (timer == *pHead)
 	{
 		*pHead = timer->next;
@@ -705,6 +786,8 @@ static int FireExpiredTimerQueueTimers(WINPR_TIMER_QUEUE* timerQueue)
 {
 	struct timespec CurrentTime;
 	WINPR_TIMER_QUEUE_TIMER* node;
+
+	WINPR_ASSERT(timerQueue);
 
 	if (!timerQueue->activeHead)
 		return 0;
@@ -748,6 +831,7 @@ static void* TimerQueueThread(void* arg)
 	struct timespec timeout;
 	WINPR_TIMER_QUEUE* timerQueue = (WINPR_TIMER_QUEUE*)arg;
 
+	WINPR_ASSERT(timerQueue);
 	while (1)
 	{
 		pthread_mutex_lock(&(timerQueue->cond_mutex));
@@ -781,6 +865,7 @@ static void* TimerQueueThread(void* arg)
 
 static int StartTimerQueueThread(WINPR_TIMER_QUEUE* timerQueue)
 {
+	WINPR_ASSERT(timerQueue);
 	pthread_cond_init(&(timerQueue->cond), NULL);
 	pthread_mutex_init(&(timerQueue->cond_mutex), NULL);
 	pthread_mutex_init(&(timerQueue->mutex), NULL);

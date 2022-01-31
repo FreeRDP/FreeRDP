@@ -58,7 +58,7 @@ static wStream* disp_server_single_packet_new(UINT32 type, UINT32 length)
 	}
 
 	header.type = type;
-	header.length = length;
+	header.length = DISPLAY_CONTROL_HEADER_LENGTH + length;
 
 	if ((error = disp_write_header(s, &header)))
 	{
@@ -152,7 +152,7 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) < DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE * pdu.NumMonitors)
+	if (Stream_GetRemainingLength(s) / DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE < pdu.NumMonitors)
 	{
 		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;

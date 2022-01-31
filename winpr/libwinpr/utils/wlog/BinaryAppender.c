@@ -25,6 +25,7 @@
 
 #include "BinaryAppender.h"
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/stream.h>
@@ -70,14 +71,14 @@ static BOOL WLog_BinaryAppender_Open(wLog* log, wLogAppender* appender)
 			return FALSE;
 	}
 
-	if (!PathFileExistsA(binaryAppender->FilePath))
+	if (!winpr_PathFileExists(binaryAppender->FilePath))
 	{
-		if (!PathMakePathA(binaryAppender->FilePath, 0))
+		if (!winpr_PathMakePath(binaryAppender->FilePath, 0))
 			return FALSE;
 		UnixChangeFileMode(binaryAppender->FilePath, 0xFFFF);
 	}
 
-	binaryAppender->FileDescriptor = fopen(binaryAppender->FullFileName, "a+");
+	binaryAppender->FileDescriptor = winpr_fopen(binaryAppender->FullFileName, "a+");
 
 	if (!binaryAppender->FileDescriptor)
 		return FALSE;
@@ -145,7 +146,8 @@ static BOOL WLog_BinaryAppender_WriteMessage(wLog* log, wLogAppender* appender,
 	Stream_Write_UINT32(s, message->Type);
 	Stream_Write_UINT32(s, message->Level);
 
-	Stream_Write_UINT32(s, message->LineNumber);
+	WINPR_ASSERT(message->LineNumber <= UINT32_MAX);
+	Stream_Write_UINT32(s, (UINT32)message->LineNumber);
 
 	Stream_Write_UINT32(s, (UINT32)FileNameLength);
 	Stream_Write(s, message->FileName, FileNameLength + 1);

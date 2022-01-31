@@ -32,44 +32,46 @@ typedef struct rdp_certificate_store rdpCertificateStore;
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
-struct rdp_certificate_data
-{
-	char* hostname;
-	UINT16 port;
-	char* subject;
-	char* issuer;
-	char* fingerprint;
-};
-
-struct rdp_certificate_store
-{
-	char* path;
-	char* file;
-	char* legacy_file;
-	rdpSettings* settings;
-	rdpCertificateData* certificate_data;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	FREERDP_API rdpCertificateData* certificate_data_new(const char* hostname, UINT16 port,
-	                                                     const char* subject, const char* issuer,
-	                                                     const char* fingerprint);
+	FREERDP_API rdpCertificateData* certificate_data_new(const char* hostname, UINT16 port);
 	FREERDP_API void certificate_data_free(rdpCertificateData* certificate_data);
-	FREERDP_API rdpCertificateStore* certificate_store_new(rdpSettings* settings);
-	FREERDP_API BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
-	                                          rdpCertificateData* certificate_data);
+
+	FREERDP_API const char* certificate_data_get_host(const rdpCertificateData* cert);
+	FREERDP_API UINT16 certificate_data_get_port(const rdpCertificateData* cert);
+
+	FREERDP_API BOOL certificate_data_set_pem(rdpCertificateData* cert, const char* pem);
+	FREERDP_API BOOL certificate_data_set_subject(rdpCertificateData* cert, const char* subject);
+	FREERDP_API BOOL certificate_data_set_issuer(rdpCertificateData* cert, const char* issuer);
+	FREERDP_API BOOL certificate_data_set_fingerprint(rdpCertificateData* cert,
+	                                                  const char* fingerprint);
+	FREERDP_API const char* certificate_data_get_pem(const rdpCertificateData* cert);
+	FREERDP_API const char* certificate_data_get_subject(const rdpCertificateData* cert);
+	FREERDP_API const char* certificate_data_get_issuer(const rdpCertificateData* cert);
+	FREERDP_API const char* certificate_data_get_fingerprint(const rdpCertificateData* cert);
+
+	FREERDP_API rdpCertificateStore* certificate_store_new(const rdpSettings* settings);
 	FREERDP_API void certificate_store_free(rdpCertificateStore* certificate_store);
-	FREERDP_API int certificate_data_match(rdpCertificateStore* certificate_store,
-	                                       rdpCertificateData* certificate_data);
-	FREERDP_API BOOL certificate_data_print(rdpCertificateStore* certificate_store,
-	                                        rdpCertificateData* certificate_data);
-	FREERDP_API BOOL certificate_get_stored_data(rdpCertificateStore* certificate_store,
-	                                             rdpCertificateData* certificate_data,
-	                                             char** subject, char** issuer, char** fingerprint);
+
+	FREERDP_API int certificate_store_contains_data(rdpCertificateStore* certificate_store,
+	                                                const rdpCertificateData* certificate_data);
+	FREERDP_API rdpCertificateData*
+	certificate_store_load_data(rdpCertificateStore* certificate_store, const char* host,
+	                            UINT16 port);
+	FREERDP_API BOOL certificate_store_save_data(rdpCertificateStore* certificate_store,
+	                                             const rdpCertificateData* certificate_data);
+	FREERDP_API BOOL certificate_store_remove_data(rdpCertificateStore* certificate_store,
+	                                               const rdpCertificateData* certificate_data);
+
+	FREERDP_API const char*
+	certificate_store_get_hosts_file(const rdpCertificateStore* certificate_store);
+	FREERDP_API const char*
+	certificate_store_get_certs_path(const rdpCertificateStore* certificate_store);
+	FREERDP_API const char*
+	certificate_store_get_hosts_path(const rdpCertificateStore* certificate_store);
 
 #ifdef __cplusplus
 }

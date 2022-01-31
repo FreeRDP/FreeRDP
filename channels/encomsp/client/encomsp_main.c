@@ -24,6 +24,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/print.h>
 
 #include <freerdp/channels/log.h>
@@ -99,7 +100,7 @@ static UINT encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) < (size_t)(str->cchString * 2))
+	if (Stream_GetRemainingLength(s) / sizeof(WCHAR) < str->cchString)
 	{
 		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
@@ -1140,17 +1141,7 @@ static DWORD WINAPI encomsp_virtual_channel_client_thread(LPVOID arg)
 static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVOID pData,
                                                     UINT32 dataLength)
 {
-	UINT32 status;
-	status = encomsp->channelEntryPoints.pVirtualChannelOpenEx(
-	    encomsp->InitHandle, &encomsp->OpenHandle, encomsp->channelDef.name,
-	    encomsp_virtual_channel_open_event_ex);
-
-	if (status != CHANNEL_RC_OK)
-	{
-		WLog_ERR(TAG, "pVirtualChannelOpen failed with %s [%08" PRIX32 "]",
-		         WTSErrorToString(status), status);
-		return status;
-	}
+	WINPR_ASSERT(encomsp);
 
 	encomsp->queue = MessageQueue_New(NULL);
 
@@ -1168,7 +1159,9 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	return CHANNEL_RC_OK;
+	return encomsp->channelEntryPoints.pVirtualChannelOpenEx(
+	    encomsp->InitHandle, &encomsp->OpenHandle, encomsp->channelDef.name,
+	    encomsp_virtual_channel_open_event_ex);
 }
 
 /**
@@ -1183,18 +1176,23 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 	if (encomsp->OpenHandle == 0)
 		return CHANNEL_RC_OK;
 
-	if (MessageQueue_PostQuit(encomsp->queue, 0) &&
-	    (WaitForSingleObject(encomsp->thread, INFINITE) == WAIT_FAILED))
+	if (encomsp->queue && encomsp->thread)
 	{
-		rc = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", rc);
-		return rc;
+		if (MessageQueue_PostQuit(encomsp->queue, 0) &&
+		    (WaitForSingleObject(encomsp->thread, INFINITE) == WAIT_FAILED))
+		{
+			rc = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", rc);
+			return rc;
+		}
 	}
 
 	MessageQueue_Free(encomsp->queue);
 	CloseHandle(encomsp->thread);
 	encomsp->queue = NULL;
 	encomsp->thread = NULL;
+
+	WINPR_ASSERT(encomsp->channelEntryPoints.pVirtualChannelCloseEx);
 	rc = encomsp->channelEntryPoints.pVirtualChannelCloseEx(encomsp->InitHandle,
 	                                                        encomsp->OpenHandle);
 
@@ -1293,7 +1291,8 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 
 	encomsp->channelDef.options = CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
 	                              CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL;
-	sprintf_s(encomsp->channelDef.name, ARRAYSIZE(encomsp->channelDef.name), "encomsp");
+	sprintf_s(encomsp->channelDef.name, ARRAYSIZE(encomsp->channelDef.name),
+	          ENCOMSP_SVC_CHANNEL_NAME);
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&

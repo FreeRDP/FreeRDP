@@ -46,15 +46,19 @@
 
 static HMODULE g_WtsApiModule = NULL;
 
-static PWtsApiFunctionTable g_WtsApi = NULL;
+static const WtsApiFunctionTable* g_WtsApi = NULL;
 
 #if defined(_WIN32)
 static HMODULE g_WtsApi32Module = NULL;
 static WtsApiFunctionTable WtsApi32_WtsApiFunctionTable = { 0 };
 
-#define WTSAPI32_LOAD_PROC(_name, _type)                                                   \
-	WtsApi32_WtsApiFunctionTable.p##_name = (##_type)GetProcAddress(g_WtsApi32Module, "WT" \
-	                                                                                  "S" #_name);
+#ifdef __MINGW32__
+#define WTSAPI32_LOAD_PROC(NAME, TYPE)                                                   \
+	WtsApi32_WtsApiFunctionTable.p##NAME = (TYPE)GetProcAddress(g_WtsApi32Module, "WTS" #NAME);
+#else
+#define WTSAPI32_LOAD_PROC(NAME, TYPE)                                                   \
+	WtsApi32_WtsApiFunctionTable.p##NAME = (##TYPE)GetProcAddress(g_WtsApi32Module, "WTS" #NAME);
+#endif
 
 static BOOL WtsApi32_InitializeWtsApi(void)
 {
@@ -674,7 +678,7 @@ const CHAR* WTSSessionStateToString(WTS_CONNECTSTATE_CLASS state)
 	return "INVALID_STATE";
 }
 
-BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)
+BOOL WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table)
 {
 	/* Use InitOnceExecuteOnce here as well - otherwise a table set with this
 	   function is overriden on the first use of a WTS* API call (due to
@@ -688,7 +692,7 @@ BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)
 static BOOL LoadAndInitialize(char* library)
 {
 	INIT_WTSAPI_FN pInitWtsApi;
-	g_WtsApiModule = LoadLibraryA(library);
+	g_WtsApiModule = LoadLibraryX(library);
 
 	if (!g_WtsApiModule)
 		return FALSE;
@@ -777,7 +781,7 @@ static BOOL CALLBACK InitializeWtsApiStubs(PINIT_ONCE once, PVOID param, PVOID* 
 	WINPR_UNUSED(context);
 	if (param)
 	{
-		g_WtsApi = (PWtsApiFunctionTable)param;
+		g_WtsApi = (const WtsApiFunctionTable*)param;
 		return TRUE;
 	}
 

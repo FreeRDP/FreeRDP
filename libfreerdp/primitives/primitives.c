@@ -157,7 +157,7 @@ static primitives_YUV_benchmark* primitives_YUV_benchmark_init(primitives_YUV_be
 		if (!buf)
 			goto fail;
 
-		winpr_RAND(buf, roi->width * roi->height);
+		winpr_RAND(buf, roi->width * roi->height * 1ULL);
 		ret->steps[i] = roi->width;
 	}
 
@@ -191,10 +191,10 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
 	dueDate = GetTickCount64() + runTime;
 	while (GetTickCount64() < dueDate)
 	{
-		pstatus_t status =
+		pstatus_t cstatus =
 		    prims->YUV420ToRGB_8u_P3AC4R(channels, bench->steps, bench->outputBuffer,
 		                                 bench->outputStride, bench->testedFormat, &bench->roi);
-		if (status != PRIMITIVES_SUCCESS)
+		if (cstatus != PRIMITIVES_SUCCESS)
 			return FALSE;
 		*computations = *computations + 1;
 	}

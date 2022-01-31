@@ -771,11 +771,11 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	settings = subsystem->shw->settings;
 	status = freerdp_assistance_populate_settings_from_assistance_file(file, settings);
-	freerdp_set_param_string(settings, FreeRDP_Domain, "RDP");
-	freerdp_set_param_string(settings, FreeRDP_Username, "Shadow");
-	freerdp_set_param_bool(settings, FreeRDP_AutoLogonEnabled, TRUE);
-	freerdp_set_param_uint32(settings, FreeRDP_DesktopWidth, width);
-	freerdp_set_param_uint32(settings, FreeRDP_DesktopHeight, height);
+	freerdp_settings_set_string(settings, FreeRDP_Domain, "RDP");
+	freerdp_settings_set_string(settings, FreeRDP_Username, "Shadow");
+	freerdp_settings_set_bool(settings, FreeRDP_AutoLogonEnabled, TRUE);
+	freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, width);
+	freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, height);
 	status = win_shadow_rdp_start(subsystem);
 
 	if (status < 0)

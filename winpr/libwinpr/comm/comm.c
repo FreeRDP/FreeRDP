@@ -26,7 +26,7 @@
 
 #if defined __linux__ && !defined ANDROID
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -92,8 +92,8 @@ HANDLE_CREATOR* GetCommHandleCreator(void)
 static void _CommInit(void)
 {
 	/* NB: error management to be done outside of this function */
-	assert(_Log == NULL);
-	assert(_CommDevices == NULL);
+	WINPR_ASSERT(_Log == NULL);
+	WINPR_ASSERT(_CommDevices == NULL);
 	_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX + 1, sizeof(COMM_DEVICE*));
 
 	if (!_CommDevices)
@@ -107,7 +107,7 @@ static void _CommInit(void)
 	}
 
 	_Log = WLog_Get("com.winpr.comm");
-	assert(_Log != NULL);
+	WINPR_ASSERT(_Log != NULL);
 }
 
 /**
@@ -1184,7 +1184,7 @@ static HANDLE_OPS ops = { CommIsHandled, CommCloseHandle,
 /**
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363198%28v=vs.85%29.aspx
  *
- * @param lpDeviceName e.g. COM1, \\.\COM1, ...
+ * @param lpDeviceName e.g. COM1, "\\.\COM1", ...
  *
  * @param dwDesiredAccess expects GENERIC_READ | GENERIC_WRITE, a
  * warning message is printed otherwise. TODO: better support.
@@ -1425,7 +1425,7 @@ BOOL CommCloseHandle(HANDLE handle)
 		return FALSE;
 	}
 
-	if (pComm->PendingEvents & SERIAL_EV_FREERDP_WAITING)
+	if (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
 	{
 		ULONG WaitMask = 0;
 		DWORD BytesReturned = 0;

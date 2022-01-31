@@ -54,20 +54,13 @@ char* _strdup(const char* strSource)
 
 WCHAR* _wcsdup(const WCHAR* strSource)
 {
+	size_t len = _wcslen(strSource);
 	WCHAR* strDestination;
 
-	if (strSource == NULL)
-		return NULL;
-
-#if defined(__APPLE__) && defined(__MACH__) || defined(ANDROID) || defined(sun)
-	strDestination = malloc(wcslen((wchar_t*)strSource));
+	strDestination = calloc(len + 1, sizeof(WCHAR));
 
 	if (strDestination != NULL)
-		wcscpy((wchar_t*)strDestination, (const wchar_t*)strSource);
-
-#else
-	strDestination = (WCHAR*)wcsdup((wchar_t*)strSource);
-#endif
+		memcpy(strDestination, strSource, len * sizeof(WCHAR));
 
 	if (strDestination == NULL)
 		WLog_ERR(TAG, "wcsdup");
@@ -139,31 +132,31 @@ size_t _wcsnlen(const WCHAR* str, size_t max)
 
 WCHAR* _wcschr(const WCHAR* str, WCHAR c)
 {
-	WCHAR* p = (WCHAR*)str;
+	const WCHAR* p = (const WCHAR*)str;
 	WCHAR value;
 	Data_Write_UINT16(&value, c);
 
 	while (*p && (*p != value))
 		p++;
 
-	return ((*p == value) ? p : NULL);
+	return ((*p == value) ? (WCHAR*)p : NULL);
 }
 
 /* _wcsrchr -> wcsrchr */
 
 WCHAR* _wcsrchr(const WCHAR* str, WCHAR c)
 {
-	WCHAR* p;
+	const WCHAR* p;
 	WCHAR ch;
 
 	if (!str)
 		return NULL;
 
-	for (p = (WCHAR*)0; (ch = *str); str++)
+	for (p = (const WCHAR*)0; (ch = *str); str++)
 		if (ch == c)
-			p = (WCHAR*)str;
+			p = (const WCHAR*)str;
 
-	return p;
+	return (WCHAR*)p;
 }
 
 char* strtok_s(char* strToken, const char* strDelimit, char** context)
@@ -456,12 +449,12 @@ int lstrlenA(LPCSTR lpString)
 
 int lstrlenW(LPCWSTR lpString)
 {
-	LPWSTR p;
+	LPCWSTR p;
 
 	if (!lpString)
 		return 0;
 
-	p = (LPWSTR)lpString;
+	p = (LPCWSTR)lpString;
 
 	while (*p)
 		p++;

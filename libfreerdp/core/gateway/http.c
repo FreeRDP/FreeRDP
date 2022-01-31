@@ -30,6 +30,9 @@
 
 #include <freerdp/log.h>
 
+/* websocket need sha1 for Sec-Websocket-Accept */
+#include <winpr/crypto.h>
+
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 #endif
@@ -39,6 +42,8 @@
 #define TAG FREERDP_TAG("core.gateway.http")
 
 #define RESPONSE_SIZE_LIMIT 64 * 1024 * 1024
+
+#define WEBSOCKET_MAGIC_GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 struct _http_context
 {
@@ -52,6 +57,8 @@ struct _http_context
 	char* Pragma;
 	char* RdgConnectionId;
 	char* RdgAuthScheme;
+	BOOL websocketUpgrade;
+	char SecWebsocketKey[16];
 };
 
 struct _http_request
@@ -63,7 +70,7 @@ struct _http_request
 	char* Authorization;
 	size_t ContentLength;
 	char* Content;
-	char* TransferEncoding;
+	TRANSFER_ENCODING TransferEncoding;
 };
 
 struct _http_response
@@ -76,6 +83,9 @@ struct _http_response
 
 	size_t ContentLength;
 	const char* ContentType;
+	TRANSFER_ENCODING TransferEncoding;
+	const char* SecWebsocketVersion;
+	const char* SecWebsocketAccept;
 
 	size_t BodyLength;
 	BYTE* BodyContent;
@@ -258,6 +268,30 @@ BOOL http_context_set_rdg_connection_id(HttpContext* context, const char* RdgCon
 	return TRUE;
 }
 
+BOOL http_context_enable_websocket_upgrade(HttpContext* context, BOOL enable)
+{
+	if (!context)
+		return FALSE;
+
+	if (enable)
+	{
+		int i;
+		winpr_RAND((BYTE*)context->SecWebsocketKey, 15);
+		for (i = 0; i < 16; i++)
+			context->SecWebsocketKey[i] = (context->SecWebsocketKey[i] | 0x40) & 0x5f;
+		context->SecWebsocketKey[15] = '\0';
+	}
+	else
+		context->SecWebsocketKey[0] = '\0';
+	context->websocketUpgrade = enable;
+	return TRUE;
+}
+
+BOOL http_context_is_websocket_upgrade_enabled(HttpContext* context)
+{
+	return context->websocketUpgrade;
+}
+
 BOOL http_context_set_rdg_auth_scheme(HttpContext* context, const char* RdgAuthScheme)
 {
 	if (!context || !RdgAuthScheme)
@@ -342,16 +376,12 @@ BOOL http_request_set_auth_param(HttpRequest* request, const char* AuthParam)
 	return TRUE;
 }
 
-BOOL http_request_set_transfer_encoding(HttpRequest* request, const char* TransferEncoding)
+BOOL http_request_set_transfer_encoding(HttpRequest* request, TRANSFER_ENCODING TransferEncoding)
 {
-	if (!request || !TransferEncoding)
+	if (!request || TransferEncoding == TransferEncodingUnknown)
 		return FALSE;
 
-	free(request->TransferEncoding);
-	request->TransferEncoding = _strdup(TransferEncoding);
-
-	if (!request->TransferEncoding)
-		return FALSE;
+	request->TransferEncoding = TransferEncoding;
 
 	return TRUE;
 }
@@ -429,12 +459,25 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 
 	if (!http_encode_header_line(s, request->Method, request->URI) ||
 	    !http_encode_body_line(s, "Cache-Control", context->CacheControl) ||
-	    !http_encode_body_line(s, "Connection", context->Connection) ||
 	    !http_encode_body_line(s, "Pragma", context->Pragma) ||
 	    !http_encode_body_line(s, "Accept", context->Accept) ||
 	    !http_encode_body_line(s, "User-Agent", context->UserAgent) ||
 	    !http_encode_body_line(s, "Host", context->Host))
 		goto fail;
+
+	if (!context->websocketUpgrade)
+	{
+		if (!http_encode_body_line(s, "Connection", context->Connection))
+			goto fail;
+	}
+	else
+	{
+		if (!http_encode_body_line(s, "Connection", "Upgrade") ||
+		    !http_encode_body_line(s, "Upgrade", "websocket") ||
+		    !http_encode_body_line(s, "Sec-Websocket-Version", "13") ||
+		    !http_encode_body_line(s, "Sec-Websocket-Key", context->SecWebsocketKey))
+			goto fail;
+	}
 
 	if (context->RdgConnectionId)
 	{
@@ -448,9 +491,14 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 			goto fail;
 	}
 
-	if (request->TransferEncoding)
+	if (request->TransferEncoding != TransferEncodingIdentity)
 	{
-		if (!http_encode_body_line(s, "Transfer-Encoding", request->TransferEncoding))
+		if (request->TransferEncoding == TransferEncodingChunked)
+		{
+			if (!http_encode_body_line(s, "Transfer-Encoding", "chunked"))
+				goto fail;
+		}
+		else
 			goto fail;
 	}
 	else
@@ -480,7 +528,12 @@ fail:
 
 HttpRequest* http_request_new(void)
 {
-	return (HttpRequest*)calloc(1, sizeof(HttpRequest));
+	HttpRequest* request = (HttpRequest*)calloc(1, sizeof(HttpRequest));
+	if (!request)
+		return NULL;
+
+	request->TransferEncoding = TransferEncodingIdentity;
+	return request;
 }
 
 void http_request_free(HttpRequest* request)
@@ -494,7 +547,6 @@ void http_request_free(HttpRequest* request)
 	free(request->Content);
 	free(request->Method);
 	free(request->URI);
-	free(request->TransferEncoding);
 	free(request);
 }
 
@@ -550,7 +602,6 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
                                              const char* value)
 {
 	BOOL status = TRUE;
-
 	if (!response || !name)
 		return FALSE;
 
@@ -570,6 +621,29 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 		response->ContentType = value;
 
 		if (!response->ContentType)
+			return FALSE;
+	}
+	else if (_stricmp(name, "Transfer-Encoding") == 0)
+	{
+		if (_stricmp(value, "identity") == 0)
+			response->TransferEncoding = TransferEncodingIdentity;
+		else if (_stricmp(value, "chunked") == 0)
+			response->TransferEncoding = TransferEncodingChunked;
+		else
+			response->TransferEncoding = TransferEncodingUnknown;
+	}
+	else if (_stricmp(name, "Sec-WebSocket-Version") == 0)
+	{
+		response->SecWebsocketVersion = value;
+
+		if (!response->SecWebsocketVersion)
+			return FALSE;
+	}
+	else if (_stricmp(name, "Sec-WebSocket-Accept") == 0)
+	{
+		response->SecWebsocketAccept = value;
+
+		if (!response->SecWebsocketAccept)
 			return FALSE;
 	}
 	else if (_stricmp(name, "WWW-Authenticate") == 0)
@@ -948,6 +1022,8 @@ HttpResponse* http_response_new(void)
 
 	ListDictionary_KeyObject(response->Authenticates)->fnObjectEquals = strings_equals_nocase;
 	ListDictionary_ValueObject(response->Authenticates)->fnObjectEquals = strings_equals_nocase;
+
+	response->TransferEncoding = TransferEncodingIdentity;
 	return response;
 fail:
 	http_response_free(response);
@@ -1006,13 +1082,74 @@ SSIZE_T http_response_get_body_length(HttpResponse* response)
 	return (SSIZE_T)response->BodyLength;
 }
 
-const char* http_response_get_auth_token(HttpResponse* respone, const char* method)
+const char* http_response_get_auth_token(HttpResponse* response, const char* method)
 {
-	if (!respone || !method)
+	if (!response || !method)
 		return NULL;
 
-	if (!ListDictionary_Contains(respone->Authenticates, method))
+	if (!ListDictionary_Contains(response->Authenticates, method))
 		return NULL;
 
-	return ListDictionary_GetItemValue(respone->Authenticates, method);
+	return ListDictionary_GetItemValue(response->Authenticates, method);
+}
+
+TRANSFER_ENCODING http_response_get_transfer_encoding(HttpResponse* response)
+{
+	if (!response)
+		return TransferEncodingUnknown;
+
+	return response->TransferEncoding;
+}
+
+BOOL http_response_is_websocket(HttpContext* http, HttpResponse* response)
+{
+	BOOL isWebsocket = FALSE;
+	WINPR_DIGEST_CTX* sha1 = NULL;
+	char* base64accept = NULL;
+	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH];
+
+	if (!http || !response)
+		return FALSE;
+
+	if (!http->websocketUpgrade || response->StatusCode != HTTP_STATUS_SWITCH_PROTOCOLS)
+		return FALSE;
+
+	if (response->SecWebsocketVersion && _stricmp(response->SecWebsocketVersion, "13") != 0)
+		return FALSE;
+
+	if (!response->SecWebsocketAccept)
+		return FALSE;
+
+	/* now check if Sec-Websocket-Accept is correct */
+
+	sha1 = winpr_Digest_New();
+	if (!sha1)
+		goto out;
+
+	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+		goto out;
+
+	if (!winpr_Digest_Update(sha1, (const BYTE*)http->SecWebsocketKey,
+	                         strlen(http->SecWebsocketKey)))
+		goto out;
+	if (!winpr_Digest_Update(sha1, (const BYTE*)WEBSOCKET_MAGIC_GUID, strlen(WEBSOCKET_MAGIC_GUID)))
+		goto out;
+
+	if (!winpr_Digest_Final(sha1, sha1_digest, sizeof(sha1_digest)))
+		goto out;
+
+	base64accept = crypto_base64_encode(sha1_digest, WINPR_SHA1_DIGEST_LENGTH);
+	if (!base64accept)
+		goto out;
+
+	if (_stricmp(response->SecWebsocketAccept, base64accept) != 0)
+	{
+		WLog_WARN(TAG, "Webserver gave Websocket Upgrade response but sanity check failed");
+		goto out;
+	}
+	isWebsocket = TRUE;
+out:
+	winpr_Digest_Free(sha1);
+	free(base64accept);
+	return isWebsocket;
 }

@@ -110,6 +110,9 @@ static const char* call_to_string_proxy_server(UINT32 functionId)
 		case TRANSFER_IN_REQUEST:
 			return "TRANSFER_IN_REQUEST               [proxy|server]";
 
+		case TRANSFER_OUT_REQUEST:
+			return "TRANSFER_OUT_REQUEST              [proxy|server]";
+
 		default:
 			return "UNKNOWN                           [proxy|server]";
 	}

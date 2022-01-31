@@ -8,6 +8,9 @@ int TestFormatSpecifiers(int argc, char* argv[])
 
 	char fmt[4096];
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	/* size_t */
 	{
 		size_t arg = 0xabcd;

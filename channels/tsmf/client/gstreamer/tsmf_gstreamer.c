@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <fcntl.h>
 #include <stdio.h>

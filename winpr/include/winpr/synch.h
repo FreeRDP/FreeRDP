@@ -108,6 +108,10 @@ extern "C"
 	WINPR_API BOOL SetEvent(HANDLE hEvent);
 	WINPR_API BOOL ResetEvent(HANDLE hEvent);
 
+#if defined(WITH_DEBUG_EVENTS)
+#define DumpEventHandles() DumpEventHandles_(__FUNCTION__, __FILE__, __LINE__)
+	WINPR_API void DumpEventHandles_(const char* fkt, const char* file, size_t line);
+#endif
 #ifdef UNICODE
 #define CreateEvent CreateEventW
 #define CreateEventEx CreateEventExW
@@ -174,6 +178,7 @@ extern "C"
 
 #define WAIT_OBJECT_0 0x00000000L
 #define WAIT_ABANDONED 0x00000080L
+#define WAIT_IO_COMPLETION 0x000000C0L
 
 #ifndef WAIT_TIMEOUT
 #define WAIT_TIMEOUT 0x00000102L
@@ -202,7 +207,8 @@ extern "C"
 		ULONG Version;
 		DWORD Flags;
 
-		union {
+		union
+		{
 			struct
 			{
 				HMODULE LocalizedReasonModule;
@@ -291,8 +297,17 @@ extern "C"
 	InitializeCriticalSectionAndSpinCount(lpCriticalSection, dwSpinCount)
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifndef _RTL_RUN_ONCE_DEF
 #define _RTL_RUN_ONCE_DEF
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #define RTL_RUN_ONCE_INIT \
 	{                     \

@@ -100,24 +100,39 @@ extern "C"
 	FREERDP_API int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, int argc,
 	                                                              char* argv[]);
 
-	FREERDP_API BOOL client_cli_authenticate(freerdp* instance, char** username, char** password,
-	                                         char** domain);
-	FREERDP_API BOOL client_cli_gw_authenticate(freerdp* instance, char** username, char** password,
-	                                            char** domain);
+	FREERDP_API BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** password,
+	                                            char** domain, rdp_auth_reason reason);
 
-	FREERDP_API DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name,
-	                                                const char* subject, const char* issuer,
-	                                                const char* fingerprint, BOOL host_mismatch);
+#if defined(WITH_FREERDP_DEPRECATED)
+	FREERDP_API WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",
+	                                 BOOL client_cli_authenticate(freerdp* instance,
+	                                                              char** username, char** password,
+	                                                              char** domain));
+	FREERDP_API
+	    WINPR_DEPRECATED_VAR("Use client_cli_authenticate_ex",
+	                         BOOL client_cli_gw_authenticate(freerdp* instance, char** username,
+	                                                         char** password, char** domain));
+
+	FREERDP_API WINPR_DEPRECATED_VAR(
+	    "Use client_cli_verify_certificate_ex",
+	    DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name,
+	                                        const char* subject, const char* issuer,
+	                                        const char* fingerprint, BOOL host_mismatch));
+#endif
 
 	FREERDP_API DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host,
 	                                                   UINT16 port, const char* common_name,
 	                                                   const char* subject, const char* issuer,
 	                                                   const char* fingerprint, DWORD flags);
 
-	FREERDP_API DWORD client_cli_verify_changed_certificate(
-	    freerdp* instance, const char* common_name, const char* subject, const char* issuer,
-	    const char* fingerprint, const char* old_subject, const char* old_issuer,
-	    const char* old_fingerprint);
+#if defined(WITH_FREERDP_DEPRECATED)
+	FREERDP_API WINPR_DEPRECATED_VAR("Use client_cli_verify_changed_certificate_ex",
+	                                 DWORD client_cli_verify_changed_certificate(
+	                                     freerdp* instance, const char* common_name,
+	                                     const char* subject, const char* issuer,
+	                                     const char* fingerprint, const char* old_subject,
+	                                     const char* old_issuer, const char* old_fingerprint));
+#endif
 
 	FREERDP_API DWORD client_cli_verify_changed_certificate_ex(
 	    freerdp* instance, const char* host, UINT16 port, const char* common_name,

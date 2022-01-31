@@ -44,7 +44,7 @@ public class QuickConnectHistoryGateway
 		Cursor cursor = db.query(HistoryDB.QUICK_CONNECT_TABLE_NAME, column, selection, null, null,
 		                         null, HistoryDB.QUICK_CONNECT_TABLE_COL_TIMESTAMP);
 
-		ArrayList<BookmarkBase> result = new ArrayList<BookmarkBase>(cursor.getCount());
+		ArrayList<BookmarkBase> result = new ArrayList<>(cursor.getCount());
 		if (cursor.moveToFirst())
 		{
 			do

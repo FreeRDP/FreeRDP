@@ -44,7 +44,7 @@ struct rdp_palette_cache
 
 	/* internal */
 
-	rdpSettings* settings;
+	rdpContext* context;
 };
 
 #ifdef __cplusplus
@@ -54,7 +54,7 @@ extern "C"
 
 	FREERDP_API void palette_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_API rdpPaletteCache* palette_cache_new(rdpSettings* settings);
+	FREERDP_API rdpPaletteCache* palette_cache_new(rdpContext* context);
 	FREERDP_API void palette_cache_free(rdpPaletteCache* palette_cache);
 
 #ifdef __cplusplus

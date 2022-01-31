@@ -263,7 +263,7 @@ int TestPrimitivesColors(int argc, char* argv[])
 		                      PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGBX32,
 		                      PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };
 	DWORD x;
-	prim_size_t roi = { 1920, 1080 };
+	prim_size_t roi = { 1920 / 4, 1080 / 4 };
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	prim_test_setup(FALSE);

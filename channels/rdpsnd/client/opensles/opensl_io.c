@@ -27,7 +27,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include "rdpsnd_main.h"
 #include "opensl_io.h"
@@ -71,8 +71,8 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 	SLresult result;
 	SLuint32 sr = p->sr;
 	SLuint32 channels = p->outchannels;
-	assert(p->engineObject);
-	assert(p->engineEngine);
+	WINPR_ASSERT(p->engineObject);
+	WINPR_ASSERT(p->engineEngine);
 
 	if (channels)
 	{
@@ -139,7 +139,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		result = (*p->engineEngine)
 		             ->CreateOutputMix(p->engineEngine, &(p->outputMixObject), 1, ids, req);
 		DEBUG_SND("engineEngine=%p", (void*)p->engineEngine);
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (result != SL_RESULT_SUCCESS)
 			goto end_openaudio;
@@ -147,7 +147,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		// realize the output mix
 		result = (*p->outputMixObject)->Realize(p->outputMixObject, SL_BOOLEAN_FALSE);
 		DEBUG_SND("Realize=%" PRIu32 "", result);
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (result != SL_RESULT_SUCCESS)
 			goto end_openaudio;
@@ -177,7 +177,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		             ->CreateAudioPlayer(p->engineEngine, &(p->bqPlayerObject), &audioSrc,
 		                                 &audioSnk, 2, ids1, req1);
 		DEBUG_SND("bqPlayerObject=%p", (void*)p->bqPlayerObject);
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (result != SL_RESULT_SUCCESS)
 			goto end_openaudio;
@@ -185,7 +185,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		// realize the player
 		result = (*p->bqPlayerObject)->Realize(p->bqPlayerObject, SL_BOOLEAN_FALSE);
 		DEBUG_SND("Realize=%" PRIu32 "", result);
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (result != SL_RESULT_SUCCESS)
 			goto end_openaudio;
@@ -194,7 +194,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		result =
 		    (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject, SL_IID_PLAY, &(p->bqPlayerPlay));
 		DEBUG_SND("bqPlayerPlay=%p", (void*)p->bqPlayerPlay);
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (result != SL_RESULT_SUCCESS)
 			goto end_openaudio;
@@ -203,7 +203,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		result = (*p->bqPlayerObject)
 		             ->GetInterface(p->bqPlayerObject, SL_IID_VOLUME, &(p->bqPlayerVolume));
 		DEBUG_SND("bqPlayerVolume=%p", (void*)p->bqPlayerVolume);
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (result != SL_RESULT_SUCCESS)
 			goto end_openaudio;
@@ -213,7 +213,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		             ->GetInterface(p->bqPlayerObject, SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
 		                            &(p->bqPlayerBufferQueue));
 		DEBUG_SND("bqPlayerBufferQueue=%p", (void*)p->bqPlayerBufferQueue);
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (result != SL_RESULT_SUCCESS)
 			goto end_openaudio;
@@ -222,7 +222,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		result = (*p->bqPlayerBufferQueue)
 		             ->RegisterCallback(p->bqPlayerBufferQueue, bqPlayerCallback, p);
 		DEBUG_SND("bqPlayerCallback=%p", (void*)p->bqPlayerCallback);
-		assert(!result);
+		WINPR_ASSERT(!result);
 
 		if (result != SL_RESULT_SUCCESS)
 			goto end_openaudio;
@@ -230,9 +230,9 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		// set the player's state to playing
 		result = (*p->bqPlayerPlay)->SetPlayState(p->bqPlayerPlay, SL_PLAYSTATE_PLAYING);
 		DEBUG_SND("SetPlayState=%" PRIu32 "", result);
-		assert(!result);
+		WINPR_ASSERT(!result);
 	end_openaudio:
-		assert(!result);
+		WINPR_ASSERT(!result);
 		return result;
 	}
 
@@ -323,8 +323,8 @@ void android_CloseAudioDevice(OPENSL_STREAM* p)
 static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context)
 {
 	OPENSL_STREAM* p = (OPENSL_STREAM*)context;
-	assert(p);
-	assert(p->queue);
+	WINPR_ASSERT(p);
+	WINPR_ASSERT(p->queue);
 	void* data = Queue_Dequeue(p->queue);
 	free(data);
 }
@@ -333,9 +333,9 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context)
 int android_AudioOut(OPENSL_STREAM* p, const short* buffer, int size)
 {
 	HANDLE ev;
-	assert(p);
-	assert(buffer);
-	assert(size > 0);
+	WINPR_ASSERT(p);
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(size > 0);
 
 	ev = Queue_Event(p->queue);
 	/* Assure, that the queue is not full. */
@@ -362,8 +362,8 @@ int android_AudioOut(OPENSL_STREAM* p, const short* buffer, int size)
 int android_GetOutputMute(OPENSL_STREAM* p)
 {
 	SLboolean mute;
-	assert(p);
-	assert(p->bqPlayerVolume);
+	WINPR_ASSERT(p);
+	WINPR_ASSERT(p->bqPlayerVolume);
 	SLresult rc = (*p->bqPlayerVolume)->GetMute(p->bqPlayerVolume, &mute);
 
 	if (SL_RESULT_SUCCESS != rc)
@@ -375,8 +375,8 @@ int android_GetOutputMute(OPENSL_STREAM* p)
 BOOL android_SetOutputMute(OPENSL_STREAM* p, BOOL _mute)
 {
 	SLboolean mute = _mute;
-	assert(p);
-	assert(p->bqPlayerVolume);
+	WINPR_ASSERT(p);
+	WINPR_ASSERT(p->bqPlayerVolume);
 	SLresult rc = (*p->bqPlayerVolume)->SetMute(p->bqPlayerVolume, mute);
 
 	if (SL_RESULT_SUCCESS != rc)
@@ -388,8 +388,8 @@ BOOL android_SetOutputMute(OPENSL_STREAM* p, BOOL _mute)
 int android_GetOutputVolume(OPENSL_STREAM* p)
 {
 	SLmillibel level;
-	assert(p);
-	assert(p->bqPlayerVolume);
+	WINPR_ASSERT(p);
+	WINPR_ASSERT(p->bqPlayerVolume);
 	SLresult rc = (*p->bqPlayerVolume)->GetVolumeLevel(p->bqPlayerVolume, &level);
 
 	if (SL_RESULT_SUCCESS != rc)
@@ -401,8 +401,8 @@ int android_GetOutputVolume(OPENSL_STREAM* p)
 int android_GetOutputVolumeMax(OPENSL_STREAM* p)
 {
 	SLmillibel level;
-	assert(p);
-	assert(p->bqPlayerVolume);
+	WINPR_ASSERT(p);
+	WINPR_ASSERT(p->bqPlayerVolume);
 	SLresult rc = (*p->bqPlayerVolume)->GetMaxVolumeLevel(p->bqPlayerVolume, &level);
 
 	if (SL_RESULT_SUCCESS != rc)

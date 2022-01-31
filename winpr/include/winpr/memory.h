@@ -29,7 +29,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/file.h>
-#include <winpr/heap.h>
 
 #ifndef _WIN32
 

@@ -45,7 +45,7 @@ static void output_handle_geometry(void* data, struct wl_output* wl_output, int 
 	if (!output->make)
 	{
 		assert(uwacErrorHandler(output->display, UWAC_ERROR_NOMEMORY, "%s: unable to strdup make\n",
-		                        __FUNCTION__));
+		                        __func__));
 	}
 
 	if (output->model)
@@ -54,7 +54,7 @@ static void output_handle_geometry(void* data, struct wl_output* wl_output, int 
 	if (!output->model)
 	{
 		assert(uwacErrorHandler(output->display, UWAC_ERROR_NOMEMORY,
-		                        "%s: unable to strdup model\n", __FUNCTION__));
+		                        "%s: unable to strdup model\n", __func__));
 	}
 
 	UwacEvent* event = UwacDisplayNewEvent(output->display, UWAC_EVENT_OUTPUT_GEOMETRY);

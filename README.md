@@ -13,13 +13,15 @@ Downloads: https://pub.freerdp.com/releases/
 Wiki: https://github.com/FreeRDP/FreeRDP/wiki  
 API documentation: https://pub.freerdp.com/api/  
 
-IRC channel: #freerdp @ irc.freenode.net  
+Matrix room : #FreeRDP:matrix.org (main)
+XMPP channel: #FreeRDP#matrix.org@matrix.org (bridged)
+IRC channel : #freerdp @ irc.oftc.net (bridged)
 Mailing list: https://lists.sourceforge.net/lists/listinfo/freerdp-devel
 
 ## Microsoft Open Specifications
 
 Information regarding the Microsoft Open Specifications can be found at:
-http://www.microsoft.com/openspecifications/
+https://www.microsoft.com/openspecifications/
 
 A list of reference documentation is maintained here:
 https://github.com/FreeRDP/FreeRDP/wiki/Reference-Documentation

@@ -1,6 +1,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/file.h>
 #include <winpr/print.h>
 #include <winpr/image.h>
 #include <winpr/environment.h>
@@ -14,7 +15,7 @@ static void* read_image(const char* src, size_t* size)
 	int success = 0;
 	void* a = NULL;
 	INT64 src_size;
-	FILE* fsrc = fopen(src, "rb");
+	FILE* fsrc = winpr_fopen(src, "rb");
 
 	if (!fsrc)
 	{
@@ -155,7 +156,7 @@ static int create_test(const char* src, const char* dst_png, const char* dst_bmp
 	void* buffer = NULL;
 	wImage *image = NULL, *image2 = NULL, *image3 = NULL, *image4 = NULL;
 
-	if (!PathFileExistsA(src))
+	if (!winpr_PathFileExists(src))
 	{
 		fprintf(stderr, "File %s does not exist!", src);
 		return -1;
@@ -295,5 +296,9 @@ static int test_image_png_to_bmp(void)
 int TestImage(int argc, char* argv[])
 {
 	int rc = test_image_png_to_bmp();
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	return rc;
 }

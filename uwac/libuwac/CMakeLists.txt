@@ -17,23 +17,24 @@
 set(MODULE_NAME "uwac")
 set(MODULE_PREFIX "UWAC")
 
-
 set(GENERATED_SOURCES "")
 macro(generate_protocol_file PROTO)
     add_custom_command(
-        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-protocol.c"
-        COMMAND ${WAYLAND_SCANNER} code < ${CMAKE_SOURCE_DIR}/uwac/protocols/${PROTO}.xml > ${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-protocol.c
-        DEPENDS ${CMAKE_SOURCE_DIR}/uwac/protocols/${PROTO}.xml
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/protocols/${PROTO}-protocol.c"
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/protocols
+	COMMAND ${WAYLAND_SCANNER} code < ${CMAKE_CURRENT_SOURCE_DIR}/../protocols/${PROTO}.xml > ${CMAKE_CURRENT_BINARY_DIR}/protocols/${PROTO}-protocol.c
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../protocols/${PROTO}.xml
     )
 
     add_custom_command(
-        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-client-protocol.h"
-        COMMAND ${WAYLAND_SCANNER} client-header < ${CMAKE_SOURCE_DIR}/uwac/protocols/${PROTO}.xml > ${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-client-protocol.h
-        DEPENDS ${CMAKE_SOURCE_DIR}/uwac/protocols/${PROTO}.xml
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/protocols/${PROTO}-client-protocol.h"
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/protocols
+	COMMAND ${WAYLAND_SCANNER} client-header < ${CMAKE_CURRENT_SOURCE_DIR}/../protocols/${PROTO}.xml > ${CMAKE_CURRENT_BINARY_DIR}/protocols/${PROTO}-client-protocol.h
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../protocols/${PROTO}.xml
     )
 
-    list(APPEND GENERATED_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-client-protocol.h)
-    list(APPEND GENERATED_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${PROTO}-protocol.c)
+    list(APPEND GENERATED_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/protocols/${PROTO}-client-protocol.h)
+    list(APPEND GENERATED_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/protocols/${PROTO}-protocol.c)
 endmacro()
 
 generate_protocol_file(xdg-shell)
@@ -48,9 +49,9 @@ if(FREEBSD)
 endif()
 include_directories(${WAYLAND_INCLUDE_DIR})
 include_directories(${XKBCOMMON_INCLUDE_DIR})
-include_directories("${CMAKE_SOURCE_DIR}/uwac/include")
-include_directories("${CMAKE_BINARY_DIR}/uwac/include")
-include_directories("${CMAKE_BINARY_DIR}/uwac/libuwac")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../include")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/../include")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/protocols")
 
 add_definitions(-DBUILD_IVI -DBUILD_FULLSCREEN_SHELL -DENABLE_XKBCOMMON)
 
@@ -70,16 +71,23 @@ set(${MODULE_PREFIX}_SRCS
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-
+set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${UWAC_API_VERSION})
 if (WITH_LIBRARY_VERSIONING)
 	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${UWAC_VERSION} SOVERSION ${UWAC_API_VERSION})
 endif()
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} ${PRIVATE_KEYWORD} ${WAYLAND_LIBS} ${XKBCOMMON_LIBS} ${EPOLLSHIM_LIBS} freerdp)
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} PRIVATE ${WAYLAND_LIBS} ${XKBCOMMON_LIBS} ${EPOLLSHIM_LIBS})
+if (HAVE_PIXMAN_REGION)
+	target_link_libraries(${MODULE_NAME} PRIVATE ${pixman_LINK_LIBRARIES})
+else()
+	target_link_libraries(${MODULE_NAME} PRIVATE freerdp)
+endif()
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT uwac)
-
+install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT uwac
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "uwac")
 

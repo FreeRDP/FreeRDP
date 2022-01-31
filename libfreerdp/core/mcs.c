@@ -202,7 +202,7 @@ static BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userDat
 static BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU,
                                           UINT16* length);
 
-static int mcs_initialize_client_channels(rdpMcs* mcs, rdpSettings* settings)
+static int mcs_initialize_client_channels(rdpMcs* mcs, const rdpSettings* settings)
 {
 	UINT32 index;
 
@@ -218,8 +218,12 @@ static int mcs_initialize_client_channels(rdpMcs* mcs, rdpSettings* settings)
 
 	for (index = 0; index < mcs->channelCount; index++)
 	{
-		CopyMemory(mcs->channels[index].Name, settings->ChannelDefArray[index].name, 8);
-		mcs->channels[index].options = settings->ChannelDefArray[index].options;
+		const CHANNEL_DEF* defchannel =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_ChannelDefArray, index);
+		rdpMcsChannel* cur = &mcs->channels[index];
+		WINPR_ASSERT(defchannel);
+		CopyMemory(cur->Name, defchannel->name, CHANNEL_NAME_LEN);
+		cur->options = defchannel->options;
 	}
 
 	return 0;
@@ -688,11 +692,15 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	size_t bm, em;
 	wStream* gcc_CCrq = NULL;
 	wStream* client_data = NULL;
+	rdpContext* context;
 
 	if (!mcs)
 		return FALSE;
 
-	mcs_initialize_client_channels(mcs, mcs->settings);
+	context = transport_get_context(mcs->transport);
+	WINPR_ASSERT(context);
+
+	mcs_initialize_client_channels(mcs, context->settings);
 	client_data = Stream_New(NULL, 512);
 
 	if (!client_data)
@@ -701,7 +709,8 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 		return FALSE;
 	}
 
-	gcc_write_client_data_blocks(client_data, mcs);
+	if (!gcc_write_client_data_blocks(client_data, mcs))
+		goto out;
 	gcc_CCrq = Stream_New(NULL, 1024);
 
 	if (!gcc_CCrq)
@@ -710,7 +719,8 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 		goto out;
 	}
 
-	gcc_write_conference_create_request(gcc_CCrq, client_data);
+	if (!gcc_write_conference_create_request(gcc_CCrq, client_data))
+		goto out;
 	length = Stream_GetPosition(gcc_CCrq) + 7;
 	s = Stream_New(NULL, 1024 + length);
 
@@ -825,7 +835,8 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 		goto out;
 	}
 
-	gcc_write_conference_create_response(gcc_CCrsp, server_data);
+	if (!gcc_write_conference_create_response(gcc_CCrsp, server_data))
+		goto out;
 	length = Stream_GetPosition(gcc_CCrsp) + 7;
 	s = Stream_New(NULL, length + 1024);
 
@@ -1100,7 +1111,6 @@ BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channelId)
 
 BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId)
 {
-	BOOL status;
 	UINT16 length;
 	BYTE result;
 	UINT16 initiator;
@@ -1110,7 +1120,6 @@ BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId)
 	if (!mcs || !s || !channelId)
 		return FALSE;
 
-	status = TRUE;
 	MCSPDU = DomainMCSPDU_ChannelJoinConfirm;
 	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, &length))
 		return FALSE;
@@ -1245,7 +1254,7 @@ BOOL mcs_client_begin(rdpMcs* mcs)
 	if (!mcs || !mcs->transport)
 		return FALSE;
 
-	context = mcs->transport->context;
+	context = transport_get_context(mcs->transport);
 
 	if (!context)
 		return FALSE;
@@ -1281,7 +1290,6 @@ rdpMcs* mcs_new(rdpTransport* transport)
 		return NULL;
 
 	mcs->transport = transport;
-	mcs->settings = transport->settings;
 	mcs_init_domain_parameters(&mcs->targetParameters, 34, 2, 0, 0xFFFF);
 	mcs_init_domain_parameters(&mcs->minimumParameters, 1, 1, 1, 0x420);
 	mcs_init_domain_parameters(&mcs->maximumParameters, 0xFFFF, 0xFC17, 0xFFFF, 0xFFFF);

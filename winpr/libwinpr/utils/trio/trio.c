@@ -406,7 +406,7 @@ typedef trio_longlong_t trio_int64_t;
  * Internal Definitions
  */
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4244)
 #endif
@@ -1368,8 +1368,10 @@ TRIO_PRIVATE double TrioLogarithmBase TRIO_ARGS1((base), int base)
  * Description:
  *  Parse the qualifiers of a potential conversion specifier
  */
+#if __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
 TRIO_PRIVATE int TrioParseQualifiers TRIO_ARGS4((type, format, offset, parameter), int type,
                                                 TRIO_CONST char* format, int offset,
                                                 trio_parameter_t* parameter)
@@ -1659,7 +1661,9 @@ TRIO_PRIVATE int TrioParseQualifiers TRIO_ARGS4((type, format, offset, parameter
 
 	return 0;
 }
+#if __GNUC__
 #pragma GCC diagnostic pop
+#endif
 
 /*************************************************************************
  * TrioParseSpecifier
@@ -1667,8 +1671,10 @@ TRIO_PRIVATE int TrioParseQualifiers TRIO_ARGS4((type, format, offset, parameter
  * Description:
  *  Parse the specifier part of a potential conversion specifier
  */
+#if __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
 TRIO_PRIVATE int TrioParseSpecifier TRIO_ARGS4((type, format, offset, parameter), int type,
                                                TRIO_CONST char* format, int offset,
                                                trio_parameter_t* parameter)
@@ -1851,7 +1857,7 @@ TRIO_PRIVATE int TrioParseSpecifier TRIO_ARGS4((type, format, offset, parameter)
 		{
 			unsigned int max;
 			int without_namespace = TRUE;
-			char* tmpformat = (char*)&format[offset];
+			const char* tmpformat = (const char*)&format[offset];
 			int ch;
 
 			parameter->type = FORMAT_USER_DEFINED;
@@ -1887,7 +1893,7 @@ TRIO_PRIVATE int TrioParseSpecifier TRIO_ARGS4((type, format, offset, parameter)
 					if (max > MAX_USER_NAME)
 						max = MAX_USER_NAME;
 					trio_copy_max(parameter->user_defined.namespace, max, tmpformat);
-					tmpformat = (char*)&format[offset];
+					tmpformat = (const char*)&format[offset];
 				}
 			}
 
@@ -1906,7 +1912,9 @@ TRIO_PRIVATE int TrioParseSpecifier TRIO_ARGS4((type, format, offset, parameter)
 
 	return 0;
 }
+#if __GNUC__
 #pragma GCC diagnostic pop
+#endif
 
 /*************************************************************************
  * TrioParse
@@ -4724,8 +4732,8 @@ TRIO_PUBLIC int trio_asprintfv TRIO_ARGS3((result, format, args), char** result,
 /**
    Register new user-defined specifier.
 
-   @param callback
-   @param name
+   @param callback a function to call
+   @param name a name for the specifier
    @return Handle.
  */
 TRIO_PUBLIC trio_pointer_t trio_register TRIO_ARGS2((callback, name), trio_callback_t callback,
@@ -7189,6 +7197,6 @@ TRIO_PUBLIC TRIO_CONST char* trio_strerror TRIO_ARGS1((errorcode), int errorcode
 #endif
 }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif

@@ -26,11 +26,12 @@
 #include "wf_cliprdr.h"
 
 #include <freerdp/gdi/gfx.h>
+#include <freerdp/gdi/video.h>
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("windows")
 
-void wf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
+void wf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)
 {
 	wfContext* wfc = (wfContext*)context;
 	rdpSettings* settings = wfc->context.settings;
@@ -57,9 +58,25 @@ void wf_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs*
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
 	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		wfc->disp = (DispClientContext*)e->pInterface;
+	}
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_geometry_init(wfc->context.gdi, (GeometryClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_control_init(wfc->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_data_init(wfc->context.gdi, (VideoClientContext*)e->pInterface);
+	}
 }
 
-void wf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
+void wf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e)
 {
 	wfContext* wfc = (wfContext*)context;
 	rdpSettings* settings = wfc->context.settings;
@@ -81,5 +98,21 @@ void wf_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEven
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
+	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		wfc->disp = NULL;
+	}
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_geometry_uninit(wfc->context.gdi, (GeometryClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_control_uninit(wfc->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_data_uninit(wfc->context.gdi, (VideoClientContext*)e->pInterface);
 	}
 }

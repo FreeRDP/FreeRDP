@@ -100,7 +100,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 	PIXEL pixelA, pixelB;
 	UINT32 runLength;
 	UINT32 code;
-	UINT32 advance;
+	UINT32 advance = 0;
 	RLEEXTRA
 
 	if ((rowDelta == 0) || (rowDelta < width))
@@ -133,7 +133,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 		/* Handle Background Run Orders. */
 		if (code == REGULAR_BG_RUN || code == MEGA_MEGA_BG_RUN)
 		{
-			runLength = ExtractRunLength(code, pbSrc, &advance);
+			runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
 			pbSrc = pbSrc + advance;
 
 			if (fFirstLine)
@@ -196,7 +196,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case MEGA_MEGA_FG_RUN:
 			case LITE_SET_FG_FG_RUN:
 			case MEGA_MEGA_SET_FG_RUN:
-				runLength = ExtractRunLength(code, pbSrc, &advance);
+				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
 				pbSrc = pbSrc + advance;
 
 				if (code == LITE_SET_FG_FG_RUN || code == MEGA_MEGA_SET_FG_RUN)
@@ -231,7 +231,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			/* Handle Dithered Run Orders. */
 			case LITE_DITHERED_RUN:
 			case MEGA_MEGA_DITHERED_RUN:
-				runLength = ExtractRunLength(code, pbSrc, &advance);
+				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
 				pbSrc = pbSrc + advance;
 				if (pbSrc >= pbEnd)
 					return FALSE;
@@ -256,7 +256,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			/* Handle Color Run Orders. */
 			case REGULAR_COLOR_RUN:
 			case MEGA_MEGA_COLOR_RUN:
-				runLength = ExtractRunLength(code, pbSrc, &advance);
+				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
 				pbSrc = pbSrc + advance;
 				if (pbSrc >= pbEnd)
 					return FALSE;
@@ -277,7 +277,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case MEGA_MEGA_FGBG_IMAGE:
 			case LITE_SET_FG_FGBG_IMAGE:
 			case MEGA_MEGA_SET_FGBG_IMAGE:
-				runLength = ExtractRunLength(code, pbSrc, &advance);
+				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
 				pbSrc = pbSrc + advance;
 
 				if (pbSrc >= pbEnd)
@@ -342,7 +342,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			/* Handle Color Image Orders. */
 			case REGULAR_COLOR_IMAGE:
 			case MEGA_MEGA_COLOR_IMAGE:
-				runLength = ExtractRunLength(code, pbSrc, &advance);
+				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
 				pbSrc = pbSrc + advance;
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
 					return FALSE;

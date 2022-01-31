@@ -235,6 +235,7 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	return hNamedPipe;
 }
 
+extern HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void);
 HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void)
 {
 	_NamedPipeClientHandleCreator.IsHandled = IsNamedPipeFileNameA;

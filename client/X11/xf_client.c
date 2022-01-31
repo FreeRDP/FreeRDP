@@ -26,7 +26,9 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
+#include <winpr/sspicli.h>
+
 #include <float.h>
 
 #include <X11/Xlib.h>
@@ -299,8 +301,8 @@ static BOOL xf_desktop_resize(rdpContext* context)
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 		XSetForeground(xfc->display, xfc->gc, 0);
-		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, 0, 0, xfc->window->width,
-		               xfc->window->height);
+		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, 0, 0, settings->DesktopWidth,
+		               settings->DesktopHeight);
 	}
 
 	return TRUE;
@@ -649,10 +651,10 @@ BOOL xf_create_window(xfContext* xfc)
 
 	if (!xfc->image)
 	{
-		rdpGdi* gdi = xfc->context.gdi;
+		rdpGdi* cgdi = xfc->context.gdi;
 		xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-		                          (char*)gdi->primary_buffer, settings->DesktopWidth,
-		                          settings->DesktopHeight, xfc->scanline_pad, gdi->stride);
+		                          (char*)cgdi->primary_buffer, settings->DesktopWidth,
+		                          settings->DesktopHeight, xfc->scanline_pad, cgdi->stride);
 		xfc->image->byte_order = LSBFirst;
 		xfc->image->bitmap_bit_order = LSBFirst;
 	}
@@ -814,8 +816,6 @@ void xf_lock_x11_(xfContext* xfc, const char* fkt)
 	else
 		XLockDisplay(xfc->display);
 
-	if (xfc->locked)
-		WLog_WARN(TAG, "%s:\t[%" PRIu32 "] recursive lock from %s", __FUNCTION__, xfc->locked, fkt);
 	xfc->locked++;
 	WLog_VRB(TAG, "%s:\t[%" PRIu32 "] from %s", __FUNCTION__, xfc->locked, fkt);
 }
@@ -836,15 +836,14 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 static BOOL xf_get_pixmap_info(xfContext* xfc)
 {
 	int i;
-	int vi_count;
-	int pf_count;
-	XVisualInfo* vi;
-	XVisualInfo* vis;
-	XVisualInfo tpl;
-	XPixmapFormatValues* pf;
-	XPixmapFormatValues* pfs;
-	XWindowAttributes window_attributes;
-	assert(xfc->display);
+	int vi_count = 0;
+	int pf_count = 0;
+	XVisualInfo* vi = NULL;
+	XVisualInfo* vis = NULL;
+	XVisualInfo tpl = { 0 };
+	XPixmapFormatValues* pfs = NULL;
+	XWindowAttributes window_attributes = { 0 };
+	WINPR_ASSERT(xfc->display);
 	pfs = XListPixmapFormats(xfc->display, &pf_count);
 
 	if (!pfs)
@@ -855,7 +854,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 
 	for (i = 0; i < pf_count; i++)
 	{
-		pf = pfs + i;
+		const XPixmapFormatValues* pf = &pfs[i];
 
 		if (pf->depth == xfc->depth)
 		{
@@ -865,7 +864,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	}
 
 	XFree(pfs);
-	ZeroMemory(&tpl, sizeof(tpl));
+
 	tpl.class = TrueColor;
 	tpl.screen = xfc->screen_number;
 
@@ -1076,8 +1075,9 @@ static const button_map xf_button_flags[NUM_BUTTONS_MAPPED] = {
 	{ Button2, PTR_FLAGS_BUTTON3 },
 	{ Button3, PTR_FLAGS_BUTTON2 },
 	{ Button4, PTR_FLAGS_WHEEL | 0x78 },
-	{ Button5, PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x78 },
-	{ 6, PTR_FLAGS_HWHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x78 },
+	/* Negative value is 9bit twos complement */
+	{ Button5, PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | (0x100 - 0x78) },
+	{ 6, PTR_FLAGS_HWHEEL | PTR_FLAGS_WHEEL_NEGATIVE | (0x100 - 0x78) },
 	{ 7, PTR_FLAGS_HWHEEL | 0x78 },
 	{ 8, PTR_XFLAGS_BUTTON1 },
 	{ 9, PTR_XFLAGS_BUTTON2 },
@@ -1182,20 +1182,12 @@ static BOOL xf_pre_connect(freerdp* instance)
 
 	if (!settings->Username && !settings->CredentialsFromStdin && !settings->SmartcardLogon)
 	{
-		int rc;
 		char login_name[MAX_PATH] = { 0 };
+		ULONG size = sizeof(login_name) - 1;
 
-#ifdef HAVE_GETLOGIN_R
-		rc = getlogin_r(login_name, sizeof(login_name));
-#else
-		strncpy(login_name, getlogin(), sizeof(login_name));
-		rc = 0;
-#endif
-		if (rc == 0)
+		if (GetUserNameExA(NameSamCompatible, login_name, &size))
 		{
-			settings->Username = _strdup(login_name);
-
-			if (!settings->Username)
+			if (!freerdp_settings_set_string(settings, FreeRDP_Username, login_name))
 				return FALSE;
 
 			WLog_INFO(TAG, "No user name set. - Using login name: %s", settings->Username);
@@ -1219,7 +1211,7 @@ static BOOL xf_pre_connect(freerdp* instance)
 
 	xf_detect_monitors(xfc, &maxWidth, &maxHeight);
 
-	if (maxWidth && maxHeight)
+	if (maxWidth && maxHeight && !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 	{
 		settings->DesktopWidth = maxWidth;
 		settings->DesktopHeight = maxHeight;
@@ -1331,7 +1323,7 @@ static BOOL xf_post_connect(freerdp* instance)
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 	update->SetKeyboardImeStatus = xf_keyboard_set_ime_status;
 
-	if (!(xfc->clipboard = xf_clipboard_new(xfc)))
+	if (settings->RedirectClipboard && !(xfc->clipboard = xf_clipboard_new(xfc)))
 		return FALSE;
 
 	if (!(xfc->xfDisp = xf_disp_new(xfc)))
@@ -1400,11 +1392,8 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[3];
-	XEvent xevent;
 	wMessage msg;
 	wMessageQueue* queue;
-	int pending_status = 1;
-	int process_status = 1;
 	freerdp* instance = (freerdp*)arg;
 	xfContext* xfc = (xfContext*)instance->context;
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
@@ -1433,26 +1422,7 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 
 				if (WaitForSingleObject(events[1], 0) == WAIT_OBJECT_0)
 				{
-					do
-					{
-						xf_lock_x11(xfc);
-						pending_status = XPending(xfc->display);
-						xf_unlock_x11(xfc);
-
-						if (pending_status)
-						{
-							xf_lock_x11(xfc);
-							ZeroMemory(&xevent, sizeof(xevent));
-							XNextEvent(xfc->display, &xevent);
-							process_status = xf_event_process(instance, &xevent);
-							xf_unlock_x11(xfc);
-
-							if (!process_status)
-								break;
-						}
-					} while (pending_status);
-
-					if (!process_status)
+					if (!xf_process_x_events(xfc->context.instance))
 					{
 						running = FALSE;
 						break;
@@ -1471,6 +1441,7 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 	}
 
 	MessageQueue_PostQuit(queue, 0);
+	freerdp_abort_connect(xfc->context.instance);
 	ExitThread(0);
 	return 0;
 }
@@ -1509,7 +1480,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	DWORD exit_code = 0;
 	DWORD nCount;
 	DWORD waitStatus;
-	HANDLE handles[64];
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	xfContext* xfc;
 	freerdp* instance;
 	rdpContext* context;
@@ -1532,6 +1503,84 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		else if (freerdp_get_last_error(instance->context) ==
 		         FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED)
 			exit_code = XF_EXIT_NEGO_FAILURE;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_LOGON_FAILURE)
+ 			exit_code = XF_EXIT_LOGON_FAILURE;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT)
+ 			exit_code = XF_EXIT_ACCOUNT_LOCKED_OUT;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_PRE_CONNECT_FAILED)
+ 			exit_code = XF_EXIT_PRE_CONNECT_FAILED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_UNDEFINED)
+ 			exit_code = XF_EXIT_CONNECT_UNDEFINED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_POST_CONNECT_FAILED)
+ 			exit_code = XF_EXIT_POST_CONNECT_FAILED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_DNS_ERROR)
+ 			exit_code = XF_EXIT_DNS_ERROR;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_DNS_NAME_NOT_FOUND)
+ 			exit_code = XF_EXIT_DNS_NAME_NOT_FOUND;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_FAILED)
+ 			exit_code = XF_EXIT_CONNECT_FAILED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR)
+ 			exit_code = XF_EXIT_MCS_CONNECT_INITIAL_ERROR;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_TLS_CONNECT_FAILED)
+ 			exit_code = XF_EXIT_TLS_CONNECT_FAILED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_INSUFFICIENT_PRIVILEGES)
+ 			exit_code = XF_EXIT_INSUFFICIENT_PRIVILEGES;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_CANCELLED)
+ 			exit_code = XF_EXIT_CONNECT_CANCELLED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED)
+ 			exit_code = XF_EXIT_SECURITY_NEGO_CONNECT_FAILED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_TRANSPORT_FAILED)
+ 			exit_code = XF_EXIT_CONNECT_TRANSPORT_FAILED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED)
+ 			exit_code = XF_EXIT_CONNECT_PASSWORD_EXPIRED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_PASSWORD_MUST_CHANGE)
+ 			exit_code = XF_EXIT_CONNECT_PASSWORD_MUST_CHANGE;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_KDC_UNREACHABLE)
+ 			exit_code = XF_EXIT_CONNECT_KDC_UNREACHABLE;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_ACCOUNT_DISABLED)
+ 			exit_code = XF_EXIT_CONNECT_ACCOUNT_DISABLED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED)
+ 			exit_code = XF_EXIT_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_CLIENT_REVOKED)
+ 			exit_code = XF_EXIT_CONNECT_CLIENT_REVOKED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_WRONG_PASSWORD)
+ 			exit_code = XF_EXIT_CONNECT_WRONG_PASSWORD;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_ACCESS_DENIED)
+ 			exit_code = XF_EXIT_CONNECT_ACCESS_DENIED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION)
+ 			exit_code = XF_EXIT_CONNECT_ACCOUNT_RESTRICTION;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED)
+ 			exit_code = XF_EXIT_CONNECT_ACCOUNT_EXPIRED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_LOGON_TYPE_NOT_GRANTED)
+ 			exit_code = XF_EXIT_CONNECT_LOGON_TYPE_NOT_GRANTED;
+ 		else if (freerdp_get_last_error(instance->context) ==
+ 				 FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS)
+ 			exit_code = XF_EXIT_CONNECT_NO_OR_MISSING_CREDENTIALS;
 		else
 			exit_code = XF_EXIT_CONN_FAILED;
 	}
@@ -1656,7 +1705,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		if (!handle_window_events(instance))
 			break;
 
-		if ((status != WAIT_TIMEOUT) && (waitStatus == WAIT_OBJECT_0))
+		if ((waitStatus != WAIT_TIMEOUT) && (waitStatus == WAIT_OBJECT_0))
 		{
 			timerEvent.now = GetTickCount64();
 			PubSub_OnTimer(context->pubSub, context, &timerEvent);
@@ -1696,7 +1745,7 @@ end:
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 {
-	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_NEGO_FAILURE))
+	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONNECT_NO_OR_MISSING_CREDENTIALS))
 		return reason;
 	/* License error set */
 	else if (reason >= 0x100 && reason <= 0x10A)
@@ -1711,7 +1760,7 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 	return reason;
 }
 
-static void xf_TerminateEventHandler(void* context, TerminateEventArgs* e)
+static void xf_TerminateEventHandler(void* context, const TerminateEventArgs* e)
 {
 	rdpContext* ctx = (rdpContext*)context;
 	WINPR_UNUSED(e);
@@ -1719,7 +1768,7 @@ static void xf_TerminateEventHandler(void* context, TerminateEventArgs* e)
 }
 
 #ifdef WITH_XRENDER
-static void xf_ZoomingChangeEventHandler(void* context, ZoomingChangeEventArgs* e)
+static void xf_ZoomingChangeEventHandler(void* context, const ZoomingChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings = xfc->context.settings;
@@ -1743,7 +1792,7 @@ static void xf_ZoomingChangeEventHandler(void* context, ZoomingChangeEventArgs* 
 	xf_draw_screen(xfc, 0, 0, settings->DesktopWidth, settings->DesktopHeight);
 }
 
-static void xf_PanningChangeEventHandler(void* context, PanningChangeEventArgs* e)
+static void xf_PanningChangeEventHandler(void* context, const PanningChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings = xfc->context.settings;
@@ -1826,16 +1875,15 @@ static Atom get_supported_atom(xfContext* xfc, const char* atomName)
 static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	xfContext* xfc = (xfContext*)instance->context;
-	assert(context);
-	assert(xfc);
-	assert(!xfc->display);
-	assert(!xfc->mutex);
-	assert(!xfc->x11event);
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(!xfc->display);
+	WINPR_ASSERT(!xfc->mutex);
+	WINPR_ASSERT(!xfc->x11event);
 	instance->PreConnect = xf_pre_connect;
 	instance->PostConnect = xf_post_connect;
 	instance->PostDisconnect = xf_post_disconnect;
-	instance->Authenticate = client_cli_authenticate;
-	instance->GatewayAuthenticate = client_cli_gw_authenticate;
+	instance->AuthenticateEx = client_cli_authenticate_ex;
 	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->PresentGatewayMessage = client_cli_present_gateway_message;
@@ -1898,7 +1946,8 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 		if ((status == Success) && (actual_type == XA_ATOM) && (actual_format == 32))
 		{
 			xfc->supportedAtomCount = nitems;
-			xfc->supportedAtoms = calloc(nitems, sizeof(Atom));
+			xfc->supportedAtoms = calloc(xfc->supportedAtomCount, sizeof(Atom));
+			WINPR_ASSERT(xfc->supportedAtoms);
 			memcpy(xfc->supportedAtoms, data, nitems * sizeof(Atom));
 		}
 

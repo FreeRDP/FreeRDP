@@ -27,6 +27,7 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <freerdp/api.h>
 #include <freerdp/log.h>
@@ -45,6 +46,7 @@
 #include "line.h"
 #include "gdi.h"
 #include "../core/graphics.h"
+#include "../core/update.h"
 
 #define TAG FREERDP_TAG("gdi")
 
@@ -322,7 +324,7 @@ static const BYTE GDI_BS_HATCHED_PATTERNS[] = {
 	0x7E, 0xBD, 0xDB, 0xE7, 0xE7, 0xDB, 0xBD, 0x7E  /* HS_DIACROSS */
 };
 
-INLINE BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor, UINT32* color, UINT32* format)
+BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor, UINT32* color, UINT32* format)
 {
 	UINT32 SrcFormat;
 	UINT32 ColorDepth;
@@ -1057,7 +1059,7 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 
 		case RDP_CODEC_ID_NONE:
 			format = gdi_get_pixel_format(cmd->bmp.bpp);
-			size = cmd->bmp.width * cmd->bmp.height * GetBytesPerPixel(format);
+			size = cmd->bmp.width * cmd->bmp.height * GetBytesPerPixel(format) * 1ULL;
 			if (size > cmd->bmp.bitmapDataLength)
 			{
 				WLog_ERR(TAG, "Short nocodec message: got %" PRIu32 " bytes, require %" PRIuz,
@@ -1112,7 +1114,20 @@ out:
 
 static void gdi_register_update_callbacks(rdpUpdate* update)
 {
-	rdpPrimaryUpdate* primary = update->primary;
+	rdpPrimaryUpdate* primary;
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(update->context);
+
+	settings = update->context->settings;
+	WINPR_ASSERT(settings);
+
+	primary = update->primary;
+	WINPR_ASSERT(primary);
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding))
+		return;
 	update->Palette = gdi_palette_update;
 	update->SetBounds = gdi_set_bounds;
 	primary->DstBlt = gdi_dstblt;
@@ -1143,8 +1158,14 @@ static void gdi_register_update_callbacks(rdpUpdate* update)
 }
 
 static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format, BYTE* buffer,
-                             void (*pfree)(void*))
+                             void (*pfree)(void*), BOOL isLocked)
 {
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->context);
+	WINPR_ASSERT(gdi->context->update);
+	if (!isLocked)
+		rdp_update_lock(gdi->context->update);
+
 	gdi->primary = (gdiBitmap*)calloc(1, sizeof(gdiBitmap));
 
 	if (format > 0)
@@ -1197,6 +1218,7 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format, BYTE* bu
 	if (!gdi->drawing)
 		gdi->drawing = gdi->primary;
 
+	rdp_update_unlock(gdi->context->update);
 	return TRUE;
 fail_hwnd:
 	gdi_DeleteObject((HGDIOBJECT)gdi->primary->bitmap);
@@ -1206,6 +1228,7 @@ fail_hdc:
 	free(gdi->primary);
 	gdi->primary = NULL;
 fail_primary:
+	rdp_update_unlock(gdi->context->update);
 	return FALSE;
 }
 
@@ -1227,6 +1250,10 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT
 	    (!buffer || (gdi->primary_buffer == buffer)))
 		return TRUE;
 
+	WINPR_ASSERT(gdi->context);
+	WINPR_ASSERT(gdi->context->update);
+	rdp_update_lock(gdi->context->update);
+
 	if (gdi->drawing == gdi->primary)
 		gdi->drawing = NULL;
 
@@ -1235,7 +1262,7 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT
 	gdi_bitmap_free_ex(gdi->primary);
 	gdi->primary = NULL;
 	gdi->primary_buffer = NULL;
-	return gdi_init_primary(gdi, stride, format, buffer, pfree);
+	return gdi_init_primary(gdi, stride, format, buffer, pfree, TRUE);
 }
 
 /**
@@ -1279,10 +1306,10 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 
 	gdi->hdc->format = gdi->dstFormat;
 
-	if (!gdi_init_primary(gdi, stride, gdi->dstFormat, buffer, pfree))
+	if (!gdi_init_primary(gdi, stride, gdi->dstFormat, buffer, pfree, FALSE))
 		goto fail;
 
-	if (!(context->cache = cache_new(instance->settings)))
+	if (!(context->cache = cache_new(instance->context)))
 		goto fail;
 
 	gdi_register_update_callbacks(instance->update);

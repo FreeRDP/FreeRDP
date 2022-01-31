@@ -23,7 +23,9 @@
 #include "uwac-utils.h"
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
@@ -71,8 +73,8 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 	wl_shm_pool_destroy(pool);
 
 	if (munmap(data, size) < 0)
-		fprintf(stderr, "%s: munmap(%p, %" PRIuz ") failed with [%d] %s\n", __FUNCTION__, data,
-		        size, errno, strerror(errno));
+		fprintf(stderr, "%s: munmap(%p, %zu) failed with [%d] %s\n", __func__, data, size, errno,
+		        strerror(errno));
 
 error_mmap:
 	close(fd);
@@ -85,13 +87,13 @@ static void on_buffer_release(void* data, struct wl_buffer* wl_buffer)
 	wl_buffer_destroy(wl_buffer);
 }
 
-const struct wl_buffer_listener buffer_release_listener = { on_buffer_release };
+static const struct wl_buffer_listener buffer_release_listener = { on_buffer_release };
 
 static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 {
 	struct wl_buffer* buffer = NULL;
 	struct wl_cursor* cursor;
-	struct wl_cursor_image* image;
+	struct wl_cursor_image* image = NULL;
 	struct wl_surface* surface = NULL;
 	int32_t x = 0, y = 0;
 	int buffer_add_listener_success = -1;
@@ -168,6 +170,7 @@ static void keyboard_repeat_func(UwacTask* task, uint32_t events)
 
 		key->window = window;
 		key->sym = input->repeat_sym;
+		key->raw_key = input->repeat_key;
 		key->pressed = true;
 	}
 }
@@ -230,6 +233,8 @@ static void keyboard_handle_keymap(void* data, struct wl_keyboard* keyboard, uin
 	input->xkb.control_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Control");
 	input->xkb.alt_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Mod1");
 	input->xkb.shift_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Shift");
+	input->xkb.caps_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Lock");
+	input->xkb.num_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Mod2");
 }
 
 static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32_t serial,
@@ -424,6 +429,7 @@ static void keyboard_handle_modifiers(void* data, struct wl_keyboard* keyboard, 
                                       uint32_t mods_locked, uint32_t group)
 {
 	UwacSeat* input = data;
+	UwacKeyboardModifiersEvent* event;
 	xkb_mod_mask_t mask;
 
 	/* If we're not using a keymap, then we don't handle PC-style modifiers */
@@ -431,8 +437,9 @@ static void keyboard_handle_modifiers(void* data, struct wl_keyboard* keyboard, 
 		return;
 
 	xkb_state_update_mask(input->xkb.state, mods_depressed, mods_latched, mods_locked, 0, 0, group);
-	mask = xkb_state_serialize_mods(input->xkb.state,
-	                                XKB_STATE_MODS_DEPRESSED | XKB_STATE_MODS_LATCHED);
+	mask = xkb_state_serialize_mods(input->xkb.state, XKB_STATE_MODS_DEPRESSED |
+	                                                      XKB_STATE_MODS_LATCHED |
+	                                                      XKB_STATE_MODS_LOCKED);
 	input->modifiers = 0;
 	if (mask & input->xkb.control_mask)
 		input->modifiers |= UWAC_MOD_CONTROL_MASK;
@@ -440,6 +447,17 @@ static void keyboard_handle_modifiers(void* data, struct wl_keyboard* keyboard, 
 		input->modifiers |= UWAC_MOD_ALT_MASK;
 	if (mask & input->xkb.shift_mask)
 		input->modifiers |= UWAC_MOD_SHIFT_MASK;
+	if (mask & input->xkb.caps_mask)
+		input->modifiers |= UWAC_MOD_CAPS_MASK;
+	if (mask & input->xkb.num_mask)
+		input->modifiers |= UWAC_MOD_NUM_MASK;
+
+	event = (UwacKeyboardModifiersEvent*)UwacDisplayNewEvent(input->display,
+	                                                         UWAC_EVENT_KEYBOARD_MODIFIERS);
+	if (!event)
+		return;
+
+	event->modifiers = input->modifiers;
 }
 
 static void set_repeat_info(UwacSeat* input, int32_t rate, int32_t delay)
@@ -763,14 +781,16 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 	UwacSeat* input = data;
 	UwacWindow* window = input->pointer_focus;
 
-	float sx = wl_fixed_to_double(sx_w);
-	float sy = wl_fixed_to_double(sy_w);
+	int sx_i = wl_fixed_to_int(sx_w);
+	int sy_i = wl_fixed_to_int(sy_w);
+	double sx_d = wl_fixed_to_double(sx_w);
+	double sy_d = wl_fixed_to_double(sy_w);
 
-	if (!window)
+	if (!window || (sx_i < 0) || (sy_i < 0))
 		return;
 
-	input->sx = sx;
-	input->sy = sy;
+	input->sx = sx_d;
+	input->sy = sy_d;
 
 	motion_event =
 	    (UwacPointerMotionEvent*)UwacDisplayNewEvent(input->display, UWAC_EVENT_POINTER_MOTION);
@@ -779,8 +799,8 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 
 	motion_event->seat = input;
 	motion_event->window = window;
-	motion_event->x = wl_fixed_to_int(sx_w);
-	motion_event->y = wl_fixed_to_int(sy_w);
+	motion_event->x = sx_i;
+	motion_event->y = sy_i;
 }
 
 static void pointer_handle_button(void* data, struct wl_pointer* pointer, uint32_t serial,
@@ -828,12 +848,37 @@ static void pointer_handle_axis(void* data, struct wl_pointer* pointer, uint32_t
 
 static void pointer_frame(void* data, struct wl_pointer* wl_pointer)
 {
-	/*UwacSeat *seat = data;*/
+	UwacPointerFrameEvent* event;
+	UwacSeat* seat = data;
+	UwacWindow* window = seat->pointer_focus;
+
+	if (!window)
+		return;
+
+	event = (UwacPointerFrameEvent*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_POINTER_FRAME);
+	if (!event)
+		return;
+
+	event->seat = seat;
+	event->window = window;
 }
 
 static void pointer_axis_source(void* data, struct wl_pointer* wl_pointer, uint32_t axis_source)
 {
-	/*UwacSeat *seat = data;*/
+	UwacPointerSourceEvent* event;
+	UwacSeat* seat = data;
+	UwacWindow* window = seat->pointer_focus;
+
+	if (!window)
+		return;
+
+	event = (UwacPointerSourceEvent*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_POINTER_SOURCE);
+	if (!event)
+		return;
+
+	event->seat = seat;
+	event->window = window;
+	event->axis_source = axis_source;
 }
 
 static void pointer_axis_stop(void* data, struct wl_pointer* wl_pointer, uint32_t time,
@@ -846,6 +891,24 @@ static void pointer_axis_discrete(void* data, struct wl_pointer* wl_pointer, uin
                                   int32_t discrete)
 {
 	/*UwacSeat *seat = data;*/
+	UwacPointerAxisEvent* event;
+	UwacSeat* seat = data;
+	UwacWindow* window = seat->pointer_focus;
+
+	if (!window)
+		return;
+
+	event =
+	    (UwacPointerAxisEvent*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_POINTER_AXIS_DISCRETE);
+	if (!event)
+		return;
+
+	event->seat = seat;
+	event->window = window;
+	event->x = seat->sx;
+	event->y = seat->sy;
+	event->axis = axis;
+	event->value = discrete;
 }
 
 static const struct wl_pointer_listener pointer_listener = {
@@ -961,7 +1024,7 @@ UwacSeat* UwacSeatNew(UwacDisplay* d, uint32_t id, uint32_t version)
 	ret->xkb_context = xkb_context_new(0);
 	if (!ret->xkb_context)
 	{
-		fprintf(stderr, "%s: unable to allocate a xkb_context\n", __FUNCTION__);
+		fprintf(stderr, "%s: unable to allocate a xkb_context\n", __func__);
 		goto error_xkb_context;
 	}
 
@@ -972,13 +1035,13 @@ UwacSeat* UwacSeatNew(UwacDisplay* d, uint32_t id, uint32_t version)
 	ret->repeat_timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
 	if (ret->repeat_timer_fd < 0)
 	{
-		fprintf(stderr, "%s: error creating repeat timer\n", __FUNCTION__);
+		fprintf(stderr, "%s: error creating repeat timer\n", __func__);
 		goto error_timer_fd;
 	}
 	ret->repeat_task.run = keyboard_repeat_func;
 	if (UwacDisplayWatchFd(d, ret->repeat_timer_fd, EPOLLIN, &ret->repeat_task) < 0)
 	{
-		fprintf(stderr, "%s: error polling repeat timer\n", __FUNCTION__);
+		fprintf(stderr, "%s: error polling repeat timer\n", __func__);
 		goto error_watch_timerfd;
 	}
 
@@ -1076,12 +1139,15 @@ UwacReturnCode UwacSeatInhibitShortcuts(UwacSeat* s, bool inhibit)
 		return UWAC_ERROR_CLOSED;
 
 	if (s->keyboard_inhibitor)
+	{
 		zwp_keyboard_shortcuts_inhibitor_v1_destroy(s->keyboard_inhibitor);
+		s->keyboard_inhibitor = NULL;
+	}
 	if (inhibit && s->display && s->display->keyboard_inhibit_manager)
 		s->keyboard_inhibitor = zwp_keyboard_shortcuts_inhibit_manager_v1_inhibit_shortcuts(
 		    s->display->keyboard_inhibit_manager, s->keyboard_focus->surface, s->seat);
 
-	if (!s->keyboard_inhibitor)
+	if (inhibit && !s->keyboard_inhibitor)
 		return UWAC_ERROR_INTERNAL;
 	return UWAC_SUCCESS;
 }
@@ -1127,5 +1193,7 @@ UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t l
 	{
 		seat->pointer_type = 1;
 	}
+	if (seat && !seat->default_cursor)
+		return UWAC_SUCCESS;
 	return set_cursor_image(seat, seat->display->serial);
 }

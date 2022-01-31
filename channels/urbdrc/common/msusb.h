@@ -82,6 +82,7 @@ extern "C"
 	                                           MSUSB_INTERFACE_DESCRIPTOR* NewMsInterface);
 	FREERDP_API MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* out);
 	FREERDP_API BOOL msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, wStream* out);
+	FREERDP_API void msusb_msinterface_free(MSUSB_INTERFACE_DESCRIPTOR* MsInterface);
 
 	/* MSUSB_CONFIG exported functions */
 	FREERDP_API MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_new(void);

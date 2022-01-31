@@ -39,9 +39,12 @@ extern "C"
 	                                                PVIRTUALCHANNELENTRYEX entryEx, void* data);
 	FREERDP_API int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings,
 	                                             const char* name, void* data);
-	FREERDP_API BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance,
-	                                          void** read_fds, int* read_count, void** write_fds,
-	                                          int* write_count);
+#if defined(WITH_FREERDP_DEPRECATED)
+	FREERDP_API WINPR_DEPRECATED_VAR(
+	    "Use freerdp_channels_get_event_handle",
+	    BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
+	                                  int* read_count, void** write_fds, int* write_count));
+#endif
 	FREERDP_API BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance);
 
 	FREERDP_API void* freerdp_channels_get_static_channel_interface(rdpChannels* channels,
@@ -56,7 +59,7 @@ extern "C"
 	FREERDP_API UINT16 freerdp_channels_get_id_by_name(freerdp* instance, const char* channel_name);
 	FREERDP_API const char* freerdp_channels_get_name_by_id(freerdp* instance, UINT16 channelId);
 
-	FREERDP_API PWtsApiFunctionTable FreeRDP_InitWtsApi(void);
+	FREERDP_API const WtsApiFunctionTable* FreeRDP_InitWtsApi(void);
 
 #ifdef __cplusplus
 }

@@ -3,6 +3,8 @@
 # FreeRDP Proxy Server Capture Module
 #
 # Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
+# Copyright 2021 Armin Novak <anovak@thincast.com>
+# Copyright 2021 Thincast Technologies GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +19,11 @@
 # limitations under the License.
 #
 
-set(PLUGIN_NAME "proxy-capture-plugin")
+cmake_minimum_required(VERSION 3.4)
 
-add_library(${PLUGIN_NAME} MODULE
+project(proxy-capture-plugin VERSION 1.0.0 LANGUAGES C)
+
+add_library(${PROJECT_NAME} MODULE
 	cap_main.c
 	cap_config.c
 	cap_config.h
@@ -27,7 +31,9 @@ add_library(${PLUGIN_NAME} MODULE
 	cap_protocol.h
 )
 
-set_target_properties(${PLUGIN_NAME} PROPERTIES PREFIX "")
-set_target_properties(${PLUGIN_NAME} PROPERTIES NO_SONAME 1)
-set_target_properties(${PLUGIN_NAME} PROPERTIES
-LIBRARY_OUTPUT_DIRECTORY "${FREERDP_PROXY_PLUGINDIR}")
+target_link_libraries(${PROJECT_NAME} winpr)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+set_target_properties(${PROJECT_NAME} PROPERTIES NO_SONAME 1)
+
+install(TARGETS ${PROJECT_NAME} DESTINATION ${FREERDP_PROXY_PLUGINDIR})

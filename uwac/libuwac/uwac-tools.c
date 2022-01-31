@@ -24,7 +24,6 @@
 #include <string.h>
 #include <uwac/uwac-tools.h>
 
-/** @brief */
 struct uwac_touch_automata
 {
 	struct wl_array tp;

@@ -34,6 +34,11 @@ typedef struct xf_window xfWindow;
 #include "xfreerdp.h"
 
 // Extended ICCM flags http://standards.freedesktop.org/wm-spec/wm-spec-latest.html
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #define _NET_WM_MOVERESIZE_SIZE_TOPLEFT 0
 #define _NET_WM_MOVERESIZE_SIZE_TOP 1
 #define _NET_WM_MOVERESIZE_SIZE_TOPRIGHT 2
@@ -50,6 +55,10 @@ typedef struct xf_window xfWindow;
 #define _NET_WM_STATE_REMOVE 0 /* remove/unset property */
 #define _NET_WM_STATE_ADD 1    /* add/set property */
 #define _NET_WM_STATE_TOGGLE 2 /* toggle property */
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 enum xf_localmove_state
 {

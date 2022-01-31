@@ -44,6 +44,10 @@
  */
 
 #ifdef WITH_OPENSSL
+extern const EVP_MD* winpr_openssl_get_evp_md(WINPR_MD_TYPE md);
+#endif
+
+#ifdef WITH_OPENSSL
 const EVP_MD* winpr_openssl_get_evp_md(WINPR_MD_TYPE md)
 {
 	const char* name = winpr_md_type_to_string(md);
@@ -185,12 +189,14 @@ BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, siz
 	if (!evp || !hmac)
 		return FALSE;
 
+	if (keylen > INT_MAX)
+		return FALSE;
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
-	HMAC_Init_ex(hmac, key, keylen, evp, NULL); /* no return value on OpenSSL 0.9.x */
+	HMAC_Init_ex(hmac, key, (int)keylen, evp, NULL); /* no return value on OpenSSL 0.9.x */
 	return TRUE;
 #else
 
-	if (HMAC_Init_ex(hmac, key, keylen, evp, NULL) == 1)
+	if (HMAC_Init_ex(hmac, key, (int)keylen, evp, NULL) == 1)
 		return TRUE;
 
 #endif

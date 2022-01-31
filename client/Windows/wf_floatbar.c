@@ -20,12 +20,14 @@
 #include <winpr/crt.h>
 #include <winpr/windows.h>
 
-#include "resource.h"
-
 #include "wf_client.h"
 #include "wf_floatbar.h"
+
+#include "resource/resource.h"
 #include "wf_gdi.h"
+#ifdef _MSC_VER
 #pragma comment(lib, "Msimg32.lib")
+#endif
 
 #define TAG CLIENT_TAG("windows.floatbar")
 
@@ -123,7 +125,7 @@ static BOOL floatbar_animation(wfFloatBar* const floatbar, const BOOL show)
 
 	floatbar->animating = timer;
 
-	if (SetTimer(floatbar->hwnd, timer, USER_TIMER_MINIMUM, NULL) == NULL)
+	if (SetTimer(floatbar->hwnd, timer, USER_TIMER_MINIMUM, NULL) == 0)
 	{
 		DWORD err = GetLastError();
 		WLog_ERR(TAG, "SetTimer failed with %08" PRIx32, err);
@@ -140,7 +142,7 @@ static BOOL floatbar_trigger_hide(wfFloatBar* floatbar)
 
 	if (!floatbar->locked && floatbar->shown)
 	{
-		if (SetTimer(floatbar->hwnd, TIMER_HIDE, 3000, NULL) == NULL)
+		if (SetTimer(floatbar->hwnd, TIMER_HIDE, 3000, NULL) == 0)
 		{
 			DWORD err = GetLastError();
 			WLog_ERR(TAG, "SetTimer failed with %08" PRIx32, err);
@@ -355,18 +357,10 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 	int bottom = BACKGROUND_H - 1;
 	int right = BACKGROUND_W - 1;
 	const int angleOffset = BACKGROUND_H - 1;
-	TRIVERTEX triVertext[2] = { left,
-		                        top,
-		                        GetRValue(rgbTop) << 8,
-		                        GetGValue(rgbTop) << 8,
-		                        GetBValue(rgbTop) << 8,
-		                        0x0000,
-		                        right,
-		                        bottom,
-		                        GetRValue(rgbBottom) << 8,
-		                        GetGValue(rgbBottom) << 8,
-		                        GetBValue(rgbBottom) << 8,
-		                        0x0000 };
+	TRIVERTEX triVertext[2] = { { left, top, GetRValue(rgbTop) << 8, GetGValue(rgbTop) << 8,
+		                          GetBValue(rgbTop) << 8, 0x0000 },
+		                        { right, bottom, GetRValue(rgbBottom) << 8,
+		                          GetGValue(rgbBottom) << 8, GetBValue(rgbBottom) << 8, 0x0000 } };
 
 	if (!floatbar)
 		return FALSE;

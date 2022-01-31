@@ -33,6 +33,10 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+#include <openssl/provider.h>
+#endif
+
 #include "../log.h"
 #define TAG WINPR_TAG("utils.ssl")
 
@@ -242,15 +246,24 @@ static BOOL winpr_enable_fips(DWORD flags)
 		WLog_ERR(TAG, "Openssl fips mode not available on openssl versions less than 1.0.1!");
 		return FALSE;
 #else
-		WLog_DBG(TAG, "Ensuring openssl fips mode is ENabled");
+		WLog_DBG(TAG, "Ensuring openssl fips mode is enabled");
 
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+		OSSL_PROVIDER_load(NULL, "fips");
+		if (!EVP_default_properties_is_fips_enabled(NULL))
+#else
 		if (FIPS_mode() != 1)
+#endif
 		{
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+			if (EVP_set_default_properties(NULL, "fips=yes"))
+#else
 			if (FIPS_mode_set(1))
-				WLog_INFO(TAG, "Openssl fips mode ENabled!");
+#endif
+				WLog_INFO(TAG, "Openssl fips mode enabled!");
 			else
 			{
-				WLog_ERR(TAG, "Openssl fips mode ENable failed!");
+				WLog_ERR(TAG, "Openssl fips mode enable failed!");
 				return FALSE;
 			}
 		}
@@ -297,8 +310,15 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 		return FALSE;
 
 #endif
+
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+	/* The legacy provider is needed for MD4. */
+	OSSL_PROVIDER_load(NULL, "legacy");
+	OSSL_PROVIDER_load(NULL, "default");
+#endif
+
 	g_winpr_openssl_initialized_by_winpr = TRUE;
-	return winpr_enable_fips(flags);
+	return TRUE;
 }
 
 /* exported functions */
@@ -356,6 +376,8 @@ BOOL winpr_FIPSMode(void)
 {
 #if (OPENSSL_VERSION_NUMBER < 0x10001000L) || defined(LIBRESSL_VERSION_NUMBER)
 	return FALSE;
+#elif defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+	return (EVP_default_properties_is_fips_enabled(NULL) == 1);
 #else
 	return (FIPS_mode() == 1);
 #endif

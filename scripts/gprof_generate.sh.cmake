@@ -18,7 +18,7 @@ fi
 
 GCC=@CMAKE_C_COMPILER@
 GPROF=${GCC/gcc/gprof}
-LIB=@CMAKE_BINARY_DIR@/client/Android/FreeRDPCore/jni/armeabi-v7a/libfreerdp-android.so
+LIB=@PROJECT_BINARY_DIR@/client/Android/FreeRDPCore/jni/armeabi-v7a/libfreerdp-android.so
 
 if [ ! -f $LIB ]; then
 	echo "Missing libfreerdp-android.so"

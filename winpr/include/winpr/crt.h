@@ -28,7 +28,6 @@
 
 #include <winpr/spec.h>
 #include <winpr/string.h>
-#include <winpr/heap.h>
 
 #ifndef _WIN32
 
@@ -99,7 +98,7 @@ static INLINE UINT64 _byteswap_uint64(UINT64 _val)
 
 static INLINE UINT16 _byteswap_ushort(UINT16 _val)
 {
-	return (((_val) >> 8) | ((_val) << 8));
+	return (UINT16)(((_val) >> 8U) | ((_val) << 8U));
 }
 
 #endif
@@ -122,9 +121,18 @@ extern "C"
 
 /* Data Alignment */
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifndef _ERRNO_T_DEFINED
 #define _ERRNO_T_DEFINED
 typedef int errno_t;
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 #ifdef __cplusplus

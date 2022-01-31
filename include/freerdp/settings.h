@@ -121,7 +121,7 @@ typedef enum
 #define RNS_UD_CS_STRONG_ASYMMETRIC_KEYS 0x0008
 #define RNS_UD_CS_VALID_CONNECTION_TYPE 0x0020
 #define RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU 0x0040
-#define RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT 0x0080
+#define RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT 0x0080
 #define RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL 0x0100
 #define RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE 0x0200
 #define RNS_UD_CS_SUPPORT_HEARTBEAT_PDU 0x0400
@@ -190,14 +190,14 @@ typedef enum
 #define NEG_MEMBLT_INDEX 0x03
 #define NEG_MEM3BLT_INDEX 0x04
 #define NEG_ATEXTOUT_INDEX 0x05
-#define NEG_AEXTTEXTOUT_INDEX 0x06  /* Must be ignored */
+#define NEG_AEXTTEXTOUT_INDEX 0x06 /* Must be ignored */
 #define NEG_DRAWNINEGRID_INDEX 0x07 /* Must be ignored */
 #define NEG_LINETO_INDEX 0x08
 #define NEG_MULTI_DRAWNINEGRID_INDEX 0x09
 #define NEG_OPAQUE_RECT_INDEX 0x0A /* Must be ignored */
 #define NEG_SAVEBITMAP_INDEX 0x0B
-#define NEG_WTEXTOUT_INDEX 0x0C   /* Must be ignored */
-#define NEG_MEMBLT_V2_INDEX 0x0D  /* Must be ignored */
+#define NEG_WTEXTOUT_INDEX 0x0C  /* Must be ignored */
+#define NEG_MEMBLT_V2_INDEX 0x0D /* Must be ignored */
 #define NEG_MEM3BLT_V2_INDEX 0x0E /* Must be ignored */
 #define NEG_MULTIDSTBLT_INDEX 0x0F
 #define NEG_MULTIPATBLT_INDEX 0x10
@@ -452,9 +452,7 @@ typedef struct _RDPDR_DEVICE RDPDR_DEVICE;
 
 struct _RDPDR_DRIVE
 {
-	UINT32 Id;
-	UINT32 Type;
-	char* Name;
+	RDPDR_DEVICE device;
 	char* Path;
 	BOOL automount;
 };
@@ -462,26 +460,20 @@ typedef struct _RDPDR_DRIVE RDPDR_DRIVE;
 
 struct _RDPDR_PRINTER
 {
-	UINT32 Id;
-	UINT32 Type;
-	char* Name;
+	RDPDR_DEVICE device;
 	char* DriverName;
 };
 typedef struct _RDPDR_PRINTER RDPDR_PRINTER;
 
 struct _RDPDR_SMARTCARD
 {
-	UINT32 Id;
-	UINT32 Type;
-	char* Name;
+	RDPDR_DEVICE device;
 };
 typedef struct _RDPDR_SMARTCARD RDPDR_SMARTCARD;
 
 struct _RDPDR_SERIAL
 {
-	UINT32 Id;
-	UINT32 Type;
-	char* Name;
+	RDPDR_DEVICE device;
 	char* Path;
 	char* Driver;
 	char* Permissive;
@@ -490,9 +482,7 @@ typedef struct _RDPDR_SERIAL RDPDR_SERIAL;
 
 struct _RDPDR_PARALLEL
 {
-	UINT32 Id;
-	UINT32 Type;
-	char* Name;
+	RDPDR_DEVICE device;
 	char* Path;
 };
 typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
@@ -502,6 +492,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define PROXY_TYPE_SOCKS 2
 #define PROXY_TYPE_IGNORE 0xFFFF
 
+/* ThreadingFlags */
+#define THREADING_FLAGS_DISABLE_THREADS 0x00000001
 /* Settings */
 
 #ifdef __GNUC__
@@ -533,6 +525,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_MaxTimeInCheckLoop (26)
 #define FreeRDP_AcceptedCert (27)
 #define FreeRDP_AcceptedCertLength (28)
+#define FreeRDP_ThreadingFlags (64)
 #define FreeRDP_RdpVersion (128)
 #define FreeRDP_DesktopWidth (129)
 #define FreeRDP_DesktopHeight (130)
@@ -681,6 +674,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_Password51Length (1281)
 #define FreeRDP_SmartcardLogon (1282)
 #define FreeRDP_PromptForCredentials (1283)
+#define FreeRDP_SmartcardCertificate (1285)
+#define FreeRDP_SmartcardPrivateKey (1286)
 #define FreeRDP_KerberosKdc (1344)
 #define FreeRDP_KerberosRealm (1345)
 #define FreeRDP_IgnoreCertificate (1408)
@@ -697,6 +692,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_AutoAcceptCertificate (1419)
 #define FreeRDP_AutoDenyCertificate (1420)
 #define FreeRDP_CertificateAcceptedFingerprints (1421)
+#define FreeRDP_CertificateUseKnownHosts (1422)
+#define FreeRDP_CertificateCallbackPreferPEM (1423)
 #define FreeRDP_Workarea (1536)
 #define FreeRDP_Fullscreen (1537)
 #define FreeRDP_PercentScreen (1538)
@@ -736,6 +733,10 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_PlayRemoteFx (1857)
 #define FreeRDP_DumpRemoteFxFile (1858)
 #define FreeRDP_PlayRemoteFxFile (1859)
+#define FreeRDP_TransportDump (1860)
+#define FreeRDP_TransportDumpFile (1861)
+#define FreeRDP_TransportDumpReplay (1862)
+#define FreeRDP_DeactivateClientDecoding (1863)
 #define FreeRDP_GatewayUsageMethod (1984)
 #define FreeRDP_GatewayPort (1985)
 #define FreeRDP_GatewayHostname (1986)
@@ -752,6 +753,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_GatewayAccessToken (1997)
 #define FreeRDP_GatewayAcceptedCert (1998)
 #define FreeRDP_GatewayAcceptedCertLength (1999)
+#define FreeRDP_GatewayHttpUseWebsockets (2000)
 #define FreeRDP_ProxyType (2015)
 #define FreeRDP_ProxyHostname (2016)
 #define FreeRDP_ProxyPort (2017)
@@ -801,6 +803,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_BitmapCacheV2CellInfo (2502)
 #define FreeRDP_ColorPointerFlag (2560)
 #define FreeRDP_PointerCacheSize (2561)
+#define FreeRDP_KeyboardRemappingList (2622)
 #define FreeRDP_KeyboardCodePage (2623)
 #define FreeRDP_KeyboardLayout (2624)
 #define FreeRDP_KeyboardType (2625)
@@ -814,6 +817,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_KeyboardHook (2633)
 #define FreeRDP_HasHorizontalWheel (2634)
 #define FreeRDP_HasExtendedMouseEvent (2635)
+#define FreeRDP_SuspendInput (2636)
 #define FreeRDP_BrushSupportLevel (2688)
 #define FreeRDP_GlyphSupportLevel (2752)
 #define FreeRDP_GlyphCache (2753)
@@ -854,6 +858,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_GfxSendQoeAck (3846)
 #define FreeRDP_GfxAVC444v2 (3847)
 #define FreeRDP_GfxCapsFilter (3848)
+#define FreeRDP_GfxPlanar (3849)
 #define FreeRDP_BitmapCacheV3CodecId (3904)
 #define FreeRDP_DrawNineGridEnabled (3968)
 #define FreeRDP_DrawNineGridCacheSize (3969)
@@ -891,6 +896,9 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_TcpKeepAliveDelay (5192)
 #define FreeRDP_TcpKeepAliveInterval (5193)
 #define FreeRDP_TcpAckTimeout (5194)
+#define FreeRDP_ActionScript (5195)
+#define FreeRDP_Floatbar (5196)
+#define FreeRDP_TcpConnectTimeout (5197)
 
 /**
  * FreeRDP Settings Data Structure
@@ -925,7 +933,10 @@ struct rdp_settings
 	ALIGN64 char* AcceptedCert;            /* 27 */
 	ALIGN64 UINT32 AcceptedCertLength;     /* 28 */
 	UINT64 padding0064[64 - 29];           /* 29 */
-	UINT64 padding0128[128 - 64];          /* 64 */
+	/* resource management related options */
+	ALIGN64 UINT32 ThreadingFlags; /* 64 */
+
+	UINT64 padding0128[128 - 65]; /* 65 */
 
 	/**
 	 * GCC User Data Blocks
@@ -1144,7 +1155,12 @@ struct rdp_settings
 	ALIGN64 UINT32 Password51Length;   /* 1281 */
 	ALIGN64 BOOL SmartcardLogon;       /* 1282 */
 	ALIGN64 BOOL PromptForCredentials; /* 1283 */
-	UINT64 padding1344[1344 - 1284];   /* 1284 */
+
+	/* Settings used for smartcard emulation */
+	UINT64 padding1284[1285 - 1284];     /* 1284 */
+	ALIGN64 char* SmartcardCertificate;  /* 1285 */
+	ALIGN64 char* SmartcardPrivateKey;   /* 1286 */
+	UINT64 padding1344[1344 - 1287];     /* 1287 */
 
 	/* Kerberos Authentication */
 	ALIGN64 char* KerberosKdc;       /* 1344 */
@@ -1152,22 +1168,24 @@ struct rdp_settings
 	UINT64 padding1408[1408 - 1346]; /* 1346 */
 
 	/* Server Certificate */
-	ALIGN64 BOOL IgnoreCertificate;               /* 1408 */
-	ALIGN64 char* CertificateName;                /* 1409 */
-	ALIGN64 char* CertificateFile;                /* 1410 */
-	ALIGN64 char* PrivateKeyFile;                 /* 1411 */
-	ALIGN64 char* RdpKeyFile;                     /* 1412 */
-	ALIGN64 rdpRsaKey* RdpServerRsaKey;           /* 1413 */
-	ALIGN64 rdpCertificate* RdpServerCertificate; /* 1414 */
-	ALIGN64 BOOL ExternalCertificateManagement;   /* 1415 */
-	ALIGN64 char* CertificateContent;             /* 1416 */
-	ALIGN64 char* PrivateKeyContent;              /* 1417 */
-	ALIGN64 char* RdpKeyContent;                  /* 1418 */
-	ALIGN64 BOOL AutoAcceptCertificate;           /* 1419 */
-	ALIGN64 BOOL AutoDenyCertificate;             /* 1420 */
+	ALIGN64 BOOL IgnoreCertificate;                /* 1408 */
+	ALIGN64 char* CertificateName;                 /* 1409 */
+	ALIGN64 char* CertificateFile;                 /* 1410 */
+	ALIGN64 char* PrivateKeyFile;                  /* 1411 */
+	ALIGN64 char* RdpKeyFile;                      /* 1412 */
+	ALIGN64 rdpRsaKey* RdpServerRsaKey;            /* 1413 */
+	ALIGN64 rdpCertificate* RdpServerCertificate;  /* 1414 */
+	ALIGN64 BOOL ExternalCertificateManagement;    /* 1415 */
+	ALIGN64 char* CertificateContent;              /* 1416 */
+	ALIGN64 char* PrivateKeyContent;               /* 1417 */
+	ALIGN64 char* RdpKeyContent;                   /* 1418 */
+	ALIGN64 BOOL AutoAcceptCertificate;            /* 1419 */
+	ALIGN64 BOOL AutoDenyCertificate;              /* 1420 */
 	ALIGN64 char* CertificateAcceptedFingerprints; /* 1421 */
-	UINT64 padding1472[1472 - 1422];               /* 1422 */
-	UINT64 padding1536[1536 - 1472];              /* 1472 */
+	ALIGN64 BOOL CertificateUseKnownHosts;         /* 1422 */
+	ALIGN64 BOOL CertificateCallbackPreferPEM;     /* 1423 */
+	UINT64 padding1472[1472 - 1424];               /* 1424 */
+	UINT64 padding1536[1536 - 1472];               /* 1472 */
 
 	/**
 	 * User Interface
@@ -1225,12 +1243,16 @@ struct rdp_settings
 	UINT64 padding1856[1856 - 1795]; /* 1795 */
 
 	/* Recording */
-	ALIGN64 BOOL DumpRemoteFx;       /* 1856 */
-	ALIGN64 BOOL PlayRemoteFx;       /* 1857 */
-	ALIGN64 char* DumpRemoteFxFile;  /* 1858 */
-	ALIGN64 char* PlayRemoteFxFile;  /* 1859 */
-	UINT64 padding1920[1920 - 1860]; /* 1860 */
-	UINT64 padding1984[1984 - 1920]; /* 1920 */
+	ALIGN64 BOOL DumpRemoteFx;             /* 1856 */
+	ALIGN64 BOOL PlayRemoteFx;             /* 1857 */
+	ALIGN64 char* DumpRemoteFxFile;        /* 1858 */
+	ALIGN64 char* PlayRemoteFxFile;        /* 1859 */
+	ALIGN64 BOOL TransportDump;            /* 1860 */
+	ALIGN64 char* TransportDumpFile;       /* 1861 */
+	ALIGN64 BOOL TransportDumpReplay;      /* 1862 */
+	ALIGN64 BOOL DeactivateClientDecoding; /* 1863 */
+	UINT64 padding1920[1920 - 1864];       /* 1864 */
+	UINT64 padding1984[1984 - 1920];       /* 1920 */
 
 	/**
 	 * Gateway
@@ -1253,7 +1275,8 @@ struct rdp_settings
 	ALIGN64 char* GatewayAccessToken;         /* 1997 */
 	ALIGN64 char* GatewayAcceptedCert;        /* 1998 */
 	ALIGN64 UINT32 GatewayAcceptedCertLength; /* 1999 */
-	UINT64 padding2015[2015 - 2000];          /* 2000 */
+	ALIGN64 BOOL GatewayHttpUseWebsockets;    /* 2000 */
+	UINT64 padding2015[2015 - 2001];          /* 2001 */
 
 	/* Proxy */
 	ALIGN64 UINT32 ProxyType;        /* 2015 */
@@ -1335,23 +1358,30 @@ struct rdp_settings
 	/* Pointer Capabilities */
 	ALIGN64 BOOL ColorPointerFlag;   /* 2560 */
 	ALIGN64 UINT32 PointerCacheSize; /* 2561 */
-	UINT64 padding2624[2623 - 2562]; /* 2562 */
+	UINT64 padding2624[2622 - 2562]; /* 2562 */
 
 	/* Input Capabilities */
-	ALIGN64 UINT32 KeyboardCodePage;    /* 2623 */
-	ALIGN64 UINT32 KeyboardLayout;      /* 2624 */
-	ALIGN64 UINT32 KeyboardType;        /* 2625 */
-	ALIGN64 UINT32 KeyboardSubType;     /* 2626 */
-	ALIGN64 UINT32 KeyboardFunctionKey; /* 2627 */
-	ALIGN64 char* ImeFileName;          /* 2628 */
-	ALIGN64 BOOL UnicodeInput;          /* 2629 */
-	ALIGN64 BOOL FastPathInput;         /* 2630 */
-	ALIGN64 BOOL MultiTouchInput;       /* 2631 */
-	ALIGN64 BOOL MultiTouchGestures;    /* 2632 */
-	ALIGN64 UINT32 KeyboardHook;        /* 2633 */
-	ALIGN64 BOOL HasHorizontalWheel;    /* 2634 */
-	ALIGN64 BOOL HasExtendedMouseEvent; /* 2635 */
-	UINT64 padding2688[2688 - 2636];    /* 2636 */
+	ALIGN64 char* KeyboardRemappingList; /* 2622 */
+	ALIGN64 UINT32 KeyboardCodePage;     /* 2623 */
+	ALIGN64 UINT32 KeyboardLayout;       /* 2624 */
+	ALIGN64 UINT32 KeyboardType;         /* 2625 */
+	ALIGN64 UINT32 KeyboardSubType;      /* 2626 */
+	ALIGN64 UINT32 KeyboardFunctionKey;  /* 2627 */
+	ALIGN64 char* ImeFileName;           /* 2628 */
+	ALIGN64 BOOL UnicodeInput;           /* 2629 */
+	ALIGN64 BOOL FastPathInput;          /* 2630 */
+	ALIGN64 BOOL MultiTouchInput;        /* 2631 */
+	ALIGN64 BOOL MultiTouchGestures;     /* 2632 */
+	ALIGN64 UINT32 KeyboardHook;         /* 2633 */
+	ALIGN64 BOOL HasHorizontalWheel;     /* 2634 */
+	ALIGN64 BOOL HasExtendedMouseEvent;  /* 2635 */
+
+	/** SuspendInput disables processing of keyboard/mouse/multitouch input.
+	 * If used by an implementation ensure proper state resync after reenabling
+	 * input
+	 */
+	ALIGN64 BOOL SuspendInput;       /* 2636 */
+	UINT64 padding2688[2688 - 2637]; /* 2637 */
 
 	/* Brush Capabilities */
 	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */
@@ -1451,7 +1481,8 @@ struct rdp_settings
 	ALIGN64 BOOL GfxSendQoeAck;      /* 3846 */
 	ALIGN64 BOOL GfxAVC444v2;        /* 3847 */
 	ALIGN64 UINT32 GfxCapsFilter;    /* 3848 */
-	UINT64 padding3904[3904 - 3849]; /* 3849 */
+	ALIGN64 BOOL GfxPlanar;          /* 3849 */
+	UINT64 padding3904[3904 - 3850]; /* 3850 */
 
 	/**
 	 * Caches
@@ -1541,7 +1572,10 @@ struct rdp_settings
 	ALIGN64 UINT32 TcpKeepAliveDelay;     /* 5192 */
 	ALIGN64 UINT32 TcpKeepAliveInterval;  /* 5193 */
 	ALIGN64 UINT32 TcpAckTimeout;         /* 5194 */
-	UINT64 padding5312[5312 - 5195];      /* 5195 */
+	ALIGN64 char* ActionScript;           /* 5195 */
+	ALIGN64 UINT32 Floatbar;              /* 5196 */
+	ALIGN64 UINT32 TcpConnectTimeout;     /* 5197 */
+	UINT64 padding5312[5312 - 5198];      /* 5198 */
 
 	/**
 	 * WARNING: End of ABI stable zone!
@@ -1560,8 +1594,6 @@ struct rdp_settings
 
 	ALIGN64 BYTE* SettingsModified; /* byte array marking fields that have been modified from their
 	                                   default value - currently UNUSED! */
-	ALIGN64 char* ActionScript;
-	ALIGN64 DWORD Floatbar;
 	ALIGN64 char* XSelectionAtom;
 };
 typedef struct rdp_settings rdpSettings;
@@ -1596,36 +1628,62 @@ extern "C"
 
 	FREERDP_API void freerdp_settings_dump(wLog* log, DWORD level, const rdpSettings* settings);
 
-	FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument);
-	FREERDP_API int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous,
-	                                               char* argument);
-	FREERDP_API int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value);
-	FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous,
-	                                                     char* option, char* value);
+	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* argv[]);
+	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args);
+	FREERDP_API void freerdp_addin_argv_free(ADDIN_ARGV* args);
+
+	FREERDP_API BOOL freerdp_addin_argv_add_argument(ADDIN_ARGV* args, const char* argument);
+	FREERDP_API BOOL freerdp_addin_argv_add_argument_ex(ADDIN_ARGV* args, const char* argument,
+	                                                    size_t len);
+	FREERDP_API BOOL freerdp_addin_argv_del_argument(ADDIN_ARGV* args, const char* argument);
+
+	FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, const char* argument);
+	FREERDP_API int freerdp_addin_replace_argument(ADDIN_ARGV* args, const char* previous,
+	                                               const char* argument);
+	FREERDP_API int freerdp_addin_set_argument_value(ADDIN_ARGV* args, const char* option,
+	                                                 const char* value);
+	FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, const char* previous,
+	                                                     const char* option, const char* value);
 
 	FREERDP_API BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
 	FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings,
 	                                                         const char* name);
 	FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings,
 	                                                              UINT32 type);
-	FREERDP_API RDPDR_DEVICE* freerdp_device_clone(RDPDR_DEVICE* device);
+
+	FREERDP_API RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[]);
+	FREERDP_API RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device);
+	FREERDP_API void freerdp_device_free(RDPDR_DEVICE* device);
+
 	FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
 
 	FREERDP_API BOOL freerdp_static_channel_collection_add(rdpSettings* settings,
 	                                                       ADDIN_ARGV* channel);
+	FREERDP_API BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* name);
 	FREERDP_API ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings,
 	                                                               const char* name);
-	FREERDP_API ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel);
+#if defined(WITH_FREERDP_DEPRECATED)
+	FREERDP_API WINPR_DEPRECATED(ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel));
+#endif
+
 	FREERDP_API void freerdp_static_channel_collection_free(rdpSettings* settings);
 
 	FREERDP_API BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings,
 	                                                        ADDIN_ARGV* channel);
-	FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings,
+	FREERDP_API BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings,
+	                                                        const char* name);
+	FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(const rdpSettings* settings,
 	                                                                const char* name);
-	FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel);
+
+#if defined(WITH_FREERDP_DEPRECATED)
+	FREERDP_API WINPR_DEPRECATED(ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel));
+#endif
+
 	FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 
 	FREERDP_API void freerdp_target_net_addresses_free(rdpSettings* settings);
+	FREERDP_API BOOL freerdp_target_net_addresses_copy(rdpSettings* settings, char** addresses,
+	                                                   UINT32 count);
 
 	FREERDP_API void freerdp_performance_flags_make(rdpSettings* settings);
 	FREERDP_API void freerdp_performance_flags_split(rdpSettings* settings);
@@ -1640,6 +1698,7 @@ extern "C"
 	 * the functions freerdp_get_param_* and freerdp_set_param_* are deprecated.
 	 * use freerdp_settings_get_* and freerdp_settings_set_* as a replacement!
 	 */
+#if defined(WITH_FREERDP_DEPRECATED)
 	FREERDP_API WINPR_DEPRECATED(BOOL freerdp_get_param_bool(const rdpSettings* settings, int id));
 	FREERDP_API WINPR_DEPRECATED(int freerdp_set_param_bool(rdpSettings* settings, int id,
 	                                                        BOOL param));
@@ -1662,6 +1721,7 @@ extern "C"
 	                                                            int id));
 	FREERDP_API WINPR_DEPRECATED(int freerdp_set_param_string(rdpSettings* settings, int id,
 	                                                          const char* param));
+#endif
 
 	FREERDP_API BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id);
 	FREERDP_API BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL param);
@@ -1685,10 +1745,25 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_set_uint64(rdpSettings* settings, size_t id, UINT64 param);
 
 	FREERDP_API const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id);
+	FREERDP_API char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id);
+	FREERDP_API BOOL freerdp_settings_set_string_len(rdpSettings* settings, size_t id,
+	                                                 const char* param, size_t len);
 	FREERDP_API BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id,
 	                                             const char* param);
 
 	FREERDP_API const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id);
+	FREERDP_API void* freerdp_settings_get_pointer_writable(rdpSettings* settings, size_t id);
+	FREERDP_API BOOL freerdp_settings_set_pointer(rdpSettings* settings, size_t id,
+	                                              const void* data);
+	FREERDP_API BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id,
+	                                                  const void* data, size_t len);
+
+	FREERDP_API const void* freerdp_settings_get_pointer_array(const rdpSettings* settings,
+	                                                           size_t id, size_t offset);
+	FREERDP_API void* freerdp_settings_get_pointer_array_writable(const rdpSettings* settings,
+	                                                              size_t id, size_t offset);
+	FREERDP_API BOOL freerdp_settings_set_pointer_array(rdpSettings* settings, size_t id,
+	                                                    size_t offset, const void* data);
 
 	FREERDP_API BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name,
 	                                                     const char* value);
@@ -1697,6 +1772,7 @@ extern "C"
 	FREERDP_API SSIZE_T freerdp_settings_get_type_for_name(const char* value);
 	FREERDP_API SSIZE_T freerdp_settings_get_type_for_key(size_t key);
 	FREERDP_API const char* freerdp_settings_get_name_for_key(size_t key);
+	FREERDP_API UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings);
 
 #ifdef __cplusplus
 }

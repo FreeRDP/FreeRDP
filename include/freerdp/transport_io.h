@@ -55,8 +55,8 @@ extern "C"
 	};
 	typedef struct rdp_transport_io rdpTransportIo;
 
-	FREERDP_API const rdpTransportIo* freerdp_get_io_callbacks(freerdp* instance);
-	FREERDP_API BOOL freerdp_set_io_callbacks(freerdp* instance,
+	FREERDP_API const rdpTransportIo* freerdp_get_io_callbacks(rdpContext* context);
+	FREERDP_API BOOL freerdp_set_io_callbacks(rdpContext* context,
 	                                          const rdpTransportIo* io_callbacks);
 	/* PDU parser.
 	 * incomplete: FALSE if the whole PDU is available, TRUE otherwise
@@ -65,6 +65,8 @@ extern "C"
 	 *         <0 -> Abort, an error occured
 	 */
 	FREERDP_API SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplete);
+	FREERDP_API rdpContext* transport_get_context(rdpTransport* transport);
+	FREERDP_API rdpTransport* freerdp_get_transport(rdpContext* context);
 
 #ifdef __cplusplus
 }

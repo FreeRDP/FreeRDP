@@ -148,8 +148,9 @@ static UINT remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msg
                                        UINT32 msgSize)
 {
 	ctlHeader->msgType = msgType;
-	sprintf_s(ctlHeader->ChannelName, ARRAYSIZE(ctlHeader->ChannelName), REMDESK_CHANNEL_CTL_NAME);
-	ctlHeader->DataLength = 4 + msgSize;
+	sprintf_s(ctlHeader->ch.ChannelName, ARRAYSIZE(ctlHeader->ch.ChannelName),
+	          REMDESK_CHANNEL_CTL_NAME);
+	ctlHeader->ch.DataLength = 4 + msgSize;
 	return CHANNEL_RC_OK;
 }
 
@@ -171,7 +172,7 @@ static UINT remdesk_send_ctl_result_pdu(RemdeskServerContext* context, UINT32 re
 		return error;
 	}
 
-	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
+	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
@@ -215,7 +216,7 @@ static UINT remdesk_send_ctl_version_info_pdu(RemdeskServerContext* context)
 
 	pdu.versionMajor = 1;
 	pdu.versionMinor = 2;
-	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
+	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
@@ -254,12 +255,20 @@ static UINT remdesk_recv_ctl_version_info_pdu(RemdeskServerContext* context, wSt
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+		WLog_ERR(TAG, "REMOTEDESKTOP_CTL_VERSIONINFO_PACKET missing data, got %" PRIuz,
+		         Stream_GetRemainingLength(s));
 		return ERROR_INVALID_DATA;
 	}
 
 	Stream_Read_UINT32(s, versionMajor); /* versionMajor (4 bytes) */
 	Stream_Read_UINT32(s, versionMinor); /* versionMinor (4 bytes) */
+	if ((versionMajor != 1) || (versionMinor != 2))
+	{
+		WLog_ERR(TAG, "REMOTEDESKTOP_CTL_VERSIONINFO_PACKET invalid version %" PRIu32 ".%" PRIu32,
+		         versionMajor, versionMinor);
+		return ERROR_INVALID_DATA;
+	}
+
 	return CHANNEL_RC_OK;
 }
 
@@ -702,7 +711,7 @@ out:
 static UINT remdesk_server_start(RemdeskServerContext* context)
 {
 	context->priv->ChannelHandle =
-	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "remdesk");
+	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, REMDESK_SVC_CHANNEL_NAME);
 
 	if (!context->priv->ChannelHandle)
 	{

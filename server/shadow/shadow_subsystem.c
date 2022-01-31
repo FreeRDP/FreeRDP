@@ -129,13 +129,12 @@ void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 		wObject* obj2;
 		/* Release resource in messages before free */
 		obj1 = MessageQueue_Object(subsystem->MsgPipe->In);
-		obj2 = MessageQueue_Object(subsystem->MsgPipe->Out);
-		if (obj1)
-			obj1->fnObjectFree = shadow_subsystem_free_queued_message;
-		MessageQueue_Clear(subsystem->MsgPipe->In);
 
-		if (obj2)
-			obj2->fnObjectFree = shadow_subsystem_free_queued_message;
+		    obj1->fnObjectFree = shadow_subsystem_free_queued_message;
+		    MessageQueue_Clear(subsystem->MsgPipe->In);
+
+		    obj2 = MessageQueue_Object(subsystem->MsgPipe->Out);
+		    obj2->fnObjectFree = shadow_subsystem_free_queued_message;
 		MessageQueue_Clear(subsystem->MsgPipe->Out);
 		MessagePipe_Free(subsystem->MsgPipe);
 		subsystem->MsgPipe = NULL;
@@ -178,7 +177,7 @@ UINT32 shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 	RDP_SHADOW_ENTRY_POINTS ep;
 
 	if (shadow_subsystem_load_entry_points(&ep) < 0)
-		return -1;
+		return 0;
 
 	numMonitors = ep.EnumMonitors(monitors, maxMonitors);
 
@@ -198,8 +197,8 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data(
 	UINT32 x, y;
 	BYTE* pSrc8;
 	BYTE* pDst8;
-	int xorStep;
-	int andStep;
+	UINT32 xorStep;
+	UINT32 andStep;
 	UINT32 andBit;
 	BYTE* andBits;
 	UINT32 andPixel;

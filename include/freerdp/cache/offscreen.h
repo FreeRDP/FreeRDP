@@ -38,7 +38,7 @@ extern "C"
 
 	FREERDP_API void offscreen_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_API rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings);
+	FREERDP_API rdpOffscreenCache* offscreen_cache_new(rdpContext* context);
 	FREERDP_API void offscreen_cache_free(rdpOffscreenCache* offscreen);
 
 #ifdef __cplusplus

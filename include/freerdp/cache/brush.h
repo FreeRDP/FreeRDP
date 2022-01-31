@@ -41,7 +41,7 @@ extern "C"
 
 	FREERDP_API void brush_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_API rdpBrushCache* brush_cache_new(rdpSettings* settings);
+	FREERDP_API rdpBrushCache* brush_cache_new(rdpContext* context);
 	FREERDP_API void brush_cache_free(rdpBrushCache* brush);
 
 #ifdef __cplusplus

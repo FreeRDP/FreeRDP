@@ -5,7 +5,8 @@
 int TestSynchSemaphore(int argc, char* argv[])
 {
 	HANDLE semaphore;
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	semaphore = CreateSemaphore(NULL, 0, 1, NULL);
 
 	if (!semaphore)

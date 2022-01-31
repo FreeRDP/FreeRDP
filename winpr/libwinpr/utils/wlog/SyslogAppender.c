@@ -93,7 +93,7 @@ static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogAppender* append
 
 	syslogLevel = getSyslogLevel(message->Level);
 	if (syslogLevel >= 0)
-		syslog(syslogLevel, "skipped data message of %d bytes", message->Length);
+		syslog(syslogLevel, "skipped data message of %" PRIuz " bytes", message->Length);
 
 	return TRUE;
 }
@@ -108,8 +108,8 @@ static BOOL WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogAppender* appen
 
 	syslogLevel = getSyslogLevel(message->Level);
 	if (syslogLevel >= 0)
-		syslog(syslogLevel, "skipped image (%dx%dx%d)", message->ImageWidth, message->ImageHeight,
-		       message->ImageBpp);
+		syslog(syslogLevel, "skipped image (%" PRIuz "x%" PRIuz "x%" PRIuz ")", message->ImageWidth,
+		       message->ImageHeight, message->ImageBpp);
 
 	return TRUE;
 }

@@ -57,8 +57,8 @@ if(WITH_OPENSLES)
 	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "opensles" "")
 endif()
 
-if (WITH_SERVER)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "proxy" "")
+if(WITH_SNDIO)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "sndio" "")
 endif()
 
 add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "fake" "")

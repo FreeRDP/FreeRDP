@@ -19,7 +19,7 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 		goto out;
 	}
 
-	due.QuadPart = -15000000LL; /* 1.5 seconds */
+	due.QuadPart = -1500000LL; /* 0.15 seconds */
 
 	if (!SetWaitableTimer(timer, &due, 0, NULL, NULL, 0))
 	{
@@ -36,18 +36,18 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 	}
 
 	printf("Timer Signaled\n");
-	status = WaitForSingleObject(timer, 2000);
+	status = WaitForSingleObject(timer, 200);
 
 	if (status != WAIT_TIMEOUT)
 	{
-		printf("WaitForSingleObject(timer, 2000) failure: Actual: 0x%08" PRIX32
+		printf("WaitForSingleObject(timer, 200) failure: Actual: 0x%08" PRIX32
 		       ", Expected: 0x%08X\n",
 		       status, WAIT_TIMEOUT);
 		goto out;
 	}
 
 	due.QuadPart = 0;
-	period = 1200; /* 1.2 seconds */
+	period = 120; /* 0.12 seconds */
 
 	if (!SetWaitableTimer(timer, &due, period, NULL, NULL, 0))
 	{

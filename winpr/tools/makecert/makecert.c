@@ -25,6 +25,7 @@
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 #include <winpr/crypto.h>
+#include <winpr/file.h>
 
 #ifdef WITH_OPENSSL
 #include <openssl/crypto.h>
@@ -77,13 +78,21 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 	while (offset >= length)
 	{
 		size_t new_len;
+		size_t readBytes = 0;
 		char* new_str;
 		new_len = length * 2;
 		if (new_len == 0)
 			new_len = 2048;
+
+		if (new_len > INT_MAX)
+		{
+			status = -1;
+			break;
+		}
+
 		new_str = (char*)realloc(x509_str, new_len);
 
-		if (!new_str || (new_len > INT_MAX))
+		if (!new_str)
 		{
 			status = -1;
 			break;
@@ -91,12 +100,16 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 
 		length = new_len;
 		x509_str = new_str;
-		status = BIO_read(bio, &x509_str[offset], (int)length - 1);
-
-		if (status < 0)
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+		status = BIO_read_ex(bio, &x509_str[offset], length - offset, &readBytes);
+#else
+		status = BIO_read(bio, &x509_str[offset], length - offset);
+		readBytes = status;
+#endif
+		if (status <= 0)
 			break;
 
-		offset += (size_t)status;
+		offset += (size_t)readBytes;
 	}
 
 	if (status < 0)
@@ -116,7 +129,7 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 static int makecert_print_command_line_help(COMMAND_LINE_ARGUMENT_A* args, int argc, char** argv)
 {
 	char* str;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 
 	if (!argv || (argc < 1))
 		return -1;
@@ -272,7 +285,7 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context,
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 
 	if (!context || !argv || (argc < 0))
 		return -1;
@@ -474,7 +487,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 	if (!fullpath)
 		goto out_fail;
 
-	fp = fopen(fullpath, "w+");
+	fp = winpr_fopen(fullpath, "w+");
 
 	if (fp)
 	{
@@ -632,7 +645,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 	if (!fullpath)
 		goto out_fail;
 
-	fp = fopen(fullpath, "w+");
+	fp = winpr_fopen(fullpath, "w+");
 
 	if (!fp)
 		goto out_fail;
@@ -830,7 +843,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	long serial = 0;
 	X509_NAME* name = NULL;
 	const EVP_MD* md = NULL;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	int ret;
 	ret = makecert_context_parse_arguments(context, args, argc, argv);
 
@@ -1052,7 +1065,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 	if (!context->live)
 	{
-		if (!PathFileExistsA(context->output_path))
+		if (!winpr_PathFileExists(context->output_path))
 		{
 			if (!CreateDirectoryA(context->output_path, NULL))
 				return -1;

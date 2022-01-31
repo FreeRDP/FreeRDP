@@ -100,7 +100,7 @@ public class ManualBookmarkGateway extends BookmarkBaseGateway
 		    queryBookmarks(BookmarkDB.DB_KEY_BOOKMARK_LABEL + " LIKE '%" + pattern + "%' OR " +
 		                       BookmarkDB.DB_KEY_BOOKMARK_HOSTNAME + " LIKE '%" + pattern + "%'",
 		                   BookmarkDB.DB_KEY_BOOKMARK_LABEL);
-		ArrayList<BookmarkBase> bookmarks = new ArrayList<BookmarkBase>(cursor.getCount());
+		ArrayList<BookmarkBase> bookmarks = new ArrayList<>(cursor.getCount());
 
 		if (cursor.moveToFirst() && (cursor.getCount() > 0))
 		{

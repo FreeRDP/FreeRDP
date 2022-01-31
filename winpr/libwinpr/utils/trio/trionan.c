@@ -242,7 +242,7 @@
  * kind of endianess. The individual bytes are then used as an index
  * for the IEEE 754 bit-patterns and masks.
  */
-#define TRIO_DOUBLE_INDEX(x) (((unsigned char*)&internalEndianMagic)[7 - (x)])
+#define TRIO_DOUBLE_INDEX(x) (((const unsigned char*)&internalEndianMagic)[7 - (x)])
 static TRIO_CONST double internalEndianMagic = 7.949928895127363e-275;
 #endif
 
@@ -291,10 +291,10 @@ static TRIO_CONST unsigned char ieee_754_qnan_array[] = { 0x7F, 0xF8, 0x00, 0x00
 
 TRIO_PRIVATE_NAN double internal_make_double TRIO_ARGS1((values), TRIO_CONST unsigned char* values)
 {
-	TRIO_VOLATILE double result;
-	int i;
+	TRIO_VOLATILE double result = 0.0;
+	size_t i;
 
-	for (i = 0; i < (int)sizeof(double); i++)
+	for (i = 0; i < sizeof(double); i++)
 	{
 		((TRIO_VOLATILE unsigned char*)&result)[TRIO_DOUBLE_INDEX(i)] = values[i];
 	}

@@ -552,7 +552,10 @@ static UINT urb_select_interface(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callba
 	MsInterface = msusb_msinterface_read(s);
 
 	if ((Stream_GetRemainingLength(s) < 4) || !MsInterface)
+	{
+		msusb_msinterface_free(MsInterface);
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, OutputBufferSize);
 	pdev->select_interface(pdev, MsInterface->InterfaceNumber, MsInterface->AlternateSetting);
@@ -721,9 +724,10 @@ static UINT urb_bulk_or_interrupt_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
 	Stream_Read_UINT32(s, OutputBufferSize);
 	EndpointAddress = (PipeHandle & 0x000000ff);
 	/**  process TS_URB_BULK_OR_INTERRUPT_TRANSFER */
-	return pdev->bulk_or_interrupt_transfer(pdev, callback, MessageId, RequestId, EndpointAddress,
-	                                        TransferFlags, noAck, OutputBufferSize,
-	                                        urb_bulk_transfer_cb, 10000);
+	return pdev->bulk_or_interrupt_transfer(
+	    pdev, callback, MessageId, RequestId, EndpointAddress, TransferFlags, noAck,
+	    OutputBufferSize, (transferDir == USBD_TRANSFER_DIRECTION_OUT) ? Stream_Pointer(s) : NULL,
+	    urb_bulk_transfer_cb, 10000);
 }
 
 static void urb_isoch_transfer_cb(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, wStream* out,
@@ -777,6 +781,7 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback
                                UINT32 RequestField, UINT32 MessageId, IUDEVMAN* udevman,
                                int transferDir)
 {
+	int rc;
 	UINT32 EndpointAddress;
 	UINT32 PipeHandle, TransferFlags, StartFrame, NumberOfPackets;
 	UINT32 ErrorCount, OutputBufferSize;
@@ -797,17 +802,21 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback
 	Stream_Read_UINT32(s, NumberOfPackets); /** NumberOfPackets */
 	Stream_Read_UINT32(s, ErrorCount);      /** ErrorCount */
 
-	if (Stream_GetRemainingLength(s) < NumberOfPackets * 12 + 4)
+	if (Stream_GetRemainingLength(s) < NumberOfPackets * 12ULL + 4ULL)
 		return ERROR_INVALID_DATA;
 
 	packetDescriptorData = Stream_Pointer(s);
 	Stream_Seek(s, NumberOfPackets * 12);
 	Stream_Read_UINT32(s, OutputBufferSize);
-	return pdev->isoch_transfer(
+	rc = pdev->isoch_transfer(
 	    pdev, callback, MessageId, RequestId, EndpointAddress, TransferFlags, StartFrame,
 	    ErrorCount, noAck, packetDescriptorData, NumberOfPackets, OutputBufferSize,
 	    (transferDir == USBD_TRANSFER_DIRECTION_OUT) ? Stream_Pointer(s) : NULL,
 	    urb_isoch_transfer_cb, 2000);
+
+	if (rc < 0)
+		return ERROR_INTERNAL_ERROR;
+	return (UINT)rc;
 }
 
 static UINT urb_control_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
@@ -1746,6 +1755,13 @@ static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLB
 			WLog_Print(urbdrc->log, WLOG_DEBUG, "URB_Func: %" PRIx16 " is not found!",
 			           URB_Function);
 			break;
+	}
+
+	if (error)
+	{
+		WLog_Print(urbdrc->log, WLOG_WARN,
+		           "USB transfer request URB Function '%s' [0x%08x] failed with %08" PRIx32,
+		           urb_function_string(URB_Function), URB_Function, error);
 	}
 
 	return error;

@@ -41,14 +41,16 @@ addons:
       - libgsm1-dev
       - libavcodec-dev
       - libavutil-dev
-      - libx264-dev
       - libxext-dev
+      - ninja-build
+      - libsystemd-dev
+      - libwayland-dev
 
 before_script:
   - ulimit -c unlimited -S 
 
 script:
   - sudo hostname travis-ci.local
-  - cmake -G "Unix Makefiles" -C ci/cmake-preloads/config-linux-all.txt -D CMAKE_BUILD_TYPE=Debug -DWITH_LIBSYSTEMD=OFF -DWITH_WAYLAND=OFF .
+  - cmake -G Ninja -C ci/cmake-preloads/config-linux-all.txt -D CMAKE_BUILD_TYPE=Debug .
   - make
   - make test

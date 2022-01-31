@@ -100,7 +100,7 @@ void prim_test_setup(BOOL performance)
 	g_TestPrimitivesPerformance = performance;
 }
 
-BOOL speed_test(const char* name, const char* dsc, UINT32 iterations, pstatus_t (*generic)(),
+BOOL speed_test(const char* name, const char* dsc, UINT32 iterations, pstatus_t (*fkt_generic)(),
                 pstatus_t (*optimised)(), ...)
 {
 	UINT32 i;

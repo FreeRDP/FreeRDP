@@ -132,7 +132,7 @@
 
 struct rdp_rdp
 {
-	int state;
+	CONNECTION_STATE state;
 	freerdp* instance;
 	rdpContext* context;
 	rdpNla* nla;
@@ -166,7 +166,7 @@ struct rdp_rdp
 	BYTE encrypt_key[16];
 	BYTE decrypt_update_key[16];
 	BYTE encrypt_update_key[16];
-	int rc4_key_len;
+	size_t rc4_key_len;
 	BYTE fips_sign_key[20];
 	BYTE fips_encrypt_key[24];
 	BYTE fips_decrypt_key[24];
@@ -210,6 +210,8 @@ FREERDP_LOCAL BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channelId);
 
 FREERDP_LOCAL BOOL rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId, const BYTE* data,
                                          size_t size);
+FREERDP_LOCAL BOOL rdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize,
+                                           UINT32 flags, const BYTE* data, size_t chunkSize);
 
 FREERDP_LOCAL wStream* rdp_message_channel_pdu_init(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags);
@@ -222,7 +224,7 @@ FREERDP_LOCAL int rdp_recv_callback(rdpTransport* transport, wStream* s, void* e
 FREERDP_LOCAL int rdp_check_fds(rdpRdp* rdp);
 
 FREERDP_LOCAL rdpRdp* rdp_new(rdpContext* context);
-FREERDP_LOCAL void rdp_reset(rdpRdp* rdp);
+FREERDP_LOCAL BOOL rdp_reset(rdpRdp* rdp);
 FREERDP_LOCAL void rdp_free(rdpRdp* rdp);
 
 FREERDP_LOCAL const rdpTransportIo* rdp_get_io_callbacks(rdpRdp* rdp);

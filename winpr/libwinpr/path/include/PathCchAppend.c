@@ -1,8 +1,8 @@
 
 /*
 #define DEFINE_UNICODE		FALSE
-#define _PATH_SEPARATOR_CHR	'\\'
-#define _PATH_SEPARATOR_STR	"\\"
+#define CUR_PATH_SEPARATOR_CHR	'\\'
+#define CUR_PATH_SEPARATOR_STR	"\\"
 #define PATH_CCH_APPEND		PathCchAppendA
 */
 
@@ -28,8 +28,8 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 	pszMoreLength = lstrlenW(pszMore);
 	pszPathLength = lstrlenW(pszPath);
 
-	pathBackslash = (pszPath[pszPathLength - 1] == _PATH_SEPARATOR_CHR) ? TRUE : FALSE;
-	moreBackslash = (pszMore[0] == _PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	pathBackslash = (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	moreBackslash = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
 	if (pathBackslash && moreBackslash)
 	{
@@ -51,8 +51,8 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 	{
 		if ((pszPathLength + pszMoreLength + 1) < cchPath)
 		{
-			swprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, _PATH_SEPARATOR_STR L"%s",
-			           pszMore);
+			swprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength,
+			           CUR_PATH_SEPARATOR_STR L"%s", pszMore);
 			return S_OK;
 		}
 	}
@@ -65,8 +65,8 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 
 HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 {
-	BOOL pathBackslash;
-	BOOL moreBackslash;
+	BOOL pathBackslash = FALSE;
+	BOOL moreBackslash = FALSE;
 	size_t pszMoreLength;
 	size_t pszPathLength;
 
@@ -79,11 +79,13 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 	if (cchPath == 0 || cchPath > PATHCCH_MAX_CCH)
 		return E_INVALIDARG;
 
-	pszMoreLength = lstrlenA(pszMore);
 	pszPathLength = lstrlenA(pszPath);
+	if (pszPathLength > 0)
+		pathBackslash = (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
-	pathBackslash = (pszPath[pszPathLength - 1] == _PATH_SEPARATOR_CHR) ? TRUE : FALSE;
-	moreBackslash = (pszMore[0] == _PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	pszMoreLength = lstrlenA(pszMore);
+	if (pszMoreLength > 0)
+		moreBackslash = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
 	if (pathBackslash && moreBackslash)
 	{
@@ -105,7 +107,7 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 	{
 		if ((pszPathLength + pszMoreLength + 1) < cchPath)
 		{
-			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, _PATH_SEPARATOR_STR "%s",
+			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, CUR_PATH_SEPARATOR_STR "%s",
 			          pszMore);
 			return S_OK;
 		}
@@ -118,7 +120,7 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 
 /*
 #undef DEFINE_UNICODE
-#undef _PATH_SEPARATOR_CHR
-#undef _PATH_SEPARATOR_STR
+#undef CUR_PATH_SEPARATOR_CHR
+#undef CUR_PATH_SEPARATOR_STR
 #undef PATH_CCH_APPEND
 */

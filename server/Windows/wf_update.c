@@ -187,6 +187,7 @@ void wf_update_encoder_reset(wfInfo* wfi)
 		}
 		else
 		{
+			/* TODO: pass ThreadingFlags somehow */
 			wfi->rfx_context = rfx_context_new(TRUE);
 			wfi->rfx_context->mode = RLGR3;
 			wfi->rfx_context->width = wfi->servscreen_width;

@@ -51,7 +51,7 @@ struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS
 {
 	IWTSPlugin* plugin;
 	PREGISTERAUDINDEVICE pRegisterAudinDevice;
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	rdpContext* rdpcontext;
 };
 typedef struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS FREERDP_AUDIN_DEVICE_ENTRY_POINTS;

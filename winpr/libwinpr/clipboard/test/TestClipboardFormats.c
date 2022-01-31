@@ -12,6 +12,9 @@ int TestClipboardFormats(int argc, char* argv[])
 	wClipboard* clipboard;
 	UINT32 utf8StringFormatId;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	clipboard = ClipboardCreate();
 	if (!clipboard)
 		return -1;

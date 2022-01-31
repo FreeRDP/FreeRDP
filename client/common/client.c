@@ -38,13 +38,25 @@
 
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
-	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(context);
+
+	pEntryPoints = instance->pClientEntryPoints;
+	WINPR_ASSERT(pEntryPoints);
 	return IFCALLRESULT(TRUE, pEntryPoints->ClientNew, instance, context);
 }
 
 static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 {
-	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(context);
+
+	pEntryPoints = instance->pClientEntryPoints;
+	WINPR_ASSERT(pEntryPoints);
 	IFCALL(pEntryPoints->ClientFree, instance, context);
 }
 
@@ -233,7 +245,7 @@ int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, 
 	if (!freerdp_client_settings_post_process(settings))
 		status = -1;
 
-	WLog_DBG(TAG, "This is %s", freerdp_get_build_config());
+	WLog_DBG(TAG, "This is %s %s", freerdp_get_version_string(), freerdp_get_build_config());
 	return status;
 }
 
@@ -353,13 +365,29 @@ out:
  *  @return TRUE if a password was successfully entered. See freerdp_passphrase_read() for more
  * details.
  */
-static BOOL client_cli_authenticate_raw(freerdp* instance, BOOL gateway, char** username,
+static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reason, char** username,
                                         char** password, char** domain)
 {
 	static const size_t password_size = 512;
 	const char* auth[] = { "Username: ", "Domain:   ", "Password: " };
 	const char* gw[] = { "GatewayUsername: ", "GatewayDomain:   ", "GatewayPassword: " };
-	const char** prompt = (gateway) ? gw : auth;
+	const char** prompt;
+
+	switch (reason)
+	{
+		case AUTH_NLA:
+		case AUTH_TLS:
+		case AUTH_RDP:
+			prompt = auth;
+			break;
+		case GW_AUTH_HTTP:
+		case GW_AUTH_RDG:
+		case GW_AUTH_RPC:
+			prompt = gw;
+			break;
+		default:
+			return FALSE;
+	}
 
 	if (!username || !password || !domain)
 		return FALSE;
@@ -423,6 +451,44 @@ fail:
 	return FALSE;
 }
 
+BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** password, char** domain,
+                                rdp_auth_reason reason)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(username);
+	WINPR_ASSERT(password);
+	WINPR_ASSERT(domain);
+
+	if (instance->settings->SmartcardLogon)
+	{
+		WLog_INFO(TAG, "Authentication via smartcard");
+		return TRUE;
+	}
+
+	switch (reason)
+	{
+		case AUTH_NLA:
+			break;
+		case AUTH_TLS:
+			if ((*username) && (*password))
+				return TRUE;
+			break;
+		case AUTH_RDP:
+			if ((*username) && (*password))
+				return TRUE;
+			break;
+		case GW_AUTH_HTTP:
+		case GW_AUTH_RDG:
+		case GW_AUTH_RPC:
+			break;
+		default:
+			return FALSE;
+	}
+
+	return client_cli_authenticate_raw(instance, reason, username, password, domain);
+}
+
+#if defined(WITH_FREERDP_DEPRECATED)
 BOOL client_cli_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
 	if (instance->settings->SmartcardLogon)
@@ -438,10 +504,11 @@ BOOL client_cli_gw_authenticate(freerdp* instance, char** username, char** passw
 {
 	return client_cli_authenticate_raw(instance, TRUE, username, password, domain);
 }
+#endif
 
 static DWORD client_cli_accept_certificate(rdpSettings* settings)
 {
-	char answer;
+	int answer;
 
 	if (settings->CredentialsFromStdin)
 		return 0;
@@ -503,6 +570,7 @@ static DWORD client_cli_accept_certificate(rdpSettings* settings)
  *  @param host_mismatch Indicates the certificate host does not match.
  *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
  */
+#if defined(WITH_FREERDP_DEPRECATED)
 DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name, const char* subject,
                                     const char* issuer, const char* fingerprint, BOOL host_mismatch)
 {
@@ -519,6 +587,7 @@ DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name, 
 	       "Please look at the OpenSSL documentation on how to add a private CA to the store.\n");
 	return client_cli_accept_certificate(instance->settings);
 }
+#endif
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
  *  when the connection requires it.
@@ -540,7 +609,6 @@ DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT
                                        const char* issuer, const char* fingerprint, DWORD flags)
 {
 	const char* type = "RDP-Server";
-
 	if (flags & VERIFY_CERT_FLAG_GATEWAY)
 		type = "RDP-Gateway";
 
@@ -551,7 +619,17 @@ DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT
 	printf("\tCommon Name: %s\n", common_name);
 	printf("\tSubject:     %s\n", subject);
 	printf("\tIssuer:      %s\n", issuer);
-	printf("\tThumbprint:  %s\n", fingerprint);
+	/* Newer versions of FreeRDP allow exposing the whole PEM by setting
+	 * FreeRDP_CertificateCallbackPreferPEM to TRUE
+	 */
+	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
+	{
+		printf("\t----------- Certificate --------------\n");
+		printf("%s\n", fingerprint);
+		printf("\t--------------------------------------\n");
+	}
+	else
+		printf("\tThumbprint:  %s\n", fingerprint);
 
 	printf("The above X.509 certificate could not be verified, possibly because you do not have\n"
 	       "the CA certificate in your certificate store, or the certificate has expired.\n"
@@ -574,6 +652,7 @@ DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT
  *  @param old_fingerprint
  *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
  */
+#if defined(WITH_FREERDP_DEPRECATED)
 DWORD client_cli_verify_changed_certificate(freerdp* instance, const char* common_name,
                                             const char* subject, const char* issuer,
                                             const char* fingerprint, const char* old_subject,
@@ -601,6 +680,7 @@ DWORD client_cli_verify_changed_certificate(freerdp* instance, const char* commo
 	       "Please contact the administrator of the RDP server and clarify.\n");
 	return client_cli_accept_certificate(instance->settings);
 }
+#endif
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
  *  when a stored certificate does not match the remote counterpart.
@@ -641,12 +721,32 @@ DWORD client_cli_verify_changed_certificate_ex(freerdp* instance, const char* ho
 	printf("\tCommon Name: %s\n", common_name);
 	printf("\tSubject:     %s\n", subject);
 	printf("\tIssuer:      %s\n", issuer);
-	printf("\tThumbprint:  %s\n", fingerprint);
+	/* Newer versions of FreeRDP allow exposing the whole PEM by setting
+	 * FreeRDP_CertificateCallbackPreferPEM to TRUE
+	 */
+	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
+	{
+		printf("\t----------- Certificate --------------\n");
+		printf("%s\n", fingerprint);
+		printf("\t--------------------------------------\n");
+	}
+	else
+		printf("\tThumbprint:  %s\n", fingerprint);
 	printf("\n");
 	printf("Old Certificate details:\n");
 	printf("\tSubject:     %s\n", old_subject);
 	printf("\tIssuer:      %s\n", old_issuer);
-	printf("\tThumbprint:  %s\n", old_fingerprint);
+	/* Newer versions of FreeRDP allow exposing the whole PEM by setting
+	 * FreeRDP_CertificateCallbackPreferPEM to TRUE
+	 */
+	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
+	{
+		printf("\t----------- Certificate --------------\n");
+		printf("%s\n", old_fingerprint);
+		printf("\t--------------------------------------\n");
+	}
+	else
+		printf("\tThumbprint:  %s\n", old_fingerprint);
 	printf("\n");
 	if (flags & VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1)
 	{
@@ -667,7 +767,7 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
                                         BOOL isConsentMandatory, size_t length,
                                         const WCHAR* message)
 {
-	char answer;
+	int answer;
 	const char* msgType = (type == GATEWAY_MESSAGE_CONSENT) ? "Consent message" : "Service message";
 
 	if (!isDisplayMandatory && !isConsentMandatory)

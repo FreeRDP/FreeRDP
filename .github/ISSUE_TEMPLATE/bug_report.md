@@ -6,7 +6,10 @@ about: Create a report to help us improve
 
 **Found a bug? - We would like to help you and smash the bug away.**
 1. __Please don't "report" questions as bugs. For these (questions/build instructions/...) please use one of the following means of contact:__
-   * We are reachable via IRC _#freerdp on freenode_
+   * We are reachable via:
+    * Matrix room : #FreeRDP:matrix.org (main)
+    * XMPP channel: #FreeRDP#matrix.org@matrix.org (bridged)
+    * IRC channel : #freerdp @ irc.oftc.net (bridged)
    * We are reachable via mailing list <freerdp-devel@lists.sourceforge.net>
    * Try our mailing list for discussions/questions
 1. Before reporting a bug have a look into our issue tracker to see if the bug was already reported and you can add some additional information.

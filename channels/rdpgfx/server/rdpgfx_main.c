@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -200,9 +200,17 @@ static INLINE UINT rdpgfx_server_single_packet_send(RdpgfxServerContext* context
 static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
                                          const RDPGFX_CAPS_CONFIRM_PDU* capsConfirm)
 {
-	RDPGFX_CAPSET* capsSet = capsConfirm->capsSet;
-	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_CAPSCONFIRM,
-	                                             RDPGFX_CAPSET_BASE_SIZE + capsSet->length);
+	wStream* s;
+	RDPGFX_CAPSET* capsSet;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(capsConfirm);
+
+	capsSet = capsConfirm->capsSet;
+	WINPR_ASSERT(capsSet);
+
+	s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_CAPSCONFIRM,
+	                                    RDPGFX_CAPSET_BASE_SIZE + capsSet->length);
 
 	if (!s)
 	{
@@ -210,6 +218,8 @@ static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
+	WLog_DBG(TAG, "[%s] CAPS version=0x%04" PRIx32 ", flags=0x%04" PRIx32 ", length=%" PRIu32,
+	         __FUNCTION__, capsSet->version, capsSet->flags, capsSet->length);
 	Stream_Write_UINT32(s, capsSet->version); /* version (4 bytes) */
 	Stream_Write_UINT32(s, capsSet->length);  /* capsDataLength (4 bytes) */
 
@@ -233,7 +243,6 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
                                            const RDPGFX_RESET_GRAPHICS_PDU* pdu)
 {
 	UINT32 index;
-	MONITOR_DEF* monitor;
 	wStream* s;
 
 	/* Check monitorCount. This ensures total size within 340 bytes) */
@@ -259,7 +268,7 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
 
 	for (index = 0; index < pdu->monitorCount; index++)
 	{
-		monitor = &(pdu->monitorDefArray[index]);
+		const MONITOR_DEF* monitor = &(pdu->monitorDefArray[index]);
 		Stream_Write_UINT32(s, monitor->left);   /* left (4 bytes) */
 		Stream_Write_UINT32(s, monitor->top);    /* top (4 bytes) */
 		Stream_Write_UINT32(s, monitor->right);  /* right (4 bytes) */
@@ -330,6 +339,11 @@ static UINT rdpgfx_send_create_surface_pdu(RdpgfxServerContext* context,
                                            const RDPGFX_CREATE_SURFACE_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_CREATESURFACE, 7);
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT((pdu->pixelFormat == GFX_PIXEL_FORMAT_XRGB_8888) ||
+	             (pdu->pixelFormat == GFX_PIXEL_FORMAT_ARGB_8888));
 
 	if (!s)
 	{
@@ -1135,7 +1149,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) < (pdu.cacheEntriesCount * 12))
+	if (Stream_GetRemainingLength(s) / 12 < pdu.cacheEntriesCount)
 	{
 		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
@@ -1379,12 +1393,10 @@ static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
 	RdpgfxServerContext* context = (RdpgfxServerContext*)arg;
 	RdpgfxServerPrivate* priv = context->priv;
 	DWORD status;
-	DWORD nCount;
-	void* buffer;
-	HANDLE events[8];
+	DWORD nCount = 0;
+	HANDLE events[8] = { 0 };
 	UINT error = CHANNEL_RC_OK;
-	buffer = NULL;
-	nCount = 0;
+
 	events[nCount++] = priv->stopEvent;
 	events[nCount++] = priv->channelEvent;
 

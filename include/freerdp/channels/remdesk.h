@@ -86,8 +86,7 @@ typedef struct _REMDESK_CHANNEL_HEADER REMDESK_CHANNEL_HEADER;
 
 struct _REMDESK_CTL_HEADER
 {
-	UINT32 DataLength;
-	char ChannelName[32];
+	REMDESK_CHANNEL_HEADER ch;
 
 	UINT32 msgType;
 };

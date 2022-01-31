@@ -42,19 +42,48 @@
 
 #if defined(WITH_SSE2)
 /* Use lddqu for unaligned; load for 16-byte aligned. */
-#define LOAD_SI128(_ptr_)                                           \
-	(((ULONG_PTR)(_ptr_)&0x0f) ? _mm_lddqu_si128((__m128i*)(_ptr_)) \
-	                           : _mm_load_si128((__m128i*)(_ptr_)))
+#define LOAD_SI128(_ptr_)                                                       \
+	(((const ULONG_PTR)(_ptr_)&0x0f) ? _mm_lddqu_si128((const __m128i*)(_ptr_)) \
+	                                 : _mm_load_si128((const __m128i*)(_ptr_)))
 #endif
+
+static INLINE BYTE* writePixelBGRA(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
+                                   BYTE B, BYTE A)
+{
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(format);
+
+	*dst++ = B;
+	*dst++ = G;
+	*dst++ = R;
+	*dst++ = A;
+	return dst;
+}
 
 static INLINE BYTE* writePixelBGRX(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
                                    BYTE B, BYTE A)
 {
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(format);
+	WINPR_UNUSED(A);
+
 	*dst++ = B;
 	*dst++ = G;
 	*dst++ = R;
+	dst++; /* Do not touch alpha */
+
+	return dst;
+}
+
+static INLINE BYTE* writePixelRGBA(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
+                                   BYTE B, BYTE A)
+{
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(format);
+
+	*dst++ = R;
+	*dst++ = G;
+	*dst++ = B;
 	*dst++ = A;
 	return dst;
 }
@@ -64,10 +93,26 @@ static INLINE BYTE* writePixelRGBX(BYTE* dst, DWORD formatSize, UINT32 format, B
 {
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(format);
+	WINPR_UNUSED(A);
+
 	*dst++ = R;
 	*dst++ = G;
 	*dst++ = B;
+	dst++; /* Do not touch alpha */
+
+	return dst;
+}
+
+static INLINE BYTE* writePixelABGR(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
+                                   BYTE B, BYTE A)
+{
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(format);
+
 	*dst++ = A;
+	*dst++ = B;
+	*dst++ = G;
+	*dst++ = R;
 	return dst;
 }
 
@@ -76,10 +121,25 @@ static INLINE BYTE* writePixelXBGR(BYTE* dst, DWORD formatSize, UINT32 format, B
 {
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(format);
-	*dst++ = A;
+	WINPR_UNUSED(A);
+
+	dst++; /* Do not touch alpha */
 	*dst++ = B;
 	*dst++ = G;
 	*dst++ = R;
+	return dst;
+}
+
+static INLINE BYTE* writePixelARGB(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
+                                   BYTE B, BYTE A)
+{
+	WINPR_UNUSED(formatSize);
+	WINPR_UNUSED(format);
+
+	*dst++ = A;
+	*dst++ = R;
+	*dst++ = G;
+	*dst++ = B;
 	return dst;
 }
 
@@ -88,49 +148,59 @@ static INLINE BYTE* writePixelXRGB(BYTE* dst, DWORD formatSize, UINT32 format, B
 {
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(format);
-	*dst++ = A;
+	WINPR_UNUSED(A);
+
+	dst++; /* Do not touch alpha */
 	*dst++ = R;
 	*dst++ = G;
 	*dst++ = B;
 	return dst;
 }
 
-static INLINE BYTE* writePixelGeneric(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
-                                      BYTE B, BYTE A)
+static INLINE BYTE* writePixelGenericAlpha(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R,
+                                           BYTE G, BYTE B, BYTE A)
 {
 	UINT32 color = FreeRDPGetColor(format, R, G, B, A);
 	WriteColor(dst, format, color);
 	return dst + formatSize;
 }
 
+static INLINE BYTE* writePixelGeneric(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
+                                      BYTE B, BYTE A)
+{
+	UINT32 color = FreeRDPGetColor(format, R, G, B, A);
+	WriteColorIgnoreAlpha(dst, format, color);
+	return dst + formatSize;
+}
+
 typedef BYTE* (*fkt_writePixel)(BYTE*, DWORD, UINT32, BYTE, BYTE, BYTE, BYTE);
 
-static INLINE fkt_writePixel getPixelWriteFunction(DWORD format)
+static INLINE fkt_writePixel getPixelWriteFunction(DWORD format, BOOL useAlpha)
 {
 	switch (format)
 	{
 		case PIXEL_FORMAT_ARGB32:
 		case PIXEL_FORMAT_XRGB32:
-			return writePixelXRGB;
+			return useAlpha ? writePixelARGB : writePixelXRGB;
 
 		case PIXEL_FORMAT_ABGR32:
 		case PIXEL_FORMAT_XBGR32:
-			return writePixelXBGR;
+			return useAlpha ? writePixelABGR : writePixelXBGR;
 
 		case PIXEL_FORMAT_RGBA32:
 		case PIXEL_FORMAT_RGBX32:
-			return writePixelRGBX;
+			return useAlpha ? writePixelRGBA : writePixelRGBX;
 
 		case PIXEL_FORMAT_BGRA32:
 		case PIXEL_FORMAT_BGRX32:
-			return writePixelBGRX;
+			return useAlpha ? writePixelBGRA : writePixelBGRX;
 
 		default:
-			return writePixelGeneric;
+			return useAlpha ? writePixelGenericAlpha : writePixelGeneric;
 	}
 }
 
-static INLINE BYTE CLIP(INT32 X)
+static INLINE BYTE CLIP(INT64 X)
 {
 	if (X > 255L)
 		return 255L;
@@ -138,7 +208,7 @@ static INLINE BYTE CLIP(INT32 X)
 	if (X < 0L)
 		return 0L;
 
-	return X;
+	return (BYTE)X;
 }
 
 /**

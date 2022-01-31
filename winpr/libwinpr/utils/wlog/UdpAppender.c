@@ -44,7 +44,8 @@ static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 	char addressString[256];
 	struct addrinfo hints;
 	struct addrinfo* result;
-	int status, addrLen;
+	int status;
+	size_t addrLen;
 	char* colonPos;
 
 	if (!appender)
@@ -60,7 +61,7 @@ static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 	if (!colonPos)
 		return FALSE;
 
-	addrLen = (int)(colonPos - udpAppender->host);
+	addrLen = (colonPos - udpAppender->host);
 	memcpy(addressString, udpAppender->host, addrLen);
 	addressString[addrLen] = '\0';
 	ZeroMemory(&hints, sizeof(hints));

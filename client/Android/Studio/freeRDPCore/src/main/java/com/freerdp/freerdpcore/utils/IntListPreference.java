@@ -34,6 +34,6 @@ public class IntListPreference extends ListPreference
 
 	@Override protected boolean persistString(String value)
 	{
-		return persistInt(Integer.valueOf(value));
+		return persistInt(Integer.parseInt(value));
 	}
 }

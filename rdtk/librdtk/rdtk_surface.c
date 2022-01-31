@@ -22,15 +22,28 @@
 
 #include "rdtk_surface.h"
 
-int rdtk_surface_fill(rdtkSurface* surface, int x, int y, int width, int height, UINT32 color)
+#include <string.h>
+
+int rdtk_surface_fill(rdtkSurface* surface, uint16_t x, uint16_t y, uint16_t width, uint16_t height,
+                      uint32_t color)
 {
-	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline, x, y, width, height,
-	                   color);
+	uint32_t i;
+	for (i = y; i < y + height; i++)
+	{
+		uint32_t j;
+		uint8_t* line = &surface->data[i * surface->scanline];
+		for (j = x; j < x + width; j++)
+		{
+			uint32_t* pixel = (uint32_t*)&line[j + 4];
+			*pixel = color;
+		}
+	}
 
 	return 1;
 }
 
-rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int height, int scanline)
+rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width, uint16_t height,
+                              uint32_t scanline)
 {
 	rdtkSurface* surface;
 
@@ -50,13 +63,13 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int hei
 	surface->scanline = scanline;
 
 	surface->data = data;
-	surface->owner = FALSE;
+	surface->owner = false;
 
 	if (!data)
 	{
 		surface->scanline = (surface->width + (surface->width % 4)) * 4;
 
-		surface->data = (BYTE*)calloc(surface->height, surface->scanline);
+		surface->data = (uint8_t*)calloc(surface->height, surface->scanline);
 
 		if (!surface->data)
 		{
@@ -64,9 +77,9 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int hei
 			return NULL;
 		}
 
-		ZeroMemory(surface->data, surface->scanline * surface->height);
+		memset(surface->data, 0, surface->scanline * surface->height);
 
-		surface->owner = TRUE;
+		surface->owner = true;
 	}
 
 	return surface;

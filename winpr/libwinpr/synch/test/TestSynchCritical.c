@@ -7,7 +7,7 @@
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
 
-#define TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS 500
+#define TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS 50
 #define TEST_SYNC_CRITICAL_TEST1_RUNS 4
 
 static CRITICAL_SECTION critical;
@@ -86,6 +86,7 @@ static DWORD WINAPI TestSynchCritical_Test1(LPVOID arg)
  */
 static DWORD WINAPI TestSynchCritical_Test2(LPVOID arg)
 {
+	WINPR_UNUSED(arg);
 	if (TryEnterCriticalSection(&critical) == TRUE)
 	{
 		LeaveCriticalSection(&critical);
@@ -155,7 +156,7 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 
 	InitializeCriticalSection(&critical);
 
-	for (i = 0; i < 1000; i++)
+	for (i = 0; i < 10; i++)
 	{
 		if (critical.RecursionCount != i)
 		{
@@ -216,7 +217,7 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 
 	for (j = 0; j < TEST_SYNC_CRITICAL_TEST1_RUNS; j++)
 	{
-		dwSpinCount = j * 1000;
+		dwSpinCount = j * 100;
 		InitializeCriticalSectionAndSpinCount(&critical, dwSpinCount);
 
 		gTestValueVulnerable = 0;
@@ -315,6 +316,9 @@ int TestSynchCritical(int argc, char* argv[])
 	DWORD dwDeadLockDetectionTimeMs;
 	DWORD i;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	dwDeadLockDetectionTimeMs =
 	    2 * TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS * TEST_SYNC_CRITICAL_TEST1_RUNS;
 
@@ -334,12 +338,12 @@ int TestSynchCritical(int argc, char* argv[])
 	 * Workaround checking the value of bThreadTerminated which is passed in the thread arg
 	 */
 
-	for (i = 0; i < dwDeadLockDetectionTimeMs; i += 100)
+	for (i = 0; i < dwDeadLockDetectionTimeMs; i += 10)
 	{
 		if (bThreadTerminated)
 			break;
 
-		Sleep(100);
+		Sleep(10);
 	}
 
 	if (!bThreadTerminated)

@@ -24,11 +24,13 @@
 #include "config.h"
 #endif
 
-#include "rpc.h"
+#include <winpr/stream.h>
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/log.h>
+
+#include "rpc.h"
 
 #define RTS_FLAG_NONE 0x0000
 #define RTS_FLAG_PING 0x0001
@@ -79,21 +81,28 @@
 
 FREERDP_LOCAL void rts_generate_cookie(BYTE* cookie);
 
-FREERDP_LOCAL SSIZE_T rts_command_length(UINT32 CommandType, const BYTE* buffer, size_t length);
+FREERDP_LOCAL BOOL rts_write_pdu_auth3(wStream* s, const rpcconn_rpc_auth_3_hdr_t* auth);
+FREERDP_LOCAL BOOL rts_write_pdu_bind(wStream* s, const rpcconn_bind_hdr_t* bind);
 
-FREERDP_LOCAL int rts_send_CONN_A1_pdu(rdpRpc* rpc);
-FREERDP_LOCAL int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+FREERDP_LOCAL BOOL rts_read_pdu_header(wStream* s, rpcconn_hdr_t* header);
+FREERDP_LOCAL void rts_free_pdu_header(rpcconn_hdr_t* header, BOOL allocated);
 
-FREERDP_LOCAL int rts_send_CONN_B1_pdu(rdpRpc* rpc);
+FREERDP_LOCAL BOOL rts_read_common_pdu_header(wStream* s, rpcconn_common_hdr_t* header);
 
-FREERDP_LOCAL int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+FREERDP_LOCAL BOOL rts_command_length(UINT32 CommandType, wStream* s, size_t* length);
 
-FREERDP_LOCAL int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc);
+FREERDP_LOCAL BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc);
+FREERDP_LOCAL BOOL rts_recv_CONN_A3_pdu(rdpRpc* rpc, wStream* buffer);
 
-FREERDP_LOCAL int rts_send_flow_control_ack_pdu(rdpRpc* rpc);
+FREERDP_LOCAL BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc);
 
-FREERDP_LOCAL int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+FREERDP_LOCAL BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer);
 
-#include "rts_signature.h"
+FREERDP_LOCAL BOOL rts_send_OUT_R1_A3_pdu(rdpRpc* rpc);
+
+FREERDP_LOCAL BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc);
+
+FREERDP_LOCAL BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer,
+                                                const rpcconn_hdr_t* header);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RTS_H */

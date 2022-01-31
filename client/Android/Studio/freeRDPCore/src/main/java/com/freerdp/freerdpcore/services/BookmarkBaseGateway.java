@@ -234,7 +234,7 @@ public abstract class BookmarkBaseGateway
 		Cursor cursor =
 		    queryBookmarks(BookmarkDB.DB_KEY_BOOKMARK_LABEL + " LIKE '%" + pattern + "%'",
 		                   BookmarkDB.DB_KEY_BOOKMARK_LABEL);
-		ArrayList<BookmarkBase> bookmarks = new ArrayList<BookmarkBase>(cursor.getCount());
+		ArrayList<BookmarkBase> bookmarks = new ArrayList<>(cursor.getCount());
 
 		if (cursor.moveToFirst() && (cursor.getCount() > 0))
 		{

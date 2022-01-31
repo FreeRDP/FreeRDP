@@ -90,6 +90,9 @@ LPSTR freerdp_get_library_install_path(void)
 
 LPSTR freerdp_get_dynamic_addin_install_path(void)
 {
+#if defined(WITH_ADD_PLUGIN_TO_RPATH)
+	return NULL;
+#else
 	LPSTR pszPath;
 	size_t cchPath;
 	size_t cchAddinPath;
@@ -102,6 +105,8 @@ LPSTR freerdp_get_dynamic_addin_install_path(void)
 	cchPath = cchInstallPrefix + cchAddinPath;
 	needInstallPath = is_path_required(pszInstallPrefix, cchInstallPrefix);
 	needLibPath = is_path_required(pszAddinPath, cchAddinPath);
+
+	WLog_DBG(TAG, "freerdp_get_dynamic_addin_install_path <- pszInstallPrefix: %s, pszAddinPath: %s", pszInstallPrefix, pszAddinPath);
 
 	if (!needInstallPath && !needLibPath)
 		return NULL;
@@ -126,7 +131,10 @@ LPSTR freerdp_get_dynamic_addin_install_path(void)
 		}
 	}
 
+	WLog_DBG(TAG, "freerdp_get_dynamic_addin_install_path -> pszPath: %s", pszPath);
+
 	return pszPath;
+#endif
 }
 
 PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath,
@@ -148,6 +156,8 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPa
 
 	if (!pszFileName || !pszEntryName)
 		goto fail;
+
+	WLog_DBG(TAG, "freerdp_load_dynamic_addin <- pszFileName: %s, pszPath: %s, pszEntryName: %s", pszFileName, pszPath, pszEntryName);
 
 	cchFileName = strlen(pszFileName);
 
@@ -215,7 +225,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPa
 	else
 		pszFilePath = _strdup(pszRelativeFilePath);
 
-	library = LoadLibraryA(pszFilePath);
+	library = LoadLibraryX(pszFilePath);
 
 	if (!library)
 		goto fail;
@@ -239,58 +249,72 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LP
 	PVIRTUALCHANNELENTRY entry;
 	LPSTR pszFileName;
 	const size_t cchBaseFileName = sizeof(FREERDP_SHARED_LIBRARY_PREFIX) + 32;
-	LPCSTR pszExtension;
-	LPCSTR pszPrefix = FREERDP_SHARED_LIBRARY_PREFIX;
 	size_t nameLen = 0;
 	size_t subsystemLen = 0;
 	size_t typeLen = 0;
-	size_t extensionLen = 0;
-	pszExtension = PathGetSharedLibraryExtensionA(0);
+	size_t cchFileName = 0;
+
 	if (pszName)
 		nameLen = strnlen(pszName, MAX_PATH);
 	if (pszSubsystem)
 		subsystemLen = strnlen(pszSubsystem, MAX_PATH);
 	if (pszType)
 		typeLen = strnlen(pszType, MAX_PATH);
-	if (pszExtension)
-		extensionLen = strnlen(pszExtension, MAX_PATH);
 
 	if (pszName && pszSubsystem && pszType)
 	{
-		const size_t cchFileName =
-		    cchBaseFileName + nameLen + subsystemLen + typeLen + extensionLen;
+		cchFileName =
+			cchBaseFileName + nameLen + subsystemLen + typeLen;
 		pszFileName = (LPSTR)malloc(cchFileName);
 
 		if (!pszFileName)
 			return NULL;
 
-		sprintf_s(pszFileName, cchFileName, "%s%s-client-%s-%s.%s", pszPrefix, pszName,
-		          pszSubsystem, pszType, pszExtension);
+		sprintf_s(pszFileName, cchFileName, "%s-client-%s-%s", pszName,
+				  pszSubsystem, pszType);
 	}
 	else if (pszName && pszSubsystem)
 	{
-		const size_t cchFileName = cchBaseFileName + nameLen + subsystemLen + extensionLen;
+		cchFileName = cchBaseFileName + nameLen + subsystemLen;
 		pszFileName = (LPSTR)malloc(cchFileName);
 
 		if (!pszFileName)
 			return NULL;
 
-		sprintf_s(pszFileName, cchFileName, "%s%s-client-%s.%s", pszPrefix, pszName, pszSubsystem,
-		          pszExtension);
+		sprintf_s(pszFileName, cchFileName, "%s-client-%s", pszName, pszSubsystem		          );
 	}
 	else if (pszName)
 	{
-		const size_t cchFileName = cchBaseFileName + nameLen + extensionLen;
+		cchFileName = cchBaseFileName + nameLen ;
 		pszFileName = (LPSTR)malloc(cchFileName);
 
 		if (!pszFileName)
 			return NULL;
 
-		sprintf_s(pszFileName, cchFileName, "%s%s-client.%s", pszPrefix, pszName, pszExtension);
+		sprintf_s(pszFileName, cchFileName, "%s-client", pszName);
 	}
 	else
 	{
 		return NULL;
+	}
+
+	{
+		LPCSTR pszExtension = PathGetSharedLibraryExtensionA(0);
+		LPCSTR pszPrefix = FREERDP_SHARED_LIBRARY_PREFIX;
+		LPSTR tmp;
+		int rc;
+
+		if (pszPrefix)
+			cchFileName += strnlen(pszPrefix, MAX_PATH);
+		if (pszExtension)
+			cchFileName += strnlen(pszExtension, MAX_PATH) + 1;
+		tmp = calloc(cchFileName, sizeof(CHAR));
+		if (tmp)
+			rc = sprintf_s(tmp, cchFileName, "%s%s.%s", pszPrefix, pszFileName, pszExtension);
+		free(pszFileName);
+		pszFileName = tmp;
+		if (!pszFileName)
+			return NULL;
 	}
 
 	if (pszSubsystem)

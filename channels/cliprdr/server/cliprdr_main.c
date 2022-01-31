@@ -82,7 +82,7 @@ static UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s
 	size_t pos, size;
 	BOOL status;
 	UINT32 dataLen;
-	UINT32 written;
+	ULONG written;
 	pos = Stream_GetPosition(s);
 	if ((pos < 8) || (pos > UINT32_MAX))
 	{
@@ -478,7 +478,6 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 
 	WINPR_UNUSED(header);
 
-
 	WLog_DBG(TAG, "CliprdrClientCapabilities");
 	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
@@ -557,7 +556,9 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_UNUSED(header);
-	if ((slength = Stream_GetRemainingLength(s)) < 260 * sizeof(WCHAR))
+
+	slength = Stream_GetRemainingLength(s);
+	if (slength / sizeof(WCHAR) < 260)
 	{
 		WLog_ERR(TAG, "Stream_GetRemainingLength returned %" PRIuz " but should at least be 520",
 		         slength);
@@ -1216,7 +1217,8 @@ static UINT cliprdr_server_open(CliprdrServerContext* context)
 	void* buffer = NULL;
 	DWORD BytesReturned = 0;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*)context->handle;
-	cliprdr->ChannelHandle = WTSVirtualChannelOpen(cliprdr->vcm, WTS_CURRENT_SESSION, "cliprdr");
+	cliprdr->ChannelHandle =
+	    WTSVirtualChannelOpen(cliprdr->vcm, WTS_CURRENT_SESSION, CLIPRDR_SVC_CHANNEL_NAME);
 
 	if (!cliprdr->ChannelHandle)
 	{

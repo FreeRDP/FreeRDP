@@ -29,6 +29,7 @@
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
+#include <winpr/file.h>
 #include <winpr/stream.h>
 
 #include "../../log.h"
@@ -187,7 +188,7 @@ static BOOL Pcap_Write_Record(wPcap* pcap, wPcapRecord* record)
 wPcap* Pcap_Open(char* name, BOOL write)
 {
 	wPcap* pcap = NULL;
-	FILE* pcap_fp = fopen(name, write ? "w+b" : "rb");
+	FILE* pcap_fp = winpr_fopen(name, write ? "w+b" : "rb");
 
 	if (!pcap_fp)
 	{
@@ -221,7 +222,7 @@ wPcap* Pcap_Open(char* name, BOOL write)
 	{
 		if (_fseeki64(pcap->fp, 0, SEEK_END) < 0)
 			goto out_fail;
-		pcap->file_size = _ftelli64(pcap->fp);
+		pcap->file_size = (SSIZE_T)_ftelli64(pcap->fp);
 		if (pcap->file_size < 0)
 			goto out_fail;
 		if (_fseeki64(pcap->fp, 0, SEEK_SET) < 0)
@@ -374,7 +375,7 @@ static BOOL WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 static UINT32 g_InboundSequenceNumber = 0;
 static UINT32 g_OutboundSequenceNumber = 0;
 
-BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
+BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flags)
 {
 	wTcpHeader tcp;
 	wIPv4Header ipv4;

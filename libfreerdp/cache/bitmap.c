@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
@@ -47,7 +48,9 @@ static BOOL bitmap_cache_put(rdpBitmapCache* bitmap_cache, UINT32 id, UINT32 ind
 static BOOL update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
 	rdpBitmap* bitmap;
-	rdpCache* cache = context->cache;
+	rdpCache* cache;
+
+	cache = context->cache;
 
 	if (memblt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, memblt->cacheIndex);
@@ -258,29 +261,45 @@ BOOL bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index, rdpB
 
 void bitmap_cache_register_callbacks(rdpUpdate* update)
 {
-	rdpCache* cache = update->context->cache;
-	cache->bitmap->MemBlt = update->primary->MemBlt;
-	cache->bitmap->Mem3Blt = update->primary->Mem3Blt;
-	update->primary->MemBlt = update_gdi_memblt;
-	update->primary->Mem3Blt = update_gdi_mem3blt;
-	update->secondary->CacheBitmap = update_gdi_cache_bitmap;
-	update->secondary->CacheBitmapV2 = update_gdi_cache_bitmap_v2;
-	update->secondary->CacheBitmapV3 = update_gdi_cache_bitmap_v3;
-	update->BitmapUpdate = gdi_bitmap_update;
+	rdpCache* cache;
+
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(update->context);
+	WINPR_ASSERT(update->context->cache);
+
+	cache = update->context->cache;
+	WINPR_ASSERT(cache);
+
+	if (!freerdp_settings_get_bool(update->context->settings, FreeRDP_DeactivateClientDecoding))
+	{
+		cache->bitmap->MemBlt = update->primary->MemBlt;
+		cache->bitmap->Mem3Blt = update->primary->Mem3Blt;
+		update->primary->MemBlt = update_gdi_memblt;
+		update->primary->Mem3Blt = update_gdi_mem3blt;
+		update->secondary->CacheBitmap = update_gdi_cache_bitmap;
+		update->secondary->CacheBitmapV2 = update_gdi_cache_bitmap_v2;
+		update->secondary->CacheBitmapV3 = update_gdi_cache_bitmap_v3;
+		update->BitmapUpdate = gdi_bitmap_update;
+	}
 }
 
-rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
+rdpBitmapCache* bitmap_cache_new(rdpContext* context)
 {
 	UINT32 i;
+	rdpSettings* settings;
 	rdpBitmapCache* bitmapCache;
+
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
 	bitmapCache = (rdpBitmapCache*)calloc(1, sizeof(rdpBitmapCache));
 
 	if (!bitmapCache)
 		return NULL;
 
-	bitmapCache->settings = settings;
-	bitmapCache->update = ((freerdp*)settings->instance)->update;
-	bitmapCache->context = bitmapCache->update->context;
+	bitmapCache->context = context;
 	bitmapCache->cells =
 	    (BITMAP_V2_CELL*)calloc(settings->BitmapCacheV2NumCells, sizeof(BITMAP_V2_CELL));
 

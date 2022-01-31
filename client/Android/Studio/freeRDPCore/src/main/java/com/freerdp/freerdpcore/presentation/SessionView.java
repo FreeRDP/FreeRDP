@@ -13,23 +13,21 @@ package com.freerdp.freerdpcore.presentation;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import com.freerdp.freerdpcore.application.SessionState;
-import com.freerdp.freerdpcore.services.LibFreeRDP;
 import com.freerdp.freerdpcore.utils.DoubleGestureDetector;
 import com.freerdp.freerdpcore.utils.GestureDetector;
-import com.freerdp.freerdpcore.utils.Mouse;
 
 import java.util.Stack;
 
@@ -77,7 +75,7 @@ public class SessionView extends View
 
 	private void initSessionView(Context context)
 	{
-		invalidRegions = new Stack<Rect>();
+		invalidRegions = new Stack<>();
 		gestureDetector = new GestureDetector(context, new SessionGestureListener(), null, true);
 		doubleGestureDetector =
 		    new DoubleGestureDetector(context, null, new SessionDoubleGestureListener());
@@ -214,6 +212,7 @@ public class SessionView extends View
 
 		canvas.save();
 		canvas.concat(scaleMatrix);
+		canvas.drawColor(Color.BLACK);
 		surface.draw(canvas);
 		canvas.restore();
 	}

@@ -22,6 +22,8 @@ include_directories(..)
 
 add_library(helpers STATIC
 	    helpers.c)
+target_link_libraries(helpers freerdp)
+	   
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 

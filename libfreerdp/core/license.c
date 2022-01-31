@@ -27,6 +27,7 @@
 #include <winpr/crypto.h>
 #include <winpr/shell.h>
 #include <winpr/path.h>
+#include <winpr/file.h>
 
 #include <freerdp/log.h>
 
@@ -188,19 +189,21 @@ out:
 	return ret;
 }
 
-static BOOL saveCal(rdpSettings* settings, const BYTE* data, int length, char* hostname)
+static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, const char* hostname)
 {
 	char hash[41];
 	FILE* fp;
 	char* licenseStorePath = NULL;
 	char filename[MAX_PATH], filenameNew[MAX_PATH];
 	char *filepath = NULL, *filepathNew = NULL;
+	WCHAR* wFilepathNew = NULL;
+	WCHAR* wFilepath = NULL;
 	size_t written;
 	BOOL ret = FALSE;
 
-	if (!PathFileExistsA(settings->ConfigPath))
+	if (!winpr_PathFileExists(settings->ConfigPath))
 	{
-		if (!PathMakePathA(settings->ConfigPath, 0))
+		if (!winpr_PathMakePath(settings->ConfigPath, 0))
 		{
 			WLog_ERR(TAG, "error creating directory '%s'", settings->ConfigPath);
 			goto out;
@@ -211,9 +214,9 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, int length, char* h
 	if (!(licenseStorePath = GetCombinedPath(settings->ConfigPath, licenseStore)))
 		goto out;
 
-	if (!PathFileExistsA(licenseStorePath))
+	if (!winpr_PathFileExists(licenseStorePath))
 	{
-		if (!PathMakePathA(licenseStorePath, 0))
+		if (!winpr_PathMakePath(licenseStorePath, 0))
 		{
 			WLog_ERR(TAG, "error creating directory '%s'", licenseStorePath);
 			goto out;
@@ -231,8 +234,12 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, int length, char* h
 
 	if (!(filepathNew = GetCombinedPath(licenseStorePath, filenameNew)))
 		goto out;
+	if (ConvertToUnicode(CP_UTF8, 0, filepathNew, -1, &wFilepathNew, 0) <= 0)
+		goto out;
+	if (ConvertToUnicode(CP_UTF8, 0, filepath, -1, &wFilepath, 0) <= 0)
+		goto out;
 
-	fp = fopen(filepathNew, "wb");
+	fp = winpr_fopen(filepathNew, "wb");
 	if (!fp)
 		goto out;
 
@@ -241,25 +248,28 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, int length, char* h
 
 	if (written != 1)
 	{
-		DeleteFile(filepathNew);
+		DeleteFileW(wFilepathNew);
 		goto out;
 	}
 
-	ret = MoveFileEx(filepathNew, filepath, MOVEFILE_REPLACE_EXISTING);
+	ret = MoveFileExW(wFilepathNew, wFilepath, MOVEFILE_REPLACE_EXISTING);
 
 out:
+	free(wFilepathNew);
 	free(filepathNew);
+	free(wFilepath);
 	free(filepath);
 	free(licenseStorePath);
 	return ret;
 }
 
-static BYTE* loadCalFile(rdpSettings* settings, const char* hostname, int* dataLen)
+static BYTE* loadCalFile(rdpSettings* settings, const char* hostname, size_t* dataLen)
 {
 	char *licenseStorePath = NULL, *calPath = NULL;
 	char calFilename[MAX_PATH];
 	char hash[41];
-	int length, status;
+	INT64 length;
+	int status;
 	FILE* fp;
 	BYTE* ret = NULL;
 
@@ -277,23 +287,25 @@ static BYTE* loadCalFile(rdpSettings* settings, const char* hostname, int* dataL
 	if (!(calPath = GetCombinedPath(licenseStorePath, calFilename)))
 		goto error_path;
 
-	fp = fopen(calPath, "rb");
+	fp = winpr_fopen(calPath, "rb");
 	if (!fp)
 		goto error_open;
 
 	_fseeki64(fp, 0, SEEK_END);
 	length = _ftelli64(fp);
 	_fseeki64(fp, 0, SEEK_SET);
+	if (length < 0)
+		goto error_malloc;
 
-	ret = (BYTE*)malloc(length);
+	ret = (BYTE*)malloc((size_t)length);
 	if (!ret)
 		goto error_malloc;
 
-	status = fread(ret, length, 1, fp);
+	status = fread(ret, (size_t)length, 1, fp);
 	if (status <= 0)
 		goto error_read;
 
-	*dataLen = length;
+	*dataLen = (size_t)length;
 
 	fclose(fp);
 	free(calPath);
@@ -615,11 +627,12 @@ BOOL license_generate_hwid(rdpLicense* license)
 	}
 	else
 	{
-		wStream s;
+		wStream buffer;
+		wStream* s;
 		const char* hostname = license->rdp->settings->ClientHostname;
-		Stream_StaticInit(&s, license->HardwareId, 4);
-		Stream_Write_UINT32(&s, PLATFORMID);
-		Stream_Free(&s, TRUE);
+		s = Stream_StaticInit(&buffer, license->HardwareId, 4);
+		Stream_Write_UINT32(s, PLATFORMID);
+		Stream_Free(s, TRUE);
 
 		hashTarget = (const BYTE*)hostname;
 		targetLen = strlen(hostname);
@@ -683,9 +696,14 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
 	license->EncryptedPremasterSecret->length = PREMASTER_SECRET_LENGTH;
 #ifndef LICENSE_NULL_PREMASTER_SECRET
-	license->EncryptedPremasterSecret->length = crypto_rsa_public_encrypt(
-	    license->PremasterSecret, PREMASTER_SECRET_LENGTH, license->ModulusLength, license->Modulus,
-	    license->Exponent, EncryptedPremasterSecret);
+	{
+		SSIZE_T length = crypto_rsa_public_encrypt(
+		    license->PremasterSecret, PREMASTER_SECRET_LENGTH, license->ModulusLength,
+		    license->Modulus, license->Exponent, EncryptedPremasterSecret);
+		if ((length < 0) || (length > UINT16_MAX))
+			return FALSE;
+		license->EncryptedPremasterSecret->length = (UINT16)length;
+	}
 #endif
 	license->EncryptedPremasterSecret->data = EncryptedPremasterSecret;
 	return TRUE;
@@ -1417,7 +1435,7 @@ BOOL license_answer_license_request(rdpLicense* license)
 {
 	wStream* s;
 	BYTE* license_data = NULL;
-	int license_size = 0;
+	size_t license_size = 0;
 	BOOL status;
 	char* username;
 

@@ -39,6 +39,7 @@ struct _rdpsnd_server_private
 	HANDLE StopEvent;
 	HANDLE channelEvent;
 	void* ChannelHandle;
+	DWORD SessionId;
 
 	BOOL waitingHeader;
 	DWORD expectedBytes;
@@ -46,9 +47,9 @@ struct _rdpsnd_server_private
 	wStream* input_stream;
 	wStream* rdpsnd_pdu;
 	BYTE* out_buffer;
-	int out_buffer_size;
-	int out_frames;
-	int out_pending_frames;
+	size_t out_buffer_size;
+	size_t out_frames;
+	size_t out_pending_frames;
 	UINT32 src_bytes_per_sample;
 	UINT32 src_bytes_per_frame;
 	FREERDP_DSP_CONTEXT* dsp_context;

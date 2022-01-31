@@ -76,23 +76,23 @@ static void fatal_handler(int signum)
 	raise(signum);
 }
 
-const int fatal_signals[] = { SIGABRT,   SIGALRM, SIGBUS,  SIGFPE,  SIGHUP,  SIGILL,
-	                          SIGINT,    SIGKILL, SIGQUIT, SIGSEGV, SIGSTOP, SIGTERM,
-	                          SIGTSTP,   SIGTTIN, SIGTTOU, SIGUSR1, SIGUSR2,
+static const int fatal_signals[] = { SIGABRT,   SIGALRM, SIGBUS,  SIGFPE,  SIGHUP,  SIGILL,
+	                                 SIGINT,    SIGKILL, SIGQUIT, SIGSEGV, SIGSTOP, SIGTERM,
+	                                 SIGTSTP,   SIGTTIN, SIGTTOU, SIGUSR1, SIGUSR2,
 #ifdef SIGPOLL
-	                          SIGPOLL,
+	                                 SIGPOLL,
 #endif
 #ifdef SIGPROF
-	                          SIGPROF,
+	                                 SIGPROF,
 #endif
 #ifdef SIGSYS
-	                          SIGSYS,
+	                                 SIGSYS,
 #endif
-	                          SIGTRAP,
+	                                 SIGTRAP,
 #ifdef SIGVTALRM
-	                          SIGVTALRM,
+	                                 SIGVTALRM,
 #endif
-	                          SIGXCPU,   SIGXFSZ };
+	                                 SIGXCPU,   SIGXFSZ };
 
 int freerdp_handle_signals(void)
 {

@@ -28,8 +28,8 @@
 
 static int status = 0;
 
-LONG* pLoopCount = NULL;
-BOOL bStopTest = FALSE;
+static LONG* pLoopCount = NULL;
+static BOOL bStopTest = FALSE;
 
 static DWORD WINAPI test_error_thread(LPVOID arg)
 {
@@ -41,7 +41,7 @@ static DWORD WINAPI test_error_thread(LPVOID arg)
 
 	do
 	{
-		dwErrorSet = (DWORD)rand();
+		dwErrorSet = (DWORD)abs(rand()) + 1;
 		SetLastError(dwErrorSet);
 		if ((dwErrorGet = GetLastError()) != dwErrorSet)
 		{
@@ -63,6 +63,9 @@ int TestErrorSetLastError(int argc, char* argv[])
 	DWORD error;
 	HANDLE threads[4];
 	int i;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
 	/* We must initialize WLog here. It will check for settings
 	 * in the environment and if the variables are not set, the last
@@ -97,8 +100,8 @@ int TestErrorSetLastError(int argc, char* argv[])
 		}
 	}
 
-	// let the threads run for at least 2 seconds
-	Sleep(2000);
+	// let the threads run for at least 0.2 seconds
+	Sleep(200);
 	bStopTest = TRUE;
 
 	WaitForSingleObject(threads[0], INFINITE);

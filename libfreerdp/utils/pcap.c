@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/wtypes.h>
+#include <winpr/file.h>
 #include <winpr/crt.h>
 #include <freerdp/log.h>
 
@@ -166,7 +167,7 @@ BOOL pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
 	return pcap_has_next_record(pcap) && pcap_read_record(pcap, record);
 }
 
-rdpPcap* pcap_open(char* name, BOOL write)
+rdpPcap* pcap_open(const char* name, BOOL write)
 {
 	rdpPcap* pcap;
 
@@ -174,10 +175,10 @@ rdpPcap* pcap_open(char* name, BOOL write)
 	if (!pcap)
 		goto fail;
 
-	pcap->name = name;
+	pcap->name = _strdup(name);
 	pcap->write = write;
 	pcap->record_count = 0;
-	pcap->fp = fopen(name, write ? "w+b" : "rb");
+	pcap->fp = winpr_fopen(name, write ? "w+b" : "rb");
 
 	if (pcap->fp == NULL)
 		goto fail;
@@ -232,5 +233,6 @@ void pcap_close(rdpPcap* pcap)
 	if (pcap->fp != NULL)
 		fclose(pcap->fp);
 
+	free(pcap->name);
 	free(pcap);
 }

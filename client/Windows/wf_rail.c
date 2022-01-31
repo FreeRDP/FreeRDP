@@ -32,6 +32,22 @@
 #define GET_X_LPARAM(lParam) ((UINT16)(lParam & 0xFFFF))
 #define GET_Y_LPARAM(lParam) ((UINT16)((lParam >> 16) & 0xFFFF))
 
+struct wf_rail_window
+{
+	wfContext* wfc;
+
+	HWND hWnd;
+
+	DWORD dwStyle;
+	DWORD dwExStyle;
+
+	int x;
+	int y;
+	int width;
+	int height;
+	char* title;
+};
+
 /* RemoteApp Core Protocol Extension */
 
 struct _WINDOW_STYLE
@@ -95,7 +111,7 @@ static const WINDOW_STYLE EXTENDED_WINDOW_STYLES[] = {
 	{ WS_EX_WINDOWEDGE, "WS_EX_WINDOWEDGE", FALSE }
 };
 
-void PrintWindowStyles(UINT32 style)
+static void PrintWindowStyles(UINT32 style)
 {
 	int i;
 	WLog_INFO(TAG, "\tWindow Styles:\t{");
@@ -115,7 +131,7 @@ void PrintWindowStyles(UINT32 style)
 	}
 }
 
-void PrintExtendedWindowStyles(UINT32 style)
+static void PrintExtendedWindowStyles(UINT32 style)
 {
 	int i;
 	WLog_INFO(TAG, "\tExtended Window Styles:\t{");
@@ -417,6 +433,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (fieldFlags & WINDOW_ORDER_STATE_NEW)
 	{
+		BOOL rc;
 		HANDLE hInstance;
 		WCHAR* titleW = NULL;
 		WNDCLASSEX wndClassEx;
@@ -509,10 +526,11 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		}
 
 		SetWindowLongPtr(railWindow->hWnd, GWLP_USERDATA, (LONG_PTR)railWindow);
-		HashTable_Add(wfc->railWindows, (void*)(UINT_PTR)orderInfo->windowId, (void*)railWindow);
+		rc = HashTable_Insert(wfc->railWindows, (void*)(UINT_PTR)orderInfo->windowId,
+		                      (void*)railWindow);
 		free(titleW);
 		UpdateWindow(railWindow->hWnd);
-		return TRUE;
+		return rc;
 	}
 	else
 	{
@@ -854,34 +872,46 @@ static UINT wf_rail_server_system_param(RailClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT wf_rail_server_handshake(RailClientContext* context,
-                                     const RAIL_HANDSHAKE_ORDER* handshake)
+static UINT wf_rail_server_start_cmd(RailClientContext* context)
 {
-	RAIL_EXEC_ORDER exec;
-	RAIL_SYSPARAM_ORDER sysparam;
-	RAIL_HANDSHAKE_ORDER clientHandshake;
-	RAIL_CLIENT_STATUS_ORDER clientStatus;
+	UINT status;
+	RAIL_EXEC_ORDER exec = { 0 };
+	RAIL_SYSPARAM_ORDER sysparam = { 0 };
+	RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
 	wfContext* wfc = (wfContext*)context->custom;
 	rdpSettings* settings = wfc->context.settings;
-	clientHandshake.buildNumber = 0x00001DB0;
-	context->ClientHandshake(context, &clientHandshake);
-	ZeroMemory(&clientStatus, sizeof(RAIL_CLIENT_STATUS_ORDER));
-	clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
-	context->ClientInformation(context, &clientStatus);
+	clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
+
+	if (settings->AutoReconnectionEnabled)
+		clientStatus.flags |= TS_RAIL_CLIENTSTATUS_AUTORECONNECT;
+
+	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_ZORDER_SYNC;
+	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED;
+	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED;
+	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED;
+	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED;
+	status = context->ClientInformation(context, &clientStatus);
+
+	if (status != CHANNEL_RC_OK)
+		return status;
 
 	if (settings->RemoteAppLanguageBarSupported)
 	{
 		RAIL_LANGBAR_INFO_ORDER langBarInfo;
 		langBarInfo.languageBarStatus = 0x00000008; /* TF_SFT_HIDDEN */
-		context->ClientLanguageBarInfo(context, &langBarInfo);
+		status = context->ClientLanguageBarInfo(context, &langBarInfo);
+
+		/* We want the language bar, but the server might not support it. */
+		switch (status)
+		{
+			case CHANNEL_RC_OK:
+			case ERROR_BAD_CONFIGURATION:
+				break;
+			default:
+				return status;
+		}
 	}
 
-	ZeroMemory(&sysparam, sizeof(RAIL_SYSPARAM_ORDER));
 	sysparam.params = 0;
 	sysparam.params |= SPI_MASK_SET_HIGH_CONTRAST;
 	sysparam.highContrast.colorScheme.string = NULL;
@@ -901,13 +931,26 @@ static UINT wf_rail_server_handshake(RailClientContext* context,
 	sysparam.workArea.right = settings->DesktopWidth;
 	sysparam.workArea.bottom = settings->DesktopHeight;
 	sysparam.dragFullWindows = FALSE;
-	context->ClientSystemParam(context, &sysparam);
-	ZeroMemory(&exec, sizeof(RAIL_EXEC_ORDER));
+	status = context->ClientSystemParam(context, &sysparam);
+
+	if (status != CHANNEL_RC_OK)
+		return status;
+
 	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
 	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
 	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
-	context->ClientExecute(context, &exec);
-	return CHANNEL_RC_OK;
+	return context->ClientExecute(context, &exec);
+}
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT wf_rail_server_handshake(RailClientContext* context,
+                                     const RAIL_HANDSHAKE_ORDER* handshake)
+{
+	return wf_rail_server_start_cmd(context);
 }
 
 /**
@@ -918,7 +961,7 @@ static UINT wf_rail_server_handshake(RailClientContext* context,
 static UINT wf_rail_server_handshake_ex(RailClientContext* context,
                                         const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
-	return CHANNEL_RC_OK;
+	return wf_rail_server_start_cmd(context);
 }
 
 /**

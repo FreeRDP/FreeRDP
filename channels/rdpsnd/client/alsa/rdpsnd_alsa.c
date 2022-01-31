@@ -61,12 +61,15 @@ struct rdpsnd_alsa_plugin
 	snd_pcm_uframes_t period_size;
 };
 
-#define SND_PCM_CHECK(_func, _status)              \
-	if (_status < 0)                               \
-	{                                              \
-		WLog_ERR(TAG, "%s: %d\n", _func, _status); \
-		return -1;                                 \
-	}
+#define SND_PCM_CHECK(_func, _status)                  \
+	do                                                 \
+	{                                                  \
+		if (_status < 0)                               \
+		{                                              \
+			WLog_ERR(TAG, "%s: %d\n", _func, _status); \
+			return -1;                                 \
+		}                                              \
+	} while (0)
 
 static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 {
@@ -427,11 +430,14 @@ static BOOL rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
 {
 	UINT latency;
-	size_t offset;
+	size_t offset = 0;
 	int frame_size;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
-	offset = 0;
+	WINPR_ASSERT(alsa);
+	WINPR_ASSERT(data || (size == 0));
 	frame_size = alsa->actual_channels * alsa->aformat.wBitsPerSample / 8;
+	if (frame_size <= 0)
+		return 0;
 
 	while (offset < size)
 	{
@@ -472,11 +478,11 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                             NULL, NULL, -1, NULL, "device" },
@@ -525,7 +531,7 @@ static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV*
  */
 UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	rdpsndAlsaPlugin* alsa;
 	UINT error;
 	alsa = (rdpsndAlsaPlugin*)calloc(1, sizeof(rdpsndAlsaPlugin));
@@ -547,7 +553,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 
 	if (args->argc > 1)
 	{
-		if ((error = rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin*)alsa, args)))
+		if ((error = rdpsnd_alsa_parse_addin_args(&alsa->device, args)))
 		{
 			WLog_ERR(TAG, "rdpsnd_alsa_parse_addin_args failed with error %" PRIu32 "", error);
 			goto error_parse_args;

@@ -59,7 +59,6 @@ struct rdp_glyph_cache
 
 	wLog* log;
 	rdpContext* context;
-	rdpSettings* settings;
 };
 
 #ifdef __cplusplus
@@ -69,7 +68,7 @@ extern "C"
 
 	FREERDP_API void glyph_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_API rdpGlyphCache* glyph_cache_new(rdpSettings* settings);
+	FREERDP_API rdpGlyphCache* glyph_cache_new(rdpContext* context);
 	FREERDP_API void glyph_cache_free(rdpGlyphCache* glyph);
 
 #ifdef __cplusplus

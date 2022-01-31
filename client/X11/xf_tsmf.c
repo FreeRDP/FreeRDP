@@ -307,7 +307,7 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 	return 1;
 }
 
-int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
+static int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 {
 	int ret;
 	unsigned int i;
@@ -424,7 +424,7 @@ int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 	return 1;
 }
 
-int xf_tsmf_xv_uninit(xfContext* xfc, TsmfClientContext* tsmf)
+static int xf_tsmf_xv_uninit(xfContext* xfc, TsmfClientContext* tsmf)
 {
 	xfXvContext* xv = (xfXvContext*)xfc->xv_context;
 

@@ -740,7 +740,7 @@ static int test_MppcCompressBellsRdp5(void)
 	int status;
 	UINT32 Flags;
 	UINT32 SrcSize;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 DstSize;
 	BYTE* pDstData;
 	MPPC_CONTEXT* mppc;
@@ -752,7 +752,7 @@ static int test_MppcCompressBellsRdp5(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
-	pSrcData = (BYTE*)TEST_MPPC_BELLS;
+	pSrcData = (const BYTE*)TEST_MPPC_BELLS;
 	expectedSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
@@ -792,7 +792,7 @@ static int test_MppcCompressBellsRdp4(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	BYTE* pDstData;
@@ -805,7 +805,7 @@ static int test_MppcCompressBellsRdp4(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
-	pSrcData = (BYTE*)TEST_MPPC_BELLS;
+	pSrcData = (const BYTE*)TEST_MPPC_BELLS;
 	expectedSize = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
@@ -845,7 +845,7 @@ static int test_MppcDecompressBellsRdp5(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	MPPC_CONTEXT* mppc;
@@ -857,7 +857,7 @@ static int test_MppcDecompressBellsRdp5(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
-	pSrcData = (BYTE*)TEST_MPPC_BELLS_RDP5;
+	pSrcData = (const BYTE*)TEST_MPPC_BELLS_RDP5;
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
 	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
@@ -892,7 +892,7 @@ static int test_MppcDecompressBellsRdp4(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	MPPC_CONTEXT* mppc;
@@ -904,7 +904,7 @@ static int test_MppcDecompressBellsRdp4(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
-	pSrcData = (BYTE*)TEST_MPPC_BELLS_RDP4;
+	pSrcData = (const BYTE*)TEST_MPPC_BELLS_RDP4;
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 0;
 	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
@@ -940,7 +940,7 @@ static int test_MppcCompressIslandRdp5(void)
 	int status;
 	UINT32 Flags;
 	UINT32 SrcSize;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 DstSize;
 	BYTE* pDstData;
 	MPPC_CONTEXT* mppc;
@@ -952,7 +952,7 @@ static int test_MppcCompressIslandRdp5(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_ISLAND_DATA) - 1;
-	pSrcData = (BYTE*)TEST_ISLAND_DATA;
+	pSrcData = (const BYTE*)TEST_ISLAND_DATA;
 	expectedSize = sizeof(TEST_ISLAND_DATA_RDP5) - 1;
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
@@ -992,7 +992,7 @@ static int test_MppcCompressBufferRdp5(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	BYTE* pDstData;
@@ -1005,7 +1005,7 @@ static int test_MppcCompressBufferRdp5(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
-	pSrcData = (BYTE*)TEST_RDP5_UNCOMPRESSED_DATA;
+	pSrcData = (const BYTE*)TEST_RDP5_UNCOMPRESSED_DATA;
 	expectedSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
@@ -1042,7 +1042,7 @@ static int test_MppcDecompressBufferRdp5(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	MPPC_CONTEXT* mppc;
@@ -1054,7 +1054,7 @@ static int test_MppcDecompressBufferRdp5(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
-	pSrcData = (BYTE*)TEST_RDP5_COMPRESSED_DATA;
+	pSrcData = (const BYTE*)TEST_RDP5_COMPRESSED_DATA;
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
 	expectedSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);

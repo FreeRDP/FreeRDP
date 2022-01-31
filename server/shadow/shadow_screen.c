@@ -20,6 +20,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/assert.h>
+
 #include "shadow_surface.h"
 
 #include "shadow_screen.h"
@@ -27,11 +29,14 @@
 
 rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 {
-	int x, y;
-	int width, height;
+	INT64 x, y;
+	INT64 width, height;
 	rdpShadowScreen* screen;
 	rdpShadowSubsystem* subsystem;
 	MONITOR_DEF* primary;
+
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(server->subsystem);
 
 	screen = (rdpShadowScreen*)calloc(1, sizeof(rdpShadowScreen));
 
@@ -46,24 +51,35 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 
 	region16_init(&(screen->invalidRegion));
 
+	WINPR_ASSERT(subsystem->selectedMonitor < ARRAYSIZE(subsystem->monitors));
 	primary = &(subsystem->monitors[subsystem->selectedMonitor]);
 
 	x = primary->left;
 	y = primary->top;
-	width = primary->right - primary->left;
-	height = primary->bottom - primary->top;
+	width = primary->right - primary->left + 1;
+	height = primary->bottom - primary->top + 1;
 
-	screen->width = width;
-	screen->height = height;
+	WINPR_ASSERT(x >= 0);
+	WINPR_ASSERT(x <= UINT16_MAX);
+	WINPR_ASSERT(y >= 0);
+	WINPR_ASSERT(y <= UINT16_MAX);
+	WINPR_ASSERT(width >= 0);
+	WINPR_ASSERT(width <= UINT16_MAX);
+	WINPR_ASSERT(height >= 0);
+	WINPR_ASSERT(height <= UINT16_MAX);
 
-	screen->primary = shadow_surface_new(server, x, y, width, height);
+	screen->width = (UINT16)width;
+	screen->height = (UINT16)height;
+
+	screen->primary =
+	    shadow_surface_new(server, (UINT16)x, (UINT16)y, (UINT16)width, (UINT16)height);
 
 	if (!screen->primary)
 		goto out_free_region;
 
 	server->surface = screen->primary;
 
-	screen->lobby = shadow_surface_new(server, x, y, width, height);
+	screen->lobby = shadow_surface_new(server, (UINT16)x, (UINT16)y, (UINT16)width, (UINT16)height);
 
 	if (!screen->lobby)
 		goto out_free_primary;
@@ -125,17 +141,26 @@ BOOL shadow_screen_resize(rdpShadowScreen* screen)
 
 	x = primary->left;
 	y = primary->top;
-	width = primary->right - primary->left;
-	height = primary->bottom - primary->top;
+	width = primary->right - primary->left + 1;
+	height = primary->bottom - primary->top + 1;
 
-	if (shadow_surface_resize(screen->primary, x, y, width, height) &&
-	    shadow_surface_resize(screen->lobby, x, y, width, height))
+	WINPR_ASSERT(x >= 0);
+	WINPR_ASSERT(x <= UINT16_MAX);
+	WINPR_ASSERT(y >= 0);
+	WINPR_ASSERT(y <= UINT16_MAX);
+	WINPR_ASSERT(width >= 0);
+	WINPR_ASSERT(width <= UINT16_MAX);
+	WINPR_ASSERT(height >= 0);
+	WINPR_ASSERT(height <= UINT16_MAX);
+	if (shadow_surface_resize(screen->primary, (UINT16)x, (UINT16)y, (UINT16)width,
+	                          (UINT16)height) &&
+	    shadow_surface_resize(screen->lobby, (UINT16)x, (UINT16)y, (UINT16)width, (UINT16)height))
 	{
-		if ((width != screen->width) || (height != screen->height))
+		if (((UINT32)width != screen->width) || ((UINT32)height != screen->height))
 		{
 			/* screen size is changed. Store new size and reinit lobby */
-			screen->width = width;
-			screen->height = height;
+			screen->width = (UINT32)width;
+			screen->height = (UINT32)height;
 			shadow_client_init_lobby(screen->server);
 		}
 		return TRUE;

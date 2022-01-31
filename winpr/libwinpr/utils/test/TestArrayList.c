@@ -12,13 +12,16 @@ int TestArrayList(int argc, char* argv[])
 	wArrayList* arrayList;
 	const size_t elemsToInsert = 10;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	arrayList = ArrayList_New(TRUE);
 	if (!arrayList)
 		return -1;
 
 	for (index = 0; index < elemsToInsert; index++)
 	{
-		if (ArrayList_Add(arrayList, (void*)index) < 0)
+		if (!ArrayList_Append(arrayList, (void*)index))
 			return -1;
 	}
 

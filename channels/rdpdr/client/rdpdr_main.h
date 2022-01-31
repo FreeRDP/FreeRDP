@@ -61,7 +61,7 @@ struct rdpdr_plugin
 
 	UINT16 versionMajor;
 	UINT16 versionMinor;
-	UINT16 clientID;
+	UINT32 clientID;
 	char computerName[256];
 
 	UINT32 sequenceId;

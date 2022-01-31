@@ -153,7 +153,7 @@ static const char* x11_event_string(int event)
 
 		default:
 			return "UNKNOWN";
-	};
+	}
 }
 
 #ifdef WITH_DEBUG_X11
@@ -178,8 +178,6 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 		return FALSE;
 
 	obj = ArrayList_Object(xfc->xevents);
-	if (!obj)
-		return FALSE;
 	obj->fnObjectFree = free;
 	sprintf_s(command, sizeof(command), "%s xevent", xfc->context.settings->ActionScript);
 	actionScript = popen(command, "r");
@@ -193,7 +191,7 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 		strtok_s(buffer, "\n", &context);
 		xevent = _strdup(buffer);
 
-		if (!xevent || ArrayList_Add(xfc->xevents, xevent) < 0)
+		if (!xevent || !ArrayList_Append(xfc->xevents, xevent))
 		{
 			pclose(actionScript);
 			ArrayList_Free(xfc->xevents);
@@ -264,6 +262,37 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 
 	pclose(actionScript);
 	return TRUE;
+}
+
+void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
+{
+	rdpSettings* settings;
+	INT64 tx, ty;
+
+	if (!xfc || !xfc->context.settings || !y || !x)
+		return;
+
+	settings = xfc->context.settings;
+	tx = *x;
+	ty = *y;
+	if (!xfc->remote_app)
+	{
+#ifdef WITH_XRENDER
+
+		if (xf_picture_transform_required(xfc))
+		{
+			double xScalingFactor = xfc->scaledWidth / (double)settings->DesktopWidth;
+			double yScalingFactor = xfc->scaledHeight / (double)settings->DesktopHeight;
+			tx = ((tx + xfc->offset_x) * xScalingFactor);
+			ty = ((ty + xfc->offset_y) * yScalingFactor);
+		}
+
+#endif
+	}
+
+	CLAMP_COORDINATES(tx, ty);
+	*x = tx;
+	*y = ty;
 }
 
 void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
@@ -477,7 +506,7 @@ static BOOL xf_event_KeyPress(xfContext* xfc, const XKeyEvent* event, BOOL app)
 	char str[256];
 	WINPR_UNUSED(app);
 	XLookupString((XKeyEvent*)event, str, sizeof(str), &keysym, NULL);
-	xf_keyboard_key_press(xfc, event->keycode, keysym);
+	xf_keyboard_key_press(xfc, event, keysym);
 	return TRUE;
 }
 
@@ -487,7 +516,7 @@ static BOOL xf_event_KeyRelease(xfContext* xfc, const XKeyEvent* event, BOOL app
 	char str[256];
 	WINPR_UNUSED(app);
 	XLookupString((XKeyEvent*)event, str, sizeof(str), &keysym, NULL);
-	xf_keyboard_key_release(xfc, event->keycode, keysym);
+	xf_keyboard_key_release(xfc, event, keysym);
 	return TRUE;
 }
 
@@ -618,6 +647,8 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, const XEnterWindowEvent* event,
 
 static BOOL xf_event_LeaveNotify(xfContext* xfc, const XLeaveWindowEvent* event, BOOL app)
 {
+	if (event->mode == NotifyGrab || event->mode == NotifyUngrab)
+		return TRUE;
 	if (!app)
 	{
 		xfc->mouse_active = FALSE;
@@ -732,7 +763,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 	{
 		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
-		if (appWindow)
+		if (appWindow && (appWindow->rail_state == WINDOW_SHOW))
 		{
 			/* local restore event */
 			/* This is now handled as part of the PropertyNotify
@@ -853,7 +884,8 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				appWindow->rail_state = WINDOW_SHOW_MINIMIZED;
 				xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MINIMIZE);
 			}
-			else if (!minimized && !maxVert && !maxHorz && (appWindow->rail_state != WINDOW_SHOW) &&
+			else if (((Atom)event->atom == xfc->WM_STATE) && !minimized &&
+			         (appWindow->rail_state != WINDOW_SHOW) &&
 			         (appWindow->rail_state != WINDOW_HIDE))
 			{
 				appWindow->rail_state = WINDOW_SHOW;

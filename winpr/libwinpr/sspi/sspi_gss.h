@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SSPI_GSS_PRIVATE_H
-#define FREERDP_SSPI_GSS_PRIVATE_H
+#ifndef WINPR_SSPI_GSS_PRIVATE_H
+#define WINPR_SSPI_GSS_PRIVATE_H
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
@@ -677,4 +677,4 @@ extern "C"
 }
 #endif
 
-#endif /* FREERDP_SSPI_GSS_PRIVATE_H */
+#endif /* WINPR_SSPI_GSS_PRIVATE_H */

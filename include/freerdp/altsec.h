@@ -187,6 +187,7 @@ typedef BOOL (*pDrawGdiPlusCacheNext)(rdpContext* context,
                                       const DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next);
 typedef BOOL (*pDrawGdiPlusCacheEnd)(rdpContext* context,
                                      const DRAW_GDIPLUS_CACHE_END_ORDER* draw_gdiplus_cache_end);
+typedef BOOL (*pDrawOrderInfo)(rdpContext* context, UINT8 orderType, const char* orderName);
 
 struct rdp_altsec_update
 {
@@ -205,22 +206,9 @@ struct rdp_altsec_update
 	pDrawGdiPlusCacheFirst DrawGdiPlusCacheFirst; /* 25 */
 	pDrawGdiPlusCacheNext DrawGdiPlusCacheNext;   /* 26 */
 	pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;     /* 27 */
-	UINT32 paddingB[32 - 28];                     /* 28 */
-
-	/* internal */
-
-	CREATE_OFFSCREEN_BITMAP_ORDER create_offscreen_bitmap;
-	SWITCH_SURFACE_ORDER switch_surface;
-	CREATE_NINE_GRID_BITMAP_ORDER create_nine_grid_bitmap;
-	FRAME_MARKER_ORDER frame_marker;
-	STREAM_BITMAP_FIRST_ORDER stream_bitmap_first;
-	STREAM_BITMAP_NEXT_ORDER stream_bitmap_next;
-	DRAW_GDIPLUS_CACHE_FIRST_ORDER draw_gdiplus_cache_first;
-	DRAW_GDIPLUS_CACHE_NEXT_ORDER draw_gdiplus_cache_next;
-	DRAW_GDIPLUS_CACHE_END_ORDER draw_gdiplus_cache_end;
-	DRAW_GDIPLUS_FIRST_ORDER draw_gdiplus_first;
-	DRAW_GDIPLUS_NEXT_ORDER draw_gdiplus_next;
-	DRAW_GDIPLUS_END_ORDER draw_gdiplus_end;
+	/* Statistics callback */
+	pDrawOrderInfo DrawOrderInfo; /* 28 */
+	UINT32 paddingB[32 - 29];     /* 29 */
 };
 typedef struct rdp_altsec_update rdpAltSecUpdate;
 

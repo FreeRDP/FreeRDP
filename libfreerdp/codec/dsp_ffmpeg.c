@@ -270,6 +270,8 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
 			break;
 	}
 
+	context->context->max_b_frames = 1;
+	context->context->delay = 0;
 	context->context->channels = format->nChannels;
 	context->context->channel_layout = layout;
 	context->context->sample_rate = format->nSamplesPerSec;
@@ -571,7 +573,9 @@ BOOL freerdp_dsp_ffmpeg_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 FREERDP_DSP_CONTEXT* freerdp_dsp_ffmpeg_context_new(BOOL encode)
 {
 	FREERDP_DSP_CONTEXT* context;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 10, 100)
 	avcodec_register_all();
+#endif
 	context = calloc(1, sizeof(FREERDP_DSP_CONTEXT));
 
 	if (!context)
@@ -667,7 +671,9 @@ BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 	if (!context || !srcFormat || !data || !out || context->encoder)
 		return FALSE;
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(context->packet);
+#endif
 	context->packet->data = (uint8_t*)data;
 	context->packet->size = length;
 	return ffmpeg_decode(context->context, context->packet, context->frame, context->rcontext,

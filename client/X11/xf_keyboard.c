@@ -43,6 +43,8 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
+static void xf_keyboard_send_key(xfContext* xfc, BOOL down, const XKeyEvent* ev);
+
 static BOOL xf_sync_kbd_state(xfContext* xfc)
 {
 	const UINT32 syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
@@ -61,7 +63,7 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	char* keyCombination;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
-	xfc->actionScriptExists = PathFileExistsA(xfc->context.settings->ActionScript);
+	xfc->actionScriptExists = winpr_PathFileExists(xfc->context.settings->ActionScript);
 
 	if (!xfc->actionScriptExists)
 		return FALSE;
@@ -72,8 +74,6 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 		return FALSE;
 
 	obj = ArrayList_Object(xfc->keyCombinations);
-	if (!obj)
-		return FALSE;
 	obj->fnObjectFree = free;
 	sprintf_s(command, sizeof(command), "%s key", xfc->context.settings->ActionScript);
 	keyScript = popen(command, "r");
@@ -90,7 +90,7 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 		strtok_s(buffer, "\n", &context);
 		keyCombination = _strdup(buffer);
 
-		if (!keyCombination || ArrayList_Add(xfc->keyCombinations, keyCombination) < 0)
+		if (!keyCombination || !ArrayList_Append(xfc->keyCombinations, keyCombination))
 		{
 			ArrayList_Free(xfc->keyCombinations);
 			xfc->actionScriptExists = FALSE;
@@ -119,7 +119,8 @@ BOOL xf_keyboard_init(xfContext* xfc)
 {
 	xf_keyboard_clear(xfc);
 	xfc->KeyboardLayout = xfc->context.settings->KeyboardLayout;
-	xfc->KeyboardLayout = freerdp_keyboard_init(xfc->KeyboardLayout);
+	xfc->KeyboardLayout =
+	    freerdp_keyboard_init_ex(xfc->KeyboardLayout, xfc->context.settings->KeyboardRemappingList);
 	xfc->context.settings->KeyboardLayout = xfc->KeyboardLayout;
 
 	if (xfc->modifierMap)
@@ -143,27 +144,33 @@ void xf_keyboard_free(xfContext* xfc)
 	xf_keyboard_action_script_free(xfc);
 }
 
-void xf_keyboard_key_press(xfContext* xfc, BYTE keycode, KeySym keysym)
+void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym)
 {
-	if (keycode < 8)
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
+	if (event->keycode < 8)
 		return;
 
-	xfc->KeyboardState[keycode] = TRUE;
+	xfc->KeyboardState[event->keycode] = TRUE;
 
 	if (xf_keyboard_handle_special_keys(xfc, keysym))
 		return;
 
-	xf_keyboard_send_key(xfc, TRUE, keycode);
+	xf_keyboard_send_key(xfc, TRUE, event);
 }
 
-void xf_keyboard_key_release(xfContext* xfc, BYTE keycode, KeySym keysym)
+void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keysym)
 {
-	if (keycode < 8)
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
+	if (event->keycode < 8)
 		return;
 
-	xfc->KeyboardState[keycode] = FALSE;
+	xfc->KeyboardState[event->keycode] = FALSE;
 	xf_keyboard_handle_special_keys_release(xfc, keysym);
-	xf_keyboard_send_key(xfc, FALSE, keycode);
+	xf_keyboard_send_key(xfc, FALSE, event);
 }
 
 void xf_keyboard_release_all_keypress(xfContext* xfc)
@@ -195,19 +202,20 @@ BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
 	return xfc->KeyboardState[keycode];
 }
 
-void xf_keyboard_send_key(xfContext* xfc, BOOL down, BYTE keycode)
+void xf_keyboard_send_key(xfContext* xfc, BOOL down, const XKeyEvent* event)
 {
 	DWORD rdp_scancode;
 	rdpInput* input;
-	input = xfc->context.input;
-	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
 
-	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
-	{
-		WLog_ERR(TAG, "Unknown key with X keycode 0x%02" PRIx8 "", keycode);
-	}
-	else if (rdp_scancode == RDP_SCANCODE_PAUSE && !xf_keyboard_key_pressed(xfc, XK_Control_L) &&
-	         !xf_keyboard_key_pressed(xfc, XK_Control_R))
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
+	input = xfc->context.input;
+	WINPR_ASSERT(input);
+
+	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(event->keycode);
+	if (rdp_scancode == RDP_SCANCODE_PAUSE && !xf_keyboard_key_pressed(xfc, XK_Control_L) &&
+	    !xf_keyboard_key_pressed(xfc, XK_Control_R))
 	{
 		/* Pause without Ctrl has to be sent as a series of keycodes
 		 * in a single input PDU.  Pause only happens on "press";
@@ -220,7 +228,48 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BYTE keycode)
 	}
 	else
 	{
-		freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
+		BOOL rc;
+		if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_UnicodeInput))
+		{
+			wchar_t buffer[32] = { 0 };
+			int rc = 0;
+			int xwc = -1;
+
+			switch (rdp_scancode)
+			{
+				case RDP_SCANCODE_RETURN:
+					break;
+				default:
+				{
+					XIM xim = XOpenIM(xfc->display, 0, 0, 0);
+					XIC xic =
+					    XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, NULL);
+
+					KeySym ignore = { 0 };
+					Status return_status;
+					XKeyEvent ev = *event;
+					ev.type = KeyPress;
+					xwc = XwcLookupString(xic, &ev, buffer, ARRAYSIZE(buffer), &ignore,
+					                      &return_status);
+				}
+				break;
+			}
+
+			if (xwc < 1)
+			{
+				if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
+					WLog_ERR(TAG, "Unknown key with X keycode 0x%02" PRIx8 "", event->keycode);
+				else
+					rc = freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
+			}
+			else
+				rc = freerdp_input_send_unicode_keyboard_event(input, down ? KBD_FLAGS_RELEASE : 0,
+				                                               buffer[0]);
+		}
+		else if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
+			WLog_ERR(TAG, "Unknown key with X keycode 0x%02" PRIx8 "", event->keycode);
+		else
+			rc = freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
 
 		if ((rdp_scancode == RDP_SCANCODE_CAPSLOCK) && (down == FALSE))
 		{

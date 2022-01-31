@@ -36,10 +36,10 @@ typedef UINT (*psRdpsndServerInitialize)(RdpsndServerContext* context, BOOL ownT
 typedef UINT (*psRdpsndServerSelectFormat)(RdpsndServerContext* context,
                                            UINT16 client_format_index);
 typedef UINT (*psRdpsndServerSendSamples)(RdpsndServerContext* context, const void* buf,
-                                          int nframes, UINT16 wTimestamp);
+                                          size_t nframes, UINT16 wTimestamp);
 typedef UINT (*psRdpsndServerConfirmBlock)(RdpsndServerContext* context, BYTE confirmBlockNum,
                                            UINT16 wtimestamp);
-typedef UINT (*psRdpsndServerSetVolume)(RdpsndServerContext* context, int left, int right);
+typedef UINT (*psRdpsndServerSetVolume)(RdpsndServerContext* context, UINT16 left, UINT16 right);
 typedef UINT (*psRdpsndServerClose)(RdpsndServerContext* context);
 
 typedef void (*psRdpsndServerActivated)(RdpsndServerContext* context);
@@ -56,6 +56,9 @@ struct _rdpsnd_server_context
 	/* Server self-defined pointer. */
 	void* data;
 
+	/* Server to request to use dynamic virtual channel. */
+	BOOL use_dynamic_virtual_channel;
+
 	/* Server supported formats. Set by server. */
 	AUDIO_FORMAT* server_formats;
 	size_t num_server_formats;
@@ -64,7 +67,7 @@ struct _rdpsnd_server_context
 	AUDIO_FORMAT* src_format;
 
 	/* Server audio latency, or buffer size, in milli-seconds. Set by server. */
-	int latency;
+	UINT32 latency;
 
 	/* Client supported formats. */
 	AUDIO_FORMAT* client_formats;

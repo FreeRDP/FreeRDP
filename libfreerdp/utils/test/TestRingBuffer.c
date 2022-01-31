@@ -89,6 +89,9 @@ int TestRingBuffer(int argc, char* argv[])
 	int i /*, chunkNb, counter*/;
 	DataChunk chunks[2];
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (!ringbuffer_init(&ringBuffer, 10))
 	{
 		fprintf(stderr, "unable to initialize ringbuffer\n");

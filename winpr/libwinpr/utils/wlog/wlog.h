@@ -71,15 +71,17 @@ struct _wLog
 	BOOL IsRoot;
 	BOOL inherit;
 	LPSTR* Names;
-	DWORD NameCount;
+	size_t NameCount;
 	wLogAppender* Appender;
 
 	wLog* Parent;
 	wLog** Children;
 	DWORD ChildrenCount;
 	DWORD ChildrenSize;
+	CRITICAL_SECTION lock;
 };
 
+extern const char* WLOG_LEVELS[7];
 BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message);
 
 #include "wlog/Layout.h"

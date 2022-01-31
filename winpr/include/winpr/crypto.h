@@ -35,7 +35,7 @@
 #define ALG_TYPE_RESERVED7 (7 << 9)
 #endif
 
-#if (NTDDI_VERSION <= 0x05010200)
+#if !defined(NTDDI_VERSION) || (NTDDI_VERSION <= 0x05010200)
 #define ALG_SID_SHA_256 12
 #define ALG_SID_SHA_384 13
 #define ALG_SID_SHA_512 14
@@ -274,6 +274,16 @@ typedef struct _CERT_CONTEXT
 	HCERTSTORE hCertStore;
 } CERT_CONTEXT, *PCERT_CONTEXT;
 typedef const CERT_CONTEXT* PCCERT_CONTEXT;
+
+#if !defined(AT_KEYEXCHANGE)
+#define AT_KEYEXCHANGE (1)
+#endif
+#if !defined(AT_SIGNATURE)
+#define AT_SIGNATURE (2)
+#endif
+#if !defined(AT_AUTHENTICATE)
+#define AT_AUTHENTICATE (3)
+#endif
 
 #define CERT_ENCODING_TYPE_MASK 0x0000FFFF
 #define CMSG_ENCODING_TYPE_MASK 0xFFFF0000

@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <winpr/collections.h>
 
@@ -46,12 +47,14 @@ struct _wObjectPool
 
 static void ObjectPool_Lock(wObjectPool* pool)
 {
+	WINPR_ASSERT(pool);
 	if (pool->synchronized)
 		EnterCriticalSection(&pool->lock);
 }
 
 static void ObjectPool_Unlock(wObjectPool* pool)
 {
+	WINPR_ASSERT(pool);
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
 }
@@ -116,8 +119,7 @@ out:
 
 wObject* ObjectPool_Object(wObjectPool* pool)
 {
-	if (!pool)
-		return NULL;
+	WINPR_ASSERT(pool);
 	return &pool->object;
 }
 

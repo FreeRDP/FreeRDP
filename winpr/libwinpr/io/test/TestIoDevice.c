@@ -12,6 +12,9 @@ int TestIoDevice(int argc, char* argv[])
 	UNICODE_STRING uString;
 	PDEVICE_OBJECT_EX pDeviceObject = NULL;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	_RtlInitAnsiString(&aString, "\\Device\\Example");
 	_RtlAnsiStringToUnicodeString(&uString, &aString, TRUE);
 

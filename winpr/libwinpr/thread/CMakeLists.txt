@@ -16,6 +16,8 @@
 # limitations under the License.
 
 winpr_module_add(
+	apc.h
+	apc.c
 	argv.c
 	process.c
 	processor.c

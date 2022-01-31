@@ -26,6 +26,7 @@
 #include <stdarg.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
 #include <winpr/environment.h>
@@ -39,8 +40,6 @@
 #include <sys/syscall.h>
 #endif
 
-extern const char* WLOG_LEVELS[7];
-
 /**
  * Log Layout
  */
@@ -48,6 +47,7 @@ extern const char* WLOG_LEVELS[7];
 static void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message, const char* format,
                                       va_list args)
 {
+	WINPR_ASSERT(message);
 	if (!strchr(format, '%'))
 		sprintf_s(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, "%s", format);
 	else
@@ -70,6 +70,10 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 	void* args[32];
 	char format[256];
 	SYSTEMTIME localTime;
+
+	WINPR_ASSERT(layout);
+	WINPR_ASSERT(message);
+
 	GetLocalTime(&localTime);
 	index = 0;
 	p = (char*)layout->FormatString;
@@ -98,7 +102,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 				}
 				else if ((p[0] == 'f') && (p[1] == 'l')) /* file */
 				{
-					char* file;
+					const char* file;
 					file = strrchr(message->FileName, '/');
 
 					if (!file)
@@ -107,7 +111,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					if (file)
 						file++;
 					else
-						file = (char*)message->FileName;
+						file = (const char*)message->FileName;
 
 					args[argc++] = (void*)file;
 					format[index++] = '%';

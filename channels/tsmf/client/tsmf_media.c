@@ -373,7 +373,7 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid,
 		goto error_add;
 	obj->fnObjectFree = _tsmf_stream_free;
 
-	if (ArrayList_Add(presentation_list, presentation) < 0)
+	if (!ArrayList_Append(presentation_list, presentation))
 		goto error_add;
 
 	return presentation;
@@ -1279,7 +1279,7 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
 	if (!stream->ack_thread)
 		goto error_ack_thread;
 
-	if (ArrayList_Add(presentation->stream_list, stream) < 0)
+	if (!ArrayList_Append(presentation->stream_list, stream))
 		goto error_add;
 
 	stream->rdpcontext = rdpcontext;

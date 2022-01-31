@@ -320,8 +320,7 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 
 static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 {
-	UINT16 x;
-	UINT16 y;
+	UINT32 y;
 	BYTE* co_dst;
 	BYTE* cg_dst;
 	INT8* co_src0;
@@ -338,6 +337,7 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 
 	for (y = 0; y<tempHeight>> 1; y++)
 	{
+		UINT32 x;
 		co_dst = context->priv->PlaneBuffers[1] + y * (tempWidth >> 1);
 		cg_dst = context->priv->PlaneBuffers[2] + y * (tempWidth >> 1);
 		co_src0 = (INT8*)context->priv->PlaneBuffers[1] + (y << 1) * tempWidth;
@@ -385,6 +385,6 @@ void nsc_init_sse2(NSC_CONTEXT* context)
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 		return;
 
-	PROFILER_RENAME(context->priv->prof_nsc_encode, "nsc_encode_sse2");
+	PROFILER_RENAME(context->priv->prof_nsc_encode, "nsc_encode_sse2")
 	context->encode = nsc_encode_sse2;
 }

@@ -68,9 +68,12 @@ typedef struct _AudinOSSDevice
 	rdpContext* rdpcontext;
 } AudinOSSDevice;
 
-#define OSS_LOG_ERR(_text, _error) \
-	if (_error != 0)               \
-		WLog_ERR(TAG, "%s: %i - %s\n", _text, _error, strerror(_error));
+#define OSS_LOG_ERR(_text, _error)                                           \
+	do                                                                       \
+	{                                                                        \
+		if (_error != 0)                                                     \
+			WLog_ERR(TAG, "%s: %i - %s\n", _text, _error, strerror(_error)); \
+	} while (0)
 
 static UINT32 audin_oss_get_format(const AUDIO_FORMAT* format)
 {
@@ -380,12 +383,12 @@ static UINT audin_oss_free(IAudinDevice* device)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, ADDIN_ARGV* args)
+static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV* args)
 {
 	int status;
 	char *str_num, *eptr;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 	COMMAND_LINE_ARGUMENT_A audin_oss_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                           NULL, NULL, -1, NULL, "audio device name" },
@@ -453,7 +456,7 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, ADDIN_ARGV* args)
  */
 UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	AudinOSSDevice* oss;
 	UINT error;
 	oss = (AudinOSSDevice*)calloc(1, sizeof(AudinOSSDevice));

@@ -47,12 +47,6 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	formatList.msgType = CB_FORMAT_LIST;
 	formatList.msgFlags = msgFlags;
 	formatList.dataLen = dataLen;
@@ -88,12 +82,6 @@ UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatListResponse");
 
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	formatListResponse.msgType = CB_FORMAT_LIST_RESPONSE;
 	formatListResponse.msgFlags = msgFlags;
 	formatListResponse.dataLen = dataLen;
@@ -118,12 +106,6 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 	UINT error = CHANNEL_RC_OK;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataRequest");
-
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
 
 	formatDataRequest.msgType = CB_FORMAT_DATA_REQUEST;
 	formatDataRequest.msgFlags = msgFlags;
@@ -153,12 +135,6 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 	UINT error = CHANNEL_RC_OK;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataResponse");
-
-	if (!context->custom)
-	{
-		WLog_ERR(TAG, "context->custom not set!");
-		return ERROR_INTERNAL_ERROR;
-	}
 
 	formatDataResponse.msgType = CB_FORMAT_DATA_RESPONSE;
 	formatDataResponse.msgFlags = msgFlags;
@@ -292,12 +268,26 @@ UINT cliprdr_serialize_file_list(const FILEDESCRIPTORW* file_descriptor_array,
                                  UINT32 file_descriptor_count, BYTE** format_data,
                                  UINT32* format_data_length)
 {
+	return cliprdr_serialize_file_list_ex(CB_STREAM_FILECLIP_ENABLED, file_descriptor_array,
+	                                      file_descriptor_count, format_data, format_data_length);
+}
+
+UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_descriptor_array,
+                                    UINT32 file_descriptor_count, BYTE** format_data,
+                                    UINT32* format_data_length)
+{
 	UINT result = NO_ERROR;
 	UINT32 i;
 	wStream* s = NULL;
 
 	if (!file_descriptor_array || !format_data || !format_data_length)
 		return ERROR_BAD_ARGUMENTS;
+
+	if ((flags & CB_STREAM_FILECLIP_ENABLED) == 0)
+	{
+		WLog_WARN(TAG, "No file clipboard support annouonced!");
+		return ERROR_BAD_ARGUMENTS;
+	}
 
 	s = Stream_New(NULL, 4 + file_descriptor_count * CLIPRDR_FILEDESCRIPTOR_SIZE);
 	if (!s)
@@ -318,11 +308,14 @@ UINT cliprdr_serialize_file_list(const FILEDESCRIPTORW* file_descriptor_array,
 		 *
 		 * https://support.microsoft.com/en-us/help/2258090
 		 */
-		if ((file->nFileSizeHigh > 0) || (file->nFileSizeLow >= CLIPRDR_MAX_FILE_SIZE))
+		if ((flags & CB_HUGE_FILE_SUPPORT_ENABLED) == 0)
 		{
-			WLog_ERR(TAG, "cliprdr does not support files over 2 GB");
-			result = ERROR_FILE_TOO_LARGE;
-			goto error;
+			if ((file->nFileSizeHigh > 0) || (file->nFileSizeLow >= CLIPRDR_MAX_FILE_SIZE))
+			{
+				WLog_ERR(TAG, "cliprdr does not support files over 2 GB");
+				result = ERROR_FILE_TOO_LARGE;
+				goto error;
+			}
 		}
 
 		Stream_Write_UINT32(s, file->dwFlags);          /* flags (4 bytes) */

@@ -1,8 +1,8 @@
 
 /*
 #define DEFINE_UNICODE		FALSE
-#define _PATH_SEPARATOR_CHR	'\\'
-#define _PATH_SEPARATOR_STR	"\\"
+#define CUR_PATH_SEPARATOR_CHR	'\\'
+#define CUR_PATH_SEPARATOR_STR	"\\"
 #define PATH_ALLOC_COMBINE	PathAllocCombineA
 */
 
@@ -51,17 +51,17 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFla
 	if (pszPathInLength < 3)
 		return E_FAIL;
 
-	backslashIn = (pszPathIn[pszPathInLength - 1] == _PATH_SEPARATOR_CHR) ? TRUE : FALSE;
-	backslashMore = (pszMore[0] == _PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	backslashIn = (pszPathIn[pszPathInLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	backslashMore = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
 	if (backslashMore)
 	{
-		if ((pszPathIn[1] == ':') && (pszPathIn[2] == _PATH_SEPARATOR_CHR))
+		if ((pszPathIn[1] == ':') && (pszPathIn[2] == CUR_PATH_SEPARATOR_CHR))
 		{
 			size_t sizeOfBuffer;
 			pszPathOutLength = 2 + pszMoreLength;
 			sizeOfBuffer = (pszPathOutLength + 1) * 2;
-			pszPathOut = (PWSTR)HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
+			pszPathOut = (PWSTR)calloc(sizeOfBuffer, 2);
 
 			if (!pszPathOut)
 				return E_OUTOFMEMORY;
@@ -76,7 +76,7 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFla
 		size_t sizeOfBuffer;
 		pszPathOutLength = pszPathInLength + pszMoreLength;
 		sizeOfBuffer = (pszPathOutLength + 1) * 2;
-		pszPathOut = (PWSTR)HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
+		pszPathOut = (PWSTR)calloc(sizeOfBuffer, 2);
 
 		if (!pszPathOut)
 			return E_OUTOFMEMORY;
@@ -84,7 +84,7 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFla
 		if (backslashIn)
 			swprintf_s(pszPathOut, sizeOfBuffer, L"%s%s", pszPathIn, pszMore);
 		else
-			swprintf_s(pszPathOut, sizeOfBuffer, L"%s" _PATH_SEPARATOR_STR L"%s", pszPathIn,
+			swprintf_s(pszPathOut, sizeOfBuffer, L"%s" CUR_PATH_SEPARATOR_STR L"%s", pszPathIn,
 			           pszMore);
 
 		*ppszPathOut = pszPathOut;
@@ -126,17 +126,17 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags
 	if (pszPathInLength < 3)
 		return E_FAIL;
 
-	backslashIn = (pszPathIn[pszPathInLength - 1] == _PATH_SEPARATOR_CHR) ? TRUE : FALSE;
-	backslashMore = (pszMore[0] == _PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	backslashIn = (pszPathIn[pszPathInLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	backslashMore = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
 	if (backslashMore)
 	{
-		if ((pszPathIn[1] == ':') && (pszPathIn[2] == _PATH_SEPARATOR_CHR))
+		if ((pszPathIn[1] == ':') && (pszPathIn[2] == CUR_PATH_SEPARATOR_CHR))
 		{
 			size_t sizeOfBuffer;
 			pszPathOutLength = 2 + pszMoreLength;
 			sizeOfBuffer = (pszPathOutLength + 1) * 2;
-			pszPathOut = (PSTR)HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
+			pszPathOut = (PSTR)calloc(sizeOfBuffer, 2);
 
 			if (!pszPathOut)
 				return E_OUTOFMEMORY;
@@ -151,7 +151,7 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags
 		size_t sizeOfBuffer;
 		pszPathOutLength = pszPathInLength + pszMoreLength;
 		sizeOfBuffer = (pszPathOutLength + 1) * 2;
-		pszPathOut = (PSTR)HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
+		pszPathOut = (PSTR)calloc(sizeOfBuffer, 2);
 
 		if (!pszPathOut)
 			return E_OUTOFMEMORY;
@@ -159,7 +159,8 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags
 		if (backslashIn)
 			sprintf_s(pszPathOut, sizeOfBuffer, "%s%s", pszPathIn, pszMore);
 		else
-			sprintf_s(pszPathOut, sizeOfBuffer, "%s" _PATH_SEPARATOR_STR "%s", pszPathIn, pszMore);
+			sprintf_s(pszPathOut, sizeOfBuffer, "%s" CUR_PATH_SEPARATOR_STR "%s", pszPathIn,
+			          pszMore);
 
 		*ppszPathOut = pszPathOut;
 		return S_OK;
@@ -172,7 +173,7 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags
 
 /*
 #undef DEFINE_UNICODE
-#undef _PATH_SEPARATOR_CHR
-#undef _PATH_SEPARATOR_STR
+#undef CUR_PATH_SEPARATOR_CHR
+#undef CUR_PATH_SEPARATOR_STR
 #undef PATH_ALLOC_COMBINE
 */

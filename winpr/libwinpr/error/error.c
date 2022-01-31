@@ -44,7 +44,7 @@ DWORD GetLastError(VOID)
 	PTEB pt = NtCurrentTeb();
 	if (pt)
 	{
-		return NtCurrentTeb()->LastErrorValue;
+		return pt->LastErrorValue;
 	}
 	return ERROR_OUTOFMEMORY;
 }

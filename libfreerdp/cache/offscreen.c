@@ -24,7 +24,7 @@
 #include <stdio.h>
 
 #include <winpr/crt.h>
-
+#include <winpr/assert.h>
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>
@@ -42,10 +42,7 @@ struct rdp_offscreen_cache
 	rdpBitmap** entries;   /* 2 */
 	UINT32 currentSurface; /* 3 */
 
-	/* internal */
-
-	rdpUpdate* update;
-	rdpSettings* settings;
+	rdpContext* context;
 };
 
 static void offscreen_cache_put(rdpOffscreenCache* offscreen_cache, UINT32 index,
@@ -129,6 +126,8 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index)
 {
 	rdpBitmap* bitmap;
 
+	WINPR_ASSERT(offscreenCache);
+
 	if (index >= offscreenCache->maxEntries)
 	{
 		WLog_ERR(TAG, "invalid offscreen bitmap index: 0x%08" PRIX32 "", index);
@@ -148,6 +147,8 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index)
 
 void offscreen_cache_put(rdpOffscreenCache* offscreenCache, UINT32 index, rdpBitmap* bitmap)
 {
+	WINPR_ASSERT(offscreenCache);
+
 	if (index >= offscreenCache->maxEntries)
 	{
 		WLog_ERR(TAG, "invalid offscreen bitmap index: 0x%08" PRIX32 "", index);
@@ -162,6 +163,8 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 {
 	rdpBitmap* prevBitmap;
 
+	WINPR_ASSERT(offscreenCache);
+
 	if (index >= offscreenCache->maxEntries)
 	{
 		WLog_ERR(TAG, "invalid offscreen bitmap index (delete): 0x%08" PRIX32 "", index);
@@ -171,27 +174,36 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 	prevBitmap = offscreenCache->entries[index];
 
 	if (prevBitmap != NULL)
-		Bitmap_Free(offscreenCache->update->context, prevBitmap);
+		Bitmap_Free(offscreenCache->context, prevBitmap);
 
 	offscreenCache->entries[index] = NULL;
 }
 
 void offscreen_cache_register_callbacks(rdpUpdate* update)
 {
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(update->altsec);
+
 	update->altsec->CreateOffscreenBitmap = update_gdi_create_offscreen_bitmap;
 	update->altsec->SwitchSurface = update_gdi_switch_surface;
 }
 
-rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings)
+rdpOffscreenCache* offscreen_cache_new(rdpContext* context)
 {
 	rdpOffscreenCache* offscreenCache;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
 	offscreenCache = (rdpOffscreenCache*)calloc(1, sizeof(rdpOffscreenCache));
 
 	if (!offscreenCache)
 		return NULL;
 
-	offscreenCache->settings = settings;
-	offscreenCache->update = ((freerdp*)settings->instance)->update;
+	offscreenCache->context = context;
 	offscreenCache->currentSurface = SCREEN_BITMAP_SURFACE;
 	offscreenCache->maxSize = 7680;
 	offscreenCache->maxEntries = 2000;
@@ -210,15 +222,15 @@ rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings)
 
 void offscreen_cache_free(rdpOffscreenCache* offscreenCache)
 {
-	int i;
+	size_t i;
 	rdpBitmap* bitmap;
 
 	if (offscreenCache)
 	{
-		for (i = 0; i < (int)offscreenCache->maxEntries; i++)
+		for (i = 0; i < offscreenCache->maxEntries; i++)
 		{
 			bitmap = offscreenCache->entries[i];
-			Bitmap_Free(offscreenCache->update->context, bitmap);
+			Bitmap_Free(offscreenCache->context, bitmap);
 		}
 
 		free(offscreenCache->entries);

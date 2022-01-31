@@ -5,7 +5,8 @@
 
 static DWORD WINAPI test_thread(LPVOID arg)
 {
-	Sleep(1000);
+	WINPR_UNUSED(arg);
+	Sleep(100);
 	ExitThread(0);
 	return 0;
 }
@@ -14,6 +15,10 @@ int TestSynchThread(int argc, char* argv[])
 {
 	DWORD rc;
 	HANDLE thread;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	thread = CreateThread(NULL, 0, test_thread, NULL, 0, NULL);
 
 	if (!thread)
@@ -64,7 +69,7 @@ int TestSynchThread(int argc, char* argv[])
 	}
 
 	/* TryJoin should now fail. */
-	rc = WaitForSingleObject(thread, 50);
+	rc = WaitForSingleObject(thread, 10);
 
 	if (WAIT_TIMEOUT != rc)
 	{

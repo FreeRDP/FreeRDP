@@ -20,7 +20,7 @@
 #include <winpr/stream.h>
 #include <freerdp/settings.h>
 
-#include "pf_context.h"
+#include <freerdp/server/proxy/proxy_context.h>
 
 /* protocol message sizes */
 #define HEADER_SIZE 6

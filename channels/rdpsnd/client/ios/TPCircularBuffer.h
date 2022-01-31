@@ -45,7 +45,7 @@
 
 #include <libkern/OSAtomic.h>
 #include <string.h>
-#include <assert.h>
+#include <winpr/assert.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -124,7 +124,7 @@ extern "C"
 	{
 		buffer->tail = (buffer->tail + amount) % buffer->length;
 		OSAtomicAdd32Barrier(-amount, &buffer->fillCount);
-		assert(buffer->fillCount >= 0);
+		WINPR_ASSERT(buffer->fillCount >= 0);
 	}
 
 	/*!
@@ -136,7 +136,7 @@ extern "C"
 	{
 		buffer->tail = (buffer->tail + amount) % buffer->length;
 		buffer->fillCount -= amount;
-		assert(buffer->fillCount >= 0);
+		WINPR_ASSERT(buffer->fillCount >= 0);
 	}
 
 	/*!
@@ -173,7 +173,7 @@ extern "C"
 	{
 		buffer->head = (buffer->head + amount) % buffer->length;
 		OSAtomicAdd32Barrier(amount, &buffer->fillCount);
-		assert(buffer->fillCount <= buffer->length);
+		WINPR_ASSERT(buffer->fillCount <= buffer->length);
 	}
 
 	/*!
@@ -185,7 +185,7 @@ extern "C"
 	{
 		buffer->head = (buffer->head + amount) % buffer->length;
 		buffer->fillCount += amount;
-		assert(buffer->fillCount <= buffer->length);
+		WINPR_ASSERT(buffer->fillCount <= buffer->length);
 	}
 
 	/*!

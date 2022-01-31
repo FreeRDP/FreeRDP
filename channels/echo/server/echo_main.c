@@ -34,6 +34,7 @@
 #include <winpr/sysinfo.h>
 
 #include <freerdp/server/echo.h>
+#include <freerdp/channels/echo.h>
 #include <freerdp/channels/log.h>
 
 #define TAG CHANNELS_TAG("echo.server")
@@ -87,8 +88,8 @@ static UINT echo_server_open_channel(echo_server* echo)
 			return Error;
 		}
 
-		echo->echo_channel =
-		    WTSVirtualChannelOpenEx(echo->SessionId, "ECHO", WTS_CHANNEL_OPTION_DYNAMIC);
+		echo->echo_channel = WTSVirtualChannelOpenEx(echo->SessionId, ECHO_DVC_CHANNEL_NAME,
+		                                             WTS_CHANNEL_OPTION_DYNAMIC);
 
 		if (echo->echo_channel)
 			break;

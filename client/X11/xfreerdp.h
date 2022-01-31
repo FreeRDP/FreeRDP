@@ -32,6 +32,10 @@ typedef struct xf_context xfContext;
 #include <X11/Xcursor/Xcursor.h>
 #endif
 
+#ifdef WITH_XI
+#include <X11/extensions/XInput2.h>
+#endif
+
 #include <freerdp/api.h>
 
 #include "xf_window.h"
@@ -119,6 +123,21 @@ typedef struct
 	int button;
 	UINT16 flags;
 } button_map;
+
+#if defined(WITH_XI)
+#define MAX_CONTACTS 20
+
+typedef struct touch_contact
+{
+	int id;
+	int count;
+	double pos_x;
+	double pos_y;
+	double last_x;
+	double last_y;
+
+} touchContact;
+#endif
 
 struct xf_context
 {
@@ -216,7 +235,7 @@ struct xf_context
 	Atom _NET_WORKAREA;
 
 	Atom _NET_SUPPORTED;
-	ATOM _NET_SUPPORTING_WM_CHECK;
+	Atom _NET_SUPPORTING_WM_CHECK;
 
 	Atom _NET_WM_STATE;
 	Atom _NET_WM_STATE_FULLSCREEN;
@@ -270,6 +289,18 @@ struct xf_context
 	UINT32 locked;
 	BOOL firstPressRightCtrl;
 	BOOL ungrabKeyboardWithRightCtrl;
+
+#if defined(WITH_XI)
+	touchContact contacts[MAX_CONTACTS];
+	int active_contacts;
+	int lastEvType;
+	XIDeviceEvent lastEvent;
+	double firstDist;
+	double lastDist;
+	double z_vector;
+	double px_vector;
+	double py_vector;
+#endif
 };
 
 BOOL xf_create_window(xfContext* xfc);
@@ -318,12 +349,38 @@ enum XF_EXIT_CODE
 	XF_EXIT_CONN_FAILED = 131,
 	XF_EXIT_AUTH_FAILURE = 132,
 	XF_EXIT_NEGO_FAILURE = 133,
+	XF_EXIT_LOGON_FAILURE = 134,
+	XF_EXIT_ACCOUNT_LOCKED_OUT = 135,
+	XF_EXIT_PRE_CONNECT_FAILED = 136,
+	XF_EXIT_CONNECT_UNDEFINED = 137,
+	XF_EXIT_POST_CONNECT_FAILED = 138,
+	XF_EXIT_DNS_ERROR = 139,
+	XF_EXIT_DNS_NAME_NOT_FOUND = 140,
+	XF_EXIT_CONNECT_FAILED = 141,
+	XF_EXIT_MCS_CONNECT_INITIAL_ERROR = 142,
+	XF_EXIT_TLS_CONNECT_FAILED = 143,
+	XF_EXIT_INSUFFICIENT_PRIVILEGES = 144,
+	XF_EXIT_CONNECT_CANCELLED = 145,
+	XF_EXIT_SECURITY_NEGO_CONNECT_FAILED = 146,
+	XF_EXIT_CONNECT_TRANSPORT_FAILED = 147,
+	XF_EXIT_CONNECT_PASSWORD_EXPIRED = 148,
+	XF_EXIT_CONNECT_PASSWORD_MUST_CHANGE = 149,
+	XF_EXIT_CONNECT_KDC_UNREACHABLE = 150,
+	XF_EXIT_CONNECT_ACCOUNT_DISABLED = 151,
+	XF_EXIT_CONNECT_PASSWORD_CERTAINLY_EXPIRED = 152,
+	XF_EXIT_CONNECT_CLIENT_REVOKED = 153,
+	XF_EXIT_CONNECT_WRONG_PASSWORD = 154,
+	XF_EXIT_CONNECT_ACCESS_DENIED = 155,
+	XF_EXIT_CONNECT_ACCOUNT_RESTRICTION = 156,
+	XF_EXIT_CONNECT_ACCOUNT_EXPIRED = 157,
+	XF_EXIT_CONNECT_LOGON_TYPE_NOT_GRANTED = 158,
+	XF_EXIT_CONNECT_NO_OR_MISSING_CREDENTIALS = 159,
 
 	XF_EXIT_UNKNOWN = 255,
 };
 
-#define xf_lock_x11(xfc) xf_lock_x11_(xfc, __FUNCTION__);
-#define xf_unlock_x11(xfc) xf_unlock_x11_(xfc, __FUNCTION__);
+#define xf_lock_x11(xfc) xf_lock_x11_(xfc, __FUNCTION__)
+#define xf_unlock_x11(xfc) xf_unlock_x11_(xfc, __FUNCTION__)
 
 void xf_lock_x11_(xfContext* xfc, const char* fkt);
 void xf_unlock_x11_(xfContext* xfc, const char* fkt);

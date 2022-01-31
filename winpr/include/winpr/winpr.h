@@ -49,13 +49,21 @@
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 #define WINPR_DEPRECATED(obj) __declspec(deprecated) obj
+#define WINPR_DEPRECATED_VAR(text, obj) __declspec(deprecated(text)) obj
+#define WINPR_NORETURN(obj) __declspec(noreturn) obj
 #elif defined(__GNUC__)
 #define WINPR_DEPRECATED(obj) obj __attribute__((deprecated))
+#define WINPR_DEPRECATED_VAR(text, obj) obj __attribute__((deprecated(text)))
+#define WINPR_NORETURN(obj) __attribute__((__noreturn__)) obj
 #else
 #define WINPR_DEPRECATED(obj) obj
+#define WINPR_DEPRECATED_VAR(text, obj) obj
+#define WINPR_NORETURN(obj) obj
 #endif
 
-/* Thread local storage keyword define */
+// WARNING: *do not* use thread-local storage for new code because it is not portable
+// It is only used for VirtualChannelInit, and all FreeRDP channels use VirtualChannelInitEx
+// The old virtual channel API is only realistically used on Windows where TLS is available
 #if defined _WIN32 || defined __CYGWIN__
 #ifdef __GNUC__
 #define WINPR_TLS __thread
@@ -65,8 +73,8 @@
 #elif !defined(__IOS__)
 #define WINPR_TLS __thread
 #else
-#warning "Target iOS does not support Thread Local Storage!"
-#warning "Multi Instance support is disabled!"
+// thread-local storage is not supported on iOS
+// don't warn because it isn't actually used on iOS
 #define WINPR_TLS
 #endif
 
@@ -78,7 +86,6 @@
 
 WINPR_API void winpr_get_version(int* major, int* minor, int* revision);
 WINPR_API const char* winpr_get_version_string(void);
-WINPR_API const char* winpr_get_build_date(void);
 WINPR_API const char* winpr_get_build_revision(void);
 WINPR_API const char* winpr_get_build_config(void);
 

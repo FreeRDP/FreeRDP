@@ -23,8 +23,6 @@
 
 #include <freerdp/channels/rdpsnd.h>
 
-#define RDPSND_DVC_CHANNEL_NAME "AUDIO_PLAYBACK_DVC"
-
 /**
  * Subsystem Interface
  */
@@ -66,7 +64,7 @@ struct _FREERDP_RDPSND_DEVICE_ENTRY_POINTS
 {
 	rdpsndPlugin* rdpsnd;
 	PREGISTERRDPSNDDEVICE pRegisterRdpsndDevice;
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 };
 typedef struct _FREERDP_RDPSND_DEVICE_ENTRY_POINTS FREERDP_RDPSND_DEVICE_ENTRY_POINTS;
 typedef FREERDP_RDPSND_DEVICE_ENTRY_POINTS* PFREERDP_RDPSND_DEVICE_ENTRY_POINTS;

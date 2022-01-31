@@ -19,7 +19,7 @@ static BYTE CLIENT_MESSAGE[PIPE_BUFFER_SIZE];
 static BOOL bClientSuccess = FALSE;
 static BOOL bServerSuccess = FALSE;
 
-static HANDLE serverReadyEvent;
+static HANDLE serverReadyEvent = NULL;
 
 static LPTSTR lpszPipeName = _T("\\\\.\\pipe\\winpr_test_pipe_overlapped");
 
@@ -30,10 +30,12 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 	HANDLE hNamedPipe = NULL;
 	BYTE* lpReadBuffer = NULL;
 	BOOL fSuccess = FALSE;
-	OVERLAPPED overlapped;
+	OVERLAPPED overlapped = { 0 };
 	DWORD nNumberOfBytesToRead;
 	DWORD nNumberOfBytesToWrite;
 	DWORD NumberOfBytesTransferred;
+
+	WINPR_UNUSED(arg);
 
 	status = WaitForSingleObject(serverReadyEvent, PIPE_TIMEOUT_MS);
 	if (status != WAIT_OBJECT_0)
@@ -43,8 +45,6 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 	}
 
 	/* 1: initialize overlapped structure */
-
-	ZeroMemory(&overlapped, sizeof(OVERLAPPED));
 	if (!(hEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
 		printf("client: CreateEvent failure: %" PRIu32 "\n", GetLastError());
@@ -159,16 +159,16 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 	HANDLE hEvent = NULL;
 	HANDLE hNamedPipe = NULL;
 	BYTE* lpReadBuffer = NULL;
-	OVERLAPPED overlapped;
+	OVERLAPPED overlapped = { 0 };
 	BOOL fSuccess = FALSE;
 	BOOL fConnected = FALSE;
 	DWORD nNumberOfBytesToRead;
 	DWORD nNumberOfBytesToWrite;
 	DWORD NumberOfBytesTransferred;
 
-	/* 1: initialize overlapped structure */
+	WINPR_UNUSED(arg);
 
-	ZeroMemory(&overlapped, sizeof(OVERLAPPED));
+	/* 1: initialize overlapped structure */
 	if (!(hEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
 		printf("server: CreateEvent failure: %" PRIu32 "\n", GetLastError());
@@ -332,10 +332,11 @@ finish:
 
 int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 {
-	HANDLE ClientThread;
-	HANDLE ServerThread;
+	HANDLE ClientThread = NULL;
+	HANDLE ServerThread = NULL;
 	int result = -1;
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	FillMemory(SERVER_MESSAGE, PIPE_BUFFER_SIZE, 0xAA);
 	FillMemory(CLIENT_MESSAGE, PIPE_BUFFER_SIZE, 0xBB);
 
@@ -349,8 +350,7 @@ int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 		printf("CreateThread (client) failed: %" PRIu32 "\n", GetLastError());
 		goto out;
 	}
-	if (!(ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)named_pipe_server_thread,
-	                                  NULL, 0, NULL)))
+	if (!(ServerThread = CreateThread(NULL, 0, named_pipe_server_thread, NULL, 0, NULL)))
 	{
 		printf("CreateThread (server) failed: %" PRIu32 "\n", GetLastError());
 		goto out;
@@ -371,6 +371,13 @@ int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 		result = 0;
 
 out:
+
+	if (ClientThread)
+		CloseHandle(ClientThread);
+	if (ServerThread)
+		CloseHandle(ServerThread);
+	if (serverReadyEvent)
+		CloseHandle(serverReadyEvent);
 
 #ifndef _WIN32
 	if (result == 0)

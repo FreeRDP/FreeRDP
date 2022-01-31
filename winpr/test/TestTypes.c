@@ -53,6 +53,9 @@ int TestTypes(int argc, char* argv[])
 	BOOL ok = TRUE;
 	HRESULT hr;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	if (S_OK != (HRESULT)0L)
 	{
 		printf("Error: S_OK should be 0\n");

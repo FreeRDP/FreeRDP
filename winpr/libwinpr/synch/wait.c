@@ -26,22 +26,16 @@
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#else
-#ifndef _WIN32
-#include <sys/select.h>
-#endif
-#endif
-
-#include <assert.h>
+#include <winpr/assert.h>
 #include <errno.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/platform.h>
+#include <winpr/sysinfo.h>
 
 #include "synch.h"
+#include "pollset.h"
 #include "../thread/thread.h"
 #include <winpr/thread.h>
 #include <winpr/debug.h>
@@ -121,6 +115,14 @@ int _mach_safe_clock_gettime(int clk_id, struct timespec* t)
 
 #endif
 
+/**
+ * Drop in replacement for pthread_mutex_timedlock
+ * http://code.google.com/p/android/issues/detail?id=7807
+ * http://aleksmaus.blogspot.ca/2011/12/missing-pthreadmutextimedlock-on.html
+ */
+#if !defined(HAVE_PTHREAD_MUTEX_TIMEDLOCK)
+#include <pthread.h>
+
 static long long ts_difftime(const struct timespec* o, const struct timespec* n)
 {
 	long long oldValue = o->tv_sec * 1000000000LL + o->tv_nsec;
@@ -128,12 +130,20 @@ static long long ts_difftime(const struct timespec* o, const struct timespec* n)
 	return newValue - oldValue;
 }
 
-/* Drop in replacement for pthread_mutex_timedlock
- */
-#if !defined(HAVE_PTHREAD_MUTEX_TIMEDLOCK)
-#include <pthread.h>
+#ifdef ANDROID
+#if (__ANDROID_API__ >= 21)
+#define CONST_NEEDED const
+#else
+#define CONST_NEEDED
+#endif
+#define STATIC_NEEDED
+#else /* ANDROID */
+#define CONST_NEEDED const
+#define STATIC_NEEDED static
+#endif
 
-static int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeout)
+STATIC_NEEDED int pthread_mutex_timedlock(pthread_mutex_t* mutex,
+                                          CONST_NEEDED struct timespec* timeout)
 {
 	struct timespec timenow;
 	struct timespec sleepytime;
@@ -161,21 +171,6 @@ static int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec
 }
 #endif
 
-#ifdef HAVE_POLL_H
-static DWORD handle_mode_to_pollevent(ULONG mode)
-{
-	DWORD event = 0;
-
-	if (mode & WINPR_FD_READ)
-		event |= POLLIN;
-
-	if (mode & WINPR_FD_WRITE)
-		event |= POLLOUT;
-
-	return event;
-}
-#endif
-
 static void ts_add_ms(struct timespec* ts, DWORD dwMilliseconds)
 {
 	ts->tv_sec += dwMilliseconds / 1000L;
@@ -184,58 +179,11 @@ static void ts_add_ms(struct timespec* ts, DWORD dwMilliseconds)
 	ts->tv_nsec = ts->tv_nsec % 1000000000L;
 }
 
-static int waitOnFd(int fd, ULONG mode, DWORD dwMilliseconds)
-{
-	int status;
-#ifdef HAVE_POLL_H
-	struct pollfd pollfds;
-	pollfds.fd = fd;
-	pollfds.events = handle_mode_to_pollevent(mode);
-	pollfds.revents = 0;
-
-	do
-	{
-		status = poll(&pollfds, 1, dwMilliseconds);
-	} while ((status < 0) && (errno == EINTR));
-
-#else
-	struct timeval timeout;
-	fd_set rfds, wfds;
-	fd_set* prfds = NULL;
-	fd_set* pwfds = NULL;
-	fd_set* pefds = NULL;
-	FD_ZERO(&rfds);
-	FD_SET(fd, &rfds);
-	FD_ZERO(&wfds);
-	FD_SET(fd, &wfds);
-	ZeroMemory(&timeout, sizeof(timeout));
-
-	if (mode & WINPR_FD_READ)
-		prfds = &rfds;
-
-	if (mode & WINPR_FD_WRITE)
-		pwfds = &wfds;
-
-	if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
-	{
-		timeout.tv_sec = dwMilliseconds / 1000;
-		timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
-	}
-
-	do
-	{
-		status =
-		    select(fd + 1, prfds, pwfds, pefds, (dwMilliseconds == INFINITE) ? NULL : &timeout);
-	} while (status < 0 && (errno == EINTR));
-
-#endif
-	return status;
-}
-
-DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
+DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
 {
 	ULONG Type;
 	WINPR_HANDLE* Object;
+	WINPR_POLL_SET pollset;
 
 	if (!winpr_Handle_GetInfo(hHandle, &Type, &Object))
 	{
@@ -246,8 +194,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 	if (Type == HANDLE_TYPE_PROCESS)
 	{
-		WINPR_PROCESS* process;
-		process = (WINPR_PROCESS*)Object;
+		WINPR_PROCESS* process = (WINPR_PROCESS*)Object;
 
 		if (process->pid != waitpid(process->pid, &(process->status), 0))
 		{
@@ -259,7 +206,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		process->dwExitCode = (DWORD)process->status;
 		return WAIT_OBJECT_0;
 	}
-	else if (Type == HANDLE_TYPE_MUTEX)
+
+	if (Type == HANDLE_TYPE_MUTEX)
 	{
 		WINPR_MUTEX* mutex;
 		mutex = (WINPR_MUTEX*)Object;
@@ -285,8 +233,30 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	else
 	{
 		int status;
-		int fd = winpr_Handle_getFd(Object);
+		WINPR_THREAD* thread = NULL;
+		BOOL isSet = FALSE;
+		size_t extraFds = 0;
+		DWORD ret;
+		BOOL autoSignaled = FALSE;
 
+		if (bAlertable)
+		{
+			thread = (WINPR_THREAD*)_GetCurrentThread();
+			if (!thread)
+			{
+				WLog_ERR(TAG, "failed to retrieve currentThread");
+				return WAIT_FAILED;
+			}
+
+			/* treat reentrancy, we can't switch to alertable state when we're already
+			   treating completions */
+			if (thread->apc.treatingCompletions)
+				bAlertable = FALSE;
+			else
+				extraFds = thread->apc.length;
+		}
+
+		int fd = winpr_Handle_getFd(Object);
 		if (fd < 0)
 		{
 			WLog_ERR(TAG, "winpr_Handle_getFd did not return a fd!");
@@ -294,60 +264,76 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			return WAIT_FAILED;
 		}
 
-		status = waitOnFd(fd, Object->Mode, dwMilliseconds);
-
-		if (status < 0)
+		if (!pollset_init(&pollset, 1 + extraFds))
 		{
-			WLog_ERR(TAG, "waitOnFd() failure [%d] %s", errno, strerror(errno));
+			WLog_ERR(TAG, "unable to initialize pollset");
 			SetLastError(ERROR_INTERNAL_ERROR);
 			return WAIT_FAILED;
 		}
 
-		if (status != 1)
-			return WAIT_TIMEOUT;
+		if (!pollset_add(&pollset, fd, Object->Mode))
+		{
+			WLog_ERR(TAG, "unable to add fd in pollset");
+			goto out;
+		}
+
+		if (bAlertable && !apc_collectFds(thread, &pollset, &autoSignaled))
+		{
+			WLog_ERR(TAG, "unable to collect APC fds");
+			goto out;
+		}
+
+		if (!autoSignaled)
+		{
+			status = pollset_poll(&pollset, dwMilliseconds);
+			if (status < 0)
+			{
+				WLog_ERR(TAG, "waitOnFd() failure [%d] %s", errno, strerror(errno));
+				goto out;
+			}
+		}
+
+		ret = WAIT_TIMEOUT;
+		if (bAlertable && apc_executeCompletions(thread, &pollset, 1))
+			ret = WAIT_IO_COMPLETION;
+
+		isSet = pollset_isSignaled(&pollset, 0);
+		pollset_uninit(&pollset);
+
+		if (!isSet)
+			return ret;
 
 		return winpr_Handle_cleanup(Object);
 	}
 
+out:
+	pollset_uninit(&pollset);
 	SetLastError(ERROR_INTERNAL_ERROR);
 	return WAIT_FAILED;
 }
 
-DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
+DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 {
-	if (bAlertable)
-	{
-		/* TODO: Implement */
-		WLog_ERR(TAG, "%s: Not implemented: bAlertable", __FUNCTION__);
-		return WAIT_FAILED;
-	}
-	return WaitForSingleObject(hHandle, dwMilliseconds);
+	return WaitForSingleObjectEx(hHandle, dwMilliseconds, FALSE);
 }
 
-DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll,
-                             DWORD dwMilliseconds)
+DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll,
+                               DWORD dwMilliseconds, BOOL bAlertable)
 {
-	struct timespec starttime;
-	struct timespec timenow;
-	unsigned long long diff;
 	DWORD signalled;
 	DWORD polled;
-	DWORD* poll_map = NULL;
-	BOOL* signalled_idx = NULL;
+	DWORD poll_map[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	BOOL signalled_handles[MAXIMUM_WAIT_OBJECTS] = { FALSE };
 	int fd = -1;
 	DWORD index;
 	int status;
 	ULONG Type;
-	BOOL signal_handled = FALSE;
 	WINPR_HANDLE* Object;
-#ifdef HAVE_POLL_H
-	struct pollfd* pollfds;
-#else
-	int maxfd;
-	fd_set rfds;
-	fd_set wfds;
-	struct timeval timeout;
-#endif
+	WINPR_THREAD* thread = NULL;
+	WINPR_POLL_SET pollset;
+	DWORD ret = WAIT_FAILED;
+	size_t extraFds = 0;
+	UINT64 now, dueTime;
 
 	if (!nCount || (nCount > MAXIMUM_WAIT_OBJECTS))
 	{
@@ -355,40 +341,46 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		return WAIT_FAILED;
 	}
 
-	if (bWaitAll)
+	if (bAlertable)
 	{
-		signalled_idx = alloca(nCount * sizeof(BOOL));
-		memset(signalled_idx, FALSE, nCount * sizeof(BOOL));
-		poll_map = alloca(nCount * sizeof(DWORD));
-		memset(poll_map, 0, nCount * sizeof(DWORD));
+		thread = winpr_GetCurrentThread();
+		if (!thread)
+			return WAIT_FAILED;
+
+		/* treat reentrancy, we can't switch to alertable state when we're already
+		   treating completions */
+		if (thread->apc.treatingCompletions)
+			bAlertable = FALSE;
+		else
+			extraFds = thread->apc.length;
 	}
 
-#ifdef HAVE_POLL_H
-	pollfds = alloca(nCount * sizeof(struct pollfd));
-#endif
+	if (!pollset_init(&pollset, nCount + extraFds))
+	{
+		WLog_ERR(TAG, "unable to initialize pollset for nCount=%" PRIu32 " extraCount=%" PRIu32 "",
+		         nCount, extraFds);
+		return WAIT_FAILED;
+	}
+
 	signalled = 0;
+
+	now = GetTickCount64();
+	if (dwMilliseconds != INFINITE)
+		dueTime = now + dwMilliseconds;
+	else
+		dueTime = 0xFFFFFFFFFFFFFFFF;
 
 	do
 	{
-#ifndef HAVE_POLL_H
-		fd_set* prfds = NULL;
-		fd_set* pwfds = NULL;
-		maxfd = 0;
-		FD_ZERO(&rfds);
-		FD_ZERO(&wfds);
-		ZeroMemory(&timeout, sizeof(timeout));
-#endif
-
-		if (bWaitAll && (dwMilliseconds != INFINITE))
-			clock_gettime(CLOCK_MONOTONIC, &starttime);
-
+		BOOL autoSignaled = FALSE;
 		polled = 0;
 
+		/* first collect file descriptors to poll */
 		for (index = 0; index < nCount; index++)
 		{
 			if (bWaitAll)
 			{
-				if (signalled_idx[index])
+				if (signalled_handles[index])
 					continue;
 
 				poll_map[polled] = index;
@@ -396,190 +388,163 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 			if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
 			{
-				WLog_ERR(TAG, "invalid event file descriptor");
+				WLog_ERR(TAG, "invalid event file descriptor at %" PRIu32, index);
+				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 				SetLastError(ERROR_INVALID_HANDLE);
-				return WAIT_FAILED;
+				goto out;
 			}
 
 			fd = winpr_Handle_getFd(Object);
-
 			if (fd == -1)
 			{
-				WLog_ERR(TAG, "invalid file descriptor");
+				WLog_ERR(TAG, "invalid file descriptor at %" PRIu32, index);
+				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 				SetLastError(ERROR_INVALID_HANDLE);
-				return WAIT_FAILED;
+				goto out;
 			}
 
-#ifdef HAVE_POLL_H
-			pollfds[polled].fd = fd;
-			pollfds[polled].events = handle_mode_to_pollevent(Object->Mode);
-			pollfds[polled].revents = 0;
-#else
-
-			if (Object->Mode & WINPR_FD_READ)
+			if (!pollset_add(&pollset, fd, Object->Mode))
 			{
-				FD_SET(fd, &rfds);
-				prfds = &rfds;
+				WLog_ERR(TAG, "unable to register fd in pollset at %" PRIu32, index);
+				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
+				SetLastError(ERROR_INVALID_HANDLE);
+				goto out;
 			}
 
-			if (Object->Mode & WINPR_FD_WRITE)
-			{
-				FD_SET(fd, &wfds);
-				pwfds = &wfds;
-			}
-
-			if (fd > maxfd)
-				maxfd = fd;
-
-#endif
 			polled++;
 		}
 
-#ifdef HAVE_POLL_H
-
-		do
+		/* treat file descriptors of the APC if needed */
+		if (bAlertable && !apc_collectFds(thread, &pollset, &autoSignaled))
 		{
-			status = poll(pollfds, polled, dwMilliseconds);
-		} while (status < 0 && errno == EINTR);
-
-#else
-
-		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
-		{
-			timeout.tv_sec = dwMilliseconds / 1000;
-			timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
-		}
-
-		do
-		{
-			status =
-			    select(maxfd + 1, prfds, pwfds, 0, (dwMilliseconds == INFINITE) ? NULL : &timeout);
-		} while (status < 0 && errno == EINTR);
-
-#endif
-
-		if (status < 0)
-		{
-#ifdef HAVE_POLL_H
-			WLog_ERR(TAG, "poll() handle %d (%" PRIu32 ") failure [%d] %s", index, nCount, errno,
-			         strerror(errno));
-#else
-			WLog_ERR(TAG, "select() handle %d (%" PRIu32 ") failure [%d] %s", index, nCount, errno,
-			         strerror(errno));
-#endif
+			WLog_ERR(TAG, "unable to register APC fds");
 			winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 			SetLastError(ERROR_INTERNAL_ERROR);
-			return WAIT_FAILED;
+			goto out;
 		}
 
-		if (status == 0)
-			return WAIT_TIMEOUT;
-
-		if (bWaitAll && (dwMilliseconds != INFINITE))
+		/* poll file descriptors */
+		status = 0;
+		if (!autoSignaled)
 		{
-			clock_gettime(CLOCK_MONOTONIC, &timenow);
-			diff = ts_difftime(&timenow, &starttime);
+			DWORD waitTime;
 
-			if (diff / 1000 > dwMilliseconds)
-				return WAIT_TIMEOUT;
+			if (dwMilliseconds == INFINITE)
+				waitTime = INFINITE;
 			else
-				dwMilliseconds -= (diff / 1000);
-		}
+				waitTime = (DWORD)(dueTime - now);
 
-		signal_handled = FALSE;
-
-		for (index = 0; index < polled; index++)
-		{
-			DWORD idx;
-			BOOL signal_set = FALSE;
-
-			if (bWaitAll)
-				idx = poll_map[index];
-			else
-				idx = index;
-
-			if (!winpr_Handle_GetInfo(lpHandles[idx], &Type, &Object))
+			status = pollset_poll(&pollset, waitTime);
+			if (status < 0)
 			{
-				WLog_ERR(TAG, "invalid hHandle.");
-				SetLastError(ERROR_INVALID_HANDLE);
-				return WAIT_FAILED;
-			}
-
-			fd = winpr_Handle_getFd(lpHandles[idx]);
-
-			if (fd == -1)
-			{
-				WLog_ERR(TAG, "invalid file descriptor");
-				SetLastError(ERROR_INVALID_HANDLE);
-				return WAIT_FAILED;
-			}
-
 #ifdef HAVE_POLL_H
-			signal_set = pollfds[index].revents & pollfds[index].events;
+				WLog_ERR(TAG, "poll() handle %d (%" PRIu32 ") failure [%d] %s", index, nCount,
+				         errno, strerror(errno));
 #else
-
-			if (Object->Mode & WINPR_FD_READ)
-				signal_set = FD_ISSET(fd, &rfds) ? 1 : 0;
-
-			if (Object->Mode & WINPR_FD_WRITE)
-				signal_set |= FD_ISSET(fd, &wfds) ? 1 : 0;
-
+				WLog_ERR(TAG, "select() handle %d (%" PRIu32 ") failure [%d] %s", index, nCount,
+				         errno, strerror(errno));
 #endif
+				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
+				SetLastError(ERROR_INTERNAL_ERROR);
+				goto out;
+			}
+		}
 
-			if (signal_set)
+		/* give priority to the APC queue, to return WAIT_IO_COMPLETION */
+		if (bAlertable && apc_executeCompletions(thread, &pollset, polled))
+		{
+			ret = WAIT_IO_COMPLETION;
+			goto out;
+		}
+
+		/* then treat pollset */
+		if (status)
+		{
+			for (index = 0; index < polled; index++)
 			{
-				DWORD rc = winpr_Handle_cleanup(lpHandles[idx]);
-
-				if (rc != WAIT_OBJECT_0)
-					return rc;
+				DWORD handlesIndex;
+				BOOL signal_set = FALSE;
 
 				if (bWaitAll)
-				{
-					signalled_idx[idx] = TRUE;
+					handlesIndex = poll_map[index];
+				else
+					handlesIndex = index;
 
-					/* Continue checks from last position. */
-					for (; signalled < nCount; signalled++)
+				signal_set = pollset_isSignaled(&pollset, index);
+				if (signal_set)
+				{
+					DWORD rc = winpr_Handle_cleanup(lpHandles[handlesIndex]);
+					if (rc != WAIT_OBJECT_0)
 					{
-						if (!signalled_idx[signalled])
-							break;
+						WLog_ERR(TAG, "error in cleanup function for handle at index=%d",
+						         handlesIndex);
+						ret = rc;
+						goto out;
+					}
+
+					if (bWaitAll)
+					{
+						signalled_handles[handlesIndex] = TRUE;
+
+						/* Continue checks from last position. */
+						for (; signalled < nCount; signalled++)
+						{
+							if (!signalled_handles[signalled])
+								break;
+						}
+					}
+					else
+					{
+						ret = (WAIT_OBJECT_0 + handlesIndex);
+						goto out;
+					}
+
+					if (signalled >= nCount)
+					{
+						ret = WAIT_OBJECT_0;
+						goto out;
 					}
 				}
-
-				if (!bWaitAll)
-					return (WAIT_OBJECT_0 + index);
-
-				if (signalled >= nCount)
-					return (WAIT_OBJECT_0);
-
-				signal_handled = TRUE;
 			}
 		}
-	} while (bWaitAll || !signal_handled);
 
-	WLog_ERR(TAG, "failed (unknown error)");
-	SetLastError(ERROR_INTERNAL_ERROR);
-	return WAIT_FAILED;
+		if (bAlertable && thread->apc.length > extraFds)
+		{
+			pollset_uninit(&pollset);
+			extraFds = thread->apc.length;
+			if (!pollset_init(&pollset, nCount + extraFds))
+			{
+				WLog_ERR(TAG, "unable reallocate pollset");
+				SetLastError(ERROR_INTERNAL_ERROR);
+				return WAIT_FAILED;
+			}
+		}
+		else
+			pollset_reset(&pollset);
+
+		now = GetTickCount64();
+	} while (now < dueTime);
+
+	ret = WAIT_TIMEOUT;
+
+out:
+	pollset_uninit(&pollset);
+	return ret;
 }
 
-DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll,
-                               DWORD dwMilliseconds, BOOL bAlertable)
+DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll,
+                             DWORD dwMilliseconds)
 {
-	if (bAlertable)
-	{
-		/* TODO: Implement */
-		WLog_ERR(TAG, "%s: Not implemented: bAlertable", __FUNCTION__);
-		return WAIT_FAILED;
-	}
-
-	return WaitForMultipleObjects(nCount, lpHandles, bWaitAll, dwMilliseconds);
+	return WaitForMultipleObjectsEx(nCount, lpHandles, bWaitAll, dwMilliseconds, FALSE);
 }
 
 DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds,
                           BOOL bAlertable)
 {
-	WLog_ERR(TAG, "%s: Not implemented.", __FUNCTION__);
-	SetLastError(ERROR_NOT_SUPPORTED);
-	return WAIT_FAILED;
+	if (!SetEvent(hObjectToSignal))
+		return WAIT_FAILED;
+
+	return WaitForSingleObjectEx(hObjectToWaitOn, dwMilliseconds, bAlertable);
 }
 
 #endif

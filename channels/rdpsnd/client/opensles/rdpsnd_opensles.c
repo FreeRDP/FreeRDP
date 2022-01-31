@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -145,7 +145,7 @@ static BOOL rdpsnd_opensles_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT*
 		return TRUE;
 
 	opensles->stream = android_OpenAudioDevice(opensles->rate, opensles->channels, 20);
-	assert(opensles->stream);
+	WINPR_ASSERT(opensles->stream);
 
 	if (!opensles->stream)
 		WLog_ERR(TAG, "android_OpenAudioDevice failed");
@@ -171,8 +171,8 @@ static void rdpsnd_opensles_free(rdpsndDevicePlugin* device)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*)device;
 	DEBUG_SND("opensles=%p", (void*)opensles);
-	assert(opensles);
-	assert(opensles->device_name);
+	WINPR_ASSERT(opensles);
+	WINPR_ASSERT(opensles->device_name);
 	free(opensles->device_name);
 	free(opensles);
 }
@@ -183,8 +183,8 @@ static BOOL rdpsnd_opensles_format_supported(rdpsndDevicePlugin* device, const A
 	          ", channels=%" PRIu16 ", align=%" PRIu16 "",
 	          format->wFormatTag, format->cbSize, format->nSamplesPerSec, format->wBitsPerSample,
 	          format->nChannels, format->nBlockAlign);
-	assert(device);
-	assert(format);
+	WINPR_ASSERT(device);
+	WINPR_ASSERT(format);
 
 	switch (format->wFormatTag)
 	{
@@ -209,7 +209,7 @@ static UINT32 rdpsnd_opensles_get_volume(rdpsndDevicePlugin* device)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*)device;
 	DEBUG_SND("opensles=%p", (void*)opensles);
-	assert(opensles);
+	WINPR_ASSERT(opensles);
 
 	if (opensles->stream)
 	{
@@ -232,7 +232,7 @@ static BOOL rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*)device;
 	DEBUG_SND("opensles=%p, value=%" PRIu32 "", (void*)opensles, value);
-	assert(opensles);
+	WINPR_ASSERT(opensles);
 	opensles->volume = value;
 
 	if (opensles->stream)
@@ -270,9 +270,9 @@ static UINT rdpsnd_opensles_play(rdpsndDevicePlugin* device, const BYTE* data, s
 
 	src.b = data;
 	DEBUG_SND("size=%d, src=%p", size, (void*)src.b);
-	assert(0 == size % 2);
-	assert(size > 0);
-	assert(src.b);
+	WINPR_ASSERT(0 == size % 2);
+	WINPR_ASSERT(size > 0);
+	WINPR_ASSERT(src.b);
 	ret = android_AudioOut(opensles->stream, src.s, size / 2);
 
 	if (ret < 0)
@@ -299,8 +299,8 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_AR
 		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 	};
 
-	assert(opensles);
-	assert(args);
+	WINPR_ASSERT(opensles);
+	WINPR_ASSERT(args);
 	DEBUG_SND("opensles=%p, args=%p", (void*)opensles, (void*)args);
 	flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;

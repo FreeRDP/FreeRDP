@@ -409,7 +409,8 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 	int formatNameLength;
 	char* szFormatName;
 	WCHAR* wszFormatName;
-	wStream sub1, sub2;
+	wStream sub1buffer = { 0 };
+	wStream* sub1;
 	CLIPRDR_FORMAT* formats = NULL;
 	UINT error = ERROR_INTERNAL_ERROR;
 
@@ -420,7 +421,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 	formatList->formats = NULL;
 	formatList->numFormats = 0;
 
-	Stream_StaticInit(&sub1, Stream_Pointer(s), formatList->dataLen);
+	sub1 = Stream_StaticInit(&sub1buffer, Stream_Pointer(s), formatList->dataLen);
 	if (!Stream_SafeSeek(s, formatList->dataLen))
 		return ERROR_INVALID_DATA;
 
@@ -429,7 +430,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 	}
 	else if (!useLongFormatNames)
 	{
-		const size_t cap = Stream_Capacity(&sub1);
+		const size_t cap = Stream_Capacity(sub1);
 		formatList->numFormats = (cap / 36);
 
 		if ((formatList->numFormats * 36) != cap)
@@ -449,9 +450,9 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 		formatList->formats = formats;
 
-		while (Stream_GetRemainingLength(&sub1) >= 4)
+		while (Stream_GetRemainingLength(sub1) >= 4)
 		{
-			Stream_Read_UINT32(&sub1, formats[index].formatId); /* formatId (4 bytes) */
+			Stream_Read_UINT32(sub1, formats[index].formatId); /* formatId (4 bytes) */
 
 			formats[index].formatName = NULL;
 
@@ -463,9 +464,9 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 			 * These are 16 unicode charaters - *without* terminating null !
 			 */
 
-			szFormatName = (char*)Stream_Pointer(&sub1);
-			wszFormatName = (WCHAR*)Stream_Pointer(&sub1);
-			if (!Stream_SafeSeek(&sub1, 32))
+			szFormatName = (char*)Stream_Pointer(sub1);
+			wszFormatName = (WCHAR*)Stream_Pointer(sub1);
+			if (!Stream_SafeSeek(sub1, 32))
 				goto error_out;
 			if (asciiNames)
 			{
@@ -505,18 +506,20 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 	}
 	else
 	{
-		sub2 = sub1;
-		while (Stream_GetRemainingLength(&sub1) > 0)
+		wStream sub2buffer = sub1buffer;
+		wStream* sub2 = &sub2buffer;
+
+		while (Stream_GetRemainingLength(sub1) > 0)
 		{
 			size_t rest;
-			if (!Stream_SafeSeek(&sub1, 4)) /* formatId (4 bytes) */
+			if (!Stream_SafeSeek(sub1, 4)) /* formatId (4 bytes) */
 				goto error_out;
 
-			wszFormatName = (WCHAR*)Stream_Pointer(&sub1);
-			rest = Stream_GetRemainingLength(&sub1);
+			wszFormatName = (WCHAR*)Stream_Pointer(sub1);
+			rest = Stream_GetRemainingLength(sub1);
 			formatNameLength = _wcsnlen(wszFormatName, rest / sizeof(WCHAR));
 
-			if (!Stream_SafeSeek(&sub1, (formatNameLength + 1) * sizeof(WCHAR)))
+			if (!Stream_SafeSeek(sub1, (formatNameLength + 1) * sizeof(WCHAR)))
 				goto error_out;
 			formatList->numFormats++;
 		}
@@ -532,17 +535,17 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 		formatList->formats = formats;
 
-		while (Stream_GetRemainingLength(&sub2) >= 4)
+		while (Stream_GetRemainingLength(sub2) >= 4)
 		{
 			size_t rest;
-			Stream_Read_UINT32(&sub2, formats[index].formatId); /* formatId (4 bytes) */
+			Stream_Read_UINT32(sub2, formats[index].formatId); /* formatId (4 bytes) */
 
 			formats[index].formatName = NULL;
 
-			wszFormatName = (WCHAR*)Stream_Pointer(&sub2);
-			rest = Stream_GetRemainingLength(&sub2);
+			wszFormatName = (WCHAR*)Stream_Pointer(sub2);
+			rest = Stream_GetRemainingLength(sub2);
 			formatNameLength = _wcsnlen(wszFormatName, rest / sizeof(WCHAR));
-			if (!Stream_SafeSeek(&sub2, (formatNameLength + 1) * sizeof(WCHAR)))
+			if (!Stream_SafeSeek(sub2, (formatNameLength + 1) * sizeof(WCHAR)))
 				goto error_out;
 
 			if (formatNameLength)

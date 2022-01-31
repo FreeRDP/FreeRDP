@@ -343,7 +343,7 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 
 	if (cbMultiByte == 0)
 	{
-		sourceStart = (WCHAR*)lpWideCharStr;
+		sourceStart = (const WCHAR*)lpWideCharStr;
 		targetStart = (BYTE*)NULL;
 		result = ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar], &targetStart, NULL,
 		                            strictConversion);
@@ -351,7 +351,7 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 	}
 	else
 	{
-		sourceStart = (WCHAR*)lpWideCharStr;
+		sourceStart = (const WCHAR*)lpWideCharStr;
 		targetStart = (BYTE*)lpMultiByteStr;
 		result = ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar], &targetStart,
 		                            &targetStart[cbMultiByte], strictConversion);
@@ -429,9 +429,8 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cb
 		{
 			free(*lpWideCharStr);
 			*lpWideCharStr = NULL;
+			status = 0;
 		}
-
-		status = 0;
 	}
 
 	return status;

@@ -20,7 +20,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <freerdp/log.h>
 #include "shadow.h"
 
@@ -116,7 +116,7 @@ static void _Publish(rdpShadowMultiClientEvent* event)
 
 	subscribers = event->subscribers;
 
-	assert(event->consuming == 0);
+	WINPR_ASSERT(event->consuming == 0);
 
 	/* Count subscribing clients */
 	ArrayList_Lock(subscribers);
@@ -153,7 +153,7 @@ static void _WaitForSubscribers(rdpShadowMultiClientEvent* event)
 	}
 
 	/* Last subscriber should have already reset the event */
-	assert(WaitForSingleObject(event->event, 0) != WAIT_OBJECT_0);
+	WINPR_ASSERT(WaitForSingleObject(event->event, 0) != WAIT_OBJECT_0);
 
 	return;
 }
@@ -205,7 +205,7 @@ static BOOL _Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL 
 		ret = TRUE;
 	}
 
-	assert(event->consuming >= 0);
+	WINPR_ASSERT(event->consuming >= 0);
 
 	if (event->consuming == 0)
 	{
@@ -270,7 +270,7 @@ void* shadow_multiclient_get_subscriber(rdpShadowMultiClientEvent* event)
 	subscriber->ref = event;
 	subscriber->pleaseHandle = FALSE;
 
-	if (ArrayList_Add(event->subscribers, subscriber) < 0)
+	if (!ArrayList_Append(event->subscribers, subscriber))
 		goto out_free;
 
 	WLog_VRB(TAG, "Get subscriber %p. Wait event %d. %d clients.\n", (void*)subscriber,

@@ -28,6 +28,7 @@
 #include <freerdp/server/audin.h>
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/server/encomsp.h>
+#include <freerdp/transport_io.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -42,10 +43,10 @@ struct test_peer_context
 	wStream* s;
 	BYTE* icon_data;
 	BYTE* bg_data;
-	int icon_width;
-	int icon_height;
-	int icon_x;
-	int icon_y;
+	UINT16 icon_width;
+	UINT16 icon_height;
+	UINT32 icon_x;
+	UINT32 icon_y;
 	BOOL activated;
 	HANDLE event;
 	HANDLE stopEvent;
@@ -57,6 +58,8 @@ struct test_peer_context
 	UINT32 frame_id;
 	RdpsndServerContext* rdpsnd;
 	EncomspServerContext* encomsp;
+
+	rdpTransportIo io;
 };
 typedef struct test_peer_context testPeerContext;
 

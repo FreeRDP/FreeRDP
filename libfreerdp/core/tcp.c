@@ -51,10 +51,6 @@
 #include <sys/select.h>
 #endif
 
-#ifdef HAVE_SYS_FILIO_H
-#include <sys/filio.h>
-#endif
-
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #ifndef SOL_TCP
 #define SOL_TCP IPPROTO_TCP
@@ -664,8 +660,8 @@ BIO_METHOD* BIO_s_buffered_socket(void)
 char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* pIPv6)
 {
 	char ipAddress[INET6_ADDRSTRLEN + 1] = { 0 };
-	struct sockaddr_in6* sockaddr_ipv6 = (struct sockaddr_in6*)addr;
-	struct sockaddr_in* sockaddr_ipv4 = (struct sockaddr_in*)addr;
+	const struct sockaddr_in6* sockaddr_ipv6 = (const struct sockaddr_in6*)addr;
+	const struct sockaddr_in* sockaddr_ipv4 = (const struct sockaddr_in*)addr;
 
 	if (addr == NULL)
 	{
@@ -803,14 +799,14 @@ static BOOL freerdp_tcp_is_hostname_resolvable(rdpContext* context, const char* 
 }
 
 static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct sockaddr* addr,
-                                        socklen_t addrlen, int timeout)
+                                        socklen_t addrlen, UINT32 timeout)
 {
 	BOOL rc = FALSE;
 	HANDLE handles[2];
 	int status = 0;
 	int count = 0;
 	u_long arg = 0;
-	DWORD tout = (timeout > 0) ? (DWORD)timeout * 1000U : INFINITE;
+	DWORD tout = (timeout > 0) ? timeout : INFINITE;
 
 	handles[count] = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -896,7 +892,7 @@ static void peer_free(t_peer* peer)
 }
 
 static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT32* ports,
-                                     UINT32 count, int port, int timeout)
+                                     UINT32 count, UINT16 port, UINT32 timeout)
 {
 	UINT32 index;
 	UINT32 sindex = count;
@@ -1061,8 +1057,7 @@ static BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int soc
 	return TRUE;
 }
 
-int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* hostname, int port,
-                        DWORD timeout)
+int freerdp_tcp_connect(rdpContext* context, const char* hostname, int port, DWORD timeout)
 {
 	rdpTransport* transport;
 	if (!context || !context->rdp)
@@ -1070,7 +1065,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings, const char* 
 	transport = context->rdp->transport;
 	if (!transport)
 		return -1;
-	return IFCALLRESULT(-1, transport->io.TCPConnect, context, settings, hostname, port, timeout);
+	return transport_tcp_connect(context->rdp->transport, hostname, port, timeout);
 }
 
 int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, const char* hostname,

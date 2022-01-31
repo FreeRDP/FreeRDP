@@ -6,7 +6,8 @@ int TestSynchEvent(int argc, char* argv[])
 {
 	HANDLE event;
 	int i;
-
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 	if (ResetEvent(NULL))
 	{
 		printf("ResetEvent(NULL) unexpectedly succeeded\n");

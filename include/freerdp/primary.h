@@ -462,6 +462,8 @@ typedef BOOL (*pPolygonSC)(rdpContext* context, const POLYGON_SC_ORDER* polygon_
 typedef BOOL (*pPolygonCB)(rdpContext* context, POLYGON_CB_ORDER* polygon_cb);
 typedef BOOL (*pEllipseSC)(rdpContext* context, const ELLIPSE_SC_ORDER* ellipse_sc);
 typedef BOOL (*pEllipseCB)(rdpContext* context, const ELLIPSE_CB_ORDER* ellipse_cb);
+typedef BOOL (*pOrderInfo)(rdpContext* context, const ORDER_INFO* order_info,
+                           const char* order_name);
 
 struct rdp_primary_update
 {
@@ -490,33 +492,9 @@ struct rdp_primary_update
 	pPolygonCB PolygonCB;                 /* 35 */
 	pEllipseSC EllipseSC;                 /* 36 */
 	pEllipseCB EllipseCB;                 /* 37 */
-	UINT32 paddingB[48 - 38];             /* 38 */
-
-	/* internal */
-
-	ORDER_INFO order_info;
-	DSTBLT_ORDER dstblt;
-	PATBLT_ORDER patblt;
-	SCRBLT_ORDER scrblt;
-	OPAQUE_RECT_ORDER opaque_rect;
-	DRAW_NINE_GRID_ORDER draw_nine_grid;
-	MULTI_DSTBLT_ORDER multi_dstblt;
-	MULTI_PATBLT_ORDER multi_patblt;
-	MULTI_SCRBLT_ORDER multi_scrblt;
-	MULTI_OPAQUE_RECT_ORDER multi_opaque_rect;
-	MULTI_DRAW_NINE_GRID_ORDER multi_draw_nine_grid;
-	LINE_TO_ORDER line_to;
-	POLYLINE_ORDER polyline;
-	MEMBLT_ORDER memblt;
-	MEM3BLT_ORDER mem3blt;
-	SAVE_BITMAP_ORDER save_bitmap;
-	GLYPH_INDEX_ORDER glyph_index;
-	FAST_INDEX_ORDER fast_index;
-	FAST_GLYPH_ORDER fast_glyph;
-	POLYGON_SC_ORDER polygon_sc;
-	POLYGON_CB_ORDER polygon_cb;
-	ELLIPSE_SC_ORDER ellipse_sc;
-	ELLIPSE_CB_ORDER ellipse_cb;
+	/* Statistics callback */
+	pOrderInfo OrderInfo;     /* 38 */
+	UINT32 paddingB[48 - 39]; /* 39 */
 };
 typedef struct rdp_primary_update rdpPrimaryUpdate;
 

@@ -3,6 +3,8 @@
  * FreeRDP Proxy Server Session Capture Module
  *
  * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
+ * Copyright 2021 Armin Novak <anovak@thincast.com>
+ * Copyright 2021 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,40 +19,41 @@
  * limitations under the License.
  */
 
-#define TAG MODULE_TAG("capture")
-
-#define PLUGIN_NAME "capture"
-#define PLUGIN_DESC "stream egfx connections over tcp"
-
 #include <errno.h>
 #include <winpr/image.h>
 #include <freerdp/gdi/gdi.h>
 #include <winpr/winsock.h>
 
-#include "pf_log.h"
-#include "modules_api.h"
-#include "pf_context.h"
+#include <freerdp/server/proxy/proxy_modules_api.h>
+#include <freerdp/server/proxy/proxy_log.h>
+
+#include <freerdp/server/proxy/proxy_context.h>
 #include "cap_config.h"
 #include "cap_protocol.h"
 
+#define TAG MODULE_TAG("capture")
+
+#define PLUGIN_NAME "capture"
+#define PLUGIN_DESC "stream egfx connections over tcp"
+
 #define BUFSIZE 8092
 
-static proxyPluginsManager* g_plugins_manager = NULL;
-static captureConfig config = { 0 };
-
-static SOCKET capture_plugin_init_socket(void)
+static SOCKET capture_plugin_init_socket(const captureConfig* cconfig)
 {
 	int status;
-	int sockfd;
+	SOCKET sockfd;
 	struct sockaddr_in addr = { 0 };
+
+	WINPR_ASSERT(cconfig);
+
 	sockfd = _socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-	if (sockfd == -1)
+	if (sockfd == (SOCKET)-1)
 		return -1;
 
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(config.port);
-	inet_pton(AF_INET, config.host, &(addr.sin_addr));
+	addr.sin_port = htons(cconfig->port);
+	inet_pton(AF_INET, cconfig->host, &(addr.sin_addr));
 
 	status = _connect(sockfd, (const struct sockaddr*)&addr, sizeof(addr));
 	if (status < 0)
@@ -64,7 +67,6 @@ static SOCKET capture_plugin_init_socket(void)
 
 static BOOL capture_plugin_send_data(SOCKET sockfd, const BYTE* buffer, size_t len)
 {
-	size_t chunk_len;
 	int nsent;
 
 	if (!buffer)
@@ -72,7 +74,7 @@ static BOOL capture_plugin_send_data(SOCKET sockfd, const BYTE* buffer, size_t l
 
 	while (len > 0)
 	{
-		chunk_len = len > BUFSIZE ? BUFSIZE : len;
+		int chunk_len = len > BUFSIZE ? BUFSIZE : len;
 		nsent = _send(sockfd, (const char*)buffer, chunk_len, 0);
 		if (nsent == -1)
 			return FALSE;
@@ -109,24 +111,32 @@ error:
 	return result;
 }
 
-static SOCKET capture_plugin_get_socket(proxyData* pdata)
+static SOCKET capture_plugin_get_socket(proxyPlugin* plugin, proxyData* pdata)
 {
 	void* custom;
 
-	custom = g_plugins_manager->GetPluginData(PLUGIN_NAME, pdata);
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(plugin->mgr);
+
+	custom = plugin->mgr->GetPluginData(plugin->mgr, PLUGIN_NAME, pdata);
 	if (!custom)
 		return -1;
 
 	return (SOCKET)custom;
 }
 
-static BOOL capture_plugin_session_end(proxyData* pdata)
+static BOOL capture_plugin_session_end(proxyPlugin* plugin, proxyData* pdata, void* custom)
 {
 	SOCKET socket;
 	BOOL ret;
 	wStream* s;
 
-	socket = capture_plugin_get_socket(pdata);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(custom);
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(plugin->mgr);
+
+	socket = capture_plugin_get_socket(plugin, pdata);
 	if (socket == INVALID_SOCKET)
 		return FALSE;
 
@@ -146,7 +156,11 @@ static BOOL capture_plugin_send_frame(pClientContext* pc, SOCKET socket, const B
 	BOOL ret = FALSE;
 	wStream* s = NULL;
 	BYTE* bmp_header = NULL;
-	rdpSettings* settings = pc->context.settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(pc);
+	settings = pc->context.settings;
+	WINPR_ASSERT(settings);
 
 	frame_size = settings->DesktopWidth * settings->DesktopHeight * (settings->ColorDepth / 8);
 	bmp_header = winpr_bitmap_construct_header(settings->DesktopWidth, settings->DesktopHeight,
@@ -178,11 +192,16 @@ error:
 	return ret;
 }
 
-static BOOL capture_plugin_client_end_paint(proxyData* pdata)
+static BOOL capture_plugin_client_end_paint(proxyPlugin* plugin, proxyData* pdata, void* custom)
 {
 	pClientContext* pc = pdata->pc;
 	rdpGdi* gdi = pc->context.gdi;
 	SOCKET socket;
+
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(custom);
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(plugin->mgr);
 
 	if (gdi->suppressOutput)
 		return TRUE;
@@ -190,7 +209,7 @@ static BOOL capture_plugin_client_end_paint(proxyData* pdata)
 	if (gdi->primary->hdc->hwnd->ninvalid < 1)
 		return TRUE;
 
-	socket = capture_plugin_get_socket(pdata);
+	socket = capture_plugin_get_socket(plugin, pdata);
 	if (socket == INVALID_SOCKET)
 		return FALSE;
 
@@ -205,19 +224,28 @@ static BOOL capture_plugin_client_end_paint(proxyData* pdata)
 	return TRUE;
 }
 
-static BOOL capture_plugin_client_post_connect(proxyData* pdata)
+static BOOL capture_plugin_client_post_connect(proxyPlugin* plugin, proxyData* pdata, void* custom)
 {
+	captureConfig* cconfig;
 	SOCKET socket;
 	wStream* s;
 
-	socket = capture_plugin_init_socket();
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(custom);
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(plugin->mgr);
+
+	cconfig = plugin->custom;
+	WINPR_ASSERT(cconfig);
+
+	socket = capture_plugin_init_socket(cconfig);
 	if (socket == INVALID_SOCKET)
 	{
 		WLog_ERR(TAG, "failed to establish a connection");
 		return FALSE;
 	}
 
-	g_plugins_manager->SetPluginData(PLUGIN_NAME, pdata, (void*)socket);
+	plugin->mgr->SetPluginData(plugin->mgr, PLUGIN_NAME, pdata, (void*)socket);
 
 	s = capture_plugin_create_session_info_packet(pdata->pc);
 	if (!s)
@@ -226,11 +254,24 @@ static BOOL capture_plugin_client_post_connect(proxyData* pdata)
 	return capture_plugin_send_packet(socket, s);
 }
 
-static BOOL capture_plugin_server_post_connect(proxyData* pdata)
+static BOOL capture_plugin_server_post_connect(proxyPlugin* plugin, proxyData* pdata, void* custom)
 {
-	pServerContext* ps = pdata->ps;
-	proxyConfig* config = pdata->config;
-	rdpSettings* settings = ps->context.settings;
+	pServerContext* ps;
+	const proxyConfig* config;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(custom);
+
+	ps = pdata->ps;
+	WINPR_ASSERT(ps);
+
+	config = pdata->config;
+	WINPR_ASSERT(config);
+
+	settings = ps->context.settings;
+	WINPR_ASSERT(settings);
 
 	if (!config->GFX || !config->DecodeGFX)
 	{
@@ -248,40 +289,51 @@ static BOOL capture_plugin_server_post_connect(proxyData* pdata)
 	return TRUE;
 }
 
-static BOOL capture_plugin_unload(void)
+static BOOL capture_plugin_unload(proxyPlugin* plugin)
 {
-	capture_plugin_config_free_internal(&config);
+	if (plugin)
+	{
+		captureConfig* cconfig = plugin->custom;
+		WINPR_ASSERT(cconfig);
+
+		capture_plugin_config_free_internal(cconfig);
+		free(cconfig);
+	}
 	return TRUE;
 }
 
-static proxyPlugin demo_plugin = {
-	PLUGIN_NAME,                        /* name */
-	PLUGIN_DESC,                        /* description */
-	capture_plugin_unload,              /* PluginUnload */
-	NULL,                               /* ClientPreConnect */
-	capture_plugin_client_post_connect, /* ClientPostConnect */
-	NULL,                               /* ClientLoginFailure */
-	capture_plugin_client_end_paint,    /* ClientEndPaint */
-	capture_plugin_server_post_connect, /* ServerPostConnect */
-	NULL,                               /* ServerChannelsInit */
-	NULL,                               /* ServerChannelsFree */
-	capture_plugin_session_end,         /* Session End */
-	NULL,                               /* KeyboardEvent */
-	NULL,                               /* MouseEvent */
-	NULL,                               /* ClientChannelData */
-	NULL,                               /* ServerChannelData */
-};
-
-BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager)
+#ifdef __cplusplus
+extern "C"
 {
-	g_plugins_manager = plugins_manager;
+#endif
+	FREERDP_API BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata);
+#ifdef __cplusplus
+}
+#endif
 
-	if (!capture_plugin_init_config(&config))
+BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
+{
+	proxyPlugin plugin = { 0 };
+
+	plugin.name = PLUGIN_NAME;                                     /* name */
+	plugin.description = PLUGIN_DESC;                              /* description */
+	plugin.PluginUnload = capture_plugin_unload;                   /* PluginUnload */
+	plugin.ClientPostConnect = capture_plugin_client_post_connect; /* ClientPostConnect */
+	plugin.ClientEndPaint = capture_plugin_client_end_paint;       /* ClientEndPaint */
+	plugin.ServerPostConnect = capture_plugin_server_post_connect; /* ServerPostConnect */
+	plugin.ServerSessionEnd = capture_plugin_session_end;          /* Session End */
+	plugin.userdata = userdata;                                    /* userdata */
+	captureConfig* cconfig = calloc(1, sizeof(captureConfig));
+	if (!cconfig)
+		return FALSE;
+	plugin.custom = cconfig;
+
+	if (!capture_plugin_init_config(cconfig))
 	{
 		WLog_ERR(TAG, "failed to load config");
 		return FALSE;
 	}
 
-	WLog_INFO(TAG, "host: %s, port: %" PRIu16 "", config.host, config.port);
-	return plugins_manager->RegisterPlugin(&demo_plugin);
+	WLog_INFO(TAG, "host: %s, port: %" PRIu16 "", cconfig->host, cconfig->port);
+	return plugins_manager->RegisterPlugin(plugins_manager, &plugin);
 }

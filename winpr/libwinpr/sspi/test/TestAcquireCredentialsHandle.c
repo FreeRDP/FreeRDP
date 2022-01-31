@@ -17,6 +17,10 @@ int TestAcquireCredentialsHandle(int argc, char* argv[])
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecurityFunctionTable* table;
 	SecPkgCredentials_Names credential_names;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	sspi_GlobalInit();
 	table = InitSecurityInterface();
 	identity.User = (UINT16*)_strdup(test_User);

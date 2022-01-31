@@ -21,6 +21,10 @@ int TestNtCreateFile(int argc, char* argv[])
 	OBJECT_ATTRIBUTES attributes;
 	IO_STATUS_BLOCK ioStatusBlock;
 	int result = -1;
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	_RtlInitAnsiString(&aString, TESTFILE);
 	ntstatus = _RtlAnsiStringToUnicodeString(&uString, &aString, TRUE);
 

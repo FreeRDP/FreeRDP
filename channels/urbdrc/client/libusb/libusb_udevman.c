@@ -74,8 +74,8 @@ struct _UDEVMAN
 	IUDEVICE* head; /* head device in linked list */
 	IUDEVICE* tail; /* tail device in linked list */
 
-	LPSTR devices_vid_pid;
-	LPSTR devices_addr;
+	LPCSTR devices_vid_pid;
+	LPCSTR devices_addr;
 	wArrayList* hotplug_vid_pids;
 	UINT16 flags;
 	UINT32 device_num;
@@ -194,6 +194,12 @@ static size_t udevman_register_udevice(IUDEVMAN* idevman, BYTE bus_number, BYTE 
 		addnum = 0;
 		/* register all device that match pid vid */
 		num = udev_new_by_id(urbdrc, udevman->context, idVendor, idProduct, &devArray);
+
+		if (num == 0)
+		{
+			WLog_Print(urbdrc->log, WLOG_WARN,
+			           "Could not find or redirect any usb devices by id %04x:%04x", idVendor, idProduct);
+		}
 
 		for (i = 0; i < num; i++)
 		{
@@ -536,7 +542,7 @@ static BOOL device_is_filtered(struct libusb_device* dev,
 
 				for (x = 0; x < config->bNumInterfaces; x++)
 				{
-					uint8_t y;
+					int y;
 					const struct libusb_interface* ifc = &config->interface[x];
 					for (y = 0; y < ifc->num_altsetting; y++)
 					{
@@ -685,7 +691,7 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 		                                  ':', '#'))
 		{
 			WLog_ERR(TAG, "Invalid device argument: \"%s\"", devices);
-			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			return FALSE;
 		}
 
 		if (add_by_addr)
@@ -700,7 +706,7 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 				return CHANNEL_RC_NO_MEMORY;
 			idpair->vid = id1;
 			idpair->pid = id2;
-			if (ArrayList_Add(udevman->hotplug_vid_pids, idpair) == -1)
+			if (!ArrayList_Append(udevman->hotplug_vid_pids, idpair))
 			{
 				free(idpair);
 				return CHANNEL_RC_NO_MEMORY;
@@ -714,68 +720,69 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 	return CHANNEL_RC_OK;
 }
 
-static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
+static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, const ADDIN_ARGV* args)
 {
-	int status;
-	LPSTR devices = NULL;
-	COMMAND_LINE_ARGUMENT_A* arg;
-	COMMAND_LINE_ARGUMENT_A urbdrc_udevman_args[] = {
-		{ "dbg", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "debug" },
-		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<devices>", NULL, NULL, -1, NULL, "device list" },
-		{ "id", COMMAND_LINE_VALUE_OPTIONAL, "", NULL, BoolValueFalse, -1, NULL,
-		  "FLAG_ADD_BY_VID_PID" },
-		{ "addr", COMMAND_LINE_VALUE_OPTIONAL, "", NULL, BoolValueFalse, -1, NULL,
-		  "FLAG_ADD_BY_ADDR" },
-		{ "auto", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "FLAG_ADD_BY_AUTO" },
-		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-	};
+	int x;
+	LPCSTR devices = NULL;
 
-	status = CommandLineParseArgumentsA(args->argc, args->argv, urbdrc_udevman_args,
-	                                    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON,
-	                                    udevman, NULL, NULL);
-
-	if (status != CHANNEL_RC_OK)
-		return status;
-
-	arg = urbdrc_udevman_args;
-
-	do
+	for (x = 0; x < args->argc; x++)
 	{
-		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
-			continue;
-
-		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "dbg")
+		const char* arg = args->argv[x];
+		if (strcmp(arg, "dbg") == 0)
 		{
 			WLog_SetLogLevel(WLog_Get(TAG), WLOG_TRACE);
 		}
-		CommandLineSwitchCase(arg, "dev")
+		else if (_strnicmp(arg, "device:", 7) == 0)
 		{
-			devices = arg->Value;
+			/* Redirect all local devices */
+			const char* val = &arg[7];
+			const size_t len = strlen(val);
+			if (strcmp(val, "*") == 0)
+			{
+				udevman->flags |= UDEVMAN_FLAG_ADD_BY_AUTO;
+			}
+			else if (_strnicmp(arg, "USBInstanceID:", 14) == 0)
+			{
+				// TODO: Usb instance ID
+			}
+			else if ((val[0] == '{') && (val[len - 1] == '}'))
+			{
+				// TODO: Usb device class
+			}
 		}
-		CommandLineSwitchCase(arg, "id")
+		else if (_strnicmp(arg, "dev:", 4) == 0)
 		{
-			if (arg->Value)
-				udevman->devices_vid_pid = arg->Value;
+			devices = &arg[4];
+		}
+		else if (_strnicmp(arg, "id", 2) == 0)
+		{
+			const char* p = strchr(arg, ':');
+			if (p)
+				udevman->devices_vid_pid = p + 1;
 			else
 				udevman->flags = UDEVMAN_FLAG_ADD_BY_VID_PID;
 		}
-		CommandLineSwitchCase(arg, "addr")
+		else if (_strnicmp(arg, "addr", 4) == 0)
 		{
-			if (arg->Value)
-				udevman->devices_addr = arg->Value;
+			const char* p = strchr(arg, ':');
+			if (p)
+				udevman->devices_addr = p + 1;
 			else
 				udevman->flags = UDEVMAN_FLAG_ADD_BY_ADDR;
 		}
-		CommandLineSwitchCase(arg, "auto")
+		else if (strcmp(arg, "auto") == 0)
 		{
 			udevman->flags |= UDEVMAN_FLAG_ADD_BY_AUTO;
 		}
-		CommandLineSwitchDefault(arg)
+		else
 		{
+			const size_t len = strlen(arg);
+			if ((arg[0] == '{') && (arg[len - 1] == '}'))
+			{
+				// TODO: Check for  {Device Setup Class GUID}:
+			}
 		}
-		CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
-
+	}
 	if (devices)
 	{
 		if (udevman->flags & UDEVMAN_FLAG_ADD_BY_VID_PID)
@@ -834,7 +841,7 @@ static BOOL poll_libusb_events(UDEVMAN* udevman)
 {
 	int rc = LIBUSB_SUCCESS;
 	struct timeval tv = { 0, 500 };
-	if (libusb_try_lock_events(udevman->context))
+	if (libusb_try_lock_events(udevman->context) == 0)
 	{
 		if (libusb_event_handling_ok(udevman->context))
 		{
@@ -861,7 +868,7 @@ static BOOL poll_libusb_events(UDEVMAN* udevman)
 
 static DWORD poll_thread(LPVOID lpThreadParameter)
 {
-	libusb_hotplug_callback_handle handle;
+	libusb_hotplug_callback_handle handle = 0;
 	UDEVMAN* udevman = (UDEVMAN*)lpThreadParameter;
 	BOOL hasHotplug = libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG);
 
@@ -907,7 +914,7 @@ UINT freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS 
 	UINT rc;
 	UINT status;
 	UDEVMAN* udevman;
-	ADDIN_ARGV* args = pEntryPoints->args;
+	const ADDIN_ARGV* args = pEntryPoints->args;
 	udevman = (PUDEVMAN)calloc(1, sizeof(UDEVMAN));
 
 	if (!udevman)
@@ -917,15 +924,13 @@ UINT freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS 
 	if (!udevman->hotplug_vid_pids)
 		goto fail;
 	obj = ArrayList_Object(udevman->hotplug_vid_pids);
-	if (!obj)
-		goto fail;
 	obj->fnObjectFree = free;
 	obj->fnObjectEquals = udevman_vid_pid_pair_equals;
 
 	udevman->next_device_id = BASE_USBDEVICE_NUM;
 	udevman->iface.plugin = pEntryPoints->plugin;
 	rc = libusb_init(&udevman->context);
-
+	
 	if (rc != LIBUSB_SUCCESS)
 		goto fail;
 

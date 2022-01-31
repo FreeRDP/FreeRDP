@@ -48,7 +48,7 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 	return __lzcnt(x);
 }
 
-int test_lzcnt()
+static int test_lzcnt(void)
 {
 	if (lzcnt_s(0x1) != 31)
 	{
@@ -83,7 +83,7 @@ int test_lzcnt()
 	return 0;
 }
 
-int test_lzcnt16()
+static int test_lzcnt16(void)
 {
 	if (__lzcnt16(0x1) != 15)
 	{
@@ -108,6 +108,10 @@ int test_lzcnt16()
 
 int TestIntrinsics(int argc, char* argv[])
 {
+
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	g_LZCNT = IsProcessorFeaturePresentEx(PF_EX_LZCNT);
 
 	printf("LZCNT available: %" PRId32 "\n", g_LZCNT);

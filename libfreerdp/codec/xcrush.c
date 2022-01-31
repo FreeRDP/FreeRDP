@@ -775,7 +775,7 @@ static int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UI
 	UINT16 MatchLength = 0;
 	UINT16 MatchOutputOffset = 0;
 	UINT32 MatchHistoryOffset = 0;
-	RDP61_MATCH_DETAILS* MatchDetails = NULL;
+	const RDP61_MATCH_DETAILS* MatchDetails = NULL;
 
 	if (SrcSize < 1)
 		return -1001;
@@ -802,8 +802,8 @@ static int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UI
 			return -1003;
 
 		Data_Read_UINT16(pSrcData, MatchCount);
-		MatchDetails = (RDP61_MATCH_DETAILS*)&pSrcData[2];
-		Literals = (BYTE*)&MatchDetails[MatchCount];
+		MatchDetails = (const RDP61_MATCH_DETAILS*)&pSrcData[2];
+		Literals = (const BYTE*)&MatchDetails[MatchCount];
 		OutputOffset = 0;
 
 		if (Literals > pSrcEnd)
@@ -873,8 +873,8 @@ static int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UI
 	return 1;
 }
 
-int xcrush_decompress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
-                      UINT32* pDstSize, UINT32 flags)
+int xcrush_decompress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize,
+                      BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	int status = 0;
 	UINT32 DstSize = 0;
@@ -980,13 +980,13 @@ static int xcrush_compress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT
 	return 1;
 }
 
-int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
+int xcrush_compress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
                     UINT32* pDstSize, UINT32* pFlags)
 {
 	int status = 0;
 	UINT32 DstSize = 0;
 	BYTE* pDstData = NULL;
-	BYTE* CompressedData = NULL;
+	const BYTE* CompressedData = NULL;
 	UINT32 CompressedDataSize = 0;
 	BYTE* OriginalData = NULL;
 	UINT32 OriginalDataSize = 0;

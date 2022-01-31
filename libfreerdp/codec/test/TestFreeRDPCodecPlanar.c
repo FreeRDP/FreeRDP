@@ -3,6 +3,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
@@ -3099,7 +3100,7 @@ static const BYTE TEST_RLE_BITMAP_EXPERIMENTAL_03[16384] =
     "\x57\xCD\x98\xFF\x57\xCD\x98\xFF\x56\xCD\x98\xFF\x57\xCD\x98\xFF\x57\xCD\x98\xFF\x57\xCD\x98"
     "\xFF\x56\xCB\x96\xFF\x51\xB7\x88\xFF";
 
-BYTE TEST_RLE_BITMAP_EXPERIMENTAL_03_RLE[11160] =
+static const BYTE TEST_RLE_BITMAP_EXPERIMENTAL_03_RLE[11160] =
     "\x30\xF0\x23\x1F\x1E\x1D\x1D\x1E\x1D\x1F\x23\x4A\x78\x71\x64\x58\x4B\xF0\x3E\x30\x29\x26\x24"
     "\x22\x21\x20\x20\x20\x1D\x1E\x20\x1E"
     "\x1F\x86\x20\x20\x1F\x20\x21\x22\x1E\x1F\xF0\x1E\x1D\x1F\x20\x1F\x1F\x1F\x1E\x1E\x1F\x1F\x20"
@@ -3799,7 +3800,7 @@ BYTE TEST_RLE_BITMAP_EXPERIMENTAL_03_RLE[11160] =
     "\x37\x2D\x1F\x11\x03\x00\x00\x00\x02\x24\x02\x00\x23\x02\x00\x80\x02\x02\x00\x02\x02\x12\x2E"
     "\x3C";
 
-BYTE TEST_64X64_RED_PLANE[4096] =
+static const BYTE TEST_64X64_RED_PLANE[4096] =
     "\x23\x1F\x1E\x1D\x1D\x1E\x1D\x1F\x23\x4A\x78\x71\x64\x58\x4B\x3E\x30\x29\x26\x24\x22\x21\x20"
     "\x20\x20\x1D\x1E\x20\x1E\x1F\x20\x20"
     "\x1F\x20\x21\x22\x1E\x1F\x1F\x1F\x1F\x1F\x1F\x1F\x1E\x1D\x1F\x20\x1F\x1F\x1F\x1E\x1E\x1F\x1F"
@@ -4057,7 +4058,7 @@ BYTE TEST_64X64_RED_PLANE[4096] =
     "\x24\x25\x29\x2D\x43\x59\x6E\x81\x93\x98\x98\x98\x98\x98\x98\x98\x97\x98\x98\x98\x98\x98\x98"
     "\x98\x98\x98\x98\x98\x98\x98\x96\x88";
 
-BYTE TEST_64X64_RED_PLANE_RLE[3739] =
+static const BYTE TEST_64X64_RED_PLANE_RLE[3739] =
     "\xF0\x23\x1F\x1E\x1D\x1D\x1E\x1D\x1F\x23\x4A\x78\x71\x64\x58\x4B\xF0\x3E\x30\x29\x26\x24\x22"
     "\x21\x20\x20\x20\x1D\x1E\x20\x1E\x1F"
     "\x86\x20\x20\x1F\x20\x21\x22\x1E\x1F\xF0\x1E\x1D\x1F\x20\x1F\x1F\x1F\x1E\x1E\x1F\x1F\x20\x1E"
@@ -4293,7 +4294,7 @@ BYTE TEST_64X64_RED_PLANE_RLE[3739] =
     "\xF0\x0D\x15\x19\x41\x69\x93\x89\x71\x51\x2D\x09\x02\x02\x00\x02\x2A\x02\x00\x70\x02\x00\x02"
     "\x04\x26\x70\x8C";
 
-BYTE TEST_64X64_GREEN_PLANE[4096] =
+static const BYTE TEST_64X64_GREEN_PLANE[4096] =
     "\x2A\x25\x23\x23\x23\x23\x23\x24\x2B\x60\xA2\x97\x84\x75\x62\x50\x3C\x34\x30\x2C\x29\x28\x26"
     "\x25\x25\x23\x23\x25\x24\x24\x25\x25"
     "\x25\x25\x26\x27\x25\x24\x25\x25\x27\x24\x24\x24\x24\x24\x25\x25\x24\x25\x26\x25\x23\x24\x24"
@@ -4551,7 +4552,7 @@ BYTE TEST_64X64_GREEN_PLANE[4096] =
     "\x2A\x2C\x31\x38\x57\x74\x91\xAD\xC7\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCC\xCD\xCD\xCD\xCD\xCD\xCD"
     "\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCB\xB7";
 
-BYTE TEST_64X64_GREEN_PLANE_RLE[3696] =
+static const BYTE TEST_64X64_GREEN_PLANE_RLE[3696] =
     "\x34\x2A\x25\x23\xF0\x24\x2B\x60\xA2\x97\x84\x75\x62\x50\x3C\x34\x30\x2C\x29\x28\x93\x26\x25"
     "\x25\x23\x23\x25\x24\x24\x25\x84\x26"
     "\x27\x25\x24\x25\x25\x27\x24\xC3\x25\x25\x24\x25\x26\x25\x23\x24\x24\x25\x23\x24\x30\x22\x23"
@@ -4784,7 +4785,7 @@ BYTE TEST_64X64_GREEN_PLANE_RLE[3696] =
     "\xF0\x13\x19\x29\x5B\x97\xCF\xC1\xA1"
     "\x75\x3F\x0B\x02\x02\x00\x02\x2C\x02\x00\x50\x02\x06\x36\x9C\xC4";
 
-BYTE TEST_64X64_BLUE_PLANE[4096] =
+static const BYTE TEST_64X64_BLUE_PLANE[4096] =
     "\x27\x23\x23\x24\x25\x25\x25\x25\x28\x37\x4A\x47\x41\x3D\x38\x33\x2E\x2A\x28\x27\x26\x27\x27"
     "\x27\x25\x24\x26\x28\x26\x27\x28\x28"
     "\x26\x28\x28\x2A\x26\x27\x27\x28\x27\x27\x25\x26\x24\x25\x27\x28\x27\x28\x27\x27\x25\x26\x27"
@@ -5042,7 +5043,7 @@ BYTE TEST_64X64_BLUE_PLANE[4096] =
     "\x28\x28\x2A\x2C\x35\x3E\x46\x4E\x55\x57\x57\x57\x57\x57\x57\x57\x56\x57\x57\x57\x57\x57\x57"
     "\x57\x57\x57\x56\x57\x57\x57\x56\x51";
 
-BYTE TEST_64X64_BLUE_PLANE_RLE[3724] =
+static const BYTE TEST_64X64_BLUE_PLANE_RLE[3724] =
     "\x53\x27\x23\x23\x24\x25\xF0\x28\x37\x4A\x47\x41\x3D\x38\x33\x2E\x2A\x28\x27\x26\x27\x27\xF0"
     "\x27\x25\x24\x26\x28\x26\x27\x28\x28"
     "\x26\x28\x28\x2A\x26\x27\xF0\x27\x28\x27\x27\x25\x26\x24\x25\x27\x28\x27\x28\x27\x27\x25\xB0"
@@ -5546,9 +5547,9 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 	       FreeRDPGetColorFormatName(dstFormat));
 	fflush(stdout);
 
-	for (j = 0; j < 100; j += 8)
+	for (j = 0; j < 32; j += 8)
 	{
-		for (i = 4; i < 64; i += 8)
+		for (i = 4; i < 32; i += 8)
 		{
 			UINT32 compressedSize;
 			const UINT32 fill = j;
@@ -5650,11 +5651,127 @@ fail:
 	return rc;
 }
 
+static UINT32 prand(UINT32 max)
+{
+	UINT32 tmp;
+	if (max <= 1)
+		return 1;
+	winpr_RAND((BYTE*)&tmp, sizeof(tmp));
+	return tmp % (max - 1) + 1;
+}
+
+static BOOL FuzzPlanar(void)
+{
+	UINT32 x;
+	BOOL rc = FALSE;
+	const DWORD planarFlags = PLANAR_FORMAT_HEADER_NA | PLANAR_FORMAT_HEADER_RLE;
+	BITMAP_PLANAR_CONTEXT* planar = freerdp_bitmap_planar_context_new(planarFlags, 64, 64);
+
+	if (!planar)
+		goto fail;
+
+	for (x = 0; x < 100; x++)
+	{
+		BYTE data[0x10000] = { 0 };
+		size_t dataSize = 0x10000;
+		BYTE dstData[0x10000] = { 0 };
+
+		UINT32 DstFormat;
+		UINT32 nDstStep;
+		UINT32 nXDst;
+		UINT32 nYDst;
+		UINT32 nDstWidth;
+		UINT32 nDstHeight;
+		BOOL invalid = TRUE;
+		do
+		{
+			switch (prand(17) - 1)
+			{
+				case 0:
+					DstFormat = PIXEL_FORMAT_RGB8;
+					break;
+				case 1:
+					DstFormat = PIXEL_FORMAT_BGR15;
+					break;
+				case 2:
+					DstFormat = PIXEL_FORMAT_RGB15;
+					break;
+				case 3:
+					DstFormat = PIXEL_FORMAT_ABGR15;
+					break;
+				case 4:
+					DstFormat = PIXEL_FORMAT_ABGR15;
+					break;
+				case 5:
+					DstFormat = PIXEL_FORMAT_BGR16;
+					break;
+				case 6:
+					DstFormat = PIXEL_FORMAT_RGB16;
+					break;
+				case 7:
+					DstFormat = PIXEL_FORMAT_BGR24;
+					break;
+				case 8:
+					DstFormat = PIXEL_FORMAT_RGB24;
+					break;
+				case 9:
+					DstFormat = PIXEL_FORMAT_BGRA32;
+					break;
+				case 10:
+					DstFormat = PIXEL_FORMAT_BGRX32;
+					break;
+				case 11:
+					DstFormat = PIXEL_FORMAT_RGBA32;
+					break;
+				case 12:
+					DstFormat = PIXEL_FORMAT_RGBX32;
+					break;
+				case 13:
+					DstFormat = PIXEL_FORMAT_ABGR32;
+					break;
+				case 14:
+					DstFormat = PIXEL_FORMAT_XBGR32;
+					break;
+				case 15:
+					DstFormat = PIXEL_FORMAT_ARGB32;
+					break;
+				case 16:
+					DstFormat = PIXEL_FORMAT_XRGB32;
+					break;
+				default:
+					break;
+			}
+			nDstStep = prand(sizeof(dstData));
+			nXDst = prand(nDstStep);
+			nYDst = prand(sizeof(dstData) / nDstStep);
+			nDstWidth = prand(nDstStep / GetBytesPerPixel(DstFormat));
+			nDstHeight = prand(sizeof(dstData) / nDstStep);
+			invalid = nXDst * GetBytesPerPixel(DstFormat) + (nYDst + nDstHeight) * nDstStep >
+			          sizeof(dstData);
+		} while (invalid);
+		printf("DstFormat=%s, nXDst=%" PRIu32 ", nYDst=%" PRIu32 ", nDstWidth=%" PRIu32
+		       ", nDstHeight=%" PRIu32 ", nDstStep=%" PRIu32 ", total size=%" PRIuz "\n",
+		       FreeRDPGetColorFormatName(DstFormat), nXDst, nYDst, nDstWidth, nDstHeight, nDstStep,
+		       sizeof(dstData));
+		freerdp_planar_switch_bgr(planar, rand() % 2);
+		planar_decompress(planar, data, dataSize, prand(4096), prand(4096), dstData, DstFormat,
+		                  nDstStep, nXDst, nYDst, nDstWidth, nDstHeight, prand(2));
+	}
+
+	rc = TRUE;
+fail:
+	freerdp_bitmap_planar_context_free(planar);
+	return rc;
+}
+
 int TestFreeRDPCodecPlanar(int argc, char* argv[])
 {
 	UINT32 x;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+
+	if (!FuzzPlanar())
+		return -2;
 
 	for (x = 0; x < colorFormatCount; x++)
 	{

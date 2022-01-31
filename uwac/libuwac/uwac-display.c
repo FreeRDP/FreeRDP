@@ -84,7 +84,7 @@ static void cb_shm_format(void* data, struct wl_shm* wl_shm, uint32_t format)
 	d->shm_formats[d->shm_formats_nb - 1] = format;
 }
 
-struct wl_shm_listener shm_listener = { cb_shm_format };
+static struct wl_shm_listener shm_listener = { cb_shm_format };
 
 static void xdg_shell_ping(void* data, struct xdg_wm_base* xdg_wm_base, uint32_t serial)
 {

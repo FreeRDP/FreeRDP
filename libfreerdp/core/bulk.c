@@ -292,6 +292,8 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 
 void bulk_reset(rdpBulk* bulk)
 {
+	WINPR_ASSERT(bulk);
+
 	mppc_context_reset(bulk->mppcSend, FALSE);
 	mppc_context_reset(bulk->mppcRecv, FALSE);
 	ncrush_context_reset(bulk->ncrushRecv, FALSE);

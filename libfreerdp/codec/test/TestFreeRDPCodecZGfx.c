@@ -28,7 +28,7 @@ static int test_ZGfxCompressFox(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData = NULL;
+	const BYTE* pSrcData = NULL;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	BYTE* pDstData = NULL;
@@ -40,7 +40,7 @@ static int test_ZGfxCompressFox(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_FOX_DATA) - 1;
-	pSrcData = (BYTE*)TEST_FOX_DATA;
+	pSrcData = (const BYTE*)TEST_FOX_DATA;
 	Flags = 0;
 	expectedSize = sizeof(TEST_FOX_DATA_SINGLE) - 1;
 	status = zgfx_compress(zgfx, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
@@ -80,7 +80,7 @@ static int test_ZGfxDecompressFoxSingle(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	BYTE* pDstData = NULL;
@@ -92,7 +92,7 @@ static int test_ZGfxDecompressFoxSingle(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_FOX_DATA_SINGLE) - 1;
-	pSrcData = (BYTE*)TEST_FOX_DATA_SINGLE;
+	pSrcData = (const BYTE*)TEST_FOX_DATA_SINGLE;
 	Flags = 0;
 	expectedSize = sizeof(TEST_FOX_DATA) - 1;
 	status = zgfx_decompress(zgfx, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
@@ -132,7 +132,7 @@ static int test_ZGfxDecompressFoxMultipart(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	BYTE* pDstData = NULL;
@@ -144,7 +144,7 @@ static int test_ZGfxDecompressFoxMultipart(void)
 		return -1;
 
 	SrcSize = sizeof(TEST_FOX_DATA_MULTIPART) - 1;
-	pSrcData = (BYTE*)TEST_FOX_DATA_MULTIPART;
+	pSrcData = (const BYTE*)TEST_FOX_DATA_MULTIPART;
 	Flags = 0;
 	expectedSize = sizeof(TEST_FOX_DATA) - 1;
 	status = zgfx_decompress(zgfx, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
@@ -183,8 +183,9 @@ static int test_ZGfxCompressConsistent(void)
 {
 	int rc = -1;
 	int status;
+
 	UINT32 Flags;
-	BYTE* pSrcData;
+	const BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	BYTE* pDstData = NULL;
@@ -202,7 +203,7 @@ static int test_ZGfxCompressConsistent(void)
 
 	/* Compress */
 	expectedSize = SrcSize = sizeof(BigBuffer);
-	pSrcData = (BYTE*)BigBuffer;
+	pSrcData = (const BYTE*)BigBuffer;
 	Flags = 0;
 	status = zgfx_compress(zgfx, pSrcData, SrcSize, &pDstData2, &DstSize2, &Flags);
 

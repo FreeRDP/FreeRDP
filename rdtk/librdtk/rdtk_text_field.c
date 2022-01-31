@@ -24,15 +24,15 @@
 
 #include "rdtk_text_field.h"
 
-int rdtk_text_field_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
-                         rdtkTextField* textField, const char* text)
+int rdtk_text_field_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint16_t nWidth,
+                         uint16_t nHeight, rdtkTextField* textField, const char* text)
 {
-	int offsetX;
-	int offsetY;
-	int textWidth;
-	int textHeight;
-	int fillWidth;
-	int fillHeight;
+	uint16_t offsetX;
+	uint16_t offsetY;
+	uint16_t textWidth;
+	uint16_t textHeight;
+	uint16_t fillWidth;
+	uint16_t fillHeight;
 	rdtkFont* font;
 	rdtkEngine* engine;
 	rdtkNinePatch* ninePatch;

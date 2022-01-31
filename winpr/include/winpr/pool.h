@@ -86,7 +86,7 @@ typedef VOID (*PTP_TIMER_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context
 typedef VOID (*PTP_WAIT_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WAIT Wait,
                                   TP_WAIT_RESULT WaitResult);
 
-#endif
+#endif /* _WIN32 not defined */
 
 /*
 There is a bug in the Win8 header that defines the IO
@@ -97,7 +97,7 @@ logic tries to fix that.
 #ifdef _THREADPOOLAPISET_H_
 #define PTP_WIN32_IO_CALLBACK_DEFINED 1
 #else
-#if (_WIN32_WINNT >= 0x0600)
+#if defined(_WIN32_WINNT) && (_WIN32_WINNT >= 0x0600)
 #define PTP_WIN32_IO_CALLBACK_DEFINED 1
 #endif
 #endif
@@ -110,7 +110,12 @@ typedef VOID (*PTP_WIN32_IO_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Cont
 
 #endif
 
-#if (!defined(_WIN32) || ((defined(_WIN32) && (_WIN32_WINNT < 0x0600))))
+
+#if !defined(_WIN32)
+#define WINPR_THREAD_POOL 1
+#elif defined(_WIN32) && (_WIN32_WINNT < 0x0600)
+#define WINPR_THREAD_POOL 1
+#elif defined(__MINGW32__) && (__MINGW64_VERSION_MAJOR < 9)
 #define WINPR_THREAD_POOL 1
 #endif
 
@@ -210,6 +215,42 @@ extern "C"
 #define SetThreadpoolThreadMinimum winpr_SetThreadpoolThreadMinimum
 #define SetThreadpoolThreadMaximum winpr_SetThreadpoolThreadMaximum
 
+
+	/* Callback */
+
+	WINPR_API BOOL winpr_CallbackMayRunLong(PTP_CALLBACK_INSTANCE pci);
+
+	/* Callback Clean-up */
+
+	WINPR_API VOID winpr_SetEventWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HANDLE evt);
+	WINPR_API VOID winpr_ReleaseSemaphoreWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HANDLE sem,
+	                                                         DWORD crel);
+	WINPR_API VOID winpr_ReleaseMutexWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HANDLE mut);
+	WINPR_API VOID winpr_LeaveCriticalSectionWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci,
+	                                                             PCRITICAL_SECTION pcs);
+	WINPR_API VOID winpr_FreeLibraryWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HMODULE mod);
+	WINPR_API VOID winpr_DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE pci);
+
+#define SetEventWhenCallbackReturns winpr_SetEventWhenCallbackReturns
+#define ReleaseSemaphoreWhenCallbackReturns winpr_ReleaseSemaphoreWhenCallbackReturns
+#define ReleaseMutexWhenCallbackReturns winpr_ReleaseMutexWhenCallbackReturns
+#define LeaveCriticalSectionWhenCallbackReturns winpr_LeaveCriticalSectionWhenCallbackReturns
+#define FreeLibraryWhenCallbackReturns winpr_FreeLibraryWhenCallbackReturns
+#define DisassociateCurrentThreadFromCallback winpr_DisassociateCurrentThreadFromCallback
+
+#endif /* WINPR_THREAD_POOL */
+
+#if !defined(_WIN32)
+#define WINPR_CALLBACK_ENVIRON 1
+#elif defined(_WIN32) && (_WIN32_WINNT < 0x0600)
+#define WINPR_CALLBACK_ENVIRON 1
+#elif defined(__MINGW32__) && (__MINGW64_VERSION_MAJOR < 9)
+#define WINPR_CALLBACK_ENVIRON 1
+#endif
+
+#ifdef WINPR_CALLBACK_ENVIRON
+	/* some version of mingw are missing Callback Environment functions */
+
 	/* Callback Environment */
 
 	static INLINE VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
@@ -243,29 +284,6 @@ extern "C"
 	{
 		pcbe->RaceDll = mod;
 	}
-
-	/* Callback */
-
-	WINPR_API BOOL winpr_CallbackMayRunLong(PTP_CALLBACK_INSTANCE pci);
-
-	/* Callback Clean-up */
-
-	WINPR_API VOID winpr_SetEventWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HANDLE evt);
-	WINPR_API VOID winpr_ReleaseSemaphoreWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HANDLE sem,
-	                                                         DWORD crel);
-	WINPR_API VOID winpr_ReleaseMutexWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HANDLE mut);
-	WINPR_API VOID winpr_LeaveCriticalSectionWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci,
-	                                                             PCRITICAL_SECTION pcs);
-	WINPR_API VOID winpr_FreeLibraryWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HMODULE mod);
-	WINPR_API VOID winpr_DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE pci);
-
-#define SetEventWhenCallbackReturns winpr_SetEventWhenCallbackReturns
-#define ReleaseSemaphoreWhenCallbackReturns winpr_ReleaseSemaphoreWhenCallbackReturns
-#define ReleaseMutexWhenCallbackReturns winpr_ReleaseMutexWhenCallbackReturns
-#define LeaveCriticalSectionWhenCallbackReturns winpr_LeaveCriticalSectionWhenCallbackReturns
-#define FreeLibraryWhenCallbackReturns winpr_FreeLibraryWhenCallbackReturns
-#define DisassociateCurrentThreadFromCallback winpr_DisassociateCurrentThreadFromCallback
-
 #endif
 
 #ifdef __cplusplus

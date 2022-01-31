@@ -24,6 +24,8 @@
 #include <locale.h>
 #include <float.h>
 
+#include <winpr/sysinfo.h>
+
 #include <freerdp/client/cmdline.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/gdi/gdi.h>
@@ -225,6 +227,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	wlfContext* context;
 	rdpSettings* settings;
 	char* title = "FreeRDP";
+	char* app_id = "wlfreerdp";
 	UINT32 w, h;
 
 	if (!instance || !instance->context)
@@ -266,11 +269,13 @@ static BOOL wl_post_connect(freerdp* instance)
 
 	UwacWindowSetFullscreenState(window, NULL, instance->context->settings->Fullscreen);
 	UwacWindowSetTitle(window, title);
+	UwacWindowSetAppId(window, app_id);
 	UwacWindowSetOpaqueRegion(context->window, 0, 0, w, h);
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
 	instance->update->DesktopResize = wl_resize_display;
-	freerdp_keyboard_init(instance->context->settings->KeyboardLayout);
+	freerdp_keyboard_init_ex(instance->context->settings->KeyboardLayout,
+	                         instance->context->settings->KeyboardRemappingList);
 
 	if (!(context->disp = wlf_disp_new(context)))
 		return FALSE;
@@ -330,12 +335,15 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_FRAME_DONE:
+			{
+				UwacReturnCode r;
 				EnterCriticalSection(&context->critical);
-				rc = UwacWindowSubmitBuffer(context->window, false);
+				r = UwacWindowSubmitBuffer(context->window, false);
 				LeaveCriticalSection(&context->critical);
-				if (rc != UWAC_SUCCESS)
+				if (r != UWAC_SUCCESS)
 					return FALSE;
-				break;
+			}
+			    break;
 
 			case UWAC_EVENT_POINTER_ENTER:
 				if (!wlf_handle_pointer_enter(instance, &event.mouse_enter_leave))
@@ -358,7 +366,20 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 			case UWAC_EVENT_POINTER_AXIS:
 				if (!wlf_handle_pointer_axis(instance, &event.mouse_axis))
 					return FALSE;
+				break;
 
+			case UWAC_EVENT_POINTER_AXIS_DISCRETE:
+				if (!wlf_handle_pointer_axis_discrete(instance, &event.mouse_axis))
+					return FALSE;
+				break;
+
+			case UWAC_EVENT_POINTER_FRAME:
+				if (!wlf_handle_pointer_frame(instance, &event.mouse_frame))
+					return FALSE;
+				break;
+			case UWAC_EVENT_POINTER_SOURCE:
+				if (!wlf_handle_pointer_source(instance, &event.mouse_source))
+					return FALSE;
 				break;
 
 			case UWAC_EVENT_KEY:
@@ -394,6 +415,12 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 
 				break;
 
+			case UWAC_EVENT_KEYBOARD_MODIFIERS:
+				if (!wlf_keyboard_modifiers(instance, &event.keyboard_modifiers))
+					return FALSE;
+
+				break;
+
 			case UWAC_EVENT_CONFIGURE:
 				if (!wlf_disp_handle_configure(context->disp, event.configure.width,
 				                               event.configure.height))
@@ -409,6 +436,11 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 			case UWAC_EVENT_CLIPBOARD_SELECT:
 				if (!wlf_cliprdr_handle_event(context->clipboard, &event.clipboard))
 					return FALSE;
+
+				break;
+
+			case UWAC_EVENT_CLOSE:
+				context->closed = TRUE;
 
 				break;
 
@@ -439,9 +471,13 @@ static BOOL handle_window_events(freerdp* instance)
 static int wlfreerdp_run(freerdp* instance)
 {
 	wlfContext* context;
-	DWORD count;
-	HANDLE handles[64];
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	DWORD status = WAIT_ABANDONED;
+	HANDLE timer = NULL;
+	LARGE_INTEGER due;
+
+	TimerEventArgs timerEvent;
+	EventArgsInit(&timerEvent, "xfreerdp");
 
 	if (!instance)
 		return -1;
@@ -457,12 +493,30 @@ static int wlfreerdp_run(freerdp* instance)
 		return -1;
 	}
 
+	timer = CreateWaitableTimerA(NULL, FALSE, "mainloop-periodic-timer");
+
+	if (!timer)
+	{
+		WLog_ERR(TAG, "failed to create timer");
+		goto disconnect;
+	}
+
+	due.QuadPart = 0;
+
+	if (!SetWaitableTimer(timer, &due, 20, NULL, NULL, FALSE))
+	{
+		goto disconnect;
+	}
+
 	while (!freerdp_shall_disconnect(instance))
 	{
-		handles[0] = context->displayHandle;
-		count = freerdp_get_event_handles(instance->context, &handles[1], 63) + 1;
+		DWORD count = 0;
+		handles[count++] = timer;
+		handles[count++] = context->displayHandle;
+		count += freerdp_get_event_handles(instance->context, &handles[count],
+		                                   ARRAYSIZE(handles) - count);
 
-		if (count <= 1)
+		if (count <= 2)
 		{
 			WLog_Print(context->log, WLOG_ERROR, "Failed to get FreeRDP file descriptor");
 			break;
@@ -479,6 +533,12 @@ static int wlfreerdp_run(freerdp* instance)
 		if (!handle_uwac_events(instance, context->display))
 		{
 			WLog_Print(context->log, WLOG_ERROR, "error handling UWAC events");
+			break;
+		}
+
+		if (context->closed)
+		{
+			WLog_Print(context->log, WLOG_INFO, "Closed from Wayland");
 			break;
 		}
 
@@ -501,8 +561,17 @@ static int wlfreerdp_run(freerdp* instance)
 
 			break;
 		}
+
+		if ((status != WAIT_TIMEOUT) && (status == WAIT_OBJECT_0))
+		{
+			timerEvent.now = GetTickCount64();
+			PubSub_OnTimer(context->context.pubSub, context, &timerEvent);
+		}
 	}
 
+disconnect:
+	if (timer)
+		CloseHandle(timer);
 	freerdp_disconnect(instance);
 	return status;
 }
@@ -535,8 +604,37 @@ static int wlf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	return 1;
 }
 
+static void wlf_client_free(freerdp* instance, rdpContext* context)
+{
+	wlfContext* wlf = (wlfContext*)instance->context;
+
+	if (!context)
+		return;
+
+	if (wlf->display)
+		UwacCloseDisplay(&wlf->display);
+
+	if (wlf->displayHandle)
+		CloseHandle(wlf->displayHandle);
+	ArrayList_Free(wlf->events);
+	DeleteCriticalSection(&wlf->critical);
+}
+
+static void* uwac_event_clone(const void* val)
+{
+	UwacEvent* copy;
+	const UwacEvent* ev = (const UwacEvent*)val;
+
+	copy = calloc(1, sizeof(UwacEvent));
+	if (!copy)
+		return NULL;
+	*copy = *ev;
+	return copy;
+}
+
 static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 {
+	wObject* obj;
 	UwacReturnCode status;
 	wlfContext* wfl = (wlfContext*)context;
 
@@ -546,8 +644,7 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	instance->PreConnect = wl_pre_connect;
 	instance->PostConnect = wl_post_connect;
 	instance->PostDisconnect = wl_post_disconnect;
-	instance->Authenticate = client_cli_authenticate;
-	instance->GatewayAuthenticate = client_cli_gw_authenticate;
+	instance->AuthenticateEx = client_cli_authenticate_ex;
 	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->PresentGatewayMessage = client_cli_present_gateway_message;
@@ -564,24 +661,17 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	if (!wfl->displayHandle)
 		return FALSE;
 
+	wfl->events = ArrayList_New(FALSE);
+	if (!wfl->events)
+		return FALSE;
+
+	obj = ArrayList_Object(wfl->events);
+	obj->fnObjectNew = uwac_event_clone;
+	obj->fnObjectFree = free;
+
 	InitializeCriticalSection(&wfl->critical);
 
 	return TRUE;
-}
-
-static void wlf_client_free(freerdp* instance, rdpContext* context)
-{
-	wlfContext* wlf = (wlfContext*)instance->context;
-
-	if (!context)
-		return;
-
-	if (wlf->display)
-		UwacCloseDisplay(&wlf->display);
-
-	if (wlf->displayHandle)
-		CloseHandle(wlf->displayHandle);
-	DeleteCriticalSection(&wlf->critical);
 }
 
 static int wfl_client_start(rdpContext* context)
@@ -628,18 +718,18 @@ int main(int argc, char* argv[])
 	settings = context->settings;
 
 	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
-	status = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
-
 	if (status)
 	{
-		BOOL list = settings->ListMonitors;
+		BOOL list;
+
+		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
+
+		list = settings->ListMonitors;
+
 		if (list)
 			wlf_list_monitors(wlc);
 
-		freerdp_client_context_free(context);
-		if (list)
-			return 0;
-		return status;
+		goto fail;
 	}
 
 	if (freerdp_client_start(context) != 0)

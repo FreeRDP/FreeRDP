@@ -57,6 +57,10 @@
 #include <sys/statvfs.h>
 #endif
 
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
+
 static BOOL FileIsHandled(HANDLE handle)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)handle;
@@ -164,7 +168,7 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDist
 		return INVALID_SET_FILE_POINTER;
 	}
 
-	return _ftelli64(pFile->fp);
+	return (DWORD)_ftelli64(pFile->fp);
 }
 
 static BOOL FileSetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove,
@@ -240,7 +244,7 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	}
 
 	if (lpNumberOfBytesRead)
-		*lpNumberOfBytesRead = io_status;
+		*lpNumberOfBytesRead = (DWORD)io_status;
 
 	return status;
 }
@@ -271,7 +275,7 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 		return FALSE;
 	}
 
-	*lpNumberOfBytesWritten = io_status;
+	*lpNumberOfBytesWritten = (DWORD)io_status;
 	return TRUE;
 }
 
@@ -318,9 +322,9 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 	}
 
 	if (lpFileSizeHigh)
-		*lpFileSizeHigh = 0;
+		*lpFileSizeHigh = (UINT32)(size >> 32);
 
-	return size;
+	return (UINT32)(size & 0xFFFFFFFF);
 }
 
 static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
@@ -653,7 +657,7 @@ static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDispositio
 
 UINT32 map_posix_err(int fs_errno)
 {
-	UINT32 rc;
+	NTSTATUS rc;
 
 	/* try to return NTSTATUS version of error code */
 
@@ -702,7 +706,7 @@ UINT32 map_posix_err(int fs_errno)
 			break;
 	}
 
-	return rc;
+	return (UINT32)rc;
 }
 
 static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
@@ -766,7 +770,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 			}
 		}
 
-		fp = fopen(pFile->lpFileName, "ab");
+		fp = winpr_fopen(pFile->lpFileName, "ab");
 		if (!fp)
 		{
 			SetLastError(map_posix_err(errno));
@@ -800,7 +804,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	}
 
 	if (NULL == fp)
-		fp = fopen(pFile->lpFileName, mode);
+		fp = winpr_fopen(pFile->lpFileName, mode);
 
 	pFile->fp = fp;
 	if (!pFile->fp)
@@ -840,11 +844,11 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 #endif
 		{
 #ifdef __sun
-			WLog_ERR(TAG, "F_SETLKW failed with %s [0x%08X]",
+			WLog_ERR(TAG, "F_SETLKW failed with %s [0x%08X]", strerror(errno), errno);
 #else
-			WLog_ERR(TAG, "flock failed with %s [0x%08X]",
+			WLog_ERR(TAG, "flock failed with %s [0x%08X]", strerror(errno), errno);
 #endif
-			         strerror(errno), errno);
+
 			SetLastError(map_posix_err(errno));
 			FileCloseHandle(pFile);
 			return INVALID_HANDLE_VALUE;
@@ -868,7 +872,7 @@ static BOOL IsFileDevice(LPCTSTR lpDeviceName)
 	return TRUE;
 }
 
-HANDLE_CREATOR _FileHandleCreator = { IsFileDevice, FileCreateFileA };
+static HANDLE_CREATOR _FileHandleCreator = { IsFileDevice, FileCreateFileA };
 
 HANDLE_CREATOR* GetFileHandleCreator(void)
 {
@@ -940,12 +944,12 @@ BOOL GetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWO
 #define STATVFS statvfs
 #endif
 
-	struct STATVFS svfst;
+	struct STATVFS svfst = { 0 };
 	STATVFS(lpRootPathName, &svfst);
-	*lpSectorsPerCluster = svfst.f_frsize;
+	*lpSectorsPerCluster = (UINT32)MIN(svfst.f_frsize, UINT32_MAX);
 	*lpBytesPerSector = 1;
-	*lpNumberOfFreeClusters = svfst.f_bavail;
-	*lpTotalNumberOfClusters = svfst.f_blocks;
+	*lpNumberOfFreeClusters = (UINT32)MIN(svfst.f_bavail, UINT32_MAX);
+	*lpTotalNumberOfClusters = (UINT32)MIN(svfst.f_blocks, UINT32_MAX);
 	return TRUE;
 }
 
@@ -1357,4 +1361,31 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 
 	return (HANDLE)pFile;
 #endif /* _WIN32 */
+}
+
+FILE* winpr_fopen(const char* path, const char* mode)
+{
+#ifndef _WIN32
+	return fopen(path, mode);
+#else
+	LPWSTR lpPathW = NULL;
+	LPWSTR lpModeW = NULL;
+	FILE* result = NULL;
+
+	if (!path || !mode)
+		return NULL;
+
+	if (ConvertToUnicode(CP_UTF8, 0, path, -1, &lpPathW, 0) < 1)
+		goto cleanup;
+
+	if (ConvertToUnicode(CP_UTF8, 0, mode, -1, &lpModeW, 0) < 1)
+		goto cleanup;
+
+	result = _wfopen(lpPathW, lpModeW);
+
+cleanup:
+	free(lpPathW);
+	free(lpModeW);
+	return result;
+#endif
 }

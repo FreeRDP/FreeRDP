@@ -34,18 +34,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include "registry_reg.h"
 
 static Reg* instance = NULL;
 
-static Reg* RegGetInstance()
+static Reg* RegGetInstance(void)
 {
 	if (!instance)
-	{
 		instance = reg_open(1);
-	}
 
 	return instance;
 }
@@ -213,18 +213,23 @@ LONG RegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesir
 
 LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
 {
-	Reg* reg;
 	RegKey* pKey;
-	reg = RegGetInstance();
+	Reg* reg = RegGetInstance();
 
 	if (!reg)
 		return -1;
 
+	if (hKey != HKEY_LOCAL_MACHINE)
+		return ERROR_FILE_NOT_FOUND;
+
+	WINPR_ASSERT(reg->root_key);
 	pKey = reg->root_key->subkeys;
 
 	while (pKey != NULL)
 	{
-		if (_stricmp(pKey->subname, lpSubKey) == 0)
+		WINPR_ASSERT(lpSubKey);
+
+		if (pKey->subname && (_stricmp(pKey->subname, lpSubKey) == 0))
 		{
 			*phkResult = (HKEY)pKey;
 			return ERROR_SUCCESS;
@@ -271,24 +276,48 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD
 	RegKey* key;
 	RegVal* pValue;
 
+	WINPR_UNUSED(lpReserved);
+
 	key = (RegKey*)hKey;
+	WINPR_ASSERT(key);
+
 	pValue = key->values;
 
 	while (pValue != NULL)
 	{
 		if (strcmp(pValue->name, lpValueName) == 0)
 		{
+			if (lpType)
+				*lpType = pValue->type;
+
 			if (pValue->type == REG_DWORD)
 			{
 				DWORD* pData = (DWORD*)lpData;
 
-				if (pData != NULL)
+				if (lpcbData)
 				{
-					*pData = pValue->data.dword;
+					DWORD size = *lpcbData;
+					*lpcbData = sizeof(DWORD);
+					if (pData)
+					{
+						if (size < *lpcbData)
+							return ERROR_MORE_DATA;
+					}
 				}
 
-				*lpcbData = sizeof(DWORD);
+				if (pData != NULL)
+				{
+					DWORD size;
+					WINPR_ASSERT(lpcbData);
 
+					size = *lpcbData;
+					*lpcbData = sizeof(DWORD);
+					if (size < sizeof(DWORD))
+						return ERROR_MORE_DATA;
+					*pData = pValue->data.dword;
+				}
+				else if (lpcbData != NULL)
+					*lpcbData = sizeof(DWORD);
 				return ERROR_SUCCESS;
 			}
 			else if (pValue->type == REG_SZ)
@@ -300,11 +329,18 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD
 
 				if (pData != NULL)
 				{
+					DWORD size;
+					WINPR_ASSERT(lpcbData);
+
+					size = *lpcbData;
+					*lpcbData = length;
+					if (size < length)
+						return ERROR_MORE_DATA;
 					memcpy(pData, pValue->data.string, length);
 					pData[length] = '\0';
 				}
-
-				*lpcbData = (UINT32)length;
+				else if (lpcbData)
+					*lpcbData = (UINT32)length;
 
 				return ERROR_SUCCESS;
 			}

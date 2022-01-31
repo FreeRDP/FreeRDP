@@ -41,12 +41,6 @@ macro(configure_msvc_runtime)
 			endif()
 		endforeach()
 
-		foreach(variable ${variables})
-			if(${variable} MATCHES "/W3")
-				string(REGEX REPLACE "/W3" "/W2" ${variable} "${${variable}}")
-			endif()
-		endforeach()
-
 		set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
 		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")

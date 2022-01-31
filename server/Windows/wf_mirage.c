@@ -195,7 +195,6 @@ void wf_mirror_driver_print_display_change_status(LONG status)
 
 BOOL wf_mirror_driver_update(wfInfo* wfi, int mode)
 {
-	HDC dc;
 	BOOL status;
 	DWORD* extHdr;
 	WORD drvExtraSaved;

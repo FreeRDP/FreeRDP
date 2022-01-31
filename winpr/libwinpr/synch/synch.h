@@ -29,6 +29,8 @@
 #include <winpr/synch.h>
 
 #include "../handle/handle.h"
+#include "../thread/apc.h"
+#include "event.h"
 
 #ifndef _WIN32
 
@@ -65,26 +67,22 @@ struct winpr_semaphore
 };
 typedef struct winpr_semaphore WINPR_SEMAPHORE;
 
-struct winpr_event
-{
-	WINPR_HANDLE_DEF();
-
-	int pipe_fd[2];
-	BOOL bAttached;
-	BOOL bManualReset;
-	char* name;
-};
-typedef struct winpr_event WINPR_EVENT;
-
 #ifdef HAVE_SYS_TIMERFD_H
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/timerfd.h>
-#endif
+#define TIMER_IMPL_TIMERFD
 
-#if defined(__APPLE__)
+#elif defined(WITH_POSIX_TIMER)
+#include <fcntl.h>
+#define TIMER_IMPL_POSIX
+
+#elif defined(__APPLE__)
+#define TIMER_IMPL_DISPATCH
 #include <dispatch/dispatch.h>
+#else
+#error missing timer implementation
 #endif
 
 struct winpr_timer
@@ -98,17 +96,25 @@ struct winpr_timer
 	PTIMERAPCROUTINE pfnCompletionRoutine;
 	LPVOID lpArgToCompletionRoutine;
 
-#ifdef WITH_POSIX_TIMER
+#ifdef TIMER_IMPL_TIMERFD
+	struct itimerspec timeout;
+#endif
+
+#ifdef TIMER_IMPL_POSIX
+	WINPR_EVENT_IMPL event;
 	timer_t tid;
 	struct itimerspec timeout;
 #endif
-#if defined(__APPLE__)
+
+#ifdef TIMER_IMPL_DISPATCH
+	WINPR_EVENT_IMPL event;
 	dispatch_queue_t queue;
 	dispatch_source_t source;
-	int pipe[2];
 	BOOL running;
 #endif
 	char* name;
+
+	WINPR_APC_ITEM apcItem;
 };
 typedef struct winpr_timer WINPR_TIMER;
 

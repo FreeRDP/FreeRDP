@@ -26,6 +26,9 @@
 #include <winpr/synch.h>
 
 #include "../log.h"
+#include "../thread/apc.h"
+#include "../thread/thread.h"
+#include "../synch/pollset.h"
 
 #define TAG WINPR_TAG("synch.sleep")
 
@@ -33,11 +36,20 @@
 
 #include <time.h>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifdef HAVE_UNISTD_H
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 500
 #endif
 #include <unistd.h>
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 VOID Sleep(DWORD dwMilliseconds)
@@ -47,11 +59,64 @@ VOID Sleep(DWORD dwMilliseconds)
 
 DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
 {
-	/* TODO: Implement bAlertable support */
-	if (bAlertable)
-		WLog_WARN(TAG, "%s does not support bAlertable", __FUNCTION__);
-	Sleep(dwMilliseconds);
-	return 0;
+	WINPR_THREAD* thread = winpr_GetCurrentThread();
+	WINPR_POLL_SET pollset;
+	int status;
+	DWORD ret = WAIT_FAILED;
+	BOOL autoSignalled;
+
+	if (!thread)
+	{
+		WLog_ERR(TAG, "unable to retrieve currentThread");
+		return WAIT_FAILED;
+	}
+
+	/* treat re-entrancy if a completion is calling us */
+	if (thread->apc.treatingCompletions)
+		bAlertable = FALSE;
+
+	if (!bAlertable || !thread->apc.length)
+	{
+		usleep(dwMilliseconds * 1000);
+		return 0;
+	}
+
+	if (!pollset_init(&pollset, thread->apc.length))
+	{
+		WLog_ERR(TAG, "unable to initialize pollset");
+		return WAIT_FAILED;
+	}
+
+	if (!apc_collectFds(thread, &pollset, &autoSignalled))
+	{
+		WLog_ERR(TAG, "unable to APC file descriptors");
+		goto out;
+	}
+
+	if (!autoSignalled)
+	{
+		/* we poll and wait only if no APC member is ready */
+		status = pollset_poll(&pollset, dwMilliseconds);
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "polling of apc fds failed");
+			goto out;
+		}
+	}
+
+	if (apc_executeCompletions(thread, &pollset, 0))
+	{
+		ret = WAIT_IO_COMPLETION;
+	}
+	else
+	{
+		/* according to the spec return value is 0 see
+		 * https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-sleepex*/
+		ret = 0;
+	}
+out:
+	pollset_uninit(&pollset);
+	return ret;
 }
 
 #endif
@@ -61,9 +126,9 @@ VOID USleep(DWORD dwMicroseconds)
 #ifndef _WIN32
 	usleep(dwMicroseconds);
 #else
-	static LARGE_INTEGER freq = { 0, 0 };
-	LARGE_INTEGER t1 = { 0, 0 };
-	LARGE_INTEGER t2 = { 0, 0 };
+	static LARGE_INTEGER freq = { 0 };
+	LARGE_INTEGER t1 = { 0 };
+	LARGE_INTEGER t2 = { 0 };
 
 	QueryPerformanceCounter(&t1);
 

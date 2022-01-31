@@ -221,8 +221,8 @@ endif()
 
 if(WITH_XRANDR)
 	add_definitions(-DWITH_XRANDR)
-	include_directories(${XRANDR_INCLUDE_DIRS})
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XRANDR_LIBRARIES})
+	include_directories(${XRandR_INCLUDE_DIRS})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XRandR_LIBRARIES})
 endif()
 
 if(WITH_XFIXES)
@@ -239,16 +239,16 @@ if(WITH_FUSE)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${FUSE_LIBRARIES})
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/resources)
+include_directories(${PROJECT_SOURCE_DIR}/resources)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client freerdp m)
 if (NOT APPLE)
 	list(APPEND ${MODULE_PREFIX}_LIBS rt)
 endif()
-target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} PRIVATE ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_IPP)
-    target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${IPP_LIBRARY_LIST})
+    target_link_libraries(${MODULE_NAME} PRIVATE ${IPP_LIBRARY_LIST})
 endif()
 
 if(WITH_CLIENT_INTERFACE)

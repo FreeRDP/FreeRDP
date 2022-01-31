@@ -20,23 +20,21 @@
 #include "config.h"
 #endif
 
-#include <freerdp/codec/color.h>
-
 #include "rdtk_resources.h"
 
 #include "rdtk_nine_patch.h"
 
-static int rdtk_image_copy_alpha_blend(BYTE* pDstData, int nDstStep, int nXDst, int nYDst,
-                                       int nWidth, int nHeight, BYTE* pSrcData, int nSrcStep,
+static int rdtk_image_copy_alpha_blend(uint8_t* pDstData, int nDstStep, int nXDst, int nYDst,
+                                       int nWidth, int nHeight, uint8_t* pSrcData, int nSrcStep,
                                        int nXSrc, int nYSrc)
 {
 	int x, y;
-	BYTE A, R, G, B;
+	uint8_t A, R, G, B;
 
 	for (y = 0; y < nHeight; y++)
 	{
-		const BYTE* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
-		BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+		const uint8_t* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
+		uint8_t* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
 
 		for (x = 0; x < nWidth; x++)
 		{
@@ -80,8 +78,8 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	int nYSrc;
 	int nSrcStep;
 	int nDstStep;
-	BYTE* pSrcData;
-	BYTE* pDstData;
+	uint8_t* pSrcData;
+	uint8_t* pDstData;
 	int scaleWidth;
 
 	if (nWidth < ninePatch->width)
@@ -206,10 +204,10 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 {
 	int x, y;
-	BYTE* data;
+	uint8_t* data;
 	int beg, end;
 	int scanline;
-	UINT32* pixel;
+	uint32_t* pixel;
 	int width, height;
 	ninePatch->image = image;
 	width = image->width;
@@ -218,7 +216,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 	data = image->data;
 	/* parse scalable area */
 	beg = end = -1;
-	pixel = (UINT32*)&data[4]; /* (1, 0) */
+	pixel = (uint32_t*)&data[4]; /* (1, 0) */
 
 	for (x = 1; x < width - 1; x++)
 	{
@@ -245,7 +243,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 	ninePatch->scaleRight = end - 1;
 	ninePatch->scaleWidth = ninePatch->scaleRight - ninePatch->scaleLeft;
 	beg = end = -1;
-	pixel = (UINT32*)&data[scanline]; /* (0, 1) */
+	pixel = (uint32_t*)&data[scanline]; /* (0, 1) */
 
 	for (y = 1; y < height - 1; y++)
 	{
@@ -265,7 +263,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 			}
 		}
 
-		pixel = (UINT32*)&((BYTE*)pixel)[scanline];
+		pixel = (uint32_t*)&((uint8_t*)pixel)[scanline];
 	}
 
 	ninePatch->scaleTop = beg - 1;
@@ -273,7 +271,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 	ninePatch->scaleHeight = ninePatch->scaleBottom - ninePatch->scaleTop;
 	/* parse fillable area */
 	beg = end = -1;
-	pixel = (UINT32*)&data[((height - 1) * scanline) + 4]; /* (1, height - 1) */
+	pixel = (uint32_t*)&data[((height - 1) * scanline) + 4]; /* (1, height - 1) */
 
 	for (x = 1; x < width - 1; x++)
 	{
@@ -300,7 +298,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 	ninePatch->fillRight = end - 1;
 	ninePatch->fillWidth = ninePatch->fillRight - ninePatch->fillLeft;
 	beg = end = -1;
-	pixel = (UINT32*)&data[((width - 1) * 4) + scanline]; /* (width - 1, 1) */
+	pixel = (uint32_t*)&data[((width - 1) * 4) + scanline]; /* (width - 1, 1) */
 
 	for (y = 1; y < height - 1; y++)
 	{
@@ -320,7 +318,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 			}
 		}
 
-		pixel = (UINT32*)&((BYTE*)pixel)[scanline];
+		pixel = (uint32_t*)&((uint8_t*)pixel)[scanline];
 	}
 
 	ninePatch->fillTop = beg - 1;
@@ -372,8 +370,8 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 
 	if (!engine->button9patch)
 	{
-		int size;
-		BYTE* data;
+		SSIZE_T size;
+		const uint8_t* data;
 		status = -1;
 		size = rdtk_get_embedded_resource_file("btn_default_normal.9.png", &data);
 
@@ -382,7 +380,7 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 			image = winpr_image_new();
 
 			if (image)
-				status = winpr_image_read_buffer(image, data, size);
+				status = winpr_image_read_buffer(image, data, (size_t)size);
 		}
 
 		if (status > 0)
@@ -394,21 +392,24 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 			else
 				winpr_image_free(image, TRUE);
 		}
+		else
+			winpr_image_free(image, TRUE);
 	}
 
 	if (!engine->textField9patch)
 	{
-		int size;
-		BYTE* data;
+		SSIZE_T size;
+		const uint8_t* data;
 		status = -1;
 		size = rdtk_get_embedded_resource_file("textfield_default.9.png", &data);
+		image = NULL;
 
 		if (size > 0)
 		{
 			image = winpr_image_new();
 
 			if (image)
-				status = winpr_image_read_buffer(image, data, size);
+				status = winpr_image_read_buffer(image, data, (size_t)size);
 		}
 
 		if (status > 0)
@@ -420,6 +421,8 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 			else
 				winpr_image_free(image, TRUE);
 		}
+		else
+			winpr_image_free(image, TRUE);
 	}
 
 	return 1;

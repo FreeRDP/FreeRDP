@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-	SERIAL_DRIVER* SerialSys_s();
+	SERIAL_DRIVER* SerialSys_s(void);
 
 #ifdef __cplusplus
 }

@@ -40,7 +40,8 @@ extern "C"
 	                                    const BYTE* data, size_t length, wStream* out);
 	FREERDP_API void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context);
 	FREERDP_API BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context,
-	                                           const AUDIO_FORMAT* targetFormat);
+	                                           const AUDIO_FORMAT* targetFormat,
+	                                           UINT32 FramesPerPacket);
 
 #ifdef __cplusplus
 }

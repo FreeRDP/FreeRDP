@@ -200,6 +200,9 @@ struct _PROGRESSIVE_SURFACE_CONTEXT
 	UINT32 gridHeight;
 	UINT32 gridSize;
 	RFX_PROGRESSIVE_TILE* tiles;
+	UINT32 frameId;
+	UINT32 numUpdatedTiles;
+	UINT32* updatedTileIndices;
 };
 typedef struct _PROGRESSIVE_SURFACE_CONTEXT PROGRESSIVE_SURFACE_CONTEXT;
 

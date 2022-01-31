@@ -20,7 +20,6 @@ set(MODULE_NAME "wlfreerdp")
 set(MODULE_PREFIX "FREERDP_CLIENT_WAYLAND")
 
 include_directories(${WAYLAND_INCLUDE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/uwac/include)
 
 set(${MODULE_PREFIX}_SRCS
     wlfreerdp.c
@@ -36,6 +35,14 @@ set(${MODULE_PREFIX}_SRCS
 	wlf_channels.c
 	wlf_channels.h
 	)
+
+if (FREERDP_UNIFIED_BUILD)
+	include_directories(${PROJECT_SOURCE_DIR}/uwac/include)
+	include_directories(${PROJECT_BINARY_DIR}/uwac/include)
+else()
+	find_package(uwac 0 REQUIRED)
+	include_directories(${UWAC_INCLUDE_DIR})
+endif()
 
 list (APPEND ${MODULE_PREFIX}_LIBS freerdp-client freerdp uwac)
 

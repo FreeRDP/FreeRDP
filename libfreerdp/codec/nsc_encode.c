@@ -273,8 +273,7 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 
 static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 {
-	UINT16 x;
-	UINT16 y;
+	UINT32 y;
 	UINT32 tempWidth;
 	UINT32 tempHeight;
 
@@ -292,6 +291,7 @@ static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 
 	for (y = 0; y<tempHeight>> 1; y++)
 	{
+		UINT32 x;
 		BYTE* co_dst = context->priv->PlaneBuffers[1] + y * (tempWidth >> 1);
 		BYTE* cg_dst = context->priv->PlaneBuffers[2] + y * (tempWidth >> 1);
 		const INT8* co_src0 = (INT8*)context->priv->PlaneBuffers[1] + (y << 1) * tempWidth;

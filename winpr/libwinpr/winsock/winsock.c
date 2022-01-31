@@ -1172,7 +1172,7 @@ int _send(SOCKET s, const char* buf, int len, int flags)
 	int status;
 	int fd = (int)s;
 	flags |= MSG_NOSIGNAL;
-	status = (int)send(fd, (void*)buf, (size_t)len, flags);
+	status = (int)send(fd, (const void*)buf, (size_t)len, flags);
 	return status;
 }
 
@@ -1180,7 +1180,7 @@ int _sendto(SOCKET s, const char* buf, int len, int flags, const struct sockaddr
 {
 	int status;
 	int fd = (int)s;
-	status = (int)sendto(fd, (void*)buf, (size_t)len, flags, to, (socklen_t)tolen);
+	status = (int)sendto(fd, (const void*)buf, (size_t)len, flags, to, (socklen_t)tolen);
 	return status;
 }
 
@@ -1188,7 +1188,7 @@ int _setsockopt(SOCKET s, int level, int optname, const char* optval, int optlen
 {
 	int status;
 	int fd = (int)s;
-	status = setsockopt(fd, level, optname, (void*)optval, (socklen_t)optlen);
+	status = setsockopt(fd, level, optname, (const void*)optval, (socklen_t)optlen);
 	return status;
 }
 
@@ -1236,7 +1236,7 @@ SOCKET _socket(int af, int type, int protocol)
 struct hostent* _gethostbyaddr(const char* addr, int len, int type)
 {
 	struct hostent* host;
-	host = gethostbyaddr((void*)addr, (socklen_t)len, type);
+	host = gethostbyaddr((const void*)addr, (socklen_t)len, type);
 	return host;
 }
 

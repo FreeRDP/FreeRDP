@@ -59,10 +59,8 @@ static void rdpsnd_pulse_get_sink_info(pa_context* c, const pa_sink_info* i, int
                                        void* userdata)
 {
 	uint8_t x;
-	UINT16 dwVolumeLeft = ((50 * 0xFFFF) / 100); /* 50% */
-	;
+	UINT16 dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
 	UINT16 dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
-	;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
 
 	if (!pulse || !c || !i)
@@ -535,11 +533,11 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED,
 		                                              "<device>", NULL, NULL, -1, NULL, "device" },
@@ -585,7 +583,7 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
  */
 UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	rdpsndPulsePlugin* pulse;
 	UINT ret;
 	pulse = (rdpsndPulsePlugin*)calloc(1, sizeof(rdpsndPulsePlugin));
@@ -605,7 +603,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 
 	if (args->argc > 1)
 	{
-		ret = rdpsnd_pulse_parse_addin_args((rdpsndDevicePlugin*)pulse, args);
+		ret = rdpsnd_pulse_parse_addin_args(&pulse->device, args);
 
 		if (ret != CHANNEL_RC_OK)
 		{

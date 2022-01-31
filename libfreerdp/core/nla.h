@@ -57,8 +57,11 @@ FREERDP_LOCAL SEC_WINNT_AUTH_IDENTITY* nla_get_identity(rdpNla* nla);
 
 FREERDP_LOCAL NLA_STATE nla_get_state(rdpNla* nla);
 FREERDP_LOCAL BOOL nla_set_state(rdpNla* nla, NLA_STATE state);
+FREERDP_LOCAL const char* nla_get_state_str(NLA_STATE state);
 
-FREERDP_LOCAL BOOL nla_set_service_principal(rdpNla* nla, LPSTR principal);
+FREERDP_LOCAL DWORD nla_get_error(rdpNla* nla);
+
+FREERDP_LOCAL BOOL nla_set_service_principal(rdpNla* nla, LPTSTR principal);
 
 FREERDP_LOCAL BOOL nla_impersonate(rdpNla* nla);
 FREERDP_LOCAL BOOL nla_revert_to_self(rdpNla* nla);

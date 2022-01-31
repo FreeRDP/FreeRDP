@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/collections.h>
+#include <winpr/assert.h>
 
 struct _wStack
 {
@@ -49,7 +50,7 @@ struct _wStack
 size_t Stack_Count(wStack* stack)
 {
 	size_t ret;
-
+	WINPR_ASSERT(stack);
 	if (stack->synchronized)
 		EnterCriticalSection(&stack->lock);
 
@@ -67,13 +68,13 @@ size_t Stack_Count(wStack* stack)
 
 BOOL Stack_IsSynchronized(wStack* stack)
 {
+	WINPR_ASSERT(stack);
 	return stack->synchronized;
 }
 
 wObject* Stack_Object(wStack* stack)
 {
-	if (!stack)
-		return NULL;
+	WINPR_ASSERT(stack);
 	return &stack->object;
 }
 
@@ -89,6 +90,7 @@ void Stack_Clear(wStack* stack)
 {
 	size_t index;
 
+	WINPR_ASSERT(stack);
 	if (stack->synchronized)
 		EnterCriticalSection(&stack->lock);
 
@@ -115,6 +117,7 @@ BOOL Stack_Contains(wStack* stack, const void* obj)
 	size_t i;
 	BOOL found = FALSE;
 
+	WINPR_ASSERT(stack);
 	if (stack->synchronized)
 		EnterCriticalSection(&stack->lock);
 
@@ -139,6 +142,7 @@ BOOL Stack_Contains(wStack* stack, const void* obj)
 
 void Stack_Push(wStack* stack, void* obj)
 {
+	WINPR_ASSERT(stack);
 	if (stack->synchronized)
 		EnterCriticalSection(&stack->lock);
 
@@ -169,6 +173,7 @@ void* Stack_Pop(wStack* stack)
 {
 	void* obj = NULL;
 
+	WINPR_ASSERT(stack);
 	if (stack->synchronized)
 		EnterCriticalSection(&stack->lock);
 
@@ -189,6 +194,7 @@ void* Stack_Peek(wStack* stack)
 {
 	void* obj = NULL;
 
+	WINPR_ASSERT(stack);
 	if (stack->synchronized)
 		EnterCriticalSection(&stack->lock);
 

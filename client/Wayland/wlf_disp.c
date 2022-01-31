@@ -165,7 +165,7 @@ static BOOL wlf_disp_check_context(void* context, wlfContext** ppwlc, wlfDispCon
 	return TRUE;
 }
 
-static void wlf_disp_OnActivated(void* context, ActivatedEventArgs* e)
+static void wlf_disp_OnActivated(void* context, const ActivatedEventArgs* e)
 {
 	wlfContext* wlc;
 	wlfDispContext* wlfDisp;
@@ -187,7 +187,7 @@ static void wlf_disp_OnActivated(void* context, ActivatedEventArgs* e)
 	}
 }
 
-static void wlf_disp_OnGraphicsReset(void* context, GraphicsResetEventArgs* e)
+static void wlf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs* e)
 {
 	wlfContext* wlc;
 	wlfDispContext* wlfDisp;

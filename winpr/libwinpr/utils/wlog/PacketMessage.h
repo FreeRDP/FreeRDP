@@ -51,7 +51,7 @@ struct _wPcapRecord
 {
 	wPcapRecordHeader header;
 	void* data;
-	UINT32 length;
+	size_t length;
 	wPcapRecord* next;
 };
 
@@ -60,8 +60,8 @@ struct _wPcap
 	FILE* fp;
 	char* name;
 	BOOL write;
-	int file_size;
-	int record_count;
+	SSIZE_T file_size;
+	size_t record_count;
 	wPcapHeader header;
 	wPcapRecord* head;
 	wPcapRecord* tail;
@@ -114,6 +114,6 @@ struct _wTcpHeader
 };
 typedef struct _wTcpHeader wTcpHeader;
 
-BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags);
+BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flags);
 
 #endif /* WINPR_WLOG_PACKET_MESSAGE_PRIVATE_H */

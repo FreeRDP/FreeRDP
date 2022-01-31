@@ -207,11 +207,14 @@ extern "C"
 	                                    LPVOID lpParameter, DWORD dwCreationFlags,
 	                                    LPDWORD lpThreadId);
 
-	WINPR_API DECLSPEC_NORETURN VOID ExitThread(DWORD dwExitCode);
+	WINPR_API VOID ExitThread(DWORD dwExitCode);
 	WINPR_API BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode);
 
 	WINPR_API HANDLE _GetCurrentThread(void);
 	WINPR_API DWORD GetCurrentThreadId(void);
+
+	typedef void (*PAPCFUNC)(ULONG_PTR Parameter);
+	WINPR_API DWORD QueueUserAPC(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData);
 
 	WINPR_API DWORD ResumeThread(HANDLE hThread);
 	WINPR_API DWORD SuspendThread(HANDLE hThread);
