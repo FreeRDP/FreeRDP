@@ -82,7 +82,7 @@ static void CALLBACK waveInProc(HWAVEIN hWaveIn, UINT uMsg, DWORD_PTR dwInstance
 				if (pWaveHdr->dwBytesRecorded &&
 				    !(WaitForSingleObject(winmm->stopEvent, 0) == WAIT_OBJECT_0))
 				{
-					AUDIO_FORMAT format;
+					AUDIO_FORMAT format = { 0 };
 					format.cbSize = winmm->pwfx_cur->cbSize;
 					format.nBlockAlign = winmm->pwfx_cur->nBlockAlign;
 					format.nAvgBytesPerSec = winmm->pwfx_cur->nAvgBytesPerSec;
@@ -342,19 +342,23 @@ static UINT audin_winmm_set_format(IAudinDevice* device, const AUDIO_FORMAT* for
 		{
 			/* BUG: Many devices report to support stereo recording but fail here.
 			 *      Ensure we always use mono. */
-			if (ppwfx->nChannels > 1)
-			{
-				ppwfx->nChannels = 1;
-			}
-
-			if (ppwfx->nBlockAlign != 2)
-			{
-				ppwfx->nBlockAlign = 2;
-				ppwfx->nAvgBytesPerSec = ppwfx->nSamplesPerSec * ppwfx->nBlockAlign;
-			}
-
 			if (!test_format_supported(ppwfx))
-				return ERROR_INVALID_PARAMETER;
+			{
+				if (ppwfx->nChannels > 1)
+				{
+					ppwfx->nChannels = 1;
+				}
+
+				if (ppwfx->nBlockAlign != 2)
+				{
+					ppwfx->nBlockAlign = 2;
+					ppwfx->nAvgBytesPerSec = ppwfx->nSamplesPerSec * ppwfx->nBlockAlign;
+				}
+
+				if (!test_format_supported(ppwfx))
+					return ERROR_INVALID_PARAMETER;
+			}
+
 			winmm->pwfx_cur = ppwfx;
 			return CHANNEL_RC_OK;
 		}
@@ -375,10 +379,10 @@ static BOOL audin_winmm_format_supported(IAudinDevice* device, const AUDIO_FORMA
 	if (format->wFormatTag != WAVE_FORMAT_PCM)
 		return FALSE;
 
-	if (format->nChannels != 1)
+	if ((format->nChannels != 1) && (format->nChannels != 2))
 		return FALSE;
 
-	pwfx = (PWAVEFORMATEX)malloc(sizeof(WAVEFORMATEX) + format->cbSize);
+	pwfx = (PWAVEFORMATEX)calloc(1, sizeof(WAVEFORMATEX) + format->cbSize);
 
 	if (!pwfx)
 		return FALSE;
