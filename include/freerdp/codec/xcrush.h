@@ -25,7 +25,7 @@
 
 #include <freerdp/codec/mppc.h>
 
-typedef struct _XCRUSH_CONTEXT XCRUSH_CONTEXT;
+typedef struct s_XCRUSH_CONTEXT XCRUSH_CONTEXT;
 
 #ifdef __cplusplus
 extern "C"
