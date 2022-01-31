@@ -84,11 +84,12 @@ typedef media_status_t (*AMediaCodec_getName_t)(AMediaCodec*, char**);          
 typedef void (*AMediaCodec_releaseName_t)(AMediaCodec*, char*);                           // 28
 typedef AMediaFormat* (*AMediaCodec_getInputFormat_t)(AMediaCodec*);                      // 28
 
-const int COLOR_FormatYUV420Planar = 19;
-const int COLOR_FormatYUV420Flexible = 0x7f420888;
+static const int COLOR_FormatYUV420Planar = 19;
+static const int COLOR_FormatYUV420Flexible = 0x7f420888;
 
-const int MEDIACODEC_MINIMUM_WIDTH = 320;
-const int MEDIACODEC_MINIMUM_HEIGHT = 240;
+/* https://developer.android.com/reference/android/media/MediaCodec#qualityFloor */
+static const int MEDIACODEC_MINIMUM_WIDTH = 320;
+static const int MEDIACODEC_MINIMUM_HEIGHT = 240;
 
 struct _H264_CONTEXT_MEDIACODEC
 {
