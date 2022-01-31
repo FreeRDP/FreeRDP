@@ -32,7 +32,7 @@
 
 #define TAG FREERDP_TAG("codec")
 
-struct _NCRUSH_CONTEXT
+struct s_NCRUSH_CONTEXT
 {
 	BOOL Compressor;
 	BYTE* HistoryPtr;

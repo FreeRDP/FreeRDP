@@ -27,7 +27,7 @@
 
 #include <winpr/bitstream.h>
 
-typedef struct _NCRUSH_CONTEXT NCRUSH_CONTEXT;
+typedef struct s_NCRUSH_CONTEXT NCRUSH_CONTEXT;
 
 #ifdef __cplusplus
 extern "C"

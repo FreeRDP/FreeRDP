@@ -76,7 +76,7 @@ typedef struct _RDP61_COMPRESSED_DATA RDP61_COMPRESSED_DATA;
 
 #pragma pack(pop)
 
-struct _XCRUSH_CONTEXT
+struct s_XCRUSH_CONTEXT
 {
 	BOOL Compressor;
 	MPPC_CONTEXT* mppc;
@@ -1066,7 +1066,7 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize
 	Level1ComprFlags |= L1_INNER_COMPRESSION;
 	OriginalData[0] = (BYTE)Level1ComprFlags;
 	OriginalData[1] = (BYTE)Level2ComprFlags;
-#if DEBUG_XCRUSH
+#if defined(DEBUG_XCRUSH)
 	WLog_DBG(TAG, "XCrushCompress: Level1ComprFlags: %s Level2ComprFlags: %s",
 	         xcrush_get_level_1_compression_flags_string(Level1ComprFlags),
 	         xcrush_get_level_2_compression_flags_string(Level2ComprFlags));
