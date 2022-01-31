@@ -37,7 +37,7 @@
 	  0x07FFF000) >>                                                      \
 	 12)
 
-struct _MPPC_CONTEXT
+struct s_MPPC_CONTEXT
 {
 	wBitStream* bs;
 	BOOL Compressor;

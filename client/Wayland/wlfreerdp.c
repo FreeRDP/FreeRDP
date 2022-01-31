@@ -309,7 +309,6 @@ static void wl_post_disconnect(freerdp* instance)
 
 static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 {
-	BOOL rc;
 	UwacEvent event;
 	wlfContext* context;
 
