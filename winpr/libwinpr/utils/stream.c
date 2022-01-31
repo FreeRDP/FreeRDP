@@ -256,7 +256,7 @@ void Stream_SetCapacity(wStream* _s, size_t _c)
 
 #endif
 
-size_t Stream_GetRemainingCapacity(wStream* _s)
+size_t Stream_GetRemainingCapacity(const wStream* _s)
 {
 	size_t cur;
 	WINPR_ASSERT(_s);
@@ -272,7 +272,7 @@ size_t Stream_GetRemainingCapacity(wStream* _s)
 	return (_s->capacity - cur);
 }
 
-size_t Stream_GetRemainingLength(wStream* _s)
+size_t Stream_GetRemainingLength(const wStream* _s)
 {
 	size_t cur;
 	WINPR_ASSERT(_s);
