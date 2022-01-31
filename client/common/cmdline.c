@@ -1475,10 +1475,10 @@ static BOOL read_pem_file(rdpSettings* settings, size_t id, const char* file)
 	if (rc < 0)
 		goto fail;
 
-	if (!freerdp_settings_set_string_len(settings, id, NULL, s + 1))
+	if (!freerdp_settings_set_string_len(settings, id, NULL, s + 1ull))
 		goto fail;
 
-	ptr = freerdp_settings_get_string(settings, id);
+	ptr = freerdp_settings_get_string_writable(settings, id);
 	fr = fread(ptr, (size_t)s, 1, fp);
 	if (fr != 1)
 		goto fail;
