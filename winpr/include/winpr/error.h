@@ -3033,10 +3033,10 @@
 
 #define EXCEPTION_MAXIMUM_PARAMETERS 15
 
-typedef struct _EXCEPTION_RECORD EXCEPTION_RECORD;
-typedef struct _EXCEPTION_RECORD* PEXCEPTION_RECORD;
+typedef struct s_EXCEPTION_RECORD EXCEPTION_RECORD;
+typedef struct s_EXCEPTION_RECORD* PEXCEPTION_RECORD;
 
-struct _EXCEPTION_RECORD
+struct s_EXCEPTION_RECORD
 {
 	DWORD ExceptionCode;
 	DWORD ExceptionFlags;
@@ -3048,7 +3048,7 @@ struct _EXCEPTION_RECORD
 
 typedef void* PCONTEXT;
 
-typedef struct _EXCEPTION_POINTERS
+typedef struct s_EXCEPTION_POINTERS
 {
 	PEXCEPTION_RECORD ExceptionRecord;
 	PCONTEXT ContextRecord;
