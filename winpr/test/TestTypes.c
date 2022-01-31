@@ -56,12 +56,12 @@ int TestTypes(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	if (S_OK != (HRESULT)0L)
+	if (S_OK != 0L)
 	{
 		printf("Error: S_OK should be 0\n");
 		goto err;
 	}
-	if (S_FALSE != (HRESULT)1L)
+	if (S_FALSE != 1L)
 	{
 		printf("Error: S_FALSE should be 1\n");
 		goto err;
