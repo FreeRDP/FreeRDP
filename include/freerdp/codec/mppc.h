@@ -27,7 +27,7 @@
 
 #include <freerdp/codec/bulk.h>
 
-typedef struct _MPPC_CONTEXT MPPC_CONTEXT;
+typedef struct s_MPPC_CONTEXT MPPC_CONTEXT;
 
 #ifdef __cplusplus
 extern "C"
