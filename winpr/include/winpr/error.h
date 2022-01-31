@@ -158,8 +158,9 @@
 #define FAILED(hr) (((HRESULT)(hr)) < 0)
 #define IS_ERROR(Status) (((unsigned long)(Status)) >> 31 == SEVERITY_ERROR)
 
-#define MAKE_HRESULT(sev, fac, code) \
-	    ((HRESULT) (((unsigned long) (sev) << 31) | ((unsigned long) (fac) << 16) | ((unsigned long) (code)))
+#define MAKE_HRESULT(sev, fac, code)                                         \
+	((HRESULT)(((unsigned long)(sev) << 31) | ((unsigned long)(fac) << 16) | \
+	           ((unsigned long)(code))))
 
 #define SCODE_CODE(sc) ((sc)&0xFFFF)
 #define SCODE_FACILITY(sc) (((sc) >> 16) & 0x1FFF)
