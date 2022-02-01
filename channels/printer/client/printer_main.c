@@ -48,8 +48,7 @@
 
 #define TAG CHANNELS_TAG("printer.client")
 
-typedef struct s_PRINTER_DEVICE PRINTER_DEVICE;
-struct s_PRINTER_DEVICE
+typedef struct
 {
 	DEVICE device;
 
@@ -63,7 +62,7 @@ struct s_PRINTER_DEVICE
 	HANDLE thread;
 	rdpContext* rdpcontext;
 	char port[64];
-};
+} PRINTER_DEVICE;
 
 typedef enum
 {

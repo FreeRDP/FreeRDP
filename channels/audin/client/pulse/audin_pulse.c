@@ -40,7 +40,7 @@
 
 #include "audin_main.h"
 
-typedef struct s_AudinPulseDevice
+typedef struct
 {
 	IAudinDevice iface;
 

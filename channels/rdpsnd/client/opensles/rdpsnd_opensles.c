@@ -41,9 +41,7 @@
 #include "opensl_io.h"
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_opensles_plugin rdpsndopenslesPlugin;
-
-struct rdpsnd_opensles_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
@@ -59,7 +57,7 @@ struct rdpsnd_opensles_plugin
 	UINT32 rate;
 	UINT32 channels;
 	int format;
-};
+} rdpsndopenslesPlugin;
 
 static int rdpsnd_opensles_volume_to_millibel(unsigned short level, int max)
 {

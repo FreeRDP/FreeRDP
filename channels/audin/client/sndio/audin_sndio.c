@@ -32,7 +32,7 @@
 
 #include "audin_main.h"
 
-typedef struct s_AudinSndioDevice
+typedef struct
 {
 	IAudinDevice device;
 

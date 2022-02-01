@@ -65,7 +65,7 @@ typedef UInt32 AudioFormatID;
 typedef UInt32 AudioFormatFlags;
 #endif
 
-typedef struct s_AudinMacDevice
+typedef struct
 {
 	IAudinDevice iface;
 

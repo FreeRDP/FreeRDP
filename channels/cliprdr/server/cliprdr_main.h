@@ -32,7 +32,7 @@
 
 #define CLIPRDR_HEADER_LENGTH 8
 
-struct s_cliprdr_server_private
+typedef struct
 {
 	HANDLE vcm;
 	HANDLE Thread;
@@ -42,7 +42,6 @@ struct s_cliprdr_server_private
 
 	wStream* s;
 	char* temporaryDirectory;
-};
-typedef struct s_cliprdr_server_private CliprdrServerPrivate;
+} CliprdrServerPrivate;
 
 #endif /* FREERDP_CHANNEL_CLIPRDR_SERVER_MAIN_H */

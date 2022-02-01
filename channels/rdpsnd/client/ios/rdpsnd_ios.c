@@ -36,7 +36,7 @@
 #define INPUT_BUFFER_SIZE 32768
 #define CIRCULAR_BUFFER_SIZE (INPUT_BUFFER_SIZE * 4)
 
-typedef struct rdpsnd_ios_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 	AudioComponentInstance audio_unit;

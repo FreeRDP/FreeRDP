@@ -51,7 +51,7 @@
 
 #include "audin_main.h"
 
-typedef struct s_AudinOSSDevice
+typedef struct
 {
 	IAudinDevice iface;
 

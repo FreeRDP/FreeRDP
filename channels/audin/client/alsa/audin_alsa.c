@@ -40,7 +40,7 @@
 
 #include "audin_main.h"
 
-typedef struct s_AudinALSADevice
+typedef struct
 {
 	IAudinDevice iface;
 

@@ -24,36 +24,32 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-prototypes"
 #endif
-struct s_STATIC_ENTRY
+typedef struct
 {
 	const char* name;
 	UINT (*entry)();
-};
-typedef struct s_STATIC_ENTRY STATIC_ENTRY;
+} STATIC_ENTRY;
 
-struct s_STATIC_ENTRY_TABLE
+typedef struct
 {
 	const char* name;
 	const STATIC_ENTRY* table;
-};
-typedef struct s_STATIC_ENTRY_TABLE STATIC_ENTRY_TABLE;
+} STATIC_ENTRY_TABLE;
 
-struct s_STATIC_SUBSYSTEM_ENTRY
+typedef struct
 {
 	const char* name;
 	const char* type;
 	UINT (*entry)();
-};
-typedef struct s_STATIC_SUBSYSTEM_ENTRY STATIC_SUBSYSTEM_ENTRY;
+} STATIC_SUBSYSTEM_ENTRY;
 
-struct s_STATIC_ADDIN_TABLE
+typedef struct
 {
 	const char* name;
 	const char* type;
 	UINT (*entry)();
 	const STATIC_SUBSYSTEM_ENTRY* table;
-};
-typedef struct s_STATIC_ADDIN_TABLE STATIC_ADDIN_TABLE;
+} STATIC_ADDIN_TABLE;
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop

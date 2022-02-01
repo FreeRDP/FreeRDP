@@ -51,17 +51,15 @@
 #define MSG_SNDIN_DATA 0x06
 #define MSG_SNDIN_FORMATCHANGE 0x07
 
-typedef struct s_AUDIN_LISTENER_CALLBACK AUDIN_LISTENER_CALLBACK;
-struct s_AUDIN_LISTENER_CALLBACK
+typedef struct
 {
 	IWTSListenerCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
-};
+} AUDIN_LISTENER_CALLBACK;
 
-typedef struct s_AUDIN_CHANNEL_CALLBACK AUDIN_CHANNEL_CALLBACK;
-struct s_AUDIN_CHANNEL_CALLBACK
+typedef struct
 {
 	IWTSVirtualChannelCallback iface;
 
@@ -76,10 +74,9 @@ struct s_AUDIN_CHANNEL_CALLBACK
 	 */
 	AUDIO_FORMAT* formats;
 	UINT32 formats_count;
-};
+} AUDIN_CHANNEL_CALLBACK;
 
-typedef struct s_AUDIN_PLUGIN AUDIN_PLUGIN;
-struct s_AUDIN_PLUGIN
+typedef struct
 {
 	IWTSPlugin iface;
 
@@ -105,7 +102,7 @@ struct s_AUDIN_PLUGIN
 	IWTSListener* listener;
 
 	BOOL initialized;
-};
+} AUDIN_PLUGIN;
 
 static BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args);
 
