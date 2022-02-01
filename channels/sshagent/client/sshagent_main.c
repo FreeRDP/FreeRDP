@@ -58,8 +58,7 @@
 
 #define TAG CHANNELS_TAG("sshagent.client")
 
-typedef struct s_SSHAGENT_LISTENER_CALLBACK SSHAGENT_LISTENER_CALLBACK;
-struct s_SSHAGENT_LISTENER_CALLBACK
+typedef struct
 {
 	IWTSListenerCallback iface;
 
@@ -68,10 +67,9 @@ struct s_SSHAGENT_LISTENER_CALLBACK
 
 	rdpContext* rdpcontext;
 	const char* agent_uds_path;
-};
+} SSHAGENT_LISTENER_CALLBACK;
 
-typedef struct s_SSHAGENT_CHANNEL_CALLBACK SSHAGENT_CHANNEL_CALLBACK;
-struct s_SSHAGENT_CHANNEL_CALLBACK
+typedef struct
 {
 	IWTSVirtualChannelCallback iface;
 
@@ -83,17 +81,16 @@ struct s_SSHAGENT_CHANNEL_CALLBACK
 	int agent_fd;
 	HANDLE thread;
 	CRITICAL_SECTION lock;
-};
+} SSHAGENT_CHANNEL_CALLBACK;
 
-typedef struct s_SSHAGENT_PLUGIN SSHAGENT_PLUGIN;
-struct s_SSHAGENT_PLUGIN
+typedef struct
 {
 	IWTSPlugin iface;
 
 	SSHAGENT_LISTENER_CALLBACK* listener_callback;
 
 	rdpContext* rdpcontext;
-};
+} SSHAGENT_PLUGIN;
 
 /**
  * Function to open the connection to the sshagent

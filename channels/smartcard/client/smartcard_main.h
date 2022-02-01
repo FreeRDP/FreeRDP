@@ -41,18 +41,7 @@
 
 #define TAG CHANNELS_TAG("smartcard.client")
 
-typedef struct s_SMARTCARD_DEVICE SMARTCARD_DEVICE;
-
-struct s_SMARTCARD_CONTEXT
-{
-	HANDLE thread;
-	SCARDCONTEXT hContext;
-	wMessageQueue* IrpQueue;
-	SMARTCARD_DEVICE* smartcard;
-};
-typedef struct s_SMARTCARD_CONTEXT SMARTCARD_CONTEXT;
-
-struct s_SMARTCARD_DEVICE
+typedef struct
 {
 	DEVICE device;
 
@@ -61,6 +50,14 @@ struct s_SMARTCARD_DEVICE
 	wMessageQueue* IrpQueue;
 	wListDictionary* rgOutstandingMessages;
 	rdpContext* rdpcontext;
-};
+} SMARTCARD_DEVICE;
+
+typedef struct
+{
+	HANDLE thread;
+	SCARDCONTEXT hContext;
+	wMessageQueue* IrpQueue;
+	SMARTCARD_DEVICE* smartcard;
+} SMARTCARD_CONTEXT;
 
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H */

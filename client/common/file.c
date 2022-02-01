@@ -70,7 +70,7 @@ static const BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
 #define RDP_FILE_LINE_FLAG_TYPE_INTEGER 0x00000020
 #define RDP_FILE_LINE_FLAG_TYPE_BINARY 0x00000040
 
-struct rdp_file_line
+typedef struct
 {
 	char* text;
 	char* name;
@@ -82,8 +82,7 @@ struct rdp_file_line
 	long iValue;
 	DWORD flags;
 	int valueLength;
-};
-typedef struct rdp_file_line rdpFileLine;
+} rdpFileLine;
 
 struct rdp_file
 {

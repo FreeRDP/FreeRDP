@@ -52,9 +52,7 @@
 
 #define MAX_IRP_THREADS 5
 
-typedef struct s_SERIAL_DEVICE SERIAL_DEVICE;
-
-struct s_SERIAL_DEVICE
+typedef struct
 {
 	DEVICE device;
 	BOOL permissive;
@@ -70,15 +68,13 @@ struct s_SERIAL_DEVICE
 	UINT32 IrpThreadToBeTerminatedCount;
 	CRITICAL_SECTION TerminatingIrpThreadsLock;
 	rdpContext* rdpcontext;
-};
+} SERIAL_DEVICE;
 
-typedef struct s_IRP_THREAD_DATA IRP_THREAD_DATA;
-
-struct s_IRP_THREAD_DATA
+typedef struct
 {
 	SERIAL_DEVICE* serial;
 	IRP* irp;
-};
+} IRP_THREAD_DATA;
 
 static UINT32 _GetLastErrorToIoStatus(SERIAL_DEVICE* serial)
 {

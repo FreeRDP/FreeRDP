@@ -41,9 +41,7 @@
 
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_winmm_plugin rdpsndWinmmPlugin;
-
-struct rdpsnd_winmm_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
@@ -55,7 +53,7 @@ struct rdpsnd_winmm_plugin
 	HANDLE hThread;
 	DWORD threadId;
 	CRITICAL_SECTION cs;
-};
+} rdpsndWinmmPlugin;
 
 static BOOL rdpsnd_winmm_convert_format(const AUDIO_FORMAT* in, WAVEFORMATEX* out)
 {

@@ -36,30 +36,27 @@
 #define STREAM_BITMAP_COMPRESSED 0x02
 #define STREAM_BITMAP_V2 0x04
 
-struct s_OFFSCREEN_DELETE_LIST
+typedef struct
 {
 	UINT32 sIndices;
 	UINT32 cIndices;
 	UINT16* indices;
-};
-typedef struct s_OFFSCREEN_DELETE_LIST OFFSCREEN_DELETE_LIST;
+} OFFSCREEN_DELETE_LIST;
 
-struct s_CREATE_OFFSCREEN_BITMAP_ORDER
+typedef struct
 {
 	UINT32 id;
 	UINT32 cx;
 	UINT32 cy;
 	OFFSCREEN_DELETE_LIST deleteList;
-};
-typedef struct s_CREATE_OFFSCREEN_BITMAP_ORDER CREATE_OFFSCREEN_BITMAP_ORDER;
+} CREATE_OFFSCREEN_BITMAP_ORDER;
 
-struct s_SWITCH_SURFACE_ORDER
+typedef struct
 {
 	UINT32 bitmapId;
-};
-typedef struct s_SWITCH_SURFACE_ORDER SWITCH_SURFACE_ORDER;
+} SWITCH_SURFACE_ORDER;
 
-struct s_NINE_GRID_BITMAP_INFO
+typedef struct
 {
 	UINT32 flFlags;
 	UINT32 ulLeftWidth;
@@ -67,26 +64,23 @@ struct s_NINE_GRID_BITMAP_INFO
 	UINT32 ulTopHeight;
 	UINT32 ulBottomHeight;
 	UINT32 crTransparent;
-};
-typedef struct s_NINE_GRID_BITMAP_INFO NINE_GRID_BITMAP_INFO;
+} NINE_GRID_BITMAP_INFO;
 
-struct s_CREATE_NINE_GRID_BITMAP_ORDER
+typedef struct
 {
 	UINT32 bitmapBpp;
 	UINT32 bitmapId;
 	UINT32 cx;
 	UINT32 cy;
 	NINE_GRID_BITMAP_INFO nineGridInfo;
-};
-typedef struct s_CREATE_NINE_GRID_BITMAP_ORDER CREATE_NINE_GRID_BITMAP_ORDER;
+} CREATE_NINE_GRID_BITMAP_ORDER;
 
-struct s_FRAME_MARKER_ORDER
+typedef struct
 {
 	UINT32 action;
-};
-typedef struct s_FRAME_MARKER_ORDER FRAME_MARKER_ORDER;
+} FRAME_MARKER_ORDER;
 
-struct s_STREAM_BITMAP_FIRST_ORDER
+typedef struct
 {
 	UINT32 bitmapFlags;
 	UINT32 bitmapBpp;
@@ -96,44 +90,39 @@ struct s_STREAM_BITMAP_FIRST_ORDER
 	UINT32 bitmapSize;
 	UINT32 bitmapBlockSize;
 	BYTE* bitmapBlock;
-};
-typedef struct s_STREAM_BITMAP_FIRST_ORDER STREAM_BITMAP_FIRST_ORDER;
+} STREAM_BITMAP_FIRST_ORDER;
 
-struct s_STREAM_BITMAP_NEXT_ORDER
+typedef struct
 {
 	UINT32 bitmapFlags;
 	UINT32 bitmapType;
 	UINT32 bitmapBlockSize;
 	BYTE* bitmapBlock;
-};
-typedef struct s_STREAM_BITMAP_NEXT_ORDER STREAM_BITMAP_NEXT_ORDER;
+} STREAM_BITMAP_NEXT_ORDER;
 
-struct s_DRAW_GDIPLUS_FIRST_ORDER
+typedef struct
 {
 	UINT32 cbSize;
 	UINT32 cbTotalSize;
 	UINT32 cbTotalEmfSize;
 	BYTE* emfRecords;
-};
-typedef struct s_DRAW_GDIPLUS_FIRST_ORDER DRAW_GDIPLUS_FIRST_ORDER;
+} DRAW_GDIPLUS_FIRST_ORDER;
 
-struct s_DRAW_GDIPLUS_NEXT_ORDER
+typedef struct
 {
 	UINT32 cbSize;
 	BYTE* emfRecords;
-};
-typedef struct s_DRAW_GDIPLUS_NEXT_ORDER DRAW_GDIPLUS_NEXT_ORDER;
+} DRAW_GDIPLUS_NEXT_ORDER;
 
-struct s_DRAW_GDIPLUS_END_ORDER
+typedef struct
 {
 	UINT32 cbSize;
 	UINT32 cbTotalSize;
 	UINT32 cbTotalEmfSize;
 	BYTE* emfRecords;
-};
-typedef struct s_DRAW_GDIPLUS_END_ORDER DRAW_GDIPLUS_END_ORDER;
+} DRAW_GDIPLUS_END_ORDER;
 
-struct s_DRAW_GDIPLUS_CACHE_FIRST_ORDER
+typedef struct
 {
 	UINT32 flags;
 	UINT32 cacheType;
@@ -141,20 +130,18 @@ struct s_DRAW_GDIPLUS_CACHE_FIRST_ORDER
 	UINT32 cbSize;
 	UINT32 cbTotalSize;
 	BYTE* emfRecords;
-};
-typedef struct s_DRAW_GDIPLUS_CACHE_FIRST_ORDER DRAW_GDIPLUS_CACHE_FIRST_ORDER;
+} DRAW_GDIPLUS_CACHE_FIRST_ORDER;
 
-struct s_DRAW_GDIPLUS_CACHE_NEXT_ORDER
+typedef struct
 {
 	UINT32 flags;
 	UINT32 cacheType;
 	UINT32 cacheIndex;
 	UINT32 cbSize;
 	BYTE* emfRecords;
-};
-typedef struct s_DRAW_GDIPLUS_CACHE_NEXT_ORDER DRAW_GDIPLUS_CACHE_NEXT_ORDER;
+} DRAW_GDIPLUS_CACHE_NEXT_ORDER;
 
-struct s_DRAW_GDIPLUS_CACHE_END_ORDER
+typedef struct
 {
 	UINT32 flags;
 	UINT32 cacheType;
@@ -162,8 +149,7 @@ struct s_DRAW_GDIPLUS_CACHE_END_ORDER
 	UINT32 cbSize;
 	UINT32 cbTotalSize;
 	BYTE* emfRecords;
-};
-typedef struct s_DRAW_GDIPLUS_CACHE_END_ORDER DRAW_GDIPLUS_CACHE_END_ORDER;
+} DRAW_GDIPLUS_CACHE_END_ORDER;
 
 typedef BOOL (*pCreateOffscreenBitmap)(
     rdpContext* context, const CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap);
@@ -189,7 +175,7 @@ typedef BOOL (*pDrawGdiPlusCacheEnd)(rdpContext* context,
                                      const DRAW_GDIPLUS_CACHE_END_ORDER* draw_gdiplus_cache_end);
 typedef BOOL (*pDrawOrderInfo)(rdpContext* context, UINT8 orderType, const char* orderName);
 
-struct rdp_altsec_update
+typedef struct
 {
 	rdpContext* context;     /* 0 */
 	UINT32 paddingA[16 - 1]; /* 1 */
@@ -209,7 +195,6 @@ struct rdp_altsec_update
 	/* Statistics callback */
 	pDrawOrderInfo DrawOrderInfo; /* 28 */
 	UINT32 paddingB[32 - 29];     /* 29 */
-};
-typedef struct rdp_altsec_update rdpAltSecUpdate;
+} rdpAltSecUpdate;
 
 #endif /* FREERDP_UPDATE_ALTSEC_H */

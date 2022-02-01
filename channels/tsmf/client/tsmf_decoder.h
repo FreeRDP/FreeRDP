@@ -31,9 +31,7 @@ typedef enum e_ITSMFControlMsg
 	Control_Stop
 } ITSMFControlMsg;
 
-typedef struct s_ITSMFDecoder ITSMFDecoder;
-
-struct s_ITSMFDecoder
+typedef struct
 {
 	/* Set the decoder format. Return true if supported. */
 	BOOL (*SetFormat)(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type);
@@ -67,7 +65,7 @@ struct s_ITSMFDecoder
 	BOOL (*SetAckFunc)(ITSMFDecoder* decoder, BOOL (*cb)(void*, BOOL), void* stream);
 	/* Register a callback for stream seek detection. */
 	BOOL (*SetSyncFunc)(ITSMFDecoder* decoder, void (*cb)(void*), void* stream);
-};
+} ITSMFDecoder;
 
 #define TSMF_DECODER_EXPORT_FUNC_NAME "TSMFDecoderEntry"
 typedef ITSMFDecoder* (*TSMF_DECODER_ENTRY)(void);

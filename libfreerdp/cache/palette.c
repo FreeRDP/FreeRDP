@@ -27,6 +27,7 @@
 
 #include <freerdp/log.h>
 #include <freerdp/cache/palette.h>
+#include <freerdp/cache/cache.h>
 
 #include "palette.h"
 

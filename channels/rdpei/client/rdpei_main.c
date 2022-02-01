@@ -65,27 +65,25 @@
 #define MAX_CONTACTS 64
 #define MAX_PEN_CONTACTS 4
 
-struct s_RDPEI_CHANNEL_CALLBACK
+typedef struct
 {
 	IWTSVirtualChannelCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
-};
-typedef struct s_RDPEI_CHANNEL_CALLBACK RDPEI_CHANNEL_CALLBACK;
+} RDPEI_CHANNEL_CALLBACK;
 
-struct s_RDPEI_LISTENER_CALLBACK
+typedef struct
 {
 	IWTSListenerCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	RDPEI_CHANNEL_CALLBACK* channel_callback;
-};
-typedef struct s_RDPEI_LISTENER_CALLBACK RDPEI_LISTENER_CALLBACK;
+} RDPEI_LISTENER_CALLBACK;
 
-struct s_RDPEI_PLUGIN
+typedef struct
 {
 	IWTSPlugin iface;
 
@@ -111,8 +109,7 @@ struct s_RDPEI_PLUGIN
 	BOOL initialized;
 	HANDLE thread;
 	HANDLE event;
-};
-typedef struct s_RDPEI_PLUGIN RDPEI_PLUGIN;
+} RDPEI_PLUGIN;
 
 /**
  * Function description

@@ -24,8 +24,7 @@
 
 #include <freerdp/freerdp.h>
 
-typedef struct s_TSMF_IFMAN TSMF_IFMAN;
-struct s_TSMF_IFMAN
+typedef struct
 {
 	IWTSVirtualChannelCallback* channel_callback;
 	const char* decoder_name;
@@ -40,7 +39,7 @@ struct s_TSMF_IFMAN
 	wStream* output;
 	BOOL output_pending;
 	UINT32 output_interface_id;
-};
+} TSMF_IFMAN;
 
 UINT tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman);
 UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman);

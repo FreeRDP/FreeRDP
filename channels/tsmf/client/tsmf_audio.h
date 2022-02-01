@@ -22,9 +22,7 @@
 
 #include "tsmf_types.h"
 
-typedef struct s_ITSMFAudioDevice ITSMFAudioDevice;
-
-struct s_ITSMFAudioDevice
+typedef struct
 {
 	/* Open the audio device. */
 	BOOL (*Open)(ITSMFAudioDevice* audio, const char* device);
@@ -41,7 +39,7 @@ struct s_ITSMFAudioDevice
 	BOOL (*Flush)(ITSMFAudioDevice* audio);
 	/* Free the audio device */
 	void (*Free)(ITSMFAudioDevice* audio);
-};
+} ITSMFAudioDevice;
 
 #define TSMF_AUDIO_DEVICE_EXPORT_FUNC_NAME "TSMFAudioDeviceEntry"
 typedef ITSMFAudioDevice* (*TSMF_AUDIO_DEVICE_ENTRY)(void);

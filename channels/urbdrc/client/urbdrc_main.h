@@ -50,30 +50,24 @@ typedef struct s_IUDEVMAN IUDEVMAN;
 	_type (*get_##_arg)(IUDEVMAN * udevman);    \
 	void (*set_##_arg)(IUDEVMAN * udevman, _type _arg)
 
-typedef struct s_URBDRC_LISTENER_CALLBACK URBDRC_LISTENER_CALLBACK;
-
-struct s_URBDRC_LISTENER_CALLBACK
+typedef struct
 {
 	IWTSListenerCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
-};
+} URBDRC_LISTENER_CALLBACK;
 
-typedef struct s_URBDRC_CHANNEL_CALLBACK URBDRC_CHANNEL_CALLBACK;
-
-struct s_URBDRC_CHANNEL_CALLBACK
+typedef struct
 {
 	IWTSVirtualChannelCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
-};
+} URBDRC_CHANNEL_CALLBACK;
 
-typedef struct s_URBDRC_PLUGIN URBDRC_PLUGIN;
-
-struct s_URBDRC_PLUGIN
+typedef struct
 {
 	IWTSPlugin iface;
 
@@ -86,7 +80,7 @@ struct s_URBDRC_PLUGIN
 	wLog* log;
 	IWTSListener* listener;
 	BOOL initialized;
-};
+} URBDRC_PLUGIN;
 
 typedef BOOL (*PREGISTERURBDRCSERVICE)(IWTSPlugin* plugin, IUDEVMAN* udevman);
 struct s_FREERDP_URBDRC_SERVICE_ENTRY_POINTS
@@ -100,16 +94,14 @@ typedef FREERDP_URBDRC_SERVICE_ENTRY_POINTS* PFREERDP_URBDRC_SERVICE_ENTRY_POINT
 
 typedef int (*PFREERDP_URBDRC_DEVICE_ENTRY)(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints);
 
-typedef struct s_TRANSFER_DATA TRANSFER_DATA;
-
-struct s_TRANSFER_DATA
+typedef struct
 {
 	URBDRC_CHANNEL_CALLBACK* callback;
 	URBDRC_PLUGIN* urbdrc;
 	IUDEVMAN* udevman;
 	IWTSVirtualChannel* channel;
 	wStream* s;
-};
+} TRANSFER_DATA;
 
 typedef void (*t_isoch_transfer_cb)(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* callback, wStream* out,
                                     UINT32 InterfaceId, BOOL noAck, UINT32 MessageId,

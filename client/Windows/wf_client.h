@@ -59,22 +59,20 @@ extern "C"
 // System menu constants
 #define SYSCOMMAND_ID_SMARTSIZING 1000
 
-	struct wf_bitmap
+	typedef struct
 	{
 		rdpBitmap _bitmap;
 		HDC hdc;
 		HBITMAP bitmap;
 		HBITMAP org_bitmap;
 		BYTE* pdata;
-	};
-	typedef struct wf_bitmap wfBitmap;
+	} wfBitmap;
 
-	struct wf_pointer
+	typedef struct
 	{
 		rdpPointer pointer;
 		HCURSOR cursor;
-	};
-	typedef struct wf_pointer wfPointer;
+	} wfPointer;
 
 	struct wf_context
 	{

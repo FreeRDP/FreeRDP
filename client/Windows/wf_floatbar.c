@@ -31,8 +31,6 @@
 
 #define TAG CLIENT_TAG("windows.floatbar")
 
-typedef struct s_Button Button;
-
 /* TIMERs */
 #define TIMER_HIDE 1
 #define TIMER_ANIMAT_SHOW 2
@@ -60,7 +58,7 @@ typedef struct s_Button Button;
 #define MINIMIZE_X (RESTORE_X - (BUTTON_WIDTH + BUTTON_SPACING))
 #define TEXT_X (BACKGROUND_H + ((BUTTON_WIDTH + BUTTON_SPACING) * 3) + 5)
 
-struct s_Button
+typedef struct
 {
 	wfFloatBar* floatbar;
 	int type;
@@ -74,7 +72,7 @@ struct s_Button
 	HBITMAP locked_bmp_act;
 	HBITMAP unlocked_bmp;
 	HBITMAP unlocked_bmp_act;
-};
+} Button;
 
 struct s_FloatBar
 {

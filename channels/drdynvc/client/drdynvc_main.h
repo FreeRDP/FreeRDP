@@ -35,62 +35,7 @@
 #include <freerdp/client/drdynvc.h>
 #include <freerdp/freerdp.h>
 
-typedef struct drdynvc_plugin drdynvcPlugin;
-
-struct s_DVCMAN
-{
-	IWTSVirtualChannelManager iface;
-
-	drdynvcPlugin* drdynvc;
-
-	wArrayList* plugin_names;
-	wArrayList* plugins;
-
-	wArrayList* listeners;
-	wArrayList* channels;
-	wStreamPool* pool;
-};
-typedef struct s_DVCMAN DVCMAN;
-
-struct s_DVCMAN_LISTENER
-{
-	IWTSListener iface;
-
-	DVCMAN* dvcman;
-	char* channel_name;
-	UINT32 flags;
-	IWTSListenerCallback* listener_callback;
-};
-typedef struct s_DVCMAN_LISTENER DVCMAN_LISTENER;
-
-struct s_DVCMAN_ENTRY_POINTS
-{
-	IDRDYNVC_ENTRY_POINTS iface;
-
-	DVCMAN* dvcman;
-	const ADDIN_ARGV* args;
-	rdpSettings* settings;
-};
-typedef struct s_DVCMAN_ENTRY_POINTS DVCMAN_ENTRY_POINTS;
-
-struct s_DVCMAN_CHANNEL
-{
-	IWTSVirtualChannel iface;
-
-	int status;
-	DVCMAN* dvcman;
-	void* pInterface;
-	UINT32 channel_id;
-	char* channel_name;
-	IWTSVirtualChannelCallback* channel_callback;
-
-	wStream* dvc_data;
-	UINT32 dvc_data_length;
-	CRITICAL_SECTION lock;
-};
-typedef struct s_DVCMAN_CHANNEL DVCMAN_CHANNEL;
-
-enum e_DRDYNVC_STATE
+typedef enum
 {
 	DRDYNVC_STATE_INITIAL,
 	DRDYNVC_STATE_CAPABILITIES,
@@ -98,10 +43,9 @@ enum e_DRDYNVC_STATE
 	DRDYNVC_STATE_OPENING_CHANNEL,
 	DRDYNVC_STATE_SEND_RECEIVE,
 	DRDYNVC_STATE_FINAL
-};
-typedef enum e_DRDYNVC_STATE DRDYNVC_STATE;
+} DRDYNVC_STATE;
 
-struct drdynvc_plugin
+typedef struct
 {
 	CHANNEL_DEF channelDef;
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
@@ -124,6 +68,55 @@ struct drdynvc_plugin
 	rdpContext* rdpcontext;
 
 	IWTSVirtualChannelManager* channel_mgr;
-};
+} drdynvcPlugin;
+
+typedef struct
+{
+	IWTSVirtualChannelManager iface;
+
+	drdynvcPlugin* drdynvc;
+
+	wArrayList* plugin_names;
+	wArrayList* plugins;
+
+	wArrayList* listeners;
+	wArrayList* channels;
+	wStreamPool* pool;
+} DVCMAN;
+
+typedef struct
+{
+	IWTSListener iface;
+
+	DVCMAN* dvcman;
+	char* channel_name;
+	UINT32 flags;
+	IWTSListenerCallback* listener_callback;
+} DVCMAN_LISTENER;
+
+typedef struct
+{
+	IDRDYNVC_ENTRY_POINTS iface;
+
+	DVCMAN* dvcman;
+	const ADDIN_ARGV* args;
+	rdpSettings* settings;
+} DVCMAN_ENTRY_POINTS;
+
+typedef struct
+{
+	IWTSVirtualChannel iface;
+
+	int status;
+	DVCMAN* dvcman;
+	void* pInterface;
+	UINT32 channel_id;
+	char* channel_name;
+	IWTSVirtualChannelCallback* channel_callback;
+
+	wStream* dvc_data;
+	UINT32 dvc_data_length;
+	CRITICAL_SECTION lock;
+} DVCMAN_CHANNEL;
 
 #endif /* FREERDP_CHANNEL_DRDYNVC_CLIENT_MAIN_H */

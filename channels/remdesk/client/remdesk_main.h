@@ -38,7 +38,7 @@
 #include <freerdp/channels/log.h>
 #define TAG CHANNELS_TAG("remdesk.client")
 
-struct remdesk_plugin
+typedef struct
 {
 	CHANNEL_DEF channelDef;
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
@@ -57,7 +57,6 @@ struct remdesk_plugin
 	BYTE* EncryptedPassStub;
 	size_t EncryptedPassStubSize;
 	rdpContext* rdpcontext;
-};
-typedef struct remdesk_plugin remdeskPlugin;
+} remdeskPlugin;
 
 #endif /* FREERDP_CHANNEL_REMDESK_CLIENT_MAIN_H */

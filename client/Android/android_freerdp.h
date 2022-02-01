@@ -21,7 +21,7 @@
 
 #include "android_event.h"
 
-struct android_context
+typedef struct
 {
 	rdpContext rdpCtx;
 
@@ -38,7 +38,6 @@ struct android_context
 	CLIPRDR_FORMAT* serverFormats;
 	CliprdrClientContext* cliprdr;
 	UINT32 clipboardCapabilities;
-};
-typedef struct android_context androidContext;
+} androidContext;
 
 #endif /* FREERDP_CLIENT_ANDROID_FREERDP_H */

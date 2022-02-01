@@ -20,45 +20,40 @@
 #define EVENT_TYPE_KEY_UNICODE 4
 #define EVENT_TYPE_CLIPBOARD 5
 
-struct s_ANDROID_EVENT
+typedef struct
 {
 	int type;
-};
-typedef struct s_ANDROID_EVENT ANDROID_EVENT;
+} ANDROID_EVENT;
 
-struct s_ANDROID_EVENT_KEY
+typedef struct
 {
 	int type;
 	int flags;
 	UINT16 scancode;
-};
-typedef struct s_ANDROID_EVENT_KEY ANDROID_EVENT_KEY;
+} ANDROID_EVENT_KEY;
 
-struct s_ANDROID_EVENT_CURSOR
+typedef struct
 {
 	int type;
 	UINT16 flags;
 	UINT16 x;
 	UINT16 y;
-};
-typedef struct s_ANDROID_EVENT_CURSOR ANDROID_EVENT_CURSOR;
+} ANDROID_EVENT_CURSOR;
 
-struct s_ANDROID_EVENT_CLIPBOARD
+typedef struct
 {
 	int type;
 	void* data;
 	int data_length;
-};
-typedef struct s_ANDROID_EVENT_CLIPBOARD ANDROID_EVENT_CLIPBOARD;
+} ANDROID_EVENT_CLIPBOARD;
 
-struct s_ANDROID_EVENT_QUEUE
+typedef struct
 {
 	int size;
 	int count;
 	HANDLE isSet;
 	ANDROID_EVENT** events;
-};
-typedef struct s_ANDROID_EVENT_QUEUE ANDROID_EVENT_QUEUE;
+} ANDROID_EVENT_QUEUE;
 
 FREERDP_LOCAL BOOL android_push_event(freerdp* inst, ANDROID_EVENT* event);
 
@@ -69,7 +64,8 @@ FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancod
 FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 flags, UINT16 key);
 FREERDP_LOCAL ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y);
 FREERDP_LOCAL ANDROID_EVENT* android_event_disconnect_new(void);
-FREERDP_LOCAL ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(const void* data, size_t data_length);
+FREERDP_LOCAL ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(const void* data,
+                                                                   size_t data_length);
 
 FREERDP_LOCAL void android_event_free(ANDROID_EVENT* event);
 

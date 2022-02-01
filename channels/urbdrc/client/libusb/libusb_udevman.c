@@ -56,17 +56,13 @@
 	_man->iface.get_##_arg = udevman_get_##_arg; \
 	_man->iface.set_##_arg = udevman_set_##_arg
 
-typedef struct s_VID_PID_PAIR VID_PID_PAIR;
-
-struct s_VID_PID_PAIR
+typedef struct
 {
 	UINT16 vid;
 	UINT16 pid;
-};
+} VID_PID_PAIR;
 
-typedef struct s_UDEVMAN UDEVMAN;
-
-struct s_UDEVMAN
+typedef struct
 {
 	IUDEVMAN iface;
 
@@ -86,7 +82,7 @@ struct s_UDEVMAN
 	libusb_context* context;
 	HANDLE thread;
 	BOOL running;
-};
+} UDEVMAN;
 typedef UDEVMAN* PUDEVMAN;
 
 static BOOL poll_libusb_events(UDEVMAN* udevman);

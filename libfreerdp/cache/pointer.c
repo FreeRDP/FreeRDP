@@ -29,6 +29,7 @@
 
 #include <freerdp/log.h>
 #include <freerdp/cache/pointer.h>
+#include <freerdp/cache/cache.h>
 
 #include "pointer.h"
 

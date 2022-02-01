@@ -50,22 +50,20 @@ struct s_rdpdr_server_private
 
 #define RDPDR_HEADER_LENGTH 4
 
-struct s_RDPDR_HEADER
+typedef struct
 {
 	UINT16 Component;
 	UINT16 PacketId;
-};
-typedef struct s_RDPDR_HEADER RDPDR_HEADER;
+} RDPDR_HEADER;
 
 #define RDPDR_CAPABILITY_HEADER_LENGTH 8
 
-struct s_RDPDR_CAPABILITY_HEADER
+typedef struct
 {
 	UINT16 CapabilityType;
 	UINT16 CapabilityLength;
 	UINT32 Version;
-};
-typedef struct s_RDPDR_CAPABILITY_HEADER RDPDR_CAPABILITY_HEADER;
+} RDPDR_CAPABILITY_HEADER;
 
 struct s_RDPDR_IRP
 {

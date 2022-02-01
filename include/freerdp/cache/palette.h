@@ -27,30 +27,25 @@
 
 #include <winpr/stream.h>
 
-typedef struct s_PALETTE_TABLE_ENTRY PALETTE_TABLE_ENTRY;
-typedef struct rdp_palette_cache rdpPaletteCache;
-
-#include <freerdp/cache/cache.h>
-
-struct s_PALETTE_TABLE_ENTRY
-{
-	void* entry;
-};
-
-struct rdp_palette_cache
-{
-	UINT32 maxEntries;            /* 0 */
-	PALETTE_TABLE_ENTRY* entries; /* 1 */
-
-	/* internal */
-
-	rdpContext* context;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct
+	{
+		void* entry;
+	} PALETTE_TABLE_ENTRY;
+
+	typedef struct
+	{
+		UINT32 maxEntries;            /* 0 */
+		PALETTE_TABLE_ENTRY* entries; /* 1 */
+
+		/* internal */
+
+		rdpContext* context;
+	} rdpPaletteCache;
 
 	FREERDP_API void palette_cache_register_callbacks(rdpUpdate* update);
 

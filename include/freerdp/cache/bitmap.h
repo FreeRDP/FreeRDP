@@ -27,39 +27,34 @@
 
 #include <winpr/stream.h>
 
-typedef struct s_BITMAP_V2_CELL BITMAP_V2_CELL;
-typedef struct rdp_bitmap_cache rdpBitmapCache;
-
-#include <freerdp/cache/cache.h>
-
-struct s_BITMAP_V2_CELL
-{
-	UINT32 number;
-	rdpBitmap** entries;
-};
-
-struct rdp_bitmap_cache
-{
-	pMemBlt MemBlt;               /* 0 */
-	pMem3Blt Mem3Blt;             /* 1 */
-	pCacheBitmap CacheBitmap;     /* 2 */
-	pCacheBitmapV2 CacheBitmapV2; /* 3 */
-	pCacheBitmapV3 CacheBitmapV3; /* 4 */
-	pBitmapUpdate BitmapUpdate;   /* 5 */
-	UINT32 paddingA[16 - 6];      /* 6 */
-
-	UINT32 maxCells;          /* 16 */
-	BITMAP_V2_CELL* cells;    /* 17 */
-	UINT32 paddingB[32 - 18]; /* 18 */
-
-	/* internal */
-	rdpContext* context;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct
+	{
+		UINT32 number;
+		rdpBitmap** entries;
+	} BITMAP_V2_CELL;
+
+	typedef struct
+	{
+		pMemBlt MemBlt;               /* 0 */
+		pMem3Blt Mem3Blt;             /* 1 */
+		pCacheBitmap CacheBitmap;     /* 2 */
+		pCacheBitmapV2 CacheBitmapV2; /* 3 */
+		pCacheBitmapV3 CacheBitmapV3; /* 4 */
+		pBitmapUpdate BitmapUpdate;   /* 5 */
+		UINT32 paddingA[16 - 6];      /* 6 */
+
+		UINT32 maxCells;          /* 16 */
+		BITMAP_V2_CELL* cells;    /* 17 */
+		UINT32 paddingB[32 - 18]; /* 18 */
+
+		/* internal */
+		rdpContext* context;
+	} rdpBitmapCache;
 
 	FREERDP_API void bitmap_cache_register_callbacks(rdpUpdate* update);
 

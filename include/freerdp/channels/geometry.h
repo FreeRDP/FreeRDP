@@ -36,16 +36,14 @@ enum
 	RDH_RECTANGLE = 1
 };
 
-struct s_FREERDP_RGNDATA
+typedef struct
 {
 	RDP_RECT boundingRect;
 	UINT32 nRectCount;
 	RDP_RECT* rects;
-};
+} FREERDP_RGNDATA;
 
-typedef struct s_FREERDP_RGNDATA FREERDP_RGNDATA;
-
-struct s_MAPPED_GEOMETRY_PACKET
+typedef struct
 {
 	UINT32 version;
 	UINT64 mappingId;
@@ -56,8 +54,6 @@ struct s_MAPPED_GEOMETRY_PACKET
 	UINT32 geometryType;
 
 	FREERDP_RGNDATA geometry;
-};
-
-typedef struct s_MAPPED_GEOMETRY_PACKET MAPPED_GEOMETRY_PACKET;
+} MAPPED_GEOMETRY_PACKET;
 
 #endif /* FREERDP_CHANNEL_GEOMETRY_H */
