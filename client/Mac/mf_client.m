@@ -26,6 +26,8 @@
 #include <freerdp/utils/signal.h>
 #include <freerdp/client/cmdline.h>
 
+#include "MRDPView.h"
+
 /**
  * Client Interface
  */

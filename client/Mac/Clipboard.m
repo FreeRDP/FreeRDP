@@ -19,6 +19,7 @@
  */
 
 #import "Clipboard.h"
+#import "MRDPView.h"
 
 int mac_cliprdr_send_client_format_list(CliprdrClientContext *cliprdr)
 {

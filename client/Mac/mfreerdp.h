@@ -26,7 +26,6 @@ typedef struct mf_context mfContext;
 #include <winpr/thread.h>
 #include <winpr/clipboard.h>
 
-#include "MRDPView.h"
 #include "Keyboard.h"
 #include <CoreGraphics/CoreGraphics.h>
 
