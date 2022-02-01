@@ -822,14 +822,10 @@ static int print_bio_error(const char* str, size_t len, void* bp)
 
 HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 {
-	size_t size;
 	size_t position;
 	size_t bodyLength = 0;
-	size_t payloadOffset;
-	HttpResponse* response;
-	size = 2048;
-	payloadOffset = 0;
-	response = http_response_new();
+	size_t payloadOffset = 0;
+	HttpResponse* response = http_response_new();
 
 	if (!response)
 		return NULL;

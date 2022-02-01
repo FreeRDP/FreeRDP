@@ -1466,13 +1466,13 @@ static BOOL read_pem_file(rdpSettings* settings, size_t id, const char* file)
 	if (!fp)
 		return FALSE;
 	rs = _fseeki64(fp, 0, SEEK_END);
-	if (rc < 0)
+	if (rs < 0)
 		goto fail;
 	s = _ftelli64(fp);
 	if (s < 0)
 		goto fail;
 	rs = _fseeki64(fp, 0, SEEK_SET);
-	if (rc < 0)
+	if (rs < 0)
 		goto fail;
 
 	if (!freerdp_settings_set_string_len(settings, id, NULL, s + 1ull))

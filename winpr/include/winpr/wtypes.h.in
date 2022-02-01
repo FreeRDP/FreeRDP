@@ -273,7 +273,7 @@ typedef LONG HRESULT;
 typedef LONG SCODE;
 typedef SCODE* PSCODE;
 
-typedef struct _POINTL /* ptl  */
+typedef struct s_POINTL /* ptl  */
 {
 	LONG x;
 	LONG y;
@@ -287,7 +287,7 @@ typedef struct tagSIZE
 
 typedef SIZE SIZEL;
 
-typedef struct _GUID
+typedef struct s_GUID
 {
 	UINT32 Data1;
 	UINT16 Data2;
@@ -296,7 +296,7 @@ typedef struct _GUID
 } GUID, UUID, *PGUID, *LPGUID, *LPCGUID;
 typedef GUID CLSID;
 
-typedef struct _LUID
+typedef struct s_LUID
 {
 	DWORD LowPart;
 	LONG  HighPart;
@@ -323,7 +323,7 @@ typedef LPSTR LPTSTR;
 typedef LPCSTR LPCTSTR;
 #endif
 
-typedef union _ULARGE_INTEGER
+typedef union u_ULARGE_INTEGER
 {
 	struct
 	{
@@ -340,7 +340,7 @@ typedef union _ULARGE_INTEGER
 	ULONGLONG QuadPart;
 } ULARGE_INTEGER, *PULARGE_INTEGER;
 
-typedef union _LARGE_INTEGER
+typedef union u_LARGE_INTEGER
 {
 	struct
 	{
@@ -357,13 +357,13 @@ typedef union _LARGE_INTEGER
 	LONGLONG QuadPart;
 } LARGE_INTEGER, *PLARGE_INTEGER;
 
-typedef struct _FILETIME
+typedef struct s_FILETIME
 {
 	DWORD dwLowDateTime;
 	DWORD dwHighDateTime;
 } FILETIME, *PFILETIME, *LPFILETIME;
 
-typedef struct _SYSTEMTIME
+typedef struct s_SYSTEMTIME
 {
 	WORD wYear;
 	WORD wMonth;
@@ -375,14 +375,14 @@ typedef struct _SYSTEMTIME
 	WORD wMilliseconds;
 } SYSTEMTIME, *PSYSTEMTIME, *LPSYSTEMTIME;
 
-typedef struct _RPC_SID_IDENTIFIER_AUTHORITY
+typedef struct s_RPC_SID_IDENTIFIER_AUTHORITY
 {
 	BYTE Value[6];
 } RPC_SID_IDENTIFIER_AUTHORITY;
 
 typedef DWORD SECURITY_INFORMATION, *PSECURITY_INFORMATION;
 
-typedef struct _RPC_SID
+typedef struct s_RPC_SID
 {
 	UCHAR Revision;
 	UCHAR SubAuthorityCount;
@@ -390,7 +390,7 @@ typedef struct _RPC_SID
 	ULONG SubAuthority[1];
 } RPC_SID, *PRPC_SID, *PSID;
 
-typedef struct _ACL
+typedef struct s_ACL
 {
 	UCHAR AclRevision;
 	UCHAR Sbz1;
@@ -399,7 +399,7 @@ typedef struct _ACL
 	USHORT Sbz2;
 } ACL, *PACL;
 
-typedef struct _SECURITY_DESCRIPTOR
+typedef struct s_SECURITY_DESCRIPTOR
 {
 	UCHAR Revision;
 	UCHAR Sbz1;
@@ -412,14 +412,14 @@ typedef struct _SECURITY_DESCRIPTOR
 
 typedef WORD SECURITY_DESCRIPTOR_CONTROL, *PSECURITY_DESCRIPTOR_CONTROL;
 
-typedef struct _SECURITY_ATTRIBUTES
+typedef struct s_SECURITY_ATTRIBUTES
 {
 	DWORD nLength;
 	LPVOID lpSecurityDescriptor;
 	BOOL bInheritHandle;
 } SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
 
-typedef struct _PROCESS_INFORMATION
+typedef struct s_PROCESS_INFORMATION
 {
 	HANDLE hProcess;
 	HANDLE hThread;
