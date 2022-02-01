@@ -154,7 +154,7 @@ void primitives_init_copy(primitives_t* prims)
 	prims->copy_8u = general_copy_8u;
 	prims->copy_8u_AC4r = general_copy_8u_AC4r;
 	/* This is just an alias with void* parameters */
-	prims->copy = (__copy_t)(prims->copy_8u);
+	prims->copy = (f_copy_t)(prims->copy_8u);
 }
 
 void primitives_init_copy_opt(primitives_t* prims)
@@ -163,8 +163,8 @@ void primitives_init_copy_opt(primitives_t* prims)
 	primitives_init_copy(prims);
 	/* Pick tuned versions if possible. */
 #ifdef WITH_IPP
-	prims->copy_8u = (__copy_8u_t)ippsCopy_8u;
-	prims->copy_8u_AC4r = (__copy_8u_AC4r_t)ippiCopy_8u_AC4r;
+	prims->copy_8u = (f_copy_8u_t)ippsCopy_8u;
+	prims->copy_8u_AC4r = (f_copy_8u_AC4r_t)ippiCopy_8u_AC4r;
 #endif
 	/* Performance with an SSE2 version with no prefetch seemed to be
 	 * all over the map vs. memcpy.
@@ -174,5 +174,5 @@ void primitives_init_copy_opt(primitives_t* prims)
 	 * is consistently faster than memcpy.
 	 */
 	/* This is just an alias with void* parameters */
-	prims->copy = (__copy_t)(prims->copy_8u);
+	prims->copy = (f_copy_t)(prims->copy_8u);
 }

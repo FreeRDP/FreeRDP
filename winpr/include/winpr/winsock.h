@@ -178,7 +178,8 @@ struct sockaddr_in6_old
 	IN6_ADDR sin6_addr;
 };
 
-typedef union sockaddr_gen {
+typedef union sockaddr_gen
+{
 	struct sockaddr Address;
 	struct sockaddr_in AddressIn;
 	struct sockaddr_in6_old AddressIn6;
@@ -320,9 +321,16 @@ extern "C"
 	                       LPWSAOVERLAPPED lpOverlapped,
 	                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
 
+	WINPR_API int closesocket(SOCKET s);
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 	WINPR_API SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen);
 	WINPR_API int _bind(SOCKET s, const struct sockaddr* addr, int namelen);
-	WINPR_API int closesocket(SOCKET s);
+
 	WINPR_API int _connect(SOCKET s, const struct sockaddr* name, int namelen);
 	WINPR_API int _ioctlsocket(SOCKET s, long cmd, u_long* argp);
 	WINPR_API int _getpeername(SOCKET s, struct sockaddr* name, int* namelen);
@@ -353,6 +361,10 @@ extern "C"
 	WINPR_API struct servent* _getservbyname(const char* name, const char* proto);
 	WINPR_API struct protoent* _getprotobynumber(int number);
 	WINPR_API struct protoent* _getprotobyname(const char* name);
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #ifdef __cplusplus
 }

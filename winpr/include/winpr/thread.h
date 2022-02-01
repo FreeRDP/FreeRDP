@@ -178,7 +178,17 @@ extern "C"
 	DECLSPEC_NORETURN WINPR_API VOID ExitProcess(UINT uExitCode);
 	WINPR_API BOOL GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode);
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 	WINPR_API HANDLE _GetCurrentProcess(void);
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 	WINPR_API DWORD GetCurrentProcessId(void);
 
 	WINPR_API BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode);
@@ -210,7 +220,17 @@ extern "C"
 	WINPR_API VOID ExitThread(DWORD dwExitCode);
 	WINPR_API BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode);
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 	WINPR_API HANDLE _GetCurrentThread(void);
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 	WINPR_API DWORD GetCurrentThreadId(void);
 
 	typedef void (*PAPCFUNC)(ULONG_PTR Parameter);

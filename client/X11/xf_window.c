@@ -112,7 +112,7 @@ static void xf_SetWindowTitleText(xfContext* xfc, Window window, const char* nam
 {
 	const size_t i = strnlen(name, MAX_PATH);
 	XStoreName(xfc->display, window, name);
-	Atom wm_Name = xfc->_NET_WM_NAME;
+	Atom wm_Name = xfc->d_NET_WM_NAME;
 	Atom utf8Str = xfc->UTF8_STRING;
 	XChangeProperty(xfc->display, window, wm_Name, utf8Str, 8, PropModeReplace,
 	                (const unsigned char*)name, (int)i);
@@ -208,12 +208,12 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	}
 
 	/*
-	  It is safe to proceed with simply toogling _NET_WM_STATE_FULLSCREEN window state on the
+	  It is safe to proceed with simply toogling d_NET_WM_STATE_FULLSCREEN window state on the
 	  following conditions:
 	       - The window manager supports multiple monitor full screen
 	       - The user requested to use a single monitor to render the remote desktop
 	 */
-	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None || settings->MonitorCount == 1)
+	if (xfc->d_NET_WM_FULLSCREEN_MONITORS != None || settings->MonitorCount == 1)
 	{
 		xf_ResizeDesktopWindow(xfc, window, width, height);
 
@@ -224,9 +224,9 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		}
 
 		/* Set the fullscreen state */
-		xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
-		                   fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
-		                   xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
+		xf_SendClientEvent(xfc, window->handle, xfc->d_NET_WM_STATE, 4,
+		                   fullscreen ? d_NET_WM_STATE_ADD : d_NET_WM_STATE_REMOVE,
+		                   xfc->d_NET_WM_STATE_FULLSCREEN, 0, 0);
 
 		if (!fullscreen)
 		{
@@ -241,7 +241,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		/* Set monitor bounds */
 		if (settings->MonitorCount > 1)
 		{
-			xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
+			xf_SendClientEvent(xfc, window->handle, xfc->d_NET_WM_FULLSCREEN_MONITORS, 5,
 			                   xfc->fullscreenMonitors.top, xfc->fullscreenMonitors.bottom,
 			                   xfc->fullscreenMonitors.left, xfc->fullscreenMonitors.right, 1);
 		}
@@ -254,7 +254,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 			if (xfc->fullscreenMonitors.top)
 			{
-				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_ADD,
+				xf_SendClientEvent(xfc, window->handle, xfc->d_NET_WM_STATE, 4, d_NET_WM_STATE_ADD,
 				                   xfc->fullscreenMonitors.top, 0, 0);
 			}
 			else
@@ -268,35 +268,35 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 			}
 
 			/* if window is in maximized state, save and remove */
-			if (xfc->_NET_WM_STATE_MAXIMIZED_VERT != None)
+			if (xfc->d_NET_WM_STATE_MAXIMIZED_VERT != None)
 			{
 				BYTE state;
 				unsigned long nitems;
 				unsigned long bytes;
 				BYTE* prop;
 
-				if (xf_GetWindowProperty(xfc, window->handle, xfc->_NET_WM_STATE, 255, &nitems,
+				if (xf_GetWindowProperty(xfc, window->handle, xfc->d_NET_WM_STATE, 255, &nitems,
 				                         &bytes, &prop))
 				{
 					state = 0;
 
 					while (nitems-- > 0)
 					{
-						if (((Atom*)prop)[nitems] == xfc->_NET_WM_STATE_MAXIMIZED_VERT)
+						if (((Atom*)prop)[nitems] == xfc->d_NET_WM_STATE_MAXIMIZED_VERT)
 							state |= 0x01;
 
-						if (((Atom*)prop)[nitems] == xfc->_NET_WM_STATE_MAXIMIZED_HORZ)
+						if (((Atom*)prop)[nitems] == xfc->d_NET_WM_STATE_MAXIMIZED_HORZ)
 							state |= 0x02;
 					}
 
 					if (state)
 					{
-						xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
-						                   _NET_WM_STATE_REMOVE, xfc->_NET_WM_STATE_MAXIMIZED_VERT,
-						                   0, 0);
-						xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
-						                   _NET_WM_STATE_REMOVE, xfc->_NET_WM_STATE_MAXIMIZED_HORZ,
-						                   0, 0);
+						xf_SendClientEvent(xfc, window->handle, xfc->d_NET_WM_STATE, 4,
+						                   d_NET_WM_STATE_REMOVE,
+						                   xfc->d_NET_WM_STATE_MAXIMIZED_VERT, 0, 0);
+						xf_SendClientEvent(xfc, window->handle, xfc->d_NET_WM_STATE, 4,
+						                   d_NET_WM_STATE_REMOVE,
+						                   xfc->d_NET_WM_STATE_MAXIMIZED_HORZ, 0, 0);
 						xfc->savedMaximizedState = state;
 					}
 
@@ -318,21 +318,21 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 			if (xfc->fullscreenMonitors.top)
 			{
-				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_REMOVE,
-				                   xfc->fullscreenMonitors.top, 0, 0);
+				xf_SendClientEvent(xfc, window->handle, xfc->d_NET_WM_STATE, 4,
+				                   d_NET_WM_STATE_REMOVE, xfc->fullscreenMonitors.top, 0, 0);
 			}
 
 			/* restore maximized state, if the window was maximized before setting fullscreen */
 			if (xfc->savedMaximizedState & 0x01)
 			{
-				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_ADD,
-				                   xfc->_NET_WM_STATE_MAXIMIZED_VERT, 0, 0);
+				xf_SendClientEvent(xfc, window->handle, xfc->d_NET_WM_STATE, 4, d_NET_WM_STATE_ADD,
+				                   xfc->d_NET_WM_STATE_MAXIMIZED_VERT, 0, 0);
 			}
 
 			if (xfc->savedMaximizedState & 0x02)
 			{
-				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_ADD,
-				                   xfc->_NET_WM_STATE_MAXIMIZED_HORZ, 0, 0);
+				xf_SendClientEvent(xfc, window->handle, xfc->d_NET_WM_STATE, 4, d_NET_WM_STATE_ADD,
+				                   xfc->d_NET_WM_STATE_MAXIMIZED_HORZ, 0, 0);
 			}
 
 			xfc->savedMaximizedState = 0;
@@ -373,7 +373,7 @@ BOOL xf_GetCurrentDesktop(xfContext* xfc)
 	unsigned long nitems;
 	unsigned long bytes;
 	unsigned char* prop;
-	status = xf_GetWindowProperty(xfc, DefaultRootWindow(xfc->display), xfc->_NET_CURRENT_DESKTOP,
+	status = xf_GetWindowProperty(xfc, DefaultRootWindow(xfc->display), xfc->d_NET_CURRENT_DESKTOP,
 	                              1, &nitems, &bytes, &prop);
 
 	if (!status)
@@ -396,7 +396,7 @@ BOOL xf_GetWorkArea(xfContext* xfc)
 	if (!status)
 		return FALSE;
 
-	status = xf_GetWindowProperty(xfc, DefaultRootWindow(xfc->display), xfc->_NET_WORKAREA, 32 * 4,
+	status = xf_GetWindowProperty(xfc, DefaultRootWindow(xfc->display), xfc->d_NET_WORKAREA, 32 * 4,
 	                              &nitems, &bytes, &prop);
 
 	if (!status)
@@ -425,16 +425,16 @@ void xf_SetWindowDecorations(xfContext* xfc, Window window, BOOL show)
 	hints.flags = MWM_HINTS_DECORATIONS | MWM_HINTS_FUNCTIONS;
 	hints.inputMode = 0;
 	hints.status = 0;
-	XChangeProperty(xfc->display, window, xfc->_MOTIF_WM_HINTS, xfc->_MOTIF_WM_HINTS, 32,
+	XChangeProperty(xfc->display, window, xfc->d_MOTIF_WM_HINTS, xfc->d_MOTIF_WM_HINTS, 32,
 	                PropModeReplace, (BYTE*)&hints, PROP_MOTIF_WM_HINTS_ELEMENTS);
 }
 
 void xf_SetWindowUnlisted(xfContext* xfc, Window window)
 {
 	Atom window_state[2];
-	window_state[0] = xfc->_NET_WM_STATE_SKIP_PAGER;
-	window_state[1] = xfc->_NET_WM_STATE_SKIP_TASKBAR;
-	XChangeProperty(xfc->display, window, xfc->_NET_WM_STATE, XA_ATOM, 32, PropModeReplace,
+	window_state[0] = xfc->d_NET_WM_STATE_SKIP_PAGER;
+	window_state[1] = xfc->d_NET_WM_STATE_SKIP_TASKBAR;
+	XChangeProperty(xfc->display, window, xfc->d_NET_WM_STATE, XA_ATOM, 32, PropModeReplace,
 	                (BYTE*)&window_state, 2);
 }
 
@@ -445,7 +445,7 @@ static void xf_SetWindowPID(xfContext* xfc, Window window, pid_t pid)
 	if (!pid)
 		pid = getpid();
 
-	am_wm_pid = xfc->_NET_WM_PID;
+	am_wm_pid = xfc->d_NET_WM_PID;
 	XChangeProperty(xfc->display, window, am_wm_pid, XA_CARDINAL, 32, PropModeReplace, (BYTE*)&pid,
 	                1);
 }
@@ -551,7 +551,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	if (xfc->grab_keyboard)
 		input_mask |= EnterWindowMask | LeaveWindowMask;
 
-	XChangeProperty(xfc->display, window->handle, xfc->_NET_WM_ICON, XA_CARDINAL, 32,
+	XChangeProperty(xfc->display, window->handle, xfc->d_NET_WM_ICON, XA_CARDINAL, 32,
 	                PropModeReplace, (BYTE*)xf_icon_prop, ARRAYSIZE(xf_icon_prop));
 
 	if (parentWindow)
@@ -588,8 +588,8 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 
 	window->floatbar = xf_floatbar_new(xfc, window->handle, name, settings->Floatbar);
 
-	if (xfc->_XWAYLAND_MAY_GRAB_KEYBOARD)
-		xf_SendClientEvent(xfc, window->handle, xfc->_XWAYLAND_MAY_GRAB_KEYBOARD, 1, 1);
+	if (xfc->d_XWAYLAND_MAY_GRAB_KEYBOARD)
+		xf_SendClientEvent(xfc, window->handle, xfc->d_XWAYLAND_MAY_GRAB_KEYBOARD, 1, 1);
 
 	return window;
 }
@@ -671,7 +671,7 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 		redirect = TRUE;
 		appWindow->is_transient = TRUE;
 		xf_SetWindowUnlisted(xfc, appWindow->handle);
-		window_type = xfc->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU;
+		window_type = xfc->d_NET_WM_WINDOW_TYPE_DROPDOWN_MENU;
 	}
 	/*
 	 * TOPMOST window that is not a tool window is treated like a regular window (i.e. task
@@ -679,18 +679,18 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 	 */
 	else if (ex_style & WS_EX_TOPMOST)
 	{
-		window_type = xfc->_NET_WM_WINDOW_TYPE_NORMAL;
+		window_type = xfc->d_NET_WM_WINDOW_TYPE_NORMAL;
 	}
 	else if (style & WS_POPUP)
 	{
 		/* this includes dialogs, popups, etc, that need to be full-fledged windows */
 		appWindow->is_transient = TRUE;
-		window_type = xfc->_NET_WM_WINDOW_TYPE_DIALOG;
+		window_type = xfc->d_NET_WM_WINDOW_TYPE_DIALOG;
 		xf_SetWindowUnlisted(xfc, appWindow->handle);
 	}
 	else
 	{
-		window_type = xfc->_NET_WM_WINDOW_TYPE_NORMAL;
+		window_type = xfc->d_NET_WM_WINDOW_TYPE_NORMAL;
 	}
 
 	{
@@ -708,7 +708,7 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 		XChangeWindowAttributes(xfc->display, appWindow->handle, CWOverrideRedirect, &attrs);
 	}
 
-	XChangeProperty(xfc->display, appWindow->handle, xfc->_NET_WM_WINDOW_TYPE, XA_ATOM, 32,
+	XChangeProperty(xfc->display, appWindow->handle, xfc->d_NET_WM_WINDOW_TYPE, XA_ATOM, 32,
 	                PropModeReplace, (BYTE*)&window_type, 1);
 }
 
@@ -836,8 +836,8 @@ int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	             FocusChangeMask | PropertyChangeMask | ColormapChangeMask | OwnerGrabButtonMask;
 	XSelectInput(xfc->display, appWindow->handle, input_mask);
 
-	if (xfc->_XWAYLAND_MAY_GRAB_KEYBOARD)
-		xf_SendClientEvent(xfc, appWindow->handle, xfc->_XWAYLAND_MAY_GRAB_KEYBOARD, 1, 1);
+	if (xfc->d_XWAYLAND_MAY_GRAB_KEYBOARD)
+		xf_SendClientEvent(xfc, appWindow->handle, xfc->d_XWAYLAND_MAY_GRAB_KEYBOARD, 1, 1);
 
 	return 1;
 }
@@ -879,13 +879,13 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 	XUngrabPointer(xfc->display, CurrentTime);
 	xf_SendClientEvent(
 	    xfc, appWindow->handle,
-	    xfc->_NET_WM_MOVERESIZE, /* request X window manager to initiate a local move */
-	    5,                       /* 5 arguments to follow */
-	    x,                       /* x relative to root window */
-	    y,                       /* y relative to root window */
-	    direction,               /* extended ICCM direction flag */
-	    1,                       /* simulated mouse button 1 */
-	    1);                      /* 1 == application request per extended ICCM */
+	    xfc->d_NET_WM_MOVERESIZE, /* request X window manager to initiate a local move */
+	    5,                        /* 5 arguments to follow */
+	    x,                        /* x relative to root window */
+	    y,                        /* y relative to root window */
+	    direction,                /* extended ICCM direction flag */
+	    1,                        /* simulated mouse button 1 */
+	    1);                       /* 1 == application request per extended ICCM */
 }
 
 void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
@@ -903,11 +903,11 @@ void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
 		 */
 		xf_SendClientEvent(
 		    xfc, appWindow->handle,
-		    xfc->_NET_WM_MOVERESIZE,      /* request X window manager to abort a local move */
+		    xfc->d_NET_WM_MOVERESIZE,     /* request X window manager to abort a local move */
 		    5,                            /* 5 arguments to follow */
 		    appWindow->local_move.root_x, /* x relative to root window */
 		    appWindow->local_move.root_y, /* y relative to root window */
-		    _NET_WM_MOVERESIZE_CANCEL,    /* extended ICCM direction flag */
+		    d_NET_WM_MOVERESIZE_CANCEL,   /* extended ICCM direction flag */
 		    1,                            /* simulated mouse button 1 */
 		    1);                           /* 1 == application request per extended ICCM */
 	}
@@ -955,9 +955,9 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 
 		case WINDOW_SHOW_MAXIMIZED:
 			/* Set the window as maximized */
-			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_ADD,
-			                   xfc->_NET_WM_STATE_MAXIMIZED_VERT, xfc->_NET_WM_STATE_MAXIMIZED_HORZ,
-			                   0);
+			xf_SendClientEvent(xfc, appWindow->handle, xfc->d_NET_WM_STATE, 4, d_NET_WM_STATE_ADD,
+			                   xfc->d_NET_WM_STATE_MAXIMIZED_VERT,
+			                   xfc->d_NET_WM_STATE_MAXIMIZED_HORZ, 0);
 
 			/*
 			 * This is a workaround for the case where the window is maximized locally before the
@@ -977,9 +977,9 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 
 		case WINDOW_SHOW:
 			/* Ensure the window is not maximized */
-			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_REMOVE,
-			                   xfc->_NET_WM_STATE_MAXIMIZED_VERT, xfc->_NET_WM_STATE_MAXIMIZED_HORZ,
-			                   0);
+			xf_SendClientEvent(xfc, appWindow->handle, xfc->d_NET_WM_STATE, 4,
+			                   d_NET_WM_STATE_REMOVE, xfc->d_NET_WM_STATE_MAXIMIZED_VERT,
+			                   xfc->d_NET_WM_STATE_MAXIMIZED_HORZ, 0);
 
 			/*
 			 * Ignore configure requests until both the Maximized properties have been processed

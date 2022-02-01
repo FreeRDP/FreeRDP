@@ -317,6 +317,11 @@ typedef HRESULT(VCAPITYPE* PFNVCAPIGETINSTANCE)(REFIID refiid, PULONG pNumObjs, 
 	 WTS_SECURITY_RESET | WTS_SECURITY_VIRTUAL_CHANNELS | WTS_SECURITY_REMOTE_CONTROL |         \
 	 WTS_SECURITY_LOGON | WTS_SECURITY_MESSAGE | WTS_SECURITY_CONNECT | WTS_SECURITY_DISCONNECT)
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 typedef enum e_WTS_CONNECTSTATE_CLASS
 {
 	WTSActive,
@@ -896,6 +901,10 @@ typedef struct s_WTSLISTENERCONFIGA
 	CHAR WorkDirectory[MAX_PATH + 1];
 	CHAR InitialProgram[MAX_PATH + 1];
 } WTSLISTENERCONFIGA, *PWTSLISTENERCONFIGA;
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #ifdef UNICODE
 #define WTS_SERVER_INFO WTS_SERVER_INFOW

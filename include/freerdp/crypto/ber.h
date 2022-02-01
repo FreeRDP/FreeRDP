@@ -57,6 +57,11 @@ extern "C"
 {
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 	FREERDP_API BOOL ber_read_length(wStream* s, size_t* length);
 	FREERDP_API size_t ber_write_length(wStream* s, size_t length);
 	FREERDP_API size_t _ber_sizeof_length(size_t length);
@@ -84,6 +89,10 @@ extern "C"
 	FREERDP_API size_t ber_write_integer(wStream* s, UINT32 value);
 	FREERDP_API BOOL ber_read_integer_length(wStream* s, size_t* length);
 	FREERDP_API size_t ber_sizeof_integer(UINT32 value);
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #ifdef __cplusplus
 }

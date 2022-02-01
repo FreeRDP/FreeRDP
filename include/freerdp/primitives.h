@@ -78,113 +78,113 @@ typedef enum
 } avc444_frame_type;
 
 /* Function prototypes for all of the supported primitives. */
-typedef pstatus_t (*__copy_t)(const void* pSrc, void* pDst, INT32 bytes);
-typedef pstatus_t (*__copy_8u_t)(const BYTE* pSrc, BYTE* pDst, INT32 len);
-typedef pstatus_t (*__copy_8u_AC4r_t)(const BYTE* pSrc, INT32 srcStep, /* bytes */
+typedef pstatus_t (*f_copy_t)(const void* pSrc, void* pDst, INT32 bytes);
+typedef pstatus_t (*f_copy_8u_t)(const BYTE* pSrc, BYTE* pDst, INT32 len);
+typedef pstatus_t (*f_copy_8u_AC4r_t)(const BYTE* pSrc, INT32 srcStep, /* bytes */
                                       BYTE* pDst, INT32 dstStep,       /* bytes */
                                       INT32 width, INT32 height);      /* pixels */
-typedef pstatus_t (*__set_8u_t)(BYTE val, BYTE* pDst, UINT32 len);
-typedef pstatus_t (*__set_32s_t)(INT32 val, INT32* pDst, UINT32 len);
-typedef pstatus_t (*__set_32u_t)(UINT32 val, UINT32* pDst, UINT32 len);
-typedef pstatus_t (*__zero_t)(void* pDst, size_t bytes);
-typedef pstatus_t (*__alphaComp_argb_t)(const BYTE* pSrc1, UINT32 src1Step, const BYTE* pSrc2,
+typedef pstatus_t (*f_set_8u_t)(BYTE val, BYTE* pDst, UINT32 len);
+typedef pstatus_t (*f_set_32s_t)(INT32 val, INT32* pDst, UINT32 len);
+typedef pstatus_t (*f_set_32u_t)(UINT32 val, UINT32* pDst, UINT32 len);
+typedef pstatus_t (*f_zero_t)(void* pDst, size_t bytes);
+typedef pstatus_t (*f_alphaComp_argb_t)(const BYTE* pSrc1, UINT32 src1Step, const BYTE* pSrc2,
                                         UINT32 src2Step, BYTE* pDst, UINT32 dstStep, UINT32 width,
                                         UINT32 height);
-typedef pstatus_t (*__add_16s_t)(const INT16* pSrc1, const INT16* pSrc2, INT16* pDst, UINT32 len);
-typedef pstatus_t (*__lShiftC_16s_t)(const INT16* pSrc, UINT32 val, INT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__lShiftC_16u_t)(const UINT16* pSrc, UINT32 val, UINT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__rShiftC_16s_t)(const INT16* pSrc, UINT32 val, INT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__rShiftC_16u_t)(const UINT16* pSrc, UINT32 val, UINT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__shiftC_16s_t)(const INT16* pSrc, INT32 val, INT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__shiftC_16u_t)(const UINT16* pSrc, INT32 val, UINT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__sign_16s_t)(const INT16* pSrc, INT16* pDst, UINT32 len);
-typedef pstatus_t (*__yCbCrToRGB_16s8u_P3AC4R_t)(const INT16* const pSrc[3], UINT32 srcStep,
+typedef pstatus_t (*f_add_16s_t)(const INT16* pSrc1, const INT16* pSrc2, INT16* pDst, UINT32 len);
+typedef pstatus_t (*f_lShiftC_16s_t)(const INT16* pSrc, UINT32 val, INT16* pSrcDst, UINT32 len);
+typedef pstatus_t (*f_lShiftC_16u_t)(const UINT16* pSrc, UINT32 val, UINT16* pSrcDst, UINT32 len);
+typedef pstatus_t (*f_rShiftC_16s_t)(const INT16* pSrc, UINT32 val, INT16* pSrcDst, UINT32 len);
+typedef pstatus_t (*f_rShiftC_16u_t)(const UINT16* pSrc, UINT32 val, UINT16* pSrcDst, UINT32 len);
+typedef pstatus_t (*f_shiftC_16s_t)(const INT16* pSrc, INT32 val, INT16* pSrcDst, UINT32 len);
+typedef pstatus_t (*f_shiftC_16u_t)(const UINT16* pSrc, INT32 val, UINT16* pSrcDst, UINT32 len);
+typedef pstatus_t (*f_sign_16s_t)(const INT16* pSrc, INT16* pDst, UINT32 len);
+typedef pstatus_t (*f_yCbCrToRGB_16s8u_P3AC4R_t)(const INT16* const pSrc[3], UINT32 srcStep,
                                                  BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                  const prim_size_t* roi);
-typedef pstatus_t (*__yCbCrToRGB_16s16s_P3P3_t)(const INT16* const pSrc[3], INT32 srcStep,
+typedef pstatus_t (*f_yCbCrToRGB_16s16s_P3P3_t)(const INT16* const pSrc[3], INT32 srcStep,
                                                 INT16* pDst[3], INT32 dstStep,
                                                 const prim_size_t* roi);
-typedef pstatus_t (*__RGBToYCbCr_16s16s_P3P3_t)(const INT16* const pSrc[3], INT32 srcStep,
+typedef pstatus_t (*f_RGBToYCbCr_16s16s_P3P3_t)(const INT16* const pSrc[3], INT32 srcStep,
                                                 INT16* pDst[3], INT32 dstStep,
                                                 const prim_size_t* roi);
-typedef pstatus_t (*__RGBToRGB_16s8u_P3AC4R_t)(const INT16* const pSrc[3], UINT32 srcStep,
+typedef pstatus_t (*f_RGBToRGB_16s8u_P3AC4R_t)(const INT16* const pSrc[3], UINT32 srcStep,
                                                BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* roi);
-typedef pstatus_t (*__YCoCgToRGB_8u_AC4R_t)(const BYTE* pSrc, INT32 srcStep, BYTE* pDst,
+typedef pstatus_t (*f_YCoCgToRGB_8u_AC4R_t)(const BYTE* pSrc, INT32 srcStep, BYTE* pDst,
                                             UINT32 DstFormat, INT32 dstStep, UINT32 width,
                                             UINT32 height, UINT8 shift, BOOL withAlpha);
-typedef pstatus_t (*__RGB565ToARGB_16u32u_C3C4_t)(const UINT16* pSrc, INT32 srcStep, UINT32* pDst,
+typedef pstatus_t (*f_RGB565ToARGB_16u32u_C3C4_t)(const UINT16* pSrc, INT32 srcStep, UINT32* pDst,
                                                   INT32 dstStep, UINT32 width, UINT32 height,
                                                   UINT32 format);
-typedef pstatus_t (*__YUV420ToRGB_8u_P3AC4R_t)(const BYTE* const pSrc[3], const UINT32 srcStep[3],
+typedef pstatus_t (*f_YUV420ToRGB_8u_P3AC4R_t)(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                                BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* roi);
-typedef pstatus_t (*__YUV444ToRGB_8u_P3AC4R_t)(const BYTE* const pSrc[3], const UINT32 srcStep[3],
+typedef pstatus_t (*f_YUV444ToRGB_8u_P3AC4R_t)(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                                BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* roi);
-typedef pstatus_t (*__RGBToYUV420_8u_P3AC4R_t)(const BYTE* pSrc, UINT32 SrcFormat, UINT32 srcStep,
+typedef pstatus_t (*f_RGBToYUV420_8u_P3AC4R_t)(const BYTE* pSrc, UINT32 SrcFormat, UINT32 srcStep,
                                                BYTE* pDst[3], const UINT32 dstStep[3],
                                                const prim_size_t* roi);
-typedef pstatus_t (*__RGBToYUV444_8u_P3AC4R_t)(const BYTE* pSrc, UINT32 SrcFormat, UINT32 srcStep,
+typedef pstatus_t (*f_RGBToYUV444_8u_P3AC4R_t)(const BYTE* pSrc, UINT32 SrcFormat, UINT32 srcStep,
                                                BYTE* pDst[3], UINT32 dstStep[3],
                                                const prim_size_t* roi);
-typedef pstatus_t (*__YUV420CombineToYUV444_t)(avc444_frame_type type, const BYTE* const pSrc[3],
+typedef pstatus_t (*f_YUV420CombineToYUV444_t)(avc444_frame_type type, const BYTE* const pSrc[3],
                                                const UINT32 srcStep[3], UINT32 nWidth,
                                                UINT32 nHeight, BYTE* pDst[3],
                                                const UINT32 dstStep[3], const RECTANGLE_16* roi);
-typedef pstatus_t (*__YUV444SplitToYUV420_t)(const BYTE* const pSrc[3], const UINT32 srcStep[3],
+typedef pstatus_t (*f_YUV444SplitToYUV420_t)(const BYTE* const pSrc[3], const UINT32 srcStep[3],
                                              BYTE* pMainDst[3], const UINT32 dstMainStep[3],
                                              BYTE* pAuxDst[3], const UINT32 srcAuxStep[3],
                                              const prim_size_t* roi);
-typedef pstatus_t (*__RGBToAVC444YUV_t)(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+typedef pstatus_t (*f_RGBToAVC444YUV_t)(const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
                                         BYTE* pMainDst[3], const UINT32 dstMainStep[3],
                                         BYTE* pAuxDst[3], const UINT32 dstAuxStep[3],
                                         const prim_size_t* roi);
-typedef pstatus_t (*__andC_32u_t)(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len);
-typedef pstatus_t (*__orC_32u_t)(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len);
+typedef pstatus_t (*f_andC_32u_t)(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len);
+typedef pstatus_t (*f_orC_32u_t)(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len);
 typedef pstatus_t (*primitives_uninit_t)(void);
 
 typedef struct
 {
 	/* Memory-to-memory copy routines */
-	__copy_t copy;                 /* memcpy/memmove, basically */
-	__copy_8u_t copy_8u;           /* more strongly typed */
-	__copy_8u_AC4r_t copy_8u_AC4r; /* pixel copy function */
+	f_copy_t copy;                 /* memcpy/memmove, basically */
+	f_copy_8u_t copy_8u;           /* more strongly typed */
+	f_copy_8u_AC4r_t copy_8u_AC4r; /* pixel copy function */
 	/* Memory setting routines */
-	__set_8u_t set_8u; /* memset, basically */
-	__set_32s_t set_32s;
-	__set_32u_t set_32u;
-	__zero_t zero; /* bzero or faster */
+	f_set_8u_t set_8u; /* memset, basically */
+	f_set_32s_t set_32s;
+	f_set_32u_t set_32u;
+	f_zero_t zero; /* bzero or faster */
 	/* Arithmetic functions */
-	__add_16s_t add_16s;
+	f_add_16s_t add_16s;
 	/* And/or */
-	__andC_32u_t andC_32u;
-	__orC_32u_t orC_32u;
+	f_andC_32u_t andC_32u;
+	f_orC_32u_t orC_32u;
 	/* Shifts */
-	__lShiftC_16s_t lShiftC_16s;
-	__lShiftC_16u_t lShiftC_16u;
-	__rShiftC_16s_t rShiftC_16s;
-	__rShiftC_16u_t rShiftC_16u;
-	__shiftC_16s_t shiftC_16s;
-	__shiftC_16u_t shiftC_16u;
+	f_lShiftC_16s_t lShiftC_16s;
+	f_lShiftC_16u_t lShiftC_16u;
+	f_rShiftC_16s_t rShiftC_16s;
+	f_rShiftC_16u_t rShiftC_16u;
+	f_shiftC_16s_t shiftC_16s;
+	f_shiftC_16u_t shiftC_16u;
 	/* Alpha Composition */
-	__alphaComp_argb_t alphaComp_argb;
+	f_alphaComp_argb_t alphaComp_argb;
 	/* Sign */
-	__sign_16s_t sign_16s;
+	f_sign_16s_t sign_16s;
 	/* Color conversions */
-	__yCbCrToRGB_16s8u_P3AC4R_t yCbCrToRGB_16s8u_P3AC4R;
-	__yCbCrToRGB_16s16s_P3P3_t yCbCrToRGB_16s16s_P3P3;
-	__RGBToYCbCr_16s16s_P3P3_t RGBToYCbCr_16s16s_P3P3;
-	__RGBToRGB_16s8u_P3AC4R_t RGBToRGB_16s8u_P3AC4R;
-	__YCoCgToRGB_8u_AC4R_t YCoCgToRGB_8u_AC4R;
-	__YUV420ToRGB_8u_P3AC4R_t YUV420ToRGB_8u_P3AC4R;
-	__RGBToYUV420_8u_P3AC4R_t RGBToYUV420_8u_P3AC4R;
-	__RGBToYUV444_8u_P3AC4R_t RGBToYUV444_8u_P3AC4R;
-	__YUV420CombineToYUV444_t YUV420CombineToYUV444;
-	__YUV444SplitToYUV420_t YUV444SplitToYUV420;
-	__YUV444ToRGB_8u_P3AC4R_t YUV444ToRGB_8u_P3AC4R;
-	__RGBToAVC444YUV_t RGBToAVC444YUV;
-	__RGBToAVC444YUV_t RGBToAVC444YUVv2;
+	f_yCbCrToRGB_16s8u_P3AC4R_t yCbCrToRGB_16s8u_P3AC4R;
+	f_yCbCrToRGB_16s16s_P3P3_t yCbCrToRGB_16s16s_P3P3;
+	f_RGBToYCbCr_16s16s_P3P3_t RGBToYCbCr_16s16s_P3P3;
+	f_RGBToRGB_16s8u_P3AC4R_t RGBToRGB_16s8u_P3AC4R;
+	f_YCoCgToRGB_8u_AC4R_t YCoCgToRGB_8u_AC4R;
+	f_YUV420ToRGB_8u_P3AC4R_t YUV420ToRGB_8u_P3AC4R;
+	f_RGBToYUV420_8u_P3AC4R_t RGBToYUV420_8u_P3AC4R;
+	f_RGBToYUV444_8u_P3AC4R_t RGBToYUV444_8u_P3AC4R;
+	f_YUV420CombineToYUV444_t YUV420CombineToYUV444;
+	f_YUV444SplitToYUV420_t YUV444SplitToYUV420;
+	f_YUV444ToRGB_8u_P3AC4R_t YUV444ToRGB_8u_P3AC4R;
+	f_RGBToAVC444YUV_t RGBToAVC444YUV;
+	f_RGBToAVC444YUV_t RGBToAVC444YUVv2;
 	/* flags */
 	DWORD flags;
 	primitives_uninit_t uninit;

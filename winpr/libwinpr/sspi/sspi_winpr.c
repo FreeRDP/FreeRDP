@@ -77,18 +77,18 @@ static const SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME_LIST[] = {
 	{ "Schannel", &SCHANNEL_SecurityFunctionTableA }
 };
 
-static const WCHAR _NTLM_NAME_W[] = { 'N', 'T', 'L', 'M', '\0' };
-static const WCHAR _KERBEROS_NAME_W[] = { 'K', 'e', 'r', 'b', 'e', 'r', 'o', 's', '\0' };
-static const WCHAR _NEGOTIATE_NAME_W[] = { 'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', '\0' };
-static const WCHAR _CREDSSP_NAME_W[] = { 'C', 'r', 'e', 'd', 'S', 'S', 'P', '\0' };
-static const WCHAR _SCHANNEL_NAME_W[] = { 'S', 'c', 'h', 'a', 'n', 'n', 'e', 'l', '\0' };
+static const WCHAR s_NTLM_NAME_W[] = { 'N', 'T', 'L', 'M', '\0' };
+static const WCHAR s_KERBEROS_NAME_W[] = { 'K', 'e', 'r', 'b', 'e', 'r', 'o', 's', '\0' };
+static const WCHAR s_NEGOTIATE_NAME_W[] = { 'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', '\0' };
+static const WCHAR s_CREDSSP_NAME_W[] = { 'C', 'r', 'e', 'd', 'S', 'S', 'P', '\0' };
+static const WCHAR s_SCHANNEL_NAME_W[] = { 'S', 'c', 'h', 'a', 'n', 'n', 'e', 'l', '\0' };
 
 static const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] = {
-	{ _NTLM_NAME_W, &NTLM_SecurityFunctionTableW },
-	{ _KERBEROS_NAME_W, &KERBEROS_SecurityFunctionTableW },
-	{ _NEGOTIATE_NAME_W, &NEGOTIATE_SecurityFunctionTableW },
-	{ _CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW },
-	{ _SCHANNEL_NAME_W, &SCHANNEL_SecurityFunctionTableW }
+	{ s_NTLM_NAME_W, &NTLM_SecurityFunctionTableW },
+	{ s_KERBEROS_NAME_W, &KERBEROS_SecurityFunctionTableW },
+	{ s_NEGOTIATE_NAME_W, &NEGOTIATE_SecurityFunctionTableW },
+	{ s_CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW },
+	{ s_SCHANNEL_NAME_W, &SCHANNEL_SecurityFunctionTableW }
 };
 
 #define SecHandle_LOWER_MAX 0xFFFFFFFF

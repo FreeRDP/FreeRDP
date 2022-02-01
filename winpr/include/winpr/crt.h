@@ -31,6 +31,11 @@
 
 #ifndef _WIN32
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 #ifndef _strtoui64
 #define _strtoui64 strtoull
 #endif
@@ -103,6 +108,10 @@ static INLINE UINT16 _byteswap_ushort(UINT16 _val)
 
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 #define CopyMemory(Destination, Source, Length) memcpy((Destination), (Source), (Length))
 #define MoveMemory(Destination, Source, Length) memmove((Destination), (Source), (Length))
 #define FillMemory(Destination, Length, Fill) memset((Destination), (Fill), (Length))
@@ -140,6 +149,11 @@ extern "C"
 {
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 	WINPR_API void* _aligned_malloc(size_t size, size_t alignment);
 	WINPR_API void* _aligned_realloc(void* memblock, size_t size, size_t alignment);
 	WINPR_API void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment);
@@ -163,6 +177,10 @@ extern "C"
 	WINPR_API errno_t memmove_s(void* dest, size_t numberOfElements, const void* src, size_t count);
 	WINPR_API errno_t wmemmove_s(WCHAR* dest, size_t numberOfElements, const WCHAR* src,
 	                             size_t count);
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #ifdef __cplusplus
 }

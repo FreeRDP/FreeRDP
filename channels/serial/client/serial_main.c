@@ -185,8 +185,8 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 		goto error_handle;
 	}
 
-	_comm_setServerSerialDriver(serial->hComm, serial->ServerSerialDriverId);
-	_comm_set_permissive(serial->hComm, serial->permissive);
+	comm_setServerSerialDriver(serial->hComm, serial->ServerSerialDriverId);
+	comm_set_permissive(serial->hComm, serial->permissive);
 	/* NOTE: binary mode/raw mode required for the redirection. On
 	 * Linux, CommCreateFileA forces this setting.
 	 */
@@ -387,7 +387,7 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	Stream_Read(irp->input, InputBuffer, InputBufferLength);
 	WLog_Print(serial->log, WLOG_DEBUG,
 	           "CommDeviceIoControl: CompletionId=%" PRIu32 ", IoControlCode=[0x%" PRIX32 "] %s",
-	           irp->CompletionId, IoControlCode, _comm_serial_ioctl_name(IoControlCode));
+	           irp->CompletionId, IoControlCode, comm_serial_ioctl_name(IoControlCode));
 
 	/* FIXME: CommDeviceIoControl to be replaced by DeviceIoControl() */
 	if (CommDeviceIoControl(serial->hComm, IoControlCode, InputBuffer, InputBufferLength,
@@ -395,7 +395,7 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	{
 		/* WLog_Print(serial->log, WLOG_DEBUG, "CommDeviceIoControl: CompletionId=%"PRIu32",
 		 * IoControlCode=[0x%"PRIX32"] %s done", irp->CompletionId, IoControlCode,
-		 * _comm_serial_ioctl_name(IoControlCode)); */
+		 * comm_serial_ioctl_name(IoControlCode)); */
 		irp->IoStatus = STATUS_SUCCESS;
 	}
 	else
@@ -403,7 +403,7 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 		WLog_Print(serial->log, WLOG_DEBUG,
 		           "CommDeviceIoControl failure: IoControlCode=[0x%" PRIX32
 		           "] %s, last-error: 0x%08" PRIX32 "",
-		           IoControlCode, _comm_serial_ioctl_name(IoControlCode), GetLastError());
+		           IoControlCode, comm_serial_ioctl_name(IoControlCode), GetLastError());
 		irp->IoStatus = _GetLastErrorToIoStatus(serial);
 	}
 

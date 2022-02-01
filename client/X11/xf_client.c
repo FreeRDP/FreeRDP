@@ -111,8 +111,8 @@
 
 #define MIN_PIXEL_DIFF 0.001
 
-static int (*_def_error_handler)(Display*, XErrorEvent*);
-static int _xf_error_handler(Display* d, XErrorEvent* ev);
+static int (*s_def_error_handler)(Display*, XErrorEvent*);
+static int s_xf_error_handler(Display* d, XErrorEvent* ev);
 static void xf_check_extensions(xfContext* context);
 static void xf_window_free(xfContext* xfc);
 static BOOL xf_get_pixmap_info(xfContext* xfc);
@@ -928,11 +928,11 @@ static int xf_error_handler(Display* d, XErrorEvent* ev)
 	if (do_abort)
 		abort();
 
-	_def_error_handler(d, ev);
+	s_def_error_handler(d, ev);
 	return FALSE;
 }
 
-static int _xf_error_handler(Display* d, XErrorEvent* ev)
+static int s_xf_error_handler(Display* d, XErrorEvent* ev)
 {
 	/*
 	 * ungrab the keyboard, in case a debugger is running in
@@ -1930,17 +1930,17 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->big_endian = (ImageByteOrder(xfc->display) == MSBFirst);
 	xfc->invert = TRUE;
 	xfc->complex_regions = TRUE;
-	xfc->_NET_SUPPORTED = XInternAtom(xfc->display, "_NET_SUPPORTED", True);
-	xfc->_NET_SUPPORTING_WM_CHECK = XInternAtom(xfc->display, "_NET_SUPPORTING_WM_CHECK", True);
+	xfc->d_NET_SUPPORTED = XInternAtom(xfc->display, "_NET_SUPPORTED", True);
+	xfc->d_NET_SUPPORTING_WM_CHECK = XInternAtom(xfc->display, "_NET_SUPPORTING_WM_CHECK", True);
 
-	if ((xfc->_NET_SUPPORTED != None) && (xfc->_NET_SUPPORTING_WM_CHECK != None))
+	if ((xfc->d_NET_SUPPORTED != None) && (xfc->d_NET_SUPPORTING_WM_CHECK != None))
 	{
 		Atom actual_type = 0;
 		int actual_format = 0;
 		unsigned long nitems = 0, after = 0;
 		unsigned char* data = NULL;
 		int status = XGetWindowProperty(xfc->display, RootWindowOfScreen(xfc->screen),
-		                                xfc->_NET_SUPPORTED, 0, 1024, False, XA_ATOM, &actual_type,
+		                                xfc->d_NET_SUPPORTED, 0, 1024, False, XA_ATOM, &actual_type,
 		                                &actual_format, &nitems, &after, &data);
 
 		if ((status == Success) && (actual_type == XA_ATOM) && (actual_format == 32))
@@ -1955,38 +1955,38 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 			XFree(data);
 	}
 
-	xfc->_XWAYLAND_MAY_GRAB_KEYBOARD =
+	xfc->d_XWAYLAND_MAY_GRAB_KEYBOARD =
 	    XInternAtom(xfc->display, "_XWAYLAND_MAY_GRAB_KEYBOARD", False);
-	xfc->_NET_WM_ICON = XInternAtom(xfc->display, "_NET_WM_ICON", False);
-	xfc->_MOTIF_WM_HINTS = XInternAtom(xfc->display, "_MOTIF_WM_HINTS", False);
-	xfc->_NET_CURRENT_DESKTOP = XInternAtom(xfc->display, "_NET_CURRENT_DESKTOP", False);
-	xfc->_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
-	xfc->_NET_WM_STATE = get_supported_atom(xfc, "_NET_WM_STATE");
-	xfc->_NET_WM_STATE_FULLSCREEN = get_supported_atom(xfc, "_NET_WM_STATE_FULLSCREEN");
-	xfc->_NET_WM_STATE_MAXIMIZED_HORZ =
+	xfc->d_NET_WM_ICON = XInternAtom(xfc->display, "_NET_WM_ICON", False);
+	xfc->d_MOTIF_WM_HINTS = XInternAtom(xfc->display, "_MOTIF_WM_HINTS", False);
+	xfc->d_NET_CURRENT_DESKTOP = XInternAtom(xfc->display, "_NET_CURRENT_DESKTOP", False);
+	xfc->d_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
+	xfc->d_NET_WM_STATE = get_supported_atom(xfc, "_NET_WM_STATE");
+	xfc->d_NET_WM_STATE_FULLSCREEN = get_supported_atom(xfc, "_NET_WM_STATE_FULLSCREEN");
+	xfc->d_NET_WM_STATE_MAXIMIZED_HORZ =
 	    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
-	xfc->_NET_WM_STATE_MAXIMIZED_VERT =
+	xfc->d_NET_WM_STATE_MAXIMIZED_VERT =
 	    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
-	xfc->_NET_WM_FULLSCREEN_MONITORS = get_supported_atom(xfc, "_NET_WM_FULLSCREEN_MONITORS");
-	xfc->_NET_WM_NAME = XInternAtom(xfc->display, "_NET_WM_NAME", False);
-	xfc->_NET_WM_PID = XInternAtom(xfc->display, "_NET_WM_PID", False);
-	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE", False);
-	xfc->_NET_WM_WINDOW_TYPE_NORMAL =
+	xfc->d_NET_WM_FULLSCREEN_MONITORS = get_supported_atom(xfc, "_NET_WM_FULLSCREEN_MONITORS");
+	xfc->d_NET_WM_NAME = XInternAtom(xfc->display, "_NET_WM_NAME", False);
+	xfc->d_NET_WM_PID = XInternAtom(xfc->display, "_NET_WM_PID", False);
+	xfc->d_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE", False);
+	xfc->d_NET_WM_WINDOW_TYPE_NORMAL =
 	    XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
-	xfc->_NET_WM_WINDOW_TYPE_DIALOG =
+	xfc->d_NET_WM_WINDOW_TYPE_DIALOG =
 	    XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
-	xfc->_NET_WM_WINDOW_TYPE_POPUP = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_POPUP", False);
-	xfc->_NET_WM_WINDOW_TYPE_POPUP_MENU =
+	xfc->d_NET_WM_WINDOW_TYPE_POPUP = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_POPUP", False);
+	xfc->d_NET_WM_WINDOW_TYPE_POPUP_MENU =
 	    XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_POPUP_MENU", False);
-	xfc->_NET_WM_WINDOW_TYPE_UTILITY =
+	xfc->d_NET_WM_WINDOW_TYPE_UTILITY =
 	    XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_UTILITY", False);
-	xfc->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU =
+	xfc->d_NET_WM_WINDOW_TYPE_DROPDOWN_MENU =
 	    XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", False);
-	xfc->_NET_WM_STATE_SKIP_TASKBAR =
+	xfc->d_NET_WM_STATE_SKIP_TASKBAR =
 	    XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_TASKBAR", False);
-	xfc->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False);
-	xfc->_NET_WM_MOVERESIZE = XInternAtom(xfc->display, "_NET_WM_MOVERESIZE", False);
-	xfc->_NET_MOVERESIZE_WINDOW = XInternAtom(xfc->display, "_NET_MOVERESIZE_WINDOW", False);
+	xfc->d_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False);
+	xfc->d_NET_WM_MOVERESIZE = XInternAtom(xfc->display, "_NET_WM_MOVERESIZE", False);
+	xfc->d_NET_MOVERESIZE_WINDOW = XInternAtom(xfc->display, "_NET_MOVERESIZE_WINDOW", False);
 	xfc->UTF8_STRING = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
 	xfc->WM_PROTOCOLS = XInternAtom(xfc->display, "WM_PROTOCOLS", False);
 	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
@@ -2005,7 +2005,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	{
 		WLog_INFO(TAG, "Enabling X11 debug mode.");
 		XSynchronize(xfc->display, TRUE);
-		_def_error_handler = XSetErrorHandler(_xf_error_handler);
+		s_def_error_handler = XSetErrorHandler(s_xf_error_handler);
 	}
 
 	xf_check_extensions(xfc);

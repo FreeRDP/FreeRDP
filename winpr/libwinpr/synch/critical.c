@@ -124,7 +124,7 @@ DWORD SetCriticalSectionSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dw
 #endif
 }
 
-static VOID _WaitForCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+static VOID s_WaitForCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 #if defined(__APPLE__)
 	semaphore_wait(*((winpr_sem_t*)lpCriticalSection->LockSemaphore));
@@ -133,7 +133,7 @@ static VOID _WaitForCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 #endif
 }
 
-static VOID _UnWaitCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+static VOID s_UnWaitCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 #if defined __APPLE__
 	semaphore_signal(*((winpr_sem_t*)lpCriticalSection->LockSemaphore));
@@ -188,7 +188,7 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 		}
 
 		/* Section is locked by another thread. We have to wait. */
-		_WaitForCriticalSection(lpCriticalSection);
+		s_WaitForCriticalSection(lpCriticalSection);
 	}
 
 	/* We got the lock. Own it ... */
@@ -231,7 +231,7 @@ VOID LeaveCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 		if (InterlockedDecrement(&lpCriticalSection->LockCount) >= 0)
 		{
 			/* ...signal the semaphore to unblock the next waiting thread */
-			_UnWaitCriticalSection(lpCriticalSection);
+			s_UnWaitCriticalSection(lpCriticalSection);
 		}
 	}
 	else

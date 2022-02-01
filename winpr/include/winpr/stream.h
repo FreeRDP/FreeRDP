@@ -82,7 +82,7 @@ extern "C"
 			s->pointer = s->buffer;
 	}
 
-#define _stream_read_n8(_t, _s, _v, _p)                   \
+#define s_stream_read_n8(_t, _s, _v, _p)                  \
 	do                                                    \
 	{                                                     \
 		WINPR_ASSERT(_s);                                 \
@@ -92,7 +92,7 @@ extern "C"
 			Stream_Seek(_s, sizeof(_t));                  \
 	} while (0)
 
-#define _stream_read_n16_le(_t, _s, _v, _p)                                      \
+#define s_stream_read_n16_le(_t, _s, _v, _p)                                     \
 	do                                                                           \
 	{                                                                            \
 		WINPR_ASSERT(_s);                                                        \
@@ -102,7 +102,7 @@ extern "C"
 			Stream_Seek(_s, sizeof(_t));                                         \
 	} while (0)
 
-#define _stream_read_n16_be(_t, _s, _v, _p)                                              \
+#define s_stream_read_n16_be(_t, _s, _v, _p)                                             \
 	do                                                                                   \
 	{                                                                                    \
 		WINPR_ASSERT(_s);                                                                \
@@ -112,7 +112,7 @@ extern "C"
 			Stream_Seek(_s, sizeof(_t));                                                 \
 	} while (0)
 
-#define _stream_read_n32_le(_t, _s, _v, _p)                                              \
+#define s_stream_read_n32_le(_t, _s, _v, _p)                                             \
 	do                                                                                   \
 	{                                                                                    \
 		WINPR_ASSERT(_s);                                                                \
@@ -124,7 +124,7 @@ extern "C"
 			Stream_Seek(_s, sizeof(_t));                                                 \
 	} while (0)
 
-#define _stream_read_n32_be(_t, _s, _v, _p)                                                        \
+#define s_stream_read_n32_be(_t, _s, _v, _p)                                                       \
 	do                                                                                             \
 	{                                                                                              \
 		WINPR_ASSERT(_s);                                                                          \
@@ -136,7 +136,7 @@ extern "C"
 			Stream_Seek(_s, sizeof(_t));                                                           \
 	} while (0)
 
-#define _stream_read_n64_le(_t, _s, _v, _p)                                              \
+#define s_stream_read_n64_le(_t, _s, _v, _p)                                             \
 	do                                                                                   \
 	{                                                                                    \
 		WINPR_ASSERT(_s);                                                                \
@@ -152,7 +152,7 @@ extern "C"
 			Stream_Seek(_s, sizeof(_t));                                                 \
 	} while (0)
 
-#define _stream_read_n64_be(_t, _s, _v, _p)                                                        \
+#define s_stream_read_n64_be(_t, _s, _v, _p)                                                       \
 	do                                                                                             \
 	{                                                                                              \
 		WINPR_ASSERT(_s);                                                                          \
@@ -168,26 +168,26 @@ extern "C"
 			Stream_Seek(_s, sizeof(_t));                                                           \
 	} while (0)
 
-#define Stream_Read_UINT8(_s, _v) _stream_read_n8(UINT8, _s, _v, TRUE)
-#define Stream_Read_INT8(_s, _v) _stream_read_n8(INT8, _s, _v, TRUE)
+#define Stream_Read_UINT8(_s, _v) s_stream_read_n8(UINT8, _s, _v, TRUE)
+#define Stream_Read_INT8(_s, _v) s_stream_read_n8(INT8, _s, _v, TRUE)
 
-#define Stream_Read_UINT16(_s, _v) _stream_read_n16_le(UINT16, _s, _v, TRUE)
-#define Stream_Read_INT16(_s, _v) _stream_read_n16_le(INT16, _s, _v, TRUE)
+#define Stream_Read_UINT16(_s, _v) s_stream_read_n16_le(UINT16, _s, _v, TRUE)
+#define Stream_Read_INT16(_s, _v) s_stream_read_n16_le(INT16, _s, _v, TRUE)
 
-#define Stream_Read_UINT16_BE(_s, _v) _stream_read_n16_be(UINT16, _s, _v, TRUE)
-#define Stream_Read_INT16_BE(_s, _v) _stream_read_n16_be(INT16, _s, _v, TRUE)
+#define Stream_Read_UINT16_BE(_s, _v) s_stream_read_n16_be(UINT16, _s, _v, TRUE)
+#define Stream_Read_INT16_BE(_s, _v) s_stream_read_n16_be(INT16, _s, _v, TRUE)
 
-#define Stream_Read_UINT32(_s, _v) _stream_read_n32_le(UINT32, _s, _v, TRUE)
-#define Stream_Read_INT32(_s, _v) _stream_read_n32_le(INT32, _s, _v, TRUE)
+#define Stream_Read_UINT32(_s, _v) s_stream_read_n32_le(UINT32, _s, _v, TRUE)
+#define Stream_Read_INT32(_s, _v) s_stream_read_n32_le(INT32, _s, _v, TRUE)
 
-#define Stream_Read_UINT32_BE(_s, _v) _stream_read_n32_be(UINT32, _s, _v, TRUE)
-#define Stream_Read_INT32_BE(_s, _v) _stream_read_n32_be(INT32, _s, _v, TRUE)
+#define Stream_Read_UINT32_BE(_s, _v) s_stream_read_n32_be(UINT32, _s, _v, TRUE)
+#define Stream_Read_INT32_BE(_s, _v) s_stream_read_n32_be(INT32, _s, _v, TRUE)
 
-#define Stream_Read_UINT64(_s, _v) _stream_read_n64_le(UINT64, _s, _v, TRUE)
-#define Stream_Read_INT64(_s, _v) _stream_read_n64_le(INT64, _s, _v, TRUE)
+#define Stream_Read_UINT64(_s, _v) s_stream_read_n64_le(UINT64, _s, _v, TRUE)
+#define Stream_Read_INT64(_s, _v) s_stream_read_n64_le(INT64, _s, _v, TRUE)
 
-#define Stream_Read_UINT64_BE(_s, _v) _stream_read_n64_be(UINT64, _s, _v, TRUE)
-#define Stream_Read_INT64_BE(_s, _v) _stream_read_n64_be(INT64, _s, _v, TRUE)
+#define Stream_Read_UINT64_BE(_s, _v) s_stream_read_n64_be(UINT64, _s, _v, TRUE)
+#define Stream_Read_INT64_BE(_s, _v) s_stream_read_n64_be(INT64, _s, _v, TRUE)
 
 	static INLINE void Stream_Read(wStream* _s, void* _b, size_t _n)
 	{
@@ -198,26 +198,26 @@ extern "C"
 		Stream_Seek(_s, _n);
 	}
 
-#define Stream_Peek_UINT8(_s, _v) _stream_read_n8(UINT8, _s, _v, FALSE)
-#define Stream_Peek_INT8(_s, _v) _stream_read_n8(INT8, _s, _v, FALSE)
+#define Stream_Peek_UINT8(_s, _v) s_stream_read_n8(UINT8, _s, _v, FALSE)
+#define Stream_Peek_INT8(_s, _v) s_stream_read_n8(INT8, _s, _v, FALSE)
 
-#define Stream_Peek_UINT16(_s, _v) _stream_read_n16_le(UINT16, _s, _v, FALSE)
-#define Stream_Peek_INT16(_s, _v) _stream_read_n16_le(INT16, _s, _v, FALSE)
+#define Stream_Peek_UINT16(_s, _v) s_stream_read_n16_le(UINT16, _s, _v, FALSE)
+#define Stream_Peek_INT16(_s, _v) s_stream_read_n16_le(INT16, _s, _v, FALSE)
 
-#define Stream_Peek_UINT16_BE(_s, _v) _stream_read_n16_be(UINT16, _s, _v, FALSE)
-#define Stream_Peek_INT16_BE(_s, _v) _stream_read_n16_be(INT16, _s, _v, FALSE)
+#define Stream_Peek_UINT16_BE(_s, _v) s_stream_read_n16_be(UINT16, _s, _v, FALSE)
+#define Stream_Peek_INT16_BE(_s, _v) s_stream_read_n16_be(INT16, _s, _v, FALSE)
 
-#define Stream_Peek_UINT32(_s, _v) _stream_read_n32_le(UINT32, _s, _v, FALSE)
-#define Stream_Peek_INT32(_s, _v) _stream_read_n32_le(INT32, _s, _v, FALSE)
+#define Stream_Peek_UINT32(_s, _v) s_stream_read_n32_le(UINT32, _s, _v, FALSE)
+#define Stream_Peek_INT32(_s, _v) s_stream_read_n32_le(INT32, _s, _v, FALSE)
 
-#define Stream_Peek_UINT32_BE(_s, _v) _stream_read_n32_be(UINT32, _s, _v, FALSE)
-#define Stream_Peek_INT32_BE(_s, _v) _stream_read_n32_be(INT32, _s, _v, FALSE)
+#define Stream_Peek_UINT32_BE(_s, _v) s_stream_read_n32_be(UINT32, _s, _v, FALSE)
+#define Stream_Peek_INT32_BE(_s, _v) s_stream_read_n32_be(INT32, _s, _v, FALSE)
 
-#define Stream_Peek_UINT64(_s, _v) _stream_read_n64_le(UINT64, _s, _v, FALSE)
-#define Stream_Peek_INT64(_s, _v) _stream_read_n64_le(INT64, _s, _v, FALSE)
+#define Stream_Peek_UINT64(_s, _v) s_stream_read_n64_le(UINT64, _s, _v, FALSE)
+#define Stream_Peek_INT64(_s, _v) s_stream_read_n64_le(INT64, _s, _v, FALSE)
 
-#define Stream_Peek_UINT64_BE(_s, _v) _stream_read_n64_be(UINT64, _s, _v, FALSE)
-#define Stream_Peek_INT64_BE(_s, _v) _stream_read_n64_be(INT64, _s, _v, FALSE)
+#define Stream_Peek_UINT64_BE(_s, _v) s_stream_read_n64_be(UINT64, _s, _v, FALSE)
+#define Stream_Peek_INT64_BE(_s, _v) s_stream_read_n64_be(INT64, _s, _v, FALSE)
 
 	static INLINE void Stream_Peek(const wStream* _s, void* _b, size_t _n)
 	{

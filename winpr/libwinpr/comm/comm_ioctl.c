@@ -53,24 +53,24 @@
  * Drivers, and in [MSDN-PORTS].
  */
 
-const char* _comm_serial_ioctl_name(ULONG number)
+const char* comm_serial_ioctl_name(ULONG number)
 {
 	int i;
 
-	for (i = 0; _SERIAL_IOCTL_NAMES[i].number != 0; i++)
+	for (i = 0; SERIAL_IOCTL_NAMES[i].number != 0; i++)
 	{
-		if (_SERIAL_IOCTL_NAMES[i].number == number)
+		if (SERIAL_IOCTL_NAMES[i].number == number)
 		{
-			return _SERIAL_IOCTL_NAMES[i].name;
+			return SERIAL_IOCTL_NAMES[i].name;
 		}
 	}
 
 	return "(unknown ioctl name)";
 }
 
-static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
-                                 DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
-                                 LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
+static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
+                                  DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
+                                  LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 	SERIAL_DRIVER* pServerSerialDriver = NULL;
@@ -628,7 +628,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 
 	CommLog_Print(
 	    WLOG_WARN, _T("unsupported IoControlCode=[0x%08" PRIX32 "] %s (remote serial driver: %s)"),
-	    dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), pServerSerialDriver->name);
+	    dwIoControlCode, comm_serial_ioctl_name(dwIoControlCode), pServerSerialDriver->name);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED); /* => STATUS_NOT_IMPLEMENTED */
 	return FALSE;
 }
@@ -664,8 +664,8 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 		return FALSE;
 	}
 
-	result = _CommDeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer,
-	                              nOutBufferSize, lpBytesReturned, lpOverlapped);
+	result = s_CommDeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer,
+	                               nOutBufferSize, lpBytesReturned, lpOverlapped);
 
 	if (lpBytesReturned && *lpBytesReturned != nOutBufferSize)
 	{
@@ -683,7 +683,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 			    WLOG_WARN,
 			    "[permissive]: whereas it failed, made to succeed IoControlCode=[0x%08" PRIX32
 			    "] %s, last-error: 0x%08" PRIX32 "",
-			    dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), GetLastError());
+			    dwIoControlCode, comm_serial_ioctl_name(dwIoControlCode), GetLastError());
 		}
 
 		return TRUE; /* always! */
@@ -692,7 +692,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	return result;
 }
 
-int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
+int comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
 {
 	int result;
 	struct termios currentState;

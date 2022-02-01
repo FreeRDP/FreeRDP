@@ -79,30 +79,30 @@ struct winpr_nt_file
 };
 typedef struct winpr_nt_file WINPR_NT_FILE;
 
-static pthread_once_t _TebOnceControl = PTHREAD_ONCE_INIT;
-static pthread_key_t _TebKey;
+static pthread_once_t s_TebOnceControl = PTHREAD_ONCE_INIT;
+static pthread_key_t s_TebKey;
 
-static void _TebDestruct(void* teb)
+static void s_TebDestruct(void* teb)
 {
 	free(teb);
 }
 
-static void _TebInitOnce(void)
+static void s_TebInitOnce(void)
 {
-	pthread_key_create(&_TebKey, _TebDestruct);
+	pthread_key_create(&s_TebKey, s_TebDestruct);
 }
 
 PTEB NtCurrentTeb(void)
 {
 	PTEB teb = NULL;
 
-	if (pthread_once(&_TebOnceControl, _TebInitOnce) == 0)
+	if (pthread_once(&s_TebOnceControl, s_TebInitOnce) == 0)
 	{
-		if ((teb = pthread_getspecific(_TebKey)) == NULL)
+		if ((teb = pthread_getspecific(s_TebKey)) == NULL)
 		{
 			teb = calloc(1, sizeof(TEB));
 			if (teb)
-				pthread_setspecific(_TebKey, teb);
+				pthread_setspecific(s_TebKey, teb);
 		}
 	}
 	return teb;

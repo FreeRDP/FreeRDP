@@ -274,7 +274,7 @@ static BOOL winpr_enable_fips(DWORD flags)
 	return TRUE;
 }
 
-static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID* context)
+static BOOL CALLBACK s_winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	DWORD flags = param ? *(PDWORD)param : WINPR_SSL_INIT_DEFAULT;
 
@@ -327,7 +327,7 @@ BOOL winpr_InitializeSSL(DWORD flags)
 {
 	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
 
-	if (!InitOnceExecuteOnce(&once, _winpr_openssl_initialize, &flags, NULL))
+	if (!InitOnceExecuteOnce(&once, s_winpr_openssl_initialize, &flags, NULL))
 		return FALSE;
 
 	return winpr_enable_fips(flags);

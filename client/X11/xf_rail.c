@@ -177,8 +177,8 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	              &child_y, &mask);
 
 	/* only send the mouse coordinates if not a keyboard move or size */
-	if ((appWindow->local_move.direction != _NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
-	    (appWindow->local_move.direction != _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
+	if ((appWindow->local_move.direction != d_NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
+	    (appWindow->local_move.direction != d_NET_WM_MOVERESIZE_SIZE_KEYBOARD))
 	{
 		freerdp_input_send_mouse_event(input, PTR_FLAGS_BUTTON1, x, y);
 	}
@@ -586,7 +586,7 @@ static xfRailIcon* RailIconCache_Lookup(xfRailIconCache* cache, UINT8 cacheId, U
 }
 
 /*
- * _NET_WM_ICON format is defined as "array of CARDINAL" values which for
+ * d_NET_WM_ICON format is defined as "array of CARDINAL" values which for
  * Xlib must be represented with an array of C's "long" values. Note that
  * "long" != "INT32" on 64-bit systems. Therefore we can't simply cast
  * the bitmap data as (unsigned char*), we have to copy all the pixels.
@@ -641,7 +641,7 @@ error:
 static void xf_rail_set_window_icon(xfContext* xfc, xfAppWindow* railWindow, xfRailIcon* icon,
                                     BOOL replace)
 {
-	XChangeProperty(xfc->display, railWindow->handle, xfc->_NET_WM_ICON, XA_CARDINAL, 32,
+	XChangeProperty(xfc->display, railWindow->handle, xfc->d_NET_WM_ICON, XA_CARDINAL, 32,
 	                replace ? PropModeReplace : PropModeAppend, (unsigned char*)icon->data,
 	                icon->length);
 	XFlush(xfc->display);
@@ -931,68 +931,68 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 	switch (localMoveSize->moveSizeType)
 	{
 		case RAIL_WMSZ_LEFT:
-			direction = _NET_WM_MOVERESIZE_SIZE_LEFT;
+			direction = d_NET_WM_MOVERESIZE_SIZE_LEFT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_RIGHT:
-			direction = _NET_WM_MOVERESIZE_SIZE_RIGHT;
+			direction = d_NET_WM_MOVERESIZE_SIZE_RIGHT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_TOP:
-			direction = _NET_WM_MOVERESIZE_SIZE_TOP;
+			direction = d_NET_WM_MOVERESIZE_SIZE_TOP;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_TOPLEFT:
-			direction = _NET_WM_MOVERESIZE_SIZE_TOPLEFT;
+			direction = d_NET_WM_MOVERESIZE_SIZE_TOPLEFT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_TOPRIGHT:
-			direction = _NET_WM_MOVERESIZE_SIZE_TOPRIGHT;
+			direction = d_NET_WM_MOVERESIZE_SIZE_TOPRIGHT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_BOTTOM:
-			direction = _NET_WM_MOVERESIZE_SIZE_BOTTOM;
+			direction = d_NET_WM_MOVERESIZE_SIZE_BOTTOM;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_BOTTOMLEFT:
-			direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT;
+			direction = d_NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_BOTTOMRIGHT:
-			direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT;
+			direction = d_NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_MOVE:
-			direction = _NET_WM_MOVERESIZE_MOVE;
+			direction = d_NET_WM_MOVERESIZE_MOVE;
 			XTranslateCoordinates(xfc->display, appWindow->handle, RootWindowOfScreen(xfc->screen),
 			                      localMoveSize->posX, localMoveSize->posY, &x, &y, &child_window);
 			break;
 
 		case RAIL_WMSZ_KEYMOVE:
-			direction = _NET_WM_MOVERESIZE_MOVE_KEYBOARD;
+			direction = d_NET_WM_MOVERESIZE_MOVE_KEYBOARD;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			/* FIXME: local keyboard moves not working */
 			return CHANNEL_RC_OK;
 
 		case RAIL_WMSZ_KEYSIZE:
-			direction = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
+			direction = d_NET_WM_MOVERESIZE_SIZE_KEYBOARD;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			/* FIXME: local keyboard moves not working */

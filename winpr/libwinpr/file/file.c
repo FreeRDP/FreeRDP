@@ -872,11 +872,11 @@ static BOOL IsFileDevice(LPCTSTR lpDeviceName)
 	return TRUE;
 }
 
-static HANDLE_CREATOR _FileHandleCreator = { IsFileDevice, FileCreateFileA };
+static HANDLE_CREATOR s_FileHandleCreator = { IsFileDevice, FileCreateFileA };
 
 HANDLE_CREATOR* GetFileHandleCreator(void)
 {
-	return &_FileHandleCreator;
+	return &s_FileHandleCreator;
 }
 
 static WINPR_FILE* FileHandle_New(FILE* fp)

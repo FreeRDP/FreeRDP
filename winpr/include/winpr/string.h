@@ -50,6 +50,11 @@ extern "C"
 #define MB_USEGLYPHCHARS 0x00000004
 #define MB_ERR_INVALID_CHARS 0x00000008
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 	WINPR_API char* _strdup(const char* strSource);
 	WINPR_API WCHAR* _wcsdup(const WCHAR* strSource);
 
@@ -63,6 +68,10 @@ extern "C"
 
 	WINPR_API const WCHAR* _wcschr(const WCHAR* str, WCHAR c);
 	WINPR_API const WCHAR* _wcsrchr(const WCHAR* str, WCHAR c);
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 	WINPR_API char* strtok_s(char* strToken, const char* strDelimit, char** context);
 	WINPR_API WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context);
@@ -173,11 +182,20 @@ extern "C"
 
 #ifndef _WIN32
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-macro-identifier"
+#endif
+
 #define sprintf_s snprintf
 #define _snprintf snprintf
 #define _scprintf(...) snprintf(NULL, 0, __VA_ARGS__)
 
 #define _scprintf(...) snprintf(NULL, 0, __VA_ARGS__)
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 	/* Unicode Conversion */
 

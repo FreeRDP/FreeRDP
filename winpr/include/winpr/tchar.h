@@ -35,6 +35,11 @@ typedef WCHAR TCHAR;
 typedef CHAR TCHAR;
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifdef UNICODE
 #define _tprintf wprintf
 #define _sntprintf snwprintf
@@ -63,6 +68,10 @@ typedef CHAR TCHAR;
 #define _tcsstr strstr
 #define _stprintf_s sprintf_s
 #define _tcsnccmp strncmp
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 #endif

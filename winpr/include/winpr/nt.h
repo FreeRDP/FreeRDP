@@ -1435,7 +1435,8 @@ typedef OBJECT_ATTRIBUTES* POBJECT_ATTRIBUTES;
 
 typedef struct s_IO_STATUS_BLOCK
 {
-	union {
+	union
+	{
 #ifdef _WIN32
 		NTSTATUS Status;
 #else
@@ -1556,6 +1557,11 @@ extern "C"
 {
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 	WINPR_API VOID _RtlInitAnsiString(PANSI_STRING DestinationString, PCSZ SourceString);
 
 	WINPR_API VOID _RtlInitUnicodeString(PUNICODE_STRING DestinationString, PCWSTR SourceString);
@@ -1605,6 +1611,10 @@ extern "C"
 	                                          PLARGE_INTEGER Timeout);
 
 	WINPR_API const char* NtStatus2Tag(DWORD ntstatus);
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #ifdef __cplusplus
 }

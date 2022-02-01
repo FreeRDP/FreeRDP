@@ -39,22 +39,22 @@ typedef struct xf_window xfWindow;
 #pragma clang diagnostic ignored "-Wreserved-id-macro"
 #endif
 
-#define _NET_WM_MOVERESIZE_SIZE_TOPLEFT 0
-#define _NET_WM_MOVERESIZE_SIZE_TOP 1
-#define _NET_WM_MOVERESIZE_SIZE_TOPRIGHT 2
-#define _NET_WM_MOVERESIZE_SIZE_RIGHT 3
-#define _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT 4
-#define _NET_WM_MOVERESIZE_SIZE_BOTTOM 5
-#define _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT 6
-#define _NET_WM_MOVERESIZE_SIZE_LEFT 7
-#define _NET_WM_MOVERESIZE_MOVE 8           /* movement only */
-#define _NET_WM_MOVERESIZE_SIZE_KEYBOARD 9  /* size via keyboard */
-#define _NET_WM_MOVERESIZE_MOVE_KEYBOARD 10 /* move via keyboard */
-#define _NET_WM_MOVERESIZE_CANCEL 11        /* cancel operation */
+#define d_NET_WM_MOVERESIZE_SIZE_TOPLEFT 0
+#define d_NET_WM_MOVERESIZE_SIZE_TOP 1
+#define d_NET_WM_MOVERESIZE_SIZE_TOPRIGHT 2
+#define d_NET_WM_MOVERESIZE_SIZE_RIGHT 3
+#define d_NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT 4
+#define d_NET_WM_MOVERESIZE_SIZE_BOTTOM 5
+#define d_NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT 6
+#define d_NET_WM_MOVERESIZE_SIZE_LEFT 7
+#define d_NET_WM_MOVERESIZE_MOVE 8           /* movement only */
+#define d_NET_WM_MOVERESIZE_SIZE_KEYBOARD 9  /* size via keyboard */
+#define d_NET_WM_MOVERESIZE_MOVE_KEYBOARD 10 /* move via keyboard */
+#define d_NET_WM_MOVERESIZE_CANCEL 11        /* cancel operation */
 
-#define _NET_WM_STATE_REMOVE 0 /* remove/unset property */
-#define _NET_WM_STATE_ADD 1    /* add/set property */
-#define _NET_WM_STATE_TOGGLE 2 /* toggle property */
+#define d_NET_WM_STATE_REMOVE 0 /* remove/unset property */
+#define d_NET_WM_STATE_ADD 1    /* add/set property */
+#define d_NET_WM_STATE_TOGGLE 2 /* toggle property */
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

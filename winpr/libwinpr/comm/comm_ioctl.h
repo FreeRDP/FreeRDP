@@ -225,7 +225,7 @@ extern "C"
 
 	} SERIAL_DRIVER;
 
-	int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p);
+	int comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p);
 
 #ifdef __cplusplus
 }

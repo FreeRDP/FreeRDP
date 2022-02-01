@@ -805,7 +805,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 	 * when the window has been minimized, maximized, restored locally
 	 * ie. not using the buttons on the rail window itself
 	 */
-	if ((((Atom)event->atom == xfc->_NET_WM_STATE) && (event->state != PropertyDelete)) ||
+	if ((((Atom)event->atom == xfc->d_NET_WM_STATE) && (event->state != PropertyDelete)) ||
 	    (((Atom)event->atom == xfc->WM_STATE) && (event->state != PropertyDelete)))
 	{
 		unsigned long i;
@@ -827,9 +827,9 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				return TRUE;
 		}
 
-		if ((Atom)event->atom == xfc->_NET_WM_STATE)
+		if ((Atom)event->atom == xfc->d_NET_WM_STATE)
 		{
-			status = xf_GetWindowProperty(xfc, event->window, xfc->_NET_WM_STATE, 12, &nitems,
+			status = xf_GetWindowProperty(xfc, event->window, xfc->d_NET_WM_STATE, 12, &nitems,
 			                              &bytes, &prop);
 
 			if (status)
@@ -837,13 +837,13 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				for (i = 0; i < nitems; i++)
 				{
 					if ((Atom)((UINT16**)prop)[i] ==
-					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
+					    XInternAtom(xfc->display, "d_NET_WM_STATE_MAXIMIZED_VERT", False))
 					{
 						maxVert = TRUE;
 					}
 
 					if ((Atom)((UINT16**)prop)[i] ==
-					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False))
+					    XInternAtom(xfc->display, "d_NET_WM_STATE_MAXIMIZED_HORZ", False))
 					{
 						maxHorz = TRUE;
 					}

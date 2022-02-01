@@ -35,7 +35,8 @@ typedef struct s_OVERLAPPED
 {
 	ULONG_PTR Internal;
 	ULONG_PTR InternalHigh;
-	union {
+	union
+	{
 		struct
 		{
 			DWORD Offset;
@@ -192,12 +193,21 @@ extern "C"
 typedef HANDLE PDRIVER_OBJECT_EX;
 typedef HANDLE PDEVICE_OBJECT_EX;
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 WINPR_API NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtensionSize,
                                      PUNICODE_STRING DeviceName, DEVICE_TYPE DeviceType,
                                      ULONG DeviceCharacteristics, BOOLEAN Exclusive,
                                      PDEVICE_OBJECT_EX* DeviceObject);
 
 WINPR_API VOID _IoDeleteDeviceEx(PDEVICE_OBJECT_EX DeviceObject);
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #endif
 

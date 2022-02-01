@@ -34,7 +34,7 @@
 
 #include "comm.h"
 
-BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive)
+BOOL comm_set_permissive(HANDLE hDevice, BOOL permissive)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 
@@ -55,7 +55,7 @@ BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive)
 }
 
 /* Computes VTIME in deciseconds from Ti in milliseconds */
-static UCHAR _vtime(ULONG Ti)
+static UCHAR s_vtime(ULONG Ti)
 {
 	/* FIXME: look for an equivalent math function otherwise let
 	 * do the compiler do the optimization */
@@ -190,7 +190,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	if ((pTimeouts->ReadIntervalTimeout > 0) && (pTimeouts->ReadIntervalTimeout < MAXULONG))
 	{
 		/* Ti */
-		vtime = _vtime(pTimeouts->ReadIntervalTimeout);
+		vtime = s_vtime(pTimeouts->ReadIntervalTimeout);
 	}
 
 	/* TMAX */

@@ -456,13 +456,13 @@ extern "C"
 /* http://msdn.microsoft.com/en-us/library/windows/hardware/ff551803(v=vs.85).aspx */
 #define IOCTL_USBPRINT_GET_1284_ID 0x220034
 
-	typedef struct s__SERIAL_IOCTL_NAME
+	typedef struct s_SERIAL_IOCTL_NAME
 	{
 		ULONG number;
 		const char* name;
-	} _SERIAL_IOCTL_NAME;
+	} SERIAL_IOCTL_NAME;
 
-	static const _SERIAL_IOCTL_NAME _SERIAL_IOCTL_NAMES[] = {
+	static const SERIAL_IOCTL_NAME SERIAL_IOCTL_NAMES[] = {
 		{ IOCTL_SERIAL_SET_BAUD_RATE, "IOCTL_SERIAL_SET_BAUD_RATE" },
 		{ IOCTL_SERIAL_GET_BAUD_RATE, "IOCTL_SERIAL_GET_BAUD_RATE" },
 		{ IOCTL_SERIAL_SET_LINE_CONTROL, "IOCTL_SERIAL_SET_LINE_CONTROL" },
@@ -522,19 +522,19 @@ extern "C"
 	/**
 	 * FIXME: got a proper function name and place
 	 */
-	WINPR_API const char* _comm_serial_ioctl_name(ULONG number);
+	WINPR_API const char* comm_serial_ioctl_name(ULONG number);
 
 	/**
 	 * FIXME: got a proper function name and place
 	 */
-	WINPR_API void _comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID);
+	WINPR_API void comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID);
 
 	/**
 	 * FIXME: got a proper function name and place
 	 *
 	 * permissive mode is disabled by default.
 	 */
-	WINPR_API BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive);
+	WINPR_API BOOL comm_set_permissive(HANDLE hDevice, BOOL permissive);
 
 	/**
 	 * FIXME: to be moved in comm_ioctl.h
