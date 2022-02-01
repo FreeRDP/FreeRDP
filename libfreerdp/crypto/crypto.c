@@ -41,6 +41,23 @@ CryptoCert crypto_cert_read(const BYTE* data, UINT32 length)
 	return cert;
 }
 
+CryptoCert crypto_cert_pem_read(const char* data)
+{
+	CryptoCert cert = malloc(sizeof(*cert));
+
+	if (!cert)
+		return NULL;
+
+	cert->px509 = crypto_cert_from_pem(data, strlen(data), FALSE);
+	if (!cert->px509)
+	{
+		free(cert);
+		return NULL;
+	}
+
+	return cert;
+}
+
 void crypto_cert_free(CryptoCert cert)
 {
 	if (cert == NULL)

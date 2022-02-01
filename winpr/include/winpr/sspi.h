@@ -34,13 +34,13 @@
 #include <sspi.h>
 #include <security.h>
 
-#endif
+#endif /* _WIN32 */
 
 #if !defined(_WIN32) || defined(_UWP)
 
 #ifndef SEC_ENTRY
 #define SEC_ENTRY
-#endif
+#endif /* SEC_ENTRY */
 
 typedef CHAR SEC_CHAR;
 typedef WCHAR SEC_WCHAR;
@@ -62,7 +62,7 @@ typedef SECURITY_INTEGER* PTimeStamp;
 #ifndef __SECSTATUS_DEFINED__
 typedef LONG SECURITY_STATUS;
 #define __SECSTATUS_DEFINED__
-#endif
+#endif /* __SECSTATUS_DEFINED__ */
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
@@ -96,9 +96,9 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #else
 #define SecPkgInfo SecPkgInfoA
 #define PSecPkgInfo PSecPkgInfoA
-#endif
+#endif /* UNICODE */
 
-#endif
+#endif /* !defined(_WIN32) || defined(_UWP) */
 
 #define NTLM_SSP_NAME _T("NTLM")
 #define KERBEROS_SSP_NAME _T("Kerberos")
@@ -217,7 +217,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define SEC_I_SIGNATURE_NEEDED (SECURITY_STATUS)0x0009035CL
 #define SEC_I_NO_RENEGOTIATION (SECURITY_STATUS)0x00090360L
 
-#endif
+#endif /* _WINERROR_ */
 
 /* ============== some definitions missing in mingw ========================*/
 #ifndef SEC_E_INVALID_PARAMETER
@@ -482,7 +482,7 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 #define PSecPkgCredentials_Names PSecPkgCredentials_NamesA
 #endif
 
-#endif
+#endif /* !defined(_WIN32) || defined(_UWP) */
 
 #if !defined(_WIN32) || defined(_UWP)
 #if !defined(__MINGW32__)
@@ -601,6 +601,17 @@ typedef struct
 #define SEC_WINNT_AUTH_IDENTITY_ANSI 0x1
 #define SEC_WINNT_AUTH_IDENTITY_UNICODE 0x2
 
+typedef struct
+{
+	char* armorCache;
+	char* pkinitX509Anchors;
+	char* pkinitX509Identity;
+	BOOL withPac;
+	INT32 startTime;
+	INT32 lifeTime;
+	BYTE certSha1[20];
+} SEC_WINPR_KERBEROS_SETTINGS;
+
 #if !defined(_WIN32) || defined(_UWP)
 
 #if defined(__clang__)
@@ -649,6 +660,42 @@ typedef struct
 
 #endif /* _AUTH_IDENTITY_DEFINED */
 
+#ifndef SEC_WINNT_AUTH_IDENTITY_VERSION
+#define SEC_WINNT_AUTH_IDENTITY_VERSION 0x200
+
+typedef struct _SEC_WINNT_AUTH_IDENTITY_EXW
+{
+	UINT32 Version;
+	UINT32 Length;
+	UINT16* User;
+	UINT32 UserLength;
+	UINT16* Domain;
+	UINT32 DomainLength;
+	UINT16* Password;
+	UINT32 PasswordLength;
+	UINT32 Flags;
+	BYTE* PackageList;
+	UINT32 PackageListLength;
+} SEC_WINNT_AUTH_IDENTITY_EXW, *PSEC_WINNT_AUTH_IDENTITY_EXW;
+
+typedef struct _SEC_WINNT_AUTH_IDENTITY_EXA
+{
+	UINT32 Version;
+	UINT32 Length;
+	BYTE* User;
+	UINT32 UserLength;
+	BYTE* Domain;
+	UINT32 DomainLength;
+	BYTE* Password;
+	UINT32 PasswordLength;
+	UINT32 Flags;
+	BYTE* PackageList;
+	UINT32 PackageListLength;
+} SEC_WINNT_AUTH_IDENTITY_EXA, *PSEC_WINNT_AUTH_IDENTITY_EXA;
+
+#endif /* SEC_WINNT_AUTH_IDENTITY_VERSION */
+
+
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
@@ -672,7 +719,19 @@ typedef CtxtHandle* PCtxtHandle;
 	((((PSecHandle)(x))->dwLower != ((ULONG_PTR)((INT_PTR)-1))) && \
 	 (((PSecHandle)(x))->dwUpper != ((ULONG_PTR)((INT_PTR)-1))))
 
-#endif
+#endif /* !defined(_WIN32) || defined(_UWP) */
+
+typedef struct _SEC_WINNT_AUTH_IDENTITY_WINPRA
+{
+	SEC_WINNT_AUTH_IDENTITY_EXA identityEx;
+	SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
+} SEC_WINNT_AUTH_IDENTITY_WINPRA, *PSEC_WINNT_AUTH_IDENTITY_WINPRA;
+
+typedef struct _SEC_WINNT_AUTH_IDENTITY_WINPRW
+{
+	SEC_WINNT_AUTH_IDENTITY_EXW identityEx;
+	SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
+} SEC_WINNT_AUTH_IDENTITY_WINPRW, *PSEC_WINNT_AUTH_IDENTITY_WINPRW;
 
 #define SECBUFFER_VERSION 0
 

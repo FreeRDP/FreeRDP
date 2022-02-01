@@ -253,7 +253,6 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 
 	if (settings->SmartcardLogon)
 	{
-		settings->NlaSecurity = FALSE; /* for now */
 		settings->TlsSecurity = TRUE;
 		settings->RedirectSmartCards = TRUE;
 		settings->DeviceRedirection = TRUE;
@@ -427,6 +426,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 {
 	static const size_t password_size = 512;
 	const char* auth[] = { "Username: ", "Domain:   ", "Password: " };
+	const char* authPin[] = { "Username: ", "Domain:   ", "Pin:      " };
 	const char* gw[] = { "GatewayUsername: ", "GatewayDomain:   ", "GatewayPassword: " };
 	const char** prompt;
 
@@ -436,6 +436,9 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 		case AUTH_TLS:
 		case AUTH_RDP:
 			prompt = auth;
+			break;
+		case AUTH_SMARTCARD_PIN:
+			prompt = authPin;
 			break;
 		case GW_AUTH_HTTP:
 		case GW_AUTH_RDG:
@@ -516,21 +519,14 @@ BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** passw
 	WINPR_ASSERT(password);
 	WINPR_ASSERT(domain);
 
-	if (instance->settings->SmartcardLogon)
-	{
-		WLog_INFO(TAG, "Authentication via smartcard");
-		return TRUE;
-	}
-
 	switch (reason)
 	{
 		case AUTH_NLA:
 			break;
+
 		case AUTH_TLS:
-			if ((*username) && (*password))
-				return TRUE;
-			break;
 		case AUTH_RDP:
+		case AUTH_SMARTCARD_PIN: /* in this case password is pin code */
 			if ((*username) && (*password))
 				return TRUE;
 			break;

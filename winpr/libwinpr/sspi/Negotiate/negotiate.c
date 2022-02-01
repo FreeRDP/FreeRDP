@@ -486,7 +486,6 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
     PTimeStamp ptsExpiry)
 {
 	SSPI_CREDENTIALS* credentials;
-	SEC_WINNT_AUTH_IDENTITY* identity;
 
 	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) && (fCredentialUse != SECPKG_CRED_INBOUND) &&
 	    (fCredentialUse != SECPKG_CRED_BOTH))
@@ -495,17 +494,50 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
 	}
 
 	credentials = sspi_CredentialsNew();
-
 	if (!credentials)
 		return SEC_E_INTERNAL_ERROR;
 
 	credentials->fCredentialUse = fCredentialUse;
 	credentials->pGetKeyFn = pGetKeyFn;
 	credentials->pvGetKeyArgument = pvGetKeyArgument;
-	identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
 
-	if (identity)
-		sspi_CopyAuthIdentity(&(credentials->identity), identity);
+	if (pAuthData)
+	{
+		SEC_WINNT_AUTH_IDENTITY_EXW* identityEx = (SEC_WINNT_AUTH_IDENTITY_EXW*)pAuthData;
+		BOOL treated = FALSE;
+
+		SEC_WINNT_AUTH_IDENTITY srcIdentity;
+		if (identityEx->Version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+		{
+			if (identityEx->Length >= sizeof(*identityEx))
+			{
+				srcIdentity.User = (UINT16*)identityEx->User;
+				srcIdentity.UserLength = identityEx->UserLength;
+				srcIdentity.Domain = (UINT16*)identityEx->Domain;
+				srcIdentity.DomainLength = identityEx->DomainLength;
+				srcIdentity.Password = (UINT16*)identityEx->Password;
+				srcIdentity.PasswordLength = identityEx->PasswordLength;
+				srcIdentity.Flags = identityEx->Flags;
+
+				if (!sspi_CopyAuthIdentity(&credentials->identity, &srcIdentity))
+					return SEC_E_INSUFFICIENT_MEMORY;
+
+				if (identityEx->Length == sizeof(SEC_WINNT_AUTH_IDENTITY_WINPRA))
+				{
+					SEC_WINNT_AUTH_IDENTITY_WINPRW* identityWinpr =
+					    (SEC_WINNT_AUTH_IDENTITY_WINPRW*)pAuthData;
+					credentials->kerbSettings = identityWinpr->kerberosSettings;
+				}
+				treated = TRUE;
+			}
+		}
+
+		if (!treated)
+		{
+			SEC_WINNT_AUTH_IDENTITY* identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
+			sspi_CopyAuthIdentity(&(credentials->identity), identity);
+		}
+	}
 
 	sspi_SecureHandleSetLowerPointer(phCredential, (void*)credentials);
 	sspi_SecureHandleSetUpperPointer(phCredential, (void*)NEGO_SSP_NAME);
@@ -518,7 +550,6 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
     PTimeStamp ptsExpiry)
 {
 	SSPI_CREDENTIALS* credentials;
-	SEC_WINNT_AUTH_IDENTITY* identity;
 
 	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) && (fCredentialUse != SECPKG_CRED_INBOUND) &&
 	    (fCredentialUse != SECPKG_CRED_BOTH))
@@ -534,10 +565,44 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
 	credentials->fCredentialUse = fCredentialUse;
 	credentials->pGetKeyFn = pGetKeyFn;
 	credentials->pvGetKeyArgument = pvGetKeyArgument;
-	identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
 
-	if (identity)
-		sspi_CopyAuthIdentity(&(credentials->identity), identity);
+	if (pAuthData)
+	{
+		SEC_WINNT_AUTH_IDENTITY_EXA* identityEx = (SEC_WINNT_AUTH_IDENTITY_EXA*)pAuthData;
+		BOOL treated = FALSE;
+
+		SEC_WINNT_AUTH_IDENTITY srcIdentity;
+		if (identityEx->Version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+		{
+			if (identityEx->Length >= sizeof(*identityEx))
+			{
+				srcIdentity.User = (UINT16*)identityEx->User;
+				srcIdentity.UserLength = identityEx->UserLength;
+				srcIdentity.Domain = (UINT16*)identityEx->Domain;
+				srcIdentity.DomainLength = identityEx->DomainLength;
+				srcIdentity.Password = (UINT16*)identityEx->Password;
+				srcIdentity.PasswordLength = identityEx->PasswordLength;
+				srcIdentity.Flags = identityEx->Flags;
+
+				if (!sspi_CopyAuthIdentity(&credentials->identity, &srcIdentity))
+					return SEC_E_INSUFFICIENT_MEMORY;
+
+				if (identityEx->Length == sizeof(SEC_WINNT_AUTH_IDENTITY_WINPRA))
+				{
+					SEC_WINNT_AUTH_IDENTITY_WINPRA* identityWinpr =
+					    (SEC_WINNT_AUTH_IDENTITY_WINPRA*)pAuthData;
+					credentials->kerbSettings = identityWinpr->kerberosSettings;
+				}
+				treated = TRUE;
+			}
+		}
+
+		if (!treated)
+		{
+			SEC_WINNT_AUTH_IDENTITY* identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
+			sspi_CopyAuthIdentity(&(credentials->identity), identity);
+		}
+	}
 
 	sspi_SecureHandleSetLowerPointer(phCredential, (void*)credentials);
 	sspi_SecureHandleSetUpperPointer(phCredential, (void*)NEGO_SSP_NAME);
