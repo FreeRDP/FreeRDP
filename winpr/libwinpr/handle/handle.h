@@ -84,7 +84,7 @@ typedef BOOL (*pcUnlockFileEx)(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBy
 typedef BOOL (*pcSetFileTime)(HANDLE hFile, const FILETIME* lpCreationTime,
                               const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime);
 
-typedef struct _HANDLE_OPS
+typedef struct s_HANDLE_OPS
 {
 	pcIsHandled IsHandled;
 	pcCloseHandle CloseHandle;

@@ -26,7 +26,7 @@
 
 #include <freerdp/server/encomsp.h>
 
-struct _encomsp_server_private
+struct s_encomsp_server_private
 {
 	HANDLE Thread;
 	HANDLE StopEvent;

@@ -24,7 +24,7 @@
 #include <winpr/collections.h>
 #include <winpr/assert.h>
 
-struct _wStack
+struct s_wStack
 {
 	size_t size;
 	size_t capacity;

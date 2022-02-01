@@ -42,7 +42,7 @@
 #include "disp_main.h"
 #include "../disp_common.h"
 
-struct _DISP_CHANNEL_CALLBACK
+struct s_DISP_CHANNEL_CALLBACK
 {
 	IWTSVirtualChannelCallback iface;
 
@@ -50,9 +50,9 @@ struct _DISP_CHANNEL_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
 };
-typedef struct _DISP_CHANNEL_CALLBACK DISP_CHANNEL_CALLBACK;
+typedef struct s_DISP_CHANNEL_CALLBACK DISP_CHANNEL_CALLBACK;
 
-struct _DISP_LISTENER_CALLBACK
+struct s_DISP_LISTENER_CALLBACK
 {
 	IWTSListenerCallback iface;
 
@@ -60,9 +60,9 @@ struct _DISP_LISTENER_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	DISP_CHANNEL_CALLBACK* channel_callback;
 };
-typedef struct _DISP_LISTENER_CALLBACK DISP_LISTENER_CALLBACK;
+typedef struct s_DISP_LISTENER_CALLBACK DISP_LISTENER_CALLBACK;
 
-struct _DISP_PLUGIN
+struct s_DISP_PLUGIN
 {
 	IWTSPlugin iface;
 
@@ -74,7 +74,7 @@ struct _DISP_PLUGIN
 	UINT32 MaxMonitorAreaFactorB;
 	BOOL initialized;
 };
-typedef struct _DISP_PLUGIN DISP_PLUGIN;
+typedef struct s_DISP_PLUGIN DISP_PLUGIN;
 
 /**
  * Function description

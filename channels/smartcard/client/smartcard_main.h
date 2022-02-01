@@ -41,18 +41,18 @@
 
 #define TAG CHANNELS_TAG("smartcard.client")
 
-typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
+typedef struct s_SMARTCARD_DEVICE SMARTCARD_DEVICE;
 
-struct _SMARTCARD_CONTEXT
+struct s_SMARTCARD_CONTEXT
 {
 	HANDLE thread;
 	SCARDCONTEXT hContext;
 	wMessageQueue* IrpQueue;
 	SMARTCARD_DEVICE* smartcard;
 };
-typedef struct _SMARTCARD_CONTEXT SMARTCARD_CONTEXT;
+typedef struct s_SMARTCARD_CONTEXT SMARTCARD_CONTEXT;
 
-struct _SMARTCARD_DEVICE
+struct s_SMARTCARD_DEVICE
 {
 	DEVICE device;
 

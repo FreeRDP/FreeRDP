@@ -32,11 +32,11 @@
  * Server Interface
  */
 
-typedef struct _rdpdr_server_context RdpdrServerContext;
-typedef struct _rdpdr_server_private RdpdrServerPrivate;
+typedef struct s_rdpdr_server_context RdpdrServerContext;
+typedef struct s_rdpdr_server_private RdpdrServerPrivate;
 
 #ifndef __MINGW32__
-struct _FILE_DIRECTORY_INFORMATION
+struct s_FILE_DIRECTORY_INFORMATION
 {
 	UINT32 NextEntryOffset;
 	UINT32 FileIndex;
@@ -49,7 +49,7 @@ struct _FILE_DIRECTORY_INFORMATION
 	UINT32 FileAttributes;
 	char FileName[512];
 };
-typedef struct _FILE_DIRECTORY_INFORMATION FILE_DIRECTORY_INFORMATION;
+typedef struct s_FILE_DIRECTORY_INFORMATION FILE_DIRECTORY_INFORMATION;
 #endif
 
 typedef UINT (*psRdpdrStart)(RdpdrServerContext* context);
@@ -110,7 +110,7 @@ typedef void (*psRdpdrOnSmartcardCreate)(RdpdrServerContext* context, UINT32 dev
                                          const char* name);
 typedef void (*psRdpdrOnSmartcardDelete)(RdpdrServerContext* context, UINT32 deviceId);
 
-struct _rdpdr_server_context
+struct s_rdpdr_server_context
 {
 	HANDLE vcm;
 

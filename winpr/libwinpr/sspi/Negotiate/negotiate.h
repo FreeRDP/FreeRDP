@@ -26,16 +26,16 @@
 
 #define NTLM_OID "1.3.6.1.4.1.311.2.2.10"
 
-enum _NEGOTIATE_STATE
+enum e_NEGOTIATE_STATE
 {
 	NEGOTIATE_STATE_INITIAL,
 	NEGOTIATE_STATE_NEGOINIT,
 	NEGOTIATE_STATE_NEGORESP,
 	NEGOTIATE_STATE_FINAL
 };
-typedef enum _NEGOTIATE_STATE NEGOTIATE_STATE;
+typedef enum e_NEGOTIATE_STATE NEGOTIATE_STATE;
 
-struct _NEGOTIATE_CONTEXT
+struct s_NEGOTIATE_CONTEXT
 {
 	NEGOTIATE_STATE state;
 	UINT32 NegotiateFlags;
@@ -48,7 +48,7 @@ struct _NEGOTIATE_CONTEXT
 	const SecurityFunctionTableA* sspiA;
 	const SecurityFunctionTableW* sspiW;
 };
-typedef struct _NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT;
+typedef struct s_NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT;
 
 extern const SecPkgInfoA NEGOTIATE_SecPkgInfoA;
 extern const SecPkgInfoW NEGOTIATE_SecPkgInfoW;

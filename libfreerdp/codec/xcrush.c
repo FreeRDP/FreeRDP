@@ -34,37 +34,37 @@
 
 #pragma pack(push, 1)
 
-struct _XCRUSH_MATCH_INFO
+struct s_XCRUSH_MATCH_INFO
 {
 	UINT32 MatchOffset;
 	UINT32 ChunkOffset;
 	UINT32 MatchLength;
 };
-typedef struct _XCRUSH_MATCH_INFO XCRUSH_MATCH_INFO;
+typedef struct s_XCRUSH_MATCH_INFO XCRUSH_MATCH_INFO;
 
-struct _XCRUSH_CHUNK
+struct s_XCRUSH_CHUNK
 {
 	UINT32 offset;
 	UINT32 next;
 };
-typedef struct _XCRUSH_CHUNK XCRUSH_CHUNK;
+typedef struct s_XCRUSH_CHUNK XCRUSH_CHUNK;
 
-struct _XCRUSH_SIGNATURE
+struct s_XCRUSH_SIGNATURE
 {
 	UINT16 seed;
 	UINT16 size;
 };
-typedef struct _XCRUSH_SIGNATURE XCRUSH_SIGNATURE;
+typedef struct s_XCRUSH_SIGNATURE XCRUSH_SIGNATURE;
 
-struct _RDP61_MATCH_DETAILS
+struct s_RDP61_MATCH_DETAILS
 {
 	UINT16 MatchLength;
 	UINT16 MatchOutputOffset;
 	UINT32 MatchHistoryOffset;
 };
-typedef struct _RDP61_MATCH_DETAILS RDP61_MATCH_DETAILS;
+typedef struct s_RDP61_MATCH_DETAILS RDP61_MATCH_DETAILS;
 
-struct _RDP61_COMPRESSED_DATA
+struct s_RDP61_COMPRESSED_DATA
 {
 	BYTE Level1ComprFlags;
 	BYTE Level2ComprFlags;
@@ -72,7 +72,7 @@ struct _RDP61_COMPRESSED_DATA
 	RDP61_MATCH_DETAILS* MatchDetails;
 	BYTE* Literals;
 };
-typedef struct _RDP61_COMPRESSED_DATA RDP61_COMPRESSED_DATA;
+typedef struct s_RDP61_COMPRESSED_DATA RDP61_COMPRESSED_DATA;
 
 #pragma pack(pop)
 

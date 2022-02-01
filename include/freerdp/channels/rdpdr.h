@@ -310,9 +310,9 @@ enum FILE_FS_INFORMATION_CLASS
 };
 #endif
 
-typedef struct _DEVICE DEVICE;
-typedef struct _IRP IRP;
-typedef struct _DEVMAN DEVMAN;
+typedef struct s_DEVICE DEVICE;
+typedef struct s_IRP IRP;
+typedef struct s_DEVMAN DEVMAN;
 
 typedef UINT (*pcCustomComponentRequest)(DEVICE* device, UINT16 component, UINT16 packetId,
                                          wStream* s);
@@ -320,7 +320,7 @@ typedef UINT (*pcIRPRequest)(DEVICE* device, IRP* irp);
 typedef UINT (*pcInitDevice)(DEVICE* device);
 typedef UINT (*pcFreeDevice)(DEVICE* device);
 
-struct _DEVICE
+struct s_DEVICE
 {
 	UINT32 id;
 
@@ -336,7 +336,7 @@ struct _DEVICE
 
 typedef UINT (*pcIRPResponse)(IRP* irp);
 
-struct _IRP
+struct s_IRP
 {
 	WINPR_SLIST_ENTRY ItemEntry;
 
@@ -358,7 +358,7 @@ struct _IRP
 	BOOL cancelled;
 };
 
-struct _DEVMAN
+struct s_DEVMAN
 {
 	void* plugin;
 	UINT32 id_sequence;
@@ -367,7 +367,7 @@ struct _DEVMAN
 
 typedef UINT (*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);
 
-struct _DEVICE_SERVICE_ENTRY_POINTS
+struct s_DEVICE_SERVICE_ENTRY_POINTS
 {
 	DEVMAN* devman;
 
@@ -375,7 +375,7 @@ struct _DEVICE_SERVICE_ENTRY_POINTS
 	RDPDR_DEVICE* device;
 	rdpContext* rdpcontext;
 };
-typedef struct _DEVICE_SERVICE_ENTRY_POINTS DEVICE_SERVICE_ENTRY_POINTS;
+typedef struct s_DEVICE_SERVICE_ENTRY_POINTS DEVICE_SERVICE_ENTRY_POINTS;
 typedef DEVICE_SERVICE_ENTRY_POINTS* PDEVICE_SERVICE_ENTRY_POINTS;
 
 typedef UINT (*PDEVICE_SERVICE_ENTRY)(PDEVICE_SERVICE_ENTRY_POINTS);

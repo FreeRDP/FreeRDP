@@ -71,7 +71,7 @@ static inline char* error_string(char* errbuf, size_t errbuf_size, int errnum)
 #define VAAPI_DEVICE "/dev/dri/renderD128"
 #endif
 
-struct _H264_CONTEXT_LIBAVCODEC
+struct s_H264_CONTEXT_LIBAVCODEC
 {
 	AVCodec* codecDecoder;
 	AVCodecContext* codecDecoderContext;
@@ -92,7 +92,7 @@ struct _H264_CONTEXT_LIBAVCODEC
 #endif
 #endif
 };
-typedef struct _H264_CONTEXT_LIBAVCODEC H264_CONTEXT_LIBAVCODEC;
+typedef struct s_H264_CONTEXT_LIBAVCODEC H264_CONTEXT_LIBAVCODEC;
 
 static void libavcodec_destroy_encoder(H264_CONTEXT* h264)
 {

@@ -35,9 +35,9 @@ typedef struct libusb_interface LIBUSB_INTERFACE;
 typedef struct libusb_interface_descriptor LIBUSB_INTERFACE_DESCRIPTOR;
 typedef struct libusb_endpoint_descriptor LIBUSB_ENDPOINT_DESCEIPTOR;
 
-typedef struct _UDEVICE UDEVICE;
+typedef struct s_UDEVICE UDEVICE;
 
-struct _UDEVICE
+struct s_UDEVICE
 {
 	IUDEVICE iface;
 

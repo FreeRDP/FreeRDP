@@ -29,7 +29,7 @@
 
 #define TAG CHANNELS_TAG("remdesk.server")
 
-struct _remdesk_server_private
+struct s_remdesk_server_private
 {
 	HANDLE Thread;
 	HANDLE StopEvent;

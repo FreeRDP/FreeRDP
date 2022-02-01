@@ -35,7 +35,7 @@
 #else
 
 /* Shell clipboard formats */
-struct _FILEDESCRIPTORW
+struct s_FILEDESCRIPTORW
 {
 	DWORD dwFlags;
 	CLSID clsid;
@@ -49,10 +49,10 @@ struct _FILEDESCRIPTORW
 	DWORD nFileSizeLow;
 	WCHAR cFileName[260];
 };
-typedef struct _FILEDESCRIPTORW FILEDESCRIPTORW;
+typedef struct s_FILEDESCRIPTORW FILEDESCRIPTORW;
 
 /* Legacy definition, some types do not match the windows equivalent. */
-struct _FILEDESCRIPTOR
+struct s_FILEDESCRIPTOR
 {
 	DWORD dwFlags;
 	BYTE clsid[16];
@@ -66,7 +66,7 @@ struct _FILEDESCRIPTOR
 	DWORD nFileSizeLow;
 	WCHAR cFileName[260];
 };
-typedef struct _FILEDESCRIPTOR FILEDESCRIPTOR;
+typedef struct s_FILEDESCRIPTOR FILEDESCRIPTOR;
 
 /* FILEDESCRIPTOR.dwFlags */
 typedef enum

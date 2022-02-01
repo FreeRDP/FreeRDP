@@ -22,12 +22,12 @@
 
 #include <freerdp/server/shadow.h>
 
-struct _RDP_SHADOW_SUBSYSTEM
+struct s_RDP_SHADOW_SUBSYSTEM
 {
 	const char* name;
 	pfnShadowSubsystemEntry entry;
 };
-typedef struct _RDP_SHADOW_SUBSYSTEM RDP_SHADOW_SUBSYSTEM;
+typedef struct s_RDP_SHADOW_SUBSYSTEM RDP_SHADOW_SUBSYSTEM;
 
 #ifdef WITH_SHADOW_X11
 extern int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);

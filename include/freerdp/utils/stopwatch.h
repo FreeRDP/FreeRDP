@@ -23,14 +23,14 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-struct _STOPWATCH
+struct s_STOPWATCH
 {
 	UINT64 start;
 	UINT64 end;
 	UINT64 elapsed;
 	UINT32 count;
 };
-typedef struct _STOPWATCH STOPWATCH;
+typedef struct s_STOPWATCH STOPWATCH;
 
 #ifdef __cplusplus
 extern "C"

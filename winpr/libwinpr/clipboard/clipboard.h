@@ -24,10 +24,10 @@
 
 #include <winpr/collections.h>
 
-typedef struct _wClipboardFormat wClipboardFormat;
-typedef struct _wClipboardSynthesizer wClipboardSynthesizer;
+typedef struct s_wClipboardFormat wClipboardFormat;
+typedef struct s_wClipboardSynthesizer wClipboardSynthesizer;
 
-struct _wClipboardFormat
+struct s_wClipboardFormat
 {
 	UINT32 formatId;
 	char* formatName;
@@ -36,13 +36,13 @@ struct _wClipboardFormat
 	wClipboardSynthesizer* synthesizers;
 };
 
-struct _wClipboardSynthesizer
+struct s_wClipboardSynthesizer
 {
 	UINT32 syntheticId;
 	CLIPBOARD_SYNTHESIZE_FN pfnSynthesize;
 };
 
-struct _wClipboard
+struct s_wClipboard
 {
 	UINT64 ownerId;
 

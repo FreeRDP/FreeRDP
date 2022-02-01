@@ -24,16 +24,16 @@
 #include <winpr/collections.h>
 #include <winpr/assert.h>
 
-typedef struct _wLinkedListItem wLinkedListNode;
+typedef struct s_wLinkedListItem wLinkedListNode;
 
-struct _wLinkedListItem
+struct s_wLinkedListItem
 {
 	void* value;
 	wLinkedListNode* prev;
 	wLinkedListNode* next;
 };
 
-struct _wLinkedList
+struct s_wLinkedList
 {
 	int count;
 	int initial;

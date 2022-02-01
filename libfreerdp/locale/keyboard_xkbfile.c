@@ -41,12 +41,12 @@
 #include <X11/extensions/XKBfile.h>
 #include <X11/extensions/XKBrules.h>
 
-struct _XKB_KEY_NAME_SCANCODE
+struct s_XKB_KEY_NAME_SCANCODE
 {
 	const char* xkb_keyname; /* XKB keyname */
 	DWORD rdp_scancode;
 };
-typedef struct _XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE;
+typedef struct s_XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE;
 
 static const XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] = {
 	{ "AB00", RDP_SCANCODE_LSHIFT },

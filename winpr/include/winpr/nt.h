@@ -1293,7 +1293,7 @@ static INLINE NTSTATUS NTSTATUS_FROM_WIN32(long x)
 #endif
 
 #ifndef __MINGW32__
-typedef enum _FILE_INFORMATION_CLASS
+typedef enum e_FILE_INFORMATION_CLASS
 {
 	FileDirectoryInformation = 1,
 	FileFullDirectoryInformation,
@@ -1389,7 +1389,7 @@ typedef enum _FILE_INFORMATION_CLASS
 
 typedef CONST char* PCSZ;
 
-typedef struct _STRING
+typedef struct s_STRING
 {
 	USHORT Length;
 	USHORT MaximumLength;
@@ -1405,7 +1405,7 @@ typedef STRING OEM_STRING;
 typedef PSTRING POEM_STRING;
 typedef CONST STRING* PCOEM_STRING;
 
-typedef struct _LSA_UNICODE_STRING
+typedef struct s_LSA_UNICODE_STRING
 {
 	USHORT Length;
 	USHORT MaximumLength;
@@ -1422,7 +1422,7 @@ typedef struct _LSA_UNICODE_STRING
 #define OBJ_FORCE_ACCESS_CHECK 0x00000400L
 #define OBJ_VALID_ATTRIBUTES 0x000007F2L
 
-typedef struct _OBJECT_ATTRIBUTES
+typedef struct s_OBJECT_ATTRIBUTES
 {
 	ULONG Length;
 	HANDLE RootDirectory;
@@ -1433,7 +1433,7 @@ typedef struct _OBJECT_ATTRIBUTES
 } OBJECT_ATTRIBUTES;
 typedef OBJECT_ATTRIBUTES* POBJECT_ATTRIBUTES;
 
-typedef struct _IO_STATUS_BLOCK
+typedef struct s_IO_STATUS_BLOCK
 {
 	union {
 #ifdef _WIN32
@@ -1452,24 +1452,24 @@ typedef VOID (*PIO_APC_ROUTINE)(PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock
 
 #if !defined(_WIN32)
 
-typedef struct _PEB PEB;
-typedef struct _PEB* PPEB;
+typedef struct s_PEB PEB;
+typedef struct s_PEB* PPEB;
 
-typedef struct _TEB TEB;
-typedef struct _TEB* PTEB;
+typedef struct s_TEB TEB;
+typedef struct s_TEB* PTEB;
 
 /**
  * Process Environment Block
  */
 
-struct _THREAD_BLOCK_ID
+struct s_THREAD_BLOCK_ID
 {
 	DWORD ThreadId;
 	TEB* ThreadEnvironmentBlock;
 };
-typedef struct _THREAD_BLOCK_ID THREAD_BLOCK_ID;
+typedef struct s_THREAD_BLOCK_ID THREAD_BLOCK_ID;
 
-struct _PEB
+struct s_PEB
 {
 	DWORD ThreadCount;
 	DWORD ThreadArraySize;
@@ -1480,7 +1480,7 @@ struct _PEB
  * Thread Environment Block
  */
 
-struct _TEB
+struct s_TEB
 {
 	PEB* ProcessEnvironmentBlock;
 

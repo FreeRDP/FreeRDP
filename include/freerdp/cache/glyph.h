@@ -27,27 +27,27 @@
 #include <winpr/wlog.h>
 #include <winpr/stream.h>
 
-typedef struct _GLYPH_CACHE GLYPH_CACHE;
-typedef struct _FRAGMENT_CACHE_ENTRY FRAGMENT_CACHE_ENTRY;
-typedef struct _FRAGMENT_CACHE FRAGMENT_CACHE;
+typedef struct s_GLYPH_CACHE GLYPH_CACHE;
+typedef struct s_FRAGMENT_CACHE_ENTRY FRAGMENT_CACHE_ENTRY;
+typedef struct s_FRAGMENT_CACHE FRAGMENT_CACHE;
 typedef struct rdp_glyph_cache rdpGlyphCache;
 
 #include <freerdp/cache/cache.h>
 
-struct _GLYPH_CACHE
+struct s_GLYPH_CACHE
 {
 	UINT32 number;
 	UINT32 maxCellSize;
 	rdpGlyph** entries;
 };
 
-struct _FRAGMENT_CACHE_ENTRY
+struct s_FRAGMENT_CACHE_ENTRY
 {
 	void* fragment;
 	UINT32 size;
 };
 
-struct _FRAGMENT_CACHE
+struct s_FRAGMENT_CACHE
 {
 	FRAGMENT_CACHE_ENTRY* entries;
 };

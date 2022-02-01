@@ -65,14 +65,14 @@ struct rdp_channel_open_data
 };
 typedef struct rdp_channel_open_data CHANNEL_OPEN_DATA;
 
-struct _CHANNEL_OPEN_EVENT
+struct s_CHANNEL_OPEN_EVENT
 {
 	void* Data;
 	UINT32 DataLength;
 	void* UserData;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 };
-typedef struct _CHANNEL_OPEN_EVENT CHANNEL_OPEN_EVENT;
+typedef struct s_CHANNEL_OPEN_EVENT CHANNEL_OPEN_EVENT;
 
 /**
  * pInitHandle: handle that identifies the client connection

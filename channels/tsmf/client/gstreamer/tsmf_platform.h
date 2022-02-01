@@ -25,7 +25,7 @@
 #include <gst/gst.h>
 #include <tsmf_decoder.h>
 
-typedef struct _TSMFGstreamerDecoder
+typedef struct s_TSMFGstreamerDecoder
 {
 	ITSMFDecoder iface;
 

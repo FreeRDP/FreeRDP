@@ -24,8 +24,8 @@
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 
-struct _gdiVideoContext;
-typedef struct _gdiVideoContext gdiVideoContext;
+struct s_gdiVideoContext;
+typedef struct s_gdiVideoContext gdiVideoContext;
 
 FREERDP_API void gdi_video_geometry_init(rdpGdi* gdi, GeometryClientContext* geom);
 FREERDP_API void gdi_video_geometry_uninit(rdpGdi* gdi, GeometryClientContext* geom);

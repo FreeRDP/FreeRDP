@@ -182,12 +182,13 @@
 #define MOVEFILE_CREATE_HARDLINK 0x10
 #define MOVEFILE_FAIL_IF_NOT_TRACKABLE 0x20
 
-typedef union _FILE_SEGMENT_ELEMENT {
+typedef union u_FILE_SEGMENT_ELEMENT
+{
 	PVOID64 Buffer;
 	ULONGLONG Alignment;
 } FILE_SEGMENT_ELEMENT, *PFILE_SEGMENT_ELEMENT;
 
-typedef struct _WIN32_FIND_DATAA
+typedef struct s_WIN32_FIND_DATAA
 {
 	DWORD dwFileAttributes;
 	FILETIME ftCreationTime;
@@ -201,7 +202,7 @@ typedef struct _WIN32_FIND_DATAA
 	CHAR cAlternateFileName[14];
 } WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
 
-typedef struct _WIN32_FIND_DATAW
+typedef struct s_WIN32_FIND_DATAW
 {
 	DWORD dwFileAttributes;
 	FILETIME ftCreationTime;
@@ -215,13 +216,13 @@ typedef struct _WIN32_FIND_DATAW
 	WCHAR cAlternateFileName[14];
 } WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW;
 
-typedef enum _FINDEX_INFO_LEVELS
+typedef enum e_FINDEX_INFO_LEVELS
 {
 	FindExInfoStandard,
 	FindExInfoMaxInfoLevel
 } FINDEX_INFO_LEVELS;
 
-typedef enum _FINDEX_SEARCH_OPS
+typedef enum e_FINDEX_SEARCH_OPS
 {
 	FindExSearchNameMatch,
 	FindExSearchLimitToDirectories,
@@ -285,7 +286,7 @@ extern "C"
 
 	WINPR_API BOOL FlushFileBuffers(HANDLE hFile);
 
-	typedef struct _WIN32_FILE_ATTRIBUTE_DATA
+	typedef struct s_WIN32_FILE_ATTRIBUTE_DATA
 	{
 		DWORD dwFileAttributes;
 		FILETIME ftCreationTime;
@@ -295,7 +296,7 @@ extern "C"
 		DWORD nFileSizeLow;
 	} WIN32_FILE_ATTRIBUTE_DATA, *LPWIN32_FILE_ATTRIBUTE_DATA;
 
-	typedef enum _GET_FILEEX_INFO_LEVELS
+	typedef enum e_GET_FILEEX_INFO_LEVELS
 	{
 		GetFileExInfoStandard,
 		GetFileExMaxInfoLevel
@@ -424,7 +425,7 @@ typedef HANDLE (*pcCreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD 
                                 DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                 HANDLE hTemplateFile);
 
-typedef struct _HANDLE_CREATOR
+typedef struct s_HANDLE_CREATOR
 {
 	pcIsFileHandled IsHandled;
 	pcCreateFileA CreateFileA;

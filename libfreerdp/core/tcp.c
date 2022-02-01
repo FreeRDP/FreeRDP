@@ -88,12 +88,12 @@
 
 /* Simple Socket BIO */
 
-struct _WINPR_BIO_SIMPLE_SOCKET
+struct s_WINPR_BIO_SIMPLE_SOCKET
 {
 	SOCKET socket;
 	HANDLE hEvent;
 };
-typedef struct _WINPR_BIO_SIMPLE_SOCKET WINPR_BIO_SIMPLE_SOCKET;
+typedef struct s_WINPR_BIO_SIMPLE_SOCKET WINPR_BIO_SIMPLE_SOCKET;
 
 static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown);
 static int transport_bio_simple_uninit(BIO* bio);
@@ -448,14 +448,14 @@ BIO_METHOD* BIO_s_simple_socket(void)
 
 /* Buffered Socket BIO */
 
-struct _WINPR_BIO_BUFFERED_SOCKET
+struct s_WINPR_BIO_BUFFERED_SOCKET
 {
 	BIO* bufferedBio;
 	BOOL readBlocked;
 	BOOL writeBlocked;
 	RingBuffer xmitBuffer;
 };
-typedef struct _WINPR_BIO_BUFFERED_SOCKET WINPR_BIO_BUFFERED_SOCKET;
+typedef struct s_WINPR_BIO_BUFFERED_SOCKET WINPR_BIO_BUFFERED_SOCKET;
 
 static long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int argi,
                                             long argl, long ret)

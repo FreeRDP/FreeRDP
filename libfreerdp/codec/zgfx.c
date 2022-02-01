@@ -42,7 +42,7 @@
  * Minimum match length: 3 bytes
  */
 
-struct _ZGFX_TOKEN
+struct s_ZGFX_TOKEN
 {
 	UINT32 prefixLength;
 	UINT32 prefixCode;
@@ -50,9 +50,9 @@ struct _ZGFX_TOKEN
 	UINT32 tokenType;
 	UINT32 valueBase;
 };
-typedef struct _ZGFX_TOKEN ZGFX_TOKEN;
+typedef struct s_ZGFX_TOKEN ZGFX_TOKEN;
 
-struct _ZGFX_CONTEXT
+struct s_ZGFX_CONTEXT
 {
 	BOOL Compressor;
 

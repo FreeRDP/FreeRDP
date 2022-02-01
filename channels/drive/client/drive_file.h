@@ -31,9 +31,9 @@
 
 #define TAG CHANNELS_TAG("drive.client")
 
-typedef struct _DRIVE_FILE DRIVE_FILE;
+typedef struct s_DRIVE_FILE DRIVE_FILE;
 
-struct _DRIVE_FILE
+struct s_DRIVE_FILE
 {
 	UINT32 id;
 	BOOL is_dir;

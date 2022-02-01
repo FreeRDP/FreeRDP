@@ -20,45 +20,45 @@
 #define EVENT_TYPE_KEY_UNICODE 4
 #define EVENT_TYPE_CLIPBOARD 5
 
-struct _ANDROID_EVENT
+struct s_ANDROID_EVENT
 {
 	int type;
 };
-typedef struct _ANDROID_EVENT ANDROID_EVENT;
+typedef struct s_ANDROID_EVENT ANDROID_EVENT;
 
-struct _ANDROID_EVENT_KEY
+struct s_ANDROID_EVENT_KEY
 {
 	int type;
 	int flags;
 	UINT16 scancode;
 };
-typedef struct _ANDROID_EVENT_KEY ANDROID_EVENT_KEY;
+typedef struct s_ANDROID_EVENT_KEY ANDROID_EVENT_KEY;
 
-struct _ANDROID_EVENT_CURSOR
+struct s_ANDROID_EVENT_CURSOR
 {
 	int type;
 	UINT16 flags;
 	UINT16 x;
 	UINT16 y;
 };
-typedef struct _ANDROID_EVENT_CURSOR ANDROID_EVENT_CURSOR;
+typedef struct s_ANDROID_EVENT_CURSOR ANDROID_EVENT_CURSOR;
 
-struct _ANDROID_EVENT_CLIPBOARD
+struct s_ANDROID_EVENT_CLIPBOARD
 {
 	int type;
 	void* data;
 	int data_length;
 };
-typedef struct _ANDROID_EVENT_CLIPBOARD ANDROID_EVENT_CLIPBOARD;
+typedef struct s_ANDROID_EVENT_CLIPBOARD ANDROID_EVENT_CLIPBOARD;
 
-struct _ANDROID_EVENT_QUEUE
+struct s_ANDROID_EVENT_QUEUE
 {
 	int size;
 	int count;
 	HANDLE isSet;
 	ANDROID_EVENT** events;
 };
-typedef struct _ANDROID_EVENT_QUEUE ANDROID_EVENT_QUEUE;
+typedef struct s_ANDROID_EVENT_QUEUE ANDROID_EVENT_QUEUE;
 
 FREERDP_LOCAL BOOL android_push_event(freerdp* inst, ANDROID_EVENT* event);
 

@@ -159,7 +159,7 @@ typedef PCSC_LONG (*fnPCSCSCardGetAttrib)(SCARDHANDLE hCard, PCSC_DWORD dwAttrId
 typedef PCSC_LONG (*fnPCSCSCardSetAttrib)(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPCBYTE pbAttr,
                                           PCSC_DWORD cbAttrLen);
 
-struct _PCSCFunctionTable
+struct s_PCSCFunctionTable
 {
 	fnPCSCSCardEstablishContext pfnSCardEstablishContext;
 	fnPCSCSCardReleaseContext pfnSCardReleaseContext;
@@ -180,10 +180,10 @@ struct _PCSCFunctionTable
 	fnPCSCSCardGetAttrib pfnSCardGetAttrib;
 	fnPCSCSCardSetAttrib pfnSCardSetAttrib;
 };
-typedef struct _PCSCFunctionTable PCSCFunctionTable;
+typedef struct s_PCSCFunctionTable PCSCFunctionTable;
 
-typedef struct _PCSC_SCARDCONTEXT PCSC_SCARDCONTEXT;
-typedef struct _PCSC_SCARDHANDLE PCSC_SCARDHANDLE;
+typedef struct s_PCSC_SCARDCONTEXT PCSC_SCARDCONTEXT;
+typedef struct s_PCSC_SCARDHANDLE PCSC_SCARDHANDLE;
 
 typedef struct
 {
@@ -192,7 +192,7 @@ typedef struct
 	BYTE* data;
 } PCSC_CACHE_ITEM;
 
-struct _PCSC_SCARDCONTEXT
+struct s_PCSC_SCARDCONTEXT
 {
 	SCARDHANDLE owner;
 	CRITICAL_SECTION lock;
@@ -202,7 +202,7 @@ struct _PCSC_SCARDCONTEXT
 	wHashTable* cache;
 };
 
-struct _PCSC_SCARDHANDLE
+struct s_PCSC_SCARDHANDLE
 {
 	BOOL shared;
 	SCARDCONTEXT hSharedContext;

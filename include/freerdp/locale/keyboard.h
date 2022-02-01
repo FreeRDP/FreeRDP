@@ -30,7 +30,7 @@
 #define RDP_KEYBOARD_LAYOUT_TYPE_VARIANT 2
 #define RDP_KEYBOARD_LAYOUT_TYPE_IME 4
 
-struct _RDP_CODEPAGE
+struct s_RDP_CODEPAGE
 {
 	UINT16 id;
 	UINT8 primaryId;
@@ -41,14 +41,14 @@ struct _RDP_CODEPAGE
 	char subLanguage[512];
 	char subLanguageSymbol[512];
 };
-typedef struct _RDP_CODEPAGE RDP_CODEPAGE;
+typedef struct s_RDP_CODEPAGE RDP_CODEPAGE;
 
-struct _RDP_KEYBOARD_LAYOUT
+struct s_RDP_KEYBOARD_LAYOUT
 {
 	DWORD code; /* Keyboard layout code */
 	char* name; /* Keyboard layout name */
 };
-typedef struct _RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT;
+typedef struct s_RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT;
 
 /* Keyboard layout IDs */
 

@@ -34,11 +34,11 @@
 
 #define TAG FREERDP_TAG("cache.nine_grid")
 
-struct _NINE_GRID_ENTRY
+struct s_NINE_GRID_ENTRY
 {
 	void* entry;
 };
-typedef struct _NINE_GRID_ENTRY NINE_GRID_ENTRY;
+typedef struct s_NINE_GRID_ENTRY NINE_GRID_ENTRY;
 
 struct rdp_nine_grid_cache
 {

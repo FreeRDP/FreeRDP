@@ -26,7 +26,7 @@
  * Log Layout
  */
 
-struct _wLogLayout
+struct s_wLogLayout
 {
 	DWORD Type;
 

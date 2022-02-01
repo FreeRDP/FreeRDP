@@ -50,13 +50,13 @@ struct wf_rail_window
 
 /* RemoteApp Core Protocol Extension */
 
-struct _WINDOW_STYLE
+struct s_WINDOW_STYLE
 {
 	UINT32 style;
 	const char* name;
 	BOOL multi;
 };
-typedef struct _WINDOW_STYLE WINDOW_STYLE;
+typedef struct s_WINDOW_STYLE WINDOW_STYLE;
 
 static const WINDOW_STYLE WINDOW_STYLES[] = { { WS_BORDER, "WS_BORDER", FALSE },
 	                                          { WS_CAPTION, "WS_CAPTION", FALSE },

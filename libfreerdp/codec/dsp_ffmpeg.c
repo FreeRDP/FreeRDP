@@ -40,7 +40,7 @@
 
 #define TAG FREERDP_TAG("dsp.ffmpeg")
 
-struct _FREERDP_DSP_CONTEXT
+struct s_FREERDP_DSP_CONTEXT
 {
 	AUDIO_FORMAT format;
 

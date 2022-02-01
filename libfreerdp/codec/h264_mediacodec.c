@@ -91,7 +91,7 @@ static const int COLOR_FormatYUV420Flexible = 0x7f420888;
 static const int MEDIACODEC_MINIMUM_WIDTH = 320;
 static const int MEDIACODEC_MINIMUM_HEIGHT = 240;
 
-struct _H264_CONTEXT_MEDIACODEC
+struct s_H264_CONTEXT_MEDIACODEC
 {
 	AMediaCodec* decoder;
 	AMediaFormat* inputFormat;
@@ -134,7 +134,7 @@ struct _H264_CONTEXT_MEDIACODEC
 	const char* gAMediaFormatKeyColorFormat;
 };
 
-typedef struct _H264_CONTEXT_MEDIACODEC H264_CONTEXT_MEDIACODEC;
+typedef struct s_H264_CONTEXT_MEDIACODEC H264_CONTEXT_MEDIACODEC;
 
 static int load_libmediandk(H264_CONTEXT* h264)
 {

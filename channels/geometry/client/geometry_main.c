@@ -40,7 +40,7 @@
 
 #include "geometry_main.h"
 
-struct _GEOMETRY_CHANNEL_CALLBACK
+struct s_GEOMETRY_CHANNEL_CALLBACK
 {
 	IWTSVirtualChannelCallback iface;
 
@@ -48,9 +48,9 @@ struct _GEOMETRY_CHANNEL_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
 };
-typedef struct _GEOMETRY_CHANNEL_CALLBACK GEOMETRY_CHANNEL_CALLBACK;
+typedef struct s_GEOMETRY_CHANNEL_CALLBACK GEOMETRY_CHANNEL_CALLBACK;
 
-struct _GEOMETRY_LISTENER_CALLBACK
+struct s_GEOMETRY_LISTENER_CALLBACK
 {
 	IWTSListenerCallback iface;
 
@@ -58,9 +58,9 @@ struct _GEOMETRY_LISTENER_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	GEOMETRY_CHANNEL_CALLBACK* channel_callback;
 };
-typedef struct _GEOMETRY_LISTENER_CALLBACK GEOMETRY_LISTENER_CALLBACK;
+typedef struct s_GEOMETRY_LISTENER_CALLBACK GEOMETRY_LISTENER_CALLBACK;
 
-struct _GEOMETRY_PLUGIN
+struct s_GEOMETRY_PLUGIN
 {
 	IWTSPlugin iface;
 
@@ -70,7 +70,7 @@ struct _GEOMETRY_PLUGIN
 	GeometryClientContext* context;
 	BOOL initialized;
 };
-typedef struct _GEOMETRY_PLUGIN GEOMETRY_PLUGIN;
+typedef struct s_GEOMETRY_PLUGIN GEOMETRY_PLUGIN;
 
 static UINT32 mappedGeometryHash(const void* v)
 {

@@ -32,13 +32,13 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #endif
 
-struct _PALETTE_ENTRY
+struct s_PALETTE_ENTRY
 {
 	BYTE red;
 	BYTE green;
 	BYTE blue;
 };
-typedef struct _PALETTE_ENTRY PALETTE_ENTRY;
+typedef struct s_PALETTE_ENTRY PALETTE_ENTRY;
 
 struct rdp_palette
 {
@@ -49,39 +49,39 @@ typedef struct rdp_palette rdpPalette;
 
 #include <freerdp/settings.h>
 
-struct _RDP_PLUGIN_DATA
+struct s_RDP_PLUGIN_DATA
 {
 	DWORD size;
 	void* data[4];
 };
-typedef struct _RDP_PLUGIN_DATA RDP_PLUGIN_DATA;
+typedef struct s_RDP_PLUGIN_DATA RDP_PLUGIN_DATA;
 
-struct _RDP_RECT
+struct s_RDP_RECT
 {
 	INT16 x;
 	INT16 y;
 	INT16 width;
 	INT16 height;
 };
-typedef struct _RDP_RECT RDP_RECT;
+typedef struct s_RDP_RECT RDP_RECT;
 
-struct _RECTANGLE_16
+struct s_RECTANGLE_16
 {
 	UINT16 left;
 	UINT16 top;
 	UINT16 right;
 	UINT16 bottom;
 };
-typedef struct _RECTANGLE_16 RECTANGLE_16;
+typedef struct s_RECTANGLE_16 RECTANGLE_16;
 
-struct _RECTANGLE_32
+struct s_RECTANGLE_32
 {
 	UINT32 left;
 	UINT32 top;
 	UINT32 width;
 	UINT32 height;
 };
-typedef struct _RECTANGLE_32 RECTANGLE_32;
+typedef struct s_RECTANGLE_32 RECTANGLE_32;
 
 /* Plugin events */
 

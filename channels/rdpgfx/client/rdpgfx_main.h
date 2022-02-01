@@ -32,7 +32,7 @@
 #include <freerdp/codec/zgfx.h>
 #include <freerdp/freerdp.h>
 
-struct _RDPGFX_CHANNEL_CALLBACK
+struct s_RDPGFX_CHANNEL_CALLBACK
 {
 	IWTSVirtualChannelCallback iface;
 
@@ -40,9 +40,9 @@ struct _RDPGFX_CHANNEL_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
 };
-typedef struct _RDPGFX_CHANNEL_CALLBACK RDPGFX_CHANNEL_CALLBACK;
+typedef struct s_RDPGFX_CHANNEL_CALLBACK RDPGFX_CHANNEL_CALLBACK;
 
-struct _RDPGFX_LISTENER_CALLBACK
+struct s_RDPGFX_LISTENER_CALLBACK
 {
 	IWTSListenerCallback iface;
 
@@ -50,9 +50,9 @@ struct _RDPGFX_LISTENER_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	RDPGFX_CHANNEL_CALLBACK* channel_callback;
 };
-typedef struct _RDPGFX_LISTENER_CALLBACK RDPGFX_LISTENER_CALLBACK;
+typedef struct s_RDPGFX_LISTENER_CALLBACK RDPGFX_LISTENER_CALLBACK;
 
-struct _RDPGFX_PLUGIN
+struct s_RDPGFX_PLUGIN
 {
 	IWTSPlugin iface;
 
@@ -87,6 +87,6 @@ struct _RDPGFX_PLUGIN
 	BOOL SendQoeAck;
 	BOOL initialized;
 };
-typedef struct _RDPGFX_PLUGIN RDPGFX_PLUGIN;
+typedef struct s_RDPGFX_PLUGIN RDPGFX_PLUGIN;
 
 #endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_MAIN_H */

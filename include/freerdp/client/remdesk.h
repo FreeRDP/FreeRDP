@@ -26,9 +26,9 @@
  * Client Interface
  */
 
-typedef struct _remdesk_client_context RemdeskClientContext;
+typedef struct s_remdesk_client_context RemdeskClientContext;
 
-struct _remdesk_client_context
+struct s_remdesk_client_context
 {
 	void* handle;
 	void* custom;

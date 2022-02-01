@@ -36,7 +36,7 @@
 
 #define TAG CHANNELS_TAG("tsmf.client")
 
-typedef struct _TSMFMediaTypeMap
+typedef struct s_TSMFMediaTypeMap
 {
 	BYTE guid[16];
 	const char* name;

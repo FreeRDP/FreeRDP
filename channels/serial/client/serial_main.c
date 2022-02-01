@@ -52,9 +52,9 @@
 
 #define MAX_IRP_THREADS 5
 
-typedef struct _SERIAL_DEVICE SERIAL_DEVICE;
+typedef struct s_SERIAL_DEVICE SERIAL_DEVICE;
 
-struct _SERIAL_DEVICE
+struct s_SERIAL_DEVICE
 {
 	DEVICE device;
 	BOOL permissive;
@@ -72,9 +72,9 @@ struct _SERIAL_DEVICE
 	rdpContext* rdpcontext;
 };
 
-typedef struct _IRP_THREAD_DATA IRP_THREAD_DATA;
+typedef struct s_IRP_THREAD_DATA IRP_THREAD_DATA;
 
-struct _IRP_THREAD_DATA
+struct s_IRP_THREAD_DATA
 {
 	SERIAL_DEVICE* serial;
 	IRP* irp;

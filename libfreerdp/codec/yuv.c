@@ -7,7 +7,7 @@
 
 #define TAG FREERDP_TAG("codec")
 
-struct _YUV_CONTEXT
+struct s_YUV_CONTEXT
 {
 	UINT32 width, height;
 	BOOL useThreads;

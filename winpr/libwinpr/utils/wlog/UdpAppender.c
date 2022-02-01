@@ -28,7 +28,7 @@
 
 #include "wlog.h"
 
-struct _wLogUdpAppender
+struct s_wLogUdpAppender
 {
 	WLOG_APPENDER_COMMON();
 	char* host;
@@ -36,7 +36,7 @@ struct _wLogUdpAppender
 	int targetAddrLen;
 	SOCKET sock;
 };
-typedef struct _wLogUdpAppender wLogUdpAppender;
+typedef struct s_wLogUdpAppender wLogUdpAppender;
 
 static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 {

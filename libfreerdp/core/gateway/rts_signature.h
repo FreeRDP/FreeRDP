@@ -21,7 +21,7 @@
 #define FREERDP_LIB_CORE_GATEWAY_RTS_SIGNATURE_H
 
 typedef struct rts_pdu_signature RtsPduSignature;
-typedef struct _RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_ENTRY;
+typedef struct s_RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_ENTRY;
 
 #include "rts.h"
 
@@ -35,7 +35,7 @@ struct rts_pdu_signature
 	UINT32 CommandTypes[8];
 };
 
-struct _RTS_PDU_SIGNATURE_ENTRY
+struct s_RTS_PDU_SIGNATURE_ENTRY
 {
 	UINT32 SignatureId;
 	BOOL SignatureClient;

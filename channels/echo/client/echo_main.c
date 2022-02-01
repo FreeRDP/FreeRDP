@@ -35,8 +35,8 @@
 
 #define TAG CHANNELS_TAG("echo.client")
 
-typedef struct _ECHO_LISTENER_CALLBACK ECHO_LISTENER_CALLBACK;
-struct _ECHO_LISTENER_CALLBACK
+typedef struct s_ECHO_LISTENER_CALLBACK ECHO_LISTENER_CALLBACK;
+struct s_ECHO_LISTENER_CALLBACK
 {
 	IWTSListenerCallback iface;
 
@@ -44,8 +44,8 @@ struct _ECHO_LISTENER_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 };
 
-typedef struct _ECHO_CHANNEL_CALLBACK ECHO_CHANNEL_CALLBACK;
-struct _ECHO_CHANNEL_CALLBACK
+typedef struct s_ECHO_CHANNEL_CALLBACK ECHO_CHANNEL_CALLBACK;
+struct s_ECHO_CHANNEL_CALLBACK
 {
 	IWTSVirtualChannelCallback iface;
 
@@ -54,8 +54,8 @@ struct _ECHO_CHANNEL_CALLBACK
 	IWTSVirtualChannel* channel;
 };
 
-typedef struct _ECHO_PLUGIN ECHO_PLUGIN;
-struct _ECHO_PLUGIN
+typedef struct s_ECHO_PLUGIN ECHO_PLUGIN;
+struct s_ECHO_PLUGIN
 {
 	IWTSPlugin iface;
 

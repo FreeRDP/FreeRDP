@@ -24,7 +24,7 @@
 
 #include <winpr/crt.h>
 
-typedef struct _BITMAP_PLANAR_CONTEXT BITMAP_PLANAR_CONTEXT;
+typedef struct s_BITMAP_PLANAR_CONTEXT BITMAP_PLANAR_CONTEXT;
 
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
@@ -40,7 +40,7 @@ typedef struct _BITMAP_PLANAR_CONTEXT BITMAP_PLANAR_CONTEXT;
 #define PLANAR_CONTROL_BYTE_RUN_LENGTH(_controlByte) (_controlByte & 0x0F)
 #define PLANAR_CONTROL_BYTE_RAW_BYTES(_controlByte) ((_controlByte >> 4) & 0x0F)
 
-struct _RDP6_RLE_SEGMENT
+struct s_RDP6_RLE_SEGMENT
 {
 	/**
 	 * controlByte:
@@ -50,16 +50,16 @@ struct _RDP6_RLE_SEGMENT
 	BYTE controlByte;
 	BYTE* rawValues;
 };
-typedef struct _RDP6_RLE_SEGMENT RDP6_RLE_SEGMENT;
+typedef struct s_RDP6_RLE_SEGMENT RDP6_RLE_SEGMENT;
 
-struct _RDP6_RLE_SEGMENTS
+struct s_RDP6_RLE_SEGMENTS
 {
 	UINT32 cSegments;
 	RDP6_RLE_SEGMENT* segments;
 };
-typedef struct _RDP6_RLE_SEGMENTS RDP6_RLE_SEGMENTS;
+typedef struct s_RDP6_RLE_SEGMENTS RDP6_RLE_SEGMENTS;
 
-struct _RDP6_BITMAP_STREAM
+struct s_RDP6_BITMAP_STREAM
 {
 	/**
 	 * formatHeader:
@@ -71,9 +71,9 @@ struct _RDP6_BITMAP_STREAM
 	 */
 	BYTE formatHeader;
 };
-typedef struct _RDP6_BITMAP_STREAM RDP6_BITMAP_STREAM;
+typedef struct s_RDP6_BITMAP_STREAM RDP6_BITMAP_STREAM;
 
-struct _BITMAP_PLANAR_CONTEXT
+struct s_BITMAP_PLANAR_CONTEXT
 {
 	UINT32 maxWidth;
 	UINT32 maxHeight;

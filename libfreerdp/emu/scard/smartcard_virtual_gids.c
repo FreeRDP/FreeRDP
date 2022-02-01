@@ -202,7 +202,7 @@ static const BYTE g_GidsAppFCI[] = { 0x61, 0x12, 0x4F, 0x0B, 0xA0, 0x00, 0x00, 0
 	                                 0x54, 0x46, 0x59, 0x02, 0x01, 0x73, 0x03, 0x40, 0x01, 0xC0 };
 
 /*
-typedef struct _CARD_CACHE_FILE_FORMAT
+typedef struct s_CARD_CACHE_FILE_FORMAT
 {
     BYTE bVersion; // Cache version
     BYTE bPinsFreshness; // Card PIN

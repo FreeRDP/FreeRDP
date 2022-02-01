@@ -24,11 +24,11 @@
 #include <winpr/stream.h>
 #include <freerdp/api.h>
 
-typedef struct _MSUSB_INTERFACE_DESCRIPTOR MSUSB_INTERFACE_DESCRIPTOR;
-typedef struct _MSUSB_PIPE_DESCRIPTOR MSUSB_PIPE_DESCRIPTOR;
-typedef struct _MSUSB_CONFIG_DESCRIPTOR MSUSB_CONFIG_DESCRIPTOR;
+typedef struct s_MSUSB_INTERFACE_DESCRIPTOR MSUSB_INTERFACE_DESCRIPTOR;
+typedef struct s_MSUSB_PIPE_DESCRIPTOR MSUSB_PIPE_DESCRIPTOR;
+typedef struct s_MSUSB_CONFIG_DESCRIPTOR MSUSB_CONFIG_DESCRIPTOR;
 
-struct _MSUSB_PIPE_DESCRIPTOR
+struct s_MSUSB_PIPE_DESCRIPTOR
 {
 	UINT16 MaximumPacketSize;
 	UINT32 MaximumTransferSize;
@@ -40,7 +40,7 @@ struct _MSUSB_PIPE_DESCRIPTOR
 	int InitCompleted;
 };
 
-struct _MSUSB_INTERFACE_DESCRIPTOR
+struct s_MSUSB_INTERFACE_DESCRIPTOR
 {
 	UINT16 Length;
 	UINT16 NumberOfPipesExpected;
@@ -55,7 +55,7 @@ struct _MSUSB_INTERFACE_DESCRIPTOR
 	int InitCompleted;
 };
 
-struct _MSUSB_CONFIG_DESCRIPTOR
+struct s_MSUSB_CONFIG_DESCRIPTOR
 {
 	UINT16 wTotalLength;
 	BYTE bConfigurationValue;

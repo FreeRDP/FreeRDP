@@ -24,7 +24,7 @@
 
 #define PCAP_MAGIC_NUMBER 0xA1B2C3D4
 
-struct _wPcapHeader
+struct s_wPcapHeader
 {
 	UINT32 magic_number;  /* magic number */
 	UINT16 version_major; /* major version number */
@@ -34,20 +34,20 @@ struct _wPcapHeader
 	UINT32 snaplen;       /* max length of captured packets, in octets */
 	UINT32 network;       /* data link type */
 };
-typedef struct _wPcapHeader wPcapHeader;
+typedef struct s_wPcapHeader wPcapHeader;
 
-struct _wPcapRecordHeader
+struct s_wPcapRecordHeader
 {
 	UINT32 ts_sec;   /* timestamp seconds */
 	UINT32 ts_usec;  /* timestamp microseconds */
 	UINT32 incl_len; /* number of octets of packet saved in file */
 	UINT32 orig_len; /* actual length of packet */
 };
-typedef struct _wPcapRecordHeader wPcapRecordHeader;
+typedef struct s_wPcapRecordHeader wPcapRecordHeader;
 
-typedef struct _wPcapRecord wPcapRecord;
+typedef struct s_wPcapRecord wPcapRecord;
 
-struct _wPcapRecord
+struct s_wPcapRecord
 {
 	wPcapRecordHeader header;
 	void* data;
@@ -55,7 +55,7 @@ struct _wPcapRecord
 	wPcapRecord* next;
 };
 
-struct _wPcap
+struct s_wPcap
 {
 	FILE* fp;
 	char* name;
@@ -67,22 +67,22 @@ struct _wPcap
 	wPcapRecord* tail;
 	wPcapRecord* record;
 };
-typedef struct _wPcap wPcap;
+typedef struct s_wPcap wPcap;
 
 wPcap* Pcap_Open(char* name, BOOL write);
 void Pcap_Close(wPcap* pcap);
 
 void Pcap_Flush(wPcap* pcap);
 
-struct _wEthernetHeader
+struct s_wEthernetHeader
 {
 	BYTE Destination[6];
 	BYTE Source[6];
 	UINT16 Type;
 };
-typedef struct _wEthernetHeader wEthernetHeader;
+typedef struct s_wEthernetHeader wEthernetHeader;
 
-struct _wIPv4Header
+struct s_wIPv4Header
 {
 	BYTE Version;
 	BYTE InternetHeaderLength;
@@ -97,9 +97,9 @@ struct _wIPv4Header
 	UINT32 SourceAddress;
 	UINT32 DestinationAddress;
 };
-typedef struct _wIPv4Header wIPv4Header;
+typedef struct s_wIPv4Header wIPv4Header;
 
-struct _wTcpHeader
+struct s_wTcpHeader
 {
 	UINT16 SourcePort;
 	UINT16 DestinationPort;
@@ -112,7 +112,7 @@ struct _wTcpHeader
 	UINT16 Checksum;
 	UINT16 UrgentPointer;
 };
-typedef struct _wTcpHeader wTcpHeader;
+typedef struct s_wTcpHeader wTcpHeader;
 
 BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flags);
 

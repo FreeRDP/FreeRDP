@@ -56,17 +56,17 @@
 	_man->iface.get_##_arg = udevman_get_##_arg; \
 	_man->iface.set_##_arg = udevman_set_##_arg
 
-typedef struct _VID_PID_PAIR VID_PID_PAIR;
+typedef struct s_VID_PID_PAIR VID_PID_PAIR;
 
-struct _VID_PID_PAIR
+struct s_VID_PID_PAIR
 {
 	UINT16 vid;
 	UINT16 pid;
 };
 
-typedef struct _UDEVMAN UDEVMAN;
+typedef struct s_UDEVMAN UDEVMAN;
 
-struct _UDEVMAN
+struct s_UDEVMAN
 {
 	IUDEVMAN iface;
 

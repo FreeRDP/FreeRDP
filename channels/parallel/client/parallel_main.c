@@ -61,7 +61,7 @@
 
 #define TAG CHANNELS_TAG("drive.client")
 
-struct _PARALLEL_DEVICE
+struct s_PARALLEL_DEVICE
 {
 	DEVICE device;
 
@@ -73,7 +73,7 @@ struct _PARALLEL_DEVICE
 	wMessageQueue* queue;
 	rdpContext* rdpcontext;
 };
-typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
+typedef struct s_PARALLEL_DEVICE PARALLEL_DEVICE;
 
 /**
  * Function description

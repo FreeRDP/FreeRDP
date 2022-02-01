@@ -32,8 +32,8 @@
  * Server Interface
  */
 
-typedef struct _encomsp_server_context EncomspServerContext;
-typedef struct _encomsp_server_private EncomspServerPrivate;
+typedef struct s_encomsp_server_context EncomspServerContext;
+typedef struct s_encomsp_server_private EncomspServerPrivate;
 
 typedef UINT (*psEncomspStart)(EncomspServerContext* context);
 typedef UINT (*psEncomspStop)(EncomspServerContext* context);
@@ -62,7 +62,7 @@ typedef UINT (*psEncomspGraphicsStreamPaused)(
 typedef UINT (*psEncomspGraphicsStreamResumed)(
     EncomspServerContext* context, ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU* graphicsStreamResumed);
 
-struct _encomsp_server_context
+struct s_encomsp_server_context
 {
 	HANDLE vcm;
 	void* custom;

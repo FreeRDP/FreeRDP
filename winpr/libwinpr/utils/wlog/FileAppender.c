@@ -29,7 +29,7 @@
 #include <winpr/file.h>
 #include <winpr/path.h>
 
-struct _wLogFileAppender
+struct s_wLogFileAppender
 {
 	WLOG_APPENDER_COMMON();
 
@@ -38,7 +38,7 @@ struct _wLogFileAppender
 	char* FullFileName;
 	FILE* FileDescriptor;
 };
-typedef struct _wLogFileAppender wLogFileAppender;
+typedef struct s_wLogFileAppender wLogFileAppender;
 
 static BOOL WLog_FileAppender_SetOutputFileName(wLogFileAppender* appender, const char* filename)
 {

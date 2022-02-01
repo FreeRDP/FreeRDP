@@ -66,7 +66,7 @@
 #define NTLMSSP_NEGOTIATE_OEM 0x00000002                       /* B   (30) */
 #define NTLMSSP_NEGOTIATE_UNICODE 0x00000001                   /* A   (31) */
 
-enum _NTLM_STATE
+enum e_NTLM_STATE
 {
 	NTLM_STATE_INITIAL,
 	NTLM_STATE_NEGOTIATE,
@@ -75,7 +75,7 @@ enum _NTLM_STATE
 	NTLM_STATE_COMPLETION,
 	NTLM_STATE_FINAL
 };
-typedef enum _NTLM_STATE NTLM_STATE;
+typedef enum e_NTLM_STATE NTLM_STATE;
 
 #ifdef __MINGW32__
 typedef MSV1_0_AVID NTLM_AV_ID;
@@ -91,7 +91,7 @@ enum {
 
 #endif
 #else
-enum _NTLM_AV_ID
+enum e_NTLM_AV_ID
 {
 	MsvAvEOL,
 	MsvAvNbComputerName,
@@ -105,15 +105,15 @@ enum _NTLM_AV_ID
 	MsvAvTargetName,
 	MsvAvChannelBindings
 };
-typedef enum _NTLM_AV_ID NTLM_AV_ID;
+typedef enum e_NTLM_AV_ID NTLM_AV_ID;
 #endif /* __MINGW32__ */
 
-struct _NTLM_AV_PAIR
+struct s_NTLM_AV_PAIR
 {
 	UINT16 AvId;
 	UINT16 AvLen;
 };
-typedef struct _NTLM_AV_PAIR NTLM_AV_PAIR;
+typedef struct s_NTLM_AV_PAIR NTLM_AV_PAIR;
 
 #define MSV_AV_FLAGS_AUTHENTICATION_CONSTRAINED 0x00000001
 #define MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK 0x00000002
@@ -126,7 +126,7 @@ typedef struct _NTLM_AV_PAIR NTLM_AV_PAIR;
 #define WINDOWS_MINOR_VERSION_2 0x02
 #define NTLMSSP_REVISION_W2K3 0x0F
 
-struct _NTLM_VERSION_INFO
+struct s_NTLM_VERSION_INFO
 {
 	UINT8 ProductMajorVersion;
 	UINT8 ProductMinorVersion;
@@ -134,9 +134,9 @@ struct _NTLM_VERSION_INFO
 	BYTE Reserved[3];
 	UINT8 NTLMRevisionCurrent;
 };
-typedef struct _NTLM_VERSION_INFO NTLM_VERSION_INFO;
+typedef struct s_NTLM_VERSION_INFO NTLM_VERSION_INFO;
 
-struct _NTLM_SINGLE_HOST_DATA
+struct s_NTLM_SINGLE_HOST_DATA
 {
 	UINT32 Size;
 	UINT32 Z4;
@@ -144,15 +144,15 @@ struct _NTLM_SINGLE_HOST_DATA
 	UINT32 CustomData;
 	BYTE MachineID[32];
 };
-typedef struct _NTLM_SINGLE_HOST_DATA NTLM_SINGLE_HOST_DATA;
+typedef struct s_NTLM_SINGLE_HOST_DATA NTLM_SINGLE_HOST_DATA;
 
-struct _NTLM_RESPONSE
+struct s_NTLM_RESPONSE
 {
 	BYTE Response[24];
 };
-typedef struct _NTLM_RESPONSE NTLM_RESPONSE;
+typedef struct s_NTLM_RESPONSE NTLM_RESPONSE;
 
-struct _NTLMv2_CLIENT_CHALLENGE
+struct s_NTLMv2_CLIENT_CHALLENGE
 {
 	UINT8 RespType;
 	UINT8 HiRespType;
@@ -164,32 +164,32 @@ struct _NTLMv2_CLIENT_CHALLENGE
 	NTLM_AV_PAIR* AvPairs;
 	UINT32 cbAvPairs;
 };
-typedef struct _NTLMv2_CLIENT_CHALLENGE NTLMv2_CLIENT_CHALLENGE;
+typedef struct s_NTLMv2_CLIENT_CHALLENGE NTLMv2_CLIENT_CHALLENGE;
 
-struct _NTLMv2_RESPONSE
+struct s_NTLMv2_RESPONSE
 {
 	BYTE Response[16];
 	NTLMv2_CLIENT_CHALLENGE Challenge;
 };
-typedef struct _NTLMv2_RESPONSE NTLMv2_RESPONSE;
+typedef struct s_NTLMv2_RESPONSE NTLMv2_RESPONSE;
 
-struct _NTLM_MESSAGE_FIELDS
+struct s_NTLM_MESSAGE_FIELDS
 {
 	UINT16 Len;
 	UINT16 MaxLen;
 	PBYTE Buffer;
 	UINT32 BufferOffset;
 };
-typedef struct _NTLM_MESSAGE_FIELDS NTLM_MESSAGE_FIELDS;
+typedef struct s_NTLM_MESSAGE_FIELDS NTLM_MESSAGE_FIELDS;
 
-struct _NTLM_MESSAGE_HEADER
+struct s_NTLM_MESSAGE_HEADER
 {
 	BYTE Signature[8];
 	UINT32 MessageType;
 };
-typedef struct _NTLM_MESSAGE_HEADER NTLM_MESSAGE_HEADER;
+typedef struct s_NTLM_MESSAGE_HEADER NTLM_MESSAGE_HEADER;
 
-struct _NTLM_NEGOTIATE_MESSAGE
+struct s_NTLM_NEGOTIATE_MESSAGE
 {
 	BYTE Signature[8];
 	UINT32 MessageType;
@@ -198,9 +198,9 @@ struct _NTLM_NEGOTIATE_MESSAGE
 	NTLM_MESSAGE_FIELDS DomainName;
 	NTLM_MESSAGE_FIELDS Workstation;
 };
-typedef struct _NTLM_NEGOTIATE_MESSAGE NTLM_NEGOTIATE_MESSAGE;
+typedef struct s_NTLM_NEGOTIATE_MESSAGE NTLM_NEGOTIATE_MESSAGE;
 
-struct _NTLM_CHALLENGE_MESSAGE
+struct s_NTLM_CHALLENGE_MESSAGE
 {
 	BYTE Signature[8];
 	UINT32 MessageType;
@@ -211,9 +211,9 @@ struct _NTLM_CHALLENGE_MESSAGE
 	NTLM_MESSAGE_FIELDS TargetName;
 	NTLM_MESSAGE_FIELDS TargetInfo;
 };
-typedef struct _NTLM_CHALLENGE_MESSAGE NTLM_CHALLENGE_MESSAGE;
+typedef struct s_NTLM_CHALLENGE_MESSAGE NTLM_CHALLENGE_MESSAGE;
 
-struct _NTLM_AUTHENTICATE_MESSAGE
+struct s_NTLM_AUTHENTICATE_MESSAGE
 {
 	BYTE Signature[8];
 	UINT32 MessageType;
@@ -227,9 +227,9 @@ struct _NTLM_AUTHENTICATE_MESSAGE
 	NTLM_MESSAGE_FIELDS EncryptedRandomSessionKey;
 	BYTE MessageIntegrityCheck[16];
 };
-typedef struct _NTLM_AUTHENTICATE_MESSAGE NTLM_AUTHENTICATE_MESSAGE;
+typedef struct s_NTLM_AUTHENTICATE_MESSAGE NTLM_AUTHENTICATE_MESSAGE;
 
-struct _NTLM_CONTEXT
+struct s_NTLM_CONTEXT
 {
 	BOOL server;
 	BOOL NTLMv2;
@@ -293,7 +293,7 @@ struct _NTLM_CONTEXT
 	psPeerComputeNtlmHash HashCallback;
 	void* HashCallbackArg;
 };
-typedef struct _NTLM_CONTEXT NTLM_CONTEXT;
+typedef struct s_NTLM_CONTEXT NTLM_CONTEXT;
 
 SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT* ntlm, SecBuffer* ntproof);
 SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue);

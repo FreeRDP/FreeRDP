@@ -22,14 +22,14 @@
 
 #include <freerdp/codec/rfx.h>
 
-struct _RFX_BITSTREAM
+struct s_RFX_BITSTREAM
 {
 	BYTE* buffer;
 	int nbytes;
 	int byte_pos;
 	int bits_left;
 };
-typedef struct _RFX_BITSTREAM RFX_BITSTREAM;
+typedef struct s_RFX_BITSTREAM RFX_BITSTREAM;
 
 #define rfx_bitstream_attach(bs, _buffer, _nbytes) \
 	do                                             \

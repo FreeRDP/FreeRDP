@@ -24,12 +24,12 @@
 #include <IOKit/IOKitLib.h>
 #include <IOKit/hid/IOHIDManager.h>
 
-struct _APPLE_KEYBOARD_DESC
+struct s_APPLE_KEYBOARD_DESC
 {
 	uint32_t ProductId;
 	enum APPLE_KEYBOARD_TYPE Type;
 };
-typedef struct _APPLE_KEYBOARD_DESC APPLE_KEYBOARD_DESC;
+typedef struct s_APPLE_KEYBOARD_DESC APPLE_KEYBOARD_DESC;
 
 /* VendorID: 0x05AC (Apple, Inc.) */
 

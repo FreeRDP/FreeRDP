@@ -22,10 +22,10 @@
 #ifndef FREERDP_CODEC_REMOTEFX_H
 #define FREERDP_CODEC_REMOTEFX_H
 
-typedef struct _RFX_RECT RFX_RECT;
-typedef struct _RFX_TILE RFX_TILE;
-typedef struct _RFX_MESSAGE RFX_MESSAGE;
-typedef struct _RFX_CONTEXT RFX_CONTEXT;
+typedef struct s_RFX_RECT RFX_RECT;
+typedef struct s_RFX_TILE RFX_TILE;
+typedef struct s_RFX_MESSAGE RFX_MESSAGE;
+typedef struct s_RFX_CONTEXT RFX_CONTEXT;
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -40,14 +40,14 @@ extern "C"
 {
 #endif
 
-	enum _RLGR_MODE
+	enum e_RLGR_MODE
 	{
 		RLGR1,
 		RLGR3
 	};
-	typedef enum _RLGR_MODE RLGR_MODE;
+	typedef enum e_RLGR_MODE RLGR_MODE;
 
-	struct _RFX_RECT
+	struct s_RFX_RECT
 	{
 		UINT16 x;
 		UINT16 y;
@@ -55,7 +55,7 @@ extern "C"
 		UINT16 height;
 	};
 
-	struct _RFX_TILE
+	struct s_RFX_TILE
 	{
 		UINT16 x;
 		UINT16 y;
@@ -78,7 +78,7 @@ extern "C"
 		BYTE* YCbCrData;
 	};
 
-	struct _RFX_MESSAGE
+	struct s_RFX_MESSAGE
 	{
 		UINT32 frameIdx;
 
@@ -107,9 +107,9 @@ extern "C"
 		BOOL freeArray;
 	};
 
-	typedef struct _RFX_CONTEXT_PRIV RFX_CONTEXT_PRIV;
+	typedef struct s_RFX_CONTEXT_PRIV RFX_CONTEXT_PRIV;
 
-	enum _RFX_STATE
+	enum e_RFX_STATE
 	{
 		RFX_STATE_INITIAL,
 		RFX_STATE_SERVER_UNINITIALIZED,
@@ -118,7 +118,7 @@ extern "C"
 		RFX_STATE_FRAME_DATA_SENT,
 		RFX_STATE_FINAL
 	};
-	typedef enum _RFX_STATE RFX_STATE;
+	typedef enum e_RFX_STATE RFX_STATE;
 
 #define RFX_DECODED_SYNC 0x00000001
 #define RFX_DECODED_CONTEXT 0x00000002
@@ -126,7 +126,7 @@ extern "C"
 #define RFX_DECODED_CHANNELS 0x00000008
 #define RFX_DECODED_HEADERS 0x0000000F
 
-	struct _RFX_CONTEXT
+	struct s_RFX_CONTEXT
 	{
 		RFX_STATE state;
 

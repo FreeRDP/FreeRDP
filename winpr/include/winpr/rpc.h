@@ -22,7 +22,7 @@
 
 #include <winpr/wtypes.h>
 
-typedef struct _CONTEXT_HANDLE
+typedef struct s_CONTEXT_HANDLE
 {
 	UINT32 ContextType;
 	BYTE ContextUuid[16];
@@ -81,14 +81,14 @@ typedef void* I_RPC_HANDLE;
 typedef I_RPC_HANDLE RPC_BINDING_HANDLE;
 typedef RPC_BINDING_HANDLE handle_t;
 
-typedef struct _RPC_BINDING_VECTOR
+typedef struct s_RPC_BINDING_VECTOR
 {
 	unsigned long Count;
 	RPC_BINDING_HANDLE BindingH[1];
 } RPC_BINDING_VECTOR;
 #define rpc_binding_vector_t RPC_BINDING_VECTOR
 
-typedef struct _UUID_VECTOR
+typedef struct s_UUID_VECTOR
 {
 	unsigned long Count;
 	UUID* Uuid[1];
@@ -97,7 +97,7 @@ typedef struct _UUID_VECTOR
 
 typedef void* RPC_IF_HANDLE;
 
-typedef struct _RPC_IF_ID
+typedef struct s_RPC_IF_ID
 {
 	UUID Uuid;
 	unsigned short VersMajor;
@@ -151,13 +151,13 @@ typedef struct _RPC_IF_ID
 
 #define RPC_C_FULL_CERT_CHAIN 0x0001
 
-typedef struct _RPC_PROTSEQ_VECTORA
+typedef struct s_RPC_PROTSEQ_VECTORA
 {
 	unsigned int Count;
 	unsigned char* Protseq[1];
 } RPC_PROTSEQ_VECTORA;
 
-typedef struct _RPC_PROTSEQ_VECTORW
+typedef struct s_RPC_PROTSEQ_VECTORW
 {
 	unsigned int Count;
 	unsigned short* Protseq[1];
@@ -169,7 +169,7 @@ typedef struct _RPC_PROTSEQ_VECTORW
 #define RPC_PROTSEQ_VECTOR RPC_PROTSEQ_VECTORA
 #endif
 
-typedef struct _RPC_POLICY
+typedef struct s_RPC_POLICY
 {
 	unsigned int Length;
 	unsigned long EndpointFlags;
@@ -255,7 +255,7 @@ typedef void* RPC_AUTHZ_HANDLE;
 #define RPC_C_SECURITY_QOS_VERSION 1L
 #define RPC_C_SECURITY_QOS_VERSION_1 1L
 
-typedef struct _RPC_SECURITY_QOS
+typedef struct s_RPC_SECURITY_QOS
 {
 	unsigned long Version;
 	unsigned long Capabilities;
@@ -281,7 +281,7 @@ typedef struct _RPC_SECURITY_QOS
 #define RPC_C_HTTP_FLAG_USE_FIRST_AUTH_SCHEME 2
 #define RPC_C_HTTP_FLAG_IGNORE_CERT_CN_INVALID 8
 
-typedef struct _RPC_HTTP_TRANSPORT_CREDENTIALS_W
+typedef struct s_RPC_HTTP_TRANSPORT_CREDENTIALS_W
 {
 	SEC_WINNT_AUTH_IDENTITY_W* TransportCredentials;
 	unsigned long Flags;
@@ -291,7 +291,7 @@ typedef struct _RPC_HTTP_TRANSPORT_CREDENTIALS_W
 	unsigned short* ServerCertificateSubject;
 } RPC_HTTP_TRANSPORT_CREDENTIALS_W, *PRPC_HTTP_TRANSPORT_CREDENTIALS_W;
 
-typedef struct _RPC_HTTP_TRANSPORT_CREDENTIALS_A
+typedef struct s_RPC_HTTP_TRANSPORT_CREDENTIALS_A
 {
 	SEC_WINNT_AUTH_IDENTITY_A* TransportCredentials;
 	unsigned long Flags;
@@ -301,7 +301,7 @@ typedef struct _RPC_HTTP_TRANSPORT_CREDENTIALS_A
 	unsigned char* ServerCertificateSubject;
 } RPC_HTTP_TRANSPORT_CREDENTIALS_A, *PRPC_HTTP_TRANSPORT_CREDENTIALS_A;
 
-typedef struct _RPC_SECURITY_QOS_V2_W
+typedef struct s_RPC_SECURITY_QOS_V2_W
 {
 	unsigned long Version;
 	unsigned long Capabilities;
@@ -314,7 +314,7 @@ typedef struct _RPC_SECURITY_QOS_V2_W
 	} u;
 } RPC_SECURITY_QOS_V2_W, *PRPC_SECURITY_QOS_V2_W;
 
-typedef struct _RPC_SECURITY_QOS_V2_A
+typedef struct s_RPC_SECURITY_QOS_V2_A
 {
 	unsigned long Version;
 	unsigned long Capabilities;
@@ -329,7 +329,7 @@ typedef struct _RPC_SECURITY_QOS_V2_A
 
 #define RPC_C_SECURITY_QOS_VERSION_3 3L
 
-typedef struct _RPC_SECURITY_QOS_V3_W
+typedef struct s_RPC_SECURITY_QOS_V3_W
 {
 	unsigned long Version;
 	unsigned long Capabilities;
@@ -343,7 +343,7 @@ typedef struct _RPC_SECURITY_QOS_V3_W
 	void* Sid;
 } RPC_SECURITY_QOS_V3_W, *PRPC_SECURITY_QOS_V3_W;
 
-typedef struct _RPC_SECURITY_QOS_V3_A
+typedef struct s_RPC_SECURITY_QOS_V3_A
 {
 	unsigned long Version;
 	unsigned long Capabilities;
@@ -357,7 +357,7 @@ typedef struct _RPC_SECURITY_QOS_V3_A
 	void* Sid;
 } RPC_SECURITY_QOS_V3_A, *PRPC_SECURITY_QOS_V3_A;
 
-typedef enum _RPC_HTTP_REDIRECTOR_STAGE
+typedef enum e_RPC_HTTP_REDIRECTOR_STAGE
 {
 	RPCHTTP_RS_REDIRECT = 1,
 	RPCHTTP_RS_ACCESS_1,
@@ -419,7 +419,7 @@ typedef int (*RPC_MGMT_AUTHORIZATION_FN)(RPC_BINDING_HANDLE ClientBinding,
 #define RPC_IF_ALLOW_LOCAL_ONLY 0x0020
 #define RPC_IF_SEC_NO_CACHE 0x0040
 
-typedef struct _RPC_BINDING_HANDLE_OPTIONS_V1
+typedef struct s_RPC_BINDING_HANDLE_OPTIONS_V1
 {
 	unsigned long Version;
 	unsigned long Flags;
@@ -437,7 +437,7 @@ typedef struct
 	RPC_SECURITY_QOS* SecurityQos;
 } RPC_BINDING_HANDLE_SECURITY_V1, RPC_BINDING_HANDLE_SECURITY;
 
-typedef struct _RPC_BINDING_HANDLE_TEMPLATE
+typedef struct s_RPC_BINDING_HANDLE_TEMPLATE
 {
 	unsigned long Version;
 	unsigned long Flags;

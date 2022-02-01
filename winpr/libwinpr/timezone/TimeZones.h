@@ -7,7 +7,7 @@
 
 #include <winpr/wtypes.h>
 
-struct _TIME_ZONE_RULE_ENTRY
+struct s_TIME_ZONE_RULE_ENTRY
 {
 	UINT64 TicksStart;
 	UINT64 TicksEnd;
@@ -15,9 +15,9 @@ struct _TIME_ZONE_RULE_ENTRY
 	SYSTEMTIME StandardDate;
 	SYSTEMTIME DaylightDate;
 };
-typedef struct _TIME_ZONE_RULE_ENTRY TIME_ZONE_RULE_ENTRY;
+typedef struct s_TIME_ZONE_RULE_ENTRY TIME_ZONE_RULE_ENTRY;
 
-struct _TIME_ZONE_ENTRY
+struct s_TIME_ZONE_ENTRY
 {
 	const char* Id;
 	INT32 Bias;
@@ -28,7 +28,7 @@ struct _TIME_ZONE_ENTRY
 	const TIME_ZONE_RULE_ENTRY* RuleTable;
 	UINT32 RuleTableCount;
 };
-typedef struct _TIME_ZONE_ENTRY TIME_ZONE_ENTRY;
+typedef struct s_TIME_ZONE_ENTRY TIME_ZONE_ENTRY;
 
 extern const TIME_ZONE_ENTRY TimeZoneTable[];
 extern const size_t TimeZoneTableNrElements;

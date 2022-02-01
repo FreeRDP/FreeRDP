@@ -31,13 +31,13 @@
 #include <winpr/crt.h>
 #include <winpr/environment.h>
 
-struct _wLogJournaldAppender
+struct s_wLogJournaldAppender
 {
 	WLOG_APPENDER_COMMON();
 	char* identifier;
 	FILE* stream;
 };
-typedef struct _wLogJournaldAppender wLogJournaldAppender;
+typedef struct s_wLogJournaldAppender wLogJournaldAppender;
 
 static BOOL WLog_JournaldAppender_Open(wLog* log, wLogAppender* appender)
 {

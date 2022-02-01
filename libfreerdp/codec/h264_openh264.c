@@ -40,7 +40,7 @@ typedef void (*pWelsDestroyDecoder)(ISVCDecoder* pDecoder);
 typedef int (*pWelsCreateSVCEncoder)(ISVCEncoder** ppEncoder);
 typedef void (*pWelsDestroySVCEncoder)(ISVCEncoder* pEncoder);
 
-struct _H264_CONTEXT_OPENH264
+struct s_H264_CONTEXT_OPENH264
 {
 #if defined(WITH_OPENH264_LOADING)
 	HMODULE lib;
@@ -55,7 +55,7 @@ struct _H264_CONTEXT_OPENH264
 	ISVCEncoder* pEncoder;
 	SEncParamExt EncParamExt;
 };
-typedef struct _H264_CONTEXT_OPENH264 H264_CONTEXT_OPENH264;
+typedef struct s_H264_CONTEXT_OPENH264 H264_CONTEXT_OPENH264;
 
 #if defined(WITH_OPENH264_LOADING)
 static const char* openh264_library_names[] = {

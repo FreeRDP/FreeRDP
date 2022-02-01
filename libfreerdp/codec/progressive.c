@@ -43,7 +43,7 @@
 
 #define TAG FREERDP_TAG("codec.progressive")
 
-struct _RFX_PROGRESSIVE_UPGRADE_STATE
+struct s_RFX_PROGRESSIVE_UPGRADE_STATE
 {
 	BOOL nonLL;
 	wBitStream* srl;
@@ -55,7 +55,7 @@ struct _RFX_PROGRESSIVE_UPGRADE_STATE
 	int nz;
 	BOOL mode;
 };
-typedef struct _RFX_PROGRESSIVE_UPGRADE_STATE RFX_PROGRESSIVE_UPGRADE_STATE;
+typedef struct s_RFX_PROGRESSIVE_UPGRADE_STATE RFX_PROGRESSIVE_UPGRADE_STATE;
 
 static const char* progressive_get_block_type_string(UINT16 blockType)
 {
@@ -1651,14 +1651,14 @@ static INLINE BOOL progressive_tile_read(PROGRESSIVE_CONTEXT* progressive, BOOL 
 	return progressive_surface_tile_replace(surface, region, &tile, FALSE);
 }
 
-struct _PROGRESSIVE_TILE_PROCESS_WORK_PARAM
+struct s_PROGRESSIVE_TILE_PROCESS_WORK_PARAM
 {
 	PROGRESSIVE_CONTEXT* progressive;
 	PROGRESSIVE_BLOCK_REGION* region;
 	const PROGRESSIVE_BLOCK_CONTEXT* context;
 	RFX_PROGRESSIVE_TILE* tile;
 };
-typedef struct _PROGRESSIVE_TILE_PROCESS_WORK_PARAM PROGRESSIVE_TILE_PROCESS_WORK_PARAM;
+typedef struct s_PROGRESSIVE_TILE_PROCESS_WORK_PARAM PROGRESSIVE_TILE_PROCESS_WORK_PARAM;
 
 static void CALLBACK progressive_process_tiles_tile_work_callback(PTP_CALLBACK_INSTANCE instance,
                                                                   void* context, PTP_WORK work)

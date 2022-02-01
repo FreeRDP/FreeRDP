@@ -28,12 +28,12 @@ extern "C"
 {
 #endif
 
-	typedef struct _VideoClientContext VideoClientContext;
-	typedef struct _VideoClientContextPriv VideoClientContextPriv;
-	typedef struct _VideoSurface VideoSurface;
+	typedef struct s_VideoClientContext VideoClientContext;
+	typedef struct s_VideoClientContextPriv VideoClientContextPriv;
+	typedef struct s_VideoSurface VideoSurface;
 
 	/** @brief an implementation of surface used by the video channel */
-	struct _VideoSurface
+	struct s_VideoSurface
 	{
 		UINT32 x, y, w, h;
 		UINT32 alignedWidth, alignedHeight;
@@ -55,7 +55,7 @@ extern "C"
 	typedef BOOL (*pcVideoDeleteSurface)(VideoClientContext* video, VideoSurface* surface);
 
 	/** @brief context for the video (MS-RDPEVOR) channel */
-	struct _VideoClientContext
+	struct s_VideoClientContext
 	{
 		void* handle;
 		void* custom;

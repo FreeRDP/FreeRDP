@@ -24,8 +24,8 @@
 
 #include <freerdp/freerdp.h>
 
-typedef struct _TSMF_IFMAN TSMF_IFMAN;
-struct _TSMF_IFMAN
+typedef struct s_TSMF_IFMAN TSMF_IFMAN;
+struct s_TSMF_IFMAN
 {
 	IWTSVirtualChannelCallback* channel_callback;
 	const char* decoder_name;

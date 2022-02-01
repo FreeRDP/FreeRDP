@@ -40,7 +40,7 @@
 #include "audin_main.h"
 #include "opensl_io.h"
 
-typedef struct _AudinOpenSLESDevice
+typedef struct s_AudinOpenSLESDevice
 {
 	IAudinDevice iface;
 

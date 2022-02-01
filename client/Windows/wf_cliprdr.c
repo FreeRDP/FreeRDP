@@ -69,7 +69,7 @@ struct format_mapping
 };
 typedef struct format_mapping formatMapping;
 
-struct _CliprdrEnumFORMATETC
+struct s_CliprdrEnumFORMATETC
 {
 	IEnumFORMATETC iEnumFORMATETC;
 
@@ -78,9 +78,9 @@ struct _CliprdrEnumFORMATETC
 	LONG m_nNumFormats;
 	FORMATETC* m_pFormatEtc;
 };
-typedef struct _CliprdrEnumFORMATETC CliprdrEnumFORMATETC;
+typedef struct s_CliprdrEnumFORMATETC CliprdrEnumFORMATETC;
 
-struct _CliprdrStream
+struct s_CliprdrStream
 {
 	IStream iStream;
 
@@ -91,9 +91,9 @@ struct _CliprdrStream
 	FILEDESCRIPTORW m_Dsc;
 	void* m_pData;
 };
-typedef struct _CliprdrStream CliprdrStream;
+typedef struct s_CliprdrStream CliprdrStream;
 
-struct _CliprdrDataObject
+struct s_CliprdrDataObject
 {
 	IDataObject iDataObject;
 
@@ -105,7 +105,7 @@ struct _CliprdrDataObject
 	IStream** m_pStream;
 	void* m_pData;
 };
-typedef struct _CliprdrDataObject CliprdrDataObject;
+typedef struct s_CliprdrDataObject CliprdrDataObject;
 
 struct wf_clipboard
 {

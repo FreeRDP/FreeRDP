@@ -114,7 +114,7 @@ enum FASTPATH_INPUT_KBDFLAGS
 	FASTPATH_INPUT_KBDFLAGS_PREFIX_E1 = 0x04 /* for pause sequence */
 };
 
-struct _FASTPATH_UPDATE_PDU_HEADER
+struct s_FASTPATH_UPDATE_PDU_HEADER
 {
 	BYTE fpOutputHeader;
 	BYTE length1;
@@ -126,9 +126,9 @@ struct _FASTPATH_UPDATE_PDU_HEADER
 	BYTE secFlags;
 	UINT16 length;
 };
-typedef struct _FASTPATH_UPDATE_PDU_HEADER FASTPATH_UPDATE_PDU_HEADER;
+typedef struct s_FASTPATH_UPDATE_PDU_HEADER FASTPATH_UPDATE_PDU_HEADER;
 
-struct _FASTPATH_UPDATE_HEADER
+struct s_FASTPATH_UPDATE_HEADER
 {
 	BYTE updateHeader;
 	BYTE compressionFlags;
@@ -138,7 +138,7 @@ struct _FASTPATH_UPDATE_HEADER
 	BYTE fragmentation;
 	BYTE compression;
 };
-typedef struct _FASTPATH_UPDATE_HEADER FASTPATH_UPDATE_HEADER;
+typedef struct s_FASTPATH_UPDATE_HEADER FASTPATH_UPDATE_HEADER;
 
 FREERDP_LOCAL BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16* length);
 FREERDP_LOCAL int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s);

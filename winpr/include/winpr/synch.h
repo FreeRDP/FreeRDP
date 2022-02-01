@@ -129,7 +129,7 @@ extern "C"
 
 	/* Critical Section */
 
-	typedef struct _RTL_CRITICAL_SECTION
+	typedef struct s_RTL_CRITICAL_SECTION
 	{
 		PVOID DebugInfo;
 		LONG LockCount;
@@ -202,7 +202,7 @@ extern "C"
 
 #define CREATE_WAITABLE_TIMER_MANUAL_RESET 0x00000001
 
-	typedef struct _REASON_CONTEXT
+	typedef struct s_REASON_CONTEXT
 	{
 		ULONG Version;
 		DWORD Flags;
@@ -320,7 +320,7 @@ extern "C"
 
 #define RTL_RUN_ONCE_CTX_RESERVED_BITS 2
 
-	typedef struct _RTL_RUN_ONCE
+	typedef struct s_RTL_RUN_ONCE
 	{
 		PVOID Ptr;
 	} RTL_RUN_ONCE, *PRTL_RUN_ONCE;
@@ -363,7 +363,7 @@ extern "C"
 
 #ifdef WINPR_SYNCHRONIZATION_BARRIER
 
-	typedef struct _RTL_BARRIER
+	typedef struct s_RTL_BARRIER
 	{
 		DWORD Reserved1;
 		DWORD Reserved2;

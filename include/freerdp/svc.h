@@ -35,7 +35,7 @@
 
 #define FREERDP_CHANNEL_MAGIC_NUMBER 0x46524450
 
-struct _CHANNEL_ENTRY_POINTS_FREERDP
+struct s_CHANNEL_ENTRY_POINTS_FREERDP
 {
 	UINT32 cbSize;
 	UINT32 protocolVersion;
@@ -50,10 +50,10 @@ struct _CHANNEL_ENTRY_POINTS_FREERDP
 	void* pInterface;    /* channel callback interface, use after initialization */
 	rdpContext* context;
 };
-typedef struct _CHANNEL_ENTRY_POINTS_FREERDP CHANNEL_ENTRY_POINTS_FREERDP;
+typedef struct s_CHANNEL_ENTRY_POINTS_FREERDP CHANNEL_ENTRY_POINTS_FREERDP;
 typedef CHANNEL_ENTRY_POINTS_FREERDP* PCHANNEL_ENTRY_POINTS_FREERDP;
 
-struct _CHANNEL_ENTRY_POINTS_FREERDP_EX
+struct s_CHANNEL_ENTRY_POINTS_FREERDP_EX
 {
 	UINT32 cbSize;
 	UINT32 protocolVersion;
@@ -68,7 +68,7 @@ struct _CHANNEL_ENTRY_POINTS_FREERDP_EX
 	void* pInterface;    /* channel callback interface, use after initialization */
 	rdpContext* context;
 };
-typedef struct _CHANNEL_ENTRY_POINTS_FREERDP_EX CHANNEL_ENTRY_POINTS_FREERDP_EX;
+typedef struct s_CHANNEL_ENTRY_POINTS_FREERDP_EX CHANNEL_ENTRY_POINTS_FREERDP_EX;
 typedef CHANNEL_ENTRY_POINTS_FREERDP_EX* PCHANNEL_ENTRY_POINTS_FREERDP_EX;
 
 #endif /* FREERDP_SVC_H */

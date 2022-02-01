@@ -35,7 +35,7 @@
 #define WTSAPI_CHANNEL_MAGIC 0x44484356
 #define TAG WINPR_TAG("wtsapi")
 
-struct _WTSAPI_CHANNEL
+struct s_WTSAPI_CHANNEL
 {
 	UINT32 magic;
 	HANDLE hServer;
@@ -58,7 +58,7 @@ struct _WTSAPI_CHANNEL
 	OVERLAPPED overlapped;
 	CHANNEL_PDU_HEADER* header;
 };
-typedef struct _WTSAPI_CHANNEL WTSAPI_CHANNEL;
+typedef struct s_WTSAPI_CHANNEL WTSAPI_CHANNEL;
 
 static BOOL g_Initialized = FALSE;
 static HMODULE g_WinStaModule = NULL;

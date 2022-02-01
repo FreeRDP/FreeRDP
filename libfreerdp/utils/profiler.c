@@ -29,7 +29,7 @@
 
 #define TAG FREERDP_TAG("utils")
 
-struct _PROFILER
+struct s_PROFILER
 {
 	char* name;
 	STOPWATCH* stopwatch;

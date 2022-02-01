@@ -72,7 +72,7 @@ typedef HRESULT(__stdcall* pfnMFCreateSample)(IMFSample** ppIMFSample);
 typedef HRESULT(__stdcall* pfnMFCreateMemoryBuffer)(DWORD cbMaxLength, IMFMediaBuffer** ppBuffer);
 typedef HRESULT(__stdcall* pfnMFCreateMediaType)(IMFMediaType** ppMFType);
 
-struct _H264_CONTEXT_MF
+struct s_H264_CONTEXT_MF
 {
 	ICodecAPI* codecApi;
 	IMFTransform* transform;
@@ -90,7 +90,7 @@ struct _H264_CONTEXT_MF
 	pfnMFCreateMemoryBuffer MFCreateMemoryBuffer;
 	pfnMFCreateMediaType MFCreateMediaType;
 };
-typedef struct _H264_CONTEXT_MF H264_CONTEXT_MF;
+typedef struct s_H264_CONTEXT_MF H264_CONTEXT_MF;
 
 static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid,
                                    IMFMediaType** ppMediaType)

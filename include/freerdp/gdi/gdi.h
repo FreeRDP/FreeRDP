@@ -356,14 +356,14 @@
 #define COMPLEXREGION 0x03
 #endif
 
-struct _GDIOBJECT
+struct s_GDIOBJECT
 {
 	BYTE objectType;
 };
-typedef struct _GDIOBJECT GDIOBJECT;
+typedef struct s_GDIOBJECT GDIOBJECT;
 typedef GDIOBJECT* HGDIOBJECT;
 
-struct _GDI_RECT
+struct s_GDI_RECT
 {
 	BYTE objectType;
 	INT32 left;
@@ -371,10 +371,10 @@ struct _GDI_RECT
 	INT32 right;
 	INT32 bottom;
 };
-typedef struct _GDI_RECT GDI_RECT;
+typedef struct s_GDI_RECT GDI_RECT;
 typedef GDI_RECT* HGDI_RECT;
 
-struct _GDI_RGN
+struct s_GDI_RGN
 {
 	BYTE objectType;
 	INT32 x;   /* left */
@@ -383,10 +383,10 @@ struct _GDI_RGN
 	INT32 h;   /* height */
 	BOOL null; /* null region */
 };
-typedef struct _GDI_RGN GDI_RGN;
+typedef struct s_GDI_RGN GDI_RGN;
 typedef GDI_RGN* HGDI_RGN;
 
-struct _GDI_BITMAP
+struct s_GDI_BITMAP
 {
 	BYTE objectType;
 	UINT32 format;
@@ -396,10 +396,10 @@ struct _GDI_BITMAP
 	BYTE* data;
 	void (*free)(void*);
 };
-typedef struct _GDI_BITMAP GDI_BITMAP;
+typedef struct s_GDI_BITMAP GDI_BITMAP;
 typedef GDI_BITMAP* HGDI_BITMAP;
 
-struct _GDI_PEN
+struct s_GDI_PEN
 {
 	BYTE objectType;
 	UINT32 style;
@@ -410,34 +410,34 @@ struct _GDI_PEN
 	UINT32 format;
 	const gdiPalette* palette;
 };
-typedef struct _GDI_PEN GDI_PEN;
+typedef struct s_GDI_PEN GDI_PEN;
 typedef GDI_PEN* HGDI_PEN;
 
-struct _GDI_PALETTEENTRY
+struct s_GDI_PALETTEENTRY
 {
 	BYTE red;
 	BYTE green;
 	BYTE blue;
 };
-typedef struct _GDI_PALETTEENTRY GDI_PALETTEENTRY;
+typedef struct s_GDI_PALETTEENTRY GDI_PALETTEENTRY;
 
-struct _GDI_PALETTE
+struct s_GDI_PALETTE
 {
 	UINT16 count;
 	GDI_PALETTEENTRY* entries;
 };
-typedef struct _GDI_PALETTE GDI_PALETTE;
+typedef struct s_GDI_PALETTE GDI_PALETTE;
 typedef GDI_PALETTE* HGDI_PALETTE;
 
-struct _GDI_POINT
+struct s_GDI_POINT
 {
 	INT32 x;
 	INT32 y;
 };
-typedef struct _GDI_POINT GDI_POINT;
+typedef struct s_GDI_POINT GDI_POINT;
 typedef GDI_POINT* HGDI_POINT;
 
-struct _GDI_BRUSH
+struct s_GDI_BRUSH
 {
 	BYTE objectType;
 	int style;
@@ -446,20 +446,20 @@ struct _GDI_BRUSH
 	INT32 nXOrg;
 	INT32 nYOrg;
 };
-typedef struct _GDI_BRUSH GDI_BRUSH;
+typedef struct s_GDI_BRUSH GDI_BRUSH;
 typedef GDI_BRUSH* HGDI_BRUSH;
 
-struct _GDI_WND
+struct s_GDI_WND
 {
 	UINT32 count;
 	INT32 ninvalid;
 	HGDI_RGN invalid;
 	HGDI_RGN cinvalid;
 };
-typedef struct _GDI_WND GDI_WND;
+typedef struct s_GDI_WND GDI_WND;
 typedef GDI_WND* HGDI_WND;
 
-struct _GDI_DC
+struct s_GDI_DC
 {
 	HGDIOBJECT selectedObject;
 	UINT32 format;
@@ -472,7 +472,7 @@ struct _GDI_DC
 	INT32 drawMode;
 	INT32 bkMode;
 };
-typedef struct _GDI_DC GDI_DC;
+typedef struct s_GDI_DC GDI_DC;
 typedef GDI_DC* HGDI_DC;
 
 struct gdi_bitmap

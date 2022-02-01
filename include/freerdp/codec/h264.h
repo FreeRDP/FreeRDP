@@ -26,18 +26,18 @@
 #include <freerdp/types.h>
 #include <freerdp/channels/rdpgfx.h>
 
-typedef struct _H264_CONTEXT H264_CONTEXT;
-typedef struct _H264_CONTEXT_SUBSYSTEM H264_CONTEXT_SUBSYSTEM;
-typedef struct _YUV_CONTEXT YUV_CONTEXT;
+typedef struct s_H264_CONTEXT H264_CONTEXT;
+typedef struct s_H264_CONTEXT_SUBSYSTEM H264_CONTEXT_SUBSYSTEM;
+typedef struct s_YUV_CONTEXT YUV_CONTEXT;
 
-enum _H264_RATECONTROL_MODE
+enum e_H264_RATECONTROL_MODE
 {
 	H264_RATECONTROL_VBR = 0,
 	H264_RATECONTROL_CQP
 };
-typedef enum _H264_RATECONTROL_MODE H264_RATECONTROL_MODE;
+typedef enum e_H264_RATECONTROL_MODE H264_RATECONTROL_MODE;
 
-struct _H264_CONTEXT
+struct s_H264_CONTEXT
 {
 	BOOL Compressor;
 

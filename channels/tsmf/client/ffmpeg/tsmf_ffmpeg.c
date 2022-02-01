@@ -70,7 +70,7 @@
 #define AV_PIX_FMT_YUV420P PIX_FMT_YUV420P
 #endif
 
-typedef struct _TSMFFFmpegDecoder
+typedef struct s_TSMFFFmpegDecoder
 {
 	ITSMFDecoder iface;
 

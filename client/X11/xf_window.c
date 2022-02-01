@@ -98,7 +98,7 @@
 
 #define PROP_MOTIF_WM_HINTS_ELEMENTS 5
 
-struct _PropMotifWmHints
+struct s_PropMotifWmHints
 {
 	unsigned long flags;
 	unsigned long functions;
@@ -106,7 +106,7 @@ struct _PropMotifWmHints
 	long inputMode;
 	unsigned long status;
 };
-typedef struct _PropMotifWmHints PropMotifWmHints;
+typedef struct s_PropMotifWmHints PropMotifWmHints;
 
 static void xf_SetWindowTitleText(xfContext* xfc, Window window, const char* name)
 {

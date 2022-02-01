@@ -38,12 +38,12 @@
 
 #define TAG CLIENT_TAG("shadow")
 
-struct _SHADOW_GFX_STATUS
+struct s_SHADOW_GFX_STATUS
 {
 	BOOL gfxOpened;
 	BOOL gfxSurfaceCreated;
 };
-typedef struct _SHADOW_GFX_STATUS SHADOW_GFX_STATUS;
+typedef struct s_SHADOW_GFX_STATUS SHADOW_GFX_STATUS;
 
 static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 {

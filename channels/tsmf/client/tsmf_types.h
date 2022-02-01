@@ -39,7 +39,7 @@
 	} while (0)
 #endif
 
-typedef struct _TS_AM_MEDIA_TYPE
+typedef struct s_TS_AM_MEDIA_TYPE
 {
 	int MajorType;
 	int SubType;

@@ -55,14 +55,14 @@
  * keyboard layout indicated by the index given (in this case, 33, or US-English).
  */
 
-struct _SOLARIS_KEYBOARD
+struct s_SOLARIS_KEYBOARD
 {
 	UINT32 type;             /* Solaris keyboard type */
 	UINT32 layout;           /* Layout */
 	char* xkbType;           /* XKB keyboard */
 	UINT32 keyboardLayoutId; /* XKB keyboard layout */
 };
-typedef struct _SOLARIS_KEYBOARD SOLARIS_KEYBOARD;
+typedef struct s_SOLARIS_KEYBOARD SOLARIS_KEYBOARD;
 
 static const SOLARIS_KEYBOARD SOLARIS_KEYBOARD_TABLE[] = {
 	{ 4, 0, "sun(type4)", KBD_US },                                      /*  US4 */

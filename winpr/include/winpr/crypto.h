@@ -208,7 +208,7 @@ typedef ULONG_PTR NCRYPT_SECRET_HANDLE;
 #define CALG_ECDH (ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_DH | ALG_SID_ECDH)
 #define CALG_ECMQV (ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_ANY | ALG_SID_ECMQV)
 
-typedef struct _CRYPTOAPI_BLOB
+typedef struct s_CRYPTOAPI_BLOB
 {
 	DWORD cbData;
 	BYTE* pbData;
@@ -218,26 +218,26 @@ typedef struct _CRYPTOAPI_BLOB
     CRYPT_DATA_BLOB, *PCRYPT_DATA_BLOB, CRYPT_HASH_BLOB, *PCRYPT_HASH_BLOB, CRYPT_DIGEST_BLOB,
     *PCRYPT_DIGEST_BLOB, CRYPT_DER_BLOB, *PCRYPT_DER_BLOB, CRYPT_ATTR_BLOB, *PCRYPT_ATTR_BLOB;
 
-typedef struct _CRYPT_ALGORITHM_IDENTIFIER
+typedef struct s_CRYPT_ALGORITHM_IDENTIFIER
 {
 	LPSTR pszObjId;
 	CRYPT_OBJID_BLOB Parameters;
 } CRYPT_ALGORITHM_IDENTIFIER, *PCRYPT_ALGORITHM_IDENTIFIER;
 
-typedef struct _CRYPT_BIT_BLOB
+typedef struct s_CRYPT_BIT_BLOB
 {
 	DWORD cbData;
 	BYTE* pbData;
 	DWORD cUnusedBits;
 } CRYPT_BIT_BLOB, *PCRYPT_BIT_BLOB;
 
-typedef struct _CERT_PUBLIC_KEY_INFO
+typedef struct s_CERT_PUBLIC_KEY_INFO
 {
 	CRYPT_ALGORITHM_IDENTIFIER Algorithm;
 	CRYPT_BIT_BLOB PublicKey;
 } CERT_PUBLIC_KEY_INFO, *PCERT_PUBLIC_KEY_INFO;
 
-typedef struct _CERT_EXTENSION
+typedef struct s_CERT_EXTENSION
 {
 	LPSTR pszObjId;
 	BOOL fCritical;
@@ -245,7 +245,7 @@ typedef struct _CERT_EXTENSION
 } CERT_EXTENSION, *PCERT_EXTENSION;
 typedef const CERT_EXTENSION* PCCERT_EXTENSION;
 
-typedef struct _CERT_INFO
+typedef struct s_CERT_INFO
 {
 	DWORD dwVersion;
 	CRYPT_INTEGER_BLOB SerialNumber;
@@ -265,7 +265,7 @@ typedef void* HCERTSTORE;
 typedef ULONG_PTR HCRYPTPROV;
 typedef ULONG_PTR HCRYPTPROV_LEGACY;
 
-typedef struct _CERT_CONTEXT
+typedef struct s_CERT_CONTEXT
 {
 	DWORD dwCertEncodingType;
 	BYTE* pbCertEncoded;
@@ -551,7 +551,7 @@ extern "C"
 #define CRYPTPROTECT_FIRST_RESERVED_FLAGVAL 0x0FFFFFFF
 #define CRYPTPROTECT_LAST_RESERVED_FLAGVAL 0xFFFFFFFF
 
-typedef struct _CRYPTPROTECT_PROMPTSTRUCT
+typedef struct s_CRYPTPROTECT_PROMPTSTRUCT
 {
 	DWORD cbSize;
 	DWORD dwPromptFlags;
@@ -674,7 +674,7 @@ typedef enum
 	WINPR_MD_SHAKE256 = 15
 } WINPR_MD_TYPE;
 
-typedef struct _winpr_hmac_ctx_private_st WINPR_HMAC_CTX;
+typedef struct s_winpr_hmac_ctx_private_st WINPR_HMAC_CTX;
 
 #ifdef __cplusplus
 extern "C"
@@ -701,7 +701,7 @@ extern "C"
  * Generic Digest API
  */
 
-typedef struct _winpr_digest_ctx_private_st WINPR_DIGEST_CTX;
+typedef struct s_winpr_digest_ctx_private_st WINPR_DIGEST_CTX;
 
 #ifdef __cplusplus
 extern "C"
@@ -743,7 +743,7 @@ extern "C"
  * RC4
  */
 
-typedef struct _winpr_rc4_ctx_private_st WINPR_RC4_CTX;
+typedef struct s_winpr_rc4_ctx_private_st WINPR_RC4_CTX;
 
 #ifdef __cplusplus
 extern "C"
@@ -821,7 +821,7 @@ extern "C"
 #define WINPR_CIPHER_CAMELLIA_192_CCM 47
 #define WINPR_CIPHER_CAMELLIA_256_CCM 48
 
-typedef struct _winpr_cipher_ctx_private_st WINPR_CIPHER_CTX;
+typedef struct s_winpr_cipher_ctx_private_st WINPR_CIPHER_CTX;
 
 #ifdef __cplusplus
 extern "C"

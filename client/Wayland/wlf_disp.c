@@ -26,7 +26,7 @@
 
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
-struct _wlfDispContext
+struct s_wlfDispContext
 {
 	wlfContext* wlc;
 	DispClientContext* disp;

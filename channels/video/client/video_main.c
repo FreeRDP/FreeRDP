@@ -47,7 +47,7 @@
 
 #include "video_main.h"
 
-struct _VIDEO_CHANNEL_CALLBACK
+struct s_VIDEO_CHANNEL_CALLBACK
 {
 	IWTSVirtualChannelCallback iface;
 
@@ -55,9 +55,9 @@ struct _VIDEO_CHANNEL_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
 };
-typedef struct _VIDEO_CHANNEL_CALLBACK VIDEO_CHANNEL_CALLBACK;
+typedef struct s_VIDEO_CHANNEL_CALLBACK VIDEO_CHANNEL_CALLBACK;
 
-struct _VIDEO_LISTENER_CALLBACK
+struct s_VIDEO_LISTENER_CALLBACK
 {
 	IWTSListenerCallback iface;
 
@@ -65,9 +65,9 @@ struct _VIDEO_LISTENER_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	VIDEO_CHANNEL_CALLBACK* channel_callback;
 };
-typedef struct _VIDEO_LISTENER_CALLBACK VIDEO_LISTENER_CALLBACK;
+typedef struct s_VIDEO_LISTENER_CALLBACK VIDEO_LISTENER_CALLBACK;
 
-struct _VIDEO_PLUGIN
+struct s_VIDEO_PLUGIN
 {
 	IWTSPlugin wtsPlugin;
 
@@ -79,18 +79,18 @@ struct _VIDEO_PLUGIN
 	VideoClientContext* context;
 	BOOL initialized;
 };
-typedef struct _VIDEO_PLUGIN VIDEO_PLUGIN;
+typedef struct s_VIDEO_PLUGIN VIDEO_PLUGIN;
 
 #define XF_VIDEO_UNLIMITED_RATE 31
 
 static const BYTE MFVideoFormat_H264[] = { 'H',  '2',  '6',  '4',  0x00, 0x00, 0x10, 0x00,
 	                                       0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 };
 
-typedef struct _PresentationContext PresentationContext;
-typedef struct _VideoFrame VideoFrame;
+typedef struct s_PresentationContext PresentationContext;
+typedef struct s_VideoFrame VideoFrame;
 
 /** @brief private data for the channel */
-struct _VideoClientContextPriv
+struct s_VideoClientContextPriv
 {
 	VideoClientContext* video;
 	GeometryClientContext* geometry;
@@ -105,7 +105,7 @@ struct _VideoClientContextPriv
 };
 
 /** @brief */
-struct _VideoFrame
+struct s_VideoFrame
 {
 	UINT64 publishTime;
 	UINT64 hnsDuration;
@@ -117,7 +117,7 @@ struct _VideoFrame
 };
 
 /** @brief */
-struct _PresentationContext
+struct s_PresentationContext
 {
 	VideoClientContext* video;
 	BYTE PresentationId;

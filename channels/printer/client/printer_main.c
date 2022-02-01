@@ -48,8 +48,8 @@
 
 #define TAG CHANNELS_TAG("printer.client")
 
-typedef struct _PRINTER_DEVICE PRINTER_DEVICE;
-struct _PRINTER_DEVICE
+typedef struct s_PRINTER_DEVICE PRINTER_DEVICE;
+struct s_PRINTER_DEVICE
 {
 	DEVICE device;
 

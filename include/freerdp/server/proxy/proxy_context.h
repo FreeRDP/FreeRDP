@@ -38,9 +38,9 @@ extern "C"
 	typedef struct proxy_module proxyModule;
 	typedef struct channel_data_event_info proxyChannelDataEventInfo;
 
-	typedef struct _InterceptContextMapEntry
+	typedef struct s_InterceptContextMapEntry
 	{
-		void (*free)(struct _InterceptContextMapEntry*);
+		void (*free)(struct s_InterceptContextMapEntry*);
 	} InterceptContextMapEntry;
 
 	/* All proxy interception channels derive from this base struct

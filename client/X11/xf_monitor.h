@@ -23,22 +23,22 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
-struct _MONITOR_INFO
+struct s_MONITOR_INFO
 {
 	RECTANGLE_16 area;
 	RECTANGLE_16 workarea;
 	BOOL primary;
 };
-typedef struct _MONITOR_INFO MONITOR_INFO;
+typedef struct s_MONITOR_INFO MONITOR_INFO;
 
-struct _VIRTUAL_SCREEN
+struct s_VIRTUAL_SCREEN
 {
 	int nmonitors;
 	RECTANGLE_16 area;
 	RECTANGLE_16 workarea;
 	MONITOR_INFO* monitors;
 };
-typedef struct _VIRTUAL_SCREEN VIRTUAL_SCREEN;
+typedef struct s_VIRTUAL_SCREEN VIRTUAL_SCREEN;
 
 #include "xf_client.h"
 #include "xfreerdp.h"

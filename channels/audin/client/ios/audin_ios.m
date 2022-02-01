@@ -53,8 +53,8 @@
 
  #define IOS_AUDIO_QUEUE_NUM_BUFFERS 100
 
- typedef struct _AudinIosDevice
- {
+typedef struct s_AudinIosDevice
+{
  	IAudinDevice iface;
 
  	AUDIO_FORMAT format;

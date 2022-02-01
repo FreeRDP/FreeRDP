@@ -36,7 +36,7 @@ typedef struct rdp_nla rdpNla;
 
 #include "transport.h"
 
-enum _NLA_STATE
+enum e_NLA_STATE
 {
 	NLA_STATE_INITIAL,
 	NLA_STATE_NEGO_TOKEN,
@@ -45,7 +45,7 @@ enum _NLA_STATE
 	NLA_STATE_POST_NEGO,
 	NLA_STATE_FINAL
 };
-typedef enum _NLA_STATE NLA_STATE;
+typedef enum e_NLA_STATE NLA_STATE;
 
 FREERDP_LOCAL int nla_authenticate(rdpNla* nla);
 FREERDP_LOCAL LPTSTR nla_make_spn(const char* ServiceClass, const char* hostname);

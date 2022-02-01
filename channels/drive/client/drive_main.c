@@ -47,9 +47,9 @@
 
 #include "drive_file.h"
 
-typedef struct _DRIVE_DEVICE DRIVE_DEVICE;
+typedef struct s_DRIVE_DEVICE DRIVE_DEVICE;
 
-struct _DRIVE_DEVICE
+struct s_DRIVE_DEVICE
 {
 	DEVICE device;
 

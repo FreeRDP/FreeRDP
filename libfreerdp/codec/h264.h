@@ -31,7 +31,7 @@ typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* h264, const BYTE* pSrcDa
 typedef int (*pfnH264SubsystemCompress)(H264_CONTEXT* h264, const BYTE** pSrcYuv,
                                         const UINT32* pStride, BYTE** ppDstData, UINT32* pDstSize);
 
-struct _H264_CONTEXT_SUBSYSTEM
+struct s_H264_CONTEXT_SUBSYSTEM
 {
 	const char* name;
 	pfnH264SubsystemInit Init;

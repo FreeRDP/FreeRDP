@@ -26,9 +26,9 @@
 
 #include "../handle/handle.h"
 
-typedef struct _DEVICE_OBJECT_EX DEVICE_OBJECT_EX;
+typedef struct s_DEVICE_OBJECT_EX DEVICE_OBJECT_EX;
 
-struct _DEVICE_OBJECT_EX
+struct s_DEVICE_OBJECT_EX
 {
 	char* DeviceName;
 	char* DeviceFileName;

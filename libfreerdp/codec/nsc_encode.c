@@ -35,7 +35,7 @@
 #include "nsc_types.h"
 #include "nsc_encode.h"
 
-struct _NSC_MESSAGE
+struct s_NSC_MESSAGE
 {
 	UINT32 x;
 	UINT32 y;
@@ -55,7 +55,7 @@ struct _NSC_MESSAGE
 	UINT8 ColorLossLevel;
 	UINT8 ChromaSubsamplingLevel;
 };
-typedef struct _NSC_MESSAGE NSC_MESSAGE;
+typedef struct s_NSC_MESSAGE NSC_MESSAGE;
 
 static BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* message);
 

@@ -389,7 +389,7 @@ extern "C"
 	 * Opaque type for dynamic strings
 	 */
 
-	typedef struct _trio_string_t trio_string_t;
+	typedef struct s_trio_string_t trio_string_t;
 
 #if defined(TRIO_FUNC_STRING_APPEND)
 	TRIO_PUBLIC_STRING int trio_string_append TRIO_PROTO((trio_string_t * self,

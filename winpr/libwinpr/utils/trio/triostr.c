@@ -145,7 +145,7 @@
  * Structures
  */
 
-struct _trio_string_t
+struct s_trio_string_t
 {
 	char* content;
 	size_t length;

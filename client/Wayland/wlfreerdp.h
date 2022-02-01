@@ -30,7 +30,7 @@
 
 typedef struct wlf_context wlfContext;
 typedef struct wlf_clipboard wfClipboard;
-typedef struct _wlfDispContext wlfDispContext;
+typedef struct s_wlfDispContext wlfDispContext;
 
 #define MAX_CONTACTS 20
 

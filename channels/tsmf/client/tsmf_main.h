@@ -24,13 +24,13 @@
 
 #include <freerdp/freerdp.h>
 
-typedef struct _TSMF_LISTENER_CALLBACK TSMF_LISTENER_CALLBACK;
+typedef struct s_TSMF_LISTENER_CALLBACK TSMF_LISTENER_CALLBACK;
 
-typedef struct _TSMF_CHANNEL_CALLBACK TSMF_CHANNEL_CALLBACK;
+typedef struct s_TSMF_CHANNEL_CALLBACK TSMF_CHANNEL_CALLBACK;
 
-typedef struct _TSMF_PLUGIN TSMF_PLUGIN;
+typedef struct s_TSMF_PLUGIN TSMF_PLUGIN;
 
-struct _TSMF_LISTENER_CALLBACK
+struct s_TSMF_LISTENER_CALLBACK
 {
 	IWTSListenerCallback iface;
 
@@ -38,7 +38,7 @@ struct _TSMF_LISTENER_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 };
 
-struct _TSMF_CHANNEL_CALLBACK
+struct s_TSMF_CHANNEL_CALLBACK
 {
 	IWTSVirtualChannelCallback iface;
 
@@ -50,7 +50,7 @@ struct _TSMF_CHANNEL_CALLBACK
 	UINT32 stream_id;
 };
 
-struct _TSMF_PLUGIN
+struct s_TSMF_PLUGIN
 {
 	IWTSPlugin iface;
 

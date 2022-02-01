@@ -30,30 +30,30 @@
 
 typedef DWORD TP_VERSION, *PTP_VERSION;
 
-typedef struct _TP_CALLBACK_INSTANCE TP_CALLBACK_INSTANCE, *PTP_CALLBACK_INSTANCE;
+typedef struct s_TP_CALLBACK_INSTANCE TP_CALLBACK_INSTANCE, *PTP_CALLBACK_INSTANCE;
 
 typedef VOID (*PTP_SIMPLE_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context);
 
-typedef struct _TP_POOL TP_POOL, *PTP_POOL;
+typedef struct s_TP_POOL TP_POOL, *PTP_POOL;
 
-typedef struct _TP_POOL_STACK_INFORMATION
+typedef struct s_TP_POOL_STACK_INFORMATION
 {
 	SIZE_T StackReserve;
 	SIZE_T StackCommit;
 } TP_POOL_STACK_INFORMATION, *PTP_POOL_STACK_INFORMATION;
 
-typedef struct _TP_CLEANUP_GROUP TP_CLEANUP_GROUP, *PTP_CLEANUP_GROUP;
+typedef struct s_TP_CLEANUP_GROUP TP_CLEANUP_GROUP, *PTP_CLEANUP_GROUP;
 
 typedef VOID (*PTP_CLEANUP_GROUP_CANCEL_CALLBACK)(PVOID ObjectContext, PVOID CleanupContext);
 
-typedef struct _TP_CALLBACK_ENVIRON_V1
+typedef struct s_TP_CALLBACK_ENVIRON_V1
 {
 	TP_VERSION Version;
 	PTP_POOL Pool;
 	PTP_CLEANUP_GROUP CleanupGroup;
 	PTP_CLEANUP_GROUP_CANCEL_CALLBACK CleanupGroupCancelCallback;
 	PVOID RaceDll;
-	struct _ACTIVATION_CONTEXT* ActivationContext;
+	struct s_ACTIVATION_CONTEXT* ActivationContext;
 	PTP_SIMPLE_CALLBACK FinalizationCallback;
 
 	union {
@@ -71,13 +71,13 @@ typedef TP_CALLBACK_ENVIRON_V1 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
 
 #endif /* _WIN32 not defined */
 
-typedef struct _TP_WORK TP_WORK, *PTP_WORK;
-typedef struct _TP_TIMER TP_TIMER, *PTP_TIMER;
+typedef struct s_TP_WORK TP_WORK, *PTP_WORK;
+typedef struct s_TP_TIMER TP_TIMER, *PTP_TIMER;
 
 typedef DWORD TP_WAIT_RESULT;
-typedef struct _TP_WAIT TP_WAIT, *PTP_WAIT;
+typedef struct s_TP_WAIT TP_WAIT, *PTP_WAIT;
 
-typedef struct _TP_IO TP_IO, *PTP_IO;
+typedef struct s_TP_IO TP_IO, *PTP_IO;
 
 #ifndef _WIN32
 

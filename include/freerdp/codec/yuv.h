@@ -20,7 +20,7 @@
 #ifndef FREERDP_CODEC_YUV_H
 #define FREERDP_CODEC_YUV_H
 
-typedef struct _YUV_CONTEXT YUV_CONTEXT;
+typedef struct s_YUV_CONTEXT YUV_CONTEXT;
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>

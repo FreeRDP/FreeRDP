@@ -108,7 +108,7 @@
 #define WEBSOCKET_MASK_BIT 0x80
 #define WEBSOCKET_FIN_BIT 0x80
 
-typedef enum _WEBSOCKET_OPCODE
+typedef enum e_WEBSOCKET_OPCODE
 {
 	WebsocketContinuationOpcode = 0x0,
 	WebsocketTextOpcode = 0x1,
@@ -118,7 +118,7 @@ typedef enum _WEBSOCKET_OPCODE
 	WebsocketPongOpcode = 0xa,
 } WEBSOCKET_OPCODE;
 
-typedef enum _WEBSOCKET_STATE
+typedef enum e_WEBSOCKET_STATE
 {
 	WebsocketStateOpcodeAndFin,
 	WebsocketStateLengthAndMasking,
@@ -141,7 +141,7 @@ typedef struct
 	wStream* responseStreamBuffer;
 } rdg_http_websocket_context;
 
-typedef enum _CHUNK_STATE
+typedef enum e_CHUNK_STATE
 {
 	ChunkStateLenghHeader,
 	ChunkStateData,
@@ -160,7 +160,7 @@ typedef struct
 {
 	TRANSFER_ENCODING httpTransferEncoding;
 	BOOL isWebsocketTransport;
-	union _context
+	union u_context
 	{
 		rdg_http_encoding_chunked_context chunked;
 		rdg_http_websocket_context websocket;

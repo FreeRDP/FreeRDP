@@ -14,7 +14,7 @@
 #pragma mark Internal state
 
 // Represents the underlying state of a TWSession RDP connection.
-typedef enum _TSXConnectionState
+typedef enum e_TSXConnectionState
 {
 	TSXConnectionClosed =
 	    0, // Session either hasn't begun connecting, or its connection has finished disconnecting.
@@ -32,21 +32,21 @@ typedef enum _TSXConnectionState
 
 // Represents the type of screen resolution the user has selected. Most are dynamic sizes, meaning
 // that the actual session dimensions are calculated when connecting.
-typedef enum _TSXScreenOptions
+typedef enum e_TSXScreenOptions
 {
 	TSXScreenOptionFixed = 0,     // A static resolution, like 1024x768
 	TSXScreenOptionFitScreen = 1, // Upon connection, fit the session to the entire screen size
 	TSXScreenOptionCustom = 2,    // Like fixed just specified by the user
 } TSXScreenOptions;
 
-typedef enum _TSXAudioPlaybackOptions
+typedef enum e_TSXAudioPlaybackOptions
 {
 	TSXAudioPlaybackLocal = 0,
 	TSXAudioPlaybackServer = 1,
 	TSXAudioPlaybackSilent = 2
 } TSXAudioPlaybackOptions;
 
-typedef enum _TSXProtocolSecurityOptions
+typedef enum e_TSXProtocolSecurityOptions
 {
 	TSXProtocolSecurityAutomatic = 0,
 	TSXProtocolSecurityRDP = 1,

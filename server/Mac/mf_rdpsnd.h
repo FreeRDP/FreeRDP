@@ -40,7 +40,7 @@ void mf_peer_rdpsnd_input_callback(void* inUserData, AudioQueueRef inAQ,
                                    const AudioStreamPacketDescription* inPacketDescs);
 
 #define SND_NUMBUFFERS 3
-struct _AQRecorderState
+struct s_AQRecorderState
 {
 	AudioStreamBasicDescription dataFormat;
 	AudioQueueRef queue;
@@ -52,7 +52,7 @@ struct _AQRecorderState
 	RdpsndServerContext* snd_context;
 };
 
-typedef struct _AQRecorderState AQRecorderState;
+typedef struct s_AQRecorderState AQRecorderState;
 
 BOOL mf_peer_rdpsnd_init(mfPeerContext* context);
 BOOL mf_peer_rdpsnd_stop(void);

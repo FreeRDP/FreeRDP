@@ -72,9 +72,9 @@
 
 #include "rdpdr_main.h"
 
-typedef struct _DEVICE_DRIVE_EXT DEVICE_DRIVE_EXT;
+typedef struct s_DEVICE_DRIVE_EXT DEVICE_DRIVE_EXT;
 /* IMPORTANT: Keep in sync with DRIVE_DEVICE */
-struct _DEVICE_DRIVE_EXT
+struct s_DEVICE_DRIVE_EXT
 {
 	DEVICE device;
 	WCHAR* path;
@@ -426,7 +426,7 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 
 #define MAX_USB_DEVICES 100
 
-typedef struct _hotplug_dev
+typedef struct s_hotplug_dev
 {
 	char* path;
 	BOOL to_add;
@@ -695,7 +695,7 @@ static BOOL isAutomountLocation(const char* path)
 
 #define MAX_USB_DEVICES 100
 
-typedef struct _hotplug_dev
+typedef struct s_hotplug_dev
 {
 	char* path;
 	BOOL to_add;

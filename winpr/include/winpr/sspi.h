@@ -45,12 +45,12 @@
 typedef CHAR SEC_CHAR;
 typedef WCHAR SEC_WCHAR;
 
-struct _SECURITY_INTEGER
+struct s_SECURITY_INTEGER
 {
 	UINT32 LowPart;
 	INT32 HighPart;
 };
-typedef struct _SECURITY_INTEGER SECURITY_INTEGER;
+typedef struct s_SECURITY_INTEGER SECURITY_INTEGER;
 
 typedef SECURITY_INTEGER TimeStamp;
 typedef SECURITY_INTEGER* PTimeStamp;
@@ -69,7 +69,7 @@ typedef LONG SECURITY_STATUS;
 #pragma clang diagnostic pop
 #endif
 
-struct _SecPkgInfoA
+struct s_SecPkgInfoA
 {
 	UINT32 fCapabilities;
 	UINT16 wVersion;
@@ -78,10 +78,10 @@ struct _SecPkgInfoA
 	SEC_CHAR* Name;
 	SEC_CHAR* Comment;
 };
-typedef struct _SecPkgInfoA SecPkgInfoA;
+typedef struct s_SecPkgInfoA SecPkgInfoA;
 typedef SecPkgInfoA* PSecPkgInfoA;
 
-struct _SecPkgInfoW
+struct s_SecPkgInfoW
 {
 	UINT32 fCapabilities;
 	UINT16 wVersion;
@@ -90,7 +90,7 @@ struct _SecPkgInfoW
 	SEC_WCHAR* Name;
 	SEC_WCHAR* Comment;
 };
-typedef struct _SecPkgInfoW SecPkgInfoW;
+typedef struct s_SecPkgInfoW SecPkgInfoW;
 typedef SecPkgInfoW* PSecPkgInfoW;
 
 #ifdef UNICODE
@@ -302,35 +302,35 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 
 #if !defined(_WIN32) || defined(_UWP)
 
-struct _SecPkgContext_AccessToken
+struct s_SecPkgContext_AccessToken
 {
 	void* AccessToken;
 };
-typedef struct _SecPkgContext_AccessToken SecPkgContext_AccessToken;
+typedef struct s_SecPkgContext_AccessToken SecPkgContext_AccessToken;
 
-struct _SecPkgContext_SessionAppData
+struct s_SecPkgContext_SessionAppData
 {
 	UINT32 dwFlags;
 	UINT32 cbAppData;
 	BYTE* pbAppData;
 };
-typedef struct _SecPkgContext_SessionAppData SecPkgContext_SessionAppData;
+typedef struct s_SecPkgContext_SessionAppData SecPkgContext_SessionAppData;
 
-struct _SecPkgContext_Authority
+struct s_SecPkgContext_Authority
 {
 	char* sAuthorityName;
 };
-typedef struct _SecPkgContext_Authority SecPkgContext_Authority;
+typedef struct s_SecPkgContext_Authority SecPkgContext_Authority;
 
-struct _SecPkgContext_ClientSpecifiedTarget
+struct s_SecPkgContext_ClientSpecifiedTarget
 {
 	char* sTargetName;
 };
-typedef struct _SecPkgContext_ClientSpecifiedTarget SecPkgContext_ClientSpecifiedTarget;
+typedef struct s_SecPkgContext_ClientSpecifiedTarget SecPkgContext_ClientSpecifiedTarget;
 
 typedef UINT32 ALG_ID;
 
-struct _SecPkgContext_ConnectionInfo
+struct s_SecPkgContext_ConnectionInfo
 {
 	UINT32 dwProtocol;
 	ALG_ID aiCipher;
@@ -340,23 +340,23 @@ struct _SecPkgContext_ConnectionInfo
 	ALG_ID aiExch;
 	UINT32 dwExchStrength;
 };
-typedef struct _SecPkgContext_ConnectionInfo SecPkgContext_ConnectionInfo;
+typedef struct s_SecPkgContext_ConnectionInfo SecPkgContext_ConnectionInfo;
 
-struct _SecPkgContext_ClientCreds
+struct s_SecPkgContext_ClientCreds
 {
 	UINT32 AuthBufferLen;
 	BYTE* AuthBuffer;
 };
-typedef struct _SecPkgContext_ClientCreds SecPkgContext_ClientCreds;
+typedef struct s_SecPkgContext_ClientCreds SecPkgContext_ClientCreds;
 
-struct _SecPkgContex_DceInfo
+struct s_SecPkgContex_DceInfo
 {
 	UINT32 AuthzSvc;
 	void* pPac;
 };
-typedef struct _SecPkgContex_DceInfo SecPkgContex_DceInfo;
+typedef struct s_SecPkgContex_DceInfo SecPkgContex_DceInfo;
 
-struct _SEC_CHANNEL_BINDINGS
+struct s_SEC_CHANNEL_BINDINGS
 {
 	UINT32 dwInitiatorAddrType;
 	UINT32 cbInitiatorLength;
@@ -367,22 +367,22 @@ struct _SEC_CHANNEL_BINDINGS
 	UINT32 cbApplicationDataLength;
 	UINT32 dwApplicationDataOffset;
 };
-typedef struct _SEC_CHANNEL_BINDINGS SEC_CHANNEL_BINDINGS;
+typedef struct s_SEC_CHANNEL_BINDINGS SEC_CHANNEL_BINDINGS;
 
-struct _SecPkgContext_EapKeyBlock
+struct s_SecPkgContext_EapKeyBlock
 {
 	BYTE rgbKeys[128];
 	BYTE rgbIVs[64];
 };
-typedef struct _SecPkgContext_EapKeyBlock SecPkgContext_EapKeyBlock;
+typedef struct s_SecPkgContext_EapKeyBlock SecPkgContext_EapKeyBlock;
 
-struct _SecPkgContext_Flags
+struct s_SecPkgContext_Flags
 {
 	UINT32 Flags;
 };
-typedef struct _SecPkgContext_Flags SecPkgContext_Flags;
+typedef struct s_SecPkgContext_Flags SecPkgContext_Flags;
 
-struct _SecPkgContext_KeyInfo
+struct s_SecPkgContext_KeyInfo
 {
 	char* sSignatureAlgorithmName;
 	char* sEncryptAlgorithmName;
@@ -390,72 +390,72 @@ struct _SecPkgContext_KeyInfo
 	UINT32 SignatureAlgorithm;
 	UINT32 EncryptAlgorithm;
 };
-typedef struct _SecPkgContext_KeyInfo SecPkgContext_KeyInfo;
+typedef struct s_SecPkgContext_KeyInfo SecPkgContext_KeyInfo;
 
-struct _SecPkgContext_Lifespan
+struct s_SecPkgContext_Lifespan
 {
 	TimeStamp tsStart;
 	TimeStamp tsExpiry;
 };
-typedef struct _SecPkgContext_Lifespan SecPkgContext_Lifespan;
+typedef struct s_SecPkgContext_Lifespan SecPkgContext_Lifespan;
 
-struct _SecPkgContext_Names
+struct s_SecPkgContext_Names
 {
 	char* sUserName;
 };
-typedef struct _SecPkgContext_Names SecPkgContext_Names;
+typedef struct s_SecPkgContext_Names SecPkgContext_Names;
 
-struct _SecPkgContext_NativeNames
+struct s_SecPkgContext_NativeNames
 {
 	char* sClientName;
 	char* sServerName;
 };
-typedef struct _SecPkgContext_NativeNames SecPkgContext_NativeNames;
+typedef struct s_SecPkgContext_NativeNames SecPkgContext_NativeNames;
 
-struct _SecPkgContext_NegotiationInfo
+struct s_SecPkgContext_NegotiationInfo
 {
 	SecPkgInfo* PackageInfo;
 	UINT32 NegotiationState;
 };
-typedef struct _SecPkgContext_NegotiationInfo SecPkgContext_NegotiationInfo;
+typedef struct s_SecPkgContext_NegotiationInfo SecPkgContext_NegotiationInfo;
 
-struct _SecPkgContext_PackageInfo
+struct s_SecPkgContext_PackageInfo
 {
 	SecPkgInfo* PackageInfo;
 };
-typedef struct _SecPkgContext_PackageInfo SecPkgContext_PackageInfo;
+typedef struct s_SecPkgContext_PackageInfo SecPkgContext_PackageInfo;
 
-struct _SecPkgContext_PasswordExpiry
+struct s_SecPkgContext_PasswordExpiry
 {
 	TimeStamp tsPasswordExpires;
 };
-typedef struct _SecPkgContext_PasswordExpiry SecPkgContext_PasswordExpiry;
+typedef struct s_SecPkgContext_PasswordExpiry SecPkgContext_PasswordExpiry;
 
-struct _SecPkgContext_SessionKey
+struct s_SecPkgContext_SessionKey
 {
 	UINT32 SessionKeyLength;
 	BYTE* SessionKey;
 };
-typedef struct _SecPkgContext_SessionKey SecPkgContext_SessionKey;
+typedef struct s_SecPkgContext_SessionKey SecPkgContext_SessionKey;
 
-struct _SecPkgContext_SessionInfo
+struct s_SecPkgContext_SessionInfo
 {
 	UINT32 dwFlags;
 	UINT32 cbSessionId;
 	BYTE rgbSessionId[32];
 };
-typedef struct _SecPkgContext_SessionInfo SecPkgContext_SessionInfo;
+typedef struct s_SecPkgContext_SessionInfo SecPkgContext_SessionInfo;
 
-struct _SecPkgContext_Sizes
+struct s_SecPkgContext_Sizes
 {
 	UINT32 cbMaxToken;
 	UINT32 cbMaxSignature;
 	UINT32 cbBlockSize;
 	UINT32 cbSecurityTrailer;
 };
-typedef struct _SecPkgContext_Sizes SecPkgContext_Sizes;
+typedef struct s_SecPkgContext_Sizes SecPkgContext_Sizes;
 
-struct _SecPkgContext_StreamSizes
+struct s_SecPkgContext_StreamSizes
 {
 	UINT32 cbHeader;
 	UINT32 cbTrailer;
@@ -463,44 +463,44 @@ struct _SecPkgContext_StreamSizes
 	UINT32 cBuffers;
 	UINT32 cbBlockSize;
 };
-typedef struct _SecPkgContext_StreamSizes SecPkgContext_StreamSizes;
+typedef struct s_SecPkgContext_StreamSizes SecPkgContext_StreamSizes;
 
-struct _SecPkgContext_SubjectAttributes
+struct s_SecPkgContext_SubjectAttributes
 {
 	void* AttributeInfo;
 };
-typedef struct _SecPkgContext_SubjectAttributes SecPkgContext_SubjectAttributes;
+typedef struct s_SecPkgContext_SubjectAttributes SecPkgContext_SubjectAttributes;
 
-struct _SecPkgContext_SupportedSignatures
+struct s_SecPkgContext_SupportedSignatures
 {
 	UINT16 cSignatureAndHashAlgorithms;
 	UINT16* pSignatureAndHashAlgorithms;
 };
-typedef struct _SecPkgContext_SupportedSignatures SecPkgContext_SupportedSignatures;
+typedef struct s_SecPkgContext_SupportedSignatures SecPkgContext_SupportedSignatures;
 
-struct _SecPkgContext_TargetInformation
+struct s_SecPkgContext_TargetInformation
 {
 	UINT32 MarshalledTargetInfoLength;
 	BYTE* MarshalledTargetInfo;
 };
-typedef struct _SecPkgContext_TargetInformation SecPkgContext_TargetInformation;
+typedef struct s_SecPkgContext_TargetInformation SecPkgContext_TargetInformation;
 
 /* Security Credentials Attributes */
 
 #define SECPKG_CRED_ATTR_NAMES 1
 
-struct _SecPkgCredentials_NamesA
+struct s_SecPkgCredentials_NamesA
 {
 	SEC_CHAR* sUserName;
 };
-typedef struct _SecPkgCredentials_NamesA SecPkgCredentials_NamesA;
+typedef struct s_SecPkgCredentials_NamesA SecPkgCredentials_NamesA;
 typedef SecPkgCredentials_NamesA* PSecPkgCredentials_NamesA;
 
-struct _SecPkgCredentials_NamesW
+struct s_SecPkgCredentials_NamesW
 {
 	SEC_WCHAR* sUserName;
 };
-typedef struct _SecPkgCredentials_NamesW SecPkgCredentials_NamesW;
+typedef struct s_SecPkgCredentials_NamesW SecPkgCredentials_NamesW;
 typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 
 #ifdef UNICODE
@@ -514,12 +514,12 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 #endif
 
 #if !defined(_WIN32) || defined(_UWP) || defined(__MINGW32__)
-struct _SecPkgContext_Bindings
+struct s_SecPkgContext_Bindings
 {
 	UINT32 BindingsLength;
 	SEC_CHANNEL_BINDINGS* Bindings;
 };
-typedef struct _SecPkgContext_Bindings SecPkgContext_Bindings;
+typedef struct s_SecPkgContext_Bindings SecPkgContext_Bindings;
 #endif
 
 
@@ -640,7 +640,7 @@ typedef struct _SecPkgContext_Bindings SecPkgContext_Bindings;
 #ifndef _AUTH_IDENTITY_DEFINED
 #define _AUTH_IDENTITY_DEFINED
 
-typedef struct _SEC_WINNT_AUTH_IDENTITY_W
+typedef struct s_SEC_WINNT_AUTH_IDENTITY_W
 {
 	/* TSPasswordCreds */
 	UINT16* User;
@@ -652,7 +652,7 @@ typedef struct _SEC_WINNT_AUTH_IDENTITY_W
 	UINT32 Flags;
 } SEC_WINNT_AUTH_IDENTITY_W, *PSEC_WINNT_AUTH_IDENTITY_W;
 
-typedef struct _SEC_WINNT_AUTH_IDENTITY_A
+typedef struct s_SEC_WINNT_AUTH_IDENTITY_A
 {
 	/* TSPasswordCreds */
 	BYTE* User;
@@ -664,7 +664,7 @@ typedef struct _SEC_WINNT_AUTH_IDENTITY_A
 	UINT32 Flags;
 } SEC_WINNT_AUTH_IDENTITY_A, *PSEC_WINNT_AUTH_IDENTITY_A;
 
-struct _SEC_WINNT_AUTH_IDENTITY
+struct s_SEC_WINNT_AUTH_IDENTITY
 {
 	/* TSPasswordCreds */
 	UINT16* User;
@@ -675,7 +675,7 @@ struct _SEC_WINNT_AUTH_IDENTITY
 	UINT32 PasswordLength;
 	UINT32 Flags;
 };
-typedef struct _SEC_WINNT_AUTH_IDENTITY SEC_WINNT_AUTH_IDENTITY;
+typedef struct s_SEC_WINNT_AUTH_IDENTITY SEC_WINNT_AUTH_IDENTITY;
 
 #endif /* _AUTH_IDENTITY_DEFINED */
 
@@ -683,12 +683,12 @@ typedef struct _SEC_WINNT_AUTH_IDENTITY SEC_WINNT_AUTH_IDENTITY;
 #pragma clang diagnostic pop
 #endif
 
-struct _SecHandle
+struct s_SecHandle
 {
 	ULONG_PTR dwLower;
 	ULONG_PTR dwUpper;
 };
-typedef struct _SecHandle SecHandle;
+typedef struct s_SecHandle SecHandle;
 typedef SecHandle* PSecHandle;
 
 typedef SecHandle CredHandle;
@@ -735,22 +735,22 @@ typedef CtxtHandle* PCtxtHandle;
 
 #if !defined(_WIN32) || defined(_UWP)
 
-struct _SecBuffer
+struct s_SecBuffer
 {
 	ULONG cbBuffer;
 	ULONG BufferType;
 	void* pvBuffer;
 };
-typedef struct _SecBuffer SecBuffer;
+typedef struct s_SecBuffer SecBuffer;
 typedef SecBuffer* PSecBuffer;
 
-struct _SecBufferDesc
+struct s_SecBufferDesc
 {
 	ULONG ulVersion;
 	ULONG cBuffers;
 	PSecBuffer pBuffers;
 };
-typedef struct _SecBufferDesc SecBufferDesc;
+typedef struct s_SecBufferDesc SecBufferDesc;
 typedef SecBufferDesc* PSecBufferDesc;
 
 typedef void(SEC_ENTRY* SEC_GET_KEY_FN)(void* Arg, void* Principal, UINT32 KeyVer, void** Key,
@@ -942,7 +942,7 @@ typedef SECURITY_STATUS(SEC_ENTRY* SET_CONTEXT_ATTRIBUTES_FN_W)(PCtxtHandle phCo
 #define SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION_4 \
 	4 /* Interface has all routines through ChangeAccountPassword */
 
-struct _SecurityFunctionTableA
+struct s_SecurityFunctionTableA
 {
 	UINT32 dwVersion;
 	ENUMERATE_SECURITY_PACKAGES_FN_A EnumerateSecurityPackagesA;
@@ -973,10 +973,10 @@ struct _SecurityFunctionTableA
 	DECRYPT_MESSAGE_FN DecryptMessage;
 	SET_CONTEXT_ATTRIBUTES_FN_A SetContextAttributesA;
 };
-typedef struct _SecurityFunctionTableA SecurityFunctionTableA;
+typedef struct s_SecurityFunctionTableA SecurityFunctionTableA;
 typedef SecurityFunctionTableA* PSecurityFunctionTableA;
 
-struct _SecurityFunctionTableW
+struct s_SecurityFunctionTableW
 {
 	UINT32 dwVersion;
 	ENUMERATE_SECURITY_PACKAGES_FN_W EnumerateSecurityPackagesW;
@@ -1007,7 +1007,7 @@ struct _SecurityFunctionTableW
 	DECRYPT_MESSAGE_FN DecryptMessage;
 	SET_CONTEXT_ATTRIBUTES_FN_W SetContextAttributesW;
 };
-typedef struct _SecurityFunctionTableW SecurityFunctionTableW;
+typedef struct s_SecurityFunctionTableW SecurityFunctionTableW;
 typedef SecurityFunctionTableW* PSecurityFunctionTableW;
 
 typedef PSecurityFunctionTableA(SEC_ENTRY* INIT_SECURITY_INTERFACE_A)(void);
@@ -1153,52 +1153,52 @@ extern "C"
 #define SECPKG_ATTR_AUTH_NTLM_HASH_CB 1108
 #define SECPKG_ATTR_AUTH_NTLM_HASH_CB_DATA 1109
 
-	struct _SecPkgContext_AuthIdentity
+	struct s_SecPkgContext_AuthIdentity
 	{
 		char User[256 + 1];
 		char Domain[256 + 1];
 	};
-	typedef struct _SecPkgContext_AuthIdentity SecPkgContext_AuthIdentity;
+	typedef struct s_SecPkgContext_AuthIdentity SecPkgContext_AuthIdentity;
 
-	struct _SecPkgContext_AuthPassword
+	struct s_SecPkgContext_AuthPassword
 	{
 		char Password[256 + 1];
 	};
-	typedef struct _SecPkgContext_AuthPassword SecPkgContext_AuthPassword;
+	typedef struct s_SecPkgContext_AuthPassword SecPkgContext_AuthPassword;
 
-	struct _SecPkgContext_AuthNtlmHash
+	struct s_SecPkgContext_AuthNtlmHash
 	{
 		int Version;
 		BYTE NtlmHash[16];
 	};
-	typedef struct _SecPkgContext_AuthNtlmHash SecPkgContext_AuthNtlmHash;
+	typedef struct s_SecPkgContext_AuthNtlmHash SecPkgContext_AuthNtlmHash;
 
-	struct _SecPkgContext_AuthNtlmTimestamp
+	struct s_SecPkgContext_AuthNtlmTimestamp
 	{
 		BYTE Timestamp[8];
 		BOOL ChallengeOrResponse;
 	};
-	typedef struct _SecPkgContext_AuthNtlmTimestamp SecPkgContext_AuthNtlmTimestamp;
+	typedef struct s_SecPkgContext_AuthNtlmTimestamp SecPkgContext_AuthNtlmTimestamp;
 
-	struct _SecPkgContext_AuthNtlmClientChallenge
+	struct s_SecPkgContext_AuthNtlmClientChallenge
 	{
 		BYTE ClientChallenge[8];
 	};
-	typedef struct _SecPkgContext_AuthNtlmClientChallenge SecPkgContext_AuthNtlmClientChallenge;
+	typedef struct s_SecPkgContext_AuthNtlmClientChallenge SecPkgContext_AuthNtlmClientChallenge;
 
-	struct _SecPkgContext_AuthNtlmServerChallenge
+	struct s_SecPkgContext_AuthNtlmServerChallenge
 	{
 		BYTE ServerChallenge[8];
 	};
-	typedef struct _SecPkgContext_AuthNtlmServerChallenge SecPkgContext_AuthNtlmServerChallenge;
+	typedef struct s_SecPkgContext_AuthNtlmServerChallenge SecPkgContext_AuthNtlmServerChallenge;
 
-	struct _SecPkgContext_AuthNtlmMessage
+	struct s_SecPkgContext_AuthNtlmMessage
 	{
 		UINT32 type;
 		UINT32 length;
 		BYTE* buffer;
 	};
-	typedef struct _SecPkgContext_AuthNtlmMessage SecPkgContext_AuthNtlmMessage;
+	typedef struct s_SecPkgContext_AuthNtlmMessage SecPkgContext_AuthNtlmMessage;
 
 #define SSPI_INTERFACE_WINPR 0x00000001
 #define SSPI_INTERFACE_NATIVE 0x00000002

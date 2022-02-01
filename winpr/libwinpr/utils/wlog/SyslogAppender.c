@@ -25,11 +25,11 @@
 #include "SyslogAppender.h"
 #include <syslog.h>
 
-struct _wLogSyslogAppender
+struct s_wLogSyslogAppender
 {
 	WLOG_APPENDER_COMMON();
 };
-typedef struct _wLogSyslogAppender wLogSyslogAppender;
+typedef struct s_wLogSyslogAppender wLogSyslogAppender;
 
 static int getSyslogLevel(DWORD level)
 {

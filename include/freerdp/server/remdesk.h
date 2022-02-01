@@ -32,13 +32,13 @@
  * Server Interface
  */
 
-typedef struct _remdesk_server_context RemdeskServerContext;
-typedef struct _remdesk_server_private RemdeskServerPrivate;
+typedef struct s_remdesk_server_context RemdeskServerContext;
+typedef struct s_remdesk_server_private RemdeskServerPrivate;
 
 typedef UINT (*psRemdeskStart)(RemdeskServerContext* context);
 typedef UINT (*psRemdeskStop)(RemdeskServerContext* context);
 
-struct _remdesk_server_context
+struct s_remdesk_server_context
 {
 	HANDLE vcm;
 	void* custom;
