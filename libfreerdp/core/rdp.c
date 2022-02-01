@@ -915,7 +915,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 	if (compressedType & PACKET_COMPRESSED)
 	{
 		UINT32 DstSize = 0;
-		BYTE* pDstData = NULL;
+		const BYTE* pDstData = NULL;
 		UINT16 SrcSize = compressedLength - 18;
 
 		if ((compressedLength < 18) || (Stream_GetRemainingLength(s) < SrcSize))
