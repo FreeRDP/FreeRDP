@@ -61,8 +61,8 @@ extern "C"
 	WINPR_API size_t _wcslen(const WCHAR* str);
 	WINPR_API size_t _wcsnlen(const WCHAR* str, size_t maxNumberOfElements);
 
-	WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c);
-	WINPR_API WCHAR* _wcsrchr(const WCHAR* str, WCHAR c);
+	WINPR_API const WCHAR* _wcschr(const WCHAR* str, WCHAR c);
+	WINPR_API const WCHAR* _wcsrchr(const WCHAR* str, WCHAR c);
 
 	WINPR_API char* strtok_s(char* strToken, const char* strDelimit, char** context);
 	WINPR_API WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context);

@@ -368,7 +368,8 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 {
 	int status = -1;
 	BYTE descriptor;
-	wStream* stream = Stream_New((BYTE*)pSrcData, SrcSize);
+	wStream sbuffer = { 0 };
+	wStream* stream = Stream_StaticConstInit(&sbuffer, pSrcData, SrcSize);
 
 	if (!stream)
 		return -1;
@@ -448,7 +449,6 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 
 	status = 1;
 fail:
-	Stream_Free(stream, FALSE);
 	return status;
 }
 

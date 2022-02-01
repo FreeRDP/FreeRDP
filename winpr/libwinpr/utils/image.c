@@ -353,7 +353,8 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 	BYTE* pDstData;
 	WINPR_BITMAP_FILE_HEADER bf;
 	WINPR_BITMAP_INFO_HEADER bi;
-	wStream* s = Stream_New((BYTE*)buffer, size);
+	wStream sbuffer = { 0 };
+	wStream* s = Stream_StaticConstInit(&sbuffer, buffer, size);
 
 	if (!s)
 		return -1;
@@ -419,7 +420,6 @@ fail:
 		image->data = NULL;
 	}
 
-	Stream_Free(s, FALSE);
 	return rc;
 }
 
