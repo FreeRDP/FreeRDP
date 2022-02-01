@@ -379,7 +379,7 @@ static BOOL rts_read_version(wStream* s, p_rt_version_t* version)
 	return TRUE;
 }
 
-void rts_free_supported_versions(p_rt_versions_supported_t* versions)
+static void rts_free_supported_versions(p_rt_versions_supported_t* versions)
 {
 	if (!versions)
 		return;
@@ -520,13 +520,13 @@ static BOOL rts_write_syntax_id(wStream* s, const p_syntax_id_t* syntax_id)
 	return TRUE;
 }
 
-p_cont_elem_t* rts_context_elem_new(size_t count)
+static p_cont_elem_t* rts_context_elem_new(size_t count)
 {
 	p_cont_elem_t* ctx = calloc(count, sizeof(p_cont_elem_t));
 	return ctx;
 }
 
-void rts_context_elem_free(p_cont_elem_t* ptr)
+static void rts_context_elem_free(p_cont_elem_t* ptr)
 {
 	if (!ptr)
 		return;
