@@ -144,9 +144,13 @@
 #pragma clang diagnostic ignored "-Wreserved-id-macro"
 #endif
 
-#define __HRESULT_FROM_WIN32(x) \
-	((x) <= 0 ? ((x)) : ((((x)&0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
-#define HRESULT_FROM_WIN32(x) __HRESULT_FROM_WIN32(x)
+static INLINE HRESULT HRESULT_FROM_WIN32(unsigned long x)
+{
+	HRESULT hx = (HRESULT)x;
+	if (hx <= 0)
+		return hx;
+	return (HRESULT)((((x)&0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000));
+}
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
