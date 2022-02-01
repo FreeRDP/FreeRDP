@@ -28,16 +28,19 @@
 #include <winpr/debug.h>
 
 #if defined(WITH_VERBOSE_WINPR_ASSERT) && (WITH_VERBOSE_WINPR_ASSERT != 0)
-#define WINPR_ASSERT(cond)                                                                     \
-	do                                                                                         \
-	{                                                                                          \
-		if (!(cond))                                                                           \
-		{                                                                                      \
-			const char* tag = "com.freerdp.winpr.assert";                                      \
-			WLog_FATAL(tag, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, __FUNCTION__, __LINE__); \
-			winpr_log_backtrace(tag, WLOG_FATAL, 20);                                          \
-			abort();                                                                           \
-		}                                                                                      \
+#define WINPR_ASSERT(cond)                                                                    \
+	do                                                                                        \
+	{                                                                                         \
+		if (!(cond))                                                                          \
+		{                                                                                     \
+			static wLog* _log_cached_ptr = NULL;                                              \
+			if (!_log_cached_ptr)                                                             \
+				_log_cached_ptr = WLog_Get("com.freerdp.winpr.assert");                       \
+			WLog_Print(_log_cached_ptr, WLOG_FATAL, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, \
+			           __FUNCTION__, __LINE__);                                               \
+			winpr_log_backtrace_ex(_log_cached_ptr, WLOG_FATAL, 20);                          \
+			abort();                                                                          \
+		}                                                                                     \
 	} while (0)
 #else
 #define WINPR_ASSERT(cond) \
