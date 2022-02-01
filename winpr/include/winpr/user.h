@@ -109,7 +109,7 @@
 typedef LONG FXPT16DOT16, FAR *LPFXPT16DOT16;
 typedef LONG FXPT2DOT30, FAR *LPFXPT2DOT30;
 
-typedef struct tagCIEXYZ
+typedef struct
 {
 	FXPT2DOT30 ciexyzX;
 	FXPT2DOT30 ciexyzY;
@@ -118,7 +118,7 @@ typedef struct tagCIEXYZ
 
 typedef CIEXYZ FAR* LPCIEXYZ;
 
-typedef struct tagICEXYZTRIPLE
+typedef struct
 {
 	CIEXYZ ciexyzRed;
 	CIEXYZ ciexyzGreen;
@@ -127,7 +127,7 @@ typedef struct tagICEXYZTRIPLE
 
 typedef CIEXYZTRIPLE FAR* LPCIEXYZTRIPLE;
 
-typedef struct tagBITMAP
+typedef struct
 {
 	LONG bmType;
 	LONG bmWidth;
@@ -138,14 +138,14 @@ typedef struct tagBITMAP
 	LPVOID bmBits;
 } BITMAP, *PBITMAP, NEAR *NPBITMAP, FAR *LPBITMAP;
 
-typedef struct tagRGBTRIPLE
+typedef struct
 {
 	BYTE rgbtBlue;
 	BYTE rgbtGreen;
 	BYTE rgbtRed;
 } RGBTRIPLE, *PRGBTRIPLE, NEAR *NPRGBTRIPLE, FAR *LPRGBTRIPLE;
 
-typedef struct tagRGBQUAD
+typedef struct
 {
 	BYTE rgbBlue;
 	BYTE rgbGreen;
@@ -165,7 +165,7 @@ typedef RGBQUAD FAR* LPRGBQUAD;
 #define PROFILE_LINKED 'LINK'
 #define PROFILE_EMBEDDED 'MBED'
 
-typedef struct tagBITMAPINFOHEADER
+typedef struct
 {
 	DWORD biSize;
 	LONG biWidth;
@@ -180,13 +180,13 @@ typedef struct tagBITMAPINFOHEADER
 	DWORD biClrImportant;
 } BITMAPINFOHEADER, FAR *LPBITMAPINFOHEADER, *PBITMAPINFOHEADER;
 
-typedef struct tagBITMAPINFO
+typedef struct
 {
 	BITMAPINFOHEADER bmiHeader;
 	RGBQUAD bmiColors[1];
 } BITMAPINFO, FAR *LPBITMAPINFO, *PBITMAPINFO;
 
-typedef enum e_ORIENTATION_PREFERENCE
+typedef enum
 {
 	ORIENTATION_PREFERENCE_NONE = 0x0,
 	ORIENTATION_PREFERENCE_LANDSCAPE = 0x1,
@@ -204,7 +204,7 @@ typedef enum e_ORIENTATION_PREFERENCE
 
 #pragma pack(push, 1)
 
-typedef struct tagBITMAPCOREHEADER
+typedef struct
 {
 	DWORD bcSize;
 	WORD bcWidth;
@@ -265,13 +265,13 @@ typedef struct
 	DWORD bV5Reserved;
 } BITMAPV5HEADER, FAR *LPBITMAPV5HEADER, *PBITMAPV5HEADER;
 
-typedef struct tagBITMAPCOREINFO
+typedef struct
 {
 	BITMAPCOREHEADER bmciHeader;
 	RGBTRIPLE bmciColors[1];
 } BITMAPCOREINFO, FAR *LPBITMAPCOREINFO, *PBITMAPCOREINFO;
 
-typedef struct tagBITMAPFILEHEADER
+typedef struct
 {
 	WORD bfType;
 	DWORD bfSize;

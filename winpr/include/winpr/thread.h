@@ -33,7 +33,7 @@ extern "C"
 
 #ifndef _WIN32
 
-	typedef struct s_STARTUPINFOA
+	typedef struct
 	{
 		DWORD cb;
 		LPSTR lpReserved;
@@ -55,7 +55,7 @@ extern "C"
 		HANDLE hStdError;
 	} STARTUPINFOA, *LPSTARTUPINFOA;
 
-	typedef struct s_STARTUPINFOW
+	typedef struct
 	{
 		DWORD cb;
 		LPWSTR lpReserved;

@@ -31,7 +31,7 @@
 
 #include <winpr/nt.h>
 
-typedef struct s_OVERLAPPED
+typedef struct
 {
 	ULONG_PTR Internal;
 	ULONG_PTR InternalHigh;
@@ -47,7 +47,7 @@ typedef struct s_OVERLAPPED
 	HANDLE hEvent;
 } OVERLAPPED, *LPOVERLAPPED;
 
-typedef struct s_OVERLAPPED_ENTRY
+typedef struct
 {
 	ULONG_PTR lpCompletionKey;
 	LPOVERLAPPED lpOverlapped;

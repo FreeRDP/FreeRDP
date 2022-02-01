@@ -28,22 +28,20 @@ typedef struct s_wClipboard wClipboard;
 typedef void* (*CLIPBOARD_SYNTHESIZE_FN)(wClipboard* clipboard, UINT32 formatId, const void* data,
                                          UINT32* pSize);
 
-struct s_wClipboardFileSizeRequest
+typedef struct
 {
 	UINT32 streamId;
 	UINT32 listIndex;
-};
-typedef struct s_wClipboardFileSizeRequest wClipboardFileSizeRequest;
+} wClipboardFileSizeRequest;
 
-struct s_wClipboardFileRangeRequest
+typedef struct
 {
 	UINT32 streamId;
 	UINT32 listIndex;
 	UINT32 nPositionLow;
 	UINT32 nPositionHigh;
 	UINT32 cbRequested;
-};
-typedef struct s_wClipboardFileRangeRequest wClipboardFileRangeRequest;
+} wClipboardFileRangeRequest;
 
 typedef struct s_wClipboardDelegate wClipboardDelegate;
 

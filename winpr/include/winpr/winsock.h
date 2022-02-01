@@ -200,26 +200,25 @@ typedef union sockaddr_gen
 #pragma clang diagnostic pop
 #endif
 
-struct s_INTERFACE_INFO
+typedef struct
 {
 	ULONG iiFlags;
 	sockaddr_gen iiAddress;
 	sockaddr_gen iiBroadcastAddress;
 	sockaddr_gen iiNetmask;
-};
-typedef struct s_INTERFACE_INFO INTERFACE_INFO;
+} INTERFACE_INFO;
 typedef INTERFACE_INFO* LPINTERFACE_INFO;
 
 #define MAX_PROTOCOL_CHAIN 7
 #define WSAPROTOCOL_LEN 255
 
-typedef struct s_WSAPROTOCOLCHAIN
+typedef struct
 {
 	int ChainLen;
 	DWORD ChainEntries[MAX_PROTOCOL_CHAIN];
 } WSAPROTOCOLCHAIN, *LPWSAPROTOCOLCHAIN;
 
-typedef struct s_WSAPROTOCOL_INFOA
+typedef struct
 {
 	DWORD dwServiceFlags1;
 	DWORD dwServiceFlags2;
@@ -243,7 +242,7 @@ typedef struct s_WSAPROTOCOL_INFOA
 	CHAR szProtocol[WSAPROTOCOL_LEN + 1];
 } WSAPROTOCOL_INFOA, *LPWSAPROTOCOL_INFOA;
 
-typedef struct s_WSAPROTOCOL_INFOW
+typedef struct
 {
 	DWORD dwServiceFlags1;
 	DWORD dwServiceFlags2;

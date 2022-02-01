@@ -27,39 +27,37 @@
 #include <winpr/wlog.h>
 #include <winpr/stream.h>
 
-#include <freerdp/cache/cache.h>
-
-typedef struct
-{
-	UINT32 number;
-	UINT32 maxCellSize;
-	rdpGlyph** entries;
-} GLYPH_CACHE;
-
-typedef struct
-{
-	void* fragment;
-	UINT32 size;
-} FRAGMENT_CACHE_ENTRY;
-
-typedef struct
-{
-	FRAGMENT_CACHE_ENTRY* entries;
-} FRAGMENT_CACHE;
-
-typedef struct
-{
-	FRAGMENT_CACHE fragCache;
-	GLYPH_CACHE glyphCache[10];
-
-	wLog* log;
-	rdpContext* context;
-} rdpGlyphCache;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct
+	{
+		UINT32 number;
+		UINT32 maxCellSize;
+		rdpGlyph** entries;
+	} GLYPH_CACHE;
+
+	typedef struct
+	{
+		void* fragment;
+		UINT32 size;
+	} FRAGMENT_CACHE_ENTRY;
+
+	typedef struct
+	{
+		FRAGMENT_CACHE_ENTRY* entries;
+	} FRAGMENT_CACHE;
+
+	typedef struct
+	{
+		FRAGMENT_CACHE fragCache;
+		GLYPH_CACHE glyphCache[10];
+
+		wLog* log;
+		rdpContext* context;
+	} rdpGlyphCache;
 
 	FREERDP_API void glyph_cache_register_callbacks(rdpUpdate* update);
 

@@ -36,7 +36,7 @@ typedef VOID (*PTP_SIMPLE_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Contex
 
 typedef struct s_TP_POOL TP_POOL, *PTP_POOL;
 
-typedef struct s_TP_POOL_STACK_INFORMATION
+typedef struct
 {
 	SIZE_T StackReserve;
 	SIZE_T StackCommit;
@@ -46,7 +46,7 @@ typedef struct s_TP_CLEANUP_GROUP TP_CLEANUP_GROUP, *PTP_CLEANUP_GROUP;
 
 typedef VOID (*PTP_CLEANUP_GROUP_CANCEL_CALLBACK)(PVOID ObjectContext, PVOID CleanupContext);
 
-typedef struct s_TP_CALLBACK_ENVIRON_V1
+typedef struct
 {
 	TP_VERSION Version;
 	PTP_POOL Pool;

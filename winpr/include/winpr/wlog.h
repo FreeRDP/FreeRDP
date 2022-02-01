@@ -64,7 +64,7 @@ extern "C"
 #define WLOG_APPENDER_JOURNALD 5
 #define WLOG_APPENDER_UDP 6
 
-	struct s_wLogMessage
+	typedef struct
 	{
 		DWORD Type;
 
@@ -96,8 +96,8 @@ extern "C"
 		void* PacketData;
 		size_t PacketLength;
 		DWORD PacketFlags;
-	};
-	typedef struct s_wLogMessage wLogMessage;
+	} wLogMessage;
+
 	typedef struct s_wLogLayout wLogLayout;
 	typedef struct s_wLogAppender wLogAppender;
 	typedef struct s_wLog wLog;
@@ -207,14 +207,13 @@ extern "C"
 	typedef BOOL (*wLogCallbackImage_t)(const wLogMessage* msg);
 	typedef BOOL (*wLogCallbackPackage_t)(const wLogMessage* msg);
 
-	struct s_wLogCallbacks
+	typedef struct
 	{
 		wLogCallbackData_t data;
 		wLogCallbackImage_t image;
 		wLogCallbackMessage_t message;
 		wLogCallbackPackage_t package;
-	};
-	typedef struct s_wLogCallbacks wLogCallbacks;
+	} wLogCallbacks;
 
 #ifdef __cplusplus
 }

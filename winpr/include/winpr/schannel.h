@@ -42,19 +42,19 @@
 #define SECPKG_ATTR_CIPHER_STRENGTHS 87
 #define SECPKG_ATTR_SUPPORTED_PROTOCOLS 88
 
-typedef struct s_SecPkgCred_SupportedAlgs
+typedef struct
 {
 	DWORD cSupportedAlgs;
 	ALG_ID* palgSupportedAlgs;
 } SecPkgCred_SupportedAlgs, *PSecPkgCred_SupportedAlgs;
 
-typedef struct s_SecPkgCred_CipherStrengths
+typedef struct
 {
 	DWORD dwMinimumCipherStrength;
 	DWORD dwMaximumCipherStrength;
 } SecPkgCred_CipherStrengths, *PSecPkgCred_CipherStrengths;
 
-typedef struct s_SecPkgCred_SupportedProtocols
+typedef struct
 {
 	DWORD grbitProtocol;
 } SecPkgCred_SupportedProtocols, *PSecPkgCred_SupportedProtocols;
@@ -86,7 +86,7 @@ enum eTlsHashAlgorithm
 
 struct s_HMAPPER;
 
-typedef struct s_SCHANNEL_CRED
+typedef struct
 {
 	DWORD dwVersion;
 	DWORD cCreds;
@@ -115,7 +115,7 @@ typedef struct s_SCHANNEL_CRED
 #define SCH_CRED_MAX_SUPPORTED_ALGS 256
 #define SCH_CRED_MAX_SUPPORTED_CERTS 100
 
-typedef struct s_SCHANNEL_CERT_HASH
+typedef struct
 {
 	DWORD dwLength;
 	DWORD dwFlags;
@@ -123,7 +123,7 @@ typedef struct s_SCHANNEL_CERT_HASH
 	BYTE ShaHash[20];
 } SCHANNEL_CERT_HASH, *PSCHANNEL_CERT_HASH;
 
-typedef struct s_SCHANNEL_CERT_HASH_STORE
+typedef struct
 {
 	DWORD dwLength;
 	DWORD dwFlags;
@@ -166,7 +166,7 @@ typedef struct s_SCHANNEL_CERT_HASH_STORE
 #define SCHANNEL_ALERT 2
 #define SCHANNEL_SESSION 3
 
-typedef struct s_SCHANNEL_ALERT_TOKEN
+typedef struct
 {
 	DWORD dwTokenType;
 	DWORD dwAlertType;
@@ -204,13 +204,13 @@ typedef struct s_SCHANNEL_ALERT_TOKEN
 #define SSL_SESSION_ENABLE_RECONNECTS 1
 #define SSL_SESSION_DISABLE_RECONNECTS 2
 
-typedef struct s_SCHANNEL_SESSION_TOKEN
+typedef struct
 {
 	DWORD dwTokenType;
 	DWORD dwFlags;
 } SCHANNEL_SESSION_TOKEN;
 
-typedef struct s_SCHANNEL_CLIENT_SIGNATURE
+typedef struct
 {
 	DWORD cbLength;
 	ALG_ID aiHash;

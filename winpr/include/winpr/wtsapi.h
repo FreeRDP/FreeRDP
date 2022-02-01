@@ -322,7 +322,7 @@ typedef HRESULT(VCAPITYPE* PFNVCAPIGETINSTANCE)(REFIID refiid, PULONG pNumObjs, 
 #pragma clang diagnostic ignored "-Wreserved-identifier"
 #endif
 
-typedef enum e_WTS_CONNECTSTATE_CLASS
+typedef enum
 {
 	WTSActive,
 	WTSConnected,
@@ -336,31 +336,31 @@ typedef enum e_WTS_CONNECTSTATE_CLASS
 	WTSInit
 } WTS_CONNECTSTATE_CLASS;
 
-typedef struct s_WTS_SERVER_INFOW
+typedef struct
 {
 	LPWSTR pServerName;
 } WTS_SERVER_INFOW, *PWTS_SERVER_INFOW;
 
-typedef struct s_WTS_SERVER_INFOA
+typedef struct
 {
 	LPSTR pServerName;
 } WTS_SERVER_INFOA, *PWTS_SERVER_INFOA;
 
-typedef struct s_WTS_SESSION_INFOW
+typedef struct
 {
 	DWORD SessionId;
 	LPWSTR pWinStationName;
 	WTS_CONNECTSTATE_CLASS State;
 } WTS_SESSION_INFOW, *PWTS_SESSION_INFOW;
 
-typedef struct s_WTS_SESSION_INFOA
+typedef struct
 {
 	DWORD SessionId;
 	LPSTR pWinStationName;
 	WTS_CONNECTSTATE_CLASS State;
 } WTS_SESSION_INFOA, *PWTS_SESSION_INFOA;
 
-typedef struct s_WTS_SESSION_INFO_1W
+typedef struct
 {
 	DWORD ExecEnvId;
 	WTS_CONNECTSTATE_CLASS State;
@@ -372,7 +372,7 @@ typedef struct s_WTS_SESSION_INFO_1W
 	LPWSTR pFarmName;
 } WTS_SESSION_INFO_1W, *PWTS_SESSION_INFO_1W;
 
-typedef struct s_WTS_SESSION_INFO_1A
+typedef struct
 {
 	DWORD ExecEnvId;
 	WTS_CONNECTSTATE_CLASS State;
@@ -384,7 +384,7 @@ typedef struct s_WTS_SESSION_INFO_1A
 	LPSTR pFarmName;
 } WTS_SESSION_INFO_1A, *PWTS_SESSION_INFO_1A;
 
-typedef struct s_WTS_PROCESS_INFOW
+typedef struct
 {
 	DWORD SessionId;
 	DWORD ProcessId;
@@ -392,7 +392,7 @@ typedef struct s_WTS_PROCESS_INFOW
 	PSID pUserSid;
 } WTS_PROCESS_INFOW, *PWTS_PROCESS_INFOW;
 
-typedef struct s_WTS_PROCESS_INFOA
+typedef struct
 {
 	DWORD SessionId;
 	DWORD ProcessId;
@@ -404,7 +404,7 @@ typedef struct s_WTS_PROCESS_INFOA
 #define WTS_PROTOCOL_TYPE_ICA 1
 #define WTS_PROTOCOL_TYPE_RDP 2
 
-typedef enum e_WTS_INFO_CLASS
+typedef enum
 {
 	WTSInitialProgram,
 	WTSApplicationName,
@@ -438,7 +438,7 @@ typedef enum e_WTS_INFO_CLASS
 	WTSIsRemoteSession
 } WTS_INFO_CLASS;
 
-typedef struct s_WTSCONFIGINFOW
+typedef struct
 {
 	ULONG version;
 	ULONG fConnectClientDrivesAtLogon;
@@ -453,7 +453,7 @@ typedef struct s_WTSCONFIGINFOW
 	WCHAR ApplicationName[MAX_PATH + 1];
 } WTSCONFIGINFOW, *PWTSCONFIGINFOW;
 
-typedef struct s_WTSCONFIGINFOA
+typedef struct
 {
 	ULONG version;
 	ULONG fConnectClientDrivesAtLogon;
@@ -468,7 +468,7 @@ typedef struct s_WTSCONFIGINFOA
 	CHAR ApplicationName[MAX_PATH + 1];
 } WTSCONFIGINFOA, *PWTSCONFIGINFOA;
 
-typedef struct s_WTSINFOW
+typedef struct
 {
 	WTS_CONNECTSTATE_CLASS State;
 	DWORD SessionId;
@@ -488,7 +488,7 @@ typedef struct s_WTSINFOW
 	LARGE_INTEGER _CurrentTime; /* Conflicts with X11 headers */
 } WTSINFOW, *PWTSINFOW;
 
-typedef struct s_WTSINFOA
+typedef struct
 {
 	WTS_CONNECTSTATE_CLASS State;
 	DWORD SessionId;
@@ -512,7 +512,7 @@ typedef struct s_WTSINFOA
 #define WTS_SESSIONSTATE_LOCK 0x00000000
 #define WTS_SESSIONSTATE_UNLOCK 0x00000001
 
-typedef struct s_WTSINFOEX_LEVEL1_W
+typedef struct
 {
 	ULONG SessionId;
 	WTS_CONNECTSTATE_CLASS SessionState;
@@ -533,7 +533,7 @@ typedef struct s_WTSINFOEX_LEVEL1_W
 	DWORD OutgoingCompressedBytes;
 } WTSINFOEX_LEVEL1_W, *PWTSINFOEX_LEVEL1_W;
 
-typedef struct s_WTSINFOEX_LEVEL1_A
+typedef struct
 {
 	ULONG SessionId;
 	WTS_CONNECTSTATE_CLASS SessionState;
@@ -554,29 +554,29 @@ typedef struct s_WTSINFOEX_LEVEL1_A
 	DWORD OutgoingCompressedBytes;
 } WTSINFOEX_LEVEL1_A, *PWTSINFOEX_LEVEL1_A;
 
-typedef union u_WTSINFOEX_LEVEL_W
+typedef union
 {
 	WTSINFOEX_LEVEL1_W WTSInfoExLevel1;
 } WTSINFOEX_LEVEL_W, *PWTSINFOEX_LEVEL_W;
 
-typedef union u_WTSINFOEX_LEVEL_A
+typedef union
 {
 	WTSINFOEX_LEVEL1_A WTSInfoExLevel1;
 } WTSINFOEX_LEVEL_A, *PWTSINFOEX_LEVEL_A;
 
-typedef struct s_WTSINFOEXW
+typedef struct
 {
 	DWORD Level;
 	WTSINFOEX_LEVEL_W Data;
 } WTSINFOEXW, *PWTSINFOEXW;
 
-typedef struct s_WTSINFOEXA
+typedef struct
 {
 	DWORD Level;
 	WTSINFOEX_LEVEL_A Data;
 } WTSINFOEXA, *PWTSINFOEXA;
 
-typedef struct s_WTSCLIENTW
+typedef struct
 {
 	WCHAR ClientName[CLIENTNAME_LENGTH + 1];
 	WCHAR Domain[DOMAIN_LENGTH + 1];
@@ -599,7 +599,7 @@ typedef struct s_WTSCLIENTW
 	WCHAR DeviceId[MAX_PATH + 1];
 } WTSCLIENTW, *PWTSCLIENTW;
 
-typedef struct s_WTSCLIENTA
+typedef struct
 {
 	CHAR ClientName[CLIENTNAME_LENGTH + 1];
 	CHAR Domain[DOMAIN_LENGTH + 1];
@@ -625,13 +625,13 @@ typedef struct s_WTSCLIENTA
 #define PRODUCTINFO_COMPANYNAME_LENGTH 256
 #define PRODUCTINFO_PRODUCTID_LENGTH 4
 
-typedef struct s_WTS_PRODUCT_INFOA
+typedef struct
 {
 	CHAR CompanyName[PRODUCTINFO_COMPANYNAME_LENGTH];
 	CHAR ProductID[PRODUCTINFO_PRODUCTID_LENGTH];
 } PRODUCT_INFOA;
 
-typedef struct s_WTS_PRODUCT_INFOW
+typedef struct
 {
 	WCHAR CompanyName[PRODUCTINFO_COMPANYNAME_LENGTH];
 	WCHAR ProductID[PRODUCTINFO_PRODUCTID_LENGTH];
@@ -640,7 +640,7 @@ typedef struct s_WTS_PRODUCT_INFOW
 #define VALIDATIONINFORMATION_LICENSE_LENGTH 16384
 #define VALIDATIONINFORMATION_HARDWAREID_LENGTH 20
 
-typedef struct s_WTS_VALIDATION_INFORMATIONA
+typedef struct
 {
 	PRODUCT_INFOA ProductInfo;
 	BYTE License[VALIDATIONINFORMATION_LICENSE_LENGTH];
@@ -649,7 +649,7 @@ typedef struct s_WTS_VALIDATION_INFORMATIONA
 	DWORD HardwareIDLength;
 } WTS_VALIDATION_INFORMATIONA, *PWTS_VALIDATION_INFORMATIONA;
 
-typedef struct s_WTS_VALIDATION_INFORMATIONW
+typedef struct
 {
 	PRODUCT_INFOW ProductInfo;
 	BYTE License[VALIDATIONINFORMATION_LICENSE_LENGTH];
@@ -658,20 +658,20 @@ typedef struct s_WTS_VALIDATION_INFORMATIONW
 	DWORD HardwareIDLength;
 } WTS_VALIDATION_INFORMATIONW, *PWTS_VALIDATION_INFORMATIONW;
 
-typedef struct s_WTS_CLIENT_ADDRESS
+typedef struct
 {
 	DWORD AddressFamily;
 	BYTE Address[20];
 } WTS_CLIENT_ADDRESS, *PWTS_CLIENT_ADDRESS;
 
-typedef struct s_WTS_CLIENT_DISPLAY
+typedef struct
 {
 	DWORD HorizontalResolution;
 	DWORD VerticalResolution;
 	DWORD ColorDepth;
 } WTS_CLIENT_DISPLAY, *PWTS_CLIENT_DISPLAY;
 
-typedef enum e_WTS_CONFIG_CLASS
+typedef enum
 {
 	WTSUserConfigInitialProgram,
 	WTSUserConfigWorkingDirectory,
@@ -695,12 +695,12 @@ typedef enum e_WTS_CONFIG_CLASS
 	WTSUserConfigUser
 } WTS_CONFIG_CLASS;
 
-typedef enum e_WTS_CONFIG_SOURCE
+typedef enum
 {
 	WTSUserConfigSourceSAM
 } WTS_CONFIG_SOURCE;
 
-typedef struct s_WTSUSERCONFIGA
+typedef struct
 {
 	DWORD Source;
 	DWORD InheritInitialProgram;
@@ -722,7 +722,7 @@ typedef struct s_WTSUSERCONFIGA
 	CHAR TerminalServerHomeDirDrive[WTS_DRIVE_LENGTH + 1];
 } WTSUSERCONFIGA, *PWTSUSERCONFIGA;
 
-typedef struct s_WTSUSERCONFIGW
+typedef struct
 {
 	DWORD Source;
 	DWORD InheritInitialProgram;
@@ -761,7 +761,7 @@ typedef struct s_WTSUSERCONFIGW
 #define REMOTECONTROL_KBDCTRL_HOTKEY 0x2
 #define REMOTECONTROL_KBDALT_HOTKEY 0x4
 
-typedef enum e_WTS_VIRTUAL_CLASS
+typedef enum
 {
 	WTSVirtualClientData,
 	WTSVirtualFileHandle,
@@ -769,7 +769,7 @@ typedef enum e_WTS_VIRTUAL_CLASS
 	WTSVirtualChannelReady /* Extended */
 } WTS_VIRTUAL_CLASS;
 
-typedef struct s_WTS_SESSION_ADDRESS
+typedef struct
 {
 	DWORD AddressFamily;
 	BYTE Address[20];
@@ -788,7 +788,7 @@ typedef struct s_WTS_SESSION_ADDRESS
 #define WTS_PROCESS_INFO_LEVEL_0 0
 #define WTS_PROCESS_INFO_LEVEL_1 1
 
-typedef struct s_WTS_PROCESS_INFO_EXW
+typedef struct
 {
 	DWORD SessionId;
 	DWORD ProcessId;
@@ -804,7 +804,7 @@ typedef struct s_WTS_PROCESS_INFO_EXW
 	LARGE_INTEGER KernelTime;
 } WTS_PROCESS_INFO_EXW, *PWTS_PROCESS_INFO_EXW;
 
-typedef struct s_WTS_PROCESS_INFO_EXA
+typedef struct
 {
 	DWORD SessionId;
 	DWORD ProcessId;
@@ -820,7 +820,7 @@ typedef struct s_WTS_PROCESS_INFO_EXA
 	LARGE_INTEGER KernelTime;
 } WTS_PROCESS_INFO_EXA, *PWTS_PROCESS_INFO_EXA;
 
-typedef enum e_WTS_TYPE_CLASS
+typedef enum
 {
 	WTSTypeProcessInfoLevel0,
 	WTSTypeProcessInfoLevel1,
@@ -832,7 +832,7 @@ typedef WTSLISTENERNAMEW* PWTSLISTENERNAMEW;
 typedef CHAR WTSLISTENERNAMEA[WTS_LISTENER_NAME_LENGTH + 1];
 typedef WTSLISTENERNAMEA* PWTSLISTENERNAMEA;
 
-typedef struct s_WTSLISTENERCONFIGW
+typedef struct
 {
 	ULONG version;
 	ULONG fEnableListener;
@@ -867,7 +867,7 @@ typedef struct s_WTSLISTENERCONFIGW
 	WCHAR InitialProgram[MAX_PATH + 1];
 } WTSLISTENERCONFIGW, *PWTSLISTENERCONFIGW;
 
-typedef struct s_WTSLISTENERCONFIGA
+typedef struct
 {
 	ULONG version;
 	ULONG fEnableListener;
@@ -1425,7 +1425,7 @@ typedef BOOL(WINAPI* WTS_LOGON_USER_FN)(HANDLE hServer, LPCSTR username, LPCSTR 
 
 typedef BOOL(WINAPI* WTS_LOGOFF_USER_FN)(HANDLE hServer);
 
-struct s_WtsApiFunctionTable
+typedef struct
 {
 	DWORD dwVersion;
 	DWORD dwFlags;
@@ -1497,8 +1497,7 @@ struct s_WtsApiFunctionTable
 	WTS_LOGOFF_USER_FN pLogoffUser;
 	WTS_START_REMOTE_CONTROL_SESSION_EX_FN_W pStartRemoteControlSessionExW;
 	WTS_START_REMOTE_CONTROL_SESSION_EX_FN_A pStartRemoteControlSessionExA;
-};
-typedef struct s_WtsApiFunctionTable WtsApiFunctionTable;
+} WtsApiFunctionTable;
 typedef WtsApiFunctionTable* PWtsApiFunctionTable;
 
 typedef const WtsApiFunctionTable*(CDECL* INIT_WTSAPI_FN)(void);

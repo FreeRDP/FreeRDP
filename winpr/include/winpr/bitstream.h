@@ -26,7 +26,7 @@
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
 
-struct s_wBitStream
+typedef struct
 {
 	const BYTE* buffer;
 	BYTE* pointer;
@@ -37,8 +37,7 @@ struct s_wBitStream
 	UINT32 offset;
 	UINT32 prefetch;
 	UINT32 accumulator;
-};
-typedef struct s_wBitStream wBitStream;
+} wBitStream;
 
 #define BITDUMP_MSB_FIRST 0x00000001
 #define BITDUMP_STDERR 0x00000002

@@ -27,6 +27,7 @@
 #include <winpr/assert.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/cache/cache.h>
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>

@@ -45,12 +45,11 @@
 typedef CHAR SEC_CHAR;
 typedef WCHAR SEC_WCHAR;
 
-struct s_SECURITY_INTEGER
+typedef struct
 {
 	UINT32 LowPart;
 	INT32 HighPart;
-};
-typedef struct s_SECURITY_INTEGER SECURITY_INTEGER;
+} SECURITY_INTEGER;
 
 typedef SECURITY_INTEGER TimeStamp;
 typedef SECURITY_INTEGER* PTimeStamp;
@@ -69,7 +68,7 @@ typedef LONG SECURITY_STATUS;
 #pragma clang diagnostic pop
 #endif
 
-struct s_SecPkgInfoA
+typedef struct
 {
 	UINT32 fCapabilities;
 	UINT16 wVersion;
@@ -77,11 +76,10 @@ struct s_SecPkgInfoA
 	UINT32 cbMaxToken;
 	SEC_CHAR* Name;
 	SEC_CHAR* Comment;
-};
-typedef struct s_SecPkgInfoA SecPkgInfoA;
+} SecPkgInfoA;
 typedef SecPkgInfoA* PSecPkgInfoA;
 
-struct s_SecPkgInfoW
+typedef struct
 {
 	UINT32 fCapabilities;
 	UINT16 wVersion;
@@ -89,8 +87,7 @@ struct s_SecPkgInfoW
 	UINT32 cbMaxToken;
 	SEC_WCHAR* Name;
 	SEC_WCHAR* Comment;
-};
-typedef struct s_SecPkgInfoW SecPkgInfoW;
+} SecPkgInfoW;
 typedef SecPkgInfoW* PSecPkgInfoW;
 
 #ifdef UNICODE
