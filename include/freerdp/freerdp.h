@@ -104,7 +104,8 @@ extern "C"
 		AUTH_RDP,
 		GW_AUTH_HTTP,
 		GW_AUTH_RDG,
-		GW_AUTH_RPC
+		GW_AUTH_RPC,
+		AUTH_SMARTCARD_PIN
 	} rdp_auth_reason;
 
 	typedef BOOL (*pContextNew)(freerdp* instance, rdpContext* context);

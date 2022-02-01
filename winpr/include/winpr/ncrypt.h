@@ -157,23 +157,27 @@ extern "C"
 {
 #endif
 
-	SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
-	                                           NCryptProviderName** ppProviderList, DWORD dwFlags);
+	WINPR_API SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
+	                                                     NCryptProviderName** ppProviderList,
+	                                                     DWORD dwFlags);
 
-	SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider,
-	                                          LPCWSTR pszProviderName, DWORD dwFlags);
+	WINPR_API SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider,
+	                                                    LPCWSTR pszProviderName, DWORD dwFlags);
 
-	SECURITY_STATUS NCryptEnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR pszScope,
-	                               NCryptKeyName** ppKeyName, PVOID* ppEnumState, DWORD dwFlags);
+	WINPR_API SECURITY_STATUS NCryptEnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR pszScope,
+	                                         NCryptKeyName** ppKeyName, PVOID* ppEnumState,
+	                                         DWORD dwFlags);
 
-	SECURITY_STATUS NCryptOpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY_HANDLE* phKey,
-	                              LPCWSTR pszKeyName, DWORD dwLegacyKeySpec, DWORD dwFlags);
+	WINPR_API SECURITY_STATUS NCryptOpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY_HANDLE* phKey,
+	                                        LPCWSTR pszKeyName, DWORD dwLegacyKeySpec,
+	                                        DWORD dwFlags);
 
-	SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty, PBYTE pbOutput,
-	                                  DWORD cbOutput, DWORD* pcbResult, DWORD dwFlags);
+	WINPR_API SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty,
+	                                            PBYTE pbOutput, DWORD cbOutput, DWORD* pcbResult,
+	                                            DWORD dwFlags);
 
-	SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject);
-	SECURITY_STATUS NCryptFreeBuffer(PVOID pvInput);
+	WINPR_API SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject);
+	WINPR_API SECURITY_STATUS NCryptFreeBuffer(PVOID pvInput);
 
 #ifdef __cplusplus
 }

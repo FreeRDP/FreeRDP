@@ -26,6 +26,8 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
+#include <ctype.h>
 
 #include <winpr/assert.h>
 #include <winpr/crt.h>
@@ -231,7 +233,26 @@ static int kerberos_SetContextServicePrincipalNameA(KRB_CONTEXT* context,
 }
 
 #ifdef WITH_GSSAPI
-static krb5_error_code acquire_cred(krb5_context ctx, krb5_principal client, const char* password)
+
+static krb5_error_code krb5_prompter(krb5_context context, void* data, const char* name,
+                                     const char* banner, int num_prompts, krb5_prompt prompts[])
+{
+	int i;
+	krb5_prompt_type* ptypes = krb5_get_prompt_types(context);
+
+	for (i = 0; i < num_prompts; i++)
+	{
+		if (ptypes && ptypes[i] == KRB5_PROMPT_TYPE_PREAUTH)
+		{
+			prompts[i].reply->data = strdup((const char*)data);
+			prompts[i].reply->length = strlen((const char*)data);
+		}
+	}
+	return 0;
+}
+
+static krb5_error_code acquire_cred(krb5_context ctx, SEC_WINPR_KERBEROS_SETTINGS* optionsBlock,
+                                    krb5_principal client, const char* password)
 {
 	krb5_error_code ret;
 	krb5_creds creds;
@@ -264,6 +285,21 @@ static krb5_error_code acquire_cred(krb5_context ctx, krb5_principal client, con
 	/* Set default options */
 	krb5_get_init_creds_opt_set_forwardable(options, 0);
 	krb5_get_init_creds_opt_set_proxiable(options, 0);
+
+	if (optionsBlock && optionsBlock->withPac)
+		krb5_get_init_creds_opt_set_pac_request(ctx, options, TRUE);
+
+	if (optionsBlock && optionsBlock->armorCache)
+		krb5_get_init_creds_opt_set_fast_ccache_name(ctx, options, optionsBlock->armorCache);
+
+	if (optionsBlock && optionsBlock->pkinitX509Identity)
+		krb5_get_init_creds_opt_set_pa(ctx, options, "X509_user_identity",
+		                               optionsBlock->pkinitX509Identity);
+
+	if (optionsBlock && optionsBlock->pkinitX509Anchors)
+		krb5_get_init_creds_opt_set_pa(ctx, options, "X509_anchors",
+		                               optionsBlock->pkinitX509Anchors);
+
 #ifdef WITH_GSSAPI_MIT
 
 	/* for MIT we specify ccache output using an option */
@@ -275,7 +311,8 @@ static krb5_error_code acquire_cred(krb5_context ctx, krb5_principal client, con
 
 #endif
 
-	if ((ret = krb5_init_creds_init(ctx, client, NULL, NULL, starttime, options, &init_ctx)))
+	if ((ret = krb5_init_creds_init(ctx, client, krb5_prompter, (void*)password, starttime, options,
+	                                &init_ctx)))
 	{
 		WLog_ERR(TAG, "error krb5_init_creds_init failed");
 		goto cleanup;
@@ -332,7 +369,8 @@ cleanup:
 	return ret;
 }
 
-static int init_creds(LPCWSTR username, size_t username_len, LPCWSTR password, size_t password_len)
+static int init_creds(SEC_WINPR_KERBEROS_SETTINGS* options, LPCWSTR username, size_t username_len,
+                      LPCWSTR domain, size_t domain_len, LPCWSTR password, size_t password_len)
 {
 	krb5_error_code ret = 0;
 	krb5_context ctx = NULL;
@@ -347,6 +385,8 @@ static int init_creds(LPCWSTR username, size_t username_len, LPCWSTR password, s
 	size_t lrealm_len = 0;
 	size_t lusername_len = 0;
 	int status = 0;
+	BOOL isDefaultRealm = FALSE;
+
 	status = ConvertFromUnicode(CP_UTF8, 0, username, username_len, &lusername, 0, NULL, NULL);
 
 	if (status <= 0)
@@ -356,7 +396,6 @@ static int init_creds(LPCWSTR username, size_t username_len, LPCWSTR password, s
 	}
 
 	status = ConvertFromUnicode(CP_UTF8, 0, password, password_len, &lpassword, 0, NULL, NULL);
-
 	if (status <= 0)
 	{
 		WLog_ERR(TAG, "Failed to convert password");
@@ -372,12 +411,29 @@ static int init_creds(LPCWSTR username, size_t username_len, LPCWSTR password, s
 		goto cleanup;
 	}
 
-	ret = krb5_get_default_realm(ctx, &lrealm);
-
-	if (ret)
+	if (domain && domain_len)
 	{
-		WLog_WARN(TAG, "could not get Kerberos default realm");
-		goto cleanup;
+		char* tmp;
+		if (ConvertFromUnicode(CP_UTF8, 0, domain, domain_len, &lrealm, 0, NULL, NULL) <= 0)
+		{
+			WLog_ERR(TAG, "error: converting domain");
+		}
+
+		/* convert to upper case */
+		for (tmp = lrealm; *tmp; tmp++)
+			*tmp = toupper(*tmp);
+
+		isDefaultRealm = FALSE;
+	}
+	else
+	{
+		ret = krb5_get_default_realm(ctx, &lrealm);
+		if (ret)
+		{
+			WLog_WARN(TAG, "could not get Kerberos default realm");
+			goto cleanup;
+		}
+		isDefaultRealm = TRUE;
 	}
 
 	lrealm_len = strlen(lrealm);
@@ -411,7 +467,7 @@ static int init_creds(LPCWSTR username, size_t username_len, LPCWSTR password, s
 		goto cleanup;
 	}
 
-	ret = acquire_cred(ctx, principal, lpassword);
+	ret = acquire_cred(ctx, options, principal, lpassword);
 
 	if (ret)
 	{
@@ -427,7 +483,12 @@ cleanup:
 		free(krb_name);
 
 	if (lrealm)
-		krb5_free_default_realm(ctx, lrealm);
+	{
+		if (isDefaultRealm)
+			krb5_free_default_realm(ctx, lrealm);
+		else
+			free(lrealm);
+	}
 
 	if (principal)
 		krb5_free_principal(ctx, principal);
@@ -497,10 +558,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 				 * If we use smartcard-logon, the credentials have already
 				 * been acquired by pkinit process. If not, returned error previously.
 				 */
-				if (init_creds(context->credentials->identity.User,
-				               context->credentials->identity.UserLength,
-				               context->credentials->identity.Password,
-				               context->credentials->identity.PasswordLength))
+				SSPI_CREDENTIALS* credentials = context->credentials;
+				if (init_creds(credentials->kerbSettings, credentials->identity.User,
+				               credentials->identity.UserLength, credentials->identity.Domain,
+				               credentials->identity.DomainLength, credentials->identity.Password,
+				               credentials->identity.PasswordLength))
 					return SEC_E_NO_CREDENTIALS;
 
 				WLog_INFO(TAG, "Authenticated to Kerberos v5 via login/password");

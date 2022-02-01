@@ -24,12 +24,13 @@
 #endif
 
 #include <ctype.h>
-#include <winpr/assert.h>
 #include <errno.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
 #include <winpr/path.h>
+#include <winpr/ncrypt.h>
 
 #include <freerdp/addin.h>
 #include <freerdp/settings.h>
@@ -479,6 +480,22 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("\n");
 	printf("Drive Redirection: /drive:home,/home/user\n");
 	printf("Smartcard Redirection: /smartcard:<device>\n");
+	printf("Smartcard logon with rdp only:                /smartcard-logon [/sec:rdp]\n");
+	printf("Smartcard logon with Kerberos authentication: /smartcard-logon /sec:nla\n");
+	printf("Those options are only accepted with /smartcard-logon:\n");
+	printf("    PIN code: /pin:<PIN code>\n");
+	printf("    PKCS11 module to load: /pkcs11-module:<module>\n");
+	printf("    PKINIT anchors: /pkinit-anchors:<pkinit_anchors>\n");
+	printf("    Kerberos Ticket start time: /start-time:<delay to issue ticket>\n");
+	printf("    Kerberos Ticket lifetime: /lifetime:<ticket lifetime>\n");
+	printf("    Kerberos Ticket renewable lifetime: /renewable-lifetime:<ticket renewable "
+	       "lifetime>\n");
+	/* See also http://web.mit.edu/kerberos/krb5-latest/doc/basic/date_format.html */
+	printf("    The delay and lifetime have the following syntax: <integer>[s|m|h|d] (for seconds, "
+	       " minutes,  hours and days)\n");
+	printf("    CSP Name: /csp:<csp name>\n");
+	printf("    Card Name: /card:<card name>\n");
+
 	printf("Serial Port Redirection: /serial:<name>,<device>,[SerCx2|SerCx|Serial],[permissive]\n");
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
 	printf("Parallel Port Redirection: /parallel:<name>,<device>\n");
@@ -1354,6 +1371,12 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 			settings->ListMonitors = TRUE;
 		}
 
+		arg = CommandLineFindArgumentA(largs, "smartcard-list");
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			settings->ListSmartcards = TRUE;
+		}
+
 		arg = CommandLineFindArgumentA(largs, "kbd-scancode-list");
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
@@ -1565,7 +1588,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 			continue;
 
-		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "v")
+		CommandLineSwitchStart(arg)
+
+		    CommandLineSwitchCase(arg, "v")
 		{
 			char* p;
 
@@ -1847,6 +1872,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "monitor-list")
 		{
 			settings->ListMonitors = enable;
+		}
+		CommandLineSwitchCase(arg, "smartcard-list")
+		{
+			settings->ListSmartcards = enable;
 		}
 		CommandLineSwitchCase(arg, "t")
 		{
@@ -3239,6 +3268,59 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 		}
+		CommandLineSwitchCase(arg, "pin")
+		{
+			if (!copy_value(arg->Value, &settings->Pin))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "pkcs11-module")
+		{
+			if (!copy_value(arg->Value, &settings->Pkcs11Module))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "pkinit-anchors")
+		{
+			if (!copy_value(arg->Value, &settings->PkinitAnchors))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "kerberos-start-time")
+		{
+			/* Let kinit parse time strings according to krb5_string_to_deltat syntax. */
+			if (!copy_value(arg->Value, &settings->KerberosStartTime))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "kerberos-lifetime")
+		{
+			/* Let kinit parse time strings according to krb5_string_to_deltat syntax. */
+			if (!copy_value(arg->Value, &settings->KerberosLifeTime))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "kerberos-renewable-lifetime")
+		{
+			/* Let kinit parse time strings according to krb5_string_to_deltat syntax. */
+			if (!copy_value(arg->Value, &settings->KerberosRenewableLifeTime))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "csp")
+		{
+			if (!copy_value(arg->Value, &settings->CspName))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "card")
+		{
+			if (!copy_value(arg->Value, &settings->CardName))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "reader")
+		{
+			if (!copy_value(arg->Value, &settings->ReaderName))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "container")
+		{
+			if (!copy_value(arg->Value, &settings->ContainerName))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
 		CommandLineSwitchCase(arg, "action-script")
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_ActionScript, arg->Value))
@@ -3263,18 +3345,21 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			} ptr;
 
 			settings->SmartcardLogon = TRUE;
+
 			ptr.p = CommandLineParseCommaSeparatedValuesEx("smartcard-logon", arg->Value, &count);
 			if (ptr.pc)
 			{
 				size_t x;
-				settings->SmartcardEmulation = TRUE;
+				settings->SmartcardEmulation = (count > 1);
 				for (x = 1; x < count; x++)
 				{
 					const char* cur = ptr.pc[x];
 					if (strncmp("cert:", cur, 5) == 0)
 					{
 						const char* f = &cur[5];
-						if (!read_pem_file(settings, FreeRDP_SmartcardCertificate, f))
+						settings->SmartcardCertificateFile = strdup(f);
+						if (!settings->SmartcardCertificateFile ||
+						    !read_pem_file(settings, FreeRDP_SmartcardCertificate, f))
 						{
 							free(ptr.p);
 							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -3283,7 +3368,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					else if (strncmp("key:", cur, 4) == 0)
 					{
 						const char* f = &cur[4];
-						if (!read_pem_file(settings, FreeRDP_SmartcardPrivateKey, f))
+						settings->SmartcardPrivateKeyFile = strdup(f);
+						if (!settings->SmartcardPrivateKeyFile ||
+						    !read_pem_file(settings, FreeRDP_SmartcardPrivateKey, f))
 						{
 							free(ptr.p);
 							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -3307,7 +3394,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 			free(ptr.p);
 		}
-
 		CommandLineSwitchCase(arg, "tune")
 		{
 			size_t x, count;
@@ -3480,7 +3566,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	}
 
 	arg = CommandLineFindArgumentA(largs, "port");
-
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
 		LONGLONG val;
@@ -3492,14 +3577,18 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	}
 
 	arg = CommandLineFindArgumentA(largs, "p");
+	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	{
+		FillMemory(arg->Value, strlen(arg->Value), '*');
+	}
 
+	arg = CommandLineFindArgumentA(largs, "pin");
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
 		FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
 
 	arg = CommandLineFindArgumentA(largs, "gp");
-
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
 		FillMemory(arg->Value, strlen(arg->Value), '*');

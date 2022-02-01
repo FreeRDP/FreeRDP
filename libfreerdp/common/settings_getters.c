@@ -291,6 +291,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_ListMonitors:
 			return settings->ListMonitors;
 
+		case FreeRDP_ListSmartcards:
+			return settings->ListSmartcards;
+
 		case FreeRDP_LocalConnection:
 			return settings->LocalConnection;
 
@@ -920,6 +923,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 			settings->ListMonitors = cnv.c;
 			break;
 
+		case FreeRDP_ListSmartcards:
+			settings->ListSmartcards = cnv.c;
+			break;
+
 		case FreeRDP_LocalConnection:
 			settings->LocalConnection = cnv.c;
 			break;
@@ -1502,6 +1509,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_JpegQuality:
 			return settings->JpegQuality;
 
+		case FreeRDP_KeySpec:
+			return settings->KeySpec;
+
 		case FreeRDP_KeyboardCodePage:
 			return settings->KeyboardCodePage;
 
@@ -1908,6 +1918,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_JpegQuality:
 			settings->JpegQuality = cnv.c;
+			break;
+
+		case FreeRDP_KeySpec:
+			settings->KeySpec = cnv.c;
 			break;
 
 		case FreeRDP_KeyboardCodePage:
@@ -2340,6 +2354,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_AuthenticationServiceClass:
 			return settings->AuthenticationServiceClass;
 
+		case FreeRDP_CardName:
+			return settings->CardName;
+
 		case FreeRDP_CertificateAcceptedFingerprints:
 			return settings->CertificateAcceptedFingerprints;
 
@@ -2372,6 +2389,12 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 
 		case FreeRDP_ConnectionFile:
 			return settings->ConnectionFile;
+
+		case FreeRDP_ContainerName:
+			return settings->ContainerName;
+
+		case FreeRDP_CspName:
+			return settings->CspName;
 
 		case FreeRDP_CurrentPath:
 			return settings->CurrentPath;
@@ -2415,8 +2438,17 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_KerberosKdc:
 			return settings->KerberosKdc;
 
+		case FreeRDP_KerberosLifeTime:
+			return settings->KerberosLifeTime;
+
 		case FreeRDP_KerberosRealm:
 			return settings->KerberosRealm;
+
+		case FreeRDP_KerberosRenewableLifeTime:
+			return settings->KerberosRenewableLifeTime;
+
+		case FreeRDP_KerberosStartTime:
+			return settings->KerberosStartTime;
 
 		case FreeRDP_KeyboardRemappingList:
 			return settings->KeyboardRemappingList;
@@ -2429,6 +2461,15 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 
 		case FreeRDP_PasswordHash:
 			return settings->PasswordHash;
+
+		case FreeRDP_Pin:
+			return settings->Pin;
+
+		case FreeRDP_Pkcs11Module:
+			return settings->Pkcs11Module;
+
+		case FreeRDP_PkinitAnchors:
+			return settings->PkinitAnchors;
 
 		case FreeRDP_PlayRemoteFxFile:
 			return settings->PlayRemoteFxFile;
@@ -2459,6 +2500,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 
 		case FreeRDP_RdpKeyFile:
 			return settings->RdpKeyFile;
+
+		case FreeRDP_ReaderName:
+			return settings->ReaderName;
 
 		case FreeRDP_RedirectionAcceptedCert:
 			return settings->RedirectionAcceptedCert;
@@ -2517,11 +2561,17 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_SmartcardCertificate:
 			return settings->SmartcardCertificate;
 
+		case FreeRDP_SmartcardCertificateFile:
+			return settings->SmartcardCertificateFile;
+
 		case FreeRDP_SmartcardPin:
 			return settings->SmartcardPin;
 
 		case FreeRDP_SmartcardPrivateKey:
 			return settings->SmartcardPrivateKey;
+
+		case FreeRDP_SmartcardPrivateKeyFile:
+			return settings->SmartcardPrivateKeyFile;
 
 		case FreeRDP_TargetNetAddress:
 			return settings->TargetNetAddress;
@@ -2568,6 +2618,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 		case FreeRDP_AuthenticationServiceClass:
 			return settings->AuthenticationServiceClass;
 
+		case FreeRDP_CardName:
+			return settings->CardName;
+
 		case FreeRDP_CertificateAcceptedFingerprints:
 			return settings->CertificateAcceptedFingerprints;
 
@@ -2600,6 +2653,12 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_ConnectionFile:
 			return settings->ConnectionFile;
+
+		case FreeRDP_ContainerName:
+			return settings->ContainerName;
+
+		case FreeRDP_CspName:
+			return settings->CspName;
 
 		case FreeRDP_CurrentPath:
 			return settings->CurrentPath;
@@ -2643,8 +2702,17 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 		case FreeRDP_KerberosKdc:
 			return settings->KerberosKdc;
 
+		case FreeRDP_KerberosLifeTime:
+			return settings->KerberosLifeTime;
+
 		case FreeRDP_KerberosRealm:
 			return settings->KerberosRealm;
+
+		case FreeRDP_KerberosRenewableLifeTime:
+			return settings->KerberosRenewableLifeTime;
+
+		case FreeRDP_KerberosStartTime:
+			return settings->KerberosStartTime;
 
 		case FreeRDP_KeyboardRemappingList:
 			return settings->KeyboardRemappingList;
@@ -2657,6 +2725,15 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_PasswordHash:
 			return settings->PasswordHash;
+
+		case FreeRDP_Pin:
+			return settings->Pin;
+
+		case FreeRDP_Pkcs11Module:
+			return settings->Pkcs11Module;
+
+		case FreeRDP_PkinitAnchors:
+			return settings->PkinitAnchors;
 
 		case FreeRDP_PlayRemoteFxFile:
 			return settings->PlayRemoteFxFile;
@@ -2687,6 +2764,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_RdpKeyFile:
 			return settings->RdpKeyFile;
+
+		case FreeRDP_ReaderName:
+			return settings->ReaderName;
 
 		case FreeRDP_RedirectionAcceptedCert:
 			return settings->RedirectionAcceptedCert;
@@ -2745,8 +2825,17 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 		case FreeRDP_SmartcardCertificate:
 			return settings->SmartcardCertificate;
 
+		case FreeRDP_SmartcardCertificateFile:
+			return settings->SmartcardCertificateFile;
+
+		case FreeRDP_SmartcardPin:
+			return settings->SmartcardPin;
+
 		case FreeRDP_SmartcardPrivateKey:
 			return settings->SmartcardPrivateKey;
+
+		case FreeRDP_SmartcardPrivateKeyFile:
+			return settings->SmartcardPrivateKeyFile;
 
 		case FreeRDP_TargetNetAddress:
 			return settings->TargetNetAddress;
@@ -2803,6 +2892,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 		case FreeRDP_AuthenticationServiceClass:
 			return update_string(&settings->AuthenticationServiceClass, cnv.cc, len, cleanup);
 
+		case FreeRDP_CardName:
+			return update_string(&settings->CardName, cnv.cc, len, cleanup);
+
 		case FreeRDP_CertificateAcceptedFingerprints:
 			return update_string(&settings->CertificateAcceptedFingerprints, cnv.cc, len, cleanup);
 
@@ -2835,6 +2927,12 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_ConnectionFile:
 			return update_string(&settings->ConnectionFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_ContainerName:
+			return update_string(&settings->ContainerName, cnv.cc, len, cleanup);
+
+		case FreeRDP_CspName:
+			return update_string(&settings->CspName, cnv.cc, len, cleanup);
 
 		case FreeRDP_CurrentPath:
 			return update_string(&settings->CurrentPath, cnv.cc, len, cleanup);
@@ -2878,8 +2976,17 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 		case FreeRDP_KerberosKdc:
 			return update_string(&settings->KerberosKdc, cnv.cc, len, cleanup);
 
+		case FreeRDP_KerberosLifeTime:
+			return update_string(&settings->KerberosLifeTime, cnv.cc, len, cleanup);
+
 		case FreeRDP_KerberosRealm:
 			return update_string(&settings->KerberosRealm, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosRenewableLifeTime:
+			return update_string(&settings->KerberosRenewableLifeTime, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosStartTime:
+			return update_string(&settings->KerberosStartTime, cnv.cc, len, cleanup);
 
 		case FreeRDP_KeyboardRemappingList:
 			return update_string(&settings->KeyboardRemappingList, cnv.cc, len, cleanup);
@@ -2892,6 +2999,15 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_PasswordHash:
 			return update_string(&settings->PasswordHash, cnv.cc, len, cleanup);
+
+		case FreeRDP_Pin:
+			return update_string(&settings->Pin, cnv.cc, len, cleanup);
+
+		case FreeRDP_Pkcs11Module:
+			return update_string(&settings->Pkcs11Module, cnv.cc, len, cleanup);
+
+		case FreeRDP_PkinitAnchors:
+			return update_string(&settings->PkinitAnchors, cnv.cc, len, cleanup);
 
 		case FreeRDP_PlayRemoteFxFile:
 			return update_string(&settings->PlayRemoteFxFile, cnv.cc, len, cleanup);
@@ -2922,6 +3038,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_RdpKeyFile:
 			return update_string(&settings->RdpKeyFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_ReaderName:
+			return update_string(&settings->ReaderName, cnv.cc, len, cleanup);
 
 		case FreeRDP_RedirectionAcceptedCert:
 			return update_string(&settings->RedirectionAcceptedCert, cnv.cc, len, cleanup);
@@ -2980,11 +3099,17 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 		case FreeRDP_SmartcardCertificate:
 			return update_string(&settings->SmartcardCertificate, cnv.cc, len, cleanup);
 
+		case FreeRDP_SmartcardCertificateFile:
+			return update_string(&settings->SmartcardCertificateFile, cnv.cc, len, cleanup);
+
 		case FreeRDP_SmartcardPin:
 			return update_string(&settings->SmartcardPin, cnv.cc, len, cleanup);
 
 		case FreeRDP_SmartcardPrivateKey:
 			return update_string(&settings->SmartcardPrivateKey, cnv.cc, len, cleanup);
+
+		case FreeRDP_SmartcardPrivateKeyFile:
+			return update_string(&settings->SmartcardPrivateKeyFile, cnv.cc, len, cleanup);
 
 		case FreeRDP_TargetNetAddress:
 			return update_string(&settings->TargetNetAddress, cnv.cc, len, cleanup);

@@ -32,6 +32,7 @@
 #include <freerdp/client.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/utils/smartcard_cli.h>
 
 #include <linux/input.h>
 
@@ -702,14 +703,13 @@ int main(int argc, char* argv[])
 	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
 	if (status)
 	{
-		BOOL list;
-
 		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
 
-		list = settings->ListMonitors;
-
-		if (list)
+		if (settings->ListMonitors)
 			wlf_list_monitors(wlc);
+
+		if (settings->ListSmartcards)
+			freerdp_smartcard_list(settings);
 
 		goto fail;
 	}

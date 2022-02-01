@@ -84,11 +84,13 @@ SECURITY_STATUS winpr_NCryptDefault_dtor(NCRYPT_HANDLE handle)
 SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
                                            NCryptProviderName** ppProviderList, DWORD dwFlags)
 {
-	static const WCHAR emptyComment[] = { 0 };
 	NCryptProviderName* ret;
 	size_t stringAllocSize = 0;
+#ifdef WITH_PKCS11
 	LPWSTR strPtr;
+	static const WCHAR emptyComment[] = { 0 };
 	size_t copyAmount;
+#endif
 
 	*wProviderCount = 0;
 	*ppProviderList = NULL;
@@ -106,9 +108,10 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 	if (!ret)
 		return NTE_NO_MEMORY;
 
-	strPtr = (LPWSTR)(ret + *wProviderCount);
 
 #ifdef WITH_PKCS11
+	strPtr = (LPWSTR)(ret + *wProviderCount);
+
 	ret->pszName = strPtr;
 	copyAmount = (_wcslen(MS_SCARD_PROV) + 1) * 2;
 	memcpy(strPtr, MS_SCARD_PROV, copyAmount);

@@ -43,6 +43,10 @@ winpr_module_add(
         ncrypt_pkcs11.c
 )
 
+if (WIN32)
+	winpr_library_add_public(ncrypt)
+endif()
+
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
