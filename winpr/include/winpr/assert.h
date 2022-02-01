@@ -33,9 +33,7 @@
 	{                                                                                         \
 		if (!(cond))                                                                          \
 		{                                                                                     \
-			static wLog* _log_cached_ptr = NULL;                                              \
-			if (!_log_cached_ptr)                                                             \
-				_log_cached_ptr = WLog_Get("com.freerdp.winpr.assert");                       \
+			wLog* _log_cached_ptr = WLog_Get("com.freerdp.winpr.assert");                     \
 			WLog_Print(_log_cached_ptr, WLOG_FATAL, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, \
 			           __FUNCTION__, __LINE__);                                               \
 			winpr_log_backtrace_ex(_log_cached_ptr, WLOG_FATAL, 20);                          \
