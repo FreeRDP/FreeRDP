@@ -6,12 +6,11 @@
 
 #include <winpr/wtypes.h>
 
-struct s_WINDOWS_TZID_ENTRY
+typedef struct
 {
 	const char* windows;
 	const char* tzid;
-};
-typedef struct s_WINDOWS_TZID_ENTRY WINDOWS_TZID_ENTRY;
+} WINDOWS_TZID_ENTRY;
 
 extern const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[];
 extern const size_t WindowsTimeZoneIdTableNrElements;

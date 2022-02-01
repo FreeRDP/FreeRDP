@@ -31,13 +31,12 @@
 #include <winpr/crt.h>
 #include <winpr/environment.h>
 
-struct s_wLogJournaldAppender
+typedef struct
 {
-	WLOG_APPENDER_COMMON();
+	wLogAppender common;
 	char* identifier;
 	FILE* stream;
-};
-typedef struct s_wLogJournaldAppender wLogJournaldAppender;
+} wLogJournaldAppender;
 
 static BOOL WLog_JournaldAppender_Open(wLog* log, wLogAppender* appender)
 {
@@ -181,14 +180,14 @@ wLogAppender* WLog_JournaldAppender_New(wLog* log)
 	if (!appender)
 		return NULL;
 
-	appender->Type = WLOG_APPENDER_JOURNALD;
-	appender->Open = WLog_JournaldAppender_Open;
-	appender->Close = WLog_JournaldAppender_Close;
-	appender->WriteMessage = WLog_JournaldAppender_WriteMessage;
-	appender->WriteDataMessage = WLog_JournaldAppender_WriteDataMessage;
-	appender->WriteImageMessage = WLog_JournaldAppender_WriteImageMessage;
-	appender->Set = WLog_JournaldAppender_Set;
-	appender->Free = WLog_JournaldAppender_Free;
+	appender->common.Type = WLOG_APPENDER_JOURNALD;
+	appender->common.Open = WLog_JournaldAppender_Open;
+	appender->common.Close = WLog_JournaldAppender_Close;
+	appender->common.WriteMessage = WLog_JournaldAppender_WriteMessage;
+	appender->common.WriteDataMessage = WLog_JournaldAppender_WriteDataMessage;
+	appender->common.WriteImageMessage = WLog_JournaldAppender_WriteImageMessage;
+	appender->common.Set = WLog_JournaldAppender_Set;
+	appender->common.Free = WLog_JournaldAppender_Free;
 
 	nSize = GetEnvironmentVariableA(name, NULL, 0);
 	if (nSize)
@@ -200,11 +199,11 @@ wLogAppender* WLog_JournaldAppender_New(wLog* log)
 		if (GetEnvironmentVariableA(name, appender->identifier, nSize) != nSize - 1)
 			goto error_open;
 
-		if (!WLog_JournaldAppender_Open(log, (wLogAppender*)appender))
+		if (!WLog_JournaldAppender_Open(log, &appender->common))
 			goto error_open;
 	}
 
-	return (wLogAppender*)appender;
+	return &appender->common;
 
 error_open:
 	free(appender->identifier);

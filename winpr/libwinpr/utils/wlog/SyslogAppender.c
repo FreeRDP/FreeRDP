@@ -25,11 +25,10 @@
 #include "SyslogAppender.h"
 #include <syslog.h>
 
-struct s_wLogSyslogAppender
+typedef struct
 {
-	WLOG_APPENDER_COMMON();
-};
-typedef struct s_wLogSyslogAppender wLogSyslogAppender;
+	wLogAppender common;
+} wLogSyslogAppender;
 
 static int getSyslogLevel(DWORD level)
 {
@@ -127,14 +126,13 @@ wLogAppender* WLog_SyslogAppender_New(wLog* log)
 	if (!appender)
 		return NULL;
 
-	appender->Type = WLOG_APPENDER_SYSLOG;
+	appender->common.Type = WLOG_APPENDER_SYSLOG;
+	appender->common.Open = WLog_SyslogAppender_Open;
+	appender->common.Close = WLog_SyslogAppender_Close;
+	appender->common.WriteMessage = WLog_SyslogAppender_WriteMessage;
+	appender->common.WriteDataMessage = WLog_SyslogAppender_WriteDataMessage;
+	appender->common.WriteImageMessage = WLog_SyslogAppender_WriteImageMessage;
+	appender->common.Free = WLog_SyslogAppender_Free;
 
-	appender->Open = WLog_SyslogAppender_Open;
-	appender->Close = WLog_SyslogAppender_Close;
-	appender->WriteMessage = WLog_SyslogAppender_WriteMessage;
-	appender->WriteDataMessage = WLog_SyslogAppender_WriteDataMessage;
-	appender->WriteImageMessage = WLog_SyslogAppender_WriteImageMessage;
-	appender->Free = WLog_SyslogAppender_Free;
-
-	return (wLogAppender*)appender;
+	return &appender->common;
 }

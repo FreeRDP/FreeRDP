@@ -27,12 +27,11 @@
 
 /* WARNING: Do not access structs directly, the API will be reworked
  * to make this opaque. */
-struct s_wBufferPoolItem
+typedef struct
 {
 	SSIZE_T size;
 	void* buffer;
-};
-typedef struct s_wBufferPoolItem wBufferPoolItem;
+} wBufferPoolItem;
 
 /* WARNING: Do not access structs directly, the API will be reworked
  * to make this opaque. */

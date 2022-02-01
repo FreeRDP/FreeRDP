@@ -38,13 +38,12 @@
 
 #include "wlog.h"
 
-struct s_wLogFilter
+typedef struct
 {
 	DWORD Level;
 	LPSTR* Names;
 	size_t NameCount;
-};
-typedef struct s_wLogFilter wLogFilter;
+} wLogFilter;
 
 #define WLOG_FILTER_NOT_FILTERED -1
 #define WLOG_FILTER_NOT_INITIALIZED -2

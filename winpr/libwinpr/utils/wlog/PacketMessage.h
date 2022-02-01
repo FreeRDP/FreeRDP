@@ -24,7 +24,7 @@
 
 #define PCAP_MAGIC_NUMBER 0xA1B2C3D4
 
-struct s_wPcapHeader
+typedef struct
 {
 	UINT32 magic_number;  /* magic number */
 	UINT16 version_major; /* major version number */
@@ -33,17 +33,15 @@ struct s_wPcapHeader
 	UINT32 sigfigs;       /* accuracy of timestamps */
 	UINT32 snaplen;       /* max length of captured packets, in octets */
 	UINT32 network;       /* data link type */
-};
-typedef struct s_wPcapHeader wPcapHeader;
+} wPcapHeader;
 
-struct s_wPcapRecordHeader
+typedef struct
 {
 	UINT32 ts_sec;   /* timestamp seconds */
 	UINT32 ts_usec;  /* timestamp microseconds */
 	UINT32 incl_len; /* number of octets of packet saved in file */
 	UINT32 orig_len; /* actual length of packet */
-};
-typedef struct s_wPcapRecordHeader wPcapRecordHeader;
+} wPcapRecordHeader;
 
 typedef struct s_wPcapRecord wPcapRecord;
 
@@ -55,7 +53,7 @@ struct s_wPcapRecord
 	wPcapRecord* next;
 };
 
-struct s_wPcap
+typedef struct
 {
 	FILE* fp;
 	char* name;
@@ -66,23 +64,21 @@ struct s_wPcap
 	wPcapRecord* head;
 	wPcapRecord* tail;
 	wPcapRecord* record;
-};
-typedef struct s_wPcap wPcap;
+} wPcap;
 
 wPcap* Pcap_Open(char* name, BOOL write);
 void Pcap_Close(wPcap* pcap);
 
 void Pcap_Flush(wPcap* pcap);
 
-struct s_wEthernetHeader
+typedef struct
 {
 	BYTE Destination[6];
 	BYTE Source[6];
 	UINT16 Type;
-};
-typedef struct s_wEthernetHeader wEthernetHeader;
+} wEthernetHeader;
 
-struct s_wIPv4Header
+typedef struct
 {
 	BYTE Version;
 	BYTE InternetHeaderLength;
@@ -96,10 +92,9 @@ struct s_wIPv4Header
 	UINT16 HeaderChecksum;
 	UINT32 SourceAddress;
 	UINT32 DestinationAddress;
-};
-typedef struct s_wIPv4Header wIPv4Header;
+} wIPv4Header;
 
-struct s_wTcpHeader
+typedef struct
 {
 	UINT16 SourcePort;
 	UINT16 DestinationPort;
@@ -111,8 +106,7 @@ struct s_wTcpHeader
 	UINT16 Window;
 	UINT16 Checksum;
 	UINT16 UrgentPointer;
-};
-typedef struct s_wTcpHeader wTcpHeader;
+} wTcpHeader;
 
 BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flags);
 

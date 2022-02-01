@@ -29,16 +29,15 @@
 #include <winpr/file.h>
 #include <winpr/path.h>
 
-struct s_wLogFileAppender
+typedef struct
 {
-	WLOG_APPENDER_COMMON();
+	wLogAppender common;
 
 	char* FileName;
 	char* FilePath;
 	char* FullFileName;
 	FILE* FileDescriptor;
-};
-typedef struct s_wLogFileAppender wLogFileAppender;
+} wLogFileAppender;
 
 static BOOL WLog_FileAppender_SetOutputFileName(wLogFileAppender* appender, const char* filename)
 {
@@ -231,14 +230,14 @@ wLogAppender* WLog_FileAppender_New(wLog* log)
 	if (!FileAppender)
 		return NULL;
 
-	FileAppender->Type = WLOG_APPENDER_FILE;
-	FileAppender->Open = WLog_FileAppender_Open;
-	FileAppender->Close = WLog_FileAppender_Close;
-	FileAppender->WriteMessage = WLog_FileAppender_WriteMessage;
-	FileAppender->WriteDataMessage = WLog_FileAppender_WriteDataMessage;
-	FileAppender->WriteImageMessage = WLog_FileAppender_WriteImageMessage;
-	FileAppender->Free = WLog_FileAppender_Free;
-	FileAppender->Set = WLog_FileAppender_Set;
+	FileAppender->common.Type = WLOG_APPENDER_FILE;
+	FileAppender->common.Open = WLog_FileAppender_Open;
+	FileAppender->common.Close = WLog_FileAppender_Close;
+	FileAppender->common.WriteMessage = WLog_FileAppender_WriteMessage;
+	FileAppender->common.WriteDataMessage = WLog_FileAppender_WriteDataMessage;
+	FileAppender->common.WriteImageMessage = WLog_FileAppender_WriteImageMessage;
+	FileAppender->common.Free = WLog_FileAppender_Free;
+	FileAppender->common.Set = WLog_FileAppender_Set;
 	name = "WLOG_FILEAPPENDER_OUTPUT_FILE_PATH";
 	nSize = GetEnvironmentVariableA(name, NULL, 0);
 

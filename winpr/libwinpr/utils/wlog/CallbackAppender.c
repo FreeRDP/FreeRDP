@@ -23,13 +23,12 @@
 
 #include "CallbackAppender.h"
 
-struct s_wLogCallbackAppender
+typedef struct
 {
-	WLOG_APPENDER_COMMON();
+	wLogAppender common;
 
 	wLogCallbacks* callbacks;
-};
-typedef struct s_wLogCallbackAppender wLogCallbackAppender;
+} wLogCallbackAppender;
 
 static BOOL WLog_CallbackAppender_Open(wLog* log, wLogAppender* appender)
 {
@@ -156,16 +155,15 @@ wLogAppender* WLog_CallbackAppender_New(wLog* log)
 	if (!CallbackAppender)
 		return NULL;
 
-	CallbackAppender->Type = WLOG_APPENDER_CALLBACK;
+	CallbackAppender->common.Type = WLOG_APPENDER_CALLBACK;
+	CallbackAppender->common.Open = WLog_CallbackAppender_Open;
+	CallbackAppender->common.Close = WLog_CallbackAppender_Close;
+	CallbackAppender->common.WriteMessage = WLog_CallbackAppender_WriteMessage;
+	CallbackAppender->common.WriteDataMessage = WLog_CallbackAppender_WriteDataMessage;
+	CallbackAppender->common.WriteImageMessage = WLog_CallbackAppender_WriteImageMessage;
+	CallbackAppender->common.WritePacketMessage = WLog_CallbackAppender_WritePacketMessage;
+	CallbackAppender->common.Free = WLog_CallbackAppender_Free;
+	CallbackAppender->common.Set = WLog_CallbackAppender_Set;
 
-	CallbackAppender->Open = WLog_CallbackAppender_Open;
-	CallbackAppender->Close = WLog_CallbackAppender_Close;
-	CallbackAppender->WriteMessage = WLog_CallbackAppender_WriteMessage;
-	CallbackAppender->WriteDataMessage = WLog_CallbackAppender_WriteDataMessage;
-	CallbackAppender->WriteImageMessage = WLog_CallbackAppender_WriteImageMessage;
-	CallbackAppender->WritePacketMessage = WLog_CallbackAppender_WritePacketMessage;
-	CallbackAppender->Free = WLog_CallbackAppender_Free;
-	CallbackAppender->Set = WLog_CallbackAppender_Set;
-
-	return (wLogAppender*)CallbackAppender;
+	return &CallbackAppender->common;
 }

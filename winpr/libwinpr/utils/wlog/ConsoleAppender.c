@@ -33,13 +33,12 @@
 #define WLOG_CONSOLE_STDERR 2
 #define WLOG_CONSOLE_DEBUG 4
 
-struct s_wLogConsoleAppender
+typedef struct
 {
-	WLOG_APPENDER_COMMON();
+	wLogAppender common;
 
 	int outputStream;
-};
-typedef struct s_wLogConsoleAppender wLogConsoleAppender;
+} wLogConsoleAppender;
 
 static BOOL WLog_ConsoleAppender_Open(wLog* log, wLogAppender* appender)
 {
@@ -260,16 +259,15 @@ wLogAppender* WLog_ConsoleAppender_New(wLog* log)
 	if (!ConsoleAppender)
 		return NULL;
 
-	ConsoleAppender->Type = WLOG_APPENDER_CONSOLE;
-
-	ConsoleAppender->Open = WLog_ConsoleAppender_Open;
-	ConsoleAppender->Close = WLog_ConsoleAppender_Close;
-	ConsoleAppender->WriteMessage = WLog_ConsoleAppender_WriteMessage;
-	ConsoleAppender->WriteDataMessage = WLog_ConsoleAppender_WriteDataMessage;
-	ConsoleAppender->WriteImageMessage = WLog_ConsoleAppender_WriteImageMessage;
-	ConsoleAppender->WritePacketMessage = WLog_ConsoleAppender_WritePacketMessage;
-	ConsoleAppender->Set = WLog_ConsoleAppender_Set;
-	ConsoleAppender->Free = WLog_ConsoleAppender_Free;
+	ConsoleAppender->common.Type = WLOG_APPENDER_CONSOLE;
+	ConsoleAppender->common.Open = WLog_ConsoleAppender_Open;
+	ConsoleAppender->common.Close = WLog_ConsoleAppender_Close;
+	ConsoleAppender->common.WriteMessage = WLog_ConsoleAppender_WriteMessage;
+	ConsoleAppender->common.WriteDataMessage = WLog_ConsoleAppender_WriteDataMessage;
+	ConsoleAppender->common.WriteImageMessage = WLog_ConsoleAppender_WriteImageMessage;
+	ConsoleAppender->common.WritePacketMessage = WLog_ConsoleAppender_WritePacketMessage;
+	ConsoleAppender->common.Set = WLog_ConsoleAppender_Set;
+	ConsoleAppender->common.Free = WLog_ConsoleAppender_Free;
 
 	ConsoleAppender->outputStream = WLOG_CONSOLE_DEFAULT;
 

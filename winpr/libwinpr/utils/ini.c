@@ -32,21 +32,19 @@
 
 #include <winpr/ini.h>
 
-struct s_wIniFileKey
+typedef struct
 {
 	char* name;
 	char* value;
-};
-typedef struct s_wIniFileKey wIniFileKey;
+} wIniFileKey;
 
-struct s_wIniFileSection
+typedef struct
 {
 	char* name;
 	size_t nKeys;
 	size_t cKeys;
 	wIniFileKey** keys;
-};
-typedef struct s_wIniFileSection wIniFileSection;
+} wIniFileSection;
 
 struct s_wIniFile
 {

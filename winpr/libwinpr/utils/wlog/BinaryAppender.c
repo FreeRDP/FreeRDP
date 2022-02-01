@@ -30,16 +30,15 @@
 #include <winpr/path.h>
 #include <winpr/stream.h>
 
-struct s_wLogBinaryAppender
+typedef struct
 {
-	WLOG_APPENDER_COMMON();
+	wLogAppender common;
 
 	char* FileName;
 	char* FilePath;
 	char* FullFileName;
 	FILE* FileDescriptor;
-};
-typedef struct s_wLogBinaryAppender wLogBinaryAppender;
+} wLogBinaryAppender;
 
 static BOOL WLog_BinaryAppender_Open(wLog* log, wLogAppender* appender)
 {
@@ -227,14 +226,14 @@ wLogAppender* WLog_BinaryAppender_New(wLog* log)
 	if (!BinaryAppender)
 		return NULL;
 
-	BinaryAppender->Type = WLOG_APPENDER_BINARY;
-	BinaryAppender->Open = WLog_BinaryAppender_Open;
-	BinaryAppender->Close = WLog_BinaryAppender_Close;
-	BinaryAppender->WriteMessage = WLog_BinaryAppender_WriteMessage;
-	BinaryAppender->WriteDataMessage = WLog_BinaryAppender_WriteDataMessage;
-	BinaryAppender->WriteImageMessage = WLog_BinaryAppender_WriteImageMessage;
-	BinaryAppender->Free = WLog_BinaryAppender_Free;
-	BinaryAppender->Set = WLog_BinaryAppender_Set;
+	BinaryAppender->common.Type = WLOG_APPENDER_BINARY;
+	BinaryAppender->common.Open = WLog_BinaryAppender_Open;
+	BinaryAppender->common.Close = WLog_BinaryAppender_Close;
+	BinaryAppender->common.WriteMessage = WLog_BinaryAppender_WriteMessage;
+	BinaryAppender->common.WriteDataMessage = WLog_BinaryAppender_WriteDataMessage;
+	BinaryAppender->common.WriteImageMessage = WLog_BinaryAppender_WriteImageMessage;
+	BinaryAppender->common.Free = WLog_BinaryAppender_Free;
+	BinaryAppender->common.Set = WLog_BinaryAppender_Set;
 
-	return (wLogAppender*)BinaryAppender;
+	return &BinaryAppender->common;
 }

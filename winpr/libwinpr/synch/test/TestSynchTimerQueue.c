@@ -7,7 +7,7 @@
 #define FIRE_COUNT 5
 #define TIMER_COUNT 5
 
-struct apc_data
+typedef struct
 {
 	DWORD TimerId;
 	DWORD FireCount;
@@ -16,8 +16,7 @@ struct apc_data
 	UINT32 StartTime;
 	DWORD MaxFireCount;
 	HANDLE CompletionEvent;
-};
-typedef struct apc_data APC_DATA;
+} APC_DATA;
 
 static VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 {

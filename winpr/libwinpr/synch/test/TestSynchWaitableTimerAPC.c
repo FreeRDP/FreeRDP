@@ -6,11 +6,10 @@
 static int g_Count = 0;
 static HANDLE g_Event = NULL;
 
-struct apc_data
+typedef struct
 {
 	UINT32 StartTime;
-};
-typedef struct apc_data APC_DATA;
+} APC_DATA;
 
 static VOID CALLBACK TimerAPCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
 {

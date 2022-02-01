@@ -28,7 +28,7 @@ extern "C"
 {
 #endif
 
-	typedef struct map_info
+	typedef struct
 	{
 		struct map_info* next;
 		uintptr_t start;
