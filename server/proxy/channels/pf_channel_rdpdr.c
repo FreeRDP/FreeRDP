@@ -1476,11 +1476,11 @@ fail:
 
 static void* stream_copy(const void* obj)
 {
-	wStream* src = obj;
+	const wStream* src = obj;
 	wStream* dst = Stream_New(NULL, Stream_Capacity(src));
 	if (!dst)
 		return NULL;
-	memcpy(Stream_Buffer(dst), Stream_Buffer(src), Stream_Capacity(dst));
+	memcpy(Stream_Buffer(dst), Stream_ConstBuffer(src), Stream_Capacity(dst));
 	Stream_SetLength(dst, Stream_Length(src));
 	Stream_SetPosition(dst, Stream_GetPosition(src));
 	return dst;
