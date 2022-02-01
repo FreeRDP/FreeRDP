@@ -483,7 +483,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	BYTE compression;
 	BYTE compressionFlags;
 	UINT32 DstSize = 0;
-	BYTE* pDstData = NULL;
+	const BYTE* pDstData = NULL;
 	rdpTransport* transport;
 
 	if (!fastpath || !s)
