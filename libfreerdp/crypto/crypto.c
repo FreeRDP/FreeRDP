@@ -29,7 +29,7 @@
 
 #define TAG FREERDP_TAG("crypto")
 
-CryptoCert crypto_cert_read(BYTE* data, UINT32 length)
+CryptoCert crypto_cert_read(const BYTE* data, UINT32 length)
 {
 	CryptoCert cert = malloc(sizeof(*cert));
 

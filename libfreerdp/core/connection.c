@@ -1439,7 +1439,7 @@ int rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 {
 	int status = 0;
 	freerdp_peer* client = NULL;
-	const int cstate = rdp_get_state(rdp);
+	const CONNECTION_STATE cstate = rdp_get_state(rdp);
 
 	if (cstate >= CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT)
 		client = rdp->context->peer;
