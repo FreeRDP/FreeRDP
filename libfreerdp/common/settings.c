@@ -1027,18 +1027,21 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 {
 	ULONGLONG uval;
 	LONGLONG ival;
-	SSIZE_T index, type;
+	SSIZE_T i, type;
+	size_t index;
 	if (!settings || !name)
 		return FALSE;
 
-	index = freerdp_settings_get_key_for_name(name);
-	if (index < 0)
+	i = freerdp_settings_get_key_for_name(name);
+	if (i < 0)
 	{
 		WLog_ERR(TAG, "Invalid settings key [%s]", name);
 		return FALSE;
 	}
 
-	type = freerdp_settings_get_type_for_key((size_t)index);
+	index = (size_t)i;
+
+	type = freerdp_settings_get_type_for_key(index);
 	switch (type)
 	{
 
@@ -1108,7 +1111,7 @@ static BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, size_t id, 
 		return FALSE;
 	if (lenId >= 0)
 	{
-		if (!freerdp_settings_set_uint32(settings, lenId, 0))
+		if (!freerdp_settings_set_uint32(settings, (size_t)lenId, 0))
 			return FALSE;
 	}
 
@@ -1127,7 +1130,7 @@ static BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, size_t id, 
 	}
 	if (lenId < 0)
 		return TRUE;
-	return freerdp_settings_set_uint32(settings, lenId, len);
+	return freerdp_settings_set_uint32(settings, (size_t)lenId, len);
 }
 
 const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id)
