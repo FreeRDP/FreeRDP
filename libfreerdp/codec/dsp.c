@@ -328,7 +328,6 @@ static UINT16 dsp_decode_ima_adpcm_sample(ADPCM* adpcm, unsigned int channel, BY
 static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
                                          wStream* out)
 {
-	size_t pos;
 	BYTE sample;
 	UINT16 decoded;
 	size_t out_size = size * 4;
@@ -339,8 +338,6 @@ static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYT
 
 	if (!Stream_EnsureCapacity(out, out_size))
 		return FALSE;
-
-	pos = Stream_GetPosition(out);
 
 	while (size > 0)
 	{
@@ -715,9 +712,7 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYT
 	size_t start;
 	INT16 sample;
 	BYTE encoded;
-	size_t out_size;
 	size_t align;
-	out_size = size / 2;
 
 	if (!Stream_EnsureRemainingCapacity(out, size))
 		return FALSE;
@@ -945,9 +940,7 @@ static BOOL freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context, const BYTE
 {
 	size_t start;
 	INT32 sample;
-	size_t out_size;
 	const size_t step = 8 + ((context->format.nChannels > 1) ? 4 : 0);
-	out_size = size / 2;
 
 	if (!Stream_EnsureRemainingCapacity(out, size))
 		return FALSE;

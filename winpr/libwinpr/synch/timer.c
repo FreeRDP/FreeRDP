@@ -638,7 +638,6 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
 {
 	ULONG Type;
 	WINPR_HANDLE* Object;
-	WINPR_TIMER* timer;
 
 	if (!winpr_Handle_GetInfo(hTimer, &Type, &Object))
 		return FALSE;
@@ -646,13 +645,14 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
 	if (Type != HANDLE_TYPE_TIMER)
 		return FALSE;
 
-	timer = (WINPR_TIMER*)Object;
 #if defined(__APPLE__)
+	{
+		WINPR_TIMER* timer = (WINPR_TIMER*)Object;
+		if (timer->running)
+			dispatch_suspend(timer->source);
 
-	if (timer->running)
-		dispatch_suspend(timer->source);
-
-	timer->running = FALSE;
+		timer->running = FALSE;
+	}
 #endif
 	return TRUE;
 }

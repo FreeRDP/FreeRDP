@@ -3588,11 +3588,13 @@ fail:
 static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 totalLength)
 {
 	BOOL treated;
-	size_t capstart, start, end, len;
+	size_t start, end, len;
 	UINT16 numberCapabilities;
 	UINT16 count;
 
-	capstart = Stream_GetPosition(s);
+#ifdef WITH_DEBUG_CAPABILITIES
+	const size_t capstart = Stream_GetPosition(s);
+#endif
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 

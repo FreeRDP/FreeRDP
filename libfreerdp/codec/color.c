@@ -313,10 +313,6 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(BYTE* pDstData, UINT32 Dst
 	UINT32 andBit;
 	UINT32 xorPixel;
 	UINT32 andPixel;
-	UINT32 dstBitsPerPixel;
-	UINT32 dstBytesPerPixel;
-	dstBitsPerPixel = GetBitsPerPixel(DstFormat);
-	dstBytesPerPixel = GetBytesPerPixel(DstFormat);
 
 	vFlip = (xorBpp == 1) ? FALSE : TRUE;
 	andStep = (nWidth + 7) / 8;
@@ -406,10 +402,8 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(BYTE* pDstData, UINT32 Dst
 	UINT32 xorPixel;
 	UINT32 andPixel;
 	UINT32 dstBitsPerPixel;
-	UINT32 dstBytesPerPixel;
 	UINT32 xorBytesPerPixel;
 	dstBitsPerPixel = GetBitsPerPixel(DstFormat);
-	dstBytesPerPixel = GetBytesPerPixel(DstFormat);
 
 	vFlip = (xorBpp == 1) ? FALSE : TRUE;
 	andStep = (nWidth + 7) / 8;
