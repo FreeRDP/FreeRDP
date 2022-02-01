@@ -290,7 +290,7 @@ static void freerdp_client_print_scancodes(void)
 	{
 		const char* name = freerdp_keyboard_scancode_name(x);
 		if (name)
-			printf("0x%04" PRIx16 "  --> %s\n", x, name);
+			printf("0x%04" PRIx32 "  --> %s\n", x, name);
 	}
 }
 
