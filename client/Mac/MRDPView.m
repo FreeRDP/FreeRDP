@@ -604,7 +604,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 
 	keyFlags = 0;
 	key = [event keyCode] + 8;
-	modFlags = [event modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+	modFlags = [event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
 	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
 	keyFlags |= (scancode & KBDEXT) ? KBDEXT : 0;
@@ -615,62 +615,62 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	         "flagsChanged: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X extended: %d name: %s modFlags: 0x%04X",
 	         key - 8, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode), modFlags);
 
-	if (modFlags & NSAlphaShiftKeyMask)
-		WLog_DBG(TAG,  "NSAlphaShiftKeyMask");
+	if (modFlags & NSEventModifierFlagCapsLock)
+		WLog_DBG(TAG,  "NSEventModifierFlagCapsLock");
 
-	if (modFlags & NSShiftKeyMask)
-		WLog_DBG(TAG,  "NSShiftKeyMask");
+	if (modFlags & NSEventModifierFlagShift)
+		WLog_DBG(TAG,  "NSEventModifierFlagShift");
 
-	if (modFlags & NSControlKeyMask)
-		WLog_DBG(TAG,  "NSControlKeyMask");
+	if (modFlags & NSEventModifierFlagControl)
+		WLog_DBG(TAG,  "NSEventModifierFlagControl");
 
-	if (modFlags & NSAlternateKeyMask)
-		WLog_DBG(TAG,  "NSAlternateKeyMask");
+	if (modFlags & NSEventModifierFlagOption)
+		WLog_DBG(TAG,  "NSEventModifierFlagOption");
 
-	if (modFlags & NSCommandKeyMask)
-		WLog_DBG(TAG,  "NSCommandKeyMask");
+	if (modFlags & NSEventModifierFlagCommand)
+		WLog_DBG(TAG,  "NSEventModifierFlagCommand");
 
-	if (modFlags & NSNumericPadKeyMask)
-		WLog_DBG(TAG,  "NSNumericPadKeyMask");
+	if (modFlags & NSEventModifierFlagNumericPad)
+		WLog_DBG(TAG,  "NSEventModifierFlagNumericPad");
 
-	if (modFlags & NSHelpKeyMask)
-		WLog_DBG(TAG,  "NSHelpKeyMask");
+	if (modFlags & NSEventModifierFlagHelp)
+		WLog_DBG(TAG,  "NSEventModifierFlagHelp");
 
 #endif
 
-	if ((modFlags & NSAlphaShiftKeyMask) && !(kbdModFlags & NSAlphaShiftKeyMask))
+	if ((modFlags & NSEventModifierFlagCapsLock) && !(kbdModFlags & NSEventModifierFlagCapsLock))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
-	else if (!(modFlags & NSAlphaShiftKeyMask) && (kbdModFlags & NSAlphaShiftKeyMask))
+	else if (!(modFlags & NSEventModifierFlagCapsLock) && (kbdModFlags & NSEventModifierFlagCapsLock))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
-	if ((modFlags & NSShiftKeyMask) && !(kbdModFlags & NSShiftKeyMask))
+	if ((modFlags & NSEventModifierFlagShift) && !(kbdModFlags & NSEventModifierFlagShift))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
-	else if (!(modFlags & NSShiftKeyMask) && (kbdModFlags & NSShiftKeyMask))
+	else if (!(modFlags & NSEventModifierFlagShift) && (kbdModFlags & NSEventModifierFlagShift))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
-	if ((modFlags & NSControlKeyMask) && !(kbdModFlags & NSControlKeyMask))
+	if ((modFlags & NSEventModifierFlagControl) && !(kbdModFlags & NSEventModifierFlagControl))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
-	else if (!(modFlags & NSControlKeyMask) && (kbdModFlags & NSControlKeyMask))
+	else if (!(modFlags & NSEventModifierFlagControl) && (kbdModFlags & NSEventModifierFlagControl))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
-	if ((modFlags & NSAlternateKeyMask) && !(kbdModFlags & NSAlternateKeyMask))
+	if ((modFlags & NSEventModifierFlagOption) && !(kbdModFlags & NSEventModifierFlagOption))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
-	else if (!(modFlags & NSAlternateKeyMask) && (kbdModFlags & NSAlternateKeyMask))
+	else if (!(modFlags & NSEventModifierFlagOption) && (kbdModFlags & NSEventModifierFlagOption))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
-	if ((modFlags & NSCommandKeyMask) && !(kbdModFlags & NSCommandKeyMask))
+	if ((modFlags & NSEventModifierFlagCommand) && !(kbdModFlags & NSEventModifierFlagCommand))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
-	else if (!(modFlags & NSCommandKeyMask) && (kbdModFlags & NSCommandKeyMask))
+	else if (!(modFlags & NSEventModifierFlagCommand) && (kbdModFlags & NSEventModifierFlagCommand))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
-	if ((modFlags & NSNumericPadKeyMask) && !(kbdModFlags & NSNumericPadKeyMask))
+	if ((modFlags & NSEventModifierFlagNumericPad) && !(kbdModFlags & NSEventModifierFlagNumericPad))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
-	else if (!(modFlags & NSNumericPadKeyMask) && (kbdModFlags & NSNumericPadKeyMask))
+	else if (!(modFlags & NSEventModifierFlagNumericPad) && (kbdModFlags & NSEventModifierFlagNumericPad))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
-	if ((modFlags & NSHelpKeyMask) && !(kbdModFlags & NSHelpKeyMask))
+	if ((modFlags & NSEventModifierFlagHelp) && !(kbdModFlags & NSEventModifierFlagHelp))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
-	else if (!(modFlags & NSHelpKeyMask) && (kbdModFlags & NSHelpKeyMask))
+	else if (!(modFlags & NSEventModifierFlagHelp) && (kbdModFlags & NSEventModifierFlagHelp))
 		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
 	kbdModFlags = modFlags;
@@ -696,7 +696,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 
 	if (self->bitmap_context)
 	{
-		CGContextRef cgContext = [[NSGraphicsContext currentContext] graphicsPort];
+		CGContextRef cgContext = [[NSGraphicsContext currentContext] CGContext];
 		CGImageRef cgImage = CGBitmapContextCreateImage(self->bitmap_context);
 		CGContextSaveGState(cgContext);
 		CGContextClipToRect(
@@ -1031,7 +1031,7 @@ DWORD mac_verify_certificate_ex(freerdp *instance, const char *host, UINT16 port
 		type = "RDP-Redirect";
 
 	sprintf_s(hostname, sizeof(hostname), "%s %s:%" PRIu16, type, host, port);
-	dialog.serverHostname = [NSString stringWithCString:hostname];
+	dialog.serverHostname = [NSString stringWithCString:hostname encoding:NSUTF8StringEncoding];
 	dialog.commonName = [NSString stringWithCString:common_name encoding:NSUTF8StringEncoding];
 	dialog.subject = [NSString stringWithCString:subject encoding:NSUTF8StringEncoding];
 	dialog.issuer = [NSString stringWithCString:issuer encoding:NSUTF8StringEncoding];
@@ -1068,7 +1068,7 @@ DWORD mac_verify_changed_certificate_ex(freerdp *instance, const char *host, UIN
 		type = "RDP-Redirect";
 
 	sprintf_s(hostname, sizeof(hostname), "%s %s:%" PRIu16, type, host, port);
-	dialog.serverHostname = [NSString stringWithCString:hostname];
+	dialog.serverHostname = [NSString stringWithCString:hostname encoding:NSUTF8StringEncoding];
 	dialog.commonName = [NSString stringWithCString:common_name encoding:NSUTF8StringEncoding];
 	dialog.subject = [NSString stringWithCString:subject encoding:NSUTF8StringEncoding];
 	dialog.issuer = [NSString stringWithCString:issuer encoding:NSUTF8StringEncoding];
@@ -1158,7 +1158,6 @@ BOOL mf_Pointer_New(rdpContext *context, rdpPointer *pointer)
 	/* create an image using above representation */
 	image = [[NSImage alloc] initWithSize:[bmiRep size]];
 	[image addRepresentation:bmiRep];
-	[image setFlipped:NO];
 	mrdpCursor->nsImage = image;
 	/* need hotspot to create cursor */
 	hotSpot.x = pointer->xPos;
