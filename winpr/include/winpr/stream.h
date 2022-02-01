@@ -353,6 +353,12 @@ extern "C"
 		return _s->buffer;
 	}
 
+	static INLINE const BYTE* Stream_ConstBuffer(const wStream* _s)
+	{
+		WINPR_ASSERT(_s);
+		return _s->buffer;
+	}
+
 #define Stream_GetBuffer(_s, _b) _b = Stream_Buffer(_s)
 
 	static INLINE BYTE* Stream_Pointer(wStream* _s)
