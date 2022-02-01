@@ -759,7 +759,7 @@ static INLINE size_t xcrush_copy_bytes(BYTE* dst, const BYTE* src, size_t num)
 }
 
 static int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize,
-                                BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
+                                const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	const BYTE* pSrcEnd = NULL;
 	const BYTE* Literals = NULL;
@@ -878,7 +878,7 @@ int xcrush_decompress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSi
 {
 	int status = 0;
 	UINT32 DstSize = 0;
-	BYTE* pDstData = NULL;
+	const BYTE* pDstData = NULL;
 	BYTE Level1ComprFlags;
 	BYTE Level2ComprFlags;
 
