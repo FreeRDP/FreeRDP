@@ -69,8 +69,11 @@ void* ncrypt_new_handle(NCryptHandleType kind, size_t len, NCryptGetPropertyFn g
 	return ret;
 }
 
-SECURITY_STATUS winpr_NCryptDefault_dtor(NCryptBaseHandle* h)
+SECURITY_STATUS winpr_NCryptDefault_dtor(NCRYPT_HANDLE handle)
 {
+	NCryptBaseHandle* h = (NCryptBaseHandle*)handle;
+	WINPR_ASSERT(h);
+
 	memset(h->magic, 0, sizeof(h->magic));
 	h->type = WINPR_NCRYPT_INVALID;
 	h->releaseFn = NULL;

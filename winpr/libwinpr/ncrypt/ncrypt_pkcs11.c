@@ -20,7 +20,10 @@
 
 #include <pkcs11-helper-1.0/pkcs11.h>
 
+#include <winpr/assert.h>
 #include <winpr/library.h>
+
+#include <winpr/ncrypt.h>
 
 #include "../log.h"
 #include "ncrypt.h"
@@ -38,8 +41,11 @@ typedef struct
 	CK_FUNCTION_LIST_PTR p11;
 } NCryptP11ProviderHandle;
 
-static SECURITY_STATUS NCryptP11StorageProvider_dtor(NCryptP11ProviderHandle* provider)
+static SECURITY_STATUS NCryptP11StorageProvider_dtor(NCRYPT_HANDLE handle)
 {
+	NCryptP11ProviderHandle* provider = (NCryptP11ProviderHandle*)handle;
+	WINPR_ASSERT(provider);
+
 	CK_RV rv = provider->p11->C_Finalize(NULL);
 	if (rv != CKR_OK)
 	{
@@ -48,7 +54,7 @@ static SECURITY_STATUS NCryptP11StorageProvider_dtor(NCryptP11ProviderHandle* pr
 	if (provider->library)
 		FreeLibrary(provider->library);
 
-	return winpr_NCryptDefault_dtor(&provider->baseProvider.baseHandle);
+	return winpr_NCryptDefault_dtor(handle);
 }
 
 #define MAX_SLOTS 64
@@ -159,8 +165,9 @@ static BOOL attributes_allocate_buffers(CK_ATTRIBUTE_PTR attributes, CK_ULONG co
 	return ret;
 }
 
-CK_RV object_load_attributes(NCryptP11ProviderHandle* provider, CK_SESSION_HANDLE session,
-                             CK_OBJECT_HANDLE object, CK_ATTRIBUTE_PTR attributes, CK_ULONG count)
+static CK_RV object_load_attributes(NCryptP11ProviderHandle* provider, CK_SESSION_HANDLE session,
+                                    CK_OBJECT_HANDLE object, CK_ATTRIBUTE_PTR attributes,
+                                    CK_ULONG count)
 {
 	CK_RV rv = provider->p11->C_GetAttributeValue(session, object, attributes, count);
 
@@ -169,7 +176,7 @@ CK_RV object_load_attributes(NCryptP11ProviderHandle* provider, CK_SESSION_HANDL
 		case CKR_OK:
 			if (!attributes_have_unallocated_buffers(attributes, count))
 				return rv;
-			/* fallthrought */
+			/* [fallthrough] */
 		case CKR_ATTRIBUTE_SENSITIVE:
 		case CKR_ATTRIBUTE_TYPE_INVALID:
 		case CKR_BUFFER_TOO_SMALL:
@@ -441,7 +448,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 	NCryptP11ProviderHandle* provider = (NCryptP11ProviderHandle*)hProvider;
 	P11EnumKeysState* state = (P11EnumKeysState*)*ppEnumState;
 	CK_RV rv;
-	CK_SLOT_ID currentSlot;
+	CK_SLOT_ID currentSlot = 0;
 	CK_SESSION_HANDLE currentSession = (CK_SESSION_HANDLE)NULL;
 	NCryptKeyName* keyName = NULL;
 	char slotFilterBuffer[65] = { 0 };
@@ -737,9 +744,8 @@ static SECURITY_STATUS NCryptP11OpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY
 	if (ret != ERROR_SUCCESS)
 		return ret;
 
-	keyHandle = (NCryptP11KeyHandle*)ncrypt_new_handle(WINPR_NCRYPT_KEY, sizeof(*keyHandle),
-	                                                   (NCryptGetPropertyFn)NCryptP11GetProperty,
-	                                                   (NCryptReleaseFn)winpr_NCryptDefault_dtor);
+	keyHandle = (NCryptP11KeyHandle*)ncrypt_new_handle(
+	    WINPR_NCRYPT_KEY, sizeof(*keyHandle), NCryptP11GetProperty, winpr_NCryptDefault_dtor);
 	if (!keyHandle)
 		return NTE_NO_MEMORY;
 
@@ -755,17 +761,17 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
                                                LPCWSTR pszProviderName, DWORD dwFlags,
                                                LPCSTR* modulePaths)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = ERROR_INVALID_PARAMETER;
 	NCryptP11ProviderHandle* ret = NULL;
 	CK_RV rv;
-	CK_RV (*c_get_function_list)(CK_FUNCTION_LIST_PTR_PTR);
+	typedef CK_RV (*t_get_function_list)(CK_FUNCTION_LIST_PTR_PTR);
+	t_get_function_list c_get_function_list;
 
 	if (!phProvider)
 		return ERROR_INVALID_PARAMETER;
 
 	ret = (NCryptP11ProviderHandle*)ncrypt_new_handle(
-	    WINPR_NCRYPT_PROVIDER, sizeof(*ret), (NCryptGetPropertyFn)NCryptP11GetProperty,
-	    (NCryptReleaseFn)NCryptP11StorageProvider_dtor);
+	    WINPR_NCRYPT_PROVIDER, sizeof(*ret), NCryptP11GetProperty, NCryptP11StorageProvider_dtor);
 	if (!ret)
 		return NTE_NO_MEMORY;
 
@@ -782,7 +788,8 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 			goto out_load_library;
 		}
 
-		c_get_function_list = GetProcAddress(ret->library, "C_GetFunctionList");
+		c_get_function_list =
+		    (t_get_function_list)GetProcAddress(ret->library, "C_GetFunctionList");
 		if (!c_get_function_list)
 		{
 			status = NTE_PROV_TYPE_ENTRY_BAD;

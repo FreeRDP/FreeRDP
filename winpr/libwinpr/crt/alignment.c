@@ -39,7 +39,7 @@
 
 #ifdef __APPLE__
 #include <malloc/malloc.h>
-#elif __FreeBSD__ || __OpenBSD__
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <stdlib.h>
 #else
 #include <malloc.h>
