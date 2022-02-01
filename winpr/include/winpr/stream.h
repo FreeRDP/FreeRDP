@@ -367,6 +367,12 @@ extern "C"
 		return _s->pointer;
 	}
 
+	static INLINE const BYTE* Stream_ConstPointer(const wStream* _s)
+	{
+		WINPR_ASSERT(_s);
+		return _s->pointer;
+	}
+
 #define Stream_GetPointer(_s, _p) _p = Stream_Pointer(_s)
 
 #if defined(WITH_WINPR_DEPRECATED)
