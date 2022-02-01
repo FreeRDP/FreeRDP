@@ -1132,7 +1132,13 @@ static BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, size_t id, 
 
 const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id)
 {
-	return freerdp_settings_get_pointer_writable(settings, id);
+	union
+	{
+		const rdpSettings* pc;
+		rdpSettings* p;
+	} cnv;
+	cnv.pc = settings;
+	return freerdp_settings_get_pointer_writable(cnv.p, id);
 }
 
 BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const void* data,
