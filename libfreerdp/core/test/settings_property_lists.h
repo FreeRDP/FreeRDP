@@ -89,7 +89,6 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_IgnoreCertificate,
 	FreeRDP_JpegCodec,
 	FreeRDP_ListMonitors,
-	FreeRDP_ListSmartcards,
 	FreeRDP_LocalConnection,
 	FreeRDP_LogonErrors,
 	FreeRDP_LogonNotify,

@@ -54,6 +54,7 @@
 
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
+#include <freerdp/utils/smartcard_cli.h>
 
 #include "cmdline.h"
 
@@ -1373,7 +1374,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 		arg = CommandLineFindArgumentA(largs, "smartcard-list");
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
-			settings->ListSmartcards = TRUE;
+			freerdp_smartcard_list(settings);
 		}
 
 		arg = CommandLineFindArgumentA(largs, "kbd-scancode-list");
@@ -1871,10 +1872,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "monitor-list")
 		{
 			settings->ListMonitors = enable;
-		}
-		CommandLineSwitchCase(arg, "smartcard-list")
-		{
-			settings->ListSmartcards = enable;
 		}
 		CommandLineSwitchCase(arg, "t")
 		{

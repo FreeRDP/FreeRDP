@@ -29,7 +29,6 @@
 #include <freerdp/streamdump.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/client/cmdline.h>
-#include <freerdp/utils/smartcard_cli.h>
 
 #include "../xf_client.h"
 #include "../xfreerdp.h"
@@ -64,9 +63,6 @@ int main(int argc, char* argv[])
 
 		if (settings->ListMonitors)
 			xf_list_monitors(xfc);
-
-		if (settings->ListSmartcards)
-			freerdp_smartcard_list(settings);
 
 		goto out;
 	}

@@ -291,9 +291,6 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_ListMonitors:
 			return settings->ListMonitors;
 
-		case FreeRDP_ListSmartcards:
-			return settings->ListSmartcards;
-
 		case FreeRDP_LocalConnection:
 			return settings->LocalConnection;
 
@@ -921,10 +918,6 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_ListMonitors:
 			settings->ListMonitors = cnv.c;
-			break;
-
-		case FreeRDP_ListSmartcards:
-			settings->ListSmartcards = cnv.c;
 			break;
 
 		case FreeRDP_LocalConnection:
