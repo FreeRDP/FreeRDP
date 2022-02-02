@@ -19,7 +19,7 @@
 #include <freerdp/utils/smartcard_cli.h>
 #include "../../libfreerdp/core/smartcardlogon.h"
 
-BOOL freerdp_smartcard_list(rdpSettings* settings)
+BOOL freerdp_smartcard_list(const rdpSettings* settings)
 {
 	SmartcardCert certs[64] = { 0 };
 	DWORD i, count;
