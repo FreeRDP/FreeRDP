@@ -493,10 +493,8 @@ static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)
 		if (settings->GatewayEnabled ||
 		    rdp_client_redirect_resolvable(settings->RedirectionTargetFQDN))
 		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
-
-			if (!settings->ServerHostname)
+			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
+			                                 settings->RedirectionTargetFQDN))
 				return FALSE;
 
 			return TRUE;
@@ -510,10 +508,8 @@ static BOOL rdp_client_redirect_try_ip(rdpSettings* settings)
 {
 	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 	{
-		free(settings->ServerHostname);
-		settings->ServerHostname = _strdup(settings->TargetNetAddress);
-
-		if (!settings->ServerHostname)
+		if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
+		                                 settings->TargetNetAddress))
 			return FALSE;
 
 		return TRUE;
@@ -529,10 +525,8 @@ static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
 		if (settings->GatewayEnabled ||
 		    rdp_client_redirect_resolvable(settings->RedirectionTargetNetBiosName))
 		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
-
-			if (!settings->ServerHostname)
+			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
+			                                 settings->RedirectionTargetNetBiosName))
 				return FALSE;
 
 			return TRUE;
