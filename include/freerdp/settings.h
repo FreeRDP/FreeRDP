@@ -673,7 +673,6 @@ typedef struct
 #define FreeRDP_ContainerName (1296)
 #define FreeRDP_CspName (1297)
 #define FreeRDP_PkinitAnchors (1298)
-#define FreeRDP_ListSmartcards (1299)
 #define FreeRDP_KerberosKdc (1344)
 #define FreeRDP_KerberosRealm (1345)
 #define FreeRDP_KerberosStartTime (1346)
@@ -1174,8 +1173,7 @@ struct rdp_settings
 	ALIGN64 char* ContainerName;            /* 1296 */
 	ALIGN64 char* CspName;                  /* 1297 */
 	ALIGN64 char* PkinitAnchors;            /* 1298 */
-	ALIGN64 BOOL ListSmartcards;            /* 1299 */
-	UINT64 padding1344[1344 - 1300];        /* 1300 */
+	UINT64 padding1344[1344 - 1299];        /* 1299 */
 
 	/* Kerberos Authentication */
 	ALIGN64 char* KerberosKdc;               /* 1344 */

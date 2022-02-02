@@ -100,7 +100,6 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_IgnoreCertificate, 0, "FreeRDP_IgnoreCertificate" },
 	{ FreeRDP_JpegCodec, 0, "FreeRDP_JpegCodec" },
 	{ FreeRDP_ListMonitors, 0, "FreeRDP_ListMonitors" },
-	{ FreeRDP_ListSmartcards, 0, "FreeRDP_ListSmartcards" },
 	{ FreeRDP_LocalConnection, 0, "FreeRDP_LocalConnection" },
 	{ FreeRDP_LogonErrors, 0, "FreeRDP_LogonErrors" },
 	{ FreeRDP_LogonNotify, 0, "FreeRDP_LogonNotify" },
