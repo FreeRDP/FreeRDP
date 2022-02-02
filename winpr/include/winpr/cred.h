@@ -19,6 +19,8 @@
 #ifndef WINPR_CRED_H_
 #define WINPR_CRED_H_
 
+#include <winpr/winpr.h>
+
 #ifdef _WIN32
 #include <wincred.h>
 #else
@@ -41,10 +43,10 @@ typedef struct _CERT_CREDENTIAL_INFO
 	UCHAR rgbHashOfCert[CERT_HASH_LENGTH];
 } CERT_CREDENTIAL_INFO, *PCERT_CREDENTIAL_INFO;
 
-BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
-                            LPSTR* MarshaledCredential);
-BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credential,
-                            LPWSTR* MarshaledCredential);
+WINPR_API BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
+                                      LPSTR* MarshaledCredential);
+WINPR_API BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credential,
+                                      LPWSTR* MarshaledCredential);
 
 #ifdef UNICODE
 #define CredMarshalCredential CredMarshalCredentialW

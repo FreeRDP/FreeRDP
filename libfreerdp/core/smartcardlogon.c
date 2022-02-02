@@ -332,8 +332,8 @@ out:
 	return ret;
 }
 
-BOOL smartcard_sw_enumerateCerts(rdpSettings* settings, SmartcardCert* scCert, DWORD count,
-                                 DWORD* retCount)
+static BOOL smartcard_sw_enumerateCerts(rdpSettings* settings, SmartcardCert* scCert, DWORD count,
+                                        DWORD* retCount)
 {
 	size_t sz;
 
