@@ -547,8 +547,7 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 
 	if (!settings->CspName)
 	{
-		settings->CspName = strdup(MS_SCARD_PROV_A);
-		if (!settings->CspName)
+		if (!freerdp_settings_set_string(settings, FreeRDP_CspName, MS_SCARD_PROV_A))
 		{
 			WLog_ERR(TAG, "unable to set CSP name");
 			return FALSE;
@@ -585,8 +584,7 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 	 */
 	if (!settings->Username && certs[0].userHint)
 	{
-		settings->Username = strdup(certs[0].userHint);
-		if (!settings->Username)
+		if (!freerdp_settings_set_string(settings, FreeRDP_Username, certs[0].userHint))
 		{
 			WLog_ERR(TAG, "unable to copy certificate username");
 			goto out;
@@ -595,8 +593,7 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 
 	if (!settings->Domain && certs[0].domainHint)
 	{
-		settings->Domain = strdup(certs[0].domainHint);
-		if (!settings->Domain)
+		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, certs[0].domainHint))
 		{
 			WLog_ERR(TAG, "unable to copy certificate domain");
 			goto out;
@@ -615,8 +612,7 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 
 	if (!settings->ContainerName && certs[0].containerName)
 	{
-		settings->ContainerName = strdup(certs[0].containerName);
-		if (!settings->ContainerName)
+		if (!freerdp_settings_set_string(settings, FreeRDP_ContainerName, certs[0].containerName))
 		{
 			WLog_ERR(TAG, "unable to copy container name");
 			goto out;
@@ -647,8 +643,7 @@ setup_pin:
 			if (!dupSrc)
 				dupSrc = "";
 
-			settings->Pin = strdup(dupSrc);
-			if (!settings->Pin)
+			if (!freerdp_settings_set_string(settings, FreeRDP_Pin, dupSrc))
 			{
 				WLog_ERR(TAG, "error setting pin");
 				return FALSE;
