@@ -3357,8 +3357,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					if (strncmp("cert:", cur, 5) == 0)
 					{
 						const char* f = &cur[5];
-						settings->SmartcardCertificateFile = strdup(f);
-						if (!settings->SmartcardCertificateFile ||
+
+						if (!freerdp_settings_set_string(settings, FreeRDP_SmartcardCertificateFile,
+						                                 f) ||
 						    !read_pem_file(settings, FreeRDP_SmartcardCertificate, f))
 						{
 							free(ptr.p);
@@ -3368,8 +3369,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					else if (strncmp("key:", cur, 4) == 0)
 					{
 						const char* f = &cur[4];
-						settings->SmartcardPrivateKeyFile = strdup(f);
-						if (!settings->SmartcardPrivateKeyFile ||
+						if (!freerdp_settings_set_string(settings, FreeRDP_SmartcardPrivateKeyFile,
+						                                 f) ||
 						    !read_pem_file(settings, FreeRDP_SmartcardPrivateKey, f))
 						{
 							free(ptr.p);
@@ -3378,8 +3379,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					}
 					else if (strncmp("pin:", cur, 4) == 0)
 					{
-						settings->SmartcardPin = strdup(&cur[4]);
-						if (!settings->SmartcardPin)
+						const char* f = &cur[4];
+						if (!freerdp_settings_set_string(settings, FreeRDP_SmartcardPin, f))
 						{
 							free(ptr.p);
 							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
