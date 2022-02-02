@@ -333,8 +333,8 @@ static void* mf_peer_main_loop(void* arg)
 	}
 
 	/* Initialize the real server settings here */
-	client->settings->CertificateFile = _strdup("server.crt");
-	client->settings->PrivateKeyFile = _strdup("server.key");
+	freerdp_settings_set_string(client->settings, FreeRDP_CertificateFile, "server.crt");
+	freerdp_settings_set_string(client->settings, FreeRDP_PrivateKeyFile, "server.key");
 
 	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile)
 	{

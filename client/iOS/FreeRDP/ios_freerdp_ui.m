@@ -54,9 +54,9 @@ static BOOL ios_ui_authenticate_raw(freerdp *instance, char **username, char **p
 	free(*password);
 	free(*domain);
 	// set values back
-	*username = strdup([[params objectForKey:@"username"] UTF8String]);
-	*password = strdup([[params objectForKey:@"password"] UTF8String]);
-	*domain = strdup([[params objectForKey:@"domain"] UTF8String]);
+	*username = _strdup([[params objectForKey:@"username"] UTF8String]);
+	*password = _strdup([[params objectForKey:@"password"] UTF8String]);
+	*domain = _strdup([[params objectForKey:@"domain"] UTF8String]);
 
 	if (!(*username) || !(*password) || !(*domain))
 	{

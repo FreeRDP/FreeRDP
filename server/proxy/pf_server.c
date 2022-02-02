@@ -159,8 +159,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 				return FALSE;
 			}
 
-			settings->ServerHostname = _strdup(ev.target_address);
-			if (!settings->ServerHostname)
+			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, ev.target_address))
 			{
 				PROXY_LOG_ERR(TAG, ps, "strdup failed!");
 				return FALSE;

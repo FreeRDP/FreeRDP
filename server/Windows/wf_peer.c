@@ -211,18 +211,14 @@ static BOOL wf_peer_read_settings(freerdp_peer* client)
 	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("CertificateFile"),
 	                                   &(client->settings->CertificateFile)))
 	{
-		client->settings->CertificateFile = _strdup("server.crt");
-
-		if (!client->settings->CertificateFile)
+		if (!freerdp_settings_set_string(client->settings, FreeRDP_CertificateFile, "server.crt"))
 			return FALSE;
 	}
 
 	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("PrivateKeyFile"),
 	                                   &(client->settings->PrivateKeyFile)))
 	{
-		client->settings->PrivateKeyFile = _strdup("server.key");
-
-		if (!client->settings->PrivateKeyFile)
+		if (!freerdp_settings_set_string(client->settings, FreeRDP_PrivateKeyFile, "server.key"))
 			return FALSE;
 	}
 
