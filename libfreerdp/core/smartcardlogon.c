@@ -127,7 +127,7 @@ static BOOL treat_sc_cert(SmartcardCert* scCert)
 }
 
 #ifndef _WIN32
-static BOOL build_pkinit_args(rdpSettings* settings, SmartcardCert* scCert)
+static BOOL build_pkinit_args(const rdpSettings* settings, SmartcardCert* scCert)
 {
 	/* pkinit args only under windows
 	 * 		PKCS11:module_name=opensc-pkcs11.so
@@ -149,9 +149,9 @@ static BOOL build_pkinit_args(rdpSettings* settings, SmartcardCert* scCert)
 }
 #endif /* _WIN32 */
 
-static BOOL smartcard_hw_enumerateCerts(rdpSettings* settings, LPCWSTR csp, const char* reader,
-                                        const char* userFilter, SmartcardCert* scCert, DWORD count,
-                                        DWORD* retCount)
+static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp,
+                                        const char* reader, const char* userFilter,
+                                        SmartcardCert* scCert, DWORD count, DWORD* retCount)
 {
 	BOOL ret = FALSE;
 	LPWSTR scope = NULL;
@@ -333,8 +333,8 @@ out:
 	return ret;
 }
 
-static BOOL smartcard_sw_enumerateCerts(rdpSettings* settings, SmartcardCert* scCert, DWORD count,
-                                        DWORD* retCount)
+static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCert* scCert,
+                                        DWORD count, DWORD* retCount)
 {
 	size_t sz;
 
@@ -382,7 +382,7 @@ out_error:
 	return FALSE;
 }
 
-BOOL smartcard_enumerateCerts(rdpSettings* settings, SmartcardCert* scCert, DWORD count,
+BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCert* scCert, DWORD count,
                               DWORD* retCount)
 {
 	BOOL ret;

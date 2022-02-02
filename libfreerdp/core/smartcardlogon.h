@@ -42,7 +42,7 @@ typedef struct _SmartcardCert SmartcardCert;
 
 FREERDP_API void smartcardCert_Free(SmartcardCert* scCert);
 
-FREERDP_API BOOL smartcard_enumerateCerts(rdpSettings* settings, SmartcardCert* scCert, DWORD count,
+FREERDP_API BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCert* scCert, DWORD count,
                                           DWORD* retCount);
 
 #endif /* LIBFREERDP_CORE_SMARTCARDLOGON_H */
