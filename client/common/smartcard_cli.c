@@ -16,35 +16,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <winpr/assert.h>
+
 #include <freerdp/utils/smartcard_cli.h>
 #include "../../libfreerdp/core/smartcardlogon.h"
 
 BOOL freerdp_smartcard_list(const rdpSettings* settings)
 {
-	SmartcardCert certs[64] = { 0 };
+	SmartcardCerts* certs = NULL;
 	DWORD i, count;
 
-	if (!smartcard_enumerateCerts(settings, certs, 64, &count))
+	if (!smartcard_enumerateCerts(settings, &certs, &count))
 		return FALSE;
 
 	for (i = 0; i < count; i++)
 	{
+		const SmartcardCertInfo* info = smartcard_getCertInfo(certs, i);
 		char readerName[256] = { 0 };
 
-		printf("%d: %s\n", i, certs[i].subject);
+		WINPR_ASSERT(info);
 
-		if (WideCharToMultiByte(CP_UTF8, 0, certs[i].reader, -1, readerName, sizeof(readerName),
-		                        NULL, NULL) > 0)
+		printf("%d: %s\n", i, info->subject);
+
+		if (WideCharToMultiByte(CP_UTF8, 0, info->reader, -1, readerName, sizeof(readerName), NULL,
+		                        NULL) > 0)
 			printf("\t* reader: %s\n", readerName);
 #ifndef _WIN32
-		printf("\t* slotId: %" PRIu32 "\n", certs[i].slotId);
-		printf("\t* pkinitArgs: %s\n", certs[i].pkinitArgs);
+		printf("\t* slotId: %" PRIu32 "\n", info->slotId);
+		printf("\t* pkinitArgs: %s\n", info->pkinitArgs);
 #endif
-		printf("\t* containerName: %s\n", certs[i].containerName);
-		if (certs[i].upn)
-			printf("\t* UPN: %s\n", certs[i].upn);
-
-		smartcardCert_Free(&certs[i]);
+		printf("\t* containerName: %s\n", info->containerName);
+		if (info->upn)
+			printf("\t* UPN: %s\n", info->upn);
 	}
+	smartcardCerts_Free(certs);
+
 	return TRUE;
 }

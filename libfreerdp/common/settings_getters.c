@@ -2554,17 +2554,11 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_SmartcardCertificate:
 			return settings->SmartcardCertificate;
 
-		case FreeRDP_SmartcardCertificateFile:
-			return settings->SmartcardCertificateFile;
-
 		case FreeRDP_SmartcardPin:
 			return settings->SmartcardPin;
 
 		case FreeRDP_SmartcardPrivateKey:
 			return settings->SmartcardPrivateKey;
-
-		case FreeRDP_SmartcardPrivateKeyFile:
-			return settings->SmartcardPrivateKeyFile;
 
 		case FreeRDP_TargetNetAddress:
 			return settings->TargetNetAddress;
@@ -2818,17 +2812,11 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 		case FreeRDP_SmartcardCertificate:
 			return settings->SmartcardCertificate;
 
-		case FreeRDP_SmartcardCertificateFile:
-			return settings->SmartcardCertificateFile;
-
 		case FreeRDP_SmartcardPin:
 			return settings->SmartcardPin;
 
 		case FreeRDP_SmartcardPrivateKey:
 			return settings->SmartcardPrivateKey;
-
-		case FreeRDP_SmartcardPrivateKeyFile:
-			return settings->SmartcardPrivateKeyFile;
 
 		case FreeRDP_TargetNetAddress:
 			return settings->TargetNetAddress;
@@ -3092,17 +3080,11 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 		case FreeRDP_SmartcardCertificate:
 			return update_string(&settings->SmartcardCertificate, cnv.cc, len, cleanup);
 
-		case FreeRDP_SmartcardCertificateFile:
-			return update_string(&settings->SmartcardCertificateFile, cnv.cc, len, cleanup);
-
 		case FreeRDP_SmartcardPin:
 			return update_string(&settings->SmartcardPin, cnv.cc, len, cleanup);
 
 		case FreeRDP_SmartcardPrivateKey:
 			return update_string(&settings->SmartcardPrivateKey, cnv.cc, len, cleanup);
-
-		case FreeRDP_SmartcardPrivateKeyFile:
-			return update_string(&settings->SmartcardPrivateKeyFile, cnv.cc, len, cleanup);
 
 		case FreeRDP_TargetNetAddress:
 			return update_string(&settings->TargetNetAddress, cnv.cc, len, cleanup);
