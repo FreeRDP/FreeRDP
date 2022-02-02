@@ -538,9 +538,9 @@ void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
 
 static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 {
-#define MAX_SC_CERTS 64
-	SmartcardCert certs[MAX_SC_CERTS];
-	DWORD count, i = 0;
+	SmartcardCerts* certs = NULL;
+	const SmartcardCertInfo* info = NULL;
+	DWORD count;
 	rdpSettings* settings = nla->settings;
 	SEC_WINPR_KERBEROS_SETTINGS* kerbSettings = &nla->kerberosSettings;
 	BOOL ret = FALSE;
@@ -564,68 +564,71 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 		}
 	}
 
-	if (!smartcard_enumerateCerts(settings, certs, MAX_SC_CERTS, &count))
+	if (!smartcard_enumerateCerts(settings, &certs, &count))
 	{
 		WLog_ERR(TAG, "unable to list smartcard certificates");
 		return FALSE;
 	}
 
-	if (!count)
+	if (count < 1)
 	{
 		WLog_ERR(TAG, "no smartcard certificates found");
-		return FALSE;
+		goto out;
 	}
 
 	if (count != 1)
 		goto setup_pin;
 
+	info = smartcard_getCertInfo(certs, 0);
+	if (!info)
+		goto out;
+
 	/*
 	 * just one result let's try to fill missing parameters
 	 */
-	if (!settings->Username && certs[0].userHint)
+	if (!settings->Username && info->userHint)
 	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_Username, certs[0].userHint))
+		if (!freerdp_settings_set_string(settings, FreeRDP_Username, info->userHint))
 		{
 			WLog_ERR(TAG, "unable to copy certificate username");
 			goto out;
 		}
 	}
 
-	if (!settings->Domain && certs[0].domainHint)
+	if (!settings->Domain && info->domainHint)
 	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, certs[0].domainHint))
+		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, info->domainHint))
 		{
 			WLog_ERR(TAG, "unable to copy certificate domain");
 			goto out;
 		}
 	}
 
-	if (!settings->ReaderName && certs[0].reader)
+	if (!settings->ReaderName && info->reader)
 	{
-		if (ConvertFromUnicode(CP_UTF8, 0, certs[0].reader, -1, &settings->ReaderName, 0, NULL,
-		                       NULL) < 0)
+		if (ConvertFromUnicode(CP_UTF8, 0, info->reader, -1, &settings->ReaderName, 0, NULL, NULL) <
+		    0)
 		{
 			WLog_ERR(TAG, "unable to copy reader name");
 			goto out;
 		}
 	}
 
-	if (!settings->ContainerName && certs[0].containerName)
+	if (!settings->ContainerName && info->containerName)
 	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_ContainerName, certs[0].containerName))
+		if (!freerdp_settings_set_string(settings, FreeRDP_ContainerName, info->containerName))
 		{
 			WLog_ERR(TAG, "unable to copy container name");
 			goto out;
 		}
 	}
 
-	memcpy(nla->kerberosSettings.certSha1, certs[0].sha1Hash,
-	       sizeof(nla->kerberosSettings.certSha1));
+	memcpy(nla->kerberosSettings.certSha1, info->sha1Hash, sizeof(nla->kerberosSettings.certSha1));
 
 #ifndef _WIN32
-	if (certs[0].pkinitArgs)
+	if (info->pkinitArgs)
 	{
-		kerbSettings->pkinitX509Identity = strdup(certs[0].pkinitArgs);
+		kerbSettings->pkinitX509Identity = _strdup(info->pkinitArgs);
 		if (!kerbSettings->pkinitX509Identity)
 		{
 			WLog_ERR(TAG, "unable to copy pkinitArgs");
@@ -669,8 +672,7 @@ setup_pin:
 
 	ret = TRUE;
 out:
-	for (i = 0; i < count; i++)
-		smartcardCert_Free(&certs[i]);
+	smartcardCerts_Free(certs);
 
 	return ret;
 }
@@ -1995,8 +1997,6 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	s = Stream_StaticInit(&staticRetStream, (BYTE*)nla->tsCredentials.pvBuffer, length);
 	ber_write_nla_TSCredentials(s, &cr);
 	ret = TRUE;
-
-	printf("creds=%s\n", winpr_BinToHexString((BYTE*)nla->tsCredentials.pvBuffer, length, TRUE));
 out:
 	Stream_Free(credsContentStream, TRUE);
 	return ret;

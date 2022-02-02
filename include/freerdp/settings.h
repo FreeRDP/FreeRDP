@@ -663,16 +663,14 @@ typedef struct
 #define FreeRDP_SmartcardPrivateKey (1286)
 #define FreeRDP_SmartcardPin (1287)
 #define FreeRDP_SmartcardEmulation (1288)
-#define FreeRDP_SmartcardCertificateFile (1289)
-#define FreeRDP_SmartcardPrivateKeyFile (1290)
-#define FreeRDP_Pkcs11Module (1291)
-#define FreeRDP_Pin (1292)
-#define FreeRDP_KeySpec (1293)
-#define FreeRDP_CardName (1294)
-#define FreeRDP_ReaderName (1295)
-#define FreeRDP_ContainerName (1296)
-#define FreeRDP_CspName (1297)
-#define FreeRDP_PkinitAnchors (1298)
+#define FreeRDP_Pkcs11Module (1289)
+#define FreeRDP_Pin (1290)
+#define FreeRDP_KeySpec (1291)
+#define FreeRDP_CardName (1292)
+#define FreeRDP_ReaderName (1293)
+#define FreeRDP_ContainerName (1294)
+#define FreeRDP_CspName (1295)
+#define FreeRDP_PkinitAnchors (1296)
 #define FreeRDP_KerberosKdc (1344)
 #define FreeRDP_KerberosRealm (1345)
 #define FreeRDP_KerberosStartTime (1346)
@@ -1159,21 +1157,19 @@ struct rdp_settings
 	UINT64 padding1284[1285 - 1284];   /* 1284 */
 
 	/* Settings used for smartcard emulation */
-	ALIGN64 char* SmartcardCertificate;     /* 1285 */
-	ALIGN64 char* SmartcardPrivateKey;      /* 1286 */
-	ALIGN64 char* SmartcardPin;             /* 1287 */
-	ALIGN64 BOOL SmartcardEmulation;        /* 1288 */
-	ALIGN64 char* SmartcardCertificateFile; /* 1289 */
-	ALIGN64 char* SmartcardPrivateKeyFile;  /* 1290 */
-	ALIGN64 char* Pkcs11Module;             /* 1291 */
-	ALIGN64 char* Pin;                      /* 1292 */
-	ALIGN64 UINT32 KeySpec;                 /* 1293 */
-	ALIGN64 char* CardName;                 /* 1294 */
-	ALIGN64 char* ReaderName;               /* 1295 */
-	ALIGN64 char* ContainerName;            /* 1296 */
-	ALIGN64 char* CspName;                  /* 1297 */
-	ALIGN64 char* PkinitAnchors;            /* 1298 */
-	UINT64 padding1344[1344 - 1299];        /* 1299 */
+	ALIGN64 char* SmartcardCertificate; /* 1285 */
+	ALIGN64 char* SmartcardPrivateKey;  /* 1286 */
+	ALIGN64 char* SmartcardPin;         /* 1287 */
+	ALIGN64 BOOL SmartcardEmulation;    /* 1288 */
+	ALIGN64 char* Pkcs11Module;         /* 1289 */
+	ALIGN64 char* Pin;                  /* 1290 */
+	ALIGN64 UINT32 KeySpec;             /* 1291 */
+	ALIGN64 char* CardName;             /* 1292 */
+	ALIGN64 char* ReaderName;           /* 1293 */
+	ALIGN64 char* ContainerName;        /* 1294 */
+	ALIGN64 char* CspName;              /* 1295 */
+	ALIGN64 char* PkinitAnchors;        /* 1296 */
+	UINT64 padding1344[1344 - 1297];    /* 1297 */
 
 	/* Kerberos Authentication */
 	ALIGN64 char* KerberosKdc;               /* 1344 */
