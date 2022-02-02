@@ -141,8 +141,8 @@ static BOOL build_pkinit_args(rdpSettings* settings, SmartcardCert* scCert)
 	if (!scCert->pkinitArgs)
 		return FALSE;
 
-	snprintf(scCert->pkinitArgs, sz, "PKCS11:module_name=%s:slotid=%" PRIu16, pkModule,
-	         (UINT16)scCert->slotId);
+	_snprintf(scCert->pkinitArgs, sz, "PKCS11:module_name=%s:slotid=%" PRIu16, pkModule,
+	          (UINT16)scCert->slotId);
 
 	return TRUE;
 }
@@ -167,7 +167,7 @@ static BOOL smartcard_hw_enumerateCerts(rdpSettings* settings, LPCWSTR csp, cons
 		if (!scopeStr)
 			goto out;
 
-		snprintf(scopeStr, readerSz + 5, "\\\\.\\%s\\", reader);
+		_snprintf(scopeStr, readerSz + 5, "\\\\.\\%s\\", reader);
 		res = ConvertToUnicode(CP_UTF8, 0, scopeStr, -1, &scope, 0);
 		free(scopeStr);
 
@@ -350,8 +350,8 @@ static BOOL smartcard_sw_enumerateCerts(rdpSettings* settings, SmartcardCert* sc
 	sz = strlen("FILE:") + strlen(settings->SmartcardCertificateFile) + 1 +
 	     strlen(settings->SmartcardPrivateKeyFile) + 1;
 	scCert->pkinitArgs = malloc(sz);
-	snprintf(scCert->pkinitArgs, sz, "FILE:%s,%s", settings->SmartcardCertificateFile,
-	         settings->SmartcardPrivateKeyFile);
+	_snprintf(scCert->pkinitArgs, sz, "FILE:%s,%s", settings->SmartcardCertificateFile,
+	          settings->SmartcardPrivateKeyFile);
 
 	scCert->certificate = crypto_cert_pem_read(settings->SmartcardCertificate);
 	if (!scCert->certificate)
