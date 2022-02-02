@@ -132,11 +132,12 @@ static BOOL build_pkinit_args(rdpSettings* settings, SmartcardCert* scCert)
 	/* pkinit args only under windows
 	 * 		PKCS11:module_name=opensc-pkcs11.so
 	 */
-	size_t sz = strlen("PKCS11:module_name=:slotid=XXXXX");
+	size_t sz;
 	const char* pkModule = settings->Pkcs11Module ? settings->Pkcs11Module : "opensc-pkcs11.so";
 
-	sz += strlen(pkModule) + 1;
-
+	sz = _snprintf(NULL, 0, "PKCS11:module_name=%s:slotid=%" PRIu16, pkModule,
+	               (UINT16)scCert->slotId) +
+	     1;
 	scCert->pkinitArgs = malloc(sz);
 	if (!scCert->pkinitArgs)
 		return FALSE;

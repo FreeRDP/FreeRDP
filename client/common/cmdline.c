@@ -480,7 +480,6 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("\n");
 	printf("Drive Redirection: /drive:home,/home/user\n");
 	printf("Smartcard Redirection: /smartcard:<device>\n");
-	printf("Smartcard logon with rdp only:                /smartcard-logon [/sec:rdp]\n");
 	printf("Smartcard logon with Kerberos authentication: /smartcard-logon /sec:nla\n");
 	printf("Those options are only accepted with /smartcard-logon:\n");
 	printf("    PIN code: /pin:<PIN code>\n");

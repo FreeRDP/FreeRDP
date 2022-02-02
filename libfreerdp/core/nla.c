@@ -140,7 +140,7 @@ struct rdp_nla
 	LPTSTR ServicePrincipalName;
 	void* identityPtr;
 	SEC_WINNT_AUTH_IDENTITY* identity;
-	SEC_WINNT_AUTH_IDENTITY_EXW identityEx;
+	SEC_WINNT_AUTH_IDENTITY_EXA identityEx;
 	SEC_WINNT_AUTH_IDENTITY_WINPRA identityWinPr;
 	SEC_WINPR_KERBEROS_SETTINGS kerberosSettings;
 	PSecurityFunctionTable table;
@@ -687,15 +687,15 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	{
 #ifdef _WIN32
 		{
-			SEC_WINNT_AUTH_IDENTITY_EXW* identityEx;
+			SEC_WINNT_AUTH_IDENTITY_EXA* identityEx;
 			CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
-			LPWSTR marshalledCredentials;
+			LPSTR marshalledCredentials;
 
 			identityEx = &nla->identityEx;
 			memcpy(certInfo.rgbHashOfCert, nla->kerberosSettings.certSha1,
 			       sizeof(certInfo.rgbHashOfCert));
 
-			if (!CredMarshalCredentialW(CertCredential, &certInfo, &marshalledCredentials))
+			if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
 			{
 				WLog_ERR(TAG, "error marshalling cert credentials");
 				return FALSE;
@@ -703,9 +703,9 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 
 			identityEx->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
 			identityEx->Length = sizeof(*identityEx);
-			identityEx->User = (PUSHORT)marshalledCredentials;
-			identityEx->UserLength = _wcslen(marshalledCredentials);
-			if (ConvertToUnicode(CP_UTF8, 0, settings->Pin, -1, &identityEx->Password, 0) <= 0)
+			identityEx->User = (BYTE*)marshalledCredentials;
+			identityEx->UserLength = strlen(marshalledCredentials);
+			if (!(identityEx->Password = (BYTE*)strdup(settings->Pin)))
 				return FALSE;
 			identityEx->PasswordLength = strlen(settings->Pin);
 			identityEx->Domain = NULL;
@@ -1910,7 +1910,6 @@ fail:
 	Stream_Free(s, FALSE);
 	return ret;
 }
-
 
 /**
  * Encode TSCredentials structure.
