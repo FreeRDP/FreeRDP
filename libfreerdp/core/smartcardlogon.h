@@ -22,7 +22,7 @@
 #include <freerdp/settings.h>
 #include <freerdp/crypto/crypto.h>
 
-typedef struct
+struct _SmartcardCert
 {
 	LPWSTR reader;
 	CryptoCert certificate;
@@ -37,11 +37,12 @@ typedef struct
 	BYTE atr[256];
 	DWORD atrLength;
 	BYTE sha1Hash[20];
-} SmartcardCert;
+};
+typedef struct _SmartcardCert SmartcardCert;
 
-void smartcardCert_Free(SmartcardCert* scCert);
+FREERDP_API void smartcardCert_Free(SmartcardCert* scCert);
 
-BOOL smartcard_enumerateCerts(rdpSettings* settings, SmartcardCert* scCert, DWORD count,
-                              DWORD* retCount);
+FREERDP_API BOOL smartcard_enumerateCerts(rdpSettings* settings, SmartcardCert* scCert, DWORD count,
+                                          DWORD* retCount);
 
 #endif /* LIBFREERDP_CORE_SMARTCARDLOGON_H */

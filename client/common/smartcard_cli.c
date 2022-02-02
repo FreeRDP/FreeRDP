@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 #include <freerdp/utils/smartcard_cli.h>
-#include "../core/smartcardlogon.h"
+#include "../../libfreerdp/core/smartcardlogon.h"
 
 BOOL freerdp_smartcard_list(rdpSettings* settings)
 {
