@@ -177,7 +177,46 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 	return TRUE;
 }
 
+static BOOL pf_server_setup_channels(freerdp_peer* peer)
+{
+	char** accepted_channels = NULL;
+	size_t accepted_channels_count;
+	size_t i;
+	pServerContext* ps = (pServerContext*)peer->context;
+	wHashTable* byId = ps->channelsById;
+
+	accepted_channels = WTSGetAcceptedChannelNames(peer, &accepted_channels_count);
+	if (!accepted_channels)
+		return TRUE;
+
+	for (i = 0; i < accepted_channels_count; i++)
+	{
+		pServerChannelContext* channelContext;
+		const char* cname = accepted_channels[i];
+		UINT16 channelId = WTSChannelGetId(peer, cname);
+
+		PROXY_LOG_INFO(TAG, ps, "Accepted channel: %s", cname);
+		channelContext = ChannelContext_new(ps, cname, channelId);
+		if (!channelContext)
+		{
+			PROXY_LOG_ERR(TAG, ps, "error seting up channelContext for '%s'", cname);
+			return FALSE;
+		}
+
+		if (!HashTable_Insert(byId, &channelContext->channel_id, channelContext))
+		{
+			ChannelContext_free(channelContext);
+			PROXY_LOG_ERR(TAG, ps, "error inserting channelContext in byId table for '%s'", cname);
+			return FALSE;
+		}
+	}
+
+	free(accepted_channels);
+	return TRUE;
+}
+
 /* Event callbacks */
+
 /**
  * This callback is called when the entire connection sequence is done (as
  * described in MS-RDPBCGR section 1.3)
@@ -191,9 +230,6 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	pClientContext* pc;
 	rdpSettings* client_settings;
 	proxyData* pdata;
-	char** accepted_channels = NULL;
-	size_t accepted_channels_count;
-	size_t i;
 
 	WINPR_ASSERT(peer);
 
@@ -204,13 +240,10 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	WINPR_ASSERT(pdata);
 
 	PROXY_LOG_INFO(TAG, ps, "Accepted client: %s", peer->settings->ClientHostname);
-	accepted_channels = WTSGetAcceptedChannelNames(peer, &accepted_channels_count);
-	if (accepted_channels)
+	if (!pf_server_setup_channels(peer))
 	{
-		for (i = 0; i < accepted_channels_count; i++)
-			PROXY_LOG_INFO(TAG, ps, "Accepted channel: %s", accepted_channels[i]);
-
-		free(accepted_channels);
+		PROXY_LOG_ERR(TAG, ps, "error setting up channels");
+		return FALSE;
 	}
 
 	pc = pf_context_create_client_context(peer->settings);
@@ -276,6 +309,7 @@ static BOOL pf_server_activate(freerdp_peer* peer)
 	peer->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_ACTIVATE, pdata, peer))
 		return FALSE;
+
 	return TRUE;
 }
 
@@ -334,8 +368,8 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	pClientContext* pc;
 	proxyData* pdata;
 	const proxyConfig* config;
-	pf_utils_channel_mode pass;
-	const char* channel_name = WTSChannelGetName(peer, channelId);
+	const pServerChannelContext* channel;
+	UINT32 channelId32 = channelId;
 
 	WINPR_ASSERT(peer);
 
@@ -356,8 +390,14 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	if (!pc)
 		goto original_cb;
 
-	pass = pf_utils_get_channel_mode(config, channel_name);
-	switch (pass)
+	channel = HashTable_GetItemValue(ps->channelsById, &channelId32);
+	if (!channel)
+	{
+		PROXY_LOG_ERR(TAG, ps, "channel id=%d not registered here, dropping", channelId32);
+		return TRUE;
+	}
+
+	switch (channel->channelMode)
 	{
 		case PF_UTILS_CHANNEL_BLOCK:
 			return TRUE;
@@ -366,7 +406,7 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 			proxyChannelDataEventInfo ev;
 
 			ev.channel_id = channelId;
-			ev.channel_name = channel_name;
+			ev.channel_name = channel->channel_name;
 			ev.data = data;
 			ev.data_len = size;
 			ev.flags = flags;
@@ -379,8 +419,8 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 			return IFCALLRESULT(TRUE, pc->sendChannelData, pc, &ev);
 		}
 		case PF_UTILS_CHANNEL_INTERCEPT:
-			return pf_server_receive_channel_intercept(pdata, channelId, channel_name, data, size,
-			                                           flags, totalSize);
+			return pf_server_receive_channel_intercept(pdata, channelId, channel->channel_name,
+			                                           data, size, flags, totalSize);
 		default:
 			break;
 	}

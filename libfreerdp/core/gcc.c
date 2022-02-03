@@ -2006,7 +2006,7 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 			Stream_Write_UINT32(s, flags);  /* flags */
 		}
 	}
-	WLog_DBG(TAG, "[%s] FINISHED" PRIu32, __FUNCTION__);
+	WLog_DBG(TAG, "[%s] FINISHED", __FUNCTION__);
 	return TRUE;
 }
 

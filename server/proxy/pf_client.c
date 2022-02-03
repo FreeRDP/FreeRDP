@@ -376,9 +376,10 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	return pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_PRE_CONNECT, pc->pdata, pc);
 }
 
-static BOOL pf_client_receive_channel_passthrough(proxyData* pdata, UINT16 channelId,
-                                                  const char* channel_name, const BYTE* xdata,
-                                                  size_t xsize, UINT32 flags, size_t totalSize)
+static BOOL pf_client_receive_channel_passthrough(proxyData* pdata,
+                                                  const pServerChannelContext* channel,
+                                                  const BYTE* xdata, size_t xsize, UINT32 flags,
+                                                  size_t totalSize)
 {
 	proxyChannelDataEventInfo ev;
 	UINT16 server_channel_id;
@@ -389,8 +390,8 @@ static BOOL pf_client_receive_channel_passthrough(proxyData* pdata, UINT16 chann
 	ps = pdata->ps;
 	WINPR_ASSERT(ps);
 
-	ev.channel_id = channelId;
-	ev.channel_name = channel_name;
+	ev.channel_id = channel->channel_id;
+	ev.channel_name = channel->channel_name;
 	ev.data = xdata;
 	ev.data_len = xsize;
 	ev.flags = flags;
@@ -411,7 +412,7 @@ static BOOL pf_client_receive_channel_passthrough(proxyData* pdata, UINT16 chann
 	 * CREATE_REQUEST_PDU (0x01) packets as invalid.
 	 */
 	if ((flags & CHANNEL_FLAG_FIRST) &&
-	    (strncmp(channel_name, DRDYNVC_SVC_CHANNEL_NAME, CHANNEL_NAME_LEN + 1) == 0))
+	    (strncmp(channel->channel_name, DRDYNVC_SVC_CHANNEL_NAME, CHANNEL_NAME_LEN + 1) == 0))
 	{
 		BYTE cmd, first;
 		wStream *s, sbuffer;
@@ -468,7 +469,7 @@ static BOOL pf_client_receive_channel_passthrough(proxyData* pdata, UINT16 chann
 				return TRUE; /* Silently drop */
 		}
 	}
-	server_channel_id = WTSChannelGetId(ps->context.peer, channel_name);
+	server_channel_id = WTSChannelGetId(ps->context.peer, channel->channel_name);
 
 	/* Ignore messages for channels that can not be mapped.
 	 * The client might not have enabled support for this specific channel,
@@ -499,12 +500,11 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
                                                 const BYTE* xdata, size_t xsize, UINT32 flags,
                                                 size_t totalSize)
 {
-	const char* channel_name = freerdp_channels_get_name_by_id(instance, channelId);
 	pClientContext* pc;
 	pServerContext* ps;
 	proxyData* pdata;
-	const proxyConfig* config;
-	pf_utils_channel_mode pass;
+	pServerChannelContext* channel;
+	UINT32 channelId32 = channelId;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(xdata || (xsize == 0));
@@ -519,21 +519,20 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	pdata = ps->pdata;
 	WINPR_ASSERT(pdata);
 
-	config = pdata->config;
-	WINPR_ASSERT(config);
+	channel = HashTable_GetItemValue(ps->channelsById, &channelId32);
+	if (!channel)
+		return TRUE;
 
-	pass = pf_utils_get_channel_mode(config, channel_name);
-
-	switch (pass)
+	switch (channel->channelMode)
 	{
 		case PF_UTILS_CHANNEL_BLOCK:
 			return TRUE; /* Silently drop */
 		case PF_UTILS_CHANNEL_PASSTHROUGH:
-			return pf_client_receive_channel_passthrough(pdata, channelId, channel_name, xdata,
-			                                             xsize, flags, totalSize);
+			return pf_client_receive_channel_passthrough(pdata, channel, xdata, xsize, flags,
+			                                             totalSize);
 		case PF_UTILS_CHANNEL_INTERCEPT:
-			return pf_client_receive_channel_intercept(pdata, channelId, channel_name, xdata, xsize,
-			                                           flags, totalSize);
+			return pf_client_receive_channel_intercept(pdata, channelId, channel->channel_name,
+			                                           xdata, xsize, flags, totalSize);
 		case PF_UTILS_CHANNEL_NOT_HANDLED:
 		default:
 			WINPR_ASSERT(pc->client_receive_channel_data_original);

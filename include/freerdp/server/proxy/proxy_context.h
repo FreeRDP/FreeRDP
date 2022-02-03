@@ -47,6 +47,28 @@ extern "C"
 	 * and set their cleanup function accordingly. */
 	FREERDP_API void intercept_context_entry_free(void* obj);
 
+	/** @brief how is handled a channel */
+	enum pf_utils_channel_mode
+	{
+		PF_UTILS_CHANNEL_NOT_HANDLED,
+		PF_UTILS_CHANNEL_BLOCK,
+		PF_UTILS_CHANNEL_PASSTHROUGH,
+		PF_UTILS_CHANNEL_INTERCEPT,
+	};
+	typedef enum pf_utils_channel_mode pf_utils_channel_mode;
+
+	/** @brief per channel configuration */
+	struct p_server_channel_context
+	{
+		char* channel_name;
+		UINT32 channel_id;
+		BOOL isDynamic;
+		pf_utils_channel_mode channelMode;
+	};
+	typedef struct p_server_channel_context pServerChannelContext;
+
+	void ChannelContext_free(pServerChannelContext* ctx);
+
 	/**
 	 * Wraps rdpContext and holds the state for the proxy's server.
 	 */
@@ -60,8 +82,11 @@ extern "C"
 		HANDLE dynvcReady;
 
 		wHashTable* interceptContextMap;
+		wHashTable* channelsById;
 	};
 	typedef struct p_server_context pServerContext;
+
+	pServerChannelContext* ChannelContext_new(pServerContext* ps, const char* name, UINT32 id);
 
 	/**
 	 * Wraps rdpContext and holds the state for the proxy's client.
