@@ -22,6 +22,7 @@
 #define FREERDP_SERVER_PROXY_PFUTILS_H
 
 #include <freerdp/server/proxy/proxy_config.h>
+#include <freerdp/server/proxy/proxy_context.h>
 
 /**
  * @brief pf_utils_channel_is_passthrough Checks of a channel identified by 'name'
@@ -34,14 +35,6 @@
  *         e.g. proxy client and server are termination points and data passed
  *         between.
  */
-typedef enum
-{
-	PF_UTILS_CHANNEL_NOT_HANDLED,
-	PF_UTILS_CHANNEL_BLOCK,
-	PF_UTILS_CHANNEL_PASSTHROUGH,
-	PF_UTILS_CHANNEL_INTERCEPT,
-} pf_utils_channel_mode;
-
 pf_utils_channel_mode pf_utils_get_channel_mode(const proxyConfig* config, const char* name);
 const char* pf_utils_channel_mode_string(pf_utils_channel_mode mode);
 
