@@ -187,12 +187,13 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	UINT result = NO_ERROR;
 	UINT32 i;
 	UINT32 count = 0;
+	wStream sbuffer;
 	wStream* s = NULL;
 
 	if (!format_data || !file_descriptor_array || !file_descriptor_count)
 		return ERROR_BAD_ARGUMENTS;
 
-	s = Stream_New((BYTE*)format_data, format_data_length);
+	s = Stream_StaticConstInit(&sbuffer, format_data, format_data_length);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -225,27 +226,35 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 
 	for (i = 0; i < count; i++)
 	{
-		int c;
-		UINT64 lastWriteTime;
+		UINT64 tmp;
 		FILEDESCRIPTORW* file = &((*file_descriptor_array)[i]);
 
 		Stream_Read_UINT32(s, file->dwFlags);          /* flags (4 bytes) */
-		Stream_Seek(s, 32);                            /* reserved1 (32 bytes) */
+		Stream_Read_UINT32(s, file->clsid.Data1);
+		Stream_Read_UINT16(s, file->clsid.Data2);
+		Stream_Read_UINT16(s, file->clsid.Data3);
+		Stream_Read(s, &file->clsid.Data4, sizeof(file->clsid.Data4));
+		Stream_Read_UINT32(s, file->sizel.cx);
+		Stream_Read_UINT32(s, file->sizel.cy);
+		Stream_Read_UINT32(s, file->pointl.x);
+		Stream_Read_UINT32(s, file->pointl.y);
 		Stream_Read_UINT32(s, file->dwFileAttributes); /* fileAttributes (4 bytes) */
-		Stream_Seek(s, 16);                            /* reserved2 (16 bytes) */
-		Stream_Read_UINT64(s, lastWriteTime);          /* lastWriteTime (8 bytes) */
-		file->ftLastWriteTime = uint64_to_filetime(lastWriteTime);
+		Stream_Read_UINT64(s, tmp);                    /* ftCreationTime (8 bytes) */
+		file->ftCreationTime = uint64_to_filetime(tmp);
+		Stream_Read_UINT64(s, tmp); /* ftLastAccessTime (8 bytes) */
+		file->ftLastAccessTime = uint64_to_filetime(tmp);
+		Stream_Read_UINT64(s, tmp); /* lastWriteTime (8 bytes) */
+		file->ftLastWriteTime = uint64_to_filetime(tmp);
 		Stream_Read_UINT32(s, file->nFileSizeHigh); /* fileSizeHigh (4 bytes) */
 		Stream_Read_UINT32(s, file->nFileSizeLow);  /* fileSizeLow (4 bytes) */
-		for (c = 0; c < 260; c++)                   /* cFileName (520 bytes) */
-			Stream_Read_UINT16(s, file->cFileName[c]);
+		Stream_Read_UTF16_String(s, file->cFileName,
+		                         ARRAYSIZE(file->cFileName)); /* cFileName (520 bytes) */
 	}
 
 	if (Stream_GetRemainingLength(s) > 0)
 		WLog_WARN(TAG, "packed file list has %" PRIuz " excess bytes",
 		          Stream_GetRemainingLength(s));
 out:
-	Stream_Free(s, FALSE);
 
 	return result;
 }
