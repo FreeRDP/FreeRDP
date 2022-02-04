@@ -4,6 +4,7 @@
  *
  * Copyright 2015 ANSSI, Author Thomas Calderon
  * Copyright 2017 Dorian Ducournau <dorian.ducournau@gmail.com>
+ * Copyright 2022 David Fort <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,8 +97,8 @@ static sspi_gss_OID SSPI_GSS_C_SPNEGO_KRB5 = &g_SSPI_GSS_C_SPNEGO_KRB5;
 static KRB_CONTEXT* kerberos_ContextNew(void)
 {
 	KRB_CONTEXT* context;
-	context = (KRB_CONTEXT*)calloc(1, sizeof(KRB_CONTEXT));
 
+	context = (KRB_CONTEXT*)calloc(1, sizeof(KRB_CONTEXT));
 	if (!context)
 		return NULL;
 
@@ -105,6 +106,7 @@ static KRB_CONTEXT* kerberos_ContextNew(void)
 	context->major_status = 0;
 	context->gss_ctx = SSPI_GSS_C_NO_CONTEXT;
 	context->cred = SSPI_GSS_C_NO_CREDENTIAL;
+
 	return context;
 }
 
@@ -120,6 +122,8 @@ static void kerberos_ContextFree(KRB_CONTEXT* context)
 		sspi_gss_release_name(&minor_status, &context->target_name);
 		context->target_name = NULL;
 	}
+
+	sspi_gss_release_cred(&minor_status, &context->cred);
 
 	if (context->gss_ctx)
 	{
@@ -260,11 +264,23 @@ static krb5_error_code acquire_cred(krb5_context ctx, SEC_WINPR_KERBEROS_SETTING
 	krb5_get_init_creds_opt* options = NULL;
 	krb5_ccache ccache;
 	krb5_init_creds_context init_ctx = NULL;
+	const char* cacheType;
 
-	/* Get default ccache */
-	if ((ret = krb5_cc_default(ctx, &ccache)))
+	/* Get ccache */
+	if (optionsBlock && optionsBlock->cache)
 	{
-		WLog_ERR(TAG, "error while getting default ccache");
+		ret = krb5_cc_resolve(ctx, optionsBlock->cache, &ccache);
+		cacheType = "user set cache";
+	}
+	else
+	{
+		ret = krb5_cc_default(ctx, &ccache);
+		cacheType = "default";
+	}
+
+	if (ret)
+	{
+		WLog_ERR(TAG, "error while getting %s ccache", cacheType);
 		goto cleanup;
 	}
 
@@ -286,6 +302,15 @@ static krb5_error_code acquire_cred(krb5_context ctx, SEC_WINPR_KERBEROS_SETTING
 	krb5_get_init_creds_opt_set_forwardable(options, 0);
 	krb5_get_init_creds_opt_set_proxiable(options, 0);
 
+	if (optionsBlock && optionsBlock->startTime)
+		starttime = optionsBlock->startTime;
+
+	if (optionsBlock && optionsBlock->lifeTime)
+		krb5_get_init_creds_opt_set_tkt_life(options, optionsBlock->lifeTime);
+
+	if (optionsBlock && optionsBlock->renewLifeTime)
+		krb5_get_init_creds_opt_set_renew_life(options, optionsBlock->renewLifeTime);
+
 	if (optionsBlock && optionsBlock->withPac)
 		krb5_get_init_creds_opt_set_pac_request(ctx, options, TRUE);
 
@@ -301,7 +326,6 @@ static krb5_error_code acquire_cred(krb5_context ctx, SEC_WINPR_KERBEROS_SETTING
 		                               optionsBlock->pkinitX509Anchors);
 
 #ifdef WITH_GSSAPI_MIT
-
 	/* for MIT we specify ccache output using an option */
 	if ((ret = krb5_get_init_creds_opt_set_out_ccache(ctx, options, ccache)))
 	{
@@ -498,6 +522,57 @@ cleanup:
 
 	return ret;
 }
+
+static SECURITY_STATUS setupCreds(KRB_CONTEXT* context, SSPI_CREDENTIALS* credentials)
+{
+	SEC_WINPR_KERBEROS_SETTINGS* kerbSettings = credentials->kerbSettings;
+	sspi_gss_OID_set_desc krb5_set = { 1, SSPI_GSS_C_SPNEGO_KRB5 };
+	sspi_gss_key_value_element_desc ccache_setting = { "ccache", NULL };
+	sspi_gss_key_value_set_desc store = { 0, &ccache_setting };
+	char* file_colon_cache = NULL;
+	OM_uint32 ret, minor;
+
+	if (kerbSettings && kerbSettings->cache)
+	{
+		size_t len = _snprintf(NULL, 0, "FILE:%s", kerbSettings->cache);
+		file_colon_cache = malloc(len + 1);
+		_snprintf(file_colon_cache, len + 1, "FILE:%s", kerbSettings->cache);
+		store.count = 1;
+		ccache_setting.value = file_colon_cache;
+	}
+
+	WLog_DBG(TAG, "acquiring credentials");
+	ret = sspi_gss_acquire_cred_from(&minor, SSPI_GSS_C_NO_NAME, SSPI_GSS_C_INDEFINITE, &krb5_set,
+	                                 SSPI_GSS_C_INITIATE, &store, &(context->cred), NULL, NULL);
+	if (SSPI_GSS_ERROR(ret))
+	{
+
+		BOOL isNoCreds = !!(ret & SSPI_GSS_S_NO_CRED);
+		if (isNoCreds)
+		{
+			/* Then let's try to acquire credentials using login and password,
+			 * and only those two, means not with a smartcard.
+			 * If we use smartcard-logon, the credentials have already
+			 * been acquired by pkinit process. If not, returned error previously.
+			 */
+			if (init_creds(credentials->kerbSettings, credentials->identity.User,
+			               credentials->identity.UserLength, credentials->identity.Domain,
+			               credentials->identity.DomainLength, credentials->identity.Password,
+			               credentials->identity.PasswordLength))
+				return SEC_E_NO_CREDENTIALS;
+
+			WLog_INFO(TAG, "Authenticated to Kerberos v5 via login/password");
+			ret = sspi_gss_acquire_cred_from(&minor, SSPI_GSS_C_NO_NAME, SSPI_GSS_C_INDEFINITE, &krb5_set,
+			                               SSPI_GSS_C_INITIATE, &store, &(context->cred), NULL, NULL);
+
+		}
+
+	}
+	free(file_colon_cache);
+
+	return ret;
+}
+
 #endif
 
 static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
@@ -512,13 +587,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 	sspi_gss_buffer_desc input_tok = { 0 };
 	sspi_gss_buffer_desc output_tok = { 0 };
 	sspi_gss_OID actual_mech;
-	sspi_gss_OID desired_mech;
+	sspi_gss_OID desired_mech = SSPI_GSS_C_SPNEGO_KRB5;
 	UINT32 actual_services;
-	input_tok.length = 0;
-	output_tok.length = 0;
-	desired_mech = SSPI_GSS_C_SPNEGO_KRB5;
-	context = (KRB_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
+	context = (KRB_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 	if (!context)
 	{
 		context = kerberos_ContextNew();
@@ -538,79 +610,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*)KRB_PACKAGE_NAME);
 	}
-
-	if (!pInput)
-	{
-#if defined(WITH_GSSAPI)
-		context->major_status = sspi_gss_init_sec_context(
-		    &(context->minor_status), context->cred, &(context->gss_ctx), context->target_name,
-		    desired_mech, SSPI_GSS_C_MUTUAL_FLAG | SSPI_GSS_C_DELEG_FLAG, SSPI_GSS_C_INDEFINITE,
-		    SSPI_GSS_C_NO_CHANNEL_BINDINGS, &input_tok, &actual_mech, &output_tok, &actual_services,
-		    &(context->actual_time));
-
-		if (SSPI_GSS_ERROR(context->major_status))
-		{
-			/* GSSAPI failed because we do not have credentials */
-			if (context->major_status & SSPI_GSS_S_NO_CRED)
-			{
-				/* Then let's try to acquire credentials using login and password,
-				 * and only those two, means not with a smartcard.
-				 * If we use smartcard-logon, the credentials have already
-				 * been acquired by pkinit process. If not, returned error previously.
-				 */
-				SSPI_CREDENTIALS* credentials = context->credentials;
-				if (init_creds(credentials->kerbSettings, credentials->identity.User,
-				               credentials->identity.UserLength, credentials->identity.Domain,
-				               credentials->identity.DomainLength, credentials->identity.Password,
-				               credentials->identity.PasswordLength))
-					return SEC_E_NO_CREDENTIALS;
-
-				WLog_INFO(TAG, "Authenticated to Kerberos v5 via login/password");
-				/* retry GSSAPI call */
-				context->major_status = sspi_gss_init_sec_context(
-				    &(context->minor_status), context->cred, &(context->gss_ctx),
-				    context->target_name, desired_mech,
-				    SSPI_GSS_C_MUTUAL_FLAG | SSPI_GSS_C_DELEG_FLAG, SSPI_GSS_C_INDEFINITE,
-				    SSPI_GSS_C_NO_CHANNEL_BINDINGS, &input_tok, &actual_mech, &output_tok,
-				    &actual_services, &(context->actual_time));
-
-				if (SSPI_GSS_ERROR(context->major_status))
-				{
-					/* We can't use Kerberos */
-					WLog_ERR(TAG, "Init GSS security context failed : can't use Kerberos");
-					return SEC_E_INTERNAL_ERROR;
-				}
-			}
-		}
-
-#endif
-
-		if (context->major_status & SSPI_GSS_S_CONTINUE_NEEDED)
-		{
-			if (output_tok.length != 0)
-			{
-				if (!pOutput)
-					return SEC_E_INVALID_TOKEN;
-
-				if (pOutput->cBuffers < 1)
-					return SEC_E_INVALID_TOKEN;
-
-				output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
-
-				if (!output_buffer)
-					return SEC_E_INVALID_TOKEN;
-
-				if (output_buffer->cbBuffer < 1)
-					return SEC_E_INVALID_TOKEN;
-
-				CopyMemory(output_buffer->pvBuffer, output_tok.value, output_tok.length);
-				output_buffer->cbBuffer = output_tok.length;
-				sspi_gss_release_buffer(&(context->minor_status), &output_tok);
-				return SEC_I_CONTINUE_NEEDED;
-			}
-		}
-	}
 	else
+		credentials = context->credentials;
+
+	if (pInput)
 	{
 		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
 
@@ -622,29 +625,53 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 		input_tok.value = input_buffer->pvBuffer;
 		input_tok.length = input_buffer->cbBuffer;
-		context->major_status = sspi_gss_init_sec_context(
-		    &(context->minor_status), context->cred, &(context->gss_ctx), context->target_name,
-		    desired_mech, SSPI_GSS_C_MUTUAL_FLAG | SSPI_GSS_C_DELEG_FLAG, SSPI_GSS_C_INDEFINITE,
-		    SSPI_GSS_C_NO_CHANNEL_BINDINGS, &input_tok, &actual_mech, &output_tok, &actual_services,
-		    &(context->actual_time));
-
-		if (SSPI_GSS_ERROR(context->major_status))
-			return SEC_E_INTERNAL_ERROR;
-
-		if (output_tok.length == 0)
-		{
-			/* Free output_buffer to detect second call in NLA */
-			output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
-			sspi_SecBufferFree(output_buffer);
-			return SEC_E_OK;
-		}
-		else
-		{
-			return SEC_E_INTERNAL_ERROR;
-		}
 	}
 
-	return SEC_E_INTERNAL_ERROR;
+	if (!pOutput)
+		return SEC_E_INVALID_TOKEN;
+
+	if (pOutput->cBuffers < 1)
+		return SEC_E_INVALID_TOKEN;
+
+	output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
+	if (!output_buffer)
+		return SEC_E_INVALID_TOKEN;
+
+	if (output_buffer->cbBuffer < 1)
+		return SEC_E_INVALID_TOKEN;
+
+#if defined(WITH_GSSAPI)
+	if (context->cred == SSPI_GSS_C_NO_CREDENTIAL)
+	{
+		context->major_status = setupCreds(context, credentials);
+		if (SSPI_GSS_ERROR(context->major_status))
+			return context->major_status;
+	}
+
+	context->major_status = sspi_gss_init_sec_context(
+		&(context->minor_status), context->cred, &(context->gss_ctx), context->target_name,
+		desired_mech, SSPI_GSS_C_MUTUAL_FLAG | SSPI_GSS_C_DELEG_FLAG, SSPI_GSS_C_INDEFINITE,
+		SSPI_GSS_C_NO_CHANNEL_BINDINGS, &input_tok, &actual_mech, &output_tok, &actual_services,
+		&(context->actual_time));
+#endif
+
+	if (output_buffer->cbBuffer < output_tok.length)
+		return SEC_E_INVALID_TOKEN;
+
+	output_buffer->cbBuffer = output_tok.length;
+	if (output_tok.length != 0)
+	{
+		CopyMemory(output_buffer->pvBuffer, output_tok.value, output_tok.length);
+		sspi_gss_release_buffer(&(context->minor_status), &output_tok);
+	}
+
+	if (context->major_status & SSPI_GSS_S_CONTINUE_NEEDED)
+		return SEC_I_CONTINUE_NEEDED;
+
+	if (SSPI_GSS_ERROR(context->major_status))
+		return SEC_E_INTERNAL_ERROR;
+
+	return SEC_E_OK;
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_DeleteSecurityContext(PCtxtHandle phContext)

@@ -355,9 +355,6 @@ size_t ber_write_contextual_unicode_octet_string(wStream* s, BYTE tag, LPWSTR st
 	size_t inner_len = ber_sizeof_octet_string(len);
 	size_t ret;
 
-	if (!Stream_EnsureRemainingCapacity(s, inner_len + 5))
-		return 0;
-
 	ret = ber_write_contextual_tag(s, tag, inner_len, TRUE);
 	return ret + ber_write_octet_string(s, (const BYTE*)str, len);
 }
@@ -365,17 +362,18 @@ size_t ber_write_contextual_unicode_octet_string(wStream* s, BYTE tag, LPWSTR st
 size_t ber_write_contextual_char_to_unicode_octet_string(wStream* s, BYTE tag, const char* str)
 {
 	size_t ret;
-	size_t len = strlen(str) * 2;
-	size_t inner_len = ber_sizeof_octet_string(len);
+	size_t len = strlen(str);
+	size_t inner_len = ber_sizeof_octet_string(len * 2);
 
-	if (!Stream_EnsureRemainingCapacity(s, inner_len + 10))
+	if (Stream_GetRemainingCapacity(s) < ber_sizeof_contextual_tag(inner_len) + inner_len)
 		return 0;
 
 	ret = ber_write_contextual_tag(s, tag, inner_len, TRUE);
 	ret += ber_write_universal_tag(s, BER_TAG_OCTET_STRING, FALSE);
-	ret += ber_write_length(s, len);
-	MultiByteToWideChar(CP_UTF8, 0, str, len, (LPWSTR)Stream_Pointer(s), len);
-	Stream_Seek(s, len);
+	ret += ber_write_length(s, len * 2);
+	if (MultiByteToWideChar(CP_UTF8, 0, str, len, (LPWSTR)Stream_Pointer(s), len * 2) < 0)
+		return 0;
+	Stream_Seek(s, len * 2);
 
 	return ret + len;
 }
