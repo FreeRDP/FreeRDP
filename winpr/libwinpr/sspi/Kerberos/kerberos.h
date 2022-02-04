@@ -28,7 +28,7 @@
 #include "../../log.h"
 
 #ifdef WITH_GSSAPI
-#include <krb5.h>
+#include <krb5/krb5.h>
 #include <gssapi.h>
 #endif
 

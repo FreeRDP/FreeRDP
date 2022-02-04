@@ -7,6 +7,7 @@
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  * Copyright 2016 Martin Fleisz <martin.fleisz@thincast.com>
  * Copyright 2017 Dorian Ducournau <dorian.ducournau@gmail.com>
+ * Copyright 2022 David Fort <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +27,8 @@
 #endif
 
 #include <time.h>
+#include <ctype.h>
 
-#include <winpr/debug.h>
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/tls.h>
@@ -44,6 +45,7 @@
 #include <winpr/registry.h>
 #include <winpr/ncrypt.h>
 #include <winpr/cred.h>
+#include <winpr/debug.h>
 
 #include "nla.h"
 #include "utils.h"
@@ -625,7 +627,6 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 
 	memcpy(nla->kerberosSettings.certSha1, info->sha1Hash, sizeof(nla->kerberosSettings.certSha1));
 
-#ifndef _WIN32
 	if (info->pkinitArgs)
 	{
 		kerbSettings->pkinitX509Identity = _strdup(info->pkinitArgs);
@@ -635,18 +636,13 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 			goto out;
 		}
 	}
-#endif /* _WIN32 */
 
 setup_pin:
-	if (!settings->Pin)
+	if (!settings->SmartcardPin)
 	{
 		if (settings->SmartcardEmulation)
 		{
-			const char* dupSrc = settings->SmartcardPin;
-			if (!dupSrc)
-				dupSrc = "";
-
-			if (!freerdp_settings_set_string(settings, FreeRDP_Pin, dupSrc))
+			if (!freerdp_settings_set_string(settings, FreeRDP_SmartcardPin, ""))
 			{
 				WLog_ERR(TAG, "error setting pin");
 				return FALSE;
@@ -661,7 +657,7 @@ setup_pin:
 				return TRUE;
 			}
 
-			if (!instance->AuthenticateEx(instance, &settings->Username, &settings->Pin,
+			if (!instance->AuthenticateEx(instance, &settings->Username, &settings->SmartcardPin,
 			                              &settings->Domain, AUTH_SMARTCARD_PIN))
 			{
 				WLog_ERR(TAG, "no pin code entered");
@@ -707,9 +703,9 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			identityEx->Length = sizeof(*identityEx);
 			identityEx->User = (BYTE*)marshalledCredentials;
 			identityEx->UserLength = strlen(marshalledCredentials);
-			if (!(identityEx->Password = (BYTE*)strdup(settings->Pin)))
+			if (!(identityEx->Password = (BYTE*)_strdup(settings->SmartcardPin)))
 				return FALSE;
-			identityEx->PasswordLength = strlen(settings->Pin);
+			identityEx->PasswordLength = strlen(settings->SmartcardPin);
 			identityEx->Domain = NULL;
 			identityEx->DomainLength = 0;
 			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
@@ -728,8 +724,8 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			identityEx->UserLength = strlen(settings->Username);
 			identityEx->Domain = (BYTE*)settings->Domain;
 			identityEx->DomainLength = strlen(settings->Domain);
-			identityEx->Password = (BYTE*)strdup(settings->Pin);
-			identityEx->PasswordLength = strlen(settings->Pin);
+			identityEx->Password = (BYTE*)settings->SmartcardPin;
+			identityEx->PasswordLength = strlen(settings->SmartcardPin);
 			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 			identityEx->PackageList = NULL;
 			identityEx->PackageListLength = 0;
@@ -843,6 +839,171 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	return TRUE;
 }
 
+static const char* parseInt(const char* v, INT32* r)
+{
+	*r = 0;
+
+	/* check that we have at least a digit */
+	if (!*v || !((*v >= '0') && (*v <= '9')))
+		return NULL;
+
+	for ( ; *v && (*v >= '0') && (*v <= '9'); v++)
+	{
+		*r = (*r * 10) + (*v - '0');
+	}
+
+	return v;
+}
+
+static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* message)
+{
+	INT32 v;
+	const char* ptr;
+	/* determine the format :
+	 *   h:m[:s] (3:00:02) 			deltat in hours/minutes
+	 *   <n>d<n>h<n>m<n>s 1d4h	    deltat in day/hours/minutes/seconds
+	 *   <n>						deltat in seconds
+	 */
+	ptr = strchr(value, ':');
+	if (ptr)
+	{
+		/* format like h:m[:s] */
+		*dest = 0;
+		value = parseInt(value, &v);
+		if (!value || *value != ':')
+		{
+			WLog_ERR(TAG, "Invalid value for %s", message);
+			return FALSE;
+		}
+
+		*dest = v * 3600;
+
+		value = parseInt(value + 1, &v);
+		if (!value || (*value != 0 && *value != ':') || (v > 60))
+		{
+			WLog_ERR(TAG, "Invalid value for %s", message);
+			return FALSE;
+		}
+		*dest += v * 60;
+
+		if (*value == ':')
+		{
+			/* have optional seconds */
+			value = parseInt(value + 1, &v);
+			if (!value || (*value != 0) || (v > 60))
+			{
+				WLog_ERR(TAG, "Invalid value for %s", message);
+				return FALSE;
+			}
+			*dest += v;
+		}
+		return TRUE;
+	}
+
+	/* <n> or <n>d<n>h<n>m<n>s format */
+	value = parseInt(value, &v);
+	if (!value)
+	{
+		WLog_ERR(TAG, "Invalid value for %s", message);
+		return FALSE;
+	}
+
+	if (!*value || isspace(*value)) {
+		/* interpret that as a value in seconds */
+		*dest = v;
+		return TRUE;
+	}
+
+	*dest = 0;
+	do
+	{
+		INT32 factor;
+		INT32 maxValue;
+
+		switch(*value)
+		{
+		case 'd':
+			factor = 3600 * 24;
+			maxValue = 0;
+			break;
+		case 'h':
+			factor = 3600;
+			maxValue = 0;
+			break;
+		case 'm':
+			factor = 60;
+			maxValue = 60;
+			break;
+		case 's':
+			factor = 1;
+			maxValue = 60;
+			break;
+		}
+
+		if ((maxValue > 0) && (v > maxValue))
+		{
+			WLog_ERR(TAG, "invalid value for unit %c when parsing %s", *value, message);
+			return FALSE;
+		}
+
+		*dest += (v * factor);
+		value++;
+		if (!*value)
+			return TRUE;
+
+		value = parseInt(value, &v);
+		if (!value || !*value)
+		{
+			WLog_ERR(TAG, "Invalid value for %s", message);
+			return FALSE;
+		}
+
+	} while(TRUE);
+
+	return TRUE;
+}
+
+static BOOL nla_setup_kerberos(rdpNla* nla)
+{
+	SEC_WINPR_KERBEROS_SETTINGS* kerbSettings = &nla->kerberosSettings;
+	rdpSettings* settings = nla->settings;
+
+	if (settings->KerberosLifeTime &&
+	    !parseKerberosDeltat(settings->KerberosLifeTime, &kerbSettings->lifeTime, "lifetime"))
+		return FALSE;
+
+	if (settings->KerberosStartTime &&
+	    !parseKerberosDeltat(settings->KerberosStartTime, &kerbSettings->startTime, "starttime"))
+		return FALSE;
+
+	if (settings->KerberosRenewableLifeTime &&
+	    !parseKerberosDeltat(settings->KerberosRenewableLifeTime, &kerbSettings->renewLifeTime,
+	                         "renewLifetime"))
+		return FALSE;
+
+	if (settings->KerberosCache)
+	{
+		kerbSettings->cache = strdup(settings->KerberosCache);
+		if (!kerbSettings->cache)
+		{
+			WLog_ERR(TAG, "unable to copy cache name");
+			return FALSE;
+		}
+	}
+
+	if (settings->KerberosArmor)
+	{
+		kerbSettings->armorCache = strdup(settings->KerberosArmor);
+		if (!kerbSettings->armorCache)
+		{
+			WLog_ERR(TAG, "unable to copy armorCache");
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 /**
  * Initialize NTLM/Kerberos SSP authentication module (client).
  * @param credssp
@@ -859,6 +1020,9 @@ static int nla_client_init(rdpNla* nla)
 
 	if (settings->RestrictedAdminModeRequired)
 		settings->DisableCredentialsDelegation = TRUE;
+
+	if (!nla_setup_kerberos(nla))
+		return -1;
 
 	if (settings->SmartcardLogon && !nla_adjust_settings_from_smartcard(nla))
 		return -1;
@@ -1934,10 +2098,8 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 		TSSmartCardCreds_t smartcardCreds = { 0 };
 		TSCspDataDetail_t cspData = { 0 };
 
-		if (settings->SmartcardEmulation)
-			smartcardCreds.pin = settings->SmartcardPin;
-		if (!smartcardCreds.pin)
-			smartcardCreds.pin = settings->Pin ? settings->Pin : "";
+		smartcardCreds.pin = settings->SmartcardPin ? settings->SmartcardPin : "";
+
 		/*smartcardCreds.userHint = settings->UserHint;
 		smartcardCreds.domainHint = settings->DomainHint;*/
 		smartcardCreds.cspData = &cspData;
@@ -1997,6 +2159,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	s = Stream_StaticInit(&staticRetStream, (BYTE*)nla->tsCredentials.pvBuffer, length);
 	ber_write_nla_TSCredentials(s, &cr);
 	ret = TRUE;
+
 out:
 	Stream_Free(credsContentStream, TRUE);
 	return ret;
@@ -2580,6 +2743,10 @@ void nla_free(rdpNla* nla)
 	sspi_SecBufferFree(&nla->tsCredentials);
 
 	free(nla->ServicePrincipalName);
+	free(nla->kerberosSettings.armorCache);
+	free(nla->kerberosSettings.cache);
+	free(nla->kerberosSettings.pkinitX509Anchors);
+	free(nla->kerberosSettings.pkinitX509Identity);
 	nla_identity_free(nla->identity);
 	nla_set_package_name(nla, NULL);
 	free(nla);

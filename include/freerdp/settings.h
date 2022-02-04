@@ -664,18 +664,19 @@ typedef struct
 #define FreeRDP_SmartcardPin (1287)
 #define FreeRDP_SmartcardEmulation (1288)
 #define FreeRDP_Pkcs11Module (1289)
-#define FreeRDP_Pin (1290)
+#define FreeRDP_PkinitAnchors (1290)
 #define FreeRDP_KeySpec (1291)
 #define FreeRDP_CardName (1292)
 #define FreeRDP_ReaderName (1293)
 #define FreeRDP_ContainerName (1294)
 #define FreeRDP_CspName (1295)
-#define FreeRDP_PkinitAnchors (1296)
 #define FreeRDP_KerberosKdc (1344)
 #define FreeRDP_KerberosRealm (1345)
 #define FreeRDP_KerberosStartTime (1346)
 #define FreeRDP_KerberosLifeTime (1347)
 #define FreeRDP_KerberosRenewableLifeTime (1348)
+#define FreeRDP_KerberosCache (1349)
+#define FreeRDP_KerberosArmor (1350)
 #define FreeRDP_IgnoreCertificate (1408)
 #define FreeRDP_CertificateName (1409)
 #define FreeRDP_CertificateFile (1410)
@@ -1162,14 +1163,13 @@ struct rdp_settings
 	ALIGN64 char* SmartcardPin;         /* 1287 */
 	ALIGN64 BOOL SmartcardEmulation;    /* 1288 */
 	ALIGN64 char* Pkcs11Module;         /* 1289 */
-	ALIGN64 char* Pin;                  /* 1290 */
+	ALIGN64 char* PkinitAnchors;        /* 1290 */
 	ALIGN64 UINT32 KeySpec;             /* 1291 */
 	ALIGN64 char* CardName;             /* 1292 */
 	ALIGN64 char* ReaderName;           /* 1293 */
 	ALIGN64 char* ContainerName;        /* 1294 */
 	ALIGN64 char* CspName;              /* 1295 */
-	ALIGN64 char* PkinitAnchors;        /* 1296 */
-	UINT64 padding1344[1344 - 1297];    /* 1297 */
+	UINT64 padding1344[1344 - 1296];    /* 1296 */
 
 	/* Kerberos Authentication */
 	ALIGN64 char* KerberosKdc;               /* 1344 */
@@ -1177,7 +1177,9 @@ struct rdp_settings
 	ALIGN64 char* KerberosStartTime;         /* 1346 */
 	ALIGN64 char* KerberosLifeTime;          /* 1347 */
 	ALIGN64 char* KerberosRenewableLifeTime; /* 1348 */
-	UINT64 padding1408[1408 - 1349];         /* 1349 */
+	ALIGN64 char* KerberosCache;             /* 1349 */
+	ALIGN64 char* KerberosArmor;             /* 1350 */
+	UINT64 padding1408[1408 - 1351];         /* 1351 */
 
 	/* Server Certificate */
 	ALIGN64 BOOL IgnoreCertificate;                /* 1408 */

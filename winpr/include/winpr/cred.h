@@ -43,6 +43,7 @@ typedef struct _CERT_CREDENTIAL_INFO
 	UCHAR rgbHashOfCert[CERT_HASH_LENGTH];
 } CERT_CREDENTIAL_INFO, *PCERT_CREDENTIAL_INFO;
 
+#if 0 /* shall we implement these ? */
 WINPR_API BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
                                       LPSTR* MarshaledCredential);
 WINPR_API BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credential,
@@ -53,6 +54,8 @@ WINPR_API BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credenti
 #else
 #define CredMarshalCredential CredMarshalCredentialA
 #endif
+
+#endif /* 0 */
 
 #endif /* _WIN32 */
 

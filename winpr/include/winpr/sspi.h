@@ -601,11 +601,13 @@ typedef struct
 
 typedef struct
 {
+	char* cache;
 	char* armorCache;
 	char* pkinitX509Anchors;
 	char* pkinitX509Identity;
 	BOOL withPac;
 	INT32 startTime;
+	INT32 renewLifeTime;
 	INT32 lifeTime;
 	BYTE certSha1[20];
 } SEC_WINPR_KERBEROS_SETTINGS;
@@ -661,7 +663,7 @@ typedef struct
 #ifndef SEC_WINNT_AUTH_IDENTITY_VERSION
 #define SEC_WINNT_AUTH_IDENTITY_VERSION 0x200
 
-typedef struct _SEC_WINNT_AUTH_IDENTITY_EXW
+typedef struct
 {
 	UINT32 Version;
 	UINT32 Length;
@@ -676,7 +678,7 @@ typedef struct _SEC_WINNT_AUTH_IDENTITY_EXW
 	UINT32 PackageListLength;
 } SEC_WINNT_AUTH_IDENTITY_EXW, *PSEC_WINNT_AUTH_IDENTITY_EXW;
 
-typedef struct _SEC_WINNT_AUTH_IDENTITY_EXA
+typedef struct
 {
 	UINT32 Version;
 	UINT32 Length;
@@ -719,13 +721,13 @@ typedef CtxtHandle* PCtxtHandle;
 
 #endif /* !defined(_WIN32) || defined(_UWP) */
 
-typedef struct _SEC_WINNT_AUTH_IDENTITY_WINPRA
+typedef struct
 {
 	SEC_WINNT_AUTH_IDENTITY_EXA identityEx;
 	SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
 } SEC_WINNT_AUTH_IDENTITY_WINPRA, *PSEC_WINNT_AUTH_IDENTITY_WINPRA;
 
-typedef struct _SEC_WINNT_AUTH_IDENTITY_WINPRW
+typedef struct
 {
 	SEC_WINNT_AUTH_IDENTITY_EXW identityEx;
 	SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;

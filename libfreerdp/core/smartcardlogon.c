@@ -295,6 +295,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		}
 
 		cert = &certs->certs[count - 1];
+		ZeroMemory(cert, sizeof(*cert));
 
 		if (ConvertFromUnicode(CP_UTF8, 0, keyName->pszName, -1, &cert->info.containerName, 0, NULL,
 		                       NULL) <= 0)
@@ -405,14 +406,16 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 
 	endofloop:
 		free(certBytes);
+		NCryptFreeBuffer(keyName);
 		if (phKey)
 			NCryptFreeObject((NCRYPT_HANDLE)phKey);
 	}
 
 	*scCerts = certs;
-	*retCount = (DWORD)certs->count;
+	*retCount = (DWORD)count;
 	ret = TRUE;
 
+	NCryptFreeBuffer(enumState);
 	NCryptFreeObject((NCRYPT_HANDLE)provider);
 out:
 	free(scope);

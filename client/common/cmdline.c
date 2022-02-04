@@ -482,19 +482,6 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Drive Redirection: /drive:home,/home/user\n");
 	printf("Smartcard Redirection: /smartcard:<device>\n");
 	printf("Smartcard logon with Kerberos authentication: /smartcard-logon /sec:nla\n");
-	printf("Those options are only accepted with /smartcard-logon:\n");
-	printf("    PIN code: /pin:<PIN code>\n");
-	printf("    PKCS11 module to load: /pkcs11-module:<module>\n");
-	printf("    PKINIT anchors: /pkinit-anchors:<pkinit_anchors>\n");
-	printf("    Kerberos Ticket start time: /start-time:<delay to issue ticket>\n");
-	printf("    Kerberos Ticket lifetime: /lifetime:<ticket lifetime>\n");
-	printf("    Kerberos Ticket renewable lifetime: /renewable-lifetime:<ticket renewable "
-	       "lifetime>\n");
-	/* See also http://web.mit.edu/kerberos/krb5-latest/doc/basic/date_format.html */
-	printf("    The delay and lifetime have the following syntax: <integer>[s|m|h|d] (for seconds, "
-	       " minutes,  hours and days)\n");
-	printf("    CSP Name: /csp:<csp name>\n");
-	printf("    Card Name: /card:<card name>\n");
 
 	printf("Serial Port Redirection: /serial:<name>,<device>,[SerCx2|SerCx|Serial],[permissive]\n");
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
@@ -1504,6 +1491,71 @@ fail:
 	fclose(fp);
 	return rc;
 }
+
+typedef enum {
+	CMDLINE_SUBOPTION_STRING,
+	CMDLINE_SUBOPTION_FILE,
+} CmdLineSubOptionType;
+
+typedef BOOL (*CmdLineSubOptionCb)(const char* value, rdpSettings* settings);
+typedef struct
+{
+	const char* optname;
+	size_t id;
+	CmdLineSubOptionType opttype;
+	CmdLineSubOptionCb cb;
+} CmdLineSubOptions;
+
+static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts, const char* arg)
+{
+	BOOL found = FALSE;
+	size_t xx;
+
+	for (xx = 0; opts[xx].optname; xx++)
+	{
+		size_t optlen = strlen(opts[xx].optname);
+
+		if (strncmp(opts[xx].optname, arg, optlen) == 0)
+		{
+			const char* val = &arg[optlen];
+			BOOL status;
+
+			switch (opts[xx].opttype)
+			{
+			case CMDLINE_SUBOPTION_STRING:
+				status = freerdp_settings_set_string(settings, opts[xx].id, val);
+				break;
+			case CMDLINE_SUBOPTION_FILE:
+				status = read_pem_file(settings, opts[xx].id, val);
+				break;
+			default:
+				WLog_ERR(TAG, "invalid subOption type");
+				return FALSE;
+			}
+
+			if (!status)
+				return FALSE;
+
+			if (opts[xx].cb && !opts[xx].cb(val, settings))
+				return FALSE;
+
+			found = TRUE;
+			break;
+		}
+	}
+
+	if (!found)
+		WLog_ERR(TAG, "option %s not handled", arg);
+
+	return found;
+}
+
+static BOOL setSmartcardEmulation(const char* value, rdpSettings* settings)
+{
+	settings->SmartcardEmulation = TRUE;
+	return TRUE;
+}
+
 
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int argc,
                                                          char** argv, BOOL allowUnknown)
@@ -3264,58 +3316,41 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 		}
-		CommandLineSwitchCase(arg, "pin")
+		CommandLineSwitchCase(arg, "kerberos")
 		{
-			if (!copy_value(arg->Value, &settings->Pin))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "pkcs11-module")
-		{
-			if (!copy_value(arg->Value, &settings->Pkcs11Module))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "pkinit-anchors")
-		{
-			if (!copy_value(arg->Value, &settings->PkinitAnchors))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "kerberos-start-time")
-		{
-			/* Let kinit parse time strings according to krb5_string_to_deltat syntax. */
-			if (!copy_value(arg->Value, &settings->KerberosStartTime))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "kerberos-lifetime")
-		{
-			/* Let kinit parse time strings according to krb5_string_to_deltat syntax. */
-			if (!copy_value(arg->Value, &settings->KerberosLifeTime))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "kerberos-renewable-lifetime")
-		{
-			/* Let kinit parse time strings according to krb5_string_to_deltat syntax. */
-			if (!copy_value(arg->Value, &settings->KerberosRenewableLifeTime))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "csp")
-		{
-			if (!copy_value(arg->Value, &settings->CspName))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "card")
-		{
-			if (!copy_value(arg->Value, &settings->CardName))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "reader")
-		{
-			if (!copy_value(arg->Value, &settings->ReaderName))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "container")
-		{
-			if (!copy_value(arg->Value, &settings->ContainerName))
-				return COMMAND_LINE_ERROR_MEMORY;
+			size_t count;
+			union
+			{
+				char** p;
+				const char** pc;
+			} ptr;
+
+			ptr.p = CommandLineParseCommaSeparatedValuesEx("kerberos", arg->Value, &count);
+			if (ptr.pc)
+			{
+				size_t x;
+				static const CmdLineSubOptions opts[] = {
+					{ "start-time:", FreeRDP_KerberosStartTime, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "lifetime:", FreeRDP_KerberosLifeTime, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "renewable-lifetime:", FreeRDP_KerberosRenewableLifeTime, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "cache:", FreeRDP_KerberosCache, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "armor:", FreeRDP_KerberosArmor, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "pkinit-anchors:", FreeRDP_PkinitAnchors, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "pkcs11-module:", FreeRDP_Pkcs11Module, CMDLINE_SUBOPTION_STRING, NULL },
+					{ NULL, 0, CMDLINE_SUBOPTION_STRING, NULL }
+				};
+
+				for (x = 1; x < count; x++)
+				{
+					const char* cur = ptr.pc[x];
+					if (!parseSubOptions(settings, opts, cur))
+					{
+						free(ptr.p);
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+				}
+			}
+			free(ptr.p);
 		}
 		CommandLineSwitchCase(arg, "action-script")
 		{
@@ -3346,39 +3381,21 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (ptr.pc)
 			{
 				size_t x;
-				settings->SmartcardEmulation = (count > 1);
+				static const CmdLineSubOptions opts[] = {
+					{ "cert:", FreeRDP_SmartcardCertificate, CMDLINE_SUBOPTION_FILE, setSmartcardEmulation },
+					{ "key:", FreeRDP_SmartcardPrivateKey, CMDLINE_SUBOPTION_FILE, setSmartcardEmulation },
+					{ "pin:", FreeRDP_SmartcardPin, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "csp:", FreeRDP_CspName, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "reader:", FreeRDP_ReaderName, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "card:", FreeRDP_CardName, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "container:", FreeRDP_ContainerName, CMDLINE_SUBOPTION_STRING, NULL },
+					{ NULL, 0, CMDLINE_SUBOPTION_STRING, NULL },
+				};
+
 				for (x = 1; x < count; x++)
 				{
 					const char* cur = ptr.pc[x];
-					if (strncmp("cert:", cur, 5) == 0)
-					{
-						const char* f = &cur[5];
-
-						if (!read_pem_file(settings, FreeRDP_SmartcardCertificate, f))
-						{
-							free(ptr.p);
-							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-						}
-					}
-					else if (strncmp("key:", cur, 4) == 0)
-					{
-						const char* f = &cur[4];
-						if (!read_pem_file(settings, FreeRDP_SmartcardPrivateKey, f))
-						{
-							free(ptr.p);
-							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-						}
-					}
-					else if (strncmp("pin:", cur, 4) == 0)
-					{
-						const char* f = &cur[4];
-						if (!freerdp_settings_set_string(settings, FreeRDP_SmartcardPin, f))
-						{
-							free(ptr.p);
-							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-						}
-					}
-					else
+					if (!parseSubOptions(settings, opts, cur))
 					{
 						free(ptr.p);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -3575,7 +3592,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
 
-	arg = CommandLineFindArgumentA(largs, "pin");
+	arg = CommandLineFindArgumentA(largs, "smartcard-logon");
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
 		FillMemory(arg->Value, strlen(arg->Value), '*');

@@ -2428,6 +2428,12 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_ImeFileName:
 			return settings->ImeFileName;
 
+		case FreeRDP_KerberosArmor:
+			return settings->KerberosArmor;
+
+		case FreeRDP_KerberosCache:
+			return settings->KerberosCache;
+
 		case FreeRDP_KerberosKdc:
 			return settings->KerberosKdc;
 
@@ -2454,9 +2460,6 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 
 		case FreeRDP_PasswordHash:
 			return settings->PasswordHash;
-
-		case FreeRDP_Pin:
-			return settings->Pin;
 
 		case FreeRDP_Pkcs11Module:
 			return settings->Pkcs11Module;
@@ -2686,6 +2689,12 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 		case FreeRDP_ImeFileName:
 			return settings->ImeFileName;
 
+		case FreeRDP_KerberosArmor:
+			return settings->KerberosArmor;
+
+		case FreeRDP_KerberosCache:
+			return settings->KerberosCache;
+
 		case FreeRDP_KerberosKdc:
 			return settings->KerberosKdc;
 
@@ -2712,9 +2721,6 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_PasswordHash:
 			return settings->PasswordHash;
-
-		case FreeRDP_Pin:
-			return settings->Pin;
 
 		case FreeRDP_Pkcs11Module:
 			return settings->Pkcs11Module;
@@ -2954,6 +2960,12 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 		case FreeRDP_ImeFileName:
 			return update_string(&settings->ImeFileName, cnv.cc, len, cleanup);
 
+		case FreeRDP_KerberosArmor:
+			return update_string(&settings->KerberosArmor, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosCache:
+			return update_string(&settings->KerberosCache, cnv.cc, len, cleanup);
+
 		case FreeRDP_KerberosKdc:
 			return update_string(&settings->KerberosKdc, cnv.cc, len, cleanup);
 
@@ -2980,9 +2992,6 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_PasswordHash:
 			return update_string(&settings->PasswordHash, cnv.cc, len, cleanup);
-
-		case FreeRDP_Pin:
-			return update_string(&settings->Pin, cnv.cc, len, cleanup);
 
 		case FreeRDP_Pkcs11Module:
 			return update_string(&settings->Pkcs11Module, cnv.cc, len, cleanup);
