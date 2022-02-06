@@ -22,6 +22,7 @@
 
 #include "proxy.h"
 #include "freerdp/settings.h"
+#include "freerdp/crypto/crypto.h"
 #include "tcp.h"
 
 #include "winpr/environment.h" /* For GetEnvironmentVariableA */
@@ -62,7 +63,8 @@ static const char* rplstat[] = { "succeeded",
 	                             "Command not supported",
 	                             "Address type not supported" };
 
-static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port);
+static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
+                               const char* proxyPassword, const char* hostname, UINT16 port);
 static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
                                 const char* proxyPassword, const char* hostname, UINT16 port);
 static void proxy_read_environment(rdpSettings* settings, char* envname);
@@ -381,7 +383,7 @@ BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* proxyUse
 			return TRUE;
 
 		case PROXY_TYPE_HTTP:
-			return http_proxy_connect(bufferedBio, hostname, port);
+			return http_proxy_connect(bufferedBio, proxyUsername, proxyPassword, hostname, port);
 
 		case PROXY_TYPE_SOCKS:
 			return socks_proxy_connect(bufferedBio, proxyUsername, proxyPassword, hostname, port);
@@ -404,7 +406,8 @@ static const char* get_response_header(char* response)
 	return response;
 }
 
-static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
+static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
+                               const char* proxyPassword, const char* hostname, UINT16 port)
 {
 	int status;
 	wStream* s;
@@ -420,6 +423,32 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 	Stream_Write(s, hostname, strlen(hostname));
 	Stream_Write_UINT8(s, ':');
 	Stream_Write(s, port_str, strnlen(port_str, sizeof(port_str)));
+
+	if (proxyUsername && proxyPassword)
+	{
+		char* creds = NULL;
+		char* base64 = NULL;
+		int length;
+
+		length = _scprintf("%s:%s", proxyUsername, proxyPassword);
+		if (length > 0)
+		{
+			creds = (char*)malloc((size_t)length + 1);
+
+			if (creds != NULL)
+			{
+				sprintf_s(creds, (size_t)length + 1, "%s:%s", proxyUsername, proxyPassword);
+				base64 = crypto_base64_encode((const BYTE*)creds, length);
+
+				Stream_Write(s, CRLF "Proxy-Authorization: Basic ", 29);
+				Stream_Write(s, base64, strlen(base64));
+
+				free(base64);
+				free(creds);
+			}
+		}
+	}
+
 	Stream_Write(s, CRLF CRLF, 4);
 	status = BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
 
