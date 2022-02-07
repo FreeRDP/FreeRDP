@@ -21,11 +21,12 @@
 #include <errno.h>
 
 #include "proxy.h"
-#include "freerdp/settings.h"
-#include "freerdp/crypto/crypto.h"
+#include <freerdp/settings.h>
+#include <freerdp/crypto/crypto.h>
 #include "tcp.h"
 
-#include "winpr/environment.h" /* For GetEnvironmentVariableA */
+#include <winpr/assert.h>
+#include <winpr/environment.h> /* For GetEnvironmentVariableA */
 
 #define CRLF "\r\n"
 #define TAG FREERDP_TAG("core.proxy")
@@ -409,69 +410,94 @@ static const char* get_response_header(char* response)
 static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
                                const char* proxyPassword, const char* hostname, UINT16 port)
 {
+	BOOL rc = FALSE;
 	int status;
 	wStream* s;
-	char port_str[10], recv_buf[256], *eol;
-	size_t resultsize;
+	char port_str[10] = { 0 };
+	char recv_buf[256] = { 0 };
+	char* eol = NULL;
+	size_t resultsize = 0;
+	size_t reserveSize;
+	size_t portLen;
+	size_t hostLen;
+	const char connect[8] = "CONNECT";
+	const char httpheader[17] = " HTTP/1.1" CRLF "Host: ";
+
+	WINPR_ASSERT(bufferedBio);
+	WINPR_ASSERT(hostname);
+
 	_itoa_s(port, port_str, sizeof(port_str), 10);
-	s = Stream_New(NULL, 200);
-	Stream_Write(s, "CONNECT ", 8);
-	Stream_Write(s, hostname, strlen(hostname));
+
+	hostLen = strlen(hostname);
+	portLen = strnlen(port_str, sizeof(port_str));
+	reserveSize = ARRAYSIZE(connect) + (hostLen + 1 + portLen) * 2 + ARRAYSIZE(httpheader);
+	s = Stream_New(NULL, reserveSize);
+	if (!s)
+		goto fail;
+
+	Stream_Write(s, connect, ARRAYSIZE(connect));
+	Stream_Write(s, hostname, hostLen);
 	Stream_Write_UINT8(s, ':');
-	Stream_Write(s, port_str, strlen(port_str));
-	Stream_Write(s, " HTTP/1.1" CRLF "Host: ", 17);
-	Stream_Write(s, hostname, strlen(hostname));
+	Stream_Write(s, port_str, portLen);
+	Stream_Write(s, httpheader, ARRAYSIZE(httpheader));
+	Stream_Write(s, hostname, hostLen);
 	Stream_Write_UINT8(s, ':');
-	Stream_Write(s, port_str, strnlen(port_str, sizeof(port_str)));
+	Stream_Write(s, port_str, portLen);
 
 	if (proxyUsername && proxyPassword)
 	{
-		char* creds = NULL;
-		char* base64 = NULL;
-		int length;
-
-		length = _scprintf("%s:%s", proxyUsername, proxyPassword);
+		const int length = _scprintf("%s:%s", proxyUsername, proxyPassword);
 		if (length > 0)
 		{
-			creds = (char*)malloc((size_t)length + 1);
+			const size_t size = (size_t)length + 1ull;
+			char* creds = (char*)malloc(size);
 
-			if (creds != NULL)
+			if (!creds)
+				goto fail;
+			else
 			{
-				sprintf_s(creds, (size_t)length + 1, "%s:%s", proxyUsername, proxyPassword);
-				base64 = crypto_base64_encode((const BYTE*)creds, length);
+				const char basic[] = CRLF "Proxy-Authorization: Basic ";
+				char* base64;
 
-				Stream_Write(s, CRLF "Proxy-Authorization: Basic ", 29);
+				sprintf_s(creds, size, "%s:%s", proxyUsername, proxyPassword);
+				base64 = crypto_base64_encode((const BYTE*)creds, size - 1);
+
+				if (!base64 ||
+				    !Stream_EnsureRemainingCapacity(s, ARRAYSIZE(basic) + strlen(base64)))
+				{
+					free(base64);
+					free(creds);
+					goto fail;
+				}
+				Stream_Write(s, basic, ARRAYSIZE(basic));
 				Stream_Write(s, base64, strlen(base64));
 
 				free(base64);
-				free(creds);
 			}
+			free(creds);
 		}
 	}
+
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+		goto fail;
 
 	Stream_Write(s, CRLF CRLF, 4);
 	status = BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
 
 	if ((status < 0) || ((size_t)status != Stream_GetPosition(s)))
 	{
-		Stream_Free(s, TRUE);
 		WLog_ERR(TAG, "HTTP proxy: failed to write CONNECT request");
-		return FALSE;
+		goto fail;
 	}
 
-	Stream_Free(s, TRUE);
-	s = NULL;
 	/* Read result until CR-LF-CR-LF.
 	 * Keep recv_buf a null-terminated string. */
-	memset(recv_buf, '\0', sizeof(recv_buf));
-	resultsize = 0;
-
 	while (strstr(recv_buf, CRLF CRLF) == NULL)
 	{
 		if (resultsize >= sizeof(recv_buf) - 1)
 		{
 			WLog_ERR(TAG, "HTTP Reply headers too long: %s", get_response_header(recv_buf));
-			return FALSE;
+			goto fail;
 		}
 
 		status =
@@ -487,13 +513,13 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 			}
 
 			WLog_ERR(TAG, "Failed reading reply from HTTP proxy (Status %d)", status);
-			return FALSE;
+			goto fail;
 		}
 		else if (status == 0)
 		{
 			/* Error? */
 			WLog_ERR(TAG, "Failed reading reply from HTTP proxy (BIO_read returned zero)");
-			return FALSE;
+			goto fail;
 		}
 
 		resultsize += status;
@@ -505,23 +531,24 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	if (!eol)
 	{
 		/* should never happen */
-		return FALSE;
+		goto fail;
 	}
 
 	*eol = '\0';
 	WLog_INFO(TAG, "HTTP Proxy: %s", recv_buf);
 
 	if (strnlen(recv_buf, sizeof(recv_buf)) < 12)
-	{
-		return FALSE;
-	}
+		goto fail;
 
 	recv_buf[7] = 'X';
 
 	if (strncmp(recv_buf, "HTTP/1.X 200", 12))
-		return FALSE;
+		goto fail;
 
-	return TRUE;
+	rc = TRUE;
+fail:
+	Stream_Free(s, TRUE);
+	return rc;
 }
 
 static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, BYTE checkVer)
