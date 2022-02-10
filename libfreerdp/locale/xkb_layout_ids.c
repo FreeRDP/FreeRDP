@@ -31,20 +31,18 @@
 
 #include "liblocale.h"
 
-struct _XKB_VARIANT
+typedef struct
 {
 	const char* variant;     /* XKB Keyboard layout variant */
 	UINT32 keyboardLayoutID; /* Keyboard Layout ID */
-};
-typedef struct _XKB_VARIANT XKB_VARIANT;
+} XKB_VARIANT;
 
-struct _XKB_LAYOUT
+typedef struct
 {
 	const char* layout;      /* XKB Keyboard layout */
 	UINT32 keyboardLayoutID; /* Keyboard Layout ID */
 	const XKB_VARIANT* variants;
-};
-typedef struct _XKB_LAYOUT XKB_LAYOUT;
+} XKB_LAYOUT;
 
 /* Those have been generated automatically and are waiting to be filled by hand */
 

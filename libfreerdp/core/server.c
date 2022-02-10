@@ -50,14 +50,13 @@
 	} while (0)
 #endif
 
-struct _wtsChannelMessage
+typedef struct
 {
 	UINT16 channelId;
 	UINT16 reserved;
 	UINT32 length;
 	UINT32 offset;
-};
-typedef struct _wtsChannelMessage wtsChannelMessage;
+} wtsChannelMessage;
 
 static DWORD g_SessionId = 1;
 static wHashTable* g_ServerHandles = NULL;

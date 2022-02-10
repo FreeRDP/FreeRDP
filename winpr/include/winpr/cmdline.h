@@ -96,10 +96,7 @@
 #define BoolValueTrue ((LPSTR)1)
 #define BoolValueFalse ((LPSTR)0)
 
-typedef struct _COMMAND_LINE_ARGUMENT_A COMMAND_LINE_ARGUMENT_A;
-typedef struct _COMMAND_LINE_ARGUMENT_W COMMAND_LINE_ARGUMENT_W;
-
-struct _COMMAND_LINE_ARGUMENT_A
+typedef struct
 {
 	LPCSTR Name;
 	DWORD Flags;
@@ -109,9 +106,9 @@ struct _COMMAND_LINE_ARGUMENT_A
 	LONG Index;
 	LPCSTR Alias;
 	LPCSTR Text;
-};
+} COMMAND_LINE_ARGUMENT_A;
 
-struct _COMMAND_LINE_ARGUMENT_W
+typedef struct
 {
 	LPCWSTR Name;
 	DWORD Flags;
@@ -121,7 +118,7 @@ struct _COMMAND_LINE_ARGUMENT_W
 	LONG Index;
 	LPCWSTR Alias;
 	LPCWSTR Text;
-};
+} COMMAND_LINE_ARGUMENT_W;
 
 #ifdef UNICODE
 #define COMMAND_LINE_ARGUMENT COMMAND_LINE_ARGUMENT_W

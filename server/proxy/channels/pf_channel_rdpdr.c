@@ -65,7 +65,7 @@ typedef enum
 	STATE_CLIENT_CHANNEL_RUNNING = 0x10
 } pf_channel_client_state;
 
-typedef struct _pf_channel_client_context
+typedef struct
 {
 	pf_channel_common_context common;
 	pf_channel_client_state state;

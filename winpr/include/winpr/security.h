@@ -34,7 +34,7 @@
 
 #define ANYSIZE_ARRAY 1
 
-typedef enum _SECURITY_IMPERSONATION_LEVEL
+typedef enum
 {
 	SecurityAnonymous,
 	SecurityIdentification,
@@ -135,7 +135,7 @@ typedef enum _SECURITY_IMPERSONATION_LEVEL
 typedef PVOID PACCESS_TOKEN;
 typedef PVOID PCLAIMS_BLOB;
 
-typedef struct _LUID_AND_ATTRIBUTES
+typedef struct
 {
 	LUID Luid;
 	DWORD Attributes;
@@ -143,12 +143,12 @@ typedef struct _LUID_AND_ATTRIBUTES
 typedef LUID_AND_ATTRIBUTES LUID_AND_ATTRIBUTES_ARRAY[ANYSIZE_ARRAY];
 typedef LUID_AND_ATTRIBUTES_ARRAY* PLUID_AND_ATTRIBUTES_ARRAY;
 
-typedef struct _SID_IDENTIFIER_AUTHORITY
+typedef struct
 {
 	BYTE Value[6];
 } SID_IDENTIFIER_AUTHORITY, *PSID_IDENTIFIER_AUTHORITY;
 
-typedef struct _SID
+typedef struct
 {
 	BYTE Revision;
 	BYTE SubAuthorityCount;
@@ -156,7 +156,7 @@ typedef struct _SID
 	DWORD SubAuthority[ANYSIZE_ARRAY];
 } SID, *PISID;
 
-typedef enum _SID_NAME_USE
+typedef enum
 {
 	SidTypeUser = 1,
 	SidTypeGroup,
@@ -171,7 +171,7 @@ typedef enum _SID_NAME_USE
 } SID_NAME_USE,
     *PSID_NAME_USE;
 
-typedef struct _SID_AND_ATTRIBUTES
+typedef struct
 {
 	PSID Sid;
 	DWORD Attributes;
@@ -182,21 +182,21 @@ typedef SID_AND_ATTRIBUTES_ARRAY* PSID_AND_ATTRIBUTES_ARRAY;
 
 typedef ULONG_PTR SID_HASH_ENTRY, *PSID_HASH_ENTRY;
 
-typedef struct _SID_AND_ATTRIBUTES_HASH
+typedef struct
 {
 	DWORD SidCount;
 	PSID_AND_ATTRIBUTES SidAttr;
 	SID_HASH_ENTRY Hash[SID_HASH_SIZE];
 } SID_AND_ATTRIBUTES_HASH, *PSID_AND_ATTRIBUTES_HASH;
 
-typedef enum _TOKEN_TYPE
+typedef enum
 {
 	TokenPrimary = 1,
 	TokenImpersonation
 } TOKEN_TYPE;
 typedef TOKEN_TYPE* PTOKEN_TYPE;
 
-typedef enum _TOKEN_ELEVATION_TYPE
+typedef enum
 {
 	TokenElevationTypeDefault = 1,
 	TokenElevationTypeFull,
@@ -204,7 +204,7 @@ typedef enum _TOKEN_ELEVATION_TYPE
 } TOKEN_ELEVATION_TYPE,
     *PTOKEN_ELEVATION_TYPE;
 
-typedef enum _TOKEN_INFORMATION_CLASS
+typedef enum
 {
 	TokenUser = 1,
 	TokenGroups,
@@ -250,49 +250,49 @@ typedef enum _TOKEN_INFORMATION_CLASS
 } TOKEN_INFORMATION_CLASS,
     *PTOKEN_INFORMATION_CLASS;
 
-typedef struct _TOKEN_USER
+typedef struct
 {
 	SID_AND_ATTRIBUTES User;
 } TOKEN_USER, *PTOKEN_USER;
 
-typedef struct _TOKEN_GROUPS
+typedef struct
 {
 	DWORD GroupCount;
 	SID_AND_ATTRIBUTES Groups[ANYSIZE_ARRAY];
 } TOKEN_GROUPS, *PTOKEN_GROUPS;
 
-typedef struct _TOKEN_PRIVILEGES
+typedef struct
 {
 	DWORD PrivilegeCount;
 	LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY];
 } TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;
 
-typedef struct _TOKEN_OWNER
+typedef struct
 {
 	PSID Owner;
 } TOKEN_OWNER, *PTOKEN_OWNER;
 
-typedef struct _TOKEN_PRIMARY_GROUP
+typedef struct
 {
 	PSID PrimaryGroup;
 } TOKEN_PRIMARY_GROUP, *PTOKEN_PRIMARY_GROUP;
 
-typedef struct _TOKEN_DEFAULT_DACL
+typedef struct
 {
 	PACL DefaultDacl;
 } TOKEN_DEFAULT_DACL, *PTOKEN_DEFAULT_DACL;
 
-typedef struct _TOKEN_USER_CLAIMS
+typedef struct
 {
 	PCLAIMS_BLOB UserClaims;
 } TOKEN_USER_CLAIMS, *PTOKEN_USER_CLAIMS;
 
-typedef struct _TOKEN_DEVICE_CLAIMS
+typedef struct
 {
 	PCLAIMS_BLOB DeviceClaims;
 } TOKEN_DEVICE_CLAIMS, *PTOKEN_DEVICE_CLAIMS;
 
-typedef struct _TOKEN_GROUPS_AND_PRIVILEGES
+typedef struct
 {
 	DWORD SidCount;
 	DWORD SidLength;
@@ -306,27 +306,27 @@ typedef struct _TOKEN_GROUPS_AND_PRIVILEGES
 	LUID AuthenticationId;
 } TOKEN_GROUPS_AND_PRIVILEGES, *PTOKEN_GROUPS_AND_PRIVILEGES;
 
-typedef struct _TOKEN_LINKED_TOKEN
+typedef struct
 {
 	HANDLE LinkedToken;
 } TOKEN_LINKED_TOKEN, *PTOKEN_LINKED_TOKEN;
 
-typedef struct _TOKEN_ELEVATION
+typedef struct
 {
 	DWORD TokenIsElevated;
 } TOKEN_ELEVATION, *PTOKEN_ELEVATION;
 
-typedef struct _TOKEN_MANDATORY_LABEL
+typedef struct
 {
 	SID_AND_ATTRIBUTES Label;
 } TOKEN_MANDATORY_LABEL, *PTOKEN_MANDATORY_LABEL;
 
-typedef struct _TOKEN_MANDATORY_POLICY
+typedef struct
 {
 	DWORD Policy;
 } TOKEN_MANDATORY_POLICY, *PTOKEN_MANDATORY_POLICY;
 
-typedef struct _TOKEN_ACCESS_INFORMATION
+typedef struct
 {
 	PSID_AND_ATTRIBUTES_HASH SidHash;
 	PSID_AND_ATTRIBUTES_HASH RestrictedSidHash;
@@ -341,18 +341,18 @@ typedef struct _TOKEN_ACCESS_INFORMATION
 	PSID_AND_ATTRIBUTES_HASH CapabilitiesHash;
 } TOKEN_ACCESS_INFORMATION, *PTOKEN_ACCESS_INFORMATION;
 
-typedef struct _TOKEN_AUDIT_POLICY
+typedef struct
 {
 	BYTE PerUserPolicy[((POLICY_AUDIT_SUBCATEGORY_COUNT) >> 1) + 1];
 } TOKEN_AUDIT_POLICY, *PTOKEN_AUDIT_POLICY;
 
-typedef struct _TOKEN_SOURCE
+typedef struct
 {
 	CHAR SourceName[TOKEN_SOURCE_LENGTH];
 	LUID SourceIdentifier;
 } TOKEN_SOURCE, *PTOKEN_SOURCE;
 
-typedef struct _TOKEN_STATISTICS
+typedef struct
 {
 	LUID TokenId;
 	LUID AuthenticationId;
@@ -366,7 +366,7 @@ typedef struct _TOKEN_STATISTICS
 	LUID ModifiedId;
 } TOKEN_STATISTICS, *PTOKEN_STATISTICS;
 
-typedef struct _TOKEN_CONTROL
+typedef struct
 {
 	LUID TokenId;
 	LUID AuthenticationId;
@@ -374,12 +374,12 @@ typedef struct _TOKEN_CONTROL
 	TOKEN_SOURCE TokenSource;
 } TOKEN_CONTROL, *PTOKEN_CONTROL;
 
-typedef struct _TOKEN_ORIGIN
+typedef struct
 {
 	LUID OriginatingLogonSession;
 } TOKEN_ORIGIN, *PTOKEN_ORIGIN;
 
-typedef enum _MANDATORY_LEVEL
+typedef enum
 {
 	MandatoryLevelUntrusted = 0,
 	MandatoryLevelLow,
@@ -391,7 +391,7 @@ typedef enum _MANDATORY_LEVEL
 } MANDATORY_LEVEL,
     *PMANDATORY_LEVEL;
 
-typedef struct _TOKEN_APPCONTAINER_INFORMATION
+typedef struct
 {
 	PSID TokenAppContainer;
 } TOKEN_APPCONTAINER_INFORMATION, *PTOKEN_APPCONTAINER_INFORMATION;

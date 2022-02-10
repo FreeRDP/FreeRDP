@@ -23,8 +23,8 @@
 #include <freerdp/channels/rdpgfx.h>
 #include <freerdp/freerdp.h>
 
-typedef struct _rdpgfx_server_context RdpgfxServerContext;
-typedef struct _rdpgfx_server_private RdpgfxServerPrivate;
+typedef struct s_rdpgfx_server_context RdpgfxServerContext;
+typedef struct s_rdpgfx_server_private RdpgfxServerPrivate;
 
 typedef BOOL (*psRdpgfxServerOpen)(RdpgfxServerContext* context);
 typedef BOOL (*psRdpgfxServerClose)(RdpgfxServerContext* context);
@@ -78,7 +78,7 @@ typedef UINT (*psRdpgfxFrameAcknowledge)(RdpgfxServerContext* context,
 typedef UINT (*psRdpgfxQoeFrameAcknowledge)(
     RdpgfxServerContext* context, const RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoeFrameAcknowledge);
 
-struct _rdpgfx_server_context
+struct s_rdpgfx_server_context
 {
 	HANDLE vcm;
 	void* custom;

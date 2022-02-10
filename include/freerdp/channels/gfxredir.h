@@ -62,80 +62,62 @@
 /* GFXREDIR_PRESENT_BUFFER_PDU.numOpaqueRects */
 #define GFXREDIR_MAX_OPAQUE_RECTS 0x10
 
-struct _GFXREDIR_HEADER
+typedef struct
 {
 	UINT32 cmdId;
 	UINT32 length;
-};
+} GFXREDIR_HEADER;
 
-typedef struct _GFXREDIR_HEADER GFXREDIR_HEADER;
-
-struct _GFXREDIR_LEGACY_CAPS_PDU
+typedef struct
 {
 	UINT16 version; // GFXREDIR_CHANNEL_VERSION_LEGACY
-};
+} GFXREDIR_LEGACY_CAPS_PDU;
 
-typedef struct _GFXREDIR_LEGACY_CAPS_PDU GFXREDIR_LEGACY_CAPS_PDU;
-
-struct _GFXREDIR_CAPS_HEADER
+typedef struct
 {
-	UINT32 signature;       // GFXREDIR_CAPS_SIGNATURE
-	UINT32 version;         // GFXREDIR_CAPS_VERSION
-	UINT32 length;          // GFXREDIR_CAPS_HEADER_SIZE + size of capsData
-};
+	UINT32 signature; // GFXREDIR_CAPS_SIGNATURE
+	UINT32 version;   // GFXREDIR_CAPS_VERSION
+	UINT32 length;    // GFXREDIR_CAPS_HEADER_SIZE + size of capsData
+} GFXREDIR_CAPS_HEADER;
 
-typedef struct _GFXREDIR_CAPS_HEADER GFXREDIR_CAPS_HEADER;
-
-struct _GFXREDIR_CAPS_V2_0_PDU
+typedef struct
 {
 	GFXREDIR_CAPS_HEADER header;
 	UINT32 supportedFeatures; /* Reserved for future extensions */
-};
+} GFXREDIR_CAPS_V2_0_PDU;
 
-typedef struct _GFXREDIR_CAPS_V2_0_PDU GFXREDIR_CAPS_V2_0_PDU;
-
-struct _GFXREDIR_ERROR_PDU
+typedef struct
 {
 	UINT32 errorCode;
-};
+} GFXREDIR_ERROR_PDU;
 
-typedef struct _GFXREDIR_ERROR_PDU GFXREDIR_ERROR_PDU;
-
-struct _GFXREDIR_CAPS_ADVERTISE_PDU
+typedef struct
 {
 	UINT32 length;    // length of caps;
 	const BYTE* caps; // points variable length array of GFXREDIR_CAPS_HEADER.
-};
+} GFXREDIR_CAPS_ADVERTISE_PDU;
 
-typedef struct _GFXREDIR_CAPS_ADVERTISE_PDU GFXREDIR_CAPS_ADVERTISE_PDU;
-
-struct _GFXREDIR_CAPS_CONFIRM_PDU
+typedef struct
 {
 	UINT32 version;       // confirmed version, must be one of advertised by client.
 	UINT32 length;        // GFXREDIR_CAPS_HEADER_SIZE + size of capsData.
 	const BYTE* capsData; // confirmed capsData from selected GFXREDIR_CAPS_HEADER.capsData.
-};
+} GFXREDIR_CAPS_CONFIRM_PDU;
 
-typedef struct _GFXREDIR_CAPS_CONFIRM_PDU GFXREDIR_CAPS_CONFIRM_PDU;
-
-struct _GFXREDIR_OPEN_POOL_PDU
+typedef struct
 {
 	UINT64 poolId;
 	UINT64 poolSize;
 	UINT32 sectionNameLength;          // number of charactor, must include null terminated char.
 	const unsigned short* sectionName; // Windows-style 2 bytes wchar_t with null-terminated.
-};
+} GFXREDIR_OPEN_POOL_PDU;
 
-typedef struct _GFXREDIR_OPEN_POOL_PDU GFXREDIR_OPEN_POOL_PDU;
-
-struct _GFXREDIR_CLOSE_POOL_PDU
+typedef struct
 {
 	UINT64 poolId;
-};
+} GFXREDIR_CLOSE_POOL_PDU;
 
-typedef struct _GFXREDIR_CLOSE_POOL_PDU GFXREDIR_CLOSE_POOL_PDU;
-
-struct _GFXREDIR_CREATE_BUFFER_PDU
+typedef struct
 {
 	UINT64 poolId;
 	UINT64 bufferId;
@@ -144,18 +126,14 @@ struct _GFXREDIR_CREATE_BUFFER_PDU
 	UINT32 width;
 	UINT32 height;
 	UINT32 format; // GFXREDIR_BUFFER_PIXEL_FORMAT_
-};
+} GFXREDIR_CREATE_BUFFER_PDU;
 
-typedef struct _GFXREDIR_CREATE_BUFFER_PDU GFXREDIR_CREATE_BUFFER_PDU;
-
-struct _GFXREDIR_DESTROY_BUFFER_PDU
+typedef struct
 {
 	UINT64 bufferId;
-};
+} GFXREDIR_DESTROY_BUFFER_PDU;
 
-typedef struct _GFXREDIR_DESTROY_BUFFER_PDU GFXREDIR_DESTROY_BUFFER_PDU;
-
-struct _GFXREDIR_PRESENT_BUFFER_PDU
+typedef struct
 {
 	UINT64 timestamp;
 	UINT64 presentId;
@@ -167,16 +145,12 @@ struct _GFXREDIR_PRESENT_BUFFER_PDU
 	RECTANGLE_32 dirtyRect;
 	UINT32 numOpaqueRects;
 	RECTANGLE_32* opaqueRects;
-};
+} GFXREDIR_PRESENT_BUFFER_PDU;
 
-typedef struct _GFXREDIR_PRESENT_BUFFER_PDU GFXREDIR_PRESENT_BUFFER_PDU;
-
-struct _GFXREDIR_PRESENT_BUFFER_ACK_PDU
+typedef struct
 {
 	UINT64 windowId;
 	UINT64 presentId;
-};
-
-typedef struct _GFXREDIR_PRESENT_BUFFER_ACK_PDU GFXREDIR_PRESENT_BUFFER_ACK_PDU;
+} GFXREDIR_PRESENT_BUFFER_ACK_PDU;
 
 #endif /* FREERDP_CHANNEL_GFXREDIR_H */

@@ -710,13 +710,12 @@ static const RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT_TABLE[] = {
 	{ 0x0000046a, "Yoruba" },
 };
 
-struct _RDP_KEYBOARD_LAYOUT_VARIANT
+typedef struct
 {
 	DWORD code;       /* Keyboard layout code */
 	DWORD id;         /* Keyboard variant ID */
 	const char* name; /* Keyboard layout variant name */
-};
-typedef struct _RDP_KEYBOARD_LAYOUT_VARIANT RDP_KEYBOARD_LAYOUT_VARIANT;
+} RDP_KEYBOARD_LAYOUT_VARIANT;
 
 static const RDP_KEYBOARD_LAYOUT_VARIANT RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[] = {
 	{ KBD_ARABIC_102, 0x0028, "Arabic (102)" },
@@ -768,13 +767,12 @@ static const RDP_KEYBOARD_LAYOUT_VARIANT RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[] = {
 
 /* Input Method Editor (IME) */
 
-struct _RDP_KEYBOARD_IME
+typedef struct
 {
 	DWORD code;       /* Keyboard layout code */
 	const char* file; /* IME file */
 	const char* name; /* Keyboard layout name */
-};
-typedef struct _RDP_KEYBOARD_IME RDP_KEYBOARD_IME;
+} RDP_KEYBOARD_IME;
 
 /* Global Input Method Editors (IME) */
 

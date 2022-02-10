@@ -56,7 +56,7 @@
 
 #define SCARD_MAX_TIMEOUT 60000
 
-struct _scard_call_context
+struct s_scard_call_context
 {
 	HANDLE StartedEvent;
 	wLinkedList* names;
@@ -71,7 +71,7 @@ struct _scard_call_context
 	void (*fn_free)(void*);
 };
 
-struct _scard_context_element
+struct s_scard_context_element
 {
 	void* context;
 	void (*fn_free)(void*);
@@ -90,7 +90,8 @@ static LONG smartcard_EstablishContext_Call(scard_call_context* smartcard, wStre
 	if (ret.ReturnCode == SCARD_S_SUCCESS)
 	{
 		const void* key = (void*)(size_t)hContext;
-		struct _scard_context_element* pContext = calloc(1, sizeof(struct _scard_context_element));
+		struct s_scard_context_element* pContext =
+		    calloc(1, sizeof(struct s_scard_context_element));
 		if (!pContext)
 			return STATUS_NO_MEMORY;
 
@@ -1810,7 +1811,7 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 
 static void context_free(void* arg)
 {
-	struct _scard_context_element* element = arg;
+	struct s_scard_context_element* element = arg;
 	if (!arg)
 		return;
 
@@ -1921,7 +1922,7 @@ BOOL smarcard_call_set_callbacks(scard_call_context* ctx, void* userdata,
 
 void* smartcard_call_get_context(scard_call_context* ctx, SCARDCONTEXT hContext)
 {
-	struct _scard_context_element* element;
+	struct s_scard_context_element* element;
 
 	WINPR_ASSERT(ctx);
 	element = HashTable_GetItemValue(ctx->rgSCardContextList, (void*)hContext);

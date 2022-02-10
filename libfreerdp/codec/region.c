@@ -68,7 +68,7 @@
  * rectangles in the same places (of the same width, of course).
  */
 
-struct _REGION16_DATA
+struct S_REGION16_DATA
 {
 	long size;
 	long nbRects;

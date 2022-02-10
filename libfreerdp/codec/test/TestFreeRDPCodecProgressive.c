@@ -128,12 +128,11 @@
  * 	dec_2_3_100_sampleimage3.bmp
  */
 
-struct _EGFX_SAMPLE_FILE
+typedef struct
 {
 	BYTE* buffer;
 	size_t size;
-};
-typedef struct _EGFX_SAMPLE_FILE EGFX_SAMPLE_FILE;
+} EGFX_SAMPLE_FILE;
 
 static int g_Width = 0;
 static int g_Height = 0;

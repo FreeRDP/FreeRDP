@@ -28,7 +28,7 @@
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/encomsp.h>
 
-struct tf_context
+typedef struct
 {
 	rdpContext context;
 
@@ -36,7 +36,6 @@ struct tf_context
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
-};
-typedef struct tf_context tfContext;
+} tfContext;
 
 #endif /* FREERDP_CLIENT_SAMPLE_H */

@@ -30,11 +30,11 @@
 
 #include <freerdp/freerdp.h>
 
-typedef struct _TSMF_PRESENTATION TSMF_PRESENTATION;
+typedef struct S_TSMF_PRESENTATION TSMF_PRESENTATION;
 
-typedef struct _TSMF_STREAM TSMF_STREAM;
+typedef struct S_TSMF_STREAM TSMF_STREAM;
 
-typedef struct _TSMF_SAMPLE TSMF_SAMPLE;
+typedef struct S_TSMF_SAMPLE TSMF_SAMPLE;
 
 TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid,
                                          IWTSVirtualChannelCallback* pChannelCallback);

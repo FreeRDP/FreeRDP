@@ -7,7 +7,7 @@
 
 #define TAG FREERDP_TAG("codec")
 
-struct _YUV_CONTEXT
+struct S_YUV_CONTEXT
 {
 	UINT32 width, height;
 	BOOL useThreads;
@@ -18,7 +18,7 @@ struct _YUV_CONTEXT
 	TP_CALLBACK_ENVIRON ThreadPoolEnv;
 };
 
-struct s_YUV_PROCESS_WORK_PARAM
+typedef struct
 {
 	YUV_CONTEXT* context;
 	const BYTE* pYUVData[3];
@@ -27,10 +27,9 @@ struct s_YUV_PROCESS_WORK_PARAM
 	BYTE* dest;
 	UINT32 nDstStep;
 	RECTANGLE_16 rect;
-};
-typedef struct s_YUV_PROCESS_WORK_PARAM YUV_PROCESS_WORK_PARAM;
+} YUV_PROCESS_WORK_PARAM;
 
-struct s_YUV_COMBINE_WORK_PARAM
+typedef struct
 {
 	YUV_CONTEXT* context;
 	const BYTE* pYUVData[3];
@@ -39,10 +38,9 @@ struct s_YUV_COMBINE_WORK_PARAM
 	UINT32 iDstStride[3];
 	RECTANGLE_16 rect;
 	BYTE type;
-};
-typedef struct s_YUV_COMBINE_WORK_PARAM YUV_COMBINE_WORK_PARAM;
+} YUV_COMBINE_WORK_PARAM;
 
-struct s_YUV_ENCODE_WORK_PARAM
+typedef struct
 {
 	YUV_CONTEXT* context;
 	const BYTE* pSrcData;
@@ -55,8 +53,7 @@ struct s_YUV_ENCODE_WORK_PARAM
 	BYTE* pYUVLumaData[3];
 	BYTE* pYUVChromaData[3];
 	UINT32 iStride[3];
-};
-typedef struct s_YUV_ENCODE_WORK_PARAM YUV_ENCODE_WORK_PARAM;
+} YUV_ENCODE_WORK_PARAM;
 
 static INLINE BOOL avc420_yuv_to_rgb(const BYTE* pYUVData[3], const UINT32 iStride[3],
                                      const RECTANGLE_16* rect, UINT32 nDstStep, BYTE* pDstData,

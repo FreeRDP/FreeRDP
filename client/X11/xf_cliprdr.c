@@ -64,16 +64,15 @@
 #define MAX_CLIPBOARD_FORMATS 255
 #define WIN32_FILETIME_TO_UNIX_EPOCH_USEC UINT64_C(116444736000000000)
 
-struct xf_cliprdr_format
+typedef struct
 {
 	Atom atom;
 	UINT32 formatId;
 	char* formatName;
-};
-typedef struct xf_cliprdr_format xfCliprdrFormat;
+} xfCliprdrFormat;
 
 #ifdef WITH_FUSE
-struct xf_cliprdr_fuse_stream
+typedef struct
 {
 	UINT32 stream_id;
 	/* must be one of FILECONTENTS_SIZE or FILECONTENTS_RANGE*/
@@ -81,10 +80,9 @@ struct xf_cliprdr_fuse_stream
 	fuse_req_t req;
 	/*for FILECONTENTS_SIZE must be ino number* */
 	size_t req_ino;
-};
-typedef struct xf_cliprdr_fuse_stream xfCliprdrFuseStream;
+} xfCliprdrFuseStream;
 
-struct xf_cliprdr_fuse_inode
+typedef struct
 {
 	size_t parent_ino;
 	size_t ino;
@@ -95,8 +93,7 @@ struct xf_cliprdr_fuse_inode
 	struct timespec st_mtim;
 	char* name;
 	wArrayList* child_inos;
-};
-typedef struct xf_cliprdr_fuse_inode xfCliprdrFuseInode;
+} xfCliprdrFuseInode;
 
 static void xf_cliprdr_fuse_inode_free(void* obj)
 {

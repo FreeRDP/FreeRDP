@@ -47,9 +47,7 @@
 
 #include "drive_file.h"
 
-typedef struct _DRIVE_DEVICE DRIVE_DEVICE;
-
-struct _DRIVE_DEVICE
+typedef struct
 {
 	DEVICE device;
 
@@ -64,7 +62,7 @@ struct _DRIVE_DEVICE
 	DEVMAN* devman;
 
 	rdpContext* rdpcontext;
-};
+} DRIVE_DEVICE;
 
 static UINT sys_code_page = 0;
 

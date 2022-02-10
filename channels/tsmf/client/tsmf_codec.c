@@ -36,7 +36,7 @@
 
 #define TAG CHANNELS_TAG("tsmf.client")
 
-typedef struct _TSMFMediaTypeMap
+typedef struct
 {
 	BYTE guid[16];
 	const char* name;
@@ -330,7 +330,7 @@ static UINT32 tsmf_codec_parse_VIDEOINFOHEADER2(TS_AM_MEDIA_TYPE* mediatype, wSt
 static UINT32 tsmf_codec_parse_VIDEOINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 {
 	/*
-	typedef struct tagVIDEOINFOHEADER {
+	typedef struct  {
 	  RECT             rcSource;			//16
 	  RECT             rcTarget;			//16	32
 	  DWORD            dwBitRate;			//4	36

@@ -51,25 +51,23 @@
 #include "rdpsnd_common.h"
 #include "rdpsnd_main.h"
 
-struct _RDPSND_CHANNEL_CALLBACK
+typedef struct
 {
 	IWTSVirtualChannelCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
-};
-typedef struct _RDPSND_CHANNEL_CALLBACK RDPSND_CHANNEL_CALLBACK;
+} RDPSND_CHANNEL_CALLBACK;
 
-struct _RDPSND_LISTENER_CALLBACK
+typedef struct
 {
 	IWTSListenerCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	RDPSND_CHANNEL_CALLBACK* channel_callback;
-};
-typedef struct _RDPSND_LISTENER_CALLBACK RDPSND_LISTENER_CALLBACK;
+} RDPSND_LISTENER_CALLBACK;
 
 struct rdpsnd_plugin
 {

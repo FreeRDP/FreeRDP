@@ -34,12 +34,10 @@
 
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_fake_plugin rdpsndFakePlugin;
-
-struct rdpsnd_fake_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
-};
+} rdpsndFakePlugin;
 
 static BOOL rdpsnd_fake_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency)
 {

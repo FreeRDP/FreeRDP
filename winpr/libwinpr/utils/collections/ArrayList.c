@@ -31,7 +31,7 @@
 #define va_copy(dest, src) (dest = src)
 #endif
 
-struct _wArrayList
+struct s_wArrayList
 {
 	size_t capacity;
 	size_t growthFactor;

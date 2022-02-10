@@ -30,7 +30,7 @@
  * Client Interface
  */
 
-typedef struct _rdpgfx_client_context RdpgfxClientContext;
+typedef struct s_rdpgfx_client_context RdpgfxClientContext;
 
 typedef UINT (*pcRdpgfxResetGraphics)(RdpgfxClientContext* context,
                                       const RDPGFX_RESET_GRAPHICS_PDU* resetGraphics);
@@ -97,7 +97,7 @@ typedef UINT (*pcRdpgfxMapWindowForSurface)(RdpgfxClientContext* context, UINT16
                                             UINT64 windowID);
 typedef UINT (*pcRdpgfxUnmapWindowForSurface)(RdpgfxClientContext* context, UINT64 windowID);
 
-struct _rdpgfx_client_context
+struct s_rdpgfx_client_context
 {
 	void* handle;
 	void* custom;

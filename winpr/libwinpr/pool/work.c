@@ -66,7 +66,6 @@ static TP_CALLBACK_ENVIRON DEFAULT_CALLBACK_ENVIRONMENT = {
 	NULL, /* CleanupGroup */
 	NULL, /* CleanupGroupCancelCallback */
 	NULL, /* RaceDll */
-	NULL, /* ActivationContext */
 	NULL, /* FinalizationCallback */
 	{ 0 } /* Flags */
 };

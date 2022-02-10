@@ -26,7 +26,7 @@
 #include <freerdp/channels/cliprdr.h>
 #include <freerdp/freerdp.h>
 
-typedef struct _sshagent_client_context
+typedef struct
 {
 	int ProtocolVersion;
 	int MaxConnections;

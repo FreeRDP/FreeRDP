@@ -42,7 +42,7 @@ enum RdpEiState
 	STATE_SUSPENDED,
 };
 
-struct _rdpei_server_private
+struct s_rdpei_server_private
 {
 	HANDLE channelHandle;
 	HANDLE eventHandle;

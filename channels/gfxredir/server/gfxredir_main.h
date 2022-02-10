@@ -22,7 +22,7 @@
 
 #include <freerdp/server/gfxredir.h>
 
-struct _gfxredir_server_private
+struct s_gfxredir_server_private
 {
 	BOOL isReady;
 	wStream* input_stream;

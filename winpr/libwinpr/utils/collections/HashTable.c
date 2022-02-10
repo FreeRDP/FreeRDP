@@ -34,9 +34,9 @@
  * http://www.pomakis.com/hashtable/hashtable.h
  */
 
-typedef struct _wKeyValuePair wKeyValuePair;
+typedef struct s_wKeyValuePair wKeyValuePair;
 
-struct _wKeyValuePair
+struct s_wKeyValuePair
 {
 	void* key;
 	void* value;
@@ -45,7 +45,7 @@ struct _wKeyValuePair
 	BOOL markedForRemove;
 };
 
-struct _wHashTable
+struct s_wHashTable
 {
 	BOOL synchronized;
 	CRITICAL_SECTION lock;

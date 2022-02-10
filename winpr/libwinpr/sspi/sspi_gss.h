@@ -35,13 +35,10 @@
 #define SSPI_GSSAPI
 #define SSPI_GSSOID
 
-struct sspi_gss_name_struct;
 typedef struct sspi_gss_name_struct* sspi_gss_name_t;
 
-struct sspi_gss_cred_id_struct;
 typedef struct sspi_gss_cred_id_struct* sspi_gss_cred_id_t;
 
-struct sspi_gss_ctx_id_struct;
 typedef struct sspi_gss_ctx_id_struct* sspi_gss_ctx_id_t;
 
 typedef struct sspi_gss_OID_desc_struct
@@ -615,7 +612,7 @@ extern "C"
 }
 #endif
 
-struct _GSSAPI_FUNCTION_TABLE
+typedef struct
 {
 	fn_sspi_gss_acquire_cred gss_acquire_cred;
 	fn_sspi_gss_release_cred gss_release_cred;
@@ -663,8 +660,7 @@ struct _GSSAPI_FUNCTION_TABLE
 	fn_sspi_gss_pseudo_random gss_pseudo_random;
 	fn_sspi_gss_store_cred gss_store_cred;
 	fn_sspi_gss_set_neg_mechs gss_set_neg_mechs;
-};
-typedef struct _GSSAPI_FUNCTION_TABLE GSSAPI_FUNCTION_TABLE;
+} GSSAPI_FUNCTION_TABLE;
 
 GSSAPI_FUNCTION_TABLE* SEC_ENTRY gssApi_InitSecurityInterface(void);
 

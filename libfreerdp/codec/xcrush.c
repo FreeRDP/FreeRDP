@@ -34,45 +34,40 @@
 
 #pragma pack(push, 1)
 
-struct _XCRUSH_MATCH_INFO
+typedef struct
 {
 	UINT32 MatchOffset;
 	UINT32 ChunkOffset;
 	UINT32 MatchLength;
-};
-typedef struct _XCRUSH_MATCH_INFO XCRUSH_MATCH_INFO;
+} XCRUSH_MATCH_INFO;
 
-struct _XCRUSH_CHUNK
+typedef struct
 {
 	UINT32 offset;
 	UINT32 next;
-};
-typedef struct _XCRUSH_CHUNK XCRUSH_CHUNK;
+} XCRUSH_CHUNK;
 
-struct _XCRUSH_SIGNATURE
+typedef struct
 {
 	UINT16 seed;
 	UINT16 size;
-};
-typedef struct _XCRUSH_SIGNATURE XCRUSH_SIGNATURE;
+} XCRUSH_SIGNATURE;
 
-struct _RDP61_MATCH_DETAILS
+typedef struct
 {
 	UINT16 MatchLength;
 	UINT16 MatchOutputOffset;
 	UINT32 MatchHistoryOffset;
-};
-typedef struct _RDP61_MATCH_DETAILS RDP61_MATCH_DETAILS;
+} RDP61_MATCH_DETAILS;
 
-struct _RDP61_COMPRESSED_DATA
+typedef struct
 {
 	BYTE Level1ComprFlags;
 	BYTE Level2ComprFlags;
 	UINT16 MatchCount;
 	RDP61_MATCH_DETAILS* MatchDetails;
 	BYTE* Literals;
-};
-typedef struct _RDP61_COMPRESSED_DATA RDP61_COMPRESSED_DATA;
+} RDP61_COMPRESSED_DATA;
 
 #pragma pack(pop)
 

@@ -42,7 +42,7 @@ extern "C"
 {
 #endif
 
-	typedef struct opensl_stream
+	typedef struct
 	{
 		// engine interfaces
 		SLObjectItf engineObject;

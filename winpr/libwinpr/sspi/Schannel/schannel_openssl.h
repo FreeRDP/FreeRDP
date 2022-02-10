@@ -27,7 +27,7 @@
 /* OpenSSL includes windows.h */
 #include <winpr/windows.h>
 
-typedef struct _SCHANNEL_OPENSSL SCHANNEL_OPENSSL;
+typedef struct S_SCHANNEL_OPENSSL SCHANNEL_OPENSSL;
 
 int schannel_openssl_client_init(SCHANNEL_OPENSSL* context);
 int schannel_openssl_server_init(SCHANNEL_OPENSSL* context);

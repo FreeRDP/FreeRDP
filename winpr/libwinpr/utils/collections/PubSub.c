@@ -30,7 +30,7 @@
  * http://msdn.microsoft.com/en-us/library/awbftdfh.aspx
  */
 
-struct _wPubSub
+struct s_wPubSub
 {
 	CRITICAL_SECTION lock;
 	BOOL synchronized;

@@ -25,9 +25,9 @@
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
 
-typedef struct _rdpsnd_server_context RdpsndServerContext;
-typedef struct _rdpsnd_server_context rdpsnd_server_context;
-typedef struct _rdpsnd_server_private RdpsndServerPrivate;
+typedef struct s_rdpsnd_server_context RdpsndServerContext;
+typedef struct s_rdpsnd_server_context rdpsnd_server_context;
+typedef struct s_rdpsnd_server_private RdpsndServerPrivate;
 
 typedef UINT (*psRdpsndStart)(RdpsndServerContext* context);
 typedef UINT (*psRdpsndStop)(RdpsndServerContext* context);
@@ -44,7 +44,7 @@ typedef UINT (*psRdpsndServerClose)(RdpsndServerContext* context);
 
 typedef void (*psRdpsndServerActivated)(RdpsndServerContext* context);
 
-struct _rdpsnd_server_context
+struct s_rdpsnd_server_context
 {
 	HANDLE vcm;
 

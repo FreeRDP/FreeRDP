@@ -40,23 +40,21 @@
 #define CLEARCODEC_VBAR_SIZE 32768
 #define CLEARCODEC_VBAR_SHORT_SIZE 16384
 
-struct _CLEAR_GLYPH_ENTRY
+typedef struct
 {
 	UINT32 size;
 	UINT32 count;
 	UINT32* pixels;
-};
-typedef struct _CLEAR_GLYPH_ENTRY CLEAR_GLYPH_ENTRY;
+} CLEAR_GLYPH_ENTRY;
 
-struct _CLEAR_VBAR_ENTRY
+typedef struct
 {
 	UINT32 size;
 	UINT32 count;
 	BYTE* pixels;
-};
-typedef struct _CLEAR_VBAR_ENTRY CLEAR_VBAR_ENTRY;
+} CLEAR_VBAR_ENTRY;
 
-struct _CLEAR_CONTEXT
+struct S_CLEAR_CONTEXT
 {
 	BOOL Compressor;
 	NSC_CONTEXT* nsc;

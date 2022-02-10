@@ -22,7 +22,7 @@
 
 #ifndef _WIN32
 
-struct _WINPR_PROTECTED_MEMORY_BLOCK
+typedef struct
 {
 	BYTE* pData;
 	DWORD cbData;
@@ -30,15 +30,13 @@ struct _WINPR_PROTECTED_MEMORY_BLOCK
 	BYTE key[32];
 	BYTE iv[32];
 	BYTE salt[8];
-};
-typedef struct _WINPR_PROTECTED_MEMORY_BLOCK WINPR_PROTECTED_MEMORY_BLOCK;
+} WINPR_PROTECTED_MEMORY_BLOCK;
 
-struct _WINPR_CERTSTORE
+typedef struct
 {
 	LPCSTR lpszStoreProvider;
 	DWORD dwMsgAndCertEncodingType;
-};
-typedef struct _WINPR_CERTSTORE WINPR_CERTSTORE;
+} WINPR_CERTSTORE;
 
 #endif
 

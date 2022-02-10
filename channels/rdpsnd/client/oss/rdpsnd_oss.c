@@ -51,9 +51,7 @@
 
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_oss_plugin rdpsndOssPlugin;
-
-struct rdpsnd_oss_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
@@ -65,7 +63,7 @@ struct rdpsnd_oss_plugin
 
 	UINT32 latency;
 	AUDIO_FORMAT format;
-};
+} rdpsndOssPlugin;
 
 #define OSS_LOG_ERR(_text, _error)                                         \
 	do                                                                     \

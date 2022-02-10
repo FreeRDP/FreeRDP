@@ -44,7 +44,7 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.Kerberos")
 
-struct _KRB_CONTEXT
+struct s_KRB_CONTEXT
 {
 	CtxtHandle context;
 	SSPI_CREDENTIALS* credentials;

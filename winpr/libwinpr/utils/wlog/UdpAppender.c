@@ -28,15 +28,14 @@
 
 #include "wlog.h"
 
-struct _wLogUdpAppender
+typedef struct
 {
 	WLOG_APPENDER_COMMON();
 	char* host;
 	struct sockaddr targetAddr;
 	int targetAddrLen;
 	SOCKET sock;
-};
-typedef struct _wLogUdpAppender wLogUdpAppender;
+} wLogUdpAppender;
 
 static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 {

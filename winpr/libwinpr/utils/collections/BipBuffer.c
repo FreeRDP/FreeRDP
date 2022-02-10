@@ -27,14 +27,13 @@
 
 #include <winpr/collections.h>
 
-struct _wBipBlock
+typedef struct
 {
 	size_t index;
 	size_t size;
-};
-typedef struct _wBipBlock wBipBlock;
+} wBipBlock;
 
-struct _wBipBuffer
+struct s_wBipBuffer
 {
 	size_t size;
 	BYTE* buffer;

@@ -32,7 +32,7 @@ extern "C"
 
 #ifndef _WIN32
 
-	typedef struct _TIME_ZONE_INFORMATION
+	typedef struct
 	{
 		LONG Bias;
 		WCHAR StandardName[32];
@@ -43,7 +43,7 @@ extern "C"
 		LONG DaylightBias;
 	} TIME_ZONE_INFORMATION, *PTIME_ZONE_INFORMATION, *LPTIME_ZONE_INFORMATION;
 
-	typedef struct _TIME_DYNAMIC_ZONE_INFORMATION
+	typedef struct
 	{
 		LONG Bias;
 		WCHAR StandardName[32];

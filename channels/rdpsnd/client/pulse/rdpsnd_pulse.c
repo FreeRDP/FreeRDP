@@ -38,9 +38,7 @@
 
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_pulse_plugin rdpsndPulsePlugin;
-
-struct rdpsnd_pulse_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
@@ -51,7 +49,7 @@ struct rdpsnd_pulse_plugin
 	pa_stream* stream;
 	UINT32 latency;
 	UINT32 volume;
-};
+} rdpsndPulsePlugin;
 
 static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format);
 

@@ -24,7 +24,7 @@
 #include <freerdp/api.h>
 
 /** @brief ring buffer meta data */
-struct _RingBuffer
+typedef struct
 {
 	size_t initialSize;
 	size_t freeSize;
@@ -32,16 +32,14 @@ struct _RingBuffer
 	size_t readPtr;
 	size_t writePtr;
 	BYTE* buffer;
-};
-typedef struct _RingBuffer RingBuffer;
+} RingBuffer;
 
 /** @brief a piece of data in the ring buffer, exactly like a glibc iovec */
-struct _DataChunk
+typedef struct
 {
 	size_t size;
 	const BYTE* data;
-};
-typedef struct _DataChunk DataChunk;
+} DataChunk;
 
 #ifdef __cplusplus
 extern "C"

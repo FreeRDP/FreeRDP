@@ -55,7 +55,7 @@ enum RDP_NEG_FAILURE_FAILURECODES
 #define AUTHZ_SUCCESS 0x00000000
 #define AUTHZ_ACCESS_DENIED 0x0000052E
 
-enum _NEGO_STATE
+typedef enum
 {
 	NEGO_STATE_INITIAL,
 	NEGO_STATE_EXT,  /* Extended NLA (NLA + TLS implicit) */
@@ -64,8 +64,7 @@ enum _NEGO_STATE
 	NEGO_STATE_RDP,  /* Standard Legacy RDP Encryption */
 	NEGO_STATE_FAIL, /* Negotiation failure */
 	NEGO_STATE_FINAL
-};
-typedef enum _NEGO_STATE NEGO_STATE;
+} NEGO_STATE;
 
 /* RDP Negotiation Messages */
 enum RDP_NEG_MSG

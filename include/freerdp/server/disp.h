@@ -26,8 +26,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-typedef struct _disp_server_private DispServerPrivate;
-typedef struct _disp_server_context DispServerContext;
+typedef struct s_disp_server_private DispServerPrivate;
+typedef struct s_disp_server_context DispServerContext;
 
 typedef UINT (*psDispMonitorLayout)(DispServerContext* context,
                                     const DISPLAY_CONTROL_MONITOR_LAYOUT_PDU* pdu);
@@ -35,7 +35,7 @@ typedef UINT (*psDispCaps)(DispServerContext* context);
 typedef UINT (*psDispOpen)(DispServerContext* context);
 typedef UINT (*psDispClose)(DispServerContext* context);
 
-struct _disp_server_context
+struct s_disp_server_context
 {
 	void* custom;
 	HANDLE vcm;

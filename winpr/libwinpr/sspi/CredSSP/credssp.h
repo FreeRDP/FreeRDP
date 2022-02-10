@@ -24,11 +24,10 @@
 
 #include "../sspi.h"
 
-struct _CREDSSP_CONTEXT
+typedef struct
 {
 	BOOL server;
-};
-typedef struct _CREDSSP_CONTEXT CREDSSP_CONTEXT;
+} CREDSSP_CONTEXT;
 
 CREDSSP_CONTEXT* credssp_ContextNew(void);
 void credssp_ContextFree(CREDSSP_CONTEXT* context);

@@ -36,12 +36,11 @@
 
 #define TAG FREERDP_TAG("cache.brush")
 
-struct _BRUSH_ENTRY
+typedef struct
 {
 	UINT32 bpp;
 	void* entry;
-};
-typedef struct _BRUSH_ENTRY BRUSH_ENTRY;
+} BRUSH_ENTRY;
 
 struct rdp_brush_cache
 {

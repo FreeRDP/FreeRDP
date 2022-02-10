@@ -42,7 +42,7 @@
 #define  WAVE_MAPPED_DEFAULT_COMMUNICATION_DEVICE   0x0010
 #endif
 
-typedef struct _AudinWinmmDevice
+typedef struct
 {
 	IAudinDevice iface;
 

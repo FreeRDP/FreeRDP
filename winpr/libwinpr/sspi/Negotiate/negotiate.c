@@ -29,7 +29,7 @@
 #include "negotiate.h"
 
 #include "../sspi.h"
-#include "../log.h"
+#include "../../log.h"
 #define TAG WINPR_TAG("negotiate")
 
 extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;

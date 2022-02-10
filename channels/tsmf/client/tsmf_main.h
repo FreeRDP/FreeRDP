@@ -24,21 +24,15 @@
 
 #include <freerdp/freerdp.h>
 
-typedef struct _TSMF_LISTENER_CALLBACK TSMF_LISTENER_CALLBACK;
-
-typedef struct _TSMF_CHANNEL_CALLBACK TSMF_CHANNEL_CALLBACK;
-
-typedef struct _TSMF_PLUGIN TSMF_PLUGIN;
-
-struct _TSMF_LISTENER_CALLBACK
+typedef struct
 {
 	IWTSListenerCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
-};
+} TSMF_LISTENER_CALLBACK;
 
-struct _TSMF_CHANNEL_CALLBACK
+typedef struct
 {
 	IWTSVirtualChannelCallback iface;
 
@@ -48,9 +42,9 @@ struct _TSMF_CHANNEL_CALLBACK
 
 	BYTE presentation_id[GUID_SIZE];
 	UINT32 stream_id;
-};
+} TSMF_CHANNEL_CALLBACK;
 
-struct _TSMF_PLUGIN
+typedef struct
 {
 	IWTSPlugin iface;
 
@@ -62,7 +56,7 @@ struct _TSMF_PLUGIN
 	const char* audio_device;
 
 	rdpContext* rdpcontext;
-};
+} TSMF_PLUGIN;
 
 BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id);
 BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id,

@@ -26,10 +26,10 @@
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpei.h>
 
-typedef struct _rdpei_server_context RdpeiServerContext;
-typedef struct _rdpei_server_private RdpeiServerPrivate;
+typedef struct s_rdpei_server_context RdpeiServerContext;
+typedef struct s_rdpei_server_private RdpeiServerPrivate;
 
-struct _rdpei_server_context
+struct s_rdpei_server_context
 {
 	HANDLE vcm;
 

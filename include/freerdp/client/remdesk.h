@@ -26,12 +26,10 @@
  * Client Interface
  */
 
-typedef struct _remdesk_client_context RemdeskClientContext;
-
-struct _remdesk_client_context
+typedef struct
 {
 	void* handle;
 	void* custom;
-};
+} RemdeskClientContext;
 
 #endif /* FREERDP_CHANNEL_REMDESK_CLIENT_REMDESK_H */

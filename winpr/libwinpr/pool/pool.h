@@ -25,12 +25,12 @@
 #include <winpr/thread.h>
 #include <winpr/collections.h>
 
-struct _TP_CALLBACK_INSTANCE
+struct S_TP_CALLBACK_INSTANCE
 {
 	PTP_WORK Work;
 };
 
-struct _TP_POOL
+struct S_TP_POOL
 {
 	DWORD Minimum;
 	DWORD Maximum;
@@ -40,29 +40,29 @@ struct _TP_POOL
 	wCountdownEvent* WorkComplete;
 };
 
-struct _TP_WORK
+struct S_TP_WORK
 {
 	PVOID CallbackParameter;
 	PTP_WORK_CALLBACK WorkCallback;
 	PTP_CALLBACK_ENVIRON CallbackEnvironment;
 };
 
-struct _TP_TIMER
+struct S_TP_TIMER
 {
 	void* dummy;
 };
 
-struct _TP_WAIT
+struct S_TP_WAIT
 {
 	void* dummy;
 };
 
-struct _TP_IO
+struct S_TP_IO
 {
 	void* dummy;
 };
 
-struct _TP_CLEANUP_GROUP
+struct S_TP_CLEANUP_GROUP
 {
 #ifndef _WIN32
 	wArrayList* groups;

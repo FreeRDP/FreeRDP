@@ -4,7 +4,7 @@
 #include <winpr/windows.h>
 #include <winpr/interlocked.h>
 
-typedef struct _PROGRAM_ITEM
+typedef struct
 {
 	WINPR_SLIST_ENTRY ItemEntry;
 	ULONG Signature;

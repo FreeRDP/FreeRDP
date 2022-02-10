@@ -26,7 +26,7 @@
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/color.h>
 
-typedef struct _CLEAR_CONTEXT CLEAR_CONTEXT;
+typedef struct S_CLEAR_CONTEXT CLEAR_CONTEXT;
 
 #ifdef __cplusplus
 extern "C"

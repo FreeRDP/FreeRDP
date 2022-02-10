@@ -27,15 +27,15 @@
 /**
  * Client Interface
  */
-typedef struct _geometry_client_context GeometryClientContext;
+typedef struct s_geometry_client_context GeometryClientContext;
 
-typedef struct _MAPPED_GEOMETRY MAPPED_GEOMETRY;
+typedef struct S_MAPPED_GEOMETRY MAPPED_GEOMETRY;
 typedef BOOL (*pcMappedGeometryAdded)(GeometryClientContext* context, MAPPED_GEOMETRY* geometry);
 typedef BOOL (*pcMappedGeometryUpdate)(MAPPED_GEOMETRY* geometry);
 typedef BOOL (*pcMappedGeometryClear)(MAPPED_GEOMETRY* geometry);
 
 /** @brief a geometry record tracked by the geometry channel */
-struct _MAPPED_GEOMETRY
+struct S_MAPPED_GEOMETRY
 {
 	volatile LONG refCounter;
 	UINT64 mappingId;
@@ -50,7 +50,7 @@ struct _MAPPED_GEOMETRY
 };
 
 /** @brief the geometry context for client channel */
-struct _geometry_client_context
+struct s_geometry_client_context
 {
 	wHashTable* geometries;
 	void* handle;

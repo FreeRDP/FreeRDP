@@ -261,7 +261,7 @@
 
 #pragma pack(push, 1)
 
-typedef struct _SCARD_IO_REQUEST
+typedef struct
 {
 	DWORD dwProtocol;
 	DWORD cbPciLength;
@@ -396,7 +396,7 @@ typedef struct
 	BYTE rgbAtr[36];
 } SCARD_READERSTATEW, *PSCARD_READERSTATEW, *LPSCARD_READERSTATEW;
 
-typedef struct _SCARD_ATRMASK
+typedef struct
 {
 	DWORD cbAtr;
 	BYTE rgbAtr[36];
@@ -1111,7 +1111,7 @@ typedef LONG(WINAPI* fnSCardListReadersWithDeviceInstanceIdW)(SCARDCONTEXT hCont
 
 typedef LONG(WINAPI* fnSCardAudit)(SCARDCONTEXT hContext, DWORD dwEvent);
 
-struct _SCardApiFunctionTable
+typedef struct
 {
 	DWORD dwVersion;
 	DWORD dwFlags;
@@ -1192,9 +1192,7 @@ struct _SCardApiFunctionTable
 	fnSCardListReadersWithDeviceInstanceIdA pfnSCardListReadersWithDeviceInstanceIdA;
 	fnSCardListReadersWithDeviceInstanceIdW pfnSCardListReadersWithDeviceInstanceIdW;
 	fnSCardAudit pfnSCardAudit;
-};
-
-typedef struct _SCardApiFunctionTable SCardApiFunctionTable;
+} SCardApiFunctionTable;
 typedef SCardApiFunctionTable* PSCardApiFunctionTable;
 
 #ifdef __cplusplus

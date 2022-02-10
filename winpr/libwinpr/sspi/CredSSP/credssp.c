@@ -27,7 +27,7 @@
 #include "credssp.h"
 
 #include "../sspi.h"
-#include "../log.h"
+#include "../../log.h"
 
 #define TAG WINPR_TAG("sspi.CredSSP")
 

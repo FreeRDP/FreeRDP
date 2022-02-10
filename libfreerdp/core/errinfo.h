@@ -23,14 +23,13 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/api.h>
 
-struct _ERRINFO
+typedef struct
 {
 	UINT32 code;
 	const char* name;
 	const char* info;
 	const char* category;
-};
-typedef struct _ERRINFO ERRINFO;
+} ERRINFO;
 
 FREERDP_LOCAL void rdp_print_errinfo(UINT32 code);
 

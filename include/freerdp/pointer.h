@@ -32,20 +32,18 @@
 #define SYSPTR_NULL 0x00000000
 #define SYSPTR_DEFAULT 0x00007F00
 
-struct _POINTER_POSITION_UPDATE
+typedef struct
 {
 	UINT32 xPos;
 	UINT32 yPos;
-};
-typedef struct _POINTER_POSITION_UPDATE POINTER_POSITION_UPDATE;
+} POINTER_POSITION_UPDATE;
 
-struct _POINTER_SYSTEM_UPDATE
+typedef struct
 {
 	UINT32 type;
-};
-typedef struct _POINTER_SYSTEM_UPDATE POINTER_SYSTEM_UPDATE;
+} POINTER_SYSTEM_UPDATE;
 
-struct _POINTER_COLOR_UPDATE
+typedef struct
 {
 	UINT32 cacheIndex;
 	UINT32 xPos;
@@ -56,10 +54,9 @@ struct _POINTER_COLOR_UPDATE
 	UINT32 lengthXorMask;
 	BYTE* xorMaskData;
 	BYTE* andMaskData;
-};
-typedef struct _POINTER_COLOR_UPDATE POINTER_COLOR_UPDATE;
+} POINTER_COLOR_UPDATE;
 
-struct _POINTER_LARGE_UPDATE
+typedef struct
 {
 	UINT16 xorBpp;
 	UINT16 cacheIndex;
@@ -71,21 +68,18 @@ struct _POINTER_LARGE_UPDATE
 	UINT32 lengthXorMask;
 	BYTE* xorMaskData;
 	BYTE* andMaskData;
-};
-typedef struct _POINTER_LARGE_UPDATE POINTER_LARGE_UPDATE;
+} POINTER_LARGE_UPDATE;
 
-struct _POINTER_NEW_UPDATE
+typedef struct
 {
 	UINT32 xorBpp;
 	POINTER_COLOR_UPDATE colorPtrAttr;
-};
-typedef struct _POINTER_NEW_UPDATE POINTER_NEW_UPDATE;
+} POINTER_NEW_UPDATE;
 
-struct _POINTER_CACHED_UPDATE
+typedef struct
 {
 	UINT32 cacheIndex;
-};
-typedef struct _POINTER_CACHED_UPDATE POINTER_CACHED_UPDATE;
+} POINTER_CACHED_UPDATE;
 
 typedef BOOL (*pPointerPosition)(rdpContext* context,
                                  const POINTER_POSITION_UPDATE* pointer_position);

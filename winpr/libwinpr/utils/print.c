@@ -29,7 +29,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include "trio.h"
+#include "trio/trio.h"
 
 #include "../log.h"
 

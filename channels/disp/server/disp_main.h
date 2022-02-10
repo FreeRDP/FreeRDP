@@ -22,7 +22,7 @@
 
 #include <freerdp/server/disp.h>
 
-struct _disp_server_private
+struct s_disp_server_private
 {
 	BOOL isReady;
 	wStream* input_stream;

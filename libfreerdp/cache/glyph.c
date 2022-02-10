@@ -30,6 +30,7 @@
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>
+#include <freerdp/cache/cache.h>
 #include <freerdp/cache/glyph.h>
 
 #include "glyph.h"

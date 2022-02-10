@@ -37,19 +37,19 @@ extern "C"
 	((type*)(((ULONG_PTR)address) - (ULONG_PTR)(&(((type*)0)->field))))
 #endif
 
-	typedef struct _WINPR_LIST_ENTRY WINPR_LIST_ENTRY;
-	typedef struct _WINPR_LIST_ENTRY* WINPR_PLIST_ENTRY;
+	typedef struct S_WINPR_LIST_ENTRY WINPR_LIST_ENTRY;
+	typedef struct S_WINPR_LIST_ENTRY* WINPR_PLIST_ENTRY;
 
-	struct _WINPR_LIST_ENTRY
+	struct S_WINPR_LIST_ENTRY
 	{
 		WINPR_PLIST_ENTRY Flink;
 		WINPR_PLIST_ENTRY Blink;
 	};
 
-	typedef struct _WINPR_SINGLE_LIST_ENTRY WINPR_SINGLE_LIST_ENTRY;
-	typedef struct _WINPR_SINGLE_LIST_ENTRY* WINPR_PSINGLE_LIST_ENTRY;
+	typedef struct S_WINPR_SINGLE_LIST_ENTRY WINPR_SINGLE_LIST_ENTRY;
+	typedef struct S_WINPR_SINGLE_LIST_ENTRY* WINPR_PSINGLE_LIST_ENTRY;
 
-	struct _WINPR_SINGLE_LIST_ENTRY
+	struct S_WINPR_SINGLE_LIST_ENTRY
 	{
 		WINPR_PSINGLE_LIST_ENTRY Next;
 	};
@@ -70,8 +70,8 @@ extern "C"
 
 #ifdef _WIN64
 
-	typedef struct _WINPR_SLIST_ENTRY* WINPR_PSLIST_ENTRY;
-	typedef struct DECLSPEC_ALIGN(16) _WINPR_SLIST_ENTRY
+	typedef struct S_WINPR_SLIST_ENTRY* WINPR_PSLIST_ENTRY;
+	typedef struct DECLSPEC_ALIGN(16) S_WINPR_SLIST_ENTRY
 	{
 		WINPR_PSLIST_ENTRY Next;
 	} WINPR_SLIST_ENTRY;
@@ -95,7 +95,8 @@ extern "C"
 
 #ifdef _WIN64
 
-	typedef union DECLSPEC_ALIGN(16) _WINPR_SLIST_HEADER {
+	typedef union DECLSPEC_ALIGN(16) _WINPR_SLIST_HEADER
+	{
 		struct
 		{
 			ULONGLONG Alignment;
@@ -125,7 +126,8 @@ extern "C"
 
 #else /* _WIN64 */
 
-	typedef union _WINPR_SLIST_HEADER {
+	typedef union _WINPR_SLIST_HEADER
+	{
 		ULONGLONG Alignment;
 
 		struct

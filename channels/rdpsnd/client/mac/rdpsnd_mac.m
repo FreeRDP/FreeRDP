@@ -39,7 +39,7 @@
 
 #include "rdpsnd_main.h"
 
-struct rdpsnd_mac_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
@@ -52,8 +52,7 @@ struct rdpsnd_mac_plugin
 	AVAudioEngine *engine;
 	AVAudioPlayerNode *player;
 	UINT64 diff;
-};
-typedef struct rdpsnd_mac_plugin rdpsndMacPlugin;
+} rdpsndMacPlugin;
 
 static BOOL rdpsnd_mac_set_format(rdpsndDevicePlugin *device, const AUDIO_FORMAT *format,
                                   UINT32 latency)

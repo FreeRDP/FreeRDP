@@ -27,7 +27,7 @@
 
 #include <winpr/collections.h>
 
-struct _wMessageQueue
+struct s_wMessageQueue
 {
 	size_t head;
 	size_t tail;

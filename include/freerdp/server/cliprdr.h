@@ -33,7 +33,7 @@
  * Server Interface
  */
 
-typedef struct _cliprdr_server_context CliprdrServerContext;
+typedef struct s_cliprdr_server_context CliprdrServerContext;
 
 typedef UINT (*psCliprdrOpen)(CliprdrServerContext* context);
 typedef UINT (*psCliprdrClose)(CliprdrServerContext* context);
@@ -83,7 +83,7 @@ typedef UINT (*psCliprdrClientFileContentsResponse)(
 typedef UINT (*psCliprdrServerFileContentsResponse)(
     CliprdrServerContext* context, const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse);
 
-struct _cliprdr_server_context
+struct s_cliprdr_server_context
 {
 	void* handle;
 	void* custom;

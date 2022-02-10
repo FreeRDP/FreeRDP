@@ -36,15 +36,13 @@
 
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_sndio_plugin rdpsndSndioPlugin;
-
-struct rdpsnd_sndio_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
 	struct sio_hdl* hdl;
 	struct sio_par par;
-};
+} rdpsndSndioPlugin;
 
 static BOOL rdpsnd_sndio_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {

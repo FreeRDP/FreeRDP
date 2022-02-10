@@ -32,7 +32,7 @@
  * Client Interface
  */
 
-typedef struct _cliprdr_client_context CliprdrClientContext;
+typedef struct s_cliprdr_client_context CliprdrClientContext;
 
 typedef UINT (*pcCliprdrServerCapabilities)(CliprdrClientContext* context,
                                             const CLIPRDR_CAPABILITIES* capabilities);
@@ -75,7 +75,7 @@ typedef UINT (*pcCliprdrClientFileContentsResponse)(
 typedef UINT (*pcCliprdrServerFileContentsResponse)(
     CliprdrClientContext* context, const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse);
 
-struct _cliprdr_client_context
+struct s_cliprdr_client_context
 {
 	void* handle;
 	void* custom;
@@ -105,33 +105,30 @@ struct _cliprdr_client_context
 	rdpContext* rdpcontext;
 };
 
-struct _CLIPRDR_FORMAT_NAME
+typedef struct
 {
 	UINT32 id;
 	char* name;
 	int length;
-};
-typedef struct _CLIPRDR_FORMAT_NAME CLIPRDR_FORMAT_NAME;
+} CLIPRDR_FORMAT_NAME;
 
 /**
  * Clipboard Events
  */
 
-struct _RDP_CB_CLIP_CAPS
+typedef struct
 {
 	wMessage event;
 	UINT32 capabilities;
-};
-typedef struct _RDP_CB_CLIP_CAPS RDP_CB_CLIP_CAPS;
+} RDP_CB_CLIP_CAPS;
 
-struct _RDP_CB_MONITOR_READY_EVENT
+typedef struct
 {
 	wMessage event;
 	UINT32 capabilities;
-};
-typedef struct _RDP_CB_MONITOR_READY_EVENT RDP_CB_MONITOR_READY_EVENT;
+} RDP_CB_MONITOR_READY_EVENT;
 
-struct _RDP_CB_FORMAT_LIST_EVENT
+typedef struct
 {
 	wMessage event;
 	UINT32* formats;
@@ -139,25 +136,22 @@ struct _RDP_CB_FORMAT_LIST_EVENT
 	BYTE* raw_format_data;
 	UINT32 raw_format_data_size;
 	BOOL raw_format_unicode;
-};
-typedef struct _RDP_CB_FORMAT_LIST_EVENT RDP_CB_FORMAT_LIST_EVENT;
+} RDP_CB_FORMAT_LIST_EVENT;
 
-struct _RDP_CB_DATA_REQUEST_EVENT
+typedef struct
 {
 	wMessage event;
 	UINT32 format;
-};
-typedef struct _RDP_CB_DATA_REQUEST_EVENT RDP_CB_DATA_REQUEST_EVENT;
+} RDP_CB_DATA_REQUEST_EVENT;
 
-struct _RDP_CB_DATA_RESPONSE_EVENT
+typedef struct
 {
 	wMessage event;
 	BYTE* data;
 	UINT32 size;
-};
-typedef struct _RDP_CB_DATA_RESPONSE_EVENT RDP_CB_DATA_RESPONSE_EVENT;
+} RDP_CB_DATA_RESPONSE_EVENT;
 
-struct _RDP_CB_FILECONTENTS_REQUEST_EVENT
+typedef struct
 {
 	wMessage event;
 	UINT32 streamId;
@@ -167,37 +161,32 @@ struct _RDP_CB_FILECONTENTS_REQUEST_EVENT
 	UINT32 nPositionHigh;
 	UINT32 cbRequested;
 	UINT32 clipDataId;
-};
-typedef struct _RDP_CB_FILECONTENTS_REQUEST_EVENT RDP_CB_FILECONTENTS_REQUEST_EVENT;
+} RDP_CB_FILECONTENTS_REQUEST_EVENT;
 
-struct _RDP_CB_FILECONTENTS_RESPONSE_EVENT
+typedef struct
 {
 	wMessage event;
 	BYTE* data;
 	UINT32 size;
 	UINT32 streamId;
-};
-typedef struct _RDP_CB_FILECONTENTS_RESPONSE_EVENT RDP_CB_FILECONTENTS_RESPONSE_EVENT;
+} RDP_CB_FILECONTENTS_RESPONSE_EVENT;
 
-struct _RDP_CB_LOCK_CLIPDATA_EVENT
+typedef struct
 {
 	wMessage event;
 	UINT32 clipDataId;
-};
-typedef struct _RDP_CB_LOCK_CLIPDATA_EVENT RDP_CB_LOCK_CLIPDATA_EVENT;
+} RDP_CB_LOCK_CLIPDATA_EVENT;
 
-struct _RDP_CB_UNLOCK_CLIPDATA_EVENT
+typedef struct
 {
 	wMessage event;
 	UINT32 clipDataId;
-};
-typedef struct _RDP_CB_UNLOCK_CLIPDATA_EVENT RDP_CB_UNLOCK_CLIPDATA_EVENT;
+} RDP_CB_UNLOCK_CLIPDATA_EVENT;
 
-struct _RDP_CB_TEMPDIR_EVENT
+typedef struct
 {
 	wMessage event;
 	char dirname[520];
-};
-typedef struct _RDP_CB_TEMPDIR_EVENT RDP_CB_TEMPDIR_EVENT;
+} RDP_CB_TEMPDIR_EVENT;
 
 #endif /* FREERDP_CHANNEL_CLIPRDR_CLIENT_CLIPRDR_H */

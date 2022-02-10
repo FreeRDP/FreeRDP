@@ -111,8 +111,8 @@ struct xf_glyph
 typedef struct xf_glyph xfGlyph;
 
 typedef struct xf_clipboard xfClipboard;
-typedef struct _xfDispContext xfDispContext;
-typedef struct _xfVideoContext xfVideoContext;
+typedef struct s_xfDispContext xfDispContext;
+typedef struct s_xfVideoContext xfVideoContext;
 typedef struct xf_rail_icon_cache xfRailIconCache;
 
 /* Number of buttons that are mapped from X11 to RDP button events. */

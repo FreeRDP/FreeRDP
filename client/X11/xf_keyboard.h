@@ -25,7 +25,7 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-struct _XF_MODIFIER_KEYS
+typedef struct
 {
 	BOOL Shift;
 	BOOL LeftShift;
@@ -39,8 +39,7 @@ struct _XF_MODIFIER_KEYS
 	BOOL Super;
 	BOOL LeftSuper;
 	BOOL RightSuper;
-};
-typedef struct _XF_MODIFIER_KEYS XF_MODIFIER_KEYS;
+} XF_MODIFIER_KEYS;
 
 BOOL xf_keyboard_init(xfContext* xfc);
 void xf_keyboard_free(xfContext* xfc);

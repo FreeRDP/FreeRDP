@@ -40,7 +40,7 @@
 #define CHANNEL_MAX_COUNT 30
 #endif
 
-struct rdp_channel_client_data
+typedef struct
 {
 	PVIRTUALCHANNELENTRY entry;
 	PVIRTUALCHANNELENTRYEX entryEx;
@@ -48,10 +48,9 @@ struct rdp_channel_client_data
 	PCHANNEL_INIT_EVENT_EX_FN pChannelInitEventProcEx;
 	void* pInitHandle;
 	void* lpUserParam;
-};
-typedef struct rdp_channel_client_data CHANNEL_CLIENT_DATA;
+} CHANNEL_CLIENT_DATA;
 
-struct rdp_channel_open_data
+typedef struct
 {
 	char name[CHANNEL_NAME_LEN + 1];
 	int OpenHandle;
@@ -62,17 +61,15 @@ struct rdp_channel_open_data
 	void* lpUserParam;
 	PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc;
 	PCHANNEL_OPEN_EVENT_EX_FN pChannelOpenEventProcEx;
-};
-typedef struct rdp_channel_open_data CHANNEL_OPEN_DATA;
+} CHANNEL_OPEN_DATA;
 
-struct _CHANNEL_OPEN_EVENT
+typedef struct
 {
 	void* Data;
 	UINT32 DataLength;
 	void* UserData;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
-};
-typedef struct _CHANNEL_OPEN_EVENT CHANNEL_OPEN_EVENT;
+} CHANNEL_OPEN_EVENT;
 
 /**
  * pInitHandle: handle that identifies the client connection
@@ -80,12 +77,11 @@ typedef struct _CHANNEL_OPEN_EVENT CHANNEL_OPEN_EVENT;
  * Used by the client with VirtualChannelOpen
  */
 
-struct rdp_channel_init_data
+typedef struct
 {
 	rdpChannels* channels;
 	void* pInterface;
-};
-typedef struct rdp_channel_init_data CHANNEL_INIT_DATA;
+} CHANNEL_INIT_DATA;
 
 struct rdp_channels
 {

@@ -32,7 +32,7 @@
 
 #include "tsmf_audio.h"
 
-typedef struct _TSMFPulseAudioDevice
+typedef struct
 {
 	ITSMFAudioDevice iface;
 

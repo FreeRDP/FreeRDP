@@ -159,7 +159,7 @@ typedef PCSC_LONG (*fnPCSCSCardGetAttrib)(SCARDHANDLE hCard, PCSC_DWORD dwAttrId
 typedef PCSC_LONG (*fnPCSCSCardSetAttrib)(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPCBYTE pbAttr,
                                           PCSC_DWORD cbAttrLen);
 
-struct _PCSCFunctionTable
+typedef struct
 {
 	fnPCSCSCardEstablishContext pfnSCardEstablishContext;
 	fnPCSCSCardReleaseContext pfnSCardReleaseContext;
@@ -179,11 +179,7 @@ struct _PCSCFunctionTable
 	fnPCSCSCardCancel pfnSCardCancel;
 	fnPCSCSCardGetAttrib pfnSCardGetAttrib;
 	fnPCSCSCardSetAttrib pfnSCardSetAttrib;
-};
-typedef struct _PCSCFunctionTable PCSCFunctionTable;
-
-typedef struct _PCSC_SCARDCONTEXT PCSC_SCARDCONTEXT;
-typedef struct _PCSC_SCARDHANDLE PCSC_SCARDHANDLE;
+} PCSCFunctionTable;
 
 typedef struct
 {
@@ -192,7 +188,7 @@ typedef struct
 	BYTE* data;
 } PCSC_CACHE_ITEM;
 
-struct _PCSC_SCARDCONTEXT
+typedef struct
 {
 	SCARDHANDLE owner;
 	CRITICAL_SECTION lock;
@@ -200,13 +196,13 @@ struct _PCSC_SCARDCONTEXT
 	DWORD dwCardHandleCount;
 	BOOL isTransactionLocked;
 	wHashTable* cache;
-};
+} PCSC_SCARDCONTEXT;
 
-struct _PCSC_SCARDHANDLE
+typedef struct
 {
 	BOOL shared;
 	SCARDCONTEXT hSharedContext;
-};
+} PCSC_SCARDHANDLE;
 
 static HMODULE g_PCSCModule = NULL;
 static PCSCFunctionTable g_PCSC = { 0 };
