@@ -26,6 +26,52 @@
 #include <winpr/thread.h>
 #include <winpr/collections.h>
 
+#if defined(_WIN32)
+#if (_WIN32_WINNT < _WIN32_WINNT_WIN6)
+struct _TP_CALLBACK_INSTANCE
+{
+	PTP_WORK Work;
+};
+
+struct _TP_POOL
+{
+	DWORD Minimum;
+	DWORD Maximum;
+	wArrayList* Threads;
+	wQueue* PendingQueue;
+	HANDLE TerminateEvent;
+	wCountdownEvent* WorkComplete;
+};
+
+struct _TP_WORK
+{
+	PVOID CallbackParameter;
+	PTP_WORK_CALLBACK WorkCallback;
+	PTP_CALLBACK_ENVIRON CallbackEnvironment;
+};
+
+struct _TP_TIMER
+{
+	void* dummy;
+};
+
+struct _TP_WAIT
+{
+	void* dummy;
+};
+
+struct _TP_IO
+{
+	void* dummy;
+};
+
+struct _TP_CLEANUP_GROUP
+{
+	void* dummy;
+};
+
+#endif
+#else
 struct S_TP_CALLBACK_INSTANCE
 {
 	PTP_WORK Work;
@@ -65,13 +111,11 @@ struct S_TP_IO
 
 struct S_TP_CLEANUP_GROUP
 {
-#ifndef _WIN32
 	wArrayList* groups;
 	PTP_CALLBACK_ENVIRON env;
-#else
-	void* dummy;
-#endif
 };
+
+#endif
 
 PTP_POOL GetDefaultThreadpool(void);
 
