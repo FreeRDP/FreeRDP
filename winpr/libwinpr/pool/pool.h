@@ -20,6 +20,7 @@
 #ifndef WINPR_POOL_PRIVATE_H
 #define WINPR_POOL_PRIVATE_H
 
+#include <winpr/windows.h>
 #include <winpr/pool.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
