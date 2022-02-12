@@ -58,6 +58,12 @@
 
 #define TAG CLIENT_TAG("windows")
 
+PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPSTR pszSubsystem,
+    LPSTR pszType, DWORD dwFlags)
+{
+    return NULL;
+}
+
 static BOOL wf_create_console(void)
 {
 #if defined(WITH_WIN_CONSOLE)
