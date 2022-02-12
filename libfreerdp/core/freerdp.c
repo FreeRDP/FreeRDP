@@ -105,7 +105,8 @@ BOOL freerdp_connect(freerdp* instance)
 	if (status)
 		status2 = freerdp_channels_pre_connect(instance->context->channels, instance);
 
-	if (settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
+	if (settings->KeyboardLayout == KBD_JAPANESE ||
+	    settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
 	{
 		settings->KeyboardType = 7;
 		settings->KeyboardSubType = 2;
