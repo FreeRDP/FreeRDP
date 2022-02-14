@@ -97,7 +97,7 @@ static SECURITY_STATUS NCryptP11StorageProvider_dtor(NCRYPT_HANDLE handle)
 	if (provider->library)
 		FreeLibrary(provider->library);
 
-	return winpr_NCryptDefault_dtor(&provider->baseProvider.baseHandle);
+	return winpr_NCryptDefault_dtor(handle);
 }
 
 static void fix_padded_string(char *str, size_t maxlen)
@@ -788,70 +788,101 @@ static SECURITY_STATUS NCryptP11OpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY
 	return ERROR_SUCCESS;
 }
 
+static SECURITY_STATUS initialize_pkcs11(HANDLE handle,
+                                         CK_RV (*c_get_function_list)(CK_FUNCTION_LIST_PTR_PTR),
+                                         NCRYPT_PROV_HANDLE* phProvider)
+{
+	SECURITY_STATUS status = ERROR_SUCCESS;
+	NCryptP11ProviderHandle* ret;
+	CK_RV rv;
+
+	WINPR_ASSERT(c_get_function_list);
+	WINPR_ASSERT(phProvider);
+
+	ret = (NCryptP11ProviderHandle*)ncrypt_new_handle(
+	    WINPR_NCRYPT_PROVIDER, sizeof(*ret), NCryptP11GetProperty, NCryptP11StorageProvider_dtor);
+	if (!ret)
+	{
+		if (handle)
+			FreeLibrary(handle);
+		return NTE_NO_MEMORY;
+	}
+
+	ret->library = handle;
+	ret->baseProvider.enumKeysFn = NCryptP11EnumKeys;
+	ret->baseProvider.openKeyFn = NCryptP11OpenKey;
+
+	rv = c_get_function_list(&ret->p11);
+	if (rv != CKR_OK)
+	{
+		status = NTE_PROVIDER_DLL_FAIL;
+		goto fail;
+	}
+
+	WINPR_ASSERT(ret->p11->C_Initialize);
+	rv = ret->p11->C_Initialize(NULL);
+	if (rv != CKR_OK)
+	{
+		status = NTE_PROVIDER_DLL_FAIL;
+		goto fail;
+	}
+
+	*phProvider = (NCRYPT_PROV_HANDLE)ret;
+
+fail:
+	if (status != ERROR_SUCCESS)
+		ret->baseProvider.baseHandle.releaseFn((NCRYPT_HANDLE)ret);
+	return status;
+}
+
 SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
                                                LPCWSTR pszProviderName, DWORD dwFlags,
                                                LPCSTR* modulePaths)
 {
 	SECURITY_STATUS status;
-	NCryptP11ProviderHandle* ret = NULL;
-	CK_RV rv;
-	CK_RV (*c_get_function_list)(CK_FUNCTION_LIST_PTR_PTR);
 
 	WINPR_ASSERT(modulePaths);
 
 	if (!phProvider)
 		return ERROR_INVALID_PARAMETER;
 
-	ret = (NCryptP11ProviderHandle*)ncrypt_new_handle(
-	    WINPR_NCRYPT_PROVIDER, sizeof(*ret), NCryptP11GetProperty, NCryptP11StorageProvider_dtor);
-	if (!ret)
-		return NTE_NO_MEMORY;
-
-	ret->baseProvider.enumKeysFn = NCryptP11EnumKeys;
-	ret->baseProvider.openKeyFn = NCryptP11OpenKey;
-
+#if defined(WITH_OPENSC_PKCS11_LINKED)
+	return initialize_pkcs11(NULL, C_GetFunctionList, phProvider);
+#else
 	while (*modulePaths)
 	{
+		HANDLE library;
+		CK_RV (*c_get_function_list)(CK_FUNCTION_LIST_PTR_PTR);
+
 		WLog_DBG(TAG, "Trying pkcs11-helper module '%s'", *modulePaths);
-		ret->library = LoadLibrary(*modulePaths);
-		if (!ret->library)
+		library = LoadLibrary(*modulePaths);
+		if (!library)
 		{
 			status = NTE_PROV_DLL_NOT_FOUND;
 			goto out_load_library;
 		}
 
-		c_get_function_list = GetProcAddress(ret->library, "C_GetFunctionList");
+		c_get_function_list = GetProcAddress(library, "C_GetFunctionList");
 		if (!c_get_function_list)
 		{
 			status = NTE_PROV_TYPE_ENTRY_BAD;
-			goto out_lib_entry;
+			goto out_load_library;
 		}
 
-		rv = c_get_function_list(&ret->p11);
-		if (rv != CKR_OK)
+		status = initialize_pkcs11(library, c_get_function_list, phProvider);
+		if (status != ERROR_SUCCESS)
 		{
 			status = NTE_PROVIDER_DLL_FAIL;
-			goto out_lib_entry;
-		}
-
-		rv = ret->p11->C_Initialize(NULL);
-		if (rv != CKR_OK)
-		{
-			status = NTE_PROVIDER_DLL_FAIL;
-			goto out_lib_entry;
+			goto out_load_library;
 		}
 
 		WLog_DBG(TAG, "module '%s' loaded", *modulePaths);
-		*phProvider = (NCRYPT_PROV_HANDLE)ret;
 		return ERROR_SUCCESS;
 
-	out_lib_entry:
-		FreeLibrary(ret->library);
 	out_load_library:
 		modulePaths++;
 	}
-
-	free(ret);
+#endif
 	return status;
 }
 

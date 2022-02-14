@@ -15,16 +15,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-winpr_module_add(
-	ncrypt.c
-	ncrypt.h
-	ncrypt_pkcs11.c
-)
-
 if(WITH_PKCS11 AND NOT WIN32)
 	winpr_include_directory_add(${PKCS11_INCLUDE_DIR})
 	winpr_library_add_public(${PKCS11_LIBRARY})
+
+    option(WITH_OPENSC_PKCS11_LINKED "Directly link opensc-pkcs11" OFF)
+    if (WITH_OPENSC_PKCS11_LINKED)
+
+        # opensc-pkcs11 is installed without any library prefix.
+        # Disable this when checking for this library.
+        set(backup ${CMAKE_FIND_LIBRARY_PREFIXES})
+        set(CMAKE_FIND_LIBRARY_PREFIXES "")        
+        find_library(OPENSC_PKCS11
+            NAMES opensc-pkcs11
+            PATH_SUFFIXES pkcs11
+            REQUIRED)
+        set(CMAKE_FIND_LIBRARY_PREFIXES ${backup})
+
+        winpr_definition_add(-DWITH_OPENSC_PKCS11_LINKED)
+        winpr_library_add_private(${OPENSC_PKCS11})
+    endif()
 endif()
+
+winpr_module_add(
+        ncrypt.c
+        ncrypt.h
+        ncrypt_pkcs11.c
+)
 
 if(BUILD_TESTING)
 	add_subdirectory(test)
