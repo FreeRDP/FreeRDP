@@ -786,10 +786,11 @@ int nla_client_begin(rdpNla* nla)
 				goto fail;
 			nla_set_state(nla, NLA_STATE_NEGO_TOKEN);
 			break;
+		case SEC_E_NO_CREDENTIALS:
 		case SEC_I_INCOMPLETE_CREDENTIALS:
 		case SEC_E_INCOMPLETE_MESSAGE:
 		default:
-			break;
+			goto fail;
 	}
 
 	rc = 1;
