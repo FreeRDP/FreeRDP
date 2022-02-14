@@ -166,10 +166,6 @@ SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider
 	if (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0 ||
 	    _wcscmp(pszProviderName, MS_SCARD_PROV) == 0)
 	{
-		SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE * phProvider,
-		                                               LPCWSTR pszProviderName, DWORD dwFlags,
-		                                               LPCSTR * modulePaths);
-
 		if (!modulePaths)
 			return ERROR_INVALID_PARAMETER;
 		return NCryptOpenP11StorageProviderEx(phProvider, pszProviderName, dwFlags, modulePaths);
