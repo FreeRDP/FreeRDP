@@ -1002,7 +1002,7 @@ static jboolean JNICALL jni_freerdp_send_clipboard_data(JNIEnv* env, jclass cls,
 	ANDROID_EVENT* event;
 	freerdp* inst = (freerdp*)instance;
 	const jbyte* data = jdata != NULL ? (*env)->GetStringUTFChars(env, jdata, NULL) : NULL;
-	const size_t data_length = data ? (*env)->GetStringUTFLength(env, data) : 0;
+	const size_t data_length = data ? (*env)->GetStringUTFLength(env, jdata) : 0;
 	jboolean ret = JNI_FALSE;
 	event = (ANDROID_EVENT*)android_event_clipboard_new((void*)data, data_length);
 
