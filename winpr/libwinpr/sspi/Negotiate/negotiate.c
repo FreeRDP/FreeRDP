@@ -134,6 +134,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		if (!pInput)
 		{
 			context->sspiW->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
 		}
 
@@ -158,6 +159,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		if (!pInput)
 		{
 			context->sspiW->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, NTLM_SSP_NAME);
 		}
 
@@ -196,6 +198,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 		if (!pInput)
 		{
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
 		}
 
@@ -220,6 +223,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 		if (!pInput)
 		{
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, NTLM_SSP_NAME);
 		}
 
