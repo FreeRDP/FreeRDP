@@ -142,6 +142,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		    TargetDataRep, pInput, Reserved2, &(context->SubContext), pOutput, pfContextAttr,
 		    ptsExpiry);
 
+#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
 		if (status == SEC_E_NO_CREDENTIALS)
 		{
 			WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
@@ -149,6 +150,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			context->sspiW->DeleteSecurityContext(&(context->SubContext));
 			SecInvalidateHandle(&context->SubContext);
 		}
+#endif
 	}
 
 	if (ErrorInitContextKerberos)
@@ -202,6 +204,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 		    TargetDataRep, pInput, Reserved2, &(context->SubContext), pOutput, pfContextAttr,
 		    ptsExpiry);
 
+#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
 		if (status == SEC_E_NO_CREDENTIALS)
 		{
 			WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
@@ -209,6 +212,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
 			SecInvalidateHandle(&context->SubContext);
 		}
+#endif
 	}
 
 	if (ErrorInitContextKerberos)
