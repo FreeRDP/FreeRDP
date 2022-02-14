@@ -839,7 +839,7 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
                                                LPCWSTR pszProviderName, DWORD dwFlags,
                                                LPCSTR* modulePaths)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = ERROR_INVALID_PARAMETER;
 #if defined(__LP64__) || (defined(__x86_64__) && !defined(__ILP32__)) || defined(_M_X64) || \
     defined(__ia64) || defined(_M_IA64) || defined(__aarch64__) || defined(__powerpc64__)
 #define LIBS64
@@ -876,11 +876,10 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 
 	while (*modulePaths)
 	{
-		HANDLE library;
+		HANDLE library = LoadLibrary(*modulePaths);
 		CK_RV (*c_get_function_list)(CK_FUNCTION_LIST_PTR_PTR);
 
 		WLog_DBG(TAG, "Trying pkcs11-helper module '%s'", *modulePaths);
-		library = LoadLibrary(*modulePaths);
 		if (!library)
 		{
 			status = NTE_PROV_DLL_NOT_FOUND;
