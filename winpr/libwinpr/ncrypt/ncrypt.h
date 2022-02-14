@@ -20,6 +20,10 @@
 #ifndef WINPR_LIBWINPR_NCRYPT_NCRYPT_H_
 #define WINPR_LIBWINPR_NCRYPT_NCRYPT_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <winpr/bcrypt.h>
 #include <winpr/crypto.h>
 #include <winpr/ncrypt.h>
@@ -78,5 +82,11 @@ SECURITY_STATUS checkNCryptHandle(NCRYPT_HANDLE handle, NCryptHandleType matchTy
 void* ncrypt_new_handle(NCryptHandleType kind, size_t len, NCryptGetPropertyFn getProp,
                         NCryptReleaseFn dtor);
 SECURITY_STATUS winpr_NCryptDefault_dtor(NCryptBaseHandle* h);
+
+#if defined(WITH_PKCS11)
+SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
+                                               LPCWSTR pszProviderName, DWORD dwFlags,
+                                               LPCSTR* modulePaths);
+#endif
 
 #endif /* WINPR_LIBWINPR_NCRYPT_NCRYPT_H_ */
