@@ -39,7 +39,7 @@
 
 #define TAG CHANNELS_TAG("echo.server")
 
-typedef struct _echo_server
+typedef struct
 {
 	echo_server_context context;
 

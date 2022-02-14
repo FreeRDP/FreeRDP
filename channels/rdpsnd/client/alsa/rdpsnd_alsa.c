@@ -41,9 +41,7 @@
 
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_alsa_plugin rdpsndAlsaPlugin;
-
-struct rdpsnd_alsa_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
@@ -59,7 +57,7 @@ struct rdpsnd_alsa_plugin
 
 	snd_pcm_uframes_t buffer_size;
 	snd_pcm_uframes_t period_size;
-};
+} rdpsndAlsaPlugin;
 
 #define SND_PCM_CHECK(_func, _status)                  \
 	do                                                 \

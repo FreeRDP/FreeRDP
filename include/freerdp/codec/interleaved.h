@@ -20,23 +20,13 @@
 #ifndef FREERDP_CODEC_INTERLEAVED_H
 #define FREERDP_CODEC_INTERLEAVED_H
 
-typedef struct _BITMAP_INTERLEAVED_CONTEXT BITMAP_INTERLEAVED_CONTEXT;
-
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 
-struct _BITMAP_INTERLEAVED_CONTEXT
-{
-	BOOL Compressor;
-
-	UINT32 TempSize;
-	BYTE* TempBuffer;
-
-	wStream* bts;
-};
+typedef struct S_BITMAP_INTERLEAVED_CONTEXT BITMAP_INTERLEAVED_CONTEXT;
 
 #ifdef __cplusplus
 extern "C"

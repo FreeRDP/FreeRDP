@@ -53,11 +53,11 @@
 
  #define IOS_AUDIO_QUEUE_NUM_BUFFERS 100
 
- typedef struct _AudinIosDevice
- {
- 	IAudinDevice iface;
+typedef struct
+{
+	IAudinDevice iface;
 
- 	AUDIO_FORMAT format;
+	AUDIO_FORMAT format;
  	UINT32 FramesPerPacket;
  	int dev_unit;
 
@@ -70,7 +70,7 @@
  	AudioQueueRef audioQueue;
  	AudioStreamBasicDescription audioFormat;
  	AudioQueueBufferRef audioBuffers[IOS_AUDIO_QUEUE_NUM_BUFFERS];
- } AudinIosDevice;
+} AudinIosDevice;
 
  static AudioFormatID audin_ios_get_format(const AUDIO_FORMAT *format)
  {

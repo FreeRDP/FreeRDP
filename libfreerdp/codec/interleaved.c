@@ -324,6 +324,16 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 3)
 #include "include/bitmap.c"
 
+struct S_BITMAP_INTERLEAVED_CONTEXT
+{
+	BOOL Compressor;
+
+	UINT32 TempSize;
+	BYTE* TempBuffer;
+
+	wStream* bts;
+};
+
 BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE* pSrcData,
                             UINT32 SrcSize, UINT32 nSrcWidth, UINT32 nSrcHeight, UINT32 bpp,
                             BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,

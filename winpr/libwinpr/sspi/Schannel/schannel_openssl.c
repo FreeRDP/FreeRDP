@@ -35,7 +35,7 @@
 #include <openssl/err.h>
 #include <openssl/bio.h>
 
-struct _SCHANNEL_OPENSSL
+struct S_SCHANNEL_OPENSSL
 {
 	SSL* ssl;
 	SSL_CTX* ctx;

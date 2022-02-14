@@ -36,7 +36,7 @@
 #define TAG CLIENT_TAG("x11disp")
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
-struct _xfDispContext
+struct s_xfDispContext
 {
 	xfContext* xfc;
 	DispClientContext* disp;

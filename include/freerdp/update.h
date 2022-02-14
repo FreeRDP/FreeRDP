@@ -44,7 +44,7 @@ typedef struct rdp_update rdpUpdate;
 /* Bitmap Updates */
 #define EX_COMPRESSED_BITMAP_HEADER_PRESENT 0x01
 
-struct _BITMAP_DATA
+typedef struct
 {
 	UINT32 destLeft;
 	UINT32 destTop;
@@ -61,46 +61,41 @@ struct _BITMAP_DATA
 	UINT32 cbUncompressedSize;
 	BYTE* bitmapDataStream;
 	BOOL compressed;
-};
-typedef struct _BITMAP_DATA BITMAP_DATA;
+} BITMAP_DATA;
 
-struct _BITMAP_UPDATE
+typedef struct
 {
 	UINT32 number;
 	BITMAP_DATA* rectangles;
 	BOOL skipCompression;
-};
-typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
+} BITMAP_UPDATE;
 
 /* Palette Updates */
 
-struct _PALETTE_UPDATE
+typedef struct
 {
 	UINT32 number;
 	PALETTE_ENTRY entries[256];
-};
-typedef struct _PALETTE_UPDATE PALETTE_UPDATE;
+} PALETTE_UPDATE;
 
 /* Play Sound (System Beep) Updates */
 
-struct _PLAY_SOUND_UPDATE
+typedef struct
 {
 	UINT32 duration;
 	UINT32 frequency;
-};
-typedef struct _PLAY_SOUND_UPDATE PLAY_SOUND_UPDATE;
+} PLAY_SOUND_UPDATE;
 
 /* Surface Command Updates */
-struct _TS_COMPRESSED_BITMAP_HEADER_EX
+typedef struct
 {
 	UINT32 highUniqueId;
 	UINT32 lowUniqueId;
 	UINT64 tmMilliseconds;
 	UINT64 tmSeconds;
-};
-typedef struct _TS_COMPRESSED_BITMAP_HEADER_EX TS_COMPRESSED_BITMAP_HEADER_EX;
+} TS_COMPRESSED_BITMAP_HEADER_EX;
 
-struct _TS_BITMAP_DATA_EX
+typedef struct
 {
 	BYTE bpp;
 	BYTE flags;
@@ -110,8 +105,7 @@ struct _TS_BITMAP_DATA_EX
 	UINT32 bitmapDataLength;
 	TS_COMPRESSED_BITMAP_HEADER_EX exBitmapDataHeader;
 	BYTE* bitmapData;
-};
-typedef struct _TS_BITMAP_DATA_EX TS_BITMAP_DATA_EX;
+} TS_BITMAP_DATA_EX;
 
 enum SURFCMD_CMDTYPE
 {
@@ -120,7 +114,7 @@ enum SURFCMD_CMDTYPE
 	CMDTYPE_STREAM_SURFACE_BITS = 0x0006
 };
 
-struct _SURFACE_BITS_COMMAND
+typedef struct
 {
 	UINT32 cmdType;
 	UINT32 destLeft;
@@ -129,15 +123,13 @@ struct _SURFACE_BITS_COMMAND
 	UINT32 destBottom;
 	TS_BITMAP_DATA_EX bmp;
 	BOOL skipCompression;
-};
-typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
+} SURFACE_BITS_COMMAND;
 
-struct _SURFACE_FRAME_MARKER
+typedef struct
 {
 	UINT32 frameAction;
 	UINT32 frameId;
-};
-typedef struct _SURFACE_FRAME_MARKER SURFACE_FRAME_MARKER;
+} SURFACE_FRAME_MARKER;
 
 enum SURFCMD_FRAMEACTION
 {
@@ -159,13 +151,12 @@ enum
 	TS_STATUS_VM_RETRYING_MONITORING = 0x00000505
 };
 
-struct _SURFACE_FRAME
+typedef struct
 {
 	UINT32 frameId;
 	UINT32 commandCount;
 	SURFACE_BITS_COMMAND* commands;
-};
-typedef struct _SURFACE_FRAME SURFACE_FRAME;
+} SURFACE_FRAME;
 
 /* defined inside libfreerdp-core */
 typedef struct rdp_update_proxy rdpUpdateProxy;

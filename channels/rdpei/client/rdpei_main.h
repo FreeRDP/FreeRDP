@@ -62,24 +62,22 @@
  *
  */
 
-struct _RDPINPUT_CONTACT_POINT
+typedef struct
 {
 	BOOL dirty;
 	BOOL active;
 	UINT32 contactId;
 	INT32 externalId;
 	RDPINPUT_CONTACT_DATA data;
-};
-typedef struct _RDPINPUT_CONTACT_POINT RDPINPUT_CONTACT_POINT;
+} RDPINPUT_CONTACT_POINT;
 
-struct _RDPINPUT_PEN_CONTACT_POINT
+typedef struct
 {
 	BOOL dirty;
 	BOOL active;
 	INT32 externalId;
 	RDPINPUT_PEN_CONTACT data;
-};
-typedef struct _RDPINPUT_PEN_CONTACT_POINT RDPINPUT_PEN_CONTACT_POINT;
+} RDPINPUT_PEN_CONTACT_POINT;
 
 #ifdef WITH_DEBUG_DVC
 #define DEBUG_DVC(...) WLog_DBG(TAG, __VA_ARGS__)

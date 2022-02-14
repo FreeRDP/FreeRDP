@@ -1,8 +1,6 @@
 #ifndef FREERDP_CLIENT_MAC_FREERDP_H
 #define FREERDP_CLIENT_MAC_FREERDP_H
 
-typedef struct mf_context mfContext;
-
 #include <freerdp/freerdp.h>
 #include <freerdp/client/file.h>
 #include <freerdp/api.h>
@@ -29,7 +27,7 @@ typedef struct mf_context mfContext;
 #include "Keyboard.h"
 #include <CoreGraphics/CoreGraphics.h>
 
-struct mf_context
+typedef struct
 {
 	rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
@@ -85,6 +83,6 @@ struct mf_context
 	int yMaxScroll;     // maximum vertical scroll value
 
 	CGEventFlags kbdFlags;
-};
+} mfContext;
 
 #endif /* FREERDP_CLIENT_MAC_FREERDP_H */

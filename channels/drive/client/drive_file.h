@@ -31,9 +31,7 @@
 
 #define TAG CHANNELS_TAG("drive.client")
 
-typedef struct _DRIVE_FILE DRIVE_FILE;
-
-struct _DRIVE_FILE
+typedef struct
 {
 	UINT32 id;
 	BOOL is_dir;
@@ -49,7 +47,7 @@ struct _DRIVE_FILE
 	UINT32 DesiredAccess;
 	UINT32 CreateDisposition;
 	UINT32 CreateOptions;
-};
+} DRIVE_FILE;
 
 DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 PathLength, UINT32 id,
                            UINT32 DesiredAccess, UINT32 CreateDisposition, UINT32 CreateOptions,

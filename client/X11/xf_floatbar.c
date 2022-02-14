@@ -60,7 +60,16 @@
 
 typedef BOOL (*OnClick)(xfFloatbar*);
 
-typedef struct xf_floatbar_button xfFloatbarButton;
+typedef struct
+{
+	int x;
+	int y;
+	int type;
+	bool focus;
+	bool clicked;
+	OnClick onclick;
+	Window handle;
+} xfFloatbarButton;
 
 struct xf_floatbar
 {
@@ -80,17 +89,6 @@ struct xf_floatbar
 	BOOL created;
 	Window root_window;
 	char* title;
-};
-
-struct xf_floatbar_button
-{
-	int x;
-	int y;
-	int type;
-	bool focus;
-	bool clicked;
-	OnClick onclick;
-	Window handle;
 };
 
 static xfFloatbarButton* xf_floatbar_new_button(xfFloatbar* floatbar, int type);

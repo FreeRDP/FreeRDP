@@ -62,19 +62,17 @@ struct winpr_thread
 	void* exit_stack;
 #endif
 };
-typedef struct winpr_thread WINPR_THREAD;
 
 WINPR_THREAD* winpr_GetCurrentThread(VOID);
 
-struct winpr_process
+typedef struct
 {
 	WINPR_HANDLE_DEF();
 
 	pid_t pid;
 	int status;
 	DWORD dwExitCode;
-};
-typedef struct winpr_process WINPR_PROCESS;
+} WINPR_PROCESS;
 
 #endif
 

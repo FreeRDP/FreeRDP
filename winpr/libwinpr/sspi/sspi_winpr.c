@@ -55,19 +55,17 @@ static const SecPkgInfoW* SecPkgInfoW_LIST[] = { &NTLM_SecPkgInfoW, &KERBEROS_Se
 static SecurityFunctionTableA winpr_SecurityFunctionTableA;
 static SecurityFunctionTableW winpr_SecurityFunctionTableW;
 
-struct _SecurityFunctionTableA_NAME
+typedef struct
 {
 	const SEC_CHAR* Name;
 	const SecurityFunctionTableA* SecurityFunctionTable;
-};
-typedef struct _SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME;
+} SecurityFunctionTableA_NAME;
 
-struct _SecurityFunctionTableW_NAME
+typedef struct
 {
 	const SEC_WCHAR* Name;
 	const SecurityFunctionTableW* SecurityFunctionTable;
-};
-typedef struct _SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME;
+} SecurityFunctionTableW_NAME;
 
 static const SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME_LIST[] = {
 	{ "NTLM", &NTLM_SecurityFunctionTableA },
@@ -94,20 +92,18 @@ static const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] = {
 #define SecHandle_LOWER_MAX 0xFFFFFFFF
 #define SecHandle_UPPER_MAX 0xFFFFFFFE
 
-struct _CONTEXT_BUFFER_ALLOC_ENTRY
+typedef struct
 {
 	void* contextBuffer;
 	UINT32 allocatorIndex;
-};
-typedef struct _CONTEXT_BUFFER_ALLOC_ENTRY CONTEXT_BUFFER_ALLOC_ENTRY;
+} CONTEXT_BUFFER_ALLOC_ENTRY;
 
-struct _CONTEXT_BUFFER_ALLOC_TABLE
+typedef struct
 {
 	UINT32 cEntries;
 	UINT32 cMaxEntries;
 	CONTEXT_BUFFER_ALLOC_ENTRY* entries;
-};
-typedef struct _CONTEXT_BUFFER_ALLOC_TABLE CONTEXT_BUFFER_ALLOC_TABLE;
+} CONTEXT_BUFFER_ALLOC_TABLE;
 
 static CONTEXT_BUFFER_ALLOC_TABLE ContextBufferAllocTable = { 0 };
 

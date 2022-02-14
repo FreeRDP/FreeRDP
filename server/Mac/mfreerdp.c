@@ -44,6 +44,9 @@
 #include "mfreerdp.h"
 #include "mf_peer.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
+
 static void mf_server_main_loop(freerdp_listener* instance)
 {
 	WINPR_ASSERT(instance);

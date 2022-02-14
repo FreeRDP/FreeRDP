@@ -73,9 +73,10 @@ extern "C"
 #define PROCESSOR_ARM_7TDMI 70001
 #define PROCESSOR_OPTIL 0x494F
 
-	typedef struct _SYSTEM_INFO
+	typedef struct
 	{
-		union {
+		union
+		{
 			DWORD dwOemId;
 
 			struct
@@ -99,7 +100,7 @@ extern "C"
 	WINPR_API void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 	WINPR_API void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 
-	typedef struct _OSVERSIONINFOA
+	typedef struct
 	{
 		DWORD dwOSVersionInfoSize;
 		DWORD dwMajorVersion;
@@ -109,7 +110,7 @@ extern "C"
 		CHAR szCSDVersion[128];
 	} OSVERSIONINFOA, *POSVERSIONINFOA, *LPOSVERSIONINFOA;
 
-	typedef struct _OSVERSIONINFOW
+	typedef struct
 	{
 		DWORD dwOSVersionInfoSize;
 		DWORD dwMajorVersion;
@@ -119,7 +120,7 @@ extern "C"
 		WCHAR szCSDVersion[128];
 	} OSVERSIONINFOW, *POSVERSIONINFOW, *LPOSVERSIONINFOW;
 
-	typedef struct _OSVERSIONINFOEXA
+	typedef struct
 	{
 		DWORD dwOSVersionInfoSize;
 		DWORD dwMajorVersion;
@@ -134,7 +135,7 @@ extern "C"
 		BYTE wReserved;
 	} OSVERSIONINFOEXA, *POSVERSIONINFOEXA, *LPOSVERSIONINFOEXA;
 
-	typedef struct _OSVERSIONINFOEXW
+	typedef struct
 	{
 		DWORD dwOSVersionInfoSize;
 		DWORD dwMajorVersion;
@@ -276,7 +277,7 @@ extern "C"
 
 	WINPR_API DWORD GetTickCount(void);
 
-	typedef enum _COMPUTER_NAME_FORMAT
+	typedef enum
 	{
 		ComputerNameNetBIOS,
 		ComputerNameDnsHostname,

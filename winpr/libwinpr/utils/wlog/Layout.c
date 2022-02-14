@@ -33,7 +33,7 @@
 
 #include "wlog.h"
 
-#include "wlog/Layout.h"
+#include "Layout.h"
 
 #if defined __linux__ && !defined ANDROID
 #include <unistd.h>

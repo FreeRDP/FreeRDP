@@ -22,7 +22,7 @@
 
 #include <winpr/crt.h>
 
-typedef struct _FloatBar wfFloatBar;
+typedef struct s_FloatBar wfFloatBar;
 typedef struct wf_context wfContext;
 
 wfFloatBar* wf_floatbar_new(wfContext* wfc, HINSTANCE window, DWORD flags);

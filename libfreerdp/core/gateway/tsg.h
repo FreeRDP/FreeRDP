@@ -35,7 +35,7 @@ typedef struct rdp_tsg rdpTsg;
 #include <freerdp/types.h>
 #include <freerdp/api.h>
 
-enum _TSG_STATE
+typedef enum
 {
 	TSG_STATE_INITIAL,
 	TSG_STATE_CONNECTED,
@@ -45,8 +45,7 @@ enum _TSG_STATE
 	TSG_STATE_TUNNEL_CLOSE_PENDING,
 	TSG_STATE_CHANNEL_CLOSE_PENDING,
 	TSG_STATE_FINAL
-};
-typedef enum _TSG_STATE TSG_STATE;
+} TSG_STATE;
 
 #define TsProxyCreateTunnelOpnum 1
 #define TsProxyAuthorizeTunnelOpnum 2

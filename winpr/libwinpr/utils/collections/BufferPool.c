@@ -27,16 +27,15 @@
 
 /* WARNING: Do not access structs directly, the API will be reworked
  * to make this opaque. */
-struct _wBufferPoolItem
+typedef struct
 {
 	SSIZE_T size;
 	void* buffer;
-};
-typedef struct _wBufferPoolItem wBufferPoolItem;
+} wBufferPoolItem;
 
 /* WARNING: Do not access structs directly, the API will be reworked
  * to make this opaque. */
-struct _wBufferPool
+struct s_wBufferPool
 {
 	SSIZE_T fixedSize;
 	DWORD alignment;

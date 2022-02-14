@@ -70,7 +70,7 @@
 #define HTTP_STATUS_GATEWAY_TIMEOUT 504
 #define HTTP_STATUS_VERSION_NOT_SUP 505
 
-typedef enum _TRANSFER_ENCODING
+typedef enum
 {
 	TransferEncodingUnknown,
 	TransferEncodingIdentity,
@@ -78,7 +78,7 @@ typedef enum _TRANSFER_ENCODING
 } TRANSFER_ENCODING;
 
 /* HTTP context */
-typedef struct _http_context HttpContext;
+typedef struct s_http_context HttpContext;
 
 FREERDP_LOCAL HttpContext* http_context_new(void);
 FREERDP_LOCAL void http_context_free(HttpContext* context);
@@ -100,7 +100,7 @@ FREERDP_LOCAL BOOL http_context_enable_websocket_upgrade(HttpContext* context, B
 FREERDP_LOCAL BOOL http_context_is_websocket_upgrade_enabled(HttpContext* context);
 
 /* HTTP request */
-typedef struct _http_request HttpRequest;
+typedef struct s_http_request HttpRequest;
 
 FREERDP_LOCAL HttpRequest* http_request_new(void);
 FREERDP_LOCAL void http_request_free(HttpRequest* request);
@@ -119,7 +119,7 @@ FREERDP_LOCAL BOOL http_request_set_transfer_encoding(HttpRequest* request,
 FREERDP_LOCAL wStream* http_request_write(HttpContext* context, HttpRequest* request);
 
 /* HTTP response */
-typedef struct _http_response HttpResponse;
+typedef struct s_http_response HttpResponse;
 
 FREERDP_LOCAL HttpResponse* http_response_new(void);
 FREERDP_LOCAL void http_response_free(HttpResponse* response);

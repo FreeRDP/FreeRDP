@@ -20,28 +20,25 @@
 #ifndef FREERDP_LIB_CORE_GATEWAY_RTS_SIGNATURE_H
 #define FREERDP_LIB_CORE_GATEWAY_RTS_SIGNATURE_H
 
-typedef struct rts_pdu_signature RtsPduSignature;
-typedef struct _RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_ENTRY;
-
 #include "rts.h"
 
 #include <winpr/wtypes.h>
 #include <freerdp/api.h>
 
-struct rts_pdu_signature
+typedef struct
 {
 	UINT16 Flags;
 	UINT16 NumberOfCommands;
 	UINT32 CommandTypes[8];
-};
+} RtsPduSignature;
 
-struct _RTS_PDU_SIGNATURE_ENTRY
+typedef struct
 {
 	UINT32 SignatureId;
 	BOOL SignatureClient;
 	const RtsPduSignature* Signature;
 	const char* PduName;
-};
+} RTS_PDU_SIGNATURE_ENTRY;
 
 /* RTS PDU Signature IDs */
 

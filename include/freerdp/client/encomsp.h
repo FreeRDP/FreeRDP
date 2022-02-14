@@ -28,7 +28,7 @@
  * Client Interface
  */
 
-typedef struct _encomsp_client_context EncomspClientContext;
+typedef struct s_encomsp_client_context EncomspClientContext;
 
 typedef UINT (*pcEncomspFilterUpdated)(EncomspClientContext* context,
                                        const ENCOMSP_FILTER_UPDATED_PDU* filterUpdated);
@@ -55,7 +55,7 @@ typedef UINT (*pcEncomspGraphicsStreamResumed)(
     EncomspClientContext* context,
     const ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU* graphicsStreamResumed);
 
-struct _encomsp_client_context
+struct s_encomsp_client_context
 {
 	void* handle;
 	void* custom;

@@ -72,7 +72,7 @@ the custom_zlib field of the compress and decompress settings*/
 
 #ifdef LODEPNG_COMPILE_PNG
 /*The PNG color types (also used for raw).*/
-typedef enum LodePNGColorType
+typedef enum
 {
 	LCT_GREY = 0,       /*greyscale: 1,2,4,8,16 bit*/
 	LCT_RGB = 2,        /*RGB: 8,16 bit*/
@@ -245,7 +245,7 @@ Color mode of an image. Contains all information required to decode the pixel
 bits to RGBA colors. This information is the same as used in the PNG file
 format, and is used both for PNG and raw image data in LodePNG.
 */
-typedef struct LodePNGColorMode
+typedef struct
 {
 	/*header (IHDR)*/
 	LodePNGColorType
@@ -326,7 +326,7 @@ size_t lodepng_get_raw_size(unsigned w, unsigned h, const LodePNGColorMode* colo
 
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
 /*The information of a Time chunk in PNG.*/
-typedef struct LodePNGTime
+typedef struct
 {
 	unsigned year;   /*2 bytes used (0-65535)*/
 	unsigned month;  /*1-12*/
@@ -338,7 +338,7 @@ typedef struct LodePNGTime
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
 
 /*Information about the PNG image, except pixels, width and height.*/
-typedef struct LodePNGInfo
+typedef struct
 {
 	/*header (IHDR), palette (PLTE) and transparency (tRNS) chunks*/
 	unsigned compression_method; /*compression method of the original file. Always 0.*/
@@ -456,7 +456,7 @@ unsigned lodepng_convert(unsigned char* out, const unsigned char* in, LodePNGCol
 Settings for the decoder. This contains settings for the PNG and the Zlib
 decoder, but not the Info settings from the Info structs.
 */
-typedef struct LodePNGDecoderSettings
+typedef struct
 {
 	LodePNGDecompressSettings zlibsettings; /*in here is the setting to ignore Adler32 checksums*/
 
@@ -478,7 +478,7 @@ void lodepng_decoder_settings_init(LodePNGDecoderSettings* settings);
 
 #ifdef LODEPNG_COMPILE_ENCODER
 /*automatically use color type with less bits per pixel if losslessly possible. Default: AUTO*/
-typedef enum LodePNGFilterStrategy
+typedef enum
 {
 	/*every filter at zero*/
 	LFS_ZERO,
@@ -499,7 +499,7 @@ typedef enum LodePNGFilterStrategy
 /*Gives characteristics about the colors of the image, which helps decide which color model to use
 for encoding. Used internally by default if "auto_convert" is enabled. Public because it's useful
 for custom algorithms.*/
-typedef struct LodePNGColorProfile
+typedef struct
 {
 	unsigned colored; /*not greyscale*/
 	unsigned key;     /*if true, image is not opaque. Only if true and alpha is false, color key is
@@ -526,7 +526,7 @@ unsigned lodepng_auto_choose_color(LodePNGColorMode* mode_out, const unsigned ch
                                    unsigned w, unsigned h, const LodePNGColorMode* mode_in);
 
 /*Settings for the encoder.*/
-typedef struct LodePNGEncoderSettings
+typedef struct
 {
 	LodePNGCompressSettings
 	    zlibsettings; /*settings for the zlib encoder, such as window size, ...*/
@@ -563,7 +563,7 @@ void lodepng_encoder_settings_init(LodePNGEncoderSettings* settings);
 
 #if defined(LODEPNG_COMPILE_DECODER) || defined(LODEPNG_COMPILE_ENCODER)
 /*The settings, state and information for extended encoding and decoding.*/
-typedef struct LodePNGState
+typedef struct
 {
 #ifdef LODEPNG_COMPILE_DECODER
 	LodePNGDecoderSettings decoder; /*the decoding settings*/

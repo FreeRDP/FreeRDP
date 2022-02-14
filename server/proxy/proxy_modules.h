@@ -26,7 +26,7 @@
 
 #include <freerdp/server/proxy/proxy_modules_api.h>
 
-enum _PF_FILTER_TYPE
+typedef enum
 {
 	FILTER_TYPE_KEYBOARD,                              /* proxyKeyboardEventInfo */
 	FILTER_TYPE_MOUSE,                                 /* proxyMouseEventInfo */
@@ -38,10 +38,9 @@ enum _PF_FILTER_TYPE
 	FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_CREATE,     /* proxyChannelDataEventInfo */
 
 	FILTER_LAST
-};
-typedef enum _PF_FILTER_TYPE PF_FILTER_TYPE;
+} PF_FILTER_TYPE;
 
-enum _PF_HOOK_TYPE
+typedef enum
 {
 	HOOK_TYPE_CLIENT_INIT_CONNECT,
 	HOOK_TYPE_CLIENT_UNINIT_CONNECT,
@@ -60,8 +59,7 @@ enum _PF_HOOK_TYPE
 	HOOK_TYPE_SERVER_SESSION_END,
 
 	HOOK_LAST
-};
-typedef enum _PF_HOOK_TYPE PF_HOOK_TYPE;
+} PF_HOOK_TYPE;
 
 #ifdef __cplusplus
 extern "C"

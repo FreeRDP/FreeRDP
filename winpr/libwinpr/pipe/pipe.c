@@ -73,7 +73,7 @@
 
 static wArrayList* g_NamedPipeServerSockets = NULL;
 
-typedef struct _NamedPipeServerSocketEntry
+typedef struct
 {
 	char* name;
 	int serverfd;

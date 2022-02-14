@@ -26,7 +26,7 @@
 
 #include <winpr/collections.h>
 
-struct _wObjectPool
+struct s_wObjectPool
 {
 	size_t size;
 	size_t capacity;

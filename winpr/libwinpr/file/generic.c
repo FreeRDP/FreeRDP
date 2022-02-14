@@ -848,14 +848,13 @@ BOOL WINAPI SetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	return FALSE;
 }
 
-struct _WIN32_FILE_SEARCH
+typedef struct
 {
 	DIR* pDir;
 	LPSTR lpPath;
 	LPSTR lpPattern;
 	struct dirent* pDirent;
-};
-typedef struct _WIN32_FILE_SEARCH WIN32_FILE_SEARCH;
+} WIN32_FILE_SEARCH;
 
 static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
                              LPWIN32_FIND_DATAA lpFindFileData)

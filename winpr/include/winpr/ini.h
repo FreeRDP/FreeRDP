@@ -23,7 +23,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-typedef struct _wIniFile wIniFile;
+typedef struct s_wIniFile wIniFile;
 
 #ifdef __cplusplus
 extern "C"

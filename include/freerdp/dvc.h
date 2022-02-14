@@ -56,15 +56,15 @@
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
 
-typedef struct _IWTSVirtualChannelManager IWTSVirtualChannelManager;
-typedef struct _IWTSListener IWTSListener;
-typedef struct _IWTSVirtualChannel IWTSVirtualChannel;
+typedef struct s_IWTSVirtualChannelManager IWTSVirtualChannelManager;
+typedef struct s_IWTSListener IWTSListener;
+typedef struct s_IWTSVirtualChannel IWTSVirtualChannel;
 
-typedef struct _IWTSPlugin IWTSPlugin;
-typedef struct _IWTSListenerCallback IWTSListenerCallback;
-typedef struct _IWTSVirtualChannelCallback IWTSVirtualChannelCallback;
+typedef struct s_IWTSPlugin IWTSPlugin;
+typedef struct s_IWTSListenerCallback IWTSListenerCallback;
+typedef struct s_IWTSVirtualChannelCallback IWTSVirtualChannelCallback;
 
-struct _IWTSListener
+struct s_IWTSListener
 {
 	/* Retrieves the listener-specific configuration. */
 	UINT (*GetConfiguration)(IWTSListener* pListener, void** ppPropertyBag);
@@ -72,7 +72,7 @@ struct _IWTSListener
 	void* pInterface;
 };
 
-struct _IWTSVirtualChannel
+struct s_IWTSVirtualChannel
 {
 	/* Starts a write request on the channel. */
 	UINT (*Write)(IWTSVirtualChannel* pChannel, ULONG cbSize, const BYTE* pBuffer, void* pReserved);
@@ -80,7 +80,7 @@ struct _IWTSVirtualChannel
 	UINT (*Close)(IWTSVirtualChannel* pChannel);
 };
 
-struct _IWTSVirtualChannelManager
+struct s_IWTSVirtualChannelManager
 {
 	/* Returns an instance of a listener object that listens on a specific
 	   endpoint, or creates a static channel. */
@@ -95,7 +95,7 @@ struct _IWTSVirtualChannelManager
 	UINT (*DestroyListener)(IWTSVirtualChannelManager* pChannelMgr, IWTSListener* ppListener);
 };
 
-struct _IWTSPlugin
+struct s_IWTSPlugin
 {
 	/* Used for the first call that is made from the client to the plug-in. */
 	UINT (*Initialize)(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr);
@@ -119,7 +119,7 @@ struct _IWTSPlugin
 	void* pInterface;
 };
 
-struct _IWTSListenerCallback
+struct s_IWTSListenerCallback
 {
 	/* Accepts or denies a connection request for an incoming connection to
 	   the associated listener. */
@@ -128,7 +128,7 @@ struct _IWTSListenerCallback
 	 BOOL* pbAccept, IWTSVirtualChannelCallback** ppCallback);
 };
 
-struct _IWTSVirtualChannelCallback
+struct s_IWTSVirtualChannelCallback
 {
 	/* Notifies the user about data that is being received. */
 	UINT (*OnDataReceived)(IWTSVirtualChannelCallback* pChannelCallback, wStream* data);
@@ -139,8 +139,8 @@ struct _IWTSVirtualChannelCallback
 };
 
 /* The DVC Plugin entry points */
-typedef struct _IDRDYNVC_ENTRY_POINTS IDRDYNVC_ENTRY_POINTS;
-struct _IDRDYNVC_ENTRY_POINTS
+typedef struct S_IDRDYNVC_ENTRY_POINTS IDRDYNVC_ENTRY_POINTS;
+struct S_IDRDYNVC_ENTRY_POINTS
 {
 	UINT(*RegisterPlugin)
 	(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name, IWTSPlugin* pPlugin);

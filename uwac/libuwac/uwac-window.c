@@ -497,7 +497,7 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 		errno = 0;
 		val = strtoul(env, &endp, 10);
 
-		if (!errno && val != 0 && val != ULONG_MAX)
+		if (!errno && val != 0 && val != UINT32_MAX)
 			ivi_surface_id = val;
 	}
 

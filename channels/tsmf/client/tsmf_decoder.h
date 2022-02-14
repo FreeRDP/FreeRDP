@@ -23,7 +23,7 @@
 
 #include "tsmf_types.h"
 
-typedef enum _ITSMFControlMsg
+typedef enum
 {
 	Control_Pause,
 	Control_Resume,
@@ -31,9 +31,9 @@ typedef enum _ITSMFControlMsg
 	Control_Stop
 } ITSMFControlMsg;
 
-typedef struct _ITSMFDecoder ITSMFDecoder;
+typedef struct s_ITSMFDecoder ITSMFDecoder;
 
-struct _ITSMFDecoder
+struct s_ITSMFDecoder
 {
 	/* Set the decoder format. Return true if supported. */
 	BOOL (*SetFormat)(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type);

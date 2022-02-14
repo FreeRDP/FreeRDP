@@ -47,27 +47,25 @@
 
 #include "video_main.h"
 
-struct _VIDEO_CHANNEL_CALLBACK
+typedef struct
 {
 	IWTSVirtualChannelCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
-};
-typedef struct _VIDEO_CHANNEL_CALLBACK VIDEO_CHANNEL_CALLBACK;
+} VIDEO_CHANNEL_CALLBACK;
 
-struct _VIDEO_LISTENER_CALLBACK
+typedef struct
 {
 	IWTSListenerCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	VIDEO_CHANNEL_CALLBACK* channel_callback;
-};
-typedef struct _VIDEO_LISTENER_CALLBACK VIDEO_LISTENER_CALLBACK;
+} VIDEO_LISTENER_CALLBACK;
 
-struct _VIDEO_PLUGIN
+typedef struct
 {
 	IWTSPlugin wtsPlugin;
 
@@ -78,46 +76,15 @@ struct _VIDEO_PLUGIN
 
 	VideoClientContext* context;
 	BOOL initialized;
-};
-typedef struct _VIDEO_PLUGIN VIDEO_PLUGIN;
+} VIDEO_PLUGIN;
 
 #define XF_VIDEO_UNLIMITED_RATE 31
 
 static const BYTE MFVideoFormat_H264[] = { 'H',  '2',  '6',  '4',  0x00, 0x00, 0x10, 0x00,
 	                                       0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 };
 
-typedef struct _PresentationContext PresentationContext;
-typedef struct _VideoFrame VideoFrame;
-
-/** @brief private data for the channel */
-struct _VideoClientContextPriv
-{
-	VideoClientContext* video;
-	GeometryClientContext* geometry;
-	wQueue* frames;
-	CRITICAL_SECTION framesLock;
-	wBufferPool* surfacePool;
-	UINT32 publishedFrames;
-	UINT32 droppedFrames;
-	UINT32 lastSentRate;
-	UINT64 nextFeedbackTime;
-	PresentationContext* currentPresentation;
-};
-
 /** @brief */
-struct _VideoFrame
-{
-	UINT64 publishTime;
-	UINT64 hnsDuration;
-	MAPPED_GEOMETRY* geometry;
-	UINT32 w, h;
-	UINT32 scanline;
-	BYTE* surfaceData;
-	PresentationContext* presentation;
-};
-
-/** @brief */
-struct _PresentationContext
+typedef struct
 {
 	VideoClientContext* video;
 	BYTE PresentationId;
@@ -131,6 +98,33 @@ struct _PresentationContext
 	UINT64 lastPublishTime, nextPublishTime;
 	volatile LONG refCounter;
 	VideoSurface* surface;
+} PresentationContext;
+
+/** @brief */
+typedef struct
+{
+	UINT64 publishTime;
+	UINT64 hnsDuration;
+	MAPPED_GEOMETRY* geometry;
+	UINT32 w, h;
+	UINT32 scanline;
+	BYTE* surfaceData;
+	PresentationContext* presentation;
+} VideoFrame;
+
+/** @brief private data for the channel */
+struct s_VideoClientContextPriv
+{
+	VideoClientContext* video;
+	GeometryClientContext* geometry;
+	wQueue* frames;
+	CRITICAL_SECTION framesLock;
+	wBufferPool* surfacePool;
+	UINT32 publishedFrames;
+	UINT32 droppedFrames;
+	UINT32 lastSentRate;
+	UINT64 nextFeedbackTime;
+	PresentationContext* currentPresentation;
 };
 
 static void PresentationContext_unref(PresentationContext* presentation);

@@ -33,8 +33,8 @@
 typedef UINT (*AudinReceive)(const AUDIO_FORMAT* format, const BYTE* data, size_t size,
                              void* userData);
 
-typedef struct _IAudinDevice IAudinDevice;
-struct _IAudinDevice
+typedef struct s_IAudinDevice IAudinDevice;
+struct s_IAudinDevice
 {
 	UINT (*Open)(IAudinDevice* devplugin, AudinReceive receive, void* userData);
 	BOOL (*FormatSupported)(IAudinDevice* devplugin, const AUDIO_FORMAT* format);
@@ -47,14 +47,13 @@ struct _IAudinDevice
 
 typedef UINT (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
 
-struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS
+typedef struct
 {
 	IWTSPlugin* plugin;
 	PREGISTERAUDINDEVICE pRegisterAudinDevice;
 	const ADDIN_ARGV* args;
 	rdpContext* rdpcontext;
-};
-typedef struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
+} FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 typedef FREERDP_AUDIN_DEVICE_ENTRY_POINTS* PFREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 
 typedef UINT (*PFREERDP_AUDIN_DEVICE_ENTRY)(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints);

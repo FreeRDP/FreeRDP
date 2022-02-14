@@ -61,15 +61,14 @@ typedef BOOL(WINAPI* fnRemoveClipboardFormatListener)(HWND hwnd);
 typedef BOOL(WINAPI* fnGetUpdatedClipboardFormats)(PUINT lpuiFormats, UINT cFormats,
                                                    PUINT pcFormatsOut);
 
-struct format_mapping
+typedef struct
 {
 	UINT32 remote_format_id;
 	UINT32 local_format_id;
 	WCHAR* name;
-};
-typedef struct format_mapping formatMapping;
+} formatMapping;
 
-struct _CliprdrEnumFORMATETC
+typedef struct
 {
 	IEnumFORMATETC iEnumFORMATETC;
 
@@ -77,10 +76,9 @@ struct _CliprdrEnumFORMATETC
 	LONG m_nIndex;
 	LONG m_nNumFormats;
 	FORMATETC* m_pFormatEtc;
-};
-typedef struct _CliprdrEnumFORMATETC CliprdrEnumFORMATETC;
+} CliprdrEnumFORMATETC;
 
-struct _CliprdrStream
+typedef struct
 {
 	IStream iStream;
 
@@ -90,10 +88,9 @@ struct _CliprdrStream
 	ULARGE_INTEGER m_lOffset;
 	FILEDESCRIPTORW m_Dsc;
 	void* m_pData;
-};
-typedef struct _CliprdrStream CliprdrStream;
+} CliprdrStream;
 
-struct _CliprdrDataObject
+typedef struct
 {
 	IDataObject iDataObject;
 
@@ -104,10 +101,9 @@ struct _CliprdrDataObject
 	ULONG m_nStreams;
 	IStream** m_pStream;
 	void* m_pData;
-};
-typedef struct _CliprdrDataObject CliprdrDataObject;
+} CliprdrDataObject;
 
-struct wf_clipboard
+typedef struct
 {
 	wfContext* wfc;
 	rdpChannels* channels;
@@ -143,8 +139,7 @@ struct wf_clipboard
 	fnAddClipboardFormatListener AddClipboardFormatListener;
 	fnRemoveClipboardFormatListener RemoveClipboardFormatListener;
 	fnGetUpdatedClipboardFormats GetUpdatedClipboardFormats;
-};
-typedef struct wf_clipboard wfClipboard;
+} wfClipboard;
 
 #define WM_CLIPRDR_MESSAGE (WM_USER + 156)
 #define OLE_SETCLIPBOARD 1

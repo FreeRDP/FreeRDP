@@ -23,13 +23,12 @@
 
 #include "CallbackAppender.h"
 
-struct _wLogCallbackAppender
+typedef struct
 {
 	WLOG_APPENDER_COMMON();
 
 	wLogCallbacks* callbacks;
-};
-typedef struct _wLogCallbackAppender wLogCallbackAppender;
+} wLogCallbackAppender;
 
 static BOOL WLog_CallbackAppender_Open(wLog* log, wLogAppender* appender)
 {

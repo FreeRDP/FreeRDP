@@ -30,7 +30,7 @@
 
 #define TAG CHANNELS_TAG("cliprdr.client")
 
-struct cliprdr_plugin
+typedef struct
 {
 	CHANNEL_DEF channelDef;
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
@@ -48,8 +48,7 @@ struct cliprdr_plugin
 	BOOL fileClipNoFilePaths;
 	BOOL canLockClipData;
 	BOOL hasHugeFileSupport;
-};
-typedef struct cliprdr_plugin cliprdrPlugin;
+} cliprdrPlugin;
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
 

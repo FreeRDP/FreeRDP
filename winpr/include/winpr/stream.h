@@ -34,9 +34,9 @@ extern "C"
 {
 #endif
 
-	typedef struct _wStreamPool wStreamPool;
+	typedef struct s_wStreamPool wStreamPool;
 
-	struct _wStream
+	typedef struct
 	{
 		BYTE* buffer;
 		BYTE* pointer;
@@ -47,8 +47,7 @@ extern "C"
 		wStreamPool* pool;
 		BOOL isAllocatedStream;
 		BOOL isOwner;
-	};
-	typedef struct _wStream wStream;
+	} wStream;
 
 	static INLINE size_t Stream_Capacity(const wStream* _s);
 	WINPR_API size_t Stream_GetRemainingCapacity(const wStream* _s);

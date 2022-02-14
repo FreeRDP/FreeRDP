@@ -49,7 +49,7 @@
 #define MSG_SNDIN_DATA 0x06
 #define MSG_SNDIN_FORMATCHANGE 0x07
 
-typedef struct _audin_server
+typedef struct
 {
 	audin_server_context context;
 

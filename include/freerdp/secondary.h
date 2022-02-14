@@ -67,7 +67,7 @@
 #define SO_CHAR_INC_EQUAL_BM_BASE 0x20
 #define SO_MAXEXT_EQUAL_BM_SIDE 0x40
 
-struct _CACHE_BITMAP_ORDER
+typedef struct
 {
 	UINT32 cacheId;
 	UINT32 bitmapBpp;
@@ -78,10 +78,9 @@ struct _CACHE_BITMAP_ORDER
 	BOOL compressed;
 	BYTE bitmapComprHdr[8];
 	BYTE* bitmapDataStream;
-};
-typedef struct _CACHE_BITMAP_ORDER CACHE_BITMAP_ORDER;
+} CACHE_BITMAP_ORDER;
 
-struct _CACHE_BITMAP_V2_ORDER
+typedef struct
 {
 	UINT32 cacheId;
 	UINT32 flags;
@@ -98,10 +97,9 @@ struct _CACHE_BITMAP_V2_ORDER
 	UINT32 cbScanWidth;
 	UINT32 cbUncompressedSize;
 	BYTE* bitmapDataStream;
-};
-typedef struct _CACHE_BITMAP_V2_ORDER CACHE_BITMAP_V2_ORDER;
+} CACHE_BITMAP_V2_ORDER;
 
-struct _BITMAP_DATA_EX
+typedef struct
 {
 	UINT32 bpp;
 	UINT32 codecID;
@@ -109,10 +107,9 @@ struct _BITMAP_DATA_EX
 	UINT32 height;
 	UINT32 length;
 	BYTE* data;
-};
-typedef struct _BITMAP_DATA_EX BITMAP_DATA_EX;
+} BITMAP_DATA_EX;
 
-struct _CACHE_BITMAP_V3_ORDER
+typedef struct
 {
 	UINT32 cacheId;
 	UINT32 bpp;
@@ -121,37 +118,33 @@ struct _CACHE_BITMAP_V3_ORDER
 	UINT32 key1;
 	UINT32 key2;
 	BITMAP_DATA_EX bitmapData;
-};
-typedef struct _CACHE_BITMAP_V3_ORDER CACHE_BITMAP_V3_ORDER;
+} CACHE_BITMAP_V3_ORDER;
 
-struct _CACHE_COLOR_TABLE_ORDER
+typedef struct
 {
 	UINT32 cacheIndex;
 	UINT32 numberColors;
 	UINT32 colorTable[256];
-};
-typedef struct _CACHE_COLOR_TABLE_ORDER CACHE_COLOR_TABLE_ORDER;
+} CACHE_COLOR_TABLE_ORDER;
 
-struct _CACHE_GLYPH_ORDER
+typedef struct
 {
 	UINT32 cacheId;
 	UINT32 cGlyphs;
 	GLYPH_DATA glyphData[256];
 	WCHAR* unicodeCharacters;
-};
-typedef struct _CACHE_GLYPH_ORDER CACHE_GLYPH_ORDER;
+} CACHE_GLYPH_ORDER;
 
-struct _CACHE_GLYPH_V2_ORDER
+typedef struct
 {
 	UINT32 cacheId;
 	UINT32 flags;
 	UINT32 cGlyphs;
 	GLYPH_DATA_V2 glyphData[256];
 	WCHAR* unicodeCharacters;
-};
-typedef struct _CACHE_GLYPH_V2_ORDER CACHE_GLYPH_V2_ORDER;
+} CACHE_GLYPH_V2_ORDER;
 
-struct _CACHE_BRUSH_ORDER
+typedef struct
 {
 	UINT32 index;
 	UINT32 bpp;
@@ -160,8 +153,7 @@ struct _CACHE_BRUSH_ORDER
 	UINT32 style;
 	UINT32 length;
 	BYTE data[256];
-};
-typedef struct _CACHE_BRUSH_ORDER CACHE_BRUSH_ORDER;
+} CACHE_BRUSH_ORDER;
 
 typedef BOOL (*pCacheBitmap)(rdpContext* context, const CACHE_BITMAP_ORDER* cache_bitmap_order);
 typedef BOOL (*pCacheBitmapV2)(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);

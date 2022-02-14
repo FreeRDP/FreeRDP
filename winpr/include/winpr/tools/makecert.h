@@ -27,7 +27,7 @@ extern "C"
 {
 #endif
 
-	typedef struct _MAKECERT_CONTEXT MAKECERT_CONTEXT;
+	typedef struct S_MAKECERT_CONTEXT MAKECERT_CONTEXT;
 
 	WINPR_API int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv);
 

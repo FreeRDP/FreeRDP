@@ -27,13 +27,12 @@
 
 #define TAG CLIENT_TAG("wayland.pointer")
 
-struct wlf_pointer
+typedef struct
 {
 	rdpPointer pointer;
 	size_t size;
 	void* data;
-};
-typedef struct wlf_pointer wlfPointer;
+} wlfPointer;
 
 static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {

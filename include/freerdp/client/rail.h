@@ -31,7 +31,7 @@
  * Client Interface
  */
 
-typedef struct _rail_client_context RailClientContext;
+typedef struct s_rail_client_context RailClientContext;
 
 typedef UINT (*pcRailOnOpen)(RailClientContext* context, BOOL* sendHandshake);
 
@@ -87,7 +87,7 @@ typedef UINT (*pcRailServerGetAppidResponseExtended)(RailClientContext* context,
 typedef UINT (*pcRailClientCompartmentInfo)(RailClientContext* context,
                                             const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
 
-struct _rail_client_context
+struct s_rail_client_context
 {
 	void* handle;
 	void* custom;

@@ -28,23 +28,18 @@ extern "C"
 {
 #endif
 
-	typedef struct _VideoClientContext VideoClientContext;
-	typedef struct _VideoClientContextPriv VideoClientContextPriv;
-	typedef struct _VideoSurface VideoSurface;
+	typedef struct s_VideoClientContext VideoClientContext;
+	typedef struct s_VideoClientContextPriv VideoClientContextPriv;
 
 	/** @brief an implementation of surface used by the video channel */
-	struct _VideoSurface
+	typedef struct
 	{
 		UINT32 x, y, w, h;
 		UINT32 alignedWidth, alignedHeight;
 		BYTE* data;
 		DWORD format;
 		UINT32 scanline;
-	};
-
-	FREERDP_API VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y,
-	                                                          UINT32 w, UINT32 h);
-	FREERDP_API void VideoClient_DestroyCommonContext(VideoSurface* surface);
+	} VideoSurface;
 
 	typedef void (*pcVideoTimer)(VideoClientContext* video, UINT64 now);
 	typedef void (*pcVideoSetGeometry)(VideoClientContext* video, GeometryClientContext* geometry);
@@ -55,7 +50,7 @@ extern "C"
 	typedef BOOL (*pcVideoDeleteSurface)(VideoClientContext* video, VideoSurface* surface);
 
 	/** @brief context for the video (MS-RDPEVOR) channel */
-	struct _VideoClientContext
+	struct s_VideoClientContext
 	{
 		void* handle;
 		void* custom;
@@ -67,6 +62,10 @@ extern "C"
 		pcVideoShowSurface showSurface;
 		pcVideoDeleteSurface deleteSurface;
 	};
+
+	FREERDP_API VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y,
+	                                                          UINT32 w, UINT32 h);
+	FREERDP_API void VideoClient_DestroyCommonContext(VideoSurface* surface);
 
 #ifdef __cplusplus
 }

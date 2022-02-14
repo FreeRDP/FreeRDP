@@ -143,15 +143,14 @@
 
 #define WS_EX_DECORATIONS 0x40000000
 
-struct _WINDOW_ORDER_INFO
+typedef struct
 {
 	UINT32 windowId;
 	UINT32 fieldFlags;
 	UINT32 notifyIconId;
-};
-typedef struct _WINDOW_ORDER_INFO WINDOW_ORDER_INFO;
+} WINDOW_ORDER_INFO;
 
-struct _ICON_INFO
+typedef struct
 {
 	UINT32 cacheEntry;
 	UINT32 cacheId;
@@ -164,26 +163,23 @@ struct _ICON_INFO
 	BYTE* bitsMask;
 	BYTE* colorTable;
 	BYTE* bitsColor;
-};
-typedef struct _ICON_INFO ICON_INFO;
+} ICON_INFO;
 
-struct _CACHED_ICON_INFO
+typedef struct
 {
 	UINT32 cacheEntry;
 	UINT32 cacheId;
-};
-typedef struct _CACHED_ICON_INFO CACHED_ICON_INFO;
+} CACHED_ICON_INFO;
 
-struct _NOTIFY_ICON_INFOTIP
+typedef struct
 {
 	UINT32 timeout;
 	UINT32 flags;
 	RAIL_UNICODE_STRING text;
 	RAIL_UNICODE_STRING title;
-};
-typedef struct _NOTIFY_ICON_INFOTIP NOTIFY_ICON_INFOTIP;
+} NOTIFY_ICON_INFOTIP;
 
-struct _WINDOW_STATE_ORDER
+typedef struct
 {
 	UINT32 ownerWindowId;
 	UINT32 style;
@@ -217,22 +213,19 @@ struct _WINDOW_STATE_ORDER
 	UINT8 EnforceServerZOrder;
 	UINT8 AppBarState;
 	UINT8 AppBarEdge;
-};
-typedef struct _WINDOW_STATE_ORDER WINDOW_STATE_ORDER;
+} WINDOW_STATE_ORDER;
 
-struct _WINDOW_ICON_ORDER
+typedef struct
 {
 	ICON_INFO* iconInfo;
-};
-typedef struct _WINDOW_ICON_ORDER WINDOW_ICON_ORDER;
+} WINDOW_ICON_ORDER;
 
-struct _WINDOW_CACHED_ICON_ORDER
+typedef struct
 {
 	CACHED_ICON_INFO cachedIcon;
-};
-typedef struct _WINDOW_CACHED_ICON_ORDER WINDOW_CACHED_ICON_ORDER;
+} WINDOW_CACHED_ICON_ORDER;
 
-struct _NOTIFY_ICON_STATE_ORDER
+typedef struct
 {
 	UINT32 version;
 	RAIL_UNICODE_STRING toolTip;
@@ -240,16 +233,14 @@ struct _NOTIFY_ICON_STATE_ORDER
 	UINT32 state;
 	ICON_INFO icon;
 	CACHED_ICON_INFO cachedIcon;
-};
-typedef struct _NOTIFY_ICON_STATE_ORDER NOTIFY_ICON_STATE_ORDER;
+} NOTIFY_ICON_STATE_ORDER;
 
-struct _MONITORED_DESKTOP_ORDER
+typedef struct
 {
 	UINT32 activeWindowId;
 	UINT32 numWindowIds;
 	UINT32* windowIds;
-};
-typedef struct _MONITORED_DESKTOP_ORDER MONITORED_DESKTOP_ORDER;
+} MONITORED_DESKTOP_ORDER;
 
 typedef BOOL (*pWindowCreate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                               const WINDOW_STATE_ORDER* window_state);

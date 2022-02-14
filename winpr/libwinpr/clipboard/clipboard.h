@@ -24,25 +24,22 @@
 
 #include <winpr/collections.h>
 
-typedef struct _wClipboardFormat wClipboardFormat;
-typedef struct _wClipboardSynthesizer wClipboardSynthesizer;
+typedef struct
+{
+	UINT32 syntheticId;
+	CLIPBOARD_SYNTHESIZE_FN pfnSynthesize;
+} wClipboardSynthesizer;
 
-struct _wClipboardFormat
+typedef struct
 {
 	UINT32 formatId;
 	char* formatName;
 
 	UINT32 numSynthesizers;
 	wClipboardSynthesizer* synthesizers;
-};
+} wClipboardFormat;
 
-struct _wClipboardSynthesizer
-{
-	UINT32 syntheticId;
-	CLIPBOARD_SYNTHESIZE_FN pfnSynthesize;
-};
-
-struct _wClipboard
+struct s_wClipboard
 {
 	UINT64 ownerId;
 

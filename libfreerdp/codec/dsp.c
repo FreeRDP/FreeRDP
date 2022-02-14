@@ -61,7 +61,8 @@
 
 #if !defined(WITH_DSP_FFMPEG)
 
-union _ADPCM {
+typedef union
+{
 	struct
 	{
 		size_t packet_size;
@@ -75,10 +76,9 @@ union _ADPCM {
 		INT32 sample1[2];
 		INT32 sample2[2];
 	} ms;
-};
-typedef union _ADPCM ADPCM;
+} ADPCM;
 
-struct _FREERDP_DSP_CONTEXT
+struct S_FREERDP_DSP_CONTEXT
 {
 	BOOL encoder;
 

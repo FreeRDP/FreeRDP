@@ -32,7 +32,7 @@ typedef enum ECHO_SERVER_OPEN_RESULT
 	ECHO_SERVER_OPEN_RESULT_ERROR = 3
 } ECHO_SERVER_OPEN_RESULT;
 
-typedef struct _echo_server_context echo_server_context;
+typedef struct s_echo_server_context echo_server_context;
 
 typedef UINT (*psEchoServerOpen)(echo_server_context* context);
 typedef UINT (*psEchoServerClose)(echo_server_context* context);
@@ -44,7 +44,7 @@ typedef UINT (*psEchoServerOpenResult)(echo_server_context* context,
 typedef UINT (*psEchoServerResponse)(echo_server_context* context, const BYTE* buffer,
                                      UINT32 length);
 
-struct _echo_server_context
+struct s_echo_server_context
 {
 	HANDLE vcm;
 

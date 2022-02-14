@@ -53,22 +53,20 @@ static UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 
 #include <security/pam_appl.h>
 
-struct _SHADOW_PAM_AUTH_DATA
+typedef struct
 {
 	const char* user;
 	const char* domain;
 	const char* password;
-};
-typedef struct _SHADOW_PAM_AUTH_DATA SHADOW_PAM_AUTH_DATA;
+} SHADOW_PAM_AUTH_DATA;
 
-struct _SHADOW_PAM_AUTH_INFO
+typedef struct
 {
 	char* service_name;
 	pam_handle_t* handle;
 	struct pam_conv pamc;
 	SHADOW_PAM_AUTH_DATA appdata;
-};
-typedef struct _SHADOW_PAM_AUTH_INFO SHADOW_PAM_AUTH_INFO;
+} SHADOW_PAM_AUTH_INFO;
 
 static int x11_shadow_pam_conv(int num_msg, const struct pam_message** msg,
                                struct pam_response** resp, void* appdata_ptr)

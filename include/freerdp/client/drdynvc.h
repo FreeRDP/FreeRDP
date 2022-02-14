@@ -26,7 +26,7 @@
  * Client Interface
  */
 
-typedef struct _drdynvc_client_context DrdynvcClientContext;
+typedef struct s_drdynvc_client_context DrdynvcClientContext;
 
 typedef int (*pcDrdynvcGetVersion)(DrdynvcClientContext* context);
 typedef UINT (*pcDrdynvcOnChannelConnected)(DrdynvcClientContext* context, const char* name,
@@ -38,7 +38,7 @@ typedef UINT (*pcDrdynvcOnChannelAttached)(DrdynvcClientContext* context, const 
 typedef UINT (*pcDrdynvcOnChannelDetached)(DrdynvcClientContext* context, const char* name,
                                            void* pInterface);
 
-struct _drdynvc_client_context
+struct s_drdynvc_client_context
 {
 	void* handle;
 	void* custom;

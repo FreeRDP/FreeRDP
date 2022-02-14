@@ -202,7 +202,7 @@
 #define RTS_CONTROL_TOGGLE 0x03
 
 // http://msdn.microsoft.com/en-us/library/windows/desktop/aa363214%28v=vs.85%29.aspx
-typedef struct _DCB
+typedef struct
 {
 	DWORD DCBlength;
 	DWORD BaudRate;
@@ -234,7 +234,7 @@ typedef struct _DCB
 	WORD wReserved1;
 } DCB, *LPDCB;
 
-typedef struct _COMM_CONFIG
+typedef struct
 {
 	DWORD dwSize;
 	WORD wVersion;
@@ -246,7 +246,7 @@ typedef struct _COMM_CONFIG
 	WCHAR wcProviderData[1];
 } COMMCONFIG, *LPCOMMCONFIG;
 
-typedef struct _COMMPROP
+typedef struct
 {
 	WORD wPacketLength;
 	WORD wPacketVersion;
@@ -268,7 +268,7 @@ typedef struct _COMMPROP
 	WCHAR wcProvChar[1];
 } COMMPROP, *LPCOMMPROP;
 
-typedef struct _COMMTIMEOUTS
+typedef struct
 {
 	DWORD ReadIntervalTimeout;
 	DWORD ReadTotalTimeoutMultiplier;
@@ -277,7 +277,7 @@ typedef struct _COMMTIMEOUTS
 	DWORD WriteTotalTimeoutConstant;
 } COMMTIMEOUTS, *LPCOMMTIMEOUTS;
 
-typedef struct _COMSTAT
+typedef struct
 {
 	DWORD fCtsHold : 1;
 	DWORD fDsrHold : 1;
@@ -366,7 +366,7 @@ extern "C"
 	 * IOCTLs table according the server's serial driver:
 	 * http://msdn.microsoft.com/en-us/library/windows/hardware/dn265347%28v=vs.85%29.aspx
 	 */
-	typedef enum _SERIAL_DRIVER_ID
+	typedef enum
 	{
 		SerialDriverUnknown = 0,
 		SerialDriverSerialSys,
@@ -456,7 +456,7 @@ extern "C"
 /* http://msdn.microsoft.com/en-us/library/windows/hardware/ff551803(v=vs.85).aspx */
 #define IOCTL_USBPRINT_GET_1284_ID 0x220034
 
-	typedef struct __SERIAL_IOCTL_NAME
+	typedef struct
 	{
 		ULONG number;
 		const char* name;

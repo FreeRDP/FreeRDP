@@ -46,6 +46,9 @@
 
 #include "CoreVideo/CoreVideo.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
+
 // refactor these
 static int info_last_sec = 0;
 static int info_last_nsec = 0;
@@ -324,7 +327,6 @@ static void* mf_peer_main_loop(void* arg)
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->settings);
-	WINPR_ASSERT(client->input);
 
 	if (!mf_peer_init(client))
 	{
@@ -363,7 +365,7 @@ static void* mf_peer_main_loop(void* arg)
 	{
 		DWORD status;
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
-		DWORD count = client->GetEventHandles(handles, ARRAYSIZE(handles));
+		DWORD count = client->GetEventHandles(client, handles, ARRAYSIZE(handles));
 
 		if ((count == 0) || (count == MAXIMUM_WAIT_OBJECTS))
 		{
@@ -373,7 +375,7 @@ static void* mf_peer_main_loop(void* arg)
 
 		handles[count++] = WTSVirtualChannelManagerGetEventHandle(context->vcm);
 
-		status = WaitForMultipleObjects(handles, count, FALSE, INFINITE);
+		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForMultipleObjects failed");

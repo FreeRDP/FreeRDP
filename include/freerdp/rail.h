@@ -290,71 +290,63 @@ enum SPI_MASK
 #define RAIL_TASKBAR_MSG_TAB_ACTIVE 0x00000004
 #define RAIL_TASKBAR_MSG_TAB_PROPERTIES 0x00000005
 
-struct _RAIL_UNICODE_STRING
+typedef struct
 {
 	UINT16 length;
 	BYTE* string;
-};
-typedef struct _RAIL_UNICODE_STRING RAIL_UNICODE_STRING;
+} RAIL_UNICODE_STRING;
 
-struct _RAIL_HIGH_CONTRAST
+typedef struct
 {
 	UINT32 flags;
 	UINT32 colorSchemeLength;
 	RAIL_UNICODE_STRING colorScheme;
-};
-typedef struct _RAIL_HIGH_CONTRAST RAIL_HIGH_CONTRAST;
+} RAIL_HIGH_CONTRAST;
 
 /* RAIL Orders */
 
-struct _RAIL_HANDSHAKE_ORDER
+typedef struct
 {
 	UINT32 buildNumber;
-};
-typedef struct _RAIL_HANDSHAKE_ORDER RAIL_HANDSHAKE_ORDER;
+} RAIL_HANDSHAKE_ORDER;
 
-struct _RAIL_HANDSHAKE_EX_ORDER
+typedef struct
 {
 	UINT32 buildNumber;
 	UINT32 railHandshakeFlags;
-};
-typedef struct _RAIL_HANDSHAKE_EX_ORDER RAIL_HANDSHAKE_EX_ORDER;
+} RAIL_HANDSHAKE_EX_ORDER;
 
-struct _RAIL_CLIENT_STATUS_ORDER
+typedef struct
 {
 	UINT32 flags;
-};
-typedef struct _RAIL_CLIENT_STATUS_ORDER RAIL_CLIENT_STATUS_ORDER;
+} RAIL_CLIENT_STATUS_ORDER;
 
-struct _RAIL_EXEC_ORDER
+typedef struct
 {
 	UINT16 flags;
 	char* RemoteApplicationProgram;
 	char* RemoteApplicationWorkingDir;
 	char* RemoteApplicationArguments;
-};
-typedef struct _RAIL_EXEC_ORDER RAIL_EXEC_ORDER;
+} RAIL_EXEC_ORDER;
 
-struct _RAIL_EXEC_RESULT_ORDER
+typedef struct
 {
 	UINT16 flags;
 	UINT16 execResult;
 	UINT32 rawResult;
 	RAIL_UNICODE_STRING exeOrFile;
-};
-typedef struct _RAIL_EXEC_RESULT_ORDER RAIL_EXEC_RESULT_ORDER;
+} RAIL_EXEC_RESULT_ORDER;
 
-struct _TS_FILTERKEYS
+typedef struct
 {
 	UINT32 Flags;
 	UINT32 WaitTime;
 	UINT32 DelayTime;
 	UINT32 RepeatTime;
 	UINT32 BounceTime;
-};
-typedef struct _TS_FILTERKEYS TS_FILTERKEYS;
+} TS_FILTERKEYS;
 
-struct _RAIL_SYSPARAM_ORDER
+typedef struct
 {
 	UINT32 param;
 	UINT32 params;
@@ -372,40 +364,35 @@ struct _RAIL_SYSPARAM_ORDER
 	TS_FILTERKEYS filterKeys;
 	BOOL setScreenSaveActive;
 	BOOL setScreenSaveSecure;
-};
-typedef struct _RAIL_SYSPARAM_ORDER RAIL_SYSPARAM_ORDER;
+} RAIL_SYSPARAM_ORDER;
 
-struct _RAIL_ACTIVATE_ORDER
+typedef struct
 {
 	UINT32 windowId;
 	BOOL enabled;
-};
-typedef struct _RAIL_ACTIVATE_ORDER RAIL_ACTIVATE_ORDER;
+} RAIL_ACTIVATE_ORDER;
 
-struct _RAIL_SYSMENU_ORDER
+typedef struct
 {
 	UINT32 windowId;
 	INT16 left;
 	INT16 top;
-};
-typedef struct _RAIL_SYSMENU_ORDER RAIL_SYSMENU_ORDER;
+} RAIL_SYSMENU_ORDER;
 
-struct _RAIL_SYSCOMMAND_ORDER
+typedef struct
 {
 	UINT32 windowId;
 	UINT16 command;
-};
-typedef struct _RAIL_SYSCOMMAND_ORDER RAIL_SYSCOMMAND_ORDER;
+} RAIL_SYSCOMMAND_ORDER;
 
-struct _RAIL_NOTIFY_EVENT_ORDER
+typedef struct
 {
 	UINT32 windowId;
 	UINT32 notifyIconId;
 	UINT32 message;
-};
-typedef struct _RAIL_NOTIFY_EVENT_ORDER RAIL_NOTIFY_EVENT_ORDER;
+} RAIL_NOTIFY_EVENT_ORDER;
 
-struct _RAIL_MINMAXINFO_ORDER
+typedef struct
 {
 	UINT32 windowId;
 	INT16 maxWidth;
@@ -416,112 +403,98 @@ struct _RAIL_MINMAXINFO_ORDER
 	INT16 minTrackHeight;
 	INT16 maxTrackWidth;
 	INT16 maxTrackHeight;
-};
-typedef struct _RAIL_MINMAXINFO_ORDER RAIL_MINMAXINFO_ORDER;
+} RAIL_MINMAXINFO_ORDER;
 
-struct _RAIL_LOCALMOVESIZE_ORDER
+typedef struct
 {
 	UINT32 windowId;
 	BOOL isMoveSizeStart;
 	UINT16 moveSizeType;
 	INT16 posX;
 	INT16 posY;
-};
-typedef struct _RAIL_LOCALMOVESIZE_ORDER RAIL_LOCALMOVESIZE_ORDER;
+} RAIL_LOCALMOVESIZE_ORDER;
 
-struct _RAIL_WINDOWMOVE_ORDER
+typedef struct
 {
 	UINT32 windowId;
 	INT16 left;
 	INT16 top;
 	INT16 right;
 	INT16 bottom;
-};
-typedef struct _RAIL_WINDOWMOVE_ORDER RAIL_WINDOW_MOVE_ORDER;
+} RAIL_WINDOW_MOVE_ORDER;
 
-struct _RAIL_GET_APPID_REQ_ORDER
+typedef struct
 {
 	UINT32 windowId;
-};
-typedef struct _RAIL_GET_APPID_REQ_ORDER RAIL_GET_APPID_REQ_ORDER;
+} RAIL_GET_APPID_REQ_ORDER;
 
-struct _RAIL_GET_APPID_RESP_ORDER
+typedef struct
 {
 	UINT32 windowId;
 	WCHAR applicationId[260];
-};
-typedef struct _RAIL_GET_APPID_RESP_ORDER RAIL_GET_APPID_RESP_ORDER;
+} RAIL_GET_APPID_RESP_ORDER;
 
-struct _RAIL_LANGBAR_INFO_ORDER
+typedef struct
 {
 	UINT32 languageBarStatus;
-};
-typedef struct _RAIL_LANGBAR_INFO_ORDER RAIL_LANGBAR_INFO_ORDER;
+} RAIL_LANGBAR_INFO_ORDER;
 
-struct _RAIL_COMPARTMENT_INFO_ORDER
+typedef struct
 {
 	UINT32 ImeState;
 	UINT32 ImeConvMode;
 	UINT32 ImeSentenceMode;
 	UINT32 KanaMode;
-};
-typedef struct _RAIL_COMPARTMENT_INFO_ORDER RAIL_COMPARTMENT_INFO_ORDER;
+} RAIL_COMPARTMENT_INFO_ORDER;
 
-struct _RAIL_ZORDER_SYNC
+typedef struct
 {
 	UINT32 windowIdMarker;
-};
-typedef struct _RAIL_ZORDER_SYNC RAIL_ZORDER_SYNC;
+} RAIL_ZORDER_SYNC;
 
-struct _RAIL_CLOAK
+typedef struct
 {
 	UINT32 windowId;
 	BOOL cloak;
-};
-typedef struct _RAIL_CLOAK RAIL_CLOAK;
+} RAIL_CLOAK;
 
-struct _RAIL_POWER_DISPLAY_REQUEST
+typedef struct
 {
 	UINT32 active;
-};
-typedef struct _RAIL_POWER_DISPLAY_REQUEST RAIL_POWER_DISPLAY_REQUEST;
+} RAIL_POWER_DISPLAY_REQUEST;
 
-struct _RAIL_TASKBAR_INFO_ORDER
+typedef struct
 {
 	UINT32 TaskbarMessage;
 	UINT32 WindowIdTab;
 	UINT32 Body;
-};
-typedef struct _RAIL_TASKBAR_INFO_ORDER RAIL_TASKBAR_INFO_ORDER;
+} RAIL_TASKBAR_INFO_ORDER;
 
-struct _RAIL_LANGUAGEIME_INFO_ORDER
+typedef struct
 {
 	UINT32 ProfileType;
 	UINT32 LanguageID;
 	GUID LanguageProfileCLSID;
 	GUID ProfileGUID;
 	UINT32 KeyboardLayout;
-};
-typedef struct _RAIL_LANGUAGEIME_INFO_ORDER RAIL_LANGUAGEIME_INFO_ORDER;
+} RAIL_LANGUAGEIME_INFO_ORDER;
 
-struct _RAIL_SNAP_ARRANGE
+typedef struct
 {
 	UINT32 windowId;
 	INT16 left;
 	INT16 top;
 	INT16 right;
 	INT16 bottom;
-};
-typedef struct _RAIL_SNAP_ARRANGE RAIL_SNAP_ARRANGE;
+} RAIL_SNAP_ARRANGE;
 
-struct _RAIL_GET_APPID_RESP_EX
+typedef struct
 {
 	UINT32 windowID;
 	WCHAR applicationID[520 / sizeof(WCHAR)];
 	UINT32 processId;
 	WCHAR processImageName[520 / sizeof(WCHAR)];
-};
-typedef struct _RAIL_GET_APPID_RESP_EX RAIL_GET_APPID_RESP_EX;
+} RAIL_GET_APPID_RESP_EX;
 
 /* DEPRECATED: RAIL Constants
  * use the spec conformant naming scheme TS_ below

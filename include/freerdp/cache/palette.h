@@ -27,15 +27,14 @@
 
 #include <winpr/stream.h>
 
-typedef struct _PALETTE_TABLE_ENTRY PALETTE_TABLE_ENTRY;
 typedef struct rdp_palette_cache rdpPaletteCache;
 
 #include <freerdp/cache/cache.h>
 
-struct _PALETTE_TABLE_ENTRY
+typedef struct
 {
 	void* entry;
-};
+} PALETTE_TABLE_ENTRY;
 
 struct rdp_palette_cache
 {

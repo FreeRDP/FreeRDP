@@ -55,7 +55,7 @@
 
 typedef WCHAR* RESOURCENAME;
 
-typedef struct _tsendpointinfo
+typedef struct
 {
 	RESOURCENAME* resourceName;
 	UINT32 numResourceNames;
@@ -64,13 +64,13 @@ typedef struct _tsendpointinfo
 	UINT32 Port;
 } TSENDPOINTINFO, *PTSENDPOINTINFO;
 
-typedef struct _TSG_PACKET_HEADER
+typedef struct
 {
 	UINT16 ComponentId;
 	UINT16 PacketId;
 } TSG_PACKET_HEADER, *PTSG_PACKET_HEADER;
 
-typedef struct _TSG_CAPABILITY_NAP
+typedef struct
 {
 	UINT32 capabilities;
 } TSG_CAPABILITY_NAP, *PTSG_CAPABILITY_NAP;
@@ -80,13 +80,13 @@ typedef union
 	TSG_CAPABILITY_NAP tsgCapNap;
 } TSG_CAPABILITIES_UNION, *PTSG_CAPABILITIES_UNION;
 
-typedef struct _TSG_PACKET_CAPABILITIES
+typedef struct
 {
 	UINT32 capabilityType;
 	TSG_CAPABILITIES_UNION tsgPacket;
 } TSG_PACKET_CAPABILITIES, *PTSG_PACKET_CAPABILITIES;
 
-typedef struct _TSG_PACKET_VERSIONCAPS
+typedef struct
 {
 	TSG_PACKET_HEADER tsgHeader;
 	PTSG_PACKET_CAPABILITIES tsgCaps;
@@ -96,12 +96,12 @@ typedef struct _TSG_PACKET_VERSIONCAPS
 	UINT16 quarantineCapabilities;
 } TSG_PACKET_VERSIONCAPS, *PTSG_PACKET_VERSIONCAPS;
 
-typedef struct _TSG_PACKET_QUARCONFIGREQUEST
+typedef struct
 {
 	UINT32 flags;
 } TSG_PACKET_QUARCONFIGREQUEST, *PTSG_PACKET_QUARCONFIGREQUEST;
 
-typedef struct _TSG_PACKET_QUARREQUEST
+typedef struct
 {
 	UINT32 flags;
 	WCHAR* machineName;
@@ -110,7 +110,7 @@ typedef struct _TSG_PACKET_QUARREQUEST
 	UINT32 dataLen;
 } TSG_PACKET_QUARREQUEST, *PTSG_PACKET_QUARREQUEST;
 
-typedef struct _TSG_REDIRECTION_FLAGS
+typedef struct
 {
 	BOOL enableAllRedirections;
 	BOOL disableAllRedirections;
@@ -122,7 +122,7 @@ typedef struct _TSG_REDIRECTION_FLAGS
 	BOOL pnpRedirectionDisabled;
 } TSG_REDIRECTION_FLAGS, *PTSG_REDIRECTION_FLAGS;
 
-typedef struct _TSG_PACKET_RESPONSE
+typedef struct
 {
 	UINT32 flags;
 	UINT32 reserved;
@@ -131,7 +131,7 @@ typedef struct _TSG_PACKET_RESPONSE
 	TSG_REDIRECTION_FLAGS redirectionFlags;
 } TSG_PACKET_RESPONSE, *PTSG_PACKET_RESPONSE;
 
-typedef struct _TSG_PACKET_QUARENC_RESPONSE
+typedef struct
 {
 	UINT32 flags;
 	UINT32 certChainLen;
@@ -140,7 +140,7 @@ typedef struct _TSG_PACKET_QUARENC_RESPONSE
 	PTSG_PACKET_VERSIONCAPS versionCaps;
 } TSG_PACKET_QUARENC_RESPONSE, *PTSG_PACKET_QUARENC_RESPONSE;
 
-typedef struct TSG_PACKET_STRING_MESSAGE
+typedef struct
 {
 	INT32 isDisplayMandatory;
 	INT32 isConsentMandatory;
@@ -148,30 +148,30 @@ typedef struct TSG_PACKET_STRING_MESSAGE
 	WCHAR* msgBuffer;
 } TSG_PACKET_STRING_MESSAGE;
 
-typedef struct TSG_PACKET_REAUTH_MESSAGE
+typedef struct
 {
 	UINT64 tunnelContext;
 } TSG_PACKET_REAUTH_MESSAGE, *PTSG_PACKET_REAUTH_MESSAGE;
 
-typedef struct _TSG_PACKET_MSG_RESPONSE
+typedef struct
 {
 	UINT32 msgID;
 	UINT32 msgType;
 	INT32 isMsgPresent;
 } TSG_PACKET_MSG_RESPONSE, *PTSG_PACKET_MSG_RESPONSE;
 
-typedef struct TSG_PACKET_CAPS_RESPONSE
+typedef struct
 {
 	TSG_PACKET_QUARENC_RESPONSE pktQuarEncResponse;
 	TSG_PACKET_MSG_RESPONSE pktConsentMessage;
 } TSG_PACKET_CAPS_RESPONSE, *PTSG_PACKET_CAPS_RESPONSE;
 
-typedef struct TSG_PACKET_MSG_REQUEST
+typedef struct
 {
 	UINT32 maxMessagesPerBatch;
 } TSG_PACKET_MSG_REQUEST, *PTSG_PACKET_MSG_REQUEST;
 
-typedef struct _TSG_PACKET_AUTH
+typedef struct
 {
 	TSG_PACKET_VERSIONCAPS tsgVersionCaps;
 	UINT32 cookieLen;
@@ -184,7 +184,7 @@ typedef union
 	PTSG_PACKET_AUTH packetAuth;
 } TSG_INITIAL_PACKET_TYPE_UNION, *PTSG_INITIAL_PACKET_TYPE_UNION;
 
-typedef struct TSG_PACKET_REAUTH
+typedef struct
 {
 	UINT64 tunnelContext;
 	UINT32 packetId;
@@ -206,7 +206,7 @@ typedef union
 	PTSG_PACKET_REAUTH packetReauth;
 } TSG_PACKET_TYPE_UNION;
 
-typedef struct _TSG_PACKET
+typedef struct
 {
 	UINT32 packetId;
 	TSG_PACKET_TYPE_UNION tsgPacket;

@@ -57,12 +57,12 @@ typedef void (*WLOG_APPENDER_FREE)(wLogAppender* appender);
 	WLOG_APPENDER_FREE Free;                                  \
 	WLOG_APPENDER_SET Set
 
-struct _wLogAppender
+struct s_wLogAppender
 {
 	WLOG_APPENDER_COMMON();
 };
 
-struct _wLog
+struct s_wLog
 {
 	LPSTR Name;
 	LONG FilterLevel;
@@ -84,7 +84,7 @@ struct _wLog
 extern const char* WLOG_LEVELS[7];
 BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message);
 
-#include "wlog/Layout.h"
-#include "wlog/Appender.h"
+#include "Layout.h"
+#include "Appender.h"
 
 #endif /* WINPR_WLOG_PRIVATE_H */

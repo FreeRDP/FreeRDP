@@ -26,7 +26,7 @@
 
 #include <winpr/collections.h>
 
-struct _wQueue
+struct s_wQueue
 {
 	size_t capacity;
 	size_t growthFactor;

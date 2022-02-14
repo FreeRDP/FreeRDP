@@ -10,12 +10,13 @@ static HANDLE s_sync = NULL;
 static int runInstance(int argc, char* argv[], freerdp** inst, DWORD timeout)
 {
 	int rc = -1;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
+	rdpContext* context;
+
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
 	clientEntryPoints.ContextSize = sizeof(rdpContext);
-	rdpContext* context = freerdp_client_context_new(&clientEntryPoints);
+	context = freerdp_client_context_new(&clientEntryPoints);
 
 	if (!context)
 		goto finish;

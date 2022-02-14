@@ -36,7 +36,7 @@
 
 #include "../rail_common.h"
 
-struct rail_plugin
+typedef struct
 {
 	CHANNEL_DEF channelDef;
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
@@ -52,8 +52,7 @@ struct rail_plugin
 	DWORD channelFlags;
 	RAIL_CLIENT_STATUS_ORDER clientStatus;
 	BOOL sendHandshake;
-};
-typedef struct rail_plugin railPlugin;
+} railPlugin;
 
 RailClientContext* rail_get_client_interface(railPlugin* rail);
 UINT rail_send_channel_data(railPlugin* rail, wStream* s);

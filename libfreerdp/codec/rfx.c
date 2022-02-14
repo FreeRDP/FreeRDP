@@ -752,12 +752,11 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 	return TRUE;
 }
 
-struct _RFX_TILE_PROCESS_WORK_PARAM
+typedef struct
 {
 	RFX_TILE* tile;
 	RFX_CONTEXT* context;
-};
-typedef struct _RFX_TILE_PROCESS_WORK_PARAM RFX_TILE_PROCESS_WORK_PARAM;
+} RFX_TILE_PROCESS_WORK_PARAM;
 
 static void CALLBACK rfx_process_message_tile_work_callback(PTP_CALLBACK_INSTANCE instance,
                                                             void* context, PTP_WORK work)
@@ -1400,7 +1399,7 @@ static BOOL rfx_write_tile(RFX_CONTEXT* context, wStream* s, RFX_TILE* tile)
 	return TRUE;
 }
 
-struct _RFX_TILE_COMPOSE_WORK_PARAM
+struct S_RFX_TILE_COMPOSE_WORK_PARAM
 {
 	RFX_TILE* tile;
 	RFX_CONTEXT* context;

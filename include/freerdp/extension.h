@@ -43,16 +43,14 @@ typedef UINT32(FREERDP_CC* PREGISTERPRECONNECTHOOK)(rdpExtPlugin* plugin,
 typedef UINT32(FREERDP_CC* PREGISTERPOSTCONNECTHOOK)(rdpExtPlugin* plugin,
                                                      PFREERDP_EXTENSION_HOOK hook);
 
-struct _FREERDP_EXTENSION_ENTRY_POINTS
+typedef struct
 {
 	void* ext; /* Reference to internal instance */
 	PREGISTEREXTENSION pRegisterExtension;
 	PREGISTERPRECONNECTHOOK pRegisterPreConnectHook;
 	PREGISTERPOSTCONNECTHOOK pRegisterPostConnectHook;
 	void* data;
-};
-
-typedef struct _FREERDP_EXTENSION_ENTRY_POINTS FREERDP_EXTENSION_ENTRY_POINTS;
+} FREERDP_EXTENSION_ENTRY_POINTS;
 typedef FREERDP_EXTENSION_ENTRY_POINTS* PFREERDP_EXTENSION_ENTRY_POINTS;
 
 typedef int(FREERDP_CC* PFREERDP_EXTENSION_ENTRY)(PFREERDP_EXTENSION_ENTRY_POINTS pEntryPoints);

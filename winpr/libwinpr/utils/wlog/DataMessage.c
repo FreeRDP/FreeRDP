@@ -23,7 +23,7 @@
 
 #include "wlog.h"
 
-#include "wlog/DataMessage.h"
+#include "DataMessage.h"
 
 #include <winpr/file.h>
 

@@ -834,20 +834,20 @@ typedef struct
 } trio_custom_t;
 
 /* General trio "class" */
-typedef struct _trio_class_t
+typedef struct s_trio_class_t
 {
 	/*
 	 * The function to write characters to a stream.
 	 */
-	void(*OutStream) TRIO_PROTO((struct _trio_class_t*, int));
+	void(*OutStream) TRIO_PROTO((struct s_trio_class_t*, int));
 	/*
 	 * The function to read characters from a stream.
 	 */
-	void(*InStream) TRIO_PROTO((struct _trio_class_t*, int*));
+	void(*InStream) TRIO_PROTO((struct s_trio_class_t*, int*));
 	/*
 	 * The function to undo read characters from a stream.
 	 */
-	void(*UndoStream) TRIO_PROTO((struct _trio_class_t*));
+	void(*UndoStream) TRIO_PROTO((struct s_trio_class_t*));
 	/*
 	 * The current location in the stream.
 	 */
@@ -883,7 +883,7 @@ typedef struct _trio_class_t
 } trio_class_t;
 
 /* References (for user-defined callbacks) */
-typedef struct _trio_reference_t
+typedef struct
 {
 	trio_class_t* data;
 	trio_parameter_t* parameter;
@@ -891,9 +891,9 @@ typedef struct _trio_reference_t
 
 #if TRIO_FEATURE_USER_DEFINED
 /* Registered entries (for user-defined callbacks) */
-typedef struct _trio_userdef_t
+typedef struct s_trio_userdef_t
 {
-	struct _trio_userdef_t* next;
+	struct s_trio_userdef_t* next;
 	trio_callback_t callback;
 	char* name;
 } trio_userdef_t;

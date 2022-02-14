@@ -27,8 +27,8 @@
 #include <freerdp/rail.h>
 #include <freerdp/channels/rail.h>
 
-typedef struct _rail_server_context RailServerContext;
-typedef struct _rail_server_private RailServerPrivate;
+typedef struct s_rail_server_context RailServerContext;
+typedef struct s_rail_server_private RailServerPrivate;
 
 typedef UINT (*psRailStart)(RailServerContext* context);
 typedef BOOL (*psRailStop)(RailServerContext* context);
@@ -89,7 +89,7 @@ typedef UINT (*psRailServerPowerDisplayRequest)(
 typedef UINT (*psRailServerGetAppidRespEx)(RailServerContext* context,
                                            const RAIL_GET_APPID_RESP_EX* GetAppidRespEx);
 
-struct _rail_server_context
+struct s_rail_server_context
 {
 	HANDLE vcm;
 	void* custom;

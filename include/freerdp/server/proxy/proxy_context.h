@@ -36,11 +36,10 @@ extern "C"
 
 	typedef struct proxy_data proxyData;
 	typedef struct proxy_module proxyModule;
-	typedef struct channel_data_event_info proxyChannelDataEventInfo;
 
-	typedef struct _InterceptContextMapEntry
+	typedef struct s_InterceptContextMapEntry
 	{
-		void (*free)(struct _InterceptContextMapEntry*);
+		void (*free)(struct s_InterceptContextMapEntry*);
 	} InterceptContextMapEntry;
 
 	/* All proxy interception channels derive from this base struct
@@ -48,14 +47,13 @@ extern "C"
 	FREERDP_API void intercept_context_entry_free(void* obj);
 
 	/** @brief how is handled a channel */
-	enum pf_utils_channel_mode
+	typedef enum
 	{
 		PF_UTILS_CHANNEL_NOT_HANDLED,
 		PF_UTILS_CHANNEL_BLOCK,
 		PF_UTILS_CHANNEL_PASSTHROUGH,
 		PF_UTILS_CHANNEL_INTERCEPT,
-	};
-	typedef enum pf_utils_channel_mode pf_utils_channel_mode;
+	} pf_utils_channel_mode;
 
 	/** @brief per channel configuration */
 	struct p_server_channel_context

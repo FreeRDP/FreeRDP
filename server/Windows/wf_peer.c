@@ -189,7 +189,7 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 			break;
 		}
 
-		status = WaitForMultipleObjects(handles, count, FALSE, INFINITE);
+		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForMultipleObjects failed");

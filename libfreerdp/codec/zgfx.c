@@ -42,17 +42,16 @@
  * Minimum match length: 3 bytes
  */
 
-struct _ZGFX_TOKEN
+typedef struct
 {
 	UINT32 prefixLength;
 	UINT32 prefixCode;
 	UINT32 valueBits;
 	UINT32 tokenType;
 	UINT32 valueBase;
-};
-typedef struct _ZGFX_TOKEN ZGFX_TOKEN;
+} ZGFX_TOKEN;
 
-struct _ZGFX_CONTEXT
+struct S_ZGFX_CONTEXT
 {
 	BOOL Compressor;
 
@@ -117,25 +116,25 @@ static const ZGFX_TOKEN ZGFX_TOKEN_TABLE[] = {
 	{ 0 }
 };
 
-static INLINE BOOL zgfx_GetBits(ZGFX_CONTEXT* _zgfx, UINT32 _nbits)
+static INLINE BOOL zgfx_GetBits(ZGFX_CONTEXT* zgfx, UINT32 nbits)
 {
-	if (!_zgfx)
+	if (!zgfx)
 		return FALSE;
 
-	while (_zgfx->cBitsCurrent < _nbits)
+	while (zgfx->cBitsCurrent < nbits)
 	{
-		_zgfx->BitsCurrent <<= 8;
+		zgfx->BitsCurrent <<= 8;
 
-		if (_zgfx->pbInputCurrent < _zgfx->pbInputEnd)
-			_zgfx->BitsCurrent += *(_zgfx->pbInputCurrent)++;
+		if (zgfx->pbInputCurrent < zgfx->pbInputEnd)
+			zgfx->BitsCurrent += *(zgfx->pbInputCurrent)++;
 
-		_zgfx->cBitsCurrent += 8;
+		zgfx->cBitsCurrent += 8;
 	}
 
-	_zgfx->cBitsRemaining -= _nbits;
-	_zgfx->cBitsCurrent -= _nbits;
-	_zgfx->bits = _zgfx->BitsCurrent >> _zgfx->cBitsCurrent;
-	_zgfx->BitsCurrent &= ((1 << _zgfx->cBitsCurrent) - 1);
+	zgfx->cBitsRemaining -= nbits;
+	zgfx->cBitsCurrent -= nbits;
+	zgfx->bits = zgfx->BitsCurrent >> zgfx->cBitsCurrent;
+	zgfx->BitsCurrent &= ((1 << zgfx->cBitsCurrent) - 1);
 	return TRUE;
 }
 

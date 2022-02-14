@@ -28,7 +28,7 @@
 
 #include "../stream.h"
 
-struct _wStreamPool
+struct s_wStreamPool
 {
 	size_t aSize;
 	size_t aCapacity;

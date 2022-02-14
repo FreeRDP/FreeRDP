@@ -70,12 +70,11 @@
  * #define MICROSOFT_IOS_SNI_BUG
  */
 
-struct _BIO_RDP_TLS
+typedef struct
 {
 	SSL* ssl;
 	CRITICAL_SECTION lock;
-};
-typedef struct _BIO_RDP_TLS BIO_RDP_TLS;
+} BIO_RDP_TLS;
 
 static int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, UINT16 port);
 static void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port,

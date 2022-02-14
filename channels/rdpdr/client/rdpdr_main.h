@@ -44,9 +44,7 @@
 
 #define TAG CHANNELS_TAG("rdpdr.client")
 
-typedef struct rdpdr_plugin rdpdrPlugin;
-
-struct rdpdr_plugin
+typedef struct
 {
 	CHANNEL_DEF channelDef;
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
@@ -78,7 +76,7 @@ struct rdpdr_plugin
 	HANDLE stopEvent;
 #endif
 	rdpContext* rdpcontext;
-};
+} rdpdrPlugin;
 
 UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
 

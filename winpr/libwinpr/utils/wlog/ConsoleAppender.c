@@ -33,13 +33,12 @@
 #define WLOG_CONSOLE_STDERR 2
 #define WLOG_CONSOLE_DEBUG 4
 
-struct _wLogConsoleAppender
+typedef struct
 {
 	WLOG_APPENDER_COMMON();
 
 	int outputStream;
-};
-typedef struct _wLogConsoleAppender wLogConsoleAppender;
+} wLogConsoleAppender;
 
 static BOOL WLog_ConsoleAppender_Open(wLog* log, wLogAppender* appender)
 {

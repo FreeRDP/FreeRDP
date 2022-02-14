@@ -30,7 +30,7 @@
 #include <winpr/path.h>
 #include <winpr/stream.h>
 
-struct _wLogBinaryAppender
+typedef struct
 {
 	WLOG_APPENDER_COMMON();
 
@@ -38,8 +38,7 @@ struct _wLogBinaryAppender
 	char* FilePath;
 	char* FullFileName;
 	FILE* FileDescriptor;
-};
-typedef struct _wLogBinaryAppender wLogBinaryAppender;
+} wLogBinaryAppender;
 
 static BOOL WLog_BinaryAppender_Open(wLog* log, wLogAppender* appender)
 {
