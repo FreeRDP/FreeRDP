@@ -84,6 +84,5 @@ typedef struct
 
 	CGEventFlags kbdFlags;
 } mfContext;
-;
 
 #endif /* FREERDP_CLIENT_MAC_FREERDP_H */
