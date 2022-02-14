@@ -69,8 +69,11 @@ void* ncrypt_new_handle(NCryptHandleType kind, size_t len, NCryptGetPropertyFn g
 	return ret;
 }
 
-SECURITY_STATUS winpr_NCryptDefault_dtor(NCryptBaseHandle* h)
+SECURITY_STATUS winpr_NCryptDefault_dtor(NCRYPT_HANDLE handle)
 {
+	NCryptBaseHandle* h = (NCryptBaseHandle*)handle;
+	WINPR_ASSERT(h);
+
 	memset(h->magic, 0, sizeof(h->magic));
 	h->type = WINPR_NCRYPT_INVALID;
 	h->releaseFn = NULL;
@@ -136,19 +139,20 @@ SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider, LPCWST
 		_wcscmp(pszProviderName, MS_SCARD_PROV) == 0)
 	{
 		static LPCSTR openscPaths[] = {
+			"opensc-pkcs11.so", /* In case winpr is installed in system paths */
 #ifdef __APPLE__
-				"/usr/local/lib/pkcs11/opensc-pkcs11.so",
+			"/usr/local/lib/pkcs11/opensc-pkcs11.so",
 #else
 				/* linux and UNIXes */
 #ifdef LIBS64
-				"/usr/lib/x86_64-linux-gnu/pkcs11/opensc-pkcs11.so", /* Ubuntu/debian */
-				"/lib64/pkcs11/opensc-pkcs11.so", /* Fedora */
+			"/usr/lib/x86_64-linux-gnu/pkcs11/opensc-pkcs11.so", /* Ubuntu/debian */
+			"/lib64/pkcs11/opensc-pkcs11.so",                    /* Fedora */
 #else
-				"/usr/lib/i386-linux-gnu/opensc-pkcs11.so", /* debian */
-				"/lib32/pkcs11/opensc-pkcs11.so", /* Fedora */
+			"/usr/lib/i386-linux-gnu/opensc-pkcs11.so", /* debian */
+			"/lib32/pkcs11/opensc-pkcs11.so",           /* Fedora */
 #endif
 #endif
-				NULL
+			NULL
 		};
 
 		return winpr_NCryptOpenStorageProviderEx(phProvider, pszProviderName, dwFlags, openscPaths);
