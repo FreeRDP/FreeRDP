@@ -861,8 +861,6 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 #endif
 		                     NULL };
 
-	WINPR_ASSERT(modulePaths);
-
 	if (!phProvider)
 		return ERROR_INVALID_PARAMETER;
 

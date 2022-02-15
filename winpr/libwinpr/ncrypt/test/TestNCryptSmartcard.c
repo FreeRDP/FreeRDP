@@ -139,11 +139,12 @@ int TestNCryptSmartcard(int argc, char* argv[])
 			free(certBytes);
 
 		endofloop:
+			NCryptFreeBuffer(keyName);
 			NCryptFreeObject((NCRYPT_HANDLE)phKey);
 			i++;
 		}
 
-		NCryptFreeObject((NCRYPT_HANDLE)enumState);
+		NCryptFreeBuffer(enumState);
 		NCryptFreeObject((NCRYPT_HANDLE)provider);
 	}
 	return 0;
