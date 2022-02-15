@@ -25,6 +25,7 @@
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/tchar.h>
+#include <winpr/assert.h>
 
 #include "negotiate.h"
 
@@ -70,16 +71,19 @@ const SecPkgInfoW NEGOTIATE_SecPkgInfoW = {
 
 static void negotiate_SetSubPackage(NEGOTIATE_CONTEXT* context, const TCHAR* name)
 {
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(name);
+
 	if (_tcsnccmp(name, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0)
 	{
-		context->sspiA = (const SecurityFunctionTableA*)&KERBEROS_SecurityFunctionTableA;
-		context->sspiW = (const SecurityFunctionTableW*)&KERBEROS_SecurityFunctionTableW;
+		context->sspiA = &KERBEROS_SecurityFunctionTableA;
+		context->sspiW = &KERBEROS_SecurityFunctionTableW;
 		context->kerberos = TRUE;
 	}
 	else
 	{
-		context->sspiA = (const SecurityFunctionTableA*)&NTLM_SecurityFunctionTableA;
-		context->sspiW = (const SecurityFunctionTableW*)&NTLM_SecurityFunctionTableW;
+		context->sspiA = &NTLM_SecurityFunctionTableA;
+		context->sspiW = &NTLM_SecurityFunctionTableW;
 		context->kerberos = FALSE;
 	}
 }
@@ -129,6 +133,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	{
 		if (!pInput)
 		{
+			context->sspiW->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
 		}
 
@@ -137,20 +143,23 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		    TargetDataRep, pInput, Reserved2, &(context->SubContext), pOutput, pfContextAttr,
 		    ptsExpiry);
 
+#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
 		if (status == SEC_E_NO_CREDENTIALS)
 		{
 			WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
 			ErrorInitContextKerberos = TRUE;
-			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_ContextFree(context);
-			return status;
+			context->sspiW->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 		}
+#endif
 	}
-	else
+
+	if (ErrorInitContextKerberos)
 	{
 		if (!pInput)
 		{
-			context->sspiA->DeleteSecurityContext(&(context->SubContext));
+			context->sspiW->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, NTLM_SSP_NAME);
 		}
 
@@ -188,6 +197,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 	{
 		if (!pInput)
 		{
+			context->sspiA->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
 		}
 
@@ -196,21 +207,23 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 		    TargetDataRep, pInput, Reserved2, &(context->SubContext), pOutput, pfContextAttr,
 		    ptsExpiry);
 
+#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
 		if (status == SEC_E_NO_CREDENTIALS)
 		{
 			WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
 			ErrorInitContextKerberos = TRUE;
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_ContextFree(context);
-			sspi_SecureHandleSetLowerPointer(phNewContext, NULL);
-			return status;
+			SecInvalidateHandle(&context->SubContext);
 		}
+#endif
 	}
-	else
+
+	if (ErrorInitContextKerberos)
 	{
 		if (!pInput)
 		{
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, NTLM_SSP_NAME);
 		}
 

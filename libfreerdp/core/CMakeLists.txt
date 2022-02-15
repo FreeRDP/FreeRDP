@@ -147,10 +147,6 @@ endif()
 
 freerdp_library_add(${OPENSSL_LIBRARIES})
 
-if(WITH_GSSAPI)
-	freerdp_library_add(${GSS_LIBRARIES})
-endif()
-
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
