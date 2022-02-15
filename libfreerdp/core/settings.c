@@ -64,9 +64,9 @@ static BOOL settings_reg_query_dword_val(HKEY hKey, const TCHAR* sub, DWORD* val
 
 	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, sub, NULL, &dwType, (BYTE*)value, &dwSize) != ERROR_SUCCESS)
-	{
 		return FALSE;
-	}
+	if (dwType != REG_DWORD)
+		return FALSE;
 
 	return TRUE;
 }
@@ -76,6 +76,9 @@ static BOOL settings_reg_query_word_val(HKEY hKey, const TCHAR* sub, UINT16* val
 	DWORD dwValue;
 
 	if (!settings_reg_query_dword_val(hKey, sub, &dwValue))
+		return FALSE;
+
+	if (dwValue > UINT16_MAX)
 		return FALSE;
 
 	*value = (UINT16)dwValue;
