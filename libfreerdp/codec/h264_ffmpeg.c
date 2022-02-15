@@ -193,6 +193,7 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
 	BYTE** pYUVData = h264->pYUVData;
 	UINT32* iStride = h264->iStride;
+
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(sys->packet);
 #else
@@ -202,7 +203,14 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 	sys->packet->size = (int)MIN(SrcSize, INT32_MAX);
 	/* avcodec_decode_video2 is deprecated with libavcodec 57.48.101 */
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 48, 101)
+
 	status = avcodec_send_packet(sys->codecDecoderContext, sys->packet);
+
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
+	av_packet_unref(sys->packet);
+#else
+	av_packet_free(&sys->packet);
+#endif
 
 	if (status < 0)
 	{
