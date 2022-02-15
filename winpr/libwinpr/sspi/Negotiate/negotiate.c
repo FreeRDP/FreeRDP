@@ -26,12 +26,17 @@
 #include <winpr/sspi.h>
 #include <winpr/tchar.h>
 #include <winpr/assert.h>
+#include <winpr/registry.h>
+#include <winpr/build-config.h>
 
 #include "negotiate.h"
 
 #include "../sspi.h"
 #include "../../log.h"
 #define TAG WINPR_TAG("negotiate")
+
+static const char NEGO_REG_KEY[] =
+    "Software\\" WINPR_VENDOR_STRING "\\" WINPR_PRODUCT_STRING "\\SSPI\\Negotiate";
 
 extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
 extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
@@ -108,13 +113,68 @@ static void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 	free(context);
 }
 
+static BOOL negotaite_get_dword(HKEY hKey, const char* subkey, DWORD* pdwValue)
+{
+	DWORD dwValue = 0, dwType = 0;
+	DWORD dwSize = sizeof(dwValue);
+	LONG rc = RegQueryValueExA(hKey, subkey, NULL, &dwType, (BYTE*)&dwValue, &dwSize);
+
+	if (rc != ERROR_SUCCESS)
+		return FALSE;
+	if (dwType != REG_DWORD)
+		return FALSE;
+
+	*pdwValue = dwValue;
+	return TRUE;
+}
+
+static BOOL negotiate_get_config(BOOL* kerberos, BOOL* ntlm)
+{
+	HKEY hKey = NULL;
+	LONG rc;
+
+	WINPR_ASSERT(kerberos);
+	WINPR_ASSERT(ntlm);
+
+#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
+	*ntlm = TRUE;
+#else
+	*ntlm = FALSE;
+#endif
+	*kerberos = TRUE;
+
+	rc = RegOpenKeyExA(HKEY_LOCAL_MACHINE, NEGO_REG_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+	if (rc == ERROR_SUCCESS)
+	{
+		DWORD dwValue;
+
+		if (negotaite_get_dword(hKey, "kerberos", &dwValue))
+			*kerberos = (dwValue != 0) ? TRUE : FALSE;
+
+#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
+		if (negotaite_get_dword(hKey, "ntlm", &dwValue))
+			*ntlm = (dwValue != 0) ? TRUE : FALSE;
+#endif
+
+		RegCloseKey(hKey);
+	}
+
+	return TRUE;
+}
+
 static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
     PCredHandle phCredential, PCtxtHandle phContext, SEC_WCHAR* pszTargetName, ULONG fContextReq,
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
-	NEGOTIATE_CONTEXT* context;
+	BOOL ntlm = TRUE;
+	BOOL kerberos = TRUE;
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
+	NEGOTIATE_CONTEXT* context = NULL;
+
+	if (!negotiate_get_config(&kerberos, &ntlm))
+		return status;
+
 	context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -129,7 +189,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	}
 
 	/* if Kerberos has previously failed or WITH_GSSAPI is not defined, we use NTLM directly */
-	if (ErrorInitContextKerberos == FALSE)
+	if (kerberos && !ErrorInitContextKerberos)
 	{
 		if (!pInput)
 		{
@@ -144,7 +204,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		    ptsExpiry);
 
 #if !defined(WITH_GSS_NO_NTLM_FALLBACK)
-		if (status == SEC_E_NO_CREDENTIALS)
+		if (ntlm && (status == SEC_E_NO_CREDENTIALS))
 		{
 			WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
 			ErrorInitContextKerberos = TRUE;
@@ -154,7 +214,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 #endif
 	}
 
-	if (ErrorInitContextKerberos)
+	if (ntlm && ErrorInitContextKerberos)
 	{
 		if (!pInput)
 		{
@@ -177,8 +237,14 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
-	NEGOTIATE_CONTEXT* context;
+	BOOL ntlm = TRUE;
+	BOOL kerberos = TRUE;
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
+	NEGOTIATE_CONTEXT* context = NULL;
+
+	if (!negotiate_get_config(&kerberos, &ntlm))
+		return status;
+
 	context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -193,7 +259,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 	}
 
 	/* if Kerberos has previously failed or WITH_GSSAPI is not defined, we use NTLM directly */
-	if (ErrorInitContextKerberos == FALSE)
+	if (kerberos && !ErrorInitContextKerberos)
 	{
 		if (!pInput)
 		{
@@ -208,7 +274,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 		    ptsExpiry);
 
 #if !defined(WITH_GSS_NO_NTLM_FALLBACK)
-		if (status == SEC_E_NO_CREDENTIALS)
+		if (ntlm && (status == SEC_E_NO_CREDENTIALS))
 		{
 			WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
 			ErrorInitContextKerberos = TRUE;
@@ -218,7 +284,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 #endif
 	}
 
-	if (ErrorInitContextKerberos)
+	if (ntlm && ErrorInitContextKerberos)
 	{
 		if (!pInput)
 		{
