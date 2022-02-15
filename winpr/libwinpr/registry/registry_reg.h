@@ -47,6 +47,7 @@ struct s_reg_val
 	union reg_data
 	{
 		DWORD dword;
+		UINT64 qword;
 		char* string;
 	} data;
 };
@@ -65,5 +66,7 @@ struct s_reg_key
 
 Reg* reg_open(BOOL read_only);
 void reg_close(Reg* reg);
+
+const char* reg_type_string(DWORD type);
 
 #endif
