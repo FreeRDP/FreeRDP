@@ -315,8 +315,9 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 	return ERROR_SUCCESS;
 }
 
-static LPWSTR convertKeyType(CK_KEY_TYPE k)
+static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 {
+	DWORD retLen;
 	const WCHAR* r = NULL;
 
 #define ALGO_CASE(V, S) \
@@ -349,11 +350,37 @@ static LPWSTR convertKeyType(CK_KEY_TYPE k)
 		case CKK_AES:
 		case CKK_BLOWFISH:
 		case CKK_TWOFISH:
+		default:
 			break;
 	}
 #undef ALGO_CASE
 
-	return _wcsdup(r);
+	retLen = _wcslen(r);
+	if (outlen)
+		*outlen = retLen;
+
+	if (!r)
+	{
+		if (dest && len > 0)
+			dest[0] = 0;
+		return FALSE;
+	}
+	else
+	{
+		if (retLen + 1 < len)
+		{
+			WLog_ERR(TAG, "target buffer is too small for algo name");
+			return FALSE;
+		}
+
+		if (dest)
+		{
+			memcpy(dest, r, retLen * 2);
+			dest[retLen] = 0;
+		}
+	}
+
+	return TRUE;
 }
 
 static void wprintKeyName(LPWSTR str, CK_SLOT_ID slotId, CK_BYTE* id, CK_ULONG idLen)
@@ -591,8 +618,13 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 
 		if (ncertObjects)
 		{
-			/* sizeof keyName struct + "\<slotId>\<certId>" */
-			const size_t KEYNAME_SZ = (1 + 8 /*slotId*/ + 1 + (privKey->idLen * 2) + 1) * 2;
+			/* sizeof keyName struct + "\<slotId>\<certId>" + keyName->pszAlgid */
+			DWORD algoSz;
+			size_t KEYNAME_SZ = (1 + 8 /*slotId*/ + 1 + (privKey->idLen * 2) + 1) * 2;
+
+			convertKeyType(privKey->keyType, NULL, 0, &algoSz);
+			KEYNAME_SZ += (algoSz + 1) * 2;
+
 			keyName = calloc(1, sizeof(*keyName) + KEYNAME_SZ);
 			if (!keyName)
 			{
@@ -601,9 +633,11 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 			}
 			keyName->dwLegacyKeySpec = AT_KEYEXCHANGE | AT_SIGNATURE;
 			keyName->dwFlags = NCRYPT_MACHINE_KEY_FLAG;
-			keyName->pszAlgid = convertKeyType(privKey->keyType);
 			keyName->pszName = (LPWSTR)(keyName + 1);
 			wprintKeyName(keyName->pszName, privKey->slotId, privKey->id, privKey->idLen);
+
+			keyName->pszAlgid = keyName->pszName + _wcslen(keyName->pszName) + 1;
+			convertKeyType(privKey->keyType, keyName->pszAlgid, algoSz+1, NULL);
 		}
 
 	cleanup_FindObjects:

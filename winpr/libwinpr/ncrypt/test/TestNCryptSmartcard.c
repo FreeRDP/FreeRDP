@@ -66,7 +66,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 	SECURITY_STATUS status;
 	size_t j = 0;
 	DWORD providerCount;
-	NCryptProviderName *names;
+	NCryptProviderName *names = NULL;
 
 	status = NCryptEnumStorageProviders(&providerCount, &names, NCRYPT_SILENT_FLAG);
 	if (status != ERROR_SUCCESS)
@@ -147,5 +147,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 		NCryptFreeBuffer(enumState);
 		NCryptFreeObject((NCRYPT_HANDLE)provider);
 	}
+
+	NCryptFreeBuffer(names);
 	return 0;
 }
