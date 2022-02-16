@@ -296,13 +296,7 @@ typedef struct
  	return CHANNEL_RC_OK;
  }
 
- #ifdef BUILTIN_CHANNELS
- #define freerdp_audin_client_subsystem_entry ios_freerdp_audin_client_subsystem_entry
- #else
- #define freerdp_audin_client_subsystem_entry FREERDP_API freerdp_audin_client_subsystem_entry
- #endif
-
- UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+ UINT ios_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
  {
  	DWORD errCode;
  	char errString[1024];

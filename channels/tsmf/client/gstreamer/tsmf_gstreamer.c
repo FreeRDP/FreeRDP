@@ -1013,13 +1013,7 @@ static BOOL tsmf_gstreamer_sync(ITSMFDecoder* decoder, void (*cb)(void*), void* 
 	return TRUE;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_tsmf_client_subsystem_entry gstreamer_freerdp_tsmf_client_decoder_subsystem_entry
-#else
-#define freerdp_tsmf_client_subsystem_entry FREERDP_API freerdp_tsmf_client_decoder_subsystem_entry
-#endif
-
-ITSMFDecoder* freerdp_tsmf_client_subsystem_entry(void)
+ITSMFDecoder* gstreamer_freerdp_tsmf_client_decoder_subsystem_entry(void)
 {
 	TSMFGstreamerDecoder* decoder;
 

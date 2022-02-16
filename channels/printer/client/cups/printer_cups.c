@@ -382,11 +382,7 @@ static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 		cups_driver->references--;
 }
 
-#ifdef BUILTIN_CHANNELS
 rdpPrinterDriver* cups_freerdp_printer_client_subsystem_entry(void)
-#else
-FREERDP_API rdpPrinterDriver* freerdp_printer_client_subsystem_entry(void)
-#endif
 {
 	if (!uniq_cups_driver)
 	{

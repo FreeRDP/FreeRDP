@@ -899,12 +899,7 @@ static DWORD poll_thread(LPVOID lpThreadParameter)
 	return 0;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_urbdrc_client_subsystem_entry libusb_freerdp_urbdrc_client_subsystem_entry
-#else
-#define freerdp_urbdrc_client_subsystem_entry FREERDP_API freerdp_urbdrc_client_subsystem_entry
-#endif
-UINT freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
+UINT libusb_freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	wObject* obj;
 	UINT rc;

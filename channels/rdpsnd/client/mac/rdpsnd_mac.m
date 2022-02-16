@@ -352,18 +352,12 @@ static UINT rdpsnd_mac_play(rdpsndDevicePlugin *device, const BYTE *data, size_t
 	return mac->diff > UINT_MAX ? UINT_MAX : mac->diff;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_rdpsnd_client_subsystem_entry mac_freerdp_rdpsnd_client_subsystem_entry
-#else
-#define freerdp_rdpsnd_client_subsystem_entry FREERDP_API freerdp_rdpsnd_client_subsystem_entry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+UINT mac_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndMacPlugin *mac;
 	mac = (rdpsndMacPlugin *)calloc(1, sizeof(rdpsndMacPlugin));

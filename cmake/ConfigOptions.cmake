@@ -72,8 +72,6 @@ CMAKE_DEPENDENT_OPTION(WITH_CLIENT "Build client binaries" ON "WITH_CLIENT_COMMO
 
 option(WITH_SERVER "Build server binaries" OFF)
 
-option(BUILTIN_CHANNELS "Combine all channels into their respective base library" ON)
-
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
 option(FREERDP_UNIFIED_BUILD "Build WinPR, uwac, RdTk and FreeRDP in one go" ON)

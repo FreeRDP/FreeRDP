@@ -621,13 +621,7 @@ static BOOL CALLBACK InitializeAvCodecs(PINIT_ONCE once, PVOID param, PVOID* con
 	return TRUE;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_tsmf_client_subsystem_entry ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry
-#else
-#define freerdp_tsmf_client_subsystem_entry FREERDP_API freerdp_tsmf_client_decoder_subsystem_entry
-#endif
-
-ITSMFDecoder* freerdp_tsmf_client_subsystem_entry(void)
+ITSMFDecoder* ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry(void)
 {
 	TSMFFFmpegDecoder* decoder;
 	InitOnceExecuteOnce(&g_Initialized, InitializeAvCodecs, NULL, NULL);

@@ -354,18 +354,12 @@ static UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonit
 	return disp_send_display_control_monitor_layout_pdu(callback, NumMonitors, Monitors);
 }
 
-#ifdef BUILTIN_CHANNELS
-#define DVCPluginEntry disp_DVCPluginEntry
-#else
-#define DVCPluginEntry FREERDP_API DVCPluginEntry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+UINT disp_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT error = CHANNEL_RC_OK;
 	DISP_PLUGIN* disp;
