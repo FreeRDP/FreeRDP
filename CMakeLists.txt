@@ -863,9 +863,6 @@ else()
 	set(FREERDP_PROXY_PLUGINDIR "${PROXY_PLUGINDIR}")
 endif()
 
-# Declare we have config.h, generated later on.
-add_definitions("-DHAVE_CONFIG_H")
-
 # RPATH configuration
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)

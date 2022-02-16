@@ -25,9 +25,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <errno.h>
 #include <stdio.h>

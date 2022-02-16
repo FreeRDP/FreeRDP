@@ -16,9 +16,7 @@
  * permissions and limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <string.h>
 #include <stdlib.h>

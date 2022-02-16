@@ -21,9 +21,8 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
+
 #include <winpr/crt.h>
 #include <winpr/ssl.h>
 #include <winpr/path.h>

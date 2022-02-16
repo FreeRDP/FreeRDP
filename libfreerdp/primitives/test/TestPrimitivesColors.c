@@ -12,9 +12,7 @@
  * permissions and limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <winpr/sysinfo.h>
 #include <freerdp/utils/profiler.h>

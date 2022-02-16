@@ -22,9 +22,7 @@
 
 #include "rdp.h"
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <freerdp/log.h>
 #include <freerdp/freerdp.h>

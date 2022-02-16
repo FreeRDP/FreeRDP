@@ -22,9 +22,7 @@
 #ifndef FREERDP_CLIENT_X11_FREERDP_H
 #define FREERDP_CLIENT_X11_FREERDP_H
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 typedef struct xf_context xfContext;
 
