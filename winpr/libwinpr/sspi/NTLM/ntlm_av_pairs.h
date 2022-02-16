@@ -20,9 +20,7 @@
 #ifndef WINPR_SSPI_NTLM_AV_PAIRS_H
 #define WINPR_SSPI_NTLM_AV_PAIRS_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include "ntlm.h"
 

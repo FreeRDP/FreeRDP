@@ -21,9 +21,7 @@
 
 #include "../handle/handle.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #ifdef HAVE_SYS_EVENTFD_H
 #include <sys/eventfd.h>

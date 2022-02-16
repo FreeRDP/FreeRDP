@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
+#include <winpr/config.h>
 
 #if defined(__FreeBSD_kernel__) && defined(__GLIBC__)
 #define _GNU_SOURCE

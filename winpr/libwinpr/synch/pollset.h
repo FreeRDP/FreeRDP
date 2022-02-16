@@ -22,9 +22,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/synch.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #ifndef _WIN32
 

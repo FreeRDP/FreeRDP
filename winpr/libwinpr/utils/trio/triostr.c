@@ -19,9 +19,7 @@
  * Include files
  */
 
-#if defined(HAVE_CONFIG_H)
-#include <config.h>
-#endif
+#include <winpr/config.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,13 +103,6 @@
 #define strcasecmp(x, y) _stricmp(x, y)
 #else
 #define strcasecmp(x, y) _stricmp(x, y)
-#endif
-#endif
-
-#if !defined(HAVE_CONFIG_H)
-#if !(defined(TRIO_PLATFORM_SUNOS))
-#define HAVE_TOLOWER
-#define HAVE_TOUPPER
 #endif
 #endif
 
