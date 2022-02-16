@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>

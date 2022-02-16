@@ -35,9 +35,7 @@
  *     xrdp-ssh-agent gets a separate DVC invocation.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -13,9 +13,7 @@
  * permissions and limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>

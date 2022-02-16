@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>

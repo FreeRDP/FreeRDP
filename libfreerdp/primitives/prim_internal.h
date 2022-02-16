@@ -17,9 +17,7 @@
 #ifndef FREERDP_LIB_PRIM_INTERNAL_H
 #define FREERDP_LIB_PRIM_INTERNAL_H
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <freerdp/primitives.h>
 #include <freerdp/api.h>

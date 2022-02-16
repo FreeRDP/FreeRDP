@@ -22,9 +22,7 @@
 #ifndef FREERDP_CHANNEL_DISP_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_DISP_CLIENT_MAIN_H
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>

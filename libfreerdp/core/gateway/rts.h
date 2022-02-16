@@ -20,9 +20,7 @@
 #ifndef FREERDP_LIB_CORE_GATEWAY_RTS_H
 #define FREERDP_LIB_CORE_GATEWAY_RTS_H
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <winpr/stream.h>
 

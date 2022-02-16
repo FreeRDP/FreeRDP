@@ -21,9 +21,7 @@
 
 /* GDI Drawing Functions: http://msdn.microsoft.com/en-us/library/dd162760/ */
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #include <stdio.h>
 #include <string.h>

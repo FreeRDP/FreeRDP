@@ -22,9 +22,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
-#endif
 
 #ifndef _WIN32
 #include <sys/time.h>

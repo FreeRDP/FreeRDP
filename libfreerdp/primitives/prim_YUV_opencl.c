@@ -18,7 +18,6 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <freerdp/config.h>
 
 #include <freerdp/types.h>
