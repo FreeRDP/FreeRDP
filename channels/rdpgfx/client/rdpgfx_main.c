@@ -2047,12 +2047,6 @@ static void* rdpgfx_get_cache_slot_data(RdpgfxClientContext* context, UINT16 cac
 	return pData;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define DVCPluginEntry rdpgfx_DVCPluginEntry
-#else
-#define DVCPluginEntry FREERDP_API DVCPluginEntry
-#endif
-
 RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings)
 {
 	RDPGFX_PLUGIN* gfx;
@@ -2168,7 +2162,7 @@ void rdpgfx_client_context_free(RdpgfxClientContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+UINT rdpgfx_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_PLUGIN* gfx;

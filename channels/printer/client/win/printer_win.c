@@ -416,11 +416,7 @@ static void printer_win_release_ref_driver(rdpPrinterDriver* driver)
 		win->references--;
 }
 
-#ifdef BUILTIN_CHANNELS
 rdpPrinterDriver* win_freerdp_printer_client_subsystem_entry(void)
-#else
-FREERDP_API rdpPrinterDriver* freerdp_printer_client_subsystem_entry(void)
-#endif
 {
 	if (!win_driver)
 	{

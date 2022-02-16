@@ -226,14 +226,7 @@ static void tsmf_alsa_free(ITSMFAudioDevice* audio)
 	free(alsa);
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_tsmf_client_audio_subsystem_entry alsa_freerdp_tsmf_client_audio_subsystem_entry
-#else
-#define freerdp_tsmf_client_audio_subsystem_entry \
-	FREERDP_API freerdp_tsmf_client_audio_subsystem_entry
-#endif
-
-ITSMFAudioDevice* freerdp_tsmf_client_audio_subsystem_entry(void)
+ITSMFAudioDevice* alsa_freerdp_tsmf_client_audio_subsystem_entry(void)
 {
 	TSMFAlsaAudioDevice* alsa;
 	alsa = (TSMFAlsaAudioDevice*)malloc(sizeof(TSMFAlsaAudioDevice));

@@ -22,10 +22,6 @@ set(${MODULE_PREFIX}_SRCS
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "VirtualChannelEntryEx")
 
-if(BUILTIN_CHANNELS)
-  target_link_libraries(${MODULE_NAME} freerdp)
-else()
-  target_link_libraries(${MODULE_NAME} winpr freerdp)
-endif()
+target_link_libraries(${MODULE_NAME} freerdp)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")

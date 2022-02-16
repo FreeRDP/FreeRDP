@@ -63,7 +63,6 @@
 #cmakedefine WITH_CHANNEL_RDPAPPLIST
 
 /* Plugins */
-#cmakedefine BUILTIN_CHANNELS
 #cmakedefine WITH_RDPDR
 
 /* Channels */

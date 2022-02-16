@@ -961,12 +961,7 @@ static rdpPrinterDriver* printer_load_backend(const char* backend)
  * @return 0 on success, otherwise a Win32 error code
  */
 UINT
-#ifdef BUILTIN_CHANNELS
 printer_DeviceServiceEntry
-#else
-    FREERDP_API
-    DeviceServiceEntry
-#endif
     (PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	int i;

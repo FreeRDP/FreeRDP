@@ -994,18 +994,12 @@ out_error:
 	return error;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define DeviceServiceEntry drive_DeviceServiceEntry
-#else
-#define DeviceServiceEntry FREERDP_API DeviceServiceEntry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+UINT drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	RDPDR_DRIVE* drive;
 	UINT error;

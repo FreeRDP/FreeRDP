@@ -1161,19 +1161,12 @@ static UINT video_plugin_terminated(IWTSPlugin* pPlugin)
 /**
  * Channel Client Interface
  */
-
-#ifdef BUILTIN_CHANNELS
-#define DVCPluginEntry video_DVCPluginEntry
-#else
-#define DVCPluginEntry FREERDP_API DVCPluginEntry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+UINT video_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT error = CHANNEL_RC_OK;
 	VIDEO_PLUGIN* videoPlugin;

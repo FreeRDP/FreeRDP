@@ -553,18 +553,12 @@ static UINT tsmf_process_addin_args(IWTSPlugin* pPlugin, const ADDIN_ARGV* args)
 	return CHANNEL_RC_OK;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define DVCPluginEntry tsmf_DVCPluginEntry
-#else
-#define DVCPluginEntry FREERDP_API DVCPluginEntry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+UINT tsmf_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT status = 0;
 	TSMF_PLUGIN* tsmf;

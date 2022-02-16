@@ -443,18 +443,12 @@ static void mappedGeometryUnref_void(void* arg)
  * Channel Client Interface
  */
 
-#ifdef BUILTIN_CHANNELS
-#define DVCPluginEntry geometry_DVCPluginEntry
-#else
-#define DVCPluginEntry FREERDP_API DVCPluginEntry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+UINT geometry_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT error = CHANNEL_RC_OK;
 	GEOMETRY_PLUGIN* geometry;
