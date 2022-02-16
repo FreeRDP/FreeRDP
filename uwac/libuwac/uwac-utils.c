@@ -22,7 +22,7 @@
  * OF THIS SOFTWARE.
  */
 
-#include "config.h"
+#include <uwac/config.h>
 
 #include <stdlib.h>
 #include <stdio.h>

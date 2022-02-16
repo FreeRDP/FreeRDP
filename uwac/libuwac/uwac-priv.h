@@ -23,7 +23,7 @@
 #ifndef UWAC_PRIV_H_
 #define UWAC_PRIV_H_
 
-#include "config.h"
+#include <uwac/config.h>
 
 #include <stdbool.h>
 #include <wayland-client.h>

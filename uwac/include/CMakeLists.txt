@@ -15,5 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-file(GLOB UWAC_HEADERS "uwac/*.h")
-install(FILES ${UWAC_HEADERS} DESTINATION include/uwac${UWAC_API_VERSION}/uwac COMPONENT headers)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+	DESTINATION ${UWAC_INCLUDE_DIR}
+        FILES_MATCHING PATTERN "*.h")
+
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/
+	DESTINATION ${UWAC_INCLUDE_DIR}
+        FILES_MATCHING PATTERN "*.h")
+

@@ -93,9 +93,12 @@ set(WAYLAND_FEATURE_DESCRIPTION "Wayland client")
 set(WAYLAND_FEATURE_TYPE "REQUIRED")
 find_feature(Wayland ${WAYLAND_FEATURE_TYPE} ${WAYLAND_FEATURE_PURPOSE} ${WAYLAND_FEATURE_DESCRIPTION})
 
-include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/templates)
+set(UWAC_INCLUDE_DIR include/uwac${UWAC_API_VERSION})
+
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 add_subdirectory(libuwac)
-add_subdirectory(include)
 add_subdirectory(templates)
+add_subdirectory(include)
 
