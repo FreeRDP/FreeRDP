@@ -32,7 +32,7 @@
 #include "uwac-utils.h"
 #include "uwac-os.h"
 
-#include "config.h"
+#include <uwac/config.h>
 
 #define UWAC_INITIAL_BUFFERS 3
 
