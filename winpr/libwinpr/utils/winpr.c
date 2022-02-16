@@ -18,11 +18,9 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
-#include "buildflags.h"
+#include <winpr/buildflags.h>
 
 #include <stdlib.h>
 #include <stdio.h>

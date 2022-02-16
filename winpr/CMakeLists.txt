@@ -243,13 +243,6 @@ set(OPENSSL_FEATURE_TYPE "RECOMMENDED")
         message(FATAL_ERROR "OpenSSL or MBedTLS are required, none enabled/found")
     endif()
 
-	# Include directories
-	include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
-
-	# Configure files
-	add_definitions("-DHAVE_CONFIG_H")
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-
 	enable_testing()
 
 	if(MSVC)
@@ -288,7 +281,8 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
-add_subdirectory(include)
+set(WINPR_INCLUDE_DIR "include/winpr${WINPR_VERSION_MAJOR}")
+
 
 add_subdirectory(libwinpr)
 
@@ -300,14 +294,14 @@ if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
 
+add_subdirectory(include)
+
 install_freerdp_man(wlog.7 7)
 # Exporting
 
 export(PACKAGE winpr)
 
 SetFreeRDPCMakeInstallDir(WINPR_CMAKE_INSTALL_DIR "WinPR${WINPR_VERSION_MAJOR}")
-
-set(WINPR_INCLUDE_DIR "include/winpr${WINPR_VERSION_MAJOR}")
 
 configure_package_config_file(WinPRConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake
 	INSTALL_DESTINATION ${WINPR_CMAKE_INSTALL_DIR}
@@ -323,4 +317,4 @@ install(EXPORT WinPRTargets DESTINATION ${WINPR_CMAKE_INSTALL_DIR})
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr${WINPR_VERSION_MAJOR}.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr${WINPR_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/buildflags.h)
+

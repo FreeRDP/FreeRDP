@@ -20,9 +20,7 @@
 #ifndef WINPR_LIBWINPR_NCRYPT_NCRYPT_H_
 #define WINPR_LIBWINPR_NCRYPT_NCRYPT_H_
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/bcrypt.h>
 #include <winpr/crypto.h>
