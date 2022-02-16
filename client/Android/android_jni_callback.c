@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <freerdp/config.h>
 #endif
 
 #include <stdio.h>

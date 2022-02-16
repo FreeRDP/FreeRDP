@@ -21,7 +21,7 @@
 #define FREERDP_CHANNEL_TSMF_CLIENT_TYPES_H
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <freerdp/config.h>
 #endif
 
 #include <freerdp/dvc.h>

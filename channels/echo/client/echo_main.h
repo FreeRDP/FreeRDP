@@ -21,7 +21,7 @@
 #define FREERDP_CHANNEL_ECHO_CLIENT_MAIN_H
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <freerdp/config.h>
 #endif
 
 #include <freerdp/dvc.h>

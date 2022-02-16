@@ -21,7 +21,7 @@
 #define FREERDP_LIB_CRYPTO_OPENSSLCOMPAT_H
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <freerdp/config.h>
 #endif
 
 #include <freerdp/api.h>
