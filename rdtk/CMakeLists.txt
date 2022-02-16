@@ -96,11 +96,11 @@ endif()
 
 SetFreeRDPCMakeInstallDir(RDTK_CMAKE_INSTALL_DIR "rdtk${RDTK_VERSION_MAJOR}")
 
-include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/templates)
+set(RDTK_INCLUDE_DIR include/rdtk${RDTK_API_VERSION})
 
 add_subdirectory(librdtk)
-add_subdirectory(include)
 add_subdirectory(templates)
+add_subdirectory(include)
 
 install(EXPORT rdtk DESTINATION ${RDTK_CMAKE_INSTALL_DIR})
 
