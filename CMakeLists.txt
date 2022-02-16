@@ -951,7 +951,6 @@ if(WITH_THIRD_PARTY)
 	endif()
 endif()
 
-add_subdirectory(include)
 
 add_subdirectory(libfreerdp)
 
@@ -979,8 +978,7 @@ if(WITH_SERVER)
 	add_subdirectory(server)
 endif()
 
-# Configure files - Add last so all symbols are defined
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+add_subdirectory(include)
 
 # Packaging
 
@@ -1006,7 +1004,6 @@ FOREACH(var ${res})
 	ENDIF()
 ENDFOREACH()
 string(REPLACE ";" " " FREERDP_BUILD_CONFIG "${FREERDP_BUILD_CONFIG_LIST}")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/buildflags.h)
 
 message(STATUS "Intrinsic path configuration:")
 #ShowCMakeVars("^CMAKE_INSTALL_PREFIX")

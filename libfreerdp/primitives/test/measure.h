@@ -26,7 +26,7 @@
 #define TEST_MEASURE_H_INCLUDED
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <freerdp/config.h>
 #endif
 
 #include <time.h>

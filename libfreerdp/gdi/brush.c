@@ -22,7 +22,7 @@
 /* GDI Brush Functions: http://msdn.microsoft.com/en-us/library/dd183395/ */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <freerdp/config.h>
 #endif
 
 #include <stdio.h>

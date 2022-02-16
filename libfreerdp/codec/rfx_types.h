@@ -21,7 +21,7 @@
 #define FREERDP_LIB_CODEC_RFX_TYPES_H
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <freerdp/config.h>
 #endif
 
 #include <winpr/crt.h>

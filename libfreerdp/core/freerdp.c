@@ -20,7 +20,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <freerdp/config.h>
 #endif
 
 #include <stdarg.h>
@@ -32,7 +32,7 @@
 #include "transport.h"
 #include "connection.h"
 #include "message.h"
-#include "buildflags.h"
+#include <freerdp/buildflags.h>
 #include "gateway/rpc_fault.h"
 
 #include <winpr/assert.h>

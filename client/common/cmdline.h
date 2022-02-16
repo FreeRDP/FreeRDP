@@ -21,7 +21,7 @@
 #define CLIENT_COMMON_CMDLINE_H
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <freerdp/config.h>
 #endif
 
 #include <winpr/cmdline.h>

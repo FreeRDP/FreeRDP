@@ -14,7 +14,7 @@
 
 #import <freerdp/input.h>
 #import <freerdp/version.h>
-#import "config.h"
+#import <freerdp/config.h>
 
 #include <sys/types.h>
 #include <sys/sysctl.h>

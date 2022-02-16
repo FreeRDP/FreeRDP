@@ -22,7 +22,7 @@
 #define FREERDP_LIB_CORE_RDP_H
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <freerdp/config.h>
 #endif
 
 #include "nla.h"
