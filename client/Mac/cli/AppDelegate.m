@@ -67,7 +67,7 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 
 		if (settings->WindowTitle && settings->WindowTitle[0])
 		{
-			winTitle = [[NSString alloc] initWithCString:settings->WindowTitle];
+			winTitle = [[NSString alloc] initWithCString:settings->WindowTitle encoding:NSUTF8StringEncoding];
 		}
 		else
 		{
