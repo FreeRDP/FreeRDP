@@ -106,13 +106,24 @@ rdpPointer* Pointer_Alloc(rdpContext* context)
 }
 
 static BOOL Pointer_New(rdpContext* context, rdpPointer* pointer)
-{
+{	
 	rdpPointer* proto;
 
 	if (!context || !context->graphics || !context->graphics->Pointer_Prototype)
 		return FALSE;
 
 	proto = context->graphics->Pointer_Prototype;
+	if (pointer->xorMaskData)
+	{
+		free(pointer->xorMaskData);
+		pointer->xorMaskData = NULL;
+	}
+
+	if (pointer->andMaskData)
+	{
+		free(pointer->andMaskData);
+		pointer->andMaskData = NULL;
+	}
 	*pointer = *proto;
 	return TRUE;
 }
