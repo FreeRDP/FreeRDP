@@ -1329,7 +1329,7 @@ static UINT urb_control_get_interface_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
 {
 	size_t out_size;
 	UINT32 InterfaceId, OutputBufferSize, usbd_status;
-	UINT16 interface;
+	UINT16 InterfaceNr;
 	wStream* out;
 	URBDRC_PLUGIN* urbdrc;
 	const BOOL noAck = (RequestField & 0x80000000U) != 0;
@@ -1354,7 +1354,7 @@ static UINT urb_control_get_interface_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
 	}
 
 	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
-	Stream_Read_UINT16(s, interface);
+	Stream_Read_UINT16(s, InterfaceNr);
 	Stream_Seek(s, 2);
 	Stream_Read_UINT32(s, OutputBufferSize);
 	if (OutputBufferSize > UINT32_MAX - 36)
@@ -1369,7 +1369,7 @@ static UINT urb_control_get_interface_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
 
 	if (!pdev->control_transfer(
 	        pdev, RequestId, 0, 0, 0x80 | 0x01, 0x0A, /* REQUEST_GET_INTERFACE */
-	        0, interface, &usbd_status, &OutputBufferSize, Stream_Pointer(out), 1000))
+	        0, InterfaceNr, &usbd_status, &OutputBufferSize, Stream_Pointer(out), 1000))
 	{
 		WLog_Print(urbdrc->log, WLOG_DEBUG, "control_transfer failed");
 		Stream_Free(out, TRUE);

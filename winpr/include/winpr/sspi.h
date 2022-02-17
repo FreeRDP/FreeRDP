@@ -484,7 +484,7 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 
 #endif
 
-#if !defined(_WIN32) || defined(_UWP) || defined(__MINGW32__)
+#if !defined(_WIN32) || defined(_UWP) || !defined(__MINGW32__)
 typedef struct
 {
 	UINT32 BindingsLength;

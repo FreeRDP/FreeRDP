@@ -197,15 +197,15 @@ static const char* call_to_string_proxy(BOOL client, UINT32 interfaceId, UINT32 
 	}
 }
 
-static const char* call_to_string_stub(BOOL client, UINT32 interfaceId, UINT32 functionId)
+static const char* call_to_string_stub(BOOL client, UINT32 interfaceNr, UINT32 functionId)
 {
 	return "QUERY_DEVICE_TEXT_RSP             [stub  |client]";
 }
 
-const char* call_to_string(BOOL client, UINT32 interface, UINT32 functionId)
+const char* call_to_string(BOOL client, UINT32 interfaceNr, UINT32 functionId)
 {
-	const UINT32 mask = (interface & STREAM_ID_MASK) >> 30;
-	const UINT32 interfaceId = interface & INTERFACE_ID_MASK;
+	const UINT32 mask = (interfaceNr & STREAM_ID_MASK) >> 30;
+	const UINT32 interfaceId = interfaceNr & INTERFACE_ID_MASK;
 
 	switch (mask)
 	{
