@@ -4,8 +4,8 @@
 
 #include <initguid.h>
 #include <mmdeviceapi.h>
-#include <Functiondiscoverykeys_devpkey.h>
-#include <Audioclient.h>
+#include <functiondiscoverykeys_devpkey.h>
+#include <audioclient.h>
 
 #define TAG SERVER_TAG("windows")
 
