@@ -486,7 +486,7 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 		strncpy(Domain, *domain, CREDUI_MAX_DOMAIN_TARGET_LENGTH);
 	}
 
-	if (!(username && *username && password && *password))
+    if (!(*UserName && *Password))
 	{
 		if (!wfc->isConsole && wfc->context.settings->CredentialsFromStdin)
 			WLog_ERR(TAG, "Flag for stdin read present but stdin is redirected; using GUI");
