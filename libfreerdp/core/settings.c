@@ -158,16 +158,18 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		settings_reg_query_dword(settings, FreeRDP_BitmapCacheV2NumCells, hKey, _T("NumCells"));
 		for (x = 0; x < 5; x++)
 		{
+			DWORD val;
 			TCHAR numentries[64] = { 0 };
 			TCHAR persist[64] = { 0 };
 			BITMAP_CACHE_V2_CELL_INFO cache = { 0 };
 			_sntprintf(numentries, ARRAYSIZE(numentries), _T("Cell%uNumEntries"), x);
 			_sntprintf(persist, ARRAYSIZE(persist), _T("Cell%uPersistent"), x);
-			if (!settings_reg_query_dword_val(hKey, numentries, &cache.numEntries) ||
+			if (!settings_reg_query_dword_val(hKey, numentries, &val) ||
 			    !settings_reg_query_bool_val(hKey, persist, &cache.persistent) ||
 			    !freerdp_settings_set_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, x,
 			                                        &cache))
 				WLog_WARN(TAG, "Failed to load registry keys to settings!");
+			cache.numEntries = val;
 		}
 
 		settings_reg_query_bool(settings, FreeRDP_AllowCacheWaitingList, hKey,

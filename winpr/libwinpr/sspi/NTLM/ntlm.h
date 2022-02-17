@@ -89,6 +89,10 @@ enum
 	MsvAvSingleHost = MsvAvRestrictions
 };
 
+#else
+#ifndef MsvAvSingleHost
+#define MsvAvSingleHost MsvAvRestrictions
+#endif
 #endif
 #else
 typedef enum
