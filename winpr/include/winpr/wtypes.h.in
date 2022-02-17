@@ -81,7 +81,7 @@ typedef LONG_PTR SSIZE_T;
 #pragma clang diagnostic ignored "-Wreserved-id-macro"
 #endif
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__MINGW32__)
 
 #define CALLBACK
 
