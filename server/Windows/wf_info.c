@@ -196,7 +196,7 @@ wfInfo* wf_info_get_instance()
 BOOL wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	int i;
-	int peerId;
+	int peerId = 0;
 
 	if (!wfi || !context)
 		return FALSE;
