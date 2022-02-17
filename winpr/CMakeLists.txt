@@ -67,7 +67,7 @@ elseif(WITH_GSSAPI)
 endif()
 
 include(CMakeDependentOption)
-CMAKE_DEPENDENT_OPTION(WITH_GSS_NO_NTLM_FALLBACK "Do not fall back to NTLM if no kerberos ticket available" OFF "WITH_GSSAPI" ON)
+CMAKE_DEPENDENT_OPTION(WITH_GSS_NO_NTLM_FALLBACK "Do not fall back to NTLM if no kerberos ticket available" OFF "WITH_GSSAPI" OFF)
 if (WITH_GSS_NO_NTLM_FALLBACK)
 	add_definitions("-DWITH_GSS_NO_NTLM_FALLBACK")
 endif()
