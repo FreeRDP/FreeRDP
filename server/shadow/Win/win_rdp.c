@@ -187,7 +187,7 @@ static DWORD WINAPI shw_client_thread(LPVOID arg)
 	{
 		DWORD status;
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
-		DWORD count = freerdp_get_event_handles(instance, handles, ARRAYSIZE(handles));
+		DWORD count = freerdp_get_event_handles(instance->context, handles, ARRAYSIZE(handles));
 
 		if ((count == 0) || (count == MAXIMUM_WAIT_OBJECTS))
 		{
