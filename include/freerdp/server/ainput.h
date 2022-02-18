@@ -34,6 +34,10 @@ typedef enum AINPUT_SERVER_OPEN_RESULT
 
 typedef struct _ainput_server_context ainput_server_context;
 
+typedef UINT (*psAInputServerInitialize)(ainput_server_context* context, BOOL externalThread);
+typedef UINT (*psAInputServerPoll)(ainput_server_context* context);
+typedef BOOL (*psAInputServerChannelHandle)(ainput_server_context* context, HANDLE* handle);
+
 typedef UINT (*psAInputServerOpen)(ainput_server_context* context);
 typedef UINT (*psAInputServerClose)(ainput_server_context* context);
 typedef BOOL (*psAInputServerIsOpen)(ainput_server_context* context);
@@ -55,6 +59,28 @@ struct _ainput_server_context
 	 * Open the ainput channel.
 	 */
 	psAInputServerOpen Open;
+
+	/**
+	 * Optional: Set thread handling.
+	 * When externalThread=TRUE the application is responsible to call
+	 * ainput_server_context_poll periodically to process input events.
+	 *
+	 * Defaults to externalThread=FALSE
+	 */
+	psAInputServerInitialize Initialize;
+
+	/**
+	 * @brief Poll When externalThread=TRUE call periodically from your main loop.
+	 * if externalThread=FALSE do not call.
+	 */
+	psAInputServerPoll Poll;
+
+	/**
+	 * @brief Poll When externalThread=TRUE call to get a handle to wait for events.
+	 * Will return FALSE until the handle is available.
+	 */
+	psAInputServerChannelHandle ChannelHandle;
+
 	/**
 	 * Close the ainput channel.
 	 */
