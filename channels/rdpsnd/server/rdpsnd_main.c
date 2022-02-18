@@ -695,10 +695,11 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 			priv->SessionId = (DWORD)*pSessionId;
 			WTSFreeMemory(pSessionId);
 			priv->ChannelHandle = (HANDLE)WTSVirtualChannelOpenEx(
-			    priv->SessionId, "AUDIO_PLAYBACK_DVC", WTS_CHANNEL_OPTION_DYNAMIC);
+			    priv->SessionId, RDPSND_DVC_CHANNEL_NAME, WTS_CHANNEL_OPTION_DYNAMIC);
 			if (!priv->ChannelHandle)
 			{
-				WLog_ERR(TAG, "Open audio dynamic virtual channel (AUDIO_PLAYBACK_DVC) failed!");
+				WLog_ERR(TAG, "Open audio dynamic virtual channel (%s) failed!",
+				         RDPSND_DVC_CHANNEL_NAME);
 				return ERROR_INTERNAL_ERROR;
 			}
 		}
