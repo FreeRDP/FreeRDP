@@ -76,7 +76,7 @@ static void android_OnChannelConnectedEventHandler(void* context,
 	if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		android_cliprdr_init(afc, (CliprdrClientContext*)e->pInterface);
-	    }
+	}
 	else
 		freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
@@ -99,7 +99,7 @@ static void android_OnChannelDisconnectedEventHandler(void* context,
 	if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		android_cliprdr_uninit(afc, (CliprdrClientContext*)e->pInterface);
-	    }
+	}
 	else
 		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
 }

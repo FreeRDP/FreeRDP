@@ -648,20 +648,20 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	{
 		case XI_ButtonPress:
 			xfc->xi_event = TRUE;
-				xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
-				                       event->event, xfc->remote_app, TRUE);
+			xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
+			                       event->event, xfc->remote_app, TRUE);
 			break;
 
 		case XI_ButtonRelease:
 			xfc->xi_event = TRUE;
-				xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
-				                       event->event, xfc->remote_app, FALSE);
+			xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
+			                       event->event, xfc->remote_app, FALSE);
 			break;
 
 		case XI_Motion:
 			xfc->xi_event = TRUE;
-				xf_generic_MotionNotify(xfc, (int)event->event_x, (int)event->event_y,
-				                        event->detail, event->event, xfc->remote_app);
+			xf_generic_MotionNotify(xfc, (int)event->event_x, (int)event->event_y, event->detail,
+			                        event->event, xfc->remote_app);
 			break;
 		case XI_RawButtonPress:
 		case XI_RawButtonRelease:
@@ -674,7 +674,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 				xf_generic_RawButtonEvent(xfc, ev->detail, xfc->remote_app,
 				                          evtype == XI_RawButtonPress);
 			}
-		break;
+			break;
 		case XI_RawMotion:
 			xfc->xi_rawevent = xfc->common.mouse_grabbed &&
 			                   freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove);
@@ -691,7 +691,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 
 				xf_generic_RawMotionNotify(xfc, (int)x, (int)y, event->event, xfc->remote_app);
 			}
-		break;
+			break;
 		default:
 			WLog_WARN(TAG, "[%s] Unhandled event %d: Event was registered but is not handled!");
 			break;

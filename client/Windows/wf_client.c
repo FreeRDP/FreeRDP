@@ -1431,7 +1431,6 @@ static int wfreerdp_client_stop(rdpContext* context)
 	return 0;
 }
 
-
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->Version = 1;
