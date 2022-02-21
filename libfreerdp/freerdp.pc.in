@@ -9,7 +9,7 @@ Description: FreeRDP: A Remote Desktop Protocol Implementation
 URL: http://www.freerdp.com/
 Version: @FREERDP_VERSION@
 Requires: 
-Requires.private: @WINPR_PKG_CONFIG_FILENAME@ libssl
+Requires.private: winpr@FREERDP_API_VERSION@
 Libs: -L${libdir} ${libs}
 Libs.private: -ldl -lpthread
 Cflags: -I${includedir}
