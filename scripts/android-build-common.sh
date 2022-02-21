@@ -3,6 +3,18 @@
 SCRIPT_PATH=$(dirname "${BASH_SOURCE[0]}")
 SCRIPT_PATH=$(realpath "$SCRIPT_PATH")
 
+FIND_ARGS="-type f -print -quit"
+case "$(uname -s)" in
+
+   Darwin)
+		 FIND_ARGS="-perm +111 $FIND_ARGS"
+     ;;
+
+   *)
+		 FIND_ARGS="-executable $FIND_ARGS"
+     ;;
+esac
+
 if [ -z $BUILD_ARCH ]; then
 	BUILD_ARCH="armeabi-v7a x86 x86_64 arm64-v8a"
 fi
@@ -12,7 +24,7 @@ if [ -z $NDK_TARGET ]; then
 fi
 
 if [ -z $CMAKE_PROGRAM ]; then
-  	CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake -type f -executable -print -quit)
+	CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake $FIND_ARGS)
 fi
 
 if [ -z $CCACHE ]; then
@@ -99,7 +111,7 @@ function common_parse_arguments {
 
 			--sdk)
 			ANDROID_SDK="$2"
-  	        CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake -type f -executable -print -quit)
+			CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake $FIND_ARGS)
 			shift
 			;;
 
@@ -196,7 +208,7 @@ function common_check_requirements {
 	fi
 
     if [ -z $CMAKE_PROGRAM ]; then
-    	CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake -type f -executable -print -quit)
+			CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake $FIND_ARGS)
     fi
 
 	for CMD in make git $CMAKE_PROGRAM $NDK_BUILD
@@ -232,8 +244,8 @@ function common_update {
 	CACHE=$SCRIPT_PATH/../cache
 	common_run mkdir -p $CACHE
 	TARFILE="$CACHE/$SCM_TAG.tar.gz"
-	
-	
+
+
 	if [[ ! -f "$TARFILE" ]];
 	then
 		common_run wget -O "$TARFILE" "$SCM_URL/archive/$SCM_TAG.tar.gz"
