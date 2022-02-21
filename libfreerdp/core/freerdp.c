@@ -588,11 +588,11 @@ const char* freerdp_get_version_string(void)
 const char* freerdp_get_build_config(void)
 {
 	static const char build_config[] =
-	    "Build configuration: " BUILD_CONFIG "\n"
-	    "Build type:          " BUILD_TYPE "\n"
-	    "CFLAGS:              " CFLAGS "\n"
-	    "Compiler:            " COMPILER_ID ", " COMPILER_VERSION "\n"
-	    "Target architecture: " TARGET_ARCH "\n";
+	    "Build configuration: " FREERDP_BUILD_CONFIG "\n"
+	    "Build type:          " FREERDP_BUILD_TYPE "\n"
+	    "CFLAGS:              " FREERDP_CFLAGS "\n"
+	    "Compiler:            " FREERDP_COMPILER_ID ", " FREERDP_COMPILER_VERSION "\n"
+	    "Target architecture: " FREERDP_TARGET_ARCH "\n";
 	return build_config;
 }
 
