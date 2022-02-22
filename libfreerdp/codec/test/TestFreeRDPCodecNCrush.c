@@ -76,7 +76,7 @@ static BOOL test_NCrushDecompressBells(void)
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	UINT32 expectedSize;
-	BYTE* pDstData = NULL;
+	const BYTE* pDstData = NULL;
 	NCRUSH_CONTEXT* ncrush = ncrush_context_new(FALSE);
 
 	if (!ncrush)

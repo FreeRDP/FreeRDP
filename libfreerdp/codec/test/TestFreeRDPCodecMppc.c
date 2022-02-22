@@ -850,14 +850,14 @@ static int test_MppcDecompressBellsRdp5(void)
 	UINT32 DstSize;
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
-	BYTE* pDstData = NULL;
+	const BYTE* pDstData = NULL;
 	mppc = mppc_context_new(1, FALSE);
 
 	if (!mppc)
 		return -1;
 
 	SrcSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
-	pSrcData = (const BYTE*)TEST_MPPC_BELLS_RDP5;
+	pSrcData = TEST_MPPC_BELLS_RDP5;
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
 	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
@@ -897,7 +897,7 @@ static int test_MppcDecompressBellsRdp4(void)
 	UINT32 DstSize;
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
-	BYTE* pDstData = NULL;
+	const BYTE* pDstData = NULL;
 	mppc = mppc_context_new(0, FALSE);
 
 	if (!mppc)
@@ -1047,7 +1047,7 @@ static int test_MppcDecompressBufferRdp5(void)
 	UINT32 DstSize;
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
-	BYTE* pDstData = NULL;
+	const BYTE* pDstData = NULL;
 	mppc = mppc_context_new(1, FALSE);
 
 	if (!mppc)
