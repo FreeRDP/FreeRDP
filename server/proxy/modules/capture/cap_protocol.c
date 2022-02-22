@@ -49,12 +49,12 @@ wStream* capture_plugin_create_session_info_packet(pClientContext* pc)
 	if ((username_length == 0) || (username_length > UINT16_MAX))
 		return NULL;
 
-	s = capture_plugin_packet_new(SESSION_INFO_PDU_BASE_SIZE + username_length,
+	s = capture_plugin_packet_new(SESSION_INFO_PDU_BASE_SIZE + (UINT32)username_length,
 	                              MESSAGE_TYPE_SESSION_INFO);
 	if (!s)
 		return NULL;
 
-	Stream_Write_UINT16(s, username_length);                         /* username length (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)username_length);                 /* username length (2 bytes) */
 	Stream_Write(s, settings->Username, username_length);            /* username */
 	Stream_Write_UINT32(s, settings->DesktopWidth);                  /* desktop width (4 bytes) */
 	Stream_Write_UINT32(s, settings->DesktopHeight);                 /* desktop height (4 bytes) */

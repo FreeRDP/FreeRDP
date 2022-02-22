@@ -210,7 +210,8 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 
 			value->data.dword = (DWORD)val;
 			}
-			break;
+		}
+		    break;
 			case REG_QWORD:
 			{
 				unsigned long long val;
@@ -257,7 +258,6 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 				     reg_data_type_string(value->type));
 			break;
 		}
-	}
 
 	if (!key->values)
 	{
