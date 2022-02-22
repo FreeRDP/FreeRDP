@@ -20,9 +20,7 @@
 #ifndef FREERDP_CLIENT_H
 #define FREERDP_CLIENT_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/event.h>
