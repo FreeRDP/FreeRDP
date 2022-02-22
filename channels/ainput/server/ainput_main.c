@@ -192,7 +192,7 @@ static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
 
 static HANDLE ainput_server_get_channel_handle(ainput_server* ainput)
 {
-	BYTE* buffer = NULL;
+	void* buffer = NULL;
 	DWORD BytesReturned = 0;
 	HANDLE ChannelEvent = NULL;
 
@@ -389,7 +389,7 @@ ainput_server_context* ainput_server_context_new(HANDLE vcm)
 		goto fail;
 	return &ainput->context;
 fail:
-	ainput_server_context_free(ainput);
+	ainput_server_context_free(&ainput->context);
 	return NULL;
 }
 
@@ -496,17 +496,23 @@ UINT ainput_server_context_poll_int(ainput_server_context* context)
 			break;
 		case AINPUT_OPENED:
 		{
-			BYTE* buffer = NULL;
+			union
+			{
+				BYTE* pb;
+				void* pv;
+			} buffer;
 			DWORD BytesReturned = 0;
 
-			if (WTSVirtualChannelQuery(ainput->ainput_channel, WTSVirtualChannelReady, &buffer,
+			buffer.pv = NULL;
+
+			if (WTSVirtualChannelQuery(ainput->ainput_channel, WTSVirtualChannelReady, &buffer.pv,
 			                           &BytesReturned) != TRUE)
 			{
 				WLog_ERR(TAG, "WTSVirtualChannelReady failed,");
 			}
 			else
 			{
-				if (*buffer != 0)
+				if (*buffer.pb != 0)
 				{
 					error = ainput_server_send_version(ainput);
 					if (error)
@@ -518,7 +524,7 @@ UINT ainput_server_context_poll_int(ainput_server_context* context)
 				else
 					error = CHANNEL_RC_OK;
 			}
-			WTSFreeMemory(buffer);
+			WTSFreeMemory(buffer.pv);
 		}
 		break;
 		case AINPUT_VERSION_SENT:
