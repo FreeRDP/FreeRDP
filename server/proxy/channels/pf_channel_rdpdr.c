@@ -1131,7 +1131,9 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 	pf_channel_client_context* rdpdr;
 	pServerContext* ps;
 	wStream* s;
+#if defined(WITH_PROXY_EMULATE_SMARTCARD)
 	UINT16 packetid;
+#endif
 
 	WINPR_ASSERT(pc);
 	WINPR_ASSERT(pc->pdata);
@@ -1248,10 +1250,10 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 						return FALSE;
 				}
 			}
+			break;
 #else
 			return pf_channel_rdpdr_client_send_to_server(ps, s);
 #endif
-			break;
 		default:
 			WLog_ERR(TAG,
 			         "[%s]: Channel %s [0x%04" PRIx16

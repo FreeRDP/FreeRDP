@@ -813,6 +813,7 @@ err:
 	mbedtls_md_free(&ctx);
 	SecureZeroMemory(md_buf, 64);
 	return rv;
-#endif
+#else
 	return 0;
+#endif
 }
