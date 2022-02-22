@@ -144,9 +144,15 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *form
 	OSStatus err;
 	NSError *error;
 	rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
-	AudioObjectPropertyAddress propertyAddress = { kAudioHardwarePropertyDefaultOutputDevice,
-		                                           kAudioObjectPropertyScopeGlobal,
-		                                           kAudioObjectPropertyElementMaster };
+	AudioObjectPropertyAddress propertyAddress = {
+		kAudioHardwarePropertyDefaultOutputDevice,
+		kAudioObjectPropertyScopeGlobal,
+#if defined(MAC_OS_VERSION_12_0)
+		kAudioObjectPropertyElementMain
+#else
+		kAudioObjectPropertyElementMaster
+#endif
+	};
 
 	if (mac->isOpen)
 		return TRUE;
