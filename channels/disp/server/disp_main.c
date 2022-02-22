@@ -72,6 +72,24 @@ error:
 	return NULL;
 }
 
+static void disp_server_sanitize_monitor_layout(DISPLAY_CONTROL_MONITOR_LAYOUT* monitor)
+{
+	if (monitor->PhysicalWidth < DISPLAY_CONTROL_MIN_PHYSICAL_MONITOR_WIDTH ||
+	    monitor->PhysicalWidth > DISPLAY_CONTROL_MAX_PHYSICAL_MONITOR_WIDTH ||
+	    monitor->PhysicalHeight < DISPLAY_CONTROL_MIN_PHYSICAL_MONITOR_HEIGHT ||
+	    monitor->PhysicalHeight > DISPLAY_CONTROL_MAX_PHYSICAL_MONITOR_HEIGHT)
+	{
+		if (monitor->PhysicalWidth != 0 || monitor->PhysicalHeight != 0)
+			WLog_DBG(
+			    TAG,
+			    "Sanitizing invalid physical monitor size. Old physical monitor size: [%" PRIu32
+			    ", %" PRIu32 "]",
+			    monitor->PhysicalWidth, monitor->PhysicalHeight);
+
+		monitor->PhysicalWidth = monitor->PhysicalHeight = 0;
+	}
+}
+
 static BOOL disp_server_is_monitor_layout_valid(DISPLAY_CONTROL_MONITOR_LAYOUT* monitor)
 {
 	if (monitor->Width < DISPLAY_CONTROL_MIN_MONITOR_WIDTH ||
@@ -85,22 +103,6 @@ static BOOL disp_server_is_monitor_layout_valid(DISPLAY_CONTROL_MONITOR_LAYOUT* 
 	    monitor->Height > DISPLAY_CONTROL_MAX_MONITOR_HEIGHT)
 	{
 		WLog_WARN(TAG, "Received invalid value for monitor->Height: %" PRIu32 "", monitor->Width);
-		return FALSE;
-	}
-
-	if (monitor->PhysicalWidth < DISPLAY_CONTROL_MIN_PHYSICAL_MONITOR_WIDTH ||
-	    monitor->PhysicalWidth > DISPLAY_CONTROL_MAX_PHYSICAL_MONITOR_WIDTH)
-	{
-		WLog_WARN(TAG, "Received invalid value for monitor->PhysicalWidth: %" PRIu32 "",
-		          monitor->PhysicalWidth);
-		return FALSE;
-	}
-
-	if (monitor->PhysicalHeight < DISPLAY_CONTROL_MIN_PHYSICAL_MONITOR_HEIGHT ||
-	    monitor->PhysicalHeight > DISPLAY_CONTROL_MAX_PHYSICAL_MONITOR_HEIGHT)
-	{
-		WLog_WARN(TAG, "Received invalid value for monitor->Height: %" PRIu32 "",
-		          monitor->PhysicalHeight);
 		return FALSE;
 	}
 
@@ -183,6 +185,8 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 		Stream_Read_UINT32(s, monitor->Orientation);        /* Orientation (4 bytes) */
 		Stream_Read_UINT32(s, monitor->DesktopScaleFactor); /* DesktopScaleFactor (4 bytes) */
 		Stream_Read_UINT32(s, monitor->DeviceScaleFactor);  /* DeviceScaleFactor (4 bytes) */
+
+		disp_server_sanitize_monitor_layout(monitor);
 		WLog_DBG(TAG,
 		         "\t%d : Flags: 0x%08" PRIX32 " Left/Top: (%" PRId32 ",%" PRId32 ") W/H=%" PRIu32
 		         "x%" PRIu32 ")",
