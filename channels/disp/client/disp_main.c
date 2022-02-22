@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/synch.h>
 #include <winpr/print.h>
 #include <winpr/thread.h>
@@ -87,8 +88,14 @@ disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback, UI
 	UINT32 index;
 	DISP_PLUGIN* disp;
 	UINT32 MonitorLayoutSize;
-	DISPLAY_CONTROL_HEADER header;
+	DISPLAY_CONTROL_HEADER header = { 0 };
+
+	WINPR_ASSERT(callback);
+	WINPR_ASSERT(Monitors || (NumMonitors == 0));
+
 	disp = (DISP_PLUGIN*)callback->plugin;
+	WINPR_ASSERT(disp);
+
 	MonitorLayoutSize = DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE;
 	header.length = 8 + 8 + (NumMonitors * MonitorLayoutSize);
 	header.type = DISPLAY_CONTROL_PDU_TYPE_MONITOR_LAYOUT;
@@ -172,8 +179,15 @@ static UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, 
 	DISP_PLUGIN* disp;
 	DispClientContext* context;
 	UINT ret = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(callback);
+	WINPR_ASSERT(s);
+
 	disp = (DISP_PLUGIN*)callback->plugin;
+	WINPR_ASSERT(disp);
+
 	context = (DispClientContext*)disp->iface.pInterface;
+	WINPR_ASSERT(context);
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
@@ -200,7 +214,10 @@ static UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, 
 static UINT disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 error;
-	DISPLAY_CONTROL_HEADER header;
+	DISPLAY_CONTROL_HEADER header = { 0 };
+
+	WINPR_ASSERT(callback);
+	WINPR_ASSERT(s);
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
@@ -264,6 +281,13 @@ static UINT disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
 {
 	DISP_CHANNEL_CALLBACK* callback;
 	DISP_LISTENER_CALLBACK* listener_callback = (DISP_LISTENER_CALLBACK*)pListenerCallback;
+
+	WINPR_ASSERT(listener_callback);
+	WINPR_ASSERT(pChannel);
+	WINPR_ASSERT(Data);
+	WINPR_ASSERT(pbAccept);
+	WINPR_ASSERT(ppCallback);
+
 	callback = (DISP_CHANNEL_CALLBACK*)calloc(1, sizeof(DISP_CHANNEL_CALLBACK));
 
 	if (!callback)
@@ -291,6 +315,10 @@ static UINT disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 {
 	UINT status;
 	DISP_PLUGIN* disp = (DISP_PLUGIN*)pPlugin;
+
+	WINPR_ASSERT(disp);
+	WINPR_ASSERT(pChannelMgr);
+
 	if (disp->initialized)
 	{
 		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", DISP_DVC_CHANNEL_NAME);
@@ -349,8 +377,16 @@ static UINT disp_plugin_terminated(IWTSPlugin* pPlugin)
 static UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors,
                                      DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
-	DISP_PLUGIN* disp = (DISP_PLUGIN*)context->handle;
-	DISP_CHANNEL_CALLBACK* callback = disp->listener_callback->channel_callback;
+	DISP_PLUGIN* disp;
+	DISP_CHANNEL_CALLBACK* callback;
+
+	WINPR_ASSERT(context);
+
+	disp = (DISP_PLUGIN*)context->handle;
+	WINPR_ASSERT(disp);
+
+	callback = disp->listener_callback->channel_callback;
+
 	return disp_send_display_control_monitor_layout_pdu(callback, NumMonitors, Monitors);
 }
 
@@ -370,7 +406,10 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	UINT error = CHANNEL_RC_OK;
 	DISP_PLUGIN* disp;
 	DispClientContext* context;
-	disp = (DISP_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, "disp");
+
+	WINPR_ASSERT(pEntryPoints);
+
+	disp = (DISP_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, DISP_CHANNEL_NAME);
 
 	if (!disp)
 	{
@@ -401,7 +440,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->handle = (void*)disp;
 		context->SendMonitorLayout = disp_send_monitor_layout;
 		disp->iface.pInterface = (void*)context;
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "disp", &disp->iface);
+		error = pEntryPoints->RegisterPlugin(pEntryPoints, DISP_CHANNEL_NAME, &disp->iface);
 	}
 	else
 	{
