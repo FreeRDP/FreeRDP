@@ -27,7 +27,7 @@
 #include <winpr/collections.h>
 
 #if defined(_WIN32)
-#if (_WIN32_WINNT < _WIN32_WINNT_WIN6)
+#if (_WIN32_WINNT < _WIN32_WINNT_WIN6) || defined(__MINGW32__)
 struct _TP_CALLBACK_INSTANCE
 {
 	PTP_WORK Work;
