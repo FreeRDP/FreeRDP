@@ -27,6 +27,7 @@ endif()
 
 set(${MODULE_PREFIX}_SRCS
 	client.c
+	client_rails.c
 	cmdline.c
 	file.c
 	geometry.c)
