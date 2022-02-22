@@ -29,7 +29,7 @@ static WCHAR testDelimiter[] = { '\r', '\n', '\0' };
 
 int TestString(int argc, char* argv[])
 {
-	WCHAR* p;
+	const WCHAR* p;
 	size_t pos;
 	size_t length;
 	WCHAR* context;

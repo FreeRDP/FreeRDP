@@ -734,4 +734,5 @@ BOOL xf_ungrab(xfContext* xfc)
 	XUngrabKeyboard(xfc->display, CurrentTime);
 	XUngrabPointer(xfc->display, CurrentTime);
 	xfc->common.mouse_grabbed = FALSE;
+	return TRUE;
 }
