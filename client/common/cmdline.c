@@ -40,6 +40,7 @@
 #include <freerdp/channels/rdp2tcp.h>
 #include <freerdp/channels/remdesk.h>
 #include <freerdp/channels/rdpsnd.h>
+#include <freerdp/channels/disp.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/utils/passphrase.h>
@@ -3841,7 +3842,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->SupportDisplayControl)
 	{
-		const char* p[] = { "disp" };
+		const char* p[] = { DISP_CHANNEL_NAME };
 
 		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
 			return FALSE;
