@@ -1,4 +1,3 @@
-/**
 ﻿/**
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Graphics Pipeline Extension
