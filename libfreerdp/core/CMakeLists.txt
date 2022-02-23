@@ -64,7 +64,6 @@ set(${MODULE_PREFIX}_SRCS
 	nla.c
 	nla.h
 	smartcardlogon.c
-	smartcardlogon.h
 	tscredentials.c
 	tscredentials.h
 	nego.c

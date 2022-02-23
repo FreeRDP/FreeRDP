@@ -50,7 +50,7 @@
 #include "nla.h"
 #include "utils.h"
 #include "tscredentials.h"
-#include "smartcardlogon.h"
+#include <freerdp/utils/smartcardlogon.h>
 
 #define TAG FREERDP_TAG("core.nla")
 
