@@ -983,7 +983,7 @@ static BOOL nla_setup_kerberos(rdpNla* nla)
 
 	if (settings->KerberosCache)
 	{
-		kerbSettings->cache = strdup(settings->KerberosCache);
+		kerbSettings->cache = _strdup(settings->KerberosCache);
 		if (!kerbSettings->cache)
 		{
 			WLog_ERR(TAG, "unable to copy cache name");
@@ -993,7 +993,7 @@ static BOOL nla_setup_kerberos(rdpNla* nla)
 
 	if (settings->KerberosArmor)
 	{
-		kerbSettings->armorCache = strdup(settings->KerberosArmor);
+		kerbSettings->armorCache = _strdup(settings->KerberosArmor);
 		if (!kerbSettings->armorCache)
 		{
 			WLog_ERR(TAG, "unable to copy armorCache");
