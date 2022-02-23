@@ -19,8 +19,8 @@
 
 #include <winpr/assert.h>
 
-#include <freerdp/utils/smartcard_cli.h>
-#include "../../libfreerdp/core/smartcardlogon.h"
+#include <freerdp/client/utils/smartcard_cli.h>
+#include <freerdp/utils/smartcardlogon.h>
 
 BOOL freerdp_smartcard_list(const rdpSettings* settings)
 {

@@ -54,7 +54,7 @@
 
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
-#include <freerdp/utils/smartcard_cli.h>
+#include <freerdp/client/utils/smartcard_cli.h>
 
 #include "cmdline.h"
 

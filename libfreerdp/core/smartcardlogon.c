@@ -33,7 +33,7 @@
 
 #include <freerdp/log.h>
 
-#include "smartcardlogon.h"
+#include <freerdp/utils/smartcardlogon.h>
 
 #define TAG FREERDP_TAG("smartcardlogon")
 
