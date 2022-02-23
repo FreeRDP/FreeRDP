@@ -638,7 +638,7 @@ extern "C"
 }
 #endif
 
-struct _GSSAPI_FUNCTION_TABLE
+typedef struct
 {
 	fn_sspi_gss_acquire_cred gss_acquire_cred;
 	fn_sspi_gss_release_cred gss_release_cred;
@@ -687,8 +687,7 @@ struct _GSSAPI_FUNCTION_TABLE
 	fn_sspi_gss_store_cred gss_store_cred;
 	fn_sspi_gss_set_neg_mechs gss_set_neg_mechs;
 	fn_sspi_gss_acquire_cred_from gss_acquire_cred_from;
-};
-typedef struct _GSSAPI_FUNCTION_TABLE GSSAPI_FUNCTION_TABLE;
+} GSSAPI_FUNCTION_TABLE;
 
 GSSAPI_FUNCTION_TABLE* SEC_ENTRY gssApi_InitSecurityInterface(void);
 

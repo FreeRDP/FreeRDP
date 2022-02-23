@@ -27,7 +27,7 @@
 
 #define CERT_HASH_LENGTH 20
 
-typedef enum _CRED_MARSHAL_TYPE
+typedef enum
 {
 	CertCredential,
 	UsernameTargetCredential,
@@ -37,7 +37,7 @@ typedef enum _CRED_MARSHAL_TYPE
 } CRED_MARSHAL_TYPE,
     *PCRED_MARSHAL_TYPE;
 
-typedef struct _CERT_CREDENTIAL_INFO
+typedef struct
 {
 	ULONG cbSize;
 	UCHAR rgbHashOfCert[CERT_HASH_LENGTH];

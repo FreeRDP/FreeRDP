@@ -28,7 +28,7 @@
 
 #define SSPI_CREDENTIALS_HASH_LENGTH_OFFSET 512
 
-struct _SSPI_CREDENTIALS
+typedef struct
 {
 	DWORD flags;
 	ULONG fCredentialUse;
@@ -36,8 +36,7 @@ struct _SSPI_CREDENTIALS
 	void* pvGetKeyArgument;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SEC_WINPR_KERBEROS_SETTINGS* kerbSettings;
-};
-typedef struct _SSPI_CREDENTIALS SSPI_CREDENTIALS;
+} SSPI_CREDENTIALS;
 
 SSPI_CREDENTIALS* sspi_CredentialsNew(void);
 void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials);
