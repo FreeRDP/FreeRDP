@@ -27,6 +27,10 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	cmake_minimum_required(VERSION 3.4)
 	project(uwac VERSION ${UWAC_VERSION} LANGUAGES C)
 
+	set(CMAKE_C_STANDARD 99)
+	set(CMAKE_C_STANDARD_REQUIRED ON)
+	set(CMAKE_C_EXTENSIONS ON)
+
 	set(CMAKE_COLOR_MAKEFILE ON)
 
 	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
