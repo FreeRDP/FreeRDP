@@ -19,6 +19,10 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	cmake_minimum_required(VERSION 3.4)
 	project(WinPR LANGUAGES C)
 
+	set(CMAKE_C_STANDARD 99)
+	set(CMAKE_C_STANDARD_REQUIRED ON)
+	set(CMAKE_C_EXTENSIONS ON)
+
 	set(CMAKE_COLOR_MAKEFILE ON)
 	option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
 
