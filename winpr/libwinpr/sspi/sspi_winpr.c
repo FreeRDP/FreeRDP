@@ -382,7 +382,8 @@ int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, c
 	return 1;
 }
 
-int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDENTITY* srcIdentity)
+int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
+                          const SEC_WINNT_AUTH_IDENTITY* srcIdentity)
 {
 	int status;
 
