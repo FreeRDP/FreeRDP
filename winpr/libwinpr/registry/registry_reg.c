@@ -207,9 +207,8 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 			{
 				WLog_WARN(TAG, "%s::%s value %s invalid", key->name, value->name, data);
 				goto fail;
-
-			value->data.dword = (DWORD)val;
 			}
+			value->data.dword = (DWORD)val;
 		}
 		    break;
 			case REG_QWORD:
