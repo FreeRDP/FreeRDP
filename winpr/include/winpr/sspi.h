@@ -695,7 +695,6 @@ typedef struct
 
 #endif /* SEC_WINNT_AUTH_IDENTITY_VERSION */
 
-
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
@@ -1235,7 +1234,7 @@ extern "C"
 	                                                      const char* user, const char* domain,
 	                                                      LPWSTR password, ULONG passwordLength);
 	WINPR_API int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
-	                                    SEC_WINNT_AUTH_IDENTITY* srcIdentity);
+	                                    const SEC_WINNT_AUTH_IDENTITY* srcIdentity);
 
 	WINPR_API const char* GetSecurityStatusString(SECURITY_STATUS status);
 
