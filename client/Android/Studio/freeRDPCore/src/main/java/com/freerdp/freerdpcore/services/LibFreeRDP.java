@@ -13,8 +13,9 @@ package com.freerdp.freerdpcore.services;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import androidx.collection.LongSparseArray;
 import android.util.Log;
+
+import androidx.collection.LongSparseArray;
 
 import com.freerdp.freerdpcore.application.GlobalApp;
 import com.freerdp.freerdpcore.application.SessionState;
@@ -23,9 +24,7 @@ import com.freerdp.freerdpcore.domain.ManualBookmark;
 import com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
