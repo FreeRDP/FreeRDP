@@ -36,15 +36,17 @@ extern "C"
 	FREERDP_API int freerdp_client_settings_command_line_status_print(rdpSettings* settings,
 	                                                                  int status, int argc,
 	                                                                  char** argv);
-	FREERDP_API int freerdp_client_settings_command_line_status_print_ex(
-	    rdpSettings* settings, int status, int argc, char** argv, COMMAND_LINE_ARGUMENT_A* custom);
+	FREERDP_API int
+	freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, int status,
+	                                                     int argc, char** argv,
+	                                                     const COMMAND_LINE_ARGUMENT_A* custom);
 	FREERDP_API BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);
 
 	FREERDP_API BOOL freerdp_client_print_version(void);
 	FREERDP_API BOOL freerdp_client_print_buildconfig(void);
 	FREERDP_API BOOL freerdp_client_print_command_line_help(int argc, char** argv);
-	FREERDP_API BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
-	                                                           COMMAND_LINE_ARGUMENT_A* custom);
+	FREERDP_API BOOL freerdp_client_print_command_line_help_ex(
+	    int argc, char** argv, const COMMAND_LINE_ARGUMENT_A* custom);
 
 	FREERDP_API BOOL freerdp_parse_username(const char* username, char** user, char** domain);
 	FREERDP_API BOOL freerdp_parse_hostname(const char* hostname, char** host, int* port);

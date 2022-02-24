@@ -140,7 +140,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "fast-path input/output" },
 	{ "fipsmode", COMMAND_LINE_VALUE_BOOL, NULL, NULL, NULL, -1, NULL, "FIPS mode" },
 	{ "floatbar", COMMAND_LINE_VALUE_OPTIONAL,
-	  "sticky:[on|off],default:[visible|hidden],show:[always|fullscreen||window]", NULL, NULL, -1,
+	  "sticky:[on|off],default:[visible|hidden],show:[always|fullscreen|window]", NULL, NULL, -1,
 	  NULL,
 	  "floatbar is disabled by default (when enabled defaults to sticky in fullscreen mode)" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
@@ -225,7 +225,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Send unicode symbols, e.g. use the local keyboard map. ATTENTION: Does not work with every "
 	  "RDP server!" },
 	{ "kerberos", COMMAND_LINE_VALUE_REQUIRED,
-	  "[lifetime:<time>,start-time:<time>,renewable-lifetime:<time>,cache:<path>,armor:<path>,pkinit-anchors:<path>,pkcs11-module:<name>]",
+	  "[lifetime:<time>,start-time:<time>,renewable-lifetime:<time>,cache:<path>,armor:<path>,"
+	  "pkinit-anchors:<path>,pkcs11-module:<name>]",
 	  NULL, NULL, -1, NULL, "Kerberos options" },
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info-string>", NULL, NULL, -1, NULL,
 	  "Load balance info" },
@@ -343,8 +344,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Scale remote desktop to window size" },
 	{ "smartcard", COMMAND_LINE_VALUE_OPTIONAL, "<str>[,<str>...]", NULL, NULL, -1, NULL,
 	  "Redirect the smartcard devices containing any of the <str> in their names." },
-	{ "smartcard-logon", COMMAND_LINE_VALUE_OPTIONAL, "[cert:<path>,key:<key>,pin:<pin>,csp:<csp name>,reader:<reader>,card:<card>]", NULL,
-	  NULL, -1, NULL, "Activates Smartcard (optional certificate) Logon authentication." },
+	{ "smartcard-logon", COMMAND_LINE_VALUE_OPTIONAL,
+	  "[cert:<path>,key:<key>,pin:<pin>,csp:<csp name>,reader:<reader>,card:<card>]", NULL, NULL,
+	  -1, NULL, "Activates Smartcard (optional certificate) Logon authentication." },
 	{ "sound", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>,][latency:<"
 	  "latency>,][quality:<quality>]",
