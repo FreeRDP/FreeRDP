@@ -29,6 +29,8 @@
 
 #include "h264.h"
 
+static const char* CODEC_NAME = "video/avc";
+
 static const int COLOR_FormatYUV420Planar = 19;
 static const int COLOR_FormatYUV420Flexible = 0x7f420888;
 
@@ -58,7 +60,7 @@ static AMediaFormat* mediacodec_format_new(wLog* log, int width, int height)
 		return NULL;
 	}
 
-	AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "video/avc");
+	AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, CODEC_NAME);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_WIDTH, width);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_HEIGHT, height);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, COLOR_FormatYUV420Planar);
@@ -464,7 +466,7 @@ static BOOL mediacodec_init(H264_CONTEXT* h264)
 	// updated when we're given the height and width for the first time
 	sys->width = sys->outputWidth = MEDIACODEC_MINIMUM_WIDTH;
 	sys->height = sys->outputHeight = MEDIACODEC_MINIMUM_HEIGHT;
-	sys->decoder = AMediaCodec_createDecoderByType("video/avc");
+	sys->decoder = AMediaCodec_createDecoderByType(CODEC_NAME);
 	if (sys->decoder == NULL)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_createCodecByName failed");
@@ -480,7 +482,7 @@ static BOOL mediacodec_init(H264_CONTEXT* h264)
 		goto EXCEPTION;
 	}
 
-	WLog_Print(h264->log, WLOG_DEBUG, "MediaCodec using video/avc codec [%s]", codec_name);
+	WLog_Print(h264->log, WLOG_DEBUG, "MediaCodec using %s codec [%s]", CODEC_NAME, codec_name);
 	AMediaCodec_releaseName(sys->decoder, codec_name);
 #endif
 
