@@ -81,7 +81,7 @@ char* get_string_from_string_builder(JNIEnv* env, jobject strBuilder)
 	jclass cls;
 	jmethodID methodId;
 	jstring strObj;
-	const jbyte* native_str;
+	const char* native_str;
 	char* result;
 
 	// get class
