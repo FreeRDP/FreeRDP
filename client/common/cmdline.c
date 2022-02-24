@@ -301,8 +301,19 @@ static void freerdp_client_print_scancodes(void)
 	}
 }
 
+static BOOL is_delimiter(const char* delimiters, char c)
+{
+	char d;
+	while ((d = *delimiters++) != '\0')
+	{
+		if (d == c)
+			return TRUE;
+	}
+	return FALSE;
+}
+
 static char* print_token(char* text, size_t start_offset, size_t* current, size_t limit,
-                         const char delimiter)
+                         const char* delimiters)
 {
 	int rc;
 	size_t len = strlen(text);
@@ -321,7 +332,7 @@ static char* print_token(char* text, size_t start_offset, size_t* current, size_
 
 		for (x = MIN(len, limit - start_offset); x > 1; x--)
 		{
-			if (text[x] == delimiter)
+			if (is_delimiter(delimiters, text[x]))
 			{
 				printf("%.*s\n", (int)x, text);
 				*current = 0;
@@ -343,10 +354,13 @@ static size_t print_optionals(const char* text, size_t start_offset, size_t curr
 {
 	const size_t limit = 80;
 	char* str = _strdup(text);
-	char* cur = print_token(str, start_offset, &current, limit, '[');
+	char* cur = print_token(str, start_offset, &current, limit, "[], ");
 
 	while (cur)
-		cur = print_token(cur, start_offset, &current, limit, '[');
+	{
+		cur++;
+		cur = print_token(cur, start_offset + 1, &current, limit, "[], ");
+	}
 
 	free(str);
 	return current;
@@ -356,12 +370,12 @@ static size_t print_description(const char* text, size_t start_offset, size_t cu
 {
 	const size_t limit = 80;
 	char* str = _strdup(text);
-	char* cur = print_token(str, start_offset, &current, limit, ' ');
+	char* cur = print_token(str, start_offset, &current, limit, " ");
 
 	while (cur)
 	{
 		cur++;
-		cur = print_token(cur, start_offset, &current, limit, ' ');
+		cur = print_token(cur, start_offset, &current, limit, " ");
 	}
 
 	free(str);
@@ -446,7 +460,7 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 }
 
 BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
-                                               COMMAND_LINE_ARGUMENT_A* custom)
+                                               const COMMAND_LINE_ARGUMENT_A* custom)
 {
 	const char* name = "FreeRDP";
 	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)];
@@ -1289,7 +1303,7 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 
 int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, int status,
                                                          int argc, char** argv,
-                                                         COMMAND_LINE_ARGUMENT_A* custom)
+                                                         const COMMAND_LINE_ARGUMENT_A* custom)
 {
 	const COMMAND_LINE_ARGUMENT_A* arg;
 	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)];
