@@ -248,11 +248,49 @@ static krb5_error_code krb5_prompter(krb5_context context, void* data, const cha
 	{
 		if (ptypes && ptypes[i] == KRB5_PROMPT_TYPE_PREAUTH)
 		{
-			prompts[i].reply->data = strdup((const char*)data);
+			prompts[i].reply->data = _strdup((const char*)data);
 			prompts[i].reply->length = strlen((const char*)data);
 		}
 	}
 	return 0;
+}
+
+static char* allocate_print(const char* fmt, va_list ap)
+{
+	char* buffer = NULL;
+	size_t size = 0;
+	do
+	{
+		if (size > 0)
+		{
+			char* tmp = realloc(buffer, size);
+			if (!tmp)
+				break;
+			buffer = tmp;
+		}
+
+		int rc = vsnprintf(buffer, size, fmt, ap);
+		if (rc <= 0)
+			break;
+		size = rc;
+	} while (!buffer);
+	return buffer;
+}
+
+static void krb5_log_error_message(krb5_context ctx, krb5_error_code ret, DWORD level,
+                                   const char* fmt, ...)
+{
+	va_list ap;
+	char* buffer = NULL;
+	const char* msg = krb5_get_error_message(ctx, ret);
+
+	va_start(ap, fmt);
+	buffer = allocate_print(fmt, ap);
+	va_end(ap);
+
+	WLog_Print_tag(TAG, level, "%s [%s]", buffer, msg);
+	free(buffer);
+	krb5_free_error_message(ctx, msg);
 }
 
 static krb5_error_code acquire_cred(krb5_context ctx, SEC_WINPR_KERBEROS_SETTINGS* optionsBlock,
@@ -280,13 +318,13 @@ static krb5_error_code acquire_cred(krb5_context ctx, SEC_WINPR_KERBEROS_SETTING
 
 	if (ret)
 	{
-		WLog_ERR(TAG, "error while getting %s ccache", cacheType);
+		krb5_log_error_message(ctx, ret, WLOG_ERROR, "error while getting %s ccache", cacheType);
 		goto cleanup;
 	}
 
 	if ((ret = krb5_cc_initialize(ctx, ccache, client)))
 	{
-		WLog_ERR(TAG, "error: could not initialize ccache");
+		krb5_log_error_message(ctx, ret, WLOG_ERROR, "error: could not initialize ccache");
 		goto cleanup;
 	}
 
@@ -294,7 +332,7 @@ static krb5_error_code acquire_cred(krb5_context ctx, SEC_WINPR_KERBEROS_SETTING
 
 	if ((ret = krb5_get_init_creds_opt_alloc(ctx, &options)))
 	{
-		WLog_ERR(TAG, "error while allocating options");
+		krb5_log_error_message(ctx, ret, WLOG_ERROR, "error while allocating options");
 		goto cleanup;
 	}
 
@@ -329,7 +367,7 @@ static krb5_error_code acquire_cred(krb5_context ctx, SEC_WINPR_KERBEROS_SETTING
 	/* for MIT we specify ccache output using an option */
 	if ((ret = krb5_get_init_creds_opt_set_out_ccache(ctx, options, ccache)))
 	{
-		WLog_ERR(TAG, "error while setting ccache output");
+		krb5_log_error_message(ctx, ret, WLOG_ERROR, "error while setting ccache output");
 		goto cleanup;
 	}
 
@@ -338,27 +376,27 @@ static krb5_error_code acquire_cred(krb5_context ctx, SEC_WINPR_KERBEROS_SETTING
 	if ((ret = krb5_init_creds_init(ctx, client, krb5_prompter, (void*)password, starttime, options,
 	                                &init_ctx)))
 	{
-		WLog_ERR(TAG, "error krb5_init_creds_init failed");
+		krb5_log_error_message(ctx, ret, WLOG_ERROR, "error krb5_init_creds_init failed");
 		goto cleanup;
 	}
 
 	if ((ret = krb5_init_creds_set_password(ctx, init_ctx, password)))
 	{
-		WLog_ERR(TAG, "error krb5_init_creds_set_password failed");
+		krb5_log_error_message(ctx, ret, WLOG_ERROR, "error krb5_init_creds_set_password failed");
 		goto cleanup;
 	}
 
 	/* Get credentials */
 	if ((ret = krb5_init_creds_get(ctx, init_ctx)))
 	{
-		WLog_ERR(TAG, "error while getting credentials");
+		krb5_log_error_message(ctx, ret, WLOG_ERROR, "error while getting credentials");
 		goto cleanup;
 	}
 
 	/* Retrieve credentials */
 	if ((ret = krb5_init_creds_get_creds(ctx, init_ctx, &creds)))
 	{
-		WLog_ERR(TAG, "error while retrieving credentials");
+		krb5_log_error_message(ctx, ret, WLOG_ERROR, "error while retrieving credentials");
 		goto cleanup;
 	}
 
@@ -367,7 +405,7 @@ static krb5_error_code acquire_cred(krb5_context ctx, SEC_WINPR_KERBEROS_SETTING
 	/* For Heimdal, we use this function to store credentials */
 	if ((ret = krb5_init_creds_store(ctx, init_ctx, ccache)))
 	{
-		WLog_ERR(TAG, "error while storing credentials");
+		krb5_log_error_message(ctx, ret, WLOG_ERROR, "error while storing credentials");
 		goto cleanup;
 	}
 
@@ -431,7 +469,8 @@ static int init_creds(SEC_WINPR_KERBEROS_SETTINGS* options, LPCWSTR username, si
 
 	if (ret)
 	{
-		WLog_ERR(TAG, "error: while initializing Kerberos 5 library");
+		krb5_log_error_message(ctx, ret, WLOG_ERROR,
+		                       "error: while initializing Kerberos 5 library");
 		goto cleanup;
 	}
 
@@ -454,7 +493,7 @@ static int init_creds(SEC_WINPR_KERBEROS_SETTINGS* options, LPCWSTR username, si
 		ret = krb5_get_default_realm(ctx, &lrealm);
 		if (ret)
 		{
-			WLog_WARN(TAG, "could not get Kerberos default realm");
+			krb5_log_error_message(ctx, ret, WLOG_WARN, "could not get Kerberos default realm");
 			goto cleanup;
 		}
 		isDefaultRealm = TRUE;
@@ -487,7 +526,7 @@ static int init_creds(SEC_WINPR_KERBEROS_SETTINGS* options, LPCWSTR username, si
 
 	if (ret)
 	{
-		WLog_ERR(TAG, "could not convert %s to principal", krb_name);
+		krb5_log_error_message(ctx, ret, WLOG_ERROR, "could not convert %s to principal", krb_name);
 		goto cleanup;
 	}
 
@@ -495,7 +534,8 @@ static int init_creds(SEC_WINPR_KERBEROS_SETTINGS* options, LPCWSTR username, si
 
 	if (ret)
 	{
-		WLog_ERR(TAG, "Kerberos credentials not found and could not be acquired");
+		krb5_log_error_message(ctx, ret, WLOG_ERROR,
+		                       "Kerberos credentials not found and could not be acquired");
 		goto cleanup;
 	}
 
