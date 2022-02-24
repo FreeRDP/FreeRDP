@@ -1492,7 +1492,8 @@ fail:
 	return rc;
 }
 
-typedef enum {
+typedef enum
+{
 	CMDLINE_SUBOPTION_STRING,
 	CMDLINE_SUBOPTION_FILE,
 } CmdLineSubOptionType;
@@ -1524,15 +1525,15 @@ static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts
 
 			switch (opt->opttype)
 			{
-			case CMDLINE_SUBOPTION_STRING:
-				status = freerdp_settings_set_string(settings, opt->id, val);
-				break;
-			case CMDLINE_SUBOPTION_FILE:
-				status = read_pem_file(settings, opt->id, val);
-				break;
-			default:
-				WLog_ERR(TAG, "invalid subOption type");
-				return FALSE;
+				case CMDLINE_SUBOPTION_STRING:
+					status = freerdp_settings_set_string(settings, opt->id, val);
+					break;
+				case CMDLINE_SUBOPTION_FILE:
+					status = read_pem_file(settings, opt->id, val);
+					break;
+				default:
+					WLog_ERR(TAG, "invalid subOption type");
+					return FALSE;
 			}
 
 			if (!status)
@@ -1557,7 +1558,6 @@ static BOOL setSmartcardEmulation(const char* value, rdpSettings* settings)
 	settings->SmartcardEmulation = TRUE;
 	return TRUE;
 }
-
 
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int argc,
                                                          char** argv, BOOL allowUnknown)
@@ -3318,16 +3318,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 		}
-		CommandLineSwitchCase(arg, "pkcs11-module")
-		{
-			if (!copy_value(arg->Value, &settings->Pkcs11Module))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "pkinit-anchors")
-		{
-			if (!copy_value(arg->Value, &settings->PkinitAnchors))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
 		CommandLineSwitchCase(arg, "kerberos")
 		{
 			size_t count;
@@ -3347,7 +3337,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					{ "renewable-lifetime:", FreeRDP_KerberosRenewableLifeTime,
 					  CMDLINE_SUBOPTION_STRING, NULL },
 					{ "cache:", FreeRDP_KerberosCache, CMDLINE_SUBOPTION_STRING, NULL },
-					{ "armor:", FreeRDP_KerberosArmor, CMDLINE_SUBOPTION_STRING, NULL }
+					{ "armor:", FreeRDP_KerberosArmor, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "pkinit-anchors:", FreeRDP_PkinitAnchors, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "pkcs11-module:", FreeRDP_Pkcs11Module, CMDLINE_SUBOPTION_STRING, NULL }
 				};
 
 				for (x = 1; x < count; x++)
