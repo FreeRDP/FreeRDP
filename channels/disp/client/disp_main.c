@@ -284,7 +284,6 @@ static UINT disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
 
 	WINPR_ASSERT(listener_callback);
 	WINPR_ASSERT(pChannel);
-	WINPR_ASSERT(Data);
 	WINPR_ASSERT(pbAccept);
 	WINPR_ASSERT(ppCallback);
 
