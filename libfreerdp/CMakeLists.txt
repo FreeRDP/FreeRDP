@@ -318,8 +318,6 @@ set(PRIMITIVES_OPT_SRCS
     ${PRIMITIVES_SSSE3_SRCS}
     ${PRIMITIVES_OPENCL_SRCS})
 
-freerdp_definition_add(-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
-
 ### IPP Variable debugging
 if(WITH_IPP)
     if(CMAKE_COMPILER_IS_GNUCC)
