@@ -131,7 +131,7 @@ static BOOL WLog_FileAppender_Close(wLog* log, wLogAppender* appender)
 static BOOL WLog_FileAppender_WriteMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
 	FILE* fp;
-	char prefix[WLOG_MAX_PREFIX_SIZE];
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
 	wLogFileAppender* fileAppender;
 
 	if (!log || !appender || !message)
