@@ -708,7 +708,7 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			identityEx->PasswordLength = strlen(settings->SmartcardPin);
 			identityEx->Domain = NULL;
 			identityEx->DomainLength = 0;
-			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 			identityEx->PackageList = NULL;
 			identityEx->PackageListLength = 0;
 
