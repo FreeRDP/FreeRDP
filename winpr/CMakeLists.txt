@@ -278,7 +278,7 @@ if(BUILD_SHARED_LIBS)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_DLL")
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_EXPORTS")
+add_definitions(-DWINPR_EXPORTS)
 
 # Enable 64bit file support on linux and FreeBSD.
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux" OR FREEBSD)

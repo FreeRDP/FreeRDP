@@ -72,9 +72,7 @@ include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 include (SetFreeRDPCMakeInstallDir)
 
-if(BUILD_SHARED_LIBS)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DRDTK_EXPORTS")
-endif()
+add_definitions(-DRDTK_EXPORTS)
 
 if (NOT IOS)
 	check_include_files(stdbool.h WINPR_HAVE_STDBOOL_H)
