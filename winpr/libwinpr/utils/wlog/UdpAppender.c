@@ -93,7 +93,7 @@ static BOOL WLog_UdpAppender_Close(wLog* log, wLogAppender* appender)
 
 static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
-	char prefix[WLOG_MAX_PREFIX_SIZE];
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
 	wLogUdpAppender* udpAppender;
 
 	if (!log || !appender || !message)

@@ -54,7 +54,7 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
                                               wLogMessage* message)
 {
 	FILE* fp;
-	char prefix[WLOG_MAX_PREFIX_SIZE];
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
 	wLogConsoleAppender* consoleAppender;
 	if (!appender)
 		return FALSE;
