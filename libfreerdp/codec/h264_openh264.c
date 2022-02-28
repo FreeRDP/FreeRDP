@@ -115,6 +115,21 @@ static int openh264_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 
 		}
 	}
 
+	if (state != dsErrorFree)
+	{
+		WLog_Print(h264->log, WLOG_WARN, "DecodeFrame2 state: 0x%02X", state);
+		return -2003;
+	}
+
+#if OPENH264_MAJOR >= 2
+	state = (*sys->pDecoder)->FlushFrame(sys->pDecoder, pYUVData, &sBufferInfo);
+	if (state != dsErrorFree)
+	{
+		WLog_Print(h264->log, WLOG_WARN, "FlushFrame state: 0x%02X", state);
+		return -2003;
+	}
+#endif
+
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
 	iStride[0] = pSystemBuffer->iStride[0];
 	iStride[1] = pSystemBuffer->iStride[1];
