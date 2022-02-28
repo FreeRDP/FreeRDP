@@ -67,12 +67,9 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
 #ifdef _WIN32
 	if (consoleAppender->outputStream == WLOG_CONSOLE_DEBUG)
 	{
-		char MessageString[4096];
-
-		sprintf_s(MessageString, sizeof(MessageString), "%s%s\n", message->PrefixString,
-		          message->TextString);
-
-		OutputDebugStringA(MessageString);
+		OutputDebugStringA(message->PrefixString);
+		OutputDebugStringA(message->TextString);
+		OutputDebugStringA("\n");
 
 		return TRUE;
 	}
