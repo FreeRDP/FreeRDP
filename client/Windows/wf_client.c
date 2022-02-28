@@ -562,8 +562,8 @@ static BOOL wf_gw_authenticate(freerdp* instance, char** username, char** passwo
 static WCHAR* wf_format_text(const WCHAR* fmt, ...)
 {
 	int rc;
-	size_t size = 1024;
-	WCHAR* buffer = calloc(size, sizeof(WCHAR));
+	size_t size = 0;
+	WCHAR* buffer = NULL;
 	if (!buffer)
 		return NULL;
 
@@ -572,7 +572,7 @@ static WCHAR* wf_format_text(const WCHAR* fmt, ...)
 		WCHAR* tmp;
 		va_list ap;
 		va_start(ap, fmt);
-		rc = vswprintf_s(buffer, size, fmt, ap);
+		rc = _vsnwprintf(buffer, size, fmt, ap);
 		va_end(ap);
 		if (rc <= 0)
 			goto fail;
