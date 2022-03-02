@@ -1498,6 +1498,7 @@ static int nla_server_authenticate(rdpNla* nla)
 
 	while (TRUE)
 	{
+		int rc = -1;
 		SecBuffer inputBuffer = { 0 };
 		SecBuffer outputBuffer = { 0 };
 		SecBufferDesc inputBufferDesc = { 0 };
@@ -1509,13 +1510,13 @@ static int nla_server_authenticate(rdpNla* nla)
 		inputBufferDesc.pBuffers = &inputBuffer;
 
 		if (nla_server_recv(nla) < 0)
-			goto fail_auth;
+			goto fail;
 
 		WLog_DBG(TAG, "Receiving Authentication Token");
 		if (!nla_sec_buffer_alloc_from_buffer(&inputBuffer, &nla->negoToken, 0))
 		{
 			WLog_ERR(TAG, "CredSSP: invalid negoToken!");
-			goto fail_auth;
+			goto fail;
 		}
 
 		outputBufferDesc.ulVersion = SECBUFFER_VERSION;
@@ -1523,7 +1524,7 @@ static int nla_server_authenticate(rdpNla* nla)
 		outputBufferDesc.pBuffers = &outputBuffer;
 
 		if (!nla_sec_buffer_alloc(&outputBuffer, nla->cbMaxToken))
-			goto fail_auth;
+			goto fail;
 
 		nla->status = nla->table->AcceptSecurityContext(
 		    &nla->credentials, nla->haveContext ? &nla->context : NULL, &inputBufferDesc,
@@ -1533,7 +1534,7 @@ static int nla_server_authenticate(rdpNla* nla)
 		         GetSecurityStatusString(nla->status), nla->status);
 
 		if (!nla_sec_buffer_alloc_from_buffer(&nla->negoToken, &outputBuffer, 0))
-			goto fail_auth;
+			goto fail;
 
 		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 		{
@@ -1567,13 +1568,11 @@ static int nla_server_authenticate(rdpNla* nla)
 			}
 
 			if (!nla_complete_auth(nla, &outputBufferDesc))
-				goto fail_auth;
+				goto fail;
 		}
 
 		if (nla->status == SEC_E_OK)
 		{
-			int rc = -1;
-
 			if (outputBuffer.cbBuffer != 0)
 			{
 				if (!nla_send(nla))
@@ -1618,14 +1617,15 @@ static int nla_server_authenticate(rdpNla* nla)
 				goto fail;
 
 			rc = 1;
-		fail:
-			sspi_SecBufferFree(&inputBuffer);
-			sspi_SecBufferFree(&outputBuffer);
-			if (rc < 0)
-			{
-				res = rc;
-				goto fail_auth;
-			}
+		}
+
+	fail:
+		sspi_SecBufferFree(&inputBuffer);
+		sspi_SecBufferFree(&outputBuffer);
+		if (rc < 0)
+		{
+			res = rc;
+			goto fail_auth;
 		}
 
 		if ((nla->status != SEC_E_OK) && (nla->status != SEC_I_CONTINUE_NEEDED))
