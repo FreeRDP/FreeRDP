@@ -233,7 +233,7 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 	{
 		CK_SLOT_INFO slotInfo;
 
-		WINPR_ASSERT(p11->C_GetSessionInfo);
+		WINPR_ASSERT(p11->C_GetSlotInfo);
 		rv = p11->C_GetSlotInfo(state->slots[i], &slotInfo);
 		if (rv != CKR_OK)
 		{
@@ -386,16 +386,22 @@ static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 static void wprintKeyName(LPWSTR str, CK_SLOT_ID slotId, CK_BYTE* id, CK_ULONG idLen)
 {
 	char asciiName[128];
-	char* ptr;
+	char* ptr = asciiName;
+	const CK_BYTE* bytePtr;
 	CK_ULONG i;
 
-	snprintf(asciiName, sizeof(asciiName), "\\%.8x\\", (UINT32)slotId);
-	ptr = asciiName + strlen(asciiName);
+	*ptr = '\\'; ptr++;
+
+	bytePtr = ((CK_BYTE*)&slotId);
+	for (i = 0; i < sizeof(slotId); i++, bytePtr++, ptr += 2)
+		snprintf(ptr, 3, "%.2x", *bytePtr);
+
+	*ptr = '\\'; ptr++;
 
 	for (i = 0; i < idLen; i++, id++, ptr += 2)
 		snprintf(ptr, 3, "%.2x", *id);
 
-	MultiByteToWideChar(CP_UTF8, 0, asciiName, strlen(asciiName), str, (strlen(asciiName) + 1) * 2);
+	MultiByteToWideChar(CP_UTF8, 0, asciiName, strlen(asciiName), str, (strlen(asciiName) + 1));
 }
 
 static size_t parseHex(const char* str, const char* end, CK_BYTE* target)
@@ -466,11 +472,11 @@ static SECURITY_STATUS parseKeyName(LPCWSTR pszKeyName, CK_SLOT_ID* slotId, CK_B
 	if (!pos)
 		return NTE_BAD_KEY;
 
-	if (pos - &asciiKeyName[1] > 8)
+	if (pos - &asciiKeyName[1] > sizeof(CK_SLOT_ID) * 2)
 		return NTE_BAD_KEY;
 
 	*slotId = (CK_SLOT_ID)0;
-	if (parseHex(&asciiKeyName[1], pos, (CK_BYTE*)slotId) != 4)
+	if (parseHex(&asciiKeyName[1], pos, (CK_BYTE*)slotId) != sizeof(CK_SLOT_ID))
 		return NTE_BAD_KEY;
 
 	*idLen = parseHex(pos + 1, NULL, id);
@@ -620,7 +626,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		{
 			/* sizeof keyName struct + "\<slotId>\<certId>" + keyName->pszAlgid */
 			DWORD algoSz;
-			size_t KEYNAME_SZ = (1 + 8 /*slotId*/ + 1 + (privKey->idLen * 2) + 1) * 2;
+			size_t KEYNAME_SZ = (1 + (sizeof(privKey->slotId) * 2) /*slotId*/ + 1 + (privKey->idLen * 2) + 1) * 2;
 
 			convertKeyType(privKey->keyType, NULL, 0, &algoSz);
 			KEYNAME_SZ += (algoSz + 1) * 2;

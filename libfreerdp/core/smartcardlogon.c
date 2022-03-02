@@ -282,11 +282,12 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		PBYTE certBytes = NULL;
 		DWORD cbOutput;
 		SmartcardCertInfoPrivate* cert;
+		BOOL haveError = TRUE;
 
 		count++;
 		{
 			SmartcardCerts* tmp =
-			    realloc(certs, sizeof(SmartcardCerts) + sizeof(SmartcardCertInfoPrivate) * (count));
+			    realloc(certs, sizeof(SmartcardCerts) + (sizeof(SmartcardCertInfoPrivate) * count));
 			if (!tmp)
 				goto out;
 			certs = tmp;
@@ -403,12 +404,19 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 			goto endofloop;
 		}
 #endif
+		haveError = FALSE;
 
 	endofloop:
 		free(certBytes);
 		NCryptFreeBuffer(keyName);
 		if (phKey)
 			NCryptFreeObject((NCRYPT_HANDLE)phKey);
+
+		if (haveError)
+		{
+			smartcardCertInfoPrivate_Free(cert);
+			count--;
+		}
 	}
 
 	*scCerts = certs;
