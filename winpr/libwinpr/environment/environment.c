@@ -665,13 +665,14 @@ DWORD GetEnvironmentVariableX(const char* lpName, char* lpBuffer, DWORD nSize)
 	{
 		char lpBufferMaxA[WINPR_MAX_ENVIRONMENT_LENGTH] = { 0 };
 		WCHAR lpBufferMaxW[WINPR_MAX_ENVIRONMENT_LENGTH] = { 0 };
+		LPSTR lpTmpBuffer = lpBufferMaxA;
 
 		nSizeW = ARRAYSIZE(lpBufferMaxW);
 
 		result = GetEnvironmentVariableW(lpNameW, lpBufferMaxW, nSizeW);
 
 		status = ConvertFromUnicode(CP_UTF8, 0, lpBufferMaxW, _wcsnlen(lpBufferMaxW, nSizeW),
-		                            &lpBufferMaxA, sizeof(lpBufferMaxA), NULL, NULL);
+		                            &lpTmpBuffer, sizeof(lpBufferMaxA), NULL, NULL);
 
 		if (status > 0)
 			result = (DWORD)status;
