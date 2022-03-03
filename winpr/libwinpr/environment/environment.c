@@ -671,7 +671,7 @@ DWORD GetEnvironmentVariableX(const char* lpName, char* lpBuffer, DWORD nSize)
 
 		result = GetEnvironmentVariableW(lpNameW, lpBufferMaxW, nSizeW);
 
-		status = ConvertFromUnicode(CP_UTF8, 0, lpBufferMaxW, _wcsnlen(lpBufferMaxW, nSizeW),
+		status = ConvertFromUnicode(CP_UTF8, 0, lpBufferMaxW, _wcsnlen(lpBufferMaxW, nSizeW) + 1,
 		                            &lpTmpBuffer, sizeof(lpBufferMaxA), NULL, NULL);
 
 		if (status > 0)
