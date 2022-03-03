@@ -426,6 +426,8 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 	NCryptFreeBuffer(enumState);
 	NCryptFreeObject((NCRYPT_HANDLE)provider);
 out:
+	if (!ret)
+		smartcardCerts_Free(certs);
 	free(scope);
 	return ret;
 }
