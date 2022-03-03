@@ -1505,7 +1505,7 @@ static BOOL handle_window_events(freerdp* instance)
 	{
 		if (!xf_process_x_events(instance))
 		{
-			WLog_INFO(TAG, "Closed from X11");
+			WLog_DBG(TAG, "Closed from X11");
 			return FALSE;
 		}
 	}

@@ -108,7 +108,7 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 						XITouchClassInfo* t = (XITouchClassInfo*)class;
 						if (t->mode == XIDirectTouch)
 						{
-							WLog_INFO(
+							WLog_DBG(
 							    TAG,
 							    "%s %s touch device (id: %d, mode: %d), supporting %d touches.",
 							    dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
@@ -122,8 +122,8 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 				case XIButtonClass:
 				{
 					XIButtonClassInfo* t = (XIButtonClassInfo*)class;
-					WLog_INFO(TAG, "%s button device (id: %d, mode: %d)", dev->name, dev->deviceid,
-					          t->num_buttons);
+					WLog_DBG(TAG, "%s button device (id: %d, mode: %d)", dev->name, dev->deviceid,
+					         t->num_buttons);
 					XISetMask(masks[nmasks], XI_ButtonPress);
 					XISetMask(masks[nmasks], XI_ButtonRelease);
 					XISetMask(masks[nmasks], XI_Motion);

@@ -509,7 +509,7 @@ static BOOL useKnownHosts(rdpCertificateStore* certificate_store)
 	WINPR_ASSERT(certificate_store);
 
 	use = freerdp_settings_get_bool(certificate_store->settings, FreeRDP_CertificateUseKnownHosts);
-	WLog_INFO(TAG, "known_hosts=%d", use);
+	WLog_DBG(TAG, "known_hosts=%d", use);
 	return use;
 }
 
