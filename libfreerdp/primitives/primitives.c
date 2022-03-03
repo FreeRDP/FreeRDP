@@ -260,7 +260,7 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 	/* finally compute the results */
 	*prims = *best->prims;
 
-	WLog_INFO(TAG, "primitives autodetect, using %s", best->name);
+	WLog_DBG(TAG, "primitives autodetect, using %s", best->name);
 	ret = TRUE;
 out:
 	if (!ret)
