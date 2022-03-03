@@ -111,12 +111,30 @@ else()
 endif()
 message("FREERDP_VERSION=${FREERDP_VERSION_FULL}")
 
+if(EXISTS "${PROJECT_SOURCE_DIR}/.source_version" )
+	file(READ ${PROJECT_SOURCE_DIR}/.source_version GIT_REVISION)
+
+  string(STRIP ${GIT_REVISION} GIT_REVISION)
+elseif(USE_VERSION_FROM_GIT_TAG)
+	git_get_exact_tag(GIT_REVISION --tags --always)
+
+	if (${GIT_REVISION} STREQUAL "n/a")
+		git_rev_parse (GIT_REVISION --short)
+	endif()
+endif()
+
+if (NOT GIT_REVISION)
+	set(GIT_REVISION ${FREEERDP_VERSION})
+endif()
+
+message(STATUS "Git Revision ${GIT_REVISION}")
+
 set(FREERDP_INCLUDE_DIR "include/freerdp${FREERDP_VERSION_MAJOR}/")
 
 option(WITH_SMARTCARD_EMULATE "Emulate smartcards instead of redirecting readers" OFF)
 if (WITH_SMARTCARD_EMULATE)
-    add_definitions(-DWITH_SMARTCARD_EMULATE)
-    find_package(ZLIB REQUIRED)
+	add_definitions(-DWITH_SMARTCARD_EMULATE)
+	find_package(ZLIB REQUIRED)
 endif()
 
 option(WITH_FREERDP_DEPRECATED "Build FreeRDP deprecated symbols" OFF)
@@ -144,24 +162,10 @@ if(CCACHE AND WITH_CCACHE)
 	endif(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
 endif(CCACHE AND WITH_CCACHE)
 
-if(EXISTS "${PROJECT_SOURCE_DIR}/.source_version" )
-	file(READ ${PROJECT_SOURCE_DIR}/.source_version GIT_REVISION)
-
-  string(STRIP ${GIT_REVISION} GIT_REVISION)
-else()
-	git_get_exact_tag(GIT_REVISION --tags --always)
-
-	if (${GIT_REVISION} STREQUAL "n/a")
-		git_rev_parse (GIT_REVISION --short)
-	endif()
-endif()
-
 if(CMAKE_CROSSCOMPILING)
 	SET (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
 endif(CMAKE_CROSSCOMPILING)
 # /Allow to search the host machine for git/ccache
-
-message(STATUS "Git Revision ${GIT_REVISION}")
 
 # Turn on solution folders (2.8.4+)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
