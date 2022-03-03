@@ -666,17 +666,12 @@ DWORD GetEnvironmentVariableX(const char* lpName, char* lpBuffer, DWORD nSize)
 		char lpBufferMaxA[WINPR_MAX_ENVIRONMENT_LENGTH] = { 0 };
 		WCHAR lpBufferMaxW[WINPR_MAX_ENVIRONMENT_LENGTH] = { 0 };
 
-		// calling GetEnvironmentVariableX with a NULL buffer should return the expected size
-		// TODO: dynamically allocate the buffer, or use the theoretical limit of 32,768 characters
+		nSizeW = ARRAYSIZE(lpBufferMaxW);
 
-		lpBufferA = lpBufferMaxA;
-		lpBufferW = lpBufferMaxW;
-		nSizeW = sizeof(lpBufferMaxW) / 2;
+		result = GetEnvironmentVariableW(lpNameW, lpBufferMaxW, nSizeW);
 
-		result = GetEnvironmentVariableW(lpNameW, lpBufferW, nSizeW);
-
-		status = ConvertFromUnicode(CP_UTF8, 0, lpBufferW, -1, &lpBufferA, sizeof(lpBufferMaxA),
-		                            NULL, NULL);
+		status = ConvertFromUnicode(CP_UTF8, 0, lpBufferMaxW, _wcsnlen(lpBufferMaxW, nSizeW),
+		                            &lpBufferMaxA, sizeof(lpBufferMaxA), NULL, NULL);
 
 		if (status > 0)
 			result = (DWORD)status;
