@@ -531,7 +531,7 @@ static void ClipboardInitLocalFileSubsystem(wClipboard* clipboard)
 #ifdef WITH_WCLIPBOARD_POSIX
 	if (ClipboardInitPosixFileSubsystem(clipboard))
 	{
-		WLog_INFO(TAG, "initialized POSIX local file subsystem");
+		WLog_DBG(TAG, "initialized POSIX local file subsystem");
 		return;
 	}
 	else

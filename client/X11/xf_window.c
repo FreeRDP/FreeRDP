@@ -367,7 +367,7 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
 
 	if (actual_type == None)
 	{
-		WLog_INFO(TAG, "Property %lu does not exist", (unsigned long)property);
+		WLog_DBG(TAG, "Property %lu does not exist", (unsigned long)property);
 		return FALSE;
 	}
 
