@@ -1213,6 +1213,25 @@ fail:
 	return CHANNEL_RC_NO_MEMORY;
 }
 
+static void cleanup_internals(rdpsndPlugin* rdpsnd)
+{
+	if (!rdpsnd)
+		return;
+
+	if (rdpsnd->pool)
+		StreamPool_Return(rdpsnd->pool, rdpsnd->data_in);
+
+	audio_formats_free(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
+	audio_formats_free(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
+
+	rdpsnd->NumberOfClientFormats = 0;
+	rdpsnd->ClientFormats = NULL;
+	rdpsnd->NumberOfServerFormats = 0;
+	rdpsnd->ServerFormats = NULL;
+
+	rdpsnd->data_in = NULL;
+}
+
 /**
  * Function description
  *
@@ -1240,15 +1259,7 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 		}
 	}
 
-	if (rdpsnd->pool)
-		StreamPool_Return(rdpsnd->pool, rdpsnd->data_in);
-
-	audio_formats_free(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
-	rdpsnd->NumberOfClientFormats = 0;
-	rdpsnd->ClientFormats = NULL;
-	audio_formats_free(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
-	rdpsnd->NumberOfServerFormats = 0;
-	rdpsnd->ServerFormats = NULL;
+	cleanup_internals(rdpsnd);
 
 	if (rdpsnd->device)
 	{
@@ -1548,17 +1559,9 @@ static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->Close, rdpsnd->device);
-	if (rdpsnd->pool)
-	{
-		StreamPool_Return(rdpsnd->pool, rdpsnd->data_in);
-	}
 
-	audio_formats_free(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
-	rdpsnd->NumberOfClientFormats = 0;
-	rdpsnd->ClientFormats = NULL;
-	audio_formats_free(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
-	rdpsnd->NumberOfServerFormats = 0;
-	rdpsnd->ServerFormats = NULL;
+	cleanup_internals(rdpsnd);
+
 	if (rdpsnd->device)
 	{
 		IFCALL(rdpsnd->device->Free, rdpsnd->device);
