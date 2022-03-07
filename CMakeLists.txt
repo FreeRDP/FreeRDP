@@ -124,7 +124,7 @@ elseif(USE_VERSION_FROM_GIT_TAG)
 endif()
 
 if (NOT GIT_REVISION)
-	set(GIT_REVISION ${FREEERDP_VERSION})
+	set(GIT_REVISION ${FREERDP_VERSION})
 endif()
 
 message(STATUS "Git Revision ${GIT_REVISION}")
