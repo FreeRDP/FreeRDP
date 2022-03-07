@@ -369,7 +369,7 @@ RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[])
 						goto fail;
 				}
 				if (count > 2)
-					device.drive->automount = (args[2] == NULL) ? FALSE : TRUE;
+					device.drive->automount = (args[2] == NULL) ? TRUE : FALSE;
 				break;
 			default:
 				goto fail;
