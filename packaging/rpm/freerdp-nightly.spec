@@ -58,8 +58,6 @@ BuildRequires: libpulse-devel
 BuildRequires: libusb-1_0-devel
 BuildRequires: libudev-devel
 BuildRequires: dbus-1-glib-devel
-BuildRequires: gstreamer-devel
-BuildRequires: gstreamer-plugins-base-devel
 BuildRequires: wayland-devel
 BuildRequires: libjpeg-devel
 BuildRequires: libavutil-devel
@@ -77,8 +75,6 @@ BuildRequires: pulseaudio-libs-devel
 BuildRequires: libusbx-devel
 BuildRequires: systemd-devel
 BuildRequires: dbus-glib-devel
-BuildRequires: gstreamer1-devel
-BuildRequires: gstreamer1-plugins-base-devel
 BuildRequires: libjpeg-turbo-devel
 %endif 
 

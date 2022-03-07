@@ -42,8 +42,6 @@ Build-Depends:
  libpam0g-dev,
  uuid-dev, 
  libxml2-dev,
- libgstreamer1.0-dev | libgstreamer0.10-dev,
- libgstreamer-plugins-base1.0-dev | libgstreamer-plugins-base0.10-dev
 Standards-Version: 3.9.5
 Homepage: http://www.freerdp.com/
 Vcs-Browser: http://github.com/FreeRDP/FreeRDP.git
