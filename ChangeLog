@@ -1,3 +1,16 @@
+# 2022-xx-yy Version 2.6.x
+
+Noteworthy changes:
+
+Fixed issues:
+* Backported improved version dection see docs/version_detection.md for details
+
+Important notes:
+
+For a complete and detailed change log since the last release run:
+git log 2.0.0..2.6.x
+
+
 # 2022-02-22 Version 2.6.0
 
 Noteworthy changes:
