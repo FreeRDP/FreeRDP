@@ -36,6 +36,7 @@
 #include <freerdp/channels/channels.h>
 
 #include "pf_client.h"
+#include "pf_channel.h"
 #include <freerdp/server/proxy/proxy_context.h>
 #include "pf_update.h"
 #include "pf_input.h"
@@ -333,7 +334,6 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 		if (!pf_channel_smartcard_client_new(pc))
 			return FALSE;
 #endif
-
 		/* Copy the current channel settings from the peer connection to the client. */
 		if (!freerdp_channels_from_mcs(settings, &ps->context))
 			return FALSE;
@@ -374,126 +374,6 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	return pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_PRE_CONNECT, pc->pdata, pc);
 }
 
-static BOOL pf_client_receive_channel_passthrough(proxyData* pdata,
-                                                  const pServerChannelContext* channel,
-                                                  const BYTE* xdata, size_t xsize, UINT32 flags,
-                                                  size_t totalSize)
-{
-	proxyChannelDataEventInfo ev;
-	UINT16 server_channel_id;
-	pServerContext* ps;
-
-	WINPR_ASSERT(pdata);
-
-	ps = pdata->ps;
-	WINPR_ASSERT(ps);
-
-	ev.channel_id = channel->channel_id;
-	ev.channel_name = channel->channel_name;
-	ev.data = xdata;
-	ev.data_len = xsize;
-	ev.flags = flags;
-	ev.total_size = totalSize;
-
-	if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA, pdata,
-	                           &ev))
-		return TRUE; /* Silently drop */
-
-	/* Dynamic channels need special treatment
-	 *
-	 * We need to check every message with CHANNEL_FLAG_FIRST set if it
-	 * is a CREATE_REQUEST_PDU (0x01) and extract channelId and name
-	 * from it.
-	 *
-	 * To avoid issues with (misbehaving) clients assume all packets
-	 * that do not have at least a length of 1 byte and all incomplete
-	 * CREATE_REQUEST_PDU (0x01) packets as invalid.
-	 */
-	if ((flags & CHANNEL_FLAG_FIRST) &&
-	    (strncmp(channel->channel_name, DRDYNVC_SVC_CHANNEL_NAME, CHANNEL_NAME_LEN + 1) == 0))
-	{
-		BYTE cmd, first;
-		wStream *s, sbuffer;
-
-		s = Stream_StaticConstInit(&sbuffer, xdata, xsize);
-		if (Stream_Length(s) < 1)
-			return FALSE;
-
-		Stream_Read_UINT8(s, first);
-		cmd = first >> 4;
-
-		if (cmd == CREATE_REQUEST_PDU)
-		{
-			proxyChannelDataEventInfo dev;
-			size_t len, nameLen;
-			const char* name;
-			UINT32 dynChannelId;
-			BYTE cbId = first & 0x03;
-			switch (cbId)
-			{
-				case 0x00:
-					if (Stream_GetRemainingLength(s) < 1)
-						return FALSE;
-					Stream_Read_UINT8(s, dynChannelId);
-					break;
-				case 0x01:
-					if (Stream_GetRemainingLength(s) < 2)
-						return FALSE;
-					Stream_Read_UINT16(s, dynChannelId);
-					break;
-				case 0x02:
-					if (Stream_GetRemainingLength(s) < 4)
-						return FALSE;
-					Stream_Read_UINT32(s, dynChannelId);
-					break;
-				default:
-					return FALSE;
-			}
-
-			name = (const char*)Stream_Pointer(s);
-			nameLen = Stream_GetRemainingLength(s);
-			len = strnlen(name, nameLen);
-			if ((len == 0) || (len == nameLen))
-				return FALSE;
-			dev.channel_id = dynChannelId;
-			dev.channel_name = name;
-			dev.data = xdata;
-			dev.data_len = xsize;
-			dev.flags = flags;
-			dev.total_size = totalSize;
-
-			if (!pf_modules_run_filter(
-			        pdata->module, FILTER_TYPE_CLIENT_PASSTHROUGH_DYN_CHANNEL_CREATE, pdata, &dev))
-				return TRUE; /* Silently drop */
-		}
-	}
-	server_channel_id = WTSChannelGetId(ps->context.peer, channel->channel_name);
-
-	/* Ignore messages for channels that can not be mapped.
-	 * The client might not have enabled support for this specific channel,
-	 * so just drop the message. */
-	if (server_channel_id == 0)
-		return TRUE;
-	return ps->context.peer->SendChannelPacket(ps->context.peer, server_channel_id, totalSize,
-	                                           flags, xdata, xsize);
-}
-
-static BOOL pf_client_receive_channel_intercept(proxyData* pdata, UINT16 channelId,
-                                                const char* channel_name, const BYTE* xdata,
-                                                size_t xsize, UINT32 flags, size_t totalSize)
-{
-	WINPR_ASSERT(pdata);
-	WINPR_ASSERT(channel_name);
-
-	if (strcmp(channel_name, RDPDR_SVC_CHANNEL_NAME) == 0)
-		return pf_channel_rdpdr_client_handle(pdata->pc, channelId, channel_name, xdata, xsize,
-		                                      flags, totalSize);
-
-	WLog_ERR(TAG, "[%s]: Channel %s [0x%04" PRIx16 "] intercept mode not implemented, aborting",
-	         __FUNCTION__, channel_name, channelId);
-	return FALSE;
-}
-
 static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channelId,
                                                 const BYTE* xdata, size_t xsize, UINT32 flags,
                                                 size_t totalSize)
@@ -502,7 +382,8 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	pServerContext* ps;
 	proxyData* pdata;
 	pServerChannelContext* channel;
-	UINT32 channelId32 = channelId;
+	UINT16 server_channel_id;
+	UINT64 channelId64 = channelId;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(xdata || (xsize == 0));
@@ -517,26 +398,29 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	pdata = ps->pdata;
 	WINPR_ASSERT(pdata);
 
-	channel = HashTable_GetItemValue(ps->channelsById, &channelId32);
+	channel = HashTable_GetItemValue(ps->channelsById, &channelId64);
 	if (!channel)
 		return TRUE;
 
-	switch (channel->channelMode)
+	switch (channel->onBackData(pdata, channel, xdata, xsize, flags, totalSize))
 	{
-		case PF_UTILS_CHANNEL_BLOCK:
-			return TRUE; /* Silently drop */
-		case PF_UTILS_CHANNEL_PASSTHROUGH:
-			return pf_client_receive_channel_passthrough(pdata, channel, xdata, xsize, flags,
-			                                             totalSize);
-		case PF_UTILS_CHANNEL_INTERCEPT:
-			return pf_client_receive_channel_intercept(pdata, channelId, channel->channel_name,
-			                                           xdata, xsize, flags, totalSize);
-		case PF_UTILS_CHANNEL_NOT_HANDLED:
-		default:
-			WINPR_ASSERT(pc->client_receive_channel_data_original);
-			return pc->client_receive_channel_data_original(instance, channelId, xdata, xsize,
-			                                                flags, totalSize);
+	case PF_CHANNEL_RESULT_PASS:
+		break;
+	case PF_CHANNEL_RESULT_DROP:
+		return TRUE;
+	case PF_CHANNEL_RESULT_ERROR:
+		return FALSE;
 	}
+
+	server_channel_id = WTSChannelGetId(ps->context.peer, channel->channel_name);
+
+	/* Ignore messages for channels that can not be mapped.
+	 * The client might not have enabled support for this specific channel,
+	 * so just drop the message. */
+	if (server_channel_id == 0)
+		return TRUE;
+
+	return ps->context.peer->SendChannelPacket(ps->context.peer, server_channel_id, totalSize, flags, xdata, xsize);
 }
 
 static BOOL pf_client_on_server_heartbeat(freerdp* instance, BYTE period, BYTE count1, BYTE count2)

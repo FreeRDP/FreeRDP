@@ -36,6 +36,7 @@ extern "C"
 
 	typedef struct proxy_data proxyData;
 	typedef struct proxy_module proxyModule;
+	typedef struct p_server_channel_context pServerChannelContext;
 
 	typedef struct s_InterceptContextMapEntry
 	{
@@ -49,21 +50,48 @@ extern "C"
 	/** @brief how is handled a channel */
 	typedef enum
 	{
-		PF_UTILS_CHANNEL_NOT_HANDLED,
-		PF_UTILS_CHANNEL_BLOCK,
-		PF_UTILS_CHANNEL_PASSTHROUGH,
-		PF_UTILS_CHANNEL_INTERCEPT,
+		PF_UTILS_CHANNEL_NOT_HANDLED, /*!< channel not handled */
+		PF_UTILS_CHANNEL_BLOCK,		  /*!< block and drop traffic on this channel */
+		PF_UTILS_CHANNEL_PASSTHROUGH, /*!< pass traffic from this channel */
+		PF_UTILS_CHANNEL_INTERCEPT,	  /*!< inspect traffic from this channel */
 	} pf_utils_channel_mode;
+
+	/** @brief channel opened status */
+	typedef enum
+	{
+		CHANNEL_OPENSTATE_WAITING_OPEN_STATUS, /*!< dynamic channel waiting for create response */
+		CHANNEL_OPENSTATE_OPENED,			   /*!< opened */
+		CHANNEL_OPENSTATE_CLOSED			   /*!< dynamic channel has been opened then closed */
+	} PfChannelOpenStatus;
+
+	#define PF_DYNAMIC_CHANNEL_MASK 0xFFFF000000000000
+
+	/** @brief result of a channel treatment */
+	typedef enum
+	{
+		PF_CHANNEL_RESULT_PASS,  /*!< pass the packet as is */
+		PF_CHANNEL_RESULT_DROP,  /*!< drop the packet */
+		PF_CHANNEL_RESULT_ERROR  /*!< error during packet treatment */
+	} PfChannelResult;
+
+	typedef PfChannelResult (*proxyChannelDataFn)(proxyData* pdata, const pServerChannelContext* channel,
+            const BYTE* xdata, size_t xsize, UINT32 flags,
+            size_t totalSizepServer);
+	typedef void (*proxyChannelContextDtor)(void *context);
 
 	/** @brief per channel configuration */
 	struct p_server_channel_context
 	{
 		char* channel_name;
-		UINT32 channel_id;
+		UINT64 channel_id;
+		PfChannelOpenStatus openStatus;
 		BOOL isDynamic;
 		pf_utils_channel_mode channelMode;
+		proxyChannelDataFn onFrontData;
+		proxyChannelDataFn onBackData;
+		proxyChannelContextDtor contextDtor;
+		void *context;
 	};
-	typedef struct p_server_channel_context pServerChannelContext;
 
 	void ChannelContext_free(pServerChannelContext* ctx);
 
@@ -84,7 +112,7 @@ extern "C"
 	};
 	typedef struct p_server_context pServerContext;
 
-	pServerChannelContext* ChannelContext_new(pServerContext* ps, const char* name, UINT32 id);
+	pServerChannelContext* ChannelContext_new(pServerContext* ps, const char* name, UINT64 id);
 
 	/**
 	 * Wraps rdpContext and holds the state for the proxy's client.
