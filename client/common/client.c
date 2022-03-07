@@ -730,6 +730,7 @@ BOOL client_auto_reconnect(freerdp* instance)
 
 BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* instance))
 {
+	BOOL retry = TRUE;
 	UINT32 error;
 	UINT32 maxRetries;
 	UINT32 numRetries = 0;
@@ -765,7 +766,7 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 	}
 
 	/* Perform an auto-reconnect. */
-	while (TRUE)
+	while (retry)
 	{
 		UINT32 x;
 
@@ -781,12 +782,21 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 		if (freerdp_reconnect(instance))
 			return TRUE;
 
+		switch (freerdp_get_last_error(instance))
+		{
+			case FREERDP_ERROR_CONNECT_CANCELLED:
+				WLog_WARN(TAG, "Autoreconnect aborted by user");
+				retry = FALSE;
+				break;
+			default:
+				break;
+		}
 		for (x = 0; x < 50; x++)
 		{
 			if (!IFCALLRESULT(TRUE, window_events, instance))
 				return FALSE;
 
-			Sleep(100);
+			Sleep(10);
 		}
 	}
 
