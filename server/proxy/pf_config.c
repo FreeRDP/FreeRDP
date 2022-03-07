@@ -960,7 +960,6 @@ static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData*
 			accept = TRUE;
 			break;
 		case PF_UTILS_CHANNEL_BLOCK:
-		case PF_UTILS_CHANNEL_NOT_HANDLED:
 		default:
 			accept = FALSE;
 			break;
@@ -1028,7 +1027,6 @@ static BOOL config_plugin_channel_create(proxyPlugin* plugin, proxyData* pdata, 
 			accept = TRUE;
 			break;
 		case PF_UTILS_CHANNEL_BLOCK:
-		case PF_UTILS_CHANNEL_NOT_HANDLED:
 		default:
 			accept = FALSE;
 			break;
