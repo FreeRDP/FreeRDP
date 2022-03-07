@@ -866,7 +866,7 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 #else
 	if (!tls_prepare(tls, underlying, TLS_client_method(), options, TRUE))
 #endif
-		return FALSE;
+		return 0;
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(LIBRESSL_VERSION_NUMBER)
 	SSL_set_tlsext_host_name(tls->ssl, tls->hostname);

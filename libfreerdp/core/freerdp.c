@@ -52,6 +52,7 @@
 #include <freerdp/cache/pointer.h>
 
 #include "settings.h"
+#include "utils.h"
 
 #define TAG FREERDP_TAG("core")
 
@@ -168,7 +169,9 @@ BOOL freerdp_connect(freerdp* instance)
 #endif
 	freerdp_set_last_error_log(instance->context, FREERDP_ERROR_SUCCESS);
 	clearChannelError(instance->context);
-	ResetEvent(instance->context->abortEvent);
+	if (!utils_reset_abort(instance->context))
+		return FALSE;
+
 	rdp = instance->context->rdp;
 	settings = instance->settings;
 
@@ -308,7 +311,8 @@ BOOL freerdp_abort_connect(freerdp* instance)
 	if (!instance || !instance->context)
 		return FALSE;
 
-	return SetEvent(instance->context->abortEvent);
+	freerdp_set_last_error_if_not(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
+	return utils_abort_connect(instance->context);
 }
 
 BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -540,11 +544,16 @@ BOOL freerdp_disconnect_before_reconnect(freerdp* instance)
 
 BOOL freerdp_reconnect(freerdp* instance)
 {
-	BOOL status;
-	rdpRdp* rdp = instance->context->rdp;
-	ResetEvent(instance->context->abortEvent);
-	status = rdp_client_reconnect(rdp);
-	return status;
+	rdpRdp* rdp;
+
+	if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_CONNECT_CANCELLED)
+		return FALSE;
+
+	rdp = instance->context->rdp;
+
+	if (!utils_reset_abort(instance->context))
+		return FALSE;
+	return rdp_client_reconnect(rdp);
 }
 
 BOOL freerdp_shall_disconnect(freerdp* instance)
