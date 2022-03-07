@@ -39,6 +39,8 @@
 #include <freerdp/listener.h>
 #include <freerdp/cache/pointer.h>
 
+#include "utils.h"
+
 #define TAG FREERDP_TAG("core.connection")
 
 /**
@@ -411,10 +413,13 @@ BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 		return FALSE;
 
 	context = rdp->context;
+
+	if (freerdp_get_last_error(context) == FREERDP_ERROR_CONNECT_CANCELLED)
+		return FALSE;
+
 	context->LastError = FREERDP_ERROR_SUCCESS;
 	clearChannelError(context);
-	ResetEvent(context->abortEvent);
-	return TRUE;
+	return utils_reset_abort(context);
 }
 
 static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)

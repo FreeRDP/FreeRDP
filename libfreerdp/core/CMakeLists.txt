@@ -131,7 +131,10 @@ set(${MODULE_PREFIX}_SRCS
 	peer.c
 	peer.h
 	display.c
-	display.h)
+	display.h
+	utils.c
+	utils.h
+	)
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS})
 

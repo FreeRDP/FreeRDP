@@ -27,6 +27,7 @@
 #include "rdp.h"
 
 #include "info.h"
+#include "utils.h"
 #include "redirection.h"
 
 #include <freerdp/crypto/per.h>
@@ -414,7 +415,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	{
 		if (code == X224_TPDU_DISCONNECT_REQUEST)
 		{
-			freerdp_abort_connect(rdp->instance);
+			utils_abort_connect(rdp->instance->context);
 			return TRUE;
 		}
 
@@ -471,7 +472,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 		}
 
 		WLog_DBG(TAG, "DisconnectProviderUltimatum: reason: %d", reason);
-		freerdp_abort_connect(rdp->instance);
+		utils_abort_connect(context);
 		EventArgsInit(&e, "freerdp");
 		e.code = 0;
 		PubSub_OnTerminate(context->pubSub, context, &e);
