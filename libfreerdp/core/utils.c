@@ -161,3 +161,16 @@ BOOL utils_str_is_empty(const char* str)
 		return TRUE;
 	return FALSE;
 }
+
+BOOL utils_abort_connect(rdpContext* context)
+{
+	WINPR_ASSERT(context);
+
+	return SetEvent(context->abortEvent);
+}
+
+BOOL utils_reset_abort(rdpContext* context)
+{
+	WINPR_ASSERT(context);
+	return ResetEvent(context->abortEvent);
+}
