@@ -152,8 +152,8 @@ int xf_input_init(xfContext* xfc, Window window)
 
 			if (xfc->context.settings->MultiTouchInput)
 			{
-				WLog_INFO(TAG, "%s (%d) \"%s\" id: %d", xf_input_get_class_string(class->type),
-				          class->type, dev->name, dev->deviceid);
+				WLog_DBG(TAG, "%s (%d) \"%s\" id: %d", xf_input_get_class_string(class->type),
+				         class->type, dev->name, dev->deviceid);
 			}
 
 			evmasks[nmasks].mask = masks[nmasks];
@@ -166,9 +166,9 @@ int xf_input_init(xfContext* xfc, Window window)
 			{
 				if (xfc->context.settings->MultiTouchInput)
 				{
-					WLog_INFO(TAG, "%s %s touch device (id: %d, mode: %d), supporting %d touches.",
-					          dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
-					          dev->deviceid, t->mode, t->num_touches);
+					WLog_DBG(TAG, "%s %s touch device (id: %d, mode: %d), supporting %d touches.",
+					         dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
+					         dev->deviceid, t->mode, t->num_touches);
 				}
 
 				XISetMask(masks[nmasks], XI_TouchBegin);
@@ -182,8 +182,8 @@ int xf_input_init(xfContext* xfc, Window window)
 				if (!touch && (class->type == XIButtonClass) &&
 				    strcmp(dev->name, "Virtual core pointer"))
 				{
-					WLog_INFO(TAG, "%s button device (id: %d, mode: %d)", dev->name, dev->deviceid,
-					          t->mode);
+					WLog_DBG(TAG, "%s button device (id: %d, mode: %d)", dev->name, dev->deviceid,
+					         t->mode);
 					XISetMask(masks[nmasks], XI_ButtonPress);
 					XISetMask(masks[nmasks], XI_ButtonRelease);
 					XISetMask(masks[nmasks], XI_Motion);
