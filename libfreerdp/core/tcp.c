@@ -838,12 +838,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 	status = WaitForMultipleObjects(count, handles, FALSE, tout);
 
 	if (WAIT_OBJECT_0 != status)
-	{
-		if (status == WAIT_OBJECT_0 + 1)
-			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_CANCELLED);
-
 		goto fail;
-	}
 
 	status = recv(sockfd, NULL, 0, 0);
 
@@ -1240,9 +1235,6 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 	if (WaitForSingleObject(context->abortEvent, 0) == WAIT_OBJECT_0)
 	{
 		close(sockfd);
-
-		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
-
 		return -1;
 	}
 
