@@ -814,9 +814,9 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 	return TRUE;
 }
 
-#if defined(WITH_DEBUG_THREADS)
 VOID DumpThreadHandles(void)
 {
+#if defined(WITH_DEBUG_THREADS)
 	char** msg;
 	size_t used, i;
 	void* stack = winpr_backtrace(20);
@@ -879,6 +879,6 @@ VOID DumpThreadHandles(void)
 #endif
 
 	WLog_DBG(TAG, "---------------- End Dumping thread handles -------------");
-}
 #endif
+}
 #endif
