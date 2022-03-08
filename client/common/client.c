@@ -393,19 +393,21 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 {
 	static const size_t password_size = 512;
 	const char* auth[] = { "Username: ", "Domain:   ", "Password: " };
-	const char* authPin[] = { "Username: ", "Domain:   ", "Pin:      " };
+	const char* authPin[] = { "Username: ", "Domain:   ", "Smartcard-Pin:      " };
 	const char* gw[] = { "GatewayUsername: ", "GatewayDomain:   ", "GatewayPassword: " };
 	const char** prompt;
+	BOOL pinOnly = FALSE;
 
 	switch (reason)
 	{
-		case AUTH_NLA:
-		case AUTH_TLS:
-		case AUTH_RDP:
-			prompt = auth;
-			break;
 		case AUTH_SMARTCARD_PIN:
 			prompt = authPin;
+			pinOnly = TRUE;
+			break;
+		case AUTH_TLS:
+		case AUTH_RDP:
+		case AUTH_NLA:
+			prompt = auth;
 			break;
 		case GW_AUTH_HTTP:
 		case GW_AUTH_RDG:
@@ -419,7 +421,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 	if (!username || !password || !domain)
 		return FALSE;
 
-	if (!*username)
+	if (!*username && !pinOnly)
 	{
 		size_t username_size = 0;
 		printf("%s", prompt[0]);
@@ -437,7 +439,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 		}
 	}
 
-	if (!*domain)
+	if (!*domain && !pinOnly)
 	{
 		size_t domain_size = 0;
 		printf("%s", prompt[1]);
@@ -493,12 +495,6 @@ BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** passw
 
 		case AUTH_TLS:
 		case AUTH_RDP:
-			if (instance->settings->SmartcardLogon)
-			{
-				WLog_INFO(TAG, "Authentication via smartcard");
-				return TRUE;
-			}
-
 		case AUTH_SMARTCARD_PIN: /* in this case password is pin code */
 			if ((*username) && (*password))
 				return TRUE;

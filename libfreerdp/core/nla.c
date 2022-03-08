@@ -639,7 +639,7 @@ setup_pin:
 	if (!settings->Password)
 	{
 			freerdp* instance = nla->instance;
-		    auth_status reason = utils_authenticate(instance, AUTH_SMARTCARD_PIN, TRUE);
+		    auth_status reason = utils_authenticate(instance, AUTH_NLA, TRUE);
 		    switch (reason)
 		    {
 			    case AUTH_SKIP:
