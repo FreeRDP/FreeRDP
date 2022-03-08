@@ -20,7 +20,6 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_AllowUnanouncedOrdersFromServer, 0, "FreeRDP_AllowUnanouncedOrdersFromServer" },
 	{ FreeRDP_AltSecFrameMarkerSupport, 0, "FreeRDP_AltSecFrameMarkerSupport" },
 	{ FreeRDP_AsyncChannels, 0, "FreeRDP_AsyncChannels" },
-	{ FreeRDP_AsyncInput, 0, "FreeRDP_AsyncInput" },
 	{ FreeRDP_AsyncUpdate, 0, "FreeRDP_AsyncUpdate" },
 	{ FreeRDP_AudioCapture, 0, "FreeRDP_AudioCapture" },
 	{ FreeRDP_AudioPlayback, 0, "FreeRDP_AudioPlayback" },

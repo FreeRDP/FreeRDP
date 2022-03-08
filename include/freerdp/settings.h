@@ -701,7 +701,6 @@ typedef struct
 #define FreeRDP_MouseMotion (1541)
 #define FreeRDP_WindowTitle (1542)
 #define FreeRDP_ParentWindowId (1543)
-#define FreeRDP_AsyncInput (1544)
 #define FreeRDP_AsyncUpdate (1545)
 #define FreeRDP_AsyncChannels (1546)
 #define FreeRDP_ToggleFullscreen (1548)
@@ -1214,7 +1213,7 @@ struct rdp_settings
 	ALIGN64 BOOL MouseMotion;             /* 1541 */
 	ALIGN64 char* WindowTitle;            /* 1542 */
 	ALIGN64 UINT64 ParentWindowId;        /* 1543 */
-	ALIGN64 BOOL AsyncInput;              /* 1544 */
+	UINT64 padding1544[1545 - 1544];      /* 1544 */
 	ALIGN64 BOOL AsyncUpdate;             /* 1545 */
 	ALIGN64 BOOL AsyncChannels;           /* 1546 */
 	UINT64 padding1548[1548 - 1547];      /* 1547 */

@@ -419,80 +419,22 @@ static DWORD android_verify_changed_certificate_ex(freerdp* instance, const char
 	return res;
 }
 
-static DWORD WINAPI jni_input_thread(LPVOID arg)
-{
-	HANDLE event[2];
-	wMessageQueue* queue;
-	freerdp* instance = (freerdp*)arg;
-	WLog_DBG(TAG, "input_thread Start.");
-
-	if (!(queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE)))
-		goto disconnect;
-
-	if (!(event[0] = android_get_handle(instance)))
-		goto disconnect;
-
-	if (!(event[1] = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE)))
-		goto disconnect;
-
-	do
-	{
-		DWORD rc = WaitForMultipleObjects(2, event, FALSE, INFINITE);
-
-		if ((rc < WAIT_OBJECT_0) || (rc > WAIT_OBJECT_0 + 1))
-			continue;
-
-		if (rc == WAIT_OBJECT_0 + 1)
-		{
-			wMessage msg;
-			MessageQueue_Peek(queue, &msg, FALSE);
-
-			if (msg.id == WMQ_QUIT)
-				break;
-		}
-
-		if (android_check_handle(instance) != TRUE)
-			break;
-	} while (1);
-
-	WLog_DBG(TAG, "input_thread Quit.");
-disconnect:
-	MessageQueue_PostQuit(queue, 0);
-	ExitThread(0);
-	return 0;
-}
-
 static int android_freerdp_run(freerdp* instance)
 {
 	DWORD count;
 	DWORD status = WAIT_FAILED;
-	HANDLE handles[64];
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS];
 	HANDLE inputEvent = NULL;
-	HANDLE inputThread = NULL;
 	const rdpSettings* settings = instance->context->settings;
 	rdpContext* context = instance->context;
-	BOOL async_input = settings->AsyncInput;
-	WLog_DBG(TAG, "AsyncInput=%" PRIu8 "", settings->AsyncInput);
 
-	if (async_input)
-	{
-		if (!(inputThread = CreateThread(NULL, 0, jni_input_thread, instance, 0, NULL)))
-		{
-			WLog_ERR(TAG, "async input: failed to create input thread");
-			goto disconnect;
-		}
-	}
-	else
-		inputEvent = android_get_handle(instance);
+	inputEvent = android_get_handle(instance);
 
 	while (!freerdp_shall_disconnect(instance))
 	{
 		DWORD tmp;
 		count = 0;
 
-		if (inputThread)
-			handles[count++] = inputThread;
-		else
 			handles[count++] = inputEvent;
 
 		tmp = freerdp_get_event_handles(context, &handles[count], 64 - count);
@@ -527,28 +469,16 @@ static int android_freerdp_run(freerdp* instance)
 		if (freerdp_shall_disconnect(instance))
 			break;
 
-		if (!async_input)
-		{
 			if (android_check_handle(instance) != TRUE)
 			{
 				WLog_ERR(TAG, "Failed to check android file descriptor");
 				status = GetLastError();
 				break;
 			}
-		}
 	}
 
 disconnect:
 	WLog_INFO(TAG, "Prepare shutdown...");
-
-	if (async_input && inputThread)
-	{
-		wMessageQueue* input_queue =
-		    freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(input_queue, 0);
-		WaitForSingleObject(inputThread, INFINITE);
-		CloseHandle(inputThread);
-	}
 
 	return status;
 }

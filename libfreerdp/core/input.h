@@ -35,7 +35,6 @@ typedef struct
 	rdpInput common;
 	/* Internal */
 
-	BOOL asynchronous;
 	rdpInputProxy* proxy;
 	wMessageQueue* queue;
 } rdp_input_internal;

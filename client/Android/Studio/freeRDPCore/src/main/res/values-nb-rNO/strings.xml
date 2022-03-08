@@ -154,7 +154,6 @@
     <string name="settings_remote_program">Fjernprogram</string>
     <string name="settings_work_dir">Arbeidsmappe</string>
     <string name="settings_async_channel">Asynk-kanal</string>
-    <string name="settings_async_input">Asynk-inndata</string>
     <string name="settings_async_update">Asynk-oppdatering</string>
     <string name="settings_console_mode">Konsollmodus</string>
     <!-- App settings strings -->

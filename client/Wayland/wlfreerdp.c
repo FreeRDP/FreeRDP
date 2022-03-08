@@ -449,10 +449,6 @@ static BOOL handle_window_events(freerdp* instance)
 
 	settings = instance->settings;
 
-	if (!settings->AsyncInput)
-	{
-	}
-
 	return TRUE;
 }
 

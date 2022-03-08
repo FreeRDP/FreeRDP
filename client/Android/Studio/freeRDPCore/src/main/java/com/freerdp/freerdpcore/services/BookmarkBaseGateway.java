@@ -117,8 +117,6 @@ public abstract class BookmarkBaseGateway
 
 		values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_CHANNEL,
 		           bookmark.getDebugSettings().getAsyncChannel());
-		values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_INPUT,
-		           bookmark.getDebugSettings().getAsyncInput());
 		values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_UPDATE,
 		           bookmark.getDebugSettings().getAsyncUpdate());
 		values.put(BookmarkDB.DB_KEY_BOOKMARK_DEBUG_LEVEL,
@@ -172,8 +170,6 @@ public abstract class BookmarkBaseGateway
 
 		values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_CHANNEL,
 		           bookmark.getDebugSettings().getAsyncChannel());
-		values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_INPUT,
-		           bookmark.getDebugSettings().getAsyncInput());
 		values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_UPDATE,
 		           bookmark.getDebugSettings().getAsyncUpdate());
 		values.put(BookmarkDB.DB_KEY_BOOKMARK_DEBUG_LEVEL,
@@ -327,7 +323,6 @@ public abstract class BookmarkBaseGateway
 		columns.add(BookmarkDB.DB_KEY_BOOKMARK_DEBUG_LEVEL);
 		columns.add(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_CHANNEL);
 		columns.add(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_UPDATE);
-		columns.add(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_INPUT);
 
 		addBookmarkSpecificColumns(columns);
 	}
@@ -442,8 +437,6 @@ public abstract class BookmarkBaseGateway
 
 		bookmark.getDebugSettings().setAsyncChannel(
 		    cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_CHANNEL)) == 1);
-		bookmark.getDebugSettings().setAsyncInput(
-		    cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_INPUT)) == 1);
 		bookmark.getDebugSettings().setAsyncUpdate(
 		    cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_UPDATE)) == 1);
 		bookmark.getDebugSettings().setDebugLevel(

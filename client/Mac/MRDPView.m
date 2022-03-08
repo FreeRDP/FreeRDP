@@ -108,34 +108,6 @@ static DWORD WINAPI mac_client_thread(void *param);
 	return 0;
 }
 
-static DWORD WINAPI mac_client_input_thread(LPVOID param)
-{
-	int status;
-	wMessage message;
-	wMessageQueue *queue;
-	rdpContext *context = (rdpContext *)param;
-	status = 1;
-	queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
-
-	while (MessageQueue_Wait(queue))
-	{
-		while (MessageQueue_Peek(queue, &message, TRUE))
-		{
-			status = freerdp_message_queue_process_message(context->instance,
-			                                               FREERDP_INPUT_MESSAGE_QUEUE, &message);
-
-			if (!status)
-				break;
-		}
-
-		if (!status)
-			break;
-	}
-
-	ExitThread(0);
-	return 0;
-}
-
 DWORD WINAPI mac_client_thread(void *param)
 {
 	@autoreleasepool
@@ -144,7 +116,6 @@ DWORD WINAPI mac_client_thread(void *param)
 		DWORD rc;
 		HANDLE events[16] = { 0 };
 		HANDLE inputEvent;
-		HANDLE inputThread = NULL;
 		DWORD nCount;
 		DWORD nCountTmp;
 		DWORD nCountBase;
@@ -165,16 +136,6 @@ DWORD WINAPI mac_client_thread(void *param)
 		nCount = 0;
 		events[nCount++] = mfc->stopEvent;
 
-		if (settings->AsyncInput)
-		{
-			if (!(inputThread = CreateThread(NULL, 0, mac_client_input_thread, context, 0, NULL)))
-			{
-				WLog_ERR(TAG, "failed to create async input thread");
-				goto disconnect;
-			}
-		}
-		else
-		{
 			if (!(inputEvent = freerdp_get_message_queue_event_handle(instance,
 			                                                          FREERDP_INPUT_MESSAGE_QUEUE)))
 			{
@@ -183,7 +144,6 @@ DWORD WINAPI mac_client_thread(void *param)
 			}
 
 			events[nCount++] = inputEvent;
-		}
 
 		nCountBase = nCount;
 
@@ -213,13 +173,10 @@ DWORD WINAPI mac_client_thread(void *param)
 				break;
 			}
 
-			if (!settings->AsyncInput)
-			{
 				if (WaitForSingleObject(inputEvent, 0) == WAIT_OBJECT_0)
 				{
 					input_activity_cb(instance);
 				}
-			}
 
 			{
 				if (!freerdp_check_event_handles(context))
@@ -233,20 +190,6 @@ DWORD WINAPI mac_client_thread(void *param)
 	disconnect:
 		[view setIs_connected:0];
 		freerdp_disconnect(instance);
-
-		if (settings->AsyncInput && inputThread)
-		{
-			wMessageQueue *inputQueue =
-			    freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-
-			if (inputQueue)
-			{
-				MessageQueue_PostQuit(inputQueue, 0);
-				WaitForSingleObject(inputThread, INFINITE);
-			}
-
-			CloseHandle(inputThread);
-		}
 
 		ExitThread(0);
 		return 0;
