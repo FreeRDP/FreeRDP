@@ -823,7 +823,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 
 	dvcman = (DVCMAN*)drdynvc->channel_mgr;
 
-	WLog_Print(drdynvc->log, WLOG_DEBUG, "write_data: ChannelId=%" PRIu32 " size=%" PRIu32 "",
+	WLog_Print(drdynvc->log, WLOG_TRACE, "write_data: ChannelId=%" PRIu32 " size=%" PRIu32 "",
 	           ChannelId, dataSize);
 	data_out = StreamPool_Take(dvcman->pool, CHANNEL_CHUNK_LENGTH);
 
@@ -1136,7 +1136,7 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	Length = drdynvc_read_variable_uint(s, Sp);
-	WLog_Print(drdynvc->log, WLOG_DEBUG,
+	WLog_Print(drdynvc->log, WLOG_TRACE,
 	           "process_data_first: Sp=%d cbChId=%d, ChannelId=%" PRIu32 " Length=%" PRIu32 "", Sp,
 	           cbChId, ChannelId, Length);
 	status = dvcman_receive_channel_data_first(drdynvc, drdynvc->channel_mgr, ChannelId, Length);
@@ -1221,7 +1221,7 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 Thread
 	Cmd = (value & 0xf0) >> 4;
 	Sp = (value & 0x0c) >> 2;
 	cbChId = (value & 0x03) >> 0;
-	WLog_Print(drdynvc->log, WLOG_DEBUG, "order_recv: Cmd=0x%x, Sp=%d cbChId=%d", Cmd, Sp, cbChId);
+	WLog_Print(drdynvc->log, WLOG_TRACE, "order_recv: Cmd=0x%x, Sp=%d cbChId=%d", Cmd, Sp, cbChId);
 
 	switch (Cmd)
 	{
