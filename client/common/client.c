@@ -230,43 +230,12 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 	}
 
 	/* deal with the smartcard / smartcard logon stuff */
-	if (settings->SmartcardEmulation)
-	{
-		/* if no pin is defined on the smartcard emulation use the user password */
-		if (!settings->SmartcardPin)
-		{
-			if (!settings->Password)
-			{
-				WLog_ERR(TAG, "No pin or password defined for smartcard emu");
-				goto out_error;
-			}
-
-			if (!freerdp_settings_set_string(settings, FreeRDP_SmartcardPin, settings->Password))
-			{
-				WLog_ERR(TAG, "error when setting smartcard pin to user password");
-				goto out_error;
-			}
-		}
-	}
-
 	if (settings->SmartcardLogon)
 	{
 		settings->TlsSecurity = TRUE;
 		settings->RedirectSmartCards = TRUE;
 		settings->DeviceRedirection = TRUE;
 		freerdp_settings_set_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
-
-		if (!settings->Password && settings->SmartcardEmulation)
-		{
-			/* when no user password is provided, in the case of smartcard emulation for smartcard
-			 * logon take the smartcard pin as user password to match PasswordIsSmartcardPin
-			 */
-			if (!freerdp_settings_set_string(settings, FreeRDP_Password, settings->SmartcardPin))
-			{
-				WLog_ERR(TAG, "error when setting smartcard pin to user password");
-				goto out_error;
-			}
-		}
 	}
 
 	return TRUE;
@@ -524,6 +493,12 @@ BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** passw
 
 		case AUTH_TLS:
 		case AUTH_RDP:
+			if (instance->settings->SmartcardLogon)
+			{
+				WLog_INFO(TAG, "Authentication via smartcard");
+				return TRUE;
+			}
+
 		case AUTH_SMARTCARD_PIN: /* in this case password is pin code */
 			if ((*username) && (*password))
 				return TRUE;
