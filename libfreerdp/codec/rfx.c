@@ -1092,7 +1092,10 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 			UINT8 channelId;
 
 			if (Stream_GetRemainingLength(s) < 2)
+			{
+				WLog_ERR(TAG, "extraBlockLen too small(%" PRIuz ")", Stream_GetRemainingLength(s));
 				return FALSE;
+			}
 
 			extraBlockLen = 2;
 			Stream_Read_UINT8(s, codecId);   /* codecId (1 byte) must be set to 0x01 */
@@ -1234,6 +1237,9 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 				                        NULL, FREERDP_FLIP_NONE))
 				{
 					region16_uninit(&updateRegion);
+					WLog_ERR(TAG,
+					         "nbUpdateRectx[% " PRIu32 " (%" PRIu32 ")] freerdp_image_copy failed",
+					         j, nbUpdateRects);
 					return FALSE;
 				}
 
@@ -1248,6 +1254,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 		return TRUE;
 	}
 
+	WLog_ERR(TAG, "%s failed", __FUNCTION__);
 	return FALSE;
 }
 
