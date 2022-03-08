@@ -9,7 +9,6 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_AllowUnanouncedOrdersFromServer,
 	FreeRDP_AltSecFrameMarkerSupport,
 	FreeRDP_AsyncChannels,
-	FreeRDP_AsyncInput,
 	FreeRDP_AsyncUpdate,
 	FreeRDP_AudioCapture,
 	FreeRDP_AudioPlayback,

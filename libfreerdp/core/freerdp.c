@@ -314,16 +314,6 @@ DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events, DWORD count
 	else
 		return 0;
 
-	WINPR_ASSERT(context->settings);
-	if (context->settings->AsyncInput)
-	{
-		if (nCount >= count)
-			return 0;
-
-		events[nCount++] =
-		    freerdp_get_message_queue_event_handle(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
-	}
-
 	return nCount;
 }
 
@@ -361,18 +351,6 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 			WLog_ERR(TAG, "checkChannelErrorEvent() failed - %" PRIi32 "", status);
 
 		return FALSE;
-	}
-
-	WINPR_ASSERT(context->settings);
-	if (context->settings->AsyncInput)
-	{
-		int rc = freerdp_message_queue_process_pending_messages(context->instance,
-		                                                        FREERDP_INPUT_MESSAGE_QUEUE);
-
-		if (rc < 0)
-			return FALSE;
-		else
-			status = TRUE;
 	}
 
 	return status;
@@ -492,13 +470,6 @@ BOOL freerdp_disconnect(freerdp* instance)
 	up = update_cast(rdp->update);
 
 	update_post_disconnect(instance->update);
-
-	if (instance->settings->AsyncInput)
-	{
-		wMessageQueue* inputQueue =
-		    freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(inputQueue, 0);
-	}
 
 	IFCALL(instance->PostDisconnect, instance);
 

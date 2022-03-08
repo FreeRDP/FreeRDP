@@ -3186,10 +3186,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			                               enable))
 				return COMMAND_LINE_ERROR;
 		}
-		CommandLineSwitchCase(arg, "async-input")
-		{
-			settings->AsyncInput = enable;
-		}
 		CommandLineSwitchCase(arg, "async-update")
 		{
 			settings->AsyncUpdate = enable;

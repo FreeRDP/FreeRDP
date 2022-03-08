@@ -99,7 +99,6 @@ static BOOL mfreerdp_client_new(freerdp *instance, rdpContext *context)
 	context->instance->LogonErrorInfo = mac_logon_error_info;
 	context->instance->settings = instance->settings;
 	settings = context->settings;
-	settings->AsyncInput = TRUE;
 	return TRUE;
 }
 

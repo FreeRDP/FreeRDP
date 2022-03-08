@@ -2914,59 +2914,6 @@ void update_message_proxy_free(rdpUpdateProxy* message)
 	}
 }
 
-/* Input */
-
-static BOOL input_message_SynchronizeEvent(rdpInput* input, UINT32 flags)
-{
-	rdp_input_internal* in = input_cast(input);
-	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, SynchronizeEvent),
-	                         (void*)(size_t)flags, NULL);
-}
-
-static BOOL input_message_KeyboardEvent(rdpInput* input, UINT16 flags, UINT16 code)
-{
-	rdp_input_internal* in = input_cast(input);
-	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, KeyboardEvent),
-	                         (void*)(size_t)flags, (void*)(size_t)code);
-}
-
-static BOOL input_message_UnicodeKeyboardEvent(rdpInput* input, UINT16 flags, UINT16 code)
-{
-	rdp_input_internal* in = input_cast(input);
-	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, UnicodeKeyboardEvent),
-	                         (void*)(size_t)flags, (void*)(size_t)code);
-}
-
-static BOOL input_message_MouseEvent(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
-{
-	UINT32 pos = (x << 16) | y;
-	rdp_input_internal* in = input_cast(input);
-	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, MouseEvent),
-	                         (void*)(size_t)flags, (void*)(size_t)pos);
-}
-
-static BOOL input_message_ExtendedMouseEvent(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
-{
-	UINT32 pos = (x << 16) | y;
-	rdp_input_internal* in = input_cast(input);
-	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, ExtendedMouseEvent),
-	                         (void*)(size_t)flags, (void*)(size_t)pos);
-}
-
-static BOOL input_message_FocusInEvent(rdpInput* input, UINT16 toggleStates)
-{
-	rdp_input_internal* in = input_cast(input);
-	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, FocusInEvent),
-	                         (void*)(size_t)toggleStates, NULL);
-}
-
-static BOOL input_message_KeyboardPauseEvent(rdpInput* input)
-{
-	rdp_input_internal* in = input_cast(input);
-	return MessageQueue_Post(in->queue, (void*)input, MakeMessageId(Input, KeyboardPauseEvent),
-	                         NULL, NULL);
-}
-
 /* Event Queue */
 static int input_message_free_input_class(wMessage* msg, int type)
 {
@@ -3181,51 +3128,4 @@ int input_message_queue_process_pending_messages(rdpInput* input)
 	}
 
 	return status;
-}
-
-static BOOL input_message_proxy_register(rdpInputProxy* proxy, rdpInput* input)
-{
-	if (!proxy || !input)
-		return FALSE;
-
-	/* Input */
-	proxy->SynchronizeEvent = input->SynchronizeEvent;
-	proxy->KeyboardEvent = input->KeyboardEvent;
-	proxy->UnicodeKeyboardEvent = input->UnicodeKeyboardEvent;
-	proxy->MouseEvent = input->MouseEvent;
-	proxy->ExtendedMouseEvent = input->ExtendedMouseEvent;
-	proxy->FocusInEvent = input->FocusInEvent;
-	proxy->KeyboardPauseEvent = input->KeyboardPauseEvent;
-	input->SynchronizeEvent = input_message_SynchronizeEvent;
-	input->KeyboardEvent = input_message_KeyboardEvent;
-	input->UnicodeKeyboardEvent = input_message_UnicodeKeyboardEvent;
-	input->MouseEvent = input_message_MouseEvent;
-	input->ExtendedMouseEvent = input_message_ExtendedMouseEvent;
-	input->FocusInEvent = input_message_FocusInEvent;
-	input->KeyboardPauseEvent = input_message_KeyboardPauseEvent;
-	return TRUE;
-}
-
-rdpInputProxy* input_message_proxy_new(rdpInput* input)
-{
-	rdpInputProxy* proxy;
-	proxy = (rdpInputProxy*)calloc(1, sizeof(rdpInputProxy));
-
-	if (!proxy)
-		return NULL;
-
-	proxy->input = input;
-
-	if (!input_message_proxy_register(proxy, input))
-	{
-		free(proxy);
-		return NULL;
-	}
-
-	return proxy;
-}
-
-void input_message_proxy_free(rdpInputProxy* proxy)
-{
-	free(proxy);
 }

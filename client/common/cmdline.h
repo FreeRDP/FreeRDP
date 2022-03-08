@@ -52,8 +52,6 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Automatically request remote assistance input control" },
 	{ "async-channels", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Asynchronous channels (experimental)" },
-	{ "async-input", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "Asynchronous input" },
 	{ "async-update", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Asynchronous update" },
 	{ "audio-mode", COMMAND_LINE_VALUE_REQUIRED, "<mode>", NULL, NULL, -1, NULL,

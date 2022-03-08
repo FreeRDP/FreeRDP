@@ -113,7 +113,6 @@
     <string name="settings_remote_program">"Lancement de programme"</string>
     <string name="settings_work_dir">"Répertoire de travail"</string>
     <string name="settings_async_channel">Async channel</string>
-    <string name="settings_async_input">Async input</string>
     <string name="settings_async_update">Async update</string>
     <string name="settings_console_mode">"Mode console"</string>
     <!-- App settings strings -->

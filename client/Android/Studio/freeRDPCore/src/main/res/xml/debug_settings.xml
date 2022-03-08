@@ -31,8 +31,5 @@
         <CheckBoxPreference
             android:key="bookmark.async_update"
             android:title="@string/settings_async_update" />
-        <CheckBoxPreference
-            android:key="bookmark.async_input"
-            android:title="@string/settings_async_input" />
     </PreferenceCategory>
 </PreferenceScreen>

@@ -51,9 +51,6 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_AsyncChannels:
 			return settings->AsyncChannels;
 
-		case FreeRDP_AsyncInput:
-			return settings->AsyncInput;
-
 		case FreeRDP_AsyncUpdate:
 			return settings->AsyncUpdate;
 
@@ -598,10 +595,6 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_AsyncChannels:
 			settings->AsyncChannels = cnv.c;
-			break;
-
-		case FreeRDP_AsyncInput:
-			settings->AsyncInput = cnv.c;
 			break;
 
 		case FreeRDP_AsyncUpdate:

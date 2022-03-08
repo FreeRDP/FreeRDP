@@ -955,35 +955,6 @@ static BOOL wf_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDi
 	return TRUE;
 }
 
-static DWORD WINAPI wf_input_thread(LPVOID arg)
-{
-	int status;
-	wMessage message;
-	wMessageQueue* queue;
-	freerdp* instance = (freerdp*)arg;
-	WINPR_ASSERT(NULL != instance);
-	status = 1;
-	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-
-	while (MessageQueue_Wait(queue))
-	{
-		while (MessageQueue_Peek(queue, &message, TRUE))
-		{
-			status = freerdp_message_queue_process_message(instance, FREERDP_INPUT_MESSAGE_QUEUE,
-			                                               &message);
-
-			if (!status)
-				break;
-		}
-
-		if (!status)
-			break;
-	}
-
-	ExitThread(0);
-	return 0;
-}
-
 static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
 	MSG msg;
@@ -993,14 +964,12 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	int quit_msg;
 	DWORD nCount;
 	DWORD error;
-	HANDLE handles[64];
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS];
 	wfContext* wfc;
 	freerdp* instance;
 	rdpContext* context;
 	rdpChannels* channels;
 	rdpSettings* settings;
-	BOOL async_input;
-	HANDLE input_thread;
 	instance = (freerdp*)lpParam;
 	context = instance->context;
 	wfc = (wfContext*)instance->context;
@@ -1010,16 +979,6 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 
 	channels = instance->context->channels;
 	settings = instance->context->settings;
-	async_input = settings->AsyncInput;
-
-	if (async_input)
-	{
-		if (!(input_thread = CreateThread(NULL, 0, wf_input_thread, instance, 0, NULL)))
-		{
-			WLog_ERR(TAG, "Failed to create async input thread.");
-			goto disconnect;
-		}
-	}
 
 	while (1)
 	{
@@ -1104,20 +1063,9 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	}
 
 	/* cleanup */
-	if (async_input)
-	{
-		wMessageQueue* input_queue;
-		input_queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-
-		if (MessageQueue_PostQuit(input_queue, 0))
-			WaitForSingleObject(input_thread, INFINITE);
-	}
 
 disconnect:
 	freerdp_disconnect(instance);
-
-	if (async_input)
-		CloseHandle(input_thread);
 
 end:
 	error = freerdp_get_last_error(instance->context);

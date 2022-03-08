@@ -119,7 +119,6 @@
     <string name="settings_remote_program">远程程序</string>
     <string name="settings_work_dir">工作目录</string>
     <string name="settings_async_channel">异步通道</string>
-    <string name="settings_async_input">异步输入</string>
     <string name="settings_async_update">异步更新</string>
     <string name="settings_console_mode">控制台模式</string>
     <!-- App settings strings -->

@@ -656,16 +656,6 @@ BOOL input_register_client_callbacks(rdpInput* input)
 		input->FocusInEvent = input_send_focus_in_event;
 	}
 
-	in->asynchronous = settings->AsyncInput;
-
-	if (in->asynchronous)
-	{
-		in->proxy = input_message_proxy_new(input);
-
-		if (!in->proxy)
-			return FALSE;
-	}
-
 	return TRUE;
 }
 
@@ -795,8 +785,6 @@ void input_free(rdpInput* input)
 	if (input != NULL)
 	{
 		rdp_input_internal* in = input_cast(input);
-		if (in->asynchronous)
-			input_message_proxy_free(in->proxy);
 
 		MessageQueue_Free(in->queue);
 		free(in);

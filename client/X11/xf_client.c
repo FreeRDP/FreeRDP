@@ -1422,76 +1422,6 @@ static int xf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	return 1;
 }
 
-static DWORD WINAPI xf_input_thread(LPVOID arg)
-{
-	BOOL running = TRUE;
-	DWORD status;
-	DWORD nCount;
-	HANDLE events[3];
-	wMessage msg;
-	wMessageQueue* queue;
-	rdpSettings* settings;
-	freerdp* instance = (freerdp*)arg;
-	xfContext* xfc;
-
-	WINPR_ASSERT(instance);
-
-	xfc = (xfContext*)instance->context;
-	WINPR_ASSERT(xfc);
-
-	settings = xfc->common.context.settings;
-	WINPR_ASSERT(settings);
-
-	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-	nCount = 0;
-	events[nCount++] = MessageQueue_Event(queue);
-	events[nCount++] = xfc->x11event;
-	events[nCount++] = instance->context->abortEvent;
-
-	while (running)
-	{
-		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
-
-		switch (status)
-		{
-			case WAIT_OBJECT_0:
-			case WAIT_OBJECT_0 + 1:
-			case WAIT_OBJECT_0 + 2:
-				if (WaitForSingleObject(events[0], 0) == WAIT_OBJECT_0)
-				{
-					if (MessageQueue_Peek(queue, &msg, FALSE))
-					{
-						if (msg.id == WMQ_QUIT)
-							running = FALSE;
-					}
-				}
-
-				if (WaitForSingleObject(events[1], 0) == WAIT_OBJECT_0)
-				{
-					if (!xf_process_x_events(instance))
-					{
-						running = FALSE;
-						break;
-					}
-				}
-
-				if (WaitForSingleObject(events[2], 0) == WAIT_OBJECT_0)
-					running = FALSE;
-
-				break;
-
-			default:
-				running = FALSE;
-				break;
-		}
-	}
-
-	MessageQueue_PostQuit(queue, 0);
-	freerdp_abort_connect(instance);
-	ExitThread(0);
-	return 0;
-}
-
 static BOOL handle_window_events(freerdp* instance)
 {
 	rdpSettings* settings;
@@ -1501,14 +1431,11 @@ static BOOL handle_window_events(freerdp* instance)
 
 	settings = instance->settings;
 
-	if (!settings->AsyncInput)
-	{
 		if (!xf_process_x_events(instance))
 		{
 			WLog_DBG(TAG, "Closed from X11");
 			return FALSE;
 		}
-	}
 
 	return TRUE;
 }
@@ -1531,11 +1458,11 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	freerdp* instance;
 	rdpContext* context;
 	HANDLE inputEvent = NULL;
-	HANDLE inputThread = NULL;
 	HANDLE timer = NULL;
 	LARGE_INTEGER due;
 	rdpSettings* settings;
 	TimerEventArgs timerEvent;
+
 	EventArgsInit(&timerEvent, "xfreerdp");
 	instance = (freerdp*)param;
 	context = instance->context;
@@ -1671,28 +1598,13 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	{
 		goto disconnect;
 	}
-
-	if (!settings->AsyncInput)
-	{
-		inputEvent = xfc->x11event;
-	}
-	else
-	{
-		if (!(inputThread = CreateThread(NULL, 0, xf_input_thread, instance, 0, NULL)))
-		{
-			WLog_ERR(TAG, "async input: failed to create input thread");
-			exit_code = XF_EXIT_UNKNOWN;
-			goto disconnect;
-		}
-	}
+	inputEvent = xfc->x11event;
 
 	while (!freerdp_shall_disconnect(instance))
 	{
 		nCount = 0;
 		handles[nCount++] = timer;
-
-		if (!settings->AsyncInput)
-			handles[nCount++] = inputEvent;
+		handles[nCount++] = inputEvent;
 
 		/*
 		 * win8 and server 2k12 seem to have some timing issue/race condition
@@ -1756,12 +1668,6 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 			timerEvent.now = GetTickCount64();
 			PubSub_OnTimer(context->pubSub, context, &timerEvent);
 		}
-	}
-
-	if (settings->AsyncInput)
-	{
-		WaitForSingleObject(inputThread, INFINITE);
-		CloseHandle(inputThread);
 	}
 
 	if (!exit_code)

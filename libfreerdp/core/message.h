@@ -161,7 +161,4 @@ FREERDP_LOCAL int input_message_queue_process_message(rdpInput* input, wMessage*
 FREERDP_LOCAL int input_message_queue_free_message(wMessage* message);
 FREERDP_LOCAL int input_message_queue_process_pending_messages(rdpInput* input);
 
-FREERDP_LOCAL rdpInputProxy* input_message_proxy_new(rdpInput* input);
-FREERDP_LOCAL void input_message_proxy_free(rdpInputProxy* proxy);
-
 #endif /* FREERDP_LIB_CORE_MESSAGE_H */

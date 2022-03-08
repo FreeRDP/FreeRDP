@@ -276,7 +276,6 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	shw->settings = instance->context->settings;
 	settings->AsyncChannels = FALSE;
 	settings->AsyncUpdate = FALSE;
-	settings->AsyncInput = FALSE;
 	settings->IgnoreCertificate = TRUE;
 	settings->ExternalCertificateManagement = TRUE;
 	settings->RdpSecurity = TRUE;
