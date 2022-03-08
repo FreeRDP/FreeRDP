@@ -35,7 +35,11 @@ static BOOL update_recv_surfcmd_bitmap_header_ex(wStream* s, TS_COMPRESSED_BITMA
 		return FALSE;
 
 	if (Stream_GetRemainingLength(s) < 24)
+	{
+		WLog_ERR(TAG, "got %" PRIuz ", expected %" PRIuz " bytes", Stream_GetRemainingLength(s),
+		         24);
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, header->highUniqueId);
 	Stream_Read_UINT32(s, header->lowUniqueId);
@@ -50,7 +54,11 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 		return FALSE;
 
 	if (Stream_GetRemainingLength(s) < 12)
+	{
+		WLog_ERR(TAG, "got %" PRIuz ", expected %" PRIuz " bytes", Stream_GetRemainingLength(s),
+		         12);
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, bmp->bpp);
 	Stream_Read_UINT8(s, bmp->flags);
@@ -80,7 +88,13 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 	}
 
 	bmp->bitmapData = Stream_Pointer(s);
-	return Stream_SafeSeek(s, bmp->bitmapDataLength);
+	if (!Stream_SafeSeek(s, bmp->bitmapDataLength))
+	{
+		WLog_ERR(TAG, "expected bitmapDataLength %" PRIu32 ", not enough data",
+		         bmp->bitmapDataLength);
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static BOOL update_recv_surfcmd_is_rect_valid(const rdpContext* context,
@@ -118,10 +132,14 @@ static BOOL update_recv_surfcmd_is_rect_valid(const rdpContext* context,
 
 static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT16 cmdType)
 {
+	BOOL rc = FALSE;
 	SURFACE_BITS_COMMAND cmd = { 0 };
 
 	if (Stream_GetRemainingLength(s) < 8)
+	{
+		WLog_ERR(TAG, "got %" PRIuz ", expected %" PRIuz " bytes", Stream_GetRemainingLength(s), 8);
 		goto fail;
+	}
 
 	cmd.cmdType = cmdType;
 	Stream_Read_UINT16(s, cmd.destLeft);
@@ -135,9 +153,15 @@ static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT
 	if (!update_recv_surfcmd_bitmap_ex(s, &cmd.bmp))
 		goto fail;
 
-	return IFCALLRESULT(TRUE, update->SurfaceBits, update->context, &cmd);
+	if (!IFCALLRESULT(TRUE, update->SurfaceBits, update->context, &cmd))
+	{
+		WLog_DBG(TAG, "update->SurfaceBits implementation failed");
+		goto fail;
+	}
+
+	rc = TRUE;
 fail:
-	return FALSE;
+	return rc;
 }
 
 static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
@@ -148,7 +172,10 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 	WINPR_ASSERT(s);
 
 	if (Stream_GetRemainingLength(s) < 6)
+	{
+		WLog_ERR(TAG, "got %" PRIuz ", expected %" PRIuz " bytes", Stream_GetRemainingLength(s), 6);
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, marker.frameAction);
 	Stream_Read_UINT32(s, marker.frameId);
@@ -161,7 +188,13 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 		return FALSE;
 	}
 
-	return update->SurfaceFrameMarker(update->context, &marker);
+	if (!update->SurfaceFrameMarker(update->context, &marker))
+	{
+		WLog_DBG(TAG, "update->SurfaceFrameMarker implementation failed");
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 int update_recv_surfcmds(rdpUpdate* update, wStream* s)
