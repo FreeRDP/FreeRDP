@@ -889,10 +889,6 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 		else
 			settings->MultitransportFlags = 0;
 	}
-	CommandLineSwitchCase(arg, "password-is-pin")
-	{
-		settings->PasswordIsSmartcardPin = enable;
-	}
 	CommandLineSwitchEnd(arg)
 
 	        return status
