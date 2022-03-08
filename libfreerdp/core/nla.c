@@ -636,32 +636,21 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 	}
 
 setup_pin:
-	if (!settings->SmartcardPin)
+	if (!settings->Password)
 	{
-		if (settings->SmartcardEmulation)
-		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_SmartcardPin, ""))
-			{
-				WLog_ERR(TAG, "error setting pin");
-				return FALSE;
-			}
-		}
-		else
-		{
 			freerdp* instance = nla->instance;
-			if (!instance->AuthenticateEx)
-			{
-				WLog_ERR(TAG, "no pin configured and no instance->AuthenticateEx callback");
-				return TRUE;
-			}
-
-			if (!instance->AuthenticateEx(instance, &settings->Username, &settings->SmartcardPin,
-			                              &settings->Domain, AUTH_SMARTCARD_PIN))
-			{
-				WLog_ERR(TAG, "no pin code entered");
-				return TRUE;
-			}
-		}
+		    auth_status reason = utils_authenticate(instance, AUTH_SMARTCARD_PIN, TRUE);
+		    switch (reason)
+		    {
+			    case AUTH_SKIP:
+				    WLog_ERR(TAG, "no pin configured and no instance->AuthenticateEx callback");
+				    return TRUE;
+			    case AUTH_NO_CREDENTIALS:
+				    WLog_ERR(TAG, "no pin code entered");
+				    return TRUE;
+			    default:
+				    break;
+		    }
 	}
 
 	ret = TRUE;
@@ -701,9 +690,9 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			identityEx->Length = sizeof(*identityEx);
 			identityEx->User = (BYTE*)marshalledCredentials;
 			identityEx->UserLength = strlen(marshalledCredentials);
-			if (!(identityEx->Password = (BYTE*)_strdup(settings->SmartcardPin)))
+			if (!(identityEx->Password = (BYTE*)_strdup(settings->Password)))
 				return FALSE;
-			identityEx->PasswordLength = strlen(settings->SmartcardPin);
+			identityEx->PasswordLength = strlen(settings->Password);
 			identityEx->Domain = NULL;
 			identityEx->DomainLength = 0;
 			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
@@ -722,8 +711,8 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			identityEx->UserLength = strlen(settings->Username);
 			identityEx->Domain = (BYTE*)settings->Domain;
 			identityEx->DomainLength = strlen(settings->Domain);
-			identityEx->Password = (BYTE*)settings->SmartcardPin;
-			identityEx->PasswordLength = strlen(settings->SmartcardPin);
+			identityEx->Password = (BYTE*)settings->Password;
+			identityEx->PasswordLength = strlen(settings->Password);
 			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 			identityEx->PackageList = NULL;
 			identityEx->PackageListLength = 0;
@@ -2096,7 +2085,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 		TSSmartCardCreds_t smartcardCreds = { 0 };
 		TSCspDataDetail_t cspData = { 0 };
 
-		smartcardCreds.pin = settings->SmartcardPin ? settings->SmartcardPin : "";
+		smartcardCreds.pin = settings->Password ? settings->Password : "";
 
 		/*smartcardCreds.userHint = settings->UserHint;
 		smartcardCreds.domainHint = settings->DomainHint;*/
