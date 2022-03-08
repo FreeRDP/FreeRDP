@@ -644,10 +644,10 @@ setup_pin:
 		    {
 			    case AUTH_SKIP:
 				    WLog_ERR(TAG, "no pin configured and no instance->AuthenticateEx callback");
-				    return TRUE;
+				    break;
 			    case AUTH_NO_CREDENTIALS:
 				    WLog_ERR(TAG, "no pin code entered");
-				    return TRUE;
+				    break;
 			    default:
 				    break;
 		    }
