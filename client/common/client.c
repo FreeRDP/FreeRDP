@@ -392,8 +392,8 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
                                         char** password, char** domain)
 {
 	static const size_t password_size = 512;
-	const char* auth[] = { "Username: ", "Domain:   ", "Password: " };
-	const char* authPin[] = { "Username: ", "Domain:   ", "Smartcard-Pin:      " };
+	const char* auth[] = { "Username:        ", "Domain:          ", "Password:        " };
+	const char* authPin[] = { "Username:        ", "Domain:          ", "Smartcard-Pin:   " };
 	const char* gw[] = { "GatewayUsername: ", "GatewayDomain:   ", "GatewayPassword: " };
 	const char** prompt;
 	BOOL pinOnly = FALSE;
