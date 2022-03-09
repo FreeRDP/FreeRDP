@@ -181,14 +181,21 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 {
 	SURFACE_FRAME_MARKER marker;
 
-	if (Stream_GetRemainingLength(s) < 6)
+	if (Stream_GetRemainingLength(s) < 2)
 	{
 		WLog_ERR(TAG, "got %" PRIuz ", expected %" PRIuz " bytes", Stream_GetRemainingLength(s), 6);
 		return FALSE;
 	}
 
 	Stream_Read_UINT16(s, marker.frameAction);
-	Stream_Read_UINT32(s, marker.frameId);
+	if (Stream_GetRemainingLength(s) < 4)
+		WLog_WARN(TAG,
+		          "[SERVER-BUG]: got %" PRIuz ", expected %" PRIuz
+		          " bytes. [MS-RDPBCGR] 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER) is "
+		          "missing frameId, ignoring",
+		          Stream_GetRemainingLength(s), 4);
+	else
+		Stream_Read_UINT32(s, marker.frameId);
 	WLog_Print(update->log, WLOG_DEBUG,
 	           "SurfaceFrameMarker: action: %s (%" PRIu32 ") id: %" PRIu32 "",
 	           (!marker.frameAction) ? "Begin" : "End", marker.frameAction, marker.frameId);
