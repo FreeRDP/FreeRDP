@@ -1,7 +1,19 @@
+# 2022-XX-YY Version 2.X.Y
+
+Noteworthy changes:
+
+Fixed issues:
+* Backported #6786: Use /network:auto by default
+* Backported #7714: Workaround for broken surface frame marker
+
+Important notes:
+
+For a complete and detailed change log since the last release run:
+git log 2.6.1..2.X.Y
+
 # 2022-03-07 Version 2.6.1
 
 Noteworthy changes:
-* Decreased logging verbosity, now freerdp is much less verbose by default
 
 Fixed issues:
 * Backported freerdp_abort_connect during freerdp_connect fix (#7700)
