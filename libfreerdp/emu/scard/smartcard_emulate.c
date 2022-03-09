@@ -304,7 +304,7 @@ static SCardHandle* scard_handle_new(SmartcardEmulationContext* smartcard, SCARD
 		const char* key =
 		    freerdp_settings_get_string(smartcard->settings, FreeRDP_SmartcardPrivateKey);
 
-		const char* pin = freerdp_settings_get_string(smartcard->settings, FreeRDP_SmartcardPin);
+		const char* pin = freerdp_settings_get_string(smartcard->settings, FreeRDP_Password);
 
 		if (!vgids_init(hdl->vgids, pem, key, pin))
 			goto fail;
@@ -2690,7 +2690,7 @@ BOOL Emulate_IsConfigured(SmartcardEmulationContext* context)
 
 	pem = freerdp_settings_get_string(context->settings, FreeRDP_SmartcardCertificate);
 	key = freerdp_settings_get_string(context->settings, FreeRDP_SmartcardPrivateKey);
-	pin = freerdp_settings_get_string(context->settings, FreeRDP_SmartcardPin);
+	pin = freerdp_settings_get_string(context->settings, FreeRDP_Password);
 
 	/* Cache result only, if no initialization arguments changed. */
 	if ((context->pem == pem) && (context->key == key) && (context->pin == pin))

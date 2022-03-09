@@ -889,10 +889,6 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 		else
 			settings->MultitransportFlags = 0;
 	}
-	CommandLineSwitchCase(arg, "password-is-pin")
-	{
-		settings->PasswordIsSmartcardPin = enable;
-	}
 	CommandLineSwitchEnd(arg)
 
 	        return status
@@ -3396,7 +3392,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					  setSmartcardEmulation },
 					{ "key:", FreeRDP_SmartcardPrivateKey, CMDLINE_SUBOPTION_FILE,
 					  setSmartcardEmulation },
-					{ "pin:", FreeRDP_SmartcardPin, CMDLINE_SUBOPTION_STRING, NULL },
+					{ "pin:", FreeRDP_Password, CMDLINE_SUBOPTION_STRING, NULL },
 					{ "csp:", FreeRDP_CspName, CMDLINE_SUBOPTION_STRING, NULL },
 					{ "reader:", FreeRDP_ReaderName, CMDLINE_SUBOPTION_STRING, NULL },
 					{ "card:", FreeRDP_CardName, CMDLINE_SUBOPTION_STRING, NULL },

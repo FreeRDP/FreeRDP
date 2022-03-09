@@ -661,7 +661,6 @@ typedef struct
 #define FreeRDP_PromptForCredentials (1283)
 #define FreeRDP_SmartcardCertificate (1285)
 #define FreeRDP_SmartcardPrivateKey (1286)
-#define FreeRDP_SmartcardPin (1287)
 #define FreeRDP_SmartcardEmulation (1288)
 #define FreeRDP_Pkcs11Module (1289)
 #define FreeRDP_PkinitAnchors (1290)
@@ -1159,7 +1158,7 @@ struct rdp_settings
 	/* Settings used for smartcard emulation */
 	ALIGN64 char* SmartcardCertificate; /* 1285 */
 	ALIGN64 char* SmartcardPrivateKey;  /* 1286 */
-	ALIGN64 char* SmartcardPin;         /* 1287 */
+	UINT64 padding1287[1288 - 1287];    /* 1287 */
 	ALIGN64 BOOL SmartcardEmulation;    /* 1288 */
 	ALIGN64 char* Pkcs11Module;         /* 1289 */
 	ALIGN64 char* PkinitAnchors;        /* 1290 */

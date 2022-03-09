@@ -107,6 +107,28 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 	if (!prompt)
 		return AUTH_SKIP;
 
+	switch (reason)
+	{
+		case AUTH_RDP:
+		case AUTH_TLS:
+			if (instance->settings->SmartcardLogon)
+			{
+				if (!utils_str_is_empty(settings->Password))
+				{
+					WLog_INFO(TAG, "Authentication via smartcard");
+					return AUTH_SUCCESS;
+				}
+				reason = AUTH_SMARTCARD_PIN;
+			}
+			break;
+		case AUTH_NLA:
+			if (instance->settings->SmartcardLogon)
+				reason = AUTH_SMARTCARD_PIN;
+			break;
+		default:
+			break;
+	}
+
 	/* If no callback is specified still continue connection */
 	if (!instance->Authenticate && !instance->AuthenticateEx)
 		return AUTH_NO_CREDENTIALS;

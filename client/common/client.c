@@ -230,43 +230,12 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 	}
 
 	/* deal with the smartcard / smartcard logon stuff */
-	if (settings->SmartcardEmulation)
-	{
-		/* if no pin is defined on the smartcard emulation use the user password */
-		if (!settings->SmartcardPin)
-		{
-			if (!settings->Password)
-			{
-				WLog_ERR(TAG, "No pin or password defined for smartcard emu");
-				goto out_error;
-			}
-
-			if (!freerdp_settings_set_string(settings, FreeRDP_SmartcardPin, settings->Password))
-			{
-				WLog_ERR(TAG, "error when setting smartcard pin to user password");
-				goto out_error;
-			}
-		}
-	}
-
 	if (settings->SmartcardLogon)
 	{
 		settings->TlsSecurity = TRUE;
 		settings->RedirectSmartCards = TRUE;
 		settings->DeviceRedirection = TRUE;
 		freerdp_settings_set_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
-
-		if (!settings->Password && settings->SmartcardEmulation)
-		{
-			/* when no user password is provided, in the case of smartcard emulation for smartcard
-			 * logon take the smartcard pin as user password to match PasswordIsSmartcardPin
-			 */
-			if (!freerdp_settings_set_string(settings, FreeRDP_Password, settings->SmartcardPin))
-			{
-				WLog_ERR(TAG, "error when setting smartcard pin to user password");
-				goto out_error;
-			}
-		}
 	}
 
 	return TRUE;
@@ -423,20 +392,22 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
                                         char** password, char** domain)
 {
 	static const size_t password_size = 512;
-	const char* auth[] = { "Username: ", "Domain:   ", "Password: " };
-	const char* authPin[] = { "Username: ", "Domain:   ", "Pin:      " };
+	const char* auth[] = { "Username:        ", "Domain:          ", "Password:        " };
+	const char* authPin[] = { "Username:        ", "Domain:          ", "Smartcard-Pin:   " };
 	const char* gw[] = { "GatewayUsername: ", "GatewayDomain:   ", "GatewayPassword: " };
 	const char** prompt;
+	BOOL pinOnly = FALSE;
 
 	switch (reason)
 	{
-		case AUTH_NLA:
-		case AUTH_TLS:
-		case AUTH_RDP:
-			prompt = auth;
-			break;
 		case AUTH_SMARTCARD_PIN:
 			prompt = authPin;
+			pinOnly = TRUE;
+			break;
+		case AUTH_TLS:
+		case AUTH_RDP:
+		case AUTH_NLA:
+			prompt = auth;
 			break;
 		case GW_AUTH_HTTP:
 		case GW_AUTH_RDG:
@@ -450,7 +421,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 	if (!username || !password || !domain)
 		return FALSE;
 
-	if (!*username)
+	if (!*username && !pinOnly)
 	{
 		size_t username_size = 0;
 		printf("%s", prompt[0]);
@@ -468,7 +439,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 		}
 	}
 
-	if (!*domain)
+	if (!*domain && !pinOnly)
 	{
 		size_t domain_size = 0;
 		printf("%s", prompt[1]);

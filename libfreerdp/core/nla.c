@@ -34,6 +34,7 @@
 #include <freerdp/peer.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/sam.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
@@ -171,6 +172,8 @@ static BOOL nla_sec_buffer_alloc(SecBuffer* buffer, size_t size)
 	sspi_SecBufferFree(buffer);
 	if (!sspi_SecBufferAlloc(buffer, size))
 		return FALSE;
+
+	WINPR_ASSERT(buffer);
 	buffer->BufferType = SECBUFFER_TOKEN;
 	return TRUE;
 }
@@ -181,6 +184,8 @@ static BOOL nla_sec_buffer_alloc_from_data(SecBuffer* buffer, const BYTE* data, 
 	BYTE* pb;
 	if (!nla_sec_buffer_alloc(buffer, offset + size))
 		return FALSE;
+
+	WINPR_ASSERT(buffer);
 	pb = buffer->pvBuffer;
 	memcpy(&pb[offset], data, size);
 	return TRUE;
@@ -541,9 +546,20 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 	SmartcardCerts* certs = NULL;
 	const SmartcardCertInfo* info = NULL;
 	DWORD count;
-	rdpSettings* settings = nla->settings;
-	SEC_WINPR_KERBEROS_SETTINGS* kerbSettings = &nla->kerberosSettings;
+	rdpSettings* settings;
+	SEC_WINPR_KERBEROS_SETTINGS* kerbSettings;
 	BOOL ret = FALSE;
+
+	WINPR_ASSERT(nla);
+
+	settings = nla->settings;
+	WINPR_ASSERT(settings);
+
+	if (!settings->SmartcardLogon)
+		return TRUE;
+
+	kerbSettings = &nla->kerberosSettings;
+	WINPR_ASSERT(kerbSettings);
 
 	if (!settings->CspName)
 	{
@@ -636,33 +652,6 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 	}
 
 setup_pin:
-	if (!settings->SmartcardPin)
-	{
-		if (settings->SmartcardEmulation)
-		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_SmartcardPin, ""))
-			{
-				WLog_ERR(TAG, "error setting pin");
-				return FALSE;
-			}
-		}
-		else
-		{
-			freerdp* instance = nla->instance;
-			if (!instance->AuthenticateEx)
-			{
-				WLog_ERR(TAG, "no pin configured and no instance->AuthenticateEx callback");
-				return TRUE;
-			}
-
-			if (!instance->AuthenticateEx(instance, &settings->Username, &settings->SmartcardPin,
-			                              &settings->Domain, AUTH_SMARTCARD_PIN))
-			{
-				WLog_ERR(TAG, "no pin code entered");
-				return TRUE;
-			}
-		}
-	}
 
 	ret = TRUE;
 out:
@@ -676,64 +665,16 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	WINPR_SAM* sam;
 	WINPR_SAM_ENTRY* entry;
 	BOOL PromptPassword = FALSE;
-	rdpSettings* settings = nla->settings;
-	freerdp* instance = nla->instance;
+	rdpSettings* settings;
+	freerdp* instance;
 
-	if (settings->SmartcardLogon)
-	{
-#ifdef _WIN32
-		{
-			SEC_WINNT_AUTH_IDENTITY_EXA* identityEx;
-			CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
-			LPSTR marshalledCredentials;
+	WINPR_ASSERT(nla);
 
-			identityEx = &nla->identityEx;
-			memcpy(certInfo.rgbHashOfCert, nla->kerberosSettings.certSha1,
-			       sizeof(certInfo.rgbHashOfCert));
+	settings = nla->settings;
+	WINPR_ASSERT(settings);
 
-			if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
-			{
-				WLog_ERR(TAG, "error marshalling cert credentials");
-				return FALSE;
-			}
-
-			identityEx->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
-			identityEx->Length = sizeof(*identityEx);
-			identityEx->User = (BYTE*)marshalledCredentials;
-			identityEx->UserLength = strlen(marshalledCredentials);
-			if (!(identityEx->Password = (BYTE*)_strdup(settings->SmartcardPin)))
-				return FALSE;
-			identityEx->PasswordLength = strlen(settings->SmartcardPin);
-			identityEx->Domain = NULL;
-			identityEx->DomainLength = 0;
-			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-			identityEx->PackageList = NULL;
-			identityEx->PackageListLength = 0;
-
-			nla->identityPtr = identityEx;
-		}
-#else
-		{
-			SEC_WINNT_AUTH_IDENTITY_EXA* identityEx = &nla->identityWinPr.identityEx;
-
-			identityEx->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
-			identityEx->Length = sizeof(nla->identityWinPr);
-			identityEx->User = (BYTE*)settings->Username;
-			identityEx->UserLength = strlen(settings->Username);
-			identityEx->Domain = (BYTE*)settings->Domain;
-			identityEx->DomainLength = strlen(settings->Domain);
-			identityEx->Password = (BYTE*)settings->SmartcardPin;
-			identityEx->PasswordLength = strlen(settings->SmartcardPin);
-			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-			identityEx->PackageList = NULL;
-			identityEx->PackageListLength = 0;
-
-			nla->identityPtr = &nla->identityWinPr;
-		} /* smartcard logon */
-#endif /* _WIN32 */
-
-		return TRUE;
-	}
+	instance = nla->instance;
+	WINPR_ASSERT(instance);
 
 	/* */
 	if ((utils_str_is_empty(settings->Username) ||
@@ -794,6 +735,61 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	{
 		nla_identity_free(nla->identity);
 		nla->identity = NULL;
+	}
+	else if (settings->SmartcardLogon)
+	{
+#ifdef _WIN32
+		{
+			SEC_WINNT_AUTH_IDENTITY_EXA* identityEx;
+			CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
+			LPSTR marshalledCredentials;
+
+			identityEx = &nla->identityEx;
+			memcpy(certInfo.rgbHashOfCert, nla->kerberosSettings.certSha1,
+			       sizeof(certInfo.rgbHashOfCert));
+
+			if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
+			{
+				WLog_ERR(TAG, "error marshalling cert credentials");
+				return FALSE;
+			}
+
+			identityEx->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+			identityEx->Length = sizeof(*identityEx);
+			identityEx->User = (BYTE*)marshalledCredentials;
+			identityEx->UserLength = strlen(marshalledCredentials);
+			if (!(identityEx->Password = (BYTE*)_strdup(settings->Password)))
+				return FALSE;
+			identityEx->PasswordLength = strlen(settings->Password);
+			identityEx->Domain = NULL;
+			identityEx->DomainLength = 0;
+			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+			identityEx->PackageList = NULL;
+			identityEx->PackageListLength = 0;
+
+			nla->identityPtr = identityEx;
+		}
+#else
+		{
+			SEC_WINNT_AUTH_IDENTITY_EXA* identityEx = &nla->identityWinPr.identityEx;
+
+			identityEx->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+			identityEx->Length = sizeof(nla->identityWinPr);
+			identityEx->User = (BYTE*)settings->Username;
+			identityEx->UserLength = strlen(settings->Username);
+			identityEx->Domain = (BYTE*)settings->Domain;
+			identityEx->DomainLength = strlen(settings->Domain);
+			identityEx->Password = (BYTE*)settings->Password;
+			identityEx->PasswordLength = strlen(settings->Password);
+			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+			identityEx->PackageList = NULL;
+			identityEx->PackageListLength = 0;
+
+			nla->identityPtr = &nla->identityWinPr;
+		} /* smartcard logon */
+#endif /* _WIN32 */
+
+		return TRUE;
 	}
 	else
 	{
@@ -857,6 +853,11 @@ static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* mess
 {
 	INT32 v;
 	const char* ptr;
+
+	WINPR_ASSERT(value);
+	WINPR_ASSERT(dest);
+	WINPR_ASSERT(message);
+
 	/* determine the format :
 	 *   h:m[:s] (3:00:02) 			deltat in hours/minutes
 	 *   <n>d<n>h<n>m<n>s 1d4h	    deltat in day/hours/minutes/seconds
@@ -963,8 +964,16 @@ static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* mess
 
 static BOOL nla_setup_kerberos(rdpNla* nla)
 {
-	SEC_WINPR_KERBEROS_SETTINGS* kerbSettings = &nla->kerberosSettings;
-	rdpSettings* settings = nla->settings;
+	SEC_WINPR_KERBEROS_SETTINGS* kerbSettings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(nla);
+
+	settings = nla->settings;
+	WINPR_ASSERT(settings);
+
+	kerbSettings = &nla->kerberosSettings;
+	WINPR_ASSERT(kerbSettings);
 
 	if (settings->KerberosLifeTime &&
 	    !parseKerberosDeltat(settings->KerberosLifeTime, &kerbSettings->lifeTime, "lifetime"))
@@ -1012,7 +1021,12 @@ static int nla_client_init(rdpNla* nla)
 	char* spn;
 	size_t length;
 	rdpTls* tls = NULL;
-	rdpSettings* settings = nla->settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(nla);
+
+	settings = nla->settings;
+	WINPR_ASSERT(settings);
 
 	nla_set_state(nla, NLA_STATE_INITIAL);
 
@@ -1022,7 +1036,7 @@ static int nla_client_init(rdpNla* nla)
 	if (!nla_setup_kerberos(nla))
 		return -1;
 
-	if (settings->SmartcardLogon && !nla_adjust_settings_from_smartcard(nla))
+	if (!nla_adjust_settings_from_smartcard(nla))
 		return -1;
 
 	if (!nla_client_setup_identity(nla))
@@ -1124,6 +1138,9 @@ int nla_client_begin(rdpNla* nla)
 	int rc = -1;
 	SecBuffer outputBuffer = { 0 };
 	SecBufferDesc outputBufferDesc = { 0 };
+
+	WINPR_ASSERT(nla);
+
 	if (nla_client_init(nla) < 1)
 		goto fail;
 
@@ -1182,6 +1199,8 @@ static int nla_client_recv_nego_token(rdpNla* nla)
 	SecBuffer outputBuffer = { 0 };
 	SecBufferDesc inputBufferDesc = { 0 };
 	SecBufferDesc outputBufferDesc = { 0 };
+
+	WINPR_ASSERT(nla);
 
 	inputBufferDesc.ulVersion = SECBUFFER_VERSION;
 	inputBufferDesc.cBuffers = 1;
@@ -1250,6 +1269,8 @@ fail:
 
 static int nla_client_recv_pub_key_auth(rdpNla* nla)
 {
+	WINPR_ASSERT(nla);
+
 	/* Verify Server Public Key Echo */
 	if (nla->peerVersion < 5)
 		nla->status = nla_decrypt_public_key_echo(nla);
@@ -1299,6 +1320,8 @@ static int nla_client_recv_pub_key_auth(rdpNla* nla)
 
 static int nla_client_recv(rdpNla* nla)
 {
+	WINPR_ASSERT(nla);
+
 	switch (nla_get_state(nla))
 	{
 		case NLA_STATE_NEGO_TOKEN:
@@ -1320,6 +1343,9 @@ static int nla_client_authenticate(rdpNla* nla)
 	int rc = -1;
 	wStream* s;
 	int status;
+
+	WINPR_ASSERT(nla);
+
 	s = Stream_New(NULL, 4096);
 
 	if (!s)
@@ -1361,7 +1387,12 @@ fail:
 
 static int nla_server_init(rdpNla* nla)
 {
-	rdpTls* tls = transport_get_tls(nla->transport);
+	rdpTls* tls;
+
+	WINPR_ASSERT(nla);
+
+	tls = transport_get_tls(nla->transport);
+	WINPR_ASSERT(tls);
 
 	if (!nla_sec_buffer_alloc_from_data(&nla->PublicKey, tls->PublicKey, 0, tls->PublicKeyLength))
 	{
@@ -1438,6 +1469,9 @@ static wStream* nla_server_recv_stream(rdpNla* nla)
 {
 	wStream* s = NULL;
 	int status = -1;
+
+	WINPR_ASSERT(nla);
+
 	s = Stream_New(NULL, 4096);
 
 	if (!s)
@@ -1465,6 +1499,9 @@ fail:
 static int nla_server_authenticate(rdpNla* nla)
 {
 	int res = -1;
+
+	WINPR_ASSERT(nla);
+
 	if (nla_server_init(nla) < 1)
 		goto fail_auth;
 
@@ -1719,6 +1756,8 @@ fail_auth:
 
 int nla_authenticate(rdpNla* nla)
 {
+	WINPR_ASSERT(nla);
+
 	if (nla->server)
 		return nla_server_authenticate(nla);
 	else
@@ -1728,6 +1767,8 @@ int nla_authenticate(rdpNla* nla)
 static void ap_integer_increment_le(BYTE* number, size_t size)
 {
 	size_t index;
+
+	WINPR_ASSERT(number || (size == 0));
 
 	for (index = 0; index < size; index++)
 	{
@@ -1748,6 +1789,8 @@ static void ap_integer_decrement_le(BYTE* number, size_t size)
 {
 	size_t index;
 
+	WINPR_ASSERT(number || (size == 0));
+
 	for (index = 0; index < size; index++)
 	{
 		if (number[index] > 0)
@@ -1766,6 +1809,8 @@ static void ap_integer_decrement_le(BYTE* number, size_t size)
 SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 {
 	SECURITY_STATUS status;
+
+	WINPR_ASSERT(nla);
 
 	if (!nla_sec_buffer_alloc_from_buffer(&nla->pubKeyAuth, &nla->PublicKey,
 	                                      nla->ContextSizes.cbSecurityTrailer))
@@ -1790,6 +1835,9 @@ SECURITY_STATUS nla_encrypt_public_key_hash(rdpNla* nla)
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 	WINPR_DIGEST_CTX* sha256 = NULL;
 	BYTE* hash;
+
+	WINPR_ASSERT(nla);
+
 	const ULONG auth_data_length =
 	    (nla->ContextSizes.cbSecurityTrailer + WINPR_SHA256_DIGEST_LENGTH);
 	const BYTE* hashMagic = nla->server ? ServerClientHashMagic : ClientServerHashMagic;
@@ -1893,6 +1941,9 @@ SECURITY_STATUS nla_decrypt_public_key_hash(rdpNla* nla)
 	WINPR_DIGEST_CTX* sha256 = NULL;
 	BYTE serverClientHash[WINPR_SHA256_DIGEST_LENGTH];
 	SECURITY_STATUS status = SEC_E_INVALID_TOKEN;
+
+	WINPR_ASSERT(nla);
+
 	const BYTE* hashMagic = nla->server ? ClientServerHashMagic : ServerClientHashMagic;
 	const BYTE* decryptedHash;
 	const size_t hashSize =
@@ -1953,6 +2004,9 @@ fail:
 BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 {
 	size_t length;
+
+	WINPR_ASSERT(nla);
+	WINPR_ASSERT(s);
 
 	if (!nla->identity)
 	{
@@ -2048,6 +2102,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data, size_t offset)
 	size_t ts_password_creds_length = 0;
 	BOOL ret = FALSE;
 
+	WINPR_ASSERT(nla);
 	if (!data)
 		return FALSE;
 
@@ -2087,8 +2142,10 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	wStream* s;
 	size_t length;
 	BOOL ret = FALSE;
-
 	TSCredentials_t cr = { 0 };
+
+	WINPR_ASSERT(nla);
+
 	rdpSettings* settings = nla->settings;
 
 	if (settings->SmartcardLogon)
@@ -2096,7 +2153,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 		TSSmartCardCreds_t smartcardCreds = { 0 };
 		TSCspDataDetail_t cspData = { 0 };
 
-		smartcardCreds.pin = settings->SmartcardPin ? settings->SmartcardPin : "";
+		smartcardCreds.pin = settings->Password ? settings->Password : "";
 
 		/*smartcardCreds.userHint = settings->UserHint;
 		smartcardCreds.domainHint = settings->DomainHint;*/
@@ -2167,6 +2224,8 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 {
 	SECURITY_STATUS status;
 
+	WINPR_ASSERT(nla);
+
 	if (!nla_encode_ts_credentials(nla))
 		return SEC_E_INSUFFICIENT_MEMORY;
 
@@ -2184,6 +2243,8 @@ static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 {
 	SECURITY_STATUS status;
+
+	WINPR_ASSERT(nla);
 
 	if (nla->authInfo.cbBuffer < 1)
 	{
@@ -2210,6 +2271,8 @@ static size_t nla_sizeof_nego_token(size_t length)
 
 static size_t nla_sizeof_nego_tokens(const SecBuffer* buffer)
 {
+	WINPR_ASSERT(buffer);
+
 	size_t length = buffer->cbBuffer;
 	if (length == 0)
 		return 0;
@@ -2222,6 +2285,8 @@ static size_t nla_sizeof_nego_tokens(const SecBuffer* buffer)
 
 static size_t nla_sizeof_pub_key_auth(const SecBuffer* buffer)
 {
+	WINPR_ASSERT(buffer);
+
 	size_t length = buffer->cbBuffer;
 	if (length == 0)
 		return 0;
@@ -2232,6 +2297,8 @@ static size_t nla_sizeof_pub_key_auth(const SecBuffer* buffer)
 
 static size_t nla_sizeof_auth_info(const SecBuffer* buffer)
 {
+	WINPR_ASSERT(buffer);
+
 	size_t length = buffer->cbBuffer;
 	if (length == 0)
 		return 0;
@@ -2242,6 +2309,8 @@ static size_t nla_sizeof_auth_info(const SecBuffer* buffer)
 
 static size_t nla_sizeof_client_nonce(const SecBuffer* buffer)
 {
+	WINPR_ASSERT(buffer);
+
 	size_t length = buffer->cbBuffer;
 	if (length == 0)
 		return 0;
@@ -2260,6 +2329,8 @@ static size_t nla_sizeof_ts_request(size_t length)
 static BOOL nla_client_write_nego_token(wStream* s, const SecBuffer* negoToken)
 {
 	const size_t nego_tokens_length = nla_sizeof_nego_tokens(negoToken);
+
+	WINPR_ASSERT(s);
 
 	if (Stream_GetRemainingCapacity(s) < nego_tokens_length)
 		return FALSE;
@@ -2301,6 +2372,9 @@ BOOL nla_send(rdpNla* nla)
 	size_t ts_request_length;
 	size_t error_code_context_length = 0;
 	size_t error_code_length = 0;
+
+	WINPR_ASSERT(nla);
+
 	const size_t nego_tokens_length = nla_sizeof_nego_tokens(&nla->negoToken);
 	const size_t pub_key_auth_length = nla_sizeof_pub_key_auth(&nla->pubKeyAuth);
 	const size_t auth_info_length = nla_sizeof_auth_info(&nla->authInfo);
@@ -2389,6 +2463,9 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	size_t length;
 	UINT32 version = 0;
 
+	WINPR_ASSERT(nla);
+	WINPR_ASSERT(s);
+
 	WLog_DBG(TAG, "<<----- receiving...");
 
 	/* TSRequest */
@@ -2471,6 +2548,9 @@ fail:
 
 int nla_recv_pdu(rdpNla* nla, wStream* s)
 {
+	WINPR_ASSERT(nla);
+	WINPR_ASSERT(s);
+
 	if (nla_decode_ts_request(nla, s) < 1)
 		return -1;
 
@@ -2536,7 +2616,11 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 int nla_server_recv(rdpNla* nla)
 {
 	int status = -1;
-	wStream* s = nla_server_recv_stream(nla);
+	wStream* s;
+
+	WINPR_ASSERT(nla);
+
+	s = nla_server_recv_stream(nla);
 	if (!s)
 		goto fail;
 	status = nla_decode_ts_request(nla, s);
@@ -2548,6 +2632,7 @@ fail:
 
 void nla_buffer_free(rdpNla* nla)
 {
+	WINPR_ASSERT(nla);
 	sspi_SecBufferFree(&nla->negoToken);
 	sspi_SecBufferFree(&nla->pubKeyAuth);
 	sspi_SecBufferFree(&nla->authInfo);
