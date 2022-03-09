@@ -676,62 +676,6 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	instance = nla->instance;
 	WINPR_ASSERT(instance);
 
-	if (settings->SmartcardLogon)
-	{
-#ifdef _WIN32
-		{
-			SEC_WINNT_AUTH_IDENTITY_EXA* identityEx;
-			CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
-			LPSTR marshalledCredentials;
-
-			identityEx = &nla->identityEx;
-			memcpy(certInfo.rgbHashOfCert, nla->kerberosSettings.certSha1,
-			       sizeof(certInfo.rgbHashOfCert));
-
-			if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
-			{
-				WLog_ERR(TAG, "error marshalling cert credentials");
-				return FALSE;
-			}
-
-			identityEx->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
-			identityEx->Length = sizeof(*identityEx);
-			identityEx->User = (BYTE*)marshalledCredentials;
-			identityEx->UserLength = strlen(marshalledCredentials);
-			if (!(identityEx->Password = (BYTE*)_strdup(settings->Password)))
-				return FALSE;
-			identityEx->PasswordLength = strlen(settings->Password);
-			identityEx->Domain = NULL;
-			identityEx->DomainLength = 0;
-			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-			identityEx->PackageList = NULL;
-			identityEx->PackageListLength = 0;
-
-			nla->identityPtr = identityEx;
-		}
-#else
-		{
-			SEC_WINNT_AUTH_IDENTITY_EXA* identityEx = &nla->identityWinPr.identityEx;
-
-			identityEx->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
-			identityEx->Length = sizeof(nla->identityWinPr);
-			identityEx->User = (BYTE*)settings->Username;
-			identityEx->UserLength = strlen(settings->Username);
-			identityEx->Domain = (BYTE*)settings->Domain;
-			identityEx->DomainLength = strlen(settings->Domain);
-			identityEx->Password = (BYTE*)settings->Password;
-			identityEx->PasswordLength = strlen(settings->Password);
-			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-			identityEx->PackageList = NULL;
-			identityEx->PackageListLength = 0;
-
-			nla->identityPtr = &nla->identityWinPr;
-		} /* smartcard logon */
-#endif /* _WIN32 */
-
-		return TRUE;
-	}
-
 	/* */
 	if ((utils_str_is_empty(settings->Username) ||
 	     (utils_str_is_empty(settings->Password) &&
@@ -791,6 +735,61 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	{
 		nla_identity_free(nla->identity);
 		nla->identity = NULL;
+	}
+	else if (settings->SmartcardLogon)
+	{
+#ifdef _WIN32
+		{
+			SEC_WINNT_AUTH_IDENTITY_EXA* identityEx;
+			CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
+			LPSTR marshalledCredentials;
+
+			identityEx = &nla->identityEx;
+			memcpy(certInfo.rgbHashOfCert, nla->kerberosSettings.certSha1,
+			       sizeof(certInfo.rgbHashOfCert));
+
+			if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
+			{
+				WLog_ERR(TAG, "error marshalling cert credentials");
+				return FALSE;
+			}
+
+			identityEx->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+			identityEx->Length = sizeof(*identityEx);
+			identityEx->User = (BYTE*)marshalledCredentials;
+			identityEx->UserLength = strlen(marshalledCredentials);
+			if (!(identityEx->Password = (BYTE*)_strdup(settings->Password)))
+				return FALSE;
+			identityEx->PasswordLength = strlen(settings->Password);
+			identityEx->Domain = NULL;
+			identityEx->DomainLength = 0;
+			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+			identityEx->PackageList = NULL;
+			identityEx->PackageListLength = 0;
+
+			nla->identityPtr = identityEx;
+		}
+#else
+		{
+			SEC_WINNT_AUTH_IDENTITY_EXA* identityEx = &nla->identityWinPr.identityEx;
+
+			identityEx->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+			identityEx->Length = sizeof(nla->identityWinPr);
+			identityEx->User = (BYTE*)settings->Username;
+			identityEx->UserLength = strlen(settings->Username);
+			identityEx->Domain = (BYTE*)settings->Domain;
+			identityEx->DomainLength = strlen(settings->Domain);
+			identityEx->Password = (BYTE*)settings->Password;
+			identityEx->PasswordLength = strlen(settings->Password);
+			identityEx->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+			identityEx->PackageList = NULL;
+			identityEx->PackageListLength = 0;
+
+			nla->identityPtr = &nla->identityWinPr;
+		} /* smartcard logon */
+#endif /* _WIN32 */
+
+		return TRUE;
 	}
 	else
 	{
