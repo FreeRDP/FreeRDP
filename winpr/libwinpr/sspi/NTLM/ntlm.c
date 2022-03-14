@@ -49,6 +49,8 @@ static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 	DWORD nSize = 0;
 	CHAR* computerName;
 
+	WINPR_ASSERT(context);
+
 	if (!Workstation)
 	{
 		if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) ||
@@ -91,6 +93,8 @@ static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 
 static int ntlm_SetContextServicePrincipalNameW(NTLM_CONTEXT* context, LPWSTR ServicePrincipalName)
 {
+	WINPR_ASSERT(context);
+
 	if (!ServicePrincipalName)
 	{
 		context->ServicePrincipalName.Buffer = NULL;
@@ -115,6 +119,8 @@ static int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 	char* name = TargetName;
 	DWORD nSize = 0;
 	CHAR* computerName = NULL;
+
+	WINPR_ASSERT(context);
 
 	if (!name)
 	{
@@ -254,7 +260,7 @@ static NTLM_CONTEXT* ntlm_ContextNew(void)
 
 	context->NegotiateFlags = 0;
 	context->LmCompatibilityLevel = 3;
-	context->state = NTLM_STATE_INITIAL;
+	ntlm_change_state(context, NTLM_STATE_INITIAL);
 	FillMemory(context->MachineID, sizeof(context->MachineID), 0xAA);
 
 	if (context->NTLMv2)
@@ -414,79 +420,85 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*)NTLM_PACKAGE_NAME);
 	}
 
-	if (context->state == NTLM_STATE_INITIAL)
+	switch (ntlm_get_state(context))
 	{
-		context->state = NTLM_STATE_NEGOTIATE;
-
-		if (!pInput)
-			return SEC_E_INVALID_TOKEN;
-
-		if (pInput->cBuffers < 1)
-			return SEC_E_INVALID_TOKEN;
-
-		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
-
-		if (!input_buffer)
-			return SEC_E_INVALID_TOKEN;
-
-		if (input_buffer->cbBuffer < 1)
-			return SEC_E_INVALID_TOKEN;
-
-		status = ntlm_read_NegotiateMessage(context, input_buffer);
-
-		if (context->state == NTLM_STATE_CHALLENGE)
+		case NTLM_STATE_INITIAL:
 		{
-			if (!pOutput)
+			ntlm_change_state(context, NTLM_STATE_NEGOTIATE);
+
+			if (!pInput)
 				return SEC_E_INVALID_TOKEN;
 
-			if (pOutput->cBuffers < 1)
+			if (pInput->cBuffers < 1)
 				return SEC_E_INVALID_TOKEN;
 
-			output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
+			input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
 
-			if (!output_buffer->BufferType)
+			if (!input_buffer)
 				return SEC_E_INVALID_TOKEN;
 
-			if (output_buffer->cbBuffer < 1)
-				return SEC_E_INSUFFICIENT_MEMORY;
+			if (input_buffer->cbBuffer < 1)
+				return SEC_E_INVALID_TOKEN;
 
-			return ntlm_write_ChallengeMessage(context, output_buffer);
-		}
+			status = ntlm_read_NegotiateMessage(context, input_buffer);
 
-		return SEC_E_OUT_OF_SEQUENCE;
-	}
-	else if (context->state == NTLM_STATE_AUTHENTICATE)
-	{
-		if (!pInput)
-			return SEC_E_INVALID_TOKEN;
-
-		if (pInput->cBuffers < 1)
-			return SEC_E_INVALID_TOKEN;
-
-		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
-
-		if (!input_buffer)
-			return SEC_E_INVALID_TOKEN;
-
-		if (input_buffer->cbBuffer < 1)
-			return SEC_E_INVALID_TOKEN;
-
-		status = ntlm_read_AuthenticateMessage(context, input_buffer);
-
-		if (pOutput)
-		{
-			ULONG i;
-
-			for (i = 0; i < pOutput->cBuffers; i++)
+			if (ntlm_get_state(context) == NTLM_STATE_CHALLENGE)
 			{
-				pOutput->pBuffers[i].cbBuffer = 0;
-				pOutput->pBuffers[i].BufferType = SECBUFFER_TOKEN;
+				if (!pOutput)
+					return SEC_E_INVALID_TOKEN;
+
+				if (pOutput->cBuffers < 1)
+					return SEC_E_INVALID_TOKEN;
+
+				output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
+
+				if (!output_buffer->BufferType)
+					return SEC_E_INVALID_TOKEN;
+
+				if (output_buffer->cbBuffer < 1)
+					return SEC_E_INSUFFICIENT_MEMORY;
+
+				return ntlm_write_ChallengeMessage(context, output_buffer);
 			}
+
+			return SEC_E_OUT_OF_SEQUENCE;
 		}
+		break;
+		case NTLM_STATE_AUTHENTICATE:
+		{
+			if (!pInput)
+				return SEC_E_INVALID_TOKEN;
 
-		return status;
+			if (pInput->cBuffers < 1)
+				return SEC_E_INVALID_TOKEN;
+
+			input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
+
+			if (!input_buffer)
+				return SEC_E_INVALID_TOKEN;
+
+			if (input_buffer->cbBuffer < 1)
+				return SEC_E_INVALID_TOKEN;
+
+			status = ntlm_read_AuthenticateMessage(context, input_buffer);
+
+			if (pOutput)
+			{
+				ULONG i;
+
+				for (i = 0; i < pOutput->cBuffers; i++)
+				{
+					pOutput->pBuffers[i].cbBuffer = 0;
+					pOutput->pBuffers[i].BufferType = SECBUFFER_TOKEN;
+				}
+			}
+
+			return status;
+		}
+		break;
+		default:
+			break;
 	}
-
 	return SEC_E_OUT_OF_SEQUENCE;
 }
 
@@ -540,7 +552,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*)NTLM_PACKAGE_NAME);
 	}
 
-	if ((!pInput) || (context->state == NTLM_STATE_AUTHENTICATE))
+	if ((!pInput) || (ntlm_get_state(context) == NTLM_STATE_AUTHENTICATE))
 	{
 		if (!pOutput)
 			return SEC_E_INVALID_TOKEN;
@@ -556,10 +568,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 		if (output_buffer->cbBuffer < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		if (context->state == NTLM_STATE_INITIAL)
-			context->state = NTLM_STATE_NEGOTIATE;
+		if (ntlm_get_state(context) == NTLM_STATE_INITIAL)
+			ntlm_change_state(context, NTLM_STATE_NEGOTIATE);
 
-		if (context->state == NTLM_STATE_NEGOTIATE)
+		if (ntlm_get_state(context) == NTLM_STATE_NEGOTIATE)
 			return ntlm_write_NegotiateMessage(context, output_buffer);
 
 		return SEC_E_OUT_OF_SEQUENCE;
@@ -585,7 +597,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 			context->Bindings.Bindings = (SEC_CHANNEL_BINDINGS*)channel_bindings->pvBuffer;
 		}
 
-		if (context->state == NTLM_STATE_CHALLENGE)
+		if (ntlm_get_state(context) == NTLM_STATE_CHALLENGE)
 		{
 			status = ntlm_read_ChallengeMessage(context, input_buffer);
 
@@ -606,7 +618,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 			if (output_buffer->cbBuffer < 1)
 				return SEC_E_INSUFFICIENT_MEMORY;
 
-			if (context->state == NTLM_STATE_AUTHENTICATE)
+			if (ntlm_get_state(context) == NTLM_STATE_AUTHENTICATE)
 				return ntlm_write_AuthenticateMessage(context, output_buffer);
 		}
 
@@ -675,7 +687,12 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContex
 SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT* ntlm, SecBuffer* ntproof)
 {
 	BYTE* blob;
-	SecBuffer* target = &ntlm->ChallengeTargetInfo;
+	SecBuffer* target;
+
+	WINPR_ASSERT(ntlm);
+	WINPR_ASSERT(ntproof);
+
+	target = &ntlm->ChallengeTargetInfo;
 
 	if (!sspi_SecBufferAlloc(ntproof, 36 + target->cbBuffer))
 		return SEC_E_INSUFFICIENT_MEMORY;
@@ -696,8 +713,13 @@ SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT* ntlm, SecBuffer* ntproof)
 SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue)
 {
 	BYTE* blob;
-	ULONG msgSize = ntlm->NegotiateMessage.cbBuffer + ntlm->ChallengeMessage.cbBuffer +
-	                ntlm->AuthenticateMessage.cbBuffer;
+	ULONG msgSize;
+
+	WINPR_ASSERT(ntlm);
+	WINPR_ASSERT(micvalue);
+
+	msgSize = ntlm->NegotiateMessage.cbBuffer + ntlm->ChallengeMessage.cbBuffer +
+	          ntlm->AuthenticateMessage.cbBuffer;
 
 	if (!sspi_SecBufferAlloc(micvalue, msgSize))
 		return SEC_E_INSUFFICIENT_MEMORY;
@@ -975,8 +997,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULON
 	void* data;
 	UINT32 SeqNo;
 	UINT32 value;
-	BYTE digest[WINPR_MD5_DIGEST_LENGTH];
-	BYTE checksum[8];
+	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE checksum[8] = { 0 };
 	BYTE* signature;
 	ULONG version = 1;
 	WINPR_HMAC_CTX* hmac;
@@ -1072,12 +1094,12 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 	void* data;
 	UINT32 SeqNo;
 	UINT32 value;
-	BYTE digest[WINPR_MD5_DIGEST_LENGTH];
-	BYTE checksum[8];
+	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE checksum[8] = { 0 };
 	UINT32 version = 1;
 	WINPR_HMAC_CTX* hmac;
 	NTLM_CONTEXT* context;
-	BYTE expected_signature[WINPR_MD5_DIGEST_LENGTH];
+	BYTE expected_signature[WINPR_MD5_DIGEST_LENGTH] = { 0 };
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer signature_buffer = NULL;
 	SeqNo = (UINT32)MessageSeqNo;
@@ -1264,3 +1286,52 @@ const SecPkgInfoW NTLM_SecPkgInfoW = {
 	NTLM_SecPkgInfoW_Name,   /* Name */
 	NTLM_SecPkgInfoW_Comment /* Comment */
 };
+
+const char* ntlm_message_type_string(UINT32 messageType)
+{
+	switch (messageType)
+	{
+		case MESSAGE_TYPE_NEGOTIATE:
+			return "MESSAGE_TYPE_NEGOTIATE";
+		case MESSAGE_TYPE_CHALLENGE:
+			return "MESSAGE_TYPE_CHALLENGE";
+		case MESSAGE_TYPE_AUTHENTICATE:
+			return "MESSAGE_TYPE_AUTHENTICATE";
+		default:
+			return "MESSAGE_TYPE_UNKNOWN";
+	}
+}
+
+const char* ntlm_state_string(NTLM_STATE state)
+{
+	switch (state)
+	{
+		case NTLM_STATE_INITIAL:
+			return "NTLM_STATE_INITIAL";
+		case NTLM_STATE_NEGOTIATE:
+			return "NTLM_STATE_NEGOTIATE";
+		case NTLM_STATE_CHALLENGE:
+			return "NTLM_STATE_CHALLENGE";
+		case NTLM_STATE_AUTHENTICATE:
+			return "NTLM_STATE_AUTHENTICATE";
+		case NTLM_STATE_COMPLETION:
+			return "NTLM_STATE_COMPLETION";
+		case NTLM_STATE_FINAL:
+			return "NTLM_STATE_FINAL";
+		default:
+			return "NTLM_STATE_UNKNOWN";
+	}
+}
+void ntlm_change_state(NTLM_CONTEXT* ntlm, NTLM_STATE state)
+{
+	WINPR_ASSERT(ntlm);
+	WLog_DBG(TAG, "change state from %s to %s", ntlm_state_string(ntlm->state),
+	         ntlm_state_string(state));
+	ntlm->state = state;
+}
+
+NTLM_STATE ntlm_get_state(NTLM_CONTEXT* ntlm)
+{
+	WINPR_ASSERT(ntlm);
+	return ntlm->state;
+}

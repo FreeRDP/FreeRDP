@@ -24,16 +24,16 @@
 
 #include "ntlm_av_pairs.h"
 
-void ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo);
-int ntlm_read_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo);
-void ntlm_write_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo);
+BOOL ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo);
+BOOL ntlm_read_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo);
+BOOL ntlm_write_version_info(wStream* s, const NTLM_VERSION_INFO* versionInfo);
 
 #ifdef WITH_DEBUG_NTLM
-void ntlm_print_version_info(NTLM_VERSION_INFO* versionInfo);
+void ntlm_print_version_info(const NTLM_VERSION_INFO* versionInfo);
 #endif
 
 int ntlm_read_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response);
-int ntlm_write_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response);
+int ntlm_write_ntlm_v2_response(wStream* s, const NTLMv2_RESPONSE* response);
 
 void ntlm_output_target_name(NTLM_CONTEXT* context);
 void ntlm_output_channel_bindings(NTLM_CONTEXT* context);
