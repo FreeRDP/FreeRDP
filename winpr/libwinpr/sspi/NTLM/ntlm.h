@@ -186,8 +186,7 @@ typedef struct
 
 typedef struct
 {
-	BYTE Signature[8];
-	UINT32 MessageType;
+	NTLM_MESSAGE_HEADER header;
 	UINT32 NegotiateFlags;
 	NTLM_VERSION_INFO Version;
 	NTLM_MESSAGE_FIELDS DomainName;
@@ -196,8 +195,7 @@ typedef struct
 
 typedef struct
 {
-	BYTE Signature[8];
-	UINT32 MessageType;
+	NTLM_MESSAGE_HEADER header;
 	UINT32 NegotiateFlags;
 	BYTE ServerChallenge[8];
 	BYTE Reserved[8];
@@ -208,8 +206,7 @@ typedef struct
 
 typedef struct
 {
-	BYTE Signature[8];
-	UINT32 MessageType;
+	NTLM_MESSAGE_HEADER header;
 	UINT32 NegotiateFlags;
 	NTLM_VERSION_INFO Version;
 	NTLM_MESSAGE_FIELDS DomainName;
@@ -258,7 +255,7 @@ typedef struct
 	NTLM_NEGOTIATE_MESSAGE NEGOTIATE_MESSAGE;
 	NTLM_CHALLENGE_MESSAGE CHALLENGE_MESSAGE;
 	NTLM_AUTHENTICATE_MESSAGE AUTHENTICATE_MESSAGE;
-	UINT32 MessageIntegrityCheckOffset;
+	size_t MessageIntegrityCheckOffset;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;
 	SecBuffer AuthenticateMessage;
@@ -285,6 +282,13 @@ typedef struct
 	psPeerComputeNtlmHash HashCallback;
 	void* HashCallbackArg;
 } NTLM_CONTEXT;
+
+char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags);
+const char* ntlm_message_type_string(UINT32 messageType);
+
+const char* ntlm_state_string(NTLM_STATE state);
+void ntlm_change_state(NTLM_CONTEXT* ntlm, NTLM_STATE state);
+NTLM_STATE ntlm_get_state(NTLM_CONTEXT* ntlm);
 
 SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT* ntlm, SecBuffer* ntproof);
 SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue);

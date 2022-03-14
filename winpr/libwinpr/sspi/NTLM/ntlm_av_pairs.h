@@ -36,7 +36,7 @@ PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair);
 NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTLM_AV_ID AvId,
                                size_t* pcbAvPairListRemaining);
 
-int ntlm_construct_challenge_target_info(NTLM_CONTEXT* context);
-int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context);
+BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context);
+BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context);
 
 #endif /* WINPR_SSPI_NTLM_AV_PAIRS_H */
