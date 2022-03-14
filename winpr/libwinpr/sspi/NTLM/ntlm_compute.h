@@ -24,16 +24,16 @@
 
 #include "ntlm_av_pairs.h"
 
-void ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo);
-int ntlm_read_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo);
-void ntlm_write_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo);
+BOOL ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo);
+BOOL ntlm_read_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo);
+BOOL ntlm_write_version_info(wStream* s, const NTLM_VERSION_INFO* versionInfo);
 
 #ifdef WITH_DEBUG_NTLM
-void ntlm_print_version_info(NTLM_VERSION_INFO* versionInfo);
+void ntlm_print_version_info(const NTLM_VERSION_INFO* versionInfo);
 #endif
 
-int ntlm_read_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response);
-int ntlm_write_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response);
+BOOL ntlm_read_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response);
+BOOL ntlm_write_ntlm_v2_response(wStream* s, const NTLMv2_RESPONSE* response);
 
 void ntlm_output_target_name(NTLM_CONTEXT* context);
 void ntlm_output_channel_bindings(NTLM_CONTEXT* context);
@@ -41,8 +41,8 @@ void ntlm_output_channel_bindings(NTLM_CONTEXT* context);
 void ntlm_current_time(BYTE* timestamp);
 void ntlm_generate_timestamp(NTLM_CONTEXT* context);
 
-int ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
-int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);
+BOOL ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
+BOOL ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);
 
 void ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext);
 void ntlm_generate_client_challenge(NTLM_CONTEXT* context);
@@ -53,12 +53,12 @@ void ntlm_generate_exported_session_key(NTLM_CONTEXT* context);
 void ntlm_encrypt_random_session_key(NTLM_CONTEXT* context);
 void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context);
 
-void ntlm_generate_client_signing_key(NTLM_CONTEXT* context);
-void ntlm_generate_server_signing_key(NTLM_CONTEXT* context);
-void ntlm_generate_client_sealing_key(NTLM_CONTEXT* context);
-void ntlm_generate_server_sealing_key(NTLM_CONTEXT* context);
+BOOL ntlm_generate_client_signing_key(NTLM_CONTEXT* context);
+BOOL ntlm_generate_server_signing_key(NTLM_CONTEXT* context);
+BOOL ntlm_generate_client_sealing_key(NTLM_CONTEXT* context);
+BOOL ntlm_generate_server_sealing_key(NTLM_CONTEXT* context);
 void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context);
 
-void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT32 size);
+BOOL ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT32 size);
 
 #endif /* WINPR_AUTH_NTLM_COMPUTE_H */
