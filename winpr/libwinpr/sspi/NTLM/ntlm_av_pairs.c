@@ -21,12 +21,13 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include "ntlm.h"
 #include "../sspi.h"
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
 #include <winpr/tchar.h>
@@ -75,8 +76,8 @@ static const char* get_av_pair_string(UINT16 pair)
 			return "MsvAvSingleHost";
 		case MsvAvTargetName:
 			return "MsvAvTargetName";
-		case MsvChannelBindings:
-			return "MsvChannelBindings";
+		case MsvAvChannelBindings:
+			return "MsvAvChannelBindings";
 		default:
 			return "UNKNOWN";
 	}
@@ -87,11 +88,13 @@ static NTLM_AV_PAIR* ntlm_av_pair_next(NTLM_AV_PAIR* pAvPairList, size_t* pcbAvP
 
 static INLINE void ntlm_av_pair_set_id(NTLM_AV_PAIR* pAvPair, UINT16 id)
 {
+	WINPR_ASSERT(pAvPair);
 	Data_Write_UINT16(&pAvPair->AvId, id);
 }
 
 static INLINE void ntlm_av_pair_set_len(NTLM_AV_PAIR* pAvPair, UINT16 len)
 {
+	WINPR_ASSERT(pAvPair);
 	Data_Write_UINT16(&pAvPair->AvLen, len);
 }
 
@@ -124,6 +127,7 @@ static INLINE BOOL ntlm_av_pair_get_id(const NTLM_AV_PAIR* pAvPair, size_t size,
 
 ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 {
+	size_t size;
 	size_t cbAvPair;
 	NTLM_AV_PAIR* pAvPair;
 
@@ -131,7 +135,9 @@ ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 	if (!pAvPair)
 		return 0;
 
-	return ((PBYTE)pAvPair - (PBYTE)pAvPairList) + sizeof(NTLM_AV_PAIR);
+	size = ((PBYTE)pAvPair - (PBYTE)pAvPairList) + sizeof(NTLM_AV_PAIR);
+	WINPR_ASSERT(size <= ULONG_MAX);
+	return (ULONG)size;
 }
 
 static INLINE BOOL ntlm_av_pair_get_len(const NTLM_AV_PAIR* pAvPair, size_t size, size_t* pAvLen)
@@ -149,6 +155,7 @@ static INLINE BOOL ntlm_av_pair_get_len(const NTLM_AV_PAIR* pAvPair, size_t size
 	return TRUE;
 }
 
+#ifdef WITH_DEBUG_NTLM
 void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 {
 	UINT16 pair;
@@ -158,19 +165,20 @@ void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 	if (!ntlm_av_pair_check(pAvPair, cbAvPair))
 		return;
 
-	WLog_INFO(TAG, "AV_PAIRs =");
+	WLog_VRB(TAG, "AV_PAIRs =");
 
 	while (pAvPair && ntlm_av_pair_get_id(pAvPair, cbAvPair, &pair) && (pair != MsvAvEOL))
 	{
 		size_t cbLen = 0;
 		ntlm_av_pair_get_len(pAvPair, cbAvPair, &cbLen);
 
-		WLog_INFO(TAG, "\t%s AvId: %" PRIu16 " AvLen: %" PRIu16 "", get_av_pair_string(pair), pair);
-		winpr_HexDump(TAG, WLOG_INFO, ntlm_av_pair_get_value_pointer(pAvPair), cbLen);
+		WLog_VRB(TAG, "\t%s AvId: %" PRIu16 " AvLen: %" PRIu16 "", get_av_pair_string(pair), pair);
+		winpr_HexDump(TAG, WLOG_TRACE, ntlm_av_pair_get_value_pointer(pAvPair), cbLen);
 
 		pAvPair = ntlm_av_pair_next(pAvPair, &cbAvPair);
 	}
 }
+#endif
 
 static ULONG ntlm_av_pair_list_size(ULONG AvPairsCount, ULONG AvPairsValueLength)
 {
@@ -180,6 +188,7 @@ static ULONG ntlm_av_pair_list_size(ULONG AvPairsCount, ULONG AvPairsValueLength
 
 PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair)
 {
+	WINPR_ASSERT(pAvPair);
 	return (PBYTE)pAvPair + sizeof(NTLM_AV_PAIR);
 }
 
@@ -259,11 +268,11 @@ static BOOL ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTL
 	if (!pAvPair || cbAvPair < 2 * sizeof(NTLM_AV_PAIR) + AvLen)
 		return FALSE;
 
-	ntlm_av_pair_set_id(pAvPair, AvId);
+	ntlm_av_pair_set_id(pAvPair, (UINT16)AvId);
 	ntlm_av_pair_set_len(pAvPair, AvLen);
 	if (AvLen)
 	{
-		assert(Value != NULL);
+		WINPR_ASSERT(Value != NULL);
 		CopyMemory(ntlm_av_pair_get_value_pointer(pAvPair), Value, AvLen);
 	}
 
@@ -286,8 +295,9 @@ static BOOL ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList
 	if (!ntlm_av_pair_get_len(pAvPair, cbAvPair, &avLen))
 		return FALSE;
 
+	WINPR_ASSERT(avLen <= UINT16_MAX);
 	return ntlm_av_pair_add(pAvPairList, cbAvPairList, pair,
-	                        ntlm_av_pair_get_value_pointer(pAvPair), avLen);
+	                        ntlm_av_pair_get_value_pointer(pAvPair), (UINT16)avLen);
 }
 
 static int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
@@ -296,6 +306,8 @@ static int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FO
 	int status;
 	DWORD nSize = 0;
 	CHAR* computerName;
+
+	WINPR_ASSERT(pName);
 
 	if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) || GetLastError() != ERROR_MORE_DATA)
 		return -1;
@@ -394,6 +406,9 @@ static void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 	BYTE* ChannelBindingToken;
 	UINT32 ChannelBindingTokenLength;
 	SEC_CHANNEL_BINDINGS* ChannelBindings;
+
+	WINPR_ASSERT(context);
+
 	ZeroMemory(context->ChannelBindingsHash, WINPR_MD5_DIGEST_LENGTH);
 	ChannelBindings = context->Bindings.Bindings;
 
@@ -436,6 +451,7 @@ out:
 
 static void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
 {
+	WINPR_ASSERT(context);
 	/**
 	 * The Single_Host_Data structure allows a client to send machine-specific information
 	 * within an authentication exchange to services on the same machine. The client can
@@ -451,10 +467,10 @@ static void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
 	FillMemory(context->SingleHostData.MachineID, 32, 0xAA);
 }
 
-int ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
+BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 {
-	int rc = -1;
-	int length;
+	BOOL rc = FALSE;
+	ULONG length;
 	ULONG AvPairsCount;
 	ULONG AvPairsLength;
 	NTLM_AV_PAIR* pAvPairList;
@@ -463,6 +479,8 @@ int ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	UNICODE_STRING NbComputerName = { 0 };
 	UNICODE_STRING DnsDomainName = { 0 };
 	UNICODE_STRING DnsComputerName = { 0 };
+
+	WINPR_ASSERT(context);
 
 	if (ntlm_get_target_computer_name(&NbDomainName, ComputerNameNetBIOS) < 0)
 		goto fail;
@@ -516,7 +534,7 @@ int ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	                      sizeof(context->Timestamp)))
 		goto fail;
 
-	rc = 1;
+	rc = TRUE;
 fail:
 	ntlm_free_unicode_string(&NbDomainName);
 	ntlm_free_unicode_string(&NbComputerName);
@@ -525,7 +543,7 @@ fail:
 	return rc;
 }
 
-int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
+BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 {
 	ULONG size;
 	ULONG AvPairsCount;
@@ -546,6 +564,9 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	size_t cbAvDnsTreeName;
 	size_t cbChallengeTargetInfo;
 	size_t cbAuthenticateTargetInfo;
+
+	WINPR_ASSERT(context);
+
 	AvPairsCount = 1;
 	AvPairsValueLength = 0;
 	ChallengeTargetInfo = (NTLM_AV_PAIR*)context->ChallengeTargetInfo.pvBuffer;
@@ -635,7 +656,7 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		 * SEC_CHANNEL_BINDINGS structure
 		 * http://msdn.microsoft.com/en-us/library/windows/desktop/dd919963/
 		 */
-		AvPairsCount++; /* MsvChannelBindings */
+		AvPairsCount++; /* MsvAvChannelBindings */
 		AvPairsValueLength += 16;
 		ntlm_compute_channel_bindings(context);
 
@@ -714,15 +735,17 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 
 	if (context->SendSingleHostData)
 	{
+		WINPR_ASSERT(context->SingleHostData.Size <= UINT16_MAX);
 		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvAvSingleHost,
-		                      (PBYTE)&context->SingleHostData, context->SingleHostData.Size))
+		                      (PBYTE)&context->SingleHostData,
+		                      (UINT16)context->SingleHostData.Size))
 			goto fail;
 	}
 
 	if (!context->SuppressExtendedProtection)
 	{
-		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvChannelBindings,
-		                      context->ChannelBindingsHash, 16))
+		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo,
+		                      MsvAvChannelBindings, context->ChannelBindingsHash, 16))
 			goto fail;
 
 		if (context->ServicePrincipalName.Length > 0)
@@ -745,8 +768,8 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		ZeroMemory(AvEOL, sizeof(NTLM_AV_PAIR));
 	}
 
-	return 1;
+	return TRUE;
 fail:
 	sspi_SecBufferFree(&context->AuthenticateTargetInfo);
-	return -1;
+	return FALSE;
 }
