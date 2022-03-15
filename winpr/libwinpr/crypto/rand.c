@@ -36,7 +36,12 @@
 
 int winpr_RAND(BYTE* output, size_t len)
 {
-#if defined(WITH_OPENSSL)
+	/* deterministic random for unit tests */
+#if defined(BUILD_TESTING)
+	size_t x;
+	for (x = 0; x < len; x++)
+		output[x] = x & 0xFF;
+#elif defined(WITH_OPENSSL)
 	if (len > INT_MAX)
 		return -1;
 	if (RAND_bytes(output, (int)len) != 1)
