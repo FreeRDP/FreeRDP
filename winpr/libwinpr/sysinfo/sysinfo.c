@@ -22,6 +22,7 @@
 
 #include <winpr/sysinfo.h>
 #include <winpr/platform.h>
+#include <winpr/winsock.h>
 
 #if defined(ANDROID)
 #include "cpufeatures/cpu-features.h"
@@ -420,7 +421,7 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 		return FALSE;
 	}
 
-	if (gethostname(hostname, sizeof(hostname)) == -1)
+	if (_gethostname(hostname, sizeof(hostname)) == -1)
 		return FALSE;
 
 	length = strnlen(hostname, sizeof(hostname));
@@ -466,7 +467,7 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 		return rc;
 	}
 
-	if (gethostname(hostname, sizeof(hostname)) == -1)
+	if (_gethostname(hostname, sizeof(hostname)) == -1)
 		return FALSE;
 
 	length = strnlen(hostname, sizeof(hostname));
