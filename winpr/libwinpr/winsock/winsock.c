@@ -20,6 +20,7 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/synch.h>
 
 #include <winpr/winsock.h>
@@ -1248,7 +1249,14 @@ struct hostent* _gethostbyname(const char* name)
 int _gethostname(char* name, int namelen)
 {
 	int status;
+#if defined(BUILD_TESTING)
+	const char test[] = "testhostname";
+	WINPR_ASSERT(namelen >= sizeof(test));
+	strncpy(name, test, sizeof(test));
+	status = strnlen(name, sizeof(test));
+#else
 	status = gethostname(name, (size_t)namelen);
+#endif
 	return status;
 }
 
