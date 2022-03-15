@@ -773,43 +773,6 @@ BOOL ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
 }
 
 /**
- * Generate sealing key.
- * @msdn{cc236712}
- * @param exported_session_key ExportedSessionKey
- * @param seal_magic Seal magic string
- * @param sealing_key Destination sealing key
- */
-
-static int ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal_magic,
-                                     BYTE* sealing_key)
-{
-	BYTE* p;
-	SecBuffer buffer;
-
-	WINPR_ASSERT(exported_session_key);
-	WINPR_ASSERT(seal_magic);
-	WINPR_ASSERT(sealing_key);
-
-	if (!sspi_SecBufferAlloc(&buffer, WINPR_MD5_DIGEST_LENGTH + seal_magic->cbBuffer))
-		return -1;
-
-	p = (BYTE*)buffer.pvBuffer;
-	/* Concatenate ExportedSessionKey with seal magic */
-	CopyMemory(p, exported_session_key, WINPR_MD5_DIGEST_LENGTH);
-	CopyMemory(&p[WINPR_MD5_DIGEST_LENGTH], seal_magic->pvBuffer, seal_magic->cbBuffer);
-
-	if (!winpr_Digest(WINPR_MD_MD5, buffer.pvBuffer, buffer.cbBuffer, sealing_key,
-	                  WINPR_MD5_DIGEST_LENGTH))
-	{
-		sspi_SecBufferFree(&buffer);
-		return -1;
-	}
-
-	sspi_SecBufferFree(&buffer);
-	return 1;
-}
-
-/**
  * Generate client sealing key (ClientSealingKey).
  * @msdn{cc236712}
  * @param NTLM context
