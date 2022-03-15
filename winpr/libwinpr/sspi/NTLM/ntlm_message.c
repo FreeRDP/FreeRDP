@@ -37,40 +37,76 @@
 
 static const char NTLM_SIGNATURE[8] = { 'N', 'T', 'L', 'M', 'S', 'S', 'P', '\0' };
 
-#if defined(WITH_DEBUG_NTLM)
-static const char* const NTLM_NEGOTIATE_STRINGS[] = { "NTLMSSP_NEGOTIATE_56",
-	                                                  "NTLMSSP_NEGOTIATE_KEY_EXCH",
-	                                                  "NTLMSSP_NEGOTIATE_128",
-	                                                  "NTLMSSP_RESERVED1",
-	                                                  "NTLMSSP_RESERVED2",
-	                                                  "NTLMSSP_RESERVED3",
-	                                                  "NTLMSSP_NEGOTIATE_VERSION",
-	                                                  "NTLMSSP_RESERVED4",
-	                                                  "NTLMSSP_NEGOTIATE_TARGET_INFO",
-	                                                  "NTLMSSP_REQUEST_NON_NT_SESSION_KEY",
-	                                                  "NTLMSSP_RESERVED5",
-	                                                  "NTLMSSP_NEGOTIATE_IDENTIFY",
-	                                                  "NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY",
-	                                                  "NTLMSSP_RESERVED6",
-	                                                  "NTLMSSP_TARGET_TYPE_SERVER",
-	                                                  "NTLMSSP_TARGET_TYPE_DOMAIN",
-	                                                  "NTLMSSP_NEGOTIATE_ALWAYS_SIGN",
-	                                                  "NTLMSSP_RESERVED7",
-	                                                  "NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED",
-	                                                  "NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED",
-	                                                  "NTLMSSP_NEGOTIATE_ANONYMOUS",
-	                                                  "NTLMSSP_RESERVED8",
-	                                                  "NTLMSSP_NEGOTIATE_NTLM",
-	                                                  "NTLMSSP_RESERVED9",
-	                                                  "NTLMSSP_NEGOTIATE_LM_KEY",
-	                                                  "NTLMSSP_NEGOTIATE_DATAGRAM",
-	                                                  "NTLMSSP_NEGOTIATE_SEAL",
-	                                                  "NTLMSSP_NEGOTIATE_SIGN",
-	                                                  "NTLMSSP_RESERVED10",
-	                                                  "NTLMSSP_REQUEST_TARGET",
-	                                                  "NTLMSSP_NEGOTIATE_OEM",
-	                                                  "NTLMSSP_NEGOTIATE_UNICODE" };
+const char* ntlm_get_negotiate_string(UINT32 flag)
+{
+	if (flag & NTLMSSP_NEGOTIATE_56)
+		return "NTLMSSP_NEGOTIATE_56";
+	if (flag & NTLMSSP_NEGOTIATE_KEY_EXCH)
+		return "NTLMSSP_NEGOTIATE_KEY_EXCH";
+	if (flag & NTLMSSP_NEGOTIATE_128)
+		return "NTLMSSP_NEGOTIATE_128";
+	if (flag & NTLMSSP_RESERVED1)
+		return "NTLMSSP_RESERVED1";
+	if (flag & NTLMSSP_RESERVED2)
+		return "NTLMSSP_RESERVED2";
+	if (flag & NTLMSSP_RESERVED3)
+		return "NTLMSSP_RESERVED3";
+	if (flag & NTLMSSP_NEGOTIATE_VERSION)
+		return "NTLMSSP_NEGOTIATE_VERSION";
+	if (flag & NTLMSSP_RESERVED4)
+		return "NTLMSSP_RESERVED4";
+	if (flag & NTLMSSP_NEGOTIATE_TARGET_INFO)
+		return "NTLMSSP_NEGOTIATE_TARGET_INFO";
+	if (flag & NTLMSSP_REQUEST_NON_NT_SESSION_KEY)
+		return "NTLMSSP_REQUEST_NON_NT_SESSION_KEY";
+	if (flag & NTLMSSP_RESERVED5)
+		return "NTLMSSP_RESERVED5";
+	if (flag & NTLMSSP_NEGOTIATE_IDENTIFY)
+		return "NTLMSSP_NEGOTIATE_IDENTIFY";
+	if (flag & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
+		return "NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY";
+	if (flag & NTLMSSP_RESERVED6)
+		return "NTLMSSP_RESERVED6";
+	if (flag & NTLMSSP_TARGET_TYPE_SERVER)
+		return "NTLMSSP_TARGET_TYPE_SERVER";
+	if (flag & NTLMSSP_TARGET_TYPE_DOMAIN)
+		return "NTLMSSP_TARGET_TYPE_DOMAIN";
+	if (flag & NTLMSSP_NEGOTIATE_ALWAYS_SIGN)
+		return "NTLMSSP_NEGOTIATE_ALWAYS_SIGN";
+	if (flag & NTLMSSP_RESERVED7)
+		return "NTLMSSP_RESERVED7";
+	if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED)
+		return "NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED";
+	if (flag & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED)
+		return "NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED";
+	if (flag & NTLMSSP_NEGOTIATE_ANONYMOUS)
+		return "NTLMSSP_NEGOTIATE_ANONYMOUS";
+	if (flag & NTLMSSP_RESERVED8)
+		return "NTLMSSP_RESERVED8";
+	if (flag & NTLMSSP_NEGOTIATE_NTLM)
+		return "NTLMSSP_NEGOTIATE_NTLM";
+	if (flag & NTLMSSP_RESERVED9)
+		return "NTLMSSP_RESERVED9";
+	if (flag & NTLMSSP_NEGOTIATE_LM_KEY)
+		return "NTLMSSP_NEGOTIATE_LM_KEY";
+	if (flag & NTLMSSP_NEGOTIATE_DATAGRAM)
+		return "NTLMSSP_NEGOTIATE_DATAGRAM";
+	if (flag & NTLMSSP_NEGOTIATE_SEAL)
+		return "NTLMSSP_NEGOTIATE_SEAL";
+	if (flag & NTLMSSP_NEGOTIATE_SIGN)
+		return "NTLMSSP_NEGOTIATE_SIGN";
+	if (flag & NTLMSSP_RESERVED10)
+		return "NTLMSSP_RESERVED10";
+	if (flag & NTLMSSP_REQUEST_TARGET)
+		return "NTLMSSP_REQUEST_TARGET";
+	if (flag & NTLMSSP_NEGOTIATE_OEM)
+		return "NTLMSSP_NEGOTIATE_OEM";
+	if (flag & NTLMSSP_NEGOTIATE_UNICODE)
+		return "NTLMSSP_NEGOTIATE_UNICODE";
+	return "NTLMSSP_NEGOTIATE_UNKNOWN";
+}
 
+#if defined(WITH_DEBUG_NTLM)
 static void ntlm_print_message_fields(const NTLM_MESSAGE_FIELDS* fields, const char* name)
 {
 	WINPR_ASSERT(fields);
@@ -93,7 +129,7 @@ static void ntlm_print_negotiate_flags(UINT32 flags)
 	{
 		if ((flags >> i) & 1)
 		{
-			const char* str = NTLM_NEGOTIATE_STRINGS[(31 - i)];
+			const char* str = ntlm_get_negotiate_string(1 << i);
 			WLog_VRB(TAG, "\t%s (%d),", str, (31 - i));
 		}
 	}

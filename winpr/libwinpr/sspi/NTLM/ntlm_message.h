@@ -31,4 +31,6 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, const PSec
 
 SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context);
 
+const char* ntlm_get_negotiate_string(UINT32 flag);
+
 #endif /* WINPR_SSPI_NTLM_MESSAGE_H */

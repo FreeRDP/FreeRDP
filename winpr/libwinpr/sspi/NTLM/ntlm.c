@@ -1287,6 +1287,35 @@ const SecPkgInfoW NTLM_SecPkgInfoW = {
 	NTLM_SecPkgInfoW_Comment /* Comment */
 };
 
+char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags)
+{
+	int x;
+	if (!buffer || (size == 0))
+		return buffer;
+
+	for (x = 0; x < 31; x++)
+	{
+		size_t len = strnlen(buffer, size);
+		if (flags & x)
+		{
+			const char* str = ntlm_get_negotiate_string(1 << x);
+			size_t flen = strlen(str);
+			if (len > 0)
+			{
+				if (size - len < 1)
+					break;
+				strcat(buffer, "|");
+				len++;
+			}
+
+			if (size - len < flen)
+				break;
+			strcat(buffer, str);
+		}
+	}
+	return buffer;
+}
+
 const char* ntlm_message_type_string(UINT32 messageType)
 {
 	switch (messageType)

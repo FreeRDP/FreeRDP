@@ -283,6 +283,7 @@ typedef struct
 	void* HashCallbackArg;
 } NTLM_CONTEXT;
 
+char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags);
 const char* ntlm_message_type_string(UINT32 messageType);
 
 const char* ntlm_state_string(NTLM_STATE state);
