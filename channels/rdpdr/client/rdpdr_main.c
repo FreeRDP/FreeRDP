@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/sysinfo.h>
 #include <winpr/stream.h>
 
 #include <winpr/sspicli.h>
@@ -1114,7 +1115,10 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	size_t computerNameLenW;
 
 	if (!rdpdr->computerName[0])
-		gethostname(rdpdr->computerName, sizeof(rdpdr->computerName) - 1);
+	{
+		DWORD size = sizeof(rdpdr->computerName) - 1;
+		GetComputerNameA(rdpdr->computerName, &size);
+	}
 
 	computerNameLenW = ConvertToUnicode(CP_UTF8, 0, rdpdr->computerName, -1, &computerNameW, 0) * 2;
 	s = Stream_New(NULL, 16 + computerNameLenW + 2);
