@@ -86,14 +86,14 @@ static void ntlm_print_message_fields(const NTLM_MESSAGE_FIELDS* fields, const c
 static void ntlm_print_negotiate_flags(UINT32 flags)
 {
 	int i;
-	const char* str;
+
 	WLog_VRB(TAG, "negotiateFlags \"0x%08" PRIX32 "\"", flags);
 
 	for (i = 31; i >= 0; i--)
 	{
 		if ((flags >> i) & 1)
 		{
-			str = NTLM_NEGOTIATE_STRINGS[(31 - i)];
+			const char* str = NTLM_NEGOTIATE_STRINGS[(31 - i)];
 			WLog_VRB(TAG, "\t%s (%d),", str, (31 - i));
 		}
 	}
@@ -660,10 +660,10 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	ntlm_generate_timestamp(context); /* Timestamp */
 
-	if (ntlm_compute_lm_v2_response(context) < 0) /* LmChallengeResponse */
+	if (!ntlm_compute_lm_v2_response(context)) /* LmChallengeResponse */
 		goto fail;
 
-	if (ntlm_compute_ntlm_v2_response(context) < 0) /* NtChallengeResponse */
+	if (!ntlm_compute_ntlm_v2_response(context)) /* NtChallengeResponse */
 		goto fail;
 
 	ntlm_generate_key_exchange_key(context);     /* KeyExchangeKey */
@@ -671,11 +671,15 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ntlm_generate_exported_session_key(context); /* ExportedSessionKey */
 	ntlm_encrypt_random_session_key(context);    /* EncryptedRandomSessionKey */
 	/* Generate signing keys */
-	ntlm_generate_client_signing_key(context);
-	ntlm_generate_server_signing_key(context);
+	if (!ntlm_generate_client_signing_key(context))
+		goto fail;
+	if (!ntlm_generate_server_signing_key(context))
+		goto fail;
 	/* Generate sealing keys */
-	ntlm_generate_client_sealing_key(context);
-	ntlm_generate_server_sealing_key(context);
+	if (!ntlm_generate_client_sealing_key(context))
+		goto fail;
+	if (!ntlm_generate_server_sealing_key(context))
+		goto fail;
 	/* Initialize RC4 seal state using client sealing key */
 	ntlm_init_rc4_seal_states(context);
 #if defined(WITH_DEBUG_NTLM)
@@ -895,7 +899,6 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (message->NtChallengeResponse.Len > 0)
 	{
-		int rc;
 		size_t cbAvFlags;
 		wStream ssbuffer;
 		wStream* snt = Stream_StaticConstInit(&ssbuffer, message->NtChallengeResponse.Buffer,
@@ -905,8 +908,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 			goto fail;
 
 		status = SEC_E_INVALID_TOKEN;
-		rc = ntlm_read_ntlm_v2_response(snt, &(context->NTLMv2Response));
-		if (rc < 0)
+		if (!ntlm_read_ntlm_v2_response(snt, &(context->NTLMv2Response)))
 			goto fail;
 		status = SEC_E_INTERNAL_ERROR;
 
@@ -1184,9 +1186,19 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->UseMIC)
 	{
 		/* Message Integrity Check */
-		ntlm_compute_message_integrity_check(context, message->MessageIntegrityCheck, 16);
+		ntlm_compute_message_integrity_check(context, message->MessageIntegrityCheck,
+		                                     sizeof(message->MessageIntegrityCheck));
+		if (length < context->MessageIntegrityCheckOffset)
+		{
+			return SEC_E_INTERNAL_ERROR;
+		}
 		Stream_SetPosition(s, context->MessageIntegrityCheckOffset);
-		Stream_Write(s, message->MessageIntegrityCheck, 16);
+		if (Stream_GetRemainingCapacity(s) < sizeof(message->MessageIntegrityCheck))
+		{
+			return SEC_E_INTERNAL_ERROR;
+		}
+
+		Stream_Write(s, message->MessageIntegrityCheck, sizeof(message->MessageIntegrityCheck));
 		Stream_SetPosition(s, length);
 	}
 
@@ -1205,7 +1217,6 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 	size_t cbAvFlags;
 	NTLM_AV_PAIR* AvFlags = NULL;
 	NTLM_AUTHENTICATE_MESSAGE* message;
-	BYTE messageIntegrityCheck[16] = { 0 };
 
 	if (!context)
 		return SEC_E_INVALID_PARAMETER;
@@ -1222,10 +1233,10 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 	if (AvFlags)
 		Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags), flags);
 
-	if (ntlm_compute_lm_v2_response(context) < 0) /* LmChallengeResponse */
+	if (!ntlm_compute_lm_v2_response(context)) /* LmChallengeResponse */
 		return SEC_E_INTERNAL_ERROR;
 
-	if (ntlm_compute_ntlm_v2_response(context) < 0) /* NtChallengeResponse */
+	if (!ntlm_compute_ntlm_v2_response(context)) /* NtChallengeResponse */
 		return SEC_E_INTERNAL_ERROR;
 
 	/* KeyExchangeKey */
@@ -1237,16 +1248,16 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
-		ZeroMemory(
-		    &((PBYTE)context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
-		    16);
+		BYTE messageIntegrityCheck[16] = { 0 };
+
 		ntlm_compute_message_integrity_check(context, messageIntegrityCheck,
 		                                     sizeof(messageIntegrityCheck));
 		CopyMemory(
 		    &((PBYTE)context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
-		    message->MessageIntegrityCheck, 16);
+		    message->MessageIntegrityCheck, sizeof(message->MessageIntegrityCheck));
 
-		if (memcmp(messageIntegrityCheck, message->MessageIntegrityCheck, 16) != 0)
+		if (memcmp(messageIntegrityCheck, message->MessageIntegrityCheck,
+		           sizeof(message->MessageIntegrityCheck)) != 0)
 		{
 			WLog_ERR(TAG, "Message Integrity Check (MIC) verification failed!");
 #ifdef WITH_DEBUG_NTLM
@@ -1290,11 +1301,15 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 	}
 
 	/* Generate signing keys */
-	ntlm_generate_client_signing_key(context);
-	ntlm_generate_server_signing_key(context);
+	if (!ntlm_generate_client_signing_key(context))
+		return SEC_E_INTERNAL_ERROR;
+	if (!ntlm_generate_server_signing_key(context))
+		return SEC_E_INTERNAL_ERROR;
 	/* Generate sealing keys */
-	ntlm_generate_client_sealing_key(context);
-	ntlm_generate_server_sealing_key(context);
+	if (!ntlm_generate_client_sealing_key(context))
+		return SEC_E_INTERNAL_ERROR;
+	if (!ntlm_generate_server_sealing_key(context))
+		return SEC_E_INTERNAL_ERROR;
 	/* Initialize RC4 seal state */
 	ntlm_init_rc4_seal_states(context);
 #if defined(WITH_DEBUG_NTLM)
