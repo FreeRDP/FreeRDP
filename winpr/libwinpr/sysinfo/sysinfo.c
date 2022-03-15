@@ -274,7 +274,12 @@ VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 	ULARGE_INTEGER time64;
 	time64.u.HighPart = 0;
 	/* time represented in tenths of microseconds since midnight of January 1, 1601 */
+
+#if defined(BUILD_TESTING)
+	time64.QuadPart = 11644473600LL; /* Seconds since January 1, 1601 */
+#else
 	time64.QuadPart = time(NULL) + 11644473600LL; /* Seconds since January 1, 1601 */
+#endif
 	time64.QuadPart *= 10000000;                  /* Convert timestamp to tenths of a microsecond */
 	lpSystemTimeAsFileTime->dwLowDateTime = time64.u.LowPart;
 	lpSystemTimeAsFileTime->dwHighDateTime = time64.u.HighPart;
