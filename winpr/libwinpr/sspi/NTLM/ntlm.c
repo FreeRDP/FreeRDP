@@ -441,6 +441,8 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 				return SEC_E_INVALID_TOKEN;
 
 			status = ntlm_read_NegotiateMessage(context, input_buffer);
+			if (status != SEC_I_CONTINUE_NEEDED)
+				return status;
 
 			if (ntlm_get_state(context) == NTLM_STATE_CHALLENGE)
 			{

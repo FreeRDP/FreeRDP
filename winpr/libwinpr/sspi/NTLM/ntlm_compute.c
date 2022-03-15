@@ -448,8 +448,8 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 
 		ret = context->HashCallback(context->HashCallbackArg, &credentials->identity, &proofValue,
 		                            context->EncryptedRandomSessionKey,
-		                            (&context->AUTHENTICATE_MESSAGE)->MessageIntegrityCheck,
-		                            &micValue, hash);
+		                            context->AUTHENTICATE_MESSAGE.MessageIntegrityCheck, &micValue,
+		                            hash);
 		sspi_SecBufferFree(&proofValue);
 		sspi_SecBufferFree(&micValue);
 		return ret ? TRUE : FALSE;
@@ -834,8 +834,9 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 	}
 }
 
-void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT32 size)
+BOOL ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT32 size)
 {
+	BOOL rc = FALSE;
 	/*
 	 * Compute the HMAC-MD5 hash of ConcatenationOf(NEGOTIATE_MESSAGE,
 	 * CHALLENGE_MESSAGE, AUTHENTICATE_MESSAGE) using the ExportedSessionKey
@@ -848,7 +849,7 @@ void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT
 
 	memset(mic, 0, size);
 	if (!hmac)
-		return;
+		return FALSE;
 
 	if (winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->ExportedSessionKey, WINPR_MD5_DIGEST_LENGTH))
 	{
@@ -856,10 +857,27 @@ void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT
 		                  context->NegotiateMessage.cbBuffer);
 		winpr_HMAC_Update(hmac, (BYTE*)context->ChallengeMessage.pvBuffer,
 		                  context->ChallengeMessage.cbBuffer);
-		winpr_HMAC_Update(hmac, (BYTE*)context->AuthenticateMessage.pvBuffer,
-		                  context->AuthenticateMessage.cbBuffer);
+
+		if (context->MessageIntegrityCheckOffset > 0)
+		{
+			const BYTE* auth = (BYTE*)context->AuthenticateMessage.pvBuffer;
+			const BYTE data[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+			const size_t rest = context->MessageIntegrityCheckOffset + sizeof(data);
+
+			WINPR_ASSERT(rest <= context->AuthenticateMessage.cbBuffer);
+			winpr_HMAC_Update(hmac, &auth[0], context->MessageIntegrityCheckOffset);
+			winpr_HMAC_Update(hmac, data, sizeof(data));
+			winpr_HMAC_Update(hmac, &auth[rest], context->AuthenticateMessage.cbBuffer - rest);
+		}
+		else
+		{
+			winpr_HMAC_Update(hmac, (BYTE*)context->AuthenticateMessage.pvBuffer,
+			                  context->AuthenticateMessage.cbBuffer);
+		}
 		winpr_HMAC_Final(hmac, mic, WINPR_MD5_DIGEST_LENGTH);
+		rc = TRUE;
 	}
 
 	winpr_HMAC_Free(hmac);
+	return rc;
 }

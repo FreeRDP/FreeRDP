@@ -255,7 +255,7 @@ typedef struct
 	NTLM_NEGOTIATE_MESSAGE NEGOTIATE_MESSAGE;
 	NTLM_CHALLENGE_MESSAGE CHALLENGE_MESSAGE;
 	NTLM_AUTHENTICATE_MESSAGE AUTHENTICATE_MESSAGE;
-	UINT32 MessageIntegrityCheckOffset;
+	size_t MessageIntegrityCheckOffset;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;
 	SecBuffer AuthenticateMessage;

@@ -203,7 +203,8 @@ static void ntlm_print_authenticate_message(const SecBuffer* AuthenticateMessage
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
 		WLog_VRB(TAG, "MessageIntegrityCheck (length = 16)");
-		winpr_HexDump(TAG, WLOG_TRACE, message->MessageIntegrityCheck, 16);
+		winpr_HexDump(TAG, WLOG_TRACE, message->MessageIntegrityCheck,
+		              sizeof(message->MessageIntegrityCheck));
 	}
 }
 
@@ -411,6 +412,105 @@ static void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
 	}
 }
 
+static BOOL ntlm_read_negotiate_flags(wStream* s, UINT32* flags, UINT32 required, const char* name)
+{
+	UINT32 NegotiateFlags = 0;
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(flags);
+	WINPR_ASSERT(name);
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_ERR(TAG, "%s::NegotiateFlags expected 4bytes, have %" PRIuz "bytes", name,
+		         Stream_GetRemainingLength(s));
+		return FALSE;
+	}
+
+	Stream_Read_UINT32(s, NegotiateFlags); /* NegotiateFlags (4 bytes) */
+
+	if ((NegotiateFlags & required) != required)
+	{
+		WLog_ERR(TAG, "%s::NegotiateFlags invalid flags 0x08%" PRIx32 ", 0x%08" PRIx32 " required",
+		         name, NegotiateFlags, required);
+		return FALSE;
+	}
+	*flags = NegotiateFlags;
+	return TRUE;
+}
+
+static BOOL ntlm_write_negotiate_flags(wStream* s, UINT32 flags, const char* name)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(name);
+
+	if (Stream_GetRemainingCapacity(s) < 4)
+	{
+		WLog_ERR(TAG, "%s::NegotiateFlags expected 4bytes, have %" PRIuz "bytes", name,
+		         Stream_GetRemainingCapacity(s));
+		return FALSE;
+	}
+
+	Stream_Write_UINT32(s, flags); /* NegotiateFlags (4 bytes) */
+	return TRUE;
+}
+
+static BOOL ntlm_read_message_integrity_check(wStream* s, size_t* offset, BYTE* data, size_t size,
+                                              const char* name)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(offset);
+	WINPR_ASSERT(data);
+	WINPR_ASSERT(size == WINPR_MD5_DIGEST_LENGTH);
+	WINPR_ASSERT(name);
+
+	*offset = Stream_GetPosition(s);
+
+	if (Stream_GetRemainingLength(s) < size)
+	{
+		WLog_ERR(TAG,
+		         "%s::MessageIntegrityCheckOffset expected %" PRIuz "bytes, got "
+		         "%" PRIuz "byets",
+		         name, size, Stream_GetRemainingLength(s));
+		return FALSE;
+	}
+
+	Stream_Read(s, data, size);
+	return TRUE;
+}
+
+static BOOL ntlm_write_message_integrity_check(wStream* s, size_t offset, const BYTE* data,
+                                               size_t size, const char* name)
+{
+	size_t pos;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(data);
+	WINPR_ASSERT(size == WINPR_MD5_DIGEST_LENGTH);
+	WINPR_ASSERT(name);
+
+	pos = Stream_GetPosition(s);
+
+	if (offset + size > Stream_Capacity(s))
+	{
+		WLog_ERR(TAG,
+		         "%s::MessageIntegrityCheck invalid offset[length] %" PRIuz "[%" PRIuz
+		         "], got %" PRIuz,
+		         name, offset, size, Stream_GetRemainingCapacity(s));
+		return FALSE;
+	}
+	Stream_SetPosition(s, offset);
+	if (Stream_GetRemainingCapacity(s) < size)
+	{
+		WLog_ERR(TAG, "%s::MessageIntegrityCheck expected %" PRIuz "bytes, got %" PRIuz "bytes",
+		         name, size, Stream_GetRemainingCapacity(s));
+		return FALSE;
+	}
+
+	Stream_Write(s, data, size);
+	Stream_SetPosition(s, pos);
+	return TRUE;
+}
+
 SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	wStream sbuffer;
@@ -435,27 +535,23 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (!ntlm_read_message_header(s, &message->header, MESSAGE_TYPE_NEGOTIATE))
 		return SEC_E_INVALID_TOKEN;
 
-	if (Stream_GetRemainingLength(s) < 4)
-		return SEC_E_INVALID_TOKEN;
-
-	Stream_Read_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
-
-	if (!((message->NegotiateFlags & NTLMSSP_REQUEST_TARGET) &&
-	      (message->NegotiateFlags & NTLMSSP_NEGOTIATE_NTLM) &&
-	      (message->NegotiateFlags & NTLMSSP_NEGOTIATE_UNICODE)))
+	if (!ntlm_read_negotiate_flags(s, &message->NegotiateFlags,
+	                               NTLMSSP_REQUEST_TARGET | NTLMSSP_NEGOTIATE_NTLM |
+	                                   NTLMSSP_NEGOTIATE_UNICODE,
+	                               "NTLM_NEGOTIATE_MESSAGE"))
 		return SEC_E_INVALID_TOKEN;
 
 	context->NegotiateFlags = message->NegotiateFlags;
 
 	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
-	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED)
+	// if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED)
 	{
 		if (!ntlm_read_message_fields(s, &(message->DomainName))) /* DomainNameFields (8 bytes) */
 			return SEC_E_INVALID_TOKEN;
 	}
 
 	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
-	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED)
+	// if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED)
 	{
 		if (!ntlm_read_message_fields(s, &(message->Workstation))) /* WorkstationFields (8 bytes) */
 			return SEC_E_INVALID_TOKEN;
@@ -538,10 +634,9 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	if (!ntlm_write_message_header(s, &message->header))
 		return SEC_E_INTERNAL_ERROR;
 
-	if (Stream_GetRemainingCapacity(s) < 4)
+	if (!ntlm_write_negotiate_flags(s, message->NegotiateFlags, "NTLM_NEGOTIATE_MESSAGE"))
 		return SEC_E_INTERNAL_ERROR;
 
-	Stream_Write_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
 	/* DomainNameFields (8 bytes) */
 		if (!ntlm_write_message_fields(s, &(message->DomainName)))
@@ -608,21 +703,21 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (!ntlm_read_message_fields(s, &(message->TargetName))) /* TargetNameFields (8 bytes) */
 		goto fail;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!ntlm_read_negotiate_flags(s, &message->NegotiateFlags, 0, "NTLM_CHALLENGE_MESSAGE"))
 		goto fail;
 
-	Stream_Read_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 	context->NegotiateFlags = message->NegotiateFlags;
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (Stream_GetRemainingLength(s) < 16)
+	{
+		WLog_ERR(TAG,
+		         "NTLM_CHALLENGE_MESSAGE::ServerChallenge expected 16bytes, got %" PRIuz "bytes",
+		         Stream_GetRemainingLength(s));
 		goto fail;
+	}
 
 	Stream_Read(s, message->ServerChallenge, 8); /* ServerChallenge (8 bytes) */
 	CopyMemory(context->ServerChallenge, message->ServerChallenge, 8);
-
-	if (Stream_GetRemainingLength(s) < 8)
-		goto fail;
-
 	Stream_Read(s, message->Reserved, 8); /* Reserved (8 bytes), should be ignored */
 
 	if (!ntlm_read_message_fields(s, &(message->TargetInfo))) /* TargetInfoFields (8 bytes) */
@@ -791,10 +886,17 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	if (!ntlm_write_message_fields(s, &(message->TargetName)))
 		return SEC_E_INTERNAL_ERROR;
 
-	if (Stream_GetRemainingCapacity(s) < 20)
+	if (!ntlm_write_negotiate_flags(s, message->NegotiateFlags, "NTLM_CHALLENGE_MESSAGE"))
 		return SEC_E_INTERNAL_ERROR;
 
-	Stream_Write_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
+	if (Stream_GetRemainingCapacity(s) < 16)
+	{
+		WLog_ERR(TAG,
+		         "NTLM_CHALLENGE_MESSAGE::ServerChallenge expected 16bytes, got %" PRIuz "bytes",
+		         Stream_GetRemainingCapacity(s));
+		return SEC_E_INTERNAL_ERROR;
+	}
+
 	Stream_Write(s, message->ServerChallenge, 8);    /* ServerChallenge (8 bytes) */
 	Stream_Write(s, message->Reserved, 8);           /* Reserved (8 bytes), should be ignored */
 
@@ -891,9 +993,9 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	        &(message->EncryptedRandomSessionKey))) /* EncryptedRandomSessionKeyFields (8 bytes) */
 		goto fail;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!ntlm_read_negotiate_flags(s, &message->NegotiateFlags, 0, "NTLM_AUTHENTICATE_MESSAGE"))
 		goto fail;
-	Stream_Read_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
+
 	context->NegotiateKeyExchange =
 	    (message->NegotiateFlags & NTLMSSP_NEGOTIATE_KEY_EXCH) ? TRUE : FALSE;
 
@@ -987,13 +1089,11 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
-		context->MessageIntegrityCheckOffset = (UINT32)Stream_GetPosition(s);
-
 		status = SEC_E_INVALID_TOKEN;
-		if (Stream_GetRemainingLength(s) < 16)
+		if (!ntlm_read_message_integrity_check(
+		        s, &context->MessageIntegrityCheckOffset, message->MessageIntegrityCheck,
+		        sizeof(message->MessageIntegrityCheck), "NTLM_AUTHENTICATE_MESSAGE"))
 			goto fail;
-
-		Stream_Read(s, message->MessageIntegrityCheck, 16);
 	}
 
 	status = SEC_E_INTERNAL_ERROR;
@@ -1160,9 +1260,8 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	        s,
 	        &(message->EncryptedRandomSessionKey))) /* EncryptedRandomSessionKeyFields (8 bytes) */
 		return SEC_E_INTERNAL_ERROR;
-	if (Stream_GetRemainingCapacity(s) < 4)
+	if (!ntlm_write_negotiate_flags(s, message->NegotiateFlags, "NTLM_AUTHENTICATE_MESSAGE"))
 		return SEC_E_INTERNAL_ERROR;
-	Stream_Write_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 	{
@@ -1172,10 +1271,12 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	if (context->UseMIC)
 	{
-		context->MessageIntegrityCheckOffset = (UINT32)Stream_GetPosition(s);
-		if (Stream_GetRemainingCapacity(s) < 16)
+		const BYTE data[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+
+		context->MessageIntegrityCheckOffset = Stream_GetPosition(s);
+		if (!ntlm_write_message_integrity_check(s, Stream_GetPosition(s), data, sizeof(data),
+		                                        "NTLM_AUTHENTICATE_MESSAGE"))
 			return SEC_E_INTERNAL_ERROR;
-		Stream_Zero(s, 16); /* Message Integrity Check (16 bytes) */
 	}
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED)
@@ -1224,18 +1325,10 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 		/* Message Integrity Check */
 		ntlm_compute_message_integrity_check(context, message->MessageIntegrityCheck,
 		                                     sizeof(message->MessageIntegrityCheck));
-		if (length < context->MessageIntegrityCheckOffset)
-		{
+		if (!ntlm_write_message_integrity_check(
+		        s, context->MessageIntegrityCheckOffset, message->MessageIntegrityCheck,
+		        sizeof(message->MessageIntegrityCheck), "NTLM_AUTHENTICATE_MESSAGE"))
 			return SEC_E_INTERNAL_ERROR;
-		}
-		Stream_SetPosition(s, context->MessageIntegrityCheckOffset);
-		if (Stream_GetRemainingCapacity(s) < sizeof(message->MessageIntegrityCheck))
-		{
-			return SEC_E_INTERNAL_ERROR;
-		}
-
-		Stream_Write(s, message->MessageIntegrityCheck, sizeof(message->MessageIntegrityCheck));
-		Stream_SetPosition(s, length);
 	}
 
 #if defined(WITH_DEBUG_NTLM)
