@@ -431,7 +431,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	{
 		char ClientHostname[33] = { 0 };
-		gethostname(ClientHostname, 31);
+		DWORD size = sizeof(ClientHostname) - 2;
+		GetComputerNameA(ClientHostname, &size);
 		if (!freerdp_settings_set_string(settings, FreeRDP_ClientHostname, ClientHostname))
 			goto out_fail;
 	}
