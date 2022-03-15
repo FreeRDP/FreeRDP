@@ -149,7 +149,7 @@ struct rdp_nla
 };
 
 static BOOL nla_send(rdpNla* nla);
-static int nla_server_recv(rdpNla* nla);
+static BOOL nla_server_recv(rdpNla* nla);
 static void nla_buffer_free(rdpNla* nla);
 static SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla);
 static SECURITY_STATUS nla_encrypt_public_key_hash(rdpNla* nla);
@@ -1191,9 +1191,9 @@ fail:
 	return rc;
 }
 
-static int nla_client_recv_nego_token(rdpNla* nla)
+static BOOL nla_client_recv_nego_token(rdpNla* nla)
 {
-	int rc = -1;
+	BOOL rc = FALSE;
 	SECURITY_STATUS status;
 	SecBuffer inputBuffer = { 0 };
 	SecBuffer outputBuffer = { 0 };
@@ -1260,14 +1260,14 @@ static int nla_client_recv_nego_token(rdpNla* nla)
 			goto fail;
 	}
 
-	rc = 1;
+	rc = TRUE;
 fail:
 	sspi_SecBufferFree(&inputBuffer);
 	sspi_SecBufferFree(&outputBuffer);
 	return rc;
 }
 
-static int nla_client_recv_pub_key_auth(rdpNla* nla)
+static BOOL nla_client_recv_pub_key_auth(rdpNla* nla)
 {
 	WINPR_ASSERT(nla);
 
@@ -1283,18 +1283,18 @@ static int nla_client_recv_pub_key_auth(rdpNla* nla)
 	{
 		WLog_ERR(TAG, "Could not verify public key echo %s [0x%08" PRIX32 "]",
 		         GetSecurityStatusString(nla->status), nla->status);
-		return -1;
+		return FALSE;
 	}
 
 	/* Send encrypted credentials */
 	nla->status = nla_encrypt_ts_credentials(nla);
 	if (nla->status != SEC_E_OK)
-		return -1;
+		return FALSE;
 
 	if (!nla_send(nla))
 	{
 		nla_buffer_free(nla);
-		return -1;
+		return FALSE;
 	}
 
 	nla_buffer_free(nla);
@@ -1312,13 +1312,13 @@ static int nla_client_recv_pub_key_auth(rdpNla* nla)
 	}
 
 	if (nla->status != SEC_E_OK)
-		return -1;
+		return FALSE;
 
 	nla_set_state(nla, NLA_STATE_AUTH_INFO);
-	return 1;
+	return TRUE;
 }
 
-static int nla_client_recv(rdpNla* nla)
+static BOOL nla_client_recv(rdpNla* nla)
 {
 	WINPR_ASSERT(nla);
 
@@ -1334,13 +1334,13 @@ static int nla_client_recv(rdpNla* nla)
 		default:
 			WLog_ERR(TAG, "NLA in invalid client receive state %s",
 			         nla_get_state_str(nla_get_state(nla)));
-			return -1;
+			return FALSE;
 	}
 }
 
-static int nla_client_authenticate(rdpNla* nla)
+static BOOL nla_client_authenticate(rdpNla* nla)
 {
-	int rc = -1;
+	BOOL rc = FALSE;
 	wStream* s;
 	int status;
 
@@ -1351,7 +1351,7 @@ static int nla_client_authenticate(rdpNla* nla)
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		return -1;
+		return FALSE;
 	}
 
 	if (nla_client_begin(nla) < 1)
@@ -1374,7 +1374,7 @@ static int nla_client_authenticate(rdpNla* nla)
 			goto fail;
 	}
 
-	rc = 1;
+	rc = TRUE;
 fail:
 	Stream_Free(s, TRUE);
 	return rc;
@@ -1385,7 +1385,7 @@ fail:
  * @param credssp
  */
 
-static int nla_server_init(rdpNla* nla)
+static BOOL nla_server_init(rdpNla* nla)
 {
 	rdpTls* tls;
 
@@ -1397,7 +1397,7 @@ static int nla_server_init(rdpNla* nla)
 	if (!nla_sec_buffer_alloc_from_data(&nla->PublicKey, tls->PublicKey, 0, tls->PublicKeyLength))
 	{
 		WLog_ERR(TAG, "Failed to allocate SecBuffer for public key");
-		return -1;
+		return FALSE;
 	}
 
 	if (nla->SspiModule)
@@ -1409,7 +1409,7 @@ static int nla_server_init(rdpNla* nla)
 		if (!hSSPI)
 		{
 			WLog_ERR(TAG, "Failed to load SSPI module: %s", nla->SspiModule);
-			return -1;
+			return FALSE;
 		}
 
 #ifdef UNICODE
@@ -1429,7 +1429,7 @@ static int nla_server_init(rdpNla* nla)
 	nla->status = nla_update_package_name(nla);
 
 	if (nla->status != SEC_E_OK)
-		return -1;
+		return FALSE;
 
 	nla->status =
 	    nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME, SECPKG_CRED_INBOUND, NULL, NULL,
@@ -1439,7 +1439,7 @@ static int nla_server_init(rdpNla* nla)
 	{
 		WLog_ERR(TAG, "AcquireCredentialsHandle status %s [0x%08" PRIX32 "]",
 		         GetSecurityStatusString(nla->status), nla->status);
-		return -1;
+		return FALSE;
 	}
 
 	nla->haveContext = FALSE;
@@ -1462,7 +1462,7 @@ static int nla_server_init(rdpNla* nla)
 	nla->fContextReq |= ASC_REQ_SEQUENCE_DETECT;
 	nla->fContextReq |= ASC_REQ_EXTENDED_ERROR;
 	nla_set_state(nla, NLA_STATE_INITIAL);
-	return 1;
+	return TRUE;
 }
 
 static wStream* nla_server_recv_stream(rdpNla* nla)
@@ -1502,7 +1502,7 @@ static int nla_server_authenticate(rdpNla* nla)
 
 	WINPR_ASSERT(nla);
 
-	if (nla_server_init(nla) < 1)
+	if (!nla_server_init(nla))
 		goto fail_auth;
 
 	/* Client is starting, here es the state machine:
@@ -1616,7 +1616,7 @@ static int nla_server_authenticate(rdpNla* nla)
 					goto fail;
 				}
 
-				if (nla_server_recv(nla) < 0)
+				if (!nla_server_recv(nla))
 					goto fail;
 
 				WLog_DBG(TAG, "Receiving pubkey Token");
@@ -1710,7 +1710,7 @@ static int nla_server_authenticate(rdpNla* nla)
 
 	/* Receive encrypted credentials */
 
-	if (nla_server_recv(nla) < 0)
+	if (!nla_server_recv(nla))
 		goto fail_auth;
 
 	nla->status = nla_decrypt_ts_credentials(nla);
@@ -2457,9 +2457,9 @@ fail:
 	return rc;
 }
 
-static int nla_decode_ts_request(rdpNla* nla, wStream* s)
+static BOOL nla_decode_ts_request(rdpNla* nla, wStream* s)
 {
-	int rc = -1;
+	BOOL rc = FALSE;
 	size_t length;
 	UINT32 version = 0;
 
@@ -2540,19 +2540,19 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 			}
 		}
 	}
-	rc = 1;
+	rc = TRUE;
 fail:
 
 	return rc;
 }
 
-int nla_recv_pdu(rdpNla* nla, wStream* s)
+BOOL nla_recv_pdu(rdpNla* nla, wStream* s)
 {
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(s);
 
-	if (nla_decode_ts_request(nla, s) < 1)
-		return -1;
+	if (!nla_decode_ts_request(nla, s))
+		return FALSE;
 
 	if (nla->errorCode)
 	{
@@ -2607,15 +2607,15 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 		}
 
 		freerdp_set_last_error_log(nla->instance->context, code);
-		return -1;
+		return FALSE;
 	}
 
 	return nla_client_recv(nla);
 }
 
-int nla_server_recv(rdpNla* nla)
+BOOL nla_server_recv(rdpNla* nla)
 {
-	int status = -1;
+	BOOL status = FALSE;
 	wStream* s;
 
 	WINPR_ASSERT(nla);

@@ -1526,7 +1526,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_NLA:
 			if (nla_get_state(rdp->nla) < NLA_STATE_AUTH_INFO)
 			{
-				if (nla_recv_pdu(rdp->nla, s) < 1)
+				if (!nla_recv_pdu(rdp->nla, s))
 				{
 					WLog_ERR(TAG, "%s: %s - nla_recv_pdu() fail", __FUNCTION__,
 					         rdp_get_state_string(rdp));
