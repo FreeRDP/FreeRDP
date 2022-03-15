@@ -123,7 +123,6 @@ struct rdp_nla
 	ULONG pfContextAttr;
 	BOOL haveContext;
 	BOOL haveInputBuffer;
-	BOOL havePubKeyAuth;
 	SECURITY_STATUS status;
 	CredHandle credentials;
 	TimeStamp expiration;
@@ -1090,7 +1089,6 @@ static int nla_client_init(rdpNla* nla)
 
 	nla->haveContext = FALSE;
 	nla->haveInputBuffer = FALSE;
-	nla->havePubKeyAuth = FALSE;
 
 	ZeroMemory(&nla->ContextSizes, sizeof(SecPkgContext_Sizes));
 	/*
@@ -1230,7 +1228,6 @@ static BOOL nla_client_recv_nego_token(rdpNla* nla)
 			nla_set_state(nla, NLA_STATE_NEGO_TOKEN);
 			break;
 		case SEC_E_OK: /* completed */
-			nla->havePubKeyAuth = TRUE;
 			status = nla_query_context_sizes(nla);
 
 			if (status != SEC_E_OK)
@@ -1444,7 +1441,6 @@ static BOOL nla_server_init(rdpNla* nla)
 
 	nla->haveContext = FALSE;
 	nla->haveInputBuffer = FALSE;
-	nla->havePubKeyAuth = FALSE;
 
 	ZeroMemory(&nla->ContextSizes, sizeof(SecPkgContext_Sizes));
 	/*
@@ -1490,228 +1486,224 @@ fail:
 	return s;
 }
 
-/**
- * Authenticate with client using CredSSP (server).
- * @param credssp
- * @return 1 if authentication is successful
- */
-
-static int nla_server_authenticate(rdpNla* nla)
+static BOOL nla_server_send_token(rdpNla* nla, SecBufferDesc* token)
 {
-	int res = -1;
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(nla);
+	WINPR_ASSERT(token);
+
+	if (token->cBuffers != 1)
+	{
+		WLog_ERR(TAG, "[%s] token->cBuffers=%" PRIu32, __FUNCTION__, token->cBuffers);
+		goto fail;
+	}
+	if (!nla_sec_buffer_alloc_from_buffer(&nla->negoToken, &token->pBuffers[0], 0))
+		goto fail;
+
+	if (!nla_send(nla))
+		goto fail;
+
+	rc = TRUE;
+
+fail:
+
+	return rc;
+}
+
+static BOOL nla_server_complete_auth(rdpNla* nla, SecBufferDesc* token)
+{
+	BOOL rc = FALSE;
+	freerdp_peer* peer;
+	SECURITY_STATUS status;
+
+	WINPR_ASSERT(nla);
+	WINPR_ASSERT(nla->table);
+	WINPR_ASSERT(nla->table->SetContextAttributes);
+	WINPR_ASSERT(nla->instance);
+	WINPR_ASSERT(nla->instance->context);
+	WINPR_ASSERT(token);
+
+	peer = nla->instance->context->peer;
+	WINPR_ASSERT(peer);
+
+	if (peer->ComputeNtlmHash)
+	{
+		status = nla->table->SetContextAttributes(&nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB,
+		                                          (void*)peer->ComputeNtlmHash, 0);
+
+		if (status != SEC_E_OK)
+		{
+			WLog_ERR(TAG, "SetContextAttributesA(hash cb) status %s [0x%08" PRIX32 "]",
+			         GetSecurityStatusString(status), status);
+			return FALSE;
+		}
+
+		status = nla->table->SetContextAttributes(&nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB_DATA,
+		                                          peer, 0);
+	}
+	else if (nla->SamFile)
+	{
+		status = nla->table->SetContextAttributes(&nla->context, SECPKG_ATTR_AUTH_NTLM_SAM_FILE,
+		                                          nla->SamFile, strlen(nla->SamFile) + 1);
+	}
+	if (status != SEC_E_OK)
+	{
+		WLog_ERR(TAG, "SetContextAttributesA(hash cb data) status %s [0x%08" PRIX32 "]",
+		         GetSecurityStatusString(status), status);
+		return FALSE;
+	}
+
+	if (!nla_complete_auth(nla, token))
+		return FALSE;
+
+	sspi_SecBufferFree(&nla->negoToken);
+	sspi_SecBufferFree(&nla->ClientNonce);
+	return nla_send(nla);
+}
+
+static BOOL nla_server_process_nego_token(rdpNla* nla)
+{
+	BOOL rc = FALSE;
+	SecBuffer inputBuffer = { 0 };
+	SecBuffer outputBuffer = { 0 };
+	SecBufferDesc inputBufferDesc = { 0 };
+	SecBufferDesc outputBufferDesc = { 0 };
+
+	/* receive authentication token */
+	inputBufferDesc.ulVersion = SECBUFFER_VERSION;
+	inputBufferDesc.cBuffers = 1;
+	inputBufferDesc.pBuffers = &inputBuffer;
 
 	WINPR_ASSERT(nla);
 
-	if (!nla_server_init(nla))
-		goto fail_auth;
-
-	/* Client is starting, here es the state machine:
-	 *
-	 *  -- NLA_STATE_INITIAL	--> NLA_STATE_INITIAL
-	 * ----->> sending...
-	 *    ----->> protocol version 6
-	 *    ----->> nego token
-	 *    ----->> client nonce
-	 * <<----- receiving...
-	 *    <<----- protocol version 6
-	 *    <<----- nego token
-	 * ----->> sending...
-	 *    ----->> protocol version 6
-	 *    ----->> nego token
-	 *    ----->> public key auth
-	 *    ----->> client nonce
-	 * -- NLA_STATE_NEGO_TOKEN	--> NLA_STATE_PUB_KEY_AUTH
-	 * <<----- receiving...
-	 *    <<----- protocol version 6
-	 *    <<----- public key info
-	 * ----->> sending...
-	 *    ----->> protocol version 6
-	 *    ----->> auth info
-	 *    ----->> client nonce
-	 * -- NLA_STATE_PUB_KEY_AUTH	--> NLA_STATE
-	 */
-
-	while (TRUE)
+	WLog_DBG(TAG, "Receiving Authentication Token");
+	if (!nla_sec_buffer_alloc_from_buffer(&inputBuffer, &nla->negoToken, 0))
 	{
-		int rc = -1;
-		SecBuffer inputBuffer = { 0 };
-		SecBuffer outputBuffer = { 0 };
-		SecBufferDesc inputBufferDesc = { 0 };
-		SecBufferDesc outputBufferDesc = { 0 };
-
-		/* receive authentication token */
-		inputBufferDesc.ulVersion = SECBUFFER_VERSION;
-		inputBufferDesc.cBuffers = 1;
-		inputBufferDesc.pBuffers = &inputBuffer;
-
-		if (nla_server_recv(nla) < 0)
-			goto fail;
-
-		WLog_DBG(TAG, "Receiving Authentication Token");
-		if (!nla_sec_buffer_alloc_from_buffer(&inputBuffer, &nla->negoToken, 0))
-		{
-			WLog_ERR(TAG, "CredSSP: invalid negoToken!");
-			goto fail;
-		}
-
-		outputBufferDesc.ulVersion = SECBUFFER_VERSION;
-		outputBufferDesc.cBuffers = 1;
-		outputBufferDesc.pBuffers = &outputBuffer;
-
-		if (!nla_sec_buffer_alloc(&outputBuffer, nla->cbMaxToken))
-			goto fail;
-
-		nla->status = nla->table->AcceptSecurityContext(
-		    &nla->credentials, nla->haveContext ? &nla->context : NULL, &inputBufferDesc,
-		    nla->fContextReq, SECURITY_NATIVE_DREP, &nla->context, &outputBufferDesc,
-		    &nla->pfContextAttr, &nla->expiration);
-		WLog_VRB(TAG, "AcceptSecurityContext status %s [0x%08" PRIX32 "]",
-		         GetSecurityStatusString(nla->status), nla->status);
-
-		if (!nla_sec_buffer_alloc_from_buffer(&nla->negoToken, &outputBuffer, 0))
-			goto fail;
-
-		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
-		{
-			freerdp_peer* peer = nla->instance->context->peer;
-
-			if (peer->ComputeNtlmHash)
-			{
-				SECURITY_STATUS status;
-				status = nla->table->SetContextAttributes(
-				    &nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB, (void*)peer->ComputeNtlmHash, 0);
-
-				if (status != SEC_E_OK)
-				{
-					WLog_ERR(TAG, "SetContextAttributesA(hash cb) status %s [0x%08" PRIX32 "]",
-					         GetSecurityStatusString(status), status);
-				}
-
-				status = nla->table->SetContextAttributes(
-				    &nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB_DATA, peer, 0);
-
-				if (status != SEC_E_OK)
-				{
-					WLog_ERR(TAG, "SetContextAttributesA(hash cb data) status %s [0x%08" PRIX32 "]",
-					         GetSecurityStatusString(status), status);
-				}
-			}
-			else if (nla->SamFile)
-			{
-				nla->table->SetContextAttributes(&nla->context, SECPKG_ATTR_AUTH_NTLM_SAM_FILE,
-				                                 nla->SamFile, strlen(nla->SamFile) + 1);
-			}
-
-			if (!nla_complete_auth(nla, &outputBufferDesc))
-				goto fail;
-		}
-
-		if (nla->status == SEC_E_OK)
-		{
-			if (outputBuffer.cbBuffer != 0)
-			{
-				if (!nla_send(nla))
-				{
-					nla_buffer_free(nla);
-					goto fail;
-				}
-
-				if (!nla_server_recv(nla))
-					goto fail;
-
-				WLog_DBG(TAG, "Receiving pubkey Token");
-			}
-
-			nla->havePubKeyAuth = TRUE;
-			nla->status = nla_query_context_sizes(nla);
-
-			if (nla->status != SEC_E_OK)
-				goto fail;
-
-			if (nla->peerVersion < 5)
-				nla->status = nla_decrypt_public_key_echo(nla);
-			else
-				nla->status = nla_decrypt_public_key_hash(nla);
-
-			if (nla->status != SEC_E_OK)
-			{
-				WLog_ERR(TAG,
-				         "Error: could not verify client's public key echo %s [0x%08" PRIX32 "]",
-				         GetSecurityStatusString(nla->status), nla->status);
-				goto fail;
-			}
-
-			sspi_SecBufferFree(&nla->negoToken);
-
-			if (nla->peerVersion < 5)
-				nla->status = nla_encrypt_public_key_echo(nla);
-			else
-				nla->status = nla_encrypt_public_key_hash(nla);
-
-			if (nla->status != SEC_E_OK)
-				goto fail;
-
-			rc = 1;
-		}
-
-	fail:
-		sspi_SecBufferFree(&inputBuffer);
-		sspi_SecBufferFree(&outputBuffer);
-		if (rc < 0)
-		{
-			res = rc;
-			goto fail_auth;
-		}
-
-		if ((nla->status != SEC_E_OK) && (nla->status != SEC_I_CONTINUE_NEEDED))
-		{
-			/* Special handling of these specific error codes as NTSTATUS_FROM_WIN32
-			   unfortunately does not map directly to the corresponding NTSTATUS values
-			 */
-			switch (GetLastError())
-			{
-				case ERROR_PASSWORD_MUST_CHANGE:
-					nla->errorCode = STATUS_PASSWORD_MUST_CHANGE;
-					break;
-
-				case ERROR_PASSWORD_EXPIRED:
-					nla->errorCode = STATUS_PASSWORD_EXPIRED;
-					break;
-
-				case ERROR_ACCOUNT_DISABLED:
-					nla->errorCode = STATUS_ACCOUNT_DISABLED;
-					break;
-
-				default:
-					nla->errorCode = NTSTATUS_FROM_WIN32(GetLastError());
-					break;
-			}
-
-			WLog_ERR(TAG, "AcceptSecurityContext status %s [0x%08" PRIX32 "]",
-			         GetSecurityStatusString(nla->status), nla->status);
-			nla_send(nla);
-			goto fail_auth; /* Access Denied */
-		}
-
-		/* send authentication token */
-		WLog_DBG(TAG, "Sending Authentication Token");
-
-		if (!nla_send(nla))
-		{
-			nla_buffer_free(nla);
-			goto fail_auth;
-		}
-
-		if (nla->status != SEC_I_CONTINUE_NEEDED)
-			break;
-
-		nla->haveContext = TRUE;
+		WLog_ERR(TAG, "CredSSP: invalid negoToken!");
+		goto fail;
 	}
 
-	/* Receive encrypted credentials */
+	outputBufferDesc.ulVersion = SECBUFFER_VERSION;
+	outputBufferDesc.cBuffers = 1;
+	outputBufferDesc.pBuffers = &outputBuffer;
 
-	if (!nla_server_recv(nla))
-		goto fail_auth;
+	if (!nla_sec_buffer_alloc(&outputBuffer, nla->cbMaxToken))
+		goto fail;
+
+	nla->status = nla->table->AcceptSecurityContext(
+	    &nla->credentials, nla->haveContext ? &nla->context : NULL, &inputBufferDesc,
+	    nla->fContextReq, SECURITY_NATIVE_DREP, &nla->context, &outputBufferDesc,
+	    &nla->pfContextAttr, &nla->expiration);
+	WLog_VRB(TAG, "AcceptSecurityContext status %s [0x%08" PRIX32 "]",
+	         GetSecurityStatusString(nla->status), nla->status);
+
+	switch (nla->status)
+	{
+		case SEC_I_COMPLETE_AND_CONTINUE:
+		case SEC_I_COMPLETE_NEEDED:
+			if (!nla_server_complete_auth(nla, &outputBufferDesc))
+				goto fail;
+			nla_set_state(nla, NLA_STATE_AUTH_INFO);
+			break;
+		case SEC_I_CONTINUE_NEEDED: /* out token -> server -> InitializeSecurityContext again */
+			nla->haveContext = TRUE;
+			if (!nla_server_send_token(nla, &outputBufferDesc))
+				goto fail;
+			nla_set_state(nla, NLA_STATE_NEGO_TOKEN);
+			break;
+		case SEC_E_NO_CREDENTIALS:
+		case SEC_I_INCOMPLETE_CREDENTIALS:
+		case SEC_E_INCOMPLETE_MESSAGE:
+		default:
+			WLog_ERR(TAG, "[%s]: return %s not handled, discarding peer", __FUNCTION__,
+			         GetSecurityStatusString(nla->status));
+			{
+				/* Special handling of these specific error codes as NTSTATUS_FROM_WIN32
+				   unfortunately does not map directly to the corresponding NTSTATUS values
+				 */
+				switch (GetLastError())
+				{
+					case ERROR_PASSWORD_MUST_CHANGE:
+						nla->errorCode = STATUS_PASSWORD_MUST_CHANGE;
+						break;
+
+					case ERROR_PASSWORD_EXPIRED:
+						nla->errorCode = STATUS_PASSWORD_EXPIRED;
+						break;
+
+					case ERROR_ACCOUNT_DISABLED:
+						nla->errorCode = STATUS_ACCOUNT_DISABLED;
+						break;
+
+					default:
+						nla->errorCode = NTSTATUS_FROM_WIN32(GetLastError());
+						break;
+				}
+
+				WLog_ERR(TAG, "AcceptSecurityContext status %s [0x%08" PRIX32 "]",
+				         GetSecurityStatusString(nla->status), nla->status);
+				if (!nla_send(nla)) /* Access Denied */
+					goto fail;
+			}
+
+			goto fail;
+	}
+
+	rc = TRUE;
+fail:
+	sspi_SecBufferFree(&inputBuffer);
+	sspi_SecBufferFree(&outputBuffer);
+	return rc;
+}
+
+static BOOL nla_server_process_pubkey_auth(rdpNla* nla)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(nla);
+
+	if (nla->status != SEC_E_OK)
+		goto fail;
+
+	nla->status = nla_query_context_sizes(nla);
+
+	if (nla->status != SEC_E_OK)
+		goto fail;
+
+	if (nla->peerVersion < 5)
+		nla->status = nla_decrypt_public_key_echo(nla);
+	else
+		nla->status = nla_decrypt_public_key_hash(nla);
+
+	if (nla->status != SEC_E_OK)
+	{
+		WLog_ERR(TAG, "Error: could not verify client's public key echo %s [0x%08" PRIX32 "]",
+		         GetSecurityStatusString(nla->status), nla->status);
+		goto fail;
+	}
+
+	if (nla->peerVersion < 5)
+		nla->status = nla_encrypt_public_key_echo(nla);
+	else
+		nla->status = nla_encrypt_public_key_hash(nla);
+
+	if (nla->status != SEC_E_OK)
+		goto fail;
+
+	rc = TRUE;
+
+fail:
+	return rc;
+}
+
+static BOOL nla_server_process_auth_info(rdpNla* nla)
+{
+	BOOL rc = FALSE;
+	WINPR_ASSERT(nla);
+
+	if (nla->status != SEC_E_OK)
+		return FALSE;
 
 	nla->status = nla_decrypt_ts_credentials(nla);
 
@@ -1742,8 +1734,83 @@ static int nla_server_authenticate(rdpNla* nla)
 		}
 	}
 
-	res = 1;
+	rc = TRUE;
+
 fail_auth:
+	return rc;
+}
+
+/**
+ * Authenticate with client using CredSSP (server).
+ * @param credssp
+ * @return 1 if authentication is successful
+ */
+
+static BOOL nla_server_authenticate(rdpNla* nla)
+{
+	BOOL res = FALSE;
+
+	WINPR_ASSERT(nla);
+
+	if (!nla_server_init(nla))
+		goto fail;
+
+	/* Client is starting, here es the state machine:
+	 *
+	 *  -- NLA_STATE_INITIAL	--> NLA_STATE_INITIAL
+	 * ----->> sending...
+	 *    ----->> protocol version 6
+	 *    ----->> nego token
+	 *    ----->> client nonce
+	 * <<----- receiving...
+	 *    <<----- protocol version 6
+	 *    <<----- nego token
+	 * ----->> sending...
+	 *    ----->> protocol version 6
+	 *    ----->> nego token
+	 *    ----->> public key auth
+	 *    ----->> client nonce
+	 * -- NLA_STATE_NEGO_TOKEN	--> NLA_STATE_PUB_KEY_AUTH
+	 * <<----- receiving...
+	 *    <<----- protocol version 6
+	 *    <<----- public key info
+	 * ----->> sending...
+	 *    ----->> protocol version 6
+	 *    ----->> auth info
+	 *    ----->> client nonce
+	 * -- NLA_STATE_PUB_KEY_AUTH	--> NLA_STATE
+	 */
+
+	while (nla_get_state(nla) != NLA_STATE_FINAL)
+	{
+		if (nla_server_recv(nla) < 0)
+			goto fail;
+
+		switch (nla_get_state(nla))
+		{
+			case NLA_STATE_INITIAL: /* Receive token and client nonce */
+				if (!nla_server_process_nego_token(nla))
+					goto fail;
+				break;
+			case NLA_STATE_NEGO_TOKEN: /* Receive token and client nonce */
+				if (!nla_server_process_nego_token(nla))
+					goto fail;
+				break;
+			case NLA_STATE_PUB_KEY_AUTH: /* Receive auth info, client nonce */
+				if (!nla_server_process_pubkey_auth(nla))
+					goto fail;
+				break;
+			case NLA_STATE_AUTH_INFO:
+				if (!nla_server_process_auth_info(nla))
+					goto fail;
+				break;
+			default:
+				goto fail;
+		}
+	}
+
+	res = TRUE;
+fail:
 	nla_buffer_free(nla);
 	return res;
 }
@@ -1754,7 +1821,7 @@ fail_auth:
  * @return 1 if authentication is successful
  */
 
-int nla_authenticate(rdpNla* nla)
+BOOL nla_authenticate(rdpNla* nla)
 {
 	WINPR_ASSERT(nla);
 

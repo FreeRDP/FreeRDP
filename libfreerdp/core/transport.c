@@ -503,7 +503,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 		transport_set_nla_mode(transport, TRUE);
 	}
 
-	if (nla_authenticate(transport->nla) < 0)
+	if (!nla_authenticate(transport->nla))
 	{
 		WLog_Print(transport->log, WLOG_ERROR, "client authentication failure");
 		transport_set_nla_mode(transport, FALSE);
