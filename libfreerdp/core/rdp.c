@@ -1090,6 +1090,8 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			break;
 
 		default:
+			WLog_WARN(TAG, "[UNHANDLED] %s Data PDU (0x%02" PRIX8 "), length: %" PRIu16 "",
+			          data_pdu_type_to_string(type), type, length);
 			break;
 	}
 
