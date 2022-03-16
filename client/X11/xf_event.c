@@ -608,7 +608,6 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 	if (app)
 	{
 		xfAppWindow* appWindow;
-		xf_rail_send_activate(xfc, event->window, TRUE);
 		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 		/* Update the server with any window changes that occurred while the window was not focused.
@@ -634,9 +633,6 @@ static BOOL xf_event_FocusOut(xfContext* xfc, const XFocusOutEvent* event, BOOL 
 		XUngrabKeyboard(xfc->display, CurrentTime);
 
 	xf_keyboard_release_all_keypress(xfc);
-
-	if (app)
-		xf_rail_send_activate(xfc, event->window, FALSE);
 
 	return TRUE;
 }
