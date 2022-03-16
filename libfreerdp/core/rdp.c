@@ -2043,3 +2043,15 @@ BOOL rdp_set_io_callbacks(rdpRdp* rdp, const rdpTransportIo* io_callbacks)
 	}
 	return TRUE;
 }
+
+BOOL rdp_set_io_callback_context(rdpRdp* rdp, void* usercontext)
+{
+	WINPR_ASSERT(rdp);
+	rdp->ioContext = usercontext;
+}
+
+void* rdp_get_io_callback_context(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+	return rdp->ioContext;
+}
