@@ -1346,7 +1346,7 @@ static BOOL filter_smartcard_device_list_remove(pf_channel_server_context* rdpdr
 		Stream_Read_UINT32(s, deviceID);
 		if (deviceID == SCARD_DEVICE_ID)
 		{
-			ArrayList_Remove(rdpdr->blockedDevices, (void*)deviceID);
+			ArrayList_Remove(rdpdr->blockedDevices, (void*)(size_t)deviceID);
 
 			/* This is the only device, filter it! */
 			if (count == 1)
@@ -1371,7 +1371,7 @@ static BOOL filter_smartcard_device_io_request(pf_channel_server_context* rdpdr,
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 	Stream_Read_UINT32(s, DeviceID);
-	return ArrayList_Contains(rdpdr->blockedDevices, (void*)DeviceID);
+	return ArrayList_Contains(rdpdr->blockedDevices, (void*)(size_t)DeviceID);
 }
 
 static BOOL filter_smartcard_device_list_announce(pf_channel_server_context* rdpdr, wStream* s)
@@ -1404,7 +1404,7 @@ static BOOL filter_smartcard_device_list_announce(pf_channel_server_context* rdp
 			return TRUE;
 		if (DeviceType == RDPDR_DTYP_SMARTCARD)
 		{
-			ArrayList_Append(rdpdr->blockedDevices, (void*)DeviceId);
+			ArrayList_Append(rdpdr->blockedDevices, (void*)(size_t)DeviceId);
 			if (count == 1)
 				return TRUE;
 
