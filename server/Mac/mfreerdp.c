@@ -63,7 +63,7 @@ static void mf_server_main_loop(freerdp_listener* instance)
 			break;
 		}
 
-		status = WaitForMultipleObjects(handles, count, FALSE, INFINITE);
+		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForMultipleObjects failed");
