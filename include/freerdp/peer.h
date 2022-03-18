@@ -72,6 +72,7 @@ typedef int (*psPeerVirtualChannelWrite)(freerdp_peer* peer, HANDLE hChannel, co
                                          UINT32 length);
 typedef void* (*psPeerVirtualChannelGetData)(freerdp_peer* peer, HANDLE hChannel);
 typedef int (*psPeerVirtualChannelSetData)(freerdp_peer* peer, HANDLE hChannel, void* data);
+typedef BOOL (*psPeerSetState)(freerdp_peer* peer, CONNECTION_STATE state);
 
 /** @brief the result of the license callback */
 typedef enum
@@ -151,6 +152,18 @@ struct rdp_freerdp_peer
 	ALIGN64 psPeerLicenseCallback LicenseCallback;
 
 	ALIGN64 psPeerSendChannelPacket SendChannelPacket;
+
+	/**
+	 * @brief SetState Function pointer allowing to manually set the state of the
+	 * internal state machine.
+	 *
+	 * This is useful if certain parts of a RDP connection must be skipped (e.g.
+	 * when replaying a RDP connection dump the authentication/negotiate parts
+	 * must be skipped)
+	 *
+	 * \note Must be called after \b Initialize as that also modifies the state.
+	 */
+	ALIGN64 psPeerSetState SetState;
 };
 
 #ifdef __cplusplus
