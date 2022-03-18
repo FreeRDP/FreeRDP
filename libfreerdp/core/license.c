@@ -467,10 +467,7 @@ int license_recv(rdpLicense* license, wStream* s)
 	UINT16 securityFlags = 0;
 
 	if (!rdp_read_header(license->rdp, s, &length, &channelId))
-	{
-		WLog_ERR(TAG, "Incorrect RDP header.");
 		return -1;
-	}
 
 	if (!rdp_read_security_header(s, &securityFlags, &length))
 		return -1;

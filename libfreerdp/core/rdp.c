@@ -26,6 +26,7 @@
 
 #include "info.h"
 #include "utils.h"
+#include "mcs.h"
 #include "redirection.h"
 
 #include <freerdp/crypto/per.h>
@@ -405,8 +406,8 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	BYTE code;
 	BYTE choice;
 	UINT16 initiator;
-	enum DomainMCSPDU MCSPDU;
-	enum DomainMCSPDU domainMCSPDU;
+	DomainMCSPDU MCSPDU;
+	DomainMCSPDU domainMCSPDU;
 	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataRequest
 	                                     : DomainMCSPDU_SendDataIndication;
 
@@ -425,27 +426,40 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 			return TRUE;
 		}
 
+		WLog_WARN(TAG, "Unexpected X224 TPDU type %s [%08" PRIx32 "] instead of %s",
+		          tpdu_type_to_string(code), code, tpdu_type_to_string(X224_TPDU_DATA));
 		return FALSE;
 	}
 
 	if (!per_read_choice(s, &choice))
 		return FALSE;
 
-	domainMCSPDU = (enum DomainMCSPDU)(choice >> 2);
+	domainMCSPDU = (DomainMCSPDU)(choice >> 2);
 
 	if (domainMCSPDU != MCSPDU)
 	{
 		if (domainMCSPDU != DomainMCSPDU_DisconnectProviderUltimatum)
+		{
+			WLog_WARN(TAG, "Received %s instead of %s", mcs_domain_pdu_string(domainMCSPDU),
+			          mcs_domain_pdu_string(MCSPDU));
 			return FALSE;
+		}
 	}
 
 	MCSPDU = domainMCSPDU;
 
 	if (*length < 8U)
+	{
+		WLog_WARN(TAG, "TPDU invalid length, got %" PRIu16 ", expected at least 8", *length);
 		return FALSE;
+	}
 
 	if ((*length - 8U) > Stream_GetRemainingLength(s))
+	{
+		WLog_WARN(TAG, "TPDU invalid length, got %" PRIuz ", expected %" PRIu16,
+		          Stream_GetRemainingLength(s), *length - 8);
 		return FALSE;
+	}
 
 	if (MCSPDU == DomainMCSPDU_DisconnectProviderUltimatum)
 	{
@@ -486,7 +500,11 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	}
 
 	if (Stream_GetRemainingLength(s) < 5)
+	{
+		WLog_WARN(TAG, "TPDU packet short length, got %" PRIuz ", expected at least 5",
+		          Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	if (!per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
 		return FALSE;
@@ -500,7 +518,11 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 		return FALSE;
 
 	if (*length > Stream_GetRemainingLength(s))
+	{
+		WLog_WARN(TAG, "TPDU invalid length, got %" PRIuz ", expected %" PRIu16,
+		          Stream_GetRemainingLength(s), *length);
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -516,7 +538,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 {
 	int body_length;
-	enum DomainMCSPDU MCSPDU;
+	DomainMCSPDU MCSPDU;
 	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataIndication
 	                                     : DomainMCSPDU_SendDataRequest;
 
@@ -1323,10 +1345,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 securityFlags = 0;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
-	{
-		WLog_ERR(TAG, "Incorrect RDP header.");
 		return -1;
-	}
 
 	if (freerdp_shall_disconnect(rdp->instance))
 		return 0;
@@ -1809,6 +1828,7 @@ rdpRdp* rdp_new(rdpContext* context)
 		rdp->settings = context->settings;
 	rdp->settings->instance = context->instance;
 
+	context->settings = rdp->settings;
 	if (context->instance)
 		context->settings->instance = context->instance;
 	else if (context->peer)
@@ -2048,6 +2068,7 @@ BOOL rdp_set_io_callback_context(rdpRdp* rdp, void* usercontext)
 {
 	WINPR_ASSERT(rdp);
 	rdp->ioContext = usercontext;
+	return TRUE;
 }
 
 void* rdp_get_io_callback_context(rdpRdp* rdp)
