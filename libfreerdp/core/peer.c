@@ -216,6 +216,13 @@ static int freerdp_peer_virtual_channel_set_data(freerdp_peer* client, HANDLE hC
 	return 1;
 }
 
+static BOOL freerdp_peer_set_state(freerdp_peer* client, CONNECTION_STATE state)
+{
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->context);
+	return rdp_server_transition_to_state(client->context->rdp, state) >= 0;
+}
+
 static BOOL freerdp_peer_initialize(freerdp_peer* client)
 {
 	rdpRdp* rdp;
@@ -233,7 +240,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 	settings->ServerMode = TRUE;
 	settings->FrameAcknowledge = 0;
 	settings->LocalConnection = client->local;
-	rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL);
+	rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CONNECT);
 
 	if (settings->RdpKeyFile)
 	{
@@ -978,6 +985,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		client->VirtualChannelRead = NULL; /* must be defined by server application */
 		client->VirtualChannelGetData = freerdp_peer_virtual_channel_get_data;
 		client->VirtualChannelSetData = freerdp_peer_virtual_channel_set_data;
+		client->SetState = freerdp_peer_set_state;
 	}
 
 	return client;
