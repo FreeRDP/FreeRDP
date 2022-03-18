@@ -75,7 +75,11 @@ static void tpdu_write_header(wStream* s, UINT16 length, BYTE code);
 BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li, UINT16 tpktlength)
 {
 	if (Stream_GetRemainingLength(s) < 3)
+	{
+		WLog_WARN(TAG, "tpdu invalid data, got %" PRIuz ", require at least 3 more",
+		          Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, *li);   /* LI */
 	Stream_Read_UINT8(s, *code); /* Code */
@@ -245,4 +249,23 @@ BOOL tpdu_read_data(wStream* s, UINT16* LI, UINT16 tpktlength)
 	*LI = li;
 
 	return TRUE;
+}
+
+const char* tpdu_type_to_string(int type)
+{
+	switch (type)
+	{
+		case X224_TPDU_CONNECTION_REQUEST:
+			return "X224_TPDU_CONNECTION_REQUEST";
+		case X224_TPDU_CONNECTION_CONFIRM:
+			return "X224_TPDU_CONNECTION_CONFIRM";
+		case X224_TPDU_DISCONNECT_REQUEST:
+			return "X224_TPDU_DISCONNECT_REQUEST";
+		case X224_TPDU_DATA:
+			return "X224_TPDU_DATA";
+		case X224_TPDU_ERROR:
+			return "X224_TPDU_ERROR";
+		default:
+			return "X224_TPDU_UNKNOWN";
+	}
 }

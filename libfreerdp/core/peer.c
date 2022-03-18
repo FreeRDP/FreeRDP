@@ -220,7 +220,7 @@ static BOOL freerdp_peer_set_state(freerdp_peer* client, CONNECTION_STATE state)
 {
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
-	return rdp_server_transition_to_state(client->context->rdp, state) >= 0;
+	return rdp_server_transition_to_state(client->context->rdp, state);
 }
 
 static BOOL freerdp_peer_initialize(freerdp_peer* client)
@@ -431,10 +431,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	WINPR_ASSERT(settings);
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
-	{
-		WLog_ERR(TAG, "Incorrect RDP header.");
 		return -1;
-	}
 
 	rdp->inPackets++;
 	if (freerdp_shall_disconnect(rdp->instance))

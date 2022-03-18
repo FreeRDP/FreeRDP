@@ -21,6 +21,8 @@
 
 #include <freerdp/crypto/per.h>
 
+#include <freerdp/log.h>
+#define TAG FREERDP_TAG("crypto.per")
 /**
  * Read PER length.
  * @param s stream
@@ -33,14 +35,22 @@ BOOL per_read_length(wStream* s, UINT16* length)
 	BYTE byte;
 
 	if (Stream_GetRemainingLength(s) < 1)
+	{
+		WLog_WARN(TAG, "PER length invalid data, got %" PRIuz ", require at least 1 more",
+		          Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x80)
 	{
 		if (Stream_GetRemainingLength(s) < 1)
+		{
+			WLog_WARN(TAG, "PER length invalid data, got %" PRIuz ", require at least 1 more",
+			          Stream_GetRemainingLength(s));
 			return FALSE;
+		}
 
 		byte &= ~(0x80);
 		*length = (byte << 8);
@@ -88,7 +98,11 @@ BOOL per_write_length(wStream* s, UINT16 length)
 BOOL per_read_choice(wStream* s, BYTE* choice)
 {
 	if (Stream_GetRemainingLength(s) < 1)
+	{
+		WLog_WARN(TAG, "PER choice invalid data, got %" PRIuz ", require at least 1 more",
+		          Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, *choice);
 	return TRUE;
@@ -272,12 +286,20 @@ BOOL per_write_integer(wStream* s, UINT32 integer)
 BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
 {
 	if (Stream_GetRemainingLength(s) < 2)
+	{
+		WLog_WARN(TAG, "PER uint16 invalid data, got %" PRIuz ", require at least 2",
+		          Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT16_BE(s, *integer);
 
-	if (*integer + min > 0xFFFF)
+	if (*integer > UINT16_MAX - min)
+	{
+		WLog_WARN(TAG, "PER uint16 invalid value %" PRIu16 " > %" PRIu16, *integer,
+		          UINT16_MAX - min);
 		return FALSE;
+	}
 
 	*integer += min;
 

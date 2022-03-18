@@ -190,6 +190,102 @@ static const char* const mcs_result_enumerated[] =
 };
 */
 
+const char* mcs_domain_pdu_string(DomainMCSPDU pdu)
+{
+	switch (pdu)
+	{
+		case DomainMCSPDU_PlumbDomainIndication:
+			return "DomainMCSPDU_PlumbDomainIndication";
+		case DomainMCSPDU_ErectDomainRequest:
+			return "DomainMCSPDU_ErectDomainRequest";
+		case DomainMCSPDU_MergeChannelsRequest:
+			return "DomainMCSPDU_MergeChannelsRequest";
+		case DomainMCSPDU_MergeChannelsConfirm:
+			return "DomainMCSPDU_MergeChannelsConfirm";
+		case DomainMCSPDU_PurgeChannelsIndication:
+			return "DomainMCSPDU_PurgeChannelsIndication";
+		case DomainMCSPDU_MergeTokensRequest:
+			return "DomainMCSPDU_MergeTokensRequest";
+		case DomainMCSPDU_MergeTokensConfirm:
+			return "DomainMCSPDU_MergeTokensConfirm";
+		case DomainMCSPDU_PurgeTokensIndication:
+			return "DomainMCSPDU_PurgeTokensIndication";
+		case DomainMCSPDU_DisconnectProviderUltimatum:
+			return "DomainMCSPDU_DisconnectProviderUltimatum";
+		case DomainMCSPDU_RejectMCSPDUUltimatum:
+			return "DomainMCSPDU_RejectMCSPDUUltimatum";
+		case DomainMCSPDU_AttachUserRequest:
+			return "DomainMCSPDU_AttachUserRequest";
+		case DomainMCSPDU_AttachUserConfirm:
+			return "DomainMCSPDU_AttachUserConfirm";
+		case DomainMCSPDU_DetachUserRequest:
+			return "DomainMCSPDU_DetachUserRequest";
+		case DomainMCSPDU_DetachUserIndication:
+			return "DomainMCSPDU_DetachUserIndication";
+		case DomainMCSPDU_ChannelJoinRequest:
+			return "DomainMCSPDU_ChannelJoinRequest";
+		case DomainMCSPDU_ChannelJoinConfirm:
+			return "DomainMCSPDU_ChannelJoinConfirm";
+		case DomainMCSPDU_ChannelLeaveRequest:
+			return "DomainMCSPDU_ChannelLeaveRequest";
+		case DomainMCSPDU_ChannelConveneRequest:
+			return "DomainMCSPDU_ChannelConveneRequest";
+		case DomainMCSPDU_ChannelConveneConfirm:
+			return "DomainMCSPDU_ChannelConveneConfirm";
+		case DomainMCSPDU_ChannelDisbandRequest:
+			return "DomainMCSPDU_ChannelDisbandRequest";
+		case DomainMCSPDU_ChannelDisbandIndication:
+			return "DomainMCSPDU_ChannelDisbandIndication";
+		case DomainMCSPDU_ChannelAdmitRequest:
+			return "DomainMCSPDU_ChannelAdmitRequest";
+		case DomainMCSPDU_ChannelAdmitIndication:
+			return "DomainMCSPDU_ChannelAdmitIndication";
+		case DomainMCSPDU_ChannelExpelRequest:
+			return "DomainMCSPDU_ChannelExpelRequest";
+		case DomainMCSPDU_ChannelExpelIndication:
+			return "DomainMCSPDU_ChannelExpelIndication";
+		case DomainMCSPDU_SendDataRequest:
+			return "DomainMCSPDU_SendDataRequest";
+		case DomainMCSPDU_SendDataIndication:
+			return "DomainMCSPDU_SendDataIndication";
+		case DomainMCSPDU_UniformSendDataRequest:
+			return "DomainMCSPDU_UniformSendDataRequest";
+		case DomainMCSPDU_UniformSendDataIndication:
+			return "DomainMCSPDU_UniformSendDataIndication";
+		case DomainMCSPDU_TokenGrabRequest:
+			return "DomainMCSPDU_TokenGrabRequest";
+		case DomainMCSPDU_TokenGrabConfirm:
+			return "DomainMCSPDU_TokenGrabConfirm";
+		case DomainMCSPDU_TokenInhibitRequest:
+			return "DomainMCSPDU_TokenInhibitRequest";
+		case DomainMCSPDU_TokenInhibitConfirm:
+			return "DomainMCSPDU_TokenInhibitConfirm";
+		case DomainMCSPDU_TokenGiveRequest:
+			return "DomainMCSPDU_TokenGiveRequest";
+		case DomainMCSPDU_TokenGiveIndication:
+			return "DomainMCSPDU_TokenGiveIndication";
+		case DomainMCSPDU_TokenGiveResponse:
+			return "DomainMCSPDU_TokenGiveResponse";
+		case DomainMCSPDU_TokenGiveConfirm:
+			return "DomainMCSPDU_TokenGiveConfirm";
+		case DomainMCSPDU_TokenPleaseRequest:
+			return "DomainMCSPDU_TokenPleaseRequest";
+		case DomainMCSPDU_TokenPleaseConfirm:
+			return "DomainMCSPDU_TokenPleaseConfirm";
+		case DomainMCSPDU_TokenReleaseRequest:
+			return "DomainMCSPDU_TokenReleaseRequest";
+		case DomainMCSPDU_TokenReleaseConfirm:
+			return "DomainMCSPDU_TokenReleaseConfirm";
+		case DomainMCSPDU_TokenTestRequest:
+			return "DomainMCSPDU_TokenTestRequest";
+		case DomainMCSPDU_TokenTestConfirm:
+			return "DomainMCSPDU_TokenTestConfirm";
+		case DomainMCSPDU_enum_length:
+			return "DomainMCSPDU_enum_length";
+		default:
+			return "DomainMCSPDU_UNKNOWN";
+	};
+}
 static BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
                                         DomainParameters* minimumParameters,
                                         DomainParameters* maximumParameters,
@@ -197,8 +293,8 @@ static BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 
 static BOOL mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData);
 static BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData);
-static BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU,
-                                          UINT16* length);
+static BOOL mcs_read_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16* length,
+                                          DomainMCSPDU* actual);
 
 static int mcs_initialize_client_channels(rdpMcs* mcs, const rdpSettings* settings)
 {
@@ -235,11 +331,15 @@ static int mcs_initialize_client_channels(rdpMcs* mcs, const rdpSettings* settin
  * @return
  */
 
-BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU, UINT16* length)
+BOOL mcs_read_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16* length,
+                                   DomainMCSPDU* actual)
 {
 	UINT16 li;
 	BYTE choice;
-	enum DomainMCSPDU MCSPDU;
+	DomainMCSPDU MCSPDU;
+
+	if (actual)
+		*actual = DomainMCSPDU_invalid;
 
 	if (!s || !domainMCSPDU || !length)
 		return FALSE;
@@ -250,15 +350,19 @@ BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU, 
 	if (!tpdu_read_data(s, &li, *length))
 		return FALSE;
 
-	MCSPDU = *domainMCSPDU;
-
 	if (!per_read_choice(s, &choice))
 		return FALSE;
 
-	*domainMCSPDU = (choice >> 2);
+	MCSPDU = (choice >> 2);
+	if (actual)
+		*actual = MCSPDU;
 
-	if (*domainMCSPDU != MCSPDU)
+	if (domainMCSPDU != MCSPDU)
+	{
+		WLog_ERR(TAG, "Expected MCS %s, got %s", mcs_domain_pdu_string(domainMCSPDU),
+		         mcs_domain_pdu_string(MCSPDU));
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -270,7 +374,7 @@ BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU, 
  * @param length TPKT length
  */
 
-void mcs_write_domain_mcspdu_header(wStream* s, enum DomainMCSPDU domainMCSPDU, UINT16 length,
+void mcs_write_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16 length,
                                     BYTE options)
 {
 	tpkt_write_header(s, length);
@@ -682,7 +786,7 @@ out:
  * @param mcs mcs module
  */
 
-BOOL mcs_send_connect_initial(rdpMcs* mcs)
+static BOOL mcs_send_connect_initial(rdpMcs* mcs)
 {
 	int status = -1;
 	size_t length;
@@ -880,14 +984,11 @@ BOOL mcs_recv_erect_domain_request(rdpMcs* mcs, wStream* s)
 	UINT16 length;
 	UINT32 subHeight;
 	UINT32 subInterval;
-	enum DomainMCSPDU MCSPDU;
 
 	if (!mcs || !s)
 		return FALSE;
 
-	MCSPDU = DomainMCSPDU_ErectDomainRequest;
-
-	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, &length))
+	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_ErectDomainRequest, &length, NULL))
 		return FALSE;
 
 	if (!per_read_integer(s, &subHeight)) /* subHeight (INTEGER) */
@@ -941,13 +1042,11 @@ BOOL mcs_send_erect_domain_request(rdpMcs* mcs)
 BOOL mcs_recv_attach_user_request(rdpMcs* mcs, wStream* s)
 {
 	UINT16 length;
-	enum DomainMCSPDU MCSPDU;
 
 	if (!mcs || !s)
 		return FALSE;
 
-	MCSPDU = DomainMCSPDU_AttachUserRequest;
-	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, &length))
+	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_AttachUserRequest, &length, NULL))
 		return FALSE;
 	return tpkt_ensure_stream_consumed(s, length);
 }
@@ -992,13 +1091,11 @@ BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, wStream* s)
 {
 	BYTE result;
 	UINT16 length;
-	enum DomainMCSPDU MCSPDU;
 
 	if (!mcs || !s)
 		return FALSE;
 
-	MCSPDU = DomainMCSPDU_AttachUserConfirm;
-	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, &length))
+	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_AttachUserConfirm, &length, NULL))
 		return FALSE;
 	if (!per_read_enumerated(s, &result, MCS_Result_enum_length)) /* result */
 		return FALSE;
@@ -1051,13 +1148,11 @@ BOOL mcs_recv_channel_join_request(rdpMcs* mcs, wStream* s, UINT16* channelId)
 {
 	UINT16 length;
 	UINT16 userId;
-	enum DomainMCSPDU MCSPDU;
 
 	if (!mcs || !s || !channelId)
 		return FALSE;
 
-	MCSPDU = DomainMCSPDU_ChannelJoinRequest;
-	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, &length))
+	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinRequest, &length, NULL))
 		return FALSE;
 
 	if (!per_read_integer16(s, &userId, MCS_BASE_CHANNEL_ID) && (userId == mcs->userId))
@@ -1113,13 +1208,11 @@ BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId)
 	BYTE result;
 	UINT16 initiator;
 	UINT16 requested;
-	enum DomainMCSPDU MCSPDU;
 
 	if (!mcs || !s || !channelId)
 		return FALSE;
 
-	MCSPDU = DomainMCSPDU_ChannelJoinConfirm;
-	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, &length))
+	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinConfirm, &length, NULL))
 		return FALSE;
 
 	if (!per_read_enumerated(s, &result, MCS_Result_enum_length)) /* result */
@@ -1257,6 +1350,8 @@ BOOL mcs_client_begin(rdpMcs* mcs)
 	if (!context)
 		return FALSE;
 
+	/* First transition state, we need this to trigger session recording */
+	rdp_client_transition_to_state(context->rdp, CONNECTION_STATE_MCS_CONNECT);
 	if (!mcs_send_connect_initial(mcs))
 	{
 		freerdp_set_last_error_if_not(context, FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR);
@@ -1265,7 +1360,6 @@ BOOL mcs_client_begin(rdpMcs* mcs)
 		return FALSE;
 	}
 
-	rdp_client_transition_to_state(context->rdp, CONNECTION_STATE_MCS_CONNECT);
 	return TRUE;
 }
 

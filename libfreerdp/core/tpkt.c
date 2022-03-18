@@ -89,7 +89,11 @@ BOOL tpkt_read_header(wStream* s, UINT16* length)
 	BYTE version;
 
 	if (Stream_GetRemainingLength(s) < 1)
+	{
+		WLog_WARN(TAG, "tpkt invalid data, got %" PRIuz ", require at least 1 more",
+		          Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Peek_UINT8(s, version);
 
@@ -98,7 +102,11 @@ BOOL tpkt_read_header(wStream* s, UINT16* length)
 		size_t slen;
 		UINT16 len;
 		if (Stream_GetRemainingLength(s) < 4)
+		{
+			WLog_WARN(TAG, "tpkt invalid data, got %" PRIuz ", require at least 4 more",
+			          Stream_GetRemainingLength(s));
 			return FALSE;
+		}
 
 		Stream_Seek(s, 2);
 		Stream_Read_UINT16_BE(s, len);
