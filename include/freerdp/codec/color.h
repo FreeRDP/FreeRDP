@@ -68,6 +68,8 @@
 #define PIXEL_FORMAT_BGRX32 FREERDP_PIXEL_FORMAT(32, FREERDP_PIXEL_FORMAT_TYPE_BGRA, 0, 8, 8, 8)
 #define PIXEL_FORMAT_RGBA32 FREERDP_PIXEL_FORMAT(32, FREERDP_PIXEL_FORMAT_TYPE_RGBA, 8, 8, 8, 8)
 #define PIXEL_FORMAT_RGBX32 FREERDP_PIXEL_FORMAT(32, FREERDP_PIXEL_FORMAT_TYPE_RGBA, 0, 8, 8, 8)
+#define PIXEL_FORMAT_BGRX32_DEPTH30 FREERDP_PIXEL_FORMAT(32, FREERDP_PIXEL_FORMAT_TYPE_BGRA, 0, 10, 10, 10)
+#define PIXEL_FORMAT_RGBX32_DEPTH30 FREERDP_PIXEL_FORMAT(32, FREERDP_PIXEL_FORMAT_TYPE_RGBA, 0, 10, 10, 10)
 
 /* 24bpp formats */
 #define PIXEL_FORMAT_RGB24 FREERDP_PIXEL_FORMAT(24, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 0, 8, 8, 8)
@@ -148,6 +150,12 @@ extern "C"
 
 			case PIXEL_FORMAT_RGBX32:
 				return "PIXEL_FORMAT_RGBX32";
+
+			case PIXEL_FORMAT_BGRX32_DEPTH30:
+				return "PIXEL_FORMAT_BGRX32_DEPTH30";
+
+			case PIXEL_FORMAT_RGBX32_DEPTH30:
+				return "PIXEL_FORMAT_RGBX32_DEPTH30";
 
 			/* 24bpp formats */
 			case PIXEL_FORMAT_RGB24:
@@ -607,6 +615,7 @@ extern "C"
 		UINT32 _g = g;
 		UINT32 _b = b;
 		UINT32 _a = a;
+		UINT32 t;
 
 		switch (format)
 		{
@@ -634,6 +643,18 @@ extern "C"
 
 			case PIXEL_FORMAT_BGRX32:
 				return (_b << 24) | (_g << 16) | (_r << 8) | _a;
+
+			case PIXEL_FORMAT_RGBX32_DEPTH30:
+				// TODO: Not tested
+				t = (_r << 22) | (_g << 12) | (_b << 2);
+				// NOTE: Swapping byte-order because WriteColor written UINT32 in big-endian
+				return ((t & 0xff) << 24) | (((t >> 8) & 0xff) << 16) | (((t >> 16) & 0xff) << 8) | (t >> 24);
+
+			case PIXEL_FORMAT_BGRX32_DEPTH30:
+				// NOTE: Swapping b and r channel (unknown reason)
+				t = (_r << 22) | (_g << 12) | (_b << 2);
+				// NOTE: Swapping byte-order because WriteColor written UINT32 in big-endian
+				return ((t & 0xff) << 24) | (((t >> 8) & 0xff) << 16) | (((t >> 16) & 0xff) << 8) | (t >> 24);
 
 			/* 24bpp formats */
 			case PIXEL_FORMAT_RGB24:

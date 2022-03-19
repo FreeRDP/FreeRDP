@@ -733,6 +733,8 @@ UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned)
 
 	if (xfc->depth == 32)
 		DstFormat = (!invert) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_BGRA32;
+	else if (xfc->depth == 30)
+		DstFormat = (!invert) ? PIXEL_FORMAT_RGBX32_DEPTH30 : PIXEL_FORMAT_BGRX32_DEPTH30;
 	else if (xfc->depth == 24)
 	{
 		if (aligned)
