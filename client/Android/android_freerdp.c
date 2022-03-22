@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <winpr/assert.h>
+
 #include <freerdp/graphics.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/gdi/gdi.h>
@@ -121,7 +123,7 @@ static BOOL android_end_paint(rdpContext* context)
 	if (!ctx || !context->instance)
 		return FALSE;
 
-	settings = context->instance->settings;
+	settings = context->settings;
 
 	if (!settings)
 		return FALSE;
@@ -183,10 +185,10 @@ static BOOL android_pre_connect(freerdp* instance)
 	int rc;
 	rdpSettings* settings;
 
-	if (!instance)
+	if (!instance || !instance->context)
 		return FALSE;
 
-	settings = instance->settings;
+	settings = instance->context->settings;
 
 	if (!settings)
 		return FALSE;
@@ -209,7 +211,7 @@ static BOOL android_pre_connect(freerdp* instance)
 		return FALSE;
 	}
 
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!freerdp_client_load_addins(instance->context->channels, instance->context->settings))
 	{
 		WLog_ERR(TAG, "Failed to load addins [%l08X]", GetLastError());
 		return FALSE;
@@ -288,11 +290,14 @@ static BOOL android_post_connect(freerdp* instance)
 	rdpSettings* settings;
 	rdpUpdate* update;
 
-	if (!instance || !instance->settings || !instance->context || !instance->update)
+	if (!instance || !instance->context)
 		return FALSE;
 
-	update = instance->update;
-	settings = instance->settings;
+	update = instance->context->update;
+	WINPR_ASSERT(update);
+
+	settings = instance->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (!gdi_init(instance, PIXEL_FORMAT_RGBX32))
 		return FALSE;
@@ -300,9 +305,9 @@ static BOOL android_post_connect(freerdp* instance)
 	if (!android_register_pointer(instance->context->graphics))
 		return FALSE;
 
-	instance->update->BeginPaint = android_begin_paint;
-	instance->update->EndPaint = android_end_paint;
-	instance->update->DesktopResize = android_desktop_resize;
+	update->BeginPaint = android_begin_paint;
+	update->EndPaint = android_end_paint;
+	update->DesktopResize = android_desktop_resize;
 	freerdp_callback("OnSettingsChanged", "(JIII)V", (jlong)instance, settings->DesktopWidth,
 	                 settings->DesktopHeight, settings->ColorDepth);
 	freerdp_callback("OnConnectionSuccess", "(J)V", (jlong)instance);
@@ -708,7 +713,8 @@ static jboolean JNICALL jni_freerdp_parse_arguments(JNIEnv* env, jclass cls, jlo
 		(*env)->ReleaseStringUTFChars(env, str, raw);
 	}
 
-	status = freerdp_client_settings_parse_command_line(inst->settings, count, argv, FALSE);
+	status =
+	    freerdp_client_settings_parse_command_line(inst->context->settings, count, argv, FALSE);
 
 	for (i = 0; i < count; i++)
 		free(argv[i]);

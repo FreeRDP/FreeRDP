@@ -80,31 +80,37 @@ static ANDROID_EVENT* android_pop_event(ANDROID_EVENT_QUEUE* queue)
 
 static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 {
-	ANDROID_EVENT* event;
-	rdpContext* context = inst->context;
-	androidContext* afc = (androidContext*)context;
+	rdpContext* context;
+
+	WINPR_ASSERT(queue);
+	WINPR_ASSERT(inst);
+
+	context = inst->context;
+	WINPR_ASSERT(context);
 
 	while (android_peek_event(queue))
 	{
-		event = android_pop_event(queue);
+		androidContext* afc = (androidContext*)context;
+		ANDROID_EVENT* event = android_pop_event(queue);
 
 		if (event->type == EVENT_TYPE_KEY)
 		{
 			ANDROID_EVENT_KEY* key_event = (ANDROID_EVENT_KEY*)event;
-			inst->input->KeyboardEvent(inst->input, key_event->flags, key_event->scancode);
+			context->input->KeyboardEvent(context->input, key_event->flags, key_event->scancode);
 			android_event_free((ANDROID_EVENT*)key_event);
 		}
 		else if (event->type == EVENT_TYPE_KEY_UNICODE)
 		{
 			ANDROID_EVENT_KEY* key_event = (ANDROID_EVENT_KEY*)event;
-			inst->input->UnicodeKeyboardEvent(inst->input, key_event->flags, key_event->scancode);
+			context->input->UnicodeKeyboardEvent(context->input, key_event->flags,
+			                                     key_event->scancode);
 			android_event_free((ANDROID_EVENT*)key_event);
 		}
 		else if (event->type == EVENT_TYPE_CURSOR)
 		{
 			ANDROID_EVENT_CURSOR* cursor_event = (ANDROID_EVENT_CURSOR*)event;
-			inst->input->MouseEvent(inst->input, cursor_event->flags, cursor_event->x,
-			                        cursor_event->y);
+			context->input->MouseEvent(context->input, cursor_event->flags, cursor_event->x,
+			                           cursor_event->y);
 			android_event_free((ANDROID_EVENT*)cursor_event);
 		}
 		else if (event->type == EVENT_TYPE_CLIPBOARD)
