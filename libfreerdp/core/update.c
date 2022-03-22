@@ -3043,6 +3043,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	if (!update)
 		return NULL;
 
+	update->common.context = rdp->context;
 	update->log = WLog_Get("com.freerdp.core.update");
 	InitializeCriticalSection(&(update->mux));
 	update->common.pointer = (rdpPointerUpdate*)calloc(1, sizeof(rdpPointerUpdate));

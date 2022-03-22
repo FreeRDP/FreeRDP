@@ -1800,15 +1800,15 @@ rdpRdp* rdp_new(rdpContext* context)
 
 	if (!context->settings)
 	{
-		context->settings = freerdp_settings_new(flags);
+		context->settings = rdp->settings = freerdp_settings_new(flags);
 
-		if (!context->settings)
+		if (!rdp->settings)
 			goto fail;
 	}
+	else
+		rdp->settings = context->settings;
+	rdp->settings->instance = context->instance;
 
-	rdp->settings = context->settings;
-
-	context->settings = rdp->settings;
 	if (context->instance)
 		context->settings->instance = context->instance;
 	else if (context->peer)
@@ -1870,7 +1870,7 @@ rdpRdp* rdp_new(rdpContext* context)
 	if (!rdp->redirection)
 		goto fail;
 
-	rdp->autodetect = autodetect_new();
+	rdp->autodetect = autodetect_new(rdp->context);
 
 	if (!rdp->autodetect)
 		goto fail;

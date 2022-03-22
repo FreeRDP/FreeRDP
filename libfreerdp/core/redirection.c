@@ -455,7 +455,7 @@ int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)
 	return status;
 }
 
-rdpRedirection* redirection_new()
+rdpRedirection* redirection_new(void)
 {
 	rdpRedirection* redirection;
 	redirection = (rdpRedirection*)calloc(1, sizeof(rdpRedirection));

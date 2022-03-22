@@ -97,9 +97,6 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	if (!instance)
 		return NULL;
 
-	/* Attention: This prevents rdp_new from allocating a new settings struct! */
-	instance->context->settings = pEntryPoints->settings;
-
 	instance->ContextSize = pEntryPoints->ContextSize;
 	instance->ContextNew = freerdp_client_common_new;
 	instance->ContextFree = freerdp_client_common_free;
@@ -110,7 +107,7 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 
 	CopyMemory(instance->pClientEntryPoints, pEntryPoints, pEntryPoints->Size);
 
-	if (!freerdp_context_new(instance))
+	if (!freerdp_context_new_ex(instance, pEntryPoints->settings))
 		goto out_fail2;
 
 	context = instance->context;

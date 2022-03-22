@@ -481,7 +481,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 	up = update_cast(rdp->update);
 
-	update_post_disconnect(instance->context->update);
+	update_post_disconnect(rdp->update);
 
 	IFCALL(instance->PostDisconnect, instance);
 
@@ -613,15 +613,24 @@ static wEventType FreeRDP_Events[] = {
  */
 BOOL freerdp_context_new(freerdp* instance)
 {
+	return freerdp_context_new_ex(instance, NULL);
+}
+
+BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
+{
 	rdpRdp* rdp;
 	rdpContext* context;
 	BOOL ret = TRUE;
-	instance->context = (rdpContext*)calloc(1, instance->ContextSize);
 
-	if (!instance->context)
+	WINPR_ASSERT(instance);
+
+	instance->context = context = (rdpContext*)calloc(1, instance->ContextSize);
+
+	if (!context)
 		return FALSE;
 
-	context = instance->context;
+	/* Set to external settings, prevents rdp_new from creating its own instance */
+	context->settings = settings;
 	context->instance = instance;
 	context->ServerMode = FALSE;
 	context->disconnectUltimatum = 0;

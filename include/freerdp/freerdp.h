@@ -501,6 +501,7 @@ settings but before rdp_client_connect() to have it executed after the
 	typedef struct rdp_channel_handles rdpChannelHandles;
 
 	FREERDP_API BOOL freerdp_context_new(freerdp* instance);
+	FREERDP_API BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings);
 	FREERDP_API void freerdp_context_free(freerdp* instance);
 
 	FREERDP_API BOOL freerdp_connect(freerdp* instance);

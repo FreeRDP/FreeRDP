@@ -769,6 +769,7 @@ rdpInput* input_new(rdpRdp* rdp)
 	if (!input)
 		return NULL;
 
+	input->common.context = rdp->context;
 	input->queue = MessageQueue_New(&cb);
 
 	if (!input->queue)
