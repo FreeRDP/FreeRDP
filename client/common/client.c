@@ -83,7 +83,7 @@ static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 
 /* Common API */
 
-rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
+rdpContext* freerdp_client_context_new(const RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	freerdp* instance;
 	rdpContext* context;
