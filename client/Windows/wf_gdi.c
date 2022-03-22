@@ -776,7 +776,7 @@ static BOOL wf_gdi_surface_frame_marker(rdpContext* context,
 	if (!context || !surface_frame_marker || !context->instance)
 		return FALSE;
 
-	settings = context->instance->settings;
+	settings = context->settings;
 
 	if (!settings)
 		return FALSE;
@@ -784,8 +784,7 @@ static BOOL wf_gdi_surface_frame_marker(rdpContext* context,
 	if (surface_frame_marker->frameAction == SURFACECMD_FRAMEACTION_END &&
 	    settings->FrameAcknowledge > 0)
 	{
-		IFCALL(context->instance->update->SurfaceFrameAcknowledge, context,
-		       surface_frame_marker->frameId);
+		IFCALL(context->update->SurfaceFrameAcknowledge, context, surface_frame_marker->frameId);
 	}
 
 	return TRUE;
