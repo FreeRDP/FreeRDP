@@ -359,21 +359,25 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id)
 {
 	wMessageQueue* queue = NULL;
+	rdpContext* context;
 
 	WINPR_ASSERT(instance);
+
+	context = instance->context;
+	WINPR_ASSERT(context);
 
 	switch (id)
 	{
 		case FREERDP_UPDATE_MESSAGE_QUEUE:
 		{
-			rdp_update_internal* update = update_cast(instance->update);
+			rdp_update_internal* update = update_cast(context->update);
 			queue = update->queue;
 		}
 		break;
 
 		case FREERDP_INPUT_MESSAGE_QUEUE:
 		{
-			rdp_input_internal* input = input_cast(instance->input);
+			rdp_input_internal* input = input_cast(context->input);
 			queue = input->queue;
 		}
 		break;
@@ -396,17 +400,21 @@ HANDLE freerdp_get_message_queue_event_handle(freerdp* instance, DWORD id)
 int freerdp_message_queue_process_message(freerdp* instance, DWORD id, wMessage* message)
 {
 	int status = -1;
+	rdpContext* context;
 
 	WINPR_ASSERT(instance);
+
+	context = instance->context;
+	WINPR_ASSERT(context);
 
 	switch (id)
 	{
 		case FREERDP_UPDATE_MESSAGE_QUEUE:
-			status = update_message_queue_process_message(instance->update, message);
+			status = update_message_queue_process_message(context->update, message);
 			break;
 
 		case FREERDP_INPUT_MESSAGE_QUEUE:
-			status = input_message_queue_process_message(instance->input, message);
+			status = input_message_queue_process_message(context->input, message);
 			break;
 	}
 
@@ -416,17 +424,21 @@ int freerdp_message_queue_process_message(freerdp* instance, DWORD id, wMessage*
 int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id)
 {
 	int status = -1;
+	rdpContext* context;
 
 	WINPR_ASSERT(instance);
+
+	context = instance->context;
+	WINPR_ASSERT(context);
 
 	switch (id)
 	{
 		case FREERDP_UPDATE_MESSAGE_QUEUE:
-			status = update_message_queue_process_pending_messages(instance->update);
+			status = update_message_queue_process_pending_messages(context->update);
 			break;
 
 		case FREERDP_INPUT_MESSAGE_QUEUE:
-			status = input_message_queue_process_pending_messages(instance->input);
+			status = input_message_queue_process_pending_messages(context->input);
 			break;
 	}
 
@@ -631,7 +643,9 @@ BOOL freerdp_context_new(freerdp* instance)
 		goto fail;
 
 	context->rdp = rdp;
+#if defined(WITH_FREERDP_DEPRECATED)
 	instance->input = rdp->input;
+#endif
 	instance->update = rdp->update;
 	instance->settings = rdp->settings;
 	instance->autodetect = rdp->autodetect;
@@ -641,7 +655,7 @@ BOOL freerdp_context_new(freerdp* instance)
 	if (!context->graphics)
 		goto fail;
 
-	context->input = instance->input;
+	context->input = rdp->input;
 	context->update = instance->update;
 	context->settings = instance->settings;
 	context->autodetect = rdp->autodetect;
@@ -650,7 +664,6 @@ BOOL freerdp_context_new(freerdp* instance)
 	instance->update->primary->context = instance->context;
 	instance->update->secondary->context = instance->context;
 	instance->update->altsec->context = instance->context;
-	instance->input->context = context;
 
 	if (!(context->errorDescription = calloc(1, 500)))
 	{

@@ -61,7 +61,7 @@ BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEven
 	uint32_t x, y;
 	rdpClientContext* cctx;
 
-	if (!instance || !ev || !instance->input)
+	if (!instance || !ev)
 		return FALSE;
 
 	x = ev->x;
@@ -245,7 +245,7 @@ BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev
 	wlfContext* context;
 	enum wl_pointer_axis_source source = WL_POINTER_AXIS_SOURCE_CONTINUOUS;
 
-	if (!instance || !ev || !instance->input || !instance->context)
+	if (!instance || !ev || !instance->context)
 		return FALSE;
 
 	context = (wlfContext*)instance->context;
@@ -324,13 +324,14 @@ BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
 	rdpInput* input;
 	DWORD rdp_scancode;
 
-	if (!instance || !ev || !instance->input)
+	if (!instance || !ev)
 		return FALSE;
 
+	WINPR_ASSERT(instance->context);
 	if (instance->context->settings->GrabKeyboard && ev->raw_key == KEY_RIGHTCTRL)
 		wlf_handle_ungrab_key(instance, ev);
 
-	input = instance->input;
+	input = instance->context->input;
 	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(ev->raw_key + 8);
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
@@ -352,7 +353,7 @@ BOOL wlf_handle_ungrab_key(freerdp* instance, const UwacKeyEvent* ev)
 
 BOOL wlf_keyboard_enter(freerdp* instance, const UwacKeyboardEnterLeaveEvent* ev)
 {
-	if (!instance || !ev || !instance->input)
+	if (!instance || !ev)
 		return FALSE;
 
 	((wlfContext*)instance->context)->focusing = TRUE;
@@ -365,13 +366,15 @@ BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent*
 	UINT16 syncFlags;
 	wlfContext* wlf;
 
-	if (!instance || !ev || !instance->input)
+	if (!instance || !ev)
 		return FALSE;
 
 	wlf = (wlfContext*)instance->context;
 	WINPR_ASSERT(wlf);
 
-	input = instance->input;
+	input = instance->context->input;
+	WINPR_ASSERT(input);
+
 	syncFlags = 0;
 
 	if (ev->modifiers & UWAC_MOD_CAPS_MASK)
