@@ -34,6 +34,9 @@
 #include <stdio.h>
 #include "../handle/handle.h"
 
+#define EPOCH_DIFF 11644473600LL
+#define STAT_TIME_TO_FILETIME(_t) (((UINT64)(_t) + EPOCH_DIFF) * 10000000LL)
+
 struct winpr_file
 {
 	WINPR_HANDLE_DEF();

@@ -216,6 +216,20 @@ typedef struct
 	WCHAR cAlternateFileName[14];
 } WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW;
 
+typedef struct
+{
+	DWORD dwFileAttributes;
+	FILETIME ftCreationTime;
+	FILETIME ftLastAccessTime;
+	FILETIME ftLastWriteTime;
+	DWORD dwVolumeSerialNumber;
+	DWORD nFileSizeHigh;
+	DWORD nFileSizeLow;
+	DWORD nNumberOfLinks;
+	DWORD nFileIndexHigh;
+	DWORD nFileIndexLow;
+} BY_HANDLE_FILE_INFORMATION, *PBY_HANDLE_FILE_INFORMATION, *LPBY_HANDLE_FILE_INFORMATION;
+
 typedef enum
 {
 	FindExInfoStandard,
@@ -311,6 +325,9 @@ extern "C"
 	                                    LPVOID lpFileInformation);
 
 	WINPR_API DWORD GetFileAttributesW(LPCWSTR lpFileName);
+
+	WINPR_API BOOL GetFileInformationByHandle(HANDLE hFile,
+	                                          LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
 
 	WINPR_API BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes);
 

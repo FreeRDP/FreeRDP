@@ -173,10 +173,6 @@
  * Asynchronous I/O User Guide:
  * http://code.google.com/p/kernel/wiki/AIOUserGuide
  */
-
-#define EPOCH_DIFF 11644473600LL
-#define STAT_TIME_TO_FILETIME(_t) (((UINT64)(_t) + EPOCH_DIFF) * 10000000LL)
-
 static wArrayList* _HandleCreators;
 
 static pthread_once_t _HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
@@ -535,6 +531,26 @@ DWORD WINAPI GetFileAttributesW(LPCWSTR lpFileName)
 	ret = GetFileAttributesA(lpCFileName);
 	free(lpCFileName);
 	return ret;
+}
+
+BOOL GetFileInformationByHandle(HANDLE hFile, LPBY_HANDLE_FILE_INFORMATION lpFileInformation)
+{
+	ULONG Type;
+	WINPR_HANDLE* handle;
+
+	if (hFile == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	if (!winpr_Handle_GetInfo(hFile, &Type, &handle))
+		return FALSE;
+
+	handle = (WINPR_HANDLE*)hFile;
+
+	if (handle->ops->GetFileInformationByHandle)
+		return handle->ops->GetFileInformationByHandle(handle, lpFileInformation);
+
+	WLog_ERR(TAG, "GetFileInformationByHandle operation not implemented");
+	return 0;
 }
 
 static char* append(char* buffer, size_t size, const char* append)
