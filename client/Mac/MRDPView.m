@@ -28,6 +28,7 @@
 #import "CertificateDialog.h"
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/input.h>
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
@@ -73,10 +74,17 @@ static DWORD WINAPI mac_client_thread(void *param);
 	rdpSettings *settings;
 	EmbedWindowEventArgs e;
 	[self initializeView];
+
+	WINPR_ASSERT(rdp_context);
 	context = rdp_context;
 	mfc = (mfContext *)rdp_context;
+
 	instance = context->instance;
+	WINPR_ASSERT(instance);
+
 	settings = context->settings;
+	WINPR_ASSERT(settings);
+
 	EventArgsInit(&e, "mfreerdp");
 	e.embed = TRUE;
 	e.handle = (void *)self;
@@ -84,10 +92,10 @@ static DWORD WINAPI mac_client_thread(void *param);
 	NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
 	NSRect screenFrame = [screen frame];
 
-	if (instance->settings->Fullscreen)
+	if (settings->Fullscreen)
 	{
-		instance->settings->DesktopWidth = screenFrame.size.width;
-		instance->settings->DesktopHeight = screenFrame.size.height;
+		settings->DesktopWidth = screenFrame.size.width;
+		settings->DesktopHeight = screenFrame.size.height;
 		[self enterFullScreenMode:[NSScreen mainScreen] withOptions:nil];
 	}
 	else
@@ -95,8 +103,8 @@ static DWORD WINAPI mac_client_thread(void *param);
 		[self exitFullScreenModeWithOptions:nil];
 	}
 
-	mfc->client_height = instance->settings->DesktopHeight;
-	mfc->client_width = instance->settings->DesktopWidth;
+	mfc->client_height = settings->DesktopHeight;
+	mfc->client_width = settings->DesktopWidth;
 
 	if (!(mfc->common.thread =
 	          CreateThread(NULL, 0, mac_client_thread, (void *)context, 0, &mfc->mainThreadId)))
@@ -496,7 +504,8 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	         keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
 	sync_keyboard_state(instance);
-	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
+	WINPR_ASSERT(instance->context);
+	freerdp_input_send_keyboard_event(instance->context->input, keyFlags, scancode);
 }
 
 - (void)keyUp:(NSEvent *)event
@@ -531,7 +540,8 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	         "keyUp: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s",
 	         keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
-	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
+	WINPR_ASSERT(instance->context);
+	freerdp_input_send_keyboard_event(instance->context->input, keyFlags, scancode);
 }
 
 - (void)flagsChanged:(NSEvent *)event
@@ -541,6 +551,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	DWORD vkcode;
 	DWORD scancode;
 	DWORD modFlags;
+	rdpInput *input;
 
 	if (!is_connected)
 		return;
@@ -581,40 +592,45 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 
 #endif
 
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	input = instance->context->input;
+
 	if ((modFlags & NSEventModifierFlagCapsLock) && !(kbdModFlags & NSEventModifierFlagCapsLock))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_DOWN, scancode);
 	else if (!(modFlags & NSEventModifierFlagCapsLock) && (kbdModFlags & NSEventModifierFlagCapsLock))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
 	if ((modFlags & NSEventModifierFlagShift) && !(kbdModFlags & NSEventModifierFlagShift))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_DOWN, scancode);
 	else if (!(modFlags & NSEventModifierFlagShift) && (kbdModFlags & NSEventModifierFlagShift))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
 	if ((modFlags & NSEventModifierFlagControl) && !(kbdModFlags & NSEventModifierFlagControl))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_DOWN, scancode);
 	else if (!(modFlags & NSEventModifierFlagControl) && (kbdModFlags & NSEventModifierFlagControl))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
 	if ((modFlags & NSEventModifierFlagOption) && !(kbdModFlags & NSEventModifierFlagOption))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_DOWN, scancode);
 	else if (!(modFlags & NSEventModifierFlagOption) && (kbdModFlags & NSEventModifierFlagOption))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
 	if ((modFlags & NSEventModifierFlagCommand) && !(kbdModFlags & NSEventModifierFlagCommand))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_DOWN, scancode);
 	else if (!(modFlags & NSEventModifierFlagCommand) && (kbdModFlags & NSEventModifierFlagCommand))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
 	if ((modFlags & NSEventModifierFlagNumericPad) && !(kbdModFlags & NSEventModifierFlagNumericPad))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_DOWN, scancode);
 	else if (!(modFlags & NSEventModifierFlagNumericPad) && (kbdModFlags & NSEventModifierFlagNumericPad))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
 	if ((modFlags & NSEventModifierFlagHelp) && !(kbdModFlags & NSEventModifierFlagHelp))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_DOWN, scancode);
 	else if (!(modFlags & NSEventModifierFlagHelp) && (kbdModFlags & NSEventModifierFlagHelp))
-		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
 	kbdModFlags = modFlags;
 }
@@ -817,15 +833,19 @@ static void mac_OnChannelDisconnectedEventHandler(void *context,
 BOOL mac_pre_connect(freerdp *instance)
 {
 	rdpSettings *settings;
+	rdpUpdate *update;
 
 	WINPR_ASSERT(instance);
-	WINPR_ASSERT(instance->update);
+	WINPR_ASSERT(instance->context);
 
-	instance->update->BeginPaint = mac_begin_paint;
-	instance->update->EndPaint = mac_end_paint;
-	instance->update->DesktopResize = mac_desktop_resize;
+	update = instance->context->update;
+	WINPR_ASSERT(update);
 
-	settings = instance->settings;
+	update->BeginPaint = mac_begin_paint;
+	update->EndPaint = mac_end_paint;
+	update->DesktopResize = mac_desktop_resize;
+
+	settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
 	if (!settings->ServerHostname)
@@ -840,7 +860,7 @@ BOOL mac_pre_connect(freerdp *instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    mac_OnChannelDisconnectedEventHandler);
 
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!freerdp_client_load_addins(instance->context->channels, settings))
 		return FALSE;
 
 	return TRUE;
@@ -849,11 +869,18 @@ BOOL mac_pre_connect(freerdp *instance)
 BOOL mac_post_connect(freerdp *instance)
 {
 	rdpGdi *gdi;
-	rdpSettings *settings;
-	rdpPointer rdp_pointer;
-	mfContext *mfc = (mfContext *)instance->context;
-	MRDPView *view = (MRDPView *)mfc->view;
-	ZeroMemory(&rdp_pointer, sizeof(rdpPointer));
+	rdpPointer rdp_pointer = { 0 };
+	mfContext *mfc;
+	MRDPView *view;
+
+	WINPR_ASSERT(instance);
+
+	mfc = (mfContext *)instance->context;
+	WINPR_ASSERT(mfc);
+
+	view = (MRDPView *)mfc->view;
+	WINPR_ASSERT(view);
+
 	rdp_pointer.size = sizeof(rdpPointer);
 	rdp_pointer.New = mf_Pointer_New;
 	rdp_pointer.Free = mf_Pointer_Free;
@@ -861,7 +888,6 @@ BOOL mac_post_connect(freerdp *instance)
 	rdp_pointer.SetNull = mf_Pointer_SetNull;
 	rdp_pointer.SetDefault = mf_Pointer_SetDefault;
 	rdp_pointer.SetPosition = mf_Pointer_SetPosition;
-	settings = instance->settings;
 
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRX32))
 		return FALSE;
@@ -958,21 +984,37 @@ static BOOL mac_authenticate_int(NSString *title, freerdp *instance, char **user
 
 BOOL mac_authenticate(freerdp *instance, char **username, char **password, char **domain)
 {
+	rdpSettings *settings;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	settings = instance->context->settings;
+	WINPR_ASSERT(settings);
+
 	NSString *title =
 	    [NSString stringWithFormat:@"%@:%u",
-	                               [NSString stringWithCString:instance->settings->ServerHostname
+	                               [NSString stringWithCString:settings->ServerHostname
 	                                                  encoding:NSUTF8StringEncoding],
-	                               instance -> settings -> ServerPort];
+	                               settings -> ServerPort];
 	return mac_authenticate_int(title, instance, username, password, domain);
 }
 
 BOOL mac_gw_authenticate(freerdp *instance, char **username, char **password, char **domain)
 {
+	rdpSettings *settings;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	settings = instance->context->settings;
+	WINPR_ASSERT(settings);
+
 	NSString *title =
 	    [NSString stringWithFormat:@"%@:%u",
-	                               [NSString stringWithCString:instance->settings->GatewayHostname
+	                               [NSString stringWithCString:settings->GatewayHostname
 	                                                  encoding:NSUTF8StringEncoding],
-	                               instance -> settings -> GatewayPort];
+	                               settings -> GatewayPort];
 	return mac_authenticate_int(title, instance, username, password, domain);
 }
 
@@ -1365,9 +1407,13 @@ void windows_to_apple_cords(MRDPView *view, NSRect *r)
 
 void sync_keyboard_state(freerdp *instance)
 {
-	mfContext *context = (mfContext *)instance->context;
 	UINT32 flags = 0;
 	CGEventFlags currentFlags = CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState);
+	mfContext *context;
+
+	WINPR_ASSERT(instance);
+	context = (mfContext *)instance->context;
+	WINPR_ASSERT(context);
 
 	if (context->kbdFlags != currentFlags)
 	{
@@ -1377,7 +1423,7 @@ void sync_keyboard_state(freerdp *instance)
 		if (currentFlags & kCGEventFlagMaskNumericPad)
 			flags |= KBD_SYNC_NUM_LOCK;
 
-		freerdp_input_send_synchronize_event(instance->input, flags);
+		freerdp_input_send_synchronize_event(instance->context->input, flags);
 		context->kbdFlags = currentFlags;
 	}
 }
