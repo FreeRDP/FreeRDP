@@ -654,7 +654,6 @@ void ntlm_generate_random_session_key(NTLM_CONTEXT* context)
 void ntlm_generate_exported_session_key(NTLM_CONTEXT* context)
 {
 	WINPR_ASSERT(context);
-	WINPR_ASSERT(sizeof(context->ExportedSessionKey) == sizeof(context->RandomSessionKey));
 
 	CopyMemory(context->ExportedSessionKey, context->RandomSessionKey,
 	           sizeof(context->ExportedSessionKey));
