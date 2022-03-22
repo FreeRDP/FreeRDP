@@ -243,8 +243,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	UINT32 timeout;
 
 	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
 
-	settings = rdp->settings;
+	settings = rdp->context->settings;
 	WINPR_ASSERT(settings);
 
 	if (!rdp_client_reset_codecs(rdp->context))
@@ -400,7 +401,7 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 {
 	rdpContext* context;
 
-	if (!rdp || !rdp->settings || !rdp->context)
+	if (!rdp || !rdp->context)
 		return FALSE;
 
 	context = rdp->context;
@@ -556,7 +557,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	instance = rdp->context->instance;
 	WINPR_ASSERT(instance);
 
-	settings = rdp->settings;
+	settings = rdp->context->settings;
 	WINPR_ASSERT(settings);
 
 	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
@@ -645,9 +646,14 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	UINT32 key_len;
 	int status = 0;
 	BOOL ret = FALSE;
-	rdpSettings* settings;
 	BYTE* crypt_client_random = NULL;
-	settings = rdp->settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (!settings->UseRdpSecurityLayer)
 	{
@@ -769,8 +775,16 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	BYTE* mod;
 	BYTE* priv_exp;
 	BOOL ret = FALSE;
+	rdpSettings* settings;
 
-	if (!rdp->settings->UseRdpSecurityLayer)
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
+	if (!settings->UseRdpSecurityLayer)
 	{
 		/* No RDP Security. */
 		return TRUE;
@@ -805,7 +819,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) < rand_len)
 		return FALSE;
 
-	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
+	key_len = settings->RdpServerRsaKey->ModulusLength;
 	client_random = malloc(key_len);
 
 	if (!client_random)
@@ -827,8 +841,8 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 
 	Stream_Read(s, crypt_client_random, rand_len);
-	mod = rdp->settings->RdpServerRsaKey->Modulus;
-	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
+	mod = settings->RdpServerRsaKey->Modulus;
+	priv_exp = settings->RdpServerRsaKey->PrivateExponent;
 
 	if (crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp,
 	                               client_random) <= 0)
@@ -837,8 +851,8 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		goto end;
 	}
 
-	rdp->settings->ClientRandom = client_random;
-	rdp->settings->ClientRandomLength = 32;
+	settings->ClientRandom = client_random;
+	settings->ClientRandomLength = 32;
 
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(client_random, rdp))
@@ -846,7 +860,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	rdp->do_crypt = TRUE;
 
-	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC, WINPR_ENCRYPT,
 		                                     rdp->fips_encrypt_key, fips_ivec);
@@ -1071,10 +1085,10 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
-	settings = rdp->settings;
-	WINPR_ASSERT(settings);
-
 	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	instance = rdp->context->instance;
 	WINPR_ASSERT(instance);
@@ -1120,7 +1134,7 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	 * The server may request a different desktop size during Deactivation-Reactivation sequence.
 	 * In this case, the UI should be informed and do actual window resizing at this point.
 	 */
-	if (width != rdp->settings->DesktopWidth || height != rdp->settings->DesktopHeight)
+	if ((width != settings->DesktopWidth) || (height != settings->DesktopHeight))
 	{
 		BOOL status = TRUE;
 		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
@@ -1138,6 +1152,15 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 
 int rdp_client_connect_finalize(rdpRdp* rdp)
 {
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
 	/**
 	 * [MS-RDPBCGR] 1.3.1.1 - 8.
 	 * The client-to-server PDUs sent during this phase have no dependencies on any of the
@@ -1160,7 +1183,7 @@ int rdp_client_connect_finalize(rdpRdp* rdp)
 	 * host cache and a deactivation reactivation sequence is *not* in progress.
 	 */
 
-	if (!rdp->deactivation_reactivation && rdp->settings->BitmapCachePersistEnabled)
+	if (!rdp->deactivation_reactivation && settings->BitmapCachePersistEnabled)
 	{
 		if (!rdp_send_client_persistent_key_list_pdu(rdp))
 			return -1;
@@ -1224,7 +1247,9 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
-	settings = rdp->settings;
+	WINPR_ASSERT(rdp->context->settings);
+
+	settings = rdp->context->settings;
 	WINPR_ASSERT(settings);
 
 	nego = rdp->nego;
@@ -1320,12 +1345,23 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 {
 	UINT32 i;
-	rdpMcs* mcs = rdp->mcs;
+	rdpMcs* mcs;
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
+	mcs = rdp->mcs;
 
 	if (!mcs_recv_connect_initial(mcs, s))
 		return FALSE;
 
-	WLog_INFO(TAG, "Accepted client: %s", rdp->settings->ClientHostname);
+	WLog_INFO(TAG, "Accepted client: %s", settings->ClientHostname);
 	WLog_INFO(TAG, "Accepted channels:");
 
 	for (i = 0; i < mcs->channelCount; i++)
@@ -1403,7 +1439,19 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 {
-	freerdp_peer* peer = rdp->context->peer;
+	freerdp_peer* peer;
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
+	peer = rdp->context->peer;
+	WINPR_ASSERT(peer);
 
 	if (rdp_get_state(rdp) != CONNECTION_STATE_CAPABILITIES_EXCHANGE)
 		return FALSE;
@@ -1414,7 +1462,7 @@ BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 	if (peer->ClientCapabilities && !peer->ClientCapabilities(peer))
 		return FALSE;
 
-	if (rdp->settings->SaltedChecksum)
+	if (settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 
 	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);

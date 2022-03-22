@@ -57,11 +57,14 @@ static BOOL rdp_write_synchronize_pdu(wStream* s, const rdpSettings* settings)
 
 BOOL rdp_recv_synchronize_pdu(rdpRdp* rdp, wStream* s)
 {
+	const rdpSettings* settings;
 	WINPR_ASSERT(rdp);
-	WINPR_ASSERT(rdp->settings);
+	WINPR_ASSERT(rdp->context);
 	WINPR_ASSERT(s);
 
-	if (rdp->settings->ServerMode)
+	settings = rdp->context->settings;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 		return rdp_recv_server_synchronize_pdu(rdp, s);
 	else
 		return rdp_recv_client_synchronize_pdu(rdp, s);
@@ -83,7 +86,8 @@ BOOL rdp_send_server_synchronize_pdu(rdpRdp* rdp)
 		return FALSE;
 
 	WINPR_ASSERT(rdp);
-	if (!rdp_write_synchronize_pdu(s, rdp->settings))
+	WINPR_ASSERT(rdp->context);
+	if (!rdp_write_synchronize_pdu(s, rdp->context->settings))
 	{
 		Stream_Free(s, TRUE);
 		return FALSE;
@@ -122,7 +126,8 @@ BOOL rdp_send_client_synchronize_pdu(rdpRdp* rdp)
 		return FALSE;
 
 	WINPR_ASSERT(rdp);
-	if (!rdp_write_synchronize_pdu(s, rdp->settings))
+	WINPR_ASSERT(rdp->context);
+	if (!rdp_write_synchronize_pdu(s, rdp->context->settings))
 	{
 		Stream_Free(s, TRUE);
 		return FALSE;
@@ -270,10 +275,14 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s, const rdpSettin
 
 BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 {
-	wStream* s = rdp_data_pdu_init(rdp);
+	wStream* s;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	s = rdp_data_pdu_init(rdp);
 	if (!s)
 		return FALSE;
-	if (!rdp_write_client_persistent_key_list_pdu(s, rdp->settings))
+	if (!rdp_write_client_persistent_key_list_pdu(s, rdp->context->settings))
 	{
 		Stream_Free(s, TRUE);
 		return FALSE;
@@ -371,10 +380,10 @@ BOOL rdp_send_client_font_list_pdu(rdpRdp* rdp, UINT16 flags)
 BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s)
 {
 	WINPR_ASSERT(rdp);
-	WINPR_ASSERT(rdp->settings);
+	WINPR_ASSERT(rdp->context);
 	WINPR_ASSERT(s);
 
-	if (rdp->settings->ServerMode)
+	if (freerdp_settings_get_bool(rdp->context->settings, FreeRDP_ServerMode))
 		return rdp_recv_server_font_map_pdu(rdp, s);
 	else
 		return rdp_recv_client_font_map_pdu(rdp, s);
@@ -430,9 +439,14 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 {
 	UINT16 lengthSourceDescriptor;
 	UINT32 timeout;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
+
+	WINPR_ASSERT(rdp->context);
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE)
 		rdp->deactivation_reactivation = TRUE;
@@ -444,7 +458,6 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	 * the following fields.
 	 */
 
-	WINPR_ASSERT(rdp->settings);
 	if (Stream_GetRemainingLength(s) > 0)
 	{
 		do
@@ -452,7 +465,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 			if (Stream_GetRemainingLength(s) < 4)
 				break;
 
-			Stream_Read_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
+			Stream_Read_UINT32(s, settings->ShareId); /* shareId (4 bytes) */
 
 			if (Stream_GetRemainingLength(s) < 2)
 				break;
@@ -468,7 +481,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
 
-	for (timeout = 0; timeout < rdp->settings->TcpAckTimeout; timeout += 100)
+	for (timeout = 0; timeout < settings->TcpAckTimeout; timeout += 100)
 	{
 		if (rdp_check_fds(rdp) < 0)
 			return FALSE;
@@ -490,17 +503,24 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 {
-	wStream* s = rdp_send_stream_pdu_init(rdp);
+	wStream* s;
 	BOOL status = FALSE;
+	const rdpSettings* settings;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
+	s = rdp_send_stream_pdu_init(rdp);
 	if (!s)
 		return FALSE;
 
 	if (Stream_GetRemainingCapacity(s) < 7)
 		goto fail;
 
-	WINPR_ASSERT(rdp->settings);
-	Stream_Write_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
+	Stream_Write_UINT32(s, settings->ShareId);      /* shareId (4 bytes) */
 	Stream_Write_UINT16(s, 1);                      /* lengthSourceDescriptor (2 bytes) */
 	Stream_Write_UINT8(s, 0);                       /* sourceDescriptor (should be 0x00) */
 
@@ -538,10 +558,10 @@ BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
-	settings = rdp->settings;
+	WINPR_ASSERT(rdp->context);
+	settings = rdp->context->settings;
 	WINPR_ASSERT(settings);
 
-	WINPR_ASSERT(rdp->context);
 	peer = rdp->context->peer;
 	WINPR_ASSERT(peer);
 

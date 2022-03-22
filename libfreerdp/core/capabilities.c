@@ -3872,6 +3872,7 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId, UIN
 {
 	UINT16 securityFlags = 0;
 	freerdp* instance;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->context);
@@ -3879,13 +3880,16 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId, UIN
 	instance = rdp->context->instance;
 	WINPR_ASSERT(instance);
 
+	settings = instance->settings;
+	WINPR_ASSERT(settings);
+
 	if (!rdp_read_header(rdp, s, length, pChannelId))
 		return FALSE;
 
 	if (freerdp_shall_disconnect(instance))
 		return TRUE;
 
-	if (rdp->settings->UseRdpSecurityLayer)
+	if (settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(s, &securityFlags, length))
 			return FALSE;
@@ -3923,6 +3927,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
 	freerdp* instance;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
@@ -3931,6 +3936,9 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 
 	instance = rdp->context->instance;
 	WINPR_ASSERT(instance);
+
+	settings = instance->settings;
+	WINPR_ASSERT(settings);
 
 	if (!rdp_recv_get_active_header(rdp, s, &channelId, &length))
 		return FALSE;
@@ -3965,12 +3973,12 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
-	rdp->settings->PduSource = pduSource;
+	settings->PduSource = pduSource;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Read_UINT32(s, rdp->settings->ShareId);     /* shareId (4 bytes) */
+	Stream_Read_UINT32(s, settings->ShareId);          /* shareId (4 bytes) */
 	Stream_Read_UINT16(s, lengthSourceDescriptor);     /* lengthSourceDescriptor (2 bytes) */
 	Stream_Read_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 
@@ -3979,7 +3987,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	/* capabilitySets */
-	if (!rdp_read_capability_sets(s, rdp->settings, lengthCombinedCapabilities))
+	if (!rdp_read_capability_sets(s, settings, lengthCombinedCapabilities))
 	{
 		WLog_ERR(TAG, "rdp_read_capability_sets failed");
 		return FALSE;
@@ -3990,7 +3998,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 
 	{
 		rdp_secondary_update_internal* secondary = secondary_update_cast(rdp->update->secondary);
-		secondary->glyph_v2 = (rdp->settings->GlyphSupportLevel > GLYPH_SUPPORT_FULL);
+		secondary->glyph_v2 = (settings->GlyphSupportLevel > GLYPH_SUPPORT_FULL);
 	}
 
 	return tpkt_ensure_stream_consumed(s, length);
@@ -4069,14 +4077,24 @@ static BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 
 BOOL rdp_send_demand_active(rdpRdp* rdp)
 {
-	wStream* s = rdp_send_stream_pdu_init(rdp);
+	wStream* s;
 	BOOL status;
+	rdpSettings* settings;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
+	s = rdp_send_stream_pdu_init(rdp);
 	if (!s)
 		return FALSE;
 
-	rdp->settings->ShareId = 0x10000 + rdp->mcs->userId;
-	status = rdp_write_demand_active(s, rdp->settings) &&
+	settings->ShareId = 0x10000 + rdp->mcs->userId;
+	status = rdp_write_demand_active(s, settings) &&
 	         rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->userId);
 	Stream_Release(s);
 	return status;
@@ -4084,11 +4102,17 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 
 BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 {
-	rdpSettings* settings;
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
+	rdpSettings* settings;
 
-	settings = rdp->settings;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (Stream_GetRemainingLength(s) < 10)
 		return FALSE;
@@ -4102,7 +4126,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 		return FALSE;
 
 	Stream_Seek(s, lengthSourceDescriptor);    /* sourceDescriptor */
-	if (!rdp_read_capability_sets(s, rdp->settings, lengthCombinedCapabilities))
+	if (!rdp_read_capability_sets(s, settings, lengthCombinedCapabilities))
 		return FALSE;
 
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_SURFACE_COMMANDS])
@@ -4296,13 +4320,20 @@ static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 
 BOOL rdp_send_confirm_active(rdpRdp* rdp)
 {
-	wStream* s = rdp_send_stream_pdu_init(rdp);
+	wStream* s;
 	BOOL status;
+	rdpSettings* settings;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+	s = rdp_send_stream_pdu_init(rdp);
 	if (!s)
 		return FALSE;
 
-	status = rdp_write_confirm_active(s, rdp->settings) &&
+	status = rdp_write_confirm_active(s, settings) &&
 	         rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->userId);
 	Stream_Release(s);
 	return status;

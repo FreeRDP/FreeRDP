@@ -143,9 +143,10 @@ static BOOL fastpath_write_update_pdu_header(wStream* s,
                                              FASTPATH_UPDATE_PDU_HEADER* fpUpdatePduHeader,
                                              rdpRdp* rdp)
 {
-	if (!s || !fpUpdatePduHeader || !rdp)
-		return FALSE;
-
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(fpUpdatePduHeader);
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
 	if (Stream_GetRemainingCapacity(s) < 3)
 		return FALSE;
 
@@ -158,8 +159,10 @@ static BOOL fastpath_write_update_pdu_header(wStream* s,
 
 	if (fpUpdatePduHeader->secFlags)
 	{
-		WINPR_ASSERT(rdp->settings);
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		rdpSettings* settings = rdp->context->settings;
+
+		WINPR_ASSERT(settings);
+		if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 		{
 			if (Stream_GetRemainingCapacity(s) < 4)
 				return FALSE;
@@ -180,16 +183,21 @@ static UINT32 fastpath_get_update_pdu_header_size(FASTPATH_UPDATE_PDU_HEADER* fp
                                                   rdpRdp* rdp)
 {
 	UINT32 size = 3; /* fpUpdatePduHeader + length1 + length2 */
+	const rdpSettings* settings;
 
-	if (!fpUpdatePduHeader || !rdp)
-		return 0;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(fpUpdatePduHeader);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (fpUpdatePduHeader->secFlags)
 	{
 		size += 8; /* dataSignature */
 
-		WINPR_ASSERT(rdp->settings);
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			size += 4; /* fipsInformation */
 	}
 
@@ -862,15 +870,20 @@ static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 {
 	UINT32 sec_bytes;
 	sec_bytes = 0;
+	const rdpSettings* settings;
 
-	if (!rdp)
-		return 0;
+	WINPR_ASSERT(rdp);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (rdp->do_crypt)
 	{
 		sec_bytes = 8;
 
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
 	}
 
@@ -924,15 +937,18 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	rdpRdp* rdp;
 	UINT16 length;
 	BYTE eventHeader;
+	const rdpSettings* settings;
 
-	if (!s)
-		return FALSE;
-
-	if (!fastpath)
-		goto fail;
+	WINPR_ASSERT(fastpath);
+	WINPR_ASSERT(s);
 
 	rdp = fastpath->rdp;
 	WINPR_ASSERT(rdp);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	state = rdp_get_state(rdp);
 	if (state != CONNECTION_STATE_ACTIVE)
@@ -977,8 +993,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 		BYTE* fpInputEvents = Stream_Pointer(s) + sec_bytes;
 		UINT16 fpInputEvents_length = length - 3 - sec_bytes;
 
-		WINPR_ASSERT(rdp->settings);
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 		{
 			BYTE pad;
 
@@ -1072,15 +1087,18 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	FASTPATH_UPDATE_PDU_HEADER fpUpdatePduHeader = { 0 };
 	FASTPATH_UPDATE_HEADER fpUpdateHeader = { 0 };
 
-	if (!fastpath || !fastpath->rdp || !fastpath->fs || !s)
-		return FALSE;
+	WINPR_ASSERT(fastpath);
+	WINPR_ASSERT(s);
 
 	rdp = fastpath->rdp;
-	fs = fastpath->fs;
-	settings = rdp->settings;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
 
-	if (!settings)
-		return FALSE;
+	fs = fastpath->fs;
+	WINPR_ASSERT(fs);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	maxLength = FASTPATH_MAX_PACKET_SIZE - 20;
 
@@ -1180,7 +1198,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		{
 			pSignature = Stream_Buffer(fs) + 3;
 
-			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
 				pSignature += 4;
 
@@ -1208,7 +1226,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			UINT32 dataSize = fpUpdateHeaderSize + DstSize + pad;
 			BYTE* data = Stream_Pointer(fs) - dataSize;
 
-			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
 				if (!security_hmac_signature(data, dataSize - pad, pSignature, rdp))
 					return FALSE;

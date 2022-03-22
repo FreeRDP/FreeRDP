@@ -151,20 +151,26 @@ static char* rdp_info_package_flags_description(UINT32 flags)
 
 static BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 {
-	BYTE ClientRandom[32];
-	BYTE AutoReconnectRandom[32];
+	BYTE ClientRandom[32] = { 0 };
+	BYTE AutoReconnectRandom[32] = { 0 };
 	ARC_SC_PRIVATE_PACKET* serverCookie;
 	ARC_CS_PRIVATE_PACKET* clientCookie;
-	rdpSettings* settings = rdp->settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
 	serverCookie = settings->ServerAutoReconnectCookie;
 	clientCookie = settings->ClientAutoReconnectCookie;
 	clientCookie->cbLen = 28;
 	clientCookie->version = serverCookie->version;
 	clientCookie->logonId = serverCookie->logonId;
+
 	ZeroMemory(clientCookie->securityVerifier, 16);
-	ZeroMemory(AutoReconnectRandom, sizeof(AutoReconnectRandom));
 	CopyMemory(AutoReconnectRandom, serverCookie->arcRandomBits, 16);
-	ZeroMemory(ClientRandom, sizeof(ClientRandom));
 
 	if (settings->SelectedProtocol == PROTOCOL_RDP)
 		CopyMemory(ClientRandom, settings->ClientRandom, settings->ClientRandomLength);
@@ -189,7 +195,16 @@ static BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon
 {
 	BYTE* p;
 	ARC_SC_PRIVATE_PACKET* autoReconnectCookie;
-	rdpSettings* settings = rdp->settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(info);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
 	autoReconnectCookie = settings->ServerAutoReconnectCookie;
 
 	if (Stream_GetRemainingLength(s) < 28)
@@ -240,7 +255,15 @@ static BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon
 static BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 {
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
-	rdpSettings* settings = rdp->settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
 	autoReconnectCookie = settings->ClientAutoReconnectCookie;
 
 	if (Stream_GetRemainingLength(s) < 28)
@@ -264,7 +287,14 @@ static void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 {
 	BYTE* p;
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
-	rdpSettings* settings = rdp->settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 	autoReconnectCookie = settings->ClientAutoReconnectCookie;
 	p = autoReconnectCookie->securityVerifier;
 	WLog_DBG(TAG,
@@ -294,7 +324,14 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	UINT16 cbClientAddress;
 	UINT16 cbClientDir;
 	UINT16 cbAutoReconnectLen;
-	rdpSettings* settings = rdp->settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -413,9 +450,14 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	UINT16 cbClientDir;
 	UINT16 cbAutoReconnectCookie;
 	rdpSettings* settings;
-	if (!rdp || !rdp->settings || !s)
-		return FALSE;
-	settings = rdp->settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
 	clientAddressFamily = settings->IPv6Enabled ? ADDRESS_FAMILY_INET6 : ADDRESS_FAMILY_INET;
 	rc = ConvertToUnicode(CP_UTF8, 0, settings->ClientAddress, -1, &clientAddress, 0);
 	if ((rc < 0) || (rc > (UINT16_MAX / 2)))
@@ -544,7 +586,14 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	UINT16 cbAlternateShell;
 	UINT16 cbWorkingDir;
 	UINT32 CompressionLevel;
-	rdpSettings* settings = rdp->settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (Stream_GetRemainingLength(s) < 18)
 		return FALSE;
@@ -625,10 +674,12 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	BOOL usedPasswordCookie = FALSE;
 	rdpSettings* settings;
 
-	if (!rdp || !s || !rdp->settings)
-		return FALSE;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
 
-	settings = rdp->settings;
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	flags = INFO_MOUSE | INFO_UNICODE | INFO_LOGONERRORS | INFO_MAXIMIZESHELL |
 	        INFO_ENABLEWINDOWSKEY | INFO_DISABLECTRLALTDEL | INFO_MOUSE_HAS_WHEEL |
@@ -863,6 +914,14 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 	UINT16 length;
 	UINT16 channelId;
 	UINT16 securityFlags = 0;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return FALSE;
@@ -873,7 +932,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 	if ((securityFlags & SEC_INFO_PKT) == 0)
 		return FALSE;
 
-	if (rdp->settings->UseRdpSecurityLayer)
+	if (settings->UseRdpSecurityLayer)
 	{
 		if (securityFlags & SEC_REDIRECTION_PKT)
 		{

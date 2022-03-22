@@ -1155,9 +1155,18 @@ static void update_write_refresh_rect(wStream* s, BYTE count, const RECTANGLE_16
 
 static BOOL update_send_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
-	rdpRdp* rdp = context->rdp;
+	rdpRdp* rdp;
+	rdpSettings* settings;
 
-	if (rdp->settings->RefreshRect)
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	rdp = context->rdp;
+	WINPR_ASSERT(rdp);
+
+	if (settings->RefreshRect)
 	{
 		wStream* s = rdp_data_pdu_init(rdp);
 
@@ -1188,9 +1197,18 @@ static void update_write_suppress_output(wStream* s, BYTE allow, const RECTANGLE
 
 static BOOL update_send_suppress_output(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
-	rdpRdp* rdp = context->rdp;
+	rdpRdp* rdp;
+	rdpSettings* settings;
 
-	if (rdp->settings->SuppressOutput)
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	rdp = context->rdp;
+	WINPR_ASSERT(rdp);
+
+	if (settings->SuppressOutput)
 	{
 		wStream* s = rdp_data_pdu_init(rdp);
 
@@ -1314,9 +1332,18 @@ out_fail:
 
 static BOOL update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 {
-	rdpRdp* rdp = context->rdp;
+	rdpRdp* rdp;
+	rdpSettings* settings;
 
-	if (rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	rdp = context->rdp;
+	WINPR_ASSERT(rdp);
+
+	if (settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
 	{
 		wStream* s = rdp_data_pdu_init(rdp);
 
@@ -1380,9 +1407,19 @@ out_fail:
 static BOOL update_send_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_sound)
 {
 	wStream* s;
-	rdpRdp* rdp = context->rdp;
+	rdpRdp* rdp;
+	rdpSettings* settings;
 
-	if (!rdp->settings->ReceivedCapabilities[CAPSET_TYPE_SOUND])
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(play_sound);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	rdp = context->rdp;
+	WINPR_ASSERT(rdp);
+
+	if (!settings->ReceivedCapabilities[CAPSET_TYPE_SOUND])
 	{
 		return TRUE;
 	}

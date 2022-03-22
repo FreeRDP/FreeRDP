@@ -580,6 +580,14 @@ int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s)
 {
 	AUTODETECT_REQ_PDU autodetectReqPdu;
 	BOOL success = FALSE;
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+
+	WINPR_ASSERT(rdp->context);
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (Stream_GetRemainingLength(s) < 6)
 		return -1;
@@ -594,7 +602,7 @@ int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s)
 	         autodetectReqPdu.headerLength, autodetectReqPdu.headerTypeId,
 	         autodetectReqPdu.sequenceNumber, autodetectReqPdu.requestType);
 
-	if (!rdp->settings->NetworkAutoDetect)
+	if (!settings->NetworkAutoDetect)
 	{
 		WLog_WARN(AUTODETECT_TAG,
 		          "Received a [MS-RDPBCGR] 2.2.14.1.1 RTT Measure Request (RDP_RTT_REQUEST) [%s] "
@@ -657,6 +665,14 @@ int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s)
 {
 	AUTODETECT_RSP_PDU autodetectRspPdu;
 	BOOL success = FALSE;
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+
+	WINPR_ASSERT(rdp->context);
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (Stream_GetRemainingLength(s) < 6)
 		return -1;
@@ -671,7 +687,7 @@ int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s)
 	         autodetectRspPdu.headerLength, autodetectRspPdu.headerTypeId,
 	         autodetectRspPdu.sequenceNumber, autodetectRspPdu.responseType);
 
-	if (!rdp->settings->NetworkAutoDetect)
+	if (!settings->NetworkAutoDetect)
 	{
 		WLog_WARN(AUTODETECT_TAG,
 		          "Received a [MS-RDPBCGR] 2.2.14.2.1 RTT Measure Response (RDP_RTT_RESPONSE) [%s] "

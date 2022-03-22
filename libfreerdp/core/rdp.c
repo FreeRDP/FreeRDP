@@ -252,15 +252,21 @@ BOOL rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 sh
 
 static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
 {
-	if (!rdp || !s)
-		return FALSE;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (rdp->do_crypt)
 	{
 		if (!Stream_SafeSeek(s, 12))
 			return FALSE;
 
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 		{
 			if (!Stream_SafeSeek(s, 4))
 				return FALSE;
@@ -407,6 +413,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	UINT16 initiator;
 	enum DomainMCSPDU MCSPDU;
 	enum DomainMCSPDU domainMCSPDU;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
@@ -415,8 +422,11 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 
 	WINPR_ASSERT(rdp->context);
 
-	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataRequest
-	                                     : DomainMCSPDU_SendDataIndication;
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
+	MCSPDU =
+	    (settings->ServerMode) ? DomainMCSPDU_SendDataRequest : DomainMCSPDU_SendDataIndication;
 
 	*channelId = 0; /* Initialize in case of early abort */
 	if (!tpkt_read_header(s, length))
@@ -521,11 +531,20 @@ void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 {
 	int body_length;
 	enum DomainMCSPDU MCSPDU;
-	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataIndication
-	                                     : DomainMCSPDU_SendDataRequest;
+	rdpSettings* settings;
 
-	if ((rdp->sec_flags & SEC_ENCRYPT) &&
-	    (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS))
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
+	MCSPDU =
+	    (settings->ServerMode) ? DomainMCSPDU_SendDataIndication : DomainMCSPDU_SendDataRequest;
+
+	if ((rdp->sec_flags & SEC_ENCRYPT) && (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS))
 	{
 		int pad;
 		body_length = length - RDP_PACKET_HEADER_MAX_LENGTH - 16;
@@ -554,6 +573,16 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 {
 	BYTE* data;
 	BOOL status;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
 	sec_flags |= rdp->sec_flags;
 	*pad = 0;
 
@@ -563,7 +592,7 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 
 		if (sec_flags & SEC_ENCRYPT)
 		{
-			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
 				data = Stream_Pointer(s) + 12;
 				length = length - (data - Stream_Buffer(s));
@@ -616,12 +645,20 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 static UINT32 rdp_get_sec_bytes(rdpRdp* rdp, UINT16 sec_flags)
 {
 	UINT32 sec_bytes;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (rdp->sec_flags & SEC_ENCRYPT)
 	{
 		sec_bytes = 12;
 
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
 	}
 	else if (rdp->sec_flags != 0 || sec_flags != 0)
@@ -715,12 +752,15 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	UINT32 sec_bytes;
 	size_t sec_hold;
 	UINT32 pad;
+	rdpSettings* settings;
 
-	if (!s)
-		return FALSE;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
 
-	if (!rdp)
-		goto fail;
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
@@ -730,7 +770,7 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	Stream_Seek(s, sec_bytes);
 	if (!rdp_write_share_control_header(s, length - sec_bytes, PDU_TYPE_DATA, channel_id))
 		goto fail;
-	if (!rdp_write_share_data_header(s, length - sec_bytes, type, rdp->settings->ShareId))
+	if (!rdp_write_share_data_header(s, length - sec_bytes, type, settings->ShareId))
 		goto fail;
 	Stream_SetPosition(s, sec_hold);
 
@@ -1212,12 +1252,19 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 	BYTE wmac[8];
 	BOOL status;
 	INT32 length;
+	rdpSettings* settings;
 
-	if (!rdp || !s || !pLength)
-		return FALSE;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(pLength);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	length = *pLength;
-	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		UINT16 len;
 		BYTE version, pad;
@@ -1334,6 +1381,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 channelId = 0;
 	UINT16 securityFlags = 0;
 	freerdp* instance;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
@@ -1341,6 +1389,9 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp->context);
 	instance = rdp->context->instance;
 	WINPR_ASSERT(instance);
+
+	settings = instance->settings;
+	WINPR_ASSERT(settings);
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
@@ -1356,7 +1407,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		rdp->autodetect->bandwidthMeasureByteCount += length;
 	}
 
-	if (rdp->settings->UseRdpSecurityLayer)
+	if (settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(s, &securityFlags, &length))
 		{
@@ -1406,7 +1457,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			if (!Stream_SafeSeek(s, remain))
 				return -1;
 
-			rdp->settings->PduSource = pduSource;
+			settings->PduSource = pduSource;
 			rdp->inPackets++;
 
 			switch (pduType)
@@ -1455,7 +1506,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	}
 	else if (rdp->mcs->messageChannelId && (channelId == rdp->mcs->messageChannelId))
 	{
-		if (!rdp->settings->UseRdpSecurityLayer)
+		if (!settings->UseRdpSecurityLayer)
 			if (!rdp_read_security_header(s, &securityFlags, NULL))
 				return -1;
 		rdp->inPackets++;
@@ -1526,10 +1577,16 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 {
 	int status = 0;
 	rdpRdp* rdp = (rdpRdp*)extra;
+	rdpSettings* settings;
 
-	WINPR_ASSERT(transport);
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
+
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(transport);
 	/*
 	 * At any point in the connection sequence between when all
 	 * MCS channels have been joined and when the RDP connection
@@ -1574,7 +1631,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			{
 				transport_set_nla_mode(rdp->transport, FALSE);
 
-				if (rdp->settings->VmConnectMode)
+				if (settings->VmConnectMode)
 				{
 					if (!nego_set_state(rdp->nego, NEGO_STATE_NLA))
 						return -1;
@@ -1823,17 +1880,12 @@ rdpRdp* rdp_new(rdpContext* context)
 			goto fail;
 	}
 
-	rdp->settings = context->settings;
-
 	if (context->instance)
-	{
-		rdp->settings->instance = context->instance;
-		context->instance->settings = rdp->settings;
-	}
+		context->settings->instance = context->instance;
 	else if (context->peer)
 	{
-		rdp->settings->instance = context->peer;
-		context->peer->settings = rdp->settings;
+		context->settings->instance = context->peer;
+		context->peer->settings = context->settings;
 	}
 
 	rdp->transport = transport_new(context);
@@ -1950,7 +2002,7 @@ BOOL rdp_reset(rdpRdp* rdp)
 	context = rdp->context;
 	WINPR_ASSERT(context);
 
-	settings = rdp->settings;
+	settings = rdp->context->settings;
 	WINPR_ASSERT(settings);
 
 	bulk_reset(rdp->bulk);
@@ -2021,7 +2073,8 @@ void rdp_free(rdpRdp* rdp)
 		DeleteCriticalSection(&rdp->critical);
 		rdp_reset_free(rdp);
 
-		freerdp_settings_free(rdp->settings);
+		WINPR_ASSERT(rdp->context);
+		freerdp_settings_free(rdp->context->settings);
 
 		input_free(rdp->input);
 		update_free(rdp->update);

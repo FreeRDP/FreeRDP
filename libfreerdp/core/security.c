@@ -527,8 +527,16 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 	rdpSettings* settings;
 	BOOL status;
-	settings = rdp->settings;
+
+	WINPR_ASSERT(client_random);
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
 	server_random = settings->ServerRandom;
+	WINPR_ASSERT(server_random);
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
@@ -572,7 +580,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 
 		winpr_Digest_Free(sha1);
 
-		if (rdp->settings->ServerMode)
+		if (settings->ServerMode)
 		{
 			fips_expand_key_bits(client_encrypt_key_t, rdp->fips_decrypt_key);
 			fips_expand_key_bits(client_decrypt_key_t, rdp->fips_encrypt_key);
@@ -595,7 +603,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 
 	memcpy(rdp->sign_key, session_key_blob, 16);
 
-	if (rdp->settings->ServerMode)
+	if (settings->ServerMode)
 	{
 		status = security_md5_16_32_32(&session_key_blob[16], client_random, server_random,
 		                               rdp->encrypt_key);
@@ -656,6 +664,14 @@ static BOOL security_key_update(BYTE* key, BYTE* update_key, size_t key_len, rdp
 	WINPR_RC4_CTX* rc4 = NULL;
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 	BOOL result = FALSE;
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
+
 	WLog_DBG(TAG, "updating RDP key");
 
 	if (!(sha1 = winpr_Digest_New()))
@@ -700,10 +716,17 @@ static BOOL security_key_update(BYTE* key, BYTE* update_key, size_t key_len, rdp
 	if (!winpr_RC4_Update(rc4, key_len, key, key))
 		goto out;
 
-	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
-		memcpy(key, salt, 3);
-	else if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_56BIT)
-		memcpy(key, salt, 1);
+	switch (settings->EncryptionMethods)
+	{
+		case ENCRYPTION_METHOD_40BIT:
+			memcpy(key, salt, 3);
+			break;
+		case ENCRYPTION_METHOD_56BIT:
+			memcpy(key, salt, 1);
+			break;
+		default:
+			break;
+	}
 
 	result = TRUE;
 out:

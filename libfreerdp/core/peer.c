@@ -129,13 +129,16 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 	rdpPeerChannel* peerChannel;
 	rdpMcsChannel* mcsChannel;
 	rdpRdp* rdp;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 
 	rdp = client->context->rdp;
 	WINPR_ASSERT(rdp);
-	WINPR_ASSERT(rdp->settings);
+
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (!hChannel)
 		return -1;
@@ -147,7 +150,7 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 	if (peerChannel->channelFlags & WTS_CHANNEL_OPTION_DYNAMIC)
 		return -1; /* not yet supported */
 
-	maxChunkSize = rdp->settings->VirtualChannelChunkSize;
+	maxChunkSize = settings->VirtualChannelChunkSize;
 	totalLength = length;
 	flags = CHANNEL_FLAG_FIRST;
 
@@ -160,7 +163,7 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 
 		if (length > maxChunkSize)
 		{
-			chunkSize = rdp->settings->VirtualChannelChunkSize;
+			chunkSize = settings->VirtualChannelChunkSize;
 		}
 		else
 		{
@@ -227,7 +230,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 	rdp = client->context->rdp;
 	WINPR_ASSERT(rdp);
 
-	settings = rdp->settings;
+	settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
 	settings->ServerMode = TRUE;
@@ -408,6 +411,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	UINT16 pduSource;
 	UINT16 channelId;
 	UINT16 securityFlags = 0;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(client);
@@ -416,8 +420,10 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	rdp = client->context->rdp;
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->mcs);
-	WINPR_ASSERT(rdp->settings);
 	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
@@ -429,7 +435,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	if (freerdp_shall_disconnect(rdp->context->instance))
 		return 0;
 
-	if (rdp->settings->UseRdpSecurityLayer)
+	if (settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(s, &securityFlags, &length))
 			return -1;
@@ -481,7 +487,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	}
 	else if ((rdp->mcs->messageChannelId > 0) && (channelId == rdp->mcs->messageChannelId))
 	{
-		if (!rdp->settings->UseRdpSecurityLayer)
+		if (!settings->UseRdpSecurityLayer)
 			if (!rdp_read_security_header(s, &securityFlags, NULL))
 				return -1;
 
@@ -552,6 +558,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 	UINT32 SelectedProtocol;
 	freerdp_peer* client = (freerdp_peer*)extra;
 	rdpRdp* rdp;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(client);
@@ -559,6 +566,9 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 	rdp = client->context->rdp;
 	WINPR_ASSERT(rdp);
+
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
 
 	switch (rdp_get_state(rdp))
 	{
@@ -638,7 +648,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT:
-			if (rdp->settings->UseRdpSecurityLayer)
+			if (settings->UseRdpSecurityLayer)
 			{
 				if (!rdp_server_establish_keys(rdp, s))
 				{
@@ -929,7 +939,6 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 		goto fail;
 
 	client->update = rdp->update;
-	client->settings = rdp->settings;
 	client->autodetect = rdp->autodetect;
 	context->rdp = rdp;
 	context->input = rdp->input;

@@ -124,20 +124,19 @@ BOOL freerdp_connect(freerdp* instance)
 	status = rdp_client_connect(rdp);
 
 	/* Pointers might have changed inbetween */
-	if (rdp && rdp->settings)
 	{
 		rdp_update_internal* up = update_cast(rdp->update);
 
 		/* --authonly tests the connection without a UI */
-		if (rdp->settings->AuthenticationOnly)
+		if (settings->AuthenticationOnly)
 		{
 			WLog_ERR(TAG, "Authentication only, exit status %" PRId32 "", status);
 			goto freerdp_connect_finally;
 		}
 
-		if (rdp->settings->DumpRemoteFx)
+		if (settings->DumpRemoteFx)
 		{
-			up->pcap_rfx = pcap_open(rdp->settings->DumpRemoteFxFile, TRUE);
+			up->pcap_rfx = pcap_open(settings->DumpRemoteFxFile, TRUE);
 
 			if (up->pcap_rfx)
 				up->dump_rfx = TRUE;
@@ -633,7 +632,6 @@ BOOL freerdp_context_new(freerdp* instance)
 	context->rdp = rdp;
 	instance->input = rdp->input;
 	instance->update = rdp->update;
-	instance->settings = rdp->settings;
 	instance->autodetect = rdp->autodetect;
 	instance->heartbeat = rdp->heartbeat;
 	context->graphics = graphics_new(context);

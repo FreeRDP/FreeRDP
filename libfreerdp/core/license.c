@@ -418,8 +418,19 @@ static BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 	size_t length;
 	BYTE flags;
 	UINT16 wMsgSize;
-	rdpRdp* rdp = license->rdp;
+	rdpRdp* rdp;
 	BOOL ret;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(license);
+	WINPR_ASSERT(s);
+
+	rdp = license->rdp;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
+	settings = rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	DEBUG_LICENSE("Sending %s Packet", LICENSE_MESSAGE_STRINGS[type & 0x1F]);
 	length = Stream_GetPosition(s);
@@ -432,7 +443,7 @@ static BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 	 * running in server mode! This flag seems to be incorrectly documented.
 	 */
 
-	if (!rdp->settings->ServerMode)
+	if (!settings->ServerMode)
 		flags |= EXTENDED_ERROR_MSG_SUPPORTED;
 
 	if (!license_write_preamble(s, type, flags, wMsgSize))
@@ -613,11 +624,19 @@ BOOL license_generate_hwid(rdpLicense* license)
 {
 	const BYTE* hashTarget;
 	size_t targetLen;
-	BYTE macAddress[6];
+	BYTE macAddress[6] = { 0 };
+	rdpSettings* settings;
+
+	WINPR_ASSERT(license);
+	WINPR_ASSERT(license->rdp);
+	WINPR_ASSERT(license->rdp->context);
+
+	settings = license->rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	ZeroMemory(license->HardwareId, HWID_LENGTH);
 
-	if (license->rdp->settings->OldLicenseBehaviour)
+	if (settings->OldLicenseBehaviour)
 	{
 		ZeroMemory(macAddress, sizeof(macAddress));
 		hashTarget = macAddress;
@@ -627,7 +646,7 @@ BOOL license_generate_hwid(rdpLicense* license)
 	{
 		wStream buffer;
 		wStream* s;
-		const char* hostname = license->rdp->settings->ClientHostname;
+		const char* hostname = settings->ClientHostname;
 		s = Stream_StaticInit(&buffer, license->HardwareId, 4);
 		Stream_Write_UINT32(s, PLATFORMID);
 		Stream_Free(s, TRUE);
@@ -652,7 +671,14 @@ static BOOL license_get_server_rsa_public_key(rdpLicense* license)
 	BYTE* Exponent;
 	BYTE* Modulus;
 	int ModulusLength;
-	rdpSettings* settings = license->rdp->settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(license);
+	WINPR_ASSERT(license->rdp);
+	WINPR_ASSERT(license->rdp->context);
+
+	settings = license->rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (license->ServerCertificate->length < 1)
 	{
@@ -1237,6 +1263,15 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	BOOL ret = FALSE;
 	BYTE computedMac[16];
 	LICENSE_BLOB* calBlob;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(license);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(license->rdp);
+	WINPR_ASSERT(license->rdp->context);
+
+	settings = license->rdp->context->settings;
+	WINPR_ASSERT(settings);
 
 	DEBUG_LICENSE("Receiving Server New/Upgrade License Packet");
 
@@ -1318,9 +1353,9 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	license->state = LICENSE_STATE_COMPLETED;
 
 	ret = TRUE;
-	if (!license->rdp->settings->OldLicenseBehaviour)
-		ret = saveCal(license->rdp->settings, Stream_Pointer(licenseStream), cbLicenseInfo,
-		              license->rdp->settings->ClientHostname);
+	if (!settings->OldLicenseBehaviour)
+		ret = saveCal(settings, Stream_Pointer(licenseStream), cbLicenseInfo,
+		              settings->ClientHostname);
 
 out_free_stream:
 	Stream_Free(licenseStream, FALSE);
@@ -1436,10 +1471,17 @@ BOOL license_answer_license_request(rdpLicense* license)
 	size_t license_size = 0;
 	BOOL status;
 	char* username;
+	rdpSettings* settings;
 
-	if (!license->rdp->settings->OldLicenseBehaviour)
-		license_data = loadCalFile(license->rdp->settings, license->rdp->settings->ClientHostname,
-		                           &license_size);
+	WINPR_ASSERT(license);
+	WINPR_ASSERT(license->rdp);
+	WINPR_ASSERT(license->rdp->context);
+
+	settings = license->rdp->context->settings;
+	WINPR_ASSERT(settings);
+
+	if (!settings->OldLicenseBehaviour)
+		license_data = loadCalFile(settings, settings->ClientHostname, &license_size);
 
 	if (license_data)
 	{
@@ -1476,15 +1518,15 @@ BOOL license_answer_license_request(rdpLicense* license)
 	s = license_send_stream_init(license);
 	if (!s)
 		return FALSE;
-	if (license->rdp->settings->Username != NULL)
-		username = license->rdp->settings->Username;
+	if (settings->Username != NULL)
+		username = settings->Username;
 	else
 		username = "username";
 
 	license->ClientUserName->data = (BYTE*)username;
 	license->ClientUserName->length = strlen(username) + 1;
-	license->ClientMachineName->data = (BYTE*)license->rdp->settings->ClientHostname;
-	license->ClientMachineName->length = strlen(license->rdp->settings->ClientHostname) + 1;
+	license->ClientMachineName->data = (BYTE*)settings->ClientHostname;
+	license->ClientMachineName->length = strlen(settings->ClientHostname) + 1;
 
 	status = license_write_new_license_request_packet(license, s);
 

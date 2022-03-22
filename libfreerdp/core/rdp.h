@@ -141,7 +141,6 @@ struct rdp_rdp
 	rdpFastPath* fastpath;
 	rdpLicense* license;
 	rdpRedirection* redirection;
-	rdpSettings* settings;
 	rdpTransport* transport;
 	rdpAutoDetect* autodetect;
 	rdpHeartbeat* heartbeat;
