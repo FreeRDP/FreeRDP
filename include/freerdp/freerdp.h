@@ -422,19 +422,17 @@ owned by rdpRdp */
 		                                 It is used to get the username/password when it was not
 		                                 provided at connection time. */
 #if defined(WITH_FREERDP_DEPRECATED)
-		ALIGN64 pVerifyCertificate VerifyCertificate;               /**< (offset 51)
-    Callback for certificate validation.
-    Used to verify that an unknown certificate is
-trusted. DEPRECATED: Use VerifyChangedCertificateEx*/
-		ALIGN64 pVerifyChangedCertificate VerifyChangedCertificate; /**<
-(offset 52) Callback for changed certificate validation. Used when a certificate differs from stored
-fingerprint. DEPRECATED: Use VerifyChangedCertificateEx */
+		WINPR_DEPRECATED_VAR("Use VerifyCertificateEx or VerifyX509Certificate  instead",
+		                     ALIGN64 pVerifyCertificate VerifyCertificate;) /**< (offset 51) */
+		WINPR_DEPRECATED_VAR("Use VerifyChangedCertificateEx or VerifyX509Certificate  instead",
+		                     ALIGN64 pVerifyChangedCertificate
+		                         VerifyChangedCertificate;) /**< (offset 52) */
 #else
 	    ALIGN64 UINT64 reserved[2];
 #endif
 		ALIGN64 pVerifyX509Certificate
-		    VerifyX509Certificate; /**< (offset 53)  Callback for X509 certificate verification (PEM
-		                              format) */
+		    VerifyX509Certificate; /**< (offset 53)  Callback for X509 certificate verification
+		                              (PEM format) */
 
 		ALIGN64 pLogonErrorInfo
 		    LogonErrorInfo; /**< (offset 54)  Callback for logon error info, important for logon
