@@ -161,7 +161,7 @@ BOOL freerdp_connect(freerdp* instance)
 			goto freerdp_connect_finally;
 	}
 
-	if (!status || (status2 != CHANNEL_RC_OK) || !update_post_connect(instance->update))
+	if (!status || (status2 != CHANNEL_RC_OK) || !update_post_connect(instance->context->update))
 	{
 		WLog_ERR(TAG, "freerdp_post_connect failed");
 
@@ -174,7 +174,7 @@ BOOL freerdp_connect(freerdp* instance)
 	if (instance->settings->PlayRemoteFx)
 	{
 		wStream* s;
-		rdp_update_internal* update = update_cast(instance->update);
+		rdp_update_internal* update = update_cast(instance->context->update);
 		pcap_record record;
 
 		WINPR_ASSERT(update);
@@ -481,7 +481,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 	up = update_cast(rdp->update);
 
-	update_post_disconnect(instance->update);
+	update_post_disconnect(instance->context->update);
 
 	IFCALL(instance->PostDisconnect, instance);
 
@@ -645,8 +645,9 @@ BOOL freerdp_context_new(freerdp* instance)
 	context->rdp = rdp;
 #if defined(WITH_FREERDP_DEPRECATED)
 	instance->input = rdp->input;
-#endif
 	instance->update = rdp->update;
+#endif
+
 	instance->settings = rdp->settings;
 	instance->autodetect = rdp->autodetect;
 	instance->heartbeat = rdp->heartbeat;
@@ -656,14 +657,9 @@ BOOL freerdp_context_new(freerdp* instance)
 		goto fail;
 
 	context->input = rdp->input;
-	context->update = instance->update;
+	context->update = rdp->update;
 	context->settings = instance->settings;
 	context->autodetect = rdp->autodetect;
-	instance->update->context = instance->context;
-	instance->update->pointer->context = instance->context;
-	instance->update->primary->context = instance->context;
-	instance->update->secondary->context = instance->context;
-	instance->update->altsec->context = instance->context;
 
 	if (!(context->errorDescription = calloc(1, 500)))
 	{

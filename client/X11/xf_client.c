@@ -1286,10 +1286,18 @@ static BOOL xf_post_connect(freerdp* instance)
 	rdpContext* context;
 	rdpSettings* settings;
 	ResizeWindowEventArgs e;
-	xfContext* xfc = (xfContext*)instance->context;
+	xfContext* xfc;
+
+	WINPR_ASSERT(instance);
+	xfc = (xfContext*)instance->context;
 	context = instance->context;
-	settings = instance->settings;
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
 	update = context->update;
+	WINPR_ASSERT(update);
 
 	if (!gdi_init(instance, xf_get_local_color_format(xfc, TRUE)))
 		return FALSE;
@@ -1306,11 +1314,11 @@ static BOOL xf_post_connect(freerdp* instance)
 		}
 
 		xf_gdi_register_update_callbacks(update);
-		brush_cache_register_callbacks(instance->update);
-		glyph_cache_register_callbacks(instance->update);
-		bitmap_cache_register_callbacks(instance->update);
-		offscreen_cache_register_callbacks(instance->update);
-		palette_cache_register_callbacks(instance->update);
+		brush_cache_register_callbacks(context->update);
+		glyph_cache_register_callbacks(context->update);
+		bitmap_cache_register_callbacks(context->update);
+		offscreen_cache_register_callbacks(context->update);
+		palette_cache_register_callbacks(context->update);
 	}
 
 #ifdef WITH_XRENDER

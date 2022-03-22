@@ -1283,13 +1283,13 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	if (!gdi)
 		goto fail;
 
-	instance->context->gdi = gdi;
+	context->gdi = gdi;
 	gdi->log = WLog_Get(TAG);
 
 	if (!gdi->log)
 		goto fail;
 
-	gdi->context = instance->context;
+	gdi->context = context;
 	gdi->width = instance->settings->DesktopWidth;
 	gdi->height = instance->settings->DesktopHeight;
 	gdi->dstFormat = format;
@@ -1307,17 +1307,17 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	if (!gdi_init_primary(gdi, stride, gdi->dstFormat, buffer, pfree, FALSE))
 		goto fail;
 
-	if (!(context->cache = cache_new(instance->context)))
+	if (!(context->cache = cache_new(context)))
 		goto fail;
 
-	gdi_register_update_callbacks(instance->update);
-	brush_cache_register_callbacks(instance->update);
-	glyph_cache_register_callbacks(instance->update);
-	bitmap_cache_register_callbacks(instance->update);
-	offscreen_cache_register_callbacks(instance->update);
-	palette_cache_register_callbacks(instance->update);
+	gdi_register_update_callbacks(context->update);
+	brush_cache_register_callbacks(context->update);
+	glyph_cache_register_callbacks(context->update);
+	bitmap_cache_register_callbacks(context->update);
+	offscreen_cache_register_callbacks(context->update);
+	palette_cache_register_callbacks(context->update);
 
-	if (!gdi_register_graphics(instance->context->graphics))
+	if (!gdi_register_graphics(context->graphics))
 		goto fail;
 
 	return TRUE;

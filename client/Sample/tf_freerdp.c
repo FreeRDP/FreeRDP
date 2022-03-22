@@ -176,20 +176,28 @@ static BOOL tf_pre_connect(freerdp* instance)
  */
 static BOOL tf_post_connect(freerdp* instance)
 {
+	rdpContext* context;
+
 	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
 		return FALSE;
+
+	context = instance->context;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->update);
 
 	/* With this setting we disable all graphics processing in the library.
 	 *
 	 * This allows low resource (client) protocol parsing.
 	 */
-	freerdp_settings_set_bool(instance->settings, FreeRDP_DeactivateClientDecoding, TRUE);
-	instance->update->BeginPaint = tf_begin_paint;
-	instance->update->EndPaint = tf_end_paint;
-	instance->update->PlaySound = tf_play_sound;
-	instance->update->DesktopResize = tf_desktop_resize;
-	instance->update->SetKeyboardIndicators = tf_keyboard_set_indicators;
-	instance->update->SetKeyboardImeStatus = tf_keyboard_set_ime_status;
+	if (!freerdp_settings_set_bool(instance->settings, FreeRDP_DeactivateClientDecoding, TRUE))
+		return FALSE;
+
+	context->update->BeginPaint = tf_begin_paint;
+	context->update->EndPaint = tf_end_paint;
+	context->update->PlaySound = tf_play_sound;
+	context->update->DesktopResize = tf_desktop_resize;
+	context->update->SetKeyboardIndicators = tf_keyboard_set_indicators;
+	context->update->SetKeyboardImeStatus = tf_keyboard_set_ime_status;
 	return TRUE;
 }
 

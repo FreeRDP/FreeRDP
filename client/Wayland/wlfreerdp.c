@@ -261,8 +261,8 @@ static BOOL wl_post_connect(freerdp* instance)
 	UwacWindowSetTitle(window, title);
 	UwacWindowSetAppId(window, app_id);
 	UwacWindowSetOpaqueRegion(context->window, 0, 0, w, h);
-	instance->update->EndPaint = wl_end_paint;
-	instance->update->DesktopResize = wl_resize_display;
+	instance->context->update->EndPaint = wl_end_paint;
+	instance->context->update->DesktopResize = wl_resize_display;
 	freerdp_keyboard_init_ex(instance->context->settings->KeyboardLayout,
 	                         instance->context->settings->KeyboardRemappingList);
 

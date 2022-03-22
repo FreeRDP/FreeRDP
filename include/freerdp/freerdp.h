@@ -353,18 +353,16 @@ extern "C"
 		UINT64 paddingA[16 - 2]; /* 2 */
 
 #if defined(WITH_FREERDP_DEPRECATED)
-		FREERDP_API WINPR_DEPRECATED_VAR("use rdpContext::input instead",
-		                                 ALIGN64 rdpInput* input;) /* (offset 16)
-		                    Input handle for the connection.
-		                              Will be initialized by a call to freerdp_context_new()
-		   owned by rdpRdp */
+		WINPR_DEPRECATED_VAR("use rdpContext::input instead", ALIGN64 rdpInput* input;) /* (offset
+		                        16) Input handle for the connection. Will be initialized by a call
+		                        to freerdp_context_new() owned by rdpRdp */
+		WINPR_DEPRECATED_VAR("use rdpContext::update instead",
+		                     ALIGN64 rdpUpdate* update;) /* (offset 17)
+		                      Update display parameters. Used to register display events callbacks
+and settings.		 Will be initialized by a call to freerdp_context_new()		 owned by rdpRdp */
 #else
-	    UINT64 paddingX[1];
+	    UINT64 paddingX[2];
 #endif
-		    ALIGN64
-		    rdpUpdate* update;             /* (offset 17)
-		                              Update display parameters. Used to register display events callbacks
-        and settings.		 Will be initialized by a call to freerdp_context_new()		 owned by rdpRdp */
 		ALIGN64 rdpSettings* settings;     /**< (offset 18)
 		                                Pointer to a rdpSettings structure. Will be used to maintain the
 		                                required RDP	 settings.		              Will be
