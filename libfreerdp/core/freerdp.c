@@ -646,9 +646,9 @@ BOOL freerdp_context_new(freerdp* instance)
 	instance->input = rdp->input;
 	instance->update = rdp->update;
 	instance->settings = rdp->settings;
+	instance->autodetect = rdp->autodetect;
 #endif
 
-	instance->autodetect = rdp->autodetect;
 	instance->heartbeat = rdp->heartbeat;
 	context->graphics = graphics_new(context);
 
@@ -749,13 +749,20 @@ void freerdp_context_free(freerdp* instance)
 	stream_dump_free(ctx->dump);
 	ctx->dump = NULL;
 
+	ctx->input = NULL;      /* owned by rdpRdp */
+	ctx->update = NULL;     /* owned by rdpRdp */
+	ctx->settings = NULL;   /* owned by rdpRdp */
+	ctx->autodetect = NULL; /* owned by rdpRdp */
+
 	free(ctx);
 	instance->context = NULL;
 #if defined(WITH_FREERDP_DEPRECATED)
 	instance->input = NULL;    /* owned by rdpRdp */
 	instance->update = NULL;   /* owned by rdpRdp */
 	instance->settings = NULL; /* owned by rdpRdp */
+	instance->autodetect = NULL; /* owned by rdpRdp */
 #endif
+	instance->heartbeat = NULL; /* owned by rdpRdp */
 }
 
 int freerdp_get_disconnect_ultimatum(rdpContext* context)

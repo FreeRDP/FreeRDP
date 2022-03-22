@@ -367,14 +367,15 @@ and settings.		 Will be initialized by a call to freerdp_context_new()		 owned b
 		                            initialized by	 a call to freerdp_context_new()
 		                            owned by rdpRdp
 		                          */
-#else
-	    UINT64 paddingX[3];
-#endif
-		ALIGN64 rdpAutoDetect* autodetect; /* (offset 19)
+		WINPR_DEPRECATED_VAR("use rdpContext::autodetect instead",
+		                     ALIGN64 rdpAutoDetect* autodetect;) /* (offset 19)
 		                                Auto-Detect handle for the connection.
 		                                Will be initialized by a call to freerdp_context_new()
 owned by rdpRdp */
-		ALIGN64 rdpHeartbeat* heartbeat;   /* (offset 21) owned by rdpRdp*/
+#else
+	    UINT64 paddingX[4];
+#endif
+		ALIGN64 rdpHeartbeat* heartbeat; /* (offset 21) owned by rdpRdp*/
 
 		UINT64 paddingB[32 - 21]; /* 21 */
 
