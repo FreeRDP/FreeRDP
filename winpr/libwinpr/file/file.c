@@ -325,6 +325,69 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 	return (UINT32)(size & 0xFFFFFFFF);
 }
 
+static BOOL FileGetFileInformationByHandle(HANDLE hFile,
+                                           LPBY_HANDLE_FILE_INFORMATION lpFileInformation)
+{
+	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
+	struct stat st;
+	UINT64 ft;
+	const char* lastSep;
+
+	if (!pFile)
+		return FALSE;
+	if (!lpFileInformation)
+		return FALSE;
+
+	if (fstat(fileno(pFile->fp), &st) == -1)
+	{
+		WLog_ERR(TAG, "fstat failed with %s [%#08X]", errno, strerror(errno));
+		return FALSE;
+	}
+
+	lpFileInformation->dwFileAttributes = 0;
+
+	if (S_ISDIR(st.st_mode))
+		lpFileInformation->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
+
+	if (lpFileInformation->dwFileAttributes == 0)
+		lpFileInformation->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+
+	lastSep = strrchr(pFile->lpFileName, '/');
+
+	if (lastSep)
+	{
+		const char* name = lastSep + 1;
+		const size_t namelen = strlen(name);
+
+		if ((namelen > 1) && (name[0] == '.') && (name[1] != '.'))
+			lpFileInformation->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+	}
+
+	if (!(st.st_mode & S_IWUSR))
+		lpFileInformation->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+
+#ifdef _DARWIN_FEATURE_64_BIT_INODE
+	ft = STAT_TIME_TO_FILETIME(st.st_birthtime);
+#else
+	ft = STAT_TIME_TO_FILETIME(st.st_ctime);
+#endif
+	lpFileInformation->ftCreationTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFileInformation->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
+	ft = STAT_TIME_TO_FILETIME(st.st_mtime);
+	lpFileInformation->ftLastWriteTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFileInformation->ftLastWriteTime.dwLowDateTime = ft & 0xFFFFFFFF;
+	ft = STAT_TIME_TO_FILETIME(st.st_atime);
+	lpFileInformation->ftLastAccessTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFileInformation->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
+	lpFileInformation->nFileSizeHigh = ((UINT64)st.st_size) >> 32ULL;
+	lpFileInformation->nFileSizeLow = st.st_size & 0xFFFFFFFF;
+	lpFileInformation->dwVolumeSerialNumber = st.st_dev;
+	lpFileInformation->nNumberOfLinks = st.st_nlink;
+	lpFileInformation->nFileIndexHigh = (st.st_ino >> 4) & 0xFFFFFFFF;
+	lpFileInformation->nFileIndexLow = st.st_ino & 0xFFFFFFFF;
+	return TRUE;
+}
+
 static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
                            DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh,
                            LPOVERLAPPED lpOverlapped)
@@ -484,10 +547,10 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 
 static UINT64 FileTimeToUS(const FILETIME* ft)
 {
-	const UINT64 EPOCH_DIFF = 11644473600ULL * 1000000ULL;
+	const UINT64 EPOCH_DIFF_US = EPOCH_DIFF * 1000000ULL;
 	UINT64 tmp = ((UINT64)ft->dwHighDateTime) << 32 | ft->dwLowDateTime;
 	tmp /= 10; /* 100ns steps to 1us step */
-	tmp -= EPOCH_DIFF;
+	tmp -= EPOCH_DIFF_US;
 	return tmp;
 }
 
@@ -586,44 +649,52 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	return TRUE;
 }
 
-static HANDLE_OPS fileOps = { FileIsHandled,
-	                          FileCloseHandle,
-	                          FileGetFd,
-	                          NULL, /* CleanupHandle */
-	                          FileRead,
-	                          NULL, /* FileReadEx */
-	                          NULL, /* FileReadScatter */
-	                          FileWrite,
-	                          NULL, /* FileWriteEx */
-	                          NULL, /* FileWriteGather */
-	                          FileGetFileSize,
-	                          NULL, /*  FlushFileBuffers */
-	                          FileSetEndOfFile,
-	                          FileSetFilePointer,
-	                          FileSetFilePointerEx,
-	                          NULL, /* FileLockFile */
-	                          FileLockFileEx,
-	                          FileUnlockFile,
-	                          FileUnlockFileEx,
-	                          FileSetFileTime };
+static HANDLE_OPS fileOps = {
+	FileIsHandled,
+	FileCloseHandle,
+	FileGetFd,
+	NULL, /* CleanupHandle */
+	FileRead,
+	NULL, /* FileReadEx */
+	NULL, /* FileReadScatter */
+	FileWrite,
+	NULL, /* FileWriteEx */
+	NULL, /* FileWriteGather */
+	FileGetFileSize,
+	NULL, /*  FlushFileBuffers */
+	FileSetEndOfFile,
+	FileSetFilePointer,
+	FileSetFilePointerEx,
+	NULL, /* FileLockFile */
+	FileLockFileEx,
+	FileUnlockFile,
+	FileUnlockFileEx,
+	FileSetFileTime,
+	FileGetFileInformationByHandle,
+};
 
 static HANDLE_OPS shmOps = {
-	FileIsHandled, FileCloseHandle,
-	FileGetFd,     NULL, /* CleanupHandle */
-	FileRead,      NULL, /* FileReadEx */
-	NULL,                /* FileReadScatter */
-	FileWrite,     NULL, /* FileWriteEx */
-	NULL,                /* FileWriteGather */
-	NULL,                /* FileGetFileSize */
-	NULL,                /*  FlushFileBuffers */
-	NULL,                /* FileSetEndOfFile */
-	NULL,                /* FileSetFilePointer */
-	NULL,                /* SetFilePointerEx */
-	NULL,                /* FileLockFile */
-	NULL,                /* FileLockFileEx */
-	NULL,                /* FileUnlockFile */
-	NULL,                /* FileUnlockFileEx */
-	NULL                 /* FileSetFileTime */
+	FileIsHandled,
+	FileCloseHandle,
+	FileGetFd,
+	NULL, /* CleanupHandle */
+	FileRead,
+	NULL, /* FileReadEx */
+	NULL, /* FileReadScatter */
+	FileWrite,
+	NULL, /* FileWriteEx */
+	NULL, /* FileWriteGather */
+	NULL, /* FileGetFileSize */
+	NULL, /*  FlushFileBuffers */
+	NULL, /* FileSetEndOfFile */
+	NULL, /* FileSetFilePointer */
+	NULL, /* SetFilePointerEx */
+	NULL, /* FileLockFile */
+	NULL, /* FileLockFileEx */
+	NULL, /* FileUnlockFile */
+	NULL, /* FileUnlockFileEx */
+	NULL, /* FileSetFileTime */
+	FileGetFileInformationByHandle,
 };
 
 static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDisposition, BOOL* create)
