@@ -644,14 +644,13 @@ BOOL freerdp_context_new(freerdp* instance)
 	context->input = instance->input;
 	context->update = instance->update;
 	context->settings = instance->settings;
-	context->autodetect = instance->autodetect;
+	context->autodetect = rdp->autodetect;
 	instance->update->context = instance->context;
 	instance->update->pointer->context = instance->context;
 	instance->update->primary->context = instance->context;
 	instance->update->secondary->context = instance->context;
 	instance->update->altsec->context = instance->context;
 	instance->input->context = context;
-	instance->autodetect->context = context;
 
 	if (!(context->errorDescription = calloc(1, 500)))
 	{
