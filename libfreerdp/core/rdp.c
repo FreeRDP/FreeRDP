@@ -1810,8 +1810,8 @@ rdpRdp* rdp_new(rdpContext* context)
 
 	if (context->instance)
 	{
-		rdp->settings->instance = context->instance;
-		context->instance->settings = rdp->settings;
+		context->settings->instance = context->instance;
+		context->settings = rdp->settings;
 	}
 	else if (context->peer)
 	{

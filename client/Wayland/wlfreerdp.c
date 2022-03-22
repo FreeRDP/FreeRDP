@@ -177,10 +177,10 @@ static BOOL wl_pre_connect(freerdp* instance)
 		return FALSE;
 
 	context = (wlfContext*)instance->context;
-	settings = instance->settings;
+	WINPR_ASSERT(context);
 
-	if (!context || !settings)
-		return FALSE;
+	settings = instance->context->settings;
+	WINPR_ASSERT(settings);
 
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_WAYLAND;
@@ -204,7 +204,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 		}
 	}
 
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!freerdp_client_load_addins(instance->context->channels, settings))
 		return FALSE;
 
 	return TRUE;
@@ -442,12 +442,8 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 
 static BOOL handle_window_events(freerdp* instance)
 {
-	rdpSettings* settings;
-
-	if (!instance || !instance->settings)
+	if (!instance)
 		return FALSE;
-
-	settings = instance->settings;
 
 	return TRUE;
 }

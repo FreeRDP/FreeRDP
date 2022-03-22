@@ -141,8 +141,9 @@ static BOOL tf_pre_connect(freerdp* instance)
 	rdpSettings* settings;
 
 	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
 
-	settings = instance->settings;
+	settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
 	/* Optional OS identifier sent to server */
@@ -159,7 +160,7 @@ static BOOL tf_pre_connect(freerdp* instance)
 
 	/* Load all required plugins / channels / libraries specified by current
 	 * settings. */
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!freerdp_client_load_addins(instance->context->channels, settings))
 		return FALSE;
 
 	/* TODO: Any code your client requires */
@@ -189,7 +190,7 @@ static BOOL tf_post_connect(freerdp* instance)
 	 *
 	 * This allows low resource (client) protocol parsing.
 	 */
-	if (!freerdp_settings_set_bool(instance->settings, FreeRDP_DeactivateClientDecoding, TRUE))
+	if (!freerdp_settings_set_bool(context->settings, FreeRDP_DeactivateClientDecoding, TRUE))
 		return FALSE;
 
 	context->update->BeginPaint = tf_begin_paint;
@@ -236,7 +237,9 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	BOOL rc = freerdp_connect(instance);
 
-	if (instance->settings->AuthenticationOnly)
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(instance->context->settings);
+	if (instance->context->settings->AuthenticationOnly)
 	{
 		result = freerdp_get_last_error(instance->context);
 		freerdp_abort_connect(instance);

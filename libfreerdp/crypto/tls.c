@@ -1285,9 +1285,15 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 	int verification_status = -1;
 	BOOL hostname_match = FALSE;
 	rdpCertificateData* certificate_data = NULL;
-	freerdp* instance = (freerdp*)tls->settings->instance;
 	BYTE* pemCert = NULL;
 	DWORD flags = VERIFY_CERT_FLAG_NONE;
+	freerdp* instance;
+
+	WINPR_ASSERT(tls);
+	WINPR_ASSERT(tls->settings);
+
+	instance = (freerdp*)tls->settings->instance;
+	WINPR_ASSERT(instance);
 
 	if (freerdp_shall_disconnect(instance))
 		return -1;
@@ -1437,7 +1443,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 				else if (instance->VerifyCertificateEx)
 				{
 					const BOOL use_pem = freerdp_settings_get_bool(
-					    instance->settings, FreeRDP_CertificateCallbackPreferPEM);
+					    tls->settings, FreeRDP_CertificateCallbackPreferPEM);
 					char* fp = NULL;
 					DWORD cflags = flags;
 					if (use_pem)
@@ -1503,7 +1509,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					const char* old_pem = certificate_data_get_pem(stored_data);
 					const BOOL fpIsAllocated =
 					    !old_pem || !freerdp_settings_get_bool(
-					                    instance->settings, FreeRDP_CertificateCallbackPreferPEM);
+					                    tls->settings, FreeRDP_CertificateCallbackPreferPEM);
 					char* fp;
 					if (!fpIsAllocated)
 					{

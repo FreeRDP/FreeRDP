@@ -91,7 +91,7 @@ BOOL freerdp_connect(freerdp* instance)
 	rdp = instance->context->rdp;
 	WINPR_ASSERT(rdp);
 
-	settings = instance->settings;
+	settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
 	freerdp_channels_register_instance(instance->context->channels, instance);
@@ -171,7 +171,7 @@ BOOL freerdp_connect(freerdp* instance)
 		goto freerdp_connect_finally;
 	}
 
-	if (instance->settings->PlayRemoteFx)
+	if (settings->PlayRemoteFx)
 	{
 		wStream* s;
 		rdp_update_internal* update = update_cast(instance->context->update);
@@ -624,7 +624,6 @@ BOOL freerdp_context_new(freerdp* instance)
 	context = instance->context;
 	context->instance = instance;
 	context->ServerMode = FALSE;
-	context->settings = instance->settings;
 	context->disconnectUltimatum = 0;
 	context->pubSub = PubSub_New(TRUE);
 
@@ -646,9 +645,9 @@ BOOL freerdp_context_new(freerdp* instance)
 #if defined(WITH_FREERDP_DEPRECATED)
 	instance->input = rdp->input;
 	instance->update = rdp->update;
+	instance->settings = rdp->settings;
 #endif
 
-	instance->settings = rdp->settings;
 	instance->autodetect = rdp->autodetect;
 	instance->heartbeat = rdp->heartbeat;
 	context->graphics = graphics_new(context);
@@ -658,7 +657,7 @@ BOOL freerdp_context_new(freerdp* instance)
 
 	context->input = rdp->input;
 	context->update = rdp->update;
-	context->settings = instance->settings;
+	context->settings = rdp->settings;
 	context->autodetect = rdp->autodetect;
 
 	if (!(context->errorDescription = calloc(1, 500)))
@@ -752,7 +751,11 @@ void freerdp_context_free(freerdp* instance)
 
 	free(ctx);
 	instance->context = NULL;
+#if defined(WITH_FREERDP_DEPRECATED)
+	instance->input = NULL;    /* owned by rdpRdp */
+	instance->update = NULL;   /* owned by rdpRdp */
 	instance->settings = NULL; /* owned by rdpRdp */
+#endif
 }
 
 int freerdp_get_disconnect_ultimatum(rdpContext* context)

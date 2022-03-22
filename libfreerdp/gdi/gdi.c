@@ -1276,9 +1276,18 @@ BOOL gdi_init(freerdp* instance, UINT32 format)
 BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
                  void (*pfree)(void*))
 {
-	UINT32 SrcFormat = gdi_get_pixel_format(instance->settings->ColorDepth);
-	rdpGdi* gdi = (rdpGdi*)calloc(1, sizeof(rdpGdi));
-	rdpContext* context = instance->context;
+	rdpContext* context;
+	UINT32 SrcFormat;
+	rdpGdi* gdi;
+
+	WINPR_ASSERT(instance);
+
+	context = instance->context;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->settings);
+
+	SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth);
+	gdi = (rdpGdi*)calloc(1, sizeof(rdpGdi));
 
 	if (!gdi)
 		goto fail;
@@ -1290,8 +1299,8 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 		goto fail;
 
 	gdi->context = context;
-	gdi->width = instance->settings->DesktopWidth;
-	gdi->height = instance->settings->DesktopHeight;
+	gdi->width = context->settings->DesktopWidth;
+	gdi->height = context->settings->DesktopHeight;
 	gdi->dstFormat = format;
 	/* default internal buffer format */
 	WLog_Print(gdi->log, WLOG_INFO, "Local framebuffer format  %s",
