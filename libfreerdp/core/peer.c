@@ -417,6 +417,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->mcs);
 	WINPR_ASSERT(rdp->settings);
+	WINPR_ASSERT(rdp->context);
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
@@ -425,7 +426,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	}
 
 	rdp->inPackets++;
-	if (freerdp_shall_disconnect(rdp->instance))
+	if (freerdp_shall_disconnect(rdp->context->instance))
 		return 0;
 
 	if (rdp->settings->UseRdpSecurityLayer)

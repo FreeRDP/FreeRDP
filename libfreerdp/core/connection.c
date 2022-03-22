@@ -542,6 +542,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 {
 	BOOL status;
 	rdpSettings* settings;
+	freerdp* instance;
 
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
@@ -550,6 +551,10 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 		return FALSE;
 
 	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
+	instance = rdp->context->instance;
+	WINPR_ASSERT(instance);
 
 	settings = rdp->settings;
 	WINPR_ASSERT(settings);
@@ -603,7 +608,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 			return FALSE;
 	}
 
-	if (!IFCALLRESULT(TRUE, rdp->instance->Redirect, rdp->instance))
+	if (!IFCALLRESULT(TRUE, instance->Redirect, instance))
 		return FALSE;
 
 	status = rdp_client_connect(rdp);
@@ -1060,8 +1065,22 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	UINT16 width;
 	UINT16 height;
 	UINT16 length;
-	width = rdp->settings->DesktopWidth;
-	height = rdp->settings->DesktopHeight;
+	freerdp* instance;
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+
+	settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
+	WINPR_ASSERT(rdp->context);
+
+	instance = rdp->context->instance;
+	WINPR_ASSERT(instance);
+
+	width = settings->DesktopWidth;
+	height = settings->DesktopHeight;
 
 	pos = Stream_GetPosition(s);
 
@@ -1085,7 +1104,7 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		return rc;
 	}
 
-	if (freerdp_shall_disconnect(rdp->instance))
+	if (freerdp_shall_disconnect(instance))
 		return 0;
 
 	if (!rdp_send_confirm_active(rdp))

@@ -1128,6 +1128,15 @@ static BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s, logon_info_ex* in
 {
 	UINT32 errorNotificationType;
 	UINT32 errorNotificationData;
+	freerdp* instance;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(info);
+	WINPR_ASSERT(rdp->context);
+
+	instance = rdp->context->instance;
+	WINPR_ASSERT(instance);
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
@@ -1136,8 +1145,7 @@ static BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s, logon_info_ex* in
 	Stream_Read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
 	WLog_DBG(TAG, "LogonErrorInfo: Data: 0x%08" PRIX32 " Type: 0x%08" PRIX32 "",
 	         errorNotificationData, errorNotificationType);
-	IFCALL(rdp->instance->LogonErrorInfo, rdp->instance, errorNotificationData,
-	       errorNotificationType);
+	IFCALL(instance->LogonErrorInfo, instance, errorNotificationData, errorNotificationType);
 	info->ErrorNotificationType = errorNotificationType;
 	info->ErrorNotificationData = errorNotificationData;
 	return TRUE;
