@@ -1808,15 +1808,16 @@ rdpRdp* rdp_new(rdpContext* context)
 
 	rdp->settings = context->settings;
 
+	context->settings = rdp->settings;
 	if (context->instance)
-	{
 		context->settings->instance = context->instance;
-		context->settings = rdp->settings;
-	}
 	else if (context->peer)
 	{
 		rdp->settings->instance = context->peer;
+
+#if defined(WITH_FREERDP_DEPRECATED)
 		context->peer->settings = rdp->settings;
+#endif
 	}
 
 	rdp->transport = transport_new(context);

@@ -1196,6 +1196,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 	rdpPeerChannel* channel = NULL;
 	WTSVirtualChannelManager* vcm;
 	HANDLE hChannelHandle = NULL;
+	rdpContext* context;
 	vcm = (WTSVirtualChannelManager*)hServer;
 
 	if (!vcm)
@@ -1205,7 +1206,16 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 	}
 
 	client = vcm->client;
-	mcs = client->context->rdp->mcs;
+	WINPR_ASSERT(client);
+
+	context = client->context;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->rdp);
+	WINPR_ASSERT(context->settings);
+
+	mcs = context->rdp->mcs;
+	WINPR_ASSERT(mcs);
+
 	length = strlen(pVirtualName);
 
 	if (length > 8)
@@ -1234,8 +1244,9 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 
 	if (!channel)
 	{
-		channel = channel_new(vcm, client, joined_channel->ChannelId, index,
-		                      RDP_PEER_CHANNEL_TYPE_SVC, client->settings->VirtualChannelChunkSize);
+		channel =
+		    channel_new(vcm, client, joined_channel->ChannelId, index, RDP_PEER_CHANNEL_TYPE_SVC,
+		                context->settings->VirtualChannelChunkSize);
 
 		if (!channel)
 			goto fail;
@@ -1302,8 +1313,11 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 		return NULL;
 	}
 
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->context);
+	WINPR_ASSERT(client->context->settings);
 	channel = channel_new(vcm, client, 0, 0, RDP_PEER_CHANNEL_TYPE_DVC,
-	                      client->settings->VirtualChannelChunkSize);
+	                      client->context->settings->VirtualChannelChunkSize);
 
 	if (!channel)
 	{
@@ -1481,12 +1495,16 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 	}
 	else
 	{
+		rdpContext* context;
+
 		first = TRUE;
 		WINPR_ASSERT(channel->client);
-		WINPR_ASSERT(channel->client->settings);
+		context = channel->client->context;
+		WINPR_ASSERT(context);
+		WINPR_ASSERT(context->settings);
 		while (Length > 0)
 		{
-			s = Stream_New(NULL, channel->client->settings->VirtualChannelChunkSize);
+			s = Stream_New(NULL, context->settings->VirtualChannelChunkSize);
 
 			if (!s)
 			{
