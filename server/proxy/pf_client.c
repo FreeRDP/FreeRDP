@@ -620,7 +620,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	WINPR_ASSERT(instance);
 	context = instance->context;
 	WINPR_ASSERT(context);
-	settings = instance->context->settings;
+	settings = context->settings;
 	WINPR_ASSERT(settings);
 	update = context->update;
 	WINPR_ASSERT(update);
