@@ -223,8 +223,9 @@ static BOOL wf_pre_connect(freerdp* instance)
 	rdpContext* context;
 	rdpSettings* settings;
 
-	if (!instance || !instance->context || !instance->context->settings)
-		return FALSE;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(instance->context->settings);
 
 	context = instance->context;
 	wfc = (wfContext*)instance->context;
@@ -472,8 +473,10 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 	char User[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
 	char Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
 
-	if (!instance || !instance->context)
-		return FALSE;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(instance->context->settings);
+
 	wfc = (wfContext*)instance->context;
 
 	fSave = FALSE;
