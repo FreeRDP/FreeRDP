@@ -708,12 +708,13 @@ int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s)
 	return success ? 0 : -1;
 }
 
-rdpAutoDetect* autodetect_new(void)
+rdpAutoDetect* autodetect_new(rdpContext* context)
 {
 	rdpAutoDetect* autoDetect = (rdpAutoDetect*)calloc(1, sizeof(rdpAutoDetect));
 
 	if (autoDetect)
 	{
+		autoDetect->context = context;
 	}
 
 	return autoDetect;

@@ -50,9 +50,9 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
-	WINPR_ASSERT(instance->settings);
+	WINPR_ASSERT(instance->context->settings);
 
-	settings = instance->settings;
+	settings = instance->context->settings;
 
 	if (freerdp_shall_disconnect(instance))
 		return AUTH_FAILED;
@@ -92,9 +92,9 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
-	WINPR_ASSERT(instance->settings);
+	WINPR_ASSERT(instance->context->settings);
 
-	settings = instance->settings;
+	settings = instance->context->settings;
 
 	if (freerdp_shall_disconnect(instance))
 		return AUTH_FAILED;
@@ -111,7 +111,7 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 	{
 		case AUTH_RDP:
 		case AUTH_TLS:
-			if (instance->settings->SmartcardLogon)
+			if (settings->SmartcardLogon)
 			{
 				if (!utils_str_is_empty(settings->Password))
 				{
@@ -122,7 +122,7 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 			}
 			break;
 		case AUTH_NLA:
-			if (instance->settings->SmartcardLogon)
+			if (settings->SmartcardLogon)
 				reason = AUTH_SMARTCARD_PIN;
 			break;
 		default:

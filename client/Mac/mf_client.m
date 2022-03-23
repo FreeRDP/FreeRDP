@@ -81,7 +81,6 @@ static int mfreerdp_client_stop(rdpContext *context)
 static BOOL mfreerdp_client_new(freerdp *instance, rdpContext *context)
 {
 	mfContext *mfc;
-	rdpSettings *settings;
 
 	WINPR_ASSERT(instance);
 
@@ -97,8 +96,6 @@ static BOOL mfreerdp_client_new(freerdp *instance, rdpContext *context)
 	context->instance->VerifyCertificateEx = mac_verify_certificate_ex;
 	context->instance->VerifyChangedCertificateEx = mac_verify_changed_certificate_ex;
 	context->instance->LogonErrorInfo = mac_logon_error_info;
-	context->instance->settings = instance->settings;
-	settings = context->settings;
 	return TRUE;
 }
 

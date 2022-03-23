@@ -177,10 +177,10 @@ static BOOL wl_pre_connect(freerdp* instance)
 		return FALSE;
 
 	context = (wlfContext*)instance->context;
-	settings = instance->settings;
+	WINPR_ASSERT(context);
 
-	if (!context || !settings)
-		return FALSE;
+	settings = instance->context->settings;
+	WINPR_ASSERT(settings);
 
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_WAYLAND;
@@ -204,7 +204,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 		}
 	}
 
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!freerdp_client_load_addins(instance->context->channels, settings))
 		return FALSE;
 
 	return TRUE;
@@ -261,8 +261,8 @@ static BOOL wl_post_connect(freerdp* instance)
 	UwacWindowSetTitle(window, title);
 	UwacWindowSetAppId(window, app_id);
 	UwacWindowSetOpaqueRegion(context->window, 0, 0, w, h);
-	instance->update->EndPaint = wl_end_paint;
-	instance->update->DesktopResize = wl_resize_display;
+	instance->context->update->EndPaint = wl_end_paint;
+	instance->context->update->DesktopResize = wl_resize_display;
 	freerdp_keyboard_init_ex(instance->context->settings->KeyboardLayout,
 	                         instance->context->settings->KeyboardRemappingList);
 
@@ -442,12 +442,8 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 
 static BOOL handle_window_events(freerdp* instance)
 {
-	rdpSettings* settings;
-
-	if (!instance || !instance->settings)
+	if (!instance)
 		return FALSE;
-
-	settings = instance->settings;
 
 	return TRUE;
 }

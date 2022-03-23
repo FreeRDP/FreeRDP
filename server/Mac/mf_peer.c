@@ -93,9 +93,18 @@ static void mf_peer_rfx_update(freerdp_peer* client)
 	rdpUpdate* update;
 	mfPeerContext* mfp;
 	SURFACE_BITS_COMMAND cmd = { 0 };
-	update = client->update;
+
+	WINPR_ASSERT(client);
+
 	mfp = (mfPeerContext*)client->context;
+	WINPR_ASSERT(mfp);
+
+	update = client->context->update;
+	WINPR_ASSERT(update);
+
 	s = mfp->s;
+	WINPR_ASSERT(s);
+
 	Stream_Clear(s);
 	Stream_SetPosition(s, 0);
 	UINT32 x = mfi->invalid.x / mfi->scale;
@@ -157,15 +166,24 @@ static BOOL mf_peer_check_fds(freerdp_peer* client)
 /* Called when we have a new peer connecting */
 static BOOL mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 {
+	rdpSettings* settings;
+
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->context);
+	WINPR_ASSERT(context);
+
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
 	if (!(context->info = mf_info_get_instance()))
 		return FALSE;
 
-	if (!(context->rfx_context = rfx_context_new_ex(TRUE, client->settings->ThreadingFlags)))
+	if (!(context->rfx_context = rfx_context_new_ex(TRUE, settings->ThreadingFlags)))
 		goto fail_rfx_context;
 
 	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = client->settings->DesktopWidth;
-	context->rfx_context->height = client->settings->DesktopHeight;
+	context->rfx_context->width = settings->DesktopWidth;
+	context->rfx_context->height = settings->DesktopHeight;
 	rfx_context_set_pixel_format(context->rfx_context, PIXEL_FORMAT_BGRA32);
 
 	if (!(context->s = Stream_New(NULL, 0xFFFF)))
@@ -247,9 +265,16 @@ static BOOL mf_peer_init(freerdp_peer* client)
 
 static BOOL mf_peer_post_connect(freerdp_peer* client)
 {
-	mfPeerContext* context = (mfPeerContext*)client->context;
-	rdpSettings* settings = client->settings;
 	mfInfo* mfi = mf_info_get_instance();
+
+	WINPR_ASSERT(client);
+
+	mfPeerContext* context = (mfPeerContext*)client->context;
+	WINPR_ASSERT(context);
+
+	rdpSettings* settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
 	mfi->scale = 1;
 	// mfi->servscreen_width = 2880 / mfi->scale;
 	// mfi->servscreen_height = 1800 / mfi->scale;
@@ -263,7 +288,11 @@ static BOOL mf_peer_post_connect(freerdp_peer* client)
 	settings->DesktopWidth = mfi->servscreen_width;
 	settings->DesktopHeight = mfi->servscreen_height;
 	settings->ColorDepth = bitsPerPixel;
-	client->update->DesktopResize(client->update->context);
+
+	WINPR_ASSERT(client->context->update);
+	WINPR_ASSERT(client->context->update->DesktopResize);
+	client->context->update->DesktopResize(client->context);
+
 	mfi->mouse_down_left = FALSE;
 	mfi->mouse_down_right = FALSE;
 	mfi->mouse_down_other = FALSE;
@@ -284,9 +313,15 @@ static BOOL mf_peer_post_connect(freerdp_peer* client)
 
 static BOOL mf_peer_activate(freerdp_peer* client)
 {
+	WINPR_ASSERT(client);
+
 	mfPeerContext* context = (mfPeerContext*)client->context;
-	rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
-	                  client->settings->DesktopHeight);
+	WINPR_ASSERT(context);
+
+	rdpSettings* settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
+	rfx_context_reset(context->rfx_context, settings->DesktopWidth, settings->DesktopHeight);
 	context->activated = TRUE;
 	return TRUE;
 }
@@ -321,10 +356,10 @@ static BOOL mf_peer_suppress_output(rdpContext* context, BYTE allow, const RECTA
 static void* mf_peer_main_loop(void* arg)
 {
 	mfPeerContext* context;
+	rdpSettings* settings;
+	rdpInput* input;
+	rdpUpdate* update;
 	freerdp_peer* client = (freerdp_peer*)arg;
-
-	WINPR_ASSERT(client);
-	WINPR_ASSERT(client->settings);
 
 	if (!mf_peer_init(client))
 	{
@@ -332,30 +367,45 @@ static void* mf_peer_main_loop(void* arg)
 		return NULL;
 	}
 
-	/* Initialize the real server settings here */
-	freerdp_settings_set_string(client->settings, FreeRDP_CertificateFile, "server.crt");
-	freerdp_settings_set_string(client->settings, FreeRDP_PrivateKeyFile, "server.key");
+	WINPR_ASSERT(client->context);
 
-	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile)
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
+	/* Initialize the real server settings here */
+	freerdp_settings_set_string(settings, FreeRDP_CertificateFile, "server.crt");
+	freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, "server.key");
+
+	if (!settings->CertificateFile || !settings->PrivateKeyFile)
 	{
 		freerdp_peer_free(client);
 		return NULL;
 	}
 
-	client->settings->NlaSecurity = FALSE;
-	client->settings->RemoteFxCodec = TRUE;
-	client->settings->ColorDepth = 32;
-	client->settings->SuppressOutput = TRUE;
-	client->settings->RefreshRect = FALSE;
+	settings->NlaSecurity = FALSE;
+	settings->RemoteFxCodec = TRUE;
+	settings->ColorDepth = 32;
+	settings->SuppressOutput = TRUE;
+	settings->RefreshRect = FALSE;
+
 	client->PostConnect = mf_peer_post_connect;
 	client->Activate = mf_peer_activate;
-	client->context->input->SynchronizeEvent = mf_peer_synchronize_event;
-	client->context->input->KeyboardEvent = mf_input_keyboard_event; // mf_peer_keyboard_event;
-	client->context->input->UnicodeKeyboardEvent = mf_peer_unicode_keyboard_event;
-	client->context->input->MouseEvent = mf_input_mouse_event;
-	client->context->input->ExtendedMouseEvent = mf_input_extended_mouse_event;
-	// client->update->RefreshRect = mf_peer_refresh_rect;
-	client->update->SuppressOutput = mf_peer_suppress_output;
+
+	input = client->context->input;
+	WINPR_ASSERT(input);
+
+	input->SynchronizeEvent = mf_peer_synchronize_event;
+	input->KeyboardEvent = mf_input_keyboard_event; // mf_peer_keyboard_event;
+	input->UnicodeKeyboardEvent = mf_peer_unicode_keyboard_event;
+	input->MouseEvent = mf_input_mouse_event;
+	input->ExtendedMouseEvent = mf_input_extended_mouse_event;
+
+	update = client->context->update;
+	WINPR_ASSERT(update);
+
+	// update->RefreshRect = mf_peer_refresh_rect;
+	update->SuppressOutput = mf_peer_suppress_output;
+
 	client->Initialize(client);
 	context = (mfPeerContext*)client->context;
 

@@ -37,8 +37,9 @@ extern "C"
 	typedef BOOL (*psListenerOpenLocal)(freerdp_listener* instance, const char* path);
 	typedef BOOL (*psListenerOpenFromSocket)(freerdp_listener* instance, int fd);
 #if defined(WITH_FREERDP_DEPRECATED)
-	typedef BOOL (*psListenerGetFileDescriptor)(freerdp_listener* instance, void** rfds,
-	                                            int* rcount);
+	WINPR_DEPRECATED_VAR("Use psListenerGetEventHandles instead",
+	                     typedef BOOL (*psListenerGetFileDescriptor)(freerdp_listener* instance,
+	                                                                 void** rfds, int* rcount);)
 #endif
 	typedef DWORD (*psListenerGetEventHandles)(freerdp_listener* instance, HANDLE* events,
 	                                           DWORD nCount);
@@ -58,7 +59,8 @@ extern "C"
 		psListenerOpen Open;
 		psListenerOpenLocal OpenLocal;
 #if defined(WITH_FREERDP_DEPRECATED)
-		psListenerGetFileDescriptor GetFileDescriptor;
+		WINPR_DEPRECATED_VAR("Use rdp_freerdp_listener::GetEventHandles instead",
+		                     psListenerGetFileDescriptor GetFileDescriptor;)
 #else
 	    void* reserved;
 #endif

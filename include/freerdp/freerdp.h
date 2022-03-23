@@ -352,24 +352,30 @@ extern "C"
 
 		UINT64 paddingA[16 - 2]; /* 2 */
 
-		ALIGN64 rdpInput* input;           /* (offset 16)
-		                              Input handle for the connection.
-		                                        Will be initialized by a call to freerdp_context_new()
-		             owned by rdpRdp */
-		ALIGN64 rdpUpdate* update;         /* (offset 17)
-		                              Update display parameters. Used to register display events callbacks
-		and settings.		 Will be initialized by a call to freerdp_context_new()		 owned by rdpRdp */
-		ALIGN64 rdpSettings* settings;     /**< (offset 18)
-		                                Pointer to a rdpSettings structure. Will be used to maintain the
-		                                required RDP	 settings.		              Will be
-		                                initialized by	 a call to freerdp_context_new()
-		                                owned by rdpRdp
-		                              */
-		ALIGN64 rdpAutoDetect* autodetect; /* (offset 19)
+#if defined(WITH_FREERDP_DEPRECATED)
+		WINPR_DEPRECATED_VAR("use rdpContext::input instead", ALIGN64 rdpInput* input;) /* (offset
+		                        16) Input handle for the connection. Will be initialized by a call
+		                        to freerdp_context_new() owned by rdpRdp */
+		WINPR_DEPRECATED_VAR("use rdpContext::update instead",
+		                     ALIGN64 rdpUpdate* update;) /* (offset 17)
+		                      Update display parameters. Used to register display events callbacks
+and settings.		 Will be initialized by a call to freerdp_context_new()		 owned by rdpRdp */
+		WINPR_DEPRECATED_VAR("use rdpContext::settings instead",
+		                     ALIGN64 rdpSettings* settings;) /**< (offset 18)
+		                            Pointer to a rdpSettings structure. Will be used to maintain the
+		                            required RDP	 settings.		              Will be
+		                            initialized by	 a call to freerdp_context_new()
+		                            owned by rdpRdp
+		                          */
+		WINPR_DEPRECATED_VAR("use rdpContext::autodetect instead",
+		                     ALIGN64 rdpAutoDetect* autodetect;) /* (offset 19)
 		                                Auto-Detect handle for the connection.
 		                                Will be initialized by a call to freerdp_context_new()
 owned by rdpRdp */
-		ALIGN64 rdpHeartbeat* heartbeat;   /* (offset 21) owned by rdpRdp*/
+#else
+	    UINT64 paddingX[4];
+#endif
+		ALIGN64 rdpHeartbeat* heartbeat; /* (offset 21) owned by rdpRdp*/
 
 		UINT64 paddingB[32 - 21]; /* 21 */
 
@@ -416,19 +422,17 @@ owned by rdpRdp */
 		                                 It is used to get the username/password when it was not
 		                                 provided at connection time. */
 #if defined(WITH_FREERDP_DEPRECATED)
-		ALIGN64 pVerifyCertificate VerifyCertificate;               /**< (offset 51)
-    Callback for certificate validation.
-    Used to verify that an unknown certificate is
-trusted. DEPRECATED: Use VerifyChangedCertificateEx*/
-		ALIGN64 pVerifyChangedCertificate VerifyChangedCertificate; /**<
-(offset 52) Callback for changed certificate validation. Used when a certificate differs from stored
-fingerprint. DEPRECATED: Use VerifyChangedCertificateEx */
+		WINPR_DEPRECATED_VAR("Use VerifyCertificateEx or VerifyX509Certificate  instead",
+		                     ALIGN64 pVerifyCertificate VerifyCertificate;) /**< (offset 51) */
+		WINPR_DEPRECATED_VAR("Use VerifyChangedCertificateEx or VerifyX509Certificate  instead",
+		                     ALIGN64 pVerifyChangedCertificate
+		                         VerifyChangedCertificate;) /**< (offset 52) */
 #else
 	    ALIGN64 UINT64 reserved[2];
 #endif
 		ALIGN64 pVerifyX509Certificate
-		    VerifyX509Certificate; /**< (offset 53)  Callback for X509 certificate verification (PEM
-		                              format) */
+		    VerifyX509Certificate; /**< (offset 53)  Callback for X509 certificate verification
+		                              (PEM format) */
 
 		ALIGN64 pLogonErrorInfo
 		    LogonErrorInfo; /**< (offset 54)  Callback for logon error info, important for logon
@@ -497,6 +501,7 @@ settings but before rdp_client_connect() to have it executed after the
 	typedef struct rdp_channel_handles rdpChannelHandles;
 
 	FREERDP_API BOOL freerdp_context_new(freerdp* instance);
+	FREERDP_API BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings);
 	FREERDP_API void freerdp_context_free(freerdp* instance);
 
 	FREERDP_API BOOL freerdp_connect(freerdp* instance);

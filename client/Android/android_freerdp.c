@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <winpr/assert.h>
+
 #include <freerdp/graphics.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/gdi/gdi.h>
@@ -121,7 +123,7 @@ static BOOL android_end_paint(rdpContext* context)
 	if (!ctx || !context->instance)
 		return FALSE;
 
-	settings = context->instance->settings;
+	settings = context->settings;
 
 	if (!settings)
 		return FALSE;
@@ -169,8 +171,9 @@ static BOOL android_end_paint(rdpContext* context)
 
 static BOOL android_desktop_resize(rdpContext* context)
 {
-	if (!context || !context->instance || !context->settings)
-		return FALSE;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->settings);
+	WINPR_ASSERT(context->instance);
 
 	freerdp_callback("OnGraphicsResize", "(JIII)V", (jlong)context->instance,
 	                 context->settings->DesktopWidth, context->settings->DesktopHeight,
@@ -183,10 +186,10 @@ static BOOL android_pre_connect(freerdp* instance)
 	int rc;
 	rdpSettings* settings;
 
-	if (!instance)
-		return FALSE;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
 
-	settings = instance->settings;
+	settings = instance->context->settings;
 
 	if (!settings)
 		return FALSE;
@@ -209,7 +212,7 @@ static BOOL android_pre_connect(freerdp* instance)
 		return FALSE;
 	}
 
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!freerdp_client_load_addins(instance->context->channels, instance->context->settings))
 	{
 		WLog_ERR(TAG, "Failed to load addins [%l08X]", GetLastError());
 		return FALSE;
@@ -221,46 +224,43 @@ static BOOL android_pre_connect(freerdp* instance)
 
 static BOOL android_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
-	if (!context || !pointer || !context->gdi)
-		return FALSE;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(pointer);
+	WINPR_ASSERT(context->gdi);
 
 	return TRUE;
 }
 
 static void android_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
-	if (!context || !pointer)
-		return;
+	WINPR_ASSERT(context);
 }
 
 static BOOL android_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 {
-	if (!context)
-		return FALSE;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(pointer);
 
 	return TRUE;
 }
 
 static BOOL android_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
-	if (!context)
-		return FALSE;
+	WINPR_ASSERT(context);
 
 	return TRUE;
 }
 
 static BOOL android_Pointer_SetNull(rdpContext* context)
 {
-	if (!context)
-		return FALSE;
+	WINPR_ASSERT(context);
 
 	return TRUE;
 }
 
 static BOOL android_Pointer_SetDefault(rdpContext* context)
 {
-	if (!context)
-		return FALSE;
+	WINPR_ASSERT(context);
 
 	return TRUE;
 }
@@ -288,11 +288,14 @@ static BOOL android_post_connect(freerdp* instance)
 	rdpSettings* settings;
 	rdpUpdate* update;
 
-	if (!instance || !instance->settings || !instance->context || !instance->update)
-		return FALSE;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
 
-	update = instance->update;
-	settings = instance->settings;
+	update = instance->context->update;
+	WINPR_ASSERT(update);
+
+	settings = instance->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (!gdi_init(instance, PIXEL_FORMAT_RGBX32))
 		return FALSE;
@@ -300,9 +303,9 @@ static BOOL android_post_connect(freerdp* instance)
 	if (!android_register_pointer(instance->context->graphics))
 		return FALSE;
 
-	instance->update->BeginPaint = android_begin_paint;
-	instance->update->EndPaint = android_end_paint;
-	instance->update->DesktopResize = android_desktop_resize;
+	update->BeginPaint = android_begin_paint;
+	update->EndPaint = android_end_paint;
+	update->DesktopResize = android_desktop_resize;
 	freerdp_callback("OnSettingsChanged", "(JIII)V", (jlong)instance, settings->DesktopWidth,
 	                 settings->DesktopHeight, settings->ColorDepth);
 	freerdp_callback("OnConnectionSuccess", "(J)V", (jlong)instance);
@@ -489,8 +492,8 @@ static DWORD WINAPI android_thread_func(LPVOID param)
 	freerdp* instance = param;
 	WLog_DBG(TAG, "Start...");
 
-	if (!instance || !instance->context)
-		goto fail;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
 
 	if (freerdp_client_start(instance->context) != CHANNEL_RC_OK)
 		goto fail;
@@ -528,8 +531,8 @@ fail:
 
 static BOOL android_client_new(freerdp* instance, rdpContext* context)
 {
-	if (!instance || !context)
-		return FALSE;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(context);
 
 	if (!android_event_queue_init(instance))
 		return FALSE;
@@ -708,7 +711,8 @@ static jboolean JNICALL jni_freerdp_parse_arguments(JNIEnv* env, jclass cls, jlo
 		(*env)->ReleaseStringUTFChars(env, str, raw);
 	}
 
-	status = freerdp_client_settings_parse_command_line(inst->settings, count, argv, FALSE);
+	status =
+	    freerdp_client_settings_parse_command_line(inst->context->settings, count, argv, FALSE);
 
 	for (i = 0; i < count; i++)
 		free(argv[i]);

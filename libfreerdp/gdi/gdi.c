@@ -1276,22 +1276,31 @@ BOOL gdi_init(freerdp* instance, UINT32 format)
 BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
                  void (*pfree)(void*))
 {
-	UINT32 SrcFormat = gdi_get_pixel_format(instance->settings->ColorDepth);
-	rdpGdi* gdi = (rdpGdi*)calloc(1, sizeof(rdpGdi));
-	rdpContext* context = instance->context;
+	rdpContext* context;
+	UINT32 SrcFormat;
+	rdpGdi* gdi;
+
+	WINPR_ASSERT(instance);
+
+	context = instance->context;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->settings);
+
+	SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth);
+	gdi = (rdpGdi*)calloc(1, sizeof(rdpGdi));
 
 	if (!gdi)
 		goto fail;
 
-	instance->context->gdi = gdi;
+	context->gdi = gdi;
 	gdi->log = WLog_Get(TAG);
 
 	if (!gdi->log)
 		goto fail;
 
-	gdi->context = instance->context;
-	gdi->width = instance->settings->DesktopWidth;
-	gdi->height = instance->settings->DesktopHeight;
+	gdi->context = context;
+	gdi->width = context->settings->DesktopWidth;
+	gdi->height = context->settings->DesktopHeight;
 	gdi->dstFormat = format;
 	/* default internal buffer format */
 	WLog_Print(gdi->log, WLOG_INFO, "Local framebuffer format  %s",
@@ -1307,17 +1316,17 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	if (!gdi_init_primary(gdi, stride, gdi->dstFormat, buffer, pfree, FALSE))
 		goto fail;
 
-	if (!(context->cache = cache_new(instance->context)))
+	if (!(context->cache = cache_new(context)))
 		goto fail;
 
-	gdi_register_update_callbacks(instance->update);
-	brush_cache_register_callbacks(instance->update);
-	glyph_cache_register_callbacks(instance->update);
-	bitmap_cache_register_callbacks(instance->update);
-	offscreen_cache_register_callbacks(instance->update);
-	palette_cache_register_callbacks(instance->update);
+	gdi_register_update_callbacks(context->update);
+	brush_cache_register_callbacks(context->update);
+	glyph_cache_register_callbacks(context->update);
+	bitmap_cache_register_callbacks(context->update);
+	offscreen_cache_register_callbacks(context->update);
+	palette_cache_register_callbacks(context->update);
 
-	if (!gdi_register_graphics(instance->context->graphics))
+	if (!gdi_register_graphics(context->graphics))
 		goto fail;
 
 	return TRUE;

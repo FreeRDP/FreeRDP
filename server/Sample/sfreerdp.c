@@ -111,8 +111,9 @@ static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(ctx->settings);
 
-	if (!(context->rfx_context = rfx_context_new_ex(TRUE, client->settings->ThreadingFlags)))
+	if (!(context->rfx_context = rfx_context_new_ex(TRUE, ctx->settings->ThreadingFlags)))
 		goto fail;
 
 	if (!rfx_context_reset(context->rfx_context, SAMPLE_SERVER_DEFAULT_WIDTH,
@@ -171,7 +172,9 @@ static void test_peer_begin_frame(freerdp_peer* client)
 	testPeerContext* context;
 
 	WINPR_ASSERT(client);
-	update = client->update;
+	WINPR_ASSERT(client->context);
+
+	update = client->context->update;
 	WINPR_ASSERT(update);
 
 	context = (testPeerContext*)client->context;
@@ -190,11 +193,12 @@ static void test_peer_end_frame(freerdp_peer* client)
 	testPeerContext* context;
 
 	WINPR_ASSERT(client);
-	update = client->update;
-	WINPR_ASSERT(update);
 
 	context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
+
+	update = client->context->update;
+	WINPR_ASSERT(update);
 
 	fm.frameAction = SURFACECMD_FRAMEACTION_END;
 	fm.frameId = context->frame_id;
@@ -219,10 +223,10 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
 
-	settings = client->settings;
+	settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
-	update = client->update;
+	update = client->context->update;
 	WINPR_ASSERT(update);
 
 	if (!settings->RemoteFxCodec && !freerdp_settings_get_bool(settings, FreeRDP_NSCodec))
@@ -297,15 +301,17 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 	char line[50];
 	BYTE* rgb_data = NULL;
 	int c;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(client);
 
 	context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
-	WINPR_ASSERT(client->settings);
 
-	if (!client->settings->RemoteFxCodec &&
-	    !freerdp_settings_get_bool(client->settings, FreeRDP_NSCodec))
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
+	if (!settings->RemoteFxCodec && !freerdp_settings_get_bool(settings, FreeRDP_NSCodec))
 	{
 		WLog_ERR(TAG, "Client doesn't support RemoteFX or NSCodec");
 		return FALSE;
@@ -364,19 +370,22 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 	wStream* s;
 	RFX_RECT rect;
 	rdpUpdate* update;
+	rdpSettings* settings;
 	SURFACE_BITS_COMMAND cmd = { 0 };
 	testPeerContext* context;
 
 	WINPR_ASSERT(client);
-	WINPR_ASSERT(client->settings);
 
 	context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
 
-	update = client->update;
+	update = client->context->update;
 	WINPR_ASSERT(update);
 
-	if (freerdp_settings_get_bool(client->settings, FreeRDP_DumpRemoteFx))
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_DumpRemoteFx))
 		return;
 
 	if (context->icon_width < 1 || !context->activated)
@@ -388,16 +397,16 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 	rect.width = context->icon_width;
 	rect.height = context->icon_height;
 
-	if (client->settings->RemoteFxCodec)
+	if (settings->RemoteFxCodec)
 	{
-		WINPR_ASSERT(client->settings->RemoteFxCodecId <= UINT16_MAX);
-		cmd.bmp.codecID = (UINT16)client->settings->RemoteFxCodecId;
+		WINPR_ASSERT(settings->RemoteFxCodecId <= UINT16_MAX);
+		cmd.bmp.codecID = (UINT16)settings->RemoteFxCodecId;
 		cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
 	}
 	else
 	{
-		WINPR_ASSERT(client->settings->NSCodecId <= UINT16_MAX);
-		cmd.bmp.codecID = (UINT16)client->settings->NSCodecId;
+		WINPR_ASSERT(settings->NSCodecId <= UINT16_MAX);
+		cmd.bmp.codecID = (UINT16)settings->NSCodecId;
 		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	}
 
@@ -405,7 +414,7 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 	{
 		s = test_peer_stream_init(context);
 
-		if (client->settings->RemoteFxCodec)
+		if (settings->RemoteFxCodec)
 			rfx_compose_message(context->rfx_context, s, &rect, 1, context->bg_data, rect.width,
 			                    rect.height, rect.width * 3);
 		else
@@ -428,7 +437,7 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 
 	s = test_peer_stream_init(context);
 
-	if (client->settings->RemoteFxCodec)
+	if (settings->RemoteFxCodec)
 		rfx_compose_message(context->rfx_context, s, &rect, 1, context->icon_data, rect.width,
 		                    rect.height, rect.width * 3);
 	else
@@ -513,7 +522,7 @@ static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 	if (!s)
 		return FALSE;
 
-	update = client->update;
+	update = client->context->update;
 	WINPR_ASSERT(update);
 
 	if (!(pcap_rfx = pcap_open(info->test_pcap_file, FALSE)))
@@ -610,12 +619,15 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 static BOOL tf_peer_post_connect(freerdp_peer* client)
 {
 	testPeerContext* context;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(client);
-	WINPR_ASSERT(client->settings);
 
 	context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
+
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
 
 	/**
 	 * This callback is called when the entire connection sequence is done, i.e. we've received the
@@ -624,25 +636,22 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 	 * callback returns.
 	 */
 	WLog_DBG(TAG, "Client %s is activated (osMajorType %" PRIu32 " osMinorType %" PRIu32 ")",
-	         client->local ? "(local)" : client->hostname, client->settings->OsMajorType,
-	         client->settings->OsMinorType);
+	         client->local ? "(local)" : client->hostname, settings->OsMajorType,
+	         settings->OsMinorType);
 
-	if (client->settings->AutoLogonEnabled)
+	if (settings->AutoLogonEnabled)
 	{
 		WLog_DBG(TAG, " and wants to login automatically as %s\\%s",
-		         client->settings->Domain ? client->settings->Domain : "",
-		         client->settings->Username);
+		         settings->Domain ? settings->Domain : "", settings->Username);
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
 
 	WLog_DBG(TAG, "");
 	WLog_DBG(TAG, "Client requested desktop: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "",
-	         client->settings->DesktopWidth, client->settings->DesktopHeight,
-	         client->settings->ColorDepth);
+	         settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
 #if (SAMPLE_SERVER_USE_CLIENT_RESOLUTION == 1)
 
-	if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
-	                       client->settings->DesktopHeight))
+	if (!rfx_context_reset(context->rfx_context, settings->DesktopWidth, settings->DesktopHeight))
 		return FALSE;
 
 	WLog_DBG(TAG, "Using resolution requested by client.");
@@ -712,13 +721,15 @@ static BOOL tf_peer_activate(freerdp_peer* client)
 {
 	testPeerContext* context;
 	struct server_info* info;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(client);
-	WINPR_ASSERT(client->settings);
-	WINPR_ASSERT(client->update);
 
 	context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
+
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
 
 	info = client->ContextExtra;
 	WINPR_ASSERT(info);
@@ -727,11 +738,11 @@ static BOOL tf_peer_activate(freerdp_peer* client)
 	// client->settings->CompressionLevel = PACKET_COMPR_TYPE_8K;
 	// client->settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
 	// client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
-	client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
+	settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
 
 	if (info->test_pcap_file != NULL)
 	{
-		freerdp_settings_set_bool(client->settings, FreeRDP_DumpRemoteFx, TRUE);
+		freerdp_settings_set_bool(settings, FreeRDP_DumpRemoteFx, TRUE);
 
 		if (!tf_peer_dump_rfx(client))
 			return FALSE;
@@ -754,51 +765,57 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	freerdp_peer* client;
 	rdpUpdate* update;
-	testPeerContext* context;
+	rdpContext* context;
+	testPeerContext* tcontext;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(input);
-	WINPR_ASSERT(input->context);
 
-	client = input->context->peer;
+	context = input->context;
+	WINPR_ASSERT(context);
+
+	client = context->peer;
 	WINPR_ASSERT(client);
-	WINPR_ASSERT(client->settings);
 
-	update = client->update;
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	update = context->update;
 	WINPR_ASSERT(update);
 
-	context = (testPeerContext*)input->context;
-	WINPR_ASSERT(context);
+	tcontext = (testPeerContext*)context;
+	WINPR_ASSERT(tcontext);
 
 	WLog_DBG(TAG, "Client sent a keyboard event (flags:0x%04" PRIX16 " code:0x%04" PRIX16 ")",
 	         flags, code);
 
 	if ((flags & 0x4000) && code == 0x22) /* 'g' key */
 	{
-		if (client->settings->DesktopWidth != 800)
+		if (settings->DesktopWidth != 800)
 		{
-			client->settings->DesktopWidth = 800;
-			client->settings->DesktopHeight = 600;
+			settings->DesktopWidth = 800;
+			settings->DesktopHeight = 600;
 		}
 		else
 		{
-			client->settings->DesktopWidth = SAMPLE_SERVER_DEFAULT_WIDTH;
-			client->settings->DesktopHeight = SAMPLE_SERVER_DEFAULT_HEIGHT;
+			settings->DesktopWidth = SAMPLE_SERVER_DEFAULT_WIDTH;
+			settings->DesktopHeight = SAMPLE_SERVER_DEFAULT_HEIGHT;
 		}
 
-		if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
-		                       client->settings->DesktopHeight))
+		if (!rfx_context_reset(tcontext->rfx_context, settings->DesktopWidth,
+		                       settings->DesktopHeight))
 			return FALSE;
 
 		WINPR_ASSERT(update->DesktopResize);
 		update->DesktopResize(update->context);
-		context->activated = FALSE;
+		tcontext->activated = FALSE;
 	}
 	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_C) /* 'c' key */
 	{
-		if (context->debug_channel)
+		if (tcontext->debug_channel)
 		{
 			ULONG written;
-			WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test2", 5, &written);
+			WTSVirtualChannelWrite(tcontext->debug_channel, (PCHAR) "test2", 5, &written);
 		}
 	}
 	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_X) /* 'x' key */
@@ -808,12 +825,12 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	}
 	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_R) /* 'r' key */
 	{
-		context->audin_open = !context->audin_open;
+		tcontext->audin_open = !tcontext->audin_open;
 	}
 #if defined(CHANNEL_AINPUT_SERVER)
 	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_I) /* 'i' key */
 	{
-		context->ainput_open = !context->ainput_open;
+		tcontext->ainput_open = !tcontext->ainput_open;
 	}
 #endif
 	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_S) /* 's' key */
@@ -965,6 +982,9 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	DWORD status;
 	testPeerContext* context;
 	struct server_info* info;
+	rdpSettings* settings;
+	rdpInput* input;
+	rdpUpdate* update;
 	freerdp_peer* client = (freerdp_peer*)arg;
 
 	const char* key = "server.key";
@@ -987,52 +1007,59 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		cert = info->cert;
 
 	/* Initialize the real server settings here */
-	WINPR_ASSERT(client->settings);
+	WINPR_ASSERT(client->context);
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
 	if (info->replay_dump)
 	{
-		if (!freerdp_settings_set_bool(client->settings, FreeRDP_TransportDumpReplay, TRUE) ||
-		    !freerdp_settings_set_string(client->settings, FreeRDP_TransportDumpFile,
-		                                 info->replay_dump))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDumpReplay, TRUE) ||
+		    !freerdp_settings_set_string(settings, FreeRDP_TransportDumpFile, info->replay_dump))
 		{
 			freerdp_peer_free(client);
 			return 0;
 		}
 	}
-	if (!freerdp_settings_set_string(client->settings, FreeRDP_CertificateFile, cert) ||
-	    !freerdp_settings_set_string(client->settings, FreeRDP_PrivateKeyFile, key) ||
-	    !freerdp_settings_set_string(client->settings, FreeRDP_RdpKeyFile, key))
+	if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, cert) ||
+	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, key) ||
+	    !freerdp_settings_set_string(settings, FreeRDP_RdpKeyFile, key))
 	{
 		WLog_ERR(TAG, "Memory allocation failed (strdup)");
 		freerdp_peer_free(client);
 		return 0;
 	}
 
-	client->settings->RdpSecurity = TRUE;
-	client->settings->TlsSecurity = TRUE;
-	client->settings->NlaSecurity = FALSE;
-	client->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
-	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_HIGH; */
-	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_LOW; */
-	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_FIPS; */
-	client->settings->RemoteFxCodec = TRUE;
-	freerdp_settings_set_bool(client->settings, FreeRDP_NSCodec, TRUE);
-	client->settings->ColorDepth = 32;
-	client->settings->SuppressOutput = TRUE;
-	client->settings->RefreshRect = TRUE;
+	settings->RdpSecurity = TRUE;
+	settings->TlsSecurity = TRUE;
+	settings->NlaSecurity = FALSE;
+	settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+	/* settings->EncryptionLevel = ENCRYPTION_LEVEL_HIGH; */
+	/* settings->EncryptionLevel = ENCRYPTION_LEVEL_LOW; */
+	/* settings->EncryptionLevel = ENCRYPTION_LEVEL_FIPS; */
+	settings->RemoteFxCodec = TRUE;
+	freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE);
+	settings->ColorDepth = 32;
+	settings->SuppressOutput = TRUE;
+	settings->RefreshRect = TRUE;
+
 	client->PostConnect = tf_peer_post_connect;
 	client->Activate = tf_peer_activate;
 
 	WINPR_ASSERT(client->context);
-	WINPR_ASSERT(client->context->input);
-	client->context->input->SynchronizeEvent = tf_peer_synchronize_event;
-	client->context->input->KeyboardEvent = tf_peer_keyboard_event;
-	client->context->input->UnicodeKeyboardEvent = tf_peer_unicode_keyboard_event;
-	client->context->input->MouseEvent = tf_peer_mouse_event;
-	client->context->input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
+	input = client->context->input;
+	WINPR_ASSERT(input);
 
-	client->update->RefreshRect = tf_peer_refresh_rect;
-	client->update->SuppressOutput = tf_peer_suppress_output;
-	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
+	input->SynchronizeEvent = tf_peer_synchronize_event;
+	input->KeyboardEvent = tf_peer_keyboard_event;
+	input->UnicodeKeyboardEvent = tf_peer_unicode_keyboard_event;
+	input->MouseEvent = tf_peer_mouse_event;
+	input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
+
+	update = client->context->update;
+	WINPR_ASSERT(update);
+
+	update->RefreshRect = tf_peer_refresh_rect;
+	update->SuppressOutput = tf_peer_suppress_output;
+	settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 
 	WINPR_ASSERT(client->Initialize);
 	rc = client->Initialize(client);

@@ -1201,19 +1201,29 @@ static BOOL xf_pre_connect(freerdp* instance)
 {
 	rdpChannels* channels;
 	rdpSettings* settings;
-	rdpContext* context = instance->context;
-	xfContext* xfc = (xfContext*)instance->context;
+	rdpContext* context;
+	xfContext* xfc;
 	UINT32 maxWidth = 0;
 	UINT32 maxHeight = 0;
-	settings = instance->settings;
+
+	WINPR_ASSERT(instance);
+
+	context = instance->context;
+	xfc = (xfContext*)instance->context;
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
 	channels = context->channels;
+	WINPR_ASSERT(channels);
+
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
-	PubSub_SubscribeChannelConnected(instance->context->pubSub, xf_OnChannelConnectedEventHandler);
-	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-	                                    xf_OnChannelDisconnectedEventHandler);
+	PubSub_SubscribeChannelConnected(context->pubSub, xf_OnChannelConnectedEventHandler);
+	PubSub_SubscribeChannelDisconnected(context->pubSub, xf_OnChannelDisconnectedEventHandler);
 
-	if (!freerdp_client_load_addins(channels, instance->settings))
+	if (!freerdp_client_load_addins(channels, settings))
 		return FALSE;
 
 	if (!settings->Username && !settings->CredentialsFromStdin && !settings->SmartcardLogon)
@@ -1286,10 +1296,18 @@ static BOOL xf_post_connect(freerdp* instance)
 	rdpContext* context;
 	rdpSettings* settings;
 	ResizeWindowEventArgs e;
-	xfContext* xfc = (xfContext*)instance->context;
+	xfContext* xfc;
+
+	WINPR_ASSERT(instance);
+	xfc = (xfContext*)instance->context;
 	context = instance->context;
-	settings = instance->settings;
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
 	update = context->update;
+	WINPR_ASSERT(update);
 
 	if (!gdi_init(instance, xf_get_local_color_format(xfc, TRUE)))
 		return FALSE;
@@ -1306,11 +1324,11 @@ static BOOL xf_post_connect(freerdp* instance)
 		}
 
 		xf_gdi_register_update_callbacks(update);
-		brush_cache_register_callbacks(instance->update);
-		glyph_cache_register_callbacks(instance->update);
-		bitmap_cache_register_callbacks(instance->update);
-		offscreen_cache_register_callbacks(instance->update);
-		palette_cache_register_callbacks(instance->update);
+		brush_cache_register_callbacks(context->update);
+		glyph_cache_register_callbacks(context->update);
+		bitmap_cache_register_callbacks(context->update);
+		offscreen_cache_register_callbacks(context->update);
+		palette_cache_register_callbacks(context->update);
 	}
 
 #ifdef WITH_XRENDER
@@ -1424,13 +1442,6 @@ static int xf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 
 static BOOL handle_window_events(freerdp* instance)
 {
-	rdpSettings* settings;
-
-	if (!instance || !instance->settings)
-		return FALSE;
-
-	settings = instance->settings;
-
 		if (!xf_process_x_events(instance))
 		{
 			WLog_DBG(TAG, "Closed from X11");
@@ -1564,7 +1575,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		goto end;
 
 	/* --authonly ? */
-	if (instance->settings->AuthenticationOnly)
+	if (settings->AuthenticationOnly)
 	{
 		WLog_ERR(TAG, "Authentication only, exit status %" PRId32 "", !status);
 		goto disconnect;

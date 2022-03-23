@@ -66,7 +66,6 @@ struct rdp_transport
 	rdpTls* tls;
 	rdpContext* context;
 	rdpNla* nla;
-	rdpSettings* settings;
 	void* ReceiveExtra;
 	wStream* ReceiveBuffer;
 	TransportRecv ReceiveCallback;
@@ -207,13 +206,14 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 
 BOOL transport_connect_tls(rdpTransport* transport)
 {
-	if (!transport)
-		return FALSE;
+	const rdpSettings* settings;
+	rdpContext* context = transport_get_context(transport);
 
-	WINPR_ASSERT(transport->settings);
+	settings = context->settings;
+	WINPR_ASSERT(settings);
 
 	/* Only prompt for password if we use TLS (NLA also calls this function) */
-	if (transport->settings->SelectedProtocol == PROTOCOL_SSL)
+	if (settings->SelectedProtocol == PROTOCOL_SSL)
 	{
 		switch (utils_authenticate(transport_get_context(transport)->instance, AUTH_TLS, FALSE))
 		{
@@ -241,7 +241,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 	context = transport_get_context(transport);
 	WINPR_ASSERT(context);
 
-	settings = transport->settings;
+	settings = context->settings;
 	WINPR_ASSERT(settings);
 
 	if (!(tls = tls_new(settings)))
@@ -349,17 +349,16 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	int sockfd;
 	BOOL status = FALSE;
 	rdpSettings* settings;
-	rdpContext* context;
+	rdpContext* context = transport_get_context(transport);
 	BOOL rpcFallback;
 
-	WINPR_ASSERT(transport);
+	WINPR_ASSERT(context);
 	WINPR_ASSERT(hostname);
 
-	settings = transport->settings;
-	context = transport_get_context(transport);
-	rpcFallback = !settings->GatewayHttpTransport;
+	settings = context->settings;
 	WINPR_ASSERT(settings);
-	WINPR_ASSERT(context);
+
+	rpcFallback = !settings->GatewayHttpTransport;
 
 	if (transport->GatewayEnabled)
 	{
@@ -460,15 +459,16 @@ BOOL transport_accept_tls(rdpTransport* transport)
 
 static BOOL transport_default_accept_tls(rdpTransport* transport)
 {
+	rdpContext* context = transport_get_context(transport);
 	rdpSettings* settings;
 
-	WINPR_ASSERT(transport);
+	WINPR_ASSERT(context);
 
-	settings = transport->settings;
+	settings = context->settings;
 	WINPR_ASSERT(settings);
 
 	if (!transport->tls)
-		transport->tls = tls_new(transport->settings);
+		transport->tls = tls_new(settings);
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
@@ -481,14 +481,17 @@ static BOOL transport_default_accept_tls(rdpTransport* transport)
 
 BOOL transport_accept_nla(rdpTransport* transport)
 {
+	rdpContext* context = transport_get_context(transport);
 	rdpSettings* settings;
 	freerdp* instance;
-	if (!transport)
-		return FALSE;
-	settings = transport->settings;
-	if (!settings)
-		return FALSE;
-	instance = (freerdp*)settings->instance;
+
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	instance = context->instance;
+	WINPR_ASSERT(settings);
 	if (!IFCALLRESULT(FALSE, transport->io.TLSAccept, transport))
 		return FALSE;
 
@@ -876,14 +879,13 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 	int status = -1;
 	int writtenlength = 0;
 	rdpRdp* rdp;
-	rdpContext* context;
+	rdpContext* context = transport_get_context(transport);
+
+	WINPR_ASSERT(transport);
+	WINPR_ASSERT(context);
 
 	if (!s)
 		return -1;
-
-	context = transport_get_context(transport);
-	if (!transport || !context)
-		goto fail;
 
 	rdp = context->rdp;
 	if (!rdp)
@@ -936,7 +938,8 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 			continue;
 		}
 
-		if (transport->blocking || transport->settings->WaitForOutputBufferFlush)
+		WINPR_ASSERT(context->settings);
+		if (transport->blocking || context->settings->WaitForOutputBufferFlush)
 		{
 			while (BIO_write_blocked(transport->frontBio))
 			{
@@ -1101,11 +1104,8 @@ int transport_check_fds(rdpTransport* transport)
 	wStream* received;
 	UINT64 now = GetTickCount64();
 	UINT64 dueDate = 0;
-	rdpContext* context;
+	rdpContext* context = transport_get_context(transport);
 
-	WINPR_ASSERT(transport);
-
-	context = transport_get_context(transport);
 	WINPR_ASSERT(context);
 
 	if (transport->layer == TRANSPORT_LAYER_CLOSED)
@@ -1115,8 +1115,8 @@ int transport_check_fds(rdpTransport* transport)
 		return -1;
 	}
 
-	WINPR_ASSERT(transport->settings);
-	dueDate = now + transport->settings->MaxTimeInCheckLoop;
+	WINPR_ASSERT(context->settings);
+	dueDate = now + context->settings->MaxTimeInCheckLoop;
 
 	if (transport->haveMoreBytesToRead)
 	{
@@ -1281,7 +1281,6 @@ rdpTransport* transport_new(rdpContext* context)
 	transport->io.ReadBytes = transport_read_layer;
 
 	transport->context = context;
-	transport->settings = context->settings;
 	transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
 
 	if (!transport->ReceivePool)

@@ -103,12 +103,13 @@ static void pf_client_on_activated(void* ctx, const ActivatedEventArgs* e)
 	WINPR_ASSERT(ps);
 	peer = ps->context.peer;
 	WINPR_ASSERT(peer);
+	WINPR_ASSERT(peer->context);
 
 	PROXY_LOG_INFO(TAG, pc, "client activated, registering server input callbacks");
 
 	/* Register server input/update callbacks only after proxy client is fully activated */
 	pf_server_register_input_callbacks(peer->context->input);
-	pf_server_register_update_callbacks(peer->update);
+	pf_server_register_update_callbacks(peer->context->update);
 }
 
 static BOOL pf_client_load_rdpsnd(pClientContext* pc)
@@ -243,7 +244,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	WINPR_ASSERT(ps->pdata);
 	config = ps->pdata->config;
 	WINPR_ASSERT(config);
-	settings = instance->settings;
+	settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
 	/*
@@ -319,7 +320,7 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 
 	if (!pf_utils_is_passthrough(config))
 	{
-		if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+		if (!freerdp_client_load_addins(instance->context->channels, settings))
 		{
 			PROXY_LOG_ERR(TAG, pc, "Failed to load addins");
 			return FALSE;
@@ -619,9 +620,9 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	WINPR_ASSERT(instance);
 	context = instance->context;
 	WINPR_ASSERT(context);
-	settings = instance->settings;
+	settings = context->settings;
 	WINPR_ASSERT(settings);
-	update = instance->update;
+	update = context->update;
 	WINPR_ASSERT(update);
 	pc = (pClientContext*)context;
 	WINPR_ASSERT(pc);
@@ -808,7 +809,7 @@ static BOOL pf_client_connect(freerdp* instance)
 	WINPR_ASSERT(instance);
 	pc = (pClientContext*)instance->context;
 	WINPR_ASSERT(pc);
-	settings = instance->settings;
+	settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
 	PROXY_LOG_INFO(TAG, pc, "connecting using client info: Username: %s, Domain: %s",

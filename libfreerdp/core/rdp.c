@@ -1800,23 +1800,24 @@ rdpRdp* rdp_new(rdpContext* context)
 
 	if (!context->settings)
 	{
-		context->settings = freerdp_settings_new(flags);
+		context->settings = rdp->settings = freerdp_settings_new(flags);
 
-		if (!context->settings)
+		if (!rdp->settings)
 			goto fail;
 	}
-
-	rdp->settings = context->settings;
+	else
+		rdp->settings = context->settings;
+	rdp->settings->instance = context->instance;
 
 	if (context->instance)
-	{
-		rdp->settings->instance = context->instance;
-		context->instance->settings = rdp->settings;
-	}
+		context->settings->instance = context->instance;
 	else if (context->peer)
 	{
 		rdp->settings->instance = context->peer;
+
+#if defined(WITH_FREERDP_DEPRECATED)
 		context->peer->settings = rdp->settings;
+#endif
 	}
 
 	rdp->transport = transport_new(context);
@@ -1869,7 +1870,7 @@ rdpRdp* rdp_new(rdpContext* context)
 	if (!rdp->redirection)
 		goto fail;
 
-	rdp->autodetect = autodetect_new();
+	rdp->autodetect = autodetect_new(rdp->context);
 
 	if (!rdp->autodetect)
 		goto fail;
