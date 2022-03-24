@@ -49,7 +49,6 @@ typedef struct
 	wStream* data_in;
 	void* InitHandle;
 	DWORD OpenHandle;
-	rdpSettings* settings;
 	wMessageQueue* queue;
 
 	UINT32 Version;

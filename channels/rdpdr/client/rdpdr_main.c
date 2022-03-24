@@ -1064,7 +1064,9 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	settings = (rdpSettings*)rdpdr->channelEntryPoints.pExtendedData;
+	WINPR_ASSERT(rdpdr->rdpcontext);
+	settings = rdpdr->rdpcontext->settings;
+	WINPR_ASSERT(settings);
 
 	if (settings->ClientHostname)
 		strncpy(rdpdr->computerName, settings->ClientHostname, sizeof(rdpdr->computerName) - 1);

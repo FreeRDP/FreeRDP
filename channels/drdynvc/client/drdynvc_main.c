@@ -1492,6 +1492,7 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	UINT32 index;
 	rdpSettings* settings;
 
+	WINPR_UNUSED(drdynvc);
 	WINPR_UNUSED(pData);
 	WINPR_UNUSED(dataLength);
 
@@ -1510,9 +1511,12 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 		return status;
 	}
 
-	settings = (rdpSettings*)drdynvc->channelEntryPoints.pExtendedData;
+	WINPR_UNUSED(drdynvc->rdpcontext);
+	settings = drdynvc->rdpcontext->settings;
+	WINPR_UNUSED(settings);
 
-	for (index = 0; index < settings->DynamicChannelCount; index++)
+	for (index = 0; index < freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount);
+	     index++)
 	{
 		const ADDIN_ARGV* args = settings->DynamicChannelArray[index];
 		error = dvcman_load_addin(drdynvc, drdynvc->channel_mgr, args, settings);
