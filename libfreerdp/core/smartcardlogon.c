@@ -530,12 +530,15 @@ BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCerts** scCe
 	BOOL ret;
 	LPWSTR csp;
 	const char* asciiCsp;
+	const char* ReaderName = freerdp_settings_get_string(settings, FreeRDP_ReaderName);
+	const char* Username = freerdp_settings_get_string(settings, FreeRDP_Username);
+	const char* CspName = freerdp_settings_get_string(settings, FreeRDP_CspName);
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(scCerts);
 	WINPR_ASSERT(retCount);
 
-	asciiCsp = settings->CspName ? settings->CspName : MS_SCARD_PROV_A;
+	asciiCsp = CspName ? CspName : MS_SCARD_PROV_A;
 
 	if (settings->SmartcardEmulation)
 		return smartcard_sw_enumerateCerts(settings, scCerts, retCount);
@@ -546,8 +549,7 @@ BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCerts** scCe
 		return FALSE;
 	}
 
-	ret = smartcard_hw_enumerateCerts(settings, csp, settings->ReaderName, settings->Username,
-	                                  scCerts, retCount);
+	ret = smartcard_hw_enumerateCerts(settings, csp, ReaderName, Username, scCerts, retCount);
 	free(csp);
 	return ret;
 }

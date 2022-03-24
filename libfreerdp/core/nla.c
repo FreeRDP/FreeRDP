@@ -2190,11 +2190,11 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 		smartcardCreds.domainHint = settings->DomainHint;*/
 		smartcardCreds.cspData = &cspData;
 
-		cspData.keySpec = settings->KeySpec;
-		cspData.cspName = settings->CspName;
-		cspData.readerName = settings->ReaderName;
-		cspData.cardName = settings->CardName;
-		cspData.containerName = settings->ContainerName;
+		cspData.keySpec = freerdp_settings_get_uint32(settings, FreeRDP_KeySpec);
+		cspData.cspName = freerdp_settings_get_string(settings, FreeRDP_CspName);
+		cspData.readerName = freerdp_settings_get_string(settings, FreeRDP_ReaderName);
+		cspData.cardName = freerdp_settings_get_string(settings, FreeRDP_CardName);
+		cspData.containerName = freerdp_settings_get_string(settings, FreeRDP_ContainerName);
 
 		length = ber_sizeof_nla_TSSmartCardCreds(&smartcardCreds);
 		credsContentStream = Stream_New(NULL, length);
