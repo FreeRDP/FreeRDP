@@ -593,7 +593,8 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 		XMoveWindow(xfc->display, window->handle, settings->DesktopPosX, settings->DesktopPosY);
 	}
 
-	window->floatbar = xf_floatbar_new(xfc, window->handle, name, settings->Floatbar);
+	window->floatbar = xf_floatbar_new(xfc, window->handle, name,
+	                                   freerdp_settings_get_uint32(settings, FreeRDP_Floatbar));
 
 	if (xfc->_XWAYLAND_MAY_GRAB_KEYBOARD)
 		xf_SendClientEvent(xfc, window->handle, xfc->_XWAYLAND_MAY_GRAB_KEYBOARD, 1, 1);

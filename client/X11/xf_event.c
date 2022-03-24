@@ -173,6 +173,7 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
 	const rdpSettings* settings;
+	const char* ActionScript;
 
 	WINPR_ASSERT(xfc);
 
@@ -186,7 +187,8 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 
 	obj = ArrayList_Object(xfc->xevents);
 	obj->fnObjectFree = free;
-	sprintf_s(command, sizeof(command), "%s xevent", settings->ActionScript);
+	ActionScript = freerdp_settings_get_string(settings, FreeRDP_ActionScript);
+	sprintf_s(command, sizeof(command), "%s xevent", ActionScript);
 	actionScript = popen(command, "r");
 
 	if (!actionScript)
@@ -228,6 +230,7 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 	FILE* actionScript;
 	BOOL match = FALSE;
 	const char* xeventName;
+	const char* ActionScript;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
 
@@ -254,8 +257,8 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 	if (!match)
 		return FALSE;
 
-	sprintf_s(command, sizeof(command), "%s xevent %s %lu",
-	          xfc->common.context.settings->ActionScript, xeventName,
+	ActionScript = freerdp_settings_get_string(xfc->common.context.settings, FreeRDP_ActionScript);
+	sprintf_s(command, sizeof(command), "%s xevent %s %lu", ActionScript, xeventName,
 	          (unsigned long)xfc->window->handle);
 	actionScript = popen(command, "r");
 

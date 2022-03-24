@@ -1243,7 +1243,7 @@ static BOOL xf_pre_connect(freerdp* instance)
 	if (settings->AuthenticationOnly)
 	{
 		/* Check +auth-only has a username and password. */
-		if (!settings->Password)
+		if (!freerdp_settings_get_string(settings, FreeRDP_Password))
 		{
 			WLog_INFO(TAG, "auth-only, but no password set. Please provide one.");
 			return FALSE;
@@ -1476,9 +1476,16 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 
 	EventArgsInit(&timerEvent, "xfreerdp");
 	instance = (freerdp*)param;
-	context = instance->context;
+	WINPR_ASSERT(instance);
+
 	status = freerdp_connect(instance);
+	context = instance->context;
+	WINPR_ASSERT(context);
 	xfc = (xfContext*)instance->context;
+	WINPR_ASSERT(xfc);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
 
 	if (!status)
 	{
@@ -1594,7 +1601,6 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		goto disconnect;
 	}
 
-	settings = context->settings;
 	timer = CreateWaitableTimerA(NULL, FALSE, "mainloop-periodic-timer");
 
 	if (!timer)
