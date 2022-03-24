@@ -206,10 +206,11 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 					goto out_error;
 			}
 
-			if (settings->Password)
+			if (freerdp_settings_get_string(settings, FreeRDP_Password))
 			{
-				if (!freerdp_settings_set_string(settings, FreeRDP_GatewayPassword,
-				                                 settings->Password))
+				if (!freerdp_settings_set_string(
+				        settings, FreeRDP_GatewayPassword,
+				        freerdp_settings_get_string(settings, FreeRDP_Password)))
 					goto out_error;
 			}
 		}

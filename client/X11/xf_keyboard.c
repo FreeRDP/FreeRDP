@@ -66,12 +66,14 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
 	const rdpSettings* settings;
+	const char* ActionScript;
 	WINPR_ASSERT(xfc);
 
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	xfc->actionScriptExists = winpr_PathFileExists(settings->ActionScript);
+	ActionScript = freerdp_settings_get_string(settings, FreeRDP_ActionScript);
+	xfc->actionScriptExists = winpr_PathFileExists(ActionScript);
 
 	if (!xfc->actionScriptExists)
 		return FALSE;
@@ -83,7 +85,7 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 
 	obj = ArrayList_Object(xfc->keyCombinations);
 	obj->fnObjectFree = free;
-	sprintf_s(command, sizeof(command), "%s key", settings->ActionScript);
+	sprintf_s(command, sizeof(command), "%s key", ActionScript);
 	keyScript = popen(command, "r");
 
 	if (!keyScript)
@@ -455,6 +457,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	char buffer[1024] = { 0 };
 	char command[2048] = { 0 };
 	char combination[1024] = { 0 };
+	const char* ActionScript;
 
 	if (!xfc->actionScriptExists)
 		return 1;
@@ -501,8 +504,8 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	if (!match)
 		return 1;
 
-	sprintf_s(command, sizeof(command), "%s key %s", xfc->common.context.settings->ActionScript,
-	          combination);
+	ActionScript = freerdp_settings_get_string(xfc->common.context.settings, FreeRDP_ActionScript);
+	sprintf_s(command, sizeof(command), "%s key %s", ActionScript, combination);
 	keyScript = popen(command, "r");
 
 	if (!keyScript)
