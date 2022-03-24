@@ -70,12 +70,13 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 {
 	char* name;
 	char* pass;
-	char* password;
+	const char* password;
 	rdpSettings* settings;
 
 	WINPR_ASSERT(remdesk);
 
-	settings = remdesk->settings;
+	WINPR_ASSERT(remdesk->rdpcontext);
+	settings = remdesk->rdpcontext;
 	WINPR_ASSERT(settings);
 
 	if (remdesk->ExpertBlob)
@@ -84,7 +85,7 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 	if (settings->RemoteAssistancePassword)
 		password = settings->RemoteAssistancePassword;
 	else
-		password = settings->Password;
+		password = freerdp_settings_get_string(settings, FreeRDP_Password);
 
 	if (!password)
 	{
@@ -367,6 +368,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	int cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
 	REMDESK_CTL_AUTHENTICATE_PDU pdu = { 0 };
+	rdpSettings* settings;
 
 	WINPR_ASSERT(remdesk);
 
@@ -377,8 +379,11 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	}
 
 	pdu.expertBlob = remdesk->ExpertBlob;
-	WINPR_ASSERT(remdesk->settings);
-	pdu.raConnectionString = remdesk->settings->RemoteAssistanceRCTicket;
+	WINPR_ASSERT(remdesk->rdpcontext);
+	settings = remdesk->rdpcontext;
+	WINPR_ASSERT(settings);
+
+	pdu.raConnectionString = settings->RemoteAssistanceRCTicket;
 	status = ConvertToUnicode(CP_UTF8, 0, pdu.raConnectionString, -1, &raConnectionStringW, 0);
 
 	if (status <= 0)
@@ -437,11 +442,14 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 	int cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
 	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu;
+	rdpSettings* settings;
 
 	WINPR_ASSERT(remdesk);
-	WINPR_ASSERT(remdesk->settings);
+	WINPR_ASSERT(remdesk->rdpcontext);
+	settings = remdesk->rdpcontext;
+	WINPR_ASSERT(settings);
 
-	pdu.raConnectionString = remdesk->settings->RemoteAssistanceRCTicket;
+	pdu.raConnectionString = settings->RemoteAssistanceRCTicket;
 	status = ConvertToUnicode(CP_UTF8, 0, pdu.raConnectionString, -1, &raConnectionStringW, 0);
 
 	if (status <= 0)
@@ -750,7 +758,6 @@ static UINT remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 static void remdesk_process_connect(remdeskPlugin* remdesk)
 {
 	WINPR_ASSERT(remdesk);
-	remdesk->settings = (rdpSettings*)remdesk->channelEntryPoints.pExtendedData;
 }
 
 /**
