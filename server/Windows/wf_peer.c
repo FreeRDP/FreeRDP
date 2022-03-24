@@ -82,8 +82,8 @@ static void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 static BOOL wf_peer_init(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(wfPeerContext);
-	client->ContextNew = (psPeerContextNew)wf_peer_context_new;
-	client->ContextFree = (psPeerContextFree)wf_peer_context_free;
+	client->ContextNew = wf_peer_context_new;
+	client->ContextFree = wf_peer_context_free;
 	return freerdp_peer_context_new(client);
 }
 

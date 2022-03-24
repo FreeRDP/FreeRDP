@@ -237,8 +237,8 @@ static void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 static BOOL mf_peer_init(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(mfPeerContext);
-	client->ContextNew = (psPeerContextNew)mf_peer_context_new;
-	client->ContextFree = (psPeerContextFree)mf_peer_context_free;
+	client->ContextNew = mf_peer_context_new;
+	client->ContextFree = mf_peer_context_free;
 
 	if (!freerdp_peer_context_new(client))
 		return FALSE;
