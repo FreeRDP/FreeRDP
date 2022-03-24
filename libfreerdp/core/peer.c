@@ -240,7 +240,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 	settings->ServerMode = TRUE;
 	settings->FrameAcknowledge = 0;
 	settings->LocalConnection = client->local;
-	rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CONNECT);
+	rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL);
 
 	if (settings->RdpKeyFile)
 	{
@@ -555,11 +555,12 @@ static int peer_recv_pdu(freerdp_peer* client, wStream* s)
 		return peer_recv_fastpath_pdu(client, s);
 }
 
-static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
+static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void* extra)
 {
 	UINT32 SelectedProtocol;
 	freerdp_peer* client = (freerdp_peer*)extra;
 	rdpRdp* rdp;
+	int ret = -1;
 	rdpSettings* settings;
 
 	WINPR_ASSERT(transport);
@@ -579,26 +580,29 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			{
 				WLog_ERR(TAG, "%s: %s - rdp_server_accept_nego() fail", __FUNCTION__,
 				         rdp_get_state_string(rdp));
-				return -1;
-			}
-
-			SelectedProtocol = nego_get_selected_protocol(rdp->nego);
-			settings->NlaSecurity = (SelectedProtocol & PROTOCOL_HYBRID) ? TRUE : FALSE;
-			settings->TlsSecurity = (SelectedProtocol & PROTOCOL_SSL) ? TRUE : FALSE;
-			settings->RdpSecurity = (SelectedProtocol == PROTOCOL_RDP) ? TRUE : FALSE;
-
-			if (SelectedProtocol & PROTOCOL_HYBRID)
-			{
-				SEC_WINNT_AUTH_IDENTITY* identity = nego_get_identity(rdp->nego);
-				sspi_CopyAuthIdentity(&client->identity, identity);
-				IFCALLRET(client->Logon, client->authenticated, client, &client->identity, TRUE);
-				nego_free_nla(rdp->nego);
 			}
 			else
 			{
-				IFCALLRET(client->Logon, client->authenticated, client, &client->identity, FALSE);
-			}
+				SelectedProtocol = nego_get_selected_protocol(rdp->nego);
+				settings->NlaSecurity = (SelectedProtocol & PROTOCOL_HYBRID) ? TRUE : FALSE;
+				settings->TlsSecurity = (SelectedProtocol & PROTOCOL_SSL) ? TRUE : FALSE;
+				settings->RdpSecurity = (SelectedProtocol == PROTOCOL_RDP) ? TRUE : FALSE;
 
+				if (SelectedProtocol & PROTOCOL_HYBRID)
+				{
+					SEC_WINNT_AUTH_IDENTITY* identity = nego_get_identity(rdp->nego);
+					sspi_CopyAuthIdentity(&client->identity, identity);
+					IFCALLRET(client->Logon, client->authenticated, client, &client->identity,
+					          TRUE);
+					nego_free_nla(rdp->nego);
+				}
+				else
+				{
+					IFCALLRET(client->Logon, client->authenticated, client, &client->identity,
+					          FALSE);
+				}
+				ret = 0;
+			}
 			break;
 
 		case CONNECTION_STATE_NEGO:
@@ -608,8 +612,9 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				         "%s: %s - "
 				         "rdp_server_accept_mcs_connect_initial() fail",
 				         __FUNCTION__, rdp_get_state_string(rdp));
-				return -1;
 			}
+			else
+				ret = 0;
 
 			break;
 
@@ -620,8 +625,9 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				         "%s: %s - "
 				         "rdp_server_accept_mcs_erect_domain_request() fail",
 				         __FUNCTION__, rdp_get_state_string(rdp));
-				return -1;
 			}
+			else
+				ret = 0;
 
 			break;
 
@@ -632,8 +638,9 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				         "%s: %s - "
 				         "rdp_server_accept_mcs_attach_user_request() fail",
 				         __FUNCTION__, rdp_get_state_string(rdp));
-				return -1;
 			}
+			else
+				ret = 0;
 
 			break;
 
@@ -644,12 +651,13 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				         "%s: %s - "
 				         "rdp_server_accept_mcs_channel_join_request() fail",
 				         __FUNCTION__, rdp_get_state_string(rdp));
-				return -1;
 			}
-
+			else
+				ret = 0;
 			break;
 
 		case CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT:
+			ret = 0;
 			if (rdp->settings->UseRdpSecurityLayer)
 			{
 				if (!rdp_server_establish_keys(rdp, s))
@@ -658,15 +666,16 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 					         "%s: %s - "
 					         "rdp_server_establish_keys() fail",
 					         __FUNCTION__, rdp_get_state_string(rdp));
-					return -1;
+					ret = -1;
 				}
 			}
+			if (ret >= 0)
+			{
+				rdp_server_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE);
 
-			rdp_server_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE);
-
-			if (Stream_GetRemainingLength(s) > 0)
-				return peer_recv_callback(transport, s, extra);
-
+				if (Stream_GetRemainingLength(s) > 0)
+					ret = 1; /* Rerun function */
+			}
 			break;
 
 		case CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE:
@@ -676,11 +685,13 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				         "%s: %s - "
 				         "rdp_recv_client_info() fail",
 				         __FUNCTION__, rdp_get_state_string(rdp));
-				return -1;
 			}
-
-			rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
-			return peer_recv_callback(transport, NULL, extra);
+			else
+			{
+				rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
+				ret = 2; /* Rerun, NULL stream */
+			}
+			break;
 
 		case CONNECTION_STATE_LICENSING:
 		{
@@ -704,23 +715,26 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 					         "%s: %s - callback internal "
 					         "error, aborting",
 					         __FUNCTION__, rdp_get_state_string(rdp));
-					return -1;
+					break;
 
 				case LICENSE_CB_ABORT:
-					return -1;
+					break;
 
 				case LICENSE_CB_IN_PROGRESS:
+					ret = 0;
 					break;
 
 				case LICENSE_CB_COMPLETED:
 					rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
-					return peer_recv_callback(transport, NULL, extra);
+					ret = 2; /* Rerun, NULL stream */
+					break;
 
 				default:
 					WLog_ERR(TAG,
 					         "%s: CONNECTION_STATE_LICENSING - unknown license callback "
 					         "result %d",
 					         __FUNCTION__, res);
+					ret = 0;
 					break;
 			}
 
@@ -731,29 +745,32 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			if (!rdp->AwaitCapabilities)
 			{
 				if (client->Capabilities && !client->Capabilities(client))
-					return -1;
-
-				if (!rdp_send_demand_active(rdp))
+				{
+				}
+				else if (!rdp_send_demand_active(rdp))
 				{
 					WLog_ERR(TAG,
 					         "%s: %s - "
 					         "rdp_send_demand_active() fail",
 					         __FUNCTION__, rdp_get_state_string(rdp));
-					return -1;
 				}
-
-				rdp->AwaitCapabilities = TRUE;
-
-				if (s)
+				else
 				{
-					if (peer_recv_pdu(client, s) < 0)
+					rdp->AwaitCapabilities = TRUE;
+
+					if (s)
 					{
-						WLog_ERR(TAG,
-						         "%s: %s - "
-						         "peer_recv_pdu() fail",
-						         __FUNCTION__, rdp_get_state_string(rdp));
-						return -1;
+						ret = peer_recv_pdu(client, s);
+						if (ret < 0)
+						{
+							WLog_ERR(TAG,
+							         "%s: %s - "
+							         "peer_recv_pdu() fail",
+							         __FUNCTION__, rdp_get_state_string(rdp));
+						}
 					}
+					else
+						ret = 0;
 				}
 			}
 			else
@@ -762,44 +779,62 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				 * During reactivation sequence the client might sent some input or channel data
 				 * before receiving the Deactivate All PDU. We need to process them as usual.
 				 */
-				if (peer_recv_pdu(client, s) < 0)
+				ret = peer_recv_pdu(client, s);
+				if (ret < 0)
 				{
 					WLog_ERR(TAG,
 					         "%s: %s - "
 					         "peer_recv_pdu() fail",
 					         __FUNCTION__, rdp_get_state_string(rdp));
-					return -1;
 				}
 			}
 
 			break;
 
 		case CONNECTION_STATE_FINALIZATION:
-			if (peer_recv_pdu(client, s) < 0)
+			ret = peer_recv_pdu(client, s);
+			if (ret < 0)
 			{
 				WLog_ERR(TAG, "%s: %s - peer_recv_pdu() fail", __FUNCTION__,
 				         rdp_get_state_string(rdp));
-				return -1;
 			}
-
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
-			if (peer_recv_pdu(client, s) < 0)
+			ret = peer_recv_pdu(client, s);
+			if (ret < 0)
 			{
 				WLog_ERR(TAG, "%s: %s - peer_recv_pdu() fail", __FUNCTION__,
 				         rdp_get_state_string(rdp));
-				return -1;
 			}
 
 			break;
 
 		default:
 			WLog_ERR(TAG, "%s state %d", rdp_get_state_string(rdp), rdp_get_state(rdp));
-			return -1;
+			break;
 	}
 
-	return 0;
+	return ret;
+}
+
+static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
+{
+	int rc = 0;
+	do
+	{
+		switch (rc)
+		{
+			default:
+				rc = peer_recv_callback_internal(transport, s, extra);
+				break;
+			case 2:
+				rc = peer_recv_callback_internal(transport, NULL, extra);
+				break;
+		}
+	} while (rc > 0);
+
+	return rc;
 }
 
 static BOOL freerdp_peer_close(freerdp_peer* client)
