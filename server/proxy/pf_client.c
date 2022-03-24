@@ -757,9 +757,9 @@ static void pf_client_set_security_settings(pClientContext* pc)
 	config = pc->pdata->config;
 	WINPR_ASSERT(config);
 
-	settings->RdpSecurity = config->ClientRdpSecurity;
-	settings->TlsSecurity = config->ClientTlsSecurity;
-	settings->NlaSecurity = config->ClientNlaSecurity;
+	freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, config->ClientRdpSecurity);
+	freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, config->ClientTlsSecurity);
+	freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, config->ClientNlaSecurity);
 
 	/* Smartcard authentication currently does not work with NLA */
 	if (pf_client_use_proxy_smartcard_auth(settings))

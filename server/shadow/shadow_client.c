@@ -604,6 +604,7 @@ static BOOL shadow_client_activate(freerdp_peer* peer)
 static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* identity,
                                 BOOL automatic)
 {
+	BOOL rc = FALSE;
 	char* user = NULL;
 	char* domain = NULL;
 	char* password = NULL;
@@ -662,38 +663,23 @@ static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTIT
 
 	if ((identity->User && !user) || (identity->Domain && !domain) ||
 	    (identity->Password && !password))
-	{
-		free(user);
-		free(domain);
-		free(password);
-		return FALSE;
-	}
+		goto fail;
 
 	if (user)
-	{
-		free(settings->Username);
-		settings->Username = user;
-		user = NULL;
-	}
+		freerdp_settings_set_string(settings, FreeRDP_Username, user);
 
 	if (domain)
-	{
-		free(settings->Domain);
-		settings->Domain = domain;
-		domain = NULL;
-	}
+		freerdp_settings_set_string(settings, FreeRDP_Domain, domain);
 
 	if (password)
-	{
-		free(settings->Password);
-		settings->Password = password;
-		password = NULL;
-	}
+		freerdp_settings_set_string(settings, FreeRDP_Password, password);
 
+	rc = TRUE;
+fail:
 	free(user);
 	free(domain);
 	free(password);
-	return TRUE;
+	return rc;
 }
 
 static INLINE void shadow_client_common_frame_acknowledge(rdpShadowClient* client, UINT32 frameId)
