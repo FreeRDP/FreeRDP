@@ -65,7 +65,7 @@ FREERDP_LOCAL BOOL nla_set_service_principal(rdpNla* nla, LPTSTR principal);
 FREERDP_LOCAL BOOL nla_impersonate(rdpNla* nla);
 FREERDP_LOCAL BOOL nla_revert_to_self(rdpNla* nla);
 
-FREERDP_LOCAL rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings);
+FREERDP_LOCAL rdpNla* nla_new(rdpContext* context, rdpTransport* transport);
 FREERDP_LOCAL void nla_free(rdpNla* nla);
 
 #endif /* FREERDP_LIB_CORE_NLA_H */

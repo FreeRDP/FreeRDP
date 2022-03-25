@@ -108,11 +108,10 @@ struct rdp_nla
 	NLA_STATE state;
 	ULONG sendSeqNum;
 	ULONG recvSeqNum;
-	freerdp* instance;
+	rdpContext* rdpcontext;
 	CtxtHandle context;
 	LPTSTR SspiModule;
 	char* SamFile;
-	rdpSettings* settings;
 	rdpTransport* transport;
 	UINT32 cbMaxToken;
 	CHAR* packageName;
@@ -551,8 +550,9 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 	BOOL ret = FALSE;
 
 	WINPR_ASSERT(nla);
+	WINPR_ASSERT(nla->rdpcontext);
 
-	settings = nla->settings;
+	settings = nla->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
 	if (!settings->SmartcardLogon)
@@ -669,11 +669,12 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	freerdp* instance;
 
 	WINPR_ASSERT(nla);
+	WINPR_ASSERT(nla->rdpcontext);
 
-	settings = nla->settings;
+	settings = nla->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
-	instance = nla->instance;
+	instance = nla->rdpcontext->instance;
 	WINPR_ASSERT(instance);
 
 	/* */
@@ -968,8 +969,9 @@ static BOOL nla_setup_kerberos(rdpNla* nla)
 	rdpSettings* settings;
 
 	WINPR_ASSERT(nla);
+	WINPR_ASSERT(nla->rdpcontext);
 
-	settings = nla->settings;
+	settings = nla->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
 	kerbSettings = &nla->kerberosSettings;
@@ -1024,8 +1026,9 @@ static int nla_client_init(rdpNla* nla)
 	rdpSettings* settings;
 
 	WINPR_ASSERT(nla);
+	WINPR_ASSERT(nla->rdpcontext);
 
-	settings = nla->settings;
+	settings = nla->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
 	nla_set_state(nla, NLA_STATE_INITIAL);
@@ -1490,6 +1493,51 @@ fail:
 	return s;
 }
 
+static BOOL nla_server_recv_credentials(rdpNla* nla)
+{
+	BOOL rc = FALSE;
+	WINPR_ASSERT(nla);
+
+	if (nla_server_recv(nla) < 0)
+		goto fail;
+
+	nla->status = nla_decrypt_ts_credentials(nla);
+
+	if (nla->status != SEC_E_OK)
+	{
+		WLog_ERR(TAG, "Could not decrypt TSCredentials status %s [0x%08" PRIX32 "]",
+		         GetSecurityStatusString(nla->status), nla->status);
+		goto fail;
+	}
+
+	WINPR_ASSERT(nla->table);
+	WINPR_ASSERT(nla->table->ImpersonateSecurityContext);
+	nla->status = nla->table->ImpersonateSecurityContext(&nla->context);
+
+	if (nla->status != SEC_E_OK)
+	{
+		WLog_ERR(TAG, "ImpersonateSecurityContext status %s [0x%08" PRIX32 "]",
+		         GetSecurityStatusString(nla->status), nla->status);
+		goto fail;
+	}
+	else
+	{
+		WINPR_ASSERT(nla->table->RevertSecurityContext);
+		nla->status = nla->table->RevertSecurityContext(&nla->context);
+
+		if (nla->status != SEC_E_OK)
+		{
+			WLog_ERR(TAG, "RevertSecurityContext status %s [0x%08" PRIX32 "]",
+			         GetSecurityStatusString(nla->status), nla->status);
+			goto fail;
+		}
+	}
+
+	rc = TRUE;
+fail:
+	return rc;
+}
+
 /**
  * Authenticate with client using CredSSP (server).
  * @param credssp
@@ -1545,7 +1593,7 @@ static int nla_server_authenticate(rdpNla* nla)
 		inputBufferDesc.pBuffers = &inputBuffer;
 
 		if (nla_server_recv(nla) < 0)
-			goto fail;
+			goto fail_auth;
 
 		WLog_DBG(TAG, "Receiving Authentication Token");
 		if (!nla_sec_buffer_alloc_from_buffer(&inputBuffer, &nla->negoToken, 0))
@@ -1573,11 +1621,11 @@ static int nla_server_authenticate(rdpNla* nla)
 
 		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 		{
-			freerdp_peer* peer = nla->instance->context->peer;
+			SECURITY_STATUS status;
+			freerdp_peer* peer = nla->rdpcontext->peer;
 
 			if (peer->ComputeNtlmHash)
 			{
-				SECURITY_STATUS status;
 				status = nla->table->SetContextAttributes(
 				    &nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB, (void*)peer->ComputeNtlmHash, 0);
 
@@ -1598,8 +1646,14 @@ static int nla_server_authenticate(rdpNla* nla)
 			}
 			else if (nla->SamFile)
 			{
-				nla->table->SetContextAttributes(&nla->context, SECPKG_ATTR_AUTH_NTLM_SAM_FILE,
-				                                 nla->SamFile, strlen(nla->SamFile) + 1);
+				status =
+				    nla->table->SetContextAttributes(&nla->context, SECPKG_ATTR_AUTH_NTLM_SAM_FILE,
+				                                     nla->SamFile, strlen(nla->SamFile) + 1);
+				if (status != SEC_E_OK)
+				{
+					WLog_ERR(TAG, "SetContextAttributesA(sam file) status %s [0x%08" PRIX32 "]",
+					         GetSecurityStatusString(status), status);
+				}
 			}
 
 			if (!nla_complete_auth(nla, &outputBufferDesc))
@@ -1653,7 +1707,10 @@ static int nla_server_authenticate(rdpNla* nla)
 
 			rc = 1;
 		}
-
+		else
+		{
+			rc = 0;
+		}
 	fail:
 		sspi_SecBufferFree(&inputBuffer);
 		sspi_SecBufferFree(&outputBuffer);
@@ -1709,38 +1766,8 @@ static int nla_server_authenticate(rdpNla* nla)
 	}
 
 	/* Receive encrypted credentials */
-
-	if (nla_server_recv(nla) < 0)
+	if (!nla_server_recv_credentials(nla))
 		goto fail_auth;
-
-	nla->status = nla_decrypt_ts_credentials(nla);
-
-	if (nla->status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "Could not decrypt TSCredentials status %s [0x%08" PRIX32 "]",
-		         GetSecurityStatusString(nla->status), nla->status);
-		goto fail_auth;
-	}
-
-	nla->status = nla->table->ImpersonateSecurityContext(&nla->context);
-
-	if (nla->status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "ImpersonateSecurityContext status %s [0x%08" PRIX32 "]",
-		         GetSecurityStatusString(nla->status), nla->status);
-		goto fail_auth;
-	}
-	else
-	{
-		nla->status = nla->table->RevertSecurityContext(&nla->context);
-
-		if (nla->status != SEC_E_OK)
-		{
-			WLog_ERR(TAG, "RevertSecurityContext status %s [0x%08" PRIX32 "]",
-			         GetSecurityStatusString(nla->status), nla->status);
-			goto fail_auth;
-		}
-	}
 
 	res = 1;
 fail_auth:
@@ -2141,12 +2168,15 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	wStream staticRetStream;
 	wStream* s;
 	size_t length;
+	rdpSettings* settings;
 	BOOL ret = FALSE;
 	TSCredentials_t cr = { 0 };
 
 	WINPR_ASSERT(nla);
+	WINPR_ASSERT(nla->rdpcontext);
 
-	rdpSettings* settings = nla->settings;
+	settings = nla->rdpcontext->settings;
+	WINPR_ASSERT(settings);
 
 	if (settings->SmartcardLogon)
 	{
@@ -2179,7 +2209,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	{
 		TSPasswordCreds_t passCreds = { 0 };
 
-		if (!nla->settings->DisableCredentialsDelegation && nla->identity)
+		if (!settings->DisableCredentialsDelegation && nla->identity)
 		{
 			passCreds.userNameLen = nla->identity->UserLength * 2;
 			passCreds.userName = (BYTE*)nla->identity->User;
@@ -2606,7 +2636,7 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 				break;
 		}
 
-		freerdp_set_last_error_log(nla->instance->context, code);
+		freerdp_set_last_error_log(nla->rdpcontext, code);
 		return -1;
 	}
 
@@ -2696,9 +2726,16 @@ fail:
  * @return new CredSSP state machine.
  */
 
-rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings)
+rdpNla* nla_new(rdpContext* context, rdpTransport* transport)
 {
 	rdpNla* nla = (rdpNla*)calloc(1, sizeof(rdpNla));
+	rdpSettings* settings;
+
+	WINPR_ASSERT(transport);
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
 
 	if (!nla)
 		return NULL;
@@ -2712,8 +2749,7 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 	}
 
 	nla->identityPtr = nla->identity;
-	nla->instance = instance;
-	nla->settings = settings;
+	nla->rdpcontext = context;
 	nla->server = settings->ServerMode;
 	nla->transport = transport;
 	nla->sendSeqNum = 0;

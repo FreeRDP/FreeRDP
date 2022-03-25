@@ -294,19 +294,17 @@ BOOL transport_connect_nla(rdpTransport* transport)
 {
 	rdpContext* context = NULL;
 	rdpSettings* settings = NULL;
-	freerdp* instance = NULL;
 	rdpRdp* rdp = NULL;
 	if (!transport)
 		return FALSE;
 
 	context = transport_get_context(transport);
-	settings = context->settings;
-	instance = context->instance;
-	rdp = context->rdp;
-
 	WINPR_ASSERT(context);
+
+	settings = context->settings;
 	WINPR_ASSERT(settings);
-	WINPR_ASSERT(instance);
+
+	rdp = context->rdp;
 	WINPR_ASSERT(rdp);
 
 	if (!transport_connect_tls(transport))
@@ -316,7 +314,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 		return TRUE;
 
 	nla_free(rdp->nla);
-	rdp->nla = nla_new(instance, transport, settings);
+	rdp->nla = nla_new(context, transport);
 
 	if (!rdp->nla)
 		return FALSE;
@@ -483,15 +481,12 @@ BOOL transport_accept_nla(rdpTransport* transport)
 {
 	rdpContext* context = transport_get_context(transport);
 	rdpSettings* settings;
-	freerdp* instance;
 
 	WINPR_ASSERT(context);
 
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	instance = context->instance;
-	WINPR_ASSERT(settings);
 	if (!IFCALLRESULT(FALSE, transport->io.TLSAccept, transport))
 		return FALSE;
 
@@ -502,7 +497,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	if (!transport->nla)
 	{
-		transport->nla = nla_new(instance, transport, settings);
+		transport->nla = nla_new(context, transport);
 		transport_set_nla_mode(transport, TRUE);
 	}
 
