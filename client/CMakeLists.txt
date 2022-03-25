@@ -51,8 +51,7 @@ if(FREERDP_VENDOR AND WITH_CLIENT)
 	endif()
 
 	if(ANDROID)
-		message(STATUS "Adding Android client")
-		add_subdirectory(Android)
+		message(STATUS "Android client module is built with Android Studio project")
 	endif()
 endif()
 
