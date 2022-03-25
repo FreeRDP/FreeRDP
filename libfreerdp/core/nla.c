@@ -1493,6 +1493,51 @@ fail:
 	return s;
 }
 
+static BOOL nla_server_recv_credentials(rdpNla* nla)
+{
+	BOOL rc = FALSE;
+	WINPR_ASSERT(nla);
+
+	if (nla_server_recv(nla) < 0)
+		goto fail;
+
+	nla->status = nla_decrypt_ts_credentials(nla);
+
+	if (nla->status != SEC_E_OK)
+	{
+		WLog_ERR(TAG, "Could not decrypt TSCredentials status %s [0x%08" PRIX32 "]",
+		         GetSecurityStatusString(nla->status), nla->status);
+		goto fail;
+	}
+
+	WINPR_ASSERT(nla->table);
+	WINPR_ASSERT(nla->table->ImpersonateSecurityContext);
+	nla->status = nla->table->ImpersonateSecurityContext(&nla->context);
+
+	if (nla->status != SEC_E_OK)
+	{
+		WLog_ERR(TAG, "ImpersonateSecurityContext status %s [0x%08" PRIX32 "]",
+		         GetSecurityStatusString(nla->status), nla->status);
+		goto fail;
+	}
+	else
+	{
+		WINPR_ASSERT(nla->table->RevertSecurityContext);
+		nla->status = nla->table->RevertSecurityContext(&nla->context);
+
+		if (nla->status != SEC_E_OK)
+		{
+			WLog_ERR(TAG, "RevertSecurityContext status %s [0x%08" PRIX32 "]",
+			         GetSecurityStatusString(nla->status), nla->status);
+			goto fail;
+		}
+	}
+
+	rc = TRUE;
+fail:
+	return rc;
+}
+
 /**
  * Authenticate with client using CredSSP (server).
  * @param credssp
@@ -1721,38 +1766,8 @@ static int nla_server_authenticate(rdpNla* nla)
 	}
 
 	/* Receive encrypted credentials */
-
-	if (nla_server_recv(nla) < 0)
+	if (!nla_server_recv_credentials(nla))
 		goto fail_auth;
-
-	nla->status = nla_decrypt_ts_credentials(nla);
-
-	if (nla->status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "Could not decrypt TSCredentials status %s [0x%08" PRIX32 "]",
-		         GetSecurityStatusString(nla->status), nla->status);
-		goto fail_auth;
-	}
-
-	nla->status = nla->table->ImpersonateSecurityContext(&nla->context);
-
-	if (nla->status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "ImpersonateSecurityContext status %s [0x%08" PRIX32 "]",
-		         GetSecurityStatusString(nla->status), nla->status);
-		goto fail_auth;
-	}
-	else
-	{
-		nla->status = nla->table->RevertSecurityContext(&nla->context);
-
-		if (nla->status != SEC_E_OK)
-		{
-			WLog_ERR(TAG, "RevertSecurityContext status %s [0x%08" PRIX32 "]",
-			         GetSecurityStatusString(nla->status), nla->status);
-			goto fail_auth;
-		}
-	}
 
 	res = 1;
 fail_auth:
