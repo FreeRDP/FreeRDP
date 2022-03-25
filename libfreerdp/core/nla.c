@@ -783,8 +783,8 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 		{
 			if (settings->PasswordHash && strlen(settings->PasswordHash) == 32)
 			{
-				if (sspi_SetAuthIdentity(nla->identity, settings->Username, settings->Domain,
-				                         settings->PasswordHash) < 0)
+				if (sspi_SetAuthIdentityA(nla->identity, settings->Username, settings->Domain,
+				                          settings->PasswordHash) < 0)
 					return -1;
 
 				/**
@@ -799,8 +799,8 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 
 		if (usePassword)
 		{
-			if (sspi_SetAuthIdentity(nla->identity, settings->Username, settings->Domain,
-			                         settings->Password) < 0)
+			if (sspi_SetAuthIdentityA(nla->identity, settings->Username, settings->Domain,
+			                          settings->Password) < 0)
 				return -1;
 		}
 	}
@@ -2006,6 +2006,12 @@ fail:
 BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 {
 	size_t length;
+	size_t userLen = 0;
+	size_t domainLen = 0;
+	size_t passwordLen = 0;
+	WCHAR* user = NULL;
+	WCHAR* domain = NULL;
+	WCHAR* password = NULL;
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(s);
@@ -2036,61 +2042,37 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 		return FALSE;
 	}
 
-	nla->identity->DomainLength = (UINT32)length;
+	domainLen = length / sizeof(WCHAR);
+	if (length > 0)
+		domain = Stream_Pointer(s);
 
-	if (nla->identity->DomainLength > 0)
-	{
-		nla->identity->Domain = (UINT16*)malloc(length);
-
-		if (!nla->identity->Domain)
-			return FALSE;
-
-		CopyMemory(nla->identity->Domain, Stream_Pointer(s), nla->identity->DomainLength);
-		Stream_Seek(s, nla->identity->DomainLength);
-		nla->identity->DomainLength /= 2;
-	}
+	if (!Stream_SafeSeek(s, length))
+		return FALSE;
 
 	/* [1] userName (OCTET STRING) */
 	if (!ber_read_contextual_tag(s, 1, &length, TRUE) || !ber_read_octet_string_tag(s, &length))
-	{
 		return FALSE;
-	}
 
-	nla->identity->UserLength = (UINT32)length;
+	userLen = length / sizeof(WCHAR);
+	if (length > 0)
+		user = Stream_Pointer(s);
 
-	if (nla->identity->UserLength > 0)
-	{
-		nla->identity->User = (UINT16*)malloc(length);
-
-		if (!nla->identity->User)
-			return FALSE;
-
-		CopyMemory(nla->identity->User, Stream_Pointer(s), nla->identity->UserLength);
-		Stream_Seek(s, nla->identity->UserLength);
-		nla->identity->UserLength /= 2;
-	}
+	if (!Stream_SafeSeek(s, length))
+		return FALSE;
 
 	/* [2] password (OCTET STRING) */
 	if (!ber_read_contextual_tag(s, 2, &length, TRUE) || !ber_read_octet_string_tag(s, &length))
-	{
 		return FALSE;
-	}
 
-	nla->identity->PasswordLength = (UINT32)length;
+	passwordLen = length / sizeof(WCHAR);
+	if (length > 0)
+		password = Stream_Pointer(s);
 
-	if (nla->identity->PasswordLength > 0)
-	{
-		nla->identity->Password = (UINT16*)malloc(length);
+	if (!Stream_SafeSeek(s, length))
+		return FALSE;
 
-		if (!nla->identity->Password)
-			return FALSE;
-
-		CopyMemory(nla->identity->Password, Stream_Pointer(s), nla->identity->PasswordLength);
-		Stream_Seek(s, nla->identity->PasswordLength);
-		nla->identity->PasswordLength /= 2;
-	}
-
-	return TRUE;
+	return sspi_SetAuthIdentityWithLengthW(nla->identity, user, userLen, domain, domainLen,
+	                                       password, passwordLen) > 0;
 }
 
 static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data, size_t offset)

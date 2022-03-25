@@ -19,7 +19,7 @@
  */
 
 #include <winpr/config.h>
-
+#include <winpr/assert.h>
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
@@ -318,8 +318,58 @@ void sspi_SecureHandleFree(SecHandle* handle)
 	free(handle);
 }
 
-int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, const char* domain,
-                         const char* password)
+int sspi_SetAuthIdentityW(SEC_WINNT_AUTH_IDENTITY* identity, const WCHAR* user, const WCHAR* domain,
+                          const WCHAR* password)
+{
+	return sspi_SetAuthIdentityWithLengthW(identity, user, user ? _wcslen(user) : 0, domain,
+	                                       domain ? _wcslen(domain) : 0, password,
+	                                       password ? _wcslen(password) : 0);
+}
+
+static BOOL copy(WCHAR** dst, UINT32* dstLen, const WCHAR* what, size_t len)
+{
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(dstLen);
+	WINPR_ASSERT(what);
+	WINPR_ASSERT(len > 0);
+	WINPR_ASSERT(_wcsnlen(what, len) == len);
+
+	*dst = calloc(sizeof(WCHAR), len + 1);
+	if (!*dst)
+		return FALSE;
+	memcpy(*dst, what, len * sizeof(WCHAR));
+	*dstLen = len;
+	return TRUE;
+}
+
+int sspi_SetAuthIdentityWithLengthW(SEC_WINNT_AUTH_IDENTITY* identity, const WCHAR* user,
+                                    size_t userLen, const WCHAR* domain, size_t domainLen,
+                                    const WCHAR* password, size_t passwordLen)
+{
+	WINPR_ASSERT(identity);
+	sspi_FreeAuthIdentity(identity);
+	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+	if (user)
+	{
+		if (!copy(&identity->User, &identity->UserLength, user, userLen))
+			return -1;
+	}
+	if (domain)
+	{
+		if (!copy(&identity->Domain, &identity->DomainLength, domain, domainLen))
+			return -1;
+	}
+	if (password)
+	{
+		if (!copy(&identity->Password, &identity->PasswordLength, password, passwordLen))
+			return -1;
+	}
+
+	return 1;
+}
+
+int sspi_SetAuthIdentityA(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, const char* domain,
+                          const char* password)
 {
 	int rc;
 	int unicodePasswordLenW;

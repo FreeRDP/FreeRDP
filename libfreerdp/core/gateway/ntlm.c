@@ -84,7 +84,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, LPCSTR user, LPCSTR domain, LPCS
 	if (!ntlm->table)
 		return FALSE;
 
-	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
+	sspi_SetAuthIdentityA(&(ntlm->identity), user, domain, password);
 	status = ntlm->table->QuerySecurityPackageInfo(NTLM_SSP_NAME, &ntlm->pPackageInfo);
 
 	if (status != SEC_E_OK)
