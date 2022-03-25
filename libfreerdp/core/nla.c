@@ -27,7 +27,6 @@
 #include <time.h>
 #include <ctype.h>
 
-
 #include <freerdp/log.h>
 #include <freerdp/crypto/tls.h>
 #include <freerdp/build-config.h>
@@ -735,6 +734,7 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	{
 		nla_identity_free(nla->identity);
 		nla->identity = NULL;
+		nla->identityPtr = NULL;
 	}
 	else if (settings->SmartcardLogon)
 	{
@@ -841,7 +841,7 @@ static const char* parseInt(const char* v, INT32* r)
 	if (!*v || !((*v >= '0') && (*v <= '9')))
 		return NULL;
 
-	for ( ; *v && (*v >= '0') && (*v <= '9'); v++)
+	for (; *v && (*v >= '0') && (*v <= '9'); v++)
 	{
 		*r = (*r * 10) + (*v - '0');
 	}
@@ -907,7 +907,8 @@ static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* mess
 		return FALSE;
 	}
 
-	if (!*value || isspace(*value)) {
+	if (!*value || isspace(*value))
+	{
 		/* interpret that as a value in seconds */
 		*dest = v;
 		return TRUE;
@@ -919,24 +920,24 @@ static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* mess
 		INT32 factor;
 		INT32 maxValue;
 
-		switch(*value)
+		switch (*value)
 		{
-		case 'd':
-			factor = 3600 * 24;
-			maxValue = 0;
-			break;
-		case 'h':
-			factor = 3600;
-			maxValue = 0;
-			break;
-		case 'm':
-			factor = 60;
-			maxValue = 60;
-			break;
-		case 's':
-			factor = 1;
-			maxValue = 60;
-			break;
+			case 'd':
+				factor = 3600 * 24;
+				maxValue = 0;
+				break;
+			case 'h':
+				factor = 3600;
+				maxValue = 0;
+				break;
+			case 'm':
+				factor = 60;
+				maxValue = 60;
+				break;
+			case 's':
+				factor = 1;
+				maxValue = 60;
+				break;
 		}
 
 		if ((maxValue > 0) && (v > maxValue))
@@ -957,7 +958,7 @@ static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* mess
 			return FALSE;
 		}
 
-	} while(TRUE);
+	} while (TRUE);
 
 	return TRUE;
 }
