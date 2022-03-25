@@ -340,10 +340,9 @@ int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, c
                                             ULONG passwordLength)
 {
 	int status;
+
+	sspi_FreeAuthIdentity(identity);
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-	free(identity->User);
-	identity->User = (UINT16*)NULL;
-	identity->UserLength = 0;
 
 	if (user)
 	{
@@ -355,10 +354,6 @@ int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, c
 		identity->UserLength = (ULONG)(status - 1);
 	}
 
-	free(identity->Domain);
-	identity->Domain = (UINT16*)NULL;
-	identity->DomainLength = 0;
-
 	if (domain)
 	{
 		status = ConvertToUnicode(CP_UTF8, 0, domain, -1, (LPWSTR*)&(identity->Domain), 0);
@@ -369,7 +364,6 @@ int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, c
 		identity->DomainLength = (ULONG)(status - 1);
 	}
 
-	free(identity->Password);
 	identity->Password = (UINT16*)calloc(1, (passwordLength + 1) * sizeof(WCHAR));
 
 	if (!identity->Password)
@@ -385,6 +379,9 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 {
 	int status;
 
+	sspi_FreeAuthIdentity(identity);
+
+	identity->Flags = srcIdentity->Flags;
 	if (srcIdentity->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
 	{
 		status = sspi_SetAuthIdentity(identity, (char*)srcIdentity->User,
@@ -399,8 +396,8 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 	}
 
 	identity->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
+
 	/* login/password authentication */
-	identity->User = identity->Domain = identity->Password = NULL;
 	identity->UserLength = srcIdentity->UserLength;
 
 	if (identity->UserLength > 0)

@@ -509,33 +509,7 @@ static const UINT32 NonceLength = 32;
 
 void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
 {
-	if (identity)
-	{
-		/* Password authentication */
-		if (identity->User)
-		{
-			memset(identity->User, 0, identity->UserLength * 2);
-			free(identity->User);
-		}
-
-		if (identity->Password)
-		{
-			size_t len = identity->PasswordLength;
-
-			if (len > LB_PASSWORD_MAX_LENGTH) /* [pth] Password hash */
-				len -= LB_PASSWORD_MAX_LENGTH;
-
-			memset(identity->Password, 0, len * 2);
-			free(identity->Password);
-		}
-
-		if (identity->Domain)
-		{
-			memset(identity->Domain, 0, identity->DomainLength * 2);
-			free(identity->Domain);
-		}
-	}
-
+	sspi_FreeAuthIdentity(identity);
 	free(identity);
 }
 
@@ -2044,13 +2018,9 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 
 	/* TSPasswordCreds (SEQUENCE)
 	 * Initialise to default values. */
+
+	sspi_FreeAuthIdentity(nla->identity);
 	nla->identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-	nla->identity->UserLength = (UINT32)0;
-	nla->identity->User = NULL;
-	nla->identity->DomainLength = (UINT32)0;
-	nla->identity->Domain = NULL;
-	nla->identity->Password = NULL;
-	nla->identity->PasswordLength = (UINT32)0;
 
 	if (!ber_read_sequence_tag(s, &length))
 		return FALSE;

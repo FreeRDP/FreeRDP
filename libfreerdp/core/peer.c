@@ -988,6 +988,7 @@ void freerdp_peer_free(freerdp_peer* client)
 	if (!client)
 		return;
 
+	sspi_FreeAuthIdentity(&client->identity);
 	closesocket((SOCKET)client->sockfd);
 	free(client);
 }
