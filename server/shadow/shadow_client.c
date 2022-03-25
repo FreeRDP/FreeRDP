@@ -644,7 +644,7 @@ static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTIT
 			int rc;
 			WINPR_ASSERT(identity->PasswordLength <= INT_MAX);
 			rc = ConvertFromUnicode(CP_UTF8, 0, identity->Password, (int)identity->PasswordLength,
-			                        &user, 0, NULL, NULL);
+			                        &password, 0, NULL, NULL);
 			WINPR_ASSERT(rc > 0);
 		}
 	}
