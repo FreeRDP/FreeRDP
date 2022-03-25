@@ -1548,7 +1548,7 @@ static int nla_server_authenticate(rdpNla* nla)
 		inputBufferDesc.pBuffers = &inputBuffer;
 
 		if (nla_server_recv(nla) < 0)
-			goto fail;
+			goto fail_auth;
 
 		WLog_DBG(TAG, "Receiving Authentication Token");
 		if (!nla_sec_buffer_alloc_from_buffer(&inputBuffer, &nla->negoToken, 0))
@@ -1574,8 +1574,7 @@ static int nla_server_authenticate(rdpNla* nla)
 		if (!nla_sec_buffer_alloc_from_buffer(&nla->negoToken, &outputBuffer, 0))
 			goto fail;
 
-		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) ||
-		    (nla->status == SEC_I_COMPLETE_NEEDED) || (nla->status == SEC_I_CONTINUE_NEEDED))
+		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 		{
 			SECURITY_STATUS status;
 			freerdp_peer* peer = nla->rdpcontext->peer;
@@ -1663,7 +1662,10 @@ static int nla_server_authenticate(rdpNla* nla)
 
 			rc = 1;
 		}
-
+		else
+		{
+			rc = 0;
+		}
 	fail:
 		sspi_SecBufferFree(&inputBuffer);
 		sspi_SecBufferFree(&outputBuffer);
