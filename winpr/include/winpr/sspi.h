@@ -1236,6 +1236,8 @@ extern "C"
 	WINPR_API int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 	                                    const SEC_WINNT_AUTH_IDENTITY* srcIdentity);
 
+	WINPR_API void sspi_FreeAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity);
+
 	WINPR_API const char* GetSecurityStatusString(SECURITY_STATUS status);
 
 	WINPR_API SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceExW(DWORD flags);

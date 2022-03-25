@@ -310,12 +310,8 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm, BOOL* pbContinueNeeded)
 
 static void ntlm_client_uninit(rdpNtlm* ntlm)
 {
-	free(ntlm->identity.User);
-	ntlm->identity.User = NULL;
-	free(ntlm->identity.Domain);
-	ntlm->identity.Domain = NULL;
-	free(ntlm->identity.Password);
-	ntlm->identity.Password = NULL;
+	sspi_FreeAuthIdentity(&ntlm->identity);
+
 	free(ntlm->ServicePrincipalName);
 	ntlm->ServicePrincipalName = NULL;
 
