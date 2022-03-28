@@ -1295,26 +1295,31 @@ char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags)
 	if (!buffer || (size == 0))
 		return buffer;
 
-	for (x = 0; x < 31; x++)
-	{
-		size_t len = strnlen(buffer, size);
-		if (flags & x)
-		{
-			const char* str = ntlm_get_negotiate_string(1 << x);
-			size_t flen = strlen(str);
-			if (len > 0)
-			{
-				if (size - len < 1)
-					break;
-				strcat(buffer, "|");
-				len++;
-			}
+	snprintf(buffer, size, "[0x%08" PRIx32 "] ", flags);
 
-			if (size - len < flen)
-				break;
-			strcat(buffer, str);
+		for (x = 0; x < 31; x++)
+		{
+			const UINT32 mask = 1 << x;
+			size_t len = strnlen(buffer, size);
+			if (flags & mask)
+			{
+				const char* str = ntlm_get_negotiate_string(mask);
+				const size_t flen = strlen(str);
+
+				if ((len > 0) && (buffer[len - 1] != ' '))
+				{
+					if (size - len < 1)
+						break;
+					strcat(buffer, "|");
+					len++;
+				}
+
+				if (size - len < flen)
+					break;
+				strcat(buffer, str);
+			}
 		}
-	}
+
 	return buffer;
 }
 

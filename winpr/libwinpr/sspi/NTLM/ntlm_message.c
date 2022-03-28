@@ -415,6 +415,7 @@ static void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
 static BOOL ntlm_read_negotiate_flags(wStream* s, UINT32* flags, UINT32 required, const char* name)
 {
 	UINT32 NegotiateFlags = 0;
+	char buffer[1024] = { 0 };
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(flags);
 	WINPR_ASSERT(name);
@@ -434,12 +435,16 @@ static BOOL ntlm_read_negotiate_flags(wStream* s, UINT32* flags, UINT32 required
 		         name, NegotiateFlags, required);
 		return FALSE;
 	}
+
+	WLog_DBG(TAG, "Read flags %s",
+	         ntlm_negotiate_flags_string(buffer, ARRAYSIZE(buffer), NegotiateFlags));
 	*flags = NegotiateFlags;
 	return TRUE;
 }
 
 static BOOL ntlm_write_negotiate_flags(wStream* s, UINT32 flags, const char* name)
 {
+	char buffer[1024] = { 0 };
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(name);
 
@@ -450,6 +455,7 @@ static BOOL ntlm_write_negotiate_flags(wStream* s, UINT32 flags, const char* nam
 		return FALSE;
 	}
 
+	WLog_DBG(TAG, "Write flags %s", ntlm_negotiate_flags_string(buffer, ARRAYSIZE(buffer), flags));
 	Stream_Write_UINT32(s, flags); /* NegotiateFlags (4 bytes) */
 	return TRUE;
 }
@@ -562,6 +568,12 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 		if (!ntlm_read_version_info(s, &(message->Version))) /* Version (8 bytes) */
 			return SEC_E_INVALID_TOKEN;
 	}
+
+		if (!ntlm_read_message_fields_buffer(s, &message->DomainName))
+			return SEC_E_INVALID_TOKEN;
+
+		if (!ntlm_read_message_fields_buffer(s, &message->Workstation))
+			return SEC_E_INVALID_TOKEN;
 
 	length = Stream_GetPosition(s);
 	WINPR_ASSERT(length <= ULONG_MAX);
@@ -1018,11 +1030,8 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (!ntlm_read_message_fields_buffer(s, &(message->UserName))) /* UserName */
 		goto fail;
 
-	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED)
-	{
-		if (!ntlm_read_message_fields_buffer(s, &(message->Workstation))) /* Workstation */
-			goto fail;
-	}
+	if (!ntlm_read_message_fields_buffer(s, &(message->Workstation))) /* Workstation */
+		goto fail;
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_LM_KEY)
 	{
@@ -1362,8 +1371,11 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 	if (AvFlags)
 		Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags), flags);
 
-	if (!ntlm_compute_lm_v2_response(context)) /* LmChallengeResponse */
-		return SEC_E_INTERNAL_ERROR;
+	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_LM_KEY)
+	{
+		if (!ntlm_compute_lm_v2_response(context)) /* LmChallengeResponse */
+			return SEC_E_INTERNAL_ERROR;
+	}
 
 	if (!ntlm_compute_ntlm_v2_response(context)) /* NtChallengeResponse */
 		return SEC_E_INTERNAL_ERROR;
