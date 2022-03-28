@@ -265,11 +265,11 @@ static void free_objects(PTP_WORK* work_objects, void* params, UINT32 waitCount)
 	free(params);
 }
 
+#define TILE_SIZE 64
 static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* pYUVData[3],
                         const UINT32 iStride[3], UINT32 yuvHeight, UINT32 DstFormat, BYTE* dest,
                         UINT32 nDstStep, const RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
-	UINT32 steps;
 	BOOL rc = FALSE;
 	UINT32 x, y;
 	PTP_WORK* work_objects = NULL;
@@ -290,8 +290,25 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	}
 
 	/* case where we use threads */
-	steps = MAX((context->nthreads + numRegionRects / 2 + 1) / numRegionRects, 1);
-	nobjects = numRegionRects * steps;
+	nobjects = 0;
+	for (x = 0; x < numRegionRects; x++)
+	{
+		UINT32 line = 0;
+		const RECTANGLE_16* rect = &regionRects[x];
+		RECTANGLE_16 r = *rect;
+		if (rectangle_is_empty(rect))
+			continue;
+		while (r.left < r.right)
+		{
+			line++;
+			r.left += TILE_SIZE;
+		}
+		while (r.top < r.bottom)
+		{
+			nobjects += line;
+			r.top += TILE_SIZE;
+		}
+	}
 
 	if (!allocate_objects(&work_objects, (void**)&params, sizeof(YUV_PROCESS_WORK_PARAM), nobjects))
 		goto fail;
@@ -299,28 +316,27 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	for (x = 0; x < numRegionRects; x++)
 	{
 		const RECTANGLE_16* rect = &regionRects[x];
-		const UINT32 height = rect->bottom - rect->top;
-
-		const UINT32 heightStep = MAX((height + steps / 2 + 1) / steps, 1);
-		for (y = 0; y < steps; y++)
+		RECTANGLE_16 r = *rect;
+		while (r.left < r.right)
 		{
-			YUV_PROCESS_WORK_PARAM* cur = &params[waitCount];
-			RECTANGLE_16 r = *rect;
-			r.top += y * heightStep;
+			RECTANGLE_16 y = r;
+			y.right = MIN(r.right, r.left + TILE_SIZE);
 
-			/* If we have an odd bounding rectangle we might end up with < steps
-			 * workers. Check we do not exceed the bounding rectangle. */
-			r.bottom = r.top + heightStep;
-			if (r.bottom > rect->bottom)
-				r.bottom = rect->bottom;
-			if (r.top >= rect->bottom)
-				continue;
-			if (r.bottom > yuvHeight)
-				r.bottom = yuvHeight;
-			*cur = pool_decode_param(&r, context, pYUVData, iStride, DstFormat, dest, nDstStep);
-			if (!submit_object(&work_objects[waitCount], cb, cur, context))
-				goto fail;
-			waitCount++;
+			while (y.top < y.bottom)
+			{
+				YUV_PROCESS_WORK_PARAM* cur = &params[waitCount];
+				RECTANGLE_16 z = y;
+				z.bottom = MIN(z.bottom, z.top + TILE_SIZE);
+				if (rectangle_is_empty(&z))
+					continue;
+				*cur = pool_decode_param(&z, context, pYUVData, iStride, DstFormat, dest, nDstStep);
+				if (!submit_object(&work_objects[waitCount], cb, cur, context))
+					goto fail;
+				waitCount++;
+				y.top += TILE_SIZE;
+			}
+
+			r.left += TILE_SIZE;
 		}
 	}
 	rc = TRUE;
