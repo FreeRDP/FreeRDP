@@ -65,12 +65,12 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	UINT32 i;
 	UINT32 count = 0;
 	wStream sbuffer;
-	wStream* s = NULL;
+	wStream* s = &sbuffer;
 
 	if (!format_data || !file_descriptor_array || !file_descriptor_count)
 		return ERROR_BAD_ARGUMENTS;
 
-	s = Stream_StaticConstInit(&sbuffer, format_data, format_data_length);
+	Stream_StaticInit(&sbuffer, format_data, format_data_length);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
