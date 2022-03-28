@@ -23,6 +23,7 @@
 #include <winpr/assert.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
+#include <winpr/string.h>
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
@@ -1295,7 +1296,7 @@ char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags)
 	if (!buffer || (size == 0))
 		return buffer;
 
-	snprintf(buffer, size, "[0x%08" PRIx32 "] ", flags);
+	_snprintf(buffer, size, "[0x%08" PRIx32 "] ", flags);
 
 		for (x = 0; x < 31; x++)
 		{
