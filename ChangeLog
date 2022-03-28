@@ -1,6 +1,7 @@
 # 2022-XX-YY Version 2.X.Y
 
 Noteworthy changes:
+* Backported various NTLM fixes
 * Backported WINPR_ASSERT to ease future backports
 
 Fixed issues:
