@@ -401,15 +401,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings->ClientProductId)
 		goto out_fail;
 
-	settings->ClientHostname = calloc(1, 32);
+	if (!freerdp_settings_set_string(settings, FreeRDP_ClientHostname, settings->ComputerName))
+		goto out_fail;
 
-	if (!settings->ClientHostname)
-		goto out_fail;
-	DWORD size = 31;
-	GetComputerNameA(ClientHostname, &size);
-	if (!freerdp_settings_set_string(settings, FreeRDP_ClientHostname, ClientHostname))
-		goto out_fail;
-	settings->ClientHostname[31] = 0;
 	settings->ColorPointerFlag = TRUE;
 	settings->LargePointerFlag = (LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384);
 	settings->PointerCacheSize = 20;

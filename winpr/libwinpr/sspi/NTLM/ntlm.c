@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
 #include <winpr/tchar.h>

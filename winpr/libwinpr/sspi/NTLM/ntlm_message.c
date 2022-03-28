@@ -37,6 +37,18 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.NTLM")
 
+static wStream* Stream_StaticConstInit(wStream* buffer, const BYTE* data, size_t size)
+{
+	Stream_StaticInit(buffer, data, size);
+	return buffer;
+}
+
+static wStream* Stream_StaticInit2(wStream* buffer, BYTE* data, size_t size)
+{
+	Stream_StaticInit(buffer, data, size);
+	return buffer;
+}
+
 static const char NTLM_SIGNATURE[8] = { 'N', 'T', 'L', 'M', 'S', 'S', 'P', '\0' };
 
 const char* ntlm_get_negotiate_string(UINT32 flag)
@@ -609,7 +621,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	*message = empty;
 
-	s = Stream_StaticInit(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
+	s = Stream_StaticInit2(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
 
 	if (!s)
 		return SEC_E_INTERNAL_ERROR;
@@ -854,7 +866,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	*message = empty;
 
-	s = Stream_StaticInit(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
+	s = Stream_StaticInit2(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
 
 	if (!s)
 		return SEC_E_INTERNAL_ERROR;
@@ -1172,7 +1184,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	*message = empty;
 
-	s = Stream_StaticInit(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
+	s = Stream_StaticInit2(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
 
 	if (!s)
 		return SEC_E_INTERNAL_ERROR;
