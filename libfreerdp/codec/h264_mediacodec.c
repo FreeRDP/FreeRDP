@@ -18,7 +18,7 @@
  */
 
 #include <winpr/wlog.h>
-#include <assert.h>
+#include <winpr/assert.h>
 #include <winpr/library.h>
 
 #include <freerdp/log.h>
@@ -28,8 +28,6 @@
 #include <media/NdkMediaFormat.h>
 
 #include "h264.h"
-
-#define WINPR_ASSERT(x) assert(x)
 
 #define RESOLVE_MEDIANDK_FUNC(sys, name)                                          \
 	({                                                                            \

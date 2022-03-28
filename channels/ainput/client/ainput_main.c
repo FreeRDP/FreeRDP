@@ -26,7 +26,7 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
-#include <assert.h>
+#include <winpr/assert.h>
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>
 
@@ -36,8 +36,6 @@
 #include <freerdp/channels/ainput.h>
 
 #include "../common/ainput_common.h"
-
-#define WINPR_ASSERT(x) assert(x)
 
 #define TAG CHANNELS_TAG("ainput.client")
 
