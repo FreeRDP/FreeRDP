@@ -51,6 +51,8 @@ static wStream* Stream_StaticInit2(wStream* buffer, BYTE* data, size_t size)
 
 static const char NTLM_SIGNATURE[8] = { 'N', 'T', 'L', 'M', 'S', 'S', 'P', '\0' };
 
+static void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields);
+
 const char* ntlm_get_negotiate_string(UINT32 flag)
 {
 	if (flag & NTLMSSP_NEGOTIATE_56)
@@ -322,6 +324,8 @@ static BOOL ntlm_read_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 		return FALSE;
 	}
 
+	ntlm_free_message_fields_buffer(fields);
+
 	Stream_Read_UINT16(s, fields->Len);          /* Len (2 bytes) */
 	Stream_Read_UINT16(s, fields->MaxLen);       /* MaxLen (2 bytes) */
 	Stream_Read_UINT32(s, fields->BufferOffset); /* BufferOffset (4 bytes) */
@@ -411,7 +415,7 @@ static BOOL ntlm_write_message_fields_buffer(wStream* s, const NTLM_MESSAGE_FIEL
 	return TRUE;
 }
 
-static void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
+void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
 {
 	if (fields)
 	{
@@ -1047,12 +1051,9 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (!ntlm_read_message_fields_buffer(s, &(message->Workstation))) /* Workstation */
 		goto fail;
 
-	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_LM_KEY)
-	{
-		if (!ntlm_read_message_fields_buffer(
-		        s, &(message->LmChallengeResponse))) /* LmChallengeResponse */
-			goto fail;
-	}
+	if (!ntlm_read_message_fields_buffer(s,
+	                                     &(message->LmChallengeResponse))) /* LmChallengeResponse */
+		goto fail;
 
 	if (!ntlm_read_message_fields_buffer(s,
 	                                     &(message->NtChallengeResponse))) /* NtChallengeResponse */
