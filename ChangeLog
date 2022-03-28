@@ -1,6 +1,7 @@
 # 2022-XX-YY Version 2.X.Y
 
 Noteworthy changes:
+* Backported WINPR_ASSERT to ease future backports
 
 Fixed issues:
 * Backported #6786: Use /network:auto by default
