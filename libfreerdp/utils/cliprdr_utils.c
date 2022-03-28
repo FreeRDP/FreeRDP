@@ -111,10 +111,10 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 		Stream_Read_UINT16(s, file->clsid.Data2);
 		Stream_Read_UINT16(s, file->clsid.Data3);
 		Stream_Read(s, &file->clsid.Data4, sizeof(file->clsid.Data4));
-		Stream_Read_UINT32(s, file->sizel.cx);
-		Stream_Read_UINT32(s, file->sizel.cy);
-		Stream_Read_UINT32(s, file->pointl.x);
-		Stream_Read_UINT32(s, file->pointl.y);
+		Stream_Read_INT32(s, file->sizel.cx);
+		Stream_Read_INT32(s, file->sizel.cy);
+		Stream_Read_INT32(s, file->pointl.x);
+		Stream_Read_INT32(s, file->pointl.y);
 		Stream_Read_UINT32(s, file->dwFileAttributes); /* fileAttributes (4 bytes) */
 		Stream_Read_UINT64(s, tmp);                    /* ftCreationTime (8 bytes) */
 		file->ftCreationTime = uint64_to_filetime(tmp);
@@ -162,6 +162,7 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
 {
 	UINT result = NO_ERROR;
 	UINT32 i;
+	size_t len;
 	wStream* s = NULL;
 
 	if (!file_descriptor_array || !format_data || !format_data_length)
@@ -217,7 +218,11 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
 	Stream_SealLength(s);
 
 	Stream_GetBuffer(s, *format_data);
-	Stream_GetLength(s, *format_data_length);
+	Stream_GetLength(s, len);
+	if (len > UINT32_MAX)
+		goto error;
+
+	*format_data_length = (UINT32)len;
 
 	Stream_Free(s, FALSE);
 
