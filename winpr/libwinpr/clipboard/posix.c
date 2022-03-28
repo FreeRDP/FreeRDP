@@ -767,8 +767,8 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 formatId,
                                                  const void* data, UINT32* pSize)
 {
-	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize, "",
-	                                            "file:", "\r\n", FALSE);
+	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize, "", "file:", "\n",
+	                                            FALSE);
 }
 
 /* Prepend header of common gnome format to file list*/
