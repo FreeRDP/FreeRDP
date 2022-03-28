@@ -25,6 +25,22 @@ android {
         minSdkVersion rootProject.ext.minApi
         targetSdkVersion rootProject.ext.targetApi
         vectorDrawables.useSupportLibrary = true
+
+        ndk {
+            File jniLibsDirectory = new File(project.projectDir, "src/main/jniLibs")
+            ArrayList<String> abiFiltersList = new ArrayList<String>();
+            if (new File(jniLibsDirectory, "arm64-v8a/libfreerdp3.so").exists())
+                abiFiltersList.add("arm64-v8a")
+            if (new File(jniLibsDirectory, "armeabi-v7a/libfreerdp3.so").exists())
+                abiFiltersList.add("armeabi-v7a")
+            if (new File(jniLibsDirectory, "x86_64/libfreerdp3.so").exists())
+                abiFiltersList.add("x86_64")
+            if (new File(jniLibsDirectory, "x86/libfreerdp3.so").exists())
+                abiFiltersList.add("x86")
+            
+            abiFilters = abiFiltersList
+        }
+
         externalNativeBuild {
             cmake {
                 arguments "-DWITH_CLIENT_CHANNELS=ON"
