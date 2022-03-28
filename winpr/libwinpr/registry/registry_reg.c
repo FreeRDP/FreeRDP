@@ -27,7 +27,7 @@
 #include <string.h>
 
 #include <winpr/wtypes.h>
-#include <assert.h>
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
 
@@ -35,8 +35,6 @@
 
 #include "../log.h"
 #define TAG WINPR_TAG("registry")
-
-#define WINPR_ASSERT assert
 
 #define WINPR_HKLM_HIVE "/etc/winpr/HKLM.reg"
 

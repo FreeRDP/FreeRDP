@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/bitstream.h>
@@ -40,8 +40,6 @@
 #include "rfx_rlgr.h"
 #include "rfx_types.h"
 #include "progressive.h"
-
-#define WINPR_ASSERT(x) assert(x)
 
 #define TAG FREERDP_TAG("codec.progressive")
 

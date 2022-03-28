@@ -24,10 +24,9 @@
 #endif
 
 #include <ctype.h>
-#include <assert.h>
 #include <errno.h>
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -49,7 +48,6 @@
 
 #include <freerdp/log.h>
 
-#define WINPR_ASSERT(x) assert(x)
 #define TAG CLIENT_TAG("common.cmdline")
 
 static BOOL freerdp_client_print_codepages(const char* arg)

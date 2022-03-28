@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <winpr/assert.h>
 
 #include <freerdp/freerdp.h>
 
@@ -30,8 +30,6 @@
 #define TAG FREERDP_TAG("core.gateway.utils")
 
 #include "utils.h"
-
-#define WINPR_ASSERT(x) assert(x)
 
 BOOL utils_abort_connect(rdpContext* context)
 {
