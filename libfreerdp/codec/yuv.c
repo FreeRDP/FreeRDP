@@ -300,11 +300,15 @@ static void free_objects(PTP_WORK* work_objects, UINT32 waitCount)
 
 	    for (i = 0; i < waitCount; i++)
 		{
-			if (!work_objects[i])
-				continue;
-			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
-			CloseThreadpoolWork(work_objects[i]);
-		}
+		    PTP_WORK cur = work_objects[i];
+		    work_objects[i] = NULL;
+
+		    if (!cur)
+			    continue;
+
+		    WaitForThreadpoolWorkCallbacks(cur, FALSE);
+		    CloseThreadpoolWork(cur);
+	    }
 }
 
 static BOOL intersects(UINT32 pos, const RECTANGLE_16* regionRects, UINT32 numRegionRects)
