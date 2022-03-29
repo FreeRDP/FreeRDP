@@ -1035,24 +1035,24 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 
 int rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 {
-	int status;
-	status = license_recv(rdp->license, s);
+	LICENSE_STATE state;
+	int status = license_recv(rdp->license, s);
 
 	if (status < 0)
 		return status;
 
-	if (rdp->license->state == LICENSE_STATE_ABORTED)
+	state = license_get_state(rdp->license);
+	switch (state)
 	{
-		WLog_ERR(TAG, "license connection sequence aborted.");
-		return -1;
+		case LICENSE_STATE_ABORTED:
+			WLog_ERR(TAG, "license connection sequence aborted.");
+			return -1;
+		case LICENSE_STATE_COMPLETED:
+			rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
+			return 0;
+		default:
+			return 0;
 	}
-
-	if (rdp->license->state == LICENSE_STATE_COMPLETED)
-	{
-		rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
-	}
-
-	return 0;
 }
 
 int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
