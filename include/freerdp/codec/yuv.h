@@ -52,7 +52,7 @@ extern "C"
 	                                       BYTE* pYUVChromaData[3], const RECTANGLE_16* regionRects,
 	                                       UINT32 numRegionRects);
 
-	FREERDP_API void yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height);
+	FREERDP_API BOOL yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height);
 
 	FREERDP_API YUV_CONTEXT* yuv_context_new(BOOL encoder, UINT32 ThreadingFlags);
 	FREERDP_API void yuv_context_free(YUV_CONTEXT* context);
