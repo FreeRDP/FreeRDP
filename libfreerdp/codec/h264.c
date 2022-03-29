@@ -643,9 +643,7 @@ BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 
 	h264->width = width;
 	h264->height = height;
-	yuv_context_reset(h264->yuv, width, height);
-
-	return TRUE;
+	return yuv_context_reset(h264->yuv, width, height);
 }
 
 H264_CONTEXT* h264_context_new(BOOL Compressor)
