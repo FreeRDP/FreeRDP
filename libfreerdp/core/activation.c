@@ -474,7 +474,8 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 		if (rdp_check_fds(rdp) < 0)
 			return FALSE;
 
-		if (freerdp_shall_disconnect(rdp->instance))
+		WINPR_ASSERT(rdp->context);
+		if (freerdp_shall_disconnect(rdp->context->instance))
 			return TRUE;
 
 		if (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE)
