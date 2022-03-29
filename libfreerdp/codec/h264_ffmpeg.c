@@ -201,6 +201,7 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 	WINPR_ASSERT(sys);
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
+	sys->packet = &sys->bufferpacket;
 	WINPR_ASSERT(sys->packet);
 	av_init_packet(sys->packet);
 #else
@@ -324,6 +325,7 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 		return -1;
 
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(55, 39, 100)
+	sys->packet = &sys->bufferpacket;
 	WINPR_ASSERT(sys->packet);
 	av_packet_unref(sys->packet);
 #else
@@ -553,10 +555,6 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 	{
 		goto EXCEPTION;
 	}
-
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
-	sys->packet = &sys->bufferpacket;
-#endif
 
 	h264->pSystemData = (void*)sys;
 
