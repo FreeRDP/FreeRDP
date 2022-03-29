@@ -219,7 +219,8 @@ static PresentationContext* PresentationContext_new(VideoClientContext* video, B
 		WLog_ERR(TAG, "unable to create a h264 context");
 		goto fail;
 	}
-	h264_context_reset(ret->h264, width, height);
+	if (!h264_context_reset(ret->h264, width, height))
+		goto fail;
 
 	ret->currentSample = Stream_New(NULL, 4096);
 	if (!ret->currentSample)
