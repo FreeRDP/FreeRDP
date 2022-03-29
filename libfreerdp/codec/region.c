@@ -140,10 +140,10 @@ static RECTANGLE_16* region16_extents_noconst(REGION16* region)
 
 BOOL rectangle_is_empty(const RECTANGLE_16* rect)
 {
-	/* A rectangle with width = 0 or height = 0 should be regarded
+	/* A rectangle with width <= 0 or height <= 0 should be regarded
 	 * as empty.
 	 */
-	return ((rect->left == rect->right) || (rect->top == rect->bottom)) ? TRUE : FALSE;
+	return ((rect->left >= rect->right) || (rect->top >= rect->bottom)) ? TRUE : FALSE;
 }
 
 BOOL region16_is_empty(const REGION16* region)
