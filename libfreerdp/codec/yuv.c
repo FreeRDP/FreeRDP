@@ -317,7 +317,7 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 		RECTANGLE_16 r = *rect;
 
 		if (intersects(x, regionRects, numRegionRects))
-			return FALSE;
+			continue;
 
 		if (rectangle_is_empty(rect))
 			continue;
