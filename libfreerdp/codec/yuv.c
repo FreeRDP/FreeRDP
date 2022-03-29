@@ -265,6 +265,25 @@ static void free_objects(PTP_WORK* work_objects, void* params, UINT32 waitCount)
 	free(params);
 }
 
+static BOOL intersects(UINT32 pos, const RECTANGLE_16* regionRects, UINT32 numRegionRects)
+{
+	UINT32 x;
+
+	for (x = pos + 1; x < numRegionRects; x++)
+	{
+		const RECTANGLE_16* what = &regionRects[pos];
+		const RECTANGLE_16* rect = &regionRects[x];
+
+		if (rectangles_intersects(what, rect))
+		{
+			WLog_WARN(TAG, "YUV decoder: intersecting rectangles, aborting");
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
 #define TILE_SIZE 64
 static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* pYUVData[3],
                         const UINT32 iStride[3], UINT32 yuvHeight, UINT32 DstFormat, BYTE* dest,
@@ -296,6 +315,10 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 		UINT32 line = 0;
 		const RECTANGLE_16* rect = &regionRects[x];
 		RECTANGLE_16 r = *rect;
+
+		if (intersects(x, regionRects, numRegionRects))
+			return FALSE;
+
 		if (rectangle_is_empty(rect))
 			continue;
 		while (r.left < r.right)
