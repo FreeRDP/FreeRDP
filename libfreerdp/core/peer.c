@@ -434,7 +434,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		return -1;
 
 	rdp->inPackets++;
-	if (freerdp_shall_disconnect(rdp->instance))
+	if (freerdp_shall_disconnect(rdp->context->instance))
 		return 0;
 
 	if (settings->UseRdpSecurityLayer)

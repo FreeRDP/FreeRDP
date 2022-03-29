@@ -1126,18 +1126,30 @@ static BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, wStream* s)
 
 static BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s, logon_info_ex* info)
 {
+	freerdp* instance;
 	UINT32 errorNotificationType;
 	UINT32 errorNotificationData;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(info);
+
+	instance = rdp->context->instance;
+	WINPR_ASSERT(instance);
+
 	if (Stream_GetRemainingLength(s) < 8)
+	{
+		WLog_WARN(TAG, "received short logon error info, need 8 bytes, got %" PRIuz,
+		          Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, errorNotificationType); /* errorNotificationType (4 bytes) */
 	Stream_Read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
 	WLog_DBG(TAG, "LogonErrorInfo: Data: 0x%08" PRIX32 " Type: 0x%08" PRIX32 "",
 	         errorNotificationData, errorNotificationType);
-	IFCALL(rdp->instance->LogonErrorInfo, rdp->instance, errorNotificationData,
-	       errorNotificationType);
+	IFCALL(instance->LogonErrorInfo, instance, errorNotificationData, errorNotificationType);
 	info->ErrorNotificationType = errorNotificationType;
 	info->ErrorNotificationData = errorNotificationData;
 	return TRUE;
@@ -1149,14 +1161,27 @@ static BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex*
 	UINT32 fieldsPresent;
 	UINT16 Length;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(info);
+
 	if (Stream_GetRemainingLength(s) < 6)
+	{
+		WLog_WARN(TAG, "received short logon info extended, need 6 bytes, got %" PRIuz,
+		          Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, Length);        /* Length (2 bytes) */
 	Stream_Read_UINT32(s, fieldsPresent); /* fieldsPresent (4 bytes) */
 
 	if ((Length < 6) || (Stream_GetRemainingLength(s) < (Length - 6U)))
+	{
+		WLog_WARN(TAG,
+		          "received short logon info extended, need %" PRIu16 " - 6 bytes, got %" PRIuz,
+		          Length, Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	WLog_DBG(TAG, "LogonInfoExtended: fieldsPresent: 0x%08" PRIX32 "", fieldsPresent);
 

@@ -3872,10 +3872,13 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId, UIN
 {
 	UINT16 securityFlags = 0;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
 	if (!rdp_read_header(rdp, s, length, pChannelId))
 		return FALSE;
 
-	if (freerdp_shall_disconnect(rdp->instance))
+	if (freerdp_shall_disconnect(rdp->context->instance))
 		return TRUE;
 
 	if (rdp->settings->UseRdpSecurityLayer)
@@ -3916,10 +3919,14 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+
 	if (!rdp_recv_get_active_header(rdp, s, &channelId, &length))
 		return FALSE;
 
-	if (freerdp_shall_disconnect(rdp->instance))
+	if (freerdp_shall_disconnect(rdp->context->instance))
 		return TRUE;
 
 	if (!rdp_read_share_control_header(s, NULL, NULL, &pduType, &pduSource))

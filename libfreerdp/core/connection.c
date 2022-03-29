@@ -605,7 +605,9 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 			return FALSE;
 	}
 
-	if (!IFCALLRESULT(TRUE, rdp->instance->Redirect, rdp->instance))
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(rdp->context->instance);
+	if (!IFCALLRESULT(TRUE, rdp->context->instance->Redirect, rdp->context->instance))
 		return FALSE;
 
 	status = rdp_client_connect(rdp);
@@ -1084,7 +1086,8 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		return rc;
 	}
 
-	if (freerdp_shall_disconnect(rdp->instance))
+	WINPR_ASSERT(rdp->context);
+	if (freerdp_shall_disconnect(rdp->context->instance))
 		return 0;
 
 	if (!rdp_send_confirm_active(rdp))

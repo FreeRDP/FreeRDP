@@ -408,6 +408,12 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	UINT16 initiator;
 	DomainMCSPDU MCSPDU;
 	DomainMCSPDU domainMCSPDU;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->settings);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+
 	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataRequest
 	                                     : DomainMCSPDU_SendDataIndication;
 
@@ -422,7 +428,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	{
 		if (code == X224_TPDU_DISCONNECT_REQUEST)
 		{
-			utils_abort_connect(rdp->instance->context);
+			utils_abort_connect(rdp->context);
 			return TRUE;
 		}
 
@@ -470,10 +476,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 		if (!mcs_recv_disconnect_provider_ultimatum(rdp->mcs, s, &reason))
 			return FALSE;
 
-		if (!rdp->instance)
-			return FALSE;
-
-		context = rdp->instance->context;
+		context = rdp->context;
 		context->disconnectUltimatum = reason;
 
 		if (rdp->errorInfo == ERRINFO_SUCCESS)
@@ -812,15 +815,20 @@ static BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT16 unitId;
 	UINT16 ledFlags;
-	rdpContext* context = rdp->instance->context;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+
+	rdpContext* context = rdp->context;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->update);
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	Stream_Read_UINT16(s, unitId);   /* unitId (2 bytes) */
 	Stream_Read_UINT16(s, ledFlags); /* ledFlags (2 bytes) */
-	IFCALL(context->update->SetKeyboardIndicators, context, ledFlags);
-	return TRUE;
+	return IFCALLRESULT(TRUE, context->update->SetKeyboardIndicators, context, ledFlags);
 }
 
 static BOOL rdp_recv_server_set_keyboard_ime_status_pdu(rdpRdp* rdp, wStream* s)
@@ -1343,11 +1351,19 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 pduSource;
 	UINT16 channelId = 0;
 	UINT16 securityFlags = 0;
+	freerdp* instance;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+
+	instance = rdp->context->instance;
+	WINPR_ASSERT(instance);
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return -1;
 
-	if (freerdp_shall_disconnect(rdp->instance))
+	if (freerdp_shall_disconnect(instance))
 		return 0;
 
 	if (rdp->autodetect->bandwidthMeasureStarted)
@@ -1464,7 +1480,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	{
 		rdp->inPackets++;
 
-		if (!freerdp_channel_process(rdp->instance, s, channelId, length))
+		if (!freerdp_channel_process(instance, s, channelId, length))
 			return -1;
 	}
 
@@ -1811,7 +1827,6 @@ rdpRdp* rdp_new(rdpContext* context)
 
 	InitializeCriticalSection(&rdp->critical);
 	rdp->context = context;
-	rdp->instance = context->instance;
 	flags = 0;
 
 	if (context->ServerMode)
