@@ -1616,6 +1616,10 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 	xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
 
+	/* Clear the active SelectionRequest, as it is now invalid */
+	free(clipboard->respond);
+	clipboard->respond = NULL;
+
 	xf_clipboard_formats_free(clipboard);
 	xf_cliprdr_clear_cached_data(clipboard);
 	clipboard->data_format_id = -1;
@@ -2049,6 +2053,8 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	if (formatDataResponse->msgFlags == CB_RESPONSE_FAIL)
 	{
 		WLog_WARN(TAG, "Format Data Response PDU msgFlags is CB_RESPONSE_FAIL");
+		free(clipboard->respond);
+		clipboard->respond = NULL;
 		return CHANNEL_RC_OK;
 	}
 
