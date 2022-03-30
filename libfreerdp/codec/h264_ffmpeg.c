@@ -250,6 +250,7 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 #else
 	status = avcodec_decode_video2(sys->codecDecoderContext, sys->videoFrame, &gotFrame, packet);
 #endif
+#endif
 	if (status < 0)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "Failed to decode video frame (status=%d)", status);
