@@ -22,6 +22,8 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
+
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/log.h>
 #include <freerdp/session.h>
@@ -1008,19 +1010,50 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	UINT32 cbDomain;
 	UINT32 cbUserName;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(info);
+
 	WINPR_UNUSED(rdp);
 	ZeroMemory(info, sizeof(*info));
 
 	if (Stream_GetRemainingLength(s) < logonInfoV2TotalSize)
+	{
+		WLog_WARN(TAG, "short LogonInfoV2, expected %" PRIuz " bytes, got %" PRIuz,
+		          logonInfoV2TotalSize, Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, Version);         /* Version (2 bytes) */
 	if (Version != SAVE_SESSION_PDU_VERSION_ONE)
+	{
+		WLog_WARN(TAG, "LogonInfoV2::Version expected %" PRIu16 " bytes, got %" PRIu16,
+		          SAVE_SESSION_PDU_VERSION_ONE, Version);
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, Size); /* Size (4 bytes) */
-	if (Size != logonInfoV2Size)
-		return FALSE;
+
+	/* [MS-RDPBCGR] 2.2.10.1.1.2 Logon Info Version 2 (TS_LOGON_INFO_VERSION_2)
+	 * should be logonInfoV2TotalSize
+	 * but even MS server 2019 sends logonInfoV2Size
+	 */
+	if (Size != logonInfoV2TotalSize)
+	{
+		if (Size != logonInfoV2Size)
+		{
+			WLog_WARN(TAG, "LogonInfoV2::Size expected %" PRIu32 " bytes, got %" PRIu32,
+			          logonInfoV2TotalSize, Size);
+			return FALSE;
+		}
+		else
+		{
+			WLog_WARN(TAG,
+			          "[SERVER-BUG] 2.2.10.1.1.2 Logon Info Version 2 (TS_LOGON_INFO_VERSION_2) "
+			          "Size expected %" PRIu32 " bytes, got %" PRIu32 ", ignoring",
+			          logonInfoV2TotalSize, Size);
+		}
+	}
 
 	Stream_Read_UINT32(s, info->sessionId); /* SessionId (4 bytes) */
 	Stream_Read_UINT32(s, cbDomain);        /* cbDomain (4 bytes) */
@@ -1357,6 +1390,10 @@ static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 		return FALSE;
 
 	Stream_Write_UINT16(s, SAVE_SESSION_PDU_VERSION_ONE);
+	/* [MS-RDPBCGR] 2.2.10.1.1.2 Logon Info Version 2 (TS_LOGON_INFO_VERSION_2)
+	 * should be logonInfoV2TotalSize
+	 * but even MS server 2019 sends logonInfoV2Size
+	 */
 	Stream_Write_UINT32(s, logonInfoV2Size);
 	Stream_Write_UINT32(s, info->sessionId);
 	domainLen = strlen(info->domain);
