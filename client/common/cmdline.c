@@ -2162,105 +2162,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
-				char* p;
-				char* atPtr;
 				const char* cur = arg->Value;
 
 				if (!cur)
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				/* value is [scheme://][user:password@]hostname:port */
-				p = strstr(cur, "://");
-
-				if (p)
-				{
-					*p = '\0';
-
-					if (_stricmp("no_proxy", cur) == 0)
-					{
-						if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType,
-						                                 PROXY_TYPE_IGNORE))
-							return COMMAND_LINE_ERROR_MEMORY;
-					}
-					if (_stricmp("http", cur) == 0)
-					{
-						if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType,
-						                                 PROXY_TYPE_HTTP))
-							return COMMAND_LINE_ERROR_MEMORY;
-					}
-					else if (_stricmp("socks5", cur) == 0)
-					{
-						if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType,
-						                                 PROXY_TYPE_SOCKS))
-							return COMMAND_LINE_ERROR_MEMORY;
-					}
-					else
-					{
-						WLog_ERR(TAG, "Only HTTP and SOCKS5 proxies supported by now");
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					}
-
-					cur = p + 3;
-				}
-
-				/* cur is now [user:password@]hostname:port */
-				atPtr = strrchr(cur, '@');
-
-				if (atPtr)
-				{
-					/* got a login / password,
-					 *               atPtr
-					 *               v
-					 * [user:password@]hostname:port
-					 *      ^
-					 *      colonPtr
-					 */
-					char* colonPtr = strchr(cur, ':');
-
-					if (!colonPtr || (colonPtr > atPtr))
-					{
-						WLog_ERR(
-						    TAG,
-						    "invalid syntax for proxy, expected syntax is user:password@host:port");
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					}
-
-					*colonPtr = '\0';
-					if (!freerdp_settings_set_string(settings, FreeRDP_ProxyUsername, cur))
-					{
-						WLog_ERR(TAG, "unable to allocate proxy username");
-						return COMMAND_LINE_ERROR_MEMORY;
-					}
-
-					*atPtr = '\0';
-
-					if (!freerdp_settings_set_string(settings, FreeRDP_ProxyPassword, colonPtr + 1))
-					{
-						WLog_ERR(TAG, "unable to allocate proxy password");
-						return COMMAND_LINE_ERROR_MEMORY;
-					}
-
-					cur = atPtr + 1;
-				}
-
-				p = strchr(cur, ':');
-
-				if (p)
-				{
-					LONGLONG val;
-
-					if (!value_to_int(&p[1], &val, 0, UINT16_MAX))
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
-					if (!freerdp_settings_set_uint16(settings, FreeRDP_ProxyPort, (UINT16)val))
-						return FALSE;
-					*p = '\0';
-				}
-
-				p = strchr(cur, '/');
-				if (p)
-					*p = '\0';
-				if (!freerdp_settings_set_string(settings, FreeRDP_ProxyHostname, cur))
-					return FALSE;
+				if (!proxy_parse_uri(settings, cur))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 			else
 			{
