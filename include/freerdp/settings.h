@@ -1697,6 +1697,7 @@ extern "C"
 	FREERDP_API void freerdp_target_net_addresses_free(rdpSettings* settings);
 	FREERDP_API BOOL freerdp_target_net_addresses_copy(rdpSettings* settings, char** addresses,
 	                                                   UINT32 count);
+	FREERDP_API BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in);
 
 	FREERDP_API void freerdp_performance_flags_make(rdpSettings* settings);
 	FREERDP_API void freerdp_performance_flags_split(rdpSettings* settings);

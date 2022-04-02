@@ -69,7 +69,6 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
                                 const char* proxyPassword, const char* hostname, UINT16 port);
 static void proxy_read_environment(rdpSettings* settings, char* envname);
-static BOOL proxy_parse_uri(rdpSettings* settings, const char* uri);
 
 BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* lpPeerPort,
                    const char** lpProxyUsername, const char** lpProxyPassword)
@@ -285,93 +284,15 @@ void proxy_read_environment(rdpSettings* settings, char* envname)
 		}
 		else
 		{
-			proxy_parse_uri(settings, env);
+			if (!proxy_parse_uri(settings, env))
+			{
+				WLog_WARN(
+				    TAG, "Error while parsing proxy URI from environment variable; ignoring proxy");
+			}
 		}
 	}
 
 	free(env);
-}
-
-BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
-{
-	BOOL rc = FALSE;
-	char *hostname, *pport;
-	const char* protocol;
-	char* p;
-	UINT16 port;
-	char* uri_copy = _strdup(uri_in);
-	char* uri = uri_copy;
-	if (!uri)
-		return FALSE;
-	p = strstr(uri, "://");
-
-	if (p)
-	{
-		if (p == uri + 4 && !strncmp("http", uri, 4))
-		{
-			if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_HTTP))
-				goto fail;
-
-			protocol = "http";
-		}
-		else if (p == uri + 6 && !strncmp("socks5", uri, 6))
-		{
-			if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_SOCKS))
-				goto fail;
-			protocol = "socks5";
-		}
-		else
-		{
-			WLog_ERR(TAG, "Only HTTP and SOCKS5 proxies supported by now");
-			goto fail;
-		}
-
-		uri = p + 3;
-	}
-	else
-	{
-		WLog_ERR(TAG, "No scheme in proxy URI");
-		goto fail;
-	}
-
-	hostname = uri;
-	pport = strchr(hostname, ':');
-
-	if (pport)
-	{
-		long val;
-		errno = 0;
-		val = strtol(pport + 1, NULL, 0);
-
-		if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
-			return FALSE;
-
-		port = (UINT16)val;
-	}
-	else
-	{
-		/* The default is 80. Also for Proxys. */
-		port = 80;
-		pport = strchr(hostname, '/');
-	}
-
-	if (pport)
-		*pport = '\0';
-
-	if (!freerdp_settings_set_string(settings, FreeRDP_ProxyHostname, hostname))
-		goto fail;
-
-	if (!freerdp_settings_set_uint16(settings, FreeRDP_ProxyPort, port))
-		goto fail;
-
-	WLog_INFO(TAG, "Parsed proxy configuration: %s://%s:%d", protocol,
-	          freerdp_settings_get_string(settings, FreeRDP_ProxyHostname),
-	          freerdp_settings_get_uint16(settings, FreeRDP_ProxyPort));
-	rc = TRUE;
-
-fail:
-	free(uri_copy);
-	return rc;
 }
 
 BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* proxyUsername,
