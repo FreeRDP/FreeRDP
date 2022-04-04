@@ -102,6 +102,26 @@ BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* l
 	return FALSE;
 }
 
+static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONGLONG max)
+{
+	long long rc;
+
+	if (!value || !result)
+		return FALSE;
+
+	errno = 0;
+	rc = _strtoi64(value, NULL, 0);
+
+	if (errno != 0)
+		return FALSE;
+
+	if ((rc < min) || (rc > max))
+		return FALSE;
+
+	*result = rc;
+	return TRUE;
+}
+
 static BOOL cidr4_match(const struct in_addr* addr, const struct in_addr* net, BYTE bits)
 {
 	uint32_t mask, amask, nmask;
@@ -796,24 +816,4 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 		WLog_INFO(TAG, "SOCKS Proxy replied: %d status not listed in rfc1928", buf[1]);
 
 	return FALSE;
-}
-
-static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONGLONG max)
-{
-	long long rc;
-
-	if (!value || !result)
-		return FALSE;
-
-	errno = 0;
-	rc = _strtoi64(value, NULL, 0);
-
-	if (errno != 0)
-		return FALSE;
-
-	if ((rc < min) || (rc > max))
-		return FALSE;
-
-	*result = rc;
-	return TRUE;
 }
