@@ -222,9 +222,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 	if (domain)
 	{
-		/* Convert to uppercase */
-		for (char* p = domain; *p != 0; p++)
-			*p = toupper(*p);
+		CharUpperA(domain);
 		/* Will use domain if realm is not specified in username */
 		if ((rv = krb5_set_default_realm(ctx, domain)))
 			goto cleanup;
@@ -234,8 +232,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	char* p = username;
 	for (; *p != '@' && *p != 0; p++)
 		;
-	for (; *p != 0; p++)
-		*p = toupper(*p);
+	CharUpperA(p);
 
 	if ((rv = krb5_parse_name(ctx, username, &principal)))
 		goto cleanup;
