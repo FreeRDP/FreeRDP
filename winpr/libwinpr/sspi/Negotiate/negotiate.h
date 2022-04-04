@@ -42,6 +42,7 @@ typedef struct
 	SecBuffer NegoInitMessage;
 
 	CtxtHandle SubContext;
+	int current_cred;
 
 	BOOL kerberos;
 	const SecurityFunctionTableA* sspiA;
