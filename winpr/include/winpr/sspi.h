@@ -722,6 +722,12 @@ typedef CtxtHandle* PCtxtHandle;
 
 typedef struct
 {
+	SEC_WINNT_AUTH_IDENTITY identity;
+	SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
+} SEC_WINNT_AUTH_IDENTITY_WINPR;
+
+typedef struct
+{
 	SEC_WINNT_AUTH_IDENTITY_EXA identityEx;
 	SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
 } SEC_WINNT_AUTH_IDENTITY_WINPRA, *PSEC_WINNT_AUTH_IDENTITY_WINPRA;

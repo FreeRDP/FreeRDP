@@ -366,6 +366,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(PCredHandle phCreden
 		return SEC_E_INVALID_HANDLE;
 
 	sspi_CredentialsFree(credentials);
+	sspi_SecureHandleInvalidate(phCredential);
 	return SEC_E_OK;
 }
 
@@ -1298,28 +1299,28 @@ char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags)
 
 	_snprintf(buffer, size, "[0x%08" PRIx32 "] ", flags);
 
-		for (x = 0; x < 31; x++)
+	for (x = 0; x < 31; x++)
+	{
+		const UINT32 mask = 1 << x;
+		size_t len = strnlen(buffer, size);
+		if (flags & mask)
 		{
-			const UINT32 mask = 1 << x;
-			size_t len = strnlen(buffer, size);
-			if (flags & mask)
+			const char* str = ntlm_get_negotiate_string(mask);
+			const size_t flen = strlen(str);
+
+			if ((len > 0) && (buffer[len - 1] != ' '))
 			{
-				const char* str = ntlm_get_negotiate_string(mask);
-				const size_t flen = strlen(str);
-
-				if ((len > 0) && (buffer[len - 1] != ' '))
-				{
-					if (size - len < 1)
-						break;
-					strcat(buffer, "|");
-					len++;
-				}
-
-				if (size - len < flen)
+				if (size - len < 1)
 					break;
-				strcat(buffer, str);
+				strcat(buffer, "|");
+				len++;
 			}
+
+			if (size - len < flen)
+				break;
+			strcat(buffer, str);
 		}
+	}
 
 	return buffer;
 }
