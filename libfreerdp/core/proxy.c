@@ -320,6 +320,7 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 {
 	BOOL rc = FALSE;
 	const char* protocol = "";
+	UINT16 port;
 	char* p;
 	char* atPtr;
 	char* uri_copy = _strdup(uri_in);
@@ -422,15 +423,26 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 			goto fail;
 		}
 
-		if (!freerdp_settings_set_uint16(settings, FreeRDP_ProxyPort, (UINT16)val))
-			goto fail;
+		port = (UINT16)val;
 		*p = '\0';
 	}
 	else
 	{
-		WLog_ERR(TAG, "invalid syntax for proxy (port missing)");
-		goto fail;
+		if (_stricmp("http", protocol) == 0)
+		{
+			/* The default is 80. Also for Proxys. */
+			port = 80;
+		}
+		else
+		{
+			port = 1080;
+		}
+
+		WLog_DBG(TAG, "setting default proxy port: %d", port);
 	}
+
+	if (!freerdp_settings_set_uint16(settings, FreeRDP_ProxyPort, port))
+		goto fail;
 
 	p = strchr(uri, '/');
 	if (p)
