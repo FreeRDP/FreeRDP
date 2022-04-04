@@ -22,6 +22,7 @@
 
 #include "proxy.h"
 #include <freerdp/settings.h>
+#include <freerdp/utils/proxy_utils.h>
 #include <freerdp/crypto/crypto.h>
 #include "tcp.h"
 
@@ -647,4 +648,172 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 		WLog_INFO(TAG, "SOCKS Proxy replied: %d status not listed in rfc1928", buf[1]);
 
 	return FALSE;
+}
+
+static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONGLONG max)
+{
+	long long rc;
+
+	if (!value || !result)
+		return FALSE;
+
+	errno = 0;
+	rc = _strtoi64(value, NULL, 0);
+
+	if (errno != 0)
+		return FALSE;
+
+	if ((rc < min) || (rc > max))
+		return FALSE;
+
+	*result = rc;
+	return TRUE;
+}
+
+BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
+{
+	BOOL rc = FALSE;
+	const char* protocol = "";
+	char* p;
+	char* atPtr;
+	char* uri_copy = _strdup(uri_in);
+	char* uri = uri_copy;
+	if (!uri)
+		goto fail;
+
+	p = strstr(uri, "://");
+
+	if (p)
+	{
+		*p = '\0';
+
+		if (_stricmp("no_proxy", uri) == 0)
+		{
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_IGNORE))
+				goto fail;
+		}
+		if (_stricmp("http", uri) == 0)
+		{
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_HTTP))
+				goto fail;
+			protocol = "http";
+		}
+		else if (_stricmp("socks5", uri) == 0)
+		{
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_SOCKS))
+				goto fail;
+			protocol = "socks5";
+		}
+		else
+		{
+			WLog_ERR(TAG, "Only HTTP and SOCKS5 proxies supported by now");
+			goto fail;
+		}
+
+		uri = p + 3;
+	}
+	else
+	{
+		/* default proxy protocol is http */
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_HTTP))
+			goto fail;
+		protocol = "http";
+	}
+
+	/* uri is now [user:password@]hostname:port */
+	atPtr = strrchr(uri, '@');
+
+	if (atPtr)
+	{
+		/* got a login / password,
+		 *				 atPtr
+		 *				 v
+		 * [user:password@]hostname:port
+		 *		^
+		 *		colonPtr
+		 */
+		char* colonPtr = strchr(uri, ':');
+
+		if (!colonPtr || (colonPtr > atPtr))
+		{
+			WLog_ERR(TAG, "invalid syntax for proxy (contains no password)");
+			goto fail;
+		}
+
+		*colonPtr = '\0';
+		if (!freerdp_settings_set_string(settings, FreeRDP_ProxyUsername, uri))
+		{
+			WLog_ERR(TAG, "unable to allocate proxy username");
+			goto fail;
+		}
+
+		*atPtr = '\0';
+
+		if (!freerdp_settings_set_string(settings, FreeRDP_ProxyPassword, colonPtr + 1))
+		{
+			WLog_ERR(TAG, "unable to allocate proxy password");
+			goto fail;
+		}
+
+		uri = atPtr + 1;
+	}
+
+	p = strchr(uri, ':');
+
+	if (p)
+	{
+		LONGLONG val;
+
+		if (!value_to_int(&p[1], &val, 0, UINT16_MAX))
+		{
+			WLog_ERR(TAG, "invalid syntax for proxy (invalid port)");
+			goto fail;
+		}
+
+		if (val == 0)
+		{
+			WLog_ERR(TAG, "invalid syntax for proxy (port missing)");
+			goto fail;
+		}
+
+		if (!freerdp_settings_set_uint16(settings, FreeRDP_ProxyPort, (UINT16)val))
+			goto fail;
+		*p = '\0';
+	}
+	else
+	{
+		WLog_ERR(TAG, "invalid syntax for proxy (port missing)");
+		goto fail;
+	}
+
+	p = strchr(uri, '/');
+	if (p)
+		*p = '\0';
+	if (!freerdp_settings_set_string(settings, FreeRDP_ProxyHostname, uri))
+		goto fail;
+
+	if (_stricmp("", uri) == 0)
+	{
+		WLog_ERR(TAG, "invalid syntax for proxy (hostname missing)");
+		goto fail;
+	}
+
+	if (freerdp_settings_get_string(settings, FreeRDP_ProxyUsername))
+	{
+		WLog_INFO(TAG, "Parsed proxy configuration: %s://%s:%s@%s:%d", protocol,
+		          freerdp_settings_get_string(settings, FreeRDP_ProxyUsername), "******",
+		          freerdp_settings_get_string(settings, FreeRDP_ProxyHostname),
+		          freerdp_settings_get_uint16(settings, FreeRDP_ProxyPort));
+	}
+	else
+	{
+		WLog_INFO(TAG, "Parsed proxy configuration: %s://%s:%d", protocol,
+		          freerdp_settings_get_string(settings, FreeRDP_ProxyHostname),
+		          freerdp_settings_get_uint16(settings, FreeRDP_ProxyPort));
+	}
+	rc = TRUE;
+
+fail:
+	free(uri_copy);
+	return rc;
 }

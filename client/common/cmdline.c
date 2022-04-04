@@ -43,6 +43,7 @@
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/utils/passphrase.h>
+#include <freerdp/utils/proxy_utils.h>
 #include <freerdp/channels/urbdrc.h>
 #include <freerdp/channels/rdpdr.h>
 
