@@ -116,6 +116,9 @@ static BOOL fastpath_write_update_header(wStream* s, FASTPATH_UPDATE_HEADER* fpU
 	fpUpdateHeader->updateHeader |= fpUpdateHeader->updateCode & 0x0F;
 	fpUpdateHeader->updateHeader |= (fpUpdateHeader->fragmentation & 0x03) << 4;
 	fpUpdateHeader->updateHeader |= (fpUpdateHeader->compression & 0x03) << 6;
+
+	if (Stream_GetRemainingCapacity(s) < 1)
+		return FALSE;
 	Stream_Write_UINT8(s, fpUpdateHeader->updateHeader);
 
 	if (fpUpdateHeader->compression)
@@ -1198,6 +1201,9 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		Stream_SetPosition(fs, 0);
 		fastpath_write_update_pdu_header(fs, &fpUpdatePduHeader, rdp);
 		fastpath_write_update_header(fs, &fpUpdateHeader);
+
+		if (Stream_GetRemainingCapacity(fs) < (size_t)DstSize + pad)
+			return FALSE;
 		Stream_Write(fs, pDstData, DstSize);
 
 		if (pad)
