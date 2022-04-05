@@ -342,6 +342,9 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 	if (!fastpath || !fastpath->rdp || !s)
 		return -1;
 
+	Stream_SealLength(s);
+	Stream_SetPosition(s, 0);
+
 	update = fastpath->rdp->update;
 
 	if (!update || !update->pointer || !update->context)
@@ -463,6 +466,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 			break;
 	}
 
+	Stream_SetPosition(s, 0);
 	if (!rc)
 	{
 		WLog_ERR(TAG, "Fastpath update %s [%" PRIx8 "] failed, status %d",
@@ -548,10 +552,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			goto out_fail;
 		}
 
-		Stream_SealLength(fastpath->updateData);
-		Stream_SetPosition(fastpath->updateData, 0);
 		status = fastpath_recv_update(fastpath, updateCode, fastpath->updateData);
-		Stream_SetPosition(fastpath->updateData, 0);
 
 		if (status < 0)
 		{
@@ -606,10 +607,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			}
 
 			fastpath->fragmentation = -1;
-			Stream_SealLength(fastpath->updateData);
-			Stream_SetPosition(fastpath->updateData, 0);
 			status = fastpath_recv_update(fastpath, updateCode, fastpath->updateData);
-			Stream_SetPosition(fastpath->updateData, 0);
 
 			if (status < 0)
 			{
