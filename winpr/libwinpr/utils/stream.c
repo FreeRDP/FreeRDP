@@ -163,12 +163,6 @@ void Stream_EnsureValidity(wStream* s)
 	cur = (size_t)(s->pointer - s->buffer);
 	STREAM_ASSERT(cur <= s->capacity);
 	STREAM_ASSERT(s->length <= s->capacity);
-
-	/* Length is only valid after a call to Stream_SealLength */
-	if (s->length > 0)
-	{
-		STREAM_ASSERT(cur <= s->length);
-	}
 }
 
 void Stream_Free(wStream* s, BOOL bFreeBuffer)
