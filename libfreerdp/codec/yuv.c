@@ -244,6 +244,7 @@ void yuv_context_free(YUV_CONTEXT* context)
 			CloseThreadpool(context->threadPool);
 		DestroyThreadpoolEnvironment(&context->ThreadPoolEnv);
 		free(context->work_objects);
+		free(context->work_combined_params);
 		free(context->work_enc_params);
 		free(context->work_dec_params);
 	}
