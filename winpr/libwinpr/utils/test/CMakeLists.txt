@@ -44,5 +44,7 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 	add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
 endforeach()
 
+set_property(TEST TestBacktrace PROPERTY SKIP_RETURN_CODE 77)
+
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
 

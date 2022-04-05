@@ -1,8 +1,10 @@
+#include <winpr/config.h>
 #include <stdio.h>
 #include <winpr/debug.h>
 
 int TestBacktrace(int argc, char* argv[])
 {
+#if defined(HAVE_EXECINFO_H) || defined(ANDROID) || ((defined(_WIN32) || defined(_WIN64)) && !defined(_UWP))
 	int rc = -1;
 	size_t used, x;
 	char** msg;
@@ -31,4 +33,8 @@ int TestBacktrace(int argc, char* argv[])
 	winpr_backtrace_free(stack);
 	free(msg);
 	return rc;
+#else
+	/* Use return code 77 to indicate the test should be skipped */
+	return 77;
+#endif
 }
