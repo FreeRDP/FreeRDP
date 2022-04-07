@@ -488,6 +488,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->GatewayRpcTransport = TRUE;
 	settings->GatewayHttpTransport = TRUE;
 	settings->GatewayUdpTransport = TRUE;
+	settings->GatewayHttpUseWebsockets = TRUE;
 	settings->FastPathInput = TRUE;
 	settings->FastPathOutput = TRUE;
 	settings->LongCredentialsSupported = TRUE;
