@@ -372,13 +372,13 @@ static BOOL wf_post_connect(freerdp* instance)
 	wfc = (wfContext*)instance->context;
 	WINPR_ASSERT(wfc);
 
-	cache = instance->context->cache;
-	WINPR_ASSERT(cache);
-
 	wfc->primary = wf_image_new(wfc, settings->DesktopWidth, settings->DesktopHeight, format, NULL);
 
 	if (!gdi_init_ex(instance, format, 0, wfc->primary->pdata, NULL))
 		return FALSE;
+
+	cache = instance->context->cache;
+	WINPR_ASSERT(cache);
 
 	gdi = instance->context->gdi;
 
