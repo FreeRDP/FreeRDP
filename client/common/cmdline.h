@@ -289,7 +289,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Print base64 reconnect cookie after connecting" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<driver>]", NULL, NULL, -1, NULL,
 	  "Redirect printer device" },
-	{ "proxy", COMMAND_LINE_VALUE_REQUIRED, "[<proto>://][<user>:<password>@]<host>:<port>", NULL,
+	{ "proxy", COMMAND_LINE_VALUE_REQUIRED, "[<proto>://][<user>:<password>@]<host>[:<port>]", NULL,
 	  NULL, -1, NULL,
 	  "Proxy settings: override env. var (see also environment variable below). Protocol "
 	  "\"socks5\" should be given explicitly where \"http\" is default." },

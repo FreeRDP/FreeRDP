@@ -60,6 +60,8 @@ static CGLContextObj glContext;
 static CGContextRef bmp;
 static CGImageRef img;
 
+static void mf_peer_context_free(freerdp_peer* client, rdpContext* context);
+
 static BOOL mf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
 	if (info_event_queue->pipe_fd[0] == -1)
@@ -164,72 +166,68 @@ static BOOL mf_peer_check_fds(freerdp_peer* client)
 }
 
 /* Called when we have a new peer connecting */
-static BOOL mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
+static BOOL mf_peer_context_new(freerdp_peer* client, rdpContext* context)
 {
 	rdpSettings* settings;
+	mfPeerContext* peer = (mfPeerContext*)context;
 
 	WINPR_ASSERT(client);
-	WINPR_ASSERT(client->context);
 	WINPR_ASSERT(context);
 
-	settings = client->context->settings;
+	settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	if (!(context->info = mf_info_get_instance()))
+	if (!(peer->info = mf_info_get_instance()))
 		return FALSE;
 
-	if (!(context->rfx_context = rfx_context_new_ex(TRUE, settings->ThreadingFlags)))
-		goto fail_rfx_context;
+	if (!(peer->rfx_context = rfx_context_new_ex(TRUE, settings->ThreadingFlags)))
+		goto fail;
 
-	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = settings->DesktopWidth;
-	context->rfx_context->height = settings->DesktopHeight;
-	rfx_context_set_pixel_format(context->rfx_context, PIXEL_FORMAT_BGRA32);
+	peer->rfx_context->mode = RLGR3;
+	peer->rfx_context->width = settings->DesktopWidth;
+	peer->rfx_context->height = settings->DesktopHeight;
+	rfx_context_set_pixel_format(peer->rfx_context, PIXEL_FORMAT_BGRA32);
 
-	if (!(context->s = Stream_New(NULL, 0xFFFF)))
-		goto fail_stream_new;
+	if (!(peer->s = Stream_New(NULL, 0xFFFF)))
+		goto fail;
 
-	context->vcm = WTSOpenServerA((LPSTR)client->context);
+	peer->vcm = WTSOpenServerA((LPSTR)client->context);
 
-	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
-		goto fail_open_server;
+	if (!peer->vcm || (peer->vcm == INVALID_HANDLE_VALUE))
+		goto fail;
 
-	mf_info_peer_register(context->info, context);
+	mf_info_peer_register(peer->info, peer);
 	return TRUE;
-fail_open_server:
-	Stream_Free(context->s, TRUE);
-	context->s = NULL;
-fail_stream_new:
-	rfx_context_free(context->rfx_context);
-	context->rfx_context = NULL;
-fail_rfx_context:
+fail:
+	mf_peer_context_free(client, context);
 	return FALSE;
 }
 
 /* Called after a peer disconnects */
-static void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
+static void mf_peer_context_free(freerdp_peer* client, rdpContext* context)
 {
+	mfPeerContext* peer = (mfPeerContext*)context;
 	if (context)
 	{
-		mf_info_peer_unregister(context->info, context);
+		mf_info_peer_unregister(peer->info, peer);
 		dispatch_suspend(info_timer);
-		Stream_Free(context->s, TRUE);
-		rfx_context_free(context->rfx_context);
-		// nsc_context_free(context->nsc_context);
+		Stream_Free(peer->s, TRUE);
+		rfx_context_free(peer->rfx_context);
+		// nsc_context_free(peer->nsc_context);
 #ifdef CHANNEL_AUDIN_SERVER
 
-		if (context->audin)
-			audin_server_context_free(context->audin);
+		if (peer->audin)
+			audin_server_context_free(peer->audin);
 
 #endif
 #ifdef CHANNEL_RDPSND_SERVER
 		mf_peer_rdpsnd_stop();
 
-		if (context->rdpsnd)
-			rdpsnd_server_context_free(context->rdpsnd);
+		if (peer->rdpsnd)
+			rdpsnd_server_context_free(peer->rdpsnd);
 
 #endif
-		WTSCloseServer(context->vcm);
+		WTSCloseServer(peer->vcm);
 	}
 }
 
