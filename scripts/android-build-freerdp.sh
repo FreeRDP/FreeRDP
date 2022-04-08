@@ -2,7 +2,7 @@
 
 JPEG_TAG=master
 OPENH264_TAG=master
-OPENSSL_TAG=master
+OPENSSL_TAG=openssl-1.1.1n
 FFMPEG_TAG=n4.4.1
 
 WITH_JPEG=0
