@@ -35,6 +35,8 @@
 #include <freerdp/event.h>
 
 static HWND g_focus_hWnd;
+static HWND g_main_hWnd;
+static HWND g_parent_hWnd;
 
 #define X_POS(lParam) ((UINT16)(lParam & 0xFFFF))
 #define Y_POS(lParam) ((UINT16)((lParam >> 16) & 0xFFFF))
@@ -59,7 +61,10 @@ static BOOL alt_ctrl_down()
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	wfContext* wfc;
+	LPDWORD ext_proc_id;
+	LPDWORD this_proc_id;
+
+	wfContext* wfc = NULL;
 	DWORD rdp_scancode;
 	rdpInput* input;
 	PKBDLLHOOKSTRUCT p;
@@ -73,6 +78,23 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 		return CallNextHookEx(NULL, nCode, wParam, lParam);
 	}
 
+	if (g_parent_hWnd && g_main_hWnd)
+	{
+		wfc = (wfContext*)GetWindowLongPtr(g_main_hWnd, GWLP_USERDATA);
+		GUITHREADINFO gui_thread_info;
+		gui_thread_info.cbSize = sizeof(GUITHREADINFO);
+		HWND fg_win_hwnd = GetForegroundWindow();
+		DWORD fg_win_thread_id = GetWindowThreadProcessId(fg_win_hwnd, &ext_proc_id);
+		BOOL result = GetGUIThreadInfo(fg_win_thread_id, &gui_thread_info);
+		if (gui_thread_info.hwndFocus != wfc->hWndParent)
+		{
+			g_focus_hWnd = NULL;
+ 			return CallNextHookEx(NULL, nCode, wParam, lParam);
+		}
+		
+		g_focus_hWnd = g_main_hWnd;
+	}
+
 	if (g_focus_hWnd && (nCode == HC_ACTION))
 	{
 		switch (wParam)
@@ -81,7 +103,8 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 			case WM_SYSKEYDOWN:
 			case WM_KEYUP:
 			case WM_SYSKEYUP:
-				wfc = (wfContext*)GetWindowLongPtr(g_focus_hWnd, GWLP_USERDATA);
+				if (!wfc)
+					wfc = (wfContext*)GetWindowLongPtr(g_focus_hWnd, GWLP_USERDATA);
 				p = (PKBDLLHOOKSTRUCT)lParam;
 
 				if (!wfc || !p)
@@ -325,6 +348,12 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	{
 		rdpInput* input = wfc->common.context.input;
 		rdpSettings* settings = wfc->common.context.settings;
+
+		if (!g_parent_hWnd && wfc->hWndParent)
+			g_parent_hWnd = wfc->hWndParent;
+
+		if (!g_main_hWnd)
+			g_main_hWnd = wfc->hwnd;
 
 		switch (Msg)
 		{
