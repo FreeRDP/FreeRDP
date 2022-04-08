@@ -270,7 +270,6 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	                               config->DeviceRedirection) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl,
 	                               config->DisplayControl) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteApplicationMode, config->RemoteApp) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_MultiTouchInput, config->Multitouch))
 		return FALSE;
 
