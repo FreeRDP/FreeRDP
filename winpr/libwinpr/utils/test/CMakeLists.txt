@@ -9,7 +9,6 @@ set(${MODULE_PREFIX}_TESTS
 	TestVersion.c
 	TestImage.c
 	TestBipBuffer.c
-	TestBacktrace.c
 	TestQueue.c
 	TestPrint.c
 	TestPubSub.c
@@ -26,6 +25,12 @@ set(${MODULE_PREFIX}_TESTS
 	TestStreamPool.c
 	TestMessageQueue.c
 	TestMessagePipe.c)
+
+if (TEST_WINPR_BACKTRACE)
+	set(${MODULE_PREFIX}_TESTS
+		${${MODULE_PREFIX}_TESTS}
+		TestBacktrace.c)
+endif()
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
