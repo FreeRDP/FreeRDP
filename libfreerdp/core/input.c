@@ -497,6 +497,12 @@ static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
 	else
 		keyboardFlags |= KBD_FLAGS_DOWN;
 
+	if (keyCode & 0xFF00)
+		WLog_WARN(TAG,
+		          "Problematic [MS-RDPBCGR] 2.2.8.1.1.3.1.1.1 Keyboard Event (TS_KEYBOARD_EVENT) "
+		          "keyCode=0x%04" PRIx16
+		          ", high byte values should be sent in keyboardFlags field, ignoring.",
+		          keyCode);
 	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, keyboardFlags, keyCode & 0xFF);
 }
 
