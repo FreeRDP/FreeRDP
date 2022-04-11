@@ -38,11 +38,9 @@
 #define INPUT_EVENT_MOUSE 0x8001
 #define INPUT_EVENT_MOUSEX 0x8002
 
-#define RDP_CLIENT_INPUT_PDU_HEADER_LENGTH 4
-
 static void rdp_write_client_input_pdu_header(wStream* s, UINT16 number)
 {
-	Stream_Write_UINT16(s, 1); /* numberEvents (2 bytes) */
+	Stream_Write_UINT16(s, number); /* numberEvents (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* pad2Octets (2 bytes) */
 }
 
@@ -67,6 +65,8 @@ static wStream* rdp_client_input_pdu_init(rdpRdp* rdp, UINT16 type)
 
 static BOOL rdp_send_client_input_pdu(rdpRdp* rdp, wStream* s)
 {
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->mcs);
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_INPUT, rdp->mcs->userId);
 }
 
@@ -96,12 +96,15 @@ static BOOL input_send_synchronize_event(rdpInput* input, UINT32 flags)
 
 static void input_write_keyboard_event(wStream* s, UINT16 flags, UINT16 code)
 {
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(code <= UINT8_MAX);
+
 	Stream_Write_UINT16(s, flags); /* keyboardFlags (2 bytes) */
 	Stream_Write_UINT16(s, code);  /* keyCode (2 bytes) */
 	Stream_Write_UINT16(s, 0);     /* pad2Octets (2 bytes) */
 }
 
-static BOOL input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+static BOOL input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	wStream* s;
 	rdpRdp* rdp;
@@ -280,7 +283,7 @@ static BOOL input_send_fastpath_synchronize_event(rdpInput* input, UINT32 flags)
 	return fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
-static BOOL input_send_fastpath_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+static BOOL input_send_fastpath_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	wStream* s;
 	BYTE eventFlags = 0;
@@ -494,7 +497,7 @@ static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
 	else
 		keyboardFlags |= KBD_FLAGS_DOWN;
 
-	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, keyboardFlags, keyCode);
+	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, keyboardFlags, keyCode & 0xFF);
 }
 
 static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
@@ -625,7 +628,6 @@ BOOL input_recv(rdpInput* input, wStream* s)
 BOOL input_register_client_callbacks(rdpInput* input)
 {
 	rdpSettings* settings;
-	rdp_input_internal* in = input_cast(input);
 
 	if (!input->context)
 		return FALSE;
@@ -670,7 +672,7 @@ BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags)
 	return IFCALLRESULT(TRUE, input->SynchronizeEvent, input, flags);
 }
 
-BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	if (!input || !input->context)
 		return FALSE;

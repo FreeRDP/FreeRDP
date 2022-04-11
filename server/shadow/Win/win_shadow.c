@@ -45,7 +45,7 @@ static BOOL win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
 }
 
 static BOOL win_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
-                                            UINT16 flags, UINT16 code)
+                                            UINT16 flags, UINT8 code)
 {
 	UINT rc;
 	INPUT event;

@@ -31,7 +31,7 @@ static BOOL shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 	return IFCALLRESULT(TRUE, subsystem->SynchronizeEvent, subsystem, client, flags);
 }
 
-static BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+static BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	rdpShadowClient* client = (rdpShadowClient*)input->context;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;

@@ -62,7 +62,7 @@ static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 	return TRUE;
 }
 
-static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	const proxyConfig* config;
 	proxyKeyboardEventInfo event;

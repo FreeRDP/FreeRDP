@@ -61,11 +61,11 @@ static BOOL ios_events_handle_event(mfInfo *mfi, NSDictionary *event_description
 	else if ([event_type isEqualToString:@"keyboard"])
 	{
 		if ([[event_description objectForKey:@"subtype"] isEqualToString:@"scancode"])
-			instance->input->KeyboardEvent(
+			freerdp_input_send_keyboard_event(
 			    instance->input, [[event_description objectForKey:@"flags"] unsignedShortValue],
 			    [[event_description objectForKey:@"scancode"] unsignedShortValue]);
 		else if ([[event_description objectForKey:@"subtype"] isEqualToString:@"unicode"])
-			instance->input->UnicodeKeyboardEvent(
+			freerdp_input_send_unicode_keyboard_event(
 			    instance->input, [[event_description objectForKey:@"flags"] unsignedShortValue],
 			    [[event_description objectForKey:@"unicode_char"] unsignedShortValue]);
 		else

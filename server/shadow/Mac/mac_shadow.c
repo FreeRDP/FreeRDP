@@ -41,7 +41,7 @@ static BOOL mac_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
 }
 
 static BOOL mac_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
-                                            UINT16 flags, UINT16 code)
+                                            UINT16 flags, UINT8 code)
 {
 	DWORD vkcode;
 	DWORD keycode;

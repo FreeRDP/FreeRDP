@@ -674,7 +674,7 @@ static BOOL fastpath_recv_input_event_scancode(rdpFastPath* fastpath, wStream* s
 {
 	rdpInput* input;
 	UINT16 flags;
-	UINT16 code;
+	UINT8 code;
 
 	if (!fastpath || !fastpath->rdp || !fastpath->rdp->input || !s)
 		return FALSE;
