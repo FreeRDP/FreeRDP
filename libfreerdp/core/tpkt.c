@@ -69,6 +69,8 @@ BOOL tpkt_verify_header(wStream* s)
 {
 	BYTE version;
 
+	WINPR_ASSERT(s);
+
 	Stream_Peek_UINT8(s, version);
 
 	if (version == 3)

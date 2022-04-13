@@ -435,7 +435,6 @@ static BOOL certificate_write_server_public_key(const rdpCertificate* certificat
 	Stream_Write(s, certificate->cert_info.exponent, sizeof(certificate->cert_info.exponent));
 	Stream_Write(s, certificate->cert_info.Modulus, certificate->cert_info.ModulusLength);
 	Stream_Zero(s, 8); /* 8 bytes of zero padding */
-
 	return TRUE;
 }
 
@@ -631,7 +630,6 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 		WLog_ERR(TAG, "unable to parse server public signature");
 		return FALSE;
 	}
-
 	return TRUE;
 }
 

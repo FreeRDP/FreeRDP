@@ -96,7 +96,12 @@ BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li, UINT16 tpktlength)
 		/* DST-REF (2 bytes) */
 		/* SRC-REF (2 bytes) */
 		/* Class 0 (1 byte) */
-		return Stream_SafeSeek(s, 5);
+		if (!Stream_SafeSeek(s, 5))
+		{
+			WLog_WARN(TAG, "tpdu invalid data, got %" PRIuz ", require at least 5 more",
+			          Stream_GetRemainingLength(s));
+			return FALSE;
+		}
 	}
 
 	return TRUE;

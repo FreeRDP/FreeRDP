@@ -572,7 +572,6 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 	size_t length;
 
 	WINPR_ASSERT(s);
-	WINPR_ASSERT(value);
 
 	if (!ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE))
 		return FALSE;

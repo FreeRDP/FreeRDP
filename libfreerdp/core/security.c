@@ -331,6 +331,11 @@ BOOL security_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length, BYTE* 
 	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH];
 	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH];
 	BOOL result = FALSE;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(data || (length == 0));
+	WINPR_ASSERT(output);
+
 	security_UINT32_le(length_le, length); /* length must be little-endian */
 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
@@ -377,6 +382,8 @@ BOOL security_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length, BYTE* 
 	memcpy(output, md5_digest, 8);
 	result = TRUE;
 out:
+	if (!result)
+		WLog_WARN(TAG, "security mac generation failed");
 	winpr_Digest_Free(sha1);
 	winpr_Digest_Free(md5);
 	return result;
@@ -392,6 +399,10 @@ BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
 	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH];
 	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH];
 	BOOL result = FALSE;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(data || (length == 0));
+	WINPR_ASSERT(output);
 
 	EnterCriticalSection(&rdp->critical);
 	security_UINT32_le(length_le, length); /* length must be little-endian */
@@ -456,6 +467,8 @@ BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
 	memcpy(output, md5_digest, 8);
 	result = TRUE;
 out:
+	if (!result)
+		WLog_WARN(TAG, "security mac signature generation failed");
 	LeaveCriticalSection(&rdp->critical);
 	winpr_Digest_Free(sha1);
 	winpr_Digest_Free(md5);
@@ -745,6 +758,10 @@ fail:
 BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 {
 	BOOL rc = FALSE;
+
+	WINPR_ASSERT(data || (length == 0));
+	WINPR_ASSERT(rdp);
+
 	EnterCriticalSection(&rdp->critical);
 	if (rdp->rc4_decrypt_key == NULL)
 		goto fail;
@@ -770,6 +787,8 @@ BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 	rdp->decrypt_checksum_use_count++;
 	rc = TRUE;
 fail:
+	if (!rc)
+		WLog_WARN(TAG, "Failed to decrypt security");
 	LeaveCriticalSection(&rdp->critical);
 	return rc;
 }
