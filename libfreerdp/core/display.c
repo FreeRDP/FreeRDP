@@ -23,19 +23,20 @@ static BOOL display_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount,
                                              const MONITOR_DEF* monitorDefArray)
 {
 	UINT32 index;
-	const MONITOR_DEF* monitor;
 
 	if (!Stream_EnsureRemainingCapacity(s, 4 + (monitorCount * 20)))
 		return FALSE;
 
 	Stream_Write_UINT32(s, monitorCount); /* monitorCount (4 bytes) */
 
-	for (index = 0, monitor = monitorDefArray; index < monitorCount; index++, monitor++)
+	for (index = 0; index < monitorCount; index++)
 	{
-		Stream_Write_UINT32(s, monitor->left);   /* left (4 bytes) */
-		Stream_Write_UINT32(s, monitor->top);    /* top (4 bytes) */
-		Stream_Write_UINT32(s, monitor->right);  /* right (4 bytes) */
-		Stream_Write_UINT32(s, monitor->bottom); /* bottom (4 bytes) */
+		const MONITOR_DEF* monitor = &monitorDefArray[index];
+
+		Stream_Write_INT32(s, monitor->left);    /* left (4 bytes) */
+		Stream_Write_INT32(s, monitor->top);     /* top (4 bytes) */
+		Stream_Write_INT32(s, monitor->right);   /* right (4 bytes) */
+		Stream_Write_INT32(s, monitor->bottom);  /* bottom (4 bytes) */
 		Stream_Write_UINT32(s, monitor->flags);  /* flags (4 bytes) */
 	}
 
