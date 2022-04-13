@@ -24,6 +24,7 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <freerdp/log.h>
 
 #include "gcc.h"
@@ -341,8 +342,9 @@ BOOL mcs_read_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16
 	if (actual)
 		*actual = DomainMCSPDU_invalid;
 
-	if (!s || !domainMCSPDU || !length)
-		return FALSE;
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(domainMCSPDU);
+	WINPR_ASSERT(length);
 
 	if (!tpkt_read_header(s, length))
 		return FALSE;
@@ -377,6 +379,10 @@ BOOL mcs_read_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16
 void mcs_write_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16 length,
                                     BYTE options)
 {
+	WINPR_ASSERT(s);
+	WINPR_ASSERT((options & ~0x03) == 0);
+	WINPR_ASSERT((domainMCSPDU & ~0x3F) == 0);
+
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
 	per_write_choice(s, (BYTE)((domainMCSPDU << 2) | options));
@@ -629,8 +635,8 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 	BOOL upwardFlag;
 	UINT16 tlength;
 
-	if (!mcs || !s)
-		return FALSE;
+	WINPR_ASSERT(mcs);
+	WINPR_ASSERT(s);
 
 	if (!tpkt_read_header(s, &tlength))
 		return FALSE;
@@ -985,8 +991,8 @@ BOOL mcs_recv_erect_domain_request(rdpMcs* mcs, wStream* s)
 	UINT32 subHeight;
 	UINT32 subInterval;
 
-	if (!mcs || !s)
-		return FALSE;
+	WINPR_ASSERT(mcs);
+	WINPR_ASSERT(s);
 
 	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_ErectDomainRequest, &length, NULL))
 		return FALSE;
@@ -1269,8 +1275,9 @@ BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason
 {
 	BYTE b1, b2;
 
-	if (!mcs || !s || !reason)
-		return FALSE;
+	WINPR_ASSERT(mcs);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(reason);
 
 	/*
 	 * http://msdn.microsoft.com/en-us/library/cc240872.aspx:
@@ -1300,7 +1307,11 @@ BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason
 	 */
 
 	if (Stream_GetRemainingLength(s) < 1)
+	{
+		WLog_WARN(TAG, "short provider ultimatum, need 1 byte, got %" PRIuz,
+		          Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 
 	Stream_Rewind_UINT8(s);
 	Stream_Read_UINT8(s, b1);
@@ -1320,8 +1331,7 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs)
 	int status;
 	UINT16 length = 9;
 
-	if (!mcs)
-		return FALSE;
+	WINPR_ASSERT(mcs);
 
 	s = Stream_New(NULL, length);
 
@@ -1351,7 +1361,6 @@ BOOL mcs_client_begin(rdpMcs* mcs)
 		return FALSE;
 
 	/* First transition state, we need this to trigger session recording */
-	rdp_client_transition_to_state(context->rdp, CONNECTION_STATE_MCS_CONNECT);
 	if (!mcs_send_connect_initial(mcs))
 	{
 		freerdp_set_last_error_if_not(context, FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR);

@@ -374,6 +374,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if (rdp_get_state(rdp) != CONNECTION_STATE_NLA)
 	{
+		rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CONNECT);
 		if (!mcs_client_begin(rdp->mcs))
 			return FALSE;
 	}
