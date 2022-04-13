@@ -51,7 +51,7 @@ extern "C"
 	                                       UINT16 min);
 	FREERDP_API BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length,
 	                                        UINT16 min);
-	FREERDP_API BOOL per_read_numeric_string(wStream* s, int min);
+	FREERDP_API BOOL per_read_numeric_string(wStream* s, UINT16 min);
 	FREERDP_API BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length,
 	                                          UINT16 min);
 
