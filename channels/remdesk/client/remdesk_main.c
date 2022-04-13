@@ -76,7 +76,7 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 	WINPR_ASSERT(remdesk);
 
 	WINPR_ASSERT(remdesk->rdpcontext);
-	settings = remdesk->rdpcontext;
+	settings = remdesk->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
 	if (remdesk->ExpertBlob)
@@ -380,7 +380,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 
 	pdu.expertBlob = remdesk->ExpertBlob;
 	WINPR_ASSERT(remdesk->rdpcontext);
-	settings = remdesk->rdpcontext;
+	settings = remdesk->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
 	pdu.raConnectionString = settings->RemoteAssistanceRCTicket;
@@ -446,7 +446,7 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(remdesk->rdpcontext);
-	settings = remdesk->rdpcontext;
+	settings = remdesk->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
 	pdu.raConnectionString = settings->RemoteAssistanceRCTicket;
