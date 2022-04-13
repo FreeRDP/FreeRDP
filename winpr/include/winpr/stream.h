@@ -61,6 +61,12 @@ extern "C"
 	WINPR_API wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size);
 	WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 
+#define Stream_CheckAndLogRequiredLength(tag, s, len) \
+	Stream_CheckAndLogRequiredLengthEx(tag, s, len, NULL, __FILE__, __FUNCTION__, __LINE__)
+	WINPR_API BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, wStream* s, UINT64 len,
+	                                                  const char* custom, const char* file,
+	                                                  const char* fkt, size_t line);
+
 	static INLINE void Stream_Seek(wStream* s, size_t _offset)
 	{
 		WINPR_ASSERT(s);

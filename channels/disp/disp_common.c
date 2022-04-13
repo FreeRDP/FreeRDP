@@ -34,11 +34,8 @@
  */
 UINT disp_read_header(wStream* s, DISPLAY_CONTROL_HEADER* header)
 {
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "header parsing failed: not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, header->type);
 	Stream_Read_UINT32(s, header->length);

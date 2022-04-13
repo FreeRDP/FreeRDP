@@ -173,7 +173,7 @@ static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
 	WINPR_ASSERT(ainput);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 24)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
 		return ERROR_NO_DATA;
 
 	Stream_Read_UINT64(s, time);

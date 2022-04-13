@@ -86,13 +86,13 @@ static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	ainput = (AINPUT_PLUGIN*)callback->plugin;
 	WINPR_ASSERT(ainput);
 
-	if (Stream_GetRemainingLength(data) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, data, 2))
 		return ERROR_NO_DATA;
 	Stream_Read_UINT16(data, type);
 	switch (type)
 	{
 		case MSG_AINPUT_VERSION:
-			if (Stream_GetRemainingLength(data) < 8)
+			if (!Stream_CheckAndLogRequiredLength(TAG, data, 8))
 				return ERROR_NO_DATA;
 			Stream_Read_UINT32(data, ainput->MajorVersion);
 			Stream_Read_UINT32(data, ainput->MinorVersion);

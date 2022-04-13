@@ -276,7 +276,7 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* 
 	rdpsnd->NumberOfServerFormats = 0;
 	rdpsnd->ServerFormats = NULL;
 
-	if (Stream_GetRemainingLength(s) < 30)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 30))
 		return ERROR_BAD_LENGTH;
 
 	/* http://msdn.microsoft.com/en-us/library/cc240956.aspx */
@@ -290,7 +290,7 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* 
 	Stream_Seek_UINT8(s);                   /* bPad */
 	rdpsnd->NumberOfServerFormats = wNumberOfFormats;
 
-	if (Stream_GetRemainingLength(s) / 14 < wNumberOfFormats)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 14ull * wNumberOfFormats))
 		return ERROR_BAD_LENGTH;
 
 	rdpsnd->ServerFormats = audio_formats_new(wNumberOfFormats);
@@ -366,7 +366,7 @@ static UINT rdpsnd_recv_training_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	WINPR_ASSERT(rdpsnd);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_BAD_LENGTH;
 
 	Stream_Read_UINT16(s, wTimeStamp);
@@ -441,7 +441,7 @@ static UINT rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 B
 	WINPR_ASSERT(rdpsnd);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return ERROR_BAD_LENGTH;
 
 	rdpsnd->wArrivalTime = GetTickCount64();
@@ -591,7 +591,7 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 	UINT64 diffMS, ts;
 	UINT latency = 0;
 
-	if (Stream_GetRemainingLength(s) < size)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, size))
 		return ERROR_BAD_LENGTH;
 
 	if (rdpsnd->wCurrentFormatNo >= rdpsnd->NumberOfClientFormats)
@@ -651,7 +651,7 @@ static UINT rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	 * to be filled with the first four bytes of the audio sample data sent as
 	 * part of the preceding Wave Info PDU.
 	 */
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	CopyMemory(Stream_Buffer(s), rdpsnd->waveData, 4);
@@ -664,7 +664,7 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 	AUDIO_FORMAT* format;
 	UINT32 dwAudioTimeStamp;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return ERROR_BAD_LENGTH;
 
 	Stream_Read_UINT16(s, rdpsnd->wTimeStamp);
@@ -710,7 +710,7 @@ static UINT rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	BOOL rc = FALSE;
 	UINT32 dwVolume;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_BAD_LENGTH;
 
 	Stream_Read_UINT32(s, dwVolume);
@@ -745,7 +745,7 @@ static UINT rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 		goto out;
 	}
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 	{
 		status = ERROR_BAD_LENGTH;
 		goto out;

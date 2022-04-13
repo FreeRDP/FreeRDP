@@ -314,3 +314,20 @@ BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t length)
 
 	return TRUE;
 }
+
+BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, wStream* s, UINT64 len, const char* custom,
+                                        const char* file, const char* fkt, size_t line)
+{
+	const size_t actual = Stream_GetRemainingLength(s);
+
+	WINPR_UNUSED(custom);
+	WINPR_UNUSED(file);
+
+	if (actual < len)
+	{
+		WLog_WARN(tag, "[%s:%" PRIuz "] invalid length, got %" PRIuz ", require at least %" PRIu64,
+		          fkt, line, actual, len);
+		return FALSE;
+	}
+	return TRUE;
+}

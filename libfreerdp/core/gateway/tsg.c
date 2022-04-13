@@ -1045,7 +1045,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 	if (!packet)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(pdu->s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 12))
 		goto fail;
 
 	Stream_Seek_UINT32(pdu->s);                   /* PacketPtr (4 bytes) */
@@ -1064,7 +1064,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 		packet->tsgPacket.packetCapsResponse = packetCapsResponse;
 
-		if (Stream_GetRemainingLength(pdu->s) < 32)
+		if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 32))
 			goto fail;
 
 		Stream_Seek_UINT32(pdu->s); /* PacketQuarResponsePtr (4 bytes) */
@@ -1080,7 +1080,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 		if ((Pointer == 0x0002000C) || (Pointer == 0x00020008))
 		{
-			if (Stream_GetRemainingLength(pdu->s) < 16)
+			if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 16))
 				goto fail;
 
 			Stream_Seek_UINT32(pdu->s);                     /* MsgId (4 bytes) */
@@ -1091,7 +1091,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 		if (packetCapsResponse->pktQuarEncResponse.certChainLen > 0)
 		{
-			if (Stream_GetRemainingLength(pdu->s) < 16)
+			if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 16))
 				goto fail;
 
 			Stream_Read_UINT32(pdu->s, Pointer); /* MsgPtr (4 bytes): 0x00020014 */
@@ -1113,7 +1113,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 		}
 		else
 		{
-			if (Stream_GetRemainingLength(pdu->s) < 4)
+			if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 4))
 				goto fail;
 
 			Stream_Read_UINT32(pdu->s, Pointer); /* Ptr (4 bytes) */
@@ -1126,7 +1126,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 		packetCapsResponse->pktQuarEncResponse.versionCaps = versionCaps;
 
-		if (Stream_GetRemainingLength(pdu->s) < 18)
+		if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 18))
 			goto fail;
 
 		Stream_Read_UINT16(pdu->s, versionCaps->tsgHeader.ComponentId); /* ComponentId (2 bytes) */
@@ -1157,7 +1157,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 		versionCaps->tsgCaps = tsgCaps;
 
-		if (Stream_GetRemainingLength(pdu->s) < 16)
+		if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 16))
 			goto fail;
 
 		Stream_Seek_UINT32(pdu->s);                          /* MaxCount (4 bytes) */
@@ -1180,7 +1180,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 		{
 			case TSG_ASYNC_MESSAGE_CONSENT_MESSAGE:
 			case TSG_ASYNC_MESSAGE_SERVICE_MESSAGE:
-				if (Stream_GetRemainingLength(pdu->s) < 16)
+				if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 16))
 					goto fail;
 
 				Stream_Read_INT32(pdu->s, packetStringMessage.isDisplayMandatory);
@@ -1190,7 +1190,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 				if (Pointer)
 				{
-					if (Stream_GetRemainingLength(pdu->s) < 12)
+					if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 12))
 						goto fail;
 
 					Stream_Seek_UINT32(pdu->s); /* MaxCount (4 bytes) */
@@ -1206,12 +1206,8 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 				}
 
 				packetStringMessage.msgBuffer = (WCHAR*)Stream_Pointer(pdu->s);
-				if (Stream_GetRemainingLength(pdu->s) < packetStringMessage.msgBytes)
-				{
-					WLog_ERR(TAG, "Unable to read message (%" PRIu32 " remaining %" PRId32 ")",
-					         packetStringMessage.msgBytes, Stream_GetRemainingLength(pdu->s));
+				if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, packetStringMessage.msgBytes))
 					goto fail;
-				}
 
 				if (context->instance)
 				{
@@ -1234,7 +1230,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 				if (!tsg_stream_align(pdu->s, 8))
 					goto fail;
 
-				if (Stream_GetRemainingLength(pdu->s) < 8)
+				if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 8))
 					goto fail;
 
 				Stream_Seek_UINT64(pdu->s); /* TunnelContext (8 bytes) */
@@ -1250,7 +1246,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 			goto fail;
 
 		/* TunnelContext (20 bytes) */
-		if (Stream_GetRemainingLength(pdu->s) < 24)
+		if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 24))
 			goto fail;
 
 		Stream_Read_UINT32(pdu->s, tunnelContext->ContextType); /* ContextType (4 bytes) */
@@ -1269,7 +1265,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 		packet->tsgPacket.packetQuarEncResponse = packetQuarEncResponse;
 
-		if (Stream_GetRemainingLength(pdu->s) < 32)
+		if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 32))
 			goto fail;
 
 		Stream_Seek_UINT32(pdu->s); /* PacketQuarResponsePtr (4 bytes) */
@@ -1281,7 +1277,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 		if (packetQuarEncResponse->certChainLen > 0)
 		{
-			if (Stream_GetRemainingLength(pdu->s) < 16)
+			if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 16))
 				goto fail;
 
 			Stream_Read_UINT32(pdu->s, Pointer); /* Ptr (4 bytes): 0x0002000C */
@@ -1303,7 +1299,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 		}
 		else
 		{
-			if (Stream_GetRemainingLength(pdu->s) < 4)
+			if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 4))
 				goto fail;
 
 			Stream_Read_UINT32(pdu->s, Pointer); /* Ptr (4 bytes): 0x00020008 */
@@ -1316,7 +1312,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 
 		packetQuarEncResponse->versionCaps = versionCaps;
 
-		if (Stream_GetRemainingLength(pdu->s) < 18)
+		if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 18))
 			goto fail;
 
 		Stream_Read_UINT16(pdu->s, versionCaps->tsgHeader.ComponentId); /* ComponentId (2 bytes) */
@@ -1340,7 +1336,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 		if (!tsg_stream_align(pdu->s, 4))
 			goto fail;
 
-		if (Stream_GetRemainingLength(pdu->s) < 36)
+		if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 36))
 			goto fail;
 
 		/* Not sure exactly what this is */
@@ -1448,7 +1444,7 @@ static BOOL TsProxyAuthorizeTunnelReadResponse(RPC_PDU* pdu)
 	if (!packet)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(pdu->s) < 68)
+	if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 68))
 		goto fail;
 
 	Stream_Seek_UINT32(pdu->s);                   /* PacketPtr (4 bytes) */
@@ -1519,7 +1515,7 @@ static BOOL TsProxyAuthorizeTunnelReadResponse(RPC_PDU* pdu)
 		goto fail;
 	}
 
-	if (Stream_GetRemainingLength(pdu->s) < SizeValue)
+	if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, SizeValue))
 		goto fail;
 
 	if (SizeValue == 4)
@@ -1579,7 +1575,7 @@ static BOOL TsProxyReadPacketSTringMessage(rdpTsg* tsg, wStream* s, TSG_PACKET_S
 	if (!tsg || !s || !msg)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < 32)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
 		return FALSE;
 
 	Stream_Read_UINT32(s, Pointer);                /* ConsentMessagePtr (4 bytes) */
@@ -1594,7 +1590,7 @@ static BOOL TsProxyReadPacketSTringMessage(rdpTsg* tsg, wStream* s, TSG_PACKET_S
 	if (msg->msgBytes < ActualCount * 2)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < msg->msgBytes)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, msg->msgBytes))
 		return FALSE;
 
 	msg->msgBuffer = (WCHAR*)Stream_Pointer(s);
@@ -1626,7 +1622,7 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	if (!pdu)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(pdu->s) < 28)
+	if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 28))
 		goto fail;
 
 	Stream_Seek_UINT32(pdu->s);                  /* PacketPtr (4 bytes) */
@@ -1702,7 +1698,7 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			break;
 
 		case TSG_ASYNC_MESSAGE_REAUTH:
-			if (Stream_GetRemainingLength(pdu->s) < 20)
+			if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 20))
 				goto fail;
 
 			Stream_Read_UINT32(pdu->s, Pointer); /* ReauthMessagePtr (4 bytes) */
@@ -1783,7 +1779,7 @@ static BOOL TsProxyCreateChannelReadResponse(RPC_PDU* pdu, CONTEXT_HANDLE* chann
 	if (!pdu)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(pdu->s) < 28)
+	if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 28))
 		goto fail;
 
 	/* ChannelContext (20 bytes) */
@@ -1831,7 +1827,7 @@ static BOOL TsProxyCloseChannelReadResponse(RPC_PDU* pdu, CONTEXT_HANDLE* contex
 	if (!pdu)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(pdu->s) < 24)
+	if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 24))
 		goto fail;
 
 	/* ChannelContext (20 bytes) */
@@ -1878,7 +1874,7 @@ static BOOL TsProxyCloseTunnelReadResponse(RPC_PDU* pdu, CONTEXT_HANDLE* context
 	if (!pdu || !context)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(pdu->s) < 24)
+	if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, 24))
 		goto fail;
 
 	/* TunnelContext (20 bytes) */

@@ -103,12 +103,8 @@ static BOOL clear_decompress_nscodec(NSC_CONTEXT* nsc, UINT32 width, UINT32 heig
 {
 	BOOL rc;
 
-	if (Stream_GetRemainingLength(s) < bitmapDataByteCount)
-	{
-		WLog_ERR(TAG, "stream short %" PRIuz " [%" PRIu32 " expected]",
-		         Stream_GetRemainingLength(s), bitmapDataByteCount);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, bitmapDataByteCount))
 		return FALSE;
-	}
 
 	rc = nsc_process_message(nsc, 32, width, height, Stream_Pointer(s), bitmapDataByteCount,
 	                         pDstData, DstFormat, nDstStep, nXDstRel, nYDstRel, width, height,
@@ -135,14 +131,10 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 	BYTE paletteCount;
 	UINT32 palette[128] = { 0 };
 
-	if (Stream_GetRemainingLength(s) < bitmapDataByteCount)
-	{
-		WLog_ERR(TAG, "stream short %" PRIuz " [%" PRIu32 " expected]",
-		         Stream_GetRemainingLength(s), bitmapDataByteCount);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, bitmapDataByteCount))
 		return FALSE;
-	}
 
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 	Stream_Read_UINT8(s, paletteCount);
 	bitmapDataOffset = 1 + (paletteCount * 3);
@@ -153,7 +145,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) / 3 < paletteCount)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 3ull * paletteCount))
 		return FALSE;
 
 	for (i = 0; i < paletteCount; i++)
@@ -175,11 +167,8 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 		UINT32 color;
 		UINT32 runLengthFactor;
 
-		if (Stream_GetRemainingLength(s) < 2)
-		{
-			WLog_ERR(TAG, "stream short %" PRIuz " [2 expected]", Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 			return FALSE;
-		}
 
 		Stream_Read_UINT8(s, tmp);
 		Stream_Read_UINT8(s, runLengthFactor);
@@ -190,23 +179,16 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 
 		if (runLengthFactor >= 0xFF)
 		{
-			if (Stream_GetRemainingLength(s) < 2)
-			{
-				WLog_ERR(TAG, "stream short %" PRIuz " [2 expected]", Stream_GetRemainingLength(s));
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 				return FALSE;
-			}
 
 			Stream_Read_UINT16(s, runLengthFactor);
 			bitmapDataOffset += 2;
 
 			if (runLengthFactor >= 0xFFFF)
 			{
-				if (Stream_GetRemainingLength(s) < 4)
-				{
-					WLog_ERR(TAG, "stream short %" PRIuz " [4 expected]",
-					         Stream_GetRemainingLength(s));
+				if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 					return FALSE;
-				}
 
 				Stream_Read_UINT32(s, runLengthFactor);
 				bitmapDataOffset += 4;
@@ -346,12 +328,8 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 	UINT32 pixelIndex;
 	UINT32 pixelCount;
 
-	if (Stream_GetRemainingLength(s) < residualByteCount)
-	{
-		WLog_ERR(TAG, "stream short %" PRIuz " [%" PRIu32 " expected]",
-		         Stream_GetRemainingLength(s), residualByteCount);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, residualByteCount))
 		return FALSE;
-	}
 
 	suboffset = 0;
 	pixelIndex = 0;
@@ -368,11 +346,8 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 		UINT32 runLengthFactor;
 		UINT32 color;
 
-		if (Stream_GetRemainingLength(s) < 4)
-		{
-			WLog_ERR(TAG, "stream short %" PRIuz " [4 expected]", Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return FALSE;
-		}
 
 		Stream_Read_UINT8(s, b);
 		Stream_Read_UINT8(s, g);
@@ -383,23 +358,16 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 
 		if (runLengthFactor >= 0xFF)
 		{
-			if (Stream_GetRemainingLength(s) < 2)
-			{
-				WLog_ERR(TAG, "stream short %" PRIuz " [2 expected]", Stream_GetRemainingLength(s));
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 				return FALSE;
-			}
 
 			Stream_Read_UINT16(s, runLengthFactor);
 			suboffset += 2;
 
 			if (runLengthFactor >= 0xFFFF)
 			{
-				if (Stream_GetRemainingLength(s) < 4)
-				{
-					WLog_ERR(TAG, "stream short %" PRIuz " [4 expected]",
-					         Stream_GetRemainingLength(s));
+				if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 					return FALSE;
-				}
 
 				Stream_Read_UINT32(s, runLengthFactor);
 				suboffset += 4;
@@ -451,12 +419,8 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 	BYTE subcodecId;
 	UINT32 suboffset;
 
-	if (Stream_GetRemainingLength(s) < subcodecByteCount)
-	{
-		WLog_ERR(TAG, "stream short %" PRIuz " [%" PRIu32 " expected]",
-		         Stream_GetRemainingLength(s), subcodecByteCount);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, subcodecByteCount))
 		return FALSE;
-	}
 
 	suboffset = 0;
 
@@ -465,11 +429,8 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 		UINT32 nXDstRel;
 		UINT32 nYDstRel;
 
-		if (Stream_GetRemainingLength(s) < 13)
-		{
-			WLog_ERR(TAG, "stream short %" PRIuz " [13 expected]", Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 13))
 			return FALSE;
-		}
 
 		Stream_Read_UINT16(s, xStart);
 		Stream_Read_UINT16(s, yStart);
@@ -479,12 +440,8 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 		Stream_Read_UINT8(s, subcodecId);
 		suboffset += 13;
 
-		if (Stream_GetRemainingLength(s) < bitmapDataByteCount)
-		{
-			WLog_ERR(TAG, "stream short %" PRIuz " [%" PRIu32 " expected]",
-			         Stream_GetRemainingLength(s), bitmapDataByteCount);
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, bitmapDataByteCount))
 			return FALSE;
-		}
 
 		nXDstRel = nXDst + xStart;
 		nYDstRel = nYDst + yStart;
@@ -595,11 +552,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 	UINT32 nXDstRel;
 	UINT32 nYDstRel;
 
-	if (Stream_GetRemainingLength(s) < bandsByteCount)
-	{
-		WLog_ERR(TAG, "stream short %" PRIuz " [11 expected]", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, bandsByteCount))
 		return FALSE;
-	}
 
 	suboffset = 0;
 
@@ -618,11 +572,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 		UINT32 vBarPixelCount;
 		UINT32 vBarShortPixelCount = 0;
 
-		if (Stream_GetRemainingLength(s) < 11)
-		{
-			WLog_ERR(TAG, "stream short %" PRIuz " [11 expected]", Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 11))
 			return FALSE;
-		}
 
 		Stream_Read_UINT16(s, xStart);
 		Stream_Read_UINT16(s, xEnd);
@@ -656,11 +607,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 			BOOL vBarUpdate = FALSE;
 			const BYTE* cpSrcPixel;
 
-			if (Stream_GetRemainingLength(s) < 2)
-			{
-				WLog_ERR(TAG, "stream short %" PRIuz " [2 expected]", Stream_GetRemainingLength(s));
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 				return FALSE;
-			}
 
 			Stream_Read_UINT16(s, vBarHeader);
 			suboffset += 2;
@@ -683,12 +631,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					return FALSE;
 				}
 
-				if (Stream_GetRemainingLength(s) < 1)
-				{
-					WLog_ERR(TAG, "stream short %" PRIuz " [1 expected]",
-					         Stream_GetRemainingLength(s));
+				if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 					return FALSE;
-				}
 
 				Stream_Read_UINT8(s, vBarYOn);
 				suboffset += 1;
@@ -714,12 +658,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					return FALSE;
 				}
 
-				if (Stream_GetRemainingLength(s) / 3 < vBarShortPixelCount)
-				{
-					WLog_ERR(TAG, "stream short %" PRIuz " [%" PRIu32 " expected]",
-					         Stream_GetRemainingLength(s), (vBarShortPixelCount * 3));
+				if (!Stream_CheckAndLogRequiredLength(TAG, s, 3ull * vBarShortPixelCount))
 					return FALSE;
-				}
 
 				if (clear->ShortVBarStorageCursor >= CLEARCODEC_VBAR_SHORT_SIZE)
 				{
@@ -920,11 +860,8 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 2)
-	{
-		WLog_ERR(TAG, "stream short %" PRIuz " [2 expected]", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
-	}
 
 	Stream_Read_UINT16(s, glyphIndex);
 
@@ -1041,11 +978,8 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 	if (!s)
 		return -2005;
 
-	if (Stream_GetRemainingLength(s) < 2)
-	{
-		WLog_ERR(TAG, "stream short %" PRIuz " [2 expected]", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		goto fail;
-	}
 
 	if (!updateContextFormat(clear, DstFormat))
 		goto fail;
@@ -1082,14 +1016,13 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 	}
 
 	/* Read composition payload header parameters */
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 	{
 		const UINT32 mask = (CLEARCODEC_FLAG_GLYPH_HIT | CLEARCODEC_FLAG_GLYPH_INDEX);
 
 		if ((glyphFlags & mask) == mask)
 			goto finish;
 
-		WLog_ERR(TAG, "stream short %" PRIuz " [12 expected]", Stream_GetRemainingLength(s));
 		goto fail;
 	}
 

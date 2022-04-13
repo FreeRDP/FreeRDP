@@ -17,12 +17,15 @@
  * limitations under the License.
  */
 
-#include <freerdp/config.h>
+#include <winpr/assert.h>
+#include <winpr/print.h>
 
+#include <freerdp/config.h>
 #include <freerdp/crypto/per.h>
 
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("crypto.per")
+
 /**
  * Read PER length.
  * @param s stream
@@ -34,23 +37,15 @@ BOOL per_read_length(wStream* s, UINT16* length)
 {
 	BYTE byte;
 
-	if (Stream_GetRemainingLength(s) < 1)
-	{
-		WLog_WARN(TAG, "PER length invalid data, got %" PRIuz ", require at least 1 more",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
-	}
 
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x80)
 	{
-		if (Stream_GetRemainingLength(s) < 1)
-		{
-			WLog_WARN(TAG, "PER length invalid data, got %" PRIuz ", require at least 1 more",
-			          Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			return FALSE;
-		}
 
 		byte &= ~(0x80);
 		*length = (byte << 8);
@@ -97,12 +92,8 @@ BOOL per_write_length(wStream* s, UINT16 length)
 
 BOOL per_read_choice(wStream* s, BYTE* choice)
 {
-	if (Stream_GetRemainingLength(s) < 1)
-	{
-		WLog_WARN(TAG, "PER choice invalid data, got %" PRIuz ", require at least 1 more",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
-	}
 
 	Stream_Read_UINT8(s, *choice);
 	return TRUE;
@@ -131,9 +122,10 @@ BOOL per_write_choice(wStream* s, BYTE choice)
 
 BOOL per_read_selection(wStream* s, BYTE* selection)
 {
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 
+	WINPR_ASSERT(selection);
 	Stream_Read_UINT8(s, *selection);
 	return TRUE;
 }
@@ -161,9 +153,10 @@ BOOL per_write_selection(wStream* s, BYTE selection)
 
 BOOL per_read_number_of_sets(wStream* s, BYTE* number)
 {
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 
+	WINPR_ASSERT(number);
 	Stream_Read_UINT8(s, *number);
 	return TRUE;
 }
@@ -190,7 +183,7 @@ BOOL per_write_number_of_sets(wStream* s, BYTE number)
 
 BOOL per_read_padding(wStream* s, UINT16 length)
 {
-	if ((Stream_GetRemainingLength(s)) < length)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return FALSE;
 
 	Stream_Seek(s, length);
@@ -222,10 +215,12 @@ BOOL per_read_integer(wStream* s, UINT32* integer)
 {
 	UINT16 length;
 
+	WINPR_ASSERT(integer);
+
 	if (!per_read_length(s, &length))
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < length)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return FALSE;
 
 	if (length == 0)
@@ -285,12 +280,8 @@ BOOL per_write_integer(wStream* s, UINT32 integer)
 
 BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
 {
-	if (Stream_GetRemainingLength(s) < 2)
-	{
-		WLog_WARN(TAG, "PER uint16 invalid data, got %" PRIuz ", require at least 2",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
-	}
 
 	Stream_Read_UINT16_BE(s, *integer);
 
@@ -331,14 +322,18 @@ BOOL per_write_integer16(wStream* s, UINT16 integer, UINT16 min)
 
 BOOL per_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 {
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 
+	WINPR_ASSERT(enumerated);
 	Stream_Read_UINT8(s, *enumerated);
 
 	/* check that enumerated value falls within expected range */
 	if (*enumerated + 1 > count)
+	{
+		WLog_WARN(TAG, "PER invalid data, expected %" PRIu8 " < %" PRIu8, *enumerated, count);
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -359,6 +354,24 @@ BOOL per_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
 	return TRUE;
 }
 
+static BOOL per_check_oid_and_log_mismatch(const BYTE* got, const BYTE* expect, size_t length)
+{
+	if (memcmp(got, expect, length) == 0)
+	{
+		return TRUE;
+	}
+	else
+	{
+		char* got_str = winpr_BinToHexString(got, length, TRUE);
+		char* expect_str = winpr_BinToHexString(expect, length, TRUE);
+
+		WLog_WARN(TAG, "PER OID mismatch, got %s, expected %s", got_str, expect_str);
+		free(got_str);
+		free(expect_str);
+		return FALSE;
+	}
+}
+
 /**
  * Read PER OBJECT_IDENTIFIER (OID).
  * @param s stream
@@ -371,15 +384,18 @@ BOOL per_read_object_identifier(wStream* s, const BYTE oid[6])
 {
 	BYTE t12;
 	UINT16 length;
-	BYTE a_oid[6];
+	BYTE a_oid[6] = { 0 };
 
 	if (!per_read_length(s, &length))
 		return FALSE;
 
 	if (length != 5)
+	{
+		WLog_WARN(TAG, "PER length, got %" PRIu16 ", expected 5", length);
 		return FALSE;
+	}
 
-	if (Stream_GetRemainingLength(s) < length)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return FALSE;
 
 	Stream_Read_UINT8(s, t12); /* first two tuples */
@@ -391,15 +407,7 @@ BOOL per_read_object_identifier(wStream* s, const BYTE oid[6])
 	Stream_Read_UINT8(s, a_oid[4]); /* tuple 5 */
 	Stream_Read_UINT8(s, a_oid[5]); /* tuple 6 */
 
-	if ((a_oid[0] == oid[0]) && (a_oid[1] == oid[1]) && (a_oid[2] == oid[2]) &&
-	    (a_oid[3] == oid[3]) && (a_oid[4] == oid[4]) && (a_oid[5] == oid[5]))
-	{
-		return TRUE;
-	}
-	else
-	{
-		return FALSE;
-	}
+	return per_check_oid_and_log_mismatch(a_oid, oid, sizeof(a_oid));
 }
 
 /**
@@ -449,7 +457,6 @@ static void per_write_string(wStream* s, BYTE* str, int length)
 
 BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
 {
-	UINT16 i;
 	UINT16 mlength;
 	BYTE* a_oct_str;
 
@@ -459,19 +466,13 @@ BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT1
 	if (mlength + min != length)
 		return FALSE;
 
-	if ((Stream_GetRemainingLength(s)) < length)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return FALSE;
 
 	a_oct_str = Stream_Pointer(s);
 	Stream_Seek(s, length);
 
-	for (i = 0; i < length; i++)
-	{
-		if (a_oct_str[i] != oct_str[i])
-			return FALSE;
-	}
-
-	return TRUE;
+	return per_check_oid_and_log_mismatch(a_oct_str, oct_str, length);
 }
 
 /**
@@ -507,9 +508,9 @@ BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT
  * @param min minimum string length
  */
 
-BOOL per_read_numeric_string(wStream* s, int min)
+BOOL per_read_numeric_string(wStream* s, UINT16 min)
 {
-	int length;
+	size_t length;
 	UINT16 mlength;
 
 	if (!per_read_length(s, &mlength))
@@ -517,7 +518,7 @@ BOOL per_read_numeric_string(wStream* s, int min)
 
 	length = (mlength + min + 1) / 2;
 
-	if (((int)Stream_GetRemainingLength(s)) < length)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return FALSE;
 
 	Stream_Seek(s, length);

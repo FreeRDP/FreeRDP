@@ -327,7 +327,7 @@ BOOL rts_extract_pdu_signature(RtsPduSignature* signature, wStream* src,
 		UINT32 CommandType;
 		size_t CommandLength;
 
-		if (Stream_GetRemainingLength(&tmp) < 4)
+		if (!Stream_CheckAndLogRequiredLength(TAG, &tmp, 4))
 			goto fail;
 
 		Stream_Read_UINT32(&tmp, CommandType); /* CommandType (4 bytes) */

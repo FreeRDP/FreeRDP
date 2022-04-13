@@ -528,11 +528,8 @@ static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStrea
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 60)
-	{
-		WLog_ERR(TAG, "not enough bytes for a TSMM_PRESENTATION_REQUEST");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 60))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT8(s, req.PresentationId);
 	Stream_Read_UINT8(s, req.Version);
@@ -552,11 +549,8 @@ static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStrea
 
 	Stream_Read_UINT32(s, req.cbExtra);
 
-	if (Stream_GetRemainingLength(s) < req.cbExtra)
-	{
-		WLog_ERR(TAG, "not enough bytes for cbExtra of TSMM_PRESENTATION_REQUEST");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, req.cbExtra))
 		return ERROR_INVALID_DATA;
-	}
 
 	req.pExtraData = Stream_Pointer(s);
 
@@ -593,15 +587,17 @@ static UINT video_control_on_data_received(IWTSVirtualChannelCallback* pChannelC
 	context = (VideoClientContext*)video->wtsPlugin.pInterface;
 	WINPR_ASSERT(context);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, cbSize);
-	if (cbSize < 8 || Stream_GetRemainingLength(s) < (cbSize - 4))
+	if (cbSize < 8)
 	{
-		WLog_ERR(TAG, "invalid cbSize");
+		WLog_ERR(TAG, "invalid cbSize %" PRIu32 ", expected 8", cbSize);
 		return ERROR_INVALID_DATA;
 	}
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, cbSize - 4))
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, packetType);
 	switch (packetType)
@@ -940,15 +936,18 @@ static UINT video_data_on_data_received(IWTSVirtualChannelCallback* pChannelCall
 	video = (VIDEO_PLUGIN*)callback->plugin;
 	context = (VideoClientContext*)video->wtsPlugin.pInterface;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, cbSize);
-	if (cbSize < 8 || Stream_GetRemainingLength(s) < (cbSize - 4))
+	if (cbSize < 8)
 	{
-		WLog_ERR(TAG, "invalid cbSize");
+		WLog_ERR(TAG, "invalid cbSize %" PRIu32 ", expected >= 8", cbSize);
 		return ERROR_INVALID_DATA;
 	}
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, cbSize - 4))
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, packetType);
 	if (packetType != TSMM_PACKET_TYPE_VIDEO_DATA)
@@ -957,11 +956,8 @@ static UINT video_data_on_data_received(IWTSVirtualChannelCallback* pChannelCall
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) < 32)
-	{
-		WLog_ERR(TAG, "not enough bytes for a TSMM_VIDEO_DATA");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT8(s, data.PresentationId);
 	Stream_Read_UINT8(s, data.Version);

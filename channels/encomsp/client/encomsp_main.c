@@ -52,11 +52,8 @@ struct encomsp_plugin
  */
 static UINT encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
-	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, ENCOMSP_ORDER_HEADER_SIZE))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, header->Type);   /* Type (2 bytes) */
 	Stream_Read_UINT16(s, header->Length); /* Length (2 bytes) */
@@ -84,11 +81,8 @@ static UINT encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 {
 	ZeroMemory(str, sizeof(ENCOMSP_UNICODE_STRING));
 
-	if (Stream_GetRemainingLength(s) < 2)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, str->cchString); /* cchString (2 bytes) */
 
@@ -98,11 +92,8 @@ static UINT encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) / sizeof(WCHAR) < str->cchString)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(WCHAR) * str->cchString))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read(s, &(str->wString), (str->cchString * 2)); /* String (variable) */
 	return CHANNEL_RC_OK;
@@ -169,11 +160,8 @@ static UINT encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s,
 	beg = pos - ENCOMSP_ORDER_HEADER_SIZE;
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
 
-	if (Stream_GetRemainingLength(s) < 1)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT8(s, pdu.Flags); /* Flags (1 byte) */
 	end = Stream_GetPosition(s);
@@ -186,11 +174,8 @@ static UINT encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
-		{
-			WLog_ERR(TAG, "Not enough data!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
@@ -220,11 +205,8 @@ static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream
 	if (!context)
 		return ERROR_INVALID_HANDLE;
 
-	if (Stream_GetRemainingLength(s) < 6)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 		return ERROR_INVALID_DATA;
-	}
 
 	pos = Stream_GetPosition(s);
 	if (pos < ENCOMSP_ORDER_HEADER_SIZE)
@@ -251,11 +233,8 @@ static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
-		{
-			WLog_ERR(TAG, "Not enough data!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
@@ -291,11 +270,8 @@ static UINT encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream
 	beg = pos - ENCOMSP_ORDER_HEADER_SIZE;
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, pdu.AppId); /* AppId (4 bytes) */
 	end = Stream_GetPosition(s);
@@ -308,11 +284,8 @@ static UINT encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
-		{
-			WLog_ERR(TAG, "Not enough data!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
@@ -348,11 +321,8 @@ static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s,
 	beg = pos - ENCOMSP_ORDER_HEADER_SIZE;
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
 
-	if (Stream_GetRemainingLength(s) < 10)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 10))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, pdu.Flags); /* Flags (2 bytes) */
 	Stream_Read_UINT32(s, pdu.AppId); /* AppId (4 bytes) */
@@ -374,11 +344,8 @@ static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
-		{
-			WLog_ERR(TAG, "Not enough data!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
@@ -414,11 +381,8 @@ static UINT encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s,
 	beg = pos - ENCOMSP_ORDER_HEADER_SIZE;
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, pdu.WndId); /* WndId (4 bytes) */
 	end = Stream_GetPosition(s);
@@ -431,11 +395,8 @@ static UINT encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
-		{
-			WLog_ERR(TAG, "Not enough data!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
@@ -471,11 +432,8 @@ static UINT encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s,
 	beg = pos - ENCOMSP_ORDER_HEADER_SIZE;
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, pdu.WndId); /* WndId (4 bytes) */
 	end = Stream_GetPosition(s);
@@ -488,11 +446,8 @@ static UINT encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
-		{
-			WLog_ERR(TAG, "Not enough data!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
@@ -528,11 +483,8 @@ static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream
 	beg = pos - ENCOMSP_ORDER_HEADER_SIZE;
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
 
-	if (Stream_GetRemainingLength(s) < 10)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 10))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, pdu.ParticipantId); /* ParticipantId (4 bytes) */
 	Stream_Read_UINT32(s, pdu.GroupId);       /* GroupId (4 bytes) */
@@ -554,11 +506,8 @@ static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
-		{
-			WLog_ERR(TAG, "Not enough data!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
@@ -588,11 +537,8 @@ static UINT encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream
 	if (!context)
 		return ERROR_INVALID_HANDLE;
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return ERROR_INVALID_DATA;
-	}
 
 	beg = (Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
@@ -610,11 +556,8 @@ static UINT encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
-		{
-			WLog_ERR(TAG, "Not enough data!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
@@ -650,11 +593,8 @@ static UINT encomsp_recv_change_participant_control_level_pdu(encomspPlugin* enc
 	beg = pos - ENCOMSP_ORDER_HEADER_SIZE;
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
 
-	if (Stream_GetRemainingLength(s) < 6)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, pdu.Flags);         /* Flags (2 bytes) */
 	Stream_Read_UINT32(s, pdu.ParticipantId); /* ParticipantId (4 bytes) */
@@ -668,11 +608,8 @@ static UINT encomsp_recv_change_participant_control_level_pdu(encomspPlugin* enc
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
-		{
-			WLog_ERR(TAG, "Not enough data!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
@@ -754,11 +691,8 @@ static UINT encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStr
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
-		{
-			WLog_ERR(TAG, "Not enough data!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
@@ -803,11 +737,8 @@ static UINT encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wSt
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
-		{
-			WLog_ERR(TAG, "Not enough data!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}

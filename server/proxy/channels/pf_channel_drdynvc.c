@@ -58,17 +58,17 @@ static DynvcReadResult dynvc_read_varInt(wStream* s, size_t len, UINT64* varInt,
 	switch (len)
 	{
 		case 0x00:
-			if (Stream_GetRemainingLength(s) < 1)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 				return last ? DYNCVC_READ_ERROR : DYNCVC_READ_INCOMPLETE;
 			Stream_Read_UINT8(s, *varInt);
 			break;
 		case 0x01:
-			if (Stream_GetRemainingLength(s) < 2)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 				return last ? DYNCVC_READ_ERROR : DYNCVC_READ_INCOMPLETE;
 			Stream_Read_UINT16(s, *varInt);
 			break;
 		case 0x02:
-			if (Stream_GetRemainingLength(s) < 4)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				return last ? DYNCVC_READ_ERROR : DYNCVC_READ_INCOMPLETE;
 			Stream_Read_UINT32(s, *varInt);
 			break;
@@ -107,7 +107,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 	const char* direction = isBackData ? "B->F" : "F->B";
 
 	s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(tracker->currentPacket), Stream_GetPosition(tracker->currentPacket));
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return PF_CHANNEL_RESULT_ERROR;
 
 	Stream_Read_UINT8(s, byte0);
@@ -243,7 +243,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			}
 
 			/* CREATE_REQUEST_PDU response */
-			if (Stream_GetRemainingLength(s) < 4)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				return PF_CHANNEL_RESULT_ERROR;
 
 			Stream_Read_UINT32(s, creationStatus);

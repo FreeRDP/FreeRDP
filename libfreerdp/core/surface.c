@@ -34,12 +34,8 @@ static BOOL update_recv_surfcmd_bitmap_header_ex(wStream* s, TS_COMPRESSED_BITMA
 	if (!s || !header)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < 24)
-	{
-		WLog_ERR(TAG, "got %" PRIuz ", expected %" PRIuz " bytes", Stream_GetRemainingLength(s),
-		         24);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, header->highUniqueId);
 	Stream_Read_UINT32(s, header->lowUniqueId);
@@ -53,12 +49,8 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 	if (!s || !bmp)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_ERR(TAG, "got %" PRIuz ", expected %" PRIuz " bytes", Stream_GetRemainingLength(s),
-		         12);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return FALSE;
-	}
 
 	Stream_Read_UINT8(s, bmp->bpp);
 	Stream_Read_UINT8(s, bmp->flags);
@@ -135,11 +127,8 @@ static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT
 	BOOL rc = FALSE;
 	SURFACE_BITS_COMMAND cmd = { 0 };
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "got %" PRIuz ", expected %" PRIuz " bytes", Stream_GetRemainingLength(s), 8);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		goto fail;
-	}
 
 	cmd.cmdType = cmdType;
 	Stream_Read_UINT16(s, cmd.destLeft);
@@ -171,14 +160,11 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 2)
-	{
-		WLog_ERR(TAG, "got %" PRIuz ", expected %" PRIuz " bytes", Stream_GetRemainingLength(s), 6);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
-	}
 
 	Stream_Read_UINT16(s, marker.frameAction);
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		WLog_WARN(TAG,
 		          "[SERVER-BUG]: got %" PRIuz ", expected %" PRIuz
 		          " bytes. [MS-RDPBCGR] 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER) is "

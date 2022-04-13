@@ -52,11 +52,8 @@ static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* head
 	UINT32 ChannelNameLen;
 	char* pChannelName = NULL;
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return CHANNEL_RC_NO_MEMORY;
-	}
 
 	Stream_Read_UINT32(s, ChannelNameLen);     /* ChannelNameLen (4 bytes) */
 	Stream_Read_UINT32(s, header->DataLength); /* DataLen (4 bytes) */
@@ -73,11 +70,8 @@ static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* head
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) < ChannelNameLen)
-	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, ChannelNameLen))
 		return ERROR_INVALID_DATA;
-	}
 
 	ZeroMemory(header->ChannelName, sizeof(header->ChannelName));
 	pChannelName = (char*)header->ChannelName;
@@ -251,12 +245,8 @@ static UINT remdesk_recv_ctl_version_info_pdu(RemdeskServerContext* context, wSt
 	UINT32 versionMajor;
 	UINT32 versionMinor;
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "REMOTEDESKTOP_CTL_VERSIONINFO_PACKET missing data, got %" PRIuz,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, versionMajor); /* versionMajor (4 bytes) */
 	Stream_Read_UINT32(s, versionMinor); /* versionMinor (4 bytes) */
@@ -410,11 +400,8 @@ static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, 
 	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu;
 	UINT error;
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
-	}
 
 	pdu.expertBlob = NULL;
 	expertBlobW = (WCHAR*)Stream_Pointer(s);
@@ -447,11 +434,8 @@ static UINT remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s,
 	UINT error = CHANNEL_RC_OK;
 	UINT32 msgType = 0;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, msgType); /* msgType (4 bytes) */
 	WLog_INFO(TAG, "msgType: %" PRIu32 "", msgType);

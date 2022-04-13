@@ -382,7 +382,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 totalLen
 			return FALSE;
 
 		case DATA_PDU_TYPE_FRAME_ACKNOWLEDGE:
-			if (Stream_GetRemainingLength(s) < 4)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				return FALSE;
 
 			Stream_Read_UINT32(s, client->ack_frame_id);
@@ -445,10 +445,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		if (securityFlags & SEC_ENCRYPT)
 		{
 			if (!rdp_decrypt(rdp, s, &length, securityFlags))
-			{
-				WLog_ERR(TAG, "rdp_decrypt failed");
 				return -1;
-			}
 		}
 	}
 
@@ -479,11 +476,15 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 			case PDU_TYPE_FLOW_STOP:
 			case PDU_TYPE_FLOW_TEST:
 				if (!Stream_SafeSeek(s, remain))
+				{
+					WLog_WARN(TAG, "Short PDU, need %" PRIuz " bytes, got %" PRIuz, remain,
+					          Stream_GetRemainingLength(s));
 					return -1;
+				}
 				break;
 
 			default:
-				WLog_ERR(TAG, "Client sent pduType %" PRIu16 "", pduType);
+				WLog_ERR(TAG, "Client sent unknown pduType %" PRIu16 "", pduType);
 				return -1;
 		}
 	}
@@ -511,7 +512,6 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 	rdpRdp* rdp;
 	UINT16 length;
 	BOOL rc;
-	size_t rem;
 	rdpFastPath* fastpath;
 
 	WINPR_ASSERT(s);
@@ -526,12 +526,13 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 
 	rc = fastpath_read_header_rdp(fastpath, s, &length);
 
-	rem = Stream_GetRemainingLength(s);
-	if (!rc || (length == 0) || (length > rem))
+	if (!rc || (length == 0))
 	{
 		WLog_ERR(TAG, "incorrect FastPath PDU header length %" PRIu16 "", length);
 		return -1;
 	}
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
+		return -1;
 
 	if (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_ENCRYPTED)
 	{

@@ -1505,12 +1505,8 @@ static INLINE BOOL progressive_tile_read_upgrade(PROGRESSIVE_CONTEXT* progressiv
 	RFX_PROGRESSIVE_TILE tile = { 0 };
 	const size_t expect = 20;
 
-	if (Stream_GetRemainingLength(s) < expect)
-	{
-		WLog_Print(progressive->log, WLOG_ERROR, "Expected %" PRIuz " bytes, got %" PRIuz, expect,
-		           Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, expect))
 		return FALSE;
-	}
 
 	tile.blockType = blockType;
 	tile.blockLen = blockLen;
@@ -1587,12 +1583,8 @@ static INLINE BOOL progressive_tile_read(PROGRESSIVE_CONTEXT* progressive, BOOL 
 	RFX_PROGRESSIVE_TILE tile = { 0 };
 	size_t expect = simple ? 16 : 17;
 
-	if (Stream_GetRemainingLength(s) < expect)
-	{
-		WLog_Print(progressive->log, WLOG_ERROR, "Expected %" PRIuz " bytes, got %" PRIuz, expect,
-		           Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, expect))
 		return FALSE;
-	}
 
 	tile.blockType = blockType;
 	tile.blockLen = blockLen;
@@ -1696,19 +1688,13 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, wS
 	PROGRESSIVE_TILE_PROCESS_WORK_PARAM* params = NULL;
 	UINT16 close_cnt = 0;
 
-	if (Stream_GetRemainingLength(s) < region->tileDataSize)
-	{
-		WLog_Print(progressive->log, WLOG_ERROR, "Short block %" PRIuz ", expected %" PRIu32,
-		           Stream_GetRemainingLength(s), region->tileDataSize);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, region->tileDataSize))
 		return -1;
-	}
 
 	while ((Stream_GetRemainingLength(s) >= 6) &&
 	       (region->tileDataSize > (Stream_GetPosition(s) - start)))
 	{
-		size_t rem;
 		const size_t pos = Stream_GetPosition(s);
-		rem = Stream_GetRemainingLength(s);
 
 		Stream_Read_UINT16(s, blockType);
 		Stream_Read_UINT32(s, blockLen);
@@ -1716,14 +1702,15 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, wS
 		WLog_Print(progressive->log, WLOG_DEBUG, "%s",
 		           progressive_get_block_type_string(blockType));
 
-		if (rem < blockLen)
+		if (blockLen < 6)
 		{
-			WLog_Print(progressive->log, WLOG_ERROR, "Expected %" PRIu32 " remaining %" PRIuz,
-			           blockLen, rem);
+			WLog_Print(progressive->log, WLOG_ERROR, "Expected >= %" PRIu32 " remaining %" PRIuz, 6,
+			           blockLen);
 			return -1003;
 		}
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, blockLen - 6))
+			return -1003;
 
-		rem = Stream_GetRemainingLength(s);
 		switch (blockType)
 		{
 			case PROGRESSIVE_WBT_TILE_SIMPLE:
@@ -1749,7 +1736,7 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, wS
 				return -1039;
 		}
 
-		rem = Stream_GetPosition(s);
+		size_t rem = Stream_GetPosition(s);
 		if ((rem - pos) != blockLen)
 		{
 			WLog_Print(progressive->log, WLOG_ERROR,
@@ -2030,13 +2017,8 @@ static INLINE INT32 progressive_wb_sync(PROGRESSIVE_CONTEXT* progressive, wStrea
 		return -1005;
 	}
 
-	if (Stream_GetRemainingLength(s) < 6)
-	{
-		WLog_Print(progressive->log, WLOG_ERROR,
-		           "ProgressiveSync short %" PRIuz ", expected %" PRIuz,
-		           Stream_GetRemainingLength(s), 6);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 		return -1004;
-	}
 
 	WLog_Print(progressive->log, WLOG_DEBUG, "ProgressiveSync");
 
@@ -2082,13 +2064,8 @@ static INLINE INT32 progressive_wb_frame_begin(PROGRESSIVE_CONTEXT* progressive,
 		return -1005;
 	}
 
-	if (Stream_GetRemainingLength(s) < 6)
-	{
-		WLog_Print(progressive->log, WLOG_ERROR,
-		           "ProgressiveFrameBegin short %" PRIuz ", expected %" PRIuz,
-		           Stream_GetRemainingLength(s), 6);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 		return -1007;
-	}
 
 	Stream_Read_UINT32(s, frameBegin.frameIndex);
 	Stream_Read_UINT16(s, frameBegin.regionCount);
@@ -2168,13 +2145,8 @@ static INLINE int progressive_wb_context(PROGRESSIVE_CONTEXT* progressive, wStre
 		return -1005;
 	}
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_Print(progressive->log, WLOG_ERROR,
-		           "ProgressiveContext short %" PRIuz ", expected %" PRIuz,
-		           Stream_GetRemainingLength(s), 4);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return -1009;
-	}
 
 	Stream_Read_UINT8(s, context->ctxId);
 	Stream_Read_UINT16(s, context->tileSize);
@@ -2210,13 +2182,8 @@ static INLINE INT32 progressive_wb_read_region_header(PROGRESSIVE_CONTEXT* progr
 	size_t len;
 
 	memset(region, 0, sizeof(PROGRESSIVE_BLOCK_REGION));
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_Print(progressive->log, WLOG_ERROR,
-		           "ProgressiveRegion short %" PRIuz ", expected %" PRIuz,
-		           Stream_GetRemainingLength(s), 12);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return -1011;
-	}
 
 	region->blockType = blockType;
 	region->blockLen = blockLen;
@@ -2252,7 +2219,7 @@ static INLINE INT32 progressive_wb_read_region_header(PROGRESSIVE_CONTEXT* progr
 	}
 
 	len = Stream_GetRemainingLength(s);
-	if (len / 8 < region->numRects)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ull * region->numRects))
 	{
 		WLog_Print(progressive->log, WLOG_ERROR, "ProgressiveRegion data short for region->rects");
 		return -1015;
@@ -2469,23 +2436,25 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 	progressive->state = 0; /* Set state to not initialized */
 	while (Stream_GetRemainingLength(s) >= 6)
 	{
-		size_t rem, st, e;
+		size_t st, e;
 
 		st = Stream_GetPosition(s);
-		rem = Stream_GetRemainingLength(s);
 
 		Stream_Read_UINT16(s, blockType);
 		Stream_Read_UINT32(s, blockLen);
 
-		if (rem < blockLen)
+		if (blockLen < 6)
 		{
-			WLog_Print(progressive->log, WLOG_ERROR, "Short block %" PRIuz ", expected %" PRIu32,
-			           rem, blockLen);
+			WLog_WARN(TAG, "Invalid blockLen %" PRIu32 ", expected >= 6", blockLen);
+			rc = -1003;
+			goto fail;
+		}
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, blockLen - 6))
+		{
 			rc = -1003;
 			goto fail;
 		}
 
-		rem = Stream_GetRemainingLength(s);
 		switch (blockType)
 		{
 			case PROGRESSIVE_WBT_SYNC:

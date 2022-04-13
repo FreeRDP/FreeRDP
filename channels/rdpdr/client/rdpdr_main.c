@@ -1122,7 +1122,7 @@ static UINT rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, rdpdr->versionMajor);
@@ -1209,7 +1209,7 @@ static UINT rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, versionMajor);

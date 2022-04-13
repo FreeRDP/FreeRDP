@@ -24,6 +24,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/stream.h>
 
 #include <freerdp/log.h>
 
@@ -982,7 +983,7 @@ static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
 	UINT16 length;
 	BYTE correlationId[16] = { 0 };
 
-	if (Stream_GetRemainingLength(s) < 36)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 36))
 	{
 		WLog_ERR(TAG, "RDP_NEG_REQ::flags CORRELATION_INFO_PRESENT but data is missing");
 		return FALSE;
@@ -1047,7 +1048,7 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 7)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 7))
 		return FALSE;
 	Stream_Read_UINT8(s, flags);
 	if ((flags & ~(RESTRICTED_ADMIN_MODE_REQUIRED | REDIRECTED_AUTHENTICATION_MODE_REQUIRED |
@@ -1130,9 +1131,8 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 7)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 7))
 	{
-		WLog_ERR(TAG, "RDP_NEG_RSP short data %" PRIuz, Stream_GetRemainingLength(s));
 		nego_set_state(nego, NEGO_STATE_FAIL);
 		return FALSE;
 	}
@@ -1168,11 +1168,9 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 	WINPR_ASSERT(s);
 
 	WLog_DBG(TAG, "RDP_NEG_FAILURE");
-	if (Stream_GetRemainingLength(s) < 7)
-	{
-		WLog_ERR(TAG, "RDP_NEG_FAILURE short data %" PRIuz, Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 7))
 		return FALSE;
-	}
+
 	Stream_Read_UINT8(s, flags);
 	if (flags != 0)
 	{

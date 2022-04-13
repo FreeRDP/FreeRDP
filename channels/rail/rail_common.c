@@ -96,7 +96,7 @@ UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
 	if (!s || !orderType || !orderLength)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, *orderType);   /* orderType (2 bytes) */
@@ -129,7 +129,7 @@ wStream* rail_pdu_init(size_t length)
  */
 UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 {
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
@@ -148,7 +148,7 @@ void rail_write_handshake_order(wStream* s, const RAIL_HANDSHAKE_ORDER* handshak
  */
 UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, handshakeEx->buildNumber);        /* buildNumber (4 bytes) */
@@ -221,7 +221,7 @@ static UINT rail_read_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast
 	if (!s || !highContrast)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, highContrast->flags);             /* flags (4 bytes) */
@@ -263,7 +263,7 @@ static UINT rail_read_filterkeys(wStream* s, TS_FILTERKEYS* filterKeys)
 	if (!s || !filterKeys)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 20)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, filterKeys->Flags);
@@ -308,11 +308,8 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 	if (!s || !sysparam)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 5)
-	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
 
@@ -348,11 +345,8 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 		case SPI_SET_WORK_AREA:
 			sysparam->params |= SPI_MASK_SET_WORK_AREA;
 
-			if (Stream_GetRemainingLength(s) < 8)
-			{
-				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 				return ERROR_INVALID_DATA;
-			}
 
 			Stream_Read_UINT16(s, sysparam->workArea.left);   /* left (2 bytes) */
 			Stream_Read_UINT16(s, sysparam->workArea.top);    /* top (2 bytes) */
@@ -363,11 +357,8 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 		case SPI_DISPLAY_CHANGE:
 			sysparam->params |= SPI_MASK_DISPLAY_CHANGE;
 
-			if (Stream_GetRemainingLength(s) < 8)
-			{
-				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 				return ERROR_INVALID_DATA;
-			}
 
 			Stream_Read_UINT16(s, sysparam->displayChange.left);   /* left (2 bytes) */
 			Stream_Read_UINT16(s, sysparam->displayChange.top);    /* top (2 bytes) */
@@ -378,11 +369,8 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 		case SPI_TASKBAR_POS:
 			sysparam->params |= SPI_MASK_TASKBAR_POS;
 
-			if (Stream_GetRemainingLength(s) < 8)
-			{
-				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 				return ERROR_INVALID_DATA;
-			}
 
 			Stream_Read_UINT16(s, sysparam->taskbarPos.left);   /* left (2 bytes) */
 			Stream_Read_UINT16(s, sysparam->taskbarPos.top);    /* top (2 bytes) */
@@ -392,11 +380,8 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 
 		case SPI_SET_HIGH_CONTRAST:
 			sysparam->params |= SPI_MASK_SET_HIGH_CONTRAST;
-			if (Stream_GetRemainingLength(s) < 8)
-			{
-				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 				return ERROR_INVALID_DATA;
-			}
 
 			error = rail_read_high_contrast(s, &sysparam->highContrast);
 			break;
@@ -407,11 +392,8 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			if (!extendedSpiSupported)
 				return ERROR_INVALID_DATA;
 
-			if (Stream_GetRemainingLength(s) < 4)
-			{
-				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				return ERROR_INVALID_DATA;
-			}
 
 			Stream_Read_UINT32(s, sysparam->caretWidth);
 
@@ -426,11 +408,8 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			if (!extendedSpiSupported)
 				return ERROR_INVALID_DATA;
 
-			if (Stream_GetRemainingLength(s) < 4)
-			{
-				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				return ERROR_INVALID_DATA;
-			}
 
 			Stream_Read_UINT32(s, sysparam->stickyKeys);
 			break;
@@ -441,11 +420,8 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			if (!extendedSpiSupported)
 				return ERROR_INVALID_DATA;
 
-			if (Stream_GetRemainingLength(s) < 4)
-			{
-				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				return ERROR_INVALID_DATA;
-			}
 
 			Stream_Read_UINT32(s, sysparam->toggleKeys);
 			break;
@@ -456,11 +432,8 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			if (!extendedSpiSupported)
 				return ERROR_INVALID_DATA;
 
-			if (Stream_GetRemainingLength(s) < 20)
-			{
-				WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 				return ERROR_INVALID_DATA;
-			}
 
 			error = rail_read_filterkeys(s, &sysparam->filterKeys);
 			break;

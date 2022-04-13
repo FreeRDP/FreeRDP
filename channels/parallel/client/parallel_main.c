@@ -87,7 +87,7 @@ static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 		return ERROR_INVALID_DATA;
 	/* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
 	/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
-	if (Stream_GetRemainingLength(irp->input) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 4))
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, PathLength);
 	ptr = (WCHAR*)Stream_Pointer(irp->input);
@@ -153,7 +153,7 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	UINT64 Offset;
 	ssize_t status;
 	BYTE* buffer = NULL;
-	if (Stream_GetRemainingLength(irp->input) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
@@ -208,7 +208,7 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 	UINT64 Offset;
 	ssize_t status;
 	void* ptr;
-	if (Stream_GetRemainingLength(irp->input) > 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, Length);

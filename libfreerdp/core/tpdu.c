@@ -74,12 +74,8 @@ static void tpdu_write_header(wStream* s, UINT16 length, BYTE code);
 
 BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li, UINT16 tpktlength)
 {
-	if (Stream_GetRemainingLength(s) < 3)
-	{
-		WLog_WARN(TAG, "tpdu invalid data, got %" PRIuz ", require at least 3 more",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 3))
 		return FALSE;
-	}
 
 	Stream_Read_UINT8(s, *li);   /* LI */
 	Stream_Read_UINT8(s, *code); /* Code */
@@ -195,7 +191,9 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li, UINT16 tpktlength)
 	 */
 	bytes_read = (Stream_GetPosition(s) - position) - 1;
 
-	return (Stream_GetRemainingLength(s) >= (size_t)(*li - bytes_read));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(*li - bytes_read)))
+		return FALSE;
+	return TRUE;
 }
 
 /**

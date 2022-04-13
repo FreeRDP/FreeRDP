@@ -126,21 +126,21 @@ static int wts_read_variable_uint(wStream* s, int cbLen, UINT32* val)
 	switch (cbLen)
 	{
 		case 0:
-			if (Stream_GetRemainingLength(s) < 1)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 				return 0;
 
 			Stream_Read_UINT8(s, *val);
 			return 1;
 
 		case 1:
-			if (Stream_GetRemainingLength(s) < 2)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 				return 0;
 
 			Stream_Read_UINT16(s, *val);
 			return 2;
 
 		case 2:
-			if (Stream_GetRemainingLength(s) < 4)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				return 0;
 
 			Stream_Read_UINT32(s, *val);

@@ -648,13 +648,15 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 		return FALSE;
 
 	/* callingDomainSelector (OCTET_STRING) */
-	if (!ber_read_octet_string_tag(s, &length) || (Stream_GetRemainingLength(s)) < length)
+	if (!ber_read_octet_string_tag(s, &length) ||
+	    (!Stream_CheckAndLogRequiredLength(TAG, s, length)))
 		return FALSE;
 
 	Stream_Seek(s, length);
 
 	/* calledDomainSelector (OCTET_STRING) */
-	if (!ber_read_octet_string_tag(s, &length) || (Stream_GetRemainingLength(s)) < length)
+	if (!ber_read_octet_string_tag(s, &length) ||
+	    (!Stream_CheckAndLogRequiredLength(TAG, s, length)))
 		return FALSE;
 
 	Stream_Seek(s, length);
@@ -675,7 +677,8 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 	if (!mcs_read_domain_parameters(s, &mcs->maximumParameters))
 		return FALSE;
 
-	if (!ber_read_octet_string_tag(s, &length) || (Stream_GetRemainingLength(s)) < length)
+	if (!ber_read_octet_string_tag(s, &length) ||
+	    (!Stream_CheckAndLogRequiredLength(TAG, s, length)))
 		return FALSE;
 
 	if (!gcc_read_conference_create_request(s, mcs))
@@ -1306,12 +1309,8 @@ BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason
 	 * 0 - padding
 	 */
 
-	if (Stream_GetRemainingLength(s) < 1)
-	{
-		WLog_WARN(TAG, "short provider ultimatum, need 1 byte, got %" PRIuz,
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
-	}
 
 	Stream_Rewind_UINT8(s);
 	Stream_Read_UINT8(s, b1);

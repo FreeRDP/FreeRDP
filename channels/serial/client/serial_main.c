@@ -126,7 +126,7 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	DWORD CreateDisposition;
 	UINT32 PathLength;
 
-	if (Stream_GetRemainingLength(irp->input) < 32)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, DesiredAccess);     /* DesiredAccess (4 bytes) */
@@ -202,7 +202,7 @@ error_handle:
 
 static UINT serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 {
-	if (Stream_GetRemainingLength(irp->input) < 32)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(irp->input, 32); /* Padding (32 bytes) */
@@ -236,7 +236,7 @@ static UINT serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	BYTE* buffer = NULL;
 	DWORD nbRead = 0;
 
-	if (Stream_GetRemainingLength(irp->input) < 32)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
@@ -297,7 +297,7 @@ static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	void* ptr;
 	DWORD nbWritten = 0;
 
-	if (Stream_GetRemainingLength(irp->input) < 32)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
@@ -351,7 +351,7 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	BYTE* OutputBuffer = NULL;
 	DWORD BytesReturned = 0;
 
-	if (Stream_GetRemainingLength(irp->input) < 32)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, OutputBufferLength); /* OutputBufferLength (4 bytes) */
@@ -359,7 +359,7 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	Stream_Read_UINT32(irp->input, IoControlCode);      /* IoControlCode (4 bytes) */
 	Stream_Seek(irp->input, 20);                        /* Padding (20 bytes) */
 
-	if (Stream_GetRemainingLength(irp->input) < InputBufferLength)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, InputBufferLength))
 		return ERROR_INVALID_DATA;
 
 	OutputBuffer = (BYTE*)calloc(OutputBufferLength, sizeof(BYTE));

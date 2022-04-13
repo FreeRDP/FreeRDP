@@ -79,12 +79,8 @@ static BOOL rdp_read_info_null_string(UINT32 flags, wStream* s, size_t cbLen, CH
 	const BOOL unicode = flags & INFO_UNICODE;
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
 
-	if (Stream_GetRemainingLength(s) < (size_t)(cbLen))
-	{
-		WLog_ERR(TAG, "protocol error: invalid remaining length: %" PRIuz ", expected %" PRIuz,
-		         Stream_GetRemainingLength(s), cbLen);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(cbLen)))
 		return FALSE;
-	}
 
 	if (cbLen > 0)
 	{
@@ -198,7 +194,7 @@ static BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon
 	rdpSettings* settings = rdp->settings;
 	autoReconnectCookie = settings->ServerAutoReconnectCookie;
 
-	if (Stream_GetRemainingLength(s) < 28)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 28))
 		return FALSE;
 
 	Stream_Read_UINT32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
@@ -249,7 +245,7 @@ static BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 	rdpSettings* settings = rdp->settings;
 	autoReconnectCookie = settings->ClientAutoReconnectCookie;
 
-	if (Stream_GetRemainingLength(s) < 28)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 28))
 		return FALSE;
 
 	Stream_Read_UINT32(s, autoReconnectCookie->cbLen);         /* cbLen (4 bytes) */
@@ -302,7 +298,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	UINT16 cbAutoReconnectLen;
 	rdpSettings* settings = rdp->settings;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
@@ -324,14 +320,11 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	settings->IPv6Enabled = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? TRUE : FALSE);
 
-	if (Stream_GetRemainingLength(s) < cbClientAddress)
-		return FALSE;
-
 	if (!rdp_read_info_null_string(INFO_UNICODE, s, cbClientAddress, &settings->ClientAddress,
 	                               (settings->RdpVersion < RDP_VERSION_10_0) ? 64 : 80))
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
 
 	Stream_Read_UINT16(s, cbClientDir); /* cbClientDir (2 bytes) */
@@ -362,7 +355,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	/* optional: clientSessionId (4 bytes), should be set to 0 */
 	if (Stream_GetRemainingLength(s) == 0)
 		goto end;
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, settings->ClientSessionId);
@@ -371,7 +364,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) == 0)
 		goto end;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, settings->PerformanceFlags);
@@ -381,7 +374,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) == 0)
 		goto end;
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
 
 	Stream_Read_UINT16(s, cbAutoReconnectLen);
@@ -410,7 +403,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) == 0)
 		goto end;
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
 	{
 		UINT16 cbDynamicDSTTimeZoneKeyName;
@@ -424,7 +417,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 		if (Stream_GetRemainingLength(s) == 0)
 			goto end;
 
-		if (Stream_GetRemainingLength(s) < 2)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 			return FALSE;
 		Stream_Read_UINT16(s, settings->DynamicDaylightTimeDisabled);
 		if (settings->DynamicDaylightTimeDisabled > 1)
@@ -548,7 +541,7 @@ static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, 
 	const BOOL unicode = flags & INFO_UNICODE;
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
 
-	if (Stream_GetRemainingLength(s) < (size_t)(cbLenNonNull + nullSize))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(cbLenNonNull + nullSize)))
 		return FALSE;
 
 	if (cbLenNonNull > 0)
@@ -616,7 +609,7 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	UINT32 CompressionLevel;
 	rdpSettings* settings = rdp->settings;
 
-	if (Stream_GetRemainingLength(s) < 18)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 18))
 		return FALSE;
 
 	Stream_Read_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes ) */
@@ -998,7 +991,7 @@ static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 	WINPR_UNUSED(rdp);
 	ZeroMemory(info, sizeof(*info));
 
-	if (Stream_GetRemainingLength(s) < 576)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 576))
 		return FALSE;
 
 	Stream_Read_UINT32(s, cbDomain); /* cbDomain (4 bytes) */
@@ -1085,12 +1078,8 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	WINPR_UNUSED(rdp);
 	ZeroMemory(info, sizeof(*info));
 
-	if (Stream_GetRemainingLength(s) < logonInfoV2TotalSize)
-	{
-		WLog_WARN(TAG, "short LogonInfoV2, expected %" PRIuz " bytes, got %" PRIuz,
-		          logonInfoV2TotalSize, Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, logonInfoV2TotalSize))
 		return FALSE;
-	}
 
 	Stream_Read_UINT16(s, Version);         /* Version (2 bytes) */
 	if (Version != SAVE_SESSION_PDU_VERSION_ONE)
@@ -1143,11 +1132,8 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 			goto fail;
 		}
 
-		if (Stream_GetRemainingLength(s) < (size_t)cbDomain)
-		{
-			WLog_ERR(TAG, "insufficient remaining stream length");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)cbDomain))
 			goto fail;
-		}
 
 		memcpy(domain, Stream_Pointer(s), cbDomain);
 		Stream_Seek(s, cbDomain); /* domain */
@@ -1181,11 +1167,8 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 			goto fail;
 		}
 
-		if (Stream_GetRemainingLength(s) < (size_t)cbUserName)
-		{
-			WLog_ERR(TAG, "insufficient remaining stream length");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)cbUserName))
 			goto fail;
-		}
 
 		memcpy(user, Stream_Pointer(s), cbUserName);
 		Stream_Seek(s, cbUserName); /* userName */
@@ -1217,7 +1200,7 @@ fail:
 static BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, wStream* s)
 {
 	WINPR_UNUSED(rdp);
-	if (Stream_GetRemainingLength(s) < 576)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 576))
 		return FALSE;
 
 	Stream_Seek(s, 576); /* pad (576 bytes) */
@@ -1239,12 +1222,8 @@ static BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s, logon_info_ex* in
 	instance = rdp->context->instance;
 	WINPR_ASSERT(instance);
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_WARN(TAG, "received short logon error info, need 8 bytes, got %" PRIuz,
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, errorNotificationType); /* errorNotificationType (4 bytes) */
 	Stream_Read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
@@ -1266,7 +1245,7 @@ static BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex*
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(info);
 
-	if (Stream_GetRemainingLength(s) < 6)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 	{
 		WLog_WARN(TAG, "received short logon info extended, need 6 bytes, got %" PRIuz,
 		          Stream_GetRemainingLength(s));
@@ -1276,7 +1255,7 @@ static BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex*
 	Stream_Read_UINT16(s, Length);        /* Length (2 bytes) */
 	Stream_Read_UINT32(s, fieldsPresent); /* fieldsPresent (4 bytes) */
 
-	if ((Length < 6) || (Stream_GetRemainingLength(s) < (Length - 6U)))
+	if ((Length < 6) || (!Stream_CheckAndLogRequiredLength(TAG, s, (Length - 6U))))
 	{
 		WLog_WARN(TAG,
 		          "received short logon info extended, need %" PRIu16 " - 6 bytes, got %" PRIuz,
@@ -1290,13 +1269,13 @@ static BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex*
 
 	if (fieldsPresent & LOGON_EX_AUTORECONNECTCOOKIE)
 	{
-		if (Stream_GetRemainingLength(s) < 4)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return FALSE;
 
 		info->haveCookie = TRUE;
 		Stream_Read_UINT32(s, cbFieldData); /* cbFieldData (4 bytes) */
 
-		if (Stream_GetRemainingLength(s) < cbFieldData)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, cbFieldData))
 			return FALSE;
 
 		if (!rdp_read_server_auto_reconnect_cookie(rdp, s, info))
@@ -1307,19 +1286,19 @@ static BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex*
 	{
 		info->haveErrorInfo = TRUE;
 
-		if (Stream_GetRemainingLength(s) < 4)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return FALSE;
 
 		Stream_Read_UINT32(s, cbFieldData); /* cbFieldData (4 bytes) */
 
-		if (Stream_GetRemainingLength(s) < cbFieldData)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, cbFieldData))
 			return FALSE;
 
 		if (!rdp_recv_logon_error_info(rdp, s, info))
 			return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 570)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 570))
 		return FALSE;
 
 	Stream_Seek(s, 570); /* pad (570 bytes) */
@@ -1335,7 +1314,7 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 	rdpContext* context = rdp->context;
 	rdpUpdate* update = rdp->context->update;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, infoType); /* infoType (4 bytes) */
