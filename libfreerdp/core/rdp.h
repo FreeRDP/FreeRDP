@@ -179,6 +179,7 @@ struct rdp_rdp
 	CRITICAL_SECTION critical;
 	rdpTransportIo* io;
 	void* ioContext;
+	HANDLE abortEvent;
 };
 
 FREERDP_LOCAL BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length);

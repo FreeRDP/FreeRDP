@@ -29,6 +29,8 @@
 
 #include "utils.h"
 
+#include "../core/rdp.h"
+
 BOOL utils_str_copy(const char* value, char** dst)
 {
 	WINPR_ASSERT(dst);
@@ -54,7 +56,7 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 
 	settings = instance->context->settings;
 
-	if (freerdp_shall_disconnect(instance))
+	if (freerdp_shall_disconnect_context(instance->context))
 		return AUTH_FAILED;
 
 	if (!settings->GatewayPassword || !settings->GatewayUsername ||
@@ -96,7 +98,7 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 
 	settings = instance->context->settings;
 
-	if (freerdp_shall_disconnect(instance))
+	if (freerdp_shall_disconnect_context(instance->context))
 		return AUTH_FAILED;
 
 	/* Ask for auth data if no or an empty username was specified or no password was given */
@@ -184,15 +186,31 @@ BOOL utils_str_is_empty(const char* str)
 	return FALSE;
 }
 
-BOOL utils_abort_connect(rdpContext* context)
+BOOL utils_abort_connect(rdpRdp* rdp)
 {
-	WINPR_ASSERT(context);
+	WINPR_ASSERT(rdp);
 
-	return SetEvent(context->abortEvent);
+	return SetEvent(rdp->abortEvent);
 }
 
-BOOL utils_reset_abort(rdpContext* context)
+BOOL utils_reset_abort(rdpRdp* rdp)
 {
-	WINPR_ASSERT(context);
-	return ResetEvent(context->abortEvent);
+	WINPR_ASSERT(rdp);
+
+	return ResetEvent(rdp->abortEvent);
+}
+
+HANDLE utils_get_abort_event(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+	return rdp->abortEvent;
+}
+
+BOOL utils_abort_event_is_set(rdpRdp* rdp)
+{
+	DWORD status;
+	WINPR_ASSERT(rdp);
+	status = WaitForSingleObject(rdp->abortEvent, 0);
+	WINPR_ASSERT(status != WAIT_ABANDONED);
+	return status == WAIT_OBJECT_0;
 }

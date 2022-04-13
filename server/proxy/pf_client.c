@@ -769,7 +769,7 @@ static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 	}
 	handles[nCount++] = Queue_Event(pc->cached_server_channel_data);
 
-	while (!freerdp_shall_disconnect(instance))
+	while (!freerdp_shall_disconnect_context(instance->context))
 	{
 		UINT32 tmp = freerdp_get_event_handles(instance->context, &handles[nCount],
 		                                       ARRAYSIZE(handles) - nCount);
@@ -793,7 +793,7 @@ static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 		if (status == WAIT_OBJECT_0)
 			break;
 
-		if (freerdp_shall_disconnect(instance))
+		if (freerdp_shall_disconnect_context(instance->context))
 			break;
 
 		if (proxy_data_shall_disconnect(pdata))
@@ -971,7 +971,7 @@ static int pf_client_client_stop(rdpContext* context)
 
 	PROXY_LOG_DBG(TAG, pc, "aborting client connection");
 	proxy_data_abort_connect(pdata);
-	freerdp_abort_connect(context->instance);
+	freerdp_abort_connect_context(context);
 
 	return 0;
 }

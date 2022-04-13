@@ -3878,7 +3878,7 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId, UIN
 	if (!rdp_read_header(rdp, s, length, pChannelId))
 		return FALSE;
 
-	if (freerdp_shall_disconnect(rdp->context->instance))
+	if (freerdp_shall_disconnect_context(rdp->context))
 		return TRUE;
 
 	if (rdp->settings->UseRdpSecurityLayer)
@@ -3926,7 +3926,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	if (!rdp_recv_get_active_header(rdp, s, &channelId, &length))
 		return FALSE;
 
-	if (freerdp_shall_disconnect(rdp->context->instance))
+	if (freerdp_shall_disconnect_context(rdp->context))
 		return TRUE;
 
 	if (!rdp_read_share_control_header(s, NULL, NULL, &pduType, &pduSource))

@@ -266,7 +266,7 @@ int ios_run_freerdp(freerdp *instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	while (!freerdp_shall_disconnect(instance))
+	while (!freerdp_shall_disconnect_context(instance->context))
 	{
 		rcount = wcount = 0;
 		pool = [[NSAutoreleasePool alloc] init];

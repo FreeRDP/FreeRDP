@@ -434,7 +434,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		return -1;
 
 	rdp->inPackets++;
-	if (freerdp_shall_disconnect(rdp->context->instance))
+	if (freerdp_shall_disconnect_context(rdp->context))
 		return 0;
 
 	if (settings->UseRdpSecurityLayer)
@@ -1075,9 +1075,6 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 	context->update = rdp->update;
 	context->settings = rdp->settings;
 	context->autodetect = rdp->autodetect;
-	context->update->context = context;
-	context->input->context = context;
-	context->autodetect->context = context;
 	update_register_server_callbacks(rdp->update);
 	autodetect_register_server_callbacks(rdp->autodetect);
 

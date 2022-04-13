@@ -155,7 +155,7 @@ DWORD WINAPI mac_client_thread(void *param)
 
 		nCountBase = nCount;
 
-		while (!freerdp_shall_disconnect(instance))
+		while (!freerdp_shall_disconnect_context(instance->context))
 		{
 			nCount = nCountBase;
 			{

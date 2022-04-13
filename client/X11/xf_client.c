@@ -1617,7 +1617,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	}
 	inputEvent = xfc->x11event;
 
-	while (!freerdp_shall_disconnect(instance))
+	while (!freerdp_shall_disconnect_context(instance->context))
 	{
 		nCount = 0;
 		handles[nCount++] = timer;
@@ -1733,7 +1733,7 @@ static void xf_TerminateEventHandler(void* context, const TerminateEventArgs* e)
 {
 	rdpContext* ctx = (rdpContext*)context;
 	WINPR_UNUSED(e);
-	freerdp_abort_connect(ctx->instance);
+	freerdp_abort_connect_context(ctx);
 }
 
 #ifdef WITH_XRENDER

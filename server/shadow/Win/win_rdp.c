@@ -217,7 +217,7 @@ static DWORD WINAPI shw_client_thread(LPVOID arg)
 			break;
 		}
 
-		if (freerdp_shall_disconnect(instance))
+		if (freerdp_shall_disconnect_context(instance->context))
 		{
 			break;
 		}

@@ -433,7 +433,7 @@ static int android_freerdp_run(freerdp* instance)
 
 	inputEvent = android_get_handle(instance);
 
-	while (!freerdp_shall_disconnect(instance))
+	while (!freerdp_shall_disconnect_context(instance->context))
 	{
 		DWORD tmp;
 		count = 0;
@@ -469,7 +469,7 @@ static int android_freerdp_run(freerdp* instance)
 			break;
 		}
 
-		if (freerdp_shall_disconnect(instance))
+		if (freerdp_shall_disconnect_context(instance->context))
 			break;
 
 			if (android_check_handle(instance) != TRUE)
@@ -774,7 +774,7 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1disconnect(JNIEnv* env
 		return JNI_FALSE;
 	}
 
-	if (!freerdp_abort_connect(inst))
+	if (!freerdp_abort_connect_context(inst->context))
 		return JNI_FALSE;
 
 	return JNI_TRUE;

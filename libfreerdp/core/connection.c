@@ -443,7 +443,7 @@ BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 
 	context->LastError = FREERDP_ERROR_SUCCESS;
 	clearChannelError(context);
-	return utils_reset_abort(context);
+	return utils_reset_abort(rdp);
 }
 
 static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
@@ -1086,8 +1086,7 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		return rc;
 	}
 
-	WINPR_ASSERT(rdp->context);
-	if (freerdp_shall_disconnect(rdp->context->instance))
+	if (freerdp_shall_disconnect_context(rdp->context))
 		return 0;
 
 	if (!rdp_send_confirm_active(rdp))

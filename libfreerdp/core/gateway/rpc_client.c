@@ -361,7 +361,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 				Stream_SetPosition(fragment, StubOffset);
 				Stream_Read_UINT32(fragment, rpc->result);
 
-				utils_abort_connect(context);
+				utils_abort_connect(context->rdp);
 				tsg_set_state(tsg, TSG_STATE_TUNNEL_CLOSE_PENDING);
 				EventArgsInit(&e, "freerdp");
 				e.code = 0;

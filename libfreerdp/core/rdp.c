@@ -362,7 +362,7 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 			WLog_ERR(TAG, "%s missing context=%p", __FUNCTION__, context);
 
 		/* Ensure the connection is terminated */
-		utils_abort_connect(context);
+		utils_abort_connect(rdp);
 	}
 	else
 	{
@@ -428,7 +428,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	{
 		if (code == X224_TPDU_DISCONNECT_REQUEST)
 		{
-			utils_abort_connect(rdp->context);
+			utils_abort_connect(rdp);
 			return TRUE;
 		}
 
@@ -495,7 +495,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 		}
 
 		WLog_DBG(TAG, "DisconnectProviderUltimatum: reason: %d", reason);
-		utils_abort_connect(context);
+		utils_abort_connect(rdp);
 		EventArgsInit(&e, "freerdp");
 		e.code = 0;
 		PubSub_OnTerminate(context->pubSub, context, &e);
@@ -1363,7 +1363,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return -1;
 
-	if (freerdp_shall_disconnect(instance))
+	if (freerdp_shall_disconnect_context(rdp->context))
 		return 0;
 
 	if (rdp->autodetect->bandwidthMeasureStarted)
@@ -1925,6 +1925,9 @@ rdpRdp* rdp_new(rdpContext* context)
 	if (!rdp->bulk)
 		goto fail;
 
+	rdp->abortEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!rdp->abortEvent)
+		goto fail;
 	return rdp;
 
 fail:
@@ -2051,6 +2054,8 @@ void rdp_free(rdpRdp* rdp)
 		multitransport_free(rdp->multitransport);
 		bulk_free(rdp->bulk);
 		free(rdp->io);
+		if (rdp->abortEvent)
+			CloseHandle(rdp->abortEvent);
 		free(rdp);
 	}
 }

@@ -811,7 +811,7 @@ static UINT xf_rail_server_execute_result(RailClientContext* context,
 	{
 		WLog_ERR(TAG, "RAIL exec error: execResult=%s NtError=0x%X\n",
 		         error_code_names[execResult->execResult], execResult->rawResult);
-		freerdp_abort_connect(xfc->common.context.instance);
+		freerdp_abort_connect_context(&xfc->common.context);
 	}
 	else
 	{

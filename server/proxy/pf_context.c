@@ -355,7 +355,7 @@ void proxy_data_abort_connect(proxyData* pdata)
 	WINPR_ASSERT(pdata->abort_event);
 	SetEvent(pdata->abort_event);
 	if (pdata->pc)
-		freerdp_abort_connect(pdata->pc->context.instance);
+		freerdp_abort_connect_context(&pdata->pc->context);
 }
 
 BOOL proxy_data_shall_disconnect(proxyData* pdata)
