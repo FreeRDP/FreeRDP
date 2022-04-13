@@ -65,7 +65,7 @@ typedef struct rdp_input_proxy rdpInputProxy;
 /* Input Interface */
 
 typedef BOOL (*pSynchronizeEvent)(rdpInput* input, UINT32 flags);
-typedef BOOL (*pKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
+typedef BOOL (*pKeyboardEvent)(rdpInput* input, UINT16 flags, UINT8 code);
 typedef BOOL (*pUnicodeKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
 typedef BOOL (*pMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 typedef BOOL (*pExtendedMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
@@ -95,7 +95,7 @@ extern "C"
 #endif
 
 	FREERDP_API BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags);
-	FREERDP_API BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
+	FREERDP_API BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code);
 	FREERDP_API BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down,
 	                                                      UINT32 rdp_scancode);
 	FREERDP_API BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input);

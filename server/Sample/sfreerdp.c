@@ -761,7 +761,7 @@ static BOOL tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 	return TRUE;
 }
 
-static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	freerdp_peer* client;
 	rdpUpdate* update;
@@ -786,10 +786,10 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	tcontext = (testPeerContext*)context;
 	WINPR_ASSERT(tcontext);
 
-	WLog_DBG(TAG, "Client sent a keyboard event (flags:0x%04" PRIX16 " code:0x%04" PRIX16 ")",
-	         flags, code);
+	WLog_DBG(TAG, "Client sent a keyboard event (flags:0x%04" PRIX16 " code:0x%04" PRIX8 ")", flags,
+	         code);
 
-	if ((flags & 0x4000) && code == 0x22) /* 'g' key */
+	if ((flags & KBD_FLAGS_DOWN) && (code == RDP_SCANCODE_KEY_G)) /* 'g' key */
 	{
 		if (settings->DesktopWidth != 800)
 		{
@@ -810,7 +810,7 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 		update->DesktopResize(update->context);
 		tcontext->activated = FALSE;
 	}
-	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_C) /* 'c' key */
+	else if ((flags & KBD_FLAGS_DOWN) && code == RDP_SCANCODE_KEY_C) /* 'c' key */
 	{
 		if (tcontext->debug_channel)
 		{
@@ -818,22 +818,22 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 			WTSVirtualChannelWrite(tcontext->debug_channel, (PCHAR) "test2", 5, &written);
 		}
 	}
-	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_X) /* 'x' key */
+	else if ((flags & KBD_FLAGS_DOWN) && code == RDP_SCANCODE_KEY_X) /* 'x' key */
 	{
 		WINPR_ASSERT(client->Close);
 		client->Close(client);
 	}
-	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_R) /* 'r' key */
+	else if ((flags & KBD_FLAGS_DOWN) && code == RDP_SCANCODE_KEY_R) /* 'r' key */
 	{
 		tcontext->audin_open = !tcontext->audin_open;
 	}
 #if defined(CHANNEL_AINPUT_SERVER)
-	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_I) /* 'i' key */
+	else if ((flags & KBD_FLAGS_DOWN) && code == RDP_SCANCODE_KEY_I) /* 'i' key */
 	{
 		tcontext->ainput_open = !tcontext->ainput_open;
 	}
 #endif
-	else if ((flags & 0x4000) && code == RDP_SCANCODE_KEY_S) /* 's' key */
+	else if ((flags & KBD_FLAGS_DOWN) && code == RDP_SCANCODE_KEY_S) /* 's' key */
 	{
 	}
 
