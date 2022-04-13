@@ -1358,10 +1358,6 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 
 	Stream_Read(s, settings->ServerCertificate, settings->ServerCertificateLength);
 
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, certificate_new(),
-	                                      sizeof(rdpCertificate)))
-		goto fail;
-
 	data = settings->ServerCertificate;
 	length = settings->ServerCertificateLength;
 
