@@ -80,7 +80,11 @@ static BOOL rdp_read_info_null_string(UINT32 flags, wStream* s, size_t cbLen, CH
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
 
 	if (Stream_GetRemainingLength(s) < (size_t)(cbLen))
+	{
+		WLog_ERR(TAG, "protocol error: invalid remaining length: %" PRIuz ", expected %" PRIuz,
+		         Stream_GetRemainingLength(s), cbLen);
 		return FALSE;
+	}
 
 	if (cbLen > 0)
 	{
@@ -350,23 +354,22 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	/* optional: clientTimeZone (172 bytes) */
 	if (Stream_GetRemainingLength(s) == 0)
-		return TRUE;
+		goto end;
 
 	if (!rdp_read_client_time_zone(s, settings))
 		return FALSE;
 
 	/* optional: clientSessionId (4 bytes), should be set to 0 */
 	if (Stream_GetRemainingLength(s) == 0)
-		return TRUE;
-
+		goto end;
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	Stream_Seek_UINT32(s);
+	Stream_Read_UINT32(s, settings->ClientSessionId);
 
 	/* optional: performanceFlags (4 bytes) */
 	if (Stream_GetRemainingLength(s) == 0)
-		return TRUE;
+		goto end;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -376,7 +379,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	/* optional: cbAutoReconnectLen (2 bytes) */
 	if (Stream_GetRemainingLength(s) == 0)
-		return TRUE;
+		goto end;
 
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
@@ -386,14 +389,56 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	/* optional: autoReconnectCookie (28 bytes) */
 	/* must be present if cbAutoReconnectLen is > 0 */
 	if (cbAutoReconnectLen > 0)
-		return rdp_read_client_auto_reconnect_cookie(rdp, s);
+	{
+		if (!rdp_read_client_auto_reconnect_cookie(rdp, s))
+			return FALSE;
+	}
 
-	/* TODO */
-	/* reserved1 (2 bytes) */
-	/* reserved2 (2 bytes) */
-	/* cbDynamicDSTTimeZoneKeyName (2 bytes) */
-	/* dynamicDSTTimeZoneKeyName (variable) */
-	/* dynamicDaylightTimeDisabled (2 bytes) */
+	/* skip reserved1 and reserved2 fields */
+	if (Stream_GetRemainingLength(s) == 0)
+		goto end;
+
+	if (!Stream_SafeSeek(s, 2))
+		return FALSE;
+
+	if (Stream_GetRemainingLength(s) == 0)
+		goto end;
+
+	if (!Stream_SafeSeek(s, 2))
+		return FALSE;
+
+	if (Stream_GetRemainingLength(s) == 0)
+		goto end;
+
+	if (Stream_GetRemainingLength(s) < 2)
+		return FALSE;
+	{
+		UINT16 cbDynamicDSTTimeZoneKeyName;
+
+		Stream_Read_UINT16(s, cbDynamicDSTTimeZoneKeyName);
+
+		if (!rdp_read_info_null_string(INFO_UNICODE, s, cbDynamicDSTTimeZoneKeyName,
+		                               &settings->DynamicDSTTimeZoneKeyName, 254))
+			return FALSE;
+
+		if (Stream_GetRemainingLength(s) == 0)
+			goto end;
+
+		if (Stream_GetRemainingLength(s) < 2)
+			return FALSE;
+		Stream_Read_UINT16(s, settings->DynamicDaylightTimeDisabled);
+		if (settings->DynamicDaylightTimeDisabled > 1)
+		{
+			WLog_WARN(TAG,
+			          "[MS-RDPBCGR] 2.2.1.11.1.1.1 Extended Info Packet "
+			          "(TS_EXTENDED_INFO_PACKET)::dynamicDaylightTimeDisabled value %" PRIu16
+			          " not allowed in [0,1]",
+			          settings->DynamicDaylightTimeDisabled);
+			return FALSE;
+		}
+	}
+
+end:
 	return TRUE;
 }
 
@@ -447,7 +492,8 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (!rdp_write_client_time_zone(s, settings)) /* clientTimeZone (172 bytes) */
 		goto fail;
 
-	Stream_Write_UINT32(s, 0); /* clientSessionId (4 bytes), should be set to 0 */
+	Stream_Write_UINT32(
+	    s, settings->ClientSessionId); /* clientSessionId (4 bytes), should be set to 0 */
 	freerdp_performance_flags_make(settings);
 	Stream_Write_UINT32(s, settings->PerformanceFlags); /* performanceFlags (4 bytes) */
 	Stream_Write_UINT16(s, cbAutoReconnectCookie);      /* cbAutoReconnectCookie (2 bytes) */
@@ -460,6 +506,28 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 		Stream_Write_UINT16(s, 0);                      /* reserved1 (2 bytes) */
 		Stream_Write_UINT16(s, 0);                      /* reserved2 (2 bytes) */
 	}
+
+	if (settings->EarlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE)
+	{
+		int rc;
+		WCHAR DynamicDSTTimeZoneKeyName[254] = { 0 };
+		LPWSTR ptr = DynamicDSTTimeZoneKeyName;
+
+		if (!Stream_EnsureRemainingCapacity(s, 10 + sizeof(DynamicDSTTimeZoneKeyName)))
+			goto fail;
+
+		/* skip reserved1 and reserved2 fields */
+		Stream_Seek(s, 4);
+
+		rc = ConvertToUnicode(CP_UTF8, 0, settings->DynamicDSTTimeZoneKeyName, -1, &ptr,
+		                      ARRAYSIZE(DynamicDSTTimeZoneKeyName));
+		if (rc < 0)
+			goto fail;
+		Stream_Write_UINT16(s, (UINT16)rc);
+		Stream_Write_UTF16_String(s, ptr, (size_t)rc);
+		Stream_Write_UINT16(s, settings->DynamicDaylightTimeDisabled ? 0x01 : 0x00);
+	}
+
 	ret = TRUE;
 fail:
 	free(clientAddress);
