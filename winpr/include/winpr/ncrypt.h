@@ -198,7 +198,7 @@ extern "C"
 	 * @param modulePaths [in] an array of library path to try to load ended with a NULL string
 	 * @return ERROR_SUCCESS or an NTE error code something failed
 	 */
-	SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
+	WINPR_API SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 	                                                  LPCWSTR pszProviderName, DWORD dwFlags,
 	                                                  LPCSTR* modulePaths);
 
