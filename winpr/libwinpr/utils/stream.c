@@ -315,8 +315,8 @@ BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t length)
 	return TRUE;
 }
 
-BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, wStream* s, UINT64 len, const char* fmt,
-                                        ...)
+BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, DWORD level, wStream* s, UINT64 len,
+                                        const char* fmt, ...)
 {
 	const size_t actual = Stream_GetRemainingLength(s);
 
@@ -325,7 +325,7 @@ BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, wStream* s, UINT64 len,
 		va_list args;
 
 		va_start(args, fmt);
-		Stream_CheckAndLogRequiredLengthExVa(tag, s, len, fmt, args);
+		Stream_CheckAndLogRequiredLengthExVa(tag, level, s, len, fmt, args);
 		va_end(args);
 
 		return FALSE;
@@ -333,8 +333,36 @@ BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, wStream* s, UINT64 len,
 	return TRUE;
 }
 
-BOOL Stream_CheckAndLogRequiredLengthExVa(const char* tag, wStream* s, UINT64 len, const char* fmt,
-                                          va_list args)
+BOOL Stream_CheckAndLogRequiredLengthExVa(const char* tag, DWORD level, wStream* s, UINT64 len,
+                                          const char* fmt, va_list args)
+{
+	const size_t actual = Stream_GetRemainingLength(s);
+
+	if (actual < len)
+		return Stream_CheckAndLogRequiredLengthWLogExVa(WLog_Get(tag), level, s, len, fmt, args);
+	return TRUE;
+}
+
+BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s, UINT64 len,
+                                            const char* fmt, ...)
+{
+	const size_t actual = Stream_GetRemainingLength(s);
+
+	if (actual < len)
+	{
+		va_list args;
+
+		va_start(args, fmt);
+		Stream_CheckAndLogRequiredLengthWLogExVa(log, level, s, len, fmt, args);
+		va_end(args);
+
+		return FALSE;
+	}
+	return TRUE;
+}
+
+BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s, UINT64 len,
+                                              const char* fmt, va_list args)
 {
 	const size_t actual = Stream_GetRemainingLength(s);
 
@@ -344,9 +372,9 @@ BOOL Stream_CheckAndLogRequiredLengthExVa(const char* tag, wStream* s, UINT64 le
 
 		vsnprintf(prefix, sizeof(prefix), fmt, args);
 
-		WLog_WARN(tag, "[%s] invalid length, got %" PRIuz ", require at least %" PRIu64, prefix,
-		          actual, len);
-
+		WLog_Print(log, level, "[%s] invalid length, got %" PRIuz ", require at least %" PRIu64,
+		           prefix, actual, len);
+		winpr_log_backtrace_ex(log, level, 20);
 		return FALSE;
 	}
 	return TRUE;

@@ -479,8 +479,8 @@ static UINT rdpdr_ignore_capset_(wStream* s, size_t capabilityLength, const char
 		return ERROR_INVALID_DATA;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthEx(TAG, s, capabilityLength - 4U, "%s::capabilityLength",
-	                                        fkt))
+	if (!Stream_CheckAndLogRequiredLengthEx(TAG, WLOG_ERROR, s, capabilityLength - 4U,
+	                                        "%s::capabilityLength", fkt))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4U);
