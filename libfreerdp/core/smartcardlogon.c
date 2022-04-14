@@ -268,7 +268,18 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 			goto out;
 	}
 
-	status = NCryptOpenStorageProvider(&provider, csp, 0);
+	if (settings->Pkcs11Module)
+	{
+		LPCSTR paths[] = {
+			settings->Pkcs11Module,
+			NULL
+		};
+
+		status = winpr_NCryptOpenStorageProviderEx(&provider, csp, 0, paths);
+	}
+	else
+		status = NCryptOpenStorageProvider(&provider, csp, 0);
+
 	if (status != ERROR_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to open provider");
