@@ -15,6 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <winpr/assert.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/server/proxy/proxy_log.h>
 
@@ -25,9 +27,11 @@
 
 ChannelStateTracker* channelTracker_new(pServerChannelContext* channel, ChannelTrackerPeekFn fn, void* data)
 {
-	ChannelStateTracker* ret = calloc(1, sizeof(*ret));
+	ChannelStateTracker* ret = calloc(1, sizeof(ChannelStateTracker));
 	if (!ret)
 		return ret;
+
+	WINPR_ASSERT(fn);
 
 	ret->channel = channel;
 	ret->peekFn = fn;
@@ -35,7 +39,7 @@ ChannelStateTracker* channelTracker_new(pServerChannelContext* channel, ChannelT
 	ret->currentPacket = Stream_New(NULL, 10 * 1024);
 	if (!ret->currentPacket)
 	{
-		free(ret);
+		channelTracker_free(ret);
 		return NULL;
 	}
 	return ret;
@@ -45,9 +49,10 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
         size_t totalSize)
 {
 	PfChannelResult result;
-	BOOL firstPacket = !!(flags & CHANNEL_FLAG_FIRST);
-	BOOL lastPacket = !!(flags & CHANNEL_FLAG_LAST);
+	BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST);
+	BOOL lastPacket = (flags & CHANNEL_FLAG_LAST);
 
+	WINPR_ASSERT(tracker);
 
 	WLog_VRB(TAG, "channelTracker_update(%s): sz=%d first=%d last=%d", tracker->channel->channel_name, xsize, firstPacket, lastPacket);
 	if (flags & CHANNEL_FLAG_FIRST)
@@ -88,6 +93,8 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 			return PF_CHANNEL_RESULT_ERROR;
 
 		Stream_Write(tracker->currentPacket, xdata, xsize);
+
+		WINPR_ASSERT(tracker->peekFn);
 		result = tracker->peekFn(tracker, firstPacket, lastPacket);
 		break;
 	case CHANNEL_TRACKER_PASS:
@@ -132,6 +139,8 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 	BOOL r;
 	const char* direction = toBack ? "F->B" : "B->F";
 
+	WINPR_ASSERT(t);
+
 	WLog_VRB(TAG, "channelTracker_flushCurrent(%s): %s sz=%d first=%d last=%d", t->channel->channel_name,
 			direction, Stream_GetPosition(t->currentPacket), first, last);
 
@@ -173,7 +182,10 @@ static PfChannelResult pf_channel_generic_back_data(proxyData* pdata, const pSer
             const BYTE* xdata, size_t xsize, UINT32 flags,
             size_t totalSize)
 {
-	proxyChannelDataEventInfo ev;
+	proxyChannelDataEventInfo ev = { 0 };
+
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
 
 	switch(channel->channelMode) {
 	case PF_UTILS_CHANNEL_PASSTHROUGH:
@@ -201,7 +213,10 @@ static PfChannelResult pf_channel_generic_front_data(proxyData* pdata, const pSe
             const BYTE* xdata, size_t xsize, UINT32 flags,
             size_t totalSize)
 {
-	proxyChannelDataEventInfo ev;
+	proxyChannelDataEventInfo ev = { 0 };
+
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
 
 	switch(channel->channelMode) {
 	case PF_UTILS_CHANNEL_PASSTHROUGH:

@@ -1720,6 +1720,9 @@ static PfChannelResult pf_rdpdr_back_data(proxyData* pdata, const pServerChannel
             const BYTE* xdata, size_t xsize, UINT32 flags,
             size_t totalSize)
 {
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
+
 	if (!pf_channel_rdpdr_client_handle(pdata->pc, channel->channel_id, channel->channel_name, xdata, xsize, flags, totalSize))
 	{
 		WLog_ERR(TAG, "error treating client back data");
@@ -1732,6 +1735,9 @@ static PfChannelResult pf_rdpdr_front_data(proxyData* pdata, const pServerChanne
             const BYTE* xdata, size_t xsize, UINT32 flags,
             size_t totalSize)
 {
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
+
 	if (!pf_channel_rdpdr_server_handle(pdata->ps, channel->channel_id, channel->channel_name, xdata, xsize, flags, totalSize))
 	{
 		WLog_ERR(TAG, "error treating front data");
