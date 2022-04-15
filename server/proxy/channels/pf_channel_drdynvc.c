@@ -54,6 +54,7 @@ typedef enum {
 
 static DynvcReadResult dynvc_read_varInt(wStream* s, size_t len, UINT64* varInt, BOOL last)
 {
+	WINPR_ASSERT(varInt);
 	switch (len)
 	{
 		case 0x00:
@@ -89,11 +90,20 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 	UINT64 dynChannelId = 0;
 	UINT64 Length = 0;
 	pServerChannelContext* dynChannel = NULL;
+
+	WINPR_ASSERT(tracker);
+
 	DynChannelContext* dynChannelContext = (DynChannelContext*)tracker->trackerData;
+	WINPR_ASSERT(dynChannelContext);
+
 	BOOL isBackData = (tracker == dynChannelContext->backTracker.tracker);
 	DynChannelTrackerState* trackerState = isBackData ? &dynChannelContext->backTracker : &dynChannelContext->frontTracker;
+	WINPR_ASSERT(trackerState);
+
 	UINT32 flags = lastPacket ? CHANNEL_FLAG_LAST : 0;
 	proxyData* pdata = tracker->pdata;
+	WINPR_ASSERT(pdata);
+
 	const char* direction = isBackData ? "B->F" : "F->B";
 
 	s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(tracker->currentPacket), Stream_GetPosition(tracker->currentPacket));
@@ -393,6 +403,7 @@ static PfChannelResult pf_dynvc_back_data(proxyData* pdata, const pServerChannel
             const BYTE* xdata, size_t xsize, UINT32 flags,
             size_t totalSize)
 {
+	WINPR_ASSERT(channel);
 	DynChannelContext* dyn = (DynChannelContext*)channel->context;
 	WINPR_UNUSED(pdata);
 	WINPR_ASSERT(dyn);
@@ -403,6 +414,7 @@ static PfChannelResult pf_dynvc_front_data(proxyData* pdata, const pServerChanne
             const BYTE* xdata, size_t xsize, UINT32 flags,
             size_t totalSize)
 {
+	WINPR_ASSERT(channel);
 	DynChannelContext* dyn = (DynChannelContext*)channel->context;
 	WINPR_UNUSED(pdata);
 	WINPR_ASSERT(dyn);

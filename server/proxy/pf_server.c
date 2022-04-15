@@ -405,10 +405,11 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 		return TRUE;
 	}
 
+	WINPR_ASSERT(channel->onFrontData);
 	switch (channel->onFrontData(pdata, channel, data, size, flags, totalSize))
 	{
 	case PF_CHANNEL_RESULT_PASS: {
-		proxyChannelDataEventInfo ev;
+		proxyChannelDataEventInfo ev = { 0 };
 
 		ev.channel_id = channelId;
 		ev.channel_name = channel->channel_name;

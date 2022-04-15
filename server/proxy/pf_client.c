@@ -402,6 +402,7 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	if (!channel)
 		return TRUE;
 
+	WINPR_ASSERT(channel->onBackData);
 	switch (channel->onBackData(pdata, channel, xdata, xsize, flags, totalSize))
 	{
 	case PF_CHANNEL_RESULT_PASS:
