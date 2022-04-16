@@ -45,6 +45,7 @@
 // Implement loadView to create a view hierarchy programmatically, without using a nib.
 - (void)loadView
 {
+#if !(TARGET_OS_MACCATALYST)
 	webView = [[[UIWebView alloc] initWithFrame:CGRectZero] autorelease];
 	[webView
 	    setAutoresizingMask:(UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight)];
@@ -52,6 +53,7 @@
 	[webView setDelegate:self];
 	[webView setDataDetectorTypes:UIDataDetectorTypeNone];
 	[self setView:webView];
+#endif
 }
 
 // Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
@@ -67,6 +69,7 @@
 	                  encoding:NSUTF8StringEncoding
 	                     error:nil] autorelease];
 
+#if !(TARGET_OS_MACCATALYST)
 	[webView
 	    loadHTMLString:[NSString stringWithFormat:htmlString, TSXAppFullVersion(),
 	                                              [[UIDevice currentDevice] systemName],
@@ -74,6 +77,7 @@
 	                                              [[UIDevice currentDevice] model]]
 	           baseURL:[NSURL fileURLWithPath:[[[NSBundle mainBundle] bundlePath]
 	                                              stringByAppendingPathComponent:@"about_page"]]];
+#endif
 }
 
 // Override to allow orientations other than the default portrait orientation.
@@ -82,6 +86,7 @@
 	return YES;
 }
 
+#if !(TARGET_OS_MACCATALYST)
 #pragma mark -
 #pragma mark UIWebView callbacks
 - (BOOL)webView:(UIWebView *)webView
@@ -116,5 +121,6 @@
 	}
 	return YES;
 }
+#endif
 
 @end

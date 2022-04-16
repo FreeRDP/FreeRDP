@@ -10,8 +10,14 @@
 
 #import <UIKit/UIKit.h>
 
+#if TARGET_OS_MACCATALYST
+@interface HelpController : UIViewController
+{
+}
+#else
 @interface HelpController : UIViewController <UIWebViewDelegate>
 {
 	UIWebView *webView;
 }
+#endif
 @end

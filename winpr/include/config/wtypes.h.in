@@ -303,7 +303,9 @@ typedef struct s_LUID
 } LUID, *PLUID;
 
 typedef GUID IID;
+#if !(TARGET_OS_MACCATALYST)
 typedef IID* REFIID;
+#endif
 
 #ifdef UNICODE
 #define _T(x)	L ## x
