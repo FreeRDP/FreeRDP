@@ -7,6 +7,7 @@ Noteworthy changes:
 Fixed issues:
 * Backported #6786: Use /network:auto by default
 * Backported #7714: Workaround for broken surface frame marker
+* Backported #7733: Support 10bit X11 color (BGRX32 only)
 * Backported #7745: GFX progressive double free
 
 Important notes:
