@@ -311,7 +311,7 @@ static BOOL rdg_read_http_unicode_string(wStream* s, const WCHAR** string, UINT1
 	size_t rem = Stream_GetRemainingLength(s);
 
 	/* Read length of the string */
-	if (rem < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 	{
 		WLog_ERR(TAG, "[%s]: Could not read stream length, only have % " PRIuz " bytes", rem);
 		return FALSE;
@@ -1262,12 +1262,8 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 10)
-	{
-		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 10", __FUNCTION__,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 10))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, errorCode);
 	Stream_Read_UINT8(s, verMajor);
@@ -1306,12 +1302,8 @@ static BOOL rdg_process_tunnel_response_optional(rdpRdg* rdg, wStream* s, UINT16
 	if (fieldsPresent & HTTP_TUNNEL_RESPONSE_FIELD_CAPS)
 	{
 		UINT32 caps;
-		if (Stream_GetRemainingLength(s) < 4)
-		{
-			WLog_ERR(TAG, "[%s] Short capsFlags, got %" PRIuz ", expected 4", __FUNCTION__,
-			         Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return FALSE;
-		}
 
 		Stream_Read_UINT32(s, caps);
 		WLog_DBG(TAG, "capabilities=%s", capabilities_enum_to_string(caps));
@@ -1370,12 +1362,8 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 10)
-	{
-		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 10", __FUNCTION__,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 10))
 		return FALSE;
-	}
 
 	Stream_Read_UINT16(s, serverVersion);
 	Stream_Read_UINT32(s, errorCode);
@@ -1410,12 +1398,8 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 8", __FUNCTION__,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, errorCode);
 	Stream_Read_UINT16(s, fieldsPresent);
@@ -1446,12 +1430,8 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 8", __FUNCTION__,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, errorCode);
 	Stream_Read_UINT16(s, fieldsPresent);
@@ -1479,12 +1459,8 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 	UINT32 packetLength;
 	Stream_SetPosition(s, 0);
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 8", __FUNCTION__,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
-	}
 
 	Stream_Read_UINT16(s, type);
 	Stream_Seek_UINT16(s); /* reserved */
@@ -2059,7 +2035,7 @@ static BOOL rdg_process_close_packet(rdpRdg* rdg, wStream* s)
 	UINT32 packetSize = 12;
 
 	/* Read error code */
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 	Stream_Read_UINT32(s, errorCode);
 

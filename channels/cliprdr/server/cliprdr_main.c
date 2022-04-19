@@ -430,7 +430,7 @@ cliprdr_server_file_contents_response(CliprdrServerContext* context,
 static UINT cliprdr_server_receive_general_capability(CliprdrServerContext* context, wStream* s,
                                                       CLIPRDR_GENERAL_CAPABILITY_SET* cap_set)
 {
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, cap_set->version);      /* version (4 bytes) */
@@ -477,7 +477,7 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 	WINPR_UNUSED(header);
 
 	WLog_DBG(TAG, "CliprdrClientCapabilities");
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilities.cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
@@ -486,7 +486,7 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 	for (index = 0; index < capabilities.cCapabilitiesSets; index++)
 	{
 		void* tmp = NULL;
-		if (Stream_GetRemainingLength(s) < 4)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			goto out;
 		Stream_Read_UINT16(s, capabilitySetType);   /* capabilitySetType (2 bytes) */
 		Stream_Read_UINT16(s, capabilitySetLength); /* capabilitySetLength (2 bytes) */
@@ -555,13 +555,8 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 
 	WINPR_UNUSED(header);
 
-	slength = Stream_GetRemainingLength(s);
-	if (slength / sizeof(WCHAR) < 260)
-	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength returned %" PRIuz " but should at least be 520",
-		         slength);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 260 * sizeof(WCHAR)))
 		return CHANNEL_RC_NO_MEMORY;
-	}
 
 	wszTempDir = (WCHAR*)Stream_Pointer(s);
 
@@ -662,11 +657,8 @@ static UINT cliprdr_server_receive_lock_clipdata(CliprdrServerContext* context, 
 	UINT error = CHANNEL_RC_OK;
 	WLog_DBG(TAG, "CliprdrClientLockClipData");
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	lockClipboardData.msgType = CB_LOCK_CLIPDATA;
 	lockClipboardData.msgFlags = header->msgFlags;

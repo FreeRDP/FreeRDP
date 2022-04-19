@@ -168,11 +168,8 @@ HANDLE rdpei_server_get_event_handle(RdpeiServerContext* context)
 static UINT read_cs_ready_message(RdpeiServerContext* context, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
-	if (Stream_GetRemainingLength(s) < 10)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 10))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, context->protocolFlags);
 	Stream_Read_UINT32(s, context->clientVersion);
@@ -206,11 +203,8 @@ static UINT read_touch_contact_data(RdpeiServerContext* context, wStream* s,
                                     RDPINPUT_CONTACT_DATA* contactData)
 {
 	WINPR_UNUSED(context);
-	if (Stream_GetRemainingLength(s) < 1)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT8(s, contactData->contactId);
 	if (!rdpei_read_2byte_unsigned(s, &contactData->fieldsPresent) ||
@@ -255,11 +249,8 @@ static UINT read_pen_contact(RdpeiServerContext* context, wStream* s,
                              RDPINPUT_PEN_CONTACT* contactData)
 {
 	WINPR_UNUSED(context);
-	if (Stream_GetRemainingLength(s) < 1)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT8(s, contactData->deviceId);
 	if (!rdpei_read_2byte_unsigned(s, &contactData->fieldsPresent) ||
@@ -470,11 +461,8 @@ static UINT read_dismiss_hovering_contact(RdpeiServerContext* context, wStream* 
 	BYTE contactId;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < 1)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT8(s, contactId);
 

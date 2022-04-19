@@ -29,6 +29,7 @@
 #include <winpr/winsock.h>
 
 #include "rdp.h"
+#include "utils.h"
 
 #if !defined(_WIN32)
 
@@ -817,7 +818,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 		goto fail;
 	}
 
-	handles[count++] = context->abortEvent;
+	handles[count++] = utils_get_abort_event(context->rdp);
 	status = _connect(sockfd, addr, addrlen);
 
 	if (status < 0)
@@ -1232,7 +1233,7 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 		}
 	}
 
-	if (WaitForSingleObject(context->abortEvent, 0) == WAIT_OBJECT_0)
+	if (WaitForSingleObject(utils_get_abort_event(context->rdp), 0) == WAIT_OBJECT_0)
 	{
 		close(sockfd);
 		return -1;

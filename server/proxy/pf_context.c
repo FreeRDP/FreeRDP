@@ -232,8 +232,7 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 		 * it must be freed before setting it to NULL to avoid a memory leak!
 		 */
 
-		if (!freerdp_settings_set_pointer_len(dst, FreeRDP_RdpServerRsaKey, NULL,
-		                                      sizeof(rdpRsaKey)))
+		if (!freerdp_settings_set_pointer_len(dst, FreeRDP_RdpServerRsaKey, NULL, 1))
 			goto out_fail;
 	}
 
@@ -355,7 +354,7 @@ void proxy_data_abort_connect(proxyData* pdata)
 	WINPR_ASSERT(pdata->abort_event);
 	SetEvent(pdata->abort_event);
 	if (pdata->pc)
-		freerdp_abort_connect(pdata->pc->context.instance);
+		freerdp_abort_connect_context(&pdata->pc->context);
 }
 
 BOOL proxy_data_shall_disconnect(proxyData* pdata)

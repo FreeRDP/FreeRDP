@@ -112,21 +112,20 @@ UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "calloc failed!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return CHANNEL_RC_NO_MEMORY;
-	}
 
 	Stream_Read_UINT16(s, header->cmdId);     /* cmdId (2 bytes) */
 	Stream_Read_UINT16(s, header->flags);     /* flags (2 bytes) */
 	Stream_Read_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
 
-	if ((header->pduLength < 8) || (Stream_GetRemainingLength(s) < (header->pduLength - 8)))
+	if (header->pduLength < 8)
 	{
         WLog_ERR(TAG, "header->pduLength %u less than 8!", header->pduLength);
 		return ERROR_INVALID_DATA;
 	}
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, (header->pduLength - 8)))
+		return ERROR_INVALID_DATA;
 
 	return CHANNEL_RC_OK;
 }
@@ -159,11 +158,8 @@ UINT rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(pt16);
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, pt16->x); /* x (2 bytes) */
 	Stream_Read_UINT16(s, pt16->y); /* y (2 bytes) */
@@ -198,11 +194,8 @@ UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(rect16);
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, rect16->left);   /* left (2 bytes) */
 	Stream_Read_UINT16(s, rect16->top);    /* top (2 bytes) */
@@ -245,11 +238,8 @@ UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(color32);
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT8(s, color32->B);  /* B (1 byte) */
 	Stream_Read_UINT8(s, color32->G);  /* G (1 byte) */

@@ -418,6 +418,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings_get_computer_name(settings))
 		goto out_fail;
 
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, NULL, 1))
+		goto out_fail;
+
 	settings->ReceivedCapabilities = calloc(1, 32);
 
 	if (!settings->ReceivedCapabilities)
@@ -574,13 +577,13 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	{
 		ARC_CS_PRIVATE_PACKET cookie = { 0 };
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ClientAutoReconnectCookie, &cookie,
-		                                      sizeof(cookie)))
+		                                      1))
 			goto out_fail;
 	}
 	{
 		ARC_SC_PRIVATE_PACKET cookie = { 0 };
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerAutoReconnectCookie, &cookie,
-		                                      sizeof(cookie)))
+		                                      1))
 			goto out_fail;
 	}
 
@@ -834,13 +837,11 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 
 	if (!freerdp_settings_set_pointer_len(
 	        _settings, FreeRDP_ClientAutoReconnectCookie,
-	        freerdp_settings_get_pointer(settings, FreeRDP_ClientAutoReconnectCookie),
-	        sizeof(ARC_CS_PRIVATE_PACKET)))
+	        freerdp_settings_get_pointer(settings, FreeRDP_ClientAutoReconnectCookie), 1))
 		goto out_fail;
 	if (!freerdp_settings_set_pointer_len(
 	        _settings, FreeRDP_ServerAutoReconnectCookie,
-	        freerdp_settings_get_pointer(settings, FreeRDP_ServerAutoReconnectCookie),
-	        sizeof(ARC_SC_PRIVATE_PACKET)))
+	        freerdp_settings_get_pointer(settings, FreeRDP_ServerAutoReconnectCookie), 1))
 		goto out_fail;
 
 	_settings->ClientTimeZone = (LPTIME_ZONE_INFORMATION)malloc(sizeof(TIME_ZONE_INFORMATION));

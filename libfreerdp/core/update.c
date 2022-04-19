@@ -57,11 +57,8 @@ static BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 {
 	UINT16 numberOrders;
 
-	if (Stream_GetRemainingLength(s) < 6)
-	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 6");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 		return FALSE;
-	}
 
 	Stream_Seek_UINT16(s);               /* pad2OctetsA (2 bytes) */
 	Stream_Read_UINT16(s, numberOrders); /* numberOrders (2 bytes) */
@@ -84,7 +81,7 @@ static BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* bitmapData)
 {
 	WINPR_UNUSED(update);
-	if (Stream_GetRemainingLength(s) < 18)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 18))
 		return FALSE;
 
 	Stream_Read_UINT16(s, bitmapData->destLeft);
@@ -108,7 +105,7 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 	{
 		if (!(bitmapData->flags & NO_BITMAP_COMPRESSION_HDR))
 		{
-			if (Stream_GetRemainingLength(s) < 8)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 				return FALSE;
 
 			Stream_Read_UINT16(s,
@@ -126,7 +123,7 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 	else
 		bitmapData->compressed = FALSE;
 
-	if (Stream_GetRemainingLength(s) < bitmapData->bitmapLength)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, bitmapData->bitmapLength))
 		return FALSE;
 
 	if (bitmapData->bitmapLength > 0)
@@ -207,7 +204,7 @@ BITMAP_UPDATE* update_read_bitmap_update(rdpUpdate* update, wStream* s)
 	if (!bitmapUpdate)
 		goto fail;
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		goto fail;
 
 	Stream_Read_UINT16(s, bitmapUpdate->number); /* numberRectangles (2 bytes) */
@@ -261,7 +258,7 @@ PALETTE_UPDATE* update_read_palette(rdpUpdate* update, wStream* s)
 	if (!palette_update)
 		goto fail;
 
-	if (Stream_GetRemainingLength(s) < 6)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 		goto fail;
 
 	Stream_Seek_UINT16(s);                         /* pad2Octets (2 bytes) */
@@ -270,7 +267,7 @@ PALETTE_UPDATE* update_read_palette(rdpUpdate* update, wStream* s)
 	if (palette_update->number > 256)
 		palette_update->number = 256;
 
-	if (Stream_GetRemainingLength(s) / 3 < palette_update->number)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 3ull * palette_update->number))
 		goto fail;
 
 	/* paletteEntries */
@@ -300,7 +297,7 @@ static BOOL update_read_synchronize(rdpUpdate* update, wStream* s)
 
 static BOOL update_read_play_sound(wStream* s, PLAY_SOUND_UPDATE* play_sound)
 {
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
 	Stream_Read_UINT32(s, play_sound->duration);  /* duration (4 bytes) */
@@ -325,7 +322,7 @@ POINTER_POSITION_UPDATE* update_read_pointer_position(rdpUpdate* update, wStream
 	if (!pointer_position)
 		goto fail;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		goto fail;
 
 	Stream_Read_UINT16(s, pointer_position->xPos); /* xPos (2 bytes) */
@@ -343,7 +340,7 @@ POINTER_SYSTEM_UPDATE* update_read_pointer_system(rdpUpdate* update, wStream* s)
 	if (!pointer_system)
 		goto fail;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		goto fail;
 
 	Stream_Read_UINT32(s, pointer_system->type); /* systemPointerType (4 bytes) */
@@ -366,7 +363,7 @@ static BOOL _update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer
 	if (!pointer_color)
 		goto fail;
 
-	if (Stream_GetRemainingLength(s) < 14)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 14))
 		goto fail;
 
 	Stream_Read_UINT16(s, pointer_color->cacheIndex); /* cacheIndex (2 bytes) */
@@ -415,7 +412,7 @@ static BOOL _update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer
 		 *
 		 * In fact instead of 24-bpp, the bpp parameter is given by the containing packet.
 		 */
-		if (Stream_GetRemainingLength(s) < pointer_color->lengthXorMask)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, pointer_color->lengthXorMask))
 			goto fail;
 
 		scanlineSize = (7 + xorBpp * pointer_color->width) / 8;
@@ -449,7 +446,7 @@ static BOOL _update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer
 		 * consume 2 bytes (7 pixels per scan-line multiplied by 1 bpp, rounded up to the next even
 		 * number of bytes).
 		 */
-		if (Stream_GetRemainingLength(s) < pointer_color->lengthAndMask)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, pointer_color->lengthAndMask))
 			goto fail;
 
 		scanlineSize = ((7 + pointer_color->width) / 8);
@@ -504,7 +501,7 @@ static BOOL _update_read_pointer_large(wStream* s, POINTER_LARGE_UPDATE* pointer
 	if (!pointer)
 		goto fail;
 
-	if (Stream_GetRemainingLength(s) < 20)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 		goto fail;
 
 	Stream_Read_UINT16(s, pointer->xorBpp);
@@ -540,7 +537,7 @@ static BOOL _update_read_pointer_large(wStream* s, POINTER_LARGE_UPDATE* pointer
 		 *
 		 * In fact instead of 24-bpp, the bpp parameter is given by the containing packet.
 		 */
-		if (Stream_GetRemainingLength(s) < pointer->lengthXorMask)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, pointer->lengthXorMask))
 			goto fail;
 
 		scanlineSize = (7 + pointer->xorBpp * pointer->width) / 8;
@@ -574,7 +571,7 @@ static BOOL _update_read_pointer_large(wStream* s, POINTER_LARGE_UPDATE* pointer
 		 * consume 2 bytes (7 pixels per scan-line multiplied by 1 bpp, rounded up to the next even
 		 * number of bytes).
 		 */
-		if (Stream_GetRemainingLength(s) < pointer->lengthAndMask)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, pointer->lengthAndMask))
 			goto fail;
 
 		scanlineSize = ((7 + pointer->width) / 8);
@@ -627,7 +624,7 @@ POINTER_NEW_UPDATE* update_read_pointer_new(rdpUpdate* update, wStream* s)
 	if (!pointer_new)
 		goto fail;
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		goto fail;
 
 	Stream_Read_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
@@ -655,7 +652,7 @@ POINTER_CACHED_UPDATE* update_read_pointer_cached(rdpUpdate* update, wStream* s)
 	if (!pointer)
 		goto fail;
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		goto fail;
 
 	Stream_Read_UINT16(s, pointer->cacheIndex); /* cacheIndex (2 bytes) */
@@ -672,7 +669,7 @@ BOOL update_recv_pointer(rdpUpdate* update, wStream* s)
 	rdpContext* context = update->context;
 	rdpPointerUpdate* pointer = update->pointer;
 
-	if (Stream_GetRemainingLength(s) < 2 + 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2 + 2))
 		return FALSE;
 
 	Stream_Read_UINT16(s, messageType); /* messageType (2 bytes) */
@@ -766,11 +763,8 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 	rdp_update_internal* up = update_cast(update);
 	rdpContext* context = update->context;
 
-	if (Stream_GetRemainingLength(s) < 2)
-	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 2");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
-	}
 
 	Stream_Read_UINT16(s, updateType); /* updateType (2 bytes) */
 	WLog_Print(up->log, WLOG_TRACE, "%s Update Data PDU", update_type_to_string(updateType));
@@ -2218,19 +2212,22 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 	RECTANGLE_16* areas;
 	rdp_update_internal* up = update_cast(update);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT8(s, numberOfAreas);
 	Stream_Seek(s, 3); /* pad3Octects */
 
-	if (Stream_GetRemainingLength(s) / 8 < numberOfAreas)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ull * numberOfAreas))
 		return FALSE;
 
 	areas = (RECTANGLE_16*)calloc(numberOfAreas, sizeof(RECTANGLE_16));
 
 	if (!areas)
+	{
+		WLog_WARN(TAG, "[OOM] refresh rect");
 		return FALSE;
+	}
 
 	for (index = 0; index < numberOfAreas; index++)
 	{
@@ -2256,7 +2253,10 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 	RECTANGLE_16 rect = { 0 };
 	BYTE allowDisplayUpdates;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	WINPR_ASSERT(up);
+	WINPR_ASSERT(s);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT8(s, allowDisplayUpdates);
@@ -2264,8 +2264,9 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 
 	if (allowDisplayUpdates > 0)
 	{
-		if (Stream_GetRemainingLength(s) < sizeof(RECTANGLE_16))
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(RECTANGLE_16)))
 			return FALSE;
+
 		Stream_Read_UINT16(s, rect.left);
 		Stream_Read_UINT16(s, rect.top);
 		Stream_Read_UINT16(s, rect.right);

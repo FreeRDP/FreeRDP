@@ -783,7 +783,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	s = Stream_StaticConstInit(&buffer, cmd->data, cmd->length);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	surface = (gdiGfxSurface*)context->GetSurfaceData(context, cmd->surfaceId);
@@ -808,7 +808,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	{
 		UINT32 x, y;
 
-		if (Stream_GetRemainingLength(s) < cmd->height * cmd->width * 1ULL)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, cmd->height * cmd->width * 1ULL))
 			return ERROR_INVALID_DATA;
 
 		for (y = cmd->top; y < cmd->top + cmd->height; y++)
@@ -842,7 +842,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 			UINT32 count;
 			BYTE a;
 
-			if (Stream_GetRemainingLength(s) < 2)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 				return ERROR_INVALID_DATA;
 
 			Stream_Read_UINT8(s, a);
@@ -850,14 +850,14 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 
 			if (count >= 0xFF)
 			{
-				if (Stream_GetRemainingLength(s) < 2)
+				if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 					return ERROR_INVALID_DATA;
 
 				Stream_Read_UINT16(s, count);
 
 				if (count >= 0xFFFF)
 				{
-					if (Stream_GetRemainingLength(s) < 4)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 						return ERROR_INVALID_DATA;
 
 					Stream_Read_UINT32(s, count);

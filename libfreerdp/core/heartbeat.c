@@ -35,7 +35,7 @@ int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp->context);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(AUTODETECT_TAG, s, 4))
 		return -1;
 
 	Stream_Read_UINT8(s, reserved); /* reserved (1 byte) */

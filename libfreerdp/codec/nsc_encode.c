@@ -523,6 +523,7 @@ BOOL nsc_decompose_message(NSC_CONTEXT* context, wStream* s, BYTE* bmpdata, UINT
                            UINT32 flip)
 {
 	size_t size = Stream_GetRemainingLength(s);
+
 	if (size > UINT32_MAX)
 		return FALSE;
 

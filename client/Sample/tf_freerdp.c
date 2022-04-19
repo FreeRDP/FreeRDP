@@ -242,7 +242,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 	if (instance->context->settings->AuthenticationOnly)
 	{
 		result = freerdp_get_last_error(instance->context);
-		freerdp_abort_connect(instance);
+		freerdp_abort_connect_context(instance->context);
 		WLog_ERR(TAG, "Authentication only, exit status 0x%08" PRIx32 "", result);
 		goto disconnect;
 	}
@@ -254,7 +254,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 		return result;
 	}
 
-	while (!freerdp_shall_disconnect(instance))
+	while (!freerdp_shall_disconnect_context(instance->context))
 	{
 		nCount = freerdp_get_event_handles(instance->context, handles, ARRAYSIZE(handles));
 

@@ -244,12 +244,8 @@ static BOOL ntlm_read_message_header(wStream* s, NTLM_MESSAGE_HEADER* header, UI
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_ERR(TAG, "Short NTLM_MESSAGE_HEADER::header %" PRIuz ", expected 12",
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return FALSE;
-	}
 
 	Stream_Read(s, header->Signature, 8);
 	Stream_Read_UINT32(s, header->MessageType);
@@ -303,12 +299,8 @@ static BOOL ntlm_read_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(fields);
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "Short NTLM_MESSAGE_FIELDS::header %" PRIuz ", expected %" PRIuz,
-		         Stream_GetRemainingLength(s), 8);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
-	}
 
 	ntlm_free_message_fields_buffer(fields);
 
@@ -424,12 +416,8 @@ static BOOL ntlm_read_negotiate_flags(wStream* s, UINT32* flags, UINT32 required
 	WINPR_ASSERT(flags);
 	WINPR_ASSERT(name);
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "%s::NegotiateFlags expected 4bytes, have %" PRIuz "bytes", name,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
@@ -475,14 +463,8 @@ static BOOL ntlm_read_message_integrity_check(wStream* s, size_t* offset, BYTE* 
 
 	*offset = Stream_GetPosition(s);
 
-	if (Stream_GetRemainingLength(s) < size)
-	{
-		WLog_ERR(TAG,
-		         "%s::MessageIntegrityCheckOffset expected %" PRIuz "bytes, got "
-		         "%" PRIuz "byets",
-		         name, size, Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, size))
 		return FALSE;
-	}
 
 	Stream_Read(s, data, size);
 	return TRUE;
@@ -724,13 +706,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	context->NegotiateFlags = message->NegotiateFlags;
 
-	if (Stream_GetRemainingLength(s) < 16)
-	{
-		WLog_ERR(TAG,
-		         "NTLM_CHALLENGE_MESSAGE::ServerChallenge expected 16bytes, got %" PRIuz "bytes",
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
 		goto fail;
-	}
 
 	Stream_Read(s, message->ServerChallenge, 8); /* ServerChallenge (8 bytes) */
 	CopyMemory(context->ServerChallenge, message->ServerChallenge, 8);

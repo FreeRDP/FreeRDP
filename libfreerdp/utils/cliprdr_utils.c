@@ -74,21 +74,16 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 	{
-		WLog_ERR(TAG, "invalid packed file list");
-
 		result = ERROR_INCORRECT_SIZE;
 		goto out;
 	}
 
 	Stream_Read_UINT32(s, count); /* cItems (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) / CLIPRDR_FILEDESCRIPTOR_SIZE < count)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, CLIPRDR_FILEDESCRIPTOR_SIZE * count * 1ull))
 	{
-		WLog_ERR(TAG, "packed file list is too short: expected %" PRIuz ", have %" PRIuz,
-		         ((size_t)count) * CLIPRDR_FILEDESCRIPTOR_SIZE, Stream_GetRemainingLength(s));
-
 		result = ERROR_INCORRECT_SIZE;
 		goto out;
 	}

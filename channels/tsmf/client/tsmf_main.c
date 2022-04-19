@@ -138,11 +138,8 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	UINT32 cbSize = Stream_GetRemainingLength(data);
 
 	/* 2.2.1 Shared Message Header (SHARED_MSG_HEADER) */
-	if (cbSize < 12)
-	{
-		WLog_ERR(TAG, "invalid size. cbSize=%" PRIu32 "", cbSize);
+	if (!Stream_CheckAndLogRequiredLength(TAG, data, 12))
 		return ERROR_INVALID_DATA;
-	}
 
 	input = data;
 	output = Stream_New(NULL, 256);
@@ -198,7 +195,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 			switch (FunctionId)
 			{
 				case SET_CHANNEL_PARAMS:
-					if (Stream_GetRemainingLength(input) < GUID_SIZE + 4)
+					if (!Stream_CheckAndLogRequiredLength(TAG, input, GUID_SIZE + 4))
 					{
 						error = ERROR_INVALID_DATA;
 						goto out;

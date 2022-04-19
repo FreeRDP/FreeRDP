@@ -46,19 +46,13 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 	meta->regionRects = NULL;
 	meta->quantQualityVals = NULL;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		goto error_out;
-	}
 
 	Stream_Read_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) / 8 < meta->numRegionRects)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ull * meta->numRegionRects))
 		goto error_out;
-	}
 
 	meta->regionRects = (RECTANGLE_16*)calloc(meta->numRegionRects, sizeof(RECTANGLE_16));
 
@@ -97,9 +91,8 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 		         index, regionRect->left, regionRect->top, regionRect->right, regionRect->bottom);
 	}
 
-	if (Stream_GetRemainingLength(s) / 2 < meta->numRegionRects)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2ull * meta->numRegionRects))
 	{
-		WLog_ERR(TAG, "not enough data!");
 		error = ERROR_INVALID_DATA;
 		goto error_out;
 	}
@@ -189,7 +182,7 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 	{
 		error = ERROR_INVALID_DATA;
 		goto fail;
@@ -220,7 +213,7 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	{
 		tmp = h264.cbAvc420EncodedBitstream1 - pos2 + pos1;
 
-		if (Stream_GetRemainingLength(s) < tmp)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, tmp))
 		{
 			error = ERROR_INVALID_DATA;
 			goto fail;

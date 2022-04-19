@@ -1057,7 +1057,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 			}
 		}
 
-		if (freerdp_shall_disconnect(instance))
+		if (freerdp_shall_disconnect_context(instance->context))
 			break;
 
 		quit_msg = FALSE;

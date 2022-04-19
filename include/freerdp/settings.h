@@ -563,6 +563,8 @@ typedef struct
 #define FreeRDP_MonitorLocalShiftX (395)
 #define FreeRDP_MonitorLocalShiftY (396)
 #define FreeRDP_HasMonitorAttributes (397)
+#define FreeRDP_MonitorFlags (398)
+#define FreeRDP_MonitorAttributeFlags (399)
 #define FreeRDP_MultitransportFlags (512)
 #define FreeRDP_SupportMultitransport (513)
 #define FreeRDP_AlternateShell (640)
@@ -588,6 +590,7 @@ typedef struct
 #define FreeRDP_IPv6Enabled (768)
 #define FreeRDP_ClientAddress (769)
 #define FreeRDP_ClientDir (770)
+#define FreeRDP_ClientSessionId (771)
 #define FreeRDP_AutoReconnectionEnabled (832)
 #define FreeRDP_AutoReconnectMaxRetries (833)
 #define FreeRDP_ClientAutoReconnectCookie (834)
@@ -1005,7 +1008,9 @@ struct rdp_settings
 	ALIGN64 UINT32 MonitorLocalShiftX;   /*395 */
 	ALIGN64 UINT32 MonitorLocalShiftY;   /*    396 */
 	ALIGN64 BOOL HasMonitorAttributes;   /*    397 */
-	UINT64 padding0448[448 - 398];       /* 398 */
+	ALIGN64 UINT32 MonitorFlags;         /* 398 */
+	ALIGN64 UINT32 MonitorAttributeFlags; /* 399 */
+	UINT64 padding0448[448 - 400];        /* 400 */
 
 	/* Client Message Channel Data */
 	UINT64 padding0512[512 - 448]; /* 448 */
@@ -1050,7 +1055,8 @@ struct rdp_settings
 	ALIGN64 BOOL IPv6Enabled;      /* 768 */
 	ALIGN64 char* ClientAddress;   /* 769 */
 	ALIGN64 char* ClientDir;       /* 770 */
-	UINT64 padding0832[832 - 771]; /* 771 */
+	ALIGN64 UINT32 ClientSessionId; /*  */
+	UINT64 padding0832[832 - 772];  /* 772 */
 
 	/* Client Info (Auto Reconnection) */
 	ALIGN64 BOOL AutoReconnectionEnabled;                     /* 832 */

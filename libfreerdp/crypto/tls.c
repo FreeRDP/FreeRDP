@@ -1295,7 +1295,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 	instance = (freerdp*)tls->settings->instance;
 	WINPR_ASSERT(instance);
 
-	if (freerdp_shall_disconnect(instance))
+	if (freerdp_shall_disconnect_context(instance->context))
 		return -1;
 
 	if (!tls_extract_pem(cert, &pemCert, &length))

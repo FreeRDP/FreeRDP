@@ -250,7 +250,7 @@ BOOL gcc_read_conference_create_request(wStream* s, rdpMcs* mcs)
 	if (!per_read_length(s, &length))
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < length)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return FALSE;
 
 	if (!gcc_read_client_data_blocks(s, mcs, length))
@@ -411,7 +411,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 		if (!gcc_read_user_data_header(s, &type, &blockLength))
 			return FALSE;
 
-		if (Stream_GetRemainingLength(s) < (size_t)(blockLength - 4))
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(blockLength - 4)))
 			return FALSE;
 
 		switch (type)
@@ -652,13 +652,13 @@ BOOL gcc_write_server_data_blocks(wStream* s, rdpMcs* mcs)
 
 BOOL gcc_read_user_data_header(wStream* s, UINT16* type, UINT16* length)
 {
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT16(s, *type);   /* type */
 	Stream_Read_UINT16(s, *length); /* length */
 
-	if ((*length < 4) || (Stream_GetRemainingLength(s) < (size_t)(*length - 4)))
+	if ((*length < 4) || (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(*length - 4))))
 		return FALSE;
 
 	return TRUE;
@@ -1089,7 +1089,7 @@ BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs)
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, serverVersion); /* version */
@@ -1232,7 +1232,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
 	Stream_Read_UINT32(s, serverEncryptionMethod);    /* encryptionMethod */
@@ -1329,7 +1329,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 		return TRUE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
 	Stream_Read_UINT32(s, settings->ServerRandomLength);      /* serverRandomLen */
@@ -1338,7 +1338,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	if ((settings->ServerRandomLength == 0) || (settings->ServerCertificateLength == 0))
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < settings->ServerRandomLength)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, settings->ServerRandomLength))
 		return FALSE;
 
 	/* serverRandom */
@@ -1348,7 +1348,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 
 	Stream_Read(s, settings->ServerRandom, settings->ServerRandomLength);
 
-	if (Stream_GetRemainingLength(s) < settings->ServerCertificateLength)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, settings->ServerCertificateLength))
 		goto fail;
 
 	/* serverCertificate */
@@ -1357,10 +1357,6 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 		goto fail;
 
 	Stream_Read(s, settings->ServerCertificate, settings->ServerCertificateLength);
-
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, certificate_new(),
-	                                      sizeof(rdpCertificate)))
-		goto fail;
 
 	data = settings->ServerCertificate;
 	length = settings->ServerCertificateLength;
@@ -1729,7 +1725,7 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 	UINT16 channelCount;
 	UINT16 parsedChannelCount;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT16(s, MCSChannelId); /* MCSChannelId */
@@ -1747,7 +1743,7 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 			parsedChannelCount = mcs->channelCount;
 	}
 
-	if (Stream_GetRemainingLength(s) / 2 < channelCount)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2ull * channelCount))
 		return FALSE;
 
 	for (i = 0; i < parsedChannelCount; i++)
@@ -2149,7 +2145,7 @@ BOOL gcc_read_server_message_channel_data(wStream* s, rdpMcs* mcs)
 {
 	UINT16 MCSChannelId;
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
 
 	Stream_Read_UINT16(s, MCSChannelId); /* MCSChannelId */
@@ -2219,7 +2215,7 @@ BOOL gcc_read_server_multitransport_channel_data(wStream* s, rdpMcs* mcs)
 {
 	UINT32 flags;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, flags); /* flags */

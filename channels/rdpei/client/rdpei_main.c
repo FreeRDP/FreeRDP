@@ -725,18 +725,17 @@ static UINT rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s
 
 	rdpei = (RDPEI_PLUGIN*)callback->plugin;
 
-	size = Stream_GetRemainingLength(s);
-	if (size < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(s, protocolVersion); /* protocolVersion (4 bytes) */
 
 	if (protocolVersion >= RDPINPUT_PROTOCOL_V300)
 	{
-		if (size < 8)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return ERROR_INVALID_DATA;
 	}
 
-	if (size >= 9)
+	if (Stream_GetRemainingLength(s) >= 4)
 		Stream_Read_UINT32(s, features);
 
 	if (rdpei->version > protocolVersion)
@@ -815,7 +814,7 @@ static UINT rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 	UINT error;
 	if (!s)
 		return ERROR_INTERNAL_ERROR;
-	if (Stream_GetRemainingLength(s) < 6)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, eventId);   /* eventId (2 bytes) */

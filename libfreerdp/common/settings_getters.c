@@ -1393,6 +1393,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_ClientRandomLength:
 			return settings->ClientRandomLength;
 
+		case FreeRDP_ClientSessionId:
+			return settings->ClientSessionId;
+
 		case FreeRDP_ClusterInfoFlags:
 			return settings->ClusterInfoFlags;
 
@@ -1525,11 +1528,17 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_MaxTimeInCheckLoop:
 			return settings->MaxTimeInCheckLoop;
 
+		case FreeRDP_MonitorAttributeFlags:
+			return settings->MonitorAttributeFlags;
+
 		case FreeRDP_MonitorCount:
 			return settings->MonitorCount;
 
 		case FreeRDP_MonitorDefArraySize:
 			return settings->MonitorDefArraySize;
+
+		case FreeRDP_MonitorFlags:
+			return settings->MonitorFlags;
 
 		case FreeRDP_MonitorLocalShiftX:
 			return settings->MonitorLocalShiftX;
@@ -1770,6 +1779,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 			settings->ClientRandomLength = cnv.c;
 			break;
 
+		case FreeRDP_ClientSessionId:
+			settings->ClientSessionId = cnv.c;
+			break;
+
 		case FreeRDP_ClusterInfoFlags:
 			settings->ClusterInfoFlags = cnv.c;
 			break;
@@ -1946,12 +1959,20 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 			settings->MaxTimeInCheckLoop = cnv.c;
 			break;
 
+		case FreeRDP_MonitorAttributeFlags:
+			settings->MonitorAttributeFlags = cnv.c;
+			break;
+
 		case FreeRDP_MonitorCount:
 			settings->MonitorCount = cnv.c;
 			break;
 
 		case FreeRDP_MonitorDefArraySize:
 			settings->MonitorDefArraySize = cnv.c;
+			break;
+
+		case FreeRDP_MonitorFlags:
+			settings->MonitorFlags = cnv.c;
 			break;
 
 		case FreeRDP_MonitorLocalShiftX:

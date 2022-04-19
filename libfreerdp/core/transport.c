@@ -589,7 +589,7 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 		int r = (int)((tr > INT_MAX) ? INT_MAX : tr);
 		int status = BIO_read(transport->frontBio, data + read, r);
 
-		if (freerdp_shall_disconnect(context->instance))
+		if (freerdp_shall_disconnect_context(context))
 			return -1;
 
 		if (status <= 0)
@@ -1122,7 +1122,7 @@ int transport_check_fds(rdpTransport* transport)
 	while (now < dueDate)
 	{
 		WINPR_ASSERT(context);
-		if (freerdp_shall_disconnect(context->instance))
+		if (freerdp_shall_disconnect_context(context))
 		{
 			return -1;
 		}

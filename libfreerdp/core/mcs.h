@@ -136,6 +136,8 @@ struct rdp_mcs
 	UINT16 baseChannelId;
 	UINT16 messageChannelId;
 
+	UINT32 flags;
+
 	DomainParameters domainParameters;
 	DomainParameters targetParameters;
 	DomainParameters minimumParameters;

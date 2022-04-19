@@ -187,11 +187,8 @@ static UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, 
 	context = (DispClientContext*)disp->iface.pInterface;
 	WINPR_ASSERT(context);
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_ERR(TAG, "not enough remaining data");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, disp->MaxNumMonitors);        /* MaxNumMonitors (4 bytes) */
 	Stream_Read_UINT32(s, disp->MaxMonitorAreaFactorA); /* MaxMonitorAreaFactorA (4 bytes) */
@@ -217,11 +214,8 @@ static UINT disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 	WINPR_ASSERT(callback);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "not enough remaining data");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
-	}
 
 	if ((error = disp_read_header(s, &header)))
 	{

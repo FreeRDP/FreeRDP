@@ -100,7 +100,7 @@ static BOOL xf_floatbar_button_onclick_close(xfFloatbar* floatbar)
 	if (!floatbar)
 		return FALSE;
 
-	return freerdp_abort_connect(floatbar->xfc->common.context.instance);
+	return freerdp_abort_connect_context(&floatbar->xfc->common.context);
 }
 
 static BOOL xf_floatbar_button_onclick_minimize(xfFloatbar* floatbar)

@@ -25,18 +25,22 @@
 
 #include "rdpei_common.h"
 
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("channels.rdpei.common")
+
 BOOL rdpei_read_2byte_unsigned(wStream* s, UINT16* value)
 {
 	BYTE byte;
 
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x80)
 	{
-		if (Stream_GetRemainingLength(s) < 1)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			return FALSE;
 
 		*value = (byte & 0x7F) << 8;
@@ -82,7 +86,7 @@ BOOL rdpei_read_2byte_signed(wStream* s, INT16* value)
 	BYTE byte;
 	BOOL negative;
 
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte);
@@ -93,7 +97,7 @@ BOOL rdpei_read_2byte_signed(wStream* s, INT16* value)
 
 	if (byte & 0x80)
 	{
-		if (Stream_GetRemainingLength(s) < 1)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
@@ -152,14 +156,14 @@ BOOL rdpei_read_4byte_unsigned(wStream* s, UINT32* value)
 	BYTE byte;
 	BYTE count;
 
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte);
 
 	count = (byte & 0xC0) >> 6;
 
-	if (Stream_GetRemainingLength(s) < count)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, count))
 		return FALSE;
 
 	switch (count)
@@ -251,7 +255,7 @@ BOOL rdpei_read_4byte_signed(wStream* s, INT32* value)
 	BYTE count;
 	BOOL negative;
 
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte);
@@ -259,7 +263,7 @@ BOOL rdpei_read_4byte_signed(wStream* s, INT32* value)
 	count = (byte & 0xC0) >> 6;
 	negative = (byte & 0x20);
 
-	if (Stream_GetRemainingLength(s) < count)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, count))
 		return FALSE;
 
 	switch (count)
@@ -377,14 +381,14 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 	UINT64 byte;
 	BYTE count;
 
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte);
 
 	count = (byte & 0xE0) >> 5;
 
-	if (Stream_GetRemainingLength(s) < count)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, count))
 		return FALSE;
 
 	switch (count)

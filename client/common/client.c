@@ -951,7 +951,7 @@ int freerdp_client_common_stop(rdpContext* context)
 	rdpClientContext* cctx = (rdpClientContext*)context;
 	WINPR_ASSERT(cctx);
 
-	freerdp_abort_connect(cctx->context.instance);
+	freerdp_abort_connect_context(&cctx->context);
 
 	if (cctx->thread)
 	{

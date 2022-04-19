@@ -488,7 +488,7 @@ static int wlfreerdp_run(freerdp* instance)
 		goto disconnect;
 	}
 
-	while (!freerdp_shall_disconnect(instance))
+	while (!freerdp_shall_disconnect_context(instance->context))
 	{
 		DWORD count = 0;
 		handles[count++] = timer;

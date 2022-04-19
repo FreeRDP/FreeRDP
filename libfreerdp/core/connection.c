@@ -374,6 +374,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if (rdp_get_state(rdp) != CONNECTION_STATE_NLA)
 	{
+		rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CONNECT);
 		if (!mcs_client_begin(rdp->mcs))
 			return FALSE;
 	}
@@ -443,7 +444,7 @@ BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 
 	context->LastError = FREERDP_ERROR_SUCCESS;
 	clearChannelError(context);
-	return utils_reset_abort(context);
+	return utils_reset_abort(rdp);
 }
 
 static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
@@ -792,13 +793,13 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	rdp->do_crypt_license = (sec_flags & SEC_LICENSE_ENCRYPT_SC) != 0 ? TRUE : FALSE;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, rand_len);
 
 	/* rand_len already includes 8 bytes of padding */
-	if (Stream_GetRemainingLength(s) < rand_len)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, rand_len))
 		return FALSE;
 
 	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
@@ -1086,8 +1087,7 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		return rc;
 	}
 
-	WINPR_ASSERT(rdp->context);
-	if (freerdp_shall_disconnect(rdp->context->instance))
+	if (freerdp_shall_disconnect_context(rdp->context))
 		return 0;
 
 	if (!rdp_send_confirm_active(rdp))

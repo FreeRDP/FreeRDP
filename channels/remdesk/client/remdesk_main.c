@@ -76,7 +76,7 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 	WINPR_ASSERT(remdesk);
 
 	WINPR_ASSERT(remdesk->rdpcontext);
-	settings = remdesk->rdpcontext;
+	settings = remdesk->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
 	if (remdesk->ExpertBlob)
@@ -142,11 +142,8 @@ static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* head
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, ChannelNameLen);     /* ChannelNameLen (4 bytes) */
 	Stream_Read_UINT32(s, header->DataLength); /* DataLen (4 bytes) */
@@ -163,11 +160,8 @@ static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* head
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) < ChannelNameLen)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, ChannelNameLen))
 		return ERROR_INVALID_DATA;
-	}
 
 	ZeroMemory(header->ChannelName, sizeof(header->ChannelName));
 	pChannelName = (char*)header->ChannelName;
@@ -272,11 +266,8 @@ static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, versionMajor); /* versionMajor (4 bytes) */
 	Stream_Read_UINT32(s, versionMinor); /* versionMinor (4 bytes) */
@@ -341,11 +332,8 @@ static UINT remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s,
 	WINPR_ASSERT(header);
 	WINPR_ASSERT(pResult);
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, result); /* result (4 bytes) */
 	*pResult = result;
@@ -380,7 +368,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 
 	pdu.expertBlob = remdesk->ExpertBlob;
 	WINPR_ASSERT(remdesk->rdpcontext);
-	settings = remdesk->rdpcontext;
+	settings = remdesk->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
 	pdu.raConnectionString = settings->RemoteAssistanceRCTicket;
@@ -446,7 +434,7 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(remdesk->rdpcontext);
-	settings = remdesk->rdpcontext;
+	settings = remdesk->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
 	pdu.raConnectionString = settings->RemoteAssistanceRCTicket;
@@ -590,11 +578,8 @@ static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHA
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "Not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, msgType); /* msgType (4 bytes) */
 

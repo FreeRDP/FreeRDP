@@ -21,6 +21,8 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/assert.h>
 
 #include "rdp.h"
 
@@ -123,8 +125,16 @@ static BOOL rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UI
 
 BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length)
 {
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(flags);
+
 	/* Basic Security Header */
-	if ((Stream_GetRemainingLength(s) < 4) || (length && (*length < 4)))
+	if ((length && (*length < 4)))
+	{
+		WLog_WARN(TAG, "invalid security header length, have %" PRIu16 ", must be >= 4", *length);
+		return FALSE;
+	}
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT16(s, *flags); /* flags */
@@ -143,18 +153,30 @@ BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length)
  * @param flags security flags
  */
 
-void rdp_write_security_header(wStream* s, UINT16 flags)
+BOOL rdp_write_security_header(wStream* s, UINT16 flags)
 {
+	WINPR_ASSERT(s);
+
+	if (Stream_GetRemainingCapacity(s) < 4)
+		return FALSE;
+
 	/* Basic Security Header */
 	Stream_Write_UINT16(s, flags); /* flags */
 	Stream_Write_UINT16(s, 0);     /* flagsHi (unused) */
+	return TRUE;
 }
 
 BOOL rdp_read_share_control_header(wStream* s, UINT16* tpktLength, UINT16* remainingLength,
                                    UINT16* type, UINT16* channel_id)
 {
 	UINT16 len;
-	if (Stream_GetRemainingLength(s) < 2)
+	UINT16 tmp;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(type);
+	WINPR_ASSERT(channel_id);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
 
 	/* Share Control Header */
@@ -174,15 +196,19 @@ BOOL rdp_read_share_control_header(wStream* s, UINT16* tpktLength, UINT16* remai
 		return TRUE;
 	}
 
-	if ((len < 4U) || ((len - 2U) > Stream_GetRemainingLength(s)))
+	if (len < 4U)
+	{
+		WLog_ERR(TAG, "Invalid share control header, length is %" PRIu16 ", must be >4", len);
 		return FALSE;
+	}
 
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, len - 2))
+		return FALSE;
 	if (tpktLength)
 		*tpktLength = len;
 
-	Stream_Read_UINT16(s, *type); /* pduType */
-	*type &= 0x0F;                /* type is in the 4 least significant bits */
-
+	Stream_Read_UINT16(s, tmp); /* pduType */
+	*type = tmp & 0x0F;         /* type is in the 4 least significant bits */
 	if (len > 5)
 	{
 		Stream_Read_UINT16(s, *channel_id); /* pduSource */
@@ -201,6 +227,8 @@ BOOL rdp_read_share_control_header(wStream* s, UINT16* tpktLength, UINT16* remai
 
 BOOL rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type, UINT16 channel_id)
 {
+	WINPR_ASSERT(s);
+
 	if (length < RDP_PACKET_HEADER_MAX_LENGTH)
 		return FALSE;
 	if (Stream_GetRemainingCapacity(s) < 6)
@@ -216,7 +244,9 @@ BOOL rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type, UINT
 BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* shareId,
                                 BYTE* compressedType, UINT16* compressedLength)
 {
-	if (Stream_GetRemainingLength(s) < 12)
+	WINPR_ASSERT(s);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return FALSE;
 
 	/* Share Data Header */
@@ -234,6 +264,9 @@ BOOL rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 sh
 {
 	const size_t headerLen = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SHARE_CONTROL_HEADER_LENGTH +
 	                         RDP_SHARE_DATA_HEADER_LENGTH;
+
+	WINPR_ASSERT(s);
+
 	if (length < headerLen)
 		return FALSE;
 	length -= headerLen;
@@ -253,8 +286,8 @@ BOOL rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 sh
 
 static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
 {
-	if (!rdp || !s)
-		return FALSE;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
 
 	if (rdp->do_crypt)
 	{
@@ -339,11 +372,15 @@ fail:
 
 BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 {
+	WINPR_ASSERT(rdp);
+
 	rdp->errorInfo = errorInfo;
 
 	if (rdp->errorInfo != ERRINFO_SUCCESS)
 	{
 		rdpContext* context = rdp->context;
+		WINPR_ASSERT(context);
+
 		rdp_print_errinfo(rdp->errorInfo);
 
 		if (context)
@@ -362,7 +399,7 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 			WLog_ERR(TAG, "%s missing context=%p", __FUNCTION__, context);
 
 		/* Ensure the connection is terminated */
-		utils_abort_connect(context);
+		utils_abort_connect(rdp);
 	}
 	else
 	{
@@ -374,7 +411,11 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 
 wStream* rdp_message_channel_pdu_init(rdpRdp* rdp)
 {
-	wStream* s = transport_send_stream_init(rdp->transport, 4096);
+	wStream* s;
+
+	WINPR_ASSERT(rdp);
+
+	s = transport_send_stream_init(rdp->transport, 4096);
 
 	if (!s)
 		return NULL;
@@ -411,9 +452,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
-	WINPR_ASSERT(rdp->context);
 	WINPR_ASSERT(s);
-
 	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataRequest
 	                                     : DomainMCSPDU_SendDataIndication;
 
@@ -428,7 +467,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	{
 		if (code == X224_TPDU_DISCONNECT_REQUEST)
 		{
-			utils_abort_connect(rdp->context);
+			utils_abort_connect(rdp);
 			return TRUE;
 		}
 
@@ -460,12 +499,8 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 		return FALSE;
 	}
 
-	if ((*length - 8U) > Stream_GetRemainingLength(s))
-	{
-		WLog_WARN(TAG, "TPDU invalid length, got %" PRIuz ", expected %" PRIu16,
-		          Stream_GetRemainingLength(s), *length - 8);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, *length - 8))
 		return FALSE;
-	}
 
 	if (MCSPDU == DomainMCSPDU_DisconnectProviderUltimatum)
 	{
@@ -495,19 +530,15 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 		}
 
 		WLog_DBG(TAG, "DisconnectProviderUltimatum: reason: %d", reason);
-		utils_abort_connect(context);
+		utils_abort_connect(rdp);
 		EventArgsInit(&e, "freerdp");
 		e.code = 0;
 		PubSub_OnTerminate(context->pubSub, context, &e);
 		return TRUE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 5)
-	{
-		WLog_WARN(TAG, "TPDU packet short length, got %" PRIuz ", expected at least 5",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return FALSE;
-	}
 
 	if (!per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
 		return FALSE;
@@ -520,12 +551,8 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	if (!per_read_length(s, length)) /* userData (OCTET_STRING) */
 		return FALSE;
 
-	if (*length > Stream_GetRemainingLength(s))
-	{
-		WLog_WARN(TAG, "TPDU invalid length, got %" PRIuz ", expected %" PRIu16,
-		          Stream_GetRemainingLength(s), *length);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, *length))
 		return FALSE;
-	}
 
 	return TRUE;
 }
@@ -542,6 +569,11 @@ void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 {
 	int body_length;
 	DomainMCSPDU MCSPDU;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->settings);
+	WINPR_ASSERT(s);
+
 	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataIndication
 	                                     : DomainMCSPDU_SendDataRequest;
 
@@ -823,7 +855,7 @@ static BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->update);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT16(s, unitId);   /* unitId (2 bytes) */
@@ -840,7 +872,7 @@ static BOOL rdp_recv_server_set_keyboard_ime_status_pdu(rdpRdp* rdp, wStream* s)
 	if (!rdp || !rdp->input)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < 10)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 10))
 		return FALSE;
 
 	Stream_Read_UINT16(s, unitId);      /* unitId (2 bytes) */
@@ -854,7 +886,7 @@ static BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT32 errorInfo;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, errorInfo); /* errorInfo (4 bytes) */
@@ -865,7 +897,7 @@ static BOOL rdp_recv_server_auto_reconnect_status_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT32 arcStatus;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, arcStatus); /* arcStatus (4 bytes) */
@@ -877,7 +909,7 @@ static BOOL rdp_recv_server_status_info_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT32 statusCode;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, statusCode); /* statusCode (4 bytes) */
@@ -896,12 +928,12 @@ static BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 	MONITOR_DEF* monitorDefArray;
 	BOOL ret = TRUE;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, monitorCount); /* monitorCount (4 bytes) */
 
-	if ((Stream_GetRemainingLength(s) / 20) < monitorCount)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20ull * monitorCount))
 		return FALSE;
 
 	monitorDefArray = (MONITOR_DEF*)calloc(monitorCount, sizeof(MONITOR_DEF));
@@ -947,7 +979,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		const BYTE* pDstData = NULL;
 		UINT16 SrcSize = compressedLength - 18;
 
-		if ((compressedLength < 18) || (Stream_GetRemainingLength(s) < SrcSize))
+		if ((compressedLength < 18) || (!Stream_CheckAndLogRequiredLength(TAG, s, SrcSize)))
 		{
 			WLog_ERR(TAG, "bulk_decompress: not enough bytes for compressedLength %" PRIu16 "",
 			         compressedLength);
@@ -1139,6 +1171,9 @@ out_fail:
 
 int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securityFlags)
 {
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+
 	if (securityFlags & SEC_AUTODETECT_REQ)
 	{
 		/* Server Auto-Detect Request PDU */
@@ -1204,9 +1239,12 @@ BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type, UINT16* channel_id)
 	 * Switched the order of these two fields to match this observation.
 	 */
 	UINT8 pduType;
-	if (!type)
-		return FALSE;
-	if (Stream_GetRemainingLength(s) < 6)
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(type);
+	WINPR_ASSERT(channel_id);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 		return FALSE;
 	Stream_Read_UINT8(s, pduType); /* pduTypeFlow */
 	*type = pduType;
@@ -1231,8 +1269,10 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 	BOOL status;
 	INT32 length;
 
-	if (!rdp || !s || !pLength)
-		return FALSE;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->settings);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(pLength);
 
 	length = *pLength;
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
@@ -1242,7 +1282,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 		BYTE* sig;
 		INT64 padLength;
 
-		if (Stream_GetRemainingLength(s) < 12)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 			return FALSE;
 
 		Stream_Read_UINT16(s, len);    /* 0x10 */
@@ -1254,7 +1294,10 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 		padLength = length - pad;
 
 		if ((length <= 0) || (padLength <= 0) || (padLength > UINT16_MAX))
+		{
+			WLog_ERR(TAG, "FATAL: invalid pad length %" PRId32, padLength);
 			return FALSE;
+		}
 
 		if (!security_fips_decrypt(Stream_Pointer(s), length, rdp))
 		{
@@ -1273,14 +1316,17 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 		return TRUE;
 	}
 
-	if (Stream_GetRemainingLength(s) < sizeof(wmac))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(wmac)))
 		return FALSE;
 
 	Stream_Read(s, wmac, sizeof(wmac));
 	length -= sizeof(wmac);
 
 	if (length <= 0)
+	{
+		WLog_ERR(TAG, "FATAL: invalid length field");
 		return FALSE;
+	}
 
 	if (!security_decrypt(Stream_Pointer(s), length, rdp))
 		return FALSE;
@@ -1363,7 +1409,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return -1;
 
-	if (freerdp_shall_disconnect(instance))
+	if (freerdp_shall_disconnect_context(rdp->context))
 		return 0;
 
 	if (rdp->autodetect->bandwidthMeasureStarted)
@@ -1502,7 +1548,7 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 		return -1;
 	}
 
-	if ((length == 0) || (length > Stream_GetRemainingLength(s)))
+	if ((length == 0) || (!Stream_CheckAndLogRequiredLength(TAG, s, length)))
 	{
 		WLog_ERR(TAG, "incorrect FastPath PDU header length %" PRIu16 "", length);
 		return -1;
@@ -1614,6 +1660,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				nla_free(rdp->nla);
 				rdp->nla = NULL;
 
+				rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CONNECT);
 				if (!mcs_client_begin(rdp->mcs))
 				{
 					WLog_ERR(TAG, "%s: %s - mcs_client_begin() fail", __FUNCTION__,
@@ -1925,6 +1972,9 @@ rdpRdp* rdp_new(rdpContext* context)
 	if (!rdp->bulk)
 		goto fail;
 
+	rdp->abortEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!rdp->abortEvent)
+		goto fail;
 	return rdp;
 
 fail:
@@ -2019,7 +2069,7 @@ BOOL rdp_reset(rdpRdp* rdp)
 		goto fail;
 
 	rdp->errorInfo = 0;
-	rdp->deactivation_reactivation = 0;
+	rdp->deactivation_reactivation = FALSE;
 	rdp->finalize_sc_pdus = 0;
 
 	rc = TRUE;
@@ -2051,6 +2101,8 @@ void rdp_free(rdpRdp* rdp)
 		multitransport_free(rdp->multitransport);
 		bulk_free(rdp->bulk);
 		free(rdp->io);
+		if (rdp->abortEvent)
+			CloseHandle(rdp->abortEvent);
 		free(rdp);
 	}
 }

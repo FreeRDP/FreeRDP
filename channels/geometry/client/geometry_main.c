@@ -188,15 +188,12 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 	geometry = (GEOMETRY_PLUGIN*)callback->plugin;
 	context = (GeometryClientContext*)geometry->iface.pInterface;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough remaining data");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
-	if (length < 73 || Stream_GetRemainingLength(s) < (length - 4))
+	if (length < 73 || !Stream_CheckAndLogRequiredLength(TAG, s, (length - 4)))
 	{
 		WLog_ERR(TAG, "invalid packet length");
 		return ERROR_INVALID_DATA;
@@ -269,11 +266,8 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
 		Stream_Read_UINT32(s, geometryType);
 
 		Stream_Read_UINT32(s, cbGeometryBuffer);
-		if (Stream_GetRemainingLength(s) < cbGeometryBuffer)
-		{
-			WLog_ERR(TAG, "invalid packet length");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, cbGeometryBuffer))
 			return ERROR_INVALID_DATA;
-		}
 
 		if (cbGeometryBuffer)
 		{

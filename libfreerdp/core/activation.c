@@ -102,13 +102,16 @@ BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s)
 
 	rdp->finalize_sc_pdus |= FINALIZE_SC_SYNCHRONIZE_PDU;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT16(s, messageType); /* messageType (2 bytes) */
 
 	if (messageType != SYNCMSGTYPE_SYNC)
+	{
+		WLog_WARN(TAG, "client synchronize PDU message type invalid, got %" PRIu16, messageType);
 		return FALSE;
+	}
 
 	/* targetUser (2 bytes) */
 	Stream_Seek_UINT16(s);
@@ -137,7 +140,7 @@ static BOOL rdp_recv_control_pdu(wStream* s, UINT16* action)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(action);
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
 	Stream_Read_UINT16(s, *action); /* action (2 bytes) */
@@ -300,8 +303,12 @@ BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s)
 	WINPR_ASSERT(s);
 
 	/* 2.2.1.17.1 Persistent Key List PDU Data (TS_BITMAPCACHE_PERSISTENT_LIST_PDU) */
-	if (Stream_GetRemainingLength(s) < 21)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 21))
+	{
+		WLog_ERR(TAG, "short TS_BITMAPCACHE_PERSISTENT_LIST_PDU, need 21 bytes, got %" PRIuz,
+		         Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 	/* Read numEntriesCacheX for variable length data in PDU */
 	for (x = 0; x < 5; x++)
 	{
@@ -335,9 +342,20 @@ BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s)
 
 	/* Skip padding */
 	if (!Stream_SafeSeek(s, 3))
+	{
+		WLog_ERR(TAG, "short TS_BITMAPCACHE_PERSISTENT_LIST_PDU, need 3 bytes, got %" PRIuz,
+		         Stream_GetRemainingLength(s));
 		return FALSE;
+	}
 	/* Skip actual entries sent by client */
-	return Stream_SafeSeek(s, count * sizeof(UINT64));
+	if (!Stream_SafeSeek(s, count * sizeof(UINT64)))
+	{
+		WLog_ERR(TAG,
+		         "short TS_BITMAPCACHE_PERSISTENT_LIST_PDU, need %" PRIuz " bytes, got %" PRIuz,
+		         count * sizeof(UINT64), Stream_GetRemainingLength(s));
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static BOOL rdp_write_client_font_list_pdu(wStream* s, UINT16 flags)
@@ -385,8 +403,9 @@ BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
+	WLog_WARN(TAG, "Invalid PDU received: FONT_MAP only allowed client -> server");
 	rdp->finalize_sc_pdus |= FINALIZE_SC_FONT_MAP_PDU;
-	return TRUE;
+	return FALSE;
 }
 
 BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, wStream* s)
@@ -449,17 +468,17 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	{
 		do
 		{
-			if (Stream_GetRemainingLength(s) < 4)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				break;
 
 			Stream_Read_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
 
-			if (Stream_GetRemainingLength(s) < 2)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 				break;
 
 			Stream_Read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 
-			if (Stream_GetRemainingLength(s) < lengthSourceDescriptor)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, lengthSourceDescriptor))
 				break;
 
 			Stream_Seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
@@ -475,7 +494,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 			return FALSE;
 
 		WINPR_ASSERT(rdp->context);
-		if (freerdp_shall_disconnect(rdp->context->instance))
+		if (freerdp_shall_disconnect_context(rdp->context))
 			return TRUE;
 
 		if (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE)

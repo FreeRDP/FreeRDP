@@ -117,7 +117,7 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, si
 	}
 	packetLength -= 8;
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
 	/* [MS-RDPBCGR] 3.1.5.2.2 Processing of Virtual Channel PDU
@@ -134,7 +134,7 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, si
 		         chunkLength);
 		return FALSE;
 	}
-	if (length < chunkLength)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 	{
 		WLog_ERR(TAG, "Expected %" PRIu32 " bytes, but have %" PRIdz, length, chunkLength);
 		return FALSE;
@@ -156,7 +156,10 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 	UINT32 flags;
 	size_t chunkLength;
 
-	if (Stream_GetRemainingLength(s) < 8)
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(s);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
 	Stream_Read_UINT32(s, length);
@@ -199,7 +202,13 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 		if (!rc)
 			return FALSE;
 	}
-	return Stream_SafeSeek(s, chunkLength);
+	if (!Stream_SafeSeek(s, chunkLength))
+	{
+		WLog_WARN(TAG, "Short PDU, need %" PRIuz " bytes, got %" PRIuz, chunkLength,
+		          Stream_GetRemainingLength(s));
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static const WtsApiFunctionTable FreeRDP_WtsApiFunctionTable = {

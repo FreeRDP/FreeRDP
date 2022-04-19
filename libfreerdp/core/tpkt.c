@@ -69,6 +69,8 @@ BOOL tpkt_verify_header(wStream* s)
 {
 	BYTE version;
 
+	WINPR_ASSERT(s);
+
 	Stream_Peek_UINT8(s, version);
 
 	if (version == 3)
@@ -88,25 +90,16 @@ BOOL tpkt_read_header(wStream* s, UINT16* length)
 {
 	BYTE version;
 
-	if (Stream_GetRemainingLength(s) < 1)
-	{
-		WLog_WARN(TAG, "tpkt invalid data, got %" PRIuz ", require at least 1 more",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
-	}
 
 	Stream_Peek_UINT8(s, version);
 
 	if (version == 3)
 	{
-		size_t slen;
 		UINT16 len;
-		if (Stream_GetRemainingLength(s) < 4)
-		{
-			WLog_WARN(TAG, "tpkt invalid data, got %" PRIuz ", require at least 4 more",
-			          Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return FALSE;
-		}
 
 		Stream_Seek(s, 2);
 		Stream_Read_UINT16_BE(s, len);
@@ -118,10 +111,9 @@ BOOL tpkt_read_header(wStream* s, UINT16* length)
 			return FALSE;
 		}
 
-		slen = Stream_GetRemainingLength(s) + 4;
-		if (len > slen)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, len - 4))
 		{
-			WLog_ERR(TAG, "TPKT header length %" PRIu16 ", but only received %" PRIdz, len, slen);
+			WLog_ERR(TAG, "TPKT header length %" PRIu16 ", but received less", len);
 			return FALSE;
 		}
 		*length = len;

@@ -302,7 +302,7 @@ extern "C"
 		ALIGN64 rdpMetrics* metrics;       /* 41 */
 		ALIGN64 rdpCodecs* codecs;         /* 42 */
 		ALIGN64 rdpAutoDetect* autodetect; /* 43 owned by rdpRdp */
-		ALIGN64 HANDLE abortEvent;         /* 44 */
+		UINT64 paddingC1[45 - 44];         /* 44 */
 		ALIGN64 int disconnectUltimatum;   /* 45 */
 		UINT64 paddingC[64 - 46];          /* 46 */
 
@@ -505,8 +505,16 @@ settings but before rdp_client_connect() to have it executed after the
 	FREERDP_API void freerdp_context_free(freerdp* instance);
 
 	FREERDP_API BOOL freerdp_connect(freerdp* instance);
-	FREERDP_API BOOL freerdp_abort_connect(freerdp* instance);
-	FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance);
+
+	WINPR_DEPRECATED_VAR("use freerdp_abort_connect_context instead",
+	                     FREERDP_API BOOL freerdp_abort_connect(freerdp* instance));
+
+	FREERDP_API BOOL freerdp_abort_connect_context(rdpContext* context);
+
+	WINPR_DEPRECATED_VAR("use freerdp_shall_disconnect_context instead",
+	                     FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance));
+
+	FREERDP_API BOOL freerdp_shall_disconnect_context(rdpContext* context);
 	FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 
 	FREERDP_API BOOL freerdp_disconnect_before_reconnect(freerdp* instance);

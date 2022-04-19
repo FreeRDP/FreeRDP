@@ -202,7 +202,7 @@ static BOOL nla_decode_to_buffer(wStream* s, SecBuffer* buffer)
 	if (!s || !buffer)
 		return FALSE;
 	if (!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
-	    Stream_GetRemainingLength(s) < length)
+	    !Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return FALSE;
 
 	rc = nla_sec_buffer_alloc_from_data(buffer, Stream_Pointer(s), 0, length);

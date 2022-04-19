@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <winpr/assert.h>
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
@@ -259,7 +260,7 @@ static BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* in
 	/* skip zero padding, if any */
 	do
 	{
-		if (Stream_GetRemainingLength(s) < 1)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			goto error1;
 
 		Stream_Peek_UINT8(s, padding);
@@ -278,7 +279,7 @@ static BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* in
 	if (modulus_length > UINT32_MAX)
 		goto error1;
 
-	if ((Stream_GetRemainingLength(s)) < modulus_length)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, modulus_length))
 		goto error1;
 
 	info->ModulusLength = (UINT32)modulus_length;
@@ -295,7 +296,7 @@ static BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* in
 
 	error++;
 
-	if (((Stream_GetRemainingLength(s)) < exponent_length) || (exponent_length > 4))
+	if ((!Stream_CheckAndLogRequiredLength(TAG, s, exponent_length)) || (exponent_length > 4))
 		goto error2;
 
 	Stream_Read(s, &info->exponent[4 - exponent_length], exponent_length);
@@ -370,7 +371,10 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 	UINT32 datalen;
 	BYTE* tmp;
 
-	if (Stream_GetRemainingLength(s) < 20)
+	WINPR_ASSERT(certificate);
+	WINPR_ASSERT(s);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 		return FALSE;
 
 	Stream_Read(s, magic, 4);
@@ -386,7 +390,7 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 	Stream_Read_UINT32(s, datalen);
 	Stream_Read(s, certificate->cert_info.exponent, 4);
 
-	if ((keylen <= 8) || (Stream_GetRemainingLength(s) < keylen))
+	if ((keylen <= 8) || (!Stream_CheckAndLogRequiredLength(TAG, s, keylen)))
 		return FALSE;
 
 	certificate->cert_info.ModulusLength = keylen - 8;
@@ -398,6 +402,39 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 
 	Stream_Read(s, certificate->cert_info.Modulus, certificate->cert_info.ModulusLength);
 	Stream_Seek(s, 8); /* 8 bytes of zero padding */
+	return TRUE;
+}
+
+static BOOL certificate_write_server_public_key(const rdpCertificate* certificate, wStream* s)
+{
+	const char magic[4] = "RSA1";
+	const UINT16 wPublicKeyBlobType = BB_RSA_KEY_BLOB;
+	UINT16 wPublicKeyBlobLen = 0;
+	UINT32 keylen, bitlen, datalen;
+
+	WINPR_ASSERT(certificate);
+	WINPR_ASSERT(s);
+
+	/* [MS-RDPBCGR] 2.2.1.4.3.1.1.1 RSA Public Key (RSA_PUBLIC_KEY) */
+	wPublicKeyBlobLen = sizeof(magic) + 12 + sizeof(certificate->cert_info.exponent) +
+	                    certificate->cert_info.ModulusLength + 8;
+	bitlen = certificate->cert_info.ModulusLength * 8;
+	keylen = (bitlen / 8) + 8;
+	datalen = bitlen / 8 - 1;
+
+	if (!Stream_EnsureRemainingCapacity(s, 4 + wPublicKeyBlobLen))
+		return FALSE;
+
+	Stream_Write_UINT16(s, wPublicKeyBlobType);
+	Stream_Write_UINT16(s, wPublicKeyBlobLen);
+	Stream_Write(s, magic, sizeof(magic));
+	Stream_Write_UINT32(s, keylen);
+	Stream_Write_UINT32(s, bitlen);
+	Stream_Write_UINT32(s, datalen);
+
+	Stream_Write(s, certificate->cert_info.exponent, sizeof(certificate->cert_info.exponent));
+	Stream_Write(s, certificate->cert_info.Modulus, certificate->cert_info.ModulusLength);
+	Stream_Zero(s, 8); /* 8 bytes of zero padding */
 	return TRUE;
 }
 
@@ -490,6 +527,27 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	return TRUE;
 }
 
+static BOOL certificate_write_server_public_signature(const rdpCertificate* certificate, wStream* s)
+{
+	const UINT16 wSignatureBlobType = BB_RSA_SIGNATURE_BLOB;
+	UINT16 wSignatureBlobLen = 72;
+	char signature[72] = { 0 };
+
+	WINPR_ASSERT(certificate);
+	WINPR_ASSERT(s);
+
+	if (!Stream_EnsureRemainingCapacity(s, 4 + wSignatureBlobLen))
+		return FALSE;
+
+	Stream_Write_UINT16(s, wSignatureBlobType);
+	Stream_Write_UINT16(s, wSignatureBlobLen);
+
+	WLog_WARN(TAG, "[%s] TODO: Calcualte proper signature", __FUNCTION__);
+
+	Stream_Write(s, signature, wSignatureBlobLen);
+	return TRUE;
+}
+
 /**
  * Read a Server Proprietary Certificate.\n
  * @param certificate certificate module
@@ -507,7 +565,7 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 	BYTE* sigdata;
 	size_t sigdatalen;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return FALSE;
 
 	/* -4, because we need to include dwVersion */
@@ -534,11 +592,8 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 
 	Stream_Read_UINT16(s, wPublicKeyBlobLen);
 
-	if (Stream_GetRemainingLength(s) < wPublicKeyBlobLen)
-	{
-		WLog_ERR(TAG, "not enough bytes for public key(len=%" PRIu16 ")", wPublicKeyBlobLen);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, wPublicKeyBlobLen))
 		return FALSE;
-	}
 
 	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
 	{
@@ -546,7 +601,7 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	sigdatalen = Stream_Pointer(s) - sigdata;
@@ -560,11 +615,8 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 
 	Stream_Read_UINT16(s, wSignatureBlobLen);
 
-	if (Stream_GetRemainingLength(s) < wSignatureBlobLen)
-	{
-		WLog_ERR(TAG, "not enough bytes for signature(len=%" PRIu16 ")", wSignatureBlobLen);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, wSignatureBlobLen))
 		return FALSE;
-	}
 
 	if (wSignatureBlobLen != 72)
 	{
@@ -578,6 +630,29 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 		WLog_ERR(TAG, "unable to parse server public signature");
 		return FALSE;
 	}
+	return TRUE;
+}
+
+static BOOL certificate_write_server_proprietary_certificate(const rdpCertificate* certificate,
+                                                             wStream* s)
+{
+	const UINT32 dwSigAlgId = SIGNATURE_ALG_RSA;
+	const UINT32 dwKeyAlgId = KEY_EXCHANGE_ALG_RSA;
+
+	WINPR_ASSERT(certificate);
+	WINPR_ASSERT(s);
+
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return FALSE;
+
+	Stream_Write_UINT32(s, dwSigAlgId);
+	Stream_Write_UINT32(s, dwKeyAlgId);
+
+	if (!certificate_write_server_public_key(certificate, s))
+		return FALSE;
+
+	if (!certificate_write_server_public_signature(certificate, s))
+		return FALSE;
 
 	return TRUE;
 }
@@ -596,7 +671,7 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certi
 	UINT32 numCertBlobs;
 	DEBUG_CERTIFICATE("Server X.509 Certificate Chain");
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, numCertBlobs); /* numCertBlobs */
@@ -607,12 +682,12 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certi
 
 	for (i = 0; i < numCertBlobs; i++)
 	{
-		if (Stream_GetRemainingLength(s) < 4)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return FALSE;
 
 		Stream_Read_UINT32(s, certLength);
 
-		if (Stream_GetRemainingLength(s) < certLength)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, certLength))
 			return FALSE;
 
 		DEBUG_CERTIFICATE("X.509 Certificate #%d, length:%" PRIu32 "", i + 1, certLength);
@@ -656,6 +731,36 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certi
 	return TRUE;
 }
 
+static BOOL certificate_write_server_x509_certificate_chain(const rdpCertificate* certificate,
+                                                            wStream* s)
+{
+	UINT32 i;
+	UINT32 numCertBlobs = 0;
+
+	WINPR_ASSERT(certificate);
+	WINPR_ASSERT(s);
+
+	if (certificate->x509_cert_chain)
+		numCertBlobs = certificate->x509_cert_chain->count;
+
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+		return FALSE;
+	Stream_Write_UINT32(s, numCertBlobs); /* numCertBlobs */
+
+	for (i = 0; i < numCertBlobs; i++)
+	{
+		const rdpCertBlob* cert = &certificate->x509_cert_chain->array[i];
+
+		if (!Stream_EnsureRemainingCapacity(s, 4 + cert->length))
+			return FALSE;
+
+		Stream_Write_UINT32(s, cert->length);
+		Stream_Write(s, cert->data, cert->length);
+	}
+
+	return TRUE;
+}
+
 /**
  * Read a Server Certificate.\n
  * @param certificate certificate module
@@ -690,6 +795,37 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, const BYTE
 
 		case CERT_CHAIN_VERSION_2:
 			ret = certificate_read_server_x509_certificate_chain(certificate, s);
+			break;
+
+		default:
+			WLog_ERR(TAG, "invalid certificate chain version:%" PRIu32 "",
+			         dwVersion & CERT_CHAIN_VERSION_MASK);
+			ret = FALSE;
+			break;
+	}
+
+	return ret;
+}
+
+BOOL certificate_write_server_certificate(rdpCertificate* certificate, UINT32 dwVersion, wStream* s)
+{
+	BOOL ret;
+
+	WINPR_ASSERT(certificate);
+	WINPR_ASSERT(s);
+
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+		return FALSE;
+	Stream_Write_UINT32(s, dwVersion); /* dwVersion (4 bytes) */
+
+	switch (dwVersion & CERT_CHAIN_VERSION_MASK)
+	{
+		case CERT_CHAIN_VERSION_1:
+			ret = certificate_write_server_proprietary_certificate(certificate, s);
+			break;
+
+		case CERT_CHAIN_VERSION_2:
+			ret = certificate_write_server_x509_certificate_chain(certificate, s);
 			break;
 
 		default:

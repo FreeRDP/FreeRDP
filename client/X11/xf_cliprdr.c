@@ -414,11 +414,8 @@ static CLIPRDR_FORMAT* xf_cliprdr_parse_server_format_list(BYTE* data, size_t le
 		goto error;
 	}
 
-	if (Stream_GetRemainingLength(s) < sizeof(UINT32))
-	{
-		WLog_ERR(TAG, "too short serialized format list");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT32)))
 		goto error;
-	}
 
 	Stream_Read_UINT32(s, *numFormats);
 
@@ -439,11 +436,8 @@ static CLIPRDR_FORMAT* xf_cliprdr_parse_server_format_list(BYTE* data, size_t le
 		const char* formatName = NULL;
 		size_t formatNameLength = 0;
 
-		if (Stream_GetRemainingLength(s) < sizeof(UINT32))
-		{
-			WLog_ERR(TAG, "unexpected end of serialized format list");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT32)))
 			goto error;
-		}
 
 		Stream_Read_UINT32(s, formats[i].formatId);
 		formatName = (const char*)Stream_Pointer(s);
@@ -1799,11 +1793,8 @@ static xfCliprdrFuseInode* xf_cliprdr_fuse_create_root_node()
 static BOOL xf_cliprdr_fuse_check_stream(wStream* s, size_t count)
 {
 	UINT32 nrDescriptors;
-	if (Stream_GetRemainingLength(s) < sizeof(UINT32))
-	{
-		WLog_ERR(TAG, "too short serialized format list");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT32)))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, nrDescriptors);
 	if (count != nrDescriptors)

@@ -23,6 +23,8 @@
 #include <winpr/stream.h>
 #include <freerdp/api.h>
 
+#include "tpkt.h"
+
 enum X224_TPDU_TYPE
 {
 	X224_TPDU_CONNECTION_REQUEST = 0xE0,

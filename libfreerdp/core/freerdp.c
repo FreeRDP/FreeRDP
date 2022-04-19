@@ -85,7 +85,7 @@ BOOL freerdp_connect(freerdp* instance)
 	instance->ConnectionCallbackState = CLIENT_STATE_INITIAL;
 	freerdp_set_last_error_log(instance->context, FREERDP_ERROR_SUCCESS);
 	clearChannelError(instance->context);
-	if (!utils_reset_abort(instance->context))
+	if (!utils_reset_abort(instance->context->rdp))
 		return FALSE;
 
 	rdp = instance->context->rdp;
@@ -238,11 +238,20 @@ freerdp_connect_finally:
 
 BOOL freerdp_abort_connect(freerdp* instance)
 {
-	if (!instance || !instance->context)
+	if (!instance)
 		return FALSE;
 
-	freerdp_set_last_error_if_not(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
-	return utils_abort_connect(instance->context);
+	return freerdp_abort_connect_context(instance->context);
+}
+
+BOOL freerdp_abort_connect_context(rdpContext* context)
+{
+	if (!context)
+		return FALSE;
+
+	freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
+
+	return utils_abort_connect(context->rdp);
 }
 
 #if defined(WITH_FREERDP_DEPRECATED)
@@ -309,7 +318,7 @@ DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events, DWORD count
 	{
 		events[nCount++] = freerdp_channels_get_event_handle(context->instance);
 		events[nCount++] = getChannelErrorEventHandle(context);
-		events[nCount++] = context->abortEvent;
+		events[nCount++] = utils_get_abort_event(context->rdp);
 	}
 	else
 		return 0;
@@ -473,8 +482,8 @@ BOOL freerdp_disconnect(freerdp* instance)
 	if (!instance || !instance->context)
 		return FALSE;
 
-	utils_abort_connect(instance->context);
 	rdp = instance->context->rdp;
+	utils_abort_connect(rdp);
 
 	if (!rdp_client_disconnect(rdp))
 		rc = FALSE;
@@ -519,20 +528,25 @@ BOOL freerdp_reconnect(freerdp* instance)
 
 	rdp = instance->context->rdp;
 
-	if (!utils_reset_abort(instance->context))
+	if (!utils_reset_abort(instance->context->rdp))
 		return FALSE;
 	return rdp_client_reconnect(rdp);
 }
 
 BOOL freerdp_shall_disconnect(freerdp* instance)
 {
-	if (!instance || !instance->context)
+	if (!instance)
 		return FALSE;
 
-	if (WaitForSingleObject(instance->context->abortEvent, 0) != WAIT_OBJECT_0)
+	return freerdp_shall_disconnect_context(instance->context);
+}
+
+BOOL freerdp_shall_disconnect_context(rdpContext* context)
+{
+	if (!context)
 		return FALSE;
 
-	return TRUE;
+	return utils_abort_event_is_set(context->rdp);
 }
 
 BOOL freerdp_focus_required(freerdp* instance)
@@ -682,10 +696,6 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 	}
 
 	update_register_client_callbacks(rdp->update);
-	instance->context->abortEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	if (!instance->context->abortEvent)
-		goto fail;
 
 	if (!(context->channels = freerdp_channels_new(instance)))
 		goto fail;
@@ -694,7 +704,7 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 	if (!context->dump)
 		goto fail;
 
-	IFCALLRET(instance->ContextNew, ret, instance, instance->context);
+	IFCALLRET(instance->ContextNew, ret, instance, context);
 
 	if (ret)
 		return TRUE;
@@ -744,10 +754,6 @@ void freerdp_context_free(freerdp* instance)
 
 	free(ctx->errorDescription);
 	ctx->errorDescription = NULL;
-
-	if (ctx->abortEvent)
-		CloseHandle(ctx->abortEvent);
-	ctx->abortEvent = NULL;
 
 	freerdp_channels_free(ctx->channels);
 	ctx->channels = NULL;

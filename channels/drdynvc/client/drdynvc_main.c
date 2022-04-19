@@ -952,7 +952,7 @@ static UINT drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, i
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_INIT_HANDLE;
 
-	if (Stream_GetRemainingLength(s) < 3)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 3))
 		return ERROR_INVALID_DATA;
 
 	WLog_Print(drdynvc->log, WLOG_TRACE, "capability_request Sp=%d cbChId=%d", Sp, cbChId);
@@ -964,7 +964,7 @@ static UINT drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, i
 	 */
 	if ((drdynvc->version == 2) || (drdynvc->version == 3))
 	{
-		if (Stream_GetRemainingLength(s) < 8)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT16(s, drdynvc->PriorityCharge0);
@@ -1054,7 +1054,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int c
 		drdynvc->state = DRDYNVC_STATE_READY;
 	}
 
-	if (Stream_GetRemainingLength(s) < drdynvc_cblen_to_bytes(cbChId))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, drdynvc_cblen_to_bytes(cbChId)))
 		return ERROR_INVALID_DATA;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
@@ -1131,7 +1131,8 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
 	UINT32 Length;
 	UINT32 ChannelId;
 
-	if (Stream_GetRemainingLength(s) < drdynvc_cblen_to_bytes(cbChId) + drdynvc_cblen_to_bytes(Sp))
+	if (!Stream_CheckAndLogRequiredLength(
+	        TAG, s, drdynvc_cblen_to_bytes(cbChId) + drdynvc_cblen_to_bytes(Sp)))
 		return ERROR_INVALID_DATA;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
@@ -1162,7 +1163,7 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wSt
 	UINT32 ChannelId;
 	UINT status;
 
-	if (Stream_GetRemainingLength(s) < drdynvc_cblen_to_bytes(cbChId))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, drdynvc_cblen_to_bytes(cbChId)))
 		return ERROR_INVALID_DATA;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
@@ -1187,7 +1188,7 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	UINT error;
 	UINT32 ChannelId;
 
-	if (Stream_GetRemainingLength(s) < drdynvc_cblen_to_bytes(cbChId))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, drdynvc_cblen_to_bytes(cbChId)))
 		return ERROR_INVALID_DATA;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
@@ -1214,7 +1215,7 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 Thread
 	int Sp;
 	int cbChId;
 
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT8(s, value);
