@@ -108,7 +108,7 @@ BOOL freerdp_connect(freerdp* instance)
 	if (settings->KeyboardLayout == KBD_JAPANESE ||
 	    settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
 	{
-		settings->KeyboardType = 7;
+		settings->KeyboardType = KBD_TYPE_JAPANESE;
 		settings->KeyboardSubType = 2;
 		settings->KeyboardFunctionKey = 12;
 	}
