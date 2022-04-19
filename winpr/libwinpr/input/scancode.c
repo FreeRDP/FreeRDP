@@ -133,7 +133,7 @@ DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 
 DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 {
-	size_t i;
+	DWORD i;
 	DWORD scancode;
 	DWORD codeIndex;
 

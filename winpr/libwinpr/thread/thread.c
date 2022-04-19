@@ -177,6 +177,7 @@ static HANDLE_OPS ops = { ThreadIsHandled,
 	                      NULL,
 	                      NULL,
 	                      NULL,
+	                      NULL,
 	                      NULL };
 
 static void dump_thread(WINPR_THREAD* thread)

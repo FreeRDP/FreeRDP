@@ -2967,7 +2967,7 @@ static int input_message_process_input_class(rdpInputProxy* proxy, wMessage* msg
 
 		case Input_KeyboardEvent:
 			IFCALL(proxy->KeyboardEvent, msg->context, (UINT16)(size_t)msg->wParam,
-			       (UINT16)(size_t)msg->lParam);
+			       (UINT8)(size_t)msg->lParam);
 			break;
 
 		case Input_UnicodeKeyboardEvent:

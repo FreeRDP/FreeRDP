@@ -1177,7 +1177,8 @@ static HANDLE_OPS ops = { CommIsHandled, CommCloseHandle,
 	                      NULL,          NULL,
 	                      NULL,          NULL,
 	                      NULL,          NULL,
-	                      NULL,          NULL };
+	                      NULL,          NULL,
+	                      NULL };
 
 /**
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363198%28v=vs.85%29.aspx

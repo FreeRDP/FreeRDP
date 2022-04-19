@@ -129,6 +129,7 @@ static HANDLE_OPS ops = { SemaphoreIsHandled,
 	                      NULL,
 	                      NULL,
 	                      NULL,
+	                      NULL,
 	                      NULL };
 
 HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount,
