@@ -96,14 +96,15 @@ static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 		if (event->type == EVENT_TYPE_KEY)
 		{
 			ANDROID_EVENT_KEY* key_event = (ANDROID_EVENT_KEY*)event;
-			context->input->KeyboardEvent(context->input, key_event->flags, key_event->scancode);
+			freerdp_input_send_keyboard_event(context->input, key_event->flags,
+			                                  key_event->scancode);
 			android_event_free((ANDROID_EVENT*)key_event);
 		}
 		else if (event->type == EVENT_TYPE_KEY_UNICODE)
 		{
 			ANDROID_EVENT_KEY* key_event = (ANDROID_EVENT_KEY*)event;
-			context->input->UnicodeKeyboardEvent(context->input, key_event->flags,
-			                                     key_event->scancode);
+			freerdp_input_send_keyboard_event(context->input, key_event->flags,
+			                                  key_event->scancode);
 			android_event_free((ANDROID_EVENT*)key_event);
 		}
 		else if (event->type == EVENT_TYPE_CURSOR)

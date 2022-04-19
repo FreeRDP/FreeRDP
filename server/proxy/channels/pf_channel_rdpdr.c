@@ -1715,3 +1715,48 @@ BOOL pf_channel_rdpdr_client_reset(pClientContext* pc)
 
 	return TRUE;
 }
+
+static PfChannelResult pf_rdpdr_back_data(proxyData* pdata, const pServerChannelContext* channel,
+            const BYTE* xdata, size_t xsize, UINT32 flags,
+            size_t totalSize)
+{
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
+
+	if (!pf_channel_rdpdr_client_handle(pdata->pc, channel->channel_id, channel->channel_name, xdata, xsize, flags, totalSize))
+	{
+		WLog_ERR(TAG, "error treating client back data");
+		return PF_CHANNEL_RESULT_ERROR;
+	}
+	return PF_CHANNEL_RESULT_PASS;
+}
+
+static PfChannelResult pf_rdpdr_front_data(proxyData* pdata, const pServerChannelContext* channel,
+            const BYTE* xdata, size_t xsize, UINT32 flags,
+            size_t totalSize)
+{
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
+
+	if (!pf_channel_rdpdr_server_handle(pdata->ps, channel->channel_id, channel->channel_name, xdata, xsize, flags, totalSize))
+	{
+		WLog_ERR(TAG, "error treating front data");
+		return PF_CHANNEL_RESULT_ERROR;
+
+	}
+	return PF_CHANNEL_RESULT_PASS;
+}
+
+BOOL pf_channel_setup_rdpdr(pServerContext* ps, pServerChannelContext* channel)
+{
+	channel->onBackData = pf_rdpdr_back_data;
+	channel->onFrontData = pf_rdpdr_front_data;
+
+	if (!pf_channel_rdpdr_server_new(ps))
+		return FALSE;
+	if (!pf_channel_rdpdr_server_announce(ps))
+		return FALSE;
+
+	return TRUE;
+}
+

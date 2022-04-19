@@ -37,16 +37,16 @@
 
 static UINT32 ChannelId_Hash(const void* key)
 {
-	const UINT32* v = (const UINT32*)key;
-	return *v;
+	const UINT64* v = (const UINT64*)key;
+	return (*v & 0xFFFFFFFF) + (*v >> 32);
 }
 
-static BOOL ChannelId_Compare(const UINT32* v1, const UINT32* v2)
+static BOOL ChannelId_Compare(const UINT64* v1, const UINT64* v2)
 {
 	return (*v1 == *v2);
 }
 
-pServerChannelContext* ChannelContext_new(pServerContext* ps, const char* name, UINT32 id)
+pServerChannelContext* ChannelContext_new(pServerContext* ps, const char* name, UINT64 id)
 {
 	pServerChannelContext* ret = calloc(1, sizeof(*ret));
 	if (!ret)
@@ -55,6 +55,7 @@ pServerChannelContext* ChannelContext_new(pServerContext* ps, const char* name, 
 		return NULL;
 	}
 
+	ret->openStatus = CHANNEL_OPENSTATE_OPENED;
 	ret->channel_id = id;
 	ret->channel_name = _strdup(name);
 	if (!ret->channel_name)
@@ -72,6 +73,8 @@ void ChannelContext_free(pServerChannelContext* ctx)
 {
 	if (!ctx)
 		return;
+
+	IFCALL(ctx->contextDtor,ctx->context);
 
 	free(ctx->channel_name);
 	free(ctx);

@@ -75,7 +75,7 @@ typedef BOOL (*pfnShadowClientCapabilities)(rdpShadowSubsystem* subsystem, rdpSh
 typedef BOOL (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
                                           UINT32 flags);
 typedef BOOL (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
-                                       UINT16 flags, UINT16 code);
+                                       UINT16 flags, UINT8 code);
 typedef BOOL (*pfnShadowUnicodeKeyboardEvent)(rdpShadowSubsystem* subsystem,
                                               rdpShadowClient* client, UINT16 flags, UINT16 code);
 typedef BOOL (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,

@@ -526,6 +526,7 @@ static HANDLE_OPS ops = { ProcessHandleIsHandle,
 	                      NULL,
 	                      NULL,
 	                      NULL,
+	                      NULL,
 	                      NULL };
 
 HANDLE CreateProcessHandle(pid_t pid)

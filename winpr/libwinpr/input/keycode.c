@@ -598,7 +598,7 @@ DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags)
 
 DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, DWORD dwFlags)
 {
-	int index;
+	DWORD index;
 	DWORD keycode = 0;
 
 	if (dwFlags & KEYCODE_TYPE_APPLE)

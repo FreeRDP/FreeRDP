@@ -73,6 +73,7 @@ static HANDLE_OPS ops = { NoneHandleIsHandle,
 	                      NULL,
 	                      NULL,
 	                      NULL,
+	                      NULL,
 	                      NULL };
 
 HANDLE CreateNoneHandle()

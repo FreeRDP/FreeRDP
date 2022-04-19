@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCM_URL=https://github.com/FFmpeg/FFmpeg
+SCM_URL=https://github.com/FFmpeg/FFmpeg/archive
 SCM_TAG=n4.4.1
 
 OLD_PATH=$PATH
