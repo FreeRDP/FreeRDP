@@ -2291,8 +2291,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			if (_stricmp(arg->Value, "rpc") == 0)
 			{
-				settings->GatewayRpcTransport = TRUE;
-				settings->GatewayHttpTransport = FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, TRUE) ||
+				    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, FALSE) ||
+				    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, FALSE))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 			else
 			{
@@ -2301,21 +2303,24 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				{
 					*c++ = '\0';
 					if (_stricmp(c, "no-websockets") != 0)
-					{
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					}
-					freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, FALSE);
+
+					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets,
+					                               FALSE))
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
 
 				if (_stricmp(arg->Value, "http") == 0)
 				{
-					settings->GatewayRpcTransport = FALSE;
-					settings->GatewayHttpTransport = TRUE;
+					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, FALSE) ||
+					    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, TRUE))
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
 				else if (_stricmp(arg->Value, "auto") == 0)
 				{
-					settings->GatewayRpcTransport = TRUE;
-					settings->GatewayHttpTransport = TRUE;
+					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, TRUE) ||
+					    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, TRUE))
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
 			}
 		}
