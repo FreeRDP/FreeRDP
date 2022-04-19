@@ -211,6 +211,5 @@ BOOL utils_abort_event_is_set(rdpRdp* rdp)
 	DWORD status;
 	WINPR_ASSERT(rdp);
 	status = WaitForSingleObject(rdp->abortEvent, 0);
-	WINPR_ASSERT(status != WAIT_ABANDONED);
 	return status == WAIT_OBJECT_0;
 }

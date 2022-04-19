@@ -238,14 +238,17 @@ freerdp_connect_finally:
 
 BOOL freerdp_abort_connect(freerdp* instance)
 {
-	WINPR_ASSERT(instance);
+	if (!instance)
+		return FALSE;
 
 	return freerdp_abort_connect_context(instance->context);
 }
 
 BOOL freerdp_abort_connect_context(rdpContext* context)
 {
-	WINPR_ASSERT(context);
+	if (!context)
+		return FALSE;
+
 	freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
 
 	return utils_abort_connect(context->rdp);
@@ -532,13 +535,16 @@ BOOL freerdp_reconnect(freerdp* instance)
 
 BOOL freerdp_shall_disconnect(freerdp* instance)
 {
-	WINPR_ASSERT(instance);
+	if (!instance)
+		return FALSE;
+
 	return freerdp_shall_disconnect_context(instance->context);
 }
 
 BOOL freerdp_shall_disconnect_context(rdpContext* context)
 {
-	WINPR_ASSERT(context);
+	if (!context)
+		return FALSE;
 
 	return utils_abort_event_is_set(context->rdp);
 }
