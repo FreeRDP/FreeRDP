@@ -9,6 +9,7 @@ Fixed issues:
 * Backported #7714: Workaround for broken surface frame marker
 * Backported #7733: Support 10bit X11 color (BGRX32 only)
 * Backported #7745: GFX progressive double free
+* Backported #7808: Disable websockets with /gt:rpc
 
 Important notes:
 
