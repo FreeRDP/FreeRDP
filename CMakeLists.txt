@@ -979,8 +979,6 @@ if(WITH_SERVER)
 	add_subdirectory(server)
 endif()
 
-add_subdirectory(include)
-
 # Packaging
 
 set(CMAKE_CPACK_INCLUDE_FILE "CMakeCPack.cmake")
@@ -995,21 +993,24 @@ endif()
 
 #message("VENDOR: ${VENDOR} CLIENT_VENDOR_PATH: ${CLIENT_VENDOR_PATH} CMAKE_CPACK_INCLUDE_FILE: ${CMAKE_CPACK_INCLUDE_FILE}")
 
-include(${CMAKE_CPACK_INCLUDE_FILE})
-
 set(FREERDP_BUILD_CONFIG_LIST "")
 GET_CMAKE_PROPERTY(res VARIABLES)
 FOREACH(var ${res})
-	IF (var MATCHES "^WITH_*|^BUILD_TESTING|^HAVE_*")
-		LIST(APPEND FREERDP_BUILD_CONFIG_LIST "${var}=${${var}}")
-	ENDIF()
+        IF (var MATCHES "^WITH_*|^BUILD_TESTING|^HAVE_*")
+                LIST(APPEND FREERDP_BUILD_CONFIG_LIST "${var}=${${var}}")
+        ENDIF()
 ENDFOREACH()
 string(REPLACE ";" " " FREERDP_BUILD_CONFIG "${FREERDP_BUILD_CONFIG_LIST}")
+
+add_subdirectory(include)
+
+include(${CMAKE_CPACK_INCLUDE_FILE})
 
 message(STATUS "Intrinsic path configuration:")
 #ShowCMakeVars("^CMAKE_INSTALL_PREFIX")
 #ShowCMakeVars("^CMAKE_INSTALL_LIBDIR")
 ShowCMakeVars("^FREERDP_INSTALL_PREFIX|^FREERDP_LIBRARY_PATH|^FREERDP_PLUGIN_PATH")
 ShowCMakeVars("^FREERDP_ADDIN_PATH|^FREERDP_EXTENSION_PATH|^FREERDP_PROXY_PLUGINDIR")
+
 
 
