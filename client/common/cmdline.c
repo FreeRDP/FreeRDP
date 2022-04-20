@@ -2112,8 +2112,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "g")
 		{
-			free(settings->GatewayHostname);
-
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
 				char* p;
@@ -2132,11 +2130,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					s = (size_t)(p - arg->Value);
 					settings->GatewayPort = (UINT32)val;
 
-					if (!(settings->GatewayHostname = (char*)calloc(s + 1UL, sizeof(char))))
+					if (!freerdp_settings_set_string_len(settings, FreeRDP_GatewayHostname,
+					                                     arg->Value, s))
 						return COMMAND_LINE_ERROR_MEMORY;
-
-					strncpy(settings->GatewayHostname, arg->Value, s);
-					settings->GatewayHostname[s] = '\0';
 				}
 				else
 				{
