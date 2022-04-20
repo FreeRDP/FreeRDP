@@ -25,10 +25,16 @@
 #include <freerdp/codec/audio.h>
 #include <freerdp/codec/dsp.h>
 
-struct S_FREERDP_DSP_COMMON_CONTEXT
+typedef struct
 {
-	wStream* buffer;
-	wStream* resample;
-};
+	ALIGN64 AUDIO_FORMAT format;
+	ALIGN64 BOOL encoder;
+	ALIGN64 wStream* buffer;
+	ALIGN64 wStream* resample;
+	ALIGN64 wStream* channelmix;
+} FREERDP_DSP_COMMON_CONTEXT;
+
+BOOL freerdp_dsp_common_context_init(FREERDP_DSP_COMMON_CONTEXT* context, BOOL encode);
+void freerdp_dsp_common_context_uninit(FREERDP_DSP_COMMON_CONTEXT* context);
 
 #endif /* FREERDP_LIB_CODEC_DSP_H */
