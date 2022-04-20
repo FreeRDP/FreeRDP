@@ -116,7 +116,7 @@ foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
     add_subdirectory(${${MODULE_PREFIX}_SUBMODULE})
 endforeach()
 
-if (NOT WITH_DSP_FFMPEG AND NOT WITH_FAAC)
+if (NOT WITH_DSP_FFMPEG AND NOT WITH_FAAC AND NOT WITH_FDK_AAC)
     message(WARNING "Compiling without WITH_DSP_FFMPEG and WITH_FAAC, AAC encoder support disabled")
 endif ()
 
@@ -170,6 +170,24 @@ set(CODEC_SSE2_SRCS
 set(CODEC_NEON_SRCS
     codec/rfx_neon.c
     codec/rfx_neon.h)
+
+option(WITH_FDK_AAC "Enable FDK_AAC support" OFF)
+if (WITH_FDK_AAC)
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(FDK_AAC REQUIRED fdk-aac)
+
+	add_definitions(-DWITH_FDK_AAC)
+	include_directories(${FDK_AAC_INCLUDE_DIRS})
+
+	link_directories(${FDK_AAC_LIBRARY_DIRS})
+  freerdp_library_add(${FDK_AAC_LIBRARIES})
+
+	list(APPEND CODEC_SRCS
+    codec/dsp_fdk_impl.c
+    codec/dsp_fdk_impl.h
+    codec/dsp_fdk_aac.c
+    codec/dsp_fdk_aac.h)
+endif()
 
 if(WITH_SSE2)
     set(CODEC_SRCS ${CODEC_SRCS} ${CODEC_SSE2_SRCS})

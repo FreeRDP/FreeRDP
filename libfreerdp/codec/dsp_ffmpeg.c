@@ -40,10 +40,9 @@
 
 struct S_FREERDP_DSP_CONTEXT
 {
-	AUDIO_FORMAT format;
+	FREERDP_DSP_COMMON_CONTEXT common;
 
 	BOOL isOpen;
-	BOOL encoder;
 
 	UINT32 bufferedSamples;
 
@@ -59,7 +58,6 @@ struct S_FREERDP_DSP_CONTEXT
 #else
 	AVAudioResampleContext* rcontext;
 #endif
-	wStream* channelmix;
 };
 
 static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, BOOL encoder)
@@ -230,7 +228,7 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
 	if (!context || context->isOpen)
 		return FALSE;
 
-	format = &context->format;
+	format = &context->common.format;
 
 	if (!format)
 		return FALSE;
@@ -238,10 +236,10 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
 	layout = av_get_default_channel_layout(format->nChannels);
 	context->id = ffmpeg_get_avcodec(format);
 
-	if (ffmpeg_codec_is_filtered(context->id, context->encoder))
+	if (ffmpeg_codec_is_filtered(context->id, context->common.encoder))
 		goto fail;
 
-	if (context->encoder)
+	if (context->common.encoder)
 		context->codec = avcodec_find_encoder(context->id);
 	else
 		context->codec = avcodec_find_decoder(context->id);
@@ -320,7 +318,7 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
 	context->frame->sample_rate = format->nSamplesPerSec;
 	context->frame->format = AV_SAMPLE_FMT_S16;
 
-	if (context->encoder)
+	if (context->common.encoder)
 	{
 		context->resampled->format = context->context->sample_fmt;
 		context->resampled->sample_rate = context->context->sample_rate;
@@ -578,16 +576,16 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_ffmpeg_context_new(BOOL encode)
 	context = calloc(1, sizeof(FREERDP_DSP_CONTEXT));
 
 	if (!context)
-		return NULL;
+		goto fail;
 
-	context->channelmix = Stream_New(NULL, 1024);
-	if (!context->channelmix)
-	{
-		freerdp_dsp_ffmpeg_context_free(context);
-		return NULL;
-	}
-	context->encoder = encode;
+	if (!freerdp_dsp_common_context_init(&context->common, encode))
+		goto fail;
+
 	return context;
+
+fail:
+	freerdp_dsp_ffmpeg_context_free(context);
+	return NULL;
 }
 
 void freerdp_dsp_ffmpeg_context_free(FREERDP_DSP_CONTEXT* context)
@@ -595,7 +593,7 @@ void freerdp_dsp_ffmpeg_context_free(FREERDP_DSP_CONTEXT* context)
 	if (context)
 	{
 		ffmpeg_close_context(context);
-		Stream_Free(context->channelmix, TRUE);
+		freerdp_dsp_common_context_uninit(&context->common);
 		free(context);
 	}
 }
@@ -607,7 +605,7 @@ BOOL freerdp_dsp_ffmpeg_context_reset(FREERDP_DSP_CONTEXT* context,
 		return FALSE;
 
 	ffmpeg_close_context(context);
-	context->format = *targetFormat;
+	context->common.format = *targetFormat;
 	return ffmpeg_open_context(context);
 }
 
@@ -629,36 +627,36 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 	samples = size / bpp / srcFormat->nChannels;
 
 	*dstFormat = *srcFormat;
-	if (context->format.nChannels == srcFormat->nChannels)
+	if (context->common.format.nChannels == srcFormat->nChannels)
 	{
 		*data = src;
 		*length = size;
 		return TRUE;
 	}
 
-	Stream_SetPosition(context->channelmix, 0);
+	Stream_SetPosition(context->common.channelmix, 0);
 
 	/* Destination has more channels than source */
-	if (context->format.nChannels > srcFormat->nChannels)
+	if (context->common.format.nChannels > srcFormat->nChannels)
 	{
 		switch (srcFormat->nChannels)
 		{
 			case 1:
-				if (!Stream_EnsureCapacity(context->channelmix, size * 2))
+				if (!Stream_EnsureCapacity(context->common.channelmix, size * 2))
 					return FALSE;
 
 				for (x = 0; x < samples; x++)
 				{
 					for (y = 0; y < bpp; y++)
-						Stream_Write_UINT8(context->channelmix, src[x * bpp + y]);
+						Stream_Write_UINT8(context->common.channelmix, src[x * bpp + y]);
 
 					for (y = 0; y < bpp; y++)
-						Stream_Write_UINT8(context->channelmix, src[x * bpp + y]);
+						Stream_Write_UINT8(context->common.channelmix, src[x * bpp + y]);
 				}
 
-				Stream_SealLength(context->channelmix);
-				*data = Stream_Buffer(context->channelmix);
-				*length = Stream_Length(context->channelmix);
+				Stream_SealLength(context->common.channelmix);
+				*data = Stream_Buffer(context->common.channelmix);
+				*length = Stream_Length(context->common.channelmix);
 				dstFormat->nChannels = 2;
 				return TRUE;
 
@@ -674,7 +672,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 	switch (srcFormat->nChannels)
 	{
 		case 2:
-			if (!Stream_EnsureCapacity(context->channelmix, size / 2))
+			if (!Stream_EnsureCapacity(context->common.channelmix, size / 2))
 				return FALSE;
 
 			/* Simply drop second channel.
@@ -682,12 +680,12 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 			for (x = 0; x < samples; x++)
 			{
 				for (y = 0; y < bpp; y++)
-					Stream_Write_UINT8(context->channelmix, src[2 * x * bpp + y]);
+					Stream_Write_UINT8(context->common.channelmix, src[2 * x * bpp + y]);
 			}
 
-			Stream_SealLength(context->channelmix);
-			*data = Stream_Buffer(context->channelmix);
-			*length = Stream_Length(context->channelmix);
+			Stream_SealLength(context->common.channelmix);
+			*data = Stream_Buffer(context->common.channelmix);
+			*length = Stream_Length(context->common.channelmix);
 			dstFormat->nChannels = 1;
 			return TRUE;
 
@@ -707,7 +705,7 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 	int rc;
 	AUDIO_FORMAT fmt = { 0 };
 
-	if (!context || !format || !data || !out || !context->encoder)
+	if (!context || !format || !data || !out || !context->common.encoder)
 		return FALSE;
 
 	if (!context || !data || !out)
@@ -772,7 +770,7 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
                                const BYTE* data, size_t length, wStream* out)
 {
-	if (!context || !srcFormat || !data || !out || context->encoder)
+	if (!context || !srcFormat || !data || !out || context->common.encoder)
 		return FALSE;
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
