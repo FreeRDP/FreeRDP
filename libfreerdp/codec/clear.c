@@ -1016,13 +1016,17 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 	}
 
 	/* Read composition payload header parameters */
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
+	if (Stream_GetRemainingLength(s) < 12)
 	{
 		const UINT32 mask = (CLEARCODEC_FLAG_GLYPH_HIT | CLEARCODEC_FLAG_GLYPH_INDEX);
 
 		if ((glyphFlags & mask) == mask)
 			goto finish;
 
+		WLog_ERR(TAG,
+		         "invalid glyphFlags, missing flags: 0x%0x" PRIx8 " & 0x%02" PRIx32
+		         " == 0x%02" PRIx32,
+		         glyphFlags, mask, glyphFlags & mask);
 		goto fail;
 	}
 
