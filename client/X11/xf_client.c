@@ -1384,7 +1384,10 @@ static int xf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	const char* str_data = freerdp_get_logon_error_info_data(data);
 	const char* str_type = freerdp_get_logon_error_info_type(type);
 	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
-	xf_rail_disable_remoteapp_mode(xfc);
+	if(type != LOGON_MSG_SESSION_CONTINUE)
+	{
+	    xf_rail_disable_remoteapp_mode(xfc);
+	}
 	return 1;
 }
 
