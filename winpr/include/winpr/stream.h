@@ -27,6 +27,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/endian.h>
 #include <winpr/synch.h>
+#include <winpr/assert.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -55,6 +56,19 @@ extern "C"
 	WINPR_API wStream* Stream_New(BYTE* buffer, size_t size);
 	WINPR_API void Stream_StaticInit(wStream* s, BYTE* buffer, size_t size);
 	WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
+
+#define Stream_CheckAndLogRequiredLength(tag, s, len)                                     \
+	Stream_CheckAndLogRequiredLengthEx(tag, WLOG_WARN, s, len, "%s(%s:%d)", __FUNCTION__, \
+	                                   __FILE__, __LINE__)
+	WINPR_API BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, DWORD level, wStream* s,
+	                                                  UINT64 len, const char* fmt, ...);
+	WINPR_API BOOL Stream_CheckAndLogRequiredLengthExVa(const char* tag, DWORD level, wStream* s,
+	                                                    UINT64 len, const char* fmt, va_list args);
+	WINPR_API BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s,
+	                                                      UINT64 len, const char* fmt, ...);
+	WINPR_API BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s,
+	                                                        UINT64 len, const char* fmt,
+	                                                        va_list args);
 
 	static INLINE void Stream_Seek(wStream* s, size_t _offset)
 	{
