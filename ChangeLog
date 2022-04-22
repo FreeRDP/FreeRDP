@@ -10,6 +10,7 @@ Fixed issues:
 * Backported #7733: Support 10bit X11 color (BGRX32 only)
 * Backported #7745: GFX progressive double free
 * Backported #7808: Disable websockets with /gt:rpc
+* Backported #7815: RAIL expect LOGON_MSG_SESSION_CONTINUE
 
 Important notes:
 
