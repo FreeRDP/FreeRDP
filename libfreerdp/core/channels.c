@@ -134,7 +134,7 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, si
 		         chunkLength);
 		return FALSE;
 	}
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
+	if (length < chunkLength)
 	{
 		WLog_ERR(TAG, "Expected %" PRIu32 " bytes, but have %" PRIdz, length, chunkLength);
 		return FALSE;
