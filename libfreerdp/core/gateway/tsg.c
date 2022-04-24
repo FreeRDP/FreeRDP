@@ -2708,7 +2708,14 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 				status = 1;
 		}
 		break;
-
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+		case BIO_CTRL_GET_KTLS_SEND:
+			status = 0;
+			break;
+		case BIO_CTRL_GET_KTLS_RECV:
+			status = 0;
+			break;
+#endif
 		default:
 			break;
 	}

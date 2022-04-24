@@ -2407,7 +2407,23 @@ static long rdg_bio_ctrl(BIO* in_bio, int cmd, long arg1, void* arg2)
 		 */
 		status = BIO_ctrl(tlsOut->bio, cmd, arg1, arg2);
 	}
-
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	else if (cmd == BIO_CTRL_GET_KTLS_SEND)
+	{
+		/* Even though BIO_get_ktls_send says that returning negative values is valid
+		 * openssl internal sources are full of if(!BIO_get_ktls_send && ) stuff. This has some
+		 * nasty sideeffects. return 0 as proper no KTLS offloading flag
+		 */
+		status = 0;
+	}
+	else if (cmd == BIO_CTRL_GET_KTLS_RECV)
+	{
+		/* Even though BIO_get_ktls_recv says that returning negative values is valid
+		 * there is no reason to trust  trust negative values are implemented right everywhere
+		 */
+		status = 0;
+	}
+#endif
 	return status;
 }
 
