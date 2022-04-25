@@ -186,30 +186,26 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	int status = -1;
 	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*)BIO_get_data(bio);
 
-	if (cmd == BIO_C_SET_SOCKET)
+	switch (cmd)
 	{
-		transport_bio_simple_uninit(bio);
-		transport_bio_simple_init(bio, (SOCKET)arg2, (int)arg1);
-		return 1;
-	}
-	else if (cmd == BIO_C_GET_SOCKET)
-	{
-		if (!BIO_get_init(bio) || !arg2)
-			return 0;
+		case BIO_C_SET_SOCKET:
+			transport_bio_simple_uninit(bio);
+			transport_bio_simple_init(bio, (SOCKET)arg2, (int)arg1);
+			return 1;
+		case BIO_C_GET_SOCKET:
+			if (!BIO_get_init(bio) || !arg2)
+				return 0;
 
-		*((SOCKET*)arg2) = ptr->socket;
-		return 1;
-	}
-	else if (cmd == BIO_C_GET_EVENT)
-	{
-		if (!BIO_get_init(bio) || !arg2)
-			return 0;
+			*((SOCKET*)arg2) = ptr->socket;
+			return 1;
+		case BIO_C_GET_EVENT:
+			if (!BIO_get_init(bio) || !arg2)
+				return 0;
 
-		*((HANDLE*)arg2) = ptr->hEvent;
-		return 1;
-	}
-	else if (cmd == BIO_C_SET_NONBLOCK)
-	{
+			*((HANDLE*)arg2) = ptr->hEvent;
+			return 1;
+		case BIO_C_SET_NONBLOCK:
+		{
 #ifndef _WIN32
 		int flags;
 		flags = fcntl((int)ptr->socket, F_GETFL);
@@ -226,11 +222,11 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		/* the internal socket is always non-blocking */
 #endif
 		return 1;
-	}
-	else if (cmd == BIO_C_WAIT_READ)
-	{
-		int timeout = (int)arg1;
-		int sockfd = (int)ptr->socket;
+		}
+		case BIO_C_WAIT_READ:
+		{
+			int timeout = (int)arg1;
+			int sockfd = (int)ptr->socket;
 #ifdef HAVE_POLL_H
 		struct pollfd pollset;
 		pollset.fd = sockfd;
@@ -260,11 +256,12 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		} while ((status < 0) && (errno == EINTR));
 
 #endif
-	}
-	else if (cmd == BIO_C_WAIT_WRITE)
-	{
-		int timeout = (int)arg1;
-		int sockfd = (int)ptr->socket;
+		}
+		break;
+		case BIO_C_WAIT_WRITE:
+		{
+			int timeout = (int)arg1;
+			int sockfd = (int)ptr->socket;
 #ifdef HAVE_POLL_H
 		struct pollfd pollset;
 		pollset.fd = sockfd;
@@ -294,6 +291,10 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		} while ((status < 0) && (errno == EINTR));
 
 #endif
+		}
+		break;
+		default:
+			break;
 	}
 
 	switch (cmd)
@@ -563,7 +564,7 @@ static int transport_bio_buffered_gets(BIO* bio, char* str, int size)
 
 static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
-	int status = -1;
+	long status = -1;
 	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*)BIO_get_data(bio);
 
 	switch (cmd)
