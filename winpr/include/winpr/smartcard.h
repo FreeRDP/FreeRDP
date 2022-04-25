@@ -619,9 +619,9 @@ extern "C"
 {
 #endif
 
-	extern const SCARD_IO_REQUEST g_rgSCardT0Pci;
-	extern const SCARD_IO_REQUEST g_rgSCardT1Pci;
-	extern const SCARD_IO_REQUEST g_rgSCardRawPci;
+	WINPR_API extern const SCARD_IO_REQUEST g_rgSCardT0Pci;
+	WINPR_API extern const SCARD_IO_REQUEST g_rgSCardT1Pci;
+	WINPR_API extern const SCARD_IO_REQUEST g_rgSCardRawPci;
 
 #define SCARD_PCI_T0 (&g_rgSCardT0Pci)
 #define SCARD_PCI_T1 (&g_rgSCardT1Pci)
