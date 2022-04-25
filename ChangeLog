@@ -1,6 +1,7 @@
 # 2022-XX-YY Version 2.X.Y
 
 Noteworthy changes:
+* Backported OpenSSL3 gateway support (#7822)
 * Backported various NTLM fixes
 * Backported WINPR_ASSERT to ease future backports
 
