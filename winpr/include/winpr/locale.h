@@ -484,13 +484,13 @@ extern "C"
 {
 #endif
 
-	DWORD WINAPI FormatMessageA(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId,
-	                            DWORD dwLanguageId, LPSTR lpBuffer, DWORD nSize,
-	                            va_list* Arguments);
+	WINPR_API DWORD WINAPI FormatMessageA(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId,
+	                                      DWORD dwLanguageId, LPSTR lpBuffer, DWORD nSize,
+	                                      va_list* Arguments);
 
-	DWORD WINAPI FormatMessageW(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId,
-	                            DWORD dwLanguageId, LPWSTR lpBuffer, DWORD nSize,
-	                            va_list* Arguments);
+	WINPR_API DWORD WINAPI FormatMessageW(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId,
+	                                      DWORD dwLanguageId, LPWSTR lpBuffer, DWORD nSize,
+	                                      va_list* Arguments);
 
 #ifdef UNICODE
 #define FormatMessage FormatMessageW
