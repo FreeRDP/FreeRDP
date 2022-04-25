@@ -89,9 +89,9 @@ extern "C"
 	                                            DWORD* PublicKeyLength);
 
 #define TSSK_KEY_LENGTH 64
-	extern const BYTE tssk_modulus[];
-	extern const BYTE tssk_privateExponent[];
-	extern const BYTE tssk_exponent[];
+	WINPR_API extern const BYTE tssk_modulus[];
+	WINPR_API extern const BYTE tssk_privateExponent[];
+	WINPR_API extern const BYTE tssk_exponent[];
 
 	FREERDP_API SSIZE_T crypto_rsa_public_encrypt(const BYTE* input, size_t length,
 	                                              size_t key_length, const BYTE* modulus,

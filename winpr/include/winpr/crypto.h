@@ -482,8 +482,8 @@ typedef const CERT_CONTEXT* PCCERT_CONTEXT;
 #define CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE \
 	(CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE_ID << CERT_SYSTEM_STORE_LOCATION_SHIFT)
 
-HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwMsgAndCertEncodingType,
-                         HCRYPTPROV_LEGACY hCryptProv, DWORD dwFlags, const void* pvPara);
+WINPR_API HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwMsgAndCertEncodingType,
+                                   HCRYPTPROV_LEGACY hCryptProv, DWORD dwFlags, const void* pvPara);
 
 WINPR_API HCERTSTORE CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv, LPCWSTR szSubsystemProtocol);
 WINPR_API HCERTSTORE CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv, LPCSTR szSubsystemProtocol);
@@ -607,15 +607,17 @@ extern "C"
 #define CRYPT_STRING_NOCRLF 0x40000000
 #define CRYPT_STRING_NOCR 0x80000000
 
-BOOL CryptStringToBinaryW(LPCWSTR pszString, DWORD cchString, DWORD dwFlags, BYTE* pbBinary,
-                          DWORD* pcbBinary, DWORD* pdwSkip, DWORD* pdwFlags);
-BOOL CryptStringToBinaryA(LPCSTR pszString, DWORD cchString, DWORD dwFlags, BYTE* pbBinary,
-                          DWORD* pcbBinary, DWORD* pdwSkip, DWORD* pdwFlags);
+WINPR_API BOOL CryptStringToBinaryW(LPCWSTR pszString, DWORD cchString, DWORD dwFlags,
+                                    BYTE* pbBinary, DWORD* pcbBinary, DWORD* pdwSkip,
+                                    DWORD* pdwFlags);
+WINPR_API BOOL CryptStringToBinaryA(LPCSTR pszString, DWORD cchString, DWORD dwFlags,
+                                    BYTE* pbBinary, DWORD* pcbBinary, DWORD* pdwSkip,
+                                    DWORD* pdwFlags);
 
-BOOL CryptBinaryToStringW(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, LPWSTR pszString,
-                          DWORD* pcchString);
-BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, LPSTR pszString,
-                          DWORD* pcchString);
+WINPR_API BOOL CryptBinaryToStringW(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags,
+                                    LPWSTR pszString, DWORD* pcchString);
+WINPR_API BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags,
+                                    LPSTR pszString, DWORD* pcchString);
 
 #ifdef UNICODE
 #define CryptStringToBinary CryptStringToBinaryW
