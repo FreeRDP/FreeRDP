@@ -766,7 +766,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 			 * Doing this here would inhibit the ability to restore a maximized window
 			 * that is minimized back to the maximized state
 			 */
-			xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
+			// xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
 			appWindow->is_mapped = TRUE;
 		}
 	}

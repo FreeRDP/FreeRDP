@@ -137,6 +137,9 @@ struct xf_app_window
 	BOOL is_transient;
 	xfLocalMove local_move;
 	BYTE rail_state;
+	BOOL maxVert;
+	BOOL maxHorz;
+	BOOL minimized;
 	BOOL rail_ignore_configure;
 };
 
