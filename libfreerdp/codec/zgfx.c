@@ -360,6 +360,17 @@ static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t 
 	return TRUE;
 }
 
+/* Allocate the buffers a bit larger.
+ *
+ * Due to optimizations some h264 decoders will read data beyond
+ * the actual available data, so ensure that it will never be a
+ * out of bounds read.
+ */
+static BYTE* aligned_zgfx_malloc(size_t size)
+{
+	return malloc(size + 64);
+}
+
 int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
                     UINT32* pDstSize, UINT32 flags)
 {
@@ -384,7 +395,7 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 		*ppDstData = NULL;
 
 		if (zgfx->OutputCount > 0)
-			*ppDstData = (BYTE*)malloc(zgfx->OutputCount);
+			*ppDstData = aligned_zgfx_malloc(zgfx->OutputCount);
 
 		if (!*ppDstData)
 			goto fail;
@@ -410,7 +421,7 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 		if (!Stream_CheckAndLogRequiredLength(TAG, stream, sizeof(UINT32) * segmentCount))
 			goto fail;
 
-		pConcatenated = (BYTE*)malloc(uncompressedSize);
+		pConcatenated = aligned_zgfx_malloc(uncompressedSize);
 
 		if (!pConcatenated)
 			goto fail;
