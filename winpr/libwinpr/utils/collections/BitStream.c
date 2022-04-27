@@ -107,8 +107,11 @@ void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length, U
 	{
 		const char* str = strs[buffer[i / 8]];
 		const int nbits = (length - i) > 8 ? 8 : (length - i);
-        pos += _snprintf(&pbuffer[pos], length - pos, "%.*s ", nbits, str);
+		const int rc = _snprintf(&pbuffer[pos], length - pos, "%.*s ", nbits, str);
+		if (rc < 0)
+			return;
 
+		pos += (size_t)rc;
 		if ((i % 64) == 0)
 		{
 			pos = 0;
