@@ -52,7 +52,7 @@
 
 static BOOL mf_Pointer_New(rdpContext *context, rdpPointer *pointer);
 static void mf_Pointer_Free(rdpContext *context, rdpPointer *pointer);
-static BOOL mf_Pointer_Set(rdpContext *context, const rdpPointer *pointer);
+static BOOL mf_Pointer_Set(rdpContext *context, rdpPointer *pointer);
 static BOOL mf_Pointer_SetNull(rdpContext *context);
 static BOOL mf_Pointer_SetDefault(rdpContext *context);
 static BOOL mf_Pointer_SetPosition(rdpContext *context, UINT32 x, UINT32 y);
@@ -1195,7 +1195,7 @@ void mf_Pointer_Free(rdpContext *context, rdpPointer *pointer)
 	}
 }
 
-BOOL mf_Pointer_Set(rdpContext *context, const rdpPointer *pointer)
+BOOL mf_Pointer_Set(rdpContext *context, rdpPointer *pointer)
 {
 	mfContext *mfc = (mfContext *)context;
 	MRDPView *view = (MRDPView *)mfc->view;

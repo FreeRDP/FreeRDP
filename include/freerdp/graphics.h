@@ -81,7 +81,7 @@ extern "C"
 
 	typedef BOOL (*pPointer_New)(rdpContext* context, rdpPointer* pointer);
 	typedef void (*pPointer_Free)(rdpContext* context, rdpPointer* pointer);
-	typedef BOOL (*pPointer_Set)(rdpContext* context, const rdpPointer* pointer);
+	typedef BOOL (*pPointer_Set)(rdpContext* context, rdpPointer* pointer);
 	typedef BOOL (*pPointer_SetNull)(rdpContext* context);
 	typedef BOOL (*pPointer_SetDefault)(rdpContext* context);
 	typedef BOOL (*pPointer_SetPosition)(rdpContext* context, UINT32 x, UINT32 y);

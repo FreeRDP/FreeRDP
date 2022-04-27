@@ -445,19 +445,13 @@ static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 #endif
 }
 
-static BOOL xf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
+static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 #ifdef WITH_XCURSOR
-	union
-	{
-		const rdpPointer* cpv;
-		rdpPointer* pv;
-	} cnv;
 	xfContext* xfc = (xfContext*)context;
 	Window handle = xf_Pointer_get_window(xfc);
 
-	cnv.cpv = pointer;
-	xfc->pointer = cnv.pv;
+	xfc->pointer = pointer;
 
 	/* in RemoteApp mode, window can be null if none has had focus */
 
