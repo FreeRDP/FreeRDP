@@ -739,24 +739,19 @@ static int test_MppcCompressBellsRdp5(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	UINT32 SrcSize;
-	const BYTE* pSrcData;
-	UINT32 DstSize;
-	BYTE* pDstData;
-	MPPC_CONTEXT* mppc;
-	UINT32 expectedSize;
-	BYTE OutputBuffer[65536];
-	mppc = mppc_context_new(1, TRUE);
+	BYTE OutputBuffer[65536] = { 0 };
+	const UINT32 SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
+	const BYTE* pSrcData = (const BYTE*)TEST_MPPC_BELLS;
+	UINT32 DstSize = sizeof(OutputBuffer);
+	const BYTE* pDstData = NULL;
+	const UINT32 expectedSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
+
+	MPPC_CONTEXT* mppc = mppc_context_new(1, TRUE);
 
 	if (!mppc)
 		return -1;
 
-	SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
-	pSrcData = (const BYTE*)TEST_MPPC_BELLS;
-	expectedSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
-	DstSize = sizeof(OutputBuffer);
-	pDstData = OutputBuffer;
-	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
+	status = mppc_compress(mppc, pSrcData, SrcSize, OutputBuffer, &pDstData, &DstSize, &Flags);
 
 	if (status < 0)
 		goto fail;
@@ -792,24 +787,18 @@ static int test_MppcCompressBellsRdp4(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	const BYTE* pSrcData;
-	UINT32 SrcSize;
-	UINT32 DstSize;
-	BYTE* pDstData;
-	MPPC_CONTEXT* mppc;
-	UINT32 expectedSize;
-	BYTE OutputBuffer[65536];
-	mppc = mppc_context_new(0, TRUE);
+	BYTE OutputBuffer[65536] = { 0 };
+	const BYTE* pSrcData = (const BYTE*)TEST_MPPC_BELLS;
+	const UINT32 SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
+	UINT32 DstSize = sizeof(OutputBuffer);
+	const BYTE* pDstData = NULL;
+	const UINT32 expectedSize = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
+	MPPC_CONTEXT* mppc = mppc_context_new(0, TRUE);
 
 	if (!mppc)
 		return -1;
 
-	SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
-	pSrcData = (const BYTE*)TEST_MPPC_BELLS;
-	expectedSize = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
-	DstSize = sizeof(OutputBuffer);
-	pDstData = OutputBuffer;
-	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
+	status = mppc_compress(mppc, pSrcData, SrcSize, OutputBuffer, &pDstData, &DstSize, &Flags);
 
 	if (status < 0)
 		goto fail;
@@ -939,24 +928,18 @@ static int test_MppcCompressIslandRdp5(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	UINT32 SrcSize;
-	const BYTE* pSrcData;
-	UINT32 DstSize;
-	BYTE* pDstData;
-	MPPC_CONTEXT* mppc;
-	UINT32 expectedSize;
-	BYTE OutputBuffer[65536];
-	mppc = mppc_context_new(1, TRUE);
+	BYTE OutputBuffer[65536] = { 0 };
+	const UINT32 SrcSize = sizeof(TEST_ISLAND_DATA) - 1;
+	const BYTE* pSrcData = (const BYTE*)TEST_ISLAND_DATA;
+	const UINT32 expectedSize = sizeof(TEST_ISLAND_DATA_RDP5) - 1;
+	UINT32 DstSize = sizeof(OutputBuffer);
+	const BYTE* pDstData = NULL;
+	MPPC_CONTEXT* mppc = mppc_context_new(1, TRUE);
 
 	if (!mppc)
 		return -1;
 
-	SrcSize = sizeof(TEST_ISLAND_DATA) - 1;
-	pSrcData = (const BYTE*)TEST_ISLAND_DATA;
-	expectedSize = sizeof(TEST_ISLAND_DATA_RDP5) - 1;
-	DstSize = sizeof(OutputBuffer);
-	pDstData = OutputBuffer;
-	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
+	status = mppc_compress(mppc, pSrcData, SrcSize, OutputBuffer, &pDstData, &DstSize, &Flags);
 
 	if (status < 0)
 		goto fail;
@@ -992,24 +975,19 @@ static int test_MppcCompressBufferRdp5(void)
 	int rc = -1;
 	int status;
 	UINT32 Flags;
-	const BYTE* pSrcData;
-	UINT32 SrcSize;
-	UINT32 DstSize;
-	BYTE* pDstData;
-	MPPC_CONTEXT* mppc;
-	UINT32 expectedSize;
-	BYTE OutputBuffer[65536];
-	mppc = mppc_context_new(1, TRUE);
+	BYTE OutputBuffer[65536] = { 0 };
+	const UINT32 SrcSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
+	const BYTE* pSrcData = (const BYTE*)TEST_RDP5_UNCOMPRESSED_DATA;
+	const UINT32 expectedSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
+	UINT32 DstSize = sizeof(OutputBuffer);
+
+	const BYTE* pDstData = NULL;
+	MPPC_CONTEXT* mppc = mppc_context_new(1, TRUE);
 
 	if (!mppc)
 		return -1;
 
-	SrcSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
-	pSrcData = (const BYTE*)TEST_RDP5_UNCOMPRESSED_DATA;
-	expectedSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
-	DstSize = sizeof(OutputBuffer);
-	pDstData = OutputBuffer;
-	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
+	status = mppc_compress(mppc, pSrcData, SrcSize, OutputBuffer, &pDstData, &DstSize, &Flags);
 
 	if (status < 0)
 		goto fail;

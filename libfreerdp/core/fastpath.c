@@ -1124,10 +1124,10 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
-		BYTE* pSrcData;
+		const BYTE* pSrcData;
 		UINT32 SrcSize;
 		UINT32 DstSize = 0;
-		BYTE* pDstData = NULL;
+		const BYTE* pDstData = NULL;
 		UINT32 compressionFlags = 0;
 		BYTE pad = 0;
 		BYTE* pSignature = NULL;
@@ -1137,7 +1137,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		fpUpdateHeader.compressionFlags = 0;
 		fpUpdateHeader.updateCode = updateCode;
 		fpUpdateHeader.size = (totalLength > maxLength) ? maxLength : totalLength;
-		pSrcData = pDstData = Stream_Pointer(s);
+		pSrcData = Stream_Pointer(s);
 		SrcSize = DstSize = fpUpdateHeader.size;
 
 		if (rdp->sec_flags & SEC_ENCRYPT)

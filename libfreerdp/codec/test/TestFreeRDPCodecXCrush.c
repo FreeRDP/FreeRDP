@@ -42,109 +42,90 @@ static const BYTE TEST_ISLAND_DATA_XCRUSH[] =
     "\x03\xbb\x43\x7b\x6f\xa8\xe5\x8b\xd0\xf0\xe8\xde\xd8\xd8\xe7\xec"
     "\xf3\xa7\xe4\x7c\xa7\xe2\x9f\x01\x99\x4b\x80";
 
-static int test_XCrushCompressBells(void)
+static void test_dump(const char* fkt, const void* generated, size_t generated_size,
+                      const void* expected, size_t expected_size)
 {
-	int status;
-	UINT32 Flags;
-	UINT32 SrcSize;
-	const BYTE* pSrcData;
-	UINT32 DstSize;
-	BYTE* pDstData;
-	UINT32 expectedSize;
-	BYTE OutputBuffer[65536];
-	XCRUSH_CONTEXT* xcrush;
-	xcrush = xcrush_context_new(TRUE);
-	SrcSize = sizeof(TEST_BELLS_DATA) - 1;
-	pSrcData = (const BYTE*)TEST_BELLS_DATA;
-	expectedSize = sizeof(TEST_BELLS_DATA_XCRUSH) - 1;
-	pDstData = OutputBuffer;
-	DstSize = sizeof(OutputBuffer);
-	ZeroMemory(OutputBuffer, sizeof(OutputBuffer));
-	status = xcrush_compress(xcrush, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-	printf("status: %d Flags: 0x%08" PRIX32 " DstSize: %" PRIu32 "\n", status, Flags, DstSize);
-
-	if (DstSize != expectedSize)
-	{
-		printf("XCrushCompressBells: output size mismatch: Actual: %" PRIu32 ", Expected: %" PRIu32
-		       "\n",
-		       DstSize, expectedSize);
-		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
-		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_BELLS_DATA_XCRUSH, expectedSize * 8, 0);
-		return -1;
-	}
-
-	if (memcmp(pDstData, TEST_BELLS_DATA_XCRUSH, DstSize) != 0)
-	{
-		printf("XCrushCompressBells: output mismatch\n");
-		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
-		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_BELLS_DATA_XCRUSH, expectedSize * 8, 0);
-		return -1;
-	}
-
-	xcrush_context_free(xcrush);
-	return 1;
+	printf("[%s] output size mismatch: Actual: %" PRIuz ", Expected: %" PRIuz "\n", fkt,
+	       generated_size, expected_size);
+	printf("[%s] Actual\n", fkt);
+	BitDump(fkt, WLOG_INFO, generated, generated_size * 8ull, 0);
+	printf("[%s] Expected\n", fkt);
+	BitDump(fkt, WLOG_INFO, expected, expected_size * 8ull, 0);
 }
 
-static int test_XCrushCompressIsland(void)
+static BOOL test_compare(const char* fkt, const void* generated, size_t generated_size,
+                         const void* expected, size_t expected_size)
 {
-	int status;
-	UINT32 Flags;
-	UINT32 SrcSize;
-	const BYTE* pSrcData;
-	UINT32 DstSize;
-	BYTE* pDstData;
-	UINT32 expectedSize;
-	BYTE OutputBuffer[65536];
-	XCRUSH_CONTEXT* xcrush;
-	xcrush = xcrush_context_new(TRUE);
-	SrcSize = sizeof(TEST_ISLAND_DATA) - 1;
-	pSrcData = (const BYTE*)TEST_ISLAND_DATA;
-	expectedSize = sizeof(TEST_ISLAND_DATA_XCRUSH) - 1;
-	pDstData = OutputBuffer;
-	DstSize = sizeof(OutputBuffer);
-	ZeroMemory(OutputBuffer, sizeof(OutputBuffer));
-	status = xcrush_compress(xcrush, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-	printf("status: %d Flags: 0x%08" PRIX32 " DstSize: %" PRIu32 "\n", status, Flags, DstSize);
-
-	if (DstSize != expectedSize)
+	if (generated_size != expected_size)
 	{
-		printf("XCrushCompressIsland: output size mismatch: Actual: %" PRIu32 ", Expected: %" PRIu32
-		       "\n",
-		       DstSize, expectedSize);
-		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
-		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_ISLAND_DATA_XCRUSH, expectedSize * 8, 0);
-		return -1;
+		test_dump(fkt, generated, generated_size, expected, expected_size);
+		return FALSE;
 	}
 
-	if (memcmp(pDstData, TEST_ISLAND_DATA_XCRUSH, DstSize) != 0)
+	if (memcmp(generated, expected, generated_size) != 0)
 	{
-		printf("XCrushCompressIsland: output mismatch\n");
-		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
-		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_ISLAND_DATA_XCRUSH, expectedSize * 8, 0);
-		return -1;
+		test_dump(fkt, generated, generated_size, expected, expected_size);
+		return FALSE;
 	}
+
+	return TRUE;
+}
+
+static BOOL test_run(const char* fkt, const void* src, UINT32 src_size, const void* expected,
+                     size_t expected_size)
+{
+	BOOL rc = FALSE;
+	int status = -1;
+	UINT32 Flags = 0;
+	const BYTE* pDstData = NULL;
+	BYTE OutputBuffer[65536] = { 0 };
+	UINT32 DstSize = sizeof(OutputBuffer);
+	XCRUSH_CONTEXT* xcrush = xcrush_context_new(TRUE);
+	if (!xcrush)
+		return -1;
+	status = xcrush_compress(xcrush, src, src_size, OutputBuffer, &pDstData, &DstSize, &Flags);
+	printf("[%s] status: %d Flags: 0x%08" PRIX32 " DstSize: %" PRIu32 "\n", fkt, status, Flags,
+	       DstSize);
+
+	rc = test_compare(fkt, pDstData, DstSize, expected, expected_size);
 
 	xcrush_context_free(xcrush);
-	return 1;
+	return rc;
 }
+
+struct test_argument
+{
+	const char* name;
+	const void* src;
+	UINT32 src_size;
+	const void* expected;
+	size_t expected_size;
+};
+
+static const struct test_argument tests[] = {
+	{ "XCrushCompressIsland", TEST_ISLAND_DATA, sizeof(TEST_ISLAND_DATA) - 1,
+	  TEST_ISLAND_DATA_XCRUSH, sizeof(TEST_ISLAND_DATA_XCRUSH) - 1 }
+#if 0
+	,{ "XCrushCompressBells", TEST_BELLS_DATA, sizeof(TEST_BELLS_DATA) - 1, TEST_BELLS_DATA_XCRUSH,
+	  sizeof(TEST_BELLS_DATA_XCRUSH) - 1 }
+#endif
+};
 
 int TestFreeRDPCodecXCrush(int argc, char* argv[])
 {
+	int rc = 0;
+	size_t x;
+
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	// if (test_XCrushCompressBells() < 0)
-	//	return -1;
-	if (test_XCrushCompressIsland() < 0)
-		return -1;
+	for (x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		const struct test_argument* arg = &tests[x];
 
-	return 0;
+		if (!test_run(arg->name, arg->src, arg->src_size, arg->expected, arg->expected_size))
+			rc = -1;
+	}
+
+	return rc;
 }
