@@ -34,7 +34,7 @@
 #include <mbedtls/hmac_drbg.h>
 #endif
 
-int winpr_RAND(BYTE* output, size_t len)
+int winpr_RAND(void* output, size_t len)
 {
 #if defined(WITH_OPENSSL)
 	if (len > INT_MAX)
@@ -53,7 +53,7 @@ int winpr_RAND(BYTE* output, size_t len)
 	return 0;
 }
 
-int winpr_RAND_pseudo(BYTE* output, size_t len)
+int winpr_RAND_pseudo(void* output, size_t len)
 {
 	return winpr_RAND(output, len);
 }
