@@ -151,13 +151,19 @@ void winpr_CArrayDump(const char* tag, UINT32 level, const BYTE* data, size_t le
 		pos = 0;
 
 		for (i = 0; i < line; i++)
-            pos += _snprintf(&buffer[pos], llen - pos, "\\x%02" PRIX8 "", p[i]);
+		{
+			const int rc = _snprintf(&buffer[pos], llen - pos, "\\x%02" PRIX8 "", p[i]);
+			if (rc < 0)
+				goto fail;
+			pos += (size_t)rc;
+		}
 
 		WLog_LVL(tag, level, "%s", buffer);
 		offset += line;
 		p += line;
 	}
 
+fail:
 	free(buffer);
 }
 
