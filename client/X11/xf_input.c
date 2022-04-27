@@ -758,6 +758,7 @@ int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 		return xf_input_handle_event_local(xfc, event);
 	}
 
-#endif
+#else
 	return 0;
+#endif
 }

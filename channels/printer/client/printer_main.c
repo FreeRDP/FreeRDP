@@ -575,7 +575,6 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			return irp->Complete(irp);
-			break;
 	}
 
 	return CHANNEL_RC_OK;

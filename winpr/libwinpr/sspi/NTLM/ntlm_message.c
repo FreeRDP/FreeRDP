@@ -637,8 +637,8 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
 	/* DomainNameFields (8 bytes) */
-		if (!ntlm_write_message_fields(s, &(message->DomainName)))
-			return SEC_E_INTERNAL_ERROR;
+	if (!ntlm_write_message_fields(s, &(message->DomainName)))
+		return SEC_E_INTERNAL_ERROR;
 
 	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
 	/* WorkstationFields (8 bytes) */

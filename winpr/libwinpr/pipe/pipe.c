@@ -202,15 +202,6 @@ static HANDLE_OPS ops = { PipeIsHandled,
 static BOOL NamedPipeIsHandled(HANDLE handle)
 {
 	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_NAMED_PIPE, TRUE);
-	WINPR_HANDLE* pPipe = (WINPR_HANDLE*)handle;
-
-	if (!pPipe || (pPipe->Type != HANDLE_TYPE_NAMED_PIPE) || (pPipe == INVALID_HANDLE_VALUE))
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
 }
 
 static int NamedPipeGetFd(HANDLE handle)
