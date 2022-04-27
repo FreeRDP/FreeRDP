@@ -236,7 +236,7 @@ static void android_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	WINPR_ASSERT(context);
 }
 
-static BOOL android_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
+static BOOL android_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(pointer);

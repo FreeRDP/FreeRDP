@@ -147,7 +147,7 @@ static void ios_Pointer_Free(rdpContext *context, rdpPointer *pointer)
 		return;
 }
 
-static BOOL ios_Pointer_Set(rdpContext *context, const rdpPointer *pointer)
+static BOOL ios_Pointer_Set(rdpContext *context, rdpPointer *pointer)
 {
 	if (!context)
 		return FALSE;

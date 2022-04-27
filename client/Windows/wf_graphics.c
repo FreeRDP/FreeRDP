@@ -289,7 +289,7 @@ static BOOL wf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	return TRUE;
 }
 
-static BOOL wf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
+static BOOL wf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	HCURSOR hCur;
 	wfContext* wfc = (wfContext*)context;
