@@ -1141,7 +1141,7 @@ static HANDLE_OPS ops = { CommIsHandled, CommCloseHandle,
 /**
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363198%28v=vs.85%29.aspx
  *
- * @param lpDeviceName e.g. COM1, "\\.\COM1", ...
+ * @param lpDeviceName e.g. COM1, ...
  *
  * @param dwDesiredAccess expects GENERIC_READ | GENERIC_WRITE, a
  * warning message is printed otherwise. TODO: better support.

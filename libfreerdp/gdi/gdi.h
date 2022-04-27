@@ -51,11 +51,11 @@ static INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
 }
 
 /**
- * Get current color in brush bitmap according to dest coordinates.\n
- * @msdn{dd183396}
+ * Get current color in brush bitmap according to dest coordinates. msdn{dd183396}
+ *
  * @param x dest x-coordinate
  * @param y dest y-coordinate
- * @return color
+ * @return color pointer
  */
 static INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 {

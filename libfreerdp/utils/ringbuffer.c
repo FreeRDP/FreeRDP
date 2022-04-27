@@ -150,11 +150,13 @@ static BOOL ringbuffer_realloc(RingBuffer* rb, size_t targetSize)
 }
 
 /**
+ * Write to a ringbuffer
  *
- * @param rb
- * @param ptr
- * @param sz
- * @return
+ * @param rb A pointer to the ringbuffer
+ * @param ptr A pointer to the data to write
+ * @param sz The number of bytes to write
+ *
+ * @return \b TRUE for success, \b FALSE for failure
  */
 BOOL ringbuffer_write(RingBuffer* rb, const BYTE* ptr, size_t sz)
 {

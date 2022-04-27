@@ -1106,8 +1106,7 @@ out:
 
 /**
  * Register GDI callbacks with libfreerdp-core.
- * @param inst current instance
- * @return
+ * @param update current instance
  */
 
 static void gdi_register_update_callbacks(rdpUpdate* update)

@@ -86,9 +86,9 @@ int er_get_content_length(int length)
 
 /**
  * Read er Universal tag.
- * @param s stream
+ * @param s A pointer to the stream to write to
  * @param tag er universally-defined tag
- * @return
+ * @return \b TRUE for success
  */
 
 BOOL er_read_universal_tag(wStream* s, BYTE tag, BOOL pc)
@@ -319,8 +319,8 @@ int er_skip_octet_string(int length)
 
 /**
  * Read a er BOOLEAN
- * @param s
- * @param value
+ * @param s A pointer to the stream to read from
+ * @param value A pointer to read the data to
  */
 
 BOOL er_read_BOOL(wStream* s, BOOL* value)
@@ -340,8 +340,8 @@ BOOL er_read_BOOL(wStream* s, BOOL* value)
 
 /**
  * Write a er BOOLEAN
- * @param s
- * @param value
+ * @param s A pointer to the stream to write to
+ * @param value The value to write
  */
 
 void er_write_BOOL(wStream* s, BOOL value)
@@ -393,8 +393,8 @@ BOOL er_read_integer(wStream* s, UINT32* value)
 
 /**
  * Write a er INTEGER
- * @param s
- * @param value
+ * @param s A pointer to the stream to write to
+ * @param value the value to write
  */
 
 int er_write_integer(wStream* s, INT32 value)

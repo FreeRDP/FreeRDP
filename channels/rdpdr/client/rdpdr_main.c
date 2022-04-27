@@ -827,11 +827,6 @@ static BOOL device_already_plugged(rdpdrPlugin* rdpdr, const hotplug_dev* device
 	return !rc;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 struct hotplug_delete_arg
 {
 	hotplug_dev* dev_array;
@@ -1228,11 +1223,6 @@ static UINT rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
 	return CHANNEL_RC_OK;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 struct device_announce_arg
 {
 	rdpdrPlugin* rdpdr;

@@ -42,8 +42,7 @@
 #define TAG FREERDP_TAG("gdi.bitmap")
 
 /**
- * Get pixel at the given coordinates.\n
- * @msdn{dd144909}
+ * Get pixel at the given coordinates. msdn{dd144909}
  * @param hdc device context
  * @param nXPos pixel x position
  * @param nYPos pixel y position
@@ -65,13 +64,13 @@ BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
 }
 
 /**
- * Set pixel at the given coordinates.\n
- * @msdn{dd145078}
- * @param hdc device context
+ * Set pixel at the given coordinates. msdn{dd145078}
+ *
+ * @param hBmp device context
  * @param X pixel x position
  * @param Y pixel y position
  * @param crColor new pixel color
- * @return
+ * @return the color written
  */
 
 static INLINE UINT32 gdi_SetPixelBmp(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y, UINT32 crColor)
@@ -88,13 +87,12 @@ UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y, UINT32 crColor)
 }
 
 /**
- * Create a new bitmap with the given width, height, color format and pixel buffer.\n
- * @msdn{dd183485}
+ * Create a new bitmap with the given width, height, color format and pixel buffer. msdn{dd183485}
+ *
  * @param nWidth width
  * @param nHeight height
- * @param cBitsPerPixel bits per pixel
+ * @param format the color format used
  * @param data pixel buffer
- * @param fkt_free The function used for deallocation of the buffer, NULL for none.
  * @return new bitmap
  */
 
@@ -102,6 +100,17 @@ HGDI_BITMAP gdi_CreateBitmap(UINT32 nWidth, UINT32 nHeight, UINT32 format, BYTE*
 {
 	return gdi_CreateBitmapEx(nWidth, nHeight, format, 0, data, _aligned_free);
 }
+
+/**
+ * Create a new bitmap with the given width, height, color format and pixel buffer. msdn{dd183485}
+ *
+ * @param nWidth width
+ * @param nHeight height
+ * @param format the color format used
+ * @param data pixel buffer
+ * @param fkt_free The function used for deallocation of the buffer, NULL for none.
+ * @return new bitmap
+ */
 
 HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight, UINT32 format, UINT32 stride,
                                BYTE* data, void (*fkt_free)(void*))

@@ -81,7 +81,6 @@ typedef struct
 static const BYTE MFVideoFormat_H264[] = { 'H',  '2',  '6',  '4',  0x00, 0x00, 0x10, 0x00,
 	                                       0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 };
 
-/** @brief */
 typedef struct
 {
 	VideoClientContext* video;
@@ -98,7 +97,6 @@ typedef struct
 	VideoSurface* surface;
 } PresentationContext;
 
-/** @brief */
 typedef struct
 {
 	UINT64 publishTime;

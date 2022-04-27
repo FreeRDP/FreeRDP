@@ -1121,13 +1121,13 @@ fail:
 }
 
 /**
- * Send NTLMSSP AUTHENTICATE_MESSAGE.\n
- * AUTHENTICATE_MESSAGE @msdn{cc236643}
- * @param NTLM context
- * @param buffer
+ * Send NTLMSSP AUTHENTICATE_MESSAGE. msdn{cc236643}
+ *
+ * @param context Pointer to the NTLM context
+ * @param buffer The buffer to write
  */
 
-SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
+SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, const PSecBuffer buffer)
 {
 	wStream sbuffer;
 	wStream* s;

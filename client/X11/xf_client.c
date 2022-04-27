@@ -1458,7 +1458,8 @@ static BOOL handle_window_events(freerdp* instance)
  *  It will be run from the thread's entry point (thread_func()).
  *  It initiates the connection, and will continue to run until the session ends,
  *  processing events as they are received.
- *  @param instance - pointer to the rdp_freerdp structure that contains the session's settings
+ *
+ *  @param param - pointer to the rdp_freerdp structure that contains the session's settings
  *  @return A code from the enum XF_EXIT_CODE (0 if successful)
  */
 static DWORD WINAPI xf_client_thread(LPVOID param)
