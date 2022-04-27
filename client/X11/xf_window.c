@@ -965,6 +965,9 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 
 void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 {
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+
 	switch (state)
 	{
 		case WINDOW_HIDE:

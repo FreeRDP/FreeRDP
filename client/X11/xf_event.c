@@ -910,22 +910,27 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 
 			if (status)
 			{
-				appWindow->maxVert = FALSE;
-				appWindow->maxHorz = FALSE;
+				if (appWindow)
+				{
+					appWindow->maxVert = FALSE;
+					appWindow->maxHorz = FALSE;
+				}
 				for (i = 0; i < nitems; i++)
 				{
 					if ((Atom)((UINT16**)prop)[i] ==
 					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
 					{
 						maxVert = TRUE;
-						appWindow->maxVert = TRUE;
+						if (appWindow)
+							appWindow->maxVert = TRUE;
 					}
 
 					if ((Atom)((UINT16**)prop)[i] ==
 					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False))
 					{
 						maxHorz = TRUE;
-						appWindow->maxHorz = TRUE;
+						if (appWindow)
+							appWindow->maxHorz = TRUE;
 					}
 				}
 
@@ -944,12 +949,14 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				if (((UINT32)*prop == 3))
 				{
 					minimized = TRUE;
-					appWindow->minimized = TRUE;
+					if (appWindow)
+						appWindow->minimized = TRUE;
 				}
 				else
 				{
 					minimized = FALSE;
-					appWindow->minimized = FALSE;
+					if (appWindow)
+						appWindow->minimized = FALSE;
 				}
 
 				minimizedChanged = TRUE;
@@ -959,6 +966,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 
 		if (app)
 		{
+			WINPR_ASSERT(appWindow);
 			if (appWindow->maxVert && appWindow->maxHorz && !appWindow->minimized)
 			{
 				if(appWindow->rail_state != WINDOW_SHOW_MAXIMIZED)
