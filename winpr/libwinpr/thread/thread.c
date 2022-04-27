@@ -106,15 +106,7 @@ static void cleanup_handle(void* obj);
 
 static BOOL ThreadIsHandled(HANDLE handle)
 {
-	WINPR_THREAD* pThread = (WINPR_THREAD*)handle;
-
-	if (!pThread || (pThread->Type != HANDLE_TYPE_THREAD))
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_THREAD, FALSE);
 }
 
 static int ThreadGetFd(HANDLE handle)
@@ -439,7 +431,7 @@ static BOOL initializeThreads(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Conte
 		goto out;
 	}
 
-	mainThread.Type = HANDLE_TYPE_THREAD;
+	mainThread.common.Type = HANDLE_TYPE_THREAD;
 	mainThreadId = pthread_self();
 
 	currentThreadTlsIndex = TlsAlloc();
@@ -620,7 +612,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	thread->lpParameter = lpParameter;
 	thread->lpStartAddress = lpStartAddress;
 	thread->lpThreadAttributes = lpThreadAttributes;
-	thread->ops = &ops;
+	thread->common.ops = &ops;
 #if defined(WITH_DEBUG_THREADS)
 	thread->create_stack = winpr_backtrace(20);
 	dump_thread(thread);

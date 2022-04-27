@@ -49,15 +49,7 @@ static BOOL TimerCloseHandle(HANDLE handle);
 
 static BOOL TimerIsHandled(HANDLE handle)
 {
-	WINPR_TIMER* pTimer = (WINPR_TIMER*)handle;
-
-	if (!pTimer || (pTimer->Type != HANDLE_TYPE_TIMER))
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_TIMER, FALSE);
 }
 
 static int TimerGetFd(HANDLE handle)
@@ -351,7 +343,7 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 		if (lpTimerName)
 			timer->name = strdup(lpTimerName);
 
-		timer->ops = &ops;
+		timer->common.ops = &ops;
 #if defined(TIMER_IMPL_DISPATCH) || defined(TIMER_IMPL_POSIX)
 		if (!winpr_event_init(&timer->event))
 			goto fail;

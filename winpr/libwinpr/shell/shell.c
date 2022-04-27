@@ -54,7 +54,10 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 	WINPR_ACCESS_TOKEN* token;
 	token = (WINPR_ACCESS_TOKEN*)hToken;
 
-	if (!token || (token->Type != HANDLE_TYPE_ACCESS_TOKEN) || !lpcchSize)
+	if (!AccessTokenIsValid(hToken))
+		return FALSE;
+
+	if (!lpcchSize)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;

@@ -40,11 +40,6 @@
 #define HANDLE_TYPE_TIMER_QUEUE_TIMER 12
 #define HANDLE_TYPE_COMM 13
 
-#define WINPR_HANDLE_DEF() \
-	ULONG Type;            \
-	ULONG Mode;            \
-	HANDLE_OPS* ops
-
 typedef BOOL (*pcIsHandled)(HANDLE handle);
 typedef BOOL (*pcCloseHandle)(HANDLE handle);
 typedef int (*pcGetFd)(HANDLE handle);
@@ -111,11 +106,32 @@ typedef struct
 	pcGetFileInformationByHandle GetFileInformationByHandle;
 } HANDLE_OPS;
 
-struct winpr_handle
+typedef struct
 {
-	WINPR_HANDLE_DEF();
-};
-typedef struct winpr_handle WINPR_HANDLE;
+	ULONG Type;
+	ULONG Mode;
+	HANDLE_OPS* ops;
+} WINPR_HANDLE;
+
+static INLINE BOOL WINPR_HANDLE_IS_HANDLED(HANDLE handle, ULONG type, BOOL invalidValue)
+{
+	WINPR_HANDLE* pWinprHandle = (WINPR_HANDLE*)handle;
+	BOOL invalid = !pWinprHandle;
+
+	if (invalidValue)
+	{
+		if (INVALID_HANDLE_VALUE == pWinprHandle)
+			invalid = TRUE;
+	}
+
+	if (invalid || (pWinprHandle->Type != type))
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
 
 static INLINE void WINPR_HANDLE_SET_TYPE_AND_MODE(void* _handle, ULONG _type, ULONG _mode)
 {

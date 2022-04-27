@@ -39,15 +39,7 @@ static BOOL MutexCloseHandle(HANDLE handle);
 
 static BOOL MutexIsHandled(HANDLE handle)
 {
-	WINPR_TIMER* pMutex = (WINPR_TIMER*)handle;
-
-	if (!pMutex || (pMutex->Type != HANDLE_TYPE_MUTEX))
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_MUTEX, FALSE);
 }
 
 static int MutexGetFd(HANDLE handle)
@@ -159,7 +151,7 @@ HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 		pthread_mutex_init(&mutex->mutex, &attr);
 		WINPR_HANDLE_SET_TYPE_AND_MODE(mutex, HANDLE_TYPE_MUTEX, WINPR_FD_READ);
-		mutex->ops = &ops;
+		mutex->common.ops = &ops;
 		handle = (HANDLE)mutex;
 
 		if (bInitialOwner)

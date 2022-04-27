@@ -484,15 +484,7 @@ static BOOL ProcessHandleCloseHandle(HANDLE handle)
 
 static BOOL ProcessHandleIsHandle(HANDLE handle)
 {
-	WINPR_PROCESS* process = (WINPR_PROCESS*)handle;
-
-	if (!process || process->Type != HANDLE_TYPE_PROCESS)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_PROCESS, FALSE);
 }
 
 static int ProcessGetFd(HANDLE handle)
@@ -538,8 +530,8 @@ HANDLE CreateProcessHandle(pid_t pid)
 		return NULL;
 
 	process->pid = pid;
-	process->Type = HANDLE_TYPE_PROCESS;
-	process->ops = &ops;
+	process->common.Type = HANDLE_TYPE_PROCESS;
+	process->common.ops = &ops;
 	return (HANDLE)process;
 }
 

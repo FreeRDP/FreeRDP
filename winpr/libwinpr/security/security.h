@@ -28,7 +28,7 @@
 
 struct winpr_access_token
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	LPSTR Username;
 	LPSTR Domain;
@@ -37,6 +37,8 @@ struct winpr_access_token
 	DWORD GroupId;
 };
 typedef struct winpr_access_token WINPR_ACCESS_TOKEN;
+
+BOOL AccessTokenIsValid(HANDLE handle);
 
 #endif
 
