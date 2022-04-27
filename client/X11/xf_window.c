@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <winpr/assert.h>
 #include <winpr/thread.h>
 #include <winpr/crt.h>
 #include <winpr/string.h>
@@ -933,6 +934,9 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 
 void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 {
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+
 	switch (state)
 	{
 		case WINDOW_HIDE:

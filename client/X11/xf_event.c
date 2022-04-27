@@ -24,6 +24,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <winpr/assert.h>
+
 #include <freerdp/log.h>
 #include <freerdp/locale/keyboard.h>
 
@@ -759,7 +761,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 	{
 		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
-		if (appWindow)
+		if (appWindow && (appWindow->rail_state == WINDOW_SHOW))
 		{
 			/* local restore event */
 			/* This is now handled as part of the PropertyNotify
@@ -777,6 +779,10 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 static BOOL xf_event_UnmapNotify(xfContext* xfc, const XUnmapEvent* event, BOOL app)
 {
 	xfAppWindow* appWindow;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
 	xf_keyboard_release_all_keypress(xfc);
 
 	if (!app)
@@ -796,6 +802,9 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, const XUnmapEvent* event, BOOL 
 
 static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event, BOOL app)
 {
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
 	/*
 	 * This section handles sending the appropriate commands to the rail server
 	 * when the window has been minimized, maximized, restored locally
@@ -830,18 +839,27 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 
 			if (status)
 			{
+				if (appWindow)
+				{
+					appWindow->maxVert = FALSE;
+					appWindow->maxHorz = FALSE;
+				}
 				for (i = 0; i < nitems; i++)
 				{
 					if ((Atom)((UINT16**)prop)[i] ==
 					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
 					{
 						maxVert = TRUE;
+						if (appWindow)
+							appWindow->maxVert = TRUE;
 					}
 
 					if ((Atom)((UINT16**)prop)[i] ==
 					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False))
 					{
 						maxHorz = TRUE;
+						if (appWindow)
+							appWindow->maxHorz = TRUE;
 					}
 				}
 
@@ -858,9 +876,17 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 			{
 				/* If the window is in the iconic state */
 				if (((UINT32)*prop == 3))
+				{
 					minimized = TRUE;
+					if (appWindow)
+						appWindow->minimized = TRUE;
+				}
 				else
+				{
 					minimized = FALSE;
+					if (appWindow)
+						appWindow->minimized = FALSE;
+				}
 
 				minimizedChanged = TRUE;
 				XFree(prop);
@@ -869,22 +895,30 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 
 		if (app)
 		{
-			if (maxVert && maxHorz && !minimized &&
-			    (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED))
+			WINPR_ASSERT(appWindow);
+			if (appWindow->maxVert && appWindow->maxHorz && !appWindow->minimized)
 			{
-				appWindow->rail_state = WINDOW_SHOW_MAXIMIZED;
-				xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MAXIMIZE);
+				if (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED)
+				{
+					appWindow->rail_state = WINDOW_SHOW_MAXIMIZED;
+					xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MAXIMIZE);
+				}
 			}
-			else if (minimized && (appWindow->rail_state != WINDOW_SHOW_MINIMIZED))
+			else if (appWindow->minimized)
 			{
-				appWindow->rail_state = WINDOW_SHOW_MINIMIZED;
-				xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MINIMIZE);
+				if (appWindow->rail_state != WINDOW_SHOW_MINIMIZED)
+				{
+					appWindow->rail_state = WINDOW_SHOW_MINIMIZED;
+					xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MINIMIZE);
+				}
 			}
-			else if (!minimized && !maxVert && !maxHorz && (appWindow->rail_state != WINDOW_SHOW) &&
-			         (appWindow->rail_state != WINDOW_HIDE))
+			else
 			{
-				appWindow->rail_state = WINDOW_SHOW;
-				xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
+				if (appWindow->rail_state != WINDOW_SHOW && appWindow->rail_state != WINDOW_HIDE)
+				{
+					appWindow->rail_state = WINDOW_SHOW;
+					xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
+				}
 			}
 		}
 		else if (minimizedChanged)
