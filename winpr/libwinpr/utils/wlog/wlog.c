@@ -20,6 +20,7 @@
 #include <winpr/config.h>
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include <winpr/crt.h>
@@ -374,7 +375,7 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line, const 
 			{
 				char formattedLogMessage[WLOG_MAX_STRING_SIZE] = { 0 };
 
-				if (wvsnprintfx(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message.FormatString,
+                if (vsnprintf(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message.FormatString,
 				                args) < 0)
 					return FALSE;
 

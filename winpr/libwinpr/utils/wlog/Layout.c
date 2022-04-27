@@ -45,11 +45,8 @@
 static void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message, const char* format,
                                       va_list args)
 {
-	WINPR_ASSERT(message);
-	if (!strchr(format, '%'))
-		sprintf_s(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, "%s", format);
-	else
-		wvsnprintfx(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format, args);
+    WINPR_ASSERT(message);
+    vsnprintf(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format, args);
 }
 
 static void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message, const char* format, ...)

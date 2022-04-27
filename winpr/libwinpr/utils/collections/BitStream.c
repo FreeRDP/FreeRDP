@@ -22,7 +22,6 @@
 
 #include <winpr/print.h>
 #include <winpr/bitstream.h>
-#include "../trio/trio.h"
 
 static const char* BYTE_BIT_STRINGS_LSB[256] = {
 	"00000000", "00000001", "00000010", "00000011", "00000100", "00000101", "00000110", "00000111",
@@ -108,7 +107,7 @@ void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length, U
 	{
 		const char* str = strs[buffer[i / 8]];
 		const int nbits = (length - i) > 8 ? 8 : (length - i);
-		pos += trio_snprintf(&pbuffer[pos], length - pos, "%.*s ", nbits, str);
+        pos += _snprintf(&pbuffer[pos], length - pos, "%.*s ", nbits, str);
 
 		if ((i % 64) == 0)
 		{

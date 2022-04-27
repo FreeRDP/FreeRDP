@@ -27,8 +27,6 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include "trio/trio.h"
-
 #include "../log.h"
 
 #ifndef MIN
@@ -76,7 +74,7 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 
 	while (offset < length)
 	{
-		int rc = trio_snprintf(&buffer[pos], blen - pos, "%04" PRIuz " ", offset);
+        int rc = _snprintf(&buffer[pos], blen - pos, "%04" PRIuz " ", offset);
 
 		if (rc < 0)
 			goto fail;
@@ -89,7 +87,7 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 
 		for (i = 0; i < line; i++)
 		{
-			rc = trio_snprintf(&buffer[pos], blen - pos, "%02" PRIx8 " ", p[i]);
+            rc = _snprintf(&buffer[pos], blen - pos, "%02" PRIx8 " ", p[i]);
 
 			if (rc < 0)
 				goto fail;
@@ -99,7 +97,7 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 
 		for (; i < WINPR_HEXDUMP_LINE_LENGTH; i++)
 		{
-			rc = trio_snprintf(&buffer[pos], blen - pos, "   ");
+            rc = _snprintf(&buffer[pos], blen - pos, "   ");
 
 			if (rc < 0)
 				goto fail;
@@ -109,7 +107,7 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
 
 		for (i = 0; i < line; i++)
 		{
-			rc = trio_snprintf(&buffer[pos], blen - pos, "%c",
+            rc = _snprintf(&buffer[pos], blen - pos, "%c",
 			                   (p[i] >= 0x20 && p[i] < 0x7F) ? (char)p[i] : '.');
 
 			if (rc < 0)
@@ -153,7 +151,7 @@ void winpr_CArrayDump(const char* tag, UINT32 level, const BYTE* data, size_t le
 		pos = 0;
 
 		for (i = 0; i < line; i++)
-			pos += trio_snprintf(&buffer[pos], llen - pos, "\\x%02" PRIX8 "", p[i]);
+            pos += _snprintf(&buffer[pos], llen - pos, "\\x%02" PRIX8 "", p[i]);
 
 		WLog_LVL(tag, level, "%s", buffer);
 		offset += line;
@@ -186,7 +184,7 @@ size_t winpr_HexStringToBinBuffer(const char* str, size_t strLength, BYTE* data,
 	{
 		BYTE val = value(str[x++]);
 		if (x < maxStrLen)
-			val = (val << 4) | (value(str[x++]));
+            val = (BYTE)(val << 4) | (value(str[x++]));
 		if (x < maxStrLen)
 		{
 			if (str[x] == ' ')
@@ -250,24 +248,4 @@ char* winpr_BinToHexString(const BYTE* data, size_t length, BOOL space)
 	}
 
 	return p;
-}
-
-int wvprintfx(const char* fmt, va_list args)
-{
-	return trio_vprintf(fmt, args);
-}
-
-int wprintfx(const char* fmt, ...)
-{
-	va_list args;
-	int status;
-	va_start(args, fmt);
-	status = trio_vprintf(fmt, args);
-	va_end(args);
-	return status;
-}
-
-int wvsnprintfx(char* buffer, size_t bufferSize, const char* fmt, va_list args)
-{
-	return trio_vsnprintf(buffer, bufferSize, fmt, args);
 }
