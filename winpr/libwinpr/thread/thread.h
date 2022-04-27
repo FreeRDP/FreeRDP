@@ -37,7 +37,7 @@ typedef struct winpr_APC_item WINPR_APC_ITEM;
 
 struct winpr_thread
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	BOOL started;
 	WINPR_EVENT_IMPL event;
@@ -67,7 +67,7 @@ WINPR_THREAD* winpr_GetCurrentThread(VOID);
 
 typedef struct
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	pid_t pid;
 	int status;

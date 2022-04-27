@@ -61,15 +61,7 @@
 
 static BOOL FileIsHandled(HANDLE handle)
 {
-	WINPR_FILE* pFile = (WINPR_FILE*)handle;
-
-	if (!pFile || (pFile->Type != HANDLE_TYPE_FILE))
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_FILE, FALSE);
 }
 
 static int FileGetFd(HANDLE handle)
@@ -809,7 +801,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	}
 
 	WINPR_HANDLE_SET_TYPE_AND_MODE(pFile, HANDLE_TYPE_FILE, WINPR_FD_READ);
-	pFile->ops = &fileOps;
+	pFile->common.ops = &fileOps;
 
 	pFile->lpFileName = _strdup(lpFileName);
 	if (!pFile->lpFileName)
@@ -951,7 +943,7 @@ HANDLE_CREATOR* GetFileHandleCreator(void)
 static WINPR_FILE* FileHandle_New(FILE* fp)
 {
 	WINPR_FILE* pFile;
-	char name[MAX_PATH];
+	char name[MAX_PATH] = { 0 };
 
 	_snprintf(name, sizeof(name), "device_%d", fileno(fp));
 	pFile = (WINPR_FILE*)calloc(1, sizeof(WINPR_FILE));
@@ -961,7 +953,7 @@ static WINPR_FILE* FileHandle_New(FILE* fp)
 		return NULL;
 	}
 	pFile->fp = fp;
-	pFile->ops = &shmOps;
+	pFile->common.ops = &shmOps;
 	pFile->lpFileName = _strdup(name);
 
 	WINPR_HANDLE_SET_TYPE_AND_MODE(pFile, HANDLE_TYPE_FILE, WINPR_FD_READ);

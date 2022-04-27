@@ -39,7 +39,7 @@
 
 struct winpr_file
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	FILE* fp;
 

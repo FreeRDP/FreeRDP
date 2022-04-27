@@ -66,7 +66,7 @@ VOID _InitializeObjectAttributes(POBJECT_ATTRIBUTES InitializedAttributes,
 
 struct winpr_nt_file
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	ACCESS_MASK DesiredAccess;
 	OBJECT_ATTRIBUTES ObjectAttributes;

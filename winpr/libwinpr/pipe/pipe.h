@@ -29,7 +29,7 @@
 
 struct winpr_pipe
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	int fd;
 };
@@ -41,7 +41,7 @@ typedef void (*fnUnrefNamedPipe)(WINPR_NAMED_PIPE* pNamedPipe);
 
 struct winpr_named_pipe
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	int clientfd;
 	int serverfd;

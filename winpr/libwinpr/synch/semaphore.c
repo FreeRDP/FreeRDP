@@ -38,15 +38,7 @@ static BOOL SemaphoreCloseHandle(HANDLE handle);
 
 static BOOL SemaphoreIsHandled(HANDLE handle)
 {
-	WINPR_TIMER* pSemaphore = (WINPR_TIMER*)handle;
-
-	if (!pSemaphore || (pSemaphore->Type != HANDLE_TYPE_SEMAPHORE))
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_SEMAPHORE, FALSE);
 }
 
 static int SemaphoreGetFd(HANDLE handle)
@@ -145,7 +137,7 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 	semaphore->pipe_fd[0] = -1;
 	semaphore->pipe_fd[1] = -1;
 	semaphore->sem = (winpr_sem_t*)NULL;
-	semaphore->ops = &ops;
+	semaphore->common.ops = &ops;
 #ifdef WINPR_PIPE_SEMAPHORE
 
 	if (pipe(semaphore->pipe_fd) < 0)

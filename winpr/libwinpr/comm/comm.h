@@ -33,7 +33,7 @@
 
 struct winpr_comm
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	int fd;
 
@@ -97,6 +97,7 @@ typedef struct winpr_comm WINPR_COMM;
 void CommLog_Print(DWORD wlog_level, ...);
 
 BOOL CommIsHandled(HANDLE handle);
+BOOL CommIsHandleValid(HANDLE handle);
 BOOL CommCloseHandle(HANDLE handle);
 HANDLE_CREATOR* GetCommHandleCreator(void);
 

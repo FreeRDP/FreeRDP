@@ -28,7 +28,7 @@
 
 struct winpr_none_handle
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 };
 
 typedef struct winpr_none_handle WINPR_NONE_HANDLE;
