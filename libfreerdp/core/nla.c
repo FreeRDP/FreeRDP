@@ -2009,9 +2009,9 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 	size_t userLen = 0;
 	size_t domainLen = 0;
 	size_t passwordLen = 0;
-	WCHAR* user = NULL;
-	WCHAR* domain = NULL;
-	WCHAR* password = NULL;
+	const WCHAR* user = NULL;
+	const WCHAR* domain = NULL;
+	const WCHAR* password = NULL;
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(s);
@@ -2044,7 +2044,7 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 
 	domainLen = length / sizeof(WCHAR);
 	if (length > 0)
-		domain = Stream_Pointer(s);
+		domain = Stream_PointerAs(s, const WCHAR);
 
 	if (!Stream_SafeSeek(s, length))
 		return FALSE;
@@ -2055,7 +2055,7 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 
 	userLen = length / sizeof(WCHAR);
 	if (length > 0)
-		user = Stream_Pointer(s);
+		user = Stream_PointerAs(s, const WCHAR);
 
 	if (!Stream_SafeSeek(s, length))
 		return FALSE;
@@ -2066,7 +2066,7 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 
 	passwordLen = length / sizeof(WCHAR);
 	if (length > 0)
-		password = Stream_Pointer(s);
+		password = Stream_PointerAs(s, const WCHAR);
 
 	if (!Stream_SafeSeek(s, length))
 		return FALSE;
