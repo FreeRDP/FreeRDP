@@ -520,6 +520,7 @@ BOOL ber_read_{prefix}{defName}_array(wStream* s, {defName}_t** pitems, size_t* 
             free(retItems);
             return FALSE;
         }}
+        retItems = tmpRet;
 
         memcpy(&retItems[ret], item, sizeof(*item));
         free(item);

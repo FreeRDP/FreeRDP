@@ -1,9 +1,10 @@
 /* ============================================================================================================
  * this file has been generated using
- * tools/asn_parser_generator.py --input=libfreerdp/core/credssp.asn1 --output-kind=headers --output=libfreerdp/core/tscredentials.h
+ * ./tools/asn_parser_generator.py --input=libfreerdp/core/credssp.asn1 --output-kind=headers
+ * --output=libfreerdp/core/tscredentials.h
  *
- * /!\ If you want to modify this file you'd probably better change asn_parser_generator.py or the corresponding ASN1 
- *     definition file
+ * /!\ If you want to modify this file you'd probably better change asn_parser_generator.py or the
+ * corresponding ASN1 definition file
  *
  * ============================================================================================================
  */
