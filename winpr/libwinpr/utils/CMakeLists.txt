@@ -41,17 +41,6 @@ set(${MODULE_PREFIX}_LODEPNG_SRCS
 	lodepng/lodepng.c
 	lodepng/lodepng.h)
 
-set(${MODULE_PREFIX}_TRIO_SRCS
-	trio/strio.h
-	trio/trio.c
-	trio/trio.h
-	trio/triodef.h
-	trio/trionan.c
-	trio/trionan.h
-	trio/triop.h
-	trio/triostr.c
-	trio/triostr.h)
-
 if (HAVE_SYSLOG_H)
 	set(SYSLOG_SRCS
 		wlog/SyslogAppender.c
@@ -120,12 +109,10 @@ endif()
 winpr_module_add(${${MODULE_PREFIX}_SRCS}
 	${${MODULE_PREFIX}_COLLECTIONS_SRCS}
 	${${MODULE_PREFIX}_LODEPNG_SRCS}
-	${${MODULE_PREFIX}_TRIO_SRCS}
 	${${MODULE_PREFIX}_WLOG_SRCS})
 
 winpr_include_directory_add(
 	"lodepng"
-	"trio"
 	".")
 
 if(OPENSSL_FOUND)

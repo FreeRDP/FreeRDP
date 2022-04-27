@@ -14,11 +14,7 @@
  * http://www.codingunit.com/printf-format-specifiers-format-conversions-and-formatted-output
  */
 
-#if 0
 #define _printf printf
-#else
-#define _printf wprintfx
-#endif
 
 static BOOL test_bin_tohex_string(void)
 {

@@ -121,10 +121,13 @@ static INLINE BOOL HashTable_IsProbablePrime(size_t oddNumber)
 
 static INLINE size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 {
+    float tmp;
 	size_t idealNumOfBuckets;
 
 	WINPR_ASSERT(table);
-	idealNumOfBuckets = table->numOfElements / (table->idealRatio);
+
+    tmp = (table->numOfElements / table->idealRatio);
+    idealNumOfBuckets = (size_t)tmp;
 
 	if (idealNumOfBuckets < 5)
 		idealNumOfBuckets = 5;

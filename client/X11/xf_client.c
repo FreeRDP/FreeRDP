@@ -202,10 +202,10 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	/* calculate and fix up scaled coordinates */
 	x2 = x + w;
 	y2 = y + h;
-	x = floor(x / xScalingFactor) - 1;
-	y = floor(y / yScalingFactor) - 1;
-	w = ceil(x2 / xScalingFactor) + 1 - x;
-	h = ceil(y2 / yScalingFactor) + 1 - y;
+    x = (int)floor(x / xScalingFactor) - 1;
+    y = (int)floor(y / yScalingFactor) - 1;
+    w = (int)ceil(x2 / xScalingFactor) + 1 - x;
+    h = (int)ceil(y2 / yScalingFactor) + 1 - y;
 	XRenderSetPictureTransform(xfc->display, primaryPicture, &transform);
 	XRenderComposite(xfc->display, PictOpSrc, primaryPicture, 0, windowPicture, x, y, 0, 0,
 	                 xfc->offset_x + x, xfc->offset_y + y, w, h);
