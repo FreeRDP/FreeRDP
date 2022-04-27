@@ -573,9 +573,15 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BO
 static BOOL xf_event_KeyPress(xfContext* xfc, const XKeyEvent* event, BOOL app)
 {
 	KeySym keysym;
-	char str[256];
+	char str[256] = { 0 };
+	union
+	{
+		const XKeyEvent* cev;
+		XKeyEvent* ev;
+	} cnv;
+	cnv.cev = event;
 	WINPR_UNUSED(app);
-	XLookupString((XKeyEvent*)event, str, sizeof(str), &keysym, NULL);
+	XLookupString(cnv.ev, str, sizeof(str), &keysym, NULL);
 	xf_keyboard_key_press(xfc, event, keysym);
 	return TRUE;
 }
@@ -583,9 +589,16 @@ static BOOL xf_event_KeyPress(xfContext* xfc, const XKeyEvent* event, BOOL app)
 static BOOL xf_event_KeyRelease(xfContext* xfc, const XKeyEvent* event, BOOL app)
 {
 	KeySym keysym;
-	char str[256];
+	char str[256] = { 0 };
+	union
+	{
+		const XKeyEvent* cev;
+		XKeyEvent* ev;
+	} cnv;
+	cnv.cev = event;
+
 	WINPR_UNUSED(app);
-	XLookupString((XKeyEvent*)event, str, sizeof(str), &keysym, NULL);
+	XLookupString(cnv.ev, str, sizeof(str), &keysym, NULL);
 	xf_keyboard_key_release(xfc, event, keysym);
 	return TRUE;
 }

@@ -1032,7 +1032,13 @@ TRIO_PUBLIC_STRING char* trio_substring_max TRIO_ARGS3((string, max, substring),
 		{
 			if (trio_equal_max(substring, size, &string[count]))
 			{
-				result = (char*)&string[count];
+				union
+				{
+					const char* cpv;
+					char* pv;
+				} cnv;
+				cnv.cpv = &string[count];
+				result = cnv.pv;
 				break;
 			}
 		}
@@ -1202,7 +1208,15 @@ TRIO_PUBLIC_STRING trio_long_double_t trio_to_long_double TRIO_ARGS2((source, en
 		value = -value;
 
 	if (endp)
-		*endp = (char*)source;
+	{
+		union
+		{
+			const char* cpv;
+			char* pv;
+		} cnv;
+		cnv.cpv = source;
+		*endp = cnv.pv;
+	}
 	return value;
 #endif
 }

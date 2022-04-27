@@ -282,10 +282,18 @@ static INLINE YUV_PROCESS_WORK_PARAM pool_decode_param(const RECTANGLE_16* rect,
 static BOOL submit_object(PTP_WORK* work_object, PTP_WORK_CALLBACK cb, const void* param,
                           YUV_CONTEXT* context)
 {
+	union
+	{
+		const void* cpv;
+		void* pv;
+	} cnv;
+
+	cnv.cpv = param;
+
 	if (!work_object || !param || !context)
 		return FALSE;
 
-	*work_object = CreateThreadpoolWork(cb, (void*)param, &context->ThreadPoolEnv);
+	*work_object = CreateThreadpoolWork(cb, cnv.pv, &context->ThreadPoolEnv);
 	if (!*work_object)
 		return FALSE;
 

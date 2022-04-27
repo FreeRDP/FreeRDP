@@ -259,13 +259,19 @@ static Pixmap xf_brush_new(xfContext* xfc, UINT32 width, UINT32 height, UINT32 b
 
 static Pixmap xf_mono_bitmap_new(xfContext* xfc, int width, int height, const BYTE* data)
 {
-	int scanline;
+	union
+	{
+		const BYTE* cpv;
+		char* pv;
+	} cnv;
+	const int scanline = (width + 7) / 8;
 	XImage* image;
 	Pixmap bitmap;
-	scanline = (width + 7) / 8;
+	cnv.cpv = data;
+
 	bitmap = XCreatePixmap(xfc->display, xfc->drawable, width, height, 1);
-	image = XCreateImage(xfc->display, xfc->visual, 1, ZPixmap, 0, (char*)data, width, height, 8,
-	                     scanline);
+	image =
+	    XCreateImage(xfc->display, xfc->visual, 1, ZPixmap, 0, cnv.pv, width, height, 8, scanline);
 	image->byte_order = LSBFirst;
 	image->bitmap_bit_order = LSBFirst;
 	XPutImage(xfc->display, bitmap, xfc->gc_mono, image, 0, 0, 0, 0, width, height);
@@ -1012,8 +1018,15 @@ static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData, UINT32 sc
 		UINT32 width = rects[i].right - rects[i].left;
 		UINT32 height = rects[i].bottom - rects[i].top;
 		const BYTE* src = pSrcData + top * scanline + bpp * left;
+
+		union
+		{
+			const BYTE* cev;
+			BYTE* ev;
+		} cnv;
+		cnv.cev = src;
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-		                     (char*)/* API does not modify */ src, width, height, xfc->scanline_pad,
+		                     /* API does not modify */ cnv.ev, width, height, xfc->scanline_pad,
 		                     scanline);
 
 		if (!image)

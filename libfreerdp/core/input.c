@@ -676,7 +676,6 @@ BOOL input_recv(rdpInput* input, wStream* s)
 BOOL input_register_client_callbacks(rdpInput* input)
 {
 	rdpSettings* settings;
-	rdp_input_internal* in = input_cast(input);
 
 	if (!input->context)
 		return FALSE;

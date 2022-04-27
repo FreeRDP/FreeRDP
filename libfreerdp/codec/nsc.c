@@ -423,11 +423,12 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT32 width, UINT32 
                          UINT32 nHeight, UINT32 flip)
 {
 	wStream* s;
+	wStream sbuffer = { 0 };
 	BOOL ret;
 	if (!context || !data || !pDstData)
 		return FALSE;
 
-	s = Stream_New((BYTE*)data, length);
+	s = Stream_StaticConstInit(&sbuffer, data, length);
 
 	if (!s)
 		return FALSE;
@@ -458,14 +459,12 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT32 width, UINT32 
 			break;
 
 		default:
-			Stream_Free(s, TRUE);
 			return FALSE;
 	}
 
 	context->width = width;
 	context->height = height;
 	ret = nsc_context_initialize(context, s);
-	Stream_Free(s, FALSE);
 
 	if (!ret)
 		return FALSE;

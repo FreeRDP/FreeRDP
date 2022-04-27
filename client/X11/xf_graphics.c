@@ -226,13 +226,13 @@ static BOOL xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL pr
 	return TRUE;
 }
 
-static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpPointer* pointer,
+static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer* pointer,
                                                  Cursor* cursor)
 {
 #ifdef WITH_XCURSOR
 	UINT32 CursorFormat;
 	xfContext* xfc = (xfContext*)context;
-	xfPointer* xpointer = (xfPointer*)pointer;
+	xfPointer* xpointer = pointer;
 	XcursorImage ci = { 0 };
 	rdpSettings* settings;
 	UINT32 xTargetSize;
@@ -448,9 +448,16 @@ static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 static BOOL xf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 {
 #ifdef WITH_XCURSOR
+	union
+	{
+		const rdpPointer* cpv;
+		rdpPointer* pv;
+	} cnv;
 	xfContext* xfc = (xfContext*)context;
 	Window handle = xf_Pointer_get_window(xfc);
-	xfc->pointer = (xfPointer*)pointer;
+
+	cnv.cpv = pointer;
+	xfc->pointer = cnv.pv;
 
 	/* in RemoteApp mode, window can be null if none has had focus */
 

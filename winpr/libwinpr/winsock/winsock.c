@@ -1156,10 +1156,15 @@ int _select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
             const struct timeval* timeout)
 {
 	int status;
-
+	union
+	{
+		const struct timeval* cpv;
+		struct timeval* pv;
+	} cnv;
+	cnv.cpv = timeout;
 	do
 	{
-		status = select(nfds, readfds, writefds, exceptfds, (struct timeval*)timeout);
+		status = select(nfds, readfds, writefds, exceptfds, cnv.pv);
 	} while ((status < 0) && (errno == EINTR));
 
 	return status;

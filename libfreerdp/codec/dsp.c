@@ -577,11 +577,17 @@ static BOOL freerdp_dsp_decode_faad(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 
 	if (!context->faadSetup)
 	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
 		unsigned long samplerate;
 		unsigned char channels;
-		long err =
-		    NeAACDecInit(context->faad, /* API is not modifying content */ (unsigned char*)src,
-		                 size, &samplerate, &channels);
+		long err;
+		cnv.cpv = src;
+		err = NeAACDecInit(context->faad, /* API is not modifying content */ cnv.pv, size,
+		                   &samplerate, &channels);
 
 		if (err != 0)
 			return FALSE;
@@ -597,6 +603,11 @@ static BOOL freerdp_dsp_decode_faad(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 
 	while (offset < size)
 	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
 		size_t outSize;
 		void* sample_buffer;
 		outSize = context->format.nSamplesPerSec * context->format.nChannels *
@@ -606,8 +617,10 @@ static BOOL freerdp_dsp_decode_faad(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 			return FALSE;
 
 		sample_buffer = Stream_Pointer(out);
-		output = NeAACDecDecode2(context->faad, &info, (unsigned char*)&src[offset], size - offset,
-		                         &sample_buffer, Stream_GetRemainingCapacity(out));
+
+		cnv.cpv = &src[offset];
+		output = NeAACDecDecode2(context->faad, &info, cnv.pv, size - offset, &sample_buffer,
+		                         Stream_GetRemainingCapacity(out));
 
 		if (info.error != 0)
 			return FALSE;

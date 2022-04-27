@@ -663,11 +663,15 @@ static BOOL xf_clipboard_copy_formats(xfClipboard* clipboard, const CLIPRDR_FORM
 static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FORMAT* formats,
                                         UINT32 numFormats)
 {
-	CLIPRDR_FORMAT_LIST formatList = { 0 };
-	formatList.msgFlags = CB_RESPONSE_OK;
-	formatList.numFormats = numFormats;
-	formatList.formats = (CLIPRDR_FORMAT*)formats;
-	formatList.msgType = CB_FORMAT_LIST;
+	union
+	{
+		const CLIPRDR_FORMAT* cpv;
+		CLIPRDR_FORMAT* pv;
+	} cnv = { .cpv = formats };
+	const CLIPRDR_FORMAT_LIST formatList = { .msgFlags = CB_RESPONSE_OK,
+		                                     .numFormats = numFormats,
+		                                     .formats = cnv.pv,
+		                                     .msgType = CB_FORMAT_LIST };
 
 	if (!xf_clipboard_changed(clipboard, formats, numFormats))
 		return CHANNEL_RC_OK;

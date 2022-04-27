@@ -20,6 +20,7 @@
 #ifndef WINPR_UTILS_BITSTREAM_H
 #define WINPR_UTILS_BITSTREAM_H
 
+#include <winpr/assert.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
@@ -49,6 +50,8 @@ extern "C"
 
 	static INLINE void BitStream_Prefetch(wBitStream* _bs)
 	{
+		WINPR_ASSERT(_bs);
+
 		(_bs->prefetch) = 0;
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 4) < (_bs->capacity))
 			(_bs->prefetch) |= ((UINT32) * (_bs->pointer + 4) << 24);
@@ -62,6 +65,7 @@ extern "C"
 
 	static INLINE void BitStream_Fetch(wBitStream* _bs)
 	{
+		WINPR_ASSERT(_bs);
 		(_bs->accumulator) = 0;
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 0) < (_bs->capacity))
 			(_bs->accumulator) |= ((UINT32) * (_bs->pointer + 0) << 24);
@@ -76,6 +80,7 @@ extern "C"
 
 	static INLINE void BitStream_Flush(wBitStream* _bs)
 	{
+		WINPR_ASSERT(_bs);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 0) < (_bs->capacity))
 			*(_bs->pointer + 0) = (BYTE)((UINT32)_bs->accumulator >> 24);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 1) < (_bs->capacity))
@@ -88,6 +93,7 @@ extern "C"
 
 	static INLINE void BitStream_Shift(wBitStream* _bs, UINT32 _nbits)
 	{
+		WINPR_ASSERT(_bs);
 		if (_nbits == 0)
 		{
 		}
@@ -126,12 +132,14 @@ extern "C"
 
 	static INLINE void BitStream_Shift32(wBitStream* _bs)
 	{
+		WINPR_ASSERT(_bs);
 		BitStream_Shift(_bs, 16);
 		BitStream_Shift(_bs, 16);
 	}
 
 	static INLINE void BitStream_Write_Bits(wBitStream* _bs, UINT32 _bits, UINT32 _nbits)
 	{
+		WINPR_ASSERT(_bs);
 		_bs->position += _nbits;
 		_bs->offset += _nbits;
 		if (_bs->offset < 32)
@@ -156,6 +164,7 @@ extern "C"
 
 	static INLINE size_t BitStream_GetRemainingLength(wBitStream* _bs)
 	{
+		WINPR_ASSERT(_bs);
 		return (_bs->length - _bs->position);
 	}
 

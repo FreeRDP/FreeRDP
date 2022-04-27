@@ -175,7 +175,15 @@ void ArrayList_SetItem(wArrayList* arrayList, size_t index, const void* obj)
 		if (arrayList->object.fnObjectNew)
 			arrayList->array[index] = arrayList->object.fnObjectNew(obj);
 		else
-			arrayList->array[index] = (void*)obj;
+		{
+			union
+			{
+				const void* cpv;
+				void* pv;
+			} cnv;
+			cnv.cpv = obj;
+			arrayList->array[index] = cnv.pv;
+		}
 	}
 }
 

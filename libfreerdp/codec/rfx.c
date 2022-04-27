@@ -1528,6 +1528,11 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 			for (xIdx = startTileX, gridRelX = startTileX * 64; xIdx <= endTileX;
 			     xIdx++, gridRelX += 64)
 			{
+				union
+				{
+					const BYTE* cpv;
+					BYTE* pv;
+				} cnv;
 				int tileWidth = 64;
 
 				if ((xIdx == endTileX) && (gridRelX + 64 > width))
@@ -1560,7 +1565,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 				}
 
 				/* Cast away const */
-				tile->data = (BYTE*)&data[(ay * scanline) + (ax * bytesPerPixel)];
+				cnv.cpv = &data[(ay * scanline) + (ax * bytesPerPixel)];
+				tile->data = cnv.pv;
 				tile->quantIdxY = context->quantIdxY;
 				tile->quantIdxCb = context->quantIdxCb;
 				tile->quantIdxCr = context->quantIdxCr;
