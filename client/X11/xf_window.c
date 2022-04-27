@@ -805,6 +805,9 @@ int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->is_mapped = FALSE;
 	appWindow->is_transient = FALSE;
 	appWindow->rail_state = 0;
+	appWindow->maxVert = FALSE;
+	appWindow->maxHorz = FALSE;
+	appWindow->minimized = FALSE;
 	appWindow->rail_ignore_configure = FALSE;
 	appWindow->handle = XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), appWindow->x,
 	                                  appWindow->y, appWindow->width, appWindow->height, 0,
@@ -969,11 +972,14 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 			break;
 
 		case WINDOW_SHOW_MINIMIZED:
+		    appWindow->minimized = TRUE;
 			XIconifyWindow(xfc->display, appWindow->handle, xfc->screen_number);
 			break;
 
 		case WINDOW_SHOW_MAXIMIZED:
 			/* Set the window as maximized */
+			appWindow->maxHorz = TRUE;
+			appWindow->maxVert = TRUE;
 			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_ADD,
 			                   xfc->_NET_WM_STATE_MAXIMIZED_VERT, xfc->_NET_WM_STATE_MAXIMIZED_HORZ,
 			                   0);
