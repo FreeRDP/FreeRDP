@@ -1680,7 +1680,4 @@ UINT rail_server_handle_messages(RailServerContext* context)
 			WLog_ERR(TAG, "Unknown RAIL PDU order received.");
 			return ERROR_INVALID_DATA;
 	}
-
-	Stream_SetPosition(s, 0);
-	return status;
 }

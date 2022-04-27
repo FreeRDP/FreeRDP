@@ -311,7 +311,6 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			return irp->Complete(irp);
-			break;
 	}
 
 	return CHANNEL_RC_OK;

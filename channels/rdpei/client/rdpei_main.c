@@ -716,7 +716,6 @@ static UINT rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback,
 static UINT rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 features = 0;
-	UINT32 size;
 	UINT32 protocolVersion;
 	RDPEI_PLUGIN* rdpei;
 

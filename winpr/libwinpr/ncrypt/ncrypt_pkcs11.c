@@ -16,6 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <stdlib.h>
+
 #ifdef WITH_PKCS11
 
 #include <pkcs11-helper-1.0/pkcs11.h>

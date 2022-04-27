@@ -35,9 +35,9 @@
 
 #include <stdlib.h>
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #include <malloc/malloc.h>
-#elif __FreeBSD__ || __OpenBSD__
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <stdlib.h>
 #else
 #include <malloc.h>
@@ -168,7 +168,7 @@ static INLINE size_t cMIN(size_t a, size_t b)
 void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t alignment,
                                size_t offset)
 {
-	void* newMemblock = NULL;
+	char* newMemblock = NULL;
 	WINPR_ALIGNED_MEM* pMem = NULL;
 	WINPR_ALIGNED_MEM* pNewMem = NULL;
 

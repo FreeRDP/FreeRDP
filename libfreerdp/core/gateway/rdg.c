@@ -762,7 +762,6 @@ static int rdg_websocket_read(BIO* bio, BYTE* pBuffer, size_t size,
 		}
 	}
 	/* should be unreachable */
-	return -1;
 }
 
 static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
@@ -863,7 +862,6 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 				return -1;
 		}
 	}
-	return -1;
 }
 
 static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,

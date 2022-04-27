@@ -550,7 +550,6 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 	WCHAR* wszTempDir;
 	CLIPRDR_TEMP_DIRECTORY tempDirectory;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*)context->handle;
-	size_t slength;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_UNUSED(header);

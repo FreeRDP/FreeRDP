@@ -466,7 +466,7 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 
 			return SEC_E_OUT_OF_SEQUENCE;
 		}
-		break;
+
 		case NTLM_STATE_AUTHENTICATE:
 		{
 			if (!pInput)
@@ -498,7 +498,7 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 
 			return status;
 		}
-		break;
+
 		default:
 			break;
 	}

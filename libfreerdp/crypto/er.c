@@ -419,8 +419,6 @@ int er_write_integer(wStream* s, INT32 value)
 		Stream_Write_UINT32_BE(s, value);
 		return 5;
 	}
-
-	return 0;
 }
 
 int er_skip_integer(INT32 value)
@@ -437,8 +435,6 @@ int er_skip_integer(INT32 value)
 	{
 		return _er_skip_length(4) + 5;
 	}
-
-	return 0;
 }
 
 BOOL er_read_integer_length(wStream* s, int* length)

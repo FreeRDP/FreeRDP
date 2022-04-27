@@ -578,8 +578,6 @@ static DWORD client_cli_accept_certificate(rdpSettings* settings)
 
 		printf("\n");
 	}
-
-	return 0;
 }
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation

@@ -12,7 +12,7 @@ static const TCHAR testPathNotUNC[] = _T("C:\\share\\path\\file");
 int TestPathIsUNCEx(int argc, char* argv[])
 {
 	BOOL status;
-	LPTSTR Server;
+	LPCTSTR Server;
 	TCHAR Path[PATHCCH_MAX_CCH];
 
 	WINPR_UNUSED(argc);
@@ -22,11 +22,11 @@ int TestPathIsUNCEx(int argc, char* argv[])
 
 	_tcscpy(Path, testPathUNC);
 
-	status = PathIsUNCEx(Path, (LPCTSTR*)&Server);
+	status = PathIsUNCEx(Path, &Server);
 
 	if (!status)
 	{
-		_tprintf(_T("PathIsUNCEx status: 0x%08") _T(PRIX32) _T("\n"), status);
+		_tprintf(_T("PathIsUNCEx status: 0x%d\n"), status);
 		return -1;
 	}
 
@@ -40,7 +40,7 @@ int TestPathIsUNCEx(int argc, char* argv[])
 
 	_tcscpy(Path, testPathNotUNC);
 
-	status = PathIsUNCEx(Path, (LPCTSTR*)&Server);
+	status = PathIsUNCEx(Path, &Server);
 
 	if (status)
 	{

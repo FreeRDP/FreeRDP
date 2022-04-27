@@ -1011,8 +1011,6 @@ static int libusb_udev_query_device_descriptor(IUDEVICE* idev, int offset)
 		default:
 			return 0;
 	}
-
-	return 0;
 }
 
 static BOOL libusb_udev_detach_kernel_driver(IUDEVICE* idev)

@@ -307,12 +307,11 @@ static DWORD ThreadCleanupHandle(HANDLE handle)
 
 	if (!thread->joined)
 	{
-		int status;
-		status = pthread_join(thread->thread, NULL);
+		int rc = pthread_join(thread->thread, NULL);
 
-		if (status != 0)
+		if (rc != 0)
 		{
-			WLog_ERR(TAG, "pthread_join failure: [%d] %s", status, strerror(status));
+			WLog_ERR(TAG, "pthread_join failure: [%d] %s", rc, strerror(rc));
 			goto fail;
 		}
 		else

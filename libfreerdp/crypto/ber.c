@@ -671,8 +671,6 @@ size_t ber_write_integer(wStream* s, UINT32 value)
 		Stream_Write_UINT32_BE(s, value);
 		return 6;
 	}
-
-	return 0;
 }
 
 size_t ber_write_contextual_integer(wStream* s, BYTE tag, UINT32 value)
@@ -711,8 +709,6 @@ size_t ber_sizeof_integer(UINT32 value)
 		/* treat as signed integer i.e. NT/HRESULT error codes */
 		return 6;
 	}
-
-	return 0;
 }
 
 size_t ber_sizeof_contextual_integer(UINT32 value)
