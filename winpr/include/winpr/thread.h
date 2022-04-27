@@ -207,7 +207,7 @@ extern "C"
 	                                    LPVOID lpParameter, DWORD dwCreationFlags,
 	                                    LPDWORD lpThreadId);
 
-	WINPR_API DECLSPEC_NORETURN VOID ExitThread(DWORD dwExitCode);
+	WINPR_API VOID ExitThread(DWORD dwExitCode);
 	WINPR_API BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode);
 
 	WINPR_API HANDLE _GetCurrentThread(void);
