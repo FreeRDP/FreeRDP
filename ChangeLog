@@ -1,3 +1,10 @@
+# 20xx-xx-xx Version 2.x.x
+
+Noteworthy changes:
+
+Fixed issues:
+* Backported #7440: wlfreerdp appid
+
 # 2022-04-25 Version 2.7.0
 
 Noteworthy changes:
