@@ -3515,7 +3515,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	arg = CommandLineFindArgumentA(largs, "smartcard-logon");
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
-		FillMemory(arg->Value, strlen(arg->Value), '*');
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
 
 	arg = CommandLineFindArgumentA(largs, "gp");
