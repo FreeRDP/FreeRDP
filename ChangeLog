@@ -1,8 +1,9 @@
 # 20xx-xx-xx Version 2.x.x
 
 Noteworthy changes:
-
+ 
 Fixed issues:
+* Fixed #7837: Prevent out of bound reads for FFMPEG
 * Backported #7440: wlfreerdp appid
 * Backported #7832: RAIL window restore
 * Backported #7833: Refactored WinPR thread locking
