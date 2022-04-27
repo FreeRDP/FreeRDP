@@ -19,6 +19,7 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
 #include <freerdp/config.h>
 
 #include <stdio.h>
@@ -327,8 +328,16 @@ static UINT echo_server_close(echo_server_context* context)
 
 static BOOL echo_server_request(echo_server_context* context, const BYTE* buffer, UINT32 length)
 {
+	union
+	{
+		const BYTE* cpv;
+		CHAR* pv;
+	} cnv;
+	cnv.cpv = buffer;
 	echo_server* echo = (echo_server*)context;
-	return WTSVirtualChannelWrite(echo->echo_channel, (PCHAR)buffer, length, NULL);
+	WINPR_ASSERT(echo);
+
+	return WTSVirtualChannelWrite(echo->echo_channel, cnv.pv, length, NULL);
 }
 
 echo_server_context* echo_server_context_new(HANDLE vcm)

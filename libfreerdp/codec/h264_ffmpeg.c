@@ -188,6 +188,11 @@ EXCEPTION:
 
 static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize)
 {
+	union
+	{
+		const BYTE* cpv;
+		BYTE* pv;
+	} cnv;
 	int rc = -1;
 	int status;
 	int gotFrame = 0;
@@ -215,7 +220,8 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 		goto fail;
 	}
 
-	packet->data = (BYTE*)pSrcData;
+	cnv.cpv = pSrcData;
+	packet->data = cnv.pv;
 	packet->size = (int)MIN(SrcSize, INT32_MAX);
 
 	WINPR_ASSERT(sys->codecDecoderContext);
@@ -321,6 +327,11 @@ fail:
 static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const UINT32* pStride,
                                BYTE** ppDstData, UINT32* pDstSize)
 {
+	union
+	{
+		const BYTE* cpv;
+		uint8_t* pv;
+	} cnv;
 	int rc = -1;
 	int status;
 	int gotFrame = 0;
@@ -362,9 +373,15 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52, 92, 100)
 	sys->videoFrame->chroma_location = AVCHROMA_LOC_LEFT;
 #endif
-	sys->videoFrame->data[0] = (uint8_t*)pSrcYuv[0];
-	sys->videoFrame->data[1] = (uint8_t*)pSrcYuv[1];
-	sys->videoFrame->data[2] = (uint8_t*)pSrcYuv[2];
+	cnv.cpv = pSrcYuv[0];
+	sys->videoFrame->data[0] = cnv.pv;
+
+	cnv.cpv = pSrcYuv[1];
+	sys->videoFrame->data[1] = cnv.pv;
+
+	cnv.cpv = pSrcYuv[2];
+	sys->videoFrame->data[2] = cnv.pv;
+
 	sys->videoFrame->linesize[0] = (int)pStride[0];
 	sys->videoFrame->linesize[1] = (int)pStride[1];
 	sys->videoFrame->linesize[2] = (int)pStride[2];

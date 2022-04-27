@@ -440,7 +440,15 @@ BOOL ntlm_client_set_input_buffer(rdpNtlm* ntlm, BOOL copy, const void* data, si
 		memcpy(ntlm->inputBuffer[0].pvBuffer, data, size);
 	}
 	else
-		ntlm->inputBuffer[0].pvBuffer = (void*)data;
+	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
+		cnv.cpv = data;
+		ntlm->inputBuffer[0].pvBuffer = cnv.pv;
+	}
 
 	return TRUE;
 }

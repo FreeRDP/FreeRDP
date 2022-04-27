@@ -19,6 +19,7 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
@@ -113,7 +114,18 @@ PTEB NtCurrentTeb(void)
 
 VOID _RtlInitAnsiString(PANSI_STRING DestinationString, PCSZ SourceString)
 {
-	DestinationString->Buffer = (PCHAR)SourceString;
+	union
+	{
+		const char* cpv;
+		char* pv;
+	} cnv;
+
+	WINPR_ASSERT(DestinationString);
+	WINPR_ASSERT(SourceString);
+
+	cnv.cpv = SourceString;
+
+	DestinationString->Buffer = cnv.pv;
 
 	if (!SourceString)
 	{
@@ -135,7 +147,17 @@ VOID _RtlInitAnsiString(PANSI_STRING DestinationString, PCSZ SourceString)
 
 VOID _RtlInitUnicodeString(PUNICODE_STRING DestinationString, PCWSTR SourceString)
 {
-	DestinationString->Buffer = (PWSTR)SourceString;
+	union
+	{
+		const WCHAR* cpv;
+		WCHAR* pv;
+	} cnv;
+
+	WINPR_ASSERT(DestinationString);
+	WINPR_ASSERT(SourceString);
+
+	cnv.cpv = SourceString;
+	DestinationString->Buffer = cnv.pv;
 
 	if (!SourceString)
 	{

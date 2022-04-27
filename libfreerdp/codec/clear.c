@@ -964,6 +964,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 	UINT32 residualByteCount;
 	UINT32 bandsByteCount;
 	UINT32 subcodecByteCount;
+	wStream sbuffer = { 0 };
 	wStream* s;
 	BYTE* glyphData = NULL;
 
@@ -976,7 +977,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 	if ((nWidth > 0xFFFF) || (nHeight > 0xFFFF))
 		return -1004;
 
-	s = Stream_New((BYTE*)pSrcData, SrcSize);
+	s = Stream_StaticConstInit(&sbuffer, pSrcData, SrcSize);
 
 	if (!s)
 		return -2005;
@@ -1079,7 +1080,6 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 finish:
 	rc = 0;
 fail:
-	Stream_Free(s, FALSE);
 	return rc;
 }
 

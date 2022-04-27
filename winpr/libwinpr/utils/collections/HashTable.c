@@ -241,7 +241,15 @@ static INLINE void setKey(wHashTable* table, wKeyValuePair* pair, const void* ke
 	if (table->key.fnObjectNew)
 		pair->key = table->key.fnObjectNew(key);
 	else
-		pair->key = (void*)key;
+	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
+		cnv.cpv = key;
+		pair->key = cnv.pv;
+	}
 }
 
 static INLINE void setValue(wHashTable* table, wKeyValuePair* pair, const void* value)
@@ -253,7 +261,15 @@ static INLINE void setValue(wHashTable* table, wKeyValuePair* pair, const void* 
 	if (table->value.fnObjectNew)
 		pair->value = table->value.fnObjectNew(value);
 	else
-		pair->value = (void*)value;
+	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
+		cnv.cpv = value;
+		pair->value = cnv.pv;
+	}
 }
 
 /**
@@ -413,7 +429,7 @@ BOOL HashTable_Remove(wHashTable* table, const void* key)
 	disposePair(table, pair);
 	table->numOfElements--;
 
-	if (!table->foreachRecursionLevel && table->lowerRehashThreshold > 0.0)
+	if (!table->foreachRecursionLevel && table->lowerRehashThreshold > 0.0f)
 	{
 		float elementToBucketRatio = (float)table->numOfElements / (float)table->numOfBuckets;
 

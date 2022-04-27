@@ -883,8 +883,8 @@ void channel_data_free(void* obj)
 	proxyChannelDataEventInfo* dst = obj;
 	if (dst)
 	{
-		free((void*)dst->data);
-		free((void*)dst->channel_name);
+		free(dst->data);
+		free(dst->channel_name);
 		free(dst);
 	}
 }
@@ -910,7 +910,7 @@ static void* channel_data_copy(const void* obj)
 	dst->data = malloc(src->data_len);
 	if (!dst->data)
 		goto fail;
-	memcpy((void*)dst->data, src->data, src->data_len);
+	memcpy(dst->data, src->data, src->data_len);
 	return dst;
 
 fail:

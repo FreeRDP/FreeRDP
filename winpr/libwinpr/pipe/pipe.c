@@ -427,7 +427,15 @@ BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 		/* synchronous behavior */
 		lpOverlapped->Internal = 1;
 		lpOverlapped->InternalHigh = (ULONG_PTR)nNumberOfBytesToWrite;
-		lpOverlapped->Pointer = (PVOID)lpBuffer;
+		{
+			union
+			{
+				LPCVOID cpv;
+				PVOID pv;
+			} cnv;
+			cnv.cpv = lpBuffer;
+			lpOverlapped->Pointer = cnv.pv;
+		}
 		SetEvent(lpOverlapped->hEvent);
 #endif
 	}

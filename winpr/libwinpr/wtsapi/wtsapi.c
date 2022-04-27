@@ -681,7 +681,13 @@ BOOL WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table)
 	/* Use InitOnceExecuteOnce here as well - otherwise a table set with this
 	   function is overriden on the first use of a WTS* API call (due to
 	   wtsapiInitOnce not being set). */
-	InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, (PVOID)table, NULL);
+	union
+	{
+		const void* cpv;
+		void* pv;
+	} cnv;
+	cnv.cpv = table;
+	InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, cnv.pv, NULL);
 	if (!g_WtsApi)
 		return FALSE;
 	return TRUE;

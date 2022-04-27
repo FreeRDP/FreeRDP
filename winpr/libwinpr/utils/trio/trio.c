@@ -3001,22 +3001,20 @@ TRIO_PRIVATE void TrioWriteDouble TRIO_ARGS6((self, number, flags, width, precis
 	/* Normal numbers */
 	if (flags & FLAGS_LONGDOUBLE)
 	{
-		baseDigits =
-		    (base == 10) ? LDBL_DIG : (int)trio_floor(LDBL_MANT_DIG / TrioLogarithmBase(base));
+		const trio_long_double_t tmp = trio_floor(LDBL_MANT_DIG / TrioLogarithmBase(base));
+		baseDigits = (base == 10) ? LDBL_DIG : (int)tmp;
 		epsilon = LDBL_EPSILON;
 	}
 	else if (flags & FLAGS_SHORT)
 	{
-		baseDigits = (base == BASE_DECIMAL)
-		                 ? FLT_DIG
-		                 : (int)trio_floor(FLT_MANT_DIG / TrioLogarithmBase(base));
+		const trio_long_double_t tmp = trio_floor(FLT_MANT_DIG / TrioLogarithmBase(base));
+		baseDigits = (base == BASE_DECIMAL) ? FLT_DIG : (int)tmp;
 		epsilon = FLT_EPSILON;
 	}
 	else
 	{
-		baseDigits = (base == BASE_DECIMAL)
-		                 ? DBL_DIG
-		                 : (int)trio_floor(DBL_MANT_DIG / TrioLogarithmBase(base));
+		const trio_long_double_t tmp = trio_floor(DBL_MANT_DIG / TrioLogarithmBase(base));
+		baseDigits = (base == BASE_DECIMAL) ? DBL_DIG : (int)tmp;
 		epsilon = DBL_EPSILON;
 	}
 
@@ -3082,7 +3080,10 @@ reprocess:
 			workNumber = TRIO_FABS(workNumber);
 			if (workNumber - trio_floor(workNumber) < epsilon)
 				workNumber--;
-			leadingFractionZeroes = (int)trio_floor(workNumber);
+			{
+				const trio_long_double_t tmp = trio_floor(workNumber);
+				leadingFractionZeroes = (int)tmp;
+			}
 		}
 	}
 
@@ -3099,7 +3100,8 @@ reprocess:
 		}
 		else
 		{
-			exponent = (int)trio_floor(workNumber);
+			const trio_long_double_t tmp = trio_floor(workNumber);
+			exponent = (int)tmp;
 			workNumber = number;
 			/*
 			 * The expression A * 10^-B is equivalent to A / 10^B but the former
@@ -3139,7 +3141,8 @@ reprocess:
 	integerDigits = 1;
 	if (integerNumber > epsilon)
 	{
-		integerDigits += (int)TrioLogarithm(integerNumber, base);
+		const trio_long_double_t tmp = TrioLogarithm(integerNumber, base);
+		integerDigits += (int)tmp;
 	}
 
 	fractionDigits = precision;
@@ -3162,10 +3165,11 @@ reprocess:
 		workNumber = number * dblFractionBase + TRIO_SUFFIX_LONG(0.5);
 		if (trio_floor(number * dblFractionBase) != trio_floor(workNumber))
 		{
+			const trio_long_double_t tmp1 = TrioLogarithm(number * dblFractionBase, base);
+			const trio_long_double_t tmp2 = TrioLogarithm(workNumber, base);
 			adjustNumber = TRUE;
 			/* Remove a leading fraction zero if fraction is rounded up */
-			if ((int)TrioLogarithm(number * dblFractionBase, base) !=
-			    (int)TrioLogarithm(workNumber, base))
+			if ((int)tmp1 != (int)tmp2)
 			{
 				--leadingFractionZeroes;
 			}
@@ -3218,11 +3222,13 @@ reprocess:
 		{
 			if (workNumber > 1.0)
 			{
+				trio_long_double_t tmp;
 				/* Adjust if number was rounded up one digit (ie. 99 to 100) */
 				integerNumber = trio_floor(workNumber);
 				fractionNumber = 0.0;
-				integerDigits =
-				    (integerNumber > epsilon) ? 1 + (int)TrioLogarithm(integerNumber, base) : 1;
+				tmp = TrioLogarithm(integerNumber, base);
+
+				integerDigits = (integerNumber > epsilon) ? 1 + (int)tmp : 1;
 				if (flags & FLAGS_FLOAT_G)
 				{
 					if (flags & FLAGS_ALTERNATIVE)
@@ -3322,11 +3328,15 @@ reprocess:
 		trailingZeroes = fractionDigits - fractionDigitsInspect;
 		for (i = 0; i < fractionDigitsInspect; i++)
 		{
+			trio_long_double_t tmp;
+
 			workFractionNumber *= dblBase;
 			workFractionAdjust *= dblBase;
 			workNumber = trio_floor(workFractionNumber + workFractionAdjust);
 			workFractionNumber -= workNumber;
-			offset = (int)trio_fmod(workNumber, dblBase);
+
+			tmp = trio_fmod(workNumber, dblBase);
+			offset = (int)tmp;
 			if (offset == 0)
 			{
 				trailingZeroes++;
@@ -3359,10 +3369,9 @@ reprocess:
 	exponentDigits = 0;
 	if (flags & FLAGS_FLOAT_E)
 	{
-		exponentDigits =
-		    (uExponent == 0)
-		        ? 1
-		        : (int)trio_ceil(TrioLogarithm((double)(uExponent + 1), (isHex) ? 10 : base));
+		const trio_long_double_t tmp =
+		    trio_ceil(TrioLogarithm((double)(uExponent + 1), (isHex) ? 10 : base));
+		exponentDigits = (uExponent == 0) ? 1 : (int)tmp;
 	}
 	requireTwoDigitExponent = ((base == BASE_DECIMAL) && (exponentDigits == 1));
 	if (exponentDigits > 0)
@@ -3434,7 +3443,8 @@ reprocess:
 		}
 		else
 		{
-			self->OutStream(self, digits[(int)trio_fmod(workNumber, dblBase)]);
+			const trio_long_double_t tmp = trio_fmod(workNumber, dblBase);
+			self->OutStream(self, digits[(int)tmp]);
 		}
 
 #if TRIO_FEATURE_QUOTE
@@ -3477,6 +3487,7 @@ reprocess:
 		}
 		else
 		{
+			trio_long_double_t tmp;
 			fractionNumber *= dblBase;
 			fractionAdjust *= dblBase;
 			workNumber = trio_floor(fractionNumber + fractionAdjust);
@@ -3490,7 +3501,9 @@ reprocess:
 			{
 				fractionNumber -= workNumber;
 			}
-			offset = (int)trio_fmod(workNumber, dblBase);
+
+			tmp = trio_fmod(workNumber, dblBase);
+			offset = (int)tmp;
 			if (offset == 0)
 			{
 				trailingZeroes++;
@@ -3520,6 +3533,7 @@ reprocess:
 	/* Output exponent */
 	if (exponentDigits > 0)
 	{
+		trio_long_double_t tmp;
 		self->OutStream(self, isHex ? ((flags & FLAGS_UPPER) ? 'P' : 'p')
 		                            : ((flags & FLAGS_UPPER) ? 'E' : 'e'));
 		self->OutStream(self, (isExponentNegative) ? '-' : '+');
@@ -3530,7 +3544,9 @@ reprocess:
 
 		if (isHex)
 			base = 10;
-		exponentBase = (int)TrioPower(base, exponentDigits - 1);
+
+		tmp = TrioPower(base, exponentDigits - 1);
+		exponentBase = (int)tmp;
 		for (i = 0; i < exponentDigits; i++)
 		{
 			self->OutStream(self, digits[(uExponent / exponentBase) % base]);

@@ -179,7 +179,15 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, void* 
 	if (!item)
 		goto out_error;
 
-	item->key = (void*)key;
+	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
+		cnv.cpv = key;
+		item->key = cnv.pv;
+	}
 	item->value = value;
 	item->next = NULL;
 

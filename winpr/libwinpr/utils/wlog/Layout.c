@@ -86,7 +86,13 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 			{
 				if ((p[0] == 'l') && (p[1] == 'v')) /* log level */
 				{
-					args[argc++] = (void*)WLOG_LEVELS[message->Level];
+					union
+					{
+						const void* cpv;
+						void* pv;
+					} cnv;
+					cnv.cpv = WLOG_LEVELS[message->Level];
+					args[argc++] = cnv.pv;
 					format[index++] = '%';
 					format[index++] = 's';
 					p++;
@@ -111,14 +117,28 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					else
 						file = (const char*)message->FileName;
 
-					args[argc++] = (void*)file;
+					{
+						union
+						{
+							const void* cpv;
+							void* pv;
+						} cnv;
+						cnv.cpv = file;
+						args[argc++] = cnv.pv;
+					}
 					format[index++] = '%';
 					format[index++] = 's';
 					p++;
 				}
 				else if ((p[0] == 'f') && (p[1] == 'n')) /* function */
 				{
-					args[argc++] = (void*)message->FunctionName;
+					union
+					{
+						const void* cpv;
+						void* pv;
+					} cnv;
+					cnv.cpv = message->FunctionName;
+					args[argc++] = cnv.pv;
 					format[index++] = '%';
 					format[index++] = 's';
 					p++;

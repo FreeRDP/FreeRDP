@@ -790,16 +790,15 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 
 static BOOL WLog_ParseName(wLog* log, LPCSTR name)
 {
+	const char* cp = name;
 	char* p;
-	size_t count;
+	size_t count = 1;
 	LPSTR names;
-	count = 1;
-	p = (char*)name;
 
-	while ((p = strchr(p, '.')) != NULL)
+	while ((cp = strchr(cp, '.')) != NULL)
 	{
 		count++;
-		p++;
+		cp++;
 	}
 
 	names = _strdup(name);

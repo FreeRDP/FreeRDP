@@ -299,7 +299,7 @@ static DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HAND
 BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
                                          const struct sockaddr_storage* peer_addr)
 {
-	void* sin_addr = NULL;
+	const void* sin_addr = NULL;
 	const BYTE localhost6_bytes[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 
 	WINPR_ASSERT(client);
@@ -307,16 +307,17 @@ BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
 
 	if (peer_addr->ss_family == AF_INET)
 	{
-		sin_addr = &(((struct sockaddr_in*)peer_addr)->sin_addr);
+		const UINT32* usin_addr = sin_addr = &(((const struct sockaddr_in*)peer_addr)->sin_addr);
 
-		if ((*(UINT32*)sin_addr) == 0x0100007f)
+		if ((*usin_addr) == 0x0100007f)
 			client->local = TRUE;
 	}
 	else if (peer_addr->ss_family == AF_INET6)
 	{
-		sin_addr = &(((struct sockaddr_in6*)peer_addr)->sin6_addr);
+		const struct sockaddr_in6* usin_addr = sin_addr =
+		    &(((const struct sockaddr_in6*)peer_addr)->sin6_addr);
 
-		if (memcmp(sin_addr, localhost6_bytes, 16) == 0)
+		if (memcmp(usin_addr, localhost6_bytes, 16) == 0)
 			client->local = TRUE;
 	}
 

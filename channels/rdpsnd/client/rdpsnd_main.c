@@ -1712,6 +1712,12 @@ UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	if (!rdpsnd)
 	{
+		union
+		{
+			const void* cev;
+			void* ev;
+		} cnv;
+
 		rdpsnd = allocatePlugin();
 		if (!rdpsnd)
 		{
@@ -1726,8 +1732,9 @@ UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		rdpsnd->dynamic = TRUE;
 
 		/* user data pointer is not const, cast to avoid warning. */
+		cnv.cev = pEntryPoints->GetPluginData(pEntryPoints);
 		WINPR_ASSERT(pEntryPoints->GetPluginData);
-		rdpsnd->channelEntryPoints.pExtendedData = (void*)pEntryPoints->GetPluginData(pEntryPoints);
+		rdpsnd->channelEntryPoints.pExtendedData = cnv.ev;
 
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, RDPSND_CHANNEL_NAME, &rdpsnd->iface);
 	}

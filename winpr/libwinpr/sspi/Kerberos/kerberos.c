@@ -631,6 +631,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 	context = (KRB_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 	if (!context)
 	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
 		context = kerberos_ContextNew();
 
 		if (!context)
@@ -646,7 +651,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 		}
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
-		sspi_SecureHandleSetUpperPointer(phNewContext, (void*)KRB_PACKAGE_NAME);
+
+		cnv.cpv = KRB_PACKAGE_NAME;
+		sspi_SecureHandleSetUpperPointer(phNewContext, cnv.pv);
 	}
 	else
 		credentials = context->credentials;
