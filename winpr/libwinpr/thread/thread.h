@@ -32,47 +32,63 @@
 #include "../synch/event.h"
 #include "apc.h"
 
+#ifdef __GNUC__
+#define ALIGN64 __attribute__((aligned(8)))
+#else
+#ifdef _WIN32
+#define ALIGN64 __declspec(align(8))
+#else
+#define ALIGN64
+#endif
+#endif
+
 typedef void* (*pthread_start_routine)(void*);
 typedef struct winpr_APC_item WINPR_APC_ITEM;
+
+typedef struct
+{
+	ALIGN64 pthread_mutex_t mux;
+	ALIGN64 pthread_cond_t cond;
+	ALIGN64 BOOL val;
+} mux_condition_bundle;
 
 struct winpr_thread
 {
 	WINPR_HANDLE_DEF();
 
-	BOOL started;
-	WINPR_EVENT_IMPL event;
-	BOOL mainProcess;
-	BOOL detached;
-	BOOL joined;
-	BOOL exited;
-	DWORD dwExitCode;
-	pthread_t thread;
-	SIZE_T dwStackSize;
-	LPVOID lpParameter;
-	pthread_mutex_t mutex;
-	pthread_mutex_t threadIsReadyMutex;
-	pthread_cond_t threadIsReady;
-	LPTHREAD_START_ROUTINE lpStartAddress;
-	LPSECURITY_ATTRIBUTES lpThreadAttributes;
-	APC_QUEUE apc;
+	ALIGN64 BOOL started;
+	ALIGN64 WINPR_EVENT_IMPL event;
+	ALIGN64 BOOL mainProcess;
+	ALIGN64 BOOL detached;
+	ALIGN64 BOOL joined;
+	ALIGN64 BOOL exited;
+	ALIGN64 DWORD dwExitCode;
+	ALIGN64 pthread_t thread;
+	ALIGN64 SIZE_T dwStackSize;
+	ALIGN64 LPVOID lpParameter;
+	ALIGN64 pthread_mutex_t mutex;
+	mux_condition_bundle isRunning;
+	mux_condition_bundle isCreated;
+	ALIGN64 LPTHREAD_START_ROUTINE lpStartAddress;
+	ALIGN64 LPSECURITY_ATTRIBUTES lpThreadAttributes;
+	ALIGN64 APC_QUEUE apc;
 #if defined(WITH_DEBUG_THREADS)
-	void* create_stack;
-	void* exit_stack;
+	ALIGN64 void* create_stack;
+	ALIGN64 void* exit_stack;
 #endif
 };
 typedef struct winpr_thread WINPR_THREAD;
 
 WINPR_THREAD* winpr_GetCurrentThread(VOID);
 
-struct winpr_process
+typedef struct
 {
 	WINPR_HANDLE_DEF();
 
 	pid_t pid;
 	int status;
 	DWORD dwExitCode;
-};
-typedef struct winpr_process WINPR_PROCESS;
+} WINPR_PROCESS;
 
 #endif
 
