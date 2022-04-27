@@ -36,8 +36,8 @@ FREERDP_LOCAL UINT32 bulk_compression_max_size(rdpBulk* bulk);
 
 FREERDP_LOCAL int bulk_decompress(rdpBulk* bulk, const BYTE* pSrcData, UINT32 SrcSize,
                                   const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
-FREERDP_LOCAL int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
-                                UINT32* pDstSize, UINT32* pFlags);
+FREERDP_LOCAL int bulk_compress(rdpBulk* bulk, const BYTE* pSrcData, UINT32 SrcSize,
+                                const BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
 
 FREERDP_LOCAL void bulk_reset(rdpBulk* bulk);
 
