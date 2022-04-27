@@ -145,7 +145,7 @@ out:
  * to the stream before return, but the pduLength field might be
  * changed in rdpgfx_server_single_packet_send.
  *
- * @param cmdId
+ * @param cmdId The CommandID to write
  * @param dataLen estimated data length without header
  *
  * @return new stream

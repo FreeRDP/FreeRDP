@@ -31,7 +31,6 @@
 #include <freerdp/channels/rdpei.h>
 #include <freerdp/server/rdpei.h>
 
-/** @brief */
 enum RdpEiState
 {
 	STATE_INITIAL,

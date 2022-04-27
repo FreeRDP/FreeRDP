@@ -45,9 +45,10 @@ static const BYTE NTLM_NULL_BUFFER[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0
 	                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 /**
- * Populate VERSION structure.
- * VERSION @msdn{cc236654}
- * @param s
+ * Populate VERSION structure msdn{cc236654}
+ * @param versionInfo A pointer to the version struct
+ *
+ * @return \b TRUE for success, \b FALSE for failure
  */
 
 BOOL ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo)
@@ -68,9 +69,11 @@ BOOL ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo)
 }
 
 /**
- * Read VERSION structure.
- * VERSION @msdn{cc236654}
- * @param s
+ * Read VERSION structure. msdn{cc236654}
+ * @param s A pointer to a stream to read
+ * @param versionInfo A pointer to the struct to read data to
+ *
+ * @return \b TRUE for success, \b FALSE for failure
  */
 
 BOOL ntlm_read_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo)
@@ -90,9 +93,11 @@ BOOL ntlm_read_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo)
 }
 
 /**
- * Write VERSION structure.
- * VERSION @msdn{cc236654}
- * @param s
+ * Write VERSION structure. msdn{cc236654}
+ * @param s A pointer to the stream to write to
+ * @param versionInfo A pointer to the buffer to read the data from
+ *
+ * @return \b TRUE for success, \b FALSE for failure
  */
 
 BOOL ntlm_write_version_info(wStream* s, const NTLM_VERSION_INFO* versionInfo)
@@ -116,9 +121,8 @@ BOOL ntlm_write_version_info(wStream* s, const NTLM_VERSION_INFO* versionInfo)
 }
 
 /**
- * Print VERSION structure.
- * VERSION @msdn{cc236654}
- * @param s
+ * Print VERSION structure. msdn{cc236654}
+ * @param versionInfo A pointer to the struct containing the data to print
  */
 #ifdef WITH_DEBUG_NTLM
 void ntlm_print_version_info(const NTLM_VERSION_INFO* versionInfo)
@@ -250,7 +254,8 @@ void ntlm_current_time(BYTE* timestamp)
 
 /**
  * Generate timestamp for AUTHENTICATE_MESSAGE.
- * @param NTLM context
+ *
+ * @param context A pointer to the NTLM context
  */
 
 void ntlm_generate_timestamp(NTLM_CONTEXT* context)
@@ -479,9 +484,12 @@ BOOL ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 
 /**
  * Compute NTLMv2 Response.
- * NTLMv2_RESPONSE @msdn{cc236653}
- * NTLMv2 Authentication @msdn{cc236700}
- * @param NTLM context
+ *
+ * NTLMv2_RESPONSE msdn{cc236653}
+ * NTLMv2 Authentication msdn{cc236700}
+ *
+ * @param context A pointer to the NTLM context
+ * @return \b TRUE for success, \b FALSE for failure
  */
 
 BOOL ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
@@ -572,7 +580,7 @@ void ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext)
 
 /**
  * Generate client challenge (8-byte nonce).
- * @param NTLM context
+ * @param context A pointer to the NTLM context
  */
 
 void ntlm_generate_client_challenge(NTLM_CONTEXT* context)
@@ -586,7 +594,7 @@ void ntlm_generate_client_challenge(NTLM_CONTEXT* context)
 
 /**
  * Generate server challenge (8-byte nonce).
- * @param NTLM context
+ * @param context A pointer to the NTLM context
  */
 
 void ntlm_generate_server_challenge(NTLM_CONTEXT* context)
@@ -598,9 +606,8 @@ void ntlm_generate_server_challenge(NTLM_CONTEXT* context)
 }
 
 /**
- * Generate KeyExchangeKey (the 128-bit SessionBaseKey).
- * @msdn{cc236710}
- * @param NTLM context
+ * Generate KeyExchangeKey (the 128-bit SessionBaseKey). msdn{cc236710}
+ * @param context A pointer to the NTLM context
  */
 
 void ntlm_generate_key_exchange_key(NTLM_CONTEXT* context)
@@ -614,7 +621,7 @@ void ntlm_generate_key_exchange_key(NTLM_CONTEXT* context)
 
 /**
  * Generate RandomSessionKey (16-byte nonce).
- * @param NTLM context
+ * @param context A pointer to the NTLM context
  */
 
 void ntlm_generate_random_session_key(NTLM_CONTEXT* context)
@@ -625,7 +632,7 @@ void ntlm_generate_random_session_key(NTLM_CONTEXT* context)
 
 /**
  * Generate ExportedSessionKey (the RandomSessionKey, exported)
- * @param NTLM context
+ * @param context A pointer to the NTLM context
  */
 
 void ntlm_generate_exported_session_key(NTLM_CONTEXT* context)
@@ -638,7 +645,7 @@ void ntlm_generate_exported_session_key(NTLM_CONTEXT* context)
 
 /**
  * Encrypt RandomSessionKey (RC4-encrypted RandomSessionKey, using KeyExchangeKey as the key).
- * @param NTLM context
+ * @param context A pointer to the NTLM context
  */
 
 void ntlm_encrypt_random_session_key(NTLM_CONTEXT* context)
@@ -652,7 +659,7 @@ void ntlm_encrypt_random_session_key(NTLM_CONTEXT* context)
 
 /**
  * Decrypt RandomSessionKey (RC4-encrypted RandomSessionKey, using KeyExchangeKey as the key).
- * @param NTLM context
+ * @param context A pointer to the NTLM context
  */
 
 void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
@@ -683,11 +690,13 @@ void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
 }
 
 /**
- * Generate signing key.
- * @msdn{cc236711}
+ * Generate signing key msdn{cc236711}
+ *
  * @param exported_session_key ExportedSessionKey
  * @param sign_magic Sign magic string
  * @param signing_key Destination signing key
+ *
+ * @return \b TRUE for success, \b FALSE for failure
  */
 
 static BOOL ntlm_generate_signing_key(BYTE* exported_session_key, const SecBuffer* sign_magic,
@@ -719,9 +728,10 @@ out:
 }
 
 /**
- * Generate client signing key (ClientSigningKey).
- * @msdn{cc236711}
- * @param NTLM context
+ * Generate client signing key (ClientSigningKey). msdn{cc236711}
+ * @param context A pointer to the NTLM context
+ *
+ * @return \b TRUE for success, \b FALSE for failure
  */
 
 BOOL ntlm_generate_client_signing_key(NTLM_CONTEXT* context)
@@ -734,9 +744,10 @@ BOOL ntlm_generate_client_signing_key(NTLM_CONTEXT* context)
 }
 
 /**
- * Generate server signing key (ServerSigningKey).
- * @msdn{cc236711}
- * @param NTLM context
+ * Generate server signing key (ServerSigningKey). msdn{cc236711}
+ * @param context A pointer to the NTLM context
+ *
+ * @return \b TRUE for success, \b FALSE for failure
  */
 
 BOOL ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
@@ -749,9 +760,10 @@ BOOL ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
 }
 
 /**
- * Generate client sealing key (ClientSealingKey).
- * @msdn{cc236712}
- * @param NTLM context
+ * Generate client sealing key (ClientSealingKey). msdn{cc236712}
+ * @param context A pointer to the NTLM context
+ *
+ * @return \b TRUE for success, \b FALSE for failure
  */
 
 BOOL ntlm_generate_client_sealing_key(NTLM_CONTEXT* context)
@@ -764,9 +776,10 @@ BOOL ntlm_generate_client_sealing_key(NTLM_CONTEXT* context)
 }
 
 /**
- * Generate server sealing key (ServerSealingKey).
- * @msdn{cc236712}
- * @param NTLM context
+ * Generate server sealing key (ServerSealingKey). msdn{cc236712}
+ * @param context A pointer to the NTLM context
+ *
+ * @return \b TRUE for success, \b FALSE for failure
  */
 
 BOOL ntlm_generate_server_sealing_key(NTLM_CONTEXT* context)
@@ -780,7 +793,7 @@ BOOL ntlm_generate_server_sealing_key(NTLM_CONTEXT* context)
 
 /**
  * Initialize RC4 stream cipher states for sealing.
- * @param NTLM context
+ * @param context A pointer to the NTLM context
  */
 
 void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)

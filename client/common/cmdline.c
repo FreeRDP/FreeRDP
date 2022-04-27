@@ -1407,9 +1407,10 @@ static BOOL ends_with(const char* str, const char* ext)
 
 /**
  * parses a string value with the format <v1>x<v2>
- * @param input: input string
- * @param v1: pointer to output v1
- * @param v2: pointer to output v2
+ *
+ * @param input input string
+ * @param v1 pointer to output v1
+ * @param v2 pointer to output v2
  * @return if the parsing was successful
  */
 static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* v2)
