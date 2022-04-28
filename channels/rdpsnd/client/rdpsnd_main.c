@@ -126,6 +126,8 @@ struct rdpsnd_plugin
 	HANDLE thread;
 	wMessageQueue* queue;
 	BOOL initialized;
+
+	UINT16 wVersion;
 };
 
 static const char* rdpsnd_is_dyn_str(BOOL dynamic)
@@ -268,9 +270,9 @@ static UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	UINT16 index;
-	UINT16 wVersion;
 	UINT16 wNumberOfFormats;
 	UINT ret = ERROR_BAD_LENGTH;
+
 	audio_formats_free(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
 	rdpsnd->NumberOfServerFormats = 0;
 	rdpsnd->ServerFormats = NULL;
@@ -285,7 +287,7 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* 
 	Stream_Seek_UINT16(s); /* wDGramPort */
 	Stream_Read_UINT16(s, wNumberOfFormats);
 	Stream_Read_UINT8(s, rdpsnd->cBlockNo); /* cLastBlockConfirmed */
-	Stream_Read_UINT16(s, wVersion);        /* wVersion */
+	Stream_Read_UINT16(s, rdpsnd->wVersion); /* wVersion */
 	Stream_Seek_UINT8(s);                   /* bPad */
 	rdpsnd->NumberOfServerFormats = wNumberOfFormats;
 
@@ -312,7 +314,7 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* 
 
 	if (ret == CHANNEL_RC_OK)
 	{
-		if (wVersion >= CHANNEL_VERSION_WIN_7)
+		if (rdpsnd->wVersion >= CHANNEL_VERSION_WIN_7)
 			ret = rdpsnd_send_quality_mode_pdu(rdpsnd);
 	}
 
