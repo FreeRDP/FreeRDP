@@ -759,7 +759,7 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 		Stream_Seek(s, 17);
 	}
 
-	while ((remain = Stream_GetRemainingLength(s)) >= 2)
+	while (Stream_GetRemainingLength(s) >= 2)
 	{
 		Stream_Read_UINT16(s, crlf);
 
@@ -773,7 +773,6 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	{
 		Stream_Rewind(s, 2);
 		len = Stream_GetPosition(s) - pos;
-		remain = Stream_GetRemainingLength(s);
 		Stream_Write_UINT16(s, 0);
 
 		if (strnlen((char*)str, len) == len)

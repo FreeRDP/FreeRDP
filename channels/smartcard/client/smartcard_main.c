@@ -138,7 +138,7 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 				{
 					smartcard_operation_free(&element->operation, TRUE);
 					WLog_ERR(TAG, "Queue_Enqueue failed!");
-					status = ERROR_INTERNAL_ERROR;
+					status = error;
 					break;
 				}
 

@@ -2227,7 +2227,7 @@ int freerdp_client_rdp_file_set_string_option(rdpFile* file, const char* name, c
 		if (index == -1)
 			goto out_fail;
 
-		if (!(line = freerdp_client_rdp_file_find_line_index(file, index)))
+		if (!freerdp_client_rdp_file_find_line_index(file, index))
 			goto out_fail;
 
 		if (freerdp_client_rdp_file_set_string(file, name, value, index) == -1)

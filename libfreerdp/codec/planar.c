@@ -936,6 +936,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 			return FALSE;
 	}
 
+	WINPR_UNUSED(srcp);
 	return TRUE;
 }
 

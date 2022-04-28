@@ -2726,7 +2726,7 @@ update_send_new_or_existing_notification_icons(rdpContext* context,
 	wStream* s;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
 	BOOL versionFieldPresent = FALSE;
-	UINT16 orderSize =
+	const UINT16 orderSize =
 	    update_calculate_new_or_existing_notification_icons_order(orderInfo, iconStateOrder);
 	rdp_update_internal* update;
 
@@ -2804,7 +2804,6 @@ update_send_new_or_existing_notification_icons(rdpContext* context,
 		Stream_Write_UINT16(s, iconInfo.cbBitsMask);             /* CbBitsMask (2 bytes) */
 		Stream_Write_UINT16(s, iconInfo.cbBitsColor);            /* CbBitsColor (2 bytes) */
 		Stream_Write(s, iconInfo.bitsMask, iconInfo.cbBitsMask); /* BitsMask (variable) */
-		orderSize += iconInfo.cbBitsMask;
 
 		if (iconInfo.bpp <= 8)
 		{
