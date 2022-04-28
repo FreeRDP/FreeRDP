@@ -955,7 +955,6 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
 	rdpdrPlugin* rdpdr;
 	UINT error = 0;
-	DWORD status;
 	rdpdr = (rdpdrPlugin*)arg;
 
 	WINPR_ASSERT(rdpdr);
@@ -965,7 +964,7 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 	if (!rdpdr->stopEvent)
 		goto out;
 
-	while ((status = WaitForSingleObject(rdpdr->stopEvent, 1000)) == WAIT_TIMEOUT)
+	while (WaitForSingleObject(rdpdr->stopEvent, 1000) == WAIT_TIMEOUT)
 	{
 		error = handle_hotplug(rdpdr);
 		switch (error)

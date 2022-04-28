@@ -4036,7 +4036,7 @@ static BOOL read_altsec_order(wStream* s, BYTE orderType, rdpAltSecUpdate* altse
 
 static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s, BYTE flags)
 {
-	BYTE orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
+	BYTE orderType = flags >> 2; /* orderType is in higher 6 bits of flags field */
 	BOOL rc = FALSE;
 	rdp_update_internal* up = update_cast(update);
 	rdpContext* context = update->context;

@@ -286,7 +286,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		goto out;
 	}
 
-	while ((status = NCryptEnumKeys(provider, scope, &keyName, &enumState, NCRYPT_SILENT_FLAG)) ==
+	while (NCryptEnumKeys(provider, scope, &keyName, &enumState, NCRYPT_SILENT_FLAG) ==
 	       ERROR_SUCCESS)
 	{
 		NCRYPT_KEY_HANDLE phKey = 0;
