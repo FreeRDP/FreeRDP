@@ -1146,7 +1146,7 @@ fail:
 static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
                               const RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
-	UINT rc = ERROR_INTERNAL_ERROR;
+	UINT rc = CHANNEL_RC_OK;
 	UINT res = ERROR_INTERNAL_ERROR;
 	rdpCodecs* codecs = NULL;
 	gdiGfxSurface* surface = NULL;
