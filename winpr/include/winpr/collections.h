@@ -146,7 +146,7 @@ extern "C"
 	WINPR_API void ArrayList_Unlock(wArrayList* arrayList);
 
 	WINPR_API void* ArrayList_GetItem(wArrayList* arrayList, size_t index);
-	WINPR_API void ArrayList_SetItem(wArrayList* arrayList, size_t index, const void* obj);
+	WINPR_API BOOL ArrayList_SetItem(wArrayList* arrayList, size_t index, const void* obj);
 
 	WINPR_API wObject* ArrayList_Object(wArrayList* arrayList);
 
