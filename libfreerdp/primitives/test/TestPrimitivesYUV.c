@@ -782,7 +782,7 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 
 	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 	{
-		pstatus_t rc;
+		pstatus_t rc = -1;
 		const UINT32 DstFormat = formats[x];
 		printf("Testing destination color format %s\n", FreeRDPGetColorFormatName(DstFormat));
 		PROFILER_CREATE(rgbToYUV444, "RGBToYUV444-generic")

@@ -5676,7 +5676,7 @@ static BOOL FuzzPlanar(void)
 		size_t dataSize = 0x10000;
 		BYTE dstData[0x10000] = { 0 };
 
-		UINT32 DstFormat;
+		UINT32 DstFormat = 0;
 		UINT32 nDstStep;
 		UINT32 nXDst;
 		UINT32 nYDst;
