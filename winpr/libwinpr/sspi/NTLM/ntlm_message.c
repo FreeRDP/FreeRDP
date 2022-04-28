@@ -642,8 +642,8 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
 	/* WorkstationFields (8 bytes) */
-		if (!ntlm_write_message_fields(s, &(message->Workstation)))
-			return SEC_E_INTERNAL_ERROR;
+	if (!ntlm_write_message_fields(s, &(message->Workstation)))
+		return SEC_E_INTERNAL_ERROR;
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 	{

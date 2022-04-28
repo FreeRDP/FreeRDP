@@ -269,7 +269,7 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 	int Sp;
 	int cbChId;
 	UINT32 ChannelId;
-	rdpPeerChannel* dvc;
+	rdpPeerChannel* dvc = NULL;
 
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(channel->vcm);
