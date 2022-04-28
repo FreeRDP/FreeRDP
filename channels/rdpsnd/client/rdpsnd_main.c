@@ -125,6 +125,8 @@ struct rdpsnd_plugin
 	BOOL initialized;
 
 	UINT16 wVersion;
+	UINT32 volume;
+	BOOL applyVolume;
 };
 
 static const char* rdpsnd_is_dyn_str(BOOL dynamic)
@@ -379,6 +381,20 @@ static UINT rdpsnd_recv_training_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	return rdpsnd_send_training_confirm_pdu(rdpsnd, wTimeStamp, wPackSize);
 }
 
+static BOOL rdpsnd_apply_volume(rdpsndPlugin* rdpsnd)
+{
+	WINPR_ASSERT(rdpsnd);
+
+	if (rdpsnd->isOpen && rdpsnd->applyVolume && rdpsnd->device)
+	{
+		BOOL rc = IFCALLRESULT(TRUE, rdpsnd->device->SetVolume, rdpsnd->device, rdpsnd->volume);
+		if (!rc)
+			return FALSE;
+		rdpsnd->applyVolume = FALSE;
+	}
+	return TRUE;
+}
+
 static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT32 wFormatNo,
                                          const AUDIO_FORMAT* format)
 {
@@ -428,7 +444,7 @@ static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT32 wFormatNo,
 		rdpsnd->totalPlaySize = 0;
 	}
 
-	return TRUE;
+	return rdpsnd_apply_volume(rdpsnd);
 }
 
 /**
@@ -709,7 +725,7 @@ static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
  */
 static UINT rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
-	BOOL rc = FALSE;
+	BOOL rc = TRUE;
 	UINT32 dwVolume;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
@@ -718,8 +734,10 @@ static UINT rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	Stream_Read_UINT32(s, dwVolume);
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "%s Volume: 0x%08" PRIX32 "",
 	           rdpsnd_is_dyn_str(rdpsnd->dynamic), dwVolume);
-	if (rdpsnd->device)
-		rc = IFCALLRESULT(FALSE, rdpsnd->device->SetVolume, rdpsnd->device, dwVolume);
+
+	rdpsnd->volume = dwVolume;
+	rdpsnd->applyVolume = TRUE;
+	rc = rdpsnd_apply_volume(rdpsnd);
 
 	if (!rc)
 	{
