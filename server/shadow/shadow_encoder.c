@@ -24,6 +24,7 @@
 
 #include "shadow_encoder.h"
 
+#include <freerdp/log.h>
 #define TAG CLIENT_TAG("shadow")
 
 UINT32 shadow_encoder_preferred_fps(rdpShadowEncoder* encoder)

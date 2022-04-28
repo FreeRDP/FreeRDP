@@ -34,6 +34,7 @@
 #include "xf_disp.h"
 #include "xf_monitor.h"
 
+#include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11disp")
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 

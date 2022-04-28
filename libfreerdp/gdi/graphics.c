@@ -49,14 +49,14 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32
 	if (!gdi)
 		return NULL;
 
-	nDstStep = nWidth * GetBytesPerPixel(gdi->dstFormat);
+	nDstStep = nWidth * FreeRDPGetBytesPerPixel(gdi->dstFormat);
 	pDstData = _aligned_malloc(nHeight * nDstStep * 1ULL, 16);
 
 	if (!pDstData)
 		return NULL;
 
 	pSrcData = data;
-	nSrcStep = nWidth * GetBytesPerPixel(SrcFormat);
+	nSrcStep = nWidth * FreeRDPGetBytesPerPixel(SrcFormat);
 
 	if (!freerdp_image_copy(pDstData, gdi->dstFormat, nDstStep, 0, 0, nWidth, nHeight, pSrcData,
 	                        SrcFormat, nSrcStep, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
@@ -137,12 +137,12 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 	bitmap->compressed = FALSE;
 	bitmap->format = gdi->dstFormat;
 
-	if ((GetBytesPerPixel(bitmap->format) == 0) || (DstWidth == 0) || (DstHeight == 0) ||
+	if ((FreeRDPGetBytesPerPixel(bitmap->format) == 0) || (DstWidth == 0) || (DstHeight == 0) ||
 	    (DstWidth > UINT32_MAX / DstHeight) ||
-	    (size > (UINT32_MAX / GetBytesPerPixel(bitmap->format))))
+	    (size > (UINT32_MAX / FreeRDPGetBytesPerPixel(bitmap->format))))
 		return FALSE;
 
-	size *= GetBytesPerPixel(bitmap->format);
+	size *= FreeRDPGetBytesPerPixel(bitmap->format);
 	bitmap->length = size;
 	bitmap->data = (BYTE*)_aligned_malloc(bitmap->length, 16);
 
@@ -171,8 +171,8 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 	else
 	{
 		const UINT32 SrcFormat = gdi_get_pixel_format(bpp);
-		const size_t sbpp = GetBytesPerPixel(SrcFormat);
-		const size_t dbpp = GetBytesPerPixel(bitmap->format);
+		const size_t sbpp = FreeRDPGetBytesPerPixel(SrcFormat);
+		const size_t dbpp = FreeRDPGetBytesPerPixel(bitmap->format);
 
 		if ((sbpp == 0) || (dbpp == 0))
 			return FALSE;

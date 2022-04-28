@@ -27,6 +27,8 @@
 #include <winpr/tools/makecert.h>
 
 #include <freerdp/server/shadow.h>
+
+#include <freerdp/log.h>
 #define TAG SERVER_TAG("shadow")
 
 int main(int argc, char** argv)

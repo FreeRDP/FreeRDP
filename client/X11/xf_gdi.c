@@ -1078,7 +1078,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND*
 		case RDP_CODEC_ID_NONE:
 			pSrcData = cmd->bmp.bitmapData;
 			format = gdi_get_pixel_format(cmd->bmp.bpp);
-			size = cmd->bmp.width * cmd->bmp.height * GetBytesPerPixel(format) * 1ULL;
+			size = cmd->bmp.width * cmd->bmp.height * FreeRDPGetBytesPerPixel(format) * 1ULL;
 			if (size > cmd->bmp.bitmapDataLength)
 			{
 				WLog_ERR(TAG, "Short nocodec message: got %" PRIu32 " bytes, require %" PRIuz,

@@ -1156,7 +1156,7 @@ BOOL mf_Pointer_New(rdpContext *context, rdpPointer *pointer)
 	                    isPlanar:NO
 	              colorSpaceName:NSDeviceRGBColorSpace
 	                bitmapFormat:0
-	                 bytesPerRow:rect.size.width * GetBytesPerPixel(format)
+	                 bytesPerRow:rect.size.width * FreeRDPGetBytesPerPixel(format)
 	                bitsPerPixel:0];
 	mrdpCursor->bmiRep = bmiRep;
 	/* create an image using above representation */
@@ -1242,7 +1242,7 @@ CGContextRef mac_create_bitmap_context(rdpContext *context)
 {
 	CGContextRef bitmap_context;
 	rdpGdi *gdi = context->gdi;
-	UINT32 bpp = GetBytesPerPixel(gdi->dstFormat);
+	UINT32 bpp = FreeRDPGetBytesPerPixel(gdi->dstFormat);
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 
 	if (bpp == 2)

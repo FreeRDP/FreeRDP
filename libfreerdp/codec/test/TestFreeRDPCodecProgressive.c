@@ -1032,8 +1032,8 @@ static BOOL colordiff(UINT32 format, UINT32 a, UINT32 b)
 {
 	BYTE ar, ag, ab, aa;
 	BYTE br, bg, bb, ba;
-	SplitColor(a, format, &ar, &ag, &ab, &aa, NULL);
-	SplitColor(b, format, &br, &bg, &bb, &ba, NULL);
+	FreeRDPSplitColor(a, format, &ar, &ag, &ab, &aa, NULL);
+	FreeRDPSplitColor(b, format, &br, &bg, &bb, &ba, NULL);
 	if (!diff(aa, ba) || !diff(ar, br) || !diff(ag, bg) || !diff(ab, bb))
 		return FALSE;
 	return TRUE;
@@ -1098,8 +1098,8 @@ static BOOL test_encode_decode(const char* path)
 			const BYTE* po = &orig[x * 4];
 			const BYTE* pd = &dec[x * 4];
 
-			const DWORD a = ReadColor(po, ColorFormat);
-			const DWORD b = ReadColor(pd, ColorFormat);
+			const DWORD a = FreeRDPReadColor(po, ColorFormat);
+			const DWORD b = FreeRDPReadColor(pd, ColorFormat);
 			if (!colordiff(ColorFormat, a, b))
 			{
 				printf("xxxxxxx [%u:%u] %08X != %08X\n", x, y, a, b);

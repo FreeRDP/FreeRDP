@@ -176,7 +176,7 @@ static void ios_create_bitmap_context(mfInfo *mfi)
 	rdpGdi *gdi = mfi->instance->context->gdi;
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 
-	if (GetBytesPerPixel(gdi->dstFormat) == 2)
+	if (FreeRDPGetBytesPerPixel(gdi->dstFormat) == 2)
 		mfi->bitmap_context = CGBitmapContextCreate(
 		    gdi->primary_buffer, gdi->width, gdi->height, 5, gdi->stride, colorSpace,
 		    kCGBitmapByteOrder16Little | kCGImageAlphaNoneSkipFirst);

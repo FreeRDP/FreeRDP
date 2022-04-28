@@ -38,6 +38,7 @@
 #include "wf_peer.h"
 #include <freerdp/peer.h>
 
+#include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")
 
 #define SERVER_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING

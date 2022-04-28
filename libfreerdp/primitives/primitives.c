@@ -28,6 +28,7 @@
 
 #include "prim_internal.h"
 
+#include <freerdp/log.h>
 #define TAG FREERDP_TAG("primitives")
 
 /* hints to know which kind of primitives to use */

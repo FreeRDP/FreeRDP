@@ -24,6 +24,7 @@
 
 #include "xf_video.h"
 
+#include <freerdp/log.h>
 #define TAG CLIENT_TAG("video")
 
 typedef struct

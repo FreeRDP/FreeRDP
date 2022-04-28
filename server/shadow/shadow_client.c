@@ -1229,7 +1229,8 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 		BOOL rc;
 		const UINT32 w = cmd.right - cmd.left;
 		const UINT32 h = cmd.bottom - cmd.top;
-		const BYTE* src = &pSrcData[cmd.top * nSrcStep + cmd.left * GetBytesPerPixel(SrcFormat)];
+		const BYTE* src =
+		    &pSrcData[cmd.top * nSrcStep + cmd.left * FreeRDPGetBytesPerPixel(SrcFormat)];
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_PLANAR) < 0)
 		{
 			WLog_ERR(TAG, "Failed to prepare encoder FREERDP_CODEC_PLANAR");

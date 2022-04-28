@@ -867,8 +867,8 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 		{
 			HGDI_BITMAP hBmp;
 			UINT32 brushFormat;
-			BYTE* data =
-			    (BYTE*)_aligned_malloc(8 * 8 * GetBytesPerPixel(gdi->drawing->hdc->format), 16);
+			BYTE* data = (BYTE*)_aligned_malloc(
+			    8 * 8 * FreeRDPGetBytesPerPixel(gdi->drawing->hdc->format), 16);
 
 			if (!data)
 			{
@@ -1057,7 +1057,7 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 
 		case RDP_CODEC_ID_NONE:
 			format = gdi_get_pixel_format(cmd->bmp.bpp);
-			size = cmd->bmp.width * cmd->bmp.height * GetBytesPerPixel(format) * 1ULL;
+			size = cmd->bmp.width * cmd->bmp.height * FreeRDPGetBytesPerPixel(format) * 1ULL;
 			if (size > cmd->bmp.bitmapDataLength)
 			{
 				WLog_ERR(TAG, "Short nocodec message: got %" PRIu32 " bytes, require %" PRIuz,
@@ -1172,7 +1172,7 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format, BYTE* bu
 	if (stride > 0)
 		gdi->stride = stride;
 	else
-		gdi->stride = gdi->width * GetBytesPerPixel(gdi->dstFormat);
+		gdi->stride = gdi->width * FreeRDPGetBytesPerPixel(gdi->dstFormat);
 
 	if (!gdi->primary)
 		goto fail_primary;

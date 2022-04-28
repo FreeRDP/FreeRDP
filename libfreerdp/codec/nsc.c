@@ -433,7 +433,7 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT32 width, UINT32 
 		return FALSE;
 
 	if (nDstStride == 0)
-		nDstStride = nWidth * GetBytesPerPixel(DstFormat);
+		nDstStride = nWidth * FreeRDPGetBytesPerPixel(DstFormat);
 
 	switch (bpp)
 	{

@@ -413,7 +413,7 @@ static RFX_RECT* rfx_message_get_rect(RFX_MESSAGE* message, UINT32 index)
 void rfx_context_set_pixel_format(RFX_CONTEXT* context, UINT32 pixel_format)
 {
 	context->pixel_format = pixel_format;
-	context->bits_per_pixel = GetBitsPerPixel(pixel_format);
+	context->bits_per_pixel = FreeRDPGetBitsPerPixel(pixel_format);
 }
 
 BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height)
@@ -1153,8 +1153,8 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 		UINT32 nbUpdateRects;
 		REGION16 clippingRects;
 		const RECTANGLE_16* updateRects;
-		const DWORD formatSize = GetBytesPerPixel(context->pixel_format);
-		const UINT32 dstWidth = dstStride / GetBytesPerPixel(dstFormat);
+		const DWORD formatSize = FreeRDPGetBytesPerPixel(context->pixel_format);
+		const UINT32 dstWidth = dstStride / FreeRDPGetBytesPerPixel(dstFormat);
 		region16_init(&clippingRects);
 
 		for (i = 0; i < message->numRects; i++)

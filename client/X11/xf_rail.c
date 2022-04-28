@@ -32,6 +32,7 @@
 #include "xf_window.h"
 #include "xf_rail.h"
 
+#include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
 static const char* error_code_names[] = { "RAIL_EXEC_S_OK",
@@ -634,7 +635,7 @@ static BOOL convert_rail_icon(const ICON_INFO* iconInfo, xfRailIcon* railIcon)
 
 	for (i = 2; i < nelements; i++)
 	{
-		pixels[i] = ReadColor(nextPixel, PIXEL_FORMAT_BGRA32);
+		pixels[i] = FreeRDPReadColor(nextPixel, PIXEL_FORMAT_BGRA32);
 		nextPixel += 4;
 	}
 

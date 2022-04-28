@@ -38,9 +38,9 @@ static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 format, BOOL use444)
 {
 	size_t x;
-	const UINT32 bpp = GetBytesPerPixel(format);
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(format);
 	BYTE fill = PADDING_FILL_VALUE;
-	if (!ColorHasAlpha(format))
+	if (!FreeRDPColorHasAlpha(format))
 		fill = 0xFF;
 
 	for (x = 0; x < size; x++)
@@ -49,12 +49,12 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 		UINT32 sColor, dColor;
 		BYTE sR, sG, sB, sA;
 		BYTE dR, dG, dB, dA;
-		sColor = ReadColor(src, format);
-		dColor = ReadColor(dst, format);
+		sColor = FreeRDPReadColor(src, format);
+		dColor = FreeRDPReadColor(dst, format);
 		src += bpp;
 		dst += bpp;
-		SplitColor(sColor, format, &sR, &sG, &sB, &sA, NULL);
-		SplitColor(dColor, format, &dR, &dG, &dB, &dA, NULL);
+		FreeRDPSplitColor(sColor, format, &sR, &sG, &sB, &sA, NULL);
+		FreeRDPSplitColor(dColor, format, &dR, &dG, &dB, &dA, NULL);
 
 		if ((abs(sR - dR) > maxDiff) || (abs(sG - dG) > maxDiff) || (abs(sB - dB) > maxDiff))
 		{

@@ -84,7 +84,7 @@ BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 			return FALSE;
 	}
 
-	SplitColor(srcColor, SrcFormat, &r, &g, &b, &a, &gdi->palette);
+	FreeRDPSplitColor(srcColor, SrcFormat, &r, &g, &b, &a, &gdi->palette);
 	color->blue = (unsigned short)(b << 8);
 	color->green = (unsigned short)(g << 8);
 	color->red = (unsigned short)(r << 8);
@@ -111,7 +111,7 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 
 	gdi = context->gdi;
 	xf_lock_x11(xfc);
-	depth = GetBitsPerPixel(bitmap->format);
+	depth = FreeRDPGetBitsPerPixel(bitmap->format);
 	xbitmap->pixmap =
 	    XCreatePixmap(xfc->display, xfc->drawable, bitmap->width, bitmap->height, xfc->depth);
 
@@ -310,7 +310,7 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 		ci.height = yTargetSize;
 		ci.xhot = pointer->xPos * xscale;
 		ci.yhot = pointer->yPos * yscale;
-		size = ci.height * ci.width * GetBytesPerPixel(CursorFormat) * 1ULL;
+		size = ci.height * ci.width * FreeRDPGetBytesPerPixel(CursorFormat) * 1ULL;
 
 		tmp = _aligned_malloc(size, 16);
 		if (!tmp)
@@ -399,7 +399,7 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	xpointer->nCursors = 0;
 	xpointer->mCursors = 0;
 
-	size = pointer->height * pointer->width * GetBytesPerPixel(CursorFormat) * 1ULL;
+	size = pointer->height * pointer->width * FreeRDPGetBytesPerPixel(CursorFormat) * 1ULL;
 
 	if (!(xpointer->cursorPixels = (XcursorPixel*)_aligned_malloc(size, 16)))
 		return FALSE;
