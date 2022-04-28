@@ -362,10 +362,13 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 		UINT32 i;
 		rdpPointer* pointer;
 
-		for (i = 0; i < pointer_cache->cacheSize; i++)
+		if (pointer_cache->entries)
 		{
-			pointer = pointer_cache->entries[i];
-			pointer_free(pointer_cache->context, pointer);
+			for (i = 0; i < pointer_cache->cacheSize; i++)
+			{
+				pointer = pointer_cache->entries[i];
+				pointer_free(pointer_cache->context, pointer);
+			}
 		}
 
 		free(pointer_cache->entries);

@@ -343,7 +343,9 @@ static UINT disp_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	DISP_PLUGIN* disp = (DISP_PLUGIN*)pPlugin;
 
-	if (disp && disp->listener_callback)
+	WINPR_ASSERT(disp);
+
+	if (disp->listener_callback)
 	{
 		IWTSVirtualChannelManager* mgr = disp->listener_callback->channel_mgr;
 		if (mgr)

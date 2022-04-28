@@ -390,10 +390,13 @@ static void progressive_surface_context_free(void* ptr)
 	if (!surface)
 		return;
 
-	for (index = 0; index < surface->gridSize; index++)
+	if (surface->tiles)
 	{
-		RFX_PROGRESSIVE_TILE* tile = &(surface->tiles[index]);
-		progressive_tile_free(tile);
+		for (index = 0; index < surface->tilesSize; index++)
+		{
+			RFX_PROGRESSIVE_TILE* tile = &(surface->tiles[index]);
+			progressive_tile_free(tile);
+		}
 	}
 
 	free(surface->tiles);
@@ -403,10 +406,12 @@ static void progressive_surface_context_free(void* ptr)
 
 static INLINE BOOL progressive_tile_allocate(RFX_PROGRESSIVE_TILE* tile)
 {
+	const RFX_PROGRESSIVE_TILE empty = { 0 };
 	BOOL rc = FALSE;
 	if (!tile)
 		return FALSE;
 
+	*tile = empty;
 	tile->width = 64;
 	tile->height = 64;
 	tile->stride = 4 * tile->width;
@@ -438,30 +443,38 @@ static INLINE BOOL progressive_tile_allocate(RFX_PROGRESSIVE_TILE* tile)
 
 static BOOL progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* surface)
 {
-	size_t oldIndex;
+	size_t x;
+	size_t oldIndex = 0;
 
 	WINPR_ASSERT(surface);
 	WINPR_ASSERT(surface->gridSize > 0);
 
-	oldIndex = surface->gridSize;
 	if (surface->tiles)
+	{
+		oldIndex = surface->gridSize;
 		surface->gridSize *= 2;
+	}
 
 	{
+		const RFX_PROGRESSIVE_TILE empty = { 0 };
+
 		void* tmp = realloc(surface->tiles, surface->gridSize * sizeof(RFX_PROGRESSIVE_TILE));
 		if (!tmp)
 			return FALSE;
+		surface->tilesSize = surface->gridSize;
 		surface->tiles = tmp;
-		memset(&surface->tiles[oldIndex], 0,
-		       (surface->gridSize - oldIndex) * sizeof(RFX_PROGRESSIVE_TILE));
+
+		for (x = oldIndex; x < surface->tilesSize; x++)
+			surface->tiles[x] = empty;
 	}
 	{
 		void* tmp = realloc(surface->updatedTileIndices, surface->gridSize * sizeof(UINT32));
 		if (!tmp)
 			return FALSE;
+
 		surface->updatedTileIndices = tmp;
-		memset(&surface->updatedTileIndices[oldIndex], 0,
-		       (surface->gridSize - oldIndex) * sizeof(UINT32));
+		for (x = oldIndex; x < surface->gridSize; x++)
+			surface->updatedTileIndices[x] = 0;
 	}
 	return TRUE;
 }
@@ -488,7 +501,7 @@ static PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfa
 		progressive_surface_context_free(surface);
 		return NULL;
 	}
-	for (x = 0; x < surface->gridSize; x++)
+	for (x = 0; x < surface->tilesSize; x++)
 	{
 		if (!progressive_tile_allocate(&surface->tiles[x]))
 		{
@@ -512,7 +525,7 @@ static BOOL progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* surfac
 
 	zIdx = (tile->yIdx * surface->gridWidth) + tile->xIdx;
 
-	if (zIdx >= surface->gridSize)
+	if (zIdx >= surface->tilesSize)
 	{
 		WLog_ERR(TAG, "Invalid zIndex %" PRIuz, zIdx);
 		return FALSE;
@@ -575,7 +588,7 @@ static BOOL progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* surfac
 		         region->numTiles, region->usedTiles);
 		return FALSE;
 	}
-	if (surface->numUpdatedTiles >= surface->gridSize)
+	if (surface->numUpdatedTiles >= surface->tilesSize)
 	{
 		if (!progressive_allocate_tile_cache(surface))
 			return FALSE;
@@ -589,8 +602,7 @@ static BOOL progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* surfac
 INT32 progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId,
                                          UINT32 width, UINT32 height)
 {
-	PROGRESSIVE_SURFACE_CONTEXT* surface;
-	surface = progressive_get_surface_data(progressive, surfaceId);
+	PROGRESSIVE_SURFACE_CONTEXT* surface = progressive_get_surface_data(progressive, surfaceId);
 
 	if (!surface)
 	{
@@ -1688,6 +1700,9 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, wS
 	PROGRESSIVE_TILE_PROCESS_WORK_PARAM* params = NULL;
 	UINT16 close_cnt = 0;
 
+	WINPR_ASSERT(progressive);
+	WINPR_ASSERT(region);
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, region->tileDataSize))
 		return -1;
 
@@ -1768,23 +1783,25 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, wS
 		work_objects = (PTP_WORK*)calloc(region->numTiles, sizeof(PTP_WORK));
 		if (!work_objects)
 			return -1;
-
-		params = (PROGRESSIVE_TILE_PROCESS_WORK_PARAM*)calloc(
-		    region->numTiles, sizeof(PROGRESSIVE_TILE_PROCESS_WORK_PARAM));
-		if (!params)
-		{
-			free(work_objects);
-			return -1;
-		}
 	}
 
+	params = (PROGRESSIVE_TILE_PROCESS_WORK_PARAM*)calloc(
+	    region->numTiles, sizeof(PROGRESSIVE_TILE_PROCESS_WORK_PARAM));
+	if (!params)
+	{
+		free(work_objects);
+		return -1;
+	}
+
+	WINPR_ASSERT(region->tiles || (region->numTiles == 0));
 	for (index = 0; index < region->numTiles; index++)
 	{
 		RFX_PROGRESSIVE_TILE* tile = region->tiles[index];
-		params[index].progressive = progressive;
-		params[index].region = region;
-		params[index].context = context;
-		params[index].tile = tile;
+		PROGRESSIVE_TILE_PROCESS_WORK_PARAM* param = &params[index];
+		param->progressive = progressive;
+		param->region = region;
+		param->context = context;
+		param->tile = tile;
 
 		if (progressive->rfx_context->priv->UseThreads)
 		{
@@ -1809,7 +1826,7 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, wS
 		{
 			WLog_Print(progressive->log, WLOG_ERROR, "Failed to decompress %s at %" PRIu16,
 			           progressive_get_block_type_string(tile->blockType), index);
-			return -1;
+			goto fail;
 		}
 	}
 
@@ -1826,6 +1843,7 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, wS
 		}
 	}
 
+fail:
 	free(work_objects);
 	free(params);
 

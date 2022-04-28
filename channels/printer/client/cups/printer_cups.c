@@ -342,8 +342,11 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	}
 	cupsFreeDests(num_dests, dests);
 
-	if (!haveDefault && (num_dests > 0))
-		printers[0]->is_default = TRUE;
+	if (!haveDefault && (num_dests > 0) && printers)
+	{
+		if (printers[0])
+			printers[0]->is_default = TRUE;
+	}
 
 	return printers;
 }

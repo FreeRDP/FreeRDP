@@ -901,7 +901,10 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 			                           frame->surfaceData, surface->format, surface->scanline,
 			                           surface->alignedWidth, surface->alignedHeight, &rect, 1);
 			if (status < 0)
+			{
+				VideoFrame_free(&frame);
 				return CHANNEL_RC_OK;
+			}
 
 			InterlockedIncrement(&presentation->refCounter);
 

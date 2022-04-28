@@ -910,7 +910,9 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 
 	for (x = 0; x < MAX(1, dwTimeOut); x += dwTimeStep)
 	{
-		memcpy(rgReaderStates, call->rgReaderStates, call->cReaders * sizeof(SCARD_READERSTATEA));
+		if (call->cReaders > 0)
+			memcpy(rgReaderStates, call->rgReaderStates,
+			       call->cReaders * sizeof(SCARD_READERSTATEA));
 		ret.ReturnCode = wrap(smartcard, SCardGetStatusChangeA, operation->hContext,
 		                      MIN(dwTimeOut, dwTimeStep), rgReaderStates, call->cReaders);
 		if (ret.ReturnCode != SCARD_E_TIMEOUT)
@@ -971,7 +973,9 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 
 	for (x = 0; x < MAX(1, dwTimeOut); x += dwTimeStep)
 	{
-		memcpy(rgReaderStates, call->rgReaderStates, call->cReaders * sizeof(SCARD_READERSTATEW));
+		if (call->cReaders > 0)
+			memcpy(rgReaderStates, call->rgReaderStates,
+			       call->cReaders * sizeof(SCARD_READERSTATEW));
 		{
 			ret.ReturnCode = wrap(smartcard, SCardGetStatusChangeW, operation->hContext,
 			                      MIN(dwTimeOut, dwTimeStep), rgReaderStates, call->cReaders);

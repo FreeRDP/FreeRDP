@@ -240,6 +240,8 @@ RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* 
 	UINT32 index;
 	RDPDR_DEVICE* device;
 
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(name);
 	for (index = 0; index < settings->DeviceCount; index++)
 	{
 		device = (RDPDR_DEVICE*)settings->DeviceArray[index];
@@ -258,6 +260,7 @@ RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 
 {
 	UINT32 index;
 	RDPDR_DEVICE* device;
+	WINPR_ASSERT(settings);
 
 	for (index = 0; index < settings->DeviceCount; index++)
 	{
@@ -583,11 +586,11 @@ BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* ch
 	count = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount) + 1;
 	if (freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize) < count)
 	{
-		UINT32 new_size;
-		ADDIN_ARGV** new_array;
-		new_size = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize) * 2;
+		UINT32 new_size =
+		    freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize) * 2ul;
+		ADDIN_ARGV** new_array = NULL;
 		if (new_size == 0)
-			new_size = count * 2;
+			new_size = count * 2ul;
 
 		new_array =
 		    (ADDIN_ARGV**)realloc(settings->StaticChannelArray, new_size * sizeof(ADDIN_ARGV*));
@@ -680,7 +683,7 @@ BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 	if (freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize) < count)
 	{
 		ADDIN_ARGV** new_array;
-		size_t size = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize) * 2;
+		UINT32 size = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize) * 2;
 		if (size == 0)
 			size = count * 2;
 
@@ -800,8 +803,11 @@ void freerdp_target_net_addresses_free(rdpSettings* settings)
 
 	WINPR_ASSERT(settings);
 
-	for (index = 0; index < settings->TargetNetAddressCount; index++)
-		free(settings->TargetNetAddresses[index]);
+	if (settings->TargetNetAddresses)
+	{
+		for (index = 0; index < settings->TargetNetAddressCount; index++)
+			free(settings->TargetNetAddresses[index]);
+	}
 
 	free(settings->TargetNetAddresses);
 	free(settings->TargetNetPorts);
@@ -1179,6 +1185,11 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 			return TRUE;
 		case FreeRDP_RdpServerRsaKey:
 			key_free(settings->RdpServerRsaKey);
+			if (len > 1)
+			{
+				WLog_ERR(TAG, "FreeRDP_RdpServerRsaKey::len must be 0 or 1");
+				return FALSE;
+			}
 			settings->RdpServerRsaKey = (rdpRsaKey*)cnv.v;
 			return TRUE;
 		case FreeRDP_RedirectionPassword:
@@ -1201,34 +1212,35 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 			                                         data, len, sizeof(char));
 		case FreeRDP_TargetNetAddresses:
 			if (data == NULL)
-			{
 				freerdp_target_net_addresses_free(settings);
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_TargetNetAddressCount, len))
-					return FALSE;
-			}
 			return freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetAddresses,
 			                                         FreeRDP_TargetNetAddressCount, data, len,
 			                                         sizeof(char));
-
 		case FreeRDP_TargetNetPorts:
 			if (data == NULL)
-			{
 				freerdp_target_net_addresses_free(settings);
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_TargetNetAddressCount, len))
-					return FALSE;
-			}
 			return freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetPorts,
 			                                         FreeRDP_TargetNetAddressCount, data, len,
 			                                         sizeof(char));
+		case FreeRDP_DeviceArray:
+			if (data == NULL)
+				freerdp_device_collection_free(settings);
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_DeviceArraySize, data,
+			                                         len, sizeof(char));
 		case FreeRDP_ChannelDefArray:
+			if ((len > 0) && (len < CHANNEL_MAX_COUNT))
+				WLog_WARN(TAG,
+				          "FreeRDP_ChannelDefArray::len expected to be >= %" PRIu32
+				          ", but have %" PRIu32,
+				          CHANNEL_MAX_COUNT, len);
 			if (!freerdp_settings_set_pointer_len_(settings, FreeRDP_ChannelDefArray,
 			                                       FreeRDP_ChannelDefArraySize, data, len,
 			                                       sizeof(CHANNEL_DEF)))
 				return FALSE;
 			return freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, len);
 		case FreeRDP_MonitorDefArray:
-			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len,
-			                                         sizeof(rdpMonitor));
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_MonitorDefArraySize,
+			                                         data, len, sizeof(rdpMonitor));
 		case FreeRDP_ClientAutoReconnectCookie:
 			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len,
 			                                         sizeof(ARC_CS_PRIVATE_PACKET));
@@ -1236,13 +1248,44 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len,
 			                                         sizeof(ARC_SC_PRIVATE_PACKET));
 		case FreeRDP_ClientTimeZone:
+			if (len > 1)
+			{
+				WLog_ERR(TAG, "FreeRDP_ClientTimeZone::len must be 0 or 1");
+				return FALSE;
+			}
 			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len,
 			                                         sizeof(TIME_ZONE_INFORMATION));
+		case FreeRDP_BitmapCacheV2CellInfo:
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_BitmapCacheV2NumCells,
+			                                         data, len, sizeof(BITMAP_CACHE_V2_CELL_INFO));
+		case FreeRDP_GlyphCache:
+			if ((len != 0) && (len != 10))
+			{
+				WLog_ERR(TAG, "FreeRDP_GlyphCache::len must be 0 or 10");
+				return FALSE;
+			}
+			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len,
+			                                         sizeof(GLYPH_CACHE_DEFINITION));
+		case FreeRDP_FragCache:
+			if (len > 1)
+			{
+				WLog_ERR(TAG, "FreeRDP_FragCache::len must be 0 or 1");
+				return FALSE;
+			}
+			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len,
+			                                         sizeof(GLYPH_CACHE_DEFINITION));
+		case FreeRDP_StaticChannelArray:
+			if (data == NULL)
+				freerdp_static_channel_collection_free(settings);
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_StaticChannelArraySize,
+			                                         data, len, sizeof(ADDIN_ARGV*));
+		case FreeRDP_DynamicChannelArray:
+			if (data == NULL)
+				freerdp_dynamic_channel_collection_free(settings);
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_DynamicChannelArraySize,
+			                                         data, len, sizeof(ADDIN_ARGV*));
 		case FreeRDP_ReceivedCapabilities:
 		case FreeRDP_OrderSupport:
-		case FreeRDP_BitmapCacheV2CellInfo:
-		case FreeRDP_GlyphCache:
-		case FreeRDP_FragCache:
 			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len, sizeof(char));
 
 		case FreeRDP_MonitorIds:
@@ -1324,60 +1367,95 @@ void* freerdp_settings_get_pointer_array_writable(const rdpSettings* settings, s
 BOOL freerdp_settings_set_pointer_array(rdpSettings* settings, size_t id, size_t offset,
                                         const void* data)
 {
+	size_t maxOffset = 0;
 	if (!settings)
 		return FALSE;
 	switch (id)
 	{
+		case FreeRDP_DeviceArray:
+			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_DeviceArraySize);
+			if ((offset >= maxOffset) || !data)
+				goto fail;
+			freerdp_device_free(settings->DeviceArray[offset]);
+			settings->DeviceArray[offset] = freerdp_device_clone(data);
 		case FreeRDP_TargetNetAddresses:
-			if ((offset >= settings->TargetNetAddressCount) || !data)
-				return FALSE;
+			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
+			if ((offset >= maxOffset) || !data)
+				goto fail;
 			free(settings->TargetNetAddresses[offset]);
 			settings->TargetNetAddresses[offset] = _strdup((const char*)data);
 			return settings->TargetNetAddresses[offset] != NULL;
 		case FreeRDP_TargetNetPorts:
-			if ((offset >= settings->TargetNetAddressCount) || !data)
-				return FALSE;
+			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
+			if ((offset >= maxOffset) || !data)
+				goto fail;
 			settings->TargetNetPorts[offset] = *((const UINT32*)data);
 			return TRUE;
+		case FreeRDP_StaticChannelArray:
+			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize);
+			if ((offset >= maxOffset) || !data)
+				goto fail;
+			freerdp_addin_argv_free(settings->StaticChannelArray[offset]);
+			settings->StaticChannelArray[offset] = freerdp_addin_argv_clone(data);
+			return TRUE;
+		case FreeRDP_DynamicChannelArray:
+			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize);
+			if ((offset >= maxOffset) || !data)
+				goto fail;
+			freerdp_addin_argv_free(settings->DynamicChannelArray[offset]);
+			settings->DynamicChannelArray[offset] = freerdp_addin_argv_clone(data);
+			return TRUE;
 		case FreeRDP_BitmapCacheV2CellInfo:
-			if ((offset > 5) || !data)
-				return FALSE;
+			maxOffset = 5;
+			if ((offset >= maxOffset) || !data)
+				goto fail;
 			settings->BitmapCacheV2CellInfo[offset] = *(const BITMAP_CACHE_V2_CELL_INFO*)data;
 			return TRUE;
 		case FreeRDP_OrderSupport:
-			if ((offset >= 32) || !data)
-				return FALSE;
+			maxOffset = 32;
+			if ((offset >= maxOffset) || !data)
+				goto fail;
 			settings->OrderSupport[offset] = *(const BOOL*)data;
 			return TRUE;
 		case FreeRDP_GlyphCache:
-			if ((offset >= 10) || !data)
-				return FALSE;
+			maxOffset = 10;
+			if ((offset >= maxOffset) || !data)
+				goto fail;
 			settings->GlyphCache[offset] = *(const GLYPH_CACHE_DEFINITION*)data;
 			return TRUE;
 		case FreeRDP_FragCache:
-			if ((offset >= 1) || !data)
-				return FALSE;
+			maxOffset = 1;
+			if ((offset >= maxOffset) || !data)
+				goto fail;
 			settings->FragCache[offset] = *(const GLYPH_CACHE_DEFINITION*)data;
 			return TRUE;
 		case FreeRDP_MonitorIds:
-			if ((offset > freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds)) || !data)
-				return FALSE;
+			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+			if ((offset >= maxOffset) || !data)
+				goto fail;
 			settings->MonitorIds[offset] = *(const UINT32*)data;
 			return TRUE;
 		case FreeRDP_ChannelDefArray:
-			if (offset > freerdp_settings_get_uint32(settings, FreeRDP_ChannelDefArraySize))
-				return FALSE;
+			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_ChannelDefArraySize);
+			if ((offset >= maxOffset) || !data)
+				goto fail;
 			settings->ChannelDefArray[offset] = *(const CHANNEL_DEF*)data;
 			return TRUE;
 		case FreeRDP_MonitorDefArray:
-			if (offset > freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize))
-				return FALSE;
+			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize);
+			if ((offset >= maxOffset) || !data)
+				goto fail;
 			settings->MonitorDefArray[offset] = *(const rdpMonitor*)data;
 			return TRUE;
 		default:
 			WLog_WARN(TAG, "Invalid id %" PRIuz " for %s", id, __FUNCTION__);
 			return FALSE;
 	}
+
+fail:
+	WLog_WARN(TAG, "[%s] Invalid offset=%" PRIuz " [%" PRIuz "] or NULL data=%p",
+	          freerdp_settings_get_name_for_key(id), offset, maxOffset, data);
+	return FALSE;
 }
 
 const void* freerdp_settings_get_pointer_array(const rdpSettings* settings, size_t id,

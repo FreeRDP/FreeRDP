@@ -352,10 +352,13 @@ static void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_
 	if (!x509_cert_chain)
 		return;
 
-	for (i = 0; i < x509_cert_chain->count; i++)
+	if (x509_cert_chain->array)
 	{
-		struct rdp_CertBlob* element = &x509_cert_chain->array[i];
-		free(element->data);
+		for (i = 0; i < x509_cert_chain->count; i++)
+		{
+			struct rdp_CertBlob* element = &x509_cert_chain->array[i];
+			free(element->data);
+		}
 	}
 
 	free(x509_cert_chain->array);
