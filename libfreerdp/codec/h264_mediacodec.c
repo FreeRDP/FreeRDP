@@ -522,5 +522,6 @@ EXCEPTION:
 	return FALSE;
 }
 
-H264_CONTEXT_SUBSYSTEM g_Subsystem_mediacodec = { "MediaCodec", mediacodec_init, mediacodec_uninit,
-	                                              mediacodec_decompress, mediacodec_compress };
+const H264_CONTEXT_SUBSYSTEM g_Subsystem_mediacodec = { "MediaCodec", mediacodec_init,
+	                                                    mediacodec_uninit, mediacodec_decompress,
+	                                                    mediacodec_compress };

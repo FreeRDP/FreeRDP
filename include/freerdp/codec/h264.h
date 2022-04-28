@@ -59,7 +59,7 @@ typedef struct
 
 	UINT32 numSystemData;
 	void* pSystemData;
-	H264_CONTEXT_SUBSYSTEM* subsystem;
+	const H264_CONTEXT_SUBSYSTEM* subsystem;
 	YUV_CONTEXT* yuv;
 
 	BOOL encodingBuffer;

@@ -580,11 +580,7 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 
 #define MAX_SUBSYSTEMS 10
 static INIT_ONCE subsystems_once = INIT_ONCE_STATIC_INIT;
-static H264_CONTEXT_SUBSYSTEM* subSystems[MAX_SUBSYSTEMS] = { 0 };
-
-#if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
-extern H264_CONTEXT_SUBSYSTEM g_Subsystem_MF;
-#endif
+static const H264_CONTEXT_SUBSYSTEM* subSystems[MAX_SUBSYSTEMS] = { 0 };
 
 static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOID* context)
 {
@@ -592,7 +588,6 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 
 #ifdef WITH_MEDIACODEC
 	{
-		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_mediacodec;
 		subSystems[i] = &g_Subsystem_mediacodec;
 		i++;
 	}
@@ -605,14 +600,12 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 #endif
 #ifdef WITH_OPENH264
 	{
-		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_OpenH264;
 		subSystems[i] = &g_Subsystem_OpenH264;
 		i++;
 	}
 #endif
 #ifdef WITH_FFMPEG
 	{
-		extern H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec;
 		subSystems[i] = &g_Subsystem_libavcodec;
 		i++;
 	}
@@ -637,7 +630,7 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 
 	for (i = 0; i < MAX_SUBSYSTEMS; i++)
 	{
-		H264_CONTEXT_SUBSYSTEM* subsystem = subSystems[i];
+		const H264_CONTEXT_SUBSYSTEM* subsystem = subSystems[i];
 
 		if (!subsystem || !subsystem->Init)
 			break;

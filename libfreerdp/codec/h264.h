@@ -22,25 +22,50 @@
 #define FREERDP_LIB_CODEC_H264_H
 
 #include <freerdp/api.h>
+#include <freerdp/config.h>
 #include <freerdp/codec/h264.h>
 
-typedef BOOL (*pfnH264SubsystemInit)(H264_CONTEXT* h264);
-typedef void (*pfnH264SubsystemUninit)(H264_CONTEXT* h264);
-
-typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize);
-typedef int (*pfnH264SubsystemCompress)(H264_CONTEXT* h264, const BYTE** pSrcYuv,
-                                        const UINT32* pStride, BYTE** ppDstData, UINT32* pDstSize);
-
-struct S_H264_CONTEXT_SUBSYSTEM
+#ifdef __cplusplus
+extern "C"
 {
-	const char* name;
-	pfnH264SubsystemInit Init;
-	pfnH264SubsystemUninit Uninit;
-	pfnH264SubsystemDecompress Decompress;
-	pfnH264SubsystemCompress Compress;
-};
+#endif
 
-FREERDP_LOCAL BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width,
-                                        UINT32 height);
+	typedef BOOL (*pfnH264SubsystemInit)(H264_CONTEXT* h264);
+	typedef void (*pfnH264SubsystemUninit)(H264_CONTEXT* h264);
+
+	typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* h264, const BYTE* pSrcData,
+	                                          UINT32 SrcSize);
+	typedef int (*pfnH264SubsystemCompress)(H264_CONTEXT* h264, const BYTE** pSrcYuv,
+	                                        const UINT32* pStride, BYTE** ppDstData,
+	                                        UINT32* pDstSize);
+
+	struct S_H264_CONTEXT_SUBSYSTEM
+	{
+		const char* name;
+		pfnH264SubsystemInit Init;
+		pfnH264SubsystemUninit Uninit;
+		pfnH264SubsystemDecompress Decompress;
+		pfnH264SubsystemCompress Compress;
+	};
+
+	FREERDP_LOCAL BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width,
+	                                        UINT32 height);
+
+#ifdef WITH_MEDIACODEC
+	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_mediacodec;
+#endif
+#if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
+	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_MF;
+#endif
+#ifdef WITH_OPENH264
+	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_OpenH264;
+#endif
+#ifdef WITH_FFMPEG
+	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec;
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_LIB_CODEC_H264_H */
