@@ -1673,6 +1673,8 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 				                  packetStringMessage.isDisplayMandatory != 0,
 				                  packetStringMessage.isConsentMandatory != 0,
 				                  packetStringMessage.msgBytes, packetStringMessage.msgBuffer);
+				if (!rc)
+					goto fail;
 			}
 
 			break;
@@ -1694,6 +1696,8 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 				                  packetStringMessage.isDisplayMandatory != 0,
 				                  packetStringMessage.isConsentMandatory != 0,
 				                  packetStringMessage.msgBytes, packetStringMessage.msgBuffer);
+				if (!rc)
+					goto fail;
 			}
 			break;
 

@@ -1239,8 +1239,6 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	status = TRUE;
-
 	s = Stream_New(NULL, 512);
 
 	if (!s)
@@ -1262,7 +1260,6 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		Stream_Write_UINT16(s, 8);    /* RDP_NEG_DATA length (8) */
 		Stream_Write_UINT32(s, errorCode);
 		length += 8;
-		status = FALSE;
 	}
 	else
 	{

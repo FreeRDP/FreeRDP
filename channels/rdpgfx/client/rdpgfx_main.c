@@ -588,6 +588,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
 	             "RecvResetGraphicsPdu: width: %" PRIu32 " height: %" PRIu32 " count: %" PRIu32 "",
 	             pdu.width, pdu.height, pdu.monitorCount);
 
+#if defined(WITH_DEBUG_RDPGFX)
 	for (index = 0; index < pdu.monitorCount; index++)
 	{
 		monitor = &(pdu.monitorDefArray[index]);
@@ -596,6 +597,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
 		             " bottom:%" PRIi32 " flags:0x%" PRIx32 "",
 		             monitor->left, monitor->top, monitor->right, monitor->bottom, monitor->flags);
 	}
+#endif
 
 	if (context)
 	{

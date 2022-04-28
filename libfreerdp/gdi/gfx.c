@@ -1147,6 +1147,7 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
                               const RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
+	UINT res = ERROR_INTERNAL_ERROR;
 	rdpCodecs* codecs = NULL;
 	gdiGfxSurface* surface = NULL;
 	EnterCriticalSection(&context->mux);
@@ -1167,7 +1168,9 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 		free(surface);
 	}
 
-	rc = context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
+	res = context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
+	if (res)
+		rc = res;
 
 	if (codecs && codecs->progressive)
 		progressive_delete_surface_context(codecs->progressive, deleteSurface->surfaceId);

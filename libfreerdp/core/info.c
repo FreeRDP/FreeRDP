@@ -911,7 +911,7 @@ fail:
 	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
 		ret = rdp_write_extended_info_packet(rdp, s); /* extraInfo */
 
-	return TRUE;
+	return ret;
 }
 
 /**

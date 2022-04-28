@@ -313,6 +313,8 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 		case BIO_CTRL_FLUSH:
 			BIO_clear_retry_flags(bio);
 			status = BIO_ctrl(ssl_wbio, cmd, num, ptr);
+			if (status != 1)
+				WLog_DBG(TAG, "BIO_ctrl returned %d", status);
 			BIO_copy_next_retry(bio);
 			status = 1;
 			break;
@@ -377,7 +379,6 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			{
 				tls->ssl = (SSL*)ptr;
 				ssl_rbio = SSL_get_rbio(tls->ssl);
-				ssl_wbio = SSL_get_wbio(tls->ssl);
 			}
 
 			if (ssl_rbio)

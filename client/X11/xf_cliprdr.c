@@ -2963,7 +2963,6 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 
 		clientFormat = &clipboard->clientFormats[n++];
 	}
-
 	if (ClipboardGetFormatId(clipboard->system, "x-special/mate-copied-files"))
 	{
 		clipboard->file_formats_registered = TRUE;
@@ -2973,8 +2972,6 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 
 		if (!clientFormat->formatName)
 			goto error;
-
-		clientFormat = &clipboard->clientFormats[n++];
 	}
 
 	clipboard->numClientFormats = n;

@@ -446,6 +446,7 @@ static UINT disp_server_open(DispServerContext* context)
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			rc = ERROR_INTERNAL_ERROR;
+			goto out_close;
 		}
 
 		if (!(priv->thread =
@@ -455,6 +456,7 @@ static UINT disp_server_open(DispServerContext* context)
 			CloseHandle(priv->stopEvent);
 			priv->stopEvent = NULL;
 			rc = ERROR_INTERNAL_ERROR;
+			goto out_close;
 		}
 	}
 

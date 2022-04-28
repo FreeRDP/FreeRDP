@@ -659,8 +659,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 		cnv.cpv = KRB_PACKAGE_NAME;
 		sspi_SecureHandleSetUpperPointer(phNewContext, cnv.pv);
 	}
+#if defined(WITH_GSSAPI)
 	else
 		credentials = context->credentials;
+#endif
 
 	if (pInput)
 	{

@@ -687,6 +687,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 
 	for (x = 0; x < count; x++)
 	{
+		BOOL fail = TRUE;
 		if (_wcschr(descriptors[x].cFileName, L'\\') != NULL)
 		{
 			continue;
@@ -698,14 +699,14 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 		const char* stop_at = NULL;
 		const char* previous_at = NULL;
 		rc = ConvertFromUnicode(CP_UTF8, 0, cur->cFileName, (int)curLen, &curName, 0, NULL, NULL);
+		if (rc < 0)
+			goto loop_fail;
 
 		rc = _snprintf(&dst[pos], alloc - pos, "%s%s/", lineprefix, clipboard->delegate.basePath);
 
 		if (rc < 0)
-		{
-			free(dst);
-			return NULL;
-		}
+			goto loop_fail;
+
 		pos += (size_t)rc;
 
 		previous_at = curName;
@@ -713,34 +714,27 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 		{
 			char* tmp = strndup(previous_at, stop_at - previous_at);
 			if (!tmp)
-			{
-				free(dst);
-				free(curName);
-				return NULL;
-			}
+				goto loop_fail;
+
 			rc = _snprintf(&dst[pos], stop_at - previous_at + 1, "%s", tmp);
 			free(tmp);
 			if (rc < 0)
-			{
-				free(dst);
-				free(curName);
-				return NULL;
-			}
+				goto loop_fail;
+
 			pos += (size_t)rc;
 			rc = _snprintf(&dst[pos], 4, "%%%x", *stop_at);
 			if (rc < 0)
-			{
-				free(dst);
-				free(curName);
-				return NULL;
-			}
+				goto loop_fail;
+
 			pos += (size_t)rc;
 			previous_at = stop_at + 1;
 		}
 
 		rc = _snprintf(&dst[pos], alloc - pos, "%s%s", previous_at, lineending);
 
-		if (rc < 0)
+		fail = FALSE;
+	loop_fail:
+		if ((rc < 0) || fail)
 		{
 			free(dst);
 			free(curName);

@@ -86,6 +86,8 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	if (nHeight < ninePatch->height)
 		nHeight = ninePatch->height;
 
+	WINPR_UNUSED(nHeight);
+
 	scaleWidth = nWidth - (ninePatch->width - ninePatch->scaleWidth);
 	nSrcStep = ninePatch->scanline;
 	pSrcData = ninePatch->data;

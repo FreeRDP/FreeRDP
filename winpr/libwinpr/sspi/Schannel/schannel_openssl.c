@@ -355,6 +355,8 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 				return SEC_E_INVALID_TOKEN;
 
 			status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
+			if (status < 0)
+				return SEC_E_INVALID_TOKEN;
 		}
 
 		status = SSL_connect(context->ssl);
@@ -416,18 +418,26 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 			return SEC_E_INVALID_TOKEN;
 
 		status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
-		status = SSL_accept(context->ssl);
+		if (status >= 0)
+			status = SSL_accept(context->ssl);
 
 		if (status < 0)
 		{
 			ssl_error = SSL_get_error(context->ssl, status);
 			WLog_ERR(TAG, "SSL_accept error: %s", openssl_get_ssl_error_string(ssl_error));
+			return SEC_E_INVALID_TOKEN;
 		}
 
 		if (status == 1)
 			context->connected = TRUE;
 
 		status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
+		if (status < 0)
+		{
+			ssl_error = SSL_get_error(context->ssl, status);
+			WLog_ERR(TAG, "BIO_read: %s", openssl_get_ssl_error_string(ssl_error));
+			return SEC_E_INVALID_TOKEN;
+		}
 
 		if (pOutput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
@@ -516,7 +526,8 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSec
 		return SEC_E_INVALID_TOKEN;
 
 	status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
-	status = SSL_read(context->ssl, pBuffer->pvBuffer, pBuffer->cbBuffer);
+	if (status > 0)
+		status = SSL_read(context->ssl, pBuffer->pvBuffer, pBuffer->cbBuffer);
 
 	if (status < 0)
 	{

@@ -28,11 +28,15 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/locale/locale.h>
 
+#include <freerdp/log.h>
+
 #include "liblocale.h"
 
 #if defined(__MACOSX__)
 #include "keyboard_apple.h"
 #endif
+
+#define TAG FREERDP_TAG("locale.keyboard")
 
 #ifdef WITH_X11
 
@@ -313,6 +317,9 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 		    freerdp_keyboard_init_x11_evdev(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE);
 
 #endif
+
+	if (status < 0)
+		WLog_DBG(TAG, "Failed to initialize keyboard layout, trying autodetection");
 
 	freerdp_detect_keyboard(&keyboardLayoutId);
 
