@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/stream.h>
 #include <winpr/cmdline.h>
 
@@ -49,6 +50,35 @@ typedef struct
 	UINT32 volume;
 } rdpsndPulsePlugin;
 
+static BOOL rdpsnd_check_pulse(rdpsndPulsePlugin* pulse, BOOL haveStream)
+{
+	BOOL rc = TRUE;
+	WINPR_ASSERT(pulse);
+
+	if (!pulse->context)
+	{
+		WLog_WARN(TAG, "pulse->context=%p", pulse->context);
+		rc = FALSE;
+	}
+
+	if (haveStream)
+	{
+		if (!pulse->stream)
+		{
+			WLog_WARN(TAG, "pulse->stream=%p", pulse->stream);
+			rc = FALSE;
+		}
+	}
+
+	if (!pulse->mainloop)
+	{
+		WLog_WARN(TAG, "pulse->mainloop=%p", pulse->mainloop);
+		rc = FALSE;
+	}
+
+	return rc;
+}
+
 static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format);
 
 static void rdpsnd_pulse_get_sink_info(pa_context* c, const pa_sink_info* i, int eol,
@@ -59,7 +89,8 @@ static void rdpsnd_pulse_get_sink_info(pa_context* c, const pa_sink_info* i, int
 	UINT16 dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
 
-	if (!pulse || !c || !i)
+	WINPR_ASSERT(c);
+	if (!rdpsnd_check_pulse(pulse, FALSE) || !i)
 		return;
 
 	for (x = 0; x < i->volume.channels; x++)
@@ -91,6 +122,10 @@ static void rdpsnd_pulse_context_state_callback(pa_context* context, void* userd
 {
 	pa_context_state_t state;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(pulse);
+
 	state = pa_context_get_state(context);
 
 	switch (state)
@@ -115,7 +150,7 @@ static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 	pa_context_state_t state;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
-	if (!pulse->context)
+	if (!rdpsnd_check_pulse(pulse, FALSE))
 		return FALSE;
 
 	if (pa_context_connect(pulse->context, NULL, 0, NULL))
@@ -167,11 +202,18 @@ static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 static void rdpsnd_pulse_stream_success_callback(pa_stream* stream, int success, void* userdata)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
+
+	if (!rdpsnd_check_pulse(pulse, TRUE))
+		return;
+
 	pa_threaded_mainloop_signal(pulse->mainloop, 0);
 }
 
 static void rdpsnd_pulse_wait_for_operation(rdpsndPulsePlugin* pulse, pa_operation* operation)
 {
+	if (!rdpsnd_check_pulse(pulse, TRUE))
+		return;
+
 	if (!operation)
 		return;
 
@@ -187,6 +229,11 @@ static void rdpsnd_pulse_stream_state_callback(pa_stream* stream, void* userdata
 {
 	pa_stream_state_t state;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
+
+	WINPR_ASSERT(stream);
+	if (!rdpsnd_check_pulse(pulse, TRUE))
+		return;
+
 	state = pa_stream_get_state(stream);
 
 	switch (state)
@@ -208,6 +255,11 @@ static void rdpsnd_pulse_stream_state_callback(pa_stream* stream, void* userdata
 static void rdpsnd_pulse_stream_request_callback(pa_stream* stream, size_t length, void* userdata)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
+
+	WINPR_ASSERT(stream);
+	if (!rdpsnd_check_pulse(pulse, TRUE))
+		return;
+
 	pa_threaded_mainloop_signal(pulse->mainloop, 0);
 }
 
@@ -215,15 +267,20 @@ static void rdpsnd_pulse_close(rdpsndDevicePlugin* device)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
-	if (!pulse->context || !pulse->stream)
+	WINPR_ASSERT(pulse);
+
+	if (!rdpsnd_check_pulse(pulse, FALSE))
 		return;
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
-	rdpsnd_pulse_wait_for_operation(
-	    pulse, pa_stream_drain(pulse->stream, rdpsnd_pulse_stream_success_callback, pulse));
-	pa_stream_disconnect(pulse->stream);
-	pa_stream_unref(pulse->stream);
-	pulse->stream = NULL;
+	if (pulse->stream)
+	{
+		rdpsnd_pulse_wait_for_operation(
+		    pulse, pa_stream_drain(pulse->stream, rdpsnd_pulse_stream_success_callback, pulse));
+		pa_stream_disconnect(pulse->stream);
+		pa_stream_unref(pulse->stream);
+		pulse->stream = NULL;
+	}
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 }
 
@@ -231,7 +288,9 @@ static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_F
 {
 	pa_sample_spec sample_spec = { 0 };
 
-	if (!pulse->context)
+	WINPR_ASSERT(format);
+
+	if (!rdpsnd_check_pulse(pulse, FALSE))
 		return FALSE;
 
 	if (!rdpsnd_pulse_format_supported(&pulse->device, format))
@@ -281,10 +340,12 @@ static BOOL rdpsnd_pulse_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* fo
 	pa_stream_state_t state;
 	pa_stream_flags_t flags;
 	pa_buffer_attr buffer_attr = { 0 };
-	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX];
+	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX] = { 0 };
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
-	if (!pulse->context || pulse->stream)
+	WINPR_ASSERT(format);
+
+	if (!rdpsnd_check_pulse(pulse, FALSE))
 		return TRUE;
 
 	if (!rdpsnd_pulse_set_format_spec(pulse, format))
@@ -363,9 +424,7 @@ static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
 	rdpsnd_pulse_close(device);
 
 	if (pulse->mainloop)
-	{
 		pa_threaded_mainloop_stop(pulse->mainloop);
-	}
 
 	if (pulse->context)
 	{
@@ -388,6 +447,7 @@ static BOOL rdpsnd_pulse_default_format(rdpsndDevicePlugin* device, const AUDIO_
                                         AUDIO_FORMAT* defaultFormat)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
+
 	if (!pulse || !defaultFormat)
 		return FALSE;
 
@@ -409,6 +469,9 @@ static BOOL rdpsnd_pulse_default_format(rdpsndDevicePlugin* device, const AUDIO_
 
 BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format)
 {
+	WINPR_ASSERT(device);
+	WINPR_ASSERT(format);
+
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
@@ -441,10 +504,7 @@ static UINT32 rdpsnd_pulse_get_volume(rdpsndDevicePlugin* device)
 	pa_operation* o;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
-	if (!pulse)
-		return 0;
-
-	if (!pulse->context || !pulse->mainloop)
+	if (!rdpsnd_check_pulse(pulse, FALSE))
 		return 0;
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
@@ -454,26 +514,40 @@ static UINT32 rdpsnd_pulse_get_volume(rdpsndDevicePlugin* device)
 	return pulse->volume;
 }
 
+static void rdpsnd_set_volume_success_cb(pa_context* c, int success, void* userdata)
+{
+	rdpsndPulsePlugin* pulse = userdata;
+
+	if (!rdpsnd_check_pulse(pulse, TRUE))
+		return;
+	WINPR_ASSERT(c);
+
+	WLog_INFO(TAG, "%s: %d", __FUNCTION__, success);
+}
+
 static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
-	pa_cvolume cv;
+	pa_cvolume cv = { 0 };
 	pa_volume_t left;
 	pa_volume_t right;
 	pa_operation* operation;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
-	if (!pulse->context || !pulse->stream)
+	if (!rdpsnd_check_pulse(pulse, TRUE))
+	{
+		WLog_WARN(TAG, "%s called before pulse backend was initialized");
 		return FALSE;
+	}
 
 	left = (pa_volume_t)(value & 0xFFFF);
 	right = (pa_volume_t)((value >> 16) & 0xFFFF);
 	pa_cvolume_init(&cv);
 	cv.channels = 2;
-	cv.values[0] = PA_VOLUME_MUTED + (left * (PA_VOLUME_NORM - PA_VOLUME_MUTED)) / 0xFFFF;
-	cv.values[1] = PA_VOLUME_MUTED + (right * (PA_VOLUME_NORM - PA_VOLUME_MUTED)) / 0xFFFF;
+	cv.values[0] = PA_VOLUME_MUTED + (left * (PA_VOLUME_NORM - PA_VOLUME_MUTED)) / PA_VOLUME_NORM;
+	cv.values[1] = PA_VOLUME_MUTED + (right * (PA_VOLUME_NORM - PA_VOLUME_MUTED)) / PA_VOLUME_NORM;
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	operation = pa_context_set_sink_input_volume(pulse->context, pa_stream_get_index(pulse->stream),
-	                                             &cv, NULL, NULL);
+	                                             &cv, rdpsnd_set_volume_success_cb, pulse);
 
 	if (operation)
 		pa_operation_unref(operation);
@@ -490,7 +564,7 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	int negative;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
-	if (!pulse->stream || !data)
+	if (!rdpsnd_check_pulse(pulse, TRUE) || !data)
 		return 0;
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
@@ -524,11 +598,6 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	return latency / 1000;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
 {
 	int status;
@@ -540,6 +609,10 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 		                                            { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
 	flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+
+	WINPR_ASSERT(pulse);
+	WINPR_ASSERT(args);
+
 	status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_pulse_args, flags, pulse,
 	                                    NULL, NULL);
 
@@ -566,16 +639,14 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 	return CHANNEL_RC_OK;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 UINT pulse_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	const ADDIN_ARGV* args;
 	rdpsndPulsePlugin* pulse;
 	UINT ret;
+
+	WINPR_ASSERT(pEntryPoints);
+
 	pulse = (rdpsndPulsePlugin*)calloc(1, sizeof(rdpsndPulsePlugin));
 
 	if (!pulse)
