@@ -692,5 +692,6 @@ EXCEPTION:
 	return FALSE;
 }
 
-H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec = { "libavcodec", libavcodec_init, libavcodec_uninit,
-	                                              libavcodec_decompress, libavcodec_compress };
+const H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec = { "libavcodec", libavcodec_init,
+	                                                    libavcodec_uninit, libavcodec_decompress,
+	                                                    libavcodec_compress };
