@@ -119,6 +119,11 @@ fail:
 /* ------------------------------------------------------------------------- */
 static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 {
+	union
+	{
+		const UINT16** cpv;
+		UINT16** pv;
+	} cnv;
 	const prim_size_t roi64x64 = { 64, 64 };
 	INT16 ALIGN(r[4096 + 1]), ALIGN(g[4096 + 1]), ALIGN(b[4096 + 1]);
 	UINT32 ALIGN(dst[4096 + 1]);
@@ -140,16 +145,15 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 	ptrs[1] = g + 1;
 	ptrs[2] = b + 1;
 
+	cnv.pv = ptrs;
 	if (!speed_test("RGBToRGB_16s8u_P3AC4R", "aligned", g_Iterations,
-	                (speed_test_fkt)generic->RGBToRGB_16s8u_P3AC4R,
-	                (speed_test_fkt)optimized->RGBToRGB_16s8u_P3AC4R, (const INT16**)ptrs, 64 * 2,
-	                (BYTE*)dst, 64 * 4, &roi64x64))
+	                generic->RGBToRGB_16s8u_P3AC4R, optimized->RGBToRGB_16s8u_P3AC4R, cnv.cpv,
+	                64 * 2, (BYTE*)dst, 64 * 4, &roi64x64))
 		return FALSE;
 
 	if (!speed_test("RGBToRGB_16s8u_P3AC4R", "unaligned", g_Iterations,
-	                (speed_test_fkt)generic->RGBToRGB_16s8u_P3AC4R,
-	                (speed_test_fkt)optimized->RGBToRGB_16s8u_P3AC4R, (const INT16**)ptrs, 64 * 2,
-	                ((BYTE*)dst) + 1, 64 * 4, &roi64x64))
+	                generic->RGBToRGB_16s8u_P3AC4R, optimized->RGBToRGB_16s8u_P3AC4R, cnv.cpv,
+	                64 * 2, ((BYTE*)dst) + 1, 64 * 4, &roi64x64))
 		return FALSE;
 
 	return TRUE;

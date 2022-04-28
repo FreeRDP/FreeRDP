@@ -1444,14 +1444,15 @@ xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
 				break;
 			}
 			UINT64 size;
-			wStream* s = Stream_New((BYTE*)data, data_len);
+			wStream sbuffer = { 0 };
+			wStream* s = Stream_StaticConstInit(&sbuffer, data, data_len);
 			if (!s)
 			{
 				fuse_reply_err(req, ENOMEM);
 				break;
 			}
 			Stream_Read_UINT64(s, size);
-			Stream_Free(s, FALSE);
+
 			ArrayList_Lock(clipboard->ino_list);
 			ino = xf_cliprdr_fuse_util_get_inode(clipboard->ino_list, req_ino);
 			/* ino must be exists and  */
@@ -1984,6 +1985,9 @@ error:
 static BOOL xf_cliprdr_fuse_generate_list(xfClipboard* clipboard, const BYTE* data, UINT32 size)
 {
 	BOOL status = FALSE;
+	wStream sbuffer = { 0 };
+	wStream* s;
+
 	if (size < 4)
 	{
 		WLog_ERR(TAG, "size of format data response invalid : %d", size);
@@ -1993,7 +1997,7 @@ static BOOL xf_cliprdr_fuse_generate_list(xfClipboard* clipboard, const BYTE* da
 	if (count < 1)
 		return FALSE;
 
-	wStream* s = Stream_New((BYTE*)data, size);
+	s = Stream_StaticConstInit(&sbuffer, data, size);
 	if (!s || !xf_cliprdr_fuse_check_stream(s, count))
 	{
 		WLog_ERR(TAG, "Stream_New failed");
@@ -2016,7 +2020,6 @@ static BOOL xf_cliprdr_fuse_generate_list(xfClipboard* clipboard, const BYTE* da
 error2:
 	ArrayList_Unlock(clipboard->ino_list);
 error:
-	Stream_Free(s, FALSE);
 	return status;
 }
 #endif
