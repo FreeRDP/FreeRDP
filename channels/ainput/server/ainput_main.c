@@ -235,7 +235,7 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 					case WAIT_OBJECT_0 + 1:
 					case WAIT_OBJECT_0:
 						error = ainput_server_context_poll_int(&ainput->context);
-
+						break;
 					case WAIT_FAILED:
 					default:
 						error = ERROR_INTERNAL_ERROR;
@@ -250,6 +250,7 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 					case WAIT_OBJECT_0 + 1:
 					case WAIT_OBJECT_0:
 						error = ainput_server_context_poll_int(&ainput->context);
+						break;
 
 					case WAIT_FAILED:
 					default:

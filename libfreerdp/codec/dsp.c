@@ -212,9 +212,10 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context, const BYTE* src, 
 	size_t sframes, rframes;
 	size_t rsize;
 	size_t sbytes, rbytes;
-#endif
+	size_t dstChannels;
+	size_t srcChannels;
 	size_t srcBytesPerFrame, dstBytesPerFrame;
-	size_t srcChannels, dstChannels;
+#endif
 	AUDIO_FORMAT format;
 
 	if (srcFormat->wFormatTag != WAVE_FORMAT_PCM)
@@ -225,10 +226,6 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context, const BYTE* src, 
 		return FALSE;
 	}
 
-	srcChannels = srcFormat->nChannels;
-	dstChannels = context->format.nChannels;
-	srcBytesPerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
-	dstBytesPerFrame = (context->format.wBitsPerSample > 8) ? 2 : 1;
 	/* We want to ignore differences of source and destination format. */
 	format = *srcFormat;
 	format.wFormatTag = WAVE_FORMAT_UNKNOWN;
@@ -242,6 +239,10 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context, const BYTE* src, 
 	}
 
 #if defined(WITH_SOXR)
+	srcBytesPerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
+	dstBytesPerFrame = (context->format.wBitsPerSample > 8) ? 2 : 1;
+	srcChannels = srcFormat->nChannels;
+	dstChannels = context->format.nChannels;
 	sbytes = srcChannels * srcBytesPerFrame;
 	sframes = size / sbytes;
 	rbytes = dstBytesPerFrame * dstChannels;

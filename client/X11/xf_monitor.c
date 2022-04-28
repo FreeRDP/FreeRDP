@@ -532,7 +532,6 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				settings->MonitorDefArray[j].is_primary = TRUE;
 				settings->MonitorLocalShiftX = settings->MonitorDefArray[j].x;
 				settings->MonitorLocalShiftY = settings->MonitorDefArray[j].y;
-				primaryMonitorFound = TRUE;
 			}
 			else
 			{

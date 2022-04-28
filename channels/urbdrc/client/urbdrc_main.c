@@ -595,6 +595,7 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 
 		default:
 			error = urbdrc_process_udev_data_transfer(callback, urbdrc, udevman, data);
+			WLog_DBG(TAG, "urbdrc_process_udev_data_transfer returned 0x%08" PRIx32, error);
 			error = ERROR_SUCCESS; /* Ignore errors, the device may have been unplugged. */
 			break;
 	}

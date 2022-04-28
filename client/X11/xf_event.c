@@ -308,17 +308,14 @@ void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
 
 void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 {
-	rdpSettings* settings;
-
 	if (!xfc || !xfc->common.context.settings || !y || !x)
 		return;
 
-	settings = xfc->common.context.settings;
 
 	if (!xfc->remote_app)
 	{
 #ifdef WITH_XRENDER
-
+		rdpSettings* settings = xfc->common.context.settings;
 		if (xf_picture_transform_required(xfc))
 		{
 			double xScalingFactor = settings->DesktopWidth / (double)xfc->scaledWidth;
@@ -332,6 +329,7 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 
 	CLAMP_COORDINATES(*x, *y);
 }
+
 static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 {
 	int x, y;
@@ -899,8 +897,6 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 	{
 		unsigned long i;
 		BOOL status;
-		BOOL maxVert = FALSE;
-		BOOL maxHorz = FALSE;
 		BOOL minimized = FALSE;
 		BOOL minimizedChanged = FALSE;
 		unsigned long nitems;
@@ -933,7 +929,6 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 					if ((Atom)((UINT16**)prop)[i] ==
 					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
 					{
-						maxVert = TRUE;
 						if (appWindow)
 							appWindow->maxVert = TRUE;
 					}
@@ -941,7 +936,6 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 					if ((Atom)((UINT16**)prop)[i] ==
 					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False))
 					{
-						maxHorz = TRUE;
 						if (appWindow)
 							appWindow->maxHorz = TRUE;
 					}

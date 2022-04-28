@@ -2269,9 +2269,7 @@ static LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, LPC
                                      DWORD cbInBufferSize, LPVOID lpOutBuffer,
                                      DWORD cbOutBufferSize, LPDWORD lpBytesReturned)
 {
-	DWORD IoCtlMethod = 0;
 	DWORD IoCtlFunction = 0;
-	DWORD IoCtlAccess = 0;
 	DWORD IoCtlDeviceType = 0;
 	BOOL getFeatureRequest = FALSE;
 	PCSC_LONG status = SCARD_S_SUCCESS;
@@ -2300,9 +2298,7 @@ static LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, LPC
 	 * Converting Windows Feature Request IOCTL code to the pcsc-lite control code:
 	 * http://musclecard.996296.n3.nabble.com/Converting-Windows-Feature-Request-IOCTL-code-to-the-pcsc-lite-control-code-td4906.html
 	 */
-	IoCtlMethod = METHOD_FROM_CTL_CODE(dwControlCode);
 	IoCtlFunction = FUNCTION_FROM_CTL_CODE(dwControlCode);
-	IoCtlAccess = ACCESS_FROM_CTL_CODE(dwControlCode);
 	IoCtlDeviceType = DEVICE_TYPE_FROM_CTL_CODE(dwControlCode);
 
 	if (dwControlCode == IOCTL_SMARTCARD_GET_FEATURE_REQUEST)

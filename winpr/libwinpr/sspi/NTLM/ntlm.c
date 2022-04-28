@@ -227,6 +227,8 @@ static NTLM_CONTEXT* ntlm_ContextNew(void)
 
 			status = RegQueryValueExA(hKey, "WorkstationName", NULL, &dwType, (BYTE*)workstation,
 			                          &dwSize);
+			if (status != ERROR_SUCCESS)
+				WLog_WARN(TAG, "[%s]: Key ''WorkstationName' not found", __FUNCTION__);
 			workstation[dwSize] = '\0';
 
 			if (ntlm_SetContextWorkstation(context, workstation) < 0)

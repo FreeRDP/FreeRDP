@@ -846,7 +846,6 @@ BOOL ber_read_nla_TSRemoteGuardPackageCred_array(wStream* s, TSRemoteGuardPackag
 		}
 		retItems = tmpRet;
 
-		retItems = tmpRet;
 		memcpy(&retItems[ret], item, sizeof(*item));
 		free(item);
 		ret++;

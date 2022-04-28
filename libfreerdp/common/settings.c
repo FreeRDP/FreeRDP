@@ -353,7 +353,6 @@ RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[])
 					if (!device.serial->Permissive)
 						goto fail;
 				}
-				size = sizeof(RDPDR_SERIAL);
 				break;
 			case RDPDR_DTYP_PARALLEL:
 				if (count > 1)

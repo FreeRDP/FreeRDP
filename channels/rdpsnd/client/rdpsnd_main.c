@@ -1665,6 +1665,12 @@ static UINT rdpsnd_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 	rdpsnd->listener_callback->channel_mgr = pChannelMgr;
 	status = pChannelMgr->CreateListener(pChannelMgr, RDPSND_DVC_CHANNEL_NAME, 0,
 	                                     &rdpsnd->listener_callback->iface, &(rdpsnd->listener));
+	if (status != CHANNEL_RC_OK)
+	{
+		WLog_ERR(TAG, "%s CreateListener failed!", rdpsnd_is_dyn_str(TRUE));
+		return status;
+	}
+
 	rdpsnd->listener->pInterface = rdpsnd->iface.pInterface;
 	status = rdpsnd_virtual_channel_event_initialized(rdpsnd);
 
