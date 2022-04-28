@@ -1536,8 +1536,8 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 			BYTE R, G, B;
 			BYTE eR, eG, eB;
 
-			SplitColor(pixel, PIXEL_FORMAT_XRGB32, &R, &G, &B, NULL, NULL);
-			SplitColor(ePixel, PIXEL_FORMAT_XRGB32, &eR, &eG, &eB, NULL, NULL);
+			FreeRDPSplitColor(pixel, PIXEL_FORMAT_XRGB32, &R, &G, &B, NULL, NULL);
+			FreeRDPSplitColor(ePixel, PIXEL_FORMAT_XRGB32, &eR, &eG, &eB, NULL, NULL);
 			error[0] = (R > eR) ? R - eR : eR - R;
 			error[1] = (G > eG) ? G - eG : eG - G;
 			error[2] = (B > eB) ? B - eB : eB - B;
@@ -1571,7 +1571,7 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	int margin = 1;
 	INT16* pYCbCr[3] = { NULL, NULL, NULL };
 	const UINT32 srcStride = roi.width * 2;
-	const UINT32 dstStride = roi.width * GetBytesPerPixel(format);
+	const UINT32 dstStride = roi.width * FreeRDPGetBytesPerPixel(format);
 	const UINT32 srcSize = srcStride * roi.height;
 	const UINT32 dstSize = dstStride * roi.height;
 	PROFILER_DEFINE(prof)

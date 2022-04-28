@@ -33,6 +33,7 @@
 
 #include "wf_update.h"
 
+#include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")
 
 DWORD WINAPI wf_update_thread(LPVOID lpParam)

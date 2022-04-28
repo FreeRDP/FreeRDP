@@ -28,7 +28,7 @@ HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat, UINT32 Src
 	BYTE* data;
 
 	if (DstStride == 0)
-		DstStride = nWidth * GetBytesPerPixel(DstFormat);
+		DstStride = nWidth * FreeRDPGetBytesPerPixel(DstFormat);
 
 	data = _aligned_malloc(DstStride * nHeight, 16);
 
@@ -85,7 +85,7 @@ static void test_dump_data(unsigned char* p, int len, int width, const char* nam
 
 void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
 {
-	UINT32 stride = hBmp->width * GetBytesPerPixel(hBmp->format);
+	UINT32 stride = hBmp->width * FreeRDPGetBytesPerPixel(hBmp->format);
 	test_dump_data(hBmp->data, hBmp->height * stride, stride, name);
 }
 
@@ -102,10 +102,10 @@ static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2, const gdiPalett
 	{
 		for (x = 0; x < minw; x++)
 		{
-			colorA = ReadColor(p1, hBmp1->format);
-			colorB = ReadColor(p2, hBmp2->format);
-			p1 += GetBytesPerPixel(hBmp1->format);
-			p2 += GetBytesPerPixel(hBmp2->format);
+			colorA = FreeRDPReadColor(p1, hBmp1->format);
+			colorB = FreeRDPReadColor(p2, hBmp2->format);
+			p1 += FreeRDPGetBytesPerPixel(hBmp1->format);
+			p2 += FreeRDPGetBytesPerPixel(hBmp2->format);
 
 			if (hBmp1->format != hBmp2->format)
 				colorB = FreeRDPConvertColor(colorB, hBmp2->format, hBmp1->format, palette);

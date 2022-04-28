@@ -159,7 +159,7 @@ static INLINE BYTE* writePixelGenericAlpha(BYTE* dst, DWORD formatSize, UINT32 f
                                            BYTE G, BYTE B, BYTE A)
 {
 	UINT32 color = FreeRDPGetColor(format, R, G, B, A);
-	WriteColor(dst, format, color);
+	FreeRDPWriteColor(dst, format, color);
 	return dst + formatSize;
 }
 
@@ -167,7 +167,7 @@ static INLINE BYTE* writePixelGeneric(BYTE* dst, DWORD formatSize, UINT32 format
                                       BYTE B, BYTE A)
 {
 	UINT32 color = FreeRDPGetColor(format, R, G, B, A);
-	WriteColorIgnoreAlpha(dst, format, color);
+	FreeRDPWriteColorIgnoreAlpha(dst, format, color);
 	return dst + formatSize;
 }
 

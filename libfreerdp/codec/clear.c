@@ -230,11 +230,11 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 
 		for (i = 0; i < runLengthFactor; i++)
 		{
-			BYTE* pTmpData =
-			    &pDstData[(nXDstRel + x) * GetBytesPerPixel(DstFormat) + (nYDstRel + y) * nDstStep];
+			BYTE* pTmpData = &pDstData[(nXDstRel + x) * FreeRDPGetBytesPerPixel(DstFormat) +
+			                           (nYDstRel + y) * nDstStep];
 
 			if ((nXDstRel + x < nDstWidth) && (nYDstRel + y < nDstHeight))
-				WriteColor(pTmpData, DstFormat, color);
+				FreeRDPWriteColor(pTmpData, DstFormat, color);
 
 			if (++x >= width)
 			{
@@ -255,8 +255,8 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 
 		for (i = 0; i <= suiteDepth; i++)
 		{
-			BYTE* pTmpData =
-			    &pDstData[(nXDstRel + x) * GetBytesPerPixel(DstFormat) + (nYDstRel + y) * nDstStep];
+			BYTE* pTmpData = &pDstData[(nXDstRel + x) * FreeRDPGetBytesPerPixel(DstFormat) +
+			                           (nYDstRel + y) * nDstStep];
 			UINT32 ccolor = palette[suiteIndex];
 
 			if (suiteIndex > 127)
@@ -268,7 +268,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 			suiteIndex++;
 
 			if ((nXDstRel + x < nDstWidth) && (nYDstRel + y < nDstHeight))
-				WriteColor(pTmpData, DstFormat, ccolor);
+				FreeRDPWriteColor(pTmpData, DstFormat, ccolor);
 
 			if (++x >= width)
 			{
@@ -296,7 +296,7 @@ static BOOL clear_resize_buffer(CLEAR_CONTEXT* clear, UINT32 width, UINT32 heigh
 	if (!clear)
 		return FALSE;
 
-	size = ((width + 16) * (height + 16) * GetBytesPerPixel(clear->format));
+	size = ((width + 16) * (height + 16) * FreeRDPGetBytesPerPixel(clear->format));
 
 	if (size > clear->TempSize)
 	{
@@ -385,14 +385,14 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 
 		for (i = 0; i < runLengthFactor; i++)
 		{
-			WriteColor(dstBuffer, clear->format, color);
-			dstBuffer += GetBytesPerPixel(clear->format);
+			FreeRDPWriteColor(dstBuffer, clear->format, color);
+			dstBuffer += FreeRDPGetBytesPerPixel(clear->format);
 		}
 
 		pixelIndex += runLengthFactor;
 	}
 
-	nSrcStep = nWidth * GetBytesPerPixel(clear->format);
+	nSrcStep = nWidth * FreeRDPGetBytesPerPixel(clear->format);
 
 	if (pixelIndex != pixelCount)
 	{
@@ -465,7 +465,7 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 		{
 			case 0: /* Uncompressed */
 			{
-				UINT32 nSrcStep = width * GetBytesPerPixel(PIXEL_FORMAT_BGR24);
+				UINT32 nSrcStep = width * FreeRDPGetBytesPerPixel(PIXEL_FORMAT_BGR24);
 				UINT32 nSrcSize = nSrcStep * height;
 
 				if (bitmapDataByteCount != nSrcSize)
@@ -514,7 +514,7 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* clear, CLEAR_VBAR_ENTRY* vBarEntry)
 {
 	if (vBarEntry->count > vBarEntry->size)
 	{
-		const UINT32 bpp = GetBytesPerPixel(clear->format);
+		const UINT32 bpp = FreeRDPGetBytesPerPixel(clear->format);
 		const UINT32 oldPos = vBarEntry->size * bpp;
 		const UINT32 diffSize = (vBarEntry->count - vBarEntry->size) * bpp;
 		BYTE* tmp;
@@ -679,14 +679,15 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				for (y = 0; y < vBarShortPixelCount; y++)
 				{
 					BYTE r, g, b;
-					BYTE* dstBuffer = &vBarShortEntry->pixels[y * GetBytesPerPixel(clear->format)];
+					BYTE* dstBuffer =
+					    &vBarShortEntry->pixels[y * FreeRDPGetBytesPerPixel(clear->format)];
 					UINT32 color;
 					Stream_Read_UINT8(s, b);
 					Stream_Read_UINT8(s, g);
 					Stream_Read_UINT8(s, r);
 					color = FreeRDPGetColor(clear->format, r, g, b, 0xFF);
 
-					if (!WriteColor(dstBuffer, clear->format, color))
+					if (!FreeRDPWriteColor(dstBuffer, clear->format, color))
 						return FALSE;
 				}
 
@@ -748,8 +749,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 				while (count--)
 				{
-					WriteColor(dstBuffer, clear->format, colorBkg);
-					dstBuffer += GetBytesPerPixel(clear->format);
+					FreeRDPWriteColor(dstBuffer, clear->format, colorBkg);
+					dstBuffer += FreeRDPGetBytesPerPixel(clear->format);
 				}
 
 				/*
@@ -764,18 +765,19 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 				if (count > 0)
 					pSrcPixel =
-					    &vBarShortEntry->pixels[(y - vBarYOn) * GetBytesPerPixel(clear->format)];
+					    &vBarShortEntry
+					         ->pixels[(y - vBarYOn) * FreeRDPGetBytesPerPixel(clear->format)];
 
 				for (x = 0; x < count; x++)
 				{
 					UINT32 color;
-					color =
-					    ReadColor(&pSrcPixel[x * GetBytesPerPixel(clear->format)], clear->format);
+					color = FreeRDPReadColor(&pSrcPixel[x * FreeRDPGetBytesPerPixel(clear->format)],
+					                         clear->format);
 
-					if (!WriteColor(dstBuffer, clear->format, color))
+					if (!FreeRDPWriteColor(dstBuffer, clear->format, color))
 						return FALSE;
 
-					dstBuffer += GetBytesPerPixel(clear->format);
+					dstBuffer += FreeRDPGetBytesPerPixel(clear->format);
 				}
 
 				/* if (y >= (vBarYOn + vBarShortPixelCount)), use colorBkg */
@@ -784,10 +786,10 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 				while (count--)
 				{
-					if (!WriteColor(dstBuffer, clear->format, colorBkg))
+					if (!FreeRDPWriteColor(dstBuffer, clear->format, colorBkg))
 						return FALSE;
 
-					dstBuffer += GetBytesPerPixel(clear->format);
+					dstBuffer += FreeRDPGetBytesPerPixel(clear->format);
 				}
 
 				vBarEntry->count = vBarPixelCount;
@@ -817,15 +819,16 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 				for (y = 0; y < count; y++)
 				{
-					BYTE* pDstPixel8 = &pDstData[((nYDstRel + y) * nDstStep) +
-					                             ((nXDstRel + i) * GetBytesPerPixel(DstFormat))];
-					UINT32 color = ReadColor(cpSrcPixel, clear->format);
+					BYTE* pDstPixel8 =
+					    &pDstData[((nYDstRel + y) * nDstStep) +
+					              ((nXDstRel + i) * FreeRDPGetBytesPerPixel(DstFormat))];
+					UINT32 color = FreeRDPReadColor(cpSrcPixel, clear->format);
 					color = FreeRDPConvertColor(color, clear->format, DstFormat, NULL);
 
-					if (!WriteColor(pDstPixel8, DstFormat, color))
+					if (!FreeRDPWriteColor(pDstPixel8, DstFormat, color))
 						return FALSE;
 
-					cpSrcPixel += GetBytesPerPixel(clear->format);
+					cpSrcPixel += FreeRDPGetBytesPerPixel(clear->format);
 				}
 			}
 		}
@@ -899,14 +902,14 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 			return FALSE;
 		}
 
-		nSrcStep = nWidth * GetBytesPerPixel(clear->format);
+		nSrcStep = nWidth * FreeRDPGetBytesPerPixel(clear->format);
 		return convert_color(pDstData, nDstStep, DstFormat, nXDst, nYDst, nWidth, nHeight,
 		                     glyphData, nSrcStep, clear->format, nDstWidth, nDstHeight, palette);
 	}
 
 	if (glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX)
 	{
-		const UINT32 bpp = GetBytesPerPixel(clear->format);
+		const UINT32 bpp = FreeRDPGetBytesPerPixel(clear->format);
 		CLEAR_GLYPH_ENTRY* glyphEntry = &(clear->GlyphCache[glyphIndex]);
 		glyphEntry->count = nWidth * nHeight;
 

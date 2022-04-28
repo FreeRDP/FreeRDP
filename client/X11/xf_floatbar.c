@@ -30,6 +30,7 @@
 #include "resource/minimize.xbm"
 #include "resource/restore.xbm"
 
+#include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
 #define FLOATBAR_HEIGHT 26

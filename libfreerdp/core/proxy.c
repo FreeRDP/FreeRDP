@@ -30,6 +30,8 @@
 #include <winpr/environment.h> /* For GetEnvironmentVariableA */
 
 #define CRLF "\r\n"
+
+#include <freerdp/log.h>
 #define TAG FREERDP_TAG("core.proxy")
 
 /* SOCKS Proxy auth methods by rfc1928 */

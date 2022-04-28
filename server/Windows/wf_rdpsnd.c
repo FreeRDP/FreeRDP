@@ -39,6 +39,7 @@
 
 #endif
 
+#include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")
 
 static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)

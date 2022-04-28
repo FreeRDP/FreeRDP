@@ -38,6 +38,7 @@
 
 #include "wf_interface.h"
 
+#include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")
 
 #define SERVER_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\Server"

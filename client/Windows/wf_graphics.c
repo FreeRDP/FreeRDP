@@ -50,7 +50,7 @@ HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height, UINT32 srcFor
 	bmi.bmiHeader.biWidth = width;
 	bmi.bmiHeader.biHeight = negHeight;
 	bmi.bmiHeader.biPlanes = 1;
-	bmi.bmiHeader.biBitCount = GetBitsPerPixel(dstFormat);
+	bmi.bmiHeader.biBitCount = FreeRDPGetBitsPerPixel(dstFormat);
 	bmi.bmiHeader.biCompression = BI_RGB;
 	bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**)&cdata, NULL, 0);
 

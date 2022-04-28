@@ -80,7 +80,7 @@ static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor, COLORREF* col
 	if (format)
 		*format = SrcFormat;
 
-	switch (GetBitsPerPixel(gdi->dstFormat))
+	switch (FreeRDPGetBitsPerPixel(gdi->dstFormat))
 	{
 		case 32:
 			DstFormat = PIXEL_FORMAT_ABGR32;

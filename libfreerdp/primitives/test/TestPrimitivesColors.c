@@ -86,8 +86,8 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	{
 		for (i = 0; i < roi.width * roi.height; ++i)
 		{
-			const UINT32 o1 = ReadColor(out1 + 4 * i, DstFormat);
-			const UINT32 o2 = ReadColor(out2 + 4 * i, DstFormat);
+			const UINT32 o1 = FreeRDPReadColor(out1 + 4 * i, DstFormat);
+			const UINT32 o2 = FreeRDPReadColor(out2 + 4 * i, DstFormat);
 
 			if (o1 != o2)
 			{

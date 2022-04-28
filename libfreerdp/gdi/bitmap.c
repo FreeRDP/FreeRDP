@@ -53,13 +53,14 @@
 UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdc->selectedObject;
-	BYTE* data = &(hBmp->data[(nYPos * hBmp->scanline) + nXPos * GetBytesPerPixel(hBmp->format)]);
-	return ReadColor(data, hBmp->format);
+	BYTE* data =
+	    &(hBmp->data[(nYPos * hBmp->scanline) + nXPos * FreeRDPGetBytesPerPixel(hBmp->format)]);
+	return FreeRDPReadColor(data, hBmp->format);
 }
 
 BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
 {
-	UINT32 bpp = GetBytesPerPixel(hBmp->format);
+	UINT32 bpp = FreeRDPGetBytesPerPixel(hBmp->format);
 	return &hBmp->data[(Y * hBmp->width * bpp) + X * bpp];
 }
 
@@ -75,8 +76,8 @@ BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
 
 static INLINE UINT32 gdi_SetPixelBmp(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y, UINT32 crColor)
 {
-	BYTE* p = &hBmp->data[(Y * hBmp->scanline) + X * GetBytesPerPixel(hBmp->format)];
-	WriteColor(p, hBmp->format, crColor);
+	BYTE* p = &hBmp->data[(Y * hBmp->scanline) + X * FreeRDPGetBytesPerPixel(hBmp->format)];
+	FreeRDPWriteColor(p, hBmp->format, crColor);
 	return crColor;
 }
 
@@ -116,7 +117,7 @@ HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight, UINT32 format, UIN
 	if (stride > 0)
 		hBitmap->scanline = stride;
 	else
-		hBitmap->scanline = nWidth * GetBytesPerPixel(hBitmap->format);
+		hBitmap->scanline = nWidth * FreeRDPGetBytesPerPixel(hBitmap->format);
 
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
@@ -146,7 +147,7 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
 	hBitmap->data =
-	    _aligned_malloc(nWidth * nHeight * GetBytesPerPixel(hBitmap->format) * 1ULL, 16);
+	    _aligned_malloc(nWidth * nHeight * FreeRDPGetBytesPerPixel(hBitmap->format) * 1ULL, 16);
 	hBitmap->free = _aligned_free;
 
 	if (!hBitmap->data)
@@ -155,7 +156,7 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 		return NULL;
 	}
 
-	hBitmap->scanline = nWidth * GetBytesPerPixel(hBitmap->format);
+	hBitmap->scanline = nWidth * FreeRDPGetBytesPerPixel(hBitmap->format);
 	return hBitmap;
 }
 
@@ -284,7 +285,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 		return FALSE;
 	}
 
-	colorA = ReadColor(dstp, hdcDest->format);
+	colorA = FreeRDPReadColor(dstp, hdcDest->format);
 
 	if (useSrc)
 	{
@@ -296,7 +297,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 			return FALSE;
 		}
 
-		colorC = ReadColor(srcp, hdcSrc->format);
+		colorC = FreeRDPReadColor(srcp, hdcSrc->format);
 		colorC = FreeRDPConvertColor(colorC, hdcSrc->format, hdcDest->format, palette);
 	}
 
@@ -319,7 +320,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 					return FALSE;
 				}
 
-				colorB = ReadColor(patp, hdcDest->format);
+				colorB = FreeRDPReadColor(patp, hdcDest->format);
 			}
 			break;
 
@@ -329,7 +330,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 	}
 
 	dstColor = process_rop(colorC, colorA, colorB, rop, hdcDest->format);
-	return WriteColor(dstp, hdcDest->format, dstColor);
+	return FreeRDPWriteColor(dstp, hdcDest->format, dstColor);
 }
 
 static BOOL adjust_src_coordinates(HGDI_DC hdcSrc, INT32 nWidth, INT32 nHeight, INT32* px,

@@ -45,7 +45,7 @@
  */
 static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 {
-	const UINT32 srcPixel = ReadColor(pixelPtr, format);
+	const UINT32 srcPixel = FreeRDPReadColor(pixelPtr, format);
 	UINT32 dstPixel;
 
 	switch (rop)
@@ -118,7 +118,7 @@ static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 			return FALSE;
 	}
 
-	return WriteColor(pixelPtr, format, dstPixel);
+	return FreeRDPWriteColor(pixelPtr, format, dstPixel);
 }
 
 BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)

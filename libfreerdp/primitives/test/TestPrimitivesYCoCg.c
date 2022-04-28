@@ -48,7 +48,7 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 	{
 		const UINT32 format = formats[x];
-		const UINT32 dstStride = width * GetBytesPerPixel(format);
+		const UINT32 dstStride = width * FreeRDPGetBytesPerPixel(format);
 		const char* formatName = FreeRDPGetColorFormatName(format);
 		PROFILER_CREATE(genericProf, "YCoCgRToRGB_8u_AC4R-GENERIC")
 		PROFILER_CREATE(optProf, "YCoCgRToRGB_8u_AC4R-OPT")
@@ -72,8 +72,8 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 		{
 			for (i = 0; i < width * height; ++i)
 			{
-				const UINT32 c = ReadColor(out_c + 4 * i, format);
-				const UINT32 sse = ReadColor(out_sse + 4 * i, format);
+				const UINT32 c = FreeRDPReadColor(out_c + 4 * i, format);
+				const UINT32 sse = FreeRDPReadColor(out_sse + 4 * i, format);
 
 				if (c != sse)
 				{

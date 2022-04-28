@@ -327,8 +327,8 @@ static int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat, int n
 	if (nSrcStep < 0)
 		nSrcStep = srcBytesPerPixel * nWidth;
 
-	dstBitsPerPixel = GetBitsPerPixel(DstFormat);
-	dstBytesPerPixel = GetBytesPerPixel(DstFormat);
+	dstBitsPerPixel = FreeRDPGetBitsPerPixel(DstFormat);
+	dstBytesPerPixel = FreeRDPGetBytesPerPixel(DstFormat);
 
 	if (nDstStep < 0)
 		nDstStep = dstBytesPerPixel * nWidth;

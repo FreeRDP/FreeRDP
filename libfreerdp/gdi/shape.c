@@ -147,11 +147,11 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x, nYDest);
 
 				if (dstp)
-					WriteColor(dstp, hdc->format, color);
+					FreeRDPWriteColor(dstp, hdc->format, color);
 			}
 
 			srcp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest);
-			formatSize = GetBytesPerPixel(hdc->format);
+			formatSize = FreeRDPGetBytesPerPixel(hdc->format);
 
 			for (y = 1; y < nHeight; y++)
 			{
@@ -164,7 +164,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 		case GDI_BS_HATCHED:
 		case GDI_BS_PATTERN:
 			monochrome = (hbr->pattern->format == PIXEL_FORMAT_MONO);
-			formatSize = GetBytesPerPixel(hbr->pattern->format);
+			formatSize = FreeRDPGetBytesPerPixel(hbr->pattern->format);
 
 			for (y = 0; y < nHeight; y++)
 			{
@@ -188,13 +188,13 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 					}
 					else
 					{
-						dstColor = ReadColor(patp, hbr->pattern->format);
+						dstColor = FreeRDPReadColor(patp, hbr->pattern->format);
 						dstColor =
 						    FreeRDPConvertColor(dstColor, hbr->pattern->format, hdc->format, NULL);
 					}
 
 					if (dstp)
-						WriteColor(dstp, hdc->format, dstColor);
+						FreeRDPWriteColor(dstp, hdc->format, dstColor);
 				}
 			}
 
@@ -255,10 +255,10 @@ BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nH
 		BYTE* dstRight = gdi_get_bitmap_pointer(hdc, nXDst + nWidth - 1, nYDst + y);
 
 		if (dstLeft)
-			WriteColor(dstLeft, hdc->format, color);
+			FreeRDPWriteColor(dstLeft, hdc->format, color);
 
 		if (dstRight)
-			WriteColor(dstRight, hdc->format, color);
+			FreeRDPWriteColor(dstRight, hdc->format, color);
 	}
 
 	for (x = 0; x < nWidth; x++)
@@ -267,10 +267,10 @@ BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nH
 		BYTE* dstBottom = gdi_get_bitmap_pointer(hdc, nXDst + x, nYDst + nHeight - 1);
 
 		if (dstTop)
-			WriteColor(dstTop, hdc->format, color);
+			FreeRDPWriteColor(dstTop, hdc->format, color);
 
 		if (dstBottom)
-			WriteColor(dstBottom, hdc->format, color);
+			FreeRDPWriteColor(dstBottom, hdc->format, color);
 	}
 
 	return FALSE;

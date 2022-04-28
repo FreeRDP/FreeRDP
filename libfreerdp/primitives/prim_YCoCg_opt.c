@@ -431,7 +431,7 @@ static pstatus_t neon_YCoCgToRGB_8u_X(const BYTE* pSrc, INT32 srcStep, BYTE* pDs
 	UINT32 y;
 	BYTE* dptr = pDst;
 	const BYTE* sptr = pSrc;
-	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 	const int8_t cll = shift - 1; /* -1 builds in the /2's */
 	const UINT32 srcPad = srcStep - (width * 4);
 	const UINT32 dstPad = dstStep - (width * formatSize);
