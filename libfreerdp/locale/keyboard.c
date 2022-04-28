@@ -296,9 +296,7 @@ static int freerdp_keyboard_init_x11_evdev(DWORD* keyboardLayoutId,
 DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 {
 	DWORD keycode;
-#if defined(__APPLE__) || defined(WITH_X11) || defined(WITH_WAYLAND)
 	int status = -1;
-#endif
 
 #ifdef __APPLE__
 	if (status < 0)
@@ -319,7 +317,7 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 #endif
 
 	if (status < 0)
-		WLog_DBG(TAG, "Failed to initialize keyboard layout, trying autodetection");
+		WLog_DBG(TAG, "Platform keyboard detection failed, trying autodetection");
 
 	freerdp_detect_keyboard(&keyboardLayoutId);
 
