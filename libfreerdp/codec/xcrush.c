@@ -27,7 +27,7 @@
 #include <winpr/bitstream.h>
 
 #include <freerdp/log.h>
-#include <freerdp/codec/xcrush.h>
+#include "xcrush.h"
 
 #define TAG FREERDP_TAG("codec")
 

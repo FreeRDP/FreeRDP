@@ -52,8 +52,6 @@ set(${MODULE_PREFIX}_GATEWAY_SRCS
 set(${MODULE_PREFIX}_SRCS
 	utils.c
 	utils.h
-	bulk.c
-	bulk.h
 	streamdump.c
 	activation.c
 	activation.h

@@ -22,12 +22,8 @@
 
 typedef struct rdp_bulk rdpBulk;
 
-#include "rdp.h"
-
 #include <freerdp/api.h>
-#include <freerdp/codec/mppc.h>
-#include <freerdp/codec/ncrush.h>
-#include <freerdp/codec/xcrush.h>
+#include <freerdp/freerdp.h>
 
 #define BULK_COMPRESSION_FLAGS_MASK 0xE0
 #define BULK_COMPRESSION_TYPE_MASK 0x0F

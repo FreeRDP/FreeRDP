@@ -31,6 +31,7 @@
 #include "mcs.h"
 #include "redirection.h"
 
+#include <freerdp/codec/bulk.h>
 #include <freerdp/crypto/per.h>
 #include <freerdp/log.h>
 
