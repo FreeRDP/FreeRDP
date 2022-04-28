@@ -48,6 +48,7 @@ struct s_MPPC_CONTEXT
 	ALIGN64 BYTE HistoryBuffer[65536];
 	ALIGN64 UINT16 MatchBuffer[32768];
 	ALIGN64 UINT32 CompressionLevel;
+	ALIGN64 BYTE OutputBuffer[65536];
 };
 
 static const UINT32 MPPC_MATCH_TABLE[256] = {
@@ -432,8 +433,8 @@ int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
 	return 1;
 }
 
-int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstBuffer,
-                  const BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
+int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize, const BYTE** ppDstData,
+                  UINT32* pDstSize, UINT32* pFlags)
 {
 	const BYTE* pSrcPtr;
 	const BYTE* pSrcEnd;
@@ -456,7 +457,6 @@ int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 	WINPR_ASSERT(mppc);
 	WINPR_ASSERT(pSrcData);
-	WINPR_ASSERT(pDstBuffer);
 	WINPR_ASSERT(ppDstData);
 	WINPR_ASSERT(pDstSize);
 	WINPR_ASSERT(pFlags);
@@ -487,9 +487,9 @@ int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize, BYTE
 	}
 
 	HistoryPtr = &(HistoryBuffer[HistoryOffset]);
-	pDstData = pDstBuffer;
-	*ppDstData = pDstBuffer;
-
+	pDstData = mppc->OutputBuffer;
+	*ppDstData = mppc->OutputBuffer;
+	*pDstSize = sizeof(mppc->OutputBuffer);
 	if (!pDstData)
 		return -1;
 

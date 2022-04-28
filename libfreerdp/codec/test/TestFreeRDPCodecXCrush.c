@@ -78,12 +78,11 @@ static BOOL test_run(const char* fkt, const void* src, UINT32 src_size, const vo
 	int status = -1;
 	UINT32 Flags = 0;
 	const BYTE* pDstData = NULL;
-	BYTE OutputBuffer[65536] = { 0 };
-	UINT32 DstSize = sizeof(OutputBuffer);
+	UINT32 DstSize = 0;
 	XCRUSH_CONTEXT* xcrush = xcrush_context_new(TRUE);
 	if (!xcrush)
 		return -1;
-	status = xcrush_compress(xcrush, src, src_size, OutputBuffer, &pDstData, &DstSize, &Flags);
+	status = xcrush_compress(xcrush, src, src_size, &pDstData, &DstSize, &Flags);
 	printf("[%s] status: %d Flags: 0x%08" PRIX32 " DstSize: %" PRIu32 "\n", fkt, status, Flags,
 	       DstSize);
 

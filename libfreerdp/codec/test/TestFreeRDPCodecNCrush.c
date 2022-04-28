@@ -16,17 +16,17 @@ static BOOL test_NCrushCompressBells(void)
 	int status;
 	UINT32 Flags;
 	const BYTE* pDstData = NULL;
-	BYTE OutputBuffer[65536] = { 0 };
+	ALIGN64 BYTE OutputBuffer[65536];
 	const UINT32 SrcSize = sizeof(TEST_BELLS_DATA) - 1;
 	const BYTE* pSrcData = TEST_BELLS_DATA;
 	const UINT32 expectedSize = sizeof(TEST_BELLS_NCRUSH) - 1;
-	UINT32 DstSize = sizeof(OutputBuffer);
+	UINT32 DstSize = 0;
 	NCRUSH_CONTEXT* ncrush = ncrush_context_new(TRUE);
 
 	if (!ncrush)
 		return rc;
 
-	status = ncrush_compress(ncrush, pSrcData, SrcSize, OutputBuffer, &pDstData, &DstSize, &Flags);
+	status = ncrush_compress(ncrush, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
 
 	if (status < 0)
 		goto fail;

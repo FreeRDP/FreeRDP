@@ -38,7 +38,6 @@ struct rdp_bulk
 	ALIGN64 NCRUSH_CONTEXT* ncrushSend;
 	ALIGN64 XCRUSH_CONTEXT* xcrushRecv;
 	ALIGN64 XCRUSH_CONTEXT* xcrushSend;
-	ALIGN64 BYTE OutputBuffer[65536];
 };
 
 #if defined(WITH_BULK_DEBUG)
@@ -258,7 +257,6 @@ int bulk_compress(rdpBulk* bulk, const BYTE* pSrcData, UINT32 SrcSize, const BYT
 		return 0;
 	}
 
-	*pDstSize = sizeof(bulk->OutputBuffer);
 	bulk_compression_level(bulk);
 	bulk_compression_max_size(bulk);
 
@@ -267,16 +265,15 @@ int bulk_compress(rdpBulk* bulk, const BYTE* pSrcData, UINT32 SrcSize, const BYT
 		case PACKET_COMPR_TYPE_8K:
 		case PACKET_COMPR_TYPE_64K:
 			mppc_set_compression_level(bulk->mppcSend, bulk->CompressionLevel);
-			status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, bulk->OutputBuffer, ppDstData,
-			                       pDstSize, pFlags);
+			status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
 			break;
 		case PACKET_COMPR_TYPE_RDP6:
-			status = ncrush_compress(bulk->ncrushSend, pSrcData, SrcSize, bulk->OutputBuffer,
-			                         ppDstData, pDstSize, pFlags);
+			status =
+			    ncrush_compress(bulk->ncrushSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
 			break;
 		case PACKET_COMPR_TYPE_RDP61:
-			status = xcrush_compress(bulk->xcrushSend, pSrcData, SrcSize, bulk->OutputBuffer,
-			                         ppDstData, pDstSize, pFlags);
+			status =
+			    xcrush_compress(bulk->xcrushSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
 			break;
 		case PACKET_COMPR_TYPE_RDP8:
 			WLog_ERR(TAG, "Unsupported bulk compression type %08" PRIx32, bulk->CompressionLevel);

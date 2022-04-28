@@ -91,6 +91,7 @@ struct s_XCRUSH_CONTEXT
 	ALIGN64 UINT32 OptimizedMatchCount;
 	ALIGN64 XCRUSH_MATCH_INFO OriginalMatches[1000];
 	ALIGN64 XCRUSH_MATCH_INFO OptimizedMatches[1000];
+	ALIGN64 BYTE OutputBuffer[65536];
 };
 
 //#define DEBUG_XCRUSH 1
@@ -1024,7 +1025,7 @@ static int xcrush_compress_l1(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT
 	return 1;
 }
 
-int xcrush_compress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstBuffer,
+int xcrush_compress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize,
                     const BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
 	int status = 0;
@@ -1045,14 +1046,16 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize
 	WINPR_ASSERT(pDstSize);
 	WINPR_ASSERT(pFlags);
 
+	OriginalData = xcrush->OutputBuffer;
+	*ppDstData = xcrush->OutputBuffer;
+	*pDstSize = sizeof(xcrush->OutputBuffer);
+
 	if (SrcSize > 16384)
 		return -1001;
 
 	if ((SrcSize + 2) > *pDstSize)
 		return -1002;
 
-	OriginalData = pDstBuffer;
-	*ppDstData = pDstBuffer;
 	OriginalDataSize = SrcSize;
 	pDstData = xcrush->BlockBuffer;
 	CompressedDataSize = SrcSize;
@@ -1084,8 +1087,8 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize
 	if (CompressedDataSize > 50)
 	{
 		const BYTE* pUnusedDstData = NULL;
-		status = mppc_compress(xcrush->mppc, CompressedData, CompressedDataSize, pDstData,
-		                       &pUnusedDstData, &DstSize, &Level2ComprFlags);
+		status = mppc_compress(xcrush->mppc, CompressedData, CompressedDataSize, &pUnusedDstData,
+		                       &DstSize, &Level2ComprFlags);
 	}
 
 	if (status < 0)

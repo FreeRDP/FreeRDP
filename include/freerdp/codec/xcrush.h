@@ -33,8 +33,7 @@ extern "C"
 #endif
 
 	FREERDP_API int xcrush_compress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize,
-	                                BYTE* pDstBuffer, const BYTE** ppDstData, UINT32* pDstSize,
-	                                UINT32* pFlags);
+	                                const BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
 	FREERDP_API int xcrush_decompress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize,
 	                                  const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
 

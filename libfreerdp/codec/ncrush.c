@@ -46,6 +46,7 @@ struct s_NCRUSH_CONTEXT
 	ALIGN64 UINT16 MatchTable[65536];
 	ALIGN64 BYTE HuffTableCopyOffset[1024];
 	ALIGN64 BYTE HuffTableLOM[4096];
+	ALIGN64 BYTE OutputBuffer[65536];
 };
 
 static const UINT16 HuffTableLEC[8192] = {
@@ -2482,7 +2483,7 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 	return 1;
 }
 
-int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstBuffer,
+int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize,
                     const BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
 	BYTE Literal;
@@ -2523,7 +2524,6 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 
 	WINPR_ASSERT(ncrush);
 	WINPR_ASSERT(pSrcData);
-	WINPR_ASSERT(pDstBuffer);
 	WINPR_ASSERT(ppDstData);
 	WINPR_ASSERT(pDstSize);
 	WINPR_ASSERT(pFlags);
@@ -2554,8 +2554,9 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 		*pFlags = 0;
 	}
 
-	pDstData = pDstBuffer;
-	*ppDstData = pDstBuffer;
+	pDstData = ncrush->OutputBuffer;
+	*ppDstData = ncrush->OutputBuffer;
+	*pDstSize = sizeof(ncrush->OutputBuffer);
 
 	if (!pDstData)
 		return -1002;

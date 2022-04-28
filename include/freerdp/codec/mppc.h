@@ -35,8 +35,7 @@ extern "C"
 #endif
 
 	FREERDP_API int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
-	                              BYTE* pDstBuffer, const BYTE** ppDstData, UINT32* pDstSize,
-	                              UINT32* pFlags);
+	                              const BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
 	FREERDP_API int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
 	                                const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
 
