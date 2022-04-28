@@ -26,7 +26,7 @@
 #include "nla.h"
 #include "mcs.h"
 #include "tpkt.h"
-#include "bulk.h"
+#include "../codec/bulk.h"
 #include "fastpath.h"
 #include "tpdu.h"
 #include "nego.h"

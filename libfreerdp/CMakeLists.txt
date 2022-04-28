@@ -125,6 +125,8 @@ endif ()
 
 # codec
 set(CODEC_SRCS
+	codec/bulk.c
+	codec/bulk.h
     codec/dsp.c
     codec/color.c
     codec/audio.c

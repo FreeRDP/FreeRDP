@@ -22,6 +22,9 @@
 #include <freerdp/config.h>
 
 #include "bulk.h"
+#include "../codec/mppc.h"
+#include "../codec/ncrush.h"
+#include "../codec/xcrush.h"
 
 #define TAG "com.freerdp.core"
 

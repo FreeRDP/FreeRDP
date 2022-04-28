@@ -1,7 +1,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include <freerdp/codec/ncrush.h>
+#include "../ncrush.h"
 
 static const BYTE TEST_BELLS_DATA[] = "for.whom.the.bell.tolls,.the.bell.tolls.for.thee!";
 

@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * NCrush (RDP6) Bulk Data Compression
+ * MPPC Bulk Data Compression
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,36 +17,38 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CODEC_NCRUSH_H
-#define FREERDP_CODEC_NCRUSH_H
+#ifndef FREERDP_MPPC_H
+#define FREERDP_MPPC_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-#include <freerdp/codec/mppc.h>
-
 #include <winpr/bitstream.h>
 
-typedef struct s_NCRUSH_CONTEXT NCRUSH_CONTEXT;
+#include <freerdp/codec/bulk.h>
+
+typedef struct s_MPPC_CONTEXT MPPC_CONTEXT;
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	FREERDP_API int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize,
+	FREERDP_LOCAL int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
 	                                BYTE* pDstBuffer, const BYTE** ppDstData, UINT32* pDstSize,
 	                                UINT32* pFlags);
-	FREERDP_API int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize,
+	FREERDP_LOCAL int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
 	                                  const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
 
-	FREERDP_API void ncrush_context_reset(NCRUSH_CONTEXT* ncrush, BOOL flush);
+	FREERDP_LOCAL void mppc_set_compression_level(MPPC_CONTEXT* mppc, DWORD CompressionLevel);
 
-	FREERDP_API NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor);
-	FREERDP_API void ncrush_context_free(NCRUSH_CONTEXT* ncrush);
+	FREERDP_LOCAL void mppc_context_reset(MPPC_CONTEXT* mppc, BOOL flush);
+
+	FREERDP_LOCAL MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor);
+	FREERDP_LOCAL void mppc_context_free(MPPC_CONTEXT* mppc);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FREERDP_CODEC_NCRUSH_H */
+#endif /* FREERDP_MPPC_H */
