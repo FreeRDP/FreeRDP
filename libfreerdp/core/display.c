@@ -48,14 +48,21 @@ BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
                                                 MONITOR_DEF** result)
 {
 	UINT32 index;
-	const rdpMonitor* monitor;
+	MONITOR_DEF* mdef = NULL;
 
-	if (!monitorDefArray || !(*result))
+	if (!monitorDefArray || !result || (*result))
 		return FALSE;
 
-	for (index = 0, monitor = monitorDefArray; index < monitorCount; index++, monitor++)
+	mdef = (MONITOR_DEF*)calloc(monitorCount, sizeof(MONITOR_DEF));
+
+	if (!mdef)
+		return FALSE;
+
+	for (index = 0; index < monitorCount; index++)
 	{
-		MONITOR_DEF* current = (*result + index);
+		const rdpMonitor* monitor = &monitorDefArray[index];
+		MONITOR_DEF* current = &mdef[index];
+
 		current->left = monitor->x;                                   /* left (4 bytes) */
 		current->top = monitor->y;                                    /* top (4 bytes) */
 		current->right = monitor->x + monitor->width - 1;             /* right (4 bytes) */
@@ -63,6 +70,7 @@ BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
 		current->flags = monitor->is_primary ? MONITOR_PRIMARY : 0x0; /* flags (4 bytes) */
 	}
 
+	*result = mdef;
 	return TRUE;
 }
 

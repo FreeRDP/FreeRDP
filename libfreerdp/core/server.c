@@ -1328,27 +1328,29 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 	channel->channelId = InterlockedIncrement(&vcm->dvc_channel_id_seq);
 
 	if (!ArrayList_Append(vcm->dynamicVirtualChannels, channel))
+	{
+		channel_free(channel);
+		channel = NULL;
 		goto fail;
-
+	}
 	s = Stream_New(NULL, 64);
 
 	if (!s)
-		goto fail2;
+		goto fail;
 
 	if (!wts_write_drdynvc_create_request(s, channel->channelId, pVirtualName))
-		goto fail2;
+		goto fail;
 
 	if (!WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR)Stream_Buffer(s),
 	                            Stream_GetPosition(s), &written))
-		goto fail2;
+		goto fail;
 
 	Stream_Free(s, TRUE);
 	return channel;
 fail:
-	channel_free(channel);
-fail2:
 	Stream_Free(s, TRUE);
-	ArrayList_Remove(vcm->dynamicVirtualChannels, channel);
+	if (channel)
+		ArrayList_Remove(vcm->dynamicVirtualChannels, channel);
 
 	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 	return NULL;

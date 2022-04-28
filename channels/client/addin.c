@@ -508,10 +508,9 @@ static DWORD WINAPI channel_client_thread_proc(LPVOID userdata)
 	wStream* data;
 	wMessage message;
 	msg_proc_internals* internals = userdata;
-	if (!internals)
-	{
-		/* TODO: return some error */
-	}
+
+	WINPR_ASSERT(internals);
+
 	while (1)
 	{
 		if (!MessageQueue_Wait(internals->queue))

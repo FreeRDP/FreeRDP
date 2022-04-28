@@ -191,6 +191,7 @@ typedef struct
 	UINT32 gridHeight;
 	UINT32 gridSize;
 	RFX_PROGRESSIVE_TILE* tiles;
+	size_t tilesSize;
 	UINT32 frameId;
 	UINT32 numUpdatedTiles;
 	UINT32* updatedTileIndices;

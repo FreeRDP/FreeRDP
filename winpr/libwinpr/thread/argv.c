@@ -192,7 +192,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	}
 
 	maxBufferSize = (maxNumArgs * (sizeof(char*))) + (cmdLineLength + 1);
-	buffer = calloc(maxBufferSize, sizeof(WCHAR));
+	buffer = calloc(maxBufferSize, sizeof(char));
 
 	if (!buffer)
 	{

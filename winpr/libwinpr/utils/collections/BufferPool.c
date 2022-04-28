@@ -483,7 +483,7 @@ wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignmen
 {
 	wBufferPool* pool = NULL;
 
-	pool = (wBufferPool*)malloc(sizeof(wBufferPool));
+	pool = (wBufferPool*)calloc(1, sizeof(wBufferPool));
 
 	if (pool)
 	{
@@ -522,10 +522,7 @@ wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignmen
 			pool->uCapacity = 32;
 			pool->uArray = (wBufferPoolItem*)calloc(pool->uCapacity, sizeof(wBufferPoolItem));
 			if (!pool->uArray)
-			{
-				free(pool->aArray);
 				goto out_error;
-			}
 		}
 	}
 

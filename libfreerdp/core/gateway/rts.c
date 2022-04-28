@@ -1588,9 +1588,9 @@ fail:
 
 BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer)
 {
-	BOOL rc;
-	UINT32 ReceiveWindowSize;
-	UINT32 ConnectionTimeout;
+	BOOL rc = FALSE;
+	UINT32 ReceiveWindowSize = 0;
+	UINT32 ConnectionTimeout = 0;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);

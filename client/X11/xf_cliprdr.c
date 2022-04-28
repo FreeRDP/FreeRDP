@@ -600,11 +600,15 @@ static void xf_cliprdr_provide_server_format_list(xfClipboard* clipboard)
 
 static BOOL xf_clipboard_format_equal(const CLIPRDR_FORMAT* a, const CLIPRDR_FORMAT* b)
 {
+	WINPR_ASSERT(a);
+	WINPR_ASSERT(b);
+
 	if (a->formatId != b->formatId)
 		return FALSE;
 	if (!a->formatName && !b->formatName)
 		return TRUE;
-
+	if (!a->formatName || !b->formatName)
+		return FALSE;
 	return strcmp(a->formatName, b->formatName) == 0;
 }
 static BOOL xf_clipboard_changed(xfClipboard* clipboard, const CLIPRDR_FORMAT* formats,
@@ -1772,7 +1776,7 @@ static char* xf_cliprdr_fuse_split_basename(char* name, int len)
 	return NULL;
 }
 
-static xfCliprdrFuseInode* xf_cliprdr_fuse_create_root_node()
+static xfCliprdrFuseInode* xf_cliprdr_fuse_create_root_node(void)
 {
 	xfCliprdrFuseInode* rootNode = (xfCliprdrFuseInode*)calloc(1, sizeof(xfCliprdrFuseInode));
 	if (!rootNode)
@@ -1810,7 +1814,7 @@ static BOOL xf_cliprdr_fuse_check_stream(wStream* s, size_t count)
 }
 
 static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, size_t count,
-                                         xfCliprdrFuseInode* rootNode)
+                                         const xfCliprdrFuseInode* rootNode)
 {
 	BOOL status = FALSE;
 	size_t lindex = 0;
@@ -1818,11 +1822,17 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 	char* dirName = NULL;
 	char* baseName = NULL;
 	xfCliprdrFuseInode* inode = NULL;
-	wHashTable* mapDir = HashTable_New(TRUE);
+	wHashTable* mapDir;
+
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(rootNode);
+
+	mapDir = HashTable_New(TRUE);
 	if (!mapDir)
 	{
 		WLog_ERR(TAG, "fail to alloc hashtable");
-		return FALSE;
+		goto error;
 	}
 	if (!HashTable_SetupForStringData(mapDir, FALSE))
 		goto error;

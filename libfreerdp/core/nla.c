@@ -892,8 +892,8 @@ static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* mess
 	*dest = 0;
 	do
 	{
-		INT32 factor;
-		INT32 maxValue;
+		INT32 factor = 0;
+		INT32 maxValue = 0;
 
 		switch (*value)
 		{
@@ -913,6 +913,9 @@ static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* mess
 				factor = 1;
 				maxValue = 60;
 				break;
+			default:
+				WLog_ERR(TAG, "invalid value for unit %c when parsing %s", *value, message);
+				return FALSE;
 		}
 
 		if ((maxValue > 0) && (v > maxValue))

@@ -344,7 +344,7 @@ static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL un
 		length = (bytes / sizeof(WCHAR)) - 1;
 		WINPR_ASSERT(length < INT_MAX);
 
-		mszA = (char*)calloc(length + 1, sizeof(WCHAR));
+		mszA = (char*)calloc(length + 1, sizeof(char));
 		if (!mszA)
 			return NULL;
 		if (ConvertFromUnicode(CP_UTF8, 0, string.wz, (int)length, &mszA, (int)length + 1, NULL,
@@ -432,8 +432,6 @@ static char* smartcard_array_dump(const void* pd, size_t len, char* buffer, size
 	rc = _snprintf(buffer, bufferLen, " }");
 	if ((rc < 0) || ((size_t)rc > bufferLen))
 		goto fail;
-	buffer += rc;
-	bufferLen -= (size_t)rc;
 
 fail:
 	return start;

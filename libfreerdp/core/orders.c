@@ -2512,7 +2512,10 @@ static CACHE_GLYPH_ORDER* update_read_cache_glyph_order(rdpUpdate* update, wStre
 	UINT32 i;
 	CACHE_GLYPH_ORDER* cache_glyph_order = calloc(1, sizeof(CACHE_GLYPH_ORDER));
 
-	if (!cache_glyph_order || !update || !s)
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(s);
+
+	if (!cache_glyph_order)
 		goto fail;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))

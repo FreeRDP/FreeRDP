@@ -626,7 +626,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 	sspi_gss_buffer_desc output_tok = { 0 };
 #if defined(WITH_GSSAPI)
 	sspi_gss_OID actual_mech;
+#if defined(WITH_GSSAPI)
 	sspi_gss_OID desired_mech = SSPI_GSS_C_SPNEGO_KRB5;
+#endif
 	UINT32 actual_services;
 #endif
 
