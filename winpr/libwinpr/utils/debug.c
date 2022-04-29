@@ -30,7 +30,7 @@
 #include <execinfo/debug.h>
 #endif
 
-#if defined(HAVE_UNWIND_H)
+#if defined(USE_UNWIND_H)
 #include <unwind/debug.h>
 #endif
 
@@ -89,7 +89,7 @@ void winpr_backtrace_free(void* buffer)
 	if (!buffer)
 		return;
 
-#if defined(HAVE_UNWIND_H)
+#if defined(USE_UNWIND_H)
 	winpr_unwind_backtrace_free(buffer);
 #elif defined(HAVE_EXECINFO_H)
 	winpr_execinfo_backtrace_free(buffer);
@@ -104,7 +104,7 @@ void winpr_backtrace_free(void* buffer)
 
 void* winpr_backtrace(DWORD size)
 {
-#if defined(HAVE_UNWIND_H)
+#if defined(USE_UNWIND_H)
 	return winpr_unwind_backtrace(size);
 #elif defined(HAVE_EXECINFO_H)
 	return winpr_execinfo_backtrace(size);
@@ -129,7 +129,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 		return NULL;
 	}
 
-#if defined(HAVE_UNWIND_H)
+#if defined(USE_UNWIND_H)
 	return winpr_unwind_backtrace_symbols(buffer, used);
 #elif defined(HAVE_EXECINFO_H)
 	return winpr_execinfo_backtrace_symbols(buffer, used);
@@ -151,7 +151,7 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 		return;
 	}
 
-#if defined(HAVE_EXECINFO_H) && !defined(HAVE_UNWIND_H)
+#if defined(HAVE_EXECINFO_H) && !defined(USE_UNWIND_H)
 	winpr_execinfo_backtrace_symbols_fd(buffer, fd);
 #elif !defined(ANDROID)
 	{

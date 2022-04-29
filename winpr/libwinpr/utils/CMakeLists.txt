@@ -129,9 +129,13 @@ if (HAVE_EXECINFO_H)
 endif()
 
 if (HAVE_UNWIND_H)
-    list(APPEND SRCS
-        unwind/debug.c
-        unwind/debug.h)
+    option(USE_UNWIND "Use unwind.h to generate backtraces" ON)
+    if (USE_UNWIND)
+        add_definitions(-DUSE_UNWIND)
+        list(APPEND SRCS
+            unwind/debug.c
+            unwind/debug.h)
+    endif()
 endif()
 
 winpr_module_add(${SRCS}
