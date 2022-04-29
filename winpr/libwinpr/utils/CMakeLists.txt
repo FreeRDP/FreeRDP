@@ -132,6 +132,12 @@ if (HAVE_EXECINFO_H)
         execinfo/debug.h)
 endif()
 
+if (HAVE_UNWIND_H)
+    list(APPEND SRCS
+        unwind/debug.c
+        unwind/debug.h)
+endif()
+
 winpr_module_add(${SRCS}
 	${COLLECTIONS_SRCS}
 	${LODEPNG_SRCS}
