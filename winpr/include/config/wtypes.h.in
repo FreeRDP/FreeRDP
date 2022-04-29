@@ -21,12 +21,12 @@
 #define WINPR_WTYPES_H
 
 /* Set by CMake during configuration */
-#cmakedefine WINPR_HAVE_STDINT_H
-#cmakedefine WINPR_HAVE_STDBOOL_H
+#cmakedefine HAVE_STDINT_H
+#cmakedefine HAVE_STDBOOL_H
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 /* Microsoft's inttypes.h is broken before MSVC 2015 */
-#cmakedefine WINPR_HAVE_INTTYPES_H
+#cmakedefine HAVE_INTTYPES_H
 #endif
 
 /* MSDN: Windows Data Types - http://msdn.microsoft.com/en-us/library/aa383751/ */
@@ -37,15 +37,15 @@
 
 #include <winpr/spec.h>
 
-#ifdef WINPR_HAVE_STDBOOL_H
+#ifdef HAVE_STDBOOL_H
 #include <stdbool.h>
 #endif
 
-#ifdef WINPR_HAVE_STDINT_H
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
 
-#ifdef WINPR_HAVE_INTTYPES_H
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
 
@@ -96,7 +96,7 @@ typedef LONG_PTR SSIZE_T;
 #define NEAR
 #endif
 
-#ifdef WINPR_HAVE_STDINT_H
+#ifdef HAVE_STDINT_H
 typedef int8_t                  __int8;
 typedef uint8_t                 __uint8;
 typedef int16_t                 __int16;
@@ -138,9 +138,9 @@ typedef unsigned long long      __uint64;
 #else
 #error "64-bit type not configured"
 #endif
-#endif /* WINPR_HAVE_STDINT_H */
+#endif /* HAVE_STDINT_H */
 
-#ifdef WINPR_HAVE_STDINT_H
+#ifdef HAVE_STDINT_H
 #if defined(__ILP64__) || defined(__LP64__)
 #define __int3264 int64_t
 #define __uint3264 uint64_t
@@ -156,7 +156,7 @@ typedef unsigned long long      __uint64;
 #define __int3264 __int32
 #define __uint3264 __uint32
 #endif
-#endif /* WINPR_HAVE_STDINT_H */
+#endif /* HAVE_STDINT_H */
 
 
 typedef void* PVOID, *LPVOID, *PVOID64, *LPVOID64;
@@ -486,7 +486,7 @@ typedef const BYTE* LPCBYTE;
 #endif
 
 /* integer format specifiers */
-#ifndef WINPR_HAVE_INTTYPES_H
+#ifndef HAVE_INTTYPES_H
 #define PRId8           "hhd"
 #define PRIi8           "hhi"
 #define PRIu8           "hhu"
@@ -535,7 +535,7 @@ typedef const BYTE* LPCBYTE;
 #define PRIX64          "llX"
 #endif
 #endif /* _MSC_VER */
-#endif /* WINPR_HAVE_INTTYPES_H not defined*/
+#endif /* HAVE_INTTYPES_H not defined*/
 
 #ifndef SSIZE_MAX
 #if defined(_POSIX_SSIZE_MAX)

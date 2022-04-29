@@ -47,10 +47,6 @@
 #include "tsmf_decoder.h"
 #include "tsmf_platform.h"
 
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif
-
 /* 1 second = 10,000,000 100ns units*/
 #define SEEK_TOLERANCE 10 * 1000 * 1000
 
