@@ -27,7 +27,7 @@
 #include <winpr/string.h>
 
 #if defined(HAVE_EXECINFO_H)
-#include <execinfo.h>
+#include <execinfo/debug.h>
 #endif
 
 #if defined(ANDROID)
@@ -78,15 +78,6 @@
 	} while (0)
 
 static const char* support_msg = "Invalid stacktrace buffer! check if platform is supported!";
-
-#if defined(HAVE_EXECINFO_H)
-typedef struct
-{
-	void** buffer;
-	size_t max;
-	size_t used;
-} t_execinfo;
-#endif
 
 #if defined(_WIN32) || defined(_WIN64)
 typedef struct
@@ -259,15 +250,10 @@ USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID
 void winpr_backtrace_free(void* buffer)
 {
 	if (!buffer)
-	{
-		LOGF(support_msg);
 		return;
-	}
 
 #if defined(HAVE_EXECINFO_H)
-	t_execinfo* data = (t_execinfo*)buffer;
-	free(data->buffer);
-	free(data);
+	winpr_execinfo_backtrace_free(buffer);
 #elif defined(ANDROID)
 	t_corkscrew_data* data = (t_corkscrew_data*)buffer;
 	free(data->buffer);
@@ -286,22 +272,7 @@ void winpr_backtrace_free(void* buffer)
 void* winpr_backtrace(DWORD size)
 {
 #if defined(HAVE_EXECINFO_H)
-	t_execinfo* data = calloc(1, sizeof(t_execinfo));
-
-	if (!data)
-		return NULL;
-
-	data->buffer = calloc(size, sizeof(void*));
-
-	if (!data->buffer)
-	{
-		free(data);
-		return NULL;
-	}
-
-	data->max = size;
-	data->used = backtrace(data->buffer, size);
-	return data;
+	return winpr_execinfo_backtrace(size);
 #elif defined(ANDROID)
 	t_corkscrew_data* data = calloc(1, sizeof(t_corkscrew_data));
 
@@ -357,15 +328,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 	}
 
 #if defined(HAVE_EXECINFO_H)
-	t_execinfo* data = (t_execinfo*)buffer;
-
-	if (!data)
-		return NULL;
-
-	if (used)
-		*used = data->used;
-
-	return backtrace_symbols(data->buffer, data->used);
+	return winpr_execinfo_backtrace_symbols(buffer, used);
 #elif defined(ANDROID)
 	t_corkscrew_data* data = (t_corkscrew_data*)buffer;
 
@@ -478,24 +441,18 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 	}
 
 #if defined(HAVE_EXECINFO_H)
-	t_execinfo* data = (t_execinfo*)buffer;
-
-	if (!data)
-		return;
-
-	backtrace_symbols_fd(data->buffer, data->used, fd);
-#elif defined(_WIN32) || defined(_WIN64) || defined(ANDROID)
+	winpr_execinfo_backtrace_symbols_fd(buffer, fd);
+#elif !defined(ANDROID)
 	{
-		DWORD i;
-		size_t used;
-		char** lines;
-		lines = winpr_backtrace_symbols(buffer, &used);
+		size_t i;
+		size_t used = 0;
+		char** lines = winpr_backtrace_symbols(buffer, &used);
 
-		if (lines)
-		{
-			for (i = 0; i < used; i++)
-				write(fd, lines[i], strlen(lines[i]));
-		}
+		if (!lines)
+			return;
+
+		for (i = 0; i < used; i++)
+			write(fd, lines[i], (unsigned)strnlen(lines[i], UINT32_MAX));
 	}
 #else
 	LOGF(support_msg);
@@ -527,7 +484,9 @@ void winpr_log_backtrace_ex(wLog* log, DWORD level, DWORD size)
 		for (x = 0; x < used; x++)
 			WLog_Print(log, level, "%" PRIuz ": %s\n", x, msg[x]);
 	}
-
+	free(msg);
+	
+fail:
 	winpr_backtrace_free(stack);
 }
 
@@ -552,11 +511,11 @@ char* winpr_strerror(DWORD dw, char* dmsg, size_t size)
 	if (rc)
 	{
 #if defined(UNICODE)
-		WideCharToMultiByte(CP_ACP, 0, msg, rc, dmsg, size - 1, NULL, NULL);
+		WideCharToMultiByte(CP_ACP, 0, msg, rc, dmsg, (int)MIN(size - 1, INT_MAX), NULL, NULL);
 #else  /* defined(UNICODE) */
-		memcpy(dmsg, msg, min(rc, size - 1));
+		memcpy(dmsg, msg, MIN(rc, size - 1));
 #endif /* defined(UNICODE) */
-		dmsg[min(rc, size - 1)] = 0;
+		dmsg[MIN(rc, size - 1)] = 0;
 #ifdef FORMAT_MESSAGE_ALLOCATE_BUFFER
 		LocalFree(msg);
 #else
