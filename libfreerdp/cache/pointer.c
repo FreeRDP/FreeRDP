@@ -33,7 +33,7 @@
 #define TAG FREERDP_TAG("cache.pointer")
 
 static BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer);
-static const rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index);
+static rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index);
 
 static void pointer_free(rdpContext* context, rdpPointer* pointer)
 {
@@ -253,7 +253,7 @@ out_fail:
 
 static BOOL update_pointer_cached(rdpContext* context, const POINTER_CACHED_UPDATE* pointer_cached)
 {
-	const rdpPointer* pointer;
+	rdpPointer* pointer;
 	rdpCache* cache;
 
 	WINPR_ASSERT(context);
@@ -270,9 +270,9 @@ static BOOL update_pointer_cached(rdpContext* context, const POINTER_CACHED_UPDA
 	return FALSE;
 }
 
-const rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
+rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 {
-	const rdpPointer* pointer;
+	rdpPointer* pointer;
 
 	WINPR_ASSERT(pointer_cache);
 

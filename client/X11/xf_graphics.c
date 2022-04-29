@@ -232,7 +232,7 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer
 #ifdef WITH_XCURSOR
 	UINT32 CursorFormat;
 	xfContext* xfc = (xfContext*)context;
-	xfPointer* xpointer = pointer;
+	xfPointer* xpointer = (xfPointer*)pointer;
 	XcursorImage ci = { 0 };
 	rdpSettings* settings;
 	UINT32 xTargetSize;
@@ -451,7 +451,7 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	xfContext* xfc = (xfContext*)context;
 	Window handle = xf_Pointer_get_window(xfc);
 
-	xfc->pointer = pointer;
+	xfc->pointer = (xfPointer*)pointer;
 
 	/* in RemoteApp mode, window can be null if none has had focus */
 

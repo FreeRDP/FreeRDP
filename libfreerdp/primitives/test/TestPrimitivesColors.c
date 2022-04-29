@@ -121,8 +121,8 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 {
 	union
 	{
-		const UINT16** cpv;
-		UINT16** pv;
+		const INT16** cpv;
+		INT16** pv;
 	} cnv;
 	const prim_size_t roi64x64 = { 64, 64 };
 	INT16 ALIGN(r[4096 + 1]), ALIGN(g[4096 + 1]), ALIGN(b[4096 + 1]);

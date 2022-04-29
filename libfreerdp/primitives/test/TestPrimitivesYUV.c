@@ -176,8 +176,8 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 {
 	union
 	{
-		const UINT16** cpv;
-		UINT16** pv;
+		const BYTE** cpv;
+		BYTE** pv;
 	} cnv;
 	UINT32 x, y, i;
 	UINT32 awidth, aheight;
@@ -381,8 +381,8 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 {
 	union
 	{
-		const UINT16** cpv;
-		UINT16** pv;
+		const BYTE** cpv;
+		BYTE** pv;
 	} cnv;
 	BOOL res = FALSE;
 	UINT32 x, y;
