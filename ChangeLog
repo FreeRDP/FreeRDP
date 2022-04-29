@@ -4,6 +4,7 @@ Noteworthy changes:
  
 Fixed issues:
 * Fixed #7837: Prevent out of bound reads for FFMPEG
+* Backported #7859 and #7861: Unwind support for backtrace generation
 * Backported #7440: wlfreerdp appid
 * Backported #7832: RAIL window restore
 * Backported #7833: Refactored WinPR thread locking
