@@ -112,6 +112,10 @@ set(SRCS
 
 if (ANDROID)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+    if (NOT HAVE_UNWIND_H)
+        message("[backtrace] android NDK without unwind.h, falling back to corkscrew")
+        set(HAVE_CORKSCREW 1)
+    endif()
 endif()
 
 if (HAVE_CORKSCREW)
