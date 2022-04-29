@@ -19,7 +19,7 @@ include(CheckFunctionExists)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(${MODULE_PREFIX}_COLLECTIONS_SRCS
+set(COLLECTIONS_SRCS
 	collections/Queue.c
 	collections/Stack.c
 	collections/PubSub.c
@@ -37,7 +37,7 @@ set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/MessageQueue.c
 	collections/MessagePipe.c)
 
-set(${MODULE_PREFIX}_LODEPNG_SRCS
+set(LODEPNG_SRCS
 	lodepng/lodepng.c
 	lodepng/lodepng.h)
 
@@ -58,7 +58,7 @@ if (LIBSYSTEMD_FOUND)
 	winpr_library_add_private(${LIBSYSTEMD_LIBRARY})
 endif()
 
-set(${MODULE_PREFIX}_WLOG_SRCS
+set(WLOG_SRCS
 	wlog/wlog.c
 	wlog/wlog.h
 	wlog/Layout.c
@@ -88,7 +88,7 @@ set(${MODULE_PREFIX}_WLOG_SRCS
 	)
 
 
-set(${MODULE_PREFIX}_SRCS
+set(SRCS
 	ini.c
 	sam.c
 	ntlm.c
@@ -106,10 +106,10 @@ if (ANDROID)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-winpr_module_add(${${MODULE_PREFIX}_SRCS}
-	${${MODULE_PREFIX}_COLLECTIONS_SRCS}
-	${${MODULE_PREFIX}_LODEPNG_SRCS}
-	${${MODULE_PREFIX}_WLOG_SRCS})
+winpr_module_add(${SRCS}
+	${COLLECTIONS_SRCS}
+	${LODEPNG_SRCS}
+	${WLOG_SRCS})
 
 winpr_include_directory_add(
 	"lodepng"
