@@ -18,11 +18,9 @@
  * limitations under the License.
  */
 
-/* Required to test on linux 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
-*/
 
 #include <assert.h>
 #include <stdlib.h>
