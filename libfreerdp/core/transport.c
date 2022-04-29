@@ -175,7 +175,7 @@ static BOOL transport_default_attach(rdpTransport* transport, int sockfd)
 		goto fail;
 
 	bufferedBio = BIO_push(bufferedBio, socketBio);
-	WINPR_ASSERT(!transport->frontBio);
+	WINPR_ASSERT(bufferedBio);
 	transport->frontBio = bufferedBio;
 	return TRUE;
 fail:
@@ -371,8 +371,8 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 			if (status)
 			{
-				WINPR_ASSERT(!transport->frontBio);
 				transport->frontBio = rdg_get_front_bio_and_take_ownership(transport->rdg);
+				WINPR_ASSERT(transport->frontBio);
 				BIO_set_nonblock(transport->frontBio, 0);
 				transport->layer = TRANSPORT_LAYER_TSG;
 				status = TRUE;
@@ -397,7 +397,6 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 			if (status)
 			{
-				WINPR_ASSERT(!transport->frontBio);
 				transport->frontBio = tsg_get_bio(transport->tsg);
 				transport->layer = TRANSPORT_LAYER_TSG;
 				status = TRUE;
