@@ -22,6 +22,8 @@
 #cmakedefine HAVE_GETLOGIN_R
 #cmakedefine HAVE_GETPWUID_R
 #cmakedefine HAVE_STRNDUP
+#cmakedefine HAVE_UNWIND_H
+
 #cmakedefine WITH_EVENTFD_READ_WRITE
 
 #cmakedefine WITH_NATIVE_SSPI
