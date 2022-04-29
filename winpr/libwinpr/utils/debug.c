@@ -33,10 +33,7 @@
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
-#include <io.h>
-#include <windows.h>
-#include <dbghelp.h>
-#define write _write
+#include <windows/debug.h>
 #endif
 
 #include <winpr/crt.h>
@@ -80,15 +77,6 @@
 	} while (0)
 
 static const char* support_msg = "Invalid stacktrace buffer! check if platform is supported!";
-
-#if defined(_WIN32) || defined(_WIN64)
-typedef struct
-{
-	PVOID* stack;
-	ULONG used;
-	ULONG max;
-} t_win_stack;
-#endif
 
 #if defined(ANDROID)
 #include <pthread.h>
@@ -207,48 +195,6 @@ fail:
 }
 #endif
 
-#if defined(_WIN32) && (NTDDI_VERSION <= NTDDI_WINXP)
-
-typedef USHORT(WINAPI* PRTL_CAPTURE_STACK_BACK_TRACE_FN)(ULONG FramesToSkip, ULONG FramesToCapture,
-                                                         PVOID* BackTrace, PULONG BackTraceHash);
-
-static HMODULE g_NTDLL_Library = NULL;
-static BOOL g_RtlCaptureStackBackTrace_Detected = FALSE;
-static BOOL g_RtlCaptureStackBackTrace_Available = FALSE;
-static PRTL_CAPTURE_STACK_BACK_TRACE_FN g_pRtlCaptureStackBackTrace = NULL;
-
-USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID* BackTrace,
-                                PULONG BackTraceHash)
-{
-	if (!g_RtlCaptureStackBackTrace_Detected)
-	{
-		g_NTDLL_Library = LoadLibraryA("kernel32.dll");
-
-		if (g_NTDLL_Library)
-		{
-			g_pRtlCaptureStackBackTrace = (PRTL_CAPTURE_STACK_BACK_TRACE_FN)GetProcAddress(
-			    g_NTDLL_Library, "RtlCaptureStackBackTrace");
-			g_RtlCaptureStackBackTrace_Available = (g_pRtlCaptureStackBackTrace) ? TRUE : FALSE;
-		}
-		else
-		{
-			g_RtlCaptureStackBackTrace_Available = FALSE;
-		}
-
-		g_RtlCaptureStackBackTrace_Detected = TRUE;
-	}
-
-	if (g_RtlCaptureStackBackTrace_Available)
-	{
-		return (*g_pRtlCaptureStackBackTrace)(FramesToSkip, FramesToCapture, BackTrace,
-		                                      BackTraceHash);
-	}
-
-	return 0;
-}
-
-#endif
-
 void winpr_backtrace_free(void* buffer)
 {
 	if (!buffer)
@@ -261,11 +207,7 @@ void winpr_backtrace_free(void* buffer)
 	free(data->buffer);
 	free(data);
 #elif defined(_WIN32) || defined(_WIN64)
-	{
-		t_win_stack* data = (t_win_stack*)buffer;
-		free(data->stack);
-		free(data);
-	}
+	winpr_win_backtrace_free(buffer);
 #else
 	LOGF(support_msg);
 #endif
@@ -294,24 +236,7 @@ void* winpr_backtrace(DWORD size)
 	data->used = fkt->unwind_backtrace(data->buffer, 0, size);
 	return data;
 #elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
-	HANDLE process = GetCurrentProcess();
-	t_win_stack* data = calloc(1, sizeof(t_win_stack));
-
-	if (!data)
-		return NULL;
-
-	data->max = size;
-	data->stack = calloc(data->max, sizeof(PVOID));
-
-	if (!data->stack)
-	{
-		free(data);
-		return NULL;
-	}
-
-	SymInitialize(process, NULL, TRUE);
-	data->used = RtlCaptureStackBackTrace(2, size, data->stack, NULL);
-	return data;
+	return winpr_win_backtrace(size);
 #else
 	LOGF(support_msg);
 	return NULL;
@@ -379,55 +304,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 	}
 
 #elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
-	{
-		size_t i;
-		size_t line_len = 1024;
-		HANDLE process = GetCurrentProcess();
-		t_win_stack* data = (t_win_stack*)buffer;
-		size_t array_size = data->used * sizeof(char*);
-		size_t lines_size = data->used * line_len;
-		char** vlines = calloc(1, array_size + lines_size);
-		SYMBOL_INFO* symbol = calloc(1, sizeof(SYMBOL_INFO) + line_len * sizeof(char));
-		IMAGEHLP_LINE64* line = (IMAGEHLP_LINE64*)calloc(1, sizeof(IMAGEHLP_LINE64));
-
-		if (!vlines || !symbol || !line)
-		{
-			free(vlines);
-			free(symbol);
-			free(line);
-			return NULL;
-		}
-
-		line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-		symbol->MaxNameLen = (ULONG)line_len;
-		symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-
-		/* Set the pointers in the allocated buffer's initial array section */
-		for (i = 0; i < data->used; i++)
-			vlines[i] = (char*)vlines + array_size + i * line_len;
-
-		for (i = 0; i < data->used; i++)
-		{
-			DWORD64 address = (DWORD64)(data->stack[i]);
-			DWORD displacement;
-			SymFromAddr(process, address, 0, symbol);
-
-			if (SymGetLineFromAddr64(process, address, &displacement, line))
-			{
-				sprintf_s(vlines[i], line_len, "%016" PRIx64 ": %s in %s:%" PRIu32, symbol->Address,
-				          symbol->Name, line->FileName, line->LineNumber);
-			}
-			else
-				sprintf_s(vlines[i], line_len, "%016" PRIx64 ": %s", symbol->Address, symbol->Name);
-		}
-
-		if (used)
-			*used = data->used;
-
-		free(symbol);
-		free(line);
-		return vlines;
-	}
+	return winpr_win_backtrace_symbols(buffer, used);
 #else
 	LOGF(support_msg);
 	return NULL;
@@ -494,40 +371,7 @@ fail:
 char* winpr_strerror(DWORD dw, char* dmsg, size_t size)
 {
 #if defined(_WIN32)
-	DWORD rc;
-	DWORD nSize = 0;
-	DWORD dwFlags = 0;
-	LPTSTR msg = NULL;
-	BOOL alloc = FALSE;
-	dwFlags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
-#ifdef FORMAT_MESSAGE_ALLOCATE_BUFFER
-	alloc = TRUE;
-	dwFlags |= FORMAT_MESSAGE_ALLOCATE_BUFFER;
-#else
-	nSize = (DWORD)(size * 2);
-	msg = (LPTSTR)calloc(nSize, sizeof(TCHAR));
-#endif
-	rc = FormatMessage(dwFlags, NULL, dw, 0, alloc ? (LPTSTR)&msg : msg, nSize, NULL);
-
-	if (rc)
-	{
-#if defined(UNICODE)
-		WideCharToMultiByte(CP_ACP, 0, msg, rc, dmsg, (int)MIN(size - 1, INT_MAX), NULL, NULL);
-#else  /* defined(UNICODE) */
-		memcpy(dmsg, msg, MIN(rc, size - 1));
-#endif /* defined(UNICODE) */
-		dmsg[MIN(rc, size - 1)] = 0;
-#ifdef FORMAT_MESSAGE_ALLOCATE_BUFFER
-		LocalFree(msg);
-#else
-		free(msg);
-#endif
-	}
-	else
-	{
-		_snprintf(dmsg, size, "FAILURE: 0x%08" PRIX32 "", GetLastError());
-	}
-
+	return winpr_win_strerror(dw, dmsg, size);
 #else  /* defined(_WIN32) */
 	_snprintf(dmsg, size, "%s", strerror(dw));
 #endif /* defined(_WIN32) */
