@@ -114,6 +114,12 @@ if (ANDROID)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+if (HAVE_EXECINFO_H)
+    list(APPEND SRCS
+        execinfo/debug.c
+        execinfo/debug.h)
+endif()
+
 winpr_module_add(${SRCS}
 	${COLLECTIONS_SRCS}
 	${LODEPNG_SRCS}
