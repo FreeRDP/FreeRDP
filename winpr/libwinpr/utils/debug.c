@@ -22,6 +22,8 @@
 
 #include <stdio.h>
 #include <fcntl.h>
+
+#include <winpr/crt.h>
 #include <winpr/string.h>
 
 #if defined(HAVE_EXECINFO_H)
@@ -161,7 +163,7 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 			return;
 
 		for (i = 0; i < used; i++)
-			write(fd, lines[i], (unsigned)strnlen(lines[i], UINT32_MAX));
+			_write(fd, lines[i], (unsigned)strnlen(lines[i], UINT32_MAX));
 	}
 #else
 	LOGF(support_msg);
