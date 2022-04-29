@@ -31,6 +31,12 @@
 
 #ifndef _WIN32
 
+#include <unistd.h>
+
+#ifndef _write
+#define _write write
+#endif
+
 #ifndef _strtoui64
 #define _strtoui64 strtoull
 #endif
