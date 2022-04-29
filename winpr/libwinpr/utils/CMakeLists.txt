@@ -114,6 +114,12 @@ if (ANDROID)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+if (WIN32)
+    list(APPEND SRCS
+        windows/debug.c
+        windows/debug.h)
+endif()
+
 if (HAVE_EXECINFO_H)
     list(APPEND SRCS
         execinfo/debug.c
