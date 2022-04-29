@@ -106,6 +106,12 @@ if (ANDROID)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+if (HAVE_CORKSCREW)
+    list(APPEND SRCS
+        corkscrew/debug.c
+        corkscrew/debug.h)
+endif()
+
 if (WIN32)
     list(APPEND SRCS
         windows/debug.c
