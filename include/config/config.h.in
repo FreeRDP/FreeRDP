@@ -4,18 +4,9 @@
 #include <winpr/config.h>
 
 /* Include files */
-#if defined(__APPLE__) && !defined(__IOS__)
-#cmakedefine01 HAVE_UNISTD_H
-#else
-#cmakedefine HAVE_UNISTD_H
-#endif
-#cmakedefine HAVE_INTTYPES_H
-#cmakedefine HAVE_TM_GMTOFF
-#cmakedefine HAVE_POLL_H
 #cmakedefine HAVE_SYSLOG_H
 #cmakedefine HAVE_JOURNALD_H
 #cmakedefine HAVE_VALGRIND_MEMCHECK_H
-#cmakedefine HAVE_EXECINFO_H
 #cmakedefine HAVE_STRNDUP
 
 /* Features */
@@ -33,7 +24,6 @@
 #cmakedefine WITH_JPEG
 #cmakedefine WITH_WIN8
 #cmakedefine WITH_RDPSND_DSOUND
-#cmakedefine HAVE_MATH_C99_LONG_DOUBLE
 
 #cmakedefine WITH_WINMM
 #cmakedefine WITH_MACAUDIO

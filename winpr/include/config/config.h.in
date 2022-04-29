@@ -3,12 +3,9 @@
 
 /* Include files */
 #cmakedefine HAVE_FCNTL_H
-#if defined(__APPLE__) && !defined(__IOS__)
-#cmakedefine01 HAVE_UNISTD_H
-#else
 #cmakedefine HAVE_UNISTD_H
-#endif
 #cmakedefine HAVE_INTTYPES_H
+#cmakedefine HAVE_STDBOOL_H
 #cmakedefine HAVE_AIO_H
 #cmakedefine HAVE_SYS_FILIO_H
 #cmakedefine HAVE_SYS_SELECT_H
