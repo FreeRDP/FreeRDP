@@ -28,8 +28,8 @@
 #include <execinfo/debug.h>
 #endif
 
-#if defined(ANDROID)
-#include <corkscrew/backtrace.h>
+#if defined(HAVE_CORKSCREW)
+#include <corkscrew/debug.h>
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -78,123 +78,6 @@
 
 static const char* support_msg = "Invalid stacktrace buffer! check if platform is supported!";
 
-#if defined(ANDROID)
-#include <pthread.h>
-#include <dlfcn.h>
-#include <unistd.h>
-
-typedef struct
-{
-	backtrace_frame_t* buffer;
-	size_t max;
-	size_t used;
-} t_corkscrew_data;
-
-typedef struct
-{
-	void* hdl;
-	ssize_t (*unwind_backtrace)(backtrace_frame_t* backtrace, size_t ignore_depth,
-	                            size_t max_depth);
-	ssize_t (*unwind_backtrace_thread)(pid_t tid, backtrace_frame_t* backtrace, size_t ignore_depth,
-	                                   size_t max_depth);
-	ssize_t (*unwind_backtrace_ptrace)(pid_t tid, const ptrace_context_t* context,
-	                                   backtrace_frame_t* backtrace, size_t ignore_depth,
-	                                   size_t max_depth);
-	void (*get_backtrace_symbols)(const backtrace_frame_t* backtrace, size_t frames,
-	                              backtrace_symbol_t* backtrace_symbols);
-	void (*get_backtrace_symbols_ptrace)(const ptrace_context_t* context,
-	                                     const backtrace_frame_t* backtrace, size_t frames,
-	                                     backtrace_symbol_t* backtrace_symbols);
-	void (*free_backtrace_symbols)(backtrace_symbol_t* backtrace_symbols, size_t frames);
-	void (*format_backtrace_line)(unsigned frameNumber, const backtrace_frame_t* frame,
-	                              const backtrace_symbol_t* symbol, char* buffer,
-	                              size_t bufferSize);
-} t_corkscrew;
-
-static pthread_once_t initialized = PTHREAD_ONCE_INIT;
-static t_corkscrew* fkt = NULL;
-
-void load_library(void)
-{
-	static t_corkscrew lib;
-	{
-		lib.hdl = dlopen("libcorkscrew.so", RTLD_LAZY);
-
-		if (!lib.hdl)
-		{
-			LOGF("dlopen error %s", dlerror());
-			goto fail;
-		}
-
-		lib.unwind_backtrace = dlsym(lib.hdl, "unwind_backtrace");
-
-		if (!lib.unwind_backtrace)
-		{
-			LOGF("dlsym error %s", dlerror());
-			goto fail;
-		}
-
-		lib.unwind_backtrace_thread = dlsym(lib.hdl, "unwind_backtrace_thread");
-
-		if (!lib.unwind_backtrace_thread)
-		{
-			LOGF("dlsym error %s", dlerror());
-			goto fail;
-		}
-
-		lib.unwind_backtrace_ptrace = dlsym(lib.hdl, "unwind_backtrace_ptrace");
-
-		if (!lib.unwind_backtrace_ptrace)
-		{
-			LOGF("dlsym error %s", dlerror());
-			goto fail;
-		}
-
-		lib.get_backtrace_symbols = dlsym(lib.hdl, "get_backtrace_symbols");
-
-		if (!lib.get_backtrace_symbols)
-		{
-			LOGF("dlsym error %s", dlerror());
-			goto fail;
-		}
-
-		lib.get_backtrace_symbols_ptrace = dlsym(lib.hdl, "get_backtrace_symbols_ptrace");
-
-		if (!lib.get_backtrace_symbols_ptrace)
-		{
-			LOGF("dlsym error %s", dlerror());
-			goto fail;
-		}
-
-		lib.free_backtrace_symbols = dlsym(lib.hdl, "free_backtrace_symbols");
-
-		if (!lib.free_backtrace_symbols)
-		{
-			LOGF("dlsym error %s", dlerror());
-			goto fail;
-		}
-
-		lib.format_backtrace_line = dlsym(lib.hdl, "format_backtrace_line");
-
-		if (!lib.format_backtrace_line)
-		{
-			LOGF("dlsym error %s", dlerror());
-			goto fail;
-		}
-
-		fkt = &lib;
-		return;
-	}
-fail:
-{
-	if (lib.hdl)
-		dlclose(lib.hdl);
-
-	fkt = NULL;
-}
-}
-#endif
-
 void winpr_backtrace_free(void* buffer)
 {
 	if (!buffer)
@@ -202,10 +85,8 @@ void winpr_backtrace_free(void* buffer)
 
 #if defined(HAVE_EXECINFO_H)
 	winpr_execinfo_backtrace_free(buffer);
-#elif defined(ANDROID)
-	t_corkscrew_data* data = (t_corkscrew_data*)buffer;
-	free(data->buffer);
-	free(data);
+#elif defined(HAVE_CORKSCREW)
+	winpr_corkscrew_backtrace_free(buffer);
 #elif defined(_WIN32) || defined(_WIN64)
 	winpr_win_backtrace_free(buffer);
 #else
@@ -217,24 +98,8 @@ void* winpr_backtrace(DWORD size)
 {
 #if defined(HAVE_EXECINFO_H)
 	return winpr_execinfo_backtrace(size);
-#elif defined(ANDROID)
-	t_corkscrew_data* data = calloc(1, sizeof(t_corkscrew_data));
-
-	if (!data)
-		return NULL;
-
-	data->buffer = calloc(size, sizeof(backtrace_frame_t));
-
-	if (!data->buffer)
-	{
-		free(data);
-		return NULL;
-	}
-
-	pthread_once(&initialized, load_library);
-	data->max = size;
-	data->used = fkt->unwind_backtrace(data->buffer, 0, size);
-	return data;
+#elif defined(HAVE_CORKSCREW)
+	return winpr_corkscrew_backtrace(size);
 #elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
 	return winpr_win_backtrace(size);
 #else
@@ -256,53 +121,8 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 
 #if defined(HAVE_EXECINFO_H)
 	return winpr_execinfo_backtrace_symbols(buffer, used);
-#elif defined(ANDROID)
-	t_corkscrew_data* data = (t_corkscrew_data*)buffer;
-
-	if (!data)
-		return NULL;
-
-	pthread_once(&initialized, load_library);
-
-	if (!fkt)
-	{
-		LOGF(support_msg);
-		return NULL;
-	}
-	else
-	{
-		size_t line_len = (data->max > 1024) ? data->max : 1024;
-		size_t i;
-		size_t array_size = data->used * sizeof(char*);
-		size_t lines_size = data->used * line_len;
-		char** vlines = calloc(1, array_size + lines_size);
-		backtrace_symbol_t* symbols = calloc(data->used, sizeof(backtrace_symbol_t));
-
-		if (!vlines || !symbols)
-		{
-			free(vlines);
-			free(symbols);
-			return NULL;
-		}
-
-		/* Set the pointers in the allocated buffer's initial array section */
-		for (i = 0; i < data->used; i++)
-			vlines[i] = (char*)vlines + array_size + i * line_len;
-
-		fkt->get_backtrace_symbols(data->buffer, data->used, symbols);
-
-		for (i = 0; i < data->used; i++)
-			fkt->format_backtrace_line(i, &data->buffer[i], &symbols[i], vlines[i], line_len);
-
-		fkt->free_backtrace_symbols(symbols, data->used);
-		free(symbols);
-
-		if (used)
-			*used = data->used;
-
-		return vlines;
-	}
-
+#elif defined(HAVE_CORKSCREW)
+	return winpr_corkscrew_backtrace_symbols(buffer, used);
 #elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
 	return winpr_win_backtrace_symbols(buffer, used);
 #else
