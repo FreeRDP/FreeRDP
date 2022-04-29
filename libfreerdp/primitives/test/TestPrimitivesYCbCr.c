@@ -1564,6 +1564,8 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 {
 	union
 	{
+		const INT16** cpi;
+		INT16** pi;
 		const UINT16** cpv;
 		UINT16** pv;
 	} cnv;
@@ -1572,7 +1574,7 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	float err[3];
 	BYTE* actual;
 	BYTE* actual1;
-	const BYTE* expected = TEST_XRGB_IMAGE;
+	const BYTE* expected = (const BYTE*)TEST_XRGB_IMAGE;
 	int margin = 1;
 	INT16* pYCbCr[3] = { NULL, NULL, NULL };
 	const UINT32 srcStride = roi.width * 2;
@@ -1615,9 +1617,9 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 
 	{
 		PROFILER_ENTER(prof)
-		cnv.pv = pYCbCr;
+		cnv.pi = pYCbCr;
 		status =
-		    prims->yCbCrToRGB_16s8u_P3AC4R(cnv.cpv, srcStride, actual, dstStride, format, &roi);
+		    prims->yCbCrToRGB_16s8u_P3AC4R(cnv.cpi, srcStride, actual, dstStride, format, &roi);
 		if (status != PRIMITIVES_SUCCESS)
 			goto fail;
 
@@ -1633,15 +1635,15 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 		CopyMemory(pSrcDst[1], pYCbCr[1], srcSize);
 		CopyMemory(pSrcDst[2], pYCbCr[2], srcSize);
 		PROFILER_ENTER(prof1)
-		cnv.pv = pSrcDst;
-		status = prims->yCbCrToRGB_16s16s_P3P3(cnv.cpv, srcStride, pSrcDst, srcStride, &roi);
+		cnv.pi = pSrcDst;
+		status = prims->yCbCrToRGB_16s16s_P3P3(cnv.cpi, srcStride, pSrcDst, srcStride, &roi);
 		PROFILER_EXIT(prof1)
 
 		if (status != PRIMITIVES_SUCCESS)
 			goto fail2;
 
 		PROFILER_ENTER(prof2)
-		status = prims->RGBToRGB_16s8u_P3AC4R(cnv.pv, srcStride, actual1, dstStride, format, &roi);
+		status = prims->RGBToRGB_16s8u_P3AC4R(cnv.cpi, srcStride, actual1, dstStride, format, &roi);
 		PROFILER_EXIT(prof2)
 	fail2:
 		_aligned_free(pSrcDst[0]);

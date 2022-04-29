@@ -880,17 +880,30 @@ static int pf_client_verify_X509_certificate(freerdp* instance, const BYTE* data
 
 void channel_data_free(void* obj)
 {
+	union
+	{
+		const void* cpv;
+		void* pv;
+	} cnv;
 	proxyChannelDataEventInfo* dst = obj;
 	if (dst)
 	{
-		free(dst->data);
-		free(dst->channel_name);
+		cnv.cpv = dst->data;
+		free(cnv.pv);
+
+		cnv.cpv = dst->channel_name;
+		free(cnv.pv);
 		free(dst);
 	}
 }
 
 static void* channel_data_copy(const void* obj)
 {
+	union
+	{
+		const void* cpv;
+		void* pv;
+	} cnv;
 	const proxyChannelDataEventInfo* src = obj;
 	proxyChannelDataEventInfo* dst;
 
@@ -910,7 +923,9 @@ static void* channel_data_copy(const void* obj)
 	dst->data = malloc(src->data_len);
 	if (!dst->data)
 		goto fail;
-	memcpy(dst->data, src->data, src->data_len);
+
+	cnv.cpv = dst->data;
+	memcpy(cnv.pv, src->data, src->data_len);
 	return dst;
 
 fail:
