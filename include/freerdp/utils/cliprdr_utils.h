@@ -25,15 +25,24 @@
 #include <winpr/shell.h>
 #include <freerdp/api.h>
 
-FREERDP_API UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	FREERDP_API UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	                                         FILEDESCRIPTORW** file_descriptor_array,
 	                                         UINT32* file_descriptor_count);
-FREERDP_API UINT cliprdr_serialize_file_list(const FILEDESCRIPTORW* file_descriptor_array,
+	FREERDP_API UINT cliprdr_serialize_file_list(const FILEDESCRIPTORW* file_descriptor_array,
 	                                             UINT32 file_descriptor_count, BYTE** format_data,
 	                                             UINT32* format_data_length);
-FREERDP_API UINT cliprdr_serialize_file_list_ex(UINT32 flags,
+	FREERDP_API UINT cliprdr_serialize_file_list_ex(UINT32 flags,
 	                                                const FILEDESCRIPTORW* file_descriptor_array,
 	                                                UINT32 file_descriptor_count,
 	                                                BYTE** format_data, UINT32* format_data_length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
