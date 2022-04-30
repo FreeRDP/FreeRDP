@@ -572,6 +572,10 @@ BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* na
 			}
 		}
 	}
+	{
+		const size_t rem = settings->StaticChannelArraySize - count;
+		memset(&settings->StaticChannelArray[count], 0, sizeof(ADDIN_ARGV*) * rem);
+	}
 	return FALSE;
 }
 
@@ -585,8 +589,9 @@ BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* ch
 	count = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount) + 1;
 	if (freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize) < count)
 	{
-		UINT32 new_size =
-		    freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize) * 2ul;
+		const UINT32 oldSize =
+		    freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize);
+		UINT32 new_size = oldSize * 2ul;
 		ADDIN_ARGV** new_array = NULL;
 		if (new_size == 0)
 			new_size = count * 2ul;
@@ -598,6 +603,10 @@ BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* ch
 			return FALSE;
 
 		settings->StaticChannelArray = new_array;
+		{
+			const size_t rem = new_size - oldSize;
+			memset(&settings->StaticChannelArray[oldSize], 0, sizeof(ADDIN_ARGV*) * rem);
+		}
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelArraySize, new_size))
 			return FALSE;
 	}
@@ -634,9 +643,10 @@ void freerdp_static_channel_collection_free(rdpSettings* settings)
 	if (!settings)
 		return;
 
-	for (i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount); i++)
+	if (settings->StaticChannelArray)
 	{
-		freerdp_addin_argv_free(settings->StaticChannelArray[i]);
+		for (i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize); i++)
+			freerdp_addin_argv_free(settings->StaticChannelArray[i]);
 	}
 
 	free(settings->StaticChannelArray);
@@ -659,9 +669,12 @@ BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings, const char* n
 		{
 			if (strcmp(name, cur->argv[0]))
 			{
+				const size_t rem = settings->DynamicChannelArraySize - count;
 				memmove_s(&settings->DynamicChannelArray[x], (count - x) * sizeof(ADDIN_ARGV*),
 				          &settings->DynamicChannelArray[x + 1],
 				          (count - x - 1) * sizeof(ADDIN_ARGV*));
+				memset(&settings->DynamicChannelArray[count], 0, sizeof(ADDIN_ARGV*) * rem);
+
 				return freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelCount,
 				                                   count - 1);
 			}
@@ -673,16 +686,17 @@ BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings, const char* n
 
 BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
-	UINT32 count;
+	UINT32 count, oldSize;
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(channel);
 
 	count = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount) + 1;
-	if (freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize) < count)
+	oldSize = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize);
+	if (oldSize < count)
 	{
 		ADDIN_ARGV** new_array;
-		UINT32 size = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize) * 2;
+		UINT32 size = oldSize * 2;
 		if (size == 0)
 			size = count * 2;
 
@@ -692,6 +706,10 @@ BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 			return FALSE;
 
 		settings->DynamicChannelArray = new_array;
+		{
+			const size_t rem = size - oldSize;
+			memset(&settings->DynamicChannelArray[oldSize], 0, sizeof(ADDIN_ARGV*) * rem);
+		}
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelArraySize, size))
 			return FALSE;
 	}
@@ -785,9 +803,11 @@ void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
 	UINT32 i;
 
 	WINPR_ASSERT(settings);
-	for (i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount); i++)
+
+	if (settings->DynamicChannelArray)
 	{
-		freerdp_addin_argv_free(settings->DynamicChannelArray[i]);
+		for (i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize); i++)
+			freerdp_addin_argv_free(settings->DynamicChannelArray[i]);
 	}
 
 	free(settings->DynamicChannelArray);
