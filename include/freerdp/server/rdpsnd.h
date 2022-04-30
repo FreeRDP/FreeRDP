@@ -33,10 +33,18 @@ typedef UINT (*psRdpsndStart)(RdpsndServerContext* context);
 typedef UINT (*psRdpsndStop)(RdpsndServerContext* context);
 
 typedef UINT (*psRdpsndServerInitialize)(RdpsndServerContext* context, BOOL ownThread);
+typedef UINT (*psRdpsndServerSendFormats)(RdpsndServerContext* context);
 typedef UINT (*psRdpsndServerSelectFormat)(RdpsndServerContext* context,
                                            UINT16 client_format_index);
+typedef UINT (*psRdpsndServerTraining)(RdpsndServerContext* context, UINT16 timestamp,
+                                       UINT16 packsize, BYTE* data);
+typedef UINT (*psRdpsndServerTrainingConfirm)(RdpsndServerContext* context, UINT16 timestamp,
+                                              UINT16 packsize);
 typedef UINT (*psRdpsndServerSendSamples)(RdpsndServerContext* context, const void* buf,
                                           size_t nframes, UINT16 wTimestamp);
+typedef UINT (*psRdpsndServerSendSamples2)(RdpsndServerContext* context, UINT16 formatNo,
+                                           const void* buf, size_t size, UINT16 timestamp,
+                                           UINT32 audioTimeStamp);
 typedef UINT (*psRdpsndServerConfirmBlock)(RdpsndServerContext* context, BYTE confirmBlockNum,
                                            UINT16 wtimestamp);
 typedef UINT (*psRdpsndServerSetVolume)(RdpsndServerContext* context, UINT16 left, UINT16 right);
@@ -74,6 +82,15 @@ struct s_rdpsnd_server_context
 	UINT16 num_client_formats;
 	UINT16 selected_client_format;
 
+	/* dwFlags in CLIENT_AUDIO_VERSION_AND_FORMATS */
+	UINT32 capsFlags;
+	/* dwVolume in CLIENT_AUDIO_VERSION_AND_FORMATS */
+	UINT32 initialVolume;
+	/* dwPitch in CLIENT_AUDIO_VERSION_AND_FORMATS */
+	UINT32 initialPitch;
+
+	UINT16 qualityMode;
+
 	/* Last sent audio block number. */
 	UINT8 block_no;
 
@@ -85,6 +102,16 @@ struct s_rdpsnd_server_context
 	 */
 	psRdpsndServerInitialize Initialize;
 	/**
+	 * Send server formats and version to the client. Automatically sent, when
+	 * opening the channel.
+	 * Also used to restart the protocol after sending the Close PDU.
+	 */
+	psRdpsndServerSendFormats SendFormats;
+	/**
+	 * Send Training PDU.
+	 */
+	psRdpsndServerTraining Training;
+	/**
 	 * Choose the audio format to be sent. The index argument is an index into
 	 * the client_formats array and must be smaller than num_client_formats.
 	 */
@@ -95,9 +122,10 @@ struct s_rdpsnd_server_context
 	 */
 	psRdpsndServerSendSamples SendSamples;
 	/**
-	 * Called when block confirm is received from the client
+	 * Send encoded audio samples using a Wave2 PDU.
+	 * When successful, the block_no member is incremented.
 	 */
-	psRdpsndServerConfirmBlock ConfirmBlock;
+	psRdpsndServerSendSamples2 SendSamples2;
 	/**
 	 * Set the volume level of the client. Valid range is between 0 and 0xFFFF.
 	 */
@@ -115,6 +143,14 @@ struct s_rdpsnd_server_context
 	 * synchronization.
 	 */
 	psRdpsndServerActivated Activated;
+	/**
+	 * Called when a TrainingConfirm PDU is received from the client.
+	 */
+	psRdpsndServerTrainingConfirm TrainingConfirm;
+	/**
+	 * Called when block confirm is received from the client.
+	 */
+	psRdpsndServerConfirmBlock ConfirmBlock;
 
 	/**
 	 *  MS-RDPEA channel version the client announces
