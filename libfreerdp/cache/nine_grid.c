@@ -131,28 +131,31 @@ rdpNineGridCache* nine_grid_cache_new(rdpContext* context)
 	nine_grid->maxSize = 2560;
 	nine_grid->maxEntries = 256;
 
-	settings->DrawNineGridCacheSize = nine_grid->maxSize;
-	settings->DrawNineGridCacheEntries = nine_grid->maxEntries;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DrawNineGridCacheSize, nine_grid->maxSize))
+		goto fail;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DrawNineGridCacheEntries,
+	                                 nine_grid->maxEntries))
+		goto fail;
 
 	nine_grid->entries = (NINE_GRID_ENTRY*)calloc(nine_grid->maxEntries, sizeof(NINE_GRID_ENTRY));
 	if (!nine_grid->entries)
-	{
-		free(nine_grid);
-		return NULL;
-	}
+		goto fail;
 
 	return nine_grid;
+
+fail:
+	nine_grid_cache_free(nine_grid);
+	return NULL;
 }
 
 void nine_grid_cache_free(rdpNineGridCache* nine_grid)
 {
-	int i;
-
 	if (nine_grid != NULL)
 	{
 		if (nine_grid->entries != NULL)
 		{
-			for (i = 0; i < (int)nine_grid->maxEntries; i++)
+			size_t i;
+			for (i = 0; i < nine_grid->maxEntries; i++)
 				free(nine_grid->entries[i].entry);
 
 			free(nine_grid->entries);

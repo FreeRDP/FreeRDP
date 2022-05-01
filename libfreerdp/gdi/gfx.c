@@ -108,8 +108,10 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	DesktopWidth = resetGraphics->width;
 	DesktopHeight = resetGraphics->height;
 
-	settings->DesktopWidth = DesktopWidth;
-	settings->DesktopHeight = DesktopHeight;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, DesktopWidth))
+		goto fail;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, DesktopHeight))
+		goto fail;
 
 	if (update)
 	{
@@ -1631,11 +1633,13 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding))
 	{
+		const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+		const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+
 		gfx->codecs = codecs_new(context);
 		if (!gfx->codecs)
 			return FALSE;
-		if (!freerdp_client_codecs_prepare(gfx->codecs, FREERDP_CODEC_ALL, settings->DesktopWidth,
-		                                   settings->DesktopHeight))
+		if (!freerdp_client_codecs_prepare(gfx->codecs, FREERDP_CODEC_ALL, w, h))
 			return FALSE;
 	}
 	InitializeCriticalSection(&gfx->mux);
