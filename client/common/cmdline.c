@@ -180,7 +180,7 @@ static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, co
 	}
 	free(dname);
 	if (!device)
-		return FALSE;
+		goto fail;
 
 	if (!path)
 		goto fail;
