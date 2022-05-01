@@ -1248,12 +1248,12 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 				freerdp_target_net_addresses_free(settings);
 			return freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetPorts,
 			                                         FreeRDP_TargetNetAddressCount, data, len,
-			                                         sizeof(char));
+			                                         sizeof(UINT32));
 		case FreeRDP_DeviceArray:
 			if (data == NULL)
 				freerdp_device_collection_free(settings);
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_DeviceArraySize, data,
-			                                         len, sizeof(char));
+			                                         len, sizeof(ADDIN_ARGV*));
 		case FreeRDP_ChannelDefArray:
 			if ((len > 0) && (len < CHANNEL_MAX_COUNT))
 				WLog_WARN(TAG,
