@@ -207,16 +207,17 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, const char* previous,
 
 BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 {
-	UINT32 count;
+	UINT32 count, old;
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(device);
 
-	count = settings->DeviceCount + 1;
-	if (freerdp_settings_get_uint32(settings, FreeRDP_DeviceArraySize) < count)
+	count = freerdp_settings_get_uint32(settings, FreeRDP_DeviceCount) + 1;
+	old = freerdp_settings_get_uint32(settings, FreeRDP_DeviceArraySize);
+	if (old < count)
 	{
-		UINT32 new_size;
+		UINT32 new_size = old * 2;
 		RDPDR_DEVICE** new_array;
-		new_size = freerdp_settings_get_uint32(settings, FreeRDP_DeviceArraySize) * 2;
+
 		if (new_size == 0)
 			new_size = count * 2;
 
@@ -227,6 +228,8 @@ BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 			return FALSE;
 
 		settings->DeviceArray = new_array;
+		memset(&settings->DeviceArray[old], 0, (new_size - old) * sizeof(RDPDR_DEVICE*));
+
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DeviceArraySize, new_size))
 			return FALSE;
 	}
@@ -447,6 +450,10 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 		RDPDR_PARALLEL* parallel;
 		RDPDR_SMARTCARD* smartcard;
 	} copy;
+
+	if (!device)
+		return NULL;
+
 	const char* args[] = { device->Name };
 	WINPR_ASSERT(device);
 
@@ -539,16 +546,17 @@ void freerdp_device_collection_free(rdpSettings* settings)
 
 	WINPR_ASSERT(settings);
 
-	for (index = 0; index < settings->DeviceCount; index++)
+	if (settings->DeviceArray)
 	{
-		RDPDR_DEVICE* device = (RDPDR_DEVICE*)settings->DeviceArray[index];
-		freerdp_device_free(device);
+		for (index = 0; index < settings->DeviceArraySize; index++)
+			freerdp_settings_set_pointer_array(settings, FreeRDP_DeviceArray, index, NULL);
 	}
 
 	free(settings->DeviceArray);
+
+	freerdp_settings_set_pointer(settings, FreeRDP_DeviceArray, NULL);
 	freerdp_settings_set_uint32(settings, FreeRDP_DeviceArraySize, 0);
-	settings->DeviceArray = NULL;
-	settings->DeviceCount = 0;
+	freerdp_settings_set_uint32(settings, FreeRDP_DeviceCount, 0);
 }
 
 BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* name)
@@ -1393,10 +1401,11 @@ BOOL freerdp_settings_set_pointer_array(rdpSettings* settings, size_t id, size_t
 	{
 		case FreeRDP_DeviceArray:
 			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_DeviceArraySize);
-			if ((offset >= maxOffset) || !data)
+			if (offset >= maxOffset)
 				goto fail;
 			freerdp_device_free(settings->DeviceArray[offset]);
 			settings->DeviceArray[offset] = freerdp_device_clone(data);
+			return TRUE;
 		case FreeRDP_TargetNetAddresses:
 			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
 			if ((offset >= maxOffset) || !data)
