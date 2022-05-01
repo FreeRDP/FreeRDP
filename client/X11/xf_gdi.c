@@ -986,7 +986,7 @@ static BOOL xf_gdi_surface_update_frame(xfContext* xfc, UINT16 tx, UINT16 ty, UI
 	return ret;
 }
 
-static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData, UINT32 scanline,
+static BOOL xf_gdi_update_screen(xfContext* xfc, BYTE* pSrcData, UINT32 scanline,
                                  const REGION16* pRegion)
 {
 	BOOL ret = FALSE;
@@ -1017,12 +1017,12 @@ static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData, UINT32 sc
 		UINT32 top = rects[i].top;
 		UINT32 width = rects[i].right - rects[i].left;
 		UINT32 height = rects[i].bottom - rects[i].top;
-		const BYTE* src = pSrcData + top * scanline + bpp * left;
+		BYTE* src = pSrcData + top * scanline + bpp * left;
 
 		union
 		{
-			const BYTE* cev;
-			BYTE* ev;
+			BYTE* cev;
+			char* ev;
 		} cnv;
 		cnv.cev = src;
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
