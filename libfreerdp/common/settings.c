@@ -1019,15 +1019,19 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 
 static BOOL value_to_uint(const char* value, ULONGLONG* result, ULONGLONG min, ULONGLONG max)
 {
+	char* endptr = NULL;
 	unsigned long long rc;
 
 	if (!value || !result)
 		return FALSE;
 
 	errno = 0;
-	rc = _strtoui64(value, NULL, 0);
+	rc = _strtoui64(value, &endptr, 0);
 
 	if (errno != 0)
+		return FALSE;
+
+	if (endptr == value)
 		return FALSE;
 
 	if ((rc < min) || (rc > max))
@@ -1039,15 +1043,19 @@ static BOOL value_to_uint(const char* value, ULONGLONG* result, ULONGLONG min, U
 
 static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONGLONG max)
 {
+	char* endptr = NULL;
 	long long rc;
 
 	if (!value || !result)
 		return FALSE;
 
 	errno = 0;
-	rc = _strtoi64(value, NULL, 0);
+	rc = _strtoi64(value, &endptr, 0);
 
 	if (errno != 0)
+		return FALSE;
+
+	if (endptr == value)
 		return FALSE;
 
 	if ((rc < min) || (rc > max))
@@ -1088,7 +1096,7 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 		case RDP_SETTINGS_TYPE_BOOL:
 		{
 			BOOL val = _strnicmp(value, "TRUE", 5) == 0;
-			if (!val && _strnicmp(value, "FALSE", 5) != 0)
+			if (!val && _strnicmp(value, "FALSE", 6) != 0)
 				return parsing_fail(name, "BOOL", value);
 			return freerdp_settings_set_bool(settings, index, val);
 		}
