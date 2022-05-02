@@ -734,8 +734,8 @@ extern "C"
 {
 #endif
 
-	WINPR_API int winpr_RAND(BYTE* output, size_t len);
-	WINPR_API int winpr_RAND_pseudo(BYTE* output, size_t len);
+	WINPR_API int winpr_RAND(void* output, size_t len);
+	WINPR_API int winpr_RAND_pseudo(void* output, size_t len);
 
 #ifdef __cplusplus
 }

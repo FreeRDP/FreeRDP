@@ -693,13 +693,13 @@ static UUID UUID_NIL = {
 
 RPC_STATUS UuidCreate(UUID* Uuid)
 {
-	winpr_RAND_pseudo((BYTE*)Uuid, 16);
+	winpr_RAND_pseudo(Uuid, 16);
 	return RPC_S_OK;
 }
 
 RPC_STATUS UuidCreateSequential(UUID* Uuid)
 {
-	winpr_RAND_pseudo((BYTE*)Uuid, 16);
+	winpr_RAND_pseudo(Uuid, 16);
 	return RPC_S_OK;
 }
 

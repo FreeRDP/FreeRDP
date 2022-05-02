@@ -1,6 +1,250 @@
 #include <freerdp/settings.h>
 #include "settings_property_lists.h"
 
+static BOOL compare(const ADDIN_ARGV* got, const ADDIN_ARGV* expect)
+{
+	int x;
+	if (!got && expect)
+		return FALSE;
+	if (got && !expect)
+		return FALSE;
+	if (got->argc != expect->argc)
+		return FALSE;
+
+	for (x = 0; x < expect->argc; x++)
+	{
+		if (strcmp(got->argv[x], expect->argv[x]) != 0)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL test_dyn_channels(void)
+{
+	BOOL rc = FALSE;
+	BOOL test;
+	UINT32 u32;
+	rdpSettings* settings = freerdp_settings_new(0);
+	const char* argv1[] = { "foobar" };
+	ADDIN_ARGV* args1 = NULL;
+	const ADDIN_ARGV* cmp1;
+	const char* argv2[] = { "gaga", "abba", "foo" };
+	ADDIN_ARGV* args2 = NULL;
+	const ADDIN_ARGV* cmp2;
+	const ADDIN_ARGV* got;
+
+	if (!settings)
+		goto fail;
+
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount);
+	if (u32 != 0)
+		goto fail;
+
+	/* Test the function return an error for unknown channels */
+	test = freerdp_dynamic_channel_collection_del(settings, "foobar");
+	if (test)
+		goto fail;
+	got = freerdp_dynamic_channel_collection_find(settings, "foobar");
+	if (got)
+		goto fail;
+
+	/* Add the channel */
+	cmp1 = args1 = freerdp_addin_argv_new(ARRAYSIZE(argv1), argv1);
+	test = freerdp_dynamic_channel_collection_add(settings, args1);
+	if (!test)
+		goto fail;
+	args1 = NULL; /* settings have taken ownership */
+
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount);
+	if (u32 != 1)
+		goto fail;
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize);
+	if (u32 < 1)
+		goto fail;
+
+	cmp2 = args2 = freerdp_addin_argv_new(ARRAYSIZE(argv2), argv2);
+	test = freerdp_dynamic_channel_collection_add(settings, args2);
+	if (!test)
+		goto fail;
+	args2 = NULL; /* settings have taken ownership */
+
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount);
+	if (u32 != 2)
+		goto fail;
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize);
+	if (u32 < 2)
+		goto fail;
+
+	/* Test the function return success for known channels */
+	got = freerdp_dynamic_channel_collection_find(settings, "foobar");
+	if (!compare(got, cmp1))
+		goto fail;
+	got = freerdp_dynamic_channel_collection_find(settings, "gaga");
+	if (!compare(got, cmp2))
+		goto fail;
+	test = freerdp_dynamic_channel_collection_del(settings, "foobar");
+	if (!test)
+		goto fail;
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount);
+	if (u32 != 1)
+		goto fail;
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize);
+	if (u32 < 1)
+		goto fail;
+	got = freerdp_dynamic_channel_collection_find(settings, "foobar");
+	if (compare(got, cmp1))
+		goto fail;
+	got = freerdp_dynamic_channel_collection_find(settings, "gaga");
+	if (!compare(got, cmp2))
+		goto fail;
+	test = freerdp_dynamic_channel_collection_del(settings, "gaga");
+	if (!test)
+		goto fail;
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount);
+	if (u32 != 0)
+		goto fail;
+	got = freerdp_dynamic_channel_collection_find(settings, "foobar");
+	if (compare(got, cmp1))
+		goto fail;
+	got = freerdp_dynamic_channel_collection_find(settings, "gaga");
+	if (compare(got, cmp2))
+		goto fail;
+
+	rc = TRUE;
+
+fail:
+	freerdp_settings_free(settings);
+	freerdp_addin_argv_free(args1);
+	freerdp_addin_argv_free(args2);
+	return rc;
+}
+
+static BOOL test_static_channels(void)
+{
+	BOOL rc = FALSE;
+	BOOL test;
+	UINT32 u32;
+	rdpSettings* settings = freerdp_settings_new(0);
+	const char* argv1[] = { "foobar" };
+	ADDIN_ARGV* args1 = NULL;
+	const ADDIN_ARGV* cmp1;
+	const char* argv2[] = { "gaga", "abba", "foo" };
+	ADDIN_ARGV* args2 = NULL;
+	const ADDIN_ARGV* cmp2;
+	const ADDIN_ARGV* got;
+
+	if (!settings)
+		goto fail;
+
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount);
+	if (u32 != 0)
+		goto fail;
+
+	/* Test the function return an error for unknown channels */
+	test = freerdp_static_channel_collection_del(settings, "foobar");
+	if (test)
+		goto fail;
+	got = freerdp_static_channel_collection_find(settings, "foobar");
+	if (got)
+		goto fail;
+
+	/* Add the channel */
+	cmp1 = args1 = freerdp_addin_argv_new(ARRAYSIZE(argv1), argv1);
+	test = freerdp_static_channel_collection_add(settings, args1);
+	if (!test)
+		goto fail;
+	args1 = NULL; /* settings have taken ownership */
+
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount);
+	if (u32 != 1)
+		goto fail;
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize);
+	if (u32 < 1)
+		goto fail;
+
+	cmp2 = args2 = freerdp_addin_argv_new(ARRAYSIZE(argv2), argv2);
+	test = freerdp_static_channel_collection_add(settings, args2);
+	if (!test)
+		goto fail;
+	args2 = NULL; /* settings have taken ownership */
+
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount);
+	if (u32 != 2)
+		goto fail;
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize);
+	if (u32 < 2)
+		goto fail;
+
+	/* Test the function return success for known channels */
+	got = freerdp_static_channel_collection_find(settings, "foobar");
+	if (!compare(got, cmp1))
+		goto fail;
+	got = freerdp_static_channel_collection_find(settings, "gaga");
+	if (!compare(got, cmp2))
+		goto fail;
+	test = freerdp_static_channel_collection_del(settings, "foobar");
+	if (!test)
+		goto fail;
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount);
+	if (u32 != 1)
+		goto fail;
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize);
+	if (u32 < 1)
+		goto fail;
+	got = freerdp_static_channel_collection_find(settings, "foobar");
+	if (compare(got, cmp1))
+		goto fail;
+	got = freerdp_static_channel_collection_find(settings, "gaga");
+	if (!compare(got, cmp2))
+		goto fail;
+	test = freerdp_static_channel_collection_del(settings, "gaga");
+	if (!test)
+		goto fail;
+	u32 = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount);
+	if (u32 != 0)
+		goto fail;
+	got = freerdp_static_channel_collection_find(settings, "foobar");
+	if (compare(got, cmp1))
+		goto fail;
+	got = freerdp_static_channel_collection_find(settings, "gaga");
+	if (compare(got, cmp2))
+		goto fail;
+
+	rc = TRUE;
+
+fail:
+	freerdp_settings_free(settings);
+	freerdp_addin_argv_free(args1);
+	freerdp_addin_argv_free(args2);
+	return rc;
+}
+
+static BOOL test_copy(void)
+{
+	BOOL rc = FALSE;
+	wLog* log = WLog_Get(__FUNCTION__);
+	rdpSettings* settings = freerdp_settings_new(0);
+	rdpSettings* copy = freerdp_settings_clone(settings);
+	rdpSettings* modified = freerdp_settings_clone(settings);
+
+	if (!settings || !copy || !modified)
+		goto fail;
+	if (!freerdp_settings_set_string(modified, FreeRDP_ServerHostname, "somerandomname"))
+		goto fail;
+	if (freerdp_settings_print_diff(log, WLOG_WARN, settings, copy))
+		goto fail;
+	if (!freerdp_settings_print_diff(log, WLOG_WARN, settings, modified))
+		goto fail;
+
+	rc = TRUE;
+
+fail:
+	freerdp_settings_free(settings);
+	freerdp_settings_free(copy);
+	freerdp_settings_free(modified);
+	return rc;
+}
+
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
@@ -10,6 +254,13 @@ int TestSettings(int argc, char* argv[])
 	rdpSettings* cloned2 = NULL;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+
+	if (!test_dyn_channels())
+		return -1;
+	if (!test_static_channels())
+		return -1;
+	if (!test_copy())
+		return -1;
 	settings = freerdp_settings_new(0);
 
 	if (!settings)
