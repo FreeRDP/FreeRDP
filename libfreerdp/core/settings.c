@@ -283,13 +283,13 @@ BOOL freerdp_settings_set_default_order_support(rdpSettings* settings)
 	OrderSupport[NEG_LINETO_INDEX] = TRUE;
 	OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
 	OrderSupport[NEG_MEMBLT_INDEX] =
-	    freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheEnabled);
+	    freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheEnabled) ? 1 : 0;
 	OrderSupport[NEG_MEM3BLT_INDEX] =
-	    freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheEnabled);
+	    freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheEnabled) ? 1 : 0;
 	OrderSupport[NEG_MEMBLT_V2_INDEX] =
-	    freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheEnabled);
+	    freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheEnabled) ? 1 : 0;
 	OrderSupport[NEG_MEM3BLT_V2_INDEX] =
-	    freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheEnabled);
+	    freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheEnabled) ? 1 : 0;
 	OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
 	OrderSupport[NEG_GLYPH_INDEX_INDEX] =
 	    freerdp_settings_get_uint32(settings, FreeRDP_GlyphSupportLevel) != GLYPH_SUPPORT_NONE;

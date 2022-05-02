@@ -1,4 +1,8 @@
+#include <winpr/crypto.h>
+
 #include <freerdp/settings.h>
+#include <freerdp/codecs.h>
+
 #include "settings_property_lists.h"
 
 static BOOL compare(const ADDIN_ARGV* got, const ADDIN_ARGV* expect)
@@ -245,6 +249,456 @@ fail:
 	return rc;
 }
 
+static BOOL test_helpers(void)
+{
+	BOOL rc = FALSE;
+	UINT32 flags;
+	rdpSettings* settings = freerdp_settings_new(0);
+	if (!settings)
+		goto fail;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE))
+		goto fail;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE))
+		goto fail;
+	flags = freerdp_settings_get_codecs_flags(settings);
+	if (flags != FREERDP_CODEC_ALL)
+		goto fail;
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, FALSE))
+		goto fail;
+	flags = freerdp_settings_get_codecs_flags(settings);
+	if (flags != (FREERDP_CODEC_ALL & ~FREERDP_CODEC_NSCODEC))
+		goto fail;
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, FALSE))
+		goto fail;
+	flags = freerdp_settings_get_codecs_flags(settings);
+	if (flags != (FREERDP_CODEC_ALL & ~(FREERDP_CODEC_NSCODEC | FREERDP_CODEC_REMOTEFX)))
+		goto fail;
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE))
+		goto fail;
+	flags = freerdp_settings_get_codecs_flags(settings);
+	if (flags != (FREERDP_CODEC_ALL & ~FREERDP_CODEC_REMOTEFX))
+		goto fail;
+
+	rc = TRUE;
+fail:
+	freerdp_settings_free(settings);
+	return rc;
+}
+
+static BOOL format_uint(char* buffer, size_t size, UINT64 value, UINT16 intType, UINT64 max)
+{
+	const UINT64 lvalue = value > max ? max : value;
+	intType = intType % 3;
+	switch (intType)
+	{
+		case 0:
+			_snprintf(buffer, size, "%" PRIu64, lvalue);
+			return TRUE;
+		case 1:
+			_snprintf(buffer, size, "0x%" PRIx64, lvalue);
+			return TRUE;
+		case 2:
+			if (max < UINT64_MAX)
+				_snprintf(buffer, size, "%" PRIu64, max + 1);
+			else
+				_snprintf(buffer, size, "too large a number");
+			return FALSE;
+		default:
+			_snprintf(buffer, size, "not a number value");
+			return FALSE;
+	}
+}
+
+static BOOL print_negative(char* buffer, size_t size, INT64 value, INT64 min)
+{
+	switch (min)
+	{
+		case INT16_MIN:
+			_snprintf(buffer, size, "%" PRId16, (INT16)value);
+			return FALSE;
+		case INT32_MIN:
+			_snprintf(buffer, size, "%" PRId32, (INT32)value);
+			return FALSE;
+		case INT64_MIN:
+			_snprintf(buffer, size, "%" PRId64, (INT64)value);
+			return FALSE;
+		default:
+			_snprintf(buffer, size, "too small a number");
+			return FALSE;
+	}
+}
+
+static BOOL print_xpositive(char* buffer, size_t size, INT64 value, INT64 max)
+{
+	if (value < 0)
+	{
+		_snprintf(buffer, size, "%" PRId64, value);
+		return TRUE;
+	}
+
+	switch (max)
+	{
+		case INT16_MAX:
+			_snprintf(buffer, size, "%" PRIx16, (INT16)value);
+			return FALSE;
+		case INT32_MAX:
+			_snprintf(buffer, size, "%" PRIx32, (INT32)value);
+			return FALSE;
+		case INT64_MAX:
+			_snprintf(buffer, size, "%" PRIx64, (INT64)value);
+			return FALSE;
+		default:
+			_snprintf(buffer, size, "too small a number");
+			return FALSE;
+	}
+}
+
+static BOOL format_int(char* buffer, size_t size, INT64 value, UINT16 intType, INT64 max, INT64 min)
+{
+	const INT64 lvalue = (value > max) ? max : ((value < min) ? min : value);
+	intType = intType % 4;
+
+	switch (intType)
+	{
+		case 0:
+			_snprintf(buffer, size, "%" PRId64, lvalue);
+			return TRUE;
+		case 1:
+			print_xpositive(buffer, size, lvalue, max);
+			return TRUE;
+		case 2:
+			if (max < INT64_MAX)
+				_snprintf(buffer, size, "%" PRId64, max + 1);
+			else
+				_snprintf(buffer, size, "too large a number");
+			return FALSE;
+		case 3:
+			if (min < INT64_MIN)
+				print_negative(buffer, size, min - 1, INT64_MIN);
+			else
+				_snprintf(buffer, size, "too small a number");
+			return FALSE;
+		default:
+			_snprintf(buffer, size, "not a number value");
+			return FALSE;
+	}
+}
+
+static BOOL format_bool(char* buffer, size_t size, UINT16 intType)
+{
+	intType = intType % 10;
+	switch (intType)
+	{
+		case 0:
+			_snprintf(buffer, size, "FALSE");
+			return TRUE;
+		case 1:
+			_snprintf(buffer, size, "FaLsE");
+			return TRUE;
+		case 2:
+			_snprintf(buffer, size, "False");
+			return TRUE;
+		case 3:
+			_snprintf(buffer, size, "false");
+			return TRUE;
+		case 4:
+			_snprintf(buffer, size, "falseentry");
+			return FALSE;
+		case 5:
+			_snprintf(buffer, size, "TRUE");
+			return TRUE;
+		case 6:
+			_snprintf(buffer, size, "TrUe");
+			return TRUE;
+		case 7:
+			_snprintf(buffer, size, "True");
+			return TRUE;
+		case 8:
+			_snprintf(buffer, size, "true");
+			return TRUE;
+		case 9:
+			_snprintf(buffer, size, "someentry");
+			return FALSE;
+		default:
+			_snprintf(buffer, size, "ok");
+			return FALSE;
+	}
+}
+
+static BOOL check_key_helpers(size_t key)
+{
+	int test_rounds = 100;
+	BOOL res = FALSE;
+	rdpSettings* settings = NULL;
+	SSIZE_T rc, tkey, type;
+
+	const char* name = freerdp_settings_get_name_for_key(key);
+	if (!name)
+	{
+		printf("missing name for key %" PRIuz "\n", key);
+		return FALSE;
+	}
+	tkey = freerdp_settings_get_key_for_name(name);
+	if (tkey < 0)
+	{
+		printf("missing reverse name for key %s [%" PRIuz "]\n", name, key);
+		return FALSE;
+	}
+	if ((size_t)tkey != key)
+	{
+		printf("mismatch reverse name for key %s [%" PRIuz "]: %" PRIdz "\n", name, key, tkey);
+		return FALSE;
+	}
+	type = freerdp_settings_get_type_for_name(name);
+	if (type < 0)
+	{
+		printf("missing reverse type for key %s [%" PRIuz "]\n", name, key);
+		return FALSE;
+	}
+	rc = freerdp_settings_get_type_for_key(key);
+	if (rc < 0)
+	{
+		printf("missing reverse name for key %s [%" PRIuz "]\n", name, key);
+		return FALSE;
+	}
+
+	if (rc != type)
+	{
+		printf("mismatch reverse type for key %s [%" PRIuz "]: %" PRIdz " <--> %" PRIdz "\n", name,
+		       key, rc, type);
+		return FALSE;
+	}
+
+	settings = freerdp_settings_new(0);
+	do
+	{
+		UINT16 intEntryType = 0;
+		BOOL expect, have;
+		char value[8192] = { 0 };
+		union
+		{
+			UINT64 u64;
+			INT64 i64;
+			UINT32 u32;
+			INT32 i32;
+			UINT16 u16;
+			INT16 i16;
+			void* pv;
+		} val;
+
+		winpr_RAND(&intEntryType, sizeof(intEntryType));
+		winpr_RAND(&val.u64, sizeof(val.u64));
+
+		switch (type)
+		{
+			case RDP_SETTINGS_TYPE_BOOL:
+				expect = format_bool(value, sizeof(value), intEntryType);
+				break;
+			case RDP_SETTINGS_TYPE_UINT16:
+				expect = format_uint(value, sizeof(value), val.u64, intEntryType, UINT16_MAX);
+				break;
+			case RDP_SETTINGS_TYPE_INT16:
+				expect =
+				    format_int(value, sizeof(value), val.i64, intEntryType, INT16_MAX, INT16_MIN);
+				break;
+			case RDP_SETTINGS_TYPE_UINT32:
+				expect = format_uint(value, sizeof(value), val.u64, intEntryType, UINT32_MAX);
+				break;
+			case RDP_SETTINGS_TYPE_INT32:
+				expect =
+				    format_int(value, sizeof(value), val.i64, intEntryType, INT32_MAX, INT32_MIN);
+				break;
+			case RDP_SETTINGS_TYPE_UINT64:
+				expect = format_uint(value, sizeof(value), val.u64, intEntryType, UINT64_MAX);
+				break;
+			case RDP_SETTINGS_TYPE_INT64:
+				expect =
+				    format_int(value, sizeof(value), val.i64, intEntryType, INT64_MAX, INT64_MIN);
+				break;
+			case RDP_SETTINGS_TYPE_STRING:
+				expect = TRUE;
+				_snprintf(value, sizeof(value), "somerandomstring");
+				break;
+			case RDP_SETTINGS_TYPE_POINTER:
+				expect = FALSE;
+				break;
+
+			default:
+				printf("invalid type for key %s [%" PRIuz "]: %" PRIdz " <--> %" PRIdz "\n", name,
+				       key, rc, type);
+				goto fail;
+		}
+
+		have = freerdp_settings_set_value_for_name(settings, name, value);
+		if (have != expect)
+			goto fail;
+
+	} while (test_rounds-- > 0);
+
+	res = TRUE;
+fail:
+	freerdp_settings_free(settings);
+	return res;
+}
+
+static BOOL check_args(const RDPDR_DEVICE* what, size_t count, const char* args[])
+{
+	WINPR_ASSERT(what);
+
+	if (count > 0)
+	{
+		if (strcmp(what->Name, args[0]) != 0)
+			return FALSE;
+	}
+
+	switch (what->Type)
+	{
+		case RDPDR_DTYP_PRINT:
+		{
+			const RDPDR_PRINTER* a = (const RDPDR_PRINTER*)what;
+			if (count <= 1)
+				return TRUE;
+			if (!a->DriverName)
+				return FALSE;
+			return strcmp(a->DriverName, args[1]) == 0;
+		}
+
+		case RDPDR_DTYP_SERIAL:
+		{
+			const RDPDR_SERIAL* a = (const RDPDR_SERIAL*)what;
+
+			if (count > 1)
+			{
+				if (!a->Path)
+					return FALSE;
+				if (strcmp(a->Path, args[1]) != 0)
+					return FALSE;
+			}
+
+			if (count > 2)
+			{
+				if (!a->Driver)
+					return FALSE;
+				if (strcmp(a->Driver, args[2]) != 0)
+					return FALSE;
+			}
+
+			if (count > 3)
+			{
+				if (!a->Permissive)
+					return FALSE;
+				if (strcmp(a->Permissive, args[3]) != 0)
+					return FALSE;
+			}
+			return TRUE;
+		}
+
+		case RDPDR_DTYP_PARALLEL:
+		{
+			const RDPDR_PARALLEL* a = (const RDPDR_PARALLEL*)what;
+			if (count <= 1)
+				return TRUE;
+			if (!a->Path)
+				return FALSE;
+			return strcmp(a->Path, args[1]) == 0;
+		}
+
+		case RDPDR_DTYP_SMARTCARD:
+			return TRUE;
+
+		case RDPDR_DTYP_FILESYSTEM:
+		{
+			const RDPDR_DRIVE* a = (const RDPDR_DRIVE*)what;
+			if (count > 1)
+			{
+				if (!a->Path)
+					return FALSE;
+				if (strcmp(a->Path, args[1]) != 0)
+					return FALSE;
+			}
+			if (count > 2)
+			{
+				return a->automount == (args[2] == NULL) ? TRUE : FALSE;
+			}
+			else
+				return !a->automount;
+		}
+
+		default:
+			return FALSE;
+	}
+}
+
+static int check_device_type_arg(UINT32 Type, size_t count, const char* args[])
+{
+	int rc = -3;
+	RDPDR_DEVICE* device = freerdp_device_new(Type, count, args);
+	RDPDR_DEVICE* clone = freerdp_device_clone(device);
+
+	if (!device)
+		goto fail;
+
+	rc++;
+	if (!clone)
+		goto fail;
+
+	rc++;
+	if (!check_args(device, count, args))
+		goto fail;
+
+	rc++;
+	if (!freerdp_device_equal(clone, device))
+		goto fail;
+	rc++;
+
+fail:
+	freerdp_device_free(device);
+	freerdp_device_free(clone);
+	return rc;
+}
+
+static BOOL check_device_type(void)
+{
+	size_t x;
+	struct test_entry
+	{
+		int expect;
+		UINT32 type;
+		size_t count;
+		const char** args;
+	};
+	const char* args[] = { "somename", "anothername", "3rdname", "4thname" };
+	const struct test_entry tests[] = {
+		{ 1, RDPDR_DTYP_SERIAL, 0, NULL },     { 1, RDPDR_DTYP_SERIAL, 0, args },
+		{ 1, RDPDR_DTYP_SERIAL, 1, args },     { 1, RDPDR_DTYP_SERIAL, 2, args },
+		{ 1, RDPDR_DTYP_SERIAL, 3, args },     { 1, RDPDR_DTYP_SERIAL, 4, args },
+		{ 1, RDPDR_DTYP_PARALLEL, 0, NULL },   { 1, RDPDR_DTYP_PARALLEL, 0, args },
+		{ 1, RDPDR_DTYP_PARALLEL, 1, args },   { 1, RDPDR_DTYP_PARALLEL, 2, args },
+		{ 1, RDPDR_DTYP_PARALLEL, 3, args },   { 1, RDPDR_DTYP_PARALLEL, 4, args },
+		{ 1, RDPDR_DTYP_PRINT, 0, NULL },      { 1, RDPDR_DTYP_PRINT, 0, args },
+		{ 1, RDPDR_DTYP_PRINT, 1, args },      { 1, RDPDR_DTYP_PRINT, 2, args },
+		{ 1, RDPDR_DTYP_PRINT, 3, args },      { 1, RDPDR_DTYP_PRINT, 4, args },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 0, NULL }, { 1, RDPDR_DTYP_FILESYSTEM, 0, args },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 1, args }, { 1, RDPDR_DTYP_FILESYSTEM, 2, args },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 3, args }, { 1, RDPDR_DTYP_FILESYSTEM, 4, args },
+		{ 1, RDPDR_DTYP_SMARTCARD, 0, NULL },  { 1, RDPDR_DTYP_SMARTCARD, 0, args },
+		{ 1, RDPDR_DTYP_SMARTCARD, 1, args },  { 1, RDPDR_DTYP_SMARTCARD, 2, args },
+		{ 1, RDPDR_DTYP_SMARTCARD, 3, args },  { 1, RDPDR_DTYP_SMARTCARD, 4, args }
+	};
+
+	for (x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		const struct test_entry* cur = &tests[x];
+		int got = check_device_type_arg(cur->type, cur->count, cur->args);
+		if (got != cur->expect)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
@@ -261,6 +715,11 @@ int TestSettings(int argc, char* argv[])
 		return -1;
 	if (!test_copy())
 		return -1;
+	if (!test_helpers())
+		return -1;
+	if (!check_device_type())
+		return -1;
+
 	settings = freerdp_settings_new(0);
 
 	if (!settings)
@@ -294,6 +753,8 @@ int TestSettings(int argc, char* argv[])
 		}
 		if (!freerdp_settings_set_bool(settings, key, val))
 			goto fail;
+		if (!check_key_helpers(key))
+			goto fail;
 	}
 
 #endif
@@ -311,6 +772,8 @@ int TestSettings(int argc, char* argv[])
 			goto fail;
 		}
 		if (!freerdp_settings_set_int16(settings, key, val))
+			goto fail;
+		if (!check_key_helpers(key))
 			goto fail;
 	}
 
@@ -330,6 +793,8 @@ int TestSettings(int argc, char* argv[])
 		}
 		if (!freerdp_settings_set_uint16(settings, key, val))
 			goto fail;
+		if (!check_key_helpers(key))
+			goto fail;
 	}
 
 #endif
@@ -347,6 +812,8 @@ int TestSettings(int argc, char* argv[])
 			goto fail;
 		}
 		if (!freerdp_settings_set_uint32(settings, key, val))
+			goto fail;
+		if (!check_key_helpers(key))
 			goto fail;
 	}
 
@@ -366,6 +833,8 @@ int TestSettings(int argc, char* argv[])
 		}
 		if (!freerdp_settings_set_int32(settings, key, val))
 			goto fail;
+		if (!check_key_helpers(key))
+			goto fail;
 	}
 
 #endif
@@ -384,6 +853,8 @@ int TestSettings(int argc, char* argv[])
 		}
 		if (!freerdp_settings_set_uint64(settings, key, val))
 			goto fail;
+		if (!check_key_helpers(key))
+			goto fail;
 	}
 
 #endif
@@ -401,6 +872,8 @@ int TestSettings(int argc, char* argv[])
 			goto fail;
 		}
 		if (!freerdp_settings_set_int64(settings, key, val))
+			goto fail;
+		if (!check_key_helpers(key))
 			goto fail;
 	}
 
