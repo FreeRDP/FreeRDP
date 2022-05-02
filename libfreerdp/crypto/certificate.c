@@ -158,7 +158,7 @@ static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 	if (!settings)
 		return FALSE;
 
-	ConfigPath = settings->ConfigPath;
+	ConfigPath = freerdp_settings_get_string(settings, FreeRDP_ConfigPath);
 	if (!ConfigPath)
 		return FALSE;
 

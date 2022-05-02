@@ -195,7 +195,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 	if (bkHeight < 0)
 		bkHeight = 0;
 
-	if (opX + opWidth > (INT64)context->settings->DesktopWidth)
+	if (opX + opWidth > (INT64)freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth))
 	{
 		/**
 		 * Some Microsoft servers send erroneous high values close to the
@@ -206,10 +206,10 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 		 * a RDP session to Windows XP Professional SP3.
 		 * This workaround prevents resulting problems in the UI callbacks.
 		 */
-		opWidth = context->settings->DesktopWidth - opX;
+		opWidth = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth) - opX;
 	}
 
-	if (bkX + bkWidth > (INT64)context->settings->DesktopWidth)
+	if (bkX + bkWidth > (INT64)freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth))
 	{
 		/**
 		 * Some Microsoft servers send erroneous high values close to the
@@ -220,7 +220,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 		 * a RDP session to Windows XP Professional SP3.
 		 * This workaround prevents resulting problems in the UI callbacks.
 		 */
-		bkWidth = context->settings->DesktopWidth - bkX;
+		bkWidth = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth) - bkX;
 	}
 
 	bound.x = bkX;
@@ -355,8 +355,8 @@ static BOOL update_gdi_fast_index(rdpContext* context, const FAST_INDEX_ORDER* f
 	/* Server can send a massive number (32766) which appears to be
 	 * undocumented special behavior for "Erase all the way right".
 	 * X11 has nondeterministic results asking for a draw that wide. */
-	if (opRight > (INT64)context->settings->DesktopWidth)
-		opRight = (int)context->settings->DesktopWidth;
+	if (opRight > (INT64)freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth))
+		opRight = (int)freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth);
 
 	if (x == -32768)
 		x = fastIndex->bkLeft;
@@ -427,8 +427,8 @@ static BOOL update_gdi_fast_glyph(rdpContext* context, const FAST_GLYPH_ORDER* f
 		opRight = fastGlyph->bkRight;
 
 	/* See update_gdi_fast_index opRight comment. */
-	if (opRight > (INT64)context->settings->DesktopWidth)
-		opRight = (int)context->settings->DesktopWidth;
+	if (opRight > (INT64)freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth))
+		opRight = (int)freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth);
 
 	if (x == -32768)
 		x = fastGlyph->bkLeft;
@@ -698,12 +698,14 @@ rdpGlyphCache* glyph_cache_new(rdpContext* context)
 
 	for (i = 0; i < 10; i++)
 	{
-		glyphCache->glyphCache[i].number = settings->GlyphCache[i].cacheEntries;
-		glyphCache->glyphCache[i].maxCellSize = settings->GlyphCache[i].cacheMaximumCellSize;
-		glyphCache->glyphCache[i].entries =
-		    (rdpGlyph**)calloc(glyphCache->glyphCache[i].number, sizeof(rdpGlyph*));
+		const GLYPH_CACHE_DEFINITION* currentGlyph =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_GlyphCache, i);
+		GLYPH_CACHE* currentCache = &glyphCache->glyphCache[i];
+		currentCache->number = currentGlyph->cacheEntries;
+		currentCache->maxCellSize = currentGlyph->cacheMaximumCellSize;
+		currentCache->entries = (rdpGlyph**)calloc(currentCache->number, sizeof(rdpGlyph*));
 
-		if (!glyphCache->glyphCache[i].entries)
+		if (!currentCache->entries)
 			goto fail;
 	}
 

@@ -61,12 +61,14 @@ static BOOL update_pointer_position(rdpContext* context,
                                     const POINTER_POSITION_UPDATE* pointer_position)
 {
 	rdpPointer* pointer;
+	BOOL GrabMouse;
 
 	if (!context || !context->graphics || !context->graphics->Pointer_Prototype ||
 	    !pointer_position)
 		return FALSE;
 
-	if (!context->settings->GrabMouse)
+	GrabMouse = freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse);
+	if (!GrabMouse)
 		return TRUE;
 
 	pointer = context->graphics->Pointer_Prototype;
@@ -343,7 +345,7 @@ rdpPointerCache* pointer_cache_new(rdpContext* context)
 		return NULL;
 
 	pointer_cache->context = context;
-	pointer_cache->cacheSize = settings->PointerCacheSize;
+	pointer_cache->cacheSize = freerdp_settings_get_uint32(settings, FreeRDP_PointerCacheSize);
 	pointer_cache->entries = (rdpPointer**)calloc(pointer_cache->cacheSize, sizeof(rdpPointer*));
 
 	if (!pointer_cache->entries)

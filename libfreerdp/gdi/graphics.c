@@ -160,8 +160,9 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 		}
 		else
 		{
-			freerdp_planar_switch_bgr(context->codecs->planar,
-			                          context->settings->DrawAllowDynamicColorFidelity);
+			const BOOL fidelity =
+			    freerdp_settings_get_bool(context->settings, FreeRDP_DrawAllowDynamicColorFidelity);
+			freerdp_planar_switch_bgr(context->codecs->planar, fidelity);
 			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize, DstWidth, DstHeight,
 			                       bitmap->data, bitmap->format, 0, 0, 0, DstWidth, DstHeight,
 			                       TRUE))

@@ -304,7 +304,7 @@ static int mcs_initialize_client_channels(rdpMcs* mcs, const rdpSettings* settin
 	if (!mcs || !settings)
 		return -1;
 
-	mcs->channelCount = settings->ChannelCount;
+	mcs->channelCount = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
 
 	if (mcs->channelCount > mcs->channelMaxCount)
 		mcs->channelCount = mcs->channelMaxCount;
