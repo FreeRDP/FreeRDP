@@ -352,7 +352,7 @@ RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[])
 
 				if (count > 3)
 				{
-					device.serial->Permissive = _strdup(args[1]);
+					device.serial->Permissive = _strdup(args[3]);
 					if (!device.serial->Permissive)
 						goto fail;
 				}
@@ -450,94 +450,81 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 		RDPDR_PARALLEL* parallel;
 		RDPDR_SMARTCARD* smartcard;
 	} copy;
+	size_t count = 0;
+	const char* args[4] = { 0 };
+
+	copy.dev = NULL;
+	src.dev = device;
 
 	if (!device)
 		return NULL;
 
-	const char* args[] = { device->Name };
-	WINPR_ASSERT(device);
+	if (device->Name)
+	{
+		count = 1;
+		args[0] = device->Name;
+	}
 
-	src.dev = device;
-
-	copy.dev = freerdp_device_new(device->Type, ARRAYSIZE(args), args);
-	if (!copy.dev)
-		return NULL;
-
-	copy.dev->Id = device->Id;
 	switch (device->Type)
 	{
 		case RDPDR_DTYP_FILESYSTEM:
-		{
 			if (src.drive->Path)
-				copy.drive->Path = _strdup(src.drive->Path);
-
-			if (!copy.drive->Path)
-				goto fail;
-		}
+			{
+				args[1] = src.drive->Path;
+				count = 2;
+			}
 		break;
 
 		case RDPDR_DTYP_PRINT:
-		{
-			if (copy.printer->DriverName)
+			if (src.printer->DriverName)
 			{
-				copy.printer->DriverName = _strdup(src.printer->DriverName);
-
-				if (!copy.printer->DriverName)
-					goto fail;
+				args[1] = src.printer->DriverName;
+				count = 2;
 			}
-		}
 		break;
 
 		case RDPDR_DTYP_SMARTCARD:
 			break;
 
 		case RDPDR_DTYP_SERIAL:
-		{
-			if (copy.serial->Path)
+			if (src.serial->Path)
 			{
-				copy.serial->Path = _strdup(src.serial->Path);
-
-				if (!copy.serial->Path)
-					goto fail;
+				args[1] = src.serial->Path;
+				count = 2;
 			}
 
-			if (copy.serial->Driver)
+			if (src.serial->Driver)
 			{
-				copy.serial->Driver = _strdup(src.serial->Driver);
-
-				if (!copy.serial->Driver)
-					goto fail;
+				args[2] = src.serial->Driver;
+				count = 3;
 			}
 
-			if (copy.serial->Permissive)
+			if (src.serial->Permissive)
 			{
-				copy.serial->Permissive = _strdup(src.serial->Permissive);
-
-				if (!copy.serial->Permissive)
-					goto fail;
+				args[3] = src.serial->Permissive;
+				count = 4;
 			}
-		}
 		break;
 
 		case RDPDR_DTYP_PARALLEL:
-		{
 			if (src.parallel->Path)
-				copy.parallel->Path = _strdup(src.parallel->Path);
-
-			if (!copy.parallel->Path)
-				goto fail;
-		}
+			{
+				args[1] = src.parallel->Path;
+				count = 2;
+			}
 		break;
 		default:
 			WLog_ERR(TAG, "unknown device type %" PRIu32 "", device->Type);
 			break;
 	}
 
-	return copy.dev;
+	copy.dev = freerdp_device_new(device->Type, count, args);
+	if (!copy.dev)
+		return NULL;
 
-fail:
-	freerdp_device_free(copy.dev);
-	return NULL;
+	copy.dev->Id = device->Id;
+
+	return copy.dev;
 }
 
 void freerdp_device_collection_free(rdpSettings* settings)
@@ -1559,6 +1546,93 @@ BOOL freerdp_target_net_addresses_copy(rdpSettings* settings, char** addresses, 
 			freerdp_target_net_addresses_free(settings);
 			return FALSE;
 		}
+	}
+
+	return TRUE;
+}
+
+BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* expect)
+{
+	if (!what && !expect)
+		return TRUE;
+	if (!what || !expect)
+		return FALSE;
+
+	if (what->Id != expect->Id)
+		return FALSE;
+	if (what->Type != expect->Type)
+		return FALSE;
+	if (what->Name && expect->Name)
+	{
+		if (strcmp(what->Name, expect->Name) != 0)
+			return FALSE;
+	}
+	else
+	{
+		if (what->Name != expect->Name)
+			return FALSE;
+	}
+
+	switch (what->Type)
+	{
+		case RDPDR_DTYP_PRINT:
+		{
+			const RDPDR_PRINTER* a = (const RDPDR_PRINTER*)what;
+			const RDPDR_PRINTER* b = (const RDPDR_PRINTER*)expect;
+			if (a->DriverName && b->DriverName)
+				return strcmp(a->DriverName, b->DriverName) == 0;
+			return a->DriverName == b->DriverName;
+		}
+
+		case RDPDR_DTYP_SERIAL:
+		{
+			const RDPDR_SERIAL* a = (const RDPDR_SERIAL*)what;
+			const RDPDR_SERIAL* b = (const RDPDR_SERIAL*)expect;
+
+			if (a->Path && b->Path)
+			{
+				if (strcmp(a->Path, b->Path) != 0)
+					return FALSE;
+			}
+			else if (a->Path != b->Path)
+				return FALSE;
+
+			if (a->Driver && b->Driver)
+			{
+				if (strcmp(a->Driver, b->Driver) != 0)
+					return FALSE;
+			}
+			else if (a->Driver != b->Driver)
+				return FALSE;
+			if (a->Permissive && b->Permissive)
+				return strcmp(a->Permissive, b->Permissive) == 0;
+			return a->Permissive == b->Permissive;
+		}
+
+		case RDPDR_DTYP_PARALLEL:
+		{
+			const RDPDR_PARALLEL* a = (const RDPDR_PARALLEL*)what;
+			const RDPDR_PARALLEL* b = (const RDPDR_PARALLEL*)expect;
+			if (a->Path && b->Path)
+				return strcmp(a->Path, b->Path) == 0;
+			return a->Path == b->Path;
+		}
+
+		case RDPDR_DTYP_SMARTCARD:
+			break;
+		case RDPDR_DTYP_FILESYSTEM:
+		{
+			const RDPDR_DRIVE* a = (const RDPDR_DRIVE*)what;
+			const RDPDR_DRIVE* b = (const RDPDR_DRIVE*)expect;
+			if (a->automount != b->automount)
+				return FALSE;
+			if (a->Path && b->Path)
+				return strcmp(a->Path, b->Path) == 0;
+			return a->Path == b->Path;
+		}
+
+		default:
+			return FALSE;
 	}
 
 	return TRUE;

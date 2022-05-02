@@ -544,6 +544,161 @@ fail:
 	return res;
 }
 
+static BOOL check_args(const RDPDR_DEVICE* what, size_t count, const char* args[])
+{
+	WINPR_ASSERT(what);
+
+	if (count > 0)
+	{
+		if (strcmp(what->Name, args[0]) != 0)
+			return FALSE;
+	}
+
+	switch (what->Type)
+	{
+		case RDPDR_DTYP_PRINT:
+		{
+			const RDPDR_PRINTER* a = (const RDPDR_PRINTER*)what;
+			if (count <= 1)
+				return TRUE;
+			if (!a->DriverName)
+				return FALSE;
+			return strcmp(a->DriverName, args[1]) == 0;
+		}
+
+		case RDPDR_DTYP_SERIAL:
+		{
+			const RDPDR_SERIAL* a = (const RDPDR_SERIAL*)what;
+
+			if (count > 1)
+			{
+				if (!a->Path)
+					return FALSE;
+				if (strcmp(a->Path, args[1]) != 0)
+					return FALSE;
+			}
+
+			if (count > 2)
+			{
+				if (!a->Driver)
+					return FALSE;
+				if (strcmp(a->Driver, args[2]) != 0)
+					return FALSE;
+			}
+
+			if (count > 3)
+			{
+				if (!a->Permissive)
+					return FALSE;
+				if (strcmp(a->Permissive, args[3]) != 0)
+					return FALSE;
+			}
+			return TRUE;
+		}
+
+		case RDPDR_DTYP_PARALLEL:
+		{
+			const RDPDR_PARALLEL* a = (const RDPDR_PARALLEL*)what;
+			if (count <= 1)
+				return TRUE;
+			if (!a->Path)
+				return FALSE;
+			return strcmp(a->Path, args[1]) == 0;
+		}
+
+		case RDPDR_DTYP_SMARTCARD:
+			return TRUE;
+
+		case RDPDR_DTYP_FILESYSTEM:
+		{
+			const RDPDR_DRIVE* a = (const RDPDR_DRIVE*)what;
+			if (count > 1)
+			{
+				if (!a->Path)
+					return FALSE;
+				if (strcmp(a->Path, args[1]) != 0)
+					return FALSE;
+			}
+			if (count > 2)
+			{
+				return a->automount == (args[2] == NULL) ? TRUE : FALSE;
+			}
+			else
+				return !a->automount;
+		}
+
+		default:
+			return FALSE;
+	}
+}
+
+static int check_device_type_arg(UINT32 Type, size_t count, const char* args[])
+{
+	int rc = -3;
+	RDPDR_DEVICE* device = freerdp_device_new(Type, count, args);
+	RDPDR_DEVICE* clone = freerdp_device_clone(device);
+
+	if (!device)
+		goto fail;
+
+	rc++;
+	if (!clone)
+		goto fail;
+
+	rc++;
+	if (!check_args(device, count, args))
+		goto fail;
+
+	rc++;
+	if (!freerdp_device_equal(clone, device))
+		goto fail;
+	rc++;
+
+fail:
+	freerdp_device_free(device);
+	freerdp_device_free(clone);
+	return rc;
+}
+
+static BOOL check_device_type(void)
+{
+	size_t x;
+	struct test_entry
+	{
+		int expect;
+		UINT32 type;
+		size_t count;
+		const char** args;
+	};
+	const char* args[] = { "somename", "anothername", "3rdname", "4thname" };
+	const struct test_entry tests[] = {
+		{ 1, RDPDR_DTYP_SERIAL, 0, NULL },     { 1, RDPDR_DTYP_SERIAL, 0, args },
+		{ 1, RDPDR_DTYP_SERIAL, 1, args },     { 1, RDPDR_DTYP_SERIAL, 2, args },
+		{ 1, RDPDR_DTYP_SERIAL, 3, args },     { 1, RDPDR_DTYP_SERIAL, 4, args },
+		{ 1, RDPDR_DTYP_PARALLEL, 0, NULL },   { 1, RDPDR_DTYP_PARALLEL, 0, args },
+		{ 1, RDPDR_DTYP_PARALLEL, 1, args },   { 1, RDPDR_DTYP_PARALLEL, 2, args },
+		{ 1, RDPDR_DTYP_PARALLEL, 3, args },   { 1, RDPDR_DTYP_PARALLEL, 4, args },
+		{ 1, RDPDR_DTYP_PRINT, 0, NULL },      { 1, RDPDR_DTYP_PRINT, 0, args },
+		{ 1, RDPDR_DTYP_PRINT, 1, args },      { 1, RDPDR_DTYP_PRINT, 2, args },
+		{ 1, RDPDR_DTYP_PRINT, 3, args },      { 1, RDPDR_DTYP_PRINT, 4, args },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 0, NULL }, { 1, RDPDR_DTYP_FILESYSTEM, 0, args },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 1, args }, { 1, RDPDR_DTYP_FILESYSTEM, 2, args },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 3, args }, { 1, RDPDR_DTYP_FILESYSTEM, 4, args },
+		{ 1, RDPDR_DTYP_SMARTCARD, 0, NULL },  { 1, RDPDR_DTYP_SMARTCARD, 0, args },
+		{ 1, RDPDR_DTYP_SMARTCARD, 1, args },  { 1, RDPDR_DTYP_SMARTCARD, 2, args },
+		{ 1, RDPDR_DTYP_SMARTCARD, 3, args },  { 1, RDPDR_DTYP_SMARTCARD, 4, args }
+	};
+
+	for (x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		const struct test_entry* cur = &tests[x];
+		int got = check_device_type_arg(cur->type, cur->count, cur->args);
+		if (got != cur->expect)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
@@ -561,6 +716,8 @@ int TestSettings(int argc, char* argv[])
 	if (!test_copy())
 		return -1;
 	if (!test_helpers())
+		return -1;
+	if (!check_device_type())
 		return -1;
 
 	settings = freerdp_settings_new(0);
