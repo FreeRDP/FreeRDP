@@ -1,4 +1,6 @@
 #include <freerdp/settings.h>
+#include <freerdp/codecs.h>
+
 #include "settings_property_lists.h"
 
 static BOOL compare(const ADDIN_ARGV* got, const ADDIN_ARGV* expect)
@@ -245,6 +247,86 @@ fail:
 	return rc;
 }
 
+static BOOL test_helpers(void)
+{
+	BOOL rc = FALSE;
+	UINT32 flags;
+	rdpSettings* settings = freerdp_settings_new(0);
+	if (!settings)
+		goto fail;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE))
+		goto fail;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE))
+		goto fail;
+	flags = freerdp_settings_get_codecs_flags(settings);
+	if (flags != FREERDP_CODEC_ALL)
+		goto fail;
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, FALSE))
+		goto fail;
+	flags = freerdp_settings_get_codecs_flags(settings);
+	if (flags != (FREERDP_CODEC_ALL & ~FREERDP_CODEC_NSCODEC))
+		goto fail;
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, FALSE))
+		goto fail;
+	flags = freerdp_settings_get_codecs_flags(settings);
+	if (flags != (FREERDP_CODEC_ALL & ~(FREERDP_CODEC_NSCODEC | FREERDP_CODEC_REMOTEFX)))
+		goto fail;
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE))
+		goto fail;
+	flags = freerdp_settings_get_codecs_flags(settings);
+	if (flags != (FREERDP_CODEC_ALL & ~FREERDP_CODEC_REMOTEFX))
+		goto fail;
+
+	rc = TRUE;
+fail:
+	freerdp_settings_free(settings);
+	return rc;
+}
+
+static BOOL check_key_helpers(size_t key)
+{
+	SSIZE_T rc, tkey, type;
+	const char* name = freerdp_settings_get_name_for_key(key);
+	if (!name)
+	{
+		printf("missing name for key %" PRIuz "\n", key);
+		return FALSE;
+	}
+	tkey = freerdp_settings_get_key_for_name(name);
+	if (tkey < 0)
+	{
+		printf("missing reverse name for key %s [%" PRIuz "]\n", name, key);
+		return FALSE;
+	}
+	if ((size_t)tkey != key)
+	{
+		printf("mismatch reverse name for key %s [%" PRIuz "]: %" PRIdz "\n", name, key, tkey);
+		return FALSE;
+	}
+	type = freerdp_settings_get_type_for_name(name);
+	if (type < 0)
+	{
+		printf("missing reverse type for key %s [%" PRIuz "]\n", name, key);
+		return FALSE;
+	}
+	rc = freerdp_settings_get_type_for_key(key);
+	if (rc < 0)
+	{
+		printf("missing reverse name for key %s [%" PRIuz "]\n", name, key);
+		return FALSE;
+	}
+
+	if (rc != type)
+	{
+		printf("mismatch reverse type for key %s [%" PRIuz "]: %" PRIdz " <--> %" PRIdz "\n", name,
+		       key, rc, type);
+		return FALSE;
+	}
+	return TRUE;
+}
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
@@ -261,6 +343,9 @@ int TestSettings(int argc, char* argv[])
 		return -1;
 	if (!test_copy())
 		return -1;
+	if (!test_helpers())
+		return -1;
+
 	settings = freerdp_settings_new(0);
 
 	if (!settings)
@@ -294,6 +379,8 @@ int TestSettings(int argc, char* argv[])
 		}
 		if (!freerdp_settings_set_bool(settings, key, val))
 			goto fail;
+		if (!check_key_helpers(key))
+			goto fail;
 	}
 
 #endif
@@ -311,6 +398,8 @@ int TestSettings(int argc, char* argv[])
 			goto fail;
 		}
 		if (!freerdp_settings_set_int16(settings, key, val))
+			goto fail;
+		if (!check_key_helpers(key))
 			goto fail;
 	}
 
@@ -330,6 +419,8 @@ int TestSettings(int argc, char* argv[])
 		}
 		if (!freerdp_settings_set_uint16(settings, key, val))
 			goto fail;
+		if (!check_key_helpers(key))
+			goto fail;
 	}
 
 #endif
@@ -347,6 +438,8 @@ int TestSettings(int argc, char* argv[])
 			goto fail;
 		}
 		if (!freerdp_settings_set_uint32(settings, key, val))
+			goto fail;
+		if (!check_key_helpers(key))
 			goto fail;
 	}
 
@@ -366,6 +459,8 @@ int TestSettings(int argc, char* argv[])
 		}
 		if (!freerdp_settings_set_int32(settings, key, val))
 			goto fail;
+		if (!check_key_helpers(key))
+			goto fail;
 	}
 
 #endif
@@ -384,6 +479,8 @@ int TestSettings(int argc, char* argv[])
 		}
 		if (!freerdp_settings_set_uint64(settings, key, val))
 			goto fail;
+		if (!check_key_helpers(key))
+			goto fail;
 	}
 
 #endif
@@ -401,6 +498,8 @@ int TestSettings(int argc, char* argv[])
 			goto fail;
 		}
 		if (!freerdp_settings_set_int64(settings, key, val))
+			goto fail;
+		if (!check_key_helpers(key))
 			goto fail;
 	}
 
