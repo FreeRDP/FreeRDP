@@ -672,21 +672,42 @@ static BOOL check_device_type(void)
 	};
 	const char* args[] = { "somename", "anothername", "3rdname", "4thname" };
 	const struct test_entry tests[] = {
-		{ 1, RDPDR_DTYP_SERIAL, 0, NULL },     { 1, RDPDR_DTYP_SERIAL, 0, args },
-		{ 1, RDPDR_DTYP_SERIAL, 1, args },     { 1, RDPDR_DTYP_SERIAL, 2, args },
-		{ 1, RDPDR_DTYP_SERIAL, 3, args },     { 1, RDPDR_DTYP_SERIAL, 4, args },
-		{ 1, RDPDR_DTYP_PARALLEL, 0, NULL },   { 1, RDPDR_DTYP_PARALLEL, 0, args },
-		{ 1, RDPDR_DTYP_PARALLEL, 1, args },   { 1, RDPDR_DTYP_PARALLEL, 2, args },
-		{ 1, RDPDR_DTYP_PARALLEL, 3, args },   { 1, RDPDR_DTYP_PARALLEL, 4, args },
-		{ 1, RDPDR_DTYP_PRINT, 0, NULL },      { 1, RDPDR_DTYP_PRINT, 0, args },
-		{ 1, RDPDR_DTYP_PRINT, 1, args },      { 1, RDPDR_DTYP_PRINT, 2, args },
-		{ 1, RDPDR_DTYP_PRINT, 3, args },      { 1, RDPDR_DTYP_PRINT, 4, args },
-		{ 1, RDPDR_DTYP_FILESYSTEM, 0, NULL }, { 1, RDPDR_DTYP_FILESYSTEM, 0, args },
-		{ 1, RDPDR_DTYP_FILESYSTEM, 1, args }, { 1, RDPDR_DTYP_FILESYSTEM, 2, args },
-		{ 1, RDPDR_DTYP_FILESYSTEM, 3, args }, { 1, RDPDR_DTYP_FILESYSTEM, 4, args },
-		{ 1, RDPDR_DTYP_SMARTCARD, 0, NULL },  { 1, RDPDR_DTYP_SMARTCARD, 0, args },
-		{ 1, RDPDR_DTYP_SMARTCARD, 1, args },  { 1, RDPDR_DTYP_SMARTCARD, 2, args },
-		{ 1, RDPDR_DTYP_SMARTCARD, 3, args },  { 1, RDPDR_DTYP_SMARTCARD, 4, args }
+		{ 1, RDPDR_DTYP_SERIAL, 0, NULL },
+		{ 1, RDPDR_DTYP_SERIAL, 0, args },
+		{ 1, RDPDR_DTYP_SERIAL, 1, args },
+		{ 1, RDPDR_DTYP_SERIAL, 2, args },
+		{ 1, RDPDR_DTYP_SERIAL, 3, args },
+		{ 1, RDPDR_DTYP_SERIAL, 4, args },
+		{ 1, RDPDR_DTYP_PARALLEL, 0, NULL },
+		{ 1, RDPDR_DTYP_PARALLEL, 0, args },
+		{ 1, RDPDR_DTYP_PARALLEL, 1, args },
+		{ 1, RDPDR_DTYP_PARALLEL, 2, args },
+		{ 1, RDPDR_DTYP_PARALLEL, 3, args },
+		{ 1, RDPDR_DTYP_PARALLEL, 4, args },
+		{ 1, RDPDR_DTYP_PRINT, 0, NULL },
+		{ 1, RDPDR_DTYP_PRINT, 0, args },
+		{ 1, RDPDR_DTYP_PRINT, 1, args },
+		{ 1, RDPDR_DTYP_PRINT, 2, args },
+		{ 1, RDPDR_DTYP_PRINT, 3, args },
+		{ 1, RDPDR_DTYP_PRINT, 4, args },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 0, NULL },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 0, args },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 1, args },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 2, args },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 3, args },
+		{ 1, RDPDR_DTYP_FILESYSTEM, 4, args },
+		{ 1, RDPDR_DTYP_SMARTCARD, 0, NULL },
+		{ 1, RDPDR_DTYP_SMARTCARD, 0, args },
+		{ 1, RDPDR_DTYP_SMARTCARD, 1, args },
+		{ 1, RDPDR_DTYP_SMARTCARD, 2, args },
+		{ 1, RDPDR_DTYP_SMARTCARD, 3, args },
+		{ 1, RDPDR_DTYP_SMARTCARD, 4, args },
+		{ -3, 0x123, 0, NULL },
+		{ -3, 0x123, 0, args },
+		{ -3, 0x123, 1, args },
+		{ -3, 0x123, 2, args },
+		{ -3, 0x123, 3, args },
+		{ -3, 0x123, 4, args },
 	};
 
 	for (x = 0; x < ARRAYSIZE(tests); x++)
@@ -699,6 +720,164 @@ static BOOL check_device_type(void)
 	return TRUE;
 }
 
+static BOOL check_offsets(rdpSettings* settings, size_t id, size_t min, size_t max, BOOL checkPtr)
+{
+	size_t x;
+
+	WINPR_ASSERT(settings);
+
+	if (!freerdp_settings_get_pointer(settings, id))
+		return FALSE;
+
+	for (x = min; x < max; x++)
+	{
+		const void* ptr = freerdp_settings_get_pointer_array(settings, id, x);
+		if (!ptr && checkPtr)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL test_write_offsets(rdpSettings* settings, size_t id, size_t elementSize, size_t min,
+                               size_t max)
+{
+	size_t x;
+
+	WINPR_ASSERT(settings);
+
+	for (x = min; x < max; x++)
+	{
+		const void* ptr;
+		char buffer[8192] = { 0 };
+
+		winpr_RAND(buffer, sizeof(buffer));
+		if (!freerdp_settings_set_pointer_array(settings, id, x, buffer))
+			return FALSE;
+		ptr = freerdp_settings_get_pointer_array(settings, id, x);
+		if (!ptr)
+			return FALSE;
+		if (memcmp(ptr, buffer, elementSize) != 0)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL test_pointer_array(void)
+{
+	struct pointer_test_case
+	{
+		BOOL checkPtr;
+		BOOL write;
+		size_t id;
+		SSIZE_T sizeId;
+		size_t size;
+		size_t elementSize;
+	};
+	size_t x;
+	const struct pointer_test_case tests[] = {
+		{ TRUE, FALSE, FreeRDP_DeviceArray, FreeRDP_DeviceArraySize, 32, sizeof(RDPDR_DEVICE*) },
+		{ FALSE, FALSE, FreeRDP_TargetNetAddresses, FreeRDP_TargetNetAddressCount, 33,
+		  sizeof(char*) },
+		{ FALSE, FALSE, FreeRDP_TargetNetPorts, FreeRDP_TargetNetAddressCount, 33, sizeof(UINT32) },
+		{ FALSE, FALSE, FreeRDP_StaticChannelArray, FreeRDP_StaticChannelArraySize, 32,
+		  sizeof(ADDIN_ARGV*) },
+		{ FALSE, FALSE, FreeRDP_DynamicChannelArray, FreeRDP_DynamicChannelArraySize, 33,
+		  sizeof(ADDIN_ARGV*) },
+		{ TRUE, TRUE, FreeRDP_BitmapCacheV2CellInfo, FreeRDP_BitmapCacheV2NumCells, 5,
+		  sizeof(BITMAP_CACHE_V2_CELL_INFO) },
+		{ FALSE, FALSE, FreeRDP_OrderSupport, -1, 32, sizeof(BYTE) },
+		{ FALSE, FALSE, FreeRDP_ReceivedCapabilities, -1, 32, sizeof(BYTE) },
+		{ TRUE, TRUE, FreeRDP_GlyphCache, -1, 10, sizeof(GLYPH_CACHE_DEFINITION) },
+		{ TRUE, TRUE, FreeRDP_FragCache, -1, 1, sizeof(GLYPH_CACHE_DEFINITION) },
+		{ TRUE, TRUE, FreeRDP_MonitorIds, FreeRDP_NumMonitorIds, 33, sizeof(UINT32) },
+		{ TRUE, TRUE, FreeRDP_ChannelDefArray, FreeRDP_ChannelDefArraySize, 42,
+		  sizeof(CHANNEL_DEF) },
+		{ TRUE, TRUE, FreeRDP_MonitorDefArray, FreeRDP_MonitorDefArraySize, 33,
+		  sizeof(rdpMonitor) },
+		{ TRUE, TRUE, FreeRDP_ClientTimeZone, -1, 1, sizeof(TIME_ZONE_INFORMATION) },
+		{ FALSE, FALSE, FreeRDP_RdpServerCertificate, -1, 1, sizeof(rdpCertificate*) },
+		//{ FALSE, FALSE, FreeRDP_RdpServerRsaKey, -1, 1, sizeof(rdpRsaKey*) },
+		{ TRUE, TRUE, FreeRDP_RedirectionPassword, FreeRDP_RedirectionPasswordLength, 42,
+		  sizeof(char) },
+		{ TRUE, TRUE, FreeRDP_RedirectionTsvUrl, FreeRDP_RedirectionTsvUrlLength, 42,
+		  sizeof(char) },
+		{ TRUE, TRUE, FreeRDP_LoadBalanceInfo, FreeRDP_LoadBalanceInfoLength, 42, sizeof(char) },
+		{ TRUE, TRUE, FreeRDP_ServerRandom, FreeRDP_ServerRandomLength, 42, sizeof(char) },
+		{ TRUE, TRUE, FreeRDP_ClientRandom, FreeRDP_ClientRandomLength, 42, sizeof(char) },
+		{ TRUE, TRUE, FreeRDP_ServerCertificate, FreeRDP_ServerCertificateLength, 42,
+		  sizeof(char) },
+		{ TRUE, TRUE, FreeRDP_ClientAutoReconnectCookie, -1, 1, sizeof(ARC_CS_PRIVATE_PACKET) },
+		{ TRUE, TRUE, FreeRDP_ServerAutoReconnectCookie, -1, 1, sizeof(ARC_SC_PRIVATE_PACKET) }
+	};
+	BOOL rc = FALSE;
+	rdpSettings* settings = freerdp_settings_new(0);
+	if (!settings)
+		goto fail;
+
+	for (x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		const struct pointer_test_case* cur = &tests[x];
+		if (!freerdp_settings_set_pointer_len(settings, cur->id, NULL, cur->size))
+			goto fail;
+		if (cur->sizeId >= 0)
+		{
+			const UINT32 s = freerdp_settings_get_uint32(settings, (size_t)cur->sizeId);
+			if (s != cur->size)
+				goto fail;
+		}
+		if (!check_offsets(settings, cur->id, 0, cur->size, cur->checkPtr))
+			goto fail;
+		if (check_offsets(settings, cur->id, cur->size, cur->size + 5, TRUE))
+			goto fail;
+		if (cur->write)
+		{
+			if (!test_write_offsets(settings, cur->id, cur->elementSize, 0, cur->size))
+				goto fail;
+			if (test_write_offsets(settings, cur->id, cur->elementSize, cur->size, cur->size + 5))
+				goto fail;
+		}
+		if (!freerdp_settings_set_pointer_len(settings, cur->id, NULL, 0))
+			goto fail;
+		if (cur->sizeId >= 0)
+		{
+			const UINT32 s = freerdp_settings_get_uint32(settings, (size_t)cur->sizeId);
+			if (s != 0)
+				goto fail;
+		}
+		if (check_offsets(settings, cur->id, 0, cur->size, cur->checkPtr))
+			goto fail;
+		if (cur->write)
+		{
+			if (test_write_offsets(settings, cur->id, cur->elementSize, 0, cur->size))
+				goto fail;
+		}
+		if (!freerdp_settings_set_pointer_len(settings, cur->id, NULL, cur->size))
+			goto fail;
+		if (cur->sizeId >= 0)
+		{
+			const UINT32 s = freerdp_settings_get_uint32(settings, (size_t)cur->sizeId);
+			if (s != cur->size)
+				goto fail;
+		}
+		if (!check_offsets(settings, cur->id, 0, cur->size, cur->checkPtr))
+			goto fail;
+		if (check_offsets(settings, cur->id, cur->size + 1, cur->size + 5, TRUE))
+			goto fail;
+		if (cur->write)
+		{
+			if (!test_write_offsets(settings, cur->id, cur->elementSize, 0, cur->size))
+				goto fail;
+			if (test_write_offsets(settings, cur->id, cur->elementSize, cur->size, cur->size + 5))
+				goto fail;
+		}
+	}
+
+	rc = TRUE;
+
+fail:
+	freerdp_settings_free(settings);
+	return rc;
+}
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
@@ -718,6 +897,8 @@ int TestSettings(int argc, char* argv[])
 	if (!test_helpers())
 		return -1;
 	if (!check_device_type())
+		return -1;
+	if (!test_pointer_array())
 		return -1;
 
 	settings = freerdp_settings_new(0);
