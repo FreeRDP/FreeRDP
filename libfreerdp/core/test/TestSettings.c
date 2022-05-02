@@ -218,6 +218,33 @@ fail:
 	freerdp_addin_argv_free(args2);
 	return rc;
 }
+
+static BOOL test_copy(void)
+{
+	BOOL rc = FALSE;
+	wLog* log = WLog_Get(__FUNCTION__);
+	rdpSettings* settings = freerdp_settings_new(0);
+	rdpSettings* copy = freerdp_settings_clone(settings);
+	rdpSettings* modified = freerdp_settings_clone(settings);
+
+	if (!settings || !copy || !modified)
+		goto fail;
+	if (!freerdp_settings_set_string(modified, FreeRDP_ServerHostname, "somerandomname"))
+		goto fail;
+	if (freerdp_settings_print_diff(log, WLOG_WARN, settings, copy))
+		goto fail;
+	if (!freerdp_settings_print_diff(log, WLOG_WARN, settings, modified))
+		goto fail;
+
+	rc = TRUE;
+
+fail:
+	freerdp_settings_free(settings);
+	freerdp_settings_free(copy);
+	freerdp_settings_free(modified);
+	return rc;
+}
+
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
@@ -231,6 +258,8 @@ int TestSettings(int argc, char* argv[])
 	if (!test_dyn_channels())
 		return -1;
 	if (!test_static_channels())
+		return -1;
+	if (!test_copy())
 		return -1;
 	settings = freerdp_settings_new(0);
 
