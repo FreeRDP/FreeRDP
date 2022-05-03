@@ -1,5 +1,5 @@
 message("PRELOADING iOS cache")
-set (CMAKE_TOOLCHAIN_FILE "cmake/ios.toolchain.cmake" CACHE PATH "cmake toolchain file")
+set (CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/cmake/ios.toolchain.cmake" CACHE PATH "cmake toolchain file")
 set (FREERDP_IOS_EXTERNAL_SSL_PATH $ENV{FREERDP_IOS_EXTERNAL_SSL_PATH} CACHE PATH "android ssl")
 set (CMAKE_BUILD_TYPE "Debug" CACHE STRING "build type")
 set (CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "iOS platform to build")
