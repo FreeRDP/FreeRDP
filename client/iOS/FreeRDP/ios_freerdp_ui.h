@@ -16,11 +16,14 @@ BOOL ios_ui_resize_window(rdpContext* context);
 
 BOOL ios_ui_authenticate(freerdp* instance, char** username, char** password, char** domain);
 BOOL ios_ui_gw_authenticate(freerdp* instance, char** username, char** password, char** domain);
-DWORD ios_ui_verify_certificate(freerdp* instance, const char* common_name, const char* subject,
-                                const char* issuer, const char* fingerprint, BOOL host_mismatch);
-DWORD ios_ui_verify_changed_certificate(freerdp* instance, const char* common_name,
-                                        const char* subject, const char* issuer,
-                                        const char* new_fingerprint, const char* old_subject,
-                                        const char* old_issuer, const char* old_fingerprint);
+DWORD ios_ui_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
+                                   const char* common_name, const char* subject, const char* issuer,
+                                   const char* fingerprint, DWORD flags);
+
+DWORD ios_ui_verify_changed_certificate_ex(freerdp* instance, const char* host, UINT16 port,
+                                           const char* common_name, const char* subject,
+                                           const char* issuer, const char* fingerprint,
+                                           const char* old_subject, const char* old_issuer,
+                                           const char* old_fingerprint, DWORD flags);
 
 void ios_allocate_display_buffer(mfInfo* mfi);
