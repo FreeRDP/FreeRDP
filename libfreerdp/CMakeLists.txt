@@ -322,7 +322,7 @@ set(PRIMITIVES_OPT_SRCS
 
 ### IPP Variable debugging
 if(WITH_IPP)
-    if(CMAKE_COMPILER_IS_GNUCC)
+    if(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
         foreach(INCLDIR ${IPP_INCLUDE_DIRS})
             set(OPTIMIZATION "${OPTIMIZATION} -I${INCLDIR}")
         endforeach(INCLDIR)
@@ -344,9 +344,11 @@ if(WITH_SSE2)
             PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} /arch:SSE2")
     endif()
 elseif(WITH_NEON)
-    if(CMAKE_COMPILER_IS_GNUCC)
-        set_source_files_properties(${PRIMITIVES_OPT_SRCS}
-            PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -mfpu=neon")
+    if(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+        if (NOT MSVC_ARM64 AND NOT ARCH_ARM64)
+            set_source_files_properties(${PRIMITIVES_OPT_SRCS}
+                PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -mfpu=neon")
+        endif()
     endif()
     # TODO: Add MSVC equivalent
 endif()
