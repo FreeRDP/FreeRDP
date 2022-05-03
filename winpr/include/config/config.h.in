@@ -34,4 +34,6 @@
 #cmakedefine WITH_DEBUG_EVENTS
 #cmakedefine WITH_DEBUG_MUTEX
 
+#cmakedefine WITH_VERBOSE_WINPR_ASSERT
+
 #endif /* WINPR_CONFIG_H */

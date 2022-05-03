@@ -341,7 +341,7 @@ static BOOL rts_write_auth_verifier(wStream* s, const auth_verifier_co_t* auth,
 		Stream_Zero(s, auth_pad_length);
 	}
 
-#if defined(WITH_VERBOSE_WINPR_ASSERT) && (WITH_VERBOSE_WINPR_ASSERT != 0)
+#if defined(WITH_VERBOSE_WINPR_ASSERT)
 	WINPR_ASSERT(header->frag_length + 8ull > header->auth_length);
 	{
 		size_t apos = Stream_GetPosition(s);

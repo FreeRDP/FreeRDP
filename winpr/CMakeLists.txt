@@ -90,11 +90,6 @@ if (WITH_WINPR_DEPRECATED)
 	add_definitions(-DWITH_WINPR_DEPRECATED)
 endif()
 
-if (WITH_VERBOSE_WINPR_ASSERT)
-	add_definitions(-DWITH_VERBOSE_WINPR_ASSERT)
-endif()
-
-
 # Include cmake modules
 include(CheckIncludeFiles)
 include(CheckLibraryExists)

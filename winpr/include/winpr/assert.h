@@ -26,8 +26,9 @@
 #include <winpr/wtypes.h>
 #include <winpr/wlog.h>
 #include <winpr/debug.h>
+#include <winpr/config.h>
 
-#if defined(WITH_VERBOSE_WINPR_ASSERT) && (WITH_VERBOSE_WINPR_ASSERT != 0)
+#if defined(WITH_VERBOSE_WINPR_ASSERT)
 #define WINPR_ASSERT(cond)                                                                    \
 	do                                                                                        \
 	{                                                                                         \
