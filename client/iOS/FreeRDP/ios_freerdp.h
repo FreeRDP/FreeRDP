@@ -41,7 +41,9 @@ struct mf_info
 	CGContextRef bitmap_context;
 
 	// Events
-	int event_pipe_producer, event_pipe_consumer;
+	int event_pipe_producer;
+	int event_pipe_consumer;
+	HANDLE handle;
 
 	// Tracking connection state
 	volatile TSXConnectionState connection_state;

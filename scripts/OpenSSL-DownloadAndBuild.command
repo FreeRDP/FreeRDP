@@ -21,7 +21,7 @@ MIN_SDK_VERSION="10.0"
 INSTALLDIR="external"
 
 # Architectures to build
-ARCHS="i386 x86_64 armv7 armv7s arm64"
+ARCHS="arm64"
 
 # Use default SDK version if not set
 if [ -z ${SDK_VERSION} ]; then

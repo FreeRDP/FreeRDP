@@ -8,6 +8,8 @@
  http://mozilla.org/MPL/2.0/.
  */
 
+#include <winpr/assert.h>
+
 #import <freerdp/gdi/gdi.h>
 #import <freerdp/channels/channels.h>
 #import <freerdp/client/channels.h>
@@ -90,10 +92,11 @@ static BOOL ios_pre_connect(freerdp *instance)
 	int rc;
 	rdpSettings *settings;
 
-	if (!instance || !instance->settings)
+	if (!instance || !instance->context)
 		return FALSE;
 
-	settings = instance->settings;
+	settings = instance->context->settings;
+	WINPR_ASSERT(settings);
 
 	settings->AutoLogonEnabled = settings->Password && (strlen(settings->Password) > 0);
 
@@ -124,7 +127,7 @@ static BOOL ios_pre_connect(freerdp *instance)
 		return FALSE;
 	}
 
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!freerdp_client_load_addins(instance->context->channels, settings))
 	{
 		WLog_ERR(TAG, "Failed to load addins [%l08X]", GetLastError());
 		return FALSE;
@@ -216,9 +219,9 @@ static BOOL ios_post_connect(freerdp *instance)
 		return FALSE;
 
 	ios_allocate_display_buffer(mfi);
-	instance->update->BeginPaint = ios_ui_begin_paint;
-	instance->update->EndPaint = ios_ui_end_paint;
-	instance->update->DesktopResize = ios_ui_resize_window;
+	instance->context->update->BeginPaint = ios_ui_begin_paint;
+	instance->context->update->EndPaint = ios_ui_end_paint;
+	instance->context->update->DesktopResize = ios_ui_resize_window;
 	[mfi->session performSelectorOnMainThread:@selector(sessionDidConnect)
 	                               withObject:nil
 	                            waitUntilDone:YES];
@@ -252,99 +255,43 @@ int ios_run_freerdp(freerdp *instance)
 	mfi->connection_state = TSXConnectionConnected;
 	// Connection main loop
 	NSAutoreleasePool *pool;
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	int wcount;
-	void *rfds[32];
-	void *wfds[32];
-	fd_set rfds_set;
-	fd_set wfds_set;
-	struct timeval timeout;
-	int select_status;
-	memset(rfds, 0, sizeof(rfds));
-	memset(wfds, 0, sizeof(wfds));
 
 	while (!freerdp_shall_disconnect_context(instance->context))
 	{
-		rcount = wcount = 0;
+		DWORD status;
+		DWORD nCount = 0;
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 		pool = [[NSAutoreleasePool alloc] init];
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+		nCount = freerdp_get_event_handles(instance->context, handles, ARRAYSIZE(handles));
+		if (nCount == 0)
 		{
-			NSLog(@"%s: inst->rdp_get_fds failed", __func__);
+			NSLog(@"%s: freerdp_get_event_handles failed", __func__);
 			break;
 		}
 
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+		handles[nCount++] = ios_events_get_handle(mfi);
+
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+
+		if (WAIT_FAILED == status)
 		{
-			NSLog(@"%s: freerdp_chanman_get_fds failed", __func__);
+			NSLog(@"%s: WaitForMultipleObjects failed!", __func__);
 			break;
-		}
-
-		if (ios_events_get_fds(mfi, rfds, &rcount, wfds, &wcount) != TRUE)
-		{
-			NSLog(@"%s: ios_events_get_fds", __func__);
-			break;
-		}
-
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-		FD_ZERO(&wfds_set);
-
-		for (i = 0; i < rcount; i++)
-		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
-			break;
-
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
-		select_status = select(max_fds + 1, &rfds_set, NULL, NULL, &timeout);
-
-		// timeout?
-		if (select_status == 0)
-		{
-			continue;
-		}
-		else if (select_status == -1)
-		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINPROGRESS) ||
-			      (errno == EINTR))) /* signal occurred */
-			{
-				NSLog(@"%s: select failed!", __func__);
-				break;
-			}
 		}
 
 		// Check the libfreerdp fds
-		if (freerdp_check_fds(instance) != true)
+		if (!freerdp_check_event_handles(instance->context))
 		{
-			NSLog(@"%s: inst->rdp_check_fds failed.", __func__);
+			NSLog(@"%s: freerdp_check_event_handles failed.", __func__);
 			break;
 		}
 
 		// Check input event fds
-		if (ios_events_check_fds(mfi, &rfds_set) != TRUE)
+		if (ios_events_check_handle(mfi) != TRUE)
 		{
 			// This event will fail when the app asks for a disconnect.
 			// NSLog(@"%s: ios_events_check_fds failed: terminating connection.", __func__);
-			break;
-		}
-
-		// Check channel fds
-		if (freerdp_channels_check_fds(channels, instance) != TRUE)
-		{
-			NSLog(@"%s: freerdp_chanman_check_fds failed", __func__);
 			break;
 		}
 
@@ -379,7 +326,6 @@ static BOOL ios_client_new(freerdp *instance, rdpContext *context)
 
 	ctx->mfi->context = (mfContext *)context;
 	ctx->mfi->_context = context;
-	ctx->mfi->context->settings = instance->settings;
 	ctx->mfi->instance = instance;
 
 	if (!ios_events_create_pipe(ctx->mfi))
@@ -390,8 +336,8 @@ static BOOL ios_client_new(freerdp *instance, rdpContext *context)
 	instance->PostDisconnect = ios_post_disconnect;
 	instance->Authenticate = ios_ui_authenticate;
 	instance->GatewayAuthenticate = ios_ui_gw_authenticate;
-	instance->VerifyCertificate = ios_ui_verify_certificate;
-	instance->VerifyChangedCertificate = ios_ui_verify_changed_certificate;
+	instance->VerifyCertificateEx = ios_ui_verify_certificate_ex;
+	instance->VerifyChangedCertificateEx = ios_ui_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = NULL;
 	return TRUE;
 }
