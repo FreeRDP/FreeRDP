@@ -19,7 +19,7 @@
 
 #include <freerdp/config.h>
 
-#if defined(__ARM_NEON)
+#if defined(WITH_NEON)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -239,4 +239,4 @@ void rfx_init_neon(RFX_CONTEXT* context)
 	}
 }
 
-#endif // __ARM_NEON
+#endif // WITH_NEON
