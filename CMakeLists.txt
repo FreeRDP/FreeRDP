@@ -1037,15 +1037,6 @@ add_subdirectory(include)
 
 add_subdirectory(libfreerdp)
 
-if (IOS)
-	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.0")
-	if (IOS_PLATFORM MATCHES "SIMULATOR")
-		set(CMAKE_OSX_SYSROOT "iphonesimulator")
-	else()
-		set(CMAKE_OSX_SYSROOT "iphoneos")
-	endif()
-endif()
-
 # RdTk
 include_directories("${CMAKE_SOURCE_DIR}/rdtk/include")
 include_directories("${CMAKE_BINARY_DIR}/rdtk/include")
