@@ -212,6 +212,7 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
 	DWORD vkcode;
 	DWORD keycode;
+	DWORD scancode;
 	BOOL extended = FALSE;
 
 	if (!client || !subsystem)
@@ -220,10 +221,11 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 	if (flags & KBD_FLAGS_EXTENDED)
 		extended = TRUE;
 
+	scancode = code;
 	if (extended)
-		code |= KBDEXT;
+		scancode |= KBDEXT;
 
-	vkcode = GetVirtualKeyCodeFromVirtualScanCode(code, 4);
+	vkcode = GetVirtualKeyCodeFromVirtualScanCode(scancode, 4);
 
 	if (extended)
 		vkcode |= KBDEXT;
