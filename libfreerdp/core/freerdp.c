@@ -1134,3 +1134,9 @@ BOOL freerdp_channels_from_mcs(rdpSettings* settings, const rdpContext* context)
 	WINPR_ASSERT(context);
 	return rdp_channels_from_mcs(settings, context->rdp);
 }
+
+HANDLE freerdp_abort_event(rdpContext* context)
+{
+	WINPR_ASSERT(context);
+	return utils_get_abort_event(context->rdp);
+}
