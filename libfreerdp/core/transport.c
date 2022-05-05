@@ -160,8 +160,14 @@ static BOOL transport_default_attach(rdpTransport* transport, int sockfd)
 {
 	BIO* socketBio = NULL;
 	BIO* bufferedBio;
+	const rdpSettings* settings;
+	rdpContext* context = transport_get_context(transport);
 
-	WINPR_ASSERT(transport);
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	if (!freerdp_tcp_set_keep_alive_mode(settings, sockfd))
+		goto fail;
 
 	socketBio = BIO_new(BIO_s_simple_socket());
 
