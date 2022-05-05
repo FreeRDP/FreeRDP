@@ -978,7 +978,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT
 	return sockfd;
 }
 
-static BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int sockfd)
+BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int sockfd)
 {
 	const BOOL keepalive = (freerdp_settings_get_bool(settings, FreeRDP_TcpKeepAlive));
 	UINT32 optval;
