@@ -518,7 +518,10 @@ settings but before rdp_client_connect() to have it executed after the
 	FREERDP_API BOOL freerdp_shall_disconnect_context(rdpContext* context);
 	FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 
-	FREERDP_API BOOL freerdp_disconnect_before_reconnect(freerdp* instance);
+	WINPR_DEPRECATED_VAR("use freerdp_disconnect_before_reconnect_context instead",
+	                     FREERDP_API BOOL freerdp_disconnect_before_reconnect(freerdp* instance));
+	FREERDP_API BOOL freerdp_disconnect_before_reconnect_context(rdpContext* context);
+
 	FREERDP_API BOOL freerdp_reconnect(freerdp* instance);
 
 	FREERDP_API UINT freerdp_channels_attach(freerdp* instance);
