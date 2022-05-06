@@ -316,7 +316,6 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
                                             P11EnumKeysState* state)
 {
 	CK_RV rv;
-	CK_SESSION_HANDLE session = (CK_SESSION_HANDLE)NULL;
 	CK_ULONG i, j, nslotObjects;
 	CK_OBJECT_HANDLE slotObjects[MAX_KEYS_PER_SLOT] = { 0 };
 	const char* step = NULL;
@@ -330,7 +329,9 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 	state->nprivateKeys = 0;
 	for (i = 0; i < state->nslots; i++)
 	{
+		CK_SESSION_HANDLE session = (CK_SESSION_HANDLE)NULL;
 		CK_SLOT_INFO slotInfo;
+		CK_TOKEN_INFO tokenInfo;
 
 		WINPR_ASSERT(p11->C_GetSlotInfo);
 		rv = p11->C_GetSlotInfo(state->slots[i], &slotInfo);
@@ -347,17 +348,29 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 		/* this is a safety guard as we're supposed to have listed only readers with tokens in them */
 		if (!(slotInfo.flags & CKF_TOKEN_PRESENT))
 		{
-			WLog_ERR(TAG, "token not present for slot #%d(%d)", i, state->slots[i]);
+			WLog_INFO(TAG, "token not present for slot #%d(%d)", i, state->slots[i]);
 			continue;
+		}
+
+		WINPR_ASSERT(p11->C_GetTokenInfo);
+		rv = p11->C_GetTokenInfo(state->slots[i], &tokenInfo);
+		if (rv != CKR_OK)
+		{
+			WLog_INFO(TAG, "unable to retrieve token info for slot #%d(%d)", i, state->slots[i]);
+		}
+		else
+		{
+			fix_padded_string((char *)tokenInfo.label, sizeof(tokenInfo.label));
+			WLog_DBG(TAG, "%s: token, label='%s' flags=0x%x", __FUNCTION__, tokenInfo.label,
+					tokenInfo.flags);
 		}
 
 		WINPR_ASSERT(p11->C_OpenSession);
 		rv = p11->C_OpenSession(state->slots[i], CKF_SERIAL_SESSION, NULL, NULL, &session);
 		if (rv != CKR_OK)
 		{
-			// TODO: shall it be fatal ?
-			WLog_ERR(TAG, "unable to openSession for slot #%d(%d), rv=%s", i, state->slots[i],
-					CK_RV_error_string(rv));
+			WLog_ERR(TAG, "unable to openSession for slot #%d(%d), session=%p rv=%s", i, state->slots[i],
+					session, CK_RV_error_string(rv));
 			continue;
 		}
 
