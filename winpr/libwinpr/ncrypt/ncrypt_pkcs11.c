@@ -16,6 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef WITH_PKCS11
+#define WITH_PKCS11
+#endif
 
 #include <stdlib.h>
 
@@ -216,6 +219,105 @@ static CK_RV object_load_attributes(NCryptP11ProviderHandle* provider, CK_SESSIO
 	return rv;
 }
 
+static const char* CK_RV_error_string(CK_RV rv)
+{
+	static char generic_buffer[200];
+#define ERR_ENTRY(X) case X: return #X
+
+	switch (rv)
+	{
+	ERR_ENTRY(CKR_OK);
+	ERR_ENTRY(CKR_CANCEL);
+	ERR_ENTRY(CKR_HOST_MEMORY);
+	ERR_ENTRY(CKR_SLOT_ID_INVALID);
+	ERR_ENTRY(CKR_GENERAL_ERROR);
+	ERR_ENTRY(CKR_FUNCTION_FAILED);
+	ERR_ENTRY(CKR_ARGUMENTS_BAD);
+	ERR_ENTRY(CKR_NO_EVENT);
+	ERR_ENTRY(CKR_NEED_TO_CREATE_THREADS);
+	ERR_ENTRY(CKR_CANT_LOCK);
+	ERR_ENTRY(CKR_ATTRIBUTE_READ_ONLY);
+	ERR_ENTRY(CKR_ATTRIBUTE_SENSITIVE);
+	ERR_ENTRY(CKR_ATTRIBUTE_TYPE_INVALID);
+	ERR_ENTRY(CKR_ATTRIBUTE_VALUE_INVALID);
+	ERR_ENTRY(CKR_DATA_INVALID);
+	ERR_ENTRY(CKR_DATA_LEN_RANGE);
+	ERR_ENTRY(CKR_DEVICE_ERROR);
+	ERR_ENTRY(CKR_DEVICE_MEMORY);
+	ERR_ENTRY(CKR_DEVICE_REMOVED);
+	ERR_ENTRY(CKR_ENCRYPTED_DATA_INVALID);
+	ERR_ENTRY(CKR_ENCRYPTED_DATA_LEN_RANGE);
+	ERR_ENTRY(CKR_FUNCTION_CANCELED);
+	ERR_ENTRY(CKR_FUNCTION_NOT_PARALLEL);
+	ERR_ENTRY(CKR_FUNCTION_NOT_SUPPORTED);
+	ERR_ENTRY(CKR_KEY_HANDLE_INVALID);
+	ERR_ENTRY(CKR_KEY_SIZE_RANGE);
+	ERR_ENTRY(CKR_KEY_TYPE_INCONSISTENT);
+	ERR_ENTRY(CKR_KEY_NOT_NEEDED);
+	ERR_ENTRY(CKR_KEY_CHANGED);
+	ERR_ENTRY(CKR_KEY_NEEDED);
+	ERR_ENTRY(CKR_KEY_INDIGESTIBLE);
+	ERR_ENTRY(CKR_KEY_FUNCTION_NOT_PERMITTED);
+	ERR_ENTRY(CKR_KEY_NOT_WRAPPABLE);
+	ERR_ENTRY(CKR_KEY_UNEXTRACTABLE);
+	ERR_ENTRY(CKR_MECHANISM_INVALID);
+	ERR_ENTRY(CKR_MECHANISM_PARAM_INVALID);
+	ERR_ENTRY(CKR_OBJECT_HANDLE_INVALID);
+	ERR_ENTRY(CKR_OPERATION_ACTIVE);
+	ERR_ENTRY(CKR_OPERATION_NOT_INITIALIZED);
+	ERR_ENTRY(CKR_PIN_INCORRECT);
+	ERR_ENTRY(CKR_PIN_INVALID);
+	ERR_ENTRY(CKR_PIN_LEN_RANGE);
+	ERR_ENTRY(CKR_PIN_EXPIRED);
+	ERR_ENTRY(CKR_PIN_LOCKED);
+	ERR_ENTRY(CKR_SESSION_CLOSED);
+	ERR_ENTRY(CKR_SESSION_COUNT);
+	ERR_ENTRY(CKR_SESSION_HANDLE_INVALID);
+	ERR_ENTRY(CKR_SESSION_PARALLEL_NOT_SUPPORTED);
+	ERR_ENTRY(CKR_SESSION_READ_ONLY);
+	ERR_ENTRY(CKR_SESSION_EXISTS);
+	ERR_ENTRY(CKR_SESSION_READ_ONLY_EXISTS);
+	ERR_ENTRY(CKR_SESSION_READ_WRITE_SO_EXISTS);
+	ERR_ENTRY(CKR_SIGNATURE_INVALID);
+	ERR_ENTRY(CKR_SIGNATURE_LEN_RANGE);
+	ERR_ENTRY(CKR_TEMPLATE_INCOMPLETE);
+	ERR_ENTRY(CKR_TEMPLATE_INCONSISTENT);
+	ERR_ENTRY(CKR_TOKEN_NOT_PRESENT);
+	ERR_ENTRY(CKR_TOKEN_NOT_RECOGNIZED);
+	ERR_ENTRY(CKR_TOKEN_WRITE_PROTECTED);
+	ERR_ENTRY(CKR_UNWRAPPING_KEY_HANDLE_INVALID);
+	ERR_ENTRY(CKR_UNWRAPPING_KEY_SIZE_RANGE);
+	ERR_ENTRY(CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT);
+	ERR_ENTRY(CKR_USER_ALREADY_LOGGED_IN);
+	ERR_ENTRY(CKR_USER_NOT_LOGGED_IN);
+	ERR_ENTRY(CKR_USER_PIN_NOT_INITIALIZED);
+	ERR_ENTRY(CKR_USER_TYPE_INVALID);
+	ERR_ENTRY(CKR_USER_ANOTHER_ALREADY_LOGGED_IN);
+	ERR_ENTRY(CKR_USER_TOO_MANY_TYPES);
+	ERR_ENTRY(CKR_WRAPPED_KEY_INVALID);
+	ERR_ENTRY(CKR_WRAPPED_KEY_LEN_RANGE);
+	ERR_ENTRY(CKR_WRAPPING_KEY_HANDLE_INVALID);
+	ERR_ENTRY(CKR_WRAPPING_KEY_SIZE_RANGE);
+	ERR_ENTRY(CKR_WRAPPING_KEY_TYPE_INCONSISTENT);
+	ERR_ENTRY(CKR_RANDOM_SEED_NOT_SUPPORTED);
+	ERR_ENTRY(CKR_RANDOM_NO_RNG);
+	ERR_ENTRY(CKR_DOMAIN_PARAMS_INVALID);
+	ERR_ENTRY(CKR_BUFFER_TOO_SMALL);
+	ERR_ENTRY(CKR_SAVED_STATE_INVALID);
+	ERR_ENTRY(CKR_INFORMATION_SENSITIVE);
+	ERR_ENTRY(CKR_STATE_UNSAVEABLE);
+	ERR_ENTRY(CKR_CRYPTOKI_NOT_INITIALIZED);
+	ERR_ENTRY(CKR_CRYPTOKI_ALREADY_INITIALIZED);
+	ERR_ENTRY(CKR_MUTEX_BAD);
+	ERR_ENTRY(CKR_MUTEX_NOT_LOCKED);
+	ERR_ENTRY(CKR_FUNCTION_REJECTED);
+	default:
+		snprintf(generic_buffer, sizeof(generic_buffer), "unknown 0x%lx", rv);
+		return generic_buffer;
+	}
+#undef ERR_ENTRY
+}
+
 static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
                                             P11EnumKeysState* state)
 {
@@ -244,12 +346,24 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 			continue;
 		}
 
+		fix_padded_string((char *)slotInfo.slotDescription, sizeof(slotInfo.slotDescription));
+		WLog_DBG(TAG, "%s: collecting private keys for slot #%d(%lu) descr='%s' flags=0x%x", __FUNCTION__, i,
+				state->slots[i], slotInfo.slotDescription, slotInfo.flags);
+
+		/* this is a safety guard as we're supposed to have listed only readers with tokens in them */
+		if (!(slotInfo.flags & CKF_TOKEN_PRESENT))
+		{
+			WLog_ERR(TAG, "token not present for slot #%d(%d)", i, state->slots[i]);
+			continue;
+		}
+
 		WINPR_ASSERT(p11->C_OpenSession);
 		rv = p11->C_OpenSession(state->slots[i], CKF_SERIAL_SESSION, NULL, NULL, &session);
 		if (rv != CKR_OK)
 		{
 			// TODO: shall it be fatal ?
-			WLog_ERR(TAG, "unable to openSession for slot #%d(%d)", i, state->slots[i]);
+			WLog_ERR(TAG, "unable to openSession for slot #%d(%d), rv=%s", i, state->slots[i],
+					CK_RV_error_string(rv));
 			continue;
 		}
 
@@ -258,7 +372,8 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 		if (rv != CKR_OK)
 		{
 			// TODO: shall it be fatal ?
-			WLog_ERR(TAG, "unable to initiate search for slot #%d(%d)", i, state->slots[i]);
+			WLog_ERR(TAG, "unable to initiate search for slot #%d(%d), rv=%s", i, state->slots[i],
+					CK_RV_error_string(rv));
 			step = "C_FindObjectsInit";
 			goto cleanup_FindObjectsInit;
 		}
@@ -267,11 +382,13 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 		rv = p11->C_FindObjects(session, &slotObjects[0], ARRAYSIZE(slotObjects), &nslotObjects);
 		if (rv != CKR_OK)
 		{
-			WLog_ERR(TAG, "unable to findObjects for slot #%d(%d)", i, state->slots[i]);
+			WLog_ERR(TAG, "unable to findObjects for slot #%d(%d), rv=%s", i, state->slots[i],
+					CK_RV_error_string(rv));
 			step = "C_FindObjects";
 			goto cleanup_FindObjects;
 		}
 
+		WLog_DBG(TAG, "%s: slot has %d objects", __FUNCTION__, nslotObjects);
 		for (j = 0; j < nslotObjects; j++)
 		{
 			NCryptPrivateKeyEnum* privKey = &state->privateKeys[state->nprivateKeys];
@@ -287,7 +404,7 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 			                            ARRAYSIZE(key_or_certAttrs));
 			if (rv != CKR_OK)
 			{
-				WLog_ERR(TAG, "error getting attributes");
+				WLog_ERR(TAG, "error getting attributes, rv=%s", CK_RV_error_string(rv));
 				continue;
 			}
 
@@ -302,16 +419,16 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 		rv = p11->C_FindObjectsFinal(session);
 		if (rv != CKR_OK)
 		{
-			WLog_ERR(TAG, "error during C_FindObjectsFinal for slot #%d(%d) (errorStep=%s)", i,
-			         state->slots[i], step);
+			WLog_ERR(TAG, "error during C_FindObjectsFinal for slot #%d(%d) (errorStep=%s), rv=%s", i,
+			         state->slots[i], step,	CK_RV_error_string(rv));
 		}
 	cleanup_FindObjectsInit:
 		WINPR_ASSERT(p11->C_CloseSession);
 		rv = p11->C_CloseSession(session);
 		if (rv != CKR_OK)
 		{
-			WLog_ERR(TAG, "error closing session for slot #%d(%d) (errorStep=%s)", i,
-			         state->slots[i], step);
+			WLog_ERR(TAG, "error closing session for slot #%d(%d) (errorStep=%s), rv=%s", i,
+			         state->slots[i], step,	CK_RV_error_string(rv));
 		}
 	}
 

@@ -741,6 +741,103 @@ fail:
 	return FALSE;
 }
 
+static BOOL read_pem_file(rdpSettings* settings, size_t id, const char* file)
+{
+	INT64 s;
+	int rs;
+	size_t fr;
+	char* ptr;
+	BOOL rc = FALSE;
+	FILE* fp = winpr_fopen(file, "r");
+	if (!fp)
+		return FALSE;
+	rs = _fseeki64(fp, 0, SEEK_END);
+	if (rs < 0)
+		goto fail;
+	s = _ftelli64(fp);
+	if (s < 0)
+		goto fail;
+	rs = _fseeki64(fp, 0, SEEK_SET);
+	if (rs < 0)
+		goto fail;
+
+	if (!freerdp_settings_set_string_len(settings, id, NULL, s + 1ull))
+		goto fail;
+
+	ptr = freerdp_settings_get_string_writable(settings, id);
+	fr = fread(ptr, (size_t)s, 1, fp);
+	if (fr != 1)
+		goto fail;
+	rc = TRUE;
+fail:
+	fclose(fp);
+	return rc;
+}
+
+
+/** @brief suboption type */
+typedef enum
+{
+	CMDLINE_SUBOPTION_STRING,
+	CMDLINE_SUBOPTION_FILE,
+} CmdLineSubOptionType;
+
+typedef BOOL (*CmdLineSubOptionCb)(const char* value, rdpSettings* settings);
+typedef struct
+{
+	const char* optname;
+	size_t id;
+	CmdLineSubOptionType opttype;
+	CmdLineSubOptionCb cb;
+} CmdLineSubOptions;
+
+static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts, size_t count,
+                            const char* arg)
+{
+	BOOL found = FALSE;
+	size_t xx;
+
+	for (xx = 0; xx < count; xx++)
+	{
+		const CmdLineSubOptions* opt = &opts[xx];
+		size_t optlen = strlen(opt->optname);
+
+		if (strncmp(opt->optname, arg, optlen) == 0)
+		{
+			const char* val = &arg[optlen];
+			BOOL status;
+
+			switch (opt->opttype)
+			{
+				case CMDLINE_SUBOPTION_STRING:
+					status = freerdp_settings_set_string(settings, opt->id, val);
+					break;
+				case CMDLINE_SUBOPTION_FILE:
+					status = read_pem_file(settings, opt->id, val);
+					break;
+				default:
+					WLog_ERR(TAG, "invalid subOption type");
+					return FALSE;
+			}
+
+			if (!status)
+				return FALSE;
+
+			if (opt->cb && !opt->cb(val, settings))
+				return FALSE;
+
+			found = TRUE;
+			break;
+		}
+	}
+
+	if (!found)
+		WLog_ERR(TAG, "option %s not handled", arg);
+
+	return found;
+}
+
+
 static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
 	rdpSettings* settings = (rdpSettings*)context;
@@ -764,6 +861,43 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 
 		free(ptr.p);
 	}
+	CommandLineSwitchCase(arg, "kerberos")
+	{
+		size_t count;
+		union
+		{
+			char** p;
+			const char** pc;
+		} ptr;
+
+		ptr.p = CommandLineParseCommaSeparatedValuesEx("kerberos", arg->Value, &count);
+		if (ptr.pc)
+		{
+			size_t x;
+			const CmdLineSubOptions opts[] = {
+				{ "start-time:", FreeRDP_KerberosStartTime, CMDLINE_SUBOPTION_STRING, NULL },
+				{ "lifetime:", FreeRDP_KerberosLifeTime, CMDLINE_SUBOPTION_STRING, NULL },
+				{ "renewable-lifetime:", FreeRDP_KerberosRenewableLifeTime,
+				  CMDLINE_SUBOPTION_STRING, NULL },
+				{ "cache:", FreeRDP_KerberosCache, CMDLINE_SUBOPTION_STRING, NULL },
+				{ "armor:", FreeRDP_KerberosArmor, CMDLINE_SUBOPTION_STRING, NULL },
+				{ "pkinit-anchors:", FreeRDP_PkinitAnchors, CMDLINE_SUBOPTION_STRING, NULL },
+				{ "pkcs11-module:", FreeRDP_Pkcs11Module, CMDLINE_SUBOPTION_STRING, NULL }
+			};
+
+			for (x = 1; x < count; x++)
+			{
+				const char* cur = ptr.pc[x];
+				if (!parseSubOptions(settings, opts, ARRAYSIZE(opts), cur))
+				{
+					free(ptr.p);
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
+			}
+		}
+		free(ptr.p);
+	}
+
 	CommandLineSwitchCase(arg, "vc")
 	{
 		size_t count;
@@ -1469,99 +1603,9 @@ static BOOL prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMEN
 	return freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT);
 }
 
-static BOOL read_pem_file(rdpSettings* settings, size_t id, const char* file)
-{
-	INT64 s;
-	int rs;
-	size_t fr;
-	char* ptr;
-	BOOL rc = FALSE;
-	FILE* fp = winpr_fopen(file, "r");
-	if (!fp)
-		return FALSE;
-	rs = _fseeki64(fp, 0, SEEK_END);
-	if (rs < 0)
-		goto fail;
-	s = _ftelli64(fp);
-	if (s < 0)
-		goto fail;
-	rs = _fseeki64(fp, 0, SEEK_SET);
-	if (rs < 0)
-		goto fail;
 
-	if (!freerdp_settings_set_string_len(settings, id, NULL, s + 1ull))
-		goto fail;
 
-	ptr = freerdp_settings_get_string_writable(settings, id);
-	fr = fread(ptr, (size_t)s, 1, fp);
-	if (fr != 1)
-		goto fail;
-	rc = TRUE;
-fail:
-	fclose(fp);
-	return rc;
-}
 
-typedef enum
-{
-	CMDLINE_SUBOPTION_STRING,
-	CMDLINE_SUBOPTION_FILE,
-} CmdLineSubOptionType;
-
-typedef BOOL (*CmdLineSubOptionCb)(const char* value, rdpSettings* settings);
-typedef struct
-{
-	const char* optname;
-	size_t id;
-	CmdLineSubOptionType opttype;
-	CmdLineSubOptionCb cb;
-} CmdLineSubOptions;
-
-static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts, size_t count,
-                            const char* arg)
-{
-	BOOL found = FALSE;
-	size_t xx;
-
-	for (xx = 0; xx < count; xx++)
-	{
-		const CmdLineSubOptions* opt = &opts[xx];
-		size_t optlen = strlen(opt->optname);
-
-		if (strncmp(opt->optname, arg, optlen) == 0)
-		{
-			const char* val = &arg[optlen];
-			BOOL status;
-
-			switch (opt->opttype)
-			{
-				case CMDLINE_SUBOPTION_STRING:
-					status = freerdp_settings_set_string(settings, opt->id, val);
-					break;
-				case CMDLINE_SUBOPTION_FILE:
-					status = read_pem_file(settings, opt->id, val);
-					break;
-				default:
-					WLog_ERR(TAG, "invalid subOption type");
-					return FALSE;
-			}
-
-			if (!status)
-				return FALSE;
-
-			if (opt->cb && !opt->cb(val, settings))
-				return FALSE;
-
-			found = TRUE;
-			break;
-		}
-	}
-
-	if (!found)
-		WLog_ERR(TAG, "option %s not handled", arg);
-
-	return found;
-}
 
 static BOOL setSmartcardEmulation(const char* value, rdpSettings* settings)
 {
@@ -3239,42 +3283,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				default:
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
-		}
-		CommandLineSwitchCase(arg, "kerberos")
-		{
-			size_t count;
-			union
-			{
-				char** p;
-				const char** pc;
-			} ptr;
-
-			ptr.p = CommandLineParseCommaSeparatedValuesEx("kerberos", arg->Value, &count);
-			if (ptr.pc)
-			{
-				size_t x;
-				const CmdLineSubOptions opts[] = {
-					{ "start-time:", FreeRDP_KerberosStartTime, CMDLINE_SUBOPTION_STRING, NULL },
-					{ "lifetime:", FreeRDP_KerberosLifeTime, CMDLINE_SUBOPTION_STRING, NULL },
-					{ "renewable-lifetime:", FreeRDP_KerberosRenewableLifeTime,
-					  CMDLINE_SUBOPTION_STRING, NULL },
-					{ "cache:", FreeRDP_KerberosCache, CMDLINE_SUBOPTION_STRING, NULL },
-					{ "armor:", FreeRDP_KerberosArmor, CMDLINE_SUBOPTION_STRING, NULL },
-					{ "pkinit-anchors:", FreeRDP_PkinitAnchors, CMDLINE_SUBOPTION_STRING, NULL },
-					{ "pkcs11-module:", FreeRDP_Pkcs11Module, CMDLINE_SUBOPTION_STRING, NULL }
-				};
-
-				for (x = 1; x < count; x++)
-				{
-					const char* cur = ptr.pc[x];
-					if (!parseSubOptions(settings, opts, ARRAYSIZE(opts), cur))
-					{
-						free(ptr.p);
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					}
-				}
-			}
-			free(ptr.p);
 		}
 		CommandLineSwitchCase(arg, "action-script")
 		{
