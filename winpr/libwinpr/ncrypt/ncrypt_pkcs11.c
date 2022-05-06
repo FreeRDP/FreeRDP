@@ -16,14 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef WITH_PKCS11
-#define WITH_PKCS11
-#endif
 
 #include <stdlib.h>
-
-#ifdef WITH_PKCS11
-
 #include <pkcs11-helper-1.0/pkcs11.h>
 
 #include <winpr/library.h>
@@ -1085,4 +1079,3 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 	return status;
 }
 
-#endif
