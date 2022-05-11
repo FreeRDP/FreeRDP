@@ -274,8 +274,8 @@ extern "C"
 	 * @param height   height to copy in pixels
 	 * @param data      source buffer, must be (nWidth + 7) / 8 bytes long
 	 *
-	 * @return          A buffer allocated with _aligned_malloc(width * height, 16)
-	 *                  if successufl, NULL otherwise.
+	 * @return          A buffer allocated with winpr_aligned_malloc(width * height, 16)
+	 *                  if successful, NULL otherwise.
 	 */
 	FREERDP_API BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* data);
 

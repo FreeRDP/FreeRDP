@@ -30,7 +30,7 @@ HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat, UINT32 Src
 	if (DstStride == 0)
 		DstStride = nWidth * FreeRDPGetBytesPerPixel(DstFormat);
 
-	data = _aligned_malloc(DstStride * nHeight, 16);
+	data = winpr_aligned_malloc(DstStride * nHeight, 16);
 
 	if (!data)
 		return NULL;
@@ -38,7 +38,7 @@ HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat, UINT32 Src
 	if (!freerdp_image_copy(data, DstFormat, DstStride, xDst, yDst, nWidth, nHeight, src, SrcFormat,
 	                        SrcStride, xSrc, ySrc, hPalette, FREERDP_FLIP_NONE))
 	{
-		_aligned_free(data);
+		winpr_aligned_free(data);
 		return NULL;
 	}
 
@@ -46,7 +46,7 @@ HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat, UINT32 Src
 
 	if (!bmp)
 	{
-		_aligned_free(data);
+		winpr_aligned_free(data);
 		return NULL;
 	}
 

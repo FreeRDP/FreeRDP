@@ -305,7 +305,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	surface->gdi.scanline = surface->gdi.width * FreeRDPGetBytesPerPixel(surface->gdi.format);
 	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline, xfc->scanline_pad);
 	size = surface->gdi.scanline * surface->gdi.height * 1ULL;
-	surface->gdi.data = (BYTE*)_aligned_malloc(size, 16);
+	surface->gdi.data = (BYTE*)winpr_aligned_malloc(size, 16);
 
 	if (!surface->gdi.data)
 	{
@@ -329,7 +329,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		surface->stageScanline = width * bytes;
 		surface->stageScanline = x11_pad_scanline(surface->stageScanline, xfc->scanline_pad);
 		size = surface->stageScanline * surface->gdi.height * 1ULL;
-		surface->stage = (BYTE*)_aligned_malloc(size, 16);
+		surface->stage = (BYTE*)winpr_aligned_malloc(size, 16);
 
 		if (!surface->stage)
 		{
@@ -366,9 +366,9 @@ error_set_surface_data:
 	surface->image->data = NULL;
 	XDestroyImage(surface->image);
 error_surface_image:
-	_aligned_free(surface->stage);
+	winpr_aligned_free(surface->stage);
 out_free_gdidata:
-	_aligned_free(surface->gdi.data);
+	winpr_aligned_free(surface->gdi.data);
 out_free:
 	free(surface);
 	return ret;
@@ -398,8 +398,8 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 #endif
 		surface->image->data = NULL;
 		XDestroyImage(surface->image);
-		_aligned_free(surface->gdi.data);
-		_aligned_free(surface->stage);
+		winpr_aligned_free(surface->gdi.data);
+		winpr_aligned_free(surface->stage);
 		region16_uninit(&surface->gdi.invalidRegion);
 		codecs = surface->gdi.codecs;
 		free(surface);

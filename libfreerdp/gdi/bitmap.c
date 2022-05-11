@@ -98,7 +98,7 @@ UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y, UINT32 crColor)
 
 HGDI_BITMAP gdi_CreateBitmap(UINT32 nWidth, UINT32 nHeight, UINT32 format, BYTE* data)
 {
-	return gdi_CreateBitmapEx(nWidth, nHeight, format, 0, data, _aligned_free);
+	return gdi_CreateBitmapEx(nWidth, nHeight, format, 0, data, winpr_aligned_free);
 }
 
 /**
@@ -156,8 +156,8 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
 	hBitmap->data =
-	    _aligned_malloc(nWidth * nHeight * FreeRDPGetBytesPerPixel(hBitmap->format) * 1ULL, 16);
-	hBitmap->free = _aligned_free;
+			winpr_aligned_malloc(nWidth * nHeight * FreeRDPGetBytesPerPixel(hBitmap->format) * 1ULL, 16);
+	hBitmap->free = winpr_aligned_free;
 
 	if (!hBitmap->data)
 	{

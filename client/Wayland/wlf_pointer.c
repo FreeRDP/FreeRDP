@@ -40,7 +40,7 @@ static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		return FALSE;
 
 	ptr->size = pointer->width * pointer->height * 4ULL;
-	ptr->data = _aligned_malloc(ptr->size, 16);
+	ptr->data = winpr_aligned_malloc(ptr->size, 16);
 
 	if (!ptr->data)
 		return FALSE;
@@ -50,7 +50,7 @@ static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	        pointer->xorMaskData, pointer->lengthXorMask, pointer->andMaskData,
 	        pointer->lengthAndMask, pointer->xorBpp, &context->gdi->palette))
 	{
-		_aligned_free(ptr->data);
+		winpr_aligned_free(ptr->data);
 		return FALSE;
 	}
 
@@ -63,7 +63,7 @@ static void wlf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	WINPR_UNUSED(context);
 
 	if (ptr)
-		_aligned_free(ptr->data);
+		winpr_aligned_free(ptr->data);
 }
 
 static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)

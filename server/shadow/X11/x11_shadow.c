@@ -1320,7 +1320,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	subsystem->cursorMaxWidth = 256;
 	subsystem->cursorMaxHeight = 256;
 	subsystem->cursorPixels =
-	    _aligned_malloc(subsystem->cursorMaxWidth * subsystem->cursorMaxHeight * 4, 16);
+	    winpr_aligned_malloc(subsystem->cursorMaxWidth * subsystem->cursorMaxHeight * 4, 16);
 
 	if (!subsystem->cursorPixels)
 		return -1;
@@ -1394,7 +1394,7 @@ static int x11_shadow_subsystem_uninit(rdpShadowSubsystem* sub)
 
 	if (subsystem->cursorPixels)
 	{
-		_aligned_free(subsystem->cursorPixels);
+		winpr_aligned_free(subsystem->cursorPixels);
 		subsystem->cursorPixels = NULL;
 	}
 

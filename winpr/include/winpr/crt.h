@@ -125,6 +125,8 @@ extern "C"
 }
 #endif
 
+#endif /* _WIN32 */
+
 /* Data Alignment */
 
 #if defined(__clang__)
@@ -146,19 +148,7 @@ extern "C"
 {
 #endif
 
-	WINPR_API void* _aligned_malloc(size_t size, size_t alignment);
-	WINPR_API void* _aligned_realloc(void* memblock, size_t size, size_t alignment);
-	WINPR_API void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment);
-
-	WINPR_API void* _aligned_offset_malloc(size_t size, size_t alignment, size_t offset);
-	WINPR_API void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment,
-	                                        size_t offset);
-	WINPR_API void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size,
-	                                         size_t alignment, size_t offset);
-
-	WINPR_API size_t _aligned_msize(void* memblock, size_t alignment, size_t offset);
-
-	WINPR_API void _aligned_free(void* memblock);
+#ifndef _WIN32
 
 	/* Data Conversion */
 
@@ -169,11 +159,69 @@ extern "C"
 	WINPR_API errno_t memmove_s(void* dest, size_t numberOfElements, const void* src, size_t count);
 	WINPR_API errno_t wmemmove_s(WCHAR* dest, size_t numberOfElements, const WCHAR* src,
 	                             size_t count);
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* _WIN32 */
+
+#if !defined(_WIN32) || (defined(__MINGW32__) && ! defined(_UCRT))
+/* note: we use our own implementation of _aligned_XXX function when:
+ * - it's not win32
+ * - it's mingw with native libs (not ucrt64) because we didn't managed to have it working
+ *   and not have C runtime deadly mixes
+ */
+#if WINPR_MSVCR_ALIGNMENT_EMULATE
+	#define _aligned_malloc winpr_aligned_malloc
+	#define _aligned_realloc winpr_aligned_realloc
+	#define _aligned_recalloc winpr_aligned_recalloc
+	#define _aligned_offset_malloc winpr_aligned_offset_malloc
+	#define _aligned_offset_realloc winpr_aligned_offset_realloc
+	#define _aligned_offset_recalloc winpr_aligned_offset_recalloc
+	#define _aligned_msize winpr_aligned_msize
+	#define _aligned_free winpr_aligned_free
+#endif
+
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	WINPR_API void* winpr_aligned_malloc(size_t size, size_t alignment);
+
+	WINPR_API void* winpr_aligned_realloc(void* memblock, size_t size, size_t alignment);
+
+	WINPR_API void* winpr_aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment);
+
+	WINPR_API void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset);
+
+	WINPR_API void* winpr_aligned_offset_realloc(void* memblock, size_t size, size_t alignment,
+											size_t offset);
+
+	WINPR_API void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size,
+											 size_t alignment, size_t offset);
+
+	WINPR_API size_t winpr_aligned_msize(void* memblock, size_t alignment, size_t offset);
+
+	WINPR_API void winpr_aligned_free(void* memblock);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#else
+	#define winpr_aligned_malloc _aligned_malloc
+	#define winpr_aligned_realloc _aligned_realloc
+	#define winpr_aligned_recalloc _aligned_recalloc
+	#define winpr_aligned_offset_malloc _aligned_offset_malloc
+	#define winpr_aligned_offset_realloc _aligned_offset_realloc
+	#define winpr_aligned_offset_recalloc _aligned_offset_recalloc
+	#define winpr_aligned_msize _aligned_msize
+	#define winpr_aligned_free _aligned_free
+#endif /* !defined(_WIN32) || (defined(__MINGW32__) ... */
+
 
 #endif /* WINPR_CRT_H */

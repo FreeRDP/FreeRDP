@@ -868,7 +868,7 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 		{
 			HGDI_BITMAP hBmp;
 			UINT32 brushFormat;
-			BYTE* data = (BYTE*)_aligned_malloc(
+			BYTE* data = (BYTE*)winpr_aligned_malloc(
 			    8 * 8 * FreeRDPGetBytesPerPixel(gdi->drawing->hdc->format), 16);
 
 			if (!data)
@@ -891,7 +891,7 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 				                        brushFormat, 0, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
 				{
 					ret = FALSE;
-					_aligned_free(data);
+					winpr_aligned_free(data);
 					goto out_fail;
 				}
 			}
@@ -902,7 +902,7 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 				                                        &gdi->palette))
 				{
 					ret = FALSE;
-					_aligned_free(data);
+					winpr_aligned_free(data);
 					goto out_fail;
 				}
 			}
@@ -912,7 +912,7 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			if (!hBmp)
 			{
 				ret = FALSE;
-				_aligned_free(data);
+				winpr_aligned_free(data);
 				goto out_fail;
 			}
 
@@ -1271,7 +1271,7 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT
  */
 BOOL gdi_init(freerdp* instance, UINT32 format)
 {
-	return gdi_init_ex(instance, format, 0, NULL, _aligned_free);
+	return gdi_init_ex(instance, format, 0, NULL, winpr_aligned_free);
 }
 
 BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,

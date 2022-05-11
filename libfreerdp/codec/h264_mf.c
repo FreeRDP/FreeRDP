@@ -441,7 +441,7 @@ static void mf_uninit(H264_CONTEXT* h264)
 		}
 
 		for (x = 0; x < sizeof(h264->pYUVData) / sizeof(h264->pYUVData[0]); x++)
-			_aligned_free(h264->pYUVData[x]);
+			winpr_aligned_free(h264->pYUVData[x]);
 
 		memset(h264->pYUVData, 0, sizeof(h264->pYUVData));
 		memset(h264->iStride, 0, sizeof(h264->iStride));

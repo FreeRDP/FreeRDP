@@ -847,7 +847,7 @@ static UINT printer_free(DEVICE* device)
 	CloseHandle(printer_dev->thread);
 	CloseHandle(printer_dev->stopEvent);
 	CloseHandle(printer_dev->event);
-	_aligned_free(printer_dev->pIrpList);
+	winpr_aligned_free(printer_dev->pIrpList);
 
 	if (printer_dev->printer)
 		printer_dev->printer->ReleaseRef(printer_dev->printer);
@@ -887,7 +887,7 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 	printer_dev->device.Free = printer_free;
 	printer_dev->rdpcontext = pEntryPoints->rdpcontext;
 	printer_dev->printer = printer;
-	printer_dev->pIrpList = (WINPR_PSLIST_HEADER)_aligned_malloc(sizeof(WINPR_SLIST_HEADER),
+	printer_dev->pIrpList = (WINPR_PSLIST_HEADER)winpr_aligned_malloc(sizeof(WINPR_SLIST_HEADER),
 	                                                             MEMORY_ALLOCATION_ALIGNMENT);
 
 	if (!printer_dev->pIrpList)

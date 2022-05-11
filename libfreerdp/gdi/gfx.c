@@ -1123,7 +1123,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	surface->scanline = gfx_align_scanline(surface->width * 4UL, 16);
-	surface->data = (BYTE*)_aligned_malloc(surface->scanline * surface->height * 1ULL, 16);
+	surface->data = (BYTE*)winpr_aligned_malloc(surface->scanline * surface->height * 1ULL, 16);
 
 	if (!surface->data)
 	{
@@ -1166,7 +1166,7 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 #endif
 		region16_uninit(&surface->invalidRegion);
 		codecs = surface->codecs;
-		_aligned_free(surface->data);
+		winpr_aligned_free(surface->data);
 		free(surface);
 	}
 

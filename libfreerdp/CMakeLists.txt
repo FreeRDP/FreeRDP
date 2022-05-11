@@ -402,10 +402,6 @@ if (WITH_LIBRARY_VERSIONING)
     set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
 endif()
 
-if (MINGW)
-	freerdp_library_add(ucrt)
-endif()
-
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBFREERDP_LIBS} winpr)
 
 install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT FreeRDPTargets
