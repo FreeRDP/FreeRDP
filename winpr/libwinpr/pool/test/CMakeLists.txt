@@ -18,10 +18,6 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 target_link_libraries(${MODULE_NAME} winpr)
-if (MINGW)
-	target_link_libraries(${MODULE_NAME} ucrt)
-endif()
-
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 

@@ -83,7 +83,7 @@ int TestErrorSetLastError(int argc, char* argv[])
 		return -1;
 	}
 
-	pLoopCount = _aligned_malloc(sizeof(LONG), sizeof(LONG));
+	pLoopCount = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
 	if (!pLoopCount)
 	{
 		printf("Unable to allocate memory\n");
@@ -130,6 +130,7 @@ int TestErrorSetLastError(int argc, char* argv[])
 	}
 
 	printf("Completed %" PRId32 " iterations.\n", *pLoopCount);
+	winpr_aligned_free(pLoopCount);
 
 	return status;
 }

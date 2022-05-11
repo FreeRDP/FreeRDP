@@ -36,11 +36,11 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	PROFILER_DEFINE(optProf)
 	PROFILER_CREATE(genericProf, "RGBToRGB_16s8u_P3AC4R-GENERIC")
 	PROFILER_CREATE(optProf, "RGBToRGB_16s8u_P3AC4R-OPTIMIZED")
-	r = _aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
-	g = _aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
-	b = _aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
-	out1 = _aligned_recalloc(NULL, 1, dstStride * roi.height, 16);
-	out2 = _aligned_recalloc(NULL, 1, dstStride * roi.height, 16);
+	r = winpr_aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
+	g = winpr_aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
+	b = winpr_aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
+	out1 = winpr_aligned_recalloc(NULL, 1, dstStride * roi.height, 16);
+	out2 = winpr_aligned_recalloc(NULL, 1, dstStride * roi.height, 16);
 
 	if (!r || !g || !b || !out1 || !out2)
 		goto fail;
@@ -108,11 +108,11 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 fail:
 	PROFILER_FREE(genericProf)
 	PROFILER_FREE(optProf)
-	_aligned_free(r);
-	_aligned_free(g);
-	_aligned_free(b);
-	_aligned_free(out1);
-	_aligned_free(out2);
+	winpr_aligned_free(r);
+	winpr_aligned_free(g);
+	winpr_aligned_free(b);
+	winpr_aligned_free(out1);
+	winpr_aligned_free(out2);
 	return !failed;
 }
 

@@ -75,10 +75,10 @@ int TestSynchInit(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	pErrors = _aligned_malloc(sizeof(LONG), sizeof(LONG));
-	pTestThreadFunctionCalls = _aligned_malloc(sizeof(LONG), sizeof(LONG));
-	pTestOnceFunctionCalls = _aligned_malloc(sizeof(LONG), sizeof(LONG));
-	pInitOnceExecuteOnceCalls = _aligned_malloc(sizeof(LONG), sizeof(LONG));
+	pErrors = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
+	pTestThreadFunctionCalls = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
+	pTestOnceFunctionCalls = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
+	pInitOnceExecuteOnceCalls = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
 
 	if (!pErrors || !pTestThreadFunctionCalls || !pTestOnceFunctionCalls ||
 	    !pInitOnceExecuteOnceCalls)
@@ -141,10 +141,10 @@ out:
 	fprintf(stderr, "TestOnceFunctionCalls:    %" PRId32 "\n",
 	        pTestOnceFunctionCalls ? *pTestOnceFunctionCalls : -1);
 
-	_aligned_free(pErrors);
-	_aligned_free(pTestThreadFunctionCalls);
-	_aligned_free(pTestOnceFunctionCalls);
-	_aligned_free(pInitOnceExecuteOnceCalls);
+	winpr_aligned_free(pErrors);
+	winpr_aligned_free(pTestThreadFunctionCalls);
+	winpr_aligned_free(pTestOnceFunctionCalls);
+	winpr_aligned_free(pInitOnceExecuteOnceCalls);
 
 	CloseHandle(hStartEvent);
 

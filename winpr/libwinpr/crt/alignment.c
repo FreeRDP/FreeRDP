@@ -23,7 +23,7 @@
 
 /* Data Alignment: http://msdn.microsoft.com/en-us/library/fs9stz4e/ */
 
-#ifndef _WIN32
+#if !defined(_WIN32) || (defined(__MINGW32__) && ! defined(_UCRT))
 
 #include <stdint.h>
 #include <limits.h>
@@ -54,22 +54,22 @@ struct winpr_aligned_mem
 };
 typedef struct winpr_aligned_mem WINPR_ALIGNED_MEM;
 
-void* _aligned_malloc(size_t size, size_t alignment)
+void* winpr_aligned_malloc(size_t size, size_t alignment)
 {
-	return _aligned_offset_malloc(size, alignment, 0);
+	return winpr_aligned_offset_malloc(size, alignment, 0);
 }
 
-void* _aligned_realloc(void* memblock, size_t size, size_t alignment)
+void* winpr_aligned_realloc(void* memblock, size_t size, size_t alignment)
 {
-	return _aligned_offset_realloc(memblock, size, alignment, 0);
+	return winpr_aligned_offset_realloc(memblock, size, alignment, 0);
 }
 
-void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment)
+void* winpr_aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment)
 {
-	return _aligned_offset_recalloc(memblock, num, size, alignment, 0);
+	return winpr_aligned_offset_recalloc(memblock, num, size, alignment, 0);
 }
 
-void* _aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
+void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 {
 	size_t header, alignsize;
 	uintptr_t basesize;
@@ -121,7 +121,7 @@ void* _aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 	return memblock;
 }
 
-void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment, size_t offset)
+void* winpr_aligned_offset_realloc(void* memblock, size_t size, size_t alignment, size_t offset)
 {
 	size_t copySize;
 	void* newMemblock;
@@ -129,7 +129,7 @@ void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment, siz
 	WINPR_ALIGNED_MEM* pNewMem;
 
 	if (!memblock)
-		return _aligned_offset_malloc(size, alignment, offset);
+		return winpr_aligned_offset_malloc(size, alignment, offset);
 
 	pMem = WINPR_ALIGNED_MEM_STRUCT_FROM_PTR(memblock);
 
@@ -142,11 +142,11 @@ void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment, siz
 
 	if (size == 0)
 	{
-		_aligned_free(memblock);
+		winpr_aligned_free(memblock);
 		return NULL;
 	}
 
-	newMemblock = _aligned_offset_malloc(size, alignment, offset);
+	newMemblock = winpr_aligned_offset_malloc(size, alignment, offset);
 
 	if (!newMemblock)
 		return NULL;
@@ -154,7 +154,7 @@ void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment, siz
 	pNewMem = WINPR_ALIGNED_MEM_STRUCT_FROM_PTR(newMemblock);
 	copySize = (pNewMem->size < pMem->size) ? pNewMem->size : pMem->size;
 	CopyMemory(newMemblock, memblock, copySize);
-	_aligned_free(memblock);
+	winpr_aligned_free(memblock);
 	return newMemblock;
 }
 
@@ -165,7 +165,7 @@ static INLINE size_t cMIN(size_t a, size_t b)
 	return a;
 }
 
-void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t alignment,
+void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t alignment,
                                size_t offset)
 {
 	char* newMemblock = NULL;
@@ -174,7 +174,7 @@ void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t a
 
 	if (!memblock)
 	{
-		newMemblock = _aligned_offset_malloc(size * num, alignment, offset);
+		newMemblock = winpr_aligned_offset_malloc(size * num, alignment, offset);
 
 		if (newMemblock)
 		{
@@ -197,7 +197,7 @@ void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t a
 	if (size == 0)
 		goto fail;
 
-	newMemblock = _aligned_offset_malloc(size * num, alignment, offset);
+	newMemblock = winpr_aligned_offset_malloc(size * num, alignment, offset);
 
 	if (!newMemblock)
 		goto fail;
@@ -209,11 +209,11 @@ void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t a
 		ZeroMemory(newMemblock + csize, pNewMem->size - csize);
 	}
 fail:
-	_aligned_free(memblock);
+	winpr_aligned_free(memblock);
 	return newMemblock;
 }
 
-size_t _aligned_msize(void* memblock, size_t alignment, size_t offset)
+size_t winpr_aligned_msize(void* memblock, size_t alignment, size_t offset)
 {
 	WINPR_ALIGNED_MEM* pMem;
 
@@ -231,7 +231,7 @@ size_t _aligned_msize(void* memblock, size_t alignment, size_t offset)
 	return pMem->size;
 }
 
-void _aligned_free(void* memblock)
+void winpr_aligned_free(void* memblock)
 {
 	WINPR_ALIGNED_MEM* pMem;
 

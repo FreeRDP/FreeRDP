@@ -50,7 +50,7 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32
 		return NULL;
 
 	nDstStep = nWidth * FreeRDPGetBytesPerPixel(gdi->dstFormat);
-	pDstData = _aligned_malloc(nHeight * nDstStep * 1ULL, 16);
+	pDstData = winpr_aligned_malloc(nHeight * nDstStep * 1ULL, 16);
 
 	if (!pDstData)
 		return NULL;
@@ -61,7 +61,7 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32
 	if (!freerdp_image_copy(pDstData, gdi->dstFormat, nDstStep, 0, 0, nWidth, nHeight, pSrcData,
 	                        SrcFormat, nSrcStep, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
 	{
-		_aligned_free(pDstData);
+		winpr_aligned_free(pDstData);
 		return NULL;
 	}
 
@@ -112,7 +112,7 @@ static void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 
 		gdi_DeleteObject((HGDIOBJECT)gdi_bitmap->bitmap);
 		gdi_DeleteDC(gdi_bitmap->hdc);
-		_aligned_free(bitmap->data);
+		winpr_aligned_free(bitmap->data);
 	}
 
 	free(bitmap);
@@ -144,7 +144,7 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 
 	size *= FreeRDPGetBytesPerPixel(bitmap->format);
 	bitmap->length = size;
-	bitmap->data = (BYTE*)_aligned_malloc(bitmap->length, 16);
+	bitmap->data = (BYTE*)winpr_aligned_malloc(bitmap->length, 16);
 
 	if (!bitmap->data)
 		return FALSE;
@@ -242,7 +242,7 @@ static BOOL gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 	if (!gdi_glyph->bitmap)
 	{
 		gdi_DeleteDC(gdi_glyph->hdc);
-		_aligned_free(data);
+		winpr_aligned_free(data);
 		return FALSE;
 	}
 

@@ -376,9 +376,9 @@ static void progressive_tile_free(RFX_PROGRESSIVE_TILE* tile)
 {
 	if (tile)
 	{
-		_aligned_free(tile->sign);
-		_aligned_free(tile->current);
-		_aligned_free(tile->data);
+		winpr_aligned_free(tile->sign);
+		winpr_aligned_free(tile->current);
+		winpr_aligned_free(tile->data);
 	}
 }
 
@@ -418,19 +418,19 @@ static INLINE BOOL progressive_tile_allocate(RFX_PROGRESSIVE_TILE* tile)
 
 	{
 		size_t dataLen = tile->stride * tile->height * 1ULL;
-		tile->data = (BYTE*)_aligned_malloc(dataLen, 16);
+		tile->data = (BYTE*)winpr_aligned_malloc(dataLen, 16);
 		if (tile->data)
 			memset(tile->data, 0xFF, dataLen);
 	}
 
 	{
 		size_t signLen = (8192 + 32) * 3;
-		tile->sign = (BYTE*)_aligned_malloc(signLen, 16);
+		tile->sign = (BYTE*)winpr_aligned_malloc(signLen, 16);
 	}
 
 	{
 		size_t currentLen = (8192 + 32) * 3;
-		tile->current = (BYTE*)_aligned_malloc(currentLen, 16);
+		tile->current = (BYTE*)winpr_aligned_malloc(currentLen, 16);
 	}
 
 	rc = tile->data && tile->sign && tile->current;

@@ -36,9 +36,9 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 		                       PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };
 	PROFILER_DEFINE(genericProf)
 	PROFILER_DEFINE(optProf)
-	in = _aligned_recalloc(NULL, 1, size, 16);
-	out_c = _aligned_recalloc(NULL, 1, size, 16);
-	out_sse = _aligned_recalloc(NULL, 1, size, 16);
+	in = winpr_aligned_recalloc(NULL, 1, size, 16);
+	out_c = winpr_aligned_recalloc(NULL, 1, size, 16);
+	out_sse = winpr_aligned_recalloc(NULL, 1, size, 16);
 
 	if (!in || !out_c || !out_sse)
 		goto fail;
@@ -101,9 +101,9 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 	}
 
 fail:
-	_aligned_free(in);
-	_aligned_free(out_c);
-	_aligned_free(out_sse);
+	winpr_aligned_free(in);
+	winpr_aligned_free(out_c);
+	winpr_aligned_free(out_sse);
 	return status == PRIMITIVES_SUCCESS;
 }
 

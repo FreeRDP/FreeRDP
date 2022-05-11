@@ -167,7 +167,7 @@ static void* rfx_decoder_tile_new(const void* val)
 	if (!(tile = (RFX_TILE*)calloc(1, sizeof(RFX_TILE))))
 		return NULL;
 
-	if (!(tile->data = (BYTE*)_aligned_malloc(size, 16)))
+	if (!(tile->data = (BYTE*)winpr_aligned_malloc(size, 16)))
 	{
 		free(tile);
 		return NULL;
@@ -184,7 +184,7 @@ static void rfx_decoder_tile_free(void* obj)
 	if (tile)
 	{
 		if (tile->allocated)
-			_aligned_free(tile->data);
+			winpr_aligned_free(tile->data);
 
 		free(tile);
 	}

@@ -140,7 +140,7 @@ static void* set_padding(size_t size, size_t padding)
 {
 	size_t halfPad = (padding + 1) / 2;
 	BYTE* psrc;
-	BYTE* src = _aligned_malloc(size + 2 * halfPad, 16);
+	BYTE* src = winpr_aligned_malloc(size + 2 * halfPad, 16);
 
 	if (!src)
 		return NULL;
@@ -152,7 +152,7 @@ static void* set_padding(size_t size, size_t padding)
 
 	if (!check_padding(psrc, size, padding, "init"))
 	{
-		_aligned_free(src);
+		winpr_aligned_free(src);
 		return NULL;
 	}
 
@@ -167,7 +167,7 @@ static void free_padding(void* src, size_t padding)
 		return;
 
 	ptr = ((BYTE*)src) - (padding + 1) / 2;
-	_aligned_free(ptr);
+	winpr_aligned_free(ptr);
 }
 
 /* Create 2 pseudo YUV420 frames of same size.

@@ -376,7 +376,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 
 	if (BufferSize > interleaved->TempSize)
 	{
-		interleaved->TempBuffer = _aligned_realloc(interleaved->TempBuffer, BufferSize, 16);
+		interleaved->TempBuffer = winpr_aligned_realloc(interleaved->TempBuffer, BufferSize, 16);
 		interleaved->TempSize = BufferSize;
 	}
 
@@ -504,7 +504,7 @@ BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 	if (interleaved)
 	{
 		interleaved->TempSize = 64 * 64 * 4;
-		interleaved->TempBuffer = _aligned_malloc(interleaved->TempSize, 16);
+		interleaved->TempBuffer = winpr_aligned_malloc(interleaved->TempSize, 16);
 
 		if (!interleaved->TempBuffer)
 		{
@@ -517,7 +517,7 @@ BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 
 		if (!interleaved->bts)
 		{
-			_aligned_free(interleaved->TempBuffer);
+			winpr_aligned_free(interleaved->TempBuffer);
 			free(interleaved);
 			WLog_ERR(TAG, "Stream_New failed!");
 			return NULL;
@@ -532,7 +532,7 @@ void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved)
 	if (!interleaved)
 		return;
 
-	_aligned_free(interleaved->TempBuffer);
+	winpr_aligned_free(interleaved->TempBuffer);
 	Stream_Free(interleaved->bts, TRUE);
 	free(interleaved);
 }

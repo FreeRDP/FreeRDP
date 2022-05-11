@@ -72,8 +72,8 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 
 		for (x = 0; x < 3; x++)
 		{
-			BYTE* tmp1 = _aligned_recalloc(h264->pYUVData[x], h264->iStride[x], pheight, 16);
-			BYTE* tmp2 = _aligned_recalloc(h264->pOldYUVData[x], h264->iStride[x], pheight, 16);
+			BYTE* tmp1 = winpr_aligned_recalloc(h264->pYUVData[x], h264->iStride[x], pheight, 16);
+			BYTE* tmp2 = winpr_aligned_recalloc(h264->pOldYUVData[x], h264->iStride[x], pheight, 16);
 			if (tmp1)
 				h264->pYUVData[x] = tmp1;
 			if (tmp2)
@@ -415,10 +415,10 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight)
 			BYTE* tmp2;
 			piDstStride[x] = piMainStride[0];
 			piDstSize[x] = piDstStride[x] * padDstHeight;
-			tmp1 = _aligned_recalloc(ppYUVDstData[x], piDstSize[x], 1, 16);
+			tmp1 = winpr_aligned_recalloc(ppYUVDstData[x], piDstSize[x], 1, 16);
 			if (tmp1)
 				ppYUVDstData[x] = tmp1;
-			tmp2 = _aligned_recalloc(ppOldYUVDstData[x], piDstSize[x], 1, 16);
+			tmp2 = winpr_aligned_recalloc(ppOldYUVDstData[x], piDstSize[x], 1, 16);
 			if (tmp2)
 				ppOldYUVDstData[x] = tmp2;
 			if (!tmp1 || !tmp2)
@@ -426,7 +426,7 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight)
 		}
 
 		{
-			BYTE* tmp = _aligned_recalloc(h264->lumaData, piDstSize[0], 4, 16);
+			BYTE* tmp = winpr_aligned_recalloc(h264->lumaData, piDstSize[0], 4, 16);
 			if (!tmp)
 				goto fail;
 			h264->lumaData = tmp;
@@ -696,13 +696,13 @@ void h264_context_free(H264_CONTEXT* h264)
 		{
 			if (h264->Compressor)
 			{
-				_aligned_free(h264->pYUVData[x]);
-				_aligned_free(h264->pOldYUVData[x]);
+				winpr_aligned_free(h264->pYUVData[x]);
+				winpr_aligned_free(h264->pOldYUVData[x]);
 			}
-			_aligned_free(h264->pYUV444Data[x]);
-			_aligned_free(h264->pOldYUV444Data[x]);
+			winpr_aligned_free(h264->pYUV444Data[x]);
+			winpr_aligned_free(h264->pOldYUV444Data[x]);
 		}
-		_aligned_free(h264->lumaData);
+		winpr_aligned_free(h264->lumaData);
 
 		yuv_context_free(h264->yuv);
 		free(h264);
