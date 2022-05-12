@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(WITH_PKCS11 AND NOT WIN32)
+if (PKCS11_FOUND)
 	winpr_include_directory_add(${PKCS11_INCLUDE_DIR})
 	winpr_library_add_public(${PKCS11_LIBRARY})
 
@@ -37,7 +37,7 @@ if(WITH_PKCS11 AND NOT WIN32)
 	endif()
 endif()
 
-if (WITH_PKCS11)
+if (PKCS11_FOUND)
 	winpr_module_add(
 		ncrypt_pkcs11.c
 		)
