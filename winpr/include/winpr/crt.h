@@ -143,12 +143,12 @@ typedef int errno_t;
 #pragma clang diagnostic pop
 #endif
 
+#ifndef _WIN32
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-#ifndef _WIN32
 
 	/* Data Conversion */
 
@@ -171,18 +171,16 @@ extern "C"
  * - it's mingw with native libs (not ucrt64) because we didn't managed to have it working
  *   and not have C runtime deadly mixes
  */
-#if WINPR_MSVCR_ALIGNMENT_EMULATE
-	#define _aligned_malloc winpr_aligned_malloc
-	#define _aligned_realloc winpr_aligned_realloc
-	#define _aligned_recalloc winpr_aligned_recalloc
-	#define _aligned_offset_malloc winpr_aligned_offset_malloc
-	#define _aligned_offset_realloc winpr_aligned_offset_realloc
-	#define _aligned_offset_recalloc winpr_aligned_offset_recalloc
-	#define _aligned_msize winpr_aligned_msize
-	#define _aligned_free winpr_aligned_free
+#if defined(WINPR_MSVCR_ALIGNMENT_EMULATE)
+#define _aligned_malloc winpr_aligned_malloc
+#define _aligned_realloc winpr_aligned_realloc
+#define _aligned_recalloc winpr_aligned_recalloc
+#define _aligned_offset_malloc winpr_aligned_offset_malloc
+#define _aligned_offset_realloc winpr_aligned_offset_realloc
+#define _aligned_offset_recalloc winpr_aligned_offset_recalloc
+#define _aligned_msize winpr_aligned_msize
+#define _aligned_free winpr_aligned_free
 #endif
-
-
 
 #ifdef __cplusplus
 extern "C"
