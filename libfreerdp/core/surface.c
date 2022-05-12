@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/assert.h>
 
@@ -36,7 +34,7 @@ static BOOL update_recv_surfcmd_bitmap_header_ex(wStream* s, TS_COMPRESSED_BITMA
 	if (!s || !header)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < 24)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
 		return FALSE;
 
 	Stream_Read_UINT32(s, header->highUniqueId);
@@ -51,7 +49,7 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 	if (!s || !bmp)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return FALSE;
 
 	Stream_Read_UINT8(s, bmp->bpp);
@@ -82,7 +80,13 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 	}
 
 	bmp->bitmapData = Stream_Pointer(s);
-	return Stream_SafeSeek(s, bmp->bitmapDataLength);
+	if (!Stream_SafeSeek(s, bmp->bitmapDataLength))
+	{
+		WLog_ERR(TAG, "expected bitmapDataLength %" PRIu32 ", not enough data",
+		         bmp->bitmapDataLength);
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static BOOL update_recv_surfcmd_is_rect_valid(const rdpContext* context,
@@ -120,9 +124,10 @@ static BOOL update_recv_surfcmd_is_rect_valid(const rdpContext* context,
 
 static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT16 cmdType)
 {
+	BOOL rc = FALSE;
 	SURFACE_BITS_COMMAND cmd = { 0 };
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		goto fail;
 
 	cmd.cmdType = cmdType;
@@ -137,9 +142,15 @@ static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT
 	if (!update_recv_surfcmd_bitmap_ex(s, &cmd.bmp))
 		goto fail;
 
-	return IFCALLRESULT(TRUE, update->SurfaceBits, update->context, &cmd);
+	if (!IFCALLRESULT(TRUE, update->SurfaceBits, update->context, &cmd))
+	{
+		WLog_DBG(TAG, "update->SurfaceBits implementation failed");
+		goto fail;
+	}
+
+	rc = TRUE;
 fail:
-	return FALSE;
+	return rc;
 }
 
 static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
@@ -149,11 +160,18 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 6)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
 
 	Stream_Read_UINT16(s, marker.frameAction);
-	Stream_Read_UINT32(s, marker.frameId);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		WLog_WARN(TAG,
+		          "[SERVER-BUG]: got %" PRIuz ", expected %" PRIuz
+		          " bytes. [MS-RDPBCGR] 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER) is "
+		          "missing frameId, ignoring",
+		          Stream_GetRemainingLength(s), 4);
+	else
+		Stream_Read_UINT32(s, marker.frameId);
 	WLog_Print(up->log, WLOG_DEBUG, "SurfaceFrameMarker: action: %s (%" PRIu32 ") id: %" PRIu32 "",
 	           (!marker.frameAction) ? "Begin" : "End", marker.frameAction, marker.frameId);
 
@@ -163,7 +181,13 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 		return FALSE;
 	}
 
-	return update->SurfaceFrameMarker(update->context, &marker);
+	if (!update->SurfaceFrameMarker(update->context, &marker))
+	{
+		WLog_DBG(TAG, "update->SurfaceFrameMarker implementation failed");
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 int update_recv_surfcmds(rdpUpdate* update, wStream* s)

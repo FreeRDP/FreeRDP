@@ -21,14 +21,12 @@
 #ifndef FREERDP_LIB_CORE_RDP_H
 #define FREERDP_LIB_CORE_RDP_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include "nla.h"
 #include "mcs.h"
 #include "tpkt.h"
-#include "bulk.h"
+#include "../codec/bulk.h"
 #include "fastpath.h"
 #include "tpdu.h"
 #include "nego.h"
@@ -98,31 +96,34 @@
 #define FINALIZE_SC_COMPLETE 0x0F
 
 /* Data PDU Types */
-#define DATA_PDU_TYPE_UPDATE 0x02
-#define DATA_PDU_TYPE_CONTROL 0x14
-#define DATA_PDU_TYPE_POINTER 0x1B
-#define DATA_PDU_TYPE_INPUT 0x1C
-#define DATA_PDU_TYPE_SYNCHRONIZE 0x1F
-#define DATA_PDU_TYPE_REFRESH_RECT 0x21
-#define DATA_PDU_TYPE_PLAY_SOUND 0x22
-#define DATA_PDU_TYPE_SUPPRESS_OUTPUT 0x23
-#define DATA_PDU_TYPE_SHUTDOWN_REQUEST 0x24
-#define DATA_PDU_TYPE_SHUTDOWN_DENIED 0x25
-#define DATA_PDU_TYPE_SAVE_SESSION_INFO 0x26
-#define DATA_PDU_TYPE_FONT_LIST 0x27
-#define DATA_PDU_TYPE_FONT_MAP 0x28
-#define DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS 0x29
-#define DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST 0x2B
-#define DATA_PDU_TYPE_BITMAP_CACHE_ERROR 0x2C
-#define DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS 0x2D
-#define DATA_PDU_TYPE_OFFSCREEN_CACHE_ERROR 0x2E
-#define DATA_PDU_TYPE_SET_ERROR_INFO 0x2F
-#define DATA_PDU_TYPE_DRAW_NINEGRID_ERROR 0x30
-#define DATA_PDU_TYPE_DRAW_GDIPLUS_ERROR 0x31
-#define DATA_PDU_TYPE_ARC_STATUS 0x32
-#define DATA_PDU_TYPE_STATUS_INFO 0x36
-#define DATA_PDU_TYPE_MONITOR_LAYOUT 0x37
-#define DATA_PDU_TYPE_FRAME_ACKNOWLEDGE 0x38
+typedef enum
+{
+	DATA_PDU_TYPE_UPDATE = 0x02,
+	DATA_PDU_TYPE_CONTROL = 0x14,
+	DATA_PDU_TYPE_POINTER = 0x1B,
+	DATA_PDU_TYPE_INPUT = 0x1C,
+	DATA_PDU_TYPE_SYNCHRONIZE = 0x1F,
+	DATA_PDU_TYPE_REFRESH_RECT = 0x21,
+	DATA_PDU_TYPE_PLAY_SOUND = 0x22,
+	DATA_PDU_TYPE_SUPPRESS_OUTPUT = 0x23,
+	DATA_PDU_TYPE_SHUTDOWN_REQUEST = 0x24,
+	DATA_PDU_TYPE_SHUTDOWN_DENIED = 0x25,
+	DATA_PDU_TYPE_SAVE_SESSION_INFO = 0x26,
+	DATA_PDU_TYPE_FONT_LIST = 0x27,
+	DATA_PDU_TYPE_FONT_MAP = 0x28,
+	DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS = 0x29,
+	DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST = 0x2B,
+	DATA_PDU_TYPE_BITMAP_CACHE_ERROR = 0x2C,
+	DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS = 0x2D,
+	DATA_PDU_TYPE_OFFSCREEN_CACHE_ERROR = 0x2E,
+	DATA_PDU_TYPE_SET_ERROR_INFO = 0x2F,
+	DATA_PDU_TYPE_DRAW_NINEGRID_ERROR = 0x30,
+	DATA_PDU_TYPE_DRAW_GDIPLUS_ERROR = 0x31,
+	DATA_PDU_TYPE_ARC_STATUS = 0x32,
+	DATA_PDU_TYPE_STATUS_INFO = 0x36,
+	DATA_PDU_TYPE_MONITOR_LAYOUT = 0x37,
+	DATA_PDU_TYPE_FRAME_ACKNOWLEDGE = 0x38
+} rdpPduType;
 
 /* Stream Identifiers */
 #define STREAM_UNDEFINED 0x00
@@ -133,7 +134,6 @@
 struct rdp_rdp
 {
 	CONNECTION_STATE state;
-	freerdp* instance;
 	rdpContext* context;
 	rdpNla* nla;
 	rdpMcs* mcs;
@@ -181,10 +181,12 @@ struct rdp_rdp
 	UINT64 outPackets;
 	CRITICAL_SECTION critical;
 	rdpTransportIo* io;
+	void* ioContext;
+	HANDLE abortEvent;
 };
 
 FREERDP_LOCAL BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length);
-FREERDP_LOCAL void rdp_write_security_header(wStream* s, UINT16 flags);
+FREERDP_LOCAL BOOL rdp_write_security_header(wStream* s, UINT16 flags);
 
 FREERDP_LOCAL BOOL rdp_read_share_control_header(wStream* s, UINT16* tpktLength,
                                                  UINT16* remainingLength, UINT16* type,
@@ -229,6 +231,9 @@ FREERDP_LOCAL void rdp_free(rdpRdp* rdp);
 
 FREERDP_LOCAL const rdpTransportIo* rdp_get_io_callbacks(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_set_io_callbacks(rdpRdp* rdp, const rdpTransportIo* io_callbacks);
+
+FREERDP_LOCAL BOOL rdp_set_io_callback_context(rdpRdp* rdp, void* usercontext);
+FREERDP_LOCAL void* rdp_get_io_callback_context(rdpRdp* rdp);
 
 #define RDP_TAG FREERDP_TAG("core.rdp")
 #ifdef WITH_DEBUG_RDP

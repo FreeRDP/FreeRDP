@@ -19,7 +19,7 @@ int TestAlignment(int argc, char* argv[])
 
 	/* _aligned_malloc */
 
-	ptr = _aligned_malloc(100, alignment);
+	ptr = winpr_aligned_malloc(100, alignment);
 
 	if (ptr == NULL)
 	{
@@ -35,7 +35,7 @@ int TestAlignment(int argc, char* argv[])
 
 	/* _aligned_realloc */
 
-	ptr = _aligned_realloc(ptr, 200, alignment);
+	ptr = winpr_aligned_realloc(ptr, 200, alignment);
 
 	if (((size_t)ptr % alignment) != 0)
 	{
@@ -43,11 +43,11 @@ int TestAlignment(int argc, char* argv[])
 		return -1;
 	}
 
-	_aligned_free(ptr);
+	winpr_aligned_free(ptr);
 
 	/* _aligned_offset_malloc */
 
-	ptr = _aligned_offset_malloc(200, alignment, offset);
+	ptr = winpr_aligned_offset_malloc(200, alignment, offset);
 
 	if (ptr == NULL)
 	{
@@ -64,7 +64,7 @@ int TestAlignment(int argc, char* argv[])
 
 	/* _aligned_offset_realloc */
 
-	ptr = _aligned_offset_realloc(ptr, 200, alignment, offset);
+	ptr = winpr_aligned_offset_realloc(ptr, 200, alignment, offset);
 
 	if (ptr == NULL)
 	{
@@ -81,7 +81,7 @@ int TestAlignment(int argc, char* argv[])
 
 	/* _aligned_free works for both _aligned_malloc and _aligned_offset_malloc. free() should not be
 	 * used. */
-	_aligned_free(ptr);
+	winpr_aligned_free(ptr);
 
 	return 0;
 }

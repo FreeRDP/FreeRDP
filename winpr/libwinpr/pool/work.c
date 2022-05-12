@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/pool.h>
@@ -66,7 +64,6 @@ static TP_CALLBACK_ENVIRON DEFAULT_CALLBACK_ENVIRONMENT = {
 	NULL, /* CleanupGroup */
 	NULL, /* CleanupGroupCancelCallback */
 	NULL, /* RaceDll */
-	NULL, /* ActivationContext */
 	NULL, /* FinalizationCallback */
 	{ 0 } /* Flags */
 };

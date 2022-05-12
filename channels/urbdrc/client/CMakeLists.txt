@@ -18,7 +18,7 @@
 
 define_channel_client("urbdrc")
 
-set(${MODULE_PREFIX}_SRCS	
+set(${MODULE_PREFIX}_SRCS
 	data_transfer.c
 	data_transfer.h
 	urbdrc_main.c
@@ -36,10 +36,6 @@ endif()
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 
 target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWOARD} ${${MODULE_PREFIX}_LIBS})
-
-if (WITH_DEBUG_SYMBOLS AND MSVC AND NOT BUILTIN_CHANNELS AND BUILD_SHARED_LIBS)
-	install(FILES ${PROJECT_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${FREERDP_ADDIN_PATH} COMPONENT symbols)
-endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
 

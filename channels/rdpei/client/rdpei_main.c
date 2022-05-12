@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,27 +63,25 @@
 #define MAX_CONTACTS 64
 #define MAX_PEN_CONTACTS 4
 
-struct _RDPEI_CHANNEL_CALLBACK
+typedef struct
 {
 	IWTSVirtualChannelCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
-};
-typedef struct _RDPEI_CHANNEL_CALLBACK RDPEI_CHANNEL_CALLBACK;
+} RDPEI_CHANNEL_CALLBACK;
 
-struct _RDPEI_LISTENER_CALLBACK
+typedef struct
 {
 	IWTSListenerCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	RDPEI_CHANNEL_CALLBACK* channel_callback;
-};
-typedef struct _RDPEI_LISTENER_CALLBACK RDPEI_LISTENER_CALLBACK;
+} RDPEI_LISTENER_CALLBACK;
 
-struct _RDPEI_PLUGIN
+typedef struct
 {
 	IWTSPlugin iface;
 
@@ -111,8 +107,7 @@ struct _RDPEI_PLUGIN
 	BOOL initialized;
 	HANDLE thread;
 	HANDLE event;
-};
-typedef struct _RDPEI_PLUGIN RDPEI_PLUGIN;
+} RDPEI_PLUGIN;
 
 /**
  * Function description
@@ -721,7 +716,6 @@ static UINT rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback,
 static UINT rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 features = 0;
-	UINT32 size;
 	UINT32 protocolVersion;
 	RDPEI_PLUGIN* rdpei;
 
@@ -730,18 +724,17 @@ static UINT rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s
 
 	rdpei = (RDPEI_PLUGIN*)callback->plugin;
 
-	size = Stream_GetRemainingLength(s);
-	if (size < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(s, protocolVersion); /* protocolVersion (4 bytes) */
 
 	if (protocolVersion >= RDPINPUT_PROTOCOL_V300)
 	{
-		if (size < 8)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return ERROR_INVALID_DATA;
 	}
 
-	if (size >= 9)
+	if (Stream_GetRemainingLength(s) >= 4)
 		Stream_Read_UINT32(s, features);
 
 	if (rdpei->version > protocolVersion)
@@ -820,7 +813,7 @@ static UINT rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 	UINT error;
 	if (!s)
 		return ERROR_INTERNAL_ERROR;
-	if (Stream_GetRemainingLength(s) < 6)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, eventId);   /* eventId (2 bytes) */
@@ -1460,18 +1453,12 @@ static UINT rdpei_pen_raw_event(RdpeiClientContext* context, INT32 externalId, U
 	return error;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define DVCPluginEntry rdpei_DVCPluginEntry
-#else
-#define DVCPluginEntry FREERDP_API DVCPluginEntry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+UINT rdpei_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT error;
 	RDPEI_PLUGIN* rdpei = NULL;

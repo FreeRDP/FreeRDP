@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <freerdp/log.h>
 
@@ -38,6 +36,7 @@
 #include "rpc_client.h"
 #include "rts_signature.h"
 
+#include "../utils.h"
 #include "../rdp.h"
 #include "../proxy.h"
 
@@ -362,7 +361,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 				Stream_SetPosition(fragment, StubOffset);
 				Stream_Read_UINT32(fragment, rpc->result);
 
-				freerdp_abort_connect(context->instance);
+				utils_abort_connect(context->rdp);
 				tsg_set_state(tsg, TSG_STATE_TUNNEL_CLOSE_PENDING);
 				EventArgsInit(&e, "freerdp");
 				e.code = 0;

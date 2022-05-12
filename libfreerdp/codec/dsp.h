@@ -25,7 +25,7 @@
 #include <freerdp/codec/audio.h>
 #include <freerdp/codec/dsp.h>
 
-struct _FREERDP_DSP_COMMON_CONTEXT
+struct S_FREERDP_DSP_COMMON_CONTEXT
 {
 	wStream* buffer;
 	wStream* resample;

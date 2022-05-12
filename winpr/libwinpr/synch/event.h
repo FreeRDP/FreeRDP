@@ -21,9 +21,7 @@
 
 #include "../handle/handle.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #ifdef HAVE_SYS_EVENTFD_H
 #include <sys/eventfd.h>
@@ -38,7 +36,7 @@ typedef struct winpr_event_impl WINPR_EVENT_IMPL;
 
 struct winpr_event
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	WINPR_EVENT_IMPL impl;
 	BOOL bAttached;

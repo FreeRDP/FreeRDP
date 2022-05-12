@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,6 +25,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/assert.h>
 #include <winpr/collections.h>
 
 #include <X11/Xlib.h>
@@ -48,11 +47,14 @@ static void xf_keyboard_send_key(xfContext* xfc, BOOL down, const XKeyEvent* ev)
 static BOOL xf_sync_kbd_state(xfContext* xfc)
 {
 	const UINT32 syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
-	return freerdp_input_send_synchronize_event(xfc->context.input, syncFlags);
+
+	WINPR_ASSERT(xfc);
+	return freerdp_input_send_synchronize_event(xfc->common.context.input, syncFlags);
 }
 
 static void xf_keyboard_clear(xfContext* xfc)
 {
+	WINPR_ASSERT(xfc);
 	ZeroMemory(xfc->KeyboardState, 256 * sizeof(BOOL));
 }
 
@@ -63,7 +65,15 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	char* keyCombination;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
-	xfc->actionScriptExists = winpr_PathFileExists(xfc->context.settings->ActionScript);
+	const rdpSettings* settings;
+	const char* ActionScript;
+	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	ActionScript = freerdp_settings_get_string(settings, FreeRDP_ActionScript);
+	xfc->actionScriptExists = winpr_PathFileExists(ActionScript);
 
 	if (!xfc->actionScriptExists)
 		return FALSE;
@@ -75,7 +85,7 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 
 	obj = ArrayList_Object(xfc->keyCombinations);
 	obj->fnObjectFree = free;
-	sprintf_s(command, sizeof(command), "%s key", xfc->context.settings->ActionScript);
+	sprintf_s(command, sizeof(command), "%s key", ActionScript);
 	keyScript = popen(command, "r");
 
 	if (!keyScript)
@@ -117,11 +127,18 @@ static void xf_keyboard_action_script_free(xfContext* xfc)
 
 BOOL xf_keyboard_init(xfContext* xfc)
 {
+	rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
 	xf_keyboard_clear(xfc);
-	xfc->KeyboardLayout = xfc->context.settings->KeyboardLayout;
+	xfc->KeyboardLayout = settings->KeyboardLayout;
 	xfc->KeyboardLayout =
-	    freerdp_keyboard_init_ex(xfc->KeyboardLayout, xfc->context.settings->KeyboardRemappingList);
-	xfc->context.settings->KeyboardLayout = xfc->KeyboardLayout;
+	    freerdp_keyboard_init_ex(xfc->KeyboardLayout, settings->KeyboardRemappingList);
+	settings->KeyboardLayout = xfc->KeyboardLayout;
 
 	if (xfc->modifierMap)
 		XFreeModifiermap(xfc->modifierMap);
@@ -178,6 +195,8 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 	size_t keycode;
 	DWORD rdp_scancode;
 
+	WINPR_ASSERT(xfc);
+
 	for (keycode = 0; keycode < ARRAYSIZE(xfc->KeyboardState); keycode++)
 	{
 		if (xfc->KeyboardState[keycode])
@@ -187,9 +206,10 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 			// release tab before releasing the windows key.
 			// this stops the start menu from opening on unfocus event.
 			if (rdp_scancode == RDP_SCANCODE_LWIN)
-				freerdp_input_send_keyboard_event_ex(xfc->context.input, FALSE, RDP_SCANCODE_TAB);
+				freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE,
+				                                     RDP_SCANCODE_TAB);
 
-			freerdp_input_send_keyboard_event_ex(xfc->context.input, FALSE, rdp_scancode);
+			freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE, rdp_scancode);
 			xfc->KeyboardState[keycode] = FALSE;
 		}
 	}
@@ -210,7 +230,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, const XKeyEvent* event)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 
-	input = xfc->context.input;
+	input = xfc->common.context.input;
 	WINPR_ASSERT(input);
 
 	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(event->keycode);
@@ -228,11 +248,9 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, const XKeyEvent* event)
 	}
 	else
 	{
-		BOOL rc;
-		if (freerdp_settings_get_bool(xfc->context.settings, FreeRDP_UnicodeInput))
+		if (freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_UnicodeInput))
 		{
 			wchar_t buffer[32] = { 0 };
-			int rc = 0;
 			int xwc = -1;
 
 			switch (rdp_scancode)
@@ -260,16 +278,16 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, const XKeyEvent* event)
 				if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 					WLog_ERR(TAG, "Unknown key with X keycode 0x%02" PRIx8 "", event->keycode);
 				else
-					rc = freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
+					freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
 			}
 			else
-				rc = freerdp_input_send_unicode_keyboard_event(input, down ? KBD_FLAGS_RELEASE : 0,
-				                                               buffer[0]);
+				freerdp_input_send_unicode_keyboard_event(input, down ? KBD_FLAGS_RELEASE : 0,
+				                                          buffer[0]);
 		}
 		else if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 			WLog_ERR(TAG, "Unknown key with X keycode 0x%02" PRIx8 "", event->keycode);
 		else
-			rc = freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
+			freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
 
 		if ((rdp_scancode == RDP_SCANCODE_CAPSLOCK) && (down == FALSE))
 		{
@@ -399,10 +417,13 @@ void xf_keyboard_focus_in(xfContext* xfc)
 	Window w;
 	int d, x, y;
 
+	WINPR_ASSERT(xfc);
 	if (!xfc->display || !xfc->window)
 		return;
 
-	input = xfc->context.input;
+	input = xfc->common.context.input;
+	WINPR_ASSERT(input);
+
 	syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
 	freerdp_input_send_focus_in_event(input, syncFlags);
 	xk_keyboard_update_modifier_keys(xfc);
@@ -414,10 +435,10 @@ void xf_keyboard_focus_in(xfContext* xfc)
 
 	if (XQueryPointer(xfc->display, xfc->window->handle, &w, &w, &d, &d, &x, &y, &state))
 	{
-		if (x >= 0 && x < xfc->window->width && y >= 0 && y < xfc->window->height)
+		if ((x >= 0) && (x < xfc->window->width) && (y >= 0) && (y < xfc->window->height))
 		{
 			xf_event_adjust_coordinates(xfc, &x, &y);
-			freerdp_input_send_mouse_event(input, PTR_FLAGS_MOVE, x, y);
+			freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_MOVE, x, y);
 		}
 	}
 }
@@ -434,6 +455,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	char buffer[1024] = { 0 };
 	char command[2048] = { 0 };
 	char combination[1024] = { 0 };
+	const char* ActionScript;
 
 	if (!xfc->actionScriptExists)
 		return 1;
@@ -480,8 +502,8 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	if (!match)
 		return 1;
 
-	sprintf_s(command, sizeof(command), "%s key %s", xfc->context.settings->ActionScript,
-	          combination);
+	ActionScript = freerdp_settings_get_string(xfc->common.context.settings, FreeRDP_ActionScript);
+	sprintf_s(command, sizeof(command), "%s key %s", ActionScript, combination);
 	keyScript = popen(command, "r");
 
 	if (!keyScript)
@@ -575,7 +597,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 	if (!xfc->remote_app && xfc->settings->MultiTouchGestures)
 	{
-		rdpContext* ctx = &xfc->context;
+		rdpContext* ctx = &xfc->common.context;
 
 		if (mod.Ctrl && mod.Alt)
 		{
@@ -675,7 +697,7 @@ void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym)
 		}
 
 		xfc->mouse_active = FALSE;
-		XUngrabKeyboard(xfc->display, CurrentTime);
+		xf_ungrab(xfc);
 	}
 
 	// ungrabbed
@@ -702,5 +724,14 @@ BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeSta
 	          "KeyboardSetImeStatus(unitId=%04" PRIx16 ", imeState=%08" PRIx32
 	          ", imeConvMode=%08" PRIx32 ") ignored",
 	          imeId, imeState, imeConvMode);
+	return TRUE;
+}
+
+BOOL xf_ungrab(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+	XUngrabKeyboard(xfc->display, CurrentTime);
+	XUngrabPointer(xfc->display, CurrentTime);
+	xfc->common.mouse_grabbed = FALSE;
 	return TRUE;
 }

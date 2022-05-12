@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/wlog.h>
 #include <winpr/stream.h>
@@ -202,7 +200,7 @@ static const BYTE g_GidsAppFCI[] = { 0x61, 0x12, 0x4F, 0x0B, 0xA0, 0x00, 0x00, 0
 	                                 0x54, 0x46, 0x59, 0x02, 0x01, 0x73, 0x03, 0x40, 0x01, 0xC0 };
 
 /*
-typedef struct _CARD_CACHE_FILE_FORMAT
+typedef struct
 {
     BYTE bVersion; // Cache version
     BYTE bPinsFreshness; // Card PIN
@@ -359,11 +357,8 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 		if ((len & 0x80))
 		{
 			BYTE lenSize = len & 0x7F;
-			if (Stream_GetRemainingLength(ef->data) < lenSize)
-			{
-				WLog_ERR(TAG, "Remaining length is smaller than constructed tag length");
+			if (!Stream_CheckAndLogRequiredLength(TAG, ef->data, lenSize))
 				return FALSE;
-			}
 
 			switch (lenSize)
 			{
@@ -381,11 +376,8 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 		else
 			doSize = len;
 
-		if (Stream_GetRemainingLength(ef->data) < doSize)
-		{
-			WLog_ERR(TAG, "Unexpected end for DO %04" PRIx16, nextDOID);
+		if (Stream_CheckAndLogRequiredLength(TAG, ef->data, doSize))
 			return FALSE;
-		}
 
 		if (nextDOID == doID)
 		{
@@ -579,11 +571,8 @@ static BOOL vgids_prepare_keymap(vgidsContext* context, BYTE** outData, DWORD* o
 static BOOL vgids_parse_apdu_header(wStream* s, BYTE* cla, BYTE* ins, BYTE* p1, BYTE* p2, BYTE* lc,
                                     BYTE* le)
 {
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "APDU header with less than 5 bytes");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
-	}
 
 	/* Read and verify APDU data */
 	if (cla)
@@ -606,25 +595,19 @@ static BOOL vgids_parse_apdu_header(wStream* s, BYTE* cla, BYTE* ins, BYTE* p1, 
 	/* If LC is requested - check remaining length and read as well */
 	if (lc)
 	{
-		if (Stream_GetRemainingLength(s) < 1)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			return FALSE;
 
 		Stream_Read_UINT8(s, *lc);
-		if (Stream_GetRemainingLength(s) < *lc)
-		{
-			WLog_ERR(TAG, "The LC byte is greater than the remaining command data");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, *lc))
 			return FALSE;
-		}
 	}
 
 	/* read LE */
 	if (le)
 	{
-		if (Stream_GetRemainingLength(s) < 1)
-		{
-			WLog_ERR(TAG, "Missing LE byte");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			return FALSE;
-		}
 		Stream_Read_UINT8(s, *le);
 	}
 
@@ -962,7 +945,7 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 				break;
 			}
 
-			if (Stream_GetRemainingLength(s) < 1)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			{
 				status = ISO_STATUS_INVALIDLC;
 				break;
@@ -1082,7 +1065,7 @@ static BOOL vgids_perform_digital_signature(vgidsContext* context)
 		{
 			/* skip digest info and calculate message size */
 			Stream_Seek(context->commandData, digest->infoSize);
-			if (Stream_GetRemainingLength(context->commandData) <= 1)
+			if (!Stream_CheckAndLogRequiredLength(TAG, context->commandData, 2))
 				goto sign_failed;
 			msgSize = Stream_GetRemainingLength(context->commandData);
 
@@ -1297,7 +1280,7 @@ static BOOL vgids_ins_getresponse(vgidsContext* context, wStream* s, BYTE** resp
 
 	/* Get response continues data transfer after a previous get data command */
 	/* Check if there is any data to transfer left */
-	if (!context->responseData || Stream_GetRemainingLength(context->responseData) < 1)
+	if (!context->responseData || !Stream_CheckAndLogRequiredLength(TAG, context->responseData, 1))
 	{
 		status = ISO_STATUS_COMMANDNOTALLOWED;
 		goto create_response;
@@ -1373,14 +1356,14 @@ static BOOL vgids_ins_verify(vgidsContext* context, wStream* s, BYTE** response,
 	}
 
 	/* Read and verify LC */
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 	{
 		status = ISO_STATUS_INVALIDLC;
 		goto create_response;
 	}
 
 	Stream_Read_UINT8(s, lc);
-	if (Stream_GetRemainingLength(s) < lc || lc > VGIDS_MAX_PIN_SIZE)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, lc) || (lc > VGIDS_MAX_PIN_SIZE))
 	{
 		status = ISO_STATUS_INVALIDLC;
 		goto create_response;

@@ -30,7 +30,7 @@
 #include <freerdp/api.h>
 #include <freerdp/channels/scard.h>
 
-struct _SMARTCARD_OPERATION
+typedef struct
 {
 	union
 	{
@@ -79,8 +79,7 @@ struct _SMARTCARD_OPERATION
 	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
 	const char* ioControlCodeName;
-};
-typedef struct _SMARTCARD_OPERATION SMARTCARD_OPERATION;
+} SMARTCARD_OPERATION;
 
 FREERDP_API LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32 FileId,
                                                      SMARTCARD_OPERATION* operation);

@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,7 +65,7 @@
 #define VIDEO_MIN_BUFFER_LEVEL 10
 #define VIDEO_MAX_BUFFER_LEVEL 30
 
-struct _TSMF_PRESENTATION
+struct S_TSMF_PRESENTATION
 {
 	BYTE presentation_id[GUID_SIZE];
 
@@ -93,7 +91,7 @@ struct _TSMF_PRESENTATION
 	void* rects;
 };
 
-struct _TSMF_STREAM
+struct S_TSMF_STREAM
 {
 	UINT32 stream_id;
 
@@ -137,7 +135,7 @@ struct _TSMF_STREAM
 	BOOL seeking;
 };
 
-struct _TSMF_SAMPLE
+struct S_TSMF_SAMPLE
 {
 	UINT32 sample_id;
 	UINT64 start_time;

@@ -5424,8 +5424,8 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
                           UINT32 width, UINT32 height)
 {
 	double maxDiff;
-	const UINT32 srcABits = GetBitsPerPixel(srcAFormat);
-	const UINT32 srcBBits = GetBitsPerPixel(srcBFormat);
+	const UINT32 srcABits = FreeRDPGetBitsPerPixel(srcAFormat);
+	const UINT32 srcBBits = FreeRDPGetBitsPerPixel(srcBFormat);
 	UINT32 diff = fabs((double)srcABits - srcBBits);
 	UINT32 x, y;
 
@@ -5464,18 +5464,18 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
 
 	for (y = 0; y < height; y++)
 	{
-		const BYTE* lineA = &srcA[width * GetBytesPerPixel(srcAFormat) * y];
-		const BYTE* lineB = &srcB[width * GetBytesPerPixel(srcBFormat) * y];
+		const BYTE* lineA = &srcA[width * FreeRDPGetBytesPerPixel(srcAFormat) * y];
+		const BYTE* lineB = &srcB[width * FreeRDPGetBytesPerPixel(srcBFormat) * y];
 
 		for (x = 0; x < width; x++)
 		{
 			BYTE sR, sG, sB, sA, dR, dG, dB, dA;
-			const BYTE* a = &lineA[x * GetBytesPerPixel(srcAFormat)];
-			const BYTE* b = &lineB[x * GetBytesPerPixel(srcBFormat)];
-			UINT32 colorA = ReadColor(a, srcAFormat);
-			UINT32 colorB = ReadColor(b, srcBFormat);
-			SplitColor(colorA, srcAFormat, &sR, &sG, &sB, &sA, NULL);
-			SplitColor(colorB, srcBFormat, &dR, &dG, &dB, &dA, NULL);
+			const BYTE* a = &lineA[x * FreeRDPGetBytesPerPixel(srcAFormat)];
+			const BYTE* b = &lineB[x * FreeRDPGetBytesPerPixel(srcBFormat)];
+			UINT32 colorA = FreeRDPReadColor(a, srcAFormat);
+			UINT32 colorB = FreeRDPReadColor(b, srcBFormat);
+			FreeRDPSplitColor(colorA, srcAFormat, &sR, &sG, &sB, &sA, NULL);
+			FreeRDPSplitColor(colorB, srcBFormat, &dR, &dG, &dB, &dA, NULL);
 
 			if (fabs((double)sR - dR) > maxDiff)
 				return FALSE;
@@ -5502,7 +5502,7 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* planar, const BYTE* srcBitmap,
 	UINT32 dstSize;
 	BYTE* compressedBitmap = freerdp_bitmap_compress_planar(planar, srcBitmap, srcFormat, width,
 	                                                        height, 0, NULL, &dstSize);
-	BYTE* decompressedBitmap = (BYTE*)calloc(height, width * GetBytesPerPixel(dstFormat));
+	BYTE* decompressedBitmap = (BYTE*)calloc(height, width * FreeRDPGetBytesPerPixel(dstFormat));
 	printf("%s [%s] --> [%s]: ", __FUNCTION__, FreeRDPGetColorFormatName(srcFormat),
 	       FreeRDPGetColorFormatName(dstFormat));
 	fflush(stdout);
@@ -5558,8 +5558,8 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 			const UINT32 width = i;
 			const UINT32 height = i;
 			BOOL failed = TRUE;
-			const UINT32 srcSize = width * height * GetBytesPerPixel(srcFormat);
-			const UINT32 dstSize = width * height * GetBytesPerPixel(dstFormat);
+			const UINT32 srcSize = width * height * FreeRDPGetBytesPerPixel(srcFormat);
+			const UINT32 dstSize = width * height * FreeRDPGetBytesPerPixel(dstFormat);
 			BYTE* compressedBitmap = NULL;
 			BYTE* bmp = malloc(srcSize);
 			BYTE* decompressedBitmap = (BYTE*)malloc(dstSize);
@@ -5569,12 +5569,12 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 
 			for (y = 0; y < height; y++)
 			{
-				BYTE* line = &bmp[width * GetBytesPerPixel(srcFormat) * y];
+				BYTE* line = &bmp[width * FreeRDPGetBytesPerPixel(srcFormat) * y];
 
 				for (x = 0; x < width; x++)
 				{
-					WriteColor(line, srcFormat, color);
-					line += GetBytesPerPixel(srcFormat);
+					FreeRDPWriteColor(line, srcFormat, color);
+					line += FreeRDPGetBytesPerPixel(srcFormat);
 				}
 			}
 
@@ -5676,7 +5676,7 @@ static BOOL FuzzPlanar(void)
 		size_t dataSize = 0x10000;
 		BYTE dstData[0x10000] = { 0 };
 
-		UINT32 DstFormat;
+		UINT32 DstFormat = 0;
 		UINT32 nDstStep;
 		UINT32 nXDst;
 		UINT32 nYDst;
@@ -5744,9 +5744,9 @@ static BOOL FuzzPlanar(void)
 			nDstStep = prand(sizeof(dstData));
 			nXDst = prand(nDstStep);
 			nYDst = prand(sizeof(dstData) / nDstStep);
-			nDstWidth = prand(nDstStep / GetBytesPerPixel(DstFormat));
+			nDstWidth = prand(nDstStep / FreeRDPGetBytesPerPixel(DstFormat));
 			nDstHeight = prand(sizeof(dstData) / nDstStep);
-			invalid = nXDst * GetBytesPerPixel(DstFormat) + (nYDst + nDstHeight) * nDstStep >
+			invalid = nXDst * FreeRDPGetBytesPerPixel(DstFormat) + (nYDst + nDstHeight) * nDstStep >
 			          sizeof(dstData);
 		} while (invalid);
 		printf("DstFormat=%s, nXDst=%" PRIu32 ", nYDst=%" PRIu32 ", nDstWidth=%" PRIu32

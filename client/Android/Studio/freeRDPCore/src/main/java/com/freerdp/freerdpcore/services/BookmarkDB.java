@@ -25,7 +25,7 @@ import java.util.List;
 public class BookmarkDB extends SQLiteOpenHelper
 {
 	public static final String ID = BaseColumns._ID;
-	private static final int DB_VERSION = 9;
+	private static final int DB_VERSION = 10;
 	private static final String DB_BACKUP_PREFIX = "temp_";
 	private static final String DB_NAME = "bookmarks.db";
 	static final String DB_TABLE_BOOKMARK = "tbl_manual_bookmarks";
@@ -68,7 +68,6 @@ public class BookmarkDB extends SQLiteOpenHelper
 	static final String DB_KEY_BOOKMARK_REMOTE_PROGRAM = "remote_program";
 	static final String DB_KEY_BOOKMARK_WORK_DIR = "work_dir";
 	static final String DB_KEY_BOOKMARK_ASYNC_CHANNEL = "async_channel";
-	static final String DB_KEY_BOOKMARK_ASYNC_INPUT = "async_input";
 	static final String DB_KEY_BOOKMARK_ASYNC_UPDATE = "async_update";
 	static final String DB_KEY_BOOKMARK_CONSOLE_MODE = "console_mode";
 	static final String DB_KEY_BOOKMARK_DEBUG_LEVEL = "debug_level";
@@ -282,7 +281,6 @@ public class BookmarkDB extends SQLiteOpenHelper
 		bookmarkValues.put(DB_KEY_BOOKMARK_REMOTE_PROGRAM, "");
 		bookmarkValues.put(DB_KEY_BOOKMARK_WORK_DIR, "");
 		bookmarkValues.put(DB_KEY_BOOKMARK_ASYNC_CHANNEL, 1);
-		bookmarkValues.put(DB_KEY_BOOKMARK_ASYNC_INPUT, 1);
 		bookmarkValues.put(DB_KEY_BOOKMARK_ASYNC_UPDATE, 1);
 		bookmarkValues.put(DB_KEY_BOOKMARK_CONSOLE_MODE, 0);
 		bookmarkValues.put(DB_KEY_BOOKMARK_DEBUG_LEVEL, "INFO");
@@ -317,8 +315,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 		        DB_KEY_BOOKMARK_REDIRECT_MICROPHONE + " INTEGER DEFAULT 0, " +
 		        DB_KEY_BOOKMARK_SECURITY + " INTEGER, " + DB_KEY_BOOKMARK_REMOTE_PROGRAM +
 		        " TEXT, " + DB_KEY_BOOKMARK_WORK_DIR + " TEXT, " + DB_KEY_BOOKMARK_ASYNC_CHANNEL +
-		        " INTEGER DEFAULT 0, " + DB_KEY_BOOKMARK_ASYNC_INPUT + " INTEGER DEFAULT 0, " +
-		        DB_KEY_BOOKMARK_ASYNC_UPDATE + " INTEGER DEFAULT 0, " +
+		        " INTEGER DEFAULT 0, " + DB_KEY_BOOKMARK_ASYNC_UPDATE + " INTEGER DEFAULT 0, " +
 		        DB_KEY_BOOKMARK_CONSOLE_MODE + " INTEGER, " + DB_KEY_BOOKMARK_DEBUG_LEVEL +
 		        " TEXT DEFAULT 'INFO', "
 

@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <errno.h>
 
@@ -45,7 +43,7 @@
 
 #define WEBSOCKET_MAGIC_GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-struct _http_context
+struct s_http_context
 {
 	char* Method;
 	char* URI;
@@ -61,7 +59,7 @@ struct _http_context
 	char SecWebsocketKey[16];
 };
 
-struct _http_request
+struct s_http_request
 {
 	char* Method;
 	char* URI;
@@ -73,7 +71,7 @@ struct _http_request
 	TRANSFER_ENCODING TransferEncoding;
 };
 
-struct _http_response
+struct s_http_response
 {
 	size_t count;
 	char** lines;
@@ -822,14 +820,10 @@ static int print_bio_error(const char* str, size_t len, void* bp)
 
 HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 {
-	size_t size;
 	size_t position;
 	size_t bodyLength = 0;
-	size_t payloadOffset;
-	HttpResponse* response;
-	size = 2048;
-	payloadOffset = 0;
-	response = http_response_new();
+	size_t payloadOffset = 0;
+	HttpResponse* response = http_response_new();
 
 	if (!response)
 		return NULL;

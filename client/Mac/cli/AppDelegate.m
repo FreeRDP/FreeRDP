@@ -10,6 +10,8 @@
 #import "MacFreeRDP/mfreerdp.h"
 #import "MacFreeRDP/mf_client.h"
 #import "MacFreeRDP/MRDPView.h"
+
+#import <winpr/assert.h>
 #import <freerdp/client/cmdline.h>
 
 static AppDelegate *_singleDelegate = nil;
@@ -38,17 +40,22 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 	[self CreateContext];
 	status = [self ParseCommandLineArguments];
 	mfc = (mfContext *)context;
+	WINPR_ASSERT(mfc);
+
 	mfc->view = (void *)mrdpView;
 
 	if (status == 0)
 	{
 		NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
 		NSRect screenFrame = [screen frame];
+		rdpSettings *settings = context->settings;
 
-		if (context->instance->settings->Fullscreen)
+		WINPR_ASSERT(settings);
+
+		if (settings->Fullscreen)
 		{
-			context->instance->settings->DesktopWidth = screenFrame.size.width;
-			context->instance->settings->DesktopHeight = screenFrame.size.height;
+			settings->DesktopWidth = screenFrame.size.width;
+			settings->DesktopHeight = screenFrame.size.height;
 		}
 
 		PubSub_SubscribeConnectionResult(context->pubSub, AppDelegate_ConnectionResultEventHandler);
@@ -58,17 +65,17 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 		freerdp_client_start(context);
 		NSString *winTitle;
 
-		if (mfc->context.settings->WindowTitle && mfc->context.settings->WindowTitle[0])
+		if (settings->WindowTitle && settings->WindowTitle[0])
 		{
-			winTitle = [[NSString alloc] initWithCString:mfc->context.settings->WindowTitle];
+			winTitle = [[NSString alloc] initWithCString:settings->WindowTitle encoding:NSUTF8StringEncoding];
 		}
 		else
 		{
 			winTitle = [[NSString alloc]
 			    initWithFormat:@"%@:%u",
-			                   [NSString stringWithCString:mfc->context.settings->ServerHostname
+			                   [NSString stringWithCString:settings->ServerHostname
 			                                      encoding:NSUTF8StringEncoding],
-			                   mfc -> context.settings->ServerPort];
+			                   settings->ServerPort];
 		}
 
 		[window setTitle:winTitle];

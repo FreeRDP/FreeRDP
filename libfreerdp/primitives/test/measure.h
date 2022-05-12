@@ -25,9 +25,7 @@
 #ifndef TEST_MEASURE_H_INCLUDED
 #define TEST_MEASURE_H_INCLUDED
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <time.h>
 #include <winpr/string.h>

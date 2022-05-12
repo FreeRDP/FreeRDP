@@ -27,7 +27,7 @@
 #include <freerdp/settings.h>
 #include <freerdp/server/drdynvc.h>
 
-struct _drdynvc_server_private
+struct s_drdynvc_server_private
 {
 	HANDLE Thread;
 	HANDLE StopEvent;

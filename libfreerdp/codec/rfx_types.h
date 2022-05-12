@@ -20,9 +20,7 @@
 #ifndef FREERDP_LIB_CODEC_RFX_TYPES_H
 #define FREERDP_LIB_CODEC_RFX_TYPES_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/pool.h>
@@ -42,9 +40,9 @@
 	} while (0)
 #endif
 
-typedef struct _RFX_TILE_COMPOSE_WORK_PARAM RFX_TILE_COMPOSE_WORK_PARAM;
+typedef struct S_RFX_TILE_COMPOSE_WORK_PARAM RFX_TILE_COMPOSE_WORK_PARAM;
 
-struct _RFX_CONTEXT_PRIV
+struct S_RFX_CONTEXT_PRIV
 {
 	wLog* log;
 	wObjectPool* TilePool;

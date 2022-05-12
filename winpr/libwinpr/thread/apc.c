@@ -22,6 +22,7 @@
 #include "thread.h"
 #include "../log.h"
 #include "../synch/pollset.h"
+#include <winpr/assert.h>
 
 #define TAG WINPR_TAG("apc")
 
@@ -29,6 +30,8 @@ BOOL apc_init(APC_QUEUE* apc)
 {
 	pthread_mutexattr_t attr;
 	BOOL ret = FALSE;
+
+	WINPR_ASSERT(apc);
 
 	pthread_mutexattr_init(&attr);
 	if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE) != 0)
@@ -53,13 +56,20 @@ out:
 
 BOOL apc_uninit(APC_QUEUE* apc)
 {
+	WINPR_ASSERT(apc);
 	return pthread_mutex_destroy(&apc->mutex) == 0;
 }
 
 void apc_register(WINPR_THREAD* thread, WINPR_APC_ITEM* addItem)
 {
 	WINPR_APC_ITEM** nextp;
-	APC_QUEUE* apc = &thread->apc;
+	APC_QUEUE* apc;
+
+	WINPR_ASSERT(thread);
+	WINPR_ASSERT(addItem);
+
+	apc = &thread->apc;
+	WINPR_ASSERT(apc);
 
 	pthread_mutex_lock(&apc->mutex);
 	if (apc->tail)
@@ -84,6 +94,9 @@ void apc_register(WINPR_THREAD* thread, WINPR_APC_ITEM* addItem)
 
 static INLINE void apc_item_remove(APC_QUEUE* apc, WINPR_APC_ITEM* item)
 {
+	WINPR_ASSERT(apc);
+	WINPR_ASSERT(item);
+
 	if (!item->last)
 		apc->head = item->next;
 	else
@@ -103,6 +116,8 @@ APC_REMOVE_RESULT apc_remove(WINPR_APC_ITEM* item)
 	APC_QUEUE* apc;
 	APC_REMOVE_RESULT ret = APC_REMOVE_OK;
 
+	WINPR_ASSERT(item);
+
 	if (!item->linked)
 		return APC_REMOVE_OK;
 
@@ -119,6 +134,8 @@ APC_REMOVE_RESULT apc_remove(WINPR_APC_ITEM* item)
 	}
 
 	apc = &thread->apc;
+	WINPR_ASSERT(apc);
+
 	pthread_mutex_lock(&apc->mutex);
 	if (apc->treatingCompletions)
 	{
@@ -140,7 +157,12 @@ BOOL apc_collectFds(WINPR_THREAD* thread, WINPR_POLL_SET* set, BOOL* haveAutoSig
 {
 	WINPR_APC_ITEM* item;
 	BOOL ret = FALSE;
-	APC_QUEUE* apc = &thread->apc;
+	APC_QUEUE* apc;
+
+	WINPR_ASSERT(thread);
+
+	apc = &thread->apc;
+	WINPR_ASSERT(apc);
 
 	*haveAutoSignaled = FALSE;
 	pthread_mutex_lock(&apc->mutex);
@@ -148,7 +170,10 @@ BOOL apc_collectFds(WINPR_THREAD* thread, WINPR_POLL_SET* set, BOOL* haveAutoSig
 	for (; item; item = item->next)
 	{
 		if (item->alwaysSignaled)
+		{
+			WINPR_ASSERT(haveAutoSignaled);
 			*haveAutoSignaled = TRUE;
+		}
 		else if (!pollset_add(set, item->pollFd, item->pollMode))
 			goto out;
 	}
@@ -161,9 +186,14 @@ out:
 
 int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx)
 {
-	APC_QUEUE* apc = &thread->apc;
+	APC_QUEUE* apc;
 	WINPR_APC_ITEM *item, *nextItem;
 	int ret = 0;
+
+	WINPR_ASSERT(thread);
+
+	apc = &thread->apc;
+	WINPR_ASSERT(apc);
 
 	pthread_mutex_lock(&apc->mutex);
 	apc->treatingCompletions = TRUE;
@@ -187,14 +217,6 @@ int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx
 		}
 
 		nextItem = item->next;
-
-		if (item->markedForRemove)
-		{
-			apc_item_remove(apc, item);
-
-			if (item->markedForFree)
-				free(item);
-		}
 	}
 
 	/* third pass: to do final cleanup */
@@ -220,7 +242,12 @@ void apc_cleanupThread(WINPR_THREAD* thread)
 {
 	WINPR_APC_ITEM* item;
 	WINPR_APC_ITEM* nextItem;
-	APC_QUEUE* apc = &thread->apc;
+	APC_QUEUE* apc;
+
+	WINPR_ASSERT(thread);
+
+	apc = &thread->apc;
+	WINPR_ASSERT(apc);
 
 	pthread_mutex_lock(&apc->mutex);
 	item = apc->head;

@@ -28,13 +28,12 @@
 #include <winpr/wtypes.h>
 #include <uwac/uwac.h>
 
-typedef struct wlf_context wlfContext;
 typedef struct wlf_clipboard wfClipboard;
-typedef struct _wlfDispContext wlfDispContext;
+typedef struct s_wlfDispContext wlfDispContext;
 
 #define MAX_CONTACTS 20
 
-typedef struct touch_contact
+typedef struct
 {
 	int id;
 	double pos_x;
@@ -42,9 +41,9 @@ typedef struct touch_contact
 	BOOL emulate_mouse;
 } touchContact;
 
-struct wlf_context
+typedef struct
 {
-	rdpContext context;
+	rdpClientContext common;
 
 	UwacDisplay* display;
 	HANDLE displayHandle;
@@ -56,8 +55,6 @@ struct wlf_context
 	BOOL focusing;
 
 	/* Channels */
-	RdpeiClientContext* rdpei;
-	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
 	wfClipboard* clipboard;
 	wlfDispContext* disp;
@@ -66,7 +63,7 @@ struct wlf_context
 	wArrayList* events;
 
 	touchContact contacts[MAX_CONTACTS];
-};
+} wlfContext;
 
 BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fromLocalToRDP);
 BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t srcHeight, void* dst,

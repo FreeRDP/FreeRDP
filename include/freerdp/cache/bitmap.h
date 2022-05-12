@@ -27,18 +27,13 @@
 
 #include <winpr/stream.h>
 
-typedef struct _BITMAP_V2_CELL BITMAP_V2_CELL;
-typedef struct rdp_bitmap_cache rdpBitmapCache;
-
-#include <freerdp/cache/cache.h>
-
-struct _BITMAP_V2_CELL
+typedef struct
 {
 	UINT32 number;
 	rdpBitmap** entries;
-};
+} BITMAP_V2_CELL;
 
-struct rdp_bitmap_cache
+typedef struct
 {
 	pMemBlt MemBlt;               /* 0 */
 	pMem3Blt Mem3Blt;             /* 1 */
@@ -54,7 +49,7 @@ struct rdp_bitmap_cache
 
 	/* internal */
 	rdpContext* context;
-};
+} rdpBitmapCache;
 
 #ifdef __cplusplus
 extern "C"

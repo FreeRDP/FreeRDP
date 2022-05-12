@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 
@@ -35,6 +33,7 @@
 
 #include "wf_update.h"
 
+#include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")
 
 DWORD WINAPI wf_update_thread(LPVOID lpParam)
@@ -146,7 +145,13 @@ void wf_update_encode(wfInfo* wfi)
 
 void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
 {
-	freerdp_peer* client = ((rdpContext*)context)->peer;
+	freerdp_peer* client;
+
+	WINPR_ASSERT(wfi);
+	WINPR_ASSERT(context);
+
+	client = ((rdpContext*)context)->peer;
+	WINPR_ASSERT(client);
 
 	/* This happens when the RemoteFX encoder state is reset */
 
@@ -170,8 +175,13 @@ void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
 		         context->frame_idx + 1);
 	}
 
-	wfi->cmd.bmp.codecID = client->settings->RemoteFxCodecId;
-	client->update->SurfaceBits(client->update->context, &wfi->cmd);
+	WINPR_ASSERT(client->context);
+	WINPR_ASSERT(client->context->settings);
+	WINPR_ASSERT(client->context->update);
+	WINPR_ASSERT(client->context->update->SurfaceBits);
+
+	wfi->cmd.bmp.codecID = client->context->settings->RemoteFxCodecId;
+	client->context->update->SurfaceBits(client->context, &wfi->cmd);
 	context->frame_idx++;
 }
 

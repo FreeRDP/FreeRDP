@@ -35,9 +35,7 @@ typedef struct libusb_interface LIBUSB_INTERFACE;
 typedef struct libusb_interface_descriptor LIBUSB_INTERFACE_DESCRIPTOR;
 typedef struct libusb_endpoint_descriptor LIBUSB_ENDPOINT_DESCEIPTOR;
 
-typedef struct _UDEVICE UDEVICE;
-
-struct _UDEVICE
+typedef struct
 {
 	IUDEVICE iface;
 
@@ -66,7 +64,7 @@ struct _UDEVICE
 	wArrayList* request_queue;
 
 	URBDRC_PLUGIN* urbdrc;
-};
+} UDEVICE;
 typedef UDEVICE* PUDEVICE;
 
 size_t udev_new_by_id(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UINT16 idVendor, UINT16 idProduct,

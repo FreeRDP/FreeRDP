@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/assert.h>
 
@@ -26,6 +24,7 @@
 
 #include "shadow_encoder.h"
 
+#include <freerdp/log.h>
 #define TAG CLIENT_TAG("shadow")
 
 UINT32 shadow_encoder_preferred_fps(rdpShadowEncoder* encoder)

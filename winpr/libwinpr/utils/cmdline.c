@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
@@ -483,24 +481,233 @@ const COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(const COMMAND_LINE_A
 	return nextArgument;
 }
 
+static int is_quoted(char c)
+{
+	switch (c)
+	{
+		case '"':
+			return 1;
+		case '\'':
+			return -1;
+		default:
+			return 0;
+	}
+}
+
+static size_t get_element_count(const char* list, BOOL* failed, BOOL fullquoted)
+{
+	size_t count = 0;
+	int quoted = 0;
+	BOOL finished = FALSE;
+	BOOL first = TRUE;
+	const char* it = list;
+
+	if (!list)
+		return 0;
+	if (strlen(list) == 0)
+		return 0;
+
+	while (!finished)
+	{
+		BOOL nextFirst = FALSE;
+		switch (*it)
+		{
+			case '\0':
+				if (quoted != 0)
+				{
+					WLog_ERR(TAG, "Invalid argument (missing closing quote) '%s'", list);
+					*failed = TRUE;
+					return 0;
+				}
+				finished = TRUE;
+				break;
+			case '\'':
+			case '"':
+				if (!fullquoted)
+				{
+					int now = is_quoted(*it);
+					if ((quoted == 0) && !first)
+					{
+						WLog_ERR(TAG, "Invalid argument (misplaced quote) '%s'", list);
+						*failed = TRUE;
+						return 0;
+					}
+
+					if (now == quoted)
+						quoted = 0;
+					else if (quoted == 0)
+						quoted = now;
+				}
+				break;
+			case ',':
+				if (first)
+				{
+					WLog_ERR(TAG, "Invalid argument (empty list elements) '%s'", list);
+					*failed = TRUE;
+					return 0;
+				}
+				if (quoted == 0)
+				{
+					nextFirst = TRUE;
+					count++;
+				}
+				break;
+			default:
+				break;
+		}
+
+		first = nextFirst;
+		it++;
+	}
+	return count + 1;
+}
+
+static char* get_next_comma(char* string, BOOL fullquoted)
+{
+	const char* log = string;
+	int quoted = 0;
+	BOOL first = TRUE;
+
+	WINPR_ASSERT(string);
+
+	while (TRUE)
+	{
+		switch (*string)
+		{
+			case '\0':
+				if (quoted != 0)
+					WLog_ERR(TAG, "Invalid quoted argument '%s'", log);
+				return NULL;
+
+			case '\'':
+			case '"':
+				if (!fullquoted)
+				{
+					int now = is_quoted(*string);
+					if ((quoted == 0) && !first)
+					{
+						WLog_ERR(TAG, "Invalid quoted argument '%s'", log);
+						return NULL;
+					}
+					if (now == quoted)
+						quoted = 0;
+					else if (quoted == 0)
+						quoted = now;
+				}
+				break;
+
+			case ',':
+				if (first)
+				{
+					WLog_ERR(TAG, "Invalid argument (empty list elements) '%s'", log);
+					return NULL;
+				}
+				if (quoted == 0)
+					return string;
+				break;
+
+			default:
+				break;
+		}
+		first = FALSE;
+		string++;
+	}
+
+	return NULL;
+}
+
+static BOOL is_valid_fullquoted(const char* string)
+{
+	char cur = '\0';
+	char last = '\0';
+	const char quote = *string++;
+
+	/* We did not start with a quote. */
+	if (is_quoted(quote) == 0)
+		return FALSE;
+
+	while ((cur = *string++) != '\0')
+	{
+		/* A quote is found. */
+		if (cur == quote)
+		{
+			/* If the quote was escaped, it is valid. */
+			if (last != '\\')
+			{
+				/* Only allow unescaped quote as last character in string. */
+				if (*string != '\0')
+					return FALSE;
+			}
+			/* If the last quote in the string is escaped, it is wrong. */
+			else if (*string != '\0')
+				return FALSE;
+		}
+		last = cur;
+	}
+
+	/* The string did not terminate with the same quote as it started. */
+	if (last != quote)
+		return FALSE;
+	return TRUE;
+}
+
 char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list, size_t* count)
 {
-	char** p;
-	char* str;
-	size_t nArgs;
-	size_t index;
-	size_t nCommas;
-	size_t prefix, len, namelen = 0;
-	nCommas = 0;
+	char** p = NULL;
+	char* str = NULL;
+	size_t nArgs = 0;
+	size_t index = 0;
+	size_t prefix = 0;
+	size_t len = 0;
+	size_t namelen = 0;
+	BOOL failed = FALSE;
+	char* copy = NULL;
+	char* unquoted = NULL;
+	BOOL fullquoted = FALSE;
 
 	if (count == NULL)
-		return NULL;
+		goto fail;
 
 	*count = 0;
-
-	if (!list || strlen(list) == 0)
+	if (list)
 	{
-		if (name)
+		int start, end;
+		unquoted = copy = _strdup(list);
+		if (!copy)
+			goto fail;
+
+		len = strlen(unquoted);
+		if (len > 0)
+		{
+			start = is_quoted(unquoted[0]);
+			end = is_quoted(unquoted[len - 1]);
+
+			if ((start != 0) && (end != 0))
+			{
+				if (start != end)
+				{
+					WLog_ERR(TAG, "invalid argument (quote mismatch) '%s'", list);
+					goto fail;
+				}
+				if (!is_valid_fullquoted(unquoted))
+					goto fail;
+				unquoted[len - 1] = '\0';
+				unquoted++;
+				len -= 2;
+				fullquoted = TRUE;
+			}
+		}
+	}
+
+	*count = get_element_count(unquoted, &failed, fullquoted);
+	if (failed)
+		goto fail;
+
+	if (*count == 0)
+	{
+		if (!name)
+			goto fail;
+		else
 		{
 			size_t clen = strlen(name);
 			p = (char**)calloc(2UL + clen, sizeof(char*));
@@ -511,39 +718,26 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 				p[0] = dst;
 				sprintf_s(dst, clen + 1, "%s", name);
 				*count = 1;
-				return p;
+				goto fail;
 			}
 		}
-
-		return NULL;
 	}
 
-	{
-		const char* it = list;
-
-		while ((it = strchr(it, ',')) != NULL)
-		{
-			it++;
-			nCommas++;
-		}
-	}
-
-	nArgs = nCommas + 1;
+	nArgs = *count;
 
 	if (name)
 		nArgs++;
 
 	prefix = (nArgs + 1UL) * sizeof(char*);
-	len = strlen(list);
 	if (name)
 		namelen = strlen(name);
 	p = (char**)calloc(len + prefix + 1 + namelen + 1, sizeof(char*));
 
 	if (!p)
-		return NULL;
+		goto fail;
 
 	str = &((char*)p)[prefix];
-	memcpy(str, list, len);
+	memcpy(str, unquoted, len);
 
 	if (name)
 	{
@@ -555,17 +749,41 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 
 	for (index = name ? 1 : 0; index < nArgs; index++)
 	{
-		char* comma = strchr(str, ',');
-		p[index] = str;
+		char* ptr = str;
+		const int quote = is_quoted(*ptr);
+		char* comma = get_next_comma(str, fullquoted);
+
+		if ((quote != 0) && !fullquoted)
+			ptr++;
+
+		p[index] = ptr;
 
 		if (comma)
 		{
-			str = comma + 1;
+			char* last = comma - 1;
+			const int lastQuote = is_quoted(*last);
+
+			if (!fullquoted)
+			{
+				if (lastQuote != quote)
+				{
+					WLog_ERR(TAG, "invalid argument (quote mismatch) '%s'", list);
+					free(p);
+					p = NULL;
+					goto fail;
+				}
+				else if (lastQuote != 0)
+					*last = '\0';
+			}
 			*comma = '\0';
+
+			str = comma + 1;
 		}
 	}
 
 	*count = nArgs;
+fail:
+	free(copy);
 	return p;
 }
 

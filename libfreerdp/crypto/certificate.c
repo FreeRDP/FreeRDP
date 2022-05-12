@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/assert.h>
 #include <errno.h>
@@ -160,7 +158,7 @@ static BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 	if (!settings)
 		return FALSE;
 
-	ConfigPath = settings->ConfigPath;
+	ConfigPath = freerdp_settings_get_string(settings, FreeRDP_ConfigPath);
 	if (!ConfigPath)
 		return FALSE;
 
@@ -511,7 +509,7 @@ static BOOL useKnownHosts(rdpCertificateStore* certificate_store)
 	WINPR_ASSERT(certificate_store);
 
 	use = freerdp_settings_get_bool(certificate_store->settings, FreeRDP_CertificateUseKnownHosts);
-	WLog_INFO(TAG, "known_hosts=%d", use);
+	WLog_DBG(TAG, "known_hosts=%d", use);
 	return use;
 }
 

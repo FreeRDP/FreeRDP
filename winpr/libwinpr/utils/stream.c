@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/assert.h>
 #include <winpr/crt.h>
@@ -165,12 +163,6 @@ void Stream_EnsureValidity(wStream* s)
 	cur = (size_t)(s->pointer - s->buffer);
 	STREAM_ASSERT(cur <= s->capacity);
 	STREAM_ASSERT(s->length <= s->capacity);
-
-	/* Length is only valid after a call to Stream_SealLength */
-	if (s->length > 0)
-	{
-		STREAM_ASSERT(cur <= s->length);
-	}
 }
 
 void Stream_Free(wStream* s, BOOL bFreeBuffer)
@@ -256,7 +248,7 @@ void Stream_SetCapacity(wStream* _s, size_t _c)
 
 #endif
 
-size_t Stream_GetRemainingCapacity(wStream* _s)
+size_t Stream_GetRemainingCapacity(const wStream* _s)
 {
 	size_t cur;
 	WINPR_ASSERT(_s);
@@ -272,7 +264,7 @@ size_t Stream_GetRemainingCapacity(wStream* _s)
 	return (_s->capacity - cur);
 }
 
-size_t Stream_GetRemainingLength(wStream* _s)
+size_t Stream_GetRemainingLength(const wStream* _s)
 {
 	size_t cur;
 	WINPR_ASSERT(_s);
@@ -320,5 +312,70 @@ BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t length)
 	for (x = 0; x < length; x++)
 		Stream_Read_UINT16(s, dst[x]);
 
+	return TRUE;
+}
+
+BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, DWORD level, wStream* s, UINT64 len,
+                                        const char* fmt, ...)
+{
+	const size_t actual = Stream_GetRemainingLength(s);
+
+	if (actual < len)
+	{
+		va_list args;
+
+		va_start(args, fmt);
+		Stream_CheckAndLogRequiredLengthExVa(tag, level, s, len, fmt, args);
+		va_end(args);
+
+		return FALSE;
+	}
+	return TRUE;
+}
+
+BOOL Stream_CheckAndLogRequiredLengthExVa(const char* tag, DWORD level, wStream* s, UINT64 len,
+                                          const char* fmt, va_list args)
+{
+	const size_t actual = Stream_GetRemainingLength(s);
+
+	if (actual < len)
+		return Stream_CheckAndLogRequiredLengthWLogExVa(WLog_Get(tag), level, s, len, fmt, args);
+	return TRUE;
+}
+
+BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s, UINT64 len,
+                                            const char* fmt, ...)
+{
+	const size_t actual = Stream_GetRemainingLength(s);
+
+	if (actual < len)
+	{
+		va_list args;
+
+		va_start(args, fmt);
+		Stream_CheckAndLogRequiredLengthWLogExVa(log, level, s, len, fmt, args);
+		va_end(args);
+
+		return FALSE;
+	}
+	return TRUE;
+}
+
+BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s, UINT64 len,
+                                              const char* fmt, va_list args)
+{
+	const size_t actual = Stream_GetRemainingLength(s);
+
+	if (actual < len)
+	{
+		char prefix[1024] = { 0 };
+
+		vsnprintf(prefix, sizeof(prefix), fmt, args);
+
+		WLog_Print(log, level, "[%s] invalid length, got %" PRIuz ", require at least %" PRIu64,
+		           prefix, actual, len);
+		winpr_log_backtrace_ex(log, level, 20);
+		return FALSE;
+	}
 	return TRUE;
 }

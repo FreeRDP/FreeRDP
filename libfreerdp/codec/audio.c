@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 
@@ -151,7 +149,7 @@ BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 	if (!s || !format)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < 18)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 18))
 		return FALSE;
 
 	Stream_Read_UINT16(s, format->wFormatTag);
@@ -162,7 +160,7 @@ BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 	Stream_Read_UINT16(s, format->wBitsPerSample);
 	Stream_Read_UINT16(s, format->cbSize);
 
-	if (Stream_GetRemainingLength(s) < format->cbSize)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, format->cbSize))
 		return FALSE;
 
 	format->data = NULL;

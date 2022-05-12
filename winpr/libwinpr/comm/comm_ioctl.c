@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #if defined __linux__ && !defined ANDROID
 
@@ -68,24 +66,15 @@ const char* _comm_serial_ioctl_name(ULONG number)
 	return "(unknown ioctl name)";
 }
 
-static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
-                                 DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
-                                 LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
+static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
+                                  DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
+                                  LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 	SERIAL_DRIVER* pServerSerialDriver = NULL;
 
-	if (hDevice == INVALID_HANDLE_VALUE)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
+	if (!CommIsHandleValid(hDevice))
 		return FALSE;
-	}
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
 
 	if (lpOverlapped)
 	{
@@ -658,14 +647,17 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 		return FALSE;
 	}
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
+	if (!CommIsHandled(hDevice))
+		return FALSE;
+
+	if (!pComm->fd)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
 
-	result = _CommDeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer,
-	                              nOutBufferSize, lpBytesReturned, lpOverlapped);
+	result = s_CommDeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer,
+	                               nOutBufferSize, lpBytesReturned, lpOverlapped);
 
 	if (lpBytesReturned && *lpBytesReturned != nOutBufferSize)
 	{

@@ -17,16 +17,14 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
 
 #include <winpr/collections.h>
 
-struct _wQueue
+struct s_wQueue
 {
 	size_t capacity;
 	size_t growthFactor;

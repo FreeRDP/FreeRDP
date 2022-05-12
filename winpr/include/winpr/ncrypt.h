@@ -114,22 +114,24 @@ typedef ULONG_PTR NCRYPT_KEY_HANDLE;
 	              "c\x00"           \
 	              "a\x00t\x00"      \
 	              "e\x00\x00"
-#define NCRYPT_UNIQUE_NAME_PROPERTY \
-		(const WCHAR*)"U\x00n\x00i\x00q\x00u\x00" \
-		"e\x00 \x00N\x00" \
-		"a\x00m\x00" \
-		"e\x00\x00"
-#define NCRYPT_READER_PROPERTY \
-		(const WCHAR *)"S\x00m\x00" \
-		"a\x00r\x00t\x00" \
-		"C\x00" \
-		"a\x00r\x00" \
-		"d\x00R\x00" \
-		"e\x00" \
-		"a\x00" \
-		"d\x00" \
-		"e\x00r\x00\x00"
+#define NCRYPT_UNIQUE_NAME_PROPERTY           \
+	(const WCHAR*)"U\x00n\x00i\x00q\x00u\x00" \
+	              "e\x00 \x00N\x00"           \
+	              "a\x00m\x00"                \
+	              "e\x00\x00"
+#define NCRYPT_READER_PROPERTY      \
+	(const WCHAR*)"S\x00m\x00"      \
+	              "a\x00r\x00t\x00" \
+	              "C\x00"           \
+	              "a\x00r\x00"      \
+	              "d\x00R\x00"      \
+	              "e\x00"           \
+	              "a\x00"           \
+	              "d\x00"           \
+	              "e\x00r\x00\x00"
 
+/* winpr specific properties */
+#define NCRYPT_WINPR_SLOTID (const WCHAR*)"S\x00l\x00o\x00t\x00\x00"
 
 #define NCRYPT_MACHINE_KEY_FLAG 0x20
 #define NCRYPT_SILENT_FLAG 0x40
@@ -155,23 +157,27 @@ extern "C"
 {
 #endif
 
-	SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
-	                                           NCryptProviderName** ppProviderList, DWORD dwFlags);
+	WINPR_API SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
+	                                                     NCryptProviderName** ppProviderList,
+	                                                     DWORD dwFlags);
 
-	SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider,
-	                                          LPCWSTR pszProviderName, DWORD dwFlags);
+	WINPR_API SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider,
+	                                                    LPCWSTR pszProviderName, DWORD dwFlags);
 
-	SECURITY_STATUS NCryptEnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR pszScope,
-	                               NCryptKeyName** ppKeyName, PVOID* ppEnumState, DWORD dwFlags);
+	WINPR_API SECURITY_STATUS NCryptEnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR pszScope,
+	                                         NCryptKeyName** ppKeyName, PVOID* ppEnumState,
+	                                         DWORD dwFlags);
 
-	SECURITY_STATUS NCryptOpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY_HANDLE* phKey,
-	                              LPCWSTR pszKeyName, DWORD dwLegacyKeySpec, DWORD dwFlags);
+	WINPR_API SECURITY_STATUS NCryptOpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY_HANDLE* phKey,
+	                                        LPCWSTR pszKeyName, DWORD dwLegacyKeySpec,
+	                                        DWORD dwFlags);
 
-	SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty, PBYTE pbOutput,
-	                                  DWORD cbOutput, DWORD* pcbResult, DWORD dwFlags);
+	WINPR_API SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty,
+	                                            PBYTE pbOutput, DWORD cbOutput, DWORD* pcbResult,
+	                                            DWORD dwFlags);
 
-	SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject);
-	SECURITY_STATUS NCryptFreeBuffer(PVOID pvInput);
+	WINPR_API SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject);
+	WINPR_API SECURITY_STATUS NCryptFreeBuffer(PVOID pvInput);
 
 #ifdef __cplusplus
 }
@@ -192,7 +198,7 @@ extern "C"
 	 * @param modulePaths [in] an array of library path to try to load ended with a NULL string
 	 * @return ERROR_SUCCESS or an NTE error code something failed
 	 */
-	SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
+	WINPR_API SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 	                                                  LPCWSTR pszProviderName, DWORD dwFlags,
 	                                                  LPCSTR* modulePaths);
 

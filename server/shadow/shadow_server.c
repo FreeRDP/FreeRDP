@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <errno.h>
 
@@ -600,6 +598,7 @@ int shadow_server_start(rdpShadowServer* server)
 			}
 		}
 
+		WINPR_ASSERT(list || (count == 0));
 		for (x = 1; x < count; x++)
 		{
 			BOOL success = open_port(server, list[x]);

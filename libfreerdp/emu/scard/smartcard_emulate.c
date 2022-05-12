@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -99,10 +97,8 @@ typedef struct
 static SCardHandle* find_reader(SmartcardEmulationContext* smartcard, const void* szReader,
                                 BOOL unicode);
 
-
-const BYTE ATR[] = { 0x3b, 0xf7, 0x18, 0x00, 0x00, 0x80, 0x31, 0xfe, 0x45,
-		0x73, 0x66, 0x74, 0x65, 0x2d, 0x6e, 0x66, 0xc4
-};
+static const BYTE ATR[] = { 0x3b, 0xf7, 0x18, 0x00, 0x00, 0x80, 0x31, 0xfe, 0x45,
+	                        0x73, 0x66, 0x74, 0x65, 0x2d, 0x6e, 0x66, 0xc4 };
 
 static BOOL scard_status_transition(SCardContext* context)
 {
@@ -305,10 +301,8 @@ static SCardHandle* scard_handle_new(SmartcardEmulationContext* smartcard, SCARD
 		    freerdp_settings_get_string(smartcard->settings, FreeRDP_SmartcardCertificate);
 		const char* key =
 		    freerdp_settings_get_string(smartcard->settings, FreeRDP_SmartcardPrivateKey);
-		const char* pin = NULL;
 
-		if (freerdp_settings_get_bool(smartcard->settings, FreeRDP_PasswordIsSmartcardPin))
-			pin = freerdp_settings_get_string(smartcard->settings, FreeRDP_Password);
+		const char* pin = freerdp_settings_get_string(smartcard->settings, FreeRDP_Password);
 
 		if (!vgids_init(hdl->vgids, pem, key, pin))
 			goto fail;
@@ -2694,9 +2688,7 @@ BOOL Emulate_IsConfigured(SmartcardEmulationContext* context)
 
 	pem = freerdp_settings_get_string(context->settings, FreeRDP_SmartcardCertificate);
 	key = freerdp_settings_get_string(context->settings, FreeRDP_SmartcardPrivateKey);
-
-	if (freerdp_settings_get_bool(context->settings, FreeRDP_PasswordIsSmartcardPin))
-		pin = freerdp_settings_get_string(context->settings, FreeRDP_Password);
+	pin = freerdp_settings_get_string(context->settings, FreeRDP_Password);
 
 	/* Cache result only, if no initialization arguments changed. */
 	if ((context->pem == pem) && (context->key == key) && (context->pin == pin))

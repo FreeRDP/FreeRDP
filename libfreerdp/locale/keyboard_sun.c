@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,14 +53,13 @@
  * keyboard layout indicated by the index given (in this case, 33, or US-English).
  */
 
-struct _SOLARIS_KEYBOARD
+typedef struct
 {
 	UINT32 type;             /* Solaris keyboard type */
 	UINT32 layout;           /* Layout */
 	char* xkbType;           /* XKB keyboard */
 	UINT32 keyboardLayoutId; /* XKB keyboard layout */
-};
-typedef struct _SOLARIS_KEYBOARD SOLARIS_KEYBOARD;
+} SOLARIS_KEYBOARD;
 
 static const SOLARIS_KEYBOARD SOLARIS_KEYBOARD_TABLE[] = {
 	{ 4, 0, "sun(type4)", KBD_US },                                      /*  US4 */

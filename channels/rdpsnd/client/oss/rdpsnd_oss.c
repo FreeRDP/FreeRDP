@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,9 +49,7 @@
 
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_oss_plugin rdpsndOssPlugin;
-
-struct rdpsnd_oss_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
@@ -65,7 +61,7 @@ struct rdpsnd_oss_plugin
 
 	UINT32 latency;
 	AUDIO_FORMAT format;
-};
+} rdpsndOssPlugin;
 
 #define OSS_LOG_ERR(_text, _error)                                         \
 	do                                                                     \
@@ -443,18 +439,12 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_A
 	return status;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_rdpsnd_client_subsystem_entry oss_freerdp_rdpsnd_client_subsystem_entry
-#else
-#define freerdp_rdpsnd_client_subsystem_entry FREERDP_API freerdp_rdpsnd_client_subsystem_entry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+UINT oss_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	const ADDIN_ARGV* args;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)calloc(1, sizeof(rdpsndOssPlugin));

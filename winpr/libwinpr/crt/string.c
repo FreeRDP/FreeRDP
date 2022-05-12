@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -130,33 +128,45 @@ size_t _wcsnlen(const WCHAR* str, size_t max)
 
 /* _wcschr -> wcschr */
 
-WCHAR* _wcschr(const WCHAR* str, WCHAR c)
+WCHAR* _wcschr(const WCHAR* str, WCHAR value)
 {
+	union
+	{
+		const WCHAR* cc;
+		WCHAR* c;
+	} cnv;
 	const WCHAR* p = (const WCHAR*)str;
-	WCHAR value;
-	Data_Write_UINT16(&value, c);
 
 	while (*p && (*p != value))
 		p++;
 
-	return ((*p == value) ? (WCHAR*)p : NULL);
+	cnv.cc = (*p == value) ? p : NULL;
+	return cnv.c;
 }
 
 /* _wcsrchr -> wcsrchr */
 
 WCHAR* _wcsrchr(const WCHAR* str, WCHAR c)
 {
-	const WCHAR* p;
-	WCHAR ch;
+	union
+	{
+		const WCHAR* cc;
+		WCHAR* c;
+	} cnv;
+	const WCHAR* p = NULL;
 
 	if (!str)
 		return NULL;
 
-	for (p = (const WCHAR*)0; (ch = *str); str++)
+	for (; *str != '\0'; str++)
+	{
+		const WCHAR ch = *str;
 		if (ch == c)
-			p = (const WCHAR*)str;
+			p = str;
+	}
 
-	return (WCHAR*)p;
+	cnv.cc = p;
+	return cnv.c;
 }
 
 char* strtok_s(char* strToken, const char* strDelimit, char** context)

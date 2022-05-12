@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 
@@ -51,19 +49,19 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32
 	if (!gdi)
 		return NULL;
 
-	nDstStep = nWidth * GetBytesPerPixel(gdi->dstFormat);
-	pDstData = _aligned_malloc(nHeight * nDstStep * 1ULL, 16);
+	nDstStep = nWidth * FreeRDPGetBytesPerPixel(gdi->dstFormat);
+	pDstData = winpr_aligned_malloc(nHeight * nDstStep * 1ULL, 16);
 
 	if (!pDstData)
 		return NULL;
 
 	pSrcData = data;
-	nSrcStep = nWidth * GetBytesPerPixel(SrcFormat);
+	nSrcStep = nWidth * FreeRDPGetBytesPerPixel(SrcFormat);
 
 	if (!freerdp_image_copy(pDstData, gdi->dstFormat, nDstStep, 0, 0, nWidth, nHeight, pSrcData,
 	                        SrcFormat, nSrcStep, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
 	{
-		_aligned_free(pDstData);
+		winpr_aligned_free(pDstData);
 		return NULL;
 	}
 
@@ -114,7 +112,7 @@ static void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 
 		gdi_DeleteObject((HGDIOBJECT)gdi_bitmap->bitmap);
 		gdi_DeleteDC(gdi_bitmap->hdc);
-		_aligned_free(bitmap->data);
+		winpr_aligned_free(bitmap->data);
 	}
 
 	free(bitmap);
@@ -139,14 +137,14 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 	bitmap->compressed = FALSE;
 	bitmap->format = gdi->dstFormat;
 
-	if ((GetBytesPerPixel(bitmap->format) == 0) || (DstWidth == 0) || (DstHeight == 0) ||
+	if ((FreeRDPGetBytesPerPixel(bitmap->format) == 0) || (DstWidth == 0) || (DstHeight == 0) ||
 	    (DstWidth > UINT32_MAX / DstHeight) ||
-	    (size > (UINT32_MAX / GetBytesPerPixel(bitmap->format))))
+	    (size > (UINT32_MAX / FreeRDPGetBytesPerPixel(bitmap->format))))
 		return FALSE;
 
-	size *= GetBytesPerPixel(bitmap->format);
+	size *= FreeRDPGetBytesPerPixel(bitmap->format);
 	bitmap->length = size;
-	bitmap->data = (BYTE*)_aligned_malloc(bitmap->length, 16);
+	bitmap->data = (BYTE*)winpr_aligned_malloc(bitmap->length, 16);
 
 	if (!bitmap->data)
 		return FALSE;
@@ -162,8 +160,9 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 		}
 		else
 		{
-			freerdp_planar_switch_bgr(context->codecs->planar,
-			                          context->settings->DrawAllowDynamicColorFidelity);
+			const BOOL fidelity =
+			    freerdp_settings_get_bool(context->settings, FreeRDP_DrawAllowDynamicColorFidelity);
+			freerdp_planar_switch_bgr(context->codecs->planar, fidelity);
 			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize, DstWidth, DstHeight,
 			                       bitmap->data, bitmap->format, 0, 0, 0, DstWidth, DstHeight,
 			                       TRUE))
@@ -173,8 +172,8 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 	else
 	{
 		const UINT32 SrcFormat = gdi_get_pixel_format(bpp);
-		const size_t sbpp = GetBytesPerPixel(SrcFormat);
-		const size_t dbpp = GetBytesPerPixel(bitmap->format);
+		const size_t sbpp = FreeRDPGetBytesPerPixel(SrcFormat);
+		const size_t dbpp = FreeRDPGetBytesPerPixel(bitmap->format);
 
 		if ((sbpp == 0) || (dbpp == 0))
 			return FALSE;
@@ -243,7 +242,7 @@ static BOOL gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 	if (!gdi_glyph->bitmap)
 	{
 		gdi_DeleteDC(gdi_glyph->hdc);
-		_aligned_free(data);
+		winpr_aligned_free(data);
 		return FALSE;
 	}
 

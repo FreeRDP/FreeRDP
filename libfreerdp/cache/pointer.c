@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 
@@ -35,7 +33,7 @@
 #define TAG FREERDP_TAG("cache.pointer")
 
 static BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer);
-static const rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index);
+static rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index);
 
 static void pointer_free(rdpContext* context, rdpPointer* pointer)
 {
@@ -63,12 +61,14 @@ static BOOL update_pointer_position(rdpContext* context,
                                     const POINTER_POSITION_UPDATE* pointer_position)
 {
 	rdpPointer* pointer;
+	BOOL GrabMouse;
 
 	if (!context || !context->graphics || !context->graphics->Pointer_Prototype ||
 	    !pointer_position)
 		return FALSE;
 
-	if (!context->settings->GrabMouse)
+	GrabMouse = freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse);
+	if (!GrabMouse)
 		return TRUE;
 
 	pointer = context->graphics->Pointer_Prototype;
@@ -255,7 +255,7 @@ out_fail:
 
 static BOOL update_pointer_cached(rdpContext* context, const POINTER_CACHED_UPDATE* pointer_cached)
 {
-	const rdpPointer* pointer;
+	rdpPointer* pointer;
 	rdpCache* cache;
 
 	WINPR_ASSERT(context);
@@ -272,9 +272,9 @@ static BOOL update_pointer_cached(rdpContext* context, const POINTER_CACHED_UPDA
 	return FALSE;
 }
 
-const rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
+rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 {
-	const rdpPointer* pointer;
+	rdpPointer* pointer;
 
 	WINPR_ASSERT(pointer_cache);
 
@@ -345,7 +345,7 @@ rdpPointerCache* pointer_cache_new(rdpContext* context)
 		return NULL;
 
 	pointer_cache->context = context;
-	pointer_cache->cacheSize = settings->PointerCacheSize;
+	pointer_cache->cacheSize = freerdp_settings_get_uint32(settings, FreeRDP_PointerCacheSize);
 	pointer_cache->entries = (rdpPointer**)calloc(pointer_cache->cacheSize, sizeof(rdpPointer*));
 
 	if (!pointer_cache->entries)
@@ -364,10 +364,13 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 		UINT32 i;
 		rdpPointer* pointer;
 
-		for (i = 0; i < pointer_cache->cacheSize; i++)
+		if (pointer_cache->entries)
 		{
-			pointer = pointer_cache->entries[i];
-			pointer_free(pointer_cache->context, pointer);
+			for (i = 0; i < pointer_cache->cacheSize; i++)
+			{
+				pointer = pointer_cache->entries[i];
+				pointer_free(pointer_cache->context, pointer);
+			}
 		}
 
 		free(pointer_cache->entries);

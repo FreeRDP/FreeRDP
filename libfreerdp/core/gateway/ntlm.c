@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
@@ -86,7 +84,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, LPCSTR user, LPCSTR domain, LPCS
 	if (!ntlm->table)
 		return FALSE;
 
-	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
+	sspi_SetAuthIdentityA(&(ntlm->identity), user, domain, password);
 	status = ntlm->table->QuerySecurityPackageInfo(NTLM_SSP_NAME, &ntlm->pPackageInfo);
 
 	if (status != SEC_E_OK)
@@ -312,12 +310,8 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm, BOOL* pbContinueNeeded)
 
 static void ntlm_client_uninit(rdpNtlm* ntlm)
 {
-	free(ntlm->identity.User);
-	ntlm->identity.User = NULL;
-	free(ntlm->identity.Domain);
-	ntlm->identity.Domain = NULL;
-	free(ntlm->identity.Password);
-	ntlm->identity.Password = NULL;
+	sspi_FreeAuthIdentity(&ntlm->identity);
+
 	free(ntlm->ServicePrincipalName);
 	ntlm->ServicePrincipalName = NULL;
 
@@ -446,7 +440,15 @@ BOOL ntlm_client_set_input_buffer(rdpNtlm* ntlm, BOOL copy, const void* data, si
 		memcpy(ntlm->inputBuffer[0].pvBuffer, data, size);
 	}
 	else
-		ntlm->inputBuffer[0].pvBuffer = (void*)data;
+	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
+		cnv.cpv = data;
+		ntlm->inputBuffer[0].pvBuffer = cnv.pv;
+	}
 
 	return TRUE;
 }

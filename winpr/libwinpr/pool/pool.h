@@ -20,11 +20,14 @@
 #ifndef WINPR_POOL_PRIVATE_H
 #define WINPR_POOL_PRIVATE_H
 
+#include <winpr/windows.h>
 #include <winpr/pool.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/collections.h>
 
+#if defined(_WIN32)
+#if (_WIN32_WINNT < _WIN32_WINNT_WIN6) || defined(__MINGW32__)
 struct _TP_CALLBACK_INSTANCE
 {
 	PTP_WORK Work;
@@ -64,13 +67,55 @@ struct _TP_IO
 
 struct _TP_CLEANUP_GROUP
 {
-#ifndef _WIN32
+	void* dummy;
+};
+
+#endif
+#else
+struct S_TP_CALLBACK_INSTANCE
+{
+	PTP_WORK Work;
+};
+
+struct S_TP_POOL
+{
+	DWORD Minimum;
+	DWORD Maximum;
+	wArrayList* Threads;
+	wQueue* PendingQueue;
+	HANDLE TerminateEvent;
+	wCountdownEvent* WorkComplete;
+};
+
+struct S_TP_WORK
+{
+	PVOID CallbackParameter;
+	PTP_WORK_CALLBACK WorkCallback;
+	PTP_CALLBACK_ENVIRON CallbackEnvironment;
+};
+
+struct S_TP_TIMER
+{
+	void* dummy;
+};
+
+struct S_TP_WAIT
+{
+	void* dummy;
+};
+
+struct S_TP_IO
+{
+	void* dummy;
+};
+
+struct S_TP_CLEANUP_GROUP
+{
 	wArrayList* groups;
 	PTP_CALLBACK_ENVIRON env;
-#else
-	void* dummy;
-#endif
 };
+
+#endif
 
 PTP_POOL GetDefaultThreadpool(void);
 

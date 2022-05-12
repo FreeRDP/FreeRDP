@@ -19,6 +19,7 @@
  */
 
 #import "Clipboard.h"
+#import "MRDPView.h"
 
 int mac_cliprdr_send_client_format_list(CliprdrClientContext *cliprdr)
 {
@@ -372,9 +373,9 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 		                                       encoding:NSUTF8StringEncoding];
 		free(data);
 
-		NSArray *types = [[NSArray alloc] initWithObjects:NSStringPboardType, nil];
+		NSArray *types = [[NSArray alloc] initWithObjects:NSPasteboardTypeString, nil];
 		[view->pasteboard_wr declareTypes:types owner:view];
-		[view->pasteboard_wr setString:str forType:NSStringPboardType];
+		[view->pasteboard_wr setString:str forType:NSPasteboardTypeString];
 	}
 
 	return CHANNEL_RC_OK;

@@ -37,7 +37,7 @@ static INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
 
 	if ((x >= 0) && (y >= 0) && (x < hBmp->width) && (y < hBmp->height))
 	{
-		p = hBmp->data + (y * hBmp->scanline) + (x * GetBytesPerPixel(hdcBmp->format));
+		p = hBmp->data + (y * hBmp->scanline) + (x * FreeRDPGetBytesPerPixel(hdcBmp->format));
 		return p;
 	}
 	else
@@ -51,11 +51,11 @@ static INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
 }
 
 /**
- * Get current color in brush bitmap according to dest coordinates.\n
- * @msdn{dd183396}
+ * Get current color in brush bitmap according to dest coordinates. msdn{dd183396}
+ *
  * @param x dest x-coordinate
  * @param y dest y-coordinate
- * @return color
+ * @return color pointer
  */
 static INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 {
@@ -77,7 +77,7 @@ static INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 			y = (y + hBmpBrush->height - (hdcBrush->brush->nYOrg % hBmpBrush->height)) %
 			    hBmpBrush->height;
 			p = hBmpBrush->data + (y * hBmpBrush->scanline) +
-			    (x * GetBytesPerPixel(hBmpBrush->format));
+			    (x * FreeRDPGetBytesPerPixel(hBmpBrush->format));
 			return p;
 		}
 		break;

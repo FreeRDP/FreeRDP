@@ -21,9 +21,7 @@
 #ifndef FREERDP_LIB_CODEC_NSC_TYPES_H
 #define FREERDP_LIB_CODEC_NSC_TYPES_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -35,7 +33,7 @@
 #define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n - 1)) + 0x1) & (_n - 1)))
 #define MINMAX(_v, _l, _h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
 
-struct _NSC_CONTEXT_PRIV
+typedef struct
 {
 	wLog* log;
 
@@ -47,11 +45,9 @@ struct _NSC_CONTEXT_PRIV
 	PROFILER_DEFINE(prof_nsc_decode)
 	PROFILER_DEFINE(prof_nsc_rle_compress_data)
 	PROFILER_DEFINE(prof_nsc_encode)
-};
+} NSC_CONTEXT_PRIV;
 
-typedef struct _NSC_CONTEXT_PRIV NSC_CONTEXT_PRIV;
-
-struct _NSC_CONTEXT
+struct S_NSC_CONTEXT
 {
 	UINT32 OrgByteCount[4];
 	UINT32 format;

@@ -22,9 +22,7 @@
 #ifndef FREERDP_CLIENT_X11_FREERDP_H
 #define FREERDP_CLIENT_X11_FREERDP_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 typedef struct xf_context xfContext;
 
@@ -111,8 +109,8 @@ struct xf_glyph
 typedef struct xf_glyph xfGlyph;
 
 typedef struct xf_clipboard xfClipboard;
-typedef struct _xfDispContext xfDispContext;
-typedef struct _xfVideoContext xfVideoContext;
+typedef struct s_xfDispContext xfDispContext;
+typedef struct s_xfVideoContext xfVideoContext;
 typedef struct xf_rail_icon_cache xfRailIconCache;
 
 /* Number of buttons that are mapped from X11 to RDP button events. */
@@ -141,8 +139,7 @@ typedef struct touch_contact
 
 struct xf_context
 {
-	rdpContext context;
-	DEFINE_RDP_CLIENT_COMMON();
+	rdpClientContext common;
 
 	GC gc;
 	int xfds;
@@ -204,7 +201,6 @@ struct xf_context
 #endif
 
 	BOOL focused;
-	BOOL use_xinput;
 	BOOL mouse_active;
 	BOOL fullscreen_toggle;
 	BOOL controlToggle;
@@ -272,7 +268,6 @@ struct xf_context
 	xfClipboard* clipboard;
 	CliprdrClientContext* cliprdr;
 	xfVideoContext* xfVideo;
-	RdpeiClientContext* rdpei;
 	EncomspClientContext* encomsp;
 	xfDispContext* xfDisp;
 
@@ -301,6 +296,8 @@ struct xf_context
 	double px_vector;
 	double py_vector;
 #endif
+	BOOL xi_rawevent;
+	BOOL xi_event;
 };
 
 BOOL xf_create_window(xfContext* xfc);

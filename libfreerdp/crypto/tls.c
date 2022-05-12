@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/assert.h>
 #include <string.h>
@@ -70,12 +68,11 @@
  * #define MICROSOFT_IOS_SNI_BUG
  */
 
-struct _BIO_RDP_TLS
+typedef struct
 {
 	SSL* ssl;
 	CRITICAL_SECTION lock;
-};
-typedef struct _BIO_RDP_TLS BIO_RDP_TLS;
+} BIO_RDP_TLS;
 
 static int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, UINT16 port);
 static void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port,
@@ -316,6 +313,8 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 		case BIO_CTRL_FLUSH:
 			BIO_clear_retry_flags(bio);
 			status = BIO_ctrl(ssl_wbio, cmd, num, ptr);
+			if (status != 1)
+				WLog_DBG(TAG, "BIO_ctrl returned %d", status);
 			BIO_copy_next_retry(bio);
 			status = 1;
 			break;
@@ -380,7 +379,6 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			{
 				tls->ssl = (SSL*)ptr;
 				ssl_rbio = SSL_get_rbio(tls->ssl);
-				ssl_wbio = SSL_get_wbio(tls->ssl);
 			}
 
 			if (ssl_rbio)
@@ -866,7 +864,7 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 #else
 	if (!tls_prepare(tls, underlying, TLS_client_method(), options, TRUE))
 #endif
-		return FALSE;
+		return 0;
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(LIBRESSL_VERSION_NUMBER)
 	SSL_set_tlsext_host_name(tls->ssl, tls->hostname);
@@ -1288,11 +1286,17 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 	int verification_status = -1;
 	BOOL hostname_match = FALSE;
 	rdpCertificateData* certificate_data = NULL;
-	freerdp* instance = (freerdp*)tls->settings->instance;
 	BYTE* pemCert = NULL;
 	DWORD flags = VERIFY_CERT_FLAG_NONE;
+	freerdp* instance;
 
-	if (freerdp_shall_disconnect(instance))
+	WINPR_ASSERT(tls);
+	WINPR_ASSERT(tls->settings);
+
+	instance = (freerdp*)tls->settings->instance;
+	WINPR_ASSERT(instance);
+
+	if (freerdp_shall_disconnect_context(instance->context))
 		return -1;
 
 	if (!tls_extract_pem(cert, &pemCert, &length))
@@ -1440,7 +1444,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 				else if (instance->VerifyCertificateEx)
 				{
 					const BOOL use_pem = freerdp_settings_get_bool(
-					    instance->settings, FreeRDP_CertificateCallbackPreferPEM);
+					    tls->settings, FreeRDP_CertificateCallbackPreferPEM);
 					char* fp = NULL;
 					DWORD cflags = flags;
 					if (use_pem)
@@ -1506,7 +1510,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					const char* old_pem = certificate_data_get_pem(stored_data);
 					const BOOL fpIsAllocated =
 					    !old_pem || !freerdp_settings_get_bool(
-					                    instance->settings, FreeRDP_CertificateCallbackPreferPEM);
+					                    tls->settings, FreeRDP_CertificateCallbackPreferPEM);
 					char* fp;
 					if (!fpIsAllocated)
 					{

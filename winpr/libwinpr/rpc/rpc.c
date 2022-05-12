@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/rpc.h>
@@ -695,13 +693,13 @@ static UUID UUID_NIL = {
 
 RPC_STATUS UuidCreate(UUID* Uuid)
 {
-	winpr_RAND_pseudo((BYTE*)Uuid, 16);
+	winpr_RAND_pseudo(Uuid, 16);
 	return RPC_S_OK;
 }
 
 RPC_STATUS UuidCreateSequential(UUID* Uuid)
 {
-	winpr_RAND_pseudo((BYTE*)Uuid, 16);
+	winpr_RAND_pseudo(Uuid, 16);
 	return RPC_S_OK;
 }
 

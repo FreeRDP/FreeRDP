@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/environment.h>
@@ -28,15 +26,14 @@
 
 #include "wlog.h"
 
-struct _wLogUdpAppender
+typedef struct
 {
 	WLOG_APPENDER_COMMON();
 	char* host;
 	struct sockaddr targetAddr;
 	int targetAddrLen;
 	SOCKET sock;
-};
-typedef struct _wLogUdpAppender wLogUdpAppender;
+} wLogUdpAppender;
 
 static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 {
@@ -94,7 +91,7 @@ static BOOL WLog_UdpAppender_Close(wLog* log, wLogAppender* appender)
 
 static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
-	char prefix[WLOG_MAX_PREFIX_SIZE];
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
 	wLogUdpAppender* udpAppender;
 
 	if (!log || !appender || !message)

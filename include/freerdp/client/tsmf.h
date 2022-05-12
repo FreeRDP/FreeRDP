@@ -36,7 +36,7 @@
 #define RDP_PIXFMT_I420 0x30323449
 #define RDP_PIXFMT_YV12 0x32315659
 
-struct _TSMF_VIDEO_FRAME_EVENT
+typedef struct
 {
 	BYTE* frameData;
 	UINT32 frameSize;
@@ -49,18 +49,17 @@ struct _TSMF_VIDEO_FRAME_EVENT
 	INT16 height;
 	UINT16 numVisibleRects;
 	RECTANGLE_16* visibleRects;
-};
-typedef struct _TSMF_VIDEO_FRAME_EVENT TSMF_VIDEO_FRAME_EVENT;
+} TSMF_VIDEO_FRAME_EVENT;
 
 /**
  * Client Interface
  */
 
-typedef struct _tsmf_client_context TsmfClientContext;
+typedef struct s_tsmf_client_context TsmfClientContext;
 
 typedef int (*pcTsmfFrameEvent)(TsmfClientContext* context, TSMF_VIDEO_FRAME_EVENT* event);
 
-struct _tsmf_client_context
+struct s_tsmf_client_context
 {
 	void* handle;
 	void* custom;

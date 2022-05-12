@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
@@ -27,7 +25,7 @@
 
 #include <winpr/collections.h>
 
-struct _wMessageQueue
+struct s_wMessageQueue
 {
 	size_t head;
 	size_t tail;

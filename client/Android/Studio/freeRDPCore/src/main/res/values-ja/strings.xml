@@ -115,7 +115,6 @@
     <string name="settings_remote_program">遠隔実行するプログラム</string>
     <string name="settings_work_dir">作業フォルダ</string>
     <string name="settings_async_channel">Async channel</string>
-    <string name="settings_async_input">Async input</string>
     <string name="settings_async_update">Async update</string>
     <string name="settings_console_mode">コンソールモード</string>
     <!-- App settings strings -->

@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
@@ -34,9 +32,9 @@
  * http://www.pomakis.com/hashtable/hashtable.h
  */
 
-typedef struct _wKeyValuePair wKeyValuePair;
+typedef struct s_wKeyValuePair wKeyValuePair;
 
-struct _wKeyValuePair
+struct s_wKeyValuePair
 {
 	void* key;
 	void* value;
@@ -45,7 +43,7 @@ struct _wKeyValuePair
 	BOOL markedForRemove;
 };
 
-struct _wHashTable
+struct s_wHashTable
 {
 	BOOL synchronized;
 	CRITICAL_SECTION lock;
@@ -123,10 +121,13 @@ static INLINE BOOL HashTable_IsProbablePrime(size_t oddNumber)
 
 static INLINE size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 {
+    float tmp;
 	size_t idealNumOfBuckets;
 
 	WINPR_ASSERT(table);
-	idealNumOfBuckets = table->numOfElements / (table->idealRatio);
+
+    tmp = (table->numOfElements / table->idealRatio);
+    idealNumOfBuckets = (size_t)tmp;
 
 	if (idealNumOfBuckets < 5)
 		idealNumOfBuckets = 5;
@@ -243,7 +244,15 @@ static INLINE void setKey(wHashTable* table, wKeyValuePair* pair, const void* ke
 	if (table->key.fnObjectNew)
 		pair->key = table->key.fnObjectNew(key);
 	else
-		pair->key = (void*)key;
+	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
+		cnv.cpv = key;
+		pair->key = cnv.pv;
+	}
 }
 
 static INLINE void setValue(wHashTable* table, wKeyValuePair* pair, const void* value)
@@ -255,7 +264,15 @@ static INLINE void setValue(wHashTable* table, wKeyValuePair* pair, const void* 
 	if (table->value.fnObjectNew)
 		pair->value = table->value.fnObjectNew(value);
 	else
-		pair->value = (void*)value;
+	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
+		cnv.cpv = value;
+		pair->value = cnv.pv;
+	}
 }
 
 /**
@@ -415,7 +432,7 @@ BOOL HashTable_Remove(wHashTable* table, const void* key)
 	disposePair(table, pair);
 	table->numOfElements--;
 
-	if (!table->foreachRecursionLevel && table->lowerRehashThreshold > 0.0)
+	if (!table->foreachRecursionLevel && table->lowerRehashThreshold > 0.0f)
 	{
 		float elementToBucketRatio = (float)table->numOfElements / (float)table->numOfBuckets;
 

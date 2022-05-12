@@ -17,9 +17,7 @@
  * permissions and limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
@@ -42,7 +40,7 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const pSrc[3]
 	const INT16* pCr = pSrc[2];
 	const size_t srcPad = (srcStep - (roi->width * 2)) / 2;
 	const size_t dstPad = (dstStep - (roi->width * 4));
-	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 
 	for (y = 0; y < roi->height; y++)
 	{
@@ -84,7 +82,7 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const pSrc
 	const size_t srcPad = (srcStep - (roi->width * 2)) / 2;
 	const size_t dstPad = (dstStep - (roi->width * 4));
 	const fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
-	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 
 	for (y = 0; y < roi->height; y++)
 	{
@@ -450,7 +448,7 @@ general_RGBToRGB_16s8u_P3AC4R_general(const INT16* const pSrc[3], /* 16-bit R,G,
 	UINT32 y;
 	const DWORD srcAdd = srcStep / sizeof(INT16);
 	fkt_writeScanline writeScanline = getScanlineWriteFunction(DstFormat);
-	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 
 	for (y = 0; y < roi->height; ++y)
 	{
@@ -477,7 +475,7 @@ general_RGBToRGB_16s8u_P3AC4R_BGRX(const INT16* const pSrc[3], /* 16-bit R,G, an
 	const INT16* b = pSrc[2];
 	UINT32 y;
 	const DWORD srcAdd = srcStep / sizeof(INT16);
-	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 
 	for (y = 0; y < roi->height; ++y)
 	{

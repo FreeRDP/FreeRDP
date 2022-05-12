@@ -38,14 +38,13 @@
 #define FREERDP_ADDIN_CHANNEL_DEVICE 0x00004000
 #define FREERDP_ADDIN_CHANNEL_ENTRYEX 0x00008000
 
-struct _FREERDP_ADDIN
+typedef struct
 {
 	DWORD dwFlags;
 	CHAR cName[16];
 	CHAR cType[16];
 	CHAR cSubsystem[16];
-};
-typedef struct _FREERDP_ADDIN FREERDP_ADDIN;
+} FREERDP_ADDIN;
 
 typedef PVIRTUALCHANNELENTRY (*FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN)(LPCSTR pszName,
                                                                     LPCSTR pszSubsystem,

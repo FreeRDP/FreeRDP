@@ -26,8 +26,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-typedef struct _gfxredir_server_private GfxRedirServerPrivate;
-typedef struct _gfxredir_server_context GfxRedirServerContext;
+typedef struct s_gfxredir_server_private GfxRedirServerPrivate;
+typedef struct s_gfxredir_server_context GfxRedirServerContext;
 
 typedef UINT (*psGfxRedirOpen)(GfxRedirServerContext* context);
 typedef UINT (*psGfxRedirClose)(GfxRedirServerContext* context);
@@ -57,7 +57,7 @@ typedef UINT (*psGfxRedirPresentBuffer)(GfxRedirServerContext* context,
 typedef UINT (*psGfxRedirPresentBufferAck)(GfxRedirServerContext* context,
                                            const GFXREDIR_PRESENT_BUFFER_ACK_PDU* presentBufferAck);
 
-struct _gfxredir_server_context
+struct s_gfxredir_server_context
 {
 	void* custom;
 	HANDLE vcm;

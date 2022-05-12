@@ -16,12 +16,11 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <freerdp/log.h>
+#include <freerdp/client/rail.h>
 #include <winpr/tchar.h>
 #include <winpr/print.h>
 
@@ -50,13 +49,12 @@ struct wf_rail_window
 
 /* RemoteApp Core Protocol Extension */
 
-struct _WINDOW_STYLE
+typedef struct
 {
 	UINT32 style;
 	const char* name;
 	BOOL multi;
-};
-typedef struct _WINDOW_STYLE WINDOW_STYLE;
+} WINDOW_STYLE;
 
 static const WINDOW_STYLE WINDOW_STYLES[] = { { WS_BORDER, "WS_BORDER", FALSE },
 	                                          { WS_CAPTION, "WS_CAPTION", FALSE },
@@ -872,76 +870,6 @@ static UINT wf_rail_server_system_param(RailClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-static UINT wf_rail_server_start_cmd(RailClientContext* context)
-{
-	UINT status;
-	RAIL_EXEC_ORDER exec = { 0 };
-	RAIL_SYSPARAM_ORDER sysparam = { 0 };
-	RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
-	wfContext* wfc = (wfContext*)context->custom;
-	rdpSettings* settings = wfc->context.settings;
-	clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
-
-	if (settings->AutoReconnectionEnabled)
-		clientStatus.flags |= TS_RAIL_CLIENTSTATUS_AUTORECONNECT;
-
-	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_ZORDER_SYNC;
-	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED;
-	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED;
-	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED;
-	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED;
-	status = context->ClientInformation(context, &clientStatus);
-
-	if (status != CHANNEL_RC_OK)
-		return status;
-
-	if (settings->RemoteAppLanguageBarSupported)
-	{
-		RAIL_LANGBAR_INFO_ORDER langBarInfo;
-		langBarInfo.languageBarStatus = 0x00000008; /* TF_SFT_HIDDEN */
-		status = context->ClientLanguageBarInfo(context, &langBarInfo);
-
-		/* We want the language bar, but the server might not support it. */
-		switch (status)
-		{
-			case CHANNEL_RC_OK:
-			case ERROR_BAD_CONFIGURATION:
-				break;
-			default:
-				return status;
-		}
-	}
-
-	sysparam.params = 0;
-	sysparam.params |= SPI_MASK_SET_HIGH_CONTRAST;
-	sysparam.highContrast.colorScheme.string = NULL;
-	sysparam.highContrast.colorScheme.length = 0;
-	sysparam.highContrast.flags = 0x7E;
-	sysparam.params |= SPI_MASK_SET_MOUSE_BUTTON_SWAP;
-	sysparam.mouseButtonSwap = FALSE;
-	sysparam.params |= SPI_MASK_SET_KEYBOARD_PREF;
-	sysparam.keyboardPref = FALSE;
-	sysparam.params |= SPI_MASK_SET_DRAG_FULL_WINDOWS;
-	sysparam.dragFullWindows = FALSE;
-	sysparam.params |= SPI_MASK_SET_KEYBOARD_CUES;
-	sysparam.keyboardCues = FALSE;
-	sysparam.params |= SPI_MASK_SET_WORK_AREA;
-	sysparam.workArea.left = 0;
-	sysparam.workArea.top = 0;
-	sysparam.workArea.right = settings->DesktopWidth;
-	sysparam.workArea.bottom = settings->DesktopHeight;
-	sysparam.dragFullWindows = FALSE;
-	status = context->ClientSystemParam(context, &sysparam);
-
-	if (status != CHANNEL_RC_OK)
-		return status;
-
-	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
-	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
-	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
-	return context->ClientExecute(context, &exec);
-}
-
 /**
  * Function description
  *
@@ -950,7 +878,7 @@ static UINT wf_rail_server_start_cmd(RailClientContext* context)
 static UINT wf_rail_server_handshake(RailClientContext* context,
                                      const RAIL_HANDSHAKE_ORDER* handshake)
 {
-	return wf_rail_server_start_cmd(context);
+	return client_rail_server_start_cmd(context);
 }
 
 /**
@@ -961,7 +889,7 @@ static UINT wf_rail_server_handshake(RailClientContext* context,
 static UINT wf_rail_server_handshake_ex(RailClientContext* context,
                                         const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
-	return wf_rail_server_start_cmd(context);
+	return client_rail_server_start_cmd(context);
 }
 
 /**

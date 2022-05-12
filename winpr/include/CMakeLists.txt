@@ -15,14 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/version.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr/wtypes.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/wtypes.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr/build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/build-config.h)
-set(WINPR_INSTALL_INCLUDE_DIR include/winpr${WINPR_VERSION_MAJOR}/winpr)
+configure_file(config/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/version.h)
+configure_file(config/wtypes.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/wtypes.h)
+configure_file(config/build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/build-config.h)
+configure_file(config/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/buildflags.h)
+configure_file(config/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/config.h)
 
-file(GLOB WINPR_HEADERS "winpr/*.h")
-install(FILES ${WINPR_HEADERS} DESTINATION ${WINPR_INSTALL_INCLUDE_DIR} COMPONENT headers)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr/version.h DESTINATION ${WINPR_INSTALL_INCLUDE_DIR} COMPONENT headers)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr/wtypes.h DESTINATION ${WINPR_INSTALL_INCLUDE_DIR} COMPONENT headers)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr/build-config.h DESTINATION ${WINPR_INSTALL_INCLUDE_DIR} COMPONENT headers)
-install(DIRECTORY winpr/tools DESTINATION ${WINPR_INSTALL_INCLUDE_DIR} COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+	DESTINATION ${WINPR_INCLUDE_DIR}
+        FILES_MATCHING PATTERN "*.h")
+
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/
+	DESTINATION ${WINPR_INCLUDE_DIR}
+        FILES_MATCHING PATTERN "*.h")
+

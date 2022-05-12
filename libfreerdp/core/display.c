@@ -23,19 +23,20 @@ static BOOL display_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount,
                                              const MONITOR_DEF* monitorDefArray)
 {
 	UINT32 index;
-	const MONITOR_DEF* monitor;
 
 	if (!Stream_EnsureRemainingCapacity(s, 4 + (monitorCount * 20)))
 		return FALSE;
 
 	Stream_Write_UINT32(s, monitorCount); /* monitorCount (4 bytes) */
 
-	for (index = 0, monitor = monitorDefArray; index < monitorCount; index++, monitor++)
+	for (index = 0; index < monitorCount; index++)
 	{
-		Stream_Write_UINT32(s, monitor->left);   /* left (4 bytes) */
-		Stream_Write_UINT32(s, monitor->top);    /* top (4 bytes) */
-		Stream_Write_UINT32(s, monitor->right);  /* right (4 bytes) */
-		Stream_Write_UINT32(s, monitor->bottom); /* bottom (4 bytes) */
+		const MONITOR_DEF* monitor = &monitorDefArray[index];
+
+		Stream_Write_INT32(s, monitor->left);    /* left (4 bytes) */
+		Stream_Write_INT32(s, monitor->top);     /* top (4 bytes) */
+		Stream_Write_INT32(s, monitor->right);   /* right (4 bytes) */
+		Stream_Write_INT32(s, monitor->bottom);  /* bottom (4 bytes) */
 		Stream_Write_UINT32(s, monitor->flags);  /* flags (4 bytes) */
 	}
 
@@ -47,14 +48,21 @@ BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
                                                 MONITOR_DEF** result)
 {
 	UINT32 index;
-	const rdpMonitor* monitor;
+	MONITOR_DEF* mdef = NULL;
 
-	if (!monitorDefArray || !(*result))
+	if (!monitorDefArray || !result || (*result))
 		return FALSE;
 
-	for (index = 0, monitor = monitorDefArray; index < monitorCount; index++, monitor++)
+	mdef = (MONITOR_DEF*)calloc(monitorCount, sizeof(MONITOR_DEF));
+
+	if (!mdef)
+		return FALSE;
+
+	for (index = 0; index < monitorCount; index++)
 	{
-		MONITOR_DEF* current = (*result + index);
+		const rdpMonitor* monitor = &monitorDefArray[index];
+		MONITOR_DEF* current = &mdef[index];
+
 		current->left = monitor->x;                                   /* left (4 bytes) */
 		current->top = monitor->y;                                    /* top (4 bytes) */
 		current->right = monitor->x + monitor->width - 1;             /* right (4 bytes) */
@@ -62,6 +70,7 @@ BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
 		current->flags = monitor->is_primary ? MONITOR_PRIMARY : 0x0; /* flags (4 bytes) */
 	}
 
+	*result = mdef;
 	return TRUE;
 }
 

@@ -22,14 +22,8 @@
 #ifndef FREERDP_CODEC_REMOTEFX_H
 #define FREERDP_CODEC_REMOTEFX_H
 
-typedef struct _RFX_RECT RFX_RECT;
-typedef struct _RFX_TILE RFX_TILE;
-typedef struct _RFX_MESSAGE RFX_MESSAGE;
-typedef struct _RFX_CONTEXT RFX_CONTEXT;
-
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/codec/region.h>
 
@@ -40,22 +34,21 @@ extern "C"
 {
 #endif
 
-	enum _RLGR_MODE
+	typedef enum
 	{
 		RLGR1,
 		RLGR3
-	};
-	typedef enum _RLGR_MODE RLGR_MODE;
+	} RLGR_MODE;
 
-	struct _RFX_RECT
+	typedef struct
 	{
 		UINT16 x;
 		UINT16 y;
 		UINT16 width;
 		UINT16 height;
-	};
+	} RFX_RECT;
 
-	struct _RFX_TILE
+	typedef struct
 	{
 		UINT16 x;
 		UINT16 y;
@@ -76,9 +69,9 @@ extern "C"
 		BYTE* CbData;
 		BYTE* CrData;
 		BYTE* YCbCrData;
-	};
+	} RFX_TILE;
 
-	struct _RFX_MESSAGE
+	typedef struct
 	{
 		UINT32 frameIdx;
 
@@ -105,11 +98,11 @@ extern "C"
 		UINT32 tilesDataSize;
 
 		BOOL freeArray;
-	};
+	} RFX_MESSAGE;
 
-	typedef struct _RFX_CONTEXT_PRIV RFX_CONTEXT_PRIV;
+	typedef struct S_RFX_CONTEXT_PRIV RFX_CONTEXT_PRIV;
 
-	enum _RFX_STATE
+	typedef enum
 	{
 		RFX_STATE_INITIAL,
 		RFX_STATE_SERVER_UNINITIALIZED,
@@ -117,8 +110,7 @@ extern "C"
 		RFX_STATE_SEND_FRAME_DATA,
 		RFX_STATE_FRAME_DATA_SENT,
 		RFX_STATE_FINAL
-	};
-	typedef enum _RFX_STATE RFX_STATE;
+	} RFX_STATE;
 
 #define RFX_DECODED_SYNC 0x00000001
 #define RFX_DECODED_CONTEXT 0x00000002
@@ -126,7 +118,7 @@ extern "C"
 #define RFX_DECODED_CHANNELS 0x00000008
 #define RFX_DECODED_HEADERS 0x0000000F
 
-	struct _RFX_CONTEXT
+	typedef struct
 	{
 		RFX_STATE state;
 
@@ -170,7 +162,7 @@ extern "C"
 
 		/* private definitions */
 		RFX_CONTEXT_PRIV* priv;
-	};
+	} RFX_CONTEXT;
 
 	FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, UINT32 pixel_format);
 

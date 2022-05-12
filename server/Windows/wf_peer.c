@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/tchar.h>
 #include <winpr/stream.h>
@@ -40,6 +38,7 @@
 #include "wf_peer.h"
 #include <freerdp/peer.h>
 
+#include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")
 
 #define SERVER_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING
@@ -84,8 +83,8 @@ static void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 static BOOL wf_peer_init(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(wfPeerContext);
-	client->ContextNew = (psPeerContextNew)wf_peer_context_new;
-	client->ContextFree = (psPeerContextFree)wf_peer_context_free;
+	client->ContextNew = wf_peer_context_new;
+	client->ContextFree = wf_peer_context_free;
 	return freerdp_peer_context_new(client);
 }
 
@@ -93,9 +92,18 @@ static BOOL wf_peer_post_connect(freerdp_peer* client)
 {
 	wfInfo* wfi;
 	rdpSettings* settings;
-	wfPeerContext* context = (wfPeerContext*)client->context;
+	wfPeerContext* context;
+
+	WINPR_ASSERT(client);
+
+	context = (wfPeerContext*)client->context;
+	WINPR_ASSERT(context);
+
 	wfi = context->info;
-	settings = client->settings;
+	WINPR_ASSERT(wfi);
+
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
 
 	if ((get_screen_info(wfi->screenID, NULL, 0, &wfi->servscreen_width, &wfi->servscreen_height,
 	                     &wfi->bitsPerPixel) == 0) ||
@@ -118,7 +126,10 @@ static BOOL wf_peer_post_connect(freerdp_peer* client)
 		settings->DesktopWidth = wfi->servscreen_width;
 		settings->DesktopHeight = wfi->servscreen_height;
 		settings->ColorDepth = wfi->bitsPerPixel;
-		client->update->DesktopResize(client->update->context);
+
+		WINPR_ASSERT(client->context->update);
+		WINPR_ASSERT(client->context->update->DesktopResize);
+		client->context->update->DesktopResize(client->context);
 	}
 
 	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpsnd"))
@@ -189,7 +200,7 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 			break;
 		}
 
-		status = WaitForMultipleObjects(handles, count, FALSE, INFINITE);
+		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForMultipleObjects failed");
@@ -208,21 +219,25 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 
 static BOOL wf_peer_read_settings(freerdp_peer* client)
 {
-	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("CertificateFile"),
-	                                   &(client->settings->CertificateFile)))
-	{
-		client->settings->CertificateFile = _strdup("server.crt");
+	rdpSettings* settings;
 
-		if (!client->settings->CertificateFile)
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->context);
+
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
+	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("CertificateFile"),
+	                                   &(settings->CertificateFile)))
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, "server.crt"))
 			return FALSE;
 	}
 
 	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("PrivateKeyFile"),
-	                                   &(client->settings->PrivateKeyFile)))
+	                                   &(settings->PrivateKeyFile)))
 	{
-		client->settings->PrivateKeyFile = _strdup("server.key");
-
-		if (!client->settings->PrivateKeyFile)
+		if (!freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, "server.key"))
 			return FALSE;
 	}
 
@@ -242,7 +257,11 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	if (!wf_peer_init(client))
 		goto fail_peer_init;
 
-	settings = client->settings;
+	WINPR_ASSERT(client->context);
+
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
 	settings->RemoteFxCodec = TRUE;
 	settings->ColorDepth = 32;
 	settings->NSCodec = FALSE;
@@ -254,12 +273,15 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	client->PostConnect = wf_peer_post_connect;
 	client->Activate = wf_peer_activate;
 	client->Logon = wf_peer_logon;
+
+	WINPR_ASSERT(client->context->input);
 	client->context->input->SynchronizeEvent = wf_peer_synchronize_event;
 	client->context->input->KeyboardEvent = wf_peer_keyboard_event;
 	client->context->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event;
 	client->context->input->MouseEvent = wf_peer_mouse_event;
 	client->context->input->ExtendedMouseEvent = wf_peer_extended_mouse_event;
 
+	WINPR_ASSERT(client->Initialize);
 	if (!client->Initialize(client))
 		goto fail_client_initialize;
 

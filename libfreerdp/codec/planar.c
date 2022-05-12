@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#	include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
@@ -488,8 +486,8 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 					BYTE alpha = *(*ppA)++;
 					UINT32 color =
 					    FreeRDPGetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
-					WriteColor(*ppRgba, DstFormat, color);
-					*ppRgba += GetBytesPerPixel(DstFormat);
+					FreeRDPWriteColor(*ppRgba, DstFormat, color);
+					*ppRgba += FreeRDPGetBytesPerPixel(DstFormat);
 				}
 			}
 			else
@@ -500,8 +498,8 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 				{
 					UINT32 color =
 					    FreeRDPGetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
-					WriteColor(*ppRgba, DstFormat, color);
-					*ppRgba += GetBytesPerPixel(DstFormat);
+					FreeRDPWriteColor(*ppRgba, DstFormat, color);
+					*ppRgba += FreeRDPGetBytesPerPixel(DstFormat);
 				}
 			}
 
@@ -520,7 +518,7 @@ static INLINE BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4], BYTE* p
 	const BYTE* pG = pSrcData[1];
 	const BYTE* pB = pSrcData[2];
 	const BYTE* pA = pSrcData[3];
-	const UINT32 bpp = GetBytesPerPixel(DstFormat);
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(DstFormat);
 
 	if (vFlip)
 	{
@@ -615,7 +613,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 	const primitives_t* prims = primitives_get();
 
 	if (nDstStep <= 0)
-		nDstStep = nDstWidth * GetBytesPerPixel(DstFormat);
+		nDstStep = nDstWidth * FreeRDPGetBytesPerPixel(DstFormat);
 
 	srcp = pSrcData;
 
@@ -634,7 +632,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 	DstFormat = planar_invert_format(planar, alpha, DstFormat);
 
 	if (alpha)
-		useAlpha = ColorHasAlpha(DstFormat);
+		useAlpha = FreeRDPColorHasAlpha(DstFormat);
 
 	// WLog_INFO(TAG, "CLL: %"PRIu32" CS: %"PRIu8" RLE: %"PRIu8" ALPHA: %"PRIu8"", cll, cs, rle,
 	// alpha);
@@ -838,7 +836,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 		BYTE* pTempData = planar->pTempData;
 		UINT32 nTempStep = planar->nTempStep;
 		UINT32 nTotalHeight = planar->maxHeight;
-		BYTE* dst = &pDstData[nXDst * GetBytesPerPixel(DstFormat) + nYDst * nDstStep];
+		BYTE* dst = &pDstData[nXDst * FreeRDPGetBytesPerPixel(DstFormat) + nYDst * nDstStep];
 
 		if (useAlpha)
 			TempFormat = PIXEL_FORMAT_BGRA32;
@@ -938,6 +936,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 			return FALSE;
 	}
 
+	WINPR_UNUSED(srcp);
 	return TRUE;
 }
 
@@ -951,7 +950,7 @@ static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* planar, con
 		return FALSE;
 
 	if (scanline == 0)
-		scanline = width * GetBytesPerPixel(format);
+		scanline = width * FreeRDPGetBytesPerPixel(format);
 
 	if (planar->topdown)
 	{
@@ -962,10 +961,10 @@ static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* planar, con
 
 			for (j = 0; j < width; j++)
 			{
-				const UINT32 color = ReadColor(pixel, format);
-				pixel += GetBytesPerPixel(format);
-				SplitColor(color, format, &planes[1][k], &planes[2][k], &planes[3][k],
-				           &planes[0][k], NULL);
+				const UINT32 color = FreeRDPReadColor(pixel, format);
+				pixel += FreeRDPGetBytesPerPixel(format);
+				FreeRDPSplitColor(color, format, &planes[1][k], &planes[2][k], &planes[3][k],
+				                         &planes[0][k], NULL);
 				k++;
 			}
 		}
@@ -981,10 +980,10 @@ static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* planar, con
 
 			for (j = 0; j < width; j++)
 			{
-				const UINT32 color = ReadColor(pixel, format);
-				pixel += GetBytesPerPixel(format);
-				SplitColor(color, format, &planes[1][k], &planes[2][k], &planes[3][k],
-				           &planes[0][k], NULL);
+				const UINT32 color = FreeRDPReadColor(pixel, format);
+				pixel += FreeRDPGetBytesPerPixel(format);
+				FreeRDPSplitColor(color, format, &planes[1][k], &planes[2][k], &planes[3][k],
+				                         &planes[0][k], NULL);
 				k++;
 			}
 		}

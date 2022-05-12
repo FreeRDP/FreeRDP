@@ -30,13 +30,13 @@
  * Server Interface
  */
 
-typedef struct _drdynvc_client_context DrdynvcServerContext;
-typedef struct _drdynvc_server_private DrdynvcServerPrivate;
+typedef struct s_drdynvc_server_context DrdynvcServerContext;
+typedef struct s_drdynvc_server_private DrdynvcServerPrivate;
 
 typedef UINT (*psDrdynvcStart)(DrdynvcServerContext* context);
 typedef UINT (*psDrdynvcStop)(DrdynvcServerContext* context);
 
-struct _drdynvc_client_context
+struct s_drdynvc_server_context
 {
 	HANDLE vcm;
 

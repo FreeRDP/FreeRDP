@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/error.h>
 #include <winpr/print.h>
 #include <winpr/windows.h>
@@ -104,7 +105,8 @@ static void string_hexdump(const BYTE* data, size_t length)
 	while (offset < length)
 	{
 		const size_t diff = (length - offset) * 3;
-		printf("%04" PRIxz " %.*s\n", offset, diff, &str[offset]);
+		WINPR_ASSERT(diff <= INT_MAX);
+		printf("%04" PRIxz " %.*s\n", offset, (int)diff, &str[offset]);
 		offset += 16;
 	}
 

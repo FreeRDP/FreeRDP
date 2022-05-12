@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/handle.h>
@@ -194,7 +192,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	}
 
 	maxBufferSize = (maxNumArgs * (sizeof(char*))) + (cmdLineLength + 1);
-	buffer = calloc(maxBufferSize, sizeof(WCHAR));
+	buffer = calloc(maxBufferSize, sizeof(char));
 
 	if (!buffer)
 	{

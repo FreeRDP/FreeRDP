@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -1079,3 +1077,22 @@ SECURITY_STATUS SEC_ENTRY sspi_VerifySignature(PCtxtHandle phContext, PSecBuffer
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
+
+void sspi_FreeAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity)
+{
+	if (!identity)
+		return;
+	free(identity->User);
+	identity->UserLength = (UINT32)0;
+	identity->User = NULL;
+
+	free(identity->Domain);
+	identity->DomainLength = (UINT32)0;
+	identity->Domain = NULL;
+
+	if (identity->PasswordLength > 0)
+		memset(identity->Password, 0, identity->PasswordLength);
+	free(identity->Password);
+	identity->Password = NULL;
+	identity->PasswordLength = (UINT32)0;
+}

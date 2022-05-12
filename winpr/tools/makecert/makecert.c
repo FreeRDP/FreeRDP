@@ -38,7 +38,7 @@
 
 #include <winpr/tools/makecert.h>
 
-struct _MAKECERT_CONTEXT
+struct S_MAKECERT_CONTEXT
 {
 	int argc;
 	char** argv;

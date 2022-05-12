@@ -21,9 +21,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -47,9 +45,7 @@
 
 #include "drive_file.h"
 
-typedef struct _DRIVE_DEVICE DRIVE_DEVICE;
-
-struct _DRIVE_DEVICE
+typedef struct
 {
 	DEVICE device;
 
@@ -64,7 +60,7 @@ struct _DRIVE_DEVICE
 	DEVMAN* devman;
 
 	rdpContext* rdpcontext;
-};
+} DRIVE_DEVICE;
 
 static UINT sys_code_page = 0;
 
@@ -169,7 +165,7 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->devman || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(irp->input) < 6 * 4 + 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 6 * 4 + 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, DesiredAccess);
@@ -180,7 +176,7 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	Stream_Read_UINT32(irp->input, CreateOptions);
 	Stream_Read_UINT32(irp->input, PathLength);
 
-	if (Stream_GetRemainingLength(irp->input) < PathLength)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, PathLength))
 		return ERROR_INVALID_DATA;
 
 	path = (const WCHAR*)Stream_Pointer(irp->input);
@@ -278,7 +274,7 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(irp->input) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, Length);
@@ -337,7 +333,7 @@ static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->input || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(irp->input) < 32)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, Length);
@@ -382,7 +378,7 @@ static UINT drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(irp->input) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, FsInformationClass);
@@ -414,7 +410,7 @@ static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->Complete || !irp->input || !irp->output)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(irp->input) < 32)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, FsInformationClass);
@@ -462,7 +458,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 
 	output = irp->output;
 
-	if (Stream_GetRemainingLength(irp->input) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, FsInformationClass);
@@ -598,7 +594,7 @@ static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(irp->input) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, FsInformationClass);
@@ -622,7 +618,7 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 	if (!drive || !irp || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(irp->input) < 32)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, FsInformationClass);
@@ -996,18 +992,12 @@ out_error:
 	return error;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define DeviceServiceEntry drive_DeviceServiceEntry
-#else
-#define DeviceServiceEntry FREERDP_API DeviceServiceEntry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+UINT drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	RDPDR_DRIVE* drive;
 	UINT error;

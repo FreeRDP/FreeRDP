@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,6 +51,10 @@
 #include <freerdp/server/rdpgfx.h>
 #include <freerdp/server/disp.h>
 #include <freerdp/server/gfxredir.h>
+
+#if defined(CHANNEL_AINPUT_SERVER)
+#include <freerdp/server/ainput.h>
+#endif
 
 extern void freerdp_channels_dummy(void);
 
@@ -101,6 +103,12 @@ void freerdp_channels_dummy(void)
 	gfxredir = gfxredir_server_context_new(NULL);
 	gfxredir_server_context_free(gfxredir);
 #endif // WITH_CHANNEL_GFXREDIR
+#if defined(CHANNEL_AINPUT_SERVER)
+	{
+		ainput_server_context* ainput = ainput_server_context_new(NULL);
+		ainput_server_context_free(ainput);
+	}
+#endif
 }
 
 /**

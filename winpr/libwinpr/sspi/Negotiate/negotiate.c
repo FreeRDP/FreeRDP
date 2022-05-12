@@ -18,19 +18,23 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/tchar.h>
+#include <winpr/assert.h>
+#include <winpr/registry.h>
+#include <winpr/build-config.h>
 
 #include "negotiate.h"
 
 #include "../sspi.h"
-#include "../log.h"
+#include "../../log.h"
 #define TAG WINPR_TAG("negotiate")
+
+static const char NEGO_REG_KEY[] =
+    "Software\\" WINPR_VENDOR_STRING "\\" WINPR_PRODUCT_STRING "\\SSPI\\Negotiate";
 
 extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
 extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
@@ -70,16 +74,19 @@ const SecPkgInfoW NEGOTIATE_SecPkgInfoW = {
 
 static void negotiate_SetSubPackage(NEGOTIATE_CONTEXT* context, const TCHAR* name)
 {
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(name);
+
 	if (_tcsnccmp(name, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0)
 	{
-		context->sspiA = (const SecurityFunctionTableA*)&KERBEROS_SecurityFunctionTableA;
-		context->sspiW = (const SecurityFunctionTableW*)&KERBEROS_SecurityFunctionTableW;
+		context->sspiA = &KERBEROS_SecurityFunctionTableA;
+		context->sspiW = &KERBEROS_SecurityFunctionTableW;
 		context->kerberos = TRUE;
 	}
 	else
 	{
-		context->sspiA = (const SecurityFunctionTableA*)&NTLM_SecurityFunctionTableA;
-		context->sspiW = (const SecurityFunctionTableW*)&NTLM_SecurityFunctionTableW;
+		context->sspiA = &NTLM_SecurityFunctionTableA;
+		context->sspiW = &NTLM_SecurityFunctionTableW;
 		context->kerberos = FALSE;
 	}
 }
@@ -104,13 +111,68 @@ static void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 	free(context);
 }
 
+static BOOL negotaite_get_dword(HKEY hKey, const char* subkey, DWORD* pdwValue)
+{
+	DWORD dwValue = 0, dwType = 0;
+	DWORD dwSize = sizeof(dwValue);
+	LONG rc = RegQueryValueExA(hKey, subkey, NULL, &dwType, (BYTE*)&dwValue, &dwSize);
+
+	if (rc != ERROR_SUCCESS)
+		return FALSE;
+	if (dwType != REG_DWORD)
+		return FALSE;
+
+	*pdwValue = dwValue;
+	return TRUE;
+}
+
+static BOOL negotiate_get_config(BOOL* kerberos, BOOL* ntlm)
+{
+	HKEY hKey = NULL;
+	LONG rc;
+
+	WINPR_ASSERT(kerberos);
+	WINPR_ASSERT(ntlm);
+
+#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
+	*ntlm = TRUE;
+#else
+	*ntlm = FALSE;
+#endif
+	*kerberos = TRUE;
+
+	rc = RegOpenKeyExA(HKEY_LOCAL_MACHINE, NEGO_REG_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+	if (rc == ERROR_SUCCESS)
+	{
+		DWORD dwValue;
+
+		if (negotaite_get_dword(hKey, "kerberos", &dwValue))
+			*kerberos = (dwValue != 0) ? TRUE : FALSE;
+
+#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
+		if (negotaite_get_dword(hKey, "ntlm", &dwValue))
+			*ntlm = (dwValue != 0) ? TRUE : FALSE;
+#endif
+
+		RegCloseKey(hKey);
+	}
+
+	return TRUE;
+}
+
 static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
     PCredHandle phCredential, PCtxtHandle phContext, SEC_WCHAR* pszTargetName, ULONG fContextReq,
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
-	NEGOTIATE_CONTEXT* context;
+	BOOL ntlm = TRUE;
+	BOOL kerberos = TRUE;
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
+	NEGOTIATE_CONTEXT* context = NULL;
+
+	if (!negotiate_get_config(&kerberos, &ntlm))
+		return status;
+
 	context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -125,10 +187,12 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	}
 
 	/* if Kerberos has previously failed or WITH_GSSAPI is not defined, we use NTLM directly */
-	if (ErrorInitContextKerberos == FALSE)
+	if (kerberos && !ErrorInitContextKerberos)
 	{
 		if (!pInput)
 		{
+			context->sspiW->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
 		}
 
@@ -137,20 +201,23 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		    TargetDataRep, pInput, Reserved2, &(context->SubContext), pOutput, pfContextAttr,
 		    ptsExpiry);
 
-		if (status == SEC_E_NO_CREDENTIALS)
+#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
+		if (ntlm && (status == SEC_E_NO_CREDENTIALS))
 		{
 			WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
 			ErrorInitContextKerberos = TRUE;
-			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_ContextFree(context);
-			return status;
+			context->sspiW->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 		}
+#endif
 	}
-	else
+
+	if (ntlm && ErrorInitContextKerberos)
 	{
 		if (!pInput)
 		{
-			context->sspiA->DeleteSecurityContext(&(context->SubContext));
+			context->sspiW->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, NTLM_SSP_NAME);
 		}
 
@@ -168,8 +235,14 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
-	NEGOTIATE_CONTEXT* context;
+	BOOL ntlm = TRUE;
+	BOOL kerberos = TRUE;
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
+	NEGOTIATE_CONTEXT* context = NULL;
+
+	if (!negotiate_get_config(&kerberos, &ntlm))
+		return status;
+
 	context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -184,10 +257,12 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 	}
 
 	/* if Kerberos has previously failed or WITH_GSSAPI is not defined, we use NTLM directly */
-	if (ErrorInitContextKerberos == FALSE)
+	if (kerberos && !ErrorInitContextKerberos)
 	{
 		if (!pInput)
 		{
+			context->sspiA->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, KERBEROS_SSP_NAME);
 		}
 
@@ -196,21 +271,23 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 		    TargetDataRep, pInput, Reserved2, &(context->SubContext), pOutput, pfContextAttr,
 		    ptsExpiry);
 
-		if (status == SEC_E_NO_CREDENTIALS)
+#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
+		if (ntlm && (status == SEC_E_NO_CREDENTIALS))
 		{
 			WLog_WARN(TAG, "No Kerberos credentials. Retry with NTLM");
 			ErrorInitContextKerberos = TRUE;
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
-			negotiate_ContextFree(context);
-			sspi_SecureHandleSetLowerPointer(phNewContext, NULL);
-			return status;
+			SecInvalidateHandle(&context->SubContext);
 		}
+#endif
 	}
-	else
+
+	if (ntlm && ErrorInitContextKerberos)
 	{
 		if (!pInput)
 		{
 			context->sspiA->DeleteSecurityContext(&(context->SubContext));
+			SecInvalidateHandle(&context->SubContext);
 			negotiate_SetSubPackage(context, NTLM_SSP_NAME);
 		}
 
@@ -248,7 +325,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	    phCredential, &(context->SubContext), pInput, fContextReq, TargetDataRep,
 	    &(context->SubContext), pOutput, pfContextAttr, ptsTimeStamp);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "AcceptSecurityContext status %s [0x%08" PRIX32 "]",
 		          GetSecurityStatusString(status), status);
@@ -407,7 +484,6 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
     PTimeStamp ptsExpiry)
 {
 	SSPI_CREDENTIALS* credentials;
-	SEC_WINNT_AUTH_IDENTITY* identity;
 
 	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) && (fCredentialUse != SECPKG_CRED_INBOUND) &&
 	    (fCredentialUse != SECPKG_CRED_BOTH))
@@ -416,17 +492,50 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
 	}
 
 	credentials = sspi_CredentialsNew();
-
 	if (!credentials)
 		return SEC_E_INTERNAL_ERROR;
 
 	credentials->fCredentialUse = fCredentialUse;
 	credentials->pGetKeyFn = pGetKeyFn;
 	credentials->pvGetKeyArgument = pvGetKeyArgument;
-	identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
 
-	if (identity)
-		sspi_CopyAuthIdentity(&(credentials->identity), identity);
+	if (pAuthData)
+	{
+		SEC_WINNT_AUTH_IDENTITY_EXW* identityEx = (SEC_WINNT_AUTH_IDENTITY_EXW*)pAuthData;
+		BOOL treated = FALSE;
+
+		SEC_WINNT_AUTH_IDENTITY srcIdentity;
+		if (identityEx->Version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+		{
+			if (identityEx->Length >= sizeof(*identityEx))
+			{
+				srcIdentity.User = (UINT16*)identityEx->User;
+				srcIdentity.UserLength = identityEx->UserLength;
+				srcIdentity.Domain = (UINT16*)identityEx->Domain;
+				srcIdentity.DomainLength = identityEx->DomainLength;
+				srcIdentity.Password = (UINT16*)identityEx->Password;
+				srcIdentity.PasswordLength = identityEx->PasswordLength;
+				srcIdentity.Flags = identityEx->Flags;
+
+				if (!sspi_CopyAuthIdentity(&credentials->identity, &srcIdentity))
+					return SEC_E_INSUFFICIENT_MEMORY;
+
+				if (identityEx->Length == sizeof(SEC_WINNT_AUTH_IDENTITY_WINPRA))
+				{
+					SEC_WINNT_AUTH_IDENTITY_WINPRW* identityWinpr =
+					    (SEC_WINNT_AUTH_IDENTITY_WINPRW*)pAuthData;
+					credentials->kerbSettings = identityWinpr->kerberosSettings;
+				}
+				treated = TRUE;
+			}
+		}
+
+		if (!treated)
+		{
+			SEC_WINNT_AUTH_IDENTITY* identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
+			sspi_CopyAuthIdentity(&(credentials->identity), identity);
+		}
+	}
 
 	sspi_SecureHandleSetLowerPointer(phCredential, (void*)credentials);
 	sspi_SecureHandleSetUpperPointer(phCredential, (void*)NEGO_SSP_NAME);
@@ -439,7 +548,6 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
     PTimeStamp ptsExpiry)
 {
 	SSPI_CREDENTIALS* credentials;
-	SEC_WINNT_AUTH_IDENTITY* identity;
 
 	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) && (fCredentialUse != SECPKG_CRED_INBOUND) &&
 	    (fCredentialUse != SECPKG_CRED_BOTH))
@@ -455,10 +563,44 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
 	credentials->fCredentialUse = fCredentialUse;
 	credentials->pGetKeyFn = pGetKeyFn;
 	credentials->pvGetKeyArgument = pvGetKeyArgument;
-	identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
 
-	if (identity)
-		sspi_CopyAuthIdentity(&(credentials->identity), identity);
+	if (pAuthData)
+	{
+		SEC_WINNT_AUTH_IDENTITY_EXA* identityEx = (SEC_WINNT_AUTH_IDENTITY_EXA*)pAuthData;
+		BOOL treated = FALSE;
+
+		SEC_WINNT_AUTH_IDENTITY srcIdentity;
+		if (identityEx->Version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+		{
+			if (identityEx->Length >= sizeof(*identityEx))
+			{
+				srcIdentity.User = (UINT16*)identityEx->User;
+				srcIdentity.UserLength = identityEx->UserLength;
+				srcIdentity.Domain = (UINT16*)identityEx->Domain;
+				srcIdentity.DomainLength = identityEx->DomainLength;
+				srcIdentity.Password = (UINT16*)identityEx->Password;
+				srcIdentity.PasswordLength = identityEx->PasswordLength;
+				srcIdentity.Flags = identityEx->Flags;
+
+				if (!sspi_CopyAuthIdentity(&credentials->identity, &srcIdentity))
+					return SEC_E_INSUFFICIENT_MEMORY;
+
+				if (identityEx->Length == sizeof(SEC_WINNT_AUTH_IDENTITY_WINPRA))
+				{
+					SEC_WINNT_AUTH_IDENTITY_WINPRA* identityWinpr =
+					    (SEC_WINNT_AUTH_IDENTITY_WINPRA*)pAuthData;
+					credentials->kerbSettings = identityWinpr->kerberosSettings;
+				}
+				treated = TRUE;
+			}
+		}
+
+		if (!treated)
+		{
+			SEC_WINNT_AUTH_IDENTITY* identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
+			sspi_CopyAuthIdentity(&(credentials->identity), identity);
+		}
+	}
 
 	sspi_SecureHandleSetLowerPointer(phCredential, (void*)credentials);
 	sspi_SecureHandleSetUpperPointer(phCredential, (void*)NEGO_SSP_NAME);

@@ -12,9 +12,7 @@
  * permissions and limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/sysinfo.h>
 #include <freerdp/utils/profiler.h>
@@ -38,11 +36,11 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	PROFILER_DEFINE(optProf)
 	PROFILER_CREATE(genericProf, "RGBToRGB_16s8u_P3AC4R-GENERIC")
 	PROFILER_CREATE(optProf, "RGBToRGB_16s8u_P3AC4R-OPTIMIZED")
-	r = _aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
-	g = _aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
-	b = _aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
-	out1 = _aligned_recalloc(NULL, 1, dstStride * roi.height, 16);
-	out2 = _aligned_recalloc(NULL, 1, dstStride * roi.height, 16);
+	r = winpr_aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
+	g = winpr_aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
+	b = winpr_aligned_recalloc(NULL, 1, rgbStride * roi.height, 16);
+	out1 = winpr_aligned_recalloc(NULL, 1, dstStride * roi.height, 16);
+	out2 = winpr_aligned_recalloc(NULL, 1, dstStride * roi.height, 16);
 
 	if (!r || !g || !b || !out1 || !out2)
 		goto fail;
@@ -88,8 +86,8 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	{
 		for (i = 0; i < roi.width * roi.height; ++i)
 		{
-			const UINT32 o1 = ReadColor(out1 + 4 * i, DstFormat);
-			const UINT32 o2 = ReadColor(out2 + 4 * i, DstFormat);
+			const UINT32 o1 = FreeRDPReadColor(out1 + 4 * i, DstFormat);
+			const UINT32 o2 = FreeRDPReadColor(out2 + 4 * i, DstFormat);
 
 			if (o1 != o2)
 			{
@@ -110,17 +108,22 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 fail:
 	PROFILER_FREE(genericProf)
 	PROFILER_FREE(optProf)
-	_aligned_free(r);
-	_aligned_free(g);
-	_aligned_free(b);
-	_aligned_free(out1);
-	_aligned_free(out2);
+	winpr_aligned_free(r);
+	winpr_aligned_free(g);
+	winpr_aligned_free(b);
+	winpr_aligned_free(out1);
+	winpr_aligned_free(out2);
 	return !failed;
 }
 
 /* ------------------------------------------------------------------------- */
 static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 {
+	union
+	{
+		const INT16** cpv;
+		INT16** pv;
+	} cnv;
 	const prim_size_t roi64x64 = { 64, 64 };
 	INT16 ALIGN(r[4096 + 1]), ALIGN(g[4096 + 1]), ALIGN(b[4096 + 1]);
 	UINT32 ALIGN(dst[4096 + 1]);
@@ -142,16 +145,15 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 	ptrs[1] = g + 1;
 	ptrs[2] = b + 1;
 
+	cnv.pv = ptrs;
 	if (!speed_test("RGBToRGB_16s8u_P3AC4R", "aligned", g_Iterations,
-	                (speed_test_fkt)generic->RGBToRGB_16s8u_P3AC4R,
-	                (speed_test_fkt)optimized->RGBToRGB_16s8u_P3AC4R, (const INT16**)ptrs, 64 * 2,
-	                (BYTE*)dst, 64 * 4, &roi64x64))
+	                generic->RGBToRGB_16s8u_P3AC4R, optimized->RGBToRGB_16s8u_P3AC4R, cnv.cpv,
+	                64 * 2, (BYTE*)dst, 64 * 4, &roi64x64))
 		return FALSE;
 
 	if (!speed_test("RGBToRGB_16s8u_P3AC4R", "unaligned", g_Iterations,
-	                (speed_test_fkt)generic->RGBToRGB_16s8u_P3AC4R,
-	                (speed_test_fkt)optimized->RGBToRGB_16s8u_P3AC4R, (const INT16**)ptrs, 64 * 2,
-	                ((BYTE*)dst) + 1, 64 * 4, &roi64x64))
+	                generic->RGBToRGB_16s8u_P3AC4R, optimized->RGBToRGB_16s8u_P3AC4R, cnv.cpv,
+	                64 * 2, ((BYTE*)dst) + 1, 64 * 4, &roi64x64))
 		return FALSE;
 
 	return TRUE;

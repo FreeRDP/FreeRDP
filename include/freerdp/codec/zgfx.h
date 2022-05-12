@@ -32,7 +32,7 @@
 
 #define ZGFX_SEGMENTED_MAXSIZE 65535
 
-typedef struct _ZGFX_CONTEXT ZGFX_CONTEXT;
+typedef struct S_ZGFX_CONTEXT ZGFX_CONTEXT;
 
 #ifdef __cplusplus
 extern "C"

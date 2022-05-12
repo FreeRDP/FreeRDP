@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/assert.h>
 #include <stdio.h>
@@ -147,7 +145,7 @@ out:
  * to the stream before return, but the pduLength field might be
  * changed in rdpgfx_server_single_packet_send.
  *
- * @param cmdId
+ * @param cmdId The CommandID to write
  * @param dataLen estimated data length without header
  *
  * @return new stream
@@ -1100,11 +1098,8 @@ static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerContext* context, wStr
 	RDPGFX_FRAME_ACKNOWLEDGE_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, pdu.queueDepth);         /* queueDepth (4 bytes) */
 	Stream_Read_UINT32(s, pdu.frameId);            /* frameId (4 bytes) */
@@ -1133,11 +1128,8 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 	RDPGFX_CACHE_ENTRY_METADATA* cacheEntries;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < 2)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_INVALID_DATA;
-	}
 
 	/* cacheEntriesCount (2 bytes) */
 	Stream_Read_UINT16(s, pdu.cacheEntriesCount);
@@ -1149,11 +1141,8 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) / 12 < pdu.cacheEntriesCount)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12ull * pdu.cacheEntriesCount))
 		return ERROR_INVALID_DATA;
-	}
 
 	if (pdu.cacheEntriesCount > 0)
 	{
@@ -1201,11 +1190,8 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream
 	if (!context)
 		return ERROR_BAD_ARGUMENTS;
 
-	if (Stream_GetRemainingLength(s) < 2)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, pdu.capsSetCount); /* capsSetCount (2 bytes) */
 	if (pdu.capsSetCount > 0)
@@ -1221,7 +1207,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream
 	{
 		RDPGFX_CAPSET* capsSet = &(pdu.capsSets[index]);
 
-		if (Stream_GetRemainingLength(s) < 8)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 			goto fail;
 
 		Stream_Read_UINT32(s, capsSet->version); /* version (4 bytes) */
@@ -1229,7 +1215,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream
 
 		if (capsSet->length >= 4)
 		{
-			if (Stream_GetRemainingLength(s) < 4)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				goto fail;
 
 			Stream_Peek_UINT32(s, capsSet->flags); /* capsData (4 bytes) */
@@ -1260,11 +1246,8 @@ static UINT rdpgfx_recv_qoe_frame_acknowledge_pdu(RdpgfxServerContext* context, 
 	RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, pdu.frameId);     /* frameId (4 bytes) */
 	Stream_Read_UINT32(s, pdu.timestamp);   /* timestamp (4 bytes) */

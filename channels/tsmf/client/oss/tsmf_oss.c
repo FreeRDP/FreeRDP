@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +44,7 @@
 
 #include "tsmf_audio.h"
 
-typedef struct _TSMFOSSAudioDevice
+typedef struct
 {
 	ITSMFAudioDevice iface;
 
@@ -229,14 +227,7 @@ static void tsmf_oss_free(ITSMFAudioDevice* audio)
 	free(oss);
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_tsmf_client_audio_subsystem_entry oss_freerdp_tsmf_client_audio_subsystem_entry
-#else
-#define freerdp_tsmf_client_audio_subsystem_entry \
-	FREERDP_API freerdp_tsmf_client_audio_subsystem_entry
-#endif
-
-ITSMFAudioDevice* freerdp_tsmf_client_audio_subsystem_entry(void)
+ITSMFAudioDevice* oss_freerdp_tsmf_client_audio_subsystem_entry(void)
 {
 	TSMFOssAudioDevice* oss;
 	oss = (TSMFOssAudioDevice*)malloc(sizeof(TSMFOssAudioDevice));

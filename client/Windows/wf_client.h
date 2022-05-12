@@ -44,8 +44,6 @@
 #include <freerdp/codec/nsc.h>
 #include <freerdp/client/file.h>
 
-typedef struct wf_context wfContext;
-
 #include "wf_channels.h"
 #include "wf_floatbar.h"
 #include "wf_event.h"
@@ -59,27 +57,24 @@ extern "C"
 // System menu constants
 #define SYSCOMMAND_ID_SMARTSIZING 1000
 
-	struct wf_bitmap
+	typedef struct
 	{
 		rdpBitmap _bitmap;
 		HDC hdc;
 		HBITMAP bitmap;
 		HBITMAP org_bitmap;
 		BYTE* pdata;
-	};
-	typedef struct wf_bitmap wfBitmap;
+	} wfBitmap;
 
-	struct wf_pointer
+	typedef struct
 	{
 		rdpPointer pointer;
 		HCURSOR cursor;
-	};
-	typedef struct wf_pointer wfPointer;
+	} wfPointer;
 
 	struct wf_context
 	{
-		rdpContext context;
-		DEFINE_RDP_CLIENT_COMMON();
+		rdpClientContext common;
 
 		int offset_x;
 		int offset_y;

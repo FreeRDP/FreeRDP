@@ -28,7 +28,7 @@
  * Client Interface
  */
 
-typedef struct _rdpei_client_context RdpeiClientContext;
+typedef struct s_rdpei_client_context RdpeiClientContext;
 
 typedef UINT32 (*pcRdpeiGetVersion)(RdpeiClientContext* context);
 typedef UINT32 (*pcRdpeiGetFeatures)(RdpeiClientContext* context);
@@ -53,7 +53,7 @@ typedef UINT (*pcRdpeiPenRawEvent)(RdpeiClientContext* context, INT32 externalId
 typedef UINT (*pcRdpeiSuspendTouch)(RdpeiClientContext* context);
 typedef UINT (*pcRdpeiResumeTouch)(RdpeiClientContext* context);
 
-struct _rdpei_client_context
+struct s_rdpei_client_context
 {
 	void* handle;
 	void* custom;

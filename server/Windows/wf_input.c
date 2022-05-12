@@ -17,16 +17,14 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/windows.h>
 
 #include "wf_input.h"
 #include "wf_info.h"
 
-BOOL wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	INPUT keyboard_event;
 	WINPR_UNUSED(input);
@@ -190,7 +188,7 @@ BOOL wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 	return TRUE;
 }
 
-BOOL wf_peer_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL wf_peer_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	WINPR_UNUSED(input);
 	WINPR_UNUSED(flags);

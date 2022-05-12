@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/assert.h>
 #include <winpr/sspicli.h>
@@ -80,15 +78,7 @@ static BOOL LogonUserCloseHandle(HANDLE handle);
 
 static BOOL LogonUserIsHandled(HANDLE handle)
 {
-	WINPR_ACCESS_TOKEN* pLogonUser = (WINPR_ACCESS_TOKEN*)handle;
-
-	if (!pLogonUser || (pLogonUser->Type != HANDLE_TYPE_ACCESS_TOKEN))
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_ACCESS_TOKEN, FALSE);
 }
 
 static int LogonUserGetFd(HANDLE handle)
@@ -135,6 +125,7 @@ static HANDLE_OPS ops = { LogonUserIsHandled,
 	                      NULL,
 	                      NULL,
 	                      NULL,
+	                      NULL,
 	                      NULL };
 
 BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword, DWORD dwLogonType,
@@ -152,7 +143,7 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword, DWO
 		return FALSE;
 
 	WINPR_HANDLE_SET_TYPE_AND_MODE(token, HANDLE_TYPE_ACCESS_TOKEN, WINPR_FD_READ);
-	token->ops = &ops;
+	token->common.ops = &ops;
 	token->Username = _strdup(lpszUsername);
 
 	if (!token->Username)

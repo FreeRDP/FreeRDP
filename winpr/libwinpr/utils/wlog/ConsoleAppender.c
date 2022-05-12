@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include "ConsoleAppender.h"
 #include "Message.h"
@@ -33,13 +31,12 @@
 #define WLOG_CONSOLE_STDERR 2
 #define WLOG_CONSOLE_DEBUG 4
 
-struct _wLogConsoleAppender
+typedef struct
 {
 	WLOG_APPENDER_COMMON();
 
 	int outputStream;
-};
-typedef struct _wLogConsoleAppender wLogConsoleAppender;
+} wLogConsoleAppender;
 
 static BOOL WLog_ConsoleAppender_Open(wLog* log, wLogAppender* appender)
 {
@@ -55,7 +52,7 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
                                               wLogMessage* message)
 {
 	FILE* fp;
-	char prefix[WLOG_MAX_PREFIX_SIZE];
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
 	wLogConsoleAppender* consoleAppender;
 	if (!appender)
 		return FALSE;
@@ -68,12 +65,9 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
 #ifdef _WIN32
 	if (consoleAppender->outputStream == WLOG_CONSOLE_DEBUG)
 	{
-		char MessageString[4096];
-
-		sprintf_s(MessageString, sizeof(MessageString), "%s%s\n", message->PrefixString,
-		          message->TextString);
-
-		OutputDebugStringA(MessageString);
+		OutputDebugStringA(message->PrefixString);
+		OutputDebugStringA(message->TextString);
+		OutputDebugStringA("\n");
 
 		return TRUE;
 	}

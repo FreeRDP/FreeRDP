@@ -18,22 +18,19 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include "wlf_pointer.h"
 #include "wlfreerdp.h"
 
 #define TAG CLIENT_TAG("wayland.pointer")
 
-struct wlf_pointer
+typedef struct
 {
 	rdpPointer pointer;
 	size_t size;
 	void* data;
-};
-typedef struct wlf_pointer wlfPointer;
+} wlfPointer;
 
 static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
@@ -43,7 +40,7 @@ static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		return FALSE;
 
 	ptr->size = pointer->width * pointer->height * 4ULL;
-	ptr->data = _aligned_malloc(ptr->size, 16);
+	ptr->data = winpr_aligned_malloc(ptr->size, 16);
 
 	if (!ptr->data)
 		return FALSE;
@@ -53,7 +50,7 @@ static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	        pointer->xorMaskData, pointer->lengthXorMask, pointer->andMaskData,
 	        pointer->lengthAndMask, pointer->xorBpp, &context->gdi->palette))
 	{
-		_aligned_free(ptr->data);
+		winpr_aligned_free(ptr->data);
 		return FALSE;
 	}
 
@@ -66,13 +63,13 @@ static void wlf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	WINPR_UNUSED(context);
 
 	if (ptr)
-		_aligned_free(ptr->data);
+		winpr_aligned_free(ptr->data);
 }
 
-static BOOL wlf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
+static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	wlfContext* wlf = (wlfContext*)context;
-	const wlfPointer* ptr = (const wlfPointer*)pointer;
+	wlfPointer* ptr = (wlfPointer*)pointer;
 	void* data;
 	UINT32 w, h, x, y;
 	size_t size;

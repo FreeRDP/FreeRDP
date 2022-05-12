@@ -19,9 +19,8 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/assert.h>
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/library.h>
@@ -68,7 +67,7 @@ VOID _InitializeObjectAttributes(POBJECT_ATTRIBUTES InitializedAttributes,
 
 struct winpr_nt_file
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	ACCESS_MASK DesiredAccess;
 	OBJECT_ATTRIBUTES ObjectAttributes;
@@ -115,7 +114,18 @@ PTEB NtCurrentTeb(void)
 
 VOID _RtlInitAnsiString(PANSI_STRING DestinationString, PCSZ SourceString)
 {
-	DestinationString->Buffer = (PCHAR)SourceString;
+	union
+	{
+		const char* cpv;
+		char* pv;
+	} cnv;
+
+	WINPR_ASSERT(DestinationString);
+	WINPR_ASSERT(SourceString);
+
+	cnv.cpv = SourceString;
+
+	DestinationString->Buffer = cnv.pv;
 
 	if (!SourceString)
 	{
@@ -137,7 +147,17 @@ VOID _RtlInitAnsiString(PANSI_STRING DestinationString, PCSZ SourceString)
 
 VOID _RtlInitUnicodeString(PUNICODE_STRING DestinationString, PCWSTR SourceString)
 {
-	DestinationString->Buffer = (PWSTR)SourceString;
+	union
+	{
+		const WCHAR* cpv;
+		WCHAR* pv;
+	} cnv;
+
+	WINPR_ASSERT(DestinationString);
+	WINPR_ASSERT(SourceString);
+
+	cnv.cpv = SourceString;
+	DestinationString->Buffer = cnv.pv;
 
 	if (!SourceString)
 	{

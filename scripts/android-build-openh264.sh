@@ -1,5 +1,5 @@
 #!/bin/bash
-SCM_URL=https://github.com/cisco/openh264
+SCM_URL=https://github.com/cisco/openh264/archive
 SCM_TAG=master
 
 source $(dirname "${BASH_SOURCE[0]}")/android-build-common.sh

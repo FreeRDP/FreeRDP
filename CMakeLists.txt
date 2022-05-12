@@ -22,6 +22,10 @@ cmake_minimum_required(VERSION 3.4)
 
 project(FreeRDP C)
 
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON)
+
 if(NOT DEFINED VENDOR)
 	set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")
 endif()
@@ -107,23 +111,35 @@ else()
 endif()
 message("FREERDP_VERSION=${FREERDP_VERSION_FULL}")
 
+if(EXISTS "${PROJECT_SOURCE_DIR}/.source_version" )
+	file(READ ${PROJECT_SOURCE_DIR}/.source_version GIT_REVISION)
+
+  string(STRIP ${GIT_REVISION} GIT_REVISION)
+elseif(USE_VERSION_FROM_GIT_TAG)
+	git_get_exact_tag(GIT_REVISION --tags --always)
+
+	if (${GIT_REVISION} STREQUAL "n/a")
+		git_rev_parse (GIT_REVISION --short)
+	endif()
+endif()
+
+if (NOT GIT_REVISION)
+	set(GIT_REVISION ${FREERDP_VERSION})
+endif()
+
+message(STATUS "Git Revision ${GIT_REVISION}")
+
 set(FREERDP_INCLUDE_DIR "include/freerdp${FREERDP_VERSION_MAJOR}/")
 
 option(WITH_SMARTCARD_EMULATE "Emulate smartcards instead of redirecting readers" OFF)
 if (WITH_SMARTCARD_EMULATE)
-    add_definitions(-DWITH_SMARTCARD_EMULATE)
-    find_package(ZLIB REQUIRED)
+	add_definitions(-DWITH_SMARTCARD_EMULATE)
+	find_package(ZLIB REQUIRED)
 endif()
 
 option(WITH_FREERDP_DEPRECATED "Build FreeRDP deprecated symbols" OFF)
 if (WITH_FREERDP_DEPRECATED)
 	add_definitions(-DWITH_FREERDP_DEPRECATED)
-endif()
-
-# Compatibility options
-if(DEFINED STATIC_CHANNELS)
-	message(WARNING "STATIC_CHANNELS is obsolete, please use BUILTIN_CHANNELS instead")
-	set(BUILTIN_CHANNELS ${STATIC_CHANNELS} CACHE BOOL "" FORCE)
 endif()
 
 # Make paths absolute
@@ -146,24 +162,10 @@ if(CCACHE AND WITH_CCACHE)
 	endif(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
 endif(CCACHE AND WITH_CCACHE)
 
-if(EXISTS "${PROJECT_SOURCE_DIR}/.source_version" )
-	file(READ ${PROJECT_SOURCE_DIR}/.source_version GIT_REVISION)
-
-  string(STRIP ${GIT_REVISION} GIT_REVISION)
-else()
-	git_get_exact_tag(GIT_REVISION --tags --always)
-
-	if (${GIT_REVISION} STREQUAL "n/a")
-		git_rev_parse (GIT_REVISION --short)
-	endif()
-endif()
-
 if(CMAKE_CROSSCOMPILING)
 	SET (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
 endif(CMAKE_CROSSCOMPILING)
 # /Allow to search the host machine for git/ccache
-
-message(STATUS "Git Revision ${GIT_REVISION}")
 
 # Turn on solution folders (2.8.4+)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -422,6 +424,7 @@ if(WIN32)
 	add_definitions(-DWIN32_LEAN_AND_MEAN)
 	add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
 
+	set(CMAKE_DL_LIBS "")
 	set(CMAKE_USE_RELATIVE_PATH ON)
 	if (${CMAKE_GENERATOR} MATCHES "NMake Makefile*" OR ${CMAKE_GENERATOR} MATCHES "Ninja*" OR ${CMAKE_GENERATOR} MATCHES "Unix Makefiles")
 		set(CMAKE_PDB_BINARY_DIR ${PROJECT_BINARY_DIR})
@@ -459,22 +462,6 @@ if(WIN32)
 endif()
 
 add_definitions(-DFREERDP_EXPORTS)
-
-# Include files
-if(NOT IOS)
-	check_include_files(unistd.h HAVE_UNISTD_H)
-	check_include_files(execinfo.h HAVE_EXECINFO_H)
-	check_include_files(inttypes.h HAVE_INTTYPES_H)
-else()
-	set(HAVE_UNISTD_H 1)
-	set(HAVE_INTTYPES_H 1)
-endif()
-
-if(NOT IOS)
-	check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
-else()
-	set(HAVE_TM_GMTOFF 1)
-endif()
 
 # Mac OS X
 if(APPLE)
@@ -519,7 +506,6 @@ if(ANDROID)
 
 	if(ANDROID_ABI STREQUAL arm64-v8a)
 		# https://github.com/android/ndk/issues/910
-		add_definitions(-D__ARM_NEON)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=softfp")
 	endif()
 
@@ -564,19 +550,6 @@ else()
 endif()
 
 if(UNIX OR CYGWIN)
-	if (FREEBSD)
-		list(APPEND CMAKE_REQUIRED_INCLUDES ${EPOLLSHIM_INCLUDE_DIR})
-	endif()
-	if (FREEBSD)
-		list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES ${EPOLLSHIM_INCLUDE_DIR})
-	endif()
-	option(WITH_POLL "Check for and include poll.h" ON)
-	if (WITH_POLL)
-		check_include_files(poll.h HAVE_POLL_H)
-	endif()
-	list(APPEND CMAKE_REQUIRED_LIBRARIES m)
-	check_symbol_exists(ceill math.h HAVE_MATH_C99_LONG_DOUBLE)
-	list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES m)
 	set(X11_FEATURE_TYPE "RECOMMENDED")
 	set(WAYLAND_FEATURE_TYPE "RECOMMENDED")
 else()
@@ -767,7 +740,6 @@ find_feature(LAME ${LAME_FEATURE_TYPE} ${LAME_FEATURE_PURPOSE} ${LAME_FEATURE_DE
 find_feature(FAAD2 ${FAAD2_FEATURE_TYPE} ${FAAD2_FEATURE_PURPOSE} ${FAAD2_FEATURE_DESCRIPTION})
 find_feature(FAAC ${FAAC_FEATURE_TYPE} ${FAAC_FEATURE_PURPOSE} ${FAAC_FEATURE_DESCRIPTION})
 find_feature(soxr ${SOXR_FEATURE_TYPE} ${SOXR_FEATURE_PURPOSE} ${SOXR_FEATURE_DESCRIPTION})
-
 find_feature(GSSAPI ${GSSAPI_FEATURE_TYPE} ${GSSAPI_FEATURE_PURPOSE} ${GSSAPI_FEATURE_DESCRIPTION})
 
 if (WITH_OPENH264 AND NOT WITH_OPENH264_LOADING)
@@ -810,23 +782,6 @@ if (WITH_OPENH264 AND NOT OPENH264_FOUND)
 	message(FATAL_ERROR "OpenH264 support requested but not detected")
 endif()
 set(WITH_OPENH264 ${OPENH264_FOUND})
-
-if ( (WITH_GSSAPI) AND (NOT GSS_FOUND))
-	message(WARNING "-DWITH_GSSAPI=ON is set, but not GSSAPI implementation was found, disabling")
-elseif(WITH_GSSAPI)
-	if(GSS_FLAVOUR STREQUAL "MIT")
-		add_definitions("-DWITH_GSSAPI -DWITH_GSSAPI_MIT")
-		if(GSS_VERSION_1_13)
-			add_definitions("-DHAVE_AT_LEAST_KRB_V1_13")
-		endif()
-		include_directories(${_GSS_INCLUDE_DIR})
-	elseif(GSS_FLAVOUR STREQUAL "Heimdal")
-		add_definitions("-DWITH_GSSAPI -DWITH_GSSAPI_HEIMDAL")
-		include_directories(${_GSS_INCLUDE_DIR})
-	else()
-		message(WARNING "Kerberos version not detected")
-	endif()
-endif()
 
 if(TARGET_ARCH MATCHES "x86|x64")
 	if (NOT APPLE)
@@ -881,9 +836,6 @@ if(NOT DEFINED PROXY_PLUGINDIR)
 else()
 	set(FREERDP_PROXY_PLUGINDIR "${PROXY_PLUGINDIR}")
 endif()
-
-# Declare we have config.h, generated later on.
-add_definitions("-DHAVE_CONFIG_H")
 
 # RPATH configuration
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
@@ -970,7 +922,6 @@ if(WITH_THIRD_PARTY)
 	endif()
 endif()
 
-add_subdirectory(include)
 
 add_subdirectory(libfreerdp)
 
@@ -998,9 +949,6 @@ if(WITH_SERVER)
 	add_subdirectory(server)
 endif()
 
-# Configure files - Add last so all symbols are defined
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-
 # Packaging
 
 set(CMAKE_CPACK_INCLUDE_FILE "CMakeCPack.cmake")
@@ -1015,22 +963,24 @@ endif()
 
 #message("VENDOR: ${VENDOR} CLIENT_VENDOR_PATH: ${CLIENT_VENDOR_PATH} CMAKE_CPACK_INCLUDE_FILE: ${CMAKE_CPACK_INCLUDE_FILE}")
 
-include(${CMAKE_CPACK_INCLUDE_FILE})
-
 set(FREERDP_BUILD_CONFIG_LIST "")
 GET_CMAKE_PROPERTY(res VARIABLES)
 FOREACH(var ${res})
-	IF (var MATCHES "^WITH_*|^BUILD_TESTING|^BUILTIN_CHANNELS|^HAVE_*")
-		LIST(APPEND FREERDP_BUILD_CONFIG_LIST "${var}=${${var}}")
-	ENDIF()
+        IF (var MATCHES "^WITH_*|^BUILD_TESTING|^HAVE_*")
+                LIST(APPEND FREERDP_BUILD_CONFIG_LIST "${var}=${${var}}")
+        ENDIF()
 ENDFOREACH()
 string(REPLACE ";" " " FREERDP_BUILD_CONFIG "${FREERDP_BUILD_CONFIG_LIST}")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/buildflags.h)
+
+add_subdirectory(include)
+
+include(${CMAKE_CPACK_INCLUDE_FILE})
 
 message(STATUS "Intrinsic path configuration:")
 #ShowCMakeVars("^CMAKE_INSTALL_PREFIX")
 #ShowCMakeVars("^CMAKE_INSTALL_LIBDIR")
 ShowCMakeVars("^FREERDP_INSTALL_PREFIX|^FREERDP_LIBRARY_PATH|^FREERDP_PLUGIN_PATH")
 ShowCMakeVars("^FREERDP_ADDIN_PATH|^FREERDP_EXTENSION_PATH|^FREERDP_PROXY_PLUGINDIR")
+
 
 

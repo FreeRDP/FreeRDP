@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #ifndef _WIN32
 
@@ -159,7 +157,7 @@ typedef PCSC_LONG (*fnPCSCSCardGetAttrib)(SCARDHANDLE hCard, PCSC_DWORD dwAttrId
 typedef PCSC_LONG (*fnPCSCSCardSetAttrib)(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPCBYTE pbAttr,
                                           PCSC_DWORD cbAttrLen);
 
-struct _PCSCFunctionTable
+typedef struct
 {
 	fnPCSCSCardEstablishContext pfnSCardEstablishContext;
 	fnPCSCSCardReleaseContext pfnSCardReleaseContext;
@@ -179,11 +177,7 @@ struct _PCSCFunctionTable
 	fnPCSCSCardCancel pfnSCardCancel;
 	fnPCSCSCardGetAttrib pfnSCardGetAttrib;
 	fnPCSCSCardSetAttrib pfnSCardSetAttrib;
-};
-typedef struct _PCSCFunctionTable PCSCFunctionTable;
-
-typedef struct _PCSC_SCARDCONTEXT PCSC_SCARDCONTEXT;
-typedef struct _PCSC_SCARDHANDLE PCSC_SCARDHANDLE;
+} PCSCFunctionTable;
 
 typedef struct
 {
@@ -192,7 +186,7 @@ typedef struct
 	BYTE* data;
 } PCSC_CACHE_ITEM;
 
-struct _PCSC_SCARDCONTEXT
+typedef struct
 {
 	SCARDHANDLE owner;
 	CRITICAL_SECTION lock;
@@ -200,13 +194,13 @@ struct _PCSC_SCARDCONTEXT
 	DWORD dwCardHandleCount;
 	BOOL isTransactionLocked;
 	wHashTable* cache;
-};
+} PCSC_SCARDCONTEXT;
 
-struct _PCSC_SCARDHANDLE
+typedef struct
 {
 	BOOL shared;
 	SCARDCONTEXT hSharedContext;
-};
+} PCSC_SCARDHANDLE;
 
 static HMODULE g_PCSCModule = NULL;
 static PCSCFunctionTable g_PCSC = { 0 };
@@ -2275,9 +2269,7 @@ static LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, LPC
                                      DWORD cbInBufferSize, LPVOID lpOutBuffer,
                                      DWORD cbOutBufferSize, LPDWORD lpBytesReturned)
 {
-	DWORD IoCtlMethod = 0;
 	DWORD IoCtlFunction = 0;
-	DWORD IoCtlAccess = 0;
 	DWORD IoCtlDeviceType = 0;
 	BOOL getFeatureRequest = FALSE;
 	PCSC_LONG status = SCARD_S_SUCCESS;
@@ -2306,9 +2298,7 @@ static LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, LPC
 	 * Converting Windows Feature Request IOCTL code to the pcsc-lite control code:
 	 * http://musclecard.996296.n3.nabble.com/Converting-Windows-Feature-Request-IOCTL-code-to-the-pcsc-lite-control-code-td4906.html
 	 */
-	IoCtlMethod = METHOD_FROM_CTL_CODE(dwControlCode);
 	IoCtlFunction = FUNCTION_FROM_CTL_CODE(dwControlCode);
-	IoCtlAccess = ACCESS_FROM_CTL_CODE(dwControlCode);
 	IoCtlDeviceType = DEVICE_TYPE_FROM_CTL_CODE(dwControlCode);
 
 	if (dwControlCode == IOCTL_SMARTCARD_GET_FEATURE_REQUEST)

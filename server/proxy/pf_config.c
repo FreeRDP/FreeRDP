@@ -747,8 +747,16 @@ size_t pf_config_modules_count(const proxyConfig* config)
 
 const char** pf_config_modules(const proxyConfig* config)
 {
+	union
+	{
+		char** ppc;
+		const char** cppc;
+	} cnv;
+
 	WINPR_ASSERT(config);
-	return (const char**)config->Modules;
+
+	cnv.ppc = config->Modules;
+	return cnv.cppc;
 }
 
 static BOOL pf_config_copy_string(char** dst, const char* src)
@@ -952,7 +960,6 @@ static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData*
 			accept = TRUE;
 			break;
 		case PF_UTILS_CHANNEL_BLOCK:
-		case PF_UTILS_CHANNEL_NOT_HANDLED:
 		default:
 			accept = FALSE;
 			break;
@@ -1020,7 +1027,6 @@ static BOOL config_plugin_channel_create(proxyPlugin* plugin, proxyData* pdata, 
 			accept = TRUE;
 			break;
 		case PF_UTILS_CHANNEL_BLOCK:
-		case PF_UTILS_CHANNEL_NOT_HANDLED:
 		default:
 			accept = FALSE;
 			break;

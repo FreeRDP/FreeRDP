@@ -72,7 +72,7 @@ typedef HRESULT(__stdcall* pfnMFCreateSample)(IMFSample** ppIMFSample);
 typedef HRESULT(__stdcall* pfnMFCreateMemoryBuffer)(DWORD cbMaxLength, IMFMediaBuffer** ppBuffer);
 typedef HRESULT(__stdcall* pfnMFCreateMediaType)(IMFMediaType** ppMFType);
 
-struct _H264_CONTEXT_MF
+typedef struct
 {
 	ICodecAPI* codecApi;
 	IMFTransform* transform;
@@ -89,8 +89,7 @@ struct _H264_CONTEXT_MF
 	pfnMFCreateSample MFCreateSample;
 	pfnMFCreateMemoryBuffer MFCreateMemoryBuffer;
 	pfnMFCreateMediaType MFCreateMediaType;
-};
-typedef struct _H264_CONTEXT_MF H264_CONTEXT_MF;
+} H264_CONTEXT_MF;
 
 static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid,
                                    IMFMediaType** ppMediaType)
@@ -442,7 +441,7 @@ static void mf_uninit(H264_CONTEXT* h264)
 		}
 
 		for (x = 0; x < sizeof(h264->pYUVData) / sizeof(h264->pYUVData[0]); x++)
-			_aligned_free(h264->pYUVData[x]);
+			winpr_aligned_free(h264->pYUVData[x]);
 
 		memset(h264->pYUVData, 0, sizeof(h264->pYUVData));
 		memset(h264->iStride, 0, sizeof(h264->iStride));
@@ -593,5 +592,5 @@ error:
 	return FALSE;
 }
 
-H264_CONTEXT_SUBSYSTEM g_Subsystem_MF = { "MediaFoundation", mf_init, mf_uninit, mf_decompress,
-	                                      mf_compress };
+const H264_CONTEXT_SUBSYSTEM g_Subsystem_MF = { "MediaFoundation", mf_init, mf_uninit,
+	                                            mf_decompress, mf_compress };

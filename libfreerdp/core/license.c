@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
@@ -336,7 +334,7 @@ error_path:
 static BOOL license_read_preamble(wStream* s, BYTE* bMsgType, BYTE* flags, UINT16* wMsgSize)
 {
 	/* preamble (4 bytes) */
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT8(s, *bMsgType);  /* bMsgType (1 byte) */
@@ -469,10 +467,7 @@ int license_recv(rdpLicense* license, wStream* s)
 	UINT16 securityFlags = 0;
 
 	if (!rdp_read_header(license->rdp, s, &length, &channelId))
-	{
-		WLog_ERR(TAG, "Incorrect RDP header.");
 		return -1;
-	}
 
 	if (!rdp_read_security_header(s, &securityFlags, &length))
 		return -1;
@@ -784,7 +779,7 @@ static BOOL license_decrypt_and_check_MAC(rdpLicense* license, const BYTE* input
 
 BOOL license_read_product_info(wStream* s, LICENSE_PRODUCT_INFO* productInfo)
 {
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
 	Stream_Read_UINT32(s, productInfo->dwVersion);     /* dwVersion (4 bytes) */
@@ -794,7 +789,7 @@ BOOL license_read_product_info(wStream* s, LICENSE_PRODUCT_INFO* productInfo)
 	if ((productInfo->cbCompanyName < 2) || (productInfo->cbCompanyName % 2 != 0))
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < productInfo->cbCompanyName)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, productInfo->cbCompanyName))
 		return FALSE;
 
 	productInfo->pbProductId = NULL;
@@ -803,7 +798,7 @@ BOOL license_read_product_info(wStream* s, LICENSE_PRODUCT_INFO* productInfo)
 		return FALSE;
 	Stream_Read(s, productInfo->pbCompanyName, productInfo->cbCompanyName);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		goto out_fail;
 
 	Stream_Read_UINT32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
@@ -811,7 +806,7 @@ BOOL license_read_product_info(wStream* s, LICENSE_PRODUCT_INFO* productInfo)
 	if ((productInfo->cbProductId < 2) || (productInfo->cbProductId % 2 != 0))
 		goto out_fail;
 
-	if (Stream_GetRemainingLength(s) < productInfo->cbProductId)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, productInfo->cbProductId))
 		goto out_fail;
 
 	productInfo->pbProductId = (BYTE*)malloc(productInfo->cbProductId);
@@ -875,13 +870,13 @@ BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob)
 {
 	UINT16 wBlobType;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT16(s, wBlobType);    /* wBlobType (2 bytes) */
 	Stream_Read_UINT16(s, blob->length); /* wBlobLen (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < blob->length)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, blob->length))
 		return FALSE;
 
 	/*
@@ -993,12 +988,13 @@ BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList)
 	UINT32 i;
 	UINT32 scopeCount;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, scopeCount); /* ScopeCount (4 bytes) */
 
-	if (scopeCount > Stream_GetRemainingLength(s) / 4) /* every blob is at least 4 bytes */
+	if (!Stream_CheckAndLogRequiredLength(TAG, s,
+	                                      4ull * scopeCount)) /* every blob is at least 4 bytes */
 		return FALSE;
 
 	scopeList->count = scopeCount;
@@ -1109,7 +1105,7 @@ error:
 BOOL license_read_license_request_packet(rdpLicense* license, wStream* s)
 {
 	/* ServerRandom (32 bytes) */
-	if (Stream_GetRemainingLength(s) < 32)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
 		return FALSE;
 
 	Stream_Read(s, license->ServerRandom, 32);
@@ -1162,7 +1158,7 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 
 	DEBUG_LICENSE("Receiving Platform Challenge Packet");
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, ConnectFlags); /* ConnectFlags, Reserved (4 bytes) */
@@ -1174,7 +1170,7 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	license->EncryptedPlatformChallenge->type = BB_ENCRYPTED_DATA_BLOB;
 
 	/* MACData (16 bytes) */
-	if (Stream_GetRemainingLength(s) < 16)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
 		return FALSE;
 
 	Stream_Read(s, macData, 16);
@@ -1202,7 +1198,7 @@ static BOOL license_read_encrypted_blob(const rdpLicense* license, wStream* s, L
 	UINT16 wBlobType, wBlobLen;
 	BYTE* encryptedData;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT16(s, wBlobType);
@@ -1215,7 +1211,7 @@ static BOOL license_read_encrypted_blob(const rdpLicense* license, wStream* s, L
 
 	Stream_Read_UINT16(s, wBlobLen);
 
-	if (Stream_GetRemainingLength(s) < wBlobLen)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, wBlobLen))
 		return FALSE;
 
 	encryptedData = Stream_Pointer(s);
@@ -1251,7 +1247,7 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 		goto out_free_blob;
 
 	/* compute MAC and check it */
-	if (Stream_GetRemainingLength(s) < 16)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
 		goto out_free_blob;
 
 	if (!security_mac_data(license->MacSaltKey, calBlob->data, calBlob->length, computedMac))
@@ -1270,7 +1266,7 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	if (!licenseStream)
 		goto out_free_blob;
 
-	if (Stream_GetRemainingLength(licenseStream) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, licenseStream, 8))
 		goto out_free_stream;
 
 	Stream_Read_UINT16(licenseStream, os_minor);
@@ -1278,7 +1274,7 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 
 	/* Scope */
 	Stream_Read_UINT32(licenseStream, cbScope);
-	if (Stream_GetRemainingLength(licenseStream) < cbScope)
+	if (!Stream_CheckAndLogRequiredLength(TAG, licenseStream, cbScope))
 		goto out_free_stream;
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "Scope:");
@@ -1287,10 +1283,10 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	Stream_Seek(licenseStream, cbScope);
 
 	/* CompanyName */
-	if (Stream_GetRemainingLength(licenseStream) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, licenseStream, 4))
 		goto out_free_stream;
 	Stream_Read_UINT32(licenseStream, cbCompanyName);
-	if (Stream_GetRemainingLength(licenseStream) < cbCompanyName)
+	if (!Stream_CheckAndLogRequiredLength(TAG, licenseStream, cbCompanyName))
 		goto out_free_stream;
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "Company name:");
@@ -1299,10 +1295,10 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	Stream_Seek(licenseStream, cbCompanyName);
 
 	/* productId */
-	if (Stream_GetRemainingLength(licenseStream) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, licenseStream, 4))
 		goto out_free_stream;
 	Stream_Read_UINT32(licenseStream, cbProductId);
-	if (Stream_GetRemainingLength(licenseStream) < cbProductId)
+	if (!Stream_CheckAndLogRequiredLength(TAG, licenseStream, cbProductId))
 		goto out_free_stream;
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "Product id:");
@@ -1311,10 +1307,10 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	Stream_Seek(licenseStream, cbProductId);
 
 	/* licenseInfo */
-	if (Stream_GetRemainingLength(licenseStream) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, licenseStream, 4))
 		goto out_free_stream;
 	Stream_Read_UINT32(licenseStream, cbLicenseInfo);
-	if (Stream_GetRemainingLength(licenseStream) < cbLicenseInfo)
+	if (!Stream_CheckAndLogRequiredLength(TAG, licenseStream, cbLicenseInfo))
 		goto out_free_stream;
 
 	license->state = LICENSE_STATE_COMPLETED;
@@ -1343,7 +1339,7 @@ BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s)
 	UINT32 dwErrorCode;
 	UINT32 dwStateTransition;
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
 	Stream_Read_UINT32(s, dwErrorCode);       /* dwErrorCode (4 bytes) */

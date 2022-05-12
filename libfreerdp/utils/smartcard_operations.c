@@ -23,9 +23,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/assert.h>
 
@@ -421,11 +419,8 @@ static LONG smartcard_AccessStartedEvent_Decode(wStream* s, SMARTCARD_OPERATION*
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(operation);
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_WARN(TAG, "AccessStartedEvent is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return SCARD_F_INTERNAL_ERROR;
-	}
 
 	Stream_Read_INT32(s, operation->call.lng.LongValue); /* Unused (4 bytes) */
 
@@ -563,12 +558,8 @@ LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32
 
 	/* Device Control Request */
 
-	if (Stream_GetRemainingLength(s) < 32)
-	{
-		WLog_WARN(TAG, "Device Control Request is too short: %" PRIuz "",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
 		return SCARD_F_INTERNAL_ERROR;
-	}
 
 	Stream_Read_UINT32(s, outputBufferLength); /* OutputBufferLength (4 bytes) */
 	Stream_Read_UINT32(s, inputBufferLength);  /* InputBufferLength (4 bytes) */

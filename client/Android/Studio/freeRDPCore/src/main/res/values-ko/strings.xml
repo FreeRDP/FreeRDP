@@ -154,7 +154,6 @@
     <string name="settings_remote_program">리모트 프로그램</string>
     <string name="settings_work_dir">작업 디렉터리</string>
     <string name="settings_async_channel">비동기 채널</string>
-    <string name="settings_async_input">비동기 입력</string>
     <string name="settings_async_update">비동기 갱신</string>
     <string name="settings_console_mode">콘솔 모드</string>
     <!-- App settings strings -->

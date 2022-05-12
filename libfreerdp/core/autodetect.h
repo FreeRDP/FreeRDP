@@ -36,7 +36,7 @@
 FREERDP_LOCAL int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s);
 
-FREERDP_LOCAL rdpAutoDetect* autodetect_new(void);
+FREERDP_LOCAL rdpAutoDetect* autodetect_new(rdpContext* context);
 FREERDP_LOCAL void autodetect_free(rdpAutoDetect* autodetect);
 
 FREERDP_LOCAL void autodetect_register_server_callbacks(rdpAutoDetect* autodetect);

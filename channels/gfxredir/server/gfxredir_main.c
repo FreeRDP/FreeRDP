@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include "gfxredir_main.h"
 #include <stdio.h>
@@ -49,11 +47,8 @@ static UINT gfxredir_recv_legacy_caps_pdu(wStream* s, GfxRedirServerContext* con
 	UINT32 error = CHANNEL_RC_OK;
 	GFXREDIR_LEGACY_CAPS_PDU pdu;
 
-	if (Stream_GetRemainingLength(s) < 2)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, pdu.version); /* version (2 bytes) */
 
@@ -74,11 +69,8 @@ static UINT gfxredir_recv_caps_advertise_pdu(wStream* s, UINT32 length,
 	UINT32 error = CHANNEL_RC_OK;
 	GFXREDIR_CAPS_ADVERTISE_PDU pdu;
 
-	if (Stream_GetRemainingLength(s) < length)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return ERROR_INVALID_DATA;
-	}
 
 	pdu.length = length;
 	Stream_GetPointer(s, pdu.caps);
@@ -107,11 +99,8 @@ static UINT gfxredir_recv_present_buffer_ack_pdu(wStream* s, GfxRedirServerConte
 	UINT32 error = CHANNEL_RC_OK;
 	GFXREDIR_PRESENT_BUFFER_ACK_PDU pdu;
 
-	if (Stream_GetRemainingLength(s) < 16)
-	{
-		WLog_ERR(TAG, "not enough data!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT64(s, pdu.windowId);  /* windowId (8 bytes) */
 	Stream_Read_UINT64(s, pdu.presentId); /* presentId (8 bytes) */

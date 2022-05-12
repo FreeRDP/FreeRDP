@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 
@@ -181,7 +179,15 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, void* 
 	if (!item)
 		goto out_error;
 
-	item->key = (void*)key;
+	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
+		cnv.cpv = key;
+		item->key = cnv.pv;
+	}
 	item->value = value;
 	item->next = NULL;
 

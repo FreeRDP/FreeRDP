@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
@@ -40,7 +38,7 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYT
                                             UINT32 height, UINT8 shift, BOOL withAlpha)
 {
 	UINT32 x, y;
-	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, TRUE);
 
 	for (y = 0; y < height; y++)

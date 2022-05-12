@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <time.h>
 #include <errno.h>
@@ -31,6 +29,7 @@
 #include <winpr/winsock.h>
 
 #include "rdp.h"
+#include "utils.h"
 
 #if !defined(_WIN32)
 
@@ -88,12 +87,11 @@
 
 /* Simple Socket BIO */
 
-struct _WINPR_BIO_SIMPLE_SOCKET
+typedef struct
 {
 	SOCKET socket;
 	HANDLE hEvent;
-};
-typedef struct _WINPR_BIO_SIMPLE_SOCKET WINPR_BIO_SIMPLE_SOCKET;
+} WINPR_BIO_SIMPLE_SOCKET;
 
 static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown);
 static int transport_bio_simple_uninit(BIO* bio);
@@ -188,30 +186,26 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	int status = -1;
 	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*)BIO_get_data(bio);
 
-	if (cmd == BIO_C_SET_SOCKET)
+	switch (cmd)
 	{
-		transport_bio_simple_uninit(bio);
-		transport_bio_simple_init(bio, (SOCKET)arg2, (int)arg1);
-		return 1;
-	}
-	else if (cmd == BIO_C_GET_SOCKET)
-	{
-		if (!BIO_get_init(bio) || !arg2)
-			return 0;
+		case BIO_C_SET_SOCKET:
+			transport_bio_simple_uninit(bio);
+			transport_bio_simple_init(bio, (SOCKET)arg2, (int)arg1);
+			return 1;
+		case BIO_C_GET_SOCKET:
+			if (!BIO_get_init(bio) || !arg2)
+				return 0;
 
-		*((SOCKET*)arg2) = ptr->socket;
-		return 1;
-	}
-	else if (cmd == BIO_C_GET_EVENT)
-	{
-		if (!BIO_get_init(bio) || !arg2)
-			return 0;
+			*((SOCKET*)arg2) = ptr->socket;
+			return 1;
+		case BIO_C_GET_EVENT:
+			if (!BIO_get_init(bio) || !arg2)
+				return 0;
 
-		*((HANDLE*)arg2) = ptr->hEvent;
-		return 1;
-	}
-	else if (cmd == BIO_C_SET_NONBLOCK)
-	{
+			*((HANDLE*)arg2) = ptr->hEvent;
+			return 1;
+		case BIO_C_SET_NONBLOCK:
+		{
 #ifndef _WIN32
 		int flags;
 		flags = fcntl((int)ptr->socket, F_GETFL);
@@ -228,11 +222,11 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		/* the internal socket is always non-blocking */
 #endif
 		return 1;
-	}
-	else if (cmd == BIO_C_WAIT_READ)
-	{
-		int timeout = (int)arg1;
-		int sockfd = (int)ptr->socket;
+		}
+		case BIO_C_WAIT_READ:
+		{
+			int timeout = (int)arg1;
+			int sockfd = (int)ptr->socket;
 #ifdef HAVE_POLL_H
 		struct pollfd pollset;
 		pollset.fd = sockfd;
@@ -262,11 +256,12 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		} while ((status < 0) && (errno == EINTR));
 
 #endif
-	}
-	else if (cmd == BIO_C_WAIT_WRITE)
-	{
-		int timeout = (int)arg1;
-		int sockfd = (int)ptr->socket;
+		}
+		break;
+		case BIO_C_WAIT_WRITE:
+		{
+			int timeout = (int)arg1;
+			int sockfd = (int)ptr->socket;
 #ifdef HAVE_POLL_H
 		struct pollfd pollset;
 		pollset.fd = sockfd;
@@ -296,6 +291,10 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		} while ((status < 0) && (errno == EINTR));
 
 #endif
+		}
+		break;
+		default:
+			break;
 	}
 
 	switch (cmd)
@@ -448,14 +447,13 @@ BIO_METHOD* BIO_s_simple_socket(void)
 
 /* Buffered Socket BIO */
 
-struct _WINPR_BIO_BUFFERED_SOCKET
+typedef struct
 {
 	BIO* bufferedBio;
 	BOOL readBlocked;
 	BOOL writeBlocked;
 	RingBuffer xmitBuffer;
-};
-typedef struct _WINPR_BIO_BUFFERED_SOCKET WINPR_BIO_BUFFERED_SOCKET;
+} WINPR_BIO_BUFFERED_SOCKET;
 
 static long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int argi,
                                             long argl, long ret)
@@ -566,7 +564,7 @@ static int transport_bio_buffered_gets(BIO* bio, char* str, int size)
 
 static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
-	int status = -1;
+	long status = -1;
 	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*)BIO_get_data(bio);
 
 	switch (cmd)
@@ -821,7 +819,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 		goto fail;
 	}
 
-	handles[count++] = context->abortEvent;
+	handles[count++] = utils_get_abort_event(context->rdp);
 	status = _connect(sockfd, addr, addrlen);
 
 	if (status < 0)
@@ -842,12 +840,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 	status = WaitForMultipleObjects(count, handles, FALSE, tout);
 
 	if (WAIT_OBJECT_0 != status)
-	{
-		if (status == WAIT_OBJECT_0 + 1)
-			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_CANCELLED);
-
 		goto fail;
-	}
 
 	status = recv(sockfd, NULL, 0, 0);
 
@@ -985,7 +978,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT
 	return sockfd;
 }
 
-static BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int sockfd)
+BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int sockfd)
 {
 	const BOOL keepalive = (freerdp_settings_get_bool(settings, FreeRDP_TcpKeepAlive));
 	UINT32 optval;
@@ -1241,12 +1234,9 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 		}
 	}
 
-	if (WaitForSingleObject(context->abortEvent, 0) == WAIT_OBJECT_0)
+	if (WaitForSingleObject(utils_get_abort_event(context->rdp), 0) == WAIT_OBJECT_0)
 	{
 		close(sockfd);
-
-		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
-
 		return -1;
 	}
 

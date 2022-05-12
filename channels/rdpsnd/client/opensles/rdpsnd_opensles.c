@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/assert.h>
 
@@ -41,9 +39,7 @@
 #include "opensl_io.h"
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_opensles_plugin rdpsndopenslesPlugin;
-
-struct rdpsnd_opensles_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
@@ -59,7 +55,7 @@ struct rdpsnd_opensles_plugin
 	UINT32 rate;
 	UINT32 channels;
 	int format;
-};
+} rdpsndopenslesPlugin;
 
 static int rdpsnd_opensles_volume_to_millibel(unsigned short level, int max)
 {
@@ -292,7 +288,7 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_AR
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_opensles_args[] = {
 		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
@@ -330,18 +326,13 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_AR
 	return status;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_rdpsnd_client_subsystem_entry opensles_freerdp_rdpsnd_client_subsystem_entry
-#else
-#define freerdp_rdpsnd_client_subsystem_entry FREERDP_API freerdp_rdpsnd_client_subsystem_entry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+UINT opensles_freerdp_rdpsnd_client_subsystem_entry(
+    PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndopenslesPlugin* opensles;

@@ -17,12 +17,14 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 #include <freerdp/gdi/video.h>
 
 #include "xf_video.h"
 
+#include <freerdp/log.h>
 #define TAG CLIENT_TAG("video")
 
 typedef struct
@@ -63,6 +65,7 @@ static BOOL xfVideoShowSurface(VideoClientContext* video, const VideoSurface* su
 {
 	const xfVideoSurface* xfSurface = (const xfVideoSurface*)surface;
 	xfContext* xfc;
+	const rdpSettings* settings;
 
 	WINPR_ASSERT(video);
 	WINPR_ASSERT(xfSurface);
@@ -70,9 +73,12 @@ static BOOL xfVideoShowSurface(VideoClientContext* video, const VideoSurface* su
 	xfc = video->custom;
 	WINPR_ASSERT(xfc);
 
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
 #ifdef WITH_XRENDER
 
-	if (xfc->context.settings->SmartSizing || xfc->context.settings->MultiTouchGestures)
+	if (settings->SmartSizing || settings->MultiTouchGestures)
 	{
 		XPutImage(xfc->display, xfc->primary, xfc->gc, xfSurface->image, 0, 0, surface->x,
 		          surface->y, surface->w, surface->h);
@@ -106,7 +112,7 @@ void xf_video_control_init(xfContext* xfc, VideoClientContext* video)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(video);
 
-	gdi_video_control_init(xfc->context.gdi, video);
+	gdi_video_control_init(xfc->common.context.gdi, video);
 
 	/* X11 needs to be able to handle 32bpp colors directly. */
 	if (xfc->depth >= 24)
@@ -120,5 +126,6 @@ void xf_video_control_init(xfContext* xfc, VideoClientContext* video)
 
 void xf_video_control_uninit(xfContext* xfc, VideoClientContext* video)
 {
-	gdi_video_control_uninit(xfc->context.gdi, video);
+	WINPR_ASSERT(xfc);
+	gdi_video_control_uninit(xfc->common.context.gdi, video);
 }

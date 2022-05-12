@@ -21,9 +21,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
@@ -76,7 +74,7 @@ static BOOL smartcard_ndr_pointer_read_(wStream* s, UINT32* index, UINT32* ptr, 
 	WINPR_UNUSED(file);
 	if (!s)
 		return FALSE;
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, ndrPtr); /* mszGroupsNdrPtr (4 bytes) */
@@ -116,12 +114,8 @@ static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t eleme
 			break;
 	}
 
-	if (Stream_GetRemainingLength(s) < required)
-	{
-		WLog_ERR(TAG, "Short data while trying to read NDR pointer, expected 4, got %" PRIu32,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, required))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	switch (type)
 	{
@@ -165,14 +159,9 @@ static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t eleme
 	if (len > SIZE_MAX / 2)
 		return STATUS_BUFFER_TOO_SMALL;
 
-	if (Stream_GetRemainingLength(s) / elementSize < len)
-	{
-		WLog_ERR(TAG,
-		         "Short data while trying to read data from NDR pointer, expected %" PRIu32
-		         ", got %" PRIu32,
-		         len, Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, len * elementSize * 1ull))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
+
 	len *= elementSize;
 
 	r = calloc(len + 1, sizeof(CHAR));
@@ -355,7 +344,7 @@ static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL un
 		length = (bytes / sizeof(WCHAR)) - 1;
 		WINPR_ASSERT(length < INT_MAX);
 
-		mszA = (char*)calloc(length + 1, sizeof(WCHAR));
+		mszA = (char*)calloc(length + 1, sizeof(char));
 		if (!mszA)
 			return NULL;
 		if (ConvertFromUnicode(CP_UTF8, 0, string.wz, (int)length, &mszA, (int)length + 1, NULL,
@@ -443,8 +432,6 @@ static char* smartcard_array_dump(const void* pd, size_t len, char* buffer, size
 	rc = _snprintf(buffer, bufferLen, " }");
 	if ((rc < 0) || ((size_t)rc > bufferLen))
 		goto fail;
-	buffer += rc;
-	bufferLen -= (size_t)rc;
 
 fail:
 	return start;
@@ -1488,11 +1475,8 @@ LONG smartcard_unpack_common_type_header(wStream* s)
 	UINT8 endianness;
 	UINT16 commonHeaderLength;
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_WARN(TAG, "CommonTypeHeader is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	/* Process CommonTypeHeader */
 	Stream_Read_UINT8(s, version);             /* Version (1 byte) */
@@ -1541,11 +1525,8 @@ LONG smartcard_unpack_private_type_header(wStream* s)
 	UINT32 filler;
 	UINT32 objectBufferLength;
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_WARN(TAG, "PrivateTypeHeader is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, objectBufferLength); /* ObjectBufferLength (4 bytes) */
 	Stream_Read_UINT32(s, filler);             /* Filler (4 bytes), should be 0x00000000 */
@@ -1556,14 +1537,8 @@ LONG smartcard_unpack_private_type_header(wStream* s)
 		return STATUS_INVALID_PARAMETER;
 	}
 
-	if (objectBufferLength != Stream_GetRemainingLength(s))
-	{
-		WLog_WARN(TAG,
-		          "PrivateTypeHeader ObjectBufferLength mismatch: Actual: %" PRIu32
-		          ", Expected: %" PRIuz "",
-		          objectBufferLength, Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, objectBufferLength))
 		return STATUS_INVALID_PARAMETER;
-	}
 
 	return SCARD_S_SUCCESS;
 }
@@ -1674,20 +1649,13 @@ LONG smartcard_unpack_redir_scard_context_(wStream* s, REDIR_SCARDCONTEXT* conte
 
 	ZeroMemory(context, sizeof(REDIR_SCARDCONTEXT));
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, context->cbContext); /* cbContext (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < context->cbContext)
-	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %" PRIuz ", Expected: %" PRIu32 "",
-		          Stream_GetRemainingLength(s), context->cbContext);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, context->cbContext))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	if ((context->cbContext != 0) && (context->cbContext != 4) && (context->cbContext != 8))
 	{
@@ -1709,12 +1677,8 @@ LONG smartcard_unpack_redir_scard_context_(wStream* s, REDIR_SCARDCONTEXT* conte
 		return STATUS_INVALID_PARAMETER;
 	}
 
-	if (context->cbContext > Stream_GetRemainingLength(s))
-	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too long: Actual: %" PRIuz ", Expected: %" PRIu32 "",
-		          Stream_GetRemainingLength(s), context->cbContext);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, context->cbContext))
 		return STATUS_INVALID_PARAMETER;
-	}
 
 	return SCARD_S_SUCCESS;
 }
@@ -1742,12 +1706,8 @@ LONG smartcard_unpack_redir_scard_context_ref(wStream* s, REDIR_SCARDCONTEXT* co
 	if (context->cbContext == 0)
 		return SCARD_S_SUCCESS;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %" PRIuz ", Expected: 4",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
@@ -1764,12 +1724,8 @@ LONG smartcard_unpack_redir_scard_context_ref(wStream* s, REDIR_SCARDCONTEXT* co
 		return STATUS_INVALID_PARAMETER;
 	}
 
-	if (Stream_GetRemainingLength(s) < context->cbContext)
-	{
-		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %" PRIuz ", Expected: %" PRIu32 "",
-		          Stream_GetRemainingLength(s), context->cbContext);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, context->cbContext))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	if (context->cbContext)
 		Stream_Read(s, &(context->pbContext), context->cbContext);
@@ -1797,20 +1753,13 @@ LONG smartcard_unpack_redir_scard_handle_(wStream* s, REDIR_SCARDHANDLE* handle,
 {
 	ZeroMemory(handle, sizeof(REDIR_SCARDHANDLE));
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_WARN(TAG, "SCARDHANDLE is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
 
-	if ((Stream_GetRemainingLength(s) < handle->cbHandle) || (!handle->cbHandle))
-	{
-		WLog_WARN(TAG, "SCARDHANDLE is too short: Actual: %" PRIuz ", Expected: %" PRIu32 "",
-		          Stream_GetRemainingLength(s), handle->cbHandle);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, handle->cbHandle))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	if (!smartcard_ndr_pointer_read_(s, index, NULL, file, function, line))
 		return ERROR_INVALID_DATA;
@@ -1837,12 +1786,8 @@ LONG smartcard_unpack_redir_scard_handle_ref(wStream* s, REDIR_SCARDHANDLE* hand
 {
 	UINT32 length;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_WARN(TAG, "REDIR_SCARDHANDLE is too short: Actual: %" PRIuz ", Expected: 4",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
@@ -1859,12 +1804,8 @@ LONG smartcard_unpack_redir_scard_handle_ref(wStream* s, REDIR_SCARDHANDLE* hand
 		return STATUS_INVALID_PARAMETER;
 	}
 
-	if ((Stream_GetRemainingLength(s) < handle->cbHandle) || (!handle->cbHandle))
-	{
-		WLog_WARN(TAG, "REDIR_SCARDHANDLE is too short: Actual: %" PRIuz ", Expected: %" PRIu32 "",
-		          Stream_GetRemainingLength(s), handle->cbHandle);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, handle->cbHandle))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	if (handle->cbHandle)
 		Stream_Read(s, &(handle->pbHandle), handle->cbHandle);
@@ -1885,12 +1826,8 @@ LONG smartcard_pack_redir_scard_handle_ref(wStream* s, const REDIR_SCARDHANDLE* 
 
 LONG smartcard_unpack_establish_context_call(wStream* s, EstablishContext_Call* call)
 {
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_WARN(TAG, "EstablishContext_Call is too short: Actual: %" PRIuz ", Expected: 4",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, call->dwScope); /* dwScope (4 bytes) */
 	smartcard_trace_establish_context_call(call);
@@ -1938,11 +1875,8 @@ LONG smartcard_unpack_list_reader_groups_call(wStream* s, ListReaderGroups_Call*
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_WARN(TAG, "ListReaderGroups_Call is too short: %" PRIdz, Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_INT32(s, call->fmszGroupsIsNULL); /* fmszGroupsIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cchGroups);       /* cchGroups (4 bytes) */
@@ -1992,11 +1926,8 @@ LONG smartcard_unpack_list_readers_call(wStream* s, ListReaders_Call* call, BOOL
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 16)
-	{
-		WLog_WARN(TAG, "ListReaders_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, call->cBytes); /* cBytes (4 bytes) */
 	if (!smartcard_ndr_pointer_read(s, &index, &mszGroupsNdrPtr))
@@ -2052,11 +1983,8 @@ static LONG smartcard_unpack_connect_common(wStream* s, Connect_Common_Call* com
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_WARN(TAG, "Connect_Common is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, common->dwShareMode);          /* dwShareMode (4 bytes) */
 	Stream_Read_UINT32(s, common->dwPreferredProtocols); /* dwPreferredProtocols (4 bytes) */
@@ -2156,11 +2084,8 @@ LONG smartcard_unpack_reconnect_call(wStream* s, Reconnect_Call* call)
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_WARN(TAG, "Reconnect_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, call->dwShareMode);          /* dwShareMode (4 bytes) */
 	Stream_Read_UINT32(s, call->dwPreferredProtocols); /* dwPreferredProtocols (4 bytes) */
@@ -2205,12 +2130,8 @@ LONG smartcard_unpack_hcard_and_disposition_call(wStream* s, HCardAndDisposition
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_WARN(TAG, "HCardAndDisposition_Call is too short: %" PRIuz "",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, call->dwDisposition); /* dwDisposition (4 bytes) */
 
@@ -2266,7 +2187,7 @@ static LONG smartcard_unpack_reader_state_a(wStream* s, LPSCARD_READERSTATEA* pp
 	LPSCARD_READERSTATEA rgReaderStates;
 	BOOL* states;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return status;
 
 	Stream_Read_UINT32(s, len);
@@ -2286,12 +2207,8 @@ static LONG smartcard_unpack_reader_state_a(wStream* s, LPSCARD_READERSTATEA* pp
 		UINT32 ptr = UINT32_MAX;
 		LPSCARD_READERSTATEA readerState = &rgReaderStates[index];
 
-		if (Stream_GetRemainingLength(s) < 52)
-		{
-			WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %" PRIuz "",
-			          Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 52))
 			goto fail;
-		}
 
 		if (!smartcard_ndr_pointer_read(s, ptrIndex, &ptr))
 		{
@@ -2343,7 +2260,7 @@ static LONG smartcard_unpack_reader_state_w(wStream* s, LPSCARD_READERSTATEW* pp
 	LPSCARD_READERSTATEW rgReaderStates;
 	BOOL* states;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return status;
 
 	Stream_Read_UINT32(s, len);
@@ -2365,12 +2282,8 @@ static LONG smartcard_unpack_reader_state_w(wStream* s, LPSCARD_READERSTATEW* pp
 		UINT32 ptr = UINT32_MAX;
 		LPSCARD_READERSTATEW readerState = &rgReaderStates[index];
 
-		if (Stream_GetRemainingLength(s) < 52)
-		{
-			WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %" PRIuz "",
-			          Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 52))
 			goto fail;
-		}
 
 		if (!smartcard_ndr_pointer_read(s, ptrIndex, &ptr))
 		{
@@ -2430,12 +2343,8 @@ LONG smartcard_unpack_get_status_change_a_call(wStream* s, GetStatusChangeA_Call
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %" PRIuz "",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, call->dwTimeOut); /* dwTimeOut (4 bytes) */
 	Stream_Read_UINT32(s, call->cReaders);  /* cReaders (4 bytes) */
@@ -2468,12 +2377,8 @@ LONG smartcard_unpack_get_status_change_w_call(wStream* s, GetStatusChangeW_Call
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %" PRIuz "",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, call->dwTimeOut); /* dwTimeOut (4 bytes) */
 	Stream_Read_UINT32(s, call->cReaders);  /* cReaders (4 bytes) */
@@ -2532,11 +2437,8 @@ LONG smartcard_unpack_state_call(wStream* s, State_Call* call)
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_WARN(TAG, "State_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_INT32(s, call->fpbAtrIsNULL); /* fpbAtrIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbAtrLen);    /* cbAtrLen (4 bytes) */
@@ -2585,11 +2487,8 @@ LONG smartcard_unpack_status_call(wStream* s, Status_Call* call, BOOL unicode)
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_WARN(TAG, "Status_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_INT32(s, call->fmszReaderNamesIsNULL); /* fmszReaderNamesIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cchReaderLen);         /* cchReaderLen (4 bytes) */
@@ -2650,11 +2549,8 @@ LONG smartcard_unpack_get_attrib_call(wStream* s, GetAttrib_Call* call)
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_WARN(TAG, "GetAttrib_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, call->dwAttrId);     /* dwAttrId (4 bytes) */
 	Stream_Read_INT32(s, call->fpbAttrIsNULL); /* fpbAttrIsNULL (4 bytes) */
@@ -2718,11 +2614,8 @@ LONG smartcard_unpack_control_call(wStream* s, Control_Call* call)
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 20)
-	{
-		WLog_WARN(TAG, "Control_Call is too short: %" PRIuz "", Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, call->dwControlCode);                    /* dwControlCode (4 bytes) */
 	Stream_Read_UINT32(s, call->cbInBufferSize);                   /* cbInBufferSize (4 bytes) */
@@ -2796,12 +2689,8 @@ LONG smartcard_unpack_transmit_call(wStream* s, Transmit_Call* call)
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 32)
-	{
-		WLog_WARN(TAG, "Transmit_Call is too short: Actual: %" PRIuz ", Expected: 32",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, ioSendPci.dwProtocol);   /* dwProtocol (4 bytes) */
 	Stream_Read_UINT32(s, ioSendPci.cbExtraBytes); /* cbExtraBytes (4 bytes) */
@@ -2851,23 +2740,13 @@ LONG smartcard_unpack_transmit_call(wStream* s, Transmit_Call* call)
 	if (pbExtraBytesNdrPtr)
 	{
 		// TODO: Use unified pointer reading
-		if (Stream_GetRemainingLength(s) < 4)
-		{
-			WLog_WARN(TAG, "Transmit_Call is too short: %" PRIuz " (ioSendPci.pbExtraBytes)",
-			          Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return STATUS_BUFFER_TOO_SMALL;
-		}
 
 		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
-		if (Stream_GetRemainingLength(s) < ioSendPci.cbExtraBytes)
-		{
-			WLog_WARN(TAG,
-			          "Transmit_Call is too short: Actual: %" PRIuz ", Expected: %" PRIu32
-			          " (ioSendPci.cbExtraBytes)",
-			          Stream_GetRemainingLength(s), ioSendPci.cbExtraBytes);
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, ioSendPci.cbExtraBytes))
 			return STATUS_BUFFER_TOO_SMALL;
-		}
 
 		ioSendPci.pbExtraBytes = Stream_Pointer(s);
 		call->pioSendPci =
@@ -2908,12 +2787,8 @@ LONG smartcard_unpack_transmit_call(wStream* s, Transmit_Call* call)
 
 	if (pioRecvPciNdrPtr)
 	{
-		if (Stream_GetRemainingLength(s) < 12)
-		{
-			WLog_WARN(TAG, "Transmit_Call is too short: Actual: %" PRIuz ", Expected: 12",
-			          Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 			return STATUS_BUFFER_TOO_SMALL;
-		}
 
 		Stream_Read_UINT32(s, ioRecvPci.dwProtocol);   /* dwProtocol (4 bytes) */
 		Stream_Read_UINT32(s, ioRecvPci.cbExtraBytes); /* cbExtraBytes (4 bytes) */
@@ -2932,12 +2807,8 @@ LONG smartcard_unpack_transmit_call(wStream* s, Transmit_Call* call)
 		if (pbExtraBytesNdrPtr)
 		{
 			// TODO: Unify ndr pointer reading
-			if (Stream_GetRemainingLength(s) < 4)
-			{
-				WLog_WARN(TAG, "Transmit_Call is too short: %" PRIuz " (ioRecvPci.pbExtraBytes)",
-				          Stream_GetRemainingLength(s));
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				return STATUS_BUFFER_TOO_SMALL;
-			}
 
 			Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
@@ -2959,14 +2830,8 @@ LONG smartcard_unpack_transmit_call(wStream* s, Transmit_Call* call)
 				return STATUS_INVALID_PARAMETER;
 			}
 
-			if (Stream_GetRemainingLength(s) < ioRecvPci.cbExtraBytes)
-			{
-				WLog_WARN(TAG,
-				          "Transmit_Call is too short: Actual: %" PRIuz ", Expected: %" PRIu32
-				          " (ioRecvPci.cbExtraBytes)",
-				          Stream_GetRemainingLength(s), ioRecvPci.cbExtraBytes);
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, ioRecvPci.cbExtraBytes))
 				return STATUS_BUFFER_TOO_SMALL;
-			}
 
 			ioRecvPci.pbExtraBytes = Stream_Pointer(s);
 			call->pioRecvPci =
@@ -3063,12 +2928,8 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(wStream* s, LocateCardsByATRA_C
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 16)
-	{
-		WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: %" PRIuz "",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, call->cAtrs);
 	if (!smartcard_ndr_pointer_read(s, &index, &rgAtrMasksNdrPtr))
@@ -3185,11 +3046,9 @@ LONG smartcard_unpack_locate_cards_a_call(wStream* s, LocateCardsA_Call* call)
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 16)
-	{
-		WLog_WARN(TAG, "%s is too short: %" PRIuz "", __FUNCTION__, Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
+
 	Stream_Read_UINT32(s, call->cBytes);
 	if (!smartcard_ndr_pointer_read(s, &index, &sz1NdrPtr))
 		return ERROR_INVALID_DATA;
@@ -3225,11 +3084,9 @@ LONG smartcard_unpack_locate_cards_w_call(wStream* s, LocateCardsW_Call* call)
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 16)
-	{
-		WLog_WARN(TAG, "%s is too short: %" PRIuz "", __FUNCTION__, Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
+
 	Stream_Read_UINT32(s, call->cBytes);
 	if (!smartcard_ndr_pointer_read(s, &index, &sz1NdrPtr))
 		return ERROR_INVALID_DATA;
@@ -3268,7 +3125,7 @@ LONG smartcard_unpack_set_attrib_call(wStream* s, SetAttrib_Call* call)
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return STATUS_BUFFER_TOO_SMALL;
 	Stream_Read_UINT32(s, call->dwAttrId);
 	Stream_Read_UINT32(s, call->cbAttrLen);
@@ -3306,12 +3163,8 @@ LONG smartcard_unpack_locate_cards_by_atr_w_call(wStream* s, LocateCardsByATRW_C
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if (Stream_GetRemainingLength(s) < 16)
-	{
-		WLog_WARN(TAG, "LocateCardsByATRW_Call is too short: %" PRIuz "",
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
 		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	Stream_Read_UINT32(s, call->cAtrs);
 	if (!smartcard_ndr_pointer_read(s, &index, &rgAtrMasksNdrPtr))
@@ -3368,7 +3221,7 @@ LONG smartcard_unpack_read_cache_a_call(wStream* s, ReadCacheA_Call* call)
 	if (!smartcard_ndr_pointer_read(s, &index, &contextNdrPtr))
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return STATUS_BUFFER_TOO_SMALL;
 	Stream_Read_UINT32(s, call->Common.FreshnessCounter);
 	Stream_Read_INT32(s, call->Common.fPbDataIsNULL);
@@ -3413,7 +3266,7 @@ LONG smartcard_unpack_read_cache_w_call(wStream* s, ReadCacheW_Call* call)
 	if (!smartcard_ndr_pointer_read(s, &index, &contextNdrPtr))
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return STATUS_BUFFER_TOO_SMALL;
 	Stream_Read_UINT32(s, call->Common.FreshnessCounter);
 	Stream_Read_INT32(s, call->Common.fPbDataIsNULL);
@@ -3459,7 +3312,7 @@ LONG smartcard_unpack_write_cache_a_call(wStream* s, WriteCacheA_Call* call)
 	if (!smartcard_ndr_pointer_read(s, &index, &contextNdrPtr))
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return STATUS_BUFFER_TOO_SMALL;
 
 	Stream_Read_UINT32(s, call->Common.FreshnessCounter);
@@ -3518,7 +3371,7 @@ LONG smartcard_unpack_write_cache_w_call(wStream* s, WriteCacheW_Call* call)
 	if (!smartcard_ndr_pointer_read(s, &index, &contextNdrPtr))
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return STATUS_BUFFER_TOO_SMALL;
 	Stream_Read_UINT32(s, call->Common.FreshnessCounter);
 	Stream_Read_UINT32(s, call->Common.cbDataLen);

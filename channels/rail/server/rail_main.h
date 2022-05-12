@@ -29,7 +29,7 @@
 
 #include "../rail_common.h"
 
-struct _rail_server_private
+struct s_rail_server_private
 {
 	HANDLE thread;
 	HANDLE stopEvent;

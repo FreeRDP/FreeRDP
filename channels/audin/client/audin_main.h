@@ -20,9 +20,7 @@
 #ifndef FREERDP_CHANNEL_AUDIN_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_AUDIN_CLIENT_MAIN_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>

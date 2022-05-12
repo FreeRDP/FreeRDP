@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <freerdp/log.h>
@@ -100,11 +98,8 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 	UINT32 length;
 	WCHAR* wstr = NULL;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "rdp_redirection_read_string failure: cannot read length");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, length);
 
@@ -116,7 +111,7 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < length)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 	{
 		WLog_ERR(TAG,
 		         "rdp_redirection_read_string failure: insufficient stream length (%" PRIu32
@@ -235,7 +230,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 length;
 	rdpRedirection* redirection = rdp->redirection;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return -1;
 
 	Stream_Read_UINT16(s, flags);                  /* flags (2 bytes) */
@@ -274,12 +269,12 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		 * 0010  34 30 32 36 34 33 32 2e 31 35 36 32 39 2e 30 30  4026432.15629.00
 		 * 0020  30 30 0d 0a                                      00..
 		 */
-		if (Stream_GetRemainingLength(s) < 4)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return -1;
 
 		Stream_Read_UINT32(s, redirection->LoadBalanceInfoLength);
 
-		if (Stream_GetRemainingLength(s) < redirection->LoadBalanceInfoLength)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, redirection->LoadBalanceInfoLength))
 			return -1;
 
 		redirection->LoadBalanceInfo = (BYTE*)malloc(redirection->LoadBalanceInfoLength);
@@ -332,7 +327,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		 * Notwithstanding the above, we'll allocated an additional zero WCHAR at the
 		 * end of the buffer which won't get counted in PasswordLength.
 		 */
-		if (Stream_GetRemainingLength(s) < 4)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return -1;
 
 		Stream_Read_UINT32(s, redirection->PasswordLength);
@@ -342,7 +337,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		 * password cookie format (see previous comment).
 		 */
 
-		if (Stream_GetRemainingLength(s) < redirection->PasswordLength)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, redirection->PasswordLength))
 			return -1;
 
 		if (redirection->PasswordLength > LB_PASSWORD_MAX_LENGTH)
@@ -378,12 +373,12 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_CLIENT_TSV_URL)
 	{
-		if (Stream_GetRemainingLength(s) < 4)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return -1;
 
 		Stream_Read_UINT32(s, redirection->TsvUrlLength);
 
-		if (Stream_GetRemainingLength(s) < redirection->TsvUrlLength)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, redirection->TsvUrlLength))
 			return -1;
 
 		redirection->TsvUrl = (BYTE*)malloc(redirection->TsvUrlLength);
@@ -402,7 +397,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		UINT32 count;
 		UINT32 targetNetAddressesLength;
 
-		if (Stream_GetRemainingLength(s) < 8)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 			return -1;
 
 		Stream_Read_UINT32(s, targetNetAddressesLength);
@@ -457,7 +452,7 @@ int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)
 	return status;
 }
 
-rdpRedirection* redirection_new()
+rdpRedirection* redirection_new(void)
 {
 	rdpRedirection* redirection;
 	redirection = (rdpRedirection*)calloc(1, sizeof(rdpRedirection));

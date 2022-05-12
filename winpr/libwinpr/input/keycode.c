@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 
@@ -600,7 +598,7 @@ DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags)
 
 DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, DWORD dwFlags)
 {
-	int index;
+	DWORD index;
 	DWORD keycode = 0;
 
 	if (dwFlags & KEYCODE_TYPE_APPLE)

@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,8 +69,8 @@ static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor, COLORREF* col
 	if (!wfc)
 		return FALSE;
 
-	gdi = wfc->context.gdi;
-	settings = wfc->context.settings;
+	gdi = wfc->common.context.gdi;
+	settings = wfc->common.context.settings;
 
 	if (!gdi || !settings)
 		return FALSE;
@@ -82,7 +80,7 @@ static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor, COLORREF* col
 	if (format)
 		*format = SrcFormat;
 
-	switch (GetBitsPerPixel(gdi->dstFormat))
+	switch (FreeRDPGetBitsPerPixel(gdi->dstFormat))
 	{
 		case 32:
 			DstFormat = PIXEL_FORMAT_ABGR32;
@@ -216,10 +214,10 @@ static BOOL wf_scale_rect(wfContext* wfc, RECT* source)
 	UINT32 ww, wh, dw, dh;
 	rdpSettings* settings;
 
-	if (!wfc || !source || !wfc->context.settings)
+	if (!wfc || !source || !wfc->common.context.settings)
 		return FALSE;
 
-	settings = wfc->context.settings;
+	settings = wfc->common.context.settings;
 
 	if (!settings)
 		return FALSE;
@@ -242,7 +240,7 @@ static BOOL wf_scale_rect(wfContext* wfc, RECT* source)
 	if (!wh)
 		wh = dh;
 
-	if (wfc->context.settings->SmartSizing && (ww != dw || wh != dh))
+	if (wfc->common.context.settings->SmartSizing && (ww != dw || wh != dh))
 	{
 		source->bottom = source->bottom * wh / dh + 20;
 		source->top = source->top * wh / dh - 20;
@@ -260,7 +258,7 @@ static BOOL wf_scale_rect(wfContext* wfc, RECT* source)
 void wf_invalidate_region(wfContext* wfc, UINT32 x, UINT32 y, UINT32 width, UINT32 height)
 {
 	RECT rect;
-	rdpGdi* gdi = wfc->context.gdi;
+	rdpGdi* gdi = wfc->common.context.gdi;
 	wfc->update_rect.left = x + wfc->offset_x;
 	wfc->update_rect.top = y + wfc->offset_y;
 	wfc->update_rect.right = wfc->update_rect.left + width;
@@ -278,11 +276,11 @@ void wf_invalidate_region(wfContext* wfc, UINT32 x, UINT32 y, UINT32 width, UINT
 void wf_update_offset(wfContext* wfc)
 {
 	rdpSettings* settings;
-	settings = wfc->context.settings;
+	settings = wfc->common.context.settings;
 
 	if (wfc->fullscreen)
 	{
-		if (wfc->context.settings->UseMultimon)
+		if (wfc->common.context.settings->UseMultimon)
 		{
 			int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
 			int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
@@ -321,11 +319,11 @@ void wf_update_offset(wfContext* wfc)
 void wf_resize_window(wfContext* wfc)
 {
 	rdpSettings* settings;
-	settings = wfc->context.settings;
+	settings = wfc->common.context.settings;
 
 	if (wfc->fullscreen)
 	{
-		if (wfc->context.settings->UseMultimon)
+		if (wfc->common.context.settings->UseMultimon)
 		{
 			int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
 			int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
@@ -341,7 +339,7 @@ void wf_resize_window(wfContext* wfc)
 			             GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
 		}
 	}
-	else if (!wfc->context.settings->Decorations)
+	else if (!wfc->common.context.settings->Decorations)
 	{
 		SetWindowLongPtr(wfc->hwnd, GWL_STYLE, WS_CHILD);
 
@@ -778,7 +776,7 @@ static BOOL wf_gdi_surface_frame_marker(rdpContext* context,
 	if (!context || !surface_frame_marker || !context->instance)
 		return FALSE;
 
-	settings = context->instance->settings;
+	settings = context->settings;
 
 	if (!settings)
 		return FALSE;
@@ -786,8 +784,7 @@ static BOOL wf_gdi_surface_frame_marker(rdpContext* context,
 	if (surface_frame_marker->frameAction == SURFACECMD_FRAMEACTION_END &&
 	    settings->FrameAcknowledge > 0)
 	{
-		IFCALL(context->instance->update->SurfaceFrameAcknowledge, context,
-		       surface_frame_marker->frameId);
+		IFCALL(context->update->SurfaceFrameAcknowledge, context, surface_frame_marker->frameId);
 	}
 
 	return TRUE;

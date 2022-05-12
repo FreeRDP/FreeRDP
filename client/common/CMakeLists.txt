@@ -27,9 +27,11 @@ endif()
 
 set(${MODULE_PREFIX}_SRCS
 	client.c
+	client_rails.c
 	cmdline.c
 	file.c
-	geometry.c)
+	geometry.c
+	smartcard_cli.c)
 
 foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})
 	get_filename_component(NINC ${FREERDP_CHANNELS_CLIENT_SRC} PATH)
@@ -62,7 +64,7 @@ if (WITH_LIBRARY_VERSIONING)
   set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
 endif()
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
+list(APPEND ${MODULE_PREFIX}_LIBS freerdp winpr)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${FREERDP_CHANNELS_CLIENT_LIBS})
 if(OPENBSD)

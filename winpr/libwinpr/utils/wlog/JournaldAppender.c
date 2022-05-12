@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include "JournaldAppender.h"
 
@@ -31,13 +29,12 @@
 #include <winpr/crt.h>
 #include <winpr/environment.h>
 
-struct _wLogJournaldAppender
+typedef struct
 {
 	WLOG_APPENDER_COMMON();
 	char* identifier;
 	FILE* stream;
-};
-typedef struct _wLogJournaldAppender wLogJournaldAppender;
+} wLogJournaldAppender;
 
 static BOOL WLog_JournaldAppender_Open(wLog* log, wLogAppender* appender)
 {
@@ -79,7 +76,7 @@ static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender
 {
 	char* formatStr;
 	wLogJournaldAppender* journaldAppender;
-	char prefix[WLOG_MAX_PREFIX_SIZE];
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
 
 	if (!log || !appender || !message)
 		return FALSE;

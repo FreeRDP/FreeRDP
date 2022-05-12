@@ -21,9 +21,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <freerdp/codec/interleaved.h>
 #include <freerdp/log.h>
@@ -324,6 +322,16 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 3)
 #include "include/bitmap.c"
 
+struct S_BITMAP_INTERLEAVED_CONTEXT
+{
+	BOOL Compressor;
+
+	UINT32 TempSize;
+	BYTE* TempBuffer;
+
+	wStream* bts;
+};
+
 BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE* pSrcData,
                             UINT32 SrcSize, UINT32 nSrcWidth, UINT32 nSrcHeight, UINT32 bpp,
                             BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
@@ -368,7 +376,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 
 	if (BufferSize > interleaved->TempSize)
 	{
-		interleaved->TempBuffer = _aligned_realloc(interleaved->TempBuffer, BufferSize, 16);
+		interleaved->TempBuffer = winpr_aligned_realloc(interleaved->TempBuffer, BufferSize, 16);
 		interleaved->TempSize = BufferSize;
 	}
 
@@ -496,7 +504,7 @@ BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 	if (interleaved)
 	{
 		interleaved->TempSize = 64 * 64 * 4;
-		interleaved->TempBuffer = _aligned_malloc(interleaved->TempSize, 16);
+		interleaved->TempBuffer = winpr_aligned_malloc(interleaved->TempSize, 16);
 
 		if (!interleaved->TempBuffer)
 		{
@@ -509,7 +517,7 @@ BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 
 		if (!interleaved->bts)
 		{
-			_aligned_free(interleaved->TempBuffer);
+			winpr_aligned_free(interleaved->TempBuffer);
 			free(interleaved);
 			WLog_ERR(TAG, "Stream_New failed!");
 			return NULL;
@@ -524,7 +532,7 @@ void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved)
 	if (!interleaved)
 		return;
 
-	_aligned_free(interleaved->TempBuffer);
+	winpr_aligned_free(interleaved->TempBuffer);
 	Stream_Free(interleaved->bts, TRUE);
 	free(interleaved);
 }

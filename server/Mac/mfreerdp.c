@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +42,9 @@
 #include "mfreerdp.h"
 #include "mf_peer.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
+
 static void mf_server_main_loop(freerdp_listener* instance)
 {
 	WINPR_ASSERT(instance);
@@ -62,7 +63,7 @@ static void mf_server_main_loop(freerdp_listener* instance)
 			break;
 		}
 
-		status = WaitForMultipleObjects(handles, count, FALSE, INFINITE);
+		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForMultipleObjects failed");

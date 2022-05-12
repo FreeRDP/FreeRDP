@@ -17,23 +17,21 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/collections.h>
 #include <winpr/assert.h>
 
-typedef struct _wLinkedListItem wLinkedListNode;
+typedef struct s_wLinkedListItem wLinkedListNode;
 
-struct _wLinkedListItem
+struct s_wLinkedListItem
 {
 	void* value;
 	wLinkedListNode* prev;
 	wLinkedListNode* next;
 };
 
-struct _wLinkedList
+struct s_wLinkedList
 {
 	int count;
 	int initial;
@@ -187,7 +185,15 @@ static wLinkedListNode* LinkedList_Create(wLinkedList* list, const void* value)
 	if (list->object.fnObjectNew)
 		node->value = list->object.fnObjectNew(value);
 	else
-		node->value = (void*)value;
+	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
+		cnv.cpv = value;
+		node->value = cnv.pv;
+	}
 
 	if (list->object.fnObjectInit)
 		list->object.fnObjectInit(node);

@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <sndio.h>
 #include <stdio.h>
@@ -36,15 +34,13 @@
 
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_sndio_plugin rdpsndSndioPlugin;
-
-struct rdpsnd_sndio_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
 	struct sio_hdl* hdl;
 	struct sio_par par;
-};
+} rdpsndSndioPlugin;
 
 static BOOL rdpsnd_sndio_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
@@ -178,18 +174,12 @@ static UINT rdpsnd_sndio_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 	return CHANNEL_RC_OK;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_rdpsnd_client_subsystem_entry sndio_freerdp_rdpsnd_client_subsystem_entry
-#else
-#define freerdp_rdpsnd_client_subsystem_entry FREERDP_API freerdp_rdpsnd_client_subsystem_entry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+UINT sndio_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndSndioPlugin* sndio;

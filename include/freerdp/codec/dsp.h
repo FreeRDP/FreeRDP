@@ -25,7 +25,7 @@
 #include <freerdp/api.h>
 #include <freerdp/codec/audio.h>
 
-typedef struct _FREERDP_DSP_CONTEXT FREERDP_DSP_CONTEXT;
+typedef struct S_FREERDP_DSP_CONTEXT FREERDP_DSP_CONTEXT;
 
 #ifdef __cplusplus
 extern "C"

@@ -20,13 +20,11 @@
 
 #import <Foundation/Foundation.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include "shell_ios.h"
 
-NSString *ios_get_directory_for_search_path(NSString *searchPath)
+NSString *ios_get_directory_for_search_path(NSSearchPathDirectory searchPath)
 {
 	return [NSSearchPathForDirectoriesInDomains(searchPath, NSUserDomainMask, YES) lastObject];
 }

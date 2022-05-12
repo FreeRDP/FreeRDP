@@ -23,7 +23,7 @@
 #include <freerdp/server/rdpgfx.h>
 #include <freerdp/codec/zgfx.h>
 
-struct _rdpgfx_server_private
+struct s_rdpgfx_server_private
 {
 	ZGFX_CONTEXT* zgfx;
 	BOOL ownThread;

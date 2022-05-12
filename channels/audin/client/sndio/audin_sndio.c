@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <sndio.h>
 
@@ -32,7 +30,7 @@
 
 #include "audin_main.h"
 
-typedef struct _AudinSndioDevice
+typedef struct
 {
 	IAudinDevice device;
 
@@ -305,18 +303,12 @@ static UINT audin_sndio_parse_addin_args(AudinSndioDevice* device, ADDIN_ARGV* a
 	return CHANNEL_RC_OK;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_audin_client_subsystem_entry sndio_freerdp_audin_client_subsystem_entry
-#else
-#define freerdp_audin_client_subsystem_entry FREERDP_API freerdp_audin_client_subsystem_entry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+UINT sndio_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	AudinSndioDevice* sndio;

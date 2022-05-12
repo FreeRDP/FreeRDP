@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/platform.h>
@@ -663,25 +661,19 @@ DWORD GetEnvironmentVariableX(const char* lpName, char* lpBuffer, DWORD nSize)
 
 	if (!lpBuffer)
 	{
-		char lpBufferMaxA[WINPR_MAX_ENVIRONMENT_LENGTH];
-		WCHAR lpBufferMaxW[WINPR_MAX_ENVIRONMENT_LENGTH];
+		char lpBufferMaxA[WINPR_MAX_ENVIRONMENT_LENGTH] = { 0 };
+		WCHAR lpBufferMaxW[WINPR_MAX_ENVIRONMENT_LENGTH] = { 0 };
+		LPSTR lpTmpBuffer = lpBufferMaxA;
 
-		// calling GetEnvironmentVariableX with a NULL buffer should return the expected size
-		// TODO: dynamically allocate the buffer, or use the theoretical limit of 32,768 characters
+		nSizeW = ARRAYSIZE(lpBufferMaxW);
 
-		lpBufferA = lpBufferMaxA;
-		lpBufferW = lpBufferMaxW;
-		nSizeW = sizeof(lpBufferMaxW) / 2;
+		result = GetEnvironmentVariableW(lpNameW, lpBufferMaxW, nSizeW);
 
-		result = GetEnvironmentVariableW(lpNameW, lpBufferW, nSizeW);
-
-		status = ConvertFromUnicode(CP_UTF8, 0, lpBufferW, -1, &lpBufferA, sizeof(lpBufferMaxA),
-		                            NULL, NULL);
+		status = ConvertFromUnicode(CP_UTF8, 0, lpBufferMaxW, _wcsnlen(lpBufferMaxW, nSizeW) + 1,
+		                            &lpTmpBuffer, sizeof(lpBufferMaxA), NULL, NULL);
 
 		if (status > 0)
 			result = (DWORD)status;
-
-		return result;
 	}
 	else
 	{

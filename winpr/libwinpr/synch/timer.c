@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/file.h>
@@ -51,15 +49,7 @@ static BOOL TimerCloseHandle(HANDLE handle);
 
 static BOOL TimerIsHandled(HANDLE handle)
 {
-	WINPR_TIMER* pTimer = (WINPR_TIMER*)handle;
-
-	if (!pTimer || (pTimer->Type != HANDLE_TYPE_TIMER))
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_TIMER, FALSE);
 }
 
 static int TimerGetFd(HANDLE handle)
@@ -302,16 +292,27 @@ static BOOL timer_drain_fd(int fd)
 	return ret >= 0;
 }
 
-static HANDLE_OPS ops = { TimerIsHandled, TimerCloseHandle,
-	                      TimerGetFd,     TimerCleanupHandle,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL };
+static HANDLE_OPS ops = { TimerIsHandled,
+	                      TimerCloseHandle,
+	                      TimerGetFd,
+	                      TimerCleanupHandle,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL };
 
 /**
  * Waitable Timer
@@ -342,7 +343,7 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 		if (lpTimerName)
 			timer->name = strdup(lpTimerName);
 
-		timer->ops = &ops;
+		timer->common.ops = &ops;
 #if defined(TIMER_IMPL_DISPATCH) || defined(TIMER_IMPL_POSIX)
 		if (!winpr_event_init(&timer->event))
 			goto fail;
@@ -638,7 +639,6 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
 {
 	ULONG Type;
 	WINPR_HANDLE* Object;
-	WINPR_TIMER* timer;
 
 	if (!winpr_Handle_GetInfo(hTimer, &Type, &Object))
 		return FALSE;
@@ -646,13 +646,14 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
 	if (Type != HANDLE_TYPE_TIMER)
 		return FALSE;
 
-	timer = (WINPR_TIMER*)Object;
 #if defined(__APPLE__)
+	{
+		WINPR_TIMER* timer = (WINPR_TIMER*)Object;
+		if (timer->running)
+			dispatch_suspend(timer->source);
 
-	if (timer->running)
-		dispatch_suspend(timer->source);
-
-	timer->running = FALSE;
+		timer->running = FALSE;
+	}
 #endif
 	return TRUE;
 }

@@ -19,9 +19,7 @@
 
 /* GDI Pen Functions: http://msdn.microsoft.com/en-us/library/dd162790 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>

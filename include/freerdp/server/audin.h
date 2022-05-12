@@ -26,7 +26,7 @@
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
 
-typedef struct _audin_server_context audin_server_context;
+typedef struct s_audin_server_context audin_server_context;
 
 typedef UINT (*psAudinServerSelectFormat)(audin_server_context* context,
                                           size_t client_format_index);
@@ -40,7 +40,7 @@ typedef UINT (*psAudinServerReceiveSamples)(audin_server_context* context,
                                             const AUDIO_FORMAT* format, wStream* buf,
                                             size_t nframes);
 
-struct _audin_server_context
+struct s_audin_server_context
 {
 	HANDLE vcm;
 

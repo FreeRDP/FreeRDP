@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <limits.h>
 #include <winpr/crt.h>
@@ -27,14 +25,13 @@
 
 #include <winpr/collections.h>
 
-struct _wBipBlock
+typedef struct
 {
 	size_t index;
 	size_t size;
-};
-typedef struct _wBipBlock wBipBlock;
+} wBipBlock;
 
-struct _wBipBuffer
+struct s_wBipBuffer
 {
 	size_t size;
 	BYTE* buffer;

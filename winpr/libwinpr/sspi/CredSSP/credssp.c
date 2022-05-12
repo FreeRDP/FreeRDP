@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
@@ -27,7 +25,7 @@
 #include "credssp.h"
 
 #include "../sspi.h"
-#include "../log.h"
+#include "../../log.h"
 
 #define TAG WINPR_TAG("sspi.CredSSP")
 
@@ -53,6 +51,11 @@ static SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(
 
 	if (!context)
 	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
 		context = credssp_ContextNew();
 
 		if (!context)
@@ -67,7 +70,9 @@ static SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(
 		}
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
-		sspi_SecureHandleSetUpperPointer(phNewContext, (void*)CREDSSP_PACKAGE_NAME);
+
+		cnv.cpv = CREDSSP_PACKAGE_NAME;
+		sspi_SecureHandleSetUpperPointer(phNewContext, cnv.pv);
 	}
 
 	return SEC_E_OK;
@@ -121,6 +126,11 @@ static SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleA(
 
 	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
 	{
+		union
+		{
+			const void* cpv;
+			void* pv;
+		} cnv;
 		credentials = sspi_CredentialsNew();
 
 		if (!credentials)
@@ -129,7 +139,9 @@ static SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleA(
 		identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
 		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*)credentials);
-		sspi_SecureHandleSetUpperPointer(phCredential, (void*)CREDSSP_PACKAGE_NAME);
+
+		cnv.cpv = CREDSSP_PACKAGE_NAME;
+		sspi_SecureHandleSetUpperPointer(phCredential, cnv.pv);
 		return SEC_E_OK;
 	}
 

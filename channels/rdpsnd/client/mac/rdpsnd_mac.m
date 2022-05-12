@@ -21,9 +21,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +37,7 @@
 
 #include "rdpsnd_main.h"
 
-struct rdpsnd_mac_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
@@ -52,8 +50,7 @@ struct rdpsnd_mac_plugin
 	AVAudioEngine *engine;
 	AVAudioPlayerNode *player;
 	UINT64 diff;
-};
-typedef struct rdpsnd_mac_plugin rdpsndMacPlugin;
+} rdpsndMacPlugin;
 
 static BOOL rdpsnd_mac_set_format(rdpsndDevicePlugin *device, const AUDIO_FORMAT *format,
                                   UINT32 latency)
@@ -146,7 +143,12 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *form
 	rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
 	AudioObjectPropertyAddress propertyAddress = { kAudioHardwarePropertyDefaultOutputDevice,
 		                                           kAudioObjectPropertyScopeGlobal,
-		                                           kAudioObjectPropertyElementMaster };
+#if defined(MAC_OS_VERSION_12_0)
+																								 kAudioObjectPropertyElementMain
+#else
+		                                           kAudioObjectPropertyElementMaster
+#endif
+	};
 
 	if (mac->isOpen)
 		return TRUE;
@@ -353,18 +355,12 @@ static UINT rdpsnd_mac_play(rdpsndDevicePlugin *device, const BYTE *data, size_t
 	return mac->diff > UINT_MAX ? UINT_MAX : mac->diff;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_rdpsnd_client_subsystem_entry mac_freerdp_rdpsnd_client_subsystem_entry
-#else
-#define freerdp_rdpsnd_client_subsystem_entry FREERDP_API freerdp_rdpsnd_client_subsystem_entry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+UINT mac_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndMacPlugin *mac;
 	mac = (rdpsndMacPlugin *)calloc(1, sizeof(rdpsndMacPlugin));

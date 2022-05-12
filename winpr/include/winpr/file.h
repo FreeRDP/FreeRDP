@@ -182,12 +182,13 @@
 #define MOVEFILE_CREATE_HARDLINK 0x10
 #define MOVEFILE_FAIL_IF_NOT_TRACKABLE 0x20
 
-typedef union _FILE_SEGMENT_ELEMENT {
+typedef union
+{
 	PVOID64 Buffer;
 	ULONGLONG Alignment;
 } FILE_SEGMENT_ELEMENT, *PFILE_SEGMENT_ELEMENT;
 
-typedef struct _WIN32_FIND_DATAA
+typedef struct
 {
 	DWORD dwFileAttributes;
 	FILETIME ftCreationTime;
@@ -201,7 +202,7 @@ typedef struct _WIN32_FIND_DATAA
 	CHAR cAlternateFileName[14];
 } WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
 
-typedef struct _WIN32_FIND_DATAW
+typedef struct
 {
 	DWORD dwFileAttributes;
 	FILETIME ftCreationTime;
@@ -215,13 +216,27 @@ typedef struct _WIN32_FIND_DATAW
 	WCHAR cAlternateFileName[14];
 } WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW;
 
-typedef enum _FINDEX_INFO_LEVELS
+typedef struct
+{
+	DWORD dwFileAttributes;
+	FILETIME ftCreationTime;
+	FILETIME ftLastAccessTime;
+	FILETIME ftLastWriteTime;
+	DWORD dwVolumeSerialNumber;
+	DWORD nFileSizeHigh;
+	DWORD nFileSizeLow;
+	DWORD nNumberOfLinks;
+	DWORD nFileIndexHigh;
+	DWORD nFileIndexLow;
+} BY_HANDLE_FILE_INFORMATION, *PBY_HANDLE_FILE_INFORMATION, *LPBY_HANDLE_FILE_INFORMATION;
+
+typedef enum
 {
 	FindExInfoStandard,
 	FindExInfoMaxInfoLevel
 } FINDEX_INFO_LEVELS;
 
-typedef enum _FINDEX_SEARCH_OPS
+typedef enum
 {
 	FindExSearchNameMatch,
 	FindExSearchLimitToDirectories,
@@ -285,7 +300,7 @@ extern "C"
 
 	WINPR_API BOOL FlushFileBuffers(HANDLE hFile);
 
-	typedef struct _WIN32_FILE_ATTRIBUTE_DATA
+	typedef struct
 	{
 		DWORD dwFileAttributes;
 		FILETIME ftCreationTime;
@@ -295,7 +310,7 @@ extern "C"
 		DWORD nFileSizeLow;
 	} WIN32_FILE_ATTRIBUTE_DATA, *LPWIN32_FILE_ATTRIBUTE_DATA;
 
-	typedef enum _GET_FILEEX_INFO_LEVELS
+	typedef enum
 	{
 		GetFileExInfoStandard,
 		GetFileExMaxInfoLevel
@@ -310,6 +325,9 @@ extern "C"
 	                                    LPVOID lpFileInformation);
 
 	WINPR_API DWORD GetFileAttributesW(LPCWSTR lpFileName);
+
+	WINPR_API BOOL GetFileInformationByHandle(HANDLE hFile,
+	                                          LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
 
 	WINPR_API BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes);
 
@@ -424,7 +442,7 @@ typedef HANDLE (*pcCreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD 
                                 DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                 HANDLE hTemplateFile);
 
-typedef struct _HANDLE_CREATOR
+typedef struct
 {
 	pcIsFileHandled IsHandled;
 	pcCreateFileA CreateFileA;

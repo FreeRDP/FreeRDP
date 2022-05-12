@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
@@ -130,7 +128,7 @@ static BOOL shw_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelConnected(context->pubSub, shw_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(context->pubSub, shw_OnChannelDisconnectedEventHandler);
 
-	if (!freerdp_client_load_addins(context->channels, instance->settings))
+	if (!freerdp_client_load_addins(context->channels, context->settings))
 		return FALSE;
 
 	return TRUE;
@@ -140,18 +138,28 @@ static BOOL shw_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
 	shwContext* shw;
+	rdpUpdate* update;
 	rdpSettings* settings;
+
+	WINPR_ASSERT(instance);
+
 	shw = (shwContext*)instance->context;
-	settings = instance->settings;
+	WINPR_ASSERT(shw);
+
+	update = instance->context->update;
+	WINPR_ASSERT(update);
+
+	settings = instance->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRX32))
 		return FALSE;
 
 	gdi = instance->context->gdi;
-	instance->update->BeginPaint = shw_begin_paint;
-	instance->update->EndPaint = shw_end_paint;
-	instance->update->DesktopResize = shw_desktop_resize;
-	instance->update->SurfaceFrameMarker = shw_surface_frame_marker;
+	update->BeginPaint = shw_begin_paint;
+	update->EndPaint = shw_end_paint;
+	update->DesktopResize = shw_desktop_resize;
+	update->SurfaceFrameMarker = shw_surface_frame_marker;
 	return TRUE;
 }
 
@@ -187,7 +195,7 @@ static DWORD WINAPI shw_client_thread(LPVOID arg)
 	{
 		DWORD status;
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
-		DWORD count = freerdp_get_event_handles(instance, handles, ARRAYSIZE(handles));
+		DWORD count = freerdp_get_event_handles(instance->context, handles, ARRAYSIZE(handles));
 
 		if ((count == 0) || (count == MAXIMUM_WAIT_OBJECTS))
 		{
@@ -209,7 +217,7 @@ static DWORD WINAPI shw_client_thread(LPVOID arg)
 			break;
 		}
 
-		if (freerdp_shall_disconnect(instance))
+		if (freerdp_shall_disconnect_context(instance->context))
 		{
 			break;
 		}
@@ -245,7 +253,7 @@ static int shw_freerdp_client_start(rdpContext* context)
 	freerdp* instance = context->instance;
 	shw = (shwContext*)context;
 
-	if (!(shw->thread = CreateThread(NULL, 0, shw_client_thread, instance, 0, NULL)))
+	if (!(shw->common.thread = CreateThread(NULL, 0, shw_client_thread, instance, 0, NULL)))
 	{
 		WLog_ERR(TAG, "Failed to create thread");
 		return -1;
@@ -265,7 +273,12 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	shwContext* shw;
 	rdpSettings* settings;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(context);
+
 	shw = (shwContext*)instance->context;
+	WINPR_ASSERT(shw);
 
 	if (!(shw->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 		return FALSE;
@@ -274,11 +287,13 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PostConnect = shw_post_connect;
 	instance->Authenticate = shw_authenticate;
 	instance->VerifyX509Certificate = shw_verify_x509_certificate;
-	settings = instance->settings;
-	shw->settings = instance->context->settings;
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	shw->settings = settings;
 	settings->AsyncChannels = FALSE;
 	settings->AsyncUpdate = FALSE;
-	settings->AsyncInput = FALSE;
 	settings->IgnoreCertificate = TRUE;
 	settings->ExternalCertificateManagement = TRUE;
 	settings->RdpSecurity = TRUE;

@@ -25,6 +25,8 @@ set(MODULE_PREFIX "FREERDP_SERVER_PROXY")
 
 set(${MODULE_PREFIX}_SRCS
   pf_context.c
+  pf_channel.c
+  pf_channel.h
   pf_client.c
   pf_client.h
   pf_input.c
@@ -70,14 +72,6 @@ endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
-if (NOT BUILTIN_CHANNELS)
-    set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rdpgfx-client)
-    get_target_property(CUR_INSTALL_RPATH ${MODULE_NAME} INSTALL_RPATH)
-    if (NOT APPLE)
-        set(CUR_INSTALL_RPATH "${CUR_INSTALL_RPATH}:\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}/freerdp${FREERDP_VERSION_MAJOR}")
-    endif()
-    set_target_properties(${MODULE_NAME} PROPERTIES INSTALL_RPATH ${CUR_INSTALL_RPATH})
-endif()
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})

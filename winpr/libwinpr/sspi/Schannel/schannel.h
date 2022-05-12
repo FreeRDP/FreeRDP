@@ -27,20 +27,18 @@
 
 #include "schannel_openssl.h"
 
-struct _SCHANNEL_CREDENTIALS
+typedef struct
 {
 	SCHANNEL_CRED cred;
 	ULONG fCredentialUse;
-};
-typedef struct _SCHANNEL_CREDENTIALS SCHANNEL_CREDENTIALS;
+} SCHANNEL_CREDENTIALS;
 
-struct _SCHANNEL_CONTEXT
+typedef struct
 {
 	BOOL server;
 	SCHANNEL_CRED cred;
 	SCHANNEL_OPENSSL* openssl;
-};
-typedef struct _SCHANNEL_CONTEXT SCHANNEL_CONTEXT;
+} SCHANNEL_CONTEXT;
 
 SCHANNEL_CONTEXT* schannel_ContextNew(void);
 void schannel_ContextFree(SCHANNEL_CONTEXT* context);

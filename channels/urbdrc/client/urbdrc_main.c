@@ -143,7 +143,7 @@ static UINT urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* callback,
 	if (!callback || !s)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, Version);
@@ -186,7 +186,7 @@ static UINT urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, wSt
 
 	urbdrc = (URBDRC_PLUGIN*)callback->plugin;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, MajorVersion);
@@ -385,7 +385,7 @@ static UINT urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, wStr
 	if (!data)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(data) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, data, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Rewind_UINT32(data);
@@ -520,7 +520,7 @@ static UINT urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callbac
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_GetRemainingLength(data) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, data, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Rewind(data, 4);
@@ -576,7 +576,7 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 
 	udevman = (IUDEVMAN*)urbdrc->udevman;
 
-	if (Stream_GetRemainingLength(data) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, data, 12))
 		return ERROR_INVALID_DATA;
 
 	urbdrc_dump_message(urbdrc->log, FALSE, FALSE, data);
@@ -595,6 +595,7 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 
 		default:
 			error = urbdrc_process_udev_data_transfer(callback, urbdrc, udevman, data);
+			WLog_DBG(TAG, "urbdrc_process_udev_data_transfer returned 0x%08" PRIx32, error);
 			error = ERROR_SUCCESS; /* Ignore errors, the device may have been unplugged. */
 			break;
 	}
@@ -939,18 +940,13 @@ BOOL del_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum, UINT1
 	idevman->loading_unlock(idevman);
 	return TRUE;
 }
-#ifdef BUILTIN_CHANNELS
-#define DVCPluginEntry urbdrc_DVCPluginEntry
-#else
-#define DVCPluginEntry FREERDP_API DVCPluginEntry
-#endif
 
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+UINT urbdrc_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT status = 0;
 	const ADDIN_ARGV* args;

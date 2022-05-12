@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/nt.h>
@@ -121,11 +119,8 @@ static UINT rdpdr_server_receive_announce_response(RdpdrServerContext* context, 
 
 	WINPR_UNUSED(header);
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, VersionMajor); /* VersionMajor (2 bytes) */
 	Stream_Read_UINT16(s, VersionMinor); /* VersionMinor (2 bytes) */
@@ -151,11 +146,8 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 
 	WINPR_UNUSED(header);
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, UnicodeFlag);     /* UnicodeFlag (4 bytes) */
 	Stream_Seek_UINT32(s);                  /* CodePage (4 bytes), MUST be set to zero */
@@ -186,11 +178,8 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 		}
 	}
 
-	if (Stream_GetRemainingLength(s) < ComputerNameLen)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, ComputerNameLen))
 		return ERROR_INVALID_DATA;
-	}
 
 	/* ComputerName must be null terminated, check if it really is */
 
@@ -239,11 +228,8 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
  */
 static UINT rdpdr_server_read_capability_set_header(wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, header->CapabilityType);   /* CapabilityType (2 bytes) */
 	Stream_Read_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
@@ -285,11 +271,8 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 	UINT16 VersionMinor;
 	UINT32 SpecialTypeDeviceCap;
 
-	if (Stream_GetRemainingLength(s) < 32)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Seek_UINT32(s);               /* osType (4 bytes), ignored on receipt */
 	Stream_Seek_UINT32(s);               /* osVersion (4 bytes), unused and must be set to zero */
@@ -327,11 +310,8 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 
 	if (header->Version == GENERAL_CAPABILITY_VERSION_02)
 	{
-		if (Stream_GetRemainingLength(s) < 4)
-		{
-			WLog_ERR(TAG, "not enough data in stream!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_Read_UINT32(s, SpecialTypeDeviceCap); /* SpecialTypeDeviceCap (4 bytes) */
 	}
@@ -668,11 +648,8 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 
 	WINPR_UNUSED(header);
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, numCapabilities); /* numCapabilities (2 bytes) */
 	Stream_Seek_UINT16(s);                  /* Padding (2 bytes) */
@@ -807,11 +784,8 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 
 	WINPR_UNUSED(header);
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
 	WLog_DBG(TAG, "DeviceCount: %" PRIu32 "", DeviceCount);
@@ -820,22 +794,16 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 	{
 		ZeroMemory(PreferredDosName, sizeof(PreferredDosName));
 
-		if (Stream_GetRemainingLength(s) < 20)
-		{
-			WLog_ERR(TAG, "not enough data in stream!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_Read_UINT32(s, DeviceType);       /* DeviceType (4 bytes) */
 		Stream_Read_UINT32(s, DeviceId);         /* DeviceId (4 bytes) */
 		Stream_Read(s, PreferredDosName, 8);     /* PreferredDosName (8 bytes) */
 		Stream_Read_UINT32(s, DeviceDataLength); /* DeviceDataLength (4 bytes) */
 
-		if (Stream_GetRemainingLength(s) < DeviceDataLength)
-		{
-			WLog_ERR(TAG, "not enough data in stream!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, DeviceDataLength))
 			return ERROR_INVALID_DATA;
-		}
 
 		WLog_DBG(TAG, "Device %d Name: %s Id: 0x%08" PRIX32 " DataLength: %" PRIu32 "", i,
 		         PreferredDosName, DeviceId, DeviceDataLength);
@@ -900,22 +868,16 @@ static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 
 	WINPR_UNUSED(header);
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
 	WLog_DBG(TAG, "DeviceCount: %" PRIu32 "", DeviceCount);
 
 	for (i = 0; i < DeviceCount; i++)
 	{
-		if (Stream_GetRemainingLength(s) < 4)
-		{
-			WLog_ERR(TAG, "not enough data in stream!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
 		WLog_DBG(TAG, "Device %d Id: 0x%08" PRIX32 "", i, DeviceId);
@@ -980,11 +942,8 @@ static UINT rdpdr_server_receive_device_io_completion(RdpdrServerContext* contex
 
 	WINPR_UNUSED(header);
 
-	if (Stream_GetRemainingLength(s) < 12)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, deviceId);
 	Stream_Read_UINT32(s, completionId);
@@ -1377,11 +1336,8 @@ static UINT rdpdr_server_read_file_directory_information(wStream* s,
 	UINT32 fileNameLength;
 	ZeroMemory(fdi, sizeof(FILE_DIRECTORY_INFORMATION));
 
-	if (Stream_GetRemainingLength(s) < 64)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 64))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, fdi->NextEntryOffset);         /* NextEntryOffset (4 bytes) */
 	Stream_Read_UINT32(s, fdi->FileIndex);               /* FileIndex (4 bytes) */
@@ -1394,11 +1350,8 @@ static UINT rdpdr_server_read_file_directory_information(wStream* s,
 	Stream_Read_UINT32(s, fdi->FileAttributes);          /* FileAttributes (4 bytes) */
 	Stream_Read_UINT32(s, fileNameLength);               /* FileNameLength (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < fileNameLength)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, fileNameLength))
 		return ERROR_INVALID_DATA;
-	}
 
 	WINPR_ASSERT(fileNameLength / 2U <= INT_MAX);
 	WINPR_ASSERT(sizeof(fdi->FileName) < INT_MAX);
@@ -1699,11 +1652,8 @@ static UINT rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
 		return CHANNEL_RC_OK;
 	}
 
-	if (Stream_GetRemainingLength(s) < 5)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, fileId);     /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1812,11 +1762,8 @@ static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 		return CHANNEL_RC_OK;
 	}
 
-	if (Stream_GetRemainingLength(s) < 5)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, fileId);     /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1895,11 +1842,8 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 	         ", ioStatus=0x%" PRIx32 "",
 	         deviceId, completionId, ioStatus);
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
@@ -1915,11 +1859,8 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 	}
 	else
 	{
-		if (Stream_GetRemainingLength(s) < 1)
-		{
-			WLog_ERR(TAG, "not enough data in stream!");
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			return ERROR_INVALID_DATA;
-		}
 
 		Stream_Seek(s, 1); /* Padding (1 byte) */
 	}
@@ -1979,11 +1920,8 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 		return CHANNEL_RC_OK;
 	}
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, fileId);
 	/* Setup the IRP. */
@@ -2062,11 +2000,8 @@ static UINT rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, w
 	         ", ioStatus=0x%" PRIx32 "",
 	         deviceId, completionId, ioStatus);
 
-	if (Stream_GetRemainingLength(s) < 5)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, fileId);     /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -2135,19 +2070,13 @@ static UINT rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, w
 	         ", ioStatus=0x%" PRIx32 "",
 	         deviceId, completionId, ioStatus);
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < length)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return ERROR_INVALID_DATA;
-	}
 
 	if (length > 0)
 	{
@@ -2217,20 +2146,14 @@ static UINT rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, 
 	         ", ioStatus=0x%" PRIx32 "",
 	         deviceId, completionId, ioStatus);
 
-	if (Stream_GetRemainingLength(s) < 5)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 	Stream_Seek(s, 1);             /* Padding (1 byte) */
 
-	if (Stream_GetRemainingLength(s) < length)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return ERROR_INVALID_DATA;
-	}
 
 	/* Invoke the write file completion routine. */
 	context->OnDriveWriteFileComplete(context, irp->CallbackData, ioStatus, length);
@@ -2386,11 +2309,8 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 		return CHANNEL_RC_OK;
 	}
 
-	if (Stream_GetRemainingLength(s) < 5)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, fileId);     /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -2488,11 +2408,8 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	         ", ioStatus=0x%" PRIx32 "",
 	         deviceId, completionId, ioStatus);
 
-	if (Stream_GetRemainingLength(s) < 5)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 	Stream_Seek(s, 1);             /* Padding (1 byte) */
@@ -2540,11 +2457,8 @@ static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 		return CHANNEL_RC_OK;
 	}
 
-	if (Stream_GetRemainingLength(s) < 5)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, fileId);     /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */

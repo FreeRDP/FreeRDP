@@ -17,9 +17,7 @@
  * permissions and limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
@@ -601,8 +599,12 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const pSrc[3], int src
                                              const prim_size_t* roi) /* region of interest */
 {
 	__m128i min, max, y_r, y_g, y_b, cb_r, cb_g, cb_b, cr_r, cr_g, cr_b;
-	const __m128i *r_buf, *g_buf, *b_buf;
-	__m128i *y_buf, *cb_buf, *cr_buf;
+	const __m128i* r_buf = (const __m128i*)(pSrc[0]);
+	const __m128i* g_buf = (const __m128i*)(pSrc[1]);
+	const __m128i* b_buf = (const __m128i*)(pSrc[2]);
+	__m128i* y_buf = (__m128i*)(pDst[0]);
+	__m128i* cb_buf = (__m128i*)(pDst[1]);
+	__m128i* cr_buf = (__m128i*)(pDst[2]);
 	UINT32 yp;
 	int srcbump, dstbump, imax;
 
@@ -617,12 +619,7 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const pSrc[3], int src
 
 	min = _mm_set1_epi16(-128 * 32);
 	max = _mm_set1_epi16(127 * 32);
-	r_buf = (const __m128i*)(pSrc[0]);
-	g_buf = (const __m128i*)(pSrc[1]);
-	b_buf = (const __m128i*)(pSrc[2]);
-	y_buf = (__m128i*)(pDst[0]);
-	cb_buf = (__m128i*)(pDst[1]);
-	cr_buf = (__m128i*)(pDst[2]);
+
 	y_r = _mm_set1_epi16(9798);    /*  0.299000 << 15 */
 	y_g = _mm_set1_epi16(19235);   /*  0.587000 << 15 */
 	y_b = _mm_set1_epi16(3735);    /*  0.114000 << 15 */

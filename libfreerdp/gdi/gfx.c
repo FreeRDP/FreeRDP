@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include "../core/update.h"
 
@@ -110,8 +108,10 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	DesktopWidth = resetGraphics->width;
 	DesktopHeight = resetGraphics->height;
 
-	settings->DesktopWidth = DesktopWidth;
-	settings->DesktopHeight = DesktopHeight;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, DesktopWidth))
+		goto fail;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, DesktopHeight))
+		goto fail;
 
 	if (update)
 	{
@@ -335,7 +335,7 @@ static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* co
 	if (!is_within_surface(surface, cmd))
 		return ERROR_INVALID_DATA;
 
-	bpp = GetBytesPerPixel(cmd->format);
+	bpp = FreeRDPGetBytesPerPixel(cmd->format);
 	size = bpp * cmd->width * cmd->height * 1ULL;
 	if (cmd->length < size)
 	{
@@ -735,7 +735,7 @@ static BOOL gdi_apply_alpha(BYTE* data, UINT32 format, UINT32 stride, RECTANGLE_
 	UINT32 y;
 	UINT32 written = 0;
 	BOOL first = TRUE;
-	const UINT32 bpp = GetBytesPerPixel(format);
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(format);
 	WINPR_ASSERT(rect);
 
 	for (y = rect->top; y < rect->bottom; y++)
@@ -753,10 +753,10 @@ static BOOL gdi_apply_alpha(BYTE* data, UINT32 format, UINT32 stride, RECTANGLE_
 				return TRUE;
 
 			src = &line[x * bpp];
-			color = ReadColor(src, format);
-			SplitColor(color, format, &r, &g, &b, NULL, NULL);
+			color = FreeRDPReadColor(src, format);
+			FreeRDPSplitColor(color, format, &r, &g, &b, NULL, NULL);
 			color = FreeRDPGetColor(format, r, g, b, a);
-			WriteColor(src, format, color);
+			FreeRDPWriteColor(src, format, color);
 			written++;
 		}
 
@@ -785,7 +785,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	s = Stream_StaticConstInit(&buffer, cmd->data, cmd->length);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	surface = (gdiGfxSurface*)context->GetSurfaceData(context, cmd->surfaceId);
@@ -810,7 +810,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	{
 		UINT32 x, y;
 
-		if (Stream_GetRemainingLength(s) < cmd->height * cmd->width * 1ULL)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, cmd->height * cmd->width * 1ULL))
 			return ERROR_INVALID_DATA;
 
 		for (y = cmd->top; y < cmd->top + cmd->height; y++)
@@ -821,12 +821,12 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 			{
 				UINT32 color;
 				BYTE r, g, b, a;
-				BYTE* src = &line[x * GetBytesPerPixel(surface->format)];
+				BYTE* src = &line[x * FreeRDPGetBytesPerPixel(surface->format)];
 				Stream_Read_UINT8(s, a);
-				color = ReadColor(src, surface->format);
-				SplitColor(color, surface->format, &r, &g, &b, NULL, NULL);
+				color = FreeRDPReadColor(src, surface->format);
+				FreeRDPSplitColor(color, surface->format, &r, &g, &b, NULL, NULL);
 				color = FreeRDPGetColor(surface->format, r, g, b, a);
-				WriteColor(src, surface->format, color);
+				FreeRDPWriteColor(src, surface->format, color);
 			}
 		}
 	}
@@ -844,7 +844,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 			UINT32 count;
 			BYTE a;
 
-			if (Stream_GetRemainingLength(s) < 2)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 				return ERROR_INVALID_DATA;
 
 			Stream_Read_UINT8(s, a);
@@ -852,14 +852,14 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 
 			if (count >= 0xFF)
 			{
-				if (Stream_GetRemainingLength(s) < 2)
+				if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 					return ERROR_INVALID_DATA;
 
 				Stream_Read_UINT16(s, count);
 
 				if (count >= 0xFFFF)
 				{
-					if (Stream_GetRemainingLength(s) < 4)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 						return ERROR_INVALID_DATA;
 
 					Stream_Read_UINT32(s, count);
@@ -1123,7 +1123,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	surface->scanline = gfx_align_scanline(surface->width * 4UL, 16);
-	surface->data = (BYTE*)_aligned_malloc(surface->scanline * surface->height * 1ULL, 16);
+	surface->data = (BYTE*)winpr_aligned_malloc(surface->scanline * surface->height * 1ULL, 16);
 
 	if (!surface->data)
 	{
@@ -1148,7 +1148,8 @@ fail:
 static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
                               const RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
-	UINT rc = ERROR_INTERNAL_ERROR;
+	UINT rc = CHANNEL_RC_OK;
+	UINT res = ERROR_INTERNAL_ERROR;
 	rdpCodecs* codecs = NULL;
 	gdiGfxSurface* surface = NULL;
 	EnterCriticalSection(&context->mux);
@@ -1165,11 +1166,13 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 #endif
 		region16_uninit(&surface->invalidRegion);
 		codecs = surface->codecs;
-		_aligned_free(surface->data);
+		winpr_aligned_free(surface->data);
 		free(surface);
 	}
 
-	rc = context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
+	res = context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
+	if (res)
+		rc = res;
 
 	if (codecs && codecs->progressive)
 		progressive_delete_surface_context(codecs->progressive, deleteSurface->surfaceId);
@@ -1630,11 +1633,13 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding))
 	{
+		const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+		const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+
 		gfx->codecs = codecs_new(context);
 		if (!gfx->codecs)
 			return FALSE;
-		if (!freerdp_client_codecs_prepare(gfx->codecs, FREERDP_CODEC_ALL, settings->DesktopWidth,
-		                                   settings->DesktopHeight))
+		if (!freerdp_client_codecs_prepare(gfx->codecs, FREERDP_CODEC_ALL, w, h))
 			return FALSE;
 	}
 	InitializeCriticalSection(&gfx->mux);

@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/wtypes.h>
 #include <winpr/assert.h>
@@ -176,7 +174,7 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, version);      /* version (4 bytes) */
@@ -225,7 +223,7 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT32
 	WINPR_ASSERT(cliprdr);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
@@ -234,13 +232,14 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT32
 
 	for (index = 0; index < cCapabilitiesSets; index++)
 	{
-		if (Stream_GetRemainingLength(s) < 4)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT16(s, capabilitySetType); /* capabilitySetType (2 bytes) */
 		Stream_Read_UINT16(s, lengthCapability);  /* lengthCapability (2 bytes) */
 
-		if ((lengthCapability < 4) || (Stream_GetRemainingLength(s) < (lengthCapability - 4U)))
+		if ((lengthCapability < 4) ||
+		    (!Stream_CheckAndLogRequiredLength(TAG, s, lengthCapability - 4U)))
 			return ERROR_INVALID_DATA;
 
 		switch (capabilitySetType)
@@ -388,11 +387,8 @@ static UINT cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "LockClipData");
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough remaining data");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	lockClipboardData.msgType = CB_LOCK_CLIPDATA;
 	lockClipboardData.msgFlags = flags;
@@ -454,14 +450,14 @@ static UINT cliprdr_order_recv(LPVOID userdata, wStream* s)
 	WINPR_ASSERT(cliprdr);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, msgType);  /* msgType (2 bytes) */
 	Stream_Read_UINT16(s, msgFlags); /* msgFlags (2 bytes) */
 	Stream_Read_UINT32(s, dataLen);  /* dataLen (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < dataLen)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, dataLen))
 		return ERROR_INVALID_DATA;
 
 #ifdef WITH_DEBUG_CLIPRDR

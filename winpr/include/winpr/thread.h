@@ -33,7 +33,7 @@ extern "C"
 
 #ifndef _WIN32
 
-	typedef struct _STARTUPINFOA
+	typedef struct
 	{
 		DWORD cb;
 		LPSTR lpReserved;
@@ -55,7 +55,7 @@ extern "C"
 		HANDLE hStdError;
 	} STARTUPINFOA, *LPSTARTUPINFOA;
 
-	typedef struct _STARTUPINFOW
+	typedef struct
 	{
 		DWORD cb;
 		LPWSTR lpReserved;
@@ -248,10 +248,7 @@ extern "C"
 	/* CommandLineToArgvA is not present in the original Windows API, WinPR always exports it */
 
 	WINPR_API LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs);
-
-#if defined(WITH_DEBUG_THREADS)
 	WINPR_API VOID DumpThreadHandles(void);
-#endif
 
 #ifdef __cplusplus
 }

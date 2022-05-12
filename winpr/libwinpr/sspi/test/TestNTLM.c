@@ -74,7 +74,7 @@ static const BYTE TEST_NTLM_V2_HASH[16] = { 0x4c, 0x7f, 0x70, 0x6f, 0x7d, 0xde, 
 
 #define NTLM_PACKAGE_NAME NTLM_SSP_NAME
 
-struct _TEST_NTLM_CLIENT
+typedef struct
 {
 	CtxtHandle context;
 	ULONG cbMaxToken;
@@ -94,8 +94,7 @@ struct _TEST_NTLM_CLIENT
 	SecPkgInfo* pPackageInfo;
 	SecurityFunctionTable* table;
 	SEC_WINNT_AUTH_IDENTITY identity;
-};
-typedef struct _TEST_NTLM_CLIENT TEST_NTLM_CLIENT;
+} TEST_NTLM_CLIENT;
 
 static int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* domain,
                                  const char* password)
@@ -284,7 +283,7 @@ static void test_ntlm_client_free(TEST_NTLM_CLIENT* ntlm)
 	free(ntlm);
 }
 
-struct _TEST_NTLM_SERVER
+typedef struct
 {
 	CtxtHandle context;
 	ULONG cbMaxToken;
@@ -305,8 +304,7 @@ struct _TEST_NTLM_SERVER
 	SecPkgInfo* pPackageInfo;
 	SecurityFunctionTable* table;
 	SEC_WINNT_AUTH_IDENTITY identity;
-};
-typedef struct _TEST_NTLM_SERVER TEST_NTLM_SERVER;
+} TEST_NTLM_SERVER;
 
 static int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 {
@@ -467,17 +465,14 @@ static void test_ntlm_server_free(TEST_NTLM_SERVER* ntlm)
 	free(ntlm);
 }
 
-int TestNTLM(int argc, char* argv[])
+static BOOL test_default(void)
 {
 	int status;
-	int rc = -1;
+	BOOL rc = FALSE;
 	PSecBuffer pSecBuffer;
 	TEST_NTLM_CLIENT* client = NULL;
 	TEST_NTLM_SERVER* server = NULL;
 	BOOL DynamicTest = TRUE;
-
-	WINPR_UNUSED(argc);
-	WINPR_UNUSED(argv);
 
 	/**
 	 * Client Initialization
@@ -684,7 +679,7 @@ int TestNTLM(int argc, char* argv[])
 		goto fail;
 	}
 
-	rc = 0;
+	rc = TRUE;
 
 fail:
 	/**
@@ -693,4 +688,14 @@ fail:
 	test_ntlm_client_free(client);
 	test_ntlm_server_free(server);
 	return rc;
+}
+
+int TestNTLM(int argc, char* argv[])
+{
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
+	if (!test_default())
+		return -1;
+	return 0;
 }

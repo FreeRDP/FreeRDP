@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <errno.h>
 #include <winpr/assert.h>
@@ -51,17 +49,15 @@
 #define MSG_SNDIN_DATA 0x06
 #define MSG_SNDIN_FORMATCHANGE 0x07
 
-typedef struct _AUDIN_LISTENER_CALLBACK AUDIN_LISTENER_CALLBACK;
-struct _AUDIN_LISTENER_CALLBACK
+typedef struct
 {
 	IWTSListenerCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
-};
+} AUDIN_LISTENER_CALLBACK;
 
-typedef struct _AUDIN_CHANNEL_CALLBACK AUDIN_CHANNEL_CALLBACK;
-struct _AUDIN_CHANNEL_CALLBACK
+typedef struct
 {
 	IWTSVirtualChannelCallback iface;
 
@@ -76,10 +72,9 @@ struct _AUDIN_CHANNEL_CALLBACK
 	 */
 	AUDIO_FORMAT* formats;
 	UINT32 formats_count;
-};
+} AUDIN_CHANNEL_CALLBACK;
 
-typedef struct _AUDIN_PLUGIN AUDIN_PLUGIN;
-struct _AUDIN_PLUGIN
+typedef struct
 {
 	IWTSPlugin iface;
 
@@ -105,7 +100,7 @@ struct _AUDIN_PLUGIN
 	IWTSListener* listener;
 
 	BOOL initialized;
-};
+} AUDIN_PLUGIN;
 
 static BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args);
 
@@ -142,7 +137,7 @@ static UINT audin_process_version(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 	const UINT32 ClientVersion = 0x01;
 	UINT32 ServerVersion;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, ServerVersion);
@@ -200,7 +195,7 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 	UINT32 NumFormats;
 	UINT32 cbSizeFormatsPacket;
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, NumFormats);
@@ -474,7 +469,7 @@ static UINT audin_process_open(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* call
 	UINT32 FramesPerPacket;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, FramesPerPacket);
@@ -518,7 +513,7 @@ static UINT audin_process_format_change(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLB
 	UINT32 NewFormat;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, NewFormat);
@@ -956,18 +951,12 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args)
 	return TRUE;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define DVCPluginEntry audin_DVCPluginEntry
-#else
-#define DVCPluginEntry FREERDP_API DVCPluginEntry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+UINT audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	struct SubsystemEntry
 	{

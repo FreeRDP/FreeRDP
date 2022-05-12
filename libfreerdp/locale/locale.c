@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #if defined(__APPLE__)
 #include <CoreFoundation/CFString.h>
@@ -43,14 +41,13 @@
 #define LOCALE_LANGUAGE_LEN 6
 #define LOCALE_COUNTRY_LEN 10
 
-struct _SYSTEM_LOCALE
+typedef struct
 {
 	char language[LOCALE_LANGUAGE_LEN]; /* Two or three letter language code */
 	char country[LOCALE_COUNTRY_LEN];   /* Two or three letter country code (Sometimes with Cyrl_
 	                                       prefix) */
 	DWORD code;                         /* 32-bit unsigned integer corresponding to the locale */
-};
-typedef struct _SYSTEM_LOCALE SYSTEM_LOCALE;
+} SYSTEM_LOCALE;
 
 /*
  * Refer to MSDN article "Locale Identifier Constants and Strings":
@@ -274,12 +271,11 @@ static const SYSTEM_LOCALE SYSTEM_LOCALE_TABLE[] = {
 	{ "zu", "ZA", ZULU }        /* Windows XP SP2 and later: Zulu/isiZulu (South Africa) */
 };
 
-struct _LOCALE_NAME
+typedef struct
 {
 	DWORD localeId;
 	const char* name;
-};
-typedef struct _LOCALE_NAME LOCALE_NAME;
+} LOCALE_NAME;
 
 static const LOCALE_NAME LOCALE_NAME_TABLE[] = {
 	{ AFRIKAANS, "AFRIKAANS" },
@@ -483,12 +479,11 @@ static const LOCALE_NAME LOCALE_NAME_TABLE[] = {
 	{ ZULU, "ZULU" }
 };
 
-struct _LOCALE_KEYBOARD_LAYOUTS
+typedef struct
 {
 	DWORD locale;             /* Locale ID */
 	DWORD keyboardLayouts[5]; /* array of associated keyboard layouts */
-};
-typedef struct _LOCALE_KEYBOARD_LAYOUTS LOCALE_KEYBOARD_LAYOUTS;
+} LOCALE_KEYBOARD_LAYOUTS;
 
 /* TODO: Use KBD_* defines instead of hardcoded values */
 

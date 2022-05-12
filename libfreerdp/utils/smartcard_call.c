@@ -23,9 +23,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/assert.h>
 
@@ -56,7 +54,7 @@
 
 #define SCARD_MAX_TIMEOUT 60000
 
-struct _scard_call_context
+struct s_scard_call_context
 {
 	HANDLE StartedEvent;
 	wLinkedList* names;
@@ -71,7 +69,7 @@ struct _scard_call_context
 	void (*fn_free)(void*);
 };
 
-struct _scard_context_element
+struct s_scard_context_element
 {
 	void* context;
 	void (*fn_free)(void*);
@@ -90,7 +88,8 @@ static LONG smartcard_EstablishContext_Call(scard_call_context* smartcard, wStre
 	if (ret.ReturnCode == SCARD_S_SUCCESS)
 	{
 		const void* key = (void*)(size_t)hContext;
-		struct _scard_context_element* pContext = calloc(1, sizeof(struct _scard_context_element));
+		struct s_scard_context_element* pContext =
+		    calloc(1, sizeof(struct s_scard_context_element));
 		if (!pContext)
 			return STATUS_NO_MEMORY;
 
@@ -911,7 +910,9 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 
 	for (x = 0; x < MAX(1, dwTimeOut); x += dwTimeStep)
 	{
-		memcpy(rgReaderStates, call->rgReaderStates, call->cReaders * sizeof(SCARD_READERSTATEA));
+		if (call->cReaders > 0)
+			memcpy(rgReaderStates, call->rgReaderStates,
+			       call->cReaders * sizeof(SCARD_READERSTATEA));
 		ret.ReturnCode = wrap(smartcard, SCardGetStatusChangeA, operation->hContext,
 		                      MIN(dwTimeOut, dwTimeStep), rgReaderStates, call->cReaders);
 		if (ret.ReturnCode != SCARD_E_TIMEOUT)
@@ -972,7 +973,9 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 
 	for (x = 0; x < MAX(1, dwTimeOut); x += dwTimeStep)
 	{
-		memcpy(rgReaderStates, call->rgReaderStates, call->cReaders * sizeof(SCARD_READERSTATEW));
+		if (call->cReaders > 0)
+			memcpy(rgReaderStates, call->rgReaderStates,
+			       call->cReaders * sizeof(SCARD_READERSTATEW));
 		{
 			ret.ReturnCode = wrap(smartcard, SCardGetStatusChangeW, operation->hContext,
 			                      MIN(dwTimeOut, dwTimeStep), rgReaderStates, call->cReaders);
@@ -1810,7 +1813,7 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 
 static void context_free(void* arg)
 {
-	struct _scard_context_element* element = arg;
+	struct s_scard_context_element* element = arg;
 	if (!arg)
 		return;
 
@@ -1921,7 +1924,7 @@ BOOL smarcard_call_set_callbacks(scard_call_context* ctx, void* userdata,
 
 void* smartcard_call_get_context(scard_call_context* ctx, SCARDCONTEXT hContext)
 {
-	struct _scard_context_element* element;
+	struct s_scard_context_element* element;
 
 	WINPR_ASSERT(ctx);
 	element = HashTable_GetItemValue(ctx->rgSCardContextList, (void*)hContext);

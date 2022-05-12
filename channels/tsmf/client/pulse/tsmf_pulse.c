@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +30,7 @@
 
 #include "tsmf_audio.h"
 
-typedef struct _TSMFPulseAudioDevice
+typedef struct
 {
 	ITSMFAudioDevice iface;
 
@@ -400,11 +398,7 @@ static void tsmf_pulse_free(ITSMFAudioDevice* audio)
 	free(pulse);
 }
 
-#ifdef BUILTIN_CHANNELS
 ITSMFAudioDevice* pulse_freerdp_tsmf_client_audio_subsystem_entry(void)
-#else
-FREERDP_API ITSMFAudioDevice* freerdp_tsmf_client_audio_subsystem_entry(void)
-#endif
 {
 	TSMFPulseAudioDevice* pulse;
 	pulse = (TSMFPulseAudioDevice*)calloc(1, sizeof(TSMFPulseAudioDevice));

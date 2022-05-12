@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,9 +39,7 @@
 
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_alsa_plugin rdpsndAlsaPlugin;
-
-struct rdpsnd_alsa_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
@@ -59,7 +55,7 @@ struct rdpsnd_alsa_plugin
 
 	snd_pcm_uframes_t buffer_size;
 	snd_pcm_uframes_t period_size;
-};
+} rdpsndAlsaPlugin;
 
 #define SND_PCM_CHECK(_func, _status)                  \
 	do                                                 \
@@ -518,18 +514,12 @@ static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN
 	return CHANNEL_RC_OK;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_rdpsnd_client_subsystem_entry alsa_freerdp_rdpsnd_client_subsystem_entry
-#else
-#define freerdp_rdpsnd_client_subsystem_entry FREERDP_API freerdp_rdpsnd_client_subsystem_entry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+UINT alsa_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	const ADDIN_ARGV* args;
 	rdpsndAlsaPlugin* alsa;

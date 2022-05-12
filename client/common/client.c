@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <string.h>
 #include <errno.h>
@@ -32,6 +30,29 @@
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+#include <freerdp/client/ainput.h>
+#include <freerdp/channels/ainput.h>
+#endif
+
+#if defined(CHANNEL_VIDEO_CLIENT)
+#include <freerdp/client/video.h>
+#include <freerdp/channels/video.h>
+#include <freerdp/gdi/video.h>
+#endif
+
+#if defined(CHANNEL_RDPGFX_CLIENT)
+#include <freerdp/client/rdpgfx.h>
+#include <freerdp/channels/rdpgfx.h>
+#include <freerdp/gdi/gfx.h>
+#endif
+
+#if defined(CHANNEL_GEOMETRY_CLIENT)
+#include <freerdp/client/geometry.h>
+#include <freerdp/channels/geometry.h>
+#include <freerdp/gdi/video.h>
+#endif
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
@@ -62,7 +83,7 @@ static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 
 /* Common API */
 
-rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
+rdpContext* freerdp_client_context_new(const RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	freerdp* instance;
 	rdpContext* context;
@@ -76,7 +97,6 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	if (!instance)
 		return NULL;
 
-	instance->settings = pEntryPoints->settings;
 	instance->ContextSize = pEntryPoints->ContextSize;
 	instance->ContextNew = freerdp_client_common_new;
 	instance->ContextFree = freerdp_client_common_free;
@@ -87,12 +107,11 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 
 	CopyMemory(instance->pClientEntryPoints, pEntryPoints, pEntryPoints->Size);
 
-	if (!freerdp_context_new(instance))
+	if (!freerdp_context_new_ex(instance, pEntryPoints->settings))
 		goto out_fail2;
 
 	context = instance->context;
 	context->instance = instance;
-	context->settings = instance->settings;
 
 	if (freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0) !=
 	    CHANNEL_RC_OK)
@@ -176,28 +195,22 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 		{
 			if (settings->Username)
 			{
-				free(settings->GatewayUsername);
-				settings->GatewayUsername = _strdup(settings->Username);
-
-				if (!settings->GatewayUsername)
+				if (!freerdp_settings_set_string(settings, FreeRDP_GatewayUsername,
+				                                 settings->Username))
 					goto out_error;
 			}
 
 			if (settings->Domain)
 			{
-				free(settings->GatewayDomain);
-				settings->GatewayDomain = _strdup(settings->Domain);
-
-				if (!settings->GatewayDomain)
+				if (!freerdp_settings_set_string(settings, FreeRDP_GatewayDomain, settings->Domain))
 					goto out_error;
 			}
 
-			if (settings->Password)
+			if (freerdp_settings_get_string(settings, FreeRDP_Password))
 			{
-				free(settings->GatewayPassword);
-				settings->GatewayPassword = _strdup(settings->Password);
-
-				if (!settings->GatewayPassword)
+				if (!freerdp_settings_set_string(
+				        settings, FreeRDP_GatewayPassword,
+				        freerdp_settings_get_string(settings, FreeRDP_Password)))
 					goto out_error;
 			}
 		}
@@ -213,6 +226,15 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 	else if (settings->UseMultimon)
 	{
 		settings->Fullscreen = TRUE;
+	}
+
+	/* deal with the smartcard / smartcard logon stuff */
+	if (settings->SmartcardLogon)
+	{
+		settings->TlsSecurity = TRUE;
+		settings->RedirectSmartCards = TRUE;
+		settings->DeviceRedirection = TRUE;
+		freerdp_settings_set_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
 	}
 
 	return TRUE;
@@ -369,15 +391,25 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
                                         char** password, char** domain)
 {
 	static const size_t password_size = 512;
-	const char* auth[] = { "Username: ", "Domain:   ", "Password: " };
+	const char* auth[] = { "Username:        ", "Domain:          ", "Password:        " };
+	const char* authPin[] = { "Username:        ", "Domain:          ", "Smartcard-Pin:   " };
 	const char* gw[] = { "GatewayUsername: ", "GatewayDomain:   ", "GatewayPassword: " };
 	const char** prompt;
+	BOOL pinOnly = FALSE;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(instance->context->settings);
 
 	switch (reason)
 	{
-		case AUTH_NLA:
+		case AUTH_SMARTCARD_PIN:
+			prompt = authPin;
+			pinOnly = TRUE;
+			break;
 		case AUTH_TLS:
 		case AUTH_RDP:
+		case AUTH_NLA:
 			prompt = auth;
 			break;
 		case GW_AUTH_HTTP:
@@ -392,7 +424,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 	if (!username || !password || !domain)
 		return FALSE;
 
-	if (!*username)
+	if (!*username && !pinOnly)
 	{
 		size_t username_size = 0;
 		printf("%s", prompt[0]);
@@ -410,7 +442,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 		}
 	}
 
-	if (!*domain)
+	if (!*domain && !pinOnly)
 	{
 		size_t domain_size = 0;
 		printf("%s", prompt[1]);
@@ -436,7 +468,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 			goto fail;
 
 		if (freerdp_passphrase_read(prompt[2], *password, password_size,
-		                            instance->settings->CredentialsFromStdin) == NULL)
+		                            instance->context->settings->CredentialsFromStdin) == NULL)
 			goto fail;
 	}
 
@@ -459,21 +491,14 @@ BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** passw
 	WINPR_ASSERT(password);
 	WINPR_ASSERT(domain);
 
-	if (instance->settings->SmartcardLogon)
-	{
-		WLog_INFO(TAG, "Authentication via smartcard");
-		return TRUE;
-	}
-
 	switch (reason)
 	{
 		case AUTH_NLA:
 			break;
+
 		case AUTH_TLS:
-			if ((*username) && (*password))
-				return TRUE;
-			break;
 		case AUTH_RDP:
+		case AUTH_SMARTCARD_PIN: /* in this case password is pin code */
 			if ((*username) && (*password))
 				return TRUE;
 			break;
@@ -553,8 +578,6 @@ static DWORD client_cli_accept_certificate(rdpSettings* settings)
 
 		printf("\n");
 	}
-
-	return 0;
 }
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
@@ -609,6 +632,11 @@ DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT
                                        const char* issuer, const char* fingerprint, DWORD flags)
 {
 	const char* type = "RDP-Server";
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(instance->context->settings);
+
 	if (flags & VERIFY_CERT_FLAG_GATEWAY)
 		type = "RDP-Gateway";
 
@@ -634,7 +662,7 @@ DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT
 	printf("The above X.509 certificate could not be verified, possibly because you do not have\n"
 	       "the CA certificate in your certificate store, or the certificate has expired.\n"
 	       "Please look at the OpenSSL documentation on how to add a private CA to the store.\n");
-	return client_cli_accept_certificate(instance->settings);
+	return client_cli_accept_certificate(instance->context->settings);
 }
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
@@ -709,6 +737,10 @@ DWORD client_cli_verify_changed_certificate_ex(freerdp* instance, const char* ho
 {
 	const char* type = "RDP-Server";
 
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(instance->context->settings);
+
 	if (flags & VERIFY_CERT_FLAG_GATEWAY)
 		type = "RDP-Gateway";
 
@@ -760,7 +792,7 @@ DWORD client_cli_verify_changed_certificate_ex(freerdp* instance, const char* ho
 	       "connections.\n"
 	       "This may indicate that the certificate has been tampered with.\n"
 	       "Please contact the administrator of the RDP server and clarify.\n");
-	return client_cli_accept_certificate(instance->settings);
+	return client_cli_accept_certificate(instance->context->settings);
 }
 
 BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
@@ -769,6 +801,10 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 {
 	int answer;
 	const char* msgType = (type == GATEWAY_MESSAGE_CONSENT) ? "Consent message" : "Service message";
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(instance->context->settings);
 
 	if (!isDisplayMandatory && !isConsentMandatory)
 		return TRUE;
@@ -830,15 +866,20 @@ BOOL client_auto_reconnect(freerdp* instance)
 
 BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* instance))
 {
+	BOOL retry = TRUE;
 	UINT32 error;
 	UINT32 maxRetries;
 	UINT32 numRetries = 0;
 	rdpSettings* settings;
 
-	if (!instance || !instance->settings)
+	if (!instance)
 		return FALSE;
 
-	settings = instance->settings;
+	WINPR_ASSERT(instance->context);
+
+	settings = instance->context->settings;
+	WINPR_ASSERT(settings);
+
 	maxRetries = settings->AutoReconnectMaxRetries;
 
 	/* Only auto reconnect on network disconnects. */
@@ -865,7 +906,7 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 	}
 
 	/* Perform an auto-reconnect. */
-	while (TRUE)
+	while (retry)
 	{
 		UINT32 x;
 
@@ -881,15 +922,288 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 		if (freerdp_reconnect(instance))
 			return TRUE;
 
+		switch (freerdp_get_last_error(instance->context))
+		{
+			case FREERDP_ERROR_CONNECT_CANCELLED:
+				WLog_WARN(TAG, "Autoreconnect aborted by user");
+				retry = FALSE;
+				break;
+			default:
+				break;
+		}
 		for (x = 0; x < 50; x++)
 		{
 			if (!IFCALLRESULT(TRUE, window_events, instance))
 				return FALSE;
 
-			Sleep(100);
+			Sleep(10);
 		}
 	}
 
 	WLog_ERR(TAG, "Maximum reconnect retries exceeded");
 	return FALSE;
+}
+
+int freerdp_client_common_stop(rdpContext* context)
+{
+	rdpClientContext* cctx = (rdpClientContext*)context;
+	WINPR_ASSERT(cctx);
+
+	freerdp_abort_connect_context(&cctx->context);
+
+	if (cctx->thread)
+	{
+		WaitForSingleObject(cctx->thread, INFINITE);
+		CloseHandle(cctx->thread);
+		cctx->thread = NULL;
+	}
+
+	return 0;
+}
+
+void freerdp_client_OnChannelConnectedEventHandler(void* context,
+                                                   const ChannelConnectedEventArgs* e)
+{
+	rdpClientContext* cctx = (rdpClientContext*)context;
+
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT(e);
+
+	if (0)
+	{
+	}
+#if defined(CHANNEL_AINPUT_CLIENT)
+	else if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
+		cctx->ainput = (AInputClientContext*)e->pInterface;
+#endif
+#if defined(CHANNEL_RDPEI_CLIENT)
+	else if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		cctx->rdpei = (RdpeiClientContext*)e->pInterface;
+	}
+#endif
+#if defined(CHANNEL_RDPGFX_CLIENT)
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_graphics_pipeline_init(cctx->context.gdi, (RdpgfxClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_GEOMETRY_CLIENT)
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_geometry_init(cctx->context.gdi, (GeometryClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_VIDEO_CLIENT)
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_control_init(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_data_init(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+#endif
+}
+
+void freerdp_client_OnChannelDisconnectedEventHandler(void* context,
+                                                      const ChannelDisconnectedEventArgs* e)
+{
+	rdpClientContext* cctx = (rdpClientContext*)context;
+
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT(e);
+
+	if (0)
+	{
+	}
+#if defined(CHANNEL_AINPUT_CLIENT)
+	else if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
+		cctx->ainput = NULL;
+#endif
+#if defined(CHANNEL_RDPEI_CLIENT)
+	else if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		cctx->rdpei = NULL;
+	}
+#endif
+#if defined(CHANNEL_RDPGFX_CLIENT)
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_graphics_pipeline_uninit(cctx->context.gdi, (RdpgfxClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_GEOMETRY_CLIENT)
+	else if (strcmp(e->name, GEOMETRY_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_geometry_uninit(cctx->context.gdi, (GeometryClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_VIDEO_CLIENT)
+	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_control_uninit(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
+	{
+		gdi_video_data_uninit(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+#endif
+}
+
+BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
+{
+	BOOL handled = FALSE;
+
+	WINPR_ASSERT(cctx);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (cctx->ainput)
+	{
+		UINT rc;
+		UINT64 flags = 0;
+		INT32 x = 0, y = 0;
+		INT32 value = mflags & 0xFF;
+
+		if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)
+			value = -1 * (0x100 - value);
+
+		/* We have discrete steps, scale this so we can also support high
+		 * resolution wheels. */
+		value *= 0x10000;
+
+		if (mflags & PTR_FLAGS_WHEEL)
+		{
+			flags |= AINPUT_FLAGS_WHEEL;
+			y = value;
+		}
+
+		if (mflags & PTR_FLAGS_HWHEEL)
+		{
+			flags |= AINPUT_FLAGS_WHEEL;
+			x = value;
+		}
+
+		WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
+		rc = cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, x, y);
+		if (rc == CHANNEL_RC_OK)
+			handled = TRUE;
+	}
+#endif
+	if (!handled)
+		freerdp_input_send_mouse_event(cctx->context.input, mflags, 0, 0);
+
+	return TRUE;
+}
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+static INLINE BOOL ainput_send_diff_event(rdpClientContext* cctx, UINT64 flags, INT32 x, INT32 y)
+{
+	UINT rc;
+
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT(cctx->ainput);
+	WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
+
+	rc = cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, x, y);
+
+	return rc == CHANNEL_RC_OK;
+}
+#endif
+
+BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UINT16 mflags, INT32 x,
+                                      INT32 y)
+{
+	BOOL handled = FALSE;
+
+	WINPR_ASSERT(cctx);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (cctx->ainput)
+	{
+		UINT64 flags = 0;
+		BOOL relativeInput =
+		    freerdp_settings_get_bool(cctx->context.settings, FreeRDP_MouseUseRelativeMove);
+
+		if (cctx->mouse_grabbed && relativeInput)
+			flags |= AINPUT_FLAGS_HAVE_REL;
+
+		if (relative)
+			flags |= AINPUT_FLAGS_REL;
+
+		if (mflags & PTR_FLAGS_DOWN)
+			flags |= AINPUT_FLAGS_DOWN;
+		if (mflags & PTR_FLAGS_BUTTON1)
+			flags |= AINPUT_FLAGS_BUTTON1;
+		if (mflags & PTR_FLAGS_BUTTON2)
+			flags |= AINPUT_FLAGS_BUTTON2;
+		if (mflags & PTR_FLAGS_BUTTON3)
+			flags |= AINPUT_FLAGS_BUTTON3;
+		if (mflags & PTR_FLAGS_MOVE)
+			flags |= AINPUT_FLAGS_MOVE;
+		handled = ainput_send_diff_event(cctx, flags, x, y);
+	}
+#endif
+
+	if (!handled)
+	{
+		if (relative)
+		{
+			cctx->lastX += x;
+			cctx->lastY += y;
+			WLog_WARN(TAG, "Relative mouse input channel not available, sending absolute!");
+		}
+		else
+		{
+			cctx->lastX = x;
+			cctx->lastY = y;
+		}
+		freerdp_input_send_mouse_event(cctx->context.input, mflags, (UINT16)cctx->lastX,
+		                               (UINT16)cctx->lastY);
+	}
+	return TRUE;
+}
+
+BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL relative, UINT16 mflags,
+                                               INT32 x, INT32 y)
+{
+	BOOL handled = FALSE;
+	WINPR_ASSERT(cctx);
+
+#if defined(CHANNEL_AINPUT_CLIENT)
+	if (cctx->ainput)
+	{
+		UINT64 flags = 0;
+
+		if (relative)
+			flags |= AINPUT_FLAGS_REL;
+		if (mflags & PTR_XFLAGS_DOWN)
+			flags |= AINPUT_FLAGS_DOWN;
+		if (mflags & PTR_XFLAGS_BUTTON1)
+			flags |= AINPUT_XFLAGS_BUTTON1;
+		if (mflags & PTR_XFLAGS_BUTTON2)
+			flags |= AINPUT_XFLAGS_BUTTON2;
+
+		handled = ainput_send_diff_event(cctx, flags, x, y);
+	}
+#endif
+
+	if (!handled)
+	{
+		if (relative)
+		{
+			cctx->lastX += x;
+			cctx->lastY += y;
+			WLog_WARN(TAG, "Relative mouse input channel not available, sending absolute!");
+		}
+		else
+		{
+			cctx->lastX = x;
+			cctx->lastY = y;
+		}
+		freerdp_input_send_extended_mouse_event(cctx->context.input, mflags, (UINT16)cctx->lastX,
+		                                        (UINT16)cctx->lastY);
+	}
+
+	return TRUE;
 }

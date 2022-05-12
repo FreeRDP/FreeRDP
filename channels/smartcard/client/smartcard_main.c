@@ -22,9 +22,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/smartcard.h>
@@ -140,7 +138,7 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 				{
 					smartcard_operation_free(&element->operation, TRUE);
 					WLog_ERR(TAG, "Queue_Enqueue failed!");
-					status = ERROR_INTERNAL_ERROR;
+					status = error;
 					break;
 				}
 

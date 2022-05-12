@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <freerdp/log.h>
 
@@ -40,7 +38,7 @@
 
 #define TAG FREERDP_TAG("dsp.ffmpeg")
 
-struct _FREERDP_DSP_CONTEXT
+struct S_FREERDP_DSP_CONTEXT
 {
 	AUDIO_FORMAT format;
 
@@ -61,6 +59,7 @@ struct _FREERDP_DSP_CONTEXT
 #else
 	AVAudioResampleContext* rcontext;
 #endif
+	wStream* channelmix;
 };
 
 static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, BOOL encoder)
@@ -581,6 +580,12 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_ffmpeg_context_new(BOOL encode)
 	if (!context)
 		return NULL;
 
+	context->channelmix = Stream_New(NULL, 1024);
+	if (!context->channelmix)
+	{
+		freerdp_dsp_ffmpeg_context_free(context);
+		return NULL;
+	}
 	context->encoder = encode;
 	return context;
 }
@@ -590,6 +595,7 @@ void freerdp_dsp_ffmpeg_context_free(FREERDP_DSP_CONTEXT* context)
 	if (context)
 	{
 		ffmpeg_close_context(context);
+		Stream_Free(context->channelmix, TRUE);
 		free(context);
 	}
 }
@@ -605,15 +611,113 @@ BOOL freerdp_dsp_ffmpeg_context_reset(FREERDP_DSP_CONTEXT* context,
 	return ffmpeg_open_context(context);
 }
 
+static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
+                                    const AUDIO_FORMAT* srcFormat, const BYTE** data,
+                                    size_t* length, AUDIO_FORMAT* dstFormat)
+{
+	UINT32 bpp;
+	size_t samples;
+	size_t x, y;
+
+	if (!context || !data || !length || !dstFormat)
+		return FALSE;
+
+	if (srcFormat->wFormatTag != WAVE_FORMAT_PCM)
+		return FALSE;
+
+	bpp = srcFormat->wBitsPerSample > 8 ? 2 : 1;
+	samples = size / bpp / srcFormat->nChannels;
+
+	*dstFormat = *srcFormat;
+	if (context->format.nChannels == srcFormat->nChannels)
+	{
+		*data = src;
+		*length = size;
+		return TRUE;
+	}
+
+	Stream_SetPosition(context->channelmix, 0);
+
+	/* Destination has more channels than source */
+	if (context->format.nChannels > srcFormat->nChannels)
+	{
+		switch (srcFormat->nChannels)
+		{
+			case 1:
+				if (!Stream_EnsureCapacity(context->channelmix, size * 2))
+					return FALSE;
+
+				for (x = 0; x < samples; x++)
+				{
+					for (y = 0; y < bpp; y++)
+						Stream_Write_UINT8(context->channelmix, src[x * bpp + y]);
+
+					for (y = 0; y < bpp; y++)
+						Stream_Write_UINT8(context->channelmix, src[x * bpp + y]);
+				}
+
+				Stream_SealLength(context->channelmix);
+				*data = Stream_Buffer(context->channelmix);
+				*length = Stream_Length(context->channelmix);
+				dstFormat->nChannels = 2;
+				return TRUE;
+
+			case 2:  /* We only support stereo, so we can not handle this case. */
+			default: /* Unsupported number of channels */
+				WLog_WARN(TAG, "[%s] unsuported source channel count %" PRIu16, __FUNCTION__,
+				          srcFormat->nChannels);
+				return FALSE;
+		}
+	}
+
+	/* Destination has less channels than source */
+	switch (srcFormat->nChannels)
+	{
+		case 2:
+			if (!Stream_EnsureCapacity(context->channelmix, size / 2))
+				return FALSE;
+
+			/* Simply drop second channel.
+			 * TODO: Calculate average */
+			for (x = 0; x < samples; x++)
+			{
+				for (y = 0; y < bpp; y++)
+					Stream_Write_UINT8(context->channelmix, src[2 * x * bpp + y]);
+			}
+
+			Stream_SealLength(context->channelmix);
+			*data = Stream_Buffer(context->channelmix);
+			*length = Stream_Length(context->channelmix);
+			dstFormat->nChannels = 1;
+			return TRUE;
+
+		case 1:  /* Invalid, do we want to use a 0 channel sound? */
+		default: /* Unsupported number of channels */
+			WLog_WARN(TAG, "[%s] unsuported channel count %" PRIu16, __FUNCTION__,
+			          srcFormat->nChannels);
+			return FALSE;
+	}
+
+	return FALSE;
+}
+
 BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* format,
                                const BYTE* data, size_t length, wStream* out)
 {
 	int rc;
+	AUDIO_FORMAT fmt = { 0 };
 
 	if (!context || !format || !data || !out || !context->encoder)
 		return FALSE;
 
 	if (!context || !data || !out)
+		return FALSE;
+
+	/* https://github.com/FreeRDP/FreeRDP/issues/7607
+	 *
+	 * we get noisy data with channel transformation, so do it ourselves.
+	 */
+	if (!freerdp_dsp_channel_mix(context, data, length, format, &data, &length, &fmt))
 		return FALSE;
 
 	/* Create input frame */

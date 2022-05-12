@@ -44,19 +44,18 @@ extern "C"
 	typedef void (*OBJECT_FREE_FN)(void* obj);
 	typedef BOOL (*OBJECT_EQUALS_FN)(const void* objA, const void* objB);
 
-	struct _wObject
+	typedef struct
 	{
 		OBJECT_NEW_FN fnObjectNew;
 		OBJECT_INIT_FN fnObjectInit;
 		OBJECT_UNINIT_FN fnObjectUninit;
 		OBJECT_FREE_FN fnObjectFree;
 		OBJECT_EQUALS_FN fnObjectEquals;
-	};
-	typedef struct _wObject wObject;
+	} wObject;
 
 	/* System.Collections.Queue */
 
-	typedef struct _wQueue wQueue;
+	typedef struct s_wQueue wQueue;
 
 	WINPR_API size_t Queue_Count(wQueue* queue);
 
@@ -114,7 +113,7 @@ extern "C"
 
 	/* System.Collections.Stack */
 
-	typedef struct _wStack wStack;
+	typedef struct s_wStack wStack;
 
 	WINPR_API size_t Stack_Count(wStack* stack);
 	WINPR_API BOOL Stack_IsSynchronized(wStack* stack);
@@ -134,7 +133,7 @@ extern "C"
 
 	/* System.Collections.ArrayList */
 
-	typedef struct _wArrayList wArrayList;
+	typedef struct s_wArrayList wArrayList;
 
 	WINPR_API size_t ArrayList_Capacity(wArrayList* arrayList);
 	WINPR_API size_t ArrayList_Count(wArrayList* arrayList);
@@ -147,7 +146,7 @@ extern "C"
 	WINPR_API void ArrayList_Unlock(wArrayList* arrayList);
 
 	WINPR_API void* ArrayList_GetItem(wArrayList* arrayList, size_t index);
-	WINPR_API void ArrayList_SetItem(wArrayList* arrayList, size_t index, const void* obj);
+	WINPR_API BOOL ArrayList_SetItem(wArrayList* arrayList, size_t index, const void* obj);
 
 	WINPR_API wObject* ArrayList_Object(wArrayList* arrayList);
 
@@ -181,20 +180,19 @@ extern "C"
 
 	/* WARNING: Do not access structs directly, the API will be reworked
 	 * to make this opaque. */
-	struct _wDictionary
+	typedef struct
 	{
 		BOOL synchronized;
 		CRITICAL_SECTION lock;
-	};
-	typedef struct _wDictionary wDictionary;
+	} wDictionary;
 
 	/* System.Collections.Specialized.ListDictionary */
 
-	typedef struct _wListDictionaryItem wListDictionaryItem;
+	typedef struct s_wListDictionaryItem wListDictionaryItem;
 
 	/* WARNING: Do not access structs directly, the API will be reworked
 	 * to make this opaque. */
-	struct _wListDictionaryItem
+	struct s_wListDictionaryItem
 	{
 		void* key;
 		void* value;
@@ -204,7 +202,7 @@ extern "C"
 
 	/* WARNING: Do not access structs directly, the API will be reworked
 	 * to make this opaque. */
-	struct _wListDictionary
+	typedef struct
 	{
 		BOOL synchronized;
 		CRITICAL_SECTION lock;
@@ -212,8 +210,7 @@ extern "C"
 		wListDictionaryItem* head;
 		wObject objectKey;
 		wObject objectValue;
-	};
-	typedef struct _wListDictionary wListDictionary;
+	} wListDictionary;
 
 #define ListDictionary_KeyObject(_dictionary) (&_dictionary->objectKey)
 #define ListDictionary_ValueObject(_dictionary) (&_dictionary->objectValue)
@@ -241,7 +238,7 @@ extern "C"
 
 	/* System.Collections.Generic.LinkedList<T> */
 
-	typedef struct _wLinkedList wLinkedList;
+	typedef struct s_wLinkedList wLinkedList;
 
 	WINPR_API int LinkedList_Count(wLinkedList* list);
 	WINPR_API void* LinkedList_First(wLinkedList* list);
@@ -272,18 +269,17 @@ extern "C"
 
 	/* WARNING: Do not access structs directly, the API will be reworked
 	 * to make this opaque. */
-	struct _wReference
+	typedef struct
 	{
 		UINT32 Count;
 		void* Pointer;
-	};
-	typedef struct _wReference wReference;
+	} wReference;
 
 	typedef int (*REFERENCE_FREE)(void* context, void* ptr);
 
 	/* WARNING: Do not access structs directly, the API will be reworked
 	 * to make this opaque. */
-	struct _wReferenceTable
+	typedef struct
 	{
 		UINT32 size;
 		CRITICAL_SECTION lock;
@@ -291,8 +287,7 @@ extern "C"
 		BOOL synchronized;
 		wReference* array;
 		REFERENCE_FREE ReferenceFree;
-	};
-	typedef struct _wReferenceTable wReferenceTable;
+	} wReferenceTable;
 
 	WINPR_API UINT32 ReferenceTable_Add(wReferenceTable* referenceTable, void* ptr);
 	WINPR_API UINT32 ReferenceTable_Release(wReferenceTable* referenceTable, void* ptr);
@@ -305,14 +300,13 @@ extern "C"
 
 	/* WARNING: Do not access structs directly, the API will be reworked
 	 * to make this opaque. */
-	struct _wCountdownEvent
+	typedef struct
 	{
 		DWORD count;
 		CRITICAL_SECTION lock;
 		HANDLE event;
 		DWORD initialCount;
-	};
-	typedef struct _wCountdownEvent wCountdownEvent;
+	} wCountdownEvent;
 
 	WINPR_API DWORD CountdownEvent_CurrentCount(wCountdownEvent* countdown);
 	WINPR_API DWORD CountdownEvent_InitialCount(wCountdownEvent* countdown);
@@ -330,7 +324,7 @@ extern "C"
 
 	typedef UINT32 (*HASH_TABLE_HASH_FN)(const void* key);
 
-	typedef struct _wHashTable wHashTable;
+	typedef struct s_wHashTable wHashTable;
 
 	typedef BOOL (*HASH_TABLE_FOREACH_FN)(const void* key, void* value, void* arg);
 
@@ -373,7 +367,7 @@ extern "C"
 
 	/* BufferPool */
 
-	typedef struct _wBufferPool wBufferPool;
+	typedef struct s_wBufferPool wBufferPool;
 
 	WINPR_API SSIZE_T BufferPool_GetPoolSize(wBufferPool* pool);
 	WINPR_API SSIZE_T BufferPool_GetBufferSize(wBufferPool* pool, const void* buffer);
@@ -387,7 +381,7 @@ extern "C"
 
 	/* ObjectPool */
 
-	typedef struct _wObjectPool wObjectPool;
+	typedef struct s_wObjectPool wObjectPool;
 
 	WINPR_API void* ObjectPool_Take(wObjectPool* pool);
 	WINPR_API void ObjectPool_Return(wObjectPool* pool, void* obj);
@@ -400,11 +394,11 @@ extern "C"
 
 	/* Message Queue */
 
-	typedef struct _wMessage wMessage;
+	typedef struct s_wMessage wMessage;
 
 	typedef void (*MESSAGE_FREE_FN)(wMessage* message);
 
-	struct _wMessage
+	struct s_wMessage
 	{
 		UINT32 id;
 		void* context;
@@ -414,7 +408,7 @@ extern "C"
 		MESSAGE_FREE_FN Free;
 	};
 
-	typedef struct _wMessageQueue wMessageQueue;
+	typedef struct s_wMessageQueue wMessageQueue;
 
 #define WMQ_QUIT 0xFFFFFFFF
 
@@ -472,12 +466,11 @@ extern "C"
 
 	/* Message Pipe */
 
-	struct _wMessagePipe
+	typedef struct
 	{
 		wMessageQueue* In;
 		wMessageQueue* Out;
-	};
-	typedef struct _wMessagePipe wMessagePipe;
+	} wMessagePipe;
 
 	WINPR_API void MessagePipe_PostQuit(wMessagePipe* pipe, int nExitCode);
 
@@ -486,25 +479,23 @@ extern "C"
 
 	/* Publisher/Subscriber Pattern */
 
-	struct _wEventArgs
+	typedef struct
 	{
 		DWORD Size;
 		const char* Sender;
-	};
-	typedef struct _wEventArgs wEventArgs;
+	} wEventArgs;
 
 	typedef void (*pEventHandler)(void* context, const wEventArgs* e);
 
 #define MAX_EVENT_HANDLERS 32
 
-	struct _wEventType
+	typedef struct
 	{
 		const char* EventName;
 		wEventArgs EventArgs;
 		size_t EventHandlerCount;
 		pEventHandler EventHandlers[MAX_EVENT_HANDLERS];
-	};
-	typedef struct _wEventType wEventType;
+	} wEventType;
 
 #define EventArgsInit(_event_args, _sender)       \
 	memset(_event_args, 0, sizeof(*_event_args)); \
@@ -534,9 +525,9 @@ extern "C"
 		return PubSub_Unsubscribe(pubSub, #name, (pEventHandler)EventHandler);     \
 	}
 
-#define DEFINE_EVENT_BEGIN(name)      \
-	typedef struct _##name##EventArgs \
-	{                                 \
+#define DEFINE_EVENT_BEGIN(name) \
+	typedef struct               \
+	{                            \
 		wEventArgs e;
 
 #define DEFINE_EVENT_END(name)   \
@@ -555,7 +546,7 @@ extern "C"
 		}                                            \
 	}
 
-	typedef struct _wPubSub wPubSub;
+	typedef struct s_wPubSub wPubSub;
 
 	WINPR_API void PubSub_Lock(wPubSub* pubSub);
 	WINPR_API void PubSub_Unlock(wPubSub* pubSub);
@@ -576,7 +567,7 @@ extern "C"
 	WINPR_API void PubSub_Free(wPubSub* pubSub);
 
 	/* BipBuffer */
-	typedef struct _wBipBuffer wBipBuffer;
+	typedef struct s_wBipBuffer wBipBuffer;
 
 	WINPR_API BOOL BipBuffer_Grow(wBipBuffer* bb, size_t size);
 	WINPR_API void BipBuffer_Clear(wBipBuffer* bb);

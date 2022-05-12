@@ -25,17 +25,16 @@
 
 #pragma pack(push, 1)
 
-struct _WINPR_BITMAP_FILE_HEADER
+typedef struct
 {
 	BYTE bfType[2];
 	UINT32 bfSize;
 	UINT16 bfReserved1;
 	UINT16 bfReserved2;
 	UINT32 bfOffBits;
-};
-typedef struct _WINPR_BITMAP_FILE_HEADER WINPR_BITMAP_FILE_HEADER;
+} WINPR_BITMAP_FILE_HEADER;
 
-struct _WINPR_BITMAP_INFO_HEADER
+typedef struct
 {
 	UINT32 biSize;
 	INT32 biWidth;
@@ -48,18 +47,16 @@ struct _WINPR_BITMAP_INFO_HEADER
 	INT32 biYPelsPerMeter;
 	UINT32 biClrUsed;
 	UINT32 biClrImportant;
-};
-typedef struct _WINPR_BITMAP_INFO_HEADER WINPR_BITMAP_INFO_HEADER;
+} WINPR_BITMAP_INFO_HEADER;
 
-struct _WINPR_BITMAP_CORE_HEADER
+typedef struct
 {
 	UINT32 bcSize;
 	UINT16 bcWidth;
 	UINT16 bcHeight;
 	UINT16 bcPlanes;
 	UINT16 bcBitCount;
-};
-typedef struct _WINPR_BITMAP_CORE_HEADER WINPR_BITMAP_CORE_HEADER;
+} WINPR_BITMAP_CORE_HEADER;
 
 #pragma pack(pop)
 
@@ -68,7 +65,7 @@ typedef struct _WINPR_BITMAP_CORE_HEADER WINPR_BITMAP_CORE_HEADER;
 
 #define WINPR_IMAGE_BMP_HEADER_LEN 54
 
-struct _wImage
+typedef struct
 {
 	int type;
 	UINT32 width;
@@ -77,8 +74,7 @@ struct _wImage
 	UINT32 scanline;
 	UINT32 bitsPerPixel;
 	UINT32 bytesPerPixel;
-};
-typedef struct _wImage wImage;
+} wImage;
 
 #ifdef __cplusplus
 extern "C"

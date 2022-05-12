@@ -17,14 +17,15 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/timezone.h>
 
 #include "timezone.h"
+
+#include <freerdp/log.h>
+#define TAG FREERDP_TAG("core.timezone")
 
 static void rdp_read_system_time(wStream* s, SYSTEMTIME* system_time);
 static void rdp_write_system_time(wStream* s, SYSTEMTIME* system_time);
@@ -86,7 +87,7 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 	if (!s || !settings)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < 172)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 172))
 		return FALSE;
 
 	tz = settings->ClientTimeZone;

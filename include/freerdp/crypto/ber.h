@@ -74,16 +74,30 @@ extern "C"
 	FREERDP_API size_t ber_sizeof_sequence(size_t length);
 	FREERDP_API size_t ber_sizeof_sequence_tag(size_t length);
 	FREERDP_API BOOL ber_read_bit_string(wStream* s, size_t* length, BYTE* padding);
-	FREERDP_API size_t ber_write_octet_string(wStream* s, const BYTE* oct_str, size_t length);
+
 	FREERDP_API BOOL ber_read_octet_string_tag(wStream* s, size_t* length);
+	FREERDP_API BOOL ber_read_octet_string(wStream* s, BYTE** content, size_t* length);
 	FREERDP_API size_t ber_write_octet_string_tag(wStream* s, size_t length);
 	FREERDP_API size_t ber_sizeof_octet_string(size_t length);
+	FREERDP_API size_t ber_sizeof_contextual_octet_string(size_t length);
+	FREERDP_API size_t ber_write_char_to_unicode_octet_string(wStream* s, const char* str);
+	FREERDP_API size_t ber_write_contextual_char_to_unicode_octet_string(wStream* s, BYTE tag,
+	                                                                     const char* oct_str);
+	FREERDP_API size_t ber_write_octet_string(wStream* s, const BYTE* oct_str, size_t length);
+	FREERDP_API BOOL ber_read_char_from_unicode_octet_string(wStream* s, char** str);
+	FREERDP_API BOOL ber_read_unicode_octet_string(wStream* s, LPWSTR* str);
+	FREERDP_API size_t ber_write_contextual_octet_string(wStream* s, BYTE tag, const BYTE* oct_str,
+	                                                     size_t length);
+	FREERDP_API size_t ber_write_contextual_unicode_octet_string(wStream* s, BYTE tag, LPWSTR str);
+
 	FREERDP_API BOOL ber_read_BOOL(wStream* s, BOOL* value);
 	FREERDP_API void ber_write_BOOL(wStream* s, BOOL value);
 	FREERDP_API BOOL ber_read_integer(wStream* s, UINT32* value);
 	FREERDP_API size_t ber_write_integer(wStream* s, UINT32 value);
+	FREERDP_API size_t ber_write_contextual_integer(wStream* s, BYTE tag, UINT32 value);
 	FREERDP_API BOOL ber_read_integer_length(wStream* s, size_t* length);
 	FREERDP_API size_t ber_sizeof_integer(UINT32 value);
+	FREERDP_API size_t ber_sizeof_contextual_integer(UINT32 value);
 
 #ifdef __cplusplus
 }

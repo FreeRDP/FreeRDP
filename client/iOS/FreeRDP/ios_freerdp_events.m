@@ -8,6 +8,8 @@
  http://mozilla.org/MPL/2.0/.
  */
 
+#include <winpr/assert.h>
+
 #include "ios_freerdp_events.h"
 
 #pragma mark -
@@ -18,6 +20,8 @@
 BOOL ios_events_send(mfInfo *mfi, NSDictionary *event_description)
 {
 	NSData *encoded_description = [NSKeyedArchiver archivedDataWithRootObject:event_description];
+
+	WINPR_ASSERT(mfi);
 
 	if ([encoded_description length] > 32000 || (mfi->event_pipe_producer == -1))
 		return FALSE;
@@ -49,24 +53,32 @@ static BOOL ios_events_handle_event(mfInfo *mfi, NSDictionary *event_description
 {
 	NSString *event_type = [event_description objectForKey:@"type"];
 	BOOL should_continue = TRUE;
+	rdpInput *input;
+
+	WINPR_ASSERT(mfi);
+
 	freerdp *instance = mfi->instance;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	input = instance->context->input;
+	WINPR_ASSERT(input);
 
 	if ([event_type isEqualToString:@"mouse"])
 	{
-		instance->input->MouseEvent(
-		    instance->input, [[event_description objectForKey:@"flags"] unsignedShortValue],
-		    [[event_description objectForKey:@"coord_x"] unsignedShortValue],
-		    [[event_description objectForKey:@"coord_y"] unsignedShortValue]);
+		input->MouseEvent(input, [[event_description objectForKey:@"flags"] unsignedShortValue],
+		                  [[event_description objectForKey:@"coord_x"] unsignedShortValue],
+		                  [[event_description objectForKey:@"coord_y"] unsignedShortValue]);
 	}
 	else if ([event_type isEqualToString:@"keyboard"])
 	{
 		if ([[event_description objectForKey:@"subtype"] isEqualToString:@"scancode"])
-			instance->input->KeyboardEvent(
-			    instance->input, [[event_description objectForKey:@"flags"] unsignedShortValue],
+			freerdp_input_send_keyboard_event(
+			    input, [[event_description objectForKey:@"flags"] unsignedShortValue],
 			    [[event_description objectForKey:@"scancode"] unsignedShortValue]);
 		else if ([[event_description objectForKey:@"subtype"] isEqualToString:@"unicode"])
-			instance->input->UnicodeKeyboardEvent(
-			    instance->input, [[event_description objectForKey:@"flags"] unsignedShortValue],
+			freerdp_input_send_unicode_keyboard_event(
+			    input, [[event_description objectForKey:@"flags"] unsignedShortValue],
 			    [[event_description objectForKey:@"unicode_char"] unsignedShortValue]);
 		else
 			NSLog(@"%s: doesn't know how to send keyboard input with subtype %@", __func__,
@@ -80,9 +92,14 @@ static BOOL ios_events_handle_event(mfInfo *mfi, NSDictionary *event_description
 	return should_continue;
 }
 
-BOOL ios_events_check_fds(mfInfo *mfi, fd_set *rfds)
+BOOL ios_events_check_handle(mfInfo *mfi)
 {
-	if ((mfi->event_pipe_consumer == -1) || !FD_ISSET(mfi->event_pipe_consumer, rfds))
+	WINPR_ASSERT(mfi);
+
+	if (WaitForSingleObject(mfi->handle, 0) != WAIT_OBJECT_0)
+		return TRUE;
+
+	if (mfi->event_pipe_consumer == -1)
 		return TRUE;
 
 	uint32_t archived_data_length = 0;
@@ -119,18 +136,18 @@ BOOL ios_events_check_fds(mfInfo *mfi, fd_set *rfds)
 	return ios_events_handle_event(mfi, unarchived_object_data);
 }
 
-BOOL ios_events_get_fds(mfInfo *mfi, void **read_fds, int *read_count, void **write_fds,
-                        int *write_count)
+HANDLE ios_events_get_handle(mfInfo *mfi)
 {
-	read_fds[*read_count] = (void *)(long)(mfi->event_pipe_consumer);
-	(*read_count)++;
-	return TRUE;
+	WINPR_ASSERT(mfi);
+	return mfi->handle;
 }
 
 // Sets up the event pipe
 BOOL ios_events_create_pipe(mfInfo *mfi)
 {
 	int pipe_fds[2];
+
+	WINPR_ASSERT(mfi);
 
 	if (pipe(pipe_fds) == -1)
 	{
@@ -140,14 +157,18 @@ BOOL ios_events_create_pipe(mfInfo *mfi)
 
 	mfi->event_pipe_consumer = pipe_fds[0];
 	mfi->event_pipe_producer = pipe_fds[1];
+	mfi->handle = CreateFileDescriptorEvent(NULL, FALSE, FALSE, mfi->event_pipe_consumer,
+	                                        WINPR_FD_READ | WINPR_FD_WRITE);
 	return TRUE;
 }
 
 void ios_events_free_pipe(mfInfo *mfi)
 {
+	WINPR_ASSERT(mfi);
 	int consumer_fd = mfi->event_pipe_consumer, producer_fd = mfi->event_pipe_producer;
 
 	mfi->event_pipe_consumer = mfi->event_pipe_producer = -1;
 	close(producer_fd);
 	close(consumer_fd);
+	CloseHandle(mfi->handle);
 }

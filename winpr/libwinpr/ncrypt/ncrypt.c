@@ -69,8 +69,11 @@ void* ncrypt_new_handle(NCryptHandleType kind, size_t len, NCryptGetPropertyFn g
 	return ret;
 }
 
-SECURITY_STATUS winpr_NCryptDefault_dtor(NCryptBaseHandle* h)
+SECURITY_STATUS winpr_NCryptDefault_dtor(NCRYPT_HANDLE handle)
 {
+	NCryptBaseHandle* h = (NCryptBaseHandle*)handle;
+	WINPR_ASSERT(h);
+
 	memset(h->magic, 0, sizeof(h->magic));
 	h->type = WINPR_NCRYPT_INVALID;
 	h->releaseFn = NULL;
@@ -81,11 +84,13 @@ SECURITY_STATUS winpr_NCryptDefault_dtor(NCryptBaseHandle* h)
 SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
                                            NCryptProviderName** ppProviderList, DWORD dwFlags)
 {
-	static const WCHAR emptyComment[] = { 0 };
 	NCryptProviderName* ret;
 	size_t stringAllocSize = 0;
+#ifdef WITH_PKCS11
 	LPWSTR strPtr;
+	static const WCHAR emptyComment[] = { 0 };
 	size_t copyAmount;
+#endif
 
 	*wProviderCount = 0;
 	*ppProviderList = NULL;
@@ -103,9 +108,10 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 	if (!ret)
 		return NTE_NO_MEMORY;
 
-	strPtr = (LPWSTR)(ret + *wProviderCount);
 
 #ifdef WITH_PKCS11
+	strPtr = (LPWSTR)(ret + *wProviderCount);
+
 	ret->pszName = strPtr;
 	copyAmount = (_wcslen(MS_SCARD_PROV) + 1) * 2;
 	memcpy(strPtr, MS_SCARD_PROV, copyAmount);
@@ -121,37 +127,15 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 	return ERROR_SUCCESS;
 }
 
-
 SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider, LPCWSTR pszProviderName,
                                           DWORD dwFlags)
 {
 
 #ifdef WITH_PKCS11
-
-#if defined(__LP64__) || (defined(__x86_64__) && !defined(__ILP32__)) || defined(_M_X64) || defined(__ia64) || defined (_M_IA64) || defined(__aarch64__) || defined(__powerpc64__)
-#	define LIBS64
-#endif
-
 	if (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0 ||
-		_wcscmp(pszProviderName, MS_SCARD_PROV) == 0)
+	    _wcscmp(pszProviderName, MS_SCARD_PROV) == 0)
 	{
-		static LPCSTR openscPaths[] = {
-#ifdef __APPLE__
-				"/usr/local/lib/pkcs11/opensc-pkcs11.so",
-#else
-				/* linux and UNIXes */
-#ifdef LIBS64
-				"/usr/lib/x86_64-linux-gnu/pkcs11/opensc-pkcs11.so", /* Ubuntu/debian */
-				"/lib64/pkcs11/opensc-pkcs11.so", /* Fedora */
-#else
-				"/usr/lib/i386-linux-gnu/opensc-pkcs11.so", /* debian */
-				"/lib32/pkcs11/opensc-pkcs11.so", /* Fedora */
-#endif
-#endif
-				NULL
-		};
-
-		return winpr_NCryptOpenStorageProviderEx(phProvider, pszProviderName, dwFlags, openscPaths);
+		return winpr_NCryptOpenStorageProviderEx(phProvider, pszProviderName, dwFlags, NULL);
 	}
 #endif
 
@@ -166,12 +150,6 @@ SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider
 	if (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0 ||
 	    _wcscmp(pszProviderName, MS_SCARD_PROV) == 0)
 	{
-		SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE * phProvider,
-		                                               LPCWSTR pszProviderName, DWORD dwFlags,
-		                                               LPCSTR * modulePaths);
-
-		if (!modulePaths)
-			return ERROR_INVALID_PARAMETER;
 		return NCryptOpenP11StorageProviderEx(phProvider, pszProviderName, dwFlags, modulePaths);
 	}
 #endif
@@ -212,9 +190,13 @@ static NCryptKeyGetPropertyEnum propertyStringToEnum(LPCWSTR pszProperty)
 	{
 		return NCRYPT_PROPERTY_CERTIFICATE;
 	}
-	else if(_wcscmp(pszProperty, NCRYPT_READER_PROPERTY) == 0)
+	else if (_wcscmp(pszProperty, NCRYPT_READER_PROPERTY) == 0)
 	{
 		return NCRYPT_PROPERTY_READER;
+	}
+	else if (_wcscmp(pszProperty, NCRYPT_WINPR_SLOTID) == 0)
+	{
+		return NCRYPT_PROPERTY_SLOTID;
 	}
 
 	return NCRYPT_PROPERTY_UNKNOWN;

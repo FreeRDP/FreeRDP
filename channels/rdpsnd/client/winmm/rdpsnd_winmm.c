@@ -21,9 +21,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,9 +39,7 @@
 
 #include "rdpsnd_main.h"
 
-typedef struct rdpsnd_winmm_plugin rdpsndWinmmPlugin;
-
-struct rdpsnd_winmm_plugin
+typedef struct
 {
 	rdpsndDevicePlugin device;
 
@@ -55,7 +51,7 @@ struct rdpsnd_winmm_plugin
 	HANDLE hThread;
 	DWORD threadId;
 	CRITICAL_SECTION cs;
-};
+} rdpsndWinmmPlugin;
 
 static BOOL rdpsnd_winmm_convert_format(const AUDIO_FORMAT* in, WAVEFORMATEX* out)
 {
@@ -306,26 +302,20 @@ fail:
 	return 0;
 }
 
-static void rdpsnd_winmm_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+static void rdpsnd_winmm_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
 {
 	WINPR_UNUSED(device);
 	WINPR_UNUSED(args);
 }
-
-#ifdef BUILTIN_CHANNELS
-#define freerdp_rdpsnd_client_subsystem_entry winmm_freerdp_rdpsnd_client_subsystem_entry
-#else
-#define freerdp_rdpsnd_client_subsystem_entry FREERDP_API freerdp_rdpsnd_client_subsystem_entry
-#endif
 
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+UINT winmm_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-	ADDIN_ARGV* args;
+	const ADDIN_ARGV* args;
 	rdpsndWinmmPlugin* winmm;
 
 	if (waveOutGetNumDevs() == 0)
@@ -349,7 +339,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	InitializeCriticalSection(&winmm->cs);
 
 	args = pEntryPoints->args;
-	rdpsnd_winmm_parse_addin_args((rdpsndDevicePlugin*)winmm, args);
+	rdpsnd_winmm_parse_addin_args(&winmm->device, args);
 	winmm->volume = 0xFFFFFFFF;
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)winmm);
 	return CHANNEL_RC_OK;

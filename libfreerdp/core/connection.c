@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include "info.h"
 #include "input.h"
@@ -38,6 +36,8 @@
 #include <freerdp/error.h>
 #include <freerdp/listener.h>
 #include <freerdp/cache/pointer.h>
+
+#include "utils.h"
 
 #define TAG FREERDP_TAG("core.connection")
 
@@ -361,23 +361,26 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		if ((SelectedProtocol & PROTOCOL_SSL) || (SelectedProtocol == PROTOCOL_RDP))
 		{
 			if ((settings->Username != NULL) &&
-			    ((settings->Password != NULL) || (settings->RedirectionPassword != NULL &&
-			                                      settings->RedirectionPasswordLength > 0)))
+			    ((freerdp_settings_get_string(settings, FreeRDP_Password) != NULL) ||
+			     (settings->RedirectionPassword != NULL &&
+			      settings->RedirectionPasswordLength > 0)))
 				settings->AutoLogonEnabled = TRUE;
 		}
+		transport_set_blocking_mode(rdp->transport, FALSE);
 	}
 
 	/* everything beyond this point is event-driven and non blocking */
 	transport_set_recv_callbacks(rdp->transport, rdp_recv_callback, rdp);
-	transport_set_blocking_mode(rdp->transport, FALSE);
 
 	if (rdp_get_state(rdp) != CONNECTION_STATE_NLA)
 	{
+		rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CONNECT);
 		if (!mcs_client_begin(rdp->mcs))
 			return FALSE;
 	}
 
-	for (timeout = 0; timeout < settings->TcpAckTimeout; timeout += 100)
+	for (timeout = 0; timeout < freerdp_settings_get_uint32(settings, FreeRDP_TcpAckTimeout);
+	     timeout += 100)
 	{
 		if (rdp_check_fds(rdp) < 0)
 		{
@@ -436,10 +439,12 @@ BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 	context = rdp->context;
 	WINPR_ASSERT(context);
 
+	if (freerdp_get_last_error(context) == FREERDP_ERROR_CONNECT_CANCELLED)
+		return FALSE;
+
 	context->LastError = FREERDP_ERROR_SUCCESS;
 	clearChannelError(context);
-	ResetEvent(context->abortEvent);
-	return TRUE;
+	return utils_reset_abort(rdp);
 }
 
 static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
@@ -493,10 +498,8 @@ static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)
 		if (settings->GatewayEnabled ||
 		    rdp_client_redirect_resolvable(settings->RedirectionTargetFQDN))
 		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
-
-			if (!settings->ServerHostname)
+			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
+			                                 settings->RedirectionTargetFQDN))
 				return FALSE;
 
 			return TRUE;
@@ -510,10 +513,8 @@ static BOOL rdp_client_redirect_try_ip(rdpSettings* settings)
 {
 	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 	{
-		free(settings->ServerHostname);
-		settings->ServerHostname = _strdup(settings->TargetNetAddress);
-
-		if (!settings->ServerHostname)
+		if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
+		                                 settings->TargetNetAddress))
 			return FALSE;
 
 		return TRUE;
@@ -529,10 +530,8 @@ static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
 		if (settings->GatewayEnabled ||
 		    rdp_client_redirect_resolvable(settings->RedirectionTargetNetBiosName))
 		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
-
-			if (!settings->ServerHostname)
+			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
+			                                 settings->RedirectionTargetNetBiosName))
 				return FALSE;
 
 			return TRUE;
@@ -607,7 +606,9 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 			return FALSE;
 	}
 
-	if (!IFCALLRESULT(TRUE, rdp->instance->Redirect, rdp->instance))
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(rdp->context->instance);
+	if (!IFCALLRESULT(TRUE, rdp->context->instance->Redirect, rdp->context->instance))
 		return FALSE;
 
 	status = rdp_client_connect(rdp);
@@ -776,10 +777,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 
 	if (!rdp_read_header(rdp, s, &length, &channel_id))
-	{
-		WLog_ERR(TAG, "invalid RDP header");
 		return FALSE;
-	}
 
 	if (!rdp_read_security_header(s, &sec_flags, NULL))
 	{
@@ -795,13 +793,13 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	rdp->do_crypt_license = (sec_flags & SEC_LICENSE_ENCRYPT_SC) != 0 ? TRUE : FALSE;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, rand_len);
 
 	/* rand_len already includes 8 bytes of padding */
-	if (Stream_GetRemainingLength(s) < rand_len)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, rand_len))
 		return FALSE;
 
 	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
@@ -1089,7 +1087,7 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		return rc;
 	}
 
-	if (freerdp_shall_disconnect(rdp->instance))
+	if (freerdp_shall_disconnect_context(rdp->context))
 		return 0;
 
 	if (!rdp_send_confirm_active(rdp))
@@ -1435,11 +1433,11 @@ BOOL rdp_server_reactivate(rdpRdp* rdp)
 	return TRUE;
 }
 
-int rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
+BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 {
-	int status = 0;
+	BOOL status = FALSE;
 	freerdp_peer* client = NULL;
-	const int cstate = rdp_get_state(rdp);
+	const CONNECTION_STATE cstate = rdp_get_state(rdp);
 
 	if (cstate >= CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT)
 		client = rdp->context->peer;
@@ -1451,7 +1449,8 @@ int rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 	}
 
 	WLog_DBG(TAG, "%s %s --> %s", __FUNCTION__, rdp_get_state_string(rdp), rdp_state_string(state));
-	rdp_set_state(rdp, state);
+	if (!rdp_set_state(rdp, state))
+		goto fail;
 	switch (state)
 	{
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
@@ -1476,7 +1475,7 @@ int rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 					IFCALLRET(client->PostConnect, client->connected, client);
 
 					if (!client->connected)
-						return -1;
+						goto fail;
 				}
 
 				if (rdp_get_state(rdp) >= CONNECTION_STATE_ACTIVE)
@@ -1484,7 +1483,7 @@ int rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 					IFCALLRET(client->Activate, client->activated, client);
 
 					if (!client->activated)
-						return -1;
+						goto fail;
 				}
 			}
 
@@ -1494,6 +1493,8 @@ int rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 			break;
 	}
 
+	status = TRUE;
+fail:
 	return status;
 }
 

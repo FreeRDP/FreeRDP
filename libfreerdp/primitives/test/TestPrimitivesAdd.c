@@ -12,9 +12,7 @@
  * permissions and limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/sysinfo.h>
 #include "prim_test.h"

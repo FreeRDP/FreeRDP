@@ -72,8 +72,6 @@ CMAKE_DEPENDENT_OPTION(WITH_CLIENT "Build client binaries" ON "WITH_CLIENT_COMMO
 
 option(WITH_SERVER "Build server binaries" OFF)
 
-option(BUILTIN_CHANNELS "Combine all channels into their respective base library" ON)
-
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
 option(FREERDP_UNIFIED_BUILD "Build WinPR, uwac, RdTk and FreeRDP in one go" ON)
@@ -149,7 +147,6 @@ option(WITH_DEBUG_RINGBUFFER "Enable Ringbuffer debug messages" ${DEFAULT_DEBUG_
 option(WITH_DEBUG_SYMBOLS "Pack debug symbols to installer" OFF)
 option(WITH_CCACHE "Use ccache support if available" ON)
 option(WITH_CLANG_FORMAT "Detect clang-format. run 'cmake --build . --target clangformat' to format." ON)
-option(WITH_GSSAPI "Compile support for kerberos authentication. (EXPERIMENTAL)" OFF)
 
 option(WITH_DSP_EXPERIMENTAL "Enable experimental sound encoder/decoder formats" OFF)
 if (WITH_FFMPEG)

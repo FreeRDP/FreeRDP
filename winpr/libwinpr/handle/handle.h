@@ -40,11 +40,6 @@
 #define HANDLE_TYPE_TIMER_QUEUE_TIMER 12
 #define HANDLE_TYPE_COMM 13
 
-#define WINPR_HANDLE_DEF() \
-	ULONG Type;            \
-	ULONG Mode;            \
-	HANDLE_OPS* ops
-
 typedef BOOL (*pcIsHandled)(HANDLE handle);
 typedef BOOL (*pcCloseHandle)(HANDLE handle);
 typedef int (*pcGetFd)(HANDLE handle);
@@ -66,6 +61,8 @@ typedef BOOL (*pcWriteFileGather)(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArr
                                   DWORD nNumberOfBytesToWrite, LPDWORD lpReserved,
                                   LPOVERLAPPED lpOverlapped);
 typedef DWORD (*pcGetFileSize)(HANDLE handle, LPDWORD lpFileSizeHigh);
+typedef BOOL (*pcGetFileInformationByHandle)(HANDLE handle,
+                                             LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
 typedef BOOL (*pcFlushFileBuffers)(HANDLE hFile);
 typedef BOOL (*pcSetEndOfFile)(HANDLE handle);
 typedef DWORD (*pcSetFilePointer)(HANDLE handle, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh,
@@ -84,7 +81,7 @@ typedef BOOL (*pcUnlockFileEx)(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBy
 typedef BOOL (*pcSetFileTime)(HANDLE hFile, const FILETIME* lpCreationTime,
                               const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime);
 
-typedef struct _HANDLE_OPS
+typedef struct
 {
 	pcIsHandled IsHandled;
 	pcCloseHandle CloseHandle;
@@ -106,13 +103,35 @@ typedef struct _HANDLE_OPS
 	pcUnlockFile UnlockFile;
 	pcUnlockFileEx UnlockFileEx;
 	pcSetFileTime SetFileTime;
+	pcGetFileInformationByHandle GetFileInformationByHandle;
 } HANDLE_OPS;
 
-struct winpr_handle
+typedef struct
 {
-	WINPR_HANDLE_DEF();
-};
-typedef struct winpr_handle WINPR_HANDLE;
+	ULONG Type;
+	ULONG Mode;
+	HANDLE_OPS* ops;
+} WINPR_HANDLE;
+
+static INLINE BOOL WINPR_HANDLE_IS_HANDLED(HANDLE handle, ULONG type, BOOL invalidValue)
+{
+	WINPR_HANDLE* pWinprHandle = (WINPR_HANDLE*)handle;
+	BOOL invalid = !pWinprHandle;
+
+	if (invalidValue)
+	{
+		if (INVALID_HANDLE_VALUE == pWinprHandle)
+			invalid = TRUE;
+	}
+
+	if (invalid || (pWinprHandle->Type != type))
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
 
 static INLINE void WINPR_HANDLE_SET_TYPE_AND_MODE(void* _handle, ULONG _type, ULONG _mode)
 {

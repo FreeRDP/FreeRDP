@@ -1,0 +1,581 @@
+/**
+ * WinPR: Windows Portable Runtime
+ * Windows Data Types
+ *
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef WINPR_WTYPES_H
+#define WINPR_WTYPES_H
+
+/* Set by CMake during configuration */
+#cmakedefine HAVE_STDINT_H
+#cmakedefine HAVE_STDBOOL_H
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+/* Microsoft's inttypes.h is broken before MSVC 2015 */
+#cmakedefine HAVE_INTTYPES_H
+#endif
+
+/* MSDN: Windows Data Types - http://msdn.microsoft.com/en-us/library/aa383751/ */
+/* [MS-DTYP]: Windows Data Types - http://msdn.microsoft.com/en-us/library/cc230273/ */
+
+#include <wchar.h>
+#include <winpr/windows.h>
+
+#include <winpr/spec.h>
+
+#ifdef HAVE_STDBOOL_H
+#include <stdbool.h>
+#endif
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
+#include <limits.h>
+
+#if defined(_WIN32) || defined(__MINGW32__)
+#include <wtypes.h>
+
+/* Handle missing ssize_t on Windows */
+#ifdef _WIN64
+typedef long long LONG_PTR;
+#else
+typedef long LONG_PTR;
+#endif
+typedef LONG_PTR SSIZE_T;
+
+#endif
+
+#if defined(__OBJC__) && defined(__APPLE__)
+#include <objc/objc.h>
+#endif
+
+#ifndef CONST
+#define CONST const
+#endif
+
+#ifndef VOID
+#define VOID void
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
+#if !defined(_WIN32) && !defined(__MINGW32__)
+
+#define CALLBACK
+
+#define WINAPI
+#define CDECL
+
+#ifndef FAR
+#define FAR
+#endif
+
+#ifndef NEAR
+#define NEAR
+#endif
+
+#ifdef HAVE_STDINT_H
+typedef int8_t                  __int8;
+typedef uint8_t                 __uint8;
+typedef int16_t                 __int16;
+typedef uint16_t                __uint16;
+typedef int32_t                 __int32;
+typedef uint32_t                __uint32;
+typedef int64_t                 __int64;
+typedef uint64_t                __uint64;
+#else
+#if UCHAR_MAX == 0xFF
+typedef signed char             __int8;
+typedef unsigned char           __uint8;
+#else
+#error "8-bit type not configured"
+#endif
+#if USHRT_MAX == 0xFFFF
+typedef short                   __int16;
+typedef unsigned short          __uint16;
+#elif UINT_MAX == 0xFFFF
+typedef int                     __int16;
+typedef unsigned int            __uint16;
+#error "16-bit type not configured"
+#endif
+#if UINT_MAX == 0xFFFFFFFF
+typedef int                     __int32;
+typedef unsigned int            __uint32;
+#elif ULONG_MAX == 0xFFFFFFFF
+typedef long                    __int32;
+typedef unsigned long           __uint32;
+#else
+#error "32-bit type not configured"
+#endif
+#if ULONG_MAX == 0xFFFFFFFFFFFFFFFF
+typedef long                    __int64;
+typedef unsigned long           __uint64;
+#elif ULLONG_MAX == 0xFFFFFFFFFFFFFFFF
+typedef long long               __int64;
+typedef unsigned long long      __uint64;
+#else
+#error "64-bit type not configured"
+#endif
+#endif /* HAVE_STDINT_H */
+
+#ifdef HAVE_STDINT_H
+#if defined(__ILP64__) || defined(__LP64__)
+#define __int3264 int64_t
+#define __uint3264 uint64_t
+#else
+#define __int3264 int32_t
+#define __uint3264 uint32_t
+#endif
+#else
+#if defined(__ILP64__) || defined(__LP64__)
+#define __int3264 __int64
+#define __uint3264 __uint64
+#else
+#define __int3264 __int32
+#define __uint3264 __uint32
+#endif
+#endif /* HAVE_STDINT_H */
+
+
+typedef void* PVOID, *LPVOID, *PVOID64, *LPVOID64;
+
+#ifndef XMD_H /* X11/Xmd.h typedef collision with BOOL */
+#ifndef __OBJC__ /* objc.h typedef collision with BOOL */
+#ifndef __APPLE__
+typedef __int32 BOOL;
+#else /* __APPLE__ */
+/* ensure compatibility with objc libraries */
+#if (defined(TARGET_OS_IPHONE) && defined(__LP64__))  || defined(TARGET_OS_WATCH)
+typedef bool BOOL;
+#else
+typedef signed char BOOL;
+#endif
+#endif /* __APPLE__ */
+#endif /* __OBJC__ */
+#endif /* XMD_H */
+
+typedef BOOL* PBOOL, *LPBOOL;
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef XMD_H /* X11/Xmd.h typedef collision with BYTE */
+typedef __uint8 BYTE;
+#endif /* XMD_H */
+typedef BYTE byte, *PBYTE, *LPBYTE;
+typedef BYTE BOOLEAN, PBOOLEAN;
+
+#if CHAR_BIT == 8
+typedef char CHAR;
+typedef unsigned char UCHAR;
+#else
+typedef __int8 CHAR;
+typedef __uint8 UCHAR;
+#endif
+typedef CHAR CCHAR, *PCHAR, *LPCH, *PCH, *PSTR, *LPSTR;
+typedef const CHAR* LPCCH, *PCCH, *LPCSTR, *PCSTR;
+typedef UCHAR* PUCHAR;
+
+typedef __uint16 WCHAR;
+typedef WCHAR UNICODE, *PWCHAR, *LPWCH, *PWCH, *BSTR, *LMSTR, *LPWSTR, *PWSTR;
+typedef const WCHAR* LPCWCH, *PCWCH, *LMCSTR, *LPCWSTR, *PCWSTR;
+
+typedef __int16 SHORT, *PSHORT;
+typedef __int32 INT, *PINT, *LPINT;
+typedef __int32 LONG, *PLONG, *LPLONG;
+typedef __int64 LONGLONG, *PLONGLONG;
+
+typedef __uint32 UINT, *PUINT, *LPUINT;
+typedef __uint16 USHORT, *PUSHORT;
+typedef __uint32 ULONG, *PULONG;
+typedef __uint64 ULONGLONG, *PULONGLONG;
+
+#ifndef XMD_H /* X11/Xmd.h typedef collisions */
+typedef __int8 INT8;
+typedef __int16 INT16;
+typedef __int32 INT32;
+typedef __int64 INT64;
+#endif
+typedef INT8* PINT8;
+typedef INT16* PINT16;
+typedef INT32* PINT32;
+typedef INT64* PINT64;
+
+typedef __int32 LONG32, *PLONG32;
+#ifndef LONG64 /* X11/Xmd.h uses/defines LONG64 */
+typedef __int64 LONG64, *PLONG64;
+#endif
+
+typedef __uint8 UINT8, *PUINT8;
+typedef __uint16 UINT16, *PUINT16;
+typedef __uint32 UINT32, *PUINT32;
+typedef __uint64 UINT64, *PUINT64;
+typedef __uint64 ULONG64, *PULONG64;
+
+typedef __uint16 WORD, *PWORD, *LPWORD;
+typedef __uint32 DWORD, DWORD32, *PDWORD, *LPDWORD, *PDWORD32;
+typedef __uint64 DWORD64, DWORDLONG, QWORD, *PDWORD64, *PDWORDLONG, *PQWORD;
+
+typedef __int3264 INT_PTR, *PINT_PTR;
+typedef __uint3264 UINT_PTR, *PUINT_PTR;
+typedef __int3264 LONG_PTR, *PLONG_PTR;
+typedef __uint3264 ULONG_PTR, *PULONG_PTR;
+typedef __uint3264 DWORD_PTR, *PDWORD_PTR;
+
+typedef ULONG_PTR SIZE_T, *PSIZE_T;
+typedef LONG_PTR SSIZE_T, *PSSIZE_T;
+
+typedef float FLOAT;
+
+typedef double DOUBLE;
+
+typedef void* HANDLE, *PHANDLE, *LPHANDLE;
+typedef HANDLE HINSTANCE;
+typedef HANDLE HMODULE;
+typedef HANDLE HWND;
+typedef HANDLE HBITMAP;
+typedef HANDLE HICON;
+typedef HANDLE HCURSOR;
+typedef HANDLE HBRUSH;
+typedef HANDLE HMENU;
+
+typedef DWORD HCALL;
+
+typedef ULONG error_status_t;
+typedef LONG HRESULT;
+typedef LONG SCODE;
+typedef SCODE* PSCODE;
+
+typedef struct s_POINTL /* ptl  */
+{
+	LONG x;
+	LONG y;
+} POINTL, *PPOINTL;
+
+typedef struct tagSIZE
+{
+	LONG cx;
+	LONG cy;
+} SIZE, *PSIZE, *LPSIZE;
+
+typedef SIZE SIZEL;
+
+typedef struct s_GUID
+{
+	UINT32 Data1;
+	UINT16 Data2;
+	UINT16 Data3;
+	BYTE Data4[8];
+} GUID, UUID, *PGUID, *LPGUID, *LPCGUID;
+typedef GUID CLSID;
+
+typedef struct s_LUID
+{
+	DWORD LowPart;
+	LONG  HighPart;
+} LUID, *PLUID;
+
+typedef GUID IID;
+typedef IID* REFIID;
+
+#ifdef UNICODE
+#define _T(x)	L ## x
+#else
+#define _T(x)	x
+#endif
+
+#ifdef UNICODE
+typedef LPWSTR PTSTR;
+typedef LPWSTR LPTCH;
+typedef LPWSTR LPTSTR;
+typedef LPCWSTR LPCTSTR;
+#else
+typedef LPSTR PTSTR;
+typedef LPSTR LPTCH;
+typedef LPSTR LPTSTR;
+typedef LPCSTR LPCTSTR;
+#endif
+
+typedef union u_ULARGE_INTEGER
+{
+	struct
+	{
+		DWORD LowPart;
+		DWORD HighPart;
+	} DUMMYSTRUCTNAME;
+
+	struct
+	{
+		DWORD LowPart;
+		DWORD HighPart;
+	} u;
+
+	ULONGLONG QuadPart;
+} ULARGE_INTEGER, *PULARGE_INTEGER;
+
+typedef union u_LARGE_INTEGER
+{
+	struct
+	{
+		DWORD LowPart;
+		LONG  HighPart;
+	} DUMMYSTRUCTNAME;
+
+	struct
+	{
+		DWORD LowPart;
+		LONG  HighPart;
+	} u;
+
+	LONGLONG QuadPart;
+} LARGE_INTEGER, *PLARGE_INTEGER;
+
+typedef struct s_FILETIME
+{
+	DWORD dwLowDateTime;
+	DWORD dwHighDateTime;
+} FILETIME, *PFILETIME, *LPFILETIME;
+
+typedef struct s_SYSTEMTIME
+{
+	WORD wYear;
+	WORD wMonth;
+	WORD wDayOfWeek;
+	WORD wDay;
+	WORD wHour;
+	WORD wMinute;
+	WORD wSecond;
+	WORD wMilliseconds;
+} SYSTEMTIME, *PSYSTEMTIME, *LPSYSTEMTIME;
+
+typedef struct s_RPC_SID_IDENTIFIER_AUTHORITY
+{
+	BYTE Value[6];
+} RPC_SID_IDENTIFIER_AUTHORITY;
+
+typedef DWORD SECURITY_INFORMATION, *PSECURITY_INFORMATION;
+
+typedef struct s_RPC_SID
+{
+	UCHAR Revision;
+	UCHAR SubAuthorityCount;
+	RPC_SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+	ULONG SubAuthority[1];
+} RPC_SID, *PRPC_SID, *PSID;
+
+typedef struct s_ACL
+{
+	UCHAR AclRevision;
+	UCHAR Sbz1;
+	USHORT AclSize;
+	USHORT AceCount;
+	USHORT Sbz2;
+} ACL, *PACL;
+
+typedef struct s_SECURITY_DESCRIPTOR
+{
+	UCHAR Revision;
+	UCHAR Sbz1;
+	USHORT Control;
+	PSID Owner;
+	PSID Group;
+	PACL Sacl;
+	PACL Dacl;
+} SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
+
+typedef WORD SECURITY_DESCRIPTOR_CONTROL, *PSECURITY_DESCRIPTOR_CONTROL;
+
+typedef struct s_SECURITY_ATTRIBUTES
+{
+	DWORD nLength;
+	LPVOID lpSecurityDescriptor;
+	BOOL bInheritHandle;
+} SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
+
+typedef struct s_PROCESS_INFORMATION
+{
+	HANDLE hProcess;
+	HANDLE hThread;
+	DWORD dwProcessId;
+	DWORD dwThreadId;
+} PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
+
+typedef DWORD (*PTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
+typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
+
+typedef void* FARPROC;
+
+typedef struct tagDEC
+{
+	USHORT wReserved;
+	union
+	{
+		struct
+		{
+			BYTE scale;
+			BYTE sign;
+		} DUMMYSTRUCTNAME;
+		USHORT signscale;
+	} DUMMYUNIONNAME;
+	ULONG Hi32;
+	union
+	{
+		struct
+		{
+			ULONG Lo32;
+			ULONG Mid32;
+		} DUMMYSTRUCTNAME2;
+		ULONGLONG Lo64;
+	} DUMMYUNIONNAME2;
+} DECIMAL;
+
+typedef DECIMAL* LPDECIMAL;
+
+#define DECIMAL_NEG		((BYTE) 0x80)
+#define DECIMAL_SETZERO(dec)	{ (dec).Lo64 = 0; (dec).Hi32 = 0; (dec).signscale = 0; }
+
+typedef DWORD LCID;
+typedef PDWORD PLCID;
+typedef WORD LANGID;
+
+#endif /* _WIN32 not defined */
+
+typedef void* PCONTEXT_HANDLE;
+typedef PCONTEXT_HANDLE* PPCONTEXT_HANDLE;
+
+#ifndef _NTDEF
+typedef LONG NTSTATUS;
+typedef NTSTATUS* PNTSTATUS;
+#endif
+
+#ifndef _LPCVOID_DEFINED
+#define _LPCVOID_DEFINED
+typedef const VOID* LPCVOID;
+#endif
+
+#ifndef _LPCBYTE_DEFINED
+#define _LPCBYTE_DEFINED
+typedef const BYTE* LPCBYTE;
+#endif
+
+/* integer format specifiers */
+#ifndef HAVE_INTTYPES_H
+#define PRId8           "hhd"
+#define PRIi8           "hhi"
+#define PRIu8           "hhu"
+#define PRIo8           "hho"
+#define PRIx8           "hhx"
+#define PRIX8           "hhX"
+#define PRId16          "hd"
+#define PRIi16          "hi"
+#define PRIu16          "hu"
+#define PRIo16          "ho"
+#define PRIx16          "hx"
+#define PRIX16          "hX"
+#if defined(_MSC_VER)
+#define PRId32          "I32d"
+#define PRIi32          "I32i"
+#define PRIu32          "I32u"
+#define PRIo32          "I32o"
+#define PRIx32          "I32x"
+#define PRIX32          "I32X"
+#define PRId64          "I64d"
+#define PRIi64          "I64i"
+#define PRIu64          "I64u"
+#define PRIo64          "I64o"
+#define PRIx64          "I64x"
+#define PRIX64          "I64X"
+#else
+#define PRId32          "d"
+#define PRIi32          "i"
+#define PRIu32          "u"
+#define PRIo32          "o"
+#define PRIx32          "x"
+#define PRIX32          "X"
+#if ULONG_MAX == 0xFFFFFFFFFFFFFFFF
+#define PRId64          "ld"
+#define PRIi64          "li"
+#define PRIu64          "lu"
+#define PRIo64          "lo"
+#define PRIx64          "lx"
+#define PRIX64          "lX"
+#else
+#define PRId64          "lld"
+#define PRIi64          "lli"
+#define PRIu64          "llu"
+#define PRIo64          "llo"
+#define PRIx64          "llx"
+#define PRIX64          "llX"
+#endif
+#endif /* _MSC_VER */
+#endif /* HAVE_INTTYPES_H not defined*/
+
+#ifndef SSIZE_MAX
+#if defined(_POSIX_SSIZE_MAX)
+#define SSIZE_MAX _POSIX_SSIZE_MAX
+#elif defined(_WIN64)
+#define SSIZE_MAX _I64_MAX
+#elif defined(_WIN32)
+#define SSIZE_MAX LONG_MAX
+#else
+#define SSIZE_MAX LONG_MAX
+#endif
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER < 1900
+/* %z not supported before MSVC 2015 */
+#define PRIdz		"Id"
+#define PRIiz		"Ii"
+#define PRIuz		"Iu"
+#define PRIoz		"Io"
+#define PRIxz		"Ix"
+#define PRIXz		"IX"
+#else
+#define PRIdz		"zd"
+#define PRIiz		"zi"
+#define PRIuz		"zu"
+#define PRIoz		"zo"
+#define PRIxz		"zx"
+#define PRIXz		"zX"
+#endif
+
+
+#include <winpr/user.h>
+
+#ifndef _WIN32
+#define _fseeki64(fp, offset, origin) fseeko(fp, offset, origin)
+#define _ftelli64(fp) ftello(fp)
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+#endif /* WINPR_WTYPES_H */

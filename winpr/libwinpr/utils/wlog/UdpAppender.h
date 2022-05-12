@@ -26,7 +26,7 @@
 
 #include <winpr/wlog.h>
 
-#include "wlog/wlog.h"
+#include "wlog.h"
 
 wLogAppender* WLog_UdpAppender_New(wLog* log);
 

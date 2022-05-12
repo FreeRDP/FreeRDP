@@ -35,13 +35,10 @@
 #define SSPI_GSSAPI
 #define SSPI_GSSOID
 
-struct sspi_gss_name_struct;
 typedef struct sspi_gss_name_struct* sspi_gss_name_t;
 
-struct sspi_gss_cred_id_struct;
 typedef struct sspi_gss_cred_id_struct* sspi_gss_cred_id_t;
 
-struct sspi_gss_ctx_id_struct;
 typedef struct sspi_gss_ctx_id_struct* sspi_gss_ctx_id_t;
 
 typedef struct sspi_gss_OID_desc_struct
@@ -611,11 +608,37 @@ extern "C"
 	                                                       sspi_gss_cred_id_t cred_handle,
 	                                                       const sspi_gss_OID_set mech_set);
 
+	struct sspi_gss_key_value_element_struct {
+	    const char *key;
+	    const char *value;
+	};
+	typedef struct sspi_gss_key_value_element_struct sspi_gss_key_value_element_desc;
+
+	struct sspi_gss_key_value_set_struct {
+		UINT32 count;
+	    sspi_gss_key_value_element_desc *elements;
+	};
+	typedef struct sspi_gss_key_value_set_struct sspi_gss_key_value_set_desc;
+	typedef const sspi_gss_key_value_set_desc *sspi_gss_const_key_value_set_t;
+
+	UINT32 SSPI_GSSAPI sspi_gss_acquire_cred_from(UINT32 *minor_status,
+	    sspi_gss_name_t desired_name, UINT32 time_req, sspi_gss_OID_set desired_mechs,
+	    sspi_gss_cred_usage_t cred_usage, sspi_gss_const_key_value_set_t cred_store,
+		sspi_gss_cred_id_t *output_cred_handle,	sspi_gss_OID_set *actual_mechs,
+		UINT32* time_rec);
+
+	typedef UINT32 (SSPI_GSSAPI* fn_sspi_gss_acquire_cred_from)(UINT32 *minor_status,
+	    sspi_gss_name_t desired_name, UINT32 time_req, sspi_gss_OID_set desired_mechs,
+	    sspi_gss_cred_usage_t cred_usage, sspi_gss_const_key_value_set_t cred_store,
+		sspi_gss_cred_id_t *output_cred_handle,	sspi_gss_OID_set *actual_mechs,
+		UINT32* time_rec);
+
+
 #ifdef __cplusplus
 }
 #endif
 
-struct _GSSAPI_FUNCTION_TABLE
+typedef struct
 {
 	fn_sspi_gss_acquire_cred gss_acquire_cred;
 	fn_sspi_gss_release_cred gss_release_cred;
@@ -663,8 +686,8 @@ struct _GSSAPI_FUNCTION_TABLE
 	fn_sspi_gss_pseudo_random gss_pseudo_random;
 	fn_sspi_gss_store_cred gss_store_cred;
 	fn_sspi_gss_set_neg_mechs gss_set_neg_mechs;
-};
-typedef struct _GSSAPI_FUNCTION_TABLE GSSAPI_FUNCTION_TABLE;
+	fn_sspi_gss_acquire_cred_from gss_acquire_cred_from;
+} GSSAPI_FUNCTION_TABLE;
 
 GSSAPI_FUNCTION_TABLE* SEC_ENTRY gssApi_InitSecurityInterface(void);
 

@@ -81,7 +81,7 @@ static BOOL pf_channel_client_write_iostatus(wStream* out, const SMARTCARD_OPERA
 	WINPR_ASSERT(out);
 
 	pos = Stream_GetPosition(out);
-	if (Stream_Length(out) < 16)
+	if (!Stream_CheckAndLogRequiredLength(TAG, out, 16))
 		return FALSE;
 	Stream_SetPosition(out, 0);
 
@@ -178,12 +178,8 @@ BOOL pf_channel_smartcard_client_handle(pClientContext* pc, wStream* s, wStream*
 	e.send_fkt = send_fkt;
 
 	/* Skip IRP header */
-	if (Stream_GetRemainingLength(s) < 20)
-	{
-		WLog_WARN(TAG, "[%s] Invalid IRP received, expected 20 bytes, have %" PRIuz,
-		          SCARD_SVC_CHANNEL_NAME, Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 		return FALSE;
-	}
 	else
 	{
 		UINT32 DeviceId;

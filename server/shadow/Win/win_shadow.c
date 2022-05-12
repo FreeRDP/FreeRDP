@@ -45,7 +45,7 @@ static BOOL win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
 }
 
 static BOOL win_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
-                                            UINT16 flags, UINT16 code)
+                                            UINT16 flags, UINT8 code)
 {
 	UINT rc;
 	INPUT event;
@@ -291,9 +291,17 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 		rdpGdi* gdi;
 		shwContext* shw;
 		rdpContext* context;
+
+		WINPR_ASSERT(subsystem);
 		shw = subsystem->shw;
-		context = &shw->context;
+		WINPR_ASSERT(shw);
+
+		context = &shw->common.context;
+		WINPR_ASSERT(context);
+
 		gdi = context->gdi;
+		WINPR_ASSERT(gdi);
+
 		pDstData = gdi->primary_buffer;
 		nDstStep = gdi->width * 4;
 		DstFormat = gdi->dstFormat;

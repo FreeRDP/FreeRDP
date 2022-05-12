@@ -20,9 +20,7 @@
 #ifndef WINPR_SYNCH_PRIVATE_H
 #define WINPR_SYNCH_PRIVATE_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/platform.h>
 
@@ -52,7 +50,7 @@
 
 struct winpr_mutex
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 	char* name;
 	pthread_mutex_t mutex;
 };
@@ -60,7 +58,7 @@ typedef struct winpr_mutex WINPR_MUTEX;
 
 struct winpr_semaphore
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	int pipe_fd[2];
 	winpr_sem_t* sem;
@@ -87,7 +85,7 @@ typedef struct winpr_semaphore WINPR_SEMAPHORE;
 
 struct winpr_timer
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	int fd;
 	BOOL bInit;
@@ -122,7 +120,7 @@ typedef struct winpr_timer_queue_timer WINPR_TIMER_QUEUE_TIMER;
 
 struct winpr_timer_queue
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	pthread_t thread;
 	pthread_attr_t attr;
@@ -139,7 +137,7 @@ typedef struct winpr_timer_queue WINPR_TIMER_QUEUE;
 
 struct winpr_timer_queue_timer
 {
-	WINPR_HANDLE_DEF();
+	WINPR_HANDLE common;
 
 	ULONG Flags;
 	DWORD DueTime;

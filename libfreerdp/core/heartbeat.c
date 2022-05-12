@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #define WITH_DEBUG_HEARTBEAT
 
@@ -33,7 +31,11 @@ int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 	BYTE count2;
 	BOOL rc;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(s);
+
+	if (!Stream_CheckAndLogRequiredLength(AUTODETECT_TAG, s, 4))
 		return -1;
 
 	Stream_Read_UINT8(s, reserved); /* reserved (1 byte) */
@@ -45,7 +47,8 @@ int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 	         "received Heartbeat PDU -> period=%" PRIu8 ", count1=%" PRIu8 ", count2=%" PRIu8 "",
 	         period, count1, count2);
 
-	rc = IFCALLRESULT(TRUE, rdp->heartbeat->ServerHeartbeat, rdp->instance, period, count1, count2);
+	rc = IFCALLRESULT(TRUE, rdp->heartbeat->ServerHeartbeat, rdp->context->instance, period, count1,
+	                  count2);
 	if (!rc)
 	{
 		WLog_ERR(HEARTBEAT_TAG, "heartbeat->ServerHeartbeat callback failed!");

@@ -163,7 +163,7 @@ macro(add_channel_client_subsystem _channel_prefix _channel_name _subsystem _typ
 endmacro(add_channel_client_subsystem)
 
 macro(channel_install _targets _destination _export_target)
-    if (NOT BUILTIN_CHANNELS OR NOT BUILD_SHARED_LIBS)
+    if (NOT BUILD_SHARED_LIBS)
         install(TARGETS ${_targets} DESTINATION ${_destination} EXPORT ${_export_target})
     endif()
 endmacro(channel_install)
@@ -182,39 +182,16 @@ macro(add_channel_client_library _module_prefix _module_name _channel_name _dyna
     link_directories(${_lnk_dir})
   endif()
 
-  if(${_dynamic} AND (NOT BUILTIN_CHANNELS))
-    # On windows create dll version information.
-    # Vendor, product and year are already set in top level CMakeLists.txt
-    if (WIN32)
-      set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
-      set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
-      set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
-      set (RC_VERSION_PATCH 0)
-      set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${_module_name}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+	set(${_module_prefix}_STATIC ON PARENT_SCOPE)
+	set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
+	set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
+	set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
+	add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
+	target_link_libraries(${_module_name} ${${_module_prefix}_LIBS})
 
-      configure_file(
-      ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-      ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-      @ONLY)
-
-      set ( ${_module_prefix}_SRCS ${${_module_prefix}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-    endif()
-
-    add_library(${_module_name} ${${_module_prefix}_SRCS})
-    target_link_libraries(${_module_name} ${${_module_prefix}_LIBS})
-    client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
-  else()
-    set(${_module_prefix}_STATIC ON PARENT_SCOPE)
-    set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
-    set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
-    set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
-    add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
-    target_link_libraries(${_module_name} ${${_module_prefix}_LIBS})
-
-    if (NOT BUILD_SHARED_LIBS)
-        client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
-    endif()
-  endif()
+	if (NOT BUILD_SHARED_LIBS)
+			client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
+	endif()
 endmacro(add_channel_client_library)
 
 macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_name _type _dynamic _entry)
@@ -223,38 +200,15 @@ macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_
     link_directories(${_lnk_dir})
   endif()
 
-  if(${_dynamic} AND (NOT BUILTIN_CHANNELS))
-    # On windows create dll version information.
-    # Vendor, product and year are already set in top level CMakeLists.txt
-    if (WIN32)
-      set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
-      set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
-      set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
-      set (RC_VERSION_PATCH 0)
-      set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${_module_name}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+	set(${_module_prefix}_STATIC ON PARENT_SCOPE)
+	set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
+	set(${_module_prefix}_TYPE ${_type} PARENT_SCOPE)
 
-      configure_file(
-      ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-      ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-      @ONLY)
-
-      set ( ${_module_prefix}_SRCS ${${_module_prefix}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-    endif()
-
-    add_library(${_module_name} ${${_module_prefix}_SRCS})
-    target_link_libraries(${_module_name} ${${_module_prefix}_LIBS})
-    client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
-  else()
-    set(${_module_prefix}_STATIC ON PARENT_SCOPE)
-    set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
-    set(${_module_prefix}_TYPE ${_type} PARENT_SCOPE)
-
-    add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
-    target_link_libraries(${_module_name} ${${_module_prefix}_LIBS})
-    if (NOT BUILD_SHARED_LIBS)
-        client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
-    endif()
-  endif()
+	add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
+	target_link_libraries(${_module_name} ${${_module_prefix}_LIBS})
+	if (NOT BUILD_SHARED_LIBS)
+			client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
+	endif()
 endmacro(add_channel_client_subsystem_library)
 
 macro(add_channel_server_library _module_prefix _module_name _channel_name _dynamic _entry)
@@ -263,34 +217,13 @@ macro(add_channel_server_library _module_prefix _module_name _channel_name _dyna
     link_directories(${_lnk_dir})
   endif()
 
-  if(${_dynamic} AND (NOT BUILTIN_CHANNELS))
-    # On windows create dll version information.
-    # Vendor, product and year are already set in top level CMakeLists.txt
-    if (WIN32)
-      set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
-      set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
-      set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
-      set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${_module_name}${FREERDP_VERSION_MAJOR}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
-
-      configure_file(
-      ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-      ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-      @ONLY)
-
-      set ( ${_module_prefix}_SRCS ${${_module_prefix}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-    endif()
-
-    add_library(${_module_name} ${${_module_prefix}_SRCS})
-    server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
-  else()
-    set(${_module_prefix}_STATIC ON PARENT_SCOPE)
-    set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
-    set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
-    set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
-    add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
-    if (NOT BUILD_SHARED_LIBS)
-        server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
-    endif()
+	set(${_module_prefix}_STATIC ON PARENT_SCOPE)
+	set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
+	set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
+	set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
+	add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
+	if (NOT BUILD_SHARED_LIBS)
+			server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
   endif()
 endmacro(add_channel_server_library)
 

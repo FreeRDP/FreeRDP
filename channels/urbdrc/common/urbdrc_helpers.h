@@ -34,7 +34,7 @@ extern "C"
 	const char* urb_function_string(UINT16 urb);
 	const char* mask_to_string(UINT32 mask);
 	const char* interface_to_string(UINT32 id);
-	const char* call_to_string(BOOL client, UINT32 interface, UINT32 functionId);
+	const char* call_to_string(BOOL client, UINT32 interfaceNr, UINT32 functionId);
 
 	void urbdrc_dump_message(wLog* log, BOOL client, BOOL write, wStream* s);
 

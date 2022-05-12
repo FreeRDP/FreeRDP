@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -302,7 +300,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LP
 		LPCSTR pszExtension = PathGetSharedLibraryExtensionA(0);
 		LPCSTR pszPrefix = FREERDP_SHARED_LIBRARY_PREFIX;
 		LPSTR tmp;
-		int rc;
+		int rc = 0;
 
 		if (pszPrefix)
 			cchFileName += strnlen(pszPrefix, MAX_PATH);
@@ -311,10 +309,14 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LP
 		tmp = calloc(cchFileName, sizeof(CHAR));
 		if (tmp)
 			rc = sprintf_s(tmp, cchFileName, "%s%s.%s", pszPrefix, pszFileName, pszExtension);
+
 		free(pszFileName);
 		pszFileName = tmp;
-		if (!pszFileName)
+		if (!pszFileName || (rc < 0))
+		{
+			free(pszFileName);
 			return NULL;
+		}
 	}
 
 	if (pszSubsystem)

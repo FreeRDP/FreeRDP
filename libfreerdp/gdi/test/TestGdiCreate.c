@@ -92,7 +92,7 @@ static int test_gdi_CreateBitmap(void)
 	width = 32;
 	height = 16;
 
-	if (!(data = (BYTE*)_aligned_malloc(width * height * 4, 16)))
+	if (!(data = (BYTE*)winpr_aligned_malloc(width * height * 4, 16)))
 	{
 		printf("failed to allocate aligned bitmap data memory\n");
 		return -1;
@@ -355,7 +355,7 @@ static BOOL test_gdi_GetPixel(void)
 		}
 
 		gdi_SelectObject(hdc, (HGDIOBJECT)hBitmap);
-		bpp = GetBytesPerPixel(hBitmap->format);
+		bpp = FreeRDPGetBytesPerPixel(hBitmap->format);
 
 		for (i = 0; i < height; i++)
 		{
@@ -364,7 +364,8 @@ static BOOL test_gdi_GetPixel(void)
 				UINT32 pixel;
 				const UINT32 color =
 				    FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
-				WriteColor(&hBitmap->data[i * hBitmap->scanline + j * bpp], hBitmap->format, color);
+				FreeRDPWriteColor(&hBitmap->data[i * hBitmap->scanline + j * bpp], hBitmap->format,
+				                  color);
 				pixel = gdi_GetPixel(hdc, j, i);
 
 				if (pixel != color)
@@ -407,7 +408,7 @@ static BOOL test_gdi_SetPixel(void)
 		hdc->format = colorFormatList[x];
 		hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
 		gdi_SelectObject(hdc, (HGDIOBJECT)hBitmap);
-		bpp = GetBytesPerPixel(hBitmap->format);
+		bpp = FreeRDPGetBytesPerPixel(hBitmap->format);
 
 		for (i = 0; i < height; i++)
 		{
@@ -417,7 +418,8 @@ static BOOL test_gdi_SetPixel(void)
 				const UINT32 color =
 				    FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
 				gdi_SetPixel(hdc, j, i, color);
-				pixel = ReadColor(&hBitmap->data[i * hBitmap->scanline + j * bpp], hBitmap->format);
+				pixel = FreeRDPReadColor(&hBitmap->data[i * hBitmap->scanline + j * bpp],
+				                         hBitmap->format);
 
 				if (pixel != color)
 				{

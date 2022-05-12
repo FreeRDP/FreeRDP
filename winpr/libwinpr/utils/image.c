@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
@@ -51,7 +49,7 @@ static BOOL writeBitmapFileHeader(wStream* s, const WINPR_BITMAP_FILE_HEADER* bf
 
 static BOOL readBitmapFileHeader(wStream* s, WINPR_BITMAP_FILE_HEADER* bf)
 {
-	if (!s || !bf || (Stream_GetRemainingLength(s) < sizeof(WINPR_BITMAP_FILE_HEADER)))
+	if (!s || !bf || (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(WINPR_BITMAP_FILE_HEADER))))
 		return FALSE;
 
 	Stream_Read_UINT8(s, bf->bfType[0]);
@@ -84,7 +82,7 @@ static BOOL writeBitmapInfoHeader(wStream* s, const WINPR_BITMAP_INFO_HEADER* bi
 
 static BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi)
 {
-	if (!s || !bi || (Stream_GetRemainingLength(s) < sizeof(WINPR_BITMAP_INFO_HEADER)))
+	if (!s || !bi || (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(WINPR_BITMAP_INFO_HEADER))))
 		return FALSE;
 
 	Stream_Read_UINT32(s, bi->biSize);
@@ -353,7 +351,8 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 	BYTE* pDstData;
 	WINPR_BITMAP_FILE_HEADER bf;
 	WINPR_BITMAP_INFO_HEADER bi;
-	wStream* s = Stream_New((BYTE*)buffer, size);
+	wStream sbuffer = { 0 };
+	wStream* s = Stream_StaticConstInit(&sbuffer, buffer, size);
 
 	if (!s)
 		return -1;
@@ -419,7 +418,6 @@ fail:
 		image->data = NULL;
 	}
 
-	Stream_Free(s, FALSE);
 	return rc;
 }
 

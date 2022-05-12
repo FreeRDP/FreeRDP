@@ -43,7 +43,7 @@ enum
 };
 
 /** @brief presentation request struct */
-struct _TSMM_PRESENTATION_REQUEST
+typedef struct
 {
 	BYTE PresentationId;
 	BYTE Version;
@@ -56,15 +56,13 @@ struct _TSMM_PRESENTATION_REQUEST
 	BYTE VideoSubtypeId[16];
 	UINT32 cbExtra;
 	BYTE* pExtraData;
-};
-typedef struct _TSMM_PRESENTATION_REQUEST TSMM_PRESENTATION_REQUEST;
+} TSMM_PRESENTATION_REQUEST;
 
 /** @brief response to a TSMM_PRESENTATION_REQUEST */
-struct _TSMM_PRESENTATION_RESPONSE
+typedef struct
 {
 	BYTE PresentationId;
-};
-typedef struct _TSMM_PRESENTATION_RESPONSE TSMM_PRESENTATION_RESPONSE;
+} TSMM_PRESENTATION_RESPONSE;
 
 /** @brief TSMM_VIDEO_DATA flags */
 enum
@@ -75,7 +73,7 @@ enum
 };
 
 /** @brief a video data packet */
-struct _TSMM_VIDEO_DATA
+typedef struct
 {
 	BYTE PresentationId;
 	BYTE Version;
@@ -87,8 +85,7 @@ struct _TSMM_VIDEO_DATA
 	UINT32 SampleNumber;
 	UINT32 cbSample;
 	BYTE* pSample;
-};
-typedef struct _TSMM_VIDEO_DATA TSMM_VIDEO_DATA;
+} TSMM_VIDEO_DATA;
 
 /** @brief values for NotificationType in TSMM_CLIENT_NOTIFICATION */
 enum
@@ -98,21 +95,18 @@ enum
 };
 
 /** @brief struct used when NotificationType is FRAMERATE_OVERRIDE */
-struct _TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE
+typedef struct
 {
 	UINT32 Flags;
 	UINT32 DesiredFrameRate;
-};
-typedef struct _TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE
-    TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE;
+} TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE;
 
 /** @brief a client to server notification struct */
-struct _TSMM_CLIENT_NOTIFICATION
+typedef struct
 {
 	BYTE PresentationId;
 	BYTE NotificationType;
 	TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE FramerateOverride;
-};
-typedef struct _TSMM_CLIENT_NOTIFICATION TSMM_CLIENT_NOTIFICATION;
+} TSMM_CLIENT_NOTIFICATION;
 
 #endif /* FREERDP_CHANNEL_VIDEO_H */

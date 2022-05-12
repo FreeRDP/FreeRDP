@@ -19,9 +19,8 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/assert.h>
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +38,7 @@
 
 #define TAG CHANNELS_TAG("echo.server")
 
-typedef struct _echo_server
+typedef struct
 {
 	echo_server_context context;
 
@@ -329,8 +328,16 @@ static UINT echo_server_close(echo_server_context* context)
 
 static BOOL echo_server_request(echo_server_context* context, const BYTE* buffer, UINT32 length)
 {
+	union
+	{
+		const BYTE* cpv;
+		CHAR* pv;
+	} cnv;
+	cnv.cpv = buffer;
 	echo_server* echo = (echo_server*)context;
-	return WTSVirtualChannelWrite(echo->echo_channel, (PCHAR)buffer, length, NULL);
+	WINPR_ASSERT(echo);
+
+	return WTSVirtualChannelWrite(echo->echo_channel, cnv.pv, length, NULL);
 }
 
 echo_server_context* echo_server_context_new(HANDLE vcm)

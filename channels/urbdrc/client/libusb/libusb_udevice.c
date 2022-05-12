@@ -62,9 +62,7 @@
 #define HAVE_STREAM_ID_API 1
 #endif
 
-typedef struct _ASYNC_TRANSFER_USER_DATA ASYNC_TRANSFER_USER_DATA;
-
-struct _ASYNC_TRANSFER_USER_DATA
+typedef struct
 {
 	wStream* data;
 	BOOL noack;
@@ -79,7 +77,7 @@ struct _ASYNC_TRANSFER_USER_DATA
 #if !defined(HAVE_STREAM_ID_API)
 	UINT32 streamID;
 #endif
-};
+} ASYNC_TRANSFER_USER_DATA;
 
 static void request_free(void* value);
 
@@ -1013,8 +1011,6 @@ static int libusb_udev_query_device_descriptor(IUDEVICE* idev, int offset)
 		default:
 			return 0;
 	}
-
-	return 0;
 }
 
 static BOOL libusb_udev_detach_kernel_driver(IUDEVICE* idev)

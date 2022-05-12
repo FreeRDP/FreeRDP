@@ -32,7 +32,7 @@
 
 #define TAG CHANNELS_TAG("rdpsnd.server")
 
-struct _rdpsnd_server_private
+struct s_rdpsnd_server_private
 {
 	BOOL ownThread;
 	HANDLE Thread;

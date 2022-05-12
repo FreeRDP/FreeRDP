@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -93,11 +91,8 @@ static UINT rdpsnd_server_recv_waveconfirm(RdpsndServerContext* context, wStream
 	BYTE confirmBlockNum;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, timestamp);
 	Stream_Read_UINT8(s, confirmBlockNum);
@@ -119,11 +114,8 @@ static UINT rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, wStrea
 {
 	UINT16 quality;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT16(s, quality);
 	Stream_Seek_UINT16(s); // reserved
@@ -144,11 +136,8 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	BYTE lastblock;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < 20)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, flags);                       /* dwFlags */
 	Stream_Read_UINT32(s, vol);                         /* dwVolume */
@@ -160,11 +149,8 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	Stream_Seek_UINT8(s);                               /* bPad */
 
 	/* this check is only a guess as cbSize can influence the size of a format record */
-	if (Stream_GetRemainingLength(s) / 18 < context->num_client_formats)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 18ull * context->num_client_formats))
 		return ERROR_INVALID_DATA;
-	}
 
 	if (!context->num_client_formats)
 	{
@@ -182,7 +168,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 
 	for (i = 0; i < context->num_client_formats; i++)
 	{
-		if (Stream_GetRemainingLength(s) < 18)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 18))
 		{
 			WLog_ERR(TAG, "not enough data in stream!");
 			error = ERROR_INVALID_DATA;
@@ -695,10 +681,11 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 			priv->SessionId = (DWORD)*pSessionId;
 			WTSFreeMemory(pSessionId);
 			priv->ChannelHandle = (HANDLE)WTSVirtualChannelOpenEx(
-			    priv->SessionId, "AUDIO_PLAYBACK_DVC", WTS_CHANNEL_OPTION_DYNAMIC);
+			    priv->SessionId, RDPSND_DVC_CHANNEL_NAME, WTS_CHANNEL_OPTION_DYNAMIC);
 			if (!priv->ChannelHandle)
 			{
-				WLog_ERR(TAG, "Open audio dynamic virtual channel (AUDIO_PLAYBACK_DVC) failed!");
+				WLog_ERR(TAG, "Open audio dynamic virtual channel (%s) failed!",
+				         RDPSND_DVC_CHANNEL_NAME);
 				return ERROR_INTERNAL_ERROR;
 			}
 		}

@@ -25,7 +25,7 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-struct _XF_MODIFIER_KEYS
+typedef struct
 {
 	BOOL Shift;
 	BOOL LeftShift;
@@ -39,8 +39,7 @@ struct _XF_MODIFIER_KEYS
 	BOOL Super;
 	BOOL LeftSuper;
 	BOOL RightSuper;
-};
-typedef struct _XF_MODIFIER_KEYS XF_MODIFIER_KEYS;
+} XF_MODIFIER_KEYS;
 
 BOOL xf_keyboard_init(xfContext* xfc);
 void xf_keyboard_free(xfContext* xfc);
@@ -60,5 +59,7 @@ void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym);
 BOOL xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
 BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                 UINT32 imeConvMode);
+
+BOOL xf_ungrab(xfContext* xfc);
 
 #endif /* FREERDP_CLIENT_X11_XF_KEYBOARD_H */

@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -44,8 +42,7 @@
 #define TAG FREERDP_TAG("gdi.bitmap")
 
 /**
- * Get pixel at the given coordinates.\n
- * @msdn{dd144909}
+ * Get pixel at the given coordinates. msdn{dd144909}
  * @param hdc device context
  * @param nXPos pixel x position
  * @param nYPos pixel y position
@@ -55,30 +52,31 @@
 UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdc->selectedObject;
-	BYTE* data = &(hBmp->data[(nYPos * hBmp->scanline) + nXPos * GetBytesPerPixel(hBmp->format)]);
-	return ReadColor(data, hBmp->format);
+	BYTE* data =
+	    &(hBmp->data[(nYPos * hBmp->scanline) + nXPos * FreeRDPGetBytesPerPixel(hBmp->format)]);
+	return FreeRDPReadColor(data, hBmp->format);
 }
 
 BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
 {
-	UINT32 bpp = GetBytesPerPixel(hBmp->format);
+	UINT32 bpp = FreeRDPGetBytesPerPixel(hBmp->format);
 	return &hBmp->data[(Y * hBmp->width * bpp) + X * bpp];
 }
 
 /**
- * Set pixel at the given coordinates.\n
- * @msdn{dd145078}
- * @param hdc device context
+ * Set pixel at the given coordinates. msdn{dd145078}
+ *
+ * @param hBmp device context
  * @param X pixel x position
  * @param Y pixel y position
  * @param crColor new pixel color
- * @return
+ * @return the color written
  */
 
 static INLINE UINT32 gdi_SetPixelBmp(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y, UINT32 crColor)
 {
-	BYTE* p = &hBmp->data[(Y * hBmp->scanline) + X * GetBytesPerPixel(hBmp->format)];
-	WriteColor(p, hBmp->format, crColor);
+	BYTE* p = &hBmp->data[(Y * hBmp->scanline) + X * FreeRDPGetBytesPerPixel(hBmp->format)];
+	FreeRDPWriteColor(p, hBmp->format, crColor);
 	return crColor;
 }
 
@@ -89,20 +87,30 @@ UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y, UINT32 crColor)
 }
 
 /**
- * Create a new bitmap with the given width, height, color format and pixel buffer.\n
- * @msdn{dd183485}
+ * Create a new bitmap with the given width, height, color format and pixel buffer. msdn{dd183485}
+ *
  * @param nWidth width
  * @param nHeight height
- * @param cBitsPerPixel bits per pixel
+ * @param format the color format used
  * @param data pixel buffer
- * @param fkt_free The function used for deallocation of the buffer, NULL for none.
  * @return new bitmap
  */
 
 HGDI_BITMAP gdi_CreateBitmap(UINT32 nWidth, UINT32 nHeight, UINT32 format, BYTE* data)
 {
-	return gdi_CreateBitmapEx(nWidth, nHeight, format, 0, data, _aligned_free);
+	return gdi_CreateBitmapEx(nWidth, nHeight, format, 0, data, winpr_aligned_free);
 }
+
+/**
+ * Create a new bitmap with the given width, height, color format and pixel buffer. msdn{dd183485}
+ *
+ * @param nWidth width
+ * @param nHeight height
+ * @param format the color format used
+ * @param data pixel buffer
+ * @param fkt_free The function used for deallocation of the buffer, NULL for none.
+ * @return new bitmap
+ */
 
 HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight, UINT32 format, UINT32 stride,
                                BYTE* data, void (*fkt_free)(void*))
@@ -118,7 +126,7 @@ HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight, UINT32 format, UIN
 	if (stride > 0)
 		hBitmap->scanline = stride;
 	else
-		hBitmap->scanline = nWidth * GetBytesPerPixel(hBitmap->format);
+		hBitmap->scanline = nWidth * FreeRDPGetBytesPerPixel(hBitmap->format);
 
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
@@ -148,8 +156,8 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
 	hBitmap->data =
-	    _aligned_malloc(nWidth * nHeight * GetBytesPerPixel(hBitmap->format) * 1ULL, 16);
-	hBitmap->free = _aligned_free;
+			winpr_aligned_malloc(nWidth * nHeight * FreeRDPGetBytesPerPixel(hBitmap->format) * 1ULL, 16);
+	hBitmap->free = winpr_aligned_free;
 
 	if (!hBitmap->data)
 	{
@@ -157,7 +165,7 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 		return NULL;
 	}
 
-	hBitmap->scanline = nWidth * GetBytesPerPixel(hBitmap->format);
+	hBitmap->scanline = nWidth * FreeRDPGetBytesPerPixel(hBitmap->format);
 	return hBitmap;
 }
 
@@ -286,7 +294,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 		return FALSE;
 	}
 
-	colorA = ReadColor(dstp, hdcDest->format);
+	colorA = FreeRDPReadColor(dstp, hdcDest->format);
 
 	if (useSrc)
 	{
@@ -298,7 +306,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 			return FALSE;
 		}
 
-		colorC = ReadColor(srcp, hdcSrc->format);
+		colorC = FreeRDPReadColor(srcp, hdcSrc->format);
 		colorC = FreeRDPConvertColor(colorC, hdcSrc->format, hdcDest->format, palette);
 	}
 
@@ -321,7 +329,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 					return FALSE;
 				}
 
-				colorB = ReadColor(patp, hdcDest->format);
+				colorB = FreeRDPReadColor(patp, hdcDest->format);
 			}
 			break;
 
@@ -331,7 +339,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 	}
 
 	dstColor = process_rop(colorC, colorA, colorB, rop, hdcDest->format);
-	return WriteColor(dstp, hdcDest->format, dstColor);
+	return FreeRDPWriteColor(dstp, hdcDest->format, dstColor);
 }
 
 static BOOL adjust_src_coordinates(HGDI_DC hdcSrc, INT32 nWidth, INT32 nHeight, INT32* px,

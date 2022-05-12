@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/environment.h>
 #include <winpr/wtypes.h>
@@ -152,7 +150,7 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 				goto end;
 
 			strncpy(tzid, &buf[pos], alloc);
-			WLog_INFO(TAG, "winpr_get_timezone_from_link: tzid: %s", tzid);
+			WLog_DBG(TAG, "%s: tzid: %s", __FUNCTION__, tzid);
 			goto end;
 		}
 
@@ -264,7 +262,7 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 	tzid = winpr_read_unix_timezone_identifier_from_file(fp);
 	fclose(fp);
 	if (tzid != NULL)
-		WLog_INFO(TAG, "winpr_get_unix_timezone_identifier_from_file: tzid: %s", tzid);
+		WLog_DBG(TAG, "%s: tzid: %s", __FUNCTION__, tzid);
 	return tzid;
 #endif
 }

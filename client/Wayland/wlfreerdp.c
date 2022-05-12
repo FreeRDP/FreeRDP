@@ -46,22 +46,6 @@
 
 #define TAG CLIENT_TAG("wayland")
 
-static BOOL wl_begin_paint(rdpContext* context)
-{
-	rdpGdi* gdi;
-
-	if (!context || !context->gdi)
-		return FALSE;
-
-	gdi = context->gdi;
-
-	if (!gdi->primary)
-		return FALSE;
-
-	gdi->primary->hdc->hwnd->invalid->null = TRUE;
-	return TRUE;
-}
-
 static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw, INT32 ih)
 {
 	BOOL res = FALSE;
@@ -90,7 +74,7 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	if (!data || (rc != UWAC_SUCCESS))
 		goto fail;
 
-	gdi = context_w->context.gdi;
+	gdi = context_w->common.context.gdi;
 
 	if (!gdi)
 		goto fail;
@@ -109,13 +93,13 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 
 	if (!wlf_copy_image(gdi->primary_buffer, gdi->stride, gdi->width, gdi->height, data, stride,
 	                    geometry.width, geometry.height, &area,
-	                    context_w->context.settings->SmartSizing))
+	                    context_w->common.context.settings->SmartSizing))
 		goto fail;
 
-	if (!wlf_scale_coordinates(&context_w->context, &x, &y, FALSE))
+	if (!wlf_scale_coordinates(&context_w->common.context, &x, &y, FALSE))
 		goto fail;
 
-	if (!wlf_scale_coordinates(&context_w->context, &w, &h, FALSE))
+	if (!wlf_scale_coordinates(&context_w->common.context, &w, &h, FALSE))
 		goto fail;
 
 	if (UwacWindowAddDamage(context_w->window, x, y, w, h) != UWAC_SUCCESS)
@@ -150,17 +134,23 @@ static BOOL wl_end_paint(rdpContext* context)
 	w = gdi->primary->hdc->hwnd->invalid->w;
 	h = gdi->primary->hdc->hwnd->invalid->h;
 	context_w = (wlfContext*)context;
-	return wl_update_buffer(context_w, x, y, w, h);
+	if(!wl_update_buffer(context_w, x, y, w, h)){
+		return FALSE;
+	}
+
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
+	gdi->primary->hdc->hwnd->ninvalid = 0;
+	return TRUE;
 }
 
 static BOOL wl_refresh_display(wlfContext* context)
 {
 	rdpGdi* gdi;
 
-	if (!context || !context->context.gdi)
+	if (!context || !context->common.context.gdi)
 		return FALSE;
 
-	gdi = context->context.gdi;
+	gdi = context->common.context.gdi;
 	return wl_update_buffer(context, 0, 0, gdi->width, gdi->height);
 }
 
@@ -187,10 +177,10 @@ static BOOL wl_pre_connect(freerdp* instance)
 		return FALSE;
 
 	context = (wlfContext*)instance->context;
-	settings = instance->settings;
+	WINPR_ASSERT(context);
 
-	if (!context || !settings)
-		return FALSE;
+	settings = instance->context->settings;
+	WINPR_ASSERT(settings);
 
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_WAYLAND;
@@ -214,7 +204,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 		}
 	}
 
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!freerdp_client_load_addins(instance->context->channels, settings))
 		return FALSE;
 
 	return TRUE;
@@ -271,9 +261,8 @@ static BOOL wl_post_connect(freerdp* instance)
 	UwacWindowSetTitle(window, title);
 	UwacWindowSetAppId(window, app_id);
 	UwacWindowSetOpaqueRegion(context->window, 0, 0, w, h);
-	instance->update->BeginPaint = wl_begin_paint;
-	instance->update->EndPaint = wl_end_paint;
-	instance->update->DesktopResize = wl_resize_display;
+	instance->context->update->EndPaint = wl_end_paint;
+	instance->context->update->DesktopResize = wl_resize_display;
 	freerdp_keyboard_init_ex(instance->context->settings->KeyboardLayout,
 	                         instance->context->settings->KeyboardRemappingList);
 
@@ -309,7 +298,6 @@ static void wl_post_disconnect(freerdp* instance)
 
 static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 {
-	BOOL rc;
 	UwacEvent event;
 	wlfContext* context;
 
@@ -454,16 +442,8 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 
 static BOOL handle_window_events(freerdp* instance)
 {
-	rdpSettings* settings;
-
-	if (!instance || !instance->settings)
+	if (!instance)
 		return FALSE;
-
-	settings = instance->settings;
-
-	if (!settings->AsyncInput)
-	{
-	}
 
 	return TRUE;
 }
@@ -508,7 +488,7 @@ static int wlfreerdp_run(freerdp* instance)
 		goto disconnect;
 	}
 
-	while (!freerdp_shall_disconnect(instance))
+	while (!freerdp_shall_disconnect_context(instance->context))
 	{
 		DWORD count = 0;
 		handles[count++] = timer;
@@ -565,7 +545,7 @@ static int wlfreerdp_run(freerdp* instance)
 		if ((status != WAIT_TIMEOUT) && (status == WAIT_OBJECT_0))
 		{
 			timerEvent.now = GetTickCount64();
-			PubSub_OnTimer(context->context.pubSub, context, &timerEvent);
+			PubSub_OnTimer(context->common.context.pubSub, context, &timerEvent);
 		}
 	}
 
@@ -680,12 +660,6 @@ static int wfl_client_start(rdpContext* context)
 	return 0;
 }
 
-static int wfl_client_stop(rdpContext* context)
-{
-	WINPR_UNUSED(context);
-	return 0;
-}
-
 static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	ZeroMemory(pEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
@@ -697,7 +671,7 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->ClientNew = wlf_client_new;
 	pEntryPoints->ClientFree = wlf_client_free;
 	pEntryPoints->ClientStart = wfl_client_start;
-	pEntryPoints->ClientStop = wfl_client_stop;
+	pEntryPoints->ClientStop = freerdp_client_common_stop;
 	return 0;
 }
 
@@ -720,13 +694,9 @@ int main(int argc, char* argv[])
 	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
 	if (status)
 	{
-		BOOL list;
-
 		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
 
-		list = settings->ListMonitors;
-
-		if (list)
+		if (settings->ListMonitors)
 			wlf_list_monitors(wlc);
 
 		goto fail;

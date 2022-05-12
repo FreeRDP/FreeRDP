@@ -20,9 +20,7 @@
 #ifndef FREERDP_LIB_LOCALE_LIB_H
 #define FREERDP_LIB_LOCALE_LIB_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <freerdp/log.h>
 

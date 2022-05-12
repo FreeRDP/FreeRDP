@@ -19,13 +19,11 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include "wlog.h"
 
-#include "wlog/PacketMessage.h"
+#include "PacketMessage.h"
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>

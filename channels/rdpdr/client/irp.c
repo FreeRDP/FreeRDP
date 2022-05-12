@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,7 +48,7 @@ static UINT irp_free(IRP* irp)
 	Stream_Free(irp->input, TRUE);
 	Stream_Free(irp->output, TRUE);
 
-	_aligned_free(irp);
+	winpr_aligned_free(irp);
 	return CHANNEL_RC_OK;
 }
 
@@ -85,7 +83,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 	DEVICE* device;
 	UINT32 DeviceId;
 
-	if (Stream_GetRemainingLength(s) < 20)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 	{
 		if (error)
 			*error = ERROR_INVALID_DATA;
@@ -104,7 +102,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 		return NULL;
 	}
 
-	irp = (IRP*)_aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
+	irp = (IRP*)winpr_aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
 
 	if (!irp)
 	{
@@ -129,7 +127,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 	if (!irp->output)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		_aligned_free(irp);
+		winpr_aligned_free(irp);
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
 		return NULL;
@@ -138,7 +136,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 	if (!rdpdr_write_iocompletion_header(irp->output, DeviceId, irp->CompletionId, 0))
 	{
 		Stream_Free(irp->output, TRUE);
-		_aligned_free(irp);
+		winpr_aligned_free(irp);
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
 		return NULL;

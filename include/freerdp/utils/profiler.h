@@ -23,7 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/utils/stopwatch.h>
 
-typedef struct _PROFILER PROFILER;
+typedef struct S_PROFILER PROFILER;
 
 #ifdef __cplusplus
 extern "C"

@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
@@ -29,7 +27,7 @@
 
 #define TAG FREERDP_TAG("crypto")
 
-CryptoCert crypto_cert_read(BYTE* data, UINT32 length)
+CryptoCert crypto_cert_read(const BYTE* data, UINT32 length)
 {
 	CryptoCert cert = malloc(sizeof(*cert));
 
@@ -38,6 +36,23 @@ CryptoCert crypto_cert_read(BYTE* data, UINT32 length)
 
 	/* this will move the data pointer but we don't care, we don't use it again */
 	cert->px509 = d2i_X509(NULL, (D2I_X509_CONST BYTE**)&data, length);
+	return cert;
+}
+
+CryptoCert crypto_cert_pem_read(const char* data)
+{
+	CryptoCert cert = malloc(sizeof(*cert));
+
+	if (!cert)
+		return NULL;
+
+	cert->px509 = crypto_cert_from_pem(data, strlen(data), FALSE);
+	if (!cert->px509)
+	{
+		free(cert);
+		return NULL;
+	}
+
 	return cert;
 }
 

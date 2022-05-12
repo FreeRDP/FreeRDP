@@ -75,7 +75,7 @@ extern "C"
 #define _wcschr wcschr
 #define _wcsrchr wcsrchr
 
-#endif
+#endif /* _WIN32 */
 
 #if !defined(_WIN32) || defined(_UWP)
 

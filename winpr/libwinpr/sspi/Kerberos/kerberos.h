@@ -28,11 +28,11 @@
 #include "../../log.h"
 
 #ifdef WITH_GSSAPI
-#include <krb5.h>
+#include <krb5/krb5.h>
 #include <gssapi.h>
 #endif
 
-typedef struct _KRB_CONTEXT KRB_CONTEXT;
+typedef struct s_KRB_CONTEXT KRB_CONTEXT;
 
 extern const SecPkgInfoA KERBEROS_SecPkgInfoA;
 extern const SecPkgInfoW KERBEROS_SecPkgInfoW;

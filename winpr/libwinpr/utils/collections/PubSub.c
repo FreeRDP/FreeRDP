@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 
@@ -30,7 +28,7 @@
  * http://msdn.microsoft.com/en-us/library/awbftdfh.aspx
  */
 
-struct _wPubSub
+struct s_wPubSub
 {
 	CRITICAL_SECTION lock;
 	BOOL synchronized;

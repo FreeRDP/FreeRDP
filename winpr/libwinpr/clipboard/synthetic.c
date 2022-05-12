@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <errno.h>
 #include <winpr/crt.h>
@@ -332,55 +330,58 @@ static void* clipboard_synthesize_image_bmp(wClipboard* clipboard, UINT32 format
  */
 
 static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 formatId,
-                                              const void* data, UINT32* pSize)
+                                              const void* pData, UINT32* pSize)
 {
-	char* pSrcData = NULL;
+	union
+	{
+		const void* cpv;
+		const char* cpc;
+		const BYTE* cpb;
+		WCHAR* pv;
+	} pSrcData;
 	char* pDstData = NULL;
-	INT64 SrcSize = (INT64)*pSize;
+
+	pSrcData.cpv = NULL;
+
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(pSize);
 
 	if (formatId == ClipboardGetFormatId(clipboard, "text/html"))
 	{
+		INT64 SrcSize = (INT64)*pSize;
 		char* body;
-		BYTE bom[2];
-		char num[20];
-		const WCHAR* wstr;
+		char num[20] = { 0 };
+
+		/* Create a copy, we modify the input data */
+		pSrcData.pv = calloc(1, SrcSize + 1);
+		if (!pSrcData.pv)
+			goto fail;
+		memcpy(pSrcData.pv, pData, SrcSize);
 
 		if (SrcSize > 2)
 		{
 			if (SrcSize > INT_MAX)
 				return NULL;
-			CopyMemory(bom, data, 2);
 
-			if ((bom[0] == 0xFE) && (bom[1] == 0xFF))
+			/* Check the BOM (Byte Order Mark) */
+			if ((pSrcData.cpb[0] == 0xFE) && (pSrcData.cpb[1] == 0xFF))
+				ByteSwapUnicode(pSrcData.pv, (int)(SrcSize / 2));
+
+			/* Check if we have WCHAR, convert to UTF-8 */
+			if ((pSrcData.cpb[0] == 0xFF) && (pSrcData.cpb[1] == 0xFE))
 			{
-				ByteSwapUnicode((WCHAR*)data, (int)(SrcSize / 2));
+				char* utfString = NULL;
+				ConvertFromUnicode(CP_UTF8, 0, &pSrcData.pv[1], (int)(SrcSize - 2) / 2, &utfString,
+				                   0, NULL, NULL);
+				free(pSrcData.pv);
+				pSrcData.cpc = utfString;
 			}
-
-			if ((bom[0] == 0xFF) && (bom[1] == 0xFE))
-			{
-				wstr = (const WCHAR*)&((BYTE*)data)[2];
-				ConvertFromUnicode(CP_UTF8, 0, wstr, (int)(SrcSize - 2) / 2, &pSrcData, 0, NULL,
-				                   NULL);
-			}
-		}
-
-		if (!pSrcData)
-		{
-			pSrcData = (char*)calloc(1, SrcSize + 1);
-
-			if (!pSrcData)
-				return NULL;
-
-			CopyMemory(pSrcData, data, SrcSize);
 		}
 
 		pDstData = (char*)calloc(1, SrcSize + 200);
 
 		if (!pDstData)
-		{
-			free(pSrcData);
-			return NULL;
-		}
+			goto fail;
 
 		sprintf_s(pDstData, SrcSize + 200,
 		          "Version:0.9\r\n"
@@ -388,10 +389,10 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		          "EndHTML:0000000000\r\n"
 		          "StartFragment:0000000000\r\n"
 		          "EndFragment:0000000000\r\n");
-		body = strstr(pSrcData, "<body");
+		body = strstr(pSrcData.cpc, "<body");
 
 		if (!body)
-			body = strstr(pSrcData, "<BODY");
+			body = strstr(pSrcData.cpc, "<BODY");
 
 		/* StartHTML */
 		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
@@ -404,7 +405,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		/* StartFragment */
 		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
 		CopyMemory(&pDstData[69], num, 10);
-		strcat(pDstData, pSrcData);
+		strcat(pDstData, pSrcData.cpc);
 		/* EndFragment */
 		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
 		CopyMemory(&pDstData[93], num, 10);
@@ -417,9 +418,9 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
 		CopyMemory(&pDstData[43], num, 10);
 		*pSize = (UINT32)strlen(pDstData) + 1;
-		free(pSrcData);
 	}
-
+fail:
+	free(pSrcData.pv);
 	return pDstData;
 }
 

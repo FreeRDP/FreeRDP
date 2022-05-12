@@ -322,11 +322,8 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 }
 UINT cliprdr_read_unlock_clipdata(wStream* s, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough remaining data");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, unlockClipboardData->clipDataId); /* clipDataId (4 bytes) */
 	return CHANNEL_RC_OK;
@@ -334,11 +331,8 @@ UINT cliprdr_read_unlock_clipdata(wStream* s, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unl
 
 UINT cliprdr_read_format_data_request(wStream* s, CLIPRDR_FORMAT_DATA_REQUEST* request)
 {
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, request->requestedFormatId); /* requestedFormatId (4 bytes) */
 	return CHANNEL_RC_OK;
@@ -348,11 +342,8 @@ UINT cliprdr_read_format_data_response(wStream* s, CLIPRDR_FORMAT_DATA_RESPONSE*
 {
 	response->requestedFormatData = NULL;
 
-	if (Stream_GetRemainingLength(s) < response->dataLen)
-	{
-		WLog_ERR(TAG, "not enough data in stream!");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, response->dataLen))
 		return ERROR_INVALID_DATA;
-	}
 
 	if (response->dataLen)
 		response->requestedFormatData = Stream_Pointer(s);
@@ -362,11 +353,8 @@ UINT cliprdr_read_format_data_response(wStream* s, CLIPRDR_FORMAT_DATA_RESPONSE*
 
 UINT cliprdr_read_file_contents_request(wStream* s, CLIPRDR_FILE_CONTENTS_REQUEST* request)
 {
-	if (Stream_GetRemainingLength(s) < 24)
-	{
-		WLog_ERR(TAG, "not enough remaining data");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
 		return ERROR_INVALID_DATA;
-	}
 
 	request->haveClipDataId = FALSE;
 	Stream_Read_UINT32(s, request->streamId);      /* streamId (4 bytes) */
@@ -390,11 +378,8 @@ UINT cliprdr_read_file_contents_request(wStream* s, CLIPRDR_FILE_CONTENTS_REQUES
 
 UINT cliprdr_read_file_contents_response(wStream* s, CLIPRDR_FILE_CONTENTS_RESPONSE* response)
 {
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "not enough remaining data");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT32(s, response->streamId);   /* streamId (4 bytes) */
 	response->requestedData = Stream_Pointer(s); /* requestedFileContentsData */

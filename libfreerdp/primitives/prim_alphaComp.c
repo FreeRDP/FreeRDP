@@ -20,9 +20,7 @@
  * The IPP gives other options.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>

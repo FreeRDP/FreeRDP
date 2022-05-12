@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,7 +59,7 @@
 
 #define TAG CHANNELS_TAG("drive.client")
 
-struct _PARALLEL_DEVICE
+typedef struct
 {
 	DEVICE device;
 
@@ -72,8 +70,7 @@ struct _PARALLEL_DEVICE
 	HANDLE thread;
 	wMessageQueue* queue;
 	rdpContext* rdpcontext;
-};
-typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
+} PARALLEL_DEVICE;
 
 /**
  * Function description
@@ -90,7 +87,7 @@ static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 		return ERROR_INVALID_DATA;
 	/* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
 	/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
-	if (Stream_GetRemainingLength(irp->input) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 4))
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, PathLength);
 	ptr = (WCHAR*)Stream_Pointer(irp->input);
@@ -156,7 +153,7 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	UINT64 Offset;
 	ssize_t status;
 	BYTE* buffer = NULL;
-	if (Stream_GetRemainingLength(irp->input) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
@@ -211,7 +208,7 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 	UINT64 Offset;
 	ssize_t status;
 	void* ptr;
-	if (Stream_GetRemainingLength(irp->input) > 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, Length);
@@ -314,7 +311,6 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			return irp->Complete(irp);
-			break;
 	}
 
 	return CHANNEL_RC_OK;
@@ -405,18 +401,12 @@ static UINT parallel_free(DEVICE* device)
 	return CHANNEL_RC_OK;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define DeviceServiceEntry parallel_DeviceServiceEntry
-#else
-#define DeviceServiceEntry FREERDP_API DeviceServiceEntry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;

@@ -26,13 +26,11 @@
 
 #include "../handle/handle.h"
 
-typedef struct _DEVICE_OBJECT_EX DEVICE_OBJECT_EX;
-
-struct _DEVICE_OBJECT_EX
+typedef struct
 {
 	char* DeviceName;
 	char* DeviceFileName;
-};
+} DEVICE_OBJECT_EX;
 
 #endif
 

@@ -17,19 +17,16 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include "CallbackAppender.h"
 
-struct _wLogCallbackAppender
+typedef struct
 {
 	WLOG_APPENDER_COMMON();
 
 	wLogCallbacks* callbacks;
-};
-typedef struct _wLogCallbackAppender wLogCallbackAppender;
+} wLogCallbackAppender;
 
 static BOOL WLog_CallbackAppender_Open(wLog* log, wLogAppender* appender)
 {
@@ -44,7 +41,7 @@ static BOOL WLog_CallbackAppender_Close(wLog* log, wLogAppender* appender)
 static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender,
                                                wLogMessage* message)
 {
-	char prefix[WLOG_MAX_PREFIX_SIZE];
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
 	wLogCallbackAppender* callbackAppender;
 
 	if (!appender)
@@ -64,7 +61,7 @@ static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender
 static BOOL WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
                                                    wLogMessage* message)
 {
-	char prefix[WLOG_MAX_PREFIX_SIZE];
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
 	wLogCallbackAppender* callbackAppender;
 
 	if (!appender)
@@ -83,7 +80,7 @@ static BOOL WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogAppender* appe
 static BOOL WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
                                                     wLogMessage* message)
 {
-	char prefix[WLOG_MAX_PREFIX_SIZE];
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
 	wLogCallbackAppender* callbackAppender;
 
 	if (!appender)
@@ -102,7 +99,7 @@ static BOOL WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogAppender* app
 static BOOL WLog_CallbackAppender_WritePacketMessage(wLog* log, wLogAppender* appender,
                                                      wLogMessage* message)
 {
-	char prefix[WLOG_MAX_PREFIX_SIZE];
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
 	wLogCallbackAppender* callbackAppender;
 
 	if (!appender)

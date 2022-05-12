@@ -20,7 +20,6 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_AllowUnanouncedOrdersFromServer, 0, "FreeRDP_AllowUnanouncedOrdersFromServer" },
 	{ FreeRDP_AltSecFrameMarkerSupport, 0, "FreeRDP_AltSecFrameMarkerSupport" },
 	{ FreeRDP_AsyncChannels, 0, "FreeRDP_AsyncChannels" },
-	{ FreeRDP_AsyncInput, 0, "FreeRDP_AsyncInput" },
 	{ FreeRDP_AsyncUpdate, 0, "FreeRDP_AsyncUpdate" },
 	{ FreeRDP_AudioCapture, 0, "FreeRDP_AudioCapture" },
 	{ FreeRDP_AudioPlayback, 0, "FreeRDP_AudioPlayback" },
@@ -109,6 +108,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_MouseAttached, 0, "FreeRDP_MouseAttached" },
 	{ FreeRDP_MouseHasWheel, 0, "FreeRDP_MouseHasWheel" },
 	{ FreeRDP_MouseMotion, 0, "FreeRDP_MouseMotion" },
+	{ FreeRDP_MouseUseRelativeMove, 0, "FreeRDP_MouseUseRelativeMove" },
 	{ FreeRDP_MstscCookieMode, 0, "FreeRDP_MstscCookieMode" },
 	{ FreeRDP_MultiTouchGestures, 0, "FreeRDP_MultiTouchGestures" },
 	{ FreeRDP_MultiTouchInput, 0, "FreeRDP_MultiTouchInput" },
@@ -150,6 +150,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_SendPreconnectionPdu, 0, "FreeRDP_SendPreconnectionPdu" },
 	{ FreeRDP_ServerMode, 0, "FreeRDP_ServerMode" },
 	{ FreeRDP_SmartSizing, 0, "FreeRDP_SmartSizing" },
+	{ FreeRDP_SmartcardEmulation, 0, "FreeRDP_SmartcardEmulation" },
 	{ FreeRDP_SmartcardLogon, 0, "FreeRDP_SmartcardLogon" },
 	{ FreeRDP_SoftwareGdi, 0, "FreeRDP_SoftwareGdi" },
 	{ FreeRDP_SoundBeepsEnabled, 0, "FreeRDP_SoundBeepsEnabled" },
@@ -199,6 +200,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_ChannelDefArraySize, 3, "FreeRDP_ChannelDefArraySize" },
 	{ FreeRDP_ClientBuild, 3, "FreeRDP_ClientBuild" },
 	{ FreeRDP_ClientRandomLength, 3, "FreeRDP_ClientRandomLength" },
+	{ FreeRDP_ClientSessionId, 3, "FreeRDP_ClientSessionId" },
 	{ FreeRDP_ClusterInfoFlags, 3, "FreeRDP_ClusterInfoFlags" },
 	{ FreeRDP_ColorDepth, 3, "FreeRDP_ColorDepth" },
 	{ FreeRDP_CompDeskSupportLevel, 3, "FreeRDP_CompDeskSupportLevel" },
@@ -233,6 +235,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_GlyphSupportLevel, 3, "FreeRDP_GlyphSupportLevel" },
 	{ FreeRDP_JpegCodecId, 3, "FreeRDP_JpegCodecId" },
 	{ FreeRDP_JpegQuality, 3, "FreeRDP_JpegQuality" },
+	{ FreeRDP_KeySpec, 3, "FreeRDP_KeySpec" },
 	{ FreeRDP_KeyboardCodePage, 3, "FreeRDP_KeyboardCodePage" },
 	{ FreeRDP_KeyboardFunctionKey, 3, "FreeRDP_KeyboardFunctionKey" },
 	{ FreeRDP_KeyboardHook, 3, "FreeRDP_KeyboardHook" },
@@ -242,8 +245,10 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_LargePointerFlag, 3, "FreeRDP_LargePointerFlag" },
 	{ FreeRDP_LoadBalanceInfoLength, 3, "FreeRDP_LoadBalanceInfoLength" },
 	{ FreeRDP_MaxTimeInCheckLoop, 3, "FreeRDP_MaxTimeInCheckLoop" },
+	{ FreeRDP_MonitorAttributeFlags, 3, "FreeRDP_MonitorAttributeFlags" },
 	{ FreeRDP_MonitorCount, 3, "FreeRDP_MonitorCount" },
 	{ FreeRDP_MonitorDefArraySize, 3, "FreeRDP_MonitorDefArraySize" },
+	{ FreeRDP_MonitorFlags, 3, "FreeRDP_MonitorFlags" },
 	{ FreeRDP_MonitorLocalShiftX, 3, "FreeRDP_MonitorLocalShiftX" },
 	{ FreeRDP_MonitorLocalShiftY, 3, "FreeRDP_MonitorLocalShiftY" },
 	{ FreeRDP_MultifragMaxRequestSize, 3, "FreeRDP_MultifragMaxRequestSize" },
@@ -311,6 +316,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_AlternateShell, 7, "FreeRDP_AlternateShell" },
 	{ FreeRDP_AssistanceFile, 7, "FreeRDP_AssistanceFile" },
 	{ FreeRDP_AuthenticationServiceClass, 7, "FreeRDP_AuthenticationServiceClass" },
+	{ FreeRDP_CardName, 7, "FreeRDP_CardName" },
 	{ FreeRDP_CertificateAcceptedFingerprints, 7, "FreeRDP_CertificateAcceptedFingerprints" },
 	{ FreeRDP_CertificateContent, 7, "FreeRDP_CertificateContent" },
 	{ FreeRDP_CertificateFile, 7, "FreeRDP_CertificateFile" },
@@ -322,6 +328,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_ComputerName, 7, "FreeRDP_ComputerName" },
 	{ FreeRDP_ConfigPath, 7, "FreeRDP_ConfigPath" },
 	{ FreeRDP_ConnectionFile, 7, "FreeRDP_ConnectionFile" },
+	{ FreeRDP_ContainerName, 7, "FreeRDP_ContainerName" },
+	{ FreeRDP_CspName, 7, "FreeRDP_CspName" },
 	{ FreeRDP_CurrentPath, 7, "FreeRDP_CurrentPath" },
 	{ FreeRDP_Domain, 7, "FreeRDP_Domain" },
 	{ FreeRDP_DrivesToRedirect, 7, "FreeRDP_DrivesToRedirect" },
@@ -335,12 +343,19 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_GatewayUsername, 7, "FreeRDP_GatewayUsername" },
 	{ FreeRDP_HomePath, 7, "FreeRDP_HomePath" },
 	{ FreeRDP_ImeFileName, 7, "FreeRDP_ImeFileName" },
+	{ FreeRDP_KerberosArmor, 7, "FreeRDP_KerberosArmor" },
+	{ FreeRDP_KerberosCache, 7, "FreeRDP_KerberosCache" },
 	{ FreeRDP_KerberosKdc, 7, "FreeRDP_KerberosKdc" },
+	{ FreeRDP_KerberosLifeTime, 7, "FreeRDP_KerberosLifeTime" },
 	{ FreeRDP_KerberosRealm, 7, "FreeRDP_KerberosRealm" },
+	{ FreeRDP_KerberosRenewableLifeTime, 7, "FreeRDP_KerberosRenewableLifeTime" },
+	{ FreeRDP_KerberosStartTime, 7, "FreeRDP_KerberosStartTime" },
 	{ FreeRDP_KeyboardRemappingList, 7, "FreeRDP_KeyboardRemappingList" },
 	{ FreeRDP_NtlmSamFile, 7, "FreeRDP_NtlmSamFile" },
 	{ FreeRDP_Password, 7, "FreeRDP_Password" },
 	{ FreeRDP_PasswordHash, 7, "FreeRDP_PasswordHash" },
+	{ FreeRDP_Pkcs11Module, 7, "FreeRDP_Pkcs11Module" },
+	{ FreeRDP_PkinitAnchors, 7, "FreeRDP_PkinitAnchors" },
 	{ FreeRDP_PlayRemoteFxFile, 7, "FreeRDP_PlayRemoteFxFile" },
 	{ FreeRDP_PreconnectionBlob, 7, "FreeRDP_PreconnectionBlob" },
 	{ FreeRDP_PrivateKeyContent, 7, "FreeRDP_PrivateKeyContent" },
@@ -351,6 +366,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_RDP2TCPArgs, 7, "FreeRDP_RDP2TCPArgs" },
 	{ FreeRDP_RdpKeyContent, 7, "FreeRDP_RdpKeyContent" },
 	{ FreeRDP_RdpKeyFile, 7, "FreeRDP_RdpKeyFile" },
+	{ FreeRDP_ReaderName, 7, "FreeRDP_ReaderName" },
 	{ FreeRDP_RedirectionAcceptedCert, 7, "FreeRDP_RedirectionAcceptedCert" },
 	{ FreeRDP_RedirectionDomain, 7, "FreeRDP_RedirectionDomain" },
 	{ FreeRDP_RedirectionTargetFQDN, 7, "FreeRDP_RedirectionTargetFQDN" },
@@ -483,6 +499,138 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 	return TRUE;
 }
 
+BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* settings,
+                                 const rdpSettings* other)
+{
+	size_t x;
+	BOOL rc = FALSE;
+
+	if (!settings && other)
+		rc = TRUE;
+	if (settings && !other)
+		rc = TRUE;
+
+	for (x = 0; x < ARRAYSIZE(settings_map); x++)
+	{
+		const struct settings_str_entry* cur = &settings_map[x];
+		switch (cur->type)
+		{
+			case 0: /* bool */
+			{
+				BOOL sval = freerdp_settings_get_bool(settings, cur->id);
+				BOOL cval = freerdp_settings_get_bool(other, cur->id);
+				if (sval != cval)
+				{
+					WLog_Print(log, level, "%s [BOOL]: %s -> %s", cur->str, sval ? "TRUE" : "FALSE",
+					           cval ? "TRUE" : "FALSE");
+					rc = TRUE;
+				}
+			}
+			break;
+			case 1: /* UINT16 */
+			{
+				UINT16 sval = freerdp_settings_get_uint16(settings, cur->id);
+				UINT16 cval = freerdp_settings_get_uint16(other, cur->id);
+				if (sval != cval)
+				{
+					WLog_Print(log, level, "%s [UINT16]: %" PRIu16 " -> %" PRIu16, cur->str, sval,
+					           cval);
+					rc = TRUE;
+				}
+			}
+			break;
+			case 2: /* INT16 */
+			{
+				INT16 sval = freerdp_settings_get_int16(settings, cur->id);
+				INT16 cval = freerdp_settings_get_int16(other, cur->id);
+				if (sval != cval)
+				{
+					WLog_Print(log, level, "%s [INT16]: %" PRId16 " -> %" PRId16, cur->str, sval,
+					           cval);
+					rc = TRUE;
+				}
+			}
+			break;
+			case 3: /* UINT32 */
+			{
+				UINT32 sval = freerdp_settings_get_uint32(settings, cur->id);
+				UINT32 cval = freerdp_settings_get_uint32(other, cur->id);
+				if (sval != cval)
+				{
+					WLog_Print(log, level, "%s [UINT32]: %" PRIu32 " -> %" PRIu32, cur->str, sval,
+					           cval);
+					rc = TRUE;
+				}
+			}
+			break;
+			case 4: /* INT32 */
+			{
+				INT32 sval = freerdp_settings_get_int32(settings, cur->id);
+				INT32 cval = freerdp_settings_get_int32(other, cur->id);
+				if (sval != cval)
+				{
+					WLog_Print(log, level, "%s [INT32]: %" PRId32 " -> %" PRId32, cur->str, sval,
+					           cval);
+					rc = TRUE;
+				}
+			}
+			break;
+			case 5: /* UINT64 */
+			{
+				UINT64 sval = freerdp_settings_get_uint64(settings, cur->id);
+				UINT64 cval = freerdp_settings_get_uint64(other, cur->id);
+				if (sval != cval)
+				{
+					WLog_Print(log, level, "%s [UINT64]: %" PRIu64 " -> %" PRIu64, cur->str, sval,
+					           cval);
+					rc = TRUE;
+				}
+			}
+			break;
+			case 6: /* INT64 */
+			{
+				INT64 sval = freerdp_settings_get_int64(settings, cur->id);
+				INT64 cval = freerdp_settings_get_int64(other, cur->id);
+				if (sval != cval)
+				{
+					WLog_Print(log, level, "%s [INT64]: %" PRId64 " -> %" PRId64, cur->str, sval,
+					           cval);
+					rc = TRUE;
+				}
+			}
+			break;
+			case 7: /* strings */
+			{
+				const char* sval = freerdp_settings_get_string(settings, cur->id);
+				const char* cval = freerdp_settings_get_string(other, cur->id);
+				if (sval != cval)
+				{
+					if (!sval || !cval || (strcmp(sval, cval) != 0))
+					{
+						WLog_Print(log, level, "%s [STRING]: '%s' -> '%s'", cur->str, sval, cval);
+						rc = TRUE;
+					}
+				}
+			}
+			break;
+			case 8: /* pointer */
+			{
+				const void* sval = freerdp_settings_get_pointer(settings, cur->id);
+				const void* cval = freerdp_settings_get_pointer(other, cur->id);
+				if (sval != cval)
+				{
+					if ((sval && !cval) || (!sval && cval))
+					{
+						WLog_Print(log, level, "%s [POINTER]: '%p' -> '%p'", cur->str, sval, cval);
+						rc = TRUE;
+					}
+				}
+			}
+			break;
+		}
+	}
+	return rc;
+}
 void freerdp_settings_dump(wLog* log, DWORD level, const rdpSettings* settings)
 {
 	size_t x;

@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -185,15 +183,7 @@ static BOOL EventCloseHandle(HANDLE handle);
 
 static BOOL EventIsHandled(HANDLE handle)
 {
-	WINPR_TIMER* pEvent = (WINPR_TIMER*)handle;
-
-	if (!pEvent || (pEvent->Type != HANDLE_TYPE_EVENT))
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_EVENT, FALSE);
 }
 
 static int EventGetFd(HANDLE handle)
@@ -247,16 +237,27 @@ static BOOL EventCloseHandle(HANDLE handle)
 	return EventCloseHandle_(event);
 }
 
-static HANDLE_OPS ops = { EventIsHandled, EventCloseHandle,
-	                      EventGetFd,     NULL, /* CleanupHandle */
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL,
-	                      NULL,           NULL };
+static HANDLE_OPS ops = { EventIsHandled,
+	                      EventCloseHandle,
+	                      EventGetFd,
+	                      NULL, /* CleanupHandle */
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL,
+	                      NULL };
 
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,
                     LPCWSTR lpName)
@@ -295,7 +296,7 @@ HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 	event->impl.fds[1] = -1;
 	event->bAttached = FALSE;
 	event->bManualReset = bManualReset;
-	event->ops = &ops;
+	event->common.ops = &ops;
 	WINPR_HANDLE_SET_TYPE_AND_MODE(event, HANDLE_TYPE_EVENT, FD_READ);
 
 	if (!event->bManualReset)
@@ -431,7 +432,7 @@ HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 		event->bAttached = TRUE;
 		event->bManualReset = bManualReset;
 		winpr_event_init_from_fd(&event->impl, FileDescriptor);
-		event->ops = &ops;
+		event->common.ops = &ops;
 		WINPR_HANDLE_SET_TYPE_AND_MODE(event, HANDLE_TYPE_EVENT, mode);
 		handle = (HANDLE)event;
 	}
@@ -501,7 +502,7 @@ int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor, ULONG mode)
 		close(event->impl.fds[0]);
 
 	event->bAttached = TRUE;
-	event->Mode = mode;
+	event->common.Mode = mode;
 	event->impl.fds[0] = FileDescriptor;
 	return 0;
 #else

@@ -14,9 +14,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <string.h>
 #include <freerdp/types.h>

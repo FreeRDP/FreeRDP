@@ -18,18 +18,15 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include "SyslogAppender.h"
 #include <syslog.h>
 
-struct _wLogSyslogAppender
+typedef struct
 {
 	WLOG_APPENDER_COMMON();
-};
-typedef struct _wLogSyslogAppender wLogSyslogAppender;
+} wLogSyslogAppender;
 
 static int getSyslogLevel(DWORD level)
 {

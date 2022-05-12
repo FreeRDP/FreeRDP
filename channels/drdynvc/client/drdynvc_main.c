@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
@@ -212,27 +210,6 @@ static IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager* 
 	return channel;
 }
 
-static IWTSVirtualChannel* dvcman_find_channel_by_name(IWTSVirtualChannelManager* pChannelMgr,
-                                                       const char* name)
-{
-	size_t index;
-	IWTSVirtualChannel* channel = NULL;
-	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
-	ArrayList_Lock(dvcman->channels);
-	for (index = 0; index < ArrayList_Count(dvcman->channels); index++)
-	{
-		DVCMAN_CHANNEL* cur = (DVCMAN_CHANNEL*)ArrayList_GetItem(dvcman->channels, index);
-		if (strcmp(cur->channel_name, name) == 0)
-		{
-			channel = &cur->iface;
-			break;
-		}
-	}
-
-	ArrayList_Unlock(dvcman->channels);
-	return channel;
-}
-
 static void dvcman_plugin_terminate(void* plugin)
 {
 	IWTSPlugin* pPlugin = plugin;
@@ -337,12 +314,6 @@ static DVCMAN_CHANNEL* dvcman_channel_new(drdynvcPlugin* drdynvc,
 		WLog_Print(drdynvc->log, WLOG_ERROR,
 		           "Protocol error: Duplicated ChannelId %" PRIu32 " (%s)!", ChannelId,
 		           ChannelName);
-		return NULL;
-	}
-
-	if (dvcman_find_channel_by_name(pChannelMgr, ChannelName))
-	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "Channel %s already open!", ChannelName);
 		return NULL;
 	}
 
@@ -852,7 +823,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 
 	dvcman = (DVCMAN*)drdynvc->channel_mgr;
 
-	WLog_Print(drdynvc->log, WLOG_DEBUG, "write_data: ChannelId=%" PRIu32 " size=%" PRIu32 "",
+	WLog_Print(drdynvc->log, WLOG_TRACE, "write_data: ChannelId=%" PRIu32 " size=%" PRIu32 "",
 	           ChannelId, dataSize);
 	data_out = StreamPool_Take(dvcman->pool, CHANNEL_CHUNK_LENGTH);
 
@@ -981,7 +952,7 @@ static UINT drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, i
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_INIT_HANDLE;
 
-	if (Stream_GetRemainingLength(s) < 3)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 3))
 		return ERROR_INVALID_DATA;
 
 	WLog_Print(drdynvc->log, WLOG_TRACE, "capability_request Sp=%d cbChId=%d", Sp, cbChId);
@@ -993,7 +964,7 @@ static UINT drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, i
 	 */
 	if ((drdynvc->version == 2) || (drdynvc->version == 3))
 	{
-		if (Stream_GetRemainingLength(s) < 8)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT16(s, drdynvc->PriorityCharge0);
@@ -1083,7 +1054,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int c
 		drdynvc->state = DRDYNVC_STATE_READY;
 	}
 
-	if (Stream_GetRemainingLength(s) < drdynvc_cblen_to_bytes(cbChId))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, drdynvc_cblen_to_bytes(cbChId)))
 		return ERROR_INVALID_DATA;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
@@ -1160,12 +1131,13 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
 	UINT32 Length;
 	UINT32 ChannelId;
 
-	if (Stream_GetRemainingLength(s) < drdynvc_cblen_to_bytes(cbChId) + drdynvc_cblen_to_bytes(Sp))
+	if (!Stream_CheckAndLogRequiredLength(
+	        TAG, s, drdynvc_cblen_to_bytes(cbChId) + drdynvc_cblen_to_bytes(Sp)))
 		return ERROR_INVALID_DATA;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	Length = drdynvc_read_variable_uint(s, Sp);
-	WLog_Print(drdynvc->log, WLOG_DEBUG,
+	WLog_Print(drdynvc->log, WLOG_TRACE,
 	           "process_data_first: Sp=%d cbChId=%d, ChannelId=%" PRIu32 " Length=%" PRIu32 "", Sp,
 	           cbChId, ChannelId, Length);
 	status = dvcman_receive_channel_data_first(drdynvc, drdynvc->channel_mgr, ChannelId, Length);
@@ -1191,7 +1163,7 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wSt
 	UINT32 ChannelId;
 	UINT status;
 
-	if (Stream_GetRemainingLength(s) < drdynvc_cblen_to_bytes(cbChId))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, drdynvc_cblen_to_bytes(cbChId)))
 		return ERROR_INVALID_DATA;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
@@ -1216,7 +1188,7 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	UINT error;
 	UINT32 ChannelId;
 
-	if (Stream_GetRemainingLength(s) < drdynvc_cblen_to_bytes(cbChId))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, drdynvc_cblen_to_bytes(cbChId)))
 		return ERROR_INVALID_DATA;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
@@ -1243,14 +1215,14 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 Thread
 	int Sp;
 	int cbChId;
 
-	if (Stream_GetRemainingLength(s) < 1)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT8(s, value);
 	Cmd = (value & 0xf0) >> 4;
 	Sp = (value & 0x0c) >> 2;
 	cbChId = (value & 0x03) >> 0;
-	WLog_Print(drdynvc->log, WLOG_DEBUG, "order_recv: Cmd=0x%x, Sp=%d cbChId=%d", Cmd, Sp, cbChId);
+	WLog_Print(drdynvc->log, WLOG_TRACE, "order_recv: Cmd=0x%x, Sp=%d cbChId=%d", Cmd, Sp, cbChId);
 
 	switch (Cmd)
 	{
@@ -1521,6 +1493,7 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	UINT32 index;
 	rdpSettings* settings;
 
+	WINPR_ASSERT(drdynvc);
 	WINPR_UNUSED(pData);
 	WINPR_UNUSED(dataLength);
 
@@ -1539,9 +1512,12 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 		return status;
 	}
 
-	settings = (rdpSettings*)drdynvc->channelEntryPoints.pExtendedData;
+	WINPR_ASSERT(drdynvc->rdpcontext);
+	settings = drdynvc->rdpcontext->settings;
+	WINPR_ASSERT(settings);
 
-	for (index = 0; index < settings->DynamicChannelCount; index++)
+	for (index = 0; index < freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount);
+	     index++)
 	{
 		const ADDIN_ARGV* args = settings->DynamicChannelArray[index];
 		error = dvcman_load_addin(drdynvc, drdynvc->channel_mgr, args, settings);

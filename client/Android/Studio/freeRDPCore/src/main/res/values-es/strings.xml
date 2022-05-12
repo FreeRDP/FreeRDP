@@ -114,7 +114,6 @@
     <string name="settings_remote_program">Programa Remoto</string>
     <string name="settings_work_dir">Directorio de trabajo</string>
     <string name="settings_async_channel">Async channel</string>
-    <string name="settings_async_input">Async input</string>
     <string name="settings_async_update">Async update</string>
     <string name="settings_console_mode">Modo Consola</string>
     <!-- App settings strings -->

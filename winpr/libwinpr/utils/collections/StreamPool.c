@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -28,7 +26,7 @@
 
 #include "../stream.h"
 
-struct _wStreamPool
+struct s_wStreamPool
 {
 	size_t aSize;
 	size_t aCapacity;

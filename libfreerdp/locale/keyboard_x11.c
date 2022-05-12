@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +60,7 @@ int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 
 	while (fgets(buffer, sizeof(buffer), xprop) != NULL)
 	{
-		if ((pch = strstr(buffer, "_XKB_RULES_NAMES_BACKUP(STRING) = ")) != NULL)
+		if (strstr(buffer, "_XKB_RULES_NAMES_BACKUP(STRING) = ") != NULL)
 		{
 			/* "rules" */
 			pch = strchr(&buffer[34], ','); /* We assume it is xorg */
@@ -111,7 +109,7 @@ int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 
 	while (fgets(buffer, sizeof(buffer), xprop) != NULL)
 	{
-		if ((pch = strstr(buffer, "_XKB_RULES_NAMES(STRING) = ")) != NULL)
+		if (strstr(buffer, "_XKB_RULES_NAMES(STRING) = ") != NULL)
 		{
 			/* "rules" */
 			pch = strchr(&buffer[27], ','); // We assume it is xorg
@@ -189,7 +187,7 @@ static char* freerdp_detect_keymap_from_xkb(void)
 				else
 					beg++;
 
-				if ((pch = strchr(beg + 1, '"')) == NULL)
+				if (strchr(beg + 1, '"') == NULL)
 					break;
 
 				end = strcspn(beg + 1, "\"") + beg + 1;

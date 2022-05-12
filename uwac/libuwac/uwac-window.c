@@ -26,12 +26,13 @@
 #include <unistd.h>
 #include <assert.h>
 #include <sys/mman.h>
+#include <errno.h>
 
 #include "uwac-priv.h"
 #include "uwac-utils.h"
 #include "uwac-os.h"
 
-#include "config.h"
+#include <uwac/config.h>
 
 #define UWAC_INITIAL_BUFFERS 3
 
@@ -127,7 +128,8 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 	event->window = window;
 	event->states = surfaceState;
 
-	if (width && height)
+	if ((width > 0 && height > 0) &&
+		(width != window->width ||  height != window->height))
 	{
 		event->width = width;
 		event->height = height;
@@ -485,6 +487,36 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 
 	wl_surface_set_user_data(w->surface, w);
 
+#if BUILD_IVI
+	uint32_t ivi_surface_id = 1;
+	char* env = getenv("IVI_SURFACE_ID");
+	if (env)
+	{
+		unsigned long val;
+		char* endp;
+
+		errno = 0;
+		val = strtoul(env, &endp, 10);
+
+		if (!errno && val != 0 && val != UINT32_MAX)
+			ivi_surface_id = val;
+	}
+
+	if (display->ivi_application)
+	{
+		w->ivi_surface = ivi_application_surface_create(display->ivi_application, ivi_surface_id, w->surface);
+		assert(w->ivi_surface);
+		ivi_surface_add_listener(w->ivi_surface, &ivi_surface_listener, w);
+	} else
+#endif
+#if BUILD_FULLSCREEN_SHELL
+	if (display->fullscreen_shell)
+	{
+		zwp_fullscreen_shell_v1_present_surface(display->fullscreen_shell, w->surface,
+                                                 ZWP_FULLSCREEN_SHELL_V1_PRESENT_METHOD_CENTER,
+                                                 NULL);
+	} else
+#endif
 	if (display->xdg_base)
 	{
 		w->xdg_surface = xdg_wm_base_get_xdg_surface(display->xdg_base, w->surface);
@@ -509,22 +541,6 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 		wl_surface_commit(w->surface);
 		wl_display_roundtrip(w->display->display);
 	}
-#if BUILD_IVI
-	else if (display->ivi_application)
-	{
-		w->ivi_surface = ivi_application_surface_create(display->ivi_application, 1, w->surface);
-		assert(w->ivi_surface);
-		ivi_surface_add_listener(w->ivi_surface, &ivi_surface_listener, w);
-	}
-#endif
-#if BUILD_FULLSCREEN_SHELL
-	else if (display->fullscreen_shell)
-	{
-		zwp_fullscreen_shell_v1_present_surface(display->fullscreen_shell, w->surface,
-		                                        ZWP_FULLSCREEN_SHELL_V1_PRESENT_METHOD_CENTER,
-		                                        NULL);
-	}
-#endif
 	else
 	{
 		w->shell_surface = wl_shell_get_shell_surface(display->shell, w->surface);

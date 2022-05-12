@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
@@ -27,7 +25,7 @@
 #include "schannel.h"
 
 #include "../sspi.h"
-#include "../log.h"
+#include "../../log.h"
 
 static char* SCHANNEL_PACKAGE_NAME = "Schannel";
 

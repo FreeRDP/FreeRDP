@@ -1,4 +1,4 @@
-/**
+/*
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Channel Addins
  *
@@ -19,8 +19,8 @@
 
 typedef UINT (*MsgHandler)(LPVOID userdata, wStream* data);
 
-FREERDP_API void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata, MsgHandler,
-                                                const char* channel_name);
+FREERDP_API void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata,
+                                                MsgHandler handler, const char* channel_name);
 
 UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLength,
                                  UINT32 totalLength, UINT32 dataFlags);

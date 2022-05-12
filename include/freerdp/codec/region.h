@@ -32,15 +32,13 @@ extern "C"
 {
 #endif
 
-	struct _REGION16_DATA;
-	typedef struct _REGION16_DATA REGION16_DATA;
+	typedef struct S_REGION16_DATA REGION16_DATA;
 
-	struct _REGION16
+	typedef struct
 	{
 		RECTANGLE_16 extents;
 		REGION16_DATA* data;
-	};
-	typedef struct _REGION16 REGION16;
+	} REGION16;
 
 	/** computes if two rectangles are equal
 	 * @param r1 first rectangle

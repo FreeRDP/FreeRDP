@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/sysinfo.h>
 #include "prim_test.h"
@@ -38,9 +36,9 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 		                       PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };
 	PROFILER_DEFINE(genericProf)
 	PROFILER_DEFINE(optProf)
-	in = _aligned_recalloc(NULL, 1, size, 16);
-	out_c = _aligned_recalloc(NULL, 1, size, 16);
-	out_sse = _aligned_recalloc(NULL, 1, size, 16);
+	in = winpr_aligned_recalloc(NULL, 1, size, 16);
+	out_c = winpr_aligned_recalloc(NULL, 1, size, 16);
+	out_sse = winpr_aligned_recalloc(NULL, 1, size, 16);
 
 	if (!in || !out_c || !out_sse)
 		goto fail;
@@ -50,7 +48,7 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 	{
 		const UINT32 format = formats[x];
-		const UINT32 dstStride = width * GetBytesPerPixel(format);
+		const UINT32 dstStride = width * FreeRDPGetBytesPerPixel(format);
 		const char* formatName = FreeRDPGetColorFormatName(format);
 		PROFILER_CREATE(genericProf, "YCoCgRToRGB_8u_AC4R-GENERIC")
 		PROFILER_CREATE(optProf, "YCoCgRToRGB_8u_AC4R-OPT")
@@ -74,8 +72,8 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 		{
 			for (i = 0; i < width * height; ++i)
 			{
-				const UINT32 c = ReadColor(out_c + 4 * i, format);
-				const UINT32 sse = ReadColor(out_sse + 4 * i, format);
+				const UINT32 c = FreeRDPReadColor(out_c + 4 * i, format);
+				const UINT32 sse = FreeRDPReadColor(out_sse + 4 * i, format);
 
 				if (c != sse)
 				{
@@ -103,9 +101,9 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 	}
 
 fail:
-	_aligned_free(in);
-	_aligned_free(out_c);
-	_aligned_free(out_sse);
+	winpr_aligned_free(in);
+	winpr_aligned_free(out_c);
+	winpr_aligned_free(out_sse);
 	return status == PRIMITIVES_SUCCESS;
 }
 

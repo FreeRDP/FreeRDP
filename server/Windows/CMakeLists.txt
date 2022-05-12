@@ -89,7 +89,7 @@ endif()
 
 
 if(NOT CMAKE_WINDOWS_VERSION STREQUAL "WINXP")
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} d3d11 dxgi dxguid)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} d3d11 dxgi)
 endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} dsound)

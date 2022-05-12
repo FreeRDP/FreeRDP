@@ -24,12 +24,61 @@
 #include <winpr/crypto.h>
 #include <winpr/print.h>
 
+#include <freerdp/server/proxy/proxy_log.h>
 #include <freerdp/server/proxy/proxy_server.h>
 
 #include "pf_client.h"
+#include "pf_utils.h"
 #include <freerdp/server/proxy/proxy_context.h>
 
 #include "channels/pf_channel_rdpdr.h"
+
+#define TAG PROXY_TAG("server")
+
+static UINT32 ChannelId_Hash(const void* key)
+{
+	const UINT64* v = (const UINT64*)key;
+	return (*v & 0xFFFFFFFF) + (*v >> 32);
+}
+
+static BOOL ChannelId_Compare(const UINT64* v1, const UINT64* v2)
+{
+	return (*v1 == *v2);
+}
+
+pServerChannelContext* ChannelContext_new(pServerContext* ps, const char* name, UINT64 id)
+{
+	pServerChannelContext* ret = calloc(1, sizeof(*ret));
+	if (!ret)
+	{
+		PROXY_LOG_ERR(TAG, ps, "error allocating channel context for '%s'", name);
+		return NULL;
+	}
+
+	ret->openStatus = CHANNEL_OPENSTATE_OPENED;
+	ret->channel_id = id;
+	ret->channel_name = _strdup(name);
+	if (!ret->channel_name)
+	{
+		PROXY_LOG_ERR(TAG, ps, "error allocating name in channel context for '%s'", ret);
+		free(ret);
+		return NULL;
+	}
+
+	ret->channelMode = pf_utils_get_channel_mode(ps->pdata->config, name);
+	return ret;
+}
+
+void ChannelContext_free(pServerChannelContext* ctx)
+{
+	if (!ctx)
+		return;
+
+	IFCALL(ctx->contextDtor,ctx->context);
+
+	free(ctx->channel_name);
+	free(ctx);
+}
 
 /* Proxy context initialization callback */
 static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx);
@@ -60,6 +109,18 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 	WINPR_ASSERT(obj);
 	obj->fnObjectFree = intercept_context_entry_free;
 
+	/* channels by ids */
+	context->channelsById = HashTable_New(FALSE);
+	if (!context->channelsById)
+		goto error;
+	if (!HashTable_SetHashFunction(context->channelsById, ChannelId_Hash))
+		goto error;
+
+	obj = HashTable_KeyObject(context->channelsById);
+	obj->fnObjectEquals = (OBJECT_EQUALS_FN)ChannelId_Compare;
+
+	obj = HashTable_ValueObject(context->channelsById);
+	obj->fnObjectFree = (OBJECT_FREE_FN)ChannelContext_free;
 	return TRUE;
 
 error:
@@ -85,6 +146,7 @@ void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 	}
 
 	HashTable_Free(context->interceptContextMap);
+	HashTable_Free(context->channelsById);
 
 	if (context->vcm && (context->vcm != INVALID_HANDLE_VALUE))
 		WTSCloseServer((HANDLE)context->vcm);
@@ -170,8 +232,7 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 		 * it must be freed before setting it to NULL to avoid a memory leak!
 		 */
 
-		if (!freerdp_settings_set_pointer_len(dst, FreeRDP_RdpServerRsaKey, NULL,
-		                                      sizeof(rdpRsaKey)))
+		if (!freerdp_settings_set_pointer_len(dst, FreeRDP_RdpServerRsaKey, NULL, 1))
 			goto out_fail;
 	}
 
@@ -293,7 +354,7 @@ void proxy_data_abort_connect(proxyData* pdata)
 	WINPR_ASSERT(pdata->abort_event);
 	SetEvent(pdata->abort_event);
 	if (pdata->pc)
-		freerdp_abort_connect(pdata->pc->context.instance);
+		freerdp_abort_connect_context(&pdata->pc->context);
 }
 
 BOOL proxy_data_shall_disconnect(proxyData* pdata)

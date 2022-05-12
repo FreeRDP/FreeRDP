@@ -58,6 +58,10 @@ extern "C"
 	FREERDP_API const rdpTransportIo* freerdp_get_io_callbacks(rdpContext* context);
 	FREERDP_API BOOL freerdp_set_io_callbacks(rdpContext* context,
 	                                          const rdpTransportIo* io_callbacks);
+
+	FREERDP_API BOOL freerdp_set_io_callback_context(rdpContext* context, void* usercontext);
+	FREERDP_API void* freerdp_get_io_callback_context(rdpContext* context);
+
 	/* PDU parser.
 	 * incomplete: FALSE if the whole PDU is available, TRUE otherwise
 	 * Return: 0  -> PDU header incomplete

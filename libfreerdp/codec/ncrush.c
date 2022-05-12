@@ -19,33 +19,33 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/assert.h>
+
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/bitstream.h>
 
 #include <freerdp/log.h>
-#include <freerdp/codec/ncrush.h>
+#include "ncrush.h"
 
 #define TAG FREERDP_TAG("codec")
 
-struct _NCRUSH_CONTEXT
+struct s_NCRUSH_CONTEXT
 {
-	BOOL Compressor;
-	BYTE* HistoryPtr;
-	UINT32 HistoryOffset;
-	UINT32 HistoryEndOffset;
-	UINT32 HistoryBufferSize;
-	BYTE HistoryBuffer[65536];
-	UINT32 HistoryBufferFence;
-	UINT32 OffsetCache[4];
-	UINT16 HashTable[65536];
-	UINT16 MatchTable[65536];
-	BYTE HuffTableCopyOffset[1024];
-	BYTE HuffTableLOM[4096];
+	ALIGN64 BOOL Compressor;
+	ALIGN64 BYTE* HistoryPtr;
+	ALIGN64 UINT32 HistoryOffset;
+	ALIGN64 UINT32 HistoryEndOffset;
+	ALIGN64 UINT32 HistoryBufferSize;
+	ALIGN64 BYTE HistoryBuffer[65536];
+	ALIGN64 UINT32 HistoryBufferFence;
+	ALIGN64 UINT32 OffsetCache[4];
+	ALIGN64 UINT16 HashTable[65536];
+	ALIGN64 UINT16 MatchTable[65536];
+	ALIGN64 BYTE HuffTableCopyOffset[1024];
+	ALIGN64 BYTE HuffTableLOM[4096];
 };
 
 static const UINT16 HuffTableLEC[8192] = {
@@ -1918,14 +1918,19 @@ static const UINT32 LOMBaseLUT[30] = {
 
 static INLINE UINT16 get_word(const BYTE* data)
 {
-	UINT16 tmp = *data++;
+	UINT16 tmp;
+
+	WINPR_ASSERT(data);
+	tmp = *data++;
 	tmp |= *data << 8;
 	return tmp;
 }
 
 static INLINE UINT32 get_dword(const BYTE* data)
 {
-	UINT32 tmp = *data++;
+	UINT32 tmp;
+	WINPR_ASSERT(data);
+	tmp = *data++;
 	tmp |= (UINT32)*data++ << 8U;
 	tmp |= (UINT32)*data++ << 16U;
 	tmp |= (UINT32)*data++ << 24U;
@@ -1935,6 +1940,11 @@ static INLINE UINT32 get_dword(const BYTE* data)
 static INLINE BOOL NCrushFetchBits(const BYTE** SrcPtr, const BYTE** SrcEnd, INT32* nbits,
                                    UINT32* bits)
 {
+	WINPR_ASSERT(SrcPtr);
+	WINPR_ASSERT(SrcEnd);
+	WINPR_ASSERT(nbits);
+	WINPR_ASSERT(bits);
+
 	if (*nbits < 16)
 	{
 		if ((*SrcPtr + 1) >= *SrcEnd)
@@ -1964,6 +1974,10 @@ static INLINE BOOL NCrushFetchBits(const BYTE** SrcPtr, const BYTE** SrcEnd, INT
 
 static INLINE void NCrushWriteStart(UINT32* bits, UINT32* offset, UINT32* accumulator)
 {
+	WINPR_ASSERT(bits);
+	WINPR_ASSERT(offset);
+	WINPR_ASSERT(accumulator);
+
 	*bits = 0;
 	*offset = 0;
 	*accumulator = 0;
@@ -1972,6 +1986,10 @@ static INLINE void NCrushWriteStart(UINT32* bits, UINT32* offset, UINT32* accumu
 static INLINE void NCrushWriteBits(BYTE** DstPtr, UINT32* accumulator, UINT32* offset, UINT32 _bits,
                                    UINT32 _nbits)
 {
+	WINPR_ASSERT(DstPtr);
+	WINPR_ASSERT(accumulator);
+	WINPR_ASSERT(offset);
+
 	*accumulator |= _bits << *offset;
 	*offset += _nbits;
 
@@ -1986,12 +2004,14 @@ static INLINE void NCrushWriteBits(BYTE** DstPtr, UINT32* accumulator, UINT32* o
 
 static INLINE void NCrushWriteFinish(BYTE** DstPtr, UINT32 accumulator)
 {
+	WINPR_ASSERT(DstPtr);
+
 	*(*DstPtr)++ = accumulator & 0xFF;
 	*(*DstPtr)++ = (accumulator >> 8) & 0xFF;
 }
 
 int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize,
-                      BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
+                      const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	UINT32 index;
 	UINT32 bits;
@@ -2017,6 +2037,11 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 	UINT32 CopyOffsetBase;
 	UINT32 LengthOfMatchBits;
 	UINT32 LengthOfMatchBase;
+
+	WINPR_ASSERT(ncrush);
+	WINPR_ASSERT(pSrcData);
+	WINPR_ASSERT(ppDstData);
+	WINPR_ASSERT(pDstSize);
 
 	if (ncrush->HistoryEndOffset != 65535)
 		return -1001;
@@ -2249,13 +2274,14 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 static int ncrush_hash_table_add(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize,
                                  UINT32 HistoryOffset)
 {
-	const BYTE* SrcPtr;
+	const BYTE* SrcPtr = pSrcData;
 	UINT32 Hash;
-	UINT32 Offset;
-	UINT32 EndOffset;
-	SrcPtr = pSrcData;
-	Offset = HistoryOffset;
-	EndOffset = Offset + SrcSize - 8;
+	UINT32 Offset = HistoryOffset;
+	UINT32 EndOffset = Offset + SrcSize - 8;
+
+	WINPR_ASSERT(ncrush);
+	WINPR_ASSERT(pSrcData);
+	WINPR_ASSERT(Offset + SrcSize >= 8);
 
 	while (Offset < EndOffset)
 	{
@@ -2273,6 +2299,10 @@ static int ncrush_find_match_length(const BYTE* Ptr1, const BYTE* Ptr2, BYTE* Hi
 {
 	BYTE val1, val2;
 	const BYTE* Ptr = Ptr1;
+
+	WINPR_ASSERT(Ptr1);
+	WINPR_ASSERT(Ptr2);
+	WINPR_ASSERT(HistoryPtr);
 
 	do
 	{
@@ -2297,6 +2327,9 @@ static int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset,
 	UINT16 NextOffset;
 	UINT16 MatchOffset;
 	BYTE* HistoryBuffer;
+
+	WINPR_ASSERT(ncrush);
+	WINPR_ASSERT(pMatchOffset);
 
 	if (!ncrush->MatchTable[HistoryOffset])
 		return -1;
@@ -2409,6 +2442,9 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 	int NewMatch;
 	UINT32 HistoryOffset;
 
+	WINPR_ASSERT(ncrush);
+	WINPR_ASSERT(HistoryPtr);
+
 	if (HistoryPtr < &ncrush->HistoryBuffer[32768])
 		return -1;
 
@@ -2446,8 +2482,8 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 	return 1;
 }
 
-int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
-                    UINT32* pDstSize, UINT32* pFlags)
+int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstBuffer,
+                    const BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
 	BYTE Literal;
 	const BYTE* SrcPtr;
@@ -2462,8 +2498,8 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 	BYTE* HistoryPtr;
 	BYTE* pDstData;
 	UINT32 DstSize;
-	BOOL PacketAtFront;
-	BOOL PacketFlushed;
+	BOOL PacketAtFront = FALSE;
+	BOOL PacketFlushed = FALSE;
 	UINT32 MatchLength;
 	UINT32 IndexLEC;
 	UINT32 IndexLOM;
@@ -2481,12 +2517,19 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 	BYTE* HistoryBufferEndPtr;
 	UINT32 CopyOffsetIndex;
 	UINT32 CopyOffsetBits;
-	UINT32 CompressionLevel;
-	CompressionLevel = 2;
+	UINT32 CompressionLevel = 2;
+
+	WINPR_ASSERT(ncrush);
+
+	WINPR_ASSERT(ncrush);
+	WINPR_ASSERT(pSrcData);
+	WINPR_ASSERT(pDstBuffer);
+	WINPR_ASSERT(ppDstData);
+	WINPR_ASSERT(pDstSize);
+	WINPR_ASSERT(pFlags);
+
 	HistoryBuffer = ncrush->HistoryBuffer;
 	*pFlags = 0;
-	PacketFlushed = FALSE;
-	PacketAtFront = FALSE;
 
 	if ((SrcSize + ncrush->HistoryOffset) >= 65529)
 	{
@@ -2511,7 +2554,8 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 		*pFlags = 0;
 	}
 
-	pDstData = *ppDstData;
+	pDstData = pDstBuffer;
+	*ppDstData = pDstBuffer;
 
 	if (!pDstData)
 		return -1002;
@@ -2801,6 +2845,8 @@ static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 	int j, l;
 	k = 0;
 
+	WINPR_ASSERT(context);
+
 	for (i = 0; i < 28; i++)
 	{
 		for (j = 0; j < 1 << LOMBitsLUT[i]; j++)
@@ -2851,6 +2897,8 @@ static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 
 void ncrush_context_reset(NCRUSH_CONTEXT* ncrush, BOOL flush)
 {
+	WINPR_ASSERT(ncrush);
+
 	ZeroMemory(&(ncrush->HistoryBuffer), sizeof(ncrush->HistoryBuffer));
 	ZeroMemory(&(ncrush->OffsetCache), sizeof(ncrush->OffsetCache));
 	ZeroMemory(&(ncrush->MatchTable), sizeof(ncrush->MatchTable));
@@ -2866,27 +2914,30 @@ void ncrush_context_reset(NCRUSH_CONTEXT* ncrush, BOOL flush)
 
 NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor)
 {
-	NCRUSH_CONTEXT* ncrush;
-	ncrush = (NCRUSH_CONTEXT*)calloc(1, sizeof(NCRUSH_CONTEXT));
+	NCRUSH_CONTEXT* ncrush = (NCRUSH_CONTEXT*)calloc(1, sizeof(NCRUSH_CONTEXT));
 
-	if (ncrush)
+	if (!ncrush)
+		goto fail;
+
+	ncrush->Compressor = Compressor;
+	ncrush->HistoryBufferSize = 65536;
+	ncrush->HistoryEndOffset = ncrush->HistoryBufferSize - 1;
+	ncrush->HistoryBufferFence = 0xABABABAB;
+	ncrush->HistoryOffset = 0;
+	ncrush->HistoryPtr = &(ncrush->HistoryBuffer[ncrush->HistoryOffset]);
+
+	if (ncrush_generate_tables(ncrush) < 0)
 	{
-		ncrush->Compressor = Compressor;
-		ZeroMemory(&(ncrush->OffsetCache), sizeof(ncrush->OffsetCache));
-		ncrush->HistoryBufferSize = 65536;
-		ncrush->HistoryEndOffset = ncrush->HistoryBufferSize - 1;
-		ZeroMemory(&(ncrush->HistoryBuffer), sizeof(ncrush->HistoryBuffer));
-		ncrush->HistoryBufferFence = 0xABABABAB;
-		ncrush->HistoryOffset = 0;
-		ncrush->HistoryPtr = &(ncrush->HistoryBuffer[ncrush->HistoryOffset]);
-
-		if (ncrush_generate_tables(ncrush) < 0)
-			WLog_DBG(TAG, "ncrush_context_new: failed to initialize tables");
-
-		ncrush_context_reset(ncrush, FALSE);
+		WLog_DBG(TAG, "ncrush_context_new: failed to initialize tables");
+		goto fail;
 	}
 
+	ncrush_context_reset(ncrush, FALSE);
+
 	return ncrush;
+fail:
+	ncrush_context_free(ncrush);
+	return NULL;
 }
 
 void ncrush_context_free(NCRUSH_CONTEXT* ncrush)

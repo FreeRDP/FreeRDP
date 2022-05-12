@@ -22,6 +22,8 @@
 
 #include <freerdp/api.h>
 
+#include <freerdp/freerdp.h>
+
 #include <freerdp/codec/color.h>
 
 #include <freerdp/codec/rfx.h>

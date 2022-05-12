@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +62,11 @@ void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantization_value
 /* stride is bytes between rows in the output buffer. */
 BOOL rfx_decode_rgb(RFX_CONTEXT* context, const RFX_TILE* tile, BYTE* rgb_buffer, UINT32 stride)
 {
+	union
+	{
+		const INT16** cpv;
+		INT16** pv;
+	} cnv;
 	BOOL rc = TRUE;
 	BYTE* pBuffer;
 	INT16* pSrcDst[3];
@@ -83,9 +86,9 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, const RFX_TILE* tile, BYTE* rgb_buffer
 	rfx_decode_component(context, cr_quants, tile->CrData, tile->CrLen, pSrcDst[2]); /* CrData */
 	PROFILER_ENTER(context->priv->prof_rfx_ycbcr_to_rgb)
 
-	if (prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**)pSrcDst, 64 * sizeof(INT16), rgb_buffer,
-	                                   stride, context->pixel_format,
-	                                   &roi_64x64) != PRIMITIVES_SUCCESS)
+	cnv.pv = pSrcDst;
+	if (prims->yCbCrToRGB_16s8u_P3AC4R(cnv.cpv, 64 * sizeof(INT16), rgb_buffer, stride,
+	                                   context->pixel_format, &roi_64x64) != PRIMITIVES_SUCCESS)
 		rc = FALSE;
 
 	PROFILER_EXIT(context->priv->prof_rfx_ycbcr_to_rgb)

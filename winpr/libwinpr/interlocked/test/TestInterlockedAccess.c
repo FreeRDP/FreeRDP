@@ -16,7 +16,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 	/* InterlockedIncrement */
 
-	Addend = _aligned_malloc(sizeof(LONG), sizeof(LONG));
+	Addend = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
 	if (!Addend)
 	{
 		printf("Failed to allocate memory\n");
@@ -47,7 +47,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	/* InterlockedExchange */
 
-	Target = _aligned_malloc(sizeof(LONG), sizeof(LONG));
+	Target = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
 
 	if (!Target)
 	{
@@ -91,7 +91,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	/* InterlockedCompareExchange (*Destination == Comparand) */
 
-	Destination = _aligned_malloc(sizeof(LONG), sizeof(LONG));
+	Destination = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
 	if (!Destination)
 	{
 		printf("Failed to allocate memory\n");
@@ -142,7 +142,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	/* InterlockedCompareExchange64 (*Destination == Comparand) */
 
-	Destination64 = _aligned_malloc(sizeof(LONGLONG), sizeof(LONGLONG));
+	Destination64 = winpr_aligned_malloc(sizeof(LONGLONG), sizeof(LONGLONG));
 	if (!Destination64)
 	{
 		printf("Failed to allocate memory\n");
@@ -192,10 +192,10 @@ int TestInterlockedAccess(int argc, char* argv[])
 		return -1;
 	}
 
-	_aligned_free(Addend);
-	_aligned_free(Target);
-	_aligned_free(Destination);
-	_aligned_free(Destination64);
+	winpr_aligned_free(Addend);
+	winpr_aligned_free(Target);
+	winpr_aligned_free(Destination);
+	winpr_aligned_free(Destination64);
 
 	return 0;
 }

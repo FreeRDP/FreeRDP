@@ -25,8 +25,6 @@ include_directories(${FFMPEG_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
-
-
 if(APPLE)
     # For this to work on apple, we need to add some frameworks
     FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation)
@@ -37,9 +35,5 @@ if(APPLE)
 else()
     set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${FFMPEG_LIBRARIES})
     target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-endif()
-
-if (WITH_DEBUG_SYMBOLS AND MSVC AND NOT BUILTIN_CHANNELS AND BUILD_SHARED_LIBS)
-	install(FILES ${PROJECT_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${FREERDP_ADDIN_PATH} COMPONENT symbols)
 endif()
 

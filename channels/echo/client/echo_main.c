@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,34 +33,31 @@
 
 #define TAG CHANNELS_TAG("echo.client")
 
-typedef struct _ECHO_LISTENER_CALLBACK ECHO_LISTENER_CALLBACK;
-struct _ECHO_LISTENER_CALLBACK
+typedef struct
 {
 	IWTSListenerCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
-};
+} ECHO_LISTENER_CALLBACK;
 
-typedef struct _ECHO_CHANNEL_CALLBACK ECHO_CHANNEL_CALLBACK;
-struct _ECHO_CHANNEL_CALLBACK
+typedef struct
 {
 	IWTSVirtualChannelCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
-};
+} ECHO_CHANNEL_CALLBACK;
 
-typedef struct _ECHO_PLUGIN ECHO_PLUGIN;
-struct _ECHO_PLUGIN
+typedef struct
 {
 	IWTSPlugin iface;
 
 	ECHO_LISTENER_CALLBACK* listener_callback;
 	IWTSListener* listener;
 	BOOL initialized;
-};
+} ECHO_PLUGIN;
 
 /**
  * Function description
@@ -176,18 +171,12 @@ static UINT echo_plugin_terminated(IWTSPlugin* pPlugin)
 	return CHANNEL_RC_OK;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define DVCPluginEntry echo_DVCPluginEntry
-#else
-#define DVCPluginEntry FREERDP_API DVCPluginEntry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+UINT echo_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT status = CHANNEL_RC_OK;
 	ECHO_PLUGIN* echo;

@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
@@ -38,12 +36,11 @@
 
 #define TAG CLIENT_TAG("shadow")
 
-struct _SHADOW_GFX_STATUS
+typedef struct
 {
 	BOOL gfxOpened;
 	BOOL gfxSurfaceCreated;
-};
-typedef struct _SHADOW_GFX_STATUS SHADOW_GFX_STATUS;
+} SHADOW_GFX_STATUS;
 
 static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 {
@@ -167,6 +164,7 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(peer);
+	WINPR_ASSERT(peer->context);
 
 	server = (rdpShadowServer*)peer->ContextExtra;
 	WINPR_ASSERT(server);
@@ -179,7 +177,7 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	client->subsystem = server->subsystem;
 	WINPR_ASSERT(client->subsystem);
 
-	settings = peer->settings;
+	settings = peer->context->settings;
 	WINPR_ASSERT(settings);
 
 	settings->ColorDepth = srvSettings->ColorDepth;
@@ -399,7 +397,7 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 	client = (rdpShadowClient*)peer->context;
 	WINPR_ASSERT(client);
 
-	settings = peer->settings;
+	settings = peer->context->settings;
 	WINPR_ASSERT(settings);
 
 	server = client->server;
@@ -426,9 +424,11 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 	/* Resize client if necessary */
 	if (shadow_client_recalc_desktop_size(client))
 	{
-		WINPR_ASSERT(peer->update);
-		WINPR_ASSERT(peer->update->DesktopResize);
-		peer->update->DesktopResize(peer->update->context);
+		rdpUpdate* update = peer->context->update;
+		WINPR_ASSERT(update);
+		WINPR_ASSERT(update->DesktopResize);
+
+		update->DesktopResize(update->context);
 		WLog_INFO(TAG, "Client from %s is resized (%" PRIu32 "x%" PRIu32 "@%" PRIu32 ")",
 		          peer->hostname, settings->DesktopWidth, settings->DesktopHeight,
 		          settings->ColorDepth);
@@ -582,11 +582,11 @@ static BOOL shadow_client_activate(freerdp_peer* peer)
 
 	WINPR_ASSERT(peer);
 
-	settings = peer->settings;
-	WINPR_ASSERT(settings);
-
 	client = (rdpShadowClient*)peer->context;
 	WINPR_ASSERT(client);
+
+	settings = peer->context->settings;
+	WINPR_ASSERT(settings);
 
 	client->activated = TRUE;
 	client->inLobby = client->mayView ? FALSE : TRUE;
@@ -604,6 +604,7 @@ static BOOL shadow_client_activate(freerdp_peer* peer)
 static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* identity,
                                 BOOL automatic)
 {
+	BOOL rc = FALSE;
 	char* user = NULL;
 	char* domain = NULL;
 	char* password = NULL;
@@ -614,7 +615,9 @@ static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTIT
 	WINPR_ASSERT(peer);
 	WINPR_ASSERT(identity);
 
-	settings = peer->settings;
+	WINPR_ASSERT(peer->context);
+
+	settings = peer->context->settings;
 	WINPR_ASSERT(settings);
 
 	if (identity->Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE)
@@ -642,7 +645,7 @@ static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTIT
 			int rc;
 			WINPR_ASSERT(identity->PasswordLength <= INT_MAX);
 			rc = ConvertFromUnicode(CP_UTF8, 0, identity->Password, (int)identity->PasswordLength,
-			                        &user, 0, NULL, NULL);
+			                        &password, 0, NULL, NULL);
 			WINPR_ASSERT(rc > 0);
 		}
 	}
@@ -660,38 +663,23 @@ static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTIT
 
 	if ((identity->User && !user) || (identity->Domain && !domain) ||
 	    (identity->Password && !password))
-	{
-		free(user);
-		free(domain);
-		free(password);
-		return FALSE;
-	}
+		goto fail;
 
 	if (user)
-	{
-		free(settings->Username);
-		settings->Username = user;
-		user = NULL;
-	}
+		freerdp_settings_set_string(settings, FreeRDP_Username, user);
 
 	if (domain)
-	{
-		free(settings->Domain);
-		settings->Domain = domain;
-		domain = NULL;
-	}
+		freerdp_settings_set_string(settings, FreeRDP_Domain, domain);
 
 	if (password)
-	{
-		free(settings->Password);
-		settings->Password = password;
-		password = NULL;
-	}
+		freerdp_settings_set_string(settings, FreeRDP_Password, password);
 
+	rc = TRUE;
+fail:
 	free(user);
 	free(domain);
 	free(password);
-	return TRUE;
+	return rc;
 }
 
 static INLINE void shadow_client_common_frame_acknowledge(rdpShadowClient* client, UINT32 frameId)
@@ -1241,7 +1229,8 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 		BOOL rc;
 		const UINT32 w = cmd.right - cmd.left;
 		const UINT32 h = cmd.bottom - cmd.top;
-		const BYTE* src = &pSrcData[cmd.top * nSrcStep + cmd.left * GetBytesPerPixel(SrcFormat)];
+		const BYTE* src =
+		    &pSrcData[cmd.top * nSrcStep + cmd.left * FreeRDPGetBytesPerPixel(SrcFormat)];
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_PLANAR) < 0)
 		{
 			WLog_ERR(TAG, "Failed to prepare encoder FREERDP_CODEC_PLANAR");
@@ -1873,9 +1862,10 @@ static BOOL shadow_client_send_resize(rdpShadowClient* client, SHADOW_GFX_STATUS
 	}
 
 	/* Send Resize */
-	WINPR_ASSERT(peer->update);
-	WINPR_ASSERT(peer->update->DesktopResize);
-	if (!peer->update->DesktopResize(peer->update->context))
+	WINPR_ASSERT(peer->context);
+	WINPR_ASSERT(peer->context->update);
+	WINPR_ASSERT(peer->context->update->DesktopResize);
+	if (!peer->context->update->DesktopResize(peer->context->update->context))
 	{
 		WLog_ERR(TAG, "DesktopResize failed");
 		return FALSE;
@@ -2060,6 +2050,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	wMessageQueue* MsgQueue;
 	/* This should only be visited in client thread */
 	SHADOW_GFX_STATUS gfxstatus = { 0 };
+	rdpUpdate* update;
 
 	WINPR_ASSERT(client);
 
@@ -2074,7 +2065,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	WINPR_ASSERT(peer);
 	WINPR_ASSERT(peer->context);
 
-	settings = peer->settings;
+	settings = peer->context->settings;
 	WINPR_ASSERT(settings);
 
 	peer->Capabilities = shadow_client_capabilities;
@@ -2086,10 +2077,12 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	rc = peer->Initialize(peer);
 	WINPR_ASSERT(rc);
 
-	WINPR_ASSERT(peer->update);
-	peer->update->RefreshRect = shadow_client_refresh_rect;
-	peer->update->SuppressOutput = shadow_client_suppress_output;
-	peer->update->SurfaceFrameAcknowledge = shadow_client_surface_frame_acknowledge;
+	update = peer->context->update;
+	WINPR_ASSERT(update);
+
+	update->RefreshRect = shadow_client_refresh_rect;
+	update->SuppressOutput = shadow_client_suppress_output;
+	update->SurfaceFrameAcknowledge = shadow_client_surface_frame_acknowledge;
 
 	if ((!client->vcm) || (!subsystem->updateEvent))
 		goto out;
@@ -2390,10 +2383,8 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 	peer->ContextSize = sizeof(rdpShadowClient);
 	peer->ContextNew = shadow_client_context_new;
 	peer->ContextFree = shadow_client_context_free;
-	peer->settings = freerdp_settings_clone(server->settings);
-	WINPR_ASSERT(peer->settings);
 
-	if (!freerdp_peer_context_new(peer))
+	if (!freerdp_peer_context_new_ex(peer, server->settings))
 		return FALSE;
 
 	client = (rdpShadowClient*)peer->context;

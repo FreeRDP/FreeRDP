@@ -19,9 +19,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
@@ -50,15 +48,7 @@ static HANDLE_CREATOR _NamedPipeClientHandleCreator;
 
 static BOOL NamedPipeClientIsHandled(HANDLE handle)
 {
-	WINPR_NAMED_PIPE* pFile = (WINPR_NAMED_PIPE*)handle;
-
-	if (!pFile || (pFile->Type != HANDLE_TYPE_NAMED_PIPE) || (pFile == INVALID_HANDLE_VALUE))
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_NAMED_PIPE, TRUE);
 }
 
 static BOOL NamedPipeClientCloseHandle(HANDLE handle)
@@ -123,7 +113,8 @@ static HANDLE_OPS ops = {
 	NULL, /* FileLockFileEx */
 	NULL, /* FileUnlockFile */
 	NULL, /* FileUnlockFileEx */
-	NULL  /* SetFileTime */
+	NULL, /* SetFileTime */
+	NULL, /* FileGetFileInformationByHandle */
 };
 
 static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess,
@@ -209,7 +200,7 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	s.sun_family = AF_UNIX;
 	sprintf_s(s.sun_path, ARRAYSIZE(s.sun_path), "%s", pNamedPipe->lpFilePath);
 	status = connect(pNamedPipe->clientfd, (struct sockaddr*)&s, sizeof(struct sockaddr_un));
-	pNamedPipe->ops = &ops;
+	pNamedPipe->common.ops = &ops;
 
 	if (status != 0)
 	{
@@ -302,10 +293,9 @@ int GetNamePipeFileDescriptor(HANDLE hNamedPipe)
 {
 #ifndef _WIN32
 	int fd;
-	WINPR_NAMED_PIPE* pNamedPipe;
-	pNamedPipe = (WINPR_NAMED_PIPE*)hNamedPipe;
+	WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*)hNamedPipe;
 
-	if (!pNamedPipe || pNamedPipe->Type != HANDLE_TYPE_NAMED_PIPE)
+	if (!NamedPipeClientIsHandled(hNamedPipe))
 		return -1;
 
 	fd = (pNamedPipe->ServerMode) ? pNamedPipe->serverfd : pNamedPipe->clientfd;

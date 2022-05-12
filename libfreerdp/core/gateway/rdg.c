@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/assert.h>
 
@@ -108,7 +106,7 @@
 #define WEBSOCKET_MASK_BIT 0x80
 #define WEBSOCKET_FIN_BIT 0x80
 
-typedef enum _WEBSOCKET_OPCODE
+typedef enum
 {
 	WebsocketContinuationOpcode = 0x0,
 	WebsocketTextOpcode = 0x1,
@@ -118,7 +116,7 @@ typedef enum _WEBSOCKET_OPCODE
 	WebsocketPongOpcode = 0xa,
 } WEBSOCKET_OPCODE;
 
-typedef enum _WEBSOCKET_STATE
+typedef enum
 {
 	WebsocketStateOpcodeAndFin,
 	WebsocketStateLengthAndMasking,
@@ -141,7 +139,7 @@ typedef struct
 	wStream* responseStreamBuffer;
 } rdg_http_websocket_context;
 
-typedef enum _CHUNK_STATE
+typedef enum
 {
 	ChunkStateLenghHeader,
 	ChunkStateData,
@@ -313,7 +311,7 @@ static BOOL rdg_read_http_unicode_string(wStream* s, const WCHAR** string, UINT1
 	size_t rem = Stream_GetRemainingLength(s);
 
 	/* Read length of the string */
-	if (rem < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 	{
 		WLog_ERR(TAG, "[%s]: Could not read stream length, only have % " PRIuz " bytes", rem);
 		return FALSE;
@@ -764,7 +762,6 @@ static int rdg_websocket_read(BIO* bio, BYTE* pBuffer, size_t size,
 		}
 	}
 	/* should be unreachable */
-	return -1;
 }
 
 static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
@@ -865,7 +862,6 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 				return -1;
 		}
 	}
-	return -1;
 }
 
 static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
@@ -1264,12 +1260,8 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 10)
-	{
-		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 10", __FUNCTION__,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 10))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, errorCode);
 	Stream_Read_UINT8(s, verMajor);
@@ -1308,12 +1300,8 @@ static BOOL rdg_process_tunnel_response_optional(rdpRdg* rdg, wStream* s, UINT16
 	if (fieldsPresent & HTTP_TUNNEL_RESPONSE_FIELD_CAPS)
 	{
 		UINT32 caps;
-		if (Stream_GetRemainingLength(s) < 4)
-		{
-			WLog_ERR(TAG, "[%s] Short capsFlags, got %" PRIuz ", expected 4", __FUNCTION__,
-			         Stream_GetRemainingLength(s));
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return FALSE;
-		}
 
 		Stream_Read_UINT32(s, caps);
 		WLog_DBG(TAG, "capabilities=%s", capabilities_enum_to_string(caps));
@@ -1372,12 +1360,8 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 10)
-	{
-		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 10", __FUNCTION__,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 10))
 		return FALSE;
-	}
 
 	Stream_Read_UINT16(s, serverVersion);
 	Stream_Read_UINT32(s, errorCode);
@@ -1412,12 +1396,8 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 8", __FUNCTION__,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, errorCode);
 	Stream_Read_UINT16(s, fieldsPresent);
@@ -1448,12 +1428,8 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 8", __FUNCTION__,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, errorCode);
 	Stream_Read_UINT16(s, fieldsPresent);
@@ -1481,12 +1457,8 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 	UINT32 packetLength;
 	Stream_SetPosition(s, 0);
 
-	if (Stream_GetRemainingLength(s) < 8)
-	{
-		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected 8", __FUNCTION__,
-		         Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
-	}
 
 	Stream_Read_UINT16(s, type);
 	Stream_Seek_UINT16(s); /* reserved */
@@ -2061,7 +2033,7 @@ static BOOL rdg_process_close_packet(rdpRdg* rdg, wStream* s)
 	UINT32 packetSize = 12;
 
 	/* Read error code */
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 	Stream_Read_UINT32(s, errorCode);
 
@@ -2433,7 +2405,23 @@ static long rdg_bio_ctrl(BIO* in_bio, int cmd, long arg1, void* arg2)
 		 */
 		status = BIO_ctrl(tlsOut->bio, cmd, arg1, arg2);
 	}
-
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	else if (cmd == BIO_CTRL_GET_KTLS_SEND)
+	{
+		/* Even though BIO_get_ktls_send says that returning negative values is valid
+		 * openssl internal sources are full of if(!BIO_get_ktls_send && ) stuff. This has some
+		 * nasty sideeffects. return 0 as proper no KTLS offloading flag
+		 */
+		status = 0;
+	}
+	else if (cmd == BIO_CTRL_GET_KTLS_RECV)
+	{
+		/* Even though BIO_get_ktls_recv says that returning negative values is valid
+		 * there is no reason to trust  trust negative values are implemented right everywhere
+		 */
+		status = 0;
+	}
+#endif
 	return status;
 }
 

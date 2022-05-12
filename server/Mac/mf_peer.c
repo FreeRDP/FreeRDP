@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <freerdp/listener.h>
 #include <freerdp/codec/rfx.h>
@@ -46,6 +44,9 @@
 
 #include "CoreVideo/CoreVideo.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
+
 // refactor these
 static int info_last_sec = 0;
 static int info_last_nsec = 0;
@@ -58,6 +59,8 @@ static mfEventQueue* info_event_queue;
 static CGLContextObj glContext;
 static CGContextRef bmp;
 static CGImageRef img;
+
+static void mf_peer_context_free(freerdp_peer* client, rdpContext* context);
 
 static BOOL mf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
@@ -92,9 +95,18 @@ static void mf_peer_rfx_update(freerdp_peer* client)
 	rdpUpdate* update;
 	mfPeerContext* mfp;
 	SURFACE_BITS_COMMAND cmd = { 0 };
-	update = client->update;
+
+	WINPR_ASSERT(client);
+
 	mfp = (mfPeerContext*)client->context;
+	WINPR_ASSERT(mfp);
+
+	update = client->context->update;
+	WINPR_ASSERT(update);
+
 	s = mfp->s;
+	WINPR_ASSERT(s);
+
 	Stream_Clear(s);
 	Stream_SetPosition(s, 0);
 	UINT32 x = mfi->invalid.x / mfi->scale;
@@ -154,63 +166,68 @@ static BOOL mf_peer_check_fds(freerdp_peer* client)
 }
 
 /* Called when we have a new peer connecting */
-static BOOL mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
+static BOOL mf_peer_context_new(freerdp_peer* client, rdpContext* context)
 {
-	if (!(context->info = mf_info_get_instance()))
+	rdpSettings* settings;
+	mfPeerContext* peer = (mfPeerContext*)context;
+
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	if (!(peer->info = mf_info_get_instance()))
 		return FALSE;
 
-	if (!(context->rfx_context = rfx_context_new_ex(TRUE, client->settings->ThreadingFlags)))
-		goto fail_rfx_context;
+	if (!(peer->rfx_context = rfx_context_new_ex(TRUE, settings->ThreadingFlags)))
+		goto fail;
 
-	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = client->settings->DesktopWidth;
-	context->rfx_context->height = client->settings->DesktopHeight;
-	rfx_context_set_pixel_format(context->rfx_context, PIXEL_FORMAT_BGRA32);
+	peer->rfx_context->mode = RLGR3;
+	peer->rfx_context->width = settings->DesktopWidth;
+	peer->rfx_context->height = settings->DesktopHeight;
+	rfx_context_set_pixel_format(peer->rfx_context, PIXEL_FORMAT_BGRA32);
 
-	if (!(context->s = Stream_New(NULL, 0xFFFF)))
-		goto fail_stream_new;
+	if (!(peer->s = Stream_New(NULL, 0xFFFF)))
+		goto fail;
 
-	context->vcm = WTSOpenServerA((LPSTR)client->context);
+	peer->vcm = WTSOpenServerA((LPSTR)client->context);
 
-	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
-		goto fail_open_server;
+	if (!peer->vcm || (peer->vcm == INVALID_HANDLE_VALUE))
+		goto fail;
 
-	mf_info_peer_register(context->info, context);
+	mf_info_peer_register(peer->info, peer);
 	return TRUE;
-fail_open_server:
-	Stream_Free(context->s, TRUE);
-	context->s = NULL;
-fail_stream_new:
-	rfx_context_free(context->rfx_context);
-	context->rfx_context = NULL;
-fail_rfx_context:
+fail:
+	mf_peer_context_free(client, context);
 	return FALSE;
 }
 
 /* Called after a peer disconnects */
-static void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
+static void mf_peer_context_free(freerdp_peer* client, rdpContext* context)
 {
+	mfPeerContext* peer = (mfPeerContext*)context;
 	if (context)
 	{
-		mf_info_peer_unregister(context->info, context);
+		mf_info_peer_unregister(peer->info, peer);
 		dispatch_suspend(info_timer);
-		Stream_Free(context->s, TRUE);
-		rfx_context_free(context->rfx_context);
-		// nsc_context_free(context->nsc_context);
+		Stream_Free(peer->s, TRUE);
+		rfx_context_free(peer->rfx_context);
+		// nsc_context_free(peer->nsc_context);
 #ifdef CHANNEL_AUDIN_SERVER
 
-		if (context->audin)
-			audin_server_context_free(context->audin);
+		if (peer->audin)
+			audin_server_context_free(peer->audin);
 
 #endif
 #ifdef CHANNEL_RDPSND_SERVER
 		mf_peer_rdpsnd_stop();
 
-		if (context->rdpsnd)
-			rdpsnd_server_context_free(context->rdpsnd);
+		if (peer->rdpsnd)
+			rdpsnd_server_context_free(peer->rdpsnd);
 
 #endif
-		WTSCloseServer(context->vcm);
+		WTSCloseServer(peer->vcm);
 	}
 }
 
@@ -218,8 +235,8 @@ static void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 static BOOL mf_peer_init(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(mfPeerContext);
-	client->ContextNew = (psPeerContextNew)mf_peer_context_new;
-	client->ContextFree = (psPeerContextFree)mf_peer_context_free;
+	client->ContextNew = mf_peer_context_new;
+	client->ContextFree = mf_peer_context_free;
 
 	if (!freerdp_peer_context_new(client))
 		return FALSE;
@@ -246,9 +263,16 @@ static BOOL mf_peer_init(freerdp_peer* client)
 
 static BOOL mf_peer_post_connect(freerdp_peer* client)
 {
-	mfPeerContext* context = (mfPeerContext*)client->context;
-	rdpSettings* settings = client->settings;
 	mfInfo* mfi = mf_info_get_instance();
+
+	WINPR_ASSERT(client);
+
+	mfPeerContext* context = (mfPeerContext*)client->context;
+	WINPR_ASSERT(context);
+
+	rdpSettings* settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
 	mfi->scale = 1;
 	// mfi->servscreen_width = 2880 / mfi->scale;
 	// mfi->servscreen_height = 1800 / mfi->scale;
@@ -262,7 +286,11 @@ static BOOL mf_peer_post_connect(freerdp_peer* client)
 	settings->DesktopWidth = mfi->servscreen_width;
 	settings->DesktopHeight = mfi->servscreen_height;
 	settings->ColorDepth = bitsPerPixel;
-	client->update->DesktopResize(client->update->context);
+
+	WINPR_ASSERT(client->context->update);
+	WINPR_ASSERT(client->context->update->DesktopResize);
+	client->context->update->DesktopResize(client->context);
+
 	mfi->mouse_down_left = FALSE;
 	mfi->mouse_down_right = FALSE;
 	mfi->mouse_down_other = FALSE;
@@ -283,9 +311,15 @@ static BOOL mf_peer_post_connect(freerdp_peer* client)
 
 static BOOL mf_peer_activate(freerdp_peer* client)
 {
+	WINPR_ASSERT(client);
+
 	mfPeerContext* context = (mfPeerContext*)client->context;
-	rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
-	                  client->settings->DesktopHeight);
+	WINPR_ASSERT(context);
+
+	rdpSettings* settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
+	rfx_context_reset(context->rfx_context, settings->DesktopWidth, settings->DesktopHeight);
 	context->activated = TRUE;
 	return TRUE;
 }
@@ -295,13 +329,11 @@ static BOOL mf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 	return TRUE;
 }
 
-void mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+void mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
-	UINT16 down = 0x4000;
-	// UINT16 up = 0x8000;
 	bool state_down = FALSE;
 
-	if (flags == down)
+	if (flags == KBD_FLAGS_DOWN)
 	{
 		state_down = TRUE;
 	}
@@ -320,11 +352,10 @@ static BOOL mf_peer_suppress_output(rdpContext* context, BYTE allow, const RECTA
 static void* mf_peer_main_loop(void* arg)
 {
 	mfPeerContext* context;
+	rdpSettings* settings;
+	rdpInput* input;
+	rdpUpdate* update;
 	freerdp_peer* client = (freerdp_peer*)arg;
-
-	WINPR_ASSERT(client);
-	WINPR_ASSERT(client->settings);
-	WINPR_ASSERT(client->input);
 
 	if (!mf_peer_init(client))
 	{
@@ -332,30 +363,45 @@ static void* mf_peer_main_loop(void* arg)
 		return NULL;
 	}
 
-	/* Initialize the real server settings here */
-	client->settings->CertificateFile = _strdup("server.crt");
-	client->settings->PrivateKeyFile = _strdup("server.key");
+	WINPR_ASSERT(client->context);
 
-	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile)
+	settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
+	/* Initialize the real server settings here */
+	freerdp_settings_set_string(settings, FreeRDP_CertificateFile, "server.crt");
+	freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, "server.key");
+
+	if (!settings->CertificateFile || !settings->PrivateKeyFile)
 	{
 		freerdp_peer_free(client);
 		return NULL;
 	}
 
-	client->settings->NlaSecurity = FALSE;
-	client->settings->RemoteFxCodec = TRUE;
-	client->settings->ColorDepth = 32;
-	client->settings->SuppressOutput = TRUE;
-	client->settings->RefreshRect = FALSE;
+	settings->NlaSecurity = FALSE;
+	settings->RemoteFxCodec = TRUE;
+	settings->ColorDepth = 32;
+	settings->SuppressOutput = TRUE;
+	settings->RefreshRect = FALSE;
+
 	client->PostConnect = mf_peer_post_connect;
 	client->Activate = mf_peer_activate;
-	client->context->input->SynchronizeEvent = mf_peer_synchronize_event;
-	client->context->input->KeyboardEvent = mf_input_keyboard_event; // mf_peer_keyboard_event;
-	client->context->input->UnicodeKeyboardEvent = mf_peer_unicode_keyboard_event;
-	client->context->input->MouseEvent = mf_input_mouse_event;
-	client->context->input->ExtendedMouseEvent = mf_input_extended_mouse_event;
-	// client->update->RefreshRect = mf_peer_refresh_rect;
-	client->update->SuppressOutput = mf_peer_suppress_output;
+
+	input = client->context->input;
+	WINPR_ASSERT(input);
+
+	input->SynchronizeEvent = mf_peer_synchronize_event;
+	input->KeyboardEvent = mf_input_keyboard_event; // mf_peer_keyboard_event;
+	input->UnicodeKeyboardEvent = mf_peer_unicode_keyboard_event;
+	input->MouseEvent = mf_input_mouse_event;
+	input->ExtendedMouseEvent = mf_input_extended_mouse_event;
+
+	update = client->context->update;
+	WINPR_ASSERT(update);
+
+	// update->RefreshRect = mf_peer_refresh_rect;
+	update->SuppressOutput = mf_peer_suppress_output;
+
 	client->Initialize(client);
 	context = (mfPeerContext*)client->context;
 
@@ -363,7 +409,7 @@ static void* mf_peer_main_loop(void* arg)
 	{
 		DWORD status;
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
-		DWORD count = client->GetEventHandles(handles, ARRAYSIZE(handles));
+		DWORD count = client->GetEventHandles(client, handles, ARRAYSIZE(handles));
 
 		if ((count == 0) || (count == MAXIMUM_WAIT_OBJECTS))
 		{
@@ -373,7 +419,7 @@ static void* mf_peer_main_loop(void* arg)
 
 		handles[count++] = WTSVirtualChannelManagerGetEventHandle(context->vcm);
 
-		status = WaitForMultipleObjects(handles, count, FALSE, INFINITE);
+		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForMultipleObjects failed");

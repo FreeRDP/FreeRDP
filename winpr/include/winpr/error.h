@@ -42,59 +42,60 @@
 #define NO_ERROR 0
 #endif
 
-#define E_UNEXPECTED (HRESULT)0x8000FFFFL
-#define E_NOTIMPL (HRESULT)0x80004001L
-#define E_OUTOFMEMORY (HRESULT)0x8007000EL
-#define E_INVALIDARG (HRESULT)0x80070057L
-#define E_NOINTERFACE (HRESULT)0x80004002L
-#define E_POINTER (HRESULT)0x80004003L
-#define E_HANDLE (HRESULT)0x80070006L
-#define E_ABORT (HRESULT)0x80004004L
-#define E_FAIL (HRESULT)0x80004005L
-#define E_ACCESSDENIED (HRESULT)0x80070005L
+#define E_UNEXPECTED -2147418113l   // 0x8000FFFFL
+#define E_ACCESSDENIED -2147024891l // 0x80070005L
+#define E_HANDLE -2147024890l       // 0x80070006L
+#define E_OUTOFMEMORY -2147024882l  // 0x8007000EL
 
-#define CO_E_INIT_TLS 0x80004006
-#define CO_E_INIT_SHARED_ALLOCATOR 0x80004007
-#define CO_E_INIT_MEMORY_ALLOCATOR 0x80004008
-#define CO_E_INIT_CLASS_CACHE 0x80004009
-#define CO_E_INIT_RPC_CHANNEL 0x8000400A
-#define CO_E_INIT_TLS_SET_CHANNEL_CONTROL 0x8000400B
-#define CO_E_INIT_TLS_CHANNEL_CONTROL 0x8000400C
-#define CO_E_INIT_UNACCEPTED_USER_ALLOCATOR 0x8000400D
-#define CO_E_INIT_SCM_MUTEX_EXISTS 0x8000400E
-#define CO_E_INIT_SCM_FILE_MAPPING_EXISTS 0x8000400F
-#define CO_E_INIT_SCM_MAP_VIEW_OF_FILE 0x80004010
-#define CO_E_INIT_SCM_EXEC_FAILURE 0x80004011
-#define CO_E_INIT_ONLY_SINGLE_THREADED 0x80004012
-#define CO_E_CANT_REMOTE 0x80004013
-#define CO_E_BAD_SERVER_NAME 0x80004014
-#define CO_E_WRONG_SERVER_IDENTITY 0x80004015
-#define CO_E_OLE1DDE_DISABLED 0x80004016
-#define CO_E_RUNAS_SYNTAX 0x80004017
-#define CO_E_CREATEPROCESS_FAILURE 0x80004018
-#define CO_E_RUNAS_CREATEPROCESS_FAILURE 0x80004019
-#define CO_E_RUNAS_LOGON_FAILURE 0x8000401A
-#define CO_E_LAUNCH_PERMSSION_DENIED 0x8000401B
-#define CO_E_START_SERVICE_FAILURE 0x8000401C
-#define CO_E_REMOTE_COMMUNICATION_FAILURE 0x8000401D
-#define CO_E_SERVER_START_TIMEOUT 0x8000401E
-#define CO_E_CLSREG_INCONSISTENT 0x8000401F
-#define CO_E_IIDREG_INCONSISTENT 0x80004020
-#define CO_E_NOT_SUPPORTED 0x80004021
-#define CO_E_RELOAD_DLL 0x80004022
-#define CO_E_MSI_ERROR 0x80004023
-#define CO_E_ATTEMPT_TO_CREATE_OUTSIDE_CLIENT_CONTEXT 0x80004024
-#define CO_E_SERVER_PAUSED 0x80004025
-#define CO_E_SERVER_NOT_PAUSED 0x80004026
-#define CO_E_CLASS_DISABLED 0x80004027
-#define CO_E_CLRNOTAVAILABLE 0x80004028
-#define CO_E_ASYNC_WORK_REJECTED 0x80004029
-#define CO_E_SERVER_INIT_TIMEOUT 0x8000402A
-#define CO_E_NO_SECCTX_IN_ACTIVATE 0x8000402B
-#define CO_E_TRACKER_CONFIG 0x80004030
-#define CO_E_THREADPOOL_CONFIG 0x80004031
-#define CO_E_SXS_CONFIG 0x80004032
-#define CO_E_MALFORMED_SPN 0x80004033
+#define E_INVALIDARG -2147024809l  // 0x80070057L
+#define E_NOTIMPL -2147467263l     // 0x80004001L
+#define E_NOINTERFACE -2147467262l // 0x80004002L
+#define E_POINTER -2147467261l     // 0x80004003L
+#define E_ABORT -2147467260l       // 0x80004004L
+#define E_FAIL -2147467259l        // 0x80004005L
+
+#define CO_E_INIT_TLS -2147467258l                                 // 0x80004006l
+#define CO_E_INIT_SHARED_ALLOCATOR -2147467257l                    // 0x80004007l
+#define CO_E_INIT_MEMORY_ALLOCATOR -2147467256l                    // 0x80004008l
+#define CO_E_INIT_CLASS_CACHE -2147467255l                         // 0x80004009l
+#define CO_E_INIT_RPC_CHANNEL -2147467254l                         // 0x8000400Al
+#define CO_E_INIT_TLS_SET_CHANNEL_CONTROL -2147467253l             // 0x8000400Bl
+#define CO_E_INIT_TLS_CHANNEL_CONTROL -2147467252l                 // 0x8000400Cl
+#define CO_E_INIT_UNACCEPTED_USER_ALLOCATOR -2147467251l           // 0x8000400Dl
+#define CO_E_INIT_SCM_MUTEX_EXISTS -2147467250l                    // 0x8000400El
+#define CO_E_INIT_SCM_FILE_MAPPING_EXISTS -2147467249l             // 0x8000400Fl
+#define CO_E_INIT_SCM_MAP_VIEW_OF_FILE -2147467248l                // 0x80004010l
+#define CO_E_INIT_SCM_EXEC_FAILURE -2147467247l                    // 0x80004011l
+#define CO_E_INIT_ONLY_SINGLE_THREADED -2147467246l                // 0x80004012l
+#define CO_E_CANT_REMOTE -2147467245l                              // 0x80004013l
+#define CO_E_BAD_SERVER_NAME -2147467244l                          // 0x80004014l
+#define CO_E_WRONG_SERVER_IDENTITY -2147467243l                    // 0x80004015l
+#define CO_E_OLE1DDE_DISABLED -2147467242l                         // 0x80004016l
+#define CO_E_RUNAS_SYNTAX -2147467241l                             // 0x80004017l
+#define CO_E_CREATEPROCESS_FAILURE -2147467240l                    // 0x80004018l
+#define CO_E_RUNAS_CREATEPROCESS_FAILURE -2147467239l              // 0x80004019l
+#define CO_E_RUNAS_LOGON_FAILURE -2147467238l                      // 0x8000401Al
+#define CO_E_LAUNCH_PERMSSION_DENIED -2147467237l                  // 0x8000401Bl
+#define CO_E_START_SERVICE_FAILURE -2147467236l                    // 0x8000401Cl
+#define CO_E_REMOTE_COMMUNICATION_FAILURE -2147467235l             // 0x8000401Dl
+#define CO_E_SERVER_START_TIMEOUT -2147467234l                     // 0x8000401El
+#define CO_E_CLSREG_INCONSISTENT -2147467233l                      // 0x8000401Fl
+#define CO_E_IIDREG_INCONSISTENT -2147467232l                      // 0x80004020l
+#define CO_E_NOT_SUPPORTED -2147467231l                            // 0x80004021l
+#define CO_E_RELOAD_DLL -2147467230l                               // 0x80004022l
+#define CO_E_MSI_ERROR -2147467229l                                // 0x80004023l
+#define CO_E_ATTEMPT_TO_CREATE_OUTSIDE_CLIENT_CONTEXT -2147467228l // 0x80004024l
+#define CO_E_SERVER_PAUSED -2147467227l                            // 0x80004025l
+#define CO_E_SERVER_NOT_PAUSED -2147467226l                        // 0x80004026l
+#define CO_E_CLASS_DISABLED -2147467225l                           // 0x80004027l
+#define CO_E_CLRNOTAVAILABLE -2147467224l                          // 0x80004028l
+#define CO_E_ASYNC_WORK_REJECTED -2147467223l                      // 0x80004029l
+#define CO_E_SERVER_INIT_TIMEOUT -2147467222l                      // 0x8000402Al
+#define CO_E_NO_SECCTX_IN_ACTIVATE -2147467221l                    // 0x8000402Bl
+#define CO_E_TRACKER_CONFIG -2147467216l                           // 0x80004030l
+#define CO_E_THREADPOOL_CONFIG -2147467215l                        // 0x80004031l
+#define CO_E_SXS_CONFIG -2147467214l                               // 0x80004032l
+#define CO_E_MALFORMED_SPN -2147467213l                            // 0x80004033l
 
 #define FACILITY_WINDOWSUPDATE 36
 #define FACILITY_WINDOWS_CE 24
@@ -136,17 +137,20 @@
 #define HRESULT_CODE(hr) ((hr)&0xFFFF)
 #define HRESULT_FACILITY(hr) (((hr) >> 16) & 0x1FFF)
 
-#define HRESULT_FROM_NT(x) ((HRESULT)((x) | FACILITY_NT_BIT))
+#define HRESULT_FROM_NT(x) (((x) | FACILITY_NT_BIT))
 
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreserved-id-macro"
 #endif
 
-#define __HRESULT_FROM_WIN32(x)         \
-	((HRESULT)(x) <= 0 ? ((HRESULT)(x)) \
-	                   : ((HRESULT)(((x)&0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
-#define HRESULT_FROM_WIN32(x) __HRESULT_FROM_WIN32(x)
+static INLINE HRESULT HRESULT_FROM_WIN32(unsigned long x)
+{
+	HRESULT hx = (HRESULT)x;
+	if (hx <= 0)
+		return hx;
+	return (HRESULT)((((x)&0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000));
+}
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
@@ -154,12 +158,13 @@
 
 #define HRESULT_SEVERITY(hr) (((hr) >> 31) & 0x1)
 
-#define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
-#define FAILED(hr) (((HRESULT)(hr)) < 0)
+#define SUCCEEDED(hr) (((hr)) >= 0)
+#define FAILED(hr) (((hr)) < 0)
 #define IS_ERROR(Status) (((unsigned long)(Status)) >> 31 == SEVERITY_ERROR)
 
-#define MAKE_HRESULT(sev, fac, code) \
-	    ((HRESULT) (((unsigned long) (sev) << 31) | ((unsigned long) (fac) << 16) | ((unsigned long) (code)))
+#define MAKE_HRESULT(sev, fac, code)                                         \
+	((HRESULT)(((unsigned long)(sev) << 31) | ((unsigned long)(fac) << 16) | \
+	           ((unsigned long)(code))))
 
 #define SCODE_CODE(sc) ((sc)&0xFFFF)
 #define SCODE_FACILITY(sc) (((sc) >> 16) & 0x1FFF)
@@ -168,8 +173,8 @@
 #define MAKE_SCODE(sev, fac, code) \
 	((SCODE)(((unsigned long)(sev) << 31) | ((unsigned long)(fac) << 16) | ((unsigned long)(code))))
 
-#define S_OK ((HRESULT)0L)
-#define S_FALSE ((HRESULT)1L)
+#define S_OK (0L)
+#define S_FALSE (1L)
 
 /* System Error Codes (0-499) */
 
@@ -3033,10 +3038,10 @@
 
 #define EXCEPTION_MAXIMUM_PARAMETERS 15
 
-typedef struct _EXCEPTION_RECORD EXCEPTION_RECORD;
-typedef struct _EXCEPTION_RECORD* PEXCEPTION_RECORD;
+typedef struct s_EXCEPTION_RECORD EXCEPTION_RECORD;
+typedef struct s_EXCEPTION_RECORD* PEXCEPTION_RECORD;
 
-struct _EXCEPTION_RECORD
+struct s_EXCEPTION_RECORD
 {
 	DWORD ExceptionCode;
 	DWORD ExceptionFlags;
@@ -3048,7 +3053,7 @@ struct _EXCEPTION_RECORD
 
 typedef void* PCONTEXT;
 
-typedef struct _EXCEPTION_POINTERS
+typedef struct s_EXCEPTION_POINTERS
 {
 	PEXCEPTION_RECORD ExceptionRecord;
 	PCONTEXT ContextRecord;

@@ -1,0 +1,37 @@
+#ifndef WINPR_CONFIG_H
+#define WINPR_CONFIG_H
+
+/* Include files */
+#cmakedefine HAVE_FCNTL_H
+#cmakedefine HAVE_UNISTD_H
+#cmakedefine HAVE_INTTYPES_H
+#cmakedefine HAVE_STDBOOL_H
+#cmakedefine HAVE_AIO_H
+#cmakedefine HAVE_SYS_FILIO_H
+#cmakedefine HAVE_SYS_SELECT_H
+#cmakedefine HAVE_SYS_SOCKIO_H
+#cmakedefine HAVE_SYS_EVENTFD_H
+#cmakedefine HAVE_SYS_TIMERFD_H
+#cmakedefine HAVE_TM_GMTOFF
+#cmakedefine HAVE_AIO_H
+#cmakedefine HAVE_POLL_H
+#cmakedefine HAVE_SYSLOG_H
+#cmakedefine HAVE_JOURNALD_H
+#cmakedefine HAVE_PTHREAD_MUTEX_TIMEDLOCK
+#cmakedefine HAVE_EXECINFO_H
+#cmakedefine HAVE_GETLOGIN_R
+#cmakedefine HAVE_GETPWUID_R
+#cmakedefine HAVE_STRNDUP
+#cmakedefine HAVE_UNWIND_H
+
+#cmakedefine WITH_EVENTFD_READ_WRITE
+
+#cmakedefine WITH_NATIVE_SSPI
+#cmakedefine WITH_ICU
+
+#cmakedefine WITH_DEBUG_NTLM
+#cmakedefine WITH_DEBUG_THREADS
+#cmakedefine WITH_DEBUG_EVENTS
+#cmakedefine WITH_DEBUG_MUTEX
+
+#endif /* WINPR_CONFIG_H */

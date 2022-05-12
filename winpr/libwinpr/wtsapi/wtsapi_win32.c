@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 #include <winpr/io.h>
@@ -35,7 +33,7 @@
 #define WTSAPI_CHANNEL_MAGIC 0x44484356
 #define TAG WINPR_TAG("wtsapi")
 
-struct _WTSAPI_CHANNEL
+typedef struct
 {
 	UINT32 magic;
 	HANDLE hServer;
@@ -57,8 +55,7 @@ struct _WTSAPI_CHANNEL
 	BOOL waitObjectMode;
 	OVERLAPPED overlapped;
 	CHANNEL_PDU_HEADER* header;
-};
-typedef struct _WTSAPI_CHANNEL WTSAPI_CHANNEL;
+} WTSAPI_CHANNEL;
 
 static BOOL g_Initialized = FALSE;
 static HMODULE g_WinStaModule = NULL;

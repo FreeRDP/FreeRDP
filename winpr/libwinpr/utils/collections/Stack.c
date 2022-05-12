@@ -17,14 +17,12 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/collections.h>
 #include <winpr/assert.h>
 
-struct _wStack
+struct s_wStack
 {
 	size_t size;
 	size_t capacity;

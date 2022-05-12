@@ -98,7 +98,7 @@ static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 		strncpy(passwordBuffer, password, length);
 
 		passwordBuffer[length] = '\0';
-		passwordString = [NSString stringWithCString:passwordBuffer];
+		passwordString = [NSString stringWithCString:passwordBuffer encoding:NSUTF8StringEncoding];
 	}
 
 	SecKeychainItemFreeContent(&list, password);

@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <winpr/print.h>
@@ -76,7 +74,7 @@ static void tpdu_write_header(wStream* s, UINT16 length, BYTE code);
 
 BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li, UINT16 tpktlength)
 {
-	if (Stream_GetRemainingLength(s) < 3)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 3))
 		return FALSE;
 
 	Stream_Read_UINT8(s, *li);   /* LI */
@@ -98,7 +96,12 @@ BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li, UINT16 tpktlength)
 		/* DST-REF (2 bytes) */
 		/* SRC-REF (2 bytes) */
 		/* Class 0 (1 byte) */
-		return Stream_SafeSeek(s, 5);
+		if (!Stream_SafeSeek(s, 5))
+		{
+			WLog_WARN(TAG, "tpdu invalid data, got %" PRIuz ", require at least 5 more",
+			          Stream_GetRemainingLength(s));
+			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -193,7 +196,9 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li, UINT16 tpktlength)
 	 */
 	bytes_read = (Stream_GetPosition(s) - position) - 1;
 
-	return (Stream_GetRemainingLength(s) >= (size_t)(*li - bytes_read));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(*li - bytes_read)))
+		return FALSE;
+	return TRUE;
 }
 
 /**
@@ -247,4 +252,23 @@ BOOL tpdu_read_data(wStream* s, UINT16* LI, UINT16 tpktlength)
 	*LI = li;
 
 	return TRUE;
+}
+
+const char* tpdu_type_to_string(int type)
+{
+	switch (type)
+	{
+		case X224_TPDU_CONNECTION_REQUEST:
+			return "X224_TPDU_CONNECTION_REQUEST";
+		case X224_TPDU_CONNECTION_CONFIRM:
+			return "X224_TPDU_CONNECTION_CONFIRM";
+		case X224_TPDU_DISCONNECT_REQUEST:
+			return "X224_TPDU_DISCONNECT_REQUEST";
+		case X224_TPDU_DATA:
+			return "X224_TPDU_DATA";
+		case X224_TPDU_ERROR:
+			return "X224_TPDU_ERROR";
+		default:
+			return "X224_TPDU_UNKNOWN";
+	}
 }

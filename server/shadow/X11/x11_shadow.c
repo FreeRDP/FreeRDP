@@ -53,22 +53,20 @@ static UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 
 #include <security/pam_appl.h>
 
-struct _SHADOW_PAM_AUTH_DATA
+typedef struct
 {
 	const char* user;
 	const char* domain;
 	const char* password;
-};
-typedef struct _SHADOW_PAM_AUTH_DATA SHADOW_PAM_AUTH_DATA;
+} SHADOW_PAM_AUTH_DATA;
 
-struct _SHADOW_PAM_AUTH_INFO
+typedef struct
 {
 	char* service_name;
 	pam_handle_t* handle;
 	struct pam_conv pamc;
 	SHADOW_PAM_AUTH_DATA appdata;
-};
-typedef struct _SHADOW_PAM_AUTH_INFO SHADOW_PAM_AUTH_INFO;
+} SHADOW_PAM_AUTH_INFO;
 
 static int x11_shadow_pam_conv(int num_msg, const struct pam_message** msg,
                                struct pam_response** resp, void* appdata_ptr)
@@ -208,12 +206,13 @@ static BOOL x11_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
 }
 
 static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
-                                            UINT16 flags, UINT16 code)
+                                            UINT16 flags, UINT8 code)
 {
 #ifdef WITH_XTEST
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
 	DWORD vkcode;
 	DWORD keycode;
+	DWORD scancode;
 	BOOL extended = FALSE;
 
 	if (!client || !subsystem)
@@ -222,10 +221,11 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 	if (flags & KBD_FLAGS_EXTENDED)
 		extended = TRUE;
 
+	scancode = code;
 	if (extended)
-		code |= KBDEXT;
+		scancode |= KBDEXT;
 
-	vkcode = GetVirtualKeyCodeFromVirtualScanCode(code, 4);
+	vkcode = GetVirtualKeyCodeFromVirtualScanCode(scancode, 4);
 
 	if (extended)
 		vkcode |= KBDEXT;
@@ -343,7 +343,7 @@ static BOOL x11_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 {
 #ifdef WITH_XTEST
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
-	int button = 0;
+	UINT button = 0;
 	BOOL down = FALSE;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
@@ -1320,7 +1320,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	subsystem->cursorMaxWidth = 256;
 	subsystem->cursorMaxHeight = 256;
 	subsystem->cursorPixels =
-	    _aligned_malloc(subsystem->cursorMaxWidth * subsystem->cursorMaxHeight * 4, 16);
+	    winpr_aligned_malloc(subsystem->cursorMaxWidth * subsystem->cursorMaxHeight * 4, 16);
 
 	if (!subsystem->cursorPixels)
 		return -1;
@@ -1394,7 +1394,7 @@ static int x11_shadow_subsystem_uninit(rdpShadowSubsystem* sub)
 
 	if (subsystem->cursorPixels)
 	{
-		_aligned_free(subsystem->cursorPixels);
+		winpr_aligned_free(subsystem->cursorPixels);
 		subsystem->cursorPixels = NULL;
 	}
 

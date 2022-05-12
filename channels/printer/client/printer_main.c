@@ -21,9 +21,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,8 +46,7 @@
 
 #define TAG CHANNELS_TAG("printer.client")
 
-typedef struct _PRINTER_DEVICE PRINTER_DEVICE;
-struct _PRINTER_DEVICE
+typedef struct
 {
 	DEVICE device;
 
@@ -63,7 +60,7 @@ struct _PRINTER_DEVICE
 	HANDLE thread;
 	rdpContext* rdpcontext;
 	char port[64];
-};
+} PRINTER_DEVICE;
 
 typedef enum
 {
@@ -484,7 +481,7 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 	UINT error = CHANNEL_RC_OK;
 	void* ptr;
 
-	if (Stream_GetRemainingLength(irp->input) < 32)
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
@@ -578,7 +575,6 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			return irp->Complete(irp);
-			break;
 	}
 
 	return CHANNEL_RC_OK;
@@ -653,7 +649,7 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 	if (component != RDPDR_CTYP_PRN)
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, eventID);
@@ -670,7 +666,7 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					const WCHAR *PnPName, *DriverName, *PrinterName;
 					const BYTE* CachedPrinterConfigData;
 
-					if (Stream_GetRemainingLength(s) < 24)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
 						return ERROR_INVALID_DATA;
 
 					Stream_Read(s, PortDosName, sizeof(PortDosName));
@@ -679,25 +675,25 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					Stream_Read_UINT32(s, PrintNameLen);
 					Stream_Read_UINT32(s, CacheFieldsLen);
 
-					if (Stream_GetRemainingLength(s) < PnPNameLen)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, PnPNameLen))
 						return ERROR_INVALID_DATA;
 
 					PnPName = (const WCHAR*)Stream_Pointer(s);
 					Stream_Seek(s, PnPNameLen);
 
-					if (Stream_GetRemainingLength(s) < DriverNameLen)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, DriverNameLen))
 						return ERROR_INVALID_DATA;
 
 					DriverName = (const WCHAR*)Stream_Pointer(s);
 					Stream_Seek(s, DriverNameLen);
 
-					if (Stream_GetRemainingLength(s) < PrintNameLen)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, PrintNameLen))
 						return ERROR_INVALID_DATA;
 
 					PrinterName = (const WCHAR*)Stream_Pointer(s);
 					Stream_Seek(s, PrintNameLen);
 
-					if (Stream_GetRemainingLength(s) < CacheFieldsLen)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, CacheFieldsLen))
 						return ERROR_INVALID_DATA;
 
 					CachedPrinterConfigData = Stream_Pointer(s);
@@ -717,19 +713,19 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					const WCHAR* PrinterName;
 					const BYTE* ConfigData;
 
-					if (Stream_GetRemainingLength(s) < 8)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 						return ERROR_INVALID_DATA;
 
 					Stream_Read_UINT32(s, PrinterNameLen);
 					Stream_Read_UINT32(s, ConfigDataLen);
 
-					if (Stream_GetRemainingLength(s) < PrinterNameLen)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, PrinterNameLen))
 						return ERROR_INVALID_DATA;
 
 					PrinterName = (const WCHAR*)Stream_Pointer(s);
 					Stream_Seek(s, PrinterNameLen);
 
-					if (Stream_GetRemainingLength(s) < ConfigDataLen)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, ConfigDataLen))
 						return ERROR_INVALID_DATA;
 
 					ConfigData = Stream_Pointer(s);
@@ -746,12 +742,12 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					UINT32 PrinterNameLen;
 					const WCHAR* PrinterName;
 
-					if (Stream_GetRemainingLength(s) < 4)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 						return ERROR_INVALID_DATA;
 
 					Stream_Read_UINT32(s, PrinterNameLen);
 
-					if (Stream_GetRemainingLength(s) < PrinterNameLen)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, PrinterNameLen))
 						return ERROR_INVALID_DATA;
 
 					PrinterName = (const WCHAR*)Stream_Pointer(s);
@@ -766,19 +762,19 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					const WCHAR* OldPrinterName;
 					const WCHAR* NewPrinterName;
 
-					if (Stream_GetRemainingLength(s) < 8)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 						return ERROR_INVALID_DATA;
 
 					Stream_Read_UINT32(s, OldPrinterNameLen);
 					Stream_Read_UINT32(s, NewPrinterNameLen);
 
-					if (Stream_GetRemainingLength(s) < OldPrinterNameLen)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, OldPrinterNameLen))
 						return ERROR_INVALID_DATA;
 
 					OldPrinterName = (const WCHAR*)Stream_Pointer(s);
 					Stream_Seek(s, OldPrinterNameLen);
 
-					if (Stream_GetRemainingLength(s) < NewPrinterNameLen)
+					if (!Stream_CheckAndLogRequiredLength(TAG, s, NewPrinterNameLen))
 						return ERROR_INVALID_DATA;
 
 					NewPrinterName = (const WCHAR*)Stream_Pointer(s);
@@ -801,7 +797,7 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 		{
 			UINT32 flags;
 
-			if (Stream_GetRemainingLength(s) < 4)
+			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				return ERROR_INVALID_DATA;
 
 			Stream_Read_UINT32(s, flags);
@@ -851,7 +847,7 @@ static UINT printer_free(DEVICE* device)
 	CloseHandle(printer_dev->thread);
 	CloseHandle(printer_dev->stopEvent);
 	CloseHandle(printer_dev->event);
-	_aligned_free(printer_dev->pIrpList);
+	winpr_aligned_free(printer_dev->pIrpList);
 
 	if (printer_dev->printer)
 		printer_dev->printer->ReleaseRef(printer_dev->printer);
@@ -891,7 +887,7 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 	printer_dev->device.Free = printer_free;
 	printer_dev->rdpcontext = pEntryPoints->rdpcontext;
 	printer_dev->printer = printer;
-	printer_dev->pIrpList = (WINPR_PSLIST_HEADER)_aligned_malloc(sizeof(WINPR_SLIST_HEADER),
+	printer_dev->pIrpList = (WINPR_PSLIST_HEADER)winpr_aligned_malloc(sizeof(WINPR_SLIST_HEADER),
 	                                                             MEMORY_ALLOCATION_ALIGNMENT);
 
 	if (!printer_dev->pIrpList)
@@ -962,12 +958,7 @@ static rdpPrinterDriver* printer_load_backend(const char* backend)
  * @return 0 on success, otherwise a Win32 error code
  */
 UINT
-#ifdef BUILTIN_CHANNELS
 printer_DeviceServiceEntry
-#else
-    FREERDP_API
-    DeviceServiceEntry
-#endif
     (PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	int i;

@@ -193,8 +193,8 @@ VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y, U
 	ret->alignedWidth = ret->w + 32 - ret->w % 16;
 	ret->alignedHeight = ret->h + 32 - ret->h % 16;
 
-	ret->scanline = ret->alignedWidth * GetBytesPerPixel(ret->format);
-	ret->data = _aligned_malloc(ret->scanline * ret->alignedHeight * 1ULL, 64);
+	ret->scanline = ret->alignedWidth * FreeRDPGetBytesPerPixel(ret->format);
+	ret->data = winpr_aligned_malloc(ret->scanline * ret->alignedHeight * 1ULL, 64);
 	if (!ret->data)
 		goto fail;
 	return ret;
@@ -207,6 +207,6 @@ void VideoClient_DestroyCommonContext(VideoSurface* surface)
 {
 	if (!surface)
 		return;
-	_aligned_free(surface->data);
+	winpr_aligned_free(surface->data);
 	free(surface);
 }

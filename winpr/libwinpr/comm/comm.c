@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #if defined __linux__ && !defined ANDROID
 
@@ -297,14 +295,8 @@ BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
 	DWORD bytesReturned;
 
-	if (!CommInitialized())
+	if (!CommIsHandleValid(hFile))
 		return FALSE;
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
 
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_PROPERTIES, NULL, 0, lpCommProp,
 	                         sizeof(COMMPROP), &bytesReturned, NULL))
@@ -332,14 +324,8 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
 	DWORD bytesReturned;
 
-	if (!CommInitialized())
+	if (!CommIsHandleValid(hFile))
 		return FALSE;
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
 
 	if (!lpDCB)
 	{
@@ -492,14 +478,8 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 
 	/* FIXME: validate changes according GetCommProperties? */
 
-	if (!CommInitialized())
+	if (!CommIsHandleValid(hFile))
 		return FALSE;
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
 
 	if (!lpDCB)
 	{
@@ -718,14 +698,8 @@ BOOL GetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
 	DWORD bytesReturned;
 
-	if (!CommInitialized())
+	if (!CommIsHandleValid(hFile))
 		return FALSE;
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
 
 	/* as of today, SERIAL_TIMEOUTS and COMMTIMEOUTS structures are identical */
 
@@ -748,14 +722,8 @@ BOOL SetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
 	DWORD bytesReturned;
 
-	if (!CommInitialized())
+	if (!CommIsHandleValid(hFile))
 		return FALSE;
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
 
 	/* as of today, SERIAL_TIMEOUTS and COMMTIMEOUTS structures are identical */
 
@@ -869,14 +837,8 @@ BOOL PurgeComm(HANDLE hFile, DWORD dwFlags)
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
 	DWORD bytesReturned = 0;
 
-	if (!CommInitialized())
+	if (!CommIsHandleValid(hFile))
 		return FALSE;
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
 
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_PURGE, &dwFlags, sizeof(DWORD), NULL, 0,
 	                         &bytesReturned, NULL))
@@ -894,14 +856,8 @@ BOOL SetupComm(HANDLE hFile, DWORD dwInQueue, DWORD dwOutQueue)
 	SERIAL_QUEUE_SIZE queueSize;
 	DWORD bytesReturned = 0;
 
-	if (!CommInitialized())
+	if (!CommIsHandleValid(hFile))
 		return FALSE;
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
 
 	queueSize.InSize = dwInQueue;
 	queueSize.OutSize = dwOutQueue;
@@ -1179,12 +1135,13 @@ static HANDLE_OPS ops = { CommIsHandled, CommCloseHandle,
 	                      NULL,          NULL,
 	                      NULL,          NULL,
 	                      NULL,          NULL,
-	                      NULL,          NULL };
+	                      NULL,          NULL,
+	                      NULL };
 
 /**
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363198%28v=vs.85%29.aspx
  *
- * @param lpDeviceName e.g. COM1, "\\.\COM1", ...
+ * @param lpDeviceName e.g. COM1, ...
  *
  * @param dwDesiredAccess expects GENERIC_READ | GENERIC_WRITE, a
  * warning message is printed otherwise. TODO: better support.
@@ -1286,7 +1243,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 	WINPR_HANDLE_SET_TYPE_AND_MODE(pComm, HANDLE_TYPE_COMM, WINPR_FD_READ);
-	pComm->ops = &ops;
+	pComm->common.ops = &ops;
 	/* error_handle */
 	pComm->fd = open(devicePath, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
@@ -1394,36 +1351,31 @@ error_handle:
 
 BOOL CommIsHandled(HANDLE handle)
 {
-	WINPR_COMM* pComm;
-
 	if (!CommInitialized())
 		return FALSE;
 
-	pComm = (WINPR_COMM*)handle;
+	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_COMM, TRUE);
+}
 
-	if (!pComm || (pComm->Type != HANDLE_TYPE_COMM) || (pComm == INVALID_HANDLE_VALUE))
+BOOL CommIsHandleValid(HANDLE handle)
+{
+	WINPR_COMM* pComm = (WINPR_COMM*)handle;
+	if (!CommIsHandled(handle))
+		return FALSE;
+	if (pComm->fd <= 0)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
-
 	return TRUE;
 }
 
 BOOL CommCloseHandle(HANDLE handle)
 {
-	WINPR_COMM* pComm;
+	WINPR_COMM* pComm = (WINPR_COMM*)handle;
 
-	if (!CommInitialized())
+	if (!CommIsHandled(handle))
 		return FALSE;
-
-	pComm = (WINPR_COMM*)handle;
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
 
 	if (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
 	{

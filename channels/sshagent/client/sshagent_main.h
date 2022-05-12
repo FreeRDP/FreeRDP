@@ -21,9 +21,7 @@
 #ifndef SSHAGENT_MAIN_H
 #define SSHAGENT_MAIN_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/stream.h>
 

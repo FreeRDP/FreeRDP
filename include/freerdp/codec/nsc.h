@@ -42,11 +42,12 @@ extern "C"
 		NSC_COLOR_FORMAT
 	} NSC_PARAMETER;
 
-	typedef struct _NSC_CONTEXT NSC_CONTEXT;
+	typedef struct S_NSC_CONTEXT NSC_CONTEXT;
 
 #if defined(WITH_FREERDP_DEPRECATED)
-	FREERDP_API WINPR_DEPRECATED(BOOL nsc_context_set_pixel_format(NSC_CONTEXT* context,
-	                                                               UINT32 pixel_format));
+	FREERDP_API WINPR_DEPRECATED_VAR("Use nsc_context_set_parameters(NSC_COLOR_FORMAT)",
+	                                 BOOL nsc_context_set_pixel_format(NSC_CONTEXT* context,
+	                                                                   UINT32 pixel_format));
 #endif
 
 	FREERDP_API BOOL nsc_context_set_parameters(NSC_CONTEXT* context, NSC_PARAMETER what,

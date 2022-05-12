@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/assert.h>
 #include <winpr/string.h>
@@ -65,7 +63,7 @@ typedef enum
 	STATE_CLIENT_CHANNEL_RUNNING = 0x10
 } pf_channel_client_state;
 
-typedef struct _pf_channel_client_context
+typedef struct
 {
 	pf_channel_common_context common;
 	pf_channel_client_state state;
@@ -209,7 +207,7 @@ static BOOL rdpdr_process_server_header(wStream* s, UINT16 component, UINT16 Pac
 	UINT16 rpacketid, rcomponent;
 
 	WINPR_ASSERT(s);
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 	{
 		WLog_WARN(TAG, "RDPDR_HEADER[%s | %s]: expected length 4, got %" PRIuz,
 		          rdpdr_component_string(component), rdpdr_packetid_string(PacketId),
@@ -234,7 +232,7 @@ static BOOL rdpdr_process_server_header(wStream* s, UINT16 component, UINT16 Pac
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < expect)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, expect))
 	{
 		WLog_WARN(TAG,
 		          "RDPDR_HEADER[%s | %s] not enought data, expected %" PRIuz ", "
@@ -414,7 +412,7 @@ static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, 
 	Stream_Read_UINT32(s, codePage);
 	WINPR_UNUSED(codePage); /* Field is ignored */
 	Stream_Read_UINT32(s, rdpdr->common.computerNameLen);
-	if (Stream_GetRemainingLength(s) < rdpdr->common.computerNameLen)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, rdpdr->common.computerNameLen))
 	{
 		WLog_WARN(TAG, "[%s | %s]: missing data, got " PRIu32 ", expected %" PRIu32,
 		          rdpdr_component_string(RDPDR_CTYP_CORE),
@@ -481,12 +479,9 @@ static UINT rdpdr_ignore_capset_(wStream* s, size_t capabilityLength, const char
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) < capabilityLength - 4U)
-	{
-		WLog_ERR(TAG, "[%s] missing capability data, got %" PRIuz ", expected %" PRIu16, fkt,
-		         Stream_GetRemainingLength(s), capabilityLength - 4);
+	if (!Stream_CheckAndLogRequiredLengthEx(TAG, WLOG_ERROR, s, capabilityLength - 4U,
+	                                        "%s::capabilityLength", fkt))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Seek(s, capabilityLength - 4U);
 	return CHANNEL_RC_OK;
@@ -546,7 +541,7 @@ static UINT rdpdr_process_server_core_capability_request(pf_channel_client_conte
 		UINT16 capabilityType;
 		UINT16 capabilityLength;
 
-		if (Stream_GetRemainingLength(s) < 2 * sizeof(UINT16))
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2 * sizeof(UINT16)))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT16(s, capabilityType);
@@ -702,7 +697,7 @@ static UINT rdpdr_process_client_capability_response(pf_channel_server_context* 
 		UINT16 capabilityType;
 		UINT16 capabilityLength;
 
-		if (Stream_GetRemainingLength(s) < 2 * sizeof(UINT16))
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2 * sizeof(UINT16)))
 		{
 			WLog_WARN(TAG,
 			          "[%s | %s] invalid capability length 0x" PRIu16 ", expected at least %" PRIuz,
@@ -856,12 +851,8 @@ rdpdr_process_server_capability_request_or_clientid_confirm(pf_channel_client_co
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_WARN(TAG, "[%s]: expected length >= 4, got %" PRIuz, __FUNCTION__,
-		          Stream_GetRemainingLength(s));
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
-	}
 
 	Stream_Read_UINT16(s, component);
 	if (rcomponent != component)
@@ -1020,7 +1011,7 @@ static BOOL filter_smartcard_io_requests(pf_channel_client_context* rdpdr, wStre
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(pPacketid);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
 	pos = Stream_GetPosition(s);
@@ -1131,7 +1122,9 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 	pf_channel_client_context* rdpdr;
 	pServerContext* ps;
 	wStream* s;
+#if defined(WITH_PROXY_EMULATE_SMARTCARD)
 	UINT16 packetid;
+#endif
 
 	WINPR_ASSERT(pc);
 	WINPR_ASSERT(pc->pdata);
@@ -1248,10 +1241,10 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 						return FALSE;
 				}
 			}
+			break;
 #else
 			return pf_channel_rdpdr_client_send_to_server(ps, s);
 #endif
-			break;
 		default:
 			WLog_ERR(TAG,
 			         "[%s]: Channel %s [0x%04" PRIx16
@@ -1328,7 +1321,7 @@ static BOOL filter_smartcard_device_list_remove(pf_channel_server_context* rdpdr
 	size_t pos;
 	UINT32 x, count;
 
-	if (Stream_GetRemainingLength(s) < sizeof(UINT32))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT32)))
 		return TRUE;
 	pos = Stream_GetPosition(s);
 	Stream_Read_UINT32(s, count);
@@ -1336,7 +1329,7 @@ static BOOL filter_smartcard_device_list_remove(pf_channel_server_context* rdpdr
 	if (count == 0)
 		return TRUE;
 
-	if (Stream_GetRemainingLength(s) < count * sizeof(UINT32))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, count * sizeof(UINT32)))
 		return TRUE;
 
 	for (x = 0; x < count; x++)
@@ -1346,7 +1339,7 @@ static BOOL filter_smartcard_device_list_remove(pf_channel_server_context* rdpdr
 		Stream_Read_UINT32(s, deviceID);
 		if (deviceID == SCARD_DEVICE_ID)
 		{
-			ArrayList_Remove(rdpdr->blockedDevices, (void*)deviceID);
+			ArrayList_Remove(rdpdr->blockedDevices, (void*)(size_t)deviceID);
 
 			/* This is the only device, filter it! */
 			if (count == 1)
@@ -1371,7 +1364,7 @@ static BOOL filter_smartcard_device_io_request(pf_channel_server_context* rdpdr,
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 	Stream_Read_UINT32(s, DeviceID);
-	return ArrayList_Contains(rdpdr->blockedDevices, (void*)DeviceID);
+	return ArrayList_Contains(rdpdr->blockedDevices, (void*)(size_t)DeviceID);
 }
 
 static BOOL filter_smartcard_device_list_announce(pf_channel_server_context* rdpdr, wStream* s)
@@ -1379,7 +1372,7 @@ static BOOL filter_smartcard_device_list_announce(pf_channel_server_context* rdp
 	size_t pos;
 	UINT32 x, count;
 
-	if (Stream_GetRemainingLength(s) < sizeof(UINT32))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT32)))
 		return TRUE;
 	pos = Stream_GetPosition(s);
 	Stream_Read_UINT32(s, count);
@@ -1394,7 +1387,7 @@ static BOOL filter_smartcard_device_list_announce(pf_channel_server_context* rdp
 		char PreferredDosName[8];
 		UINT32 DeviceDataLength;
 		BYTE* dst = Stream_Pointer(s);
-		if (Stream_GetRemainingLength(s) < 20)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 			return TRUE;
 		Stream_Read_UINT32(s, DeviceType);
 		Stream_Read_UINT32(s, DeviceId);
@@ -1404,7 +1397,7 @@ static BOOL filter_smartcard_device_list_announce(pf_channel_server_context* rdp
 			return TRUE;
 		if (DeviceType == RDPDR_DTYP_SMARTCARD)
 		{
-			ArrayList_Append(rdpdr->blockedDevices, (void*)DeviceId);
+			ArrayList_Append(rdpdr->blockedDevices, (void*)(size_t)DeviceId);
 			if (count == 1)
 				return TRUE;
 
@@ -1427,7 +1420,7 @@ static BOOL filter_smartcard_device_list_announce_request(pf_channel_server_cont
 	size_t pos;
 	UINT16 component, packetid;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return FALSE;
 
 	pos = Stream_GetPosition(s);
@@ -1476,11 +1469,11 @@ fail:
 
 static void* stream_copy(const void* obj)
 {
-	wStream* src = obj;
+	const wStream* src = obj;
 	wStream* dst = Stream_New(NULL, Stream_Capacity(src));
 	if (!dst)
 		return NULL;
-	memcpy(Stream_Buffer(dst), Stream_Buffer(src), Stream_Capacity(dst));
+	memcpy(Stream_Buffer(dst), Stream_ConstBuffer(src), Stream_Capacity(dst));
 	Stream_SetLength(dst, Stream_Length(src));
 	Stream_SetPosition(dst, Stream_GetPosition(src));
 	return dst;
@@ -1715,3 +1708,48 @@ BOOL pf_channel_rdpdr_client_reset(pClientContext* pc)
 
 	return TRUE;
 }
+
+static PfChannelResult pf_rdpdr_back_data(proxyData* pdata, const pServerChannelContext* channel,
+            const BYTE* xdata, size_t xsize, UINT32 flags,
+            size_t totalSize)
+{
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
+
+	if (!pf_channel_rdpdr_client_handle(pdata->pc, channel->channel_id, channel->channel_name, xdata, xsize, flags, totalSize))
+	{
+		WLog_ERR(TAG, "error treating client back data");
+		return PF_CHANNEL_RESULT_ERROR;
+	}
+	return PF_CHANNEL_RESULT_PASS;
+}
+
+static PfChannelResult pf_rdpdr_front_data(proxyData* pdata, const pServerChannelContext* channel,
+            const BYTE* xdata, size_t xsize, UINT32 flags,
+            size_t totalSize)
+{
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(channel);
+
+	if (!pf_channel_rdpdr_server_handle(pdata->ps, channel->channel_id, channel->channel_name, xdata, xsize, flags, totalSize))
+	{
+		WLog_ERR(TAG, "error treating front data");
+		return PF_CHANNEL_RESULT_ERROR;
+
+	}
+	return PF_CHANNEL_RESULT_PASS;
+}
+
+BOOL pf_channel_setup_rdpdr(pServerContext* ps, pServerChannelContext* channel)
+{
+	channel->onBackData = pf_rdpdr_back_data;
+	channel->onFrontData = pf_rdpdr_front_data;
+
+	if (!pf_channel_rdpdr_server_new(ps))
+		return FALSE;
+	if (!pf_channel_rdpdr_server_announce(ps))
+		return FALSE;
+
+	return TRUE;
+}
+

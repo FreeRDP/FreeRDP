@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -50,6 +48,8 @@
 
 #define MIN_FINGER_DIST 5
 
+static int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype);
+
 static const char* xf_input_get_class_string(int class)
 {
 	if (class == XIKeyClass)
@@ -66,19 +66,128 @@ static const char* xf_input_get_class_string(int class)
 	return "XIUnknownClass";
 }
 
-int xf_input_init(xfContext* xfc, Window window)
+static BOOL register_input_events(xfContext* xfc, Window window)
 {
-	int i, j;
+	int i, ndevices;
 	int nmasks = 0;
-	int ndevices = 0;
-	int major = 2;
-	int minor = 2;
 	XIDeviceInfo* info;
-	XIEventMask evmasks[64];
-	int opcode, event, error;
+	rdpSettings* settings;
+	XIEventMask evmasks[64] = { 0 };
 	BYTE masks[8][XIMaskLen(XI_LASTEVENT)] = { 0 };
 
 	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	info = XIQueryDevice(xfc->display, XIAllDevices, &ndevices);
+
+	for (i = 0; i < MIN(ndevices, 64); i++)
+	{
+		int j;
+		BOOL used = FALSE;
+		XIDeviceInfo* dev = &info[i];
+
+		evmasks[nmasks].mask = masks[nmasks];
+		evmasks[nmasks].mask_len = sizeof(masks[0]);
+		evmasks[nmasks].deviceid = dev->deviceid;
+
+		/* Ignore virtual core pointer */
+		if (strcmp(dev->name, "Virtual core pointer") == 0)
+			continue;
+
+		for (j = 0; j < dev->num_classes; j++)
+		{
+			const XIAnyClassInfo* class = dev->classes[j];
+
+			switch (class->type)
+			{
+				case XITouchClass:
+					if (settings->MultiTouchInput)
+					{
+						const XITouchClassInfo* t = (const XITouchClassInfo*)class;
+						if (t->mode == XIDirectTouch)
+						{
+							WLog_DBG(
+							    TAG,
+							    "%s %s touch device (id: %d, mode: %d), supporting %d touches.",
+							    dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
+							    dev->deviceid, t->mode, t->num_touches);
+							XISetMask(masks[nmasks], XI_TouchBegin);
+							XISetMask(masks[nmasks], XI_TouchUpdate);
+							XISetMask(masks[nmasks], XI_TouchEnd);
+						}
+					}
+					break;
+				case XIButtonClass:
+				{
+					const XIButtonClassInfo* t = (const XIButtonClassInfo*)class;
+					WLog_DBG(TAG, "%s button device (id: %d, mode: %d)", dev->name, dev->deviceid,
+					         t->num_buttons);
+					XISetMask(masks[nmasks], XI_ButtonPress);
+					XISetMask(masks[nmasks], XI_ButtonRelease);
+					XISetMask(masks[nmasks], XI_Motion);
+					used = TRUE;
+				}
+				break;
+				default:
+					break;
+			}
+		}
+		if (used)
+			nmasks++;
+	}
+
+	XIFreeDeviceInfo(info);
+
+	if (nmasks > 0)
+	{
+		Status xstatus = XISelectEvents(xfc->display, window, evmasks, nmasks);
+		if (xstatus != 0)
+			WLog_WARN(TAG, "XISelectEvents returned %d", xstatus);
+	}
+
+	return TRUE;
+}
+
+static BOOL register_raw_events(xfContext* xfc, Window window)
+{
+	XIEventMask mask;
+	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
+	rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove))
+	{
+		XISetMask(mask_bytes, XI_RawMotion);
+		XISetMask(mask_bytes, XI_RawButtonPress);
+		XISetMask(mask_bytes, XI_RawButtonRelease);
+
+		mask.deviceid = XIAllMasterDevices;
+		mask.mask_len = sizeof(mask_bytes);
+		mask.mask = mask_bytes;
+
+		XISelectEvents(xfc->display, window, &mask, 1);
+	}
+
+	return TRUE;
+}
+
+int xf_input_init(xfContext* xfc, Window window)
+{
+	int major = XI_2_Major;
+	int minor = XI_2_Minor;
+	int opcode, event, error;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	memset(xfc->contacts, 0, sizeof(xfc->contacts));
 	xfc->firstDist = -1.0;
@@ -96,89 +205,20 @@ int xf_input_init(xfContext* xfc, Window window)
 	xfc->XInputOpcode = opcode;
 	XIQueryVersion(xfc->display, &major, &minor);
 
-	if (major * 1000 + minor < 2002)
+	if ((major < XI_2_Major) || ((major == XI_2_Major) && (minor < 2)))
 	{
 		WLog_WARN(TAG, "Server does not support XI 2.2");
 		return -1;
 	}
-
-	if (xfc->context.settings->MultiTouchInput)
-		xfc->use_xinput = TRUE;
-
-	info = XIQueryDevice(xfc->display, XIAllDevices, &ndevices);
-
-	for (i = 0; i < ndevices; i++)
+	else
 	{
-		BOOL touch = FALSE;
-		XIDeviceInfo* dev = &info[i];
+		int scr = DefaultScreen(xfc->display);
+		Window root = RootWindow(xfc->display, scr);
 
-		for (j = 0; j < dev->num_classes; j++)
-		{
-			XIAnyClassInfo* class = dev->classes[j];
-			XITouchClassInfo* t = (XITouchClassInfo*)class;
-
-			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
-			    (strcmp(dev->name, "Virtual core pointer") != 0))
-			{
-				touch = TRUE;
-			}
-		}
-
-		for (j = 0; j < dev->num_classes; j++)
-		{
-			XIAnyClassInfo* class = dev->classes[j];
-			XITouchClassInfo* t = (XITouchClassInfo*)class;
-
-			if (xfc->context.settings->MultiTouchInput)
-			{
-				WLog_INFO(TAG, "%s (%d) \"%s\" id: %d", xf_input_get_class_string(class->type),
-				          class->type, dev->name, dev->deviceid);
-			}
-
-			evmasks[nmasks].mask = masks[nmasks];
-			evmasks[nmasks].mask_len = sizeof(masks[0]);
-			ZeroMemory(masks[nmasks], sizeof(masks[0]));
-			evmasks[nmasks].deviceid = dev->deviceid;
-
-			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
-			    (strcmp(dev->name, "Virtual core pointer") != 0))
-			{
-				if (xfc->context.settings->MultiTouchInput)
-				{
-					WLog_INFO(TAG, "%s %s touch device (id: %d, mode: %d), supporting %d touches.",
-					          dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
-					          dev->deviceid, t->mode, t->num_touches);
-				}
-
-				XISetMask(masks[nmasks], XI_TouchBegin);
-				XISetMask(masks[nmasks], XI_TouchUpdate);
-				XISetMask(masks[nmasks], XI_TouchEnd);
-				nmasks++;
-			}
-
-			if (xfc->use_xinput)
-			{
-				if (!touch && (class->type == XIButtonClass) &&
-				    strcmp(dev->name, "Virtual core pointer"))
-				{
-					WLog_INFO(TAG, "%s button device (id: %d, mode: %d)", dev->name, dev->deviceid,
-					          t->mode);
-					XISetMask(masks[nmasks], XI_ButtonPress);
-					XISetMask(masks[nmasks], XI_ButtonRelease);
-					XISetMask(masks[nmasks], XI_Motion);
-					nmasks++;
-				}
-			}
-		}
-	}
-
-	XIFreeDeviceInfo(info);
-
-	if (nmasks > 0)
-	{
-		Status xstatus = XISelectEvents(xfc->display, window, evmasks, nmasks);
-		if (xstatus != 0)
-			WLog_WARN(TAG, "XISelectEvents returned %d", xstatus);
+		if (!register_raw_events(xfc, root))
+			return -1;
+		if (!register_input_events(xfc, window))
+			return -1;
 	}
 
 	return 0;
@@ -233,7 +273,7 @@ static void xf_input_detect_pan(xfContext* xfc)
 	rdpContext* ctx;
 
 	WINPR_ASSERT(xfc);
-	ctx = &xfc->context;
+	ctx = &xfc->common.context;
 	WINPR_ASSERT(ctx);
 
 	if (xfc->active_contacts != 2)
@@ -321,7 +361,7 @@ static void xf_input_detect_pinch(xfContext* xfc)
 	rdpContext* ctx;
 
 	WINPR_ASSERT(xfc);
-	ctx = &xfc->context;
+	ctx = &xfc->common.context;
 	WINPR_ASSERT(ctx);
 
 	if (xfc->active_contacts != 2)
@@ -473,7 +513,7 @@ static int xf_input_handle_event_local(xfContext* xfc, const XEvent* event)
 				break;
 
 			default:
-				WLog_ERR(TAG, "unhandled xi type= %d", cookie.cc->evtype);
+				xf_input_event(xfc, event, cookie.cc->data, cookie.cc->evtype);
 				break;
 		}
 	}
@@ -557,7 +597,7 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 	int x, y;
 	int touchId;
 	int contactId;
-	RdpeiClientContext* rdpei = xfc->rdpei;
+	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
 		return 0;
@@ -568,44 +608,90 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 	y = (int)event->event_y;
 	xf_event_adjust_coordinates(xfc, &x, &y);
 
-	if (evtype == XI_TouchBegin)
+	switch (evtype)
 	{
-		WLog_DBG(TAG, "TouchBegin: %d", touchId);
-		rdpei->TouchBegin(rdpei, touchId, x, y, &contactId);
-	}
-	else if (evtype == XI_TouchUpdate)
-	{
-		WLog_DBG(TAG, "TouchUpdate: %d", touchId);
-		rdpei->TouchUpdate(rdpei, touchId, x, y, &contactId);
-	}
-	else if (evtype == XI_TouchEnd)
-	{
-		WLog_DBG(TAG, "TouchEnd: %d", touchId);
-		rdpei->TouchEnd(rdpei, touchId, x, y, &contactId);
+		case XI_TouchBegin:
+			WLog_DBG(TAG, "TouchBegin: %d", touchId);
+			rdpei->TouchBegin(rdpei, touchId, x, y, &contactId);
+			break;
+		case XI_TouchUpdate:
+			WLog_DBG(TAG, "TouchUpdate: %d", touchId);
+			rdpei->TouchUpdate(rdpei, touchId, x, y, &contactId);
+			break;
+		case XI_TouchEnd:
+			WLog_DBG(TAG, "TouchEnd: %d", touchId);
+			rdpei->TouchEnd(rdpei, touchId, x, y, &contactId);
+			break;
+		default:
+			break;
 	}
 
 	return 0;
 }
 
-static int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
+int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype)
 {
+	const rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(xevent);
+	WINPR_ASSERT(event);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
 	xf_input_show_cursor(xfc);
 
 	switch (evtype)
 	{
 		case XI_ButtonPress:
+			xfc->xi_event = TRUE;
 			xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
 			                       event->event, xfc->remote_app, TRUE);
 			break;
 
 		case XI_ButtonRelease:
+			xfc->xi_event = TRUE;
 			xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
 			                       event->event, xfc->remote_app, FALSE);
 			break;
 
 		case XI_Motion:
+			xfc->xi_event = TRUE;
 			xf_generic_MotionNotify(xfc, (int)event->event_x, (int)event->event_y, event->detail,
 			                        event->event, xfc->remote_app);
+			break;
+		case XI_RawButtonPress:
+		case XI_RawButtonRelease:
+			xfc->xi_rawevent = xfc->common.mouse_grabbed &&
+			                   freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove);
+
+			if (xfc->xi_rawevent)
+			{
+				const XIRawEvent* ev = (const XIRawEvent*)event;
+				xf_generic_RawButtonEvent(xfc, ev->detail, xfc->remote_app,
+				                          evtype == XI_RawButtonPress);
+			}
+			break;
+		case XI_RawMotion:
+			xfc->xi_rawevent = xfc->common.mouse_grabbed &&
+			                   freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove);
+
+			if (xfc->xi_rawevent)
+			{
+				const XIRawEvent* ev = (const XIRawEvent*)event;
+				double x = 0.0;
+				double y = 0.0;
+				if (XIMaskIsSet(ev->valuators.mask, 0))
+					x = ev->raw_values[0];
+				if (XIMaskIsSet(ev->valuators.mask, 1))
+					y = ev->raw_values[1];
+
+				xf_generic_RawMotionNotify(xfc, (int)x, (int)y, event->event, xfc->remote_app);
+			}
+			break;
+		default:
+			WLog_WARN(TAG, "[%s] Unhandled event %d: Event was registered but is not handled!");
 			break;
 	}
 
@@ -626,19 +712,13 @@ static int xf_input_handle_event_remote(xfContext* xfc, const XEvent* event)
 		switch (cookie.cc->evtype)
 		{
 			case XI_TouchBegin:
-				xf_input_touch_remote(xfc, cookie.cc->data, XI_TouchBegin);
-				break;
-
 			case XI_TouchUpdate:
-				xf_input_touch_remote(xfc, cookie.cc->data, XI_TouchUpdate);
-				break;
-
 			case XI_TouchEnd:
-				xf_input_touch_remote(xfc, cookie.cc->data, XI_TouchEnd);
+				xf_input_touch_remote(xfc, cookie.cc->data, cookie.cc->evtype);
 				break;
 
 			default:
-				xf_input_event(xfc, cookie.cc->data, cookie.cc->evtype);
+				xf_input_event(xfc, event, cookie.cc->data, cookie.cc->evtype);
 				break;
 		}
 	}
@@ -659,17 +739,26 @@ int xf_input_init(xfContext* xfc, Window window)
 int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 {
 #ifdef WITH_XI
+	const rdpSettings* settings;
+	WINPR_ASSERT(xfc);
 
-	if (xfc->context.settings->MultiTouchInput)
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	if (settings->MultiTouchInput)
 	{
 		return xf_input_handle_event_remote(xfc, event);
 	}
-
-	if (xfc->context.settings->MultiTouchGestures)
+	else if (settings->MultiTouchGestures)
+	{
+		return xf_input_handle_event_local(xfc, event);
+	}
+	else
 	{
 		return xf_input_handle_event_local(xfc, event);
 	}
 
-#endif
+#else
 	return 0;
+#endif
 }

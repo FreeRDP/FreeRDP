@@ -18,11 +18,9 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
-#include "buildflags.h"
+#include <winpr/buildflags.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -59,11 +57,11 @@ const char* winpr_get_build_revision(void)
 const char* winpr_get_build_config(void)
 {
 	static const char build_config[] =
-	    "Build configuration: " BUILD_CONFIG "\n"
-	    "Build type:          " BUILD_TYPE "\n"
-	    "CFLAGS:              " CFLAGS "\n"
-	    "Compiler:            " COMPILER_ID ", " COMPILER_VERSION "\n"
-	    "Target architecture: " TARGET_ARCH "\n";
+	    "Build configuration: " WINPR_BUILD_CONFIG "\n"
+	    "Build type:          " WINPR_BUILD_TYPE "\n"
+	    "CFLAGS:              " WINPR_CFLAGS "\n"
+	    "Compiler:            " WINPR_COMPILER_ID ", " WINPR_COMPILER_VERSION "\n"
+	    "Target architecture: " WINPR_TARGET_ARCH "\n";
 
 	return build_config;
 }

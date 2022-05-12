@@ -1,7 +1,5 @@
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <math.h>
 
@@ -31,7 +29,7 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 	const UINT32 x = 0;
 	const UINT32 y = 0;
 	const UINT32 format = PIXEL_FORMAT_RGBX32;
-	const UINT32 bstep = GetBytesPerPixel(format);
+	const UINT32 bstep = FreeRDPGetBytesPerPixel(format);
 	const size_t step = (w + 13) * 4;
 	const size_t SrcSize = step * h;
 	const float maxDiff = 4.0f * ((bpp < 24) ? 2.0f : 1.0f);
@@ -72,10 +70,10 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 		for (j = 0; j < w; j++)
 		{
 			BYTE r, g, b, dr, dg, db;
-			const UINT32 srcColor = ReadColor(&srcLine[j * bstep], format);
-			const UINT32 dstColor = ReadColor(&dstLine[j * bstep], format);
-			SplitColor(srcColor, format, &r, &g, &b, NULL, NULL);
-			SplitColor(dstColor, format, &dr, &dg, &db, NULL, NULL);
+			const UINT32 srcColor = FreeRDPReadColor(&srcLine[j * bstep], format);
+			const UINT32 dstColor = FreeRDPReadColor(&dstLine[j * bstep], format);
+			FreeRDPSplitColor(srcColor, format, &r, &g, &b, NULL, NULL);
+			FreeRDPSplitColor(dstColor, format, &dr, &dg, &db, NULL, NULL);
 
 			if (fabsf((float)r - dr) > maxDiff)
 				goto fail;
@@ -171,11 +169,11 @@ static BOOL TestColorConversion(void)
 		const UINT32 colorLow32 = FreeRDPConvertColor(colorLow, format, dstFormat, NULL);
 		const UINT32 colorHigh32 = FreeRDPConvertColor(colorHigh, format, dstFormat, NULL);
 		BYTE r, g, b, a;
-		SplitColor(colorLow32, dstFormat, &r, &g, &b, &a, NULL);
+		FreeRDPSplitColor(colorLow32, dstFormat, &r, &g, &b, &a, NULL);
 		if ((r != 0) || (g != 0) || (b != 0))
 			return FALSE;
 
-		SplitColor(colorHigh32, dstFormat, &r, &g, &b, &a, NULL);
+		FreeRDPSplitColor(colorHigh32, dstFormat, &r, &g, &b, &a, NULL);
 		if ((r != 255) || (g != 255) || (b != 255))
 			return FALSE;
 	}

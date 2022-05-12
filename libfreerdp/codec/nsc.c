@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +35,9 @@
 #include "nsc_encode.h"
 
 #include "nsc_sse2.h"
+
+#include <freerdp/log.h>
+#define TAG FREERDP_TAG("codec.nsc")
 
 #ifndef NSC_INIT_SIMD
 #define NSC_INIT_SIMD(_nsc_context) \
@@ -221,7 +222,7 @@ static BOOL nsc_stream_initialize(NSC_CONTEXT* context, wStream* s)
 {
 	int i;
 
-	if (Stream_GetRemainingLength(s) < 20)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 		return FALSE;
 
 	for (i = 0; i < 4; i++)
@@ -422,17 +423,18 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT32 width, UINT32 
                          UINT32 nHeight, UINT32 flip)
 {
 	wStream* s;
+	wStream sbuffer = { 0 };
 	BOOL ret;
 	if (!context || !data || !pDstData)
 		return FALSE;
 
-	s = Stream_New((BYTE*)data, length);
+	s = Stream_StaticConstInit(&sbuffer, data, length);
 
 	if (!s)
 		return FALSE;
 
 	if (nDstStride == 0)
-		nDstStride = nWidth * GetBytesPerPixel(DstFormat);
+		nDstStride = nWidth * FreeRDPGetBytesPerPixel(DstFormat);
 
 	switch (bpp)
 	{
@@ -457,14 +459,12 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT32 width, UINT32 
 			break;
 
 		default:
-			Stream_Free(s, TRUE);
 			return FALSE;
 	}
 
 	context->width = width;
 	context->height = height;
 	ret = nsc_context_initialize(context, s);
-	Stream_Free(s, FALSE);
 
 	if (!ret)
 		return FALSE;

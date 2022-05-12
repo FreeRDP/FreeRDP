@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,7 +63,7 @@ typedef UInt32 AudioFormatID;
 typedef UInt32 AudioFormatFlags;
 #endif
 
-typedef struct _AudinMacDevice
+typedef struct
 {
 	IAudinDevice iface;
 
@@ -156,13 +154,15 @@ static UINT audin_mac_set_format(IAudinDevice *device, const AUDIO_FORMAT *forma
 
 	if (format->wBitsPerSample == 0)
 		mac->audioFormat.mBitsPerChannel = 16;
-
-	mac->audioFormat.mBytesPerFrame = 0;
-	mac->audioFormat.mBytesPerPacket = 0;
+	
 	mac->audioFormat.mChannelsPerFrame = mac->format.nChannels;
+	mac->audioFormat.mFramesPerPacket = 1;
+
+	mac->audioFormat.mBytesPerFrame = mac->audioFormat.mChannelsPerFrame * (mac->audioFormat.mBitsPerChannel / 8);
+	mac->audioFormat.mBytesPerPacket = mac->audioFormat.mBytesPerFrame * mac->audioFormat.mFramesPerPacket;
+	
 	mac->audioFormat.mFormatFlags = audin_mac_get_flags_for_format(format);
 	mac->audioFormat.mFormatID = audin_mac_get_format(format);
-	mac->audioFormat.mFramesPerPacket = 1;
 	mac->audioFormat.mReserved = 0;
 	mac->audioFormat.mSampleRate = mac->format.nSamplesPerSec;
 	return CHANNEL_RC_OK;
@@ -379,13 +379,7 @@ static UINT audin_mac_parse_addin_args(AudinMacDevice *device, const ADDIN_ARGV 
 	return CHANNEL_RC_OK;
 }
 
-#ifdef BUILTIN_CHANNELS
-#define freerdp_audin_client_subsystem_entry mac_freerdp_audin_client_subsystem_entry
-#else
-#define freerdp_audin_client_subsystem_entry FREERDP_API freerdp_audin_client_subsystem_entry
-#endif
-
-UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+UINT mac_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	DWORD errCode;
 	char errString[1024];

@@ -21,9 +21,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +67,7 @@ static UINT rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
@@ -77,7 +75,7 @@ static UINT rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 	if (capabilityLength < 4)
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < capabilityLength - 4U)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, capabilityLength - 4U))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4U);
@@ -97,7 +95,7 @@ static UINT rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
@@ -105,7 +103,7 @@ static UINT rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
 	if (capabilityLength < 4)
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < capabilityLength - 4U)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, capabilityLength - 4U))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4U);
@@ -125,7 +123,7 @@ static UINT rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
@@ -133,7 +131,7 @@ static UINT rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s)
 	if (capabilityLength < 4U)
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < capabilityLength - 4U)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, capabilityLength - 4U))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4U);
@@ -153,7 +151,7 @@ static UINT rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
@@ -161,7 +159,7 @@ static UINT rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
 	if (capabilityLength < 4)
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < capabilityLength - 4U)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, capabilityLength - 4U))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4U);
@@ -181,7 +179,7 @@ static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
@@ -189,7 +187,7 @@ static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 	if (capabilityLength < 4)
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < capabilityLength - 4U)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, capabilityLength - 4U))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4U);
@@ -206,7 +204,7 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 	if (!rdpdr || !s)
 		return CHANNEL_RC_NULL_DATA;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, numCapabilities);
@@ -214,7 +212,7 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 
 	for (i = 0; i < numCapabilities; i++)
 	{
-		if (Stream_GetRemainingLength(s) < sizeof(UINT16))
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT16)))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT16(s, capabilityType);

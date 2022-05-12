@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #if defined __linux__ && !defined ANDROID
 
@@ -38,17 +36,8 @@ BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 
-	if (hDevice == INVALID_HANDLE_VALUE)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
+	if (!CommIsHandled(hDevice))
 		return FALSE;
-	}
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
 
 	pComm->permissive = permissive;
 	return TRUE;
@@ -93,17 +82,8 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	struct termios currentTermios;
 	EnterCriticalSection(&pComm->ReadLock); /* KISSer by the function's beginning */
 
-	if (hDevice == INVALID_HANDLE_VALUE)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
+	if (!CommIsHandled(hDevice))
 		goto return_false;
-	}
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		goto return_false;
-	}
 
 	if (lpOverlapped != NULL)
 	{
@@ -385,17 +365,8 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	struct timeval tmaxTimeout, *pTmaxTimeout;
 	EnterCriticalSection(&pComm->WriteLock); /* KISSer by the function's beginning */
 
-	if (hDevice == INVALID_HANDLE_VALUE)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
+	if (!CommIsHandled(hDevice))
 		goto return_false;
-	}
-
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		goto return_false;
-	}
 
 	if (lpOverlapped != NULL)
 	{

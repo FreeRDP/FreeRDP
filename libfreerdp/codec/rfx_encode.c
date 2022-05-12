@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -256,6 +254,11 @@ static void rfx_encode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 
 void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 {
+	union
+	{
+		const INT16** cpv;
+		INT16** pv;
+	} cnv;
 	BYTE* pBuffer;
 	INT16* pSrcDst[3];
 	int YLen, CbLen, CrLen;
@@ -280,8 +283,10 @@ void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 	                      pSrcDst[2]);
 	PROFILER_EXIT(context->priv->prof_rfx_encode_format_rgb)
 	PROFILER_ENTER(context->priv->prof_rfx_rgb_to_ycbcr)
-	prims->RGBToYCbCr_16s16s_P3P3((const INT16**)pSrcDst, 64 * sizeof(INT16), pSrcDst,
-	                              64 * sizeof(INT16), &roi_64x64);
+
+	cnv.pv = pSrcDst;
+	prims->RGBToYCbCr_16s16s_P3P3(cnv.cpv, 64 * sizeof(INT16), pSrcDst, 64 * sizeof(INT16),
+	                              &roi_64x64);
 	PROFILER_EXIT(context->priv->prof_rfx_rgb_to_ycbcr)
 	/**
 	 * We need to clear the buffers as the RLGR encoder expects it to be initialized to zero.

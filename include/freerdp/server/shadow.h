@@ -52,7 +52,7 @@ typedef struct rdp_shadow_capture rdpShadowCapture;
 typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
 typedef struct rdp_shadow_multiclient_event rdpShadowMultiClientEvent;
 
-typedef struct _RDP_SHADOW_ENTRY_POINTS RDP_SHADOW_ENTRY_POINTS;
+typedef struct S_RDP_SHADOW_ENTRY_POINTS RDP_SHADOW_ENTRY_POINTS;
 typedef int (*pfnShadowSubsystemEntry)(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
 
 typedef rdpShadowSubsystem* (*pfnShadowSubsystemNew)(void);
@@ -75,7 +75,7 @@ typedef BOOL (*pfnShadowClientCapabilities)(rdpShadowSubsystem* subsystem, rdpSh
 typedef BOOL (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
                                           UINT32 flags);
 typedef BOOL (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
-                                       UINT16 flags, UINT16 code);
+                                       UINT16 flags, UINT8 code);
 typedef BOOL (*pfnShadowUnicodeKeyboardEvent)(rdpShadowSubsystem* subsystem,
                                               rdpShadowClient* client, UINT16 flags, UINT16 code);
 typedef BOOL (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
@@ -170,7 +170,7 @@ struct rdp_shadow_surface
 	REGION16 invalidRegion;
 };
 
-struct _RDP_SHADOW_ENTRY_POINTS
+struct S_RDP_SHADOW_ENTRY_POINTS
 {
 	pfnShadowSubsystemNew New;
 	pfnShadowSubsystemFree Free;
@@ -226,11 +226,11 @@ struct rdp_shadow_subsystem
 /* Definition of message between subsystem and clients */
 #define SHADOW_MSG_IN_REFRESH_REQUEST_ID 1001
 
-typedef struct _SHADOW_MSG_OUT SHADOW_MSG_OUT;
+typedef struct S_SHADOW_MSG_OUT SHADOW_MSG_OUT;
 typedef void (*MSG_OUT_FREE_FN)(UINT32 id,
                                 SHADOW_MSG_OUT* msg); /* function to free SHADOW_MSG_OUT */
 
-struct _SHADOW_MSG_OUT
+struct S_SHADOW_MSG_OUT
 {
 	int refCount;
 	MSG_OUT_FREE_FN Free;
@@ -241,15 +241,14 @@ struct _SHADOW_MSG_OUT
 #define SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES_ID 2003
 #define SHADOW_MSG_OUT_AUDIO_OUT_VOLUME_ID 2004
 
-struct _SHADOW_MSG_OUT_POINTER_POSITION_UPDATE
+typedef struct
 {
 	SHADOW_MSG_OUT common;
 	UINT32 xPos;
 	UINT32 yPos;
-};
-typedef struct _SHADOW_MSG_OUT_POINTER_POSITION_UPDATE SHADOW_MSG_OUT_POINTER_POSITION_UPDATE;
+} SHADOW_MSG_OUT_POINTER_POSITION_UPDATE;
 
-struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
+typedef struct
 {
 	SHADOW_MSG_OUT common;
 	UINT32 xHot;
@@ -260,26 +259,23 @@ struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
 	UINT32 lengthXorMask;
 	BYTE* xorMaskData;
 	BYTE* andMaskData;
-};
-typedef struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE;
+} SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE;
 
-struct _SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES
+typedef struct
 {
 	SHADOW_MSG_OUT common;
 	AUDIO_FORMAT* audio_format;
 	void* buf;
 	size_t nFrames;
 	UINT16 wTimestamp;
-};
-typedef struct _SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES;
+} SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES;
 
-struct _SHADOW_MSG_OUT_AUDIO_OUT_VOLUME
+typedef struct
 {
 	SHADOW_MSG_OUT common;
 	UINT16 left;
 	UINT16 right;
-};
-typedef struct _SHADOW_MSG_OUT_AUDIO_OUT_VOLUME SHADOW_MSG_OUT_AUDIO_OUT_VOLUME;
+} SHADOW_MSG_OUT_AUDIO_OUT_VOLUME;
 
 #ifdef __cplusplus
 extern "C"

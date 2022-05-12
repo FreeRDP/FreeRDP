@@ -20,9 +20,7 @@
 #ifndef CLIENT_COMMON_CMDLINE_H
 #define CLIENT_COMMON_CMDLINE_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <winpr/cmdline.h>
 
@@ -54,8 +52,6 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Automatically request remote assistance input control" },
 	{ "async-channels", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Asynchronous channels (experimental)" },
-	{ "async-input", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "Asynchronous input" },
 	{ "async-update", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Asynchronous update" },
 	{ "audio-mode", COMMAND_LINE_VALUE_REQUIRED, "<mode>", NULL, NULL, -1, NULL,
@@ -140,7 +136,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "fast-path input/output" },
 	{ "fipsmode", COMMAND_LINE_VALUE_BOOL, NULL, NULL, NULL, -1, NULL, "FIPS mode" },
 	{ "floatbar", COMMAND_LINE_VALUE_OPTIONAL,
-	  "sticky:[on|off],default:[visible|hidden],show:[always|fullscreen||window]", NULL, NULL, -1,
+	  "sticky:[on|off],default:[visible|hidden],show:[always|fullscreen|window]", NULL, NULL, -1,
 	  NULL,
 	  "floatbar is disabled by default (when enabled defaults to sticky in fullscreen mode)" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
@@ -224,6 +220,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "kbd-unicode", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
 	  "Send unicode symbols, e.g. use the local keyboard map. ATTENTION: Does not work with every "
 	  "RDP server!" },
+	{ "kerberos", COMMAND_LINE_VALUE_REQUIRED,
+	  "[lifetime:<time>,start-time:<time>,renewable-lifetime:<time>,cache:<path>,armor:<path>,"
+	  "pkinit-anchors:<path>,pkcs11-module:<name>]",
+	  NULL, NULL, -1, NULL, "Kerberos options" },
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info-string>", NULL, NULL, -1, NULL,
 	  "Load balance info" },
 	{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<tag>:<level>[,<tag>:<level>[,...]]", NULL, NULL,
@@ -239,12 +239,16 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "microphone", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>]", NULL, NULL, -1,
 	  "mic", "Audio input (microphone)" },
+	{ "smartcard-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
+	  "List smartcard informations" },
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
 	  "List detected monitors" },
 	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<id>[,<id>[,...]]", NULL, NULL, -1, NULL,
 	  "Select monitors to use" },
 	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Send mouse motion" },
+	{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	  "Send mouse motion with relative addressing" },
 #if defined(CHANNEL_TSMF_CLIENT)
 	{ "multimedia", COMMAND_LINE_VALUE_OPTIONAL, "[sys:<sys>,][dev:<dev>,][decoder:<decoder>]",
 	  NULL, NULL, -1, "mmr", "[DEPRECATED] Redirect multimedia (video) use /video instead" },
@@ -272,8 +276,6 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Redirect parallel device" },
 	{ "parent-window", COMMAND_LINE_VALUE_REQUIRED, "<window-id>", NULL, NULL, -1, NULL,
 	  "Parent window id" },
-	{ "password-is-pin", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "Use smart card authentication with password as smart card PIN" },
 	{ "pcb", COMMAND_LINE_VALUE_REQUIRED, "<blob>", NULL, NULL, -1, NULL, "Preconnection Blob" },
 	{ "pcid", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL, "Preconnection Id" },
 	{ "pheight", COMMAND_LINE_VALUE_REQUIRED, "<height>", NULL, NULL, -1, NULL,
@@ -287,7 +289,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Print base64 reconnect cookie after connecting" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<driver>]", NULL, NULL, -1, NULL,
 	  "Redirect printer device" },
-	{ "proxy", COMMAND_LINE_VALUE_REQUIRED, "[<proto>://][<user>:<password>@]<host>:<port>", NULL,
+	{ "proxy", COMMAND_LINE_VALUE_REQUIRED, "[<proto>://][<user>:<password>@]<host>[:<port>]", NULL,
 	  NULL, -1, NULL,
 	  "Proxy settings: override env. var (see also environment variable below). Protocol "
 	  "\"socks5\" should be given explicitly where \"http\" is default." },
@@ -336,10 +338,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Scale remote desktop to window size" },
 	{ "smartcard", COMMAND_LINE_VALUE_OPTIONAL, "<str>[,<str>...]", NULL, NULL, -1, NULL,
 	  "Redirect the smartcard devices containing any of the <str> in their names." },
-	{ "smartcard-logon", COMMAND_LINE_VALUE_OPTIONAL, "[cert:<path>,key:<key>]", NULL, NULL, -1,
-	  NULL,
-	  "Activates Smartcard (optional certificate) Logon authentication. (EXPERIMENTAL: NLA not "
-	  "supported)" },
+	{ "smartcard-logon", COMMAND_LINE_VALUE_OPTIONAL,
+	  "[cert:<path>,key:<key>,pin:<pin>,csp:<csp name>,reader:<reader>,card:<card>]", NULL, NULL,
+	  -1, NULL, "Activates Smartcard (optional certificate) Logon authentication." },
 	{ "sound", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>,][latency:<"
 	  "latency>,][quality:<quality>]",

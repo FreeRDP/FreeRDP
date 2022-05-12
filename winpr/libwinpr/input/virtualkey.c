@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 
@@ -29,12 +27,11 @@
  * Virtual Key Codes
  */
 
-struct _VIRTUAL_KEY_CODE
+typedef struct
 {
 	DWORD code;       /* Windows Virtual Key Code */
 	const char* name; /* Virtual Key Code Name */
-};
-typedef struct _VIRTUAL_KEY_CODE VIRTUAL_KEY_CODE;
+} VIRTUAL_KEY_CODE;
 
 static const VIRTUAL_KEY_CODE VIRTUAL_KEY_CODE_TABLE[256] = {
 	{ 0, NULL },
@@ -295,12 +292,11 @@ static const VIRTUAL_KEY_CODE VIRTUAL_KEY_CODE_TABLE[256] = {
 	{ 0, NULL }
 };
 
-struct _XKB_KEYNAME
+typedef struct
 {
 	const char* name;
 	DWORD vkcode;
-};
-typedef struct _XKB_KEYNAME XKB_KEYNAME;
+} XKB_KEYNAME;
 
 static XKB_KEYNAME XKB_KEYNAME_TABLE[] = {
 	{ "BKSP", VK_BACK },

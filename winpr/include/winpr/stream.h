@@ -34,9 +34,9 @@ extern "C"
 {
 #endif
 
-	typedef struct _wStreamPool wStreamPool;
+	typedef struct s_wStreamPool wStreamPool;
 
-	struct _wStream
+	typedef struct
 	{
 		BYTE* buffer;
 		BYTE* pointer;
@@ -47,12 +47,11 @@ extern "C"
 		wStreamPool* pool;
 		BOOL isAllocatedStream;
 		BOOL isOwner;
-	};
-	typedef struct _wStream wStream;
+	} wStream;
 
-	static INLINE size_t Stream_Capacity(wStream* _s);
-	WINPR_API size_t Stream_GetRemainingCapacity(wStream* _s);
-	WINPR_API size_t Stream_GetRemainingLength(wStream* _s);
+	static INLINE size_t Stream_Capacity(const wStream* _s);
+	WINPR_API size_t Stream_GetRemainingCapacity(const wStream* _s);
+	WINPR_API size_t Stream_GetRemainingLength(const wStream* _s);
 
 	WINPR_API BOOL Stream_EnsureCapacity(wStream* s, size_t size);
 	WINPR_API BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size);
@@ -61,6 +60,19 @@ extern "C"
 	WINPR_API wStream* Stream_StaticConstInit(wStream* s, const BYTE* buffer, size_t size);
 	WINPR_API wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size);
 	WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
+
+#define Stream_CheckAndLogRequiredLength(tag, s, len)                                     \
+	Stream_CheckAndLogRequiredLengthEx(tag, WLOG_WARN, s, len, "%s(%s:%d)", __FUNCTION__, \
+	                                   __FILE__, __LINE__)
+	WINPR_API BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, DWORD level, wStream* s,
+	                                                  UINT64 len, const char* fmt, ...);
+	WINPR_API BOOL Stream_CheckAndLogRequiredLengthExVa(const char* tag, DWORD level, wStream* s,
+	                                                    UINT64 len, const char* fmt, va_list args);
+	WINPR_API BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s,
+	                                                      UINT64 len, const char* fmt, ...);
+	WINPR_API BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s,
+	                                                        UINT64 len, const char* fmt,
+	                                                        va_list args);
 
 	static INLINE void Stream_Seek(wStream* s, size_t _offset)
 	{
@@ -82,21 +94,27 @@ extern "C"
 			s->pointer = s->buffer;
 	}
 
-#define _stream_read_n8(_t, _s, _v, _p)                   \
-	do                                                    \
-	{                                                     \
-		WINPR_ASSERT(_s);                                 \
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 1); \
-		(_v) = (_t)(*(_s)->pointer);                      \
-		if (_p)                                           \
-			Stream_Seek(_s, sizeof(_t));                  \
+#define _stream_read_n8(_t, _s, _v, _p)                       \
+	do                                                        \
+	{                                                         \
+		WINPR_ASSERT(_s);                                     \
+		if (_p)                                               \
+		{                                                     \
+			WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 1); \
+		}                                                     \
+		(_v) = (_t)(*(_s)->pointer);                          \
+		if (_p)                                               \
+			Stream_Seek(_s, sizeof(_t));                      \
 	} while (0)
 
 #define _stream_read_n16_le(_t, _s, _v, _p)                                      \
 	do                                                                           \
 	{                                                                            \
 		WINPR_ASSERT(_s);                                                        \
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 2);                        \
+		if (_p)                                                                  \
+		{                                                                        \
+			WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 2);                    \
+		}                                                                        \
 		(_v) = (_t)((*(_s)->pointer) + (((UINT16)(*((_s)->pointer + 1))) << 8)); \
 		if (_p)                                                                  \
 			Stream_Seek(_s, sizeof(_t));                                         \
@@ -106,7 +124,10 @@ extern "C"
 	do                                                                                   \
 	{                                                                                    \
 		WINPR_ASSERT(_s);                                                                \
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 2);                                \
+		if (_p)                                                                          \
+		{                                                                                \
+			WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 2);                            \
+		}                                                                                \
 		(_v) = (_t)((((UINT16)(*(_s)->pointer)) << 8) + (UINT16)(*((_s)->pointer + 1))); \
 		if (_p)                                                                          \
 			Stream_Seek(_s, sizeof(_t));                                                 \
@@ -116,7 +137,10 @@ extern "C"
 	do                                                                                   \
 	{                                                                                    \
 		WINPR_ASSERT(_s);                                                                \
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 4);                                \
+		if (_p)                                                                          \
+		{                                                                                \
+			WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 4);                            \
+		}                                                                                \
 		(_v) = (_t)((UINT32)(*(_s)->pointer) + (((UINT32)(*((_s)->pointer + 1))) << 8) + \
 		            (((UINT32)(*((_s)->pointer + 2))) << 16) +                           \
 		            ((((UINT32) * ((_s)->pointer + 3))) << 24));                         \
@@ -128,7 +152,10 @@ extern "C"
 	do                                                                                             \
 	{                                                                                              \
 		WINPR_ASSERT(_s);                                                                          \
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 4);                                          \
+		if (_p)                                                                                    \
+		{                                                                                          \
+			WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 4);                                      \
+		}                                                                                          \
 		(_v) = (_t)(((((UINT32) * ((_s)->pointer))) << 24) +                                       \
 		            (((UINT32)(*((_s)->pointer + 1))) << 16) +                                     \
 		            (((UINT32)(*((_s)->pointer + 2))) << 8) + (((UINT32)(*((_s)->pointer + 3))))); \
@@ -136,32 +163,42 @@ extern "C"
 			Stream_Seek(_s, sizeof(_t));                                                           \
 	} while (0)
 
-#define _stream_read_n64_le(_t, _s, _v, _p)                                                       \
-	do                                                                                            \
-	{                                                                                             \
-		WINPR_ASSERT(_s);                                                                         \
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 8);                                         \
-		(_v) = (_t)(                                                                              \
-		    (UINT64)(*(_s)->pointer) + (((UINT64)(*((_s)->pointer + 1))) << 8) +                  \
-		    (((UINT64)(*((_s)->pointer + 2))) << 16) + (((UINT64)(*((_s)->pointer + 3))) << 24) + \
-		    (((UINT64)(*((_s)->pointer + 4))) << 32) + (((UINT64)(*((_s)->pointer + 5))) << 40) + \
-		    (((UINT64)(*((_s)->pointer + 6))) << 48) + (((UINT64)(*((_s)->pointer + 7))) << 56)); \
-		if (_p)                                                                                   \
-			Stream_Seek(_s, sizeof(_t));                                                          \
+#define _stream_read_n64_le(_t, _s, _v, _p)                                              \
+	do                                                                                   \
+	{                                                                                    \
+		WINPR_ASSERT(_s);                                                                \
+		if (_p)                                                                          \
+		{                                                                                \
+			WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 8);                            \
+		}                                                                                \
+		(_v) = (_t)((UINT64)(*(_s)->pointer) + (((UINT64)(*((_s)->pointer + 1))) << 8) + \
+		            (((UINT64)(*((_s)->pointer + 2))) << 16) +                           \
+		            (((UINT64)(*((_s)->pointer + 3))) << 24) +                           \
+		            (((UINT64)(*((_s)->pointer + 4))) << 32) +                           \
+		            (((UINT64)(*((_s)->pointer + 5))) << 40) +                           \
+		            (((UINT64)(*((_s)->pointer + 6))) << 48) +                           \
+		            (((UINT64)(*((_s)->pointer + 7))) << 56));                           \
+		if (_p)                                                                          \
+			Stream_Seek(_s, sizeof(_t));                                                 \
 	} while (0)
 
-#define _stream_read_n64_be(_t, _s, _v, _p)                                                       \
-	do                                                                                            \
-	{                                                                                             \
-		WINPR_ASSERT(_s);                                                                         \
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 8);                                         \
-		(_v) = (_t)(                                                                              \
-		    (((UINT64)(*((_s)->pointer))) << 56) + (((UINT64)(*((_s)->pointer + 1))) << 48) +     \
-		    (((UINT64)(*((_s)->pointer + 2))) << 40) + (((UINT64)(*((_s)->pointer + 3))) << 32) + \
-		    (((UINT64)(*((_s)->pointer + 4))) << 24) + (((UINT64)(*((_s)->pointer + 5))) << 16) + \
-		    (((UINT64)(*((_s)->pointer + 6))) << 8) + (((UINT64)(*((_s)->pointer + 7)))));        \
-		if (_p)                                                                                   \
-			Stream_Seek(_s, sizeof(_t));                                                          \
+#define _stream_read_n64_be(_t, _s, _v, _p)                                                        \
+	do                                                                                             \
+	{                                                                                              \
+		WINPR_ASSERT(_s);                                                                          \
+		if (_p)                                                                                    \
+		{                                                                                          \
+			WINPR_ASSERT(Stream_GetRemainingLength(_s) >= 8);                                      \
+		}                                                                                          \
+		(_v) =                                                                                     \
+		    (_t)((((UINT64)(*((_s)->pointer))) << 56) + (((UINT64)(*((_s)->pointer + 1))) << 48) + \
+		         (((UINT64)(*((_s)->pointer + 2))) << 40) +                                        \
+		         (((UINT64)(*((_s)->pointer + 3))) << 32) +                                        \
+		         (((UINT64)(*((_s)->pointer + 4))) << 24) +                                        \
+		         (((UINT64)(*((_s)->pointer + 5))) << 16) +                                        \
+		         (((UINT64)(*((_s)->pointer + 6))) << 8) + (((UINT64)(*((_s)->pointer + 7)))));    \
+		if (_p)                                                                                    \
+			Stream_Seek(_s, sizeof(_t));                                                           \
 	} while (0)
 
 #define Stream_Read_UINT8(_s, _v) _stream_read_n8(UINT8, _s, _v, TRUE)
@@ -215,7 +252,7 @@ extern "C"
 #define Stream_Peek_UINT64_BE(_s, _v) _stream_read_n64_be(UINT64, _s, _v, FALSE)
 #define Stream_Peek_INT64_BE(_s, _v) _stream_read_n64_be(INT64, _s, _v, FALSE)
 
-	static INLINE void Stream_Peek(wStream* _s, void* _b, size_t _n)
+	static INLINE void Stream_Peek(const wStream* _s, void* _b, size_t _n)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_b || (_n == 0));
@@ -276,6 +313,7 @@ extern "C"
 
 	static INLINE void Stream_Write_UINT32_BE(wStream* _s, UINT32 _v)
 	{
+		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 4);
 		Stream_Write_UINT16_BE(_s, ((_v) >> 16 & 0xFFFF));
 		Stream_Write_UINT16_BE(_s, ((_v)&0xFFFF));
 	}
@@ -349,9 +387,22 @@ extern "C"
 		return _s->buffer;
 	}
 
+	static INLINE const BYTE* Stream_ConstBuffer(const wStream* _s)
+	{
+		WINPR_ASSERT(_s);
+		return _s->buffer;
+	}
+
 #define Stream_GetBuffer(_s, _b) _b = Stream_Buffer(_s)
+#define Stream_PointerAs(s, type) (type*)Stream_Pointer(s)
 
 	static INLINE BYTE* Stream_Pointer(wStream* _s)
+	{
+		WINPR_ASSERT(_s);
+		return _s->pointer;
+	}
+
+	static INLINE const BYTE* Stream_ConstPointer(const wStream* _s)
 	{
 		WINPR_ASSERT(_s);
 		return _s->pointer;
@@ -368,7 +419,7 @@ extern "C"
 	                               void Stream_SetCapacity(wStream* _s, size_t capacity));
 #endif
 
-	static INLINE size_t Stream_Length(wStream* _s)
+	static INLINE size_t Stream_Length(const wStream* _s)
 	{
 		WINPR_ASSERT(_s);
 		return _s->length;
@@ -377,7 +428,7 @@ extern "C"
 #define Stream_GetLength(_s, _l) _l = Stream_Length(_s)
 	WINPR_API BOOL Stream_SetLength(wStream* _s, size_t _l);
 
-	static INLINE size_t Stream_Capacity(wStream* _s)
+	static INLINE size_t Stream_Capacity(const wStream* _s)
 	{
 		WINPR_ASSERT(_s);
 		return _s->capacity;
@@ -385,7 +436,7 @@ extern "C"
 
 #define Stream_GetCapacity(_s, _c) _c = Stream_Capacity(_s);
 
-	static INLINE size_t Stream_GetPosition(wStream* _s)
+	static INLINE size_t Stream_GetPosition(const wStream* _s)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->buffer <= _s->pointer);

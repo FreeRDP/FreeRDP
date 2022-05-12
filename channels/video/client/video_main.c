@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,27 +45,25 @@
 
 #include "video_main.h"
 
-struct _VIDEO_CHANNEL_CALLBACK
+typedef struct
 {
 	IWTSVirtualChannelCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
-};
-typedef struct _VIDEO_CHANNEL_CALLBACK VIDEO_CHANNEL_CALLBACK;
+} VIDEO_CHANNEL_CALLBACK;
 
-struct _VIDEO_LISTENER_CALLBACK
+typedef struct
 {
 	IWTSListenerCallback iface;
 
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 	VIDEO_CHANNEL_CALLBACK* channel_callback;
-};
-typedef struct _VIDEO_LISTENER_CALLBACK VIDEO_LISTENER_CALLBACK;
+} VIDEO_LISTENER_CALLBACK;
 
-struct _VIDEO_PLUGIN
+typedef struct
 {
 	IWTSPlugin wtsPlugin;
 
@@ -78,46 +74,14 @@ struct _VIDEO_PLUGIN
 
 	VideoClientContext* context;
 	BOOL initialized;
-};
-typedef struct _VIDEO_PLUGIN VIDEO_PLUGIN;
+} VIDEO_PLUGIN;
 
 #define XF_VIDEO_UNLIMITED_RATE 31
 
 static const BYTE MFVideoFormat_H264[] = { 'H',  '2',  '6',  '4',  0x00, 0x00, 0x10, 0x00,
 	                                       0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 };
 
-typedef struct _PresentationContext PresentationContext;
-typedef struct _VideoFrame VideoFrame;
-
-/** @brief private data for the channel */
-struct _VideoClientContextPriv
-{
-	VideoClientContext* video;
-	GeometryClientContext* geometry;
-	wQueue* frames;
-	CRITICAL_SECTION framesLock;
-	wBufferPool* surfacePool;
-	UINT32 publishedFrames;
-	UINT32 droppedFrames;
-	UINT32 lastSentRate;
-	UINT64 nextFeedbackTime;
-	PresentationContext* currentPresentation;
-};
-
-/** @brief */
-struct _VideoFrame
-{
-	UINT64 publishTime;
-	UINT64 hnsDuration;
-	MAPPED_GEOMETRY* geometry;
-	UINT32 w, h;
-	UINT32 scanline;
-	BYTE* surfaceData;
-	PresentationContext* presentation;
-};
-
-/** @brief */
-struct _PresentationContext
+typedef struct
 {
 	VideoClientContext* video;
 	BYTE PresentationId;
@@ -131,6 +95,32 @@ struct _PresentationContext
 	UINT64 lastPublishTime, nextPublishTime;
 	volatile LONG refCounter;
 	VideoSurface* surface;
+} PresentationContext;
+
+typedef struct
+{
+	UINT64 publishTime;
+	UINT64 hnsDuration;
+	MAPPED_GEOMETRY* geometry;
+	UINT32 w, h;
+	UINT32 scanline;
+	BYTE* surfaceData;
+	PresentationContext* presentation;
+} VideoFrame;
+
+/** @brief private data for the channel */
+struct s_VideoClientContextPriv
+{
+	VideoClientContext* video;
+	GeometryClientContext* geometry;
+	wQueue* frames;
+	CRITICAL_SECTION framesLock;
+	wBufferPool* surfacePool;
+	UINT32 publishedFrames;
+	UINT32 droppedFrames;
+	UINT32 lastSentRate;
+	UINT64 nextFeedbackTime;
+	PresentationContext* currentPresentation;
 };
 
 static void PresentationContext_unref(PresentationContext* presentation);
@@ -227,7 +217,8 @@ static PresentationContext* PresentationContext_new(VideoClientContext* video, B
 		WLog_ERR(TAG, "unable to create a h264 context");
 		goto fail;
 	}
-	h264_context_reset(ret->h264, width, height);
+	if (!h264_context_reset(ret->h264, width, height))
+		goto fail;
 
 	ret->currentSample = Stream_New(NULL, 4096);
 	if (!ret->currentSample)
@@ -535,11 +526,8 @@ static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStrea
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingLength(s) < 60)
-	{
-		WLog_ERR(TAG, "not enough bytes for a TSMM_PRESENTATION_REQUEST");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 60))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT8(s, req.PresentationId);
 	Stream_Read_UINT8(s, req.Version);
@@ -559,11 +547,8 @@ static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStrea
 
 	Stream_Read_UINT32(s, req.cbExtra);
 
-	if (Stream_GetRemainingLength(s) < req.cbExtra)
-	{
-		WLog_ERR(TAG, "not enough bytes for cbExtra of TSMM_PRESENTATION_REQUEST");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, req.cbExtra))
 		return ERROR_INVALID_DATA;
-	}
 
 	req.pExtraData = Stream_Pointer(s);
 
@@ -600,15 +585,17 @@ static UINT video_control_on_data_received(IWTSVirtualChannelCallback* pChannelC
 	context = (VideoClientContext*)video->wtsPlugin.pInterface;
 	WINPR_ASSERT(context);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, cbSize);
-	if (cbSize < 8 || Stream_GetRemainingLength(s) < (cbSize - 4))
+	if (cbSize < 8)
 	{
-		WLog_ERR(TAG, "invalid cbSize");
+		WLog_ERR(TAG, "invalid cbSize %" PRIu32 ", expected 8", cbSize);
 		return ERROR_INVALID_DATA;
 	}
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, cbSize - 4))
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, packetType);
 	switch (packetType)
@@ -914,7 +901,10 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 			                           frame->surfaceData, surface->format, surface->scanline,
 			                           surface->alignedWidth, surface->alignedHeight, &rect, 1);
 			if (status < 0)
+			{
+				VideoFrame_free(&frame);
 				return CHANNEL_RC_OK;
+			}
 
 			InterlockedIncrement(&presentation->refCounter);
 
@@ -947,15 +937,18 @@ static UINT video_data_on_data_received(IWTSVirtualChannelCallback* pChannelCall
 	video = (VIDEO_PLUGIN*)callback->plugin;
 	context = (VideoClientContext*)video->wtsPlugin.pInterface;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, cbSize);
-	if (cbSize < 8 || Stream_GetRemainingLength(s) < (cbSize - 4))
+	if (cbSize < 8)
 	{
-		WLog_ERR(TAG, "invalid cbSize");
+		WLog_ERR(TAG, "invalid cbSize %" PRIu32 ", expected >= 8", cbSize);
 		return ERROR_INVALID_DATA;
 	}
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, cbSize - 4))
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, packetType);
 	if (packetType != TSMM_PACKET_TYPE_VIDEO_DATA)
@@ -964,11 +957,8 @@ static UINT video_data_on_data_received(IWTSVirtualChannelCallback* pChannelCall
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) < 32)
-	{
-		WLog_ERR(TAG, "not enough bytes for a TSMM_VIDEO_DATA");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
 		return ERROR_INVALID_DATA;
-	}
 
 	Stream_Read_UINT8(s, data.PresentationId);
 	Stream_Read_UINT8(s, data.Version);
@@ -1167,19 +1157,12 @@ static UINT video_plugin_terminated(IWTSPlugin* pPlugin)
 /**
  * Channel Client Interface
  */
-
-#ifdef BUILTIN_CHANNELS
-#define DVCPluginEntry video_DVCPluginEntry
-#else
-#define DVCPluginEntry FREERDP_API DVCPluginEntry
-#endif
-
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+UINT video_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT error = CHANNEL_RC_OK;
 	VIDEO_PLUGIN* videoPlugin;
