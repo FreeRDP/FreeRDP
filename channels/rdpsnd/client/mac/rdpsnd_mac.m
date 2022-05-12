@@ -136,91 +136,95 @@ static void rdpsnd_mac_release(rdpsndMacPlugin *mac)
 
 static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *format, UINT32 latency)
 {
-	AudioDeviceID outputDeviceID;
-	UInt32 propertySize;
-	OSStatus err;
-	NSError *error;
-	rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
-	AudioObjectPropertyAddress propertyAddress = { kAudioHardwarePropertyDefaultOutputDevice,
-		                                           kAudioObjectPropertyScopeGlobal,
-#if defined(MAC_OS_VERSION_12_0)
-																								 kAudioObjectPropertyElementMain
-#else
-		                                           kAudioObjectPropertyElementMaster
-#endif
-	};
+	@autoreleasepool {
+		AudioDeviceID outputDeviceID;
+		UInt32 propertySize;
+		OSStatus err;
+		NSError *error;
+		rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
+		AudioObjectPropertyAddress propertyAddress = { kAudioHardwarePropertyDefaultOutputDevice,
+													   kAudioObjectPropertyScopeGlobal,
+	#if defined(MAC_OS_VERSION_12_0)
+																									 kAudioObjectPropertyElementMain
+	#else
+													   kAudioObjectPropertyElementMaster
+	#endif
+		};
 
-	if (mac->isOpen)
+		if (mac->isOpen)
+			return TRUE;
+
+		if (!rdpsnd_mac_set_format(device, format, latency))
+			return FALSE;
+
+		propertySize = sizeof(outputDeviceID);
+		err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL,
+										 &propertySize, &outputDeviceID);
+		if (err)
+		{
+			WLog_ERR(TAG, "AudioHardwareGetProperty: %s", FormatError(err));
+			return FALSE;
+		}
+
+		mac->engine = [[AVAudioEngine alloc] init];
+		if (!mac->engine)
+			return FALSE;
+
+		err = AudioUnitSetProperty(mac->engine.outputNode.audioUnit,
+								   kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0,
+								   &outputDeviceID, sizeof(outputDeviceID));
+		if (err)
+		{
+			rdpsnd_mac_release(mac);
+			WLog_ERR(TAG, "AudioUnitSetProperty: %s", FormatError(err));
+			return FALSE;
+		}
+
+		mac->player = [[AVAudioPlayerNode alloc] init];
+		if (!mac->player)
+		{
+			rdpsnd_mac_release(mac);
+			WLog_ERR(TAG, "AVAudioPlayerNode::init() failed");
+			return FALSE;
+		}
+
+		[mac->engine attachNode:mac->player];
+
+		[mac->engine connect:mac->player to:mac->engine.mainMixerNode format:nil];
+
+		[mac->engine prepare];
+
+		if (![mac->engine startAndReturnError:&error])
+		{
+			device->Close(device);
+			WLog_ERR(TAG, "Failed to start audio player %s", [error.localizedDescription UTF8String]);
+			return FALSE;
+		}
+
+		mac->isOpen = TRUE;
 		return TRUE;
-
-	if (!rdpsnd_mac_set_format(device, format, latency))
-		return FALSE;
-
-	propertySize = sizeof(outputDeviceID);
-	err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL,
-	                                 &propertySize, &outputDeviceID);
-	if (err)
-	{
-		WLog_ERR(TAG, "AudioHardwareGetProperty: %s", FormatError(err));
-		return FALSE;
 	}
-
-	mac->engine = [[AVAudioEngine alloc] init];
-	if (!mac->engine)
-		return FALSE;
-
-	err = AudioUnitSetProperty(mac->engine.outputNode.audioUnit,
-	                           kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0,
-	                           &outputDeviceID, sizeof(outputDeviceID));
-	if (err)
-	{
-		rdpsnd_mac_release(mac);
-		WLog_ERR(TAG, "AudioUnitSetProperty: %s", FormatError(err));
-		return FALSE;
-	}
-
-	mac->player = [[AVAudioPlayerNode alloc] init];
-	if (!mac->player)
-	{
-		rdpsnd_mac_release(mac);
-		WLog_ERR(TAG, "AVAudioPlayerNode::init() failed");
-		return FALSE;
-	}
-
-	[mac->engine attachNode:mac->player];
-
-	[mac->engine connect:mac->player to:mac->engine.mainMixerNode format:nil];
-
-	[mac->engine prepare];
-
-	if (![mac->engine startAndReturnError:&error])
-	{
-		device->Close(device);
-		WLog_ERR(TAG, "Failed to start audio player %s", [error.localizedDescription UTF8String]);
-		return FALSE;
-	}
-
-	mac->isOpen = TRUE;
-	return TRUE;
 }
 
 static void rdpsnd_mac_close(rdpsndDevicePlugin *device)
 {
-	rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
+	@autoreleasepool {
+		rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
 
-	if (mac->isPlaying)
-	{
-		[mac->player stop];
-		mac->isPlaying = FALSE;
+		if (mac->isPlaying)
+		{
+			[mac->player stop];
+			mac->isPlaying = FALSE;
+		}
+
+		if (mac->isOpen)
+		{
+			[mac->engine stop];
+			mac->isOpen = FALSE;
+		}
+
+		rdpsnd_mac_release(mac);
 	}
-
-	if (mac->isOpen)
-	{
-		[mac->engine stop];
-		mac->isOpen = FALSE;
-	}
-
-	rdpsnd_mac_release(mac);
 }
 
 static void rdpsnd_mac_free(rdpsndDevicePlugin *device)
@@ -251,108 +255,119 @@ static BOOL rdpsnd_mac_format_supported(rdpsndDevicePlugin *device, const AUDIO_
 
 static BOOL rdpsnd_mac_set_volume(rdpsndDevicePlugin *device, UINT32 value)
 {
-	Float32 fVolume;
-	UINT16 volumeLeft;
-	UINT16 volumeRight;
-	rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
+	@autoreleasepool {
+		Float32 fVolume;
+		UINT16 volumeLeft;
+		UINT16 volumeRight;
+		rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
 
-	if (!mac->player)
-		return FALSE;
+		if (!mac->player)
+			return FALSE;
 
-	volumeLeft = (value & 0xFFFF);
-	volumeRight = ((value >> 16) & 0xFFFF);
-	fVolume = ((float)volumeLeft) / 65535.0f;
+		volumeLeft = (value & 0xFFFF);
+		volumeRight = ((value >> 16) & 0xFFFF);
+		fVolume = ((float)volumeLeft) / 65535.0f;
 
-	mac->player.volume = fVolume;
+		mac->player.volume = fVolume;
 
-	return TRUE;
+		return TRUE;
+	}
 }
 
 static void rdpsnd_mac_start(rdpsndDevicePlugin *device)
 {
-	rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
+	@autoreleasepool {
+		rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
 
-	if (!mac->isPlaying)
-	{
-		if (!mac->engine.isRunning)
+		if (!mac->isPlaying)
 		{
-			NSError *error;
-
-			if (![mac->engine startAndReturnError:&error])
+			if (!mac->engine.isRunning)
 			{
-				device->Close(device);
-				WLog_ERR(TAG, "Failed to start audio player %s",
-				         [error.localizedDescription UTF8String]);
-				return;
+				NSError *error;
+
+				if (![mac->engine startAndReturnError:&error])
+				{
+					device->Close(device);
+					WLog_ERR(TAG, "Failed to start audio player %s",
+							 [error.localizedDescription UTF8String]);
+					return;
+				}
 			}
+
+			[mac->player play];
+
+			mac->isPlaying = TRUE;
+			mac->diff = 100; /* Initial latency, corrected after first sample is played. */
 		}
-
-		[mac->player play];
-
-		mac->isPlaying = TRUE;
-		mac->diff = 100; /* Initial latency, corrected after first sample is played. */
 	}
 }
 
 static UINT rdpsnd_mac_play(rdpsndDevicePlugin *device, const BYTE *data, size_t size)
 {
-	rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
-	AVAudioPCMBuffer *buffer;
-	AVAudioFormat *format;
-	float *const *db;
-	size_t pos, step, x;
-	AVAudioFrameCount count;
-	UINT64 start = GetTickCount64();
+	@autoreleasepool {
+		rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
+		AVAudioPCMBuffer *buffer;
+		AVAudioFormat *format;
+		float *const *db;
+		size_t pos, step, x;
+		AVAudioFrameCount count;
+		UINT64 start = GetTickCount64();
 
-	if (!mac->isOpen)
-		return 0;
+		if (!mac->isOpen)
+			return 0;
 
-	step = 2 * mac->format.nChannels;
+		step = 2 * mac->format.nChannels;
 
-	count = size / step;
-	format = [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32
-	                                          sampleRate:mac->format.nSamplesPerSec
-	                                            channels:mac->format.nChannels
-	                                         interleaved:NO];
-	if (!format)
-	{
-		WLog_WARN(TAG, "AVAudioFormat::init() failed");
-		return 0;
-	}
-	buffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat:format frameCapacity:count];
-	if (!buffer)
-	{
-		[format release];
-		WLog_WARN(TAG, "AVAudioPCMBuffer::init() failed");
-		return 0;
-	}
-
-	buffer.frameLength = buffer.frameCapacity;
-	db = buffer.floatChannelData;
-
-	for (pos = 0; pos < count; pos++)
-	{
-		const BYTE *d = &data[pos * step];
-		for (x = 0; x < mac->format.nChannels; x++)
+		count = size / step;
+		format = [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32
+												  sampleRate:mac->format.nSamplesPerSec
+													channels:mac->format.nChannels
+												 interleaved:NO];
+		
+		if (!format)
 		{
-			const float val = (int16_t)((uint16_t)d[0] | ((uint16_t)d[1] << 8)) / 32768.0f;
-			db[x][pos] = val;
-			d += sizeof(int16_t);
+			WLog_WARN(TAG, "AVAudioFormat::init() failed");
+			return 0;
 		}
+		
+		buffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat:format frameCapacity:count];
+		[format release];
+		
+		if (!buffer)
+		{
+			WLog_WARN(TAG, "AVAudioPCMBuffer::init() failed");
+			return 0;
+		}
+
+		buffer.frameLength = buffer.frameCapacity;
+		db = buffer.floatChannelData;
+
+		for (pos = 0; pos < count; pos++)
+		{
+			const BYTE *d = &data[pos * step];
+			for (x = 0; x < mac->format.nChannels; x++)
+			{
+				const float val = (int16_t)((uint16_t)d[0] | ((uint16_t)d[1] << 8)) / 32768.0f;
+				db[x][pos] = val;
+				d += sizeof(int16_t);
+			}
+		}
+
+		rdpsnd_mac_start(device);
+
+		[mac->player scheduleBuffer:buffer
+				  completionHandler:^{
+					  UINT64 stop = GetTickCount64();
+					  if (start > stop)
+						  mac->diff = 0;
+					  else
+						  mac->diff = stop - start;
+				  }];
+
+		[buffer release];
+		
+		return mac->diff > UINT_MAX ? UINT_MAX : mac->diff;
 	}
-
-	rdpsnd_mac_start(device);
-
-	[mac->player scheduleBuffer:buffer
-	          completionHandler:^{
-		          UINT64 stop = GetTickCount64();
-		          if (start > stop)
-			          mac->diff = 0;
-		          else
-			          mac->diff = stop - start;
-	          }];
-
-	return mac->diff > UINT_MAX ? UINT_MAX : mac->diff;
 }
 
 /**
