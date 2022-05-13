@@ -77,6 +77,12 @@ do
 done
 common_parse_arguments $REMAINING
 
+if [ -z ${WITH_MEDIACODEC+x} ];
+then
+    common_run echo "WITH_MEDIACODEC unset, defining WITH_MEDIACODEC=1"
+    WITH_MEDIACODEC=1
+fi
+
 # clean up top
 if [ -d $BUILD_SRC ];
 then
@@ -140,6 +146,14 @@ do
     else
         CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_OPENH264=OFF"
     fi
+
+    if [ $WITH_MEDIACODEC -ne 0 ];
+    then
+        CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_MEDIACODEC=ON"
+    else
+        CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_MEDIACODEC=OFF"
+    fi
+
 	if [ $WITH_FFMPEG -ne 0 ];
     then
 		if [ $BUILD_DEPS -ne 0 ];
