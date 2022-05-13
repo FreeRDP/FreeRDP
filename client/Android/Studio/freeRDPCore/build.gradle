@@ -8,8 +8,6 @@ android {
         minSdkVersion rootProject.ext.minApi
         targetSdkVersion rootProject.ext.targetApi
         vectorDrawables.useSupportLibrary = true
-        versionCode = rootProject.ext.versionCode
-        versionName = rootProject.ext.versionName
     }
 
     buildTypes {
