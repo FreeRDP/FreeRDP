@@ -215,7 +215,7 @@ static UINT audin_opensles_open(IAudinDevice* device, AudinReceive receive, void
 	opensles->user_data = user_data;
 	return CHANNEL_RC_OK;
 error_out:
-	audin_opensles_close(opensles);
+	audin_opensles_close(device);
 	return ERROR_INTERNAL_ERROR;
 }
 

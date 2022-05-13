@@ -523,7 +523,7 @@ static int android_freerdp_run(freerdp* instance)
 		count += tmp;
 		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 
-		if ((status == WAIT_FAILED))
+		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForMultipleObjects failed with %" PRIu32 " [%08lX]", status,
 			         GetLastError());

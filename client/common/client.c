@@ -782,7 +782,7 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 		if (freerdp_reconnect(instance))
 			return TRUE;
 
-		switch (freerdp_get_last_error(instance))
+		switch (freerdp_get_last_error(instance->context))
 		{
 			case FREERDP_ERROR_CONNECT_CANCELLED:
 				WLog_WARN(TAG, "Autoreconnect aborted by user");
