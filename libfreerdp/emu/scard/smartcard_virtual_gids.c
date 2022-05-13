@@ -376,7 +376,7 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 		else
 			doSize = len;
 
-		if (Stream_CheckAndLogRequiredLength(TAG, ef->data, doSize))
+		if (!Stream_CheckAndLogRequiredLength(TAG, ef->data, doSize))
 			return FALSE;
 
 		if (nextDOID == doID)
