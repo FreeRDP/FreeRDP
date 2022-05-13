@@ -18,26 +18,13 @@ if (!hasProperty('RELEASE_KEY_PASSWORD')) {
     ext.RELEASE_KEY_PASSWORD=''
 }
 
-def getVersionName = { ->
-    def stdout = new ByteArrayOutputStream()
-    exec {
-        commandLine 'git', 'describe', '--tags'
-        standardOutput = stdout
-    }
-    return stdout.toString().trim()
-}
-
 ext {
-    versionName = properties.get('VERSION_NAME', getVersionName())
-    versionCode = properties.get('VERSION_CODE', 29)
     compileApi = properties.get('COMPILE_API', 31)
     targetApi = properties.get('TARGET_API', 31)
     minApi = properties.get('MIN_API', 23)
     toolsVersion = properties.get('TOOLS_VERSION', '31.0.0')
 
     println '----------------- Project configuration -------------------'
-    println 'VERSION_NAME:       ' + versionName
-    println 'VERSION_CODE:       ' + versionCode
     println 'RELEASE_STORE_FILE: ' + RELEASE_STORE_FILE
     println 'RELEASE_KEY_ALIAS:  ' + RELEASE_KEY_ALIAS
     println 'compile API:        ' + compileApi
@@ -53,7 +40,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.4'
+        classpath 'com.android.tools.build:gradle:7.1.2'
     }
 }
 
