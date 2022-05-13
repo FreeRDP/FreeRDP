@@ -1,5 +1,16 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.gladed.androidgitversion' version '0.4.4'
+}
 
+androidGitVersion {
+    abis = ['armeabi':1, 'armeabi-v7a':2, 'arm64-v8a':3, 'mips':5, 'mips64':6, 'x86':8, 'x86_64':9 ]
+    prefix ''
+}
+
+println 'Version Name: ' + androidGitVersion.name()
+println 'Version Code: ' + androidGitVersion.code()
+
+apply plugin: 'com.android.application'
 android {
     compileSdkVersion = rootProject.ext.compileApi
     buildToolsVersion = rootProject.ext.toolsVersion
@@ -9,8 +20,8 @@ android {
         minSdkVersion rootProject.ext.minApi
         targetSdkVersion rootProject.ext.targetApi
         vectorDrawables.useSupportLibrary = true
-        versionCode = rootProject.ext.versionCode
-        versionName = rootProject.ext.versionName
+        versionName = androidGitVersion.name()
+        versionCode = androidGitVersion.code()
     }
 
     signingConfigs {
