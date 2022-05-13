@@ -9,6 +9,8 @@ Fixed issues:
 * Backported #7832: RAIL window restore
 * Backported #7833: Refactored WinPR thread locking
 * Backported #7893: Mac rdpsnd memory leak fixes
+* Backported #7895: Mac audin memory leak fixes
+* Backported #7898: Automatic android versioning
 
 # 2022-04-25 Version 2.7.0
 
