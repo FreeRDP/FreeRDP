@@ -462,7 +462,7 @@ static UINT rdpdr_send_client_name_request(pClientContext* pc, pf_channel_client
 	Stream_Write_UINT32(s, rdpdr->common.computerNameUnicode
 	                           ? 1
 	                           : 0); /* unicodeFlag, 0 for ASCII and 1 for Unicode */
-	Stream_Write_UINT32(s, 0); /* codePage, must be set to zero */
+	Stream_Write_UINT32(s, 0);       /* codePage, must be set to zero */
 	Stream_Write_UINT32(s, rdpdr->common.computerNameLen);
 	Stream_Write(s, rdpdr->common.computerName.v, rdpdr->common.computerNameLen);
 	return rdpdr_client_send(pc, s);
@@ -1229,6 +1229,11 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 						if (!rdpdr_handle_server_announce_request(pc, rdpdr, s))
 							return FALSE;
 						break;
+					case PAKID_CORE_SERVER_CAPABILITY:
+						rdpdr->state = STATE_CLIENT_EXPECT_SERVER_CORE_CAPABILITY_REQUEST;
+						rdpdr->flags = 0;
+						return pf_channel_rdpdr_client_handle(pc, channelId, channel_name, xdata,
+						                                      xsize, flags, totalSize);
 					case PAKID_CORE_DEVICE_REPLY:
 						break;
 					default:
@@ -1710,13 +1715,14 @@ BOOL pf_channel_rdpdr_client_reset(pClientContext* pc)
 }
 
 static PfChannelResult pf_rdpdr_back_data(proxyData* pdata, const pServerChannelContext* channel,
-            const BYTE* xdata, size_t xsize, UINT32 flags,
-            size_t totalSize)
+                                          const BYTE* xdata, size_t xsize, UINT32 flags,
+                                          size_t totalSize)
 {
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(channel);
 
-	if (!pf_channel_rdpdr_client_handle(pdata->pc, channel->channel_id, channel->channel_name, xdata, xsize, flags, totalSize))
+	if (!pf_channel_rdpdr_client_handle(pdata->pc, channel->channel_id, channel->channel_name,
+	                                    xdata, xsize, flags, totalSize))
 	{
 		WLog_ERR(TAG, "error treating client back data");
 		return PF_CHANNEL_RESULT_ERROR;
@@ -1725,17 +1731,17 @@ static PfChannelResult pf_rdpdr_back_data(proxyData* pdata, const pServerChannel
 }
 
 static PfChannelResult pf_rdpdr_front_data(proxyData* pdata, const pServerChannelContext* channel,
-            const BYTE* xdata, size_t xsize, UINT32 flags,
-            size_t totalSize)
+                                           const BYTE* xdata, size_t xsize, UINT32 flags,
+                                           size_t totalSize)
 {
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(channel);
 
-	if (!pf_channel_rdpdr_server_handle(pdata->ps, channel->channel_id, channel->channel_name, xdata, xsize, flags, totalSize))
+	if (!pf_channel_rdpdr_server_handle(pdata->ps, channel->channel_id, channel->channel_name,
+	                                    xdata, xsize, flags, totalSize))
 	{
 		WLog_ERR(TAG, "error treating front data");
 		return PF_CHANNEL_RESULT_ERROR;
-
 	}
 	return PF_CHANNEL_RESULT_PASS;
 }
@@ -1752,4 +1758,3 @@ BOOL pf_channel_setup_rdpdr(pServerContext* ps, pServerChannelContext* channel)
 
 	return TRUE;
 }
-
