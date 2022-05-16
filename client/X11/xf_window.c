@@ -1159,6 +1159,12 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 	int count;
 	ULONG_PTR* pKeys = NULL;
 	xfAppWindow* appWindow;
+	
+	if(NULL == xfc->railWindows)
+	{
+		return NULL;
+	}
+	
 	count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
 	for (index = 0; index < count; index++)
