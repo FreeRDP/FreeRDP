@@ -1056,7 +1056,7 @@ static int nla_client_init(rdpNla* nla)
 	if (nla->status != SEC_E_OK)
 		return -1;
 
-	WLog_DBG(TAG, "%s %" PRIu32 " : packageName=%ls ; cbMaxToken=%d", __FUNCTION__, __LINE__,
+	WLog_DBG(TAG, "%s %" PRIu32 " : packageName=%s ; cbMaxToken=%d", __FUNCTION__, __LINE__,
 	         nla->packageName, nla->cbMaxToken);
 	nla->status = nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME, SECPKG_CRED_OUTBOUND,
 	                                                   NULL, nla->identityPtr, NULL, NULL,
