@@ -1814,7 +1814,7 @@ BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	if (flags & REDIRECTED_SESSIONID_FIELD_VALID)
 	{
 		settings->RedirectedSessionId = redirectedSessionId;
-		settings->ConsoleSession = !!(redirectedSessionId == 0);
+		settings->ConsoleSession = (redirectedSessionId == 0);
 	}
 
 	if (blockLength != 8)
