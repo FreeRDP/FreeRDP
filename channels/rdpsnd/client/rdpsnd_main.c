@@ -582,12 +582,22 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 	UINT64 end;
 	UINT64 diffMS, ts;
 	UINT latency = 0;
+	UINT error;
 
 	if (Stream_GetRemainingLength(s) < size)
 		return ERROR_BAD_LENGTH;
 
 	if (rdpsnd->wCurrentFormatNo >= rdpsnd->NumberOfClientFormats)
 		return ERROR_INTERNAL_ERROR;
+
+	/*
+	 * Send the first WaveConfirm PDU. The server side uses this to determine the
+	 * network latency.
+	 * See also [MS-RDPEA] 2.2.3.8 Wave Confirm PDU
+	 */
+	error = rdpsnd_send_wave_confirm_pdu(rdpsnd, rdpsnd->wTimeStamp, rdpsnd->cBlockNo);
+	if (error)
+		return error;
 
 	data = Stream_Pointer(s);
 	format = &rdpsnd->ClientFormats[rdpsnd->wCurrentFormatNo];
@@ -621,10 +631,11 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 	diffMS = end - rdpsnd->wArrivalTime + latency;
 	ts = (rdpsnd->wTimeStamp + diffMS) % UINT16_MAX;
 
-	/* Don't send wave confirm PDU if on dynamic channel */
-	if (rdpsnd->dynamic)
-		return CHANNEL_RC_OK;
-
+	/*
+	 * Send the second WaveConfirm PDU. With the first WaveConfirm PDU,
+	 * the server side uses this second WaveConfirm PDU to determine the actual
+	 * render latency.
+	 */
 	return rdpsnd_send_wave_confirm_pdu(rdpsnd, (UINT16)ts, rdpsnd->cBlockNo);
 }
 
