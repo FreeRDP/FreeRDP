@@ -368,9 +368,7 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 	}
 	else
 	{
-		xfAppWindow* appWindow;
-		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
-
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 		if (appWindow)
 		{
 			xf_UpdateWindowArea(xfc, appWindow, x, y, w, h);
@@ -621,15 +619,12 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 
 	if (app)
 	{
-		xfAppWindow* appWindow;
-		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 		/* Update the server with any window changes that occurred while the window was not focused.
 		 */
 		if (appWindow)
-		{
 			xf_rail_adjust_position(xfc, appWindow);
-		}
 	}
 
 	xf_keyboard_focus_in(xfc);
@@ -673,13 +668,10 @@ static BOOL xf_event_ClientMessage(xfContext* xfc, const XClientMessageEvent* ev
 	{
 		if (app)
 		{
-			xfAppWindow* appWindow;
-			appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+			xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 			if (appWindow)
-			{
 				xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_CLOSE);
-			}
 
 			return TRUE;
 		}
@@ -834,14 +826,12 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 
 static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 {
-	xfAppWindow* appWindow;
-
 	WINPR_ASSERT(xfc);
 	if (!app)
 		gdi_send_suppress_output(xfc->common.context.gdi, FALSE);
 	else
 	{
-		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 		if (appWindow && (appWindow->rail_state == WINDOW_SHOW))
 		{
@@ -860,8 +850,6 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 
 static BOOL xf_event_UnmapNotify(xfContext* xfc, const XUnmapEvent* event, BOOL app)
 {
-	xfAppWindow* appWindow;
-
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 
@@ -871,12 +859,10 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, const XUnmapEvent* event, BOOL 
 		gdi_send_suppress_output(xfc->common.context.gdi, TRUE);
 	else
 	{
-		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 		if (appWindow)
-		{
 			appWindow->is_mapped = FALSE;
-		}
 	}
 
 	return TRUE;
@@ -1099,7 +1085,6 @@ static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, con
 BOOL xf_event_process(freerdp* instance, const XEvent* event)
 {
 	BOOL status = TRUE;
-	xfAppWindow* appWindow;
 	xfContext* xfc;
 	rdpSettings* settings;
 
@@ -1114,7 +1099,7 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 
 	if (xfc->remote_app)
 	{
-		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
 
 		if (appWindow)
 		{

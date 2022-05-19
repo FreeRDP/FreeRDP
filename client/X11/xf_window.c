@@ -1155,21 +1155,19 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 
 xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 {
-	int index;
-	int count;
+	size_t index;
+	size_t count;
 	ULONG_PTR* pKeys = NULL;
-	xfAppWindow* appWindow;
-	
-	if(NULL == xfc->railWindows)
-	{
+
+	WINPR_ASSERT(xfc);
+	if (!xfc->railWindows)
 		return NULL;
-	}
-	
+
 	count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
 	for (index = 0; index < count; index++)
 	{
-		appWindow = xf_rail_get_window(xfc, *(UINT64*)pKeys[index]);
+		const xfAppWindow* appWindow = xf_rail_get_window(xfc, *(UINT64*)pKeys[index]);
 
 		if (!appWindow)
 		{
