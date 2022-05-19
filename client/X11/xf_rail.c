@@ -90,9 +90,8 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 
 void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 {
-	xfAppWindow* appWindow;
 	RAIL_ACTIVATE_ORDER activate;
-	appWindow = xf_AppWindowFromX11Window(xfc, xwindow);
+	xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xwindow);
 
 	if (!appWindow)
 		return;
