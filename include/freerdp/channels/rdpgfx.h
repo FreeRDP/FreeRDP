@@ -96,9 +96,7 @@ typedef struct
 #define RDPGFX_CAPVERSION_103 0x000A0301 /** [MS-RDPEGFX] 2.2.3.6 */
 #define RDPGFX_CAPVERSION_104 0x000A0400 /** [MS-RDPEGFX] 2.2.3.7 */
 #define RDPGFX_CAPVERSION_105 0x000A0502 /** [MS-RDPEGFX] 2.2.3.8 */
-#define RDPGFX_CAPVERSION_106                                           \
-	0x000A0600 /** [MS-RDPEGFX] 2.2.3.9, [MS-RDPEGFX-errata] 2018-12-10 \
-	            */
+#define RDPGFX_CAPVERSION_106 0x000A0601 /** [MS-RDPEGFX] 2.2.3.9 */
 
 #define RDPGFX_NUMBER_CAPSETS 9
 #define RDPGFX_CAPSET_BASE_SIZE 8
