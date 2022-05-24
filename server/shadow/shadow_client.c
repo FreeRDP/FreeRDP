@@ -731,11 +731,10 @@ shadow_client_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
 static BOOL shadow_are_caps_filtered(const rdpSettings* settings, UINT32 caps)
 {
 	UINT32 filter;
-	const UINT32 capList[] = {
-		RDPGFX_CAPVERSION_8,   RDPGFX_CAPVERSION_81,  RDPGFX_CAPVERSION_10,
-		RDPGFX_CAPVERSION_101, RDPGFX_CAPVERSION_102, RDPGFX_CAPVERSION_103,
-		RDPGFX_CAPVERSION_104, RDPGFX_CAPVERSION_105, RDPGFX_CAPVERSION_106
-	};
+	const UINT32 capList[] = { RDPGFX_CAPVERSION_8,   RDPGFX_CAPVERSION_81,  RDPGFX_CAPVERSION_10,
+		                       RDPGFX_CAPVERSION_101, RDPGFX_CAPVERSION_102, RDPGFX_CAPVERSION_103,
+		                       RDPGFX_CAPVERSION_104, RDPGFX_CAPVERSION_105, RDPGFX_CAPVERSION_106,
+		                       RDPGFX_CAPVERSION_107 };
 	UINT32 x;
 
 	WINPR_ASSERT(settings);
@@ -869,6 +868,10 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 	/* Request full screen update for new gfx channel */
 	if (!shadow_client_refresh_rect(&client->context, 0, NULL))
+		return rc;
+
+	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
+	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_107, &rc))
 		return rc;
 
 	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
