@@ -11,6 +11,7 @@ Fixed issues:
 * Backported #7893: Mac rdpsnd memory leak fixes
 * Backported #7895: Mac audin memory leak fixes
 * Backported #7898: Automatic android versioning
+* Backported #7916: GFX 10.7 capability support
 
 # 2022-04-25 Version 2.7.0
 
