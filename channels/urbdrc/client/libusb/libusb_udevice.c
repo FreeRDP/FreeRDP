@@ -237,7 +237,7 @@ static void async_transfer_user_data_free(ASYNC_TRANSFER_USER_DATA* user_data)
 	}
 }
 
-static void func_iso_callback(struct libusb_transfer* transfer)
+static void LIBUSB_CALL func_iso_callback(struct libusb_transfer* transfer)
 {
 	ASYNC_TRANSFER_USER_DATA* user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
 	const UINT32 streamID = stream_id_from_buffer(transfer);
@@ -336,7 +336,7 @@ static const LIBUSB_ENDPOINT_DESCEIPTOR* func_get_ep_desc(LIBUSB_CONFIG_DESCRIPT
 	return NULL;
 }
 
-static void func_bulk_transfer_cb(struct libusb_transfer* transfer)
+static void LIBUSB_CALL func_bulk_transfer_cb(struct libusb_transfer* transfer)
 {
 	ASYNC_TRANSFER_USER_DATA* user_data;
 	uint32_t streamID;

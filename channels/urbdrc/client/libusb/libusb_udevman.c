@@ -865,7 +865,7 @@ static BOOL poll_libusb_events(UDEVMAN* udevman)
 	return rc > 0;
 }
 
-static DWORD poll_thread(LPVOID lpThreadParameter)
+static DWORD WINAPI poll_thread(LPVOID lpThreadParameter)
 {
 	libusb_hotplug_callback_handle handle;
 	UDEVMAN* udevman = (UDEVMAN*)lpThreadParameter;
