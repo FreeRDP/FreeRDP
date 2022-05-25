@@ -163,9 +163,11 @@ fail:
 static BOOL rdpgfx_is_capability_filtered(RDPGFX_PLUGIN* gfx, UINT32 caps)
 {
 	const UINT32 filter = gfx->capsFilter;
-	const UINT32 capList[] = { RDPGFX_CAPVERSION_8,   RDPGFX_CAPVERSION_81,  RDPGFX_CAPVERSION_10,
-		                       RDPGFX_CAPVERSION_101, RDPGFX_CAPVERSION_102, RDPGFX_CAPVERSION_103,
-		                       RDPGFX_CAPVERSION_104, RDPGFX_CAPVERSION_105, RDPGFX_CAPVERSION_106,
+	const UINT32 capList[] = { RDPGFX_CAPVERSION_8,   RDPGFX_CAPVERSION_81,
+		                       RDPGFX_CAPVERSION_10,  RDPGFX_CAPVERSION_101,
+		                       RDPGFX_CAPVERSION_102, RDPGFX_CAPVERSION_103,
+		                       RDPGFX_CAPVERSION_104, RDPGFX_CAPVERSION_105,
+		                       RDPGFX_CAPVERSION_106, RDPGFX_CAPVERSION_106_ERR,
 		                       RDPGFX_CAPVERSION_107 };
 	UINT32 x;
 
@@ -319,6 +321,14 @@ static UINT rdpgfx_send_supported_caps(RDPGFX_CHANNEL_CALLBACK* callback)
 		{
 			capsSet = &capsSets[pdu.capsSetCount++];
 			capsSet->version = RDPGFX_CAPVERSION_106;
+			capsSet->length = 0x4;
+			capsSet->flags = caps10Flags;
+		}
+
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_106_ERR))
+		{
+			capsSet = &capsSets[pdu.capsSetCount++];
+			capsSet->version = RDPGFX_CAPVERSION_106_ERR;
 			capsSet->length = 0x4;
 			capsSet->flags = caps10Flags;
 		}
@@ -905,6 +915,8 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 		case RDPGFX_CAPVERSION_104:
 		case RDPGFX_CAPVERSION_105:
 		case RDPGFX_CAPVERSION_106:
+		case RDPGFX_CAPVERSION_106_ERR:
+		case RDPGFX_CAPVERSION_107:
 			if (gfx->SendQoeAck)
 			{
 				RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU qoe;
