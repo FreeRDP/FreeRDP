@@ -23,6 +23,10 @@ cmake_minimum_required(VERSION 3.9)
 
 project(proxy-capture-plugin VERSION 1.0.0 LANGUAGES C)
 
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON)
+
 include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
 if (supported)
