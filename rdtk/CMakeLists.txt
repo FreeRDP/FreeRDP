@@ -24,12 +24,19 @@ set(RDTK_VERSION_FULL "${RDTK_VERSION}")
 set(RDTK_API_VERSION "${RDTK_VERSION_MAJOR}")
 
 if (NOT FREERDP_UNIFIED_BUILD)
-	cmake_minimum_required(VERSION 3.4)
+	cmake_minimum_required(VERSION 3.9)
 	project(RdTk VERSION ${RDTK_VERSION} LANGUAGES C)
 
 	set(CMAKE_C_STANDARD 99)
 	set(CMAKE_C_STANDARD_REQUIRED ON)
 	set(CMAKE_C_EXTENSIONS ON)
+
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT supported OUTPUT error)
+    if (supported)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+
 
 	set(CMAKE_COLOR_MAKEFILE ON)
 
