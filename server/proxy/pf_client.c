@@ -759,13 +759,13 @@ static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_CLIENT_INIT_CONNECT, pdata, pc))
 	{
 		proxy_data_abort_connect(pdata);
-		return FALSE;
+		goto end;
 	}
 
 	if (!pf_client_connect(instance))
 	{
 		proxy_data_abort_connect(pdata);
-		return FALSE;
+		goto end;
 	}
 	handles[nCount++] = Queue_Event(pc->cached_server_channel_data);
 
@@ -811,6 +811,7 @@ static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 
 	freerdp_disconnect(instance);
 
+end:
 	pf_modules_run_hook(pdata->module, HOOK_TYPE_CLIENT_UNINIT_CONNECT, pdata, pc);
 
 	return 0;
