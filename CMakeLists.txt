@@ -18,13 +18,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.9)
 
 project(FreeRDP C)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT supported OUTPUT error)
+if (supported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 if(NOT DEFINED VENDOR)
 	set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")

@@ -19,9 +19,15 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.9)
 
 project(proxy-capture-plugin VERSION 1.0.0 LANGUAGES C)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT supported OUTPUT error)
+if (supported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 add_library(${PROJECT_NAME} MODULE
 	cap_main.c
