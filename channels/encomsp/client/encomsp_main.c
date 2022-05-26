@@ -1171,6 +1171,9 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 
 	switch (event)
 	{
+		case CHANNEL_EVENT_INITIALIZED:
+			break;
+
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = encomsp_virtual_channel_event_connected(encomsp, pData, dataLength)))
 				WLog_ERR(TAG,
