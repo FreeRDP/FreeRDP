@@ -1053,6 +1053,8 @@ extern "C"
 {
 #endif
 
+#ifdef SSPI_DLL
+
 	/* Package Management */
 
 	WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(ULONG* pcPackages,
@@ -1147,6 +1149,8 @@ extern "C"
 	WINPR_API SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext,
 	                                                    PSecBufferDesc pMessage, ULONG MessageSeqNo,
 	                                                    PULONG pfQOP);
+
+#endif /* SSPI_DLL */
 
 #ifdef __cplusplus
 }

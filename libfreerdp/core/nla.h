@@ -62,6 +62,9 @@ FREERDP_LOCAL DWORD nla_get_error(rdpNla* nla);
 
 FREERDP_LOCAL BOOL nla_set_service_principal(rdpNla* nla, LPTSTR principal);
 
+FREERDP_LOCAL BOOL nla_set_sspi_module(rdpNla* nla, const char* sspiModule);
+FREERDP_LOCAL BOOL nla_sspi_module_init(rdpNla* nla);
+
 FREERDP_LOCAL BOOL nla_impersonate(rdpNla* nla);
 FREERDP_LOCAL BOOL nla_revert_to_self(rdpNla* nla);
 

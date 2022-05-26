@@ -70,6 +70,13 @@ elseif(WITH_GSSAPI)
 	endif()
 endif()
 
+# This option MUST be off to avoid symbol conflicts when loading an external SSPI module library
+option(SSPI_DLL "Define and export SSPI API symbols for usage as a Windows SSPI DLL replacement" OFF)
+
+if(SSPI_DLL)
+	add_definitions("-DSSPI_DLL")
+endif()
+
 include(CMakeDependentOption)
 CMAKE_DEPENDENT_OPTION(WITH_GSS_NO_NTLM_FALLBACK "Do not fall back to NTLM if no kerberos ticket available" OFF "WITH_GSSAPI" OFF)
 if (WITH_GSS_NO_NTLM_FALLBACK)
