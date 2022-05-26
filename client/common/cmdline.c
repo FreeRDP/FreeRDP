@@ -1772,6 +1772,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			                                 arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
+		CommandLineSwitchCase(arg, "sspi-module")
+		{
+			if (!freerdp_settings_set_string(settings, FreeRDP_SspiModule, arg->Value))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
 		CommandLineSwitchCase(arg, "redirect-prefer")
 		{
 			size_t count = 0;

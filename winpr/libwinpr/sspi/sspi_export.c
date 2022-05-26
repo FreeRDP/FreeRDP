@@ -39,6 +39,8 @@ typedef LONG SECURITY_STATUS;
 #pragma GCC diagnostic ignored "-Wmissing-prototypes"
 #endif
 
+#ifdef SSPI_DLL
+
 /**
  * Standard SSPI API
  */
@@ -321,6 +323,8 @@ SSPI_EXPORT SECURITY_STATUS SEC_ENTRY VerifySignature(void* phContext, void* pMe
 {
 	return sspi_VerifySignature(phContext, pMessage, MessageSeqNo, pfQOP);
 }
+
+#endif /* SSPI_DLL */
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop

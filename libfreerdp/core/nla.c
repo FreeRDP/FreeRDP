@@ -1051,7 +1051,10 @@ static int nla_client_init(rdpNla* nla)
 #else
 	nla->ServicePrincipalName = spn;
 #endif
-	nla->table = InitSecurityInterfaceEx(0);
+
+	if (!nla_sspi_module_init(nla))
+		return -1;
+
 	nla->status = nla_update_package_name(nla);
 	if (nla->status != SEC_E_OK)
 		return -1;
@@ -1381,31 +1384,8 @@ static int nla_server_init(rdpNla* nla)
 		return -1;
 	}
 
-	if (nla->SspiModule)
-	{
-		HMODULE hSSPI;
-		INIT_SECURITY_INTERFACE pInitSecurityInterface;
-		hSSPI = LoadLibraryX(nla->SspiModule);
-
-		if (!hSSPI)
-		{
-			WLog_ERR(TAG, "Failed to load SSPI module: %s", nla->SspiModule);
-			return -1;
-		}
-
-#ifdef UNICODE
-		pInitSecurityInterface =
-		    (INIT_SECURITY_INTERFACE)GetProcAddress(hSSPI, "InitSecurityInterfaceW");
-#else
-		pInitSecurityInterface =
-		    (INIT_SECURITY_INTERFACE)GetProcAddress(hSSPI, "InitSecurityInterfaceA");
-#endif
-		nla->table = pInitSecurityInterface();
-	}
-	else
-	{
-		nla->table = InitSecurityInterfaceEx(0);
-	}
+	if (!nla_sspi_module_init(nla))
+		return -1;
 
 	nla->status = nla_update_package_name(nla);
 
@@ -2724,6 +2704,14 @@ rdpNla* nla_new(rdpContext* context, rdpTransport* transport)
 			goto cleanup;
 	}
 
+	if (settings->SspiModule)
+	{
+		nla->SspiModule = _strdup(settings->SspiModule);
+
+		if (!nla->SspiModule)
+			goto cleanup;
+	}
+
 	/* init to 0 or we end up freeing a bad pointer if the alloc fails */
 	if (!nla_sec_buffer_alloc(&nla->ClientNonce, NonceLength))
 		goto cleanup;
@@ -2814,6 +2802,9 @@ void nla_free(rdpNla* nla)
 	free(nla->SamFile);
 	nla->SamFile = NULL;
 
+	free(nla->SspiModule);
+	nla->SspiModule = NULL;
+
 	nla_buffer_free(nla);
 	sspi_SecBufferFree(&nla->ClientNonce);
 	sspi_SecBufferFree(&nla->PublicKey);
@@ -2861,6 +2852,65 @@ BOOL nla_set_service_principal(rdpNla* nla, LPTSTR principal)
 		return FALSE;
 
 	nla->ServicePrincipalName = principal;
+	return TRUE;
+}
+
+BOOL nla_set_sspi_module(rdpNla* nla, const char* sspiModule)
+{
+	if (!nla)
+		return FALSE;
+
+	if (nla->SspiModule)
+	{
+		free(nla->SspiModule);
+		nla->SspiModule = NULL;
+	}
+
+	if (!sspiModule)
+		return TRUE;
+
+#ifdef UNICODE
+	ConvertToUnicode(CP_UTF8, 0, sspiModule, -1, &nla->SspiModule, 0);
+#else
+	nla->SspiModule = _strdup(sspiModule);
+#endif
+
+	if (!nla->SspiModule)
+		return FALSE;
+
+	return TRUE;
+}
+
+BOOL nla_sspi_module_init(rdpNla* nla)
+{
+	if (!nla)
+		return FALSE;
+
+	if (nla->SspiModule)
+	{
+		INIT_SECURITY_INTERFACE pInitSecurityInterface;
+		HMODULE hSSPI = LoadLibraryX(nla->SspiModule);
+
+		if (!hSSPI)
+		{
+			WLog_ERR(TAG, "Failed to load SSPI module: %s", nla->SspiModule);
+			return FALSE;
+		}
+
+#ifdef UNICODE
+		pInitSecurityInterface =
+		    (INIT_SECURITY_INTERFACE)GetProcAddress(hSSPI, "InitSecurityInterfaceW");
+#else
+		pInitSecurityInterface =
+		    (INIT_SECURITY_INTERFACE)GetProcAddress(hSSPI, "InitSecurityInterfaceA");
+#endif
+		nla->table = pInitSecurityInterface();
+	}
+	else
+	{
+		nla->table = InitSecurityInterfaceEx(0);
+	}
+
 	return TRUE;
 }
 

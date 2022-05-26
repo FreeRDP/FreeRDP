@@ -387,6 +387,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_ShellWorkingDirectory, 7, "FreeRDP_ShellWorkingDirectory" },
 	{ FreeRDP_SmartcardCertificate, 7, "FreeRDP_SmartcardCertificate" },
 	{ FreeRDP_SmartcardPrivateKey, 7, "FreeRDP_SmartcardPrivateKey" },
+	{ FreeRDP_SspiModule, 7, "FreeRDP_SspiModule" },
 	{ FreeRDP_TargetNetAddress, 7, "FreeRDP_TargetNetAddress" },
 	{ FreeRDP_TransportDumpFile, 7, "FreeRDP_TransportDumpFile" },
 	{ FreeRDP_Username, 7, "FreeRDP_Username" },
