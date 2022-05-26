@@ -1030,6 +1030,7 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 	switch (cmd->bmp.codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
+		case RDP_CODEC_ID_IMAGE_REMOTEFX:
 			if (!rfx_process_message(context->codecs->rfx, cmd->bmp.bitmapData,
 			                         cmd->bmp.bitmapDataLength, cmd->destLeft, cmd->destTop,
 			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride, gdi->height,
