@@ -819,6 +819,9 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 
 	switch (event)
 	{
+		case CHANNEL_EVENT_INITIALIZED:
+			break;
+
 		case CHANNEL_EVENT_DATA_RECEIVED:
 			if (!remdesk || (remdesk->OpenHandle != openHandle))
 			{
@@ -848,6 +851,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		default:
 			WLog_ERR(TAG, "unhandled event %" PRIu32 "!", event);
 			error = ERROR_INTERNAL_ERROR;
+			break;
 	}
 
 	if (error && remdesk && remdesk->rdpcontext)
