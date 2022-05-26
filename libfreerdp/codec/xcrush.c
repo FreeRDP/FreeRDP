@@ -941,6 +941,11 @@ int xcrush_decompress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSi
 		return status;
 	}
 
+	if (Level2ComprFlags & PACKET_FLUSHED)
+	{
+		xcrush_context_reset(xcrush, FALSE);
+	}
+
 	status =
 	    mppc_decompress(xcrush->mppc, pSrcData, SrcSize, &pDstData, &DstSize, Level2ComprFlags);
 
