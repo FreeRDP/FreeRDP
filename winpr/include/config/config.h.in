@@ -28,6 +28,7 @@
 
 #cmakedefine WITH_NATIVE_SSPI
 #cmakedefine WITH_ICU
+#cmakedefine WITH_SPNEGO
 
 #cmakedefine WITH_DEBUG_NTLM
 #cmakedefine WITH_DEBUG_THREADS

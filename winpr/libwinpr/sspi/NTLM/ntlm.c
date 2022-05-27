@@ -502,9 +502,8 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 		}
 
 		default:
-			break;
+		    return SEC_E_OUT_OF_SEQUENCE;
 	}
-	return SEC_E_OUT_OF_SEQUENCE;
 }
 
 static SECURITY_STATUS SEC_ENTRY ntlm_ImpersonateSecurityContext(PCtxtHandle phContext)
@@ -554,7 +553,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 		}
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
-		sspi_SecureHandleSetUpperPointer(phNewContext, (void*)NTLM_PACKAGE_NAME);
+		sspi_SecureHandleSetUpperPointer(phNewContext, NTLM_SSP_NAME);
 	}
 
 	if ((!pInput) || (ntlm_get_state(context) == NTLM_STATE_AUTHENTICATE))
@@ -1193,16 +1192,100 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
                                                     PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	WLog_ERR(TAG, "[%s]: TODO: Implement", __FUNCTION__);
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	NTLM_CONTEXT* context;
+	PSecBuffer data_buffer = NULL;
+	PSecBuffer sig_buffer = NULL;
+	WINPR_HMAC_CTX* hmac;
+	UINT32 seq_no;
+	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE checksum[8] = { 0 };
+	BYTE* signature;
+
+	context = sspi_SecureHandleGetLowerPointer(phContext);
+
+	for (int i = 0; i < pMessage->cBuffers; i++)
+	{
+		if (pMessage->pBuffers[i].BufferType == SECBUFFER_DATA)
+			data_buffer = &pMessage->pBuffers[i];
+		else if (pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
+			sig_buffer = &pMessage->pBuffers[i];
+	}
+
+	if (!data_buffer || !sig_buffer)
+		return SEC_E_INVALID_TOKEN;
+
+	hmac = winpr_HMAC_New();
+
+	if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->SendSigningKey, WINPR_MD5_DIGEST_LENGTH))
+		return SEC_E_INTERNAL_ERROR;
+
+	Data_Write_UINT32(&seq_no, MessageSeqNo);
+	winpr_HMAC_Update(hmac, (BYTE*)&seq_no, 4);
+	winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
+	winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH);
+	winpr_HMAC_Free(hmac);
+
+	winpr_RC4_Update(context->SendRc4Seal, 8, digest, checksum);
+
+	signature = sig_buffer->pvBuffer;
+	Data_Write_UINT32(signature, 1L);
+	CopyMemory(&signature[4], checksum, 8);
+	Data_Write_UINT32(&signature[12], seq_no);
+	sig_buffer->cbBuffer = 16;
+
+	return SEC_E_OK;
 }
 
 static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
                                                       PSecBufferDesc pMessage, ULONG MessageSeqNo,
                                                       PULONG pfQOP)
 {
-	WLog_ERR(TAG, "[%s]: TODO: Implement", __FUNCTION__);
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	NTLM_CONTEXT* context;
+	PSecBuffer data_buffer = NULL;
+	PSecBuffer sig_buffer = NULL;
+	WINPR_HMAC_CTX* hmac;
+	UINT32 seq_no;
+	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE checksum[8] = { 0 };
+	BYTE signature[16] = { 0 };
+
+	context = sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!context)
+		return SEC_E_INVALID_HANDLE;
+
+	for (int i = 0; i < pMessage->cBuffers; i++)
+	{
+		if (pMessage->pBuffers[i].BufferType == SECBUFFER_DATA)
+			data_buffer = &pMessage->pBuffers[i];
+		else if (pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
+			sig_buffer = &pMessage->pBuffers[i];
+	}
+
+	if (!data_buffer || !sig_buffer)
+		return SEC_E_INVALID_TOKEN;
+
+	hmac = winpr_HMAC_New();
+
+	if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->RecvSigningKey, WINPR_MD5_DIGEST_LENGTH))
+		return SEC_E_INTERNAL_ERROR;
+
+	Data_Write_UINT32(&seq_no, MessageSeqNo);
+	winpr_HMAC_Update(hmac, (BYTE*)&seq_no, 4);
+	winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
+	winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH);
+	winpr_HMAC_Free(hmac);
+
+	winpr_RC4_Update(context->RecvRc4Seal, 8, digest, checksum);
+
+	Data_Write_UINT32(signature, 1L);
+	CopyMemory(&signature[4], checksum, 8);
+	Data_Write_UINT32(&signature[12], seq_no);
+
+	if (memcmp(sig_buffer->pvBuffer, signature, 16) != 0)
+		return SEC_E_MESSAGE_ALTERED;
+
+	return SEC_E_OK;
 }
 
 const SecurityFunctionTableA NTLM_SecurityFunctionTableA = {
@@ -1300,28 +1383,28 @@ char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags)
 
 	_snprintf(buffer, size, "[0x%08" PRIx32 "] ", flags);
 
-		for (x = 0; x < 31; x++)
+	for (x = 0; x < 31; x++)
+	{
+		const UINT32 mask = 1 << x;
+		size_t len = strnlen(buffer, size);
+		if (flags & mask)
 		{
-			const UINT32 mask = 1 << x;
-			size_t len = strnlen(buffer, size);
-			if (flags & mask)
-			{
-				const char* str = ntlm_get_negotiate_string(mask);
-				const size_t flen = strlen(str);
+			const char* str = ntlm_get_negotiate_string(mask);
+			const size_t flen = strlen(str);
 
-				if ((len > 0) && (buffer[len - 1] != ' '))
-				{
-					if (size - len < 1)
-						break;
-				    winpr_str_append("|", buffer, size, NULL);
-				    len++;
-			    }
+            if ((len > 0) && (buffer[len - 1] != ' '))
+            {
+                if (size - len < 1)
+                    break;
+                winpr_str_append("|", buffer, size, NULL);
+                len++;
+            }
 
-				if (size - len < flen)
-					break;
-			    winpr_str_append(str, buffer, size, NULL);
-		    }
-	    }
+            if (size - len < flen)
+                break;
+            winpr_str_append(str, buffer, size, NULL);
+        }
+    }
 
 	return buffer;
 }
@@ -1373,4 +1456,17 @@ NTLM_STATE ntlm_get_state(NTLM_CONTEXT* ntlm)
 {
 	WINPR_ASSERT(ntlm);
 	return ntlm->state;
+}
+
+void ntlm_reset_cipher_state(PSecHandle phContext)
+{
+	NTLM_CONTEXT* context = sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (context)
+	{
+		winpr_RC4_Free(context->SendRc4Seal);
+		winpr_RC4_Free(context->RecvRc4Seal);
+		context->SendRc4Seal = winpr_RC4_New(context->RecvSealingKey, 16);
+		context->RecvRc4Seal = winpr_RC4_New(context->SendSealingKey, 16);
+	}
 }

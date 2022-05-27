@@ -1114,7 +1114,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	/* Computations beyond this point require the NTLM hash of the password */
 	ntlm_change_state(context, NTLM_STATE_COMPLETION);
-	return SEC_I_COMPLETE_NEEDED;
+	return ntlm_server_AuthenticateComplete(context);
 
 fail:
 	return status;
