@@ -366,7 +366,7 @@ int TestPrint(int argc, char* argv[])
 	_printf("Hexadecimal: %x/%X\n", 255, 255);
 	_printf("Octal: %o\n", 255);
 	_printf("Unsigned value: %u\n", 150);
-	_printf("Just print the percentage sign %%\n", 10);
+	_printf("Just print the percentage sign %%\n");
 
 	/**
 	 * :Hello, world!:
