@@ -2361,6 +2361,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_AuthenticationServiceClass:
 			return settings->AuthenticationServiceClass;
 
+		case FreeRDP_BitmapCachePersistFile:
+			return settings->BitmapCachePersistFile;
+
 		case FreeRDP_CardName:
 			return settings->CardName;
 
@@ -2621,6 +2624,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_AuthenticationServiceClass:
 			return settings->AuthenticationServiceClass;
+
+		case FreeRDP_BitmapCachePersistFile:
+			return settings->BitmapCachePersistFile;
 
 		case FreeRDP_CardName:
 			return settings->CardName;
@@ -2892,6 +2898,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_AuthenticationServiceClass:
 			return update_string(&settings->AuthenticationServiceClass, cnv.cc, len, cleanup);
+
+		case FreeRDP_BitmapCachePersistFile:
+			return update_string(&settings->BitmapCachePersistFile, cnv.cc, len, cleanup);
 
 		case FreeRDP_CardName:
 			return update_string(&settings->CardName, cnv.cc, len, cleanup);

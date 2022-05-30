@@ -803,6 +803,7 @@ typedef struct
 #define FreeRDP_BitmapCachePersistEnabled (2500)
 #define FreeRDP_BitmapCacheV2NumCells (2501)
 #define FreeRDP_BitmapCacheV2CellInfo (2502)
+#define FreeRDP_BitmapCachePersistFile (2503)
 #define FreeRDP_ColorPointerFlag (2560)
 #define FreeRDP_PointerCacheSize (2561)
 #define FreeRDP_KeyboardRemappingList (2622)
@@ -1374,7 +1375,8 @@ struct rdp_settings
 	ALIGN64 BOOL BitmapCachePersistEnabled;                   /* 2500 */
 	ALIGN64 UINT32 BitmapCacheV2NumCells;                     /* 2501 */
 	ALIGN64 BITMAP_CACHE_V2_CELL_INFO* BitmapCacheV2CellInfo; /* 2502 */
-	UINT64 padding2560[2560 - 2503];                          /* 2503 */
+	ALIGN64 char* BitmapCachePersistFile;                     /* 2503 */
+	UINT64 padding2560[2560 - 2504];                          /* 2504 */
 
 	/* Pointer Capabilities */
 	ALIGN64 BOOL ColorPointerFlag;   /* 2560 */

@@ -30,6 +30,7 @@
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/codec/zgfx.h>
+#include <freerdp/cache/persistent.h>
 #include <freerdp/freerdp.h>
 
 typedef struct
@@ -78,6 +79,8 @@ typedef struct
 
 	UINT16 MaxCacheSlots;
 	void* CacheSlots[25600];
+	rdpPersistentCache* persistent;
+
 	rdpContext* rdpcontext;
 
 	wLog* log;

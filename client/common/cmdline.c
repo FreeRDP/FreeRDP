@@ -3082,6 +3082,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->BitmapCacheEnabled = enable;
 		}
+		CommandLineSwitchCase(arg, "persist-cache")
+		{
+			settings->BitmapCachePersistEnabled = enable;
+		}
+		CommandLineSwitchCase(arg, "persist-cache-file")
+		{
+			if (!freerdp_settings_set_string(settings, FreeRDP_BitmapCachePersistFile, arg->Value))
+				return COMMAND_LINE_ERROR_MEMORY;
+
+			settings->BitmapCachePersistEnabled = TRUE;
+		}
 		CommandLineSwitchCase(arg, "offscreen-cache")
 		{
 			settings->OffscreenSupportLevel = (UINT32)enable;
