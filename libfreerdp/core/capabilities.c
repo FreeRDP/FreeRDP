@@ -1866,7 +1866,14 @@ static BOOL rdp_write_bitmap_cache_v2_capability_set(wStream* s, const rdpSettin
 	cacheFlags = ALLOW_CACHE_WAITING_LIST_FLAG;
 
 	if (settings->BitmapCachePersistEnabled)
+	{
 		cacheFlags |= PERSISTENT_KEYS_EXPECTED_FLAG;
+		settings->BitmapCacheV2CellInfo[0].persistent = 1;
+		settings->BitmapCacheV2CellInfo[1].persistent = 1;
+		settings->BitmapCacheV2CellInfo[2].persistent = 1;
+		settings->BitmapCacheV2CellInfo[3].persistent = 1;
+		settings->BitmapCacheV2CellInfo[4].persistent = 1;
+	}
 
 	Stream_Write_UINT16(s, cacheFlags);                     /* cacheFlags (2 bytes) */
 	Stream_Write_UINT8(s, 0);                               /* pad2 (1 byte) */

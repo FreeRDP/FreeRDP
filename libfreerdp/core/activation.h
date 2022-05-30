@@ -24,6 +24,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/settings.h>
+#include <freerdp/cache/persistent.h>
 
 #define SYNCMSGTYPE_SYNC 0x0001
 
@@ -31,6 +32,24 @@
 #define CTRLACTION_GRANTED_CONTROL 0x0002
 #define CTRLACTION_DETACH 0x0003
 #define CTRLACTION_COOPERATE 0x0004
+
+struct _RDP_BITMAP_PERSISTENT_INFO
+{
+	UINT16 numEntriesCache0;
+	UINT16 numEntriesCache1;
+	UINT16 numEntriesCache2;
+	UINT16 numEntriesCache3;
+	UINT16 numEntriesCache4;
+	UINT16 totalEntriesCache0;
+	UINT16 totalEntriesCache1;
+	UINT16 totalEntriesCache2;
+	UINT16 totalEntriesCache3;
+	UINT16 totalEntriesCache4;
+	UINT32 keyCount;
+	UINT64* keyList;
+};
+typedef struct _RDP_BITMAP_PERSISTENT_INFO RDP_BITMAP_PERSISTENT_INFO;
+
 
 #define PERSIST_FIRST_PDU 0x01
 #define PERSIST_LAST_PDU 0x02

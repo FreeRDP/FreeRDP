@@ -1125,7 +1125,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 {
 	UINT16 index;
 	RDPGFX_CACHE_IMPORT_OFFER_PDU pdu = { 0 };
-	RDPGFX_CACHE_ENTRY_METADATA* cacheEntries;
+	RDPGFX_CACHE_ENTRY_METADATA* cacheEntry;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
@@ -1144,23 +1144,11 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12ull * pdu.cacheEntriesCount))
 		return ERROR_INVALID_DATA;
 
-	if (pdu.cacheEntriesCount > 0)
-	{
-		pdu.cacheEntries = (RDPGFX_CACHE_ENTRY_METADATA*)calloc(
-		    pdu.cacheEntriesCount, sizeof(RDPGFX_CACHE_ENTRY_METADATA));
-
-		if (!pdu.cacheEntries)
-		{
-			WLog_ERR(TAG, "calloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-	}
-
 	for (index = 0; index < pdu.cacheEntriesCount; index++)
 	{
-		cacheEntries = &(pdu.cacheEntries[index]);
-		Stream_Read_UINT64(s, cacheEntries->cacheKey);     /* cacheKey (8 bytes) */
-		Stream_Read_UINT32(s, cacheEntries->bitmapLength); /* bitmapLength (4 bytes) */
+		cacheEntry = &(pdu.cacheEntries[index]);
+		Stream_Read_UINT64(s, cacheEntry->cacheKey);     /* cacheKey (8 bytes) */
+		Stream_Read_UINT32(s, cacheEntry->bitmapLength); /* bitmapLength (4 bytes) */
 	}
 
 	if (context)
@@ -1171,7 +1159,6 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 			WLog_ERR(TAG, "context->CacheImportOffer failed with error %" PRIu32 "", error);
 	}
 
-	free(pdu.cacheEntries);
 	return error;
 }
 

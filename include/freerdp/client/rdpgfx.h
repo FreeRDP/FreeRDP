@@ -26,6 +26,8 @@
 #include <freerdp/channels/rdpgfx.h>
 #include <freerdp/utils/profiler.h>
 
+#include <freerdp/cache/persistent.h>
+
 /**
  * Client Interface
  */
@@ -60,6 +62,10 @@ typedef UINT (*pcRdpgfxCacheImportReply)(RdpgfxClientContext* context,
                                          const RDPGFX_CACHE_IMPORT_REPLY_PDU* cacheImportReply);
 typedef UINT (*pcRdpgfxEvictCacheEntry)(RdpgfxClientContext* context,
                                         const RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry);
+typedef UINT (*pcRdpgfxImportCacheEntry)(RdpgfxClientContext* context, UINT16 cacheSlot,
+                                         PERSISTENT_CACHE_ENTRY* importCacheEntry);
+typedef UINT (*pcRdpgfxExportCacheEntry)(RdpgfxClientContext* context, UINT16 cacheSlot,
+                                         PERSISTENT_CACHE_ENTRY* importCacheEntry);
 typedef UINT (*pcRdpgfxMapSurfaceToOutput)(RdpgfxClientContext* context,
                                            const RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput);
 typedef UINT (*pcRdpgfxMapSurfaceToScaledOutput)(
@@ -116,6 +122,8 @@ struct s_rdpgfx_client_context
 	pcRdpgfxCacheToSurface CacheToSurface;
 	pcRdpgfxCacheImportOffer CacheImportOffer;
 	pcRdpgfxCacheImportReply CacheImportReply;
+	pcRdpgfxImportCacheEntry ImportCacheEntry;
+	pcRdpgfxExportCacheEntry ExportCacheEntry;
 	pcRdpgfxEvictCacheEntry EvictCacheEntry;
 	pcRdpgfxMapSurfaceToOutput MapSurfaceToOutput;
 	pcRdpgfxMapSurfaceToScaledOutput MapSurfaceToScaledOutput;

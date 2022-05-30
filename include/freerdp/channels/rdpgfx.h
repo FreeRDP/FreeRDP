@@ -309,16 +309,18 @@ typedef struct
 	UINT32 bitmapLength;
 } RDPGFX_CACHE_ENTRY_METADATA;
 
+#define RDPGFX_CACHE_ENTRY_MAX_COUNT 5462
+
 typedef struct
 {
 	UINT16 cacheEntriesCount;
-	RDPGFX_CACHE_ENTRY_METADATA* cacheEntries;
+	RDPGFX_CACHE_ENTRY_METADATA cacheEntries[RDPGFX_CACHE_ENTRY_MAX_COUNT];
 } RDPGFX_CACHE_IMPORT_OFFER_PDU;
 
 typedef struct
 {
 	UINT16 importedEntriesCount;
-	UINT16* cacheSlots;
+	UINT16 cacheSlots[RDPGFX_CACHE_ENTRY_MAX_COUNT];
 } RDPGFX_CACHE_IMPORT_REPLY_PDU;
 
 typedef struct

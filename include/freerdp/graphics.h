@@ -65,7 +65,8 @@ extern "C"
 		UINT32 flags;             /* 23 */
 		UINT32 length;            /* 24 */
 		BYTE* data;               /* 25 */
-		UINT32 paddingB[32 - 26]; /* 26 */
+		UINT64 key64;             /* 26 */
+		UINT32 paddingB[32 - 27]; /* 27 */
 
 		BOOL compressed;          /* 32 */
 		BOOL ephemeral;           /* 33 */

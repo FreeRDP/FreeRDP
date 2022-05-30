@@ -24,6 +24,7 @@
 #include <freerdp/types.h>
 #include <freerdp/update.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/cache/persistent.h>
 
 #include <winpr/stream.h>
 
@@ -49,6 +50,7 @@ typedef struct
 
 	/* internal */
 	rdpContext* context;
+	rdpPersistentCache* persistent;
 } rdpBitmapCache;
 
 #ifdef __cplusplus
