@@ -22,7 +22,7 @@ int TestAcquireCredentialsHandle(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 
 	sspi_GlobalInit();
-	table = InitSecurityInterface();
+	table = InitSecurityInterfaceEx(0);
 	identity.User = (UINT16*)_strdup(test_User);
 	identity.Domain = (UINT16*)_strdup(test_Domain);
 	identity.Password = (UINT16*)_strdup(test_Password);

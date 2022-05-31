@@ -11,13 +11,15 @@ int TestEnumerateSecurityPackages(int argc, char* argv[])
 	ULONG cPackages;
 	SECURITY_STATUS status;
 	SecPkgInfo* pPackageInfo;
+	SecurityFunctionTable* table;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
 	sspi_GlobalInit();
+	table = InitSecurityInterfaceEx(0);
 
-	status = EnumerateSecurityPackages(&cPackages, &pPackageInfo);
+	status = table->EnumerateSecurityPackages(&cPackages, &pPackageInfo);
 
 	if (status != SEC_E_OK)
 	{
@@ -32,7 +34,7 @@ int TestEnumerateSecurityPackages(int argc, char* argv[])
 		_tprintf(_T("\"%s\", \"%s\"\n"), pPackageInfo[index].Name, pPackageInfo[index].Comment);
 	}
 
-	FreeContextBuffer(pPackageInfo);
+	table->FreeContextBuffer(pPackageInfo);
 	sspi_GlobalFinish();
 
 	return 0;
