@@ -154,9 +154,6 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 	{
 		if ((codecId == RDP_CODEC_ID_REMOTEFX) || (codecId == RDP_CODEC_ID_IMAGE_REMOTEFX))
 		{
-			RFX_TILE* tile;
-			RFX_RECT* rect;
-			RFX_MESSAGE* message;
 			REGION16 invalidRegion;
 			region16_init(&invalidRegion);
 
@@ -164,33 +161,13 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 			                                   gdi->height))
 				return FALSE;
 
-			message = rfx_process_message(context->codecs->rfx, pSrcData, SrcSize, bitmap->left,
+			if (!rfx_process_message(context->codecs->rfx, pSrcData, SrcSize, bitmap->left,
 			                              bitmap->top, bitmap->data, bitmap->format, gdi->stride, gdi->height,
-			                              &invalidRegion);
-
-			if (!message)
+			                              &invalidRegion))
 			{
 				WLog_ERR(TAG, "rfx_process_message failure");
 				return FALSE;
 			}
-
-			if ((message->numTiles == 1) && (message->numRects == 1) && (DstWidth <= 64) &&
-			    (DstHeight <= 64))
-			{
-				tile = message->tiles[0];
-				rect = &message->rects[0];
-
-				freerdp_image_copy(bitmap->data,PIXEL_FORMAT_XRGB32, DstWidth * 4, 0, 0, DstWidth,
-				                   DstHeight, tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, 0, 0, NULL,
-				                   FREERDP_FLIP_VERTICAL);
-			}
-			else
-			{
-				WLog_WARN(TAG, "RfxMessage: numTiles: %d numRects: %d width: %d height: %d",
-				         message->numTiles, message->numRects, DstWidth, DstHeight);
-			}
-
-			rfx_message_free(context->codecs->rfx, message);
 
 			status = 1;
 		}
