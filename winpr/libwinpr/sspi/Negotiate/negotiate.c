@@ -101,6 +101,7 @@ const SecPkgInfoW NEGOTIATE_SecPkgInfoW = {
 
 static const sspi_gss_OID_desc spnego_OID = { 6, "\x2b\x06\x01\x05\x05\x02" };
 static const sspi_gss_OID_desc kerberos_OID = { 9, "\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
+static const sspi_gss_OID_desc kerberos_wrong_OID = { 9, "\x2a\x86\x48\x82\xf7\x12\x01\x02\x02" };
 static const sspi_gss_OID_desc ntlm_OID = { 10, "\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a" };
 
 static const SecPkg SecPkgTable[] = {
@@ -128,7 +129,7 @@ typedef struct
 {
 	enum NegState negState;
 	BOOL init;
-	const Mech* supportedMech;
+	sspi_gss_OID_desc supportedMech;
 	SecBuffer mechTypes;
 	SecBuffer mechToken;
 	SecBuffer mic;
@@ -141,7 +142,7 @@ static BYTE* negotiate_write_tlv(BYTE* buf, BYTE tag, ULONG len, BYTE* value)
 	*buf++ = tag;
 
 	if (len <= 0x7F)
-		*buf++ = len;
+		*buf++ = (BYTE)len;
 	else
 	{
 		while (len >> (++bytes * 8))
@@ -175,9 +176,9 @@ static BYTE* negotiate_read_tlv(BYTE* buf, BYTE* tag, ULONG* len, ULONG* bytes_r
 	int len_bytes = 0;
 	*len = 0;
 
+	if (*bytes_remain < 2)
+		return NULL;
 	*bytes_remain -= 2;
-	if (*bytes_remain < 0)
-		return buf;
 
 	*tag = *buf++;
 
@@ -186,9 +187,9 @@ static BYTE* negotiate_read_tlv(BYTE* buf, BYTE* tag, ULONG* len, ULONG* bytes_r
 	else
 	{
 		len_bytes = *buf++ & 0x7F;
+		if (*bytes_remain < len_bytes)
+			return NULL;
 		*bytes_remain -= len_bytes;
-		if (*bytes_remain < 0)
-			return buf;
 		for (int i = len_bytes - 1; i >= 0; i--)
 			*len |= *buf++ << (i * 8);
 	}
@@ -226,24 +227,36 @@ static void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 	free(context);
 }
 
-static const char* negotiate_mech_name(const Mech* mech)
+static BOOL negotiate_oid_compare(const sspi_gss_OID_desc* oid1, const sspi_gss_OID_desc* oid2)
 {
-	if (mech->oid == &spnego_OID)
+	return (oid1->length == oid2->length) && (memcmp(oid1->elements, oid2->elements, oid1->length) == 0);
+}
+
+static const char* negotiate_mech_name(const sspi_gss_OID_desc* oid)
+{
+	if (negotiate_oid_compare(oid, &spnego_OID))
 		return "SPNEGO (1.3.6.1.5.5.2)";
-	else if (mech->oid == &kerberos_OID)
+	else if (negotiate_oid_compare(oid, &kerberos_OID))
 		return "Kerberos (1.2.840.113554.1.2.2)";
-	else if (mech->oid == &ntlm_OID)
+	else if (negotiate_oid_compare(oid, &kerberos_wrong_OID))
+		return "Kerberos [wrong OID] (1.2.840.48018.1.2.2)";
+	else if (negotiate_oid_compare(oid, &ntlm_OID))
 		return "NTLM (1.3.6.1.4.1.311.2.2.10)";
 	else
 		return "Unknown mechanism";
 }
 
-static const Mech* negotiate_GetMechByOID(const sspi_gss_OID_desc oid)
+static const Mech* negotiate_GetMechByOID(sspi_gss_OID_desc oid)
 {
+	if (negotiate_oid_compare(&oid, &kerberos_wrong_OID))
+	{
+		oid.length = kerberos_OID.length;
+		oid.elements = kerberos_OID.elements;
+	}
+
 	for (int i = 0; i < MECH_COUNT; i++)
 	{
-		if (oid.length == MechTable[i].oid->length &&
-		    memcmp(oid.elements, MechTable[i].oid->elements, oid.length) == 0)
+		if (negotiate_oid_compare(&oid, MechTable[i].oid))
 			return &MechTable[i];
 	}
 	return NULL;
@@ -331,8 +344,8 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken token)
 		inner_token_len += ASN_CONTEXTUAL_LENGTH(1);
 
 	/* Length of supportedMech [1] OID */
-	if (token.supportedMech)
-		inner_token_len += ASN_CONTEXTUAL_LENGTH(token.supportedMech->oid->length);
+	if (token.supportedMech.length)
+		inner_token_len += ASN_CONTEXTUAL_LENGTH(token.supportedMech.length);
 
 	/* Length of [2] OCTET STRING */
 	if (token.mechToken.cbBuffer)
@@ -405,11 +418,11 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken token)
 	}
 
 	/* supportedMech [1] OID */
-	if (token.supportedMech)
+	if (token.supportedMech.length)
 	{
-		p = negotiate_write_contextual_tlv(p, 0xA1, 0x06, token.supportedMech->oid->length,
-		                                   token.supportedMech->oid->elements);
-		WLog_DBG(TAG, "\tsupportedMech [1] (%s)", negotiate_mech_name(token.supportedMech));
+		p = negotiate_write_contextual_tlv(p, 0xA1, 0x06, token.supportedMech.length,
+		                                   token.supportedMech.elements);
+		WLog_DBG(TAG, "\tsupportedMech [1] (%s)", negotiate_mech_name(&token.supportedMech));
 	}
 
 	/* mechToken [2] OCTET STRING */
@@ -444,12 +457,12 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 	{
 		/* initContextToken */
 		buf = negotiate_read_tlv(buf, &tag, &len, &bytes_remain);
-		if (len > bytes_remain || tag != 0x60)
+		if (!buf || len > bytes_remain || tag != 0x60)
 			return FALSE;
 
 		/* thisMech */
 		buf = negotiate_read_tlv(buf, &tag, &len, &bytes_remain);
-		if (len > bytes_remain || tag != 0x06)
+		if (!buf || len > bytes_remain || tag != 0x06)
 			return FALSE;
 
 		buf += len;
@@ -458,8 +471,10 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 
 	/* [0] NegTokenInit or [1] NegTokenResp */
 	buf = negotiate_read_tlv(buf, &contextual, &len, &bytes_remain);
+	if (!buf)
+		return FALSE;
 	buf = negotiate_read_tlv(buf, &tag, &len, &bytes_remain);
-	if (len > bytes_remain)
+	if (!buf || len > bytes_remain)
 		return FALSE;
 	else if (contextual == 0xA0 && tag == 0x30)
 		token->init = TRUE;
@@ -474,8 +489,10 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 	do
 	{
 		p = negotiate_read_tlv(buf, &contextual, &len, &bytes_remain);
+		if (!p)
+			return FALSE;
 		buf = negotiate_read_tlv(p, &tag, &len, &bytes_remain);
-		if (len > bytes_remain)
+		if (!buf || len > bytes_remain)
 			return FALSE;
 
 		switch (contextual)
@@ -507,9 +524,10 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 				/* supportedMech [1] MechType */
 				else if (tag == 0x06 && !token->init)
 				{
-					token->supportedMech = negotiate_GetMechByOID((sspi_gss_OID_desc){ len, buf });
+					token->supportedMech.length = len;
+					token->supportedMech.elements = buf;
 					WLog_DBG(TAG, "\tsupportedMech [1] (%s)",
-					         negotiate_mech_name(token->supportedMech));
+					         negotiate_mech_name(&token->supportedMech));
 				}
 				else
 					return FALSE;
@@ -577,7 +595,7 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 		/* Store the mic token after the mech token in the output buffer */
 		output_token->mic.BufferType = SECBUFFER_TOKEN;
 		output_token->mic.cbBuffer = output_buffer->cbBuffer - output_token->mechToken.cbBuffer;
-		output_token->mic.pvBuffer = output_buffer->pvBuffer + output_token->mechToken.cbBuffer;
+		output_token->mic.pvBuffer = (BYTE*)output_buffer->pvBuffer + output_token->mechToken.cbBuffer;
 
 		CopyMemory(&mic_buffers[1], &output_token->mic, sizeof(SecBuffer));
 
@@ -615,6 +633,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	SECURITY_STATUS status;
 	ULONG inner_mech_list_len = 0;
 	BYTE* p;
+	const Mech* mech;
 
 	if (!phCredential || !SecIsValidHandle(phCredential))
 		return SEC_E_NO_CREDENTIALS;
@@ -700,7 +719,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			{
 				p = negotiate_write_tlv(p, 0x06, creds[i].mech->oid->length,
 				                        creds[i].mech->oid->elements);
-				WLog_DBG(TAG, "Available mechanism: %s", negotiate_mech_name(creds[i].mech));
+				WLog_DBG(TAG, "Available mechanism: %s", negotiate_mech_name(creds[i].mech->oid));
 			}
 		}
 
@@ -727,11 +746,15 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			return SEC_E_INVALID_TOKEN;
 
 		/* On first response check if the server doesn't like out prefered mech */
-		if (context->state == NEGOTIATE_STATE_INITIAL && input_token.supportedMech &&
-		    input_token.supportedMech != context->mech)
+		if (context->state == NEGOTIATE_STATE_INITIAL && input_token.supportedMech.length &&
+		    !negotiate_oid_compare(&input_token.supportedMech, context->mech->oid))
 		{
+			mech = negotiate_GetMechByOID(input_token.supportedMech);
+			if (!mech)
+				return SEC_E_INVALID_TOKEN;
+
 			/* Make sure the specified mech is supported and get the appropriate credential */
-			sub_cred = negotiate_FindCredential(creds, input_token.supportedMech);
+			sub_cred = negotiate_FindCredential(creds, mech);
 			if (!sub_cred)
 				return SEC_E_INVALID_TOKEN;
 
@@ -739,7 +762,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			context->mech->pkg->table_w->DeleteSecurityContext(&context->sub_context);
 			sub_context = NULL;
 
-			context->mech = input_token.supportedMech;
+			context->mech = mech;
 			context->mic = TRUE;
 		}
 
@@ -760,7 +783,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 					break;
 			}
 
-			WLog_DBG(TAG, "Negotiated mechanism: %s", negotiate_mech_name(context->mech));
+			WLog_DBG(TAG, "Negotiated mechanism: %s", negotiate_mech_name(context->mech->oid));
 		}
 
 		if (context->state == NEGOTIATE_STATE_NEGORESP)
@@ -862,6 +885,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	SECURITY_STATUS status;
 	BYTE *p, tag;
 	ULONG bytes_remain, len;
+	sspi_gss_OID_desc oid = { 0 };
 
 	if (!phCredential || !SecIsValidHandle(phCredential))
 		return SEC_E_NO_CREDENTIALS;
@@ -887,28 +911,31 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			/* Read initialContextToken */
 			bytes_remain = input_buffer->cbBuffer;
 			p = negotiate_read_tlv(input_buffer->pvBuffer, &tag, &len, &bytes_remain);
-			if (len > bytes_remain || tag != 0x60)
+			if (!p || len > bytes_remain || tag != 0x60)
 				return SEC_E_INVALID_TOKEN;
 
 			/* Read thisMech */
 			p = negotiate_read_tlv(p, &tag, &len, &bytes_remain);
-			if (len > bytes_remain || tag != 0x06)
+			if (!p || len > bytes_remain || tag != 0x06)
 				return SEC_E_INVALID_TOKEN;
 
+			oid.length = len;
+			oid.elements = p;
+
 			/* Check if it's a spnego token */
-			if (len == spnego_OID.length || memcmp(p, spnego_OID.elements, len) == 0)
+			if (negotiate_oid_compare(&oid, &spnego_OID))
 			{
 				init_context.spnego = TRUE;
 			}
 			else
 			{
-				init_context.mech = negotiate_GetMechByOID((sspi_gss_OID_desc){ len, p });
+				init_context.mech = negotiate_GetMechByOID(oid);
 				if (!init_context.mech)
 					return SEC_E_INVALID_TOKEN;
 			}
 		}
 
-		WLog_DBG(TAG, "Mechanism: %s", negotiate_mech_name(init_context.mech));
+		WLog_DBG(TAG, "Mechanism: %s", negotiate_mech_name(&oid));
 
 		if (init_context.spnego)
 		{
@@ -924,12 +951,23 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			init_context.mechTypes.BufferType = SECBUFFER_DATA;
 			init_context.mechTypes.cbBuffer = input_token.mechTypes.cbBuffer;
 
-			p = negotiate_read_tlv(p, &tag, &len, &bytes_remain);
-			if (len > bytes_remain || tag != 0x06)
+			/* Prepare to read mechList */
+			bytes_remain = input_token.mechTypes.cbBuffer;
+			p = negotiate_read_tlv(input_token.mechTypes.pvBuffer, &tag, &len, &bytes_remain);
+			if (!p || len > bytes_remain || tag != 0x30)
 				return SEC_E_INVALID_TOKEN;
 
-			init_context.mech = negotiate_GetMechByOID((sspi_gss_OID_desc){ len, p });
-			sub_cred = negotiate_FindCredential(creds, init_context.mech);
+			p = negotiate_read_tlv(p, &tag, &len, &bytes_remain);
+			if (!p || len > bytes_remain || tag != 0x06)
+				return SEC_E_INVALID_TOKEN;
+			
+			oid.length = len;
+			oid.elements = p;
+
+			init_context.mech = negotiate_GetMechByOID(oid);
+
+			if (init_context.mech)
+				sub_cred = negotiate_FindCredential(creds, init_context.mech);
 
 			if (sub_cred)
 			{
@@ -946,7 +984,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			}
 
 			WLog_DBG(TAG, "Initiators preferred mechanism: %s",
-			         negotiate_mech_name(init_context.mech));
+			         negotiate_mech_name(&oid));
 		}
 		else
 		{
@@ -968,19 +1006,16 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 
 		while (!init_context.mech && bytes_remain > 0)
 		{
-			/* Prepare to read mechList */
-			bytes_remain = input_token.mechTypes.cbBuffer;
-			p = negotiate_read_tlv(input_token.mechTypes.pvBuffer, &tag, &len, &bytes_remain);
-			if (len > bytes_remain || tag != 0x30)
-				return SEC_E_INVALID_TOKEN;
-
 			/* Read each mechanism */
 			p = negotiate_read_tlv(p, &tag, &len, &bytes_remain);
-			if (len > bytes_remain || tag != 0x06)
+			if (!p || len > bytes_remain || tag != 0x06)
 				return SEC_E_INVALID_TOKEN;
 
-			init_context.mech = negotiate_GetMechByOID((sspi_gss_OID_desc){ len, p });
-			if (!negotiate_FindCredential(creds, init_context.mech))
+			oid.length = len;
+			oid.elements = p;
+
+			init_context.mech = negotiate_GetMechByOID(oid);
+			if (init_context.mech && !negotiate_FindCredential(creds, init_context.mech))
 				init_context.mech = NULL;
 		}
 
@@ -1020,8 +1055,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 		}
 
 		context->state = NEGOTIATE_STATE_NEGORESP;
-		output_token.supportedMech = context->mech;
-		WLog_DBG(TAG, "Accepted mechanism: %s", negotiate_mech_name(context->mech));
+		output_token.supportedMech.length = oid.length;
+		output_token.supportedMech.elements = oid.elements;
+		WLog_DBG(TAG, "Accepted mechanism: %s", negotiate_mech_name(&output_token.supportedMech));
 	}
 	else
 	{

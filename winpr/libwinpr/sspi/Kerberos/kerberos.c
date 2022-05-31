@@ -110,8 +110,8 @@ static void kerberos_ContextFree(KRB_CONTEXT* context)
 		context->target_name = NULL;
 	}
 
-	// if (context->gss_ctx)
-	// 	sspi_gss_delete_sec_context(&minor_status, &context->gss_ctx, SSPI_GSS_C_NO_BUFFER);
+	if (context->gss_ctx)
+		sspi_gss_delete_sec_context(&minor_status, &context->gss_ctx, SSPI_GSS_C_NO_BUFFER);
 
 	free(context);
 }
@@ -470,6 +470,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 		target_name.length = 0;
 		free(target_name.value);
+
+		if (SSPI_GSS_ERROR(major))
+			return SEC_E_TARGET_UNKNOWN;
 	}
 
 	if (pInput)
@@ -528,7 +531,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 	return SEC_E_OK;
 #else
-	return SEC_E_INTERNAL_ERROR;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 #endif /* WITH_GSSAPI */
 }
 
