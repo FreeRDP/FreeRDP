@@ -9,12 +9,15 @@ int TestQuerySecurityPackageInfo(int argc, char* argv[])
 	int rc;
 	SECURITY_STATUS status;
 	SecPkgInfo* pPackageInfo;
+	SecurityFunctionTable* table;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
 	sspi_GlobalInit();
-	status = QuerySecurityPackageInfo(NTLM_SSP_NAME, &pPackageInfo);
+	table = InitSecurityInterfaceEx(0);
+
+	status = table->QuerySecurityPackageInfo(NTLM_SSP_NAME, &pPackageInfo);
 
 	if (status != SEC_E_OK)
 		rc = -1;
@@ -25,7 +28,7 @@ int TestQuerySecurityPackageInfo(int argc, char* argv[])
 		rc = 0;
 	}
 
-	FreeContextBuffer(pPackageInfo);
+	table->FreeContextBuffer(pPackageInfo);
 	sspi_GlobalFinish();
 	return rc;
 }

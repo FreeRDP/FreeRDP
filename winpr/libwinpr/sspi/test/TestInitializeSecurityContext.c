@@ -30,8 +30,8 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 
 	sspi_GlobalInit();
-	table = InitSecurityInterface();
-	status = QuerySecurityPackageInfo(NTLM_SSP_NAME, &pPackageInfo);
+	table = InitSecurityInterfaceEx(0);
+	status = table->QuerySecurityPackageInfo(NTLM_SSP_NAME, &pPackageInfo);
 
 	if (status != SEC_E_OK)
 	{
@@ -109,7 +109,7 @@ fail:
 	if (SecIsValidHandle(&credentials))
 		table->FreeCredentialsHandle(&credentials);
 
-	FreeContextBuffer(pPackageInfo);
+	table->FreeContextBuffer(pPackageInfo);
 	sspi_GlobalFinish();
 	return rc;
 }
