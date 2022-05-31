@@ -329,7 +329,7 @@ static BOOL mf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 	return TRUE;
 }
 
-void mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
+static BOOL mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	bool state_down = FALSE;
 
@@ -337,6 +337,7 @@ void mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 	{
 		state_down = TRUE;
 	}
+	return TRUE;
 }
 
 static BOOL mf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
