@@ -386,6 +386,7 @@ static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 	ntlm->outputBuffer[0].BufferType = SECBUFFER_TOKEN;
 	ntlm->outputBuffer[0].cbBuffer = ntlm->cbMaxToken;
 	ntlm->outputBuffer[0].pvBuffer = malloc(ntlm->outputBuffer[0].cbBuffer);
+	BOOL hash_set = FALSE;
 
 	if (!ntlm->outputBuffer[0].pvBuffer)
 		return -1;
@@ -395,43 +396,29 @@ static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 	    ntlm->fContextReq, SECURITY_NATIVE_DREP, &ntlm->context, &ntlm->outputBufferDesc,
 	    &ntlm->pfContextAttr, &ntlm->expiration);
 
-	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
+	if (!hash_set && status == SEC_I_CONTINUE_NEEDED)
 	{
 		SecPkgContext_AuthIdentity AuthIdentity;
 		SecPkgContext_AuthNtlmHash AuthNtlmHash;
 		ZeroMemory(&AuthIdentity, sizeof(SecPkgContext_AuthIdentity));
 		ZeroMemory(&AuthNtlmHash, sizeof(SecPkgContext_AuthNtlmHash));
-		status = ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_AUTH_IDENTITY,
-		                                             &AuthIdentity);
 
-		if (status == SEC_E_OK)
+		if (ntlm->UseNtlmV2Hash)
 		{
-			if (strcmp(AuthIdentity.User, TEST_NTLM_USER) == 0)
-			{
-				if (ntlm->UseNtlmV2Hash)
-				{
-					AuthNtlmHash.Version = 2;
-					CopyMemory(AuthNtlmHash.NtlmHash, TEST_NTLM_V2_HASH, 16);
-				}
-				else
-				{
-					AuthNtlmHash.Version = 1;
-					CopyMemory(AuthNtlmHash.NtlmHash, TEST_NTLM_HASH, 16);
-				}
-
-				status = ntlm->table->SetContextAttributes(
-				    &ntlm->context, SECPKG_ATTR_AUTH_NTLM_HASH, &AuthNtlmHash,
-				    sizeof(SecPkgContext_AuthNtlmHash));
-			}
+			AuthNtlmHash.Version = 2;
+			CopyMemory(AuthNtlmHash.NtlmHash, TEST_NTLM_V2_HASH, 16);
+		}
+		else
+		{
+			AuthNtlmHash.Version = 1;
+			CopyMemory(AuthNtlmHash.NtlmHash, TEST_NTLM_HASH, 16);
 		}
 
-		if (ntlm->table->CompleteAuthToken)
-			status = ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
+		status = ntlm->table->SetContextAttributes(
+			&ntlm->context, SECPKG_ATTR_AUTH_NTLM_HASH, &AuthNtlmHash,
+			sizeof(SecPkgContext_AuthNtlmHash));
 
-		if (status == SEC_I_COMPLETE_NEEDED)
-			status = SEC_E_OK;
-		else if (status == SEC_I_COMPLETE_AND_CONTINUE)
-			status = SEC_I_CONTINUE_NEEDED;
+		hash_set = TRUE;
 	}
 
 	if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED))
