@@ -350,7 +350,7 @@ static int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat, int n
 			R = pSrcPixel[2] + pSrcPixel[6] + pSrcPixel[nSrcStep + 2] + pSrcPixel[nSrcStep + 6];
 			pSrcPixel += 8;
 			color = FreeRDPGetColor(DstFormat, R >> 2, G >> 2, B >> 2, 0xFF);
-			WriteColor(pDstPixel, DstFormat, color);
+			FreeRDPWriteColor(pDstPixel, DstFormat, color);
 			pDstPixel += dstBytesPerPixel;
 		}
 
