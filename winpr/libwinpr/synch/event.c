@@ -102,15 +102,8 @@ BOOL winpr_event_init(WINPR_EVENT_IMPL* event)
 #else
 	int flags;
 
-	if (pipe(event->fds) < 0)
+	if (pipe2(event->fds, O_NONBLOCK) < 0)
 		return FALSE;
-
-	flags = fcntl(event->fds[0], F_GETFL);
-	if (flags < 0)
-		goto out_error;
-
-	if (fcntl(event->fds[0], F_SETFL, flags | O_NONBLOCK) < 0)
-		goto out_error;
 
 	return TRUE;
 
