@@ -36,15 +36,6 @@
 static const char NEGO_REG_KEY[] =
     "Software\\" WINPR_VENDOR_STRING "\\" WINPR_PRODUCT_STRING "\\SSPI\\Negotiate";
 
-#define ASN_LENGTH_BYTES(len)  \
-	((len) <= 0x0000007F   ? 0 \
-	 : (len) <= 0x000000FF ? 1 \
-	 : (len) <= 0x0000FFFF ? 2 \
-	 : (len) <= 0x00FFFFFF ? 3 \
-	                       : 4)
-#define ASN_TLV_LENGTH(len) (2 + ASN_LENGTH_BYTES(len) + (len))
-#define ASN_CONTEXTUAL_LENGTH(len) ASN_TLV_LENGTH(ASN_TLV_LENGTH(len))
-
 extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
 extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
 
@@ -135,7 +126,26 @@ typedef struct
 	SecBuffer mic;
 } NegToken;
 
-static BYTE* negotiate_write_tlv(BYTE* buf, BYTE tag, ULONG len, BYTE* value)
+static inline size_t asn_tlv_length(size_t len)
+{
+	if (len <= 0x7F)
+		return 2 + len;
+	else if (len <= 0xFF)
+		return 3 + len;
+	else if (len <= 0xFFFF)
+		return 4 + len;
+	else if (len <= 0xFFFFFF)
+		return 5 + len;
+	else
+		return 6 + len;
+}
+
+static inline size_t asn_contextual_length(size_t len)
+{
+	return asn_tlv_length(asn_tlv_length(len));
+}
+
+static BYTE* negotiate_write_tlv(BYTE* buf, BYTE tag, size_t len, const BYTE* value)
 {
 	int bytes = 0;
 
@@ -162,16 +172,16 @@ static BYTE* negotiate_write_tlv(BYTE* buf, BYTE tag, ULONG len, BYTE* value)
 	return buf;
 }
 
-static BYTE* negotiate_write_contextual_tlv(BYTE* buf, BYTE contextual, BYTE tag, ULONG len,
-                                            BYTE* value)
+static BYTE* negotiate_write_contextual_tlv(BYTE* buf, BYTE contextual, BYTE tag, size_t len,
+                                            const BYTE* value)
 {
-	buf = negotiate_write_tlv(buf, contextual, ASN_TLV_LENGTH(len), NULL);
+	buf = negotiate_write_tlv(buf, contextual, asn_tlv_length(len), NULL);
 	buf = negotiate_write_tlv(buf, tag, len, value);
 
 	return buf;
 }
 
-static BYTE* negotiate_read_tlv(BYTE* buf, BYTE* tag, ULONG* len, ULONG* bytes_remain)
+static BYTE* negotiate_read_tlv(BYTE* buf, BYTE* tag, size_t* len, size_t* bytes_remain)
 {
 	int len_bytes = 0;
 	*len = 0;
@@ -270,7 +280,7 @@ static PSecHandle negotiate_FindCredential(MechCred* creds, const Mech* mech)
 		{
 			if (creds[i].valid)
 				return &creds[i].cred;
-			break;
+			return NULL;
 		}
 	}
 
@@ -326,53 +336,53 @@ static BOOL negotiate_get_config(BOOL* kerberos, BOOL* ntlm)
 	return TRUE;
 }
 
-static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken token)
+static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken *token)
 {
-	ULONG token_len = 0;
-	ULONG init_token_len = 0;
-	ULONG inner_token_len = 0;
-	ULONG total_len = 0;
+	size_t token_len = 0;
+	size_t init_token_len = 0;
+	size_t inner_token_len = 0;
+	size_t total_len = 0;
 	BYTE* p = output_buffer->pvBuffer;
 	BYTE *mech_offset, *mic_offset;
 
 	/* Length of [0] MechTypeList (SEQUENCE tag already included in buffer) */
-	if (token.init)
-		inner_token_len += ASN_TLV_LENGTH(token.mechTypes.cbBuffer);
+	if (token->init)
+		inner_token_len += asn_tlv_length(token->mechTypes.cbBuffer);
 
 	/* Lenght of negState [0] ENUMERATED */
-	if (token.negState != NOSTATE)
-		inner_token_len += ASN_CONTEXTUAL_LENGTH(1);
+	if (token->negState != NOSTATE)
+		inner_token_len += asn_contextual_length(1);
 
 	/* Length of supportedMech [1] OID */
-	if (token.supportedMech.length)
-		inner_token_len += ASN_CONTEXTUAL_LENGTH(token.supportedMech.length);
+	if (token->supportedMech.length)
+		inner_token_len += asn_contextual_length(token->supportedMech.length);
 
 	/* Length of [2] OCTET STRING */
-	if (token.mechToken.cbBuffer)
+	if (token->mechToken.cbBuffer)
 	{
-		inner_token_len += ASN_CONTEXTUAL_LENGTH(token.mechToken.cbBuffer);
-		mech_offset = p + inner_token_len - token.mechToken.cbBuffer;
+		inner_token_len += asn_contextual_length(token->mechToken.cbBuffer);
+		mech_offset = p + inner_token_len - token->mechToken.cbBuffer;
 	}
 
 	/* Length of [3] OCTET S */
-	if (token.mic.cbBuffer)
+	if (token->mic.cbBuffer)
 	{
-		inner_token_len += ASN_CONTEXTUAL_LENGTH(token.mic.cbBuffer);
-		mic_offset = p + inner_token_len - token.mic.cbBuffer;
+		inner_token_len += asn_contextual_length(token->mic.cbBuffer);
+		mic_offset = p + inner_token_len - token->mic.cbBuffer;
 	}
 
 	/* Length of [0] NegTokenInit | [1] NegTokenResp */
-	token_len += ASN_CONTEXTUAL_LENGTH(inner_token_len);
+	token_len += asn_contextual_length(inner_token_len);
 
 	total_len = token_len;
 
-	if (token.init)
+	if (token->init)
 	{
 		/* Length of MechType OID */
-		init_token_len = total_len + ASN_TLV_LENGTH(spnego_OID.length);
+		init_token_len = total_len + asn_tlv_length(spnego_OID.length);
 
 		/* Length of initialContextToken */
-		total_len = ASN_TLV_LENGTH(init_token_len);
+		total_len = asn_tlv_length(init_token_len);
 	}
 
 	/* Adjust token offsets */
@@ -384,14 +394,14 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken token)
 	output_buffer->cbBuffer = total_len;
 
 	/* Write the tokens stored in the buffer first so as not to be overwritten */
-	if (token.mic.cbBuffer)
-		MoveMemory(mic_offset, token.mic.pvBuffer, token.mic.cbBuffer);
+	if (token->mic.cbBuffer)
+		MoveMemory(mic_offset, token->mic.pvBuffer, token->mic.cbBuffer);
 
-	if (token.mechToken.cbBuffer)
-		MoveMemory(mech_offset, token.mechToken.pvBuffer, token.mechToken.cbBuffer);
+	if (token->mechToken.cbBuffer)
+		MoveMemory(mech_offset, token->mechToken.pvBuffer, token->mechToken.cbBuffer);
 
 	/* For NegTokenInit wrap in an initialContextToken */
-	if (token.init)
+	if (token->init)
 	{
 		/* InitialContextToken [APPLICATION 0] IMPLICIT SEQUENCE */
 		p = negotiate_write_tlv(p, 0x60, init_token_len, NULL);
@@ -401,44 +411,44 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken token)
 	}
 
 	/* innerContextToken [0] NegTokenInit or [1] NegTokenResp */
-	p = negotiate_write_contextual_tlv(p, token.init ? 0xA0 : 0xA1, 0x30, inner_token_len, NULL);
-	WLog_DBG(TAG, token.init ? "Writing negTokenInit..." : "Writing negTokenResp...");
+	p = negotiate_write_contextual_tlv(p, token->init ? 0xA0 : 0xA1, 0x30, inner_token_len, NULL);
+	WLog_DBG(TAG, token->init ? "Writing negTokenInit..." : "Writing negTokenResp...");
 
 	/* mechTypes [0] MechTypeList (mechTypes already contains the SEQUENCE tag) */
-	if (token.init)
+	if (token->init)
 	{
-		p = negotiate_write_tlv(p, 0xA0, token.mechTypes.cbBuffer, token.mechTypes.pvBuffer);
-		WLog_DBG(TAG, "\tmechTypes [0] (%li bytes)", token.mechTypes.cbBuffer);
+		p = negotiate_write_tlv(p, 0xA0, token->mechTypes.cbBuffer, token->mechTypes.pvBuffer);
+		WLog_DBG(TAG, "\tmechTypes [0] (%li bytes)", token->mechTypes.cbBuffer);
 	}
 	/* negState [0] ENUMERATED */
-	else if (token.negState != NOSTATE)
+	else if (token->negState != NOSTATE)
 	{
-		p = negotiate_write_contextual_tlv(p, 0xA0, 0x0A, 1, (BYTE*)&token.negState);
-		WLog_DBG(TAG, "\tnegState [0] (%d)", token.negState);
+		p = negotiate_write_contextual_tlv(p, 0xA0, 0x0A, 1, (BYTE*)&token->negState);
+		WLog_DBG(TAG, "\tnegState [0] (%d)", token->negState);
 	}
 
 	/* supportedMech [1] OID */
-	if (token.supportedMech.length)
+	if (token->supportedMech.length)
 	{
-		p = negotiate_write_contextual_tlv(p, 0xA1, 0x06, token.supportedMech.length,
-		                                   token.supportedMech.elements);
-		WLog_DBG(TAG, "\tsupportedMech [1] (%s)", negotiate_mech_name(&token.supportedMech));
+		p = negotiate_write_contextual_tlv(p, 0xA1, 0x06, token->supportedMech.length,
+		                                   token->supportedMech.elements);
+		WLog_DBG(TAG, "\tsupportedMech [1] (%s)", negotiate_mech_name(&token->supportedMech));
 	}
 
 	/* mechToken [2] OCTET STRING */
-	if (token.mechToken.cbBuffer)
+	if (token->mechToken.cbBuffer)
 	{
-		p = negotiate_write_contextual_tlv(p, 0xA2, 0x04, token.mechToken.cbBuffer, NULL);
-		p += token.mechToken.cbBuffer;
-		WLog_DBG(TAG, "\tmechToken [2] (%li bytes)", token.mechToken.cbBuffer);
+		p = negotiate_write_contextual_tlv(p, 0xA2, 0x04, token->mechToken.cbBuffer, NULL);
+		p += token->mechToken.cbBuffer;
+		WLog_DBG(TAG, "\tmechToken [2] (%li bytes)", token->mechToken.cbBuffer);
 	}
 
 	/* mechListMIC [3] OCTET STRING */
-	if (token.mic.cbBuffer)
+	if (token->mic.cbBuffer)
 	{
-		p = negotiate_write_contextual_tlv(p, 0xA3, 0x04, token.mic.cbBuffer, NULL);
-		p += token.mic.cbBuffer;
-		WLog_DBG(TAG, "\tmechListMIC [3] (%li bytes)", token.mic.cbBuffer);
+		p = negotiate_write_contextual_tlv(p, 0xA3, 0x04, token->mic.cbBuffer, NULL);
+		p += token->mic.cbBuffer;
+		WLog_DBG(TAG, "\tmechListMIC [3] (%li bytes)", token->mic.cbBuffer);
 	}
 
 	return TRUE;
@@ -448,10 +458,10 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 {
 	BYTE tag;
 	BYTE contextual;
-	ULONG len;
+	size_t len;
 	BYTE* buf = input->pvBuffer;
 	BYTE* p;
-	ULONG bytes_remain = input->cbBuffer;
+	size_t bytes_remain = input->cbBuffer;
 
 	if (token->init)
 	{
@@ -502,7 +512,7 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 				if (tag == 0x30 && token->init)
 				{
 					token->mechTypes.pvBuffer = p;
-					token->mechTypes.cbBuffer = ASN_TLV_LENGTH(len);
+					token->mechTypes.cbBuffer = asn_tlv_length(len);
 					token->mechTypes.BufferType = SECBUFFER_DATA;
 					WLog_DBG(TAG, "\tmechTypes [0] (%li bytes)", len);
 				}
@@ -631,7 +641,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status;
-	ULONG inner_mech_list_len = 0;
+	size_t inner_mech_list_len = 0;
 	BYTE* p;
 	const Mech* mech;
 
@@ -652,7 +662,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			if (!creds[i].valid)
 				continue;
 
-			inner_mech_list_len += ASN_TLV_LENGTH(creds[i].mech->oid->length);
+			inner_mech_list_len += asn_tlv_length(creds[i].mech->oid->length);
 
 			if (init_context.mech) /* We already have an optimistic mechanism */
 				continue;
@@ -688,7 +698,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		{
 			init_context.spnego = TRUE;
 			init_context.mechTypes.BufferType = SECBUFFER_DATA;
-			init_context.mechTypes.cbBuffer = ASN_TLV_LENGTH(inner_mech_list_len);
+			init_context.mechTypes.cbBuffer = asn_tlv_length(inner_mech_list_len);
 		}
 #else
 		init_context.spnego = FALSE;
@@ -813,11 +823,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		{
 			if (context->mic || input_token.negState != ACCEPT_COMPLETED)
 				return SEC_E_INVALID_TOKEN;
-			else
-			{
-				output_buffer->cbBuffer = 0;
-				return SEC_E_OK;
-			}
+
+			output_buffer->cbBuffer = 0;
+			return SEC_E_OK;
 		}
 
 		if ((context->state == NEGOTIATE_STATE_MIC && context->mic) ||
@@ -840,7 +848,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	else
 		status = SEC_I_CONTINUE_NEEDED;
 
-	if (!negotiate_write_neg_token(output_buffer, output_token))
+	if (!negotiate_write_neg_token(output_buffer, &output_token))
 		status = SEC_E_INTERNAL_ERROR;
 
 	return status;
@@ -884,7 +892,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status;
 	BYTE *p, tag;
-	ULONG bytes_remain, len;
+	size_t bytes_remain, len;
 	sspi_gss_OID_desc oid = { 0 };
 
 	if (!phCredential || !SecIsValidHandle(phCredential))
@@ -902,7 +910,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	if (!context)
 	{
 		/* Check for NTLM token */
-		if (strncmp(input_buffer->pvBuffer, "NTLMSSP", 8) == 0)
+		if (input_buffer->cbBuffer >= 8 && strncmp(input_buffer->pvBuffer, "NTLMSSP", 8) == 0)
 		{
 			init_context.mech = negotiate_GetMechByOID(ntlm_OID);
 		}
@@ -1126,7 +1134,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	else
 		status = SEC_I_CONTINUE_NEEDED;
 
-	if (!negotiate_write_neg_token(output_buffer, output_token))
+	if (!negotiate_write_neg_token(output_buffer, &output_token))
 		return SEC_E_INTERNAL_ERROR;
 
 	return status;
@@ -1188,8 +1196,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesW(PCtxtHandle p
 	if (context->mech->pkg->table_w->QueryContextAttributesW)
 		return context->mech->pkg->table_w->QueryContextAttributesW(&context->sub_context,
 		                                                            ulAttribute, pBuffer);
-	else
-		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesA(PCtxtHandle phContext,
@@ -1203,8 +1211,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesA(PCtxtHandle p
 	if (context->mech->pkg->table->QueryContextAttributesA)
 		return context->mech->pkg->table->QueryContextAttributesA(&context->sub_context,
 		                                                          ulAttribute, pBuffer);
-	else
-		return SEC_E_UNSUPPORTED_FUNCTION;
+	
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesW(PCtxtHandle phContext,
@@ -1219,8 +1227,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesW(PCtxtHandle phC
 	if (context->mech->pkg->table_w->SetContextAttributesW)
 		return context->mech->pkg->table_w->SetContextAttributesW(&context->sub_context,
 		                                                          ulAttribute, pBuffer, cbBuffer);
-	else
-		return SEC_E_UNSUPPORTED_FUNCTION;
+	
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesA(PCtxtHandle phContext,
@@ -1235,8 +1243,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesA(PCtxtHandle phC
 	if (context->mech->pkg->table->SetContextAttributesA)
 		return context->mech->pkg->table->SetContextAttributesA(&context->sub_context, ulAttribute,
 		                                                        pBuffer, cbBuffer);
-	else
-		return SEC_E_UNSUPPORTED_FUNCTION;
+	
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
@@ -1358,8 +1366,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_EncryptMessage(PCtxtHandle phContext,
 	if (context->mech->pkg->table->EncryptMessage)
 		return context->mech->pkg->table->EncryptMessage(&context->sub_context, fQOP, pMessage,
 		                                                 MessageSeqNo);
-	else
-		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_DecryptMessage(PCtxtHandle phContext,
@@ -1377,8 +1385,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_DecryptMessage(PCtxtHandle phContext,
 	if (context->mech->pkg->table->DecryptMessage)
 		return context->mech->pkg->table->DecryptMessage(&context->sub_context, pMessage,
 		                                                 MessageSeqNo, pfQOP);
-	else
-		return SEC_E_UNSUPPORTED_FUNCTION;
+	
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
@@ -1396,8 +1404,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_MakeSignature(PCtxtHandle phContext, 
 	if (context->mech->pkg->table->MakeSignature)
 		return context->mech->pkg->table->MakeSignature(&context->sub_context, fQOP, pMessage,
 		                                                MessageSeqNo);
-	else
-		return SEC_E_UNSUPPORTED_FUNCTION;
+	
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_VerifySignature(PCtxtHandle phContext,
@@ -1415,8 +1423,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_VerifySignature(PCtxtHandle phContext
 	if (context->mech->pkg->table->VerifySignature)
 		return context->mech->pkg->table->VerifySignature(&context->sub_context, pMessage,
 		                                                  MessageSeqNo, pfQOP);
-	else
-		return SEC_E_UNSUPPORTED_FUNCTION;
+	
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 const SecurityFunctionTableA NEGOTIATE_SecurityFunctionTableA = {
