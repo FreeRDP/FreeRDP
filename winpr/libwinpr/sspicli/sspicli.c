@@ -221,7 +221,12 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 			if (getlogin_r(lpNameBuffer, *nSize) != 0)
 				return FALSE;
 #else
-			strncpy(lpNameBuffer, getlogin(), *nSize);
+		{
+			const char* name = getlogin();
+			if (!name)
+				return FALSE;
+			strncpy(lpNameBuffer, name, strnlen(name, *nSize));
+		}
 #endif
 			*nSize = strnlen(lpNameBuffer, *nSize);
 			return TRUE;
