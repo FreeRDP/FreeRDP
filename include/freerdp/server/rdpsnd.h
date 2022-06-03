@@ -82,15 +82,6 @@ struct s_rdpsnd_server_context
 	UINT16 num_client_formats;
 	UINT16 selected_client_format;
 
-	/* dwFlags in CLIENT_AUDIO_VERSION_AND_FORMATS */
-	UINT32 capsFlags;
-	/* dwVolume in CLIENT_AUDIO_VERSION_AND_FORMATS */
-	UINT32 initialVolume;
-	/* dwPitch in CLIENT_AUDIO_VERSION_AND_FORMATS */
-	UINT32 initialPitch;
-
-	UINT16 qualityMode;
-
 	/* Last sent audio block number. */
 	UINT8 block_no;
 
@@ -101,16 +92,7 @@ struct s_rdpsnd_server_context
 	 * will not be called and the server must not call any API on this context.
 	 */
 	psRdpsndServerInitialize Initialize;
-	/**
-	 * Send server formats and version to the client. Automatically sent, when
-	 * opening the channel.
-	 * Also used to restart the protocol after sending the Close PDU.
-	 */
-	psRdpsndServerSendFormats SendFormats;
-	/**
-	 * Send Training PDU.
-	 */
-	psRdpsndServerTraining Training;
+
 	/**
 	 * Choose the audio format to be sent. The index argument is an index into
 	 * the client_formats array and must be smaller than num_client_formats.
@@ -121,11 +103,11 @@ struct s_rdpsnd_server_context
 	 * nframes * src_format.nBitsPerSample * src_format.nChannels / 8
 	 */
 	psRdpsndServerSendSamples SendSamples;
+
 	/**
-	 * Send encoded audio samples using a Wave2 PDU.
-	 * When successful, the block_no member is incremented.
+	 * Called when block confirm is received from the client
 	 */
-	psRdpsndServerSendSamples2 SendSamples2;
+	psRdpsndServerConfirmBlock ConfirmBlock;
 	/**
 	 * Set the volume level of the client. Valid range is between 0 and 0xFFFF.
 	 */
@@ -143,14 +125,6 @@ struct s_rdpsnd_server_context
 	 * synchronization.
 	 */
 	psRdpsndServerActivated Activated;
-	/**
-	 * Called when a TrainingConfirm PDU is received from the client.
-	 */
-	psRdpsndServerTrainingConfirm TrainingConfirm;
-	/**
-	 * Called when block confirm is received from the client.
-	 */
-	psRdpsndServerConfirmBlock ConfirmBlock;
 
 	/**
 	 *  MS-RDPEA channel version the client announces
@@ -158,6 +132,37 @@ struct s_rdpsnd_server_context
 	UINT16 clientVersion;
 
 	rdpContext* rdpcontext;
+
+	/* dwFlags in CLIENT_AUDIO_VERSION_AND_FORMATS */
+	UINT32 capsFlags;
+	/* dwVolume in CLIENT_AUDIO_VERSION_AND_FORMATS */
+	UINT32 initialVolume;
+	/* dwPitch in CLIENT_AUDIO_VERSION_AND_FORMATS */
+	UINT32 initialPitch;
+
+	UINT16 qualityMode;
+
+	/**
+	 * Send server formats and version to the client. Automatically sent, when
+	 * opening the channel.
+	 * Also used to restart the protocol after sending the Close PDU.
+	 */
+	psRdpsndServerSendFormats SendFormats;
+	/**
+	 * Send Training PDU.
+	 */
+	psRdpsndServerTraining Training;
+
+	/**
+	 * Send encoded audio samples using a Wave2 PDU.
+	 * When successful, the block_no member is incremented.
+	 */
+	psRdpsndServerSendSamples2 SendSamples2;
+
+	/**
+	 * Called when a TrainingConfirm PDU is received from the client.
+	 */
+	psRdpsndServerTrainingConfirm TrainingConfirm;
 };
 
 #ifdef __cplusplus
