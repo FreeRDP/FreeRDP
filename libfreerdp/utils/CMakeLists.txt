@@ -26,6 +26,7 @@ set(${MODULE_PREFIX}_SRCS
 	profiler.c
 	ringbuffer.c
 	signal.c
+    string.c
 	smartcard_operations.c
 	smartcard_pack.c
 	smartcard_call.c
