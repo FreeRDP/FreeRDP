@@ -31,6 +31,13 @@
 
 #include "../core/rdp.h"
 
+char* utils_str_append(char* buffer, size_t size, const char* what)
+{
+	if (!winpr_str_append(what, buffer, size, "|"))
+		return NULL;
+	return buffer;
+}
+
 BOOL utils_str_copy(const char* value, char** dst)
 {
 	WINPR_ASSERT(dst);
@@ -59,8 +66,9 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 	if (freerdp_shall_disconnect_context(instance->context))
 		return AUTH_FAILED;
 
-	if (!settings->GatewayPassword || !settings->GatewayUsername ||
-	    !strlen(settings->GatewayPassword) || !strlen(settings->GatewayUsername))
+	if (utils_str_is_empty(freerdp_settings_get_string(settings, FreeRDP_GatewayPassword)))
+		prompt = TRUE;
+	if (utils_str_is_empty(freerdp_settings_get_string(settings, FreeRDP_GatewayUsername)))
 		prompt = TRUE;
 
 	if (!prompt)
@@ -102,7 +110,7 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 		return AUTH_FAILED;
 
 	/* Ask for auth data if no or an empty username was specified or no password was given */
-	if (utils_str_is_empty(settings->Username) ||
+	if (utils_str_is_empty(freerdp_settings_get_string(settings, FreeRDP_Username)) ||
 	    (settings->Password == NULL && settings->RedirectionPassword == NULL))
 		prompt = TRUE;
 

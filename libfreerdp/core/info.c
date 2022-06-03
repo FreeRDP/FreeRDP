@@ -45,11 +45,13 @@ static const char* const INFO_TYPE_LOGON_STRINGS[4] = { "Logon Info V1", "Logon 
 
 /* This define limits the length of the strings in the label field. */
 #define MAX_LABEL_LENGTH 40
-static struct
+struct info_flags_t
 {
 	UINT32 flag;
 	const char* label;
-} const info_flags[] = {
+};
+
+static const struct info_flags_t info_flags[] = {
 	{ INFO_MOUSE, "INFO_MOUSE" },
 	{ INFO_DISABLECTRLALTDEL, "INFO_DISABLECTRLALTDEL" },
 	{ INFO_AUTOLOGON, "INFO_AUTOLOGON" },
@@ -122,12 +124,8 @@ static BOOL rdp_read_info_null_string(UINT32 flags, wStream* s, size_t cbLen, CH
 static char* rdp_info_package_flags_description(UINT32 flags)
 {
 	char* result;
-	size_t maximum_size = 1; /* Reserve space for the terminating '\0' by strcat if all flags set */
+	size_t maximum_size = 1 + MAX_LABEL_LENGTH * ARRAYSIZE(info_flags);
 	size_t i;
-	size_t size;
-
-	for (i = 0; i < ARRAYSIZE(info_flags); i++)
-		maximum_size += strnlen(info_flags[i].label, MAX_LABEL_LENGTH) + 1;
 
 	result = calloc(maximum_size, sizeof(char));
 
@@ -136,17 +134,12 @@ static char* rdp_info_package_flags_description(UINT32 flags)
 
 	for (i = 0; i < ARRAYSIZE(info_flags); i++)
 	{
-		if (info_flags[i].flag & flags)
+		const struct info_flags_t* cur = &info_flags[i];
+		if (cur->flag & flags)
 		{
-			strcat(result, info_flags[i].label);
-			strcat(result, "|");
+			winpr_str_append(cur->label, result, maximum_size, "|");
 		}
 	}
-
-	size = strnlen(result, maximum_size);
-
-	if (size > 0)
-		result[size - 1] = '\0'; /* remove last "|" */
 
 	return result;
 }

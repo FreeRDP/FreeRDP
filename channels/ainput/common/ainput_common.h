@@ -25,54 +25,33 @@
 
 #include <freerdp/channels/ainput.h>
 
-static INLINE void ainput_append(char* buffer, size_t size, const char* what, BOOL separator)
-{
-	size_t have;
-	size_t toadd;
-
-	WINPR_ASSERT(buffer || (size == 0));
-	WINPR_ASSERT(what);
-
-	have = strnlen(buffer, size);
-	toadd = strlen(what);
-	if (have > 0)
-		toadd += 1;
-
-	if (size - have < toadd + 1)
-		return;
-
-	if (have > 0)
-		strcat(buffer, separator ? "|" : " ");
-	strcat(buffer, what);
-}
-
 static INLINE const char* ainput_flags_to_string(UINT64 flags, char* buffer, size_t size)
 {
 	char number[32] = { 0 };
 
 	if (flags & AINPUT_FLAGS_HAVE_REL)
-		ainput_append(buffer, size, "AINPUT_FLAGS_HAVE_REL", TRUE);
+		winpr_str_append("AINPUT_FLAGS_HAVE_REL", buffer, size, "|");
 	if (flags & AINPUT_FLAGS_WHEEL)
-		ainput_append(buffer, size, "AINPUT_FLAGS_WHEEL", TRUE);
+		winpr_str_append("AINPUT_FLAGS_WHEEL", buffer, size, "|");
 	if (flags & AINPUT_FLAGS_MOVE)
-		ainput_append(buffer, size, "AINPUT_FLAGS_MOVE", TRUE);
+		winpr_str_append("AINPUT_FLAGS_MOVE", buffer, size, "|");
 	if (flags & AINPUT_FLAGS_DOWN)
-		ainput_append(buffer, size, "AINPUT_FLAGS_DOWN", TRUE);
+		winpr_str_append("AINPUT_FLAGS_DOWN", buffer, size, "|");
 	if (flags & AINPUT_FLAGS_REL)
-		ainput_append(buffer, size, "AINPUT_FLAGS_REL", TRUE);
+		winpr_str_append("AINPUT_FLAGS_REL", buffer, size, "|");
 	if (flags & AINPUT_FLAGS_BUTTON1)
-		ainput_append(buffer, size, "AINPUT_FLAGS_BUTTON1", TRUE);
+		winpr_str_append("AINPUT_FLAGS_BUTTON1", buffer, size, "|");
 	if (flags & AINPUT_FLAGS_BUTTON2)
-		ainput_append(buffer, size, "AINPUT_FLAGS_BUTTON2", TRUE);
+		winpr_str_append("AINPUT_FLAGS_BUTTON2", buffer, size, "|");
 	if (flags & AINPUT_FLAGS_BUTTON3)
-		ainput_append(buffer, size, "AINPUT_FLAGS_BUTTON3", TRUE);
+		winpr_str_append("AINPUT_FLAGS_BUTTON3", buffer, size, "|");
 	if (flags & AINPUT_XFLAGS_BUTTON1)
-		ainput_append(buffer, size, "AINPUT_XFLAGS_BUTTON1", TRUE);
+		winpr_str_append("AINPUT_XFLAGS_BUTTON1", buffer, size, "|");
 	if (flags & AINPUT_XFLAGS_BUTTON2)
-		ainput_append(buffer, size, "AINPUT_XFLAGS_BUTTON2", TRUE);
+		winpr_str_append("AINPUT_XFLAGS_BUTTON2", buffer, size, "|");
 
 	_snprintf(number, sizeof(number), "[0x%08" PRIx64 "]", flags);
-	ainput_append(buffer, size, number, FALSE);
+	winpr_str_append(number, buffer, size, " ");
 
 	return buffer;
 }

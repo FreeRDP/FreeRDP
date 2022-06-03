@@ -256,20 +256,18 @@ static const char* flags_to_string(UINT32 flags, const t_flag_mapping* map, size
 {
 	size_t x = 0;
 	static char buffer[1024] = { 0 };
-	char fields[12];
-	memset(buffer, 0, sizeof(buffer));
+	char fields[12] = { 0 };
 
 	for (x = 0; x < elements; x++)
 	{
-		if (buffer[0] != '\0')
-			strcat(buffer, "|");
+		const t_flag_mapping* cur = &map[x];
 
-		if ((map[x].code & flags) != 0)
-			strcat(buffer, map[x].name);
+		if ((cur->code & flags) != 0)
+			winpr_str_append(cur->name, buffer, sizeof(buffer), "|");
 	}
 
 	sprintf_s(fields, ARRAYSIZE(fields), " [%04" PRIx32 "]", flags);
-	strcat(buffer, fields);
+	winpr_str_append(fields, buffer, sizeof(buffer), NULL);
 	return buffer;
 }
 
