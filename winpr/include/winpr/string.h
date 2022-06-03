@@ -31,6 +31,9 @@ extern "C"
 {
 #endif
 
+	WINPR_API BOOL winpr_str_append(const char* what, char* buffer, size_t size,
+	                                const char* separator);
+
 #ifndef _WIN32
 
 #define CSTR_LESS_THAN 1

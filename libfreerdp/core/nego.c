@@ -945,6 +945,28 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
  * @param nego
  * @param s
  */
+static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
+{
+	static char buffer[1024] = { 0 };
+
+	_snprintf(buffer, ARRAYSIZE(buffer), "[0x%02" PRIx32 "] ", flags);
+	if (flags & EXTENDED_CLIENT_DATA_SUPPORTED)
+		winpr_str_append("EXTENDED_CLIENT_DATA_SUPPORTED", buffer, sizeof(buffer), "|");
+	if (flags & DYNVC_GFX_PROTOCOL_SUPPORTED)
+		winpr_str_append("DYNVC_GFX_PROTOCOL_SUPPORTED", buffer, sizeof(buffer), "|");
+	if (flags & RDP_NEGRSP_RESERVED)
+		winpr_str_append("RDP_NEGRSP_RESERVED", buffer, sizeof(buffer), "|");
+	if (flags & RESTRICTED_ADMIN_MODE_SUPPORTED)
+		winpr_str_append("RESTRICTED_ADMIN_MODE_SUPPORTED", buffer, sizeof(buffer), "|");
+	if (flags & REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)
+		winpr_str_append("REDIRECTED_AUTHENTICATION_MODE_SUPPORTED", buffer, sizeof(buffer), "|");
+	if ((flags &
+	     ~(EXTENDED_CLIENT_DATA_SUPPORTED | DYNVC_GFX_PROTOCOL_SUPPORTED | RDP_NEGRSP_RESERVED |
+	       RESTRICTED_ADMIN_MODE_SUPPORTED | REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)))
+		winpr_str_append("UNKNOWN", buffer, sizeof(buffer), "|");
+
+	return buffer;
+}
 
 BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 {
@@ -959,6 +981,7 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 	}
 
 	Stream_Read_UINT8(s, nego->flags);
+	WLog_DBG(TAG, "RDP_NEG_RSP::flags = { %s }", nego_rdp_neg_rsp_flags_str(nego->flags));
 	Stream_Read_UINT16(s, length);
 	Stream_Read_UINT32(s, nego->SelectedProtocol);
 	nego->state = NEGO_STATE_FINAL;
