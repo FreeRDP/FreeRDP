@@ -1309,15 +1309,15 @@ char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags)
 				{
 					if (size - len < 1)
 						break;
-					strcat(buffer, "|");
-					len++;
-				}
+				    winpr_str_append("|", buffer, size, NULL);
+				    len++;
+			    }
 
 				if (size - len < flen)
 					break;
-				strcat(buffer, str);
-			}
-		}
+			    winpr_str_append(str, buffer, size, NULL);
+		    }
+	    }
 
 	return buffer;
 }
