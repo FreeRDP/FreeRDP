@@ -348,7 +348,8 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 
 	if (formatId == ClipboardGetFormatId(clipboard, "text/html"))
 	{
-		INT64 SrcSize = (INT64)*pSize;
+		const INT64 SrcSize = (INT64)*pSize;
+		const size_t DstSize = SrcSize + 200;
 		char* body;
 		char num[20] = { 0 };
 
@@ -378,12 +379,12 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 			}
 		}
 
-		pDstData = (char*)calloc(1, SrcSize + 200);
+		pDstData = (char*)calloc(1, DstSize);
 
 		if (!pDstData)
 			goto fail;
 
-		sprintf_s(pDstData, SrcSize + 200,
+		sprintf_s(pDstData, DstSize,
 		          "Version:0.9\r\n"
 		          "StartHTML:0000000000\r\n"
 		          "EndHTML:0000000000\r\n"
@@ -395,29 +396,42 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 			body = strstr(pSrcData.cpc, "<BODY");
 
 		/* StartHTML */
-		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
+		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, DstSize));
 		CopyMemory(&pDstData[23], num, 10);
 
 		if (!body)
-			strcat(pDstData, "<HTML><BODY>");
+		{
+			if (!winpr_str_append("<HTML><BODY>", pDstData, DstSize, NULL))
+				goto fail;
+		}
 
-		strcat(pDstData, "<!--StartFragment-->");
+		if (!winpr_str_append("<!--StartFragment-->", pDstData, DstSize, NULL))
+			goto fail;
+
 		/* StartFragment */
 		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
 		CopyMemory(&pDstData[69], num, 10);
-		strcat(pDstData, pSrcData.cpc);
+
+		if (!winpr_str_append(pSrcData.cpc, pDstData, DstSize, NULL))
+			goto fail;
+
 		/* EndFragment */
 		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
 		CopyMemory(&pDstData[93], num, 10);
-		strcat(pDstData, "<!--EndFragment-->");
+
+		if (!winpr_str_append("<!--EndFragment-->", pDstData, DstSize, NULL))
+			goto fail;
 
 		if (!body)
-			strcat(pDstData, "</BODY></HTML>");
+		{
+			if (!winpr_str_append("</BODY></HTML>", pDstData, DstSize, NULL))
+				goto fail;
+		}
 
 		/* EndHTML */
-		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
+		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, DstSize));
 		CopyMemory(&pDstData[43], num, 10);
-		*pSize = (UINT32)strlen(pDstData) + 1;
+		*pSize = (UINT32)strnlen(pDstData, DstSize) + 1;
 	}
 fail:
 	free(pSrcData.pv);

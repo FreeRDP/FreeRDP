@@ -22,6 +22,7 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/path.h>
 #include <winpr/file.h>
 
@@ -555,15 +556,7 @@ BOOL GetFileInformationByHandle(HANDLE hFile, LPBY_HANDLE_FILE_INFORMATION lpFil
 
 static char* append(char* buffer, size_t size, const char* append)
 {
-	const size_t len = strnlen(buffer, size);
-	if (len == 0)
-		_snprintf(buffer, size, "%s", append);
-	else
-	{
-		strcat(buffer, "|");
-		strcat(buffer, append);
-	}
-
+	winpr_str_append(append, buffer, size, "|");
 	return buffer;
 }
 
@@ -602,7 +595,7 @@ static const char* flagsToStr(char* buffer, size_t size, DWORD flags)
 		append(buffer, size, "FILE_ATTRIBUTE_VIRTUAL");
 
 	_snprintf(strflags, sizeof(strflags), " [0x%08" PRIx32 "]", flags);
-	strcat(buffer, strflags);
+	winpr_str_append(strflags, buffer, size, NULL);
 	return buffer;
 }
 

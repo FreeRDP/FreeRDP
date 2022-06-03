@@ -33,6 +33,23 @@
 #include "../log.h"
 #define TAG WINPR_TAG("crt")
 
+BOOL winpr_str_append(const char* what, char* buffer, size_t size, const char* separator)
+{
+	const size_t used = strnlen(buffer, size);
+	const size_t add = strnlen(what, size);
+	const size_t sep_len = separator ? strnlen(separator, size) : 0;
+	const size_t sep = (used > 0) ? sep_len : 0;
+
+	if (used + add + sep >= size)
+		return FALSE;
+
+	if ((used > 0) && (sep_len > 0))
+		strncat(buffer, separator, sep_len);
+
+	strncat(buffer, what, add);
+	return TRUE;
+}
+
 #ifndef _WIN32
 
 char* _strdup(const char* strSource)

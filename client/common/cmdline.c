@@ -216,6 +216,7 @@ static BOOL copy_value(const char* value, char** dst)
 static BOOL append_value(const char* value, char** dst)
 {
 	size_t x = 0, y;
+	size_t size;
 	char* tmp;
 	if (!dst || !value)
 		return FALSE;
@@ -223,14 +224,16 @@ static BOOL append_value(const char* value, char** dst)
 	if (*dst)
 		x = strlen(*dst);
 	y = strlen(value);
-	tmp = realloc(*dst, x + y + 2);
+
+	size = x + y + 2;
+	tmp = realloc(*dst, size);
 	if (!tmp)
 		return FALSE;
 	if (x == 0)
 		tmp[0] = '\0';
 	else
-		strcat(tmp, ",");
-	strcat(tmp, value);
+		winpr_str_append(",", tmp, size, NULL);
+	winpr_str_append(value, tmp, size, NULL);
 	*dst = tmp;
 	return TRUE;
 }

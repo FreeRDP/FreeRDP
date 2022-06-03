@@ -507,12 +507,7 @@ static BOOL filter_by_class(uint8_t bDeviceClass, uint8_t bDeviceSubClass)
 
 static BOOL append(char* dst, size_t length, const char* src)
 {
-	size_t slen = strlen(src);
-	size_t dlen = strnlen(dst, length);
-	if (dlen + slen >= length)
-		return FALSE;
-	strcat(dst, src);
-	return TRUE;
+	return winpr_str_append(src, dst, length, NULL);
 }
 
 static BOOL device_is_filtered(struct libusb_device* dev,

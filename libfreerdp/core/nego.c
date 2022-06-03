@@ -1090,36 +1090,26 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
  * @param nego
  * @param s
  */
-static void pipecat(char* buffer, BOOL* first, const char* what)
-{
-	WINPR_ASSERT(first);
-
-	if (!*first)
-		strcat(buffer, "|");
-	*first = FALSE;
-	strcat(buffer, what);
-}
-
 static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
 {
-	BOOL first = TRUE;
 	static char buffer[1024] = { 0 };
 
 	_snprintf(buffer, ARRAYSIZE(buffer), "[0x%02" PRIx32 "] ", flags);
 	if (flags & EXTENDED_CLIENT_DATA_SUPPORTED)
-		pipecat(buffer, &first, "EXTENDED_CLIENT_DATA_SUPPORTED");
+		winpr_str_append("EXTENDED_CLIENT_DATA_SUPPORTED", buffer, sizeof(buffer), "|");
 	if (flags & DYNVC_GFX_PROTOCOL_SUPPORTED)
-		pipecat(buffer, &first, "DYNVC_GFX_PROTOCOL_SUPPORTED");
+		winpr_str_append("DYNVC_GFX_PROTOCOL_SUPPORTED", buffer, sizeof(buffer), "|");
 	if (flags & RDP_NEGRSP_RESERVED)
-		pipecat(buffer, &first, "RDP_NEGRSP_RESERVED");
+		winpr_str_append("RDP_NEGRSP_RESERVED", buffer, sizeof(buffer), "|");
 	if (flags & RESTRICTED_ADMIN_MODE_SUPPORTED)
-		pipecat(buffer, &first, "RESTRICTED_ADMIN_MODE_SUPPORTED");
+		winpr_str_append("RESTRICTED_ADMIN_MODE_SUPPORTED", buffer, sizeof(buffer), "|");
 	if (flags & REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)
-		pipecat(buffer, &first, "REDIRECTED_AUTHENTICATION_MODE_SUPPORTED");
+		winpr_str_append("REDIRECTED_AUTHENTICATION_MODE_SUPPORTED", buffer, sizeof(buffer), "|");
 	if ((flags &
 	     ~(EXTENDED_CLIENT_DATA_SUPPORTED | DYNVC_GFX_PROTOCOL_SUPPORTED | RDP_NEGRSP_RESERVED |
 	       RESTRICTED_ADMIN_MODE_SUPPORTED | REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)))
-		pipecat(buffer, &first, "UNKNOWN");
+		winpr_str_append("UNKNOWN", buffer, sizeof(buffer), "|");
+
 	return buffer;
 }
 
