@@ -55,8 +55,8 @@ struct Mech_st
 {
 	const sspi_gss_OID_desc* oid;
 	const SecPkg* pkg;
-	const UINT init_flags;
-	const UINT accept_flags;
+	const UINT flags;
+	const BOOL preferred;
 };
 
 typedef struct
@@ -101,8 +101,8 @@ static const SecPkg SecPkgTable[] = {
 };
 
 static const Mech MechTable[] = {
-	{ &kerberos_OID, &SecPkgTable[0], 0, 0 },
-	{ &ntlm_OID, &SecPkgTable[1], 0, 0 },
+	{ &kerberos_OID, &SecPkgTable[0], 0, TRUE },
+	{ &ntlm_OID, &SecPkgTable[1], 0, FALSE },
 };
 
 static const int MECH_COUNT = sizeof(MechTable) / sizeof(Mech);
@@ -671,7 +671,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
 			status = MechTable[i].pkg->table_w->InitializeSecurityContextW(
-			    &creds[i].cred, NULL, pszTargetName, fContextReq | creds[i].mech->init_flags,
+			    &creds[i].cred, NULL, pszTargetName, fContextReq | creds[i].mech->flags,
 			    Reserved1, TargetDataRep, NULL, Reserved2, &init_context.sub_context, &mech_output,
 			    pfContextAttr, ptsExpiry);
 
@@ -802,7 +802,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
 			status = context->mech->pkg->table_w->InitializeSecurityContextW(
-			    sub_cred, sub_context, pszTargetName, fContextReq | context->mech->init_flags,
+			    sub_cred, sub_context, pszTargetName, fContextReq | context->mech->flags,
 			    Reserved1, TargetDataRep, input_token.mechToken.cbBuffer ? &mech_input : NULL,
 			    Reserved2, &context->sub_context, &mech_output, pfContextAttr, ptsExpiry);
 
@@ -894,6 +894,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	BYTE *p, tag;
 	size_t bytes_remain, len;
 	sspi_gss_OID_desc oid = { 0 };
+	const Mech* first_mech = NULL;
 
 	if (!phCredential || !SecIsValidHandle(phCredential))
 		return SEC_E_NO_CREDENTIALS;
@@ -971,6 +972,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			
 			oid.length = len;
 			oid.elements = p;
+			p += len;
+			bytes_remain -= len;
 
 			init_context.mech = negotiate_GetMechByOID(oid);
 
@@ -1009,7 +1012,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 				return status;
 
 			init_context.mic = TRUE;
+			first_mech = init_context.mech;
 			init_context.mech = NULL;
+			output_token.mechToken.cbBuffer = 0;
 		}
 
 		while (!init_context.mech && bytes_remain > 0)
@@ -1021,8 +1026,15 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 
 			oid.length = len;
 			oid.elements = p;
+			p += len;
+			bytes_remain -= len;
 
 			init_context.mech = negotiate_GetMechByOID(oid);
+
+			/* Microsoft may send two versions of the kerberos OID */
+			if (init_context.mech == first_mech)
+				init_context.mech = NULL;
+
 			if (init_context.mech && !negotiate_FindCredential(creds, init_context.mech))
 				init_context.mech = NULL;
 		}
@@ -1047,22 +1059,21 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 		CopyMemory(init_context.mechTypes.pvBuffer, input_token.mechTypes.pvBuffer,
 		           input_token.mechTypes.cbBuffer);
 
-		/* Check if the chosen mechanism is our most preferred; otherwise request mic */
-		for (int i = 0; i < MECH_COUNT; i++)
+		if (!context->mech->preferred)
 		{
-			if (context->mech != creds[i].mech)
-			{
-				output_token.negState = REQUEST_MIC;
-				context->mic = TRUE;
-			}
-			else
-			{
-				output_token.negState = ACCEPT_INCOMPLETE;
-			}
-			break;
+			output_token.negState = REQUEST_MIC;
+			context->mic = TRUE;
+		}
+		else
+		{
+			output_token.negState = ACCEPT_INCOMPLETE;
 		}
 
-		context->state = NEGOTIATE_STATE_NEGORESP;
+		if (status == SEC_E_OK)
+			context->state = NEGOTIATE_STATE_FINAL;
+		else
+			context->state = NEGOTIATE_STATE_NEGORESP;
+
 		output_token.supportedMech.length = oid.length;
 		output_token.supportedMech.elements = oid.elements;
 		WLog_DBG(TAG, "Accepted mechanism: %s", negotiate_mech_name(&output_token.supportedMech));
@@ -1094,7 +1105,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 
 			status = context->mech->pkg->table->AcceptSecurityContext(
 			    sub_cred, &context->sub_context, &mech_input,
-			    fContextReq | context->mech->accept_flags, TargetDataRep, &context->sub_context,
+			    fContextReq | context->mech->flags, TargetDataRep, &context->sub_context,
 			    pOutput, pfContextAttr, ptsTimeStamp);
 
 			if (IsSecurityStatusError(status))

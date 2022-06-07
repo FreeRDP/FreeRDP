@@ -347,6 +347,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_KerberosArmor, 7, "FreeRDP_KerberosArmor" },
 	{ FreeRDP_KerberosCache, 7, "FreeRDP_KerberosCache" },
 	{ FreeRDP_KerberosKdc, 7, "FreeRDP_KerberosKdc" },
+	{ FreeRDP_KerberosKeytab, 7, "FreeRDP_KerberosKeytab" },
 	{ FreeRDP_KerberosLifeTime, 7, "FreeRDP_KerberosLifeTime" },
 	{ FreeRDP_KerberosRealm, 7, "FreeRDP_KerberosRealm" },
 	{ FreeRDP_KerberosRenewableLifeTime, 7, "FreeRDP_KerberosRenewableLifeTime" },

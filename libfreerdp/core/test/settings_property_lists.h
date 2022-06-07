@@ -356,6 +356,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_KerberosArmor,
 	FreeRDP_KerberosCache,
 	FreeRDP_KerberosKdc,
+	FreeRDP_KerberosKeytab,
 	FreeRDP_KerberosLifeTime,
 	FreeRDP_KerberosRealm,
 	FreeRDP_KerberosRenewableLifeTime,
