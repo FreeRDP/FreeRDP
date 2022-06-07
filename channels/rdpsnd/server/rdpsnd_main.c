@@ -853,6 +853,9 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 
 	if (context->use_dynamic_virtual_channel)
 	{
+		UINT32 channelId;
+		BOOL status = TRUE;
+
 		if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
 		                                (LPSTR*)&pSessionId, &bytesReturned))
 		{
@@ -865,6 +868,15 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 				WLog_ERR(TAG, "Open audio dynamic virtual channel (%s) failed!",
 				         RDPSND_DVC_CHANNEL_NAME);
 				return ERROR_INTERNAL_ERROR;
+			}
+
+			channelId = WTSChannelGetIdByHandle(priv->ChannelHandle);
+
+			IFCALLRET(context->ChannelIdAssigned, status, context, channelId);
+			if (!status)
+			{
+				WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
+				goto out_close;
 			}
 		}
 		else
