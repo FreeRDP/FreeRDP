@@ -572,17 +572,11 @@ BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 	    peer->AdjustMonitorsLayout(peer))
 	{
 		/* client supports the monitorLayout PDU, let's send him the monitors if any */
-		MONITOR_DEF* monitors = (MONITOR_DEF*)calloc(settings->MonitorCount, sizeof(MONITOR_DEF));
-
-		if (!monitors)
-			return FALSE;
+		MONITOR_DEF* monitors = NULL;
 
 		if (!display_convert_rdp_monitor_to_monitor_def(settings->MonitorCount,
 		                                                settings->MonitorDefArray, &monitors))
-		{
-			free(monitors);
 			return FALSE;
-		}
 
 		if (!freerdp_display_send_monitor_layout(rdp->context, settings->MonitorCount, monitors))
 		{
