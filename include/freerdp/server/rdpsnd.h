@@ -32,6 +32,8 @@ typedef struct s_rdpsnd_server_private RdpsndServerPrivate;
 typedef UINT (*psRdpsndStart)(RdpsndServerContext* context);
 typedef UINT (*psRdpsndStop)(RdpsndServerContext* context);
 
+typedef BOOL (*psRdpsndChannelIdAssigned)(RdpsndServerContext* context, UINT32 channelId);
+
 typedef UINT (*psRdpsndServerInitialize)(RdpsndServerContext* context, BOOL ownThread);
 typedef UINT (*psRdpsndServerSendFormats)(RdpsndServerContext* context);
 typedef UINT (*psRdpsndServerSelectFormat)(RdpsndServerContext* context,
@@ -163,6 +165,12 @@ struct s_rdpsnd_server_context
 	 * Called when a TrainingConfirm PDU is received from the client.
 	 */
 	psRdpsndServerTrainingConfirm TrainingConfirm;
+
+	/**
+	 * Callback, when the channel got its id assigned.
+	 * Only called, when use_dynamic_virtual_channel=TRUE.
+	 */
+	psRdpsndChannelIdAssigned ChannelIdAssigned;
 };
 
 #ifdef __cplusplus
