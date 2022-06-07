@@ -2454,6 +2454,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_KerberosKdc:
 			return settings->KerberosKdc;
 
+		case FreeRDP_KerberosKeytab:
+			return settings->KerberosKeytab;
+
 		case FreeRDP_KerberosLifeTime:
 			return settings->KerberosLifeTime;
 
@@ -2717,6 +2720,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_KerberosKdc:
 			return settings->KerberosKdc;
+
+		case FreeRDP_KerberosKeytab:
+			return settings->KerberosKeytab;
 
 		case FreeRDP_KerberosLifeTime:
 			return settings->KerberosLifeTime;
@@ -2991,6 +2997,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_KerberosKdc:
 			return update_string(&settings->KerberosKdc, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosKeytab:
+			return update_string(&settings->KerberosKeytab, cnv.cc, len, cleanup);
 
 		case FreeRDP_KerberosLifeTime:
 			return update_string(&settings->KerberosLifeTime, cnv.cc, len, cleanup);

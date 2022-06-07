@@ -169,21 +169,23 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	krb5_error_code rv;
 	krb5_context ctx = NULL;
 	krb5_ccache ccache = NULL;
+	krb5_keytab keytab = NULL;
 	krb5_get_init_creds_opt* gic_opt = NULL;
 	krb5_deltat start_time = 0;
 	krb5_principal principal = NULL;
+	krb5_principal cache_principal = NULL;
 	krb5_creds creds;
 	BOOL is_unicode = FALSE;
 	char* domain = NULL;
 	char* username = NULL;
 	char* password = NULL;
 	char* ccache_name = NULL;
+	char keytab_name[PATH_MAX];
 	sspi_gss_OID_set_desc desired_mechs = { 1, SSPI_GSS_C_SPNEGO_KRB5 };
-	sspi_gss_key_value_element_desc ccache_setting = { "ccache", ccache_name };
-	sspi_gss_key_value_set_desc cred_store = { 1, &ccache_setting };
+	sspi_gss_key_value_element_desc cred_store_opts[2];
+	sspi_gss_key_value_set_desc cred_store = { 2, cred_store_opts };
 	sspi_gss_cred_id_t gss_creds = NULL;
 	OM_uint32 major, minor;
-	char* fallback_cc_name = "MEMORY:";
 	int cred_usage;
 
 	switch (fCredentialUse)
@@ -218,18 +220,13 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			username = (char*)identity->User;
 			password = (char*)identity->Password;
 		}
+
+		if (!pszPrincipal)
+			pszPrincipal = username;
 	}
 
 	if ((rv = krb5_init_context(&ctx)))
 		goto cleanup;
-
-	/* If user provided a cache use it whether or not it's initialized with the right principal */
-	if (krb_settings && krb_settings->cache)
-	{
-		if ((rv = krb5_cc_set_default_name(ctx, krb_settings->cache)))
-			goto cleanup;
-		fallback_cc_name = krb_settings->cache;
-	}
 
 	if (domain)
 	{
@@ -239,36 +236,67 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			goto cleanup;
 	}
 
-	if (username)
+	if (pszPrincipal)
 	{
 		/* Find realm component if included and convert to uppercase */
-		char* p = username;
-		for (; *p != '@' && *p != 0; p++)
-			;
+		char *p = strchr(pszPrincipal, '@');
 		CharUpperA(p);
 
-		if ((rv = krb5_parse_name(ctx, username, &principal)))
+		if ((rv = krb5_parse_name(ctx, pszPrincipal, &principal)))
 			goto cleanup;
 	}
-	else
+
+	if (krb_settings && krb_settings->cache)
 	{
+		if ((rv = krb5_cc_resolve(ctx, krb_settings->cache, &ccache)))
+			goto cleanup;
+
+		/* Make sure the cache is initialized with the right principal */
+		if (principal)
+		{
+			if ((rv = krb5_cc_get_principal(ctx, ccache, &cache_principal)))
+				goto cleanup;
+			if (!krb5_principal_compare(ctx, principal, cache_principal))
+				if ((rv = krb5_cc_initialize(ctx, ccache, principal)))
+					goto cleanup;
+		}
+	}
+	else if (principal)
+	{
+		/* Use the default cache if it's initialized with the right principal */
+		if (krb5_cc_cache_match(ctx, principal, &ccache) == KRB5_CC_NOTFOUND)
+		{
+			if ((rv = krb5_cc_resolve(ctx, "MEMORY:", &ccache)))
+				goto cleanup;
+			if ((rv = krb5_cc_initialize(ctx, ccache, principal)))
+				goto cleanup;
+		}
+	}
+	else if (fCredentialUse & SECPKG_CRED_OUTBOUND)
+	{
+		/* Use the default cache with it's default principal */
 		if ((rv = krb5_cc_default(ctx, &ccache)))
 			goto cleanup;
 		if ((rv = krb5_cc_get_principal(ctx, ccache, &principal)))
 			goto cleanup;
 	}
-
-	/* If the default (or user provided) cache is already initialized with the right principal use
-	   it otherwise initialize a new cache in memory (or the user provided one) with our principal
-	 */
-	if (krb5_cc_cache_match(ctx, principal, &ccache) == KRB5_CC_NOTFOUND)
+	else
 	{
-		if ((rv = krb5_cc_resolve(ctx, fallback_cc_name, &ccache)))
-			goto cleanup;
-		if ((rv = krb5_cc_initialize(ctx, ccache, principal)))
+		if ((rv = krb5_cc_resolve(ctx, "MEMORY:", &ccache)))
 			goto cleanup;
 	}
 
+	if (krb_settings && krb_settings->keytab)
+	{
+		if ((rv = krb5_kt_resolve(ctx, krb_settings->keytab, &keytab)))
+			goto cleanup;
+	}
+	else
+	{
+		if ((rv = krb5_kt_default(ctx, &keytab)))
+			goto cleanup;
+	}
+	
 	if ((rv = krb5_get_init_creds_opt_alloc(ctx, &gic_opt)))
 		goto cleanup;
 
@@ -301,14 +329,21 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 #endif
 
 	krb5_cc_get_full_name(ctx, ccache, &ccache_name);
-	ccache_setting.value = ccache_name;
+	krb5_kt_get_name(ctx, keytab, keytab_name, PATH_MAX);
+
+	cred_store_opts[0].key = "ccache";
+	cred_store_opts[0].value = ccache_name;
+	cred_store_opts[1].key = "keytab";
+	cred_store_opts[1].value = keytab_name;
 
 	/* Check if there are initial creds already in the cache there's no need to request new ones */
 	major = sspi_gss_acquire_cred_from(&minor, SSPI_GSS_C_NO_NAME, SSPI_GSS_C_INDEFINITE,
-	                                   &desired_mechs, SSPI_GSS_C_INITIATE, &cred_store, &gss_creds,
+	                                   &desired_mechs, cred_usage, &cred_store, &gss_creds,
 	                                   NULL, NULL);
 	if (major != SSPI_GSS_S_NO_CRED)
 		goto cleanup;
+
+	gss_log_status_messages(major, minor);
 
 	if ((rv = krb5_get_init_creds_password(ctx, &creds, principal, password, krb5_prompter,
 	                                       password, start_time, NULL, gic_opt)))
@@ -343,7 +378,7 @@ cleanup:
 		if (password)
 			free(password);
 	}
-	if (ccache_setting.value)
+	if (ccache_name)
 		krb5_free_string(ctx, ccache_name);
 	if (principal)
 		krb5_free_principal(ctx, principal);
@@ -554,6 +589,82 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(
 		free(target_name);
 
 	return status;
+}
+
+static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
+	PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput, ULONG fContextReq,
+	ULONG TargetDataRep, PCtxtHandle phNewContext, PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpity)
+{
+#ifdef WITH_GSSAPI
+	KRB_CONTEXT *context;
+	sspi_gss_cred_id_t creds;
+	sspi_gss_ctx_id_t gss_ctx = SSPI_GSS_C_NO_CONTEXT;
+	PSecBuffer input_buffer;
+	PSecBuffer output_buffer = NULL;
+	sspi_gss_buffer_desc input_token;
+	sspi_gss_buffer_desc output_token;
+	UINT32 major, minor;
+	UINT32 time_rec;
+
+	context = sspi_SecureHandleGetLowerPointer(phContext);
+	creds = sspi_SecureHandleGetLowerPointer(phCredential);
+
+	if (pInput)
+		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
+	if (pOutput)
+		output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
+
+	if (!input_buffer)
+		return SEC_E_INVALID_TOKEN;
+
+	if (context)
+		gss_ctx = context->gss_ctx;
+
+	input_token.length = input_buffer->cbBuffer;
+	input_token.value = input_buffer->pvBuffer;
+	
+	major = sspi_gss_accept_sec_context(
+		&minor, &gss_ctx, creds, &input_token, SSPI_GSS_C_NO_CHANNEL_BINDINGS, NULL, NULL, &output_token, pfContextAttr, &time_rec, NULL);
+	
+	if (SSPI_GSS_ERROR(major))
+	{
+		gss_log_status_messages(major, minor);
+		return SEC_E_INTERNAL_ERROR;
+	}
+
+	if (output_token.length > 0)
+	{
+		if (output_buffer && output_buffer->cbBuffer >= output_token.length)
+		{
+			output_buffer->cbBuffer = output_token.length;
+			CopyMemory(output_buffer->pvBuffer, output_token.value, output_token.length);
+			sspi_gss_release_buffer(&minor, &output_token);
+		}
+		else
+		{
+			sspi_gss_release_buffer(&minor, &output_token);
+			return SEC_E_INVALID_TOKEN;
+		}
+	}
+
+	if (!context)
+	{
+		context = kerberos_ContextNew();
+		if (!context)
+			return SEC_E_INSUFFICIENT_MEMORY;
+	}
+
+	context->gss_ctx = gss_ctx;
+	sspi_SecureHandleSetUpperPointer(phNewContext, KERBEROS_SSP_NAME);
+	sspi_SecureHandleSetLowerPointer(phNewContext, context);
+
+	if (major & SSPI_GSS_S_CONTINUE_NEEDED)
+		return SEC_I_CONTINUE_NEEDED;
+
+	return SEC_E_OK;
+#else
+	return SEC_E_UNSUPPORTED_FUNCTION;
+#endif /* WITH_GSSAPI */
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_DeleteSecurityContext(PCtxtHandle phContext)
@@ -852,7 +963,7 @@ const SecurityFunctionTableA KERBEROS_SecurityFunctionTableA = {
 	kerberos_FreeCredentialsHandle,       /* FreeCredentialsHandle */
 	NULL,                                 /* Reserved2 */
 	kerberos_InitializeSecurityContextA,  /* InitializeSecurityContext */
-	NULL,                                 /* AcceptSecurityContext */
+	kerberos_AcceptSecurityContext,       /* AcceptSecurityContext */
 	NULL,                                 /* CompleteAuthToken */
 	kerberos_DeleteSecurityContext,       /* DeleteSecurityContext */
 	NULL,                                 /* ApplyControlToken */
@@ -883,7 +994,7 @@ const SecurityFunctionTableW KERBEROS_SecurityFunctionTableW = {
 	kerberos_FreeCredentialsHandle,       /* FreeCredentialsHandle */
 	NULL,                                 /* Reserved2 */
 	kerberos_InitializeSecurityContextW,  /* InitializeSecurityContext */
-	NULL,                                 /* AcceptSecurityContext */
+	kerberos_AcceptSecurityContext,       /* AcceptSecurityContext */
 	NULL,                                 /* CompleteAuthToken */
 	kerberos_DeleteSecurityContext,       /* DeleteSecurityContext */
 	NULL,                                 /* ApplyControlToken */

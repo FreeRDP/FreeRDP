@@ -680,6 +680,7 @@ typedef struct
 #define FreeRDP_KerberosRenewableLifeTime (1348)
 #define FreeRDP_KerberosCache (1349)
 #define FreeRDP_KerberosArmor (1350)
+#define FreeRDP_KerberosKeytab (1351)
 #define FreeRDP_IgnoreCertificate (1408)
 #define FreeRDP_CertificateName (1409)
 #define FreeRDP_CertificateFile (1410)
@@ -1186,7 +1187,8 @@ struct rdp_settings
 	ALIGN64 char* KerberosRenewableLifeTime; /* 1348 */
 	ALIGN64 char* KerberosCache;             /* 1349 */
 	ALIGN64 char* KerberosArmor;             /* 1350 */
-	UINT64 padding1408[1408 - 1351];         /* 1351 */
+	ALIGN64 char* KerberosKeytab;            /* 1351 */
+	UINT64 padding1408[1408 - 1352];         /* 1352 */
 
 	/* Server Certificate */
 	ALIGN64 BOOL IgnoreCertificate;                /* 1408 */

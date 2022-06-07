@@ -601,6 +601,7 @@ typedef struct
 
 typedef struct
 {
+	char* keytab;
 	char* cache;
 	char* armorCache;
 	char* pkinitX509Anchors;

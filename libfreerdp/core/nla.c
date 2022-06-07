@@ -943,6 +943,16 @@ static BOOL nla_setup_kerberos(rdpNla* nla)
 		}
 	}
 
+	if (settings->KerberosKeytab)
+	{
+		kerbSettings->keytab = _strdup(settings->KerberosKeytab);
+		if (!kerbSettings->keytab)
+		{
+			WLog_ERR(TAG, "unable to copy keytab name");
+			return FALSE;
+		}
+	}
+
 	if (settings->KerberosArmor)
 	{
 		kerbSettings->armorCache = _strdup(settings->KerberosArmor);
@@ -1352,13 +1362,16 @@ static int nla_server_init(rdpNla* nla)
 	if (!nla_sspi_module_init(nla))
 		return -1;
 
+	if (!nla_setup_kerberos(nla))
+		return -1;
+
 	nla->status = nla_update_package_name(nla);
 
 	if (nla->status != SEC_E_OK)
 		return -1;
 
 	nla->status =
-	    nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME, SECPKG_CRED_INBOUND, NULL, NULL,
+	    nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME, SECPKG_CRED_INBOUND, NULL, nla->identity,
 	                                         NULL, NULL, &nla->credentials, &nla->expiration);
 
 	if (nla->status != SEC_E_OK)
