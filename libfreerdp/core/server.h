@@ -86,6 +86,9 @@ struct WTSVirtualChannelManager
 	BYTE drdynvc_state;
 	LONG dvc_channel_id_seq;
 
+  psDVCCreationStatusCallback dvc_creation_status;
+	void* dvc_creation_status_userdata;
+
 	wArrayList* dynamicVirtualChannels;
 };
 
