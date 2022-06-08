@@ -3,6 +3,7 @@
 Noteworthy changes:
 * Backported API to get peer accepted channel names
 * Backported Stream_CheckAndLogRequiredLength
+* Backported server side handling for [MS-RDPET] (#7954)
 
 Fixed issues:
 * Fixed #7837: Prevent out of bound reads for FFMPEG
@@ -15,6 +16,7 @@ Fixed issues:
 * Backported #7898: Automatic android versioning
 * Backported #7916: GFX 10.7 capability support
 * Backported #7949: Server RDPSND API improvements
+* Backported #7957: Server DVC API improvements
 
 # 2022-04-25 Version 2.7.0
 
