@@ -91,7 +91,21 @@ static UINT echo_server_open_channel(echo_server* echo)
 		    WTSVirtualChannelOpenEx(echo->SessionId, "ECHO", WTS_CHANNEL_OPTION_DYNAMIC);
 
 		if (echo->echo_channel)
+		{
+			UINT32 channelId;
+			BOOL status = TRUE;
+
+			channelId = WTSChannelGetIdByHandle(echo->echo_channel);
+
+			IFCALLRET(echo->context.ChannelIdAssigned, status, &echo->context, channelId);
+			if (!status)
+			{
+				WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
+				return ERROR_INTERNAL_ERROR;
+			}
+
 			break;
+		}
 
 		Error = GetLastError();
 

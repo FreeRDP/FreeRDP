@@ -99,6 +99,8 @@ UINT rdpei_server_init(RdpeiServerContext* context)
 	void* buffer = NULL;
 	DWORD bytesReturned;
 	RdpeiServerPrivate* priv = context->priv;
+	UINT32 channelId;
+	BOOL status = TRUE;
 
 	priv->channelHandle = WTSVirtualChannelOpenEx(WTS_CURRENT_SESSION, RDPEI_DVC_CHANNEL_NAME,
 	                                              WTS_CHANNEL_OPTION_DYNAMIC);
@@ -106,6 +108,15 @@ UINT rdpei_server_init(RdpeiServerContext* context)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelOpenEx failed!");
 		return CHANNEL_RC_INITIALIZATION_ERROR;
+	}
+
+	channelId = WTSChannelGetIdByHandle(priv->channelHandle);
+
+	IFCALLRET(context->onChannelIdAssigned, status, context, channelId);
+	if (!status)
+	{
+		WLog_ERR(TAG, "context->onChannelIdAssigned failed!");
+		goto out_close;
 	}
 
 	if (!WTSVirtualChannelQuery(priv->channelHandle, WTSVirtualEventHandle, &buffer,

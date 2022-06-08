@@ -29,6 +29,8 @@ typedef struct _rdpgfx_server_private RdpgfxServerPrivate;
 typedef BOOL (*psRdpgfxServerOpen)(RdpgfxServerContext* context);
 typedef BOOL (*psRdpgfxServerClose)(RdpgfxServerContext* context);
 
+typedef BOOL (*psRdpgfxServerChannelIdAssigned)(RdpgfxServerContext* context, UINT32 channelId);
+
 typedef UINT (*psRdpgfxResetGraphics)(RdpgfxServerContext* context,
                                       const RDPGFX_RESET_GRAPHICS_PDU* resetGraphics);
 typedef UINT (*psRdpgfxStartFrame)(RdpgfxServerContext* context,
@@ -112,6 +114,11 @@ struct _rdpgfx_server_context
 
 	RdpgfxServerPrivate* priv;
 	rdpContext* rdpcontext;
+
+	/**
+	 * Callback, when the channel got its id assigned.
+	 */
+	psRdpgfxServerChannelIdAssigned ChannelIdAssigned;
 };
 
 #ifdef __cplusplus

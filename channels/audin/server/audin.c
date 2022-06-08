@@ -557,6 +557,8 @@ static BOOL audin_server_open(audin_server_context* context)
 		PULONG pSessionId = NULL;
 		DWORD BytesReturned = 0;
 		audin->SessionId = WTS_CURRENT_SESSION;
+		UINT32 channelId;
+		BOOL status = TRUE;
 
 		if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
 		                                (LPSTR*)&pSessionId, &BytesReturned))
@@ -572,6 +574,15 @@ static BOOL audin_server_open(audin_server_context* context)
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelOpenEx failed!");
 			return FALSE;
+		}
+
+		channelId = WTSChannelGetIdByHandle(audin->audin_channel);
+
+		IFCALLRET(context->ChannelIdAssigned, status, context, channelId);
+		if (!status)
+		{
+			WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
+			return ERROR_INTERNAL_ERROR;
 		}
 
 		if (!(audin->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))

@@ -378,6 +378,8 @@ static UINT disp_server_open(DispServerContext* context)
 	void* buffer;
 	buffer = NULL;
 	priv->SessionId = WTS_CURRENT_SESSION;
+	UINT32 channelId;
+	BOOL status = TRUE;
 
 	if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
 	                                (LPSTR*)&pSessionId, &BytesReturned) == FALSE)
@@ -396,6 +398,16 @@ static UINT disp_server_open(DispServerContext* context)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelOpenEx failed!");
 		rc = GetLastError();
+		goto out_close;
+	}
+
+	channelId = WTSChannelGetIdByHandle(priv->disp_channel);
+
+	IFCALLRET(context->ChannelIdAssigned, status, context, channelId);
+	if (!status)
+	{
+		WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
+		rc = ERROR_INTERNAL_ERROR;
 		goto out_close;
 	}
 

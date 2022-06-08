@@ -122,7 +122,21 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 		                                                 WTS_CHANNEL_OPTION_DYNAMIC);
 
 		if (ainput->ainput_channel)
+		{
+			UINT32 channelId;
+			BOOL status = TRUE;
+
+			channelId = WTSChannelGetIdByHandle(ainput->ainput_channel);
+
+			IFCALLRET(ainput->context.ChannelIdAssigned, status, &ainput->context, channelId);
+			if (!status)
+			{
+				WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
+				return ERROR_INTERNAL_ERROR;
+			}
+
 			break;
+		}
 
 		Error = GetLastError();
 

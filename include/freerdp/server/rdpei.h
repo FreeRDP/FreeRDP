@@ -47,6 +47,11 @@ struct _rdpei_server_context
 	void* user_data; /* user data, useful for callbacks */
 
 	UINT (*onPenEvent)(RdpeiServerContext* context, const RDPINPUT_PEN_EVENT* penEvent);
+
+	/**
+	 * Callback, when the channel got its id assigned.
+	 */
+	BOOL (*onChannelIdAssigned)(RdpeiServerContext* context, UINT32 channelId);
 };
 
 #ifdef __cplusplus
