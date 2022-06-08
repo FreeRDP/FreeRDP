@@ -262,7 +262,7 @@ static UINT audin_server_send_open(audin_server* audin, wStream* s)
 	audin->opened = TRUE;
 	Stream_SetPosition(s, 0);
 	Stream_Write_UINT8(s, MSG_SNDIN_OPEN);
-	Stream_Write_UINT32(s, audin->context.frames_per_packet);      /* FramesPerPacket (4 bytes) */
+	Stream_Write_UINT32(s, audin->context.frames_per_packet); /* FramesPerPacket (4 bytes) */
 	WINPR_ASSERT(audin->context.selected_client_format >= 0);
 	WINPR_ASSERT(audin->context.selected_client_format <= UINT32_MAX);
 	Stream_Write_UINT32(
@@ -578,6 +578,8 @@ static BOOL audin_server_open(audin_server_context* context)
 		PULONG pSessionId = NULL;
 		DWORD BytesReturned = 0;
 		audin->SessionId = WTS_CURRENT_SESSION;
+		UINT32 channelId;
+		BOOL status = TRUE;
 
 		if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
 		                                (LPSTR*)&pSessionId, &BytesReturned))
@@ -593,6 +595,15 @@ static BOOL audin_server_open(audin_server_context* context)
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelOpenEx failed!");
 			return FALSE;
+		}
+
+		channelId = WTSChannelGetIdByHandle(audin->audin_channel);
+
+		IFCALLRET(context->ChannelIdAssigned, status, context, channelId);
+		if (!status)
+		{
+			WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
+			return ERROR_INTERNAL_ERROR;
 		}
 
 		if (!(audin->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))

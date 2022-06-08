@@ -1423,6 +1423,8 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 		PULONG pSessionId = NULL;
 		DWORD BytesReturned = 0;
 		priv->SessionId = WTS_CURRENT_SESSION;
+		UINT32 channelId;
+		BOOL status = TRUE;
 
 		if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
 		                                (LPSTR*)&pSessionId, &BytesReturned) == FALSE)
@@ -1440,6 +1442,15 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelOpenEx failed!");
 			return FALSE;
+		}
+
+		channelId = WTSChannelGetIdByHandle(priv->rdpgfx_channel);
+
+		IFCALLRET(context->ChannelIdAssigned, status, context, channelId);
+		if (!status)
+		{
+			WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
+			goto out_close;
 		}
 
 		/* Query for channel event handle */

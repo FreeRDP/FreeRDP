@@ -29,6 +29,8 @@
 typedef struct s_disp_server_private DispServerPrivate;
 typedef struct s_disp_server_context DispServerContext;
 
+typedef BOOL (*psDispChannelIdAssigned)(DispServerContext* context, UINT32 channelId);
+
 typedef UINT (*psDispMonitorLayout)(DispServerContext* context,
                                     const DISPLAY_CONTROL_MONITOR_LAYOUT_PDU* pdu);
 typedef UINT (*psDispCaps)(DispServerContext* context);
@@ -53,6 +55,11 @@ struct s_disp_server_context
 
 	DispServerPrivate* priv;
 	rdpContext* rdpcontext;
+
+	/**
+	 * Callback, when the channel got its id assigned.
+	 */
+	psDispChannelIdAssigned ChannelIdAssigned;
 };
 
 #ifdef __cplusplus

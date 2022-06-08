@@ -34,6 +34,8 @@ typedef enum AINPUT_SERVER_OPEN_RESULT
 
 typedef struct _ainput_server_context ainput_server_context;
 
+typedef BOOL (*psAInputChannelIdAssigned)(ainput_server_context* context, UINT32 channelId);
+
 typedef UINT (*psAInputServerInitialize)(ainput_server_context* context, BOOL externalThread);
 typedef UINT (*psAInputServerPoll)(ainput_server_context* context);
 typedef BOOL (*psAInputServerChannelHandle)(ainput_server_context* context, HANDLE* handle);
@@ -98,6 +100,11 @@ struct _ainput_server_context
 	psAInputServerMouseEvent MouseEvent;
 
 	rdpContext* rdpcontext;
+
+	/**
+	 * Callback, when the channel got its id assigned.
+	 */
+	psAInputChannelIdAssigned ChannelIdAssigned;
 };
 
 #ifdef __cplusplus
