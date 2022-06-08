@@ -162,9 +162,6 @@ static UINT audin_server_send_formats(audin_server* audin, wStream* s)
 	for (i = 0; i < audin->context.num_server_formats; i++)
 	{
 		AUDIO_FORMAT format = audin->context.server_formats[i];
-		// TODO: Eliminate this
-		format.nAvgBytesPerSec =
-		    format.nSamplesPerSec * format.nChannels * format.wBitsPerSample / 8;
 
 		if (!audio_format_write(s, &format))
 		{
