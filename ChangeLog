@@ -1,6 +1,7 @@
 # 20xx-xx-xx Version 2.x.x
 
 Noteworthy changes:
+* Backported API to get peer accepted channel option flags
 * Backported API to get peer accepted channel names
 * Backported Stream_CheckAndLogRequiredLength
 * Backported server side handling for [MS-RDPET] (#7954)
@@ -603,4 +604,3 @@ Virtual Channels:
 * rdpsnd (Sound Redirection)
 	* alsa support
 	* pulse support
-
