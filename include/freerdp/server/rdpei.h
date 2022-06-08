@@ -46,6 +46,11 @@ struct s_rdpei_server_context
 	UINT (*onTouchReleased)(RdpeiServerContext* context, BYTE contactId);
 
 	void* user_data; /* user data, useful for callbacks */
+
+	/**
+	 * Callback, when the channel got its id assigned.
+	 */
+	BOOL (*onChannelIdAssigned)(RdpeiServerContext* context, UINT32 channelId);
 };
 
 #ifdef __cplusplus

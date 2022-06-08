@@ -28,6 +28,8 @@
 
 typedef struct s_audin_server_context audin_server_context;
 
+typedef BOOL (*psAudinServerChannelIdAssigned)(audin_server_context* context, UINT32 channelId);
+
 typedef UINT (*psAudinServerSelectFormat)(audin_server_context* context,
                                           size_t client_format_index);
 typedef BOOL (*psAudinServerOpen)(audin_server_context* context);
@@ -99,6 +101,11 @@ struct s_audin_server_context
 	psAudinServerReceiveSamples ReceiveSamples;
 
 	rdpContext* rdpcontext;
+
+	/**
+	 * Callback, when the channel got its id assigned.
+	 */
+	psAudinServerChannelIdAssigned ChannelIdAssigned;
 };
 
 #ifdef __cplusplus

@@ -392,6 +392,8 @@ static UINT disp_server_open(DispServerContext* context)
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 	void* buffer = NULL;
+	UINT32 channelId;
+	BOOL status = TRUE;
 
 	WINPR_ASSERT(context);
 
@@ -417,6 +419,16 @@ static UINT disp_server_open(DispServerContext* context)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelOpenEx failed!");
 		rc = GetLastError();
+		goto out_close;
+	}
+
+	channelId = WTSChannelGetIdByHandle(priv->disp_channel);
+
+	IFCALLRET(context->ChannelIdAssigned, status, context, channelId);
+	if (!status)
+	{
+		WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
+		rc = ERROR_INTERNAL_ERROR;
 		goto out_close;
 	}
 
