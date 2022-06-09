@@ -28,6 +28,7 @@
 #include <freerdp/autodetect.h>
 
 #include <winpr/sspi.h>
+#include <winpr/ntlm.h>
 #include <winpr/winsock.h>
 
 typedef BOOL (*psPeerContextNew)(freerdp_peer* peer, rdpContext* context);
@@ -147,7 +148,13 @@ struct rdp_freerdp_peer
 	ALIGN64 psPeerGetEventHandles GetEventHandles;
 	ALIGN64 psPeerAdjustMonitorsLayout AdjustMonitorsLayout;
 	ALIGN64 psPeerClientCapabilities ClientCapabilities;
-	ALIGN64 psSspiComputeNtlmHash ComputeNtlmHash;
+#if defined(WITH_FREERDP_DEPRECATED)
+	WINPR_DEPRECATED_VAR("Use freerdp_peer::SspiNtlmHashCallback instead",
+	                     ALIGN64 psPeerComputeNtlmHash ComputeNtlmHash;)
+#else
+	UINT64 reserved2;
+#endif
+	ALIGN64 psSspiNtlmHashCallback SspiNtlmHashCallback;
 	ALIGN64 psPeerLicenseCallback LicenseCallback;
 
 	ALIGN64 psPeerSendChannelPacket SendChannelPacket;

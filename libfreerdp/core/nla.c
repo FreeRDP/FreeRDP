@@ -1374,7 +1374,7 @@ static int nla_server_init(rdpNla* nla)
 	WINPR_ASSERT(peer);
 
 	identity = &nla->identityWinPr;
-	identity->ntlmSettings.hashCallback = peer->ComputeNtlmHash;
+	identity->ntlmSettings.hashCallback = peer->SspiNtlmHashCallback;
 	identity->ntlmSettings.hashCallbackArg = peer;
 	identity->ntlmSettings.samFile = nla->SamFile;
 
