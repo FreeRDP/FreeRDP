@@ -96,8 +96,13 @@ typedef struct
 #define RDPGFX_CAPVERSION_103 0x000A0301 /** [MS-RDPEGFX] 2.2.3.6 */
 #define RDPGFX_CAPVERSION_104 0x000A0400 /** [MS-RDPEGFX] 2.2.3.7 */
 #define RDPGFX_CAPVERSION_105 0x000A0502 /** [MS-RDPEGFX] 2.2.3.8 */
-#define RDPGFX_CAPVERSION_106 0x000A0601 /** [MS-RDPEGFX] 2.2.3.9 */
-#define RDPGFX_CAPVERSION_106_ERR 0x000A0600 /** [MS-RDPEGFX]-180912-errata] */
+#define RDPGFX_CAPVERSION_106                                               \
+	0x000A0600 /** [MS-RDPEGFX] 2.2.3.9 (the value in the doc is wrong, see \
+	            * [MS-RDPEGFX]-180912-errata]                               \
+	            * Since this is/was documented for a long time, also define \
+	            * the incorrect value in case some server actually uses it. \
+	            */
+#define RDPGFX_CAPVERSION_106_ERR 0x000A0601
 #define RDPGFX_CAPVERSION_107 0x000A0701     /** [MS-RDPEGFX] 2.2.3.10 */
 
 #define RDPGFX_NUMBER_CAPSETS 11
