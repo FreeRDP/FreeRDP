@@ -724,7 +724,7 @@ typedef SecBufferDesc* PSecBufferDesc;
 
 #endif /* !defined(_WIN32) || defined(_UWP) */
 
-typedef SECURITY_STATUS (*psSspiComputeNtlmHash)(void* client,
+typedef SECURITY_STATUS (*psSspiNtlmHashCallback)(void* client,
 												 const SEC_WINNT_AUTH_IDENTITY* authIdentity,
 												 const SecBuffer* ntproofvalue,
 												 const BYTE* randkey, const BYTE* mic,
@@ -733,7 +733,7 @@ typedef SECURITY_STATUS (*psSspiComputeNtlmHash)(void* client,
 typedef struct
 {
 	char* samFile;
-	psSspiComputeNtlmHash hashCallback;
+	psSspiNtlmHashCallback hashCallback;
 	void* hashCallbackArg;
 } SEC_WINPR_NTLM_SETTINGS;
 

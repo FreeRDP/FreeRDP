@@ -277,7 +277,7 @@ typedef struct
 	BYTE ClientSealingKey[16];
 	BYTE ServerSigningKey[16];
 	BYTE ServerSealingKey[16];
-	psSspiComputeNtlmHash HashCallback;
+	psSspiNtlmHashCallback HashCallback;
 	void* HashCallbackArg;
 } NTLM_CONTEXT;
 
