@@ -38,6 +38,9 @@ struct proxy_config
 	BOOL FixedTarget;
 	char* TargetHost;
 	UINT16 TargetPort;
+	char* TargetUser;
+	char* TargetDomain;
+	char* TargetPassword;
 
 	/* input */
 	BOOL Keyboard;

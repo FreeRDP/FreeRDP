@@ -151,6 +151,15 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 				return FALSE;
 			}
 
+			if (config->TargetUser)
+				freerdp_settings_set_string(settings, FreeRDP_Username, config->TargetUser);
+
+			if (config->TargetDomain)
+				freerdp_settings_set_string(settings, FreeRDP_Domain, config->TargetDomain);
+
+			if (config->TargetPassword)
+				freerdp_settings_set_string(settings, FreeRDP_Password, config->TargetPassword);
+
 			return TRUE;
 		}
 		case PROXY_FETCH_TARGET_USE_CUSTOM_ADDR:
@@ -260,27 +269,27 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	pClientContext* pc;
 	rdpSettings* client_settings;
 	proxyData* pdata;
-	rdpSettings* settings;
+	rdpSettings* frontSettings;
 
 	WINPR_ASSERT(peer);
 
 	ps = (pServerContext*)peer->context;
 	WINPR_ASSERT(ps);
 
-	settings = peer->context->settings;
-	WINPR_ASSERT(settings);
+	frontSettings = peer->context->settings;
+	WINPR_ASSERT(frontSettings);
 
 	pdata = ps->pdata;
 	WINPR_ASSERT(pdata);
 
-	PROXY_LOG_INFO(TAG, ps, "Accepted client: %s", settings->ClientHostname);
+	PROXY_LOG_INFO(TAG, ps, "Accepted client: %s", frontSettings->ClientHostname);
 	if (!pf_server_setup_channels(peer))
 	{
 		PROXY_LOG_ERR(TAG, ps, "error setting up channels");
 		return FALSE;
 	}
 
-	pc = pf_context_create_client_context(settings);
+	pc = pf_context_create_client_context(frontSettings);
 	if (pc == NULL)
 	{
 		PROXY_LOG_ERR(TAG, ps, "failed to create client context!");

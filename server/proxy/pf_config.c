@@ -188,7 +188,7 @@ static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
 
 static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 {
-	const char* target_host;
+	const char* target_value;
 
 	WINPR_ASSERT(config);
 	config->FixedTarget = pf_config_get_bool(ini, "Target", "FixedTarget", FALSE);
@@ -196,14 +196,41 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	if (!pf_config_get_uint16(ini, "Target", "Port", &config->TargetPort, config->FixedTarget))
 		return FALSE;
 
-	target_host = pf_config_get_str(ini, "Target", "Host", config->FixedTarget);
 
-	if (!target_host)
-		return FALSE;
+	if (config->FixedTarget)
+	{
+		target_value = pf_config_get_str(ini, "Target", "Host", TRUE);
+		if (!target_value)
+			return FALSE;
 
-	config->TargetHost = _strdup(target_host);
-	if (!config->TargetHost)
-		return FALSE;
+		config->TargetHost = _strdup(target_value);
+		if (!config->TargetHost)
+			return FALSE;
+	}
+
+	target_value = pf_config_get_str(ini, "Target", "User", FALSE);
+	if (target_value)
+	{
+		config->TargetUser = _strdup(target_value);
+		if (!config->TargetUser)
+			return FALSE;
+	}
+
+	target_value = pf_config_get_str(ini, "Target", "Password", FALSE);
+	if (target_value)
+	{
+		config->TargetPassword = _strdup(target_value);
+		if (!config->TargetPassword)
+			return FALSE;
+	}
+
+	target_value = pf_config_get_str(ini, "Target", "Domain", FALSE);
+	if (target_value)
+	{
+		config->TargetDomain = _strdup(target_value);
+		if (!config->TargetDomain)
+			return FALSE;
+	}
 
 	return TRUE;
 }
@@ -636,6 +663,11 @@ void pf_server_config_print(const proxyConfig* config)
 		CONFIG_PRINT_SECTION("Target");
 		CONFIG_PRINT_STR(config, TargetHost);
 		CONFIG_PRINT_UINT16(config, TargetPort);
+
+		if (config->TargetUser)
+			CONFIG_PRINT_STR(config, TargetUser);
+		if (config->TargetDomain)
+			CONFIG_PRINT_STR(config, TargetDomain);
 	}
 
 	CONFIG_PRINT_SECTION("Input");
