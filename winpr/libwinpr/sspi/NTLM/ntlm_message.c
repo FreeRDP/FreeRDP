@@ -1112,9 +1112,99 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		credentials->identity.DomainLength = message->DomainName.Len / 2;
 	}
 
-	/* Computations beyond this point require the NTLM hash of the password */
-	ntlm_change_state(context, NTLM_STATE_COMPLETION);
-	return ntlm_server_AuthenticateComplete(context);
+	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_LM_KEY)
+	{
+		if (!ntlm_compute_lm_v2_response(context)) /* LmChallengeResponse */
+			return SEC_E_INTERNAL_ERROR;
+	}
+
+	if (!ntlm_compute_ntlm_v2_response(context)) /* NtChallengeResponse */
+		return SEC_E_INTERNAL_ERROR;
+
+	/* KeyExchangeKey */
+	ntlm_generate_key_exchange_key(context);
+	/* EncryptedRandomSessionKey */
+	ntlm_decrypt_random_session_key(context);
+	/* ExportedSessionKey */
+	ntlm_generate_exported_session_key(context);
+
+	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
+	{
+		BYTE messageIntegrityCheck[16] = { 0 };
+
+		ntlm_compute_message_integrity_check(context, messageIntegrityCheck,
+		                                     sizeof(messageIntegrityCheck));
+		CopyMemory(
+		    &((PBYTE)context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
+		    message->MessageIntegrityCheck, sizeof(message->MessageIntegrityCheck));
+
+		if (memcmp(messageIntegrityCheck, message->MessageIntegrityCheck,
+		           sizeof(message->MessageIntegrityCheck)) != 0)
+		{
+			WLog_ERR(TAG, "Message Integrity Check (MIC) verification failed!");
+#ifdef WITH_DEBUG_NTLM
+			WLog_ERR(TAG, "Expected MIC:");
+			winpr_HexDump(TAG, WLOG_ERROR, messageIntegrityCheck, sizeof(messageIntegrityCheck));
+			WLog_ERR(TAG, "Actual MIC:");
+			winpr_HexDump(TAG, WLOG_ERROR, message->MessageIntegrityCheck,
+			              sizeof(message->MessageIntegrityCheck));
+#endif
+			return SEC_E_MESSAGE_ALTERED;
+		}
+	}
+	else
+	{
+		/* no mic message was present
+
+		   https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/f9e6fbc4-a953-4f24-b229-ccdcc213b9ec
+		   the mic is optional, as not supported in Windows NT, Windows 2000, Windows XP, and
+		   Windows Server 2003 and, as it seems, in the NTLMv2 implementation of Qt5.
+
+		   now check the NtProofString, to detect if the entered client password matches the
+		   expected password.
+		   */
+
+#ifdef WITH_DEBUG_NTLM
+		WLog_VRB(TAG, "No MIC present, using NtProofString for verification.");
+#endif
+
+		if (memcmp(context->NTLMv2Response.Response, context->NtProofString, 16) != 0)
+		{
+			WLog_ERR(TAG, "NtProofString verification failed!");
+#ifdef WITH_DEBUG_NTLM
+			WLog_ERR(TAG, "Expected NtProofString:");
+			winpr_HexDump(TAG, WLOG_ERROR, context->NtProofString, sizeof(context->NtProofString));
+			WLog_ERR(TAG, "Actual NtProofString:");
+			winpr_HexDump(TAG, WLOG_ERROR, context->NTLMv2Response.Response,
+			              sizeof(context->NTLMv2Response));
+#endif
+			return SEC_E_LOGON_DENIED;
+		}
+	}
+
+	/* Generate signing keys */
+	if (!ntlm_generate_client_signing_key(context))
+		return SEC_E_INTERNAL_ERROR;
+	if (!ntlm_generate_server_signing_key(context))
+		return SEC_E_INTERNAL_ERROR;
+	/* Generate sealing keys */
+	if (!ntlm_generate_client_sealing_key(context))
+		return SEC_E_INTERNAL_ERROR;
+	if (!ntlm_generate_server_sealing_key(context))
+		return SEC_E_INTERNAL_ERROR;
+	/* Initialize RC4 seal state */
+	ntlm_init_rc4_seal_states(context);
+#if defined(WITH_DEBUG_NTLM)
+	ntlm_print_authentication_complete(context);
+#endif
+	ntlm_change_state(context, NTLM_STATE_FINAL);
+	ntlm_free_message_fields_buffer(&(message->DomainName));
+	ntlm_free_message_fields_buffer(&(message->UserName));
+	ntlm_free_message_fields_buffer(&(message->Workstation));
+	ntlm_free_message_fields_buffer(&(message->LmChallengeResponse));
+	ntlm_free_message_fields_buffer(&(message->NtChallengeResponse));
+	ntlm_free_message_fields_buffer(&(message->EncryptedRandomSessionKey));
+	return SEC_E_OK;
 
 fail:
 	return status;
@@ -1324,122 +1414,5 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, const PSec
 	                                &context->AuthenticateTargetInfo);
 #endif
 	ntlm_change_state(context, NTLM_STATE_FINAL);
-	return SEC_E_OK;
-}
-
-SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
-{
-	UINT32 flags = 0;
-	size_t cbAvFlags;
-	NTLM_AV_PAIR* AvFlags = NULL;
-	NTLM_AUTHENTICATE_MESSAGE* message;
-
-	if (!context)
-		return SEC_E_INVALID_PARAMETER;
-
-	if (ntlm_get_state(context) != NTLM_STATE_COMPLETION)
-		return SEC_E_OUT_OF_SEQUENCE;
-
-	message = &context->AUTHENTICATE_MESSAGE;
-	WINPR_ASSERT(message);
-
-	AvFlags = ntlm_av_pair_get(context->NTLMv2Response.Challenge.AvPairs,
-	                           context->NTLMv2Response.Challenge.cbAvPairs, MsvAvFlags, &cbAvFlags);
-
-	if (AvFlags)
-		Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags), flags);
-
-	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_LM_KEY)
-	{
-		if (!ntlm_compute_lm_v2_response(context)) /* LmChallengeResponse */
-			return SEC_E_INTERNAL_ERROR;
-	}
-
-	if (!ntlm_compute_ntlm_v2_response(context)) /* NtChallengeResponse */
-		return SEC_E_INTERNAL_ERROR;
-
-	/* KeyExchangeKey */
-	ntlm_generate_key_exchange_key(context);
-	/* EncryptedRandomSessionKey */
-	ntlm_decrypt_random_session_key(context);
-	/* ExportedSessionKey */
-	ntlm_generate_exported_session_key(context);
-
-	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
-	{
-		BYTE messageIntegrityCheck[16] = { 0 };
-
-		ntlm_compute_message_integrity_check(context, messageIntegrityCheck,
-		                                     sizeof(messageIntegrityCheck));
-		CopyMemory(
-		    &((PBYTE)context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
-		    message->MessageIntegrityCheck, sizeof(message->MessageIntegrityCheck));
-
-		if (memcmp(messageIntegrityCheck, message->MessageIntegrityCheck,
-		           sizeof(message->MessageIntegrityCheck)) != 0)
-		{
-			WLog_ERR(TAG, "Message Integrity Check (MIC) verification failed!");
-#ifdef WITH_DEBUG_NTLM
-			WLog_ERR(TAG, "Expected MIC:");
-			winpr_HexDump(TAG, WLOG_ERROR, messageIntegrityCheck, sizeof(messageIntegrityCheck));
-			WLog_ERR(TAG, "Actual MIC:");
-			winpr_HexDump(TAG, WLOG_ERROR, message->MessageIntegrityCheck,
-			              sizeof(message->MessageIntegrityCheck));
-#endif
-			return SEC_E_MESSAGE_ALTERED;
-		}
-	}
-	else
-	{
-		/* no mic message was present
-
-		   https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/f9e6fbc4-a953-4f24-b229-ccdcc213b9ec
-		   the mic is optional, as not supported in Windows NT, Windows 2000, Windows XP, and
-		   Windows Server 2003 and, as it seems, in the NTLMv2 implementation of Qt5.
-
-		   now check the NtProofString, to detect if the entered client password matches the
-		   expected password.
-		   */
-
-#ifdef WITH_DEBUG_NTLM
-		WLog_VRB(TAG, "No MIC present, using NtProofString for verification.");
-#endif
-
-		if (memcmp(context->NTLMv2Response.Response, context->NtProofString, 16) != 0)
-		{
-			WLog_ERR(TAG, "NtProofString verification failed!");
-#ifdef WITH_DEBUG_NTLM
-			WLog_ERR(TAG, "Expected NtProofString:");
-			winpr_HexDump(TAG, WLOG_ERROR, context->NtProofString, sizeof(context->NtProofString));
-			WLog_ERR(TAG, "Actual NtProofString:");
-			winpr_HexDump(TAG, WLOG_ERROR, context->NTLMv2Response.Response,
-			              sizeof(context->NTLMv2Response));
-#endif
-			return SEC_E_LOGON_DENIED;
-		}
-	}
-
-	/* Generate signing keys */
-	if (!ntlm_generate_client_signing_key(context))
-		return SEC_E_INTERNAL_ERROR;
-	if (!ntlm_generate_server_signing_key(context))
-		return SEC_E_INTERNAL_ERROR;
-	/* Generate sealing keys */
-	if (!ntlm_generate_client_sealing_key(context))
-		return SEC_E_INTERNAL_ERROR;
-	if (!ntlm_generate_server_sealing_key(context))
-		return SEC_E_INTERNAL_ERROR;
-	/* Initialize RC4 seal state */
-	ntlm_init_rc4_seal_states(context);
-#if defined(WITH_DEBUG_NTLM)
-	ntlm_print_authentication_complete(context);
-#endif
-	ntlm_change_state(context, NTLM_STATE_FINAL);
-	ntlm_free_message_fields_buffer(&(message->DomainName));
-	ntlm_free_message_fields_buffer(&(message->UserName));
-	ntlm_free_message_fields_buffer(&(message->Workstation));
-	ntlm_free_message_fields_buffer(&(message->LmChallengeResponse));
-	ntlm_free_message_fields_buffer(&(message->NtChallengeResponse));
-	ntlm_free_message_fields_buffer(&(message->EncryptedRandomSessionKey));
 	return SEC_E_OK;
 }

@@ -298,6 +298,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 {
 	SSPI_CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;
+	SEC_WINPR_NTLM_SETTINGS* settings = NULL;
 
 	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) && (fCredentialUse != SECPKG_CRED_INBOUND) &&
 	    (fCredentialUse != SECPKG_CRED_BOTH))
@@ -313,10 +314,30 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 	credentials->fCredentialUse = fCredentialUse;
 	credentials->pGetKeyFn = pGetKeyFn;
 	credentials->pvGetKeyArgument = pvGetKeyArgument;
+
 	identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
 
 	if (identity)
+	{
 		sspi_CopyAuthIdentity(&(credentials->identity), identity);
+		if (identity->Flags & SEC_WINNT_AUTH_IDENTITY_EXTENDED)
+			settings = &((SEC_WINNT_AUTH_IDENTITY_WINPR*)pAuthData)->ntlmSettings;
+	}
+
+	if (settings)
+	{
+		if (settings->samFile)
+		{
+			credentials->ntlmSettings.samFile = _strdup(settings->samFile);
+			if (!credentials->ntlmSettings.samFile)
+			{
+				sspi_CredentialsFree(credentials);
+				return SEC_E_INSUFFICIENT_MEMORY;
+			}
+		}
+		credentials->ntlmSettings.hashCallback = settings->hashCallback;
+		credentials->ntlmSettings.hashCallbackArg = settings->hashCallbackArg;
+	}
 
 	sspi_SecureHandleSetLowerPointer(phCredential, (void*)credentials);
 	sspi_SecureHandleSetUpperPointer(phCredential, (void*)NTLM_PACKAGE_NAME);
@@ -328,31 +349,25 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	SSPI_CREDENTIALS* credentials;
-	SEC_WINNT_AUTH_IDENTITY* identity;
+	SECURITY_STATUS status;
+	SEC_WCHAR* principal = NULL;
+	SEC_WCHAR* package = NULL;
 
-	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) && (fCredentialUse != SECPKG_CRED_INBOUND) &&
-	    (fCredentialUse != SECPKG_CRED_BOTH))
-	{
-		return SEC_E_INVALID_PARAMETER;
-	}
+	if (pszPrincipal)
+		ConvertToUnicode(CP_UTF8, 0, pszPrincipal, -1, &principal, 0);
+	if (pszPackage)
+		ConvertToUnicode(CP_UTF8, 0, pszPackage, -1, &package, 0);
 
-	credentials = sspi_CredentialsNew();
+	status =
+	    ntlm_AcquireCredentialsHandleW(principal, package, fCredentialUse, pvLogonID, pAuthData,
+	                                   pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
 
-	if (!credentials)
-		return SEC_E_INTERNAL_ERROR;
+	if (principal)
+		free(principal);
+	if (package)
+		free(package);
 
-	credentials->fCredentialUse = fCredentialUse;
-	credentials->pGetKeyFn = pGetKeyFn;
-	credentials->pvGetKeyArgument = pvGetKeyArgument;
-	identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
-
-	if (identity)
-		sspi_CopyAuthIdentity(&(credentials->identity), identity);
-
-	sspi_SecureHandleSetLowerPointer(phCredential, (void*)credentials);
-	sspi_SecureHandleSetUpperPointer(phCredential, (void*)NTLM_PACKAGE_NAME);
-	return SEC_E_OK;
+	return status;
 }
 
 static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(PCredHandle phCredential)
@@ -418,6 +433,10 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 
 		credentials = (SSPI_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
 		context->credentials = credentials;
+		context->SamFile = credentials->ntlmSettings.samFile;
+		context->HashCallback = credentials->ntlmSettings.hashCallback;
+		context->HashCallbackArg = credentials->ntlmSettings.hashCallbackArg;
+
 		ntlm_SetContextTargetName(context, NULL);
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*)NTLM_PACKAGE_NAME);
@@ -656,24 +675,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(
 	return status;
 }
 
-static SECURITY_STATUS SEC_ENTRY ntlm_CompleteAuthToken(PCtxtHandle phContext,
-                                                        PSecBufferDesc pToken)
-{
-	NTLM_CONTEXT* context;
-	SECURITY_STATUS status = SEC_E_OK;
-	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
-
-	if (!context)
-		return SEC_E_INVALID_HANDLE;
-
-	if (context->server)
-	{
-		status = ntlm_server_AuthenticateComplete(context);
-	}
-
-	return status;
-}
-
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa375354 */
 
 static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
@@ -873,22 +874,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContex
 
 		return SEC_E_OK;
 	}
-	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_SAM_FILE)
-	{
-		const char* filename = (char*)pBuffer;
-		free(context->SamFile);
-		context->SamFile = NULL;
-
-		if (filename)
-		{
-			context->SamFile = _strdup(filename);
-
-			if (!context->SamFile)
-				return SEC_E_INSUFFICIENT_MEMORY;
-		}
-
-		return SEC_E_OK;
-	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_MESSAGE)
 	{
 		SecPkgContext_AuthNtlmMessage* AuthNtlmMessage = (SecPkgContext_AuthNtlmMessage*)pBuffer;
@@ -964,16 +949,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContex
 			return SEC_E_INVALID_PARAMETER;
 
 		CopyMemory(context->ServerChallenge, AuthNtlmServerChallenge->ServerChallenge, 8);
-		return SEC_E_OK;
-	}
-	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_HASH_CB)
-	{
-		context->HashCallback = (psPeerComputeNtlmHash)pBuffer;
-		return SEC_E_OK;
-	}
-	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_HASH_CB_DATA)
-	{
-		context->HashCallbackArg = pBuffer;
 		return SEC_E_OK;
 	}
 
@@ -1297,7 +1272,7 @@ const SecurityFunctionTableA NTLM_SecurityFunctionTableA = {
 	NULL,                             /* Reserved2 */
 	ntlm_InitializeSecurityContextA,  /* InitializeSecurityContext */
 	ntlm_AcceptSecurityContext,       /* AcceptSecurityContext */
-	ntlm_CompleteAuthToken,           /* CompleteAuthToken */
+	NULL,                             /* CompleteAuthToken */
 	ntlm_DeleteSecurityContext,       /* DeleteSecurityContext */
 	NULL,                             /* ApplyControlToken */
 	ntlm_QueryContextAttributesA,     /* QueryContextAttributes */
@@ -1328,7 +1303,7 @@ const SecurityFunctionTableW NTLM_SecurityFunctionTableW = {
 	NULL,                             /* Reserved2 */
 	ntlm_InitializeSecurityContextW,  /* InitializeSecurityContext */
 	ntlm_AcceptSecurityContext,       /* AcceptSecurityContext */
-	ntlm_CompleteAuthToken,           /* CompleteAuthToken */
+	NULL,                             /* CompleteAuthToken */
 	ntlm_DeleteSecurityContext,       /* DeleteSecurityContext */
 	NULL,                             /* ApplyControlToken */
 	ntlm_QueryContextAttributesW,     /* QueryContextAttributes */
@@ -1436,8 +1411,6 @@ const char* ntlm_state_string(NTLM_STATE state)
 			return "NTLM_STATE_CHALLENGE";
 		case NTLM_STATE_AUTHENTICATE:
 			return "NTLM_STATE_AUTHENTICATE";
-		case NTLM_STATE_COMPLETION:
-			return "NTLM_STATE_COMPLETION";
 		case NTLM_STATE_FINAL:
 			return "NTLM_STATE_FINAL";
 		default:

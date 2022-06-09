@@ -164,7 +164,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 {
 #ifdef WITH_GSSAPI
 	SEC_WINNT_AUTH_IDENTITY* identity = pAuthData;
-	SEC_WINNT_AUTH_IDENTITY_WINPR* identityWinPr = pAuthData;
 	SEC_WINPR_KERBEROS_SETTINGS* krb_settings = NULL;
 	krb5_error_code rv;
 	krb5_context ctx = NULL;
@@ -203,8 +202,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 	if (identity)
 	{
-		krb_settings = identityWinPr->kerberosSettings;
-		if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_UNICODE)
+		if (identity->Flags & SEC_WINNT_AUTH_IDENTITY_EXTENDED)
+			krb_settings = &((SEC_WINNT_AUTH_IDENTITY_WINPR*)identity)->kerberosSettings;
+
+		if (identity->Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE)
 		{
 			is_unicode = TRUE;
 			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)identity->Domain, identity->DomainLength,

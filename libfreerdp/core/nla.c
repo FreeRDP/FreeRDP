@@ -139,7 +139,7 @@ struct rdp_nla
 	LPTSTR ServicePrincipalName;
 	SEC_WINNT_AUTH_IDENTITY* identity;
 	SEC_WINNT_AUTH_IDENTITY_WINPR identityWinPr;
-	SEC_WINPR_KERBEROS_SETTINGS kerberosSettings;
+	SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
 	PSecurityFunctionTable table;
 	SecPkgContext_Sizes ContextSizes;
 };
@@ -522,7 +522,7 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 	if (!settings->SmartcardLogon)
 		return TRUE;
 
-	kerbSettings = &nla->kerberosSettings;
+	kerbSettings = nla->kerberosSettings;
 	WINPR_ASSERT(kerbSettings);
 
 	if (!settings->CspName)
@@ -603,7 +603,7 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 		}
 	}
 
-	memcpy(nla->kerberosSettings.certSha1, info->sha1Hash, sizeof(nla->kerberosSettings.certSha1));
+	memcpy(kerbSettings->certSha1, info->sha1Hash, sizeof(kerbSettings->certSha1));
 
 	if (info->pkinitArgs)
 	{
@@ -708,7 +708,7 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
 			LPSTR marshalledCredentials;
 
-			memcpy(certInfo.rgbHashOfCert, nla->kerberosSettings.certSha1,
+			memcpy(certInfo.rgbHashOfCert, nla->kerberosSettings->certSha1,
 			       sizeof(certInfo.rgbHashOfCert));
 
 			if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
@@ -917,7 +917,7 @@ static BOOL nla_setup_kerberos(rdpNla* nla)
 	settings = nla->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
-	kerbSettings = &nla->kerberosSettings;
+	kerbSettings = nla->kerberosSettings;
 	WINPR_ASSERT(kerbSettings);
 
 	if (settings->KerberosLifeTime &&
@@ -1347,6 +1347,8 @@ fail:
 static int nla_server_init(rdpNla* nla)
 {
 	rdpTls* tls;
+	freerdp_peer* peer;
+	SEC_WINNT_AUTH_IDENTITY_WINPR* identity;
 
 	WINPR_ASSERT(nla);
 
@@ -1365,14 +1367,25 @@ static int nla_server_init(rdpNla* nla)
 	if (!nla_setup_kerberos(nla))
 		return -1;
 
+	WINPR_ASSERT(nla->rdpcontext);
+	WINPR_ASSERT(nla->rdpcontext->peer);
+
+	peer = nla->rdpcontext->peer;
+	WINPR_ASSERT(peer);
+
+	identity = &nla->identityWinPr;
+	identity->ntlmSettings.hashCallback = peer->ComputeNtlmHash;
+	identity->ntlmSettings.hashCallbackArg = peer;
+	identity->ntlmSettings.samFile = nla->SamFile;
+
 	nla->status = nla_update_package_name(nla);
 
 	if (nla->status != SEC_E_OK)
 		return -1;
 
-	nla->status =
-	    nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME, SECPKG_CRED_INBOUND, NULL, nla->identity,
-	                                         NULL, NULL, &nla->credentials, &nla->expiration);
+	nla->status = nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME, SECPKG_CRED_INBOUND,
+	                                                   NULL, nla->identity, NULL, NULL,
+	                                                   &nla->credentials, &nla->expiration);
 
 	if (nla->status != SEC_E_OK)
 	{
@@ -1483,7 +1496,6 @@ fail:
 static int nla_server_authenticate(rdpNla* nla)
 {
 	int res = -1;
-	BOOL hash_set = FALSE;
 
 	WINPR_ASSERT(nla);
 
@@ -1555,46 +1567,6 @@ static int nla_server_authenticate(rdpNla* nla)
 
 		if (!nla_sec_buffer_alloc_from_buffer(&nla->negoToken, &outputBuffer, 0))
 			goto fail;
-
-		if (!hash_set && nla->status == SEC_I_CONTINUE_NEEDED)
-		{
-			SECURITY_STATUS status;
-			freerdp_peer* peer = nla->rdpcontext->peer;
-
-			if (peer->ComputeNtlmHash)
-			{
-				status = nla->table->SetContextAttributes(
-				    &nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB, (void*)peer->ComputeNtlmHash, 0);
-
-				if (status != SEC_E_OK)
-				{
-					WLog_ERR(TAG, "SetContextAttributesA(hash cb) status %s [0x%08" PRIX32 "]",
-					         GetSecurityStatusString(status), status);
-				}
-
-				status = nla->table->SetContextAttributes(
-				    &nla->context, SECPKG_ATTR_AUTH_NTLM_HASH_CB_DATA, peer, 0);
-
-				if (status != SEC_E_OK)
-				{
-					WLog_ERR(TAG, "SetContextAttributesA(hash cb data) status %s [0x%08" PRIX32 "]",
-					         GetSecurityStatusString(status), status);
-				}
-			}
-			else if (nla->SamFile)
-			{
-				status =
-				    nla->table->SetContextAttributes(&nla->context, SECPKG_ATTR_AUTH_NTLM_SAM_FILE,
-				                                     nla->SamFile, strlen(nla->SamFile) + 1);
-				if (status != SEC_E_OK)
-				{
-					WLog_ERR(TAG, "SetContextAttributesA(sam file) status %s [0x%08" PRIX32 "]",
-					         GetSecurityStatusString(status), status);
-				}
-			}
-
-			hash_set = TRUE;
-		}
 
 		if (nla->status == SEC_E_OK)
 		{
@@ -1987,7 +1959,6 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 	 * Initialise to default values. */
 
 	sspi_FreeAuthIdentity(nla->identity);
-	nla->identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	if (!ber_read_sequence_tag(s, &length))
 		return FALSE;
@@ -2657,13 +2628,14 @@ rdpNla* nla_new(rdpContext* context, rdpTransport* transport)
 		return NULL;
 
 	nla->identity = (SEC_WINNT_AUTH_IDENTITY*)&nla->identityWinPr;
+	nla->identity->Flags = SEC_WINNT_AUTH_IDENTITY_EXTENDED;
 	nla->rdpcontext = context;
 	nla->server = settings->ServerMode;
 	nla->transport = transport;
 	nla->sendSeqNum = 0;
 	nla->recvSeqNum = 0;
 	nla->version = 6;
-	nla->identityWinPr.kerberosSettings = &nla->kerberosSettings;
+	nla->kerberosSettings = &nla->identityWinPr.kerberosSettings;
 	SecInvalidateHandle(&nla->context);
 
 	if (settings->NtlmSamFile)
@@ -2781,10 +2753,10 @@ void nla_free(rdpNla* nla)
 	sspi_SecBufferFree(&nla->tsCredentials);
 
 	free(nla->ServicePrincipalName);
-	free(nla->kerberosSettings.armorCache);
-	free(nla->kerberosSettings.cache);
-	free(nla->kerberosSettings.pkinitX509Anchors);
-	free(nla->kerberosSettings.pkinitX509Identity);
+	free(nla->kerberosSettings->armorCache);
+	free(nla->kerberosSettings->cache);
+	free(nla->kerberosSettings->pkinitX509Anchors);
+	free(nla->kerberosSettings->pkinitX509Identity);
 	sspi_FreeAuthIdentity(nla->identity);
 	nla_set_package_name(nla, NULL);
 	free(nla);

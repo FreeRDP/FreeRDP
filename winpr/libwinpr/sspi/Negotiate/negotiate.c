@@ -1106,7 +1106,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			status = context->mech->pkg->table->AcceptSecurityContext(
 			    sub_cred, &context->sub_context, &mech_input,
 			    fContextReq | context->mech->flags, TargetDataRep, &context->sub_context,
-			    pOutput, pfContextAttr, ptsTimeStamp);
+			    &mech_output, pfContextAttr, ptsTimeStamp);
 
 			if (IsSecurityStatusError(status))
 				return status;
