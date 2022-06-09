@@ -154,7 +154,6 @@ struct rdp_freerdp_peer
 #else
 	UINT64 reserved2;
 #endif
-	ALIGN64 psSspiNtlmHashCallback SspiNtlmHashCallback;
 	ALIGN64 psPeerLicenseCallback LicenseCallback;
 
 	ALIGN64 psPeerSendChannelPacket SendChannelPacket;
@@ -170,6 +169,7 @@ struct rdp_freerdp_peer
 	 * \note Must be called after \b Initialize as that also modifies the state.
 	 */
 	ALIGN64 psPeerSetState SetState;
+	ALIGN64 psSspiNtlmHashCallback SspiNtlmHashCallback;
 };
 
 #ifdef __cplusplus

@@ -126,7 +126,7 @@ typedef struct
 	SecBuffer mic;
 } NegToken;
 
-static inline size_t asn_tlv_length(size_t len)
+static INLINE size_t asn_tlv_length(size_t len)
 {
 	if (len <= 0x7F)
 		return 2 + len;
@@ -140,7 +140,7 @@ static inline size_t asn_tlv_length(size_t len)
 		return 6 + len;
 }
 
-static inline size_t asn_contextual_length(size_t len)
+static INLINE size_t asn_contextual_length(size_t len)
 {
 	return asn_tlv_length(asn_tlv_length(len));
 }
@@ -183,7 +183,7 @@ static BYTE* negotiate_write_contextual_tlv(BYTE* buf, BYTE contextual, BYTE tag
 
 static BYTE* negotiate_read_tlv(BYTE* buf, BYTE* tag, size_t* len, size_t* bytes_remain)
 {
-	int len_bytes = 0;
+	UINT len_bytes = 0;
 	*len = 0;
 
 	if (*bytes_remain < 2)
