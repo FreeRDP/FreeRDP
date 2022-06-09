@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Audio Input Redirection Virtual Channel
+ * Telemetry Virtual Channel Extension
  *
  * Copyright 2022 Pascal Nowack <Pascal.Nowack@gmx.de>
  *
