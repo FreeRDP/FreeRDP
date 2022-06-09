@@ -28,7 +28,6 @@
 #include <freerdp/autodetect.h>
 
 #include <winpr/sspi.h>
-#include <winpr/ntlm.h>
 #include <winpr/winsock.h>
 
 typedef BOOL (*psPeerContextNew)(freerdp_peer* peer, rdpContext* context);
@@ -148,7 +147,7 @@ struct rdp_freerdp_peer
 	ALIGN64 psPeerGetEventHandles GetEventHandles;
 	ALIGN64 psPeerAdjustMonitorsLayout AdjustMonitorsLayout;
 	ALIGN64 psPeerClientCapabilities ClientCapabilities;
-	ALIGN64 psPeerComputeNtlmHash ComputeNtlmHash;
+	ALIGN64 psSspiComputeNtlmHash ComputeNtlmHash;
 	ALIGN64 psPeerLicenseCallback LicenseCallback;
 
 	ALIGN64 psPeerSendChannelPacket SendChannelPacket;

@@ -32,12 +32,6 @@ extern "C"
 {
 #endif
 
-	typedef SECURITY_STATUS (*psPeerComputeNtlmHash)(void* client,
-	                                                 const SEC_WINNT_AUTH_IDENTITY* authIdentity,
-	                                                 const SecBuffer* ntproofvalue,
-	                                                 const BYTE* randkey, const BYTE* mic,
-	                                                 const SecBuffer* micvalue, BYTE* ntlmhash);
-
 	WINPR_API BOOL NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash);
 	WINPR_API BOOL NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash);
 

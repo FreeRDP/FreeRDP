@@ -202,6 +202,9 @@ void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 	if (!credentials)
 		return;
 
+	if (credentials->ntlmSettings.samFile)
+		free(credentials->ntlmSettings.samFile);
+
 	userLength = credentials->identity.UserLength;
 	domainLength = credentials->identity.DomainLength;
 	passwordLength = credentials->identity.PasswordLength;
@@ -348,7 +351,8 @@ int sspi_SetAuthIdentityWithLengthW(SEC_WINNT_AUTH_IDENTITY* identity, const WCH
 {
 	WINPR_ASSERT(identity);
 	sspi_FreeAuthIdentity(identity);
-	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+	identity->Flags &= ~SEC_WINNT_AUTH_IDENTITY_ANSI;
+	identity->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
 	if (user)
 	{
 		if (!copy(&identity->User, &identity->UserLength, user, userLen))
@@ -392,7 +396,8 @@ int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, c
 	int status;
 
 	sspi_FreeAuthIdentity(identity);
-	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+	identity->Flags &= ~SEC_WINNT_AUTH_IDENTITY_ANSI;
+	identity->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	if (user)
 	{

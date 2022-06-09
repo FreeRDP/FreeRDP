@@ -598,20 +598,7 @@ typedef struct
 
 #define SEC_WINNT_AUTH_IDENTITY_ANSI 0x1
 #define SEC_WINNT_AUTH_IDENTITY_UNICODE 0x2
-
-typedef struct
-{
-	char* keytab;
-	char* cache;
-	char* armorCache;
-	char* pkinitX509Anchors;
-	char* pkinitX509Identity;
-	BOOL withPac;
-	INT32 startTime;
-	INT32 renewLifeTime;
-	INT32 lifeTime;
-	BYTE certSha1[20];
-} SEC_WINPR_KERBEROS_SETTINGS;
+#define SEC_WINNT_AUTH_IDENTITY_EXTENDED 0x4
 
 #if !defined(_WIN32) || defined(_UWP)
 
@@ -719,25 +706,57 @@ typedef CtxtHandle* PCtxtHandle;
 	((((PSecHandle)(x))->dwLower != ((ULONG_PTR)((INT_PTR)-1))) && \
 	 (((PSecHandle)(x))->dwUpper != ((ULONG_PTR)((INT_PTR)-1))))
 
+typedef struct
+{
+	ULONG cbBuffer;
+	ULONG BufferType;
+	void* pvBuffer;
+} SecBuffer;
+typedef SecBuffer* PSecBuffer;
+
+typedef struct
+{
+	ULONG ulVersion;
+	ULONG cBuffers;
+	PSecBuffer pBuffers;
+} SecBufferDesc;
+typedef SecBufferDesc* PSecBufferDesc;
+
 #endif /* !defined(_WIN32) || defined(_UWP) */
+
+typedef SECURITY_STATUS (*psSspiComputeNtlmHash)(void* client,
+												 const SEC_WINNT_AUTH_IDENTITY* authIdentity,
+												 const SecBuffer* ntproofvalue,
+												 const BYTE* randkey, const BYTE* mic,
+												 const SecBuffer* micvalue, BYTE* ntlmhash);
+
+typedef struct
+{
+	char* samFile;
+	psSspiComputeNtlmHash hashCallback;
+	void* hashCallbackArg;
+} SEC_WINPR_NTLM_SETTINGS;
+
+typedef struct
+{
+	char* keytab;
+	char* cache;
+	char* armorCache;
+	char* pkinitX509Anchors;
+	char* pkinitX509Identity;
+	BOOL withPac;
+	INT32 startTime;
+	INT32 renewLifeTime;
+	INT32 lifeTime;
+	BYTE certSha1[20];
+} SEC_WINPR_KERBEROS_SETTINGS;
 
 typedef struct
 {
 	SEC_WINNT_AUTH_IDENTITY identity;
-	SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
+	SEC_WINPR_NTLM_SETTINGS ntlmSettings;
+	SEC_WINPR_KERBEROS_SETTINGS kerberosSettings;
 } SEC_WINNT_AUTH_IDENTITY_WINPR;
-
-typedef struct
-{
-	SEC_WINNT_AUTH_IDENTITY_EXA identityEx;
-	SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
-} SEC_WINNT_AUTH_IDENTITY_WINPRA, *PSEC_WINNT_AUTH_IDENTITY_WINPRA;
-
-typedef struct
-{
-	SEC_WINNT_AUTH_IDENTITY_EXW identityEx;
-	SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
-} SEC_WINNT_AUTH_IDENTITY_WINPRW, *PSEC_WINNT_AUTH_IDENTITY_WINPRW;
 
 #define SECBUFFER_VERSION 0
 
@@ -768,22 +787,6 @@ typedef struct
 #define SECBUFFER_RESERVED 0x60000000
 
 #if !defined(_WIN32) || defined(_UWP)
-
-typedef struct
-{
-	ULONG cbBuffer;
-	ULONG BufferType;
-	void* pvBuffer;
-} SecBuffer;
-typedef SecBuffer* PSecBuffer;
-
-typedef struct
-{
-	ULONG ulVersion;
-	ULONG cBuffers;
-	PSecBuffer pBuffers;
-} SecBufferDesc;
-typedef SecBufferDesc* PSecBufferDesc;
 
 typedef void(SEC_ENTRY* SEC_GET_KEY_FN)(void* Arg, void* Principal, UINT32 KeyVer, void** Key,
                                         SECURITY_STATUS* pStatus);
@@ -1175,7 +1178,6 @@ extern "C"
 #define SECPKG_ATTR_AUTH_IDENTITY 1001
 #define SECPKG_ATTR_AUTH_PASSWORD 1002
 #define SECPKG_ATTR_AUTH_NTLM_HASH 1003
-#define SECPKG_ATTR_AUTH_NTLM_SAM_FILE 1004
 #define SECPKG_ATTR_AUTH_NTLM_MESSAGE 1100
 #define SECPKG_ATTR_AUTH_NTLM_TIMESTAMP 1101
 #define SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE 1102
@@ -1184,8 +1186,6 @@ extern "C"
 #define SECPKG_ATTR_AUTH_NTLM_RANDKEY 1105
 #define SECPKG_ATTR_AUTH_NTLM_MIC 1106
 #define SECPKG_ATTR_AUTH_NTLM_MIC_VALUE 1107
-#define SECPKG_ATTR_AUTH_NTLM_HASH_CB 1108
-#define SECPKG_ATTR_AUTH_NTLM_HASH_CB_DATA 1109
 
 	typedef struct
 	{

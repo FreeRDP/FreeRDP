@@ -25,7 +25,6 @@
 
 #include <winpr/nt.h>
 #include <winpr/crypto.h>
-#include <winpr/ntlm.h>
 
 #include "../sspi.h"
 
@@ -72,7 +71,6 @@ typedef enum
 	NTLM_STATE_NEGOTIATE,
 	NTLM_STATE_CHALLENGE,
 	NTLM_STATE_AUTHENTICATE,
-	NTLM_STATE_COMPLETION,
 	NTLM_STATE_FINAL
 } NTLM_STATE;
 
@@ -279,7 +277,7 @@ typedef struct
 	BYTE ClientSealingKey[16];
 	BYTE ServerSigningKey[16];
 	BYTE ServerSealingKey[16];
-	psPeerComputeNtlmHash HashCallback;
+	psSspiComputeNtlmHash HashCallback;
 	void* HashCallbackArg;
 } NTLM_CONTEXT;
 
