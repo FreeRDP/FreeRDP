@@ -155,6 +155,12 @@ static void gss_log_status_messages(OM_uint32 major_status, OM_uint32 minor_stat
 	} while (msg_ctx != 0);
 }
 
+/* taken from lib/gssapi/krb5/gssapi_err_krb5.h */
+#define KG_EMPTY_CCACHE (39756044L)
+
+static BOOL sspi_is_no_creds(OM_uint32 major, OM_uint32 minor) {
+	return (major == SSPI_GSS_S_NO_CRED) || (major == SSPI_GSS_S_FAILURE && minor == KG_EMPTY_CCACHE);
+}
 #endif /* WITH_GSSAPI */
 
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
@@ -341,10 +347,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	major = sspi_gss_acquire_cred_from(&minor, SSPI_GSS_C_NO_NAME, SSPI_GSS_C_INDEFINITE,
 	                                   &desired_mechs, cred_usage, &cred_store, &gss_creds,
 	                                   NULL, NULL);
-	if (!SSPI_GSS_ERROR(major))
-		goto cleanup;
-
 	gss_log_status_messages(major, minor);
+
+	if (!sspi_is_no_creds(major, minor))
+		goto cleanup;
 
 	if ((rv = krb5_get_init_creds_password(ctx, &creds, principal, password, krb5_prompter,
 	                                       password, start_time, NULL, gic_opt)))
