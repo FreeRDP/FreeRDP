@@ -287,7 +287,7 @@ static PSecHandle negotiate_FindCredential(MechCred* creds, const Mech* mech)
 	return NULL;
 }
 
-static BOOL negotaite_get_dword(HKEY hKey, const char* subkey, DWORD* pdwValue)
+static BOOL negotiate_get_dword(HKEY hKey, const char* subkey, DWORD* pdwValue)
 {
 	DWORD dwValue = 0, dwType = 0;
 	DWORD dwSize = sizeof(dwValue);
@@ -322,11 +322,11 @@ static BOOL negotiate_get_config(BOOL* kerberos, BOOL* ntlm)
 	{
 		DWORD dwValue;
 
-		if (negotaite_get_dword(hKey, "kerberos", &dwValue))
+		if (negotiate_get_dword(hKey, "kerberos", &dwValue))
 			*kerberos = (dwValue != 0) ? TRUE : FALSE;
 
 #if !defined(WITH_GSS_NO_NTLM_FALLBACK)
-		if (negotaite_get_dword(hKey, "ntlm", &dwValue))
+		if (negotiate_get_dword(hKey, "ntlm", &dwValue))
 			*ntlm = (dwValue != 0) ? TRUE : FALSE;
 #endif
 
@@ -579,6 +579,7 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 	SecBufferDesc mic_buffer_desc = { SECBUFFER_VERSION, 2, mic_buffers };
 	SecPkgContext_Sizes sizes;
 	SECURITY_STATUS status;
+	const SecurityFunctionTableA* table = context->mech->pkg->table;
 
 	CopyMemory(mic_buffers, &context->mechTypes, sizeof(SecBuffer));
 
@@ -587,8 +588,7 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 	{
 		CopyMemory(&mic_buffers[1], &input_token->mic, sizeof(SecBuffer));
 
-		status = context->mech->pkg->table->VerifySignature(&context->sub_context, &mic_buffer_desc,
-		                                                    0, 0);
+		status = table->VerifySignature(&context->sub_context, &mic_buffer_desc, 0, 0);
 		if (status != SEC_E_OK)
 			return status;
 
@@ -598,8 +598,7 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 	/* If peer expects a MIC then generate it */
 	if (input_token->negState != ACCEPT_COMPLETED)
 	{
-		if (context->mech->pkg->table->QueryContextAttributesA(
-		        &context->sub_context, SECPKG_ATTR_SIZES, &sizes) != SEC_E_OK)
+		if (table->QueryContextAttributesA(&context->sub_context, SECPKG_ATTR_SIZES, &sizes) != SEC_E_OK)
 			return SEC_E_INTERNAL_ERROR;
 
 		/* Store the mic token after the mech token in the output buffer */
@@ -609,8 +608,7 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 
 		CopyMemory(&mic_buffers[1], &output_token->mic, sizeof(SecBuffer));
 
-		status =
-		    context->mech->pkg->table->MakeSignature(&context->sub_context, 0, &mic_buffer_desc, 0);
+		status = table->MakeSignature(&context->sub_context, 0, &mic_buffer_desc, 0);
 		if (status != SEC_E_OK)
 			return status;
 
@@ -1270,7 +1268,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
 	if (!creds)
 		return SEC_E_INTERNAL_ERROR;
 
-	negotiate_get_config(&kerberos, &ntlm);
+	if (!negotiate_get_config(&kerberos, &ntlm))
+		return SEC_E_INTERNAL_ERROR;
 
 	for (int i = 0; i < MECH_COUNT; i++)
 	{
@@ -1307,7 +1306,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
 	if (!creds)
 		return SEC_E_INTERNAL_ERROR;
 
-	negotiate_get_config(&kerberos, &ntlm);
+	if (!negotiate_get_config(&kerberos, &ntlm))
+		return SEC_E_INTERNAL_ERROR;
 
 	for (int i = 0; i < MECH_COUNT; i++)
 	{
