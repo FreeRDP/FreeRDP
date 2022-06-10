@@ -341,7 +341,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	major = sspi_gss_acquire_cred_from(&minor, SSPI_GSS_C_NO_NAME, SSPI_GSS_C_INDEFINITE,
 	                                   &desired_mechs, cred_usage, &cred_store, &gss_creds,
 	                                   NULL, NULL);
-	if (major != SSPI_GSS_S_NO_CRED)
+	if (!SSPI_GSS_ERROR(major))
 		goto cleanup;
 
 	gss_log_status_messages(major, minor);
