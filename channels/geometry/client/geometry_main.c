@@ -31,6 +31,7 @@
 #include <winpr/collections.h>
 
 #include <freerdp/addin.h>
+#include <freerdp/client/channels.h>
 #include <freerdp/client/geometry.h>
 #include <freerdp/channels/log.h>
 
@@ -40,28 +41,10 @@
 
 typedef struct
 {
-	IWTSVirtualChannelCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
-} GEOMETRY_CHANNEL_CALLBACK;
-
-typedef struct
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	GEOMETRY_CHANNEL_CALLBACK* channel_callback;
-} GEOMETRY_LISTENER_CALLBACK;
-
-typedef struct
-{
 	IWTSPlugin iface;
 
 	IWTSListener* listener;
-	GEOMETRY_LISTENER_CALLBACK* listener_callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback;
 
 	GeometryClientContext* context;
 	BOOL initialized;
@@ -175,7 +158,7 @@ static UINT32 geometry_read_RGNDATA(wStream* s, UINT32 len, FREERDP_RGNDATA* rgn
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 length, cbGeometryBuffer;
 	MAPPED_GEOMETRY* mappedGeometry;
@@ -315,7 +298,7 @@ static UINT geometry_recv_pdu(GEOMETRY_CHANNEL_CALLBACK* callback, wStream* s)
  */
 static UINT geometry_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-	GEOMETRY_CHANNEL_CALLBACK* callback = (GEOMETRY_CHANNEL_CALLBACK*)pChannelCallback;
+    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	return geometry_recv_pdu(callback, data);
 }
 
@@ -340,13 +323,13 @@ static UINT geometry_on_new_channel_connection(IWTSListenerCallback* pListenerCa
                                                BOOL* pbAccept,
                                                IWTSVirtualChannelCallback** ppCallback)
 {
-	GEOMETRY_CHANNEL_CALLBACK* callback;
-	GEOMETRY_LISTENER_CALLBACK* listener_callback = (GEOMETRY_LISTENER_CALLBACK*)pListenerCallback;
+    GENERIC_CHANNEL_CALLBACK* callback;
+    GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	WINPR_UNUSED(Data);
 	WINPR_UNUSED(pbAccept);
 
-	callback = (GEOMETRY_CHANNEL_CALLBACK*)calloc(1, sizeof(GEOMETRY_CHANNEL_CALLBACK));
+	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 
 	if (!callback)
 	{
@@ -379,7 +362,7 @@ static UINT geometry_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 		return ERROR_INVALID_DATA;
 	}
 	geometry->listener_callback =
-	    (GEOMETRY_LISTENER_CALLBACK*)calloc(1, sizeof(GEOMETRY_LISTENER_CALLBACK));
+	    (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 
 	if (!geometry->listener_callback)
 	{

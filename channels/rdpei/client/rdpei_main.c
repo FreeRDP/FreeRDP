@@ -35,6 +35,7 @@
 
 #include <freerdp/addin.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/client/channels.h>
 
 #include "rdpei_common.h"
 
@@ -65,28 +66,10 @@
 
 typedef struct
 {
-	IWTSVirtualChannelCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
-} RDPEI_CHANNEL_CALLBACK;
-
-typedef struct
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	RDPEI_CHANNEL_CALLBACK* channel_callback;
-} RDPEI_LISTENER_CALLBACK;
-
-typedef struct
-{
 	IWTSPlugin iface;
 
 	IWTSListener* listener;
-	RDPEI_LISTENER_CALLBACK* listener_callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback;
 
 	RdpeiClientContext* context;
 
@@ -232,7 +215,7 @@ static UINT rdpei_add_frame(RdpeiClientContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpei_send_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId,
+static UINT rdpei_send_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId,
                            UINT32 pduLength)
 {
 	UINT status;
@@ -308,7 +291,7 @@ static UINT rdpei_write_pen_frame(wStream* s, const RDPINPUT_PEN_FRAME* frame)
 	return CHANNEL_RC_OK;
 }
 
-static UINT rdpei_send_pen_event_pdu(RDPEI_CHANNEL_CALLBACK* callback, UINT32 frameOffset,
+static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, UINT32 frameOffset,
                                      const RDPINPUT_PEN_FRAME* frames, UINT16 count)
 {
 	UINT status;
@@ -354,7 +337,7 @@ static UINT rdpei_send_pen_frame(RdpeiClientContext* context, RDPINPUT_PEN_FRAME
 {
 	const UINT64 currentTime = GetTickCount64();
 	RDPEI_PLUGIN* rdpei;
-	RDPEI_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback;
 	UINT error;
 
 	if (!context)
@@ -509,7 +492,7 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
+static UINT rdpei_send_cs_ready_pdu(GENERIC_CHANNEL_CALLBACK* callback)
 {
 	UINT status;
 	wStream* s;
@@ -657,7 +640,7 @@ static UINT rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback,
+static UINT rdpei_send_touch_event_pdu(GENERIC_CHANNEL_CALLBACK* callback,
                                        RDPINPUT_TOUCH_FRAME* frame)
 {
 	UINT status;
@@ -713,7 +696,7 @@ static UINT rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpei_recv_sc_ready_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 features = 0;
 	UINT32 protocolVersion;
@@ -757,7 +740,7 @@ static UINT rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpei_recv_suspend_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpei_recv_suspend_touch_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
 	RdpeiClientContext* rdpei;
@@ -783,7 +766,7 @@ static UINT rdpei_recv_suspend_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStre
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpei_recv_resume_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpei_recv_resume_touch_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RdpeiClientContext* rdpei;
 	UINT error = CHANNEL_RC_OK;
@@ -806,7 +789,7 @@ static UINT rdpei_recv_resume_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStrea
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpei_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT16 eventId;
 	UINT32 pduLength;
@@ -872,7 +855,7 @@ static UINT rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
  */
 static UINT rdpei_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-	RDPEI_CHANNEL_CALLBACK* callback = (RDPEI_CHANNEL_CALLBACK*)pChannelCallback;
+    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	return rdpei_recv_pdu(callback, data);
 }
 
@@ -883,7 +866,7 @@ static UINT rdpei_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
  */
 static UINT rdpei_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
-	RDPEI_CHANNEL_CALLBACK* callback = (RDPEI_CHANNEL_CALLBACK*)pChannelCallback;
+    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	if (callback)
 	{
 		RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)callback->plugin;
@@ -906,11 +889,11 @@ static UINT rdpei_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
                                             IWTSVirtualChannel* pChannel, BYTE* Data,
                                             BOOL* pbAccept, IWTSVirtualChannelCallback** ppCallback)
 {
-	RDPEI_CHANNEL_CALLBACK* callback;
-	RDPEI_LISTENER_CALLBACK* listener_callback = (RDPEI_LISTENER_CALLBACK*)pListenerCallback;
+    GENERIC_CHANNEL_CALLBACK* callback;
+    GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 	if (!listener_callback)
 		return ERROR_INTERNAL_ERROR;
-	callback = (RDPEI_CHANNEL_CALLBACK*)calloc(1, sizeof(RDPEI_CHANNEL_CALLBACK));
+	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 
 	WINPR_UNUSED(Data);
 	WINPR_UNUSED(pbAccept);
@@ -987,7 +970,7 @@ static UINT rdpei_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", RDPEI_DVC_CHANNEL_NAME);
 		return ERROR_INVALID_DATA;
 	}
-	rdpei->listener_callback = (RDPEI_LISTENER_CALLBACK*)calloc(1, sizeof(RDPEI_LISTENER_CALLBACK));
+	rdpei->listener_callback = (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 
 	if (!rdpei->listener_callback)
 	{
@@ -1053,7 +1036,7 @@ UINT rdpei_send_frame(RdpeiClientContext* context, RDPINPUT_TOUCH_FRAME* frame)
 {
 	UINT64 currentTime = GetTickCount64();
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
-	RDPEI_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback;
 	UINT error;
 
 	callback = rdpei->listener_callback->channel_callback;

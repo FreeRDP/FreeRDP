@@ -52,6 +52,7 @@
 #include <winpr/stream.h>
 
 #include "sshagent_main.h"
+#include <freerdp/client/channels.h>
 #include <freerdp/channels/log.h>
 
 #define TAG CHANNELS_TAG("sshagent.client")
@@ -69,11 +70,7 @@ typedef struct
 
 typedef struct
 {
-	IWTSVirtualChannelCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
+    GENERIC_CHANNEL_CALLBACK generic;
 
 	rdpContext* rdpcontext;
 	int agent_fd;
@@ -159,7 +156,8 @@ static DWORD WINAPI sshagent_read_thread(LPVOID data)
 		else
 		{
 			/* Something read: forward to virtual channel */
-			status = callback->channel->Write(callback->channel, bytes_read, buffer, NULL);
+		    IWTSVirtualChannel* channel = callback->generic.channel;
+			status = channel->Write(channel, bytes_read, buffer, NULL);
 
 			if (status != CHANNEL_RC_OK)
 			{
@@ -253,6 +251,7 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
                                                IWTSVirtualChannelCallback** ppCallback)
 {
 	SSHAGENT_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* generic;
 	SSHAGENT_LISTENER_CALLBACK* listener_callback = (SSHAGENT_LISTENER_CALLBACK*)pListenerCallback;
 	callback = (SSHAGENT_CHANNEL_CALLBACK*)calloc(1, sizeof(SSHAGENT_CHANNEL_CALLBACK));
 
@@ -273,11 +272,12 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 	}
 
 	InitializeCriticalSection(&callback->lock);
-	callback->iface.OnDataReceived = sshagent_on_data_received;
-	callback->iface.OnClose = sshagent_on_close;
-	callback->plugin = listener_callback->plugin;
-	callback->channel_mgr = listener_callback->channel_mgr;
-	callback->channel = pChannel;
+	generic = &callback->generic;
+	generic->iface.OnDataReceived = sshagent_on_data_received;
+	generic->iface.OnClose = sshagent_on_close;
+	generic->plugin = listener_callback->plugin;
+	generic->channel_mgr = listener_callback->channel_mgr;
+	generic->channel = pChannel;
 	callback->rdpcontext = listener_callback->rdpcontext;
 	callback->thread = CreateThread(NULL, 0, sshagent_read_thread, (void*)callback, 0, NULL);
 

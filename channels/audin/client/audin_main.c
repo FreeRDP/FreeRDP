@@ -37,6 +37,7 @@
 #include <winpr/stream.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/dsp.h>
+#include <freerdp/client/channels.h>
 #include <freerdp/channels/audin.h>
 
 #include "audin_main.h"
@@ -48,14 +49,6 @@
 #define MSG_SNDIN_DATA_INCOMING 0x05
 #define MSG_SNDIN_DATA 0x06
 #define MSG_SNDIN_FORMATCHANGE 0x07
-
-typedef struct
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-} AUDIN_LISTENER_CALLBACK;
 
 typedef struct
 {
@@ -78,7 +71,7 @@ typedef struct
 {
 	IWTSPlugin iface;
 
-	AUDIN_LISTENER_CALLBACK* listener_callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback;
 
 	/* Parsed plugin data */
 	AUDIO_FORMAT* fixed_format;
@@ -638,7 +631,7 @@ static UINT audin_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 {
 	AUDIN_CHANNEL_CALLBACK* callback;
 	AUDIN_PLUGIN* audin;
-	AUDIN_LISTENER_CALLBACK* listener_callback = (AUDIN_LISTENER_CALLBACK*)pListenerCallback;
+	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	if (!listener_callback || !listener_callback->plugin)
 		return ERROR_INTERNAL_ERROR;
@@ -685,7 +678,7 @@ static UINT audin_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 	}
 
 	WLog_Print(audin->log, WLOG_TRACE, "...");
-	audin->listener_callback = (AUDIN_LISTENER_CALLBACK*)calloc(1, sizeof(AUDIN_LISTENER_CALLBACK));
+	audin->listener_callback = (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 
 	if (!audin->listener_callback)
 	{

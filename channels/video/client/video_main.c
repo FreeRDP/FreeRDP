@@ -35,6 +35,7 @@
 
 #include <freerdp/addin.h>
 #include <freerdp/primitives.h>
+#include <freerdp/client/channels.h>
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 #include <freerdp/channels/log.h>
@@ -47,30 +48,12 @@
 
 typedef struct
 {
-	IWTSVirtualChannelCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
-} VIDEO_CHANNEL_CALLBACK;
-
-typedef struct
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	VIDEO_CHANNEL_CALLBACK* channel_callback;
-} VIDEO_LISTENER_CALLBACK;
-
-typedef struct
-{
 	IWTSPlugin wtsPlugin;
 
 	IWTSListener* controlListener;
 	IWTSListener* dataListener;
-	VIDEO_LISTENER_CALLBACK* control_callback;
-	VIDEO_LISTENER_CALLBACK* data_callback;
+	GENERIC_LISTENER_CALLBACK* control_callback;
+	GENERIC_LISTENER_CALLBACK* data_callback;
 
 	VideoClientContext* context;
 	BOOL initialized;
@@ -570,7 +553,7 @@ static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStrea
  */
 static UINT video_control_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* s)
 {
-	VIDEO_CHANNEL_CALLBACK* callback = (VIDEO_CHANNEL_CALLBACK*)pChannelCallback;
+    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	VIDEO_PLUGIN* video;
 	VideoClientContext* context;
 	UINT ret = CHANNEL_RC_OK;
@@ -928,7 +911,7 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 
 static UINT video_data_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* s)
 {
-	VIDEO_CHANNEL_CALLBACK* callback = (VIDEO_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	VIDEO_PLUGIN* video;
 	VideoClientContext* context;
 	UINT32 cbSize, packetType;
@@ -1010,13 +993,13 @@ static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listen
                                                     BOOL* pbAccept,
                                                     IWTSVirtualChannelCallback** ppCallback)
 {
-	VIDEO_CHANNEL_CALLBACK* callback;
-	VIDEO_LISTENER_CALLBACK* listener_callback = (VIDEO_LISTENER_CALLBACK*)listenerCallback;
+    GENERIC_CHANNEL_CALLBACK* callback;
+    GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)listenerCallback;
 
 	WINPR_UNUSED(Data);
 	WINPR_UNUSED(pbAccept);
 
-	callback = (VIDEO_CHANNEL_CALLBACK*)calloc(1, sizeof(VIDEO_CHANNEL_CALLBACK));
+	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 	if (!callback)
 	{
 		WLog_ERR(TAG, "calloc failed!");
@@ -1040,13 +1023,13 @@ static UINT video_data_on_new_channel_connection(IWTSListenerCallback* pListener
                                                  BOOL* pbAccept,
                                                  IWTSVirtualChannelCallback** ppCallback)
 {
-	VIDEO_CHANNEL_CALLBACK* callback;
-	VIDEO_LISTENER_CALLBACK* listener_callback = (VIDEO_LISTENER_CALLBACK*)pListenerCallback;
+    GENERIC_CHANNEL_CALLBACK* callback;
+    GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	WINPR_UNUSED(Data);
 	WINPR_UNUSED(pbAccept);
 
-	callback = (VIDEO_CHANNEL_CALLBACK*)calloc(1, sizeof(VIDEO_CHANNEL_CALLBACK));
+	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 	if (!callback)
 	{
 		WLog_ERR(TAG, "calloc failed!");
@@ -1074,7 +1057,7 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 {
 	UINT status;
 	VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)plugin;
-	VIDEO_LISTENER_CALLBACK* callback;
+	GENERIC_LISTENER_CALLBACK* callback;
 
 	if (video->initialized)
 	{
@@ -1082,7 +1065,7 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 		return ERROR_INVALID_DATA;
 	}
 	video->control_callback = callback =
-	    (VIDEO_LISTENER_CALLBACK*)calloc(1, sizeof(VIDEO_LISTENER_CALLBACK));
+	    (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 	if (!callback)
 	{
 		WLog_ERR(TAG, "calloc for control callback failed!");
@@ -1101,7 +1084,7 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 	video->controlListener->pInterface = video->wtsPlugin.pInterface;
 
 	video->data_callback = callback =
-	    (VIDEO_LISTENER_CALLBACK*)calloc(1, sizeof(VIDEO_LISTENER_CALLBACK));
+	    (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 	if (!callback)
 	{
 		WLog_ERR(TAG, "calloc for data callback failed!");

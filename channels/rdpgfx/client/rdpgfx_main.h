@@ -27,6 +27,7 @@
 #include <winpr/wlog.h>
 #include <winpr/collections.h>
 
+#include <freerdp/client/channels.h>
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/codec/zgfx.h>
@@ -35,28 +36,10 @@
 
 typedef struct
 {
-	IWTSVirtualChannelCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
-} RDPGFX_CHANNEL_CALLBACK;
-
-typedef struct
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	RDPGFX_CHANNEL_CALLBACK* channel_callback;
-} RDPGFX_LISTENER_CALLBACK;
-
-typedef struct
-{
 	IWTSPlugin iface;
 
 	IWTSListener* listener;
-	RDPGFX_LISTENER_CALLBACK* listener_callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback;
 
 	rdpSettings* settings;
 

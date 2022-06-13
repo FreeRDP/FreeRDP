@@ -30,7 +30,7 @@
 #define TRANSFER_CTX(transfer) (HANDLE_CTX((transfer)->dev_handle))
 #define ITRANSFER_CTX(transfer) (TRANSFER_CTX(__USBI_TRANSFER_TO_LIBUSB_TRANSFER(transfer)))
 
-UINT urbdrc_process_udev_data_transfer(URBDRC_CHANNEL_CALLBACK* callback, URBDRC_PLUGIN* urbdrc,
+UINT urbdrc_process_udev_data_transfer(GENERIC_CHANNEL_CALLBACK* callback, URBDRC_PLUGIN* urbdrc,
                                        IUDEVMAN* udevman, wStream* data);
 
 #endif /* FREERDP_CHANNEL_URBDRC_CLIENT_DATA_TRANSFER_H */

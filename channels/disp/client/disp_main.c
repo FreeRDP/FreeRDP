@@ -37,34 +37,17 @@
 #include <winpr/collections.h>
 
 #include <freerdp/addin.h>
+#include <freerdp/client/channels.h>
 
 #include "disp_main.h"
 #include "../disp_common.h"
 
 typedef struct
 {
-	IWTSVirtualChannelCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
-} DISP_CHANNEL_CALLBACK;
-
-typedef struct
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	DISP_CHANNEL_CALLBACK* channel_callback;
-} DISP_LISTENER_CALLBACK;
-
-typedef struct
-{
 	IWTSPlugin iface;
 
 	IWTSListener* listener;
-	DISP_LISTENER_CALLBACK* listener_callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback;
 
 	UINT32 MaxNumMonitors;
 	UINT32 MaxMonitorAreaFactorA;
@@ -78,7 +61,7 @@ typedef struct
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT
-disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback, UINT32 NumMonitors,
+disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback, UINT32 NumMonitors,
                                              const DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
 	UINT status;
@@ -172,7 +155,7 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT disp_recv_display_control_caps_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	DISP_PLUGIN* disp;
 	DispClientContext* context;
@@ -206,7 +189,7 @@ static UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT disp_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 error;
 	DISPLAY_CONTROL_HEADER header = { 0 };
@@ -247,7 +230,7 @@ static UINT disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
  */
 static UINT disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-	DISP_CHANNEL_CALLBACK* callback = (DISP_CHANNEL_CALLBACK*)pChannelCallback;
+    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	return disp_recv_pdu(callback, data);
 }
 
@@ -271,15 +254,15 @@ static UINT disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
                                            IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
                                            IWTSVirtualChannelCallback** ppCallback)
 {
-	DISP_CHANNEL_CALLBACK* callback;
-	DISP_LISTENER_CALLBACK* listener_callback = (DISP_LISTENER_CALLBACK*)pListenerCallback;
+    GENERIC_CHANNEL_CALLBACK* callback;
+    GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	WINPR_ASSERT(listener_callback);
 	WINPR_ASSERT(pChannel);
 	WINPR_ASSERT(pbAccept);
 	WINPR_ASSERT(ppCallback);
 
-	callback = (DISP_CHANNEL_CALLBACK*)calloc(1, sizeof(DISP_CHANNEL_CALLBACK));
+	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 
 	if (!callback)
 	{
@@ -315,7 +298,7 @@ static UINT disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", DISP_DVC_CHANNEL_NAME);
 		return ERROR_INVALID_DATA;
 	}
-	disp->listener_callback = (DISP_LISTENER_CALLBACK*)calloc(1, sizeof(DISP_LISTENER_CALLBACK));
+	disp->listener_callback = (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 
 	if (!disp->listener_callback)
 	{
@@ -371,7 +354,7 @@ static UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonit
                                      DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
 	DISP_PLUGIN* disp;
-	DISP_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback;
 
 	WINPR_ASSERT(context);
 
