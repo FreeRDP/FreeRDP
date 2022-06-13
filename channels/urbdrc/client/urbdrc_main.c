@@ -132,7 +132,7 @@ static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId, size_t
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* callback, wStream* s,
+static UINT urbdrc_process_capability_request(GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                               UINT32 MessageId)
 {
 	UINT32 InterfaceId;
@@ -170,7 +170,7 @@ static UINT urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* callback,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, wStream* s,
+static UINT urbdrc_process_channel_create(GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                           UINT32 MessageId)
 {
 	UINT32 InterfaceId;
@@ -239,7 +239,7 @@ static UINT urdbrc_send_virtual_channel_add(IWTSPlugin* plugin, IWTSVirtualChann
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVICE* pdev)
+static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEVICE* pdev)
 {
 	wStream* out;
 	UINT32 InterfaceId;
@@ -375,7 +375,7 @@ static UINT urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVI
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, wStream* data)
+static UINT urbdrc_exchange_capabilities(GENERIC_CHANNEL_CALLBACK* callback, wStream* data)
 {
 	UINT32 MessageId;
 	UINT32 FunctionId;
@@ -437,7 +437,7 @@ static BOOL urbdrc_announce_devices(IUDEVMAN* udevman)
 	return error == ERROR_SUCCESS;
 }
 
-static UINT urbdrc_device_control_channel(URBDRC_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT urbdrc_device_control_channel(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)callback->plugin;
 	IUDEVMAN* udevman = urbdrc->udevman;
@@ -504,7 +504,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback, wStream* data)
+static UINT urbdrc_process_channel_notification(GENERIC_CHANNEL_CALLBACK* callback, wStream* data)
 {
 	UINT32 MessageId;
 	UINT32 FunctionId;
@@ -557,7 +557,7 @@ static UINT urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callbac
  */
 static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-	URBDRC_CHANNEL_CALLBACK* callback = (URBDRC_CHANNEL_CALLBACK*)pChannelCallback;
+    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	URBDRC_PLUGIN* urbdrc;
 	IUDEVMAN* udevman;
 	UINT32 InterfaceId;
@@ -610,7 +610,7 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
  */
 static UINT urbdrc_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
-	URBDRC_CHANNEL_CALLBACK* callback = (URBDRC_CHANNEL_CALLBACK*)pChannelCallback;
+    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	if (callback)
 	{
 		URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)callback->plugin;
@@ -645,13 +645,13 @@ static UINT urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCall
                                              BOOL* pbAccept,
                                              IWTSVirtualChannelCallback** ppCallback)
 {
-	URBDRC_LISTENER_CALLBACK* listener_callback = (URBDRC_LISTENER_CALLBACK*)pListenerCallback;
-	URBDRC_CHANNEL_CALLBACK* callback;
+    GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
+	GENERIC_CHANNEL_CALLBACK* callback;
 
 	if (!ppCallback)
 		return ERROR_INVALID_PARAMETER;
 
-	callback = (URBDRC_CHANNEL_CALLBACK*)calloc(1, sizeof(URBDRC_CHANNEL_CALLBACK));
+	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 
 	if (!callback)
 		return ERROR_OUTOFMEMORY;
@@ -687,7 +687,7 @@ static UINT urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 	}
 	udevman = urbdrc->udevman;
 	urbdrc->listener_callback =
-	    (URBDRC_LISTENER_CALLBACK*)calloc(1, sizeof(URBDRC_LISTENER_CALLBACK));
+	    (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 
 	if (!urbdrc->listener_callback)
 		return CHANNEL_RC_NO_MEMORY;

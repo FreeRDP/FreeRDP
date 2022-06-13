@@ -23,6 +23,7 @@
 
 #include <winpr/pool.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/client/channels.h>
 
 #define DEVICE_HARDWARE_ID_SIZE 32
 #define DEVICE_COMPATIBILITY_ID_SIZE 36
@@ -50,28 +51,12 @@ typedef struct S_IUDEVMAN IUDEVMAN;
 	_type (*get_##_arg)(IUDEVMAN * udevman);    \
 	void (*set_##_arg)(IUDEVMAN * udevman, _type _arg)
 
-typedef struct
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-} URBDRC_LISTENER_CALLBACK;
-
-typedef struct
-{
-	IWTSVirtualChannelCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
-} URBDRC_CHANNEL_CALLBACK;
 
 typedef struct
 {
 	IWTSPlugin iface;
 
-	URBDRC_LISTENER_CALLBACK* listener_callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback;
 
 	IUDEVMAN* udevman;
 	UINT32 vchannel_status;
@@ -95,14 +80,14 @@ typedef int (*PFREERDP_URBDRC_DEVICE_ENTRY)(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS
 
 typedef struct
 {
-	URBDRC_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback;
 	URBDRC_PLUGIN* urbdrc;
 	IUDEVMAN* udevman;
 	IWTSVirtualChannel* channel;
 	wStream* s;
 } TRANSFER_DATA;
 
-typedef void (*t_isoch_transfer_cb)(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* callback, wStream* out,
+typedef void (*t_isoch_transfer_cb)(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
                                     UINT32 InterfaceId, BOOL noAck, UINT32 MessageId,
                                     UINT32 RequestId, UINT32 NumberOfPackets, UINT32 status,
                                     UINT32 StartFrame, UINT32 ErrorCount, UINT32 OutputBufferSize);
@@ -110,7 +95,7 @@ typedef void (*t_isoch_transfer_cb)(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* cal
 struct S_IUDEVICE
 {
 	/* Transfer */
-	int (*isoch_transfer)(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* callback, UINT32 MessageId,
+	int (*isoch_transfer)(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback, UINT32 MessageId,
 	                      UINT32 RequestId, UINT32 EndpointAddress, UINT32 TransferFlags,
 	                      UINT32 StartFrame, UINT32 ErrorCount, BOOL NoAck,
 	                      const BYTE* packetDescriptorData, UINT32 NumberOfPackets,
@@ -122,7 +107,7 @@ struct S_IUDEVICE
 	 BYTE bmRequestType, BYTE Request, UINT16 Value, UINT16 Index, UINT32* UrbdStatus,
 	 UINT32* BufferSize, BYTE* Buffer, UINT32 Timeout);
 
-	int (*bulk_or_interrupt_transfer)(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* callback,
+	int (*bulk_or_interrupt_transfer)(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback,
 	                                  UINT32 MessageId, UINT32 RequestId, UINT32 EndpointAddress,
 	                                  UINT32 TransferFlags, BOOL NoAck, UINT32 BufferSize,
 	                                  const BYTE* data, t_isoch_transfer_cb cb, UINT32 Timeout);

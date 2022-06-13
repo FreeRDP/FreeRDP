@@ -107,7 +107,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RdpgfxClientContext* context,
 	RDPGFX_HEADER header;
 	RDPGFX_CAPSET* capsSet;
 	RDPGFX_PLUGIN* gfx;
-	RDPGFX_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback;
 	wStream* s;
 	gfx = (RDPGFX_PLUGIN*)context->handle;
 
@@ -183,7 +183,7 @@ static BOOL rdpgfx_is_capability_filtered(RDPGFX_PLUGIN* gfx, UINT32 caps)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_supported_caps(RDPGFX_CHANNEL_CALLBACK* callback)
+static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 {
 	RDPGFX_PLUGIN* gfx;
 	RdpgfxClientContext* context;
@@ -351,7 +351,7 @@ static UINT rdpgfx_send_supported_caps(RDPGFX_CHANNEL_CALLBACK* callback)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_CAPSET capsSet;
 	RDPGFX_CAPS_CONFIRM_PDU pdu;
@@ -387,7 +387,7 @@ static UINT rdpgfx_send_frame_acknowledge_pdu(RdpgfxClientContext* context,
 	wStream* s;
 	RDPGFX_HEADER header;
 	RDPGFX_PLUGIN* gfx;
-	RDPGFX_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback;
 
 	if (!context || !pdu)
 		return ERROR_BAD_ARGUMENTS;
@@ -438,7 +438,7 @@ static UINT rdpgfx_send_qoe_frame_acknowledge_pdu(RdpgfxClientContext* context,
 	UINT error;
 	wStream* s;
 	RDPGFX_HEADER header;
-	RDPGFX_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback;
 	RDPGFX_PLUGIN* gfx;
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE;
@@ -486,7 +486,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	int pad;
 	UINT32 index;
@@ -572,7 +572,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_evict_cache_entry_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_evict_cache_entry_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_EVICT_CACHE_ENTRY_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
@@ -736,7 +736,7 @@ static UINT rdpgfx_send_cache_import_offer_pdu(RdpgfxClientContext* context,
 	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	RDPGFX_HEADER header;
-	RDPGFX_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
 
 	if (!context || !pdu)
@@ -937,7 +937,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_cache_import_reply_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT16 idx;
 	RDPGFX_CACHE_IMPORT_REPLY_PDU pdu;
@@ -989,7 +989,7 @@ static UINT rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_create_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_create_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_CREATE_SURFACE_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
@@ -1025,7 +1025,7 @@ static UINT rdpgfx_recv_create_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_delete_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_delete_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_DELETE_SURFACE_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
@@ -1055,7 +1055,7 @@ static UINT rdpgfx_recv_delete_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_start_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_START_FRAME_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
@@ -1089,7 +1089,7 @@ static UINT rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStre
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_END_FRAME_PDU pdu;
 	RDPGFX_FRAME_ACKNOWLEDGE_PDU ack;
@@ -1186,7 +1186,7 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_wire_to_surface_1_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_SURFACE_COMMAND cmd;
 	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu;
@@ -1274,7 +1274,7 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_wire_to_surface_2_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_SURFACE_COMMAND cmd;
 	RDPGFX_WIRE_TO_SURFACE_PDU_2 pdu;
@@ -1345,7 +1345,7 @@ static UINT rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_delete_encoding_context_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_delete_encoding_context_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_DELETE_ENCODING_CONTEXT_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
@@ -1379,7 +1379,7 @@ static UINT rdpgfx_recv_delete_encoding_context_pdu(RDPGFX_CHANNEL_CALLBACK* cal
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_solid_fill_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT16 index;
 	RECTANGLE_16* fillRect;
@@ -1446,7 +1446,7 @@ static UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_surface_to_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT16 index;
 	RDPGFX_POINT16* destPt;
@@ -1519,7 +1519,7 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_surface_to_cache_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_surface_to_cache_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_SURFACE_TO_CACHE_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
@@ -1564,7 +1564,7 @@ static UINT rdpgfx_recv_surface_to_cache_pdu(RDPGFX_CHANNEL_CALLBACK* callback, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_cache_to_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT16 index;
 	RDPGFX_POINT16* destPt;
@@ -1627,7 +1627,7 @@ static UINT rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_map_surface_to_output_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_map_surface_to_output_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
@@ -1658,7 +1658,7 @@ static UINT rdpgfx_recv_map_surface_to_output_pdu(RDPGFX_CHANNEL_CALLBACK* callb
 	return error;
 }
 
-static UINT rdpgfx_recv_map_surface_to_scaled_output_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
+static UINT rdpgfx_recv_map_surface_to_scaled_output_pdu(GENERIC_CHANNEL_CALLBACK* callback,
                                                          wStream* s)
 {
 	RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU pdu;
@@ -1698,7 +1698,7 @@ static UINT rdpgfx_recv_map_surface_to_scaled_output_pdu(RDPGFX_CHANNEL_CALLBACK
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_map_surface_to_window_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_MAP_SURFACE_TO_WINDOW_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
@@ -1729,7 +1729,7 @@ static UINT rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callb
 	return error;
 }
 
-static UINT rdpgfx_recv_map_surface_to_scaled_window_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
+static UINT rdpgfx_recv_map_surface_to_scaled_window_pdu(GENERIC_CHANNEL_CALLBACK* callback,
                                                          wStream* s)
 {
 	RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU pdu;
@@ -1770,7 +1770,7 @@ static UINT rdpgfx_recv_map_surface_to_scaled_window_pdu(RDPGFX_CHANNEL_CALLBACK
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	size_t beg, end;
 	RDPGFX_HEADER header;
@@ -1979,7 +1979,7 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	int status = 0;
 	UINT32 DstSize = 0;
 	BYTE* pDstData = NULL;
-	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	UINT error = CHANNEL_RC_OK;
 	status = zgfx_decompress(gfx->zgfx, Stream_Pointer(data),
@@ -2021,7 +2021,7 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
  */
 static UINT rdpgfx_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 {
-	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*)pChannelCallback;
+    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -2051,7 +2051,7 @@ static UINT rdpgfx_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 static UINT rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	UINT error = CHANNEL_RC_OK;
-	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 
@@ -2089,9 +2089,9 @@ static UINT rdpgfx_on_new_channel_connection(IWTSListenerCallback* pListenerCall
                                              BOOL* pbAccept,
                                              IWTSVirtualChannelCallback** ppCallback)
 {
-	RDPGFX_CHANNEL_CALLBACK* callback;
-	RDPGFX_LISTENER_CALLBACK* listener_callback = (RDPGFX_LISTENER_CALLBACK*)pListenerCallback;
-	callback = (RDPGFX_CHANNEL_CALLBACK*)calloc(1, sizeof(RDPGFX_CHANNEL_CALLBACK));
+    GENERIC_CHANNEL_CALLBACK* callback;
+    GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
+	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 
 	if (!callback)
 	{
@@ -2124,7 +2124,7 @@ static UINT rdpgfx_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", RDPGFX_DVC_CHANNEL_NAME);
 		return ERROR_INVALID_DATA;
 	}
-	gfx->listener_callback = (RDPGFX_LISTENER_CALLBACK*)calloc(1, sizeof(RDPGFX_LISTENER_CALLBACK));
+	gfx->listener_callback = (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 
 	if (!gfx->listener_callback)
 	{

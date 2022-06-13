@@ -53,7 +53,7 @@ static void usb_process_get_port_status(IUDEVICE* pdev, wStream* out)
 	}
 }
 
-static UINT urb_write_completion(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, BOOL noAck,
+static UINT urb_write_completion(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, BOOL noAck,
                                  wStream* out, UINT32 InterfaceId, UINT32 MessageId,
                                  UINT32 RequestId, UINT32 usbd_status, UINT32 OutputBufferSize)
 {
@@ -113,7 +113,7 @@ static wStream* urb_create_iocompletion(UINT32 InterfaceField, UINT32 MessageId,
 }
 
 static UINT urbdrc_process_register_request_callback(IUDEVICE* pdev,
-                                                     URBDRC_CHANNEL_CALLBACK* callback, wStream* s,
+        GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                                      IUDEVMAN* udevman)
 {
 	UINT32 NumRequestCompletion = 0;
@@ -207,7 +207,7 @@ static UINT urbdrc_process_retract_device_request(IUDEVICE* pdev, wStream* s, IU
 	return ERROR_SUCCESS;
 }
 
-static UINT urbdrc_process_io_control(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, wStream* s,
+static UINT urbdrc_process_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                       UINT32 MessageId, IUDEVMAN* udevman)
 {
 	UINT32 InterfaceId;
@@ -304,7 +304,7 @@ static UINT urbdrc_process_io_control(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* c
 	return stream_write_and_free(callback->plugin, callback->channel, out);
 }
 
-static UINT urbdrc_process_internal_io_control(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urbdrc_process_internal_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                                wStream* s, UINT32 MessageId, IUDEVMAN* udevman)
 {
 	wStream* out;
@@ -339,7 +339,7 @@ static UINT urbdrc_process_internal_io_control(IUDEVICE* pdev, URBDRC_CHANNEL_CA
 	return stream_write_and_free(callback->plugin, callback->channel, out);
 }
 
-static UINT urbdrc_process_query_device_text(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urbdrc_process_query_device_text(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                              wStream* s, UINT32 MessageId, IUDEVMAN* udevman)
 {
 	UINT32 out_size;
@@ -398,7 +398,7 @@ static void func_select_all_interface_for_msconfig(IUDEVICE* pdev,
 	}
 }
 
-static UINT urb_select_configuration(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, wStream* s,
+static UINT urb_select_configuration(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                      UINT32 RequestField, UINT32 MessageId, IUDEVMAN* udevman,
                                      int transferDir)
 {
@@ -515,7 +515,7 @@ static UINT urb_select_configuration(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* ca
 	return ERROR_SUCCESS;
 }
 
-static UINT urb_select_interface(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, wStream* s,
+static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                  UINT32 RequestField, UINT32 MessageId, IUDEVMAN* udevman,
                                  int transferDir)
 {
@@ -604,7 +604,7 @@ static UINT urb_select_interface(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callba
 	return ERROR_SUCCESS;
 }
 
-static UINT urb_control_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, wStream* s,
+static UINT urb_control_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                  UINT32 RequestField, UINT32 MessageId, IUDEVMAN* udevman,
                                  int transferDir, int External)
 {
@@ -692,7 +692,7 @@ static UINT urb_control_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callba
 	                            usbd_status, OutputBufferSize);
 }
 
-static void urb_bulk_transfer_cb(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, wStream* out,
+static void urb_bulk_transfer_cb(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
                                  UINT32 InterfaceId, BOOL noAck, UINT32 MessageId, UINT32 RequestId,
                                  UINT32 NumberOfPackets, UINT32 status, UINT32 StartFrame,
                                  UINT32 ErrorCount, UINT32 OutputBufferSize)
@@ -704,7 +704,7 @@ static void urb_bulk_transfer_cb(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callba
 		Stream_Free(out, TRUE);
 }
 
-static UINT urb_bulk_or_interrupt_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urb_bulk_or_interrupt_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                            wStream* s, UINT32 RequestField, UINT32 MessageId,
                                            IUDEVMAN* udevman, int transferDir)
 {
@@ -730,7 +730,7 @@ static UINT urb_bulk_or_interrupt_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
 	    urb_bulk_transfer_cb, 10000);
 }
 
-static void urb_isoch_transfer_cb(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, wStream* out,
+static void urb_isoch_transfer_cb(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
                                   UINT32 InterfaceId, BOOL noAck, UINT32 MessageId,
                                   UINT32 RequestId, UINT32 NumberOfPackets, UINT32 status,
                                   UINT32 StartFrame, UINT32 ErrorCount, UINT32 OutputBufferSize)
@@ -777,7 +777,7 @@ static void urb_isoch_transfer_cb(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callb
 	}
 }
 
-static UINT urb_isoch_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, wStream* s,
+static UINT urb_isoch_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                UINT32 RequestField, UINT32 MessageId, IUDEVMAN* udevman,
                                int transferDir)
 {
@@ -819,7 +819,7 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback
 	return (UINT)rc;
 }
 
-static UINT urb_control_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urb_control_descriptor_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                            wStream* s, UINT32 RequestField, UINT32 MessageId,
                                            IUDEVMAN* udevman, BYTE func_recipient, int transferDir)
 {
@@ -899,7 +899,7 @@ static UINT urb_control_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
 	                            usbd_status, OutputBufferSize);
 }
 
-static UINT urb_control_get_status_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urb_control_get_status_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                            wStream* s, UINT32 RequestField, UINT32 MessageId,
                                            IUDEVMAN* udevman, BYTE func_recipient, int transferDir)
 {
@@ -958,7 +958,7 @@ static UINT urb_control_get_status_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBA
 	                            usbd_status, OutputBufferSize);
 }
 
-static UINT urb_control_vendor_or_class_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urb_control_vendor_or_class_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                                 wStream* s, UINT32 RequestField, UINT32 MessageId,
                                                 IUDEVMAN* udevman, BYTE func_type,
                                                 BYTE func_recipient, int transferDir)
@@ -1041,7 +1041,7 @@ static UINT urb_control_vendor_or_class_request(IUDEVICE* pdev, URBDRC_CHANNEL_C
 	                            usbd_status, OutputBufferSize);
 }
 
-static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                               wStream* s, UINT32 RequestField, UINT32 MessageId,
                                               IUDEVMAN* udevman, int transferDir)
 {
@@ -1126,7 +1126,7 @@ static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
 	                            usbd_status, OutputBufferSize);
 }
 
-static UINT urb_pipe_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, wStream* s,
+static UINT urb_pipe_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                              UINT32 RequestField, UINT32 MessageId, IUDEVMAN* udevman,
                              int transferDir, int action)
 {
@@ -1205,7 +1205,7 @@ static UINT urb_pipe_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback, 
 	                            0);
 }
 
-static UINT urb_get_current_frame_number(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urb_get_current_frame_number(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                          wStream* s, UINT32 RequestField, UINT32 MessageId,
                                          IUDEVMAN* udevman, int transferDir)
 {
@@ -1267,7 +1267,7 @@ static UINT urb_get_current_frame_number(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK
 }
 
 /* Unused function for current server */
-static UINT urb_control_get_configuration_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urb_control_get_configuration_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                                   wStream* s, UINT32 RequestField, UINT32 MessageId,
                                                   IUDEVMAN* udevman, int transferDir)
 {
@@ -1323,7 +1323,7 @@ static UINT urb_control_get_configuration_request(IUDEVICE* pdev, URBDRC_CHANNEL
 }
 
 /* Unused function for current server */
-static UINT urb_control_get_interface_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urb_control_get_interface_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                               wStream* s, UINT32 RequestField, UINT32 MessageId,
                                               IUDEVMAN* udevman, int transferDir)
 {
@@ -1380,7 +1380,7 @@ static UINT urb_control_get_interface_request(IUDEVICE* pdev, URBDRC_CHANNEL_CAL
 	                            usbd_status, OutputBufferSize);
 }
 
-static UINT urb_control_feature_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urb_control_feature_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                         wStream* s, UINT32 RequestField, UINT32 MessageId,
                                         IUDEVMAN* udevman, BYTE func_recipient, BYTE command,
                                         int transferDir)
@@ -1474,7 +1474,7 @@ static UINT urb_control_feature_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK*
 	                            usbd_status, OutputBufferSize);
 }
 
-static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLBACK* callback,
+static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                             wStream* s, UINT32 MessageId, IUDEVMAN* udevman,
                                             int transferDir)
 {
@@ -1767,7 +1767,7 @@ static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, URBDRC_CHANNEL_CALLB
 	return error;
 }
 
-UINT urbdrc_process_udev_data_transfer(URBDRC_CHANNEL_CALLBACK* callback, URBDRC_PLUGIN* urbdrc,
+UINT urbdrc_process_udev_data_transfer(GENERIC_CHANNEL_CALLBACK* callback, URBDRC_PLUGIN* urbdrc,
                                        IUDEVMAN* udevman, wStream* data)
 {
 	UINT32 InterfaceId;

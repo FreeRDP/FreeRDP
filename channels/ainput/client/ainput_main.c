@@ -30,6 +30,7 @@
 
 #include "ainput_main.h"
 #include <freerdp/channels/log.h>
+#include <freerdp/client/channels.h>
 #include <freerdp/client/ainput.h>
 #include <freerdp/channels/ainput.h>
 
@@ -37,32 +38,13 @@
 
 #define TAG CHANNELS_TAG("ainput.client")
 
-typedef struct AINPUT_CHANNEL_CALLBACK_ AINPUT_CHANNEL_CALLBACK;
-struct AINPUT_CHANNEL_CALLBACK_
-{
-	IWTSVirtualChannelCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
-};
-
-typedef struct AINPUT_LISTENER_CALLBACK_ AINPUT_LISTENER_CALLBACK;
-struct AINPUT_LISTENER_CALLBACK_
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	AINPUT_CHANNEL_CALLBACK* channel_callback;
-};
 
 typedef struct AINPUT_PLUGIN_ AINPUT_PLUGIN;
 struct AINPUT_PLUGIN_
 {
 	IWTSPlugin iface;
 
-	AINPUT_LISTENER_CALLBACK* listener_callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback;
 	IWTSListener* listener;
 	UINT32 MajorVersion;
 	UINT32 MinorVersion;
@@ -78,7 +60,7 @@ static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 {
 	UINT16 type;
 	AINPUT_PLUGIN* ainput;
-	AINPUT_CHANNEL_CALLBACK* callback = (AINPUT_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 
 	WINPR_ASSERT(callback);
 	WINPR_ASSERT(data);
@@ -108,7 +90,7 @@ static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, INT32 x, INT32 y)
 {
 	AINPUT_PLUGIN* ainput;
-	AINPUT_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback;
 	BYTE buffer[32] = { 0 };
 	UINT64 time;
 	wStream sbuffer = { 0 };
@@ -161,7 +143,7 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
  */
 static UINT ainput_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
-	AINPUT_CHANNEL_CALLBACK* callback = (AINPUT_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 
 	free(callback);
 
@@ -178,14 +160,14 @@ static UINT ainput_on_new_channel_connection(IWTSListenerCallback* pListenerCall
                                              BOOL* pbAccept,
                                              IWTSVirtualChannelCallback** ppCallback)
 {
-	AINPUT_CHANNEL_CALLBACK* callback;
-	AINPUT_LISTENER_CALLBACK* listener_callback = (AINPUT_LISTENER_CALLBACK*)pListenerCallback;
+	GENERIC_CHANNEL_CALLBACK* callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	WINPR_ASSERT(listener_callback);
 	WINPR_UNUSED(Data);
 	WINPR_UNUSED(pbAccept);
 
-	callback = (AINPUT_CHANNEL_CALLBACK*)calloc(1, sizeof(AINPUT_CHANNEL_CALLBACK));
+	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 
 	if (!callback)
 	{
@@ -223,7 +205,7 @@ static UINT ainput_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 		return ERROR_INVALID_DATA;
 	}
 	ainput->listener_callback =
-	    (AINPUT_LISTENER_CALLBACK*)calloc(1, sizeof(AINPUT_LISTENER_CALLBACK));
+	    (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 
 	if (!ainput->listener_callback)
 	{
