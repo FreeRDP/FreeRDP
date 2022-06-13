@@ -577,7 +577,6 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 {
 	SecBuffer mic_buffers[2];
 	SecBufferDesc mic_buffer_desc = { SECBUFFER_VERSION, 2, mic_buffers };
-	SecPkgContext_Sizes sizes;
 	SECURITY_STATUS status;
 	const SecurityFunctionTableA* table = context->mech->pkg->table;
 
@@ -598,9 +597,6 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 	/* If peer expects a MIC then generate it */
 	if (input_token->negState != ACCEPT_COMPLETED)
 	{
-		if (table->QueryContextAttributesA(&context->sub_context, SECPKG_ATTR_SIZES, &sizes) != SEC_E_OK)
-			return SEC_E_INTERNAL_ERROR;
-
 		/* Store the mic token after the mech token in the output buffer */
 		output_token->mic.BufferType = SECBUFFER_TOKEN;
 		output_token->mic.cbBuffer = output_buffer->cbBuffer - output_token->mechToken.cbBuffer;
