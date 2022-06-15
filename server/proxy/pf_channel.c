@@ -25,7 +25,7 @@
 
 #define TAG PROXY_TAG("channel")
 
-ChannelStateTracker* channelTracker_new(pServerChannelContext* channel, ChannelTrackerPeekFn fn, void* data)
+ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel, ChannelTrackerPeekFn fn, void* data)
 {
 	ChannelStateTracker* ret = calloc(1, sizeof(ChannelStateTracker));
 	if (!ret)
@@ -134,7 +134,7 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 {
 	proxyData* pdata;
 	pServerContext* ps;
-	pServerChannelContext* channel;
+	pServerStaticChannelContext* channel;
 	UINT32 flags = CHANNEL_FLAG_FIRST;
 	BOOL r;
 	const char* direction = toBack ? "F->B" : "B->F";
@@ -178,7 +178,7 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 
 
 
-static PfChannelResult pf_channel_generic_back_data(proxyData* pdata, const pServerChannelContext* channel,
+static PfChannelResult pf_channel_generic_back_data(proxyData* pdata, const pServerStaticChannelContext* channel,
             const BYTE* xdata, size_t xsize, UINT32 flags,
             size_t totalSize)
 {
@@ -209,7 +209,7 @@ static PfChannelResult pf_channel_generic_back_data(proxyData* pdata, const pSer
 	}
 }
 
-static PfChannelResult pf_channel_generic_front_data(proxyData* pdata, const pServerChannelContext* channel,
+static PfChannelResult pf_channel_generic_front_data(proxyData* pdata, const pServerStaticChannelContext* channel,
             const BYTE* xdata, size_t xsize, UINT32 flags,
             size_t totalSize)
 {
@@ -241,7 +241,7 @@ static PfChannelResult pf_channel_generic_front_data(proxyData* pdata, const pSe
 }
 
 
-BOOL pf_channel_setup_generic(pServerChannelContext* channel)
+BOOL pf_channel_setup_generic(pServerStaticChannelContext* channel)
 {
 	channel->onBackData = pf_channel_generic_back_data;
 	channel->onFrontData = pf_channel_generic_front_data;

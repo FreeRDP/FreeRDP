@@ -202,12 +202,12 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 
 	for (i = 0; i < accepted_channels_count; i++)
 	{
-		pServerChannelContext* channelContext;
+		pServerStaticChannelContext* channelContext;
 		const char* cname = accepted_channels[i];
 		UINT16 channelId = WTSChannelGetId(peer, cname);
 
 		PROXY_LOG_INFO(TAG, ps, "Accepted channel: %s (%d)", cname, channelId);
-		channelContext = ChannelContext_new(ps, cname, channelId);
+		channelContext = StaticChannelContext_new(ps, cname, channelId);
 		if (!channelContext)
 		{
 			PROXY_LOG_ERR(TAG, ps, "error seting up channelContext for '%s'", cname);
@@ -219,7 +219,7 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 			if (!pf_channel_setup_drdynvc(ps->pdata, channelContext))
 			{
 				PROXY_LOG_ERR(TAG, ps, "error while setting up dynamic channel");
-				ChannelContext_free(channelContext);
+				StaticChannelContext_free(channelContext);
 				return FALSE;
 			}
 		}
@@ -228,7 +228,7 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 			if (!pf_channel_setup_rdpdr(ps, channelContext))
 			{
 				PROXY_LOG_ERR(TAG, ps, "error while setting up redirection channel");
-				ChannelContext_free(channelContext);
+				StaticChannelContext_free(channelContext);
 				return FALSE;
 			}
 		}
@@ -237,14 +237,14 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 			if (!pf_channel_setup_generic(channelContext))
 			{
 				PROXY_LOG_ERR(TAG, ps, "error while setting up generic channel");
-				ChannelContext_free(channelContext);
+				StaticChannelContext_free(channelContext);
 				return FALSE;
 			}
 		}
 
 		if (!HashTable_Insert(byId, &channelContext->channel_id, channelContext))
 		{
-			ChannelContext_free(channelContext);
+			StaticChannelContext_free(channelContext);
 			PROXY_LOG_ERR(TAG, ps, "error inserting channelContext in byId table for '%s'", cname);
 			return FALSE;
 		}
@@ -385,7 +385,7 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	pClientContext* pc;
 	proxyData* pdata;
 	const proxyConfig* config;
-	const pServerChannelContext* channel;
+	const pServerStaticChannelContext* channel;
 	UINT64 channelId64 = channelId;
 
 	WINPR_ASSERT(peer);

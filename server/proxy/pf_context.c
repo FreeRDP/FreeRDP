@@ -37,30 +37,29 @@
 
 static UINT32 ChannelId_Hash(const void* key)
 {
-	const UINT64* v = (const UINT64*)key;
-	return (*v & 0xFFFFFFFF) + (*v >> 32);
+	const UINT32* v = (const UINT32*)key;
+	return *v;
 }
 
-static BOOL ChannelId_Compare(const UINT64* v1, const UINT64* v2)
+static BOOL ChannelId_Compare(const UINT32* v1, const UINT32* v2)
 {
 	return (*v1 == *v2);
 }
 
-pServerChannelContext* ChannelContext_new(pServerContext* ps, const char* name, UINT64 id)
+pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const char* name, UINT32 id)
 {
-	pServerChannelContext* ret = calloc(1, sizeof(*ret));
+	pServerStaticChannelContext* ret = calloc(1, sizeof(*ret));
 	if (!ret)
 	{
 		PROXY_LOG_ERR(TAG, ps, "error allocating channel context for '%s'", name);
 		return NULL;
 	}
 
-	ret->openStatus = CHANNEL_OPENSTATE_OPENED;
 	ret->channel_id = id;
 	ret->channel_name = _strdup(name);
 	if (!ret->channel_name)
 	{
-		PROXY_LOG_ERR(TAG, ps, "error allocating name in channel context for '%s'", ret);
+		PROXY_LOG_ERR(TAG, ps, "error allocating name in channel context for '%s'", name);
 		free(ret);
 		return NULL;
 	}
@@ -69,7 +68,7 @@ pServerChannelContext* ChannelContext_new(pServerContext* ps, const char* name, 
 	return ret;
 }
 
-void ChannelContext_free(pServerChannelContext* ctx)
+void StaticChannelContext_free(pServerStaticChannelContext* ctx)
 {
 	if (!ctx)
 		return;
@@ -120,7 +119,7 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 	obj->fnObjectEquals = (OBJECT_EQUALS_FN)ChannelId_Compare;
 
 	obj = HashTable_ValueObject(context->channelsById);
-	obj->fnObjectFree = (OBJECT_FREE_FN)ChannelContext_free;
+	obj->fnObjectFree = (OBJECT_FREE_FN)StaticChannelContext_free;
 	return TRUE;
 
 error:

@@ -35,7 +35,7 @@ typedef PfChannelResult (*ChannelTrackerPeekFn)(ChannelStateTracker* tracker, BO
 
 /** @brief a tracker for channel packets */
 struct _ChannelStateTracker {
-	pServerChannelContext* channel;
+	pServerStaticChannelContext* channel;
 	ChannelTrackerMode mode;
 	wStream* currentPacket;
 	size_t currentPacketReceived;
@@ -47,7 +47,7 @@ struct _ChannelStateTracker {
 	proxyData* pdata;
 };
 
-ChannelStateTracker* channelTracker_new(pServerChannelContext* channel, ChannelTrackerPeekFn fn, void* data);
+ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel, ChannelTrackerPeekFn fn, void* data);
 
 void channelTracker_free(ChannelStateTracker* t);
 
@@ -57,8 +57,8 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, BOOL last, BOOL toFront);
 
 
-BOOL pf_channel_setup_rdpdr(pServerContext* ps, pServerChannelContext* channel);
-BOOL pf_channel_setup_generic(pServerChannelContext* channel);
+BOOL pf_channel_setup_rdpdr(pServerContext* ps, pServerStaticChannelContext* channel);
+BOOL pf_channel_setup_generic(pServerStaticChannelContext* channel);
 
 
 #endif /* SERVER_PROXY_PF_CHANNEL_H_ */
