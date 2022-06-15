@@ -36,7 +36,7 @@ extern "C"
 
 	typedef struct proxy_data proxyData;
 	typedef struct proxy_module proxyModule;
-	typedef struct p_server_channel_context pServerChannelContext;
+	typedef struct p_server_static_channel_context pServerStaticChannelContext;
 
 	typedef struct s_InterceptContextMapEntry
 	{
@@ -56,16 +56,6 @@ extern "C"
 		PF_UTILS_CHANNEL_INTERCEPT,	  /*!< inspect traffic from this channel */
 	} pf_utils_channel_mode;
 
-	/** @brief channel opened status */
-	typedef enum
-	{
-		CHANNEL_OPENSTATE_WAITING_OPEN_STATUS, /*!< dynamic channel waiting for create response */
-		CHANNEL_OPENSTATE_OPENED,			   /*!< opened */
-		CHANNEL_OPENSTATE_CLOSED			   /*!< dynamic channel has been opened then closed */
-	} PfChannelOpenStatus;
-
-	#define PF_DYNAMIC_CHANNEL_MASK 0xFFFF000000000000
-
 	/** @brief result of a channel treatment */
 	typedef enum
 	{
@@ -74,18 +64,16 @@ extern "C"
 		PF_CHANNEL_RESULT_ERROR  /*!< error during packet treatment */
 	} PfChannelResult;
 
-	typedef PfChannelResult (*proxyChannelDataFn)(proxyData* pdata, const pServerChannelContext* channel,
+	typedef PfChannelResult (*proxyChannelDataFn)(proxyData* pdata, const pServerStaticChannelContext* channel,
             const BYTE* xdata, size_t xsize, UINT32 flags,
             size_t totalSizepServer);
 	typedef void (*proxyChannelContextDtor)(void *context);
 
 	/** @brief per channel configuration */
-	struct p_server_channel_context
+	struct p_server_static_channel_context
 	{
 		char* channel_name;
-		UINT64 channel_id;
-		PfChannelOpenStatus openStatus;
-		BOOL isDynamic;
+		UINT32 channel_id;
 		pf_utils_channel_mode channelMode;
 		proxyChannelDataFn onFrontData;
 		proxyChannelDataFn onBackData;
@@ -93,7 +81,7 @@ extern "C"
 		void *context;
 	};
 
-	void ChannelContext_free(pServerChannelContext* ctx);
+	void StaticChannelContext_free(pServerStaticChannelContext* ctx);
 
 	/**
 	 * Wraps rdpContext and holds the state for the proxy's server.
@@ -112,7 +100,7 @@ extern "C"
 	};
 	typedef struct p_server_context pServerContext;
 
-	pServerChannelContext* ChannelContext_new(pServerContext* ps, const char* name, UINT64 id);
+	pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const char* name, UINT32 id);
 
 	/**
 	 * Wraps rdpContext and holds the state for the proxy's client.

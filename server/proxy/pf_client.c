@@ -381,7 +381,7 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	pClientContext* pc;
 	pServerContext* ps;
 	proxyData* pdata;
-	pServerChannelContext* channel;
+	pServerStaticChannelContext* channel;
 	UINT16 server_channel_id;
 	UINT64 channelId64 = channelId;
 
