@@ -53,6 +53,8 @@
 #include <freerdp/server/telemetry.h>
 #include <freerdp/server/rdpgfx.h>
 #include <freerdp/server/disp.h>
+#include <freerdp/server/camera-device-enumerator.h>
+#include <freerdp/server/camera-device.h>
 
 #if defined(CHANNEL_AINPUT_SERVER)
 #include <freerdp/server/ainput.h>
@@ -75,6 +77,8 @@ void freerdp_channels_dummy(void)
 	TelemetryServerContext* telemetry;
 	RdpgfxServerContext* rdpgfx;
 	DispServerContext* disp;
+	CamDevEnumServerContext* camera_enumerator;
+	CameraDeviceServerContext* camera_device;
 	audin = audin_server_context_new(NULL);
 	audin_server_context_free(audin);
 	rdpsnd = rdpsnd_server_context_new(NULL);
@@ -101,6 +105,10 @@ void freerdp_channels_dummy(void)
 	rdpgfx_server_context_free(rdpgfx);
 	disp = disp_server_context_new(NULL);
 	disp_server_context_free(disp);
+	camera_enumerator = cam_dev_enum_server_context_new(NULL);
+	cam_dev_enum_server_context_free(camera_enumerator);
+	camera_device = camera_device_server_context_new(NULL);
+	camera_device_server_context_free(camera_device);
 #if defined(CHANNEL_AINPUT_SERVER)
 	{
 		ainput_server_context* ainput = ainput_server_context_new(NULL);

@@ -81,6 +81,9 @@
 #cmakedefine CHANNEL_AUDIN
 #cmakedefine CHANNEL_AUDIN_CLIENT
 #cmakedefine CHANNEL_AUDIN_SERVER
+#cmakedefine CHANNEL_CAMERA
+#cmakedefine CHANNEL_CAMERA_CLIENT
+#cmakedefine CHANNEL_CAMERA_SERVER
 #cmakedefine CHANNEL_CLIPRDR
 #cmakedefine CHANNEL_CLIPRDR_CLIENT
 #cmakedefine CHANNEL_CLIPRDR_SERVER
