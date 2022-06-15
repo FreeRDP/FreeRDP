@@ -51,7 +51,12 @@
 #include <freerdp/server/telemetry.h>
 #include <freerdp/server/rdpgfx.h>
 #include <freerdp/server/disp.h>
+#include <freerdp/server/camera-device-enumerator.h>
+#include <freerdp/server/camera-device.h>
+
+#ifdef WITH_CHANNEL_GFXREDIR
 #include <freerdp/server/gfxredir.h>
+#endif /* WITH_CHANNEL_GFXREDIR */
 
 #if defined(CHANNEL_AINPUT_SERVER)
 #include <freerdp/server/ainput.h>
@@ -74,6 +79,8 @@ void freerdp_channels_dummy(void)
 	TelemetryServerContext* telemetry;
 	RdpgfxServerContext* rdpgfx;
 	DispServerContext* disp;
+	CamDevEnumServerContext* camera_enumerator;
+	CameraDeviceServerContext* camera_device;
 #ifdef WITH_CHANNEL_GFXREDIR
 	GfxRedirServerContext* gfxredir;
 #endif // WITH_CHANNEL_GFXREDIR
@@ -103,6 +110,10 @@ void freerdp_channels_dummy(void)
 	rdpgfx_server_context_free(rdpgfx);
 	disp = disp_server_context_new(NULL);
 	disp_server_context_free(disp);
+	camera_enumerator = cam_dev_enum_server_context_new(NULL);
+	cam_dev_enum_server_context_free(camera_enumerator);
+	camera_device = camera_device_server_context_new(NULL);
+	camera_device_server_context_free(camera_device);
 #ifdef WITH_CHANNEL_GFXREDIR
 	gfxredir = gfxredir_server_context_new(NULL);
 	gfxredir_server_context_free(gfxredir);
