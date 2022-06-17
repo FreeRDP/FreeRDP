@@ -28,33 +28,18 @@
 #include <winpr/stream.h>
 
 #include "echo_main.h"
+#include <freerdp/client/channels.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/channels/echo.h>
 
 #define TAG CHANNELS_TAG("echo.client")
 
-typedef struct
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-} ECHO_LISTENER_CALLBACK;
-
-typedef struct
-{
-	IWTSVirtualChannelCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
-} ECHO_CHANNEL_CALLBACK;
 
 typedef struct
 {
 	IWTSPlugin iface;
 
-	ECHO_LISTENER_CALLBACK* listener_callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback;
 	IWTSListener* listener;
 	BOOL initialized;
 } ECHO_PLUGIN;
@@ -66,7 +51,7 @@ typedef struct
  */
 static UINT echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-	ECHO_CHANNEL_CALLBACK* callback = (ECHO_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	BYTE* pBuffer = Stream_Pointer(data);
 	UINT32 cbSize = Stream_GetRemainingLength(data);
 
@@ -81,7 +66,7 @@ static UINT echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
  */
 static UINT echo_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
-	ECHO_CHANNEL_CALLBACK* callback = (ECHO_CHANNEL_CALLBACK*)pChannelCallback;
+    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 
 	free(callback);
 
@@ -97,10 +82,10 @@ static UINT echo_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
                                            IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
                                            IWTSVirtualChannelCallback** ppCallback)
 {
-	ECHO_CHANNEL_CALLBACK* callback;
-	ECHO_LISTENER_CALLBACK* listener_callback = (ECHO_LISTENER_CALLBACK*)pListenerCallback;
+    GENERIC_CHANNEL_CALLBACK* callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
-	callback = (ECHO_CHANNEL_CALLBACK*)calloc(1, sizeof(ECHO_CHANNEL_CALLBACK));
+	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 
 	if (!callback)
 	{
@@ -133,7 +118,7 @@ static UINT echo_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", ECHO_DVC_CHANNEL_NAME);
 		return ERROR_INVALID_DATA;
 	}
-	echo->listener_callback = (ECHO_LISTENER_CALLBACK*)calloc(1, sizeof(ECHO_LISTENER_CALLBACK));
+	echo->listener_callback = (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 
 	if (!echo->listener_callback)
 	{
