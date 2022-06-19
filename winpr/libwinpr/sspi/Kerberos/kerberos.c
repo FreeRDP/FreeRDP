@@ -305,36 +305,39 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			goto cleanup;
 	}
 	
-	if ((rv = krb5_get_init_creds_opt_alloc(ctx, &gic_opt)))
-		goto cleanup;
-
-	krb5_get_init_creds_opt_set_forwardable(gic_opt, 0);
-	krb5_get_init_creds_opt_set_proxiable(gic_opt, 0);
-
-	if (krb_settings)
+	if (fCredentialUse & SECPKG_CRED_OUTBOUND)
 	{
-		if (krb_settings->startTime)
-			start_time = krb_settings->startTime;
-		if (krb_settings->lifeTime)
-			krb5_get_init_creds_opt_set_tkt_life(gic_opt, krb_settings->lifeTime);
-		if (krb_settings->renewLifeTime)
-			krb5_get_init_creds_opt_set_renew_life(gic_opt, krb_settings->renewLifeTime);
-		if (krb_settings->withPac)
-			krb5_get_init_creds_opt_set_pac_request(ctx, gic_opt, TRUE);
-		if (krb_settings->armorCache)
-			krb5_get_init_creds_opt_set_fast_ccache_name(ctx, gic_opt, krb_settings->armorCache);
-		if (krb_settings->pkinitX509Identity)
-			krb5_get_init_creds_opt_set_pa(ctx, gic_opt, "X509_user_identity",
-			                               krb_settings->pkinitX509Identity);
-		if (krb_settings->pkinitX509Anchors)
-			krb5_get_init_creds_opt_set_pa(ctx, gic_opt, "X509_anchors",
-			                               krb_settings->pkinitX509Anchors);
-	}
+		if ((rv = krb5_get_init_creds_opt_alloc(ctx, &gic_opt)))
+			goto cleanup;
+
+		krb5_get_init_creds_opt_set_forwardable(gic_opt, 0);
+		krb5_get_init_creds_opt_set_proxiable(gic_opt, 0);
+
+		if (krb_settings)
+		{
+			if (krb_settings->startTime)
+				start_time = krb_settings->startTime;
+			if (krb_settings->lifeTime)
+				krb5_get_init_creds_opt_set_tkt_life(gic_opt, krb_settings->lifeTime);
+			if (krb_settings->renewLifeTime)
+				krb5_get_init_creds_opt_set_renew_life(gic_opt, krb_settings->renewLifeTime);
+			if (krb_settings->withPac)
+				krb5_get_init_creds_opt_set_pac_request(ctx, gic_opt, TRUE);
+			if (krb_settings->armorCache)
+				krb5_get_init_creds_opt_set_fast_ccache_name(ctx, gic_opt, krb_settings->armorCache);
+			if (krb_settings->pkinitX509Identity)
+				krb5_get_init_creds_opt_set_pa(ctx, gic_opt, "X509_user_identity",
+											krb_settings->pkinitX509Identity);
+			if (krb_settings->pkinitX509Anchors)
+				krb5_get_init_creds_opt_set_pa(ctx, gic_opt, "X509_anchors",
+											krb_settings->pkinitX509Anchors);
+		}
 
 #ifdef WITH_GSSAPI_MIT
-	krb5_get_init_creds_opt_set_out_ccache(ctx, gic_opt, ccache);
-	krb5_get_init_creds_opt_set_in_ccache(ctx, gic_opt, ccache);
+		krb5_get_init_creds_opt_set_out_ccache(ctx, gic_opt, ccache);
+		krb5_get_init_creds_opt_set_in_ccache(ctx, gic_opt, ccache);
 #endif
+	}
 
 	krb5_cc_get_full_name(ctx, ccache, &ccache_name);
 	krb5_kt_get_name(ctx, keytab, keytab_name, PATH_MAX);
@@ -349,6 +352,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	                                   &desired_mechs, cred_usage, &cred_store, &gss_creds,
 	                                   NULL, &time_rec);
 	gss_log_status_messages(major, minor);
+
+	/* No use getting initial creds for inbound creds */
+	if (!(fCredentialUse & SECPKG_CRED_OUTBOUND))
+		goto cleanup;
 
 	if (!sspi_is_no_creds(major, minor) && time_rec > 0)
 		goto cleanup;
