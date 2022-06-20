@@ -82,7 +82,7 @@ static const UINT32 CLEAR_LOG2_FLOOR[256] = {
 
 static const BYTE CLEAR_8BIT_MASKS[9] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF };
 
-void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
+static void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
 {
 	int i;
 
@@ -105,7 +105,7 @@ void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
 	clear->ShortVBarStorageCursor = 0;
 }
 
-void clear_reset_glyph_cache(CLEAR_CONTEXT* clear)
+static void clear_reset_glyph_cache(CLEAR_CONTEXT* clear)
 {
 	int i;
 

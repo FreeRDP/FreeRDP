@@ -1489,8 +1489,8 @@ static UINT gdi_CacheImportReply(RdpgfxClientContext* context,
 	return error;
 }
 
-UINT gdi_ImportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
-                          PERSISTENT_CACHE_ENTRY* importCacheEntry)
+static UINT gdi_ImportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
+                                 PERSISTENT_CACHE_ENTRY* importCacheEntry)
 {
 	UINT error;
 	gdiGfxCacheEntry* cacheEntry;
@@ -1530,8 +1530,8 @@ UINT gdi_ImportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
 	return error;
 }
 
-UINT gdi_ExportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
-                          PERSISTENT_CACHE_ENTRY* exportCacheEntry)
+static UINT gdi_ExportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
+                                 PERSISTENT_CACHE_ENTRY* exportCacheEntry)
 {
 	gdiGfxCacheEntry* cacheEntry;
 

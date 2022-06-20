@@ -103,11 +103,7 @@ extern "C"
 
 	/* Compare two color formats but ignore differences in alpha channel.
 	 */
-	static INLINE DWORD AreColorFormatsEqualNoAlpha(DWORD first, DWORD second)
-	{
-		const DWORD mask = (DWORD) ~(8UL << 12UL);
-		return (first & mask) == (second & mask);
-	}
+	FREERDP_API DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD first, DWORD second);
 
 	/* Color Space Conversions: http://msdn.microsoft.com/en-us/library/ff566496/ */
 

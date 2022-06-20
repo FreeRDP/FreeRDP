@@ -31,13 +31,6 @@
 
 #include "../core/rdp.h"
 
-char* utils_str_append(char* buffer, size_t size, const char* what)
-{
-	if (!winpr_str_append(what, buffer, size, "|"))
-		return NULL;
-	return buffer;
-}
-
 BOOL utils_str_copy(const char* value, char** dst)
 {
 	WINPR_ASSERT(dst);

@@ -315,7 +315,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	ZeroMemory(surface->gdi.data, size);
 
-	if (AreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
+	if (FreeRDPAreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
 	{
 		surface->image =
 		    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
