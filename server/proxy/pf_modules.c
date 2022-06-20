@@ -105,6 +105,10 @@ static const char* pf_modules_get_hook_type_string(PF_HOOK_TYPE result)
 			return "HOOK_TYPE_SERVER_CHANNELS_FREE";
 		case HOOK_TYPE_SERVER_SESSION_END:
 			return "HOOK_TYPE_SERVER_SESSION_END";
+		case HOOK_TYPE_SERVER_SESSION_INITIALIZE:
+			return "HOOK_TYPE_SERVER_SESSION_INITIALIZE";
+		case HOOK_TYPE_SERVER_SESSION_STARTED:
+			return "HOOK_TYPE_SERVER_SESSION_STARTED";
 		case HOOK_LAST:
 			return "HOOK_LAST";
 		default:
@@ -182,6 +186,14 @@ static BOOL pf_modules_proxy_ArrayList_ForEachFkt(void* data, size_t index, va_l
 
 		case HOOK_TYPE_SERVER_SESSION_END:
 			ok = IFCALLRESULT(TRUE, plugin->ServerSessionEnd, plugin, pdata, custom);
+			break;
+
+		case HOOK_TYPE_SERVER_SESSION_INITIALIZE:
+			ok = IFCALLRESULT(TRUE, plugin->ServerSessionInitialize, plugin, pdata, custom);
+			break;
+
+		case HOOK_TYPE_SERVER_SESSION_STARTED:
+			ok = IFCALLRESULT(TRUE, plugin->ServerSessionStarted, plugin, pdata, custom);
 			break;
 
 		case HOOK_LAST:
