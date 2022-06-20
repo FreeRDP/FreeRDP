@@ -76,8 +76,10 @@ struct proxy_plugin
 	proxyHookFn ServerChannelsInit; /* 98  custom=freerdp_peer* */
 	proxyHookFn ServerChannelsFree; /* 99  custom=freerdp_peer* */
 	proxyHookFn ServerSessionEnd;   /* 100 custom=freerdp_peer* */
+	proxyHookFn ServerSessionInitialize; /* 101 custom=freerdp_peer* */
+	proxyHookFn ServerSessionStarted;    /* 102 custom=freerdp_peer* */
 
-	UINT64 reserved4[128 - 101]; /* 101 - 127 */
+	UINT64 reserved4[128 - 103]; /* 103 - 127 */
 
 	/* proxy filters. a module can set these function pointers to register filters */
 	proxyFilterFn KeyboardEvent;         /* 128 */
