@@ -1027,6 +1027,7 @@ void smartcard_operation_free(SMARTCARD_OPERATION* op, BOOL allocated)
 			free(call->Common.CardIdentifier);
 			free(call->Common.pbData);
 		}
+		break;
 		case SCARD_IOCTL_WRITECACHEW:
 		{
 			WriteCacheW_Call* call = &op->call.writeCacheW;
