@@ -154,7 +154,7 @@ if (WITH_FFMPEG)
     option(WITH_VAAPI "Use FFMPEG VAAPI" OFF)
 endif(WITH_FFMPEG)
 
-option(USE_VERSION_FROM_GIT_TAG "Extract FreeRDP version from git tag." OFF)
+option(USE_VERSION_FROM_GIT_TAG "Extract FreeRDP version from git tag." ON)
 
 option(WITH_CAIRO    "Use CAIRO image library for screen resizing" OFF)
 option(WITH_SWSCALE  "Use SWScale image library for screen resizing" OFF)
