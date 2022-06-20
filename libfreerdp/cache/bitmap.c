@@ -282,7 +282,7 @@ void bitmap_cache_register_callbacks(rdpUpdate* update)
 	}
 }
 
-int bitmap_cache_save_persistent(rdpBitmapCache* bitmapCache)
+static int bitmap_cache_save_persistent(rdpBitmapCache* bitmapCache)
 {
 	int status;
 	UINT32 i, j;

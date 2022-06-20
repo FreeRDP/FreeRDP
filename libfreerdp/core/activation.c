@@ -276,7 +276,7 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s, RDP_BITMAP_PERS
 	return TRUE;
 }
 
-UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
+static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 {
 	int index;
 	int count;

@@ -51,7 +51,8 @@ int persistent_cache_get_count(rdpPersistentCache* persistent)
 	return persistent->count;
 }
 
-int persistent_cache_read_entry_v2(rdpPersistentCache* persistent, PERSISTENT_CACHE_ENTRY* entry)
+static int persistent_cache_read_entry_v2(rdpPersistentCache* persistent,
+                                          PERSISTENT_CACHE_ENTRY* entry)
 {
 	PERSISTENT_CACHE_ENTRY_V2 entry2;
 
@@ -72,7 +73,8 @@ int persistent_cache_read_entry_v2(rdpPersistentCache* persistent, PERSISTENT_CA
 	return 1;
 }
 
-int persistent_cache_write_entry_v2(rdpPersistentCache* persistent, const PERSISTENT_CACHE_ENTRY* entry)
+static int persistent_cache_write_entry_v2(rdpPersistentCache* persistent,
+                                           const PERSISTENT_CACHE_ENTRY* entry)
 {
 	int padding;
 	PERSISTENT_CACHE_ENTRY_V2 entry2;
@@ -105,7 +107,7 @@ int persistent_cache_write_entry_v2(rdpPersistentCache* persistent, const PERSIS
 	return 1;
 }
 
-int persistent_cache_read_v2(rdpPersistentCache* persistent)
+static int persistent_cache_read_v2(rdpPersistentCache* persistent)
 {
 	PERSISTENT_CACHE_ENTRY_V2 entry;
 
@@ -123,7 +125,8 @@ int persistent_cache_read_v2(rdpPersistentCache* persistent)
 	return 1;
 }
 
-int persistent_cache_read_entry_v3(rdpPersistentCache* persistent, PERSISTENT_CACHE_ENTRY* entry)
+static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
+                                          PERSISTENT_CACHE_ENTRY* entry)
 {
 	PERSISTENT_CACHE_ENTRY_V3 entry3;
 
@@ -159,7 +162,8 @@ int persistent_cache_read_entry_v3(rdpPersistentCache* persistent, PERSISTENT_CA
 	return 1;
 }
 
-int persistent_cache_write_entry_v3(rdpPersistentCache* persistent, const PERSISTENT_CACHE_ENTRY* entry)
+static int persistent_cache_write_entry_v3(rdpPersistentCache* persistent,
+                                           const PERSISTENT_CACHE_ENTRY* entry)
 {
 	PERSISTENT_CACHE_ENTRY_V3 entry3;
 
@@ -178,7 +182,7 @@ int persistent_cache_write_entry_v3(rdpPersistentCache* persistent, const PERSIS
 	return 1;
 }
 
-int persistent_cache_read_v3(rdpPersistentCache* persistent)
+static int persistent_cache_read_v3(rdpPersistentCache* persistent)
 {
 	PERSISTENT_CACHE_ENTRY_V3 entry;
 
@@ -216,7 +220,7 @@ int persistent_cache_write_entry(rdpPersistentCache* persistent, const PERSISTEN
 	return -1;
 }
 
-int persistent_cache_open_read(rdpPersistentCache* persistent)
+static int persistent_cache_open_read(rdpPersistentCache* persistent)
 {
 	BYTE sig[8];
 	int status = 1;
@@ -256,7 +260,7 @@ int persistent_cache_open_read(rdpPersistentCache* persistent)
 	return status;
 }
 
-int persistent_cache_open_write(rdpPersistentCache* persistent)
+static int persistent_cache_open_write(rdpPersistentCache* persistent)
 {
 	PERSISTENT_CACHE_HEADER_V3 header;
 
