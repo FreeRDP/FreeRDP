@@ -157,10 +157,6 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 			REGION16 invalidRegion;
 			region16_init(&invalidRegion);
 
-			if (!freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_REMOTEFX, gdi->width,
-			                                   gdi->height))
-				return FALSE;
-
 			if (!rfx_process_message(context->codecs->rfx, pSrcData, SrcSize, bitmap->left,
 			                         bitmap->top, bitmap->data, bitmap->format, gdi->stride,
 			                         gdi->height, &invalidRegion))
@@ -173,10 +169,6 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 		}
 		else if (codecId == RDP_CODEC_ID_NSCODEC)
 		{
-			if (!freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_NSCODEC, gdi->width,
-			                                   gdi->height))
-				return FALSE;
-
 			status = nsc_process_message(context->codecs->nsc, 32, DstWidth, DstHeight, pSrcData,
 			                             SrcSize, bitmap->data, bitmap->format, 0, 0, 0, DstWidth,
 			                             DstHeight, FREERDP_FLIP_VERTICAL);
