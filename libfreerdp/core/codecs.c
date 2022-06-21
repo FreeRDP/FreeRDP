@@ -27,56 +27,78 @@
 
 #define TAG FREERDP_TAG("core.codecs")
 
-static void codecs_free_int(rdpCodecs* codecs)
+static void codecs_free_int(rdpCodecs* codecs, UINT32 flags)
 {
 	WINPR_ASSERT(codecs);
-	if (codecs->rfx)
+
+	if (flags & FREERDP_CODEC_REMOTEFX)
 	{
-		rfx_context_free(codecs->rfx);
-		codecs->rfx = NULL;
+		if (codecs->rfx)
+		{
+			rfx_context_free(codecs->rfx);
+			codecs->rfx = NULL;
+		}
 	}
 
-	if (codecs->nsc)
+	if (flags & FREERDP_CODEC_NSCODEC)
 	{
-		nsc_context_free(codecs->nsc);
-		codecs->nsc = NULL;
+		if (codecs->nsc)
+		{
+			nsc_context_free(codecs->nsc);
+			codecs->nsc = NULL;
+		}
 	}
 
 #ifdef WITH_GFX_H264
-	if (codecs->h264)
+	if (flags & (FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444))
 	{
-		h264_context_free(codecs->h264);
-		codecs->h264 = NULL;
+		if (codecs->h264)
+		{
+			h264_context_free(codecs->h264);
+			codecs->h264 = NULL;
+		}
 	}
 #endif
 
-	if (codecs->clear)
+	if (flags & FREERDP_CODEC_CLEARCODEC)
 	{
-		clear_context_free(codecs->clear);
-		codecs->clear = NULL;
+		if (codecs->clear)
+		{
+			clear_context_free(codecs->clear);
+			codecs->clear = NULL;
+		}
 	}
 
-	if (codecs->progressive)
+	if (flags & FREERDP_CODEC_PROGRESSIVE)
 	{
-		progressive_context_free(codecs->progressive);
-		codecs->progressive = NULL;
+		if (codecs->progressive)
+		{
+			progressive_context_free(codecs->progressive);
+			codecs->progressive = NULL;
+		}
 	}
 
-	if (codecs->planar)
+	if (flags & FREERDP_CODEC_PLANAR)
 	{
-		freerdp_bitmap_planar_context_free(codecs->planar);
-		codecs->planar = NULL;
+		if (codecs->planar)
+		{
+			freerdp_bitmap_planar_context_free(codecs->planar);
+			codecs->planar = NULL;
+		}
 	}
 
-	if (codecs->interleaved)
+	if (flags & FREERDP_CODEC_INTERLEAVED)
 	{
-		bitmap_interleaved_context_free(codecs->interleaved);
-		codecs->interleaved = NULL;
+		if (codecs->interleaved)
+		{
+			bitmap_interleaved_context_free(codecs->interleaved);
+			codecs->interleaved = NULL;
+		}
 	}
 }
 BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width, UINT32 height)
 {
-	codecs_free_int(codecs);
+	codecs_free_int(codecs, flags);
 	if ((flags & FREERDP_CODEC_INTERLEAVED))
 	{
 		if (!(codecs->interleaved = bitmap_interleaved_context_new(FALSE)))
@@ -233,7 +255,7 @@ void codecs_free(rdpCodecs* codecs)
 	if (!codecs)
 		return;
 
-	codecs_free_int(codecs);
+	codecs_free_int(codecs, FREERDP_CODEC_ALL);
 
 	free(codecs);
 }
