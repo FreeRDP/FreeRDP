@@ -57,6 +57,7 @@ struct s_geometry_client_context
 	void* custom;
 
 	pcMappedGeometryAdded MappedGeometryAdded;
+	UINT32 remoteVersion;
 };
 
 #ifdef __cplusplus
