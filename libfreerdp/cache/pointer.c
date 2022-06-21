@@ -345,7 +345,10 @@ rdpPointerCache* pointer_cache_new(rdpContext* context)
 		return NULL;
 
 	pointer_cache->context = context;
-	pointer_cache->cacheSize = freerdp_settings_get_uint32(settings, FreeRDP_PointerCacheSize);
+
+	/* seen invalid pointer cache requests by mstsc (off by 1) so we ensure the cache entry size
+	 * matches */
+	pointer_cache->cacheSize = freerdp_settings_get_uint32(settings, FreeRDP_PointerCacheSize) + 1;
 	pointer_cache->entries = (rdpPointer**)calloc(pointer_cache->cacheSize, sizeof(rdpPointer*));
 
 	if (!pointer_cache->entries)
