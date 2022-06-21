@@ -41,6 +41,25 @@ typedef struct
 	GENERIC_CHANNEL_CALLBACK* channel_callback;
 } GENERIC_LISTENER_CALLBACK;
 
+typedef struct GENERIC_DYNVC_PLUGIN GENERIC_DYNVC_PLUGIN;
+typedef UINT (*DYNVC_PLUGIN_INIT_FN)(GENERIC_DYNVC_PLUGIN* plugin, rdpContext* context,
+                                     rdpSettings* settings);
+typedef void (*DYNVC_PLUGIN_TERMINATE_FN)(GENERIC_DYNVC_PLUGIN* plugin);
+
+struct GENERIC_DYNVC_PLUGIN
+{
+	IWTSPlugin iface;
+	GENERIC_LISTENER_CALLBACK* listener_callback;
+	IWTSListener* listener;
+	BOOL attached;
+	BOOL initialized;
+	wLog* log;
+	char* dynvc_name;
+	size_t channelCallbackSize;
+	const IWTSVirtualChannelCallback* channel_callbacks;
+	DYNVC_PLUGIN_TERMINATE_FN terminatePluginFn;
+};
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -56,6 +75,13 @@ extern "C"
 	FREERDP_API FREERDP_ADDIN** freerdp_channels_list_addins(LPCSTR lpName, LPCSTR lpSubsystem,
 	                                                         LPCSTR lpType, DWORD dwFlags);
 	FREERDP_API void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins);
+
+	FREERDP_API BOOL freerdp_initialize_generic_dynvc_plugin(GENERIC_DYNVC_PLUGIN* plugin);
+	FREERDP_API UINT freerdp_generic_DVCPluginEntry(
+	    IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* logTag, const char* name,
+	    size_t pluginSize, size_t channelCallbackSize,
+	    const IWTSVirtualChannelCallback* channel_callbacks, DYNVC_PLUGIN_INIT_FN initPluginFn,
+	    DYNVC_PLUGIN_TERMINATE_FN terminatePluginFn);
 
 #ifdef __cplusplus
 }

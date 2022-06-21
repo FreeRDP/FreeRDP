@@ -128,7 +128,7 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	UINT error;
 	wStream* s;
 	RDPGFX_AVC420_BITMAP_STREAM h264;
-	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
+	RdpgfxClientContext* context = gfx->context;
 	s = Stream_New(cmd->data, cmd->length);
 
 	if (!s)
@@ -173,7 +173,7 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	size_t pos1, pos2;
 	wStream* s;
 	RDPGFX_AVC444_BITMAP_STREAM h264 = { 0 };
-	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
+	RdpgfxClientContext* context = gfx->context;
 	s = Stream_New(cmd->data, cmd->length);
 
 	if (!s)
@@ -259,7 +259,7 @@ fail:
 UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error = CHANNEL_RC_OK;
-	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
+	RdpgfxClientContext* context = gfx->context;
 	PROFILER_ENTER(context->SurfaceProfiler)
 
 	switch (cmd->codecId)

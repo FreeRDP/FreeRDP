@@ -44,15 +44,12 @@
 
 typedef struct
 {
-	IWTSPlugin iface;
+	GENERIC_DYNVC_PLUGIN base;
 
-	IWTSListener* listener;
-	GENERIC_LISTENER_CALLBACK* listener_callback;
-
+	DispClientContext* context;
 	UINT32 MaxNumMonitors;
 	UINT32 MaxMonitorAreaFactorA;
 	UINT32 MaxMonitorAreaFactorB;
-	BOOL initialized;
 } DISP_PLUGIN;
 
 /**
@@ -167,7 +164,7 @@ static UINT disp_recv_display_control_caps_pdu(GENERIC_CHANNEL_CALLBACK* callbac
 	disp = (DISP_PLUGIN*)callback->plugin;
 	WINPR_ASSERT(disp);
 
-	context = (DispClientContext*)disp->iface.pInterface;
+	context = disp->context;
 	WINPR_ASSERT(context);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
@@ -246,103 +243,6 @@ static UINT disp_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 }
 
 /**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                           IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
-                                           IWTSVirtualChannelCallback** ppCallback)
-{
-	GENERIC_CHANNEL_CALLBACK* callback;
-	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
-
-	WINPR_ASSERT(listener_callback);
-	WINPR_ASSERT(pChannel);
-	WINPR_ASSERT(pbAccept);
-	WINPR_ASSERT(ppCallback);
-
-	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
-
-	if (!callback)
-	{
-		WLog_ERR(TAG, "calloc failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	callback->iface.OnDataReceived = disp_on_data_received;
-	callback->iface.OnClose = disp_on_close;
-	callback->plugin = listener_callback->plugin;
-	callback->channel_mgr = listener_callback->channel_mgr;
-	callback->channel = pChannel;
-	listener_callback->channel_callback = callback;
-	*ppCallback = (IWTSVirtualChannelCallback*)callback;
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
-{
-	UINT status;
-	DISP_PLUGIN* disp = (DISP_PLUGIN*)pPlugin;
-
-	WINPR_ASSERT(disp);
-	WINPR_ASSERT(pChannelMgr);
-
-	if (disp->initialized)
-	{
-		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", DISP_DVC_CHANNEL_NAME);
-		return ERROR_INVALID_DATA;
-	}
-	disp->listener_callback =
-	    (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
-
-	if (!disp->listener_callback)
-	{
-		WLog_ERR(TAG, "calloc failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	disp->listener_callback->iface.OnNewChannelConnection = disp_on_new_channel_connection;
-	disp->listener_callback->plugin = pPlugin;
-	disp->listener_callback->channel_mgr = pChannelMgr;
-	status = pChannelMgr->CreateListener(pChannelMgr, DISP_DVC_CHANNEL_NAME, 0,
-	                                     &disp->listener_callback->iface, &(disp->listener));
-	disp->listener->pInterface = disp->iface.pInterface;
-
-	disp->initialized = status == CHANNEL_RC_OK;
-	return status;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT disp_plugin_terminated(IWTSPlugin* pPlugin)
-{
-	DISP_PLUGIN* disp = (DISP_PLUGIN*)pPlugin;
-
-	WINPR_ASSERT(disp);
-
-	if (disp->listener_callback)
-	{
-		IWTSVirtualChannelManager* mgr = disp->listener_callback->channel_mgr;
-		if (mgr)
-			IFCALL(mgr->DestroyListener, mgr, disp->listener);
-		free(disp->listener_callback);
-	}
-
-	free(disp->iface.pInterface);
-	free(pPlugin);
-	return CHANNEL_RC_OK;
-}
-
-/**
  * Channel Client Interface
  */
 
@@ -362,7 +262,7 @@ static UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonit
 	disp = (DISP_PLUGIN*)context->handle;
 	WINPR_ASSERT(disp);
 
-	callback = disp->listener_callback->channel_callback;
+	callback = disp->base.listener_callback->channel_callback;
 
 	return disp_send_display_control_monitor_layout_pdu(callback, NumMonitors, Monitors);
 }
@@ -372,52 +272,53 @@ static UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonit
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+static UINT disp_plugin_initialize(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext,
+                                   rdpSettings* settings)
+{
+	DispClientContext* context;
+	DISP_PLUGIN* disp = (DISP_PLUGIN*)base;
+
+	WINPR_ASSERT(disp);
+	disp->MaxNumMonitors = 16;
+	disp->MaxMonitorAreaFactorA = 8192;
+	disp->MaxMonitorAreaFactorB = 8192;
+
+	context = (DispClientContext*)calloc(1, sizeof(*disp));
+	if (!context)
+	{
+		WLog_Print(base->log, WLOG_ERROR, "unable to allocate DispClientContext");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	context->handle = (void*)disp;
+	context->SendMonitorLayout = disp_send_monitor_layout;
+
+	disp->base.iface.pInterface = disp->context = context;
+
+	return CHANNEL_RC_OK;
+}
+
+static void disp_plugin_terminated(GENERIC_DYNVC_PLUGIN* base)
+{
+	DISP_PLUGIN* disp = (DISP_PLUGIN*)base;
+
+	WINPR_ASSERT(disp);
+
+	free(disp->context);
+}
+
+static const IWTSVirtualChannelCallback disp_callbacks = { disp_on_data_received, NULL, /* Open */
+	                                                       disp_on_close };
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
 UINT disp_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	UINT error = CHANNEL_RC_OK;
-	DISP_PLUGIN* disp;
-	DispClientContext* context;
-
-	WINPR_ASSERT(pEntryPoints);
-
-	disp = (DISP_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, DISP_CHANNEL_NAME);
-
-	if (!disp)
-	{
-		disp = (DISP_PLUGIN*)calloc(1, sizeof(DISP_PLUGIN));
-
-		if (!disp)
-		{
-			WLog_ERR(TAG, "calloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		disp->iface.Initialize = disp_plugin_initialize;
-		disp->iface.Connected = NULL;
-		disp->iface.Disconnected = NULL;
-		disp->iface.Terminated = disp_plugin_terminated;
-		disp->MaxNumMonitors = 16;
-		disp->MaxMonitorAreaFactorA = 8192;
-		disp->MaxMonitorAreaFactorB = 8192;
-		context = (DispClientContext*)calloc(1, sizeof(DispClientContext));
-
-		if (!context)
-		{
-			WLog_ERR(TAG, "calloc failed!");
-			free(disp);
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		context->handle = (void*)disp;
-		context->SendMonitorLayout = disp_send_monitor_layout;
-		disp->iface.pInterface = (void*)context;
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, DISP_CHANNEL_NAME, &disp->iface);
-	}
-	else
-	{
-		WLog_ERR(TAG, "could not get disp Plugin.");
-		return CHANNEL_RC_BAD_CHANNEL;
-	}
-
-	return error;
+	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, DISP_DVC_CHANNEL_NAME,
+	                                      sizeof(DISP_PLUGIN), sizeof(GENERIC_CHANNEL_CALLBACK),
+	                                      &disp_callbacks, disp_plugin_initialize,
+	                                      disp_plugin_terminated);
 }

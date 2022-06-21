@@ -41,13 +41,10 @@
 typedef struct AINPUT_PLUGIN_ AINPUT_PLUGIN;
 struct AINPUT_PLUGIN_
 {
-	IWTSPlugin iface;
-
-	GENERIC_LISTENER_CALLBACK* listener_callback;
-	IWTSListener* listener;
+	GENERIC_DYNVC_PLUGIN base;
+	AInputClientContext* context;
 	UINT32 MajorVersion;
 	UINT32 MinorVersion;
-	BOOL initialized;
 };
 
 /**
@@ -101,7 +98,6 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 	time = GetTickCount64();
 	ainput = (AINPUT_PLUGIN*)context->handle;
 	WINPR_ASSERT(ainput);
-	WINPR_ASSERT(ainput->listener_callback);
 
 	if (ainput->MajorVersion != AINPUT_VERSION_MAJOR)
 	{
@@ -109,7 +105,7 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 		          ainput->MajorVersion, ainput->MinorVersion);
 		return CHANNEL_RC_UNSUPPORTED_VERSION;
 	}
-	callback = ainput->listener_callback->channel_callback;
+	callback = ainput->base.listener_callback->channel_callback;
 	WINPR_ASSERT(callback);
 
 	{
@@ -149,104 +145,30 @@ static UINT ainput_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	return CHANNEL_RC_OK;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT ainput_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                             IWTSVirtualChannel* pChannel, BYTE* Data,
-                                             BOOL* pbAccept,
-                                             IWTSVirtualChannelCallback** ppCallback)
+static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdpSettings* settings)
 {
-	GENERIC_CHANNEL_CALLBACK* callback;
-	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
-
-	WINPR_ASSERT(listener_callback);
-	WINPR_UNUSED(Data);
-	WINPR_UNUSED(pbAccept);
-
-	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
-
-	if (!callback)
-	{
-		WLog_ERR(TAG, "calloc failed!");
+	AINPUT_PLUGIN* ainput = (AINPUT_PLUGIN*)base;
+	AInputClientContext* context = (AInputClientContext*)calloc(1, sizeof(AInputClientContext));
+	if (!context)
 		return CHANNEL_RC_NO_MEMORY;
-	}
 
-	callback->iface.OnDataReceived = ainput_on_data_received;
-	callback->iface.OnClose = ainput_on_close;
-	callback->plugin = listener_callback->plugin;
-	callback->channel_mgr = listener_callback->channel_mgr;
-	callback->channel = pChannel;
-	listener_callback->channel_callback = callback;
+	context->handle = (void*)base;
+	context->AInputSendInputEvent = ainput_send_input_event;
 
-	*ppCallback = &callback->iface;
-
+	ainput->context = context;
+	ainput->base.iface.pInterface = context;
 	return CHANNEL_RC_OK;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT ainput_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
+static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 {
-	UINT status;
-	AINPUT_PLUGIN* ainput = (AINPUT_PLUGIN*)pPlugin;
-
-	WINPR_ASSERT(ainput);
-
-	if (ainput->initialized)
-	{
-		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", AINPUT_DVC_CHANNEL_NAME);
-		return ERROR_INVALID_DATA;
-	}
-	ainput->listener_callback =
-	    (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
-
-	if (!ainput->listener_callback)
-	{
-		WLog_ERR(TAG, "calloc failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	ainput->listener_callback->iface.OnNewChannelConnection = ainput_on_new_channel_connection;
-	ainput->listener_callback->plugin = pPlugin;
-	ainput->listener_callback->channel_mgr = pChannelMgr;
-
-	status = pChannelMgr->CreateListener(pChannelMgr, AINPUT_DVC_CHANNEL_NAME, 0,
-	                                     &ainput->listener_callback->iface, &ainput->listener);
-
-	ainput->listener->pInterface = ainput->iface.pInterface;
-	ainput->initialized = status == CHANNEL_RC_OK;
-	return status;
+	AINPUT_PLUGIN* ainput = (AINPUT_PLUGIN*)base;
+	free(ainput->context);
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT ainput_plugin_terminated(IWTSPlugin* pPlugin)
-{
-	AINPUT_PLUGIN* ainput = (AINPUT_PLUGIN*)pPlugin;
-	if (ainput && ainput->listener_callback)
-	{
-		IWTSVirtualChannelManager* mgr = ainput->listener_callback->channel_mgr;
-		if (mgr)
-			IFCALL(mgr->DestroyListener, mgr, ainput->listener);
-	}
-	if (ainput)
-	{
-		free(ainput->listener_callback);
-		free(ainput->iface.pInterface);
-	}
-	free(ainput);
-
-	return CHANNEL_RC_OK;
-}
+static const IWTSVirtualChannelCallback ainput_functions = { ainput_on_data_received,
+	                                                         NULL, /* Open */
+	                                                         ainput_on_close };
 
 /**
  * Function description
@@ -255,32 +177,7 @@ static UINT ainput_plugin_terminated(IWTSPlugin* pPlugin)
  */
 UINT ainput_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	UINT status = CHANNEL_RC_OK;
-	AINPUT_PLUGIN* ainput = (AINPUT_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, "ainput");
-
-	if (!ainput)
-	{
-		AInputClientContext* context = (AInputClientContext*)calloc(1, sizeof(AInputClientContext));
-		ainput = (AINPUT_PLUGIN*)calloc(1, sizeof(AINPUT_PLUGIN));
-
-		if (!ainput || !context)
-		{
-			free(context);
-			free(ainput);
-
-			WLog_ERR(TAG, "calloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		ainput->iface.Initialize = ainput_plugin_initialize;
-		ainput->iface.Terminated = ainput_plugin_terminated;
-
-		context->handle = (void*)ainput;
-		context->AInputSendInputEvent = ainput_send_input_event;
-		ainput->iface.pInterface = (void*)context;
-
-		status = pEntryPoints->RegisterPlugin(pEntryPoints, AINPUT_CHANNEL_NAME, &ainput->iface);
-	}
-
-	return status;
+	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, AINPUT_DVC_CHANNEL_NAME,
+	                                      sizeof(AINPUT_PLUGIN), sizeof(GENERIC_CHANNEL_CALLBACK),
+	                                      &ainput_functions, init_plugin_cb, terminate_plugin_cb);
 }
