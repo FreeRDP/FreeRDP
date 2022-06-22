@@ -1026,8 +1026,7 @@ UINT audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	audin->iface.Attached = audin_plugin_attached;
 	audin->iface.Detached = audin_plugin_detached;
 	args = pEntryPoints->GetPluginData(pEntryPoints);
-	audin->rdpcontext =
-	    ((freerdp*)((rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints))->instance)->context;
+	audin->rdpcontext = pEntryPoints->GetRdpContext(pEntryPoints);
 
 	if (args)
 	{

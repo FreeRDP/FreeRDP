@@ -365,9 +365,7 @@ UINT sshagent_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		sshagent->iface.Connected = NULL;
 		sshagent->iface.Disconnected = NULL;
 		sshagent->iface.Terminated = sshagent_plugin_terminated;
-		sshagent->rdpcontext =
-		    ((freerdp*)((rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints))->instance)
-		        ->context;
+		sshagent->rdpcontext = pEntryPoints->GetRdpContext(pEntryPoints);
 		status = pEntryPoints->RegisterPlugin(pEntryPoints, "sshagent", &sshagent->iface);
 	}
 

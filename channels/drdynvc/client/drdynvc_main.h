@@ -67,7 +67,7 @@ typedef struct
 
 	DVCMAN* dvcman;
 	const ADDIN_ARGV* args;
-	rdpSettings* settings;
+	rdpContext* context;
 } DVCMAN_ENTRY_POINTS;
 
 typedef struct

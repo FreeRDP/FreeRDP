@@ -139,6 +139,9 @@ struct s_IWTSVirtualChannelCallback
 };
 
 /* The DVC Plugin entry points */
+typedef struct rdp_context rdpContext; /* forward declaration, necessary to avoid
+                                        * circular includes */
+
 typedef struct S_IDRDYNVC_ENTRY_POINTS IDRDYNVC_ENTRY_POINTS;
 struct S_IDRDYNVC_ENTRY_POINTS
 {
@@ -146,7 +149,8 @@ struct S_IDRDYNVC_ENTRY_POINTS
 	(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name, IWTSPlugin* pPlugin);
 	IWTSPlugin* (*GetPlugin)(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name);
 	const ADDIN_ARGV* (*GetPluginData)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
-	void* (*GetRdpSettings)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
+	rdpSettings* (*GetRdpSettings)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
+	rdpContext* (*GetRdpContext)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
 };
 
 typedef UINT (*PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS*);

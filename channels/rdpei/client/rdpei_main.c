@@ -1467,9 +1467,7 @@ UINT rdpei_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		rdpei->previousFrameTime = 0;
 		rdpei->maxTouchContacts = MAX_CONTACTS;
 		rdpei->maxPenContacts = MAX_PEN_CONTACTS;
-		rdpei->rdpcontext =
-		    ((freerdp*)((rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints))->instance)
-		        ->context;
+		rdpei->rdpcontext = pEntryPoints->GetRdpContext(pEntryPoints);
 
 		context = (RdpeiClientContext*)calloc(1, sizeof(RdpeiClientContext));
 

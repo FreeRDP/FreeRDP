@@ -172,9 +172,19 @@ static const ADDIN_ARGV* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoi
 	return ((DVCMAN_ENTRY_POINTS*)pEntryPoints)->args;
 }
 
-static void* dvcman_get_rdp_settings(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+static rdpContext* dvcman_get_rdp_context(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	return (void*)((DVCMAN_ENTRY_POINTS*)pEntryPoints)->settings;
+	DVCMAN_ENTRY_POINTS* entry = (DVCMAN_ENTRY_POINTS*)pEntryPoints;
+	WINPR_ASSERT(entry);
+	return entry->context;
+}
+
+static rdpSettings* dvcman_get_rdp_settings(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+{
+	rdpContext* context = dvcman_get_rdp_context(pEntryPoints);
+	WINPR_ASSERT(context);
+
+	return context->settings;
 }
 
 static UINT32 dvcman_get_channel_id(IWTSVirtualChannel* channel)
@@ -280,23 +290,28 @@ fail:
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT dvcman_load_addin(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr,
-                              const ADDIN_ARGV* args, rdpSettings* settings)
+                              const ADDIN_ARGV* args, rdpContext* context)
 {
-	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
+	WINPR_ASSERT(drdynvc);
+	WINPR_ASSERT(pChannelMgr);
+	WINPR_ASSERT(args);
+	WINPR_ASSERT(context);
 	WLog_Print(drdynvc->log, WLOG_INFO, "Loading Dynamic Virtual Channel %s", args->argv[0]);
 	pDVCPluginEntry = (PDVC_PLUGIN_ENTRY)freerdp_load_channel_addin_entry(
 	    args->argv[0], NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
 
 	if (pDVCPluginEntry)
 	{
+		DVCMAN_ENTRY_POINTS entryPoints = { 0 };
 		entryPoints.iface.RegisterPlugin = dvcman_register_plugin;
 		entryPoints.iface.GetPlugin = dvcman_get_plugin;
 		entryPoints.iface.GetPluginData = dvcman_get_plugin_data;
 		entryPoints.iface.GetRdpSettings = dvcman_get_rdp_settings;
+		entryPoints.iface.GetRdpContext = dvcman_get_rdp_context;
 		entryPoints.dvcman = (DVCMAN*)pChannelMgr;
 		entryPoints.args = args;
-		entryPoints.settings = settings;
+		entryPoints.context = context;
 		return pDVCPluginEntry(&entryPoints.iface);
 	}
 
@@ -1520,7 +1535,7 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	     index++)
 	{
 		const ADDIN_ARGV* args = settings->DynamicChannelArray[index];
-		error = dvcman_load_addin(drdynvc, drdynvc->channel_mgr, args, settings);
+		error = dvcman_load_addin(drdynvc, drdynvc->channel_mgr, args, drdynvc->rdpcontext);
 
 		if (CHANNEL_RC_OK != error)
 			goto error;

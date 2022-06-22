@@ -2399,8 +2399,7 @@ UINT rdpgfx_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	if (!gfx)
 	{
-		context =
-		    rdpgfx_client_context_new((rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints));
+		context = rdpgfx_client_context_new(pEntryPoints->GetRdpSettings(pEntryPoints));
 
 		if (!context)
 		{
