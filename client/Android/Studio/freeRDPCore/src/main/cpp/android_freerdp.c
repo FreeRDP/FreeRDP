@@ -177,7 +177,7 @@ static BOOL android_desktop_resize(rdpContext* context)
 
 	freerdp_callback("OnGraphicsResize", "(JIII)V", (jlong)context->instance,
 	                 context->settings->DesktopWidth, context->settings->DesktopHeight,
-	                 context->settings->ColorDepth);
+	                 context->freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 	return TRUE;
 }
 
@@ -209,12 +209,6 @@ static BOOL android_pre_connect(freerdp* instance)
 	if (rc != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "Could not subscribe to disconnect event handler [%l08X]", rc);
-		return FALSE;
-	}
-
-	if (!freerdp_client_load_addins(instance->context->channels, instance->context->settings))
-	{
-		WLog_ERR(TAG, "Failed to load addins [%l08X]", GetLastError());
 		return FALSE;
 	}
 
@@ -307,7 +301,8 @@ static BOOL android_post_connect(freerdp* instance)
 	update->EndPaint = android_end_paint;
 	update->DesktopResize = android_desktop_resize;
 	freerdp_callback("OnSettingsChanged", "(JIII)V", (jlong)instance, settings->DesktopWidth,
-	                 settings->DesktopHeight, settings->ColorDepth);
+	                 settings->DesktopHeight,
+	                 freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 	freerdp_callback("OnConnectionSuccess", "(J)V", (jlong)instance);
 	return TRUE;
 }
@@ -537,6 +532,7 @@ static BOOL android_client_new(freerdp* instance, rdpContext* context)
 	if (!android_event_queue_init(instance))
 		return FALSE;
 
+	instance->LoadChannels = freerdp_client_load_channels;
 	instance->PreConnect = android_pre_connect;
 	instance->PostConnect = android_post_connect;
 	instance->PostDisconnect = android_post_disconnect;

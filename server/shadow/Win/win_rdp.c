@@ -128,9 +128,6 @@ static BOOL shw_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelConnected(context->pubSub, shw_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(context->pubSub, shw_OnChannelDisconnectedEventHandler);
 
-	if (!freerdp_client_load_addins(context->channels, context->settings))
-		return FALSE;
-
 	return TRUE;
 }
 
@@ -283,6 +280,7 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	if (!(shw->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 		return FALSE;
 
+	instance->LoadChannels = freerdp_client_load_channels;
 	instance->PreConnect = shw_pre_connect;
 	instance->PostConnect = shw_post_connect;
 	instance->Authenticate = shw_authenticate;

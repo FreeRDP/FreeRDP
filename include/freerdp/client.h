@@ -193,6 +193,8 @@ extern "C"
 
 	FREERDP_API int freerdp_client_common_stop(rdpContext* context);
 
+	FREERDP_API BOOL freerdp_client_load_channels(freerdp* instance);
+
 #ifdef __cplusplus
 }
 #endif

@@ -273,9 +273,6 @@ static BOOL wf_pre_connect(freerdp* instance)
 		freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, desktopHeight);
 	}
 
-	if (!freerdp_client_load_addins(context->channels, context->settings))
-		return -1;
-
 	rc = freerdp_keyboard_init(freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout));
 	freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, rc);
 	PubSub_SubscribeChannelConnected(instance->context->pubSub, wf_OnChannelConnectedEventHandler);
@@ -1308,6 +1305,7 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 		return FALSE;
 
 	WINPR_ASSERT(instance);
+	instance->LoadChannels = freerdp_client_load_channels;
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
 	instance->PostDisconnect = wf_post_disconnect;

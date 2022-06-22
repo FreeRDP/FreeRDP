@@ -69,7 +69,8 @@ struct proxy_plugin
 	proxyHookFn ClientLoginFailure;    /* 72 custom=rdpContext* */
 	proxyHookFn ClientEndPaint;        /* 73 custom=rdpContext* */
 	proxyHookFn ClientRedirect;        /* 74 custom=rdpContext* */
-	UINT64 reserved3[96 - 75];         /* 75-95 */
+	proxyHookFn ClientLoadChannels;    /* 75 custom=rdpContext* */
+	UINT64 reserved3[96 - 76];         /* 76-95 */
 
 	proxyHookFn ServerPostConnect;  /* 96  custom=freerdp_peer* */
 	proxyHookFn ServerPeerActivate; /* 97  custom=freerdp_peer* */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FreeRDP: A Remote Desktop Protocol Implementation
  * X11 Client Interface
  *
@@ -1223,9 +1223,6 @@ static BOOL xf_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelConnected(context->pubSub, xf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(context->pubSub, xf_OnChannelDisconnectedEventHandler);
 
-	if (!freerdp_client_load_addins(channels, settings))
-		return FALSE;
-
 	if (!settings->Username && !settings->CredentialsFromStdin && !settings->SmartcardLogon)
 	{
 		char login_name[MAX_PATH] = { 0 };
@@ -1851,6 +1848,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	WINPR_ASSERT(!xfc->display);
 	WINPR_ASSERT(!xfc->mutex);
 	WINPR_ASSERT(!xfc->x11event);
+	instance->LoadChannels = freerdp_client_load_channels;
 	instance->PreConnect = xf_pre_connect;
 	instance->PostConnect = xf_post_connect;
 	instance->PostDisconnect = xf_post_disconnect;

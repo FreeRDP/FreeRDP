@@ -860,9 +860,6 @@ BOOL mac_pre_connect(freerdp *instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    mac_OnChannelDisconnectedEventHandler);
 
-	if (!freerdp_client_load_addins(instance->context->channels, settings))
-		return FALSE;
-
 	return TRUE;
 }
 

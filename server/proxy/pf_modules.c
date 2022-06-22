@@ -105,6 +105,8 @@ static const char* pf_modules_get_hook_type_string(PF_HOOK_TYPE result)
 			return "HOOK_TYPE_SERVER_CHANNELS_FREE";
 		case HOOK_TYPE_SERVER_SESSION_END:
 			return "HOOK_TYPE_SERVER_SESSION_END";
+		case HOOK_TYPE_CLIENT_LOAD_CHANNELS:
+			return "HOOK_TYPE_CLIENT_LOAD_CHANNELS";
 		case HOOK_TYPE_SERVER_SESSION_INITIALIZE:
 			return "HOOK_TYPE_SERVER_SESSION_INITIALIZE";
 		case HOOK_TYPE_SERVER_SESSION_STARTED:
@@ -166,6 +168,10 @@ static BOOL pf_modules_proxy_ArrayList_ForEachFkt(void* data, size_t index, va_l
 
 		case HOOK_TYPE_CLIENT_END_PAINT:
 			ok = IFCALLRESULT(TRUE, plugin->ClientEndPaint, plugin, pdata, custom);
+			break;
+
+		case HOOK_TYPE_CLIENT_LOAD_CHANNELS:
+			ok = IFCALLRESULT(TRUE, plugin->ClientLoadChannels, plugin, pdata, custom);
 			break;
 
 		case HOOK_TYPE_SERVER_POST_CONNECT:
