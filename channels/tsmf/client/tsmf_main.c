@@ -575,9 +575,7 @@ UINT tsmf_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		tsmf->iface.Connected = NULL;
 		tsmf->iface.Disconnected = NULL;
 		tsmf->iface.Terminated = tsmf_plugin_terminated;
-		tsmf->rdpcontext =
-		    ((freerdp*)((rdpSettings*)pEntryPoints->GetRdpSettings(pEntryPoints))->instance)
-		        ->context;
+		tsmf->rdpcontext = pEntryPoints->GetRdpContext(pEntryPoints);
 		context = (TsmfClientContext*)calloc(1, sizeof(TsmfClientContext));
 
 		if (!context)
