@@ -1167,7 +1167,7 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 
 	for (index = 0; index < count; index++)
 	{
-		const xfAppWindow* appWindow = xf_rail_get_window(xfc, *(UINT64*)pKeys[index]);
+		xfAppWindow* appWindow = xf_rail_get_window(xfc, *(UINT64*)pKeys[index]);
 
 		if (!appWindow)
 		{
