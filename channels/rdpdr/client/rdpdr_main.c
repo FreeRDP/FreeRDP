@@ -1590,7 +1590,6 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 		}
 	}
 
-	Stream_Free(s, TRUE);
 	return error;
 }
 
@@ -1690,7 +1689,6 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 			return ERROR_INTERNAL_ERROR;
 		}
 
-		rdpdr->data_in = NULL;
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
@@ -1699,6 +1697,7 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 			WLog_ERR(TAG, "MessageQueue_Post failed!");
 			return ERROR_INTERNAL_ERROR;
 		}
+		rdpdr->data_in = NULL;
 	}
 
 	return CHANNEL_RC_OK;
@@ -1750,8 +1749,6 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DW
 
 static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)
 {
-	wStream* data;
-	wMessage message;
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*)arg;
 	UINT error;
 
@@ -1775,6 +1772,7 @@ static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)
 
 	while (1)
 	{
+		wMessage message = { 0 };
 		WINPR_ASSERT(rdpdr);
 
 		if (!MessageQueue_Wait(rdpdr->queue))
@@ -1787,9 +1785,12 @@ static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)
 
 			if (message.id == 0)
 			{
-				data = (wStream*)message.wParam;
+				wStream* data = (wStream*)message.wParam;
 
-				if ((error = rdpdr_process_receive(rdpdr, data)))
+				error = rdpdr_process_receive(rdpdr, data);
+
+				Stream_Free(data, TRUE);
+				if (error)
 				{
 					WLog_ERR(TAG, "rdpdr_process_receive failed with error %" PRIu32 "!", error);
 
@@ -1886,9 +1887,9 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 		}
 	}
 
-	MessageQueue_Free(rdpdr->queue);
 	if (rdpdr->thread)
 		CloseHandle(rdpdr->thread);
+	MessageQueue_Free(rdpdr->queue);
 	rdpdr->queue = NULL;
 	rdpdr->thread = NULL;
 

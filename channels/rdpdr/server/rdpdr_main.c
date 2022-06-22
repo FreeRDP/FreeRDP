@@ -1371,6 +1371,11 @@ static UINT rdpdr_server_stop(RdpdrServerContext* context)
 		context->priv->StopEvent = NULL;
 	}
 
+	if (context->priv->ChannelHandle)
+	{
+		WTSVirtualChannelClose(context->priv->ChannelHandle);
+		context->priv->ChannelHandle = NULL;
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -2721,6 +2726,7 @@ void rdpdr_server_context_free(RdpdrServerContext* context)
 		if (context->priv)
 		{
 			ListDictionary_Free(context->priv->IrpList);
+			free(context->priv->ClientComputerName);
 			free(context->priv);
 		}
 
