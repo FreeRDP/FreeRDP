@@ -368,6 +368,11 @@ int freerdp_register_addin_provider(FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN provider
 	return 0;
 }
 
+FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN freerdp_get_current_addin_provider(void)
+{
+	return freerdp_load_static_channel_addin_entry;
+}
+
 PVIRTUALCHANNELENTRY freerdp_load_channel_addin_entry(LPCSTR pszName, LPCSTR pszSubsystem,
                                                       LPCSTR pszType, DWORD dwFlags)
 {
