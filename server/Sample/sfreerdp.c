@@ -508,7 +508,7 @@ static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 	UINT32 prev_useconds;
 	rdpUpdate* update;
 	rdpPcap* pcap_rfx;
-	pcap_record record;
+	pcap_record record = { 0 };
 	struct server_info* info;
 
 	WINPR_ASSERT(client);

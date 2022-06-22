@@ -175,7 +175,7 @@ BOOL freerdp_connect(freerdp* instance)
 	{
 		wStream* s;
 		rdp_update_internal* update = update_cast(instance->context->update);
-		pcap_record record;
+		pcap_record record = { 0 };
 
 		WINPR_ASSERT(update);
 		update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
