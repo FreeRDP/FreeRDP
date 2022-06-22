@@ -34,9 +34,9 @@
 
 #include <freerdp/event.h>
 
-static HWND g_focus_hWnd;
-static HWND g_main_hWnd;
-static HWND g_parent_hWnd;
+static HWND g_focus_hWnd = NULL;
+static HWND g_main_hWnd = NULL;
+static HWND g_parent_hWnd = NULL;
 
 #define X_POS(lParam) ((UINT16)(lParam & 0xFFFF))
 #define Y_POS(lParam) ((UINT16)((lParam >> 16) & 0xFFFF))
@@ -61,8 +61,7 @@ static BOOL alt_ctrl_down()
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	LPDWORD ext_proc_id;
-	LPDWORD this_proc_id;
+	DWORD ext_proc_id = 0;
 
 	wfContext* wfc = NULL;
 	DWORD rdp_scancode;
