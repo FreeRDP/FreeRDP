@@ -1793,7 +1793,6 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, wS
 		return -1;
 	}
 
-	WINPR_ASSERT(region->tiles || (region->numTiles == 0));
 	for (index = 0; index < region->numTiles; index++)
 	{
 		RFX_PROGRESSIVE_TILE* tile = region->tiles[index];
