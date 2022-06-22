@@ -111,9 +111,7 @@ extern "C"
 	typedef BOOL (*pContextNew)(freerdp* instance, rdpContext* context);
 	typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 
-	typedef BOOL (*pPreConnect)(freerdp* instance);
-	typedef BOOL (*pPostConnect)(freerdp* instance);
-	typedef BOOL (*pRedirect)(freerdp* instance);
+	typedef BOOL (*pConnectCallback)(freerdp* instance);
 	typedef void (*pPostDisconnect)(freerdp* instance);
 	typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password,
 	                              char** domain);
@@ -405,13 +403,13 @@ owned by rdpRdp */
 
 		ALIGN64 UINT ConnectionCallbackState; /* 47 */
 
-		ALIGN64 pPreConnect
+		ALIGN64 pConnectCallback
 		    PreConnect; /**< (offset 48)
 		             Callback for pre-connect operations.
 		             Can be set before calling freerdp_connect() to have it executed before the
 		             actual connection happens. Must be set to NULL if not needed. */
 
-		ALIGN64 pPostConnect
+		ALIGN64 pConnectCallback
 		    PostConnect; /**< (offset 49)
 		              Callback for post-connect operations.
 		              Can be set before calling freerdp_connect() to have it executed after the
@@ -452,13 +450,18 @@ owned by rdpRdp */
 		                                  Callback for gateway consent messages.
 		                                  It is used to present consent messages to the user. */
 
-		ALIGN64 pRedirect
-		    Redirect;             /**< (offset 59)
-		                          Callback for redirect operations.
-		                          Can be set after rdp_client_disconnect_and_clear and applying redirection
-settings but before rdp_client_connect() to have it executed after the
-		                          actual connection has succeeded. Must be set to NULL if not needed. */
-		UINT64 paddingD[64 - 59]; /* 59 */
+		ALIGN64 pConnectCallback Redirect; /**< (offset 58)
+		                                               Callback for redirect operations.
+		                                               Can be set after
+		             rdp_client_disconnect_and_clear and applying redirection settings but before
+		             rdp_client_connect() to have it executed after the actual connection has
+		             succeeded. Must be set to NULL if not needed. */
+		ALIGN64 pConnectCallback
+		    LoadChannels; /**< (offset 59)
+		                   * callback for loading channel configuration. Might be called multiple
+		                   * times when redirection occurs. */
+
+		UINT64 paddingD[64 - 60]; /* 60 */
 
 		ALIGN64 pSendChannelData
 		    SendChannelData; /* (offset 64)

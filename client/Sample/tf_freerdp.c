@@ -158,11 +158,6 @@ static BOOL tf_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    tf_OnChannelDisconnectedEventHandler);
 
-	/* Load all required plugins / channels / libraries specified by current
-	 * settings. */
-	if (!freerdp_client_load_addins(instance->context->channels, settings))
-		return FALSE;
-
 	/* TODO: Any code your client requires */
 	return TRUE;
 }
@@ -326,6 +321,7 @@ static BOOL tf_client_new(freerdp* instance, rdpContext* context)
 	if (!instance || !context)
 		return FALSE;
 
+	instance->LoadChannels = freerdp_client_load_channels;
 	instance->PreConnect = tf_pre_connect;
 	instance->PostConnect = tf_post_connect;
 	instance->PostDisconnect = tf_post_disconnect;

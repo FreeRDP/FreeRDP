@@ -1207,3 +1207,15 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 
 	return TRUE;
 }
+BOOL freerdp_client_load_channels(freerdp* instance)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	if (!freerdp_client_load_addins(instance->context->channels, instance->context->settings))
+	{
+		WLog_ERR(TAG, "Failed to load addins [%l08X]", GetLastError());
+		return FALSE;
+	}
+	return TRUE;
+}
