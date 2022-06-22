@@ -20,6 +20,7 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/tchar.h>
 #include <winpr/stream.h>
 #include <winpr/windows.h>
@@ -45,8 +46,11 @@
 
 static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam);
 
-static BOOL wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
+static BOOL wf_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 {
+	wfPeerContext* context = (wfPeerContext*)ctx;
+	WINPR_ASSERT(context);
+
 	if (!(context->info = wf_info_get_instance()))
 		return FALSE;
 
@@ -65,8 +69,11 @@ static BOOL wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 	return TRUE;
 }
 
-static void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
+static void wf_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 {
+	wfPeerContext* context = (wfPeerContext*)ctx;
+	WINPR_ASSERT(context);
+
 	wf_info_peer_unregister(context->info, context);
 
 	if (context->rdpsnd)
