@@ -49,14 +49,14 @@ static void free_surfaces(RdpgfxClientContext* context, wHashTable* SurfaceTable
 {
 	UINT error = 0;
 	ULONG_PTR* pKeys = NULL;
-	int count;
-	int index;
+	size_t count;
+	size_t index;
 
 	count = HashTable_GetKeys(SurfaceTable, &pKeys);
 
 	for (index = 0; index < count; index++)
 	{
-		RDPGFX_DELETE_SURFACE_PDU pdu;
+		RDPGFX_DELETE_SURFACE_PDU pdu = { 0 };
 		pdu.surfaceId = ((UINT16)pKeys[index]) - 1;
 
 		if (context)
@@ -104,8 +104,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RdpgfxClientContext* context,
 {
 	UINT error = CHANNEL_RC_OK;
 	UINT16 index;
-	RDPGFX_HEADER header;
-	RDPGFX_CAPSET* capsSet;
+	RDPGFX_HEADER header = { 0 };
 	RDPGFX_PLUGIN* gfx;
 	GENERIC_CHANNEL_CALLBACK* callback;
 	wStream* s;
@@ -122,7 +121,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RdpgfxClientContext* context,
 
 	for (index = 0; index < pdu->capsSetCount; index++)
 	{
-		capsSet = &(pdu->capsSets[index]);
+		const RDPGFX_CAPSET* capsSet = &(pdu->capsSets[index]);
 		header.pduLength += RDPGFX_CAPSET_BASE_SIZE + capsSet->length;
 	}
 
@@ -143,7 +142,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RdpgfxClientContext* context,
 
 	for (index = 0; index < pdu->capsSetCount; index++)
 	{
-		capsSet = &(pdu->capsSets[index]);
+		const RDPGFX_CAPSET* capsSet = &(pdu->capsSets[index]);
 		Stream_Write_UINT32(s, capsSet->version); /* version (4 bytes) */
 		Stream_Write_UINT32(s, capsSet->length);  /* capsDataLength (4 bytes) */
 		Stream_Write_UINT32(s, capsSet->flags);   /* capsData (4 bytes) */
@@ -353,8 +352,8 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
  */
 static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_CAPSET capsSet;
-	RDPGFX_CAPS_CONFIRM_PDU pdu;
+	RDPGFX_CAPSET capsSet = { 0 };
+	RDPGFX_CAPS_CONFIRM_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	pdu.capsSet = &capsSet;
@@ -385,7 +384,7 @@ static UINT rdpgfx_send_frame_acknowledge_pdu(RdpgfxClientContext* context,
 {
 	UINT error;
 	wStream* s;
-	RDPGFX_HEADER header;
+	RDPGFX_HEADER header = { 0 };
 	RDPGFX_PLUGIN* gfx;
 	GENERIC_CHANNEL_CALLBACK* callback;
 
@@ -437,7 +436,7 @@ static UINT rdpgfx_send_qoe_frame_acknowledge_pdu(RdpgfxClientContext* context,
 {
 	UINT error;
 	wStream* s;
-	RDPGFX_HEADER header;
+	RDPGFX_HEADER header = { 0 };
 	GENERIC_CHANNEL_CALLBACK* callback;
 	RDPGFX_PLUGIN* gfx;
 	header.flags = 0;
@@ -491,11 +490,11 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 	int pad;
 	UINT32 index;
 	MONITOR_DEF* monitor;
-	RDPGFX_RESET_GRAPHICS_PDU pdu;
+	RDPGFX_RESET_GRAPHICS_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
-	GraphicsResetEventArgs graphicsReset;
+	GraphicsResetEventArgs graphicsReset = { 0 };
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return ERROR_INVALID_DATA;
@@ -518,10 +517,10 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 	for (index = 0; index < pdu.monitorCount; index++)
 	{
 		monitor = &(pdu.monitorDefArray[index]);
-		Stream_Read_UINT32(s, monitor->left);   /* left (4 bytes) */
-		Stream_Read_UINT32(s, monitor->top);    /* top (4 bytes) */
-		Stream_Read_UINT32(s, monitor->right);  /* right (4 bytes) */
-		Stream_Read_UINT32(s, monitor->bottom); /* bottom (4 bytes) */
+		Stream_Read_INT32(s, monitor->left);    /* left (4 bytes) */
+		Stream_Read_INT32(s, monitor->top);     /* top (4 bytes) */
+		Stream_Read_INT32(s, monitor->right);   /* right (4 bytes) */
+		Stream_Read_INT32(s, monitor->bottom);  /* bottom (4 bytes) */
 		Stream_Read_UINT32(s, monitor->flags);  /* flags (4 bytes) */
 	}
 
@@ -574,7 +573,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
  */
 static UINT rdpgfx_recv_evict_cache_entry_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_EVICT_CACHE_ENTRY_PDU pdu;
+	RDPGFX_EVICT_CACHE_ENTRY_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
