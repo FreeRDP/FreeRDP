@@ -528,7 +528,7 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	pdata->server_receive_channel_data_original = peer->ReceiveChannelData;
 	peer->ReceiveChannelData = pf_server_receive_channel_data_hook;
 
-	if (!stream_dump_register_handlers(peer->context, CONNECTION_STATE_NEGO))
+	if (!stream_dump_register_handlers(peer->context, CONNECTION_STATE_NEGO, TRUE))
 		return FALSE;
 	return TRUE;
 }

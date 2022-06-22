@@ -923,6 +923,7 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 	CONNECTION_STATE state;
 	testPeerContext* peerCtx;
 	size_t offset = 0;
+	UINT32 flags = 0;
 	rdpContext* context = transport_get_context(transport);
 
 	WINPR_ASSERT(context);
@@ -954,18 +955,22 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 	if (!ls)
 		goto fail;
 
-	while (stream_dump_get(context, NULL, ls, &offset, &ts) > 0)
+	while (stream_dump_get(context, &flags, ls, &offset, &ts) > 0)
 	{
 		int rc;
-		if ((last_ts > 0) && (ts > last_ts))
+		/* Skip messages from client. */
+		if (flags & STREAM_MSG_SRV_TX)
 		{
-			UINT64 diff = ts - last_ts;
-			Sleep(diff);
+			if ((last_ts > 0) && (ts > last_ts))
+			{
+				UINT64 diff = ts - last_ts;
+				Sleep(diff);
+			}
+			last_ts = ts;
+			rc = peerCtx->io.WritePdu(transport, ls);
+			if (rc < 0)
+				goto fail;
 		}
-		last_ts = ts;
-		rc = peerCtx->io.WritePdu(transport, ls);
-		if (rc < 0)
-			goto fail;
 		Stream_SetPosition(ls, 0);
 	}
 

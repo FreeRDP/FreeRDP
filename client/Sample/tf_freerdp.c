@@ -396,7 +396,7 @@ int main(int argc, char* argv[])
 		goto fail;
 	}
 
-	if (!stream_dump_register_handlers(context, CONNECTION_STATE_MCS_CONNECT))
+	if (!stream_dump_register_handlers(context, CONNECTION_STATE_MCS_CONNECT, FALSE))
 		goto fail;
 
 	if (freerdp_client_start(context) != 0)
