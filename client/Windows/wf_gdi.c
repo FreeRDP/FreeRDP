@@ -75,7 +75,7 @@ static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor, COLORREF* col
 	if (!gdi || !settings)
 		return FALSE;
 
-	SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth);
+	SrcFormat = gdi_get_pixel_format(freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 
 	if (format)
 		*format = SrcFormat;
@@ -494,7 +494,8 @@ static BOOL wf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	if (!wf_decode_color(wfc, patblt->backColor, &bgcolor, NULL))
 		return FALSE;
 
-	brush = wf_create_brush(wfc, &patblt->brush, fgcolor, context->settings->ColorDepth);
+	brush = wf_create_brush(wfc, &patblt->brush, fgcolor,
+	                        freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth));
 	org_bkmode = SetBkMode(wfc->drawing->hdc, OPAQUE);
 	org_bkcolor = SetBkColor(wfc->drawing->hdc, bgcolor);
 	org_textcolor = SetTextColor(wfc->drawing->hdc, fgcolor);

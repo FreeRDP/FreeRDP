@@ -648,7 +648,8 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 
 	WLog_DBG(TAG, "");
 	WLog_DBG(TAG, "Client requested desktop: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "",
-	         settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
+	         settings->DesktopWidth, settings->DesktopHeight,
+	         freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 #if (SAMPLE_SERVER_USE_CLIENT_RESOLUTION == 1)
 
 	if (!rfx_context_reset(context->rfx_context, settings->DesktopWidth, settings->DesktopHeight))
@@ -1036,8 +1037,9 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	/* settings->EncryptionLevel = ENCRYPTION_LEVEL_LOW; */
 	/* settings->EncryptionLevel = ENCRYPTION_LEVEL_FIPS; */
 	settings->RemoteFxCodec = TRUE;
-	freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE);
-	settings->ColorDepth = 32;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32))
+		return FALSE;
 	settings->SuppressOutput = TRUE;
 	settings->RefreshRect = TRUE;
 

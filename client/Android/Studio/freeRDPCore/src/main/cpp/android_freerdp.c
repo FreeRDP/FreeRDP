@@ -177,7 +177,7 @@ static BOOL android_desktop_resize(rdpContext* context)
 
 	freerdp_callback("OnGraphicsResize", "(JIII)V", (jlong)context->instance,
 	                 context->settings->DesktopWidth, context->settings->DesktopHeight,
-	                 context->freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
+	                 freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth));
 	return TRUE;
 }
 

@@ -61,7 +61,7 @@ BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 	if (!settings)
 		return FALSE;
 
-	switch (settings->ColorDepth)
+	switch (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth))
 	{
 		case 32:
 		case 24:

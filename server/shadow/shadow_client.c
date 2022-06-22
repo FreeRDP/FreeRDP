@@ -180,7 +180,9 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	settings = peer->context->settings;
 	WINPR_ASSERT(settings);
 
-	settings->ColorDepth = srvSettings->ColorDepth;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth,
+	                                 freerdp_settings_get_uint32(srvSettings, FreeRDP_ColorDepth)))
+		return FALSE;
 	NSCodec = freerdp_settings_get_bool(srvSettings, FreeRDP_NSCodec);
 	freerdp_settings_set_bool(settings, FreeRDP_NSCodec, NSCodec);
 	settings->RemoteFxCodec = srvSettings->RemoteFxCodec;
@@ -406,8 +408,11 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 	subsystem = server->subsystem;
 	WINPR_ASSERT(subsystem);
 
-	if (settings->ColorDepth == 24)
-		settings->ColorDepth = 16; /* disable 24bpp */
+	if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) == 24)
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 16)) /* disable 24bpp */
+			return FALSE;
+	}
 
 	if (settings->MultifragMaxRequestSize < 0x3F0000)
 	{
@@ -419,19 +424,21 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 
 	WLog_INFO(TAG, "Client from %s is activated (%" PRIu32 "x%" PRIu32 "@%" PRIu32 ")",
 	          peer->hostname, settings->DesktopWidth, settings->DesktopHeight,
-	          settings->ColorDepth);
+	          freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 
 	/* Resize client if necessary */
 	if (shadow_client_recalc_desktop_size(client))
 	{
+		BOOL rc;
 		rdpUpdate* update = peer->context->update;
 		WINPR_ASSERT(update);
 		WINPR_ASSERT(update->DesktopResize);
 
-		update->DesktopResize(update->context);
+		rc = update->DesktopResize(update->context);
 		WLog_INFO(TAG, "Client from %s is resized (%" PRIu32 "x%" PRIu32 "@%" PRIu32 ")",
 		          peer->hostname, settings->DesktopWidth, settings->DesktopHeight,
-		          settings->ColorDepth);
+		          freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
+		return FALSE;
 	}
 
 	if (shadow_client_channels_post_connect(client) != CHANNEL_RC_OK)
@@ -1499,7 +1506,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 
 	maxUpdateSize = settings->MultifragMaxRequestSize;
 
-	if (settings->ColorDepth < 32)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) < 32)
 	{
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_INTERLEAVED) < 0)
 		{
@@ -1574,9 +1581,9 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 			if ((bitmap->width < 4) || (bitmap->height < 4))
 				continue;
 
-			if (settings->ColorDepth < 32)
+			if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) < 32)
 			{
-				UINT32 bitsPerPixel = settings->ColorDepth;
+				UINT32 bitsPerPixel = freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth);
 				UINT32 bytesPerPixel = (bitsPerPixel + 7) / 8;
 				DstSize = 64 * 64 * 4;
 				buffer = encoder->grid[k];
@@ -1887,7 +1894,7 @@ static BOOL shadow_client_send_resize(rdpShadowClient* client, SHADOW_GFX_STATUS
 	LeaveCriticalSection(&(client->lock));
 	WLog_INFO(TAG, "Client from %s is resized (%" PRIu32 "x%" PRIu32 "@%" PRIu32 ")",
 	          peer->hostname, settings->DesktopWidth, settings->DesktopHeight,
-	          settings->ColorDepth);
+	          freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 	return TRUE;
 }
 

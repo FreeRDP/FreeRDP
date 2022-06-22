@@ -512,7 +512,8 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	settings->TlsSecurity = config->ServerTlsSecurity;
 	settings->NlaSecurity = config->ServerNlaSecurity;
 	settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
-	settings->ColorDepth = 32;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32))
+		return FALSE;
 	settings->SuppressOutput = TRUE;
 	settings->RefreshRect = TRUE;
 	settings->DesktopResize = TRUE;

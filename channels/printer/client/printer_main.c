@@ -75,7 +75,7 @@ static const char* filemap[] = { "PortDosName", "PnPName", "DriverName",
 
 static char* get_printer_config_path(const rdpSettings* settings, const WCHAR* name, size_t length)
 {
-	const char* path = settings->ConfigPath;
+	const char* path = freerdp_settings_get_string(settings, FreeRDP_ConfigPath);
 	char* dir = GetCombinedPath(path, "printers");
 	char* bname = crypto_base64_encode((const BYTE*)name, length);
 	char* config = GetCombinedPath(dir, bname);
