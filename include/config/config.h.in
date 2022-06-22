@@ -52,6 +52,8 @@
 #cmakedefine WITH_CHANNEL_GFXREDIR
 #cmakedefine WITH_CHANNEL_RDPAPPLIST
 
+#cmakedefine ENFORCE_TLSV1_2
+
 /* Plugins */
 #cmakedefine WITH_RDPDR
 

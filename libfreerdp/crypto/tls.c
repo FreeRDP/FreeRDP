@@ -862,7 +862,12 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 
 	if (!tls_prepare(tls, underlying, SSLv23_client_method(), options, TRUE))
 #else
-	if (!tls_prepare(tls, underlying, TLS_client_method(), options, TRUE))
+	#if defined ENFORCE_TLSV1_2
+		if (!tls_prepare(tls, underlying, TLSv1_2_client_method(), options, TRUE))
+	#else
+		if (!tls_prepare(tls, underlying, TLS_client_method(), options, TRUE))
+	#endif
+
 #endif
 		return 0;
 
