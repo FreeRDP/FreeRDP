@@ -318,7 +318,7 @@ out_free:
 	// TODO: This is a hack to ensure connections to RDVH with 16bpp don't have an odd screen
 	// resolution width
 	//       Otherwise this could result in screen corruption ..
-	if (settings->ColorDepth <= 16)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) <= 16)
 		settings->DesktopWidth &= (~1);
 
 	[self performSelectorInBackground:@selector(runSession) withObject:nil];
