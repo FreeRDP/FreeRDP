@@ -577,6 +577,8 @@ void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata, MsgHandler
 	internals->msg_handler = msg_handler;
 	internals->userdata = userdata;
 	internals->channel_name = _strdup(channel_name);
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(ctx->settings);
 	internals->ctx = ctx;
 	if (!(ctx->settings->ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
 	{
