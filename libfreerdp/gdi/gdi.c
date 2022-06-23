@@ -881,8 +881,9 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			{
 				UINT32 bpp = brush->bpp;
 
-				if ((bpp == 16) &&
-				    (freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth) == 15))
+				const UINT32 ColorDepth =
+				    freerdp_settings_get_uint32(gdi->context->settings, FreeRDP_ColorDepth);
+				if ((bpp == 16) && (ColorDepth == 15))
 					bpp = 15;
 
 				brushFormat = gdi_get_pixel_format(bpp);
@@ -1288,8 +1289,8 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->settings);
 
-	SrcFormat =
-	    gdi_get_pixel_format(freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth));
+	const UINT32 ColorDepth = freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth);
+	SrcFormat = gdi_get_pixel_format(ColorDepth);
 	gdi = (rdpGdi*)calloc(1, sizeof(rdpGdi));
 
 	if (!gdi)
