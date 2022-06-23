@@ -63,6 +63,7 @@ extern "C"
 	    "Use WTSVirtualChannelManagerGetEventHandle",
 	    void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* fds_count));
 #endif
+	FREERDP_API BOOL WTSVirtualChannelManagerOpen(HANDLE hServer);
 	FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer);
 	FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptorEx(HANDLE hServer, BOOL autoOpen);
 	FREERDP_API HANDLE WTSVirtualChannelManagerGetEventHandle(HANDLE hServer);

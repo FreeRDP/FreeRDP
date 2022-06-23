@@ -529,14 +529,18 @@ void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* 
 }
 #endif
 
-static BOOL WTSVirtualChannelManagerOpen(WTSVirtualChannelManager* vcm)
+BOOL WTSVirtualChannelManagerOpen(HANDLE hServer)
 {
+	WTSVirtualChannelManager* vcm = (WTSVirtualChannelManager*)hServer;
+	const freerdp_peer* client;
+
 	if (!vcm)
 		return FALSE;
 
 	WINPR_ASSERT(vcm->client);
+	client = vcm->client;
 
-	if ((vcm->drdynvc_state == DRDYNVC_STATE_NONE) && vcm->client->activated)
+	if (vcm->drdynvc_state == DRDYNVC_STATE_NONE)
 	{
 		rdpPeerChannel* channel;
 		UINT32 dynvc_caps;
@@ -573,7 +577,7 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptorEx(HANDLE hServer, BOOL autoOpen
 
 	if (autoOpen)
 	{
-		if (!WTSVirtualChannelManagerOpen(vcm))
+		if (!WTSVirtualChannelManagerOpen(hServer))
 			return FALSE;
 	}
 
