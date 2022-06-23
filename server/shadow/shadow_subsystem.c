@@ -128,11 +128,11 @@ void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 		/* Release resource in messages before free */
 		obj1 = MessageQueue_Object(subsystem->MsgPipe->In);
 
-		    obj1->fnObjectFree = shadow_subsystem_free_queued_message;
-		    MessageQueue_Clear(subsystem->MsgPipe->In);
+		obj1->fnObjectFree = shadow_subsystem_free_queued_message;
+		MessageQueue_Clear(subsystem->MsgPipe->In);
 
-		    obj2 = MessageQueue_Object(subsystem->MsgPipe->Out);
-		    obj2->fnObjectFree = shadow_subsystem_free_queued_message;
+		obj2 = MessageQueue_Object(subsystem->MsgPipe->Out);
+		obj2->fnObjectFree = shadow_subsystem_free_queued_message;
 		MessageQueue_Clear(subsystem->MsgPipe->Out);
 		MessagePipe_Free(subsystem->MsgPipe);
 		subsystem->MsgPipe = NULL;

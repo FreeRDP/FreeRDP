@@ -555,11 +555,11 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 			return SEC_E_INVALID_TOKEN;
 	}
 
-		if (!ntlm_read_message_fields_buffer(s, &message->DomainName))
-			return SEC_E_INVALID_TOKEN;
+	if (!ntlm_read_message_fields_buffer(s, &message->DomainName))
+		return SEC_E_INVALID_TOKEN;
 
-		if (!ntlm_read_message_fields_buffer(s, &message->Workstation))
-			return SEC_E_INVALID_TOKEN;
+	if (!ntlm_read_message_fields_buffer(s, &message->Workstation))
+		return SEC_E_INVALID_TOKEN;
 
 	length = Stream_GetPosition(s);
 	WINPR_ASSERT(length <= ULONG_MAX);
@@ -890,8 +890,8 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 		return SEC_E_INTERNAL_ERROR;
 	}
 
-	Stream_Write(s, message->ServerChallenge, 8);    /* ServerChallenge (8 bytes) */
-	Stream_Write(s, message->Reserved, 8);           /* Reserved (8 bytes), should be ignored */
+	Stream_Write(s, message->ServerChallenge, 8); /* ServerChallenge (8 bytes) */
+	Stream_Write(s, message->Reserved, 8);        /* Reserved (8 bytes), should be ignored */
 
 	/* TargetInfoFields (8 bytes) */
 	if (!ntlm_write_message_fields(s, &(message->TargetInfo)))

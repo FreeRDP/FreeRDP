@@ -298,7 +298,7 @@ static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
  */
 static UINT geometry_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	return geometry_recv_pdu(callback, data);
 }
 
@@ -323,8 +323,8 @@ static UINT geometry_on_new_channel_connection(IWTSListenerCallback* pListenerCa
                                                BOOL* pbAccept,
                                                IWTSVirtualChannelCallback** ppCallback)
 {
-    GENERIC_CHANNEL_CALLBACK* callback;
-    GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
+	GENERIC_CHANNEL_CALLBACK* callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	WINPR_UNUSED(Data);
 	WINPR_UNUSED(pbAccept);

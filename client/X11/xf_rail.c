@@ -173,8 +173,8 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	windowMove.left = appWindow->x - appWindow->resizeMarginLeft;
 	windowMove.top = appWindow->y - appWindow->resizeMarginTop;
 	windowMove.right =
-	    appWindow->x +
-	    appWindow->width + appWindow->resizeMarginRight; /* In the update to RDP the position is one past the window */
+	    appWindow->x + appWindow->width +
+	    appWindow->resizeMarginRight; /* In the update to RDP the position is one past the window */
 	windowMove.bottom = appWindow->y + appWindow->height + appWindow->resizeMarginBottom;
 	xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
 	/*
@@ -351,13 +351,13 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		appWindow->windowWidth = windowState->windowWidth;
 		appWindow->windowHeight = windowState->windowHeight;
 	}
-	
+
 	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
 	{
 		appWindow->resizeMarginLeft = windowState->resizeMarginLeft;
 		appWindow->resizeMarginRight = windowState->resizeMarginRight;
 	}
-	
+
 	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
 	{
 		appWindow->resizeMarginTop = windowState->resizeMarginTop;

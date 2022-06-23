@@ -553,7 +553,7 @@ static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStrea
  */
 static UINT video_control_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* s)
 {
-    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	VIDEO_PLUGIN* video;
 	VideoClientContext* context;
 	UINT ret = CHANNEL_RC_OK;
@@ -993,8 +993,8 @@ static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listen
                                                     BOOL* pbAccept,
                                                     IWTSVirtualChannelCallback** ppCallback)
 {
-    GENERIC_CHANNEL_CALLBACK* callback;
-    GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)listenerCallback;
+	GENERIC_CHANNEL_CALLBACK* callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)listenerCallback;
 
 	WINPR_UNUSED(Data);
 	WINPR_UNUSED(pbAccept);
@@ -1023,8 +1023,8 @@ static UINT video_data_on_new_channel_connection(IWTSListenerCallback* pListener
                                                  BOOL* pbAccept,
                                                  IWTSVirtualChannelCallback** ppCallback)
 {
-    GENERIC_CHANNEL_CALLBACK* callback;
-    GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
+	GENERIC_CHANNEL_CALLBACK* callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	WINPR_UNUSED(Data);
 	WINPR_UNUSED(pbAccept);

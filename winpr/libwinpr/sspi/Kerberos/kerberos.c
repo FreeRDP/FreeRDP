@@ -158,8 +158,10 @@ static void gss_log_status_messages(OM_uint32 major_status, OM_uint32 minor_stat
 /* taken from lib/gssapi/krb5/gssapi_err_krb5.h */
 #define KG_EMPTY_CCACHE (39756044L)
 
-static INLINE BOOL sspi_is_no_creds(OM_uint32 major, OM_uint32 minor) {
-	return (major == SSPI_GSS_S_NO_CRED) || (major == SSPI_GSS_S_FAILURE && minor == KG_EMPTY_CCACHE);
+static INLINE BOOL sspi_is_no_creds(OM_uint32 major, OM_uint32 minor)
+{
+	return (major == SSPI_GSS_S_NO_CRED) ||
+	       (major == SSPI_GSS_S_FAILURE && minor == KG_EMPTY_CCACHE);
 }
 #endif /* WITH_GSSAPI */
 
@@ -247,7 +249,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	if (pszPrincipal)
 	{
 		/* Find realm component if included and convert to uppercase */
-		char *p = strchr(pszPrincipal, '@');
+		char* p = strchr(pszPrincipal, '@');
 		CharUpperA(p);
 
 		if ((rv = krb5_parse_name(ctx, pszPrincipal, &principal)))
@@ -304,7 +306,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 		if ((rv = krb5_kt_default(ctx, &keytab)))
 			goto cleanup;
 	}
-	
+
 	if (fCredentialUse & SECPKG_CRED_OUTBOUND)
 	{
 		if ((rv = krb5_get_init_creds_opt_alloc(ctx, &gic_opt)))
@@ -324,13 +326,14 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			if (krb_settings->withPac)
 				krb5_get_init_creds_opt_set_pac_request(ctx, gic_opt, TRUE);
 			if (krb_settings->armorCache)
-				krb5_get_init_creds_opt_set_fast_ccache_name(ctx, gic_opt, krb_settings->armorCache);
+				krb5_get_init_creds_opt_set_fast_ccache_name(ctx, gic_opt,
+				                                             krb_settings->armorCache);
 			if (krb_settings->pkinitX509Identity)
 				krb5_get_init_creds_opt_set_pa(ctx, gic_opt, "X509_user_identity",
-											krb_settings->pkinitX509Identity);
+				                               krb_settings->pkinitX509Identity);
 			if (krb_settings->pkinitX509Anchors)
 				krb5_get_init_creds_opt_set_pa(ctx, gic_opt, "X509_anchors",
-											krb_settings->pkinitX509Anchors);
+				                               krb_settings->pkinitX509Anchors);
 		}
 
 #ifdef WITH_GSSAPI_MIT
@@ -349,8 +352,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 	/* Check if there are initial creds already in the cache there's no need to request new ones */
 	major = sspi_gss_acquire_cred_from(&minor, SSPI_GSS_C_NO_NAME, SSPI_GSS_C_INDEFINITE,
-	                                   &desired_mechs, cred_usage, &cred_store, &gss_creds,
-	                                   NULL, &time_rec);
+	                                   &desired_mechs, cred_usage, &cred_store, &gss_creds, NULL,
+	                                   &time_rec);
 	gss_log_status_messages(major, minor);
 
 	/* No use getting initial creds for inbound creds */
@@ -607,11 +610,12 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
-	PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput, ULONG fContextReq,
-	ULONG TargetDataRep, PCtxtHandle phNewContext, PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpity)
+    PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput, ULONG fContextReq,
+    ULONG TargetDataRep, PCtxtHandle phNewContext, PSecBufferDesc pOutput, ULONG* pfContextAttr,
+    PTimeStamp ptsExpity)
 {
 #ifdef WITH_GSSAPI
-	KRB_CONTEXT *context;
+	KRB_CONTEXT* context;
 	sspi_gss_cred_id_t creds;
 	sspi_gss_ctx_id_t gss_ctx = SSPI_GSS_C_NO_CONTEXT;
 	PSecBuffer input_buffer;
@@ -637,10 +641,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 
 	input_token.length = input_buffer->cbBuffer;
 	input_token.value = input_buffer->pvBuffer;
-	
-	major = sspi_gss_accept_sec_context(
-		&minor, &gss_ctx, creds, &input_token, SSPI_GSS_C_NO_CHANNEL_BINDINGS, NULL, NULL, &output_token, pfContextAttr, &time_rec, NULL);
-	
+
+	major = sspi_gss_accept_sec_context(&minor, &gss_ctx, creds, &input_token,
+	                                    SSPI_GSS_C_NO_CHANNEL_BINDINGS, NULL, NULL, &output_token,
+	                                    pfContextAttr, &time_rec, NULL);
+
 	if (SSPI_GSS_ERROR(major))
 	{
 		gss_log_status_messages(major, minor);

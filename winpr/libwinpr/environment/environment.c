@@ -562,8 +562,8 @@ BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue)
 
 	if (lpValue)
 	{
-		length = (strlen(lpName) + strlen(lpValue) + 2);      /* +2 because of = and \0 */
-		envstr = (char*)malloc(length + 1);                   /* +1 because of closing \0 */
+		length = (strlen(lpName) + strlen(lpValue) + 2); /* +2 because of = and \0 */
+		envstr = (char*)malloc(length + 1);              /* +1 because of closing \0 */
 
 		if (!envstr)
 			return FALSE;

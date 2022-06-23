@@ -196,7 +196,6 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	if (!pf_config_get_uint16(ini, "Target", "Port", &config->TargetPort, config->FixedTarget))
 		return FALSE;
 
-
 	if (config->FixedTarget)
 	{
 		target_value = pf_config_get_str(ini, "Target", "Host", TRUE);

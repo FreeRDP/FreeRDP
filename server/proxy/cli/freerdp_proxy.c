@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
 			pf_server_config_dump(argv[2]);
 			status = 0;
 			goto fail;
-		    }
+		}
 		config_path = argv[1];
 	}
 

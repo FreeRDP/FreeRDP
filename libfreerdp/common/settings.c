@@ -473,7 +473,7 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 				args[1] = src.drive->Path;
 				count = 2;
 			}
-		break;
+			break;
 
 		case RDPDR_DTYP_PRINT:
 			if (src.printer->DriverName)
@@ -481,7 +481,7 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 				args[1] = src.printer->DriverName;
 				count = 2;
 			}
-		break;
+			break;
 
 		case RDPDR_DTYP_SMARTCARD:
 			break;
@@ -504,7 +504,7 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 				args[3] = src.serial->Permissive;
 				count = 4;
 			}
-		break;
+			break;
 
 		case RDPDR_DTYP_PARALLEL:
 			if (src.parallel->Path)
@@ -512,7 +512,7 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 				args[1] = src.parallel->Path;
 				count = 2;
 			}
-		break;
+			break;
 		default:
 			WLog_ERR(TAG, "unknown device type %" PRIu32 "", device->Type);
 			break;

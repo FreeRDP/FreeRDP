@@ -88,9 +88,9 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 		if (gui_thread_info.hwndFocus != wfc->hWndParent)
 		{
 			g_focus_hWnd = NULL;
- 			return CallNextHookEx(NULL, nCode, wParam, lParam);
+			return CallNextHookEx(NULL, nCode, wParam, lParam);
 		}
-		
+
 		g_focus_hWnd = g_main_hWnd;
 	}
 

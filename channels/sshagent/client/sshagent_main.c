@@ -70,7 +70,7 @@ typedef struct
 
 typedef struct
 {
-    GENERIC_CHANNEL_CALLBACK generic;
+	GENERIC_CHANNEL_CALLBACK generic;
 
 	rdpContext* rdpcontext;
 	int agent_fd;
@@ -156,7 +156,7 @@ static DWORD WINAPI sshagent_read_thread(LPVOID data)
 		else
 		{
 			/* Something read: forward to virtual channel */
-		    IWTSVirtualChannel* channel = callback->generic.channel;
+			IWTSVirtualChannel* channel = callback->generic.channel;
 			status = channel->Write(channel, bytes_read, buffer, NULL);
 
 			if (status != CHANNEL_RC_OK)

@@ -300,13 +300,13 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 		BOOL haveChannelId;
 		switch (Cmd)
 		{
-		case SOFT_SYNC_REQUEST_PDU:
-		case SOFT_SYNC_RESPONSE_PDU:
-			haveChannelId = FALSE;
-			break;
-		default:
-			haveChannelId = TRUE;
-			break;
+			case SOFT_SYNC_REQUEST_PDU:
+			case SOFT_SYNC_RESPONSE_PDU:
+				haveChannelId = FALSE;
+				break;
+			default:
+				haveChannelId = TRUE;
+				break;
 		}
 
 		if (haveChannelId)
@@ -347,7 +347,8 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 				break;
 
 			case SOFT_SYNC_RESPONSE_PDU:
-				WLog_ERR(TAG, "SoftSync response not handled yet(and rather strange to receive that packet as our code doesn't send SoftSync requests");
+				WLog_ERR(TAG, "SoftSync response not handled yet(and rather strange to receive "
+				              "that packet as our code doesn't send SoftSync requests");
 				break;
 
 			case SOFT_SYNC_REQUEST_PDU:

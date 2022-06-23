@@ -223,7 +223,8 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 				return FALSE;
 			}
 		}
-		else if (strcmp(cname, RDPDR_SVC_CHANNEL_NAME) == 0 && (channelContext->channelMode == PF_UTILS_CHANNEL_INTERCEPT))
+		else if (strcmp(cname, RDPDR_SVC_CHANNEL_NAME) == 0 &&
+		         (channelContext->channelMode == PF_UTILS_CHANNEL_INTERCEPT))
 		{
 			if (!pf_channel_setup_rdpdr(ps, channelContext))
 			{
@@ -417,23 +418,23 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	WINPR_ASSERT(channel->onFrontData);
 	switch (channel->onFrontData(pdata, channel, data, size, flags, totalSize))
 	{
-	case PF_CHANNEL_RESULT_PASS: {
-		proxyChannelDataEventInfo ev = { 0 };
+		case PF_CHANNEL_RESULT_PASS:
+		{
+			proxyChannelDataEventInfo ev = { 0 };
 
-		ev.channel_id = channelId;
-		ev.channel_name = channel->channel_name;
-		ev.data = data;
-		ev.data_len = size;
-		ev.flags = flags;
-		ev.total_size = totalSize;
-		return IFCALLRESULT(TRUE, pc->sendChannelData, pc, &ev);
+			ev.channel_id = channelId;
+			ev.channel_name = channel->channel_name;
+			ev.data = data;
+			ev.data_len = size;
+			ev.flags = flags;
+			ev.total_size = totalSize;
+			return IFCALLRESULT(TRUE, pc->sendChannelData, pc, &ev);
+		}
+		case PF_CHANNEL_RESULT_DROP:
+			return TRUE;
+		case PF_CHANNEL_RESULT_ERROR:
+			return FALSE;
 	}
-	case PF_CHANNEL_RESULT_DROP:
-		return TRUE;
-	case PF_CHANNEL_RESULT_ERROR:
-		return FALSE;
-	}
-
 
 original_cb:
 	WINPR_ASSERT(pdata->server_receive_channel_data_original);
@@ -1008,7 +1009,6 @@ void pf_server_stop(proxyServer* server)
 
 	if (!server)
 		return;
-
 
 	/* signal main thread to stop and wait for the thread to exit */
 	SetEvent(server->stopEvent);

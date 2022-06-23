@@ -271,42 +271,42 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 	if (!(ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
 	{
 #ifdef _WIN32
-	{
-		BOOL isVistaOrLater;
-		OSVERSIONINFOA verinfo;
-		ZeroMemory(&verinfo, sizeof(OSVERSIONINFOA));
-		verinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-		GetVersionExA(&verinfo);
-		isVistaOrLater =
-			((verinfo.dwMajorVersion >= 6) && (verinfo.dwMinorVersion >= 0)) ? TRUE : FALSE;
-		priv->UseThreads = isVistaOrLater;
-	}
+		{
+			BOOL isVistaOrLater;
+			OSVERSIONINFOA verinfo;
+			ZeroMemory(&verinfo, sizeof(OSVERSIONINFOA));
+			verinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+			GetVersionExA(&verinfo);
+			isVistaOrLater =
+			    ((verinfo.dwMajorVersion >= 6) && (verinfo.dwMinorVersion >= 0)) ? TRUE : FALSE;
+			priv->UseThreads = isVistaOrLater;
+		}
 #else
-	priv->UseThreads = TRUE;
+		priv->UseThreads = TRUE;
 #endif
-	GetNativeSystemInfo(&sysinfo);
-	priv->MinThreadCount = sysinfo.dwNumberOfProcessors;
-	priv->MaxThreadCount = 0;
-	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, RFX_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+		GetNativeSystemInfo(&sysinfo);
+		priv->MinThreadCount = sysinfo.dwNumberOfProcessors;
+		priv->MaxThreadCount = 0;
+		status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, RFX_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
-	if (status == ERROR_SUCCESS)
-	{
-		dwSize = sizeof(dwValue);
+		if (status == ERROR_SUCCESS)
+		{
+			dwSize = sizeof(dwValue);
 
-		if (RegQueryValueEx(hKey, _T("UseThreads"), NULL, &dwType, (BYTE*)&dwValue, &dwSize) ==
-			ERROR_SUCCESS)
-			priv->UseThreads = dwValue ? 1 : 0;
+			if (RegQueryValueEx(hKey, _T("UseThreads"), NULL, &dwType, (BYTE*)&dwValue, &dwSize) ==
+			    ERROR_SUCCESS)
+				priv->UseThreads = dwValue ? 1 : 0;
 
-		if (RegQueryValueEx(hKey, _T("MinThreadCount"), NULL, &dwType, (BYTE*)&dwValue, &dwSize) ==
-			ERROR_SUCCESS)
-			priv->MinThreadCount = dwValue;
+			if (RegQueryValueEx(hKey, _T("MinThreadCount"), NULL, &dwType, (BYTE*)&dwValue,
+			                    &dwSize) == ERROR_SUCCESS)
+				priv->MinThreadCount = dwValue;
 
-		if (RegQueryValueEx(hKey, _T("MaxThreadCount"), NULL, &dwType, (BYTE*)&dwValue, &dwSize) ==
-			ERROR_SUCCESS)
-			priv->MaxThreadCount = dwValue;
+			if (RegQueryValueEx(hKey, _T("MaxThreadCount"), NULL, &dwType, (BYTE*)&dwValue,
+			                    &dwSize) == ERROR_SUCCESS)
+				priv->MaxThreadCount = dwValue;
 
-		RegCloseKey(hKey);
-	}
+			RegCloseKey(hKey);
+		}
 	}
 	else
 	{
@@ -384,8 +384,9 @@ void rfx_context_free(RFX_CONTEXT* context)
 			free(priv->workObjects);
 			free(priv->tileWorkParams);
 #ifdef WITH_PROFILER
-		WLog_VRB(TAG,
-		         "WARNING: Profiling results probably unusable with multithreaded RemoteFX codec!");
+			WLog_VRB(
+			    TAG,
+			    "WARNING: Profiling results probably unusable with multithreaded RemoteFX codec!");
 #endif
 		}
 

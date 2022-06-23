@@ -86,7 +86,8 @@ static void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
 {
 	int i;
 
-	if (zero) {
+	if (zero)
+	{
 		for (i = 0; i < ARRAYSIZE(clear->VBarStorage); i++)
 			free(clear->VBarStorage[i].pixels);
 
@@ -95,7 +96,8 @@ static void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
 
 	clear->VBarStorageCursor = 0;
 
-	if (zero) {
+	if (zero)
+	{
 		for (i = 0; i < ARRAYSIZE(clear->ShortVBarStorage); i++)
 			free(clear->ShortVBarStorage[i].pixels);
 
@@ -1125,7 +1127,7 @@ int clear_compress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSize, B
 BOOL clear_context_reset(CLEAR_CONTEXT* clear)
 {
 	if (!clear)
-        return FALSE;
+		return FALSE;
 
 	/**
 	 * The ClearCodec context is not bound to a particular surface,

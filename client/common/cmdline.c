@@ -777,7 +777,6 @@ fail:
 	return rc;
 }
 
-
 /** @brief suboption type */
 typedef enum
 {
@@ -839,7 +838,6 @@ static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts
 
 	return found;
 }
-
 
 static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
@@ -1605,10 +1603,6 @@ static BOOL prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMEN
 
 	return freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT);
 }
-
-
-
-
 
 static BOOL setSmartcardEmulation(const char* value, rdpSettings* settings)
 {

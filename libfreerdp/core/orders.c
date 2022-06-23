@@ -3792,9 +3792,9 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return FALSE;
 
-	Stream_Read_INT16(s, orderLength);  /* orderLength (2 bytes signed) */
-	Stream_Read_UINT16(s, extraFlags);  /* extraFlags (2 bytes) */
-	Stream_Read_UINT8(s, orderType);    /* orderType (1 byte) */
+	Stream_Read_INT16(s, orderLength); /* orderLength (2 bytes signed) */
+	Stream_Read_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
+	Stream_Read_UINT8(s, orderType);   /* orderType (1 byte) */
 
 	start = Stream_GetPosition(s);
 	name = secondary_order_string(orderType);

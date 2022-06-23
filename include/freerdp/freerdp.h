@@ -371,7 +371,7 @@ and settings.		 Will be initialized by a call to freerdp_context_new()		 owned b
 		                                Will be initialized by a call to freerdp_context_new()
 owned by rdpRdp */
 #else
-	    UINT64 paddingX[4];
+	UINT64 paddingX[4];
 #endif
 		ALIGN64 rdpHeartbeat* heartbeat; /* (offset 21) owned by rdpRdp*/
 
@@ -426,7 +426,7 @@ owned by rdpRdp */
 		                     ALIGN64 pVerifyChangedCertificate
 		                         VerifyChangedCertificate;) /**< (offset 52) */
 #else
-	    ALIGN64 UINT64 reserved[2];
+	ALIGN64 UINT64 reserved[2];
 #endif
 		ALIGN64 pVerifyX509Certificate
 		    VerifyX509Certificate; /**< (offset 53)  Callback for X509 certificate verification

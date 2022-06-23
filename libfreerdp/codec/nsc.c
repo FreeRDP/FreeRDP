@@ -303,7 +303,8 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 	return TRUE;
 }
 
-static void nsc_profiler_print(NSC_CONTEXT_PRIV* priv){
+static void nsc_profiler_print(NSC_CONTEXT_PRIV* priv)
+{
 	WINPR_UNUSED(priv);
 
 	PROFILER_PRINT_HEADER

@@ -311,7 +311,6 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 	if (!xfc || !xfc->common.context.settings || !y || !x)
 		return;
 
-
 	if (!xfc->remote_app)
 	{
 #ifdef WITH_XRENDER
@@ -962,15 +961,15 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 			WINPR_ASSERT(appWindow);
 			if (appWindow->maxVert && appWindow->maxHorz && !appWindow->minimized)
 			{
-				if(appWindow->rail_state != WINDOW_SHOW_MAXIMIZED)
+				if (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED)
 				{
-				    appWindow->rail_state = WINDOW_SHOW_MAXIMIZED;
-				    xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MAXIMIZE);
+					appWindow->rail_state = WINDOW_SHOW_MAXIMIZED;
+					xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MAXIMIZE);
 				}
 			}
 			else if (appWindow->minimized)
 			{
-				if(appWindow->rail_state != WINDOW_SHOW_MINIMIZED)
+				if (appWindow->rail_state != WINDOW_SHOW_MINIMIZED)
 				{
 					appWindow->rail_state = WINDOW_SHOW_MINIMIZED;
 					xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MINIMIZE);
@@ -978,8 +977,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 			}
 			else
 			{
-				if(appWindow->rail_state != WINDOW_SHOW &&
-			         appWindow->rail_state != WINDOW_HIDE)
+				if (appWindow->rail_state != WINDOW_SHOW && appWindow->rail_state != WINDOW_HIDE)
 				{
 					appWindow->rail_state = WINDOW_SHOW;
 					xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);

@@ -83,7 +83,8 @@ static OSStatus rdpsnd_ios_render_cb(void* inRefCon,
 	return noErr;
 }
 
-static BOOL rdpsnd_ios_format_supported(rdpsndDevicePlugin* __unused device, const AUDIO_FORMAT* format)
+static BOOL rdpsnd_ios_format_supported(rdpsndDevicePlugin* __unused device,
+                                        const AUDIO_FORMAT* format)
 {
 	if (format->wFormatTag == WAVE_FORMAT_PCM)
 	{
@@ -144,7 +145,8 @@ static UINT rdpsnd_ios_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 	return 10; /* TODO: Get real latencry in [ms] */
 }
 
-static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, int __unused latency)
+static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
+                            int __unused latency)
 {
 	rdpsndIOSPlugin* p = THIS(device);
 

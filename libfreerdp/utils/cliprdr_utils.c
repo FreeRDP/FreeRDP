@@ -101,7 +101,7 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 		UINT64 tmp;
 		FILEDESCRIPTORW* file = &((*file_descriptor_array)[i]);
 
-		Stream_Read_UINT32(s, file->dwFlags);          /* flags (4 bytes) */
+		Stream_Read_UINT32(s, file->dwFlags); /* flags (4 bytes) */
 		Stream_Read_UINT32(s, file->clsid.Data1);
 		Stream_Read_UINT16(s, file->clsid.Data2);
 		Stream_Read_UINT16(s, file->clsid.Data3);

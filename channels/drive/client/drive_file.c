@@ -492,8 +492,8 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 			                    fileInformation.ftCreationTime.dwLowDateTime); /* CreationTime */
 			Stream_Write_UINT32(output,
 			                    fileInformation.ftCreationTime.dwHighDateTime); /* CreationTime */
-			Stream_Write_UINT32(output,
-			                    fileInformation.ftLastAccessTime.dwLowDateTime); /* LastAccessTime */
+			Stream_Write_UINT32(
+			    output, fileInformation.ftLastAccessTime.dwLowDateTime); /* LastAccessTime */
 			Stream_Write_UINT32(
 			    output, fileInformation.ftLastAccessTime.dwHighDateTime); /* LastAccessTime */
 			Stream_Write_UINT32(output,
@@ -504,7 +504,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 			                    fileInformation.ftLastWriteTime.dwLowDateTime); /* ChangeTime */
 			Stream_Write_UINT32(output,
 			                    fileInformation.ftLastWriteTime.dwHighDateTime); /* ChangeTime */
-			Stream_Write_UINT32(output, fileInformation.dwFileAttributes);       /* FileAttributes */
+			Stream_Write_UINT32(output, fileInformation.dwFileAttributes); /* FileAttributes */
 			/* Reserved(4), MUST NOT be added! */
 			break;
 
@@ -514,13 +514,13 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 			if (!Stream_EnsureRemainingCapacity(output, 4 + 22))
 				goto out_fail;
 
-			Stream_Write_UINT32(output, 22);                            /* Length */
+			Stream_Write_UINT32(output, 22);                             /* Length */
 			Stream_Write_UINT32(output, fileInformation.nFileSizeLow);   /* AllocationSize */
 			Stream_Write_UINT32(output, fileInformation.nFileSizeHigh);  /* AllocationSize */
 			Stream_Write_UINT32(output, fileInformation.nFileSizeLow);   /* EndOfFile */
 			Stream_Write_UINT32(output, fileInformation.nFileSizeHigh);  /* EndOfFile */
 			Stream_Write_UINT32(output, fileInformation.nNumberOfLinks); /* NumberOfLinks */
-			Stream_Write_UINT8(output, file->delete_pending ? 1 : 0);   /* DeletePending */
+			Stream_Write_UINT8(output, file->delete_pending ? 1 : 0);    /* DeletePending */
 			Stream_Write_UINT8(output, fileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
 			                               ? TRUE
 			                               : FALSE); /* Directory */
@@ -533,9 +533,9 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 			if (!Stream_EnsureRemainingCapacity(output, 4 + 8))
 				goto out_fail;
 
-			Stream_Write_UINT32(output, 8);                               /* Length */
+			Stream_Write_UINT32(output, 8);                                /* Length */
 			Stream_Write_UINT32(output, fileInformation.dwFileAttributes); /* FileAttributes */
-			Stream_Write_UINT32(output, 0);                               /* ReparseTag */
+			Stream_Write_UINT32(output, 0);                                /* ReparseTag */
 			break;
 
 		default:

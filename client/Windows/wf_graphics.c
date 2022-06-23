@@ -210,7 +210,8 @@ static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 
 		if ((pointer->lengthAndMask > 0) || (pointer->lengthXorMask > 0))
 		{
-			pdata = (BYTE*)winpr_aligned_malloc(pointer->lengthAndMask + pointer->lengthXorMask, 16);
+			pdata =
+			    (BYTE*)winpr_aligned_malloc(pointer->lengthAndMask + pointer->lengthXorMask, 16);
 
 			if (!pdata)
 				goto fail;

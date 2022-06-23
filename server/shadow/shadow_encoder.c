@@ -372,18 +372,18 @@ static int shadow_encoder_uninit(rdpShadowEncoder* encoder)
 		encoder->bs = NULL;
 	}
 
-		shadow_encoder_uninit_rfx(encoder);
+	shadow_encoder_uninit_rfx(encoder);
 
-		shadow_encoder_uninit_nsc(encoder);
+	shadow_encoder_uninit_nsc(encoder);
 
-		shadow_encoder_uninit_planar(encoder);
+	shadow_encoder_uninit_planar(encoder);
 
-		shadow_encoder_uninit_interleaved(encoder);
-		shadow_encoder_uninit_h264(encoder);
+	shadow_encoder_uninit_interleaved(encoder);
+	shadow_encoder_uninit_h264(encoder);
 
-	    shadow_encoder_uninit_progressive(encoder);
+	shadow_encoder_uninit_progressive(encoder);
 
-	    return 1;
+	return 1;
 }
 
 int shadow_encoder_reset(rdpShadowEncoder* encoder)

@@ -135,7 +135,7 @@ struct xf_app_window
 
 	UINT32 localWindowOffsetCorrX;
 	UINT32 localWindowOffsetCorrY;
-	
+
 	UINT32 resizeMarginLeft;
 	UINT32 resizeMarginTop;
 	UINT32 resizeMarginRight;

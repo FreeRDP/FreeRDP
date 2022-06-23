@@ -36,7 +36,7 @@ struct proxy_server
 	proxyConfig* config;
 
 	freerdp_listener* listener;
-	HANDLE stopEvent;           /* an event used to signal the main thread to stop */
+	HANDLE stopEvent; /* an event used to signal the main thread to stop */
 	wArrayList* peer_list;
 };
 

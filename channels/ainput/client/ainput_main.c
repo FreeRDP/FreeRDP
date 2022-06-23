@@ -38,7 +38,6 @@
 
 #define TAG CHANNELS_TAG("ainput.client")
 
-
 typedef struct AINPUT_PLUGIN_ AINPUT_PLUGIN;
 struct AINPUT_PLUGIN_
 {

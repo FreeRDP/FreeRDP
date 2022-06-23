@@ -24,24 +24,22 @@
 #include <freerdp/addin.h>
 #include <freerdp/channels/channels.h>
 
-
 typedef struct
 {
-    IWTSVirtualChannelCallback iface;
-    IWTSPlugin* plugin;
-    IWTSVirtualChannelManager* channel_mgr;
-    IWTSVirtualChannel* channel;
+	IWTSVirtualChannelCallback iface;
+	IWTSPlugin* plugin;
+	IWTSVirtualChannelManager* channel_mgr;
+	IWTSVirtualChannel* channel;
 } GENERIC_CHANNEL_CALLBACK;
 
 typedef struct
 {
-    IWTSListenerCallback iface;
-    IWTSPlugin* plugin;
-    IWTSVirtualChannelManager* channel_mgr;
-    IWTSVirtualChannel* channel;
-    GENERIC_CHANNEL_CALLBACK* channel_callback;
+	IWTSListenerCallback iface;
+	IWTSPlugin* plugin;
+	IWTSVirtualChannelManager* channel_mgr;
+	IWTSVirtualChannel* channel;
+	GENERIC_CHANNEL_CALLBACK* channel_callback;
 } GENERIC_LISTENER_CALLBACK;
-
 
 #ifdef __cplusplus
 extern "C"

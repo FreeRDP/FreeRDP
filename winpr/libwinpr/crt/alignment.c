@@ -23,7 +23,7 @@
 
 /* Data Alignment: http://msdn.microsoft.com/en-us/library/fs9stz4e/ */
 
-#if !defined(_WIN32) || (defined(__MINGW32__) && ! defined(_UCRT))
+#if !defined(_WIN32) || (defined(__MINGW32__) && !defined(_UCRT))
 
 #include <stdint.h>
 #include <limits.h>
@@ -166,7 +166,7 @@ static INLINE size_t cMIN(size_t a, size_t b)
 }
 
 void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t alignment,
-                               size_t offset)
+                                    size_t offset)
 {
 	char* newMemblock = NULL;
 	WINPR_ALIGNED_MEM* pMem = NULL;

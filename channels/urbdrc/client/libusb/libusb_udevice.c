@@ -1290,7 +1290,8 @@ static BOOL libusb_udev_control_transfer(IUDEVICE* idev, UINT32 RequestId, UINT3
 	return TRUE;
 }
 
-static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback,
+static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev,
+                                                  GENERIC_CHANNEL_CALLBACK* callback,
                                                   UINT32 MessageId, UINT32 RequestId,
                                                   UINT32 EndpointAddress, UINT32 TransferFlags,
                                                   BOOL NoAck, UINT32 BufferSize, const BYTE* data,

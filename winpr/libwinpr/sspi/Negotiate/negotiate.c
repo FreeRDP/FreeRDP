@@ -239,7 +239,8 @@ static void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 
 static BOOL negotiate_oid_compare(const sspi_gss_OID_desc* oid1, const sspi_gss_OID_desc* oid2)
 {
-	return (oid1->length == oid2->length) && (memcmp(oid1->elements, oid2->elements, oid1->length) == 0);
+	return (oid1->length == oid2->length) &&
+	       (memcmp(oid1->elements, oid2->elements, oid1->length) == 0);
 }
 
 static const char* negotiate_mech_name(const sspi_gss_OID_desc* oid)
@@ -336,7 +337,7 @@ static BOOL negotiate_get_config(BOOL* kerberos, BOOL* ntlm)
 	return TRUE;
 }
 
-static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken *token)
+static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken* token)
 {
 	size_t token_len = 0;
 	size_t init_token_len = 0;
@@ -600,7 +601,8 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 		/* Store the mic token after the mech token in the output buffer */
 		output_token->mic.BufferType = SECBUFFER_TOKEN;
 		output_token->mic.cbBuffer = output_buffer->cbBuffer - output_token->mechToken.cbBuffer;
-		output_token->mic.pvBuffer = (BYTE*)output_buffer->pvBuffer + output_token->mechToken.cbBuffer;
+		output_token->mic.pvBuffer =
+		    (BYTE*)output_buffer->pvBuffer + output_token->mechToken.cbBuffer;
 
 		CopyMemory(&mic_buffers[1], &output_token->mic, sizeof(SecBuffer));
 
@@ -665,8 +667,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
 			status = MechTable[i].pkg->table_w->InitializeSecurityContextW(
-			    &creds[i].cred, NULL, pszTargetName, fContextReq | creds[i].mech->flags,
-			    Reserved1, TargetDataRep, NULL, Reserved2, &init_context.sub_context, &mech_output,
+			    &creds[i].cred, NULL, pszTargetName, fContextReq | creds[i].mech->flags, Reserved1,
+			    TargetDataRep, NULL, Reserved2, &init_context.sub_context, &mech_output,
 			    pfContextAttr, ptsExpiry);
 
 			/* If the mechanism failed we can't use it; skip */
@@ -796,9 +798,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
 			status = context->mech->pkg->table_w->InitializeSecurityContextW(
-			    sub_cred, sub_context, pszTargetName, fContextReq | context->mech->flags,
-			    Reserved1, TargetDataRep, input_token.mechToken.cbBuffer ? &mech_input : NULL,
-			    Reserved2, &context->sub_context, &mech_output, pfContextAttr, ptsExpiry);
+			    sub_cred, sub_context, pszTargetName, fContextReq | context->mech->flags, Reserved1,
+			    TargetDataRep, input_token.mechToken.cbBuffer ? &mech_input : NULL, Reserved2,
+			    &context->sub_context, &mech_output, pfContextAttr, ptsExpiry);
 
 			if (IsSecurityStatusError(status))
 				return status;
@@ -963,7 +965,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			p = negotiate_read_tlv(p, &tag, &len, &bytes_remain);
 			if (!p || len > bytes_remain || tag != 0x06)
 				return SEC_E_INVALID_TOKEN;
-			
+
 			oid.length = len;
 			oid.elements = p;
 			p += len;
@@ -988,8 +990,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 				status = SEC_E_NO_CREDENTIALS;
 			}
 
-			WLog_DBG(TAG, "Initiators preferred mechanism: %s",
-			         negotiate_mech_name(&oid));
+			WLog_DBG(TAG, "Initiators preferred mechanism: %s", negotiate_mech_name(&oid));
 		}
 		else
 		{
@@ -1098,9 +1099,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
 			status = context->mech->pkg->table->AcceptSecurityContext(
-			    sub_cred, &context->sub_context, &mech_input,
-			    fContextReq | context->mech->flags, TargetDataRep, &context->sub_context,
-			    &mech_output, pfContextAttr, ptsTimeStamp);
+			    sub_cred, &context->sub_context, &mech_input, fContextReq | context->mech->flags,
+			    TargetDataRep, &context->sub_context, &mech_output, pfContextAttr, ptsTimeStamp);
 
 			if (IsSecurityStatusError(status))
 				return status;
@@ -1216,7 +1216,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesA(PCtxtHandle p
 	if (context->mech->pkg->table->QueryContextAttributesA)
 		return context->mech->pkg->table->QueryContextAttributesA(&context->sub_context,
 		                                                          ulAttribute, pBuffer);
-	
+
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -1232,7 +1232,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesW(PCtxtHandle phC
 	if (context->mech->pkg->table_w->SetContextAttributesW)
 		return context->mech->pkg->table_w->SetContextAttributesW(&context->sub_context,
 		                                                          ulAttribute, pBuffer, cbBuffer);
-	
+
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -1248,7 +1248,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesA(PCtxtHandle phC
 	if (context->mech->pkg->table->SetContextAttributesA)
 		return context->mech->pkg->table->SetContextAttributesA(&context->sub_context, ulAttribute,
 		                                                        pBuffer, cbBuffer);
-	
+
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -1392,7 +1392,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_DecryptMessage(PCtxtHandle phContext,
 	if (context->mech->pkg->table->DecryptMessage)
 		return context->mech->pkg->table->DecryptMessage(&context->sub_context, pMessage,
 		                                                 MessageSeqNo, pfQOP);
-	
+
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -1411,7 +1411,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_MakeSignature(PCtxtHandle phContext, 
 	if (context->mech->pkg->table->MakeSignature)
 		return context->mech->pkg->table->MakeSignature(&context->sub_context, fQOP, pMessage,
 		                                                MessageSeqNo);
-	
+
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -1430,7 +1430,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_VerifySignature(PCtxtHandle phContext
 	if (context->mech->pkg->table->VerifySignature)
 		return context->mech->pkg->table->VerifySignature(&context->sub_context, pMessage,
 		                                                  MessageSeqNo, pfQOP);
-	
+
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 

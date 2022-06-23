@@ -56,7 +56,8 @@ static int persistent_cache_read_entry_v2(rdpPersistentCache* persistent,
 {
 	PERSISTENT_CACHE_ENTRY_V2 entry2;
 
-	if (fread((void*)&entry2, 1, sizeof(PERSISTENT_CACHE_ENTRY_V2), persistent->fp) != sizeof(PERSISTENT_CACHE_ENTRY_V2))
+	if (fread((void*)&entry2, 1, sizeof(PERSISTENT_CACHE_ENTRY_V2), persistent->fp) !=
+	    sizeof(PERSISTENT_CACHE_ENTRY_V2))
 		return -1;
 
 	entry->key64 = entry2.key64;
@@ -88,7 +89,8 @@ static int persistent_cache_write_entry_v2(rdpPersistentCache* persistent,
 	if (!entry2.flags)
 		entry2.flags = 0x00000011;
 
-	if (fwrite((void*)&entry2, 1, sizeof(PERSISTENT_CACHE_ENTRY_V2), persistent->fp) != sizeof(PERSISTENT_CACHE_ENTRY_V2))
+	if (fwrite((void*)&entry2, 1, sizeof(PERSISTENT_CACHE_ENTRY_V2), persistent->fp) !=
+	    sizeof(PERSISTENT_CACHE_ENTRY_V2))
 		return -1;
 
 	if (fwrite((void*)entry->data, 1, entry->size, persistent->fp) != entry->size)
@@ -113,7 +115,8 @@ static int persistent_cache_read_v2(rdpPersistentCache* persistent)
 
 	while (1)
 	{
-		if (fread((void*)&entry, 1, sizeof(PERSISTENT_CACHE_ENTRY_V2), persistent->fp) != sizeof(PERSISTENT_CACHE_ENTRY_V2))
+		if (fread((void*)&entry, 1, sizeof(PERSISTENT_CACHE_ENTRY_V2), persistent->fp) !=
+		    sizeof(PERSISTENT_CACHE_ENTRY_V2))
 			break;
 
 		if (fseek(persistent->fp, 0x4000, SEEK_CUR) != 0)
@@ -130,7 +133,8 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 {
 	PERSISTENT_CACHE_ENTRY_V3 entry3;
 
-	if (fread((void*)&entry3, 1, sizeof(PERSISTENT_CACHE_ENTRY_V3), persistent->fp) != sizeof(PERSISTENT_CACHE_ENTRY_V3))
+	if (fread((void*)&entry3, 1, sizeof(PERSISTENT_CACHE_ENTRY_V3), persistent->fp) !=
+	    sizeof(PERSISTENT_CACHE_ENTRY_V3))
 		return -1;
 
 	entry->key64 = entry3.key64;
@@ -144,7 +148,8 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 		persistent->bmpSize = entry->size;
 		BYTE* bmpData = (BYTE*)realloc(persistent->bmpData, persistent->bmpSize);
 
-		if (!bmpData) {
+		if (!bmpData)
+		{
 			free(persistent->bmpData);
 			persistent->bmpData = NULL;
 			persistent->bmpSize = 0;
@@ -171,7 +176,8 @@ static int persistent_cache_write_entry_v3(rdpPersistentCache* persistent,
 	entry3.width = entry->width;
 	entry3.height = entry->height;
 
-	if (fwrite((void*)&entry3, 1, sizeof(PERSISTENT_CACHE_ENTRY_V3), persistent->fp) != sizeof(PERSISTENT_CACHE_ENTRY_V3))
+	if (fwrite((void*)&entry3, 1, sizeof(PERSISTENT_CACHE_ENTRY_V3), persistent->fp) !=
+	    sizeof(PERSISTENT_CACHE_ENTRY_V3))
 		return -1;
 
 	if (fwrite((void*)entry->data, 1, entry->size, persistent->fp) != entry->size)
@@ -188,7 +194,8 @@ static int persistent_cache_read_v3(rdpPersistentCache* persistent)
 
 	while (1)
 	{
-		if (fread((void*)&entry, 1, sizeof(PERSISTENT_CACHE_ENTRY_V3), persistent->fp) != sizeof(PERSISTENT_CACHE_ENTRY_V3))
+		if (fread((void*)&entry, 1, sizeof(PERSISTENT_CACHE_ENTRY_V3), persistent->fp) !=
+		    sizeof(PERSISTENT_CACHE_ENTRY_V3))
 			break;
 
 		if (fseek(persistent->fp, (entry.width * entry.height * 4), SEEK_CUR) != 0)
@@ -210,7 +217,8 @@ int persistent_cache_read_entry(rdpPersistentCache* persistent, PERSISTENT_CACHE
 	return -1;
 }
 
-int persistent_cache_write_entry(rdpPersistentCache* persistent, const PERSISTENT_CACHE_ENTRY* entry)
+int persistent_cache_write_entry(rdpPersistentCache* persistent,
+                                 const PERSISTENT_CACHE_ENTRY* entry)
 {
 	if (persistent->version == 3)
 		return persistent_cache_write_entry_v3(persistent, entry);
@@ -234,7 +242,7 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 	if (fread(sig, 1, 8, persistent->fp) != 8)
 		return -1;
 
-	if (!strncmp((const char*) sig, "RDP8bmp", 8))
+	if (!strncmp((const char*)sig, "RDP8bmp", 8))
 		persistent->version = 3;
 	else
 		persistent->version = 2;
@@ -243,7 +251,8 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 
 	if (persistent->version == 3)
 	{
-		if (fread(&header, 1, sizeof(PERSISTENT_CACHE_HEADER_V3), persistent->fp) != sizeof(PERSISTENT_CACHE_HEADER_V3))
+		if (fread(&header, 1, sizeof(PERSISTENT_CACHE_HEADER_V3), persistent->fp) !=
+		    sizeof(PERSISTENT_CACHE_HEADER_V3))
 			return -1;
 
 		status = persistent_cache_read_v3(persistent);
@@ -271,10 +280,11 @@ static int persistent_cache_open_write(rdpPersistentCache* persistent)
 
 	if (persistent->version == 3)
 	{
-		strncpy((char*) header.sig, "RDP8bmp", 8);
+		strncpy((char*)header.sig, "RDP8bmp", 8);
 		header.flags = 0x00000006;
 
-		if (fwrite(&header, 1, sizeof(PERSISTENT_CACHE_HEADER_V3), persistent->fp) != sizeof(PERSISTENT_CACHE_HEADER_V3))
+		if (fwrite(&header, 1, sizeof(PERSISTENT_CACHE_HEADER_V3), persistent->fp) !=
+		    sizeof(PERSISTENT_CACHE_HEADER_V3))
 			return -1;
 	}
 

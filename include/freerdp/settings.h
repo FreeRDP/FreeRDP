@@ -190,14 +190,14 @@ typedef enum
 #define NEG_MEMBLT_INDEX 0x03
 #define NEG_MEM3BLT_INDEX 0x04
 #define NEG_ATEXTOUT_INDEX 0x05
-#define NEG_AEXTTEXTOUT_INDEX 0x06 /* Must be ignored */
+#define NEG_AEXTTEXTOUT_INDEX 0x06  /* Must be ignored */
 #define NEG_DRAWNINEGRID_INDEX 0x07 /* Must be ignored */
 #define NEG_LINETO_INDEX 0x08
 #define NEG_MULTI_DRAWNINEGRID_INDEX 0x09
 #define NEG_OPAQUE_RECT_INDEX 0x0A /* Must be ignored */
 #define NEG_SAVEBITMAP_INDEX 0x0B
-#define NEG_WTEXTOUT_INDEX 0x0C  /* Must be ignored */
-#define NEG_MEMBLT_V2_INDEX 0x0D /* Must be ignored */
+#define NEG_WTEXTOUT_INDEX 0x0C   /* Must be ignored */
+#define NEG_MEMBLT_V2_INDEX 0x0D  /* Must be ignored */
 #define NEG_MEM3BLT_V2_INDEX 0x0E /* Must be ignored */
 #define NEG_MULTIDSTBLT_INDEX 0x0F
 #define NEG_MULTIPATBLT_INDEX 0x10
@@ -997,21 +997,21 @@ struct rdp_settings
 	UINT64 padding0384[384 - 323];      /* 323 */
 
 	/* Client Monitor Data */
-	ALIGN64 UINT32 MonitorCount;         /*    384 */
-	ALIGN64 UINT32 MonitorDefArraySize;  /*    385 */
-	ALIGN64 rdpMonitor* MonitorDefArray; /*    386 */
-	ALIGN64 BOOL SpanMonitors;           /*    387 */
-	ALIGN64 BOOL UseMultimon;            /*    388 */
-	ALIGN64 BOOL ForceMultimon;          /*    389 */
-	ALIGN64 UINT32 DesktopPosX;          /*    390 */
-	ALIGN64 UINT32 DesktopPosY;          /*    391 */
-	ALIGN64 BOOL ListMonitors;           /*    392 */
-	ALIGN64 UINT32* MonitorIds;          /*    393 */
-	ALIGN64 UINT32 NumMonitorIds;        /*    394 */
-	ALIGN64 UINT32 MonitorLocalShiftX;   /*395 */
-	ALIGN64 UINT32 MonitorLocalShiftY;   /*    396 */
-	ALIGN64 BOOL HasMonitorAttributes;   /*    397 */
-	ALIGN64 UINT32 MonitorFlags;         /* 398 */
+	ALIGN64 UINT32 MonitorCount;          /*    384 */
+	ALIGN64 UINT32 MonitorDefArraySize;   /*    385 */
+	ALIGN64 rdpMonitor* MonitorDefArray;  /*    386 */
+	ALIGN64 BOOL SpanMonitors;            /*    387 */
+	ALIGN64 BOOL UseMultimon;             /*    388 */
+	ALIGN64 BOOL ForceMultimon;           /*    389 */
+	ALIGN64 UINT32 DesktopPosX;           /*    390 */
+	ALIGN64 UINT32 DesktopPosY;           /*    391 */
+	ALIGN64 BOOL ListMonitors;            /*    392 */
+	ALIGN64 UINT32* MonitorIds;           /*    393 */
+	ALIGN64 UINT32 NumMonitorIds;         /*    394 */
+	ALIGN64 UINT32 MonitorLocalShiftX;    /*395 */
+	ALIGN64 UINT32 MonitorLocalShiftY;    /*    396 */
+	ALIGN64 BOOL HasMonitorAttributes;    /*    397 */
+	ALIGN64 UINT32 MonitorFlags;          /* 398 */
 	ALIGN64 UINT32 MonitorAttributeFlags; /* 399 */
 	UINT64 padding0448[448 - 400];        /* 400 */
 
@@ -1055,9 +1055,9 @@ struct rdp_settings
 	UINT64 padding0768[768 - 722];       /* 722 */
 
 	/* Client Info (Extra) */
-	ALIGN64 BOOL IPv6Enabled;      /* 768 */
-	ALIGN64 char* ClientAddress;   /* 769 */
-	ALIGN64 char* ClientDir;       /* 770 */
+	ALIGN64 BOOL IPv6Enabled;       /* 768 */
+	ALIGN64 char* ClientAddress;    /* 769 */
+	ALIGN64 char* ClientDir;        /* 770 */
 	ALIGN64 UINT32 ClientSessionId; /*  */
 	UINT64 padding0832[832 - 772];  /* 772 */
 

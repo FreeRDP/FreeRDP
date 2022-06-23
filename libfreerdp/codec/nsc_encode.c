@@ -286,7 +286,7 @@ static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 	if (tempWidth > context->priv->PlaneBuffersLength / tempHeight)
 		return FALSE;
 
-	for (y = 0; y<tempHeight>> 1; y++)
+	for (y = 0; y < tempHeight >> 1; y++)
 	{
 		UINT32 x;
 		BYTE* co_dst = context->priv->PlaneBuffers[1] + y * (tempWidth >> 1);
@@ -296,7 +296,7 @@ static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 		const INT8* cg_src0 = (INT8*)context->priv->PlaneBuffers[2] + (y << 1) * tempWidth;
 		const INT8* cg_src1 = cg_src0 + tempWidth;
 
-		for (x = 0; x<tempWidth>> 1; x++)
+		for (x = 0; x < tempWidth >> 1; x++)
 		{
 			*co_dst++ = (BYTE)(((INT16)*co_src0 + (INT16) * (co_src0 + 1) + (INT16)*co_src1 +
 			                    (INT16) * (co_src1 + 1)) >>

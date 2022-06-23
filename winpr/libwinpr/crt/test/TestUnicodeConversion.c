@@ -406,7 +406,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	{
 		char name[] = "someteststring";
 		const BYTE cmp[] = { 's', 0, 'o', 0, 'm', 0, 'e', 0, 't', 0, 'e', 0, 's', 0, 't', 0,
-				     's', 0, 't', 0, 'r', 0, 'i', 0, 'n', 0, 'g', 0, 0, 0 };
+			                 's', 0, 't', 0, 'r', 0, 'i', 0, 'n', 0, 'g', 0, 0,   0 };
 		WCHAR xname[128] = { 0 };
 		LPWSTR aname = NULL;
 		LPWSTR wname = &xname[0];

@@ -104,7 +104,9 @@ LPSTR freerdp_get_dynamic_addin_install_path(void)
 	needInstallPath = is_path_required(pszInstallPrefix, cchInstallPrefix);
 	needLibPath = is_path_required(pszAddinPath, cchAddinPath);
 
-	WLog_DBG(TAG, "freerdp_get_dynamic_addin_install_path <- pszInstallPrefix: %s, pszAddinPath: %s", pszInstallPrefix, pszAddinPath);
+	WLog_DBG(TAG,
+	         "freerdp_get_dynamic_addin_install_path <- pszInstallPrefix: %s, pszAddinPath: %s",
+	         pszInstallPrefix, pszAddinPath);
 
 	if (!needInstallPath && !needLibPath)
 		return NULL;
@@ -155,7 +157,8 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPa
 	if (!pszFileName || !pszEntryName)
 		goto fail;
 
-	WLog_DBG(TAG, "freerdp_load_dynamic_addin <- pszFileName: %s, pszPath: %s, pszEntryName: %s", pszFileName, pszPath, pszEntryName);
+	WLog_DBG(TAG, "freerdp_load_dynamic_addin <- pszFileName: %s, pszPath: %s, pszEntryName: %s",
+	         pszFileName, pszPath, pszEntryName);
 
 	cchFileName = strlen(pszFileName);
 
@@ -261,15 +264,13 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LP
 
 	if (pszName && pszSubsystem && pszType)
 	{
-		cchFileName =
-			cchBaseFileName + nameLen + subsystemLen + typeLen;
+		cchFileName = cchBaseFileName + nameLen + subsystemLen + typeLen;
 		pszFileName = (LPSTR)malloc(cchFileName);
 
 		if (!pszFileName)
 			return NULL;
 
-		sprintf_s(pszFileName, cchFileName, "%s-client-%s-%s", pszName,
-				  pszSubsystem, pszType);
+		sprintf_s(pszFileName, cchFileName, "%s-client-%s-%s", pszName, pszSubsystem, pszType);
 	}
 	else if (pszName && pszSubsystem)
 	{
@@ -279,11 +280,11 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LP
 		if (!pszFileName)
 			return NULL;
 
-		sprintf_s(pszFileName, cchFileName, "%s-client-%s", pszName, pszSubsystem		          );
+		sprintf_s(pszFileName, cchFileName, "%s-client-%s", pszName, pszSubsystem);
 	}
 	else if (pszName)
 	{
-		cchFileName = cchBaseFileName + nameLen ;
+		cchFileName = cchBaseFileName + nameLen;
 		pszFileName = (LPSTR)malloc(cchFileName);
 
 		if (!pszFileName)

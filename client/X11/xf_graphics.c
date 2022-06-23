@@ -320,7 +320,7 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer
 		}
 		ci.pixels = (XcursorPixel*)tmp;
 
-        if (xscale != 1 || yscale != 1)
+		if (xscale != 1 || yscale != 1)
 		{
 			if (!freerdp_image_scale((BYTE*)ci.pixels, CursorFormat, 0, 0, 0, ci.width, ci.height,
 			                         (BYTE*)xpointer->cursorPixels, CursorFormat, 0, 0, 0,

@@ -329,7 +329,8 @@ static int bitmap_cache_save_persistent(rdpBitmapCache* bitmapCache)
 			cacheEntry.flags = 0;
 			cacheEntry.data = bitmap->data;
 
-			if (persistent_cache_write_entry(persistent, &cacheEntry) < 1) {
+			if (persistent_cache_write_entry(persistent, &cacheEntry) < 1)
+			{
 				status = -1;
 				goto end;
 			}

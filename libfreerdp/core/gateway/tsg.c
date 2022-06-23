@@ -1505,8 +1505,8 @@ static BOOL TsProxyAuthorizeTunnelReadResponse(RPC_PDU* pdu)
 	    pdu->s, packetResponse->redirectionFlags
 	                .clipboardRedirectionDisabled); /* ClipboardRedirectionDisabled (4 bytes) */
 	Stream_Read_INT32(pdu->s, packetResponse->redirectionFlags
-	                              .pnpRedirectionDisabled);  /* PnpRedirectionDisabled (4 bytes) */
-	Stream_Read_UINT32(pdu->s, SizeValue);                   /* (4 bytes) */
+	                              .pnpRedirectionDisabled); /* PnpRedirectionDisabled (4 bytes) */
+	Stream_Read_UINT32(pdu->s, SizeValue);                  /* (4 bytes) */
 
 	if (SizeValue != packetResponse->responseDataLen)
 	{

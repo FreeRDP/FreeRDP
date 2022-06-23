@@ -213,12 +213,12 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
  * If no backend is available disable it before the channel is loaded.
  */
 #if defined(WITH_GFX_H264) && defined(WITH_OPENH264_LOADING)
-	if (!context->codecs->h264)
-	{
-		settings->GfxH264 = FALSE;
-		settings->GfxAVC444 = FALSE;
-		settings->GfxAVC444v2 = FALSE;
-	}
+		if (!context->codecs->h264)
+		{
+			settings->GfxH264 = FALSE;
+			settings->GfxAVC444 = FALSE;
+			settings->GfxAVC444v2 = FALSE;
+		}
 #endif
 	}
 
@@ -1176,12 +1176,12 @@ int rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 			EventArgsInit(&activatedEvent, "libfreerdp");
 			activatedEvent.firstActivation = !rdp->deactivation_reactivation;
 			PubSub_OnActivated(context->pubSub, context, &activatedEvent);
-			}
+		}
 
+		break;
+
+		default:
 			break;
-
-		    default:
-			    break;
 	}
 
 	{

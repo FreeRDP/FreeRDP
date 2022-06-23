@@ -199,8 +199,8 @@ extern "C"
 	 * @return ERROR_SUCCESS or an NTE error code something failed
 	 */
 	WINPR_API SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
-	                                                  LPCWSTR pszProviderName, DWORD dwFlags,
-	                                                  LPCSTR* modulePaths);
+	                                                            LPCWSTR pszProviderName,
+	                                                            DWORD dwFlags, LPCSTR* modulePaths);
 
 #ifdef __cplusplus
 }

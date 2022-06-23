@@ -888,7 +888,7 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 	printer_dev->rdpcontext = pEntryPoints->rdpcontext;
 	printer_dev->printer = printer;
 	printer_dev->pIrpList = (WINPR_PSLIST_HEADER)winpr_aligned_malloc(sizeof(WINPR_SLIST_HEADER),
-	                                                             MEMORY_ALLOCATION_ALIGNMENT);
+	                                                                  MEMORY_ALLOCATION_ALIGNMENT);
 
 	if (!printer_dev->pIrpList)
 	{
@@ -940,7 +940,8 @@ error_out:
 static rdpPrinterDriver* printer_load_backend(const char* backend)
 {
 	typedef rdpPrinterDriver* (*backend_load_t)(void);
-	union {
+	union
+	{
 		PVIRTUALCHANNELENTRY entry;
 		backend_load_t backend;
 	} fktconv;
@@ -957,9 +958,7 @@ static rdpPrinterDriver* printer_load_backend(const char* backend)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT
-printer_DeviceServiceEntry
-    (PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+UINT printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	int i;
 	char* name;

@@ -495,7 +495,7 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 		strncpy(Domain, *domain, CREDUI_MAX_DOMAIN_TARGET_LENGTH);
 	}
 
-    if (!(*UserName && *Password))
+	if (!(*UserName && *Password))
 	{
 		if (!wfc->isConsole && wfc->common.context.settings->CredentialsFromStdin)
 			WLog_ERR(TAG, "Flag for stdin read present but stdin is redirected; using GUI");
@@ -788,7 +788,8 @@ static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char*
 		goto CleanUp;
 	}
 
-	WLog_INFO(TAG, "CertVerifyCertificateChainPolicy succeeded for %s (%s) issued by %s", common_name, subject, issuer);
+	WLog_INFO(TAG, "CertVerifyCertificateChainPolicy succeeded for %s (%s) issued by %s",
+	          common_name, subject, issuer);
 
 	hr = S_OK;
 CleanUp:
@@ -800,7 +801,7 @@ CleanUp:
 		wf_report_error(NULL, hr);
 	}
 
-  free(derPubKey);
+	free(derPubKey);
 
 	if (NULL != pChainContext)
 	{
@@ -1328,7 +1329,7 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 		instance->VerifyChangedCertificateEx = wf_verify_changed_certificate_ex;
 		instance->PresentGatewayMessage = wf_present_gateway_message;
 	}
-	
+
 #ifdef WITH_PROGRESS_BAR
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 	CoCreateInstance(&CLSID_TaskbarList, NULL, CLSCTX_ALL, &IID_ITaskbarList3,

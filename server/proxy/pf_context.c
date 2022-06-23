@@ -46,7 +46,8 @@ static BOOL ChannelId_Compare(const UINT32* v1, const UINT32* v2)
 	return (*v1 == *v2);
 }
 
-pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const char* name, UINT32 id)
+pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const char* name,
+                                                      UINT32 id)
 {
 	pServerStaticChannelContext* ret = calloc(1, sizeof(*ret));
 	if (!ret)
@@ -73,7 +74,7 @@ void StaticChannelContext_free(pServerStaticChannelContext* ctx)
 	if (!ctx)
 		return;
 
-	IFCALL(ctx->contextDtor,ctx->context);
+	IFCALL(ctx->contextDtor, ctx->context);
 
 	free(ctx->channel_name);
 	free(ctx);

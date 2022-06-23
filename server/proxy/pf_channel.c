@@ -25,7 +25,8 @@
 
 #define TAG PROXY_TAG("channel")
 
-ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel, ChannelTrackerPeekFn fn, void* data)
+ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
+                                        ChannelTrackerPeekFn fn, void* data)
 {
 	ChannelStateTracker* ret = calloc(1, sizeof(ChannelStateTracker));
 	if (!ret)
@@ -45,8 +46,8 @@ ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel, Ch
 	return ret;
 }
 
-PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* xdata, size_t xsize, UINT32 flags,
-        size_t totalSize)
+PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* xdata, size_t xsize,
+                                      UINT32 flags, size_t totalSize)
 {
 	PfChannelResult result;
 	BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST);
@@ -54,7 +55,8 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 
 	WINPR_ASSERT(tracker);
 
-	WLog_VRB(TAG, "channelTracker_update(%s): sz=%d first=%d last=%d", tracker->channel->channel_name, xsize, firstPacket, lastPacket);
+	WLog_VRB(TAG, "channelTracker_update(%s): sz=%d first=%d last=%d",
+	         tracker->channel->channel_name, xsize, firstPacket, lastPacket);
 	if (flags & CHANNEL_FLAG_FIRST)
 	{
 		/* don't keep a too big currentPacket */
@@ -79,37 +81,37 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 	}
 
 	if (tracker->currentPacketReceived + xsize > tracker->currentPacketSize)
-		WLog_INFO(TAG, "cumulated size is bigger (%d) than total size (%d)", tracker->currentPacketReceived + xsize,
-				tracker->currentPacketSize);
+		WLog_INFO(TAG, "cumulated size is bigger (%d) than total size (%d)",
+		          tracker->currentPacketReceived + xsize, tracker->currentPacketSize);
 
 	tracker->currentPacketReceived += xsize;
 	tracker->currentPacketFragments++;
 
-
 	switch (tracker->mode)
 	{
-	case CHANNEL_TRACKER_PEEK:
-		if (!Stream_EnsureRemainingCapacity(tracker->currentPacket, xsize))
-			return PF_CHANNEL_RESULT_ERROR;
+		case CHANNEL_TRACKER_PEEK:
+			if (!Stream_EnsureRemainingCapacity(tracker->currentPacket, xsize))
+				return PF_CHANNEL_RESULT_ERROR;
 
-		Stream_Write(tracker->currentPacket, xdata, xsize);
+			Stream_Write(tracker->currentPacket, xdata, xsize);
 
-		WINPR_ASSERT(tracker->peekFn);
-		result = tracker->peekFn(tracker, firstPacket, lastPacket);
-		break;
-	case CHANNEL_TRACKER_PASS:
-		result = PF_CHANNEL_RESULT_PASS;
-		break;
-	case CHANNEL_TRACKER_DROP:
-		result = PF_CHANNEL_RESULT_DROP;
-		break;
+			WINPR_ASSERT(tracker->peekFn);
+			result = tracker->peekFn(tracker, firstPacket, lastPacket);
+			break;
+		case CHANNEL_TRACKER_PASS:
+			result = PF_CHANNEL_RESULT_PASS;
+			break;
+		case CHANNEL_TRACKER_DROP:
+			result = PF_CHANNEL_RESULT_DROP;
+			break;
 	}
 
 	if (lastPacket)
 	{
 		tracker->mode = CHANNEL_TRACKER_PEEK;
 		if (tracker->currentPacketReceived != tracker->currentPacketSize)
-			WLog_INFO(TAG, "cumulated size(%d) does not match total size (%d)", tracker->currentPacketReceived, tracker->currentPacketSize);
+			WLog_INFO(TAG, "cumulated size(%d) does not match total size (%d)",
+			          tracker->currentPacketReceived, tracker->currentPacketSize);
 	}
 
 	return result;
@@ -130,7 +132,8 @@ void channelTracker_free(ChannelStateTracker* t)
  * the accumulated current packet.
  */
 
-PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, BOOL last, BOOL toBack)
+PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, BOOL last,
+                                            BOOL toBack)
 {
 	proxyData* pdata;
 	pServerContext* ps;
@@ -141,8 +144,9 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 
 	WINPR_ASSERT(t);
 
-	WLog_VRB(TAG, "channelTracker_flushCurrent(%s): %s sz=%d first=%d last=%d", t->channel->channel_name,
-			direction, Stream_GetPosition(t->currentPacket), first, last);
+	WLog_VRB(TAG, "channelTracker_flushCurrent(%s): %s sz=%d first=%d last=%d",
+	         t->channel->channel_name, direction, Stream_GetPosition(t->currentPacket), first,
+	         last);
 
 	if (first)
 		return PF_CHANNEL_RESULT_PASS;
@@ -166,80 +170,85 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 		if (!pdata->pc->sendChannelData)
 			return PF_CHANNEL_RESULT_ERROR;
 
-		return pdata->pc->sendChannelData(pdata->pc, &ev) ? PF_CHANNEL_RESULT_DROP : PF_CHANNEL_RESULT_ERROR;
+		return pdata->pc->sendChannelData(pdata->pc, &ev) ? PF_CHANNEL_RESULT_DROP
+		                                                  : PF_CHANNEL_RESULT_ERROR;
 	}
 
 	ps = pdata->ps;
-	r = ps->context.peer->SendChannelPacket(ps->context.peer, channel->channel_id, t->currentPacketSize,
-		                              flags, Stream_Buffer(t->currentPacket), Stream_GetPosition(t->currentPacket));
+	r = ps->context.peer->SendChannelPacket(
+	    ps->context.peer, channel->channel_id, t->currentPacketSize, flags,
+	    Stream_Buffer(t->currentPacket), Stream_GetPosition(t->currentPacket));
 
 	return r ? PF_CHANNEL_RESULT_DROP : PF_CHANNEL_RESULT_ERROR;
 }
 
-
-
-static PfChannelResult pf_channel_generic_back_data(proxyData* pdata, const pServerStaticChannelContext* channel,
-            const BYTE* xdata, size_t xsize, UINT32 flags,
-            size_t totalSize)
+static PfChannelResult pf_channel_generic_back_data(proxyData* pdata,
+                                                    const pServerStaticChannelContext* channel,
+                                                    const BYTE* xdata, size_t xsize, UINT32 flags,
+                                                    size_t totalSize)
 {
 	proxyChannelDataEventInfo ev = { 0 };
 
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(channel);
 
-	switch(channel->channelMode) {
-	case PF_UTILS_CHANNEL_PASSTHROUGH:
-		ev.channel_id = channel->channel_id;
-		ev.channel_name = channel->channel_name;
-		ev.data = xdata;
-		ev.data_len = xsize;
-		ev.flags = flags;
-		ev.total_size = totalSize;
+	switch (channel->channelMode)
+	{
+		case PF_UTILS_CHANNEL_PASSTHROUGH:
+			ev.channel_id = channel->channel_id;
+			ev.channel_name = channel->channel_name;
+			ev.data = xdata;
+			ev.data_len = xsize;
+			ev.flags = flags;
+			ev.total_size = totalSize;
 
-		if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA, pdata, &ev))
-			return PF_CHANNEL_RESULT_DROP; /* Silently drop */
+			if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA,
+			                           pdata, &ev))
+				return PF_CHANNEL_RESULT_DROP; /* Silently drop */
 
-		return PF_CHANNEL_RESULT_PASS;
+			return PF_CHANNEL_RESULT_PASS;
 
-	case PF_UTILS_CHANNEL_INTERCEPT:
-		/* TODO */
-	case PF_UTILS_CHANNEL_BLOCK:
-	default:
-		return PF_CHANNEL_RESULT_DROP;
+		case PF_UTILS_CHANNEL_INTERCEPT:
+			/* TODO */
+		case PF_UTILS_CHANNEL_BLOCK:
+		default:
+			return PF_CHANNEL_RESULT_DROP;
 	}
 }
 
-static PfChannelResult pf_channel_generic_front_data(proxyData* pdata, const pServerStaticChannelContext* channel,
-            const BYTE* xdata, size_t xsize, UINT32 flags,
-            size_t totalSize)
+static PfChannelResult pf_channel_generic_front_data(proxyData* pdata,
+                                                     const pServerStaticChannelContext* channel,
+                                                     const BYTE* xdata, size_t xsize, UINT32 flags,
+                                                     size_t totalSize)
 {
 	proxyChannelDataEventInfo ev = { 0 };
 
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(channel);
 
-	switch(channel->channelMode) {
-	case PF_UTILS_CHANNEL_PASSTHROUGH:
-		ev.channel_id = channel->channel_id;
-		ev.channel_name = channel->channel_name;
-		ev.data = xdata;
-		ev.data_len = xsize;
-		ev.flags = flags;
-		ev.total_size = totalSize;
+	switch (channel->channelMode)
+	{
+		case PF_UTILS_CHANNEL_PASSTHROUGH:
+			ev.channel_id = channel->channel_id;
+			ev.channel_name = channel->channel_name;
+			ev.data = xdata;
+			ev.data_len = xsize;
+			ev.flags = flags;
+			ev.total_size = totalSize;
 
-		if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_SERVER_PASSTHROUGH_CHANNEL_DATA, pdata, &ev))
-			return PF_CHANNEL_RESULT_DROP; /* Silently drop */
+			if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_SERVER_PASSTHROUGH_CHANNEL_DATA,
+			                           pdata, &ev))
+				return PF_CHANNEL_RESULT_DROP; /* Silently drop */
 
-		return PF_CHANNEL_RESULT_PASS;
+			return PF_CHANNEL_RESULT_PASS;
 
-	case PF_UTILS_CHANNEL_INTERCEPT:
-		/* TODO */
-	case PF_UTILS_CHANNEL_BLOCK:
-	default:
-		return PF_CHANNEL_RESULT_DROP;
+		case PF_UTILS_CHANNEL_INTERCEPT:
+			/* TODO */
+		case PF_UTILS_CHANNEL_BLOCK:
+		default:
+			return PF_CHANNEL_RESULT_DROP;
 	}
 }
-
 
 BOOL pf_channel_setup_generic(pServerStaticChannelContext* channel)
 {

@@ -383,17 +383,19 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 
 	WLog_DBG(TAG, "persistentKeyList count: %d", info.keyCount);
 
-	WLog_DBG(TAG, "numEntriesCache: 0: %d 1: %d 2: %d 3: %d 4: %d",
-		info.numEntriesCache0, info.numEntriesCache1, info.numEntriesCache2, info.numEntriesCache3, info.numEntriesCache4);
+	WLog_DBG(TAG, "numEntriesCache: 0: %d 1: %d 2: %d 3: %d 4: %d", info.numEntriesCache0,
+	         info.numEntriesCache1, info.numEntriesCache2, info.numEntriesCache3,
+	         info.numEntriesCache4);
 
-	WLog_DBG(TAG, "totalEntriesCache: 0: %d 1: %d 2: %d 3: %d 4: %d",
-		info.totalEntriesCache0, info.totalEntriesCache1, info.totalEntriesCache2, info.totalEntriesCache3, info.totalEntriesCache4);
+	WLog_DBG(TAG, "totalEntriesCache: 0: %d 1: %d 2: %d 3: %d 4: %d", info.totalEntriesCache0,
+	         info.totalEntriesCache1, info.totalEntriesCache2, info.totalEntriesCache3,
+	         info.totalEntriesCache4);
 
 	wStream* s = rdp_data_pdu_init(rdp);
 
 	if (!s)
 		return FALSE;
-	
+
 	if (!rdp_write_client_persistent_key_list_pdu(s, &info))
 	{
 		Stream_Free(s, TRUE);

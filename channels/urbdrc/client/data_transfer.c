@@ -113,7 +113,7 @@ static wStream* urb_create_iocompletion(UINT32 InterfaceField, UINT32 MessageId,
 }
 
 static UINT urbdrc_process_register_request_callback(IUDEVICE* pdev,
-        GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
+                                                     GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                                      IUDEVMAN* udevman)
 {
 	UINT32 NumRequestCompletion = 0;
@@ -207,8 +207,8 @@ static UINT urbdrc_process_retract_device_request(IUDEVICE* pdev, wStream* s, IU
 	return ERROR_SUCCESS;
 }
 
-static UINT urbdrc_process_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
-                                      UINT32 MessageId, IUDEVMAN* udevman)
+static UINT urbdrc_process_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
+                                      wStream* s, UINT32 MessageId, IUDEVMAN* udevman)
 {
 	UINT32 InterfaceId;
 	UINT32 IoControlCode;
@@ -1267,8 +1267,9 @@ static UINT urb_get_current_frame_number(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBAC
 }
 
 /* Unused function for current server */
-static UINT urb_control_get_configuration_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
-                                                  wStream* s, UINT32 RequestField, UINT32 MessageId,
+static UINT urb_control_get_configuration_request(IUDEVICE* pdev,
+                                                  GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
+                                                  UINT32 RequestField, UINT32 MessageId,
                                                   IUDEVMAN* udevman, int transferDir)
 {
 	size_t out_size;

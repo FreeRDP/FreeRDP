@@ -777,9 +777,9 @@ void freerdp_context_free(freerdp* instance)
 	free(ctx);
 	instance->context = NULL;
 #if defined(WITH_FREERDP_DEPRECATED)
-	instance->input = NULL;    /* owned by rdpRdp */
-	instance->update = NULL;   /* owned by rdpRdp */
-	instance->settings = NULL; /* owned by rdpRdp */
+	instance->input = NULL;      /* owned by rdpRdp */
+	instance->update = NULL;     /* owned by rdpRdp */
+	instance->settings = NULL;   /* owned by rdpRdp */
 	instance->autodetect = NULL; /* owned by rdpRdp */
 #endif
 	instance->heartbeat = NULL; /* owned by rdpRdp */

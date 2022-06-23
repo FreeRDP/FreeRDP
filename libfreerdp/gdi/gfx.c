@@ -1480,8 +1480,10 @@ static UINT gdi_CacheImportReply(RdpgfxClientContext* context,
 
 		error = context->SetCacheSlotData(context, cacheSlot, (void*)cacheEntry);
 
-		if (error) {
-			WLog_ERR(TAG, "CacheImportReply: SetCacheSlotData failed with error %" PRIu32 "", error);
+		if (error)
+		{
+			WLog_ERR(TAG, "CacheImportReply: SetCacheSlotData failed with error %" PRIu32 "",
+			         error);
 			break;
 		}
 	}
@@ -1517,8 +1519,9 @@ static UINT gdi_ImportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
 	}
 
 	if (!freerdp_image_copy(cacheEntry->data, cacheEntry->format, cacheEntry->scanline, 0, 0,
-	                   cacheEntry->width, cacheEntry->height, importCacheEntry->data,
-	                   PIXEL_FORMAT_BGRX32, 0, 0, 0, NULL, FREERDP_FLIP_NONE)) {
+	                        cacheEntry->width, cacheEntry->height, importCacheEntry->data,
+	                        PIXEL_FORMAT_BGRX32, 0, 0, 0, NULL, FREERDP_FLIP_NONE))
+	{
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -1550,7 +1553,6 @@ static UINT gdi_ExportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
 
 	return ERROR_NOT_FOUND;
 }
-
 
 /**
  * Function description
