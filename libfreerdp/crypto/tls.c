@@ -74,6 +74,7 @@ typedef struct
 	CRITICAL_SECTION lock;
 } BIO_RDP_TLS;
 
+static BOOL tls_prep(rdpTls* tls, BIO* underlying, int options, BOOL clientMode);
 static int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, UINT16 port);
 static void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port,
                                                       const char* common_name, char** alt_names,
@@ -853,17 +854,8 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 	 * support empty fragments. This needs to be disabled.
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-	/**
-	 * disable SSLv2 and SSLv3
-	 */
-	options |= SSL_OP_NO_SSLv2;
-	options |= SSL_OP_NO_SSLv3;
 
-	if (!tls_prepare(tls, underlying, SSLv23_client_method(), options, TRUE))
-#else
 	if (!tls_prep(tls, underlying, options, TRUE))
-#endif
 		return 0;
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(LIBRESSL_VERSION_NUMBER)
@@ -874,14 +866,25 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 
 BOOL tls_prep(rdpTls* tls, BIO* underlying, int options, BOOL clientMode)
 {
-	if (tls->settings->EnforceTLSv1_2)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+	/**
+	 * disable SSLv2 and SSLv3
+	 */
+	options |= SSL_OP_NO_SSLv2;
+	options |= SSL_OP_NO_SSLv3;
+
+	return tls_prepare(tls, underlying, SSLv23_client_method(), options, clientMode);
+#else
+	const BOOL enabled = freerdp_settings_get_bool(tls->settings, FreeRDP_EnforceTLSv1_2);
+	if (enabled)
 	{
-		return tls_prepare(tls, underlying, TLSv1_2_client_method(), options, TRUE);
+		return tls_prepare(tls, underlying, TLSv1_2_client_method(), options, clientMode);
 	}
 	else
 	{
-		return tls_prepare(tls, underlying, TLS_client_method(), options, TRUE);
+		return tls_prepare(tls, underlying, TLS_client_method(), options, clientMode);
 	}
+#endif
 }
 
 #if defined(MICROSOFT_IOS_SNI_BUG) && !defined(OPENSSL_NO_TLSEXT) && \
