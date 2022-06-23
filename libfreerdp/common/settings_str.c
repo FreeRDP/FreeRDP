@@ -64,6 +64,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_EmbeddedWindow, 0, "FreeRDP_EmbeddedWindow" },
 	{ FreeRDP_EnableWindowsKey, 0, "FreeRDP_EnableWindowsKey" },
 	{ FreeRDP_EncomspVirtualChannel, 0, "FreeRDP_EncomspVirtualChannel" },
+	{ FreeRDP_EnforceTLSv1_2, 0, "FreeRDP_EnforceTLSv1_2" },
 	{ FreeRDP_ExtSecurity, 0, "FreeRDP_ExtSecurity" },
 	{ FreeRDP_ExternalCertificateManagement, 0, "FreeRDP_ExternalCertificateManagement" },
 	{ FreeRDP_FIPSMode, 0, "FreeRDP_FIPSMode" },
@@ -426,6 +427,10 @@ static const struct settings_str_entry settings_map[] = {
 BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 {
 	size_t x;
+
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(src);
+
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
@@ -505,13 +510,12 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* settings,
                                  const rdpSettings* other)
 {
-	size_t x;
 	BOOL rc = FALSE;
+	size_t x;
 
-	if (!settings && other)
-		rc = TRUE;
-	if (settings && !other)
-		rc = TRUE;
+	WINPR_ASSERT(log);
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(other);
 
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
@@ -524,9 +528,9 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 				BOOL cval = freerdp_settings_get_bool(other, cur->id);
 				if (sval != cval)
 				{
+					rc = TRUE;
 					WLog_Print(log, level, "%s [BOOL]: %s -> %s", cur->str, sval ? "TRUE" : "FALSE",
 					           cval ? "TRUE" : "FALSE");
-					rc = TRUE;
 				}
 			}
 			break;
@@ -536,9 +540,9 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 				UINT16 cval = freerdp_settings_get_uint16(other, cur->id);
 				if (sval != cval)
 				{
+					rc = TRUE;
 					WLog_Print(log, level, "%s [UINT16]: %" PRIu16 " -> %" PRIu16, cur->str, sval,
 					           cval);
-					rc = TRUE;
 				}
 			}
 			break;
@@ -548,9 +552,9 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 				INT16 cval = freerdp_settings_get_int16(other, cur->id);
 				if (sval != cval)
 				{
+					rc = TRUE;
 					WLog_Print(log, level, "%s [INT16]: %" PRId16 " -> %" PRId16, cur->str, sval,
 					           cval);
-					rc = TRUE;
 				}
 			}
 			break;
@@ -560,9 +564,9 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 				UINT32 cval = freerdp_settings_get_uint32(other, cur->id);
 				if (sval != cval)
 				{
+					rc = TRUE;
 					WLog_Print(log, level, "%s [UINT32]: %" PRIu32 " -> %" PRIu32, cur->str, sval,
 					           cval);
-					rc = TRUE;
 				}
 			}
 			break;
@@ -572,9 +576,9 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 				INT32 cval = freerdp_settings_get_int32(other, cur->id);
 				if (sval != cval)
 				{
+					rc = TRUE;
 					WLog_Print(log, level, "%s [INT32]: %" PRId32 " -> %" PRId32, cur->str, sval,
 					           cval);
-					rc = TRUE;
 				}
 			}
 			break;
@@ -584,9 +588,9 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 				UINT64 cval = freerdp_settings_get_uint64(other, cur->id);
 				if (sval != cval)
 				{
+					rc = TRUE;
 					WLog_Print(log, level, "%s [UINT64]: %" PRIu64 " -> %" PRIu64, cur->str, sval,
 					           cval);
-					rc = TRUE;
 				}
 			}
 			break;
@@ -596,9 +600,9 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 				INT64 cval = freerdp_settings_get_int64(other, cur->id);
 				if (sval != cval)
 				{
+					rc = TRUE;
 					WLog_Print(log, level, "%s [INT64]: %" PRId64 " -> %" PRId64, cur->str, sval,
 					           cval);
-					rc = TRUE;
 				}
 			}
 			break;
@@ -610,8 +614,8 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 				{
 					if (!sval || !cval || (strcmp(sval, cval) != 0))
 					{
-						WLog_Print(log, level, "%s [STRING]: '%s' -> '%s'", cur->str, sval, cval);
 						rc = TRUE;
+						WLog_Print(log, level, "%s [STRING]: '%s' -> '%s'", cur->str, sval, cval);
 					}
 				}
 			}
@@ -624,8 +628,8 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 				{
 					if ((sval && !cval) || (!sval && cval))
 					{
-						WLog_Print(log, level, "%s [POINTER]: '%p' -> '%p'", cur->str, sval, cval);
 						rc = TRUE;
+						WLog_Print(log, level, "%s [POINTER]: '%p' -> '%p'", cur->str, sval, cval);
 					}
 				}
 			}
@@ -634,9 +638,14 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 	}
 	return rc;
 }
+
 void freerdp_settings_dump(wLog* log, DWORD level, const rdpSettings* settings)
 {
 	size_t x;
+
+	WINPR_ASSERT(log);
+	WINPR_ASSERT(settings);
+
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
@@ -703,6 +712,9 @@ void freerdp_settings_dump(wLog* log, DWORD level, const rdpSettings* settings)
 void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup)
 {
 	size_t x;
+
+	WINPR_ASSERT(dst);
+
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
@@ -721,6 +733,9 @@ void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup)
 SSIZE_T freerdp_settings_get_key_for_name(const char* value)
 {
 	size_t x;
+
+	WINPR_ASSERT(value);
+
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
@@ -733,6 +748,9 @@ SSIZE_T freerdp_settings_get_key_for_name(const char* value)
 SSIZE_T freerdp_settings_get_type_for_name(const char* value)
 {
 	size_t x;
+
+	WINPR_ASSERT(value);
+
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
@@ -745,6 +763,7 @@ SSIZE_T freerdp_settings_get_type_for_name(const char* value)
 SSIZE_T freerdp_settings_get_type_for_key(size_t key)
 {
 	size_t x;
+
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
@@ -757,6 +776,7 @@ SSIZE_T freerdp_settings_get_type_for_key(size_t key)
 const char* freerdp_settings_get_name_for_key(size_t key)
 {
 	size_t x;
+
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
