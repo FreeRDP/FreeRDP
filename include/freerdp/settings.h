@@ -635,8 +635,8 @@ typedef struct
 #define FreeRDP_NtlmSamFile (1103)
 #define FreeRDP_FIPSMode (1104)
 #define FreeRDP_TlsSecLevel (1105)
-#define FreeRDP_EnforceTLSv1_2 (1107)
 #define FreeRDP_SspiModule (1106)
+#define FreeRDP_EnforceTLSv1_2 (1107)
 #define FreeRDP_MstscCookieMode (1152)
 #define FreeRDP_CookieMaxLength (1153)
 #define FreeRDP_PreconnectionId (1154)
@@ -1124,7 +1124,7 @@ struct rdp_settings
 	ALIGN64 BOOL FIPSMode;                     /* 1104 */
 	ALIGN64 UINT32 TlsSecLevel;                /* 1105 */
 	ALIGN64 char* SspiModule;                  /* 1106 */
-	ALIGN64 BOOL EnforceTLSv1_2;			   /* 1107 */
+	ALIGN64 BOOL EnforceTLSv1_2;               /* 1107 */
 	UINT64 padding1152[1152 - 1108];           /* 1108 */
 
 	/* Connection Cookie */
