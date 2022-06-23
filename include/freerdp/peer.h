@@ -73,6 +73,7 @@ typedef int (*psPeerVirtualChannelWrite)(freerdp_peer* peer, HANDLE hChannel, co
 typedef void* (*psPeerVirtualChannelGetData)(freerdp_peer* peer, HANDLE hChannel);
 typedef int (*psPeerVirtualChannelSetData)(freerdp_peer* peer, HANDLE hChannel, void* data);
 typedef BOOL (*psPeerSetState)(freerdp_peer* peer, CONNECTION_STATE state);
+typedef BOOL (*psPeerReachedState)(freerdp_peer* peer, CONNECTION_STATE state);
 
 /** @brief the result of the license callback */
 typedef enum
@@ -169,6 +170,7 @@ struct rdp_freerdp_peer
 	 * \note Must be called after \b Initialize as that also modifies the state.
 	 */
 	ALIGN64 psPeerSetState SetState;
+	ALIGN64 psPeerReachedState ReachedState;
 	ALIGN64 psSspiNtlmHashCallback SspiNtlmHashCallback;
 };
 
