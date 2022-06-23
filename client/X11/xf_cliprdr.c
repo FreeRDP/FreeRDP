@@ -1820,8 +1820,6 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 	BOOL status = FALSE;
 	size_t lindex = 0;
 	char* curName = NULL;
-	char* dirName = NULL;
-	char* baseName = NULL;
 	xfCliprdrFuseInode* inode = NULL;
 	wHashTable* mapDir;
 
@@ -1855,6 +1853,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 			break;
 		}
 
+		free(curName);
 		size_t curLen = _wcsnlen(descriptor->cFileName, ARRAYSIZE(descriptor->cFileName));
 		int newLen = ConvertFromUnicode(CP_UTF8, 0, descriptor->cFileName, (int)curLen, &curName, 0,
 		                                NULL, NULL);
@@ -1871,7 +1870,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 
 		if (split_point == NULL)
 		{
-			baseName = _strdup(curName);
+			char* baseName = _strdup(curName);
 			if (!baseName)
 				break;
 			inode->parent_ino = 1;
@@ -1881,12 +1880,12 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 		}
 		else
 		{
-			dirName = calloc(split_point - curName + 1, sizeof(char));
+			char* dirName = calloc(split_point - curName + 1, sizeof(char));
 			if (!dirName)
 				break;
 			_snprintf(dirName, split_point - curName + 1, "%s", curName);
 			/* drop last '\\' */
-			baseName = _strdup(split_point + 1);
+			char* baseName = _strdup(split_point + 1);
 			if (!baseName)
 				break;
 
@@ -1898,7 +1897,6 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 			if (!ArrayList_Append(parent->child_inos, (void*)inode->ino))
 				break;
 			free(dirName);
-			dirName = NULL;
 		}
 		/* TODO: check FD_ATTRIBUTES in dwFlags
 		    However if this flag is not valid how can we determine file/folder?
@@ -1935,9 +1933,6 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 			}
 		}
 
-		free(curName);
-		curName = NULL;
-
 		if ((descriptor->dwFlags & FD_WRITESTIME) != 0)
 		{
 			ticks = (((UINT64)descriptor->ftLastWriteTime.dwHighDateTime << 32) |
@@ -1959,8 +1954,6 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 	/* clean up incomplete ino_list*/
 	if (lindex != count)
 	{
-		free(dirName);
-		free(curName);
 		/* baseName is freed in xf_cliprdr_fuse_inode_free*/
 		xf_cliprdr_fuse_inode_free(inode);
 		ArrayList_Clear(clipboard->ino_list);
@@ -1973,6 +1966,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 	free(descriptor);
 
 error:
+	free(curName);
 	HashTable_Free(mapDir);
 	return status;
 }
