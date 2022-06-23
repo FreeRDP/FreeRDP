@@ -807,7 +807,7 @@ void mppc_context_reset(MPPC_CONTEXT* mppc, BOOL flush)
 	else
 	{
 		mppc->HistoryOffset = 0;
-	mppc->HistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
+		mppc->HistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
 	}
 }
 

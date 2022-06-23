@@ -230,7 +230,7 @@ static UINT disp_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
  */
 static UINT disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	return disp_recv_pdu(callback, data);
 }
 
@@ -254,8 +254,8 @@ static UINT disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
                                            IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
                                            IWTSVirtualChannelCallback** ppCallback)
 {
-    GENERIC_CHANNEL_CALLBACK* callback;
-    GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
+	GENERIC_CHANNEL_CALLBACK* callback;
+	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	WINPR_ASSERT(listener_callback);
 	WINPR_ASSERT(pChannel);
@@ -298,7 +298,8 @@ static UINT disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 		WLog_ERR(TAG, "[%s] channel initialized twice, aborting", DISP_DVC_CHANNEL_NAME);
 		return ERROR_INVALID_DATA;
 	}
-	disp->listener_callback = (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
+	disp->listener_callback =
+	    (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 
 	if (!disp->listener_callback)
 	{

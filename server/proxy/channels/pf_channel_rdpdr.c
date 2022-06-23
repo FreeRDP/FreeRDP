@@ -1714,7 +1714,8 @@ BOOL pf_channel_rdpdr_client_reset(pClientContext* pc)
 	return TRUE;
 }
 
-static PfChannelResult pf_rdpdr_back_data(proxyData* pdata, const pServerStaticChannelContext* channel,
+static PfChannelResult pf_rdpdr_back_data(proxyData* pdata,
+                                          const pServerStaticChannelContext* channel,
                                           const BYTE* xdata, size_t xsize, UINT32 flags,
                                           size_t totalSize)
 {
@@ -1730,7 +1731,8 @@ static PfChannelResult pf_rdpdr_back_data(proxyData* pdata, const pServerStaticC
 	return PF_CHANNEL_RESULT_PASS;
 }
 
-static PfChannelResult pf_rdpdr_front_data(proxyData* pdata, const pServerStaticChannelContext* channel,
+static PfChannelResult pf_rdpdr_front_data(proxyData* pdata,
+                                           const pServerStaticChannelContext* channel,
                                            const BYTE* xdata, size_t xsize, UINT32 flags,
                                            size_t totalSize)
 {

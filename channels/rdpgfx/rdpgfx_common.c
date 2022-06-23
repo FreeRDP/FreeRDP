@@ -121,7 +121,7 @@ UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
 
 	if (header->pduLength < 8)
 	{
-        WLog_ERR(TAG, "header->pduLength %u less than 8!", header->pduLength);
+		WLog_ERR(TAG, "header->pduLength %u less than 8!", header->pduLength);
 		return ERROR_INVALID_DATA;
 	}
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, (header->pduLength - 8)))

@@ -207,53 +207,53 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		case BIO_C_SET_NONBLOCK:
 		{
 #ifndef _WIN32
-		int flags;
-		flags = fcntl((int)ptr->socket, F_GETFL);
+			int flags;
+			flags = fcntl((int)ptr->socket, F_GETFL);
 
-		if (flags == -1)
-			return 0;
+			if (flags == -1)
+				return 0;
 
-		if (arg1)
-			fcntl((int)ptr->socket, F_SETFL, flags | O_NONBLOCK);
-		else
-			fcntl((int)ptr->socket, F_SETFL, flags & ~(O_NONBLOCK));
+			if (arg1)
+				fcntl((int)ptr->socket, F_SETFL, flags | O_NONBLOCK);
+			else
+				fcntl((int)ptr->socket, F_SETFL, flags & ~(O_NONBLOCK));
 
 #else
-		/* the internal socket is always non-blocking */
+			/* the internal socket is always non-blocking */
 #endif
-		return 1;
+			return 1;
 		}
 		case BIO_C_WAIT_READ:
 		{
 			int timeout = (int)arg1;
 			int sockfd = (int)ptr->socket;
 #ifdef HAVE_POLL_H
-		struct pollfd pollset;
-		pollset.fd = sockfd;
-		pollset.events = POLLIN;
-		pollset.revents = 0;
+			struct pollfd pollset;
+			pollset.fd = sockfd;
+			pollset.events = POLLIN;
+			pollset.revents = 0;
 
-		do
-		{
-			status = poll(&pollset, 1, timeout);
-		} while ((status < 0) && (errno == EINTR));
+			do
+			{
+				status = poll(&pollset, 1, timeout);
+			} while ((status < 0) && (errno == EINTR));
 
 #else
-		fd_set rset;
-		struct timeval tv;
-		FD_ZERO(&rset);
-		FD_SET(sockfd, &rset);
+			fd_set rset;
+			struct timeval tv;
+			FD_ZERO(&rset);
+			FD_SET(sockfd, &rset);
 
-		if (timeout)
-		{
-			tv.tv_sec = timeout / 1000;
-			tv.tv_usec = (timeout % 1000) * 1000;
-		}
+			if (timeout)
+			{
+				tv.tv_sec = timeout / 1000;
+				tv.tv_usec = (timeout % 1000) * 1000;
+			}
 
-		do
-		{
-			status = select(sockfd + 1, &rset, NULL, NULL, timeout ? &tv : NULL);
-		} while ((status < 0) && (errno == EINTR));
+			do
+			{
+				status = select(sockfd + 1, &rset, NULL, NULL, timeout ? &tv : NULL);
+			} while ((status < 0) && (errno == EINTR));
 
 #endif
 		}
@@ -263,32 +263,32 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			int timeout = (int)arg1;
 			int sockfd = (int)ptr->socket;
 #ifdef HAVE_POLL_H
-		struct pollfd pollset;
-		pollset.fd = sockfd;
-		pollset.events = POLLOUT;
-		pollset.revents = 0;
+			struct pollfd pollset;
+			pollset.fd = sockfd;
+			pollset.events = POLLOUT;
+			pollset.revents = 0;
 
-		do
-		{
-			status = poll(&pollset, 1, timeout);
-		} while ((status < 0) && (errno == EINTR));
+			do
+			{
+				status = poll(&pollset, 1, timeout);
+			} while ((status < 0) && (errno == EINTR));
 
 #else
-		fd_set rset;
-		struct timeval tv;
-		FD_ZERO(&rset);
-		FD_SET(sockfd, &rset);
+			fd_set rset;
+			struct timeval tv;
+			FD_ZERO(&rset);
+			FD_SET(sockfd, &rset);
 
-		if (timeout)
-		{
-			tv.tv_sec = timeout / 1000;
-			tv.tv_usec = (timeout % 1000) * 1000;
-		}
+			if (timeout)
+			{
+				tv.tv_sec = timeout / 1000;
+				tv.tv_usec = (timeout % 1000) * 1000;
+			}
 
-		do
-		{
-			status = select(sockfd + 1, NULL, &rset, NULL, timeout ? &tv : NULL);
-		} while ((status < 0) && (errno == EINTR));
+			do
+			{
+				status = select(sockfd + 1, NULL, &rset, NULL, timeout ? &tv : NULL);
+			} while ((status < 0) && (errno == EINTR));
 
 #endif
 		}

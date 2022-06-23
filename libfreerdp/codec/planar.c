@@ -1034,7 +1034,7 @@ static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* planar, con
 				const UINT32 color = FreeRDPReadColor(pixel, format);
 				pixel += FreeRDPGetBytesPerPixel(format);
 				FreeRDPSplitColor(color, format, &planes[1][k], &planes[2][k], &planes[3][k],
-				                         &planes[0][k], NULL);
+				                  &planes[0][k], NULL);
 				k++;
 			}
 		}
@@ -1053,7 +1053,7 @@ static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* planar, con
 				const UINT32 color = FreeRDPReadColor(pixel, format);
 				pixel += FreeRDPGetBytesPerPixel(format);
 				FreeRDPSplitColor(color, format, &planes[1][k], &planes[2][k], &planes[3][k],
-				                         &planes[0][k], NULL);
+				                  &planes[0][k], NULL);
 				k++;
 			}
 		}

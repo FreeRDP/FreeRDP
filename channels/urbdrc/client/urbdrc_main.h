@@ -51,7 +51,6 @@ typedef struct S_IUDEVMAN IUDEVMAN;
 	_type (*get_##_arg)(IUDEVMAN * udevman);    \
 	void (*set_##_arg)(IUDEVMAN * udevman, _type _arg)
 
-
 typedef struct
 {
 	IWTSPlugin iface;
@@ -87,8 +86,8 @@ typedef struct
 	wStream* s;
 } TRANSFER_DATA;
 
-typedef void (*t_isoch_transfer_cb)(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
-                                    UINT32 InterfaceId, BOOL noAck, UINT32 MessageId,
+typedef void (*t_isoch_transfer_cb)(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback,
+                                    wStream* out, UINT32 InterfaceId, BOOL noAck, UINT32 MessageId,
                                     UINT32 RequestId, UINT32 NumberOfPackets, UINT32 status,
                                     UINT32 StartFrame, UINT32 ErrorCount, UINT32 OutputBufferSize);
 

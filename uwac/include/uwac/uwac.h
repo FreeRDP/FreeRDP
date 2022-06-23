@@ -294,7 +294,8 @@ struct uwac_output_geometry_event
 };
 typedef struct uwac_output_geometry_event UwacOutputGeometryEvent;
 
-union uwac_event {
+union uwac_event
+{
 	int type;
 	UwacOutputNewEvent output_new;
 	UwacOutputGeometryEvent output_geometry;

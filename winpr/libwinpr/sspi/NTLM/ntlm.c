@@ -521,7 +521,7 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 		}
 
 		default:
-		    return SEC_E_OUT_OF_SEQUENCE;
+			return SEC_E_OUT_OF_SEQUENCE;
 	}
 }
 
@@ -1367,19 +1367,19 @@ char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags)
 			const char* str = ntlm_get_negotiate_string(mask);
 			const size_t flen = strlen(str);
 
-            if ((len > 0) && (buffer[len - 1] != ' '))
-            {
-                if (size - len < 1)
-                    break;
-                winpr_str_append("|", buffer, size, NULL);
-                len++;
-            }
+			if ((len > 0) && (buffer[len - 1] != ' '))
+			{
+				if (size - len < 1)
+					break;
+				winpr_str_append("|", buffer, size, NULL);
+				len++;
+			}
 
-            if (size - len < flen)
-                break;
-            winpr_str_append(str, buffer, size, NULL);
-        }
-    }
+			if (size - len < flen)
+				break;
+			winpr_str_append(str, buffer, size, NULL);
+		}
+	}
 
 	return buffer;
 }

@@ -41,7 +41,7 @@ typedef struct
 	NEGOTIATE_STATE state;
 	CtxtHandle sub_context;
 	SecBuffer mechTypes;
-	const Mech *mech;
+	const Mech* mech;
 	BOOL mic;
 	BOOL spnego;
 } NEGOTIATE_CONTEXT;

@@ -134,7 +134,8 @@ static BOOL wl_end_paint(rdpContext* context)
 	w = gdi->primary->hdc->hwnd->invalid->w;
 	h = gdi->primary->hdc->hwnd->invalid->h;
 	context_w = (wlfContext*)context;
-	if(!wl_update_buffer(context_w, x, y, w, h)){
+	if (!wl_update_buffer(context_w, x, y, w, h))
+	{
 		return FALSE;
 	}
 
@@ -328,7 +329,7 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				if (r != UWAC_SUCCESS)
 					return FALSE;
 			}
-			    break;
+			break;
 
 			case UWAC_EVENT_POINTER_ENTER:
 				if (!wlf_handle_pointer_enter(instance, &event.mouse_enter_leave))

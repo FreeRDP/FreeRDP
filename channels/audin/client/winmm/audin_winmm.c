@@ -37,7 +37,7 @@
 
 /* fix missing definitions in mingw */
 #ifndef WAVE_MAPPED_DEFAULT_COMMUNICATION_DEVICE
-#define  WAVE_MAPPED_DEFAULT_COMMUNICATION_DEVICE   0x0010
+#define WAVE_MAPPED_DEFAULT_COMMUNICATION_DEVICE 0x0010
 #endif
 
 typedef struct
@@ -202,7 +202,6 @@ static DWORD WINAPI audin_winmm_thread_func(LPVOID arg)
 
 		if (!log_mmresult(winmm, "waveInPrepareHeader", rc))
 		{
-
 		}
 
 		rc = waveInAddBuffer(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i]));
@@ -241,7 +240,6 @@ static DWORD WINAPI audin_winmm_thread_func(LPVOID arg)
 
 		if (!log_mmresult(winmm, "waveInUnprepareHeader", rc))
 		{
-
 		}
 
 		free(waveHdr[i].lpData);

@@ -259,4 +259,3 @@ char** winpr_corkscrew_backtrace_symbols(void* buffer, size_t* used)
 		return vlines;
 	}
 }
-

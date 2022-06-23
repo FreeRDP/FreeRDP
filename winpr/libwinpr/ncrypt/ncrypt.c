@@ -108,7 +108,6 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 	if (!ret)
 		return NTE_NO_MEMORY;
 
-
 #ifdef WITH_PKCS11
 	strPtr = (LPWSTR)(ret + *wProviderCount);
 

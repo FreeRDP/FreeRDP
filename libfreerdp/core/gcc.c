@@ -1343,7 +1343,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 
 	/* serverRandom */
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, NULL,
-										  settings->ServerRandomLength))
+	                                      settings->ServerRandomLength))
 		goto fail;
 
 	Stream_Read(s, settings->ServerRandom, settings->ServerRandomLength);
@@ -1353,7 +1353,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 
 	/* serverCertificate */
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, NULL,
-										 settings->ServerCertificateLength))
+	                                      settings->ServerCertificateLength))
 		goto fail;
 
 	Stream_Read(s, settings->ServerCertificate, settings->ServerCertificateLength);

@@ -208,21 +208,21 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 			}
 			value->data.dword = (DWORD)val;
 		}
-		    break;
-			case REG_QWORD:
+		break;
+		case REG_QWORD:
+		{
+			unsigned long long val;
+			errno = 0;
+			val = strtoull(data, NULL, 0);
+
+			if ((errno != 0) || (val > UINT64_MAX))
 			{
-				unsigned long long val;
-				errno = 0;
-				val = strtoull(data, NULL, 0);
-
-				if ((errno != 0) || (val > UINT64_MAX))
-				{
-					WLog_WARN(TAG, "%s::%s value %s invalid", key->name, value->name, data);
-					goto fail;
-				}
-
-				value->data.qword = (UINT64)val;
+				WLog_WARN(TAG, "%s::%s value %s invalid", key->name, value->name, data);
+				goto fail;
 			}
+
+			value->data.qword = (UINT64)val;
+		}
 		break;
 		case REG_SZ:
 		{
@@ -252,9 +252,9 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 		break;
 		default:
 			WLog_ERR(TAG, "[%s] %s unimplemented format: %s", key->name, value->name,
-				     reg_data_type_string(value->type));
+			         reg_data_type_string(value->type));
 			break;
-		}
+	}
 
 	if (!key->values)
 	{

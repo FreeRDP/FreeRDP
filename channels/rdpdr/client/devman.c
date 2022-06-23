@@ -181,7 +181,8 @@ UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpC
 	const char* ServiceName = NULL;
 	DEVICE_SERVICE_ENTRY_POINTS ep;
 	PDEVICE_SERVICE_ENTRY entry = NULL;
-	union {
+	union
+	{
 		const RDPDR_DEVICE* cdp;
 		RDPDR_DEVICE* dp;
 	} devconv;

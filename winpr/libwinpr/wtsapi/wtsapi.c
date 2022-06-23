@@ -51,10 +51,10 @@ static HMODULE g_WtsApi32Module = NULL;
 static WtsApiFunctionTable WtsApi32_WtsApiFunctionTable = { 0 };
 
 #ifdef __MINGW32__
-#define WTSAPI32_LOAD_PROC(NAME, TYPE)                                                   \
+#define WTSAPI32_LOAD_PROC(NAME, TYPE) \
 	WtsApi32_WtsApiFunctionTable.p##NAME = (TYPE)GetProcAddress(g_WtsApi32Module, "WTS" #NAME);
 #else
-#define WTSAPI32_LOAD_PROC(NAME, TYPE)                                                   \
+#define WTSAPI32_LOAD_PROC(NAME, TYPE) \
 	WtsApi32_WtsApiFunctionTable.p##NAME = (##TYPE)GetProcAddress(g_WtsApi32Module, "WTS" #NAME);
 #endif
 

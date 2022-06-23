@@ -775,7 +775,7 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, const BYTE
                                          size_t length)
 {
 	BOOL ret;
-	wStream* s, sbuffer;
+	wStream *s, sbuffer;
 	UINT32 dwVersion;
 
 	if (length < 4) /* NULL certificate is not an error see #1795 */

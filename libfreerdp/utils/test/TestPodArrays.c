@@ -18,14 +18,14 @@
  */
 #include <freerdp/utils/pod_arrays.h>
 
-static BOOL cb_compute_sum(UINT32 *v, void* target)
+static BOOL cb_compute_sum(UINT32* v, void* target)
 {
 	UINT32* ret = (UINT32*)target;
 	*ret += *v;
 	return TRUE;
 }
 
-static BOOL cb_stop_at_5(UINT32 *v, void* target)
+static BOOL cb_stop_at_5(UINT32* v, void* target)
 {
 	UINT32* ret = (UINT32*)target;
 	*ret += 1;
@@ -45,19 +45,18 @@ static BOOL cb_reset_after_1(UINT32* v, void* target)
 	return TRUE;
 }
 
-typedef struct {
+typedef struct
+{
 	UINT32 v1;
 	UINT16 v2;
 } BasicStruct;
 
-static BOOL cb_basic_struct(BasicStruct *v, void* target)
+static BOOL cb_basic_struct(BasicStruct* v, void* target)
 {
 	return (v->v1 == 1) && (v->v2 == 2);
 }
 
-
 POD_ARRAYS_IMPL(BasicStruct, basicstruct);
-
 
 int TestPodArrays(int argc, char* argv[])
 {

@@ -524,7 +524,8 @@ fail:
 static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, CHAR** dst,
                                  size_t max)
 {
-	union {
+	union
+	{
 		char c;
 		WCHAR w;
 		BYTE b[2];
@@ -773,7 +774,8 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		if (((flags & INFO_PASSWORD_IS_SC_PIN) == 0) && settings->RedirectionPassword &&
 		    (settings->RedirectionPasswordLength > 0))
 		{
-			union {
+			union
+			{
 				BYTE* bp;
 				WCHAR* wp;
 			} ptrconv;
@@ -976,7 +978,8 @@ static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 {
 	UINT32 cbDomain;
 	UINT32 cbUserName;
-	union {
+	union
+	{
 		BYTE* bp;
 		WCHAR* wp;
 	} ptrconv;
@@ -1074,7 +1077,7 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, logonInfoV2TotalSize))
 		return FALSE;
 
-	Stream_Read_UINT16(s, Version);         /* Version (2 bytes) */
+	Stream_Read_UINT16(s, Version); /* Version (2 bytes) */
 	if (Version != SAVE_SESSION_PDU_VERSION_ONE)
 	{
 		WLog_WARN(TAG, "LogonInfoV2::Version expected %" PRIu16 " bytes, got %" PRIu16,
@@ -1105,9 +1108,9 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 		}
 	}
 
-	Stream_Read_UINT32(s, info->sessionId); /* SessionId (4 bytes) */
-	Stream_Read_UINT32(s, cbDomain);        /* cbDomain (4 bytes) */
-	Stream_Read_UINT32(s, cbUserName);      /* cbUserName (4 bytes) */
+	Stream_Read_UINT32(s, info->sessionId);  /* SessionId (4 bytes) */
+	Stream_Read_UINT32(s, cbDomain);         /* cbDomain (4 bytes) */
+	Stream_Read_UINT32(s, cbUserName);       /* cbUserName (4 bytes) */
 	Stream_Seek(s, logonInfoV2ReservedSize); /* pad (558 bytes) */
 
 	/* cbDomain is the size in bytes of the Unicode character data in the Domain field.

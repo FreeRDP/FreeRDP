@@ -608,31 +608,34 @@ extern "C"
 	                                                       sspi_gss_cred_id_t cred_handle,
 	                                                       const sspi_gss_OID_set mech_set);
 
-	struct sspi_gss_key_value_element_struct {
-	    const char *key;
-	    const char *value;
+	struct sspi_gss_key_value_element_struct
+	{
+		const char* key;
+		const char* value;
 	};
 	typedef struct sspi_gss_key_value_element_struct sspi_gss_key_value_element_desc;
 
-	struct sspi_gss_key_value_set_struct {
+	struct sspi_gss_key_value_set_struct
+	{
 		UINT32 count;
-	    sspi_gss_key_value_element_desc *elements;
+		sspi_gss_key_value_element_desc* elements;
 	};
 	typedef struct sspi_gss_key_value_set_struct sspi_gss_key_value_set_desc;
-	typedef const sspi_gss_key_value_set_desc *sspi_gss_const_key_value_set_t;
+	typedef const sspi_gss_key_value_set_desc* sspi_gss_const_key_value_set_t;
 
-	UINT32 SSPI_GSSAPI sspi_gss_acquire_cred_from(UINT32 *minor_status,
-	    sspi_gss_name_t desired_name, UINT32 time_req, sspi_gss_OID_set desired_mechs,
-	    sspi_gss_cred_usage_t cred_usage, sspi_gss_const_key_value_set_t cred_store,
-		sspi_gss_cred_id_t *output_cred_handle,	sspi_gss_OID_set *actual_mechs,
-		UINT32* time_rec);
+	UINT32 SSPI_GSSAPI sspi_gss_acquire_cred_from(UINT32* minor_status,
+	                                              sspi_gss_name_t desired_name, UINT32 time_req,
+	                                              sspi_gss_OID_set desired_mechs,
+	                                              sspi_gss_cred_usage_t cred_usage,
+	                                              sspi_gss_const_key_value_set_t cred_store,
+	                                              sspi_gss_cred_id_t* output_cred_handle,
+	                                              sspi_gss_OID_set* actual_mechs, UINT32* time_rec);
 
-	typedef UINT32 (SSPI_GSSAPI* fn_sspi_gss_acquire_cred_from)(UINT32 *minor_status,
-	    sspi_gss_name_t desired_name, UINT32 time_req, sspi_gss_OID_set desired_mechs,
-	    sspi_gss_cred_usage_t cred_usage, sspi_gss_const_key_value_set_t cred_store,
-		sspi_gss_cred_id_t *output_cred_handle,	sspi_gss_OID_set *actual_mechs,
-		UINT32* time_rec);
-
+	typedef UINT32(SSPI_GSSAPI* fn_sspi_gss_acquire_cred_from)(
+	    UINT32* minor_status, sspi_gss_name_t desired_name, UINT32 time_req,
+	    sspi_gss_OID_set desired_mechs, sspi_gss_cred_usage_t cred_usage,
+	    sspi_gss_const_key_value_set_t cred_store, sspi_gss_cred_id_t* output_cred_handle,
+	    sspi_gss_OID_set* actual_mechs, UINT32* time_rec);
 
 #ifdef __cplusplus
 }

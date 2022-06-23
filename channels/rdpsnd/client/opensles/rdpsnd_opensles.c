@@ -253,7 +253,8 @@ static BOOL rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 
 static UINT rdpsnd_opensles_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
 {
-	union {
+	union
+	{
 		const BYTE* b;
 		const short* s;
 	} src;

@@ -62,7 +62,7 @@ extern "C"
 		WINPR_DEPRECATED_VAR("Use rdp_freerdp_listener::GetEventHandles instead",
 		                     psListenerGetFileDescriptor GetFileDescriptor;)
 #else
-	    void* reserved;
+	void* reserved;
 #endif
 		psListenerGetEventHandles GetEventHandles;
 		psListenerCheckFileDescriptor CheckFileDescriptor;

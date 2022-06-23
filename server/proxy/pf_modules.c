@@ -317,7 +317,8 @@ BOOL pf_modules_run_filter(proxyModule* module, PF_FILTER_TYPE type, proxyData* 
 static BOOL pf_modules_set_plugin_data(proxyPluginsManager* mgr, const char* plugin_name,
                                        proxyData* pdata, void* data)
 {
-	union {
+	union
+	{
 		const char* ccp;
 		char* cp;
 	} ccharconv;
@@ -347,7 +348,8 @@ static BOOL pf_modules_set_plugin_data(proxyPluginsManager* mgr, const char* plu
 static void* pf_modules_get_plugin_data(proxyPluginsManager* mgr, const char* plugin_name,
                                         proxyData* pdata)
 {
-	union {
+	union
+	{
 		const char* ccp;
 		char* cp;
 	} ccharconv;

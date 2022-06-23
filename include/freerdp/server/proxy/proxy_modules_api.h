@@ -72,11 +72,11 @@ struct proxy_plugin
 	proxyHookFn ClientLoadChannels;    /* 75 custom=rdpContext* */
 	UINT64 reserved3[96 - 76];         /* 76-95 */
 
-	proxyHookFn ServerPostConnect;  /* 96  custom=freerdp_peer* */
-	proxyHookFn ServerPeerActivate; /* 97  custom=freerdp_peer* */
-	proxyHookFn ServerChannelsInit; /* 98  custom=freerdp_peer* */
-	proxyHookFn ServerChannelsFree; /* 99  custom=freerdp_peer* */
-	proxyHookFn ServerSessionEnd;   /* 100 custom=freerdp_peer* */
+	proxyHookFn ServerPostConnect;       /* 96  custom=freerdp_peer* */
+	proxyHookFn ServerPeerActivate;      /* 97  custom=freerdp_peer* */
+	proxyHookFn ServerChannelsInit;      /* 98  custom=freerdp_peer* */
+	proxyHookFn ServerChannelsFree;      /* 99  custom=freerdp_peer* */
+	proxyHookFn ServerSessionEnd;        /* 100 custom=freerdp_peer* */
 	proxyHookFn ServerSessionInitialize; /* 101 custom=freerdp_peer* */
 	proxyHookFn ServerSessionStarted;    /* 102 custom=freerdp_peer* */
 

@@ -47,7 +47,6 @@
 #include <freerdp/codec/dsp.h>
 #include <freerdp/client/channels.h>
 
-
 #include "rdpsnd_common.h"
 #include "rdpsnd_main.h"
 
@@ -273,9 +272,9 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* 
 	Stream_Seek_UINT32(s); /* dwPitch */
 	Stream_Seek_UINT16(s); /* wDGramPort */
 	Stream_Read_UINT16(s, wNumberOfFormats);
-	Stream_Read_UINT8(s, rdpsnd->cBlockNo); /* cLastBlockConfirmed */
+	Stream_Read_UINT8(s, rdpsnd->cBlockNo);  /* cLastBlockConfirmed */
 	Stream_Read_UINT16(s, rdpsnd->wVersion); /* wVersion */
-	Stream_Seek_UINT8(s);                   /* bPad */
+	Stream_Seek_UINT8(s);                    /* bPad */
 	rdpsnd->NumberOfServerFormats = wNumberOfFormats;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 14ull * wNumberOfFormats))
@@ -1290,7 +1289,6 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 			         rdpsnd_is_dyn_str(rdpsnd->dynamic), WTSErrorToString(error), error);
 			return error;
 		}
-
 	}
 
 	cleanup_internals(rdpsnd);
@@ -1553,7 +1551,7 @@ BOOL VCAPITYPE rdpsnd_VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, 
 
 static UINT rdpsnd_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 {
-    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	rdpsndPlugin* rdpsnd;
 
 	WINPR_ASSERT(callback);
@@ -1569,7 +1567,7 @@ static UINT rdpsnd_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 
 static UINT rdpsnd_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	rdpsndPlugin* plugin;
 	wStream* copy;
 	size_t len;
@@ -1599,7 +1597,7 @@ static UINT rdpsnd_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 
 static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
-    GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	rdpsndPlugin* rdpsnd;
 
 	WINPR_ASSERT(callback);
@@ -1628,7 +1626,7 @@ static UINT rdpsnd_on_new_channel_connection(IWTSListenerCallback* pListenerCall
                                              BOOL* pbAccept,
                                              IWTSVirtualChannelCallback** ppCallback)
 {
-    GENERIC_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback;
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 	WINPR_ASSERT(listener_callback);
 	WINPR_ASSERT(pChannel);

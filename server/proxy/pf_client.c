@@ -426,12 +426,12 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	WINPR_ASSERT(channel->onBackData);
 	switch (channel->onBackData(pdata, channel, xdata, xsize, flags, totalSize))
 	{
-	case PF_CHANNEL_RESULT_PASS:
-		break;
-	case PF_CHANNEL_RESULT_DROP:
-		return TRUE;
-	case PF_CHANNEL_RESULT_ERROR:
-		return FALSE;
+		case PF_CHANNEL_RESULT_PASS:
+			break;
+		case PF_CHANNEL_RESULT_DROP:
+			return TRUE;
+		case PF_CHANNEL_RESULT_ERROR:
+			return FALSE;
 	}
 
 	server_channel_id = WTSChannelGetId(ps->context.peer, channel->channel_name);
@@ -442,7 +442,8 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	if (server_channel_id == 0)
 		return TRUE;
 
-	return ps->context.peer->SendChannelPacket(ps->context.peer, server_channel_id, totalSize, flags, xdata, xsize);
+	return ps->context.peer->SendChannelPacket(ps->context.peer, server_channel_id, totalSize,
+	                                           flags, xdata, xsize);
 }
 
 static BOOL pf_client_on_server_heartbeat(freerdp* instance, BYTE period, BYTE count1, BYTE count2)

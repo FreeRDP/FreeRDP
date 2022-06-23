@@ -1043,11 +1043,12 @@ UINT32 SSPI_GSSAPI sspi_gss_set_neg_mechs(UINT32* minor_status, sspi_gss_cred_id
 	return status;
 }
 
-UINT32 SSPI_GSSAPI sspi_gss_acquire_cred_from(UINT32 *minor_status,
-	    sspi_gss_name_t desired_name, UINT32 time_req, sspi_gss_OID_set desired_mechs,
-	    sspi_gss_cred_usage_t cred_usage, sspi_gss_const_key_value_set_t cred_store,
-		sspi_gss_cred_id_t *output_cred_handle,	sspi_gss_OID_set *actual_mechs,
-		UINT32* time_rec)
+UINT32 SSPI_GSSAPI sspi_gss_acquire_cred_from(UINT32* minor_status, sspi_gss_name_t desired_name,
+                                              UINT32 time_req, sspi_gss_OID_set desired_mechs,
+                                              sspi_gss_cred_usage_t cred_usage,
+                                              sspi_gss_const_key_value_set_t cred_store,
+                                              sspi_gss_cred_id_t* output_cred_handle,
+                                              sspi_gss_OID_set* actual_mechs, UINT32* time_rec)
 {
 	SECURITY_STATUS status;
 	InitOnceExecuteOnce(&g_Initialized, sspi_GssApiInit, NULL, NULL);
@@ -1059,9 +1060,9 @@ UINT32 SSPI_GSSAPI sspi_gss_acquire_cred_from(UINT32 *minor_status,
 	}
 
 	status = g_GssApi->gss_acquire_cred_from(minor_status, desired_name, time_req, desired_mechs,
-			cred_usage, cred_store, output_cred_handle, actual_mechs, time_rec);
+	                                         cred_usage, cred_store, output_cred_handle,
+	                                         actual_mechs, time_rec);
 	WLog_DBG(TAG, "gss_acquire_cred_from: %s (0x%08" PRIX32 ")", GetSecurityStatusString(status),
 	         status);
 	return status;
-
 }

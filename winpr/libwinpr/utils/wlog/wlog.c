@@ -237,7 +237,7 @@ static BOOL WLog_Write(wLog* log, wLogMessage* message)
 
 	if (!appender->active)
 		if (!WLog_OpenAppender(log))
-		return FALSE;
+			return FALSE;
 
 	EnterCriticalSection(&appender->lock);
 

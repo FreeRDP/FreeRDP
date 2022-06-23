@@ -128,8 +128,7 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 	event->window = window;
 	event->states = surfaceState;
 
-	if ((width > 0 && height > 0) &&
-		(width != window->width ||  height != window->height))
+	if ((width > 0 && height > 0) && (width != window->width || height != window->height))
 	{
 		event->width = width;
 		event->height = height;
@@ -504,20 +503,23 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 
 	if (display->ivi_application)
 	{
-		w->ivi_surface = ivi_application_surface_create(display->ivi_application, ivi_surface_id, w->surface);
+		w->ivi_surface =
+		    ivi_application_surface_create(display->ivi_application, ivi_surface_id, w->surface);
 		assert(w->ivi_surface);
 		ivi_surface_add_listener(w->ivi_surface, &ivi_surface_listener, w);
-	} else
+	}
+	else
 #endif
 #if BUILD_FULLSCREEN_SHELL
-	if (display->fullscreen_shell)
+	    if (display->fullscreen_shell)
 	{
 		zwp_fullscreen_shell_v1_present_surface(display->fullscreen_shell, w->surface,
-                                                 ZWP_FULLSCREEN_SHELL_V1_PRESENT_METHOD_CENTER,
-                                                 NULL);
-	} else
+		                                        ZWP_FULLSCREEN_SHELL_V1_PRESENT_METHOD_CENTER,
+		                                        NULL);
+	}
+	else
 #endif
-	if (display->xdg_base)
+	    if (display->xdg_base)
 	{
 		w->xdg_surface = xdg_wm_base_get_xdg_surface(display->xdg_base, w->surface);
 

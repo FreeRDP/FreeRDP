@@ -203,7 +203,6 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionPassword,
 		                                      redirection->Password, redirection->PasswordLength))
 			return -1;
-
 	}
 
 	if (settings->RedirectionFlags & LB_CLIENT_TSV_URL)

@@ -1408,16 +1408,16 @@ static UINT rdpdr_server_read_file_directory_information(wStream* s,
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 64))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, fdi->NextEntryOffset);         /* NextEntryOffset (4 bytes) */
-	Stream_Read_UINT32(s, fdi->FileIndex);               /* FileIndex (4 bytes) */
-	Stream_Read_INT64(s, fdi->CreationTime.QuadPart);    /* CreationTime (8 bytes) */
-	Stream_Read_INT64(s, fdi->LastAccessTime.QuadPart);  /* LastAccessTime (8 bytes) */
-	Stream_Read_INT64(s, fdi->LastWriteTime.QuadPart);   /* LastWriteTime (8 bytes) */
-	Stream_Read_INT64(s, fdi->ChangeTime.QuadPart);      /* ChangeTime (8 bytes) */
-	Stream_Read_INT64(s, fdi->EndOfFile.QuadPart);       /* EndOfFile (8 bytes) */
-	Stream_Read_INT64(s, fdi->AllocationSize.QuadPart);  /* AllocationSize (8 bytes) */
-	Stream_Read_UINT32(s, fdi->FileAttributes);          /* FileAttributes (4 bytes) */
-	Stream_Read_UINT32(s, fileNameLength);               /* FileNameLength (4 bytes) */
+	Stream_Read_UINT32(s, fdi->NextEntryOffset);        /* NextEntryOffset (4 bytes) */
+	Stream_Read_UINT32(s, fdi->FileIndex);              /* FileIndex (4 bytes) */
+	Stream_Read_INT64(s, fdi->CreationTime.QuadPart);   /* CreationTime (8 bytes) */
+	Stream_Read_INT64(s, fdi->LastAccessTime.QuadPart); /* LastAccessTime (8 bytes) */
+	Stream_Read_INT64(s, fdi->LastWriteTime.QuadPart);  /* LastWriteTime (8 bytes) */
+	Stream_Read_INT64(s, fdi->ChangeTime.QuadPart);     /* ChangeTime (8 bytes) */
+	Stream_Read_INT64(s, fdi->EndOfFile.QuadPart);      /* EndOfFile (8 bytes) */
+	Stream_Read_INT64(s, fdi->AllocationSize.QuadPart); /* AllocationSize (8 bytes) */
+	Stream_Read_UINT32(s, fdi->FileAttributes);         /* FileAttributes (4 bytes) */
+	Stream_Read_UINT32(s, fileNameLength);              /* FileNameLength (4 bytes) */
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, fileNameLength))
 		return ERROR_INVALID_DATA;
@@ -1599,8 +1599,8 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 	Stream_Write_UINT32(s, FileDirectoryInformation); /* FsInformationClass (4 bytes) */
 	Stream_Write_UINT8(s, path ? 1 : 0);              /* InitialQuery (1 byte) */
 	WINPR_ASSERT(pathLength <= UINT32_MAX);
-	Stream_Write_UINT32(s, (UINT32)pathLength);       /* PathLength (4 bytes) */
-	Stream_Zero(s, 23);                               /* Padding (23 bytes) */
+	Stream_Write_UINT32(s, (UINT32)pathLength); /* PathLength (4 bytes) */
+	Stream_Zero(s, 23);                         /* Padding (23 bytes) */
 
 	/* Convert the path to Unicode. */
 	if (pathLength > 0)
@@ -1646,10 +1646,10 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 	Stream_Write_UINT32(s, FileRenameInformation); /* FsInformationClass (4 bytes) */
 	WINPR_ASSERT(pathLength <= UINT32_MAX - 6U);
 	Stream_Write_UINT32(s, (UINT32)pathLength + 6U); /* Length (4 bytes) */
-	Stream_Zero(s, 24);                            /* Padding (24 bytes) */
+	Stream_Zero(s, 24);                              /* Padding (24 bytes) */
 	/* RDP_FILE_RENAME_INFORMATION */
-	Stream_Write_UINT8(s, 0);           /* ReplaceIfExists (1 byte) */
-	Stream_Write_UINT8(s, 0);           /* RootDirectory (1 byte) */
+	Stream_Write_UINT8(s, 0);                   /* ReplaceIfExists (1 byte) */
+	Stream_Write_UINT8(s, 0);                   /* RootDirectory (1 byte) */
 	Stream_Write_UINT32(s, (UINT32)pathLength); /* FileNameLength (4 bytes) */
 
 	/* Convert the path to Unicode. */

@@ -414,9 +414,9 @@ static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 			CopyMemory(AuthNtlmHash.NtlmHash, TEST_NTLM_HASH, 16);
 		}
 
-		status = ntlm->table->SetContextAttributes(
-			&ntlm->context, SECPKG_ATTR_AUTH_NTLM_HASH, &AuthNtlmHash,
-			sizeof(SecPkgContext_AuthNtlmHash));
+		status =
+		    ntlm->table->SetContextAttributes(&ntlm->context, SECPKG_ATTR_AUTH_NTLM_HASH,
+		                                      &AuthNtlmHash, sizeof(SecPkgContext_AuthNtlmHash));
 
 		hash_set = TRUE;
 	}

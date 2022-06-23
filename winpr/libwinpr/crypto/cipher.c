@@ -67,7 +67,7 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 	EVP_CIPHER_CTX_init((EVP_CIPHER_CTX*)ctx);
 	if (EVP_EncryptInit_ex((EVP_CIPHER_CTX*)ctx, evp, NULL, NULL, NULL) != 1)
 	{
-		EVP_CIPHER_CTX_free ((EVP_CIPHER_CTX*)ctx);
+		EVP_CIPHER_CTX_free((EVP_CIPHER_CTX*)ctx);
 		return NULL;
 	}
 
@@ -81,7 +81,7 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 	EVP_CIPHER_CTX_set_key_length((EVP_CIPHER_CTX*)ctx, (int)keylen);
 	if (EVP_EncryptInit_ex((EVP_CIPHER_CTX*)ctx, NULL, NULL, key, NULL) != 1)
 	{
-		EVP_CIPHER_CTX_free ((EVP_CIPHER_CTX*)ctx);
+		EVP_CIPHER_CTX_free((EVP_CIPHER_CTX*)ctx);
 		return NULL;
 	}
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)

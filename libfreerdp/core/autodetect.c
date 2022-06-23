@@ -141,7 +141,8 @@ static BOOL autodetect_send_rtt_measure_response(rdpRdp* rdp, UINT16 sequenceNum
 	if (!s)
 		return FALSE;
 
-	WLog_VRB(AUTODETECT_TAG, "sending RTT Measure Response PDU (seqNumber=0x%"PRIx16")", sequenceNumber);
+	WLog_VRB(AUTODETECT_TAG, "sending RTT Measure Response PDU (seqNumber=0x%" PRIx16 ")",
+	         sequenceNumber);
 	Stream_Write_UINT8(s, 0x06);                        /* headerLength (1 byte) */
 	Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_RESPONSE); /* headerTypeId (1 byte) */
 	Stream_Write_UINT16(s, sequenceNumber);             /* sequenceNumber (2 bytes) */
@@ -158,7 +159,8 @@ static BOOL autodetect_send_bandwidth_measure_start(rdpContext* context, UINT16 
 	if (!s)
 		return FALSE;
 
-	WLog_VRB(AUTODETECT_TAG, "sending Bandwidth Measure Start PDU(seqNumber=%"PRIu16")", sequenceNumber);
+	WLog_VRB(AUTODETECT_TAG, "sending Bandwidth Measure Start PDU(seqNumber=%" PRIu16 ")",
+	         sequenceNumber);
 	Stream_Write_UINT8(s, 0x06);                       /* headerLength (1 byte) */
 	Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST); /* headerTypeId (1 byte) */
 	Stream_Write_UINT16(s, sequenceNumber);            /* sequenceNumber (2 bytes) */
@@ -308,11 +310,11 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpRdp* rdp, UINT16 respon
 	         "",
 	         timeDelta, rdp->autodetect->bandwidthMeasureByteCount);
 
-	Stream_Write_UINT8(s, 0x0E);                        /* headerLength (1 byte) */
-	Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_RESPONSE); /* headerTypeId (1 byte) */
-	Stream_Write_UINT16(s, sequenceNumber);             /* sequenceNumber (2 bytes) */
-	Stream_Write_UINT16(s, responseType);               /* responseType (1 byte) */
-	Stream_Write_UINT32(s, (UINT32)MIN(timeDelta, UINT32_MAX));         /* timeDelta (4 bytes) */
+	Stream_Write_UINT8(s, 0x0E);                                /* headerLength (1 byte) */
+	Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_RESPONSE);         /* headerTypeId (1 byte) */
+	Stream_Write_UINT16(s, sequenceNumber);                     /* sequenceNumber (2 bytes) */
+	Stream_Write_UINT16(s, responseType);                       /* responseType (1 byte) */
+	Stream_Write_UINT32(s, (UINT32)MIN(timeDelta, UINT32_MAX)); /* timeDelta (4 bytes) */
 	Stream_Write_UINT32(s, rdp->autodetect->bandwidthMeasureByteCount); /* byteCount (4 bytes) */
 	IFCALLRET(rdp->autodetect->ClientBandwidthMeasureResult, success, rdp->context,
 	          rdp->autodetect);

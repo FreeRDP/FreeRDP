@@ -57,7 +57,7 @@ finish:
 
 static int testTimeout(int port)
 {
-    const DWORD timeout = 200;
+	const DWORD timeout = 200;
 	DWORD start, end, diff;
 	char arg1[] = "/v:192.0.2.1:XXXXX";
 	char* argv[] = { "test", "/v:192.0.2.1:XXXXX" };

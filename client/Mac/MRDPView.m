@@ -144,14 +144,14 @@ DWORD WINAPI mac_client_thread(void *param)
 		nCount = 0;
 		events[nCount++] = mfc->stopEvent;
 
-			if (!(inputEvent = freerdp_get_message_queue_event_handle(instance,
-			                                                          FREERDP_INPUT_MESSAGE_QUEUE)))
-			{
-				WLog_ERR(TAG, "failed to get input event handle");
-				goto disconnect;
-			}
+		if (!(inputEvent =
+		          freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE)))
+		{
+			WLog_ERR(TAG, "failed to get input event handle");
+			goto disconnect;
+		}
 
-			events[nCount++] = inputEvent;
+		events[nCount++] = inputEvent;
 
 		nCountBase = nCount;
 
@@ -181,10 +181,10 @@ DWORD WINAPI mac_client_thread(void *param)
 				break;
 			}
 
-				if (WaitForSingleObject(inputEvent, 0) == WAIT_OBJECT_0)
-				{
-					input_activity_cb(instance);
-				}
+			if (WaitForSingleObject(inputEvent, 0) == WAIT_OBJECT_0)
+			{
+				input_activity_cb(instance);
+			}
 
 			{
 				if (!freerdp_check_event_handles(context))
@@ -599,7 +599,8 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 
 	if ((modFlags & NSEventModifierFlagCapsLock) && !(kbdModFlags & NSEventModifierFlagCapsLock))
 		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_DOWN, scancode);
-	else if (!(modFlags & NSEventModifierFlagCapsLock) && (kbdModFlags & NSEventModifierFlagCapsLock))
+	else if (!(modFlags & NSEventModifierFlagCapsLock) &&
+	         (kbdModFlags & NSEventModifierFlagCapsLock))
 		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
 	if ((modFlags & NSEventModifierFlagShift) && !(kbdModFlags & NSEventModifierFlagShift))
@@ -622,9 +623,11 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	else if (!(modFlags & NSEventModifierFlagCommand) && (kbdModFlags & NSEventModifierFlagCommand))
 		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
-	if ((modFlags & NSEventModifierFlagNumericPad) && !(kbdModFlags & NSEventModifierFlagNumericPad))
+	if ((modFlags & NSEventModifierFlagNumericPad) &&
+	    !(kbdModFlags & NSEventModifierFlagNumericPad))
 		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_DOWN, scancode);
-	else if (!(modFlags & NSEventModifierFlagNumericPad) && (kbdModFlags & NSEventModifierFlagNumericPad))
+	else if (!(modFlags & NSEventModifierFlagNumericPad) &&
+	         (kbdModFlags & NSEventModifierFlagNumericPad))
 		freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode);
 
 	if ((modFlags & NSEventModifierFlagHelp) && !(kbdModFlags & NSEventModifierFlagHelp))

@@ -51,23 +51,24 @@ extern "C"
 	typedef enum
 	{
 		PF_UTILS_CHANNEL_NOT_HANDLED, /*!< channel not handled */
-		PF_UTILS_CHANNEL_BLOCK,		  /*!< block and drop traffic on this channel */
+		PF_UTILS_CHANNEL_BLOCK,       /*!< block and drop traffic on this channel */
 		PF_UTILS_CHANNEL_PASSTHROUGH, /*!< pass traffic from this channel */
-		PF_UTILS_CHANNEL_INTERCEPT,	  /*!< inspect traffic from this channel */
+		PF_UTILS_CHANNEL_INTERCEPT,   /*!< inspect traffic from this channel */
 	} pf_utils_channel_mode;
 
 	/** @brief result of a channel treatment */
 	typedef enum
 	{
-		PF_CHANNEL_RESULT_PASS,  /*!< pass the packet as is */
-		PF_CHANNEL_RESULT_DROP,  /*!< drop the packet */
-		PF_CHANNEL_RESULT_ERROR  /*!< error during packet treatment */
+		PF_CHANNEL_RESULT_PASS, /*!< pass the packet as is */
+		PF_CHANNEL_RESULT_DROP, /*!< drop the packet */
+		PF_CHANNEL_RESULT_ERROR /*!< error during packet treatment */
 	} PfChannelResult;
 
-	typedef PfChannelResult (*proxyChannelDataFn)(proxyData* pdata, const pServerStaticChannelContext* channel,
-            const BYTE* xdata, size_t xsize, UINT32 flags,
-            size_t totalSizepServer);
-	typedef void (*proxyChannelContextDtor)(void *context);
+	typedef PfChannelResult (*proxyChannelDataFn)(proxyData* pdata,
+	                                              const pServerStaticChannelContext* channel,
+	                                              const BYTE* xdata, size_t xsize, UINT32 flags,
+	                                              size_t totalSizepServer);
+	typedef void (*proxyChannelContextDtor)(void* context);
 
 	/** @brief per channel configuration */
 	struct p_server_static_channel_context
@@ -78,7 +79,7 @@ extern "C"
 		proxyChannelDataFn onFrontData;
 		proxyChannelDataFn onBackData;
 		proxyChannelContextDtor contextDtor;
-		void *context;
+		void* context;
 	};
 
 	void StaticChannelContext_free(pServerStaticChannelContext* ctx);
@@ -100,7 +101,8 @@ extern "C"
 	};
 	typedef struct p_server_context pServerContext;
 
-	pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const char* name, UINT32 id);
+	pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const char* name,
+	                                                      UINT32 id);
 
 	/**
 	 * Wraps rdpContext and holds the state for the proxy's client.

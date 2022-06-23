@@ -949,7 +949,7 @@ const char* FreeRDPGetColorFormatName(UINT32 format)
 }
 
 void FreeRDPSplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g, BYTE* _b, BYTE* _a,
-                              const gdiPalette* palette)
+                       const gdiPalette* palette)
 {
 	UINT32 tmp;
 

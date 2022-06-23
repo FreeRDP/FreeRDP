@@ -21,7 +21,6 @@
 
 #include <freerdp/server/proxy/proxy_context.h>
 
-
 /** @brief operating mode of a channel tracker */
 typedef enum
 {
@@ -31,10 +30,12 @@ typedef enum
 } ChannelTrackerMode;
 
 typedef struct _ChannelStateTracker ChannelStateTracker;
-typedef PfChannelResult (*ChannelTrackerPeekFn)(ChannelStateTracker* tracker, BOOL first, BOOL lastPacket);
+typedef PfChannelResult (*ChannelTrackerPeekFn)(ChannelStateTracker* tracker, BOOL first,
+                                                BOOL lastPacket);
 
 /** @brief a tracker for channel packets */
-struct _ChannelStateTracker {
+struct _ChannelStateTracker
+{
 	pServerStaticChannelContext* channel;
 	ChannelTrackerMode mode;
 	wStream* currentPacket;
@@ -43,22 +44,22 @@ struct _ChannelStateTracker {
 	size_t currentPacketFragments;
 
 	ChannelTrackerPeekFn peekFn;
-	void *trackerData;
+	void* trackerData;
 	proxyData* pdata;
 };
 
-ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel, ChannelTrackerPeekFn fn, void* data);
+ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
+                                        ChannelTrackerPeekFn fn, void* data);
 
 void channelTracker_free(ChannelStateTracker* t);
 
-PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* xdata, size_t xsize, UINT32 flags,
-        size_t totalSize);
+PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* xdata, size_t xsize,
+                                      UINT32 flags, size_t totalSize);
 
-PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, BOOL last, BOOL toFront);
-
+PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, BOOL last,
+                                            BOOL toFront);
 
 BOOL pf_channel_setup_rdpdr(pServerContext* ps, pServerStaticChannelContext* channel);
 BOOL pf_channel_setup_generic(pServerStaticChannelContext* channel);
-
 
 #endif /* SERVER_PROXY_PF_CHANNEL_H_ */

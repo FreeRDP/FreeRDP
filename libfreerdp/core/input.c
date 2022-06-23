@@ -45,7 +45,7 @@ static void rdp_write_client_input_pdu_header(wStream* s, UINT16 number)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(Stream_GetRemainingCapacity(s) >= 4);
 	Stream_Write_UINT16(s, number); /* numberEvents (2 bytes) */
-	Stream_Write_UINT16(s, 0); /* pad2Octets (2 bytes) */
+	Stream_Write_UINT16(s, 0);      /* pad2Octets (2 bytes) */
 }
 
 static void rdp_write_input_event_header(wStream* s, UINT32 time, UINT16 type)

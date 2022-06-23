@@ -83,13 +83,13 @@ extern "C"
 #if defined(CHANNEL_AINPUT_CLIENT)
 		ALIGN64 AInputClientContext* ainput; /**< (offset 1) */
 #else
-	    UINT64 reserved1;
+	UINT64 reserved1;
 #endif
 
 #if defined(CHANNEL_RDPEI_CLIENT)
 		ALIGN64 RdpeiClientContext* rdpei; /**< (offset 2) */
 #else
-	    UINT64 reserved2;
+	UINT64 reserved2;
 #endif
 
 		ALIGN64 INT32 lastX;        /**< (offset 3) */

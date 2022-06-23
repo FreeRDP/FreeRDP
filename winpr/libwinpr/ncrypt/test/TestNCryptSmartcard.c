@@ -27,12 +27,12 @@
 
 #define TAG "testNCrypt"
 
-static void crypto_print_name(const BYTE *b, DWORD sz)
+static void crypto_print_name(const BYTE* b, DWORD sz)
 {
 	X509_NAME* name;
 	X509* x509;
 	BIO* bio;
-	char *ret;
+	char* ret;
 
 	bio = BIO_new_mem_buf(b, sz);
 	if (!bio)
@@ -66,7 +66,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 	SECURITY_STATUS status;
 	size_t j = 0;
 	DWORD providerCount;
-	NCryptProviderName *names = NULL;
+	NCryptProviderName* names = NULL;
 
 	status = NCryptEnumStorageProviders(&providerCount, &names, NCRYPT_SILENT_FLAG);
 	if (status != ERROR_SUCCESS)
@@ -80,8 +80,8 @@ int TestNCryptSmartcard(int argc, char* argv[])
 		size_t i = 0;
 		NCryptKeyName* keyName = NULL;
 
-		if (WideCharToMultiByte(CP_UTF8, 0, names[j].pszName, -1, providerNameStr, sizeof(providerNameStr), NULL,
-										FALSE) <= 0)
+		if (WideCharToMultiByte(CP_UTF8, 0, names[j].pszName, -1, providerNameStr,
+		                        sizeof(providerNameStr), NULL, FALSE) <= 0)
 			continue;
 		printf("provider %ld: %s\n", j, providerNameStr);
 
@@ -89,8 +89,8 @@ int TestNCryptSmartcard(int argc, char* argv[])
 		if (status != ERROR_SUCCESS)
 			continue;
 
-		while ((status = NCryptEnumKeys(provider, NULL, &keyName, &enumState, NCRYPT_SILENT_FLAG)) ==
-			   ERROR_SUCCESS)
+		while ((status = NCryptEnumKeys(provider, NULL, &keyName, &enumState,
+		                                NCRYPT_SILENT_FLAG)) == ERROR_SUCCESS)
 		{
 			NCRYPT_KEY_HANDLE phKey;
 			DWORD dwFlags = 0, cbOutput;
@@ -98,28 +98,31 @@ int TestNCryptSmartcard(int argc, char* argv[])
 			WCHAR reader[1024] = { 0 };
 			PBYTE certBytes = NULL;
 
-			if (WideCharToMultiByte(CP_UTF8, 0, keyName->pszName, -1, keyNameStr, sizeof(keyNameStr), NULL,
-								FALSE) <= 0)
+			if (WideCharToMultiByte(CP_UTF8, 0, keyName->pszName, -1, keyNameStr,
+			                        sizeof(keyNameStr), NULL, FALSE) <= 0)
 				continue;
 
 			printf("\tkey %ld: %s\n", i, keyNameStr);
-			status =
-				NCryptOpenKey(provider, &phKey, keyName->pszName, keyName->dwLegacyKeySpec, dwFlags);
+			status = NCryptOpenKey(provider, &phKey, keyName->pszName, keyName->dwLegacyKeySpec,
+			                       dwFlags);
 			if (status != ERROR_SUCCESS)
 			{
 				WLog_ERR(TAG, "unable to open key %s", keyNameStr);
 				continue;
 			}
 
-			status = NCryptGetProperty(phKey, NCRYPT_READER_PROPERTY, (PBYTE)reader, sizeof(reader), &cbOutput, dwFlags);
+			status = NCryptGetProperty(phKey, NCRYPT_READER_PROPERTY, (PBYTE)reader, sizeof(reader),
+			                           &cbOutput, dwFlags);
 			if (status == ERROR_SUCCESS)
 			{
 				char readerStr[1024] = { 0 };
-				if (WideCharToMultiByte(CP_UTF8, 0, reader, cbOutput, readerStr, sizeof(readerStr), NULL, FALSE) > 0)
+				if (WideCharToMultiByte(CP_UTF8, 0, reader, cbOutput, readerStr, sizeof(readerStr),
+				                        NULL, FALSE) > 0)
 					printf("\treader: %s\n", readerStr);
 			}
 
-			status = NCryptGetProperty(phKey, NCRYPT_CERTIFICATE_PROPERTY, NULL, 0, &cbOutput, dwFlags);
+			status =
+			    NCryptGetProperty(phKey, NCRYPT_CERTIFICATE_PROPERTY, NULL, 0, &cbOutput, dwFlags);
 			if (status != ERROR_SUCCESS)
 			{
 				/* WLog_ERR(TAG, "unable to retrieve certificate for key '%s'", keyNameStr); */
@@ -128,7 +131,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 
 			certBytes = calloc(1, cbOutput);
 			status = NCryptGetProperty(phKey, NCRYPT_CERTIFICATE_PROPERTY, certBytes, cbOutput,
-									   &cbOutput, dwFlags);
+			                           &cbOutput, dwFlags);
 			if (status != ERROR_SUCCESS)
 			{
 				WLog_ERR(TAG, "unable to retrieve certificate for key %s", keyNameStr);

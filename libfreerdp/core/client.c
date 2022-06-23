@@ -491,7 +491,8 @@ BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdat
 	rdpChannels* channels;
 	rdpMcsChannel* channel = NULL;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
-	union {
+	union
+	{
 		const BYTE* pcb;
 		BYTE* pb;
 	} data;
