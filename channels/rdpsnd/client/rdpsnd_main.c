@@ -1731,6 +1731,7 @@ UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	if (!rdpsnd)
 	{
+		IWTSPlugin* iface;
 		union
 		{
 			const void* cev;
@@ -1744,18 +1745,23 @@ UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			return CHANNEL_RC_NO_MEMORY;
 		}
 
-		rdpsnd->iface.Initialize = rdpsnd_plugin_initialize;
-		rdpsnd->iface.Connected = NULL;
-		rdpsnd->iface.Disconnected = NULL;
-		rdpsnd->iface.Terminated = rdpsnd_plugin_terminated;
+		iface = &rdpsnd->iface;
+		iface->Initialize = rdpsnd_plugin_initialize;
+		iface->Connected = NULL;
+		iface->Disconnected = NULL;
+		iface->Terminated = rdpsnd_plugin_terminated;
+
 		rdpsnd->dynamic = TRUE;
+
+		WINPR_ASSERT(pEntryPoints->GetRdpContext);
+		rdpsnd->rdpcontext = pEntryPoints->GetRdpContext(pEntryPoints);
 
 		/* user data pointer is not const, cast to avoid warning. */
 		cnv.cev = pEntryPoints->GetPluginData(pEntryPoints);
 		WINPR_ASSERT(pEntryPoints->GetPluginData);
 		rdpsnd->channelEntryPoints.pExtendedData = cnv.ev;
 
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, RDPSND_CHANNEL_NAME, &rdpsnd->iface);
+		error = pEntryPoints->RegisterPlugin(pEntryPoints, RDPSND_CHANNEL_NAME, iface);
 	}
 	else
 	{
