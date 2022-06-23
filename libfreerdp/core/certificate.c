@@ -857,7 +857,7 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	bio = BIO_new_mem_buf((const void*)keycontent, strlen(keycontent));
 
 	if (!bio)
-		goto out_free;
+		goto fail;
 
 	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
 	BIO_free_all(bio);
@@ -865,14 +865,14 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	if (!rsa)
 	{
 		WLog_ERR(TAG, "unable to load RSA key from %s: %s.", keyfile, strerror(errno));
-		goto out_free;
+		goto fail;
 	}
 
 	switch (RSA_check_key(rsa))
 	{
 		case 0:
 			WLog_ERR(TAG, "invalid RSA key in %s", keyfile);
-			goto out_free_rsa;
+			goto fail;
 
 		case 1:
 			/* Valid key. */
@@ -881,7 +881,7 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 		default:
 			WLog_ERR(TAG, "unexpected error when checking RSA key from %s: %s.", keyfile,
 			         strerror(errno));
-			goto out_free_rsa;
+			goto fail;
 	}
 
 	RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
@@ -889,14 +889,14 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	if (BN_num_bytes(rsa_e) > 4)
 	{
 		WLog_ERR(TAG, "RSA public exponent too large in %s", keyfile);
-		goto out_free_rsa;
+		goto fail;
 	}
 
 	key->ModulusLength = BN_num_bytes(rsa_n);
 	key->Modulus = (BYTE*)malloc(key->ModulusLength);
 
 	if (!key->Modulus)
-		goto out_free_rsa;
+		goto fail;
 
 	BN_bn2bin(rsa_n, key->Modulus);
 	crypto_reverse(key->Modulus, key->ModulusLength);
@@ -904,7 +904,7 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	key->PrivateExponent = (BYTE*)malloc(key->PrivateExponentLength);
 
 	if (!key->PrivateExponent)
-		goto out_free_modulus;
+		goto fail;
 
 	BN_bn2bin(rsa_d, key->PrivateExponent);
 	crypto_reverse(key->PrivateExponent, key->PrivateExponentLength);
@@ -913,12 +913,9 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	crypto_reverse(key->exponent, sizeof(key->exponent));
 	RSA_free(rsa);
 	return key;
-out_free_modulus:
-	free(key->Modulus);
-out_free_rsa:
+fail:
 	RSA_free(rsa);
-out_free:
-	free(key);
+	key_free(key);
 	return NULL;
 }
 
@@ -953,18 +950,15 @@ rdpRsaKey* key_new(const char* keyfile)
 	if (fread((void*)buffer, length, 1, fp) != 1)
 		goto out_free;
 
-	fclose(fp);
 	buffer[length] = '\0';
 	key = key_new_from_content(buffer, keyfile);
-	free(buffer);
-	return key;
 out_free:
 
 	if (fp)
 		fclose(fp);
 
 	free(buffer);
-	return NULL;
+	return key;
 }
 
 rdpRsaKey* key_clone(const rdpRsaKey* key)
@@ -1007,7 +1001,11 @@ void key_free(rdpRsaKey* key)
 	if (!key)
 		return;
 
+	if (key->Modulus)
+		memset(key->Modulus, 0, key->ModulusLength);
 	free(key->Modulus);
+	if (key->PrivateExponent)
+		memset(key->PrivateExponent, 0, key->PrivateExponentLength);
 	free(key->PrivateExponent);
 	free(key);
 }
