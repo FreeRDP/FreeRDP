@@ -27,10 +27,13 @@
 
 #define SYNCMSGTYPE_SYNC 0x0001
 
-#define CTRLACTION_REQUEST_CONTROL 0x0001
-#define CTRLACTION_GRANTED_CONTROL 0x0002
-#define CTRLACTION_DETACH 0x0003
-#define CTRLACTION_COOPERATE 0x0004
+typedef enum
+{
+	CTRLACTION_REQUEST_CONTROL = 0x0001,
+	CTRLACTION_GRANTED_CONTROL = 0x0002,
+	CTRLACTION_DETACH = 0x0003,
+	CTRLACTION_COOPERATE = 0x0004
+} CTRLACTION;
 
 #define PERSIST_FIRST_PDU 0x01
 #define PERSIST_LAST_PDU 0x02
@@ -38,6 +41,7 @@
 #define FONTLIST_FIRST 0x0001
 #define FONTLIST_LAST 0x0002
 
+FREERDP_LOCAL const char* rdp_ctrlaction_string(UINT16 action, char* buffer, size_t size);
 FREERDP_LOCAL BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_deactivate_all(rdpRdp* rdp);
 

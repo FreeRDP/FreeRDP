@@ -1097,6 +1097,9 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 
 int rdp_client_connect_finalize(rdpRdp* rdp)
 {
+	if (!rdp_finalize_reset_flags(rdp, FALSE))
+		return -1;
+
 	/**
 	 * [MS-RDPBCGR] 1.3.1.1 - 8.
 	 * The client-to-server PDUs sent during this phase have no dependencies on any of the
@@ -1119,7 +1122,9 @@ int rdp_client_connect_finalize(rdpRdp* rdp)
 	 * host cache and a deactivation reactivation sequence is *not* in progress.
 	 */
 
-	if (!rdp->deactivation_reactivation && rdp->settings->BitmapCachePersistEnabled)
+	if (!rdp_finalize_is_flag_set(rdp, FINALIZE_DEACTIVATE_REACTIVATE) &&
+	    rdp->settings->BitmapCachePersistEnabled)
+
 	{
 		if (!rdp_send_client_persistent_key_list_pdu(rdp))
 			return -1;
@@ -1201,7 +1206,8 @@ int rdp_client_transition_to_state(rdpRdp* rdp, int state)
 				ActivatedEventArgs activatedEvent;
 				rdpContext* context = rdp->context;
 				EventArgsInit(&activatedEvent, "libfreerdp");
-				activatedEvent.firstActivation = !rdp->deactivation_reactivation;
+				activatedEvent.firstActivation =
+				    !rdp_finalize_is_flag_set(rdp, FINALIZE_DEACTIVATE_REACTIVATE);
 				PubSub_OnActivated(context->pubSub, context, &activatedEvent);
 			}
 
@@ -1518,7 +1524,6 @@ int rdp_server_transition_to_state(rdpRdp* rdp, int state)
 
 		case CONNECTION_STATE_FINALIZATION:
 			rdp_set_state(rdp, CONNECTION_STATE_FINALIZATION);
-			rdp->finalize_sc_pdus = 0;
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
