@@ -1342,6 +1342,20 @@ static BOOL update_send_synchronize(rdpContext* context)
 
 static BOOL update_send_desktop_resize(rdpContext* context)
 {
+	BOOL support;
+	UINT32 EarlyCapabilityFlags;
+	WINPR_ASSERT(context);
+
+	support = freerdp_settings_get_bool(context->settings, FreeRDP_SupportMonitorLayoutPdu);
+	EarlyCapabilityFlags =
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_EarlyCapabilityFlags);
+	if (!support || ((EarlyCapabilityFlags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU) == 0))
+	{
+		WLog_WARN(TAG, "Tried to resize the session, but RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU is "
+		               "not supported by client");
+		freerdp_abort_connect_context(context);
+		return FALSE;
+	}
 	return rdp_server_reactivate(context->rdp);
 }
 
