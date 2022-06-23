@@ -370,7 +370,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "tls-seclevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "1", NULL, -1, NULL,
 	  "TLS security level - defaults to 1" },
 	{ "enforce-tlsv1_2", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "Use TLS1.2 for connection." },
+	  "Force use of TLS1.2 for connection. Some servers have a buggy TLS version negotiation and "
+	  "might fail without this" },
 	{ "toggle-fullscreen", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Alt+Ctrl+Enter to toggle fullscreen" },
 	{ "tune", COMMAND_LINE_VALUE_REQUIRED, "<setting:value>,<setting:value>", "", NULL, -1, NULL,
