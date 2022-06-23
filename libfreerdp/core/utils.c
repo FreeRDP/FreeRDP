@@ -189,7 +189,8 @@ BOOL utils_str_is_empty(const char* str)
 
 BOOL utils_abort_connect(rdpRdp* rdp)
 {
-	WINPR_ASSERT(rdp);
+	if (!rdp)
+		return FALSE;
 
 	return SetEvent(rdp->abortEvent);
 }
