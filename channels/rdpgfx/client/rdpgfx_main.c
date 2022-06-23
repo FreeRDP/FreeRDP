@@ -1004,7 +1004,7 @@ static UINT rdpgfx_recv_cache_import_reply_pdu(GENERIC_CHANNEL_CALLBACK* callbac
  */
 static UINT rdpgfx_recv_create_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_CREATE_SURFACE_PDU pdu;
+	RDPGFX_CREATE_SURFACE_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -1040,7 +1040,7 @@ static UINT rdpgfx_recv_create_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
  */
 static UINT rdpgfx_recv_delete_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_DELETE_SURFACE_PDU pdu;
+	RDPGFX_DELETE_SURFACE_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -1070,7 +1070,7 @@ static UINT rdpgfx_recv_delete_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
  */
 static UINT rdpgfx_recv_start_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_START_FRAME_PDU pdu;
+	RDPGFX_START_FRAME_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -1104,8 +1104,8 @@ static UINT rdpgfx_recv_start_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStr
  */
 static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_END_FRAME_PDU pdu;
-	RDPGFX_FRAME_ACKNOWLEDGE_PDU ack;
+	RDPGFX_END_FRAME_PDU pdu = { 0 };
+	RDPGFX_FRAME_ACKNOWLEDGE_PDU ack = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -1201,8 +1201,8 @@ static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStrea
  */
 static UINT rdpgfx_recv_wire_to_surface_1_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_SURFACE_COMMAND cmd;
-	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu;
+	RDPGFX_SURFACE_COMMAND cmd = { 0 };
+	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	UINT error;
 
@@ -1289,8 +1289,8 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(GENERIC_CHANNEL_CALLBACK* callback
  */
 static UINT rdpgfx_recv_wire_to_surface_2_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_SURFACE_COMMAND cmd;
-	RDPGFX_WIRE_TO_SURFACE_PDU_2 pdu;
+	RDPGFX_SURFACE_COMMAND cmd = { 0 };
+	RDPGFX_WIRE_TO_SURFACE_PDU_2 pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -1360,7 +1360,7 @@ static UINT rdpgfx_recv_wire_to_surface_2_pdu(GENERIC_CHANNEL_CALLBACK* callback
  */
 static UINT rdpgfx_recv_delete_encoding_context_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_DELETE_ENCODING_CONTEXT_PDU pdu;
+	RDPGFX_DELETE_ENCODING_CONTEXT_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -1396,7 +1396,7 @@ static UINT rdpgfx_recv_solid_fill_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStre
 {
 	UINT16 index;
 	RECTANGLE_16* fillRect;
-	RDPGFX_SOLID_FILL_PDU pdu;
+	RDPGFX_SOLID_FILL_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error;
@@ -1463,7 +1463,7 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(GENERIC_CHANNEL_CALLBACK* callbac
 {
 	UINT16 index;
 	RDPGFX_POINT16* destPt;
-	RDPGFX_SURFACE_TO_SURFACE_PDU pdu;
+	RDPGFX_SURFACE_TO_SURFACE_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error;
@@ -1534,7 +1534,7 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(GENERIC_CHANNEL_CALLBACK* callbac
  */
 static UINT rdpgfx_recv_surface_to_cache_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_SURFACE_TO_CACHE_PDU pdu;
+	RDPGFX_SURFACE_TO_CACHE_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error;
@@ -1581,7 +1581,7 @@ static UINT rdpgfx_recv_cache_to_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 {
 	UINT16 index;
 	RDPGFX_POINT16* destPt;
-	RDPGFX_CACHE_TO_SURFACE_PDU pdu;
+	RDPGFX_CACHE_TO_SURFACE_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -1642,7 +1642,7 @@ static UINT rdpgfx_recv_cache_to_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback,
  */
 static UINT rdpgfx_recv_map_surface_to_output_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU pdu;
+	RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -1674,7 +1674,7 @@ static UINT rdpgfx_recv_map_surface_to_output_pdu(GENERIC_CHANNEL_CALLBACK* call
 static UINT rdpgfx_recv_map_surface_to_scaled_output_pdu(GENERIC_CHANNEL_CALLBACK* callback,
                                                          wStream* s)
 {
-	RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU pdu;
+	RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -1713,7 +1713,7 @@ static UINT rdpgfx_recv_map_surface_to_scaled_output_pdu(GENERIC_CHANNEL_CALLBAC
  */
 static UINT rdpgfx_recv_map_surface_to_window_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	RDPGFX_MAP_SURFACE_TO_WINDOW_PDU pdu;
+	RDPGFX_MAP_SURFACE_TO_WINDOW_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -1745,7 +1745,7 @@ static UINT rdpgfx_recv_map_surface_to_window_pdu(GENERIC_CHANNEL_CALLBACK* call
 static UINT rdpgfx_recv_map_surface_to_scaled_window_pdu(GENERIC_CHANNEL_CALLBACK* callback,
                                                          wStream* s)
 {
-	RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU pdu;
+	RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU pdu = { 0 };
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 	UINT error = CHANNEL_RC_OK;
@@ -1785,11 +1785,11 @@ static UINT rdpgfx_recv_map_surface_to_scaled_window_pdu(GENERIC_CHANNEL_CALLBAC
  */
 static UINT rdpgfx_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	size_t beg, end;
-	RDPGFX_HEADER header;
+	size_t end;
+	RDPGFX_HEADER header = { 0 };
 	UINT error;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
-	beg = Stream_GetPosition(s);
+	const size_t beg = Stream_GetPosition(s);
 
 	if ((error = rdpgfx_read_header(s, &header)))
 	{
@@ -2065,6 +2065,8 @@ static UINT rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	UINT error = CHANNEL_RC_OK;
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
+	if (!gfx)
+		goto fail;
 	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
 
 	DEBUG_RDPGFX(gfx->log, "OnClose");
@@ -2089,6 +2091,7 @@ static UINT rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 		IFCALL(context->OnClose, context);
 	}
 
+fail:
 	return CHANNEL_RC_OK;
 }
 
