@@ -21,6 +21,7 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/assert.h>
 
@@ -1745,7 +1746,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_FINALIZATION:
 			status = rdp_recv_pdu(rdp, s);
 
-			if ((status >= 0) && (rdp->finalize_sc_pdus == FINALIZE_SC_COMPLETE))
+			if ((status >= 0) && rdp_finalize_is_flag_set(rdp, FINALIZE_SC_COMPLETE))
 			{
 				rdp_client_transition_to_state(rdp, CONNECTION_STATE_ACTIVE);
 				return 2;
@@ -2070,8 +2071,7 @@ BOOL rdp_reset(rdpRdp* rdp)
 		goto fail;
 
 	rdp->errorInfo = 0;
-	rdp->deactivation_reactivation = FALSE;
-	rdp->finalize_sc_pdus = 0;
+	rdp_finalize_reset_flags(rdp, TRUE);
 
 	rc = TRUE;
 
@@ -2143,4 +2143,71 @@ void* rdp_get_io_callback_context(rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 	return rdp->ioContext;
+}
+
+const char* rdp_finalize_flags_to_str(UINT32 flags, char* buffer, size_t size)
+{
+	char number[32] = { 0 };
+	const UINT32 mask = ~(FINALIZE_SC_SYNCHRONIZE_PDU | FINALIZE_SC_CONTROL_COOPERATE_PDU |
+	                      FINALIZE_SC_CONTROL_GRANTED_PDU | FINALIZE_SC_FONT_MAP_PDU |
+	                      FINALIZE_CS_SYNCHRONIZE_PDU | FINALIZE_CS_CONTROL_COOPERATE_PDU |
+	                      FINALIZE_CS_CONTROL_REQUEST_PDU | FINALIZE_CS_PERSISTENT_KEY_LIST_PDU |
+	                      FINALIZE_CS_FONT_LIST_PDU | FINALIZE_DEACTIVATE_REACTIVATE);
+
+	if (flags & FINALIZE_SC_SYNCHRONIZE_PDU)
+		winpr_str_append("FINALIZE_SC_SYNCHRONIZE_PDU", buffer, size, "|");
+	if (flags & FINALIZE_SC_CONTROL_COOPERATE_PDU)
+		winpr_str_append("FINALIZE_SC_CONTROL_COOPERATE_PDU", buffer, size, "|");
+	if (flags & FINALIZE_SC_CONTROL_GRANTED_PDU)
+		winpr_str_append("FINALIZE_SC_CONTROL_GRANTED_PDU", buffer, size, "|");
+	if (flags & FINALIZE_SC_FONT_MAP_PDU)
+		winpr_str_append("FINALIZE_SC_FONT_MAP_PDU", buffer, size, "|");
+	if (flags & FINALIZE_CS_SYNCHRONIZE_PDU)
+		winpr_str_append("FINALIZE_CS_SYNCHRONIZE_PDU", buffer, size, "|");
+	if (flags & FINALIZE_CS_CONTROL_COOPERATE_PDU)
+		winpr_str_append("FINALIZE_CS_CONTROL_COOPERATE_PDU", buffer, size, "|");
+	if (flags & FINALIZE_CS_CONTROL_REQUEST_PDU)
+		winpr_str_append("FINALIZE_CS_CONTROL_REQUEST_PDU", buffer, size, "|");
+	if (flags & FINALIZE_CS_PERSISTENT_KEY_LIST_PDU)
+		winpr_str_append("FINALIZE_CS_PERSISTENT_KEY_LIST_PDU", buffer, size, "|");
+	if (flags & FINALIZE_CS_FONT_LIST_PDU)
+		winpr_str_append("FINALIZE_CS_FONT_LIST_PDU", buffer, size, "|");
+	if (flags & FINALIZE_DEACTIVATE_REACTIVATE)
+		winpr_str_append("FINALIZE_DEACTIVATE_REACTIVATE", buffer, size, "|");
+	if (flags & mask)
+		winpr_str_append("UNKNOWN_FLAG", buffer, size, "|");
+	if (flags == 0)
+		winpr_str_append("NO_FLAG_SET", buffer, size, "|");
+	_snprintf(number, sizeof(number), " [0x%04" PRIx16 "]", flags);
+	winpr_str_append(number, buffer, size, "|");
+	return buffer;
+}
+
+BOOL rdp_finalize_reset_flags(rdpRdp* rdp, BOOL clearAll)
+{
+	WINPR_ASSERT(rdp);
+	WLog_DBG(TAG, "[%s] reset finalize_sc_pdus", rdp_get_state_string(rdp));
+	if (clearAll)
+		rdp->finalize_sc_pdus = 0;
+	else
+		rdp->finalize_sc_pdus &= FINALIZE_DEACTIVATE_REACTIVATE;
+	return TRUE;
+}
+
+BOOL rdp_finalize_set_flag(rdpRdp* rdp, UINT32 flag)
+{
+	char buffer[1024] = { 0 };
+
+	WINPR_ASSERT(rdp);
+
+	WLog_DBG(TAG, "[%s] received flag %s", rdp_get_state_string(rdp),
+	         rdp_finalize_flags_to_str(flag, buffer, sizeof(buffer)));
+	rdp->finalize_sc_pdus |= flag;
+	return TRUE;
+}
+
+BOOL rdp_finalize_is_flag_set(rdpRdp* rdp, UINT32 flag)
+{
+	WINPR_ASSERT(rdp);
+	return (rdp->finalize_sc_pdus & flag) == flag;
 }

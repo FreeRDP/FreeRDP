@@ -89,11 +89,29 @@
 #define PDU_TYPE_FLOW_RESPONSE 0x42
 #define PDU_TYPE_FLOW_STOP 0x43
 
-#define FINALIZE_SC_SYNCHRONIZE_PDU 0x01
-#define FINALIZE_SC_CONTROL_COOPERATE_PDU 0x02
-#define FINALIZE_SC_CONTROL_GRANTED_PDU 0x04
-#define FINALIZE_SC_FONT_MAP_PDU 0x08
-#define FINALIZE_SC_COMPLETE 0x0F
+typedef enum
+{
+	FINALIZE_SC_SYNCHRONIZE_PDU = 0x01,
+	FINALIZE_SC_CONTROL_COOPERATE_PDU = 0x02,
+	FINALIZE_SC_CONTROL_GRANTED_PDU = 0x04,
+	FINALIZE_SC_FONT_MAP_PDU = 0x08,
+
+	FINALIZE_CS_SYNCHRONIZE_PDU = 0x10,
+	FINALIZE_CS_CONTROL_COOPERATE_PDU = 0x20,
+	FINALIZE_CS_CONTROL_REQUEST_PDU = 0x40,
+	FINALIZE_CS_PERSISTENT_KEY_LIST_PDU = 0x80,
+	FINALIZE_CS_FONT_LIST_PDU = 0x100,
+
+	FINALIZE_DEACTIVATE_REACTIVATE = 0x200
+} rdpFinalizePduType;
+
+#define FINALIZE_SC_COMPLETE                                           \
+	(FINALIZE_SC_SYNCHRONIZE_PDU | FINALIZE_SC_CONTROL_COOPERATE_PDU | \
+	 FINALIZE_SC_CONTROL_GRANTED_PDU | FINALIZE_SC_FONT_MAP_PDU)
+#define FINALIZE_CS_COMPLETE                                                 \
+	(FINALIZE_CS_SYNCHRONIZE_PDU | FINALIZE_CS_CONTROL_COOPERATE_PDU |       \
+	 FINALIZE_CS_CONTROL_REQUEST_PDU | FINALIZE_CS_PERSISTENT_KEY_LIST_PDU | \
+	 FINALIZE_CS_FONT_LIST_PDU)
 
 /* Data PDU Types */
 typedef enum
@@ -173,7 +191,6 @@ struct rdp_rdp
 	UINT32 errorInfo;
 	UINT32 finalize_sc_pdus;
 	BOOL resendFocus;
-	BOOL deactivation_reactivation;
 	BOOL AwaitCapabilities;
 	UINT64 inBytes;
 	UINT64 inPackets;
@@ -247,6 +264,11 @@ FREERDP_LOCAL void* rdp_get_io_callback_context(rdpRdp* rdp);
 
 const char* data_pdu_type_to_string(UINT8 type);
 const char* pdu_type_to_str(UINT16 pduType);
+
+BOOL rdp_finalize_reset_flags(rdpRdp* rdp, BOOL clearAll);
+BOOL rdp_finalize_set_flag(rdpRdp* rdp, UINT32 flag);
+BOOL rdp_finalize_is_flag_set(rdpRdp* rdp, UINT32 flag);
+const char* rdp_finalize_flags_to_str(UINT32 flags, char* buffer, size_t size);
 
 BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags);
 

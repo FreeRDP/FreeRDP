@@ -26,16 +26,6 @@
 
 #define TAG FREERDP_TAG("core.activation")
 
-/*
-static const char* const CTRLACTION_STRINGS[] =
-{
-        "",
-        "CTRLACTION_REQUEST_CONTROL",
-        "CTRLACTION_GRANTED_CONTROL",
-        "CTRLACTION_DETACH",
-        "CTRLACTION_COOPERATE"
-};
-*/
 static BOOL rdp_recv_server_synchronize_pdu(rdpRdp* rdp, wStream* s);
 static BOOL rdp_recv_client_font_list_pdu(wStream* s);
 static BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s);
@@ -72,8 +62,7 @@ BOOL rdp_recv_server_synchronize_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
-	rdp->finalize_sc_pdus |= FINALIZE_SC_SYNCHRONIZE_PDU;
-	return TRUE;
+	return rdp_finalize_set_flag(rdp, FINALIZE_SC_SYNCHRONIZE_PDU);
 }
 
 BOOL rdp_send_server_synchronize_pdu(rdpRdp* rdp)
@@ -100,7 +89,8 @@ BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
-	rdp->finalize_sc_pdus |= FINALIZE_SC_SYNCHRONIZE_PDU;
+	if (!rdp_finalize_set_flag(rdp, FINALIZE_SC_SYNCHRONIZE_PDU))
+		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
@@ -173,16 +163,19 @@ BOOL rdp_recv_server_control_pdu(rdpRdp* rdp, wStream* s)
 	switch (action)
 	{
 		case CTRLACTION_COOPERATE:
-			rdp->finalize_sc_pdus |= FINALIZE_SC_CONTROL_COOPERATE_PDU;
-			break;
+			return rdp_finalize_set_flag(rdp, FINALIZE_SC_CONTROL_COOPERATE_PDU);
 
 		case CTRLACTION_GRANTED_CONTROL:
-			rdp->finalize_sc_pdus |= FINALIZE_SC_CONTROL_GRANTED_PDU;
 			rdp->resendFocus = TRUE;
-			break;
+			return rdp_finalize_set_flag(rdp, FINALIZE_SC_CONTROL_GRANTED_PDU);
+		default:
+		{
+			char buffer[128] = { 0 };
+			WLog_WARN(TAG, "Unexpected control PDU %s",
+			          rdp_ctrlaction_string(action, buffer, sizeof(buffer)));
+			return TRUE;
+		}
 	}
-
-	return TRUE;
 }
 
 BOOL rdp_send_server_control_cooperate_pdu(rdpRdp* rdp)
@@ -526,8 +519,7 @@ BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(s);
 
 	WLog_WARN(TAG, "Invalid PDU received: FONT_MAP only allowed client -> server");
-	rdp->finalize_sc_pdus |= FINALIZE_SC_FONT_MAP_PDU;
-	return FALSE;
+	return rdp_finalize_set_flag(rdp, FINALIZE_SC_FONT_MAP_PDU);
 }
 
 BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, wStream* s)
@@ -535,7 +527,8 @@ BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
-	rdp->finalize_sc_pdus |= FINALIZE_SC_FONT_MAP_PDU;
+	if (!rdp_finalize_set_flag(rdp, FINALIZE_SC_FONT_MAP_PDU))
+		return FALSE;
 
 	if (Stream_GetRemainingLength(s) >= 8)
 	{
@@ -576,9 +569,10 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(s);
 
 	if (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE)
-		rdp->deactivation_reactivation = TRUE;
-	else
-		rdp->deactivation_reactivation = FALSE;
+	{
+		if (!rdp_finalize_set_flag(rdp, FINALIZE_DEACTIVATE_REACTIVATE))
+			return FALSE;
+	}
 
 	/*
 	 * Windows XP can send short DEACTIVATE_ALL PDU that doesn't contain
@@ -728,4 +722,30 @@ BOOL rdp_server_accept_client_persistent_key_list_pdu(rdpRdp* rdp, wStream* s)
 
 	// TODO: Actually do something with this
 	return TRUE;
+}
+
+const char* rdp_ctrlaction_string(UINT16 action, char* buffer, size_t size)
+{
+	const char* actstr;
+	switch (action)
+	{
+		case CTRLACTION_COOPERATE:
+			actstr = "CTRLACTION_COOPERATE";
+			break;
+		case CTRLACTION_DETACH:
+			actstr = "CTRLACTION_DETACH";
+			break;
+		case CTRLACTION_GRANTED_CONTROL:
+			actstr = "CTRLACTION_GRANTED_CONTROL";
+			break;
+		case CTRLACTION_REQUEST_CONTROL:
+			actstr = "CTRLACTION_REQUEST_CONTROL";
+			break;
+		default:
+			actstr = "CTRLACTION_UNKNOWN";
+			break;
+	}
+
+	_snprintf(buffer, size, "%s [0x%04" PRIx16 "]", actstr, action);
+	return buffer;
 }
