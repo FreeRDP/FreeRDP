@@ -574,6 +574,7 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 	settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
+	IFCALL(client->ReachedState, client, rdp_get_state(rdp));
 	switch (rdp_get_state(rdp))
 	{
 		case CONNECTION_STATE_INITIAL:
