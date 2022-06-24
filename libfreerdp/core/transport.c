@@ -887,6 +887,8 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 	if (!s)
 		return -1;
 
+	Stream_AddRef(s);
+
 	rdp = context->rdp;
 	if (!rdp)
 		goto fail;
