@@ -1260,7 +1260,7 @@ static BOOL device_announce(ULONG_PTR key, void* element, void* data)
 
 		if (!Stream_EnsureRemainingCapacity(arg->s, 20 + data_len))
 		{
-			Stream_Free(arg->s, TRUE);
+			Stream_Release(arg->s);
 			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 			return FALSE;
 		}
@@ -1305,7 +1305,7 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(rdpdr->devman);
 
-	s = Stream_New(NULL, 256);
+	s = StreamPool_Take(rdpdr->pool, 256);
 
 	if (!s)
 	{
@@ -1375,7 +1375,7 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 
-	irp = irp_new(rdpdr->devman, s, &error);
+	irp = irp_new(rdpdr->devman, rdpdr->pool, s, &error);
 
 	if (!irp)
 	{
@@ -1605,13 +1605,13 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 
 	if (!rdpdr || !s)
 	{
-		Stream_Free(s, TRUE);
+		Stream_Release(s);
 		return CHANNEL_RC_NULL_DATA;
 	}
 
 	if (!plugin)
 	{
-		Stream_Free(s, TRUE);
+		Stream_Release(s);
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
 	}
 	else
@@ -1624,7 +1624,7 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 
 	if (status != CHANNEL_RC_OK)
 	{
-		Stream_Free(s, TRUE);
+		Stream_Release(s);
 		WLog_ERR(TAG, "pVirtualChannelWriteEx failed with %s [%08" PRIX32 "]",
 		         WTSErrorToString(status), status);
 	}
@@ -1660,9 +1660,9 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
 		if (rdpdr->data_in != NULL)
-			Stream_Free(rdpdr->data_in, TRUE);
+			Stream_Release(rdpdr->data_in);
 
-		rdpdr->data_in = Stream_New(NULL, totalLength);
+		rdpdr->data_in = StreamPool_Take(rdpdr->pool, totalLength);
 
 		if (!rdpdr->data_in)
 		{
@@ -1683,7 +1683,9 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
-		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
+		const size_t pos = Stream_GetPosition(data_in);
+		const size_t cap = Stream_Capacity(data_in);
+		if (cap < pos)
 		{
 			WLog_ERR(TAG, "rdpdr_virtual_channel_event_data_received: read error");
 			return ERROR_INTERNAL_ERROR;
@@ -1732,7 +1734,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DW
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 		{
 			wStream* s = (wStream*)pData;
-			Stream_Free(s, TRUE);
+			Stream_Release(s);
 		}
 		break;
 
@@ -1789,7 +1791,7 @@ static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)
 
 				error = rdpdr_process_receive(rdpdr, data);
 
-				Stream_Free(data, TRUE);
+				Stream_Release(data);
 				if (error)
 				{
 					WLog_ERR(TAG, "rdpdr_process_receive failed with error %" PRIu32 "!", error);
@@ -1822,7 +1824,7 @@ static void queue_free(void* obj)
 
 	s = (wStream*)msg->wParam;
 	WINPR_ASSERT(s);
-	Stream_Free(s, TRUE);
+	Stream_Release(s);
 }
 
 /**
@@ -1906,7 +1908,7 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 
 	if (rdpdr->data_in)
 	{
-		Stream_Free(rdpdr->data_in, TRUE);
+		Stream_Release(rdpdr->data_in);
 		rdpdr->data_in = NULL;
 	}
 
@@ -1923,6 +1925,7 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 {
 	WINPR_ASSERT(rdpdr);
 	rdpdr->InitHandle = 0;
+	StreamPool_Free(rdpdr->pool);
 	free(rdpdr);
 }
 
@@ -1995,6 +1998,13 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	if (!rdpdr)
 	{
 		WLog_ERR(TAG, "calloc failed!");
+		return FALSE;
+	}
+
+	rdpdr->pool = StreamPool_New(TRUE, 1024);
+	if (!rdpdr->pool)
+	{
+		free(rdpdr);
 		return FALSE;
 	}
 
