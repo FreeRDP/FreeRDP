@@ -248,6 +248,12 @@ static void StreamPool_Remove(wStreamPool* pool, wStream* s)
 {
 	StreamPool_EnsureCapacity(pool, 1, FALSE);
 	Stream_EnsureValidity(s);
+	for (size_t x = 0; x < pool->aSize; x++)
+	{
+		wStream* cs = pool->aArray[x];
+
+		WINPR_ASSERT(cs != s);
+	}
 	pool->aArray[(pool->aSize)++] = s;
 	StreamPool_RemoveUsed(pool, s);
 }
@@ -337,14 +343,14 @@ void StreamPool_Clear(wStreamPool* pool)
 
 	while (pool->aSize > 0)
 	{
-		(pool->aSize)--;
-		Stream_Free(pool->aArray[pool->aSize], TRUE);
+		wStream* s = pool->aArray[--pool->aSize];
+		Stream_Free(s, s->isAllocatedStream);
 	}
 
 	while (pool->uSize > 0)
 	{
-		(pool->uSize)--;
-		Stream_Free(pool->uArray[pool->uSize], TRUE);
+		wStream* s = pool->uArray[--pool->uSize];
+		Stream_Free(s, s->isAllocatedStream);
 	}
 
 	StreamPool_Unlock(pool);
