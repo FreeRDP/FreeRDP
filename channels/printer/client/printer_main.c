@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
@@ -426,9 +427,15 @@ static UINT printer_process_irp_create(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	rdpPrintJob* printjob = NULL;
 
+	WINPR_ASSERT(printer_dev);
+	WINPR_ASSERT(irp);
+
 	if (printer_dev->printer)
+	{
+		WINPR_ASSERT(printer_dev->printer->CreatePrintJob);
 		printjob =
 		    printer_dev->printer->CreatePrintJob(printer_dev->printer, irp->devman->id_sequence++);
+	}
 
 	if (printjob)
 	{
@@ -452,8 +459,14 @@ static UINT printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	rdpPrintJob* printjob = NULL;
 
+	WINPR_ASSERT(printer_dev);
+	WINPR_ASSERT(irp);
+
 	if (printer_dev->printer)
+	{
+		WINPR_ASSERT(printer_dev->printer->FindPrintJob);
 		printjob = printer_dev->printer->FindPrintJob(printer_dev->printer, irp->FileId);
+	}
 
 	if (!printjob)
 	{
@@ -481,6 +494,9 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 	UINT error = CHANNEL_RC_OK;
 	void* ptr;
 
+	WINPR_ASSERT(printer_dev);
+	WINPR_ASSERT(irp);
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, Length);
@@ -490,7 +506,10 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 	if (!Stream_SafeSeek(irp->input, Length))
 		return ERROR_INVALID_DATA;
 	if (printer_dev->printer)
+	{
+		WINPR_ASSERT(printer_dev->printer->FindPrintJob);
 		printjob = printer_dev->printer->FindPrintJob(printer_dev->printer, irp->FileId);
+	}
 
 	if (!printjob)
 	{
@@ -510,6 +529,8 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 
 	Stream_Write_UINT32(irp->output, Length);
 	Stream_Write_UINT8(irp->output, 0); /* Padding */
+
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -520,7 +541,12 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
  */
 static UINT printer_process_irp_device_control(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
+	WINPR_ASSERT(printer_dev);
+	WINPR_ASSERT(irp);
+
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
+
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -532,6 +558,9 @@ static UINT printer_process_irp_device_control(PRINTER_DEVICE* printer_dev, IRP*
 static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	UINT error;
+
+	WINPR_ASSERT(printer_dev);
+	WINPR_ASSERT(irp);
 
 	switch (irp->MajorFunction)
 	{
@@ -574,6 +603,7 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
+			WINPR_ASSERT(irp->Complete);
 			return irp->Complete(irp);
 	}
 
@@ -584,12 +614,14 @@ static DWORD WINAPI printer_thread_func(LPVOID arg)
 {
 	IRP* irp;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)arg;
-	HANDLE obj[] = { printer_dev->event, printer_dev->stopEvent };
 	UINT error = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(printer_dev);
 
 	while (1)
 	{
-		DWORD rc = WaitForMultipleObjects(2, obj, FALSE, INFINITE);
+		HANDLE obj[] = { printer_dev->event, printer_dev->stopEvent };
+		DWORD rc = WaitForMultipleObjects(ARRAYSIZE(obj), obj, FALSE, INFINITE);
 
 		if (rc == WAIT_FAILED)
 		{
@@ -635,6 +667,10 @@ static DWORD WINAPI printer_thread_func(LPVOID arg)
 static UINT printer_irp_request(DEVICE* device, IRP* irp)
 {
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)device;
+
+	WINPR_ASSERT(printer_dev);
+	WINPR_ASSERT(irp);
+
 	InterlockedPushEntrySList(printer_dev->pIrpList, &(irp->ItemEntry));
 	SetEvent(printer_dev->event);
 	return CHANNEL_RC_OK;
@@ -644,7 +680,12 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 {
 	UINT32 eventID;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)device;
+
+	WINPR_ASSERT(printer_dev);
+	WINPR_ASSERT(printer_dev->rdpcontext);
+
 	const rdpSettings* settings = printer_dev->rdpcontext->settings;
+	WINPR_ASSERT(settings);
 
 	if (component != RDPDR_CTYP_PRN)
 		return ERROR_INVALID_DATA;
@@ -826,6 +867,9 @@ static UINT printer_free(DEVICE* device)
 	IRP* irp;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)device;
 	UINT error;
+
+	WINPR_ASSERT(printer_dev);
+
 	SetEvent(printer_dev->stopEvent);
 
 	if (WaitForSingleObject(printer_dev->thread, INFINITE) == WAIT_FAILED)
@@ -842,7 +886,10 @@ static UINT printer_free(DEVICE* device)
 	}
 
 	while ((irp = (IRP*)InterlockedPopEntrySList(printer_dev->pIrpList)) != NULL)
+	{
+		WINPR_ASSERT(irp->Discard);
 		irp->Discard(irp);
+	}
 
 	CloseHandle(printer_dev->thread);
 	CloseHandle(printer_dev->stopEvent);
@@ -850,7 +897,10 @@ static UINT printer_free(DEVICE* device)
 	winpr_aligned_free(printer_dev->pIrpList);
 
 	if (printer_dev->printer)
+	{
+		WINPR_ASSERT(printer_dev->printer->ReleaseRef);
 		printer_dev->printer->ReleaseRef(printer_dev->printer);
+	}
 
 	Stream_Free(printer_dev->device.data, TRUE);
 	free(printer_dev);
@@ -866,6 +916,10 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 {
 	PRINTER_DEVICE* printer_dev;
 	UINT error = ERROR_INTERNAL_ERROR;
+
+	WINPR_ASSERT(pEntryPoints);
+	WINPR_ASSERT(printer);
+
 	printer_dev = (PRINTER_DEVICE*)calloc(1, sizeof(PRINTER_DEVICE));
 
 	if (!printer_dev)
@@ -930,6 +984,7 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 		goto error_out;
 	}
 
+	WINPR_ASSERT(printer->AddRef);
 	printer->AddRef(printer);
 	return CHANNEL_RC_OK;
 error_out:
@@ -1016,6 +1071,7 @@ UINT printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	if (name && name[0])
 	{
+		WINPR_ASSERT(driver->GetPrinter);
 		rdpPrinter* printer = driver->GetPrinter(driver, name, driver_name);
 
 		if (!printer)
@@ -1025,6 +1081,7 @@ UINT printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			goto fail;
 		}
 
+		WINPR_ASSERT(printer->ReleaseRef);
 		if (!printer_save_default_config(pEntryPoints->rdpcontext->settings, printer))
 		{
 			error = CHANNEL_RC_INITIALIZATION_ERROR;
@@ -1042,6 +1099,7 @@ UINT printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	}
 	else
 	{
+		WINPR_ASSERT(driver->EnumPrinters);
 		rdpPrinter** printers = driver->EnumPrinters(driver);
 		rdpPrinter** current = printers;
 
@@ -1056,13 +1114,17 @@ UINT printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			}
 		}
 
+		WINPR_ASSERT(driver->ReleaseEnumPrinters);
 		driver->ReleaseEnumPrinters(printers);
 	}
 
 fail:
 	free(driver_name);
 	if (driver)
+	{
+		WINPR_ASSERT(driver->ReleaseRef);
 		driver->ReleaseRef(driver);
+	}
 
 	return error;
 }
