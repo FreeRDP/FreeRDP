@@ -244,6 +244,24 @@ out_fail:
  * Returns an object to the pool.
  */
 
+static void StreamPool_Remove(wStreamPool* pool, wStream* s)
+{
+	StreamPool_EnsureCapacity(pool, 1, FALSE);
+	Stream_EnsureValidity(s);
+	pool->aArray[(pool->aSize)++] = s;
+	StreamPool_RemoveUsed(pool, s);
+}
+
+static void StreamPool_ReleaseOrReturn(wStreamPool* pool, wStream* s)
+{
+	StreamPool_Lock(pool);
+	if (s->count > 0)
+		s->count--;
+	if (s->count == 0)
+		StreamPool_Remove(pool, s);
+	StreamPool_Unlock(pool);
+}
+
 void StreamPool_Return(wStreamPool* pool, wStream* s)
 {
 	WINPR_ASSERT(pool);
@@ -251,14 +269,7 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 		return;
 
 	StreamPool_Lock(pool);
-
-	StreamPool_EnsureCapacity(pool, 1, FALSE);
-	{
-		Stream_EnsureValidity(s);
-		pool->aArray[(pool->aSize)++] = s;
-		StreamPool_RemoveUsed(pool, s);
-	}
-
+	StreamPool_Remove(pool, s);
 	StreamPool_Unlock(pool);
 }
 
@@ -283,18 +294,9 @@ void Stream_AddRef(wStream* s)
 
 void Stream_Release(wStream* s)
 {
-	DWORD count;
-
 	WINPR_ASSERT(s);
 	if (s->pool)
-	{
-		StreamPool_Lock(s->pool);
-		count = --(s->count);
-		StreamPool_Unlock(s->pool);
-
-		if (count == 0)
-			StreamPool_Return(s->pool, s);
-	}
+		StreamPool_ReleaseOrReturn(s->pool, s);
 }
 
 /**
