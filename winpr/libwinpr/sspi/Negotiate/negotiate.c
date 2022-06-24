@@ -21,6 +21,7 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/sspi.h>
 #include <winpr/tchar.h>
 #include <winpr/assert.h>
@@ -105,7 +106,7 @@ static const Mech MechTable[] = {
 	{ &ntlm_OID, &SecPkgTable[1], 0, FALSE },
 };
 
-static const int MECH_COUNT = sizeof(MechTable) / sizeof(Mech);
+static const size_t MECH_COUNT = sizeof(MechTable) / sizeof(Mech);
 
 enum NegState
 {
@@ -211,6 +212,8 @@ static NEGOTIATE_CONTEXT* negotiate_ContextNew(NEGOTIATE_CONTEXT* init_context)
 {
 	NEGOTIATE_CONTEXT* context = NULL;
 
+	WINPR_ASSERT(init_context);
+
 	context = calloc(1, sizeof(NEGOTIATE_CONTEXT));
 	if (!context)
 		return NULL;
@@ -225,13 +228,15 @@ static NEGOTIATE_CONTEXT* negotiate_ContextNew(NEGOTIATE_CONTEXT* init_context)
 		}
 	}
 
-	CopyMemory(context, init_context, sizeof(NEGOTIATE_CONTEXT));
+	*context = *init_context;
 
 	return context;
 }
 
 static void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 {
+	WINPR_ASSERT(context);
+
 	if (context->mechTypes.pvBuffer)
 		free(context->mechTypes.pvBuffer);
 	free(context);
@@ -239,6 +244,9 @@ static void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 
 static BOOL negotiate_oid_compare(const sspi_gss_OID_desc* oid1, const sspi_gss_OID_desc* oid2)
 {
+	WINPR_ASSERT(oid1);
+	WINPR_ASSERT(oid2);
+
 	return (oid1->length == oid2->length) &&
 	       (memcmp(oid1->elements, oid2->elements, oid1->length) == 0);
 }
@@ -265,7 +273,7 @@ static const Mech* negotiate_GetMechByOID(sspi_gss_OID_desc oid)
 		oid.elements = kerberos_OID.elements;
 	}
 
-	for (int i = 0; i < MECH_COUNT; i++)
+	for (size_t i = 0; i < MECH_COUNT; i++)
 	{
 		if (negotiate_oid_compare(&oid, MechTable[i].oid))
 			return &MechTable[i];
@@ -275,12 +283,19 @@ static const Mech* negotiate_GetMechByOID(sspi_gss_OID_desc oid)
 
 static PSecHandle negotiate_FindCredential(MechCred* creds, const Mech* mech)
 {
-	for (int i = 0; i < MECH_COUNT; i++)
+	WINPR_ASSERT(creds);
+
+	if (!mech)
+		return NULL;
+
+	for (size_t i = 0; i < MECH_COUNT; i++)
 	{
-		if (creds[i].mech == mech)
+		MechCred* cred = &creds[i];
+
+		if (cred->mech == mech)
 		{
-			if (creds[i].valid)
-				return &creds[i].cred;
+			if (cred->valid)
+				return &cred->cred;
 			return NULL;
 		}
 	}
@@ -343,6 +358,10 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken* token)
 	size_t init_token_len = 0;
 	size_t inner_token_len = 0;
 	size_t total_len = 0;
+
+	WINPR_ASSERT(output_buffer);
+	WINPR_ASSERT(token);
+
 	BYTE* p = output_buffer->pvBuffer;
 	BYTE *mech_offset, *mic_offset;
 
@@ -460,8 +479,12 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 	BYTE tag;
 	BYTE contextual;
 	size_t len;
-	BYTE* buf = input->pvBuffer;
 	BYTE* p;
+
+	WINPR_ASSERT(input);
+	WINPR_ASSERT(token);
+
+	BYTE* buf = input->pvBuffer;
 	size_t bytes_remain = input->cbBuffer;
 
 	if (token->init)
@@ -576,17 +599,25 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegToken* input_token,
                                               NegToken* output_token, PSecBuffer output_buffer)
 {
-	SecBuffer mic_buffers[2];
+	SecBuffer mic_buffers[2] = { 0 };
 	SecBufferDesc mic_buffer_desc = { SECBUFFER_VERSION, 2, mic_buffers };
 	SECURITY_STATUS status;
-	const SecurityFunctionTableA* table = context->mech->pkg->table;
 
-	CopyMemory(mic_buffers, &context->mechTypes, sizeof(SecBuffer));
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(input_token);
+	WINPR_ASSERT(output_token);
+	WINPR_ASSERT(context->mech);
+	WINPR_ASSERT(context->mech->pkg);
+
+	const SecurityFunctionTableA* table = context->mech->pkg->table;
+	WINPR_ASSERT(table);
+
+	mic_buffers[0] = context->mechTypes;
 
 	/* Verify MIC if we received one */
 	if (input_token->mic.cbBuffer > 0)
 	{
-		CopyMemory(&mic_buffers[1], &input_token->mic, sizeof(SecBuffer));
+		mic_buffers[1] = input_token->mic;
 
 		status = table->VerifySignature(&context->sub_context, &mic_buffer_desc, 0, 0);
 		if (status != SEC_E_OK)
@@ -604,13 +635,13 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 		output_token->mic.pvBuffer =
 		    (BYTE*)output_buffer->pvBuffer + output_token->mechToken.cbBuffer;
 
-		CopyMemory(&mic_buffers[1], &output_token->mic, sizeof(SecBuffer));
+		mic_buffers[1] = output_token->mic;
 
 		status = table->MakeSignature(&context->sub_context, 0, &mic_buffer_desc, 0);
 		if (status != SEC_E_OK)
 			return status;
 
-		CopyMemory(&output_token->mic, &mic_buffers[1], sizeof(SecBuffer));
+		output_token->mic = mic_buffers[1];
 	}
 
 	/* When using NTLM cipher states need to be reset after mic exchange */
@@ -653,12 +684,14 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 
 	if (!context)
 	{
-		for (int i = 0; i < MECH_COUNT; i++)
+		for (size_t i = 0; i < MECH_COUNT; i++)
 		{
-			if (!creds[i].valid)
+			MechCred* cred = &creds[i];
+
+			if (!cred->valid)
 				continue;
 
-			inner_mech_list_len += asn_tlv_length(creds[i].mech->oid->length);
+			inner_mech_list_len += asn_tlv_length(cred->mech->oid->length);
 
 			if (init_context.mech) /* We already have an optimistic mechanism */
 				continue;
@@ -667,15 +700,15 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
 			status = MechTable[i].pkg->table_w->InitializeSecurityContextW(
-			    &creds[i].cred, NULL, pszTargetName, fContextReq | creds[i].mech->flags, Reserved1,
+			    &cred->cred, NULL, pszTargetName, fContextReq | cred->mech->flags, Reserved1,
 			    TargetDataRep, NULL, Reserved2, &init_context.sub_context, &mech_output,
 			    pfContextAttr, ptsExpiry);
 
 			/* If the mechanism failed we can't use it; skip */
 			if (IsSecurityStatusError(status))
-				creds[i].valid = FALSE;
+				cred->valid = FALSE;
 			else
-				init_context.mech = creds[i].mech;
+				init_context.mech = cred->mech;
 		}
 
 		/* No usable mechanisms were found */
@@ -719,13 +752,14 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		p = negotiate_write_tlv(context->mechTypes.pvBuffer, 0x30, inner_mech_list_len, NULL);
 
 		/* Write each enabled mechanism */
-		for (int i = 0; i < MECH_COUNT; i++)
+		for (size_t i = 0; i < MECH_COUNT; i++)
 		{
-			if (creds[i].valid)
+			MechCred* cred = &creds[i];
+			if (cred->valid)
 			{
-				p = negotiate_write_tlv(p, 0x06, creds[i].mech->oid->length,
-				                        creds[i].mech->oid->elements);
-				WLog_DBG(TAG, "Available mechanism: %s", negotiate_mech_name(creds[i].mech->oid));
+				p = negotiate_write_tlv(p, 0x06, cred->mech->oid->length,
+				                        cred->mech->oid->elements);
+				WLog_DBG(TAG, "Available mechanism: %s", negotiate_mech_name(cred->mech->oid));
 			}
 		}
 
@@ -1155,6 +1189,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_CompleteAuthToken(PCtxtHandle phConte
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
+	WINPR_ASSERT(context->mech);
+	WINPR_ASSERT(context->mech->pkg);
+	WINPR_ASSERT(context->mech->pkg->table);
 	if (context->mech->pkg->table->CompleteAuthToken)
 		status = context->mech->pkg->table->CompleteAuthToken(&context->sub_context, pToken);
 
@@ -1171,6 +1208,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_DeleteSecurityContext(PCtxtHandle phC
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
+	WINPR_ASSERT(context->mech);
+	WINPR_ASSERT(context->mech->pkg);
+	WINPR_ASSERT(context->mech->pkg->table);
 	pkg = context->mech->pkg;
 
 	if (pkg->table->DeleteSecurityContext)
@@ -1198,6 +1238,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesW(PCtxtHandle p
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
+	WINPR_ASSERT(context->mech);
+	WINPR_ASSERT(context->mech->pkg);
+	WINPR_ASSERT(context->mech->pkg->table_w);
 	if (context->mech->pkg->table_w->QueryContextAttributesW)
 		return context->mech->pkg->table_w->QueryContextAttributesW(&context->sub_context,
 		                                                            ulAttribute, pBuffer);
@@ -1213,6 +1256,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesA(PCtxtHandle p
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
+	WINPR_ASSERT(context->mech);
+	WINPR_ASSERT(context->mech->pkg);
+	WINPR_ASSERT(context->mech->pkg->table);
 	if (context->mech->pkg->table->QueryContextAttributesA)
 		return context->mech->pkg->table->QueryContextAttributesA(&context->sub_context,
 		                                                          ulAttribute, pBuffer);
@@ -1229,6 +1275,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesW(PCtxtHandle phC
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
+	WINPR_ASSERT(context->mech);
+	WINPR_ASSERT(context->mech->pkg);
+	WINPR_ASSERT(context->mech->pkg->table_w);
 	if (context->mech->pkg->table_w->SetContextAttributesW)
 		return context->mech->pkg->table_w->SetContextAttributesW(&context->sub_context,
 		                                                          ulAttribute, pBuffer, cbBuffer);
@@ -1245,6 +1294,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesA(PCtxtHandle phC
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
+	WINPR_ASSERT(context->mech);
+	WINPR_ASSERT(context->mech->pkg);
+	WINPR_ASSERT(context->mech->pkg->table);
 	if (context->mech->pkg->table->SetContextAttributesA)
 		return context->mech->pkg->table->SetContextAttributesA(&context->sub_context, ulAttribute,
 		                                                        pBuffer, cbBuffer);
@@ -1258,31 +1310,34 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
     PTimeStamp ptsExpiry)
 {
 	BOOL kerberos, ntlm;
-	MechCred* creds = calloc(MECH_COUNT, sizeof(MechCred));
-	const SecPkg* pkg;
-
-	if (!creds)
-		return SEC_E_INTERNAL_ERROR;
 
 	if (!negotiate_get_config(&kerberos, &ntlm))
 		return SEC_E_INTERNAL_ERROR;
 
-	for (int i = 0; i < MECH_COUNT; i++)
+	MechCred* creds = calloc(MECH_COUNT, sizeof(MechCred));
+
+	if (!creds)
+		return SEC_E_INTERNAL_ERROR;
+
+	for (size_t i = 0; i < MECH_COUNT; i++)
 	{
-		pkg = MechTable[i].pkg;
-		creds[i].mech = &MechTable[i];
+		MechCred* cred = &creds[i];
+		const SecPkg* pkg = MechTable[i].pkg;
+		cred->mech = &MechTable[i];
 
 		if (!kerberos && _tcscmp(pkg->name, KERBEROS_SSP_NAME) == 0)
 			continue;
 		if (!ntlm && _tcscmp(SecPkgTable[i].name, NTLM_SSP_NAME) == 0)
 			continue;
 
+		WINPR_ASSERT(pkg->table_w);
+		WINPR_ASSERT(pkg->table_w->AcquireCredentialsHandleW);
 		if (pkg->table_w->AcquireCredentialsHandleW(
 		        pszPrincipal, pszPackage, fCredentialUse, pvLogonID, pAuthData, pGetKeyFn,
-		        pvGetKeyArgument, &creds[i].cred, ptsExpiry) != SEC_E_OK)
+		        pvGetKeyArgument, &cred->cred, ptsExpiry) != SEC_E_OK)
 			continue;
 
-		creds[i].valid = TRUE;
+		cred->valid = TRUE;
 	}
 
 	sspi_SecureHandleSetLowerPointer(phCredential, (void*)creds);
@@ -1296,31 +1351,35 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
     PTimeStamp ptsExpiry)
 {
 	BOOL kerberos, ntlm;
-	MechCred* creds = calloc(MECH_COUNT, sizeof(MechCred));
-	const SecPkg* pkg;
-
-	if (!creds)
-		return SEC_E_INTERNAL_ERROR;
 
 	if (!negotiate_get_config(&kerberos, &ntlm))
 		return SEC_E_INTERNAL_ERROR;
 
-	for (int i = 0; i < MECH_COUNT; i++)
+	MechCred* creds = calloc(MECH_COUNT, sizeof(MechCred));
+
+	if (!creds)
+		return SEC_E_INTERNAL_ERROR;
+
+	for (size_t i = 0; i < MECH_COUNT; i++)
 	{
-		pkg = MechTable[i].pkg;
-		creds[i].mech = &MechTable[i];
+		const SecPkg* pkg = MechTable[i].pkg;
+		MechCred* cred = &creds[i];
+
+		cred->mech = &MechTable[i];
 
 		if (!kerberos && _tcscmp(pkg->name, KERBEROS_SSP_NAME) == 0)
 			continue;
 		if (!ntlm && _tcscmp(SecPkgTable[i].name, NTLM_SSP_NAME) == 0)
 			continue;
 
+		WINPR_ASSERT(pkg->table);
+		WINPR_ASSERT(pkg->table->AcquireCredentialsHandleA);
 		if (pkg->table->AcquireCredentialsHandleA(pszPrincipal, pszPackage, fCredentialUse,
 		                                          pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument,
-		                                          &creds[i].cred, ptsExpiry) != SEC_E_OK)
+		                                          &cred->cred, ptsExpiry) != SEC_E_OK)
 			continue;
 
-		creds[i].valid = TRUE;
+		cred->valid = TRUE;
 	}
 
 	sspi_SecureHandleSetLowerPointer(phCredential, (void*)creds);
@@ -1352,8 +1411,17 @@ static SECURITY_STATUS SEC_ENTRY negotiate_FreeCredentialsHandle(PCredHandle phC
 	if (!creds)
 		return SEC_E_INVALID_HANDLE;
 
-	for (int i = 0; i < MECH_COUNT; i++)
-		creds[i].mech->pkg->table->FreeCredentialsHandle(&creds[i].cred);
+	for (size_t i = 0; i < MECH_COUNT; i++)
+	{
+		MechCred* cred = &creds[i];
+
+		WINPR_ASSERT(cred->mech);
+		WINPR_ASSERT(cred->mech->pkg);
+		WINPR_ASSERT(cred->mech->pkg->table);
+		WINPR_ASSERT(cred->mech->pkg->table->FreeCredentialsHandle);
+		cred->mech->pkg->table->FreeCredentialsHandle(&cred->cred);
+	}
+	free(creds);
 
 	return SEC_E_OK;
 }
@@ -1370,6 +1438,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_EncryptMessage(PCtxtHandle phContext,
 	if (context->mic)
 		MessageSeqNo++;
 
+	WINPR_ASSERT(context->mech);
+	WINPR_ASSERT(context->mech->pkg);
+	WINPR_ASSERT(context->mech->pkg->table);
 	if (context->mech->pkg->table->EncryptMessage)
 		return context->mech->pkg->table->EncryptMessage(&context->sub_context, fQOP, pMessage,
 		                                                 MessageSeqNo);
@@ -1389,6 +1460,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_DecryptMessage(PCtxtHandle phContext,
 	if (context->mic)
 		MessageSeqNo++;
 
+	WINPR_ASSERT(context->mech);
+	WINPR_ASSERT(context->mech->pkg);
+	WINPR_ASSERT(context->mech->pkg->table);
 	if (context->mech->pkg->table->DecryptMessage)
 		return context->mech->pkg->table->DecryptMessage(&context->sub_context, pMessage,
 		                                                 MessageSeqNo, pfQOP);
@@ -1408,6 +1482,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_MakeSignature(PCtxtHandle phContext, 
 	if (context->mic)
 		MessageSeqNo++;
 
+	WINPR_ASSERT(context->mech);
+	WINPR_ASSERT(context->mech->pkg);
+	WINPR_ASSERT(context->mech->pkg->table);
 	if (context->mech->pkg->table->MakeSignature)
 		return context->mech->pkg->table->MakeSignature(&context->sub_context, fQOP, pMessage,
 		                                                MessageSeqNo);
@@ -1427,6 +1504,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_VerifySignature(PCtxtHandle phContext
 	if (context->mic)
 		MessageSeqNo++;
 
+	WINPR_ASSERT(context->mech);
+	WINPR_ASSERT(context->mech->pkg);
+	WINPR_ASSERT(context->mech->pkg->table);
 	if (context->mech->pkg->table->VerifySignature)
 		return context->mech->pkg->table->VerifySignature(&context->sub_context, pMessage,
 		                                                  MessageSeqNo, pfQOP);
