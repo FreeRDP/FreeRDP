@@ -76,6 +76,7 @@ typedef struct
 	HANDLE stopEvent;
 #endif
 	rdpContext* rdpcontext;
+	wStreamPool* pool;
 } rdpdrPlugin;
 
 UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
