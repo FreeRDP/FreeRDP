@@ -129,6 +129,7 @@ typedef enum
 /* Early Capability Flags (Server to Client) */
 #define RNS_UD_SC_EDGE_ACTIONS_SUPPORTED 0x00000001
 #define RNS_UD_SC_DYNAMIC_DST_SUPPORTED 0x00000002
+#define RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V2 0x00000004
 
 /* Cluster Information Flags */
 #define REDIRECTION_SUPPORTED 0x00000001
@@ -1710,6 +1711,8 @@ extern "C"
 #endif
 
 	FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
+	FREERDP_API void freerdp_capability_buffer_free(rdpSettings* settings);
+	FREERDP_API BOOL freerdp_capability_buffer_copy(rdpSettings* settings, const rdpSettings* src);
 
 	FREERDP_API void freerdp_target_net_addresses_free(rdpSettings* settings);
 	FREERDP_API BOOL freerdp_target_net_addresses_copy(rdpSettings* settings, char** addresses,
