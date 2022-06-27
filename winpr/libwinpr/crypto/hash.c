@@ -153,7 +153,8 @@ WINPR_HMAC_CTX* winpr_HMAC_New(void)
 	WINPR_HMAC_CTX* ctx = NULL;
 #if defined(WITH_OPENSSL)
 	HMAC_CTX* hmac = NULL;
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || \
+    (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
 
 	if (!(hmac = (HMAC_CTX*)calloc(1, sizeof(HMAC_CTX))))
 		return NULL;
@@ -189,7 +190,8 @@ BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, siz
 
 	if (keylen > INT_MAX)
 		return FALSE;
-#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || \
+    (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
 	HMAC_Init_ex(hmac, key, (int)keylen, evp, NULL); /* no return value on OpenSSL 0.9.x */
 	return TRUE;
 #else
@@ -225,7 +227,8 @@ BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen)
 {
 #if defined(WITH_OPENSSL)
 	HMAC_CTX* hmac = (HMAC_CTX*)ctx;
-#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || \
+    (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
 	HMAC_Update(hmac, input, ilen); /* no return value on OpenSSL 0.9.x */
 	return TRUE;
 #else
@@ -257,7 +260,8 @@ BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output, size_t olen)
 
 #if defined(WITH_OPENSSL)
 	hmac = (HMAC_CTX*)ctx;
-#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L) || \
+    (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
 	HMAC_Final(hmac, output, NULL); /* no return value on OpenSSL 0.9.x */
 	return TRUE;
 #else
@@ -283,7 +287,8 @@ void winpr_HMAC_Free(WINPR_HMAC_CTX* ctx)
 
 	if (hmac)
 	{
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || \
+    (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
 		HMAC_CTX_cleanup(hmac);
 		free(hmac);
 #else
@@ -336,7 +341,8 @@ WINPR_DIGEST_CTX* winpr_Digest_New(void)
 	WINPR_DIGEST_CTX* ctx = NULL;
 #if defined(WITH_OPENSSL)
 	EVP_MD_CTX* mdctx;
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || \
+    (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
 	mdctx = EVP_MD_CTX_create();
 #else
 	mdctx = EVP_MD_CTX_new();
@@ -468,7 +474,8 @@ void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx)
 
 	if (mdctx)
 	{
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || \
+    (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
 		EVP_MD_CTX_destroy(mdctx);
 #else
 		EVP_MD_CTX_free(mdctx);
