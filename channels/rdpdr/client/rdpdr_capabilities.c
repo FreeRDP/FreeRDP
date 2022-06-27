@@ -258,7 +258,9 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 {
 	wStream* s;
-	s = Stream_New(NULL, 256);
+
+	WINPR_ASSERT(rdpdr);
+	s = StreamPool_Take(rdpdr->pool, 256);
 
 	if (!s)
 	{
