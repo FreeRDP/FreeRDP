@@ -103,7 +103,18 @@ BOOL freerdp_connect(freerdp* instance)
 	instance->ConnectionCallbackState = CLIENT_STATE_PRECONNECT_PASSED;
 
 	if (status)
+	{
+		freerdp_settings_free(rdp->originalSettings);
+		rdp->originalSettings = freerdp_settings_clone(settings);
+		if (!rdp->originalSettings)
+			return 0;
+
+		BOOL ok = IFCALLRESULT(TRUE, instance->LoadChannels, instance);
+		if (!ok)
+			return 0;
+
 		status2 = freerdp_channels_pre_connect(instance->context->channels, instance);
+	}
 
 	if (settings->KeyboardLayout == KBD_JAPANESE ||
 	    settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)

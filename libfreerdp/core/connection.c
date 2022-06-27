@@ -549,6 +549,12 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
 
+	freerdp_channels_disconnect(rdp->context->channels, rdp->context->instance);
+	freerdp_channels_close(rdp->context->channels, rdp->context->instance);
+	freerdp_channels_free(rdp->context->channels);
+	rdp->context->channels = freerdp_channels_new(rdp->context->instance);
+	WINPR_ASSERT(rdp->context->channels);
+
 	if (rdp_redirection_apply_settings(rdp) != 0)
 		return FALSE;
 
@@ -609,6 +615,14 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	WINPR_ASSERT(rdp->context);
 	WINPR_ASSERT(rdp->context->instance);
 	if (!IFCALLRESULT(TRUE, rdp->context->instance->Redirect, rdp->context->instance))
+		return FALSE;
+
+	BOOL ok = IFCALLRESULT(TRUE, rdp->context->instance->LoadChannels, rdp->context->instance);
+	if (!ok)
+		return FALSE;
+
+	if (CHANNEL_RC_OK !=
+	    freerdp_channels_pre_connect(rdp->context->channels, rdp->context->instance))
 		return FALSE;
 
 	status = rdp_client_connect(rdp);
