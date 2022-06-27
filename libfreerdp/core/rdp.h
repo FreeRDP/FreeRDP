@@ -163,6 +163,7 @@ struct rdp_rdp
 	rdpLicense* license;
 	rdpRedirection* redirection;
 	rdpSettings* settings;
+	rdpSettings* originalSettings;
 	rdpTransport* transport;
 	rdpAutoDetect* autodetect;
 	rdpHeartbeat* heartbeat;

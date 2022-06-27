@@ -1890,6 +1890,13 @@ rdpRdp* rdp_new(rdpContext* context)
 	}
 	else
 		rdp->settings = context->settings;
+
+	/* Keep a backup copy of settings for later comparisons */
+	freerdp_settings_free(rdp->originalSettings);
+	rdp->originalSettings = freerdp_settings_clone(rdp->settings);
+	if (!rdp->originalSettings)
+		return FALSE;
+
 	rdp->settings->instance = context->instance;
 
 	context->settings = rdp->settings;
@@ -2092,6 +2099,7 @@ void rdp_free(rdpRdp* rdp)
 		rdp_reset_free(rdp);
 
 		freerdp_settings_free(rdp->settings);
+		freerdp_settings_free(rdp->originalSettings);
 
 		input_free(rdp->input);
 		update_free(rdp->update);
