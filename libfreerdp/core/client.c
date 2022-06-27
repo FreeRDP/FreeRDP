@@ -304,7 +304,8 @@ UINT freerdp_channels_attach(freerdp* instance)
 
 	channels = instance->context->channels;
 	hostname = freerdp_settings_get_string(instance->context->settings, FreeRDP_ServerHostname);
-	hostnameLength = strlen(hostname);
+	WINPR_ASSERT(hostname);
+	hostnameLength = strnlen(hostname, MAX_PATH);
 
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
@@ -367,7 +368,8 @@ UINT freerdp_channels_detach(freerdp* instance)
 
 	WINPR_ASSERT(context->settings);
 	hostname = freerdp_settings_get_string(context->settings, FreeRDP_ServerHostname);
-	hostnameLength = strlen(hostname);
+	WINPR_ASSERT(hostname);
+	hostnameLength = strnlen(hostname, MAX_PATH);
 
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
@@ -430,7 +432,8 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 
 	channels->connected = TRUE;
 	hostname = freerdp_settings_get_string(instance->context->settings, FreeRDP_ServerHostname);
-	hostnameLength = strlen(hostname);
+	WINPR_ASSERT(hostname);
+	hostnameLength = strnlen(hostname, MAX_PATH);
 
 	for (index = 0; index < channels->clientDataCount; index++)
 	{

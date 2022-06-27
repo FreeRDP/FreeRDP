@@ -44,5 +44,6 @@ FREERDP_LOCAL BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettin
 FREERDP_LOCAL void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup);
 FREERDP_LOCAL BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* val,
                                                 size_t len, BOOL cleanup);
+FREERDP_LOCAL BOOL freerdp_capability_buffer_allocate(rdpSettings* settings, UINT32 count);
 
 #endif /* FREERDP_LIB_CORE_SETTINGS_H */
