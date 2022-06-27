@@ -293,10 +293,12 @@ static UINT dvcman_load_addin(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager*
                               const ADDIN_ARGV* args, rdpContext* context)
 {
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
+
 	WINPR_ASSERT(drdynvc);
 	WINPR_ASSERT(pChannelMgr);
 	WINPR_ASSERT(args);
 	WINPR_ASSERT(context);
+
 	WLog_Print(drdynvc->log, WLOG_INFO, "Loading Dynamic Virtual Channel %s", args->argv[0]);
 	pDVCPluginEntry = (PDVC_PLUGIN_ENTRY)freerdp_load_channel_addin_entry(
 	    args->argv[0], NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
@@ -304,6 +306,7 @@ static UINT dvcman_load_addin(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager*
 	if (pDVCPluginEntry)
 	{
 		DVCMAN_ENTRY_POINTS entryPoints = { 0 };
+
 		entryPoints.iface.RegisterPlugin = dvcman_register_plugin;
 		entryPoints.iface.GetPlugin = dvcman_get_plugin;
 		entryPoints.iface.GetPluginData = dvcman_get_plugin_data;
@@ -403,8 +406,8 @@ static void dvcman_clear(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pCha
 
 	WINPR_UNUSED(drdynvc);
 
-	ArrayList_Clear(dvcman->plugins);
 	ArrayList_Clear(dvcman->channels);
+	ArrayList_Clear(dvcman->plugins);
 	ArrayList_Clear(dvcman->plugin_names);
 	ArrayList_Clear(dvcman->listeners);
 }
@@ -1317,10 +1320,24 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		if (!MessageQueue_Post(drdynvc->queue, NULL, 0, (void*)data_in, NULL))
+		if (drdynvc->async)
 		{
-			WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_Post failed!");
-			return ERROR_INTERNAL_ERROR;
+			if (!MessageQueue_Post(drdynvc->queue, NULL, 0, (void*)data_in, NULL))
+			{
+				WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_Post failed!");
+				return ERROR_INTERNAL_ERROR;
+			}
+		}
+		else
+		{
+			UINT error = drdynvc_order_recv(drdynvc, data_in, TRUE);
+			Stream_Release(data_in);
+
+			if (error)
+			{
+				WLog_Print(drdynvc->log, WLOG_WARN,
+				           "drdynvc_order_recv failed with error %" PRIu32 "!", error);
+			}
 		}
 	}
 
@@ -1549,12 +1566,15 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 	drdynvc->state = DRDYNVC_STATE_CAPABILITIES;
 
-	if (!(drdynvc->thread = CreateThread(NULL, 0, drdynvc_virtual_channel_client_thread,
-	                                     (void*)drdynvc, 0, NULL)))
+	if (drdynvc->async)
 	{
-		error = ERROR_INTERNAL_ERROR;
-		WLog_Print(drdynvc->log, WLOG_ERROR, "CreateThread failed!");
-		goto error;
+		if (!(drdynvc->thread = CreateThread(NULL, 0, drdynvc_virtual_channel_client_thread,
+		                                     (void*)drdynvc, 0, NULL)))
+		{
+			error = ERROR_INTERNAL_ERROR;
+			WLog_Print(drdynvc->log, WLOG_ERROR, "CreateThread failed!");
+			goto error;
+		}
 	}
 
 error:
@@ -1833,6 +1853,8 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 		drdynvc->context = context;
 		context->GetVersion = drdynvc_get_version;
 		drdynvc->rdpcontext = pEntryPointsEx->context;
+		if (!freerdp_settings_get_bool(drdynvc->rdpcontext->settings, FreeRDP_TransportDumpReplay))
+			drdynvc->async = TRUE;
 	}
 
 	drdynvc->log = WLog_Get(TAG);

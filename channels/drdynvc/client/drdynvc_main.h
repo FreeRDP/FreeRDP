@@ -103,6 +103,7 @@ struct drdynvc_plugin
 
 	wLog* log;
 	HANDLE thread;
+	BOOL async;
 	wStream* data_in;
 	void* InitHandle;
 	DWORD OpenHandle;
