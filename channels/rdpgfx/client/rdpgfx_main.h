@@ -41,16 +41,6 @@ typedef struct
 	IWTSListener* listener;
 	GENERIC_LISTENER_CALLBACK* listener_callback;
 
-	rdpSettings* settings;
-
-	BOOL ThinClient;
-	BOOL SmallCache;
-	BOOL Progressive;
-	BOOL ProgressiveV2;
-	BOOL H264;
-	BOOL AVC444;
-	UINT32 capsFilter;
-
 	ZGFX_CONTEXT* zgfx;
 	UINT32 UnacknowledgedFrames;
 	UINT32 TotalDecodedFrames;
@@ -68,7 +58,6 @@ typedef struct
 
 	wLog* log;
 	RDPGFX_CAPSET ConnectionCaps;
-	BOOL SendQoeAck;
 	BOOL initialized;
 } RDPGFX_PLUGIN;
 
