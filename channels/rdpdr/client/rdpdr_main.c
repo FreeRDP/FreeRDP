@@ -165,7 +165,7 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 cou
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(ids || (count == 0));
 
-	s = Stream_New(NULL, count * sizeof(UINT32) + 8);
+	s = StreamPool_Take(rdpdr->pool, count * sizeof(UINT32) + 8);
 
 	if (!s)
 	{
@@ -1137,7 +1137,7 @@ static UINT rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 
 	WINPR_ASSERT(rdpdr);
 
-	s = Stream_New(NULL, 12);
+	s = StreamPool_Take(rdpdr->pool, 12);
 
 	if (!s)
 	{
@@ -1174,7 +1174,8 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 
 	computerNameLenW = ConvertToUnicode(CP_UTF8, 0, rdpdr->computerName, -1, &computerNameW, 0) * 2;
 	WINPR_ASSERT(computerNameLenW >= 0);
-	s = Stream_New(NULL, 16U + (size_t)computerNameLenW);
+
+	s = StreamPool_Take(rdpdr->pool, 16U + (size_t)computerNameLenW);
 
 	if (!s)
 	{
@@ -1342,7 +1343,7 @@ static UINT dummy_irp_response(rdpdrPlugin* rdpdr, wStream* s)
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 
-	output = Stream_New(NULL, 256); // RDPDR_DEVICE_IO_RESPONSE_LENGTH
+	output = StreamPool_Take(rdpdr->pool, 256); // RDPDR_DEVICE_IO_RESPONSE_LENGTH
 	if (!output)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
