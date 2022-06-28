@@ -88,7 +88,6 @@ static BOOL mfreerdp_client_new(freerdp *instance, rdpContext *context)
 	WINPR_ASSERT(mfc);
 
 	mfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	context->instance->LoadChannels = freerdp_client_load_channels;
 	context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
 	context->instance->PostDisconnect = mac_post_disconnect;

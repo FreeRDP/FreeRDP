@@ -532,7 +532,6 @@ static BOOL android_client_new(freerdp* instance, rdpContext* context)
 	if (!android_event_queue_init(instance))
 		return FALSE;
 
-	instance->LoadChannels = freerdp_client_load_channels;
 	instance->PreConnect = android_pre_connect;
 	instance->PostConnect = android_post_connect;
 	instance->PostDisconnect = android_post_disconnect;

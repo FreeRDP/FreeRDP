@@ -1306,7 +1306,6 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 		return FALSE;
 
 	WINPR_ASSERT(instance);
-	instance->LoadChannels = freerdp_client_load_channels;
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
 	instance->PostDisconnect = wf_post_disconnect;

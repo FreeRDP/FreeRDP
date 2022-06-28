@@ -64,6 +64,8 @@ static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(context);
 
+	instance->LoadChannels = freerdp_client_load_channels;
+
 	pEntryPoints = instance->pClientEntryPoints;
 	WINPR_ASSERT(pEntryPoints);
 	return IFCALLRESULT(TRUE, pEntryPoints->ClientNew, instance, context);

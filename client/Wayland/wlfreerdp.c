@@ -619,7 +619,6 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	if (!instance || !context)
 		return FALSE;
 
-	instance->LoadChannels = freerdp_client_load_channels;
 	instance->PreConnect = wl_pre_connect;
 	instance->PostConnect = wl_post_connect;
 	instance->PostDisconnect = wl_post_disconnect;
