@@ -1705,6 +1705,9 @@ extern "C"
 	FREERDP_API SSIZE_T freerdp_settings_get_type_for_key(size_t key);
 	FREERDP_API const char* freerdp_settings_get_name_for_key(size_t key);
 
+	FREERDP_API char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer,
+	                                                       size_t length);
+
 #ifdef __cplusplus
 }
 #endif
