@@ -921,8 +921,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status;
-	BYTE *p, tag;
-	size_t bytes_remain, len;
+	BYTE *p = NULL, tag;
+	size_t bytes_remain = 0, len;
 	sspi_gss_OID_desc oid = { 0 };
 	const Mech* first_mech = NULL;
 
