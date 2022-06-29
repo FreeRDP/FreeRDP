@@ -28,6 +28,9 @@
 #include <X11/Xcursor/Xcursor.h>
 #endif
 
+#include <float.h>
+#include <math.h>
+
 #include <winpr/crt.h>
 #include <winpr/assert.h>
 
@@ -320,7 +323,7 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer
 		}
 		ci.pixels = (XcursorPixel*)tmp;
 
-		if (xscale != 1 || yscale != 1)
+		if (((fabs(xscale) - 1.0) > DBL_EPSILON) || ((fabs(yscale) - 1.0) > DBL_EPSILON))
 		{
 			if (!freerdp_image_scale((BYTE*)ci.pixels, CursorFormat, 0, 0, 0, ci.width, ci.height,
 			                         (BYTE*)xpointer->cursorPixels, CursorFormat, 0, 0, 0,
