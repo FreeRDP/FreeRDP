@@ -30,20 +30,15 @@
 
 #include "negotiate.h"
 
+#include "../NTLM/ntlm.h"
+#include "../NTLM/ntlm_export.h"
+#include "../Kerberos/kerberos.h"
 #include "../sspi.h"
 #include "../../log.h"
 #define TAG WINPR_TAG("negotiate")
 
 static const char NEGO_REG_KEY[] =
     "Software\\" WINPR_VENDOR_STRING "\\" WINPR_PRODUCT_STRING "\\SSPI\\Negotiate";
-
-extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
-extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
-
-extern const SecurityFunctionTableA KERBEROS_SecurityFunctionTableA;
-extern const SecurityFunctionTableW KERBEROS_SecurityFunctionTableW;
-
-extern void ntlm_reset_cipher_state(PSecHandle);
 
 typedef struct
 {
