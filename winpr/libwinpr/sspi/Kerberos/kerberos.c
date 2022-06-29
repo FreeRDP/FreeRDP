@@ -53,8 +53,6 @@ struct s_KRB_CONTEXT
 	UINT32 trailerSize;
 };
 
-static const char* KRB_PACKAGE_NAME = "Kerberos";
-
 const SecPkgInfoA KERBEROS_SecPkgInfoA = {
 	0x000F3BBF,                 /* fCapabilities */
 	1,                          /* wVersion */
@@ -79,10 +77,12 @@ const SecPkgInfoW KERBEROS_SecPkgInfoW = {
 	KERBEROS_SecPkgInfoW_Comment /* Comment */
 };
 
+#ifdef WITH_GSSAPI
 static sspi_gss_OID_desc g_SSPI_GSS_C_SPNEGO_KRB5 = {
 	9, (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02"
 };
 static sspi_gss_OID SSPI_GSS_C_SPNEGO_KRB5 = &g_SSPI_GSS_C_SPNEGO_KRB5;
+#endif
 
 static KRB_CONTEXT* kerberos_ContextNew(void)
 {
