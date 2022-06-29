@@ -62,6 +62,7 @@ static UINT rail_send(RailServerContext* context, wStream* s, ULONG length)
  */
 static UINT rail_server_send_pdu(RailServerContext* context, wStream* s, UINT16 orderType)
 {
+	char buffer[128] = { 0 };
 	UINT16 orderLength;
 
 	if (!context || !s)
@@ -71,8 +72,8 @@ static UINT rail_server_send_pdu(RailServerContext* context, wStream* s, UINT16 
 	Stream_SetPosition(s, 0);
 	rail_write_pdu_header(s, orderType, orderLength);
 	Stream_SetPosition(s, orderLength);
-	WLog_DBG(TAG, "Sending %s PDU, length: %" PRIu16 "", rail_get_order_type_string(orderType),
-	         orderLength);
+	WLog_DBG(TAG, "Sending %s PDU, length: %" PRIu16 "",
+	         rail_get_order_type_string_full(orderType, buffer, sizeof(buffer)), orderLength);
 	return rail_send(context, s, orderLength);
 }
 
@@ -1535,6 +1536,7 @@ void rail_server_set_handshake_ex_flags(RailServerContext* context, DWORD flags)
 
 UINT rail_server_handle_messages(RailServerContext* context)
 {
+	char buffer[128] = { 0 };
 	UINT status = CHANNEL_RC_OK;
 	DWORD bytesReturned;
 	UINT16 orderType;
@@ -1584,8 +1586,8 @@ UINT rail_server_handle_messages(RailServerContext* context)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	WLog_DBG(TAG, "Received %s PDU, length:%" PRIu16 "", rail_get_order_type_string(orderType),
-	         orderLength);
+	WLog_DBG(TAG, "Received %s PDU, length:%" PRIu16 "",
+	         rail_get_order_type_string_full(orderType, buffer, sizeof(buffer)), orderLength);
 
 	switch (orderType)
 	{
