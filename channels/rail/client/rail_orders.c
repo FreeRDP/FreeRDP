@@ -37,6 +37,7 @@
  */
 UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 {
+	char buffer[128] = { 0 };
 	UINT16 orderLength;
 
 	if (!rail || !s)
@@ -47,7 +48,7 @@ UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 	rail_write_pdu_header(s, orderType, orderLength);
 	Stream_SetPosition(s, orderLength);
 	WLog_Print(rail->log, WLOG_DEBUG, "Sending %s PDU, length: %" PRIu16 "",
-	           rail_get_order_type_string(orderType), orderLength);
+	           rail_get_order_type_string_full(orderType, buffer, sizeof(buffer)), orderLength);
 	return rail_send_channel_data(rail, s);
 }
 
@@ -876,6 +877,7 @@ static UINT rail_recv_get_application_id_extended_response_order(railPlugin* rai
  */
 UINT rail_order_recv(LPVOID userdata, wStream* s)
 {
+	char buffer[128] = { 0 };
 	railPlugin* rail = userdata;
 	UINT16 orderType;
 	UINT16 orderLength;
@@ -891,7 +893,7 @@ UINT rail_order_recv(LPVOID userdata, wStream* s)
 	}
 
 	WLog_Print(rail->log, WLOG_DEBUG, "Received %s PDU, length:%" PRIu16 "",
-	           rail_get_order_type_string(orderType), orderLength);
+	           rail_get_order_type_string_full(orderType, buffer, sizeof(buffer)), orderLength);
 
 	switch (orderType)
 	{
@@ -948,14 +950,16 @@ UINT rail_order_recv(LPVOID userdata, wStream* s)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unknown RAIL PDU order 0x%08" PRIx32 " received.", orderType);
+			WLog_ERR(TAG, "Unknown RAIL PDU %s received.",
+			         rail_get_order_type_string_full(orderType, buffer, sizeof(buffer)));
 			return ERROR_INVALID_DATA;
 	}
 
 	if (error != CHANNEL_RC_OK)
 	{
+		char buffer[128] = { 0 };
 		WLog_Print(rail->log, WLOG_ERROR, "Failed to process rail %s PDU, length:%" PRIu16 "",
-		           rail_get_order_type_string(orderType), orderLength);
+		           rail_get_order_type_string_full(orderType, buffer, sizeof(buffer)), orderLength);
 	}
 
 	Stream_Free(s, TRUE);

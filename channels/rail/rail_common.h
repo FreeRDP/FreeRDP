@@ -71,5 +71,6 @@ UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
                                BOOL extendedSpiSupported);
 BOOL rail_is_extended_spi_supported(UINT32 channelsFlags);
 const char* rail_get_order_type_string(UINT16 orderType);
+const char* rail_get_order_type_string_full(UINT16 orderType, char* buffer, size_t length);
 
 #endif /* FREERDP_CHANNEL_RAIL_COMMON_H */
