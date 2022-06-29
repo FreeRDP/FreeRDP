@@ -363,7 +363,7 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken* token)
 	WINPR_ASSERT(token);
 
 	BYTE* p = output_buffer->pvBuffer;
-	BYTE *mech_offset, *mic_offset;
+	BYTE *mech_offset = NULL, *mic_offset = NULL;
 
 	/* Length of [0] MechTypeList (SEQUENCE tag already included in buffer) */
 	if (token->init)
@@ -667,7 +667,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	PSecBuffer output_buffer = NULL;
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 	size_t inner_mech_list_len = 0;
 	BYTE* p;
 	const Mech* mech;
