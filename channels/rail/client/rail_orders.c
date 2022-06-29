@@ -905,6 +905,73 @@ static UINT rail_recv_get_application_id_extended_response_order(railPlugin* rai
 	return error;
 }
 
+static UINT rail_read_textscaleinfo_order(wStream* s, UINT32* pTextScaleFactor)
+{
+	WINPR_ASSERT(pTextScaleFactor);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, *pTextScaleFactor);
+	return CHANNEL_RC_OK;
+}
+
+static UINT rail_recv_textscaleinfo_order(railPlugin* rail, wStream* s)
+{
+	RailClientContext* context = rail_get_client_interface(rail);
+	UINT32 TextScaleFactor = 0;
+	UINT error;
+
+	if (!context)
+		return ERROR_INVALID_PARAMETER;
+
+	if ((error = rail_read_textscaleinfo_order(s, &TextScaleFactor)))
+		return error;
+
+	if (context->custom)
+	{
+		IFCALLRET(context->ClientTextScale, error, context, TextScaleFactor);
+
+		if (error)
+			WLog_ERR(TAG, "context.ClientTextScale failed with error %" PRIu32 "", error);
+	}
+
+	return error;
+}
+
+static UINT rail_read_caretblinkinfo_order(wStream* s, UINT32* pCaretBlinkRate)
+{
+	WINPR_ASSERT(pCaretBlinkRate);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, *pCaretBlinkRate);
+	return CHANNEL_RC_OK;
+}
+
+static UINT rail_recv_caretblinkinfo_order(railPlugin* rail, wStream* s)
+{
+	RailClientContext* context = rail_get_client_interface(rail);
+	UINT32 CaretBlinkRate = 0;
+	UINT error;
+
+	if (!context)
+		return ERROR_INVALID_PARAMETER;
+	if ((error = rail_read_caretblinkinfo_order(s, &CaretBlinkRate)))
+		return error;
+
+	if (context->custom)
+	{
+		IFCALLRET(context->ClientCaretBlinkRate, error, context, CaretBlinkRate);
+
+		if (error)
+			WLog_ERR(TAG, "context.ClientCaretBlinkRate failed with error %" PRIu32 "", error);
+	}
+
+	return error;
+}
+
 /**
  * Function description
  *
@@ -981,6 +1048,14 @@ UINT rail_order_recv(railPlugin* rail, wStream* s)
 
 		case TS_RAIL_ORDER_GET_APPID_RESP_EX:
 			error = rail_recv_get_application_id_extended_response_order(rail, s);
+			break;
+
+		case TS_RAIL_ORDER_TEXTSCALEINFO:
+			error = rail_recv_textscaleinfo_order(rail, s);
+			break;
+
+		case TS_RAIL_ORDER_CARETBLINKINFO:
+			error = rail_recv_caretblinkinfo_order(rail, s);
 			break;
 
 		default:
