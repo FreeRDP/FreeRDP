@@ -79,6 +79,10 @@ const char* rail_get_order_type_string(UINT16 orderType)
 			return "TS_RAIL_ORDER_GET_APPID_RESP_EX";
 		case TS_RAIL_ORDER_EXEC_RESULT:
 			return "TS_RAIL_ORDER_EXEC_RESULT";
+		case TS_RAIL_ORDER_TEXTSCALEINFO:
+			return "TS_RAIL_ORDER_TEXTSCALEINFO";
+		case TS_RAIL_ORDER_CARETBLINKINFO:
+			return "TS_RAIL_ORDER_CARETBLINKINFO";
 		default:
 			return "TS_RAIL_ORDER_UNKNOWN";
 	}
