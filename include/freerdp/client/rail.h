@@ -86,6 +86,8 @@ typedef UINT (*pcRailServerGetAppidResponseExtended)(RailClientContext* context,
                                                      const RAIL_GET_APPID_RESP_EX* id);
 typedef UINT (*pcRailClientCompartmentInfo)(RailClientContext* context,
                                             const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
+typedef UINT (*pcRailClientTextScale)(RailClientContext* context, UINT32 TextScale);
+typedef UINT (*pcRailClientCaretBlinkRate)(RailClientContext* context, UINT32 CaretBlinkRate);
 
 struct _rail_client_context
 {
@@ -121,6 +123,8 @@ struct _rail_client_context
 	pcRailServerGetAppidResponseExtended ServerGetAppidResponseExtended;
 	pcRailClientCompartmentInfo ClientCompartmentInfo;
 	pcRailOnOpen OnOpen;
+	pcRailClientTextScale ClientTextScale;
+	pcRailClientCaretBlinkRate ClientCaretBlinkRate;
 };
 
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_RAIL_H */
