@@ -29,7 +29,6 @@
 
 const char* rail_get_order_type_string(UINT16 orderType)
 {
-	static char buffer[64] = { 0 };
 	switch (orderType)
 	{
 		case TS_RAIL_ORDER_EXEC:
@@ -81,9 +80,15 @@ const char* rail_get_order_type_string(UINT16 orderType)
 		case TS_RAIL_ORDER_EXEC_RESULT:
 			return "TS_RAIL_ORDER_EXEC_RESULT";
 		default:
-			_snprintf(buffer, sizeof(buffer), "UNKNOWN [0x%08" PRIx32 "]", orderType);
-			return buffer;
+			return "TS_RAIL_ORDER_UNKNOWN";
 	}
+}
+
+const char* rail_get_order_type_string_full(UINT16 orderType, char* buffer, size_t length)
+{
+	_snprintf(buffer, length, "%s[0x%04" PRIx16 "]", rail_get_order_type_string(orderType),
+	          orderType);
+	return buffer;
 }
 
 /**
