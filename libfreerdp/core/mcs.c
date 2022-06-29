@@ -285,7 +285,7 @@ const char* mcs_domain_pdu_string(DomainMCSPDU pdu)
 			return "DomainMCSPDU_enum_length";
 		default:
 			return "DomainMCSPDU_UNKNOWN";
-	};
+	}
 }
 static BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
                                         DomainParameters* minimumParameters,
