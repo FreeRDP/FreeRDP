@@ -1811,3 +1811,26 @@ BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* expect)
 
 	return TRUE;
 }
+
+char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer, size_t length)
+{
+	if (flags & RAIL_LEVEL_SUPPORTED)
+		winpr_str_append("RAIL_LEVEL_SUPPORTED", buffer, length, "|");
+	if (flags & RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED)
+		winpr_str_append("RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED", buffer, length, "|");
+	if (flags & RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED)
+		winpr_str_append("RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED", buffer, length, "|");
+	if (flags & RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED)
+		winpr_str_append("RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED", buffer, length, "|");
+	if (flags & RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED)
+		winpr_str_append("RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED", buffer, length, "|");
+	if (flags & RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED)
+		winpr_str_append("RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED", buffer, length, "|");
+	if (flags & RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED)
+		winpr_str_append("RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED", buffer, length, "|");
+	if (flags & RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED)
+		winpr_str_append("RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED", buffer, length, "|");
+	if (flags & RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED)
+		winpr_str_append("RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED", buffer, length, "|");
+	return buffer;
+}

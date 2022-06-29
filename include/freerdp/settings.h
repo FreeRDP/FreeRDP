@@ -1819,6 +1819,9 @@ extern "C"
 	FREERDP_API const char* freerdp_settings_get_name_for_key(size_t key);
 	FREERDP_API UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings);
 
+	FREERDP_API char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer,
+	                                                       size_t length);
+
 #ifdef __cplusplus
 }
 #endif

@@ -30,6 +30,8 @@
 
 #include "rail_orders.h"
 
+static BOOL rail_is_feature_supported(const rdpContext* context, UINT32 featureMask);
+
 /**
  * Function description
  *
@@ -372,7 +374,46 @@ static UINT rail_recv_handshake_order(railPlugin* rail, wStream* s)
 	return error;
 }
 
-static BOOL rail_is_feature_supported(const rdpContext* context, UINT32 featureMask)
+static UINT rail_read_compartment_info_order(wStream* s,
+                                             RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo)
+{
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, RAIL_COMPARTMENT_INFO_ORDER_LENGTH))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, compartmentInfo->ImeState);        /* ImeState (4 bytes) */
+	Stream_Read_UINT32(s, compartmentInfo->ImeConvMode);     /* ImeConvMode (4 bytes) */
+	Stream_Read_UINT32(s, compartmentInfo->ImeSentenceMode); /* ImeSentenceMode (4 bytes) */
+	Stream_Read_UINT32(s, compartmentInfo->KanaMode);        /* KANAMode (4 bytes) */
+	return CHANNEL_RC_OK;
+}
+
+static UINT rail_recv_compartmentinfo_order(railPlugin* rail, wStream* s)
+{
+	RailClientContext* context = rail_get_client_interface(rail);
+	RAIL_COMPARTMENT_INFO_ORDER pdu = { 0 };
+	UINT error;
+
+	if (!context || !s)
+		return ERROR_INVALID_PARAMETER;
+
+	if (!rail_is_feature_supported(rail->rdpcontext, RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED))
+		return ERROR_BAD_CONFIGURATION;
+
+	if ((error = rail_read_compartment_info_order(s, &pdu)))
+		return error;
+
+	if (context->custom)
+	{
+		IFCALLRET(context->ClientCompartmentInfo, error, context, &pdu);
+
+		if (error)
+			WLog_ERR(TAG, "context.ClientCompartmentInfo failed with error %" PRIu32 "", error);
+	}
+
+	return error;
+}
+
+BOOL rail_is_feature_supported(const rdpContext* context, UINT32 featureMask)
 {
 	UINT32 supported, masked;
 
@@ -384,7 +425,15 @@ static BOOL rail_is_feature_supported(const rdpContext* context, UINT32 featureM
 	masked = (supported & featureMask);
 
 	if (masked != featureMask)
+	{
+		char mask[256] = { 0 };
+		char actual[256] = { 0 };
+
+		WLog_WARN(TAG, "[%s] have %s, require %s", __func__,
+		          freerdp_rail_support_flags_to_string(supported, actual, sizeof(actual)),
+		          freerdp_rail_support_flags_to_string(featureMask, mask, sizeof(mask)));
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -968,6 +1017,10 @@ UINT rail_order_recv(LPVOID userdata, wStream* s)
 			error = rail_recv_handshake_order(rail, s);
 			break;
 
+		case TS_RAIL_ORDER_COMPARTMENTINFO:
+			error = rail_recv_compartmentinfo_order(rail, s);
+			break;
+
 		case TS_RAIL_ORDER_HANDSHAKE_EX:
 			error = rail_recv_handshake_ex_order(rail, s);
 			break;
@@ -1422,6 +1475,9 @@ UINT rail_send_client_compartment_info_order(railPlugin* rail,
 
 	if (!rail || !compartmentInfo)
 		return ERROR_INVALID_PARAMETER;
+
+	if (!rail_is_feature_supported(rail->rdpcontext, RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED))
+		return ERROR_BAD_CONFIGURATION;
 
 	s = rail_pdu_init(RAIL_COMPARTMENT_INFO_ORDER_LENGTH);
 
