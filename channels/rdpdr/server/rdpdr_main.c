@@ -1883,11 +1883,10 @@ static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context, void* callbackData,
                                                 UINT32 deviceId, const char* path)
 {
-	RDPDR_IRP* irp;
+	RDPDR_IRP* irp = rdpdr_server_irp_new();
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	irp = rdpdr_server_irp_new();
 
 	if (!irp)
 	{
@@ -2052,11 +2051,10 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 static UINT rdpdr_server_drive_query_directory(RdpdrServerContext* context, void* callbackData,
                                                UINT32 deviceId, const char* path)
 {
-	RDPDR_IRP* irp;
+	RDPDR_IRP* irp = rdpdr_server_irp_new();
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	irp = rdpdr_server_irp_new();
 
 	if (!irp)
 	{
@@ -2128,11 +2126,10 @@ static UINT rdpdr_server_drive_open_file(RdpdrServerContext* context, void* call
                                          UINT32 deviceId, const char* path, UINT32 desiredAccess,
                                          UINT32 createDisposition)
 {
-	RDPDR_IRP* irp;
+	RDPDR_IRP* irp = rdpdr_server_irp_new();
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	irp = rdpdr_server_irp_new();
 
 	if (!irp)
 	{
@@ -2213,11 +2210,10 @@ static UINT rdpdr_server_drive_read_file(RdpdrServerContext* context, void* call
                                          UINT32 deviceId, UINT32 fileId, UINT32 length,
                                          UINT32 offset)
 {
-	RDPDR_IRP* irp;
+	RDPDR_IRP* irp = rdpdr_server_irp_new();
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	irp = rdpdr_server_irp_new();
 
 	if (!irp)
 	{
@@ -2290,11 +2286,10 @@ static UINT rdpdr_server_drive_write_file(RdpdrServerContext* context, void* cal
                                           UINT32 deviceId, UINT32 fileId, const char* buffer,
                                           UINT32 length, UINT32 offset)
 {
-	RDPDR_IRP* irp;
+	RDPDR_IRP* irp = rdpdr_server_irp_new();
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	irp = rdpdr_server_irp_new();
 
 	if (!irp)
 	{
@@ -2357,11 +2352,10 @@ static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, 
 static UINT rdpdr_server_drive_close_file(RdpdrServerContext* context, void* callbackData,
                                           UINT32 deviceId, UINT32 fileId)
 {
-	RDPDR_IRP* irp;
+	RDPDR_IRP* irp = rdpdr_server_irp_new();
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	irp = rdpdr_server_irp_new();
 
 	if (!irp)
 	{
@@ -2473,11 +2467,10 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* callbackData,
                                            UINT32 deviceId, const char* path)
 {
-	RDPDR_IRP* irp;
+	RDPDR_IRP* irp = rdpdr_server_irp_new();
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	irp = rdpdr_server_irp_new();
 
 	if (!irp)
 	{
