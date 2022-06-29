@@ -1,8 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2022 Armin Novak <anovak@thincast.com>
-# Copyright 2022 Thincast Technologies GmbH
+# Copyright 2022 Pascal Nowack <Pascal.Nowack@gmx.de>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
