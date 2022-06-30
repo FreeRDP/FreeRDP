@@ -124,7 +124,7 @@ static UINT enumerator_server_handle_select_version_request(CamDevEnumServerCont
                                                             wStream* s,
                                                             const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_SELECT_VERSION_REQUEST pdu = {};
+	CAM_SELECT_VERSION_REQUEST pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -262,7 +262,7 @@ static UINT enumerator_process_message(enumerator_server* enumerator)
 	BOOL rc;
 	UINT error = ERROR_INTERNAL_ERROR;
 	ULONG BytesReturned;
-	CAM_SHARED_MSG_HEADER header = {};
+	CAM_SHARED_MSG_HEADER header = { 0 };
 	wStream* s;
 
 	WINPR_ASSERT(enumerator);
