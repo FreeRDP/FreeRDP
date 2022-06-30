@@ -436,10 +436,10 @@ static UINT device_process_message(device_server* device)
 		goto out;
 	}
 
+	Stream_Seek(s, BytesReturned);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, CAM_HEADER_SIZE))
 		return ERROR_NO_DATA;
 
-	Stream_SetLength(s, BytesReturned);
 	Stream_Read_UINT8(s, header.Version);
 	Stream_Read_UINT8(s, header.MessageId);
 
@@ -686,7 +686,8 @@ static wStream* device_server_packet_new(size_t size, BYTE version, BYTE message
 
 	WINPR_ASSERT(size > 0);
 
-	s = Stream_New(NULL, size);
+	/* Allocate what we need plus header bytes */
+	s = Stream_New(NULL, size + CAM_HEADER_SIZE);
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
@@ -733,7 +734,7 @@ static UINT device_server_write_and_send_header(CameraDeviceServerContext* conte
 
 	WINPR_ASSERT(context);
 
-	s = device_server_packet_new(CAM_HEADER_SIZE, context->protocolVersion, messageId);
+	s = device_server_packet_new(0, context->protocolVersion, messageId);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -775,8 +776,7 @@ device_send_media_type_list_request_pdu(CameraDeviceServerContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(mediaTypeListRequest);
 
-	s = device_server_packet_new(CAM_HEADER_SIZE + 1, context->protocolVersion,
-	                             CAM_MSG_ID_MediaTypeListRequest);
+	s = device_server_packet_new(1, context->protocolVersion, CAM_MSG_ID_MediaTypeListRequest);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -794,8 +794,7 @@ static UINT device_send_current_media_type_request_pdu(
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(currentMediaTypeRequest);
 
-	s = device_server_packet_new(CAM_HEADER_SIZE + 1, context->protocolVersion,
-	                             CAM_MSG_ID_CurrentMediaTypeRequest);
+	s = device_server_packet_new(1, context->protocolVersion, CAM_MSG_ID_CurrentMediaTypeRequest);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -814,8 +813,8 @@ device_send_start_streams_request_pdu(CameraDeviceServerContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(startStreamsRequest);
 
-	s = device_server_packet_new(CAM_HEADER_SIZE + startStreamsRequest->N_Infos * 27,
-	                             context->protocolVersion, CAM_MSG_ID_StartStreamsRequest);
+	s = device_server_packet_new(startStreamsRequest->N_Infos * 27ul, context->protocolVersion,
+	                             CAM_MSG_ID_StartStreamsRequest);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -855,8 +854,7 @@ static UINT device_send_sample_request_pdu(CameraDeviceServerContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(sampleRequest);
 
-	s = device_server_packet_new(CAM_HEADER_SIZE + 1, context->protocolVersion,
-	                             CAM_MSG_ID_SampleRequest);
+	s = device_server_packet_new(1, context->protocolVersion, CAM_MSG_ID_SampleRequest);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -883,8 +881,7 @@ device_send_property_value_request_pdu(CameraDeviceServerContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(propertyValueRequest);
 
-	s = device_server_packet_new(CAM_HEADER_SIZE + 2, context->protocolVersion,
-	                             CAM_MSG_ID_PropertyValueRequest);
+	s = device_server_packet_new(2, context->protocolVersion, CAM_MSG_ID_PropertyValueRequest);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -903,7 +900,7 @@ static UINT device_send_set_property_value_request_pdu(
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(setPropertyValueRequest);
 
-	s = device_server_packet_new(CAM_HEADER_SIZE + 2 + 5, context->protocolVersion,
+	s = device_server_packet_new(2 + 5, context->protocolVersion,
 	                             CAM_MSG_ID_SetPropertyValueRequest);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
