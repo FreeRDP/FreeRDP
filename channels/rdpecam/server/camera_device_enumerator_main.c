@@ -100,7 +100,7 @@ static UINT enumerator_server_open_channel(enumerator_server* enumerator)
 	}
 
 	enumerator->enumerator_channel = WTSVirtualChannelOpenEx(
-	    enumerator->SessionId, CAM_DEVICE_ENUMERATOR_DVC_CHANNEL_NAME, WTS_CHANNEL_OPTION_DYNAMIC);
+	    enumerator->SessionId, RDPECAM_CONTROL_DVC_CHANNEL_NAME, WTS_CHANNEL_OPTION_DYNAMIC);
 	if (!enumerator->enumerator_channel)
 	{
 		Error = GetLastError();

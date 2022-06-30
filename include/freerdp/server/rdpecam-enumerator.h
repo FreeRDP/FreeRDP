@@ -20,7 +20,7 @@
 #ifndef FREERDP_CHANNEL_CAM_DEV_ENUM_SERVER_CAM_DEV_ENUM_H
 #define FREERDP_CHANNEL_CAM_DEV_ENUM_SERVER_CAM_DEV_ENUM_H
 
-#include <freerdp/channels/camera-device.h>
+#include <freerdp/channels/rdpecam.h>
 #include <freerdp/channels/wtsvc.h>
 
 typedef struct _cam_dev_enum_server_context CamDevEnumServerContext;
