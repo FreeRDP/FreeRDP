@@ -287,6 +287,15 @@ extern "C"
 		*_s->pointer++ = (_v)&0xFF;
 	}
 
+	static INLINE void Stream_Write_UINT24_BE(wStream* _s, UINT32 _v)
+	{
+		WINPR_ASSERT(_s);
+		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 3);
+		*_s->pointer++ = ((_v) >> 16) & 0xFF;
+		*_s->pointer++ = ((_v) >> 8) & 0xFF;
+		*_s->pointer++ = (_v)&0xFF;
+	}
+
 	static INLINE void Stream_Write_INT32(wStream* _s, INT32 _v)
 	{
 		WINPR_ASSERT(_s);
