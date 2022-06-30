@@ -22,9 +22,9 @@
 #endif
 
 #include <freerdp/channels/log.h>
-#include <freerdp/server/camera-device-enumerator.h>
+#include <freerdp/server/rdpecam-enumerator.h>
 
-#define TAG CHANNELS_TAG("cam-dev-enum.server")
+#define TAG CHANNELS_TAG("rdpecam-enumerator.server")
 
 typedef enum
 {
