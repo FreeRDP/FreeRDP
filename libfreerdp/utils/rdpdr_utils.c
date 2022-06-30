@@ -270,7 +270,7 @@ BOOL rdpdr_write_iocompletion_header(wStream* out, UINT32 DeviceId, UINT32 Compl
 
 void rdpdr_dump_received_packet(wStream* s, const char* custom)
 {
-	const size_t pos = Stream_GetPosition(s);
+	const size_t gpos = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 	if (Stream_Length(s) >= 4)
 	{
@@ -322,7 +322,7 @@ void rdpdr_dump_received_packet(wStream* s, const char* custom)
 		winpr_HexLogDump(log, WLOG_TRACE, Stream_Buffer(s), Stream_Length(s));
 	}
 
-	Stream_SetPosition(s, pos);
+	Stream_SetPosition(s, gpos);
 }
 
 void rdpdr_dump_send_packet(wStream* s, const char* custom)

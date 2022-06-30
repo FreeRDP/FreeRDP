@@ -925,12 +925,12 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 	for (index = 0; index < ret.cReaders; index++)
 	{
 		const SCARD_READERSTATEA* cur = &rgReaderStates[index];
-		ReaderState_Return* out = &ret.rgReaderStates[index];
+		ReaderState_Return* rout = &ret.rgReaderStates[index];
 
-		out->dwCurrentState = cur->dwCurrentState;
-		out->dwEventState = cur->dwEventState;
-		out->cbAtr = cur->cbAtr;
-		CopyMemory(&(out->rgbAtr), cur->rgbAtr, sizeof(out->rgbAtr));
+		rout->dwCurrentState = cur->dwCurrentState;
+		rout->dwEventState = cur->dwEventState;
+		rout->cbAtr = cur->cbAtr;
+		CopyMemory(&(rout->rgbAtr), cur->rgbAtr, sizeof(rout->rgbAtr));
 	}
 
 	status = smartcard_pack_get_status_change_return(out, &ret, TRUE);
@@ -990,12 +990,12 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 	for (index = 0; index < ret.cReaders; index++)
 	{
 		const SCARD_READERSTATEW* cur = &rgReaderStates[index];
-		ReaderState_Return* out = &ret.rgReaderStates[index];
+		ReaderState_Return* rout = &ret.rgReaderStates[index];
 
-		out->dwCurrentState = cur->dwCurrentState;
-		out->dwEventState = cur->dwEventState;
-		out->cbAtr = cur->cbAtr;
-		CopyMemory(&(out->rgbAtr), cur->rgbAtr, sizeof(out->rgbAtr));
+		rout->dwCurrentState = cur->dwCurrentState;
+		rout->dwEventState = cur->dwEventState;
+		rout->cbAtr = cur->cbAtr;
+		CopyMemory(&(rout->rgbAtr), cur->rgbAtr, sizeof(rout->rgbAtr));
 	}
 
 	status = smartcard_pack_get_status_change_return(out, &ret, TRUE);

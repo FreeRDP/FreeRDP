@@ -734,32 +734,34 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 {
 	BOOL rc = FALSE;
 	UINT32 index;
-	const void* data;
-	size_t len;
 
 	if (!_settings || !settings)
 		return FALSE;
 
-	data = freerdp_settings_get_pointer(settings, FreeRDP_LoadBalanceInfo);
-	len = freerdp_settings_get_uint32(settings, FreeRDP_LoadBalanceInfoLength);
-	if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_LoadBalanceInfo, data, len))
-		return FALSE;
-
-	data = freerdp_settings_get_pointer(settings, FreeRDP_ServerRandom);
-	len = freerdp_settings_get_uint32(settings, FreeRDP_ServerRandomLength);
-	if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_ServerRandom, data, len))
-		return FALSE;
-
-	data = freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom);
-	len = freerdp_settings_get_uint32(settings, FreeRDP_ClientRandomLength);
-	if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_ClientRandom, data, len))
-		return FALSE;
-
-	data = freerdp_settings_get_pointer(settings, FreeRDP_ServerCertificate);
-	len = freerdp_settings_get_uint32(settings, FreeRDP_ServerCertificateLength);
-	if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_ServerCertificate, data, len))
-		return FALSE;
-
+	{
+		const void* data = freerdp_settings_get_pointer(settings, FreeRDP_LoadBalanceInfo);
+		const UINT32 len = freerdp_settings_get_uint32(settings, FreeRDP_LoadBalanceInfoLength);
+		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_LoadBalanceInfo, data, len))
+			return FALSE;
+	}
+	{
+		const void* data = freerdp_settings_get_pointer(settings, FreeRDP_ServerRandom);
+		const UINT32 len = freerdp_settings_get_uint32(settings, FreeRDP_ServerRandomLength);
+		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_ServerRandom, data, len))
+			return FALSE;
+	}
+	{
+		const void* data = freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom);
+		const UINT32 len = freerdp_settings_get_uint32(settings, FreeRDP_ClientRandomLength);
+		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_ClientRandom, data, len))
+			return FALSE;
+	}
+	{
+		const void* data = freerdp_settings_get_pointer(settings, FreeRDP_ServerCertificate);
+		const UINT32 len = freerdp_settings_get_uint32(settings, FreeRDP_ServerCertificateLength);
+		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_ServerCertificate, data, len))
+			return FALSE;
+	}
 	if (settings->RdpServerCertificate)
 	{
 		rdpCertificate* cert = certificate_clone(settings->RdpServerCertificate);
@@ -798,11 +800,14 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 	                                      defArraySize))
 		goto out_fail;
 
-	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize);
-	const rdpMonitor* monitors = freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray);
+	{
+		const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize);
+		const rdpMonitor* monitors =
+		    freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray);
 
-	if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_MonitorDefArray, monitors, count))
-		goto out_fail;
+		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_MonitorDefArray, monitors, count))
+			goto out_fail;
+	}
 
 	if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_MonitorIds, NULL, 16))
 		goto out_fail;

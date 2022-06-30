@@ -495,7 +495,6 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (settings->EarlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE)
 	{
-		int rc;
 		WCHAR DynamicDSTTimeZoneKeyName[254] = { 0 };
 		LPWSTR ptr = DynamicDSTTimeZoneKeyName;
 
