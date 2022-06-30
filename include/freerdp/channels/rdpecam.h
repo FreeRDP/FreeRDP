@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Video Capture Virtual Channel Extension
+ * Video Optimized Remoting Virtual Channel Extension
  *
- * Copyright 2022 Pascal Nowack <Pascal.Nowack@gmx.de>
+ * Copyright 2021 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2021 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +18,15 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_CAMERA_DEVICE_H
-#define FREERDP_CHANNEL_CAMERA_DEVICE_H
+#ifndef FREERDP_CHANNEL_RDPECAM_H
+#define FREERDP_CHANNEL_RDPECAM_H
 
 #include <freerdp/api.h>
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
-#define CAM_DEVICE_ENUMERATOR_DVC_CHANNEL_NAME "RDCamera_Device_Enumerator"
+#define RDPECAM_DVC_CHANNEL_NAME "rdpecam"
+#define RDPECAM_CONTROL_DVC_CHANNEL_NAME "RDCamera_Device_Enumerator"
 
 typedef enum
 {
@@ -332,4 +334,4 @@ typedef struct
 	CAM_PROPERTY_VALUE PropertyValue;
 } CAM_SET_PROPERTY_VALUE_REQUEST;
 
-#endif /* FREERDP_CHANNEL_CAMERA_DEVICE_H */
+#endif /* FREERDP_CHANNEL_RDPECAM_H */

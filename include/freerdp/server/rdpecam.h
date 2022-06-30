@@ -20,7 +20,7 @@
 #ifndef FREERDP_CHANNEL_CAMERA_DEVICE_SERVER_CAMERA_DEVICE_H
 #define FREERDP_CHANNEL_CAMERA_DEVICE_SERVER_CAMERA_DEVICE_H
 
-#include <freerdp/channels/camera-device.h>
+#include <freerdp/channels/rdpecam.h>
 #include <freerdp/channels/wtsvc.h>
 
 typedef struct camera_device_server_context CameraDeviceServerContext;
