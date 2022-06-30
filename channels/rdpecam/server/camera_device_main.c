@@ -123,7 +123,7 @@ static UINT device_server_open_channel(device_server* device)
 static UINT device_server_handle_success_response(CameraDeviceServerContext* context, wStream* s,
                                                   const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_SUCCESS_RESPONSE pdu = {};
+	CAM_SUCCESS_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -141,7 +141,7 @@ static UINT device_server_handle_success_response(CameraDeviceServerContext* con
 static UINT device_server_recv_error_response(CameraDeviceServerContext* context, wStream* s,
                                               const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_ERROR_RESPONSE pdu = {};
+	CAM_ERROR_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -164,7 +164,7 @@ static UINT device_server_recv_error_response(CameraDeviceServerContext* context
 static UINT device_server_recv_stream_list_response(CameraDeviceServerContext* context, wStream* s,
                                                     const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_STREAM_LIST_RESPONSE pdu = {};
+	CAM_STREAM_LIST_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
 	BYTE i;
 
@@ -199,7 +199,7 @@ static UINT device_server_recv_media_type_list_response(CameraDeviceServerContex
                                                         wStream* s,
                                                         const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_MEDIA_TYPE_LIST_RESPONSE pdu = {};
+	CAM_MEDIA_TYPE_LIST_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
 	BYTE i;
 
@@ -248,7 +248,7 @@ static UINT device_server_recv_current_media_type_response(CameraDeviceServerCon
                                                            wStream* s,
                                                            const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_CURRENT_MEDIA_TYPE_RESPONSE pdu = {};
+	CAM_CURRENT_MEDIA_TYPE_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -278,7 +278,7 @@ static UINT device_server_recv_current_media_type_response(CameraDeviceServerCon
 static UINT device_server_recv_sample_response(CameraDeviceServerContext* context, wStream* s,
                                                const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_SAMPLE_RESPONSE pdu = {};
+	CAM_SAMPLE_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -304,7 +304,7 @@ static UINT device_server_recv_sample_response(CameraDeviceServerContext* contex
 static UINT device_server_recv_sample_error_response(CameraDeviceServerContext* context, wStream* s,
                                                      const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_SAMPLE_ERROR_RESPONSE pdu = {};
+	CAM_SAMPLE_ERROR_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -329,7 +329,7 @@ static UINT device_server_recv_property_list_response(CameraDeviceServerContext*
                                                       wStream* s,
                                                       const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_PROPERTY_LIST_RESPONSE pdu = {};
+	CAM_PROPERTY_LIST_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -376,7 +376,7 @@ static UINT device_server_recv_property_value_response(CameraDeviceServerContext
                                                        wStream* s,
                                                        const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_PROPERTY_VALUE_RESPONSE pdu = {};
+	CAM_PROPERTY_VALUE_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -402,7 +402,7 @@ static UINT device_process_message(device_server* device)
 	BOOL rc;
 	UINT error = ERROR_INTERNAL_ERROR;
 	ULONG BytesReturned;
-	CAM_SHARED_MSG_HEADER header = {};
+	CAM_SHARED_MSG_HEADER header = { 0 };
 	wStream* s;
 
 	WINPR_ASSERT(device);
