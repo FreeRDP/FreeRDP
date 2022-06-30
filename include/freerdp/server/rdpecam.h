@@ -91,7 +91,7 @@ typedef UINT (*psCameraDeviceServerSetPropertyValueRequest)(
     CameraDeviceServerContext* context,
     const CAM_SET_PROPERTY_VALUE_REQUEST* setPropertyValueRequest);
 
-typedef struct camera_device_server_context
+struct camera_device_server_context
 {
 	HANDLE vcm;
 
