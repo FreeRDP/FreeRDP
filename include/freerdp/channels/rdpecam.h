@@ -1,9 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Video Optimized Remoting Virtual Channel Extension
+ * Video Capture Virtual Channel Extension
  *
- * Copyright 2021 Armin Novak <armin.novak@thincast.com>
- * Copyright 2021 Thincast Technologies GmbH
+ * Copyright 2022 Pascal Nowack <Pascal.Nowack@gmx.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
