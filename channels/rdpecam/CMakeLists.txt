@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel("camera-device")
-define_channel("camera-device-enumerator")
+define_channel("rdpecam")
 
 if(WITH_SERVER_CHANNELS)
 	add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
