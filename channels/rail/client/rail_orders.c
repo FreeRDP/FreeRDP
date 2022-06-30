@@ -1085,9 +1085,10 @@ UINT rail_order_recv(LPVOID userdata, wStream* s)
 
 	if (error != CHANNEL_RC_OK)
 	{
-		char buffer[128] = { 0 };
+		char ebuffer[128] = { 0 };
 		WLog_Print(rail->log, WLOG_ERROR, "Failed to process rail %s PDU, length:%" PRIu16 "",
-		           rail_get_order_type_string_full(orderType, buffer, sizeof(buffer)), orderLength);
+		           rail_get_order_type_string_full(orderType, ebuffer, sizeof(ebuffer)),
+		           orderLength);
 	}
 
 	Stream_Free(s, TRUE);

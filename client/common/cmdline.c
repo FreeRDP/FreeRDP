@@ -865,11 +865,6 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	CommandLineSwitchCase(arg, "kerberos")
 	{
 		size_t count;
-		union
-		{
-			char** p;
-			const char** pc;
-		} ptr;
 
 		ptr.p = CommandLineParseCommaSeparatedValuesEx("kerberos", arg->Value, &count);
 		if (ptr.pc)

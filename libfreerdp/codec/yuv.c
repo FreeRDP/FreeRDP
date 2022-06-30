@@ -348,7 +348,7 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
                         UINT32 nDstStep, const RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
 	BOOL rc = FALSE;
-	UINT32 x, y;
+	UINT32 x;
 	UINT32 waitCount = 0;
 	primitives_t* prims = primitives_get();
 
@@ -367,7 +367,7 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 
 	if (!context->useThreads || (primitives_flags(prims) & PRIM_FLAGS_HAVE_EXTGPU))
 	{
-		for (y = 0; y < numRegionRects; y++)
+		for (UINT32 y = 0; y < numRegionRects; y++)
 		{
 			const RECTANGLE_16* rect = &regionRects[y];
 			YUV_PROCESS_WORK_PARAM current =

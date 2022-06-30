@@ -631,29 +631,29 @@ static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTIT
 	{
 		if (identity->User)
 		{
-			int rc;
+			int r;
 			WINPR_ASSERT(identity->UserLength <= INT_MAX);
-			rc = ConvertFromUnicode(CP_UTF8, 0, identity->User, (int)identity->UserLength, &user, 0,
-			                        NULL, NULL);
-			WINPR_ASSERT(rc > 0);
+			r = ConvertFromUnicode(CP_UTF8, 0, identity->User, (int)identity->UserLength, &user, 0,
+			                       NULL, NULL);
+			WINPR_ASSERT(r > 0);
 		}
 
 		if (identity->Domain)
 		{
-			int rc;
+			int r;
 			WINPR_ASSERT(identity->DomainLength <= INT_MAX);
-			rc = ConvertFromUnicode(CP_UTF8, 0, identity->Domain, (int)identity->DomainLength,
-			                        &domain, 0, NULL, NULL);
-			WINPR_ASSERT(rc > 0);
+			r = ConvertFromUnicode(CP_UTF8, 0, identity->Domain, (int)identity->DomainLength,
+			                       &domain, 0, NULL, NULL);
+			WINPR_ASSERT(r > 0);
 		}
 
 		if (identity->Password)
 		{
-			int rc;
+			int r;
 			WINPR_ASSERT(identity->PasswordLength <= INT_MAX);
-			rc = ConvertFromUnicode(CP_UTF8, 0, identity->Password, (int)identity->PasswordLength,
-			                        &password, 0, NULL, NULL);
-			WINPR_ASSERT(rc > 0);
+			r = ConvertFromUnicode(CP_UTF8, 0, identity->Password, (int)identity->PasswordLength,
+			                       &password, 0, NULL, NULL);
+			WINPR_ASSERT(r > 0);
 		}
 	}
 	else
