@@ -296,10 +296,10 @@ static UINT enumerator_process_message(enumerator_server* enumerator)
 		goto out;
 	}
 
+	Stream_SetLength(s, BytesReturned);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, CAM_HEADER_SIZE))
 		return ERROR_NO_DATA;
 
-	Stream_SetLength(s, BytesReturned);
 	Stream_Read_UINT8(s, header.Version);
 	Stream_Read_UINT8(s, header.MessageId);
 
