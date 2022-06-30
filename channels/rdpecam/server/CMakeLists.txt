@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel_server("camera-device")
-define_channel_server("camera-device-enumerator")
+define_channel_server("rdpecam")
 
 set(${MODULE_PREFIX}_SRCS
 	camera_device_enumerator_main.c
