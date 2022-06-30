@@ -185,7 +185,7 @@ static UINT telemetry_process_message(telemetry_server* telemetry)
 		goto out;
 	}
 
-	Stream_Seek(s, BytesReturned);
+	Stream_SetLength(s, BytesReturned);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_NO_DATA;
 
