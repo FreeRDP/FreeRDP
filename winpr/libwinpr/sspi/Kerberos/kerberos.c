@@ -138,7 +138,6 @@ static krb5_error_code krb5_prompter(krb5_context context, void* data, const cha
 static void gss_log_status_messages(OM_uint32 major_status, OM_uint32 minor_status)
 {
 	OM_uint32 minor, msg_ctx = 0, status = major_status;
-	sspi_gss_buffer_desc buffer;
 	int status_type = SSPI_GSS_C_GSS_CODE;
 
 	/* If the failure was in the underlying mechanism log those messages */
@@ -150,8 +149,10 @@ static void gss_log_status_messages(OM_uint32 major_status, OM_uint32 minor_stat
 
 	do
 	{
+		sspi_gss_buffer_desc buffer = { 0 };
 		sspi_gss_display_status(&minor, status, status_type, SSPI_GSS_C_NO_OID, &msg_ctx, &buffer);
 		WLog_ERR(TAG, buffer.value);
+		sspi_gss_release_buffer(&major_status, &buffer);
 	} while (msg_ctx != 0);
 }
 
@@ -396,6 +397,8 @@ cleanup:
 		if (password)
 			free(password);
 	}
+	if (keytab)
+		krb5_kt_close(ctx, keytab);
 	if (ccache_name)
 		krb5_free_string(ctx, ccache_name);
 	if (principal)
