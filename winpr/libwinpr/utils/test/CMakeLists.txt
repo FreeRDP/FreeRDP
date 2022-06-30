@@ -19,6 +19,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestLinkedList.c
 	TestListDictionary.c
 	TestCmdLine.c
+	TestASN1.c
 	TestWLog.c
 	TestWLogCallback.c
 	TestHashTable.c

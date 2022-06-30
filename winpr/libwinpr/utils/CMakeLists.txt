@@ -87,6 +87,9 @@ set(WLOG_SRCS
 	${JOURNALD_SRCS}
 	)
 
+set(ASN1_SRCS
+	asn1/asn1.c
+)
 
 set(SRCS
 	ini.c
@@ -141,7 +144,9 @@ endif()
 winpr_module_add(${SRCS}
 	${COLLECTIONS_SRCS}
 	${LODEPNG_SRCS}
-	${WLOG_SRCS})
+	${WLOG_SRCS}
+	${ASN1_SRCS}
+)
 
 winpr_include_directory_add(
 	"lodepng"
