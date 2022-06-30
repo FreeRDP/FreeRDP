@@ -23,7 +23,7 @@
 #include <freerdp/channels/camera-device.h>
 #include <freerdp/channels/wtsvc.h>
 
-typedef struct _camera_device_server_context CameraDeviceServerContext;
+typedef struct camera_device_server_context CameraDeviceServerContext;
 
 typedef UINT (*psCameraDeviceServerOpen)(CameraDeviceServerContext* context);
 typedef UINT (*psCameraDeviceServerClose)(CameraDeviceServerContext* context);
@@ -91,7 +91,7 @@ typedef UINT (*psCameraDeviceServerSetPropertyValueRequest)(
     CameraDeviceServerContext* context,
     const CAM_SET_PROPERTY_VALUE_REQUEST* setPropertyValueRequest);
 
-struct _camera_device_server_context
+typedef struct camera_device_server_context
 {
 	HANDLE vcm;
 
