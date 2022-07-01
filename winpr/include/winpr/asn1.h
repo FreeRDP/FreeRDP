@@ -154,6 +154,9 @@ extern "C"
 	WINPR_API BOOL WinPrAsn1EncSetContainer(WinPrAsn1Encoder* enc);
 	WINPR_API BOOL WinPrAsn1EncContextualSetContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId);
 	WINPR_API BOOL WinPrAsn1EncContextualContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId);
+	WINPR_API BOOL WinPrAsn1EncOctetStringContainer(WinPrAsn1Encoder* enc);
+	WINPR_API BOOL WinPrAsn1EncContextualOctetStringContainer(WinPrAsn1Encoder* enc,
+	                                                          WinPrAsn1_tagId tagId);
 	WINPR_API size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc);
 
 	WINPR_API size_t WinPrAsn1EncInteger(WinPrAsn1Encoder* enc, WinPrAsn1_INTEGER integer);
