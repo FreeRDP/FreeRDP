@@ -530,7 +530,6 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
                                     LPCSTR func, DWORD line)
 {
 	unsigned long sslerr;
-	char* buf;
 	int saveerrno;
 	DWORD level;
 
@@ -550,21 +549,15 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
 		return;
 	}
 
-	buf = malloc(120);
-
-	if (buf)
-	{
-		const char* fmt = "%s returned an error: %s";
-
 		while ((sslerr = ERR_get_error()))
 		{
-			ERR_error_string_n(sslerr, buf, 120);
-			WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt,
-			                  biofunc, buf);
-		}
+		    char buf[120] = { 0 };
+		    const char* fmt = "%s returned an error: %s";
 
-		free(buf);
-	}
+		    ERR_error_string_n(sslerr, buf, 120);
+		    WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt,
+		                      biofunc, buf);
+	    }
 }
 
 static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t bytes)
