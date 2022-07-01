@@ -312,7 +312,8 @@ static BOOL rdg_read_http_unicode_string(wStream* s, const WCHAR** string, UINT1
 	/* Read length of the string */
 	if (rem < 4)
 	{
-		WLog_ERR(TAG, "[%s]: Could not read stream length, only have % " PRIuz " bytes", rem);
+		WLog_ERR(TAG, "[%s]: Could not read stream length, only have % " PRIuz " bytes",
+		         __FUNCTION__, rem);
 		return FALSE;
 	}
 	Stream_Read_UINT16(s, strLenBytes);
@@ -325,7 +326,7 @@ static BOOL rdg_read_http_unicode_string(wStream* s, const WCHAR** string, UINT1
 	{
 		WLog_ERR(TAG,
 		         "[%s]: Could not read stream data, only have % " PRIuz " bytes, expected %" PRIu16,
-		         rem - 4, strLenBytes);
+		         __FUNCTION__, rem - 4, strLenBytes);
 		return FALSE;
 	}
 
