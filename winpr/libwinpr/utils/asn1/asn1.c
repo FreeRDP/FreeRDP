@@ -485,6 +485,42 @@ static BOOL asn1_getWriteStream(WinPrAsn1Encoder* enc, size_t len, wStream* s)
 	return TRUE;
 }
 
+size_t WinPrAsn1EncRawContent(WinPrAsn1Encoder* enc, const WinPrAsn1_MemoryChunk* c)
+{
+	wStream staticS;
+	wStream* s = &staticS;
+
+	WINPR_ASSERT(enc);
+	WINPR_ASSERT(c);
+
+	if (!asn1_getWriteStream(enc, c->len, s))
+		return 0;
+
+	Stream_Write(s, c->data, c->len);
+	return c->len;
+}
+
+size_t WinPrAsn1EncContextualRawContent(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
+                                        const WinPrAsn1_MemoryChunk* c)
+{
+	wStream staticS;
+	wStream* s = &staticS;
+
+	WINPR_ASSERT(enc);
+	WINPR_ASSERT(c);
+	WINPR_ASSERT_VALID_TAG(tagId);
+
+	size_t len = 1 + lenBytes(c->len) + c->len;
+	if (!asn1_getWriteStream(enc, len, s))
+		return 0;
+
+	Stream_Write_UINT8(s, ER_TAG_CONTEXTUAL | tagId);
+	asn1WriteLen(s, c->len);
+
+	Stream_Write(s, c->data, c->len);
+	return len;
+}
+
 static size_t asn1IntegerLen(WinPrAsn1_INTEGER value)
 {
 	if (value <= 127 && value >= -128)
@@ -495,7 +531,8 @@ static size_t asn1IntegerLen(WinPrAsn1_INTEGER value)
 		return 5;
 }
 
-size_t WinPrAsn1EncInteger(WinPrAsn1Encoder* enc, WinPrAsn1_INTEGER value)
+static size_t WinPrAsn1EncIntegerLike(WinPrAsn1Encoder* enc, WinPrAsn1_tag b,
+                                      WinPrAsn1_INTEGER value)
 {
 	wStream staticS;
 	wStream* s = &staticS;
@@ -505,7 +542,7 @@ size_t WinPrAsn1EncInteger(WinPrAsn1Encoder* enc, WinPrAsn1_INTEGER value)
 	if (!asn1_getWriteStream(enc, 1 + len, s))
 		return 0;
 
-	Stream_Write_UINT8(s, ER_TAG_INTEGER);
+	Stream_Write_UINT8(s, b);
 	switch (len)
 	{
 		case 2:
@@ -524,8 +561,18 @@ size_t WinPrAsn1EncInteger(WinPrAsn1Encoder* enc, WinPrAsn1_INTEGER value)
 	return 1 + len;
 }
 
-size_t WinPrAsn1EncContextualInteger(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
-                                     WinPrAsn1_INTEGER value)
+size_t WinPrAsn1EncInteger(WinPrAsn1Encoder* enc, WinPrAsn1_INTEGER value)
+{
+	return WinPrAsn1EncIntegerLike(enc, ER_TAG_INTEGER, value);
+}
+
+size_t WinPrAsn1EncEnumerated(WinPrAsn1Encoder* enc, WinPrAsn1_ENUMERATED value)
+{
+	return WinPrAsn1EncIntegerLike(enc, ER_TAG_ENUMERATED, value);
+}
+
+static size_t WinPrAsn1EncContextualIntegerLike(WinPrAsn1Encoder* enc, WinPrAsn1_tag tag,
+                                                WinPrAsn1_tagId tagId, WinPrAsn1_INTEGER value)
 {
 	wStream staticS;
 	wStream* s = &staticS;
@@ -543,7 +590,7 @@ size_t WinPrAsn1EncContextualInteger(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagI
 	Stream_Write_UINT8(s, ER_TAG_CONTEXTUAL | tagId);
 	asn1WriteLen(s, 1 + len);
 
-	Stream_Write_UINT8(s, ER_TAG_INTEGER);
+	Stream_Write_UINT8(s, tag);
 	switch (len)
 	{
 		case 2:
@@ -560,6 +607,18 @@ size_t WinPrAsn1EncContextualInteger(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagI
 			break;
 	}
 	return outLen;
+}
+
+size_t WinPrAsn1EncContextualInteger(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
+                                     WinPrAsn1_INTEGER value)
+{
+	return WinPrAsn1EncContextualIntegerLike(enc, ER_TAG_INTEGER, tagId, value);
+}
+
+size_t WinPrAsn1EncContextualEnumerated(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
+                                        WinPrAsn1_ENUMERATED value)
+{
+	return WinPrAsn1EncContextualIntegerLike(enc, ER_TAG_ENUMERATED, tagId, value);
 }
 
 size_t WinPrAsn1EncBoolean(WinPrAsn1Encoder* enc, WinPrAsn1_BOOL b)
@@ -654,7 +713,7 @@ size_t WinPrAsn1EncContextualMemoryChunk(WinPrAsn1Encoder* enc, BYTE wireType,
 	Stream_Write_UINT8(&s, ER_TAG_CONTEXTUAL | tagId);
 	asn1WriteLen(&s, len);
 
-	Stream_Write_UINT8(&s, ER_TAG_OBJECT_IDENTIFIER);
+	Stream_Write_UINT8(&s, wireType);
 	asn1WriteLen(&s, mchunk->len);
 	Stream_Write(&s, mchunk->data, mchunk->len);
 	return outLen;
@@ -669,7 +728,7 @@ size_t WinPrAsn1EncContextualOID(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
 size_t WinPrAsn1EncContextualOctetString(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
                                          const WinPrAsn1_OctetString* octets)
 {
-	return WinPrAsn1EncContextualMemoryChunk(enc, ER_TAG_OBJECT_IDENTIFIER, tagId, octets);
+	return WinPrAsn1EncContextualMemoryChunk(enc, ER_TAG_OCTET_STRING, tagId, octets);
 }
 
 size_t WinPrAsn1EncContextualIA5String(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
@@ -791,10 +850,21 @@ BOOL WinPrAsn1EncToStream(WinPrAsn1Encoder* enc, wStream* s)
 void WinPrAsn1Decoder_Init(WinPrAsn1Decoder* decoder, WinPrAsn1EncodingRule encoding,
                            wStream* source)
 {
+	WINPR_ASSERT(decoder);
 	WINPR_ASSERT(source);
 
 	decoder->encoding = encoding;
 	memcpy(&decoder->source, source, sizeof(*source));
+}
+
+void WinPrAsn1Decoder_InitMem(WinPrAsn1Decoder* decoder, WinPrAsn1EncodingRule encoding,
+                              const BYTE* source, size_t len)
+{
+	WINPR_ASSERT(decoder);
+	WINPR_ASSERT(source);
+
+	decoder->encoding = encoding;
+	Stream_StaticConstInit(&decoder->source, source, len);
 }
 
 BOOL WinPrAsn1DecPeekTag(WinPrAsn1Decoder* dec, WinPrAsn1_tag* tag)
@@ -821,7 +891,7 @@ static size_t readLen(wStream* s, size_t* len, BOOL derCheck)
 	if (retLen & 0x80)
 	{
 		BYTE tmp;
-		size_t nBytes = (retLen & 0x80);
+		size_t nBytes = (retLen & 0x7f);
 
 		if (Stream_GetRemainingLength(s) < nBytes)
 			return 0;
@@ -924,7 +994,8 @@ size_t WinPrAsn1DecReadBoolean(WinPrAsn1Decoder* dec, WinPrAsn1_BOOL* target)
 	return ret;
 }
 
-size_t WinPrAsn1DecReadInteger(WinPrAsn1Decoder* dec, WinPrAsn1_INTEGER* target)
+static size_t WinPrAsn1DecReadIntegerLike(WinPrAsn1Decoder* dec, WinPrAsn1_tag expectedTag,
+                                          WinPrAsn1_INTEGER* target)
 {
 	signed char v;
 	WinPrAsn1_tag tag;
@@ -935,7 +1006,7 @@ size_t WinPrAsn1DecReadInteger(WinPrAsn1Decoder* dec, WinPrAsn1_INTEGER* target)
 	WINPR_ASSERT(target);
 
 	ret = readTagAndLen(dec, &dec->source, &tag, &len);
-	if (!ret || tag != ER_TAG_INTEGER)
+	if (!ret || tag != expectedTag)
 		return 0;
 	if (Stream_GetRemainingLength(&dec->source) < len || len > 4)
 		return 0;
@@ -951,8 +1022,18 @@ size_t WinPrAsn1DecReadInteger(WinPrAsn1Decoder* dec, WinPrAsn1_INTEGER* target)
 	return ret;
 }
 
+size_t WinPrAsn1DecReadInteger(WinPrAsn1Decoder* dec, WinPrAsn1_INTEGER* target)
+{
+	return WinPrAsn1DecReadIntegerLike(dec, ER_TAG_INTEGER, target);
+}
+
+size_t WinPrAsn1DecReadEnumerated(WinPrAsn1Decoder* dec, WinPrAsn1_ENUMERATED* target)
+{
+	return WinPrAsn1DecReadIntegerLike(dec, ER_TAG_ENUMERATED, target);
+}
+
 static size_t WinPrAsn1DecReadMemoryChunkLike(WinPrAsn1Decoder* dec, WinPrAsn1_tag expectedTag,
-                                              WinPrAsn1_MemoryChunk* target)
+                                              WinPrAsn1_MemoryChunk* target, BOOL allocate)
 {
 	WinPrAsn1_tag tag;
 	size_t len;
@@ -970,24 +1051,33 @@ static size_t WinPrAsn1DecReadMemoryChunkLike(WinPrAsn1Decoder* dec, WinPrAsn1_t
 	ret += len;
 
 	target->len = len;
-	target->data = malloc(len);
-	if (!target->data)
-		return 0;
-	Stream_Read(&dec->source, target->data, len);
+	if (allocate)
+	{
+		target->data = malloc(len);
+		if (!target->data)
+			return 0;
+		Stream_Read(&dec->source, target->data, len);
+	}
+	else
+	{
+		target->data = Stream_Pointer(&dec->source);
+		Stream_Seek(&dec->source, len);
+	}
 
 	return ret;
 }
 
-size_t WinPrAsn1DecReadOID(WinPrAsn1Decoder* dec, WinPrAsn1_OID* target)
+size_t WinPrAsn1DecReadOID(WinPrAsn1Decoder* dec, WinPrAsn1_OID* target, BOOL allocate)
 {
 	return WinPrAsn1DecReadMemoryChunkLike(dec, ER_TAG_OBJECT_IDENTIFIER,
-	                                       (WinPrAsn1_MemoryChunk*)target);
+	                                       (WinPrAsn1_MemoryChunk*)target, allocate);
 }
 
-size_t WinPrAsn1DecReadOctetString(WinPrAsn1Decoder* dec, WinPrAsn1_OctetString* target)
+size_t WinPrAsn1DecReadOctetString(WinPrAsn1Decoder* dec, WinPrAsn1_OctetString* target,
+                                   BOOL allocate)
 {
-	return WinPrAsn1DecReadMemoryChunkLike(dec, ER_TAG_OCTET_STRING,
-	                                       (WinPrAsn1_OctetString*)target);
+	return WinPrAsn1DecReadMemoryChunkLike(dec, ER_TAG_OCTET_STRING, (WinPrAsn1_OctetString*)target,
+	                                       allocate);
 }
 
 size_t WinPrAsn1DecReadIA5String(WinPrAsn1Decoder* dec, WinPrAsn1_IA5STRING* target)
@@ -1263,7 +1353,7 @@ size_t WinPrAsn1DecReadContextualInteger(WinPrAsn1Decoder* dec, WinPrAsn1_tagId 
 }
 
 size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error,
-                                     WinPrAsn1_OID* target)
+                                     WinPrAsn1_OID* target, BOOL allocate)
 {
 	size_t ret, ret2;
 	WinPrAsn1_tag ftag;
@@ -1275,7 +1365,7 @@ size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagI
 	if (!ret || ftag != tagId)
 		return 0;
 
-	ret2 = WinPrAsn1DecReadOID(&content, target);
+	ret2 = WinPrAsn1DecReadOID(&content, target, allocate);
 	if (!ret2)
 	{
 		*error = TRUE;

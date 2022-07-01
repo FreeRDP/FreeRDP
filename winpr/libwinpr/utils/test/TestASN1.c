@@ -64,14 +64,14 @@ int TestASN1Read(int argc, char* argv[])
 	/* ================ Test OID ================*/
 	Stream_StaticConstInit(&staticS, oidContent, sizeof(oidContent));
 	WinPrAsn1Decoder_Init(&decoder, WINPR_ASN1_DER, &staticS);
-	if (!WinPrAsn1DecReadOID(&decoder, &oidV) || oidV.len != 3 ||
+	if (!WinPrAsn1DecReadOID(&decoder, &oidV, TRUE) || oidV.len != 3 ||
 	    memcmp(oidV.data, oidValue, oidV.len))
 		return -15;
 	WinPrAsn1FreeOID(&oidV);
 
 	Stream_StaticConstInit(&staticS, badOidContent, sizeof(badOidContent));
 	WinPrAsn1Decoder_Init(&decoder, WINPR_ASN1_DER, &staticS);
-	if (WinPrAsn1DecReadOID(&decoder, &oidV))
+	if (WinPrAsn1DecReadOID(&decoder, &oidV, TRUE))
 		return -15;
 	WinPrAsn1FreeOID(&oidV);
 

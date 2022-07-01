@@ -72,6 +72,7 @@ typedef BYTE WinPrAsn1_tag;
 typedef BYTE WinPrAsn1_tagId;
 typedef BOOL WinPrAsn1_BOOL;
 typedef INT32 WinPrAsn1_INTEGER;
+typedef INT32 WinPrAsn1_ENUMERATED;
 typedef char* WinPrAsn1_STRING;
 typedef char* WinPrAsn1_IA5STRING;
 typedef struct
@@ -106,6 +107,8 @@ extern "C"
 
 	WINPR_API void WinPrAsn1Decoder_Init(WinPrAsn1Decoder* dec, WinPrAsn1EncodingRule encoding,
 	                                     wStream* source);
+	WINPR_API void WinPrAsn1Decoder_InitMem(WinPrAsn1Decoder* dec, WinPrAsn1EncodingRule encoding,
+	                                        const BYTE* source, size_t len);
 
 	WINPR_API BOOL WinPrAsn1DecPeekTag(WinPrAsn1Decoder* dec, WinPrAsn1_tag* tag);
 	WINPR_API size_t WinPrAsn1DecReadTagAndLen(WinPrAsn1Decoder* dec, WinPrAsn1_tag* tag,
@@ -116,9 +119,12 @@ extern "C"
 	                                             size_t* len, WinPrAsn1Decoder* value);
 	WINPR_API size_t WinPrAsn1DecReadBoolean(WinPrAsn1Decoder* dec, WinPrAsn1_BOOL* target);
 	WINPR_API size_t WinPrAsn1DecReadInteger(WinPrAsn1Decoder* dec, WinPrAsn1_INTEGER* target);
-	WINPR_API size_t WinPrAsn1DecReadOID(WinPrAsn1Decoder* dec, WinPrAsn1_OID* target);
+	WINPR_API size_t WinPrAsn1DecReadEnumerated(WinPrAsn1Decoder* dec,
+	                                            WinPrAsn1_ENUMERATED* target);
+	WINPR_API size_t WinPrAsn1DecReadOID(WinPrAsn1Decoder* dec, WinPrAsn1_OID* target,
+	                                     BOOL allocate);
 	WINPR_API size_t WinPrAsn1DecReadOctetString(WinPrAsn1Decoder* dec,
-	                                             WinPrAsn1_OctetString* target);
+	                                             WinPrAsn1_OctetString* target, BOOL allocate);
 	WINPR_API size_t WinPrAsn1DecReadIA5String(WinPrAsn1Decoder* dec, WinPrAsn1_IA5STRING* target);
 	WINPR_API size_t WinPrAsn1DecReadUtcTime(WinPrAsn1Decoder* dec, WinPrAsn1_UTCTIME* target);
 	WINPR_API size_t WinPrAsn1DecReadNull(WinPrAsn1Decoder* dec);
@@ -138,7 +144,8 @@ extern "C"
 	WINPR_API size_t WinPrAsn1DecReadContextualInteger(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId,
 	                                                   BOOL* error, WinPrAsn1_INTEGER* target);
 	WINPR_API size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId,
-	                                               BOOL* error, WinPrAsn1_OID* target);
+	                                               BOOL* error, WinPrAsn1_OID* target,
+	                                               BOOL allocate);
 	WINPR_API size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec,
 	                                                    WinPrAsn1_tagId tagId, BOOL* error,
 	                                                    WinPrAsn1Decoder* target);
@@ -159,12 +166,19 @@ extern "C"
 	                                                          WinPrAsn1_tagId tagId);
 	WINPR_API size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc);
 
+	WINPR_API size_t WinPrAsn1EncRawContent(WinPrAsn1Encoder* enc, const WinPrAsn1_MemoryChunk* c);
+	WINPR_API size_t WinPrAsn1EncContextualRawContent(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
+	                                                  const WinPrAsn1_MemoryChunk* c);
 	WINPR_API size_t WinPrAsn1EncInteger(WinPrAsn1Encoder* enc, WinPrAsn1_INTEGER integer);
 	WINPR_API size_t WinPrAsn1EncContextualInteger(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
 	                                               WinPrAsn1_INTEGER integer);
 	WINPR_API size_t WinPrAsn1EncBoolean(WinPrAsn1Encoder* enc, WinPrAsn1_BOOL b);
 	WINPR_API size_t WinPrAsn1EncContextualBoolean(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
 	                                               WinPrAsn1_BOOL b);
+	WINPR_API size_t WinPrAsn1EncEnumerated(WinPrAsn1Encoder* enc, WinPrAsn1_ENUMERATED e);
+	WINPR_API size_t WinPrAsn1EncContextualEnumerated(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
+	                                                  WinPrAsn1_ENUMERATED e);
+
 	WINPR_API size_t WinPrAsn1EncOID(WinPrAsn1Encoder* enc, const WinPrAsn1_OID* oid);
 	WINPR_API size_t WinPrAsn1EncContextualOID(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
 	                                           const WinPrAsn1_OID* oid);
