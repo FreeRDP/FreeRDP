@@ -54,10 +54,10 @@ int mac_cliprdr_send_client_format_list(CliprdrClientContext *cliprdr)
 			formats[index].formatName = _strdup(formatName);
 	}
 
-	formatList.msgFlags = CB_RESPONSE_OK;
+	formatList.common.msgFlags = CB_RESPONSE_OK;
 	formatList.numFormats = numFormats;
 	formatList.formats = formats;
-	formatList.msgType = CB_FORMAT_LIST;
+	formatList.common.msgType = CB_FORMAT_LIST;
 
 	mfc->cliprdr->ClientFormatList(mfc->cliprdr, &formatList);
 
@@ -76,9 +76,9 @@ static int mac_cliprdr_send_client_format_list_response(CliprdrClientContext *cl
 {
 	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse;
 
-	formatListResponse.msgType = CB_FORMAT_LIST_RESPONSE;
-	formatListResponse.msgFlags = status ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
-	formatListResponse.dataLen = 0;
+	formatListResponse.common.msgType = CB_FORMAT_LIST_RESPONSE;
+	formatListResponse.common.msgFlags = status ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
+	formatListResponse.common.dataLen = 0;
 
 	cliprdr->ClientFormatListResponse(cliprdr, &formatListResponse);
 
@@ -93,8 +93,8 @@ static int mac_cliprdr_send_client_format_data_request(CliprdrClientContext *cli
 
 	ZeroMemory(&formatDataRequest, sizeof(CLIPRDR_FORMAT_DATA_REQUEST));
 
-	formatDataRequest.msgType = CB_FORMAT_DATA_REQUEST;
-	formatDataRequest.msgFlags = 0;
+	formatDataRequest.common.msgType = CB_FORMAT_DATA_REQUEST;
+	formatDataRequest.common.msgFlags = 0;
 
 	formatDataRequest.requestedFormatId = formatId;
 	mfc->requestedFormatId = formatId;
@@ -295,14 +295,14 @@ mac_cliprdr_server_format_data_request(CliprdrClientContext *cliprdr,
 	formatId = formatDataRequest->requestedFormatId;
 	data = (BYTE *)ClipboardGetData(mfc->clipboard, formatId, &size);
 
-	response.msgFlags = CB_RESPONSE_OK;
-	response.dataLen = size;
+	response.common.msgFlags = CB_RESPONSE_OK;
+	response.common.dataLen = size;
 	response.requestedFormatData = data;
 
 	if (!data)
 	{
-		response.msgFlags = CB_RESPONSE_FAIL;
-		response.dataLen = 0;
+		response.common.msgFlags = CB_RESPONSE_FAIL;
+		response.common.dataLen = 0;
 		response.requestedFormatData = NULL;
 	}
 
@@ -330,7 +330,7 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 	mfContext *mfc = (mfContext *)cliprdr->custom;
 	MRDPView *view = (MRDPView *)mfc->view;
 
-	if (formatDataResponse->msgFlags & CB_RESPONSE_FAIL)
+	if (formatDataResponse->common.msgFlags & CB_RESPONSE_FAIL)
 	{
 		SetEvent(mfc->clipboardRequestEvent);
 		return ERROR_INTERNAL_ERROR;
@@ -353,7 +353,7 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 	else
 		formatId = format->formatId;
 
-	size = formatDataResponse->dataLen;
+	size = formatDataResponse->common.dataLen;
 
 	ClipboardSetData(mfc->clipboard, formatId, formatDataResponse->requestedFormatData, size);
 

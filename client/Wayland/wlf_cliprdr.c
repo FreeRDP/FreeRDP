@@ -170,10 +170,14 @@ static void wlf_cliprdr_free_client_formats(wfClipboard* clipboard)
 static UINT wlf_cliprdr_send_client_format_list(wfClipboard* clipboard)
 {
 	CLIPRDR_FORMAT_LIST formatList = { 0 };
-	formatList.msgFlags = CB_RESPONSE_OK;
+	formatList.common.msgFlags = CB_RESPONSE_OK;
 	formatList.numFormats = (UINT32)clipboard->numClientFormats;
 	formatList.formats = clipboard->clientFormats;
-	formatList.msgType = CB_FORMAT_LIST;
+	formatList.common.msgType = CB_FORMAT_LIST;
+
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(clipboard->context);
+	WINPR_ASSERT(clipboard->context->ClientFormatList);
 	return clipboard->context->ClientFormatList(clipboard->context, &formatList);
 }
 
@@ -238,6 +242,10 @@ static UINT wlf_cliprdr_send_data_request(wfClipboard* clipboard, UINT32 formatI
 {
 	CLIPRDR_FORMAT_DATA_REQUEST request = { 0 };
 	request.requestedFormatId = formatId;
+
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(clipboard->context);
+	WINPR_ASSERT(clipboard->context->ClientFormatDataRequest);
 	return clipboard->context->ClientFormatDataRequest(clipboard->context, &request);
 }
 
@@ -253,9 +261,13 @@ static UINT wlf_cliprdr_send_data_response(wfClipboard* clipboard, const BYTE* d
 	if (size > UINT32_MAX)
 		return ERROR_INVALID_PARAMETER;
 
-	response.msgFlags = (data) ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
-	response.dataLen = (UINT32)size;
+	response.common.msgFlags = (data) ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
+	response.common.dataLen = (UINT32)size;
 	response.requestedFormatData = data;
+
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(clipboard->context);
+	WINPR_ASSERT(clipboard->context->ClientFormatDataResponse);
 	return clipboard->context->ClientFormatDataResponse(clipboard->context, &response);
 }
 
@@ -295,8 +307,8 @@ BOOL wlf_cliprdr_handle_event(wfClipboard* clipboard, const UwacClipboardEvent* 
  */
 static UINT wlf_cliprdr_send_client_capabilities(wfClipboard* clipboard)
 {
-	CLIPRDR_CAPABILITIES capabilities;
-	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet;
+	CLIPRDR_CAPABILITIES capabilities = { 0 };
+	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet = { 0 };
 	capabilities.cCapabilitiesSets = 1;
 	capabilities.capabilitySets = (CLIPRDR_CAPABILITY_SET*)&(generalCapabilitySet);
 	generalCapabilitySet.capabilitySetType = CB_CAPSTYPE_GENERAL;
@@ -308,6 +320,9 @@ static UINT wlf_cliprdr_send_client_capabilities(wfClipboard* clipboard)
 		generalCapabilitySet.generalFlags |=
 		    CB_STREAM_FILECLIP_ENABLED | CB_FILECLIP_NO_FILE_PATHS | CB_HUGE_FILE_SUPPORT_ENABLED;
 
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(clipboard->context);
+	WINPR_ASSERT(clipboard->context->ClientCapabilities);
 	return clipboard->context->ClientCapabilities(clipboard->context, &capabilities);
 }
 
@@ -318,10 +333,13 @@ static UINT wlf_cliprdr_send_client_capabilities(wfClipboard* clipboard)
  */
 static UINT wlf_cliprdr_send_client_format_list_response(wfClipboard* clipboard, BOOL status)
 {
-	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse;
-	formatListResponse.msgType = CB_FORMAT_LIST_RESPONSE;
-	formatListResponse.msgFlags = status ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
-	formatListResponse.dataLen = 0;
+	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse = { 0 };
+	formatListResponse.common.msgType = CB_FORMAT_LIST_RESPONSE;
+	formatListResponse.common.msgFlags = status ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
+	formatListResponse.common.dataLen = 0;
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(clipboard->context);
+	WINPR_ASSERT(clipboard->context->ClientFormatListResponse);
 	return clipboard->context->ClientFormatListResponse(clipboard->context, &formatListResponse);
 }
 
@@ -708,7 +726,7 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatDataResponse);
 
-	size = formatDataResponse->dataLen;
+	size = formatDataResponse->common.dataLen;
 	data = (LPCSTR)formatDataResponse->requestedFormatData;
 	wdata = (const WCHAR*)formatDataResponse->requestedFormatData;
 
@@ -758,6 +776,9 @@ wlf_cliprdr_server_file_size_request(wfClipboard* clipboard,
                                      const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	wClipboardFileSizeRequest request = { 0 };
+
+	WINPR_ASSERT(fileContentsRequest);
+
 	request.streamId = fileContentsRequest->streamId;
 	request.listIndex = fileContentsRequest->listIndex;
 
@@ -768,6 +789,9 @@ wlf_cliprdr_server_file_size_request(wfClipboard* clipboard,
 		           fileContentsRequest->cbRequested);
 	}
 
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(clipboard->delegate);
+	WINPR_ASSERT(clipboard->delegate->ClientRequestFileSize);
 	return clipboard->delegate->ClientRequestFileSize(clipboard->delegate, &request);
 }
 
@@ -776,11 +800,18 @@ wlf_cliprdr_server_file_range_request(wfClipboard* clipboard,
                                       const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	wClipboardFileRangeRequest request = { 0 };
+
+	WINPR_ASSERT(fileContentsRequest);
+
 	request.streamId = fileContentsRequest->streamId;
 	request.listIndex = fileContentsRequest->listIndex;
 	request.nPositionLow = fileContentsRequest->nPositionLow;
 	request.nPositionHigh = fileContentsRequest->nPositionHigh;
 	request.cbRequested = fileContentsRequest->cbRequested;
+
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(clipboard->delegate);
+	WINPR_ASSERT(clipboard->delegate->ClientRequestFileRange);
 	return clipboard->delegate->ClientRequestFileRange(clipboard->delegate, &request);
 }
 
@@ -789,8 +820,14 @@ wlf_cliprdr_send_file_contents_failure(CliprdrClientContext* context,
                                        const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	response.msgFlags = CB_RESPONSE_FAIL;
+
+	WINPR_ASSERT(fileContentsRequest);
+
+	response.common.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = fileContentsRequest->streamId;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->ClientFileContentsResponse);
 	return context->ClientFileContentsResponse(context, &response);
 }
 
@@ -839,11 +876,20 @@ static UINT wlf_cliprdr_clipboard_file_size_success(wClipboardDelegate* delegate
                                                     UINT64 fileSize)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	wfClipboard* clipboard = delegate->custom;
-	response.msgFlags = CB_RESPONSE_OK;
+	wfClipboard* clipboard;
+
+	WINPR_ASSERT(delegate);
+	WINPR_ASSERT(request);
+
+	response.common.msgFlags = CB_RESPONSE_OK;
 	response.streamId = request->streamId;
 	response.cbRequested = sizeof(UINT64);
 	response.requestedData = (BYTE*)&fileSize;
+
+	clipboard = delegate->custom;
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(clipboard->context);
+	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
@@ -852,10 +898,19 @@ static UINT wlf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate
                                                     UINT errorCode)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	wfClipboard* clipboard = delegate->custom;
+	wfClipboard* clipboard;
+
+	WINPR_ASSERT(delegate);
+	WINPR_ASSERT(request);
 	WINPR_UNUSED(errorCode);
-	response.msgFlags = CB_RESPONSE_FAIL;
+
+	response.common.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
+
+	clipboard = delegate->custom;
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(clipboard->context);
+	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
@@ -864,11 +919,21 @@ static UINT wlf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegat
                                                      const BYTE* data, UINT32 size)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	wfClipboard* clipboard = delegate->custom;
-	response.msgFlags = CB_RESPONSE_OK;
+	wfClipboard* clipboard;
+
+	WINPR_ASSERT(delegate);
+	WINPR_ASSERT(request);
+	WINPR_ASSERT(data || (size == 0));
+
+	response.common.msgFlags = CB_RESPONSE_OK;
 	response.streamId = request->streamId;
 	response.cbRequested = size;
 	response.requestedData = (const BYTE*)data;
+
+	clipboard = delegate->custom;
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(clipboard->context);
+	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
@@ -877,10 +942,19 @@ static UINT wlf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegat
                                                      UINT errorCode)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	wfClipboard* clipboard = delegate->custom;
+	wfClipboard* clipboard;
+
+	WINPR_ASSERT(delegate);
+	WINPR_ASSERT(request);
 	WINPR_UNUSED(errorCode);
-	response.msgFlags = CB_RESPONSE_FAIL;
+
+	response.common.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = request->streamId;
+
+	clipboard = delegate->custom;
+	WINPR_ASSERT(clipboard);
+	WINPR_ASSERT(clipboard->context);
+	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
 	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
