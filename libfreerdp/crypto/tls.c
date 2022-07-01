@@ -1071,6 +1071,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 
 	while (offset < length)
 	{
+		ERR_clear_error();
 		status = BIO_write(bio, &data[offset], length - offset);
 
 		if (status > 0)

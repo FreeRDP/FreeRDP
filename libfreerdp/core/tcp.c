@@ -491,6 +491,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	{
 		while (chunks[i].size)
 		{
+			ERR_clear_error();
 			status = BIO_write(next_bio, chunks[i].data, chunks[i].size);
 
 			if (status <= 0)
@@ -528,6 +529,7 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 	BIO* next_bio = BIO_next(bio);
 	ptr->readBlocked = FALSE;
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
+	ERR_clear_error();
 	status = BIO_read(next_bio, buf, size);
 
 	if (status <= 0)

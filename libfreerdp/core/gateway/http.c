@@ -835,6 +835,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		size_t s;
 		char* end;
 		/* Read until we encounter \r\n\r\n */
+		ERR_clear_error();
 		int status = BIO_read(tls->bio, Stream_Pointer(response->data), 1);
 
 		if (status <= 0)
@@ -951,6 +952,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 			if (!Stream_EnsureRemainingCapacity(response->data, bodyLength - response->BodyLength))
 				goto out_error;
 
+			ERR_clear_error();
 			status = BIO_read(tls->bio, Stream_Pointer(response->data),
 			                  bodyLength - response->BodyLength);
 
