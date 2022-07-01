@@ -18,6 +18,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/assert.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -643,3 +644,25 @@ INT64 GetLine(char** lineptr, size_t* size, FILE* stream)
 	return -1;
 #endif
 }
+
+#if !defined(HAVE_STRNDUP)
+char* strndup(const char* s, size_t n)
+{
+	char* rc;
+	size_t len;
+
+	WINPR_ASSERT(s || (n == 0));
+	if (n == 0)
+		return NULL;
+
+	len = strnlen(s, n);
+	if (len == n)
+		len++;
+
+	rc = calloc(len, sizeof(char));
+	if (!rc)
+		return NULL;
+	memcpy(rc, s, n);
+	return rc;
+}
+#endif
