@@ -137,6 +137,7 @@ static WinPrAsn1_OID oid4 = { sizeof(oid4_val), oid4_val };
 
 int TestASN1Write(int argc, char* argv[])
 {
+	size_t i;
 	wStream* s = NULL;
 	size_t expectedOuputSz;
 	int retCode = 100;
@@ -159,6 +160,9 @@ int TestASN1Write(int argc, char* argv[])
 	 *   [6] SEQ (empty)
 	 *   [7] UTC time (2016-03-17 16:40:41 UTC)
 	 *   [8] IA5String(test)
+	 *   [9] OctetString
+	 *       SEQ(empty)
+	 *
 	 */
 
 	/* APP(3) */
@@ -240,8 +244,27 @@ int TestASN1Write(int argc, char* argv[])
 	if (WinPrAsn1EncEndContainer(enc) != 8)
 		goto out;
 
+	/*   [9] OctetString
+	 *       SEQ(empty)
+	 */
+	retCode = 121;
+	if (!WinPrAsn1EncContextualOctetStringContainer(enc, 9))
+		goto out;
+
+	retCode = 122;
+	if (!WinPrAsn1EncSeqContainer(enc))
+		goto out;
+
+	retCode = 123;
+	if (WinPrAsn1EncEndContainer(enc) != 2)
+		goto out;
+
+	retCode = 124;
+	if (WinPrAsn1EncEndContainer(enc) != 6)
+		goto out;
+
 	/* close APP */
-	expectedOuputSz = 24 + 6 + 4 + 17 + 8;
+	expectedOuputSz = 24 + 6 + 4 + 17 + 8 + 6;
 	retCode = 200;
 	if (WinPrAsn1EncEndContainer(enc) != expectedOuputSz)
 		goto out;
@@ -255,9 +278,43 @@ int TestASN1Write(int argc, char* argv[])
 	retCode = 202;
 	if (!WinPrAsn1EncToStream(enc, s) || Stream_GetPosition(s) != expectedOuputSz)
 		goto out;
+	/* winpr_HexDump("", WLOG_ERROR, Stream_Buffer(s), Stream_GetPosition(s));*/
+
+	/*
+	 * let's perform a mini-performance test, where we encode an ASN1 message with a big depth,
+	 * so that we trigger reallocation routines in the encoder. We're gonna encode something like
+	 *   SEQ1
+	 *      SEQ2
+	 *         SEQ3
+	 *         ...
+	 *            SEQ1000
+	 *              INTEGER(2)
+	 *
+	 *  As static chunks and containers are 50, a depth of 1000 should be enough
+	 *
+	 */
+	WinPrAsn1Encoder_Reset(enc);
+
+	retCode = 203;
+	for (i = 0; i < 1000; i++)
+	{
+		if (!WinPrAsn1EncSeqContainer(enc))
+			goto out;
+	}
+
+	retCode = 204;
+	if (WinPrAsn1EncInteger(enc, 2) != 3)
+		goto out;
+
+	retCode = 205;
+	for (i = 0; i < 1000; i++)
+	{
+		if (!WinPrAsn1EncEndContainer(enc))
+			goto out;
+	}
+
 	retCode = 0;
 
-	/*winpr_HexDump("", WLOG_ERROR, Stream_Buffer(s), Stream_GetPosition(s));*/
 out:
 	if (s)
 		Stream_Free(s, TRUE);

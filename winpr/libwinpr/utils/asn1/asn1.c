@@ -40,7 +40,8 @@ typedef enum
 	ASN1_CONTAINER_SEQ,
 	ASN1_CONTAINER_SET,
 	ASN1_CONTAINER_APP,
-	ASN1_CONTAINER_CONTEXT_ONLY
+	ASN1_CONTAINER_CONTEXT_ONLY,
+	ASN1_CONTAINER_OCTETSTRING,
 } ContainerType;
 
 typedef struct WinPrAsn1EncContainer WinPrAsn1EncContainer;
@@ -228,7 +229,7 @@ static Asn1Chunk* asn1enc_get_free_chunk(WinPrAsn1Encoder* enc, size_t chunkSz, 
 			return NULL;
 
 		if (enc->chunks == &enc->staticChunks[0])
-			memcpy(tmp, src, enc->chunksCapacity * sizeof(*src));
+			memcpy(tmp, &enc->staticChunks[0], enc->chunksCapacity * sizeof(*src));
 		else
 			memset(tmp + enc->freeChunkId, 0, sizeof(*tmp) * 10);
 
@@ -268,7 +269,7 @@ static WinPrAsn1EncContainer* asn1enc_get_free_container(WinPrAsn1Encoder* enc, 
 			return NULL;
 
 		if (enc->containers == &enc->staticContainers[0])
-			memcpy(tmp, src, enc->containerCapacity * sizeof(*src));
+			memcpy(tmp, &enc->staticContainers[0], enc->containerCapacity * sizeof(*src));
 
 		enc->containers = tmp;
 		enc->containerCapacity += 10;
@@ -375,6 +376,16 @@ BOOL WinPrAsn1EncContextualContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagI
 	return getAsn1Container(enc, ASN1_CONTAINER_CONTEXT_ONLY, tagId, TRUE, 6) != NULL;
 }
 
+BOOL WinPrAsn1EncOctetStringContainer(WinPrAsn1Encoder* enc)
+{
+	return getAsn1Container(enc, ASN1_CONTAINER_OCTETSTRING, 0, FALSE, 6) != NULL;
+}
+
+BOOL WinPrAsn1EncContextualOctetStringContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId)
+{
+	return getAsn1Container(enc, ASN1_CONTAINER_OCTETSTRING, tagId, TRUE, 6 + 6) != NULL;
+}
+
 size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc)
 {
 	size_t innerLen, i, unused;
@@ -403,6 +414,10 @@ size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc)
 			break;
 		case ASN1_CONTAINER_SET:
 			containerByte = ER_TAG_SET;
+			innerHeaderBytes = 1 + lenBytes(innerLen);
+			break;
+		case ASN1_CONTAINER_OCTETSTRING:
+			containerByte = ER_TAG_OCTET_STRING;
 			innerHeaderBytes = 1 + lenBytes(innerLen);
 			break;
 		case ASN1_CONTAINER_APP:
@@ -441,6 +456,7 @@ size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc)
 	{
 		case ASN1_CONTAINER_SEQ:
 		case ASN1_CONTAINER_SET:
+		case ASN1_CONTAINER_OCTETSTRING:
 		case ASN1_CONTAINER_APP:
 			Stream_Write_UINT8(s, containerByte);
 			asn1WriteLen(s, innerLen);
