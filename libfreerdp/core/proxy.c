@@ -604,6 +604,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 			goto fail;
 		}
 
+		ERR_clear_error();
 		status =
 		    BIO_read(bufferedBio, (BYTE*)recv_buf + resultsize, sizeof(recv_buf) - resultsize - 1);
 
@@ -661,6 +662,7 @@ static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, 
 
 	for (;;)
 	{
+		ERR_clear_error();
 		status = BIO_read(bufferedBio, buf, len);
 
 		if (status > 0)

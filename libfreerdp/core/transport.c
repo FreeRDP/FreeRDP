@@ -592,6 +592,7 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 	{
 		const SSIZE_T tr = (SSIZE_T)bytes - read;
 		int r = (int)((tr > INT_MAX) ? INT_MAX : tr);
+		ERR_clear_error();
 		int status = BIO_read(transport->frontBio, data + read, r);
 
 		if (freerdp_shall_disconnect_context(context))
@@ -909,6 +910,7 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 
 	while (length > 0)
 	{
+		ERR_clear_error();
 		status = BIO_write(transport->frontBio, Stream_Pointer(s), length);
 
 		if (status <= 0)

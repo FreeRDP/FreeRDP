@@ -876,6 +876,7 @@ static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
 	switch (encodingContext->httpTransferEncoding)
 	{
 		case TransferEncodingIdentity:
+			ERR_clear_error();
 			return BIO_read(bio, pBuffer, size);
 		case TransferEncodingChunked:
 			return rdg_chuncked_read(bio, pBuffer, size, &encodingContext->context.chunked);
