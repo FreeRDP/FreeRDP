@@ -45,9 +45,9 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
-	formatList.msgType = CB_FORMAT_LIST;
-	formatList.msgFlags = msgFlags;
-	formatList.dataLen = dataLen;
+	formatList.common.msgType = CB_FORMAT_LIST;
+	formatList.common.msgFlags = msgFlags;
+	formatList.common.dataLen = dataLen;
 
 	if ((error = cliprdr_read_format_list(s, &formatList, cliprdr->useLongFormatNames)))
 		goto error_out;
@@ -80,9 +80,9 @@ UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatListResponse");
 
-	formatListResponse.msgType = CB_FORMAT_LIST_RESPONSE;
-	formatListResponse.msgFlags = msgFlags;
-	formatListResponse.dataLen = dataLen;
+	formatListResponse.common.msgType = CB_FORMAT_LIST_RESPONSE;
+	formatListResponse.common.msgFlags = msgFlags;
+	formatListResponse.common.dataLen = dataLen;
 
 	IFCALLRET(context->ServerFormatListResponse, error, context, &formatListResponse);
 	if (error)
@@ -99,15 +99,15 @@ UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
                                          UINT16 msgFlags)
 {
-	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest;
+	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest = { 0 };
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataRequest");
 
-	formatDataRequest.msgType = CB_FORMAT_DATA_REQUEST;
-	formatDataRequest.msgFlags = msgFlags;
-	formatDataRequest.dataLen = dataLen;
+	formatDataRequest.common.msgType = CB_FORMAT_DATA_REQUEST;
+	formatDataRequest.common.msgFlags = msgFlags;
+	formatDataRequest.common.dataLen = dataLen;
 
 	if ((error = cliprdr_read_format_data_request(s, &formatDataRequest)))
 		return error;
@@ -128,15 +128,15 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
                                           UINT16 msgFlags)
 {
-	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse;
+	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse = { 0 };
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataResponse");
 
-	formatDataResponse.msgType = CB_FORMAT_DATA_RESPONSE;
-	formatDataResponse.msgFlags = msgFlags;
-	formatDataResponse.dataLen = dataLen;
+	formatDataResponse.common.msgType = CB_FORMAT_DATA_RESPONSE;
+	formatDataResponse.common.msgFlags = msgFlags;
+	formatDataResponse.common.dataLen = dataLen;
 
 	if ((error = cliprdr_read_format_data_response(s, &formatDataResponse)))
 		return error;

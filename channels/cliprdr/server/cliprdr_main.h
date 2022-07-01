@@ -41,7 +41,7 @@ typedef struct
 	HANDLE ChannelEvent;
 
 	wStream* s;
-	char* temporaryDirectory;
+	char temporaryDirectory[260];
 } CliprdrServerPrivate;
 
 #endif /* FREERDP_CHANNEL_CLIPRDR_SERVER_MAIN_H */

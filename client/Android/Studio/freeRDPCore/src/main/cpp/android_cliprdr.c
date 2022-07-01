@@ -76,10 +76,10 @@ UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr)
 		}
 	}
 
-	formatList.msgFlags = CB_RESPONSE_OK;
+	formatList.common.msgFlags = CB_RESPONSE_OK;
 	formatList.numFormats = numFormats;
 	formatList.formats = formats;
-	formatList.msgType = CB_FORMAT_LIST;
+	formatList.common.msgType = CB_FORMAT_LIST;
 
 	if (!afc->cliprdr->ClientFormatList)
 		goto fail;
@@ -107,8 +107,8 @@ static UINT android_cliprdr_send_client_format_data_request(CliprdrClientContext
 		goto fail;
 
 	ZeroMemory(&formatDataRequest, sizeof(CLIPRDR_FORMAT_DATA_REQUEST));
-	formatDataRequest.msgType = CB_FORMAT_DATA_REQUEST;
-	formatDataRequest.msgFlags = 0;
+	formatDataRequest.common.msgType = CB_FORMAT_DATA_REQUEST;
+	formatDataRequest.common.msgFlags = 0;
 	formatDataRequest.requestedFormatId = formatId;
 	afc->requestedFormatId = formatId;
 	ResetEvent(afc->clipboardRequestEvent);
@@ -350,14 +350,14 @@ android_cliprdr_server_format_data_request(CliprdrClientContext* cliprdr,
 	ZeroMemory(&response, sizeof(CLIPRDR_FORMAT_DATA_RESPONSE));
 	formatId = formatDataRequest->requestedFormatId;
 	data = (BYTE*)ClipboardGetData(afc->clipboard, formatId, &size);
-	response.msgFlags = CB_RESPONSE_OK;
-	response.dataLen = size;
+	response.common.msgFlags = CB_RESPONSE_OK;
+	response.common.dataLen = size;
 	response.requestedFormatData = data;
 
 	if (!data)
 	{
-		response.msgFlags = CB_RESPONSE_FAIL;
-		response.dataLen = 0;
+		response.common.msgFlags = CB_RESPONSE_FAIL;
+		response.common.dataLen = 0;
 		response.requestedFormatData = NULL;
 	}
 
@@ -413,7 +413,7 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 	else
 		formatId = format->formatId;
 
-	size = formatDataResponse->dataLen;
+	size = formatDataResponse->common.dataLen;
 
 	if (!ClipboardSetData(afc->clipboard, formatId, formatDataResponse->requestedFormatData, size))
 		return ERROR_INTERNAL_ERROR;
