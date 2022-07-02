@@ -30,6 +30,7 @@
 #include <winpr/thread.h>
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>
+#include <winpr/stream.h>
 
 #include <freerdp/server/ainput.h>
 #include <freerdp/channels/ainput.h>
@@ -119,6 +120,14 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 		ainput->ainput_channel = WTSVirtualChannelOpenEx(ainput->SessionId, AINPUT_DVC_CHANNEL_NAME,
 		                                                 WTS_CHANNEL_OPTION_DYNAMIC);
 
+		Error = GetLastError();
+
+		if (Error == ERROR_NOT_FOUND)
+		{
+			WLog_DBG(TAG, "Channel %s not found", AINPUT_DVC_CHANNEL_NAME);
+			break;
+		}
+
 		if (ainput->ainput_channel)
 		{
 			UINT32 channelId;
@@ -136,13 +145,11 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 			break;
 		}
 
-		Error = GetLastError();
-
-		if (Error == ERROR_NOT_FOUND)
-			break;
-
 		if (GetTickCount() - StartTick > 5000)
+		{
+			WLog_WARN(TAG, "Timeout opening channel %s", AINPUT_DVC_CHANNEL_NAME);
 			break;
+		}
 	}
 
 	return ainput->ainput_channel ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
@@ -160,7 +167,10 @@ static UINT ainput_server_send_version(ainput_server* ainput)
 
 	Stream_SetPosition(s, 0);
 	if (!Stream_EnsureCapacity(s, 10))
+	{
+		WLog_WARN(TAG, "[%s] out of memory", AINPUT_DVC_CHANNEL_NAME);
 		return ERROR_OUTOFMEMORY;
+	}
 
 	Stream_Write_UINT16(s, MSG_AINPUT_VERSION);
 	Stream_Write_UINT32(s, AINPUT_VERSION_MAJOR); /* Version (4 bytes) */
@@ -204,7 +214,7 @@ static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
 
 static HANDLE ainput_server_get_channel_handle(ainput_server* ainput)
 {
-	void* buffer = NULL;
+	BYTE* buffer = NULL;
 	DWORD BytesReturned = 0;
 	HANDLE ChannelEvent = NULL;
 
@@ -252,6 +262,7 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 						break;
 					case WAIT_FAILED:
 					default:
+						WLog_WARN(TAG, "[%s] Wait for open failed", AINPUT_DVC_CHANNEL_NAME);
 						error = ERROR_INTERNAL_ERROR;
 						break;
 				}
@@ -268,6 +279,7 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 
 					case WAIT_FAILED:
 					default:
+						WLog_WARN(TAG, "[%s] Wait for version failed", AINPUT_DVC_CHANNEL_NAME);
 						error = ERROR_INTERNAL_ERROR;
 						break;
 				}
@@ -421,7 +433,7 @@ static UINT ainput_process_message(ainput_server* ainput)
 {
 	BOOL rc;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned;
+	ULONG BytesReturned, ActualBytesReturned;
 	UINT16 MessageId;
 	wStream* s;
 
@@ -450,13 +462,20 @@ static UINT ainput_process_message(ainput_server* ainput)
 	}
 
 	if (WTSVirtualChannelRead(ainput->ainput_channel, 0, (PCHAR)Stream_Buffer(s),
-	                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
+	                          (ULONG)Stream_Capacity(s), &ActualBytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 		goto out;
 	}
 
-	Stream_SetLength(s, BytesReturned);
+	if (BytesReturned != ActualBytesReturned)
+	{
+		WLog_ERR(TAG, "WTSVirtualChannelRead size mismatch %" PRId32 ", expected %" PRId32,
+		         ActualBytesReturned, BytesReturned);
+		goto out;
+	}
+
+	Stream_SetLength(s, ActualBytesReturned);
 	Stream_Read_UINT16(s, MessageId);
 
 	switch (MessageId)
@@ -484,9 +503,15 @@ BOOL ainput_server_context_handle(ainput_server_context* context, HANDLE* handle
 	WINPR_ASSERT(handle);
 
 	if (!ainput->externalThread)
+	{
+		WLog_WARN(TAG, "[%s] externalThread fail!", AINPUT_DVC_CHANNEL_NAME);
 		return FALSE;
+	}
 	if (ainput->state == AINPUT_INITIAL)
+	{
+		WLog_WARN(TAG, "[%s] state fail!", AINPUT_DVC_CHANNEL_NAME);
 		return FALSE;
+	}
 	*handle = ainput_server_get_channel_handle(ainput);
 	return TRUE;
 }
@@ -558,6 +583,9 @@ UINT ainput_server_context_poll(ainput_server_context* context)
 
 	WINPR_ASSERT(ainput);
 	if (!ainput->externalThread)
+	{
+		WLog_WARN(TAG, "[%s] externalThread fail!", AINPUT_DVC_CHANNEL_NAME);
 		return ERROR_INTERNAL_ERROR;
+	}
 	return ainput_server_context_poll_int(context);
 }
