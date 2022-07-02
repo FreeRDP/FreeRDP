@@ -361,6 +361,7 @@ static BOOL rdg_write_chunked(BIO* bio, wStream* sPacket)
 		return FALSE;
 	}
 
+	ERR_clear_error();
 	status = BIO_write(bio, Stream_Buffer(sChunk), (int)len);
 	Stream_Free(sChunk, TRUE);
 
@@ -435,6 +436,7 @@ static BOOL rdg_write_websocket(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opc
 
 	Stream_SealLength(sWS);
 
+	ERR_clear_error();
 	status = BIO_write(bio, Stream_Buffer(sWS), Stream_Length(sWS));
 	Stream_Free(sWS, TRUE);
 
@@ -467,6 +469,7 @@ static int rdg_websocket_read_data(BIO* bio, BYTE* pBuffer, size_t size,
 		return 0;
 	}
 
+	ERR_clear_error();
 	status =
 	    BIO_read(bio, pBuffer,
 	             (encodingContext->payloadLength < size ? encodingContext->payloadLength : size));
@@ -492,6 +495,7 @@ static int rdg_websocket_read_discard(BIO* bio, rdg_http_websocket_context* enco
 		return 0;
 	}
 
+	ERR_clear_error();
 	status = BIO_read(bio, _dummy, sizeof(_dummy));
 	if (status <= 0)
 		return status;
@@ -517,6 +521,7 @@ static int rdg_websocket_read_wstream(BIO* bio, wStream* s,
 	if (s == NULL || Stream_GetRemainingCapacity(s) != encodingContext->payloadLength)
 		return -1;
 
+	ERR_clear_error();
 	status = BIO_read(bio, Stream_Pointer(s), encodingContext->payloadLength);
 	if (status <= 0)
 		return status;
@@ -564,6 +569,7 @@ static BOOL rdg_websocket_reply_close(BIO* bio, wStream* s)
 	}
 	Stream_SealLength(closeFrame);
 
+	ERR_clear_error();
 	status = BIO_write(bio, Stream_Buffer(closeFrame), Stream_Length(closeFrame));
 	Stream_Free(closeFrame, TRUE);
 
@@ -590,6 +596,7 @@ static BOOL rdg_websocket_reply_pong(BIO* bio, wStream* s)
 	Stream_Write_UINT32(closeFrame, maskingKey); /* dummy masking key. */
 	Stream_SealLength(closeFrame);
 
+	ERR_clear_error();
 	status = BIO_write(bio, Stream_Buffer(closeFrame), Stream_Length(closeFrame));
 
 	if (status < 0)
@@ -684,6 +691,7 @@ static int rdg_websocket_read(BIO* bio, BYTE* pBuffer, size_t size,
 			case WebsocketStateOpcodeAndFin:
 			{
 				BYTE buffer[1];
+				ERR_clear_error();
 				status = BIO_read(bio, (char*)buffer, 1);
 				if (status <= 0)
 					return (effectiveDataLen > 0 ? effectiveDataLen : status);
@@ -699,6 +707,7 @@ static int rdg_websocket_read(BIO* bio, BYTE* pBuffer, size_t size,
 			{
 				BYTE buffer[1];
 				BYTE len;
+				ERR_clear_error();
 				status = BIO_read(bio, (char*)buffer, 1);
 				if (status <= 0)
 					return (effectiveDataLen > 0 ? effectiveDataLen : status);
@@ -726,6 +735,7 @@ static int rdg_websocket_read(BIO* bio, BYTE* pBuffer, size_t size,
 				BYTE lenLength = (encodingContext->state == WebsocketStateShortLength ? 2 : 8);
 				while (encodingContext->lengthAndMaskPosition < lenLength)
 				{
+					ERR_clear_error();
 					status = BIO_read(bio, (char*)buffer, 1);
 					if (status <= 0)
 						return (effectiveDataLen > 0 ? effectiveDataLen : status);
@@ -774,6 +784,7 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 		{
 			case ChunkStateData:
 			{
+				ERR_clear_error();
 				status = BIO_read(
 				    bio, pBuffer,
 				    (size > encodingContext->nextOffset ? encodingContext->nextOffset : size));
@@ -800,6 +811,7 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 				char _dummy[2];
 				WINPR_ASSERT(encodingContext->nextOffset == 0);
 				WINPR_ASSERT(encodingContext->headerFooterPos < 2);
+				ERR_clear_error();
 				status = BIO_read(bio, _dummy, 2 - encodingContext->headerFooterPos);
 				if (status >= 0)
 				{
@@ -822,6 +834,7 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 				WINPR_ASSERT(encodingContext->nextOffset == 0);
 				while (encodingContext->headerFooterPos < 10 && !_haveNewLine)
 				{
+					ERR_clear_error();
 					status = BIO_read(bio, dst, 1);
 					if (status >= 0)
 					{

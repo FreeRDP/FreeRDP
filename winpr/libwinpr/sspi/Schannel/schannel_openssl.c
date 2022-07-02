@@ -354,6 +354,7 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 			if (!pBuffer)
 				return SEC_E_INVALID_TOKEN;
 
+			ERR_clear_error();
 			status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
 			if (status < 0)
 				return SEC_E_INVALID_TOKEN;
@@ -370,6 +371,7 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 		if (status == 1)
 			context->connected = TRUE;
 
+		ERR_clear_error();
 		status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
 
 		if (pOutput->cBuffers < 1)
@@ -417,6 +419,7 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 		if (!pBuffer)
 			return SEC_E_INVALID_TOKEN;
 
+		ERR_clear_error();
 		status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
 		if (status >= 0)
 			status = SSL_accept(context->ssl);
@@ -431,6 +434,7 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 		if (status == 1)
 			context->connected = TRUE;
 
+		ERR_clear_error();
 		status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
 		if (status < 0)
 		{
@@ -488,6 +492,7 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSec
 		WLog_ERR(TAG, "SSL_write: %s", openssl_get_ssl_error_string(ssl_error));
 	}
 
+	ERR_clear_error();
 	status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
 
 	if (status > 0)
@@ -525,6 +530,7 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSec
 	if (!pBuffer)
 		return SEC_E_INVALID_TOKEN;
 
+	ERR_clear_error();
 	status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
 	if (status > 0)
 		status = SSL_read(context->ssl, pBuffer->pvBuffer, pBuffer->cbBuffer);

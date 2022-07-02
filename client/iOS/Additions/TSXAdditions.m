@@ -220,6 +220,7 @@
 	BIO_set_flags(context, BIO_FLAGS_BASE64_NO_NL);
 
 	// Encode all the data
+	ERR_clear_error();
 	BIO_write(context, [self bytes], [self length]);
 	(void)BIO_flush(context);
 
