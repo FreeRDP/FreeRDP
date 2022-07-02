@@ -31,6 +31,7 @@
 #include <openssl/crypto.h>
 #include <openssl/conf.h>
 #include <openssl/pem.h>
+#include <openssl/err.h>
 #include <openssl/rsa.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509v3.h>
