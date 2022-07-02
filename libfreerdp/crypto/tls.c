@@ -216,6 +216,7 @@ static int bio_rdp_tls_puts(BIO* bio, const char* str)
 		return 0;
 
 	size = strlen(str);
+	ERR_clear_error();
 	status = BIO_write(bio, str, size);
 	return status;
 }

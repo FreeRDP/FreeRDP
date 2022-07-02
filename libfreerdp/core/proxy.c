@@ -586,6 +586,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 		goto fail;
 
 	Stream_Write(s, CRLF CRLF, 4);
+	ERR_clear_error();
 	status = BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
 
 	if ((status < 0) || ((size_t)status != Stream_GetPosition(s)))
@@ -727,6 +728,7 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	if (nauthMethods > 1)
 		buf[3] = AUTH_M_USR_PASS;
 
+	ERR_clear_error();
 	status = BIO_write(bufferedBio, buf, writeLen);
 
 	if (status != writeLen)
@@ -770,6 +772,7 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 				*ptr = userpassLen;
 				ptr++;
 				memcpy(ptr, proxyPassword, userpassLen);
+				ERR_clear_error();
 				status = BIO_write(bufferedBio, buf, 3 + usernameLen + userpassLen);
 
 				if (status != 3 + usernameLen + userpassLen)
@@ -807,6 +810,7 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	/* follows DST.PORT in netw. format */
 	buf[hostnlen + 5] = (port >> 8) & 0xff;
 	buf[hostnlen + 6] = port & 0xff;
+	ERR_clear_error();
 	status = BIO_write(bufferedBio, buf, hostnlen + 7U);
 
 	if ((status < 0) || ((size_t)status != (hostnlen + 7U)))

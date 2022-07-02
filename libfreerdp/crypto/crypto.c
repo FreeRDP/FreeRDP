@@ -360,6 +360,7 @@ static char* crypto_print_name(X509_NAME* name)
 		if (!buffer)
 			return NULL;
 
+		ERR_clear_error();
 		BIO_read(outBIO, buffer, (int)size);
 	}
 
@@ -1066,6 +1067,7 @@ BYTE* crypto_cert_pem(X509* xcert, STACK_OF(X509) * chain, size_t* plength)
 		goto fail;
 	}
 
+	ERR_clear_error();
 	status = BIO_read(bio, pemCert, length);
 
 	if (status < 0)
@@ -1088,6 +1090,7 @@ BYTE* crypto_cert_pem(X509* xcert, STACK_OF(X509) * chain, size_t* plength)
 
 		length = new_len;
 		pemCert = new_cert;
+		ERR_clear_error();
 		status = BIO_read(bio, &pemCert[offset], length - offset);
 
 		if (status < 0)
