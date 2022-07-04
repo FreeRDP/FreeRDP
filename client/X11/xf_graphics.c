@@ -323,7 +323,9 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer
 		}
 		ci.pixels = (XcursorPixel*)tmp;
 
-		if (((fabs(xscale) - 1.0) > DBL_EPSILON) || ((fabs(yscale) - 1.0) > DBL_EPSILON))
+		const double xs = fabs(fabs(xscale) - 1.0);
+		const double ys = fabs(fabs(yscale) - 1.0);
+		if ((xs > DBL_EPSILON) || (ys > DBL_EPSILON))
 		{
 			if (!freerdp_image_scale((BYTE*)ci.pixels, CursorFormat, 0, 0, 0, ci.width, ci.height,
 			                         (BYTE*)xpointer->cursorPixels, CursorFormat, 0, 0, 0,
