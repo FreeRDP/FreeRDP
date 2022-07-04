@@ -306,23 +306,25 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 		ci.yhot = pointer->yPos * yscale;
 		size = ci.height * ci.width * GetBytesPerPixel(CursorFormat) * 1ULL;
 
-		if (xscale != 1 || yscale != 1)
+		if (!(ci.pixels = (XcursorPixel*)_aligned_malloc(size, 16)))
 		{
-			if (!(ci.pixels = (XcursorPixel*)_aligned_malloc(size, 16)))
-			{
-				xf_unlock_x11(xfc);
-				return FALSE;
+			xf_unlock_x11(xfc);
+			return FALSE;
 			}
 
-			if (!freerdp_image_scale((BYTE*)ci.pixels, CursorFormat, 0, 0, 0, ci.width, ci.height,
-			                         (BYTE*)xpointer->cursorPixels, CursorFormat, 0, 0, 0,
-			                         pointer->width, pointer->height))
-			{
-				_aligned_free(ci.pixels);
-				xf_unlock_x11(xfc);
-				return FALSE;
-			}
-		}
+		    const double xs = fabs(fabs(xscale) - 1.0);
+		    const double ys = fabs(fabs(yscale) - 1.0);
+		    if ((xs > DBL_EPSILON) || (ys > DBL_EPSILON))
+		    {
+			    if (!freerdp_image_scale((BYTE*)ci.pixels, CursorFormat, 0, 0, 0, ci.width,
+			                             ci.height, (BYTE*)xpointer->cursorPixels, CursorFormat, 0,
+			                             0, 0, pointer->width, pointer->height))
+			    {
+				    _aligned_free(ci.pixels);
+				    xf_unlock_x11(xfc);
+				    return FALSE;
+			    }
+		    }
 		else
 		{
 			ci.pixels = xpointer->cursorPixels;
@@ -333,8 +335,7 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 		xpointer->cursorHeights[cursorIndex] = ci.height;
 		xpointer->cursors[cursorIndex] = XcursorImageLoadCursor(xfc->display, &ci);
 		xpointer->nCursors += 1;
-		if (xscale != 1 || yscale != 1)
-			_aligned_free(ci.pixels);
+		_aligned_free(ci.pixels);
 
 		xf_unlock_x11(xfc);
 	}
