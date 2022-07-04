@@ -42,6 +42,8 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
+static BOOL xf_Pointer_Set(rdpContext* context, const rdpPointer* pointer);
+
 BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 {
 	rdpGdi* gdi;
@@ -227,14 +229,14 @@ static BOOL xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL pr
 	return TRUE;
 }
 
-static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpPointer* pointer,
-                                                 Cursor* cursor)
+static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpPointer* pointer,
+                                                Cursor* cursor)
 {
 #ifdef WITH_XCURSOR
 	UINT32 CursorFormat;
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;
-	XcursorImage ci;
+	XcursorImage ci = { 0 };
 	rdpSettings* settings;
 	UINT32 xTargetSize;
 	UINT32 yTargetSize;
@@ -297,7 +299,6 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpP
 			}
 		}
 
-		ZeroMemory(&ci, sizeof(ci));
 		ci.version = XCURSOR_IMAGE_VERSION;
 		ci.size = sizeof(ci);
 		ci.width = xTargetSize;
@@ -373,6 +374,18 @@ static Window xf_Pointer_get_window(xfContext* xfc)
 	}
 }
 
+BOOL xf_pointer_update_scale(xfContext* xfc)
+{
+	xfPointer* pointer;
+	WINPR_ASSERT(xfc);
+
+	pointer = xfc->pointer;
+	if (!pointer)
+		return TRUE;
+
+	return xf_Pointer_Set(&xfc->common.context, &xfc->pointer->pointer);
+}
+
 static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
 #ifdef WITH_XCURSOR
@@ -406,8 +419,6 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		return FALSE;
 	}
 
-	if (!_xf_Pointer_GetCursorForCurrentScale(context, pointer, &(xpointer->cursor)))
-		return FALSE;
 #endif
 	return TRUE;
 }
@@ -448,7 +459,7 @@ static BOOL xf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 
 	if (handle)
 	{
-		if (!_xf_Pointer_GetCursorForCurrentScale(context, pointer, &(xfc->pointer->cursor)))
+		if (!xf_Pointer_GetCursorForCurrentScale(context, pointer, &(xfc->pointer->cursor)))
 			return FALSE;
 		xf_lock_x11(xfc);
 		XDefineCursor(xfc->display, handle, xfc->pointer->cursor);
