@@ -452,7 +452,7 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 #endif
 
 fail:
-	WLog_DBG(TAG, "%s: %ld", __func__, rc ? pointer : -1);
+	WLog_DBG(TAG, "%s: %p", __func__, rc ? pointer : NULL);
 	return rc;
 }
 

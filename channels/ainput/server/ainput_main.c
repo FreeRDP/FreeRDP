@@ -214,7 +214,7 @@ static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
 
 static HANDLE ainput_server_get_channel_handle(ainput_server* ainput)
 {
-	BYTE* buffer = NULL;
+	void* buffer = NULL;
 	DWORD BytesReturned = 0;
 	HANDLE ChannelEvent = NULL;
 
