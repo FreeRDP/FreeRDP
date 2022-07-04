@@ -33,6 +33,7 @@
 #include "xf_disp.h"
 #include "xf_input.h"
 #include "xf_gfx.h"
+#include "xf_graphics.h"
 
 #include "xf_event.h"
 #include "xf_input.h"
@@ -615,6 +616,7 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 	/* Release all keys, should already be done at FocusOut but might be missed
 	 * if the WM decided to use an alternate event order */
 	xf_keyboard_release_all_keypress(xfc);
+	xf_pointer_update_scale(xfc);
 
 	if (app)
 	{
@@ -784,43 +786,42 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 			/* ask the server to resize using the display channel */
 			xf_disp_handle_configureNotify(xfc, alignedWidth, alignedHeight);
 		}
-
-		return TRUE;
 	}
-
-	appWindow = xf_AppWindowFromX11Window(xfc, event->window);
-
-	if (appWindow)
+	else
 	{
-		/*
-		 * ConfigureNotify coordinates are expressed relative to the window parent.
-		 * Translate these to root window coordinates.
-		 */
-		XTranslateCoordinates(xfc->display, appWindow->handle, RootWindowOfScreen(xfc->screen), 0,
-		                      0, &appWindow->x, &appWindow->y, &childWindow);
-		appWindow->width = event->width;
-		appWindow->height = event->height;
+		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
-		/*
-		 * Additional checks for not in a local move and not ignoring configure to send
-		 * position update to server, also should the window not be focused then do not
-		 * send to server yet (i.e. resizing using window decoration).
-		 * The server will be updated when the window gets refocused.
-		 */
-		if (appWindow->decorations)
+		if (appWindow)
 		{
-			/* moving resizing using window decoration */
-			xf_rail_adjust_position(xfc, appWindow);
-		}
-		else
-		{
-			if ((!event->send_event || appWindow->local_move.state == LMS_NOT_ACTIVE) &&
-			    !appWindow->rail_ignore_configure && xfc->focused)
+			/*
+			 * ConfigureNotify coordinates are expressed relative to the window parent.
+			 * Translate these to root window coordinates.
+			 */
+			XTranslateCoordinates(xfc->display, appWindow->handle, RootWindowOfScreen(xfc->screen),
+			                      0, 0, &appWindow->x, &appWindow->y, &childWindow);
+			appWindow->width = event->width;
+			appWindow->height = event->height;
+
+			/*
+			 * Additional checks for not in a local move and not ignoring configure to send
+			 * position update to server, also should the window not be focused then do not
+			 * send to server yet (i.e. resizing using window decoration).
+			 * The server will be updated when the window gets refocused.
+			 */
+			if (appWindow->decorations)
+			{
+				/* moving resizing using window decoration */
 				xf_rail_adjust_position(xfc, appWindow);
+			}
+			else
+			{
+				if ((!event->send_event || appWindow->local_move.state == LMS_NOT_ACTIVE) &&
+				    !appWindow->rail_ignore_configure && xfc->focused)
+					xf_rail_adjust_position(xfc, appWindow);
+			}
 		}
 	}
-
-	return TRUE;
+	return xf_pointer_update_scale(xfc);
 }
 
 static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)

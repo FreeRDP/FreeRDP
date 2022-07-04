@@ -44,6 +44,8 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
+static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
+
 BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 {
 	rdpGdi* gdi;
@@ -229,8 +231,8 @@ static BOOL xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL pr
 	return TRUE;
 }
 
-static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer* pointer,
-                                                 Cursor* cursor)
+static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer* pointer,
+                                                Cursor* cursor)
 {
 #ifdef WITH_XCURSOR
 	UINT32 CursorFormat;
@@ -262,7 +264,8 @@ static BOOL _xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer
 
 	for (i = 0; i < xpointer->nCursors; i++)
 	{
-		if (xpointer->cursorWidths[i] == xTargetSize && xpointer->cursorHeights[i] == yTargetSize)
+		if ((xpointer->cursorWidths[i] == xTargetSize) &&
+		    (xpointer->cursorHeights[i] == yTargetSize))
 		{
 			cursorIndex = i;
 		}
@@ -385,6 +388,18 @@ static Window xf_Pointer_get_window(xfContext* xfc)
 	}
 }
 
+BOOL xf_pointer_update_scale(xfContext* xfc)
+{
+	xfPointer* pointer;
+	WINPR_ASSERT(xfc);
+
+	pointer = xfc->pointer;
+	if (!pointer)
+		return TRUE;
+
+	return xf_Pointer_Set(&xfc->common.context, &xfc->pointer->pointer);
+}
+
 static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
 #ifdef WITH_XCURSOR
@@ -418,8 +433,6 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		return FALSE;
 	}
 
-	if (!_xf_Pointer_GetCursorForCurrentScale(context, pointer, &(xpointer->cursor)))
-		return FALSE;
 #endif
 	return TRUE;
 }
@@ -456,13 +469,16 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	xfContext* xfc = (xfContext*)context;
 	Window handle = xf_Pointer_get_window(xfc);
 
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(pointer);
+
 	xfc->pointer = (xfPointer*)pointer;
 
 	/* in RemoteApp mode, window can be null if none has had focus */
 
 	if (handle)
 	{
-		if (!_xf_Pointer_GetCursorForCurrentScale(context, pointer, &(xfc->pointer->cursor)))
+		if (!xf_Pointer_GetCursorForCurrentScale(context, pointer, &(xfc->pointer->cursor)))
 			return FALSE;
 		xf_lock_x11(xfc);
 		XDefineCursor(xfc->display, handle, xfc->pointer->cursor);

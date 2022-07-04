@@ -29,4 +29,6 @@ BOOL xf_register_graphics(rdpGraphics* graphics);
 BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color);
 UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned);
 
+BOOL xf_pointer_update_scale(xfContext* xfc);
+
 #endif /* FREERDP_CLIENT_X11_GRAPHICS_H */
