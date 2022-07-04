@@ -596,7 +596,7 @@ static void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int
 	region.y = y;
 	region.width = width;
 	region.height = height;
-#ifdef WITH_XFIXES
+#if defined(WITH_XFIXES) && defined(WITH_XDAMAGE)
 	XLockDisplay(subsystem->display);
 	XFixesSetRegion(subsystem->display, subsystem->xdamage_region, &region, 1);
 	XDamageSubtract(subsystem->display, subsystem->xdamage, subsystem->xdamage_region, None);
@@ -782,7 +782,7 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	 * changed outside. We will resize to correct resolution at next frame
 	 */
 	XSetErrorHandler(x11_shadow_error_handler_for_capture);
-
+#if defined(WITH_XDAMAGE)
 	if (subsystem->use_xshm)
 	{
 		image = subsystem->fb_image;
@@ -796,6 +796,7 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		LeaveCriticalSection(&surface->lock);
 	}
 	else
+#endif
 	{
 		EnterCriticalSection(&surface->lock);
 		image = XGetImage(subsystem->display, subsystem->root_window, surface->x, surface->y,
@@ -1026,7 +1027,6 @@ static int x11_shadow_xfixes_init(x11ShadowSubsystem* subsystem)
 static int x11_shadow_xinerama_init(x11ShadowSubsystem* subsystem)
 {
 #ifdef WITH_XINERAMA
-	int major, minor;
 	int xinerama_event;
 	int xinerama_error;
 	x11_shadow_subsystem_base_init(subsystem);
@@ -1034,8 +1034,11 @@ static int x11_shadow_xinerama_init(x11ShadowSubsystem* subsystem)
 	if (!XineramaQueryExtension(subsystem->display, &xinerama_event, &xinerama_error))
 		return -1;
 
+#if defined(WITH_XDAMAGE)
+	int major, minor;
 	if (!XDamageQueryVersion(subsystem->display, &major, &minor))
 		return -1;
+#endif
 
 	if (!XineramaIsActive(subsystem->display))
 		return -1;
@@ -1148,9 +1151,11 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 
 	values.subwindow_mode = IncludeInferiors;
 	values.graphics_exposures = False;
+#if defined(WITH_XDAMAGE)
 	subsystem->xshm_gc = XCreateGC(subsystem->display, subsystem->root_window,
 	                               GCSubwindowMode | GCGraphicsExposures, &values);
 	XSetFunction(subsystem->display, subsystem->xshm_gc, GXcopy);
+#endif
 	XSync(subsystem->display, False);
 	return 1;
 }
@@ -1177,13 +1182,22 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 	displayHeight = HeightOfScreen(DefaultScreenOfDisplay(display));
 #ifdef WITH_XINERAMA
 	{
+#if defined(WITH_XDAMAGE)
 		int major, minor;
+#endif
 		int xinerama_event;
 		int xinerama_error;
 		XineramaScreenInfo* screens;
 
-		if (XineramaQueryExtension(display, &xinerama_event, &xinerama_error) &&
-		    XDamageQueryVersion(display, &major, &minor) && XineramaIsActive(display))
+		const Bool xinerama = XineramaQueryExtension(display, &xinerama_event, &xinerama_error);
+		const Bool damage =
+#if defined(WITH_XDAMAGE)
+		    XDamageQueryVersion(display, &major, &minor);
+#else
+		    False;
+#endif
+
+		if (xinerama && damage && XineramaIsActive(display))
 		{
 			screens = XineramaQueryScreens(display, &numMonitors);
 
