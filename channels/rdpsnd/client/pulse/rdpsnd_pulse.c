@@ -427,15 +427,7 @@ BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, const AUDIO_FORMA
 
 			break;
 
-		case WAVE_FORMAT_ALAW:
-		case WAVE_FORMAT_MULAW:
-			if (format->cbSize == 0 && (format->nSamplesPerSec <= PA_RATE_MAX) &&
-			    (format->wBitsPerSample == 8) &&
-			    (format->nChannels >= 1 && format->nChannels <= PA_CHANNELS_MAX))
-			{
-				return TRUE;
-			}
-
+		default:
 			break;
 	}
 

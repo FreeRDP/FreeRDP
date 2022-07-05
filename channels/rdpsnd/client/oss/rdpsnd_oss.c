@@ -117,10 +117,6 @@ static BOOL rdpsnd_oss_format_supported(rdpsndDevicePlugin* device, const AUDIO_
 
 			break;
 
-		case WAVE_FORMAT_MULAW:
-		case WAVE_FORMAT_ALAW:
-			break;
-
 		default:
 			return FALSE;
 	}
