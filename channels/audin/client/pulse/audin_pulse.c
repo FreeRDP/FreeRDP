@@ -234,17 +234,6 @@ static BOOL audin_pulse_format_supported(IAudinDevice* device, const AUDIO_FORMA
 
 			break;
 
-		case WAVE_FORMAT_ALAW:  /* A-LAW */
-		case WAVE_FORMAT_MULAW: /* U-LAW */
-			if (format->cbSize == 0 && (format->nSamplesPerSec <= PA_RATE_MAX) &&
-			    (format->wBitsPerSample == 8) &&
-			    (format->nChannels >= 1 && format->nChannels <= PA_CHANNELS_MAX))
-			{
-				return TRUE;
-			}
-
-			break;
-
 		default:
 			return FALSE;
 	}
