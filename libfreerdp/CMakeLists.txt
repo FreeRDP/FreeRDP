@@ -190,6 +190,8 @@ if (WITH_DSP_FFMPEG)
         ${CODEC_SRCS}
         codec/dsp_ffmpeg.c
         codec/dsp_ffmpeg.h)
+	freerdp_include_directory_add(${FFMPEG_INCLUDE_DIRS})
+	freerdp_library_add(${FFMPEG_LIBRARIES})
 endif (WITH_DSP_FFMPEG)
 
 if (WITH_SOXR)
