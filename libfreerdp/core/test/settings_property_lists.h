@@ -53,7 +53,6 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_EmbeddedWindow,
 	FreeRDP_EnableWindowsKey,
 	FreeRDP_EncomspVirtualChannel,
-	FreeRDP_EnforceTLSv1_2,
 	FreeRDP_ExtSecurity,
 	FreeRDP_ExternalCertificateManagement,
 	FreeRDP_FIPSMode,
@@ -183,6 +182,8 @@ static const size_t bool_list_indices[] = {
 static const size_t uint16_list_indices[] = {
 	FreeRDP_DesktopOrientation,
 	FreeRDP_ProxyPort,
+	FreeRDP_TLSMaxVersion,
+	FreeRDP_TLSMinVersion,
 };
 
 #define have_uint32_list_indices

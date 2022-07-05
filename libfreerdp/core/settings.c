@@ -681,6 +681,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 	settings->OrderSupport = calloc(1, 32);
 
+	freerdp_settings_set_uint16(settings, FreeRDP_TLSMinVersion, TLS1_VERSION);
+	freerdp_settings_set_uint16(settings, FreeRDP_TLSMaxVersion, 0);
+
 	if (!settings->OrderSupport)
 		goto out_fail;
 
