@@ -866,6 +866,94 @@ void freerdp_peer_context_free(freerdp_peer* client)
 	}
 }
 
+static const char* os_major_type_to_string(UINT16 osMajorType)
+{
+	switch (osMajorType)
+	{
+		case OSMAJORTYPE_UNSPECIFIED:
+			return "Unspecified platform";
+		case OSMAJORTYPE_WINDOWS:
+			return "Windows platform";
+		case OSMAJORTYPE_OS2:
+			return "OS/2 platform";
+		case OSMAJORTYPE_MACINTOSH:
+			return "Macintosh platform";
+		case OSMAJORTYPE_UNIX:
+			return "UNIX platform";
+		case OSMAJORTYPE_IOS:
+			return "iOS platform";
+		case OSMAJORTYPE_OSX:
+			return "OS X platform";
+		case OSMAJORTYPE_ANDROID:
+			return "Android platform";
+		case OSMAJORTYPE_CHROME_OS:
+			return "Chrome OS platform";
+	}
+
+	return "Unknown platform";
+}
+
+const char* freerdp_peer_os_major_type_string(freerdp_peer* client)
+{
+	rdpContext* context;
+	UINT16 osMajorType;
+
+	WINPR_ASSERT(client);
+
+	context = client->context;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->settings);
+
+	osMajorType = freerdp_settings_get_uint32(context->settings, FreeRDP_OsMajorType);
+
+	return os_major_type_to_string(osMajorType);
+}
+
+static const char* os_minor_type_to_string(UINT16 osMinorType)
+{
+	switch (osMinorType)
+	{
+		case OSMINORTYPE_UNSPECIFIED:
+			return "Unspecified version";
+		case OSMINORTYPE_WINDOWS_31X:
+			return "Windows 3.1x";
+		case OSMINORTYPE_WINDOWS_95:
+			return "Windows 95";
+		case OSMINORTYPE_WINDOWS_NT:
+			return "Windows NT";
+		case OSMINORTYPE_OS2_V21:
+			return "OS/2 2.1";
+		case OSMINORTYPE_POWER_PC:
+			return "PowerPC";
+		case OSMINORTYPE_MACINTOSH:
+			return "Macintosh";
+		case OSMINORTYPE_NATIVE_XSERVER:
+			return "Native X Server";
+		case OSMINORTYPE_PSEUDO_XSERVER:
+			return "Pseudo X Server";
+		case OSMINORTYPE_WINDOWS_RT:
+			return "Windows RT";
+	}
+
+	return "Unknown version";
+}
+
+const char* freerdp_peer_os_minor_type_string(freerdp_peer* client)
+{
+	rdpContext* context;
+	UINT16 osMinorType;
+
+	WINPR_ASSERT(client);
+
+	context = client->context;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->settings);
+
+	osMinorType = freerdp_settings_get_uint32(context->settings, FreeRDP_OsMinorType);
+
+	return os_minor_type_to_string(osMinorType);
+}
+
 freerdp_peer* freerdp_peer_new(int sockfd)
 {
 	UINT32 option_value;

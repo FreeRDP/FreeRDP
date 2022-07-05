@@ -143,6 +143,9 @@ extern "C"
 	FREERDP_API BOOL freerdp_peer_context_new(freerdp_peer* client);
 	FREERDP_API void freerdp_peer_context_free(freerdp_peer* client);
 
+	FREERDP_API const char* freerdp_peer_os_major_type_string(freerdp_peer* client);
+	FREERDP_API const char* freerdp_peer_os_minor_type_string(freerdp_peer* client);
+
 	FREERDP_API freerdp_peer* freerdp_peer_new(int sockfd);
 	FREERDP_API void freerdp_peer_free(freerdp_peer* client);
 
