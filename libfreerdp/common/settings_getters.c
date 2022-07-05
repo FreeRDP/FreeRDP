@@ -156,9 +156,6 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_EncomspVirtualChannel:
 			return settings->EncomspVirtualChannel;
 
-		case FreeRDP_EnforceTLSv1_2:
-			return settings->EnforceTLSv1_2;
-
 		case FreeRDP_ExtSecurity:
 			return settings->ExtSecurity;
 
@@ -712,10 +709,6 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 			settings->EncomspVirtualChannel = val;
 			break;
 
-		case FreeRDP_EnforceTLSv1_2:
-			settings->EnforceTLSv1_2 = val;
-			break;
-
 		case FreeRDP_ExtSecurity:
 			settings->ExtSecurity = val;
 			break;
@@ -1200,6 +1193,12 @@ UINT16 freerdp_settings_get_uint16(const rdpSettings* settings, size_t id)
 		case FreeRDP_ProxyPort:
 			return settings->ProxyPort;
 
+		case FreeRDP_TLSMaxVersion:
+			return settings->TLSMaxVersion;
+
+		case FreeRDP_TLSMinVersion:
+			return settings->TLSMinVersion;
+
 		default:
 			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
@@ -1219,6 +1218,14 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 
 		case FreeRDP_ProxyPort:
 			settings->ProxyPort = val;
+			break;
+
+		case FreeRDP_TLSMaxVersion:
+			settings->TLSMaxVersion = cnv.c;
+			break;
+
+		case FreeRDP_TLSMinVersion:
+			settings->TLSMinVersion = cnv.c;
 			break;
 
 		default:

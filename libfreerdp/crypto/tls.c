@@ -668,8 +668,18 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 	SSL_CTX_set_options(tls->ctx, options);
 	SSL_CTX_set_read_ahead(tls->ctx, 1);
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-	SSL_CTX_set_min_proto_version(tls->ctx, TLS1_VERSION); /* min version */
-	SSL_CTX_set_max_proto_version(tls->ctx, 0); /* highest supported version by library */
+	UINT16 version = freerdp_settings_get_uint16(settings, FreeRDP_TLSMinVersion);
+	if (!SSL_CTX_set_min_proto_version(tls->ctx, version))
+	{
+		WLog_ERR(TAG, "SSL_CTX_set_min_proto_version %s failed", version);
+		return FALSE;
+	}
+	version = freerdp_settings_get_uint16(settings, FreeRDP_TLSMaxVersion);
+	if (!SSL_CTX_set_max_proto_version(tls->ctx, version))
+	{
+		WLog_ERR(TAG, "SSL_CTX_set_max_proto_version %s failed", version);
+		return FALSE;
+	}
 #endif
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
 	SSL_CTX_set_security_level(tls->ctx, settings->TlsSecLevel);
@@ -877,15 +887,7 @@ BOOL tls_prep(rdpTls* tls, BIO* underlying, int options, BOOL clientMode)
 
 	return tls_prepare(tls, underlying, SSLv23_client_method(), options, clientMode);
 #else
-	const BOOL enabled = freerdp_settings_get_bool(tls->settings, FreeRDP_EnforceTLSv1_2);
-	if (enabled)
-	{
-		return tls_prepare(tls, underlying, TLSv1_2_client_method(), options, clientMode);
-	}
-	else
-	{
-		return tls_prepare(tls, underlying, TLS_client_method(), options, clientMode);
-	}
+	return tls_prepare(tls, underlying, TLS_client_method(), options, clientMode);
 #endif
 }
 
