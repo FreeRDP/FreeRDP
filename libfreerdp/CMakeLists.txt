@@ -241,7 +241,7 @@ if(WITH_OPENH264)
     endif (NOT WITH_OPENH264_LOADING)
 endif()
 
-if(WITH_FFMPEG)
+if(WITH_VIDEO_FFMPEG)
     set(CODEC_SRCS ${CODEC_SRCS} codec/h264_ffmpeg.c)
     freerdp_include_directory_add(${FFMPEG_INCLUDE_DIRS})
     freerdp_library_add(${FFMPEG_LIBRARIES})

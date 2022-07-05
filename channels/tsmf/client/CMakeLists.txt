@@ -81,7 +81,7 @@ target_link_libraries(${MODULE_NAME} freerdp winpr)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
 
-if(WITH_FFMPEG)
+if(WITH_VIDEO_FFMPEG)
 	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "ffmpeg" "decoder")
 endif()
 
