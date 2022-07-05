@@ -40,7 +40,7 @@
 #cmakedefine WITH_GFX_H264
 #cmakedefine WITH_OPENH264
 #cmakedefine WITH_OPENH264_LOADING
-#cmakedefine WITH_FFMPEG
+#cmakedefine WITH_VIDEO_FFMPEG
 #cmakedefine WITH_DSP_EXPERIMENTAL
 #cmakedefine WITH_DSP_FFMPEG
 #cmakedefine WITH_OPENCL

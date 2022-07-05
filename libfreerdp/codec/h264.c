@@ -605,7 +605,7 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 		i++;
 	}
 #endif
-#ifdef WITH_FFMPEG
+#ifdef WITH_VIDEO_FFMPEG
 	{
 		subSystems[i] = &g_Subsystem_libavcodec;
 		i++;
