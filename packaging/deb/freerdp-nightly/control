@@ -9,7 +9,6 @@ Build-Depends:
  autotools-dev,
  cmake,
  pkg-config,
- xmlto,
  libssl-dev,
  docbook-xsl,
  xsltproc,
