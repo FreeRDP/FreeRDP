@@ -830,7 +830,7 @@ static BOOL test_pointer_array(void)
 	};
 	size_t x;
 	const struct pointer_test_case tests[] = {
-		{ TRUE, FALSE, FreeRDP_DeviceArray, FreeRDP_DeviceArraySize, 32, sizeof(RDPDR_DEVICE*) },
+		{ FALSE, FALSE, FreeRDP_DeviceArray, FreeRDP_DeviceArraySize, 32, sizeof(RDPDR_DEVICE*) },
 		{ FALSE, FALSE, FreeRDP_TargetNetAddresses, FreeRDP_TargetNetAddressCount, 33,
 		  sizeof(char*) },
 		{ FALSE, FALSE, FreeRDP_TargetNetPorts, FreeRDP_TargetNetAddressCount, 33, sizeof(UINT32) },
@@ -944,17 +944,17 @@ int TestSettings(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 
 	if (!test_dyn_channels())
-		return -1;
+		goto fail;
 	if (!test_static_channels())
-		return -1;
+		goto fail;
 	if (!test_copy())
-		return -1;
+		goto fail;
 	if (!test_helpers())
-		return -1;
+		goto fail;
 	if (!check_device_type())
-		return -1;
+		goto fail;
 	if (!test_pointer_array())
-		return -1;
+		goto fail;
 
 	settings = freerdp_settings_new(0);
 
