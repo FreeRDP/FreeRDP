@@ -1431,7 +1431,7 @@ void* freerdp_settings_get_pointer_array_writable(const rdpSettings* settings, s
 			max = freerdp_settings_get_uint32(settings, FreeRDP_DeviceArraySize);
 			if (offset >= max)
 				goto fail;
-			return &settings->DeviceArray[offset];
+			return settings->DeviceArray[offset];
 		case FreeRDP_StaticChannelArray:
 			max = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelArraySize);
 			if (offset >= max)
