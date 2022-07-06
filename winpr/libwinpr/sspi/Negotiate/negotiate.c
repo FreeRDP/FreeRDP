@@ -180,17 +180,21 @@ static const char* negotiate_mech_name(const WinPrAsn1_OID* oid)
 		return "Unknown mechanism";
 }
 
-static const Mech* negotiate_GetMechByOID(WinPrAsn1_OID oid)
+static const Mech* negotiate_GetMechByOID(const WinPrAsn1_OID* oid)
 {
-	if (negotiate_oid_compare(&oid, &kerberos_wrong_OID))
+	WINPR_ASSERT(oid);
+
+	WinPrAsn1_OID testOid = *oid;
+
+	if (negotiate_oid_compare(oid, &kerberos_wrong_OID))
 	{
-		oid.len = kerberos_OID.len;
-		oid.data = kerberos_OID.data;
+		testOid.len = kerberos_OID.len;
+		testOid.data = kerberos_OID.data;
 	}
 
 	for (size_t i = 0; i < MECH_COUNT; i++)
 	{
-		if (negotiate_oid_compare(&oid, MechTable[i].oid))
+		if (negotiate_oid_compare(&testOid, MechTable[i].oid))
 			return &MechTable[i];
 	}
 	return NULL;
@@ -673,7 +677,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		if (context->state == NEGOTIATE_STATE_INITIAL && input_token.supportedMech.len &&
 		    !negotiate_oid_compare(&input_token.supportedMech, context->mech->oid))
 		{
-			mech = negotiate_GetMechByOID(input_token.supportedMech);
+			mech = negotiate_GetMechByOID(&input_token.supportedMech);
 			if (!mech)
 				return SEC_E_INVALID_TOKEN;
 
@@ -830,7 +834,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 		/* Check for NTLM token */
 		if (input_buffer->cbBuffer >= 8 && strncmp(input_buffer->pvBuffer, "NTLMSSP", 8) == 0)
 		{
-			init_context.mech = negotiate_GetMechByOID(ntlm_OID);
+			init_context.mech = negotiate_GetMechByOID(&ntlm_OID);
 		}
 		else
 		{
@@ -853,7 +857,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			}
 			else
 			{
-				init_context.mech = negotiate_GetMechByOID(oid);
+				init_context.mech = negotiate_GetMechByOID(&oid);
 				if (!init_context.mech)
 					return SEC_E_INVALID_TOKEN;
 			}
@@ -886,7 +890,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			if (!WinPrAsn1DecReadOID(&dec, &oid, FALSE))
 				return SEC_E_INVALID_TOKEN;
 
-			init_context.mech = negotiate_GetMechByOID(oid);
+			init_context.mech = negotiate_GetMechByOID(&oid);
 
 			if (init_context.mech)
 				sub_cred = negotiate_FindCredential(creds, init_context.mech);
@@ -933,7 +937,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			if (!WinPrAsn1DecReadOID(&dec, &oid, FALSE))
 				return SEC_E_INVALID_TOKEN;
 
-			init_context.mech = negotiate_GetMechByOID(oid);
+			init_context.mech = negotiate_GetMechByOID(&oid);
 
 			/* Microsoft may send two versions of the kerberos OID */
 			if (init_context.mech == first_mech)
