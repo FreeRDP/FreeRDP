@@ -91,11 +91,9 @@ endif(WITH_CAIRO)
 
 # Prefer SWScale over Cairo, both at the same time are not possible.
 if (WITH_SWSCALE)
-    add_definitions(-DSWSCALE_FOUND=1)
     include_directories(${SWScale_INCLUDE_DIR})
     freerdp_library_add(${SWScale_LIBRARY})
 elseif (WITH_CAIRO)
-    add_definitions(-DCAIRO_FOUND=1)
     include_directories(${CAIRO_INCLUDE_DIR})
     freerdp_library_add(${CAIRO_LIBRARY})
 else()
