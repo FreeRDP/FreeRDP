@@ -25,7 +25,7 @@
 
 #include <freerdp/client/cliprdr.h>
 
-xfClipboard* xf_clipboard_new(xfContext* xfc);
+xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction);
 void xf_clipboard_free(xfClipboard* clipboard);
 
 void xf_cliprdr_init(xfContext* xfc, CliprdrClientContext* cliprdr);

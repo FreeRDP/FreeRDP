@@ -1254,6 +1254,7 @@ static BOOL xf_post_connect(freerdp* instance)
 	context = instance->context;
 	settings = instance->settings;
 	update = context->update;
+	BOOL serverIsWindowsPlatform;
 
 	if (!gdi_init(instance, xf_get_local_color_format(xfc, TRUE)))
 		return FALSE;
@@ -1323,7 +1324,8 @@ static BOOL xf_post_connect(freerdp* instance)
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 	update->SetKeyboardImeStatus = xf_keyboard_set_ime_status;
 
-	if (!(xfc->clipboard = xf_clipboard_new(xfc)))
+	serverIsWindowsPlatform = (settings->OsMajorType == OSMAJORTYPE_WINDOWS);
+	if (!(xfc->clipboard = xf_clipboard_new(xfc, !serverIsWindowsPlatform)))
 		return FALSE;
 
 	if (!(xfc->xfDisp = xf_disp_new(xfc)))
