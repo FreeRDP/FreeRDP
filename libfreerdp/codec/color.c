@@ -31,11 +31,11 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/primitives.h>
 
-#if defined(CAIRO_FOUND)
+#if defined(WITH_CAIRO)
 #include <cairo.h>
 #endif
 
-#if defined(SWSCALE_FOUND)
+#if defined(WITH_SWSCALE)
 #include <libswscale/swscale.h>
 #endif
 
@@ -746,7 +746,7 @@ BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32
 	return TRUE;
 }
 
-#if defined(SWSCALE_FOUND)
+#if defined(WITH_SWSCALE)
 static int av_format_for_buffer(UINT32 format)
 {
 	switch (format)
@@ -782,7 +782,7 @@ BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT3
 	if (nSrcStep == 0)
 		nSrcStep = nSrcWidth * FreeRDPGetBytesPerPixel(SrcFormat);
 
-#if defined(SWSCALE_FOUND) || defined(CAIRO_FOUND)
+#if defined(WITH_SWSCALE) || defined(WITH_CAIRO)
 	const BYTE* src = &pSrcData[nXSrc * FreeRDPGetBytesPerPixel(SrcFormat) + nYSrc * nSrcStep];
 	BYTE* dst = &pDstData[nXDst * FreeRDPGetBytesPerPixel(DstFormat) + nYDst * nDstStep];
 #endif
@@ -795,7 +795,7 @@ BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT3
 		                          FREERDP_FLIP_NONE);
 	}
 	else
-#if defined(SWSCALE_FOUND)
+#if defined(WITH_SWSCALE)
 	{
 		int res;
 		struct SwsContext* resize;
@@ -819,7 +819,7 @@ BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT3
 		sws_freeContext(resize);
 	}
 
-#elif defined(CAIRO_FOUND)
+#elif defined(WITH_CAIRO)
 	{
 		const double sx = (double)nDstWidth / (double)nSrcWidth;
 		const double sy = (double)nDstHeight / (double)nSrcHeight;

@@ -23,6 +23,8 @@
 #cmakedefine WITH_CUPS
 #cmakedefine WITH_JPEG
 #cmakedefine WITH_WIN8
+#cmakedefine WITH_CAIRO
+#cmakedefine WITH_SWSCALE
 #cmakedefine WITH_RDPSND_DSOUND
 
 #cmakedefine WITH_WINMM

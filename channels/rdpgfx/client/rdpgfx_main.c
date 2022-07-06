@@ -345,7 +345,7 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			capsSet->version = RDPGFX_CAPVERSION_107;
 			capsSet->length = 0x4;
 			capsSet->flags = caps10Flags;
-#if !defined(CAIRO_FOUND) && !defined(SWSCALE_FOUND)
+#if !defined(WITH_CAIRO) && !defined(WITH_SWSCALE)
 			capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
 #endif
 		}
