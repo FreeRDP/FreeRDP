@@ -476,8 +476,10 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	WINPR_ASSERT(peer->context->update);
 	peer->context->update->autoCalculateBitmapData = FALSE;
 
-	settings->SupportMonitorLayoutPdu = TRUE;
-	settings->SupportGraphicsPipeline = config->GFX;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMonitorLayoutPdu, TRUE))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, config->GFX))
+		return FALSE;
 
 	if (pf_utils_is_passthrough(config))
 	{
@@ -500,30 +502,43 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 
 	if (config->RemoteApp)
 	{
-		settings->RemoteApplicationSupportLevel =
+		const UINT32 mask =
 		    RAIL_LEVEL_SUPPORTED | RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED |
 		    RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED | RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED |
 		    RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED |
 		    RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED | RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED |
 		    RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
-		settings->RemoteAppLanguageBarSupported = TRUE;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteApplicationSupportLevel, mask))
+			return FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteAppLanguageBarSupported, TRUE))
+			return FALSE;
 	}
 
-	settings->RdpSecurity = config->ServerRdpSecurity;
-	settings->TlsSecurity = config->ServerTlsSecurity;
-	settings->NlaSecurity = config->ServerNlaSecurity;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, config->ServerRdpSecurity))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, config->ServerTlsSecurity))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, config->ServerNlaSecurity))
+		return FALSE;
+
 	settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32))
 		return FALSE;
-	settings->SuppressOutput = TRUE;
-	settings->RefreshRect = TRUE;
-	settings->DesktopResize = TRUE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SuppressOutput, TRUE))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RefreshRect, TRUE))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_DesktopResize, TRUE))
+		return FALSE;
+
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+	                                 0xFFFFFF)) /* FIXME */
+		return FALSE;
 
 	peer->PostConnect = pf_server_post_connect;
 	peer->Activate = pf_server_activate;
 	peer->Logon = pf_server_logon;
 	peer->AdjustMonitorsLayout = pf_server_adjust_monitor_layout;
-	settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 
 	/* virtual channels receive data hook */
 	pdata->server_receive_channel_data_original = peer->ReceiveChannelData;
