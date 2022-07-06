@@ -2424,9 +2424,6 @@ RdpgfxClientContext* rdpgfx_client_context_new(rdpContext* rdpcontext)
 		return NULL;
 	}
 
-	if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxH264))
-		freerdp_settings_set_bool(gfx->rdpcontext->settings, FreeRDP_GfxSmallCache, TRUE);
-
 	gfx->MaxCacheSlots =
 	    freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxSmallCache) ? 4096 : 25600;
 	context = (RdpgfxClientContext*)calloc(1, sizeof(RdpgfxClientContext));
