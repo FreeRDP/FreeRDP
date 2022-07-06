@@ -162,26 +162,17 @@ static BOOL rdp_read_general_capability_set(wStream* s, rdpSettings* settings)
 	if (Stream_GetRemainingLength(s) < 20)
 		return FALSE;
 
-	if (settings->ServerMode)
-	{
-		Stream_Read_UINT16(s, settings->OsMajorType); /* osMajorType (2 bytes) */
-		Stream_Read_UINT16(s, settings->OsMinorType); /* osMinorType (2 bytes) */
-	}
-	else
-	{
-		Stream_Seek_UINT16(s); /* osMajorType (2 bytes) */
-		Stream_Seek_UINT16(s); /* osMinorType (2 bytes) */
-	}
-
-	Stream_Seek_UINT16(s);                       /* protocolVersion (2 bytes) */
-	Stream_Seek_UINT16(s);                       /* pad2OctetsA (2 bytes) */
-	Stream_Seek_UINT16(s);                       /* generalCompressionTypes (2 bytes) */
-	Stream_Read_UINT16(s, extraFlags);           /* extraFlags (2 bytes) */
-	Stream_Seek_UINT16(s);                       /* updateCapabilityFlag (2 bytes) */
-	Stream_Seek_UINT16(s);                       /* remoteUnshareFlag (2 bytes) */
-	Stream_Seek_UINT16(s);                       /* generalCompressionLevel (2 bytes) */
-	Stream_Read_UINT8(s, refreshRectSupport);    /* refreshRectSupport (1 byte) */
-	Stream_Read_UINT8(s, suppressOutputSupport); /* suppressOutputSupport (1 byte) */
+	Stream_Read_UINT16(s, settings->OsMajorType); /* osMajorType (2 bytes) */
+	Stream_Read_UINT16(s, settings->OsMinorType); /* osMinorType (2 bytes) */
+	Stream_Seek_UINT16(s);                        /* protocolVersion (2 bytes) */
+	Stream_Seek_UINT16(s);                        /* pad2OctetsA (2 bytes) */
+	Stream_Seek_UINT16(s);                        /* generalCompressionTypes (2 bytes) */
+	Stream_Read_UINT16(s, extraFlags);            /* extraFlags (2 bytes) */
+	Stream_Seek_UINT16(s);                        /* updateCapabilityFlag (2 bytes) */
+	Stream_Seek_UINT16(s);                        /* remoteUnshareFlag (2 bytes) */
+	Stream_Seek_UINT16(s);                        /* generalCompressionLevel (2 bytes) */
+	Stream_Read_UINT8(s, refreshRectSupport);     /* refreshRectSupport (1 byte) */
+	Stream_Read_UINT8(s, suppressOutputSupport);  /* suppressOutputSupport (1 byte) */
 	settings->NoBitmapCompressionHeader = (extraFlags & NO_BITMAP_COMPRESSION_HDR) ? TRUE : FALSE;
 	settings->LongCredentialsSupported = (extraFlags & LONG_CREDENTIALS_SUPPORTED) ? TRUE : FALSE;
 
