@@ -796,6 +796,39 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 	return status;
 }
 
+static const Mech* guessMech(PSecBuffer input_buffer, BOOL* spNego, WinPrAsn1_OID* oid)
+{
+	WinPrAsn1Decoder decoder;
+	WinPrAsn1Decoder appDecoder;
+
+	*spNego = FALSE;
+
+	/* Check for NTLM token */
+	if (input_buffer->cbBuffer >= 8 && strncmp(input_buffer->pvBuffer, "NTLMSSP", 8) == 0)
+	{
+		*oid = ntlm_OID;
+		return negotiate_GetMechByOID(&ntlm_OID);
+	}
+
+	/* Read initialContextToken or raw Kerberos token */
+	WinPrAsn1Decoder_InitMem(&decoder, WINPR_ASN1_DER, input_buffer->pvBuffer,
+	                         input_buffer->cbBuffer);
+
+	if (!WinPrAsn1DecReadApp(&decoder, 0, &appDecoder))
+		return NULL;
+
+	if (!WinPrAsn1DecReadOID(&appDecoder, oid, FALSE))
+		return NULL;
+
+	if (negotiate_oid_compare(oid, &spnego_OID))
+	{
+		*spNego = TRUE;
+		return NULL;
+	}
+
+	return negotiate_GetMechByOID(oid);
+}
+
 static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
     PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput, ULONG fContextReq,
     ULONG TargetDataRep, PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr,
@@ -831,37 +864,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 
 	if (!context)
 	{
-		/* Check for NTLM token */
-		if (input_buffer->cbBuffer >= 8 && strncmp(input_buffer->pvBuffer, "NTLMSSP", 8) == 0)
-		{
-			init_context.mech = negotiate_GetMechByOID(&ntlm_OID);
-		}
-		else
-		{
-			WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, input_buffer->pvBuffer,
-			                         input_buffer->cbBuffer);
-
-			/* Read initialContextToken */
-			if (!WinPrAsn1DecReadApp(&dec, &tag, &dec2) || tag != 0)
-				return SEC_E_INVALID_TOKEN;
-			dec = dec2;
-
-			/* Read thisMech */
-			if (!WinPrAsn1DecReadOID(&dec, &oid, FALSE))
-				return SEC_E_INVALID_TOKEN;
-
-			/* Check if it's a spnego token */
-			if (negotiate_oid_compare(&oid, &spnego_OID))
-			{
-				init_context.spnego = TRUE;
-			}
-			else
-			{
-				init_context.mech = negotiate_GetMechByOID(&oid);
-				if (!init_context.mech)
-					return SEC_E_INVALID_TOKEN;
-			}
-		}
+		init_context.mech = guessMech(input_buffer, &init_context.spnego, &oid);
+		if (!init_context.mech && !init_context.spnego)
+			return SEC_E_INVALID_TOKEN;
 
 		WLog_DBG(TAG, "Mechanism: %s", negotiate_mech_name(&oid));
 
