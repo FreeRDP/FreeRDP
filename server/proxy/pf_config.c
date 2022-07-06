@@ -389,39 +389,6 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 		return FALSE;
 	}
 
-	tmp1 = pf_config_get_str(ini, "Certificates", "RdpKeyFile", FALSE);
-	if (tmp1)
-	{
-		if (!winpr_PathFileExists(tmp1))
-		{
-			WLog_ERR(TAG, "Certificates/RdpKeyFile file %s does not exist", tmp1);
-			return FALSE;
-		}
-		config->RdpKeyFile = _strdup(tmp1);
-	}
-	tmp2 = pf_config_get_str(ini, "Certificates", "RdpKeyContent", FALSE);
-	if (tmp2)
-	{
-		if (strlen(tmp2) < 1)
-		{
-			WLog_ERR(TAG, "Certificates/RdpKeyContent has invalid empty value");
-			return FALSE;
-		}
-		config->RdpKeyContent = _strdup(tmp2);
-	}
-	if (tmp1 && tmp2)
-	{
-		WLog_ERR(TAG, "Certificates/RdpKeyFile and Certificates/RdpKeyContent are mutually "
-		              "exclusive options");
-		return FALSE;
-	}
-	else if (!tmp1 && !tmp2)
-	{
-		WLog_ERR(TAG, "Certificates/RdpKeyFile or Certificates/RdpKeyContent are "
-		              "required settings");
-		return FALSE;
-	}
-
 	return TRUE;
 }
 
@@ -568,13 +535,6 @@ BOOL pf_server_config_dump(const char* file)
 	                              "<absolute path to some private key file> OR") < 0)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, "Certificates", "PrivateKeyContent",
-	                              "<Contents of some private key file in PEM format>") < 0)
-		goto fail;
-
-	if (IniFile_SetKeyValueString(ini, "Certificates", "RdpKeyFile",
-	                              "<absolute path to some private key file> OR") < 0)
-		goto fail;
-	if (IniFile_SetKeyValueString(ini, "Certificates", "RdpKeyContent",
 	                              "<Contents of some private key file in PEM format>") < 0)
 		goto fail;
 
@@ -731,8 +691,6 @@ void pf_server_config_print(const proxyConfig* config)
 	CONFIG_PRINT_STR_CONTENT(config, CertificateContent);
 	CONFIG_PRINT_STR(config, PrivateKeyFile);
 	CONFIG_PRINT_STR_CONTENT(config, PrivateKeyContent);
-	CONFIG_PRINT_STR(config, RdpKeyFile);
-	CONFIG_PRINT_STR_CONTENT(config, RdpKeyContent);
 }
 
 void pf_server_config_free(proxyConfig* config)
@@ -750,8 +708,6 @@ void pf_server_config_free(proxyConfig* config)
 	free(config->CertificateContent);
 	free(config->PrivateKeyFile);
 	free(config->PrivateKeyContent);
-	free(config->RdpKeyFile);
-	free(config->RdpKeyContent);
 	free(config);
 }
 
@@ -853,10 +809,6 @@ BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config)
 	if (!pf_config_copy_string(&tmp->PrivateKeyFile, config->PrivateKeyFile))
 		goto fail;
 	if (!pf_config_copy_string(&tmp->PrivateKeyContent, config->PrivateKeyContent))
-		goto fail;
-	if (!pf_config_copy_string(&tmp->RdpKeyFile, config->RdpKeyFile))
-		goto fail;
-	if (!pf_config_copy_string(&tmp->RdpKeyContent, config->RdpKeyContent))
 		goto fail;
 
 	*dst = tmp;

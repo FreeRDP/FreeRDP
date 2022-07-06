@@ -202,8 +202,6 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	if (!freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, server->PrivateKeyFile))
 		goto fail_privkey_file;
 
-	if (!freerdp_settings_set_string(settings, FreeRDP_RdpKeyFile, server->PrivateKeyFile))
-		goto fail_rdpkey_file;
 	if (server->ipcSocket && (strncmp(bind_address, server->ipcSocket,
 	                                  strnlen(bind_address, sizeof(bind_address))) != 0))
 	{
@@ -244,8 +242,6 @@ fail_message_queue:
 fail_open_server:
 	DeleteCriticalSection(&(client->lock));
 fail_client_lock:
-	freerdp_settings_set_string(settings, FreeRDP_RdpKeyFile, NULL);
-fail_rdpkey_file:
 	freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, NULL);
 fail_privkey_file:
 	freerdp_settings_set_string(settings, FreeRDP_CertificateFile, NULL);

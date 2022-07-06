@@ -1021,8 +1021,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		}
 	}
 	if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, cert) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, key) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_RdpKeyFile, key))
+	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, key))
 	{
 		WLog_ERR(TAG, "Memory allocation failed (strdup)");
 		freerdp_peer_free(client);

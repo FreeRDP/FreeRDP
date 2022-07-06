@@ -376,8 +376,6 @@ static const size_t string_list_indices[] = {
 	FreeRDP_ProxyPassword,
 	FreeRDP_ProxyUsername,
 	FreeRDP_RDP2TCPArgs,
-	FreeRDP_RdpKeyContent,
-	FreeRDP_RdpKeyFile,
 	FreeRDP_ReaderName,
 	FreeRDP_RedirectionAcceptedCert,
 	FreeRDP_RedirectionDomain,

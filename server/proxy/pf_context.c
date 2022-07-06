@@ -198,7 +198,6 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 	BOOL rc = FALSE;
 	rdpSettings* before_copy;
 	const size_t to_revert[] = { FreeRDP_ConfigPath,      FreeRDP_PrivateKeyContent,
-		                         FreeRDP_RdpKeyContent,   FreeRDP_RdpKeyFile,
 		                         FreeRDP_PrivateKeyFile,  FreeRDP_CertificateFile,
 		                         FreeRDP_CertificateName, FreeRDP_CertificateContent };
 

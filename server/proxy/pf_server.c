@@ -492,9 +492,7 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	                                 config->CertificateContent) ||
 	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, config->PrivateKeyFile) ||
 	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyContent,
-	                                 config->PrivateKeyContent) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_RdpKeyFile, config->RdpKeyFile) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_RdpKeyContent, config->RdpKeyContent))
+	                                 config->PrivateKeyContent))
 	{
 		WLog_ERR(TAG, "Memory allocation failed (strdup)");
 		return FALSE;

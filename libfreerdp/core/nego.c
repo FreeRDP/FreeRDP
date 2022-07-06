@@ -1313,8 +1313,8 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				settings->UseRdpSecurityLayer = FALSE;
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 			}
-			else if (!settings->RdpServerRsaKey && !settings->RdpKeyFile &&
-			         !settings->RdpKeyContent)
+			else if (!settings->RdpServerRsaKey && !settings->PrivateKeyFile &&
+			         !settings->PrivateKeyContent)
 			{
 				WLog_ERR(TAG, "Missing server certificate");
 				return FALSE;
