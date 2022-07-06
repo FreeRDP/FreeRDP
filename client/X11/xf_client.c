@@ -1342,6 +1342,7 @@ static BOOL xf_post_connect(freerdp* instance)
 	rdpSettings* settings;
 	ResizeWindowEventArgs e;
 	xfContext* xfc;
+	BOOL serverIsWindowsPlatform;
 
 	WINPR_ASSERT(instance);
 	xfc = (xfContext*)instance->context;
@@ -1422,7 +1423,9 @@ static BOOL xf_post_connect(freerdp* instance)
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 	update->SetKeyboardImeStatus = xf_keyboard_set_ime_status;
 
-	if (settings->RedirectClipboard && !(xfc->clipboard = xf_clipboard_new(xfc)))
+	serverIsWindowsPlatform = (settings->OsMajorType == OSMAJORTYPE_WINDOWS);
+	if (settings->RedirectClipboard &&
+	    !(xfc->clipboard = xf_clipboard_new(xfc, !serverIsWindowsPlatform)))
 		return FALSE;
 
 	if (!(xfc->xfDisp = xf_disp_new(xfc)))
