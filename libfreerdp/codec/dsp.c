@@ -729,13 +729,11 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYT
 	if (!Stream_EnsureRemainingCapacity(out, size))
 		return FALSE;
 
-	start = Stream_GetPosition(context->buffer);
-
 	align = (context->format.nChannels > 1) ? 32 : 4;
 
 	while (size >= align)
 	{
-		if ((Stream_GetPosition(context->buffer) - start) % context->format.nBlockAlign == 0)
+		if (Stream_GetPosition(context->buffer) % context->format.nBlockAlign == 0)
 		{
 			Stream_Write_UINT8(context->buffer, context->adpcm.ima.last_sample[0] & 0xFF);
 			Stream_Write_UINT8(context->buffer, (context->adpcm.ima.last_sample[0] >> 8) & 0xFF);
@@ -782,7 +780,7 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYT
 			size -= 4;
 		}
 
-		if (Stream_GetPosition(context->buffer) - start == context->adpcm.ima.packet_size)
+		if (Stream_GetPosition(context->buffer) >= context->adpcm.ima.packet_size)
 		{
 			BYTE* bsrc = Stream_Buffer(context->buffer);
 			Stream_Write(out, bsrc, context->adpcm.ima.packet_size);
