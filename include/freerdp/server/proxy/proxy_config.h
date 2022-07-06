@@ -94,9 +94,6 @@ struct proxy_config
 
 	char* PrivateKeyFile;
 	char* PrivateKeyContent;
-
-	char* RdpKeyFile;
-	char* RdpKeyContent;
 };
 
 #ifdef __cplusplus

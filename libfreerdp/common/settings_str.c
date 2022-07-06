@@ -367,8 +367,6 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_ProxyPassword, 7, "FreeRDP_ProxyPassword" },
 	{ FreeRDP_ProxyUsername, 7, "FreeRDP_ProxyUsername" },
 	{ FreeRDP_RDP2TCPArgs, 7, "FreeRDP_RDP2TCPArgs" },
-	{ FreeRDP_RdpKeyContent, 7, "FreeRDP_RdpKeyContent" },
-	{ FreeRDP_RdpKeyFile, 7, "FreeRDP_RdpKeyFile" },
 	{ FreeRDP_ReaderName, 7, "FreeRDP_ReaderName" },
 	{ FreeRDP_RedirectionAcceptedCert, 7, "FreeRDP_RedirectionAcceptedCert" },
 	{ FreeRDP_RedirectionDomain, 7, "FreeRDP_RedirectionDomain" },

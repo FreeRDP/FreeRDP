@@ -242,19 +242,19 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 	settings->LocalConnection = client->local;
 	rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL);
 
-	if (settings->RdpKeyFile)
+	if (settings->PrivateKeyFile)
 	{
-		settings->RdpServerRsaKey = key_new(settings->RdpKeyFile);
+		settings->RdpServerRsaKey = key_new(settings->PrivateKeyFile);
 
 		if (!settings->RdpServerRsaKey)
 		{
-			WLog_ERR(TAG, "invalid RDP key file %s", settings->RdpKeyFile);
+			WLog_ERR(TAG, "invalid RDP key file %s", settings->PrivateKeyFile);
 			return FALSE;
 		}
 	}
-	else if (settings->RdpKeyContent)
+	else if (settings->PrivateKeyContent)
 	{
-		settings->RdpServerRsaKey = key_new_from_content(settings->RdpKeyContent, NULL);
+		settings->RdpServerRsaKey = key_new_from_content(settings->PrivateKeyContent, NULL);
 
 		if (!settings->RdpServerRsaKey)
 		{
