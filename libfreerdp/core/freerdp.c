@@ -239,7 +239,7 @@ BOOL freerdp_connect(freerdp* instance)
 freerdp_connect_finally:
 	EventArgsInit(&e, "freerdp");
 	e.result = status ? 0 : -1;
-	PubSub_OnConnectionResult(instance->context->pubSub, instance->context, &e);
+	PubSub_OnConnectionResult(rdp->pubSub, instance->context, &e);
 
 	if (!status)
 		freerdp_disconnect(instance);
@@ -305,7 +305,7 @@ BOOL freerdp_check_fds(freerdp* instance)
 		WLog_DBG(TAG, "rdp_check_fds() - %i", status);
 		EventArgsInit(&e, "freerdp");
 		e.code = 0;
-		PubSub_OnTerminate(context->pubSub, context, &e);
+		PubSub_OnTerminate(rdp->pubSub, context, &e);
 		return FALSE;
 	}
 
@@ -675,12 +675,7 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 	context->instance = instance;
 	context->ServerMode = FALSE;
 	context->disconnectUltimatum = 0;
-	context->pubSub = PubSub_New(TRUE);
 
-	if (!context->pubSub)
-		goto fail;
-
-	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events, ARRAYSIZE(FreeRDP_Events));
 	context->metrics = metrics_new(context);
 
 	if (!context->metrics)
@@ -692,6 +687,13 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 		goto fail;
 
 	context->rdp = rdp;
+	context->pubSub = rdp->pubSub;
+
+	if (!context->pubSub)
+		goto fail;
+
+	PubSub_AddEventTypes(rdp->pubSub, FreeRDP_Events, ARRAYSIZE(FreeRDP_Events));
+
 #if defined(WITH_FREERDP_DEPRECATED)
 	instance->input = rdp->input;
 	instance->update = rdp->update;
@@ -768,9 +770,6 @@ void freerdp_context_free(freerdp* instance)
 
 	graphics_free(ctx->graphics);
 	ctx->graphics = NULL;
-
-	PubSub_Free(ctx->pubSub);
-	ctx->pubSub = NULL;
 
 	metrics_free(ctx->metrics);
 	ctx->metrics = NULL;

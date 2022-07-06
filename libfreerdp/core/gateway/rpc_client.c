@@ -365,7 +365,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 				tsg_set_state(tsg, TSG_STATE_TUNNEL_CLOSE_PENDING);
 				EventArgsInit(&e, "freerdp");
 				e.code = 0;
-				PubSub_OnTerminate(context->pubSub, context, &e);
+				PubSub_OnTerminate(context->rdp->pubSub, context, &e);
 				rc = 0;
 				goto success;
 			}
