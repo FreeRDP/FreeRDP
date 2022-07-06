@@ -418,35 +418,34 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 		switch (contextual)
 		{
 			case 0:
-				/* mechTypes [0] MechTypeList */
 				if (token->init)
 				{
+					/* mechTypes [0] MechTypeList */
 					WinPrAsn1DecGetStream(&dec2, &s);
 					token->mechTypes.BufferType = SECBUFFER_TOKEN;
 					token->mechTypes.cbBuffer = Stream_Length(&s);
 					token->mechTypes.pvBuffer = Stream_Buffer(&s);
 					WLog_DBG(TAG, "\tmechTypes [0] (%li bytes)", token->mechTypes.cbBuffer);
 				}
-				/* negState [0] ENUMERATED */
 				else
 				{
+					/* negState [0] ENUMERATED */
 					if (!WinPrAsn1DecReadEnumerated(&dec2, &token->negState))
 						return FALSE;
 					WLog_DBG(TAG, "\tnegState [0] (%d)", token->negState);
 				}
 				break;
 			case 1:
-				/* reqFlags [1] ContextFlags BIT STRING (ignored) */
 				if (token->init)
 				{
-					WinPrAsn1DecPeekTagAndLen(&dec2, &tag, &len);
-					if (tag != ER_TAG_BIT_STRING)
+					/* reqFlags [1] ContextFlags BIT STRING (ignored) */
+					if (!WinPrAsn1DecPeekTagAndLen(&dec2, &tag, &len) || (tag != ER_TAG_BIT_STRING))
 						return FALSE;
 					WLog_DBG(TAG, "\treqFlags [1] (%li bytes)", len);
 				}
-				/* supportedMech [1] MechType */
 				else
 				{
+					/* supportedMech [1] MechType */
 					if (!WinPrAsn1DecReadOID(&dec2, &token->supportedMech, FALSE))
 						return FALSE;
 					WLog_DBG(TAG, "\tsupportedMech [1] (%s)",
@@ -462,7 +461,7 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 				token->mechToken.BufferType = SECBUFFER_TOKEN;
 				WLog_DBG(TAG, "\tmechToken [2] (%li bytes)", octet_string.len);
 				break;
-			case 0xA3:
+			case 3:
 				/* mechListMic [3] OCTET STRING */
 				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
 					return FALSE;
@@ -472,6 +471,7 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 				WLog_DBG(TAG, "\tmechListMIC [3] (%li bytes)", octet_string.len);
 				break;
 			default:
+				WLog_ERR(TAG, "unknown contextual item %d", contextual);
 				return FALSE;
 		}
 	} while (WinPrAsn1DecPeekTag(&dec, &tag));
@@ -569,7 +569,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	{
 		enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
 		if (!enc)
-			return SEC_E_INTERNAL_ERROR;
+			return SEC_E_INSUFFICIENT_MEMORY;
 
 		if (!WinPrAsn1EncSeqContainer(enc))
 			goto cleanup;
