@@ -1191,7 +1191,7 @@ int rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 			EventArgsInit(&activatedEvent, "libfreerdp");
 			activatedEvent.firstActivation =
 			    !rdp_finalize_is_flag_set(rdp, FINALIZE_DEACTIVATE_REACTIVATE);
-			PubSub_OnActivated(context->pubSub, context, &activatedEvent);
+			PubSub_OnActivated(rdp->pubSub, context, &activatedEvent);
 		}
 
 		break;
@@ -1206,7 +1206,7 @@ int rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 		EventArgsInit(&stateEvent, "libfreerdp");
 		stateEvent.state = rdp_get_state(rdp);
 		stateEvent.active = rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE;
-		PubSub_OnConnectionStateChange(context->pubSub, context, &stateEvent);
+		PubSub_OnConnectionStateChange(rdp->pubSub, context, &stateEvent);
 	}
 
 	return status;

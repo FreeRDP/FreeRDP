@@ -191,7 +191,7 @@ static UINT freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, 
                                                  void* pInterface)
 {
 	UINT status = CHANNEL_RC_OK;
-	ChannelConnectedEventArgs e;
+	ChannelConnectedEventArgs e = { 0 };
 	rdpChannels* channels = (rdpChannels*)context->custom;
 	freerdp* instance = channels->instance;
 	EventArgsInit(&e, "freerdp");
@@ -210,7 +210,7 @@ static UINT freerdp_drdynvc_on_channel_disconnected(DrdynvcClientContext* contex
                                                     void* pInterface)
 {
 	UINT status = CHANNEL_RC_OK;
-	ChannelDisconnectedEventArgs e;
+	ChannelDisconnectedEventArgs e = { 0 };
 	rdpChannels* channels = (rdpChannels*)context->custom;
 	freerdp* instance = channels->instance;
 	EventArgsInit(&e, "freerdp");
@@ -224,7 +224,7 @@ static UINT freerdp_drdynvc_on_channel_attached(DrdynvcClientContext* context, c
                                                 void* pInterface)
 {
 	UINT status = CHANNEL_RC_OK;
-	ChannelAttachedEventArgs e;
+	ChannelAttachedEventArgs e = { 0 };
 	rdpChannels* channels = (rdpChannels*)context->custom;
 	freerdp* instance = channels->instance;
 	EventArgsInit(&e, "freerdp");
@@ -238,7 +238,7 @@ static UINT freerdp_drdynvc_on_channel_detached(DrdynvcClientContext* context, c
                                                 void* pInterface)
 {
 	UINT status = CHANNEL_RC_OK;
-	ChannelDetachedEventArgs e;
+	ChannelDetachedEventArgs e = { 0 };
 	rdpChannels* channels = (rdpChannels*)context->custom;
 	freerdp* instance = channels->instance;
 	EventArgsInit(&e, "freerdp");

@@ -201,6 +201,7 @@ struct rdp_rdp
 	rdpTransportIo* io;
 	void* ioContext;
 	HANDLE abortEvent;
+	wPubSub* pubSub;
 };
 
 FREERDP_LOCAL BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length);
