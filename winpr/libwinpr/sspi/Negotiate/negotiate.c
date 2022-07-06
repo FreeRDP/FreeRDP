@@ -27,6 +27,7 @@
 #include <winpr/assert.h>
 #include <winpr/registry.h>
 #include <winpr/build-config.h>
+#include <winpr/asn1.h>
 
 #include "negotiate.h"
 
@@ -49,7 +50,7 @@ typedef struct
 
 struct Mech_st
 {
-	const sspi_gss_OID_desc* oid;
+	const WinPrAsn1_OID* oid;
 	const SecPkg* pkg;
 	const UINT flags;
 	const BOOL preferred;
@@ -86,10 +87,11 @@ const SecPkgInfoW NEGOTIATE_SecPkgInfoW = {
 	NEGOTIATE_SecPkgInfoW_Comment /* Comment */
 };
 
-static const sspi_gss_OID_desc spnego_OID = { 6, "\x2b\x06\x01\x05\x05\x02" };
-static const sspi_gss_OID_desc kerberos_OID = { 9, "\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
-static const sspi_gss_OID_desc kerberos_wrong_OID = { 9, "\x2a\x86\x48\x82\xf7\x12\x01\x02\x02" };
-static const sspi_gss_OID_desc ntlm_OID = { 10, "\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a" };
+static const WinPrAsn1_OID spnego_OID = { 6, (BYTE*)"\x2b\x06\x01\x05\x05\x02" };
+static const WinPrAsn1_OID kerberos_OID = { 9, (BYTE*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
+static const WinPrAsn1_OID kerberos_wrong_OID = { 9,
+	                                              (BYTE*)"\x2a\x86\x48\x82\xf7\x12\x01\x02\x02" };
+static const WinPrAsn1_OID ntlm_OID = { 10, (BYTE*)"\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a" };
 
 static const SecPkg SecPkgTable[] = {
 	{ KERBEROS_SSP_NAME, &KERBEROS_SecurityFunctionTableA, &KERBEROS_SecurityFunctionTableW },
@@ -116,92 +118,11 @@ typedef struct
 {
 	enum NegState negState;
 	BOOL init;
-	sspi_gss_OID_desc supportedMech;
+	WinPrAsn1_OID supportedMech;
 	SecBuffer mechTypes;
 	SecBuffer mechToken;
 	SecBuffer mic;
 } NegToken;
-
-static INLINE size_t asn_tlv_length(size_t len)
-{
-	if (len <= 0x7F)
-		return 2 + len;
-	else if (len <= 0xFF)
-		return 3 + len;
-	else if (len <= 0xFFFF)
-		return 4 + len;
-	else if (len <= 0xFFFFFF)
-		return 5 + len;
-	else
-		return 6 + len;
-}
-
-static INLINE size_t asn_contextual_length(size_t len)
-{
-	return asn_tlv_length(asn_tlv_length(len));
-}
-
-static BYTE* negotiate_write_tlv(BYTE* buf, BYTE tag, size_t len, const BYTE* value)
-{
-	int bytes = 0;
-
-	*buf++ = tag;
-
-	if (len <= 0x7F)
-		*buf++ = (BYTE)len;
-	else
-	{
-		while (len >> (++bytes * 8))
-			;
-		*buf++ = bytes | 0x80;
-		for (int i = 0; i < bytes; i++)
-			buf[bytes - i - 1] = (BYTE)(len >> (i * 8));
-		buf += bytes;
-	}
-
-	if (value)
-	{
-		MoveMemory(buf, value, len);
-		buf += len;
-	}
-
-	return buf;
-}
-
-static BYTE* negotiate_write_contextual_tlv(BYTE* buf, BYTE contextual, BYTE tag, size_t len,
-                                            const BYTE* value)
-{
-	buf = negotiate_write_tlv(buf, contextual, asn_tlv_length(len), NULL);
-	buf = negotiate_write_tlv(buf, tag, len, value);
-
-	return buf;
-}
-
-static BYTE* negotiate_read_tlv(BYTE* buf, BYTE* tag, size_t* len, size_t* bytes_remain)
-{
-	UINT len_bytes = 0;
-	*len = 0;
-
-	if (*bytes_remain < 2)
-		return NULL;
-	*bytes_remain -= 2;
-
-	*tag = *buf++;
-
-	if (*buf <= 0x7F)
-		*len = *buf++;
-	else
-	{
-		len_bytes = *buf++ & 0x7F;
-		if (*bytes_remain < len_bytes)
-			return NULL;
-		*bytes_remain -= len_bytes;
-		for (int i = len_bytes - 1; i >= 0; i--)
-			*len |= *buf++ << (i * 8);
-	}
-
-	return buf;
-}
 
 static NEGOTIATE_CONTEXT* negotiate_ContextNew(NEGOTIATE_CONTEXT* init_context)
 {
@@ -237,16 +158,15 @@ static void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 	free(context);
 }
 
-static BOOL negotiate_oid_compare(const sspi_gss_OID_desc* oid1, const sspi_gss_OID_desc* oid2)
+static BOOL negotiate_oid_compare(const WinPrAsn1_OID* oid1, const WinPrAsn1_OID* oid2)
 {
 	WINPR_ASSERT(oid1);
 	WINPR_ASSERT(oid2);
 
-	return (oid1->length == oid2->length) &&
-	       (memcmp(oid1->elements, oid2->elements, oid1->length) == 0);
+	return (oid1->len == oid2->len) && (memcmp(oid1->data, oid2->data, oid1->len) == 0);
 }
 
-static const char* negotiate_mech_name(const sspi_gss_OID_desc* oid)
+static const char* negotiate_mech_name(const WinPrAsn1_OID* oid)
 {
 	if (negotiate_oid_compare(oid, &spnego_OID))
 		return "SPNEGO (1.3.6.1.5.5.2)";
@@ -260,12 +180,12 @@ static const char* negotiate_mech_name(const sspi_gss_OID_desc* oid)
 		return "Unknown mechanism";
 }
 
-static const Mech* negotiate_GetMechByOID(sspi_gss_OID_desc oid)
+static const Mech* negotiate_GetMechByOID(WinPrAsn1_OID oid)
 {
 	if (negotiate_oid_compare(&oid, &kerberos_wrong_OID))
 	{
-		oid.length = kerberos_OID.length;
-		oid.elements = kerberos_OID.elements;
+		oid.len = kerberos_OID.len;
+		oid.data = kerberos_OID.data;
 	}
 
 	for (size_t i = 0; i < MECH_COUNT; i++)
@@ -349,245 +269,209 @@ static BOOL negotiate_get_config(BOOL* kerberos, BOOL* ntlm)
 
 static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken* token)
 {
-	size_t token_len = 0;
-	size_t init_token_len = 0;
-	size_t inner_token_len = 0;
-	size_t total_len = 0;
-
 	WINPR_ASSERT(output_buffer);
 	WINPR_ASSERT(token);
 
-	BYTE* p = output_buffer->pvBuffer;
-	BYTE *mech_offset = NULL, *mic_offset = NULL;
+	BOOL ret = FALSE;
+	WinPrAsn1Encoder* enc = NULL;
+	WinPrAsn1_MemoryChunk mechTypes = { token->mechTypes.cbBuffer, token->mechTypes.pvBuffer };
+	WinPrAsn1_OctetString mechToken = { token->mechToken.cbBuffer, token->mechToken.pvBuffer };
+	WinPrAsn1_OctetString mechListMic = { token->mic.cbBuffer, token->mic.pvBuffer };
+	wStream s;
 
-	/* Length of [0] MechTypeList (SEQUENCE tag already included in buffer) */
-	if (token->init)
-		inner_token_len += asn_tlv_length(token->mechTypes.cbBuffer);
-
-	/* Lenght of negState [0] ENUMERATED */
-	if (token->negState != NOSTATE)
-		inner_token_len += asn_contextual_length(1);
-
-	/* Length of supportedMech [1] OID */
-	if (token->supportedMech.length)
-		inner_token_len += asn_contextual_length(token->supportedMech.length);
-
-	/* Length of [2] OCTET STRING */
-	if (token->mechToken.cbBuffer)
-	{
-		inner_token_len += asn_contextual_length(token->mechToken.cbBuffer);
-		mech_offset = p + inner_token_len - token->mechToken.cbBuffer;
-	}
-
-	/* Length of [3] OCTET S */
-	if (token->mic.cbBuffer)
-	{
-		inner_token_len += asn_contextual_length(token->mic.cbBuffer);
-		mic_offset = p + inner_token_len - token->mic.cbBuffer;
-	}
-
-	/* Length of [0] NegTokenInit | [1] NegTokenResp */
-	token_len += asn_contextual_length(inner_token_len);
-
-	total_len = token_len;
-
-	if (token->init)
-	{
-		/* Length of MechType OID */
-		init_token_len = total_len + asn_tlv_length(spnego_OID.length);
-
-		/* Length of initialContextToken */
-		total_len = asn_tlv_length(init_token_len);
-	}
-
-	/* Adjust token offsets */
-	mech_offset += total_len - inner_token_len;
-	mic_offset += total_len - inner_token_len;
-
-	if (output_buffer->cbBuffer < total_len)
+	enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
+	if (!enc)
 		return FALSE;
-	output_buffer->cbBuffer = total_len;
-
-	/* Write the tokens stored in the buffer first so as not to be overwritten */
-	if (token->mic.cbBuffer)
-		MoveMemory(mic_offset, token->mic.pvBuffer, token->mic.cbBuffer);
-
-	if (token->mechToken.cbBuffer)
-		MoveMemory(mech_offset, token->mechToken.pvBuffer, token->mechToken.cbBuffer);
 
 	/* For NegTokenInit wrap in an initialContextToken */
 	if (token->init)
 	{
 		/* InitialContextToken [APPLICATION 0] IMPLICIT SEQUENCE */
-		p = negotiate_write_tlv(p, 0x60, init_token_len, NULL);
+		if (!WinPrAsn1EncAppContainer(enc, 0))
+			goto cleanup;
 
 		/* thisMech MechType OID */
-		p = negotiate_write_tlv(p, 0x06, spnego_OID.length, spnego_OID.elements);
+		if (!WinPrAsn1EncOID(enc, &spnego_OID))
+			goto cleanup;
 	}
 
 	/* innerContextToken [0] NegTokenInit or [1] NegTokenResp */
-	p = negotiate_write_contextual_tlv(p, token->init ? 0xA0 : 0xA1, 0x30, inner_token_len, NULL);
+	if (!WinPrAsn1EncContextualSeqContainer(enc, token->init ? 0 : 1))
+		goto cleanup;
+
 	WLog_DBG(TAG, token->init ? "Writing negTokenInit..." : "Writing negTokenResp...");
 
 	/* mechTypes [0] MechTypeList (mechTypes already contains the SEQUENCE tag) */
 	if (token->init)
 	{
-		p = negotiate_write_tlv(p, 0xA0, token->mechTypes.cbBuffer, token->mechTypes.pvBuffer);
+		if (!WinPrAsn1EncContextualRawContent(enc, 0, &mechTypes))
+			goto cleanup;
 		WLog_DBG(TAG, "\tmechTypes [0] (%li bytes)", token->mechTypes.cbBuffer);
 	}
 	/* negState [0] ENUMERATED */
 	else if (token->negState != NOSTATE)
 	{
-		p = negotiate_write_contextual_tlv(p, 0xA0, 0x0A, 1, (BYTE*)&token->negState);
+		if (!WinPrAsn1EncContextualEnumerated(enc, 0, token->negState))
+			goto cleanup;
 		WLog_DBG(TAG, "\tnegState [0] (%d)", token->negState);
 	}
 
 	/* supportedMech [1] OID */
-	if (token->supportedMech.length)
+	if (token->supportedMech.len)
 	{
-		p = negotiate_write_contextual_tlv(p, 0xA1, 0x06, token->supportedMech.length,
-		                                   token->supportedMech.elements);
+		if (!WinPrAsn1EncContextualOID(enc, 1, &token->supportedMech))
+			goto cleanup;
 		WLog_DBG(TAG, "\tsupportedMech [1] (%s)", negotiate_mech_name(&token->supportedMech));
 	}
 
 	/* mechToken [2] OCTET STRING */
 	if (token->mechToken.cbBuffer)
 	{
-		p = negotiate_write_contextual_tlv(p, 0xA2, 0x04, token->mechToken.cbBuffer, NULL);
-		p += token->mechToken.cbBuffer;
+		if (!WinPrAsn1EncContextualOctetString(enc, 2, &mechToken))
+			goto cleanup;
 		WLog_DBG(TAG, "\tmechToken [2] (%li bytes)", token->mechToken.cbBuffer);
 	}
 
 	/* mechListMIC [3] OCTET STRING */
 	if (token->mic.cbBuffer)
 	{
-		p = negotiate_write_contextual_tlv(p, 0xA3, 0x04, token->mic.cbBuffer, NULL);
-		p += token->mic.cbBuffer;
+		if (!WinPrAsn1EncContextualOctetString(enc, 3, &mechListMic))
+			goto cleanup;
 		WLog_DBG(TAG, "\tmechListMIC [3] (%li bytes)", token->mic.cbBuffer);
 	}
 
-	return TRUE;
+	/* NegTokenInit or NegTokenResp */
+	if (!WinPrAsn1EncEndContainer(enc))
+		goto cleanup;
+
+	if (token->init)
+	{
+		/* initialContextToken */
+		if (!WinPrAsn1EncEndContainer(enc))
+			goto cleanup;
+	}
+
+	Stream_StaticInit(&s, output_buffer->pvBuffer, output_buffer->cbBuffer);
+
+	if (WinPrAsn1EncToStream(enc, &s))
+	{
+		output_buffer->cbBuffer = Stream_Length(&s);
+		ret = TRUE;
+	}
+
+cleanup:
+	WinPrAsn1Encoder_Free(&enc);
+	return ret;
 }
 
 static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 {
-	BYTE tag;
-	BYTE contextual;
+	WinPrAsn1Decoder dec;
+	WinPrAsn1Decoder dec2;
+	WinPrAsn1_OID oid;
+	WinPrAsn1_tagId contextual;
+	WinPrAsn1_tag tag;
 	size_t len;
-	BYTE* p;
+	WinPrAsn1_OctetString octet_string;
+	wStream s;
+	BOOL err;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(token);
 
-	BYTE* buf = input->pvBuffer;
-	size_t bytes_remain = input->cbBuffer;
+	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, input->pvBuffer, input->cbBuffer);
 
 	if (token->init)
 	{
-		/* initContextToken */
-		buf = negotiate_read_tlv(buf, &tag, &len, &bytes_remain);
-		if (!buf || len > bytes_remain || tag != 0x60)
+		if (!WinPrAsn1DecReadApp(&dec, &tag, &dec2) || tag != 0)
+			return FALSE;
+		dec = dec2;
+
+		if (!WinPrAsn1DecReadOID(&dec, &oid, FALSE))
 			return FALSE;
 
-		/* thisMech */
-		buf = negotiate_read_tlv(buf, &tag, &len, &bytes_remain);
-		if (!buf || len > bytes_remain || tag != 0x06)
+		if (!negotiate_oid_compare(&spnego_OID, &oid))
 			return FALSE;
-
-		buf += len;
-		bytes_remain -= len;
 	}
 
 	/* [0] NegTokenInit or [1] NegTokenResp */
-	buf = negotiate_read_tlv(buf, &contextual, &len, &bytes_remain);
-	if (!buf)
-		return FALSE;
-	buf = negotiate_read_tlv(buf, &tag, &len, &bytes_remain);
-	if (!buf || len > bytes_remain)
-		return FALSE;
-	else if (contextual == 0xA0 && tag == 0x30)
+	if (WinPrAsn1DecReadContextualSequence(&dec, 0, &err, &dec2))
 		token->init = TRUE;
-	else if (contextual == 0xA1 && tag == 0x30)
+	else if (WinPrAsn1DecReadContextualSequence(&dec, 1, &err, &dec2))
 		token->init = FALSE;
 	else
 		return FALSE;
+	dec = dec2;
 
 	WLog_DBG(TAG, token->init ? "Reading negTokenInit..." : "Reading negTokenResp...");
 
 	/* Read NegTokenResp sequence members */
 	do
 	{
-		p = negotiate_read_tlv(buf, &contextual, &len, &bytes_remain);
-		if (!p)
-			return FALSE;
-		buf = negotiate_read_tlv(p, &tag, &len, &bytes_remain);
-		if (!buf || len > bytes_remain)
+		if (!WinPrAsn1DecReadContextualTag(&dec, &contextual, &dec2))
 			return FALSE;
 
 		switch (contextual)
 		{
-			case 0xA0:
+			case 0:
 				/* mechTypes [0] MechTypeList */
-				if (tag == 0x30 && token->init)
+				if (token->init)
 				{
-					token->mechTypes.pvBuffer = p;
-					token->mechTypes.cbBuffer = asn_tlv_length(len);
-					token->mechTypes.BufferType = SECBUFFER_DATA;
-					WLog_DBG(TAG, "\tmechTypes [0] (%li bytes)", len);
+					WinPrAsn1DecGetStream(&dec2, &s);
+					token->mechTypes.BufferType = SECBUFFER_TOKEN;
+					token->mechTypes.cbBuffer = Stream_Length(&s);
+					token->mechTypes.pvBuffer = Stream_Buffer(&s);
+					WLog_DBG(TAG, "\tmechTypes [0] (%li bytes)", token->mechTypes.cbBuffer);
 				}
 				/* negState [0] ENUMERATED */
-				else if (tag == 0x0A && len == 1 && !token->init)
+				else
 				{
-					token->negState = *buf;
+					if (!WinPrAsn1DecReadEnumerated(&dec2, &token->negState))
+						return FALSE;
 					WLog_DBG(TAG, "\tnegState [0] (%d)", token->negState);
 				}
-				else
-					return FALSE;
 				break;
-			case 0xA1:
+			case 1:
 				/* reqFlags [1] ContextFlags BIT STRING (ignored) */
-				if (tag == 0x03 && token->init)
+				if (token->init)
 				{
+					WinPrAsn1DecPeekTagAndLen(&dec2, &tag, &len);
+					if (tag != ER_TAG_BIT_STRING)
+						return FALSE;
 					WLog_DBG(TAG, "\treqFlags [1] (%li bytes)", len);
 				}
 				/* supportedMech [1] MechType */
-				else if (tag == 0x06 && !token->init)
+				else
 				{
-					token->supportedMech.length = len;
-					token->supportedMech.elements = buf;
+					if (!WinPrAsn1DecReadOID(&dec2, &token->supportedMech, FALSE))
+						return FALSE;
 					WLog_DBG(TAG, "\tsupportedMech [1] (%s)",
 					         negotiate_mech_name(&token->supportedMech));
 				}
-				else
-					return FALSE;
 				break;
-			case 0xA2:
+			case 2:
 				/* mechToken [2] OCTET STRING */
-				if (tag != 0x04)
+				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
 					return FALSE;
-				token->mechToken.cbBuffer = len;
-				token->mechToken.pvBuffer = buf;
+				token->mechToken.cbBuffer = octet_string.len;
+				token->mechToken.pvBuffer = octet_string.data;
 				token->mechToken.BufferType = SECBUFFER_TOKEN;
-				WLog_DBG(TAG, "\tmechToken [2] (%li bytes)", len);
+				WLog_DBG(TAG, "\tmechToken [2] (%li bytes)", octet_string.len);
 				break;
 			case 0xA3:
 				/* mechListMic [3] OCTET STRING */
-				if (tag != 0x04)
+				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
 					return FALSE;
-				token->mic.cbBuffer = len;
-				token->mic.pvBuffer = buf;
+				token->mic.cbBuffer = octet_string.len;
+				token->mic.pvBuffer = octet_string.data;
 				token->mic.BufferType = SECBUFFER_TOKEN;
-				WLog_DBG(TAG, "\tmechListMIC [3] (%li bytes)", len);
+				WLog_DBG(TAG, "\tmechListMIC [3] (%li bytes)", octet_string.len);
 				break;
 			default:
 				return FALSE;
 		}
-		buf += len;
-		bytes_remain -= len;
-	} while (bytes_remain > 0);
+	} while (WinPrAsn1DecPeekTag(&dec, &tag));
 
-	if (bytes_remain < 0)
-		return FALSE;
 	return TRUE;
 }
 
@@ -663,8 +547,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
-	size_t inner_mech_list_len = 0;
-	BYTE* p;
+	WinPrAsn1Encoder* enc = NULL;
+	wStream s;
 	const Mech* mech;
 
 	if (!phCredential || !SecIsValidHandle(phCredential))
@@ -679,6 +563,13 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 
 	if (!context)
 	{
+		enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
+		if (!enc)
+			return SEC_E_INTERNAL_ERROR;
+
+		if (!WinPrAsn1EncSeqContainer(enc))
+			goto cleanup;
+
 		for (size_t i = 0; i < MECH_COUNT; i++)
 		{
 			MechCred* cred = &creds[i];
@@ -686,29 +577,36 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			if (!cred->valid)
 				continue;
 
-			inner_mech_list_len += asn_tlv_length(cred->mech->oid->length);
+			/* Send an optimistic token for the first valid mechanism */
+			if (!init_context.mech)
+			{
+				/* Use the output buffer to store the optimistic token */
+				CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
-			if (init_context.mech) /* We already have an optimistic mechanism */
-				continue;
+				status = MechTable[i].pkg->table_w->InitializeSecurityContextW(
+				    &cred->cred, NULL, pszTargetName, fContextReq | cred->mech->flags, Reserved1,
+				    TargetDataRep, NULL, Reserved2, &init_context.sub_context, &mech_output,
+				    pfContextAttr, ptsExpiry);
 
-			/* Use the output buffer to store the optimistic token */
-			CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
+				/* If the mechanism failed we can't use it; skip */
+				if (IsSecurityStatusError(status))
+				{
+					cred->valid = FALSE;
+					continue;
+				}
 
-			status = MechTable[i].pkg->table_w->InitializeSecurityContextW(
-			    &cred->cred, NULL, pszTargetName, fContextReq | cred->mech->flags, Reserved1,
-			    TargetDataRep, NULL, Reserved2, &init_context.sub_context, &mech_output,
-			    pfContextAttr, ptsExpiry);
-
-			/* If the mechanism failed we can't use it; skip */
-			if (IsSecurityStatusError(status))
-				cred->valid = FALSE;
-			else
 				init_context.mech = cred->mech;
+				status = SEC_E_INTERNAL_ERROR;
+			}
+
+			if (!WinPrAsn1EncOID(enc, cred->mech->oid))
+				goto cleanup;
+			WLog_DBG(TAG, "Available mechanism: %s", negotiate_mech_name(cred->mech->oid));
 		}
 
 		/* No usable mechanisms were found */
 		if (!init_context.mech)
-			return status;
+			goto cleanup;
 
 #ifdef WITH_SPNEGO
 		/* If the only available mech is NTLM use it directly otherwise use spnego */
@@ -722,7 +620,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		{
 			init_context.spnego = TRUE;
 			init_context.mechTypes.BufferType = SECBUFFER_DATA;
-			init_context.mechTypes.cbBuffer = asn_tlv_length(inner_mech_list_len);
+			init_context.mechTypes.cbBuffer = WinPrAsn1EncEndContainer(enc);
 		}
 #else
 		init_context.spnego = FALSE;
@@ -734,6 +632,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		if (!context)
 		{
 			init_context.mech->pkg->table->DeleteSecurityContext(&init_context.sub_context);
+			WinPrAsn1Encoder_Free(&enc);
 			return SEC_E_INSUFFICIENT_MEMORY;
 		}
 
@@ -741,22 +640,12 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 
 		if (!context->spnego)
-			return status;
+			goto cleanup;
 
-		/* Write the SEQUENCE tag */
-		p = negotiate_write_tlv(context->mechTypes.pvBuffer, 0x30, inner_mech_list_len, NULL);
-
-		/* Write each enabled mechanism */
-		for (size_t i = 0; i < MECH_COUNT; i++)
-		{
-			MechCred* cred = &creds[i];
-			if (cred->valid)
-			{
-				p = negotiate_write_tlv(p, 0x06, cred->mech->oid->length,
-				                        cred->mech->oid->elements);
-				WLog_DBG(TAG, "Available mechanism: %s", negotiate_mech_name(cred->mech->oid));
-			}
-		}
+		/* Write mechTypesList */
+		Stream_StaticInit(&s, context->mechTypes.pvBuffer, context->mechTypes.cbBuffer);
+		if (!WinPrAsn1EncToStream(enc, &s))
+			goto cleanup;
 
 		output_token.mechTypes.cbBuffer = context->mechTypes.cbBuffer;
 		output_token.mechTypes.pvBuffer = context->mechTypes.pvBuffer;
@@ -781,7 +670,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			return SEC_E_INVALID_TOKEN;
 
 		/* On first response check if the server doesn't like out prefered mech */
-		if (context->state == NEGOTIATE_STATE_INITIAL && input_token.supportedMech.length &&
+		if (context->state == NEGOTIATE_STATE_INITIAL && input_token.supportedMech.len &&
 		    !negotiate_oid_compare(&input_token.supportedMech, context->mech->oid))
 		{
 			mech = negotiate_GetMechByOID(input_token.supportedMech);
@@ -876,6 +765,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	if (!negotiate_write_neg_token(output_buffer, &output_token))
 		status = SEC_E_INTERNAL_ERROR;
 
+cleanup:
+	if (enc)
+		WinPrAsn1Encoder_Free(&enc);
 	return status;
 }
 
@@ -916,9 +808,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status;
-	BYTE *p = NULL, tag;
-	size_t bytes_remain = 0, len;
-	sspi_gss_OID_desc oid = { 0 };
+	WinPrAsn1Decoder dec, dec2;
+	WinPrAsn1_tagId tag;
+	WinPrAsn1_OID oid = { 0 };
 	const Mech* first_mech = NULL;
 
 	if (!phCredential || !SecIsValidHandle(phCredential))
@@ -942,19 +834,17 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 		}
 		else
 		{
+			WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, input_buffer->pvBuffer,
+			                         input_buffer->cbBuffer);
+
 			/* Read initialContextToken */
-			bytes_remain = input_buffer->cbBuffer;
-			p = negotiate_read_tlv(input_buffer->pvBuffer, &tag, &len, &bytes_remain);
-			if (!p || len > bytes_remain || tag != 0x60)
+			if (!WinPrAsn1DecReadApp(&dec, &tag, &dec2) || tag != 0)
 				return SEC_E_INVALID_TOKEN;
+			dec = dec2;
 
 			/* Read thisMech */
-			p = negotiate_read_tlv(p, &tag, &len, &bytes_remain);
-			if (!p || len > bytes_remain || tag != 0x06)
+			if (!WinPrAsn1DecReadOID(&dec, &oid, FALSE))
 				return SEC_E_INVALID_TOKEN;
-
-			oid.length = len;
-			oid.elements = p;
 
 			/* Check if it's a spnego token */
 			if (negotiate_oid_compare(&oid, &spnego_OID))
@@ -986,19 +876,15 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			init_context.mechTypes.cbBuffer = input_token.mechTypes.cbBuffer;
 
 			/* Prepare to read mechList */
-			bytes_remain = input_token.mechTypes.cbBuffer;
-			p = negotiate_read_tlv(input_token.mechTypes.pvBuffer, &tag, &len, &bytes_remain);
-			if (!p || len > bytes_remain || tag != 0x30)
-				return SEC_E_INVALID_TOKEN;
+			WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, input_token.mechTypes.pvBuffer,
+			                         input_token.mechTypes.cbBuffer);
 
-			p = negotiate_read_tlv(p, &tag, &len, &bytes_remain);
-			if (!p || len > bytes_remain || tag != 0x06)
+			if (!WinPrAsn1DecReadSequence(&dec, &dec2))
 				return SEC_E_INVALID_TOKEN;
+			dec = dec2;
 
-			oid.length = len;
-			oid.elements = p;
-			p += len;
-			bytes_remain -= len;
+			if (!WinPrAsn1DecReadOID(&dec, &oid, FALSE))
+				return SEC_E_INVALID_TOKEN;
 
 			init_context.mech = negotiate_GetMechByOID(oid);
 
@@ -1041,17 +927,11 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			output_token.mechToken.cbBuffer = 0;
 		}
 
-		while (!init_context.mech && bytes_remain > 0)
+		while (!init_context.mech && WinPrAsn1DecPeekTag(&dec, &tag))
 		{
 			/* Read each mechanism */
-			p = negotiate_read_tlv(p, &tag, &len, &bytes_remain);
-			if (!p || len > bytes_remain || tag != 0x06)
+			if (!WinPrAsn1DecReadOID(&dec, &oid, FALSE))
 				return SEC_E_INVALID_TOKEN;
-
-			oid.length = len;
-			oid.elements = p;
-			p += len;
-			bytes_remain -= len;
 
 			init_context.mech = negotiate_GetMechByOID(oid);
 
@@ -1098,8 +978,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 		else
 			context->state = NEGOTIATE_STATE_NEGORESP;
 
-		output_token.supportedMech.length = oid.length;
-		output_token.supportedMech.elements = oid.elements;
+		output_token.supportedMech = oid;
 		WLog_DBG(TAG, "Accepted mechanism: %s", negotiate_mech_name(&output_token.supportedMech));
 	}
 	else
