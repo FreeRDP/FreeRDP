@@ -64,6 +64,8 @@ struct _wClipboardDelegate
 	(wClipboardDelegate*, const wClipboardFileRangeRequest*, const BYTE* data, UINT32 size);
 	UINT(*ClipboardFileRangeFailure)
 	(wClipboardDelegate*, const wClipboardFileRangeRequest*, UINT errorCode);
+
+	BOOL (*IsFileNameComponentValid)(LPCWSTR lpFileName);
 };
 
 #ifdef __cplusplus
