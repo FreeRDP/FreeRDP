@@ -363,7 +363,7 @@ static BOOL pf_client_load_channels(freerdp* instance)
 		{
 			CHANNEL_DEF* channels = (CHANNEL_DEF*)freerdp_settings_get_pointer_array_writable(
 			    settings, FreeRDP_ChannelDefArray, 0);
-			size_t x, size = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
+			size_t x, size = freerdp_settings_get_uint32(settings, FreeRDP_ChannelDefArraySize);
 
 			WINPR_ASSERT(channels || (size == 0));
 
