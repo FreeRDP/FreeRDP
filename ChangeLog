@@ -4,9 +4,10 @@ Noteworthy changes:
 * Backported API to get peer accepted channel option flags
 * Backported API to get peer accepted channel names
 * Backported Stream_CheckAndLogRequiredLength
-* Backported server side handling for [MS-RDPET] (#7954)
-* Backported server side handling for [MS-RDPECAM] (#8010)
+* Backported #7954: Add server side handling for [MS-RDPET]
+* Backported #8010: Add server side handling for [MS-RDPECAM]
 * Backported #8041: Remove ALAW/ULAW codecs from linux backends (unreliable)
+* Backported #8051: Relieve CLIPRDR filename restriction when connecting to non-MS Windows servers
 
 Fixed issues:
 * Fixed #7837: Prevent out of bound reads for FFMPEG
