@@ -56,7 +56,7 @@ struct s_http_context
 	char* RdgConnectionId;
 	char* RdgAuthScheme;
 	BOOL websocketUpgrade;
-	char SecWebsocketKey[16];
+	BYTE SecWebsocketKey[16];
 };
 
 struct s_http_request
@@ -272,15 +272,8 @@ BOOL http_context_enable_websocket_upgrade(HttpContext* context, BOOL enable)
 		return FALSE;
 
 	if (enable)
-	{
-		int i;
-		winpr_RAND((BYTE*)context->SecWebsocketKey, 15);
-		for (i = 0; i < 16; i++)
-			context->SecWebsocketKey[i] = (context->SecWebsocketKey[i] | 0x40) & 0x5f;
-		context->SecWebsocketKey[15] = '\0';
-	}
-	else
-		context->SecWebsocketKey[0] = '\0';
+		winpr_RAND(context->SecWebsocketKey, sizeof(context->SecWebsocketKey));
+
 	context->websocketUpgrade = enable;
 	return TRUE;
 }
@@ -470,11 +463,21 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 	}
 	else
 	{
+		char* keyBase64 =
+		    crypto_base64_encode(context->SecWebsocketKey, sizeof(context->SecWebsocketKey));
+		if (!keyBase64)
+			goto fail;
+
 		if (!http_encode_body_line(s, "Connection", "Upgrade") ||
 		    !http_encode_body_line(s, "Upgrade", "websocket") ||
 		    !http_encode_body_line(s, "Sec-Websocket-Version", "13") ||
-		    !http_encode_body_line(s, "Sec-Websocket-Key", context->SecWebsocketKey))
+		    !http_encode_body_line(s, "Sec-Websocket-Key", keyBase64))
+		{
+			free(keyBase64);
 			goto fail;
+		}
+
+		free(keyBase64);
 	}
 
 	if (context->RdgConnectionId)
@@ -1125,8 +1128,7 @@ BOOL http_response_is_websocket(HttpContext* http, HttpResponse* response)
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
 		goto out;
 
-	if (!winpr_Digest_Update(sha1, (const BYTE*)http->SecWebsocketKey,
-	                         strlen(http->SecWebsocketKey)))
+	if (!winpr_Digest_Update(sha1, http->SecWebsocketKey, sizeof(http->SecWebsocketKey)))
 		goto out;
 	if (!winpr_Digest_Update(sha1, (const BYTE*)WEBSOCKET_MAGIC_GUID, strlen(WEBSOCKET_MAGIC_GUID)))
 		goto out;
