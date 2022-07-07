@@ -339,7 +339,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpPo
 		}
 		else
 		{
-			ci.pixels = xpointer->cursorPixels;
+			memcpy(ci.pixels, xpointer->cursorPixels, size);
 		}
 
 		cursorIndex = xpointer->nCursors;
