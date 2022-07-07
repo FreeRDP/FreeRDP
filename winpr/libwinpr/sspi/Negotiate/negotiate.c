@@ -385,25 +385,31 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 
 	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, input->pvBuffer, input->cbBuffer);
 
-	if (token->init)
+	if (!WinPrAsn1DecPeekTag(&dec, &tag))
+		return FALSE;
+
+	if (tag == 0x60)
 	{
+		/* initialContextToken [APPLICATION 0] */
 		if (!WinPrAsn1DecReadApp(&dec, &tag, &dec2) || tag != 0)
 			return FALSE;
 		dec = dec2;
 
+		/* thisMech OID */
 		if (!WinPrAsn1DecReadOID(&dec, &oid, FALSE))
 			return FALSE;
 
 		if (!negotiate_oid_compare(&spnego_OID, &oid))
 			return FALSE;
-	}
 
-	/* [0] NegTokenInit or [1] NegTokenResp */
-	if (WinPrAsn1DecReadContextualSequence(&dec, 0, &err, &dec2))
+		/* [0] NegTokenInit */
+		if (!WinPrAsn1DecReadContextualSequence(&dec, 0, &err, &dec2))
+			return FALSE;
+
 		token->init = TRUE;
-	else if (WinPrAsn1DecReadContextualSequence(&dec, 1, &err, &dec2))
-		token->init = FALSE;
-	else
+	}
+	/* [1] NegTokenResp */
+	else if (!WinPrAsn1DecReadContextualSequence(&dec, 1, &err, &dec2))
 		return FALSE;
 	dec = dec2;
 
@@ -551,6 +557,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
+	SECURITY_STATUS sub_status;
 	WinPrAsn1Encoder* enc = NULL;
 	wStream s;
 	const Mech* mech;
@@ -587,20 +594,22 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 				/* Use the output buffer to store the optimistic token */
 				CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
-				status = MechTable[i].pkg->table_w->InitializeSecurityContextW(
+				sub_status = MechTable[i].pkg->table_w->InitializeSecurityContextW(
 				    &cred->cred, NULL, pszTargetName, fContextReq | cred->mech->flags, Reserved1,
 				    TargetDataRep, NULL, Reserved2, &init_context.sub_context, &mech_output,
 				    pfContextAttr, ptsExpiry);
 
 				/* If the mechanism failed we can't use it; skip */
-				if (IsSecurityStatusError(status))
+				if (IsSecurityStatusError(sub_status))
 				{
 					cred->valid = FALSE;
 					continue;
 				}
 
 				init_context.mech = cred->mech;
-				status = SEC_E_INTERNAL_ERROR;
+#ifndef WITH_SPNEGO
+				break;
+#endif
 			}
 
 			if (!WinPrAsn1EncOID(enc, cred->mech->oid))
@@ -644,7 +653,10 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 
 		if (!context->spnego)
+		{
+			status = sub_status;
 			goto cleanup;
+		}
 
 		/* Write mechTypesList */
 		Stream_StaticInit(&s, context->mechTypes.pvBuffer, context->mechTypes.cbBuffer);
@@ -661,7 +673,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			return SEC_E_INVALID_TOKEN;
 
 		sub_context = &context->sub_context;
-		sub_cred = negotiate_FindCredential(creds, init_context.mech);
+		sub_cred = negotiate_FindCredential(creds, context->mech);
 
 		if (!context->spnego)
 		{
@@ -800,6 +812,7 @@ static const Mech* guessMech(PSecBuffer input_buffer, BOOL* spNego, WinPrAsn1_OI
 {
 	WinPrAsn1Decoder decoder;
 	WinPrAsn1Decoder appDecoder;
+	WinPrAsn1_tagId tag;
 
 	*spNego = FALSE;
 
@@ -814,7 +827,7 @@ static const Mech* guessMech(PSecBuffer input_buffer, BOOL* spNego, WinPrAsn1_OI
 	WinPrAsn1Decoder_InitMem(&decoder, WINPR_ASN1_DER, input_buffer->pvBuffer,
 	                         input_buffer->cbBuffer);
 
-	if (!WinPrAsn1DecReadApp(&decoder, 0, &appDecoder))
+	if (!WinPrAsn1DecReadApp(&decoder, &tag, &appDecoder) || tag != 0)
 		return NULL;
 
 	if (!WinPrAsn1DecReadOID(&appDecoder, oid, FALSE))
@@ -844,7 +857,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	PSecBuffer output_buffer = NULL;
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 	WinPrAsn1Decoder dec, dec2;
 	WinPrAsn1_tagId tag;
 	WinPrAsn1_OID oid = { 0 };
@@ -873,7 +886,6 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 		if (init_context.spnego)
 		{
 			/* Process spnego token */
-			input_token.init = TRUE;
 			if (!negotiate_read_neg_token(input_buffer, &input_token))
 				return SEC_E_INVALID_TOKEN;
 
@@ -892,37 +904,27 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 				return SEC_E_INVALID_TOKEN;
 			dec = dec2;
 
-			if (!WinPrAsn1DecReadOID(&dec, &oid, FALSE))
-				return SEC_E_INVALID_TOKEN;
-
-			init_context.mech = negotiate_GetMechByOID(&oid);
-
-			if (init_context.mech)
-				sub_cred = negotiate_FindCredential(creds, init_context.mech);
-
-			if (sub_cred)
+			/* If an optimistic token was provided pass it into the first mech */
+			if (input_token.mechToken.cbBuffer)
 			{
-				/* Use the output buffer to store the optimistic token */
-				CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
+				if (!WinPrAsn1DecReadOID(&dec, &oid, FALSE))
+					return SEC_E_INVALID_TOKEN;
 
-				status = init_context.mech->pkg->table->AcceptSecurityContext(
-				    sub_cred, NULL, &mech_input, fContextReq, TargetDataRep,
-				    &init_context.sub_context, &mech_output, pfContextAttr, ptsTimeStamp);
+				init_context.mech = negotiate_GetMechByOID(&oid);
+				output_token.mechToken = *output_buffer;
+				WLog_DBG(TAG, "Requested mechanism: %s",
+				         negotiate_mech_name(init_context.mech->oid));
 			}
-			else
-			{
-				status = SEC_E_NO_CREDENTIALS;
-			}
-
-			WLog_DBG(TAG, "Initiators preferred mechanism: %s", negotiate_mech_name(&oid));
 		}
-		else
+
+		if (init_context.mech)
 		{
 			sub_cred = negotiate_FindCredential(creds, init_context.mech);
 
 			status = init_context.mech->pkg->table->AcceptSecurityContext(
-			    sub_cred, NULL, pInput, fContextReq, TargetDataRep, &init_context.sub_context,
-			    pOutput, pfContextAttr, ptsTimeStamp);
+			    sub_cred, NULL, init_context.spnego ? &mech_input : pInput, fContextReq,
+			    TargetDataRep, &init_context.sub_context,
+			    init_context.spnego ? &mech_output : pOutput, pfContextAttr, ptsTimeStamp);
 		}
 
 		if (IsSecurityStatusError(status))
@@ -943,6 +945,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 				return SEC_E_INVALID_TOKEN;
 
 			init_context.mech = negotiate_GetMechByOID(&oid);
+			WLog_DBG(TAG, "Requested mechanism: %s", negotiate_mech_name(init_context.mech->oid));
 
 			/* Microsoft may send two versions of the kerberos OID */
 			if (init_context.mech == first_mech)
