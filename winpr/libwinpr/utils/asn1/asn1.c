@@ -1409,4 +1409,5 @@ wStream WinPrAsn1DecGetStream(WinPrAsn1Decoder* dec)
 
 	Stream_StaticConstInit(&s, Stream_Pointer(&dec->source),
 	                       Stream_GetRemainingLength(&dec->source));
+	return s;
 }
