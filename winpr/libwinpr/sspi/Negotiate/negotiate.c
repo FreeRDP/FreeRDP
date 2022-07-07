@@ -377,7 +377,6 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 	WinPrAsn1_tag tag;
 	size_t len;
 	WinPrAsn1_OctetString octet_string;
-	wStream s;
 	BOOL err;
 
 	WINPR_ASSERT(input);
@@ -427,7 +426,7 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 				if (token->init)
 				{
 					/* mechTypes [0] MechTypeList */
-					WinPrAsn1DecGetStream(&dec2, &s);
+					wStream s = WinPrAsn1DecGetStream(&dec2);
 					token->mechTypes.BufferType = SECBUFFER_TOKEN;
 					token->mechTypes.cbBuffer = Stream_Length(&s);
 					token->mechTypes.pvBuffer = Stream_Buffer(&s);
@@ -782,8 +781,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		status = SEC_E_INTERNAL_ERROR;
 
 cleanup:
-	if (enc)
-		WinPrAsn1Encoder_Free(&enc);
+	WinPrAsn1Encoder_Free(&enc);
 	return status;
 }
 

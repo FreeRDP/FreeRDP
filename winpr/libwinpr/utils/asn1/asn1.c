@@ -1402,11 +1402,11 @@ size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec, WinPrAsn1_tagId
 	return ret;
 }
 
-void WinPrAsn1DecGetStream(WinPrAsn1Decoder* dec, wStream* s)
+wStream WinPrAsn1DecGetStream(WinPrAsn1Decoder* dec)
 {
+	wStream s = { 0 };
 	WINPR_ASSERT(dec);
-	WINPR_ASSERT(s);
 
-	Stream_StaticConstInit(s, Stream_Pointer(&dec->source),
+	Stream_StaticConstInit(&s, Stream_Pointer(&dec->source),
 	                       Stream_GetRemainingLength(&dec->source));
 }
