@@ -149,7 +149,7 @@ extern "C"
 	WINPR_API size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec,
 	                                                    WinPrAsn1_tagId tagId, BOOL* error,
 	                                                    WinPrAsn1Decoder* target);
-	WINPR_API void WinPrAsn1DecGetStream(WinPrAsn1Decoder* dec, wStream* s);
+	WINPR_API wStream WinPrAsn1DecGetStream(WinPrAsn1Decoder* dec);
 
 	/* encoder functions */
 
