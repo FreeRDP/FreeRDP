@@ -372,6 +372,9 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	 * command-line */
 	{
 		int i;
+		UINT32 nr = 0;
+		if (settings->MonitorIds)
+			nr = settings->MonitorIds[0];
 
 		for (i = 0; i < vscreen->nmonitors; i++)
 		{
@@ -414,7 +417,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 #endif
 
-			if ((UINT32)i == settings->MonitorIds[0])
+			if ((UINT32)i == nr)
 			{
 				settings->MonitorDefArray[nmonitors].is_primary = TRUE;
 				settings->MonitorLocalShiftX = settings->MonitorDefArray[nmonitors].x;
@@ -512,7 +515,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			if (settings->NumMonitorIds)
 			{
 				/* The first monitor is the first in the setting which should be used */
-				monitor_index = settings->MonitorIds[0];
+				if (settings->MonitorIds)
+					monitor_index = settings->MonitorIds[0];
 			}
 			else
 			{
