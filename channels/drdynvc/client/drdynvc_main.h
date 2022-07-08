@@ -46,7 +46,7 @@ typedef struct
 	wArrayList* plugin_names;
 	wArrayList* plugins;
 
-	wArrayList* listeners;
+	wHashTable* listeners;
 	wArrayList* channels;
 	wStreamPool* pool;
 } DVCMAN;
