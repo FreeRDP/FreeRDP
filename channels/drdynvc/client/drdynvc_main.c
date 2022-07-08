@@ -202,21 +202,16 @@ static const char* dvcman_get_channel_name(IWTSVirtualChannel* channel)
 static IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager* pChannelMgr,
                                                      UINT32 ChannelId)
 {
-	size_t index;
 	IWTSVirtualChannel* channel = NULL;
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
-	ArrayList_Lock(dvcman->channels);
-	for (index = 0; index < ArrayList_Count(dvcman->channels); index++)
-	{
-		DVCMAN_CHANNEL* cur = (DVCMAN_CHANNEL*)ArrayList_GetItem(dvcman->channels, index);
-		if (cur->channel_id == ChannelId)
-		{
-			channel = &cur->iface;
-			break;
-		}
-	}
+	DVCMAN_CHANNEL* dvcChannel;
 
-	ArrayList_Unlock(dvcman->channels);
+	HashTable_Lock(dvcman->channelsById);
+	dvcChannel = HashTable_GetItemValue(dvcman->channelsById, &ChannelId);
+	if (dvcChannel)
+		channel = &dvcChannel->iface;
+
+	HashTable_Unlock(dvcman->channelsById);
 	return channel;
 }
 
@@ -235,6 +230,16 @@ static void wts_listener_free(void* arg)
 	dvcman_wtslistener_free(listener);
 }
 
+static BOOL channelIdMatch(const void* k1, const void* k2)
+{
+	return *((UINT32*)k1) == *((UINT32*)k2);
+}
+
+static UINT32 channelIdHash(const void* id)
+{
+	return *((UINT32*)id);
+}
+
 static IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 {
 	wObject* obj;
@@ -250,12 +255,16 @@ static IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	dvcman->iface.GetChannelId = dvcman_get_channel_id;
 	dvcman->iface.GetChannelName = dvcman_get_channel_name;
 	dvcman->drdynvc = plugin;
-	dvcman->channels = ArrayList_New(TRUE);
+	dvcman->channelsById = HashTable_New(TRUE);
 
-	if (!dvcman->channels)
+	if (!dvcman->channelsById)
 		goto fail;
 
-	obj = ArrayList_Object(dvcman->channels);
+	HashTable_SetHashFunction(dvcman->channelsById, channelIdHash);
+	obj = HashTable_KeyObject(dvcman->channelsById);
+	obj->fnObjectEquals = channelIdMatch;
+
+	obj = HashTable_ValueObject(dvcman->channelsById);
 	obj->fnObjectFree = dvcman_channel_free;
 
 	dvcman->pool = StreamPool_New(TRUE, 10);
@@ -412,7 +421,7 @@ static void dvcman_clear(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pCha
 
 	WINPR_UNUSED(drdynvc);
 
-	ArrayList_Clear(dvcman->channels);
+	HashTable_Clear(dvcman->channelsById);
 	ArrayList_Clear(dvcman->plugins);
 	ArrayList_Clear(dvcman->plugin_names);
 	HashTable_Clear(dvcman->listeners);
@@ -424,7 +433,7 @@ static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChan
 	WINPR_UNUSED(drdynvc);
 
 	ArrayList_Free(dvcman->plugins);
-	ArrayList_Free(dvcman->channels);
+	HashTable_Free(dvcman->channelsById);
 	ArrayList_Free(dvcman->plugin_names);
 	HashTable_Free(dvcman->listeners);
 
@@ -536,7 +545,7 @@ static UINT dvcman_create_channel(drdynvcPlugin* drdynvc, IWTSVirtualChannelMana
 	}
 
 	channel->status = ERROR_NOT_CONNECTED;
-	if (!ArrayList_Append(dvcman->channels, channel))
+	if (!HashTable_Insert(dvcman->channelsById, &channel->channel_id, channel))
 	{
 		WLog_Print(drdynvc->log, WLOG_ERROR, "unable to register channel in our channel list");
 		error = ERROR_INTERNAL_ERROR;
@@ -637,8 +646,8 @@ UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 	UINT error = CHANNEL_RC_OK;
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	drdynvcPlugin* drdynvc = dvcman->drdynvc;
-	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
+	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 	if (!channel)
 	{
 		// WLog_Print(drdynvc->log, WLOG_ERROR, "ChannelId %"PRIu32" not found!", ChannelId);
@@ -665,7 +674,7 @@ UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 		}
 	}
 
-	ArrayList_Remove(dvcman->channels, channel);
+	HashTable_Remove(dvcman->channelsById, &ChannelId);
 	return error;
 }
 
@@ -1402,6 +1411,15 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		                "drdynvc_virtual_channel_open_event reported an error");
 }
 
+static BOOL channelByIdCleanerFn(const void* key, void* value, void* arg)
+{
+	drdynvcPlugin* drdynvc = (drdynvcPlugin*)arg;
+	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*)value;
+
+	dvcman_close_channel(drdynvc->channel_mgr, channel->channel_id, FALSE);
+	return TRUE;
+}
+
 static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 {
 	/* TODO: rewrite this */
@@ -1454,23 +1472,9 @@ static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 		/* Disconnect remaining dynamic channels that the server did not.
 		 * This is required to properly shut down channels by calling the appropriate
 		 * event handlers. */
-		size_t count = 0;
 		DVCMAN* drdynvcMgr = (DVCMAN*)drdynvc->channel_mgr;
 
-		do
-		{
-			ArrayList_Lock(drdynvcMgr->channels);
-			count = ArrayList_Count(drdynvcMgr->channels);
-			if (count > 0)
-			{
-				IWTSVirtualChannel* channel =
-				    (IWTSVirtualChannel*)ArrayList_GetItem(drdynvcMgr->channels, 0);
-				const UINT32 ChannelId = drdynvc->channel_mgr->GetChannelId(channel);
-				dvcman_close_channel(drdynvc->channel_mgr, ChannelId, FALSE);
-				count--;
-			}
-			ArrayList_Unlock(drdynvcMgr->channels);
-		} while (count > 0);
+		HashTable_Foreach(drdynvcMgr->channelsById, channelByIdCleanerFn, drdynvc);
 	}
 
 	if (error && drdynvc->rdpcontext)
