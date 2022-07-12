@@ -282,6 +282,7 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken* token)
 	WinPrAsn1_OctetString mechToken = { token->mechToken.cbBuffer, token->mechToken.pvBuffer };
 	WinPrAsn1_OctetString mechListMic = { token->mic.cbBuffer, token->mic.pvBuffer };
 	wStream s;
+	size_t len;
 
 	enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
 	if (!enc)
@@ -355,11 +356,14 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken* token)
 			goto cleanup;
 	}
 
-	Stream_StaticInit(&s, output_buffer->pvBuffer, output_buffer->cbBuffer);
+	if (!WinPrAsn1EncStreamSize(enc, &len) || len > output_buffer->cbBuffer)
+		goto cleanup;
+
+	Stream_StaticInit(&s, output_buffer->pvBuffer, len);
 
 	if (WinPrAsn1EncToStream(enc, &s))
 	{
-		output_buffer->cbBuffer = Stream_Length(&s);
+		output_buffer->cbBuffer = len;
 		ret = TRUE;
 	}
 
