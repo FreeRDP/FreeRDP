@@ -1022,7 +1022,7 @@ static int nla_client_init(rdpNla* nla)
 	 * ISC_REQ_USE_SESSION_KEY
 	 * ISC_REQ_ALLOCATE_MEMORY
 	 */
-	nla->fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
+	nla->fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY;
 	return 1;
 }
 

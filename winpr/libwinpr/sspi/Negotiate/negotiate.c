@@ -88,20 +88,32 @@ const SecPkgInfoW NEGOTIATE_SecPkgInfoW = {
 };
 
 static const WinPrAsn1_OID spnego_OID = { 6, (BYTE*)"\x2b\x06\x01\x05\x05\x02" };
+static const WinPrAsn1_OID kerberos_u2u_OID = { 10,
+	                                            (BYTE*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x03" };
 static const WinPrAsn1_OID kerberos_OID = { 9, (BYTE*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
 static const WinPrAsn1_OID kerberos_wrong_OID = { 9,
 	                                              (BYTE*)"\x2a\x86\x48\x82\xf7\x12\x01\x02\x02" };
 static const WinPrAsn1_OID ntlm_OID = { 10, (BYTE*)"\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a" };
 
+#ifdef WITH_GSSAPI
 static const SecPkg SecPkgTable[] = {
 	{ KERBEROS_SSP_NAME, &KERBEROS_SecurityFunctionTableA, &KERBEROS_SecurityFunctionTableW },
 	{ NTLM_SSP_NAME, &NTLM_SecurityFunctionTableA, &NTLM_SecurityFunctionTableW }
 };
 
 static const Mech MechTable[] = {
-	{ &kerberos_OID, &SecPkgTable[0], 0, TRUE },
+	{ &kerberos_u2u_OID, &SecPkgTable[0], ISC_REQ_INTEGRITY | ISC_REQ_USE_SESSION_KEY, TRUE },
+	{ &kerberos_OID, &SecPkgTable[0], ISC_REQ_INTEGRITY, TRUE },
 	{ &ntlm_OID, &SecPkgTable[1], 0, FALSE },
 };
+#else
+static const SecPkg SecPkgTable[] = { { NTLM_SSP_NAME, &NTLM_SecurityFunctionTableA,
+	                                    &NTLM_SecurityFunctionTableW } };
+
+static const Mech MechTable[] = {
+	{ &ntlm_OID, &SecPkgTable[0], 0, FALSE },
+};
+#endif
 
 static const size_t MECH_COUNT = sizeof(MechTable) / sizeof(Mech);
 
@@ -158,23 +170,17 @@ static void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 	free(context);
 }
 
-static BOOL negotiate_oid_compare(const WinPrAsn1_OID* oid1, const WinPrAsn1_OID* oid2)
-{
-	WINPR_ASSERT(oid1);
-	WINPR_ASSERT(oid2);
-
-	return (oid1->len == oid2->len) && (memcmp(oid1->data, oid2->data, oid1->len) == 0);
-}
-
 static const char* negotiate_mech_name(const WinPrAsn1_OID* oid)
 {
-	if (negotiate_oid_compare(oid, &spnego_OID))
+	if (sspi_gss_oid_compare(oid, &spnego_OID))
 		return "SPNEGO (1.3.6.1.5.5.2)";
-	else if (negotiate_oid_compare(oid, &kerberos_OID))
+	else if (sspi_gss_oid_compare(oid, &kerberos_u2u_OID))
+		return "Kerberos user to user (1.2.840.113554.1.2.2.3)";
+	else if (sspi_gss_oid_compare(oid, &kerberos_OID))
 		return "Kerberos (1.2.840.113554.1.2.2)";
-	else if (negotiate_oid_compare(oid, &kerberos_wrong_OID))
+	else if (sspi_gss_oid_compare(oid, &kerberos_wrong_OID))
 		return "Kerberos [wrong OID] (1.2.840.48018.1.2.2)";
-	else if (negotiate_oid_compare(oid, &ntlm_OID))
+	else if (sspi_gss_oid_compare(oid, &ntlm_OID))
 		return "NTLM (1.3.6.1.4.1.311.2.2.10)";
 	else
 		return "Unknown mechanism";
@@ -186,7 +192,7 @@ static const Mech* negotiate_GetMechByOID(const WinPrAsn1_OID* oid)
 
 	WinPrAsn1_OID testOid = *oid;
 
-	if (negotiate_oid_compare(oid, &kerberos_wrong_OID))
+	if (sspi_gss_oid_compare(&oid, &kerberos_wrong_OID))
 	{
 		testOid.len = kerberos_OID.len;
 		testOid.data = kerberos_OID.data;
@@ -194,7 +200,7 @@ static const Mech* negotiate_GetMechByOID(const WinPrAsn1_OID* oid)
 
 	for (size_t i = 0; i < MECH_COUNT; i++)
 	{
-		if (negotiate_oid_compare(&testOid, MechTable[i].oid))
+		if (sspi_gss_oid_compare(&testOid, MechTable[i].oid))
 			return &MechTable[i];
 	}
 	return NULL;
@@ -402,7 +408,7 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 		if (!WinPrAsn1DecReadOID(&dec, &oid, FALSE))
 			return FALSE;
 
-		if (!negotiate_oid_compare(&spnego_OID, &oid))
+		if (!sspi_gss_oid_compare(&spnego_OID, &oid))
 			return FALSE;
 
 		/* [0] NegTokenInit */
@@ -690,7 +696,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 
 		/* On first response check if the server doesn't like out prefered mech */
 		if (context->state == NEGOTIATE_STATE_INITIAL && input_token.supportedMech.len &&
-		    !negotiate_oid_compare(&input_token.supportedMech, context->mech->oid))
+		    !sspi_gss_oid_compare(&input_token.supportedMech, context->mech->oid))
 		{
 			mech = negotiate_GetMechByOID(&input_token.supportedMech);
 			if (!mech)
@@ -835,7 +841,7 @@ static const Mech* guessMech(PSecBuffer input_buffer, BOOL* spNego, WinPrAsn1_OI
 	if (!WinPrAsn1DecReadOID(&appDecoder, oid, FALSE))
 		return NULL;
 
-	if (negotiate_oid_compare(oid, &spnego_OID))
+	if (sspi_gss_oid_compare(oid, &spnego_OID))
 	{
 		*spNego = TRUE;
 		return NULL;

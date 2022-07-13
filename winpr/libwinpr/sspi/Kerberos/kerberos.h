@@ -29,7 +29,6 @@
 
 #ifdef WITH_GSSAPI
 #include <krb5/krb5.h>
-#include <gssapi.h>
 #endif
 
 typedef struct s_KRB_CONTEXT KRB_CONTEXT;
