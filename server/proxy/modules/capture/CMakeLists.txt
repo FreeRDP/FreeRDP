@@ -41,7 +41,7 @@ add_library(${PROJECT_NAME} MODULE
 	cap_protocol.h
 )
 
-target_link_libraries(${PROJECT_NAME} winpr)
+target_link_libraries(${PROJECT_NAME} winpr freerdp)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 set_target_properties(${PROJECT_NAME} PROPERTIES NO_SONAME 1)
