@@ -109,7 +109,7 @@ struct rdp_nla
 	ULONG recvSeqNum;
 	rdpContext* rdpcontext;
 	CtxtHandle context;
-	LPTSTR SspiModule;
+	LPSTR SspiModule;
 	char* SamFile;
 	rdpTransport* transport;
 	UINT32 cbMaxToken;
@@ -2674,16 +2674,14 @@ rdpNla* nla_new(rdpContext* context, rdpTransport* transport)
 		if (status != ERROR_SUCCESS)
 			return nla;
 
-		status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType, NULL, &dwSize);
-
+		status = RegQueryValueExA(hKey, "SspiModule", NULL, &dwType, NULL, &dwSize);
 		if (status != ERROR_SUCCESS)
 		{
 			RegCloseKey(hKey);
 			return nla;
 		}
 
-		nla->SspiModule = (LPTSTR)malloc(dwSize + sizeof(TCHAR));
-
+		nla->SspiModule = (LPSTR)malloc(dwSize + sizeof(CHAR));
 		if (!nla->SspiModule)
 		{
 			RegCloseKey(hKey);
@@ -2691,8 +2689,7 @@ rdpNla* nla_new(rdpContext* context, rdpTransport* transport)
 		}
 
 		status =
-		    RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType, (BYTE*)nla->SspiModule, &dwSize);
-
+		    RegQueryValueExA(hKey, "SspiModule", NULL, &dwType, (BYTE*)nla->SspiModule, &dwSize);
 		if (status == ERROR_SUCCESS)
 			WLog_INFO(TAG, "Using SSPI Module: %s", nla->SspiModule);
 
@@ -2811,12 +2808,7 @@ BOOL nla_set_sspi_module(rdpNla* nla, const char* sspiModule)
 	if (!sspiModule)
 		return TRUE;
 
-#ifdef UNICODE
-	ConvertToUnicode(CP_UTF8, 0, sspiModule, -1, &nla->SspiModule, 0);
-#else
 	nla->SspiModule = _strdup(sspiModule);
-#endif
-
 	if (!nla->SspiModule)
 		return FALSE;
 
