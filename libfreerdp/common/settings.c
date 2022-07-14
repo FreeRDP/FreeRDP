@@ -1471,7 +1471,7 @@ void* freerdp_settings_get_pointer_array_writable(const rdpSettings* settings, s
 			max = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
 			if (offset >= max)
 				goto fail;
-			return settings->TargetNetPorts[offset];
+			return &settings->TargetNetPorts[offset];
 		case FreeRDP_ClientTimeZone:
 			max = 1;
 			if (offset >= max)
