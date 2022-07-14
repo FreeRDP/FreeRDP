@@ -134,27 +134,30 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, LPCSTR user, LPCSTR domain, LPCS
 	return TRUE;
 }
 
-BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCSTR ServiceClass, LPCSTR hostname)
+BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCSTR serviceClass, LPCSTR hostname)
 {
 	BOOL status = FALSE;
 	DWORD SpnLength = 0;
 #ifdef UNICODE
 	LPWSTR hostnameX = NULL;
-	ConvertToUnicode(CP_UTF8, 0, hostname, -1, (LPWSTR*)&hostnameX, 0);
+	LPWSTR serviceClassX = NULL;
+	ConvertToUnicode(CP_UTF8, 0, hostname, -1, &hostnameX, 0);
+	ConvertToUnicode(CP_UTF8, 0, serviceClass, -1, &serviceClassX, 0);
 #else
 	LPSTR hostnameX = _strdup(hostname);
+	LPSTR serviceClassX = _strdup(serviceClass);
 #endif
 
 	if (!hostnameX)
 		return FALSE;
 
-	if (!ServiceClass)
+	if (!serviceClassX)
 	{
 		ntlm->ServicePrincipalName = hostnameX;
 		return TRUE;
 	}
 
-	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, hostnameX, &SpnLength, NULL) !=
+	if (DsMakeSpn(serviceClassX, hostnameX, NULL, 0, hostnameX, &SpnLength, NULL) !=
 	    ERROR_BUFFER_OVERFLOW)
 		goto error;
 
@@ -163,12 +166,13 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCSTR ServiceClass, LPCSTR hostname)
 	if (!ntlm->ServicePrincipalName)
 		goto error;
 
-	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, hostnameX, &SpnLength,
+	if (DsMakeSpn(serviceClassX, hostnameX, NULL, 0, hostnameX, &SpnLength,
 	              ntlm->ServicePrincipalName) != ERROR_SUCCESS)
 		goto error;
 
 	status = TRUE;
 error:
+	free(serviceClassX);
 	free(hostnameX);
 	return status;
 }
