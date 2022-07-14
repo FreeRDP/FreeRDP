@@ -189,7 +189,7 @@ fail:
 	if (socketBio)
 		BIO_free_all(socketBio);
 	else
-		close(sockfd);
+		closesocket(sockfd);
 
 	return FALSE;
 }
@@ -549,15 +549,15 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
 		return;
 	}
 
-		while ((sslerr = ERR_get_error()))
-		{
-		    char buf[120] = { 0 };
-		    const char* fmt = "%s returned an error: %s";
+	while ((sslerr = ERR_get_error()))
+	{
+		char buf[120] = { 0 };
+		const char* fmt = "%s returned an error: %s";
 
-		    ERR_error_string_n(sslerr, buf, 120);
-		    WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt,
-		                      biofunc, buf);
-	    }
+		ERR_error_string_n(sslerr, buf, 120);
+		WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
+		                  buf);
+	}
 }
 
 static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t bytes)
