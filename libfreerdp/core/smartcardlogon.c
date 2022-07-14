@@ -178,7 +178,7 @@ static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 
 		userLen = (size_t)(atPos - scCert->upn);
 		scCert->userHint = malloc(userLen + 1);
-		scCert->domainHint = strdup(atPos + 1);
+		scCert->domainHint = _strdup(atPos + 1);
 
 		if (!scCert->userHint || !scCert->domainHint)
 		{
@@ -504,7 +504,7 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
 	if (ConvertToUnicode(CP_UTF8, 0, "FreeRDP Emulator", -1, &cert->info.reader, 0) < 0)
 		goto out_error;
 
-	cert->info.containerName = strdup("Private Key 00");
+	cert->info.containerName = _strdup("Private Key 00");
 	if (!cert->info.containerName)
 		goto out_error;
 
