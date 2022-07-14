@@ -75,22 +75,23 @@ static WCHAR* printer_win_get_printjob_name(size_t id)
 {
 	time_t tt;
 	struct tm tres;
-	struct tm* t;
+	errno_t err;
 	WCHAR* str;
 	size_t len = 1024;
 	int rc;
 
 	tt = time(NULL);
-	t = localtime_s(&tres, &tt);
+	err = localtime_s(&tres, &tt);
 
 	str = calloc(len, sizeof(WCHAR));
 	if (!str)
 		return NULL;
 
-	rc = swprintf_s(
-	    str, len,
-	    WIDEN("FreeRDP Print %04d-%02d-%02d% 02d-%02d-%02d - Job %") WIDEN(PRIuz) WIDEN("\0"),
-	    t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, id);
+	rc = swprintf_s(str, len,
+	                WIDEN("FreeRDP Print %04d-%02d-%02d% 02d-%02d-%02d - Job %") WIDEN(PRIuz)
+	                    WIDEN("\0"),
+	                tres.tm_year + 1900, tres.tm_mon + 1, tres.tm_mday, tres.tm_hour, tres.tm_min,
+	                tres.tm_sec, id);
 
 	return str;
 }
