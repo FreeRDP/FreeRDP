@@ -58,7 +58,7 @@ static SOCKET capture_plugin_init_socket(const captureConfig* cconfig)
 	status = _connect(sockfd, (const struct sockaddr*)&addr, sizeof(addr));
 	if (status < 0)
 	{
-		close(sockfd);
+		closesocket(sockfd);
 		return -1;
 	}
 
