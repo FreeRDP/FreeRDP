@@ -146,6 +146,10 @@ extern "C"
 	WINPR_API size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId,
 	                                               BOOL* error, WinPrAsn1_OID* target,
 	                                               BOOL allocate);
+	WINPR_API size_t WinPrAsn1DecReadContextualOctetString(WinPrAsn1Decoder* dec,
+	                                                       WinPrAsn1_tagId tagId, BOOL* error,
+	                                                       WinPrAsn1_OctetString* target,
+	                                                       BOOL allocate);
 	WINPR_API size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec,
 	                                                    WinPrAsn1_tagId tagId, BOOL* error,
 	                                                    WinPrAsn1Decoder* target);
