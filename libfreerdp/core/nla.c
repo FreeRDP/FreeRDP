@@ -44,10 +44,10 @@
 #include <winpr/ncrypt.h>
 #include <winpr/cred.h>
 #include <winpr/debug.h>
+#include <winpr/asn1.h>
 
 #include "nla.h"
 #include "utils.h"
-#include "tscredentials.h"
 #include <freerdp/utils/smartcardlogon.h>
 
 #define TAG FREERDP_TAG("core.nla")
@@ -153,7 +153,6 @@ static SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla);
 static SECURITY_STATUS nla_decrypt_public_key_hash(rdpNla* nla);
 static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla);
 static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla);
-static BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s);
 
 static BOOL nla_Digest_Update_From_SecBuffer(WINPR_DIGEST_CTX* ctx, const SecBuffer* buffer)
 {
@@ -190,21 +189,6 @@ static BOOL nla_sec_buffer_alloc_from_buffer(SecBuffer* buffer, const SecBuffer*
                                              size_t offset)
 {
 	return nla_sec_buffer_alloc_from_data(buffer, data->pvBuffer, offset, data->cbBuffer);
-}
-
-static BOOL nla_decode_to_buffer(wStream* s, SecBuffer* buffer)
-{
-	BOOL rc = FALSE;
-	size_t length;
-	if (!s || !buffer)
-		return FALSE;
-	if (!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
-	    !Stream_CheckAndLogRequiredLength(TAG, s, length))
-		return FALSE;
-
-	rc = nla_sec_buffer_alloc_from_data(buffer, Stream_Pointer(s), 0, length);
-	Stream_Seek(s, length);
-	return rc;
 }
 
 static BOOL nla_set_package_name(rdpNla* nla, const TCHAR* name)
@@ -465,27 +449,6 @@ static SECURITY_STATUS nla_encrypt(rdpNla* nla, SecBuffer* buffer, size_t header
 	}
 
 	return status;
-}
-
-static size_t ber_sizeof_sequence_octet_string(size_t length)
-{
-	size_t rc = ber_sizeof_contextual_tag(ber_sizeof_octet_string(length));
-	rc += ber_sizeof_octet_string(length);
-	return rc;
-}
-
-static size_t ber_write_sequence_octet_string(wStream* stream, BYTE context, const BYTE* value,
-                                              size_t length)
-{
-	size_t rc = ber_write_contextual_tag(stream, context, ber_sizeof_octet_string(length), TRUE);
-	rc += ber_write_octet_string(stream, value, length);
-	return rc;
-}
-
-static size_t ber_write_sequence_octet_string_from_secbuffer(wStream* stream, BYTE context,
-                                                             const SecBuffer* buffer)
-{
-	return ber_write_sequence_octet_string(stream, context, buffer->pvBuffer, buffer->cbBuffer);
 }
 
 /* CredSSP Client-To-Server Binding Hash\0 */
@@ -1936,110 +1899,66 @@ fail:
 	return status;
 }
 
-BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
-{
-	size_t length;
-	size_t userLen = 0;
-	size_t domainLen = 0;
-	size_t passwordLen = 0;
-	const WCHAR* user = NULL;
-	const WCHAR* domain = NULL;
-	const WCHAR* password = NULL;
-
-	WINPR_ASSERT(nla);
-	WINPR_ASSERT(s);
-
-	if (!nla->identity)
-	{
-		WLog_ERR(TAG, "nla->identity is NULL!");
-		return FALSE;
-	}
-
-	/* TSPasswordCreds (SEQUENCE)
-	 * Initialise to default values. */
-
-	sspi_FreeAuthIdentity(nla->identity);
-
-	if (!ber_read_sequence_tag(s, &length))
-		return FALSE;
-
-	/* The sequence is empty, return early,
-	 * TSPasswordCreds (SEQUENCE) is optional. */
-	if (length == 0)
-		return TRUE;
-
-	/* [0] domainName (OCTET STRING) */
-	if (!ber_read_contextual_tag(s, 0, &length, TRUE) || !ber_read_octet_string_tag(s, &length))
-	{
-		return FALSE;
-	}
-
-	domainLen = length / sizeof(WCHAR);
-	if (length > 0)
-		domain = Stream_PointerAs(s, const WCHAR);
-
-	if (!Stream_SafeSeek(s, length))
-		return FALSE;
-
-	/* [1] userName (OCTET STRING) */
-	if (!ber_read_contextual_tag(s, 1, &length, TRUE) || !ber_read_octet_string_tag(s, &length))
-		return FALSE;
-
-	userLen = length / sizeof(WCHAR);
-	if (length > 0)
-		user = Stream_PointerAs(s, const WCHAR);
-
-	if (!Stream_SafeSeek(s, length))
-		return FALSE;
-
-	/* [2] password (OCTET STRING) */
-	if (!ber_read_contextual_tag(s, 2, &length, TRUE) || !ber_read_octet_string_tag(s, &length))
-		return FALSE;
-
-	passwordLen = length / sizeof(WCHAR);
-	if (length > 0)
-		password = Stream_PointerAs(s, const WCHAR);
-
-	if (!Stream_SafeSeek(s, length))
-		return FALSE;
-
-	return sspi_SetAuthIdentityWithLengthW(nla->identity, user, userLen, domain, domainLen,
-	                                       password, passwordLen) > 0;
-}
-
 static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data, size_t offset)
 {
-	wStream* s;
-	size_t length;
-	size_t ts_password_creds_length = 0;
-	BOOL ret = FALSE;
+	WinPrAsn1Decoder dec, dec2;
+	WinPrAsn1_OctetString credentials;
+	BOOL error;
+	WinPrAsn1_INTEGER credType;
 
 	WINPR_ASSERT(nla);
-	if (!data)
+	WINPR_ASSERT(data);
+	WINPR_ASSERT(data->cbBuffer >= offset);
+
+	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, (BYTE*)data->pvBuffer + offset,
+	                         data->cbBuffer - offset);
+
+	/* TSCredentials */
+	if (!WinPrAsn1DecReadSequence(&dec, &dec2))
+		return FALSE;
+	dec = dec2;
+
+	/* credType [0] INTEGER */
+	if (!WinPrAsn1DecReadContextualInteger(&dec, 0, &error, &credType))
 		return FALSE;
 
-	s = Stream_New(data->pvBuffer, data->cbBuffer);
+	/* credentials [1] OCTET STRING */
+	if (!WinPrAsn1DecReadContextualOctetString(&dec, 1, &error, &credentials, FALSE))
+		return FALSE;
 
-	if (!s)
+	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, credentials.data, credentials.len);
+
+	if (credType == 1)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		return FALSE;
+		WinPrAsn1_OctetString domain;
+		WinPrAsn1_OctetString username;
+		WinPrAsn1_OctetString password;
+
+		/* TSPasswordCreds */
+		if (!WinPrAsn1DecReadSequence(&dec, &dec2))
+			return FALSE;
+		dec = dec2;
+
+		/* domainName [0] OCTET STRING */
+		if (!WinPrAsn1DecReadContextualOctetString(&dec, 0, &error, &domain, FALSE) && error)
+			return FALSE;
+
+		/* userName [1] OCTET STRING */
+		if (!WinPrAsn1DecReadContextualOctetString(&dec, 1, &error, &username, FALSE) && error)
+			return FALSE;
+
+		/* password [2] OCTET STRING */
+		if (!WinPrAsn1DecReadContextualOctetString(&dec, 2, &error, &password, FALSE))
+			return FALSE;
+
+		if (sspi_SetAuthIdentityWithLengthW(nla->identity, (WCHAR*)username.data,
+		                                    username.len / sizeof(WCHAR), (WCHAR*)domain.data,
+		                                    domain.len / sizeof(WCHAR), (WCHAR*)password.data,
+		                                    password.len / sizeof(WCHAR)) < 0)
+			return FALSE;
 	}
 
-	if (!Stream_SafeSeek(s, offset))
-		goto fail;
-
-	/* TSCredentials (SEQUENCE) */
-	ret = ber_read_sequence_tag(s, &length) &&
-	      /* [0] credType (INTEGER) */
-	      ber_read_contextual_tag(s, 0, &length, TRUE) && ber_read_integer(s, NULL) &&
-	      /* [1] credentials (OCTET STRING) */
-	      ber_read_contextual_tag(s, 1, &length, TRUE) &&
-	      ber_read_octet_string_tag(s, &ts_password_creds_length) &&
-	      nla_read_ts_password_creds(nla, s);
-fail:
-	Stream_Free(s, FALSE);
-	return ret;
+	return TRUE;
 }
 
 /**
@@ -2049,13 +1968,12 @@ fail:
 
 static BOOL nla_encode_ts_credentials(rdpNla* nla)
 {
-	wStream* credsContentStream;
-	wStream staticRetStream;
-	wStream* s;
-	size_t length;
 	rdpSettings* settings;
 	BOOL ret = FALSE;
-	TSCredentials_t cr = { 0 };
+	WinPrAsn1Encoder* enc;
+	size_t length;
+	wStream s;
+	int credType;
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(nla->rdpcontext);
@@ -2063,77 +1981,135 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	settings = nla->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
+	enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
+	if (!enc)
+		return FALSE;
+
+	/* TSCredentials */
+	if (!WinPrAsn1EncSeqContainer(enc))
+		goto out;
+
+	/* credType [0] INTEGER */
+	credType = settings->SmartcardLogon ? 2 : 1;
+	if (!WinPrAsn1EncContextualInteger(enc, 0, credType))
+		goto out;
+
+	/* credentials [1] OCTET STRING */
+	if (!WinPrAsn1EncContextualOctetStringContainer(enc, 1))
+		goto out;
+
 	if (settings->SmartcardLogon)
 	{
-		TSSmartCardCreds_t smartcardCreds = { 0 };
-		TSCspDataDetail_t cspData = { 0 };
-		char* Password = freerdp_settings_get_string_writable(settings, FreeRDP_Password);
+		struct
+		{
+			WinPrAsn1_tagId tag;
+			size_t setting_id;
+		} cspData_fields[] = { { 1, FreeRDP_CardName },
+			                   { 2, FreeRDP_ReaderName },
+			                   { 3, FreeRDP_ContainerName },
+			                   { 4, FreeRDP_CspName } };
+		WinPrAsn1_OctetString octet_string = { 0 };
+		char* str;
+		BOOL ret;
 
-		smartcardCreds.pin = Password ? Password : "";
+		/* TSSmartCardCreds */
+		if (!WinPrAsn1EncSeqContainer(enc))
+			goto out;
 
-		/*smartcardCreds.userHint = settings->UserHint;
-		smartcardCreds.domainHint = settings->DomainHint;*/
-		smartcardCreds.cspData = &cspData;
+		/* pin [0] OCTET STRING */
+		str = freerdp_settings_get_string_writable(settings, FreeRDP_Password);
+		octet_string.len =
+		    ConvertToUnicode(CP_UTF8, 0, str, -1, (LPWSTR*)&octet_string.data, 0) * sizeof(WCHAR);
+		ret = WinPrAsn1EncContextualOctetString(enc, 0, &octet_string);
+		free(octet_string.data);
+		if (!ret)
+			goto out;
 
-		cspData.keySpec = freerdp_settings_get_uint32(settings, FreeRDP_KeySpec);
-		cspData.cspName = freerdp_settings_get_string_writable(settings, FreeRDP_CspName);
-		cspData.readerName = freerdp_settings_get_string_writable(settings, FreeRDP_ReaderName);
-		cspData.cardName = freerdp_settings_get_string_writable(settings, FreeRDP_CardName);
-		cspData.containerName =
-		    freerdp_settings_get_string_writable(settings, FreeRDP_ContainerName);
+		/* cspData [1] SEQUENCE */
+		if (!WinPrAsn1EncContextualSeqContainer(enc, 1))
+			goto out;
 
-		length = ber_sizeof_nla_TSSmartCardCreds(&smartcardCreds);
-		credsContentStream = Stream_New(NULL, length);
-		if (!credsContentStream)
-			return FALSE;
+		/* keySpec [0] INTEGER */
+		if (!WinPrAsn1EncContextualInteger(enc, 0,
+		                                   freerdp_settings_get_uint32(settings, FreeRDP_KeySpec)))
+			goto out;
 
-		if (ber_write_nla_TSSmartCardCreds(credsContentStream, &smartcardCreds) == 0)
-			return FALSE;
+		for (int i = 0; i < ARRAYSIZE(cspData_fields); i++)
+		{
+			str = freerdp_settings_get_string_writable(settings, cspData_fields[i].setting_id);
+			octet_string.len =
+			    ConvertToUnicode(CP_UTF8, 0, str, -1, (LPWSTR*)&octet_string.data, 0) *
+			    sizeof(WCHAR);
+			if (octet_string.len)
+			{
+				ret = WinPrAsn1EncContextualOctetString(enc, cspData_fields[i].tag, &octet_string);
+				free(octet_string.data);
+				if (!ret)
+					goto out;
+			}
+		}
 
-		cr.credType = 2;
+		/* End cspData */
+		if (!WinPrAsn1EncEndContainer(enc))
+			goto out;
+
+		/* End TSSmartCardCreds */
+		if (!WinPrAsn1EncEndContainer(enc))
+			goto out;
 	}
 	else
 	{
-		TSPasswordCreds_t passCreds = { 0 };
+		WinPrAsn1_OctetString username = { 0 };
+		WinPrAsn1_OctetString domain = { 0 };
+		WinPrAsn1_OctetString password = { 0 };
+
+		/* TSPasswordCreds */
+		if (!WinPrAsn1EncSeqContainer(enc))
+			goto out;
 
 		if (!settings->DisableCredentialsDelegation && nla->identity)
 		{
-			passCreds.userNameLen = nla->identity->UserLength * 2;
-			passCreds.userName = (BYTE*)nla->identity->User;
+			username.len = nla->identity->UserLength * 2;
+			username.data = (BYTE*)nla->identity->User;
 
-			passCreds.domainNameLen = nla->identity->DomainLength * 2;
-			passCreds.domainName = (BYTE*)nla->identity->Domain;
+			domain.len = nla->identity->DomainLength * 2;
+			domain.data = (BYTE*)nla->identity->Domain;
 
-			passCreds.passwordLen = nla->identity->PasswordLength * 2;
-			passCreds.password = (BYTE*)nla->identity->Password;
+			password.len = nla->identity->PasswordLength * 2;
+			password.data = (BYTE*)nla->identity->Password;
 		}
 
-		length = ber_sizeof_nla_TSPasswordCreds(&passCreds);
-		credsContentStream = Stream_New(NULL, length);
-		if (!credsContentStream)
-			return FALSE;
+		if (!WinPrAsn1EncContextualOctetString(enc, 0, &domain))
+			goto out;
+		if (!WinPrAsn1EncContextualOctetString(enc, 1, &username))
+			goto out;
+		if (!WinPrAsn1EncContextualOctetString(enc, 2, &password))
+			goto out;
 
-		ber_write_nla_TSPasswordCreds(credsContentStream, &passCreds);
-
-		cr.credType = 1;
+		/* End TSPasswordCreds */
+		if (!WinPrAsn1EncEndContainer(enc))
+			goto out;
 	}
 
-	cr.credentialsLen = length;
-	cr.credentials = Stream_Buffer(credsContentStream);
+	/* End credentials | End TSCredentials */
+	if (!WinPrAsn1EncEndContainer(enc) || !WinPrAsn1EncEndContainer(enc))
+		goto out;
 
-	length = ber_sizeof_nla_TSCredentials(&cr);
+	if (!WinPrAsn1EncStreamSize(enc, &length))
+		goto out;
+
 	if (!nla_sec_buffer_alloc(&nla->tsCredentials, length))
 	{
 		WLog_ERR(TAG, "sspi_SecBufferAlloc failed!");
 		goto out;
 	}
 
-	s = Stream_StaticInit(&staticRetStream, (BYTE*)nla->tsCredentials.pvBuffer, length);
-	ber_write_nla_TSCredentials(s, &cr);
-	ret = TRUE;
+	Stream_StaticInit(&s, (BYTE*)nla->tsCredentials.pvBuffer, length);
+	if (WinPrAsn1EncToStream(enc, &s))
+		ret = TRUE;
 
 out:
-	Stream_Free(credsContentStream, TRUE);
+	WinPrAsn1Encoder_Free(&enc);
 	return ret;
 }
 
@@ -2179,103 +2155,6 @@ static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 	return SEC_E_OK;
 }
 
-static size_t nla_sizeof_nego_token(size_t length)
-{
-	length = ber_sizeof_octet_string(length);
-	length += ber_sizeof_contextual_tag(length);
-	return length;
-}
-
-static size_t nla_sizeof_nego_tokens(const SecBuffer* buffer)
-{
-	WINPR_ASSERT(buffer);
-
-	size_t length = buffer->cbBuffer;
-	if (length == 0)
-		return 0;
-	length = nla_sizeof_nego_token(length);
-	length += ber_sizeof_sequence_tag(length);
-	length += ber_sizeof_sequence_tag(length);
-	length += ber_sizeof_contextual_tag(length);
-	return length;
-}
-
-static size_t nla_sizeof_pub_key_auth(const SecBuffer* buffer)
-{
-	WINPR_ASSERT(buffer);
-
-	size_t length = buffer->cbBuffer;
-	if (length == 0)
-		return 0;
-	length = ber_sizeof_octet_string(length);
-	length += ber_sizeof_contextual_tag(length);
-	return length;
-}
-
-static size_t nla_sizeof_auth_info(const SecBuffer* buffer)
-{
-	WINPR_ASSERT(buffer);
-
-	size_t length = buffer->cbBuffer;
-	if (length == 0)
-		return 0;
-	length = ber_sizeof_octet_string(length);
-	length += ber_sizeof_contextual_tag(length);
-	return length;
-}
-
-static size_t nla_sizeof_client_nonce(const SecBuffer* buffer)
-{
-	WINPR_ASSERT(buffer);
-
-	size_t length = buffer->cbBuffer;
-	if (length == 0)
-		return 0;
-	length = ber_sizeof_octet_string(length);
-	length += ber_sizeof_contextual_tag(length);
-	return length;
-}
-
-static size_t nla_sizeof_ts_request(size_t length)
-{
-	length += ber_sizeof_integer(2);
-	length += ber_sizeof_contextual_tag(3);
-	return length;
-}
-
-static BOOL nla_client_write_nego_token(wStream* s, const SecBuffer* negoToken)
-{
-	const size_t nego_tokens_length = nla_sizeof_nego_tokens(negoToken);
-
-	WINPR_ASSERT(s);
-
-	if (Stream_GetRemainingCapacity(s) < nego_tokens_length)
-		return FALSE;
-
-	if (nego_tokens_length > 0)
-	{
-		size_t length;
-
-		WLog_DBG(TAG, "   ----->> nego token");
-		length =
-		    ber_write_contextual_tag(s, 1,
-		                             ber_sizeof_sequence(ber_sizeof_sequence(
-		                                 ber_sizeof_sequence_octet_string(negoToken->cbBuffer))),
-		                             TRUE); /* NegoData */
-		length +=
-		    ber_write_sequence_tag(s, ber_sizeof_sequence(ber_sizeof_sequence_octet_string(
-		                                  negoToken->cbBuffer))); /* SEQUENCE OF NegoDataItem */
-		length += ber_write_sequence_tag(
-		    s, ber_sizeof_sequence_octet_string(negoToken->cbBuffer)); /* NegoDataItem */
-		length +=
-		    ber_write_sequence_octet_string_from_secbuffer(s, 0, negoToken); /* OCTET STRING */
-
-		if (length != nego_tokens_length)
-			return FALSE;
-	}
-
-	return TRUE;
-}
 /**
  * Send CredSSP message.
  * @param credssp
@@ -2286,113 +2165,135 @@ BOOL nla_send(rdpNla* nla)
 	BOOL rc = FALSE;
 	wStream* s;
 	size_t length;
-	size_t ts_request_length;
-	size_t error_code_context_length = 0;
-	size_t error_code_length = 0;
+	WinPrAsn1Encoder* enc;
+	WinPrAsn1_OctetString octet_string;
 
 	WINPR_ASSERT(nla);
 
-	const size_t nego_tokens_length = nla_sizeof_nego_tokens(&nla->negoToken);
-	const size_t pub_key_auth_length = nla_sizeof_pub_key_auth(&nla->pubKeyAuth);
-	const size_t auth_info_length = nla_sizeof_auth_info(&nla->authInfo);
-	const size_t client_nonce_length = nla_sizeof_client_nonce(&nla->ClientNonce);
-
-	if (nla->peerVersion >= 3 && nla->peerVersion != 5 && nla->errorCode != 0)
-	{
-		error_code_length = ber_sizeof_integer(nla->errorCode);
-		error_code_context_length = ber_sizeof_contextual_tag(error_code_length);
-	}
-
-	length = nego_tokens_length + pub_key_auth_length + auth_info_length +
-	         error_code_context_length + error_code_length + client_nonce_length;
-	ts_request_length = nla_sizeof_ts_request(length);
-	s = Stream_New(NULL, ber_sizeof_sequence(ts_request_length));
-
-	if (!s)
-	{
-		WLog_ERR(TAG, "Stream_New failed!");
+	enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
+	if (!enc)
 		return FALSE;
-	}
 
-	WLog_DBG(TAG, "----->> sending...");
 	/* TSRequest */
-	ber_write_sequence_tag(s, ts_request_length); /* SEQUENCE */
-	/* [0] version */
-	ber_write_contextual_tag(s, 0, 3, TRUE);
-
-	WLog_DBG(TAG, "   ----->> protocol version %" PRIu32, nla->version);
-	ber_write_integer(s, nla->version); /* INTEGER */
-
-	/* [1] negoTokens (NegoData) */
-	if (!nla_client_write_nego_token(s, &nla->negoToken))
+	WLog_DBG(TAG, "----->> sending...");
+	if (!WinPrAsn1EncSeqContainer(enc))
 		goto fail;
 
-	/* [2] authInfo (OCTET STRING) */
-	if (auth_info_length > 0)
+	/* version [0] INTEGER */
+	WLog_DBG(TAG, "   ----->> protocol version %" PRIu32, nla->version);
+	if (!WinPrAsn1EncContextualInteger(enc, 0, nla->version))
+		goto fail;
+
+	/* negoTokens [1] SEQUENCE OF SEQUENCE */
+	if (nla->negoToken.cbBuffer > 0)
 	{
 		WLog_DBG(TAG, "   ----->> auth info");
-		if (ber_write_sequence_octet_string_from_secbuffer(s, 2, &nla->authInfo) !=
-		    auth_info_length)
+		if (!WinPrAsn1EncContextualSeqContainer(enc, 1) || !WinPrAsn1EncSeqContainer(enc))
+			goto fail;
+
+		/* negoToken [0] OCTET STRING */
+		octet_string.data = nla->negoToken.pvBuffer;
+		octet_string.len = nla->negoToken.cbBuffer;
+		if (!WinPrAsn1EncContextualOctetString(enc, 0, &octet_string))
+			goto fail;
+
+		/* End negoTokens (SEQUENCE OF SEQUENCE) */
+		if (!WinPrAsn1EncEndContainer(enc) || !WinPrAsn1EncEndContainer(enc))
 			goto fail;
 	}
 
-	/* [3] pubKeyAuth (OCTET STRING) */
-	if (pub_key_auth_length > 0)
+	/* authInfo [2] OCTET STRING */
+	if (nla->authInfo.cbBuffer > 0)
 	{
 		WLog_DBG(TAG, "   ----->> public key auth");
-		if (ber_write_sequence_octet_string_from_secbuffer(s, 3, &nla->pubKeyAuth) !=
-		    pub_key_auth_length)
+		octet_string.data = nla->authInfo.pvBuffer;
+		octet_string.len = nla->authInfo.cbBuffer;
+		if (!WinPrAsn1EncContextualOctetString(enc, 2, &octet_string))
 			goto fail;
 	}
 
-	/* [4] errorCode (INTEGER) */
-	if (error_code_length > 0)
+	/* pubKeyAuth [3] OCTET STRING */
+	if (nla->pubKeyAuth.cbBuffer > 0)
+	{
+		WLog_DBG(TAG, "   ----->> public key auth");
+		octet_string.data = nla->pubKeyAuth.pvBuffer;
+		octet_string.len = nla->pubKeyAuth.cbBuffer;
+		if (!WinPrAsn1EncContextualOctetString(enc, 3, &octet_string))
+			goto fail;
+	}
+
+	/* errorCode [4] INTEGER */
+	if (nla->errorCode && nla->peerVersion >= 3 && nla->peerVersion != 5)
 	{
 		char buffer[1024];
 		WLog_DBG(TAG, "   ----->> error code %s 0x%08" PRIx32,
 		         winpr_strerror(nla->errorCode, buffer, sizeof(buffer)), nla->errorCode);
-		ber_write_contextual_tag(s, 4, error_code_length, TRUE);
-		ber_write_integer(s, nla->errorCode);
-	}
-
-	/* [5] clientNonce (OCTET STRING) */
-	if (client_nonce_length > 0)
-	{
-		WLog_DBG(TAG, "   ----->> client nonce");
-		if (ber_write_sequence_octet_string_from_secbuffer(s, 5, &nla->ClientNonce) !=
-		    client_nonce_length)
+		if (!WinPrAsn1EncContextualInteger(enc, 4, nla->errorCode))
 			goto fail;
 	}
 
-	WLog_DBG(TAG, "[%" PRIuz " bytes]", Stream_GetPosition(s));
+	/* clientNonce [5] OCTET STRING */
+	if (nla->ClientNonce.cbBuffer > 0)
+	{
+		WLog_DBG(TAG, "   ----->> client nonce");
+		octet_string.data = nla->ClientNonce.pvBuffer;
+		octet_string.len = nla->ClientNonce.cbBuffer;
+		if (!WinPrAsn1EncContextualOctetString(enc, 5, &octet_string))
+			goto fail;
+	}
+
+	/* End TSRequest */
+	if (!WinPrAsn1EncEndContainer(enc))
+		goto fail;
+
+	if (!WinPrAsn1EncStreamSize(enc, &length))
+		goto fail;
+
+	s = Stream_New(NULL, length);
+	if (!s)
+		goto fail;
+
+	if (!WinPrAsn1EncToStream(enc, s))
+		goto fail;
+
+	WLog_DBG(TAG, "[%" PRIuz " bytes]", length);
 	if (transport_write(nla->transport, s) < 0)
 		goto fail;
 	rc = TRUE;
 
 fail:
-	Stream_Free(s, TRUE);
+	WinPrAsn1Encoder_Free(&enc);
 	return rc;
 }
 
 static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 {
-	int rc = -1;
-	size_t length;
+	WinPrAsn1Decoder dec, dec2, dec3;
+	BOOL error;
+	WinPrAsn1_tagId tag;
+	WinPrAsn1_OctetString octet_string;
+	WinPrAsn1_INTEGER val;
 	UINT32 version = 0;
+	char buffer[1024];
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(s);
 
+	WinPrAsn1Decoder_Init(&dec, WINPR_ASN1_DER, s);
+
 	WLog_DBG(TAG, "<<----- receiving...");
 
 	/* TSRequest */
-	if (!ber_read_sequence_tag(s, &length) || !ber_read_contextual_tag(s, 0, &length, TRUE) ||
-	    !ber_read_integer(s, &version))
-	{
-		goto fail;
-	}
+	if (!WinPrAsn1DecReadSequence(&dec, &dec2))
+		return -1;
+	dec = dec2;
 
+	/* version [0] INTEGER */
+	if (!WinPrAsn1DecReadContextualInteger(&dec, 0, &error, &val))
+		return -1;
+	version = (UINT)val;
 	WLog_DBG(TAG, "   <<----- protocol version %" PRIu32, version);
+
 	if (nla->peerVersion == 0)
 		nla->peerVersion = version;
 
@@ -2401,66 +2302,69 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	{
 		WLog_ERR(TAG, "CredSSP peer changed protocol version from %" PRIu32 " to %" PRIu32,
 		         nla->peerVersion, version);
-		goto fail;
+		return -1;
 	}
 
-	/* [1] negoTokens (NegoData) */
-	if (ber_read_contextual_tag(s, 1, &length, TRUE) != FALSE)
+	while (WinPrAsn1DecReadContextualTag(&dec, &tag, &dec2))
 	{
-		WLog_DBG(TAG, "   <<----- nego token");
-		if (!ber_read_sequence_tag(s, &length) || /* SEQUENCE OF NegoDataItem */
-		    !ber_read_sequence_tag(s, &length) || /* NegoDataItem */
-		    !ber_read_contextual_tag(s, 0, &length, TRUE))
+		switch (tag)
 		{
-			goto fail;
-		}
-
-		if (!nla_decode_to_buffer(s, &nla->negoToken))
-			goto fail;
-	}
-
-	/* [2] authInfo (OCTET STRING) */
-	if (ber_read_contextual_tag(s, 2, &length, TRUE) != FALSE)
-	{
-		WLog_DBG(TAG, "   <<----- auth info");
-		if (!nla_decode_to_buffer(s, &nla->authInfo))
-			goto fail;
-	}
-
-	/* [3] pubKeyAuth (OCTET STRING) */
-	if (ber_read_contextual_tag(s, 3, &length, TRUE) != FALSE)
-	{
-		WLog_DBG(TAG, "   <<----- public key info");
-		if (!nla_decode_to_buffer(s, &nla->pubKeyAuth))
-			goto fail;
-	}
-
-	/* [4] errorCode (INTEGER) */
-	if (nla->peerVersion >= 3)
-	{
-		if (ber_read_contextual_tag(s, 4, &length, TRUE) != FALSE)
-		{
-			char buffer[1024];
-			if (!ber_read_integer(s, &nla->errorCode))
-				goto fail;
-			WLog_DBG(TAG, "   <<----- error code %s 0x%08" PRIx32,
-			         winpr_strerror(nla->errorCode, buffer, sizeof(buffer)), nla->errorCode);
-		}
-
-		if (nla->peerVersion >= 5)
-		{
-			if (ber_read_contextual_tag(s, 5, &length, TRUE) != FALSE)
-			{
+			case 1:
+				WLog_DBG(TAG, "   <<----- nego token");
+				/* negoTokens [1] SEQUENCE OF SEQUENCE */
+				if (!WinPrAsn1DecReadSequence(&dec2, &dec3) ||
+				    !WinPrAsn1DecReadSequence(&dec3, &dec2))
+					return -1;
+				/* negoToken [0] OCTET STRING */
+				if (!WinPrAsn1DecReadContextualOctetString(&dec2, 0, &error, &octet_string,
+				                                           FALSE) &&
+				    error)
+					return -1;
+				if (!nla_sec_buffer_alloc_from_data(&nla->negoToken, octet_string.data, 0,
+				                                    octet_string.len))
+					return -1;
+				break;
+			case 2:
+				WLog_DBG(TAG, "   <<----- auth info");
+				/* authInfo [2] OCTET STRING */
+				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
+					return -1;
+				if (!nla_sec_buffer_alloc_from_data(&nla->authInfo, octet_string.data, 0,
+				                                    octet_string.len))
+					return -1;
+				break;
+			case 3:
+				WLog_DBG(TAG, "   <<----- public key info");
+				/* pubKeyAuth [3] OCTET STRING */
+				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
+					return -1;
+				if (!nla_sec_buffer_alloc_from_data(&nla->pubKeyAuth, octet_string.data, 0,
+				                                    octet_string.len))
+					return -1;
+				break;
+			case 4:
+				/* errorCode [4] INTEGER */
+				if (!WinPrAsn1DecReadInteger(&dec2, &val))
+					return -1;
+				nla->errorCode = (UINT)val;
+				WLog_DBG(TAG, "   <<----- error code %s 0x%08" PRIx32,
+				         winpr_strerror(nla->errorCode, buffer, sizeof(buffer)), nla->errorCode);
+				break;
+			case 5:
 				WLog_DBG(TAG, "   <<----- client nonce");
-				if (!nla_decode_to_buffer(s, &nla->ClientNonce))
-					goto fail;
-			}
+				/* clientNonce [5] OCTET STRING */
+				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
+					return -1;
+				if (!nla_sec_buffer_alloc_from_data(&nla->ClientNonce, octet_string.data, 0,
+				                                    octet_string.len))
+					return -1;
+				break;
+			default:
+				return -1;
 		}
 	}
-	rc = 1;
-fail:
 
-	return rc;
+	return 1;
 }
 
 int nla_recv_pdu(rdpNla* nla, wStream* s)

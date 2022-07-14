@@ -1390,6 +1390,32 @@ size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagI
 	return ret;
 }
 
+size_t WinPrAsn1DecReadContextualOctetString(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId,
+                                             BOOL* error, WinPrAsn1_OctetString* target,
+                                             BOOL allocate)
+{
+	size_t ret, ret2;
+	WinPrAsn1_tag ftag;
+	WinPrAsn1Decoder content;
+
+	WINPR_ASSERT(error);
+
+	ret = WinPrAsn1DecPeekContextualTag(dec, &ftag, &content);
+	if (!ret || ftag != tagId)
+		return 0;
+
+	ret2 = WinPrAsn1DecReadOctetString(&content, target, allocate);
+	if (!ret2)
+	{
+		*error = TRUE;
+		return 0;
+	}
+
+	*error = FALSE;
+	Stream_Seek(&dec->source, ret);
+	return ret;
+}
+
 size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error,
                                           WinPrAsn1Decoder* target)
 {
