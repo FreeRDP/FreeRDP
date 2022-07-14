@@ -721,7 +721,6 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYT
                                          wStream* out)
 {
 	int i;
-	size_t start;
 	INT16 sample;
 	BYTE encoded;
 	size_t align;
