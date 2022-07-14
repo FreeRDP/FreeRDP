@@ -39,6 +39,7 @@
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
+#include <io.h>
 #include <windows/debug.h>
 #endif
 
