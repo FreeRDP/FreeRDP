@@ -913,9 +913,13 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 					return SEC_E_INVALID_TOKEN;
 
 				init_context.mech = negotiate_GetMechByOID(&oid);
-				output_token.mechToken = *output_buffer;
-				WLog_DBG(TAG, "Requested mechanism: %s",
-				         negotiate_mech_name(init_context.mech->oid));
+
+				if (init_context.mech)
+				{
+					output_token.mechToken = *output_buffer;
+					WLog_DBG(TAG, "Requested mechanism: %s",
+					         negotiate_mech_name(init_context.mech->oid));
+				}
 			}
 		}
 
