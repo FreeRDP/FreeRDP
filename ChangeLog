@@ -23,6 +23,7 @@ Fixed issues:
 * Backported #7957: Server DVC API improvements
 * Backported #7760: Fixed osMinorType values
 * Backported #8013: Add missing osMajorType values
+* Backported #8076: Fix wrong usage of subband diffing flag (tile artifact fix)
 
 # 2022-04-25 Version 2.7.0
 
