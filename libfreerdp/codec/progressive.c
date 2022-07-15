@@ -907,7 +907,7 @@ static INLINE int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progress
 		return status;
 
 	CopyMemory(sign, buffer, 4096 * 2);
-	if (!subbandDiff)
+	if (!extrapolate)
 	{
 		rfx_differential_decode(buffer + 4032, 64);
 		progressive_rfx_decode_block(prims, &buffer[0], 1024, shift->HL1);    /* HL1 */
