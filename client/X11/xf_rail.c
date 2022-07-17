@@ -499,6 +499,12 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		    (appWindow->visibleOffsetY -
 		     (appWindow->clientOffsetY - appWindow->windowClientDeltaY));
 
+		if( appWindow->windowOffsetX == 0  && appWindow->windowOffsetY == 0 )
+		{         
+		    appWindow->windowOffsetX = appWindow->x;
+		    appWindow->windowOffsetY = appWindow->y;
+		}
+		
 		/*
 		 * The rail server like to set the window to a small size when it is minimized even though
 		 * it is hidden in some cases this can cause the window not to restore back to its original
