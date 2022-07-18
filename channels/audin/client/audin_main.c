@@ -438,8 +438,11 @@ static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callb
 		return FALSE;
 	}
 
-	if (!freerdp_dsp_context_reset(audin->dsp_context, audin->format, audin->FramesPerPacket))
-		return FALSE;
+	if (!supported)
+	{
+		if (!freerdp_dsp_context_reset(audin->dsp_context, audin->format, audin->FramesPerPacket))
+			return FALSE;
+	}
 
 	IFCALLRET(audin->device->Open, error, audin->device, audin_receive_wave_data, callback);
 
