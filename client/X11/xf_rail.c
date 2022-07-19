@@ -499,12 +499,6 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		    (appWindow->visibleOffsetY -
 		     (appWindow->clientOffsetY - appWindow->windowClientDeltaY));
 
-		if( appWindow->windowOffsetX == 0  && appWindow->windowOffsetY == 0 )
-		{         
-		    appWindow->windowOffsetX = appWindow->x;
-		    appWindow->windowOffsetY = appWindow->y;
-		}
-
 		/**
 		 * repair: Application window maximization minimization screen freeze frame when maximization
 		 **/
