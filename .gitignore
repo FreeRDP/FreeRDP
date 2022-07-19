@@ -157,3 +157,5 @@ cache/
 
 #build
 build
+cmake-build-debug
+

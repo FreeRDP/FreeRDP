@@ -21,9 +21,8 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	settings = ctx->context.settings;
 	WINPR_ASSERT(settings);
 
-	//clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
-	clientStatus.flags = 0;
-	
+	clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
+
 	if (settings->AutoReconnectionEnabled)
 		clientStatus.flags |= TS_RAIL_CLIENTSTATUS_AUTORECONNECT;
 
