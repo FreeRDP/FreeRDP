@@ -60,6 +60,10 @@ struct test_peer_context
 	HANDLE debug_channel_thread;
 #if defined(CHANNEL_AUDIN_SERVER)
 	audin_server_context* audin;
+	AUDIO_FORMAT* audin_server_formats;
+	size_t audin_n_server_formats;
+	AUDIO_FORMAT* audin_negotiated_format;
+	UINT32 audin_client_format_idx;
 #endif
 	BOOL audin_open;
 #if defined(CHANNEL_AINPUT_SERVER)

@@ -215,8 +215,7 @@ static void mf_peer_context_free(freerdp_peer* client, rdpContext* context)
 		// nsc_context_free(peer->nsc_context);
 #ifdef CHANNEL_AUDIN_SERVER
 
-		if (peer->audin)
-			audin_server_context_free(peer->audin);
+		mf_peer_audin_uninit(peer);
 
 #endif
 #ifdef CHANNEL_RDPSND_SERVER

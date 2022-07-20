@@ -5,6 +5,7 @@
  * Copyright 2012 Vic Lee
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2023 Pascal Nowack <Pascal.Nowack@gmx.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +24,9 @@
 #define FREERDP_CHANNEL_AUDIN_SERVER_H
 
 #include <freerdp/config.h>
-#include <freerdp/codec/audio.h>
+
+#include <freerdp/channels/audin.h>
 #include <freerdp/channels/wtsvc.h>
-#include <freerdp/channels/rdpsnd.h>
 
 #if !defined(CHANNEL_AUDIN_SERVER)
 #error "This header must not be included if CHANNEL_AUDIN_SERVER is not defined"
@@ -38,84 +39,122 @@ extern "C"
 
 	typedef struct s_audin_server_context audin_server_context;
 
+	typedef BOOL (*psAudinServerChannelOpen)(audin_server_context* context);
+	typedef BOOL (*psAudinServerChannelIsOpen)(audin_server_context* context);
+	typedef BOOL (*psAudinServerChannelClose)(audin_server_context* context);
+
 	typedef BOOL (*psAudinServerChannelIdAssigned)(audin_server_context* context, UINT32 channelId);
 
-	typedef UINT (*psAudinServerSelectFormat)(audin_server_context* context,
-	                                          size_t client_format_index);
-	typedef BOOL (*psAudinServerOpen)(audin_server_context* context);
-	typedef BOOL (*psAudinServerIsOpen)(audin_server_context* context);
-	typedef BOOL (*psAudinServerClose)(audin_server_context* context);
-
-	typedef UINT (*psAudinServerOpening)(audin_server_context* context);
-	typedef UINT (*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
-	typedef UINT (*psAudinServerReceiveSamples)(audin_server_context* context,
-	                                            const AUDIO_FORMAT* format, wStream* buf,
-	                                            size_t nframes);
+	typedef UINT (*psAudinServerVersion)(audin_server_context* context,
+	                                     const SNDIN_VERSION* version);
+	typedef UINT (*psAudinServerFormats)(audin_server_context* context,
+	                                     const SNDIN_FORMATS* formats);
+	typedef UINT (*psAudinServerOpen)(audin_server_context* context, const SNDIN_OPEN* open);
+	typedef UINT (*psAudinServerOpenReply)(audin_server_context* context,
+	                                       const SNDIN_OPEN_REPLY* open_reply);
+	typedef UINT (*psAudinServerIncomingData)(audin_server_context* context,
+	                                          const SNDIN_DATA_INCOMING* data_incoming);
+	typedef UINT (*psAudinServerData)(audin_server_context* context, const SNDIN_DATA* data);
+	typedef UINT (*psAudinServerFormatChange)(audin_server_context* context,
+	                                          const SNDIN_FORMATCHANGE* format_change);
 
 	struct s_audin_server_context
 	{
 		HANDLE vcm;
 
 		/* Server self-defined pointer. */
-		void* data;
+		void* userdata;
 
-		/* Server supported formats. Set by server. */
-		AUDIO_FORMAT* server_formats;
-		size_t num_server_formats;
-
-		/* Server destination PCM audio format. Set by server. */
-		AUDIO_FORMAT* dst_format;
-
-		/* Server preferred frames per packet. */
-		int frames_per_packet;
-
-		/* Client supported formats. */
-		AUDIO_FORMAT* client_formats;
-		size_t num_client_formats;
-		SSIZE_T selected_client_format;
+		/**
+		 * Server version to send to the client, when the DVC was successfully
+		 * opened.
+		 **/
+		SNDIN_VERSION_Version serverVersion;
 
 		/*** APIs called by the server. ***/
-		/**
-		 * Choose the audio format to be received. The index argument is an index into
-		 * the client_formats array and must be smaller than num_client_formats.
-		 */
-		psAudinServerSelectFormat SelectFormat;
-		/**
-		 * Open the audio input stream.
-		 */
-		psAudinServerOpen Open;
-
-		psAudinServerIsOpen IsOpen;
 
 		/**
-		 * Close the audio stream.
+		 * Open the audio input channel.
 		 */
-		psAudinServerClose Close;
+		psAudinServerChannelOpen Open;
+
+		/**
+		 * Check, whether the audio input channel thread was created
+		 */
+		psAudinServerChannelIsOpen IsOpen;
+
+		/**
+		 * Close the audio input channel.
+		 */
+		psAudinServerChannelClose Close;
+
+		/**
+		 * For the following server to client PDUs,
+		 * the message header does not have to be set.
+		 */
+
+		/**
+		 * Send a Version PDU.
+		 */
+		psAudinServerVersion SendVersion;
+
+		/**
+		 * Send a Sound Formats PDU.
+		 */
+		psAudinServerFormats SendFormats;
+
+		/**
+		 * Send an Open PDU.
+		 *
+		 * In case of ExtraFormatData is not NULL, the SubFormat is always
+		 * KSDATAFORMAT_SUBTYPE_PCM, i.e. it is not required to be explicitly set by
+		 * the API user.
+		 */
+		psAudinServerOpen SendOpen;
+
+		/**
+		 * Send a Format Change PDU.
+		 */
+		psAudinServerFormatChange SendFormatChange;
 
 		/*** Callbacks registered by the server. ***/
-		/**
-		 * It's ready to open the audio input stream. The server should examine client
-		 * formats and call SelectFormat to choose the desired one in this callback.
-		 */
-		psAudinServerOpening Opening;
-		/**
-		 * Client replied HRESULT of the open operation.
-		 */
-		psAudinServerOpenResult OpenResult;
-		/**
-		 * Receive audio samples. Actual bytes in the buffer is:
-		 * nframes * dst_format.nBitsPerSample * dst_format.nChannels / 8
-		 * Note that this callback is called from a different thread context so the
-		 * server must be careful of thread synchronization.
-		 */
-		psAudinServerReceiveSamples ReceiveSamples;
-
-		rdpContext* rdpcontext;
 
 		/**
 		 * Callback, when the channel got its id assigned.
 		 */
 		psAudinServerChannelIdAssigned ChannelIdAssigned;
+
+		/*
+		 * Callback for the Version PDU.
+		 */
+		psAudinServerVersion ReceiveVersion;
+
+		/*
+		 * Callback for the Sound Formats PDU.
+		 */
+		psAudinServerFormats ReceiveFormats;
+
+		/*
+		 * Callback for the Open Reply PDU.
+		 */
+		psAudinServerOpenReply OpenReply;
+
+		/*
+		 * Callback for the Incoming Data PDU.
+		 */
+		psAudinServerIncomingData IncomingData;
+
+		/*
+		 * Callback for the Data PDU.
+		 */
+		psAudinServerData Data;
+
+		/*
+		 * Callback for the Format Change PDU.
+		 */
+		psAudinServerFormatChange ReceiveFormatChange;
+
+		rdpContext* rdpcontext;
 	};
 
 	FREERDP_API audin_server_context* audin_server_context_new(HANDLE vcm);
