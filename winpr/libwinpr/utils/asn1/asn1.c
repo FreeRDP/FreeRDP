@@ -1302,17 +1302,39 @@ size_t WinPrAsn1DecPeekContextualTag(WinPrAsn1Decoder* dec, WinPrAsn1_tagId* tag
 	return readContextualTag(dec, &staticS, tagId, ctxtDec);
 }
 
+size_t readContextualHeader(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error,
+                            WinPrAsn1Decoder* content)
+{
+	WinPrAsn1_tag ftag;
+	size_t ret;
+
+	WINPR_ASSERT(dec);
+	WINPR_ASSERT(error);
+	WINPR_ASSERT(content);
+
+	*error = TRUE;
+	ret = WinPrAsn1DecPeekContextualTag(dec, &ftag, content);
+	if (!ret)
+		return 0;
+
+	if (ftag != tagId)
+	{
+		*error = FALSE;
+		return 0;
+	}
+
+	*error = FALSE;
+	return ret;
+}
+
 size_t WinPrAsn1DecReadContextualBool(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error,
                                       WinPrAsn1_BOOL* target)
 {
 	size_t ret, ret2;
-	WinPrAsn1_tag ftag;
 	WinPrAsn1Decoder content;
 
-	WINPR_ASSERT(error);
-
-	ret = WinPrAsn1DecPeekContextualTag(dec, &ftag, &content);
-	if (!ret || ftag != tagId)
+	ret = readContextualHeader(dec, tagId, error, &content);
+	if (!ret)
 		return 0;
 
 	ret2 = WinPrAsn1DecReadBoolean(&content, target);
@@ -1322,7 +1344,6 @@ size_t WinPrAsn1DecReadContextualBool(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tag
 		return 0;
 	}
 
-	*error = FALSE;
 	Stream_Seek(&dec->source, ret);
 	return ret;
 }
@@ -1331,13 +1352,10 @@ size_t WinPrAsn1DecReadContextualInteger(WinPrAsn1Decoder* dec, WinPrAsn1_tagId 
                                          WinPrAsn1_INTEGER* target)
 {
 	size_t ret, ret2;
-	WinPrAsn1_tag ftag;
 	WinPrAsn1Decoder content;
 
-	WINPR_ASSERT(error);
-
-	ret = WinPrAsn1DecPeekContextualTag(dec, &ftag, &content);
-	if (!ret || ftag != tagId)
+	ret = readContextualHeader(dec, tagId, error, &content);
+	if (!ret)
 		return 0;
 
 	ret2 = WinPrAsn1DecReadInteger(&content, target);
@@ -1347,7 +1365,6 @@ size_t WinPrAsn1DecReadContextualInteger(WinPrAsn1Decoder* dec, WinPrAsn1_tagId 
 		return 0;
 	}
 
-	*error = FALSE;
 	Stream_Seek(&dec->source, ret);
 	return ret;
 }
@@ -1356,13 +1373,10 @@ size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagI
                                      WinPrAsn1_OID* target, BOOL allocate)
 {
 	size_t ret, ret2;
-	WinPrAsn1_tag ftag;
 	WinPrAsn1Decoder content;
 
-	WINPR_ASSERT(error);
-
-	ret = WinPrAsn1DecPeekContextualTag(dec, &ftag, &content);
-	if (!ret || ftag != tagId)
+	ret = readContextualHeader(dec, tagId, error, &content);
+	if (!ret)
 		return 0;
 
 	ret2 = WinPrAsn1DecReadOID(&content, target, allocate);
@@ -1372,7 +1386,6 @@ size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagI
 		return 0;
 	}
 
-	*error = FALSE;
 	Stream_Seek(&dec->source, ret);
 	return ret;
 }
@@ -1381,13 +1394,10 @@ size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec, WinPrAsn1_tagId
                                           WinPrAsn1Decoder* target)
 {
 	size_t ret, ret2;
-	WinPrAsn1_tag ftag;
 	WinPrAsn1Decoder content;
 
-	WINPR_ASSERT(error);
-
-	ret = WinPrAsn1DecPeekContextualTag(dec, &ftag, &content);
-	if (!ret || ftag != tagId)
+	ret = readContextualHeader(dec, tagId, error, &content);
+	if (!ret)
 		return 0;
 
 	ret2 = WinPrAsn1DecReadSequence(&content, target);
@@ -1397,7 +1407,6 @@ size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec, WinPrAsn1_tagId
 		return 0;
 	}
 
-	*error = FALSE;
 	Stream_Seek(&dec->source, ret);
 	return ret;
 }
