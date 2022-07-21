@@ -354,7 +354,6 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		if (!getAtr(cert->info.reader, cert->info.atr, &cert->info.atrLength))
 		{
 			WLog_ERR(TAG, "unable to retrieve card ATR for key %s", cert->info.containerName);
-			goto endofloop;
 		}
 
 		/* ========= retrieve the certificate ===============*/
