@@ -109,7 +109,8 @@ int TestASN1Read(int argc, char* argv[])
 	/* ================ Test contextual ================*/
 	Stream_StaticConstInit(&staticS, contextualInteger, sizeof(contextualInteger));
 	WinPrAsn1Decoder_Init(&decoder, WINPR_ASN1_DER, &staticS);
-	if (!WinPrAsn1DecReadContextualInteger(&decoder, 0, &error, &integerV))
+	error = TRUE;
+	if (!WinPrAsn1DecReadContextualInteger(&decoder, 0, &error, &integerV) || error)
 		return -25;
 
 	/* test reading a contextual integer that is not there (index 1).
@@ -117,10 +118,12 @@ int TestASN1Read(int argc, char* argv[])
 	 * after that
 	 */
 	WinPrAsn1Decoder_Init(&decoder, WINPR_ASN1_DER, &staticS);
+	error = FALSE;
 	if (WinPrAsn1DecReadContextualInteger(&decoder, 1, &error, &integerV) || error)
 		return -26;
 
-	if (!WinPrAsn1DecReadContextualInteger(&decoder, 0, &error, &integerV))
+	error = FALSE;
+	if (!WinPrAsn1DecReadContextualInteger(&decoder, 0, &error, &integerV) || error)
 		return -27;
 
 	return 0;
