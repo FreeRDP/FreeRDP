@@ -30,7 +30,7 @@
 #define TAG WINPR_TAG("ncryptp11")
 
 #define MAX_SLOTS 64
-#define MAX_PRIVATE_KEYS 64
+#define MAX_KEYS 64
 #define MAX_KEYS_PER_SLOT 64
 
 /** @brief ncrypt provider handle */
@@ -61,25 +61,25 @@ typedef struct
 	CK_CHAR keyLabel[256];
 	CK_ULONG idLen;
 	CK_BYTE id[64];
-} NCryptPrivateKeyEnum;
+} NCryptKeyEnum;
 
 /** @brief */
 typedef struct
 {
 	CK_ULONG nslots;
 	CK_SLOT_ID slots[MAX_SLOTS];
-	CK_ULONG nprivateKeys;
-	NCryptPrivateKeyEnum privateKeys[MAX_PRIVATE_KEYS];
-	CK_ULONG privateKeyIndex;
+	CK_ULONG nKeys;
+	NCryptKeyEnum keys[MAX_KEYS];
+	CK_ULONG keyIndex;
 } P11EnumKeysState;
 
-static CK_OBJECT_CLASS object_class_private_key = CKO_PRIVATE_KEY;
-static CK_BBOOL object_sign = CK_TRUE;
+static CK_OBJECT_CLASS object_class_public_key = CKO_PUBLIC_KEY;
+static CK_BBOOL object_verify = CK_TRUE;
 static CK_KEY_TYPE object_ktype_rsa = CKK_RSA;
 
-static CK_ATTRIBUTE private_key_filter[] = {
-	{ CKA_CLASS, &object_class_private_key, sizeof(object_class_private_key) },
-	{ CKA_SIGN, &object_sign, sizeof(object_sign) },
+static CK_ATTRIBUTE public_key_filter[] = {
+	{ CKA_CLASS, &object_class_public_key, sizeof(object_class_public_key) },
+	{ CKA_VERIFY, &object_verify, sizeof(object_verify) },
 	{ CKA_KEY_TYPE, &object_ktype_rsa, sizeof(object_ktype_rsa) }
 };
 
@@ -314,8 +314,7 @@ static const char* CK_RV_error_string(CK_RV rv)
 #undef ERR_ENTRY
 }
 
-static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
-                                            P11EnumKeysState* state)
+static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKeysState* state)
 {
 	CK_RV rv;
 	CK_ULONG i, j, nslotObjects;
@@ -328,7 +327,7 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 	p11 = provider->p11;
 	WINPR_ASSERT(p11);
 
-	state->nprivateKeys = 0;
+	state->nKeys = 0;
 	for (i = 0; i < state->nslots; i++)
 	{
 		CK_SESSION_HANDLE session = (CK_SESSION_HANDLE)NULL;
@@ -344,8 +343,8 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 		}
 
 		fix_padded_string((char*)slotInfo.slotDescription, sizeof(slotInfo.slotDescription));
-		WLog_DBG(TAG, "%s: collecting private keys for slot #%d(%lu) descr='%s' flags=0x%x",
-		         __FUNCTION__, i, state->slots[i], slotInfo.slotDescription, slotInfo.flags);
+		WLog_DBG(TAG, "%s: collecting keys for slot #%d(%lu) descr='%s' flags=0x%x", __FUNCTION__,
+		         i, state->slots[i], slotInfo.slotDescription, slotInfo.flags);
 
 		/* this is a safety guard as we're supposed to have listed only readers with tokens in them
 		 */
@@ -378,7 +377,7 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 		}
 
 		WINPR_ASSERT(p11->C_FindObjectsInit);
-		rv = p11->C_FindObjectsInit(session, private_key_filter, ARRAYSIZE(private_key_filter));
+		rv = p11->C_FindObjectsInit(session, public_key_filter, ARRAYSIZE(public_key_filter));
 		if (rv != CKR_OK)
 		{
 			// TODO: shall it be fatal ?
@@ -401,13 +400,13 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 		WLog_DBG(TAG, "%s: slot has %d objects", __FUNCTION__, nslotObjects);
 		for (j = 0; j < nslotObjects; j++)
 		{
-			NCryptPrivateKeyEnum* privKey = &state->privateKeys[state->nprivateKeys];
-			CK_OBJECT_CLASS dataClass = CKO_PRIVATE_KEY;
+			NCryptKeyEnum* key = &state->keys[state->nKeys];
+			CK_OBJECT_CLASS dataClass = CKO_PUBLIC_KEY;
 			CK_ATTRIBUTE key_or_certAttrs[] = {
-				{ CKA_ID, &privKey->id, sizeof(privKey->id) },
+				{ CKA_ID, &key->id, sizeof(key->id) },
 				{ CKA_CLASS, &dataClass, sizeof(dataClass) },
-				{ CKA_LABEL, &privKey->keyLabel, sizeof(privKey->keyLabel) },
-				{ CKA_KEY_TYPE, &privKey->keyType, sizeof(privKey->keyType) }
+				{ CKA_LABEL, &key->keyLabel, sizeof(key->keyLabel) },
+				{ CKA_KEY_TYPE, &key->keyType, sizeof(key->keyType) }
 			};
 
 			rv = object_load_attributes(provider, session, slotObjects[j], key_or_certAttrs,
@@ -418,10 +417,10 @@ static SECURITY_STATUS collect_private_keys(NCryptP11ProviderHandle* provider,
 				continue;
 			}
 
-			privKey->idLen = key_or_certAttrs[0].ulValueLen;
-			privKey->slotId = state->slots[i];
-			privKey->slotInfo = slotInfo;
-			state->nprivateKeys++;
+			key->idLen = key_or_certAttrs[0].ulValueLen;
+			key->slotId = state->slots[i];
+			key->slotInfo = slotInfo;
+			state->nKeys++;
 		}
 
 	cleanup_FindObjects:
@@ -688,7 +687,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 			return NTE_FAIL;
 		}
 
-		ret = collect_private_keys(provider, state);
+		ret = collect_keys(provider, state);
 		if (ret != ERROR_SUCCESS)
 		{
 			free(state);
@@ -698,25 +697,25 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		*ppEnumState = state;
 	}
 
-	for (; state->privateKeyIndex < state->nprivateKeys; state->privateKeyIndex++)
+	for (; state->keyIndex < state->nKeys; state->keyIndex++)
 	{
 		NCryptKeyName* keyName = NULL;
-		NCryptPrivateKeyEnum* privKey = &state->privateKeys[state->privateKeyIndex];
+		NCryptKeyEnum* key = &state->keys[state->keyIndex];
 		CK_OBJECT_CLASS oclass = CKO_CERTIFICATE;
 		CK_CERTIFICATE_TYPE ctype = CKC_X_509;
 		CK_ATTRIBUTE certificateFilter[] = { { CKA_CLASS, &oclass, sizeof(oclass) },
 			                                 { CKA_CERTIFICATE_TYPE, &ctype, sizeof(ctype) },
-			                                 { CKA_ID, privKey->id, privKey->idLen } };
+			                                 { CKA_ID, key->id, key->idLen } };
 		CK_ULONG ncertObjects;
 		CK_OBJECT_HANDLE certObject;
 
 		/* check the reader filter if any */
-		if (slotFilter && memcmp(privKey->slotInfo.slotDescription, slotFilter, slotFilterLen) != 0)
+		if (slotFilter && memcmp(key->slotInfo.slotDescription, slotFilter, slotFilterLen) != 0)
 			continue;
 
-		if (!currentSession || (currentSlot != privKey->slotId))
+		if (!currentSession || (currentSlot != key->slotId))
 		{
-			/* if the current session doesn't match the current private key's slot, open a new one
+			/* if the current session doesn't match the current key's slot, open a new one
 			 */
 			if (currentSession)
 			{
@@ -726,23 +725,23 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 			}
 
 			WINPR_ASSERT(provider->p11->C_OpenSession);
-			rv = provider->p11->C_OpenSession(privKey->slotId, CKF_SERIAL_SESSION, NULL, NULL,
+			rv = provider->p11->C_OpenSession(key->slotId, CKF_SERIAL_SESSION, NULL, NULL,
 			                                  &currentSession);
 			if (rv != CKR_OK)
 			{
-				WLog_ERR(TAG, "unable to openSession for slot %d", privKey->slotId);
+				WLog_ERR(TAG, "unable to openSession for slot %d", key->slotId);
 				continue;
 			}
-			currentSlot = privKey->slotId;
+			currentSlot = key->slotId;
 		}
 
-		/* look if we can find a certificate that matches the private key's id */
+		/* look if we can find a certificate that matches the key's id */
 		WINPR_ASSERT(provider->p11->C_FindObjectsInit);
 		rv = provider->p11->C_FindObjectsInit(currentSession, certificateFilter,
 		                                      ARRAYSIZE(certificateFilter));
 		if (rv != CKR_OK)
 		{
-			WLog_ERR(TAG, "unable to initiate search for slot %d", privKey->slotId);
+			WLog_ERR(TAG, "unable to initiate search for slot %d", key->slotId);
 			continue;
 		}
 
@@ -759,9 +758,9 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 			/* sizeof keyName struct + "\<slotId>\<certId>" + keyName->pszAlgid */
 			DWORD algoSz;
 			size_t KEYNAME_SZ =
-			    (1 + (sizeof(privKey->slotId) * 2) /*slotId*/ + 1 + (privKey->idLen * 2) + 1) * 2;
+			    (1 + (sizeof(key->slotId) * 2) /*slotId*/ + 1 + (key->idLen * 2) + 1) * 2;
 
-			convertKeyType(privKey->keyType, NULL, 0, &algoSz);
+			convertKeyType(key->keyType, NULL, 0, &algoSz);
 			KEYNAME_SZ += (algoSz + 1) * 2;
 
 			keyName = calloc(1, sizeof(*keyName) + KEYNAME_SZ);
@@ -773,10 +772,10 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 			keyName->dwLegacyKeySpec = AT_KEYEXCHANGE | AT_SIGNATURE;
 			keyName->dwFlags = NCRYPT_MACHINE_KEY_FLAG;
 			keyName->pszName = (LPWSTR)(keyName + 1);
-			wprintKeyName(keyName->pszName, privKey->slotId, privKey->id, privKey->idLen);
+			wprintKeyName(keyName->pszName, key->slotId, key->id, key->idLen);
 
 			keyName->pszAlgid = keyName->pszName + _wcslen(keyName->pszName) + 1;
-			convertKeyType(privKey->keyType, keyName->pszAlgid, algoSz + 1, NULL);
+			convertKeyType(key->keyType, keyName->pszAlgid, algoSz + 1, NULL);
 		}
 
 	cleanup_FindObjects:
@@ -786,7 +785,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		if (keyName)
 		{
 			*ppKeyName = keyName;
-			state->privateKeyIndex++;
+			state->keyIndex++;
 			return ERROR_SUCCESS;
 		}
 	}
