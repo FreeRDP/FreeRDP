@@ -1221,6 +1221,8 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 	return TRUE;
 }
 
+//
+
 INT16 freerdp_settings_get_int16(const rdpSettings* settings, size_t id)
 {
 	if (!settings)
