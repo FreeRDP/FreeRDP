@@ -356,6 +356,8 @@ extern "C"
 
 	WINPR_API wHashTable* HashTable_New(BOOL synchronized);
 	WINPR_API void HashTable_Free(wHashTable* table);
+	WINPR_API void HashTable_Lock(wHashTable* table);
+	WINPR_API void HashTable_Unlock(wHashTable* table);
 
 	WINPR_API wObject* HashTable_KeyObject(wHashTable* table);
 	WINPR_API wObject* HashTable_ValueObject(wHashTable* table);

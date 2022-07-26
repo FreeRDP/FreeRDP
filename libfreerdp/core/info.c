@@ -1098,13 +1098,6 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 			          logonInfoV2TotalSize, Size);
 			return FALSE;
 		}
-		else
-		{
-			WLog_WARN(TAG,
-			          "[SERVER-BUG] 2.2.10.1.1.2 Logon Info Version 2 (TS_LOGON_INFO_VERSION_2) "
-			          "Size expected %" PRIu32 " bytes, got %" PRIu32 ", ignoring",
-			          logonInfoV2TotalSize, Size);
-		}
 	}
 
 	Stream_Read_UINT32(s, info->sessionId);  /* SessionId (4 bytes) */

@@ -106,6 +106,9 @@ static UINT generic_plugin_terminated(IWTSPlugin* pPlugin)
 
 	WLog_Print(plugin->log, WLOG_TRACE, "...");
 
+	/* some channels (namely rdpei), look at initialized to see if they should continue to run */
+	plugin->initialized = FALSE;
+
 	if (plugin->terminatePluginFn)
 		plugin->terminatePluginFn(plugin);
 

@@ -829,6 +829,18 @@ void HashTable_Free(wHashTable* table)
 	free(table);
 }
 
+void HashTable_Lock(wHashTable* table)
+{
+	WINPR_ASSERT(table);
+	EnterCriticalSection(&table->lock);
+}
+
+void HashTable_Unlock(wHashTable* table)
+{
+	WINPR_ASSERT(table);
+	LeaveCriticalSection(&table->lock);
+}
+
 wObject* HashTable_KeyObject(wHashTable* table)
 {
 	WINPR_ASSERT(table);
