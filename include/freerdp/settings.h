@@ -656,9 +656,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_NtlmSamFile (1103)
 #define FreeRDP_FIPSMode (1104)
 #define FreeRDP_TlsSecLevel (1105)
-#define FreeRDP_SspiModule (1106)
-#define FreeRDP_TLSMinVersion (1107)
-#define FreeRDP_TLSMaxVersion (1108)
+#define FreeRDP_TLSMinVersion (1106)
+#define FreeRDP_TLSMaxVersion (1107)
 #define FreeRDP_MstscCookieMode (1152)
 #define FreeRDP_CookieMaxLength (1153)
 #define FreeRDP_PreconnectionId (1154)
@@ -1111,10 +1110,9 @@ struct rdp_settings
 	ALIGN64 char* NtlmSamFile;                 /* 1103 */
 	ALIGN64 BOOL FIPSMode;                     /* 1104 */
 	ALIGN64 UINT32 TlsSecLevel;                /* 1105 */
-	ALIGN64 char* SspiModule;                  /* 1106 */
-	ALIGN64 UINT16 TLSMinVersion;              /* 1107 */
-	ALIGN64 UINT16 TLSMaxVersion;              /* 1108 */
-	UINT64 padding1152[1152 - 1109];           /* 1109 */
+	ALIGN64 UINT16 TLSMinVersion;              /* 1106 */
+	ALIGN64 UINT16 TLSMaxVersion;              /* 1107 */
+	UINT64 padding1152[1152 - 1108];           /* 1108 */
 
 	/* Connection Cookie */
 	ALIGN64 BOOL MstscCookieMode;      /* 1152 */

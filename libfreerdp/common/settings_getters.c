@@ -1221,11 +1221,11 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 			break;
 
 		case FreeRDP_TLSMaxVersion:
-			settings->TLSMaxVersion = cnv.c;
+			settings->TLSMaxVersion = val;
 			break;
 
 		case FreeRDP_TLSMinVersion:
-			settings->TLSMinVersion = cnv.c;
+			settings->TLSMinVersion = val;
 			break;
 
 		default:
