@@ -864,7 +864,7 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 
 	if (!tls_prepare(tls, underlying, SSLv23_client_method(), options, TRUE))
 #else
-	if (!tls_prepare(tls, underlying, TLS_client_method(), options, TRUE))
+	if (!tls_prep(tls, underlying, TLS_client_method(), options, TRUE))
 #endif
 		return 0;
 
@@ -872,6 +872,18 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 	SSL_set_tlsext_host_name(tls->ssl, tls->hostname);
 #endif
 	return tls_do_handshake(tls, TRUE);
+}
+
+BOOL tls_prep(rdpTls* tls, BIO* underlying, int options, BOOL clientMode)
+{
+	if (tls->settings->EnforceTLSv1_2)
+	{
+		return tls_prepare(tls, underlying, TLSv1_2_client_method(), options, clientMode);
+	}
+	else
+	{
+		return tls_prepare(tls, underlying, TLS_client_method(), options, clientMode);
+	}
 }
 
 #if defined(MICROSOFT_IOS_SNI_BUG) && !defined(OPENSSL_NO_TLSEXT) && \
