@@ -1,1 +1,1 @@
-
+name: $(Date:yyyyMMdd)$(Rev:-rr)
