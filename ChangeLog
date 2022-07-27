@@ -8,6 +8,8 @@ Noteworthy changes:
 * Backported #8010: Add server side handling for [MS-RDPECAM]
 * Backported #8041: Remove ALAW/ULAW codecs from linux backends (unreliable)
 * Backported #8051: Relieve CLIPRDR filename restriction when connecting to non-MS Windows servers
+* Backported #8048: TLS version control
+* Backported #7987: Add a new command line arg to enforce tls1.2
 
 Fixed issues:
 * Fixed #7837: Prevent out of bound reads for FFMPEG
