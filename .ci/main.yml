@@ -1,1 +1,26 @@
 name: $(Date:yyyyMMdd)$(Rev:-rr)
+
+
+resources:
+  repositories:
+  - repository: common
+    type: github
+    name: UiPath/AzurePipelinesTemplates
+    ref: refs/tags/uipath.retain.build.1.0.1
+    endpoint: "GitHub connection"
+
+pool:
+  vmImage: 'windows-2022'
+  demands:
+  - msbuild
+  - visualstudio
+
+steps:
+- task: CmdLine@2
+  name: 'getVersions'
+  inputs:
+    script: |
+      set
+      perl -v
+      cmake --version
+      msbuild -version
