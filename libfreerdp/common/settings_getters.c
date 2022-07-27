@@ -713,7 +713,7 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 			break;
 
 		case FreeRDP_EnforceTLSv1_2:
-			settings->EnforceTLSv1_2 = cnv.c;
+			settings->EnforceTLSv1_2 = val;
 			break;
 
 		case FreeRDP_ExtSecurity:
