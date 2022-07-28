@@ -20,6 +20,7 @@ set(MODULE_PREFIX "FREERDP_UTILS")
 
 set(${MODULE_PREFIX}_SRCS
 	passphrase.c
+	cliprdr_utils.c
 	pcap.c
 	profiler.c
 	ringbuffer.c
