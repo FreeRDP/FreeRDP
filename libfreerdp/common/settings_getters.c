@@ -1193,6 +1193,12 @@ UINT16 freerdp_settings_get_uint16(const rdpSettings* settings, size_t id)
 		case FreeRDP_ProxyPort:
 			return settings->ProxyPort;
 
+		case FreeRDP_TLSMaxVersion:
+			return settings->TLSMaxVersion;
+
+		case FreeRDP_TLSMinVersion:
+			return settings->TLSMinVersion;
+
 		default:
 			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz, __FUNCTION__, id);
 			return FALSE;
@@ -1212,6 +1218,14 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 
 		case FreeRDP_ProxyPort:
 			settings->ProxyPort = val;
+			break;
+
+		case FreeRDP_TLSMaxVersion:
+			settings->TLSMaxVersion = val;
+			break;
+
+		case FreeRDP_TLSMinVersion:
+			settings->TLSMinVersion = val;
 			break;
 
 		default:

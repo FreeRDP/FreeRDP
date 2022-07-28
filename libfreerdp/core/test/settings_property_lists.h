@@ -173,6 +173,8 @@ static const size_t bool_list_indices[] = {
 static const size_t uint16_list_indices[] = {
 	FreeRDP_DesktopOrientation,
 	FreeRDP_ProxyPort,
+	FreeRDP_TLSMaxVersion,
+	FreeRDP_TLSMinVersion,
 };
 
 #define have_uint32_list_indices
