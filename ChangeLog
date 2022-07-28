@@ -1,6 +1,7 @@
-# 20xx-xx-xx Version 2.x.x
+# 2022-07-28 Version 2.8.0
 
 Noteworthy changes:
+
 * Backported API to get peer accepted channel option flags
 * Backported API to get peer accepted channel names
 * Backported Stream_CheckAndLogRequiredLength
@@ -12,6 +13,7 @@ Noteworthy changes:
 * Backported #7987: Add a new command line arg to enforce tls1.2
 
 Fixed issues:
+
 * Fixed #7837: Prevent out of bound reads for FFMPEG
 * Backported #7859 and #7861: Unwind support for backtrace generation
 * Backported #7440: wlfreerdp appid
@@ -26,6 +28,10 @@ Fixed issues:
 * Backported #7760: Fixed osMinorType values
 * Backported #8013: Add missing osMajorType values
 * Backported #8076: Fix wrong usage of subband diffing flag (tile artifact fix)
+
+For a complete and detailed change log since the last release run:
+git log 2.7.0..2.8.0
+
 
 # 2022-04-25 Version 2.7.0
 
