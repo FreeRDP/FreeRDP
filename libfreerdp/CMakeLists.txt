@@ -24,7 +24,7 @@ include(FindCairo)
 # Create imported targets for Intel IPP libraries
 
 if(IPP_FOUND)
-        foreach(ipp_lib ${IPP_LIBRARIES})
+    foreach(ipp_lib ${IPP_LIBRARIES})
         add_library("${ipp_lib}_imported" STATIC IMPORTED)
         set_property(TARGET "${ipp_lib}_imported" PROPERTY IMPORTED_LOCATION "${IPP_LIBRARY_DIRS}/${ipp_lib}")
     endforeach()
