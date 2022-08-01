@@ -7,7 +7,6 @@
 #cmakedefine HAVE_SYSLOG_H
 #cmakedefine HAVE_JOURNALD_H
 #cmakedefine HAVE_VALGRIND_MEMCHECK_H
-#cmakedefine HAVE_STRNDUP
 
 /* Features */
 #cmakedefine SWRESAMPLE_FOUND
