@@ -646,23 +646,11 @@ INT64 GetLine(char** lineptr, size_t* size, FILE* stream)
 }
 
 #if !defined(HAVE_STRNDUP)
-char* strndup(const char* s, size_t n)
+char* strndup(const char* src, size_t n)
 {
-	char* rc;
-	size_t len;
-
-	WINPR_ASSERT(s || (n == 0));
-	if (n == 0)
-		return NULL;
-
-	len = strnlen(s, n);
-	if (len == n)
-		len++;
-
-	rc = calloc(len, sizeof(char));
-	if (!rc)
-		return NULL;
-	memcpy(rc, s, n);
-	return rc;
+	char* dst = calloc(n + 1, sizeof(char));
+	if (dst)
+		strncpy(dst, src, n);
+	return dst;
 }
 #endif
