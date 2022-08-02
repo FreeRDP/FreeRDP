@@ -160,6 +160,7 @@ BOOL apc_collectFds(WINPR_THREAD* thread, WINPR_POLL_SET* set, BOOL* haveAutoSig
 	APC_QUEUE* apc;
 
 	WINPR_ASSERT(thread);
+	WINPR_ASSERT(haveAutoSignaled);
 
 	apc = &thread->apc;
 	WINPR_ASSERT(apc);
@@ -171,7 +172,6 @@ BOOL apc_collectFds(WINPR_THREAD* thread, WINPR_POLL_SET* set, BOOL* haveAutoSig
 	{
 		if (item->alwaysSignaled)
 		{
-			WINPR_ASSERT(haveAutoSignaled);
 			*haveAutoSignaled = TRUE;
 		}
 		else if (!pollset_add(set, item->pollFd, item->pollMode))
