@@ -51,11 +51,9 @@
 
 #if defined(WITH_DEBUG_EVENTS)
 static wArrayList* global_event_list = NULL;
-#endif
 
 static void dump_event(WINPR_EVENT* event, size_t index)
 {
-#if defined(WITH_DEBUG_EVENTS)
 	char** msg;
 	size_t used, i;
 #if 0
@@ -76,8 +74,9 @@ static void dump_event(WINPR_EVENT* event, size_t index)
 		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
 
 	free(msg);
-#endif
 }
+#endif /* WITH_DEBUG_EVENTS */
+
 #ifdef HAVE_SYS_EVENTFD_H
 #if !defined(WITH_EVENTFD_READ_WRITE)
 static int eventfd_read(int fd, eventfd_t* value)
@@ -92,6 +91,18 @@ static int eventfd_write(int fd, eventfd_t value)
 #endif
 #endif
 
+#ifndef HAVE_SYS_EVENTFD_H
+static BOOL set_non_blocking_fd(int fd)
+{
+	int flags;
+	flags = fcntl(fd, F_GETFL);
+	if (flags < 0)
+		return FALSE;
+
+	return fcntl(fd, F_SETFL, flags | O_NONBLOCK) >= 0;
+}
+#endif /* !HAVE_SYS_EVENTFD_H */
+
 BOOL winpr_event_init(WINPR_EVENT_IMPL* event)
 {
 #ifdef HAVE_SYS_EVENTFD_H
@@ -105,11 +116,7 @@ BOOL winpr_event_init(WINPR_EVENT_IMPL* event)
 	if (pipe(event->fds) < 0)
 		return FALSE;
 
-	flags = fcntl(event->fds[0], F_GETFL);
-	if (flags < 0)
-		goto out_error;
-
-	if (fcntl(event->fds[0], F_SETFL, flags | O_NONBLOCK) < 0)
+	if (!set_non_blocking_fd(event->fds[0]) || !set_non_blocking_fd(event->fds[1]))
 		goto out_error;
 
 	return TRUE;
@@ -387,9 +394,8 @@ BOOL SetEvent(HANDLE hEvent)
 {
 	ULONG Type;
 	WINPR_HANDLE* Object;
-	BOOL status;
 	WINPR_EVENT* event;
-	status = FALSE;
+	BOOL status = FALSE;
 
 	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
 	{
