@@ -196,6 +196,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	OM_uint32 major, minor;
 	OM_uint32 time_rec;
 	int cred_usage;
+	int expired_attempts = 0;
 
 	switch (fCredentialUse)
 	{
@@ -265,11 +266,33 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 		/* Make sure the cache is initialized with the right principal */
 		if (principal)
 		{
-			if ((rv = krb5_cc_get_principal(ctx, ccache, &cache_principal)))
-				goto cleanup;
-			if (!krb5_principal_compare(ctx, principal, cache_principal))
+			BOOL doInit = FALSE;
+			rv = krb5_cc_get_principal(ctx, ccache, &cache_principal);
+
+			switch (rv)
+			{
+				case 0:
+					if (!krb5_principal_compare(ctx, principal, cache_principal))
+					{
+						WLog_DBG(
+						    TAG,
+						    "provided ccache file has a different principal, reinitializing...");
+						doInit = TRUE;
+					}
+					break;
+				case KRB5_CC_NOTFOUND:
+				case KRB5_FCC_NOFILE:
+					doInit = TRUE;
+					break;
+				default:
+					goto cleanup;
+			}
+
+			if (doInit)
+			{
 				if ((rv = krb5_cc_initialize(ctx, ccache, principal)))
 					goto cleanup;
+			}
 		}
 	}
 	else if (principal)
@@ -364,9 +387,40 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	if (!sspi_is_no_creds(major, minor) && time_rec > 0)
 		goto cleanup;
 
-	if ((rv = krb5_get_init_creds_password(ctx, &creds, principal, password, krb5_prompter,
-	                                       password, start_time, NULL, gic_opt)))
-		goto cleanup;
+again:
+	rv = krb5_get_init_creds_password(ctx, &creds, principal, password, krb5_prompter, password,
+	                                  start_time, NULL, gic_opt);
+	WLog_DBG(TAG, "krb5_get_init_creds_password: %d", rv);
+	switch (rv)
+	{
+		case KRB5_PREAUTH_FAILED:
+		{
+			WLog_DBG(TAG, "trying to renew credentials");
+			rv = krb5_get_renewed_creds(ctx, &creds, principal, ccache, NULL);
+			switch (rv)
+			{
+				case 0:
+					break;
+				case KRB5KRB_AP_ERR_TKT_EXPIRED:
+					expired_attempts++;
+
+					if (expired_attempts >= 2)
+						goto cleanup;
+
+					WLog_DBG(TAG, "expired ccache reinitializing");
+					if ((rv = krb5_cc_initialize(ctx, ccache, principal)))
+						goto cleanup;
+					goto again;
+				default:
+					goto cleanup;
+			}
+			break;
+		}
+		case 0:
+			break;
+		default:
+			goto cleanup;
+	}
 
 #ifdef WITH_GSSAPI_HEIMDAL
 	if (rv = krb5_cc_store_cred(ctx, ccache, &creds))
@@ -415,9 +469,14 @@ cleanup:
 	/* If we managed to get gss credentials set the output */
 	if (gss_creds)
 	{
-		sspi_SecureHandleSetLowerPointer(phCredential, (void*)gss_creds);
-		sspi_SecureHandleSetUpperPointer(phCredential, (void*)KERBEROS_SSP_NAME);
-		return SEC_E_OK;
+		if (!rv)
+		{
+			sspi_SecureHandleSetLowerPointer(phCredential, (void*)gss_creds);
+			sspi_SecureHandleSetUpperPointer(phCredential, (void*)KERBEROS_SSP_NAME);
+			return SEC_E_OK;
+		}
+
+		sspi_gss_release_cred(&minor, &gss_creds);
 	}
 #endif /*WITH_GSSAPI*/
 	return SEC_E_NO_CREDENTIALS;
