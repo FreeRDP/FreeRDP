@@ -22,7 +22,6 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	TCHAR lpCommandLine[200] = _T("printenv");
 #endif
 
-	//LPTSTR lpCommandLine;
 	LPSECURITY_ATTRIBUTES lpProcessAttributes;
 	LPSECURITY_ATTRIBUTES lpThreadAttributes;
 	BOOL bInheritHandles;
