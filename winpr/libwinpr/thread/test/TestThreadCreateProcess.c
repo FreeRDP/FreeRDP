@@ -15,7 +15,13 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	BOOL status;
 	DWORD exitCode;
 	LPCTSTR lpApplicationName;
-	LPTSTR lpCommandLine;
+
+#ifdef _WIN32
+	TCHAR lpCommandLine[200] = _T("cmd /C set");
+#else
+	TCHAR lpCommandLine[200] = _T("printenv");
+#endif
+
 	LPSECURITY_ATTRIBUTES lpProcessAttributes;
 	LPSECURITY_ATTRIBUTES lpThreadAttributes;
 	BOOL bInheritHandles;
@@ -35,12 +41,6 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	lpszEnvironmentBlock = GetEnvironmentStrings();
 
 	lpApplicationName = NULL;
-
-#ifdef _WIN32
-	lpCommandLine = _T("cmd /C set");
-#else
-	lpCommandLine = _T("printenv");
-#endif
 
 	lpProcessAttributes = NULL;
 	lpThreadAttributes = NULL;
