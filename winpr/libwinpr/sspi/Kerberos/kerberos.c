@@ -314,11 +314,13 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			goto cleanup;
 
 #ifdef WITH_GSSAPI_HEIMDAL
-		krb5_creds creds;
-		if ((rv = krb5_init_creds_get_creds(ctx, creds_ctx, &creds)))
-			goto cleanup;
-		if (rv = krb5_cc_store_cred(ctx, ccache, &creds))
-			goto cleanup;
+		{
+			krb5_creds creds;
+			if ((rv = krb5_init_creds_get_creds(ctx, creds_ctx, &creds)))
+				goto cleanup;
+			if (rv = krb5_cc_store_cred(ctx, ccache, &creds))
+				goto cleanup;
+		}
 #endif
 	}
 
