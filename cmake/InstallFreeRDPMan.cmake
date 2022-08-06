@@ -1,9 +1,7 @@
+include(GNUInstallDirs)
+
 function(install_freerdp_man manpage section)
  if(WITH_MANPAGES)
-   if(OPENBSD OR FREEBSD)
-       install(FILES ${manpage} DESTINATION man/man${section})
-    else()
-       install(FILES ${manpage} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/man/man${section})
-   endif()
+   install(FILES ${manpage} DESTINATION ${CMAKE_INSTALL_MANDIR}/man${section})
  endif()
 endfunction()
