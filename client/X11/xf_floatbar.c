@@ -92,6 +92,7 @@ struct xf_floatbar
 	BOOL created;
 	Window root_window;
 	char* title;
+	XFontSet fontSet;
 };
 
 static xfFloatbarButton* xf_floatbar_new_button(xfFloatbar* floatbar, int type);
@@ -334,6 +335,16 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* name, DWO
 	floatbar->xfc = xfc;
 	floatbar->locked = flags & 0x0002;
 	xf_floatbar_toggle_fullscreen(floatbar, FALSE);
+	char** missingList;
+	int missingCount;
+	char* defString;
+	floatbar->fontSet = XCreateFontSet(floatbar->xfc->display, "-*-*-*-*-*-*-*-*-*-*-*-*-*-*",
+	                                   &missingList, &missingCount, &defString);
+	if (floatbar->fontSet == NULL)
+	{
+		WLog_ERR(TAG, "Failed to create fontset");
+	}
+	XFreeStringList(missingList);
 	return floatbar;
 fail:
 	xf_floatbar_free(floatbar);
@@ -401,8 +412,16 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	/* draw the host name connected to (limit to maximum file name) */
 	len = strnlen(floatbar->title, MAX_PATH);
 	XSetForeground(display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_FOREGROUND));
-	XDrawString(display, floatbar->handle, gc, floatbar->width / 2 - len * 2, 15, floatbar->title,
-	            len);
+	if (floatbar->fontSet != NULL)
+	{
+		XmbDrawString(display, floatbar->handle, floatbar->fontSet, gc,
+		              floatbar->width / 2 - len * 2, 15, floatbar->title, len);
+	}
+	else
+	{
+		XDrawString(display, floatbar->handle, gc, floatbar->width / 2 - len * 2, 15,
+		            floatbar->title, len);
+	}
 	XFreeGC(display, gc);
 	XFreeGC(display, shape_gc);
 }
