@@ -412,8 +412,16 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	/* draw the host name connected to (limit to maximum file name) */
 	len = strnlen(floatbar->title, MAX_PATH);
 	XSetForeground(display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_FOREGROUND));
-	XmbDrawString(display, floatbar->handle, floatbar->fontSet, gc, floatbar->width / 2 - len * 2,
-	              15, floatbar->title, len);
+	if (floatbar->fontSet != NULL)
+	{
+		XmbDrawString(display, floatbar->handle, floatbar->fontSet, gc,
+		              floatbar->width / 2 - len * 2, 15, floatbar->title, len);
+	}
+	else
+	{
+		XDrawString(display, floatbar->handle, gc, floatbar->width / 2 - len * 2, 15,
+		            floatbar->title, len);
+	}
 	XFreeGC(display, gc);
 	XFreeGC(display, shape_gc);
 }
