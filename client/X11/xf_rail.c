@@ -153,7 +153,6 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	unsigned int mask;
 	Window root_window;
 	Window child_window;
-	RAIL_WINDOW_MOVE_ORDER windowMove;
 	rdpInput* input;
 
 	WINPR_ASSERT(xfc);
@@ -161,22 +160,30 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	input = xfc->common.context.input;
 	WINPR_ASSERT(input);
 
-	/*
-	 * For keyboard moves send and explicit update to RDP server
-	 */
-	windowMove.windowId = appWindow->windowId;
-	/*
-	 * Calculate new size/position for the rail window(new values for
-	 * windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server
-	 *
-	 */
-	windowMove.left = appWindow->x - appWindow->resizeMarginLeft;
-	windowMove.top = appWindow->y - appWindow->resizeMarginTop;
-	windowMove.right =
-	    appWindow->x + appWindow->width +
-	    appWindow->resizeMarginRight; /* In the update to RDP the position is one past the window */
-	windowMove.bottom = appWindow->y + appWindow->height + appWindow->resizeMarginBottom;
-	xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
+	if ((appWindow->local_move.direction == _NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
+	    (appWindow->local_move.direction == _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
+	{
+		RAIL_WINDOW_MOVE_ORDER windowMove;
+
+		/*
+		 * For keyboard moves send and explicit update to RDP server
+		 */
+		windowMove.windowId = appWindow->windowId;
+		/*
+		 * Calculate new size/position for the rail window(new values for
+		 * windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server
+		 *
+		 */
+		windowMove.left = appWindow->x - appWindow->resizeMarginLeft;
+		windowMove.top = appWindow->y - appWindow->resizeMarginTop;
+		windowMove.right =
+		    appWindow->x + appWindow->width +
+		    appWindow
+		        ->resizeMarginRight; /* In the update to RDP the position is one past the window */
+		windowMove.bottom = appWindow->y + appWindow->height + appWindow->resizeMarginBottom;
+		xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
+	}
+
 	/*
 	 * Simulate button up at new position to end the local move (per RDP spec)
 	 */
