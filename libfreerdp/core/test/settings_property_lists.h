@@ -400,6 +400,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_SmartcardPrivateKey,
 	FreeRDP_SspiModule,
 	FreeRDP_TargetNetAddress,
+	FreeRDP_TlsSecretsFile,
 	FreeRDP_TransportDumpFile,
 	FreeRDP_Username,
 	FreeRDP_WindowTitle,

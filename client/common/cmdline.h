@@ -369,6 +369,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Allowed TLS ciphers" },
 	{ "tls-seclevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "1", NULL, -1, NULL,
 	  "TLS security level - defaults to 1" },
+	{ "tls-secrets-file", COMMAND_LINE_VALUE_REQUIRED, "<filename>", NULL, NULL, -1, NULL,
+	  "File were TLS secrets will be stored in the SSLKEYLOGFILE format" },
 	{ "enforce-tlsv1_2", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Force use of TLS1.2 for connection. Some servers have a buggy TLS version negotiation and "
 	  "might fail without this" },

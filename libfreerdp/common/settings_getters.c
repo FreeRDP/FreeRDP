@@ -2594,6 +2594,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_TargetNetAddress:
 			return settings->TargetNetAddress;
 
+		case FreeRDP_TlsSecretsFile:
+			return settings->TlsSecretsFile;
+
 		case FreeRDP_TransportDumpFile:
 			return settings->TransportDumpFile;
 
@@ -2854,6 +2857,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_TargetNetAddress:
 			return settings->TargetNetAddress;
+
+		case FreeRDP_TlsSecretsFile:
+			return settings->TlsSecretsFile;
 
 		case FreeRDP_TransportDumpFile:
 			return settings->TransportDumpFile;
@@ -3125,6 +3131,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_TargetNetAddress:
 			return update_string(&settings->TargetNetAddress, cnv.cc, len, cleanup);
+
+		case FreeRDP_TlsSecretsFile:
+			return update_string(&settings->TlsSecretsFile, cnv.cc, len, cleanup);
 
 		case FreeRDP_TransportDumpFile:
 			return update_string(&settings->TransportDumpFile, cnv.cc, len, cleanup);
