@@ -129,6 +129,8 @@ extern "C"
 
 		void* clipboard;
 		CliprdrClientContext* cliprdr;
+		
+		EncomspClientContext* encomsp;
 
 		wfFloatBar* floatbar;
 
