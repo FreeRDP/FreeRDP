@@ -732,6 +732,7 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 
 	if (settings->TlsSecretsFile)
 	{
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
 		InitOnceExecuteOnce(&secrets_file_idx_once, secrets_file_init_cb, NULL, NULL);
 
 		if (secrets_file_idx != -1)
@@ -739,6 +740,9 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 			SSL_set_ex_data(tls->ssl, secrets_file_idx, settings->TlsSecretsFile);
 			SSL_CTX_set_keylog_callback(tls->ctx, SSLCTX_keylog_cb);
 		}
+#else
+		WLog_WARN(TAG, "Key-Logging not available - requires OpenSSL 1.1.1 or higher");
+#endif
 	}
 
 	BIO_push(tls->bio, underlying);
