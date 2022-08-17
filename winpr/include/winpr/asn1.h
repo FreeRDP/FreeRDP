@@ -126,6 +126,7 @@ extern "C"
 	WINPR_API size_t WinPrAsn1DecReadOctetString(WinPrAsn1Decoder* dec,
 	                                             WinPrAsn1_OctetString* target, BOOL allocate);
 	WINPR_API size_t WinPrAsn1DecReadIA5String(WinPrAsn1Decoder* dec, WinPrAsn1_IA5STRING* target);
+	WINPR_API size_t WinPrAsn1DecReadGeneralString(WinPrAsn1Decoder* dec, WinPrAsn1_STRING* target);
 	WINPR_API size_t WinPrAsn1DecReadUtcTime(WinPrAsn1Decoder* dec, WinPrAsn1_UTCTIME* target);
 	WINPR_API size_t WinPrAsn1DecReadNull(WinPrAsn1Decoder* dec);
 
@@ -192,6 +193,7 @@ extern "C"
 	WINPR_API size_t WinPrAsn1EncContextualOctetString(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
 	                                                   const WinPrAsn1_OctetString* oid);
 	WINPR_API size_t WinPrAsn1EncIA5String(WinPrAsn1Encoder* enc, WinPrAsn1_IA5STRING ia5);
+	WINPR_API size_t WinPrAsn1EncGeneralString(WinPrAsn1Encoder* enc, WinPrAsn1_STRING str);
 	WINPR_API size_t WinPrAsn1EncContextualIA5String(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
 	                                                 WinPrAsn1_IA5STRING ia5);
 	WINPR_API size_t WinPrAsn1EncUtcTime(WinPrAsn1Encoder* enc, const WinPrAsn1_UTCTIME* utc);

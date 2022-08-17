@@ -98,6 +98,17 @@ extern "C"
 		     (((UINT64)(*((const BYTE*)_d + 7))) << 56);                                \
 	} while (0)
 
+#define Data_Read_UINT64_BE(_d, _v)                                                                \
+	do                                                                                             \
+	{                                                                                              \
+		_v = (((UINT64)(*((const BYTE*)_d))) << 56) + (((UINT64)(*((const BYTE*)_d + 1))) << 48) + \
+		     (((UINT64)(*((const BYTE*)_d + 2))) << 40) +                                          \
+		     (((UINT64)(*((const BYTE*)_d + 3))) << 32) +                                          \
+		     (((UINT64)(*((const BYTE*)_d + 4))) << 24) +                                          \
+		     (((UINT64)(*((const BYTE*)_d + 5))) << 16) +                                          \
+		     (((UINT64)(*((const BYTE*)_d + 6))) << 8) + (((UINT64)(*((const BYTE*)_d + 7))));     \
+	} while (0)
+
 #define Data_Write_UINT8_NE(_d, _v) \
 	do                              \
 	{                               \
@@ -169,6 +180,13 @@ extern "C"
 		*((BYTE*)_d + 5) = ((UINT64)(_v) >> 40) & 0xFF; \
 		*((BYTE*)_d + 6) = ((UINT64)(_v) >> 48) & 0xFF; \
 		*((BYTE*)_d + 7) = ((UINT64)(_v) >> 56) & 0xFF; \
+	} while (0)
+
+#define Data_Write_UINT64_BE(_d, _v)                                \
+	do                                                              \
+	{                                                               \
+		Data_Write_UINT32_BE((BYTE*)_d, ((_v) >> 32 & 0xFFFFFFFF)); \
+		Data_Write_UINT32_BE((BYTE*)_d + 4, ((_v)&0xFFFFFFFF));     \
 	} while (0)
 
 #ifdef __cplusplus
