@@ -2196,60 +2196,56 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			goto fail;
 		}
-		else
-		{
-			if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, DRDYNVC_SVC_CHANNEL_NAME))
-			{
-				switch (WTSVirtualChannelManagerGetDrdynvcState(client->vcm))
-				{
-					/* Dynamic channel status may have been changed after processing */
-					case DRDYNVC_STATE_NONE:
 
-						/* Call this routine to Initialize drdynvc channel */
-						if (!WTSVirtualChannelManagerCheckFileDescriptor(client->vcm))
+		if (client->activated &&
+		    WTSVirtualChannelManagerIsChannelJoined(client->vcm, DRDYNVC_SVC_CHANNEL_NAME))
+		{
+			switch (WTSVirtualChannelManagerGetDrdynvcState(client->vcm))
+			{
+				/* Dynamic channel status may have been changed after processing */
+				case DRDYNVC_STATE_NONE:
+
+					/* Call this routine to Initialize drdynvc channel */
+					if (!WTSVirtualChannelManagerCheckFileDescriptor(client->vcm))
+					{
+						WLog_ERR(TAG, "Failed to initialize drdynvc channel");
+						goto fail;
+					}
+
+					break;
+
+				case DRDYNVC_STATE_READY:
+					if (client->audin && !IFCALLRESULT(TRUE, client->audin->IsOpen, client->audin))
+					{
+						if (!IFCALLRESULT(FALSE, client->audin->Open, client->audin))
 						{
-							WLog_ERR(TAG, "Failed to initialize drdynvc channel");
+							WLog_ERR(TAG, "Failed to initialize audin channel");
 							goto fail;
 						}
+					}
 
-						break;
+					/* Init RDPGFX dynamic channel */
+					if (settings->SupportGraphicsPipeline && client->rdpgfx && !gfxstatus.gfxOpened)
+					{
+						client->rdpgfx->FrameAcknowledge = shadow_client_rdpgfx_frame_acknowledge;
+						client->rdpgfx->CapsAdvertise = shadow_client_rdpgfx_caps_advertise;
 
-					case DRDYNVC_STATE_READY:
-						if (client->audin &&
-						    !IFCALLRESULT(TRUE, client->audin->IsOpen, client->audin))
+						if (!client->rdpgfx->Open(client->rdpgfx))
 						{
-							if (!IFCALLRESULT(FALSE, client->audin->Open, client->audin))
-							{
-								WLog_ERR(TAG, "Failed to initialize audin channel");
-								goto fail;
-							}
+							WLog_WARN(TAG, "Failed to open GraphicsPipeline");
+							settings->SupportGraphicsPipeline = FALSE;
 						}
-
-						/* Init RDPGFX dynamic channel */
-						if (settings->SupportGraphicsPipeline && client->rdpgfx &&
-						    !gfxstatus.gfxOpened)
+						else
 						{
-							client->rdpgfx->FrameAcknowledge =
-							    shadow_client_rdpgfx_frame_acknowledge;
-							client->rdpgfx->CapsAdvertise = shadow_client_rdpgfx_caps_advertise;
-
-							if (!client->rdpgfx->Open(client->rdpgfx))
-							{
-								WLog_WARN(TAG, "Failed to open GraphicsPipeline");
-								settings->SupportGraphicsPipeline = FALSE;
-							}
-							else
-							{
-								gfxstatus.gfxOpened = TRUE;
-								WLog_INFO(TAG, "Gfx Pipeline Opened");
-							}
+							gfxstatus.gfxOpened = TRUE;
+							WLog_INFO(TAG, "Gfx Pipeline Opened");
 						}
+					}
 
-						break;
+					break;
 
-					default:
-						break;
-				}
+				default:
+					break;
 			}
 		}
 
