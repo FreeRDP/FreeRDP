@@ -951,6 +951,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 	long options = 0;
 	BIO* bio;
 	EVP_PKEY* privkey;
+	int status;
 	X509* x509;
 
 	/**
@@ -1025,10 +1026,16 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 		return FALSE;
 	}
 
-	if (SSL_use_PrivateKey(tls->ssl, privkey) <= 0)
+	status = SSL_use_PrivateKey(tls->ssl, privkey);
+	/* The local reference to the private key will anyway go out of
+	 * scope; so the reference count should be decremented weither
+	 * SSL_use_PrivateKey succeeds or fails.
+	 */
+	EVP_PKEY_free(privkey);
+
+	if (status <= 0)
 	{
 		WLog_ERR(TAG, "SSL_CTX_use_PrivateKey_file failed");
-		EVP_PKEY_free(privkey);
 		return FALSE;
 	}
 
@@ -1050,10 +1057,16 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 		return FALSE;
 	}
 
-	if (SSL_use_certificate(tls->ssl, x509) <= 0)
+	status = SSL_use_certificate(tls->ssl, x509);
+	/* The local reference to the X509 certificate will anyway go out
+	 * of scope; so the reference count should be decremented weither
+	 * SSL_use_certificate succeeds or fails.
+	 */
+	X509_free(x509);
+
+	if (status <= 0)
 	{
 		WLog_ERR(TAG, "SSL_use_certificate_file failed");
-		X509_free(x509);
 		return FALSE;
 	}
 
