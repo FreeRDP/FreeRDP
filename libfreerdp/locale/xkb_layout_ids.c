@@ -793,7 +793,7 @@ static const XKB_LAYOUT xkbLayouts[] = {
 	{ "mt", KBD_MALTESE_48_KEY, mt_variants },                   /* Malta */
 	{ "mn", KBD_MONGOLIAN_CYRILLIC, NULL },                      /* Mongolia */
 	{ "no", KBD_NORWEGIAN, no_variants },                        /* Norway */
-	{ "pl", KBD_POLISH_214, pl_variants },                       /* Poland */
+	{ "pl", KBD_POLISH_PROGRAMMERS, pl_variants },               /* Poland */
 	{ "pt", KBD_PORTUGUESE, pt_variants },                       /* Portugal */
 	{ "ro", KBD_ROMANIAN, ro_variants },                         /* Romania */
 	{ "ru", KBD_RUSSIAN, ru_variants },                          /* Russia */
