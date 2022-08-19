@@ -75,6 +75,8 @@ int main(int argc, char** argv)
 		  "Kerberos keytab file for NLA authentication" },
 		{ "ccache", COMMAND_LINE_VALUE_REQUIRED, "<file>", NULL, NULL, -1, NULL,
 		  "Kerberos host ccache file for NLA authentication" },
+		{ "tls-secrets-file", COMMAND_LINE_VALUE_REQUIRED, "<file>", NULL, NULL, -1, NULL,
+		  "file where tls secrets shall be stored" },
 		{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 		  "Allow GFX progressive codec" },
 		{ "gfx-rfx", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
