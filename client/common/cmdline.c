@@ -1748,7 +1748,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				{
 					LONGLONG val;
 
-					if (!value_to_int(&p[2], &val, 0, UINT16_MAX))
+					if (!value_to_int(&p2[2], &val, 0, UINT16_MAX))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 					settings->ServerPort = (UINT16)val;
