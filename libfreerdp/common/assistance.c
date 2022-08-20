@@ -457,7 +457,7 @@ static BOOL freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 		q++;
 		length = strlen(p);
 
-		if (length > 8)
+		if (length > 6)
 		{
 			if (!append_address(file, p, port))
 				goto out_fail;
