@@ -164,6 +164,8 @@ static BOOL reallocate(rdpAssistanceFile* file, const char* host, UINT32 port)
 
 static BOOL append_address(rdpAssistanceFile* file, const char* host, const char* port)
 {
+	WLog_DBG(TAG, "append_address:%s:%s", host, port);
+
 	unsigned long p;
 	errno = 0;
 	p = strtoul(port, NULL, 0);
@@ -180,33 +182,41 @@ static BOOL append_address(rdpAssistanceFile* file, const char* host, const char
 
 static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 {
-	BOOL rc = FALSE;
-	char* p;
-
-	if (!file || !list)
-		return FALSE;
-
-	p = list;
-
-	while ((p = strchr(p, ';')) != NULL)
-	{
-		char* q = strchr(p, ':');
-
-		if (!q)
-			goto out;
-
-		*q = '\0';
-		q++;
-
-		if (!append_address(file, p, q))
-			goto out;
-
-		p = q;
-	}
-
+   WLog_DBG(TAG, "freerdp_assistance_parse_address_list list=%s", list);
+	
+   BOOL rc = FALSE;
+   
+   if (!file || !list)
+      return FALSE;
+	
+   char* strp = list;
+   char* s = ";";
+   char* token;
+   
+   // convert pointer type string into array type string
+   // maybe not needed for freerdp compile because *p = '\0' for pointer-type string seems to run fine??
+      // yes, tested and not needed if strp is char*
+   // const int bufflen = strlen(strp)+1;
+   // char str[bufflen];
+   // strncpy(str, strp, sizeof(str)-1); str[bufflen-1] = '\0';
+   
+   // get the first token
+   token = strtok(strp, s);
+   
+   // walk through other tokens
+   while( token != NULL ) {
+      char* port = strchr(token, ':');
+      *port = '\0';
+      port++;
+   	
+      if (!append_address(file, token, port))
+        goto out;
+    
+      token = strtok(NULL, s);
+   }
 	rc = TRUE;
 out:
-	return rc;
+	return rc;	
 }
 
 static BOOL freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
@@ -227,6 +237,7 @@ static BOOL freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
 	 */
 	count = 1;
 	str = _strdup(file->RCTicket);
+	WLog_DBG(TAG, "freerdp_assistance_parse_connection_string1 str=%s", str);
 
 	if (!str)
 		goto error;
@@ -308,12 +319,13 @@ static BOOL freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 	char* end;
 	char* p;
 	BOOL rc = FALSE;
-
+	
 	if (!file || !file->ConnectionString2)
 		return FALSE;
 
 	str = file->ConnectionString2;
-
+	WLog_DBG(TAG, "freerdp_assistance_parse_connection_string2: %s", str);
+	
 	if (!strstr(str, "<E>"))
 	{
 		WLog_ERR(TAG, "Failed to parse ASSISTANCE file: ConnectionString2 missing field <E>");
@@ -456,14 +468,19 @@ static BOOL freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 		q[0] = '\0';
 		q++;
 		length = strlen(p);
+		
+		WLog_DBG(TAG, "HOST: %s:%s length:%d", p, port, length);
 
-		if (length > 6)
+		if (length > 7)
 		{
-			if (!append_address(file, p, port))
+			if (!append_address(file, p, port)) {
+				WLog_DBG(TAG, "append_address return out_fail");
 				goto out_fail;
+				}
 		}
 
 		p = strstr(q, "<L P=\"");
+		// p = NULL; // stop looking for next address, just use first one found
 	}
 
 	rc = TRUE;
@@ -1037,6 +1054,7 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 		}
 
 		file->Type = (file->LHTicket) ? 2 : 1;
+		WLog_DBG(TAG, "freerdp_assistance_parse_file_buffer file->Type=%d", file->Type);
 		status = 0;
 
 		switch (file->Type)
@@ -1053,8 +1071,9 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 
 			case 1:
 			{
-				if (!freerdp_assistance_parse_connection_string1(file))
+				if (!freerdp_assistance_parse_connection_string1(file)) {
 					status = -1;
+					}
 			}
 			break;
 
@@ -1183,6 +1202,7 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 	buffer[fileSize.s] = '\0';
 	buffer[fileSize.s + 1] = '\0';
 	status = freerdp_assistance_parse_file_buffer(file, (char*)buffer, fileSize.s, password);
+	WLog_DBG(TAG, "freerdp_assistance_parse_file_buffer status=%d", status);
 	free(buffer);
 	return status;
 }
@@ -1196,7 +1216,8 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
 		return FALSE;
 
 	if (!file->RASessionId || !file->MachineAddresses)
-		return FALSE;
+		// return FALSE;
+		{WLog_DBG(TAG, "freerdp_assistance_populate_settings_from_assistance_file error2, %s", file->RASessionId);return FALSE;}
 
 	if (!freerdp_settings_set_string(settings, FreeRDP_RemoteAssistanceSessionId,
 	                                 file->RASessionId))
