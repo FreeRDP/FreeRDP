@@ -402,6 +402,11 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if (!freerdp_settings_set_string(settings, FreeRDP_KerberosCache, arg->Value))
 				return COMMAND_LINE_ERROR;
 		}
+		CommandLineSwitchCase(arg, "tls-secrets-file")
+		{
+			if (!freerdp_settings_set_string(settings, FreeRDP_TlsSecretsFile, arg->Value))
+				return COMMAND_LINE_ERROR;
+		}
 		CommandLineSwitchDefault(arg)
 		{
 		}

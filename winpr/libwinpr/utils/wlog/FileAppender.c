@@ -195,12 +195,11 @@ static BOOL WLog_FileAppender_Set(wLogAppender* appender, const char* setting, v
 
 	if (!strcmp("outputfilename", setting))
 		return WLog_FileAppender_SetOutputFileName(fileAppender, (const char*)value);
-	else if (!strcmp("outputfilepath", setting))
-		return WLog_FileAppender_SetOutputFilePath(fileAppender, (const char*)value);
-	else
-		return FALSE;
 
-	return TRUE;
+	if (!strcmp("outputfilepath", setting))
+		return WLog_FileAppender_SetOutputFilePath(fileAppender, (const char*)value);
+
+	return FALSE;
 }
 
 static void WLog_FileAppender_Free(wLogAppender* appender)

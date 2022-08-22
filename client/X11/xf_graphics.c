@@ -263,7 +263,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 	yTargetSize = pointer->height * yscale;
 
 	WLog_DBG(TAG, "%s: scaled: %" PRIu32 "x%" PRIu32 ", desktop: %" PRIu32 "x%" PRIu32, __func__,
-	         xfc->scaledWidth, xfc->savedHeight, settings->DesktopWidth, settings->DesktopHeight);
+	         xfc->scaledWidth, xfc->scaledHeight, settings->DesktopWidth, settings->DesktopHeight);
 	for (i = 0; i < xpointer->nCursors; i++)
 	{
 		if ((xpointer->cursorWidths[i] == xTargetSize) &&
