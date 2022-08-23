@@ -705,7 +705,9 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_SETFOCUS:
+			WLog_DBG("wf_event", "WM_SETFOCUS");
 			DEBUG_KBD("getting focus %X", hWnd);
+			freerdp_settings_set_bool(wfc->common.context.settings, FreeRDP_SuspendInput, FALSE);
 
 			if (alt_ctrl_down())
 				g_flipping_in = TRUE;
@@ -715,10 +717,12 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_KILLFOCUS:
+			WLog_DBG("wf_event", "WM_KILLFOCUS");
+			freerdp_settings_set_bool(wfc->common.context.settings, FreeRDP_SuspendInput, TRUE);
 			if (g_focus_hWnd == hWnd && wfc && !wfc->fullscreen)
 			{
 				DEBUG_KBD("loosing focus %X", hWnd);
-
+				
 				if (alt_ctrl_down())
 					g_flipping_out = TRUE;
 				else
