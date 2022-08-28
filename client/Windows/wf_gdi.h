@@ -30,6 +30,7 @@ void wf_image_free(wfBitmap* image);
 void wf_update_offset(wfContext* wfc);
 void wf_resize_window(wfContext* wfc);
 void wf_toggle_fullscreen(wfContext* wfc);
+BOOL wf_scale_rect(wfContext* wfc, RECT* source);
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update);
 
