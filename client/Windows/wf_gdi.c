@@ -209,7 +209,7 @@ static HBRUSH wf_create_brush(wfContext* wfc, rdpBrush* brush, UINT32 color, UIN
 	return br;
 }
 
-static BOOL wf_scale_rect(wfContext* wfc, RECT* source)
+BOOL wf_scale_rect(wfContext* wfc, RECT* source)
 {
 	UINT32 ww, wh, dw, dh;
 	rdpSettings* settings;
