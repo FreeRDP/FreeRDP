@@ -1,3 +1,8 @@
+I forked this to make some changes to the windows client (wfreerdp.exe):
+- Fixed graphics glitch when using smart sizing.
+- Fixed parsing of remote assistance file
+- Added support for /auto-request-control for windows client for remote assistance mode
+
 # FreeRDP: A Remote Desktop Protocol Implementation
 
 FreeRDP is a free implementation of the Remote Desktop Protocol (RDP), released under the Apache license.
