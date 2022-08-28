@@ -19,9 +19,14 @@ on:
     branches: [ master, stable* ]
   schedule:
     - cron: '30 8 * * 6'
+    
+permissions:
+  contents: read
 
 jobs:
   analyze:
+    permissions:
+      security-events: write
     name: Analyze
     runs-on: ubuntu-latest
 
