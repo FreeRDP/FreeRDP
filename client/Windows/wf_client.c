@@ -126,6 +126,8 @@ static BOOL wf_end_paint(rdpContext* context)
 			updateRect.top -= MIN(updateRect.top, wfc->yCurrentScroll);
 			updateRect.bottom -= MIN(updateRect.bottom, wfc->yCurrentScroll);
 		}
+		
+		wf_scale_rect(wfc, &updateRect);
 
 		InvalidateRect(wfc->hwnd, &updateRect, FALSE);
 
