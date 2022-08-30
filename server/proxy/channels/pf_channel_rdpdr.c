@@ -1021,7 +1021,7 @@ static BOOL filter_smartcard_io_requests(pf_channel_client_context* rdpdr, wStre
 	if (Stream_GetRemainingLength(s) >= 4)
 		Stream_Read_UINT32(s, deviceID);
 
-	WLog_DBG(TAG, "got: [%s | %s]: [0x%08]" PRIx32, rdpdr_component_string(component),
+	WLog_DBG(TAG, "got: [%s | %s]: [0x%08" PRIx32 "]", rdpdr_component_string(component),
 	         rdpdr_packetid_string(packetid), deviceID);
 
 	if (component != RDPDR_CTYP_CORE)
@@ -1425,7 +1425,7 @@ static BOOL filter_smartcard_device_list_announce_request(pf_channel_server_cont
 	size_t pos;
 	UINT16 component, packetid;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
 	pos = Stream_GetPosition(s);
@@ -1728,6 +1728,11 @@ static PfChannelResult pf_rdpdr_back_data(proxyData* pdata,
 		WLog_ERR(TAG, "error treating client back data");
 		return PF_CHANNEL_RESULT_ERROR;
 	}
+
+#if defined(WITH_PROXY_EMULATE_SMARTCARD)
+	if (pf_channel_smartcard_client_emulate(pdata->pc))
+		return PF_CHANNEL_RESULT_DROP;
+#endif
 	return PF_CHANNEL_RESULT_PASS;
 }
 
@@ -1745,6 +1750,11 @@ static PfChannelResult pf_rdpdr_front_data(proxyData* pdata,
 		WLog_ERR(TAG, "error treating front data");
 		return PF_CHANNEL_RESULT_ERROR;
 	}
+
+#if defined(WITH_PROXY_EMULATE_SMARTCARD)
+	if (pf_channel_smartcard_client_emulate(pdata->pc))
+		return PF_CHANNEL_RESULT_DROP;
+#endif
 	return PF_CHANNEL_RESULT_PASS;
 }
 
