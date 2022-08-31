@@ -318,6 +318,12 @@ public class SessionActivity extends AppCompatActivity
 		                             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 	}
 
+	@Override public void onWindowFocusChanged(boolean hasFocus)
+	{
+		super.onWindowFocusChanged(hasFocus);
+		mClipboardManager.getPrimaryClipManually();
+	}
+
 	@Override protected void onStart()
 	{
 		super.onStart();
