@@ -24,6 +24,8 @@ public abstract class ClipboardManagerProxy
 
 	public abstract void removeClipboardboardChangedListener(OnClipboardChangedListener listener);
 
+	public abstract void getPrimaryClipManually();
+
 	public static interface OnClipboardChangedListener {
 		void onClipboardChanged(String data);
 	}
@@ -45,6 +47,10 @@ public abstract class ClipboardManagerProxy
 
 		@Override
 		public void removeClipboardboardChangedListener(OnClipboardChangedListener listener)
+		{
+		}
+
+		@Override public void getPrimaryClipManually()
 		{
 		}
 	}
@@ -95,6 +101,11 @@ public abstract class ClipboardManagerProxy
 		{
 			mListener = null;
 			mClipboardManager.removePrimaryClipChangedListener(this);
+		}
+
+		@Override public void getPrimaryClipManually()
+		{
+			onPrimaryClipChanged();
 		}
 	}
 }
