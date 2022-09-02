@@ -50,7 +50,7 @@ static BOOL encomsp_toggle_control(EncomspClientContext* encomsp, BOOL control)
 
 static UINT
 wf_encomsp_participant_created(EncomspClientContext* context,
-                                const ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
+                               const ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
 {
 	wfContext* wf;
 	rdpSettings* settings;
