@@ -115,7 +115,7 @@ static BOOL wf_end_paint(rdpContext* context)
 		updateRect.top = extents->top;
 		updateRect.right = extents->right;
 		updateRect.bottom = extents->bottom;
-		
+
 		wf_scale_rect(wfc, &updateRect);
 
 		InvalidateRect(wfc->hwnd, &updateRect, FALSE);
