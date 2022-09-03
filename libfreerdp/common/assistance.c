@@ -207,7 +207,7 @@ static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char*
 	}
 	rc = TRUE;
 out:
-	return rc;	
+	return rc;
 }
 
 static BOOL freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
