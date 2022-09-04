@@ -338,6 +338,22 @@ static UINT remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s,
 	Stream_Read_UINT32(s, result); /* result (4 bytes) */
 	*pResult = result;
 	// WLog_DBG(TAG, "RemdeskRecvResult: 0x%08"PRIX32"", result);
+	switch (result)
+	{
+		case REMDESK_ERROR_HELPEESAIDNO:
+			WLog_DBG(TAG, "remote assistance connection request was denied");
+
+			return ERROR_CONNECTION_REFUSED;
+			break;
+
+		case REMDESK_ERROR_HELPEESAIDYES:
+			WLog_DBG(TAG, "remote assistance request was accepted");
+			break;
+
+		default:
+			break;
+	}
+
 	return CHANNEL_RC_OK;
 }
 
