@@ -345,10 +345,6 @@ static UINT remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s,
 			return ERROR_CONNECTION_REFUSED;
 			break;
 
-		case REMDESK_ERROR_HELPEESAIDYES:
-			WLog_DBG(TAG, "remote assistance connection request was accepted");
-			break;
-
 		default:
 			break;
 	}
