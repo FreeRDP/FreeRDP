@@ -46,6 +46,7 @@ typedef struct
 
 	int id_sequence;
 	size_t references;
+	char* defaultPrinter;
 } rdpCupsPrinterDriver;
 
 typedef struct
@@ -407,6 +408,7 @@ static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 	{
 		if (uniq_cups_driver == cups_driver)
 			uniq_cups_driver = NULL;
+		free(cups_driver->defaultPrinter);
 		free(cups_driver);
 	}
 	else
@@ -430,6 +432,13 @@ rdpPrinterDriver* cups_freerdp_printer_client_subsystem_entry(void)
 		uniq_cups_driver->driver.ReleaseRef = printer_cups_release_ref_driver;
 
 		uniq_cups_driver->id_sequence = 1;
+		uniq_cups_driver->defaultPrinter = _strdup(cupsGetDefault());
+
+		if (!uniq_cups_driver->defaultPrinter)
+		{
+			free(uniq_cups_driver);
+			return NULL;
+		}
 	}
 
 	WINPR_ASSERT(uniq_cups_driver->driver.AddRef);
