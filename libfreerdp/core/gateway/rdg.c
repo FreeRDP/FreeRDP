@@ -32,6 +32,7 @@
 #include <freerdp/utils/ringbuffer.h>
 
 #include "rdg.h"
+#include "../credssp_auth.h"
 #include "../proxy.h"
 #include "../rdp.h"
 #include "../../crypto/opensslcompat.h"
@@ -39,6 +40,12 @@
 #include "../utils.h"
 
 #define TAG FREERDP_TAG("core.gateway.rdg")
+
+#if defined(_WIN32) || defined(WITH_SPNEGO)
+#define AUTH_PKG CREDSSP_AUTH_PKG_SPNEGO
+#else
+#define AUTH_PKG CREDSSP_AUTH_PKG_NTLM
+#endif
 
 /* HTTP channel response fields present flags. */
 #define HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID 0x1
@@ -173,7 +180,7 @@ struct rdp_rdg
 	BIO* frontBio;
 	rdpTls* tlsIn;
 	rdpTls* tlsOut;
-	rdpNtlm* ntlm;
+	rdpCredsspAuth* auth;
 	HttpContext* http;
 	CRITICAL_SECTION writeSection;
 
@@ -1131,24 +1138,24 @@ fail:
 	return status;
 }
 
-static BOOL rdg_set_ntlm_auth_header(rdpNtlm* ntlm, HttpRequest* request)
+static BOOL rdg_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 {
-	const SecBuffer* ntlmToken = ntlm_client_get_output_buffer(ntlm);
-	char* base64NtlmToken = NULL;
+	const SecBuffer* authToken = credssp_auth_get_output_buffer(auth);
+	char* base64AuthToken = NULL;
 
-	if (ntlmToken)
+	if (authToken)
 	{
-		if (ntlmToken->cbBuffer > INT_MAX)
+		if (authToken->cbBuffer > INT_MAX)
 			return FALSE;
 
-		base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, (int)ntlmToken->cbBuffer);
+		base64AuthToken = crypto_base64_encode(authToken->pvBuffer, (int)authToken->cbBuffer);
 	}
 
-	if (base64NtlmToken)
+	if (base64AuthToken)
 	{
-		BOOL rc = http_request_set_auth_scheme(request, "NTLM") &&
-		          http_request_set_auth_param(request, base64NtlmToken);
-		free(base64NtlmToken);
+		BOOL rc = http_request_set_auth_scheme(request, credssp_auth_pkg_name(auth)) &&
+		          http_request_set_auth_param(request, base64AuthToken);
+		free(base64AuthToken);
 
 		if (!rc)
 			return FALSE;
@@ -1176,9 +1183,9 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
 	if (!http_request_set_method(request, method) || !http_request_set_uri(request, uri))
 		goto out;
 
-	if (rdg->ntlm)
+	if (rdg->auth)
 	{
-		if (!rdg_set_ntlm_auth_header(rdg->ntlm, request))
+		if (!rdg_set_auth_header(rdg->auth, request))
 			goto out;
 	}
 
@@ -1194,45 +1201,48 @@ out:
 	return s;
 }
 
-static BOOL rdg_handle_ntlm_challenge(rdpNtlm* ntlm, HttpResponse* response)
+static BOOL rdg_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 {
-	BOOL continueNeeded = FALSE;
 	size_t len;
 	const char* token64 = NULL;
-	size_t ntlmTokenLength = 0;
-	BYTE* ntlmTokenData = NULL;
+	size_t authTokenLength = 0;
+	BYTE* authTokenData = NULL;
+	SecBuffer authToken = { 0 };
 	long StatusCode;
+	int rc;
 
-	if (!ntlm || !response)
+	if (!auth || !response)
 		return FALSE;
 
 	StatusCode = http_response_get_status_code(response);
-
-	if (StatusCode != HTTP_STATUS_DENIED)
+	switch (StatusCode)
 	{
-		WLog_DBG(TAG, "Unexpected NTLM challenge HTTP status: %ld", StatusCode);
-		return FALSE;
+		case HTTP_STATUS_DENIED:
+		case HTTP_STATUS_OK:
+			break;
+		default:
+			WLog_DBG(TAG, "Unexpected HTTP status: %ld", StatusCode);
+			return FALSE;
 	}
 
-	token64 = http_response_get_auth_token(response, "NTLM");
+	token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
 
 	if (!token64)
 		return FALSE;
 
 	len = strlen(token64);
 
-	crypto_base64_decode(token64, len, &ntlmTokenData, &ntlmTokenLength);
+	crypto_base64_decode(token64, len, &authTokenData, &authTokenLength);
 
-	if (ntlmTokenData && ntlmTokenLength)
+	if (authTokenLength && authTokenData)
 	{
-		if (!ntlm_client_set_input_buffer(ntlm, FALSE, ntlmTokenData, (size_t)ntlmTokenLength))
-			return FALSE;
+		authToken.pvBuffer = authTokenData;
+		authToken.cbBuffer = authTokenLength;
+		credssp_auth_set_input_buffer(auth, &authToken);
 	}
 
-	if (!ntlm_authenticate(ntlm, &continueNeeded))
-		return FALSE;
-
-	if (continueNeeded)
+	rc = credssp_auth_authenticate(auth);
+	if (rc < 0)
 		return FALSE;
 
 	return TRUE;
@@ -1560,30 +1570,41 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context)
 	}
 }
 
-static BOOL rdg_ntlm_init(rdpRdg* rdg, rdpTls* tls)
+static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls)
 {
-	BOOL continueNeeded = FALSE;
 	rdpContext* context = rdg->context;
 	rdpSettings* settings = context->settings;
-	rdg->ntlm = ntlm_new();
+	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
+	int rc;
 
-	if (!rdg->ntlm)
+	rdg->auth = credssp_auth_new(context);
+	if (!rdg->auth)
 		return FALSE;
 
 	if (!rdg_get_gateway_credentials(context))
 		return FALSE;
 
-	if (!ntlm_client_init(rdg->ntlm, TRUE, settings->GatewayUsername, settings->GatewayDomain,
-	                      settings->GatewayPassword, tls->Bindings))
+	if (!credssp_auth_init(rdg->auth, AUTH_PKG, tls->Bindings))
 		return FALSE;
 
-	if (!ntlm_client_make_spn(rdg->ntlm, "HTTP", settings->GatewayHostname))
+	if (sspi_SetAuthIdentityA(&identity, settings->GatewayUsername, settings->GatewayDomain,
+	                          settings->GatewayPassword) < 0)
 		return FALSE;
 
-	if (!ntlm_authenticate(rdg->ntlm, &continueNeeded))
+	if (!credssp_auth_setup_client(rdg->auth, "HTTP", settings->GatewayHostname, &identity, NULL))
+	{
+		sspi_FreeAuthIdentity(&identity);
+		return FALSE;
+	}
+	sspi_FreeAuthIdentity(&identity);
+
+	credssp_auth_set_flags(rdg->auth, ISC_REQ_CONFIDENTIALITY);
+
+	rc = credssp_auth_authenticate(rdg->auth);
+	if (rc < 0)
 		return FALSE;
 
-	return continueNeeded;
+	return TRUE;
 }
 
 static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
@@ -1702,7 +1723,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
 	{
-		if (!rdg_ntlm_init(rdg, tls))
+		if (!rdg_auth_init(rdg, tls))
 			return FALSE;
 
 		if (!rdg_send_http_request(rdg, tls, method, TransferEncodingIdentity))
@@ -1732,24 +1753,42 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 				break;
 		}
 
-		if (!rdg_handle_ntlm_challenge(rdg->ntlm, response))
+		while (!credssp_auth_is_complete(rdg->auth))
 		{
-			http_response_free(response);
-			return FALSE;
+			if (!rdg_recv_auth_token(rdg->auth, response))
+			{
+				http_response_free(response);
+				return FALSE;
+			}
+
+			if (credssp_auth_have_output_token(rdg->auth))
+			{
+				http_response_free(response);
+
+				if (!rdg_send_http_request(rdg, tls, method, TransferEncodingIdentity))
+					return FALSE;
+
+				response = http_response_recv(tls, TRUE);
+				if (!response)
+					return FALSE;
+			}
 		}
-
-		http_response_free(response);
+		credssp_auth_free(rdg->auth);
+		rdg->auth = NULL;
 	}
+	else
+	{
+		credssp_auth_free(rdg->auth);
+		rdg->auth = NULL;
 
-	if (!rdg_send_http_request(rdg, tls, method, TransferEncodingIdentity))
-		return FALSE;
+		if (!rdg_send_http_request(rdg, tls, method, TransferEncodingIdentity))
+			return FALSE;
 
-	ntlm_free(rdg->ntlm);
-	rdg->ntlm = NULL;
-	response = http_response_recv(tls, TRUE);
+		response = http_response_recv(tls, TRUE);
 
-	if (!response)
-		return FALSE;
+		if (!response)
+			return FALSE;
+	}
 
 	statusCode = http_response_get_status_code(response);
 	bodyLength = http_response_get_body_length(response);
@@ -2574,7 +2613,7 @@ void rdg_free(rdpRdg* rdg)
 	tls_free(rdg->tlsOut);
 	tls_free(rdg->tlsIn);
 	http_context_free(rdg->http);
-	ntlm_free(rdg->ntlm);
+	credssp_auth_free(rdg->auth);
 
 	if (!rdg->attached)
 		BIO_free_all(rdg->frontBio);

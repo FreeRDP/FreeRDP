@@ -33,6 +33,8 @@
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 
+#define AUTH_PKG CREDSSP_AUTH_PKG_NTLM
+
 /**
  * Connection-Oriented RPC Protocol Client Details:
  * http://msdn.microsoft.com/en-us/library/cc243724/
@@ -104,24 +106,16 @@ const p_uuid_t BTFN_UUID = {
  * 3) The client sets the PFC_SUPPORT_HEADER_SIGN flag in the PDU header.
  */
 
-int rpc_send_bind_pdu(rdpRpc* rpc)
+static int rpc_bind_setup(rdpRpc* rpc)
 {
-	auth_status rc;
-	BOOL continueNeeded = FALSE;
-	int status = -1;
-	wStream* buffer = NULL;
-	UINT32 offset;
-	RpcClientCall* clientCall;
-	p_cont_elem_t* p_cont_elem;
-	rpcconn_bind_hdr_t bind_pdu = { 0 };
+	int rc = -1;
 	rdpContext* context;
 	rdpSettings* settings;
 	freerdp* instance;
-	RpcVirtualConnection* connection;
-	RpcInChannel* inChannel;
-	const SecBuffer* sbuffer = NULL;
+	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
 
 	WINPR_ASSERT(rpc);
+
 	context = transport_get_context(rpc->transport);
 	WINPR_ASSERT(context);
 
@@ -131,18 +125,10 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	instance = context->instance;
 	WINPR_ASSERT(instance);
 
-	connection = rpc->VirtualConnection;
-
-	WINPR_ASSERT(connection);
-
-	inChannel = connection->DefaultInChannel;
-
-	WLog_DBG(TAG, "Sending Bind PDU");
-	ntlm_free(rpc->ntlm);
-	rpc->ntlm = ntlm_new();
-
-	if (!rpc->ntlm)
-		goto fail;
+	credssp_auth_free(rpc->auth);
+	rpc->auth = credssp_auth_new(context);
+	if (!rpc->auth)
+		return -1;
 
 	rc = utils_authenticate_gateway(instance, GW_AUTH_RPC);
 	switch (rc)
@@ -151,28 +137,62 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 		case AUTH_SKIP:
 			break;
 		case AUTH_NO_CREDENTIALS:
-			freerdp_set_last_error_log(instance->context,
-			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
+			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return 0;
 		case AUTH_FAILED:
 		default:
 			return -1;
 	}
 
-	if (!ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain,
-	                      settings->GatewayPassword, NULL))
-		goto fail;
+	if (!credssp_auth_init(rpc->auth, AUTH_PKG, NULL))
+		return -1;
 
-	if (!ntlm_client_make_spn(rpc->ntlm, NULL, settings->GatewayHostname))
-		goto fail;
+	if (sspi_SetAuthIdentityA(&identity, settings->GatewayUsername, settings->GatewayDomain,
+	                          settings->GatewayPassword) < 0)
+		return -1;
 
-	if (!ntlm_authenticate(rpc->ntlm, &continueNeeded))
-		goto fail;
+	if (!credssp_auth_setup_client(rpc->auth, NULL, settings->GatewayHostname, &identity, NULL))
+	{
+		sspi_FreeAuthIdentity(&identity);
+		return -1;
+	}
+	sspi_FreeAuthIdentity(&identity);
 
-	if (!continueNeeded)
-		goto fail;
+	credssp_auth_set_flags(rpc->auth, ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE |
+	                                      ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT);
 
-	sbuffer = ntlm_client_get_output_buffer(rpc->ntlm);
+	if (credssp_auth_authenticate(rpc->auth) < 0)
+		return -1;
+
+	return 1;
+}
+
+int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
+{
+	int status = -1;
+	wStream* buffer = NULL;
+	UINT32 offset;
+	RpcClientCall* clientCall;
+	p_cont_elem_t* p_cont_elem;
+	rpcconn_bind_hdr_t bind_pdu = { 0 };
+	RpcVirtualConnection* connection;
+	RpcInChannel* inChannel;
+	const SecBuffer* sbuffer = NULL;
+
+	WINPR_ASSERT(rpc);
+
+	connection = rpc->VirtualConnection;
+
+	WINPR_ASSERT(connection);
+
+	inChannel = connection->DefaultInChannel;
+
+	if (initial && rpc_bind_setup(rpc) < 0)
+		return -1;
+
+	WLog_DBG(TAG, initial ? "Sending Bind PDU" : "Sending Alter Context PDU");
+
+	sbuffer = credssp_auth_get_output_buffer(rpc->auth);
 
 	if (!sbuffer)
 		goto fail;
@@ -180,7 +200,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu.header = rpc_pdu_header_init(rpc);
 	bind_pdu.header.auth_length = (UINT16)sbuffer->cbBuffer;
 	bind_pdu.auth_verifier.auth_value = sbuffer->pvBuffer;
-	bind_pdu.header.ptype = PTYPE_BIND;
+	bind_pdu.header.ptype = initial ? PTYPE_BIND : PTYPE_ALTER_CONTEXT;
 	bind_pdu.header.pfc_flags =
 	    PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_SUPPORT_HEADER_SIGN | PFC_CONC_MPX;
 	bind_pdu.header.call_id = 2;
@@ -224,7 +244,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	p_cont_elem->transfer_syntaxes[0].if_version = BTFN_SYNTAX_IF_VERSION;
 	offset = 116;
 
-	bind_pdu.auth_verifier.auth_type = RPC_C_AUTHN_WINNT;
+	bind_pdu.auth_verifier.auth_type =
+	    rpc_auth_pkg_to_security_provider(credssp_auth_pkg_name(rpc->auth));
 	bind_pdu.auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
 	bind_pdu.auth_verifier.auth_reserved = 0x00;
 	bind_pdu.auth_verifier.auth_context_id = 0x00000000;
@@ -295,20 +316,21 @@ fail:
 BOOL rpc_recv_bind_ack_pdu(rdpRpc* rpc, wStream* s)
 {
 	BOOL rc = FALSE;
-	BOOL continueNeeded = FALSE;
-	const BYTE* auth_data;
+	BYTE* auth_data;
 	size_t pos, end;
 	rpcconn_hdr_t header = { 0 };
+	SecBuffer buffer = { 0 };
 
 	WINPR_ASSERT(rpc);
-	WINPR_ASSERT(rpc->ntlm);
+	WINPR_ASSERT(rpc->auth);
 	WINPR_ASSERT(s);
 
 	pos = Stream_GetPosition(s);
 	if (!rts_read_pdu_header(s, &header))
 		goto fail;
 
-	WLog_DBG(TAG, "Receiving BindAck PDU");
+	WLog_DBG(TAG, header.common.ptype == PTYPE_BIND_ACK ? "Receiving BindAck PDU"
+	                                                    : "Receiving AlterContextResp PDU");
 
 	rpc->max_recv_frag = header.bind_ack.max_xmit_frag;
 	rpc->max_xmit_frag = header.bind_ack.max_recv_frag;
@@ -320,13 +342,11 @@ BOOL rpc_recv_bind_ack_pdu(rdpRpc* rpc, wStream* s)
 	auth_data = Stream_Pointer(s);
 	Stream_SetPosition(s, end);
 
-	if (!ntlm_client_set_input_buffer(rpc->ntlm, TRUE, auth_data, header.common.auth_length))
-		goto fail;
+	buffer.pvBuffer = auth_data;
+	buffer.cbBuffer = header.common.auth_length;
+	credssp_auth_set_input_buffer(rpc->auth, &buffer);
 
-	if (!ntlm_authenticate(rpc->ntlm, &continueNeeded))
-		goto fail;
-
-	if (continueNeeded)
+	if (credssp_auth_authenticate(rpc->auth) < 0)
 		goto fail;
 
 	rc = TRUE;
@@ -363,7 +383,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 
 	WLog_DBG(TAG, "Sending RpcAuth3 PDU");
 
-	sbuffer = ntlm_client_get_output_buffer(rpc->ntlm);
+	sbuffer = credssp_auth_get_output_buffer(rpc->auth);
 
 	if (!sbuffer)
 		return -1;
@@ -378,7 +398,8 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	auth_3_pdu.max_recv_frag = rpc->max_recv_frag;
 	offset = 20;
 	auth_3_pdu.auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
-	auth_3_pdu.auth_verifier.auth_type = RPC_C_AUTHN_WINNT;
+	auth_3_pdu.auth_verifier.auth_type =
+	    rpc_auth_pkg_to_security_provider(credssp_auth_pkg_name(rpc->auth));
 	auth_3_pdu.auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
 	auth_3_pdu.auth_verifier.auth_reserved = 0x00;
 	auth_3_pdu.auth_verifier.auth_context_id = 0x00000000;
@@ -404,4 +425,30 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 fail:
 	Stream_Free(buffer, TRUE);
 	return (status > 0) ? 1 : -1;
+}
+
+enum RPC_BIND_STATE rpc_bind_state(rdpRpc* rpc)
+{
+	BOOL complete, have_token;
+	WINPR_ASSERT(rpc);
+
+	complete = credssp_auth_is_complete(rpc->auth);
+	have_token = credssp_auth_have_output_token(rpc->auth);
+
+	return complete ? (have_token ? RPC_BIND_STATE_LAST_LEG : RPC_BIND_STATE_COMPLETE)
+	                : RPC_BIND_STATE_INCOMPLETE;
+}
+
+BYTE rpc_auth_pkg_to_security_provider(const char* name)
+{
+	if (strcmp(name, CREDSSP_AUTH_PKG_SPNEGO) == 0)
+		return RPC_C_AUTHN_GSS_NEGOTIATE;
+	else if (strcmp(name, CREDSSP_AUTH_PKG_NTLM) == 0)
+		return RPC_C_AUTHN_WINNT;
+	else if (strcmp(name, CREDSSP_AUTH_PKG_KERBEROS) == 0)
+		return RPC_C_AUTHN_GSS_KERBEROS;
+	else if (strcmp(name, CREDSSP_AUTH_PKG_SCHANNEL) == 0)
+		return RPC_C_AUTHN_GSS_SCHANNEL;
+	else
+		return RPC_C_AUTHN_NONE;
 }

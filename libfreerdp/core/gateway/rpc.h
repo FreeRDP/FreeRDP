@@ -74,7 +74,7 @@ typedef struct
 #include "../transport.h"
 
 #include "http.h"
-#include "ntlm.h"
+#include "../credssp_auth.h"
 
 #include <time.h>
 
@@ -599,7 +599,7 @@ typedef struct
 	RpcClient* client;
 	BIO* bio;
 	rdpTls* tls;
-	rdpNtlm* ntlm;
+	rdpCredsspAuth* auth;
 	HttpContext* http;
 	BYTE Cookie[16];
 } RpcChannel;
@@ -721,7 +721,7 @@ struct rdp_rpc
 
 	UINT32 result;
 
-	rdpNtlm* ntlm;
+	rdpCredsspAuth* auth;
 	size_t SendSeqNum;
 
 	RpcClient* client;

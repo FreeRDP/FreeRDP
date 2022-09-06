@@ -38,7 +38,7 @@
 
 #include "../proxy.h"
 #include "http.h"
-#include "ntlm.h"
+#include "../credssp_auth.h"
 #include "ncacn_http.h"
 #include "rpc_bind.h"
 #include "rpc_fault.h"
@@ -412,11 +412,11 @@ static int rpc_channel_rpch_init(RpcClient* client, RpcChannel* channel, const c
 		return -1;
 
 	settings = client->context->settings;
-	channel->ntlm = ntlm_new();
+	channel->auth = credssp_auth_new(client->context);
 	rts_generate_cookie((BYTE*)&channel->Cookie);
 	channel->client = client;
 
-	if (!channel->ntlm)
+	if (!channel->auth)
 		return -1;
 
 	channel->http = http_context_new();
@@ -472,7 +472,7 @@ void rpc_channel_free(RpcChannel* channel)
 	if (!channel)
 		return;
 
-	ntlm_free(channel->ntlm);
+	credssp_auth_free(channel->auth);
 	http_context_free(channel->http);
 	tls_free(channel->tls);
 	free(channel);
@@ -748,7 +748,7 @@ static int rpc_in_channel_connect(RpcInChannel* inChannel, UINT32 timeout)
 
 	rpc_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_CONNECTED);
 
-	if (!rpc_ncacn_http_ntlm_init(context, &inChannel->common))
+	if (!rpc_ncacn_http_auth_init(context, &inChannel->common))
 		return -1;
 
 	/* Send IN Channel Request */
@@ -781,7 +781,7 @@ static int rpc_out_channel_connect(RpcOutChannel* outChannel, int timeout)
 
 	rpc_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
 
-	if (!rpc_ncacn_http_ntlm_init(context, &outChannel->common))
+	if (!rpc_ncacn_http_auth_init(context, &outChannel->common))
 		return FALSE;
 
 	/* Send OUT Channel Request */
@@ -812,7 +812,7 @@ int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout)
 
 	rpc_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
 
-	if (!rpc_ncacn_http_ntlm_init(context, (RpcChannel*)outChannel))
+	if (!rpc_ncacn_http_auth_init(context, (RpcChannel*)outChannel))
 		return FALSE;
 
 	/* Send OUT Channel Request */
@@ -866,9 +866,9 @@ rdpRpc* rpc_new(rdpTransport* transport)
 	rpc->State = RPC_CLIENT_STATE_INITIAL;
 	rpc->transport = transport;
 	rpc->SendSeqNum = 0;
-	rpc->ntlm = ntlm_new();
+	rpc->auth = credssp_auth_new(context);
 
-	if (!rpc->ntlm)
+	if (!rpc->auth)
 		goto out_free;
 
 	rpc->PipeCallId = 0;
@@ -905,7 +905,7 @@ void rpc_free(rdpRpc* rpc)
 	if (rpc)
 	{
 		rpc_client_free(rpc->client);
-		ntlm_free(rpc->ntlm);
+		credssp_auth_free(rpc->auth);
 		rpc_virtual_connection_free(rpc->VirtualConnection);
 		free(rpc);
 	}
