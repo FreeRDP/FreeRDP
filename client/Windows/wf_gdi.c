@@ -410,9 +410,7 @@ void wf_resize_window(wfContext* wfc)
 			xpos = wfc->client_x;
 			ypos = wfc->client_y;
 		}
-		SetWindowPos(wfc->hwnd, HWND_TOP, xpos, ypos,
-		             width, height,
-		             0 /*SWP_FRAMECHANGED*/);
+		SetWindowPos(wfc->hwnd, HWND_TOP, xpos, ypos, width, height, 0 /*SWP_FRAMECHANGED*/);
 		// wf_size_scrollbars(wfc,  wfc->client_width, wfc->client_height);
 	}
 
