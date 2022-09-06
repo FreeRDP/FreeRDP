@@ -387,8 +387,31 @@ void wf_resize_window(wfContext* wfc)
 
 		wf_update_canvas_diff(wfc);
 		/* Now resize to get full canvas size and room for caption and borders */
-		SetWindowPos(wfc->hwnd, HWND_TOP, wfc->client_x, wfc->client_y,
-		             wfc->client_width + wfc->diff.x, wfc->client_height + wfc->diff.y,
+		int width, height;
+		if (settings->SmartSizing && settings->SmartSizingWidth && settings->SmartSizingHeight)
+		{
+			width = settings->SmartSizingWidth;
+			height = settings->SmartSizingHeight;
+		}
+		else
+		{
+			width = wfc->client_width + wfc->diff.x;
+			height = wfc->client_height + wfc->diff.y;
+		}
+
+		int xpos, ypos;
+		if ((settings->DesktopPosX != UINT32_MAX) && (settings->DesktopPosY != UINT32_MAX))
+		{
+			xpos = settings->DesktopPosX;
+			ypos = settings->DesktopPosY;
+		}
+		else
+		{
+			xpos = wfc->client_x;
+			ypos = wfc->client_y;
+		}
+		SetWindowPos(wfc->hwnd, HWND_TOP, xpos, ypos,
+		             width, height,
 		             0 /*SWP_FRAMECHANGED*/);
 		// wf_size_scrollbars(wfc,  wfc->client_width, wfc->client_height);
 	}
