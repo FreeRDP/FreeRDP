@@ -37,7 +37,6 @@
 typedef struct rdp_rdg rdpRdg;
 
 #include "http.h"
-#include "ntlm.h"
 
 FREERDP_LOCAL rdpRdg* rdg_new(rdpContext* context);
 FREERDP_LOCAL void rdg_free(rdpRdg* rdg);

@@ -47,7 +47,6 @@ typedef enum
 } NLA_STATE;
 
 FREERDP_LOCAL int nla_authenticate(rdpNla* nla);
-FREERDP_LOCAL LPTSTR nla_make_spn(const char* ServiceClass, const char* hostname);
 
 FREERDP_LOCAL int nla_client_begin(rdpNla* nla);
 FREERDP_LOCAL int nla_recv_pdu(rdpNla* nla, wStream* s);
@@ -60,7 +59,8 @@ FREERDP_LOCAL const char* nla_get_state_str(NLA_STATE state);
 
 FREERDP_LOCAL DWORD nla_get_error(rdpNla* nla);
 
-FREERDP_LOCAL BOOL nla_set_service_principal(rdpNla* nla, LPTSTR principal);
+FREERDP_LOCAL BOOL nla_set_service_principal(rdpNla* nla, const char* service,
+                                             const char* hostname);
 
 FREERDP_LOCAL BOOL nla_set_sspi_module(rdpNla* nla, const char* sspiModule);
 FREERDP_LOCAL BOOL nla_sspi_module_init(rdpNla* nla);

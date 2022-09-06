@@ -42,8 +42,6 @@ set(${MODULE_PREFIX}_GATEWAY_SRCS
 	${${MODULE_PREFIX}_GATEWAY_DIR}/rts.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/rts_signature.c
 	${${MODULE_PREFIX}_GATEWAY_DIR}/rts_signature.h
-	${${MODULE_PREFIX}_GATEWAY_DIR}/ntlm.c
-	${${MODULE_PREFIX}_GATEWAY_DIR}/ntlm.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/http.c
 	${${MODULE_PREFIX}_GATEWAY_DIR}/http.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/ncacn_http.c
@@ -133,7 +131,9 @@ set(${MODULE_PREFIX}_SRCS
 	peer.c
 	peer.h
 	display.c
-	display.h)
+	display.h
+	credssp_auth.c
+	credssp_auth.h)
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS})
 
