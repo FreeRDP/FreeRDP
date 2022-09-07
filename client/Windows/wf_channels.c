@@ -63,9 +63,7 @@ wf_encomsp_participant_created(EncomspClientContext* context,
 	WINPR_ASSERT(wf);
 
 	settings = wf->common.context.settings;
-
-	if (!settings)
-		return ERROR_INVALID_PARAMETER;
+	WINPR_ASSERT(settings);
 
 	request = freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceRequestControl);
 	if (request && (participantCreated->Flags & ENCOMSP_MAY_VIEW) &&
