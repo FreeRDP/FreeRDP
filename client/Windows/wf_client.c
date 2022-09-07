@@ -588,8 +588,6 @@ static WCHAR* wf_format_text(const WCHAR* fmt, ...)
 	int rc;
 	size_t size = 0;
 	WCHAR* buffer = NULL;
-	if (!buffer)
-		return NULL;
 
 	do
 	{
