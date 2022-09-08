@@ -742,6 +742,7 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 	char* p;
 	char* q;
 	char* r;
+	char* amp;
 	int status;
 	size_t length;
 
@@ -894,6 +895,10 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 		if (p)
 		{
 			p += sizeof("PassStub=\"") - 1;
+
+			// needs to be unescaped (&amp; => &)
+			amp = strstr(p, "&amp;");
+
 			q = strchr(p, '"');
 
 			if (!q)
@@ -909,13 +914,31 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 				return -1;
 			}
 
-			length = q - p;
+			if (amp)
+			{
+				length = q - p - 4;
+			}
+			else
+			{
+				length = q - p;
+			}
+
 			file->PassStub = (char*)malloc(length + 1);
 
 			if (!file->PassStub)
 				return -1;
 
-			CopyMemory(file->PassStub, p, length);
+			if (amp)
+			{
+				// just skip over "amp;" leaving "&"
+				CopyMemory(file->PassStub, p, amp - p + 1);
+				CopyMemory(file->PassStub + (amp - p + 1), amp + 5, q - amp + 5);
+			}
+			else
+			{
+				CopyMemory(file->PassStub, p, length);
+			}
+
 			file->PassStub[length] = '\0';
 		}
 
