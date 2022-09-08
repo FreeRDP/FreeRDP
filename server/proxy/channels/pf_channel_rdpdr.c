@@ -394,20 +394,7 @@ static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, 
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, unicodeFlag);
-	switch (unicodeFlag)
-	{
-		case 1:
-			rdpdr->common.computerNameUnicode = TRUE;
-			break;
-		case 0:
-			rdpdr->common.computerNameUnicode = FALSE;
-			break;
-		default:
-			WLog_WARN(TAG, "[%s | %s]: Invalid unicodeFlag value 0x%08" PRIx32,
-			          rdpdr_component_string(RDPDR_CTYP_CORE),
-			          rdpdr_packetid_string(PAKID_CORE_CLIENT_NAME), unicodeFlag);
-			return ERROR_INVALID_DATA;
-	}
+	rdpdr->common.computerNameUnicode = (unicodeFlag & 1);
 
 	Stream_Read_UINT32(s, codePage);
 	WINPR_UNUSED(codePage); /* Field is ignored */
