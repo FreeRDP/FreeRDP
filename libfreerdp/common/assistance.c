@@ -742,6 +742,7 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 	char* p;
 	char* q;
 	char* r;
+	char* amp;
 	int status;
 	size_t length;
 
