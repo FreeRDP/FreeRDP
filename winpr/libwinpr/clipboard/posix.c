@@ -36,11 +36,19 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include <dirent.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifdef _WIN32
+#include "dirent.h"
+#define S_ISDIR(x) (((x)&S_IFDIR))
+#include <winpr/wtypes.h>
+typedef SSIZE_T ssize_t;
+#else
+#include <dirent.h>
+#include <unistd.h>
+#endif
 
 #include <winpr/crt.h>
 #include <winpr/clipboard.h>

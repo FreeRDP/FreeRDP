@@ -1032,6 +1032,8 @@ BOOL GetDiskFreeSpaceW(LPCWSTR lpwRootPathName, LPDWORD lpSectorsPerCluster,
 	return ret;
 }
 
+#endif /* _WIN32 */
+
 /**
  * Check if a file name component is valid.
  *
@@ -1113,8 +1115,6 @@ BOOL ValidFileNameComponent(LPCWSTR lpFileName)
 
 	return TRUE;
 }
-
-#endif /* _WIN32 */
 
 #ifdef _UWP
 
@@ -1393,7 +1393,7 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 {
 #ifdef _WIN32
 	return (HANDLE)_get_osfhandle(fd);
-#else  /* _WIN32 */
+#else /* _WIN32 */
 	WINPR_FILE* pFile;
 	FILE* fp;
 	int flags;
