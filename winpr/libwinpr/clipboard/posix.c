@@ -775,12 +775,17 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	return dst;
 }
 
-/* Prepend header of kde dolphin format to file list*/
+/* Prepend header of kde dolphin format to file list
+ * See:
+ *   GTK: https://docs.gtk.org/glib/struct.Uri.html
+ *   uri syntax: https://www.rfc-editor.org/rfc/rfc3986#section-3
+ *   uri-lists format: https://www.rfc-editor.org/rfc/rfc2483#section-5
+ */
 static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 formatId,
                                                  const void* data, UINT32* pSize)
 {
-	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize, "", "file:", "\n",
-	                                            FALSE);
+	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize, "",
+	                                            "file:", "\r\n", FALSE);
 }
 
 /* Prepend header of common gnome format to file list*/
@@ -850,9 +855,13 @@ static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 	    1. Gnome Nautilus based file manager (Nautilus only with version >= 3.30 AND < 40):
 	        TARGET: UTF8_STRING
 	        format: x-special/nautilus-clipboard\copy\n\file://path\n\0
-	    2. Kde Dolpin:
+	    2. Kde Dolpin and Qt:
 	        TARGET: text/uri-list
-	        format: file:path\n\0
+	        format: file:path\r\n\0
+	        See:
+	          GTK: https://docs.gtk.org/glib/struct.Uri.html
+	          uri syntax: https://www.rfc-editor.org/rfc/rfc3986#section-3
+	          uri-lists fomat: https://www.rfc-editor.org/rfc/rfc2483#section-5
 	    3. Gnome and others (Unity/XFCE/Nautilus < 3.30/Nautilus >= 40):
 	        TARGET: x-special/gnome-copied-files
 	        format: copy\nfile://path\n\0
