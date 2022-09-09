@@ -30,17 +30,9 @@
 #pragma clang diagnostic pop
 #endif
 
-#define WIN32_FILETIME_TO_UNIX_EPOCH UINT64_C(11644473600)
-
-#include <stddef.h>
-#include <stdlib.h>
 #include <errno.h>
 
-#include <dirent.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <winpr/wtypes.h>
 
 #include <winpr/crt.h>
 #include <winpr/clipboard.h>
@@ -52,10 +44,10 @@
 #include <winpr/print.h>
 
 #include "clipboard.h"
-#include "posix.h"
+#include "synthetic_file.h"
 
 #include "../log.h"
-#define TAG WINPR_TAG("clipboard.posix")
+#define TAG WINPR_TAG("clipboard.synthetic.file")
 
 const char* mime_uri_list = "text/uri-list";
 const char* mime_FileGroupDescriptorW = "FileGroupDescriptorW";
@@ -63,62 +55,74 @@ const char* mime_nautilus_clipboard = "x-special/nautilus-clipboard";
 const char* mime_gnome_copied_files = "x-special/gnome-copied-files";
 const char* mime_mate_copied_files = "x-special/mate-copied-files";
 
-struct posix_file
+struct synthetic_file
 {
-	char* local_name;
+	WCHAR* local_name;
 	WCHAR* remote_name;
-	BOOL is_directory;
-	UINT64 last_write_time;
+	FILETIME last_write_time;
 
-	int fd;
+	HANDLE fd;
 	INT64 offset;
-	INT64 size;
+
+	DWORD dwFileAttributes;
+	FILETIME ftCreationTime;
+	FILETIME ftLastAccessTime;
+	FILETIME ftLastWriteTime;
+	DWORD nFileSizeHigh;
+	DWORD nFileSizeLow;
 };
 
-static struct posix_file* make_posix_file(const char* local_name, const WCHAR* remote_name)
+static struct synthetic_file* make_synthetic_file(const WCHAR* local_name, const WCHAR* remote_name)
 {
-	struct posix_file* file = NULL;
-	struct stat statbuf;
-	file = calloc(1, sizeof(*file));
+	struct synthetic_file* file = NULL;
+	WIN32_FIND_DATAW fd;
+	HANDLE hFind = FindFirstFileW(local_name, &fd);
+	if (INVALID_HANDLE_VALUE == hFind)
+	{
+		WLog_ERR(TAG, "FindFirstFile failed (%d)", GetLastError());
+		return NULL;
+	}
+	FindClose(hFind);
 
+	file = calloc(1, sizeof(*file));
 	if (!file)
 		return NULL;
 
-	file->fd = -1;
+	file->fd = INVALID_HANDLE_VALUE;
 	file->offset = 0;
-	file->local_name = _strdup(local_name);
+	file->local_name = _wcsdup(local_name);
 	file->remote_name = _wcsdup(remote_name);
 
-	if (!file->local_name || !file->remote_name)
-		goto error;
-
-	if (stat(local_name, &statbuf))
+	do
 	{
-		int err = errno;
-		WLog_ERR(TAG, "failed to stat %s: %s", local_name, strerror(err));
-		goto error;
-	}
+		if (!file->local_name || !file->remote_name)
+			break;
 
-	file->is_directory = S_ISDIR(statbuf.st_mode);
-	file->last_write_time = (statbuf.st_mtime + WIN32_FILETIME_TO_UNIX_EPOCH) * 10 * 1000 * 1000;
-	file->size = statbuf.st_size;
-	return file;
-error:
+		file->dwFileAttributes = fd.dwFileAttributes;
+		file->last_write_time = fd.ftLastWriteTime;
+		file->nFileSizeHigh = fd.nFileSizeHigh;
+		file->nFileSizeLow = fd.nFileSizeLow;
+
+		return file;
+	} while (0);
+
 	free(file->local_name);
 	free(file->remote_name);
 	free(file);
+
 	return NULL;
 }
-static UINT posix_file_read_close(struct posix_file* file, BOOL force);
 
-static void free_posix_file(void* the_file)
+static UINT synthetic_file_read_close(struct synthetic_file* file, BOOL force);
+
+static void free_synthetic_file(void* the_file)
 {
-	struct posix_file* file = the_file;
+	struct synthetic_file* file = the_file;
 
 	if (!file)
 		return;
 
-	posix_file_read_close(file, TRUE);
+	synthetic_file_read_close(file, TRUE);
 
 	free(file->local_name);
 	free(file->remote_name);
@@ -197,25 +201,14 @@ error:
  * Note that the function converts a single file name component,
  * it does not take care of component separators.
  */
-static WCHAR* convert_local_name_component_to_remote(wClipboard* clipboard, const char* local_name)
+static WCHAR* convert_local_name_component_to_remote(wClipboard* clipboard, const WCHAR* local_name)
 {
 	wClipboardDelegate* delegate = ClipboardGetDelegate(clipboard);
 	WCHAR* remote_name = NULL;
 
 	WINPR_ASSERT(delegate);
 
-	/*
-	 * Note that local file names are not actually guaranteed to be
-	 * encoded in UTF-8. Filesystems and users can use whatever they
-	 * want. The OS does not care, aside from special treatment of
-	 * '\0' and '/' bytes. But we need to make some decision here.
-	 * Assuming UTF-8 is currently the most sane thing.
-	 */
-	if (!ConvertToUnicode(CP_UTF8, 0, local_name, -1, &remote_name, 0))
-	{
-		WLog_ERR(TAG, "Unicode conversion failed for %s", local_name);
-		goto error;
-	}
+	remote_name = _wcsdup(local_name);
 
 	/*
 	 * Some file names are not valid on Windows. Check for these now
@@ -238,25 +231,7 @@ error:
 	return NULL;
 }
 
-static char* concat_local_name(const char* dir, const char* file)
-{
-	size_t len_dir = 0;
-	size_t len_file = 0;
-	char* buffer = NULL;
-	len_dir = strlen(dir);
-	len_file = strlen(file);
-	buffer = calloc(len_dir + 1 + len_file + 1, sizeof(char));
-
-	if (!buffer)
-		return NULL;
-
-	memcpy(buffer, dir, len_dir * sizeof(char));
-	buffer[len_dir] = '/';
-	memcpy(buffer + len_dir + 1, file, len_file * sizeof(char));
-	return buffer;
-}
-
-static WCHAR* concat_remote_name(const WCHAR* dir, const WCHAR* file)
+static WCHAR* concat_file_name(const WCHAR* dir, const WCHAR* file)
 {
 	size_t len_dir = 0;
 	size_t len_file = 0;
@@ -269,34 +244,35 @@ static WCHAR* concat_remote_name(const WCHAR* dir, const WCHAR* file)
 		return NULL;
 
 	memcpy(buffer, dir, len_dir * sizeof(WCHAR));
-	buffer[len_dir] = L'\\';
+	buffer[len_dir] = L'/';
 	memcpy(buffer + len_dir + 1, file, len_file * sizeof(WCHAR));
 	return buffer;
 }
 
-static BOOL add_file_to_list(wClipboard* clipboard, const char* local_name,
+static BOOL add_file_to_list(wClipboard* clipboard, const WCHAR* local_name,
                              const WCHAR* remote_name, wArrayList* files);
 
-static BOOL add_directory_entry_to_list(wClipboard* clipboard, const char* local_dir_name,
-                                        const WCHAR* remote_dir_name, const struct dirent* entry,
-                                        wArrayList* files)
+static BOOL add_directory_entry_to_list(wClipboard* clipboard, const WCHAR* local_dir_name,
+                                        const WCHAR* remote_dir_name,
+                                        const LPWIN32_FIND_DATAW pFileData, wArrayList* files)
 {
 	BOOL result = FALSE;
-	char* local_name = NULL;
+	WCHAR* local_name = NULL;
 	WCHAR* remote_name = NULL;
 	WCHAR* remote_base_name = NULL;
 
 	/* Skip special directory entries. */
-	if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))
+
+	if ((_wcscmp(pFileData->cFileName, L".") == 0) || (_wcscmp(pFileData->cFileName, L"..") == 0))
 		return TRUE;
 
-	remote_base_name = convert_local_name_component_to_remote(clipboard, entry->d_name);
+	remote_base_name = convert_local_name_component_to_remote(clipboard, pFileData->cFileName);
 
 	if (!remote_base_name)
 		return FALSE;
 
-	local_name = concat_local_name(local_dir_name, entry->d_name);
-	remote_name = concat_remote_name(remote_dir_name, remote_base_name);
+	local_name = concat_file_name(local_dir_name, pFileData->cFileName);
+	remote_name = concat_file_name(remote_dir_name, remote_base_name);
 
 	if (local_name && remote_name)
 		result = add_file_to_list(clipboard, local_name, remote_name, files);
@@ -307,91 +283,73 @@ static BOOL add_directory_entry_to_list(wClipboard* clipboard, const char* local
 	return result;
 }
 
-static BOOL do_add_directory_contents_to_list(wClipboard* clipboard, const char* local_name,
-                                              const WCHAR* remote_name, DIR* dirp,
+static BOOL do_add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* local_name,
+                                              const WCHAR* remote_name, HANDLE hFind,
                                               wArrayList* files)
 {
-	/*
-	 * For some reason POSIX does not require readdir() to be thread-safe.
-	 * However, readdir_r() has really insane interface and is pretty bad
-	 * replacement for it. Fortunately, most C libraries guarantee thread-
-	 * safety of readdir() when it is used for distinct directory streams.
-	 *
-	 * Thus we can use readdir() in multithreaded applications if we are
-	 * sure that it will not corrupt some global data. It would be nice
-	 * to have a compile-time check for this here, but some C libraries
-	 * do not provide a #define because of reasons (I'm looking at you,
-	 * musl). We should not be breaking people's builds because of that,
-	 * so we do nothing and proceed with fingers crossed.
-	 */
-	for (;;)
+	if (INVALID_HANDLE_VALUE == hFind)
 	{
-		struct dirent* entry = NULL;
-		errno = 0;
-		entry = readdir(dirp);
+		return FALSE;
+	}
 
-		if (!entry)
+	while (TRUE)
+	{
+		WIN32_FIND_DATAW FileData;
+		BOOL bRet = FindNextFileW(hFind, &FileData);
+		if (!bRet)
 		{
-			int err = errno;
-
-			if (!err)
-				break;
-
-			WLog_ERR(TAG, "failed to read directory: %s", strerror(err));
+			WLog_WARN(TAG, "FindNextFile failed (%d)", GetLastError());
+			if (ERROR_NO_MORE_FILES == GetLastError())
+				return TRUE;
 			return FALSE;
 		}
 
-		if (!add_directory_entry_to_list(clipboard, local_name, remote_name, entry, files))
+		if (!add_directory_entry_to_list(clipboard, local_name, remote_name, &FileData, files))
 			return FALSE;
 	}
 
 	return TRUE;
 }
 
-static BOOL add_directory_contents_to_list(wClipboard* clipboard, const char* local_name,
+static BOOL add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* local_name,
                                            const WCHAR* remote_name, wArrayList* files)
 {
 	BOOL result = FALSE;
-	DIR* dirp = NULL;
-	WLog_VRB(TAG, "adding directory: %s", local_name);
-	dirp = opendir(local_name);
+	WCHAR namebuf[MAX_PATH];
+	HANDLE hFind = NULL;
+	WIN32_FIND_DATAW FindData;
 
-	if (!dirp)
+	swprintf(namebuf, L"%s/*.*", local_name);
+	hFind = FindFirstFileW(namebuf, &FindData);
+	if (hFind == INVALID_HANDLE_VALUE)
 	{
-		int err = errno;
-		WLog_ERR(TAG, "failed to open directory %s: %s", local_name, strerror(err));
-		goto out;
+		WLog_ERR(TAG, "FindFirstFile failed (%d)", GetLastError());
+		return FALSE;
 	}
 
-	result = do_add_directory_contents_to_list(clipboard, local_name, remote_name, dirp, files);
+	result = do_add_directory_contents_to_list(clipboard, local_name, remote_name, hFind, files);
 
-	if (closedir(dirp))
-	{
-		int err = errno;
-		WLog_WARN(TAG, "failed to close directory: %s", strerror(err));
-	}
-
-out:
+	FindClose(hFind);
 	return result;
 }
 
-static BOOL add_file_to_list(wClipboard* clipboard, const char* local_name,
+static BOOL add_file_to_list(wClipboard* clipboard, const WCHAR* local_name,
                              const WCHAR* remote_name, wArrayList* files)
 {
-	struct posix_file* file = NULL;
+	struct synthetic_file* file = NULL;
 	WLog_VRB(TAG, "adding file: %s", local_name);
-	file = make_posix_file(local_name, remote_name);
+	file = make_synthetic_file(local_name, remote_name);
 
 	if (!file)
 		return FALSE;
 
 	if (!ArrayList_Append(files, file))
 	{
-		free_posix_file(file);
+		free_synthetic_file(file);
 		return FALSE;
 	}
 
-	if (file->is_directory)
+	if (file->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 	{
 		/*
 		 * This is effectively a recursive call, but we do not track
@@ -404,24 +362,24 @@ static BOOL add_file_to_list(wClipboard* clipboard, const char* local_name,
 	return TRUE;
 }
 
-static const char* get_basename(const char* name)
+static const WCHAR* get_basename(const WCHAR* name)
 {
-	const char* c = name;
-	const char* last_name = name;
+	const WCHAR* c = name;
+	const WCHAR* last_name = name;
 
 	while (*c++)
 	{
-		if (*c == '/')
+		if (*c == L'/')
 			last_name = c + 1;
 	}
 
 	return last_name;
 }
 
-static BOOL process_file_name(wClipboard* clipboard, const char* local_name, wArrayList* files)
+static BOOL process_file_name(wClipboard* clipboard, const WCHAR* local_name, wArrayList* files)
 {
 	BOOL result = FALSE;
-	const char* base_name = NULL;
+	const WCHAR* base_name = NULL;
 	WCHAR* remote_name = NULL;
 	/*
 	 * Start with the base name of the file. text/uri-list contains the
@@ -456,8 +414,20 @@ static BOOL process_uri(wClipboard* clipboard, const char* uri, size_t uri_len)
 	}
 	if (name)
 	{
-		result = process_file_name(clipboard, name, clipboard->localFiles);
+		WCHAR* wname = NULL;
+		/*
+		 * Note that local file names are not actually guaranteed to be
+		 * encoded in UTF-8. Filesystems and users can use whatever they
+		 * want. The OS does not care, aside from special treatment of
+		 * '\0' and '/' bytes. But we need to make some decision here.
+		 * Assuming UTF-8 is currently the most sane thing.
+		 */
+		if (ConvertToUnicode(CP_UTF8, 0, name, -1, &wname, 0))
+		{
+			result = process_file_name(clipboard, wname, clipboard->localFiles);
+		}
 		free(name);
+		free(wname);
 	}
 
 	return result;
@@ -520,13 +490,13 @@ static BOOL process_uri_list(wClipboard* clipboard, const char* data, size_t len
 	return TRUE;
 }
 
-static BOOL convert_local_file_to_filedescriptor(const struct posix_file* file,
+static BOOL convert_local_file_to_filedescriptor(const struct synthetic_file* file,
                                                  FILEDESCRIPTORW* descriptor)
 {
 	size_t remote_len = 0;
 	descriptor->dwFlags = FD_ATTRIBUTES | FD_FILESIZE | FD_WRITESTIME | FD_PROGRESSUI;
 
-	if (file->is_directory)
+	if (file->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 	{
 		descriptor->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 		descriptor->nFileSizeLow = 0;
@@ -535,12 +505,11 @@ static BOOL convert_local_file_to_filedescriptor(const struct posix_file* file,
 	else
 	{
 		descriptor->dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
-		descriptor->nFileSizeLow = (file->size >> 0) & 0xFFFFFFFF;
-		descriptor->nFileSizeHigh = (file->size >> 32) & 0xFFFFFFFF;
+		descriptor->nFileSizeLow = file->nFileSizeLow;
+		descriptor->nFileSizeHigh = file->nFileSizeHigh;
 	}
 
-	descriptor->ftLastWriteTime.dwLowDateTime = (file->last_write_time >> 0) & 0xFFFFFFFF;
-	descriptor->ftLastWriteTime.dwHighDateTime = (file->last_write_time >> 32) & 0xFFFFFFFF;
+	descriptor->ftLastWriteTime = file->ftLastWriteTime;
 
 	remote_len = _wcslen(file->remote_name);
 
@@ -567,7 +536,7 @@ static FILEDESCRIPTORW* convert_local_file_list_to_filedescriptors(wArrayList* f
 
 	for (i = 0; i < count; i++)
 	{
-		const struct posix_file* file = ArrayList_GetItem(files, i);
+		const struct synthetic_file* file = ArrayList_GetItem(files, i);
 
 		if (!convert_local_file_to_filedescriptor(file, &descriptors[i]))
 			goto error;
@@ -986,7 +955,7 @@ static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 		goto error;
 
 	obj = ArrayList_Object(clipboard->localFiles);
-	obj->fnObjectFree = free_posix_file;
+	obj->fnObjectFree = free_synthetic_file;
 
 	if (!ClipboardRegisterSynthesizer(clipboard, local_file_format_id, file_group_format_id,
 	                                  convert_uri_list_to_filedescriptors))
@@ -1030,27 +999,26 @@ error:
 	return FALSE;
 }
 
-static UINT posix_file_get_size(const struct posix_file* file, INT64* size)
+static UINT file_get_size(const struct synthetic_file* file, UINT64* size)
 {
-	struct stat statbuf;
+	UINT64 s = 0;
 
-	if (stat(file->local_name, &statbuf) < 0)
-	{
-		int err = errno;
-		WLog_ERR(TAG, "failed to stat %s: %s", file->local_name, strerror(err));
-		return ERROR_FILE_INVALID;
-	}
+	if (!file || !size)
+		return E_INVALIDARG;
 
-	*size = statbuf.st_size;
+	s = file->nFileSizeHigh;
+	s <<= 32;
+	s |= file->nFileSizeLow;
+	*size = s;
 	return NO_ERROR;
 }
 
-static UINT posix_file_request_size(wClipboardDelegate* delegate,
-                                    const wClipboardFileSizeRequest* request)
+static UINT delegate_file_request_size(wClipboardDelegate* delegate,
+                                       const wClipboardFileSizeRequest* request)
 {
 	UINT error = NO_ERROR;
-	INT64 size = 0;
-	struct posix_file* file = NULL;
+	UINT64 size = 0;
+	struct synthetic_file* file = NULL;
 
 	if (!delegate || !delegate->clipboard || !request)
 		return ERROR_BAD_ARGUMENTS;
@@ -1063,7 +1031,7 @@ static UINT posix_file_request_size(wClipboardDelegate* delegate,
 	if (!file)
 		return ERROR_INDEX_ABSENT;
 
-	error = posix_file_get_size(file, &size);
+	error = file_get_size(file, &size);
 
 	if (error)
 		error = delegate->ClipboardFileSizeFailure(delegate, request, error);
@@ -1076,153 +1044,136 @@ static UINT posix_file_request_size(wClipboardDelegate* delegate,
 	return NO_ERROR;
 }
 
-static UINT posix_file_read_open(struct posix_file* file)
+UINT synthetic_file_read_close(struct synthetic_file* file, BOOL force)
 {
-	struct stat statbuf;
-
-	if (file->fd >= 0)
-		return NO_ERROR;
-
-	file->fd = open(file->local_name, O_RDONLY);
-
-	if (file->fd < 0)
-	{
-		int err = errno;
-		WLog_ERR(TAG, "failed to open file %s: %s", file->local_name, strerror(err));
-		return ERROR_FILE_NOT_FOUND;
-	}
-
-	if (fstat(file->fd, &statbuf) < 0)
-	{
-		int err = errno;
-		WLog_ERR(TAG, "failed to stat file: %s", strerror(err));
-		return ERROR_FILE_INVALID;
-	}
-
-	file->offset = 0;
-	file->size = statbuf.st_size;
-	WLog_VRB(TAG, "open file %d -> %s", file->fd, file->local_name);
-	WLog_VRB(TAG, "file %d size: %" PRIu64 " bytes", file->fd, file->size);
-	return NO_ERROR;
-}
-
-static UINT posix_file_read_seek(struct posix_file* file, UINT64 offset)
-{
-	/*
-	 * We should avoid seeking when possible as some filesystems (e.g.,
-	 * an FTP server mapped via FUSE) may not support seeking. We keep
-	 * an accurate account of the current file offset and do not call
-	 * lseek() if the client requests file content sequentially.
-	 */
-	if (offset > INT64_MAX)
-		return ERROR_SEEK;
-
-	if (file->offset == (INT64)offset)
-		return NO_ERROR;
-
-	WLog_VRB(TAG, "file %d force seeking to %" PRIu64 ", current %" PRIu64, file->fd, offset,
-	         file->offset);
-
-	if (lseek(file->fd, (off_t)offset, SEEK_SET) < 0)
-	{
-		int err = errno;
-		WLog_ERR(TAG, "failed to seek file: %s", strerror(err));
-		return ERROR_SEEK;
-	}
-
-	return NO_ERROR;
-}
-
-static UINT posix_file_read_perform(struct posix_file* file, UINT32 size, BYTE** actual_data,
-                                    UINT32* actual_size)
-{
-	BYTE* buffer = NULL;
-	ssize_t amount = 0;
-	WLog_VRB(TAG, "file %d request read %" PRIu32 " bytes", file->fd, size);
-	buffer = malloc(size);
-
-	if (!buffer)
-	{
-		WLog_ERR(TAG, "failed to allocate %" PRIu32 " buffer bytes", size);
-		return ERROR_NOT_ENOUGH_MEMORY;
-	}
-
-	amount = read(file->fd, buffer, size);
-
-	if (amount < 0)
-	{
-		int err = errno;
-		WLog_ERR(TAG, "failed to read file: %s", strerror(err));
-		goto error;
-	}
-
-	*actual_data = buffer;
-	*actual_size = amount;
-	file->offset += amount;
-	WLog_VRB(TAG, "file %d actual read %" PRIu32 " bytes (offset %" PRIu64 ")", file->fd, amount,
-	         file->offset);
-	return NO_ERROR;
-error:
-	free(buffer);
-	return ERROR_READ_FAULT;
-}
-
-UINT posix_file_read_close(struct posix_file* file, BOOL force)
-{
-	if (file->fd < 0)
+	if (!file || INVALID_HANDLE_VALUE == file->fd)
 		return NO_ERROR;
 
 	/* Always force close the file. Clipboard might open hundreds of files
 	 * so avoid caching to prevent running out of available file descriptors */
-	if ((file->offset >= file->size) || force || TRUE)
+	UINT64 size = 0;
+	file_get_size(file, &size);
+	if ((file->offset >= size) || force)
 	{
 		WLog_VRB(TAG, "close file %d", file->fd);
-
-		if (close(file->fd) < 0)
+		if (CloseHandle(file->fd) < 0)
 		{
-			int err = errno;
-			WLog_WARN(TAG, "failed to close fd %d: %s", file->fd, strerror(err));
+			WLog_WARN(TAG, "failed to close fd %d: %d", file->fd, GetLastError());
 		}
 
-		file->fd = -1;
+		file->fd = INVALID_HANDLE_VALUE;
 	}
 
 	return NO_ERROR;
 }
 
-static UINT posix_file_get_range(struct posix_file* file, UINT64 offset, UINT32 size,
-                                 BYTE** actual_data, UINT32* actual_size)
+static UINT file_get_range(struct synthetic_file* file, UINT64 offset, UINT32 size,
+                           BYTE** actual_data, UINT32* actual_size)
 {
 	UINT error = NO_ERROR;
-	error = posix_file_read_open(file);
+	DWORD dwLow = 0;
+	DWORD dwHigh = 0;
+	BYTE* buffer = NULL;
 
-	if (error)
-		goto out;
+	if (INVALID_HANDLE_VALUE == file->fd)
+	{
+		BY_HANDLE_FILE_INFORMATION FileInfo;
 
-	error = posix_file_read_seek(file, offset);
+		file->fd = CreateFileW(file->local_name, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+		                       FILE_ATTRIBUTE_NORMAL, NULL);
+		if (INVALID_HANDLE_VALUE == file->fd)
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "failed to open file %s: %s", file->local_name, error);
+			return error;
+		}
 
-	if (error)
-		goto out;
+		if (!GetFileInformationByHandle(file->fd, &FileInfo))
+		{
+			file->fd = INVALID_HANDLE_VALUE;
+			CloseHandle(file->fd);
+			error = GetLastError();
+			WLog_ERR(TAG, "Get file [%s] information fail: %d", file->local_name, error);
+			return error;
+		}
 
-	error = posix_file_read_perform(file, size, actual_data, actual_size);
+		file->offset = 0;
+		file->nFileSizeHigh = FileInfo.nFileSizeHigh;
+		file->nFileSizeLow = FileInfo.nFileSizeLow;
 
-	if (error)
-		goto out;
+		/*
+		{
+		    UINT64 s = 0;
+		    file_get_size(file, &s);
+		    WLog_DBG(TAG, "open file %d -> %s", file->fd, file->local_name);
+		    WLog_DBG(TAG, "file %d size: %" PRIu64 " bytes", file->fd, s);
+		} //*/
+	}
 
-out:
+	do
+	{
+		/*
+		 * We should avoid seeking when possible as some filesystems (e.g.,
+		 * an FTP server mapped via FUSE) may not support seeking. We keep
+		 * an accurate account of the current file offset and do not call
+		 * lseek() if the client requests file content sequentially.
+		 */
+		if (offset > INT64_MAX)
+		{
+			WLog_ERR(TAG, "offset [%d] > INT64_MAX", offset);
+			error = ERROR_SEEK;
+			break;
+		}
 
-	posix_file_read_close(file, (error != NO_ERROR) && (size > 0));
+		if (file->offset != (INT64)offset)
+		{
+			WLog_DBG(TAG, "file %d force seeking to %" PRIu64 ", current %" PRIu64, file->fd,
+			         offset, file->offset);
+
+			dwHigh = offset >> 32;
+			dwLow = offset & 0xFFFFFFFF;
+			if (INVALID_SET_FILE_POINTER ==
+			    SetFilePointer(file->fd, dwLow, (PLONG)&dwHigh, FILE_BEGIN))
+			{
+				error = GetLastError();
+				break;
+			}
+		}
+
+		buffer = malloc(size);
+		if (!buffer)
+		{
+			error = ERROR_NOT_ENOUGH_MEMORY;
+			break;
+		}
+		if (!ReadFile(file->fd, buffer, size, (LPDWORD)actual_size, NULL))
+		{
+			error = GetLastError();
+			break;
+		}
+
+		*actual_data = buffer;
+		file->offset += *actual_size;
+		WLog_VRB(TAG, "file %d actual read %" PRIu32 " bytes (offset %" PRIu64 ")", file->fd,
+		         *actual_size, file->offset);
+	} while (0);
+
+	if (NO_ERROR != error)
+	{
+		free(buffer);
+	}
+	synthetic_file_read_close(file, (error != NO_ERROR) && (size > 0));
 	return error;
 }
 
-static UINT posix_file_request_range(wClipboardDelegate* delegate,
-                                     const wClipboardFileRangeRequest* request)
+static UINT delegate_file_request_range(wClipboardDelegate* delegate,
+                                        const wClipboardFileRangeRequest* request)
 {
 	UINT error = 0;
 	BYTE* data = NULL;
 	UINT32 size = 0;
 	UINT64 offset = 0;
-	struct posix_file* file = NULL;
+	struct synthetic_file* file = NULL;
 
 	if (!delegate || !delegate->clipboard || !request)
 		return ERROR_BAD_ARGUMENTS;
@@ -1236,7 +1187,7 @@ static UINT posix_file_request_range(wClipboardDelegate* delegate,
 		return ERROR_INDEX_ABSENT;
 
 	offset = (((UINT64)request->nPositionHigh) << 32) | ((UINT64)request->nPositionLow);
-	error = posix_file_get_range(file, offset, request->cbRequested, &data, &size);
+	error = file_get_range(file, offset, request->cbRequested, &data, &size);
 
 	if (error)
 		error = delegate->ClipboardFileRangeFailure(delegate, request, error);
@@ -1277,16 +1228,16 @@ static UINT dummy_file_range_failure(wClipboardDelegate* delegate,
 
 static void setup_delegate(wClipboardDelegate* delegate)
 {
-	delegate->ClientRequestFileSize = posix_file_request_size;
+	delegate->ClientRequestFileSize = delegate_file_request_size;
 	delegate->ClipboardFileSizeSuccess = dummy_file_size_success;
 	delegate->ClipboardFileSizeFailure = dummy_file_size_failure;
-	delegate->ClientRequestFileRange = posix_file_request_range;
+	delegate->ClientRequestFileRange = delegate_file_request_range;
 	delegate->ClipboardFileRangeSuccess = dummy_file_range_success;
 	delegate->ClipboardFileRangeFailure = dummy_file_range_failure;
 	delegate->IsFileNameComponentValid = ValidFileNameComponent;
 }
 
-BOOL ClipboardInitPosixFileSubsystem(wClipboard* clipboard)
+BOOL ClipboardInitSyntheticFileSubsystem(wClipboard* clipboard)
 {
 	if (!clipboard)
 		return FALSE;

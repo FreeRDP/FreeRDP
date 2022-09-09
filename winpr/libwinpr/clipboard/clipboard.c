@@ -27,9 +27,7 @@
 
 #include "clipboard.h"
 
-#ifdef WITH_WCLIPBOARD_POSIX
-#include "posix.h"
-#endif
+#include "synthetic_file.h"
 
 #include "../log.h"
 #define TAG WINPR_TAG("clipboard")
@@ -528,18 +526,16 @@ static void ClipboardInitLocalFileSubsystem(wClipboard* clipboard)
 	 * There can be only one local file subsystem active.
 	 * Return as soon as initialization succeeds.
 	 */
-#ifdef WITH_WCLIPBOARD_POSIX
-	if (ClipboardInitPosixFileSubsystem(clipboard))
+	if (ClipboardInitSyntheticFileSubsystem(clipboard))
 	{
-		WLog_DBG(TAG, "initialized POSIX local file subsystem");
+		WLog_DBG(TAG, "initialized synthetic local file subsystem");
 		return;
 	}
 	else
 	{
-		WLog_WARN(TAG, "failed to initialize POSIX local file subsystem");
+		WLog_WARN(TAG, "failed to initialize synthetic local file subsystem");
 	}
 
-#endif
 	WLog_INFO(TAG, "failed to initialize local file subsystem, file transfer not available");
 }
 
