@@ -180,30 +180,32 @@ static BOOL append_address(rdpAssistanceFile* file, const char* host, const char
 
 static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 {
+	WLog_DBG(TAG, "freerdp_assistance_parse_address_list list=%s", list);
+
 	BOOL rc = FALSE;
-	char* p;
 
 	if (!file || !list)
 		return FALSE;
 
-	p = list;
+	char* strp = list;
+	char* s = ";";
+	char* token;
 
-	while ((p = strchr(p, ';')) != NULL)
+	// get the first token
+	token = strtok(strp, s);
+
+	// walk through other tokens
+	while (token != NULL)
 	{
-		char* q = strchr(p, ':');
+		char* port = strchr(token, ':');
+		*port = '\0';
+		port++;
 
-		if (!q)
+		if (!append_address(file, token, port))
 			goto out;
 
-		*q = '\0';
-		q++;
-
-		if (!append_address(file, p, q))
-			goto out;
-
-		p = q;
+		token = strtok(NULL, s);
 	}
-
 	rc = TRUE;
 out:
 	return rc;
