@@ -16,18 +16,12 @@
 # limitations under the License.
 
 winpr_module_add(
-	synthetic.c
-	clipboard.c
-	clipboard.h)
-
-# MinGW has unistd.h
-if(HAVE_UNISTD_H AND NOT WIN32)
-	winpr_definition_add(-DWITH_WCLIPBOARD_POSIX)
-	winpr_module_add(
-		posix.h
-		posix.c
-	)
-endif()
+    synthetic.c
+    clipboard.c
+    clipboard.h
+    synthetic_file.h
+    synthetic_file.c
+    )
 
 if(BUILD_TESTING)
 	add_subdirectory(test)

@@ -448,9 +448,9 @@ typedef struct
 	pcCreateFileA CreateFileA;
 } HANDLE_CREATOR, *PHANDLE_CREATOR, *LPHANDLE_CREATOR;
 
-WINPR_API BOOL ValidFileNameComponent(LPCWSTR lpFileName);
-
 #endif /* _WIN32 */
+
+WINPR_API BOOL ValidFileNameComponent(LPCWSTR lpFileName);
 
 #ifdef _UWP
 
