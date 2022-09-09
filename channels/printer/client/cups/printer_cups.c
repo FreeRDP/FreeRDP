@@ -46,6 +46,7 @@ typedef struct
 
 	int id_sequence;
 	size_t references;
+	char* defaultPrinter;
 } rdpCupsPrinterDriver;
 
 typedef struct
@@ -276,7 +277,7 @@ static void printer_cups_release_ref_printer(rdpPrinter* printer)
 }
 
 static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, const char* name,
-                                            const char* driverName, BOOL is_default)
+                                            const char* driverName)
 {
 	rdpCupsPrinter* cups_printer;
 
@@ -298,7 +299,7 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 	if (!cups_printer->printer.driver)
 		goto fail;
 
-	cups_printer->printer.is_default = is_default;
+	cups_printer->printer.is_default = strcmp(name, cups_driver->defaultPrinter) == 0;
 
 	cups_printer->printer.CreatePrintJob = printer_cups_create_printjob;
 	cups_printer->printer.FindPrintJob = printer_cups_find_printjob;
@@ -351,8 +352,8 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	{
 		if (dest->instance == NULL)
 		{
-			rdpPrinter* current = printer_cups_new_printer((rdpCupsPrinterDriver*)driver,
-			                                               dest->name, NULL, dest->is_default);
+			rdpPrinter* current =
+			    printer_cups_new_printer((rdpCupsPrinterDriver*)driver, dest->name, NULL);
 			if (!current)
 			{
 				printer_cups_release_enum_printers(printers);
@@ -383,8 +384,7 @@ static rdpPrinter* printer_cups_get_printer(rdpPrinterDriver* driver, const char
 	rdpCupsPrinterDriver* cups_driver = (rdpCupsPrinterDriver*)driver;
 
 	WINPR_ASSERT(cups_driver);
-	return printer_cups_new_printer(cups_driver, name, driverName,
-	                                cups_driver->id_sequence == 1 ? TRUE : FALSE);
+	return printer_cups_new_printer(cups_driver, name, driverName);
 }
 
 static void printer_cups_add_ref_driver(rdpPrinterDriver* driver)
@@ -407,6 +407,7 @@ static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 	{
 		if (uniq_cups_driver == cups_driver)
 			uniq_cups_driver = NULL;
+		free(cups_driver->defaultPrinter);
 		free(cups_driver);
 	}
 	else
@@ -430,6 +431,13 @@ rdpPrinterDriver* cups_freerdp_printer_client_subsystem_entry(void)
 		uniq_cups_driver->driver.ReleaseRef = printer_cups_release_ref_driver;
 
 		uniq_cups_driver->id_sequence = 1;
+		uniq_cups_driver->defaultPrinter = _strdup(cupsGetDefault());
+
+		if (!uniq_cups_driver->defaultPrinter)
+		{
+			free(uniq_cups_driver);
+			return NULL;
+		}
 	}
 
 	WINPR_ASSERT(uniq_cups_driver->driver.AddRef);
