@@ -203,7 +203,6 @@ struct xf_context
 	BOOL focused;
 	BOOL mouse_active;
 	BOOL fullscreen_toggle;
-	BOOL controlToggle;
 	UINT32 KeyboardLayout;
 	BOOL KeyboardState[256];
 	XModifierKeymap* modifierMap;
@@ -268,7 +267,6 @@ struct xf_context
 	xfClipboard* clipboard;
 	CliprdrClientContext* cliprdr;
 	xfVideoContext* xfVideo;
-	EncomspClientContext* encomsp;
 	xfDispContext* xfDisp;
 
 	RailClientContext* rail;
@@ -302,10 +300,6 @@ struct xf_context
 
 BOOL xf_create_window(xfContext* xfc);
 void xf_toggle_fullscreen(xfContext* xfc);
-BOOL xf_toggle_control(xfContext* xfc);
-
-void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp);
-void xf_encomsp_uninit(xfContext* xfc, EncomspClientContext* encomsp);
 
 enum XF_EXIT_CODE
 {

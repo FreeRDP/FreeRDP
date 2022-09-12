@@ -963,6 +963,87 @@ int freerdp_client_common_stop(rdpContext* context)
 	return 0;
 }
 
+BOOL freerdp_client_encomsp_toggle_control(EncomspClientContext* encomsp)
+{
+	rdpClientContext* cctx;
+	BOOL state;
+
+	WINPR_ASSERT(encomsp);
+	cctx = (rdpClientContext*)encomsp->custom;
+
+	state = cctx->controlToggle;
+	cctx->controlToggle = !cctx->controlToggle;
+	return freerdp_client_encomsp_set_control(encomsp, state);
+}
+
+BOOL freerdp_client_encomsp_set_control(EncomspClientContext* encomsp, BOOL control)
+{
+#if defined(CHANNEL_ENCOMSP_CLIENT)
+	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu = { 0 };
+
+	if (!encomsp)
+		return FALSE;
+
+	pdu.ParticipantId = 0;
+	pdu.Flags = ENCOMSP_REQUEST_VIEW;
+
+	if (control)
+		pdu.Flags |= ENCOMSP_REQUEST_INTERACT;
+
+	encomsp->ChangeParticipantControlLevel(encomsp, &pdu);
+#endif
+	return TRUE;
+}
+
+#if defined(CHANNEL_ENCOMSP_CLIENT)
+static UINT
+client_encomsp_participant_created(EncomspClientContext* context,
+                                   const ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
+{
+	rdpClientContext* cctx;
+	rdpSettings* settings;
+	BOOL request;
+
+	if (!context || !context->custom || !participantCreated)
+		return ERROR_INVALID_PARAMETER;
+
+	cctx = (rdpClientContext*)context->custom;
+	WINPR_ASSERT(cctx);
+
+	settings = cctx->context.settings;
+	WINPR_ASSERT(settings);
+
+	request = freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceRequestControl);
+	if (request && (participantCreated->Flags & ENCOMSP_MAY_VIEW) &&
+	    !(participantCreated->Flags & ENCOMSP_MAY_INTERACT))
+	{
+		if (!freerdp_client_encomsp_set_control(context, TRUE))
+			return ERROR_INTERNAL_ERROR;
+	}
+
+	return CHANNEL_RC_OK;
+}
+
+static void client_encomsp_init(rdpClientContext* cctx, EncomspClientContext* encomsp)
+{
+	cctx->encomsp = encomsp;
+	encomsp->custom = (void*)cctx;
+	encomsp->ParticipantCreated = client_encomsp_participant_created;
+}
+
+static void client_encomsp_uninit(rdpClientContext* cctx, EncomspClientContext* encomsp)
+{
+	if (encomsp)
+	{
+		encomsp->custom = NULL;
+		encomsp->ParticipantCreated = NULL;
+	}
+
+	if (cctx)
+		cctx->encomsp = NULL;
+}
+#endif
+
 void freerdp_client_OnChannelConnectedEventHandler(void* context,
                                                    const ChannelConnectedEventArgs* e)
 {
@@ -1004,6 +1085,12 @@ void freerdp_client_OnChannelConnectedEventHandler(void* context,
 	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
 	{
 		gdi_video_data_init(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_ENCOMSP_CLIENT)
+	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
+	{
+		client_encomsp_init(cctx, (EncomspClientContext*)e->pInterface);
 	}
 #endif
 }
@@ -1049,6 +1136,12 @@ void freerdp_client_OnChannelDisconnectedEventHandler(void* context,
 	else if (strcmp(e->name, VIDEO_DATA_DVC_CHANNEL_NAME) == 0)
 	{
 		gdi_video_data_uninit(cctx->context.gdi, (VideoClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_ENCOMSP_CLIENT)
+	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
+	{
+		client_encomsp_uninit(cctx, (EncomspClientContext*)e->pInterface);
 	}
 #endif
 }

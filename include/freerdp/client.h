@@ -33,6 +33,10 @@
 #include <freerdp/client/rdpei.h>
 #endif
 
+#if defined(CHANNEL_ENCOMSP_CLIENT)
+#include <freerdp/client/encomsp.h>
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -95,7 +99,14 @@ extern "C"
 		ALIGN64 INT32 lastX;        /**< (offset 3) */
 		ALIGN64 INT32 lastY;        /**< (offset 4) */
 		ALIGN64 BOOL mouse_grabbed; /** < (offset 5) */
-		UINT64 reserved[128 - 6];   /**< (offset 6) */
+
+#if defined(CHANNEL_ENCOMSP_CLIENT)
+		ALIGN64 EncomspClientContext* encomsp; /** < (offset 6) */
+		ALIGN64 BOOL controlToggle;            /**< (offset 7) */
+#else
+	    UINT64 reserved3[2];
+#endif
+		UINT64 reserved[128 - 8]; /**< (offset 8) */
 	};
 
 	/* Common client functions */
@@ -194,6 +205,10 @@ extern "C"
 	FREERDP_API int freerdp_client_common_stop(rdpContext* context);
 
 	FREERDP_API BOOL freerdp_client_load_channels(freerdp* instance);
+
+	FREERDP_API BOOL freerdp_client_encomsp_toggle_control(EncomspClientContext* encomsp);
+	FREERDP_API BOOL freerdp_client_encomsp_set_control(EncomspClientContext* encomsp,
+	                                                    BOOL control);
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,6 @@
 #ifndef FREERDP_CLIENT_WAYLAND_FREERDP_H
 #define FREERDP_CLIENT_WAYLAND_FREERDP_H
 
-#include <freerdp/client/encomsp.h>
 #include <freerdp/client/rdpei.h>
 #include <freerdp/gdi/gfx.h>
 #include <freerdp/freerdp.h>
@@ -55,7 +54,6 @@ typedef struct
 	BOOL focusing;
 
 	/* Channels */
-	EncomspClientContext* encomsp;
 	wfClipboard* clipboard;
 	wlfDispContext* disp;
 	wLog* log;

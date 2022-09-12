@@ -32,39 +32,6 @@
 #include "tf_channels.h"
 #include "tf_freerdp.h"
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT
-tf_encomsp_participant_created(EncomspClientContext* context,
-                               const ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
-{
-	WINPR_UNUSED(context);
-	WINPR_UNUSED(participantCreated);
-	return CHANNEL_RC_OK;
-}
-
-static void tf_encomsp_init(tfContext* tf, EncomspClientContext* encomsp)
-{
-	tf->encomsp = encomsp;
-	encomsp->custom = (void*)tf;
-	encomsp->ParticipantCreated = tf_encomsp_participant_created;
-}
-
-static void tf_encomsp_uninit(tfContext* tf, EncomspClientContext* encomsp)
-{
-	if (encomsp)
-	{
-		encomsp->custom = NULL;
-		encomsp->ParticipantCreated = NULL;
-	}
-
-	if (tf)
-		tf->encomsp = NULL;
-}
-
 static UINT tf_update_surfaces(RdpgfxClientContext* context)
 {
 	WINPR_UNUSED(context);
@@ -87,10 +54,6 @@ void tf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEven
 		WINPR_ASSERT(clip);
 		clip->custom = context;
 	}
-	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
-	{
-		tf_encomsp_init(tf, (EncomspClientContext*)e->pInterface);
-	}
 	else
 		freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
@@ -110,10 +73,6 @@ void tf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnect
 		CliprdrClientContext* clip = (CliprdrClientContext*)e->pInterface;
 		WINPR_ASSERT(clip);
 		clip->custom = NULL;
-	}
-	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
-	{
-		tf_encomsp_uninit(tf, (EncomspClientContext*)e->pInterface);
 	}
 	else
 		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
