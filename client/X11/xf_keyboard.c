@@ -590,7 +590,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		if (mod.Ctrl && mod.Alt)
 		{
 			/* Ctrl-Alt-C: toggle control */
-			if (xf_toggle_control(xfc))
+			if (freerdp_client_encomsp_toggle_control(xfc->common.encomsp))
 				return TRUE;
 		}
 	}
@@ -696,7 +696,7 @@ void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym)
 	{
 		if (!xfc->fullscreen)
 		{
-			xf_toggle_control(xfc);
+			freerdp_client_encomsp_toggle_control(xfc->common.encomsp);
 		}
 
 		xfc->mouse_active = FALSE;

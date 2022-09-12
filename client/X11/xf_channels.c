@@ -68,10 +68,6 @@ void xf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEven
 	{
 		xf_cliprdr_init(xfc, (CliprdrClientContext*)e->pInterface);
 	}
-	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
-	{
-		xf_encomsp_init(xfc, (EncomspClientContext*)e->pInterface);
-	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		xf_disp_init(xfc->xfDisp, (DispClientContext*)e->pInterface);
@@ -123,10 +119,6 @@ void xf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnect
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		xf_cliprdr_uninit(xfc, (CliprdrClientContext*)e->pInterface);
-	}
-	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
-	{
-		xf_encomsp_uninit(xfc, (EncomspClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
 	{
