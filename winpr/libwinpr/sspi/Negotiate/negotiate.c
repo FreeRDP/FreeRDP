@@ -192,7 +192,7 @@ static const Mech* negotiate_GetMechByOID(const WinPrAsn1_OID* oid)
 
 	WinPrAsn1_OID testOid = *oid;
 
-	if (sspi_gss_oid_compare(&oid, &kerberos_wrong_OID))
+	if (sspi_gss_oid_compare(&testOid, &kerberos_wrong_OID))
 	{
 		testOid.len = kerberos_OID.len;
 		testOid.data = kerberos_OID.data;
