@@ -93,7 +93,7 @@ static BOOL xf_update_last_sent(xfDispContext* xfDisp)
 
 static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 {
-	DISPLAY_CONTROL_MONITOR_LAYOUT layout;
+	DISPLAY_CONTROL_MONITOR_LAYOUT layout = { 0 };
 	xfContext* xfc;
 	rdpSettings* settings;
 
@@ -242,7 +242,7 @@ static void xf_disp_OnTimer(void* context, TimerEventArgs* e)
 	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
 		return;
 
-	if (!xfDisp->activated || settings->Fullscreen)
+	if (!xfDisp->activated || xfc->fullscreen)
 		return;
 
 	xf_disp_sendResize(xfDisp);
