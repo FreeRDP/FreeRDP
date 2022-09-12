@@ -86,6 +86,7 @@ typedef struct
 	rdpContext* rdpcontext;
 	HANDLE thread;
 	HANDLE event;
+	BOOL running;
 } RDPEI_PLUGIN;
 
 /**
@@ -448,7 +449,7 @@ static DWORD WINAPI rdpei_periodic_update(LPVOID arg)
 		goto out;
 	}
 
-	while (rdpei->base.initialized)
+	while (rdpei->running)
 	{
 		status = WaitForSingleObject(rdpei->event, 20);
 
@@ -478,6 +479,9 @@ out:
 
 	if (error && rdpei && rdpei->rdpcontext)
 		setChannelError(rdpei->rdpcontext, error, "rdpei_schedule_thread reported an error");
+
+	if (rdpei)
+		rdpei->running = FALSE;
 
 	ExitThread(error);
 	return error;
@@ -1359,6 +1363,7 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdp
 	rdpei->context = context;
 	rdpei->base.iface.pInterface = (void*)context;
 
+	rdpei->running = TRUE;
 	rdpei->thread = CreateThread(NULL, 0, rdpei_periodic_update, rdpei, 0, NULL);
 	if (!rdpei->thread)
 	{
@@ -1374,6 +1379,7 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)base;
 	WINPR_ASSERT(rdpei);
 
+	rdpei->running = FALSE;
 	if (rdpei->event)
 		SetEvent(rdpei->event);
 
