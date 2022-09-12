@@ -42,13 +42,18 @@
 
 #include "audin_main.h"
 
-#define MSG_SNDIN_VERSION 0x01
-#define MSG_SNDIN_FORMATS 0x02
-#define MSG_SNDIN_OPEN 0x03
-#define MSG_SNDIN_OPEN_REPLY 0x04
-#define MSG_SNDIN_DATA_INCOMING 0x05
-#define MSG_SNDIN_DATA 0x06
-#define MSG_SNDIN_FORMATCHANGE 0x07
+#define SNDIN_VERSION 0x02
+
+enum
+{
+	MSG_SNDIN_VERSION = 0x01,
+	MSG_SNDIN_FORMATS = 0x02,
+	MSG_SNDIN_OPEN = 0x03,
+	MSG_SNDIN_OPEN_REPLY = 0x04,
+	MSG_SNDIN_DATA_INCOMING = 0x05,
+	MSG_SNDIN_DATA = 0x06,
+	MSG_SNDIN_FORMATCHANGE = 0x07
+} MSG_SNDIN_CMD;
 
 typedef struct
 {
@@ -93,6 +98,7 @@ typedef struct
 	IWTSListener* listener;
 
 	BOOL initialized;
+	UINT32 version;
 } AUDIN_PLUGIN;
 
 static BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args);
@@ -127,7 +133,7 @@ static UINT audin_channel_write_and_free(AUDIN_CHANNEL_CALLBACK* callback, wStre
 static UINT audin_process_version(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	wStream* out;
-	const UINT32 ClientVersion = 0x01;
+	const UINT32 ClientVersion = SNDIN_VERSION;
 	UINT32 ServerVersion;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
@@ -138,7 +144,7 @@ static UINT audin_process_version(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 	           ServerVersion, ClientVersion);
 
 	/* Do not answer server packet, we do not support the channel version. */
-	if (ServerVersion != ClientVersion)
+	if (ServerVersion > ClientVersion)
 	{
 		WLog_Print(audin->log, WLOG_WARN,
 		           "Incompatible channel version server=%" PRIu32
@@ -146,6 +152,7 @@ static UINT audin_process_version(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 		           ServerVersion, ClientVersion);
 		return CHANNEL_RC_OK;
 	}
+	audin->version = ServerVersion;
 
 	out = Stream_New(NULL, 5);
 
