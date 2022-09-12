@@ -238,7 +238,7 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s, RDP_BITMAP_PERS
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(info);
 
-	if (Stream_GetRemainingCapacity(s) < 24)
+	if (!Stream_EnsureRemainingCapacity(s, 24))
 		return FALSE;
 
 	Stream_Write_UINT16(s, info->numEntriesCache0);              /* numEntriesCache0 (2 bytes) */
@@ -256,7 +256,8 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s, RDP_BITMAP_PERS
 	Stream_Write_UINT16(s, 0);                                   /* pad3 (2 bytes) */
 	                                                             /* entries */
 
-	Stream_EnsureRemainingCapacity(s, info->keyCount * 8);
+	if (!Stream_EnsureRemainingCapacity(s, info->keyCount * 8))
+		return FALSE;
 
 	for (index = 0; index < info->keyCount; index++)
 	{
@@ -277,7 +278,6 @@ static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 	UINT32 keyCount;
 	UINT64* keyList = NULL;
 	rdpPersistentCache* persistent;
-	PERSISTENT_CACHE_ENTRY cacheEntry;
 	rdpSettings* settings = rdp->settings;
 
 	*pKeyList = NULL;
@@ -308,6 +308,8 @@ static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 
 	for (index = 0; index < count; index++)
 	{
+		PERSISTENT_CACHE_ENTRY cacheEntry;
+
 		if (persistent_cache_read_entry(persistent, &cacheEntry) < 1)
 			continue;
 
@@ -376,13 +378,13 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 
 	WLog_DBG(TAG, "persistentKeyList count: %d", info.keyCount);
 
-	WLog_DBG(TAG, "numEntriesCache: 0: %d 1: %d 2: %d 3: %d 4: %d", info.numEntriesCache0,
+	WLog_DBG(TAG, "numEntriesCache: [0]: %d [1]: %d [2]: %d [3]: %d [4]: %d", info.numEntriesCache0,
 	         info.numEntriesCache1, info.numEntriesCache2, info.numEntriesCache3,
 	         info.numEntriesCache4);
 
-	WLog_DBG(TAG, "totalEntriesCache: 0: %d 1: %d 2: %d 3: %d 4: %d", info.totalEntriesCache0,
-	         info.totalEntriesCache1, info.totalEntriesCache2, info.totalEntriesCache3,
-	         info.totalEntriesCache4);
+	WLog_DBG(TAG, "totalEntriesCache: [0]: %d [1]: %d [2]: %d [3]: %d [4]: %d",
+	         info.totalEntriesCache0, info.totalEntriesCache1, info.totalEntriesCache2,
+	         info.totalEntriesCache3, info.totalEntriesCache4);
 
 	wStream* s = rdp_data_pdu_init(rdp);
 
