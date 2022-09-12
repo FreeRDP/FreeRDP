@@ -2163,7 +2163,7 @@ static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 BOOL nla_send(rdpNla* nla)
 {
 	BOOL rc = FALSE;
-	wStream* s;
+	wStream* s = NULL;
 	size_t length;
 	WinPrAsn1Encoder* enc;
 	WinPrAsn1_OctetString octet_string;
@@ -2262,6 +2262,7 @@ BOOL nla_send(rdpNla* nla)
 	rc = TRUE;
 
 fail:
+	Stream_Free(s, TRUE);
 	WinPrAsn1Encoder_Free(&enc);
 	return rc;
 }
