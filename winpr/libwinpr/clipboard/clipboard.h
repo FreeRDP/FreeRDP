@@ -69,4 +69,11 @@ struct s_wClipboard
 
 BOOL ClipboardInitSynthesizers(wClipboard* clipboard);
 
+extern const char* mime_utf8_string;
+extern const char* mime_uri_list;
+extern const char* mime_FileGroupDescriptorW;
+extern const char* mime_nautilus_clipboard;
+extern const char* mime_gnome_copied_files;
+extern const char* mime_mate_copied_files;
+
 #endif /* WINPR_CLIPBOARD_PRIVATE_H */

@@ -831,6 +831,18 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 		case CB_FORMAT_TEXTURILIST:
 			srcFormatId = ClipboardGetFormatId(clipboard->system, "text/uri-list");
 			break;
+
+		case CB_FORMAT_GNOMECOPIEDFILES:
+			srcFormatId = ClipboardGetFormatId(clipboard->system, "x-special/gnome-copied-files");
+			break;
+
+		case CB_FORMAT_MATECOPIEDFILES:
+			srcFormatId = ClipboardGetFormatId(clipboard->system, "x-special/mate-copied-files");
+			break;
+
+		default:
+			xf_cliprdr_send_data_response(clipboard, NULL, 0);
+			return;
 	}
 
 	SrcSize = (UINT32)size;
@@ -2279,6 +2291,9 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 					case CB_FORMAT_MATECOPIEDFILES:
 						dstFormatId =
 						    ClipboardGetFormatId(clipboard->system, "x-special/mate-copied-files");
+						break;
+					default:
+						break;
 				}
 			}
 

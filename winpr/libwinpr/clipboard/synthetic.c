@@ -62,7 +62,7 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
 		return pDstData;
 	}
 	else if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) ||
-	         (formatId == ClipboardGetFormatId(clipboard, "UTF8_STRING")) ||
+	         (formatId == ClipboardGetFormatId(clipboard, mime_utf8_string)) ||
 	         (formatId == ClipboardGetFormatId(clipboard, "text/plain")) ||
 	         (formatId == ClipboardGetFormatId(clipboard, "TEXT")) ||
 	         (formatId == ClipboardGetFormatId(clipboard, "STRING")))
@@ -126,7 +126,7 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
 	WCHAR* pDstData = NULL;
 
 	if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) ||
-	    (formatId == ClipboardGetFormatId(clipboard, "UTF8_STRING")) ||
+	    (formatId == ClipboardGetFormatId(clipboard, mime_utf8_string)) ||
 	    (formatId == ClipboardGetFormatId(clipboard, "text/plain")) ||
 	    (formatId == ClipboardGetFormatId(clipboard, "TEXT")) ||
 	    (formatId == ClipboardGetFormatId(clipboard, "STRING")))
@@ -153,7 +153,7 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
 }
 
 /**
- * "UTF8_STRING":
+ * mime_utf8_string:
  *
  * Null-terminated UTF-8 string with LF line endings.
  */
@@ -503,7 +503,7 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 	ClipboardRegisterSynthesizer(clipboard, CF_TEXT, CF_UNICODETEXT,
 	                             clipboard_synthesize_cf_unicodetext);
 	ClipboardRegisterSynthesizer(clipboard, CF_TEXT, CF_LOCALE, clipboard_synthesize_cf_locale);
-	altFormatId = ClipboardRegisterFormat(clipboard, "UTF8_STRING");
+	altFormatId = ClipboardRegisterFormat(clipboard, mime_utf8_string);
 	ClipboardRegisterSynthesizer(clipboard, CF_TEXT, altFormatId, clipboard_synthesize_utf8_string);
 	/**
 	 * CF_OEMTEXT
@@ -512,7 +512,7 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 	ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, CF_UNICODETEXT,
 	                             clipboard_synthesize_cf_unicodetext);
 	ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, CF_LOCALE, clipboard_synthesize_cf_locale);
-	altFormatId = ClipboardRegisterFormat(clipboard, "UTF8_STRING");
+	altFormatId = ClipboardRegisterFormat(clipboard, mime_utf8_string);
 	ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, altFormatId,
 	                             clipboard_synthesize_utf8_string);
 	/**
@@ -523,13 +523,13 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 	                             clipboard_synthesize_cf_oemtext);
 	ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, CF_LOCALE,
 	                             clipboard_synthesize_cf_locale);
-	altFormatId = ClipboardRegisterFormat(clipboard, "UTF8_STRING");
+	altFormatId = ClipboardRegisterFormat(clipboard, mime_utf8_string);
 	ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, altFormatId,
 	                             clipboard_synthesize_utf8_string);
 	/**
 	 * UTF8_STRING
 	 */
-	formatId = ClipboardRegisterFormat(clipboard, "UTF8_STRING");
+	formatId = ClipboardRegisterFormat(clipboard, mime_utf8_string);
 
 	if (formatId)
 	{
