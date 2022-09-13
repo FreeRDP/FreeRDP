@@ -34,6 +34,8 @@
 #include "../log.h"
 #define TAG WINPR_TAG("clipboard")
 
+const char* mime_utf8_string = "UTF8_STRING";
+
 /**
  * Clipboard (Windows):
  * msdn.microsoft.com/en-us/library/windows/desktop/ms648709/
