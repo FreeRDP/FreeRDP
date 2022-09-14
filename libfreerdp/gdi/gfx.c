@@ -1391,6 +1391,7 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 	gdiGfxCacheEntry* cacheEntry;
 	RECTANGLE_16 invalidRect;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
+
 	EnterCriticalSection(&context->mux);
 	surface = (gdiGfxSurface*)context->GetSurfaceData(context, cacheToSurface->surfaceId);
 	cacheEntry = (gdiGfxCacheEntry*)context->GetCacheSlotData(context, cacheToSurface->cacheSlot);
@@ -1425,14 +1426,12 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 	LeaveCriticalSection(&context->mux);
 
 	if (!gdi->inGfxFrame)
-	{
-		status = CHANNEL_RC_NOT_INITIALIZED;
-		IFCALLRET(context->UpdateSurfaces, status, context);
-	}
+		status = IFCALLRESULT(CHANNEL_RC_NOT_INITIALIZED, context->UpdateSurfaces, context);
 	else
 		status = CHANNEL_RC_OK;
 
 	return status;
+
 fail:
 	LeaveCriticalSection(&context->mux);
 	return status;

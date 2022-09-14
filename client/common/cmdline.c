@@ -3594,45 +3594,64 @@ static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpS
 	return FALSE;
 }
 
+typedef struct
+{
+	size_t settingId;
+	const char* channelName;
+	void* args;
+} ChannelToLoad;
+
 BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 {
-	UINT32 index;
-
-	/* Always load FreeRDP advanced input dynamic channel */
+	ChannelToLoad dynChannels[] = {
 #if defined(CHANNEL_AINPUT_CLIENT)
-	{
-		const char* p[] = { AINPUT_CHANNEL_NAME };
-
-		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
-			return FALSE;
-	}
+		{ 0, AINPUT_CHANNEL_NAME, NULL }, /* always loaded */
 #endif
+		{ FreeRDP_AudioCapture, "audin", NULL },
+		{ FreeRDP_AudioPlayback, RDPSND_CHANNEL_NAME, NULL },
+#ifdef CHANNEL_RDPEI_CLIENT
+		{ FreeRDP_MultiTouchInput, "rdpei", NULL },
+#endif
+		{ FreeRDP_SupportGraphicsPipeline, "rdpgfx", NULL },
+		{ FreeRDP_SupportEchoChannel, "echo", NULL },
+		{ FreeRDP_SupportSSHAgentChannel, "sshagent", NULL },
+		{ FreeRDP_SupportDisplayControl, DISP_CHANNEL_NAME, NULL },
+		{ FreeRDP_SupportGeometryTracking, "geometry", NULL },
+		{ FreeRDP_SupportSSHAgentChannel, "sshagent", NULL },
+		{ FreeRDP_SupportSSHAgentChannel, "sshagent", NULL },
+		{ FreeRDP_SupportVideoOptimized, "video", NULL },
+	};
 
-	if (settings->AudioPlayback)
+	ChannelToLoad staticChannels[] = {
+		{ FreeRDP_AudioPlayback, RDPSND_CHANNEL_NAME, NULL },
+		{ FreeRDP_RedirectClipboard, CLIPRDR_SVC_CHANNEL_NAME, NULL },
+#if defined(CHANNEL_ENCOMSP_CLIENT)
+		{ FreeRDP_EncomspVirtualChannel, ENCOMSP_SVC_CHANNEL_NAME, settings },
+#endif
+		{ FreeRDP_RemdeskVirtualChannel, REMDESK_SVC_CHANNEL_NAME, settings },
+		{ FreeRDP_RDP2TCPArgs, RDP2TCP_DVC_CHANNEL_NAME, settings->RDP2TCPArgs },
+		{ FreeRDP_RemoteApplicationMode, RAIL_SVC_CHANNEL_NAME, settings }
+	};
+	size_t i;
+
+	/**
+	 * Step 1: first load dynamic channels according to the settings
+	 */
+	for (i = 0; i < ARRAYSIZE(dynChannels); i++)
 	{
-		const char* p[] = { RDPSND_CHANNEL_NAME };
+		if ((dynChannels[i].settingId == 0) ||
+		    freerdp_settings_get_bool(settings, dynChannels[i].settingId))
+		{
+			const char* p[] = { dynChannels[i].channelName };
 
-		if (!freerdp_client_add_static_channel(settings, ARRAYSIZE(p), p))
-			return FALSE;
+			if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
+				return FALSE;
+		}
 	}
 
-	/* for audio playback also load the dynamic sound channel */
-	if (settings->AudioPlayback)
-	{
-		const char* p[] = { RDPSND_CHANNEL_NAME };
-
-		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
-			return FALSE;
-	}
-
-	if (settings->AudioCapture)
-	{
-		const char* p[] = { "audin" };
-
-		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
-			return FALSE;
-	}
-
+	/**
+	 * step 2: do various adjustements in the settings, to handle channels and settings dependencies
+	 */
 	if ((freerdp_static_channel_collection_find(settings, RDPSND_CHANNEL_NAME)) ||
 	    (freerdp_dynamic_channel_collection_find(settings, RDPSND_CHANNEL_NAME))
 #if defined(CHANNEL_TSMF_CLIENT)
@@ -3802,14 +3821,6 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		}
 	}
 
-	if (settings->RedirectClipboard)
-	{
-		const char* params[] = { CLIPRDR_SVC_CHANNEL_NAME };
-
-		if (!freerdp_client_add_static_channel(settings, ARRAYSIZE(params), params))
-			return FALSE;
-	}
-
 	if (settings->LyncRdpMode)
 	{
 		settings->EncomspVirtualChannel = TRUE;
@@ -3824,95 +3835,33 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		settings->NlaSecurity = FALSE;
 	}
 
-	if (settings->EncomspVirtualChannel)
+	/* step 3: schedule some static channels to load depending on the settings */
+	for (i = 0; i < ARRAYSIZE(staticChannels); i++)
 	{
-		if (!freerdp_client_load_static_channel_addin(channels, settings, ENCOMSP_SVC_CHANNEL_NAME,
-		                                              settings))
-			return FALSE;
+		if ((staticChannels[i].settingId == 0) ||
+		    freerdp_settings_get_bool(settings, staticChannels[i].settingId))
+		{
+			if (staticChannels[i].args)
+			{
+				if (!freerdp_client_load_static_channel_addin(
+				        channels, settings, staticChannels[i].channelName, staticChannels[i].args))
+					return FALSE;
+			}
+			else
+			{
+				const char* p[] = { staticChannels[i].channelName };
+				if (!freerdp_client_add_static_channel(settings, ARRAYSIZE(p), p))
+					return FALSE;
+			}
+		}
 	}
 
-	if (settings->RemdeskVirtualChannel)
+	/* step 4: do the static channels loading and init */
+	for (i = 0; i < settings->StaticChannelCount; i++)
 	{
-		if (!freerdp_client_load_static_channel_addin(channels, settings, REMDESK_SVC_CHANNEL_NAME,
-		                                              settings))
-			return FALSE;
-	}
-
-	if (settings->RDP2TCPArgs)
-	{
-		if (!freerdp_client_load_static_channel_addin(channels, settings, RDP2TCP_DVC_CHANNEL_NAME,
-		                                              settings->RDP2TCPArgs))
-			return FALSE;
-	}
-
-	for (index = 0; index < settings->StaticChannelCount; index++)
-	{
-		ADDIN_ARGV* _args = settings->StaticChannelArray[index];
+		ADDIN_ARGV* _args = settings->StaticChannelArray[i];
 
 		if (!freerdp_client_load_static_channel_addin(channels, settings, _args->argv[0], _args))
-			return FALSE;
-	}
-
-	if (settings->RemoteApplicationMode)
-	{
-		if (!freerdp_client_load_static_channel_addin(channels, settings, RAIL_SVC_CHANNEL_NAME,
-		                                              settings))
-			return FALSE;
-	}
-
-	if (settings->MultiTouchInput)
-	{
-		const char* p[] = { "rdpei" };
-
-		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
-			return FALSE;
-	}
-
-	if (settings->SupportGraphicsPipeline)
-	{
-		const char* p[] = { "rdpgfx" };
-
-		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
-			return FALSE;
-	}
-
-	if (settings->SupportEchoChannel)
-	{
-		const char* p[] = { "echo" };
-
-		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
-			return FALSE;
-	}
-
-	if (settings->SupportSSHAgentChannel)
-	{
-		const char* p[] = { "sshagent" };
-
-		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
-			return FALSE;
-	}
-
-	if (settings->SupportDisplayControl)
-	{
-		const char* p[] = { DISP_CHANNEL_NAME };
-
-		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
-			return FALSE;
-	}
-
-	if (freerdp_settings_get_bool(settings, FreeRDP_SupportGeometryTracking))
-	{
-		const char* p[] = { "geometry" };
-
-		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
-			return FALSE;
-	}
-
-	if (freerdp_settings_get_bool(settings, FreeRDP_SupportVideoOptimized))
-	{
-		const char* p[] = { "video" };
-
-		if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
 			return FALSE;
 	}
 
