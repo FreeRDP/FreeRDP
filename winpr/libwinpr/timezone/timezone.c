@@ -64,7 +64,8 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 	do
 	{
 		rc = fread(tzid + read, 1, length - read - 1, fp);
-		read += rc;
+		if (rc > 0)
+			read += rc;
 
 		if (read < (length - 1))
 			break;
@@ -87,8 +88,11 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 	}
 
 	tzid[read] = '\0';
-	if (tzid[read - 1] == '\n')
-		tzid[read - 1] = '\0';
+	if (read > 0)
+	{
+		if (tzid[read - 1] == '\n')
+			tzid[read - 1] = '\0';
+	}
 
 	return tzid;
 }
