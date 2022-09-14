@@ -1020,9 +1020,9 @@ client_encomsp_participant_created(EncomspClientContext* context,
 		if (!freerdp_client_encomsp_set_control(context, TRUE))
 			return ERROR_INTERNAL_ERROR;
 
-		// if auto-request-control setting is enabled then only request control once upon connect,
-		// otherwise it will auto request control again every time server turns off control which
-		// is a bit annoying
+		/* if auto-request-control setting is enabled then only request control once upon connect,
+		 * otherwise it will auto request control again every time server turns off control which
+		 * is a bit annoying */
 		freerdp_settings_set_bool(settings, FreeRDP_RemoteAssistanceRequestControl, FALSE);
 	}
 
