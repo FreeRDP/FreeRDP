@@ -543,6 +543,12 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 	PSecBuffer channel_bindings = NULL;
 	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
+	if (pInput)
+	{
+		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
+		channel_bindings = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
+	}
+
 	if (!context)
 	{
 		context = ntlm_ContextNew();
@@ -575,7 +581,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 		sspi_SecureHandleSetUpperPointer(phNewContext, NTLM_SSP_NAME);
 	}
 
-	if ((!pInput) || (ntlm_get_state(context) == NTLM_STATE_AUTHENTICATE))
+	if ((!input_buffer) || (ntlm_get_state(context) == NTLM_STATE_AUTHENTICATE))
 	{
 		if (!pOutput)
 			return SEC_E_INVALID_TOKEN;
@@ -601,11 +607,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 	}
 	else
 	{
-		if (pInput->cBuffers < 1)
-			return SEC_E_INVALID_TOKEN;
-
-		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
-
 		if (!input_buffer)
 			return SEC_E_INVALID_TOKEN;
 

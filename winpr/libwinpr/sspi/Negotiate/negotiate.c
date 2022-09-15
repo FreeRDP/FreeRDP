@@ -563,7 +563,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	NegToken output_token = { NOSTATE, 0 };
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
-	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
+	PSecBuffer bindings_buffer = NULL;
+	SecBuffer mech_input_buffers[2] = { 0 };
+	SecBufferDesc mech_input = { SECBUFFER_VERSION, 2, mech_input_buffers };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 	SECURITY_STATUS sub_status;
@@ -577,7 +579,10 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 	creds = sspi_SecureHandleGetLowerPointer(phCredential);
 	if (pInput)
+	{
 		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
+		bindings_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
+	}
 	if (pOutput)
 		output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
 
@@ -675,6 +680,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		output_token.mechTypes.cbBuffer = context->mechTypes.cbBuffer;
 		output_token.mechTypes.pvBuffer = context->mechTypes.pvBuffer;
 		output_token.init = TRUE;
+
+		if (sub_status == SEC_E_OK)
+			context->state = NEGOTIATE_STATE_FINAL_OPTIMISTIC;
 	}
 	else
 	{
@@ -687,15 +695,15 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		if (!context->spnego)
 		{
 			return context->mech->pkg->table_w->InitializeSecurityContextW(
-			    sub_cred, sub_context, pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
-			    Reserved2, sub_context, pOutput, pfContextAttr, ptsExpiry);
+			    sub_cred, sub_context, pszTargetName, fContextReq | context->mech->flags, Reserved1,
+			    TargetDataRep, pInput, Reserved2, sub_context, pOutput, pfContextAttr, ptsExpiry);
 		}
 
 		if (!negotiate_read_neg_token(input_buffer, &input_token))
 			return SEC_E_INVALID_TOKEN;
 
 		/* On first response check if the server doesn't like out prefered mech */
-		if (context->state == NEGOTIATE_STATE_INITIAL && input_token.supportedMech.len &&
+		if (context->state < NEGOTIATE_STATE_NEGORESP && input_token.supportedMech.len &&
 		    !sspi_gss_oid_compare(&input_token.supportedMech, context->mech->oid))
 		{
 			mech = negotiate_GetMechByOID(&input_token.supportedMech);
@@ -716,7 +724,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		}
 
 		/* Check neg_state (required on first response) */
-		if (context->state == NEGOTIATE_STATE_INITIAL)
+		if (context->state < NEGOTIATE_STATE_NEGORESP)
 		{
 			switch (input_token.negState)
 			{
@@ -727,8 +735,13 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 				case REQUEST_MIC:
 					context->mic = TRUE; /* fallthrough */
 				case ACCEPT_INCOMPLETE:
-				case ACCEPT_COMPLETED:
 					context->state = NEGOTIATE_STATE_NEGORESP;
+					break;
+				case ACCEPT_COMPLETED:
+					if (context->state == NEGOTIATE_STATE_INITIAL)
+						context->state = NEGOTIATE_STATE_NEGORESP;
+					else
+						context->state = NEGOTIATE_STATE_FINAL;
 					break;
 			}
 
@@ -739,6 +752,10 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		{
 			/* Store the mech token in the output buffer */
 			CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
+
+			mech_input_buffers[0] = input_token.mechToken;
+			if (bindings_buffer)
+				mech_input_buffers[1] = *bindings_buffer;
 
 			status = context->mech->pkg->table_w->InitializeSecurityContextW(
 			    sub_cred, sub_context, pszTargetName, fContextReq | context->mech->flags, Reserved1,

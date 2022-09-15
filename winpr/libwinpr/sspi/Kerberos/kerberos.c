@@ -37,6 +37,7 @@
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
 #include <winpr/endian.h>
+#include <winpr/crypto.h>
 
 #include "kerberos.h"
 
@@ -650,6 +651,48 @@ fail:
 
 #endif /* WITH_GSSAPI */
 
+static BOOL kerberos_hash_channel_bindings(WINPR_DIGEST_CTX* md5, SEC_CHANNEL_BINDINGS* bindings)
+{
+	BYTE buf[4];
+
+	Data_Write_UINT32(buf, bindings->dwInitiatorAddrType);
+	if (!winpr_Digest_Update(md5, buf, 4))
+		return FALSE;
+
+	Data_Write_UINT32(buf, bindings->cbInitiatorLength);
+	if (!winpr_Digest_Update(md5, buf, 4))
+		return FALSE;
+
+	if (bindings->cbInitiatorLength &&
+	    !winpr_Digest_Update(md5, (BYTE*)bindings + bindings->dwInitiatorOffset,
+	                         bindings->cbInitiatorLength))
+		return FALSE;
+
+	Data_Write_UINT32(buf, bindings->dwAcceptorAddrType);
+	if (!winpr_Digest_Update(md5, buf, 4))
+		return FALSE;
+
+	Data_Write_UINT32(buf, bindings->cbAcceptorLength);
+	if (!winpr_Digest_Update(md5, buf, 4))
+		return FALSE;
+
+	if (bindings->cbAcceptorLength &&
+	    !winpr_Digest_Update(md5, (BYTE*)bindings + bindings->dwAcceptorOffset,
+	                         bindings->cbAcceptorLength))
+		return FALSE;
+
+	Data_Write_UINT32(buf, bindings->cbApplicationDataLength);
+	if (!winpr_Digest_Update(md5, buf, 4))
+		return FALSE;
+
+	if (bindings->cbApplicationDataLength &&
+	    !winpr_Digest_Update(md5, (BYTE*)bindings + bindings->dwApplicationDataOffset,
+	                         bindings->cbApplicationDataLength))
+		return FALSE;
+
+	return TRUE;
+}
+
 static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
     PCredHandle phCredential, PCtxtHandle phContext, SEC_CHAR* pszTargetName, ULONG fContextReq,
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
@@ -662,6 +705,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 	krb5_error_code rv;
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
+	PSecBuffer bindings_buffer = NULL;
+	WINPR_DIGEST_CTX* md5 = NULL;
+	char* target = NULL;
 	char* sname = NULL;
 	char* host = NULL;
 	krb5_data input_token = { 0 };
@@ -684,7 +730,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 		return SEC_E_NO_CREDENTIALS;
 
 	if (pInput)
+	{
 		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
+		bindings_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
+	}
 	if (pOutput)
 		output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
 
@@ -721,15 +770,20 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 	/* Split target name into service/hostname components */
 	if (pszTargetName)
 	{
-		sname = _strdup(pszTargetName);
-		if (!sname)
+		target = _strdup(pszTargetName);
+		if (!target)
 		{
 			status = SEC_E_INSUFFICIENT_MEMORY;
 			goto cleanup;
 		}
-		host = strchr(sname, '/');
+		host = strchr(target, '/');
 		if (host)
+		{
 			*host++ = 0;
+			sname = target;
+		}
+		else
+			host = target;
 	}
 
 	/* SSPI flags are compatible with GSS flags except INTEG_FLAG */
@@ -745,6 +799,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 				goto cleanup;
 
 			context->state = KERBEROS_STATE_TGT_REP;
+
+			status = SEC_I_CONTINUE_NEEDED;
 
 			break;
 
@@ -771,10 +827,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 			                                          GSS_CHECKSUM_TYPE)))
 				goto cleanup;
 
-			/* Write the checksum (channel binding and delegation not implemented) */
-			Data_Write_UINT32(cksum_contents, 16);
-			Data_Write_UINT32((cksum_contents + 20), context->flags);
-
 			/* Get a service ticket */
 			if ((rv = krb5_sname_to_principal(context->ctx, host, sname, KRB5_NT_SRV_HST,
 			                                  &in_creds.server)))
@@ -786,6 +838,41 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 			if ((rv = krb5_get_credentials(context->ctx, context->u2u ? KRB5_GC_USER_USER : 0,
 			                               credentials->ccache, &in_creds, &creds)))
 				goto cleanup;
+
+			/* Write the checksum (delegation not implemented) */
+			Data_Write_UINT32(cksum.data, 16);
+			Data_Write_UINT32((cksum.data + 20), context->flags);
+
+			if (bindings_buffer)
+			{
+				SEC_CHANNEL_BINDINGS* bindings = bindings_buffer->pvBuffer;
+
+				/* Sanity checks */
+				if (bindings_buffer->cbBuffer < sizeof(SEC_CHANNEL_BINDINGS) ||
+				    (bindings->cbInitiatorLength + bindings->dwInitiatorOffset) >
+				        bindings_buffer->cbBuffer ||
+				    (bindings->cbAcceptorLength + bindings->dwAcceptorOffset) >
+				        bindings_buffer->cbBuffer ||
+				    (bindings->cbApplicationDataLength + bindings->dwApplicationDataOffset) >
+				        bindings_buffer->cbBuffer)
+				{
+					status = SEC_E_BAD_BINDINGS;
+					goto cleanup;
+				}
+
+				md5 = winpr_Digest_New();
+				if (!md5)
+					goto cleanup;
+
+				if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+					goto cleanup;
+
+				if (!kerberos_hash_channel_bindings(md5, bindings))
+					goto cleanup;
+
+				if (!winpr_Digest_Final(md5, (BYTE*)cksum_contents + 4, 16))
+					goto cleanup;
+			}
 
 			/* Make the AP_REQ message */
 			if ((rv = krb5_mk_req_extended(context->ctx, &context->auth_ctx, ap_flags, &cksum,
@@ -808,6 +895,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 			krb5_auth_con_getsendsubkey_k(context->ctx, context->auth_ctx, &context->initiator_key);
 
 			context->state = KERBEROS_STATE_AP_REP;
+
+			if (context->flags & SSPI_GSS_C_MUTUAL_FLAG)
+				status = SEC_I_CONTINUE_NEEDED;
+			else
+				status = SEC_E_OK;
 
 			break;
 
@@ -839,6 +931,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 			context->state = KERBEROS_STATE_FINAL;
 
+			output_buffer->cbBuffer = 0;
+			status = SEC_E_OK;
+
 			break;
 
 		case KERBEROS_STATE_FINAL:
@@ -859,14 +954,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 		CopyMemory(context, &new_context, sizeof(KRB_CONTEXT));
 	}
 
-	if (context->state == KERBEROS_STATE_FINAL)
-	{
-		output_buffer->cbBuffer = 0;
-		status = SEC_E_OK;
-	}
-	else
-		status = SEC_I_CONTINUE_NEEDED;
-
 	sspi_SecureHandleSetLowerPointer(phNewContext, context);
 	sspi_SecureHandleSetUpperPointer(phNewContext, KERBEROS_SSP_NAME);
 
@@ -877,8 +964,10 @@ cleanup:
 
 	if (output_token.data)
 		krb5_free_data_contents(context->ctx, &output_token);
-	if (sname)
-		free(sname);
+
+	winpr_Digest_Free(md5);
+
+	free(target);
 
 	if (context == &new_context)
 	{
@@ -1199,7 +1288,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 		                               : context->session_key;
 		enctype = krb5_k_key_enctype(context->ctx, key);
 
-		if (context->flags & ISC_REQ_CONFIDENTIALITY)
+		if (context->flags & SSPI_GSS_C_CONF_FLAG)
 		{
 			krb5_c_crypto_length(context->ctx, enctype, KRB5_CRYPTO_TYPE_HEADER, &header);
 			krb5_c_crypto_length(context->ctx, enctype, KRB5_CRYPTO_TYPE_PADDING, &pad);
@@ -1207,9 +1296,12 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 			/* GSS header (= 16 bytes) + encrypted header = 32 bytes */
 			ContextSizes->cbSecurityTrailer = header + pad + trailer + 32;
 		}
-		if (context->flags & ISC_REQ_INTEGRITY)
+		if (context->flags & SSPI_GSS_C_INTEG_FLAG)
+		{
 			krb5_c_crypto_length(context->ctx, enctype, KRB5_CRYPTO_TYPE_CHECKSUM,
 			                     &ContextSizes->cbMaxSignature);
+			ContextSizes->cbMaxSignature += 16;
+		}
 
 		return SEC_E_OK;
 	}
