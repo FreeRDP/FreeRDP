@@ -56,6 +56,7 @@ extern "C"
 
 // System menu constants
 #define SYSCOMMAND_ID_SMARTSIZING 1000
+#define SYSCOMMAND_ID_REQUEST_CONTROL 1001
 
 	typedef struct
 	{
@@ -95,6 +96,8 @@ extern "C"
 		WNDCLASSEX wndClass;
 		LPCTSTR wndClassName;
 		HCURSOR hDefaultCursor;
+
+		UINT systemMenuInsertPosition;
 
 		HWND hwnd;
 		BOOL is_shown;

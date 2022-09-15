@@ -690,6 +690,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 						wf_send_resize(wfc);
 					}
 				}
+				else if (wParam == SYSCOMMAND_ID_REQUEST_CONTROL)
+				{
+					freerdp_client_encomsp_set_control(wfc->common.encomsp, TRUE);
+				}
 				else
 				{
 					processed = FALSE;
