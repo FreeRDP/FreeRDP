@@ -18,6 +18,8 @@
  * limitations under the License.
  */
 
+#include <time.h>
+
 #include <winpr/sysinfo.h>
 #include <winpr/path.h>
 #include <winpr/string.h>
