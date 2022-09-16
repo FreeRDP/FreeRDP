@@ -439,31 +439,158 @@ static BOOL process_file_name(wClipboard* clipboard, const char* local_name, wAr
 	return result;
 }
 
-static BOOL process_uri(wClipboard* clipboard, const char* uri, size_t uri_len)
+static BOOL is_dos_driver(const char* path)
 {
-	const char prefix[] = "file://";
-	BOOL result = FALSE;
-	char* name = NULL;
+	if ((path[1] == ':' || path[1] == '|') &&
+	    ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')))
+		return TRUE;
+	return FALSE;
+}
+
+#if !defined(BUILD_TESTING)
+static
+#endif
+    char*
+    parse_uri_to_local_file(const char* uri, size_t uri_len)
+{
+	// URI is specified by RFC 8089: https://datatracker.ietf.org/doc/html/rfc8089
+	const char prefix[] = "file:";
+	const char prefixTraditional[] = "file://";
+	char* localName = NULL;
+	size_t localLen = 0;
+	char* buffer = NULL;
 	const size_t prefixLen = strnlen(prefix, sizeof(prefix));
-
-	WINPR_ASSERT(clipboard);
-
+	const size_t prefixTraditionalLen = strnlen(prefixTraditional, sizeof(prefixTraditional));
 	WLog_VRB(TAG, "processing URI: %.*s", uri_len, uri);
 
 	if ((uri_len < prefixLen) || strncmp(uri, prefix, prefixLen))
 	{
-		WLog_ERR(TAG, "non-'file://' URI schemes are not supported");
-		goto out;
+		WLog_ERR(TAG, "non-'file:' URI schemes are not supported");
+		return NULL;
 	}
 
-	name = decode_percent_encoded_string(uri + prefixLen, uri_len - prefixLen);
+	do
+	{
+		/* https://datatracker.ietf.org/doc/html/rfc8089#appendix-F
+		 * - The minimal representation of a local file in a DOS- or Windows-
+		 *   based environment with no authority field and an absolute path
+		 *   that begins with a drive letter.
+		 *
+		 *   "file:c:/path/to/file"
+		 *
+		 * - Regular DOS or Windows file URIs with vertical line characters in
+		 *   the drive letter construct.
+		 *
+		 *   "file:c|/path/to/file"
+		 *
+		 */
+		if (uri[prefixLen] != '/')
+		{
 
-	if (!name)
-		goto out;
+			if (is_dos_driver(uri + prefixLen))
+			{
+				// Dos and Windows file URI
+				localName = (char*)(uri + prefixLen);
+				localLen = uri_len - prefixLen;
+				break;
+			}
+			else
+			{
+				WLog_ERR(TAG, "URI format are not supported: %s", uri);
+				return NULL;
+			}
+		}
 
-	result = process_file_name(clipboard, name, clipboard->localFiles);
-out:
-	free(name);
+		/*
+		 * - The minimal representation of a local file with no authority field
+		 *   and an absolute path that begins with a slash "/".  For example:
+		 *
+		 *   "file:/path/to/file"
+		 *
+		 */
+		if (uri[prefixLen] == '/' && uri[prefixLen + 1] != '/')
+		{
+			if (is_dos_driver(uri + prefixLen + 1))
+			{
+				// Dos and Windows file URI
+				localName = (char*)(uri + prefixLen + 1);
+				localLen = uri_len - prefixLen - 1;
+			}
+			else
+			{
+				localName = (char*)uri + prefixLen;
+				localLen = uri_len - prefixLen;
+			}
+			break;
+		}
+
+		/*
+		 * - A traditional file URI for a local file with an empty authority.
+		 *
+		 *   "file:///path/to/file"
+		 */
+		if ((uri_len < prefixTraditionalLen) ||
+		    strncmp(uri, prefixTraditional, prefixTraditionalLen))
+		{
+			WLog_ERR(TAG, "non-'file:' URI schemes are not supported");
+			return NULL;
+		}
+
+		localName = (char*)(uri + prefixTraditionalLen);
+		localLen = uri_len - prefixTraditionalLen;
+
+		/*
+		 * "file:///c:/path/to/file"
+		 * "file:///c|/path/to/file"
+		 */
+		if (localName[0] != '/')
+		{
+			WLog_ERR(TAG, "URI format are not supported: %s", uri);
+			return NULL;
+		}
+
+		if (is_dos_driver(localName + 1))
+		{
+			localName++;
+			localLen--;
+		}
+
+	} while (0);
+
+	buffer = calloc(localLen + 1, sizeof(char));
+	if (buffer)
+	{
+		memcpy(buffer, localName, localLen);
+		if (buffer[1] == '|' &&
+		    ((buffer[0] >= 'A' && buffer[0] <= 'Z') || (buffer[0] >= 'a' && buffer[0] <= 'z')))
+			buffer[1] = ':';
+		return buffer;
+	}
+
+	return NULL;
+}
+
+static BOOL process_uri(wClipboard* clipboard, const char* uri, size_t uri_len)
+{
+	// URI is specified by RFC 8089: https://datatracker.ietf.org/doc/html/rfc8089
+	BOOL result = FALSE;
+	char* name = NULL;
+	char* localName = NULL;
+
+	WINPR_ASSERT(clipboard);
+
+	localName = parse_uri_to_local_file(uri, uri_len);
+	if (localName)
+	{
+		name = decode_percent_encoded_string(localName, strlen(localName));
+		free(localName);
+	}
+	if (name)
+	{
+		result = process_file_name(clipboard, name, clipboard->localFiles);
+		free(name);
+	}
+
 	return result;
 }
 
