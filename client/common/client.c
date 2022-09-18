@@ -984,7 +984,7 @@ BOOL freerdp_client_encomsp_set_control(EncomspClientContext* encomsp, BOOL cont
 	if (!encomsp)
 		return FALSE;
 
-	pdu.ParticipantId = 0;
+	pdu.ParticipantId = encomsp->participantId;
 	pdu.Flags = ENCOMSP_REQUEST_VIEW;
 
 	if (control)
@@ -1012,6 +1012,9 @@ client_encomsp_participant_created(EncomspClientContext* context,
 
 	settings = cctx->context.settings;
 	WINPR_ASSERT(settings);
+
+	if (participantCreated->Flags & ENCOMSP_IS_PARTICIPANT)
+		context->participantId = participantCreated->ParticipantId;
 
 	request = freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceRequestControl);
 	if (request && (participantCreated->Flags & ENCOMSP_MAY_VIEW) &&

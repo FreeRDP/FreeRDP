@@ -71,6 +71,8 @@ struct s_encomsp_client_context
 	pcEncomspChangeParticipantControlLevel ChangeParticipantControlLevel;
 	pcEncomspGraphicsStreamPaused GraphicsStreamPaused;
 	pcEncomspGraphicsStreamResumed GraphicsStreamResumed;
+
+	UINT32 participantId;
 };
 
 #endif /* FREERDP_CHANNEL_ENCOMSP_CLIENT_ENCOMSP_H */
