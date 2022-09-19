@@ -2191,13 +2191,20 @@ wf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	if (!context || !formatDataResponse)
 		return ERROR_INTERNAL_ERROR;
 
-	if (formatDataResponse->common.msgFlags != CB_RESPONSE_OK)
-		return E_FAIL;
-
 	clipboard = (wfClipboard*)context->custom;
 
 	if (!clipboard)
 		return ERROR_INTERNAL_ERROR;
+
+	if (formatDataResponse->common.msgFlags != CB_RESPONSE_OK)
+	{
+		clipboard->hmem = NULL;
+
+		if (!SetEvent(clipboard->response_data_event))
+			return ERROR_INTERNAL_ERROR;
+
+		return CHANNEL_RC_OK;
+	}
 
 	hMem = GlobalAlloc(GMEM_MOVEABLE, formatDataResponse->common.dataLen);
 
