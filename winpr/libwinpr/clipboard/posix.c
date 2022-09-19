@@ -439,11 +439,16 @@ static BOOL process_file_name(wClipboard* clipboard, const char* local_name, wAr
 	return result;
 }
 
-static BOOL is_dos_driver(const char* path)
+static BOOL is_dos_driver(const char* path, size_t len)
 {
-	if ((path[1] == ':' || path[1] == '|') &&
-	    ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')))
-		return TRUE;
+	if (len < 2)
+		return FALSE;
+
+	if (path[1] == ':' || path[1] == '|')
+	{
+		if (((path[0] >= 'A') && (path[0] <= 'Z')) || ((path[0] >= 'a') && (path[0] <= 'z')))
+			return TRUE;
+	}
 	return FALSE;
 }
 
@@ -456,14 +461,17 @@ static
 	// URI is specified by RFC 8089: https://datatracker.ietf.org/doc/html/rfc8089
 	const char prefix[] = "file:";
 	const char prefixTraditional[] = "file://";
-	char* localName = NULL;
+	const char* localName = NULL;
 	size_t localLen = 0;
 	char* buffer = NULL;
 	const size_t prefixLen = strnlen(prefix, sizeof(prefix));
 	const size_t prefixTraditionalLen = strnlen(prefixTraditional, sizeof(prefixTraditional));
+
+	WINPR_ASSERT(uri || (uri_len == 0));
+
 	WLog_VRB(TAG, "processing URI: %.*s", uri_len, uri);
 
-	if ((uri_len < prefixLen) || strncmp(uri, prefix, prefixLen))
+	if ((uri_len <= prefixLen) || strncmp(uri, prefix, prefixLen))
 	{
 		WLog_ERR(TAG, "non-'file:' URI schemes are not supported");
 		return NULL;
@@ -487,10 +495,10 @@ static
 		if (uri[prefixLen] != '/')
 		{
 
-			if (is_dos_driver(uri + prefixLen))
+			if (is_dos_driver(&uri[prefixLen], uri_len - prefixLen))
 			{
 				// Dos and Windows file URI
-				localName = (char*)(uri + prefixLen);
+				localName = &uri[prefixLen];
 				localLen = uri_len - prefixLen;
 				break;
 			}
@@ -508,9 +516,9 @@ static
 		 *   "file:/path/to/file"
 		 *
 		 */
-		if (uri[prefixLen] == '/' && uri[prefixLen + 1] != '/')
+		else if ((uri_len > prefixLen + 1) && (uri[prefixLen + 1] != '/'))
 		{
-			if (is_dos_driver(uri + prefixLen + 1))
+			if (is_dos_driver(&uri[prefixLen + 1], uri_len - prefixLen - 1))
 			{
 				// Dos and Windows file URI
 				localName = (char*)(uri + prefixLen + 1);
@@ -518,7 +526,7 @@ static
 			}
 			else
 			{
-				localName = (char*)uri + prefixLen;
+				localName = &uri[prefixLen];
 				localLen = uri_len - prefixLen;
 			}
 			break;
@@ -536,8 +544,14 @@ static
 			return NULL;
 		}
 
-		localName = (char*)(uri + prefixTraditionalLen);
+		localName = &uri[prefixTraditionalLen];
 		localLen = uri_len - prefixTraditionalLen;
+
+		if (localLen < 1)
+		{
+			WLog_ERR(TAG, "empty 'file:' URI schemes are not supported");
+			return NULL;
+		}
 
 		/*
 		 * "file:///c:/path/to/file"
@@ -549,7 +563,7 @@ static
 			return NULL;
 		}
 
-		if (is_dos_driver(localName + 1))
+		if (is_dos_driver(&localName[1], localLen - 1))
 		{
 			localName++;
 			localLen--;
