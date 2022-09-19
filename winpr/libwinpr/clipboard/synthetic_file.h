@@ -22,6 +22,6 @@
 
 #include <winpr/clipboard.h>
 
-BOOL ClipboardInitPosixFileSubsystem(wClipboard* clipboard);
+BOOL ClipboardInitSyntheticFileSubsystem(wClipboard* clipboard);
 
 #endif /* WINPR_CLIPBOARD_POSIX_H */

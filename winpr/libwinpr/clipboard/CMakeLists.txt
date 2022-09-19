@@ -22,15 +22,15 @@ winpr_module_add(
 
 if(WIN32)
     winpr_module_add(
-        posix.h
-        posix.c
+        synthetic_file.h
+        synthetic_file.c
         dirent.h
         dirent.c
         )
 elseif(HAVE_UNISTD_H)
 	winpr_module_add(
-		posix.h
-		posix.c
+		synthetic_file.h
+		synthetic_file.c
 	)
 endif()
 

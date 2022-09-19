@@ -60,10 +60,10 @@ typedef SSIZE_T ssize_t;
 #include <winpr/print.h>
 
 #include "clipboard.h"
-#include "posix.h"
+#include "synthetic_file.h"
 
 #include "../log.h"
-#define TAG WINPR_TAG("clipboard.posix")
+#define TAG WINPR_TAG("clipboard.synthetic.file")
 
 const char* mime_uri_list = "text/uri-list";
 const char* mime_FileGroupDescriptorW = "FileGroupDescriptorW";
@@ -1439,7 +1439,7 @@ static void setup_delegate(wClipboardDelegate* delegate)
 	delegate->IsFileNameComponentValid = ValidFileNameComponent;
 }
 
-BOOL ClipboardInitPosixFileSubsystem(wClipboard* clipboard)
+BOOL ClipboardInitSyntheticFileSubsystem(wClipboard* clipboard)
 {
 	if (!clipboard)
 		return FALSE;

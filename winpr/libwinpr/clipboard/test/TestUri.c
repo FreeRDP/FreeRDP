@@ -7,7 +7,7 @@
 #include "winpr/wlog.h"
 
 #define WINPR_TAG(tag) "com.winpr." tag
-#define TAG WINPR_TAG("clipboard.posix")
+#define TAG WINPR_TAG("clipboard.synthetic.file")
 
 char* parse_uri_to_local_file(const char* uri, size_t uri_len);
 
