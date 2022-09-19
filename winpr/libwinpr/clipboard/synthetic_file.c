@@ -460,7 +460,9 @@ static BOOL is_dos_driver(const char* path, size_t len)
 	return FALSE;
 }
 
-#if !defined(BUILD_TESTING)
+#if defined(BUILD_TESTING)
+WINPR_API
+#else
 static
 #endif
     char*
