@@ -52,7 +52,6 @@ typedef struct
 
 	size_t id_sequence;
 	size_t references;
-	LPWSTR defaultPrinter;
 } rdpWinPrinterDriver;
 
 typedef struct
@@ -234,7 +233,7 @@ static void printer_win_release_ref_printer(rdpPrinter* printer)
 }
 
 static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, const WCHAR* name,
-                                           const WCHAR* drivername)
+                                           const WCHAR* drivername, BOOL is_default)
 {
 	rdpWinPrinter* win_printer;
 	DWORD needed = 0;
@@ -252,7 +251,7 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 
 	if (!win_printer->printer.name)
 		goto fail;
-	win_printer->printer.is_default = _wcscmp(name, win_driver->defaultPrinter) == 0;
+	win_printer->printer.is_default = is_default;
 
 	win_printer->printer.CreatePrintJob = printer_win_create_printjob;
 	win_printer->printer.FindPrintJob = printer_win_find_printjob;
@@ -317,6 +316,19 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 	PRINTER_INFO_2* prninfo = NULL;
 	DWORD needed, returned;
 	BOOL haveDefault = FALSE;
+	LPWSTR defaultPrinter = NULL;
+
+	GetDefaultPrinter(NULL, &needed);
+	if (needed)
+	{
+		defaultPrinter = (LPWSTR)calloc(needed, sizeof(WCHAR));
+
+		if (!defaultPrinter)
+			return NULL;
+
+		if (!GetDefaultPrinter(defaultPrinter, &needed))
+			defaultPrinter[0] = '\0';
+	}
 
 	/* find required size for the buffer */
 	EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS, NULL, 2, NULL, 0, &needed,
@@ -325,7 +337,10 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 	/* allocate array of PRINTER_INFO structures */
 	prninfo = (PRINTER_INFO_2*)GlobalAlloc(GPTR, needed);
 	if (!prninfo)
+	{
+		free(defaultPrinter);
 		return NULL;
+	}
 
 	/* call again */
 	if (!EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS, NULL, 2, (LPBYTE)prninfo,
@@ -337,6 +352,7 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 	if (!printers)
 	{
 		GlobalFree(prninfo);
+		free(defaultPrinter);
 		return NULL;
 	}
 
@@ -346,7 +362,8 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 	{
 		rdpPrinter* current = printers[num_printers];
 		current = printer_win_new_printer((rdpWinPrinterDriver*)driver, prninfo[i].pPrinterName,
-		                                  prninfo[i].pDriverName);
+		                                  prninfo[i].pDriverName,
+		                                  _wcscmp(prninfo[i].pPrinterName, defaultPrinter) == 0);
 		if (!current)
 		{
 			printer_win_release_enum_printers(printers);
@@ -362,6 +379,7 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 		printers[0]->is_default = TRUE;
 
 	GlobalFree(prninfo);
+	free(defaultPrinter);
 	return printers;
 }
 
@@ -386,7 +404,7 @@ static rdpPrinter* printer_win_get_printer(rdpPrinterDriver* driver, const char*
 			return NULL;
 	}
 
-	myPrinter = printer_win_new_printer(win_driver, nameW, driverNameW);
+	myPrinter = printer_win_new_printer(win_driver, nameW, driverNameW, FALSE);
 	free(driverNameW);
 	free(nameW);
 
@@ -408,7 +426,6 @@ static void printer_win_release_ref_driver(rdpPrinterDriver* driver)
 	rdpWinPrinterDriver* win = (rdpWinPrinterDriver*)driver;
 	if (win->references <= 1)
 	{
-		free(win->defaultPrinter);
 		free(win);
 		win_driver = NULL;
 	}
@@ -418,8 +435,6 @@ static void printer_win_release_ref_driver(rdpPrinterDriver* driver)
 
 rdpPrinterDriver* win_freerdp_printer_client_subsystem_entry(void)
 {
-	DWORD size;
-
 	if (!win_driver)
 	{
 		win_driver = (rdpWinPrinterDriver*)calloc(1, sizeof(rdpWinPrinterDriver));
@@ -435,21 +450,6 @@ rdpPrinterDriver* win_freerdp_printer_client_subsystem_entry(void)
 		win_driver->driver.ReleaseRef = printer_win_release_ref_driver;
 
 		win_driver->id_sequence = 1;
-
-		GetDefaultPrinter(NULL, &size);
-		if (size)
-		{
-			win_driver->defaultPrinter = (LPWSTR)calloc(size, sizeof(WCHAR));
-
-			if (!win_driver->defaultPrinter)
-			{
-				free(win_driver);
-				return NULL;
-			}
-
-			if (!GetDefaultPrinter(win_driver->defaultPrinter, &size))
-				win_driver->defaultPrinter[0] = "\0";
-		}
 	}
 
 	win_driver->driver.AddRef(&win_driver->driver);
