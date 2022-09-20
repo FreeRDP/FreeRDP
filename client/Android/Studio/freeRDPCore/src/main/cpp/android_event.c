@@ -90,51 +90,65 @@ static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 
 	while (android_peek_event(queue))
 	{
+		BOOL rc = FALSE;
 		androidContext* afc = (androidContext*)context;
 		ANDROID_EVENT* event = android_pop_event(queue);
 
-		if (event->type == EVENT_TYPE_KEY)
-		{
-			ANDROID_EVENT_KEY* key_event = (ANDROID_EVENT_KEY*)event;
-			freerdp_input_send_keyboard_event(context->input, key_event->flags,
-			                                  key_event->scancode);
-			android_event_free((ANDROID_EVENT*)key_event);
-		}
-		else if (event->type == EVENT_TYPE_KEY_UNICODE)
-		{
-			ANDROID_EVENT_KEY* key_event = (ANDROID_EVENT_KEY*)event;
-			freerdp_input_send_keyboard_event(context->input, key_event->flags,
-			                                  key_event->scancode);
-			android_event_free((ANDROID_EVENT*)key_event);
-		}
-		else if (event->type == EVENT_TYPE_CURSOR)
-		{
-			ANDROID_EVENT_CURSOR* cursor_event = (ANDROID_EVENT_CURSOR*)event;
-			context->input->MouseEvent(context->input, cursor_event->flags, cursor_event->x,
-			                           cursor_event->y);
-			android_event_free((ANDROID_EVENT*)cursor_event);
-		}
-		else if (event->type == EVENT_TYPE_CLIPBOARD)
-		{
-			UINT32 size;
-			UINT32 formatId;
-			ANDROID_EVENT_CLIPBOARD* clipboard_event = (ANDROID_EVENT_CLIPBOARD*)event;
-			formatId = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
-			size = clipboard_event->data_length;
+		WINPR_ASSERT(event);
 
-			if (size)
-				ClipboardSetData(afc->clipboard, formatId, clipboard_event->data, size);
-			else
-				ClipboardEmpty(afc->clipboard);
-
-			android_cliprdr_send_client_format_list(afc->cliprdr);
-			android_event_free((ANDROID_EVENT*)clipboard_event);
-		}
-		else if (event->type == EVENT_TYPE_DISCONNECT)
+		switch (event->type)
 		{
-			android_event_free(event);
+			case EVENT_TYPE_KEY:
+			{
+				ANDROID_EVENT_KEY* key_event = (ANDROID_EVENT_KEY*)event;
+
+				rc = freerdp_input_send_keyboard_event(context->input, key_event->flags,
+				                                       key_event->scancode);
+			}
+			break;
+
+			case EVENT_TYPE_KEY_UNICODE:
+			{
+				ANDROID_EVENT_KEY* key_event = (ANDROID_EVENT_KEY*)event;
+
+				rc = freerdp_input_send_unicode_keyboard_event(context->input, key_event->flags,
+				                                               key_event->scancode);
+			}
+			break;
+
+			case EVENT_TYPE_CURSOR:
+			{
+				ANDROID_EVENT_CURSOR* cursor_event = (ANDROID_EVENT_CURSOR*)event;
+
+				rc = freerdp_input_send_mouse_event(context->input, cursor_event->flags,
+				                                    cursor_event->x, cursor_event->y);
+			}
+			break;
+
+			case EVENT_TYPE_CLIPBOARD:
+			{
+				ANDROID_EVENT_CLIPBOARD* clipboard_event = (ANDROID_EVENT_CLIPBOARD*)event;
+				UINT32 formatId = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
+				UINT32 size = clipboard_event->data_length;
+
+				if (size)
+					ClipboardSetData(afc->clipboard, formatId, clipboard_event->data, size);
+				else
+					ClipboardEmpty(afc->clipboard);
+
+				android_cliprdr_send_client_format_list(afc->cliprdr);
+			}
+			break;
+
+			case EVENT_TYPE_DISCONNECT:
+			default:
+				break;
+		}
+
+		android_event_free(event);
+
+		if (!rc)
 			return FALSE;
-		}
 	}
 
 	return TRUE;
@@ -181,8 +195,7 @@ BOOL android_check_handle(freerdp* inst)
 
 ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancode)
 {
-	ANDROID_EVENT_KEY* event;
-	event = (ANDROID_EVENT_KEY*)calloc(1, sizeof(ANDROID_EVENT_KEY));
+	ANDROID_EVENT_KEY* event = (ANDROID_EVENT_KEY*)calloc(1, sizeof(ANDROID_EVENT_KEY));
 
 	if (!event)
 		return NULL;
