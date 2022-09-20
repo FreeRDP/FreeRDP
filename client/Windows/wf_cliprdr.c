@@ -461,7 +461,11 @@ static CliprdrStream* CliprdrStream_New(ULONG index, void* pData, const FILEDESC
 				free(clipboard->req_fdata);
 			}
 			else
+			{
+				instance->m_lSize.LowPart = instance->m_Dsc.nFileSizeLow;
+				instance->m_lSize.HighPart = instance->m_Dsc.nFileSizeHigh;
 				success = TRUE;
+			}
 		}
 	}
 
