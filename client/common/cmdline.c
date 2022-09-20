@@ -502,7 +502,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Serial Port Redirection: /serial:<name>,<device>,[SerCx2|SerCx|Serial],[permissive]\n");
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
 	printf("Parallel Port Redirection: /parallel:<name>,<device>\n");
-	printf("Printer Redirection: /printer:<device>,<driver>\n");
+	printf("Printer Redirection: /printer:<device>,<driver>,[default]\n");
 	printf("TCP redirection: /rdp2tcp:/usr/bin/rdp2tcp\n");
 	printf("\n");
 	printf("Audio Output Redirection: /sound:sys:oss,dev:1,format:1\n");

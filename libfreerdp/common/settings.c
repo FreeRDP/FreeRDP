@@ -334,6 +334,11 @@ RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[])
 					if (!device.printer->DriverName)
 						goto fail;
 				}
+
+				if (count > 2)
+				{
+					device.printer->IsDefault = _stricmp(args[2], "default") == 0;
+				}
 				break;
 			case RDPDR_DTYP_SERIAL:
 				if (count > 1)

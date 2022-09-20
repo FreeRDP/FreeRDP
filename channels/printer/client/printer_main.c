@@ -1072,7 +1072,7 @@ UINT printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	if (name && name[0])
 	{
 		WINPR_ASSERT(driver->GetPrinter);
-		rdpPrinter* printer = driver->GetPrinter(driver, name, driver_name);
+		rdpPrinter* printer = driver->GetPrinter(driver, name, driver_name, device->IsDefault);
 
 		if (!printer)
 		{

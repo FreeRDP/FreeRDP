@@ -378,12 +378,12 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 }
 
 static rdpPrinter* printer_cups_get_printer(rdpPrinterDriver* driver, const char* name,
-                                            const char* driverName)
+                                            const char* driverName, BOOL isDefault)
 {
 	rdpCupsPrinterDriver* cups_driver = (rdpCupsPrinterDriver*)driver;
 
 	WINPR_ASSERT(cups_driver);
-	return printer_cups_new_printer(cups_driver, name, driverName, FALSE);
+	return printer_cups_new_printer(cups_driver, name, driverName, isDefault);
 }
 
 static void printer_cups_add_ref_driver(rdpPrinterDriver* driver)

@@ -452,6 +452,7 @@ typedef struct
 {
 	RDPDR_DEVICE device;
 	char* DriverName;
+	BOOL IsDefault;
 } RDPDR_PRINTER;
 
 typedef struct

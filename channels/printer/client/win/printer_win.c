@@ -384,7 +384,7 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 }
 
 static rdpPrinter* printer_win_get_printer(rdpPrinterDriver* driver, const char* name,
-                                           const char* driverName)
+                                           const char* driverName, BOOL isDefault)
 {
 	WCHAR* driverNameW = NULL;
 	WCHAR* nameW = NULL;
@@ -404,7 +404,7 @@ static rdpPrinter* printer_win_get_printer(rdpPrinterDriver* driver, const char*
 			return NULL;
 	}
 
-	myPrinter = printer_win_new_printer(win_driver, nameW, driverNameW, FALSE);
+	myPrinter = printer_win_new_printer(win_driver, nameW, driverNameW, isDefault);
 	free(driverNameW);
 	free(nameW);
 
