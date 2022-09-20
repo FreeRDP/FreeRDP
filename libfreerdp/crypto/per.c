@@ -243,7 +243,7 @@ BOOL per_read_integer(wStream* s, UINT32* integer)
 
 BOOL per_write_integer(wStream* s, UINT32 integer)
 {
-	if (integer <= 0xFF)
+	if (integer <= UINT8_MAX)
 	{
 		if (!per_write_length(s, 1))
 			return FALSE;
@@ -251,7 +251,7 @@ BOOL per_write_integer(wStream* s, UINT32 integer)
 			return FALSE;
 		Stream_Write_UINT8(s, integer);
 	}
-	else if (integer <= 0xFFFF)
+	else if (integer <= UINT16_MAX)
 	{
 		if (!per_write_length(s, 2))
 			return FALSE;
@@ -259,7 +259,7 @@ BOOL per_write_integer(wStream* s, UINT32 integer)
 			return FALSE;
 		Stream_Write_UINT16_BE(s, integer);
 	}
-	else if (integer <= 0xFFFFFFFF)
+	else if (integer <= UINT32_MAX)
 	{
 		if (!per_write_length(s, 4))
 			return FALSE;
