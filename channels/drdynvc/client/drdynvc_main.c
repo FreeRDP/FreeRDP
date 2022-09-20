@@ -452,7 +452,8 @@ static DVCMAN_CHANNEL* dvcman_channel_new(drdynvcPlugin* drdynvc,
 	channel->dvcman = (DVCMAN*)pChannelMgr;
 	channel->channel_id = ChannelId;
 	channel->refCounter = 1;
-	channel->state = DVC_CHANNEL_INIT, channel->channel_name = _strdup(ChannelName);
+	channel->state = DVC_CHANNEL_INIT;
+	channel->channel_name = _strdup(ChannelName);
 
 	if (!channel->channel_name)
 		goto fail;
