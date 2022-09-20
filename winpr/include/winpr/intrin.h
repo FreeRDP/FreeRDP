@@ -38,10 +38,12 @@ static INLINE UINT32 __lzcnt(UINT32 _val32)
 	return ((UINT32)__builtin_clz(_val32));
 }
 
+#if !defined(__clang__)
 static INLINE UINT16 __lzcnt16(UINT16 _val16)
 {
 	return ((UINT16)(__builtin_clz((UINT32)_val16) - 16));
 }
+#endif /* !defined(__clang__) */
 
 #else /* (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2) */
 
@@ -86,5 +88,6 @@ static INLINE UINT16 __lzcnt16(UINT16 x)
 
 #endif /* (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2) */
 
-#endif /* _WIN32 */
+#endif /* !defined(_WIN32) || defined(__MINGW32__) */
+
 #endif /* WINPR_INTRIN_H */
