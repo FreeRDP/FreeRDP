@@ -34,7 +34,7 @@ typedef rdpPrinter** (*pcEnumPrinters)(rdpPrinterDriver* driver);
 typedef void (*pcReleaseEnumPrinters)(rdpPrinter** printers);
 
 typedef rdpPrinter* (*pcGetPrinter)(rdpPrinterDriver* driver, const char* name,
-                                    const char* driverName);
+                                    const char* driverName, BOOL isDefault);
 typedef void (*pcReferencePrinter)(rdpPrinter* printer);
 
 struct rdp_printer_driver
