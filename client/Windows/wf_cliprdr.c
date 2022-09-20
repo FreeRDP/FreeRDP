@@ -1486,15 +1486,12 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 				case OLE_SETCLIPBOARD:
 					DEBUG_CLIPRDR("info: OLE_SETCLIPBOARD");
 
-					if (S_FALSE == OleIsCurrentClipboard(clipboard->data_obj))
+					if (wf_create_file_obj(clipboard, &clipboard->data_obj))
 					{
-						if (wf_create_file_obj(clipboard, &clipboard->data_obj))
+						if (OleSetClipboard(clipboard->data_obj) != S_OK)
 						{
-							if (OleSetClipboard(clipboard->data_obj) != S_OK)
-							{
-								wf_destroy_file_obj(clipboard->data_obj);
-								clipboard->data_obj = NULL;
-							}
+							wf_destroy_file_obj(clipboard->data_obj);
+							clipboard->data_obj = NULL;
 						}
 					}
 
