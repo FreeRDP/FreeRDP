@@ -214,7 +214,7 @@ void wf_event_focus_in(wfContext* wfc)
 }
 
 static BOOL wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam,
-                                           LPARAM lParam, BOOL horizontal, UINT16 x, UINT16 y)
+                                           LPARAM lParam, BOOL horizontal, INT32 x, INT32 y)
 {
 	int delta;
 	UINT16 flags = 0;
@@ -483,11 +483,13 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			case WM_LBUTTONDOWN:
 				wf_scale_mouse_event(wfc, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1,
 				                     X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
+				SetCapture(wfc->hwnd);
 				break;
 
 			case WM_LBUTTONUP:
 				wf_scale_mouse_event(wfc, PTR_FLAGS_BUTTON1, X_POS(lParam) - wfc->offset_x,
 				                     Y_POS(lParam) - wfc->offset_y);
+				ReleaseCapture();
 				break;
 
 			case WM_RBUTTONDOWN:
@@ -816,12 +818,12 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 	return TRUE;
 }
 
-static BOOL wf_scale_mouse_pos(wfContext* wfc, UINT16* x, UINT16* y)
+static BOOL wf_scale_mouse_pos(wfContext* wfc, INT32 x, INT32 y, UINT16* px, UINT16* py)
 {
 	int ww, wh, dw, dh;
 	rdpSettings* settings;
 
-	if (!wfc || !x || !y)
+	if (!wfc || !px || !py)
 		return FALSE;
 
 	settings = wfc->common.context.settings;
@@ -842,29 +844,24 @@ static BOOL wf_scale_mouse_pos(wfContext* wfc, UINT16* x, UINT16* y)
 
 	if (!settings->SmartSizing || ((ww == dw) && (wh == dh)))
 	{
-		*x += wfc->xCurrentScroll;
-		*y += wfc->yCurrentScroll;
+		x += wfc->xCurrentScroll;
+		y += wfc->yCurrentScroll;
 	}
 	else
 	{
-		*x = *x * dw / ww + wfc->xCurrentScroll;
-		*y = *y * dh / wh + wfc->yCurrentScroll;
+		x = x * dw / ww + wfc->xCurrentScroll;
+		y = y * dh / wh + wfc->yCurrentScroll;
 	}
+
+	*px = MIN(UINT16_MAX, MAX(0, x));
+	*py = MIN(UINT16_MAX, MAX(0, y));
 
 	return TRUE;
 }
 
-static BOOL wf_scale_mouse_event(wfContext* wfc, UINT16 flags, UINT16 x, UINT16 y)
+static BOOL wf_pub_mouse_event(wfContext* wfc, UINT16 flags, UINT16 x, UINT16 y)
 {
-	MouseEventEventArgs eventArgs;
-
-	WINPR_ASSERT(wfc);
-
-	if (!wf_scale_mouse_pos(wfc, &x, &y))
-		return FALSE;
-
-	if (freerdp_client_send_button_event(&wfc->common, FALSE, flags, x, y))
-		return FALSE;
+	MouseEventEventArgs eventArgs = { 0 };
 
 	eventArgs.flags = flags;
 	eventArgs.x = x;
@@ -873,11 +870,26 @@ static BOOL wf_scale_mouse_event(wfContext* wfc, UINT16 flags, UINT16 x, UINT16 
 	return TRUE;
 }
 
-#if (_WIN32_WINNT >= 0x0500)
-static BOOL wf_scale_mouse_event_ex(wfContext* wfc, UINT16 flags, UINT16 buttonMask, UINT16 x,
-                                    UINT16 y)
+static BOOL wf_scale_mouse_event(wfContext* wfc, UINT16 flags, INT32 x, INT32 y)
 {
-	MouseEventExEventArgs eventArgs;
+	UINT16 px, py;
+
+	WINPR_ASSERT(wfc);
+
+	if (!wf_scale_mouse_pos(wfc, x, y, &px, &py))
+		return FALSE;
+
+	if (freerdp_client_send_button_event(&wfc->common, FALSE, flags, px, py))
+		return FALSE;
+
+	return wf_pub_mouse_event(wfc, flags, px, py);
+}
+
+#if (_WIN32_WINNT >= 0x0500)
+static BOOL wf_scale_mouse_event_ex(wfContext* wfc, UINT16 flags, UINT16 buttonMask, INT32 x,
+                                    INT32 y)
+{
+	UINT16 px, py;
 
 	WINPR_ASSERT(wfc);
 
@@ -887,16 +899,12 @@ static BOOL wf_scale_mouse_event_ex(wfContext* wfc, UINT16 flags, UINT16 buttonM
 	if (buttonMask & XBUTTON2)
 		flags |= PTR_XFLAGS_BUTTON2;
 
-	if (!wf_scale_mouse_pos(wfc, &x, &y))
+	if (!wf_scale_mouse_pos(wfc, x, y, &px, &py))
 		return FALSE;
 
-	if (freerdp_client_send_extended_button_event(&wfc->common, FALSE, flags, x, y))
+	if (freerdp_client_send_extended_button_event(&wfc->common, FALSE, flags, px, py))
 		return FALSE;
 
-	eventArgs.flags = flags;
-	eventArgs.x = x;
-	eventArgs.y = y;
-	PubSub_OnMouseEventEx(wfc->common.context.pubSub, &wfc->common.context, &eventArgs);
-	return TRUE;
+	return wf_pub_mouse_event(wfc, flags, px, py);
 }
 #endif
