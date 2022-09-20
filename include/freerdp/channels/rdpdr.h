@@ -130,8 +130,6 @@ enum IRP_MN
 /* DR_CREATE_RSP.Information */
 /* DR_DRIVE_CREATE_RSP.DeviceCreateResponse */
 
-#define FILE_OPENED 0x00000001
-#define FILE_OVERWRITTEN 0x00000003
 
 /* DR_CORE_CLIENT_ANNOUNCE_RSP.VersionMinor */
 #define RDPDR_MAJOR_RDP_VERSION 1

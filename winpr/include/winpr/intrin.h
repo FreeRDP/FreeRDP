@@ -38,12 +38,12 @@ static INLINE UINT32 __lzcnt(UINT32 _val32)
 	return ((UINT32)__builtin_clz(_val32));
 }
 
-#if !defined(__clang__)
+#if !(defined(__MINGW32__) && defined(__clang__))
 static INLINE UINT16 __lzcnt16(UINT16 _val16)
 {
 	return ((UINT16)(__builtin_clz((UINT32)_val16) - 16));
 }
-#endif /* !defined(__clang__) */
+#endif /* !(defined(__MINGW32__) && defined(__clang__)) */
 
 #else /* (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2) */
 
