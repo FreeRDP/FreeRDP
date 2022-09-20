@@ -504,7 +504,7 @@ BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdat
 	if (!instance || !data.pcb)
 	{
 		WLog_ERR(TAG, "%s(%p, %" PRIu16 ", %p, 0x%08x): Invalid arguments", __FUNCTION__, instance,
-		         channelId, data, flags);
+		         channelId, data.pcb, flags);
 		return FALSE;
 	}
 
