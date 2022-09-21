@@ -1,14 +1,18 @@
 {
     "app-id": "com.freerdp.FreeRDP",
     "runtime": "org.freedesktop.Platform",
-    "runtime-version": "21.08",
+    "runtime-version": "22.08",
     "sdk": "org.freedesktop.Sdk",
     "build-options" : {
-        "cflags": "-O2 -g",
-        "cxxflags": "-O2 -g"
+        "cflags": "-O3",
+        "cxxflags": "-O3"
     },
     "command": "freerdp.sh",
     "cleanup": [
+			"*.la",
+			"/include",
+			"/lib/cmake",
+			"/lib/pkgconfig"
     ],
     "finish-args": [
         /* X11 + XShm access */
@@ -27,12 +31,12 @@
     "add-build-extensions": {
       "org.freedesktop.Platform.ffmpeg-full": {
         "directory": "lib/ffmpeg",
-        "version": "21.08",
+        "version": "22.08",
         "add-ld-path": "."
       },
-      "org.freedesktop.Platform.openh264": {
+		"org.freedesktop.Platform.openh264": {
         "directory": "lib/openh264",
-        "version": "2.1.0",
+        "version": "2.3.0",
         "add-ld-path": "."
       }
     },
@@ -48,7 +52,11 @@
             "url": "https://xorg.freedesktop.org/releases/individual/app/xprop-1.2.5.tar.bz2",
             "sha256": "9b92ed0316bf2486121d8bac88bd1878f16b43bd335f18009b1f941f1eca93a1"
         }
-        ]
+        ],
+				"cleanup": [
+					"/share/doc",
+					"/share/man"
+				]
     },
     {
         "name": "libusb",
@@ -57,9 +65,13 @@
             {
                 "type": "git",
                 "url": "https://github.com/libusb/libusb.git",
-                "tag": "v1.0.24"
+                "tag": "v1.0.26"
             }
-        ]
+        ],
+				"cleanup": [
+					"/share/doc",
+					"/share/man"
+				]
     },
     {
         "name": "pcsc",
@@ -74,15 +86,73 @@
             {
                 "type": "git",
                 "url": "https://github.com/LudovicRousseau/PCSC.git",
-                "tag": "1.9.5"
+                "tag": "1.9.9"
             }
+        ],
+				"cleanup": [
+					"/share/doc",
+					"/share/man"
+				]
+    }, 
+		{
+			"name": "openssl111",
+			"buildsystem": "simple", 
+			"build-commands": [
+				"./config --prefix=/app",
+				"make -j $FLATPAK_BUILDER_N_JOBS",
+				"make install"
+			],
+			"cleanup": [
+				"/share/doc",
+				"/share/man",
+				"/bin"
+			],
+			"sources": [
+				{
+					"type": "archive",
+					"url": "https://www.openssl.org/source/openssl-1.1.1q.tar.gz",
+					"sha256": "d7939ce614029cdff0b6c20f0e2e5703158a489a72b2507b8bd51bf8c8fd10ca"
+				}
+			]
+		},
+    {
+        "name": "freerdp",
+        "buildsystem": "cmake-ninja",
+        "cleanup": [
+        ],
+        "config-opts": [
+					"-DCMAKE_VERBOSE_MAKEFILE=ON", 
+					"-DCMAKE_BUILD_TYPE:STRING=Release",
+					"-DCMAKE_INSTALL_LIBDIR:PATH=lib",
+					"-DCHANNEL_TSMF:BOOL=OFF",
+					"-DCHANNEL_URBDRC:BOOL=ON",
+					"-DBUILD_TESTING:BOOL=OFF",
+					"-DWITH_MANPAGES:BOOL=OFF",
+					"-DWITH_GSSAPI:BOOL=OFF",
+					"-DWITH_PCSC:BOOL=ON",
+					"-DWITH_SWSCALE:BOOL=ON",
+					"-DWITH_SERVER:BOOL=ON",
+					"-DWITH_SAMPLE:BOOL=ON",
+					"-DWITH_CUPS:BOOL=ON",
+					"-DWITH_FFMPEG:BOOL=ON",
+					"-DWITH_DSP_FFMPEG:BOOL=ON",
+					"-DWITH_OSS:BOOL=OFF",
+					"-DWITH_PULSE:BOOL=ON"
+        ],
+        "sources": [
+        {
+            "type": "dir",
+						"path": "../.."
+        }
         ]
     },
-    {
+		{
         "name": "wrapper",
         "buildsystem": "simple",
         "build-commands": [
-                "install -D freerdp.sh /app/bin/freerdp.sh"
+                "install -D freerdp.sh /app/bin/freerdp.sh",
+								"mkdir -p /app/lib/ffmpeg",
+								"mkdir -p /app/lib/openh264"
             ],
         "sources": [
                 {
@@ -90,37 +160,6 @@
                      "path": "freerdp.sh"
                 }
             ]
-    },
-    {
-        "name": "freerdp",
-        "buildsystem": "cmake-ninja",
-        "cleanup": [
-        ],
-        "config-opts": [
-        "-DCMAKE_BUILD_TYPE:STRING=Release",
-        "-DCMAKE_INSTALL_LIBDIR:PATH=lib",
-        "-DCHANNEL_TSMF:BOOL=ON",
-        "-DCHANNEL_URBDRC:BOOL=ON",
-        "-DBUILD_TESTING:BOOL=OFF",
-        "-DWITH_MANPAGES:BOOL=OFF",
-        "-DWITH_GSSAPI:BOOL=OFF",
-        "-DWITH_PCSC:BOOL=ON",
-        "-DWITH_SWSCALE:BOOL=ON",
-        "-DWITH_SERVER:BOOL=ON",
-        "-DWITH_SAMPLE:BOOL=ON",
-        "-DWITH_CUPS:BOOL=ON",
-        "-DWITH_FFMPEG:BOOL=ON",
-        "-DWITH_DSP_FFMPEG:BOOL=ON",
-        "-DWITH_OSS:BOOL=OFF",
-        "-DWITH_PULSE:BOOL=ON"
-        ],
-        "sources": [
-        {
-            "type": "git",
-            "url": "https://github.com/FreeRDP/FreeRDP.git",
-            "branch": "master"
-        }
-        ]
-    }
+    	}
     ]
 }
