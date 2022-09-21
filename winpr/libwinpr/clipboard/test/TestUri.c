@@ -6,10 +6,10 @@
 #include <winpr/winpr.h>
 #include "winpr/wlog.h"
 
+#include "../clipboard.h"
+
 #define WINPR_TAG(tag) "com.winpr." tag
 #define TAG WINPR_TAG("clipboard.posix")
-
-char* parse_uri_to_local_file(const char* uri, size_t uri_len);
 
 int TestUri(int argc, char* argv[])
 {
