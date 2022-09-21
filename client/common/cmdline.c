@@ -3629,7 +3629,6 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		{ FreeRDP_EncomspVirtualChannel, ENCOMSP_SVC_CHANNEL_NAME, settings },
 #endif
 		{ FreeRDP_RemdeskVirtualChannel, REMDESK_SVC_CHANNEL_NAME, settings },
-		{ FreeRDP_RDP2TCPArgs, RDP2TCP_DVC_CHANNEL_NAME, settings->RDP2TCPArgs },
 		{ FreeRDP_RemoteApplicationMode, RAIL_SVC_CHANNEL_NAME, settings }
 	};
 	size_t i;
@@ -3854,6 +3853,13 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 					return FALSE;
 			}
 		}
+	}
+
+	if (settings->RDP2TCPArgs)
+	{
+		if (!freerdp_client_load_static_channel_addin(channels, settings, RDP2TCP_DVC_CHANNEL_NAME,
+		                                              settings->RDP2TCPArgs))
+			return FALSE;
 	}
 
 	/* step 4: do the static channels loading and init */
