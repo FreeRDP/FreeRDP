@@ -248,6 +248,23 @@ static void xf_disp_OnTimer(void* context, TimerEventArgs* e)
 	xf_disp_sendResize(xfDisp);
 }
 
+static void xf_disp_OnWindowStateChange(void* context, const WindowStateChangeEventArgs* e)
+{
+	xfContext* xfc;
+	xfDispContext* xfDisp;
+	rdpSettings* settings;
+
+	WINPR_UNUSED(e);
+
+	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
+		return;
+
+	if (!xfDisp->activated || !xfc->fullscreen)
+		return;
+
+	xf_disp_sendResize(xfDisp);
+}
+
 xfDispContext* xf_disp_new(xfContext* xfc)
 {
 	xfDispContext* ret;
@@ -274,6 +291,7 @@ xfDispContext* xf_disp_new(xfContext* xfc)
 	PubSub_SubscribeActivated(xfc->context.pubSub, xf_disp_OnActivated);
 	PubSub_SubscribeGraphicsReset(xfc->context.pubSub, xf_disp_OnGraphicsReset);
 	PubSub_SubscribeTimer(xfc->context.pubSub, xf_disp_OnTimer);
+	PubSub_SubscribeWindowStateChange(xfc->context.pubSub, xf_disp_OnWindowStateChange);
 	return ret;
 }
 
@@ -287,6 +305,7 @@ void xf_disp_free(xfDispContext* disp)
 		PubSub_UnsubscribeActivated(disp->xfc->context.pubSub, xf_disp_OnActivated);
 		PubSub_UnsubscribeGraphicsReset(disp->xfc->context.pubSub, xf_disp_OnGraphicsReset);
 		PubSub_UnsubscribeTimer(disp->xfc->context.pubSub, xf_disp_OnTimer);
+		PubSub_UnsubscribeWindowStateChange(disp->xfc->context.pubSub, xf_disp_OnWindowStateChange);
 	}
 
 	free(disp);
