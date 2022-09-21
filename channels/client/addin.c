@@ -162,7 +162,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 	size_t cchAddinPath;
 	size_t cchInstallPrefix;
 	FREERDP_ADDIN** ppAddins;
-	WIN32_FIND_DATAA FindData;
+	WIN32_FIND_DATAW FindData = { 0 };
 	cchAddinPath = strnlen(pszAddinPath, sizeof(FREERDP_ADDIN_PATH));
 	cchInstallPrefix = strnlen(pszInstallPrefix, sizeof(FREERDP_INSTALL_PREFIX));
 	pszExtension = PathGetSharedLibraryExtensionA(0);
@@ -212,7 +212,13 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 	NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszAddinPath);
 	NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszPattern);
 	free(pszPattern);
-	hFind = FindFirstFileA(pszSearchPath, &FindData);
+	{
+		WCHAR* wpath = NULL;
+		ConvertToUnicode(CP_UTF8, 0, pszSearchPath, -1, &wpath, 0);
+		hFind = FindFirstFileW(wpath, &FindData);
+		free(wpath);
+	}
+
 	free(pszSearchPath);
 	nAddins = 0;
 	ppAddins = (FREERDP_ADDIN**)calloc(128, sizeof(FREERDP_ADDIN*));
@@ -229,6 +235,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 
 	do
 	{
+		char* cFileName = NULL;
 		BOOL used = FALSE;
 		FREERDP_ADDIN* pAddin = (FREERDP_ADDIN*)calloc(1, sizeof(FREERDP_ADDIN));
 
@@ -238,16 +245,19 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 			goto error_out;
 		}
 
+		if (ConvertFromUnicode(CP_UTF8, 0, FindData.cFileName, -1, &cFileName, 0, NULL, NULL) <= 0)
+			goto skip;
+
 		nDashes = 0;
-		for (index = 0; FindData.cFileName[index]; index++)
-			nDashes += (FindData.cFileName[index] == '-') ? 1 : 0;
+		for (index = 0; cFileName[index]; index++)
+			nDashes += (cFileName[index] == '-') ? 1 : 0;
 
 		if (nDashes == 1)
 		{
 			size_t len;
 			char* p[2] = { 0 };
 			/* <name>-client.<extension> */
-			p[0] = FindData.cFileName;
+			p[0] = cFileName;
 			p[1] = strchr(p[0], '-');
 			if (!p[1])
 				goto skip;
@@ -256,7 +266,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 			len = (size_t)(p[1] - p[0]);
 			if (len < 1)
 			{
-				WLog_WARN(TAG, "Skipping file '%s', invalid format", FindData.cFileName);
+				WLog_WARN(TAG, "Skipping file '%s', invalid format", cFileName);
 				goto skip;
 			}
 			strncpy(pAddin->cName, p[0], MIN(ARRAYSIZE(pAddin->cName), len - 1));
@@ -273,7 +283,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 			size_t len;
 			char* p[4] = { 0 };
 			/* <name>-client-<subsystem>.<extension> */
-			p[0] = FindData.cFileName;
+			p[0] = cFileName;
 			p[1] = strchr(p[0], '-');
 			if (!p[1])
 				goto skip;
@@ -290,7 +300,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 			len = (size_t)(p[1] - p[0]);
 			if (len < 1)
 			{
-				WLog_WARN(TAG, "Skipping file '%s', invalid format", FindData.cFileName);
+				WLog_WARN(TAG, "Skipping file '%s', invalid format", cFileName);
 				goto skip;
 			}
 			strncpy(pAddin->cName, p[0], MIN(ARRAYSIZE(pAddin->cName), len - 1));
@@ -298,7 +308,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 			len = (size_t)(p[3] - p[2]);
 			if (len < 1)
 			{
-				WLog_WARN(TAG, "Skipping file '%s', invalid format", FindData.cFileName);
+				WLog_WARN(TAG, "Skipping file '%s', invalid format", cFileName);
 				goto skip;
 			}
 			strncpy(pAddin->cSubsystem, p[2], MIN(ARRAYSIZE(pAddin->cSubsystem), len - 1));
@@ -316,7 +326,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 			size_t len;
 			char* p[5] = { 0 };
 			/* <name>-client-<subsystem>-<type>.<extension> */
-			p[0] = FindData.cFileName;
+			p[0] = cFileName;
 			p[1] = strchr(p[0], '-');
 			if (!p[1])
 				goto skip;
@@ -337,7 +347,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 			len = (size_t)(p[1] - p[0]);
 			if (len < 1)
 			{
-				WLog_WARN(TAG, "Skipping file '%s', invalid format", FindData.cFileName);
+				WLog_WARN(TAG, "Skipping file '%s', invalid format", cFileName);
 				goto skip;
 			}
 			strncpy(pAddin->cName, p[0], MIN(ARRAYSIZE(pAddin->cName), len - 1));
@@ -345,7 +355,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 			len = (size_t)(p[3] - p[2]);
 			if (len < 1)
 			{
-				WLog_WARN(TAG, "Skipping file '%s', invalid format", FindData.cFileName);
+				WLog_WARN(TAG, "Skipping file '%s', invalid format", cFileName);
 				goto skip;
 			}
 			strncpy(pAddin->cSubsystem, p[2], MIN(ARRAYSIZE(pAddin->cSubsystem), len - 1));
@@ -353,7 +363,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 			len = (size_t)(p[4] - p[3]);
 			if (len < 1)
 			{
-				WLog_WARN(TAG, "Skipping file '%s', invalid format", FindData.cFileName);
+				WLog_WARN(TAG, "Skipping file '%s', invalid format", cFileName);
 				goto skip;
 			}
 			strncpy(pAddin->cType, p[3], MIN(ARRAYSIZE(pAddin->cType), len - 1));
@@ -369,10 +379,11 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 		}
 
 	skip:
+		free(cFileName);
 		if (!used)
 			free(pAddin);
 
-	} while (FindNextFileA(hFind, &FindData));
+	} while (FindNextFileW(hFind, &FindData));
 
 	FindClose(hFind);
 	ppAddins[nAddins] = NULL;
