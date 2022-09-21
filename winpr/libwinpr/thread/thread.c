@@ -794,8 +794,12 @@ BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 	WINPR_HANDLE* Object;
 	WINPR_THREAD* thread;
 
-	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
+	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
+	{
+		WLog_ERR(TAG, "hThread is not a thread");
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
+	}
 
 	thread = (WINPR_THREAD*)Object;
 	*lpExitCode = thread->dwExitCode;
@@ -893,8 +897,12 @@ DWORD ResumeThread(HANDLE hThread)
 	WINPR_HANDLE* Object;
 	WINPR_THREAD* thread;
 
-	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
+	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
+	{
+		WLog_ERR(TAG, "hThread is not a thread");
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return (DWORD)-1;
+	}
 
 	thread = (WINPR_THREAD*)Object;
 

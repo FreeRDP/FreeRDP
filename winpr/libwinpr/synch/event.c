@@ -395,16 +395,16 @@ BOOL SetEvent(HANDLE hEvent)
 	ULONG Type;
 	WINPR_HANDLE* Object;
 	WINPR_EVENT* event;
-	BOOL status = FALSE;
 
-	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
+	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object) || Type != HANDLE_TYPE_EVENT)
 	{
-		event = (WINPR_EVENT*)Object;
-
-		status = winpr_event_set(&event->impl);
+		WLog_ERR(TAG, "SetEvent: hEvent is not an event");
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
 	}
 
-	return status;
+	event = (WINPR_EVENT*)Object;
+	return winpr_event_set(&event->impl);
 }
 
 BOOL ResetEvent(HANDLE hEvent)
@@ -413,11 +413,14 @@ BOOL ResetEvent(HANDLE hEvent)
 	WINPR_HANDLE* Object;
 	WINPR_EVENT* event;
 
-	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object))
+	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object) || Type != HANDLE_TYPE_EVENT)
+	{
+		WLog_ERR(TAG, "ResetEvent: hEvent is not an event");
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
+	}
 
 	event = (WINPR_EVENT*)Object;
-
 	return winpr_event_reset(&event->impl);
 }
 
@@ -481,6 +484,16 @@ HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManu
 int GetEventFileDescriptor(HANDLE hEvent)
 {
 #ifndef _WIN32
+	WINPR_HANDLE* hdl;
+	ULONG type;
+
+	if (!winpr_Handle_GetInfo(hEvent, &type, &hdl) || type != HANDLE_TYPE_EVENT)
+	{
+		WLog_ERR(TAG, "GetEventFileDescriptor: hEvent is not an event");
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return -1;
+	}
+
 	return winpr_Handle_getFd(hEvent);
 #else
 	return -1;
@@ -499,8 +512,12 @@ int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor, ULONG mode)
 	WINPR_HANDLE* Object;
 	WINPR_EVENT* event;
 
-	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object))
+	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object) || Type != HANDLE_TYPE_EVENT)
+	{
+		WLog_ERR(TAG, "SetEventFileDescriptor: hEvent is not an event");
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return -1;
+	}
 
 	event = (WINPR_EVENT*)Object;
 
