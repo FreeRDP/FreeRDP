@@ -612,7 +612,7 @@ void ClipboardDestroy(wClipboard* clipboard)
 	free(clipboard);
 }
 
-static BOOL is_dos_driver(const char* path, size_t len)
+static BOOL is_dos_drive(const char* path, size_t len)
 {
 	if (len < 2)
 		return FALSE;
@@ -665,7 +665,7 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 		if (uri[prefixLen] != '/')
 		{
 
-			if (is_dos_driver(&uri[prefixLen], uri_len - prefixLen))
+			if (is_dos_drive(&uri[prefixLen], uri_len - prefixLen))
 			{
 				// Dos and Windows file URI
 				localName = &uri[prefixLen];
@@ -688,7 +688,7 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 		 */
 		else if ((uri_len > prefixLen + 1) && (uri[prefixLen + 1] != '/'))
 		{
-			if (is_dos_driver(&uri[prefixLen + 1], uri_len - prefixLen - 1))
+			if (is_dos_drive(&uri[prefixLen + 1], uri_len - prefixLen - 1))
 			{
 				// Dos and Windows file URI
 				localName = (char*)(uri + prefixLen + 1);
@@ -733,7 +733,7 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 			return NULL;
 		}
 
-		if (is_dos_driver(&localName[1], localLen - 1))
+		if (is_dos_drive(&localName[1], localLen - 1))
 		{
 			localName++;
 			localLen--;
