@@ -38,7 +38,7 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 
 	if (EXPORT_ALL_SYMBOLS)
-		set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+		#		set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 		add_definitions(-DEXPORT_ALL_SYMBOLS)
 	endif()
 
