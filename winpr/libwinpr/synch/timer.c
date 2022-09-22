@@ -658,6 +658,30 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
 	return TRUE;
 }
 
+/*
+ * Returns inner file descriptor for usage with select()
+ * This file descriptor is not usable on Windows
+ */
+
+int GetTimerFileDescriptor(HANDLE hTimer)
+{
+#ifndef _WIN32
+	WINPR_HANDLE* hdl;
+	ULONG type;
+
+	if (!winpr_Handle_GetInfo(hTimer, &type, &hdl) || type != HANDLE_TYPE_TIMER)
+	{
+		WLog_ERR(TAG, "GetTimerFileDescriptor: hTimer is not an timer");
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return -1;
+	}
+
+	return winpr_Handle_getFd(hTimer);
+#else
+	return -1;
+#endif
+}
+
 /**
  * Timer-Queue Timer
  */
