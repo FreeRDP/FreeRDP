@@ -55,7 +55,7 @@
 #endif
 #endif
 
-#ifdef BUILD_TESTING
+#if defined(EXPORT_ALL_SYMBOLS)
 #define FREERDP_LOCAL FREERDP_API
 #else
 #if defined _WIN32 || defined __CYGWIN__
@@ -67,12 +67,6 @@
 #define FREERDP_LOCAL
 #endif
 #endif
-#endif
-
-#ifdef FREERDP_TEST_EXPORTS
-#define FREERDP_TEST_API FREERDP_API
-#else
-#define FREERDP_TEST_API
 #endif
 
 #define IFCALL(_cb, ...)      \

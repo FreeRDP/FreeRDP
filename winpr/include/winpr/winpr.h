@@ -61,7 +61,7 @@
 #define WINPR_NORETURN(obj) obj
 #endif
 
-#ifdef BUILD_TESTING
+#if defined(EXPORT_ALL_SYMBOLS)
 #define WINPR_LOCAL WINPR_API
 #else
 #if defined _WIN32 || defined __CYGWIN__
