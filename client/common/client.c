@@ -968,7 +968,9 @@ BOOL freerdp_client_encomsp_toggle_control(EncomspClientContext* encomsp)
 	rdpClientContext* cctx;
 	BOOL state;
 
-	WINPR_ASSERT(encomsp);
+	if (!encomsp)
+		return FALSE;
+
 	cctx = (rdpClientContext*)encomsp->custom;
 
 	state = cctx->controlToggle;
