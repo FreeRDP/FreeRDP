@@ -28,5 +28,6 @@ then
 	exit 1
 fi
 
-flatpak-builder -v --repo=$REPO --state-dir=$STATE $BUILD $SCRIPT_DIR/$MANIFEST.json --force-clean
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo --user
+flatpak-builder -v --repo=$REPO --state-dir=$STATE $BUILD $SCRIPT_DIR/$MANIFEST.json --force-clean --user --install-deps-from=flathub
 flatpak build-bundle -v $REPO $MANIFEST.flatpak $MANIFEST --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
