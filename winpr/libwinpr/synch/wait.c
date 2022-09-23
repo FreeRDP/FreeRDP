@@ -190,19 +190,42 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 		return WAIT_FAILED;
 	}
 
-	if (Type == HANDLE_TYPE_PROCESS)
+	if (Type == HANDLE_TYPE_PROCESS && winpr_Handle_getFd(hHandle) == -1)
 	{
+		/* note: if we have pidfd support (under linux and we have managed to associate a
+		 * 		pidfd with our process), we use the regular method with pollset below.
+		 * 		If not (on other platforms) we do a waitpid */
 		WINPR_PROCESS* process = (WINPR_PROCESS*)Object;
 
-		if (process->pid != waitpid(process->pid, &(process->status), 0))
+		do
 		{
-			WLog_ERR(TAG, "waitpid failure [%d] %s", errno, strerror(errno));
-			SetLastError(ERROR_INTERNAL_ERROR);
-			return WAIT_FAILED;
-		}
+			DWORD status;
+			DWORD waitDelay;
+			int ret = waitpid(process->pid, &(process->status), WNOHANG);
+			if (ret == process->pid)
+			{
+				process->dwExitCode = (DWORD)process->status;
+				return WAIT_OBJECT_0;
+			}
+			else if (ret < 0)
+			{
+				WLog_ERR(TAG, "waitpid failure [%d] %s", errno, strerror(errno));
+				SetLastError(ERROR_INTERNAL_ERROR);
+				return WAIT_FAILED;
+			}
 
-		process->dwExitCode = (DWORD)process->status;
-		return WAIT_OBJECT_0;
+			/* sleep by slices of 50ms */
+			waitDelay = (dwMilliseconds < 50) ? dwMilliseconds : 50;
+
+			status = SleepEx(waitDelay, bAlertable);
+			if (status != 0)
+				return status;
+
+			dwMilliseconds -= waitDelay;
+
+		} while (dwMilliseconds > 50);
+
+		return WAIT_TIMEOUT;
 	}
 
 	if (Type == HANDLE_TYPE_MUTEX)
@@ -286,7 +309,7 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 			status = pollset_poll(&pollset, dwMilliseconds);
 			if (status < 0)
 			{
-				WLog_ERR(TAG, "waitOnFd() failure [%d] %s", errno, strerror(errno));
+				WLog_ERR(TAG, "pollset_poll() failure [%d] %s", errno, strerror(errno));
 				goto out;
 			}
 		}
