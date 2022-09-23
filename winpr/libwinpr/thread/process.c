@@ -51,6 +51,7 @@
 
 #ifndef _WIN32
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/environment.h>
@@ -58,6 +59,14 @@
 #include <grp.h>
 
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#ifdef __linux__
+#include <sys/syscall.h>
+#include <fcntl.h>
+#include <errno.h>
+#endif /* __linux__ */
 
 #include "thread.h"
 
@@ -478,6 +487,12 @@ BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
 static BOOL ProcessHandleCloseHandle(HANDLE handle)
 {
 	WINPR_PROCESS* process = (WINPR_PROCESS*)handle;
+	WINPR_ASSERT(process);
+	if (process->fd >= 0)
+	{
+		close(process->fd);
+		process->fd = -1;
+	}
 	free(process);
 	return TRUE;
 }
@@ -494,15 +509,26 @@ static int ProcessGetFd(HANDLE handle)
 	if (!ProcessHandleIsHandle(handle))
 		return -1;
 
-	/* TODO: Process does not support fd... */
-	(void)process;
-	return -1;
+	return process->fd;
+}
+
+static DWORD ProcessCleanupHandle(HANDLE handle)
+{
+	WINPR_PROCESS* process = (WINPR_PROCESS*)handle;
+
+	WINPR_ASSERT(process);
+	if (process->fd > 0)
+	{
+		if (waitpid(process->pid, &process->status, WNOHANG) == process->pid)
+			process->dwExitCode = (DWORD)process->status;
+	}
+	return WAIT_OBJECT_0;
 }
 
 static HANDLE_OPS ops = { ProcessHandleIsHandle,
 	                      ProcessHandleCloseHandle,
 	                      ProcessGetFd,
-	                      NULL, /* CleanupHandle */
+	                      ProcessCleanupHandle, /* CleanupHandle */
 	                      NULL,
 	                      NULL,
 	                      NULL,
@@ -521,6 +547,40 @@ static HANDLE_OPS ops = { ProcessHandleIsHandle,
 	                      NULL,
 	                      NULL };
 
+static int _pidfd_open(pid_t pid)
+{
+#ifdef __linux__
+#if !defined(__NR_pidfd_open)
+#define __NR_pidfd_open 434
+#endif /* __NR_pidfd_open */
+
+#ifndef PIDFD_NONBLOCK
+#define PIDFD_NONBLOCK O_NONBLOCK
+#endif /* PIDFD_NONBLOCK */
+
+	int fd = syscall(__NR_pidfd_open, pid, PIDFD_NONBLOCK);
+	if (fd < 0 && errno == EINVAL)
+	{
+		/* possibly PIDFD_NONBLOCK is not supported, let's try to create a pidfd and set it
+		 * non blocking afterward */
+		int flags;
+		fd = syscall(__NR_pidfd_open, pid, 0);
+		if (fd < 0)
+			return -1;
+
+		flags = fcntl(fd, F_GETFL);
+		if (flags < 0 || fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+		{
+			close(fd);
+			fd = -1;
+		}
+	}
+	return fd;
+#else
+	return -1;
+#endif
+}
+
 HANDLE CreateProcessHandle(pid_t pid)
 {
 	WINPR_PROCESS* process;
@@ -532,6 +592,9 @@ HANDLE CreateProcessHandle(pid_t pid)
 	process->pid = pid;
 	process->common.Type = HANDLE_TYPE_PROCESS;
 	process->common.ops = &ops;
+	process->fd = _pidfd_open(pid);
+	if (process->fd >= 0)
+		process->common.Mode = WINPR_FD_READ;
 	return (HANDLE)process;
 }
 
