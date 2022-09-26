@@ -57,9 +57,6 @@
 #include "wf_rail.h"
 #include "wf_channels.h"
 #include "wf_graphics.h"
-#include "wf_cliprdr.h"
-
-#include "wf_client.h"
 
 #include "resource/resource.h"
 

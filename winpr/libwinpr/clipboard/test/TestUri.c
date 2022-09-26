@@ -6,12 +6,12 @@
 #include <winpr/winpr.h>
 #include "winpr/wlog.h"
 
+#include "../clipboard.h"
+
 #define WINPR_TAG(tag) "com.winpr." tag
 #define TAG WINPR_TAG("clipboard.posix")
 
-char* parse_uri_to_local_file(const char* uri, size_t uri_len);
-
-int main(void)
+int TestUri(int argc, char* argv[])
 {
 	int nRet = 0;
 	const char* input[] = { /*uri,                      file or NULL*/
@@ -32,31 +32,33 @@ int main(void)
 	};
 
 	const size_t nLen = ARRAYSIZE(input);
-	printf("input length:%" PRIuz "\n", nLen / 2);
 
-	WLog_SetLogLevel(WLog_Get(TAG), WLOG_ERROR);
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
+	printf("input length:%" PRIuz "\n", nLen / 2);
 
 	for (size_t i = 0; i < nLen; i += 2)
 	{
+		const char* in = input[i];
+		const char* cmp = input[i + 1];
 		int bTest = 0;
-		char* name = parse_uri_to_local_file(input[i], strlen(input[i]));
+		char* name = parse_uri_to_local_file(in, strlen(in));
 		if (name)
 		{
-			bTest = !strcmp(name, input[i + 1]);
+			bTest = !strcmp(name, cmp);
 			if (!bTest)
 			{
-				printf("Test error: input: %s; Expected value: %s; output: %s\n", input[i],
-				       input[i + 1], name);
+				printf("Test error: input: %s; Expected value: %s; output: %s\n", in, cmp, name);
 				nRet++;
 			}
 			free(name);
 		}
 		else
 		{
-			if (input[i + 1])
+			if (cmp)
 			{
-				printf("Test error: input: %s; Expected value: %s; output: %s\n", input[i],
-				       input[i + 1], name);
+				printf("Test error: input: %s; Expected value: %s; output: %s\n", in, cmp, name);
 				nRet++;
 			}
 		}

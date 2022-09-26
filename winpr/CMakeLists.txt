@@ -36,6 +36,12 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	# Default to build shared libs
 	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 	option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
+
+	if (EXPORT_ALL_SYMBOLS)
+		#		set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+		add_definitions(-DEXPORT_ALL_SYMBOLS)
+	endif()
+
 	if(CMAKE_COMPILER_IS_GNUCC)
 		if(NOT EXPORT_ALL_SYMBOLS)
 			message(STATUS "GCC default symbol visibility: hidden")

@@ -61,6 +61,20 @@
 #define WINPR_NORETURN(obj) obj
 #endif
 
+#if defined(EXPORT_ALL_SYMBOLS)
+#define WINPR_LOCAL WINPR_API
+#else
+#if defined _WIN32 || defined __CYGWIN__
+#define WINPR_LOCAL
+#else
+#if __GNUC__ >= 4
+#define WINPR_LOCAL __attribute__((visibility("hidden")))
+#else
+#define WINPR_LOCAL
+#endif
+#endif
+#endif
+
 // WARNING: *do not* use thread-local storage for new code because it is not portable
 // It is only used for VirtualChannelInit, and all FreeRDP channels use VirtualChannelInitEx
 // The old virtual channel API is only realistically used on Windows where TLS is available

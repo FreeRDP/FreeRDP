@@ -5,6 +5,7 @@ set(MODULE_PREFIX "TEST_CLIPBOARD")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
+	TestUri.c
 	TestClipboardFormats.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
@@ -24,10 +25,3 @@ endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
 
-if(NOT WIN32)
-	add_executable(TestUri TestUri.c)
-	target_link_libraries(TestUri winpr)
-	set_target_properties(TestUri PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
-	add_test(TestUri ${TESTING_OUTPUT_DIRECTORY}/TestUri)
-	set_property(TARGET TestUri PROPERTY FOLDER "WinPR/Test")
-endif()
