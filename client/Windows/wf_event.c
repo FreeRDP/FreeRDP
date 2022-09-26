@@ -34,12 +34,11 @@
 
 #include <freerdp/event.h>
 
+#include <Windowsx.h>
+
 static HWND g_focus_hWnd = NULL;
 static HWND g_main_hWnd = NULL;
 static HWND g_parent_hWnd = NULL;
-
-#define X_POS(lParam) ((UINT16)(lParam & 0xFFFF))
-#define Y_POS(lParam) ((UINT16)((lParam >> 16) & 0xFFFF))
 
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
@@ -459,67 +458,70 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 			case WM_XBUTTONDOWN:
 				wf_scale_mouse_event_ex(wfc, PTR_XFLAGS_DOWN, GET_XBUTTON_WPARAM(wParam),
-				                        X_POS(lParam) - wfc->offset_x,
-				                        Y_POS(lParam) - wfc->offset_y);
+				                        GET_X_LPARAM(lParam) - wfc->offset_x,
+				                        GET_Y_LPARAM(lParam) - wfc->offset_y);
 				break;
 
 			case WM_XBUTTONUP:
 				wf_scale_mouse_event_ex(wfc, 0, GET_XBUTTON_WPARAM(wParam),
-				                        X_POS(lParam) - wfc->offset_x,
-				                        Y_POS(lParam) - wfc->offset_y);
+				                        GET_X_LPARAM(lParam) - wfc->offset_x,
+				                        GET_Y_LPARAM(lParam) - wfc->offset_y);
 				break;
 #endif
 
 			case WM_MBUTTONDOWN:
 				wf_scale_mouse_event(wfc, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3,
-				                     X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
+				                     GET_X_LPARAM(lParam) - wfc->offset_x,
+				                     GET_Y_LPARAM(lParam) - wfc->offset_y);
 				break;
 
 			case WM_MBUTTONUP:
-				wf_scale_mouse_event(wfc, PTR_FLAGS_BUTTON3, X_POS(lParam) - wfc->offset_x,
-				                     Y_POS(lParam) - wfc->offset_y);
+				wf_scale_mouse_event(wfc, PTR_FLAGS_BUTTON3, GET_X_LPARAM(lParam) - wfc->offset_x,
+				                     GET_Y_LPARAM(lParam) - wfc->offset_y);
 				break;
 
 			case WM_LBUTTONDOWN:
 				wf_scale_mouse_event(wfc, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1,
-				                     X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
+				                     GET_X_LPARAM(lParam) - wfc->offset_x,
+				                     GET_Y_LPARAM(lParam) - wfc->offset_y);
 				SetCapture(wfc->hwnd);
 				break;
 
 			case WM_LBUTTONUP:
-				wf_scale_mouse_event(wfc, PTR_FLAGS_BUTTON1, X_POS(lParam) - wfc->offset_x,
-				                     Y_POS(lParam) - wfc->offset_y);
+				wf_scale_mouse_event(wfc, PTR_FLAGS_BUTTON1, GET_X_LPARAM(lParam) - wfc->offset_x,
+				                     GET_Y_LPARAM(lParam) - wfc->offset_y);
 				ReleaseCapture();
 				break;
 
 			case WM_RBUTTONDOWN:
 				wf_scale_mouse_event(wfc, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2,
-				                     X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
+				                     GET_X_LPARAM(lParam) - wfc->offset_x,
+				                     GET_Y_LPARAM(lParam) - wfc->offset_y);
 				break;
 
 			case WM_RBUTTONUP:
-				wf_scale_mouse_event(wfc, PTR_FLAGS_BUTTON2, X_POS(lParam) - wfc->offset_x,
-				                     Y_POS(lParam) - wfc->offset_y);
+				wf_scale_mouse_event(wfc, PTR_FLAGS_BUTTON2, GET_X_LPARAM(lParam) - wfc->offset_x,
+				                     GET_Y_LPARAM(lParam) - wfc->offset_y);
 				break;
 
 			case WM_MOUSEMOVE:
-				wf_scale_mouse_event(wfc, PTR_FLAGS_MOVE, X_POS(lParam) - wfc->offset_x,
-				                     Y_POS(lParam) - wfc->offset_y);
+				wf_scale_mouse_event(wfc, PTR_FLAGS_MOVE, GET_X_LPARAM(lParam) - wfc->offset_x,
+				                     GET_Y_LPARAM(lParam) - wfc->offset_y);
 				break;
 #if (_WIN32_WINNT >= 0x0400) || (_WIN32_WINDOWS > 0x0400)
 
 			case WM_MOUSEWHEEL:
 				wf_event_process_WM_MOUSEWHEEL(wfc, hWnd, Msg, wParam, lParam, FALSE,
-				                               X_POS(lParam) - wfc->offset_x,
-				                               Y_POS(lParam) - wfc->offset_y);
+				                               GET_X_LPARAM(lParam) - wfc->offset_x,
+				                               GET_Y_LPARAM(lParam) - wfc->offset_y);
 				break;
 #endif
 #if (_WIN32_WINNT >= 0x0600)
 
 			case WM_MOUSEHWHEEL:
 				wf_event_process_WM_MOUSEWHEEL(wfc, hWnd, Msg, wParam, lParam, TRUE,
-				                               X_POS(lParam) - wfc->offset_x,
-				                               Y_POS(lParam) - wfc->offset_y);
+				                               GET_X_LPARAM(lParam) - wfc->offset_x,
+				                               GET_Y_LPARAM(lParam) - wfc->offset_y);
 				break;
 #endif
 
