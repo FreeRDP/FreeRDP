@@ -2,6 +2,7 @@
 #include <wincred.h>
 #include <stdio.h>
 #include <malloc.h>
+#include <freerdp/settings.h>
 
 #pragma warning(disable : 4706 4094) // assignment within conditional expression
 
@@ -14,21 +15,18 @@
 
 typedef struct rdp_settings rdpSettings;
 
-EXTERN_C_START
-
-const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id);
-BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* param);
-
-EXTERN_C_END
-
 PCWSTR ValidateString(const BYTE* pb, ULONG cb)
 {
-	return pb &&                                       // present ?
-	               cb &&                               // size not 0 ?
-	               !(cb & (sizeof(WCHAR) - 1)) &&      // cb == n * sizeof(WCHAR) ?
-	               !*(WCHAR*)(pb + cb - sizeof(WCHAR)) // 0 terminated ?
-	           ? (PCWSTR)pb
-	           : 0;
+	if (!pb || !cb)
+		return 0;
+
+	if (cb & (sizeof(WCHAR) - 1))
+		return 0;
+
+	if (*(WCHAR*)(pb + cb - sizeof(WCHAR)))
+		return 0;
+
+	return (PCWSTR)pb;
 }
 
 void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_t idUsername,
@@ -37,17 +35,13 @@ void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_t idUse
 	PCSTR ServerHostname = freerdp_settings_get_string(settings, idHostname);
 
 	if (!ServerHostname)
-	{
 		return;
-	}
 
-	BOOL bExistUserName = 0 != freerdp_settings_get_string(settings, idUsername);
-	BOOL bExistPassword = 0 != freerdp_settings_get_string(settings, idPassword);
+	BOOL bExistUserName = freerdp_settings_get_string(settings, idUsername) != 0;
+	BOOL bExistPassword = freerdp_settings_get_string(settings, idPassword) != 0;
 
 	if (bExistUserName && bExistPassword)
-	{
 		return;
-	}
 
 	PCREDENTIALA Credential;
 	PCWSTR lpWideCharStr;
@@ -56,57 +50,51 @@ void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_t idUse
 	PSTR UserName;
 
 	PSTR TargetName = 0;
-	int len = 0;
+	int len = _vsnprintf(TargetName, 0, "TERMSRV/%s", (va_list)&ServerHostname);
+	len++;
+	TargetName = (PSTR)malloc(len);
+	_vsnprintf(TargetName, len, "TERMSRV/%s", (va_list)&ServerHostname);
 
-	while (0 < (len = _vsnprintf(TargetName, len, "TERMSRV/%s", (va_list)&ServerHostname)))
+	if (!TargetName)
+		return;
+
+	TargetName[len - 1] = 0;
+
+	if (!CredReadA(TargetName, CRED_TYPE_GENERIC, 0, &Credential))
+		return;
+
+	if (!bExistPassword)
 	{
-		if (TargetName)
+		ULONG cch = Credential->CredentialBlobSize;
+
+		if (lpWideCharStr = ValidateString(Credential->CredentialBlob, cch))
 		{
-			if (CredReadA(TargetName, CRED_TYPE_GENERIC, 0, &Credential))
+			Password = 0, len = 0, cch /= sizeof(WCHAR);
+
+			len = WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cch, Password, len, 0, 0);
+			Password = (PSTR)malloc(len);
+			WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cch, Password, len, 0, 0);
+			
+			if (Password)
 			{
-				if (!bExistPassword)
-				{
-					ULONG cch = Credential->CredentialBlobSize;
-
-					if (lpWideCharStr = ValidateString(Credential->CredentialBlob, cch))
-					{
-						Password = 0, len = 0, cch /= sizeof(WCHAR);
-
-						while (len = WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cch, Password,
-						                                 len, 0, 0))
-						{
-							if (Password)
-							{
-								freerdp_settings_set_string(settings, idPassword, Password);
-								break;
-							}
-
-							Password = (PSTR)alloca(len);
-						}
-					}
-				}
-
-				if (!bExistUserName)
-				{
-					if (UserName = Credential->UserName)
-					{
-						freerdp_settings_set_string(settings, idUsername, UserName);
-					}
-				}
-
-				CredFree(Credential);
+				freerdp_settings_set_string(settings, idPassword, Password);
 			}
-
-			break;
 		}
-
-		TargetName = (PSTR)alloca(++len);
 	}
+
+	if (!bExistUserName)
+	{
+		if (UserName = Credential->UserName)
+		{
+			freerdp_settings_set_string(settings, idUsername, UserName);
+		}
+	}
+
+	CredFree(Credential);
 }
 
 EXTERN_C void WINAPI AddDefaultSettings(_Inout_ rdpSettings* settings)
 {
 	AddDefaultSettings_I(settings, FreeRDP_ServerHostname, FreeRDP_Username, FreeRDP_Password);
-	AddDefaultSettings_I(settings, FreeRDP_GatewayHostname, FreeRDP_GatewayUsername,
-	                     FreeRDP_GatewayPassword);
+	AddDefaultSettings_I(settings, FreeRDP_GatewayHostname, FreeRDP_GatewayUsername, FreeRDP_GatewayPassword);
 }
