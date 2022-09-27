@@ -54,6 +54,13 @@ typedef BOOL (*psPeerPostConnect)(freerdp_peer* peer);
 typedef BOOL (*psPeerActivate)(freerdp_peer* peer);
 typedef BOOL (*psPeerLogon)(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* identity,
                             BOOL automatic);
+typedef BOOL (*psPeerSendServerRedirection)(freerdp_peer* peer, UINT32 sessionId,
+                                            const char* targetNetAddress, const char* routingToken,
+                                            const char* userName, const char* domain,
+                                            const char* password, const char* targetFQDN,
+                                            const char* targetNetBiosName, DWORD tsvUrlLength,
+                                            const BYTE* tsvUrl, UINT32 targetNetAddressesCount,
+                                            const char** targetNetAddresses);
 typedef BOOL (*psPeerAdjustMonitorsLayout)(freerdp_peer* peer);
 typedef BOOL (*psPeerClientCapabilities)(freerdp_peer* peer);
 
@@ -124,6 +131,8 @@ struct rdp_freerdp_peer
 	ALIGN64 psPeerPostConnect PostConnect;
 	ALIGN64 psPeerActivate Activate;
 	ALIGN64 psPeerLogon Logon;
+
+	ALIGN64 psPeerSendServerRedirection SendServerRedirection;
 
 	ALIGN64 psPeerSendChannelData SendChannelData;
 	ALIGN64 psPeerReceiveChannelData ReceiveChannelData;

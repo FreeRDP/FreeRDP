@@ -893,6 +893,245 @@ static BOOL freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelI
 	return rdp_send_channel_data(client->context->rdp, channelId, data, size);
 }
 
+static BOOL freerdp_peer_send_server_redirection_pdu(
+    freerdp_peer* peer, UINT32 sessionId, const char* targetNetAddress, const char* routingToken,
+    const char* userName, const char* domain, const char* password, const char* targetFQDN,
+    const char* targetNetBiosName, DWORD tsvUrlLength, const BYTE* tsvUrl,
+    UINT32 targetNetAddressesCount, const char** targetNetAddresses)
+{
+	wStream* s = rdp_send_stream_pdu_init(peer->context->rdp);
+	UINT16 length;
+	UINT32 redirFlags;
+
+	UINT32 targetNetAddressLength;
+	UINT32 loadBalanceInfoLength;
+	UINT32 userNameLength;
+	UINT32 domainLength;
+	UINT32 passwordLength;
+	UINT32 targetFQDNLength;
+	UINT32 targetNetBiosNameLength;
+	UINT32 targetNetAddressesLength;
+	UINT32* targetNetAddressesWLength;
+
+	LPWSTR targetNetAddressW = NULL;
+	LPWSTR userNameW = NULL;
+	LPWSTR domainW = NULL;
+	LPWSTR passwordW = NULL;
+	LPWSTR targetFQDNW = NULL;
+	LPWSTR targetNetBiosNameW = NULL;
+	LPWSTR* targetNetAddressesW = NULL;
+
+	length = 12; /* Flags (2) + length (2) + sessionId (4)  + redirection flags (4) */
+	redirFlags = 0;
+
+	if (targetNetAddress)
+	{
+		redirFlags |= LB_TARGET_NET_ADDRESS;
+
+		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)targetNetAddress, -1, &targetNetAddressW, 0);
+		targetNetAddressLength = (strlen(targetNetAddress) + 1) * sizeof(WCHAR);
+
+		length += 4 + targetNetAddressLength;
+	}
+
+	if (routingToken)
+	{
+		redirFlags |= LB_LOAD_BALANCE_INFO;
+		loadBalanceInfoLength =
+		    13 + strlen(routingToken) + 2; /* Add routing token prefix and suffix */
+		length += 4 + loadBalanceInfoLength;
+	}
+
+	if (userName)
+	{
+		redirFlags |= LB_USERNAME;
+
+		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)userName, -1, &userNameW, 0);
+		userNameLength = (strlen(userName) + 1) * sizeof(WCHAR);
+
+		length += 4 + userNameLength;
+	}
+
+	if (domain)
+	{
+		redirFlags |= LB_DOMAIN;
+
+		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)domain, -1, &domainW, 0);
+		domainLength = (strlen(domain) + 1) * sizeof(WCHAR);
+
+		length += 4 + domainLength;
+	}
+
+	if (password)
+	{
+		redirFlags |= LB_PASSWORD;
+
+		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)password, -1, &passwordW, 0);
+		passwordLength = (strlen(password) + 1) * sizeof(WCHAR);
+
+		length += 4 + passwordLength;
+	}
+
+	if (targetFQDN)
+	{
+		redirFlags |= LB_TARGET_FQDN;
+
+		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)targetFQDN, -1, &targetFQDNW, 0);
+		targetFQDNLength = (strlen(targetFQDN) + 1) * sizeof(WCHAR);
+
+		length += 4 + targetFQDNLength;
+	}
+
+	if (targetNetBiosName)
+	{
+		redirFlags |= LB_TARGET_NETBIOS_NAME;
+
+		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)targetNetBiosName, -1, &targetNetBiosNameW, 0);
+		targetNetBiosNameLength = (strlen(targetNetBiosName) + 1) * sizeof(WCHAR);
+
+		length += 4 + targetNetBiosNameLength;
+	}
+
+	if (tsvUrl)
+	{
+		redirFlags |= LB_CLIENT_TSV_URL;
+		length += 4 + tsvUrlLength;
+	}
+
+	if (targetNetAddresses)
+	{
+		UINT32 i;
+
+		redirFlags |= LB_TARGET_NET_ADDRESSES;
+
+		targetNetAddressesLength = 0;
+		targetNetAddressesW = calloc(targetNetAddressesCount, sizeof(LPWSTR));
+		targetNetAddressesWLength = calloc(targetNetAddressesCount, sizeof(UINT32));
+		for (i = 0; i < targetNetAddressesCount; i++)
+		{
+			ConvertToUnicode(CP_UTF8, 0, (LPCSTR)targetNetAddresses[i], -1, &targetNetAddressesW[i],
+			                 0);
+			targetNetAddressesWLength[i] = (strlen(targetNetAddresses[i]) + 1) * sizeof(WCHAR);
+			targetNetAddressesLength += 4 + targetNetAddressesWLength[i];
+		}
+
+		length += 4 + 4 + targetNetAddressesLength;
+	}
+
+	Stream_Write_UINT16(s, 0);
+	Stream_Write_UINT16(s, SEC_REDIRECTION_PKT);
+	Stream_Write_UINT16(s, length);
+
+	if (!Stream_EnsureRemainingCapacity(s, length))
+	{
+		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+		goto fail;
+	}
+
+	if (sessionId)
+		Stream_Write_UINT32(s, sessionId);
+	else
+		Stream_Write_UINT32(s, 0);
+
+	Stream_Write_UINT32(s, redirFlags);
+
+	if (redirFlags & LB_TARGET_NET_ADDRESS)
+	{
+		Stream_Write_UINT32(s, targetNetAddressLength);
+		Stream_Write(s, targetNetAddressW, targetNetAddressLength);
+		free(targetNetAddressW);
+	}
+
+	if (redirFlags & LB_LOAD_BALANCE_INFO)
+	{
+		Stream_Write_UINT32(s, loadBalanceInfoLength);
+		Stream_Write(s, "Cookie: msts=", 13);
+		Stream_Write(s, routingToken, strlen(routingToken));
+		Stream_Write_UINT8(s, 0x0d);
+		Stream_Write_UINT8(s, 0x0a);
+	}
+
+	if (redirFlags & LB_USERNAME)
+	{
+		Stream_Write_UINT32(s, userNameLength);
+		Stream_Write(s, userNameW, userNameLength);
+		free(userNameW);
+	}
+
+	if (redirFlags & LB_DOMAIN)
+	{
+		Stream_Write_UINT32(s, domainLength);
+		Stream_Write(s, domainW, domainLength);
+		free(domainW);
+	}
+
+	if (redirFlags & LB_PASSWORD)
+	{
+		Stream_Write_UINT32(s, passwordLength);
+		Stream_Write(s, passwordW, passwordLength);
+		free(passwordW);
+	}
+
+	if (redirFlags & LB_TARGET_FQDN)
+	{
+		Stream_Write_UINT32(s, targetFQDNLength);
+		Stream_Write(s, targetFQDNW, targetFQDNLength);
+		free(targetFQDNW);
+	}
+
+	if (redirFlags & LB_TARGET_NETBIOS_NAME)
+	{
+		Stream_Write_UINT32(s, targetNetBiosNameLength);
+		Stream_Write(s, targetNetBiosNameW, targetNetBiosNameLength);
+		free(targetNetBiosNameW);
+	}
+
+	if (redirFlags & LB_CLIENT_TSV_URL)
+	{
+		Stream_Write_UINT32(s, tsvUrlLength);
+		Stream_Write(s, tsvUrl, tsvUrlLength);
+	}
+
+	if (redirFlags & LB_TARGET_NET_ADDRESSES)
+	{
+		UINT32 i;
+		Stream_Write_UINT32(s, targetNetAddressesLength);
+		Stream_Write_UINT32(s, targetNetAddressesCount);
+		for (i = 0; i < targetNetAddressesCount; i++)
+		{
+			Stream_Write_UINT32(s, targetNetAddressesWLength[i]);
+			Stream_Write(s, targetNetAddressesW[i], targetNetAddressesWLength[i]);
+			free(targetNetAddressesW[i]);
+		}
+		free(targetNetAddressesW);
+		free(targetNetAddressesWLength);
+	}
+
+	Stream_Write_UINT8(s, 0);
+	rdp_send_pdu(peer->context->rdp, s, PDU_TYPE_SERVER_REDIRECTION, 0);
+
+	return TRUE;
+
+fail:
+	free(targetNetAddressW);
+	free(userNameW);
+	free(domainW);
+	free(passwordW);
+	free(targetFQDNW);
+	free(targetNetBiosNameW);
+	free(targetNetAddressesWLength);
+
+	if (targetNetAddressesCount > 0)
+	{
+		UINT32 i;
+		for (i = 0; i < targetNetAddressesCount; i++)
+			free(targetNetAddressesW[i]);
+		free(targetNetAddressesW);
+	}
+
+	return FALSE;
+}
+
 static BOOL freerdp_peer_send_channel_packet(freerdp_peer* client, UINT16 channelId,
                                              size_t totalSize, UINT32 flags, const BYTE* data,
                                              size_t chunkSize)
@@ -1098,6 +1337,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		client->Disconnect = freerdp_peer_disconnect;
 		client->SendChannelData = freerdp_peer_send_channel_data;
 		client->SendChannelPacket = freerdp_peer_send_channel_packet;
+		client->SendServerRedirection = freerdp_peer_send_server_redirection_pdu;
 		client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 		client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
 		client->HasMoreToRead = freerdp_peer_has_more_to_read;
