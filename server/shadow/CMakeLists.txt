@@ -373,5 +373,8 @@ configure_package_config_file(FreeRDP-ShadowConfig.cmake.in ${CMAKE_CURRENT_BINA
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ShadowConfigVersion.cmake
 	VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ShadowConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ShadowConfigVersion.cmake
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ShadowConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ShadowConfigVersion.cmake
 	DESTINATION ${FREERDP_SERVER_CMAKE_INSTALL_DIR})
+
+install(EXPORT FreeRDP-ShadowTargets DESTINATION ${FREERDP_SERVER_CMAKE_INSTALL_DIR})
