@@ -349,7 +349,7 @@ static BOOL add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* l
 	BOOL result = FALSE;
 	HANDLE hFind = NULL;
 	WIN32_FIND_DATAW FindData = { 0 };
-	const WCHAR wildcard[] = { '/', '*', '.', '*', '\0' };
+	const WCHAR wildcard[] = { '/', '*', '\0' };
 
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(local_name);
