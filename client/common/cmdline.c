@@ -862,6 +862,11 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 
 		free(ptr.p);
 	}
+	CommandLineSwitchCase(arg, "kdc-url")
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_KerberosKdcUrl, arg->Value))
+			return COMMAND_LINE_ERROR_MEMORY;
+	}
 	CommandLineSwitchCase(arg, "kerberos")
 	{
 		size_t count;

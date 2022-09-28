@@ -224,6 +224,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "kbd-unicode", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
 	  "Send unicode symbols, e.g. use the local keyboard map. ATTENTION: Does not work with every "
 	  "RDP server!" },
+	{ "kdc-url", COMMAND_LINE_VALUE_REQUIRED, "<url>", NULL, NULL, -1, NULL, "KDC server URL" },
 	{ "kerberos", COMMAND_LINE_VALUE_REQUIRED,
 	  "[lifetime:<time>,start-time:<time>,renewable-lifetime:<time>,cache:<path>,armor:<path>,"
 	  "pkinit-anchors:<path>,pkcs11-module:<name>]",
