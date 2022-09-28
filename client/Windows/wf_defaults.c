@@ -4,18 +4,7 @@
 #include <malloc.h>
 #include <freerdp/settings.h>
 
-#pragma warning(disable : 4706 4094) // assignment within conditional expression
-
-#define FreeRDP_ServerHostname (20)
-#define FreeRDP_Username (21)
-#define FreeRDP_Password (22)
-#define FreeRDP_GatewayHostname (1986)
-#define FreeRDP_GatewayUsername (1987)
-#define FreeRDP_GatewayPassword (1988)
-
-typedef struct rdp_settings rdpSettings;
-
-PCWSTR ValidateString(const BYTE* pb, ULONG cb)
+static PCWSTR ValidateString(const BYTE* pb, ULONG cb)
 {
 	if (!pb || !cb)
 		return 0;
@@ -29,7 +18,7 @@ PCWSTR ValidateString(const BYTE* pb, ULONG cb)
 	return (PCWSTR)pb;
 }
 
-void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_t idUsername,
+static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_t idUsername,
                           size_t idPassword)
 {
 	PCSTR ServerHostname = freerdp_settings_get_string(settings, idHostname);
@@ -93,7 +82,7 @@ void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_t idUse
 	CredFree(Credential);
 }
 
-EXTERN_C void WINAPI AddDefaultSettings(_Inout_ rdpSettings* settings)
+void WINAPI AddDefaultSettings(_Inout_ rdpSettings* settings)
 {
 	AddDefaultSettings_I(settings, FreeRDP_ServerHostname, FreeRDP_Username, FreeRDP_Password);
 	AddDefaultSettings_I(settings, FreeRDP_GatewayHostname, FreeRDP_GatewayUsername, FreeRDP_GatewayPassword);
