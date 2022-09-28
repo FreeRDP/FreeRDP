@@ -58,12 +58,12 @@ struct rdp_ntlm
 	SecPkgContext_Bindings* Bindings;
 };
 
-static ULONG cast_from_size_(size_t size, const char* fkt, const char* file, int line)
+static ULONG cast_from_size_(size_t size, const char* fkt, const char* file, size_t line)
 {
 	if (size > ULONG_MAX)
 	{
-		WLog_ERR(TAG, "[%s %s:%d] Size %" PRIdz " is larger than INT_MAX %lu", fkt, file, line,
-		         size, ULONG_MAX);
+		WLog_ERR(TAG, "[%s %s:%" PRIuz "] Size %" PRIdz " is larger than INT_MAX %lu", fkt, file,
+		         line, size, ULONG_MAX);
 		return 0;
 	}
 

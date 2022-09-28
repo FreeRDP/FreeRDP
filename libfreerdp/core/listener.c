@@ -142,7 +142,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		WSAEventSelect(sockfd, listener->events[listener->num_sockfds],
 		               FD_READ | FD_ACCEPT | FD_CLOSE);
 		listener->num_sockfds++;
-		WLog_INFO(TAG, "Listening on [%s]:%d", addr, port);
+		WLog_INFO(TAG, "Listening on [%s]:%" PRIu16, addr, port);
 	}
 
 	freeaddrinfo(res);

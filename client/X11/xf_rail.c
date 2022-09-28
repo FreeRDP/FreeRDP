@@ -562,8 +562,8 @@ static xfRailIconCache* RailIconCache_New(rdpSettings* settings)
 
 	if (!cache->entries)
 	{
-		WLog_ERR(TAG, "failed to allocate icon cache %d x %d entries", cache->numCaches,
-		         cache->numCacheEntries);
+		WLog_ERR(TAG, "failed to allocate icon cache %" PRIu32 " x %" PRIu32 " entries",
+		         cache->numCaches, cache->numCacheEntries);
 		free(cache);
 		return NULL;
 	}

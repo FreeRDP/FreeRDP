@@ -697,8 +697,8 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		Stream_Read_UINT16(s, rect->width);  /* width (2 bytes) */
 		Stream_Read_UINT16(s, rect->height); /* height (2 bytes) */
 		WLog_Print(context->priv->log, WLOG_DEBUG,
-		           "rect %d (x,y=%" PRIu16 ",%" PRIu16 " w,h=%" PRIu16 " %" PRIu16 ").", i, rect->x,
-		           rect->y, rect->width, rect->height);
+		           "rect %" PRIu16 " (x,y=%" PRIu16 ",%" PRIu16 " w,h=%" PRIu16 " %" PRIu16 ").", i,
+		           rect->x, rect->y, rect->width, rect->height);
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))

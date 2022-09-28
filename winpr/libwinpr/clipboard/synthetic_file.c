@@ -84,7 +84,7 @@ static struct synthetic_file* make_synthetic_file(const WCHAR* local_name, const
 	hFind = FindFirstFileW(local_name, &fd);
 	if (INVALID_HANDLE_VALUE == hFind)
 	{
-		WLog_ERR(TAG, "FindFirstFile failed (%d)", GetLastError());
+		WLog_ERR(TAG, "FindFirstFile failed (%" PRIu32 ")", GetLastError());
 		return NULL;
 	}
 	FindClose(hFind);
@@ -330,7 +330,7 @@ static BOOL do_add_directory_contents_to_list(wClipboard* clipboard, const WCHAR
 		BOOL bRet = FindNextFileW(hFind, &FileData);
 		if (!bRet)
 		{
-			WLog_WARN(TAG, "FindNextFile failed (%d)", GetLastError());
+			WLog_WARN(TAG, "FindNextFile failed (%" PRIu32 ")", GetLastError());
 			if (ERROR_NO_MORE_FILES == GetLastError())
 				return TRUE;
 			return FALSE;
@@ -369,7 +369,7 @@ static BOOL add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* l
 
 	if (hFind == INVALID_HANDLE_VALUE)
 	{
-		WLog_ERR(TAG, "FindFirstFile failed (%d)", GetLastError());
+		WLog_ERR(TAG, "FindFirstFile failed (%" PRIu32 ")", GetLastError());
 		return FALSE;
 	}
 
@@ -1140,7 +1140,7 @@ UINT synthetic_file_read_close(struct synthetic_file* file, BOOL force)
 		WLog_VRB(TAG, "close file %d", file->fd);
 		if (CloseHandle(file->fd) < 0)
 		{
-			WLog_WARN(TAG, "failed to close fd %d: %d", file->fd, GetLastError());
+			WLog_WARN(TAG, "failed to close fd %d: %" PRIu32, file->fd, GetLastError());
 		}
 
 		file->fd = INVALID_HANDLE_VALUE;
@@ -1206,7 +1206,7 @@ static UINT file_get_range(struct synthetic_file* file, UINT64 offset, UINT32 si
 		 */
 		if (offset > INT64_MAX)
 		{
-			WLog_ERR(TAG, "offset [%d] > INT64_MAX", offset);
+			WLog_ERR(TAG, "offset [%" PRIu64 "] > INT64_MAX", offset);
 			error = ERROR_SEEK;
 			break;
 		}

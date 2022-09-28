@@ -215,8 +215,10 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 		WLog_INFO(TAG, "|%s|", rows[ty] ? "O" : "X");
 	}
 
-	WLog_INFO(TAG, "left: %d top: %d right: %d bottom: %d ncol: %d nrow: %d", l, t, r, b, ncol,
-	          nrow);
+	WLog_INFO(TAG,
+	          "left: %" PRIu32 " top: %" PRIu32 " right: %" PRIu32 " bottom: %" PRIu32
+	          " ncol: %" PRIu32 " nrow: %" PRIu32,
+	          l, t, r, b, ncol, nrow);
 	free(col_str);
 #endif
 	return 1;

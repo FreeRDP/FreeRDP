@@ -440,7 +440,7 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 			port = 1080;
 		}
 
-		WLog_DBG(TAG, "setting default proxy port: %d", port);
+		WLog_DBG(TAG, "setting default proxy port: %" PRIu16, port);
 	}
 
 	if (!freerdp_settings_set_uint16(settings, FreeRDP_ProxyPort, port))
@@ -460,14 +460,14 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 
 	if (freerdp_settings_get_string(settings, FreeRDP_ProxyUsername))
 	{
-		WLog_INFO(TAG, "Parsed proxy configuration: %s://%s:%s@%s:%d", protocol,
+		WLog_INFO(TAG, "Parsed proxy configuration: %s://%s:%s@%s:%" PRIu16, protocol,
 		          freerdp_settings_get_string(settings, FreeRDP_ProxyUsername), "******",
 		          freerdp_settings_get_string(settings, FreeRDP_ProxyHostname),
 		          freerdp_settings_get_uint16(settings, FreeRDP_ProxyPort));
 	}
 	else
 	{
-		WLog_INFO(TAG, "Parsed proxy configuration: %s://%s:%d", protocol,
+		WLog_INFO(TAG, "Parsed proxy configuration: %s://%s:%" PRIu16, protocol,
 		          freerdp_settings_get_string(settings, FreeRDP_ProxyHostname),
 		          freerdp_settings_get_uint16(settings, FreeRDP_ProxyPort));
 	}
@@ -826,14 +826,14 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 
 	if (buf[1] == 0)
 	{
-		WLog_INFO(TAG, "Successfully connected to %s:%d", hostname, port);
+		WLog_INFO(TAG, "Successfully connected to %s:%" PRIu16, hostname, port);
 		return TRUE;
 	}
 
 	if (buf[1] > 0 && buf[1] < 9)
 		WLog_INFO(TAG, "SOCKS Proxy replied: %s", rplstat[buf[1]]);
 	else
-		WLog_INFO(TAG, "SOCKS Proxy replied: %d status not listed in rfc1928", buf[1]);
+		WLog_INFO(TAG, "SOCKS Proxy replied: %" PRIu8 " status not listed in rfc1928", buf[1]);
 
 	return FALSE;
 }

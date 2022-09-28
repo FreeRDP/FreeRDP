@@ -2157,7 +2157,7 @@ static BOOL xf_cliprdr_fuse_generate_list(xfClipboard* clipboard, const BYTE* da
 
 	if (size < 4)
 	{
-		WLog_ERR(TAG, "size of format data response invalid : %d", size);
+		WLog_ERR(TAG, "size of format data response invalid : %" PRIu32, size);
 		return FALSE;
 	}
 	size_t count = (size - 4) / sizeof(FILEDESCRIPTORW);
@@ -3047,7 +3047,7 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 		free(tmpPath);
 		return 0;
 	}
-	_snprintf(&basePath[0], basePathSize, "%s/.xfreerdp.cliprdr.%d", tmpPath,
+	_snprintf(&basePath[0], basePathSize, "%s/.xfreerdp.cliprdr.%" PRIu32, tmpPath,
 	          GetCurrentProcessId());
 	free(tmpPath);
 

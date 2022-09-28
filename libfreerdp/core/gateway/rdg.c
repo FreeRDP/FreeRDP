@@ -1756,7 +1756,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 	encoding = http_response_get_transfer_encoding(response);
 	isWebsocket = http_response_is_websocket(rdg->http, response);
 	http_response_free(response);
-	WLog_DBG(TAG, "%s authorization result: %d", method, statusCode);
+	WLog_DBG(TAG, "%s authorization result: %ld", method, statusCode);
 
 	switch (statusCode)
 	{

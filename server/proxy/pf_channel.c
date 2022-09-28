@@ -55,7 +55,7 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 
 	WINPR_ASSERT(tracker);
 
-	WLog_VRB(TAG, "channelTracker_update(%s): sz=%d first=%d last=%d",
+	WLog_VRB(TAG, "channelTracker_update(%s): sz=%" PRIuz " first=%d last=%d",
 	         tracker->channel->channel_name, xsize, firstPacket, lastPacket);
 	if (flags & CHANNEL_FLAG_FIRST)
 	{
@@ -81,7 +81,7 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 	}
 
 	if (tracker->currentPacketReceived + xsize > tracker->currentPacketSize)
-		WLog_INFO(TAG, "cumulated size is bigger (%d) than total size (%d)",
+		WLog_INFO(TAG, "cumulated size is bigger (%" PRIuz ") than total size (%" PRIuz ")",
 		          tracker->currentPacketReceived + xsize, tracker->currentPacketSize);
 
 	tracker->currentPacketReceived += xsize;
@@ -110,7 +110,7 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 	{
 		tracker->mode = CHANNEL_TRACKER_PEEK;
 		if (tracker->currentPacketReceived != tracker->currentPacketSize)
-			WLog_INFO(TAG, "cumulated size(%d) does not match total size (%d)",
+			WLog_INFO(TAG, "cumulated size(%" PRIuz ") does not match total size (%" PRIuz ")",
 			          tracker->currentPacketReceived, tracker->currentPacketSize);
 	}
 
@@ -144,7 +144,7 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 
 	WINPR_ASSERT(t);
 
-	WLog_VRB(TAG, "channelTracker_flushCurrent(%s): %s sz=%d first=%d last=%d",
+	WLog_VRB(TAG, "channelTracker_flushCurrent(%s): %s sz=%" PRIuz " first=%d last=%d",
 	         t->channel->channel_name, direction, Stream_GetPosition(t->currentPacket), first,
 	         last);
 

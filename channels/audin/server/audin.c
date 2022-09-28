@@ -209,7 +209,7 @@ static UINT audin_server_recv_formats(audin_server* audin, wStream* s, UINT32 le
 
 	if (audin->context.num_client_formats <= 0)
 	{
-		WLog_ERR(TAG, "num_client_formats expected > 0 but got %d",
+		WLog_ERR(TAG, "num_client_formats expected > 0 but got %" PRIuz,
 		         audin->context.num_client_formats);
 		return ERROR_INVALID_DATA;
 	}
@@ -254,7 +254,7 @@ static UINT audin_server_send_open(audin_server* audin, wStream* s)
 	WINPR_ASSERT(audin);
 	if (audin->context.selected_client_format < 0)
 	{
-		WLog_ERR(TAG, "audin->context.selected_client_format = %d",
+		WLog_ERR(TAG, "audin->context.selected_client_format = %" PRIdz,
 		         audin->context.selected_client_format);
 		return ERROR_INVALID_DATA;
 	}
@@ -330,7 +330,7 @@ static UINT audin_server_recv_data(audin_server* audin, wStream* s, UINT32 lengt
 	WINPR_ASSERT(audin);
 	if (audin->context.selected_client_format < 0)
 	{
-		WLog_ERR(TAG, "audin->context.selected_client_format = %d",
+		WLog_ERR(TAG, "audin->context.selected_client_format = %" PRIdz,
 		         audin->context.selected_client_format);
 		return ERROR_INVALID_DATA;
 	}

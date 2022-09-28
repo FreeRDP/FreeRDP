@@ -130,8 +130,8 @@ disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 		Stream_Write_UINT32(s, current.DesktopScaleFactor); /* DesktopScaleFactor (4 bytes) */
 		Stream_Write_UINT32(s, current.DeviceScaleFactor);  /* DeviceScaleFactor (4 bytes) */
 		WLog_DBG(TAG,
-		         "\t%d : Flags: 0x%08" PRIX32 " Left/Top: (%" PRId32 ",%" PRId32 ") W/H=%" PRIu32
-		         "x%" PRIu32 ")",
+		         "\t%" PRIu32 " : Flags: 0x%08" PRIX32 " Left/Top: (%" PRId32 ",%" PRId32
+		         ") W/H=%" PRIu32 "x%" PRIu32 ")",
 		         index, current.Flags, current.Left, current.Top, current.Width, current.Height);
 		WLog_DBG(TAG,
 		         "\t   PhysicalWidth: %" PRIu32 " PhysicalHeight: %" PRIu32 " Orientation: %" PRIu32

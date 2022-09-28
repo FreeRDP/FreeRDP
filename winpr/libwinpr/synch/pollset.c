@@ -199,7 +199,7 @@ BOOL pollset_isSignaled(WINPR_POLL_SET* set, size_t idx)
 {
 	if (idx > set->fillIndex)
 	{
-		WLog_ERR(TAG, "%s: index=%d out of pollset(fillIndex=%d)", __FUNCTION__, idx,
+		WLog_ERR(TAG, "%s: index=%d out of pollset(fillIndex=%" PRIuz ")", __FUNCTION__, idx,
 		         set->fillIndex);
 		return FALSE;
 	}

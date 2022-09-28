@@ -1774,8 +1774,9 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 		pSrcData = &pSrcData[((UINT16)subY * nSrcStep) + ((UINT16)subX * 4U)];
 	}
 
-	// WLog_INFO(TAG, "shadow_client_send_surface_update: x: %d y: %d width: %d height: %d right: %d
-	// bottom: %d", 	nXSrc, nYSrc, nWidth, nHeight, nXSrc + nWidth, nYSrc + nHeight);
+	// WLog_INFO(TAG, "shadow_client_send_surface_update: x: %" PRId64 " y: %" PRId64 " width: %"
+	// PRId64 " height: %" PRId64 " right: %" PRId64 " bottom: %" PRId64, 	nXSrc, nYSrc, nWidth,
+	// nHeight, nXSrc + nWidth, nYSrc + nHeight);
 
 	if (settings->SupportGraphicsPipeline && pStatus->gfxOpened)
 	{

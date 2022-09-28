@@ -414,7 +414,8 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 			if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddresses[i]), 80))
 				return FALSE;
 
-			WLog_DBG(TAG, "TargetNetAddresses[%d]: %s", i, redirection->TargetNetAddresses[i]);
+			WLog_DBG(TAG, "TargetNetAddresses[%" PRIuz "]: %s", i,
+			         redirection->TargetNetAddresses[i]);
 		}
 	}
 

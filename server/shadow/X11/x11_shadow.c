@@ -1265,7 +1265,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 
 	if ((subsystem->depth != 24) && (subsystem->depth != 32))
 	{
-		WLog_ERR(TAG, "unsupported X11 server color depth: %d", subsystem->depth);
+		WLog_ERR(TAG, "unsupported X11 server color depth: %" PRIu32, subsystem->depth);
 		return -1;
 	}
 

@@ -692,7 +692,8 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 			}
 			break;
 		default:
-			WLog_WARN(TAG, "[%s] Unhandled event %d: Event was registered but is not handled!");
+			WLog_WARN(TAG, "[%s] Unhandled event %d: Event was registered but is not handled!",
+			          __FUNCTION__, evtype);
 			break;
 	}
 

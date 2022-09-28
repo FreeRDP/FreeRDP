@@ -138,7 +138,7 @@ static DynvcReadResult dynvc_read_varInt(wStream* s, size_t len, UINT64* varInt,
 			break;
 		case 0x03:
 		default:
-			WLog_ERR(TAG, "Unknown int len %d", len);
+			WLog_ERR(TAG, "Unknown int len %" PRIuz, len);
 			return DYNCVC_READ_ERROR;
 	}
 	return DYNCVC_READ_OK;
@@ -377,7 +377,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 
 	if ((cmd == DATA_FIRST_PDU) || (cmd == DATA_FIRST_COMPRESSED_PDU))
 	{
-		WLog_DBG(TAG, "DynvcTracker(%s): %s DATA_FIRST currentPacketLength=%d",
+		WLog_DBG(TAG, "DynvcTracker(%s): %s DATA_FIRST currentPacketLength=%" PRIu64 "",
 		         dynChannel->channel_name, direction, Length);
 		trackerState->currentDataLength = Length;
 		trackerState->CurrentDataReceived = 0;
@@ -388,8 +388,8 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 	{
 		trackerState->CurrentDataFragments++;
 		trackerState->CurrentDataReceived += Stream_GetRemainingLength(s);
-		WLog_DBG(TAG, "DynvcTracker(%s): %s %s frags=%d received=%d(%d)", dynChannel->channel_name,
-		         direction, cmd == DATA_PDU ? "DATA" : "DATA_FIRST",
+		WLog_DBG(TAG, "DynvcTracker(%s): %s %s frags=%" PRIu32 " received=%" PRIu32 "(%" PRIu32 ")",
+		         dynChannel->channel_name, direction, cmd == DATA_PDU ? "DATA" : "DATA_FIRST",
 		         trackerState->CurrentDataFragments, trackerState->CurrentDataReceived,
 		         trackerState->currentDataLength);
 	}
@@ -400,10 +400,10 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 		{
 			if (trackerState->CurrentDataReceived > trackerState->currentDataLength)
 			{
-				WLog_ERR(
-				    TAG,
-				    "DynvcTracker: reassembled packet (%d) is bigger than announced length (%d)",
-				    trackerState->CurrentDataReceived, trackerState->currentDataLength);
+				WLog_ERR(TAG,
+				         "DynvcTracker: reassembled packet (%" PRIu32
+				         ") is bigger than announced length (%" PRIu32 ")",
+				         trackerState->CurrentDataReceived, trackerState->currentDataLength);
 				return PF_CHANNEL_RESULT_ERROR;
 			}
 

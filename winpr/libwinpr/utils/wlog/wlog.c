@@ -199,11 +199,11 @@ static BOOL log_recursion(LPCSTR file, LPCSTR fkt, size_t line)
 	if (__android_log_print(ANDROID_LOG_FATAL, tag, "Recursion detected!!!") < 0)
 		goto out;
 
-	if (__android_log_print(ANDROID_LOG_FATAL, tag, "Check %s [%s:%d]", fkt, file, line) < 0)
+	if (__android_log_print(ANDROID_LOG_FATAL, tag, "Check %s [%s:%zu]", fkt, file, line) < 0)
 		goto out;
 
 	for (i = 0; i < used; i++)
-		if (__android_log_print(ANDROID_LOG_FATAL, tag, "%zd: %s", i, msg[i]) < 0)
+		if (__android_log_print(ANDROID_LOG_FATAL, tag, "%zu: %s", i, msg[i]) < 0)
 			goto out;
 
 #else

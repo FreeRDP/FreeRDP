@@ -987,8 +987,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 		if (bodyLength != response->BodyLength)
 		{
-			WLog_WARN(TAG, "%s: %s unexpected body length: actual: %d, expected: %d", __FUNCTION__,
-			          response->ContentType, response->BodyLength, bodyLength);
+			WLog_WARN(TAG, "%s: %s unexpected body length: actual: %" PRIuz ", expected: %" PRIuz,
+			          __FUNCTION__, response->ContentType, response->BodyLength, bodyLength);
 
 			if (bodyLength > 0)
 				response->BodyLength = MIN(bodyLength, response->BodyLength);

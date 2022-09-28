@@ -378,7 +378,10 @@ static BOOL video_onMappedGeometryUpdate(MAPPED_GEOMETRY* geometry)
 	WINPR_ASSERT(presentation);
 
 	r = &geometry->geometry.boundingRect;
-	WLog_DBG(TAG, "geometry updated topGeom=(%d,%d-%dx%d) geom=(%d,%d-%dx%d) rects=(%d,%d-%dx%d)",
+	WLog_DBG(TAG,
+	         "geometry updated topGeom=(%" PRId32 ",%" PRId32 "-%" PRId32 "x%" PRId32
+	         ") geom=(%" PRId32 ",%" PRId32 "-%" PRId32 "x%" PRId32 ") rects=(%" PRId16 ",%" PRId16
+	         "-%" PRId16 "x%" PRId16 ")",
 	         geometry->topLevelLeft, geometry->topLevelTop,
 	         geometry->topLevelRight - geometry->topLevelLeft,
 	         geometry->topLevelBottom - geometry->topLevelTop,
@@ -435,12 +438,12 @@ static UINT video_PresentationRequest(VideoClientContext* video,
 		{
 			if (presentation->PresentationId == req->PresentationId)
 			{
-				WLog_ERR(TAG, "ignoring start request for existing presentation %d",
+				WLog_ERR(TAG, "ignoring start request for existing presentation %" PRIu8,
 				         req->PresentationId);
 				return CHANNEL_RC_OK;
 			}
 
-			WLog_ERR(TAG, "releasing current presentation %d", req->PresentationId);
+			WLog_ERR(TAG, "releasing current presentation %" PRIu8, req->PresentationId);
 			PresentationContext_unref(presentation);
 			presentation = priv->currentPresentation = NULL;
 		}
@@ -489,7 +492,7 @@ static UINT video_PresentationRequest(VideoClientContext* video,
 		WLog_DBG(TAG, "stopping presentation 0x%x", req->PresentationId);
 		if (!presentation)
 		{
-			WLog_ERR(TAG, "unknown presentation to stop %d", req->PresentationId);
+			WLog_ERR(TAG, "unknown presentation to stop %" PRIu8, req->PresentationId);
 			return CHANNEL_RC_OK;
 		}
 
@@ -765,15 +768,17 @@ treat_feedback:
 				video_control_send_client_notification(video, &notif);
 				priv->lastSentRate = computedRate;
 
-				WLog_DBG(TAG, "server notified with rate %d published=%d dropped=%d",
+				WLog_DBG(TAG,
+				         "server notified with rate %" PRIu32 " published=%" PRIu32
+				         " dropped=%" PRIu32,
 				         priv->lastSentRate, priv->publishedFrames, priv->droppedFrames);
 			}
 
 			PresentationContext_unref(priv->currentPresentation);
 		}
 
-		WLog_DBG(TAG, "currentRate=%d published=%d dropped=%d", priv->lastSentRate,
-		         priv->publishedFrames, priv->droppedFrames);
+		WLog_DBG(TAG, "currentRate=%" PRIu32 " published=%" PRIu32 " dropped=%" PRIu32,
+		         priv->lastSentRate, priv->publishedFrames, priv->droppedFrames);
 
 		priv->droppedFrames = 0;
 		priv->publishedFrames = 0;
@@ -802,7 +807,7 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 
 	if (presentation->PresentationId != data->PresentationId)
 	{
-		WLog_ERR(TAG, "current presentation id=%d doesn't match data id=%d",
+		WLog_ERR(TAG, "current presentation id=%" PRIu8 " doesn't match data id=%" PRIu8,
 		         presentation->PresentationId, data->PresentationId);
 		return CHANNEL_RC_OK;
 	}

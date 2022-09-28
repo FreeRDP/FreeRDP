@@ -693,7 +693,7 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certi
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, certLength))
 			return FALSE;
 
-		DEBUG_CERTIFICATE("X.509 Certificate #%d, length:%" PRIu32 "", i + 1, certLength);
+		DEBUG_CERTIFICATE("X.509 Certificate #%" PRIu32 ", length:%" PRIu32 "", i + 1, certLength);
 		certificate->x509_cert_chain->array[i].data = (BYTE*)malloc(certLength);
 
 		if (!certificate->x509_cert_chain->array[i].data)

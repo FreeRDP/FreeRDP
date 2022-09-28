@@ -206,7 +206,7 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 		const char* cname = accepted_channels[i];
 		UINT16 channelId = WTSChannelGetId(peer, cname);
 
-		PROXY_LOG_INFO(TAG, ps, "Accepted channel: %s (%d)", cname, channelId);
+		PROXY_LOG_INFO(TAG, ps, "Accepted channel: %s (%" PRIu16 ")", cname, channelId);
 		channelContext = StaticChannelContext_new(ps, cname, channelId);
 		if (!channelContext)
 		{
@@ -411,7 +411,7 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	channel = HashTable_GetItemValue(ps->channelsById, &channelId64);
 	if (!channel)
 	{
-		PROXY_LOG_ERR(TAG, ps, "channel id=%d not registered here, dropping", channelId64);
+		PROXY_LOG_ERR(TAG, ps, "channel id=%" PRIu64 " not registered here, dropping", channelId64);
 		return TRUE;
 	}
 
@@ -628,7 +628,7 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 
 		if (status == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForMultipleObjects failed (status: %d)", status);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed (status: %" PRIu32 ")", status);
 			break;
 		}
 

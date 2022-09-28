@@ -1410,8 +1410,8 @@ static BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* fla
 		*flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
 	}
 
-	WLog_DBG(TAG, "windows: %d/%d posix: %d/%d", windows_cli_status, windows_cli_count,
-	         posix_cli_status, posix_cli_count);
+	WLog_DBG(TAG, "windows: %d/%" PRIuz " posix: %d/%" PRIuz "", windows_cli_status,
+	         windows_cli_count, posix_cli_status, posix_cli_count);
 	if ((posix_cli_count == 0) && (windows_cli_count == 0))
 	{
 		if ((posix_cli_status == COMMAND_LINE_ERROR) && (windows_cli_status == COMMAND_LINE_ERROR))

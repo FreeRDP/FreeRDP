@@ -336,7 +336,8 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 
 	keyCount = rdp_load_persistent_key_list(rdp, &keyList);
 
-	WLog_DBG(TAG, "Persistent Key List: TotalKeyCount: %d MaxKeyFrag: %d", keyCount, keyMaxFrag);
+	WLog_DBG(TAG, "Persistent Key List: TotalKeyCount: %" PRIu32 " MaxKeyFrag: %" PRIu32, keyCount,
+	         keyMaxFrag);
 
 	// MS-RDPBCGR recommends sending no more than 169 entries at once.
 	// In practice, sending more than 2042 entries at once triggers an error.
@@ -376,13 +377,17 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 	info.keyCount = keyCount;
 	info.keyList = keyList;
 
-	WLog_DBG(TAG, "persistentKeyList count: %d", info.keyCount);
+	WLog_DBG(TAG, "persistentKeyList count: %" PRIu32, info.keyCount);
 
-	WLog_DBG(TAG, "numEntriesCache: [0]: %d [1]: %d [2]: %d [3]: %d [4]: %d", info.numEntriesCache0,
-	         info.numEntriesCache1, info.numEntriesCache2, info.numEntriesCache3,
-	         info.numEntriesCache4);
+	WLog_DBG(TAG,
+	         "numEntriesCache: [0]: %" PRIu16 " [1]: %" PRIu16 " [2]: %" PRIu16 " [3]: %" PRIu16
+	         " [4]: %" PRIu16,
+	         info.numEntriesCache0, info.numEntriesCache1, info.numEntriesCache2,
+	         info.numEntriesCache3, info.numEntriesCache4);
 
-	WLog_DBG(TAG, "totalEntriesCache: [0]: %d [1]: %d [2]: %d [3]: %d [4]: %d",
+	WLog_DBG(TAG,
+	         "totalEntriesCache: [0]: %" PRIu16 " [1]: %" PRIu16 " [2]: %" PRIu16 " [3]: %" PRIu16
+	         " [4]: %" PRIu16,
 	         info.totalEntriesCache0, info.totalEntriesCache1, info.totalEntriesCache2,
 	         info.totalEntriesCache3, info.totalEntriesCache4);
 

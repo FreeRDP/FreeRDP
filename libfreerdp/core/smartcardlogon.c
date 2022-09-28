@@ -369,7 +369,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		certBytes = calloc(1, cbOutput);
 		if (!certBytes)
 		{
-			WLog_ERR(TAG, "unable to allocate %d certBytes for key %s", cbOutput,
+			WLog_ERR(TAG, "unable to allocate %" PRIu32 " certBytes for key %s", cbOutput,
 			         cert->info.containerName);
 			goto endofloop;
 		}
