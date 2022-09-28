@@ -34,7 +34,7 @@
 
 #include <freerdp/event.h>
 
-#include <Windowsx.h>
+#include <windowsx.h>
 
 static HWND g_focus_hWnd = NULL;
 static HWND g_main_hWnd = NULL;
