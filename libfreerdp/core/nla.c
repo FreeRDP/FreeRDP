@@ -883,6 +883,16 @@ static BOOL nla_setup_kerberos(rdpNla* nla)
 	kerbSettings = nla->kerberosSettings;
 	WINPR_ASSERT(kerbSettings);
 
+	if (settings->KerberosKdcUrl)
+	{
+		kerbSettings->kdcUrl = _strdup(settings->KerberosKdcUrl);
+		if (!kerbSettings->kdcUrl)
+		{
+			WLog_ERR(TAG, "unable to copy kdcUrl");
+			return FALSE;
+		}
+	}
+
 	if (settings->KerberosLifeTime &&
 	    !parseKerberosDeltat(settings->KerberosLifeTime, &kerbSettings->lifeTime, "lifetime"))
 		return FALSE;
@@ -2655,6 +2665,7 @@ void nla_free(rdpNla* nla)
 	sspi_SecBufferFree(&nla->tsCredentials);
 
 	free(nla->ServicePrincipalName);
+	free(nla->kerberosSettings->kdcUrl);
 	free(nla->kerberosSettings->armorCache);
 	free(nla->kerberosSettings->cache);
 	free(nla->kerberosSettings->pkinitX509Anchors);

@@ -739,6 +739,7 @@ typedef struct
 
 typedef struct
 {
+	char* kdcUrl;
 	char* keytab;
 	char* cache;
 	char* armorCache;
