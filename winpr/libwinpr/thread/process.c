@@ -381,7 +381,7 @@ BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
                     DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory,
                     LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	return TRUE;
+	return FALSE;
 }
 
 BOOL CreateProcessAsUserA(HANDLE hToken, LPCSTR lpApplicationName, LPSTR lpCommandLine,
@@ -401,7 +401,7 @@ BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCom
                           DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory,
                           LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	return TRUE;
+	return FALSE;
 }
 
 BOOL CreateProcessWithLogonA(LPCSTR lpUsername, LPCSTR lpDomain, LPCSTR lpPassword,
@@ -410,7 +410,7 @@ BOOL CreateProcessWithLogonA(LPCSTR lpUsername, LPCSTR lpDomain, LPCSTR lpPasswo
                              LPSTARTUPINFOA lpStartupInfo,
                              LPPROCESS_INFORMATION lpProcessInformation)
 {
-	return TRUE;
+	return FALSE;
 }
 
 BOOL CreateProcessWithLogonW(LPCWSTR lpUsername, LPCWSTR lpDomain, LPCWSTR lpPassword,
@@ -419,7 +419,7 @@ BOOL CreateProcessWithLogonW(LPCWSTR lpUsername, LPCWSTR lpDomain, LPCWSTR lpPas
                              LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
                              LPPROCESS_INFORMATION lpProcessInformation)
 {
-	return TRUE;
+	return FALSE;
 }
 
 BOOL CreateProcessWithTokenA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplicationName,
@@ -437,7 +437,7 @@ BOOL CreateProcessWithTokenW(HANDLE hToken, DWORD dwLogonFlags, LPCWSTR lpApplic
                              LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
                              LPPROCESS_INFORMATION lpProcessInformation)
 {
-	return TRUE;
+	return FALSE;
 }
 
 VOID ExitProcess(UINT uExitCode)
