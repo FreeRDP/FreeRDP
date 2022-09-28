@@ -1,3 +1,22 @@
+/**
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ *
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2022 Stefan Koell
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <Windows.h>
 #include <wincred.h>
 #include <stdio.h>
@@ -19,8 +38,19 @@ static PCWSTR ValidateString(const BYTE* pb, ULONG cb)
 }
 
 static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_t idUsername,
-                          size_t idPassword)
+                                 size_t idPassword)
 {
+	static const PSTR TERMSRV = "TERMSRV/%s";
+
+	PSTR TargetName = 0;
+	PSTR UserName = 0;
+	PSTR Password = 0;
+	PWSTR UserNameW = 0;
+	PWSTR PasswordW = 0;
+	PWSTR TargetNameW = 0;
+	PWSTR ServerHostnameW = 0;
+	PCREDENTIALW Credential;
+
 	PCSTR ServerHostname = freerdp_settings_get_string(settings, idHostname);
 
 	if (!ServerHostname)
@@ -32,58 +62,57 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 	if (bExistUserName && bExistPassword)
 		return;
 
-	PCREDENTIALA Credential;
-	PCWSTR lpWideCharStr;
-
-	PSTR Password;
-	PSTR UserName;
-
-	PSTR TargetName = 0;
-	int len = _vsnprintf(TargetName, 0, "TERMSRV/%s", (va_list)&ServerHostname);
+	int len = _snprintf(TargetName, 0, TERMSRV, ServerHostname);
 	len++;
 	TargetName = (PSTR)malloc(len);
-	_vsnprintf(TargetName, len, "TERMSRV/%s", (va_list)&ServerHostname);
+
+	if (!TargetName)
+		return;
+
+	_snprintf(TargetName, len, TERMSRV, ServerHostname);
 
 	if (!TargetName)
 		return;
 
 	TargetName[len - 1] = 0;
 
-	if (!CredReadA(TargetName, CRED_TYPE_GENERIC, 0, &Credential))
+	int result = ConvertToUnicode(CP_UTF8, 0, TargetName, -1, &TargetNameW, 0);
+	if (!result)
+		return;
+
+	if (!CredReadW(TargetNameW, CRED_TYPE_GENERIC, 0, &Credential))
 		return;
 
 	if (!bExistPassword)
 	{
-		ULONG cch = Credential->CredentialBlobSize;
+		PasswordW = ValidateString(Credential->CredentialBlob, Credential->CredentialBlobSize);
 
-		if (lpWideCharStr = ValidateString(Credential->CredentialBlob, cch))
+		if (PasswordW)
 		{
-			Password = 0, len = 0, cch /= sizeof(WCHAR);
-
-			len = WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cch, Password, len, 0, 0);
-			Password = (PSTR)malloc(len);
-			WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cch, Password, len, 0, 0);
-			
-			if (Password)
-			{
+			result = ConvertFromUnicode(CP_UTF8, 0, PasswordW, -1, &Password, 0, NULL, NULL);
+			if (result)
 				freerdp_settings_set_string(settings, idPassword, Password);
-			}
 		}
 	}
 
 	if (!bExistUserName)
 	{
-		if (UserName = Credential->UserName)
+		UserNameW = Credential->UserName;
+
+		if (UserNameW)
 		{
-			freerdp_settings_set_string(settings, idUsername, UserName);
+			result = ConvertFromUnicode(CP_UTF8, 0, UserNameW, -1, &UserName, 0, NULL, NULL);
+			if (result)
+				freerdp_settings_set_string(settings, idUsername, UserName);
 		}
 	}
 
 	CredFree(Credential);
 }
 
-void WINAPI AddDefaultSettings(_Inout_ rdpSettings* settings)
+void WINAPI AddDefaultSettings(rdpSettings* settings)
 {
 	AddDefaultSettings_I(settings, FreeRDP_ServerHostname, FreeRDP_Username, FreeRDP_Password);
-	AddDefaultSettings_I(settings, FreeRDP_GatewayHostname, FreeRDP_GatewayUsername, FreeRDP_GatewayPassword);
+	AddDefaultSettings_I(settings, FreeRDP_GatewayHostname, FreeRDP_GatewayUsername,
+	                     FreeRDP_GatewayPassword);
 }
