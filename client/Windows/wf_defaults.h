@@ -1,7 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
  *
- * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2022 Stefan Koell
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

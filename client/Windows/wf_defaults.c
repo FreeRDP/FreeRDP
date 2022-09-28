@@ -1,7 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
  *
- * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2022 Stefan Koell
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +27,7 @@ static PCWSTR ValidateString(const BYTE* pb, ULONG cb)
 	if (!pb || !cb)
 		return 0;
 
-	if (cb & (sizeof(WCHAR) - 1))
+	if (cb % sizeof(WCHAR) != 0)
 		return 0;
 
 	if (*(WCHAR*)(pb + cb - sizeof(WCHAR)))
@@ -49,7 +48,7 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 	PWSTR PasswordW = 0;
 	PWSTR TargetNameW = 0;
 	PWSTR ServerHostnameW = 0;
-	PCREDENTIALW Credential;
+	PCREDENTIALW Credential = { 0 };
 
 	PCSTR ServerHostname = freerdp_settings_get_string(settings, idHostname);
 
@@ -67,21 +66,18 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 	TargetName = (PSTR)malloc(len);
 
 	if (!TargetName)
-		return;
+		goto fail;
 
 	_snprintf(TargetName, len, TERMSRV, ServerHostname);
-
-	if (!TargetName)
-		return;
 
 	TargetName[len - 1] = 0;
 
 	int result = ConvertToUnicode(CP_UTF8, 0, TargetName, -1, &TargetNameW, 0);
-	if (!result)
-		return;
+	if (result <= 0)
+		goto fail;
 
 	if (!CredReadW(TargetNameW, CRED_TYPE_GENERIC, 0, &Credential))
-		return;
+		goto fail;
 
 	if (!bExistPassword)
 	{
@@ -107,7 +103,15 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 		}
 	}
 
+
+fail:
 	CredFree(Credential);
+	free(TargetName);
+	free(TargetNameW);
+	free(ServerHostnameW);
+	free(UserName);
+	free(Password);
+	return;
 }
 
 void WINAPI AddDefaultSettings(rdpSettings* settings)
