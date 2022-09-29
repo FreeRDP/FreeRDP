@@ -1071,8 +1071,8 @@ static SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesA(PCredHandle p
 }
 
 static SECURITY_STATUS SEC_ENTRY winpr_SetCredentialsAttributesW(PCredHandle phCredential,
-                                                            ULONG ulAttribute, void* pBuffer,
-                                                            ULONG cbBuffer)
+                                                                 ULONG ulAttribute, void* pBuffer,
+                                                                 ULONG cbBuffer)
 {
 	SEC_WCHAR* Name;
 	SECURITY_STATUS status;
@@ -1105,8 +1105,8 @@ static SECURITY_STATUS SEC_ENTRY winpr_SetCredentialsAttributesW(PCredHandle phC
 }
 
 static SECURITY_STATUS SEC_ENTRY winpr_SetCredentialsAttributesA(PCredHandle phCredential,
-                                                            ULONG ulAttribute, void* pBuffer,
-                                                            ULONG cbBuffer)
+                                                                 ULONG ulAttribute, void* pBuffer,
+                                                                 ULONG cbBuffer)
 {
 	char* Name;
 	SECURITY_STATUS status;

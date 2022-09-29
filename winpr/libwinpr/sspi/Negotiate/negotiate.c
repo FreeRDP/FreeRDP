@@ -1203,8 +1203,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesA(PCtxtHandle phC
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesW(PCredHandle phCredential,
-                                                            ULONG ulAttribute, void* pBuffer,
-                                                            ULONG cbBuffer)
+                                                                     ULONG ulAttribute,
+                                                                     void* pBuffer, ULONG cbBuffer)
 {
 	MechCred* creds;
 
@@ -1224,15 +1224,16 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesW(PCredHandle
 		WINPR_ASSERT(cred->mech->pkg);
 		WINPR_ASSERT(cred->mech->pkg->table);
 		WINPR_ASSERT(cred->mech->pkg->table_w->SetCredentialsAttributesW);
-		cred->mech->pkg->table_w->SetCredentialsAttributesW(&cred->cred, ulAttribute, pBuffer, cbBuffer);
+		cred->mech->pkg->table_w->SetCredentialsAttributesW(&cred->cred, ulAttribute, pBuffer,
+		                                                    cbBuffer);
 	}
 
 	return SEC_E_OK;
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle phCredential,
-                                                            ULONG ulAttribute, void* pBuffer,
-                                                            ULONG cbBuffer)
+                                                                     ULONG ulAttribute,
+                                                                     void* pBuffer, ULONG cbBuffer)
 {
 	MechCred* creds;
 
@@ -1252,7 +1253,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle
 		WINPR_ASSERT(cred->mech->pkg);
 		WINPR_ASSERT(cred->mech->pkg->table);
 		WINPR_ASSERT(cred->mech->pkg->table->SetCredentialsAttributesA);
-		cred->mech->pkg->table->SetCredentialsAttributesA(&cred->cred, ulAttribute, pBuffer, cbBuffer);
+		cred->mech->pkg->table->SetCredentialsAttributesA(&cred->cred, ulAttribute, pBuffer,
+		                                                  cbBuffer);
 	}
 
 	return SEC_E_OK;
