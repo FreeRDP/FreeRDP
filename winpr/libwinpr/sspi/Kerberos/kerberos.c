@@ -1224,6 +1224,34 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesW(PCtxtHandle ph
 	return kerberos_QueryContextAttributesA(phContext, ulAttribute, pBuffer);
 }
 
+static SECURITY_STATUS SEC_ENTRY kerberos_SetContextAttributesW(PCtxtHandle phContext,
+                                                            ULONG ulAttribute, void* pBuffer,
+                                                            ULONG cbBuffer)
+{
+	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+static SECURITY_STATUS SEC_ENTRY kerberos_SetContextAttributesA(PCtxtHandle phContext,
+                                                            ULONG ulAttribute, void* pBuffer,
+                                                            ULONG cbBuffer)
+{
+	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesW(PCredHandle phCredential,
+                                                            ULONG ulAttribute, void* pBuffer,
+                                                            ULONG cbBuffer)
+{
+	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesA(PCredHandle phCredential,
+                                                            ULONG ulAttribute, void* pBuffer,
+                                                            ULONG cbBuffer)
+{
+	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
 static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
                                                          PSecBufferDesc pMessage,
                                                          ULONG MessageSeqNo)
@@ -1574,7 +1602,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
 }
 
 const SecurityFunctionTableA KERBEROS_SecurityFunctionTableA = {
-	1,                                    /* dwVersion */
+	3,                                    /* dwVersion */
 	NULL,                                 /* EnumerateSecurityPackages */
 	kerberos_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
 	kerberos_AcquireCredentialsHandleA,   /* AcquireCredentialsHandle */
@@ -1601,11 +1629,12 @@ const SecurityFunctionTableA KERBEROS_SecurityFunctionTableA = {
 	NULL,                                 /* QuerySecurityContextToken */
 	kerberos_EncryptMessage,              /* EncryptMessage */
 	kerberos_DecryptMessage,              /* DecryptMessage */
-	NULL,                                 /* SetContextAttributes */
+	kerberos_SetContextAttributesA,       /* SetContextAttributes */
+	kerberos_SetCredentialsAttributesA,   /* SetCredentialsAttributes */
 };
 
 const SecurityFunctionTableW KERBEROS_SecurityFunctionTableW = {
-	1,                                    /* dwVersion */
+	3,                                    /* dwVersion */
 	NULL,                                 /* EnumerateSecurityPackages */
 	kerberos_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
 	kerberos_AcquireCredentialsHandleW,   /* AcquireCredentialsHandle */
@@ -1632,5 +1661,6 @@ const SecurityFunctionTableW KERBEROS_SecurityFunctionTableW = {
 	NULL,                                 /* QuerySecurityContextToken */
 	kerberos_EncryptMessage,              /* EncryptMessage */
 	kerberos_DecryptMessage,              /* DecryptMessage */
-	NULL,                                 /* SetContextAttributes */
+	kerberos_SetContextAttributesW,       /* SetContextAttributes */
+	kerberos_SetCredentialsAttributesW,   /* SetCredentialsAttributes */
 };

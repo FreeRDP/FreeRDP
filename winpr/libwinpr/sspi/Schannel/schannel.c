@@ -358,7 +358,7 @@ static SECURITY_STATUS SEC_ENTRY schannel_DecryptMessage(PCtxtHandle phContext,
 }
 
 const SecurityFunctionTableA SCHANNEL_SecurityFunctionTableA = {
-	1,                                    /* dwVersion */
+	3,                                    /* dwVersion */
 	NULL,                                 /* EnumerateSecurityPackages */
 	schannel_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
 	schannel_AcquireCredentialsHandleA,   /* AcquireCredentialsHandle */
@@ -386,10 +386,11 @@ const SecurityFunctionTableA SCHANNEL_SecurityFunctionTableA = {
 	schannel_EncryptMessage,              /* EncryptMessage */
 	schannel_DecryptMessage,              /* DecryptMessage */
 	NULL,                                 /* SetContextAttributes */
+	NULL,                                 /* SetCredentialsAttributes */
 };
 
 const SecurityFunctionTableW SCHANNEL_SecurityFunctionTableW = {
-	1,                                    /* dwVersion */
+	3,                                    /* dwVersion */
 	NULL,                                 /* EnumerateSecurityPackages */
 	schannel_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
 	schannel_AcquireCredentialsHandleW,   /* AcquireCredentialsHandle */
@@ -417,6 +418,7 @@ const SecurityFunctionTableW SCHANNEL_SecurityFunctionTableW = {
 	schannel_EncryptMessage,              /* EncryptMessage */
 	schannel_DecryptMessage,              /* DecryptMessage */
 	NULL,                                 /* SetContextAttributes */
+	NULL,                                 /* SetCredentialsAttributes */
 };
 
 const SecPkgInfoA SCHANNEL_SecPkgInfoA = {

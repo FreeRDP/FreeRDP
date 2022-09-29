@@ -1258,6 +1258,26 @@ extern "C"
 /* Extended SECPKG_CRED_ATTR IDs begin at 500 */
 #define SECPKG_CRED_ATTR_KDC_URL 501
 
+	typedef struct
+	{
+		SEC_CHAR* KdcUrl;
+	} SecPkgCredentials_KdcUrlA;
+	typedef SecPkgCredentials_KdcUrlA* PSecPkgCredentials_KdcUrlA;
+
+	typedef struct
+	{
+		SEC_WCHAR* KdcUrl;
+	} SecPkgCredentials_KdcUrlW;
+	typedef SecPkgCredentials_KdcUrlW* PSecPkgCredentials_KdcUrlW;
+
+#ifdef UNICODE
+#define SecPkgCredentials_KdcUrl SecPkgCredentials_KdcUrlW
+#define PSecPkgCredentials_KdcUrl PSecPkgCredentials_KdcUrlW
+#else
+#define SecPkgCredentials_KdcUrl SecPkgCredentials_KdcUrlA
+#define PSecPkgCredentials_KdcUrl PSecPkgCredentials_KdcUrlA
+#endif
+
 /* Extended SECPKG_ATTR IDs begin at 1000 */
 #define SECPKG_ATTR_AUTH_IDENTITY 1001
 #define SECPKG_ATTR_AUTH_PASSWORD 1002
