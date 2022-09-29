@@ -1070,6 +1070,74 @@ static SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesA(PCredHandle p
 	return status;
 }
 
+static SECURITY_STATUS SEC_ENTRY winpr_SetCredentialsAttributesW(PCredHandle phCredential,
+                                                            ULONG ulAttribute, void* pBuffer,
+                                                            ULONG cbBuffer)
+{
+	SEC_WCHAR* Name;
+	SECURITY_STATUS status;
+	const SecurityFunctionTableW* table;
+	Name = (SEC_WCHAR*)sspi_SecureHandleGetUpperPointer(phCredential);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableWByNameW(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (!table->SetCredentialsAttributesW)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
+
+	status = table->SetCredentialsAttributesW(phCredential, ulAttribute, pBuffer, cbBuffer);
+
+	if (IsSecurityStatusError(status))
+	{
+		WLog_WARN(TAG, "SetCredentialsAttributesW status %s [0x%08" PRIX32 "]",
+		          GetSecurityStatusString(status), status);
+	}
+
+	return status;
+}
+
+static SECURITY_STATUS SEC_ENTRY winpr_SetCredentialsAttributesA(PCredHandle phCredential,
+                                                            ULONG ulAttribute, void* pBuffer,
+                                                            ULONG cbBuffer)
+{
+	char* Name;
+	SECURITY_STATUS status;
+	const SecurityFunctionTableA* table;
+	Name = (char*)sspi_SecureHandleGetUpperPointer(phCredential);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (!table->SetCredentialsAttributesA)
+	{
+		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		return SEC_E_UNSUPPORTED_FUNCTION;
+	}
+
+	status = table->SetCredentialsAttributesA(phCredential, ulAttribute, pBuffer, cbBuffer);
+
+	if (IsSecurityStatusError(status))
+	{
+		WLog_WARN(TAG, "SetCredentialsAttributesA status %s [0x%08" PRIX32 "]",
+		          GetSecurityStatusString(status), status);
+	}
+
+	return status;
+}
+
 /* Context Management */
 
 static SECURITY_STATUS SEC_ENTRY
@@ -1658,7 +1726,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_VerifySignature(PCtxtHandle phContext,
 }
 
 static SecurityFunctionTableA winpr_SecurityFunctionTableA = {
-	1,                                 /* dwVersion */
+	3,                                 /* dwVersion */
 	winpr_EnumerateSecurityPackagesA,  /* EnumerateSecurityPackages */
 	winpr_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
 	winpr_AcquireCredentialsHandleA,   /* AcquireCredentialsHandle */
@@ -1686,10 +1754,11 @@ static SecurityFunctionTableA winpr_SecurityFunctionTableA = {
 	winpr_EncryptMessage,              /* EncryptMessage */
 	winpr_DecryptMessage,              /* DecryptMessage */
 	winpr_SetContextAttributesA,       /* SetContextAttributes */
+	winpr_SetCredentialsAttributesA,   /* SetCredentialsAttributes */
 };
 
 static SecurityFunctionTableW winpr_SecurityFunctionTableW = {
-	1,                                 /* dwVersion */
+	3,                                 /* dwVersion */
 	winpr_EnumerateSecurityPackagesW,  /* EnumerateSecurityPackages */
 	winpr_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
 	winpr_AcquireCredentialsHandleW,   /* AcquireCredentialsHandle */
@@ -1717,4 +1786,5 @@ static SecurityFunctionTableW winpr_SecurityFunctionTableW = {
 	winpr_EncryptMessage,              /* EncryptMessage */
 	winpr_DecryptMessage,              /* DecryptMessage */
 	winpr_SetContextAttributesW,       /* SetContextAttributes */
+	winpr_SetCredentialsAttributesW,   /* SetCredentialsAttributes */
 };
