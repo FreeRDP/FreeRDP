@@ -461,6 +461,10 @@ typedef struct
 /* Security Credentials Attributes */
 
 #define SECPKG_CRED_ATTR_NAMES 1
+#define SECPKG_CRED_ATTR_SSI_PROVIDER 2
+#define SECPKG_CRED_ATTR_KDC_PROXY_SETTINGS 3
+#define SECPKG_CRED_ATTR_CERT 4
+#define SECPKG_CRED_ATTR_PAC_BYPASS 5
 
 typedef struct
 {
@@ -481,6 +485,65 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 #define SecPkgCredentials_Names SecPkgCredentials_NamesA
 #define PSecPkgCredentials_Names PSecPkgCredentials_NamesA
 #endif
+
+typedef struct _SecPkgCredentials_SSIProviderW
+{
+	SEC_WCHAR* sProviderName;
+	unsigned long ProviderInfoLength;
+	char* ProviderInfo;
+} SecPkgCredentials_SSIProviderW, *PSecPkgCredentials_SSIProviderW;
+
+typedef struct _SecPkgCredentials_SSIProviderA
+{
+	SEC_CHAR* sProviderName;
+	unsigned long ProviderInfoLength;
+	char* ProviderInfo;
+} SecPkgCredentials_SSIProviderA, *PSecPkgCredentials_SSIProviderA;
+
+#ifdef UNICODE
+#define SecPkgCredentials_SSIProvider SecPkgCredentials_SSIProviderW
+#define PSecPkgCredentials_SSIProvider PSecPkgCredentials_SSIProviderW
+#else
+#define SecPkgCredentials_SSIProvider SecPkgCredentials_SSIProviderA
+#define PSecPkgCredentials_SSIProvider PSecPkgCredentials_SSIProviderA
+#endif
+
+#define KDC_PROXY_SETTINGS_V1 1
+#define KDC_PROXY_SETTINGS_FLAGS_FORCEPROXY 0x1
+
+typedef struct _SecPkgCredentials_KdcProxySettingsW
+{
+	ULONG Version;
+	ULONG Flags;
+	USHORT ProxyServerOffset;
+	USHORT ProxyServerLength;
+	USHORT ClientTlsCredOffset;
+	USHORT ClientTlsCredLength;
+} SecPkgCredentials_KdcProxySettingsW, *PSecPkgCredentials_KdcProxySettingsW;
+
+typedef struct _SecPkgCredentials_KdcProxySettingsA
+{
+	ULONG Version;
+	ULONG Flags;
+	USHORT ProxyServerOffset;
+	USHORT ProxyServerLength;
+	USHORT ClientTlsCredOffset;
+	USHORT ClientTlsCredLength;
+} SecPkgCredentials_KdcProxySettingsA, *PSecPkgCredentials_KdcProxySettingsA;
+
+#ifdef UNICODE
+#define SecPkgCredentials_KdcProxySettings SecPkgCredentials_KdcProxySettingsW
+#define PSecPkgCredentials_KdcProxySettings PSecPkgCredentials_KdcProxySettingsW
+#else
+#define SecPkgCredentials_KdcProxySettings SecPkgCredentials_KdcProxySettingsA
+#define PSecPkgCredentials_KdcProxySettings SecPkgCredentials_KdcProxySettingsA
+#endif
+
+typedef struct _SecPkgCredentials_Cert
+{
+	unsigned long EncodedCertSize;
+	unsigned char* EncodedCert;
+} SecPkgCredentials_Cert, *PSecPkgCredentials_Cert;
 
 #endif /* !defined(_WIN32) || defined(_UWP) */
 
