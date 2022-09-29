@@ -81,7 +81,8 @@ enum SecurityFunctionTableIndex
 	QuerySecurityContextTokenIndex = 25,
 	EncryptMessageIndex = 26,
 	DecryptMessageIndex = 27,
-	SetContextAttributesIndex = 28
+	SetContextAttributesIndex = 28,
+	SetCredentialsAttributesIndex = 29
 };
 
 BOOL IsSecurityStatusError(SECURITY_STATUS status);

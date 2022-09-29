@@ -1032,6 +1032,20 @@ typedef SECURITY_STATUS(SEC_ENTRY* SET_CONTEXT_ATTRIBUTES_FN_W)(PCtxtHandle phCo
 #define SET_CONTEXT_ATTRIBUTES_FN SET_CONTEXT_ATTRIBUTES_FN_A
 #endif
 
+typedef SECURITY_STATUS (SEC_ENTRY* SET_CREDENTIALS_ATTRIBUTES_FN_A)(PCredHandle phCredential,
+	ULONG ulAttribute, void* pBuffer, ULONG cbBuffer);
+
+typedef SECURITY_STATUS (SEC_ENTRY* SET_CREDENTIALS_ATTRIBUTES_FN_W)(PCredHandle phCredential,
+	ULONG ulAttribute, void* pBuffer, ULONG cbBuffer);
+
+#ifdef UNICODE
+#define SetCredentialsAttributes SetCredentialsAttributesW
+#define SET_CREDENTIALS_ATTRIBUTES_FN SET_CREDENTIALS_ATTRIBUTES_FN_W
+#else
+#define SetCredentialsAttributes SetCredentialsAttributesA
+#define SET_CREDENTIALS_ATTRIBUTES_FN SET_CREDENTIALS_ATTRIBUTES_FN_A
+#endif
+
 #define SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION \
 	1 /* Interface has all routines through DecryptMessage */
 #define SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION_2 \
@@ -1071,6 +1085,7 @@ typedef struct
 	ENCRYPT_MESSAGE_FN EncryptMessage;
 	DECRYPT_MESSAGE_FN DecryptMessage;
 	SET_CONTEXT_ATTRIBUTES_FN_A SetContextAttributesA;
+	SET_CREDENTIALS_ATTRIBUTES_FN_A SetCredentialsAttributesA;
 } SecurityFunctionTableA;
 typedef SecurityFunctionTableA* PSecurityFunctionTableA;
 
@@ -1104,6 +1119,7 @@ typedef struct
 	ENCRYPT_MESSAGE_FN EncryptMessage;
 	DECRYPT_MESSAGE_FN DecryptMessage;
 	SET_CONTEXT_ATTRIBUTES_FN_W SetContextAttributesW;
+	SET_CREDENTIALS_ATTRIBUTES_FN_W SetCredentialsAttributesW;
 } SecurityFunctionTableW;
 typedef SecurityFunctionTableW* PSecurityFunctionTableW;
 
@@ -1239,6 +1255,10 @@ extern "C"
 
 	/* Custom API */
 
+/* Extended SECPKG_CRED_ATTR IDs begin at 500 */
+#define SECPKG_CRED_ATTR_KDC_URL 501
+
+/* Extended SECPKG_ATTR IDs begin at 1000 */
 #define SECPKG_ATTR_AUTH_IDENTITY 1001
 #define SECPKG_ATTR_AUTH_PASSWORD 1002
 #define SECPKG_ATTR_AUTH_NTLM_HASH 1003
