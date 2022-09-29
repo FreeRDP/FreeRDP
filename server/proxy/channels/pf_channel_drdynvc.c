@@ -399,14 +399,14 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 	if (dynChannel->openStatus != CHANNEL_OPENSTATE_OPENED)
 	{
 		WLog_ERR(TAG, "DynvcTracker(%s [%s]): channel is not opened", dynChannel->channel_name,
-		         cmd);
+		         get_packet_type(cmd));
 		return PF_CHANNEL_RESULT_ERROR;
 	}
 
 	if ((cmd == DATA_FIRST_PDU) || (cmd == DATA_FIRST_COMPRESSED_PDU))
 	{
 		WLog_DBG(TAG, "DynvcTracker(%s [%s]): %s DATA_FIRST currentPacketLength=%" PRIu64 "",
-		         dynChannel->channel_name, cmd, direction, Length);
+		         dynChannel->channel_name, get_packet_type(cmd), direction, Length);
 		trackerState->currentDataLength = Length;
 		trackerState->CurrentDataReceived = 0;
 		trackerState->CurrentDataFragments = 0;
@@ -417,8 +417,8 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 		trackerState->CurrentDataFragments++;
 		trackerState->CurrentDataReceived += Stream_GetRemainingLength(s);
 		WLog_DBG(TAG,
-		         "DynvcTracker(%s [%s]): %s %s frags=%" PRIu32 " received=%" PRIu32 "(%" PRIu32 ")",
-		         dynChannel->channel_name, cmd, direction, cmd == DATA_PDU ? "DATA" : "DATA_FIRST",
+		         "DynvcTracker(%s [%s]): %s frags=%" PRIu32 " received=%" PRIu32 "(%" PRIu32 ")",
+		         dynChannel->channel_name, get_packet_type(cmd), direction,
 		         trackerState->CurrentDataFragments, trackerState->CurrentDataReceived,
 		         trackerState->currentDataLength);
 	}
@@ -432,8 +432,8 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 				WLog_ERR(TAG,
 				         "DynvcTracker (%s  [%s]): reassembled packet (%" PRIu32
 				         ") is bigger than announced length (%" PRIu32 ")",
-				         dynChannel->channel_name, cmd, trackerState->CurrentDataReceived,
-				         trackerState->currentDataLength);
+				         dynChannel->channel_name, get_packet_type(cmd),
+				         trackerState->CurrentDataReceived, trackerState->currentDataLength);
 				return PF_CHANNEL_RESULT_ERROR;
 			}
 		}
