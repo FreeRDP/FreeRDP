@@ -309,8 +309,8 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 #ifdef HAVE_SYS_AIO_H
 		{
 			int aio_status;
-			struct aiocb cb;
-			ZeroMemory(&cb, sizeof(struct aiocb));
+			struct aiocb cb = { 0 };
+
 			cb.aio_fildes = pipe->clientfd;
 			cb.aio_buf = lpBuffer;
 			cb.aio_nbytes = nNumberOfBytesToRead;
@@ -396,8 +396,8 @@ BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 		pipe->lpOverlapped = lpOverlapped;
 #ifdef HAVE_SYS_AIO_H
 		{
-			struct aiocb cb;
-			ZeroMemory(&cb, sizeof(struct aiocb));
+			struct aiocb cb = { 0 };
+
 			cb.aio_fildes = pipe->clientfd;
 			cb.aio_buf = (void*)lpBuffer;
 			cb.aio_nbytes = nNumberOfBytesToWrite;
@@ -407,7 +407,7 @@ BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 			cb.aio_sigevent.sigev_value.sival_ptr = (void*)lpOverlapped;
 			InstallAioSignalHandler();
 			io_status = aio_write(&cb);
-			WLog_DBG("aio_write status: %d", io_status);
+			WLog_DBG("aio_write status: %" PRIdz, io_status);
 
 			if (io_status < 0)
 				status = FALSE;

@@ -37,7 +37,7 @@ BOOL freerdp_smartcard_list(const rdpSettings* settings)
 
 		WINPR_ASSERT(info);
 
-		printf("%d: %s\n", i, info->subject);
+		printf("%" PRIu32 ": %s\n", i, info->subject);
 
 		if (WideCharToMultiByte(CP_UTF8, 0, info->reader, -1, readerName, sizeof(readerName), NULL,
 		                        NULL) > 0)

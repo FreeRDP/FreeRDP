@@ -459,11 +459,11 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 			if (status < 0)
 			{
 #ifdef HAVE_POLL_H
-				WLog_ERR(TAG, "poll() handle %d (%" PRIu32 ") failure [%d] %s", index, nCount,
-				         errno, strerror(errno));
+				WLog_ERR(TAG, "poll() handle %" PRIu32 " (%" PRIu32 ") failure [%d] %s", index,
+				         nCount, errno, strerror(errno));
 #else
-				WLog_ERR(TAG, "select() handle %d (%" PRIu32 ") failure [%d] %s", index, nCount,
-				         errno, strerror(errno));
+				WLog_ERR(TAG, "select() handle %" PRIu32 " (%" PRIu32 ") failure [%d] %s", index,
+				         nCount, errno, strerror(errno));
 #endif
 				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 				SetLastError(ERROR_INTERNAL_ERROR);
@@ -497,7 +497,7 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 					DWORD rc = winpr_Handle_cleanup(lpHandles[handlesIndex]);
 					if (rc != WAIT_OBJECT_0)
 					{
-						WLog_ERR(TAG, "error in cleanup function for handle at index=%d",
+						WLog_ERR(TAG, "error in cleanup function for handle at index=%" PRIu32,
 						         handlesIndex);
 						ret = rc;
 						goto out;

@@ -347,7 +347,7 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 
 	if ((client_format_index >= context->num_client_formats) || (!context->src_format))
 	{
-		WLog_ERR(TAG, "index %d is not correct.", client_format_index);
+		WLog_ERR(TAG, "index %" PRIu16 " is not correct.", client_format_index);
 		return ERROR_INVALID_DATA;
 	}
 

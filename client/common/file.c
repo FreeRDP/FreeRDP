@@ -229,7 +229,7 @@ static BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name,
 {
 	BOOL standard = TRUE;
 #ifdef DEBUG_CLIENT_FILE
-	WLog_DBG(TAG, "%s:i:%d", name, value);
+	WLog_DBG(TAG, "%s:i:%ld", name, value);
 #endif
 
 	if (value < 0)

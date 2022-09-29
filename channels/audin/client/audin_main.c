@@ -480,7 +480,7 @@ static UINT audin_process_open(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* call
 
 	if (initialFormat >= callback->formats_count)
 	{
-		WLog_Print(audin->log, WLOG_ERROR, "invalid format index %" PRIu32 " (total %d)",
+		WLog_Print(audin->log, WLOG_ERROR, "invalid format index %" PRIu32 " (total %" PRIu32 ")",
 		           initialFormat, callback->formats_count);
 		return ERROR_INVALID_DATA;
 	}
@@ -521,8 +521,8 @@ static UINT audin_process_format_change(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLB
 
 	if (NewFormat >= callback->formats_count)
 	{
-		WLog_Print(audin->log, WLOG_ERROR, "invalid format index %" PRIu32 " (total %d)", NewFormat,
-		           callback->formats_count);
+		WLog_Print(audin->log, WLOG_ERROR, "invalid format index %" PRIu32 " (total %" PRIu32 ")",
+		           NewFormat, callback->formats_count);
 		return ERROR_INVALID_DATA;
 	}
 

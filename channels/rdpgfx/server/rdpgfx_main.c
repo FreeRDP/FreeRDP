@@ -1350,7 +1350,7 @@ static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 
 	if (end != (beg + header.pduLength))
 	{
-		WLog_ERR(TAG, "Unexpected gfx pdu end: Actual: %d, Expected: %" PRIu32 "", end,
+		WLog_ERR(TAG, "Unexpected gfx pdu end: Actual: %" PRIuz ", Expected: %" PRIuz "", end,
 		         (beg + header.pduLength));
 		Stream_SetPosition(s, (beg + header.pduLength));
 	}

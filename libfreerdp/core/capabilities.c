@@ -3857,7 +3857,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 t
 	if (numberCapabilities)
 	{
 		WLog_ERR(TAG,
-		         "strange we haven't read the number of announced capacity sets, read=%d "
+		         "strange we haven't read the number of announced capacity sets, read=%" PRIu16 " "
 		         "expected=%" PRIu16 "",
 		         count - numberCapabilities, count);
 	}

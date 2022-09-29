@@ -997,7 +997,7 @@ static int nla_client_init(rdpNla* nla)
 	if (nla->status != SEC_E_OK)
 		return -1;
 
-	WLog_DBG(TAG, "%s %" PRIu32 " : packageName=%s ; cbMaxToken=%d", __FUNCTION__, __LINE__,
+	WLog_DBG(TAG, "%s %" PRIu32 " : packageName=%s ; cbMaxToken=%" PRIu32, __FUNCTION__, __LINE__,
 	         nla->packageName, nla->cbMaxToken);
 	nla->status = nla->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME, SECPKG_CRED_OUTBOUND,
 	                                                   NULL, nla->identity, NULL, NULL,
@@ -1818,9 +1818,9 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	{
 		WLog_ERR(TAG, "Could not verify server's public key echo");
 #if defined(WITH_DEBUG_NLA)
-		WLog_ERR(TAG, "Expected (length = %d):", public_key_length);
+		WLog_ERR(TAG, "Expected (length = %" PRIu32 "):", public_key_length);
 		winpr_HexDump(TAG, WLOG_ERROR, public_key1, public_key_length);
-		WLog_ERR(TAG, "Actual (length = %d):", public_key_length);
+		WLog_ERR(TAG, "Actual (length = %" PRIu32 "):", public_key_length);
 		winpr_HexDump(TAG, WLOG_ERROR, public_key2, public_key_length);
 #endif
 		status = SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */

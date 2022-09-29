@@ -187,8 +187,8 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 
 		disp_server_sanitize_monitor_layout(monitor);
 		WLog_DBG(TAG,
-		         "\t%d : Flags: 0x%08" PRIX32 " Left/Top: (%" PRId32 ",%" PRId32 ") W/H=%" PRIu32
-		         "x%" PRIu32 ")",
+		         "\t%" PRIu32 " : Flags: 0x%08" PRIX32 " Left/Top: (%" PRId32 ",%" PRId32
+		         ") W/H=%" PRIu32 "x%" PRIu32 ")",
 		         index, monitor->Flags, monitor->Left, monitor->Top, monitor->Width,
 		         monitor->Height);
 		WLog_DBG(TAG,
@@ -249,7 +249,7 @@ static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 
 	if (end != (beg + header.length))
 	{
-		WLog_ERR(TAG, "Unexpected DISP pdu end: Actual: %d, Expected: %" PRIu32 "", end,
+		WLog_ERR(TAG, "Unexpected DISP pdu end: Actual: %" PRIuz ", Expected: %" PRIuz "", end,
 		         (beg + header.length));
 		Stream_SetPosition(s, (beg + header.length));
 	}

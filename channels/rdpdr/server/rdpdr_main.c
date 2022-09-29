@@ -856,7 +856,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, DeviceDataLength))
 			return ERROR_INVALID_DATA;
 
-		WLog_DBG(TAG, "Device %d Name: %s Id: 0x%08" PRIX32 " DataLength: %" PRIu32 "", i,
+		WLog_DBG(TAG, "Device %" PRIu32 " Name: %s Id: 0x%08" PRIX32 " DataLength: %" PRIu32 "", i,
 		         PreferredDosName, DeviceId, DeviceDataLength);
 
 		switch (DeviceType)
@@ -933,7 +933,7 @@ static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
-		WLog_DBG(TAG, "Device %d Id: 0x%08" PRIX32 "", i, DeviceId);
+		WLog_DBG(TAG, "Device %" PRIu32 " Id: 0x%08" PRIX32 "", i, DeviceId);
 		DeviceType = 0; /* TODO: Save the device type on the announce request. */
 
 		switch (DeviceType)

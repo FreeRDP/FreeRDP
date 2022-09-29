@@ -68,7 +68,7 @@ static UINT dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	DVCMAN_LISTENER* listener;
 
-	WLog_DBG(TAG, "create_listener: %d.%s.", HashTable_Count(dvcman->listeners) + 1,
+	WLog_DBG(TAG, "create_listener: %" PRIuz ".%s.", HashTable_Count(dvcman->listeners) + 1,
 	         pszChannelName);
 	listener = (DVCMAN_LISTENER*)calloc(1, sizeof(DVCMAN_LISTENER));
 
@@ -132,7 +132,7 @@ static UINT dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const ch
 	if (!ArrayList_Append(dvcman->plugins, pPlugin))
 		return ERROR_INTERNAL_ERROR;
 
-	WLog_DBG(TAG, "register_plugin: num_plugins %d", ArrayList_Count(dvcman->plugins));
+	WLog_DBG(TAG, "register_plugin: num_plugins %" PRIuz, ArrayList_Count(dvcman->plugins));
 	return CHANNEL_RC_OK;
 }
 

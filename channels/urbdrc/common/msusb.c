@@ -385,7 +385,7 @@ void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 		for (pnum = 0; pnum < MsInterface->NumberOfPipes; pnum++)
 		{
 			MsPipe = MsPipes[pnum];
-			WLog_INFO(TAG, "		Pipe: %d", pnum);
+			WLog_INFO(TAG, "		Pipe: %" PRIu32, pnum);
 			WLog_INFO(TAG, "		MaximumPacketSize: 0x%04" PRIx16 "", MsPipe->MaximumPacketSize);
 			WLog_INFO(TAG, "		MaximumTransferSize: 0x%08" PRIx32 "",
 			          MsPipe->MaximumTransferSize);

@@ -384,8 +384,8 @@ winpr_get_current_time_zone_rule(const TIME_ZONE_RULE_ENTRY* rules, UINT32 count
 	{
 		if ((rules[i].TicksStart >= windows_time) && (windows_time >= rules[i].TicksEnd))
 		{
-			/*WLog_ERR(TAG,  "Got rule %d from table at %p with count %"PRIu32"", i, (void*) rules,
-			 * count);*/
+			/*WLog_ERR(TAG,  "Got rule %" PRIu32 " from table at %p with count %"PRIu32"", i,
+			 * (void*) rules, count);*/
 			return &rules[i];
 		}
 	}

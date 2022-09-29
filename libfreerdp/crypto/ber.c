@@ -612,7 +612,7 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 	}
 	else
 	{
-		WLog_ERR(TAG, "should implement reading an integer with length=%d", length);
+		WLog_ERR(TAG, "should implement reading an integer with length=%" PRIuz, length);
 		return FALSE;
 	}
 

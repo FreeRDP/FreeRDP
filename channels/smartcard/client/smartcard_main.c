@@ -51,17 +51,19 @@ static void smartcard_context_free(void* pCtx);
 static UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 
 static SMARTCARD_DEVICE* cast_device_from(DEVICE* device, const char* fkt, const char* file,
-                                          int line)
+                                          size_t line)
 {
 	if (!device)
 	{
-		WLog_ERR(TAG, "%s [%s:%d] Called smartcard channel with NULL device", fkt, file, line);
+		WLog_ERR(TAG, "%s [%s:%" PRIuz "] Called smartcard channel with NULL device", fkt, file,
+		         line);
 		return NULL;
 	}
 
 	if (device->type != RDPDR_DTYP_SMARTCARD)
 	{
-		WLog_ERR(TAG, "%s [%s:%d] Called smartcard channel with invalid device of type %" PRIx32,
+		WLog_ERR(TAG,
+		         "%s [%s:%" PRIuz "] Called smartcard channel with invalid device of type %" PRIx32,
 		         fkt, file, line, device->type);
 		return NULL;
 	}

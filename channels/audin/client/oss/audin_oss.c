@@ -365,7 +365,7 @@ static UINT audin_oss_free(IAudinDevice* device)
 
 	if ((error = audin_oss_close(device)))
 	{
-		WLog_ERR(TAG, "audin_oss_close failed with error code %d!", error);
+		WLog_ERR(TAG, "audin_oss_close failed with error code %" PRIu32 "!", error);
 	}
 
 	free(oss);

@@ -476,8 +476,8 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 		if (endPos != (begPos + blockLength))
 		{
 			WLog_ERR(TAG,
-			         "Error parsing GCC client data block 0x%04" PRIX16
-			         ": Actual Offset: %d Expected Offset: %d",
+			         "Error parsing GCC client data block 0x%04" PRIX16 ": Actual Offset: %" PRIuz
+			         " Expected Offset: %" PRIuz,
 			         type, endPos, begPos + blockLength);
 		}
 

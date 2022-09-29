@@ -138,10 +138,37 @@ static DynvcReadResult dynvc_read_varInt(wStream* s, size_t len, UINT64* varInt,
 			break;
 		case 0x03:
 		default:
-			WLog_ERR(TAG, "Unknown int len %d", len);
+			WLog_ERR(TAG, "Unknown int len %" PRIuz, len);
 			return DYNCVC_READ_ERROR;
 	}
 	return DYNCVC_READ_OK;
+}
+
+static const char* get_packet_type(BYTE cmd)
+{
+	switch (cmd)
+	{
+		case CREATE_REQUEST_PDU:
+			return "CREATE_REQUEST_PDU";
+		case DATA_FIRST_PDU:
+			return "DATA_FIRST_PDU";
+		case DATA_PDU:
+			return "DATA_PDU";
+		case CLOSE_REQUEST_PDU:
+			return "CLOSE_REQUEST_PDU";
+		case CAPABILITY_REQUEST_PDU:
+			return "CAPABILITY_REQUEST_PDU";
+		case DATA_FIRST_COMPRESSED_PDU:
+			return "DATA_FIRST_COMPRESSED_PDU";
+		case DATA_COMPRESSED_PDU:
+			return "DATA_COMPRESSED_PDU";
+		case SOFT_SYNC_REQUEST_PDU:
+			return "SOFT_SYNC_REQUEST_PDU";
+		case SOFT_SYNC_RESPONSE_PDU:
+			return "SOFT_SYNC_RESPONSE_PDU";
+		default:
+			return "UNKNOWN";
+	}
 }
 
 static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL firstPacket,
@@ -371,14 +398,15 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 
 	if (dynChannel->openStatus != CHANNEL_OPENSTATE_OPENED)
 	{
-		WLog_ERR(TAG, "DynvcTracker(%s): channel is not opened", dynChannel->channel_name);
+		WLog_ERR(TAG, "DynvcTracker(%s [%s]): channel is not opened", dynChannel->channel_name,
+		         cmd);
 		return PF_CHANNEL_RESULT_ERROR;
 	}
 
 	if ((cmd == DATA_FIRST_PDU) || (cmd == DATA_FIRST_COMPRESSED_PDU))
 	{
-		WLog_DBG(TAG, "DynvcTracker(%s): %s DATA_FIRST currentPacketLength=%d",
-		         dynChannel->channel_name, direction, Length);
+		WLog_DBG(TAG, "DynvcTracker(%s [%s]): %s DATA_FIRST currentPacketLength=%" PRIu64 "",
+		         dynChannel->channel_name, cmd, direction, Length);
 		trackerState->currentDataLength = Length;
 		trackerState->CurrentDataReceived = 0;
 		trackerState->CurrentDataFragments = 0;
@@ -388,8 +416,9 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 	{
 		trackerState->CurrentDataFragments++;
 		trackerState->CurrentDataReceived += Stream_GetRemainingLength(s);
-		WLog_DBG(TAG, "DynvcTracker(%s): %s %s frags=%d received=%d(%d)", dynChannel->channel_name,
-		         direction, cmd == DATA_PDU ? "DATA" : "DATA_FIRST",
+		WLog_DBG(TAG,
+		         "DynvcTracker(%s [%s]): %s %s frags=%" PRIu32 " received=%" PRIu32 "(%" PRIu32 ")",
+		         dynChannel->channel_name, cmd, direction, cmd == DATA_PDU ? "DATA" : "DATA_FIRST",
 		         trackerState->CurrentDataFragments, trackerState->CurrentDataReceived,
 		         trackerState->currentDataLength);
 	}
@@ -400,10 +429,11 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 		{
 			if (trackerState->CurrentDataReceived > trackerState->currentDataLength)
 			{
-				WLog_ERR(
-				    TAG,
-				    "DynvcTracker: reassembled packet (%d) is bigger than announced length (%d)",
-				    trackerState->CurrentDataReceived, trackerState->currentDataLength);
+				WLog_ERR(TAG,
+				         "DynvcTracker (%s  [%s]): reassembled packet (%" PRIu32
+				         ") is bigger than announced length (%" PRIu32 ")",
+				         dynChannel->channel_name, cmd, trackerState->CurrentDataReceived,
+				         trackerState->currentDataLength);
 				return PF_CHANNEL_RESULT_ERROR;
 			}
 		}

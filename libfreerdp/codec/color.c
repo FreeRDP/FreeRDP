@@ -235,7 +235,7 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* pDstData, UINT32 DstFormat, UINT32 
 			break;
 
 		default:
-			WLog_WARN(TAG, "invalid icon bpp: %d", bpp);
+			WLog_WARN(TAG, "invalid icon bpp: %" PRIu32, bpp);
 			return FALSE;
 	}
 

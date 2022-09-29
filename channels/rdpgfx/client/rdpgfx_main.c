@@ -2050,7 +2050,7 @@ static UINT rdpgfx_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 	if (end != (beg + header.pduLength))
 	{
 		WLog_Print(gfx->log, WLOG_ERROR,
-		           "Unexpected gfx pdu end: Actual: %d, Expected: %" PRIu32 "", end,
+		           "Unexpected gfx pdu end: Actual: %" PRIuz ", Expected: %" PRIuz, end,
 		           (beg + header.pduLength));
 		Stream_SetPosition(s, (beg + header.pduLength));
 	}

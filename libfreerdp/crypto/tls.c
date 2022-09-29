@@ -1412,8 +1412,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 			accept_cert(tls, pemCert, length);
 		else if (verification_status < 0)
 		{
-			WLog_ERR(TAG, "VerifyX509Certificate failed: (length = %d) status: [%d] %s", length,
-			         verification_status, pemCert);
+			WLog_ERR(TAG, "VerifyX509Certificate failed: (length = %" PRIuz ") status: [%d] %s",
+			         length, verification_status, pemCert);
 			goto end;
 		}
 	}
@@ -1556,7 +1556,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 				    hostname, port, pem, certificate_store_get_hosts_file(tls->certificate_store));
 
 				if (!stored_data)
-					WLog_WARN(TAG, "Failed to get certificate entry for %s:%d", hostname, port);
+					WLog_WARN(TAG, "Failed to get certificate entry for %s:%" PRIu16 "", hostname,
+					          port);
 
 				if (tls->settings->AutoDenyCertificate)
 				{

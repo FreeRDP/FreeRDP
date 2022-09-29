@@ -67,7 +67,7 @@ typedef enum
 #define smartcard_ndr_pointer_read(s, index, ptr) \
 	smartcard_ndr_pointer_read_((s), (index), (ptr), __FILE__, __FUNCTION__, __LINE__)
 static BOOL smartcard_ndr_pointer_read_(wStream* s, UINT32* index, UINT32* ptr, const char* file,
-                                        const char* fkt, int line)
+                                        const char* fkt, size_t line)
 {
 	const UINT32 expect = 0x20000 + (*index) * 4;
 	UINT32 ndrPtr;
@@ -85,8 +85,9 @@ static BOOL smartcard_ndr_pointer_read_(wStream* s, UINT32* index, UINT32* ptr, 
 		/* Allow NULL pointer if we read the result */
 		if (ptr && (ndrPtr == 0))
 			return TRUE;
-		WLog_WARN(TAG, "[%s:%d] Read context pointer 0x%08" PRIx32 ", expected 0x%08" PRIx32, fkt,
-		          line, ndrPtr, expect);
+		WLog_WARN(TAG,
+		          "[%s:%" PRIuz "] Read context pointer 0x%08" PRIx32 ", expected 0x%08" PRIx32,
+		          fkt, line, ndrPtr, expect);
 		return FALSE;
 	}
 
