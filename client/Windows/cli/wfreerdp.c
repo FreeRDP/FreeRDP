@@ -109,7 +109,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	AddDefaultSettings(settings);
-	
+
 	if (freerdp_client_start(context) != 0)
 		goto out;
 
@@ -148,4 +148,3 @@ int main()
 	return WinMain(NULL, NULL, NULL, 0);
 }
 #endif
-

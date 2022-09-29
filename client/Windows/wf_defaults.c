@@ -103,7 +103,6 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 		}
 	}
 
-
 fail:
 	CredFree(Credential);
 	free(TargetName);
