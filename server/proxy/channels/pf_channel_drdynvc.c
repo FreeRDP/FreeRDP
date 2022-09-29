@@ -406,19 +406,19 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 				    trackerState->CurrentDataReceived, trackerState->currentDataLength);
 				return PF_CHANNEL_RESULT_ERROR;
 			}
-
-			if (trackerState->CurrentDataReceived == trackerState->currentDataLength)
-			{
-				trackerState->currentDataLength = 0;
-				trackerState->CurrentDataFragments = 0;
-				trackerState->CurrentDataReceived = 0;
-			}
 		}
 		else
 		{
 			trackerState->CurrentDataFragments = 0;
 			trackerState->CurrentDataReceived = 0;
 		}
+	}
+
+	if (trackerState->CurrentDataReceived == trackerState->currentDataLength)
+	{
+		trackerState->currentDataLength = 0;
+		trackerState->CurrentDataFragments = 0;
+		trackerState->CurrentDataReceived = 0;
 	}
 
 	switch (dynChannel->channelMode)
