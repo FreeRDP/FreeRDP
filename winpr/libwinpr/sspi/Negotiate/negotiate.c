@@ -1202,6 +1202,20 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesA(PCtxtHandle phC
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
+static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesW(PCredHandle phCredential,
+                                                            ULONG ulAttribute, void* pBuffer,
+                                                            ULONG cbBuffer)
+{
+	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle phCredential,
+                                                            ULONG ulAttribute, void* pBuffer,
+                                                            ULONG cbBuffer)
+{
+	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
 static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
     SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
@@ -1413,7 +1427,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_VerifySignature(PCtxtHandle phContext
 }
 
 const SecurityFunctionTableA NEGOTIATE_SecurityFunctionTableA = {
-	1,                                     /* dwVersion */
+	3,                                     /* dwVersion */
 	NULL,                                  /* EnumerateSecurityPackages */
 	negotiate_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
 	negotiate_AcquireCredentialsHandleA,   /* AcquireCredentialsHandle */
@@ -1441,10 +1455,11 @@ const SecurityFunctionTableA NEGOTIATE_SecurityFunctionTableA = {
 	negotiate_EncryptMessage,              /* EncryptMessage */
 	negotiate_DecryptMessage,              /* DecryptMessage */
 	negotiate_SetContextAttributesA,       /* SetContextAttributes */
+	negotiate_SetCredentialsAttributesA,   /* SetCredentialsAttributes */
 };
 
 const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW = {
-	1,                                     /* dwVersion */
+	3,                                     /* dwVersion */
 	NULL,                                  /* EnumerateSecurityPackages */
 	negotiate_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
 	negotiate_AcquireCredentialsHandleW,   /* AcquireCredentialsHandle */
@@ -1472,4 +1487,5 @@ const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW = {
 	negotiate_EncryptMessage,              /* EncryptMessage */
 	negotiate_DecryptMessage,              /* DecryptMessage */
 	negotiate_SetContextAttributesW,       /* SetContextAttributes */
+	negotiate_SetCredentialsAttributesW,   /* SetCredentialsAttributes */
 };

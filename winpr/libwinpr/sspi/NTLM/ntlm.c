@@ -963,6 +963,20 @@ static SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesA(PCtxtHandle phContex
 	return ntlm_SetContextAttributesW(phContext, ulAttribute, pBuffer, cbBuffer);
 }
 
+static SECURITY_STATUS SEC_ENTRY ntlm_SetCredentialsAttributesW(PCredHandle phCredential,
+                                                            ULONG ulAttribute, void* pBuffer,
+                                                            ULONG cbBuffer)
+{
+	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+static SECURITY_STATUS SEC_ENTRY ntlm_SetCredentialsAttributesA(PCredHandle phCredential,
+                                                            ULONG ulAttribute, void* pBuffer,
+                                                            ULONG cbBuffer)
+{
+	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
 static SECURITY_STATUS SEC_ENTRY ntlm_RevertSecurityContext(PCtxtHandle phContext)
 {
 	return SEC_E_OK;
@@ -1264,7 +1278,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 }
 
 const SecurityFunctionTableA NTLM_SecurityFunctionTableA = {
-	1,                                /* dwVersion */
+	3,                                /* dwVersion */
 	NULL,                             /* EnumerateSecurityPackages */
 	ntlm_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
 	ntlm_AcquireCredentialsHandleA,   /* AcquireCredentialsHandle */
@@ -1292,10 +1306,11 @@ const SecurityFunctionTableA NTLM_SecurityFunctionTableA = {
 	ntlm_EncryptMessage,              /* EncryptMessage */
 	ntlm_DecryptMessage,              /* DecryptMessage */
 	ntlm_SetContextAttributesA,       /* SetContextAttributes */
+	ntlm_SetCredentialsAttributesA,   /* SetCredentialsAttributes */
 };
 
 const SecurityFunctionTableW NTLM_SecurityFunctionTableW = {
-	1,                                /* dwVersion */
+	3,                                /* dwVersion */
 	NULL,                             /* EnumerateSecurityPackages */
 	ntlm_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
 	ntlm_AcquireCredentialsHandleW,   /* AcquireCredentialsHandle */
@@ -1322,7 +1337,8 @@ const SecurityFunctionTableW NTLM_SecurityFunctionTableW = {
 	NULL,                             /* QuerySecurityContextToken */
 	ntlm_EncryptMessage,              /* EncryptMessage */
 	ntlm_DecryptMessage,              /* DecryptMessage */
-	ntlm_SetContextAttributesA,       /* SetContextAttributes */
+	ntlm_SetContextAttributesW,       /* SetContextAttributes */
+	ntlm_SetCredentialsAttributesW,   /* SetCredentialsAttributes */
 };
 
 const SecPkgInfoA NTLM_SecPkgInfoA = {
