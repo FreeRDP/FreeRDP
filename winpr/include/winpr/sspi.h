@@ -1032,11 +1032,13 @@ typedef SECURITY_STATUS(SEC_ENTRY* SET_CONTEXT_ATTRIBUTES_FN_W)(PCtxtHandle phCo
 #define SET_CONTEXT_ATTRIBUTES_FN SET_CONTEXT_ATTRIBUTES_FN_A
 #endif
 
-typedef SECURITY_STATUS (SEC_ENTRY* SET_CREDENTIALS_ATTRIBUTES_FN_A)(PCredHandle phCredential,
-	ULONG ulAttribute, void* pBuffer, ULONG cbBuffer);
+typedef SECURITY_STATUS(SEC_ENTRY* SET_CREDENTIALS_ATTRIBUTES_FN_A)(PCredHandle phCredential,
+                                                                    ULONG ulAttribute,
+                                                                    void* pBuffer, ULONG cbBuffer);
 
-typedef SECURITY_STATUS (SEC_ENTRY* SET_CREDENTIALS_ATTRIBUTES_FN_W)(PCredHandle phCredential,
-	ULONG ulAttribute, void* pBuffer, ULONG cbBuffer);
+typedef SECURITY_STATUS(SEC_ENTRY* SET_CREDENTIALS_ATTRIBUTES_FN_W)(PCredHandle phCredential,
+                                                                    ULONG ulAttribute,
+                                                                    void* pBuffer, ULONG cbBuffer);
 
 #ifdef UNICODE
 #define SetCredentialsAttributes SetCredentialsAttributesW

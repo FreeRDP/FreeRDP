@@ -285,18 +285,16 @@ SSPI_EXPORT SECURITY_STATUS SEC_ENTRY SetContextAttributesA(void* phContext, ULO
 
 extern SECURITY_STATUS SEC_ENTRY sspi_SetCredentialsAttributesW(void*, ULONG, void*, ULONG);
 
-static SECURITY_STATUS SEC_ENTRY SetCredentialsAttributesW(void* phCredential,
-                                                            ULONG ulAttribute, void* pBuffer,
-                                                            ULONG cbBuffer)
+static SECURITY_STATUS SEC_ENTRY SetCredentialsAttributesW(void* phCredential, ULONG ulAttribute,
+                                                           void* pBuffer, ULONG cbBuffer)
 {
 	return sspi_SetCredentialsAttributesW(phCredential, ulAttribute, pBuffer, cbBuffer);
 }
 
 extern SECURITY_STATUS SEC_ENTRY sspi_SetCredentialsAttributesA(void*, ULONG, void*, ULONG);
 
-static SECURITY_STATUS SEC_ENTRY SetCredentialsAttributesA(void* phCredential,
-                                                            ULONG ulAttribute, void* pBuffer,
-                                                            ULONG cbBuffer)
+static SECURITY_STATUS SEC_ENTRY SetCredentialsAttributesA(void* phCredential, ULONG ulAttribute,
+                                                           void* pBuffer, ULONG cbBuffer)
 {
 	return sspi_SetCredentialsAttributesA(phCredential, ulAttribute, pBuffer, cbBuffer);
 }
