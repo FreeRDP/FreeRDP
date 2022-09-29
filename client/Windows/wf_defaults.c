@@ -48,7 +48,7 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 	PWSTR PasswordW = 0;
 	PWSTR TargetNameW = 0;
 	PWSTR ServerHostnameW = 0;
-	PCREDENTIALW Credential = { 0 };
+	CREDENTIALW Credential = { 0 };
 
 	PCSTR ServerHostname = freerdp_settings_get_string(settings, idHostname);
 
@@ -81,7 +81,7 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 
 	if (!bExistPassword)
 	{
-		PasswordW = ValidateString(Credential->CredentialBlob, Credential->CredentialBlobSize);
+		PasswordW = ValidateString(Credential.CredentialBlob, Credential.CredentialBlobSize);
 
 		if (PasswordW)
 		{
@@ -93,7 +93,7 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 
 	if (!bExistUserName)
 	{
-		UserNameW = Credential->UserName;
+		UserNameW = Credential.UserName;
 
 		if (UserNameW)
 		{
@@ -104,7 +104,7 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 	}
 
 fail:
-	CredFree(Credential);
+	CredFree(&Credential);
 	free(TargetName);
 	free(TargetNameW);
 	free(ServerHostnameW);
