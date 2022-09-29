@@ -104,6 +104,7 @@ struct s_KRB_CONTEXT
 
 typedef struct KRB_CREDENTIALS_st
 {
+	char* kdc_url;
 	krb5_ccache ccache;
 	krb5_keytab keytab;
 	krb5_keytab client_keytab;
@@ -407,6 +408,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCr
 
 	if (krb5_init_context(&ctx))
 		return SEC_E_INTERNAL_ERROR;
+
+	free(credentials->kdc_url);
 
 	if (credentials->ccache)
 		krb5_cc_close(ctx, credentials->ccache);
@@ -1238,18 +1241,66 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetContextAttributesA(PCtxtHandle phCo
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
+static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(PCredHandle phCredential,
+                                                            ULONG ulAttribute, void* pBuffer,
+                                                            ULONG cbBuffer, BOOL unicode)
+{
+#ifdef WITH_GSSAPI
+	KRB_CREDENTIALS* credentials;
+
+	if (!phCredential)
+		return SEC_E_INVALID_HANDLE;
+
+	credentials = sspi_SecureHandleGetLowerPointer(phCredential);
+	
+	if (!credentials)
+		return SEC_E_INVALID_HANDLE;
+
+	if (!pBuffer)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	if (ulAttribute == SECPKG_CRED_ATTR_KDC_URL)
+	{
+		if (credentials->kdc_url) {
+			free(credentials->kdc_url);
+			credentials->kdc_url = NULL;
+		}
+
+		if (unicode) {
+			SEC_WCHAR* KdcUrl = ((SecPkgCredentials_KdcUrlW*) pBuffer)->KdcUrl;
+
+			if (KdcUrl) {
+				ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) KdcUrl, -1, &credentials->kdc_url, 0, NULL, NULL);
+			}
+		} else {
+			SEC_CHAR* KdcUrl = ((SecPkgCredentials_KdcUrlA*) pBuffer)->KdcUrl;
+
+			if (KdcUrl) {
+				credentials->kdc_url = _strdup(KdcUrl);
+			}
+		}
+
+		WLog_WARN(TAG, "Kerberos SSPI module does not support KDC URL injection yet: %s", credentials->kdc_url);
+	}
+
+	return SEC_E_UNSUPPORTED_FUNCTION;
+#else
+	return SEC_E_UNSUPPORTED_FUNCTION;
+#endif
+}
+
 static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesW(PCredHandle phCredential,
                                                             ULONG ulAttribute, void* pBuffer,
                                                             ULONG cbBuffer)
 {
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	return kerberos_SetCredentialsAttributesX(phCredential, ulAttribute, pBuffer, cbBuffer, TRUE);
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesA(PCredHandle phCredential,
                                                             ULONG ulAttribute, void* pBuffer,
                                                             ULONG cbBuffer)
 {
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	return kerberos_SetCredentialsAttributesX(phCredential, ulAttribute, pBuffer, cbBuffer, FALSE);
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
