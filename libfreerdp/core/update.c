@@ -57,6 +57,8 @@ static BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 {
 	UINT16 numberOrders;
 
+	WINPR_ASSERT(update);
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 		return FALSE;
 
@@ -81,6 +83,8 @@ static BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* bitmapData)
 {
 	WINPR_UNUSED(update);
+	WINPR_ASSERT(bitmapData);
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 18))
 		return FALSE;
 
@@ -143,6 +147,8 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 static BOOL update_write_bitmap_data(rdpUpdate* update_pub, wStream* s, BITMAP_DATA* bitmapData)
 {
 	rdp_update_internal* update = update_cast(update_pub);
+
+	WINPR_ASSERT(bitmapData);
 
 	if (!Stream_EnsureRemainingCapacity(s, 64 + bitmapData->bitmapLength))
 		return FALSE;
@@ -231,7 +237,8 @@ fail:
 static BOOL update_write_bitmap_update(rdpUpdate* update, wStream* s,
                                        const BITMAP_UPDATE* bitmapUpdate)
 {
-	int i;
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(bitmapUpdate);
 
 	if (!Stream_EnsureRemainingCapacity(s, 32))
 		return FALSE;
@@ -240,7 +247,7 @@ static BOOL update_write_bitmap_update(rdpUpdate* update, wStream* s,
 	Stream_Write_UINT16(s, bitmapUpdate->number); /* numberRectangles (2 bytes) */
 
 	/* rectangles */
-	for (i = 0; i < (int)bitmapUpdate->number; i++)
+	for (UINT32 i = 0; i < bitmapUpdate->number; i++)
 	{
 		if (!update_write_bitmap_data(update, s, &bitmapUpdate->rectangles[i]))
 			return FALSE;
@@ -297,6 +304,8 @@ static BOOL update_read_synchronize(rdpUpdate* update, wStream* s)
 
 static BOOL update_read_play_sound(wStream* s, PLAY_SOUND_UPDATE* play_sound)
 {
+	WINPR_ASSERT(play_sound);
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
@@ -307,7 +316,9 @@ static BOOL update_read_play_sound(wStream* s, PLAY_SOUND_UPDATE* play_sound)
 
 BOOL update_recv_play_sound(rdpUpdate* update, wStream* s)
 {
-	PLAY_SOUND_UPDATE play_sound;
+	PLAY_SOUND_UPDATE play_sound = { 0 };
+
+	WINPR_ASSERT(update);
 
 	if (!update_read_play_sound(s, &play_sound))
 		return FALSE;
@@ -318,6 +329,8 @@ BOOL update_recv_play_sound(rdpUpdate* update, wStream* s)
 POINTER_POSITION_UPDATE* update_read_pointer_position(rdpUpdate* update, wStream* s)
 {
 	POINTER_POSITION_UPDATE* pointer_position = calloc(1, sizeof(POINTER_POSITION_UPDATE));
+
+	WINPR_ASSERT(update);
 
 	if (!pointer_position)
 		goto fail;
@@ -336,6 +349,8 @@ fail:
 POINTER_SYSTEM_UPDATE* update_read_pointer_system(rdpUpdate* update, wStream* s)
 {
 	POINTER_SYSTEM_UPDATE* pointer_system = calloc(1, sizeof(POINTER_SYSTEM_UPDATE));
+
+	WINPR_ASSERT(update);
 
 	if (!pointer_system)
 		goto fail;
@@ -356,6 +371,8 @@ static BOOL _update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer
 	BYTE* newMask;
 	UINT32 scanlineSize;
 	UINT32 max = 32;
+
+	WINPR_ASSERT(pointer_color);
 
 	if (flags & LARGE_POINTER_FLAG_96x96)
 		max = 96;
@@ -479,6 +496,8 @@ fail:
 POINTER_COLOR_UPDATE* update_read_pointer_color(rdpUpdate* update, wStream* s, BYTE xorBpp)
 {
 	POINTER_COLOR_UPDATE* pointer_color = calloc(1, sizeof(POINTER_COLOR_UPDATE));
+
+	WINPR_ASSERT(update);
 
 	if (!pointer_color)
 		goto fail;
@@ -605,6 +624,8 @@ POINTER_LARGE_UPDATE* update_read_pointer_large(rdpUpdate* update, wStream* s)
 {
 	POINTER_LARGE_UPDATE* pointer = calloc(1, sizeof(POINTER_LARGE_UPDATE));
 
+	WINPR_ASSERT(update);
+
 	if (!pointer)
 		goto fail;
 
@@ -620,6 +641,8 @@ fail:
 POINTER_NEW_UPDATE* update_read_pointer_new(rdpUpdate* update, wStream* s)
 {
 	POINTER_NEW_UPDATE* pointer_new = calloc(1, sizeof(POINTER_NEW_UPDATE));
+
+	WINPR_ASSERT(update);
 
 	if (!pointer_new)
 		goto fail;
@@ -649,6 +672,8 @@ POINTER_CACHED_UPDATE* update_read_pointer_cached(rdpUpdate* update, wStream* s)
 {
 	POINTER_CACHED_UPDATE* pointer = calloc(1, sizeof(POINTER_CACHED_UPDATE));
 
+	WINPR_ASSERT(update);
+
 	if (!pointer)
 		goto fail;
 
@@ -666,6 +691,9 @@ BOOL update_recv_pointer(rdpUpdate* update, wStream* s)
 {
 	BOOL rc = FALSE;
 	UINT16 messageType;
+
+	WINPR_ASSERT(update);
+
 	rdpContext* context = update->context;
 	rdpPointerUpdate* pointer = update->pointer;
 
@@ -763,6 +791,8 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 	rdp_update_internal* up = update_cast(update);
 	rdpContext* context = update->context;
 
+	WINPR_ASSERT(context);
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
 
@@ -789,7 +819,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 			}
 
 			rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, bitmap_update);
-			free_bitmap_update(update->context, bitmap_update);
+			free_bitmap_update(context, bitmap_update);
 		}
 		break;
 
@@ -837,7 +867,6 @@ void update_reset_state(rdpUpdate* update)
 {
 	rdp_update_internal* up = update_cast(update);
 	rdp_primary_update_internal* primary = primary_update_cast(update->primary);
-	rdp_altsec_update_internal* altsec = altsec_update_cast(update->altsec);
 
 	WINPR_ASSERT(primary);
 
@@ -874,6 +903,9 @@ void update_reset_state(rdpUpdate* update)
 
 	if (!up->initialState)
 	{
+		rdp_altsec_update_internal* altsec = altsec_update_cast(update->altsec);
+		WINPR_ASSERT(altsec);
+
 		altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 		IFCALL(altsec->common.SwitchSurface, update->context, &(altsec->switch_surface));
 	}
@@ -902,6 +934,9 @@ void update_post_disconnect(rdpUpdate* update)
 {
 	rdp_update_internal* up = update_cast(update);
 
+	WINPR_ASSERT(update->context);
+	WINPR_ASSERT(update->context->settings);
+
 	up->asynchronous = update->context->settings->AsyncUpdate;
 
 	if (up->asynchronous)
@@ -913,6 +948,7 @@ void update_post_disconnect(rdpUpdate* update)
 static BOOL _update_begin_paint(rdpContext* context)
 {
 	wStream* s;
+	WINPR_ASSERT(context);
 	rdp_update_internal* update = update_cast(context->update);
 
 	if (update->us)
@@ -921,6 +957,7 @@ static BOOL _update_begin_paint(rdpContext* context)
 			return FALSE;
 	}
 
+	WINPR_ASSERT(context->rdp);
 	s = fastpath_update_pdu_init_new(context->rdp->fastpath);
 
 	if (!s)
@@ -938,6 +975,7 @@ static BOOL _update_begin_paint(rdpContext* context)
 static BOOL _update_end_paint(rdpContext* context)
 {
 	wStream* s;
+	WINPR_ASSERT(context);
 	rdp_update_internal* update = update_cast(context->update);
 
 	if (!update->us)
@@ -1027,6 +1065,7 @@ static BOOL update_set_bounds(rdpContext* context, const rdpBounds* bounds)
 
 static BOOL update_bounds_is_null(rdpBounds* bounds)
 {
+	WINPR_ASSERT(bounds);
 	if ((bounds->left == 0) && (bounds->top == 0) && (bounds->right == 0) && (bounds->bottom == 0))
 		return TRUE;
 
@@ -1035,6 +1074,9 @@ static BOOL update_bounds_is_null(rdpBounds* bounds)
 
 static BOOL update_bounds_equals(rdpBounds* bounds1, rdpBounds* bounds2)
 {
+	WINPR_ASSERT(bounds1);
+	WINPR_ASSERT(bounds2);
+
 	if ((bounds1->left == bounds2->left) && (bounds1->top == bounds2->top) &&
 	    (bounds1->right == bounds2->right) && (bounds1->bottom == bounds2->bottom))
 		return TRUE;
@@ -1103,6 +1145,10 @@ static int update_prepare_bounds(rdpContext* context, ORDER_INFO* orderInfo)
 static int update_prepare_order_info(rdpContext* context, ORDER_INFO* orderInfo, UINT32 orderType)
 {
 	int length = 1;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(orderInfo);
+
 	orderInfo->fieldFlags = 0;
 	orderInfo->orderType = orderType;
 	orderInfo->controlFlags = ORDER_STANDARD;
@@ -1117,7 +1163,10 @@ static int update_write_order_info(rdpContext* context, wStream* s, ORDER_INFO* 
                                    size_t offset)
 {
 	size_t position;
+
 	WINPR_UNUSED(context);
+	WINPR_ASSERT(orderInfo);
+
 	position = Stream_GetPosition(s);
 	Stream_SetPosition(s, offset);
 	Stream_Write_UINT8(s, orderInfo->controlFlags); /* controlFlags (1 byte) */
@@ -1125,20 +1174,25 @@ static int update_write_order_info(rdpContext* context, wStream* s, ORDER_INFO* 
 	if (orderInfo->controlFlags & ORDER_TYPE_CHANGE)
 		Stream_Write_UINT8(s, orderInfo->orderType); /* orderType (1 byte) */
 
-	update_write_field_flags(s, orderInfo->fieldFlags, orderInfo->controlFlags,
-	                         get_primary_drawing_order_field_bytes(orderInfo->orderType, NULL));
-	update_write_bounds(s, orderInfo);
+	if (!update_write_field_flags(
+	        s, orderInfo->fieldFlags, orderInfo->controlFlags,
+	        get_primary_drawing_order_field_bytes(orderInfo->orderType, NULL)))
+		return -1;
+	if (!update_write_bounds(s, orderInfo))
+		return -1;
 	Stream_SetPosition(s, position);
 	return 0;
 }
 
 static void update_write_refresh_rect(wStream* s, BYTE count, const RECTANGLE_16* areas)
 {
-	int i;
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(areas || (count == 0));
+
 	Stream_Write_UINT8(s, count); /* numberOfAreas (1 byte) */
 	Stream_Seek(s, 3);            /* pad3Octets (3 bytes) */
 
-	for (i = 0; i < count; i++)
+	for (BYTE i = 0; i < count; i++)
 	{
 		Stream_Write_UINT16(s, areas[i].left);   /* left (2 bytes) */
 		Stream_Write_UINT16(s, areas[i].top);    /* top (2 bytes) */
@@ -1149,8 +1203,10 @@ static void update_write_refresh_rect(wStream* s, BYTE count, const RECTANGLE_16
 
 static BOOL update_send_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 
+	WINPR_ASSERT(rdp->settings);
 	if (rdp->settings->RefreshRect)
 	{
 		wStream* s = rdp_data_pdu_init(rdp);
@@ -1167,12 +1223,15 @@ static BOOL update_send_refresh_rect(rdpContext* context, BYTE count, const RECT
 
 static void update_write_suppress_output(wStream* s, BYTE allow, const RECTANGLE_16* area)
 {
+	WINPR_ASSERT(s);
+
 	Stream_Write_UINT8(s, allow); /* allowDisplayUpdates (1 byte) */
 	/* Use zeros for padding (like mstsc) for compatibility with legacy servers */
 	Stream_Zero(s, 3); /* pad3Octets (3 bytes) */
 
 	if (allow > 0)
 	{
+		WINPR_ASSERT(area);
 		Stream_Write_UINT16(s, area->left);   /* left (2 bytes) */
 		Stream_Write_UINT16(s, area->top);    /* top (2 bytes) */
 		Stream_Write_UINT16(s, area->right);  /* right (2 bytes) */
@@ -1182,8 +1241,11 @@ static void update_write_suppress_output(wStream* s, BYTE allow, const RECTANGLE
 
 static BOOL update_send_suppress_output(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->settings);
 	if (rdp->settings->SuppressOutput)
 	{
 		wStream* s = rdp_data_pdu_init(rdp);
@@ -1192,6 +1254,7 @@ static BOOL update_send_suppress_output(rdpContext* context, BYTE allow, const R
 			return FALSE;
 
 		update_write_suppress_output(s, allow, area);
+		WINPR_ASSERT(rdp->mcs);
 		return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->userId);
 	}
 
@@ -1201,8 +1264,11 @@ static BOOL update_send_suppress_output(rdpContext* context, BYTE allow, const R
 static BOOL update_send_surface_command(rdpContext* context, wStream* s)
 {
 	wStream* update;
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret;
+
+	WINPR_ASSERT(rdp);
 	update = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!update)
@@ -1225,8 +1291,13 @@ static BOOL update_send_surface_bits(rdpContext* context,
                                      const SURFACE_BITS_COMMAND* surfaceBitsCommand)
 {
 	wStream* s;
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret = FALSE;
+
+	WINPR_ASSERT(surfaceBitsCommand);
+	WINPR_ASSERT(rdp);
+
 	update_force_flush(context);
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
@@ -1251,9 +1322,12 @@ static BOOL update_send_surface_frame_marker(rdpContext* context,
                                              const SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
 	wStream* s;
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret = FALSE;
 	update_force_flush(context);
+
+	WINPR_ASSERT(rdp);
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!s)
@@ -1275,9 +1349,14 @@ static BOOL update_send_surface_frame_bits(rdpContext* context, const SURFACE_BI
                                            BOOL first, BOOL last, UINT32 frameId)
 {
 	wStream* s;
+
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret = FALSE;
+
 	update_force_flush(context);
+
+	WINPR_ASSERT(rdp);
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!s)
@@ -1308,8 +1387,11 @@ out_fail:
 
 static BOOL update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 {
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->settings);
 	if (rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
 	{
 		wStream* s = rdp_data_pdu_init(rdp);
@@ -1327,8 +1409,11 @@ static BOOL update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 static BOOL update_send_synchronize(rdpContext* context)
 {
 	wStream* s;
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret;
+
+	WINPR_ASSERT(rdp);
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!s)
@@ -1342,16 +1427,21 @@ static BOOL update_send_synchronize(rdpContext* context)
 
 static BOOL update_send_desktop_resize(rdpContext* context)
 {
+	WINPR_ASSERT(context);
 	return rdp_server_reactivate(context->rdp);
 }
 
 static BOOL update_send_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 {
 	wStream* s;
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	rdpUpdate* update = context->update;
 	BOOL ret = TRUE;
+
 	update_force_flush(context);
+
+	WINPR_ASSERT(rdp);
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!s)
@@ -1374,8 +1464,12 @@ out_fail:
 static BOOL update_send_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_sound)
 {
 	wStream* s;
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->settings);
+	WINPR_ASSERT(play_sound);
 	if (!rdp->settings->ReceivedCapabilities[CAPSET_TYPE_SOUND])
 	{
 		return TRUE;
@@ -1781,7 +1875,7 @@ static BOOL update_send_cache_color_table(rdpContext* context,
 	wStream* s;
 	UINT16 flags;
 	size_t bm, em, inf;
-	int headerLength;
+	size_t headerLength;
 	INT16 orderLength;
 	rdp_update_internal* update;
 
@@ -1976,6 +2070,7 @@ static BOOL update_send_create_offscreen_bitmap_order(
 	controlFlags = ORDER_SECONDARY | (orderType << 2);
 	inf = update_approximate_create_offscreen_bitmap_order(create_offscreen_bitmap);
 	update_check_flush(context, headerLength + inf);
+
 	s = update->us;
 
 	if (!s)
@@ -2046,8 +2141,12 @@ static BOOL update_send_pointer_system(rdpContext* context,
 {
 	wStream* s;
 	BYTE updateCode;
+
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret;
+
+	WINPR_ASSERT(rdp);
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!s)
@@ -2067,8 +2166,11 @@ static BOOL update_send_pointer_position(rdpContext* context,
                                          const POINTER_POSITION_UPDATE* pointerPosition)
 {
 	wStream* s;
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret = FALSE;
+
+	WINPR_ASSERT(rdp);
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!s)
@@ -2087,6 +2189,7 @@ out_fail:
 
 static BOOL update_write_pointer_color(wStream* s, const POINTER_COLOR_UPDATE* pointer_color)
 {
+	WINPR_ASSERT(pointer_color);
 	if (!Stream_EnsureRemainingCapacity(s, 32 + pointer_color->lengthAndMask +
 	                                           pointer_color->lengthXorMask))
 		return FALSE;
@@ -2113,8 +2216,13 @@ static BOOL update_send_pointer_color(rdpContext* context,
                                       const POINTER_COLOR_UPDATE* pointer_color)
 {
 	wStream* s;
+
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret = FALSE;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(pointer_color);
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!s)
@@ -2131,6 +2239,8 @@ out_fail:
 
 static BOOL update_write_pointer_large(wStream* s, const POINTER_LARGE_UPDATE* pointer)
 {
+	WINPR_ASSERT(pointer);
+
 	if (!Stream_EnsureRemainingCapacity(s, 32 + pointer->lengthAndMask + pointer->lengthXorMask))
 		return FALSE;
 
@@ -2151,8 +2261,12 @@ static BOOL update_write_pointer_large(wStream* s, const POINTER_LARGE_UPDATE* p
 static BOOL update_send_pointer_large(rdpContext* context, const POINTER_LARGE_UPDATE* pointer)
 {
 	wStream* s;
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret = FALSE;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(pointer);
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!s)
@@ -2170,8 +2284,13 @@ out_fail:
 static BOOL update_send_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new)
 {
 	wStream* s;
+
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret = FALSE;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(pointer_new);
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!s)
@@ -2192,8 +2311,13 @@ static BOOL update_send_pointer_cached(rdpContext* context,
                                        const POINTER_CACHED_UPDATE* pointer_cached)
 {
 	wStream* s;
+
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(pointer_cached);
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!s)
@@ -2207,9 +2331,8 @@ static BOOL update_send_pointer_cached(rdpContext* context,
 
 BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 {
-	int index;
 	BYTE numberOfAreas;
-	RECTANGLE_16* areas;
+	RECTANGLE_16 areas[256] = { 0 };
 	rdp_update_internal* up = update_cast(update);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
@@ -2221,28 +2344,23 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ull * numberOfAreas))
 		return FALSE;
 
-	areas = (RECTANGLE_16*)calloc(numberOfAreas, sizeof(RECTANGLE_16));
-
-	if (!areas)
+	for (BYTE index = 0; index < numberOfAreas; index++)
 	{
-		WLog_WARN(TAG, "[OOM] refresh rect");
-		return FALSE;
+		RECTANGLE_16* area = &areas[index];
+
+		Stream_Read_UINT16(s, area->left);
+		Stream_Read_UINT16(s, area->top);
+		Stream_Read_UINT16(s, area->right);
+		Stream_Read_UINT16(s, area->bottom);
 	}
 
-	for (index = 0; index < numberOfAreas; index++)
-	{
-		Stream_Read_UINT16(s, areas[index].left);
-		Stream_Read_UINT16(s, areas[index].top);
-		Stream_Read_UINT16(s, areas[index].right);
-		Stream_Read_UINT16(s, areas[index].bottom);
-	}
-
+	WINPR_ASSERT(update->context);
+	WINPR_ASSERT(update->context->settings);
 	if (update->context->settings->RefreshRect)
 		IFCALL(update->RefreshRect, update->context, numberOfAreas, areas);
 	else
 		WLog_Print(up->log, WLOG_WARN, "ignoring refresh rect request from client");
 
-	free(areas);
 	return TRUE;
 }
 
@@ -2275,6 +2393,8 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 		prect = &rect;
 	}
 
+	WINPR_ASSERT(update->context);
+	WINPR_ASSERT(update->context->settings);
 	if (update->context->settings->SuppressOutput)
 		IFCALL(update->SuppressOutput, update->context, allowDisplayUpdates, prect);
 	else
@@ -2286,6 +2406,8 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 static BOOL update_send_set_keyboard_indicators(rdpContext* context, UINT16 led_flags)
 {
 	wStream* s;
+
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	s = rdp_data_pdu_init(rdp);
 
@@ -2294,6 +2416,8 @@ static BOOL update_send_set_keyboard_indicators(rdpContext* context, UINT16 led_
 
 	Stream_Write_UINT16(s, 0);         /* unitId should be 0 according to MS-RDPBCGR 2.2.8.2.1.1 */
 	Stream_Write_UINT16(s, led_flags); /* ledFlags (2 bytes) */
+
+	WINPR_ASSERT(rdp->mcs);
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS, rdp->mcs->userId);
 }
 
@@ -2301,6 +2425,8 @@ static BOOL update_send_set_keyboard_ime_status(rdpContext* context, UINT16 imeI
                                                 UINT32 imeConvMode)
 {
 	wStream* s;
+
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	s = rdp_data_pdu_init(rdp);
 
@@ -2311,6 +2437,8 @@ static BOOL update_send_set_keyboard_ime_status(rdpContext* context, UINT16 imeI
 	Stream_Write_UINT16(s, imeId);
 	Stream_Write_UINT32(s, imeState);
 	Stream_Write_UINT32(s, imeConvMode);
+
+	WINPR_ASSERT(rdp->mcs);
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS, rdp->mcs->userId);
 }
 
@@ -2318,6 +2446,9 @@ static UINT16 update_calculate_new_or_existing_window(const WINDOW_ORDER_INFO* o
                                                       const WINDOW_STATE_ORDER* stateOrder)
 {
 	UINT16 orderSize = 11;
+
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(stateOrder);
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OWNER) != 0)
 		orderSize += 4;
@@ -2395,6 +2526,9 @@ static BOOL update_send_new_or_existing_window(rdpContext* context,
 	rdp_update_internal* update;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(stateOrder);
+
 	update = update_cast(context->update);
 
 	update_check_flush(context, orderSize);
@@ -2550,7 +2684,10 @@ static UINT16 update_calculate_window_icon_order(const WINDOW_ORDER_INFO* orderI
                                                  const WINDOW_ICON_ORDER* iconOrder)
 {
 	UINT16 orderSize = 23;
+
+	WINPR_ASSERT(iconOrder);
 	ICON_INFO* iconInfo = iconOrder->iconInfo;
+	WINPR_ASSERT(iconInfo);
 
 	orderSize += iconInfo->cbBitsColor + iconInfo->cbBitsMask;
 
@@ -2565,11 +2702,16 @@ static BOOL update_send_window_icon(rdpContext* context, const WINDOW_ORDER_INFO
 {
 	wStream* s;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
+
+	WINPR_ASSERT(iconOrder);
 	ICON_INFO* iconInfo = iconOrder->iconInfo;
 	UINT16 orderSize = update_calculate_window_icon_order(orderInfo, iconOrder);
 	rdp_update_internal* update;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(iconInfo);
+
 	update = update_cast(context->update);
 
 	update_check_flush(context, orderSize);
@@ -2620,10 +2762,15 @@ static BOOL update_send_window_cached_icon(rdpContext* context, const WINDOW_ORD
 	wStream* s;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
 	UINT16 orderSize = 14;
-	CACHED_ICON_INFO cachedIcon = cachedIconOrder->cachedIcon;
+
+	WINPR_ASSERT(cachedIconOrder);
+	const CACHED_ICON_INFO* cachedIcon = &cachedIconOrder->cachedIcon;
 	rdp_update_internal* update;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(cachedIcon);
+
 	update = update_cast(context->update);
 
 	update_check_flush(context, orderSize);
@@ -2641,8 +2788,8 @@ static BOOL update_send_window_cached_icon(rdpContext* context, const WINDOW_ORD
 	Stream_Write_UINT32(s, orderInfo->fieldFlags); /* FieldsPresentFlags (4 bytes) */
 	Stream_Write_UINT32(s, orderInfo->windowId);   /* WindowID (4 bytes) */
 	/* Write body */
-	Stream_Write_UINT16(s, cachedIcon.cacheEntry); /* CacheEntry (2 bytes) */
-	Stream_Write_UINT8(s, cachedIcon.cacheId);     /* CacheId (1 byte) */
+	Stream_Write_UINT16(s, cachedIcon->cacheEntry); /* CacheEntry (2 bytes) */
+	Stream_Write_UINT8(s, cachedIcon->cacheId);     /* CacheId (1 byte) */
 	update->numberOrders++;
 	return TRUE;
 }
@@ -2655,6 +2802,7 @@ static BOOL update_send_window_delete(rdpContext* context, const WINDOW_ORDER_IN
 	rdp_update_internal* update;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(orderInfo);
 	update = update_cast(context->update);
 
 	update_check_flush(context, orderSize);
@@ -2680,6 +2828,9 @@ static UINT16 update_calculate_new_or_existing_notification_icons_order(
     const WINDOW_ORDER_INFO* orderInfo, const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
 {
 	UINT16 orderSize = 15;
+
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(iconStateOrder);
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION) != 0)
 		orderSize += 4;
@@ -2731,6 +2882,8 @@ update_send_new_or_existing_notification_icons(rdpContext* context,
 	rdp_update_internal* update;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(iconStateOrder);
 	update = update_cast(context->update);
 
 	update_check_flush(context, orderSize);
@@ -2843,6 +2996,7 @@ static BOOL update_send_notify_icon_delete(rdpContext* context, const WINDOW_ORD
 	rdp_update_internal* update;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(orderInfo);
 	update = update_cast(context->update);
 
 	update_check_flush(context, orderSize);
@@ -2867,6 +3021,9 @@ static UINT16 update_calculate_monitored_desktop(const WINDOW_ORDER_INFO* orderI
 {
 	UINT16 orderSize = 7;
 
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(monitoredDesktop);
+
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
 	{
 		orderSize += 4;
@@ -2890,6 +3047,9 @@ static BOOL update_send_monitored_desktop(rdpContext* context, const WINDOW_ORDE
 	rdp_update_internal* update;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(monitoredDesktop);
+
 	update = update_cast(context->update);
 
 	update_check_flush(context, orderSize);
@@ -2932,6 +3092,7 @@ static BOOL update_send_non_monitored_desktop(rdpContext* context,
 	rdp_update_internal* update;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(orderInfo);
 	update = update_cast(context->update);
 
 	update_check_flush(context, orderSize);
@@ -2950,6 +3111,8 @@ static BOOL update_send_non_monitored_desktop(rdpContext* context,
 
 void update_register_server_callbacks(rdpUpdate* update)
 {
+	WINPR_ASSERT(update);
+
 	update->BeginPaint = _update_begin_paint;
 	update->EndPaint = _update_end_paint;
 	update->SetBounds = update_set_bounds;
@@ -3001,6 +3164,8 @@ void update_register_server_callbacks(rdpUpdate* update)
 
 void update_register_client_callbacks(rdpUpdate* update)
 {
+	WINPR_ASSERT(update);
+
 	update->RefreshRect = update_send_refresh_rect;
 	update->SuppressOutput = update_send_suppress_output;
 	update->SurfaceFrameAcknowledge = update_send_frame_acknowledge;
@@ -3146,6 +3311,7 @@ void rdp_update_unlock(rdpUpdate* update)
 
 BOOL update_begin_paint(rdpUpdate* update)
 {
+	WINPR_ASSERT(update);
 	rdp_update_lock(update);
 
 	if (!update->BeginPaint)
