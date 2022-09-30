@@ -42,7 +42,7 @@ typedef struct
 
 typedef struct
 {
-	FRAGMENT_CACHE_ENTRY* entries;
+	FRAGMENT_CACHE_ENTRY entries[256];
 } FRAGMENT_CACHE;
 
 typedef struct

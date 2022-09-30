@@ -709,11 +709,6 @@ rdpGlyphCache* glyph_cache_new(rdpContext* context)
 			goto fail;
 	}
 
-	glyphCache->fragCache.entries = calloc(256, sizeof(FRAGMENT_CACHE_ENTRY));
-
-	if (!glyphCache->fragCache.entries)
-		goto fail;
-
 	return glyphCache;
 fail:
 	glyph_cache_free(glyphCache);
@@ -750,16 +745,12 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 			cache[i].entries = NULL;
 		}
 
-		if (glyphCache->fragCache.entries)
+		for (i = 0; i < ARRAYSIZE(glyphCache->fragCache.entries); i++)
 		{
-			for (i = 0; i < 256; i++)
-			{
-				free(glyphCache->fragCache.entries[i].fragment);
-				glyphCache->fragCache.entries[i].fragment = NULL;
-			}
+			free(glyphCache->fragCache.entries[i].fragment);
+			glyphCache->fragCache.entries[i].fragment = NULL;
 		}
 
-		free(glyphCache->fragCache.entries);
 		free(glyphCache);
 	}
 }
