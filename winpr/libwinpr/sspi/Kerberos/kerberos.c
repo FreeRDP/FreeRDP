@@ -1294,8 +1294,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(PCredHandle 
 			}
 		}
 
-		WLog_WARN(TAG, "Kerberos SSPI module does not support KDC URL injection yet: %s",
-		          credentials->kdc_url);
+		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
 	return SEC_E_UNSUPPORTED_FUNCTION;
