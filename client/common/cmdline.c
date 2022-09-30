@@ -862,11 +862,6 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 
 		free(ptr.p);
 	}
-	CommandLineSwitchCase(arg, "kdc-url")
-	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_KerberosKdcUrl, arg->Value))
-			return COMMAND_LINE_ERROR_MEMORY;
-	}
 	CommandLineSwitchCase(arg, "kerberos")
 	{
 		size_t count;
@@ -876,6 +871,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 		{
 			size_t x;
 			const CmdLineSubOptions opts[] = {
+				{ "kdc-url:", FreeRDP_KerberosKdcUrl, CMDLINE_SUBOPTION_STRING, NULL },
 				{ "start-time:", FreeRDP_KerberosStartTime, CMDLINE_SUBOPTION_STRING, NULL },
 				{ "lifetime:", FreeRDP_KerberosLifeTime, CMDLINE_SUBOPTION_STRING, NULL },
 				{ "renewable-lifetime:", FreeRDP_KerberosRenewableLifeTime,
