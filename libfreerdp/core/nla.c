@@ -946,6 +946,7 @@ static BOOL nla_setup_kerberos(rdpNla* nla)
 
 static BOOL nla_client_init_cred_handle(rdpNla* nla)
 {
+	SECURITY_STATUS secStatus;
 	SEC_WINPR_KERBEROS_SETTINGS* kerbSettings;
 
 	WINPR_ASSERT(nla);
@@ -962,16 +963,21 @@ static BOOL nla_client_init_cred_handle(rdpNla* nla)
 		if (!secAttr.KdcUrl)
 			return FALSE;
 
-		nla->table->SetCredentialsAttributesW(&nla->credentials, SECPKG_CRED_ATTR_KDC_URL,
-		                                      (void*)&secAttr, sizeof(secAttr));
+		secStatus = nla->table->SetCredentialsAttributesW(
+		    &nla->credentials, SECPKG_CRED_ATTR_KDC_URL, (void*)&secAttr, sizeof(secAttr));
 
 		free(secAttr.KdcUrl);
 #else
 		SecPkgCredentials_KdcUrlA secAttr = { NULL };
 		secAttr.KdcUrl = kerbSettings->kdcUrl;
-		nla->table->SetCredentialsAttributesA(&nla->credentials, SECPKG_CRED_ATTR_KDC_URL,
-		                                      (void*)&secAttr, sizeof(secAttr));
+		secStatus = nla->table->SetCredentialsAttributesA(
+		    &nla->credentials, SECPKG_CRED_ATTR_KDC_URL, (void*)&secAttr, sizeof(secAttr));
 #endif
+		if (secStatus != SEC_E_OK)
+		{
+			WLog_WARN(TAG, "Explicit Kerberos KDC URL (%s) injection is not supported",
+			          kerbSettings->kdcUrl);
+		}
 	}
 
 	return TRUE;

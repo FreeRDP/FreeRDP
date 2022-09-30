@@ -1207,6 +1207,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesW(PCredHandle
                                                                      void* pBuffer, ULONG cbBuffer)
 {
 	MechCred* creds;
+	BOOL success = FALSE;
+	SECURITY_STATUS secStatus;
 
 	creds = sspi_SecureHandleGetLowerPointer(phCredential);
 
@@ -1217,18 +1219,21 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesW(PCredHandle
 	{
 		MechCred* cred = &creds[i];
 
-		if (!cred->valid)
-			continue;
-
 		WINPR_ASSERT(cred->mech);
 		WINPR_ASSERT(cred->mech->pkg);
 		WINPR_ASSERT(cred->mech->pkg->table);
 		WINPR_ASSERT(cred->mech->pkg->table_w->SetCredentialsAttributesW);
-		cred->mech->pkg->table_w->SetCredentialsAttributesW(&cred->cred, ulAttribute, pBuffer,
-		                                                    cbBuffer);
+		secStatus = cred->mech->pkg->table_w->SetCredentialsAttributesW(&cred->cred, ulAttribute,
+		                                                                pBuffer, cbBuffer);
+
+		if (secStatus == SEC_E_OK)
+		{
+			success = TRUE;
+		}
 	}
 
-	return SEC_E_OK;
+	// return success if at least one submodule accepts the credential attribute
+	return (success ? SEC_E_OK : SEC_E_UNSUPPORTED_FUNCTION);
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle phCredential,
@@ -1236,6 +1241,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle
                                                                      void* pBuffer, ULONG cbBuffer)
 {
 	MechCred* creds;
+	BOOL success = FALSE;
+	SECURITY_STATUS secStatus;
 
 	creds = sspi_SecureHandleGetLowerPointer(phCredential);
 
@@ -1253,11 +1260,17 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle
 		WINPR_ASSERT(cred->mech->pkg);
 		WINPR_ASSERT(cred->mech->pkg->table);
 		WINPR_ASSERT(cred->mech->pkg->table->SetCredentialsAttributesA);
-		cred->mech->pkg->table->SetCredentialsAttributesA(&cred->cred, ulAttribute, pBuffer,
-		                                                  cbBuffer);
+		secStatus = cred->mech->pkg->table->SetCredentialsAttributesA(&cred->cred, ulAttribute,
+		                                                              pBuffer, cbBuffer);
+
+		if (secStatus == SEC_E_OK)
+		{
+			success = TRUE;
+		}
 	}
 
-	return SEC_E_OK;
+	// return success if at least one submodule accepts the credential attribute
+	return (success ? SEC_E_OK : SEC_E_UNSUPPORTED_FUNCTION);
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
