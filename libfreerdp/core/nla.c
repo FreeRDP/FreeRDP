@@ -958,8 +958,13 @@ static BOOL nla_client_init_cred_handle(rdpNla* nla)
 #ifdef UNICODE
 		SecPkgCredentials_KdcUrlW secAttr = { NULL };
 		ConvertToUnicode(CP_UTF8, 0, kerbSettings->kdcUrl, -1, &secAttr.KdcUrl, 0);
+
+		if (!secAttr.KdcUrl)
+			return FALSE;
+
 		nla->table->SetCredentialsAttributesW(&nla->credentials, SECPKG_CRED_ATTR_KDC_URL,
 		                                      (void*)&secAttr, sizeof(secAttr));
+
 		free(secAttr.KdcUrl);
 #else
 		SecPkgCredentials_KdcUrlA secAttr = { NULL };
@@ -1053,7 +1058,8 @@ static int nla_client_init(rdpNla* nla)
 		return -1;
 	}
 
-	nla_client_init_cred_handle(nla);
+	if (!nla_client_init_cred_handle(nla))
+		return -1;
 
 	nla->haveContext = FALSE;
 	nla->haveInputBuffer = FALSE;
