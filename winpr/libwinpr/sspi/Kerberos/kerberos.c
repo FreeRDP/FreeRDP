@@ -1276,6 +1276,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(PCredHandle 
 			{
 				ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)KdcUrl, -1, &credentials->kdc_url, 0, NULL,
 				                   NULL);
+
+				if (!credentials->kdc_url)
+					return SEC_E_INSUFFICIENT_MEMORY;
 			}
 		}
 		else
@@ -1285,6 +1288,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(PCredHandle 
 			if (KdcUrl)
 			{
 				credentials->kdc_url = _strdup(KdcUrl);
+
+				if (!credentials->kdc_url)
+					return SEC_E_INSUFFICIENT_MEMORY;
 			}
 		}
 
