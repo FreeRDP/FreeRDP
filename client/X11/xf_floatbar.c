@@ -83,7 +83,7 @@ struct xf_floatbar
 	int mode;
 	int last_motion_x_root;
 	int last_motion_y_root;
-	bool locked;
+	BOOL locked;
 	xfFloatbarButton* buttons[4];
 	Window handle;
 	BOOL hasCursor;
@@ -917,4 +917,11 @@ void xf_floatbar_free(xfFloatbar* floatbar)
 	}
 
 	free(floatbar);
+}
+
+BOOL xf_floatbar_is_locked(xfFloatbar* floatbar)
+{
+	if (!floatbar)
+		return FALSE;
+	return floatbar->mode != XF_FLOATBAR_MODE_NONE;
 }

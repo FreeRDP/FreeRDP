@@ -641,6 +641,13 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
+	xfWindow* window = xfc->window;
+	if (window)
+	{
+		if (xf_floatbar_is_locked(window->floatbar))
+			return 0;
+	}
+
 	xf_input_show_cursor(xfc);
 
 	switch (evtype)
