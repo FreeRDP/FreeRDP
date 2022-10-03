@@ -569,7 +569,6 @@ out:
 static BOOL xf_process_x_events(freerdp* instance)
 {
 	BOOL status;
-	XEvent xevent;
 	int pending_status;
 	xfContext* xfc = (xfContext*)instance->context;
 	status = TRUE;
@@ -582,7 +581,8 @@ static BOOL xf_process_x_events(freerdp* instance)
 
 		if (pending_status)
 		{
-			ZeroMemory(&xevent, sizeof(xevent));
+			XEvent xevent = { 0 };
+
 			XNextEvent(xfc->display, &xevent);
 			status = xf_event_process(instance, &xevent);
 		}
