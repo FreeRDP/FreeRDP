@@ -1115,11 +1115,15 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 
 	if (xfc->window)
 	{
-		if (xf_floatbar_check_event(xfc->window->floatbar, event))
+		xfFloatbar* floatbar = xfc->window->floatbar;
+		if (xf_floatbar_check_event(floatbar, event))
 		{
-			xf_floatbar_event_process(xfc->window->floatbar, event);
+			xf_floatbar_event_process(floatbar, event);
 			return TRUE;
 		}
+
+		if (xf_floatbar_is_locked(floatbar))
+			return TRUE;
 	}
 
 	xf_event_execute_action_script(xfc, event);
@@ -1216,8 +1220,15 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 			break;
 	}
 
+	xfWindow* window = xfc->window;
+	xfFloatbar* floatbar = NULL;
+	if (window)
+		floatbar = window->floatbar;
+
 	xf_cliprdr_handle_xevent(xfc, event);
-	xf_input_handle_event(xfc, event);
+	if (!xf_floatbar_check_event(floatbar, event) && !xf_floatbar_is_locked(floatbar))
+		xf_input_handle_event(xfc, event);
+
 	XSync(xfc->display, FALSE);
 	return status;
 }
