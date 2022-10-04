@@ -188,13 +188,18 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 BOOL credssp_auth_setup_server(rdpCredsspAuth* auth)
 {
 	SECURITY_STATUS status;
+	void* auth_data = NULL;
 
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->table);
 
-	status = auth->table->AcquireCredentialsHandleA(NULL, auth->info->Name, SECPKG_CRED_INBOUND,
-	                                                NULL, &auth->identity, NULL, NULL,
-	                                                &auth->credentials, NULL);
+	if (auth->identity.ntlmSettings.samFile || auth->identity.ntlmSettings.hashCallback ||
+	    auth->identity.kerberosSettings.keytab)
+		auth_data = &auth->identity;
+
+	status =
+	    auth->table->AcquireCredentialsHandleA(NULL, auth->info->Name, SECPKG_CRED_INBOUND, NULL,
+	                                           auth_data, NULL, NULL, &auth->credentials, NULL);
 	if (status != SEC_E_OK)
 	{
 		WLog_ERR(TAG, "AcquireCredentialsHandleA failed with %s [0x%08X]",
