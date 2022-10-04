@@ -30,24 +30,31 @@
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>
 
-#define TYPE_ID_AUTODETECT_REQUEST 0x00
-#define TYPE_ID_AUTODETECT_RESPONSE 0x01
-
-FREERDP_LOCAL int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s);
-FREERDP_LOCAL int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s);
+typedef enum
+{
+	AUTODETECT_STATE_INITIAL,
+	AUTODETECT_STATE_REQUEST,
+	AUTODETECT_STATE_RESPONSE,
+	AUTODETECT_STATE_COMPLETE,
+	AUTODETECT_STATE_FAIL
+} AUTODETECT_STATE;
 
 FREERDP_LOCAL rdpAutoDetect* autodetect_new(rdpContext* context);
 FREERDP_LOCAL void autodetect_free(rdpAutoDetect* autodetect);
+FREERDP_LOCAL int autodetect_recv_request_packet(rdpAutoDetect* autodetect, wStream* s);
+FREERDP_LOCAL int autodetect_recv_response_packet(rdpAutoDetect* autodetect, wStream* s);
+
+FREERDP_LOCAL AUTODETECT_STATE autodetect_get_state(rdpAutoDetect* autodetect);
 
 FREERDP_LOCAL void autodetect_register_server_callbacks(rdpAutoDetect* autodetect);
-FREERDP_LOCAL BOOL autodetect_send_connecttime_rtt_measure_request(rdpContext* context,
+FREERDP_LOCAL BOOL autodetect_send_connecttime_rtt_measure_request(rdpAutoDetect* autodetect,
                                                                    UINT16 sequenceNumber);
-FREERDP_LOCAL BOOL autodetect_send_connecttime_bandwidth_measure_start(rdpContext* context,
+FREERDP_LOCAL BOOL autodetect_send_connecttime_bandwidth_measure_start(rdpAutoDetect* autodetect,
                                                                        UINT16 sequenceNumber);
-FREERDP_LOCAL BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context,
+FREERDP_LOCAL BOOL autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
                                                              UINT16 payloadLength,
                                                              UINT16 sequenceNumber);
-FREERDP_LOCAL BOOL autodetect_send_connecttime_bandwidth_measure_stop(rdpContext* context,
+FREERDP_LOCAL BOOL autodetect_send_connecttime_bandwidth_measure_stop(rdpAutoDetect* autodetect,
                                                                       UINT16 payloadLength,
                                                                       UINT16 sequenceNumber);
 
