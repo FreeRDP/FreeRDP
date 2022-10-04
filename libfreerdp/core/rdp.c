@@ -1042,9 +1042,10 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			break;
 
 		case DATA_PDU_TYPE_SYNCHRONIZE:
-			if (!rdp_recv_synchronize_pdu(rdp, cs))
+			if (!rdp_recv_server_synchronize_pdu(rdp, cs))
 			{
-				WLog_ERR(TAG, "DATA_PDU_TYPE_SYNCHRONIZE - rdp_recv_synchronize_pdu() failed");
+				WLog_ERR(TAG,
+				         "DATA_PDU_TYPE_SYNCHRONIZE - rdp_recv_server_synchronize_pdu() failed");
 				goto out_fail;
 			}
 
