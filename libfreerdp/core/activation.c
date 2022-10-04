@@ -26,7 +26,6 @@
 
 #define TAG FREERDP_TAG("core.activation")
 
-static BOOL rdp_recv_server_synchronize_pdu(rdpRdp* rdp, wStream* s);
 static BOOL rdp_recv_client_font_list_pdu(wStream* s);
 static BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s);
 static BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, wStream* s);
@@ -45,23 +44,8 @@ static BOOL rdp_write_synchronize_pdu(wStream* s, const rdpSettings* settings)
 	return TRUE;
 }
 
-BOOL rdp_recv_synchronize_pdu(rdpRdp* rdp, wStream* s)
-{
-	WINPR_ASSERT(rdp);
-	WINPR_ASSERT(rdp->settings);
-	WINPR_ASSERT(s);
-
-	if (rdp->settings->ServerMode)
-		return rdp_recv_server_synchronize_pdu(rdp, s);
-	else
-		return rdp_recv_client_synchronize_pdu(rdp, s);
-}
-
 BOOL rdp_recv_server_synchronize_pdu(rdpRdp* rdp, wStream* s)
 {
-	WINPR_ASSERT(rdp);
-	WINPR_ASSERT(s);
-
 	return rdp_finalize_set_flag(rdp, FINALIZE_SC_SYNCHRONIZE_PDU);
 }
 

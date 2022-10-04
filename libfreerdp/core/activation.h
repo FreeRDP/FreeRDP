@@ -63,7 +63,7 @@ FREERDP_LOCAL const char* rdp_ctrlaction_string(UINT16 action, char* buffer, siz
 FREERDP_LOCAL BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_deactivate_all(rdpRdp* rdp);
 
-FREERDP_LOCAL BOOL rdp_recv_synchronize_pdu(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_recv_server_synchronize_pdu(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_server_synchronize_pdu(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_client_synchronize_pdu(rdpRdp* rdp);
