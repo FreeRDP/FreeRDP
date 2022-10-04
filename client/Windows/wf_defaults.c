@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include <Windows.h>
+#include <windows.h>
 #include <wincred.h>
 #include <stdio.h>
 #include <malloc.h>
