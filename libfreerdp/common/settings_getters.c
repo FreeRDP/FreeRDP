@@ -1282,6 +1282,21 @@ UINT16 freerdp_settings_get_uint16(const rdpSettings* settings, size_t id)
 
 	switch (id)
 	{
+		case FreeRDP_CapsGeneralCompressionLevel:
+			return settings->CapsGeneralCompressionLevel;
+
+		case FreeRDP_CapsGeneralCompressionTypes:
+			return settings->CapsGeneralCompressionTypes;
+
+		case FreeRDP_CapsProtocolVersion:
+			return settings->CapsProtocolVersion;
+
+		case FreeRDP_CapsRemoteUnshareFlag:
+			return settings->CapsRemoteUnshareFlag;
+
+		case FreeRDP_CapsUpdateCapabilityFlag:
+			return settings->CapsUpdateCapabilityFlag;
+
 		case FreeRDP_DesktopOrientation:
 			return settings->DesktopOrientation;
 
@@ -1317,6 +1332,26 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 
 	switch (id)
 	{
+		case FreeRDP_CapsGeneralCompressionLevel:
+			settings->CapsGeneralCompressionLevel = cnv.c;
+			break;
+
+		case FreeRDP_CapsGeneralCompressionTypes:
+			settings->CapsGeneralCompressionTypes = cnv.c;
+			break;
+
+		case FreeRDP_CapsProtocolVersion:
+			settings->CapsProtocolVersion = cnv.c;
+			break;
+
+		case FreeRDP_CapsRemoteUnshareFlag:
+			settings->CapsRemoteUnshareFlag = cnv.c;
+			break;
+
+		case FreeRDP_CapsUpdateCapabilityFlag:
+			settings->CapsUpdateCapabilityFlag = cnv.c;
+			break;
+
 		case FreeRDP_DesktopOrientation:
 			settings->DesktopOrientation = cnv.c;
 			break;
@@ -3276,6 +3311,12 @@ void* freerdp_settings_get_pointer_writable(rdpSettings* settings, size_t id)
 		case FreeRDP_ReceivedCapabilities:
 			return settings->ReceivedCapabilities;
 
+		case FreeRDP_ReceivedCapabilityData:
+			return settings->ReceivedCapabilityData;
+
+		case FreeRDP_ReceivedCapabilityDataSizes:
+			return settings->ReceivedCapabilityDataSizes;
+
 		case FreeRDP_RedirectionPassword:
 			return settings->RedirectionPassword;
 
@@ -3390,6 +3431,14 @@ BOOL freerdp_settings_set_pointer(rdpSettings* settings, size_t id, const void* 
 
 		case FreeRDP_ReceivedCapabilities:
 			settings->ReceivedCapabilities = cnv.v;
+			break;
+
+		case FreeRDP_ReceivedCapabilityData:
+			settings->ReceivedCapabilityData = cnv.v;
+			break;
+
+		case FreeRDP_ReceivedCapabilityDataSizes:
+			settings->ReceivedCapabilityDataSizes = cnv.v;
 			break;
 
 		case FreeRDP_RedirectionPassword:

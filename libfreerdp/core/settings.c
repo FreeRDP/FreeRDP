@@ -321,7 +321,20 @@ BOOL freerdp_capability_buffer_allocate(rdpSettings* settings, UINT32 count)
 	memset(tmp, 0, count * sizeof(BYTE));
 	settings->ReceivedCapabilities = tmp;
 
-	return settings->ReceivedCapabilities != NULL;
+	tmp = realloc(settings->ReceivedCapabilityData, count * sizeof(BYTE*));
+	if (!tmp)
+		return FALSE;
+	memset(tmp, 0, count * sizeof(BYTE*));
+	settings->ReceivedCapabilityData = tmp;
+
+	tmp = realloc(settings->ReceivedCapabilityDataSizes, count * sizeof(UINT32));
+	if (!tmp)
+		return FALSE;
+	memset(tmp, 0, count * sizeof(UINT32));
+	settings->ReceivedCapabilityDataSizes = tmp;
+
+	return (settings->ReceivedCapabilities && settings->ReceivedCapabilityData &&
+	        settings->ReceivedCapabilityDataSizes);
 }
 
 rdpSettings* freerdp_settings_new(DWORD flags)
@@ -1027,7 +1040,6 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	_settings->ChannelDefArray = NULL;
 	_settings->MonitorDefArray = NULL;
 	_settings->MonitorIds = NULL;
-	_settings->ReceivedCapabilities = NULL;
 	_settings->OrderSupport = NULL;
 	_settings->BitmapCacheV2CellInfo = NULL;
 	_settings->GlyphCache = NULL;
@@ -1041,6 +1053,9 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	_settings->DeviceArray = NULL;
 	_settings->StaticChannelArray = NULL;
 	_settings->DynamicChannelArray = NULL;
+	_settings->ReceivedCapabilities = NULL;
+	_settings->ReceivedCapabilityData = NULL;
+	_settings->ReceivedCapabilityDataSizes = NULL;
 
 	_settings->XSelectionAtom = NULL;
 	if (!rc)

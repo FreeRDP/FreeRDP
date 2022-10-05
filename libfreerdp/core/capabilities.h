@@ -172,4 +172,6 @@ FREERDP_LOCAL BOOL rdp_send_demand_active(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength);
 FREERDP_LOCAL BOOL rdp_send_confirm_active(rdpRdp* rdp);
 
+BOOL rdp_read_capability_set(wStream* sub, UINT16 type, rdpSettings* settings, BOOL isServer);
+
 #endif /* FREERDP_LIB_CORE_CAPABILITIES_H */

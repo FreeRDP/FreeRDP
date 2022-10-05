@@ -790,6 +790,8 @@ typedef struct
 #define FreeRDP_RemoteApplicationWorkingDir (2128)
 #define FreeRDP_ReceivedCapabilities (2240)
 #define FreeRDP_ReceivedCapabilitiesSize (2241)
+#define FreeRDP_ReceivedCapabilityData (2242)
+#define FreeRDP_ReceivedCapabilityDataSizes (2243)
 #define FreeRDP_OsMajorType (2304)
 #define FreeRDP_OsMinorType (2305)
 #define FreeRDP_RefreshRect (2306)
@@ -799,6 +801,11 @@ typedef struct
 #define FreeRDP_LongCredentialsSupported (2310)
 #define FreeRDP_NoBitmapCompressionHeader (2311)
 #define FreeRDP_BitmapCompressionDisabled (2312)
+#define FreeRDP_CapsProtocolVersion (2313)
+#define FreeRDP_CapsGeneralCompressionTypes (2314)
+#define FreeRDP_CapsUpdateCapabilityFlag (2315)
+#define FreeRDP_CapsRemoteUnshareFlag (2316)
+#define FreeRDP_CapsGeneralCompressionLevel (2317)
 #define FreeRDP_DesktopResize (2368)
 #define FreeRDP_DrawAllowDynamicColorFidelity (2369)
 #define FreeRDP_DrawAllowColorSubsampling (2370)
@@ -1209,13 +1216,13 @@ struct rdp_settings
 	ALIGN64 char* CertificateName;                 /* 1409 */
 	ALIGN64 char* CertificateFile;                 /* 1410 */
 	ALIGN64 char* PrivateKeyFile;                  /* 1411 */
-	UINT64 padding1412[1];                         /* 1412 */
+	UINT64 padding1412[1413 - 1412];               /* 1412 */
 	ALIGN64 rdpRsaKey* RdpServerRsaKey;            /* 1413 */
 	ALIGN64 rdpCertificate* RdpServerCertificate;  /* 1414 */
 	ALIGN64 BOOL ExternalCertificateManagement;    /* 1415 */
 	ALIGN64 char* CertificateContent;              /* 1416 */
 	ALIGN64 char* PrivateKeyContent;               /* 1417 */
-	UINT64 padding1418[1];                         /* 1418 */
+	UINT64 padding1418[1419 - 1418];               /* 1418 */
 	ALIGN64 BOOL AutoAcceptCertificate;            /* 1419 */
 	ALIGN64 BOOL AutoDenyCertificate;              /* 1420 */
 	ALIGN64 char* CertificateAcceptedFingerprints; /* 1421 */
@@ -1356,19 +1363,26 @@ struct rdp_settings
 	/* Capabilities */
 	ALIGN64 BYTE* ReceivedCapabilities;      /* 2240 */
 	ALIGN64 UINT32 ReceivedCapabilitiesSize; /* 2241 */
-	UINT64 padding2304[2304 - 2242];         /* 2242 */
+	ALIGN64 BYTE** ReceivedCapabilityData;   /* 2242 */
+	ALIGN64 UINT32* ReceivedCapabilityDataSizes; /* 2243 */
+	UINT64 padding2304[2304 - 2244];             /* 2244 */
 
 	/* General Capabilities */
-	ALIGN64 UINT32 OsMajorType;             /* 2304 */
-	ALIGN64 UINT32 OsMinorType;             /* 2305 */
-	ALIGN64 BOOL RefreshRect;               /* 2306 */
-	ALIGN64 BOOL SuppressOutput;            /* 2307 */
-	ALIGN64 BOOL FastPathOutput;            /* 2308 */
-	ALIGN64 BOOL SaltedChecksum;            /* 2309 */
-	ALIGN64 BOOL LongCredentialsSupported;  /* 2310 */
-	ALIGN64 BOOL NoBitmapCompressionHeader; /* 2311 */
-	ALIGN64 BOOL BitmapCompressionDisabled; /* 2312 */
-	UINT64 padding2368[2368 - 2313];        /* 2313 */
+	ALIGN64 UINT32 OsMajorType;                 /* 2304 */
+	ALIGN64 UINT32 OsMinorType;                 /* 2305 */
+	ALIGN64 BOOL RefreshRect;                   /* 2306 */
+	ALIGN64 BOOL SuppressOutput;                /* 2307 */
+	ALIGN64 BOOL FastPathOutput;                /* 2308 */
+	ALIGN64 BOOL SaltedChecksum;                /* 2309 */
+	ALIGN64 BOOL LongCredentialsSupported;      /* 2310 */
+	ALIGN64 BOOL NoBitmapCompressionHeader;     /* 2311 */
+	ALIGN64 BOOL BitmapCompressionDisabled;     /* 2312 */
+	ALIGN64 UINT16 CapsProtocolVersion;         /* 2313 */
+	ALIGN64 UINT16 CapsGeneralCompressionTypes; /* 2314 */
+	ALIGN64 UINT16 CapsUpdateCapabilityFlag;    /* 2315 */
+	ALIGN64 UINT16 CapsRemoteUnshareFlag;       /* 2316 */
+	ALIGN64 UINT16 CapsGeneralCompressionLevel; /* 2317 */
+	UINT64 padding2368[2368 - 2318];            /* 2318 */
 
 	/* Bitmap Capabilities */
 	ALIGN64 BOOL DesktopResize;                 /* 2368 */
@@ -1833,6 +1847,10 @@ extern "C"
 
 	FREERDP_API const char* freerdp_settings_get_name_for_key(size_t key);
 	FREERDP_API UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings);
+
+	FREERDP_API BOOL freerdp_settings_update_from_caps(rdpSettings* settings, BYTE* capsFlags,
+	                                                   BYTE** capsData, UINT32* capsSizes,
+	                                                   UINT32 capsCount, BOOL serverReceivedCaps);
 
 	FREERDP_API const char* freerdp_settings_get_server_name(const rdpSettings* settings);
 

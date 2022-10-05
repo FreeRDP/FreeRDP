@@ -180,6 +180,11 @@ static const size_t bool_list_indices[] = {
 
 #define have_uint16_list_indices
 static const size_t uint16_list_indices[] = {
+	FreeRDP_CapsGeneralCompressionLevel,
+	FreeRDP_CapsGeneralCompressionTypes,
+	FreeRDP_CapsProtocolVersion,
+	FreeRDP_CapsRemoteUnshareFlag,
+	FreeRDP_CapsUpdateCapabilityFlag,
 	FreeRDP_DesktopOrientation,
 	FreeRDP_ProxyPort,
 	FreeRDP_TLSMaxVersion,
@@ -428,6 +433,8 @@ static const size_t pointer_list_indices[] = {
 	FreeRDP_RdpServerCertificate,
 	FreeRDP_RdpServerRsaKey,
 	FreeRDP_ReceivedCapabilities,
+	FreeRDP_ReceivedCapabilityData,
+	FreeRDP_ReceivedCapabilityDataSizes,
 	FreeRDP_RedirectionPassword,
 	FreeRDP_RedirectionTsvUrl,
 	FreeRDP_ServerAutoReconnectCookie,
