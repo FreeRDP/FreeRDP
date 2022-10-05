@@ -575,7 +575,42 @@ static BOOL autodetect_recv_bandwidth_measure_results(rdpAutoDetect* autodetect,
 }
 
 static BOOL autodetect_recv_netchar_result(rdpAutoDetect* autodetect, wStream* s,
-                                           const AUTODETECT_REQ_PDU* autodetectReqPdu)
+                                           const AUTODETECT_RSP_PDU* autodetectRspPdu)
+{
+	BOOL success = TRUE;
+
+	WINPR_ASSERT(autodetect);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(autodetectRspPdu);
+
+	switch (autodetectRspPdu->responseType)
+	{
+		case RDP_NETCHAR_SYNC_RESPONSE_TYPE:
+			/* bandwidth and averageRTT fields are present (baseRTT field is not) */
+			if ((autodetectRspPdu->headerLength != 0x0E) ||
+			    (!Stream_CheckAndLogRequiredLength(AUTODETECT_TAG, s, 8)))
+				return FALSE;
+
+			Stream_Read_UINT32(s, autodetect->netCharBandwidth);  /* bandwidth (4 bytes) */
+			Stream_Read_UINT32(s, autodetect->netCharAverageRTT); /* averageRTT (4 bytes) */
+			break;
+		default:
+			break;
+	}
+
+	WLog_VRB(AUTODETECT_TAG,
+	         "received Network Characteristics Result PDU -> baseRTT=%" PRIu32
+	         ", bandwidth=%" PRIu32 ", averageRTT=%" PRIu32 "",
+	         autodetect->netCharBaseRTT, autodetect->netCharBandwidth,
+	         autodetect->netCharAverageRTT);
+
+	IFCALLRET(autodetect->NetworkCharacteristicsResult, success, autodetect,
+	          autodetectRspPdu->sequenceNumber);
+	return success;
+}
+
+static BOOL autodetect_recv_netchar_request(rdpAutoDetect* autodetect, wStream* s,
+                                            const AUTODETECT_REQ_PDU* autodetectReqPdu)
 {
 	BOOL success = TRUE;
 
@@ -617,6 +652,9 @@ static BOOL autodetect_recv_netchar_result(rdpAutoDetect* autodetect, wStream* s
 			Stream_Read_UINT32(s, autodetect->netCharBaseRTT);    /* baseRTT (4 bytes) */
 			Stream_Read_UINT32(s, autodetect->netCharBandwidth);  /* bandwidth (4 bytes) */
 			Stream_Read_UINT32(s, autodetect->netCharAverageRTT); /* averageRTT (4 bytes) */
+			break;
+
+		default:
 			break;
 	}
 
@@ -707,7 +745,7 @@ int autodetect_recv_request_packet(rdpAutoDetect* autodetect, wStream* s)
 		case RDP_NETCHAR_RESULTS_0x0880:
 		case RDP_NETCHAR_RESULTS_0x08C0:
 			/* Network Characteristics Result (RDP_NETCHAR_RESULT) - MS-RDPBCGR 2.2.14.1.5 */
-			success = autodetect_recv_netchar_result(autodetect, s, &autodetectReqPdu);
+			success = autodetect_recv_netchar_request(autodetect, s, &autodetectReqPdu);
 			break;
 
 		default:
@@ -779,6 +817,10 @@ int autodetect_recv_response_packet(rdpAutoDetect* autodetect, wStream* s)
 		case RDP_BW_RESULTS_RESPONSE_TYPE_CONTINUOUS:
 			/* Bandwidth Measure Results (RDP_BW_RESULTS) - MS-RDPBCGR 2.2.14.2.2 */
 			success = autodetect_recv_bandwidth_measure_results(autodetect, s, &autodetectRspPdu);
+			break;
+
+		case RDP_NETCHAR_SYNC_RESPONSE_TYPE:
+			success = autodetect_recv_netchar_result(autodetect, s, &autodetectRspPdu);
 			break;
 
 		default:
