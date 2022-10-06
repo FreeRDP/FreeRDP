@@ -69,15 +69,19 @@ UINT tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 {
-	UINT32 i;
-	UINT32 v;
-	UINT32 pos;
-	UINT32 CapabilityType;
-	UINT32 cbCapabilityLength;
-	UINT32 numHostCapabilities;
+	UINT32 i = 0;
+	UINT32 v = 0;
+	UINT32 pos = 0;
+	UINT32 CapabilityType = 0;
+	UINT32 cbCapabilityLength = 0;
+	UINT32 numHostCapabilities = 0;
 
+	WINPR_ASSERT(ifman);
 	if (!Stream_EnsureRemainingCapacity(ifman->output, ifman->input_size + 4))
 		return ERROR_OUTOFMEMORY;
+
+	if (Stream_GetRemainingLength(ifman->input) < ifman->input_size)
+		return ERROR_INVALID_DATA;
 
 	pos = Stream_GetPosition(ifman->output);
 	Stream_Copy(ifman->input, ifman->output, ifman->input_size);
