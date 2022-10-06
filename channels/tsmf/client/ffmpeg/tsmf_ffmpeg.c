@@ -257,6 +257,9 @@ static BOOL tsmf_ffmpeg_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* medi
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*)decoder;
 
+	WINPR_ASSERT(mdecoder);
+	WINPR_ASSERT(media_type);
+
 	switch (media_type->MajorType)
 	{
 		case TSMF_MAJOR_TYPE_VIDEO:
@@ -309,6 +312,9 @@ static BOOL tsmf_ffmpeg_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* medi
 			   http://msdn.microsoft.com/en-us/library/dd757806.aspx */
 			if (media_type->ExtraData)
 			{
+				if (media_type->ExtraDataSize < 12)
+					return FALSE;
+
 				media_type->ExtraData += 12;
 				media_type->ExtraDataSize -= 12;
 			}
