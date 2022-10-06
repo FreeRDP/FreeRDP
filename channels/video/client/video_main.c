@@ -930,6 +930,8 @@ static UINT video_data_on_data_received(IWTSVirtualChannelCallback* pChannelCall
 	Stream_Read_UINT16(s, data.PacketsInSample);
 	Stream_Read_UINT32(s, data.SampleNumber);
 	Stream_Read_UINT32(s, data.cbSample);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, data.cbSample))
+		return ERROR_INVALID_DATA;
 	data.pSample = Stream_Pointer(s);
 
 	/*
