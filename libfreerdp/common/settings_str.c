@@ -317,6 +317,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_AllowedTlsCiphers, 7, "FreeRDP_AllowedTlsCiphers" },
 	{ FreeRDP_AlternateShell, 7, "FreeRDP_AlternateShell" },
 	{ FreeRDP_AssistanceFile, 7, "FreeRDP_AssistanceFile" },
+	{ FreeRDP_AuthenticationPackageList, 7, "FreeRDP_AuthenticationPackageList" },
 	{ FreeRDP_AuthenticationServiceClass, 7, "FreeRDP_AuthenticationServiceClass" },
 	{ FreeRDP_BitmapCachePersistFile, 7, "FreeRDP_BitmapCachePersistFile" },
 	{ FreeRDP_CardName, 7, "FreeRDP_CardName" },

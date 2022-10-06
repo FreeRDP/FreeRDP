@@ -326,6 +326,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_AllowedTlsCiphers,
 	FreeRDP_AlternateShell,
 	FreeRDP_AssistanceFile,
+	FreeRDP_AuthenticationPackageList,
 	FreeRDP_AuthenticationServiceClass,
 	FreeRDP_BitmapCachePersistFile,
 	FreeRDP_CardName,

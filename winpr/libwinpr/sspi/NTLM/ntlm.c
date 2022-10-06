@@ -297,7 +297,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
     PTimeStamp ptsExpiry)
 {
 	SSPI_CREDENTIALS* credentials;
-	SEC_WINNT_AUTH_IDENTITY* identity;
 	SEC_WINPR_NTLM_SETTINGS* settings = NULL;
 
 	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) && (fCredentialUse != SECPKG_CRED_INBOUND) &&
@@ -315,13 +314,15 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 	credentials->pGetKeyFn = pGetKeyFn;
 	credentials->pvGetKeyArgument = pvGetKeyArgument;
 
-	identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
-
-	if (identity)
+	if (pAuthData)
 	{
-		sspi_CopyAuthIdentity(&(credentials->identity), identity);
-		if (identity->Flags & SEC_WINNT_AUTH_IDENTITY_EXTENDED)
-			settings = &((SEC_WINNT_AUTH_IDENTITY_WINPR*)pAuthData)->ntlmSettings;
+		UINT32 identityFlags = sspi_GetAuthIdentityFlags(pAuthData);
+
+		sspi_CopyAuthIdentity(&(credentials->identity),
+		                      (const SEC_WINNT_AUTH_IDENTITY_INFO*)pAuthData);
+
+		if (identityFlags & SEC_WINNT_AUTH_IDENTITY_EXTENDED)
+			settings = (((SEC_WINNT_AUTH_IDENTITY_WINPR*)pAuthData)->ntlmSettings);
 	}
 
 	if (settings)

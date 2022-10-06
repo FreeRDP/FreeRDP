@@ -58,6 +58,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Audio output mode" },
 	{ "auth-only", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Authenticate only" },
+	{ "auth-pkg-list", COMMAND_LINE_VALUE_REQUIRED, "<!ntlm,kerberos>", NULL, NULL, -1, NULL,
+	  "Authentication package filter (comma-separated list, use '!' to exclude)" },
 	{ "authentication", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Authentication (experimental)" },
 	{ "auto-reconnect", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
@@ -227,8 +229,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Send unicode symbols, e.g. use the local keyboard map. ATTENTION: Does not work with every "
 	  "RDP server!" },
 	{ "kerberos", COMMAND_LINE_VALUE_REQUIRED,
-	  "[lifetime:<time>,start-time:<time>,renewable-lifetime:<time>,cache:<path>,armor:<path>,"
-	  "pkinit-anchors:<path>,pkcs11-module:<name>]",
+	  "[kdc-url:<url>,lifetime:<time>,start-time:<time>,renewable-lifetime:<time>,cache:<path>,"
+	  "armor:<path>,pkinit-anchors:<path>,pkcs11-module:<name>]",
 	  NULL, NULL, -1, NULL, "Kerberos options" },
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info-string>", NULL, NULL, -1, NULL,
 	  "Load balance info" },

@@ -50,6 +50,8 @@ static wLog* g_Log = NULL;
 static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
 #if defined(WITH_NATIVE_SSPI)
 static HMODULE g_SspiModule = NULL;
+static SecurityFunctionTableW windows_SecurityFunctionTableW = { 0 };
+static SecurityFunctionTableA windows_SecurityFunctionTableA = { 0 };
 #endif
 
 static SecurityFunctionTableW* g_SspiW = NULL;
@@ -98,12 +100,14 @@ BOOL ShouldUseNativeSspi(void)
 #if defined(WITH_NATIVE_SSPI)
 BOOL InitializeSspiModule_Native(void)
 {
+	SecurityFunctionTableW* pSspiW = NULL;
+	SecurityFunctionTableA* pSspiA = NULL;
 	INIT_SECURITY_INTERFACE_W pInitSecurityInterfaceW;
 	INIT_SECURITY_INTERFACE_A pInitSecurityInterfaceA;
 	g_SspiModule = LoadLibraryA("secur32.dll");
 
 	if (!g_SspiModule)
-		g_SspiModule = LoadLibraryA("security.dll");
+		g_SspiModule = LoadLibraryA("sspicli.dll");
 
 	if (!g_SspiModule)
 		return FALSE;
@@ -114,10 +118,44 @@ BOOL InitializeSspiModule_Native(void)
 	    (INIT_SECURITY_INTERFACE_A)GetProcAddress(g_SspiModule, "InitSecurityInterfaceA");
 
 	if (pInitSecurityInterfaceW)
-		g_SspiW = pInitSecurityInterfaceW();
+	{
+		pSspiW = pInitSecurityInterfaceW();
+
+		if (pSspiW)
+		{
+			g_SspiW = &windows_SecurityFunctionTableW;
+			CopyMemory(g_SspiW, pSspiW,
+			           FIELD_OFFSET(SecurityFunctionTableW, SetContextAttributesW));
+
+			g_SspiW->dwVersion = SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION_3;
+
+			g_SspiW->SetContextAttributesW =
+			    (SET_CONTEXT_ATTRIBUTES_FN_W)GetProcAddress(g_SspiModule, "SetContextAttributesW");
+
+			g_SspiW->SetCredentialsAttributesW = (SET_CREDENTIALS_ATTRIBUTES_FN_W)GetProcAddress(
+			    g_SspiModule, "SetCredentialsAttributesW");
+		}
+	}
 
 	if (pInitSecurityInterfaceA)
-		g_SspiA = pInitSecurityInterfaceA();
+	{
+		pSspiA = pInitSecurityInterfaceA();
+
+		if (pSspiA)
+		{
+			g_SspiA = &windows_SecurityFunctionTableA;
+			CopyMemory(g_SspiA, pSspiA,
+			           FIELD_OFFSET(SecurityFunctionTableA, SetContextAttributesA));
+
+			g_SspiA->dwVersion = SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION_3;
+
+			g_SspiA->SetContextAttributesA =
+			    (SET_CONTEXT_ATTRIBUTES_FN_W)GetProcAddress(g_SspiModule, "SetContextAttributesA");
+
+			g_SspiA->SetCredentialsAttributesA = (SET_CREDENTIALS_ATTRIBUTES_FN_W)GetProcAddress(
+			    g_SspiModule, "SetCredentialsAttributesA");
+		}
+	}
 
 	return TRUE;
 }
