@@ -34,15 +34,19 @@ extern "C"
 {
 #endif
 
-	FREERDP_API BOOL stream_dump_read_line(FILE* fp, wStream* s, UINT64* pts, size_t* pOffset);
-	FREERDP_API BOOL stream_dump_write_line(FILE* fp, wStream* s);
+	typedef enum
+	{
+		STREAM_MSG_SRV_RX = 1,
+		STREAM_MSG_SRV_TX = 2
+	} StreamDumpDirection;
 
-	FREERDP_API SSIZE_T stream_dump_append(const rdpContext* context, const char* name, wStream* s,
+	FREERDP_API SSIZE_T stream_dump_append(const rdpContext* context, UINT32 flags, wStream* s,
 	                                       size_t* offset);
-	FREERDP_API SSIZE_T stream_dump_get(const rdpContext* context, const char* name, wStream* s,
+	FREERDP_API SSIZE_T stream_dump_get(const rdpContext* context, UINT32* flags, wStream* s,
 	                                    size_t* offset, UINT64* pts);
 
-	FREERDP_API BOOL stream_dump_register_handlers(rdpContext* context, CONNECTION_STATE state);
+	FREERDP_API BOOL stream_dump_register_handlers(rdpContext* context, CONNECTION_STATE state,
+	                                               BOOL isServer);
 
 	FREERDP_API rdpStreamDumpContext* stream_dump_new(void);
 	FREERDP_API void stream_dump_free(rdpStreamDumpContext* dump);

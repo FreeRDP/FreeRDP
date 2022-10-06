@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 		goto out;
 	}
 
-	if (!stream_dump_register_handlers(context, CONNECTION_STATE_MCS_CONNECT))
+	if (!stream_dump_register_handlers(context, CONNECTION_STATE_MCS_CONNECT, FALSE))
 		goto out;
 
 	if (freerdp_client_start(context) != 0)

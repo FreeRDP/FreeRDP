@@ -2374,6 +2374,42 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->RedirectDrives = enable;
 		}
+		CommandLineSwitchCase(arg, "dump")
+		{
+			BOOL failed = FALSE;
+			size_t count = 0;
+			char** args = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+			if (!args || (count != 2))
+				failed = TRUE;
+			else
+			{
+				if (!freerdp_settings_set_string(settings, FreeRDP_TransportDumpFile, args[1]))
+					failed = TRUE;
+				else if (strcmp(args[0], "replay") == 0)
+				{
+					if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDump, FALSE))
+						failed = TRUE;
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDumpReplay,
+					                                    TRUE))
+						failed = TRUE;
+				}
+				else if (strcmp(args[0], "record") == 0)
+				{
+					if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDump, TRUE))
+						failed = TRUE;
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDumpReplay,
+					                                    FALSE))
+						failed = TRUE;
+				}
+				else
+				{
+					failed = TRUE;
+				}
+			}
+			free(args);
+			if (failed)
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+		}
 		CommandLineSwitchCase(arg, "disable-output")
 		{
 			freerdp_settings_set_bool(settings, FreeRDP_DeactivateClientDecoding, enable);
