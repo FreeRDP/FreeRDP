@@ -246,7 +246,49 @@ static BOOL negotiate_get_dword(HKEY hKey, const char* subkey, DWORD* pdwValue)
 	return TRUE;
 }
 
-static BOOL negotiate_get_config(BOOL* kerberos, BOOL* ntlm)
+static BOOL negotiate_get_config_from_auth_package_list(void* pAuthData, BOOL* kerberos, BOOL* ntlm)
+{
+	char* tok_ctx = NULL;
+	char* tok_ptr = NULL;
+	char* PackageList = NULL;
+
+	if (!sspi_CopyAuthPackageListA((const SEC_WINNT_AUTH_IDENTITY_INFO*)pAuthData, &PackageList))
+		return FALSE;
+
+	tok_ptr = strtok_s(PackageList, ",", &tok_ctx);
+
+	while (tok_ptr)
+	{
+		char* PackageName = tok_ptr;
+		BOOL PackageInclude = TRUE;
+
+		if (PackageName[0] == '!')
+		{
+			PackageName = &PackageName[1];
+			PackageInclude = FALSE;
+		}
+
+		if (!_stricmp(PackageName, "ntlm"))
+		{
+			*ntlm = PackageInclude;
+		}
+		else if (!_stricmp(PackageName, "kerberos"))
+		{
+			*kerberos = PackageInclude;
+		}
+		else
+		{
+			WLog_WARN(TAG, "Unknown authentication package name: %s", PackageName);
+		}
+
+		tok_ptr = strtok_s(NULL, ",", &tok_ctx);
+	}
+
+	free(PackageList);
+	return TRUE;
+}
+
+static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm)
 {
 	HKEY hKey = NULL;
 	LONG rc;
@@ -260,6 +302,11 @@ static BOOL negotiate_get_config(BOOL* kerberos, BOOL* ntlm)
 	*ntlm = FALSE;
 #endif
 	*kerberos = TRUE;
+
+	if (negotiate_get_config_from_auth_package_list(pAuthData, kerberos, ntlm))
+	{
+		return TRUE; // use explicit authentication package list
+	}
 
 	rc = RegOpenKeyExA(HKEY_LOCAL_MACHINE, NEGO_REG_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 	if (rc == ERROR_SUCCESS)
@@ -1312,7 +1359,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
 {
 	BOOL kerberos, ntlm;
 
-	if (!negotiate_get_config(&kerberos, &ntlm))
+	if (!negotiate_get_config(pAuthData, &kerberos, &ntlm))
 		return SEC_E_INTERNAL_ERROR;
 
 	MechCred* creds = calloc(MECH_COUNT, sizeof(MechCred));
@@ -1353,7 +1400,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
 {
 	BOOL kerberos, ntlm;
 
-	if (!negotiate_get_config(&kerberos, &ntlm))
+	if (!negotiate_get_config(pAuthData, &kerberos, &ntlm))
 		return SEC_E_INTERNAL_ERROR;
 
 	MechCred* creds = calloc(MECH_COUNT, sizeof(MechCred));

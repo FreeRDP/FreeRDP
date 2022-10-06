@@ -593,7 +593,8 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 				if (SelectedProtocol & PROTOCOL_HYBRID)
 				{
 					SEC_WINNT_AUTH_IDENTITY* identity = nego_get_identity(rdp->nego);
-					sspi_CopyAuthIdentity(&client->identity, identity);
+					sspi_CopyAuthIdentity(&client->identity,
+					                      (const SEC_WINNT_AUTH_IDENTITY_INFO*)identity);
 					IFCALLRET(client->Logon, client->authenticated, client, &client->identity,
 					          TRUE);
 					nego_free_nla(rdp->nego);

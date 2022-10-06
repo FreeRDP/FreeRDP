@@ -179,10 +179,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
     PTimeStamp ptsExpiry)
 {
 #ifdef WITH_GSSAPI
-	SEC_WINNT_AUTH_IDENTITY* identity = pAuthData;
 	SEC_WINPR_KERBEROS_SETTINGS* krb_settings = NULL;
 	KRB_CREDENTIALS* credentials = NULL;
-	krb5_error_code rv;
+	krb5_error_code rv = 0;
 	krb5_context ctx = NULL;
 	krb5_ccache ccache = NULL;
 	krb5_keytab keytab = NULL;
@@ -190,32 +189,23 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	krb5_deltat start_time = 0;
 	krb5_principal principal = NULL;
 	krb5_init_creds_context creds_ctx = NULL;
-	BOOL is_unicode = FALSE;
 	char* domain = NULL;
 	char* username = NULL;
 	char* password = NULL;
 	const char* fallback_ccache = "MEMORY:";
 
-	if (identity)
+	if (pAuthData)
 	{
-		if (identity->Flags & SEC_WINNT_AUTH_IDENTITY_EXTENDED)
-			krb_settings = &((SEC_WINNT_AUTH_IDENTITY_WINPR*)identity)->kerberosSettings;
+		UINT32 identityFlags = sspi_GetAuthIdentityFlags(pAuthData);
 
-		if (identity->Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE)
+		if (identityFlags & SEC_WINNT_AUTH_IDENTITY_EXTENDED)
+			krb_settings = (((SEC_WINNT_AUTH_IDENTITY_WINPR*)pAuthData)->kerberosSettings);
+
+		if (!sspi_CopyAuthIdentityFieldsA((const SEC_WINNT_AUTH_IDENTITY_INFO*)pAuthData, &username,
+		                                  &domain, &password))
 		{
-			is_unicode = TRUE;
-			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)identity->Domain, identity->DomainLength,
-			                   &domain, 0, NULL, NULL);
-			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)identity->User, identity->UserLength, &username,
-			                   0, NULL, NULL);
-			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)identity->Password, identity->PasswordLength,
-			                   &password, 0, NULL, NULL);
-		}
-		else
-		{
-			domain = (char*)identity->Domain;
-			username = (char*)identity->User;
-			password = (char*)identity->Password;
+			WLog_ERR(TAG, "Failed to copy auth identity fields");
+			goto cleanup;
 		}
 
 		if (!pszPrincipal)
@@ -337,15 +327,13 @@ cleanup:
 	if (rv)
 		kerberos_log_msg(ctx, rv);
 
-	if (is_unicode)
-	{
-		if (domain)
-			free(domain);
-		if (username)
-			free(username);
-		if (password)
-			free(password);
-	}
+	if (domain)
+		free(domain);
+	if (username)
+		free(username);
+	if (password)
+		free(password);
+
 	if (principal)
 		krb5_free_principal(ctx, principal);
 	if (creds_ctx)

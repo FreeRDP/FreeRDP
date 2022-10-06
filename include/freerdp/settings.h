@@ -641,6 +641,7 @@ typedef struct
 #define FreeRDP_TLSMinVersion (1107)
 #define FreeRDP_TLSMaxVersion (1108)
 #define FreeRDP_TlsSecretsFile (1109)
+#define FreeRDP_AuthenticationPackageList (1110)
 #define FreeRDP_MstscCookieMode (1152)
 #define FreeRDP_CookieMaxLength (1153)
 #define FreeRDP_PreconnectionId (1154)
@@ -1129,7 +1130,8 @@ struct rdp_settings
 	ALIGN64 UINT16 TLSMinVersion;              /* 1107 */
 	ALIGN64 UINT16 TLSMaxVersion;              /* 1108 */
 	ALIGN64 char* TlsSecretsFile;              /* 1109 */
-	UINT64 padding1152[1152 - 1110];           /* 1110 */
+	ALIGN64 char* AuthenticationPackageList;   /* 1110 */
+	UINT64 padding1152[1152 - 1111];           /* 1111 */
 
 	/* Connection Cookie */
 	ALIGN64 BOOL MstscCookieMode;      /* 1152 */

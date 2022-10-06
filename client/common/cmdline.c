@@ -3227,6 +3227,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->AuthenticationOnly = enable;
 		}
+		CommandLineSwitchCase(arg, "auth-pkg-list")
+		{
+			if (!freerdp_settings_set_string(settings, FreeRDP_AuthenticationPackageList,
+			                                 arg->Value))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
 		CommandLineSwitchCase(arg, "auto-reconnect")
 		{
 			settings->AutoReconnectionEnabled = enable;

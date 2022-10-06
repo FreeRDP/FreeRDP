@@ -429,18 +429,465 @@ int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, c
 	return 1;
 }
 
+UINT32 sspi_GetAuthIdentityVersion(void* identity)
+{
+	UINT32 version;
+
+	if (!identity)
+		return 0;
+
+	version = *((UINT32*)identity);
+
+	if ((version == SEC_WINNT_AUTH_IDENTITY_VERSION) ||
+	    (version == SEC_WINNT_AUTH_IDENTITY_VERSION_2))
+	{
+		return version;
+	}
+
+	return 0; // SEC_WINNT_AUTH_IDENTITY (no version)
+}
+
+UINT32 sspi_GetAuthIdentityFlags(void* identity)
+{
+	UINT32 version;
+	UINT32 flags = 0;
+
+	if (!identity)
+		return 0;
+
+	version = sspi_GetAuthIdentityVersion(identity);
+
+	if (version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+	{
+		flags = ((SEC_WINNT_AUTH_IDENTITY_EX*)identity)->Flags;
+	}
+	else if (version == SEC_WINNT_AUTH_IDENTITY_VERSION_2)
+	{
+		flags = ((SEC_WINNT_AUTH_IDENTITY_EX2*)identity)->Flags;
+	}
+	else // SEC_WINNT_AUTH_IDENTITY
+	{
+		flags = ((SEC_WINNT_AUTH_IDENTITY*)identity)->Flags;
+	}
+
+	return flags;
+}
+
+BOOL sspi_GetAuthIdentityUserDomainW(void* identity, WCHAR** pUser, UINT32* pUserLength,
+                                     WCHAR** pDomain, UINT32* pDomainLength)
+{
+	UINT32 version;
+
+	if (!identity)
+		return FALSE;
+
+	version = sspi_GetAuthIdentityVersion(identity);
+
+	if (version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+	{
+		*pUser = (WCHAR*)((SEC_WINNT_AUTH_IDENTITY_EXW*)identity)->User;
+		*pUserLength = ((SEC_WINNT_AUTH_IDENTITY_EXW*)identity)->UserLength;
+		*pDomain = (WCHAR*)((SEC_WINNT_AUTH_IDENTITY_EXW*)identity)->Domain;
+		*pDomainLength = ((SEC_WINNT_AUTH_IDENTITY_EXW*)identity)->DomainLength;
+	}
+	else if (version == SEC_WINNT_AUTH_IDENTITY_VERSION_2)
+	{
+		UINT32 UserOffset = ((SEC_WINNT_AUTH_IDENTITY_EX2*)identity)->UserOffset;
+		UINT32 DomainOffset = ((SEC_WINNT_AUTH_IDENTITY_EX2*)identity)->DomainOffset;
+		*pUser = (WCHAR*)&((uint8_t*)identity)[UserOffset];
+		*pUserLength = ((SEC_WINNT_AUTH_IDENTITY_EX2*)identity)->UserLength / 2;
+		*pDomain = (WCHAR*)&((uint8_t*)identity)[DomainOffset];
+		*pDomainLength = ((SEC_WINNT_AUTH_IDENTITY_EX2*)identity)->DomainLength / 2;
+	}
+	else // SEC_WINNT_AUTH_IDENTITY
+	{
+		*pUser = (WCHAR*)((SEC_WINNT_AUTH_IDENTITY_W*)identity)->User;
+		*pUserLength = ((SEC_WINNT_AUTH_IDENTITY_W*)identity)->UserLength;
+		*pDomain = (WCHAR*)((SEC_WINNT_AUTH_IDENTITY_W*)identity)->Domain;
+		*pDomainLength = ((SEC_WINNT_AUTH_IDENTITY_W*)identity)->DomainLength;
+	}
+
+	return TRUE;
+}
+
+BOOL sspi_GetAuthIdentityUserDomainA(void* identity, char** pUser, UINT32* pUserLength,
+                                     char** pDomain, UINT32* pDomainLength)
+{
+	UINT32 version;
+
+	if (!identity)
+		return FALSE;
+
+	version = sspi_GetAuthIdentityVersion(identity);
+
+	if (version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+	{
+		*pUser = (char*)((SEC_WINNT_AUTH_IDENTITY_EXA*)identity)->User;
+		*pUserLength = ((SEC_WINNT_AUTH_IDENTITY_EXA*)identity)->UserLength;
+		*pDomain = (char*)((SEC_WINNT_AUTH_IDENTITY_EXA*)identity)->Domain;
+		*pDomainLength = ((SEC_WINNT_AUTH_IDENTITY_EXA*)identity)->DomainLength;
+	}
+	else if (version == SEC_WINNT_AUTH_IDENTITY_VERSION_2)
+	{
+		UINT32 UserOffset = ((SEC_WINNT_AUTH_IDENTITY_EX2*)identity)->UserOffset;
+		UINT32 DomainOffset = ((SEC_WINNT_AUTH_IDENTITY_EX2*)identity)->DomainOffset;
+		*pUser = (char*)&((uint8_t*)identity)[UserOffset];
+		*pUserLength = ((SEC_WINNT_AUTH_IDENTITY_EX2*)identity)->UserLength;
+		*pDomain = (char*)&((uint8_t*)identity)[DomainOffset];
+		*pDomainLength = ((SEC_WINNT_AUTH_IDENTITY_EX2*)identity)->DomainLength;
+	}
+	else // SEC_WINNT_AUTH_IDENTITY
+	{
+		*pUser = (char*)((SEC_WINNT_AUTH_IDENTITY_A*)identity)->User;
+		*pUserLength = ((SEC_WINNT_AUTH_IDENTITY_A*)identity)->UserLength;
+		*pDomain = (char*)((SEC_WINNT_AUTH_IDENTITY_A*)identity)->Domain;
+		*pDomainLength = ((SEC_WINNT_AUTH_IDENTITY_A*)identity)->DomainLength;
+	}
+
+	return TRUE;
+}
+
+BOOL sspi_GetAuthIdentityPasswordW(void* identity, WCHAR** pPassword, UINT32* pPasswordLength)
+{
+	UINT32 version;
+
+	if (!identity)
+		return FALSE;
+
+	version = sspi_GetAuthIdentityVersion(identity);
+
+	if (version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+	{
+		*pPassword = (WCHAR*)((SEC_WINNT_AUTH_IDENTITY_EXW*)identity)->Password;
+		*pPasswordLength = ((SEC_WINNT_AUTH_IDENTITY_EXW*)identity)->PasswordLength;
+	}
+	else if (version == SEC_WINNT_AUTH_IDENTITY_VERSION_2)
+	{
+		return FALSE; // TODO: packed credentials
+	}
+	else // SEC_WINNT_AUTH_IDENTITY
+	{
+		*pPassword = (WCHAR*)((SEC_WINNT_AUTH_IDENTITY_W*)identity)->Password;
+		*pPasswordLength = ((SEC_WINNT_AUTH_IDENTITY_W*)identity)->PasswordLength;
+	}
+
+	return TRUE;
+}
+
+BOOL sspi_GetAuthIdentityPasswordA(void* identity, char** pPassword, UINT32* pPasswordLength)
+{
+	UINT32 version;
+
+	if (!identity)
+		return FALSE;
+
+	version = sspi_GetAuthIdentityVersion(identity);
+
+	if (version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+	{
+		*pPassword = (char*)((SEC_WINNT_AUTH_IDENTITY_EXA*)identity)->Password;
+		*pPasswordLength = ((SEC_WINNT_AUTH_IDENTITY_EXA*)identity)->PasswordLength;
+	}
+	else if (version == SEC_WINNT_AUTH_IDENTITY_VERSION_2)
+	{
+		return FALSE; // TODO: packed credentials
+	}
+	else // SEC_WINNT_AUTH_IDENTITY
+	{
+		*pPassword = (char*)((SEC_WINNT_AUTH_IDENTITY_A*)identity)->Password;
+		*pPasswordLength = ((SEC_WINNT_AUTH_IDENTITY_A*)identity)->PasswordLength;
+	}
+
+	return TRUE;
+}
+
+BOOL sspi_CopyAuthIdentityFieldsA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, char** pUser,
+                                  char** pDomain, char** pPassword)
+{
+	BOOL success = FALSE;
+	char* UserA = NULL;
+	char* DomainA = NULL;
+	char* PasswordA = NULL;
+	WCHAR* UserW = NULL;
+	WCHAR* DomainW = NULL;
+	WCHAR* PasswordW = NULL;
+	UINT32 UserLength = 0;
+	UINT32 DomainLength = 0;
+	UINT32 PasswordLength = 0;
+
+	if (!identity || !pUser || !pDomain || !pPassword)
+		return FALSE;
+
+	*pUser = *pDomain = *pPassword = NULL;
+
+	UINT32 identityFlags = sspi_GetAuthIdentityFlags((void*)identity);
+
+	if (identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+	{
+		if (!sspi_GetAuthIdentityUserDomainA((void*)identity, &UserA, &UserLength, &DomainA,
+		                                     &DomainLength))
+			goto cleanup;
+
+		if (!sspi_GetAuthIdentityPasswordA((void*)identity, &PasswordA, &PasswordLength))
+			goto cleanup;
+
+		if (UserA && UserLength)
+		{
+			*pUser = _strdup(UserA);
+
+			if (!(*pUser))
+				goto cleanup;
+		}
+
+		if (DomainA && DomainLength)
+		{
+			*pDomain = _strdup(DomainA);
+
+			if (!(*pDomain))
+				goto cleanup;
+		}
+
+		if (PasswordA && PasswordLength)
+		{
+			*pPassword = _strdup(PasswordA);
+
+			if (!(*pPassword))
+				goto cleanup;
+		}
+
+		success = TRUE;
+	}
+	else
+	{
+		if (!sspi_GetAuthIdentityUserDomainW((void*)identity, &UserW, &UserLength, &DomainW,
+		                                     &DomainLength))
+			goto cleanup;
+
+		if (!sspi_GetAuthIdentityPasswordW((void*)identity, &PasswordW, &PasswordLength))
+			goto cleanup;
+
+		if (UserW && UserLength)
+		{
+			ConvertFromUnicode(CP_UTF8, 0, UserW, UserLength, pUser, 0, NULL, NULL);
+
+			if (!(*pUser))
+				goto cleanup;
+		}
+
+		if (DomainW && DomainLength)
+		{
+			ConvertFromUnicode(CP_UTF8, 0, DomainW, DomainLength, pDomain, 0, NULL, NULL);
+
+			if (!(*pDomain))
+				goto cleanup;
+		}
+
+		if (PasswordW && PasswordLength)
+		{
+			ConvertFromUnicode(CP_UTF8, 0, PasswordW, PasswordLength, pPassword, 0, NULL, NULL);
+
+			if (!(*pPassword))
+				goto cleanup;
+		}
+
+		success = TRUE;
+	}
+
+cleanup:
+	return success;
+}
+
+BOOL sspi_CopyAuthIdentityFieldsW(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, WCHAR** pUser,
+                                  WCHAR** pDomain, WCHAR** pPassword)
+{
+	BOOL success = FALSE;
+	char* UserA = NULL;
+	char* DomainA = NULL;
+	char* PasswordA = NULL;
+	WCHAR* UserW = NULL;
+	WCHAR* DomainW = NULL;
+	WCHAR* PasswordW = NULL;
+	UINT32 UserLength = 0;
+	UINT32 DomainLength = 0;
+	UINT32 PasswordLength = 0;
+
+	if (!identity || !pUser || !pDomain || !pPassword)
+		return FALSE;
+
+	*pUser = *pDomain = *pPassword = NULL;
+
+	UINT32 identityFlags = sspi_GetAuthIdentityFlags((void*)identity);
+
+	if (identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+	{
+		if (!sspi_GetAuthIdentityUserDomainA((void*)identity, &UserA, &UserLength, &DomainA,
+		                                     &DomainLength))
+			goto cleanup;
+
+		if (!sspi_GetAuthIdentityPasswordA((void*)identity, &PasswordA, &PasswordLength))
+			goto cleanup;
+
+		if (UserA && UserLength)
+		{
+			ConvertToUnicode(CP_UTF8, 0, UserA, UserLength, pUser, 0);
+
+			if (!(*pUser))
+				goto cleanup;
+		}
+
+		if (DomainA && DomainLength)
+		{
+			ConvertToUnicode(CP_UTF8, 0, DomainA, DomainLength, pDomain, 0);
+
+			if (!(*pDomain))
+				goto cleanup;
+		}
+
+		if (PasswordA && PasswordLength)
+		{
+			ConvertToUnicode(CP_UTF8, 0, PasswordA, PasswordLength, pPassword, 0);
+
+			if (!(*pPassword))
+				goto cleanup;
+		}
+
+		success = TRUE;
+	}
+	else
+	{
+		if (!sspi_GetAuthIdentityUserDomainW((void*)identity, &UserW, &UserLength, &DomainW,
+		                                     &DomainLength))
+			goto cleanup;
+
+		if (!sspi_GetAuthIdentityPasswordW((void*)identity, &PasswordW, &PasswordLength))
+			goto cleanup;
+
+		if (UserW && UserLength)
+		{
+			*pUser = _wcsdup(UserW);
+
+			if (!(*pUser))
+				goto cleanup;
+		}
+
+		if (DomainW && DomainLength)
+		{
+			*pDomain = _wcsdup(DomainW);
+
+			if (!(*pDomain))
+				goto cleanup;
+		}
+
+		if (PasswordW && PasswordLength)
+		{
+			*pPassword = _wcsdup(PasswordW);
+
+			if (!(*pPassword))
+				goto cleanup;
+		}
+
+		success = TRUE;
+	}
+
+cleanup:
+	return success;
+}
+
+BOOL sspi_CopyAuthPackageListA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, char** pPackageList)
+{
+	UINT32 version;
+	UINT32 identityFlags;
+	char* PackageList = NULL;
+	char* PackageListA = NULL;
+	WCHAR* PackageListW = NULL;
+	UINT32 PackageListLength = 0;
+	UINT32 PackageListOffset = 0;
+	void* pAuthData = (void*)identity;
+
+	if (!pAuthData)
+		return FALSE;
+
+	version = sspi_GetAuthIdentityVersion(pAuthData);
+	identityFlags = sspi_GetAuthIdentityFlags(pAuthData);
+
+	if (identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+	{
+		if (version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+		{
+			PackageListA = (char*)((SEC_WINNT_AUTH_IDENTITY_EXA*)pAuthData)->PackageList;
+			PackageListLength = ((SEC_WINNT_AUTH_IDENTITY_EXA*)pAuthData)->PackageListLength;
+		}
+
+		if (PackageListA && PackageListLength)
+		{
+			PackageList = _strdup(PackageListA);
+		}
+	}
+	else
+	{
+		if (version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+		{
+			PackageListW = (WCHAR*)((SEC_WINNT_AUTH_IDENTITY_EXW*)pAuthData)->PackageList;
+			PackageListLength = ((SEC_WINNT_AUTH_IDENTITY_EXW*)pAuthData)->PackageListLength;
+		}
+		else if (version == SEC_WINNT_AUTH_IDENTITY_VERSION_2)
+		{
+			PackageListOffset = ((SEC_WINNT_AUTH_IDENTITY_EX2*)pAuthData)->PackageListOffset;
+			PackageListW = (WCHAR*)&((uint8_t*)pAuthData)[PackageListOffset];
+			PackageListLength = ((SEC_WINNT_AUTH_IDENTITY_EX2*)pAuthData)->PackageListLength / 2;
+		}
+
+		if (PackageListW && PackageListLength)
+		{
+			ConvertFromUnicode(CP_UTF8, 0, PackageListW, PackageListLength, &PackageList, 0, NULL,
+			                   NULL);
+		}
+	}
+
+	if (PackageList)
+	{
+		*pPackageList = PackageList;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
-                          const SEC_WINNT_AUTH_IDENTITY* srcIdentity)
+                          const SEC_WINNT_AUTH_IDENTITY_INFO* srcIdentity)
 {
 	int status;
+	UINT32 identityFlags;
+	char* UserA = NULL;
+	char* DomainA = NULL;
+	char* PasswordA = NULL;
+	WCHAR* UserW = NULL;
+	WCHAR* DomainW = NULL;
+	WCHAR* PasswordW = NULL;
+	UINT32 UserLength = 0;
+	UINT32 DomainLength = 0;
+	UINT32 PasswordLength = 0;
 
 	sspi_FreeAuthIdentity(identity);
 
-	identity->Flags = srcIdentity->Flags;
-	if (srcIdentity->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+	identityFlags = sspi_GetAuthIdentityFlags((void*)srcIdentity);
+
+	identity->Flags = identityFlags;
+
+	if (identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI)
 	{
-		status = sspi_SetAuthIdentity(identity, (char*)srcIdentity->User,
-		                              (char*)srcIdentity->Domain, (char*)srcIdentity->Password);
+		if (!sspi_GetAuthIdentityUserDomainA((void*)srcIdentity, &UserA, &UserLength, &DomainA,
+		                                     &DomainLength))
+		{
+			return -1;
+		}
+
+		if (!sspi_GetAuthIdentityPasswordA((void*)srcIdentity, &PasswordA, &PasswordLength))
+		{
+			return -1;
+		}
+
+		status = sspi_SetAuthIdentity(identity, UserA, DomainA, PasswordA);
 
 		if (status <= 0)
 			return -1;
@@ -452,8 +899,19 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 
 	identity->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
+	if (!sspi_GetAuthIdentityUserDomainW((void*)srcIdentity, &UserW, &UserLength, &DomainW,
+	                                     &DomainLength))
+	{
+		return -1;
+	}
+
+	if (!sspi_GetAuthIdentityPasswordW((void*)srcIdentity, &PasswordW, &PasswordLength))
+	{
+		return -1;
+	}
+
 	/* login/password authentication */
-	identity->UserLength = srcIdentity->UserLength;
+	identity->UserLength = UserLength;
 
 	if (identity->UserLength > 0)
 	{
@@ -462,11 +920,11 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 		if (!identity->User)
 			return -1;
 
-		CopyMemory(identity->User, srcIdentity->User, identity->UserLength * sizeof(WCHAR));
+		CopyMemory(identity->User, UserW, identity->UserLength * sizeof(WCHAR));
 		identity->User[identity->UserLength] = 0;
 	}
 
-	identity->DomainLength = srcIdentity->DomainLength;
+	identity->DomainLength = DomainLength;
 
 	if (identity->DomainLength > 0)
 	{
@@ -475,28 +933,27 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 		if (!identity->Domain)
 			return -1;
 
-		CopyMemory(identity->Domain, srcIdentity->Domain, identity->DomainLength * sizeof(WCHAR));
+		CopyMemory(identity->Domain, DomainW, identity->DomainLength * sizeof(WCHAR));
 		identity->Domain[identity->DomainLength] = 0;
 	}
 
-	identity->PasswordLength = srcIdentity->PasswordLength;
+	identity->PasswordLength = PasswordLength;
 
 	if (identity->PasswordLength > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET)
 		identity->PasswordLength -= SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
 
-	if (srcIdentity->Password)
+	if (PasswordW)
 	{
 		identity->Password = (UINT16*)calloc((identity->PasswordLength + 1), sizeof(WCHAR));
 
 		if (!identity->Password)
 			return -1;
 
-		CopyMemory(identity->Password, srcIdentity->Password,
-		           identity->PasswordLength * sizeof(WCHAR));
+		CopyMemory(identity->Password, PasswordW, identity->PasswordLength * sizeof(WCHAR));
 		identity->Password[identity->PasswordLength] = 0;
 	}
 
-	identity->PasswordLength = srcIdentity->PasswordLength;
+	identity->PasswordLength = PasswordLength;
 	/* End of login/password authentication */
 	return 1;
 }
