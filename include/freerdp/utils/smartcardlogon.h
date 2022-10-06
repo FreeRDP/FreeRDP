@@ -26,6 +26,7 @@ typedef struct sSmartCardCerts SmartcardCerts;
 
 typedef struct
 {
+	LPWSTR csp;
 	LPWSTR reader;
 	CryptoCert certificate;
 	char* pkinitArgs;

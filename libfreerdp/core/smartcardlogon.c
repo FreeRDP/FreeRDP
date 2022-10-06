@@ -97,6 +97,7 @@ static void smartcardCertInfo_Free(SmartcardCertInfo* scCert)
 
 	if (!scCert)
 		return;
+	free(scCert->csp);
 	free(scCert->reader);
 	crypto_cert_free(scCert->certificate);
 	free(scCert->pkinitArgs);
@@ -165,6 +166,9 @@ void smartcardCerts_Free(SmartcardCerts* scCert)
 static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 {
 	scCert->upn = crypto_cert_get_upn(scCert->certificate->px509);
+	if (!scCert->upn)
+		scCert->upn = crypto_cert_get_email(scCert->certificate->px509);
+
 	if (scCert->upn)
 	{
 		size_t userLen;
@@ -235,55 +239,15 @@ static BOOL build_pkinit_args(const rdpSettings* settings, SmartcardCertInfo* sc
 }
 #endif /* _WIN32 */
 
-static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp,
-                                        const char* reader, const char* userFilter,
-                                        const char* domainFilter, SmartcardCerts** scCerts,
-                                        DWORD* retCount)
+static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE provider,
+                               LPCWSTR csp, LPCWSTR scope, const char* userFilter,
+                               const char* domainFilter, SmartcardCerts** pcerts, size_t* pcount)
 {
 	BOOL ret = FALSE;
-	LPWSTR scope = NULL;
-	PVOID enumState = NULL;
-	NCRYPT_PROV_HANDLE provider;
 	NCryptKeyName* keyName = NULL;
-	SECURITY_STATUS status;
-	size_t count = 0;
-	SmartcardCerts* certs = NULL;
-	const char* Pkcs11Module = freerdp_settings_get_string(settings, FreeRDP_Pkcs11Module);
-
-	WINPR_ASSERT(csp);
-	WINPR_ASSERT(scCerts);
-	WINPR_ASSERT(retCount);
-
-	if (reader)
-	{
-		int res;
-		size_t readerSz = strlen(reader);
-		char* scopeStr = malloc(4 + readerSz + 1 + 1);
-		if (!scopeStr)
-			goto out;
-
-		_snprintf(scopeStr, readerSz + 5, "\\\\.\\%s\\", reader);
-		res = ConvertToUnicode(CP_UTF8, 0, scopeStr, -1, &scope, 0);
-		free(scopeStr);
-
-		if (res <= 0)
-			goto out;
-	}
-
-	if (Pkcs11Module)
-	{
-		LPCSTR paths[] = { Pkcs11Module, NULL };
-
-		status = winpr_NCryptOpenStorageProviderEx(&provider, csp, 0, paths);
-	}
-	else
-		status = NCryptOpenStorageProvider(&provider, csp, 0);
-
-	if (status != ERROR_SUCCESS)
-	{
-		WLog_ERR(TAG, "unable to open provider");
-		goto out;
-	}
+	PVOID enumState = NULL;
+	SmartcardCerts* certs = *pcerts;
+	size_t count = *pcount;
 
 	while (NCryptEnumKeys(provider, scope, &keyName, &enumState, NCRYPT_SILENT_FLAG) ==
 	       ERROR_SUCCESS)
@@ -293,13 +257,17 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		DWORD cbOutput;
 		SmartcardCertInfoPrivate* cert;
 		BOOL haveError = TRUE;
+		SECURITY_STATUS status;
 
 		count++;
 		{
 			SmartcardCerts* tmp =
 			    realloc(certs, sizeof(SmartcardCerts) + (sizeof(SmartcardCertInfoPrivate) * count));
 			if (!tmp)
+			{
+				WLog_ERR(TAG, "unable to reallocate certs");
 				goto out;
+			}
 			certs = tmp;
 			certs->count = count;
 			certs->certs = (SmartcardCertInfoPrivate*)(certs + 1);
@@ -317,6 +285,10 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		if (status != ERROR_SUCCESS)
 			goto endofloop;
 
+		cert->info.csp = _wcsdup(csp);
+		if (!cert->info.csp)
+			goto endofloop;
+
 #ifndef _WIN32
 		status = NCryptGetProperty(phKey, NCRYPT_WINPR_SLOTID, (PBYTE)&cert->info.slotId, 4,
 		                           &cbOutput, NCRYPT_SILENT_FLAG);
@@ -332,7 +304,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		                           NCRYPT_SILENT_FLAG);
 		if (status != ERROR_SUCCESS)
 		{
-			WLog_ERR(TAG, "unable to retrieve reader's name length for key %s",
+			WLog_DBG(TAG, "unable to retrieve reader's name length for key %s",
 			         cert->info.containerName);
 			goto endofloop;
 		}
@@ -438,12 +410,116 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		}
 	}
 
+	ret = TRUE;
+out:
+	*pcount = count;
+	*pcerts = certs;
+	NCryptFreeBuffer(enumState);
+	return ret;
+}
+
+static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp,
+                                        const char* reader, const char* userFilter,
+                                        const char* domainFilter, SmartcardCerts** scCerts,
+                                        DWORD* retCount)
+{
+	BOOL ret = FALSE;
+	LPWSTR scope = NULL;
+	NCRYPT_PROV_HANDLE provider;
+	SECURITY_STATUS status;
+	size_t count = 0;
+	SmartcardCerts* certs = NULL;
+	const char* Pkcs11Module = freerdp_settings_get_string(settings, FreeRDP_Pkcs11Module);
+
+	WINPR_ASSERT(scCerts);
+	WINPR_ASSERT(retCount);
+
+	if (reader)
+	{
+		int res;
+		size_t readerSz = strlen(reader);
+		char* scopeStr = malloc(4 + readerSz + 1 + 1);
+		if (!scopeStr)
+			goto out;
+
+		_snprintf(scopeStr, readerSz + 5, "\\\\.\\%s\\", reader);
+		res = ConvertToUnicode(CP_UTF8, 0, scopeStr, -1, &scope, 0);
+		free(scopeStr);
+
+		if (res <= 0)
+			goto out;
+	}
+
+	if (Pkcs11Module)
+	{
+		/* load a unique CSP by pkcs11 module path */
+		LPCSTR paths[] = { Pkcs11Module, NULL };
+
+		status = winpr_NCryptOpenStorageProviderEx(&provider, csp, 0, paths);
+		if (status != ERROR_SUCCESS)
+		{
+			WLog_ERR(TAG, "unable to open provider given by pkcs11 module");
+			goto out;
+		}
+
+		status = list_provider_keys(settings, provider, csp, scope, userFilter, domainFilter,
+		                            &certs, &count);
+		NCryptFreeObject((NCRYPT_HANDLE)provider);
+		if (status != ERROR_SUCCESS)
+		{
+			WLog_ERR(TAG, "error listing keys from CSP loaded from %s", Pkcs11Module);
+			goto out;
+		}
+	}
+	else
+	{
+		NCryptProviderName* names;
+		DWORD nproviders, i;
+
+		status = NCryptEnumStorageProviders(&nproviders, &names, NCRYPT_SILENT_FLAG);
+		if (status != ERROR_SUCCESS)
+		{
+			WLog_ERR(TAG, "error listing providers");
+			goto out;
+		}
+
+		for (i = 0; i < nproviders; i++)
+		{
+			char providerNameStr[256] = { 0 };
+
+			if (WideCharToMultiByte(CP_UTF8, 0, names[i].pszName, -1, providerNameStr,
+			                        sizeof(providerNameStr), NULL, FALSE) <= 0)
+			{
+				_snprintf(providerNameStr, sizeof(providerNameStr), "<unknown>");
+				WLog_ERR(TAG, "unable to convert provider name to char*, will show it as '%s'",
+				         providerNameStr);
+			}
+
+			WLog_DBG(TAG, "exploring CSP '%s'", providerNameStr);
+			if (csp && _wcscmp(names[i].pszName, csp) != 0)
+			{
+				WLog_DBG(TAG, "CSP '%s' filtered out", providerNameStr);
+				continue;
+			}
+
+			status = NCryptOpenStorageProvider(&provider, names[i].pszName, 0);
+			if (status != ERROR_SUCCESS)
+				continue;
+
+			if (!list_provider_keys(settings, provider, names[i].pszName, scope, userFilter,
+			                        domainFilter, &certs, &count))
+				WLog_INFO(TAG, "error when retrieving keys in CSP '%s'", providerNameStr);
+
+			NCryptFreeObject((NCRYPT_HANDLE)provider);
+		}
+
+		NCryptFreeBuffer(names);
+	}
+
 	*scCerts = certs;
 	*retCount = (DWORD)count;
 	ret = TRUE;
 
-	NCryptFreeBuffer(enumState);
-	NCryptFreeObject((NCRYPT_HANDLE)provider);
 out:
 	if (!ret)
 		smartcardCerts_Free(certs);
@@ -548,8 +624,7 @@ BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCerts** scCe
                               DWORD* retCount)
 {
 	BOOL ret;
-	LPWSTR csp;
-	const char* asciiCsp;
+	LPWSTR csp = NULL;
 	const char* ReaderName = freerdp_settings_get_string(settings, FreeRDP_ReaderName);
 	const char* Username = freerdp_settings_get_string(settings, FreeRDP_Username);
 	const char* Domain = freerdp_settings_get_string(settings, FreeRDP_Domain);
@@ -559,12 +634,10 @@ BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCerts** scCe
 	WINPR_ASSERT(scCerts);
 	WINPR_ASSERT(retCount);
 
-	asciiCsp = CspName ? CspName : MS_SCARD_PROV_A;
-
 	if (freerdp_settings_get_bool(settings, FreeRDP_SmartcardEmulation))
 		return smartcard_sw_enumerateCerts(settings, scCerts, retCount);
 
-	if (ConvertToUnicode(CP_UTF8, 0, asciiCsp, -1, &csp, 0) <= 0)
+	if (CspName && ConvertToUnicode(CP_UTF8, 0, CspName, -1, &csp, 0) <= 0)
 	{
 		WLog_ERR(TAG, "error while converting CSP to WCHAR");
 		return FALSE;
