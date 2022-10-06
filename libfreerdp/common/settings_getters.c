@@ -435,6 +435,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_SendPreconnectionPdu:
 			return settings->SendPreconnectionPdu;
 
+		case FreeRDP_ServerLicenseRequired:
+			return settings->ServerLicenseRequired;
+
 		case FreeRDP_ServerMode:
 			return settings->ServerMode;
 
@@ -1111,6 +1114,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 			settings->SendPreconnectionPdu = cnv.c;
 			break;
 
+		case FreeRDP_ServerLicenseRequired:
+			settings->ServerLicenseRequired = cnv.c;
+			break;
+
 		case FreeRDP_ServerMode:
 			settings->ServerMode = cnv.c;
 			break;
@@ -1689,6 +1696,12 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_ServerCertificateLength:
 			return settings->ServerCertificateLength;
 
+		case FreeRDP_ServerLicenseProductIssuersCount:
+			return settings->ServerLicenseProductIssuersCount;
+
+		case FreeRDP_ServerLicenseProductVersion:
+			return settings->ServerLicenseProductVersion;
+
 		case FreeRDP_ServerPort:
 			return settings->ServerPort;
 
@@ -2167,6 +2180,14 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 			settings->ServerCertificateLength = cnv.c;
 			break;
 
+		case FreeRDP_ServerLicenseProductIssuersCount:
+			settings->ServerLicenseProductIssuersCount = cnv.c;
+			break;
+
+		case FreeRDP_ServerLicenseProductVersion:
+			settings->ServerLicenseProductVersion = cnv.c;
+			break;
+
 		case FreeRDP_ServerPort:
 			settings->ServerPort = cnv.c;
 			break;
@@ -2610,6 +2631,12 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_ServerHostname:
 			return settings->ServerHostname;
 
+		case FreeRDP_ServerLicenseCompanyName:
+			return settings->ServerLicenseCompanyName;
+
+		case FreeRDP_ServerLicenseProductName:
+			return settings->ServerLicenseProductName;
+
 		case FreeRDP_ShellWorkingDirectory:
 			return settings->ShellWorkingDirectory;
 
@@ -2881,6 +2908,12 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_ServerHostname:
 			return settings->ServerHostname;
+
+		case FreeRDP_ServerLicenseCompanyName:
+			return settings->ServerLicenseCompanyName;
+
+		case FreeRDP_ServerLicenseProductName:
+			return settings->ServerLicenseProductName;
 
 		case FreeRDP_ShellWorkingDirectory:
 			return settings->ShellWorkingDirectory;
@@ -3164,6 +3197,12 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 		case FreeRDP_ServerHostname:
 			return update_string(&settings->ServerHostname, cnv.cc, len, cleanup);
 
+		case FreeRDP_ServerLicenseCompanyName:
+			return update_string(&settings->ServerLicenseCompanyName, cnv.cc, len, cleanup);
+
+		case FreeRDP_ServerLicenseProductName:
+			return update_string(&settings->ServerLicenseProductName, cnv.cc, len, cleanup);
+
 		case FreeRDP_ShellWorkingDirectory:
 			return update_string(&settings->ShellWorkingDirectory, cnv.cc, len, cleanup);
 
@@ -3288,6 +3327,9 @@ void* freerdp_settings_get_pointer_writable(rdpSettings* settings, size_t id)
 		case FreeRDP_ServerCertificate:
 			return settings->ServerCertificate;
 
+		case FreeRDP_ServerLicenseProductIssuers:
+			return settings->ServerLicenseProductIssuers;
+
 		case FreeRDP_ServerRandom:
 			return settings->ServerRandom;
 
@@ -3406,6 +3448,10 @@ BOOL freerdp_settings_set_pointer(rdpSettings* settings, size_t id, const void* 
 
 		case FreeRDP_ServerCertificate:
 			settings->ServerCertificate = cnv.v;
+			break;
+
+		case FreeRDP_ServerLicenseProductIssuers:
+			settings->ServerLicenseProductIssuers = cnv.v;
 			break;
 
 		case FreeRDP_ServerRandom:
