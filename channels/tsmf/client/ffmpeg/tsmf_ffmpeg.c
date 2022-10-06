@@ -193,9 +193,12 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 		if (media_type->SubType == TSMF_SUB_TYPE_AVC1 &&
 		    media_type->FormatType == TSMF_FORMAT_TYPE_MPEG2VIDEOINFO)
 		{
+			size_t required = 6;
 			/* The extradata format that FFmpeg uses is following CodecPrivate in Matroska.
 			   See http://haali.su/mkv/codecs.pdf */
 			p = mdecoder->codec_context->extradata;
+			if (mdecoder->codec_context->extradata_size < required)
+				return FALSE;
 			*p++ = 1;                         /* Reserved? */
 			*p++ = media_type->ExtraData[8];  /* Profile */
 			*p++ = 0;                         /* Profile */
@@ -204,17 +207,28 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 			*p++ = 0xe0 | 0x01;               /* Reserved | #sps */
 			s = media_type->ExtraData + 20;
 			size = ((UINT32)(*s)) * 256 + ((UINT32)(*(s + 1)));
+			required += size + 2;
+			if (mdecoder->codec_context->extradata_size < required)
+				return FALSE;
 			memcpy(p, s, size + 2);
 			s += size + 2;
 			p += size + 2;
+			required++;
+			if (mdecoder->codec_context->extradata_size < required)
+				return FALSE;
 			*p++ = 1; /* #pps */
 			size = ((UINT32)(*s)) * 256 + ((UINT32)(*(s + 1)));
+			required += size + 2;
+			if (mdecoder->codec_context->extradata_size < required)
+				return FALSE;
 			memcpy(p, s, size + 2);
 		}
 		else
 		{
 			memcpy(mdecoder->codec_context->extradata, media_type->ExtraData,
 			       media_type->ExtraDataSize);
+			if (mdecoder->codec_context->extradata_size < media_type->ExtraDataSize + 8)
+				return FALSE;
 			memset(mdecoder->codec_context->extradata + media_type->ExtraDataSize, 0, 8);
 		}
 	}
