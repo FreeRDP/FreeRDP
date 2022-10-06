@@ -3,6 +3,8 @@
  * RDP Licensing
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2022 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2022 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +24,15 @@
 
 #include "rdp.h"
 
-#include <freerdp/license.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/crypto/certificate.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/log.h>
-#include <freerdp/api.h>
 #include <freerdp/license.h>
 
 #include <winpr/stream.h>
+
+#define CLIENT_RANDOM_LENGTH 32
 
 typedef struct
 {
@@ -52,56 +53,23 @@ typedef struct
 typedef struct
 {
 	UINT32 count;
-	LICENSE_BLOB* array;
+	LICENSE_BLOB** array;
 } SCOPE_LIST;
 
-typedef enum
-{
-	LICENSE_STATE_AWAIT,
-	LICENSE_STATE_PROCESS,
-	LICENSE_STATE_ABORTED,
-	LICENSE_STATE_COMPLETED
-} LICENSE_STATE;
-
-struct rdp_license
-{
-	LICENSE_STATE state;
-	rdpRdp* rdp;
-	rdpCertificate* certificate;
-	BYTE* Modulus;
-	UINT32 ModulusLength;
-	BYTE Exponent[4];
-	BYTE HardwareId[HWID_LENGTH];
-	BYTE ClientRandom[CLIENT_RANDOM_LENGTH];
-	BYTE ServerRandom[SERVER_RANDOM_LENGTH];
-	BYTE MasterSecret[MASTER_SECRET_LENGTH];
-	BYTE PremasterSecret[PREMASTER_SECRET_LENGTH];
-	BYTE SessionKeyBlob[SESSION_KEY_BLOB_LENGTH];
-	BYTE MacSaltKey[MAC_SALT_KEY_LENGTH];
-	BYTE LicensingEncryptionKey[LICENSING_ENCRYPTION_KEY_LENGTH];
-	LICENSE_PRODUCT_INFO* ProductInfo;
-	LICENSE_BLOB* ErrorInfo;
-	LICENSE_BLOB* KeyExchangeList;
-	LICENSE_BLOB* ServerCertificate;
-	LICENSE_BLOB* ClientUserName;
-	LICENSE_BLOB* ClientMachineName;
-	LICENSE_BLOB* PlatformChallenge;
-	LICENSE_BLOB* EncryptedPremasterSecret;
-	LICENSE_BLOB* EncryptedPlatformChallenge;
-	LICENSE_BLOB* EncryptedPlatformChallengeResponse;
-	LICENSE_BLOB* EncryptedHardwareId;
-	SCOPE_LIST* ScopeList;
-	UINT32 PacketHeaderLength;
-};
+FREERDP_LOCAL BOOL license_send_valid_client_error_packet(rdpRdp* rdp);
 
 FREERDP_LOCAL int license_recv(rdpLicense* license, wStream* s);
+
+/* the configuration is applied from settings. Set FreeRDP_ServerLicense* settings */
+FREERDP_LOCAL BOOL license_server_configure(rdpLicense* license);
+FREERDP_LOCAL BOOL license_server_send_request(rdpLicense* license);
 
 FREERDP_LOCAL rdpLicense* license_new(rdpRdp* rdp);
 FREERDP_LOCAL void license_free(rdpLicense* license);
 
 #define LICENSE_TAG FREERDP_TAG("core.license")
 #ifdef WITH_DEBUG_LICENSE
-#define DEBUG_LICENSE(...) WLog_DBG(LICENSE_TAG, __VA_ARGS__)
+#define DEBUG_LICENSE(...) WLog_INFO(LICENSE_TAG, __VA_ARGS__)
 #else
 #define DEBUG_LICENSE(...) \
 	do                     \

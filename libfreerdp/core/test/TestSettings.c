@@ -454,6 +454,7 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 		                          FreeRDP_ServerCertificate,
 		                          FreeRDP_TargetNetAddresses,
 		                          FreeRDP_ReceivedCapabilities,
+		                          FreeRDP_ServerLicenseProductIssuers,
 		                          FreeRDP_TargetNetPorts,
 		                          FreeRDP_DeviceArray,
 		                          FreeRDP_ChannelDefArray,

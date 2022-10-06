@@ -901,6 +901,43 @@ void freerdp_target_net_addresses_free(rdpSettings* settings)
 	settings->TargetNetPorts = NULL;
 }
 
+void freerdp_server_license_issuers_free(rdpSettings* settings)
+{
+	UINT32 x;
+	WINPR_ASSERT(settings);
+
+	if (settings->ServerLicenseProductIssuers)
+	{
+		for (x = 0; x < settings->ServerLicenseProductIssuersCount; x++)
+			free(settings->ServerLicenseProductIssuers[x]);
+	}
+	free(settings->ServerLicenseProductIssuers);
+	settings->ServerLicenseProductIssuers = NULL;
+	settings->ServerLicenseProductIssuersCount = 0;
+}
+
+BOOL freerdp_server_license_issuers_copy(rdpSettings* settings, char** issuers, UINT32 count)
+{
+	UINT32 x;
+
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(issuers || (count == 0));
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerLicenseProductIssuers, NULL,
+	                                      count))
+		return FALSE;
+
+	for (x = 0; x < count; x++)
+	{
+		char* issuer = _strdup(issuers[x]);
+		if (!issuer)
+			return FALSE;
+		settings->ServerLicenseProductIssuers[x] = issuer;
+	}
+
+	return TRUE;
+}
+
 void freerdp_performance_flags_make(rdpSettings* settings)
 {
 	UINT32 PerformanceFlags = PERF_FLAG_NONE;
@@ -1309,6 +1346,12 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 			return freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetAddresses,
 			                                         FreeRDP_TargetNetAddressCount, data, len,
 			                                         sizeof(char*));
+		case FreeRDP_ServerLicenseProductIssuers:
+			if (data == NULL)
+				freerdp_server_license_issuers_free(settings);
+			return freerdp_settings_set_pointer_len_(settings, FreeRDP_ServerLicenseProductIssuers,
+			                                         FreeRDP_ServerLicenseProductIssuersCount, data,
+			                                         len, sizeof(char*));
 		case FreeRDP_TargetNetPorts:
 			if (data == NULL)
 				freerdp_target_net_addresses_free(settings);

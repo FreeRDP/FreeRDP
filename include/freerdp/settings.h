@@ -550,6 +550,12 @@ typedef struct
 #define FreeRDP_ServerCertificateLength (199)
 #define FreeRDP_ClientRandom (200)
 #define FreeRDP_ClientRandomLength (201)
+#define FreeRDP_ServerLicenseRequired (202)
+#define FreeRDP_ServerLicenseCompanyName (203)
+#define FreeRDP_ServerLicenseProductVersion (204)
+#define FreeRDP_ServerLicenseProductName (205)
+#define FreeRDP_ServerLicenseProductIssuers (206)
+#define FreeRDP_ServerLicenseProductIssuersCount (207)
 #define FreeRDP_ChannelCount (256)
 #define FreeRDP_ChannelDefArraySize (257)
 #define FreeRDP_ChannelDefArray (258)
@@ -1003,7 +1009,13 @@ struct rdp_settings
 	ALIGN64 UINT32 ServerCertificateLength; /* 199 */
 	ALIGN64 BYTE* ClientRandom;             /* 200 */
 	ALIGN64 UINT32 ClientRandomLength;      /* 201 */
-	UINT64 padding0256[256 - 202];          /* 202 */
+	ALIGN64 BOOL ServerLicenseRequired;     /* 202 */
+	ALIGN64 char* ServerLicenseCompanyName; /* 203 */
+	ALIGN64 UINT32 ServerLicenseProductVersion;      /* 204 */
+	ALIGN64 char* ServerLicenseProductName;          /* 205 */
+	ALIGN64 char** ServerLicenseProductIssuers;      /* 206 */
+	ALIGN64 UINT32 ServerLicenseProductIssuersCount; /* 207 */
+	UINT64 padding0256[256 - 208];                   /* 208 */
 
 	/* Client Network Data */
 	ALIGN64 UINT32 ChannelCount;          /* 256 */
@@ -1746,6 +1758,10 @@ extern "C"
 	FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 	FREERDP_API void freerdp_capability_buffer_free(rdpSettings* settings);
 	FREERDP_API BOOL freerdp_capability_buffer_copy(rdpSettings* settings, const rdpSettings* src);
+
+	FREERDP_API void freerdp_server_license_issuers_free(rdpSettings* settings);
+	FREERDP_API BOOL freerdp_server_license_issuers_copy(rdpSettings* settings, char** addresses,
+	                                                     UINT32 count);
 
 	FREERDP_API void freerdp_target_net_addresses_free(rdpSettings* settings);
 	FREERDP_API BOOL freerdp_target_net_addresses_copy(rdpSettings* settings, char** addresses,
