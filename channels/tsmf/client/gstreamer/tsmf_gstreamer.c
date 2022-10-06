@@ -414,6 +414,8 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 			   http://msdn.microsoft.com/en-us/library/dd757806.aspx */
 			if (media_type->ExtraData)
 			{
+				if (media_type->ExtraDataSize < 12)
+					return FALSE;
 				media_type->ExtraData += 12;
 				media_type->ExtraDataSize -= 12;
 			}
