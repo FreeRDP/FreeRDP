@@ -576,8 +576,14 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	if (!phCredential || !SecIsValidHandle(phCredential))
 		return SEC_E_NO_CREDENTIALS;
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
 	creds = sspi_SecureHandleGetLowerPointer(phCredential);
+
+	/* behave like windows SSPIs that don't want empty context */
+	if (phContext && !phContext->dwLower && !phContext->dwUpper)
+		return SEC_E_INVALID_HANDLE;
+
+	context = sspi_SecureHandleGetLowerPointer(phContext);
+
 	if (pInput)
 	{
 		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
@@ -891,11 +897,17 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	if (!phCredential || !SecIsValidHandle(phCredential))
 		return SEC_E_NO_CREDENTIALS;
 
+	creds = sspi_SecureHandleGetLowerPointer(phCredential);
+
 	if (!pInput)
 		return SEC_E_INVALID_TOKEN;
 
+	/* behave like windows SSPIs that don't want empty context */
+	if (phContext && !phContext->dwLower && !phContext->dwUpper)
+		return SEC_E_INVALID_HANDLE;
+
 	context = sspi_SecureHandleGetLowerPointer(phContext);
-	creds = sspi_SecureHandleGetLowerPointer(phCredential);
+
 	input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
 	if (pOutput)
 		output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);

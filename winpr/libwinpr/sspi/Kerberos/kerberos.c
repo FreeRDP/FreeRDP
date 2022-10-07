@@ -724,6 +724,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 	krb5_creds* creds = NULL;
 
 	credentials = sspi_SecureHandleGetLowerPointer(phCredential);
+
+	/* behave like windows SSPIs that don't want empty context */
+	if (phContext && !phContext->dwLower && !phContext->dwUpper)
+		return SEC_E_INVALID_HANDLE;
+
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!credentials)
@@ -1035,6 +1040,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 	krb5_principal principal = NULL;
 	krb5_creds creds = { 0 };
 
+	/* behave like windows SSPIs that don't want empty context */
+	if (phContext && !phContext->dwLower && !phContext->dwUpper)
+		return SEC_E_INVALID_HANDLE;
+
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 	credentials = sspi_SecureHandleGetLowerPointer(phCredential);
 
@@ -1283,9 +1292,13 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 		ContextSizes->cbBlockSize = 1;
 		ContextSizes->cbSecurityTrailer = 0;
 
-		key = context->acceptor_key    ? context->acceptor_key
-		      : context->initiator_key ? context->initiator_key
-		                               : context->session_key;
+		if (context->acceptor_key)
+			key = context->acceptor_key;
+		else if (context->initiator_key)
+			key = context->initiator_key;
+		else
+			key = context->session_key;
+
 		enctype = krb5_k_key_enctype(context->ctx, key);
 
 		if (context->flags & SSPI_GSS_C_CONF_FLAG)
@@ -1446,11 +1459,16 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	flags |= FLAG_WRAP_CONFIDENTIAL;
 	flags |= context->acceptor_key ? FLAG_ACCEPTOR_SUBKEY : 0;
 
-	key = context->acceptor_key    ? context->acceptor_key
-	      : context->initiator_key ? context->initiator_key
-	                               : context->session_key;
+	if (context->acceptor_key)
+		key = context->acceptor_key;
+	else if (context->initiator_key)
+		key = context->initiator_key;
+	else
+		key = context->session_key;
+
 	if (!key)
 		return SEC_E_INTERNAL_ERROR;
+
 	usage = context->acceptor ? KG_USAGE_ACCEPTOR_SEAL : KG_USAGE_INITIATOR_SEAL;
 
 	/* Set the lengths of the data (plaintext + header) */
@@ -1630,9 +1648,13 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 	flags |= context->acceptor ? FLAG_SENDER_IS_ACCEPTOR : 0;
 	flags |= context->acceptor_key ? FLAG_ACCEPTOR_SUBKEY : 0;
 
-	key = context->acceptor_key    ? context->acceptor_key
-	      : context->initiator_key ? context->initiator_key
-	                               : context->session_key;
+	if (context->acceptor_key)
+		key = context->acceptor_key;
+	else if (context->initiator_key)
+		key = context->initiator_key;
+	else
+		key = context->session_key;
+
 	if (!key)
 		return SEC_E_INTERNAL_ERROR;
 	usage = context->acceptor ? KG_USAGE_ACCEPTOR_SIGN : KG_USAGE_INITIATOR_SIGN;
