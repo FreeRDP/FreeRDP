@@ -8,6 +8,7 @@ Fixed issues:
 * Backported #7708: Header now defines DumpThreadHandles
 * Backported #8176: Check fullscreen state and not setting
 * Backported #8236: Send resize on window state change
+* Backported #7611: Audin macOS monterey fix
 
 # 2022-07-28 Version 2.8.0
 
