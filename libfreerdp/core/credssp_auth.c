@@ -121,6 +121,7 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
                                const char* pkinit)
 {
 	SECURITY_STATUS status;
+	void* identityPtr = NULL;
 
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->table);
@@ -130,13 +131,7 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 	if (!credssp_auth_set_spn(auth, target_service, target_hostname))
 		return FALSE;
 
-	if (!identity)
-	{
-		status = auth->table->AcquireCredentialsHandleA(NULL, auth->info->Name,
-		                                                SECPKG_CRED_OUTBOUND, NULL, NULL, NULL,
-		                                                NULL, &auth->credentials, NULL);
-	}
-	else
+	if (identity)
 	{
 		if (sspi_CopyAuthIdentity(&auth->identity.identity, identity) < 0)
 			return FALSE;
@@ -152,10 +147,12 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 			}
 		}
 
-		status = auth->table->AcquireCredentialsHandleA(NULL, auth->info->Name,
-		                                                SECPKG_CRED_OUTBOUND, NULL, &auth->identity,
-		                                                NULL, NULL, &auth->credentials, NULL);
+		identityPtr = &auth->identity;
 	}
+
+	status =
+	    auth->table->AcquireCredentialsHandleA(NULL, auth->info->Name, SECPKG_CRED_OUTBOUND, NULL,
+	                                           identityPtr, NULL, NULL, &auth->credentials, NULL);
 
 	if (status != SEC_E_OK)
 	{
@@ -263,7 +260,7 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 {
 	SECURITY_STATUS status;
 	SecBuffer input_buffers[2] = { 0 };
-	SecBufferDesc input_buffer_desc = { SECBUFFER_VERSION, 2, input_buffers };
+	SecBufferDesc input_buffer_desc = { SECBUFFER_VERSION, 1, input_buffers };
 	CtxtHandle* context = NULL;
 
 	WINPR_ASSERT(auth);
@@ -288,6 +285,8 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 
 	if (auth->bindings)
 	{
+		input_buffer_desc.cBuffers = 2;
+
 		input_buffers[1].BufferType = SECBUFFER_CHANNEL_BINDINGS;
 		input_buffers[1].cbBuffer = auth->bindings->BindingsLength;
 		input_buffers[1].pvBuffer = auth->bindings->Bindings;
