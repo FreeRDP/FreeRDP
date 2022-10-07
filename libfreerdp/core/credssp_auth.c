@@ -50,13 +50,13 @@ enum AUTH_STATE
 struct rdp_credssp_auth
 {
 	const rdpContext* rdp_ctx;
-	SecurityFunctionTableA* table;
-	SecPkgInfoA* info;
+	SecurityFunctionTable* table;
+	SecPkgInfo* info;
 	SEC_WINNT_AUTH_IDENTITY_WINPR identity;
 	CredHandle credentials;
 	BOOL server;
 	SecPkgContext_Bindings* bindings;
-	char* spn;
+	TCHAR* spn;
 	CtxtHandle context;
 	SecBuffer input_buffer;
 	SecBuffer output_buffer;
@@ -67,7 +67,7 @@ struct rdp_credssp_auth
 
 static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* message);
 static BOOL auth_setup_identity(rdpCredsspAuth* auth, SEC_WINNT_AUTH_IDENTITY_WINPR* identity);
-static SecurityFunctionTableA* auth_resolve_sspi_table(const rdpSettings* settings);
+static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* settings);
 
 rdpCredsspAuth* credssp_auth_new(const rdpContext* rdp_ctx)
 {
@@ -79,7 +79,7 @@ rdpCredsspAuth* credssp_auth_new(const rdpContext* rdp_ctx)
 	return auth;
 }
 
-BOOL credssp_auth_init(rdpCredsspAuth* auth, char* pkg_name, SecPkgContext_Bindings* bindings)
+BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bindings* bindings)
 {
 	SECURITY_STATUS status;
 
@@ -97,10 +97,10 @@ BOOL credssp_auth_init(rdpCredsspAuth* auth, char* pkg_name, SecPkgContext_Bindi
 	}
 
 	/* Package name will be stored in the info structure */
-	status = auth->table->QuerySecurityPackageInfoA(pkg_name, &auth->info);
+	status = auth->table->QuerySecurityPackageInfo(pkg_name, &auth->info);
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "QuerySecurityPackageInfoA (%s) failed with %s [0x%08X]", pkg_name,
+		WLog_ERR(TAG, "QuerySecurityPackageInfo (%s) failed with %s [0x%08X]", pkg_name,
 		         GetSecurityStatusString(status), status);
 		return FALSE;
 	}
@@ -151,8 +151,8 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 	}
 
 	status =
-	    auth->table->AcquireCredentialsHandleA(NULL, auth->info->Name, SECPKG_CRED_OUTBOUND, NULL,
-	                                           identityPtr, NULL, NULL, &auth->credentials, NULL);
+	    auth->table->AcquireCredentialsHandle(NULL, auth->info->Name, SECPKG_CRED_OUTBOUND, NULL,
+	                                          identityPtr, NULL, NULL, &auth->credentials, NULL);
 
 	if (status != SEC_E_OK)
 	{
@@ -165,8 +165,8 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 	{
 		SecPkgCredentials_KdcUrlA attr = { auth->identity.kerberosSettings.kdcUrl };
 
-		if (auth->table->SetCredentialsAttributesA)
-			status = auth->table->SetCredentialsAttributesA(
+		if (auth->table->SetCredentialsAttributes)
+			status = auth->table->SetCredentialsAttributes(
 			    &auth->credentials, SECPKG_CRED_ATTR_KDC_URL, &attr, sizeof(attr));
 		else
 			status = SEC_E_UNSUPPORTED_FUNCTION;
@@ -195,8 +195,8 @@ BOOL credssp_auth_setup_server(rdpCredsspAuth* auth)
 		auth_data = &auth->identity;
 
 	status =
-	    auth->table->AcquireCredentialsHandleA(NULL, auth->info->Name, SECPKG_CRED_INBOUND, NULL,
-	                                           auth_data, NULL, NULL, &auth->credentials, NULL);
+	    auth->table->AcquireCredentialsHandle(NULL, auth->info->Name, SECPKG_CRED_INBOUND, NULL,
+	                                          auth_data, NULL, NULL, &auth->credentials, NULL);
 	if (status != SEC_E_OK)
 	{
 		WLog_ERR(TAG, "AcquireCredentialsHandleA failed with %s [0x%08X]",
@@ -303,7 +303,7 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 		    &auth->credentials, context, &input_buffer_desc, auth->flags, SECURITY_NATIVE_DREP,
 		    &auth->context, &output_buffer_desc, &auth->flags, NULL);
 	else
-		status = auth->table->InitializeSecurityContextA(
+		status = auth->table->InitializeSecurityContext(
 		    &auth->credentials, context, auth->spn, auth->flags, 0, SECURITY_NATIVE_DREP,
 		    &input_buffer_desc, 0, &auth->context, &output_buffer_desc, &auth->flags, NULL);
 
@@ -315,7 +315,7 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 
 		/* Not terrible if this fails, although encryption functions may run into issues down the
 		 * line, still, authentication succeeded */
-		auth->table->QueryContextAttributesA(&auth->context, SECPKG_ATTR_SIZES, &auth->sizes);
+		auth->table->QueryContextAttributes(&auth->context, SECPKG_ATTR_SIZES, &auth->sizes);
 		WLog_DBG(TAG, "Context sizes: cbMaxSignature=%d, cbSecurityTrailer=%d",
 		         auth->sizes.cbMaxSignature, auth->sizes.cbSecurityTrailer);
 
@@ -331,7 +331,7 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 	else
 	{
 		WLog_ERR(TAG, "%s failed with %s [0x%08X]",
-		         auth->server ? "AcceptSecurityContext" : "InitializeSecurityContextA",
+		         auth->server ? "AcceptSecurityContext" : "InitializeSecurityContext",
 		         GetSecurityStatusString(status), status);
 		return -1;
 	}
@@ -502,7 +502,7 @@ size_t credssp_auth_trailer_size(rdpCredsspAuth* auth)
 	return auth->sizes.cbSecurityTrailer;
 }
 
-const char* credssp_auth_pkg_name(rdpCredsspAuth* auth)
+const TCHAR* credssp_auth_pkg_name(rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth && auth->info);
 	return auth->info->Name;
@@ -592,7 +592,7 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 	RegCloseKey(hKey);
 }
 
-static SecurityFunctionTableA* auth_resolve_sspi_table(const rdpSettings* settings)
+static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* settings)
 {
 	char* sspi_module = NULL;
 
@@ -603,8 +603,13 @@ static SecurityFunctionTableA* auth_resolve_sspi_table(const rdpSettings* settin
 
 	if (sspi_module || settings->SspiModule)
 	{
-		INIT_SECURITY_INTERFACE_A InitSecurityInterface_ptr;
+		INIT_SECURITY_INTERFACE InitSecurityInterface_ptr;
 		const char* module_name = sspi_module ? sspi_module : settings->SspiModule;
+#ifdef UNICODE
+		const char* proc_name = "InitSecurityInterfaceW";
+#else
+		const char* proc_name = "InitSecurityInterfaceA";
+#endif /* UNICODE */
 
 		HMODULE hSSPI = LoadLibraryX(module_name);
 
@@ -616,13 +621,13 @@ static SecurityFunctionTableA* auth_resolve_sspi_table(const rdpSettings* settin
 
 		WLog_INFO(TAG, "Using SSPI Module: %s", module_name);
 
-		InitSecurityInterface_ptr = GetProcAddress(hSSPI, "InitSecurityInterfaceA");
+		InitSecurityInterface_ptr = (INIT_SECURITY_INTERFACE)GetProcAddress(hSSPI, proc_name);
 
 		free(sspi_module);
 		return InitSecurityInterface_ptr();
 	}
 
-	return InitSecurityInterfaceExA(0);
+	return InitSecurityInterfaceEx(0);
 }
 
 static BOOL auth_setup_identity(rdpCredsspAuth* auth, SEC_WINNT_AUTH_IDENTITY_WINPR* identity)
@@ -722,6 +727,19 @@ static BOOL auth_setup_identity(rdpCredsspAuth* auth, SEC_WINNT_AUTH_IDENTITY_WI
 	return TRUE;
 }
 
+TCHAR* tcs_strdup_from_char(const char* str)
+{
+#ifdef UNICODE
+	TCHAR* ret;
+	if (ConvertToUnicode(CP_UTF8, 0, str, -1, &ret, 0) <= 0)
+		return NULL;
+
+	return ret;
+#else
+	return _strdup(str);
+#endif
+}
+
 BOOL credssp_auth_set_spn(rdpCredsspAuth* auth, const char* service, const char* hostname)
 {
 	size_t length;
@@ -731,17 +749,38 @@ BOOL credssp_auth_set_spn(rdpCredsspAuth* auth, const char* service, const char*
 
 	if (!service)
 	{
-		if (!(auth->spn = _strdup(hostname)))
+		if (!(auth->spn = tcs_strdup_from_char(hostname)))
 			return FALSE;
 		return TRUE;
 	}
 
 	length = strlen(service) + strlen(hostname) + 2;
-	auth->spn = malloc(length);
+	auth->spn = malloc(length * sizeof(TCHAR));
 	if (!auth->spn)
 		return FALSE;
 
+#ifndef UNICODE
 	sprintf_s(auth->spn, length, "%s/%s", service, hostname);
+#else
+	{
+		TCHAR* serviceW = NULL;
+		TCHAR* hostnameW = NULL;
+
+		if (ConvertToUnicode(CP_UTF8, 0, service, -1, &serviceW, 0) <= 0)
+			return FALSE;
+
+		if (ConvertToUnicode(CP_UTF8, 0, hostname, -1, &hostnameW, 0) <= 0)
+		{
+			free(serviceW);
+			return FALSE;
+		}
+
+		swprintf_s(auth->spn, length, _T("%s/%s"), serviceW, hostnameW);
+
+		free(serviceW);
+		free(hostnameW);
+	}
+#endif
 
 	return TRUE;
 }

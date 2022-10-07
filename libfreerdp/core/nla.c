@@ -51,7 +51,7 @@
 
 #define SERVER_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\Server"
 
-#define NLA_AUTH_PKG "Negotiate"
+#define NLA_AUTH_PKG NEGO_SSP_NAME
 
 /**
  * TSRequest ::= SEQUENCE {
