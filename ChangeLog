@@ -6,6 +6,8 @@ Fixed issues:
 * Backported #8234: Updated flatpak with build script
 * Backported #8210: Better execinfo support check for android
 * Backported #7708: Header now defines DumpThreadHandles
+* Backported #8176: Check fullscreen state and not setting
+* Backported #8236: Send resize on window state change
 
 # 2022-07-28 Version 2.8.0
 
