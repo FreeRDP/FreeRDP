@@ -47,6 +47,11 @@ static SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(
 {
 	CREDSSP_CONTEXT* context;
 	SSPI_CREDENTIALS* credentials;
+
+	/* behave like windows SSPIs that don't want empty context */
+	if (phContext && !phContext->dwLower && !phContext->dwUpper)
+		return SEC_E_INVALID_HANDLE;
+
 	context = (CREDSSP_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)

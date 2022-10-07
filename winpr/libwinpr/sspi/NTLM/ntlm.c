@@ -417,6 +417,11 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 	SSPI_CREDENTIALS* credentials;
 	PSecBuffer input_buffer;
 	PSecBuffer output_buffer;
+
+	/* behave like windows SSPIs that don't want empty context */
+	if (phContext && !phContext->dwLower && !phContext->dwUpper)
+		return SEC_E_INVALID_HANDLE;
+
 	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -541,6 +546,11 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
 	PSecBuffer channel_bindings = NULL;
+
+	/* behave like windows SSPIs that don't want empty context */
+	if (phContext && !phContext->dwLower && !phContext->dwUpper)
+		return SEC_E_INVALID_HANDLE;
+
 	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (pInput)

@@ -202,6 +202,11 @@ static SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(
 	SECURITY_STATUS status;
 	SCHANNEL_CONTEXT* context;
 	SCHANNEL_CREDENTIALS* credentials;
+
+	/* behave like windows SSPIs that don't want empty context */
+	if (phContext && !phContext->dwLower && !phContext->dwUpper)
+		return SEC_E_INVALID_HANDLE;
+
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -250,6 +255,11 @@ static SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(
 {
 	SECURITY_STATUS status;
 	SCHANNEL_CONTEXT* context;
+
+	/* behave like windows SSPIs that don't want empty context */
+	if (phContext && !phContext->dwLower && !phContext->dwUpper)
+		return SEC_E_INVALID_HANDLE;
+
 	context = (SCHANNEL_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
