@@ -279,8 +279,12 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 			return -1;
 	}
 
-	/* Context and input buffer will be null on first call */
+	/* input buffer will be null on first call,
+	 * context MUST be NULL on first call */
 	context = &auth->context;
+	if (!auth->context.dwLower && !auth->context.dwUpper)
+		context = NULL;
+
 	input_buffers[0] = auth->input_buffer;
 
 	if (auth->bindings)
