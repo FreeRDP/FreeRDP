@@ -353,9 +353,9 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			case AUTH_NO_CREDENTIALS:
 				freerdp_set_last_error_log(instance->context,
 				                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
-				return 0;
+				return FALSE;
 			default:
-				return 0;
+				return FALSE;
 		}
 	}
 
@@ -381,14 +381,14 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 
 			if (sspi_SetAuthIdentityA(nla->identity, marshalledCredentials, NULL,
 			                          settings->Password) < 0)
-				return -1;
+				return FALSE;
 
 			CredFree(marshalledCredentials);
 		}
 #else
 		if (sspi_SetAuthIdentityA(nla->identity, settings->Username, settings->Domain,
 		                          settings->Password) < 0)
-			return -1;
+			return FALSE;
 #endif /* _WIN32 */
 	}
 	else
@@ -401,7 +401,7 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			        nla->identity, settings->Username, settings->Domain,
 			        (UINT16*)settings->RedirectionPassword,
 			        settings->RedirectionPasswordLength / sizeof(WCHAR) - 1) < 0)
-				return -1;
+				return FALSE;
 		}
 
 		if (settings->RestrictedAdminModeRequired)
@@ -410,7 +410,7 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			{
 				if (sspi_SetAuthIdentityA(nla->identity, settings->Username, settings->Domain,
 				                          settings->PasswordHash) < 0)
-					return -1;
+					return FALSE;
 
 				/**
 				 * Increase password hash length by LB_PASSWORD_MAX_LENGTH to obtain a
@@ -426,7 +426,7 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 		{
 			if (sspi_SetAuthIdentityA(nla->identity, settings->Username, settings->Domain,
 			                          settings->Password) < 0)
-				return -1;
+				return FALSE;
 		}
 	}
 
