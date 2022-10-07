@@ -51,6 +51,8 @@
 
 #define SERVER_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\Server"
 
+#define NLA_AUTH_PKG "Negotiate"
+
 /**
  * TSRequest ::= SEQUENCE {
  * 	version    [0] INTEGER,
@@ -198,15 +200,6 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 	if (!settings->SmartcardLogon)
 		return TRUE;
 
-	if (!settings->CspName)
-	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_CspName, MS_SCARD_PROV_A))
-		{
-			WLog_ERR(TAG, "unable to set CSP name");
-			return FALSE;
-		}
-	}
-
 	if (!smartcard_enumerateCerts(settings, &certs, &count))
 	{
 		WLog_ERR(TAG, "unable to list smartcard certificates");
@@ -229,6 +222,22 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 	/*
 	 * just one result let's try to fill missing parameters
 	 */
+
+	if (!settings->CspName)
+	{
+		if (info->csp &&
+		    ConvertFromUnicode(CP_UTF8, 0, info->csp, -1, &settings->CspName, 0, NULL, FALSE) <= 0)
+		{
+			WLog_ERR(TAG, "unable to set CSP name");
+			goto out;
+		}
+		else if (!(settings->CspName = _strdup(MS_SCARD_PROV_A)))
+		{
+			WLog_ERR(TAG, "unable to set CSP name");
+			goto out;
+		}
+	}
+
 	if (!settings->Username && info->userHint)
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_Username, info->userHint))
@@ -454,7 +463,7 @@ static int nla_client_init(rdpNla* nla)
 	if (!nla_adjust_settings_from_smartcard(nla))
 		return -1;
 
-	if (!credssp_auth_init(nla->auth, NEGO_SSP_NAME, NULL))
+	if (!credssp_auth_init(nla->auth, NLA_AUTH_PKG, NULL))
 		return -1;
 
 	if (!nla_client_setup_identity(nla))
@@ -672,7 +681,7 @@ static int nla_server_init(rdpNla* nla)
 		return -1;
 	}
 
-	if (!credssp_auth_init(nla->auth, NEGO_SSP_NAME, NULL))
+	if (!credssp_auth_init(nla->auth, NLA_AUTH_PKG, NULL))
 		return -1;
 
 	if (!credssp_auth_setup_server(nla->auth))
