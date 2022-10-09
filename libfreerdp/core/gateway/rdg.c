@@ -1238,7 +1238,7 @@ static BOOL rdg_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 	{
 		authToken.pvBuffer = authTokenData;
 		authToken.cbBuffer = authTokenLength;
-		credssp_auth_set_input_buffer(auth, &authToken);
+		credssp_auth_take_input_buffer(auth, &authToken);
 	}
 
 	rc = credssp_auth_authenticate(auth);

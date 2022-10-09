@@ -122,11 +122,12 @@ BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel, HttpResponse
 	if (token64)
 		crypto_base64_decode(token64, strlen(token64), &authTokenData, &authTokenLength);
 
+	buffer.pvBuffer = authTokenData;
+	buffer.cbBuffer = authTokenLength;
+
 	if (authTokenData && authTokenLength)
 	{
-		buffer.pvBuffer = authTokenData;
-		buffer.cbBuffer = authTokenLength;
-		credssp_auth_set_input_buffer(auth, &buffer);
+		credssp_auth_take_input_buffer(auth, &buffer);
 		return TRUE;
 	}
 
@@ -250,11 +251,12 @@ BOOL rpc_ncacn_http_recv_out_channel_response(RpcChannel* outChannel, HttpRespon
 	if (token64)
 		crypto_base64_decode(token64, strlen(token64), &authTokenData, &authTokenLength);
 
+	buffer.pvBuffer = authTokenData;
+	buffer.cbBuffer = authTokenLength;
+
 	if (authTokenData && authTokenLength)
 	{
-		buffer.pvBuffer = authTokenData;
-		buffer.cbBuffer = authTokenLength;
-		credssp_auth_set_input_buffer(auth, &buffer);
+		credssp_auth_take_input_buffer(auth, &buffer);
 		return TRUE;
 	}
 

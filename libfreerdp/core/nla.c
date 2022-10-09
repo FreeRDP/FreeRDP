@@ -530,7 +530,7 @@ static int nla_client_recv_nego_token(rdpNla* nla)
 {
 	int rc;
 
-	credssp_auth_set_input_buffer(nla->auth, &nla->negoToken);
+	credssp_auth_take_input_buffer(nla->auth, &nla->negoToken);
 	rc = credssp_auth_authenticate(nla->auth);
 
 	switch (rc)
@@ -781,7 +781,7 @@ static int nla_server_authenticate(rdpNla* nla)
 			return -1;
 
 		WLog_DBG(TAG, "Receiving Authentication Token");
-		credssp_auth_set_input_buffer(nla->auth, &nla->negoToken);
+		credssp_auth_take_input_buffer(nla->auth, &nla->negoToken);
 
 		res = credssp_auth_authenticate(nla->auth);
 
@@ -1687,6 +1687,7 @@ void nla_free(rdpNla* nla)
 
 	sspi_SecBufferFree(&nla->pubKeyAuth);
 	sspi_SecBufferFree(&nla->authInfo);
+	sspi_SecBufferFree(&nla->negoToken);
 	sspi_SecBufferFree(&nla->ClientNonce);
 	sspi_SecBufferFree(&nla->PublicKey);
 	sspi_SecBufferFree(&nla->tsCredentials);

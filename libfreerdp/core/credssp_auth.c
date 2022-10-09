@@ -466,13 +466,17 @@ BOOL credssp_auth_revert_to_self(rdpCredsspAuth* auth)
 	return TRUE;
 }
 
-void credssp_auth_set_input_buffer(rdpCredsspAuth* auth, SecBuffer* buffer)
+void credssp_auth_take_input_buffer(rdpCredsspAuth* auth, SecBuffer* buffer)
 {
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(buffer);
 
 	auth->input_buffer = *buffer;
 	auth->input_buffer.BufferType = SECBUFFER_TOKEN;
+
+	/* Invalidate original, rdpCredsspAuth now has ownership of the buffer */
+	SecBuffer empty = { 0 };
+	*buffer = empty;
 }
 
 const SecBuffer* credssp_auth_get_output_buffer(rdpCredsspAuth* auth)
@@ -547,6 +551,7 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 	free(ntlm_settings->samFile);
 
 	free(auth->spn);
+	sspi_SecBufferFree(&auth->input_buffer);
 	sspi_SecBufferFree(&auth->output_buffer);
 
 	free(auth);
