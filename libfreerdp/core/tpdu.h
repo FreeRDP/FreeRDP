@@ -47,11 +47,11 @@ enum X224_TPDU_TYPE
 const char* tpdu_type_to_string(int type);
 FREERDP_LOCAL BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li, UINT16 tpktlength);
 FREERDP_LOCAL BOOL tpdu_read_connection_request(wStream* s, BYTE* li, UINT16 tpktlength);
-FREERDP_LOCAL void tpdu_write_connection_request(wStream* s, UINT16 length);
+FREERDP_LOCAL BOOL tpdu_write_connection_request(wStream* s, UINT16 length);
 FREERDP_LOCAL BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li, UINT16 tpktlength);
-FREERDP_LOCAL void tpdu_write_connection_confirm(wStream* s, UINT16 length);
-FREERDP_LOCAL void tpdu_write_disconnect_request(wStream* s, UINT16 length);
+FREERDP_LOCAL BOOL tpdu_write_connection_confirm(wStream* s, UINT16 length);
+FREERDP_LOCAL BOOL tpdu_write_disconnect_request(wStream* s, UINT16 length);
 FREERDP_LOCAL BOOL tpdu_read_data(wStream* s, UINT16* li, UINT16 tpktlength);
-FREERDP_LOCAL void tpdu_write_data(wStream* s);
+FREERDP_LOCAL BOOL tpdu_write_data(wStream* s);
 
 #endif /* FREERDP_LIB_CORE_TPDU_H */
