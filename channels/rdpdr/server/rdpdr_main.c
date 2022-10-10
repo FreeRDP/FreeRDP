@@ -684,10 +684,9 @@ out:
 static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* context, wStream* s,
                                                           RDPDR_HEADER* header)
 {
-	int i;
-	UINT status;
-	UINT16 numCapabilities;
-	RDPDR_CAPABILITY_HEADER capabilityHeader = { 0 };
+	UINT16 i = 0;
+	UINT status = 0;
+	UINT16 numCapabilities = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -702,6 +701,8 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 
 	for (i = 0; i < numCapabilities; i++)
 	{
+		RDPDR_CAPABILITY_HEADER capabilityHeader = { 0 };
+
 		if ((status = rdpdr_server_read_capability_set_header(s, &capabilityHeader)))
 		{
 			WLog_ERR(TAG, "rdpdr_server_read_capability_set_header failed with error %" PRIu32 "!",
@@ -822,14 +823,12 @@ static UINT rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext* context,
-                                                              wStream* s, RDPDR_HEADER* header)
+                                                              wStream* s,
+                                                              const RDPDR_HEADER* header)
 {
-	UINT32 i;
-	UINT32 DeviceCount;
-	UINT32 DeviceType;
-	UINT32 DeviceId;
-	char PreferredDosName[9] = { 0 };
-	UINT32 DeviceDataLength;
+	UINT32 i = 0;
+	UINT32 DeviceCount = 0;
+
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
@@ -843,7 +842,10 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 
 	for (i = 0; i < DeviceCount; i++)
 	{
-		ZeroMemory(PreferredDosName, sizeof(PreferredDosName));
+		UINT32 DeviceType = 0;
+		UINT32 DeviceId = 0;
+		UINT32 DeviceDataLength = 0;
+		char PreferredDosName[9] = { 0 };
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 			return ERROR_INVALID_DATA;
@@ -878,7 +880,26 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 				break;
 
 			case RDPDR_DTYP_SERIAL:
+				if (DeviceDataLength != 0)
+				{
+					WLog_WARN(TAG, "[rdpdr] RDPDR_DTYP_SERIAL::DeviceDataLength != 0 [%" PRIu32 "]",
+					          DeviceDataLength);
+				}
+
+				if (context->supportsPorts)
+				{
+					IFCALL(context->OnPortCreate, context, DeviceId, PreferredDosName);
+				}
+
+				break;
+
 			case RDPDR_DTYP_PARALLEL:
+				if (DeviceDataLength != 0)
+				{
+					WLog_WARN(TAG,
+					          "[rdpdr] RDPDR_DTYP_PARALLEL::DeviceDataLength != 0 [%" PRIu32 "]",
+					          DeviceDataLength);
+				}
 				if (context->supportsPorts)
 				{
 					IFCALL(context->OnPortCreate, context, DeviceId, PreferredDosName);
@@ -887,6 +908,12 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 				break;
 
 			case RDPDR_DTYP_SMARTCARD:
+				if (DeviceDataLength != 0)
+				{
+					WLog_WARN(TAG,
+					          "[rdpdr] RDPDR_DTYP_SMARTCARD::DeviceDataLength != 0 [%" PRIu32 "]",
+					          DeviceDataLength);
+				}
 				if (context->supportsSmartcards)
 				{
 					IFCALL(context->OnSmartcardCreate, context, DeviceId, PreferredDosName);
@@ -1011,7 +1038,7 @@ static UINT rdpdr_server_receive_device_io_completion(RdpdrServerContext* contex
 	if (!irp)
 	{
 		WLog_ERR(TAG, "IRP not found for completionId=0x%" PRIx32 "", completionId);
-		return ERROR_INTERNAL_ERROR;
+		return CHANNEL_RC_OK;
 	}
 
 	/* Invoke the callback. */
@@ -1207,7 +1234,6 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 	DWORD nCount = 0;
 	void* buffer = NULL;
 	HANDLE events[8] = { 0 };
-	RDPDR_HEADER header;
 	HANDLE ChannelEvent = NULL;
 	DWORD BytesReturned = 0;
 	UINT error;
@@ -1268,6 +1294,19 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 		if (status == WAIT_OBJECT_0)
 			break;
 
+		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned))
+		{
+			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
+		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
+		{
+			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
+
 		capacity = MIN(Stream_Capacity(s), ULONG_MAX);
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, (PCHAR)Stream_Buffer(s),
 		                           (ULONG)capacity, &BytesReturned))
@@ -1279,6 +1318,8 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 
 		if (BytesReturned >= RDPDR_HEADER_LENGTH)
 		{
+			RDPDR_HEADER header = { 0 };
+
 			Stream_SetPosition(s, 0);
 			Stream_SetLength(s, BytesReturned);
 
@@ -1290,7 +1331,8 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 				if ((error = rdpdr_server_receive_pdu(context, s, &header)))
 				{
 					WLog_ERR(TAG, "rdpdr_server_receive_pdu failed with error %" PRIu32 "!", error);
-					goto out_stream;
+					// goto out_stream;
+					error = CHANNEL_RC_OK;
 				}
 			}
 		}
