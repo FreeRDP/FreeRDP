@@ -1368,7 +1368,7 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 	BOOL allJoined = TRUE;
 	rdpMcs* mcs = rdp->mcs;
 
-	if (!mcs_recv_channel_join_request(mcs, s, &channelId))
+	if (!mcs_recv_channel_join_request(mcs, rdp->settings, s, &channelId))
 		return FALSE;
 
 	if (!mcs_send_channel_join_confirm(mcs, channelId))
