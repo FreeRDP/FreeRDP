@@ -102,8 +102,8 @@ static BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi)
 BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 {
 	BYTE* result = NULL;
-	WINPR_BITMAP_FILE_HEADER bf;
-	WINPR_BITMAP_INFO_HEADER bi;
+	WINPR_BITMAP_FILE_HEADER bf = { 0 };
+	WINPR_BITMAP_INFO_HEADER bi = { 0 };
 	wStream* s;
 	size_t imgSize;
 
@@ -261,15 +261,17 @@ static int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 	BOOL vFlip;
 	BYTE* pDstData;
 	wStream* s;
-	WINPR_BITMAP_FILE_HEADER bf;
-	WINPR_BITMAP_INFO_HEADER bi;
+	wStream sbuffer = { 0 };
+	BYTE buffer[sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(WINPR_BITMAP_INFO_HEADER)] = { 0 };
+	WINPR_BITMAP_FILE_HEADER bf = { 0 };
+	WINPR_BITMAP_INFO_HEADER bi = { 0 };
 
 	if (!image || !fp)
 		return -1;
 
 	image->data = NULL;
 
-	s = Stream_New(NULL, sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(WINPR_BITMAP_INFO_HEADER));
+	s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 
 	if (!s)
 		return -1;
@@ -339,7 +341,6 @@ fail:
 		image->data = NULL;
 	}
 
-	Stream_Free(s, TRUE);
 	return 1;
 }
 
