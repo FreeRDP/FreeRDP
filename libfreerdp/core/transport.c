@@ -163,24 +163,34 @@ static BOOL transport_default_attach(rdpTransport* transport, int sockfd)
 	const rdpSettings* settings;
 	rdpContext* context = transport_get_context(transport);
 
+	if (sockfd < 0)
+	{
+		WLog_WARN(TAG, "Running peer without socket (sockfd=%d)", sockfd);
+		return TRUE;
+	}
+
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	if (!freerdp_tcp_set_keep_alive_mode(settings, sockfd))
-		goto fail;
+	if (sockfd >= 0)
+	{
+		if (!freerdp_tcp_set_keep_alive_mode(settings, sockfd))
+			goto fail;
 
-	socketBio = BIO_new(BIO_s_simple_socket());
+		socketBio = BIO_new(BIO_s_simple_socket());
 
-	if (!socketBio)
-		goto fail;
+		if (!socketBio)
+			goto fail;
 
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
+		BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
+	}
+
 	bufferedBio = BIO_new(BIO_s_buffered_socket());
-
 	if (!bufferedBio)
 		goto fail;
 
-	bufferedBio = BIO_push(bufferedBio, socketBio);
+	if (socketBio)
+		bufferedBio = BIO_push(bufferedBio, socketBio);
 	WINPR_ASSERT(bufferedBio);
 	transport->frontBio = bufferedBio;
 	return TRUE;
@@ -1193,9 +1203,11 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 
 	transport->blocking = blocking;
 
-	WINPR_ASSERT(transport->frontBio);
-	if (!BIO_set_nonblock(transport->frontBio, blocking ? FALSE : TRUE))
-		return FALSE;
+	if (transport->frontBio)
+	{
+		if (!BIO_set_nonblock(transport->frontBio, blocking ? FALSE : TRUE))
+			return FALSE;
+	}
 
 	return TRUE;
 }
