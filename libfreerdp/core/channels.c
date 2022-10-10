@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/stream.h>
 #include <winpr/wtsapi.h>
 
@@ -53,9 +54,14 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 	size_t left;
 	UINT32 flags;
 	size_t chunkSize;
-	rdpMcs* mcs = rdp->mcs;
+	rdpMcs* mcs;
 	const rdpMcsChannel* channel = NULL;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(data || (size == 0));
+
+	mcs = rdp->mcs;
+	WINPR_ASSERT(mcs);
 	for (i = 0; i < mcs->channelCount; i++)
 	{
 		const rdpMcsChannel* cur = &mcs->channels[i];
@@ -109,6 +115,8 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, si
 	UINT32 length;
 	UINT32 flags;
 	size_t chunkLength;
+
+	WINPR_ASSERT(instance);
 
 	if (packetLength < 8)
 	{
@@ -172,11 +180,10 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 		HANDLE hChannel = 0;
 		rdpContext* context = client->context;
 		rdpMcs* mcs = context->rdp->mcs;
-		rdpMcsChannel* mcsChannel = NULL;
 
 		for (index = 0; index < mcs->channelCount; index++)
 		{
-			mcsChannel = &(mcs->channels[index]);
+			const rdpMcsChannel* mcsChannel = &(mcs->channels[index]);
 
 			if (mcsChannel->ChannelId == channelId)
 			{
