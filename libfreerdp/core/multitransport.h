@@ -29,14 +29,21 @@ typedef struct rdp_multitransport rdpMultitransport;
 
 #include <winpr/stream.h>
 
-struct rdp_multitransport
+typedef enum
 {
-	UINT32 placeholder;
-};
+	INITIATE_REQUEST_PROTOCOL_UDPFECR = 0x01,
+	INITIATE_REQUEST_PROTOCOL_UDPFECL = 0x02
+} MultitransportRequestProtocol;
 
-FREERDP_LOCAL int rdp_recv_multitransport_packet(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL int multitransport_client_recv_request(rdpMultitransport* multitransport, wStream* s);
+FREERDP_LOCAL BOOL multitransport_server_send_request(rdpMultitransport* multitransport);
 
-FREERDP_LOCAL rdpMultitransport* multitransport_new(void);
+FREERDP_LOCAL BOOL multitransport_server_recv_response(rdpMultitransport* multitransport,
+                                                       wStream* s, HRESULT* hr);
+FREERDP_LOCAL BOOL multitransport_client_send_response(rdpMultitransport* multitransport,
+                                                       HRESULT hr);
+
+FREERDP_LOCAL rdpMultitransport* multitransport_new(rdpRdp* rdp, UINT16 protocol);
 FREERDP_LOCAL void multitransport_free(rdpMultitransport* multitransport);
 
 #endif /* FREERDP_LIB_CORE_MULTITRANSPORT_H */

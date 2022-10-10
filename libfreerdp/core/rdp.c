@@ -1194,11 +1194,26 @@ int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securityFlags)
 
 	if (securityFlags & SEC_TRANSPORT_REQ)
 	{
+		HRESULT hr = E_ABORT;
 		/* Initiate Multitransport Request PDU */
-		return rdp_recv_multitransport_packet(rdp, s);
+		// TODO: This message is server -> client only
+		int rc = multitransport_client_recv_request(rdp->multitransport, s);
+		if (rc < 0)
+			return rc;
+		if (!multitransport_client_send_response(rdp->multitransport, hr))
+			return -1;
+		return 1;
 	}
 
-	return -1;
+	if (securityFlags & SEC_TRANSPORT_RSP)
+	{
+		/* Initiate Multitransport Request PDU */
+		HRESULT hr; // TODO: Do something with this result
+		// TODO: This message is client -> server only
+		return multitransport_server_recv_response(rdp->multitransport, s, &hr) ? 0 : -1;
+	}
+
+	return 1;
 }
 
 int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
@@ -1969,7 +1984,8 @@ rdpRdp* rdp_new(rdpContext* context)
 	if (!rdp->heartbeat)
 		goto fail;
 
-	rdp->multitransport = multitransport_new();
+	rdp->multitransport = multitransport_new(rdp, INITIATE_REQUEST_PROTOCOL_UDPFECL |
+	                                                  INITIATE_REQUEST_PROTOCOL_UDPFECR);
 
 	if (!rdp->multitransport)
 		goto fail;
