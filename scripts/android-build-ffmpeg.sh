@@ -2,6 +2,7 @@
 
 SCM_URL=https://github.com/FFmpeg/FFmpeg/archive
 SCM_TAG=n4.4.1
+SCM_HASH=82b43cc67296bcd01a59ae6b327cdb50121d3a9e35f41a30de1edd71bb4a6666
 
 OLD_PATH=$PATH
 
@@ -135,7 +136,7 @@ function build {
 # Run the main program.
 common_parse_arguments $@
 common_check_requirements
-common_update $SCM_URL $SCM_TAG $BUILD_SRC
+common_update $SCM_URL $SCM_TAG $BUILD_SRC $SCM_HASH
 
 HOST_PKG_CONFIG_PATH=`command -v pkg-config`
 if [ -z ${HOST_PKG_CONFIG_PATH} ]; then
