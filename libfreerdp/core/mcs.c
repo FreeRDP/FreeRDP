@@ -287,6 +287,7 @@ const char* mcs_domain_pdu_string(DomainMCSPDU pdu)
 			return "DomainMCSPDU_UNKNOWN";
 	}
 }
+
 static BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
                                         DomainParameters* minimumParameters,
                                         DomainParameters* maximumParameters,
@@ -376,16 +377,18 @@ BOOL mcs_read_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16
  * @param length TPKT length
  */
 
-void mcs_write_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16 length,
+BOOL mcs_write_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16 length,
                                     BYTE options)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT((options & ~0x03) == 0);
 	WINPR_ASSERT((domainMCSPDU & ~0x3F) == 0);
 
-	tpkt_write_header(s, length);
-	tpdu_write_data(s);
-	per_write_choice(s, (BYTE)((domainMCSPDU << 2) | options));
+	if (!tpkt_write_header(s, length))
+		return FALSE;
+	if (!tpdu_write_data(s))
+		return FALSE;
+	return per_write_choice(s, (BYTE)((domainMCSPDU << 2) | options));
 }
 
 /**
@@ -1153,7 +1156,8 @@ BOOL mcs_send_attach_user_confirm(rdpMcs* mcs)
  * @param s stream
  */
 
-BOOL mcs_recv_channel_join_request(rdpMcs* mcs, wStream* s, UINT16* channelId)
+BOOL mcs_recv_channel_join_request(rdpMcs* mcs, const rdpSettings* settings, wStream* s,
+                                   UINT16* channelId)
 {
 	UINT16 length;
 	UINT16 userId;
@@ -1164,8 +1168,15 @@ BOOL mcs_recv_channel_join_request(rdpMcs* mcs, wStream* s, UINT16* channelId)
 	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinRequest, &length, NULL))
 		return FALSE;
 
-	if (!per_read_integer16(s, &userId, MCS_BASE_CHANNEL_ID) && (userId == mcs->userId))
+	if (!per_read_integer16(s, &userId, MCS_BASE_CHANNEL_ID))
 		return FALSE;
+	if (userId != mcs->userId)
+	{
+		if (freerdp_settings_get_bool(settings, FreeRDP_TransportDumpReplay))
+			mcs->userId = userId;
+		else
+			return FALSE;
+	}
 	if (!per_read_integer16(s, channelId, 0))
 		return FALSE;
 
@@ -1244,7 +1255,7 @@ BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId)
 BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channelId)
 {
 	wStream* s;
-	int status;
+	int status = -1;
 	UINT16 length = 15;
 
 	if (!mcs)
@@ -1258,13 +1269,19 @@ BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channelId)
 		return FALSE;
 	}
 
-	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinConfirm, length, 2);
-	per_write_enumerated(s, 0, MCS_Result_enum_length);       /* result */
-	per_write_integer16(s, mcs->userId, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
-	per_write_integer16(s, channelId, 0);                     /* requested (ChannelId) */
-	per_write_integer16(s, channelId, 0);                     /* channelId */
+	if (!mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinConfirm, length, 2))
+		goto fail;
+	if (!per_write_enumerated(s, 0, MCS_Result_enum_length)) /* result */
+		goto fail;
+	if (!per_write_integer16(s, mcs->userId, MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
+		goto fail;
+	if (!per_write_integer16(s, channelId, 0)) /* requested (ChannelId) */
+		goto fail;
+	if (!per_write_integer16(s, channelId, 0)) /* channelId */
+		goto fail;
 	Stream_SealLength(s);
 	status = transport_write(mcs->transport, s);
+fail:
 	Stream_Free(s, TRUE);
 	return (status < 0) ? FALSE : TRUE;
 }
@@ -1381,9 +1398,6 @@ rdpMcs* mcs_new(rdpTransport* transport)
 {
 	rdpMcs* mcs;
 
-	if (!transport)
-		return NULL;
-
 	mcs = (rdpMcs*)calloc(1, sizeof(rdpMcs));
 
 	if (!mcs)
@@ -1420,4 +1434,30 @@ void mcs_free(rdpMcs* mcs)
 		free(mcs->channels);
 		free(mcs);
 	}
+}
+
+BOOL mcs_server_apply_to_settings(const rdpMcs* mcs, rdpSettings* settings)
+{
+	UINT32 x;
+
+	WINPR_ASSERT(mcs);
+	WINPR_ASSERT(settings);
+
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, mcs->channelCount))
+		return FALSE;
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ChannelDefArray, NULL,
+	                                      mcs->channelCount))
+		return FALSE;
+
+	for (x = 0; x < mcs->channelCount; x++)
+	{
+		const rdpMcsChannel* current = &mcs->channels[x];
+		CHANNEL_DEF def = { 0 };
+		def.options = current->options;
+		memcpy(def.name, current->Name, sizeof(def.name));
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_ChannelDefArray, x, &def))
+			return FALSE;
+	}
+
+	return TRUE;
 }

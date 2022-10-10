@@ -158,6 +158,8 @@ struct rdp_mcs
 #define MCS_TYPE_CONNECT_RESPONSE 0x66
 
 const char* mcs_domain_pdu_string(DomainMCSPDU pdu);
+BOOL mcs_server_apply_to_settings(const rdpMcs* msc, rdpSettings* settings);
+
 FREERDP_LOCAL BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s);
 FREERDP_LOCAL BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s);
 FREERDP_LOCAL BOOL mcs_send_connect_response(rdpMcs* mcs);
@@ -167,14 +169,15 @@ FREERDP_LOCAL BOOL mcs_recv_attach_user_request(rdpMcs* mcs, wStream* s);
 FREERDP_LOCAL BOOL mcs_send_attach_user_request(rdpMcs* mcs);
 FREERDP_LOCAL BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, wStream* s);
 FREERDP_LOCAL BOOL mcs_send_attach_user_confirm(rdpMcs* mcs);
-FREERDP_LOCAL BOOL mcs_recv_channel_join_request(rdpMcs* mcs, wStream* s, UINT16* channelId);
+FREERDP_LOCAL BOOL mcs_recv_channel_join_request(rdpMcs* mcs, const rdpSettings* settings,
+                                                 wStream* s, UINT16* channelId);
 FREERDP_LOCAL BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channelId);
 FREERDP_LOCAL BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId);
 FREERDP_LOCAL BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channelId);
 FREERDP_LOCAL BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason);
 FREERDP_LOCAL BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs);
 
-FREERDP_LOCAL void mcs_write_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU,
+FREERDP_LOCAL BOOL mcs_write_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU,
                                                   UINT16 length, BYTE options);
 
 FREERDP_LOCAL BOOL mcs_client_begin(rdpMcs* mcs);
