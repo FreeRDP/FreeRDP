@@ -140,8 +140,20 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 
 int rdp_redirection_apply_settings(rdpRdp* rdp)
 {
-	rdpSettings* settings = rdp->settings;
-	rdpRedirection* redirection = rdp->redirection;
+	rdpSettings* settings;
+	rdpRedirection* redirection;
+
+	WINPR_ASSERT(rdp);
+
+	freerdp_settings_free(rdp->settings);
+	rdp->context->settings = rdp->settings = freerdp_settings_clone(rdp->originalSettings);
+
+	settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
+	redirection = rdp->redirection;
+	WINPR_ASSERT(redirection);
+
 	settings->RedirectionFlags = redirection->flags;
 	settings->RedirectedSessionId = redirection->sessionID;
 
