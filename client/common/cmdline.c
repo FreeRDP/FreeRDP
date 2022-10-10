@@ -1117,91 +1117,94 @@ BOOL freerdp_parse_hostname(const char* hostname, char** host, int* port)
 	return TRUE;
 }
 
+static BOOL freerdp_apply_connection_type(rdpSettings* settings, UINT32 type)
+{
+	struct network_settings
+	{
+		size_t id;
+		BOOL value[7];
+	};
+	const struct network_settings config[] = {
+		{ FreeRDP_DisableWallpaper, { TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE } },
+		{ FreeRDP_AllowFontSmoothing, { FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE } },
+		{ FreeRDP_AllowDesktopComposition, { FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE } },
+		{ FreeRDP_DisableFullWindowDrag, { TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE } },
+		{ FreeRDP_DisableMenuAnims, { TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE } },
+		{ FreeRDP_DisableThemes, { TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE } },
+		{ FreeRDP_NetworkAutoDetect, { FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE } }
+	};
+
+	switch (type)
+	{
+		case CONNECTION_TYPE_MODEM:
+		case CONNECTION_TYPE_BROADBAND_LOW:
+		case CONNECTION_TYPE_BROADBAND_HIGH:
+		case CONNECTION_TYPE_SATELLITE:
+		case CONNECTION_TYPE_WAN:
+		case CONNECTION_TYPE_LAN:
+		case CONNECTION_TYPE_AUTODETECT:
+			break;
+		default:
+			WLog_WARN(TAG, "Invalid ConnectionType %" PRIu32 ", aborting", type);
+			return FALSE;
+	}
+
+	for (size_t x = 0; x < ARRAYSIZE(config); x++)
+	{
+		const struct network_settings* cur = &config[x];
+		if (!freerdp_settings_set_bool(settings, cur->id, cur->value[type - 1]))
+			return FALSE;
+	}
+	return TRUE;
+}
+
 BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 {
-	settings->ConnectionType = type;
 
-	if (type == CONNECTION_TYPE_MODEM)
-	{
-		settings->DisableWallpaper = TRUE;
-		settings->AllowFontSmoothing = FALSE;
-		settings->AllowDesktopComposition = FALSE;
-		settings->DisableFullWindowDrag = TRUE;
-		settings->DisableMenuAnims = TRUE;
-		settings->DisableThemes = TRUE;
-		settings->NetworkAutoDetect = FALSE;
-	}
-	else if (type == CONNECTION_TYPE_BROADBAND_LOW)
-	{
-		settings->DisableWallpaper = TRUE;
-		settings->AllowFontSmoothing = FALSE;
-		settings->AllowDesktopComposition = FALSE;
-		settings->DisableFullWindowDrag = TRUE;
-		settings->DisableMenuAnims = TRUE;
-		settings->DisableThemes = FALSE;
-		settings->NetworkAutoDetect = FALSE;
-	}
-	else if (type == CONNECTION_TYPE_SATELLITE)
-	{
-		settings->DisableWallpaper = TRUE;
-		settings->AllowFontSmoothing = FALSE;
-		settings->AllowDesktopComposition = TRUE;
-		settings->DisableFullWindowDrag = TRUE;
-		settings->DisableMenuAnims = TRUE;
-		settings->DisableThemes = FALSE;
-		settings->NetworkAutoDetect = FALSE;
-	}
-	else if (type == CONNECTION_TYPE_BROADBAND_HIGH)
-	{
-		settings->DisableWallpaper = TRUE;
-		settings->AllowFontSmoothing = FALSE;
-		settings->AllowDesktopComposition = TRUE;
-		settings->DisableFullWindowDrag = TRUE;
-		settings->DisableMenuAnims = TRUE;
-		settings->DisableThemes = FALSE;
-		settings->NetworkAutoDetect = FALSE;
-	}
-	else if (type == CONNECTION_TYPE_WAN)
-	{
-		settings->DisableWallpaper = FALSE;
-		settings->AllowFontSmoothing = TRUE;
-		settings->AllowDesktopComposition = TRUE;
-		settings->DisableFullWindowDrag = FALSE;
-		settings->DisableMenuAnims = FALSE;
-		settings->DisableThemes = FALSE;
-		settings->NetworkAutoDetect = FALSE;
-	}
-	else if (type == CONNECTION_TYPE_LAN)
-	{
-		settings->DisableWallpaper = FALSE;
-		settings->AllowFontSmoothing = TRUE;
-		settings->AllowDesktopComposition = TRUE;
-		settings->DisableFullWindowDrag = FALSE;
-		settings->DisableMenuAnims = FALSE;
-		settings->DisableThemes = FALSE;
-		settings->NetworkAutoDetect = FALSE;
-	}
-	else if (type == CONNECTION_TYPE_AUTODETECT)
-	{
-		settings->DisableWallpaper = FALSE;
-		settings->AllowFontSmoothing = TRUE;
-		settings->AllowDesktopComposition = TRUE;
-		settings->DisableFullWindowDrag = FALSE;
-		settings->DisableMenuAnims = FALSE;
-		settings->DisableThemes = FALSE;
-		settings->NetworkAutoDetect = TRUE;
-
-		/* Automatically activate GFX and RFX codec support */
-#ifdef WITH_GFX_H264
-		settings->GfxAVC444 = TRUE;
-		settings->GfxH264 = TRUE;
-#endif
-		settings->RemoteFxCodec = TRUE;
-		settings->SupportGraphicsPipeline = TRUE;
-	}
-	else
-	{
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_ConnectionType, type))
 		return FALSE;
+
+	switch (type)
+	{
+		case CONNECTION_TYPE_MODEM:
+			if (!freerdp_apply_connection_type(settings, type))
+				return FALSE;
+			break;
+		case CONNECTION_TYPE_BROADBAND_LOW:
+			if (!freerdp_apply_connection_type(settings, type))
+				return FALSE;
+			break;
+		case CONNECTION_TYPE_SATELLITE:
+			if (!freerdp_apply_connection_type(settings, type))
+				return FALSE;
+			break;
+		case CONNECTION_TYPE_BROADBAND_HIGH:
+			if (!freerdp_apply_connection_type(settings, type))
+				return FALSE;
+			break;
+		case CONNECTION_TYPE_WAN:
+			if (!freerdp_apply_connection_type(settings, type))
+				return FALSE;
+			break;
+		case CONNECTION_TYPE_LAN:
+			if (!freerdp_apply_connection_type(settings, type))
+				return FALSE;
+			break;
+		case CONNECTION_TYPE_AUTODETECT:
+			if (!freerdp_apply_connection_type(settings, type))
+				return FALSE;
+				/* Automatically activate GFX and RFX codec support */
+#ifdef WITH_GFX_H264
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE))
+				return FALSE;
+#endif
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, TRUE))
+				return FALSE;
+			break;
+		default:
+			return FALSE;
 	}
 
 	return TRUE;
@@ -2034,7 +2037,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				case 16:
 				case 15:
 				case 8:
-					settings->ColorDepth = (UINT32)val;
+					if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, (UINT32)val))
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					break;
 
 				default:
@@ -3570,7 +3574,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	{
 		settings->FastPathOutput = TRUE;
 		settings->FrameMarkerCommandEnabled = TRUE;
-		settings->ColorDepth = 32;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32))
+			return COMMAND_LINE_ERROR;
 	}
 
 	arg = CommandLineFindArgumentA(largs, "port");
@@ -3710,8 +3715,8 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		settings->AudioCapture = TRUE;
 	}
 
-	if (settings->NetworkAutoDetect || settings->SupportHeartbeatPdu ||
-	    settings->SupportMultitransport)
+	if (freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect) ||
+	    settings->SupportHeartbeatPdu || settings->SupportMultitransport)
 	{
 		settings->DeviceRedirection = TRUE; /* these RDP8 features require rdpdr to be registered */
 	}
@@ -3825,6 +3830,9 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			const char* params[] = { RDPSND_CHANNEL_NAME, "sys:fake" };
 
 			if (!freerdp_client_add_static_channel(settings, ARRAYSIZE(params), params))
+				return FALSE;
+
+			if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(params), params))
 				return FALSE;
 		}
 	}
