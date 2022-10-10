@@ -1,7 +1,12 @@
-# 20xx-xx-xx Version 2.x.x
+# 2022-10-12 Version 2.8.1
+
+Notewhorth changes:
+* Fixed CVE-2022-39282
+* Fixed CVE-2022-39283
+* Added missing commit for backported #8041: Remove ALAW/ULAW codecs from linux backends (unreliable)
+* Added hash checks for android build script dependencies
 
 Fixed issues:
-
 * Backported #8190: Fix build break with newer FFMPEG versions
 * Backported #8234: Updated flatpak with build script
 * Backported #8210: Better execinfo support check for android
@@ -9,6 +14,7 @@ Fixed issues:
 * Backported #8176: Check fullscreen state and not setting
 * Backported #8236: Send resize on window state change
 * Backported #7611: Audin macOS monterey fix
+* Backported #8291: Android build script update
 
 # 2022-07-28 Version 2.8.0
 
