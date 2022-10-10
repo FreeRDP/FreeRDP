@@ -23,6 +23,8 @@
 
 #include <freerdp/server/proxy/proxy_context.h>
 
+BOOL pf_channel_setup_rdpdr(pServerContext* ps, pServerStaticChannelContext* channel);
+
 BOOL pf_channel_rdpdr_client_new(pClientContext* pc);
 void pf_channel_rdpdr_client_free(pClientContext* pc);
 
