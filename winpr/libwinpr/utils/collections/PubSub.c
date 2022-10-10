@@ -185,7 +185,9 @@ int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, const 
 	size_t index;
 	wEventType* event;
 	int status = -1;
-	WINPR_ASSERT(pubSub);
+
+	if (!pubSub)
+		return -1;
 	WINPR_ASSERT(e);
 
 	if (pubSub->synchronized)
