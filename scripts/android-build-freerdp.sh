@@ -1,11 +1,12 @@
 #!/bin/bash
 
-JPEG_TAG=master
-OPENH264_TAG=master
-OPENSSL_TAG=openssl-1.1.1n
+OPENH264_TAG=v2.3.1
+OPENH264_HASH=453afa66dacb560bc5fd0468aabee90c483741571bca820a39a1c07f0362dc32
+OPENSSL_TAG=openssl-1.1.1q
+OPENSSL_HASH=d7939ce614029cdff0b6c20f0e2e5703158a489a72b2507b8bd51bf8c8fd10ca
 FFMPEG_TAG=n4.4.1
+FFMPEG_HASH=82b43cc67296bcd01a59ae6b327cdb50121d3a9e35f41a30de1edd71bb4a6666
 
-WITH_JPEG=0
 WITH_OPENH264=0
 WITH_OPENSSL=0
 WITH_FFMPEG=0
@@ -30,10 +31,6 @@ do
 	case $key in
 		--freerdp-src)
 			SRC_DIR="$2"
-			shift
-			;;
-		--jpeg)
-			WITH_JPEG=1
 			shift
 			;;
 		--openh264)
@@ -108,21 +105,6 @@ BASE=$(pwd)
 for ARCH in $BUILD_ARCH
 do
     # build dependencies.
-    if [ $WITH_JPEG -ne 0 ];
-    then
-        if [ $BUILD_DEPS -ne 0 ];
-        then
-            common_run bash $SCRIPT_PATH/android-build-jpeg.sh \
-                --src $BUILD_SRC/jpeg --dst $BUILD_DST \
-                --ndk $ANDROID_NDK \
-                --arch $ARCH \
-                --target $NDK_TARGET \
-                --tag $JPEG_TAG
-        fi
-        CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_JPEG=ON"
-    else
-        CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_JPEG=OFF"
-    fi
     if [ $WITH_OPENH264 -ne 0 ];
     then
         if [ -z "$ANDROID_NDK_OPENH264" ]
@@ -140,7 +122,8 @@ do
                 --ndk "$ANDROID_NDK_OPENH264" \
                 --arch $ARCH \
                 --target $NDK_TARGET \
-                --tag $OPENH264_TAG
+                --tag $OPENH264_TAG \
+								--hash $OPENH264_HASH
         fi
         CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_OPENH264=ON"
     else
@@ -164,7 +147,8 @@ do
                 --ndk "$ANDROID_NDK" \
                 --arch $ARCH \
                 --target $NDK_TARGET \
-                --tag $FFMPEG_TAG
+                --tag $FFMPEG_TAG \
+                --hash $FFMPEG_HASH
         fi
 		CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_FFMPEG=ON -DWITH_SWCALE=ON"
 	else
@@ -179,8 +163,9 @@ do
                 --sdk "$ANDROID_SDK" \
                 --ndk $ANDROID_NDK \
                 --arch $ARCH \
-		--target $NDK_TARGET \
-                --tag $OPENSSL_TAG
+								--target $NDK_TARGET \
+                --tag $OPENSSL_TAG \
+                --hash $OPENSSL_HASH
         fi
     fi
 
