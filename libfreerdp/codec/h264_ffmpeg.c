@@ -71,9 +71,9 @@ static inline char* error_string(char* errbuf, size_t errbuf_size, int errnum)
 
 typedef struct
 {
-	AVCodec* codecDecoder;
+	const AVCodec* codecDecoder;
 	AVCodecContext* codecDecoderContext;
-	AVCodec* codecEncoder;
+	const AVCodec* codecEncoder;
 	AVCodecContext* codecEncoderContext;
 	AVCodecParserContext* codecParser;
 	AVFrame* videoFrame;
