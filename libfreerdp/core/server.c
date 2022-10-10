@@ -475,6 +475,7 @@ static BOOL WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, const 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 	WINPR_ASSERT(client->context->rdp);
+
 	mcs = client->context->rdp->mcs;
 	WINPR_ASSERT(mcs);
 
@@ -1198,8 +1199,10 @@ void channel_free(rdpPeerChannel* channel)
 }
 
 static rdpPeerChannel* channel_new(WTSVirtualChannelManager* vcm, freerdp_peer* client,
-                                   UINT32 ChannelId, UINT16 index, UINT16 type, size_t chunkSize)
+                                   UINT32 ChannelId, UINT16 index, UINT16 type, size_t chunkSize,
+                                   const char* name)
 {
+	size_t len;
 	wObject queueCallbacks = { 0 };
 	rdpPeerChannel* channel = (rdpPeerChannel*)calloc(1, sizeof(rdpPeerChannel));
 
@@ -1208,6 +1211,9 @@ static rdpPeerChannel* channel_new(WTSVirtualChannelManager* vcm, freerdp_peer* 
 
 	if (!channel)
 		goto fail;
+
+	len = strnlen(name, sizeof(channel->channelName) - 1);
+	strncpy(channel->channelName, name, len);
 
 	channel->vcm = vcm;
 	channel->client = client;
@@ -1262,9 +1268,9 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 	mcs = context->rdp->mcs;
 	WINPR_ASSERT(mcs);
 
-	length = strlen(pVirtualName);
+	length = strnlen(pVirtualName, CHANNEL_NAME_LEN + 1);
 
-	if (length > 8)
+	if (length > CHANNEL_NAME_LEN)
 	{
 		SetLastError(ERROR_NOT_FOUND);
 		return NULL;
@@ -1290,9 +1296,10 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 
 	if (!channel)
 	{
-		channel =
-		    channel_new(vcm, client, joined_channel->ChannelId, index, RDP_PEER_CHANNEL_TYPE_SVC,
-		                context->settings->VirtualChannelChunkSize);
+		const UINT32 VirtualChannelChunkSize =
+		    freerdp_settings_get_uint32(context->settings, FreeRDP_VirtualChannelChunkSize);
+		channel = channel_new(vcm, client, joined_channel->ChannelId, index,
+		                      RDP_PEER_CHANNEL_TYPE_SVC, VirtualChannelChunkSize, pVirtualName);
 
 		if (!channel)
 			goto fail;
@@ -1362,8 +1369,11 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 	WINPR_ASSERT(client->context->settings);
-	channel = channel_new(vcm, client, 0, 0, RDP_PEER_CHANNEL_TYPE_DVC,
-	                      client->context->settings->VirtualChannelChunkSize);
+
+	const UINT32 VirtualChannelChunkSize =
+	    freerdp_settings_get_uint32(client->context->settings, FreeRDP_VirtualChannelChunkSize);
+	channel = channel_new(vcm, client, 0, 0, RDP_PEER_CHANNEL_TYPE_DVC, VirtualChannelChunkSize,
+	                      pVirtualName);
 
 	if (!channel)
 	{
@@ -1552,7 +1562,9 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 		WINPR_ASSERT(context->settings);
 		while (Length > 0)
 		{
-			s = Stream_New(NULL, context->settings->VirtualChannelChunkSize);
+			const UINT32 VirtualChannelChunkSize =
+			    freerdp_settings_get_uint32(context->settings, FreeRDP_VirtualChannelChunkSize);
+			s = Stream_New(NULL, VirtualChannelChunkSize);
 
 			if (!s)
 			{
