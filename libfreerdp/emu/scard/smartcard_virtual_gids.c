@@ -1446,7 +1446,8 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	/* Check params */
 	if (!cert || !privateKey || !pin)
 	{
-		WLog_ERR(TAG, "Passed invalid NULL pointer argument");
+		WLog_DBG(TAG, "Passed invalid NULL argument: cert=%p, privateKey=%p, pin=%p", cert,
+		         privateKey, pin);
 		goto init_failed;
 	}
 
