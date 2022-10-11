@@ -568,7 +568,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 2, mech_input_buffers };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
-	SECURITY_STATUS sub_status;
+	SECURITY_STATUS sub_status = SEC_E_INTERNAL_ERROR;
 	WinPrAsn1Encoder* enc = NULL;
 	wStream s;
 	const Mech* mech;

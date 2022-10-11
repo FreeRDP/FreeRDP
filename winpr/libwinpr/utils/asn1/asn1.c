@@ -390,7 +390,7 @@ size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc)
 {
 	size_t innerLen, i, unused;
 	size_t innerHeaderBytes, outerHeaderBytes;
-	BYTE containerByte;
+	BYTE containerByte = 0;
 	WinPrAsn1EncContainer* container;
 	Asn1Chunk* chunk;
 	wStream staticS;
