@@ -353,17 +353,17 @@ int sspi_SetAuthIdentityWithLengthW(SEC_WINNT_AUTH_IDENTITY* identity, const WCH
 	sspi_FreeAuthIdentity(identity);
 	identity->Flags &= ~SEC_WINNT_AUTH_IDENTITY_ANSI;
 	identity->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
-	if (user)
+	if (user && userLen > 0)
 	{
 		if (!copy(&identity->User, &identity->UserLength, user, userLen))
 			return -1;
 	}
-	if (domain)
+	if (domain && domainLen > 0)
 	{
 		if (!copy(&identity->Domain, &identity->DomainLength, domain, domainLen))
 			return -1;
 	}
-	if (password)
+	if (password && passwordLen > 0)
 	{
 		if (!copy(&identity->Password, &identity->PasswordLength, password, passwordLen))
 			return -1;
