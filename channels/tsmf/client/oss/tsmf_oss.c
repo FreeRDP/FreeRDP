@@ -58,9 +58,12 @@ typedef struct
 	UINT32 data_size_last;
 } TSMFOssAudioDevice;
 
-#define OSS_LOG_ERR(_text, _error) \
-	if (_error != 0)               \
-		WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error));
+#define OSS_LOG_ERR(_text, _error)                                         \
+	do                                                                     \
+	{                                                                      \
+		if (_error != 0)                                                   \
+			WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error)); \
+	} while (0)
 
 static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 {
