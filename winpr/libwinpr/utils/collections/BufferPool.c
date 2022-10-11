@@ -23,16 +23,12 @@
 
 #include <winpr/collections.h>
 
-/* WARNING: Do not access structs directly, the API will be reworked
- * to make this opaque. */
 typedef struct
 {
 	SSIZE_T size;
 	void* buffer;
 } wBufferPoolItem;
 
-/* WARNING: Do not access structs directly, the API will be reworked
- * to make this opaque. */
 struct s_wBufferPool
 {
 	SSIZE_T fixedSize;
