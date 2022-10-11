@@ -277,7 +277,7 @@ xfFloatbarButton* xf_floatbar_new_button(xfFloatbar* floatbar, int type)
 	WINPR_ASSERT(floatbar);
 	WINPR_ASSERT(floatbar->xfc);
 	WINPR_ASSERT(floatbar->xfc->display);
-	WINPR_ASSERT(floatbar->xfc->window);
+	WINPR_ASSERT(floatbar->handle);
 
 	button = (xfFloatbarButton*)calloc(1, sizeof(xfFloatbarButton));
 	button->type = type;
