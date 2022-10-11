@@ -1011,9 +1011,6 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 
 	size = credssp_auth_trailer_size(auth);
 
-	if (size < 0)
-		goto fail;
-
 	request_pdu.header = rpc_pdu_header_init(rpc);
 	request_pdu.header.ptype = PTYPE_REQUEST;
 	request_pdu.header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
