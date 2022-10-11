@@ -903,15 +903,15 @@ static BOOL freerdp_peer_send_server_redirection_pdu(
 	UINT16 length;
 	UINT32 redirFlags;
 
-	UINT32 targetNetAddressLength;
-	UINT32 loadBalanceInfoLength;
-	UINT32 userNameLength;
-	UINT32 domainLength;
-	UINT32 passwordLength;
-	UINT32 targetFQDNLength;
-	UINT32 targetNetBiosNameLength;
-	UINT32 targetNetAddressesLength;
-	UINT32* targetNetAddressesWLength;
+	UINT32 targetNetAddressLength = 0;
+	UINT32 loadBalanceInfoLength = 0;
+	UINT32 userNameLength = 0;
+	UINT32 domainLength = 0;
+	UINT32 passwordLength = 0;
+	UINT32 targetFQDNLength = 0;
+	UINT32 targetNetBiosNameLength = 0;
+	UINT32 targetNetAddressesLength = 0;
+	UINT32* targetNetAddressesWLength = NULL;
 
 	LPWSTR targetNetAddressW = NULL;
 	LPWSTR userNameW = NULL;
