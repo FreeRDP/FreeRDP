@@ -136,6 +136,9 @@ typedef struct
 	SecBuffer mic;
 } NegToken;
 
+static const NegToken empty_neg_token = { NOSTATE,        FALSE,          { 0, NULL },
+	                                      { 0, 0, NULL }, { 0, 0, NULL }, { 0, 0, NULL } };
+
 static NEGOTIATE_CONTEXT* negotiate_ContextNew(NEGOTIATE_CONTEXT* init_context)
 {
 	NEGOTIATE_CONTEXT* context = NULL;
@@ -559,8 +562,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	MechCred* creds;
 	PCtxtHandle sub_context = NULL;
 	PCredHandle sub_cred = NULL;
-	NegToken input_token = { NOSTATE, 0 };
-	NegToken output_token = { NOSTATE, 0 };
+	NegToken input_token = empty_neg_token;
+	NegToken output_token = empty_neg_token;
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
 	PSecBuffer bindings_buffer = NULL;
@@ -882,8 +885,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	NEGOTIATE_CONTEXT init_context = { 0 };
 	MechCred* creds;
 	PCredHandle sub_cred = NULL;
-	NegToken input_token = { NOSTATE, 0 };
-	NegToken output_token = { NOSTATE, 0 };
+	NegToken input_token = empty_neg_token;
+	NegToken output_token = empty_neg_token;
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
