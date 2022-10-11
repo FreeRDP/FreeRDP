@@ -32,6 +32,7 @@
 #endif
 #endif
 
+#include <freerdp/log.h>
 #define TAG FREERDP_TAG("primitives")
 
 typedef struct
