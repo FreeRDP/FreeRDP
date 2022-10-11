@@ -609,8 +609,8 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	UINT32 x, y;
 	UINT32 nXSrc;
 	UINT32 nYSrc;
-	UINT32 nXDst;
-	UINT32 nYDst;
+	INT64 nXDst;
+	INT64 nYDst;
 	UINT32 nWidth;
 	UINT32 nHeight;
 	UINT32 nSrcStep;
@@ -641,7 +641,7 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 		if (nXDst >= nWidth)
 			return 1;
 
-		nXSrc = nXDst;
+		nXSrc = (UINT32)nXDst;
 		nWidth -= nXDst;
 		nXDst = 0;
 	}
@@ -656,7 +656,7 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 		if (nYDst >= nHeight)
 			return 1;
 
-		nYSrc = nYDst;
+		nYSrc = (UINT32)nYDst;
 		nHeight -= nYDst;
 		nYDst = 0;
 	}

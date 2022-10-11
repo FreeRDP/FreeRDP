@@ -55,7 +55,7 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
 	surface->width = width;
 	surface->height = height;
 
-	if (scanline < 0)
+	if (scanline == 0)
 		scanline = width * 4;
 
 	surface->scanline = scanline;
