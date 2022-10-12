@@ -90,7 +90,11 @@ typedef enum
 	RDP_VERSION_10_4 = 0x00080009,
 	RDP_VERSION_10_5 = 0x0008000a,
 	RDP_VERSION_10_6 = 0x0008000b,
-	RDP_VERSION_10_7 = 0x0008000C
+	RDP_VERSION_10_7 = 0x0008000C,
+	RDP_VERSION_10_8 = 0x0008000D,
+	RDP_VERSION_10_9 = 0x0008000E,
+	RDP_VERSION_10_10 = 0x0008000F,
+	RDP_VERSION_10_11 = 0x00080010,
 } RDP_VERSION;
 
 /* Color depth */
@@ -1824,6 +1828,8 @@ extern "C"
 
 	FREERDP_API char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer,
 	                                                       size_t length);
+
+	FREERDP_API const char* freerdp_rdp_version_string(UINT32 version);
 
 #ifdef __cplusplus
 }
