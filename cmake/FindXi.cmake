@@ -29,26 +29,28 @@
 # limitations under the License.
 #=============================================================================
 
+find_package(PkgConfig)
+
+if(PKG_CONFIG_FOUND)
+	pkg_check_modules(_XI xi)
+endif (PKG_CONFIG_FOUND)
+
 include(CheckSymbolExists)
 
 find_path(XI_INCLUDE_DIR NAMES X11/extensions/XInput2.h
-          PATHS /opt/X11/include
-          DOC "The Xi include directory")
+	PATHS /opt/X11/include
+		${_XI_INCLUDEDIR}
+		${_XI_INCLUDE_DIRS}
+	DOC "The Xi include directory")
 
 find_library(XI_LIBRARY NAMES Xi
-          PATHS /opt/X11/lib
-          DOC "The Xi library")
+	PATHS /opt/X11/lib
+		${_XI_LIBDIR}
+		${_XI_LIBRARY_DIRS}
+	DOC "The Xi library")
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Xi DEFAULT_MSG XI_LIBRARY XI_INCLUDE_DIR)
-
-if(XI_FOUND)
-	check_symbol_exists(XITouchClass "${XI_INCLUDE_DIR}/X11/extensions/XInput2.h" HAVE_XI_TOUCH_CLASS)
-
-	if (NOT HAVE_XI_TOUCH_CLASS)
-		set(XI_FOUND 0)
-	endif()
-endif()
 
 if(XI_FOUND)
 	set(XI_LIBRARIES ${XI_LIBRARY})
