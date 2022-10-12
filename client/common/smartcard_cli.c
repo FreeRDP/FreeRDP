@@ -54,7 +54,7 @@ BOOL freerdp_smartcard_list(const rdpSettings* settings)
 		if (info->upn)
 			printf("\t* UPN: %s\n", info->upn);
 	}
-	smartcardCerts_Free(certs);
+	smartcardCerts_Free(&certs);
 
 	return TRUE;
 }

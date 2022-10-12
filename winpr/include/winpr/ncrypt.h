@@ -202,6 +202,14 @@ extern "C"
 	                                                            LPCWSTR pszProviderName,
 	                                                            DWORD dwFlags, LPCSTR* modulePaths);
 
+	/**
+	 * Gives a string representation of a SECURITY_STATUS
+	 *
+	 * @param status [in] SECURITY_STATUS that we want as string
+	 * @return the string representation of status
+	 */
+	WINPR_API const char* winpr_NCryptSecurityStatusError(SECURITY_STATUS status);
+
 #ifdef __cplusplus
 }
 #endif
