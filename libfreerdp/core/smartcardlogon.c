@@ -151,9 +151,13 @@ static void smartcardCertInfoPrivate_Free(SmartcardCertInfoPrivate* scCert)
 	*scCert = empty;
 }
 
-void smartcardCerts_Free(SmartcardCerts* scCert)
+void smartcardCerts_Free(SmartcardCerts** pscCert)
 {
 	size_t x;
+	SmartcardCerts* scCert;
+
+	WINPR_ASSERT(pscCert);
+	scCert = *pscCert;
 	if (!scCert)
 		return;
 
@@ -161,13 +165,17 @@ void smartcardCerts_Free(SmartcardCerts* scCert)
 		smartcardCertInfoPrivate_Free(&scCert->certs[x]);
 
 	free(scCert);
+	*pscCert = NULL;
 }
 
 static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 {
 	scCert->upn = crypto_cert_get_upn(scCert->certificate->px509);
 	if (!scCert->upn)
+	{
+		WLog_DBG(TAG, "%s has no UPN, trying emailAddress", scCert->containerName);
 		scCert->upn = crypto_cert_get_email(scCert->certificate->px509);
+	}
 
 	if (scCert->upn)
 	{
@@ -280,10 +288,19 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		                       NULL) <= 0)
 			goto endofloop;
 
+		WLog_DBG(TAG, "opening key %s", cert->info.containerName);
+
 		status = NCryptOpenKey(provider, &phKey, keyName->pszName, keyName->dwLegacyKeySpec,
-		                       keyName->dwFlags);
+		                       NCRYPT_SILENT_FLAG);
 		if (status != ERROR_SUCCESS)
+		{
+			WLog_DBG(TAG,
+			         "unable to NCryptOpenKey(dwLegacyKeySpec=0x%" PRIx32 " dwFlags=0x%" PRIx32
+			         "), status=%s, skipping",
+			         status, keyName->dwLegacyKeySpec, keyName->dwFlags,
+			         winpr_NCryptSecurityStatusError(status));
 			goto endofloop;
+		}
 
 		cert->info.csp = _wcsdup(csp);
 		if (!cert->info.csp)
@@ -294,7 +311,8 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		                           &cbOutput, NCRYPT_SILENT_FLAG);
 		if (status != ERROR_SUCCESS)
 		{
-			WLog_ERR(TAG, "unable to retrieve slotId for key %s", cert->info.containerName);
+			WLog_ERR(TAG, "unable to retrieve slotId for key %s, status=%s",
+			         cert->info.containerName, winpr_NCryptSecurityStatusError(status));
 			goto endofloop;
 		}
 #endif /* _WIN32 */
@@ -335,6 +353,8 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		if (status != ERROR_SUCCESS)
 		{
 			/* can happen that key don't have certificates */
+			WLog_DBG(TAG, "unable to retrieve certificate property len, status=0x%lx, skipping",
+			         status);
 			goto endofloop;
 		}
 
@@ -371,7 +391,10 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		}
 
 		if (!treat_sc_cert(&cert->info))
+		{
+			WLog_DBG(TAG, "error treating cert");
 			goto endofloop;
+		}
 
 		if (userFilter && cert->info.userHint && strcmp(cert->info.userHint, userFilter) != 0)
 		{
@@ -522,7 +545,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 
 out:
 	if (!ret)
-		smartcardCerts_Free(certs);
+		smartcardCerts_Free(&certs);
 	free(scope);
 	return ret;
 }
@@ -599,6 +622,7 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
 	 * We need files for PKINIT to read, so write the certificate to some
 	 * temporary location and use that.
 	 */
+	WLog_DBG(TAG, "writing PKINIT cert/key to %s and %s", keyPath, certPath);
 	if (!write_pem(keyPath, freerdp_settings_get_string(settings, FreeRDP_SmartcardPrivateKey)))
 		goto out_error;
 	if (!write_pem(certPath, freerdp_settings_get_string(settings, FreeRDP_SmartcardCertificate)))
@@ -616,7 +640,7 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
 
 out_error:
 	if (!rc)
-		smartcardCerts_Free(certs);
+		smartcardCerts_Free(&certs);
 	return rc;
 }
 

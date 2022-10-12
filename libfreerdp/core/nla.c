@@ -124,6 +124,8 @@ struct rdp_nla
 
 	rdpCredsspAuth* auth;
 	char* pkinitArgs;
+	SmartcardCerts* smartcardCerts;
+	DWORD nsmartcardCerts;
 	BYTE certSha1[20];
 };
 
@@ -185,9 +187,7 @@ static const UINT32 NonceLength = 32;
 
 static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 {
-	SmartcardCerts* certs = NULL;
 	const SmartcardCertInfo* info = NULL;
-	DWORD count;
 	rdpSettings* settings;
 	BOOL ret = FALSE;
 
@@ -200,22 +200,24 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 	if (!settings->SmartcardLogon)
 		return TRUE;
 
-	if (!smartcard_enumerateCerts(settings, &certs, &count))
+	smartcardCerts_Free(&nla->smartcardCerts);
+
+	if (!smartcard_enumerateCerts(settings, &nla->smartcardCerts, &nla->nsmartcardCerts))
 	{
 		WLog_ERR(TAG, "unable to list smartcard certificates");
 		return FALSE;
 	}
 
-	if (count < 1)
+	if (nla->nsmartcardCerts < 1)
 	{
 		WLog_ERR(TAG, "no smartcard certificates found");
 		goto out;
 	}
 
-	if (count != 1)
+	if (nla->nsmartcardCerts != 1)
 		goto setup_pin;
 
-	info = smartcard_getCertInfo(certs, 0);
+	info = smartcard_getCertInfo(nla->smartcardCerts, 0);
 	if (!info)
 		goto out;
 
@@ -291,8 +293,6 @@ setup_pin:
 
 	ret = TRUE;
 out:
-	smartcardCerts_Free(certs);
-
 	return ret;
 }
 
@@ -1694,6 +1694,7 @@ void nla_free(rdpNla* nla)
 	if (!nla)
 		return;
 
+	smartcardCerts_Free(&nla->smartcardCerts);
 	sspi_SecBufferFree(&nla->pubKeyAuth);
 	sspi_SecBufferFree(&nla->authInfo);
 	sspi_SecBufferFree(&nla->negoToken);
@@ -1703,8 +1704,8 @@ void nla_free(rdpNla* nla)
 	credssp_auth_free(nla->auth);
 
 	sspi_FreeAuthIdentity(nla->identity);
+	free(nla->pkinitArgs);
 	free(nla->identity);
-
 	free(nla);
 }
 
