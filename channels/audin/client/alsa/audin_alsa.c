@@ -242,10 +242,6 @@ static BOOL audin_alsa_format_supported(IAudinDevice* device, const AUDIO_FORMAT
 
 			break;
 
-		case WAVE_FORMAT_ALAW:
-		case WAVE_FORMAT_MULAW:
-			return TRUE;
-
 		default:
 			return FALSE;
 	}

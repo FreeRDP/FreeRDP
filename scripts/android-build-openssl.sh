@@ -1,7 +1,8 @@
 #!/bin/bash
 
-SCM_URL=https://github.com/openssl/openssl
-SCM_TAG=master
+SCM_URL=https://www.openssl.org/source
+SCM_TAG=OpenSSL_1_1_1q
+SCM_HASH=d7939ce614029cdff0b6c20f0e2e5703158a489a72b2507b8bd51bf8c8fd10ca
 
 COMPILER=4.9
 
@@ -43,7 +44,7 @@ function build {
 # Run the main program.
 common_parse_arguments $@
 common_check_requirements
-common_update $SCM_URL $SCM_TAG $BUILD_SRC
+common_update $SCM_URL $SCM_TAG $BUILD_SRC $SCM_HASH
 
 ORG_PATH=$PATH
 for ARCH in $BUILD_ARCH
@@ -74,4 +75,3 @@ then
 	common_run mkdir -p $BUILD_DST/$ARCH/include
 fi
 common_run cp -L -R $BUILD_SRC/include/openssl $BUILD_DST/$ARCH/include/
-
