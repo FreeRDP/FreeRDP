@@ -1839,3 +1839,40 @@ char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer, size_t le
 		winpr_str_append("RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED", buffer, length, "|");
 	return buffer;
 }
+
+const char* freerdp_rdp_version_string(UINT32 version)
+{
+	switch (version)
+	{
+		case RDP_VERSION_4:
+			return "RDP_VERSION_4";
+		case RDP_VERSION_5_PLUS:
+			return "RDP_VERSION_5_PLUS";
+		case RDP_VERSION_10_0:
+			return "RDP_VERSION_10_0";
+		case RDP_VERSION_10_1:
+			return "RDP_VERSION_10_1";
+		case RDP_VERSION_10_2:
+			return "RDP_VERSION_10_2";
+		case RDP_VERSION_10_3:
+			return "RDP_VERSION_10_3";
+		case RDP_VERSION_10_4:
+			return "RDP_VERSION_10_4";
+		case RDP_VERSION_10_5:
+			return "RDP_VERSION_10_5";
+		case RDP_VERSION_10_6:
+			return "RDP_VERSION_10_6";
+		case RDP_VERSION_10_7:
+			return "RDP_VERSION_10_7";
+		case RDP_VERSION_10_8:
+			return "RDP_VERSION_10_8";
+		case RDP_VERSION_10_9:
+			return "RDP_VERSION_10_9";
+		case RDP_VERSION_10_10:
+			return "RDP_VERSION_10_11";
+		case RDP_VERSION_10_11:
+			return "RDP_VERSION_10_11";
+		default:
+			return "RDP_VERSION_UNKNOWN";
+	}
+}
