@@ -825,7 +825,8 @@ static int nla_server_authenticate(rdpNla* nla)
 
 		if (res == 1)
 		{
-			if (nla->negoToken.cbBuffer > 0)
+			/* Process final part of the nego token exchange */
+			if (credssp_auth_have_output_token(nla->auth))
 			{
 				if (!nla_send(nla))
 					return -1;
@@ -843,6 +844,9 @@ static int nla_server_authenticate(rdpNla* nla)
 
 			if (!res)
 				return -1;
+
+			/* Clear nego token buffer or we will send it again to the client */
+			sspi_SecBufferFree(&nla->negoToken);
 
 			if (nla->peerVersion < 5)
 				res = nla_encrypt_public_key_echo(nla);
@@ -1414,7 +1418,7 @@ BOOL nla_send(rdpNla* nla)
 	}
 
 	/* clientNonce [5] OCTET STRING */
-	if (nla->ClientNonce.cbBuffer > 0)
+	if (!nla->server && nla->ClientNonce.cbBuffer > 0)
 	{
 		WLog_DBG(TAG, "   ----->> client nonce");
 		octet_string.data = nla->ClientNonce.pvBuffer;
@@ -1516,7 +1520,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 					return -1;
 				break;
 			case 3:
-				WLog_DBG(TAG, "   <<----- public key info");
+				WLog_DBG(TAG, "   <<----- public key auth");
 				/* pubKeyAuth [3] OCTET STRING */
 				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
 					return -1;
