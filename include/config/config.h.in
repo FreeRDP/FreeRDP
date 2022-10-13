@@ -50,6 +50,10 @@
 
 #cmakedefine WITH_VAAPI
 
+#cmakedefine WITH_CHANNELS
+#cmakedefine WITH_CLIENT_CHANNELS
+#cmakedefine WITH_SERVER_CHANNELS
+
 #cmakedefine WITH_CHANNEL_GFXREDIR
 #cmakedefine WITH_CHANNEL_RDPAPPLIST
 
