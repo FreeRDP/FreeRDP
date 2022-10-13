@@ -273,8 +273,8 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 #ifdef _WIN32
 		{
 			BOOL isVistaOrLater;
-			OSVERSIONINFOA verinfo;
-			ZeroMemory(&verinfo, sizeof(OSVERSIONINFOA));
+			OSVERSIONINFOA verinfo = { 0 };
+
 			verinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
 			GetVersionExA(&verinfo);
 			isVistaOrLater =

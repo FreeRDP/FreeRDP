@@ -124,6 +124,7 @@ BOOL credssp_auth_setup_auth_data(rdpCredsspAuth* auth, const SEC_WINNT_AUTH_IDE
 {
 	SEC_WINNT_AUTH_IDENTITY_EXW* identityEx;
 
+	WINPR_ASSERT(pAuthData);
 	ZeroMemory(pAuthData, sizeof(SEC_WINNT_AUTH_IDENTITY_WINPR));
 
 	identityEx = &pAuthData->identity;

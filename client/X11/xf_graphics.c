@@ -525,9 +525,9 @@ static BOOL xf_Pointer_SetNull(rdpContext* context)
 
 	if (nullcursor == None)
 	{
-		XcursorImage ci;
+		XcursorImage ci = { 0 };
 		XcursorPixel xp = 0;
-		ZeroMemory(&ci, sizeof(ci));
+
 		ci.version = XCURSOR_IMAGE_VERSION;
 		ci.size = sizeof(ci);
 		ci.width = ci.height = 1;

@@ -126,7 +126,7 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	char* name;
 	int status;
 	HANDLE hNamedPipe;
-	struct sockaddr_un s;
+	struct sockaddr_un s = { 0 };
 	WINPR_NAMED_PIPE* pNamedPipe;
 
 	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
@@ -196,7 +196,6 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	pNamedPipe->clientfd = socket(PF_LOCAL, SOCK_STREAM, 0);
 	pNamedPipe->serverfd = -1;
 	pNamedPipe->ServerMode = FALSE;
-	ZeroMemory(&s, sizeof(struct sockaddr_un));
 	s.sun_family = AF_UNIX;
 	sprintf_s(s.sun_path, ARRAYSIZE(s.sun_path), "%s", pNamedPipe->lpFilePath);
 	status = connect(pNamedPipe->clientfd, (struct sockaddr*)&s, sizeof(struct sockaddr_un));

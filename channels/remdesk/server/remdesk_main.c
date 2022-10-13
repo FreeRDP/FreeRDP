@@ -97,8 +97,7 @@ static UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* hea
 {
 	int index;
 	UINT32 ChannelNameLen;
-	WCHAR ChannelNameW[32];
-	ZeroMemory(ChannelNameW, sizeof(ChannelNameW));
+	WCHAR ChannelNameW[32] = { 0 };
 
 	for (index = 0; index < 32; index++)
 	{

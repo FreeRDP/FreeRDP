@@ -148,8 +148,8 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 
 - (void)CreateContext
 {
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
+
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
 	RdpClientEntry(&clientEntryPoints);

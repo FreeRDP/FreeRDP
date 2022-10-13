@@ -34,11 +34,10 @@ int mf_is_event_set(mfEventQueue* event_queue)
 {
 	fd_set rfds;
 	int num_set;
-	struct timeval time;
+	struct timeval time = { 0 };
 
 	FD_ZERO(&rfds);
 	FD_SET(event_queue->pipe_fd[0], &rfds);
-	memset(&time, 0, sizeof(time));
 	num_set = select(event_queue->pipe_fd[0] + 1, &rfds, 0, 0, &time);
 
 	return (num_set == 1);

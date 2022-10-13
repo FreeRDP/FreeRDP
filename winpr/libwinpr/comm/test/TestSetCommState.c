@@ -27,6 +27,8 @@
 
 static void init_empty_dcb(DCB* pDcb)
 {
+	WINPR_ASSERT(pDcb);
+
 	ZeroMemory(pDcb, sizeof(DCB));
 	pDcb->DCBlength = sizeof(DCB);
 	pDcb->XonChar = 1;

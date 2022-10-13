@@ -89,7 +89,7 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 	BYTE *p1, *p2;
 	BOOL rows[1024];
 #ifdef WITH_DEBUG_SHADOW_CAPTURE
-	BOOL cols[1024];
+	BOOL cols[1024] = { FALSE };
 #endif
 	allEqual = TRUE;
 	ZeroMemory(rect, sizeof(RECTANGLE_16));

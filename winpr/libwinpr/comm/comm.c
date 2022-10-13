@@ -472,7 +472,7 @@ error_handle:
  */
 BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 {
-	struct termios upcomingTermios;
+	struct termios upcomingTermios = { 0 };
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
 	DWORD bytesReturned;
 
@@ -535,8 +535,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 		return FALSE;
 	}
 
-	SERIAL_HANDFLOW handflow;
-	ZeroMemory(&handflow, sizeof(SERIAL_HANDFLOW));
+	SERIAL_HANDFLOW handflow = { 0 };
 
 	if (lpDCB->fOutxCtsFlow)
 	{
@@ -641,7 +640,6 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	/** upcomingTermios stage **/
-	ZeroMemory(&upcomingTermios, sizeof(struct termios));
 
 	if (tcgetattr(pComm->fd, &upcomingTermios) <
 	    0) /* NB: preserves current settings not directly handled by the Communication Functions */

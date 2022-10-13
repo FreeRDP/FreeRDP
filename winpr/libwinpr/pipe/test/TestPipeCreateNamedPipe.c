@@ -191,18 +191,14 @@ out:
 #define TESTNUMPIPESST 16
 static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 {
-	HANDLE servers[TESTNUMPIPESST];
-	HANDLE clients[TESTNUMPIPESST];
-	char sndbuf[PIPE_BUFFER_SIZE];
-	char rcvbuf[PIPE_BUFFER_SIZE];
+	HANDLE servers[TESTNUMPIPESST] = { 0 };
+	HANDLE clients[TESTNUMPIPESST] = { 0 };
 	DWORD dwRead;
 	DWORD dwWritten;
 	int i;
 	int numPipes;
 	BOOL bSuccess = FALSE;
 	numPipes = TESTNUMPIPESST;
-	memset(servers, 0, sizeof(servers));
-	memset(clients, 0, sizeof(clients));
 	WaitForSingleObject(ReadyEvent, INFINITE);
 
 	for (i = 0; i < numPipes; i++)
@@ -306,52 +302,59 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 
 	for (i = 0; i < numPipes; i++)
 	{
-		/* Test writing from clients to servers */
-		ZeroMemory(sndbuf, sizeof(sndbuf));
-		ZeroMemory(rcvbuf, sizeof(rcvbuf));
-		sprintf_s(sndbuf, sizeof(sndbuf), "CLIENT->SERVER ON PIPE #%05d", i);
-
-		if (!WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
-		    dwWritten != sizeof(sndbuf))
 		{
-			printf("%s: Error writing to client end of pipe #%d\n", __FUNCTION__, i);
-			goto out;
+			char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
+			char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
+			/* Test writing from clients to servers */
+			sprintf_s(sndbuf, sizeof(sndbuf), "CLIENT->SERVER ON PIPE #%05d", i);
+
+			if (!WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
+			    dwWritten != sizeof(sndbuf))
+			{
+				printf("%s: Error writing to client end of pipe #%d\n", __FUNCTION__, i);
+				goto out;
+			}
+
+			if (!ReadFile(servers[i], rcvbuf, dwWritten, &dwRead, NULL) || dwRead != dwWritten)
+			{
+				printf("%s: Error reading on server end of pipe #%d\n", __FUNCTION__, i);
+				goto out;
+			}
+
+			if (memcmp(sndbuf, rcvbuf, sizeof(sndbuf)))
+			{
+				printf("%s: Error data read on server end of pipe #%d is corrupted\n", __FUNCTION__,
+				       i);
+				goto out;
+			}
 		}
-
-		if (!ReadFile(servers[i], rcvbuf, dwWritten, &dwRead, NULL) || dwRead != dwWritten)
 		{
-			printf("%s: Error reading on server end of pipe #%d\n", __FUNCTION__, i);
-			goto out;
-		}
 
-		if (memcmp(sndbuf, rcvbuf, sizeof(sndbuf)))
-		{
-			printf("%s: Error data read on server end of pipe #%d is corrupted\n", __FUNCTION__, i);
-			goto out;
-		}
+			char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
+			char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
+			/* Test writing from servers to clients */
 
-		/* Test writing from servers to clients */
-		ZeroMemory(sndbuf, sizeof(sndbuf));
-		ZeroMemory(rcvbuf, sizeof(rcvbuf));
-		sprintf_s(sndbuf, sizeof(sndbuf), "SERVER->CLIENT ON PIPE #%05d", i);
+			sprintf_s(sndbuf, sizeof(sndbuf), "SERVER->CLIENT ON PIPE #%05d", i);
 
-		if (!WriteFile(servers[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
-		    dwWritten != sizeof(sndbuf))
-		{
-			printf("%s: Error writing to server end of pipe #%d\n", __FUNCTION__, i);
-			goto out;
-		}
+			if (!WriteFile(servers[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
+			    dwWritten != sizeof(sndbuf))
+			{
+				printf("%s: Error writing to server end of pipe #%d\n", __FUNCTION__, i);
+				goto out;
+			}
 
-		if (!ReadFile(clients[i], rcvbuf, dwWritten, &dwRead, NULL) || dwRead != dwWritten)
-		{
-			printf("%s: Error reading on client end of pipe #%d\n", __FUNCTION__, i);
-			goto out;
-		}
+			if (!ReadFile(clients[i], rcvbuf, dwWritten, &dwRead, NULL) || dwRead != dwWritten)
+			{
+				printf("%s: Error reading on client end of pipe #%d\n", __FUNCTION__, i);
+				goto out;
+			}
 
-		if (memcmp(sndbuf, rcvbuf, sizeof(sndbuf)))
-		{
-			printf("%s: Error data read on client end of pipe #%d is corrupted\n", __FUNCTION__, i);
-			goto out;
+			if (memcmp(sndbuf, rcvbuf, sizeof(sndbuf)))
+			{
+				printf("%s: Error data read on client end of pipe #%d is corrupted\n", __FUNCTION__,
+				       i);
+				goto out;
+			}
 		}
 	}
 
@@ -362,23 +365,26 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	 */
 	i = numPipes - 1;
 	DisconnectNamedPipe(servers[i]);
-
-	if (ReadFile(clients[i], rcvbuf, sizeof(rcvbuf), &dwRead, NULL))
 	{
-		printf(
-		    "%s: Error ReadFile on client should have failed after DisconnectNamedPipe on server\n",
-		    __FUNCTION__);
-		goto out;
-	}
+		char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
+		char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
+		if (ReadFile(clients[i], rcvbuf, sizeof(rcvbuf), &dwRead, NULL))
+		{
+			printf("%s: Error ReadFile on client should have failed after DisconnectNamedPipe on "
+			       "server\n",
+			       __FUNCTION__);
+			goto out;
+		}
 
-	if (WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL))
-	{
-		printf("%s: Error WriteFile on client end should have failed after DisconnectNamedPipe on "
-		       "server\n",
-		       __FUNCTION__);
-		goto out;
+		if (WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL))
+		{
+			printf(
+			    "%s: Error WriteFile on client end should have failed after DisconnectNamedPipe on "
+			    "server\n",
+			    __FUNCTION__);
+			goto out;
+		}
 	}
-
 	CloseHandle(servers[i]);
 	CloseHandle(clients[i]);
 	numPipes--;
@@ -389,20 +395,26 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	i = numPipes - 1;
 	CloseHandle(servers[i]);
 
-	if (ReadFile(clients[i], rcvbuf, sizeof(rcvbuf), &dwRead, NULL))
 	{
-		printf("%s: Error ReadFile on client end should have failed after CloseHandle on server\n",
-		       __FUNCTION__);
-		goto out;
-	}
+		char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
+		char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
 
-	if (WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL))
-	{
-		printf("%s: Error WriteFile on client end should have failed after CloseHandle on server\n",
-		       __FUNCTION__);
-		goto out;
-	}
+		if (ReadFile(clients[i], rcvbuf, sizeof(rcvbuf), &dwRead, NULL))
+		{
+			printf(
+			    "%s: Error ReadFile on client end should have failed after CloseHandle on server\n",
+			    __FUNCTION__);
+			goto out;
+		}
 
+		if (WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL))
+		{
+			printf("%s: Error WriteFile on client end should have failed after CloseHandle on "
+			       "server\n",
+			       __FUNCTION__);
+			goto out;
+		}
+	}
 	CloseHandle(clients[i]);
 	numPipes--;
 	/**
@@ -412,18 +424,25 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	i = numPipes - 1;
 	CloseHandle(clients[i]);
 
-	if (ReadFile(servers[i], rcvbuf, sizeof(rcvbuf), &dwRead, NULL))
 	{
-		printf("%s: Error ReadFile on server end should have failed after CloseHandle on client\n",
-		       __FUNCTION__);
-		goto out;
-	}
+		char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
+		char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
 
-	if (WriteFile(servers[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL))
-	{
-		printf("%s: Error WriteFile on server end should have failed after CloseHandle on client\n",
-		       __FUNCTION__);
-		goto out;
+		if (ReadFile(servers[i], rcvbuf, sizeof(rcvbuf), &dwRead, NULL))
+		{
+			printf(
+			    "%s: Error ReadFile on server end should have failed after CloseHandle on client\n",
+			    __FUNCTION__);
+			goto out;
+		}
+
+		if (WriteFile(servers[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL))
+		{
+			printf("%s: Error WriteFile on server end should have failed after CloseHandle on "
+			       "client\n",
+			       __FUNCTION__);
+			goto out;
+		}
 	}
 
 	DisconnectNamedPipe(servers[i]);

@@ -27,8 +27,6 @@ static BOOL test_sign16s_func(void)
 	INT16 ALIGN(d1[TEST_BUFFER_SIZE + 16]) = { 0 };
 	INT16 ALIGN(d2[TEST_BUFFER_SIZE + 16]) = { 0 };
 	winpr_RAND((BYTE*)src, sizeof(src));
-	memset(d1, 0, sizeof(d1));
-	memset(d2, 0, sizeof(d2));
 	status = generic->sign_16s(src + 1, d1 + 1, TEST_BUFFER_SIZE);
 
 	if (status != PRIMITIVES_SUCCESS)

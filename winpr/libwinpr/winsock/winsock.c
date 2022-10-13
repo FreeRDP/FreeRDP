@@ -236,8 +236,8 @@ PCSTR winpr_inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBuf
 {
 	if (Family == AF_INET)
 	{
-		struct sockaddr_in in;
-		memset(&in, 0, sizeof(in));
+		struct sockaddr_in in = { 0 };
+
 		in.sin_family = AF_INET;
 		memcpy(&in.sin_addr, pAddr, sizeof(struct in_addr));
 		getnameinfo((struct sockaddr*)&in, sizeof(struct sockaddr_in), pStringBuf, StringBufSize,
@@ -246,8 +246,8 @@ PCSTR winpr_inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBuf
 	}
 	else if (Family == AF_INET6)
 	{
-		struct sockaddr_in6 in;
-		memset(&in, 0, sizeof(in));
+		struct sockaddr_in6 in = { 0 };
+
 		in.sin6_family = AF_INET6;
 		memcpy(&in.sin6_addr, pAddr, sizeof(struct in_addr6));
 		getnameinfo((struct sockaddr*)&in, sizeof(struct sockaddr_in6), pStringBuf, StringBufSize,
@@ -295,12 +295,16 @@ INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf)
 #include <netinet/tcp.h>
 #include <net/if.h>
 
+#include <winpr/assert.h>
+
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
 #endif
 
 int WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData)
 {
+	WINPR_ASSERT(lpWSAData);
+
 	ZeroMemory(lpWSAData, sizeof(WSADATA));
 	lpWSAData->wVersion = wVersionRequired;
 	lpWSAData->wHighVersion = MAKEWORD(2, 2);

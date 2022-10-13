@@ -336,13 +336,12 @@ static BOOL wf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 BOOL wf_register_pointer(rdpGraphics* graphics)
 {
 	wfContext* wfc;
-	rdpPointer pointer;
+	rdpPointer pointer = { 0 };
 
 	if (!graphics)
 		return FALSE;
 
 	wfc = (wfContext*)graphics->context;
-	ZeroMemory(&pointer, sizeof(rdpPointer));
 	pointer.size = sizeof(wfPointer);
 	pointer.New = wf_Pointer_New;
 	pointer.Free = wf_Pointer_Free;

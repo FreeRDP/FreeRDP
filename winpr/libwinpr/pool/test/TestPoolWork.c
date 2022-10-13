@@ -1,4 +1,5 @@
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/pool.h>
 #include <winpr/interlocked.h>
@@ -8,21 +9,20 @@ static LONG count = 0;
 static void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {
 	int index;
-	BYTE a[1024];
-	BYTE b[1024];
-	BYTE c[1024];
 	printf("Hello %s: %03" PRId32 " (thread: 0x%08" PRIX32 ")\n", (char*)context,
 	       InterlockedIncrement(&count), GetCurrentThreadId());
 
 	for (index = 0; index < 100; index++)
 	{
-		ZeroMemory(a, 1024);
-		ZeroMemory(b, 1024);
-		ZeroMemory(c, 1024);
-		FillMemory(a, 1024, 0xAA);
-		FillMemory(b, 1024, 0xBB);
-		CopyMemory(c, a, 1024);
-		CopyMemory(c, b, 1024);
+		BYTE a[1024];
+		BYTE b[1024];
+		BYTE c[1024] = { 0 };
+
+		FillMemory(a, ARRAYSIZE(a), 0xAA);
+		FillMemory(b, ARRAYSIZE(b), 0xBB);
+
+		CopyMemory(c, a, ARRAYSIZE(a));
+		CopyMemory(c, b, ARRAYSIZE(b));
 	}
 }
 

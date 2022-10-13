@@ -549,11 +549,10 @@ static void xf_input_hide_cursor(xfContext* xfc)
 
 	if (!xfc->cursorHidden)
 	{
-		XcursorImage ci;
+		XcursorImage ci = { 0 };
 		XcursorPixel xp = 0;
 		static Cursor nullcursor = None;
 		xf_lock_x11(xfc);
-		ZeroMemory(&ci, sizeof(ci));
 		ci.version = XCURSOR_IMAGE_VERSION;
 		ci.size = sizeof(ci);
 		ci.width = ci.height = 1;

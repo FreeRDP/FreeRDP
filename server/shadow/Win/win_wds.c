@@ -478,9 +478,9 @@ int win_shadow_wds_wnd_init(winShadowSubsystem* subsystem)
 {
 	HMODULE hModule;
 	HINSTANCE hInstance;
-	WNDCLASSEX wndClassEx;
+	WNDCLASSEX wndClassEx = { 0 };
 	hModule = GetModuleHandle(NULL);
-	ZeroMemory(&wndClassEx, sizeof(WNDCLASSEX));
+
 	wndClassEx.cbSize = sizeof(WNDCLASSEX);
 	wndClassEx.style = 0;
 	wndClassEx.lpfnWndProc = ShadowWndProc;

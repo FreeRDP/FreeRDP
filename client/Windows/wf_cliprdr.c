@@ -1237,8 +1237,6 @@ static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 	if (!clipboard)
 		return ERROR_INTERNAL_ERROR;
 
-	ZeroMemory(&formatList, sizeof(CLIPRDR_FORMAT_LIST));
-
 	/* Ignore if other app is holding clipboard */
 	if (try_open_clipboard(clipboard->hwnd))
 	{
@@ -1518,8 +1516,8 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 
 static int create_cliprdr_window(wfClipboard* clipboard)
 {
-	WNDCLASSEX wnd_cls;
-	ZeroMemory(&wnd_cls, sizeof(WNDCLASSEX));
+	WNDCLASSEX wnd_cls = { 0 };
+
 	wnd_cls.cbSize = sizeof(WNDCLASSEX);
 	wnd_cls.style = CS_OWNDC;
 	wnd_cls.lpfnWndProc = cliprdr_proc;
@@ -2063,18 +2061,16 @@ wf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 		size_t i;
 		WCHAR* wFileName;
 		HRESULT result;
-		LPDATAOBJECT dataObj;
-		FORMATETC format_etc;
-		STGMEDIUM stg_medium;
-		DROPFILES* dropFiles;
+		LPDATAOBJECT dataObj = NULL;
+		FORMATETC format_etc = { 0 };
+		STGMEDIUM stg_medium = { 0 };
+		DROPFILES* dropFiles = NULL;
 		FILEGROUPDESCRIPTORW* groupDsc;
 		result = OleGetClipboard(&dataObj);
 
 		if (FAILED(result))
 			return ERROR_INTERNAL_ERROR;
 
-		ZeroMemory(&format_etc, sizeof(FORMATETC));
-		ZeroMemory(&stg_medium, sizeof(STGMEDIUM));
 		/* get DROPFILES struct from OLE */
 		format_etc.cfFormat = CF_HDROP;
 		format_etc.tymed = TYMED_HGLOBAL;
@@ -2248,9 +2244,9 @@ wf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 	DWORD uSize = 0;
 	BYTE* pData = NULL;
 	HRESULT hRet = S_OK;
-	FORMATETC vFormatEtc;
+	FORMATETC vFormatEtc = { 0 };
 	LPDATAOBJECT pDataObj = NULL;
-	STGMEDIUM vStgMedium;
+	STGMEDIUM vStgMedium = { 0 };
 	BOOL bIsStreamFile = TRUE;
 	static LPSTREAM pStreamStc = NULL;
 	static UINT32 uStreamIdStc = 0;
@@ -2284,8 +2280,6 @@ wf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 		goto error;
 	}
 
-	ZeroMemory(&vFormatEtc, sizeof(FORMATETC));
-	ZeroMemory(&vStgMedium, sizeof(STGMEDIUM));
 	vFormatEtc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
 	vFormatEtc.tymed = TYMED_ISTREAM;
 	vFormatEtc.dwAspect = 1;
@@ -2337,8 +2331,7 @@ wf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 	{
 		if (fileContentsRequest->dwFlags == FILECONTENTS_SIZE)
 		{
-			STATSTG vStatStg;
-			ZeroMemory(&vStatStg, sizeof(STATSTG));
+			STATSTG vStatStg = { 0 };
 			hRet = IStream_Stat(pStreamStc, &vStatStg, STATFLAG_NONAME);
 
 			if (hRet == S_OK)

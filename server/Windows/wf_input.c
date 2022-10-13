@@ -65,10 +65,11 @@ BOOL wf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 BOOL wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	INPUT mouse_event;
+	INPUT mouse_event = { 0 };
 	float width, height;
 	WINPR_UNUSED(input);
-	ZeroMemory(&mouse_event, sizeof(INPUT));
+
+	WINPR_ASSERT(input);
 	mouse_event.type = INPUT_MOUSE;
 
 	if (flags & PTR_FLAGS_WHEEL)
@@ -142,8 +143,7 @@ BOOL wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 {
 	if ((flags & PTR_XFLAGS_BUTTON1) || (flags & PTR_XFLAGS_BUTTON2))
 	{
-		INPUT mouse_event;
-		ZeroMemory(&mouse_event, sizeof(INPUT));
+		INPUT mouse_event = { 0 };
 		mouse_event.type = INPUT_MOUSE;
 
 		if (flags & PTR_FLAGS_MOVE)

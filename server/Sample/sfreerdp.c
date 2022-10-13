@@ -298,7 +298,7 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 	testPeerContext* context;
 	FILE* fp;
 	int i;
-	char line[50];
+	char line[50] = { 0 };
 	BYTE* rgb_data = NULL;
 	int c;
 	rdpSettings* settings;

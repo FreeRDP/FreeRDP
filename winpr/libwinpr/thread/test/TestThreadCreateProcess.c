@@ -29,12 +29,12 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	DWORD dwCreationFlags;
 	LPVOID lpEnvironment;
 	LPCTSTR lpCurrentDirectory;
-	STARTUPINFO StartupInfo;
-	PROCESS_INFORMATION ProcessInformation;
+	STARTUPINFO StartupInfo = { 0 };
+	PROCESS_INFORMATION ProcessInformation = { 0 };
 	LPTCH lpszEnvironmentBlock;
 	HANDLE pipe_read = NULL;
 	HANDLE pipe_write = NULL;
-	char buf[1024];
+	char buf[1024] = { 0 };
 	DWORD read_bytes;
 	int ret = 0;
 	SECURITY_ATTRIBUTES saAttr;
@@ -55,9 +55,7 @@ int TestThreadCreateProcess(int argc, char* argv[])
 #endif
 	lpEnvironment = lpszEnvironmentBlock;
 	lpCurrentDirectory = NULL;
-	ZeroMemory(&StartupInfo, sizeof(STARTUPINFO));
 	StartupInfo.cb = sizeof(STARTUPINFO);
-	ZeroMemory(&ProcessInformation, sizeof(PROCESS_INFORMATION));
 
 	status = CreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes,
 	                       lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment,

@@ -134,7 +134,6 @@ static BOOL test_alphaComp_func(void)
 	for (i = 0; i < sizeof(src2) / 4; ++i)
 		*ptr++ |= 0xFF000000U;
 
-	memset(dst1, 0, sizeof(dst1));
 	status = generic->alphaComp_argb(src1, 4 * SRC1_WIDTH, src2, 4 * SRC2_WIDTH, dst1,
 	                                 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
 
@@ -164,7 +163,7 @@ static int test_alphaComp_speed(void)
 	BYTE ALIGN(src1[SRC1_WIDTH * SRC1_HEIGHT]) = { 0 };
 	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT]) = { 0 };
 	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT]) = { 0 };
-	char testStr[256];
+	char testStr[256] = { 0 };
 	UINT32* ptr;
 	UINT32 i;
 	testStr[0] = '\0';
@@ -178,8 +177,6 @@ static int test_alphaComp_speed(void)
 
 	for (i = 0; i < sizeof(src2) / 4; ++i)
 		*ptr++ |= 0xFF000000U;
-
-	memset(dst1, 0, sizeof(dst1));
 
 	if (!speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->alphaComp_argb,
 	                (speed_test_fkt)optimized->alphaComp_argb, src1, 4 * SRC1_WIDTH, src2,

@@ -96,13 +96,12 @@ BOOL GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
 		else if (request == 2)
 		{
 			socklen_t length;
-			struct sockaddr_un s;
+			struct sockaddr_un s = { 0 };
 
 			if (pipe->serverfd == -1)
 				return FALSE;
 
 			length = sizeof(struct sockaddr_un);
-			ZeroMemory(&s, sizeof(struct sockaddr_un));
 
 			status = accept(pipe->serverfd, (struct sockaddr*)&s, &length);
 

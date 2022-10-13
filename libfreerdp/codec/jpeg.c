@@ -73,17 +73,15 @@ static void my_term_source(j_decompress_ptr cinfo)
 static int do_decompress(char* comp_data, int comp_data_bytes, int* width, int* height, int* bpp,
                          char* decomp_data, int* decomp_data_bytes)
 {
-	struct jpeg_decompress_struct cinfo;
+	struct jpeg_decompress_struct cinfo = { 0 };
 	struct jpeg_error_mgr jerr;
-	struct jpeg_source_mgr src_mgr;
-	struct mydata_decomp md;
-	JSAMPROW row_pointer[1];
+	struct jpeg_source_mgr src_mgr = { 0 };
+	struct mydata_decomp md = { 0 };
+	JSAMPROW row_pointer[1] = { 0 };
 
-	memset(&cinfo, 0, sizeof(cinfo));
 	cinfo.err = jpeg_std_error(&jerr);
 	jpeg_create_decompress(&cinfo);
 
-	memset(&src_mgr, 0, sizeof(src_mgr));
 	cinfo.src = &src_mgr;
 	src_mgr.init_source = my_init_source;
 	src_mgr.fill_input_buffer = my_fill_input_buffer;
@@ -91,7 +89,6 @@ static int do_decompress(char* comp_data, int comp_data_bytes, int* width, int* 
 	src_mgr.resync_to_restart = my_resync_to_restart;
 	src_mgr.term_source = my_term_source;
 
-	memset(&md, 0, sizeof(md));
 	md.data = comp_data;
 	md.data_bytes = comp_data_bytes;
 	cinfo.client_data = &md;

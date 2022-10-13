@@ -226,10 +226,9 @@ static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplic
 #endif
 		int fd;
 		int sig;
-		sigset_t set;
-		struct sigaction act;
+		sigset_t set = { 0 };
+		struct sigaction act = { 0 };
 		/* set default signal handlers */
-		memset(&act, 0, sizeof(act));
 		act.sa_handler = SIG_DFL;
 		act.sa_flags = 0;
 		sigemptyset(&act.sa_mask);

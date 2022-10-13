@@ -47,6 +47,7 @@ static BOOL _set_serial_chars(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChar
 
 static BOOL _get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
 {
+	WINPR_ASSERT(pSerialChars);
 	ZeroMemory(pSerialChars, sizeof(SERIAL_CHARS));
 	return TRUE;
 }

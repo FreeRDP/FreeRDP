@@ -1624,8 +1624,7 @@ xf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
 
 			ino->st_size = size;
 			ino->size_set = TRUE;
-			struct fuse_entry_param e;
-			memset(&e, 0, sizeof(e));
+			struct fuse_entry_param e = { 0 };
 			e.ino = ino->ino;
 			e.attr_timeout = 1.0;
 			e.entry_timeout = 1.0;
@@ -2750,7 +2749,6 @@ static void xf_cliprdr_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	size_t child_ino;
 	size_t direntry_len;
 	char* buf;
-	struct stat stbuf;
 	size_t pos = 0;
 	xfCliprdrFuseInode* child_node;
 	xfCliprdrFuseInode* node;
@@ -2795,7 +2793,7 @@ static void xf_cliprdr_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		}
 		for (index = off; index < count + 2; index++)
 		{
-			memset(&stbuf, 0, sizeof(stbuf));
+			struct stat stbuf = { 0 };
 			if (index == 0)
 			{
 				stbuf.st_ino = ino;
@@ -2905,7 +2903,7 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 	size_t count;
 	size_t child_ino;
 	BOOL found = FALSE;
-	struct fuse_entry_param e;
+	struct fuse_entry_param e = { 0 };
 	xfCliprdrFuseInode* parent_node;
 	xfCliprdrFuseInode* child_node = NULL;
 	xfClipboard* clipboard = (xfClipboard*)fuse_req_userdata(req);
@@ -2979,7 +2977,6 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 		                                     0);
 		return;
 	}
-	memset(&e, 0, sizeof(e));
 	e.ino = ino;
 	e.attr_timeout = 1.0;
 	e.entry_timeout = 1.0;

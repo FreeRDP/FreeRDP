@@ -31,19 +31,17 @@
 
 static BOOL test_SerCxSys(HANDLE hComm)
 {
-	DCB dcb;
+	DCB dcb = { 0 };
 	UCHAR XonChar, XoffChar;
 
-	struct termios currentTermios;
+	struct termios currentTermios = { 0 };
 
-	ZeroMemory(&currentTermios, sizeof(struct termios));
 	if (tcgetattr(((WINPR_COMM*)hComm)->fd, &currentTermios) < 0)
 	{
 		fprintf(stderr, "tcgetattr failure.\n");
 		return FALSE;
 	}
 
-	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
 	{
@@ -111,9 +109,8 @@ static BOOL test_SerCxSys(HANDLE hComm)
 
 static BOOL test_SerCx2Sys(HANDLE hComm)
 {
-	DCB dcb;
+	DCB dcb = { 0 };
 
-	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
 	{

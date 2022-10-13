@@ -167,7 +167,7 @@ static BOOL _get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 	/* FIXME: properties should be better probed. The current
 	 * implementation just relies on the Linux' implementation.
 	 */
-
+	WINPR_ASSERT(pProperties);
 	if (pProperties->dwProvSpec1 != COMMPROP_INITIALIZED)
 	{
 		ZeroMemory(pProperties, sizeof(COMMPROP));

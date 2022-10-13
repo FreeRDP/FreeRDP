@@ -163,9 +163,9 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 {
 	pstatus_t status;
-	INT16 ALIGN(y[4096]), ALIGN(cb[4096]), ALIGN(cr[4096]);
-	INT16 ALIGN(r1[4096]), ALIGN(g1[4096]), ALIGN(b1[4096]);
-	INT16 ALIGN(r2[4096]), ALIGN(g2[4096]), ALIGN(b2[4096]);
+	INT16 ALIGN(y[4096]) = { 0 }, ALIGN(cb[4096]) = { 0 }, ALIGN(cr[4096]) = { 0 };
+	INT16 ALIGN(r1[4096]) = { 0 }, ALIGN(g1[4096]) = { 0 }, ALIGN(b1[4096]) = { 0 };
+	INT16 ALIGN(r2[4096]) = { 0 }, ALIGN(g2[4096]) = { 0 }, ALIGN(b2[4096]) = { 0 };
 	int i;
 	const INT16* in[3];
 	INT16* out1[3];
@@ -183,12 +183,6 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 		cr[i] &= 0x1FE0U;
 	}
 
-	memset(r1, 0, sizeof(r1));
-	memset(g1, 0, sizeof(g1));
-	memset(b1, 0, sizeof(b1));
-	memset(r2, 0, sizeof(r2));
-	memset(g2, 0, sizeof(g2));
-	memset(b2, 0, sizeof(b2));
 	in[0] = y;
 	in[1] = cb;
 	in[2] = cr;

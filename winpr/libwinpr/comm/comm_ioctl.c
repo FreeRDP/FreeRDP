@@ -687,7 +687,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
 {
 	int result;
-	struct termios currentState;
+	struct termios currentState = { 0 };
 
 	if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)
 	{
@@ -696,7 +696,6 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* te
 	}
 
 	/* NB: tcsetattr() can succeed even if not all changes have been applied. */
-	ZeroMemory(&currentState, sizeof(struct termios));
 	if ((result = tcgetattr(fd, &currentState)) < 0)
 	{
 		CommLog_Print(WLOG_WARN, "tcgetattr failure, errno: %d", errno);

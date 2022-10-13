@@ -560,7 +560,6 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 {
 	size_t index;
 	char* lpPipePath;
-	struct sockaddr_un s;
 	WINPR_NAMED_PIPE* pNamedPipe = NULL;
 	int serverfd = -1;
 	NamedPipeServerSocketEntry* baseSocket = NULL;
@@ -627,6 +626,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	/* If this is the first instance of the named pipe... */
 	if (serverfd == -1)
 	{
+		struct sockaddr_un s = { 0 };
 		/* Create the UNIX domain socket and start listening. */
 		if (!(lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA()))
 			goto out;
@@ -653,7 +653,6 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 			goto out;
 		}
 
-		ZeroMemory(&s, sizeof(struct sockaddr_un));
 		s.sun_family = AF_UNIX;
 		sprintf_s(s.sun_path, ARRAYSIZE(s.sun_path), "%s", pNamedPipe->lpFilePath);
 
@@ -735,7 +734,6 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 {
 	int status;
 	socklen_t length;
-	struct sockaddr_un s;
 	WINPR_NAMED_PIPE* pNamedPipe;
 
 	if (lpOverlapped)
@@ -752,8 +750,8 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 
 	if (!(pNamedPipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 	{
+		struct sockaddr_un s = { 0 };
 		length = sizeof(struct sockaddr_un);
-		ZeroMemory(&s, sizeof(struct sockaddr_un));
 		status = accept(pNamedPipe->serverfd, (struct sockaddr*)&s, &length);
 
 		if (status < 0)

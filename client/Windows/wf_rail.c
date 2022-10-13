@@ -434,7 +434,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		BOOL rc;
 		HANDLE hInstance;
 		WCHAR* titleW = NULL;
-		WNDCLASSEX wndClassEx;
+		WNDCLASSEX wndClassEx = { 0 };
 		railWindow = (wfRailWindow*)calloc(1, sizeof(wfRailWindow));
 
 		if (!railWindow)
@@ -486,7 +486,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 		ConvertToUnicode(CP_UTF8, 0, railWindow->title, -1, &titleW, 0);
 		hInstance = GetModuleHandle(NULL);
-		ZeroMemory(&wndClassEx, sizeof(WNDCLASSEX));
+
 		wndClassEx.cbSize = sizeof(WNDCLASSEX);
 		wndClassEx.style = 0;
 		wndClassEx.lpfnWndProc = wf_RailWndProc;
@@ -687,8 +687,8 @@ static BOOL wf_rail_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* or
 	int height;
 	HICON hIcon;
 	BOOL bigIcon;
-	ICONINFO iconInfo;
-	BITMAPINFO bitmapInfo;
+	ICONINFO iconInfo = { 0 };
+	BITMAPINFO bitmapInfo = { 0 };
 	wfRailWindow* railWindow;
 	BITMAPINFOHEADER* bitmapInfoHeader;
 	wfContext* wfc = (wfContext*)context;
@@ -706,7 +706,7 @@ static BOOL wf_rail_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* or
 	iconInfo.fIcon = TRUE;
 	iconInfo.xHotspot = 0;
 	iconInfo.yHotspot = 0;
-	ZeroMemory(&bitmapInfo, sizeof(BITMAPINFO));
+
 	bitmapInfoHeader = &(bitmapInfo.bmiHeader);
 	bpp = windowIcon->iconInfo->bpp;
 	width = windowIcon->iconInfo->width;

@@ -130,7 +130,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	wStream* output;
 	UINT error = CHANNEL_RC_OK;
 	BOOL processed = FALSE;
-	TSMF_IFMAN ifman;
+	TSMF_IFMAN ifman = { 0 };
 	UINT32 MessageId;
 	UINT32 FunctionId;
 	UINT32 InterfaceId;
@@ -154,7 +154,6 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	DEBUG_TSMF("cbSize=%" PRIu32 " InterfaceId=0x%" PRIX32 " MessageId=0x%" PRIX32
 	           " FunctionId=0x%" PRIX32 "",
 	           cbSize, InterfaceId, MessageId, FunctionId);
-	ZeroMemory(&ifman, sizeof(TSMF_IFMAN));
 	ifman.channel_callback = pChannelCallback;
 	ifman.decoder_name = ((TSMF_PLUGIN*)callback->plugin)->decoder_name;
 	ifman.audio_name = ((TSMF_PLUGIN*)callback->plugin)->audio_name;

@@ -57,7 +57,7 @@ static BOOL xf_sync_kbd_state(xfContext* xfc)
 static void xf_keyboard_clear(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
-	ZeroMemory(xfc->KeyboardState, 256 * sizeof(BOOL));
+	ZeroMemory(xfc->KeyboardState, sizeof(xfc->KeyboardState));
 }
 
 static BOOL xf_keyboard_action_script_init(xfContext* xfc)
