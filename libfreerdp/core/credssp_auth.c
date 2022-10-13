@@ -392,8 +392,7 @@ BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecB
 	WINPR_ASSERT(plaintext);
 	WINPR_ASSERT(ciphertext);
 
-	/* Allocate consecutive memory for ciphertext and signature. We assume the signature size is
-	 * equal to cbSecurityTrailer */
+	/* Allocate consecutive memory for ciphertext and signature */
 	buf = calloc(1, plaintext->cbBuffer + auth->sizes.cbSecurityTrailer);
 	if (!buf)
 		return FALSE;
@@ -414,6 +413,15 @@ BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecB
 		         status);
 		free(buf);
 		return FALSE;
+	}
+
+	if (buffers[0].cbBuffer < auth->sizes.cbSecurityTrailer)
+	{
+		/* The signature is smaller than cbSecurityTrailer, so shrink the excess in between */
+		MoveMemory(((BYTE*)buffers[0].pvBuffer) + buffers[0].cbBuffer, buffers[1].pvBuffer,
+		           buffers[1].cbBuffer);
+		// use reported signature size as new cbSecurityTrailer value for DecryptMessage
+		auth->sizes.cbSecurityTrailer = buffers[0].cbBuffer;
 	}
 
 	ciphertext->cbBuffer = buffers[0].cbBuffer + buffers[1].cbBuffer;
