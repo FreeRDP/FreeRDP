@@ -520,6 +520,8 @@ void credssp_auth_take_input_buffer(rdpCredsspAuth* auth, SecBuffer* buffer)
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(buffer);
 
+	sspi_SecBufferFree(&auth->input_buffer);
+
 	auth->input_buffer = *buffer;
 	auth->input_buffer.BufferType = SECBUFFER_TOKEN;
 
