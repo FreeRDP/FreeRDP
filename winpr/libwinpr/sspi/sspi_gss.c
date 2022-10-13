@@ -88,7 +88,8 @@ BOOL sspi_gss_unwrap_token(const SecBuffer* buf, WinPrAsn1_OID* oid, uint16_t* t
 {
 	WinPrAsn1Decoder dec, dec2;
 	WinPrAsn1_tagId tag;
-	wStream s;
+	wStream sbuffer = { 0 };
+	wStream* s;
 
 	WINPR_ASSERT(buf);
 	WINPR_ASSERT(oid);
@@ -102,15 +103,17 @@ BOOL sspi_gss_unwrap_token(const SecBuffer* buf, WinPrAsn1_OID* oid, uint16_t* t
 	if (!WinPrAsn1DecReadOID(&dec2, oid, FALSE))
 		return FALSE;
 
-	s = WinPrAsn1DecGetStream(&dec2);
-	if (Stream_Length(&s) < 2)
+	sbuffer = WinPrAsn1DecGetStream(&dec2);
+	s = &sbuffer;
+
+	if (Stream_Length(s) < 2)
 		return FALSE;
 
 	if (tok_id)
-		Stream_Read_INT16_BE(&s, *tok_id);
+		Stream_Read_INT16_BE(s, *tok_id);
 
-	token->data = (char*)Stream_Pointer(&s);
-	token->length = (UINT)Stream_GetRemainingLength(&s);
+	token->data = (char*)Stream_Pointer(s);
+	token->length = (UINT)Stream_GetRemainingLength(s);
 
 	return TRUE;
 }
