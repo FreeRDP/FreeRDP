@@ -963,6 +963,7 @@ int freerdp_client_common_stop(rdpContext* context)
 	return 0;
 }
 
+#if defined(CHANNEL_ENCOMSP_CLIENT)
 BOOL freerdp_client_encomsp_toggle_control(EncomspClientContext* encomsp)
 {
 	rdpClientContext* cctx;
@@ -980,7 +981,6 @@ BOOL freerdp_client_encomsp_toggle_control(EncomspClientContext* encomsp)
 
 BOOL freerdp_client_encomsp_set_control(EncomspClientContext* encomsp, BOOL control)
 {
-#if defined(CHANNEL_ENCOMSP_CLIENT)
 	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu = { 0 };
 
 	if (!encomsp)
@@ -993,11 +993,10 @@ BOOL freerdp_client_encomsp_set_control(EncomspClientContext* encomsp, BOOL cont
 		pdu.Flags |= ENCOMSP_REQUEST_INTERACT;
 
 	encomsp->ChangeParticipantControlLevel(encomsp, &pdu);
-#endif
+
 	return TRUE;
 }
 
-#if defined(CHANNEL_ENCOMSP_CLIENT)
 static UINT
 client_encomsp_participant_created(EncomspClientContext* context,
                                    const ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)

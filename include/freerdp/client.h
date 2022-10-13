@@ -206,9 +206,11 @@ extern "C"
 
 	FREERDP_API BOOL freerdp_client_load_channels(freerdp* instance);
 
+#if defined(CHANNEL_ENCOMSP_CLIENT)
 	FREERDP_API BOOL freerdp_client_encomsp_toggle_control(EncomspClientContext* encomsp);
 	FREERDP_API BOOL freerdp_client_encomsp_set_control(EncomspClientContext* encomsp,
 	                                                    BOOL control);
+#endif
 
 #ifdef __cplusplus
 }
