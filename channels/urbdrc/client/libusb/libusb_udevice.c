@@ -1221,12 +1221,18 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, URBDRC_CHANNEL_CALLBACK* c
 	if (!Buffer)
 		Stream_Seek(user_data->data, (NumberOfPackets * 12));
 
-	iso_packet_size = BufferSize / NumberOfPackets;
-	iso_transfer = libusb_alloc_transfer(NumberOfPackets);
+	if (NumberOfPackets > 0)
+	{
+		iso_packet_size = BufferSize / NumberOfPackets;
+		iso_transfer = libusb_alloc_transfer((int)NumberOfPackets);
+	}
 
 	if (iso_transfer == NULL)
 	{
-		WLog_Print(urbdrc->log, WLOG_ERROR, "Error: libusb_alloc_transfer.");
+		WLog_Print(urbdrc->log, WLOG_ERROR,
+		           "Error: libusb_alloc_transfer [NumberOfPackets=%" PRIu32 ", BufferSize=%" PRIu32
+		           " ]",
+		           NumberOfPackets, BufferSize);
 		async_transfer_user_data_free(user_data);
 		return -1;
 	}
