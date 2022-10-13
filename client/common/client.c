@@ -115,9 +115,11 @@ rdpContext* freerdp_client_context_new(const RDP_CLIENT_ENTRY_POINTS* pEntryPoin
 	context = instance->context;
 	context->instance = instance;
 
+#if defined(WITH_CHANNELS)
 	if (freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0) !=
 	    CHANNEL_RC_OK)
 		goto out_fail2;
+#endif
 
 	return context;
 out_fail2:
