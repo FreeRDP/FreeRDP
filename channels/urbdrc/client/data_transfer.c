@@ -686,7 +686,11 @@ static UINT urb_control_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 	buffer = Stream_Pointer(out);
 
 	if (transferDir == USBD_TRANSFER_DIRECTION_OUT)
+	{
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, OutputBufferSize))
+			return ERROR_INVALID_DATA;
 		Stream_Copy(s, out, OutputBufferSize);
+	}
 
 	/**  process TS_URB_CONTROL_TRANSFER */
 	if (!pdev->control_transfer(pdev, RequestId, EndpointAddress, TransferFlags, bmRequestType,
