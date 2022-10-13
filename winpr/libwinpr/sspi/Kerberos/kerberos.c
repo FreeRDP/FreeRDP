@@ -690,7 +690,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 	KRB_CREDENTIALS* credentials;
 	KRB_CONTEXT* context;
 	KRB_CONTEXT new_context = { 0 };
-	krb5_error_code rv;
+	krb5_error_code rv = KRB5KDC_ERR_NONE;
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
 	PSecBuffer bindings_buffer = NULL;
@@ -1010,7 +1010,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 	KRB_CREDENTIALS* credentials;
 	KRB_CONTEXT* context;
 	KRB_CONTEXT new_context = { 0 };
-	PSecBuffer input_buffer;
+	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
 	WinPrAsn1_OID oid = { 0 };
 	uint16_t tok_id;
