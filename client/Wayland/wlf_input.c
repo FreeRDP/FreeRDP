@@ -25,8 +25,11 @@
 
 #include <winpr/assert.h>
 
+#include <freerdp/config.h>
 #include <freerdp/locale/keyboard.h>
+#if defined(CHANNEL_RDPEI_CLIENT)
 #include <freerdp/client/rdpei.h>
+#endif
 #include <uwac/uwac.h>
 
 #include "wlfreerdp.h"
@@ -396,7 +399,6 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 	int32_t x = 0, y = 0;
 	size_t i;
 	int touchId;
-	int contactId;
 	wlfContext* wlf;
 
 	if (!instance || !ev || !instance->context)
@@ -425,6 +427,7 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
+#if defined(CHANNEL_RDPEI_CLIENT)
 	RdpeiClientContext* rdpei = wlf->common.rdpei;
 
 	if (wlf->contacts[i].emulate_mouse == TRUE)
@@ -439,9 +442,16 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 
 	if (!rdpei)
 		return FALSE;
+	{
+		int contactId;
 
-	WINPR_ASSERT(rdpei->TouchEnd);
-	rdpei->TouchEnd(rdpei, touchId, x, y, &contactId);
+		WINPR_ASSERT(rdpei->TouchEnd);
+		rdpei->TouchEnd(rdpei, touchId, x, y, &contactId);
+	}
+#else
+	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
+	               "-DWITH_CHANNELS=ON");
+#endif
 
 	return TRUE;
 }
@@ -451,7 +461,6 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 	int32_t x, y;
 	int i;
 	int touchId;
-	int contactId;
 	wlfContext* wlf;
 
 	if (!instance || !ev || !instance->context)
@@ -481,6 +490,7 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
+#if defined(CHANNEL_RDPEI_CLIENT)
 	RdpeiClientContext* rdpei = wlf->common.rdpei;
 
 	// Emulate mouse click if touch is not possible, like in login screen
@@ -500,8 +510,16 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 
 	WINPR_ASSERT(rdpei);
 
-	WINPR_ASSERT(rdpei->TouchBegin);
-	rdpei->TouchBegin(rdpei, touchId, x, y, &contactId);
+	{
+		int contactId;
+
+		WINPR_ASSERT(rdpei->TouchBegin);
+		rdpei->TouchBegin(rdpei, touchId, x, y, &contactId);
+	}
+#else
+	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
+	               "-DWITH_CHANNELS=ON");
+#endif
 
 	return TRUE;
 }
@@ -511,7 +529,6 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 	int32_t x, y;
 	int i;
 	int touchId;
-	int contactId;
 	wlfContext* wlf;
 
 	if (!instance || !ev || !instance->context)
@@ -544,6 +561,7 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
+#if defined(CHANNEL_RDPEI_CLIENT)
 	RdpeiClientContext* rdpei = ((wlfContext*)instance->context)->common.rdpei;
 
 	if (wlf->contacts[i].emulate_mouse == TRUE)
@@ -559,8 +577,16 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 	if (!rdpei)
 		return FALSE;
 
-	WINPR_ASSERT(rdpei->TouchUpdate);
-	rdpei->TouchUpdate(rdpei, touchId, x, y, &contactId);
+	{
+		int contactId;
+
+		WINPR_ASSERT(rdpei->TouchUpdate);
+		rdpei->TouchUpdate(rdpei, touchId, x, y, &contactId);
+	}
+#else
+	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
+	               "-DWITH_CHANNELS=ON");
+#endif
 
 	return TRUE;
 }
