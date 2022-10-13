@@ -151,6 +151,48 @@ BOOL credssp_auth_setup_auth_data(rdpCredsspAuth* auth, const SEC_WINNT_AUTH_IDE
 	return TRUE;
 }
 
+static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
+{
+	SECURITY_STATUS status;
+
+	WINPR_ASSERT(auth);
+
+	if (auth->kerberosSettings.kdcUrl)
+	{
+#ifdef UNICODE
+		SecPkgCredentials_KdcUrlW secAttr = { NULL };
+		ConvertToUnicode(CP_UTF8, 0, auth->kerberosSettings.kdcUrl, -1, &secAttr.KdcUrl, 0);
+
+		if (!secAttr.KdcUrl)
+			return FALSE;
+
+		if (auth->table->SetCredentialsAttributesW)
+			status = auth->table->SetCredentialsAttributesW(
+			    &auth->credentials, SECPKG_CRED_ATTR_KDC_URL, (void*)&secAttr, sizeof(secAttr));
+		else
+			status = SEC_E_UNSUPPORTED_FUNCTION;
+
+		free(secAttr.KdcUrl);
+#else
+		SecPkgCredentials_KdcUrlA secAttr = { NULL };
+		secAttr.KdcUrl = auth->kerberosSettings.kdcUrl;
+
+		if (auth->table->SetCredentialsAttributesA)
+			status = auth->table->SetCredentialsAttributesA(
+			    &auth->credentials, SECPKG_CRED_ATTR_KDC_URL, (void*)&secAttr, sizeof(secAttr));
+		else
+			status = SEC_E_UNSUPPORTED_FUNCTION;
+#endif
+		if (status != SEC_E_OK)
+		{
+			WLog_WARN(TAG, "Explicit Kerberos KDC URL (%s) injection is not supported",
+			          auth->kerberosSettings.kdcUrl);
+		}
+	}
+
+	return TRUE;
+}
+
 BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
                                const char* target_hostname, const SEC_WINNT_AUTH_IDENTITY* identity,
                                const char* pkinit)
@@ -195,19 +237,10 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 		return FALSE;
 	}
 
-	if (auth->kerberosSettings.kdcUrl)
+	if (!credssp_auth_client_init_cred_attributes(auth))
 	{
-		SecPkgCredentials_KdcUrlA attr = { auth->kerberosSettings.kdcUrl };
-
-		if (auth->table->SetCredentialsAttributes)
-			status = auth->table->SetCredentialsAttributes(
-			    &auth->credentials, SECPKG_CRED_ATTR_KDC_URL, &attr, sizeof(attr));
-		else
-			status = SEC_E_UNSUPPORTED_FUNCTION;
-
-		if (status != SEC_E_OK)
-			WLog_WARN(TAG, "Explicit Kerberos KDC URL (%s) injection is not supported",
-			          attr.KdcUrl);
+		WLog_ERR(TAG, "Fatal error setting credential attributes");
+		return FALSE;
 	}
 
 	auth->state = AUTH_STATE_CREDS;
