@@ -260,10 +260,10 @@ static int freerdp_keyboard_init_apple(DWORD* keyboardLayoutId,
 {
 	DWORD vkcode;
 	DWORD keycode;
-	DWORD keycode_to_vkcode[256];
+	DWORD keycode_to_vkcode[256] = { 0 };
 
-	ZeroMemory(keycode_to_vkcode, sizeof(keycode_to_vkcode));
-
+	WINPR_ASSERT(x11_keycode_to_rdp_scancode);
+	WINPR_ASSERT(keyboardLayoutId);
 	for (keycode = 0; keycode < 256; keycode++)
 	{
 		vkcode = keycode_to_vkcode[keycode] =
@@ -279,10 +279,10 @@ static int freerdp_keyboard_init_x11_evdev(DWORD* keyboardLayoutId,
 {
 	DWORD vkcode;
 	DWORD keycode;
-	DWORD keycode_to_vkcode[256];
+	DWORD keycode_to_vkcode[256] = { 0 };
 
-	ZeroMemory(keycode_to_vkcode, sizeof(keycode_to_vkcode));
-
+	WINPR_ASSERT(keyboardLayoutId);
+	WINPR_ASSERT(x11_keycode_to_rdp_scancode);
 	for (keycode = 0; keycode < 256; keycode++)
 	{
 		vkcode = keycode_to_vkcode[keycode] =

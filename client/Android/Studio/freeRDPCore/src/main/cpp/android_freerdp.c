@@ -553,7 +553,10 @@ static void android_client_free(freerdp* instance, rdpContext* context)
 
 static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
+	WINPR_ASSERT(pEntryPoints);
+
 	ZeroMemory(pEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
+
 	pEntryPoints->Version = RDP_CLIENT_INTERFACE_VERSION;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
 	pEntryPoints->GlobalInit = NULL;

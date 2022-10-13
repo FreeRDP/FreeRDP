@@ -146,11 +146,15 @@ static char* rdp_info_package_flags_description(UINT32 flags)
 
 static BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 {
-	BYTE ClientRandom[32];
-	BYTE AutoReconnectRandom[32];
+	BYTE ClientRandom[32] = { 0 };
+	BYTE AutoReconnectRandom[32] = { 0 };
 	ARC_SC_PRIVATE_PACKET* serverCookie;
 	ARC_CS_PRIVATE_PACKET* clientCookie;
+
+	WINPR_ASSERT(rdp);
 	rdpSettings* settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
 	serverCookie = settings->ServerAutoReconnectCookie;
 	clientCookie = settings->ClientAutoReconnectCookie;
 	clientCookie->cbLen = 28;
@@ -1297,8 +1301,8 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 {
 	UINT32 infoType;
 	BOOL status;
-	logon_info logonInfo;
-	logon_info_ex logonInfoEx;
+	logon_info logonInfo = { 0 };
+	logon_info_ex logonInfoEx = { 0 };
 	rdpContext* context = rdp->context;
 	rdpUpdate* update = rdp->context->update;
 
@@ -1310,7 +1314,6 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 	switch (infoType)
 	{
 		case INFO_TYPE_LOGON:
-			ZeroMemory(&logonInfo, sizeof(logonInfo));
 			status = rdp_recv_logon_info_v1(rdp, s, &logonInfo);
 
 			if (status && update->SaveSessionInfo)
@@ -1321,7 +1324,6 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 			break;
 
 		case INFO_TYPE_LOGON_LONG:
-			ZeroMemory(&logonInfo, sizeof(logonInfo));
 			status = rdp_recv_logon_info_v2(rdp, s, &logonInfo);
 
 			if (status && update->SaveSessionInfo)
@@ -1340,7 +1342,6 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 			break;
 
 		case INFO_TYPE_LOGON_EXTENDED_INF:
-			ZeroMemory(&logonInfoEx, sizeof(logonInfoEx));
 			status = rdp_recv_logon_info_extended(rdp, s, &logonInfoEx);
 
 			if (status && update->SaveSessionInfo)

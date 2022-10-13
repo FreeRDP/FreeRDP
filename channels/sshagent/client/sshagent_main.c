@@ -102,9 +102,7 @@ static int connect_to_sshagent(const char* udspath)
 		return -1;
 	}
 
-	struct sockaddr_un addr;
-
-	memset(&addr, 0, sizeof(addr));
+	struct sockaddr_un addr = { 0 };
 
 	addr.sun_family = AF_UNIX;
 

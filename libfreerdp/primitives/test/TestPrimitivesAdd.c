@@ -23,15 +23,13 @@ static BOOL test_add16s_func(void)
 {
 	pstatus_t status;
 
-	INT16 ALIGN(src1[FUNC_TEST_SIZE + 3]), ALIGN(src2[FUNC_TEST_SIZE + 3]),
-	    ALIGN(d1[FUNC_TEST_SIZE + 3]), ALIGN(d2[FUNC_TEST_SIZE + 3]);
+	INT16 ALIGN(src1[FUNC_TEST_SIZE + 3]) = { 0 }, ALIGN(src2[FUNC_TEST_SIZE + 3]) = { 0 },
+	                                  ALIGN(d1[FUNC_TEST_SIZE + 3]) = { 0 },
+	                                  ALIGN(d2[FUNC_TEST_SIZE + 3]) = { 0 };
 
-	char testStr[256];
-	testStr[0] = '\0';
+	char testStr[256] = { 0 };
 	winpr_RAND((BYTE*)src1, sizeof(src1));
 	winpr_RAND((BYTE*)src2, sizeof(src2));
-	memset(d1, 0, sizeof(d1));
-	memset(d2, 0, sizeof(d2));
 	status = generic->add_16s(src1 + 1, src2 + 1, d1 + 1, FUNC_TEST_SIZE);
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;

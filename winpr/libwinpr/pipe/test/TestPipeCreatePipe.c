@@ -14,8 +14,8 @@ int TestPipeCreatePipe(int argc, char* argv[])
 	DWORD dwWrite;
 	HANDLE hReadPipe;
 	HANDLE hWritePipe;
-	BYTE readBuffer[BUFFER_SIZE];
-	BYTE writeBuffer[BUFFER_SIZE];
+	BYTE readBuffer[BUFFER_SIZE] = { 0 };
+	BYTE writeBuffer[BUFFER_SIZE] = { 0 };
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	status = CreatePipe(&hReadPipe, &hWritePipe, NULL, BUFFER_SIZE * 2);
@@ -43,7 +43,6 @@ int TestPipeCreatePipe(int argc, char* argv[])
 		return -1;
 	}
 
-	ZeroMemory(readBuffer, sizeof(readBuffer));
 	status = ReadFile(hReadPipe, &readBuffer, sizeof(readBuffer), &dwRead, NULL);
 
 	if (!status)

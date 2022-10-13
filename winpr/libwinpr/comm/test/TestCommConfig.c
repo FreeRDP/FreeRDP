@@ -28,12 +28,12 @@
 
 int TestCommConfig(int argc, char* argv[])
 {
-	DCB dcb;
+	DCB dcb = { 0 };
 	HANDLE hComm;
 	BOOL success;
 	LPCSTR lpFileName = "\\\\.\\COM1";
-	COMMPROP commProp;
-	struct stat statbuf;
+	COMMPROP commProp = { 0 };
+	struct stat statbuf = { 0 };
 
 	hComm = CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
@@ -82,7 +82,6 @@ int TestCommConfig(int argc, char* argv[])
 	/* TODO: a second call to CreateFileA should failed and
 	 * GetLastError should return ERROR_SHARING_VIOLATION */
 
-	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB);
 	success = GetCommState(hComm, &dcb);
 	if (!success)
@@ -95,7 +94,6 @@ int TestCommConfig(int argc, char* argv[])
 	        "BaudRate: %" PRIu32 " ByteSize: %" PRIu8 " Parity: %" PRIu8 " StopBits: %" PRIu8 "\n",
 	        dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
 
-	ZeroMemory(&commProp, sizeof(COMMPROP));
 	if (!GetCommProperties(hComm, &commProp))
 	{
 		fprintf(stderr, "GetCommProperties failure: GetLastError(): 0x%08x\n", GetLastError());

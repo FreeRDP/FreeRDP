@@ -506,16 +506,14 @@ static int xcrush_find_all_matches(XCRUSH_CONTEXT* xcrush, UINT32 SignatureIndex
 	UINT32 i = 0;
 	UINT32 j = 0;
 	int status = 0;
-	UINT32 offset = 0;
 	UINT32 ChunkIndex = 0;
 	UINT32 ChunkCount = 0;
 	XCRUSH_CHUNK* chunk = NULL;
 	UINT32 MatchLength = 0;
 	UINT32 MaxMatchLength = 0;
 	UINT32 PrevMatchEnd = 0;
-	XCRUSH_MATCH_INFO MatchInfo = { 0 };
-	XCRUSH_MATCH_INFO MaxMatchInfo = { 0 };
 	XCRUSH_SIGNATURE* Signatures = NULL;
+	XCRUSH_MATCH_INFO MaxMatchInfo = { 0 };
 
 	WINPR_ASSERT(xcrush);
 
@@ -523,7 +521,8 @@ static int xcrush_find_all_matches(XCRUSH_CONTEXT* xcrush, UINT32 SignatureIndex
 
 	for (i = 0; i < SignatureIndex; i++)
 	{
-		offset = SrcOffset + HistoryOffset;
+		XCRUSH_MATCH_INFO MatchInfo = { 0 };
+		UINT32 offset = SrcOffset + HistoryOffset;
 
 		if (!Signatures[i].size)
 			return -1001; /* error */
@@ -537,7 +536,6 @@ static int xcrush_find_all_matches(XCRUSH_CONTEXT* xcrush, UINT32 SignatureIndex
 		{
 			ChunkCount = 0;
 			MaxMatchLength = 0;
-			ZeroMemory(&MaxMatchInfo, sizeof(XCRUSH_MATCH_INFO));
 
 			while (chunk)
 			{

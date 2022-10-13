@@ -332,6 +332,8 @@ int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD x11_keycode_to_
 {
 	void* display;
 
+	WINPR_ASSERT(keyboardLayoutId);
+	WINPR_ASSERT(x11_keycode_to_rdp_scancode);
 	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(DWORD) * 256);
 
 	display = freerdp_keyboard_xkb_init();

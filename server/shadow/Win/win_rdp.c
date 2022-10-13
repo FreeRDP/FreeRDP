@@ -355,8 +355,8 @@ int shw_RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 int win_shadow_rdp_init(winShadowSubsystem* subsystem)
 {
 	rdpContext* context;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
+
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
 	shw_RdpClientEntry(&clientEntryPoints);

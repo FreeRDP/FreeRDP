@@ -633,9 +633,9 @@ static BOOL freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* pas
 	BYTE* pbIn = NULL;
 	BYTE* pbOut = NULL;
 	size_t cbOut, cbIn, cbFinal;
-	BYTE DerivedKey[WINPR_AES_BLOCK_SIZE];
-	BYTE InitializationVector[WINPR_AES_BLOCK_SIZE];
-	BYTE PasswordHash[WINPR_SHA1_DIGEST_LENGTH];
+	BYTE DerivedKey[WINPR_AES_BLOCK_SIZE] = { 0 };
+	BYTE InitializationVector[WINPR_AES_BLOCK_SIZE] = { 0 };
+	BYTE PasswordHash[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
 
 	if (!file || !password)
 		return FALSE;
@@ -658,7 +658,6 @@ static BOOL freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* pas
 	                                              sizeof(DerivedKey)))
 		goto fail;
 
-	ZeroMemory(InitializationVector, sizeof(InitializationVector));
 	aesDec =
 	    winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_DECRYPT, DerivedKey, InitializationVector);
 

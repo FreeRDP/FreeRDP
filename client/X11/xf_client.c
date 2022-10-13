@@ -628,7 +628,7 @@ static char* xf_window_get_title(rdpSettings* settings)
 
 BOOL xf_create_window(xfContext* xfc)
 {
-	XGCValues gcv;
+	XGCValues gcv = { 0 };
 	XEvent xevent = { 0 };
 	int width, height;
 	char* windowTitle;
@@ -696,8 +696,6 @@ BOOL xf_create_window(xfContext* xfc)
 	{
 		xfc->drawable = xf_CreateDummyWindow(xfc);
 	}
-
-	ZeroMemory(&gcv, sizeof(gcv));
 
 	if (xfc->modifierMap)
 		XFreeModifiermap(xfc->modifierMap);

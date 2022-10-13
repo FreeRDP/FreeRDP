@@ -1123,9 +1123,7 @@ HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	HANDLE hFile;
-	CREATEFILE2_EXTENDED_PARAMETERS params;
-
-	ZeroMemory(&params, sizeof(CREATEFILE2_EXTENDED_PARAMETERS));
+	CREATEFILE2_EXTENDED_PARAMETERS params = { 0 };
 
 	params.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
 

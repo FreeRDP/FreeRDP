@@ -159,6 +159,9 @@ static void fill_gdi_palette_for_icon(const BYTE* colorTable, UINT16 cbColorTabl
                                       gdiPalette* palette)
 {
 	UINT16 i;
+
+	WINPR_ASSERT(palette);
+
 	palette->format = PIXEL_FORMAT_BGRX32;
 	ZeroMemory(palette->palette, sizeof(palette->palette));
 

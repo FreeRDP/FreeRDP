@@ -31,6 +31,7 @@ void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry)
 
 static int shadow_subsystem_load_entry_points(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
+	WINPR_ASSERT(pEntryPoints);
 	ZeroMemory(pEntryPoints, sizeof(RDP_SHADOW_ENTRY_POINTS));
 
 	if (!pSubsystemEntry)

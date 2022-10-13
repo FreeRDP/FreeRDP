@@ -21,6 +21,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
+#include <winpr/assert.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
@@ -43,18 +44,23 @@ struct rdp_persistent_cache
 
 int persistent_cache_get_version(rdpPersistentCache* persistent)
 {
+	WINPR_ASSERT(persistent);
 	return persistent->version;
 }
 
 int persistent_cache_get_count(rdpPersistentCache* persistent)
 {
+	WINPR_ASSERT(persistent);
 	return persistent->count;
 }
 
 static int persistent_cache_read_entry_v2(rdpPersistentCache* persistent,
                                           PERSISTENT_CACHE_ENTRY* entry)
 {
-	PERSISTENT_CACHE_ENTRY_V2 entry2;
+	PERSISTENT_CACHE_ENTRY_V2 entry2 = { 0 };
+
+	WINPR_ASSERT(persistent);
+	WINPR_ASSERT(entry);
 
 	if (fread((void*)&entry2, sizeof(entry2), 1, persistent->fp) != 1)
 		return -1;
@@ -77,8 +83,10 @@ static int persistent_cache_write_entry_v2(rdpPersistentCache* persistent,
                                            const PERSISTENT_CACHE_ENTRY* entry)
 {
 	int padding;
-	PERSISTENT_CACHE_ENTRY_V2 entry2;
+	PERSISTENT_CACHE_ENTRY_V2 entry2 = { 0 };
 
+	WINPR_ASSERT(persistent);
+	WINPR_ASSERT(entry);
 	entry2.key64 = entry->key64;
 	entry2.width = entry->width;
 	entry2.height = entry->height;
@@ -109,9 +117,10 @@ static int persistent_cache_write_entry_v2(rdpPersistentCache* persistent,
 
 static int persistent_cache_read_v2(rdpPersistentCache* persistent)
 {
+	WINPR_ASSERT(persistent);
 	while (1)
 	{
-		PERSISTENT_CACHE_ENTRY_V2 entry;
+		PERSISTENT_CACHE_ENTRY_V2 entry = { 0 };
 
 		if (fread((void*)&entry, sizeof(entry), 1, persistent->fp) != 1)
 			break;
@@ -128,7 +137,10 @@ static int persistent_cache_read_v2(rdpPersistentCache* persistent)
 static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
                                           PERSISTENT_CACHE_ENTRY* entry)
 {
-	PERSISTENT_CACHE_ENTRY_V3 entry3;
+	PERSISTENT_CACHE_ENTRY_V3 entry3 = { 0 };
+
+	WINPR_ASSERT(persistent);
+	WINPR_ASSERT(entry);
 
 	if (fread((void*)&entry3, sizeof(entry3), 1, persistent->fp) != 1)
 		return -1;
@@ -166,7 +178,10 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 static int persistent_cache_write_entry_v3(rdpPersistentCache* persistent,
                                            const PERSISTENT_CACHE_ENTRY* entry)
 {
-	PERSISTENT_CACHE_ENTRY_V3 entry3;
+	PERSISTENT_CACHE_ENTRY_V3 entry3 = { 0 };
+
+	WINPR_ASSERT(persistent);
+	WINPR_ASSERT(entry);
 
 	entry3.key64 = entry->key64;
 	entry3.width = entry->width;
@@ -185,9 +200,10 @@ static int persistent_cache_write_entry_v3(rdpPersistentCache* persistent,
 
 static int persistent_cache_read_v3(rdpPersistentCache* persistent)
 {
+	WINPR_ASSERT(persistent);
 	while (1)
 	{
-		PERSISTENT_CACHE_ENTRY_V3 entry;
+		PERSISTENT_CACHE_ENTRY_V3 entry = { 0 };
 
 		if (fread((void*)&entry, sizeof(entry), 1, persistent->fp) != 1)
 			break;
@@ -203,6 +219,9 @@ static int persistent_cache_read_v3(rdpPersistentCache* persistent)
 
 int persistent_cache_read_entry(rdpPersistentCache* persistent, PERSISTENT_CACHE_ENTRY* entry)
 {
+	WINPR_ASSERT(persistent);
+	WINPR_ASSERT(entry);
+
 	if (persistent->version == 3)
 		return persistent_cache_read_entry_v3(persistent, entry);
 	else if (persistent->version == 2)
@@ -214,6 +233,9 @@ int persistent_cache_read_entry(rdpPersistentCache* persistent, PERSISTENT_CACHE
 int persistent_cache_write_entry(rdpPersistentCache* persistent,
                                  const PERSISTENT_CACHE_ENTRY* entry)
 {
+	WINPR_ASSERT(persistent);
+	WINPR_ASSERT(entry);
+
 	if (persistent->version == 3)
 		return persistent_cache_write_entry_v3(persistent, entry);
 	else if (persistent->version == 2)
@@ -224,10 +246,11 @@ int persistent_cache_write_entry(rdpPersistentCache* persistent,
 
 static int persistent_cache_open_read(rdpPersistentCache* persistent)
 {
-	BYTE sig[8];
+	BYTE sig[8] = { 0 };
 	int status = 1;
 	long offset;
 
+	WINPR_ASSERT(persistent);
 	persistent->fp = fopen(persistent->filename, "rb");
 
 	if (!persistent->fp)
@@ -266,6 +289,7 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 
 static int persistent_cache_open_write(rdpPersistentCache* persistent)
 {
+	WINPR_ASSERT(persistent);
 
 	persistent->fp = fopen(persistent->filename, "w+b");
 
@@ -274,7 +298,7 @@ static int persistent_cache_open_write(rdpPersistentCache* persistent)
 
 	if (persistent->version == 3)
 	{
-		PERSISTENT_CACHE_HEADER_V3 header;
+		PERSISTENT_CACHE_HEADER_V3 header = { 0 };
 		strncpy((char*)header.sig, "RDP8bmp", 8);
 		header.flags = 0x00000006;
 
@@ -290,6 +314,8 @@ static int persistent_cache_open_write(rdpPersistentCache* persistent)
 int persistent_cache_open(rdpPersistentCache* persistent, const char* filename, BOOL write,
                           UINT32 version)
 {
+	WINPR_ASSERT(persistent);
+	WINPR_ASSERT(filename);
 	persistent->write = write;
 
 	persistent->filename = _strdup(filename);
@@ -308,6 +334,7 @@ int persistent_cache_open(rdpPersistentCache* persistent, const char* filename, 
 
 int persistent_cache_close(rdpPersistentCache* persistent)
 {
+	WINPR_ASSERT(persistent);
 	if (persistent->fp)
 	{
 		fclose(persistent->fp);
@@ -319,15 +346,13 @@ int persistent_cache_close(rdpPersistentCache* persistent)
 
 rdpPersistentCache* persistent_cache_new(void)
 {
-	rdpPersistentCache* persistent;
-
-	persistent = (rdpPersistentCache*)calloc(1, sizeof(rdpPersistentCache));
+	rdpPersistentCache* persistent = calloc(1, sizeof(rdpPersistentCache));
 
 	if (!persistent)
 		return NULL;
 
 	persistent->bmpSize = 0x4000;
-	persistent->bmpData = (BYTE*)malloc(persistent->bmpSize);
+	persistent->bmpData = calloc(1, persistent->bmpSize);
 
 	if (!persistent->bmpData)
 		return NULL;

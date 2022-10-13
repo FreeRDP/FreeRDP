@@ -493,7 +493,6 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 #endif
 	UINT32 x;
 	long status;
-	SDecodingParam sDecParam = { 0 };
 	H264_CONTEXT_OPENH264* sysContexts;
 	static int traceLevel = WELS_LOG_DEBUG;
 #if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
@@ -535,6 +534,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 	for (x = 0; x < h264->numSystemData; x++)
 	{
+		SDecodingParam sDecParam = { 0 };
 		H264_CONTEXT_OPENH264* sys = &sysContexts[x];
 
 		if (h264->Compressor)
@@ -557,7 +557,6 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 				goto EXCEPTION;
 			}
 
-			ZeroMemory(&sDecParam, sizeof(sDecParam));
 #if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
 			sDecParam.eOutputColorFormat = videoFormatI420;
 #endif

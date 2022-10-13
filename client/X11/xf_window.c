@@ -785,7 +785,7 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 
 int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 {
-	XGCValues gcv;
+	XGCValues gcv = { 0 };
 	int input_mask;
 	XWMHints* InputModeHint;
 	XClassHint* class_hints;
@@ -817,7 +817,6 @@ int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	if (!appWindow->handle)
 		return -1;
 
-	ZeroMemory(&gcv, sizeof(gcv));
 	appWindow->gc = XCreateGC(xfc->display, appWindow->handle, GCGraphicsExposures, &gcv);
 	class_hints = XAllocClassHint();
 

@@ -920,14 +920,12 @@ static int test_progressive_ms_sample(char* ms_sample_path)
 	int i, j, k;
 	int count;
 	int status;
-	EGFX_SAMPLE_FILE files[3][4][4];
-	EGFX_SAMPLE_FILE bitmaps[3][4][4];
+	EGFX_SAMPLE_FILE files[3][4][4] = { 0 };
+	EGFX_SAMPLE_FILE bitmaps[3][4][4] = { 0 };
 	PROGRESSIVE_CONTEXT* progressive;
 	g_Width = 1920;
 	g_Height = 1080;
 	g_DstStep = g_Width * 4;
-	ZeroMemory(files, sizeof(files));
-	ZeroMemory(bitmaps, sizeof(bitmaps));
 	status = test_progressive_load_files(ms_sample_path, files);
 
 	if (status < 0)

@@ -226,14 +226,15 @@ static void tsmf_alsa_free(ITSMFAudioDevice* audio)
 
 ITSMFAudioDevice* alsa_freerdp_tsmf_client_audio_subsystem_entry(void)
 {
-	TSMFAlsaAudioDevice* alsa;
-	alsa = (TSMFAlsaAudioDevice*)malloc(sizeof(TSMFAlsaAudioDevice));
-	ZeroMemory(alsa, sizeof(TSMFAlsaAudioDevice));
+	TSMFAlsaAudioDevice* alsa = calloc(1, sizeof(TSMFAlsaAudioDevice));
+	if (!alsa)
+		return NULL;
+
 	alsa->iface.Open = tsmf_alsa_open;
 	alsa->iface.SetFormat = tsmf_alsa_set_format;
 	alsa->iface.Play = tsmf_alsa_play;
 	alsa->iface.GetLatency = tsmf_alsa_get_latency;
 	alsa->iface.Flush = tsmf_alsa_flush;
 	alsa->iface.Free = tsmf_alsa_free;
-	return (ITSMFAudioDevice*)alsa;
+	return &alsa->iface;
 }

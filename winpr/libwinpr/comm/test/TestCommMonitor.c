@@ -11,7 +11,7 @@ int TestCommMonitor(int argc, char* argv[])
 	DWORD dwError;
 	BOOL fSuccess;
 	DWORD dwEvtMask;
-	OVERLAPPED overlapped;
+	OVERLAPPED overlapped = { 0 };
 	LPCSTR lpFileName = "\\\\.\\COM1";
 
 	hComm = CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
@@ -31,7 +31,6 @@ int TestCommMonitor(int argc, char* argv[])
 		return -1;
 	}
 
-	ZeroMemory(&overlapped, sizeof(OVERLAPPED));
 	if (!(overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
 		printf("CreateEvent failed: GetLastError() = %" PRIu32 "\n", GetLastError());

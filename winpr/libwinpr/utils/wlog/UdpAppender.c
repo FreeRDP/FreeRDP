@@ -38,9 +38,9 @@ typedef struct
 static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 {
 	wLogUdpAppender* udpAppender;
-	char addressString[256];
-	struct addrinfo hints;
-	struct addrinfo* result;
+	char addressString[256] = { 0 };
+	struct addrinfo hints = { 0 };
+	struct addrinfo* result = { 0 };
 	int status;
 	size_t addrLen;
 	char* colonPos;
@@ -61,7 +61,6 @@ static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 	addrLen = (colonPos - udpAppender->host);
 	memcpy(addressString, udpAppender->host, addrLen);
 	addressString[addrLen] = '\0';
-	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_DGRAM;
 	status = getaddrinfo(addressString, colonPos + 1, &hints, &result);

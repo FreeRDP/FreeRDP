@@ -296,7 +296,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	HRESULT hr;
 	UINT dTop, i = 0;
 	IDXGIOutput* pOutput;
-	DXGI_OUTPUT_DESC outputDesc;
+	DXGI_OUTPUT_DESC outputDesc = { 0 };
 	DXGI_OUTPUT_DESC* pOutputDesc;
 	D3D11_TEXTURE2D_DESC textureDesc;
 	IDXGIDevice* dxgiDevice = NULL;
@@ -330,7 +330,6 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	}
 
 	pOutput = NULL;
-	ZeroMemory(&outputDesc, sizeof(outputDesc));
 
 	while (dxgiAdapter->lpVtbl->EnumOutputs(dxgiAdapter, i, &pOutput) != DXGI_ERROR_NOT_FOUND)
 	{

@@ -610,13 +610,12 @@ BOOL license_generate_hwid(rdpLicense* license)
 {
 	const BYTE* hashTarget;
 	size_t targetLen;
-	BYTE macAddress[6];
+	BYTE macAddress[6] = { 0 };
 
 	ZeroMemory(license->HardwareId, HWID_LENGTH);
 
 	if (license->rdp->settings->OldLicenseBehaviour)
 	{
-		ZeroMemory(macAddress, sizeof(macAddress));
 		hashTarget = macAddress;
 		targetLen = sizeof(macAddress);
 	}

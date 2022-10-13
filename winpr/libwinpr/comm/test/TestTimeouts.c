@@ -31,7 +31,7 @@
 
 static BOOL test_generic(HANDLE hComm)
 {
-	COMMTIMEOUTS timeouts, timeouts2;
+	COMMTIMEOUTS timeouts = { 0 }, timeouts2 = { 0 };
 
 	timeouts.ReadIntervalTimeout = 1;
 	timeouts.ReadTotalTimeoutMultiplier = 2;
@@ -45,7 +45,6 @@ static BOOL test_generic(HANDLE hComm)
 		return FALSE;
 	}
 
-	ZeroMemory(&timeouts2, sizeof(COMMTIMEOUTS));
 	if (!GetCommTimeouts(hComm, &timeouts2))
 	{
 		fprintf(stderr, "GetCommTimeouts failure, GetLastError: 0x%08x\n", GetLastError());

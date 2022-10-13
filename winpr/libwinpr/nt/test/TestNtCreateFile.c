@@ -18,8 +18,8 @@ int TestNtCreateFile(int argc, char* argv[])
 	UNICODE_STRING uString;
 	ULONG CreateDisposition;
 	ACCESS_MASK DesiredAccess = 0;
-	OBJECT_ATTRIBUTES attributes;
-	IO_STATUS_BLOCK ioStatusBlock;
+	OBJECT_ATTRIBUTES attributes = { 0 };
+	IO_STATUS_BLOCK ioStatusBlock = { 0 };
 	int result = -1;
 
 	WINPR_UNUSED(argc);
@@ -35,7 +35,6 @@ int TestNtCreateFile(int argc, char* argv[])
 	}
 
 	handle = NULL;
-	ZeroMemory(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
 	_InitializeObjectAttributes(&attributes, &uString, 0, NULL, NULL);
 	DesiredAccess = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
 	CreateOptions = FILE_DIRECTORY_FILE | FILE_WRITE_THROUGH;
