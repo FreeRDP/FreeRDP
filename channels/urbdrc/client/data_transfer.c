@@ -97,7 +97,13 @@ static wStream* urb_create_iocompletion(UINT32 InterfaceField, UINT32 MessageId,
                                         UINT32 OutputBufferSize)
 {
 	const UINT32 InterfaceId = (STREAM_ID_PROXY << 30) | (InterfaceField & 0x3FFFFFFF);
-	wStream* out = Stream_New(NULL, OutputBufferSize + 28);
+
+#if UINT32_MAX >= SIZE_MAX
+	if (OutputBufferSize > UINT32_MAX - 28ull)
+		return NULL;
+#endif
+
+	wStream* out = Stream_New(NULL, OutputBufferSize + 28ull);
 
 	if (!out)
 		return NULL;
