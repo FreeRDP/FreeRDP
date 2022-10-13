@@ -21,6 +21,7 @@
 #define FREERDP_CHANNELS_CLIENT_H
 
 #include <freerdp/api.h>
+#include <freerdp/config.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/channels.h>
 
@@ -65,6 +66,7 @@ extern "C"
 {
 #endif
 
+#if defined(WITH_CHANNELS)
 	FREERDP_API void* freerdp_channels_client_find_static_entry(const char* name,
 	                                                            const char* identifier);
 	FREERDP_API PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName,
@@ -82,6 +84,7 @@ extern "C"
 	    size_t pluginSize, size_t channelCallbackSize,
 	    const IWTSVirtualChannelCallback* channel_callbacks, DYNVC_PLUGIN_INIT_FN initPluginFn,
 	    DYNVC_PLUGIN_TERMINATE_FN terminatePluginFn);
+#endif
 
 #ifdef __cplusplus
 }
