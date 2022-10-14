@@ -330,7 +330,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	if (settings->AuthenticationServiceClass)
 	{
 		if (!nla_set_service_principal(rdp->nla, settings->AuthenticationServiceClass,
-		                               settings->ServerHostname))
+		                               freerdp_settings_get_server_name(settings)))
 			return FALSE;
 	}
 

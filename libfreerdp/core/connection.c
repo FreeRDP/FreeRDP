@@ -267,8 +267,10 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
 	}
 
+	const char* hostname = freerdp_settings_get_server_name(settings);
+
 	nego_init(rdp->nego);
-	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
+	nego_set_target(rdp->nego, hostname, settings->ServerPort);
 
 	if (settings->GatewayEnabled)
 	{

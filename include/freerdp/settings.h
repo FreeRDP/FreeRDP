@@ -516,6 +516,7 @@ typedef struct
 #define FreeRDP_MaxTimeInCheckLoop (26)
 #define FreeRDP_AcceptedCert (27)
 #define FreeRDP_AcceptedCertLength (28)
+#define FreeRDP_UserSpecifiedServerName (29)
 #define FreeRDP_ThreadingFlags (64)
 #define FreeRDP_RdpVersion (128)
 #define FreeRDP_DesktopWidth (129)
@@ -944,7 +945,8 @@ struct rdp_settings
 	ALIGN64 UINT32 MaxTimeInCheckLoop;     /* 26 */
 	ALIGN64 char* AcceptedCert;            /* 27 */
 	ALIGN64 UINT32 AcceptedCertLength;     /* 28 */
-	UINT64 padding0064[64 - 29];           /* 29 */
+	ALIGN64 char* UserSpecifiedServerName; /* 29 */
+	UINT64 padding0064[64 - 30];           /* 30 */
 	/* resource management related options */
 	ALIGN64 UINT32 ThreadingFlags; /* 64 */
 
@@ -1827,6 +1829,8 @@ extern "C"
 	FREERDP_API SSIZE_T freerdp_settings_get_type_for_key(size_t key);
 	FREERDP_API const char* freerdp_settings_get_name_for_key(size_t key);
 	FREERDP_API UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings);
+
+	FREERDP_API const char* freerdp_settings_get_server_name(const rdpSettings* settings);
 
 	FREERDP_API char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer,
 	                                                       size_t length);

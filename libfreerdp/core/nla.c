@@ -469,8 +469,9 @@ static int nla_client_init(rdpNla* nla)
 	if (!nla_client_setup_identity(nla))
 		return -1;
 
-	if (!credssp_auth_setup_client(nla->auth, "TERMSRV", settings->ServerHostname, nla->identity,
-	                               nla->pkinitArgs))
+	const char* hostname = freerdp_settings_get_server_name(settings);
+
+	if (!credssp_auth_setup_client(nla->auth, "TERMSRV", hostname, nla->identity, nla->pkinitArgs))
 		return -1;
 
 	tls = transport_get_tls(nla->transport);

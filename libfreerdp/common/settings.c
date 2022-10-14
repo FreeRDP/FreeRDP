@@ -1686,6 +1686,16 @@ UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings)
 	return flags;
 }
 
+const char* freerdp_settings_get_server_name(const rdpSettings* settings)
+{
+	const char* hostname = settings->ServerHostname;
+
+	if (settings->UserSpecifiedServerName)
+		hostname = settings->UserSpecifiedServerName;
+
+	return hostname;
+}
+
 #if defined(WITH_FREERDP_DEPRECATED)
 ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel)
 {
