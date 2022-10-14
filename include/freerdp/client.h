@@ -138,6 +138,9 @@ extern "C"
 	FREERDP_API BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** password,
 	                                            char** domain, rdp_auth_reason reason);
 
+	FREERDP_API BOOL client_cli_choose_smartcard(SmartcardCertInfo** cert_list, DWORD count,
+	                                             DWORD* choice);
+
 	FREERDP_API void
 	freerdp_client_OnChannelConnectedEventHandler(void* context,
 	                                              const ChannelConnectedEventArgs* e);

@@ -58,6 +58,7 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <freerdp/heartbeat.h>
 
 typedef struct stream_dump_context rdpStreamDumpContext;
+typedef struct SmartcardCertInfo_st SmartcardCertInfo;
 
 #ifdef __cplusplus
 extern "C"
@@ -117,6 +118,7 @@ extern "C"
 	                              char** domain);
 	typedef BOOL (*pAuthenticateEx)(freerdp* instance, char** username, char** password,
 	                                char** domain, rdp_auth_reason reason);
+	typedef BOOL (*pChooseSmartcard)(SmartcardCertInfo** cert_list, DWORD count, DWORD* choice);
 
 	/** @brief Callback used if user interaction is required to accept
 	 *         an unknown certificate.
@@ -493,7 +495,12 @@ owned by rdpRdp */
 		                                 Callback for authentication.
 		                                 It is used to get the username/password. The reason
 		                                 argument tells why it was called.  */
-		UINT64 paddingE[80 - 70];               /* 70 */
+		ALIGN64 pChooseSmartcard
+		    ChooseSmartcard;      /* (offset 70)
+		                        Callback for choosing a smartcard for logon.
+		                        Used when multiple smartcards are available. Returns an index into a list
+		                        of SmartcardCertInfo pointers	*/
+		UINT64 paddingE[80 - 71]; /* 71 */
 	};
 
 	struct rdp_channel_handles

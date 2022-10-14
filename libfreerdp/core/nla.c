@@ -124,8 +124,7 @@ struct rdp_nla
 
 	rdpCredsspAuth* auth;
 	char* pkinitArgs;
-	SmartcardCerts* smartcardCerts;
-	DWORD nsmartcardCerts;
+	SmartcardCertInfo* smartcardCert;
 	BYTE certSha1[20];
 };
 
@@ -187,7 +186,6 @@ static const UINT32 NonceLength = 32;
 
 static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 {
-	const SmartcardCertInfo* info = NULL;
 	rdpSettings* settings;
 	BOOL ret = FALSE;
 
@@ -200,35 +198,18 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 	if (!settings->SmartcardLogon)
 		return TRUE;
 
-	smartcardCerts_Free(&nla->smartcardCerts);
+	smartcardCertInfo_Free(nla->smartcardCert);
 
-	if (!smartcard_enumerateCerts(settings, &nla->smartcardCerts, &nla->nsmartcardCerts))
+	if (!smartcard_getCert(nla->rdpcontext, &nla->smartcardCert))
 	{
-		WLog_ERR(TAG, "unable to list smartcard certificates");
+		WLog_ERR(TAG, "unable to get smartcard certificate for logon");
 		return FALSE;
 	}
 
-	if (nla->nsmartcardCerts < 1)
-	{
-		WLog_ERR(TAG, "no smartcard certificates found");
-		goto out;
-	}
-
-	if (nla->nsmartcardCerts != 1)
-		goto setup_pin;
-
-	info = smartcard_getCertInfo(nla->smartcardCerts, 0);
-	if (!info)
-		goto out;
-
-	/*
-	 * just one result let's try to fill missing parameters
-	 */
-
 	if (!settings->CspName)
 	{
-		if (info->csp &&
-		    ConvertFromUnicode(CP_UTF8, 0, info->csp, -1, &settings->CspName, 0, NULL, FALSE) <= 0)
+		if (nla->smartcardCert->csp && ConvertFromUnicode(CP_UTF8, 0, nla->smartcardCert->csp, -1,
+		                                                  &settings->CspName, 0, NULL, FALSE) <= 0)
 		{
 			WLog_ERR(TAG, "unable to set CSP name");
 			goto out;
@@ -240,56 +221,55 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 		}
 	}
 
-	if (!settings->Username && info->userHint)
+	if (!settings->Username && nla->smartcardCert->userHint)
 	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_Username, info->userHint))
+		if (!freerdp_settings_set_string(settings, FreeRDP_Username, nla->smartcardCert->userHint))
 		{
 			WLog_ERR(TAG, "unable to copy certificate username");
 			goto out;
 		}
 	}
 
-	if (!settings->Domain && info->domainHint)
+	if (!settings->Domain && nla->smartcardCert->domainHint)
 	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, info->domainHint))
+		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, nla->smartcardCert->domainHint))
 		{
 			WLog_ERR(TAG, "unable to copy certificate domain");
 			goto out;
 		}
 	}
 
-	if (!settings->ReaderName && info->reader)
+	if (!settings->ReaderName && nla->smartcardCert->reader)
 	{
-		if (ConvertFromUnicode(CP_UTF8, 0, info->reader, -1, &settings->ReaderName, 0, NULL, NULL) <
-		    0)
+		if (ConvertFromUnicode(CP_UTF8, 0, nla->smartcardCert->reader, -1, &settings->ReaderName, 0,
+		                       NULL, NULL) < 0)
 		{
 			WLog_ERR(TAG, "unable to copy reader name");
 			goto out;
 		}
 	}
 
-	if (!settings->ContainerName && info->containerName)
+	if (!settings->ContainerName && nla->smartcardCert->containerName)
 	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_ContainerName, info->containerName))
+		if (!freerdp_settings_set_string(settings, FreeRDP_ContainerName,
+		                                 nla->smartcardCert->containerName))
 		{
 			WLog_ERR(TAG, "unable to copy container name");
 			goto out;
 		}
 	}
 
-	memcpy(nla->certSha1, info->sha1Hash, sizeof(nla->certSha1));
+	memcpy(nla->certSha1, nla->smartcardCert->sha1Hash, sizeof(nla->certSha1));
 
-	if (info->pkinitArgs)
+	if (nla->smartcardCert->pkinitArgs)
 	{
-		nla->pkinitArgs = _strdup(info->pkinitArgs);
+		nla->pkinitArgs = _strdup(nla->smartcardCert->pkinitArgs);
 		if (!nla->pkinitArgs)
 		{
 			WLog_ERR(TAG, "unable to copy pkinitArgs");
 			goto out;
 		}
 	}
-
-setup_pin:
 
 	ret = TRUE;
 out:
@@ -1699,7 +1679,7 @@ void nla_free(rdpNla* nla)
 	if (!nla)
 		return;
 
-	smartcardCerts_Free(&nla->smartcardCerts);
+	smartcardCertInfo_Free(nla->smartcardCert);
 	sspi_SecBufferFree(&nla->pubKeyAuth);
 	sspi_SecBufferFree(&nla->authInfo);
 	sspi_SecBufferFree(&nla->negoToken);
