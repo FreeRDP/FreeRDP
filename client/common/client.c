@@ -30,6 +30,7 @@
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/utils/smartcardlogon.h>
 
 #if defined(CHANNEL_AINPUT_CLIENT)
 #include <freerdp/client/ainput.h>
@@ -515,6 +516,47 @@ BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** passw
 	}
 
 	return client_cli_authenticate_raw(instance, reason, username, password, domain);
+}
+
+BOOL client_cli_choose_smartcard(SmartcardCertInfo** cert_list, DWORD count, DWORD* choice)
+{
+	unsigned long answer;
+	char* p = NULL;
+
+	printf("Multiple smartcards are available for use:\n");
+	for (DWORD i = 0; i < count; i++)
+	{
+		const SmartcardCertInfo* cert = cert_list[i];
+		char* reader = NULL;
+
+		ConvertFromUnicode(CP_UTF8, 0, cert->reader, -1, &reader, 0, NULL, NULL);
+		printf("[%" PRIu32
+		       "] %s\n\tReader: %s\n\tUser: %s@%s\n\tSubject: %s\n\tIssuer: %s\n\tUPN: %s\n",
+		       i, cert->containerName, reader, cert->userHint, cert->domainHint, cert->subject,
+		       cert->issuer, cert->upn);
+
+		free(reader);
+	}
+
+	while (1)
+	{
+		char input[10] = { 0 };
+
+		printf("\nChoose a smartcard to use (0 - %" PRIu32 "): ", count - 1);
+		fflush(stdout);
+		if (!fgets(input, 10, stdin))
+		{
+			WLog_ERR(TAG, "could not read from stdin");
+			return FALSE;
+		}
+
+		answer = strtoul(input, &p, 10);
+		if ((*p == '\n' && p != input) && answer < count)
+		{
+			*choice = answer;
+			return TRUE;
+		}
+	}
 }
 
 #if defined(WITH_FREERDP_DEPRECATED)

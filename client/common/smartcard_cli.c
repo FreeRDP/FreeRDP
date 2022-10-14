@@ -24,7 +24,7 @@
 
 BOOL freerdp_smartcard_list(const rdpSettings* settings)
 {
-	SmartcardCerts* certs = NULL;
+	SmartcardCertInfo** certs = NULL;
 	DWORD i, count;
 
 	if (!smartcard_enumerateCerts(settings, &certs, &count))
@@ -32,7 +32,7 @@ BOOL freerdp_smartcard_list(const rdpSettings* settings)
 
 	for (i = 0; i < count; i++)
 	{
-		const SmartcardCertInfo* info = smartcard_getCertInfo(certs, i);
+		const SmartcardCertInfo* info = certs[i];
 		char asciiStr[256] = { 0 };
 
 		WINPR_ASSERT(info);
@@ -54,7 +54,7 @@ BOOL freerdp_smartcard_list(const rdpSettings* settings)
 		if (info->upn)
 			printf("\t* UPN: %s\n", info->upn);
 	}
-	smartcardCerts_Free(&certs);
+	smartcardCertList_Free(certs, count);
 
 	return TRUE;
 }
