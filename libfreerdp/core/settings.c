@@ -348,6 +348,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_bool(settings, FreeRDP_ServerMode,
 	                               (flags & FREERDP_SETTINGS_SERVER_MODE) ? TRUE : FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_WaitForOutputBufferFlush, TRUE) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_ClusterInfoFlags,
+	                                 REDIRECTION_SUPPORTED | (REDIRECTION_VERSION4 << 2)) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_MaxTimeInCheckLoop, 100) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 1024) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 768) ||
