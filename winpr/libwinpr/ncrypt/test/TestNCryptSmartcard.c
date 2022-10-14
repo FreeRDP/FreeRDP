@@ -121,11 +121,12 @@ int TestNCryptSmartcard(int argc, char* argv[])
 					printf("\treader: %s\n", readerStr);
 			}
 
+			cbOutput = 0;
 			status =
 			    NCryptGetProperty(phKey, NCRYPT_CERTIFICATE_PROPERTY, NULL, 0, &cbOutput, dwFlags);
 			if (status != ERROR_SUCCESS)
 			{
-				/* WLog_ERR(TAG, "unable to retrieve certificate for key '%s'", keyNameStr); */
+				WLog_ERR(TAG, "unable to retrieve certificate len for key '%s'", keyNameStr);
 				goto endofloop;
 			}
 
