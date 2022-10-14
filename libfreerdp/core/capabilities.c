@@ -531,9 +531,6 @@ static BOOL rdp_apply_order_capability_set(rdpSettings* settings, const rdpSetti
 	WINPR_ASSERT(src);
 
 	int i;
-	UINT16 orderFlags;
-	BYTE orderSupport[32];
-	UINT16 orderSupportExFlags;
 	BOOL BitmapCacheV3Enabled = FALSE;
 	BOOL FrameMarkerCommandEnabled = FALSE;
 
@@ -543,16 +540,16 @@ static BOOL rdp_apply_order_capability_set(rdpSettings* settings, const rdpSetti
 			settings->OrderSupport[i] = FALSE;
 	}
 
-	if (orderFlags & ORDER_FLAGS_EXTRA_SUPPORT)
+	if (settings->OrderSupportFlags & ORDER_FLAGS_EXTRA_SUPPORT)
 	{
-		if (orderSupportExFlags & CACHE_BITMAP_V3_SUPPORT)
+		if (settings->OrderSupportFlagsEx & CACHE_BITMAP_V3_SUPPORT)
 			BitmapCacheV3Enabled = TRUE;
 
-		if (orderSupportExFlags & ALTSEC_FRAME_MARKER_SUPPORT)
+		if (settings->OrderSupportFlagsEx & ALTSEC_FRAME_MARKER_SUPPORT)
 			FrameMarkerCommandEnabled = TRUE;
 	}
 
-	if (settings->BitmapCacheV3Enabled)
+	if (BitmapCacheV3Enabled)
 	{
 		settings->BitmapCacheV3Enabled = src->BitmapCacheV3Enabled;
 		settings->BitmapCacheVersion = src->BitmapCacheVersion;
@@ -576,41 +573,44 @@ static BOOL rdp_apply_order_capability_set(rdpSettings* settings, const rdpSetti
 
 static BOOL rdp_read_order_capability_set(wStream* s, rdpSettings* settings)
 {
-	int i;
-	UINT16 orderFlags;
-	BYTE orderSupport[32];
-	UINT16 orderSupportExFlags;
+	size_t i;
+	char terminalDescriptor[17] = { 0 };
+	BYTE orderSupport[32] = { 0 };
 	BOOL BitmapCacheV3Enabled = FALSE;
 	BOOL FrameMarkerCommandEnabled = FALSE;
 
+	WINPR_ASSERT(settings);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 84))
 		return FALSE;
 
-	Stream_Seek(s, 16);                         /* terminalDescriptor (16 bytes) */
-	Stream_Seek_UINT32(s);                      /* pad4OctetsA (4 bytes) */
-	Stream_Seek_UINT16(s);                      /* desktopSaveXGranularity (2 bytes) */
-	Stream_Seek_UINT16(s);                      /* desktopSaveYGranularity (2 bytes) */
-	Stream_Seek_UINT16(s);                      /* pad2OctetsA (2 bytes) */
-	Stream_Seek_UINT16(s);                      /* maximumOrderLevel (2 bytes) */
-	Stream_Seek_UINT16(s);                      /* numberFonts (2 bytes) */
-	Stream_Read_UINT16(s, orderFlags);          /* orderFlags (2 bytes) */
-	Stream_Read(s, orderSupport, 32);           /* orderSupport (32 bytes) */
-	Stream_Seek_UINT16(s);                      /* textFlags (2 bytes) */
-	Stream_Read_UINT16(s, orderSupportExFlags); /* orderSupportExFlags (2 bytes) */
-	Stream_Seek_UINT32(s);                      /* pad4OctetsB (4 bytes) */
-	Stream_Seek_UINT32(s);                      /* desktopSaveSize (4 bytes) */
-	Stream_Seek_UINT16(s);                      /* pad2OctetsC (2 bytes) */
-	Stream_Seek_UINT16(s);                      /* pad2OctetsD (2 bytes) */
-	Stream_Seek_UINT16(s);                      /* textANSICodePage (2 bytes) */
-	Stream_Seek_UINT16(s);                      /* pad2OctetsE (2 bytes) */
+	Stream_Read(s, terminalDescriptor, 16);               /* terminalDescriptor (16 bytes) */
+	Stream_Seek_UINT32(s);                                /* pad4OctetsA (4 bytes) */
+	Stream_Seek_UINT16(s);                                /* desktopSaveXGranularity (2 bytes) */
+	Stream_Seek_UINT16(s);                                /* desktopSaveYGranularity (2 bytes) */
+	Stream_Seek_UINT16(s);                                /* pad2OctetsA (2 bytes) */
+	Stream_Seek_UINT16(s);                                /* maximumOrderLevel (2 bytes) */
+	Stream_Seek_UINT16(s);                                /* numberFonts (2 bytes) */
+	Stream_Read_UINT16(s, settings->OrderSupportFlags);   /* orderFlags (2 bytes) */
+	Stream_Read(s, orderSupport, 32);                     /* orderSupport (32 bytes) */
+	Stream_Seek_UINT16(s);                                /* textFlags (2 bytes) */
+	Stream_Read_UINT16(s, settings->OrderSupportFlagsEx); /* orderSupportExFlags (2 bytes) */
+	Stream_Seek_UINT32(s);                                /* pad4OctetsB (4 bytes) */
+	Stream_Seek_UINT32(s);                                /* desktopSaveSize (4 bytes) */
+	Stream_Seek_UINT16(s);                                /* pad2OctetsC (2 bytes) */
+	Stream_Seek_UINT16(s);                                /* pad2OctetsD (2 bytes) */
+	Stream_Read_UINT16(s, settings->TextANSICodePage);    /* textANSICodePage (2 bytes) */
+	Stream_Seek_UINT16(s);                                /* pad2OctetsE (2 bytes) */
 
-	for (i = 0; i < 32; i++)
+	if (!freerdp_settings_set_string(settings, FreeRDP_TerminalDescriptor, terminalDescriptor))
+		return FALSE;
+
+	for (i = 0; i < ARRAYSIZE(orderSupport); i++)
 		settings->OrderSupport[i] = orderSupport[i];
 
-	if (orderFlags & ORDER_FLAGS_EXTRA_SUPPORT)
+	if (settings->OrderSupportFlags & ORDER_FLAGS_EXTRA_SUPPORT)
 	{
-		BitmapCacheV3Enabled = orderSupportExFlags & CACHE_BITMAP_V3_SUPPORT;
-		FrameMarkerCommandEnabled = orderSupportExFlags & ALTSEC_FRAME_MARKER_SUPPORT;
+		BitmapCacheV3Enabled = settings->OrderSupportFlagsEx & CACHE_BITMAP_V3_SUPPORT;
+		FrameMarkerCommandEnabled = settings->OrderSupportFlagsEx & ALTSEC_FRAME_MARKER_SUPPORT;
 	}
 
 	settings->BitmapCacheV3Enabled = BitmapCacheV3Enabled;
@@ -634,20 +634,18 @@ static BOOL rdp_write_order_capability_set(wStream* s, const rdpSettings* settin
 	size_t header;
 	UINT16 orderFlags;
 	UINT16 orderSupportExFlags;
-	UINT16 textANSICodePage = 0;
+	char terminalDescriptor[16] = { 0 };
 
+	WINPR_ASSERT(settings);
 	if (!Stream_EnsureRemainingCapacity(s, 64))
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	/* see [MSDN-CP]: http://msdn.microsoft.com/en-us/library/dd317756 */
-	if (!settings->ServerMode)
-		textANSICodePage = CP_UTF8; /* Unicode (UTF-8) */
 
-	orderSupportExFlags = 0;
-	orderFlags = NEGOTIATE_ORDER_SUPPORT | ZERO_BOUNDS_DELTA_SUPPORT | COLOR_INDEX_SUPPORT;
+	orderSupportExFlags = settings->OrderSupportFlagsEx;
+	orderFlags = settings->OrderSupportFlags;
 
 	if (settings->BitmapCacheV3Enabled)
 	{
@@ -661,7 +659,14 @@ static BOOL rdp_write_order_capability_set(wStream* s, const rdpSettings* settin
 		orderFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
 	}
 
-	Stream_Zero(s, 16);                          /* terminalDescriptor (16 bytes) */
+	const char* dsc = freerdp_settings_get_string(settings, FreeRDP_TerminalDescriptor);
+	if (dsc)
+	{
+		const size_t len = strnlen(dsc, ARRAYSIZE(terminalDescriptor));
+		strncpy(terminalDescriptor, dsc, len);
+	}
+	Stream_Write(s, terminalDescriptor,
+	             sizeof(terminalDescriptor));    /* terminalDescriptor (16 bytes) */
 	Stream_Write_UINT32(s, 0);                   /* pad4OctetsA (4 bytes) */
 	Stream_Write_UINT16(s, 1);                   /* desktopSaveXGranularity (2 bytes) */
 	Stream_Write_UINT16(s, 20);                  /* desktopSaveYGranularity (2 bytes) */
@@ -676,7 +681,7 @@ static BOOL rdp_write_order_capability_set(wStream* s, const rdpSettings* settin
 	Stream_Write_UINT32(s, 230400);              /* desktopSaveSize (4 bytes) */
 	Stream_Write_UINT16(s, 0);                   /* pad2OctetsC (2 bytes) */
 	Stream_Write_UINT16(s, 0);                   /* pad2OctetsD (2 bytes) */
-	Stream_Write_UINT16(s, textANSICodePage);    /* textANSICodePage (2 bytes) */
+	Stream_Write_UINT16(s, settings->TextANSICodePage); /* textANSICodePage (2 bytes) */
 	Stream_Write_UINT16(s, 0);                   /* pad2OctetsE (2 bytes) */
 	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_ORDER);
 }
@@ -1714,9 +1719,9 @@ static BOOL rdp_read_glyph_cache_capability_set(wStream* s, rdpSettings* setting
 	/* glyphCache (40 bytes) */
 	for (x = 0; x < 10; x++)
 		rdp_read_cache_definition(s, &(settings->GlyphCache[x])); /* glyphCache0 (4 bytes) */
-	rdp_read_cache_definition(s, settings->FragCache);        /* fragCache (4 bytes) */
-	Stream_Read_UINT16(s, settings->GlyphSupportLevel);       /* glyphSupportLevel (2 bytes) */
-	Stream_Seek_UINT16(s);                                    /* pad2Octets (2 bytes) */
+	rdp_read_cache_definition(s, settings->FragCache);            /* fragCache (4 bytes) */
+	Stream_Read_UINT16(s, settings->GlyphSupportLevel);           /* glyphSupportLevel (2 bytes) */
+	Stream_Seek_UINT16(s);                                        /* pad2Octets (2 bytes) */
 	return TRUE;
 }
 
@@ -1743,8 +1748,8 @@ static BOOL rdp_write_glyph_cache_capability_set(wStream* s, const rdpSettings* 
 	for (x = 0; x < 10; x++)
 		rdp_write_cache_definition(s, &(settings->GlyphCache[x])); /* glyphCache0 (4 bytes) */
 	rdp_write_cache_definition(s, settings->FragCache);            /* fragCache (4 bytes) */
-	Stream_Write_UINT16(s, (UINT16)settings->GlyphSupportLevel); /* glyphSupportLevel (2 bytes) */
-	Stream_Write_UINT16(s, 0);                                   /* pad2Octets (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)settings->GlyphSupportLevel);   /* glyphSupportLevel (2 bytes) */
+	Stream_Write_UINT16(s, 0);                                     /* pad2Octets (2 bytes) */
 	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_GLYPH_CACHE);
 }
 
@@ -1946,9 +1951,9 @@ static BOOL rdp_write_bitmap_cache_host_support_capability_set(wStream* s,
 	header = rdp_capability_set_start(s);
 	if (header > UINT16_MAX)
 		return FALSE;
-	Stream_Write_UINT8(s, cacheVersion);    /* cacheVersion (1 byte) */
-	Stream_Write_UINT8(s, 0);               /* pad1 (1 byte) */
-	Stream_Write_UINT16(s, 0);              /* pad2 (2 bytes) */
+	Stream_Write_UINT8(s, cacheVersion); /* cacheVersion (1 byte) */
+	Stream_Write_UINT8(s, 0);            /* pad1 (1 byte) */
+	Stream_Write_UINT16(s, 0);           /* pad2 (2 bytes) */
 	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_BITMAP_CACHE_HOST_SUPPORT);
 }
 
@@ -2060,7 +2065,7 @@ static BOOL rdp_read_bitmap_cache_v2_capability_set(wStream* s, rdpSettings* set
 	                               cacheFlags & PERSISTENT_KEYS_EXPECTED_FLAG))
 		return FALSE;
 
-	Stream_Seek_UINT8(s);  /* pad2 (1 byte) */
+	Stream_Seek_UINT8(s);                                  /* pad2 (1 byte) */
 	Stream_Read_UINT8(s, settings->BitmapCacheV2NumCells); /* numCellCaches (1 byte) */
 	for (x = 0; x < 5; x++)
 	{
@@ -2069,7 +2074,7 @@ static BOOL rdp_read_bitmap_cache_v2_capability_set(wStream* s, rdpSettings* set
 		if (!rdp_read_bitmap_cache_cell_info(s, info))
 			return FALSE;
 	}
-	Stream_Seek(s, 12);    /* pad3 (12 bytes) */
+	Stream_Seek(s, 12); /* pad3 (12 bytes) */
 	return TRUE;
 }
 
@@ -2224,7 +2229,7 @@ static BOOL rdp_write_virtual_channel_capability_set(wStream* s, const rdpSettin
 		return FALSE;
 
 	Stream_Write_UINT32(s, settings->VirtualChannelCompressionFlags); /* flags (4 bytes) */
-	Stream_Write_UINT32(s, settings->VirtualChannelChunkSize); /* VCChunkSize (4 bytes) */
+	Stream_Write_UINT32(s, settings->VirtualChannelChunkSize);        /* VCChunkSize (4 bytes) */
 	return rdp_capability_set_finish(s, header, CAPSET_TYPE_VIRTUAL_CHANNEL);
 }
 

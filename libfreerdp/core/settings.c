@@ -357,6 +357,10 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	            RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED |
 	            RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED | RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED |
 	            RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED) ||
+	    !freerdp_settings_set_uint16(settings, FreeRDP_TextANSICodePage, CP_UTF8) ||
+	    !freerdp_settings_set_uint16(settings, FreeRDP_OrderSupportFlags,
+	                                 NEGOTIATE_ORDER_SUPPORT | ZERO_BOUNDS_DELTA_SUPPORT |
+	                                     COLOR_INDEX_SUPPORT) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_SupportHeartbeatPdu, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_ServerMode,
 	                               (flags & FREERDP_SETTINGS_SERVER_MODE) ? TRUE : FALSE) ||

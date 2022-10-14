@@ -814,6 +814,10 @@ typedef struct
 #define FreeRDP_BitmapCacheV3Enabled (2433)
 #define FreeRDP_AltSecFrameMarkerSupport (2434)
 #define FreeRDP_AllowUnanouncedOrdersFromServer (2435)
+#define FreeRDP_OrderSupportFlags (2436)
+#define FreeRDP_OrderSupportFlagsEx (2437)
+#define FreeRDP_TerminalDescriptor (2438)
+#define FreeRDP_TextANSICodePage (2439)
 #define FreeRDP_BitmapCacheEnabled (2497)
 #define FreeRDP_BitmapCacheVersion (2498)
 #define FreeRDP_AllowCacheWaitingList (2499)
@@ -1396,7 +1400,11 @@ struct rdp_settings
 	ALIGN64 BOOL BitmapCacheV3Enabled;            /* 2433 */
 	ALIGN64 BOOL AltSecFrameMarkerSupport;        /* 2434 */
 	ALIGN64 BOOL AllowUnanouncedOrdersFromServer; /* 2435 */
-	UINT64 padding2497[2497 - 2436];              /* 2436 */
+	ALIGN64 UINT16 OrderSupportFlags;             /* 2436 */
+	ALIGN64 UINT16 OrderSupportFlagsEx;           /* 2437 */
+	ALIGN64 char* TerminalDescriptor;             /* 2438 */
+	ALIGN64 UINT16 TextANSICodePage;              /* 2439 */
+	UINT64 padding2497[2497 - 2440];              /* 2440 */
 
 	/* Bitmap Cache Capabilities */
 	ALIGN64 BOOL BitmapCacheEnabled;                          /* 2497 */

@@ -186,9 +186,12 @@ static const size_t uint16_list_indices[] = {
 	FreeRDP_CapsRemoteUnshareFlag,
 	FreeRDP_CapsUpdateCapabilityFlag,
 	FreeRDP_DesktopOrientation,
+	FreeRDP_OrderSupportFlags,
+	FreeRDP_OrderSupportFlagsEx,
 	FreeRDP_ProxyPort,
 	FreeRDP_TLSMaxVersion,
 	FreeRDP_TLSMinVersion,
+	FreeRDP_TextANSICodePage,
 };
 
 #define have_uint32_list_indices
@@ -406,6 +409,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_SmartcardPrivateKey,
 	FreeRDP_SspiModule,
 	FreeRDP_TargetNetAddress,
+	FreeRDP_TerminalDescriptor,
 	FreeRDP_TlsSecretsFile,
 	FreeRDP_TransportDumpFile,
 	FreeRDP_UserSpecifiedServerName,

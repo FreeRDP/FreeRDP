@@ -1300,6 +1300,12 @@ UINT16 freerdp_settings_get_uint16(const rdpSettings* settings, size_t id)
 		case FreeRDP_DesktopOrientation:
 			return settings->DesktopOrientation;
 
+		case FreeRDP_OrderSupportFlags:
+			return settings->OrderSupportFlags;
+
+		case FreeRDP_OrderSupportFlagsEx:
+			return settings->OrderSupportFlagsEx;
+
 		case FreeRDP_ProxyPort:
 			return settings->ProxyPort;
 
@@ -1308,6 +1314,9 @@ UINT16 freerdp_settings_get_uint16(const rdpSettings* settings, size_t id)
 
 		case FreeRDP_TLSMinVersion:
 			return settings->TLSMinVersion;
+
+		case FreeRDP_TextANSICodePage:
+			return settings->TextANSICodePage;
 
 		default:
 			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz " [%s|%s]", __FUNCTION__, id,
@@ -1356,6 +1365,14 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 			settings->DesktopOrientation = cnv.c;
 			break;
 
+		case FreeRDP_OrderSupportFlags:
+			settings->OrderSupportFlags = cnv.c;
+			break;
+
+		case FreeRDP_OrderSupportFlagsEx:
+			settings->OrderSupportFlagsEx = cnv.c;
+			break;
+
 		case FreeRDP_ProxyPort:
 			settings->ProxyPort = cnv.c;
 			break;
@@ -1366,6 +1383,10 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 
 		case FreeRDP_TLSMinVersion:
 			settings->TLSMinVersion = cnv.c;
+			break;
+
+		case FreeRDP_TextANSICodePage:
+			settings->TextANSICodePage = cnv.c;
 			break;
 
 		default:
@@ -2660,6 +2681,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_TargetNetAddress:
 			return settings->TargetNetAddress;
 
+		case FreeRDP_TerminalDescriptor:
+			return settings->TerminalDescriptor;
+
 		case FreeRDP_TlsSecretsFile:
 			return settings->TlsSecretsFile;
 
@@ -2931,6 +2955,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_TargetNetAddress:
 			return settings->TargetNetAddress;
+
+		case FreeRDP_TerminalDescriptor:
+			return settings->TerminalDescriptor;
 
 		case FreeRDP_TlsSecretsFile:
 			return settings->TlsSecretsFile;
@@ -3213,6 +3240,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_TargetNetAddress:
 			return update_string(&settings->TargetNetAddress, cnv.cc, len, cleanup);
+
+		case FreeRDP_TerminalDescriptor:
+			return update_string(&settings->TerminalDescriptor, cnv.cc, len, cleanup);
 
 		case FreeRDP_TlsSecretsFile:
 			return update_string(&settings->TlsSecretsFile, cnv.cc, len, cleanup);
