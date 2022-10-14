@@ -37,8 +37,6 @@ typedef struct
 	char* domainHint;
 	char* subject;
 	char* issuer;
-	BYTE atr[256];
-	DWORD atrLength;
 	BYTE sha1Hash[20];
 } SmartcardCertInfo;
 

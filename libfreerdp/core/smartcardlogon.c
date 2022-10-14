@@ -27,7 +27,6 @@
 #include <winpr/ncrypt.h>
 #include <winpr/string.h>
 #include <winpr/wlog.h>
-#include <winpr/smartcard.h>
 #include <winpr/crypto.h>
 #include <winpr/path.h>
 
@@ -49,47 +48,6 @@ struct sSmartCardCerts
 	size_t count;
 	SmartcardCertInfoPrivate* certs;
 };
-
-static BOOL getAtr(LPWSTR readerName, BYTE* atr, DWORD* atrLen)
-{
-	WCHAR atrName[256];
-	DWORD cbLength;
-	DWORD dwShareMode = SCARD_SHARE_SHARED;
-	DWORD dwPreferredProtocols = SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1;
-	SCARDHANDLE hCardHandle;
-	DWORD dwActiveProtocol = 0;
-	BOOL ret = FALSE;
-	LONG status = 0;
-	SCARDCONTEXT scContext;
-
-	status = SCardEstablishContext(SCARD_SCOPE_USER, NULL, NULL, &scContext);
-	if (status != ERROR_SUCCESS || !scContext)
-		return FALSE;
-
-	status = SCardConnectW(scContext, readerName, dwShareMode, dwPreferredProtocols, &hCardHandle,
-	                       &dwActiveProtocol);
-	if (status != ERROR_SUCCESS)
-		goto out_connect;
-
-	*atrLen = 256;
-	status = SCardGetAttrib(hCardHandle, SCARD_ATTR_ATR_STRING, atr, atrLen);
-	if (status != ERROR_SUCCESS)
-		goto out_get_attrib;
-
-	cbLength = 256;
-	status = SCardListCardsW(scContext, atr, NULL, 0, atrName, &cbLength);
-	if (status != ERROR_SUCCESS)
-		goto out_listCards;
-
-	/* WLog_DBG(TAG, "ATR name: %ld -> %S\n", cbLength, atrName); */
-	ret = TRUE;
-out_listCards:
-out_get_attrib:
-	SCardDisconnect(scContext, SCARD_LEAVE_CARD);
-out_connect:
-	SCardReleaseContext(scContext);
-	return ret;
-}
 
 static void smartcardCertInfo_Free(SmartcardCertInfo* scCert)
 {
@@ -262,6 +220,7 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 	{
 		NCRYPT_KEY_HANDLE phKey = 0;
 		PBYTE certBytes = NULL;
+		DWORD dwFlags = NCRYPT_SILENT_FLAG;
 		DWORD cbOutput;
 		SmartcardCertInfoPrivate* cert;
 		BOOL haveError = TRUE;
@@ -290,8 +249,8 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 
 		WLog_DBG(TAG, "opening key %s", cert->info.containerName);
 
-		status = NCryptOpenKey(provider, &phKey, keyName->pszName, keyName->dwLegacyKeySpec,
-		                       NCRYPT_SILENT_FLAG);
+		status =
+		    NCryptOpenKey(provider, &phKey, keyName->pszName, keyName->dwLegacyKeySpec, dwFlags);
 		if (status != ERROR_SUCCESS)
 		{
 			WLog_DBG(TAG,
@@ -308,7 +267,7 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 
 #ifndef _WIN32
 		status = NCryptGetProperty(phKey, NCRYPT_WINPR_SLOTID, (PBYTE)&cert->info.slotId, 4,
-		                           &cbOutput, NCRYPT_SILENT_FLAG);
+		                           &cbOutput, dwFlags);
 		if (status != ERROR_SUCCESS)
 		{
 			WLog_ERR(TAG, "unable to retrieve slotId for key %s, status=%s",
@@ -318,8 +277,8 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 #endif /* _WIN32 */
 
 		/* ====== retrieve key's reader ====== */
-		status = NCryptGetProperty(phKey, NCRYPT_READER_PROPERTY, NULL, 0, &cbOutput,
-		                           NCRYPT_SILENT_FLAG);
+		cbOutput = 0;
+		status = NCryptGetProperty(phKey, NCRYPT_READER_PROPERTY, NULL, 0, &cbOutput, dwFlags);
 		if (status != ERROR_SUCCESS)
 		{
 			WLog_DBG(TAG, "unable to retrieve reader's name length for key %s",
@@ -335,21 +294,16 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		}
 
 		status = NCryptGetProperty(phKey, NCRYPT_READER_PROPERTY, (PBYTE)cert->info.reader,
-		                           cbOutput + 2, &cbOutput, NCRYPT_SILENT_FLAG);
+		                           cbOutput + 2, &cbOutput, dwFlags);
 		if (status != ERROR_SUCCESS)
 		{
 			WLog_ERR(TAG, "unable to retrieve reader's name for key %s", cert->info.containerName);
 			goto endofloop;
 		}
 
-		if (!getAtr(cert->info.reader, cert->info.atr, &cert->info.atrLength))
-		{
-			WLog_ERR(TAG, "unable to retrieve card ATR for key %s", cert->info.containerName);
-		}
-
 		/* ========= retrieve the certificate ===============*/
-		status = NCryptGetProperty(phKey, NCRYPT_CERTIFICATE_PROPERTY, NULL, 0, &cbOutput,
-		                           NCRYPT_SILENT_FLAG);
+		cbOutput = 0;
+		status = NCryptGetProperty(phKey, NCRYPT_CERTIFICATE_PROPERTY, NULL, 0, &cbOutput, dwFlags);
 		if (status != ERROR_SUCCESS)
 		{
 			/* can happen that key don't have certificates */
@@ -367,7 +321,7 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		}
 
 		status = NCryptGetProperty(phKey, NCRYPT_CERTIFICATE_PROPERTY, certBytes, cbOutput,
-		                           &cbOutput, NCRYPT_SILENT_FLAG);
+		                           &cbOutput, dwFlags);
 		if (status != ERROR_SUCCESS)
 		{
 			WLog_ERR(TAG, "unable to retrieve certificate for key %s", cert->info.containerName);
@@ -398,7 +352,7 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 
 		if (userFilter && cert->info.userHint && strcmp(cert->info.userHint, userFilter) != 0)
 		{
-			WLog_DBG(TAG, "discarding non matching cert %s@%s", cert->info.userHint,
+			WLog_DBG(TAG, "discarding non matching cert by user %s@%s", cert->info.userHint,
 			         cert->info.domainHint);
 			goto endofloop;
 		}
@@ -406,8 +360,8 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		if (domainFilter && cert->info.domainHint &&
 		    strcmp(cert->info.domainHint, domainFilter) != 0)
 		{
-			WLog_DBG(TAG, "discarding non matching cert %s@%s", cert->info.userHint,
-			         cert->info.domainHint);
+			WLog_DBG(TAG, "discarding non matching cert by domain(%s) %s@%s", domainFilter,
+			         cert->info.userHint, cert->info.domainHint);
 			goto endofloop;
 		}
 
@@ -657,6 +611,9 @@ BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCerts** scCe
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(scCerts);
 	WINPR_ASSERT(retCount);
+
+	if (Domain && !strlen(Domain))
+		Domain = NULL;
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_SmartcardEmulation))
 		return smartcard_sw_enumerateCerts(settings, scCerts, retCount);
