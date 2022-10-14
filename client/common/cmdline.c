@@ -2463,6 +2463,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					return rc;
 			}
 		}
+		CommandLineSwitchCase(arg, "server-name")
+		{
+			if (!freerdp_settings_set_string(settings, FreeRDP_UserSpecifiedServerName, arg->Value))
+				return COMMAND_LINE_ERROR_MEMORY;
+		}
 		CommandLineSwitchCase(arg, "shell")
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_AlternateShell, arg->Value))

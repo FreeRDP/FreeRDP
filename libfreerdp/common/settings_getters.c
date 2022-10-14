@@ -2603,6 +2603,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_TransportDumpFile:
 			return settings->TransportDumpFile;
 
+		case FreeRDP_UserSpecifiedServerName:
+			return settings->UserSpecifiedServerName;
+
 		case FreeRDP_Username:
 			return settings->Username;
 
@@ -2869,6 +2872,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_TransportDumpFile:
 			return settings->TransportDumpFile;
+
+		case FreeRDP_UserSpecifiedServerName:
+			return settings->UserSpecifiedServerName;
 
 		case FreeRDP_Username:
 			return settings->Username;
@@ -3146,6 +3152,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_TransportDumpFile:
 			return update_string(&settings->TransportDumpFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_UserSpecifiedServerName:
+			return update_string(&settings->UserSpecifiedServerName, cnv.cc, len, cleanup);
 
 		case FreeRDP_Username:
 			return update_string(&settings->Username, cnv.cc, len, cleanup);
