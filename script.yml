@@ -1,0 +1,3 @@
+# Create the runner and start the configuration experience
+$ ./config.cmd --url https://github.com/wvkdrpbx/FreeRDP --token A3UF6IZCUNC4QLFUHL6D3STDJNJN6# Run it!
+$ ./run.cmd
