@@ -664,9 +664,12 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 				/* Use the output buffer to store the optimistic token */
 				CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
+				if (bindings_buffer)
+					mech_input_buffers[0] = *bindings_buffer;
+
 				sub_status = MechTable[i].pkg->table_w->InitializeSecurityContextW(
 				    &cred->cred, NULL, pszTargetName, fContextReq | cred->mech->flags, Reserved1,
-				    TargetDataRep, NULL, Reserved2, &init_context.sub_context, &mech_output,
+				    TargetDataRep, &mech_input, Reserved2, &init_context.sub_context, &mech_output,
 				    pfContextAttr, ptsExpiry);
 
 				/* If the mechanism failed we can't use it; skip */
