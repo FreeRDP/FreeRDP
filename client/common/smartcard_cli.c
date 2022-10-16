@@ -27,7 +27,7 @@ BOOL freerdp_smartcard_list(const rdpSettings* settings)
 	SmartcardCertInfo** certs = NULL;
 	DWORD i, count;
 
-	if (!smartcard_enumerateCerts(settings, &certs, &count))
+	if (!smartcard_enumerateCerts(settings, &certs, &count, FALSE))
 		return FALSE;
 
 	for (i = 0; i < count; i++)
