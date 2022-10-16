@@ -518,7 +518,8 @@ BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** passw
 	return client_cli_authenticate_raw(instance, reason, username, password, domain);
 }
 
-BOOL client_cli_choose_smartcard(SmartcardCertInfo** cert_list, DWORD count, DWORD* choice)
+BOOL client_cli_choose_smartcard(SmartcardCertInfo** cert_list, DWORD count, DWORD* choice,
+                                 BOOL gateway)
 {
 	unsigned long answer;
 	char* p = NULL;
@@ -545,7 +546,8 @@ BOOL client_cli_choose_smartcard(SmartcardCertInfo** cert_list, DWORD count, DWO
 	{
 		char input[10] = { 0 };
 
-		printf("\nChoose a smartcard to use (0 - %" PRIu32 "): ", count - 1);
+		printf("\nChoose a smartcard to use for %s (0 - %" PRIu32 "): ",
+		       gateway ? "gateway authentication" : "logon", count - 1);
 		fflush(stdout);
 		if (!fgets(input, 10, stdin))
 		{

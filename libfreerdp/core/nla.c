@@ -200,7 +200,7 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 
 	smartcardCertInfo_Free(nla->smartcardCert);
 
-	if (!smartcard_getCert(nla->rdpcontext, &nla->smartcardCert))
+	if (!smartcard_getCert(nla->rdpcontext, &nla->smartcardCert, FALSE))
 	{
 		WLog_ERR(TAG, "unable to get smartcard certificate for logon");
 		return FALSE;
@@ -217,24 +217,6 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 		else if (!(settings->CspName = _strdup(MS_SCARD_PROV_A)))
 		{
 			WLog_ERR(TAG, "unable to set CSP name");
-			goto out;
-		}
-	}
-
-	if (!settings->Username && nla->smartcardCert->userHint)
-	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_Username, nla->smartcardCert->userHint))
-		{
-			WLog_ERR(TAG, "unable to copy certificate username");
-			goto out;
-		}
-	}
-
-	if (!settings->Domain && nla->smartcardCert->domainHint)
-	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, nla->smartcardCert->domainHint))
-		{
-			WLog_ERR(TAG, "unable to copy certificate domain");
 			goto out;
 		}
 	}

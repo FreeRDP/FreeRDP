@@ -118,7 +118,8 @@ extern "C"
 	                              char** domain);
 	typedef BOOL (*pAuthenticateEx)(freerdp* instance, char** username, char** password,
 	                                char** domain, rdp_auth_reason reason);
-	typedef BOOL (*pChooseSmartcard)(SmartcardCertInfo** cert_list, DWORD count, DWORD* choice);
+	typedef BOOL (*pChooseSmartcard)(SmartcardCertInfo** cert_list, DWORD count, DWORD* choice,
+	                                 BOOL gateway);
 
 	/** @brief Callback used if user interaction is required to accept
 	 *         an unknown certificate.

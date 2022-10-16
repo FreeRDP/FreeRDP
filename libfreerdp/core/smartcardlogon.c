@@ -607,14 +607,25 @@ out_error:
 }
 
 BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** scCerts,
-                              DWORD* retCount)
+                              DWORD* retCount, BOOL gateway)
 {
 	BOOL ret;
 	LPWSTR csp = NULL;
 	const char* ReaderName = freerdp_settings_get_string(settings, FreeRDP_ReaderName);
-	const char* Username = freerdp_settings_get_string(settings, FreeRDP_Username);
-	const char* Domain = freerdp_settings_get_string(settings, FreeRDP_Domain);
 	const char* CspName = freerdp_settings_get_string(settings, FreeRDP_CspName);
+	const char* Username;
+	const char* Domain;
+
+	if (gateway)
+	{
+		Username = freerdp_settings_get_string(settings, FreeRDP_GatewayUsername);
+		Domain = freerdp_settings_get_string(settings, FreeRDP_GatewayDomain);
+	}
+	else
+	{
+		Username = freerdp_settings_get_string(settings, FreeRDP_Username);
+		Domain = freerdp_settings_get_string(settings, FreeRDP_Domain);
+	}
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(scCerts);
@@ -638,19 +649,32 @@ BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** 
 	return ret;
 }
 
-BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert)
+static BOOL set_settings_from_smartcard(rdpSettings* settings, size_t id, const char* value)
+{
+	WINPR_ASSERT(settings);
+
+	if (!freerdp_settings_get_string(settings, id) && value)
+		if (!freerdp_settings_set_string(settings, id, value))
+			return FALSE;
+
+	return TRUE;
+}
+
+BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert, BOOL gateway)
 {
 	WINPR_ASSERT(context);
 
 	const freerdp* instance = context->instance;
-	const rdpSettings* settings = context->settings;
+	rdpSettings* settings = context->settings;
 	SmartcardCertInfo** cert_list;
 	DWORD count;
+	size_t username_setting;
+	size_t domain_setting;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(settings);
 
-	if (!smartcard_enumerateCerts(settings, &cert_list, &count))
+	if (!smartcard_enumerateCerts(settings, &cert_list, &count, gateway))
 		return FALSE;
 
 	if (count < 1)
@@ -663,7 +687,8 @@ BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert)
 	{
 		DWORD index;
 
-		if (!instance->ChooseSmartcard || !instance->ChooseSmartcard(cert_list, count, &index))
+		if (!instance->ChooseSmartcard ||
+		    !instance->ChooseSmartcard(cert_list, count, &index, gateway))
 		{
 			WLog_ERR(TAG, "more than one suitable smartcard certificate was found");
 			smartcardCertList_Free(cert_list, count);
@@ -679,6 +704,18 @@ BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert)
 	else
 		*cert = cert_list[0];
 
+	username_setting = gateway ? FreeRDP_GatewayUsername : FreeRDP_Username;
+	domain_setting = gateway ? FreeRDP_GatewayDomain : FreeRDP_Domain;
+
 	free(cert_list);
+
+	if (!set_settings_from_smartcard(settings, username_setting, (*cert)->userHint) ||
+	    !set_settings_from_smartcard(settings, domain_setting, (*cert)->domainHint))
+	{
+		WLog_ERR(TAG, "unable to set settings from smartcard!");
+		smartcardCertInfo_Free(*cert);
+		return FALSE;
+	}
+
 	return TRUE;
 }

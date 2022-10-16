@@ -26,10 +26,12 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 #include <winpr/winsock.h>
+#include <winpr/cred.h>
 
 #include <freerdp/log.h>
 #include <freerdp/error.h>
 #include <freerdp/utils/ringbuffer.h>
+#include <freerdp/utils/smartcardlogon.h>
 
 #include "rdg.h"
 #include "../credssp_auth.h"
@@ -193,6 +195,8 @@ struct rdp_rdg
 	UINT16 extAuth;
 	UINT16 reserved2;
 	rdg_http_encoding_context transferEncoding;
+
+	SmartcardCertInfo* smartcard;
 };
 
 enum
@@ -1550,11 +1554,11 @@ DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count)
 	return nCount;
 }
 
-static BOOL rdg_get_gateway_credentials(rdpContext* context)
+static BOOL rdg_get_gateway_credentials(rdpContext* context, rdp_auth_reason reason)
 {
 	freerdp* instance = context->instance;
 
-	auth_status rc = utils_authenticate_gateway(instance, GW_AUTH_RDG);
+	auth_status rc = utils_authenticate_gateway(instance, reason);
 	switch (rc)
 	{
 		case AUTH_SUCCESS:
@@ -1581,17 +1585,54 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls)
 	if (!rdg->auth)
 		return FALSE;
 
-	if (!rdg_get_gateway_credentials(context))
-		return FALSE;
-
 	if (!credssp_auth_init(rdg->auth, AUTH_PKG, tls->Bindings))
 		return FALSE;
 
-	if (sspi_SetAuthIdentityA(&identity, settings->GatewayUsername, settings->GatewayDomain,
-	                          settings->GatewayPassword) < 0)
-		return FALSE;
+	if (freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon))
+	{
+		if (!smartcard_getCert(context, &rdg->smartcard, TRUE))
+			return FALSE;
 
-	if (!credssp_auth_setup_client(rdg->auth, "HTTP", settings->GatewayHostname, &identity, NULL))
+		if (!rdg_get_gateway_credentials(context, AUTH_SMARTCARD_PIN))
+			return FALSE;
+#ifdef _WIN32
+		{
+			CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
+			LPSTR marshalledCredentials;
+
+			memcpy(certInfo.rgbHashOfCert, rdg->smartcard->sha1Hash,
+			       sizeof(certInfo.rgbHashOfCert));
+
+			if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
+			{
+				WLog_ERR(TAG, "error marshalling cert credentials");
+				return FALSE;
+			}
+
+			if (sspi_SetAuthIdentityA(&identity, marshalledCredentials, NULL,
+			                          settings->GatewayPassword) < 0)
+				return FALSE;
+
+			CredFree(marshalledCredentials);
+		}
+#else
+		if (sspi_SetAuthIdentityA(&identity, settings->GatewayUsername, settings->GatewayDomain,
+		                          settings->GatewayPassword) < 0)
+			return FALSE;
+#endif
+	}
+	else
+	{
+		if (!rdg_get_gateway_credentials(context, GW_AUTH_RDG))
+			return FALSE;
+
+		if (sspi_SetAuthIdentityA(&identity, settings->GatewayUsername, settings->GatewayDomain,
+		                          settings->GatewayPassword) < 0)
+			return FALSE;
+	}
+
+	if (!credssp_auth_setup_client(rdg->auth, "HTTP", settings->GatewayHostname, &identity,
+	                               rdg->smartcard ? rdg->smartcard->pkinitArgs : NULL))
 	{
 		sspi_FreeAuthIdentity(&identity);
 		return FALSE;
@@ -2625,6 +2666,8 @@ void rdg_free(rdpRdg* rdg)
 		if (rdg->transferEncoding.context.websocket.responseStreamBuffer != NULL)
 			Stream_Free(rdg->transferEncoding.context.websocket.responseStreamBuffer, TRUE);
 	}
+
+	smartcardCertInfo_Free(rdg->smartcard);
 
 	free(rdg);
 }
