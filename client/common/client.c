@@ -528,14 +528,17 @@ BOOL client_cli_choose_smartcard(SmartcardCertInfo** cert_list, DWORD count, DWO
 	{
 		const SmartcardCertInfo* cert = cert_list[i];
 		char* reader = NULL;
+		char* container_name = NULL;
 
 		ConvertFromUnicode(CP_UTF8, 0, cert->reader, -1, &reader, 0, NULL, NULL);
+		ConvertFromUnicode(CP_UTF8, 0, cert->containerName, -1, &container_name, 0, NULL, NULL);
 		printf("[%" PRIu32
 		       "] %s\n\tReader: %s\n\tUser: %s@%s\n\tSubject: %s\n\tIssuer: %s\n\tUPN: %s\n",
-		       i, cert->containerName, reader, cert->userHint, cert->domainHint, cert->subject,
+		       i, container_name, reader, cert->userHint, cert->domainHint, cert->subject,
 		       cert->issuer, cert->upn);
 
 		free(reader);
+		free(container_name);
 	}
 
 	while (1)

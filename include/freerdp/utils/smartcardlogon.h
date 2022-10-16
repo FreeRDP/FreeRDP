@@ -31,7 +31,8 @@ typedef struct SmartcardCertInfo_st
 	CryptoCert certificate;
 	char* pkinitArgs;
 	UINT32 slotId;
-	char* containerName;
+	char* keyName;
+	WCHAR* containerName;
 	char* upn;
 	char* userHint;
 	char* domainHint;

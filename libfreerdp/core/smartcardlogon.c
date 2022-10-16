@@ -90,6 +90,7 @@ void smartcardCertInfo_Free(SmartcardCertInfo* scCert)
 	free(scCert->reader);
 	crypto_cert_free(scCert->certificate);
 	free(scCert->pkinitArgs);
+	free(scCert->keyName);
 	free(scCert->containerName);
 	free(scCert->upn);
 	free(scCert->userHint);
@@ -117,7 +118,7 @@ static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 	scCert->upn = crypto_cert_get_upn(scCert->certificate->px509);
 	if (!scCert->upn)
 	{
-		WLog_DBG(TAG, "%s has no UPN, trying emailAddress", scCert->containerName);
+		WLog_DBG(TAG, "%s has no UPN, trying emailAddress", scCert->keyName);
 		scCert->upn = crypto_cert_get_email(scCert->certificate->px509);
 	}
 
@@ -128,7 +129,7 @@ static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 
 		if (!atPos)
 		{
-			WLog_ERR(TAG, "invalid UPN, for key %s (no @)", scCert->containerName);
+			WLog_ERR(TAG, "invalid UPN, for key %s (no @)", scCert->keyName);
 			return FALSE;
 		}
 
@@ -138,8 +139,7 @@ static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 
 		if (!scCert->userHint || !scCert->domainHint)
 		{
-			WLog_ERR(TAG, "error allocating userHint or domainHint, for key %s",
-			         scCert->containerName);
+			WLog_ERR(TAG, "error allocating userHint or domainHint, for key %s", scCert->keyName);
 			return FALSE;
 		}
 
@@ -217,11 +217,11 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		if (!cert)
 			goto out;
 
-		if (ConvertFromUnicode(CP_UTF8, 0, keyName->pszName, -1, &cert->containerName, 0, NULL,
-		                       NULL) <= 0)
+		if (ConvertFromUnicode(CP_UTF8, 0, keyName->pszName, -1, &cert->keyName, 0, NULL, NULL) <=
+		    0)
 			goto endofloop;
 
-		WLog_DBG(TAG, "opening key %s", cert->containerName);
+		WLog_DBG(TAG, "opening key %s", cert->keyName);
 
 		status =
 		    NCryptOpenKey(provider, &phKey, keyName->pszName, keyName->dwLegacyKeySpec, dwFlags);
@@ -244,7 +244,7 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		                           dwFlags);
 		if (status != ERROR_SUCCESS)
 		{
-			WLog_ERR(TAG, "unable to retrieve slotId for key %s, status=%s", cert->containerName,
+			WLog_ERR(TAG, "unable to retrieve slotId for key %s, status=%s", cert->keyName,
 			         winpr_NCryptSecurityStatusError(status));
 			goto endofloop;
 		}
@@ -255,15 +255,14 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		status = NCryptGetProperty(phKey, NCRYPT_READER_PROPERTY, NULL, 0, &cbOutput, dwFlags);
 		if (status != ERROR_SUCCESS)
 		{
-			WLog_DBG(TAG, "unable to retrieve reader's name length for key %s",
-			         cert->containerName);
+			WLog_DBG(TAG, "unable to retrieve reader's name length for key %s", cert->keyName);
 			goto endofloop;
 		}
 
 		cert->reader = calloc(1, cbOutput + 2);
 		if (!cert->reader)
 		{
-			WLog_ERR(TAG, "unable to allocate reader's name for key %s", cert->containerName);
+			WLog_ERR(TAG, "unable to allocate reader's name for key %s", cert->keyName);
 			goto endofloop;
 		}
 
@@ -271,7 +270,30 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		                           &cbOutput, dwFlags);
 		if (status != ERROR_SUCCESS)
 		{
-			WLog_ERR(TAG, "unable to retrieve reader's name for key %s", cert->containerName);
+			WLog_ERR(TAG, "unable to retrieve reader's name for key %s", cert->keyName);
+			goto endofloop;
+		}
+
+		/* ====== retrieve key container name ====== */
+		/* When using PKCS11, this will try to return what Windows would use for the key's name */
+		cbOutput = 0;
+		status = NCryptGetProperty(phKey, NCRYPT_NAME_PROPERTY, NULL, 0, &cbOutput, dwFlags);
+		if (status == ERROR_SUCCESS)
+		{
+			cert->containerName = calloc(1, cbOutput + sizeof(WCHAR));
+			if (!cert->containerName)
+			{
+				WLog_ERR(TAG, "unable to allocate key container name for key %s", cert->keyName);
+				goto endofloop;
+			}
+
+			status = NCryptGetProperty(phKey, NCRYPT_NAME_PROPERTY, (BYTE*)cert->containerName,
+			                           cbOutput, &cbOutput, dwFlags);
+		}
+
+		if (status != ERROR_SUCCESS)
+		{
+			WLog_ERR(TAG, "unable to retrieve key container name for key %s", cert->keyName);
 			goto endofloop;
 		}
 
@@ -290,7 +312,7 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		if (!certBytes)
 		{
 			WLog_ERR(TAG, "unable to allocate %" PRIu32 " certBytes for key %s", cbOutput,
-			         cert->containerName);
+			         cert->keyName);
 			goto endofloop;
 		}
 
@@ -298,14 +320,14 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		                           &cbOutput, dwFlags);
 		if (status != ERROR_SUCCESS)
 		{
-			WLog_ERR(TAG, "unable to retrieve certificate for key %s", cert->containerName);
+			WLog_ERR(TAG, "unable to retrieve certificate for key %s", cert->keyName);
 			goto endofloop;
 		}
 
 		if (!winpr_Digest(WINPR_MD_SHA1, certBytes, cbOutput, cert->sha1Hash,
 		                  sizeof(cert->sha1Hash)))
 		{
-			WLog_ERR(TAG, "unable to compute certificate sha1 for key %s", cert->containerName);
+			WLog_ERR(TAG, "unable to compute certificate sha1 for key %s", cert->keyName);
 			goto endofloop;
 		}
 
@@ -313,7 +335,7 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 
 		if (!cert->certificate)
 		{
-			WLog_ERR(TAG, "unable to parse X509 certificate for key %s", cert->containerName);
+			WLog_ERR(TAG, "unable to parse X509 certificate for key %s", cert->keyName);
 			goto endofloop;
 		}
 
@@ -554,8 +576,7 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
 	if (ConvertToUnicode(CP_UTF8, 0, "FreeRDP Emulator", -1, &cert->reader, 0) < 0)
 		goto out_error;
 
-	cert->containerName = _strdup("Private Key 00");
-	if (!cert->containerName)
+	if (ConvertToUnicode(CP_UTF8, 0, "Private Key 00", -1, &cert->containerName, 0) < 0)
 		goto out_error;
 
 	/* compute PKINIT args FILE:<cert file>,<key file>

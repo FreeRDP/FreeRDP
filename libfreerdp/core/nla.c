@@ -251,8 +251,8 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 
 	if (!settings->ContainerName && nla->smartcardCert->containerName)
 	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_ContainerName,
-		                                 nla->smartcardCert->containerName))
+		if (ConvertFromUnicode(CP_UTF8, 0, nla->smartcardCert->containerName, -1,
+		                       &settings->ContainerName, 0, NULL, NULL) < 0)
 		{
 			WLog_ERR(TAG, "unable to copy container name");
 			goto out;
