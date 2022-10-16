@@ -197,6 +197,10 @@ static NCryptKeyGetPropertyEnum propertyStringToEnum(LPCWSTR pszProperty)
 	{
 		return NCRYPT_PROPERTY_SLOTID;
 	}
+	else if (_wcscmp(pszProperty, NCRYPT_NAME_PROPERTY) == 0)
+	{
+		return NCRYPT_PROPERTY_NAME;
+	}
 
 	return NCRYPT_PROPERTY_UNKNOWN;
 }

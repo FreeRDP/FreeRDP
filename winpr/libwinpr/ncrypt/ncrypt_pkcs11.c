@@ -23,6 +23,8 @@
 #include <winpr/library.h>
 #include <winpr/assert.h>
 #include <winpr/spec.h>
+#include <winpr/smartcard.h>
+#include <winpr/asn1.h>
 
 #include "../log.h"
 #include "ncrypt.h"
@@ -72,6 +74,24 @@ typedef struct
 	NCryptKeyEnum keys[MAX_KEYS];
 	CK_ULONG keyIndex;
 } P11EnumKeysState;
+
+struct
+{
+	const char* label;
+	BYTE tag[3];
+} piv_cert_tags[] = {
+	{ "Certificate for PIV Authentication", "\x5F\xC1\x05" },
+	{ "Certificate for Digital Signature", "\x5F\xC1\x0A" },
+	{ "Certificate for Key Management", "\x5F\xC1\x0B" },
+	{ "Certificate for Card Authentication", "\x5F\xC1\x01" },
+};
+
+const BYTE APDU_PIV_SELECT_AID[] = { 0x00, 0xA4, 0x04, 0x00, 0x09, 0xA0, 0x00, 0x00,
+	                                 0x03, 0x08, 0x00, 0x00, 0x10, 0x00, 0x00 };
+const BYTE APDU_PIV_GET_CHUID[] = {
+	0x00, 0xCB, 0x3F, 0xFF, 0x05, 0x5C, 0x03, 0x5F, 0xC1, 0x02, 0x00
+};
+#define PIV_CONTAINER_NAME_LEN 36
 
 static CK_OBJECT_CLASS object_class_public_key = CKO_PUBLIC_KEY;
 static CK_BBOOL object_verify = CK_TRUE;
@@ -793,6 +813,119 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 	return NTE_NO_MORE_ITEMS;
 }
 
+static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, BYTE* piv_tag, BYTE* output,
+                                              size_t output_len)
+{
+	CK_SLOT_INFO slot_info = { 0 };
+	CK_FUNCTION_LIST_PTR p11 = NULL;
+	WCHAR* reader = NULL;
+	SCARDCONTEXT context = 0;
+	SCARDHANDLE card = 0;
+	DWORD proto = 0;
+	const SCARD_IO_REQUEST* pci = NULL;
+	BYTE buf[258] = { 0 };
+	char container_name[PIV_CONTAINER_NAME_LEN + 1] = { 0 };
+	DWORD buf_len = 0;
+	SECURITY_STATUS ret = NTE_BAD_KEY;
+	WinPrAsn1Decoder dec = { 0 };
+	WinPrAsn1Decoder dec2 = { 0 };
+	size_t len = 0;
+	BYTE tag = 0;
+	BYTE* p = NULL;
+	wStream s = { 0 };
+
+	WINPR_ASSERT(key);
+	WINPR_ASSERT(piv_tag);
+
+	WINPR_ASSERT(key->provider);
+	p11 = key->provider->p11;
+	WINPR_ASSERT(p11);
+
+	/* Get the reader the card is in */
+	WINPR_ASSERT(p11->C_GetSlotInfo);
+	if (p11->C_GetSlotInfo(key->slotId, &slot_info) != CKR_OK)
+		return NTE_BAD_KEY;
+
+	fix_padded_string((char*)slot_info.slotDescription, sizeof(slot_info.slotDescription));
+	if (ConvertToUnicode(
+	        CP_UTF8, 0, (char*)slot_info.slotDescription,
+	        strnlen((char*)slot_info.slotDescription, sizeof(slot_info.slotDescription)), &reader,
+	        0) < 0)
+		return NTE_NO_MEMORY;
+
+	if (SCardEstablishContext(SCARD_SCOPE_USER, NULL, NULL, &context) != SCARD_S_SUCCESS)
+		return NTE_BAD_KEY;
+
+	if (SCardConnectW(context, reader, SCARD_SHARE_SHARED, SCARD_PROTOCOL_Tx, &card, &proto) !=
+	    SCARD_S_SUCCESS)
+		goto out;
+	pci = (proto == SCARD_PROTOCOL_T0) ? SCARD_PCI_T0 : SCARD_PCI_T1;
+
+	buf_len = sizeof(buf);
+	if (SCardTransmit(card, pci, APDU_PIV_SELECT_AID, sizeof(APDU_PIV_SELECT_AID), NULL, buf,
+	                  &buf_len) != SCARD_S_SUCCESS)
+		goto out;
+	if ((buf[buf_len - 2] != 0x90 || buf[buf_len - 1] != 0) && buf[buf_len - 2] != 0x61)
+		goto out;
+
+	buf_len = sizeof(buf);
+	if (SCardTransmit(card, pci, APDU_PIV_GET_CHUID, sizeof(APDU_PIV_GET_CHUID), NULL, buf,
+	                  &buf_len) != SCARD_S_SUCCESS)
+		goto out;
+	if ((buf[buf_len - 2] != 0x90 || buf[buf_len - 1] != 0) && buf[buf_len - 2] != 0x61)
+		goto out;
+
+	/* Find the GUID field in the CHUID data object */
+	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_BER, buf, buf_len);
+	if (!WinPrAsn1DecReadTagAndLen(&dec, &tag, &len) || tag != 0x53)
+		goto out;
+	while (WinPrAsn1DecReadTagLenValue(&dec, &tag, &len, &dec2) && tag != 0x34)
+		;
+	if (tag != 0x34 || len != 16)
+		goto out;
+
+	s = WinPrAsn1DecGetStream(&dec2);
+	p = Stream_Buffer(&s);
+
+	/* Construct the value Windows would use for a PIV key's container name */
+	snprintf(container_name, PIV_CONTAINER_NAME_LEN + 1,
+	         "%.2x%.2x%.2x%.2x-%.2x%.2x-%.2x%.2x-%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x", p[3], p[2],
+	         p[1], p[0], p[5], p[4], p[7], p[6], p[8], p[9], p[10], p[11], p[12], piv_tag[0],
+	         piv_tag[1], piv_tag[2]);
+
+	/* And convert it to UTF-16 */
+	if (MultiByteToWideChar(CP_UTF8, 0, container_name, PIV_CONTAINER_NAME_LEN, (WCHAR*)output,
+	                        output_len) == PIV_CONTAINER_NAME_LEN)
+		ret = ERROR_SUCCESS;
+
+out:
+	if (card)
+		SCardDisconnect(card, SCARD_LEAVE_CARD);
+	if (context)
+		SCardReleaseContext(context);
+	return ret;
+}
+
+static SECURITY_STATUS check_for_piv_container_name(NCryptP11KeyHandle* key, BYTE* pbOutput,
+                                                    DWORD cbOutput, DWORD* pcbResult, char* label,
+                                                    size_t label_len)
+{
+	for (int i = 0; i < ARRAYSIZE(piv_cert_tags); i++)
+	{
+		if (strncmp(label, piv_cert_tags[i].label, label_len) == 0)
+		{
+			*pcbResult = PIV_CONTAINER_NAME_LEN * sizeof(WCHAR);
+			if (!pbOutput)
+				return ERROR_SUCCESS;
+			else if (cbOutput < PIV_CONTAINER_NAME_LEN * sizeof(WCHAR))
+				return NTE_NO_MEMORY;
+			else
+				return get_piv_container_name(key, piv_cert_tags[i].tag, pbOutput, cbOutput);
+		}
+	}
+	return NTE_NOT_FOUND;
+}
+
 static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
                                                  NCryptKeyGetPropertyEnum property, PBYTE pbOutput,
                                                  DWORD cbOutput, DWORD* pcbResult, DWORD dwFlags)
@@ -820,6 +953,7 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 
 	{
 		case NCRYPT_PROPERTY_CERTIFICATE:
+		case NCRYPT_PROPERTY_NAME:
 			break;
 		case NCRYPT_PROPERTY_READER:
 		{
@@ -907,6 +1041,46 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 
 			*pcbResult = certValue.ulValueLen;
 			ret = ERROR_SUCCESS;
+			break;
+		}
+		case NCRYPT_PROPERTY_NAME:
+		{
+			CK_ATTRIBUTE attr = { CKA_LABEL, NULL, 0 };
+			char* label = NULL;
+
+			WINPR_ASSERT(provider->p11->C_GetAttributeValue);
+			rv = provider->p11->C_GetAttributeValue(session, objectHandle, &attr, 1);
+			if (rv == CKR_OK)
+			{
+				label = calloc(1, attr.ulValueLen);
+				if (!label)
+				{
+					ret = NTE_NO_MEMORY;
+					break;
+				}
+
+				attr.pValue = label;
+				rv = provider->p11->C_GetAttributeValue(session, objectHandle, &attr, 1);
+			}
+
+			if (rv == CKR_OK)
+			{
+				/* Check if we have a PIV card */
+				ret = check_for_piv_container_name(keyHandle, pbOutput, cbOutput, pcbResult, label,
+				                                   attr.ulValueLen);
+
+				/* Otherwise, at least for GIDS cards the label will be the correct value */
+				if (ret == NTE_NOT_FOUND)
+				{
+					*pcbResult =
+					    MultiByteToWideChar(CP_UTF8, 0, label, attr.ulValueLen, (LPWSTR)pbOutput,
+					                        pbOutput ? cbOutput / sizeof(WCHAR) : 0) *
+					    sizeof(WCHAR);
+					ret = ERROR_SUCCESS;
+				}
+			}
+
+			free(label);
 			break;
 		}
 		default:

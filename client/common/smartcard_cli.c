@@ -50,7 +50,9 @@ BOOL freerdp_smartcard_list(const rdpSettings* settings)
 		printf("\t* slotId: %" PRIu32 "\n", info->slotId);
 		printf("\t* pkinitArgs: %s\n", info->pkinitArgs);
 #endif
-		printf("\t* containerName: %s\n", info->containerName);
+		if (WideCharToMultiByte(CP_UTF8, 0, info->containerName, -1, asciiStr, sizeof(asciiStr),
+		                        NULL, NULL) > 0)
+			printf("\t* containerName: %s\n", asciiStr);
 		if (info->upn)
 			printf("\t* UPN: %s\n", info->upn);
 	}
