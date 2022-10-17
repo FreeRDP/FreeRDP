@@ -1666,6 +1666,8 @@ static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context,
 	if ((ret = xf_cliprdr_send_client_capabilities(clipboard)) != CHANNEL_RC_OK)
 		return ret;
 
+	xf_clipboard_formats_free(clipboard);
+
 	if ((ret = xf_cliprdr_send_client_format_list(clipboard)) != CHANNEL_RC_OK)
 		return ret;
 
