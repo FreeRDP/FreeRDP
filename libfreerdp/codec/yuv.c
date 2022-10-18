@@ -165,8 +165,12 @@ BOOL yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height)
 
 	if (context->useThreads)
 	{
-		const UINT32 count =
-		    (width + TILE_SIZE - 1) / TILE_SIZE * (height + TILE_SIZE - 1) / TILE_SIZE * 4;
+		const UINT32 pw = (width + TILE_SIZE - width % TILE_SIZE) / TILE_SIZE;
+		const UINT32 ph = (height + TILE_SIZE - height % TILE_SIZE) / TILE_SIZE;
+
+		/* We´ve calculated the amount of workers for 64x64 tiles, but the decoder
+		 * might get 16x16 tiles mixed in. */
+		const UINT32 count = pw * ph * 16;
 
 		context->work_object_count = 0;
 		if (context->encoder)
@@ -398,8 +402,10 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 
 				if (context->work_object_count <= waitCount)
 				{
-					WLog_ERR(TAG, "YUV decoder: invalid number of tiles, only support %" PRIu32,
-					         context->work_object_count);
+					WLog_ERR(TAG,
+					         "YUV decoder: invalid number of tiles, only support %" PRIu32
+					         ", got %" PRIu32,
+					         context->work_object_count, waitCount);
 					goto fail;
 				}
 
@@ -543,8 +549,10 @@ static BOOL pool_decode_rect(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVDa
 
 		if (context->work_object_count <= waitCount)
 		{
-			WLog_ERR(TAG, "YUV rect decoder: invalid number of tiles, only support %" PRIu32,
-			         context->work_object_count);
+			WLog_ERR(TAG,
+			         "YUV rect decoder: invalid number of tiles, only support %" PRIu32
+			         ", got %" PRIu32,
+			         context->work_object_count, waitCount);
 			goto fail;
 		}
 		current = &context->work_combined_params[waitCount];
@@ -798,8 +806,10 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 
 			if (context->work_object_count <= waitCount)
 			{
-				WLog_ERR(TAG, "YUV encoder: invalid number of tiles, only support %" PRIu32,
-				         context->work_object_count);
+				WLog_ERR(TAG,
+				         "YUV encoder: invalid number of tiles, only support %" PRIu32
+				         ", got %" PRIu32,
+				         context->work_object_count, waitCount);
 				goto fail;
 			}
 
