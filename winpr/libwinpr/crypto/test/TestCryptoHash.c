@@ -11,7 +11,7 @@ static const BYTE TEST_MD5_HASH[] =
 static BOOL test_crypto_hash_md5(void)
 {
 	BOOL result = FALSE;
-	BYTE hash[WINPR_MD5_DIGEST_LENGTH];
+	BYTE hash[WINPR_MD5_DIGEST_LENGTH] = { 0 };
 	WINPR_DIGEST_CTX* ctx;
 
 	if (!(ctx = winpr_Digest_New()))
@@ -64,7 +64,7 @@ static const BYTE TEST_MD4_HASH[] =
 static BOOL test_crypto_hash_md4(void)
 {
 	BOOL result = FALSE;
-	BYTE hash[WINPR_MD4_DIGEST_LENGTH];
+	BYTE hash[WINPR_MD4_DIGEST_LENGTH] = { 0 };
 	WINPR_DIGEST_CTX* ctx;
 
 	if (!(ctx = winpr_Digest_New()))
@@ -117,7 +117,7 @@ static const BYTE TEST_SHA1_HASH[] =
 static BOOL test_crypto_hash_sha1(void)
 {
 	BOOL result = FALSE;
-	BYTE hash[WINPR_SHA1_DIGEST_LENGTH];
+	BYTE hash[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
 	WINPR_DIGEST_CTX* ctx;
 
 	if (!(ctx = winpr_Digest_New()))
@@ -168,11 +168,11 @@ static const char TEST_HMAC_MD5_DATA[] = "Hi There";
 static const BYTE TEST_HMAC_MD5_KEY[] =
     "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b";
 static const BYTE TEST_HMAC_MD5_HASH[] =
-    "\x92\x94\x72\x7a\x36\x38\xbb\x1c\x13\xf4\x8e\xf8\x15\x8b\xfc\x9d";
+    "\xb5\x79\x91\xa2\x20\x3d\x49\x2d\x73\xfb\x71\x43\xdf\xc5\x08\x28";
 
 static BOOL test_crypto_hash_hmac_md5(void)
 {
-	BYTE hash[WINPR_MD5_DIGEST_LENGTH];
+	BYTE hash[WINPR_MD5_DIGEST_LENGTH] = { 0 };
 	WINPR_HMAC_CTX* ctx;
 	BOOL result = FALSE;
 
@@ -185,6 +185,12 @@ static BOOL test_crypto_hash_hmac_md5(void)
 	if (!winpr_HMAC_Init(ctx, WINPR_MD_MD5, TEST_HMAC_MD5_KEY, WINPR_MD5_DIGEST_LENGTH))
 	{
 		fprintf(stderr, "%s: winpr_HMAC_Init failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_HMAC_Update(ctx, (const BYTE*)TEST_HMAC_MD5_DATA,
+	                       strnlen(TEST_HMAC_MD5_DATA, sizeof(TEST_HMAC_MD5_DATA))))
+	{
+		fprintf(stderr, "%s: winpr_HMAC_Update failed\n", __FUNCTION__);
 		goto out;
 	}
 	if (!winpr_HMAC_Update(ctx, (const BYTE*)TEST_HMAC_MD5_DATA,
@@ -225,11 +231,11 @@ static const char TEST_HMAC_SHA1_DATA[] = "Hi There";
 static const BYTE TEST_HMAC_SHA1_KEY[] =
     "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b";
 static const BYTE TEST_HMAC_SHA1_HASH[] =
-    "\xb6\x17\x31\x86\x55\x05\x72\x64\xe2\x8b\xc0\xb6\xfb\x37\x8c\x8e\xf1\x46\xbe\x00";
+    "\xab\x23\x08\x2d\xca\x0c\x75\xea\xca\x60\x09\xc0\xb8\x8c\x2d\xf4\xf4\xbf\x88\xee";
 
 static BOOL test_crypto_hash_hmac_sha1(void)
 {
-	BYTE hash[WINPR_SHA1_DIGEST_LENGTH];
+	BYTE hash[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
 	WINPR_HMAC_CTX* ctx;
 	BOOL result = FALSE;
 
@@ -242,6 +248,12 @@ static BOOL test_crypto_hash_hmac_sha1(void)
 	if (!winpr_HMAC_Init(ctx, WINPR_MD_SHA1, TEST_HMAC_SHA1_KEY, WINPR_SHA1_DIGEST_LENGTH))
 	{
 		fprintf(stderr, "%s: winpr_HMAC_Init failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_HMAC_Update(ctx, (const BYTE*)TEST_HMAC_SHA1_DATA,
+	                       strnlen(TEST_HMAC_SHA1_DATA, sizeof(TEST_HMAC_SHA1_DATA))))
+	{
+		fprintf(stderr, "%s: winpr_HMAC_Update failed\n", __FUNCTION__);
 		goto out;
 	}
 	if (!winpr_HMAC_Update(ctx, (const BYTE*)TEST_HMAC_SHA1_DATA,
