@@ -1,3 +1,18 @@
+# 20xx-xx-xx Version 2.8.x
+
+Notewhorth changes:
+* Backported #8324: Internal replacements for md4, md5 and hmac-md5
+   For the time being the RDP protocol requires these outdated hash
+   algorithms. So any distribution that wants to ship a working
+   FreeRDP should check the options WITH_INTERNAL_MD4 (and depending
+   on OpenSSL deprecation status WITH_INTERNAL_MD5)
+
+Fixed issues:
+
+For a complete and detailed change log since the last release run:
+git log 2.8.1..2.8.x
+
+
 # 2022-10-12 Version 2.8.1
 
 Notewhorth changes:
