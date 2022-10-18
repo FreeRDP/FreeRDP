@@ -29,6 +29,7 @@ endif()
 
 if (WITH_INTERNAL_MD5)
 	list(APPEND SRCS md5.c md5.h)
+	list(APPEND SRCS hmac_md5.c hmac_md5.h)
 endif()
 
 winpr_module_add(
