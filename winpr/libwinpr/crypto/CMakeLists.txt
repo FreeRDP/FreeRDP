@@ -27,6 +27,10 @@ if (WITH_INTERNAL_MD4)
     list(APPEND SRCS md4.c md4.h)
 endif()
 
+if (WITH_INTERNAL_MD5)
+	list(APPEND SRCS md5.c md5.h)
+endif()
+
 winpr_module_add(
     ${SRCS}
 )
