@@ -183,4 +183,6 @@
 /* Proxy */
 #cmakedefine WITH_PROXY_MODULES
 
+#cmakedefine WITH_INTERNAL_MD4
+
 #endif /* FREERDP_CONFIG_H */

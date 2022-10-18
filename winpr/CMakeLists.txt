@@ -82,6 +82,7 @@ else()
 	set(WINPR_VERSION_FULL "${WINPR_VERSION}")
 endif()
 
+option(WITH_INTERNAL_MD4 "Use compiled in md4 hash functions instead of OpenSSL/MBedTLS" OFF)
 if(NOT IOS)
 	check_include_files(stdbool.h WINPR_HAVE_STDBOOL_H)
 	check_include_files(stdint.h WINPR_HAVE_STDINT_H)
