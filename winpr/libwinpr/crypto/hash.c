@@ -43,6 +43,10 @@
 #include "md4.h"
 #endif
 
+#if defined(WITH_INTERNAL_MD5)
+#include "md5.h"
+#endif
+
 /**
  * HMAC
  */
@@ -343,6 +347,9 @@ struct _winpr_digest_ctx_private_st
 #if defined(WITH_INTERNAL_MD4)
 	WINPR_MD4_CTX md4;
 #endif
+#if defined(WITH_INTERNAL_MD5)
+	WINPR_MD5_CTX md5;
+#endif
 #if defined(WITH_OPENSSL)
 	EVP_MD_CTX* mdctx;
 #endif
@@ -457,6 +464,11 @@ BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 			winpr_MD4_Init(&ctx->md4);
 			return TRUE;
 #endif
+#if defined(WITH_INTERNAL_MD5)
+		case WINPR_MD_MD5:
+			winpr_MD5_Init(&ctx->md5);
+			return TRUE;
+#endif
 		default:
 			break;
 	}
@@ -478,6 +490,11 @@ BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen)
 #if defined(WITH_INTERNAL_MD4)
 		case WINPR_MD_MD4:
 			winpr_MD4_Update(&ctx->md4, input, ilen);
+			return TRUE;
+#endif
+#if defined(WITH_INTERNAL_MD5)
+		case WINPR_MD_MD5:
+			winpr_MD5_Update(&ctx->md5, input, ilen);
 			return TRUE;
 #endif
 		default:
@@ -511,6 +528,13 @@ BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t olen)
 			if (olen < WINPR_MD4_DIGEST_LENGTH)
 				return FALSE;
 			winpr_MD4_Final(output, &ctx->md4);
+			return TRUE;
+#endif
+#if defined(WITH_INTERNAL_MD5)
+		case WINPR_MD_MD5:
+			if (olen < WINPR_MD5_DIGEST_LENGTH)
+				return FALSE;
+			winpr_MD5_Final(output, &ctx->md5);
 			return TRUE;
 #endif
 
