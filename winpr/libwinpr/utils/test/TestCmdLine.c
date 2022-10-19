@@ -158,6 +158,7 @@ int TestCmdLine(int argc, char* argv[])
 		  "protocol security negotiation" },
 		{ "sec", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL,
 		  "force specific protocol security" },
+#if defined(WITH_FREERDP_DEPRECATED)
 		{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 		  "rdp protocol security" },
 		{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
@@ -170,6 +171,7 @@ int TestCmdLine(int argc, char* argv[])
 		  "certificate name" },
 		{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 		  "ignore certificate" },
+#endif
 		{ "valuelist", COMMAND_LINE_VALUE_REQUIRED, "<val1>,<val2>", NULL, NULL, -1, NULL,
 		  "List of comma separated values." },
 		{ "valuelist-empty", COMMAND_LINE_VALUE_REQUIRED, "<val1>,<val2>", NULL, NULL, -1, NULL,
