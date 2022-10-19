@@ -1679,6 +1679,8 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		else if (strncmp("enforce-tlsv1_2", arg->Value, 16) == 0)
 			rc = parse_tls_enforce(settings, &arg->Value[15]);
 	}
+
+#if defined(WITH_FREERDP_DEPRECATED)
 	CommandLineSwitchCase(arg, "tls-ciphers")
 	{
 		WLog_WARN(TAG, "Option /tls-ciphers is deprecated, use /tls:ciphers instead");
@@ -1699,6 +1701,7 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		WLog_WARN(TAG, "Option /enforce-tlsv1_2 is deprecated, use /tls:enforce-tlsv1_2 instead");
 		rc = parse_tls_enforce(settings, arg->Value);
 	}
+#endif
 	CommandLineSwitchDefault(arg)
 	{
 	}
@@ -3021,6 +3024,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 			free(ptr);
 		}
+#if defined(WITH_FREERDP_DEPRECATED)
 		CommandLineSwitchCase(arg, "tls-ciphers")
 		{
 			int rc = parse_tls_options(settings, arg);
@@ -3045,6 +3049,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (rc != 0)
 				return rc;
 		}
+#endif
 		CommandLineSwitchCase(arg, "cert")
 		{
 			int rc = 0;
@@ -3090,6 +3095,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (rc)
 				return rc;
 		}
+
+#if defined(WITH_FREERDP_DEPRECATED)
 		CommandLineSwitchCase(arg, "cert-name")
 		{
 			WLog_WARN(TAG, "/cert-name is deprecated, use /cert:name instead");
@@ -3111,6 +3118,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			WLog_WARN(TAG, "/cert-deny is deprecated, use /cert:deny instead");
 			settings->AutoDenyCertificate = enable;
 		}
+#endif
 		CommandLineSwitchCase(arg, "authentication")
 		{
 			settings->Authentication = enable;
