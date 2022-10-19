@@ -3092,19 +3092,23 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "cert-name")
 		{
+			WLog_WARN(TAG, "/cert-name is deprecated, use /cert:name instead");
 			if (!freerdp_settings_set_string(settings, FreeRDP_CertificateName, arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
 		CommandLineSwitchCase(arg, "cert-ignore")
 		{
+			WLog_WARN(TAG, "/cert-ignore is deprecated, use /cert:ignore instead");
 			settings->IgnoreCertificate = enable;
 		}
 		CommandLineSwitchCase(arg, "cert-tofu")
 		{
+			WLog_WARN(TAG, "/cert-tofu is deprecated, use /cert:tofu instead");
 			settings->AutoAcceptCertificate = enable;
 		}
 		CommandLineSwitchCase(arg, "cert-deny")
 		{
+			WLog_WARN(TAG, "/cert-deny is deprecated, use /cert:deny instead");
 			settings->AutoDenyCertificate = enable;
 		}
 		CommandLineSwitchCase(arg, "authentication")
