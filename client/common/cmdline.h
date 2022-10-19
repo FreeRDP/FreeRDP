@@ -215,12 +215,14 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Keyboard active language identifier" },
 	{ "kbd-fn-key", COMMAND_LINE_VALUE_REQUIRED, "<value>", NULL, NULL, -1, NULL,
 	  "Function key value" },
+#if defined(WITH_FREERDP_DEPRECATED)
 	{ "kbd-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "List keyboard layouts" },
+	  "[deprecated use /list:kbd instead] List keyboard layouts" },
 	{ "kbd-scancode-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "List keyboard RDP scancodes" },
+	  "[deprecated use list:kbd-scancode instead] List keyboard RDP scancodes" },
 	{ "kbd-lang-list", COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "List keyboard languages" },
+	  "[deprecated use /list:kbd-lang instead] List keyboard languages" },
+#endif
 	{ "kbd-remap", COMMAND_LINE_VALUE_REQUIRED,
 	  "List of <key>=<value>,... pairs to remap scancodes", NULL, NULL, -1, NULL,
 	  "Keyboard scancode remapping" },
@@ -236,6 +238,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  NULL, NULL, -1, NULL, "Kerberos options" },
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info-string>", NULL, NULL, -1, NULL,
 	  "Load balance info" },
+	{ "list", COMMAND_LINE_VALUE_REQUIRED | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
+	  "[kbd|kbd-scancode|kbd-lang|smartcard|monitor|tune]" },
 	{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<tag>:<level>[,<tag>:<level>[,...]]", NULL, NULL,
 	  -1, NULL, "Set logger filters, see wLog(7) for details" },
 	{ "log-level", COMMAND_LINE_VALUE_REQUIRED, "[OFF|FATAL|ERROR|WARN|INFO|DEBUG|TRACE]", NULL,
@@ -249,10 +253,12 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "microphone", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>]", NULL, NULL, -1,
 	  "mic", "Audio input (microphone)" },
+#if defined(WITH_FREERDP_DEPRECATED)
 	{ "smartcard-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "List smartcard informations" },
+	  "[deprecated use /list:smartcard instead] List smartcard informations" },
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "List detected monitors" },
+	  "[deprecated use /list:monitor instead] List detected monitors" },
+#endif
 	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<id>[,<id>[,...]]", NULL, NULL, -1, NULL,
 	  "Select monitors to use" },
 	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
@@ -401,8 +407,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Alt+Ctrl+Enter to toggle fullscreen" },
 	{ "tune", COMMAND_LINE_VALUE_REQUIRED, "<setting:value>,<setting:value>", "", NULL, -1, NULL,
 	  "[experimental] directly manipulate freerdp settings, use with extreme caution!" },
+#if defined(WITH_FREERDP_DEPRECATED)
 	{ "tune-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "Print options allowed for /tune" },
+	  "[deprecated use /list:tune instead] Print options allowed for /tune" },
+#endif
 	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[[<domain>\\]<user>|<user>[@<domain>]]", NULL, NULL, -1,
 	  NULL, "Username" },
 	{ "unmap-buttons", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,

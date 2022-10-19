@@ -174,6 +174,7 @@ static const test tests[] = {
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "--invalid", 0 },
 	  { { 0 } } },
+#if defined(WITH_FREERDP_DEPRECATED)
 	{ COMMAND_LINE_STATUS_PRINT,
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "/kbd-list", 0 },
@@ -181,6 +182,15 @@ static const test tests[] = {
 	{ COMMAND_LINE_STATUS_PRINT,
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "/monitor-list", 0 },
+	  { { 0 } } },
+#endif
+	{ COMMAND_LINE_STATUS_PRINT,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/list:kbd", 0 },
+	  { { 0 } } },
+	{ COMMAND_LINE_STATUS_PRINT,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/list:monitor", 0 },
 	  { { 0 } } },
 	{ COMMAND_LINE_ERROR,
 	  check_settings_smartcard_no_redirection,

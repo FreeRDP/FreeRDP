@@ -522,7 +522,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			{
 				/* This is the same as when we would trust the Xinerama results..
 				   and set the monitor index to zero.
-				   The monitor listed with /monitor-list on index zero is always the primary
+				   The monitor listed with /list:monitor on index zero is always the primary
 				*/
 				screen = DefaultScreenOfDisplay(xfc->display);
 				monitor_index = XScreenNumberOfScreen(screen);

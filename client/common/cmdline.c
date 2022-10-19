@@ -1527,6 +1527,40 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 	{
 		CommandLineParseArgumentsA(argc, argv, largs, 0x112, NULL, NULL, NULL);
 
+		arg = CommandLineFindArgumentA(largs, "list");
+		WINPR_ASSERT(arg);
+
+		if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+		{
+			if (_strnicmp("tune", arg->Value, 5) == 0)
+				freerdp_client_print_tune_list(settings);
+			else if (_strnicmp("kbd", arg->Value, 4) == 0)
+				freerdp_client_print_keyboard_list();
+			else if (_strnicmp("kbd-lang", arg->Value, 8) == 0)
+			{
+				const char* val = NULL;
+				if (_strnicmp("kbd-lang:", arg->Value, 9) == 0)
+					val = &arg->Value[9];
+				freerdp_client_print_codepages(val);
+			}
+			else if (_strnicmp("kbd-scancode", arg->Value, 13) == 0)
+				freerdp_client_print_scancodes();
+			else if (_strnicmp("monitor", arg->Value, 8) == 0)
+				settings->ListMonitors = TRUE;
+			else if (_strnicmp("smartcard", arg->Value, 10) == 0)
+				freerdp_smartcard_list(settings);
+			else
+				return COMMAND_LINE_ERROR;
+		}
+#if defined(WITH_FREERDP_DEPRECATED)
+		arg = CommandLineFindArgumentA(largs, "tune-list");
+		WINPR_ASSERT(arg);
+
+		if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+		{
+			freerdp_client_print_tune_list(settings);
+		}
+
 		arg = CommandLineFindArgumentA(largs, "kbd-lang-list");
 		WINPR_ASSERT(arg);
 
@@ -1567,6 +1601,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 			freerdp_client_print_scancodes();
 			goto out;
 		}
+#endif
 		goto out;
 	}
 	else if (status < 0)
@@ -2232,7 +2267,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				if (rc == 0)
 				{
 					WLog_ERR(TAG, "Could not identify keyboard layout: %s", arg->Value);
-					WLog_ERR(TAG, "Use /kbd-list to list available layouts");
+					WLog_ERR(TAG, "Use /list:kbd to list available layouts");
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
 
@@ -2255,7 +2290,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!value_to_int(arg->Value, &val, 1, UINT32_MAX))
 			{
 				WLog_ERR(TAG, "Could not identify keyboard active language %s", arg->Value);
-				WLog_ERR(TAG, "Use /kbd-lang-list to list available layouts");
+				WLog_ERR(TAG, "Use /list:kbd-lang to list available layouts");
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 
@@ -3601,11 +3636,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 
 			free(ptr.p);
-		}
-		CommandLineSwitchCase(arg, "tune-list")
-		{
-			freerdp_client_print_tune_list(settings);
-			return COMMAND_LINE_STATUS_PRINT;
 		}
 		CommandLineSwitchDefault(arg)
 		{
