@@ -381,15 +381,17 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "timeout", COMMAND_LINE_VALUE_REQUIRED, "<time in ms>", "9000", NULL, -1, "timeout",
 	  "Advanced setting for high latency links: Adjust connection timeout, use if you encounter "
 	  "timeout failures with your connection" },
-	{ "tls", COMMAND_LINE_VALUE_REQUIRED, "[ciphers|seclevel|secrets-file|enforce-tlsv1_2]", NULL,
-	  NULL, -1, NULL,
+	{ "tls", COMMAND_LINE_VALUE_REQUIRED, "[ciphers|seclevel|secrets-file|enforce]", NULL, NULL, -1,
+	  NULL,
 	  "TLS configuration options:"
 	  " * ciphers:[netmon|ma|<cipher names>]"
 	  " * seclevel:<level>, default: 1, range: [0-5] Override the default TLS security level, "
 	  "might be required for older target servers"
 	  " * secrets-file:<filename>"
-	  " * enforce-tlsv1_2 Force use of TLS1.2 for connection. Some servers have a buggy TLS "
-	  "version negotiation and might fail without this" },
+	  " * enforce[:[ssl3|1.0|1.1|1.2|1.3]] Force use of SSL/TLS version for a connection. Some "
+	  "servers have a buggy TLS "
+	  "version negotiation and might fail without this. Defaults to TLS 1.2 if no argument is "
+	  "supplied. Use 1.0 for windows 7" },
 #if defined(WITH_FREERDP_DEPRECATED)
 	{ "tls-ciphers", COMMAND_LINE_VALUE_REQUIRED, "[netmon|ma|ciphers]", NULL, NULL, -1, NULL,
 	  "[deprecated, use /tls:ciphers instead] Allowed TLS ciphers" },

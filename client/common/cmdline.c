@@ -1745,10 +1745,33 @@ static int parse_tls_secrets_file(rdpSettings* settings, const char* Value)
 
 static int parse_tls_enforce(rdpSettings* settings, const char* Value)
 {
+	UINT16 version = TLS1_2_VERSION;
 
-	WINPR_UNUSED(Value);
-	if (!(freerdp_settings_set_uint16(settings, FreeRDP_TLSMinVersion, TLS1_2_VERSION) &&
-	      freerdp_settings_set_uint16(settings, FreeRDP_TLSMaxVersion, TLS1_2_VERSION)))
+	if (Value)
+	{
+		struct map_t
+		{
+			char* name;
+			UINT16 version;
+		};
+		const struct map_t map[] = {
+			{ "ssl3", SSL3_VERSION },  { "1.0", TLS1_VERSION },   { "1.1", TLS1_1_VERSION },
+			{ "1.2", TLS1_2_VERSION }, { "1.3", TLS1_3_VERSION },
+		};
+
+		for (size_t x = 0; x < ARRAYSIZE(map); x++)
+		{
+			const struct map_t* cur = &map[x];
+			if (_stricmp(cur->name, Value) == 0)
+			{
+				version = cur->version;
+				break;
+			}
+		}
+	}
+
+	if (!(freerdp_settings_set_uint16(settings, FreeRDP_TLSMinVersion, version) &&
+	      freerdp_settings_set_uint16(settings, FreeRDP_TLSMaxVersion, version)))
 		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 	return 0;
 }
@@ -1764,8 +1787,8 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			rc = parse_tls_ciphers(settings, &arg->Value[9]);
 		else if (strncmp("secrets-file:", arg->Value, 13) == 0)
 			rc = parse_tls_secrets_file(settings, &arg->Value[13]);
-		else if (strncmp("enforce-tlsv1_2", arg->Value, 16) == 0)
-			rc = parse_tls_enforce(settings, &arg->Value[15]);
+		else if (strncmp("enforce:", arg->Value, 8) == 0)
+			rc = parse_tls_enforce(settings, &arg->Value[8]);
 	}
 
 #if defined(WITH_FREERDP_DEPRECATED)
@@ -1786,7 +1809,7 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	}
 	CommandLineSwitchCase(arg, "enforce-tlsv1_2")
 	{
-		WLog_WARN(TAG, "Option /enforce-tlsv1_2 is deprecated, use /tls:enforce-tlsv1_2 instead");
+		WLog_WARN(TAG, "Option /enforce-tlsv1_2 is deprecated, use /tls:enforce:1_2 instead");
 		rc = parse_tls_enforce(settings, arg->Value);
 	}
 #endif
