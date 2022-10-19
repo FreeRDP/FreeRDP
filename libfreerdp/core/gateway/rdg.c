@@ -1639,7 +1639,7 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls)
 	}
 	sspi_FreeAuthIdentity(&identity);
 
-	credssp_auth_set_flags(rdg->auth, ISC_REQ_CONFIDENTIALITY);
+	credssp_auth_set_flags(rdg->auth, ISC_REQ_CONFIDENTIALITY | ISC_REQ_MUTUAL_AUTH);
 
 	rc = credssp_auth_authenticate(rdg->auth);
 	if (rc < 0)
