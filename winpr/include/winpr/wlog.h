@@ -30,6 +30,7 @@ extern "C"
 
 #include <stdarg.h>
 #include <winpr/wtypes.h>
+#include <winpr/winpr.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
