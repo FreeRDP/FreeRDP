@@ -2897,42 +2897,45 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "sec")
 		{
-			if (!arg->Value)
+			BOOL RdpSecurity = FALSE;
+			BOOL TlsSecurity = FALSE;
+			BOOL NlaSecurity = FALSE;
+			BOOL ExtSecurity = FALSE;
+			size_t count = 0, x;
+			char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+			if (count == 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-			if (strcmp("rdp", arg->Value) == 0) /* Standard RDP */
+			for (x = 0; x < count; x++)
 			{
-				settings->RdpSecurity = TRUE;
-				settings->TlsSecurity = FALSE;
-				settings->NlaSecurity = FALSE;
-				settings->ExtSecurity = FALSE;
-				settings->UseRdpSecurityLayer = TRUE;
+				const char* cur = ptr[x];
+				if (strcmp("rdp", cur) == 0) /* Standard RDP */
+					RdpSecurity = TRUE;
+				else if (strcmp("tls", cur) == 0) /* TLS */
+					TlsSecurity = TRUE;
+				else if (strcmp("nla", cur) == 0) /* NLA */
+					NlaSecurity = TRUE;
+				else if (strcmp("ext", cur) == 0) /* NLA Extended */
+					ExtSecurity = TRUE;
+				else
+				{
+					WLog_ERR(TAG, "unknown protocol security: %s", arg->Value);
+					free(ptr);
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
 			}
-			else if (strcmp("tls", arg->Value) == 0) /* TLS */
-			{
-				settings->RdpSecurity = FALSE;
-				settings->TlsSecurity = TRUE;
-				settings->NlaSecurity = FALSE;
-				settings->ExtSecurity = FALSE;
-			}
-			else if (strcmp("nla", arg->Value) == 0) /* NLA */
-			{
-				settings->RdpSecurity = FALSE;
-				settings->TlsSecurity = FALSE;
-				settings->NlaSecurity = TRUE;
-				settings->ExtSecurity = FALSE;
-			}
-			else if (strcmp("ext", arg->Value) == 0) /* NLA Extended */
-			{
-				settings->RdpSecurity = FALSE;
-				settings->TlsSecurity = FALSE;
-				settings->NlaSecurity = FALSE;
-				settings->ExtSecurity = TRUE;
-			}
-			else
-			{
-				WLog_ERR(TAG, "unknown protocol security: %s", arg->Value);
-			}
+
+			free(ptr);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, RdpSecurity))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, RdpSecurity))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TlsSecurity))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, NlaSecurity))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, ExtSecurity))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 		CommandLineSwitchCase(arg, "encryption-methods")
 		{
@@ -2990,6 +2993,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!WLog_AddStringLogFilters(arg->Value))
 				return COMMAND_LINE_ERROR;
 		}
+#if defined(WITH_FREERDP_DEPRECATED)
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{
 			settings->RdpSecurity = enable;
@@ -3006,6 +3010,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->ExtSecurity = enable;
 		}
+#endif
 		CommandLineSwitchCase(arg, "tls")
 		{
 			size_t count, x;

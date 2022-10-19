@@ -223,7 +223,7 @@ static int testSuccess(int port)
 	STARTUPINFOA si = { 0 };
 	PROCESS_INFORMATION process = { 0 };
 	char arg1[] = "/v:127.0.0.1:XXXXX";
-	char* clientArgs[] = { "test", "/v:127.0.0.1:XXXXX", "/cert-ignore", "/rfx", NULL };
+	char* clientArgs[] = { "test", "/v:127.0.0.1:XXXXX", "/cert:ignore", "/rfx", NULL };
 	char* commandLine = NULL;
 	size_t commandLineLen;
 	int argc = 4;
