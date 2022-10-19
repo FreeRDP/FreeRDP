@@ -371,14 +371,25 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "timeout", COMMAND_LINE_VALUE_REQUIRED, "<time in ms>", "9000", NULL, -1, "timeout",
 	  "Advanced setting for high latency links: Adjust connection timeout, use if you encounter "
 	  "timeout failures with your connection" },
+	{ "tls", COMMAND_LINE_VALUE_REQUIRED, "[ciphers|seclevel|secrets-file|enforce-tlsv1_2]", NULL,
+	  NULL, -1, NULL,
+	  "TLS configuration options:"
+	  " * ciphers:[netmon|ma|<cipher names>]"
+	  " * seclevel:<level>, default: 1, range: [0-5] Override the default TLS security level, "
+	  "might be required for older target servers"
+	  " * secrets-file:<filename>"
+	  " * enforce-tlsv1_2 Force use of TLS1.2 for connection. Some servers have a buggy TLS "
+	  "version negotiation and might fail without this" },
 	{ "tls-ciphers", COMMAND_LINE_VALUE_REQUIRED, "[netmon|ma|ciphers]", NULL, NULL, -1, NULL,
-	  "Allowed TLS ciphers" },
+	  "[deprecated, use /tls:ciphers instead] Allowed TLS ciphers" },
 	{ "tls-seclevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "1", NULL, -1, NULL,
-	  "TLS security level - defaults to 1" },
+	  "[deprecated, use /tls:seclevel instead]TLS security level - defaults to 1" },
 	{ "tls-secrets-file", COMMAND_LINE_VALUE_REQUIRED, "<filename>", NULL, NULL, -1, NULL,
-	  "File were TLS secrets will be stored in the SSLKEYLOGFILE format" },
+	  "[deprecated, use /tls:secrets:file instead] File were TLS secrets will be stored in the "
+	  "SSLKEYLOGFILE format" },
 	{ "enforce-tlsv1_2", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "Force use of TLS1.2 for connection. Some servers have a buggy TLS version negotiation and "
+	  "[deprecated, use /tls:enforce-tlsv1_2 instead] Force use of TLS1.2 for connection. Some "
+	  "servers have a buggy TLS version negotiation and "
 	  "might fail without this" },
 	{ "toggle-fullscreen", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Alt+Ctrl+Enter to toggle fullscreen" },

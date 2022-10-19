@@ -1609,6 +1609,104 @@ static BOOL setSmartcardEmulation(const char* value, rdpSettings* settings)
 	return TRUE;
 }
 
+static int parse_tls_ciphers(rdpSettings* settings, const char* Value)
+{
+	const char* ciphers = NULL;
+	if (!Value)
+		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+	if (strcmp(Value, "netmon") == 0)
+	{
+		ciphers = "ALL:!ECDH:!ADH:!DHE";
+	}
+	else if (strcmp(Value, "ma") == 0)
+	{
+		ciphers = "AES128-SHA";
+	}
+	else
+	{
+		ciphers = Value;
+	}
+
+	if (!freerdp_settings_set_string(settings, FreeRDP_AllowedTlsCiphers, ciphers))
+		return COMMAND_LINE_ERROR_MEMORY;
+	return 0;
+}
+
+static int parse_tls_seclevel(rdpSettings* settings, const char* Value)
+{
+	LONGLONG val;
+
+	if (!value_to_int(Value, &val, 0, 5))
+		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_TlsSecLevel, (UINT32)val))
+		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+	return 0;
+}
+
+static int parse_tls_secrets_file(rdpSettings* settings, const char* Value)
+{
+	if (!Value)
+		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+	if (!freerdp_settings_set_string(settings, FreeRDP_TlsSecretsFile, Value))
+		return COMMAND_LINE_ERROR_MEMORY;
+	return 0;
+}
+
+static int parse_tls_enforce(rdpSettings* settings, const char* Value)
+{
+
+	WINPR_UNUSED(Value);
+	if (!(freerdp_settings_set_uint16(settings, FreeRDP_TLSMinVersion, TLS1_2_VERSION) &&
+	      freerdp_settings_set_uint16(settings, FreeRDP_TLSMaxVersion, TLS1_2_VERSION)))
+		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+	return 0;
+}
+
+static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+{
+	int rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+	CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "tls")
+	{
+		if (strncmp("ciphers:", arg->Value, 8) == 0)
+			rc = parse_tls_ciphers(settings, &arg->Value[8]);
+		else if (strncmp("seclevel:", arg->Value, 9) == 0)
+			rc = parse_tls_ciphers(settings, &arg->Value[9]);
+		else if (strncmp("secrets-file:", arg->Value, 13) == 0)
+			rc = parse_tls_secrets_file(settings, &arg->Value[13]);
+		else if (strncmp("enforce-tlsv1_2", arg->Value, 16) == 0)
+			rc = parse_tls_enforce(settings, &arg->Value[15]);
+	}
+	CommandLineSwitchCase(arg, "tls-ciphers")
+	{
+		WLog_WARN(TAG, "Option /tls-ciphers is deprecated, use /tls:ciphers instead");
+		rc = parse_tls_ciphers(settings, arg->Value);
+	}
+	CommandLineSwitchCase(arg, "tls-seclevel")
+	{
+		WLog_WARN(TAG, "Option /tls-seclevel is deprecated, use /tls:seclevel instead");
+		rc = parse_tls_seclevel(settings, arg->Value);
+	}
+	CommandLineSwitchCase(arg, "tls-secrets-file")
+	{
+		WLog_WARN(TAG, "Option /tls-secrets-file is deprecated, use /tls:secrets-file instead");
+		rc = parse_tls_secrets_file(settings, arg->Value);
+	}
+	CommandLineSwitchCase(arg, "enforce-tlsv1_2")
+	{
+		WLog_WARN(TAG, "Option /enforce-tlsv1_2 is deprecated, use /tls:enforce-tlsv1_2 instead");
+		rc = parse_tls_enforce(settings, arg->Value);
+	}
+	CommandLineSwitchDefault(arg)
+	{
+	}
+	CommandLineSwitchEnd(arg)
+
+	    return rc;
+}
+
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int argc,
                                                          char** argv, BOOL allowUnknown)
 {
@@ -2905,50 +3003,47 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->ExtSecurity = enable;
 		}
+		CommandLineSwitchCase(arg, "tls")
+		{
+			size_t count, x;
+			char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+			for (x = 0; x < count; x++)
+			{
+				COMMAND_LINE_ARGUMENT_A larg = *arg;
+				larg.Value = ptr[x];
+
+				int rc = parse_tls_options(settings, &larg);
+				if (rc != 0)
+				{
+					free(ptr);
+					return rc;
+				}
+			}
+			free(ptr);
+		}
 		CommandLineSwitchCase(arg, "tls-ciphers")
 		{
-			const char* ciphers = NULL;
-			if (!arg->Value)
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
-			if (strcmp(arg->Value, "netmon") == 0)
-			{
-				ciphers = "ALL:!ECDH:!ADH:!DHE";
-			}
-			else if (strcmp(arg->Value, "ma") == 0)
-			{
-				ciphers = "AES128-SHA";
-			}
-			else
-			{
-				ciphers = arg->Value;
-			}
-
-			if (!freerdp_settings_set_string(settings, FreeRDP_AllowedTlsCiphers, ciphers))
-				return COMMAND_LINE_ERROR_MEMORY;
+			int rc = parse_tls_options(settings, arg);
+			if (rc != 0)
+				return rc;
 		}
 		CommandLineSwitchCase(arg, "tls-seclevel")
 		{
-			LONGLONG val;
-
-			if (!value_to_int(arg->Value, &val, 0, 5))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
-			settings->TlsSecLevel = (UINT32)val;
+			int rc = parse_tls_options(settings, arg);
+			if (rc != 0)
+				return rc;
 		}
 		CommandLineSwitchCase(arg, "tls-secrets-file")
 		{
-			if (!arg->Value)
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
-			if (!freerdp_settings_set_string(settings, FreeRDP_TlsSecretsFile, arg->Value))
-				return COMMAND_LINE_ERROR_MEMORY;
+			int rc = parse_tls_options(settings, arg);
+			if (rc != 0)
+				return rc;
 		}
 		CommandLineSwitchCase(arg, "enforce-tlsv1_2")
 		{
-			if (!(freerdp_settings_set_uint16(settings, FreeRDP_TLSMinVersion, TLS1_2_VERSION) &&
-			      freerdp_settings_set_uint16(settings, FreeRDP_TLSMaxVersion, TLS1_2_VERSION)))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			int rc = parse_tls_options(settings, arg);
+			if (rc != 0)
+				return rc;
 		}
 		CommandLineSwitchCase(arg, "cert")
 		{
