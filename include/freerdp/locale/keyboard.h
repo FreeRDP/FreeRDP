@@ -227,8 +227,8 @@ extern "C"
 	FREERDP_API DWORD freerdp_keyboard_init(DWORD keyboardLayoutId);
 	FREERDP_API DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId,
 	                                           const char* keyboardRemappingList);
-	FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types);
-	FREERDP_API void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts);
+	FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count);
+	FREERDP_API void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts, size_t count);
 	FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutId);
 	FREERDP_API DWORD freerdp_keyboard_get_layout_id_from_name(const char* name);
 	FREERDP_API DWORD freerdp_keyboard_get_rdp_scancode_from_x11_keycode(DWORD keycode);
