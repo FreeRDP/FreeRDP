@@ -91,6 +91,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "subsequent connections if the certificate does not match"
 	  " * fingerprints ... A list of certificate hashes that are accepted unconditionally for a "
 	  "connection" },
+#if defined(WITH_FREERDP_DEPRECATED)
 	{ "cert-deny", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 	  "[deprecated, use /cert:deny] Automatically abort connection for any certificate that can "
 	  "not be validated." },
@@ -100,6 +101,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "[deprecated, use /cert:name:<name>] Certificate name" },
 	{ "cert-tofu", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 	  "[deprecated, use /cert:tofu] Automatically accept certificate on first connect" },
+#endif
 	{ "client-build-number", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
 	  "Client Build Number sent to server (influences smartcard behaviour, see [MS-RDPESC])" },
 	{ "client-hostname", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
@@ -380,6 +382,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  " * secrets-file:<filename>"
 	  " * enforce-tlsv1_2 Force use of TLS1.2 for connection. Some servers have a buggy TLS "
 	  "version negotiation and might fail without this" },
+#if defined(WITH_FREERDP_DEPRECATED)
 	{ "tls-ciphers", COMMAND_LINE_VALUE_REQUIRED, "[netmon|ma|ciphers]", NULL, NULL, -1, NULL,
 	  "[deprecated, use /tls:ciphers instead] Allowed TLS ciphers" },
 	{ "tls-seclevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "1", NULL, -1, NULL,
@@ -391,6 +394,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "[deprecated, use /tls:enforce-tlsv1_2 instead] Force use of TLS1.2 for connection. Some "
 	  "servers have a buggy TLS version negotiation and "
 	  "might fail without this" },
+#endif
 	{ "toggle-fullscreen", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Alt+Ctrl+Enter to toggle fullscreen" },
 	{ "tune", COMMAND_LINE_VALUE_REQUIRED, "<setting:value>,<setting:value>", "", NULL, -1, NULL,
