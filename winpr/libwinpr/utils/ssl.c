@@ -42,6 +42,12 @@
 
 static BOOL g_winpr_openssl_initialized_by_winpr = FALSE;
 
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+static OSSL_PROVIDER* s_winpr_openssl_provider_fips = NULL;
+static OSSL_PROVIDER* s_winpr_openssl_provider_legacy = NULL;
+static OSSL_PROVIDER* s_winpr_openssl_provider_default = NULL;
+#endif
+
 /**
  * Note from OpenSSL 1.1.0 "CHANGES":
  * OpenSSL now uses a new threading API. It is no longer necessary to
@@ -249,7 +255,11 @@ static BOOL winpr_enable_fips(DWORD flags)
 		WLog_DBG(TAG, "Ensuring openssl fips mode is enabled");
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-		OSSL_PROVIDER_load(NULL, "fips");
+		s_winpr_openssl_provider_fips = OSSL_PROVIDER_load(NULL, "fips");
+		if (s_winpr_openssl_provider_fips == NULL)
+		{
+			WLog_WARN(TAG, "OpenSSL FIPS provider failled to load");
+		}
 		if (!EVP_default_properties_is_fips_enabled(NULL))
 #else
 		if (FIPS_mode() != 1)
@@ -313,8 +323,16 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
 	/* The legacy provider is needed for MD4. */
-	OSSL_PROVIDER_load(NULL, "legacy");
-	OSSL_PROVIDER_load(NULL, "default");
+	s_winpr_openssl_provider_legacy = OSSL_PROVIDER_load(NULL, "legacy");
+	if (s_winpr_openssl_provider_legacy == NULL)
+	{
+		WLog_WARN(TAG, "OpenSSL LEGACY provider failed to load, no md4 support available!");
+	}
+	s_winpr_openssl_provider_default = OSSL_PROVIDER_load(NULL, "default");
+	if (s_winpr_openssl_provider_default == NULL)
+	{
+		WLog_WARN(TAG, "OpenSSL DEFAULT provider failed to load");
+	}
 #endif
 
 	g_winpr_openssl_initialized_by_winpr = TRUE;
@@ -368,6 +386,11 @@ BOOL winpr_CleanupSSL(DWORD flags)
 #endif
 	}
 
+#endif
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+	OSSL_PROVIDER_unload(s_winpr_openssl_provider_fips);
+	OSSL_PROVIDER_unload(s_winpr_openssl_provider_legacy);
+	OSSL_PROVIDER_unload(s_winpr_openssl_provider_default);
 #endif
 	return TRUE;
 }
