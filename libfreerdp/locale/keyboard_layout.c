@@ -797,15 +797,16 @@ static const RDP_KEYBOARD_IME RDP_KEYBOARD_IME_TABLE[] = {
 	{ KBD_CHINESE_TRADITIONAL_ALPHANUMERIC, "romanime.ime", "Chinese (Traditional) - Alphanumeric" }
 };
 
-void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts)
+void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts, size_t count)
 {
-	RDP_KEYBOARD_LAYOUT* current = layouts;
+	size_t x;
 
 	if (!layouts)
 		return;
 
-	while ((current->code != 0) && (current->name != NULL))
+	for (x = 0; x < count; x++)
 	{
+		RDP_KEYBOARD_LAYOUT* current = &layouts[x];
 		free(current->name);
 		current++;
 	}
@@ -813,22 +814,21 @@ void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts)
 	free(layouts);
 }
 
-RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
+RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count)
 {
-	size_t num, length, i;
-	RDP_KEYBOARD_LAYOUT* layouts;
-	RDP_KEYBOARD_LAYOUT* new;
-	num = 0;
-	layouts = (RDP_KEYBOARD_LAYOUT*)calloc((num + 1), sizeof(RDP_KEYBOARD_LAYOUT));
+	size_t num, i;
+	RDP_KEYBOARD_LAYOUT* layouts = NULL;
 
-	if (!layouts)
-		return NULL;
+	num = 0;
+
+	WINPR_ASSERT(count);
+	*count = 0;
 
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_STANDARD) != 0)
 	{
-		length = ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE);
-		new = (RDP_KEYBOARD_LAYOUT*)realloc(layouts,
-		                                    (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		const size_t length = ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE);
+		RDP_KEYBOARD_LAYOUT* new = (RDP_KEYBOARD_LAYOUT*)realloc(
+		    layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 		if (!new)
 			goto fail;
@@ -847,9 +847,9 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_VARIANT) != 0)
 	{
-		length = ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE);
-		new = (RDP_KEYBOARD_LAYOUT*)realloc(layouts,
-		                                    (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		const size_t length = ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE);
+		RDP_KEYBOARD_LAYOUT* new = (RDP_KEYBOARD_LAYOUT*)realloc(
+		    layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 		if (!new)
 			goto fail;
@@ -868,9 +868,9 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_IME) != 0)
 	{
-		length = ARRAYSIZE(RDP_KEYBOARD_IME_TABLE);
-		new = (RDP_KEYBOARD_LAYOUT*)realloc(layouts,
-		                                    (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		const size_t length = ARRAYSIZE(RDP_KEYBOARD_IME_TABLE);
+		RDP_KEYBOARD_LAYOUT* new = (RDP_KEYBOARD_LAYOUT*)realloc(
+		    layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 		if (!new)
 			goto fail;
@@ -887,10 +887,10 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 		}
 	}
 
-	ZeroMemory(&layouts[num], sizeof(RDP_KEYBOARD_LAYOUT));
+	*count = num;
 	return layouts;
 fail:
-	freerdp_keyboard_layouts_free(layouts);
+	freerdp_keyboard_layouts_free(layouts, num);
 	return NULL;
 }
 
