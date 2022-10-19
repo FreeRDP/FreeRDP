@@ -22,6 +22,7 @@
 #define WINPR_SSL_H
 
 #include <winpr/wtypes.h>
+#include <winpr/winpr.h>
 
 #define WINPR_SSL_INIT_DEFAULT 0x00
 #define WINPR_SSL_INIT_ALREADY_INITIALIZED 0x01

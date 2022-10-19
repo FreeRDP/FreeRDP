@@ -26,6 +26,7 @@
 #else
 
 #include <winpr/wtypes.h>
+#include <winpr/winpr.h>
 
 #ifndef __SECSTATUS_DEFINED__
 typedef LONG SECURITY_STATUS;
