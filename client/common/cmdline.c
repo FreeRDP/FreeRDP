@@ -62,23 +62,30 @@
 
 static BOOL freerdp_client_print_codepages(const char* arg)
 {
-	size_t count = 0, x;
+	size_t count = 0;
 	DWORD column = 2;
 	const char* filter = NULL;
-	char buffer[80];
 	RDP_CODEPAGE* pages;
 
 	if (arg)
-		filter = strchr(arg, ',') + 1;
+	{
+		filter = strchr(arg, ',');
+		if (!filter)
+			filter = arg;
+		else
+			filter++;
+	}
 	pages = freerdp_keyboard_get_matching_codepages(column, filter, &count);
 	if (!pages)
 		return TRUE;
 
 	printf("%-10s %-8s %-60s %-36s %-48s\n", "<id>", "<locale>", "<win langid>", "<language>",
 	       "<country>");
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		const RDP_CODEPAGE* page = &pages[x];
+		char buffer[80] = { 0 };
+
 		if (strnlen(page->subLanguageSymbol, ARRAYSIZE(page->subLanguageSymbol)) > 0)
 			_snprintf(buffer, sizeof(buffer), "[%s|%s]", page->primaryLanguageSymbol,
 			          page->subLanguageSymbol);
@@ -1210,58 +1217,40 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 	return TRUE;
 }
 
-static int freerdp_map_keyboard_layout_name_to_id(char* name)
+static UINT32 freerdp_get_keyboard_layout_for_type(const char* name, DWORD type)
 {
-	int i;
-	int id = 0;
-	RDP_KEYBOARD_LAYOUT* layouts;
-	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+	size_t count = 0, x;
+	RDP_KEYBOARD_LAYOUT* layouts =
+	    freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD, &count);
 
-	if (!layouts)
-		return -1;
+	if (!layouts || (count == 0))
+		return FALSE;
 
-	for (i = 0; layouts[i].code; i++)
+	for (x = 0; x < count; x++)
 	{
-		if (_stricmp(layouts[i].name, name) == 0)
-			id = (int)layouts[i].code;
+		const RDP_KEYBOARD_LAYOUT* layout = &layouts[x];
+		if (_stricmp(layout->name, name) == 0)
+		{
+			return layout->code;
+		}
 	}
 
-	freerdp_keyboard_layouts_free(layouts);
+	freerdp_keyboard_layouts_free(layouts, count);
+	return 0;
+}
 
-	if (id)
-		return id;
+static UINT32 freerdp_map_keyboard_layout_name_to_id(const char* name)
+{
+	size_t x;
+	const UINT32 variants[] = { RDP_KEYBOARD_LAYOUT_TYPE_STANDARD, RDP_KEYBOARD_LAYOUT_TYPE_VARIANT,
+		                        RDP_KEYBOARD_LAYOUT_TYPE_IME };
 
-	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
-
-	if (!layouts)
-		return -1;
-
-	for (i = 0; layouts[i].code; i++)
+	for (x = 0; x < ARRAYSIZE(variants); x++)
 	{
-		if (_stricmp(layouts[i].name, name) == 0)
-			id = (int)layouts[i].code;
+		UINT32 rc = freerdp_get_keyboard_layout_for_type(name, variants[x]);
+		if (rc > 0)
+			return rc;
 	}
-
-	freerdp_keyboard_layouts_free(layouts);
-
-	if (id)
-		return id;
-
-	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
-
-	if (!layouts)
-		return -1;
-
-	for (i = 0; layouts[i].code; i++)
-	{
-		if (_stricmp(layouts[i].name, name) == 0)
-			id = (int)layouts[i].code;
-	}
-
-	freerdp_keyboard_layouts_free(layouts);
-
-	if (id)
-		return id;
 
 	return 0;
 }
@@ -1430,6 +1419,90 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 	return freerdp_client_settings_command_line_status_print_ex(settings, status, argc, argv, NULL);
 }
 
+static void freerdp_client_print_keyboard_type_list(const char* msg, DWORD type)
+{
+
+	size_t x, count = 0;
+	RDP_KEYBOARD_LAYOUT* layouts;
+	layouts = freerdp_keyboard_get_layouts(type, &count);
+
+	printf("\n%s\n", msg);
+
+	for (x = 0; x < count; x++)
+	{
+		const RDP_KEYBOARD_LAYOUT* layout = &layouts[x];
+		printf("0x%08" PRIX32 "\t%s\n", layout->code, layout->name);
+	}
+
+	freerdp_keyboard_layouts_free(layouts, count);
+}
+
+static void freerdp_client_print_keyboard_list(void)
+{
+	freerdp_client_print_keyboard_type_list("Keyboard Layouts", RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+	freerdp_client_print_keyboard_type_list("Keyboard Layout Variants",
+	                                        RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+	freerdp_client_print_keyboard_type_list("Keyboard Layout Variants",
+	                                        RDP_KEYBOARD_LAYOUT_TYPE_IME);
+}
+
+static void freerdp_client_print_tune_list(const rdpSettings* settings)
+{
+	size_t x;
+	SSIZE_T type = 0;
+
+	printf("%s\t%50s\t%s\t%s", "<index>", "<key>", "<type>", "<default value>\n");
+	for (x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
+	{
+		const char* name = freerdp_settings_get_name_for_key(x);
+		type = freerdp_settings_get_type_for_key(x);
+
+		switch (type)
+		{
+			case RDP_SETTINGS_TYPE_BOOL:
+				printf("%" PRIuz "\t%50s\tBOOL\t%s\n", x, name,
+				       freerdp_settings_get_bool(settings, x) ? "TRUE" : "FALSE");
+				break;
+			case RDP_SETTINGS_TYPE_UINT16:
+				printf("%" PRIuz "\t%50s\tUINT16\t%" PRIu16 "\n", x, name,
+				       freerdp_settings_get_uint16(settings, x));
+				break;
+			case RDP_SETTINGS_TYPE_INT16:
+				printf("%" PRIuz "\t%50s\tINT16\t%" PRId16 "\n", x, name,
+				       freerdp_settings_get_int16(settings, x));
+				break;
+			case RDP_SETTINGS_TYPE_UINT32:
+				printf("%" PRIuz "\t%50s\tUINT32\t%" PRIu32 "\n", x, name,
+				       freerdp_settings_get_uint32(settings, x));
+				break;
+			case RDP_SETTINGS_TYPE_INT32:
+				printf("%" PRIuz "\t%50s\tINT32\t%" PRId32 "\n", x, name,
+				       freerdp_settings_get_int32(settings, x));
+				break;
+			case RDP_SETTINGS_TYPE_UINT64:
+				printf("%" PRIuz "\t%50s\tUINT64\t%" PRIu64 "\n", x, name,
+				       freerdp_settings_get_uint64(settings, x));
+				break;
+			case RDP_SETTINGS_TYPE_INT64:
+				printf("%" PRIuz "\t%50s\tINT64\t%" PRId64 "\n", x, name,
+				       freerdp_settings_get_int64(settings, x));
+				break;
+			case RDP_SETTINGS_TYPE_STRING:
+				printf("%" PRIuz "\t%50s\tSTRING\t%s"
+				       "\n",
+				       x, name, freerdp_settings_get_string(settings, x));
+				break;
+			case RDP_SETTINGS_TYPE_POINTER:
+				printf("%" PRIuz "\t%50s\tPOINTER\t%p"
+				       "\n",
+				       x, name, freerdp_settings_get_pointer(settings, x));
+				break;
+			default:
+				break;
+		}
+	}
+}
+
 int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, int status,
                                                          int argc, char** argv,
                                                          const COMMAND_LINE_ARGUMENT_A* custom)
@@ -1455,6 +1528,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 		CommandLineParseArgumentsA(argc, argv, largs, 0x112, NULL, NULL, NULL);
 
 		arg = CommandLineFindArgumentA(largs, "kbd-lang-list");
+		WINPR_ASSERT(arg);
 
 		if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 		{
@@ -1462,39 +1536,15 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 		}
 
 		arg = CommandLineFindArgumentA(largs, "kbd-list");
+		WINPR_ASSERT(arg);
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
-			DWORD i;
-			RDP_KEYBOARD_LAYOUT* layouts;
-			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
-			// if (!layouts) /* FIXME*/
-			printf("\nKeyboard Layouts\n");
-
-			for (i = 0; layouts[i].code; i++)
-				printf("0x%08" PRIX32 "\t%s\n", layouts[i].code, layouts[i].name);
-
-			freerdp_keyboard_layouts_free(layouts);
-			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
-			// if (!layouts) /* FIXME*/
-			printf("\nKeyboard Layout Variants\n");
-
-			for (i = 0; layouts[i].code; i++)
-				printf("0x%08" PRIX32 "\t%s\n", layouts[i].code, layouts[i].name);
-
-			freerdp_keyboard_layouts_free(layouts);
-			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
-			// if (!layouts) /* FIXME*/
-			printf("\nKeyboard Input Method Editors (IMEs)\n");
-
-			for (i = 0; layouts[i].code; i++)
-				printf("0x%08" PRIX32 "\t%s\n", layouts[i].code, layouts[i].name);
-
-			freerdp_keyboard_layouts_free(layouts);
-			printf("\n");
+			freerdp_client_print_keyboard_list();
 		}
 
 		arg = CommandLineFindArgumentA(largs, "monitor-list");
+		WINPR_ASSERT(arg);
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
@@ -1502,12 +1552,15 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 		}
 
 		arg = CommandLineFindArgumentA(largs, "smartcard-list");
+		WINPR_ASSERT(arg);
+
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
 			freerdp_smartcard_list(settings);
 		}
 
 		arg = CommandLineFindArgumentA(largs, "kbd-scancode-list");
+		WINPR_ASSERT(arg);
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
@@ -2079,10 +2132,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				free(ptr.p);
 			}
 		}
-		CommandLineSwitchCase(arg, "monitor-list")
-		{
-			settings->ListMonitors = enable;
-		}
 		CommandLineSwitchCase(arg, "t")
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_WindowTitle, arg->Value))
@@ -2178,9 +2227,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			if (!value_to_int(arg->Value, &val, 1, UINT32_MAX))
 			{
-				const int rc = freerdp_map_keyboard_layout_name_to_id(arg->Value);
+				const UINT32 rc = freerdp_map_keyboard_layout_name_to_id(arg->Value);
 
-				if (rc <= 0)
+				if (rc == 0)
 				{
 					WLog_ERR(TAG, "Could not identify keyboard layout: %s", arg->Value);
 					WLog_ERR(TAG, "Use /kbd-list to list available layouts");
@@ -3555,59 +3604,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "tune-list")
 		{
-			size_t x;
-			SSIZE_T type = 0;
-
-			printf("%s\t%50s\t%s\t%s", "<index>", "<key>", "<type>", "<default value>\n");
-			for (x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
-			{
-				const char* name = freerdp_settings_get_name_for_key(x);
-				type = freerdp_settings_get_type_for_key(x);
-
-				switch (type)
-				{
-					case RDP_SETTINGS_TYPE_BOOL:
-						printf("%" PRIuz "\t%50s\tBOOL\t%s\n", x, name,
-						       freerdp_settings_get_bool(settings, x) ? "TRUE" : "FALSE");
-						break;
-					case RDP_SETTINGS_TYPE_UINT16:
-						printf("%" PRIuz "\t%50s\tUINT16\t%" PRIu16 "\n", x, name,
-						       freerdp_settings_get_uint16(settings, x));
-						break;
-					case RDP_SETTINGS_TYPE_INT16:
-						printf("%" PRIuz "\t%50s\tINT16\t%" PRId16 "\n", x, name,
-						       freerdp_settings_get_int16(settings, x));
-						break;
-					case RDP_SETTINGS_TYPE_UINT32:
-						printf("%" PRIuz "\t%50s\tUINT32\t%" PRIu32 "\n", x, name,
-						       freerdp_settings_get_uint32(settings, x));
-						break;
-					case RDP_SETTINGS_TYPE_INT32:
-						printf("%" PRIuz "\t%50s\tINT32\t%" PRId32 "\n", x, name,
-						       freerdp_settings_get_int32(settings, x));
-						break;
-					case RDP_SETTINGS_TYPE_UINT64:
-						printf("%" PRIuz "\t%50s\tUINT64\t%" PRIu64 "\n", x, name,
-						       freerdp_settings_get_uint64(settings, x));
-						break;
-					case RDP_SETTINGS_TYPE_INT64:
-						printf("%" PRIuz "\t%50s\tINT64\t%" PRId64 "\n", x, name,
-						       freerdp_settings_get_int64(settings, x));
-						break;
-					case RDP_SETTINGS_TYPE_STRING:
-						printf("%" PRIuz "\t%50s\tSTRING\t%s"
-						       "\n",
-						       x, name, freerdp_settings_get_string(settings, x));
-						break;
-					case RDP_SETTINGS_TYPE_POINTER:
-						printf("%" PRIuz "\t%50s\tPOINTER\t%p"
-						       "\n",
-						       x, name, freerdp_settings_get_pointer(settings, x));
-						break;
-					default:
-						break;
-				}
-			}
+			freerdp_client_print_tune_list(settings);
 			return COMMAND_LINE_STATUS_PRINT;
 		}
 		CommandLineSwitchDefault(arg)

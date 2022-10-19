@@ -401,7 +401,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Alt+Ctrl+Enter to toggle fullscreen" },
 	{ "tune", COMMAND_LINE_VALUE_REQUIRED, "<setting:value>,<setting:value>", "", NULL, -1, NULL,
 	  "[experimental] directly manipulate freerdp settings, use with extreme caution!" },
-	{ "tune-list", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
+	{ "tune-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
 	  "Print options allowed for /tune" },
 	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[[<domain>\\]<user>|<user>[@<domain>]]", NULL, NULL, -1,
 	  NULL, "Username" },
