@@ -300,7 +300,7 @@ BOOL freerdp_client_print_buildconfig(void)
 static void freerdp_client_print_scancodes(void)
 {
 	DWORD x;
-	printf("RDP scancodes and their name for use with /kbd-remap\n");
+	printf("RDP scancodes and their name for use with /kbd:remap\n");
 
 	for (x = 0; x < UINT16_MAX; x++)
 	{
@@ -1963,6 +1963,166 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	return CHANNEL_RC_OK;
 }
 
+static int parse_kbd_layout(rdpSettings* settings, const char* value)
+{
+	int rc = 0;
+	LONGLONG ival;
+	const BOOL isInt = value_to_int(value, &ival, 1, UINT32_MAX);
+	if (!isInt)
+	{
+		ival = freerdp_map_keyboard_layout_name_to_id(value);
+
+		if (ival == 0)
+		{
+			WLog_ERR(TAG, "Could not identify keyboard layout: %s", value);
+			WLog_ERR(TAG, "Use /list:kbd to list available layouts");
+			rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+		}
+	}
+
+	if (rc == 0)
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, (UINT32)ival))
+			rc = COMMAND_LINE_ERROR;
+	}
+	return rc;
+}
+
+static BOOL check_kbd_remap_valid(const char* token)
+{
+	DWORD key, value;
+
+	WINPR_ASSERT(token);
+	/* The remapping is only allowed for scancodes, so maximum is 999=999 */
+	if (strlen(token) > 10)
+		return FALSE;
+
+	int rc = sscanf(token, "%" PRIu32 "=%" PRIu32, &key, &value);
+	if (rc != 2)
+		rc = sscanf(token, "%" PRIx32 "=%" PRIx32 "", &key, &value);
+	if (rc != 2)
+		rc = sscanf(token, "%" PRIu32 "=%" PRIx32, &key, &value);
+	if (rc != 2)
+		rc = sscanf(token, "%" PRIx32 "=%" PRIu32, &key, &value);
+	if (rc != 2)
+	{
+		WLog_WARN(TAG, "/kbd:remap invalid entry '%s'", token);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(arg);
+
+	int rc = CHANNEL_RC_OK;
+	size_t count = 0;
+	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+	if (!ptr || (count == 0))
+		rc = COMMAND_LINE_ERROR;
+	else
+	{
+		for (size_t x = 0; x < count; x++)
+		{
+			const char* val = ptr[x];
+
+			if (_strnicmp("remap:", val, 6) == 0)
+			{
+				/* Append this new occurance to the already existing list */
+				char* now = strdup(&val[6]);
+				const char* old =
+				    freerdp_settings_get_string(settings, FreeRDP_KeyboardRemappingList);
+
+				/* Basic sanity test. Entries must be like <key>=<value>, e.g. 1=2 */
+				if (!check_kbd_remap_valid(now))
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				else if (old)
+				{
+					const size_t olen = strlen(old);
+					const size_t alen = strlen(now);
+					char* tmp = calloc(olen + alen + 1, sizeof(char));
+					if (!tmp)
+						rc = COMMAND_LINE_ERROR_MEMORY;
+					else
+						_snprintf(tmp, olen + alen + 1, "%s,%s", old, now);
+					now = tmp;
+				}
+
+				if (rc == 0)
+				{
+					if (!freerdp_settings_set_string(settings, FreeRDP_KeyboardRemappingList, now))
+						rc = COMMAND_LINE_ERROR;
+				}
+				free(now);
+			}
+			else if (_strnicmp("layout:", val, 7) == 0)
+			{
+				rc = parse_kbd_layout(settings, &val[7]);
+			}
+			else if (_strnicmp("lang:", val, 5) == 0)
+			{
+				LONGLONG ival;
+				const BOOL isInt = value_to_int(&val[5], &ival, 1, UINT32_MAX);
+				if (!isInt)
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				else if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardCodePage,
+				                                      (UINT32)ival))
+					rc = COMMAND_LINE_ERROR;
+			}
+			else if (_strnicmp("type:", val, 5) == 0)
+			{
+				LONGLONG ival;
+				const BOOL isInt = value_to_int(&val[5], &ival, 1, UINT32_MAX);
+				if (!isInt)
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				else if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardType, (UINT32)ival))
+					rc = COMMAND_LINE_ERROR;
+			}
+			else if (_strnicmp("subtype:", val, 8) == 0)
+			{
+				LONGLONG ival;
+				const BOOL isInt = value_to_int(&val[8], &ival, 1, UINT32_MAX);
+				if (!isInt)
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				else if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardSubType,
+				                                      (UINT32)ival))
+					rc = COMMAND_LINE_ERROR;
+			}
+			else if (_strnicmp("fn-key:", val, 7) == 0)
+			{
+				LONGLONG ival;
+				const BOOL isInt = value_to_int(&val[7], &ival, 1, UINT32_MAX);
+				if (!isInt)
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				else if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardFunctionKey,
+				                                      (UINT32)ival))
+					rc = COMMAND_LINE_ERROR;
+			}
+			else if (_strnicmp("unicode", val, 7) == 0)
+			{
+				const int bval = parse_on_off_option(val);
+				if (bval < 0)
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				else if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, bval > 0))
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
+			else if (count == 1)
+			{
+				/* Legacy, allow /kbd:<value> for setting keyboard layout */
+				rc = parse_kbd_layout(settings, val);
+			}
+			else
+				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+			if (rc != 0)
+				break;
+		}
+	}
+	return rc;
+}
+
 static int parse_cache_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -2511,28 +2671,15 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "kbd")
 		{
-			LONGLONG val;
-
-			if (!value_to_int(arg->Value, &val, 1, UINT32_MAX))
-			{
-				const UINT32 rc = freerdp_map_keyboard_layout_name_to_id(arg->Value);
-
-				if (rc == 0)
-				{
-					WLog_ERR(TAG, "Could not identify keyboard layout: %s", arg->Value);
-					WLog_ERR(TAG, "Use /list:kbd to list available layouts");
-					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-				}
-
-				/* Found a valid mapping, reset errno */
-				val = rc;
-				errno = 0;
-			}
-
-			settings->KeyboardLayout = (UINT32)val;
+			int rc = parse_kbd_options(settings, arg);
+			if (rc != 0)
+				return rc;
 		}
+#if defined(WITH_FREERDP_DEPRECATED)
 		CommandLineSwitchCase(arg, "kbd-remap")
 		{
+			WLog_WARN(TAG, "/kbd-remap:<key>=<value>,<key2>=<value2> is deprecated, use "
+			               "/kbd:remap:<key>=<value>,remap:<key2>=<value2>,... instead");
 			if (!freerdp_settings_set_string(settings, FreeRDP_KeyboardRemappingList, arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
@@ -2540,6 +2687,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			LONGLONG val;
 
+			WLog_WARN(TAG, "/kbd-lang:<value> is deprecated, use /kbd:lang:<value> instead");
 			if (!value_to_int(arg->Value, &val, 1, UINT32_MAX))
 			{
 				WLog_ERR(TAG, "Could not identify keyboard active language %s", arg->Value);
@@ -2553,6 +2701,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			LONGLONG val;
 
+			WLog_WARN(TAG, "/kbd-type:<value> is deprecated, use /kbd:type:<value> instead");
 			if (!value_to_int(arg->Value, &val, 0, UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
@@ -2560,6 +2709,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "kbd-unicode")
 		{
+			WLog_WARN(TAG, "/kbd-unicode is deprecated, use /kbd:unicode[:on|off] instead");
 			if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, enable))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
@@ -2567,6 +2717,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			LONGLONG val;
 
+			WLog_WARN(TAG, "/kbd-subtype:<value> is deprecated, use /kbd:subtype:<value> instead");
 			if (!value_to_int(arg->Value, &val, 0, UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
@@ -2576,11 +2727,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			LONGLONG val;
 
+			WLog_WARN(TAG, "/kbd-fn-key:<value> is deprecated, use /kbd:fn-key:<value> instead");
 			if (!value_to_int(arg->Value, &val, 0, UINT32_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			settings->KeyboardFunctionKey = (UINT32)val;
 		}
+#endif
 		CommandLineSwitchCase(arg, "u")
 		{
 			user = _strdup(arg->Value);
