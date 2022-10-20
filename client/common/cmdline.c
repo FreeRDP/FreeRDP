@@ -2108,11 +2108,13 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				else if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, bval > 0))
 					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 			else if (count == 1)
 			{
 				/* Legacy, allow /kbd:<value> for setting keyboard layout */
 				rc = parse_kbd_layout(settings, val);
 			}
+#endif
 			else
 				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
@@ -2120,6 +2122,91 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				break;
 		}
 	}
+	return rc;
+}
+
+static int parse_app_option_program(rdpSettings* settings, const char* cmd)
+{
+	const size_t ids[] = { FreeRDP_RemoteApplicationMode, FreeRDP_RemoteAppLanguageBarSupported,
+		                   FreeRDP_Workarea, FreeRDP_DisableWallpaper,
+		                   FreeRDP_DisableFullWindowDrag };
+
+	if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationProgram, cmd))
+		return COMMAND_LINE_ERROR_MEMORY;
+
+	for (size_t y = 0; y < ARRAYSIZE(ids); y++)
+	{
+		if (!freerdp_settings_set_bool(settings, ids[y], TRUE))
+			return COMMAND_LINE_ERROR;
+	}
+	return CHANNEL_RC_OK;
+}
+
+static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(arg);
+
+	int rc = CHANNEL_RC_OK;
+	size_t count = 0;
+	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+	if (!ptr || (count == 0))
+		rc = COMMAND_LINE_ERROR;
+	else
+	{
+		struct app_map
+		{
+			const char* name;
+			size_t nlen;
+			size_t id;
+			int (*fkt)(rdpSettings* settings, const char* value);
+		};
+		const struct app_map amap[] = {
+			{ "program:", 8, FreeRDP_RemoteApplicationProgram, parse_app_option_program },
+			{ "workdir:", 8, FreeRDP_RemoteApplicationWorkingDir, NULL },
+			{ "name:", 5, FreeRDP_RemoteApplicationName, NULL },
+			{ "icon:", 5, FreeRDP_RemoteApplicationIcon, NULL },
+			{ "cmd:", 4, FreeRDP_RemoteApplicationCmdLine, NULL },
+			{ "file:", 5, FreeRDP_RemoteApplicationFile, NULL },
+			{ "guid:", 5, FreeRDP_RemoteApplicationGuid, NULL },
+		};
+		for (size_t x = 0; x < count; x++)
+		{
+			BOOL handled = FALSE;
+			const char* val = ptr[x];
+
+			for (size_t y = 0; y < ARRAYSIZE(amap); y++)
+			{
+				const struct app_map* cur = &amap[y];
+				if (_strnicmp(val, cur->name, cur->nlen) == 0)
+				{
+					if (cur->fkt)
+						rc = cur->fkt(settings, &val[cur->nlen]);
+					else if (!freerdp_settings_set_string(settings, cur->id, &val[cur->nlen]))
+						rc = COMMAND_LINE_ERROR_MEMORY;
+
+					handled = TRUE;
+					break;
+				}
+			}
+
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
+			if (!handled && (count == 1))
+			{
+				/* Legacy path, allow /app:command and /app:||command syntax */
+				rc = parse_app_option_program(settings, val);
+			}
+			else
+#endif
+			    if (!handled)
+				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+			if (rc != 0)
+				break;
+		}
+	}
+
+	free(ptr);
 	return rc;
 }
 
@@ -2903,21 +2990,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "app")
 		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationProgram,
-			                                 arg->Value))
-				return COMMAND_LINE_ERROR_MEMORY;
-
-			settings->RemoteApplicationMode = TRUE;
-			settings->RemoteAppLanguageBarSupported = TRUE;
-			settings->Workarea = TRUE;
-			settings->DisableWallpaper = TRUE;
-			settings->DisableFullWindowDrag = TRUE;
-		}
-		CommandLineSwitchCase(arg, "app-workdir")
-		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationWorkingDir,
-			                                 arg->Value))
-				return COMMAND_LINE_ERROR_MEMORY;
+			int rc = parse_app_options(settings, arg);
+			if (rc != 0)
+				return rc;
 		}
 		CommandLineSwitchCase(arg, "load-balance-info")
 		{
@@ -2925,6 +3000,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				return COMMAND_LINE_ERROR_MEMORY;
 
 			settings->LoadBalanceInfoLength = (UINT32)strlen((char*)settings->LoadBalanceInfo);
+		}
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE_COMMANDLINE)
+		CommandLineSwitchCase(arg, "app-workdir")
+		{
+			if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationWorkingDir,
+			                                 arg->Value))
+				return COMMAND_LINE_ERROR_MEMORY;
 		}
 		CommandLineSwitchCase(arg, "app-name")
 		{
@@ -2952,6 +3034,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationGuid, arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
+#endif
 		CommandLineSwitchCase(arg, "compression")
 		{
 			settings->CompressionEnabled = enable;

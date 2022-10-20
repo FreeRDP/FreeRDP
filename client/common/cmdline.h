@@ -32,8 +32,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Admin (or console) session" },
 	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL,
 	  "desktop composition" },
-	{ "app", COMMAND_LINE_VALUE_REQUIRED, "<path> or ||<alias>", NULL, NULL, -1, NULL,
-	  "Remote application program" },
+	{ "app", COMMAND_LINE_VALUE_REQUIRED,
+	  "program:[<path>|<||alias>],cmd:<command>,file:<filename>,guid:<guid>,icon:<filename>,name:<"
+	  "name>,workdir:<directory>",
+	  NULL, NULL, -1, NULL, "Remote application program" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "app-cmd", COMMAND_LINE_VALUE_REQUIRED, "<parameters>", NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /app:cmd:<command>] Remote application command-line parameters" },
