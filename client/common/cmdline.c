@@ -1558,6 +1558,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 
 		if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 		{
+			WLog_WARN(TAG, "Option /tune-list is deprecated, use /list:tune instead");
 			freerdp_client_print_tune_list(settings);
 		}
 
@@ -1566,6 +1567,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 
 		if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 		{
+			WLog_WARN(TAG, "Option /kbd-lang-list is deprecated, use /list:kbd-lang instead");
 			freerdp_client_print_codepages(arg->Value);
 		}
 
@@ -1574,6 +1576,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
+			WLog_WARN(TAG, "Option /kbd-list is deprecated, use /list:kbd instead");
 			freerdp_client_print_keyboard_list();
 		}
 
@@ -1582,6 +1585,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
+			WLog_WARN(TAG, "Option /monitor-list is deprecated, use /list:monitor instead");
 			settings->ListMonitors = TRUE;
 		}
 
@@ -1590,6 +1594,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
+			WLog_WARN(TAG, "Option /smartcard-list is deprecated, use /list:smartcard instead");
 			freerdp_smartcard_list(settings);
 		}
 
@@ -1598,6 +1603,8 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
+			WLog_WARN(TAG,
+			          "Option /kbd-scancode-list is deprecated, use /list:kbd-scancode instead");
 			freerdp_client_print_scancodes();
 			goto out;
 		}
@@ -3033,6 +3040,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 #if defined(WITH_FREERDP_DEPRECATED)
 		CommandLineSwitchCase(arg, "gfx-thin-client")
 		{
+			WLog_WARN(TAG, "/gfx-thin-client is deprecated, use /gfx:thin-client[:on|off] instead");
 			settings->GfxThinClient = enable;
 
 			if (settings->GfxThinClient)
@@ -3042,6 +3050,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "gfx-small-cache")
 		{
+			WLog_WARN(TAG, "/gfx-small-cache is deprecated, use /gfx:small-cache[:on|off] instead");
 			settings->GfxSmallCache = enable;
 
 			if (enable)
@@ -3049,6 +3058,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "gfx-progressive")
 		{
+			WLog_WARN(TAG, "/gfx-progressive is deprecated, use /gfx:progressive[:on|off] instead");
 			settings->GfxProgressive = enable;
 			settings->GfxThinClient = !enable;
 
@@ -3188,14 +3198,20 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			for (x = 0; x < count; x++)
 			{
 				const char* cur = ptr[x];
+				const int bval = parse_on_off_option(cur);
+				if (bval < 0)
+				{
+					free(ptr);
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
 				if (strcmp("rdp", cur) == 0) /* Standard RDP */
-					RdpSecurity = TRUE;
+					RdpSecurity = bval > 0;
 				else if (strcmp("tls", cur) == 0) /* TLS */
-					TlsSecurity = TRUE;
+					TlsSecurity = bval > 0;
 				else if (strcmp("nla", cur) == 0) /* NLA */
-					NlaSecurity = TRUE;
+					NlaSecurity = bval > 0;
 				else if (strcmp("ext", cur) == 0) /* NLA Extended */
-					ExtSecurity = TRUE;
+					ExtSecurity = bval > 0;
 				else
 				{
 					WLog_ERR(TAG, "unknown protocol security: %s", arg->Value);
@@ -3275,18 +3291,22 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 #if defined(WITH_FREERDP_DEPRECATED)
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{
+			WLog_WARN(TAG, "Option /sec-rdp is deprecated, use /sec:rdp[:on|off] instead");
 			settings->RdpSecurity = enable;
 		}
 		CommandLineSwitchCase(arg, "sec-tls")
 		{
+			WLog_WARN(TAG, "Option /sec-tls is deprecated, use /sec:tls[:on|off] instead");
 			settings->TlsSecurity = enable;
 		}
 		CommandLineSwitchCase(arg, "sec-nla")
 		{
+			WLog_WARN(TAG, "Option /sec-nla is deprecated, use /sec:nla[:on|off] instead");
 			settings->NlaSecurity = enable;
 		}
 		CommandLineSwitchCase(arg, "sec-ext")
 		{
+			WLog_WARN(TAG, "Option /sec-ext is deprecated, use /sec:ext[:on|off] instead");
 			settings->ExtSecurity = enable;
 		}
 #endif
@@ -3311,24 +3331,32 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 #if defined(WITH_FREERDP_DEPRECATED)
 		CommandLineSwitchCase(arg, "tls-ciphers")
 		{
+			WLog_WARN(TAG, "Option /tls-ciphers:<cipher list> is deprecated, use "
+			               "/tls:ciphers:<cipher list> instead");
 			int rc = parse_tls_options(settings, arg);
 			if (rc != 0)
 				return rc;
 		}
 		CommandLineSwitchCase(arg, "tls-seclevel")
 		{
+			WLog_WARN(
+			    TAG,
+			    "Option /tls-seclevel:<level> is deprecated, use /tls:sec-level:<level> instead");
 			int rc = parse_tls_options(settings, arg);
 			if (rc != 0)
 				return rc;
 		}
 		CommandLineSwitchCase(arg, "tls-secrets-file")
 		{
+			WLog_WARN(TAG, "Option /tls-secrets-file:<filename> is deprecated, use "
+			               "/tls:secrets-file:<filename> instead");
 			int rc = parse_tls_options(settings, arg);
 			if (rc != 0)
 				return rc;
 		}
 		CommandLineSwitchCase(arg, "enforce-tlsv1_2")
 		{
+			WLog_WARN(TAG, "Option /enforce-tlsv1_2 is deprecated, use /tls:enforce:1.2 instead");
 			int rc = parse_tls_options(settings, arg);
 			if (rc != 0)
 				return rc;
@@ -3530,14 +3558,18 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 #if defined(WITH_FREERDP_DEPRECATED)
 		CommandLineSwitchCase(arg, "bitmap-cache")
 		{
+			WLog_WARN(TAG, "/bitmap-cache is deprecated, use /cache:bitmap[:on|off] instead");
 			settings->BitmapCacheEnabled = enable;
 		}
 		CommandLineSwitchCase(arg, "persist-cache")
 		{
+			WLog_WARN(TAG, "/persist-cache is deprecated, use /cache:persist[:on|off] instead");
 			settings->BitmapCachePersistEnabled = enable;
 		}
 		CommandLineSwitchCase(arg, "persist-cache-file")
 		{
+			WLog_WARN(TAG, "/persist-cache-file:<filename> is deprecated, use "
+			               "/cache:persist-file:<filename> instead");
 			if (!freerdp_settings_set_string(settings, FreeRDP_BitmapCachePersistFile, arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 
@@ -3545,14 +3577,18 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "offscreen-cache")
 		{
+			WLog_WARN(TAG, "/bitmap-cache is deprecated, use /cache:bitmap[:on|off] instead");
 			settings->OffscreenSupportLevel = (UINT32)enable;
 		}
 		CommandLineSwitchCase(arg, "glyph-cache")
 		{
+			WLog_WARN(TAG, "/glyph-cache is deprecated, use /cache:glyph[:on|off] instead");
 			settings->GlyphSupportLevel = arg->Value ? GLYPH_SUPPORT_FULL : GLYPH_SUPPORT_NONE;
 		}
 		CommandLineSwitchCase(arg, "codec-cache")
 		{
+			WLog_WARN(TAG,
+			          "/codec-cache:<option> is deprecated, use /cache:codec:<option> instead");
 			if (!arg->Value)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			settings->BitmapCacheV3Enabled = TRUE;
