@@ -1755,7 +1755,6 @@ static int parse_tls_enforce(rdpSettings* settings, const char* Value)
 			UINT16 version;
 		};
 		const struct map_t map[] = {
-			{ "ssl3", SSL3_VERSION },
 			{ "1.0", TLS1_VERSION },
 			{ "1.1", TLS1_1_VERSION },
 			{ "1.2", TLS1_2_VERSION }
