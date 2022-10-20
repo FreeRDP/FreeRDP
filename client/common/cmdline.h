@@ -66,16 +66,22 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Automatic reconnection" },
 	{ "auto-reconnect-max-retries", COMMAND_LINE_VALUE_REQUIRED, "<retries>", NULL, NULL, -1, NULL,
 	  "Automatic reconnection maximum retries, 0 for unlimited [0,1000]" },
+#if defined(WITH_FREERDP_DEPRECATED)
 	{ "bitmap-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "bitmap cache" },
 	{ "persist-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "persistent bitmap cache" },
 	{ "persist-cache-file", COMMAND_LINE_VALUE_REQUIRED, "<filename>", NULL, NULL, -1, NULL,
 	  "persistent bitmap cache file" },
+#endif
 	{ "bpp", COMMAND_LINE_VALUE_REQUIRED, "<depth>", "16", NULL, -1, NULL,
 	  "Session bpp (color depth)" },
 	{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL, -1,
 	  NULL, "Print the build configuration" },
+	{ "cache", COMMAND_LINE_VALUE_REQUIRED,
+	  "[bitmap[:on|off],codec[:rfx|nsc],glyph[:on|off],offscreen[:on|off],persist,persist-file:<"
+	  "filename>]",
+	  NULL, NULL, -1, NULL, "" },
 	{ "cert", COMMAND_LINE_VALUE_REQUIRED,
 	  "[deny,ignore,name:<name>,tofu,fingerprint:<hash>:<hash as hex>[,fingerprint:<hash>:<another "
 	  "hash>]]",
@@ -112,8 +118,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  " * use-selection:<atom>  ... (X11) Specify which X selection to access. Default is "
 	  "CLIPBOARD."
 	  " PRIMARY is the X-style middle-click selection." },
+#if defined(WITH_FREERDP_DEPRECATED)
 	{ "codec-cache", COMMAND_LINE_VALUE_REQUIRED, "[rfx|nsc|jpeg]", NULL, NULL, -1, NULL,
 	  "Bitmap codec cache" },
+#endif
 	{ "compression", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, "z", "compression" },
 	{ "compression-level", COMMAND_LINE_VALUE_REQUIRED, "<level>", NULL, NULL, -1, NULL,
 	  "Compression level (0,1,2)" },
@@ -188,9 +196,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  BoolValueTrue, NULL, -1, NULL, "RDP8 graphics pipeline using small cache mode" },
 	{ "[DEPRECATED] use /gfx:thin-client instead gfx-thin-client", COMMAND_LINE_VALUE_BOOL, NULL,
 	  BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline using thin client mode" },
-#endif
 	{ "glyph-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Glyph cache (experimental)" },
+#endif
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "grab-keyboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Grab keyboard" },
@@ -287,8 +295,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "[modem|broadband|broadband-low|broadband-high|wan|lan|auto]", NULL, NULL, -1, NULL,
 	  "Network connection type" },
 	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "nscodec", "NSCodec support" },
+#if defined(WITH_FREERDP_DEPRECATED)
 	{ "offscreen-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "offscreen bitmap cache" },
+#endif
 	{ "orientation", COMMAND_LINE_VALUE_REQUIRED, "[0|90|180|270]", NULL, NULL, -1, NULL,
 	  "Orientation of display in degrees" },
 	{ "old-license", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,

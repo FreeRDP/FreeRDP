@@ -1956,6 +1956,94 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	return CHANNEL_RC_OK;
 }
 
+static int parse_cache_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(arg);
+
+	int rc = CHANNEL_RC_OK;
+	size_t count = 0;
+	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+	if (!ptr || (count == 0))
+		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+	for (size_t x = 0; x < count; x++)
+	{
+		const char* val = ptr[x];
+
+		if (_strnicmp("codec:", val, 6) == 0)
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheV3Enabled, TRUE))
+				rc = COMMAND_LINE_ERROR;
+			else if (strcmp(arg->Value, "rfx") == 0)
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE))
+					rc = COMMAND_LINE_ERROR;
+			}
+			else if (strcmp(arg->Value, "nsc") == 0)
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE))
+					rc = COMMAND_LINE_ERROR;
+			}
+
+#if defined(WITH_JPEG)
+			else if (strcmp(arg->Value, "jpeg") == 0)
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_JpegCodec, TRUE))
+					rc = COMMAND_LINE_ERROR;
+
+				if (settings->JpegQuality == 0)
+					settings->JpegQuality = 75;
+			}
+
+#endif
+		}
+		else if (_strnicmp("persist-file:", val, 13) == 0)
+		{
+
+			if (!freerdp_settings_set_string(settings, FreeRDP_BitmapCachePersistFile, &val[13]))
+				rc = COMMAND_LINE_ERROR_MEMORY;
+			else if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled, TRUE))
+				rc = COMMAND_LINE_ERROR;
+		}
+		else
+		{
+			const int bval = parse_on_off_option(val);
+			if (bval < 0)
+				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			else
+			{
+				if (_strnicmp("bitmap", val, 6) == 0)
+				{
+					if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheEnabled, bval > 0))
+						rc = COMMAND_LINE_ERROR;
+				}
+				else if (_strnicmp("glyph", val, 5) == 0)
+				{
+					if (!freerdp_settings_set_uint32(settings, FreeRDP_GlyphSupportLevel,
+					                                 bval > 0 ? GLYPH_SUPPORT_FULL
+					                                          : GLYPH_SUPPORT_NONE))
+						rc = COMMAND_LINE_ERROR;
+				}
+				else if (_strnicmp("persist", val, 7) == 0)
+				{
+					if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled,
+					                               bval > 0))
+						rc = COMMAND_LINE_ERROR;
+				}
+				else if (_strnicmp("offscreen", val, 9) == 0)
+				{
+					if (!freerdp_settings_set_uint32(settings, FreeRDP_OffscreenSupportLevel, bval))
+						rc = COMMAND_LINE_ERROR;
+				}
+			}
+		}
+	}
+
+	free(ptr);
+	return rc;
+}
+
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int argc,
                                                          char** argv, BOOL allowUnknown)
 {
@@ -3433,6 +3521,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_ClientBuild, (UINT32)val))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
+		CommandLineSwitchCase(arg, "cache")
+		{
+			int rc = parse_cache_options(settings, arg);
+			if (rc != 0)
+				return rc;
+		}
+#if defined(WITH_FREERDP_DEPRECATED)
 		CommandLineSwitchCase(arg, "bitmap-cache")
 		{
 			settings->BitmapCacheEnabled = enable;
@@ -3482,6 +3577,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 #endif
 		}
+#endif
 		CommandLineSwitchCase(arg, "fast-path")
 		{
 			settings->FastPathInput = enable;
