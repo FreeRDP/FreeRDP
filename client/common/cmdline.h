@@ -167,22 +167,28 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "gestures", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Consume multitouch input locally" },
 #ifdef WITH_GFX_H264
-	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "[[RFX|AVC420|AVC444],mask:<value>]", NULL, NULL, -1,
-	  NULL, "RDP8 graphics pipeline" },
+	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL,
+	  "[[RFX|AVC420|AVC444],mask:<value>,small-cache[:on|off],thin-client[:on|off],progressive[:on|"
+	  "off]]",
+	  NULL, NULL, -1, NULL, "RDP8 graphics pipeline" },
 #if defined(WITH_FREERDP_DEPRECATED)
 	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[[AVC420|AVC444],mask:<value>] [DEPRECATED] use /gfx:avc420 instead", NULL, NULL, -1, NULL,
 	  "RDP8.1 graphics pipeline using H264 codec" },
 #endif
 #else
-	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "RFX", NULL, NULL, -1, NULL, "RDP8 graphics pipeline" },
+	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL,
+	  "RFX,mask:<value>,small-cache[:on|off],thin-client[:on|off],progressive[:on|off]]", NULL,
+	  NULL, -1, NULL, "RDP8 graphics pipeline" },
 #endif
-	{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "RDP8 graphics pipeline using progressive codec" },
-	{ "gfx-small-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
-	  "RDP8 graphics pipeline using small cache mode" },
-	{ "gfx-thin-client", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "RDP8 graphics pipeline using thin client mode" },
+#if defined(WITH_FREERDP_DEPRECATED)
+	{ "[DEPRECATED] use /gfx:progressive instead gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL,
+	  BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline using progressive codec" },
+	{ "[DEPRECATED] use /gfx:small-cache instead gfx-small-cache", COMMAND_LINE_VALUE_BOOL, NULL,
+	  BoolValueTrue, NULL, -1, NULL, "RDP8 graphics pipeline using small cache mode" },
+	{ "[DEPRECATED] use /gfx:thin-client instead gfx-thin-client", COMMAND_LINE_VALUE_BOOL, NULL,
+	  BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline using thin client mode" },
+#endif
 	{ "glyph-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Glyph cache (experimental)" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },

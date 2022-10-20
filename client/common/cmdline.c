@@ -1697,6 +1697,19 @@ static BOOL setSmartcardEmulation(const char* value, rdpSettings* settings)
 	return TRUE;
 }
 
+static int parse_on_off_option(const char* value)
+{
+	WINPR_ASSERT(value);
+	const char* sep = strchr(value, ':');
+	if (!sep)
+		return 1;
+	if (_strnicmp("on", &sep[1], 3) == 0)
+		return 1;
+	if (_strnicmp("off", &sep[1], 4) == 0)
+		return 0;
+	return -1;
+}
+
 static int parse_tls_ciphers(rdpSettings* settings, const char* Value)
 {
 	const char* ciphers = NULL;
@@ -1824,6 +1837,123 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	CommandLineSwitchEnd(arg)
 
 	    return rc;
+}
+
+static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(arg);
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, TRUE))
+		return COMMAND_LINE_ERROR;
+
+	if (arg->Value)
+	{
+		int rc = CHANNEL_RC_OK;
+		size_t count = 0;
+		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+		if (!ptr || (count == 0))
+			rc = COMMAND_LINE_ERROR;
+		else
+		{
+			BOOL GfxH264 = FALSE;
+			BOOL GfxAVC444 = FALSE;
+			BOOL RemoteFxCodec = FALSE;
+			BOOL GfxProgressive = FALSE;
+			BOOL codecSelected = FALSE;
+
+			for (size_t x = 0; x < count; x++)
+			{
+				const char* val = ptr[x];
+#ifdef WITH_GFX_H264
+				if (_strnicmp("AVC444", val, 7) == 0)
+				{
+					const int bval = parse_on_off_option(val);
+					if (bval < 0)
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					else
+						GfxH264 = bval > 0;
+					codecSelected = TRUE;
+				}
+				else if (_strnicmp("AVC420", val, 7) == 0)
+				{
+					const int bval = parse_on_off_option(val);
+					if (bval < 0)
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					else
+						GfxAVC444 = bval > 0;
+					codecSelected = TRUE;
+				}
+				else
+#endif
+				    if (_strnicmp("RFX", val, 4) == 0)
+				{
+					const int bval = parse_on_off_option(val);
+					if (bval < 0)
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					else
+						RemoteFxCodec = bval > 0;
+					codecSelected = TRUE;
+				}
+				else if (_strnicmp("progressive", val, 11) == 0)
+				{
+					const int bval = parse_on_off_option(val);
+					if (bval < 0)
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					else
+						GfxProgressive = bval > 0;
+					codecSelected = TRUE;
+				}
+				else if (_strnicmp("mask:", val, 5) == 0)
+				{
+					ULONGLONG v;
+					const char* uv = &val[5];
+					if (!value_to_uint(uv, &v, 0, UINT32_MAX))
+						rc = COMMAND_LINE_ERROR;
+					else
+						settings->GfxCapsFilter = (UINT32)v;
+				}
+				else if (_strnicmp("small-cache", val, 11) == 0)
+				{
+					const int bval = parse_on_off_option(val);
+					if (bval < 0)
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxSmallCache, bval > 0))
+						rc = COMMAND_LINE_ERROR;
+				}
+				else if (_strnicmp("thin-client", val, 11) == 0)
+				{
+					const int bval = parse_on_off_option(val);
+					if (bval < 0)
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxThinClient, bval > 0))
+						rc = COMMAND_LINE_ERROR;
+					if ((rc == CHANNEL_RC_OK) && (bval > 0))
+					{
+						if (!freerdp_settings_set_bool(settings, FreeRDP_GfxSmallCache, bval > 0))
+							rc = COMMAND_LINE_ERROR;
+					}
+				}
+			}
+
+			if ((rc == CHANNEL_RC_OK) && codecSelected)
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, GfxAVC444))
+					rc = COMMAND_LINE_ERROR;
+				else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxH264, GfxH264))
+					rc = COMMAND_LINE_ERROR;
+				else if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, RemoteFxCodec))
+					rc = COMMAND_LINE_ERROR;
+				else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive,
+				                                    GfxProgressive))
+					rc = COMMAND_LINE_ERROR;
+			}
+		}
+		free(ptr);
+		if (rc != CHANNEL_RC_OK)
+			return rc;
+	}
+	return CHANNEL_RC_OK;
 }
 
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int argc,
@@ -2808,63 +2938,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "gfx")
 		{
-			settings->SupportGraphicsPipeline = TRUE;
-
-			if (arg->Value)
-			{
-				int rc = CHANNEL_RC_OK;
-				union
-				{
-					char** p;
-					const char** pc;
-				} ptr;
-				size_t count, x;
-
-				ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
-				if (!ptr.pc || (count == 0))
-					rc = COMMAND_LINE_ERROR;
-				else
-				{
-					for (x = 0; x < count; x++)
-					{
-						const char* val = ptr.pc[x];
-#ifdef WITH_GFX_H264
-						if (_strnicmp("AVC444", val, 7) == 0)
-						{
-							settings->GfxH264 = TRUE;
-							settings->GfxAVC444 = TRUE;
-						}
-						else if (_strnicmp("AVC420", val, 7) == 0)
-						{
-							settings->GfxH264 = TRUE;
-							settings->GfxAVC444 = FALSE;
-						}
-						else
-#endif
-						    if (_strnicmp("RFX", val, 4) == 0)
-						{
-							settings->GfxAVC444 = FALSE;
-							settings->GfxH264 = FALSE;
-							settings->RemoteFxCodec = TRUE;
-						}
-						else if (_strnicmp("mask:", val, 5) == 0)
-						{
-							ULONGLONG v;
-							const char* uv = &val[5];
-							if (!value_to_uint(uv, &v, 0, UINT32_MAX))
-								rc = COMMAND_LINE_ERROR;
-							else
-								settings->GfxCapsFilter = (UINT32)v;
-						}
-						else
-							rc = COMMAND_LINE_ERROR;
-					}
-				}
-				free(ptr.p);
-				if (rc != CHANNEL_RC_OK)
-					return rc;
-			}
+			int rc = parse_gfx_options(settings, arg);
+			if (rc != 0)
+				return rc;
 		}
+#if defined(WITH_FREERDP_DEPRECATED)
 		CommandLineSwitchCase(arg, "gfx-thin-client")
 		{
 			settings->GfxThinClient = enable;
@@ -2942,6 +3020,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					return rc;
 			}
 		}
+#endif
 #endif
 		CommandLineSwitchCase(arg, "rfx")
 		{
@@ -3287,12 +3366,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					/* sticky:[on|off] */
 					if (_strnicmp(cur, "sticky:", 7) == 0)
 					{
-						const char* val = cur + 7;
 						Floatbar &= ~0x02u;
 
-						if (_strnicmp(val, "on", 3) == 0)
+						const int bval = parse_on_off_option(cur);
+						if (bval > 0)
 							Floatbar |= 0x02u;
-						else if (_strnicmp(val, "off", 4) == 0)
+						else if (bval == 0)
 							Floatbar &= ~0x02u;
 						else
 							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
