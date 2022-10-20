@@ -223,29 +223,37 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "jpeg-quality", COMMAND_LINE_VALUE_REQUIRED, "<percentage>", NULL, NULL, -1, NULL,
 	  "JPEG quality" },
 #endif
-	{ "kbd", COMMAND_LINE_VALUE_REQUIRED, "0x<id> or <name>", NULL, NULL, -1, NULL,
-	  "Keyboard layout" },
-	{ "kbd-lang", COMMAND_LINE_VALUE_REQUIRED, "0x<id>", NULL, NULL, -1, NULL,
-	  "Keyboard active language identifier" },
-	{ "kbd-fn-key", COMMAND_LINE_VALUE_REQUIRED, "<value>", NULL, NULL, -1, NULL,
-	  "Function key value" },
+	{ "kbd", COMMAND_LINE_VALUE_REQUIRED,
+	  "[layout:[0x<id>|<name>],lang:<0x<id>>,fn-key:<value>,type:<value>,subtype:<value>,unicode[:"
+	  "on|off],remap:<key1>=<value1>,remap:<key2>=<value2>]",
+	  NULL, NULL, -1, NULL,
+	  "Keyboard related options:"
+	  "* layout: set the keybouard layout announced to the server"
+	  "* lang: set the keyboard language identifier sent to the server"
+	  "* fn-key: Function key value" },
 #if defined(WITH_FREERDP_DEPRECATED)
+	{ "kbd-lang", COMMAND_LINE_VALUE_REQUIRED, "0x<id>", NULL, NULL, -1, NULL,
+	  "[deprecated use / kbd:lang:<value> instead] Keyboard active language identifier" },
+	{ "kbd-fn-key", COMMAND_LINE_VALUE_REQUIRED, "<value>", NULL, NULL, -1, NULL,
+	  "[deprecated use /kbd:fn-key:<value> instead] Function key value" },
 	{ "kbd-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
 	  "[deprecated use /list:kbd instead] List keyboard layouts" },
 	{ "kbd-scancode-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
 	  "[deprecated use list:kbd-scancode instead] List keyboard RDP scancodes" },
 	{ "kbd-lang-list", COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
 	  "[deprecated use /list:kbd-lang instead] List keyboard languages" },
-#endif
 	{ "kbd-remap", COMMAND_LINE_VALUE_REQUIRED,
-	  "List of <key>=<value>,... pairs to remap scancodes", NULL, NULL, -1, NULL,
-	  "Keyboard scancode remapping" },
+	  "[deprecated use /kbd:remap instead] List of <key>=<value>,... pairs to remap scancodes",
+	  NULL, NULL, -1, NULL, "Keyboard scancode remapping" },
 	{ "kbd-subtype", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL,
-	  "Keyboard subtype" },
-	{ "kbd-type", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL, "Keyboard type" },
+	  "[deprecated use /kbd:subtype instead]Keyboard subtype" },
+	{ "kbd-type", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL,
+	  "[deprecated use /kbd:type instead] Keyboard type" },
 	{ "kbd-unicode", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
-	  "Send unicode symbols, e.g. use the local keyboard map. ATTENTION: Does not work with every "
+	  "[deprecated use /kbd:unicode[:on|off] instead] Send unicode symbols, e.g. use the local "
+	  "keyboard map. ATTENTION: Does not work with every "
 	  "RDP server!" },
+#endif
 	{ "kerberos", COMMAND_LINE_VALUE_REQUIRED,
 	  "[kdc-url:<url>,lifetime:<time>,start-time:<time>,renewable-lifetime:<time>,cache:<path>,"
 	  "armor:<path>,pkinit-anchors:<path>,pkcs11-module:<name>]",
