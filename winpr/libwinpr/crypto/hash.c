@@ -434,6 +434,7 @@ WINPR_DIGEST_CTX* winpr_Digest_New(void)
 
 fail:
 	winpr_Digest_Free(ctx);
+	return NULL;
 }
 
 #if defined(WITH_OPENSSL)
