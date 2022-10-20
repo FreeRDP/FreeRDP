@@ -1755,8 +1755,14 @@ static int parse_tls_enforce(rdpSettings* settings, const char* Value)
 			UINT16 version;
 		};
 		const struct map_t map[] = {
-			{ "ssl3", SSL3_VERSION },  { "1.0", TLS1_VERSION },   { "1.1", TLS1_1_VERSION },
-			{ "1.2", TLS1_2_VERSION }, { "1.3", TLS1_3_VERSION },
+			{ "ssl3", SSL3_VERSION },
+			{ "1.0", TLS1_VERSION },
+			{ "1.1", TLS1_1_VERSION },
+			{ "1.2", TLS1_2_VERSION }
+#if defined(TLS1_3_VERSION)
+			,
+			{ "1.3", TLS1_3_VERSION }
+#endif
 		};
 
 		for (size_t x = 0; x < ARRAYSIZE(map); x++)
@@ -1784,7 +1790,7 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		if (strncmp("ciphers:", arg->Value, 8) == 0)
 			rc = parse_tls_ciphers(settings, &arg->Value[8]);
 		else if (strncmp("seclevel:", arg->Value, 9) == 0)
-			rc = parse_tls_ciphers(settings, &arg->Value[9]);
+			rc = parse_tls_seclevel(settings, &arg->Value[9]);
 		else if (strncmp("secrets-file:", arg->Value, 13) == 0)
 			rc = parse_tls_secrets_file(settings, &arg->Value[13]);
 		else if (strncmp("enforce:", arg->Value, 8) == 0)
