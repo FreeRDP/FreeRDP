@@ -1552,7 +1552,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 			else
 				return COMMAND_LINE_ERROR;
 		}
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		arg = CommandLineFindArgumentA(largs, "tune-list");
 		WINPR_ASSERT(arg);
 
@@ -1816,7 +1816,7 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			rc = parse_tls_enforce(settings, &arg->Value[8]);
 	}
 
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	CommandLineSwitchCase(arg, "tls-ciphers")
 	{
 		WLog_WARN(TAG, "Option /tls-ciphers is deprecated, use /tls:ciphers instead");
@@ -2675,7 +2675,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (rc != 0)
 				return rc;
 		}
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		CommandLineSwitchCase(arg, "kbd-remap")
 		{
 			WLog_WARN(TAG, "/kbd-remap:<key>=<value>,<key2>=<value2> is deprecated, use "
@@ -3190,7 +3190,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (rc != 0)
 				return rc;
 		}
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		CommandLineSwitchCase(arg, "gfx-thin-client")
 		{
 			WLog_WARN(TAG, "/gfx-thin-client is deprecated, use /gfx:thin-client[:on|off] instead");
@@ -3441,7 +3441,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!WLog_AddStringLogFilters(arg->Value))
 				return COMMAND_LINE_ERROR;
 		}
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{
 			WLog_WARN(TAG, "Option /sec-rdp is deprecated, use /sec:rdp[:on|off] instead");
@@ -3481,7 +3481,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 			free(ptr);
 		}
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		CommandLineSwitchCase(arg, "tls-ciphers")
 		{
 			WLog_WARN(TAG, "Option /tls-ciphers:<cipher list> is deprecated, use "
@@ -3561,7 +3561,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				return rc;
 		}
 
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		CommandLineSwitchCase(arg, "cert-name")
 		{
 			WLog_WARN(TAG, "/cert-name is deprecated, use /cert:name instead");
@@ -3708,7 +3708,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (rc != 0)
 				return rc;
 		}
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		CommandLineSwitchCase(arg, "bitmap-cache")
 		{
 			WLog_WARN(TAG, "/bitmap-cache is deprecated, use /cache:bitmap[:on|off] instead");
