@@ -3001,36 +3001,44 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			settings->LoadBalanceInfoLength = (UINT32)strlen((char*)settings->LoadBalanceInfo);
 		}
-#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE_COMMANDLINE)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		CommandLineSwitchCase(arg, "app-workdir")
 		{
+			WLog_WARN(
+			    TAG,
+			    "/app-workdir:<directory> is deprecated, use /app:workdir:<directory> instead");
 			if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationWorkingDir,
 			                                 arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
 		CommandLineSwitchCase(arg, "app-name")
 		{
+			WLog_WARN(TAG, "/app-name:<directory> is deprecated, use /app:name:<name> instead");
 			if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationName, arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
 		CommandLineSwitchCase(arg, "app-icon")
 		{
+			WLog_WARN(TAG, "/app-icon:<filename> is deprecated, use /app:icon:<filename> instead");
 			if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationIcon, arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
 		CommandLineSwitchCase(arg, "app-cmd")
 		{
+			WLog_WARN(TAG, "/app-cmd:<command> is deprecated, use /app:cmd:<command> instead");
 			if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationCmdLine,
 			                                 arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
 		CommandLineSwitchCase(arg, "app-file")
 		{
+			WLog_WARN(TAG, "/app-file:<filename> is deprecated, use /app:file:<filename> instead");
 			if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationFile, arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
 		CommandLineSwitchCase(arg, "app-guid")
 		{
+			WLog_WARN(TAG, "/app-guid:<guid> is deprecated, use /app:guid:<guid> instead");
 			if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationGuid, arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
@@ -3304,6 +3312,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 #ifdef WITH_GFX_H264
 		CommandLineSwitchCase(arg, "gfx-h264")
 		{
+			WLog_WARN(TAG, "/gfx-h264 is deprecated, use /gfx:avc420 instead");
 			settings->SupportGraphicsPipeline = TRUE;
 			settings->GfxH264 = TRUE;
 
@@ -3527,22 +3536,22 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{
-			WLog_WARN(TAG, "Option /sec-rdp is deprecated, use /sec:rdp[:on|off] instead");
+			WLog_WARN(TAG, "/sec-rdp is deprecated, use /sec:rdp[:on|off] instead");
 			settings->RdpSecurity = enable;
 		}
 		CommandLineSwitchCase(arg, "sec-tls")
 		{
-			WLog_WARN(TAG, "Option /sec-tls is deprecated, use /sec:tls[:on|off] instead");
+			WLog_WARN(TAG, "/sec-tls is deprecated, use /sec:tls[:on|off] instead");
 			settings->TlsSecurity = enable;
 		}
 		CommandLineSwitchCase(arg, "sec-nla")
 		{
-			WLog_WARN(TAG, "Option /sec-nla is deprecated, use /sec:nla[:on|off] instead");
+			WLog_WARN(TAG, "/sec-nla is deprecated, use /sec:nla[:on|off] instead");
 			settings->NlaSecurity = enable;
 		}
 		CommandLineSwitchCase(arg, "sec-ext")
 		{
-			WLog_WARN(TAG, "Option /sec-ext is deprecated, use /sec:ext[:on|off] instead");
+			WLog_WARN(TAG, "/sec-ext is deprecated, use /sec:ext[:on|off] instead");
 			settings->ExtSecurity = enable;
 		}
 #endif
@@ -3567,7 +3576,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		CommandLineSwitchCase(arg, "tls-ciphers")
 		{
-			WLog_WARN(TAG, "Option /tls-ciphers:<cipher list> is deprecated, use "
+			WLog_WARN(TAG, "/tls-ciphers:<cipher list> is deprecated, use "
 			               "/tls:ciphers:<cipher list> instead");
 			int rc = parse_tls_options(settings, arg);
 			if (rc != 0)
@@ -3575,16 +3584,15 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "tls-seclevel")
 		{
-			WLog_WARN(
-			    TAG,
-			    "Option /tls-seclevel:<level> is deprecated, use /tls:sec-level:<level> instead");
+			WLog_WARN(TAG,
+			          "/tls-seclevel:<level> is deprecated, use /tls:sec-level:<level> instead");
 			int rc = parse_tls_options(settings, arg);
 			if (rc != 0)
 				return rc;
 		}
 		CommandLineSwitchCase(arg, "tls-secrets-file")
 		{
-			WLog_WARN(TAG, "Option /tls-secrets-file:<filename> is deprecated, use "
+			WLog_WARN(TAG, "/tls-secrets-file:<filename> is deprecated, use "
 			               "/tls:secrets-file:<filename> instead");
 			int rc = parse_tls_options(settings, arg);
 			if (rc != 0)
@@ -3592,7 +3600,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "enforce-tlsv1_2")
 		{
-			WLog_WARN(TAG, "Option /enforce-tlsv1_2 is deprecated, use /tls:enforce:1.2 instead");
+			WLog_WARN(TAG, "/enforce-tlsv1_2 is deprecated, use /tls:enforce:1.2 instead");
 			int rc = parse_tls_options(settings, arg);
 			if (rc != 0)
 				return rc;
