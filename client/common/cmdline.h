@@ -34,18 +34,20 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "desktop composition" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "<path> or ||<alias>", NULL, NULL, -1, NULL,
 	  "Remote application program" },
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "app-cmd", COMMAND_LINE_VALUE_REQUIRED, "<parameters>", NULL, NULL, -1, NULL,
-	  "Remote application command-line parameters" },
+	  "[DEPRECATED, use /app:cmd:<command>] Remote application command-line parameters" },
 	{ "app-file", COMMAND_LINE_VALUE_REQUIRED, "<file-name>", NULL, NULL, -1, NULL,
-	  "File to open with remote application" },
+	  "[DEPRECATED, use /app:file:<filename>] File to open with remote application" },
 	{ "app-guid", COMMAND_LINE_VALUE_REQUIRED, "<app-guid>", NULL, NULL, -1, NULL,
-	  "Remote application GUID" },
+	  "[DEPRECATED, use /app:guid:<guid>] Remote application GUID" },
 	{ "app-icon", COMMAND_LINE_VALUE_REQUIRED, "<icon-path>", NULL, NULL, -1, NULL,
-	  "Remote application icon for user interface" },
+	  "[DEPRECATED, use /app:icon:<filename>] Remote application icon for user interface" },
 	{ "app-name", COMMAND_LINE_VALUE_REQUIRED, "<app-name>", NULL, NULL, -1, NULL,
-	  "Remote application name for user interface" },
+	  "[DEPRECATED, use /app:name:<name>] Remote application name for user interface" },
 	{ "app-workdir", COMMAND_LINE_VALUE_REQUIRED, "<workspace path>", NULL, NULL, -1, NULL,
-	  "Remote application workspace path" },
+	  "[DEPRECATED, use /app:workdir:<directory>] Remote application workspace path" },
+#endif
 	{ "assistance", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL,
 	  "Remote assistance password" },
 	{ "auto-request-control", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
@@ -66,13 +68,13 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Automatic reconnection" },
 	{ "auto-reconnect-max-retries", COMMAND_LINE_VALUE_REQUIRED, "<retries>", NULL, NULL, -1, NULL,
 	  "Automatic reconnection maximum retries, 0 for unlimited [0,1000]" },
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "bitmap-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "bitmap cache" },
+	  "[DEPRECATED, use /cache:bitmap[:on|off]] bitmap cache" },
 	{ "persist-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "persistent bitmap cache" },
+	  "[DEPRECATED, use /cache:persist[:on|off]] persistent bitmap cache" },
 	{ "persist-cache-file", COMMAND_LINE_VALUE_REQUIRED, "<filename>", NULL, NULL, -1, NULL,
-	  "persistent bitmap cache file" },
+	  "[DEPRECATED, use /cache:persist-file:<filename>] persistent bitmap cache file" },
 #endif
 	{ "bpp", COMMAND_LINE_VALUE_REQUIRED, "<depth>", "16", NULL, -1, NULL,
 	  "Session bpp (color depth)" },
@@ -97,16 +99,16 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "subsequent connections if the certificate does not match"
 	  " * fingerprints ... A list of certificate hashes that are accepted unconditionally for a "
 	  "connection" },
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "cert-deny", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
-	  "[deprecated, use /cert:deny] Automatically abort connection for any certificate that can "
+	  "[DEPRECATED, use /cert:deny] Automatically abort connection for any certificate that can "
 	  "not be validated." },
 	{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
-	  "[deprecated, use /cert:ignore] Ignore certificate" },
+	  "[DEPRECATED, use /cert:ignore] Ignore certificate" },
 	{ "cert-name", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
-	  "[deprecated, use /cert:name:<name>] Certificate name" },
+	  "[DEPRECATED, use /cert:name:<name>] Certificate name" },
 	{ "cert-tofu", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
-	  "[deprecated, use /cert:tofu] Automatically accept certificate on first connect" },
+	  "[DEPRECATED, use /cert:tofu] Automatically accept certificate on first connect" },
 #endif
 	{ "client-build-number", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
 	  "Client Build Number sent to server (influences smartcard behaviour, see [MS-RDPESC])" },
@@ -118,9 +120,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  " * use-selection:<atom>  ... (X11) Specify which X selection to access. Default is "
 	  "CLIPBOARD."
 	  " PRIMARY is the X-style middle-click selection." },
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "codec-cache", COMMAND_LINE_VALUE_REQUIRED, "[rfx|nsc|jpeg]", NULL, NULL, -1, NULL,
-	  "Bitmap codec cache" },
+	  "[DEPRECATED, use /cache:codec:[rfx|nsc|jpeg]] Bitmap codec cache" },
 #endif
 	{ "compression", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, "z", "compression" },
 	{ "compression-level", COMMAND_LINE_VALUE_REQUIRED, "<level>", NULL, NULL, -1, NULL,
@@ -179,25 +181,24 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "[[RFX|AVC420|AVC444],mask:<value>,small-cache[:on|off],thin-client[:on|off],progressive[:on|"
 	  "off]]",
 	  NULL, NULL, -1, NULL, "RDP8 graphics pipeline" },
-#if defined(WITH_FREERDP_DEPRECATED)
-	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL,
-	  "[[AVC420|AVC444],mask:<value>] [DEPRECATED] use /gfx:avc420 instead", NULL, NULL, -1, NULL,
-	  "RDP8.1 graphics pipeline using H264 codec" },
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
+	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL, "[[AVC420|AVC444],mask:<value>]", NULL, NULL, -1,
+	  NULL, "[DEPRECATED, use /gfx:avc420] RDP8.1 graphics pipeline using H264 codec" },
 #endif
 #else
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL,
 	  "RFX,mask:<value>,small-cache[:on|off],thin-client[:on|off],progressive[:on|off]]", NULL,
 	  NULL, -1, NULL, "RDP8 graphics pipeline" },
 #endif
-#if defined(WITH_FREERDP_DEPRECATED)
-	{ "[DEPRECATED] use /gfx:progressive instead gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL,
-	  BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline using progressive codec" },
-	{ "[DEPRECATED] use /gfx:small-cache instead gfx-small-cache", COMMAND_LINE_VALUE_BOOL, NULL,
-	  BoolValueTrue, NULL, -1, NULL, "RDP8 graphics pipeline using small cache mode" },
-	{ "[DEPRECATED] use /gfx:thin-client instead gfx-thin-client", COMMAND_LINE_VALUE_BOOL, NULL,
-	  BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline using thin client mode" },
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
+	{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+	  "[DEPRECATED, use /gfx:progressive] RDP8 graphics pipeline using progressive codec" },
+	{ "gfx-small-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	  "[DEPRECATED, use /gfx:small-cache] RDP8 graphics pipeline using small cache mode" },
+	{ "gfx-thin-client", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+	  "[DEPRECATED, use /gfx:thin-client] RDP8 graphics pipeline using thin client mode" },
 	{ "glyph-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "Glyph cache (experimental)" },
+	  "[DEPRECATED, use /cache:glyph[:on|off]] Glyph cache (experimental)" },
 #endif
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "grab-keyboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
@@ -231,26 +232,26 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "* layout: set the keybouard layout announced to the server"
 	  "* lang: set the keyboard language identifier sent to the server"
 	  "* fn-key: Function key value" },
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "kbd-lang", COMMAND_LINE_VALUE_REQUIRED, "0x<id>", NULL, NULL, -1, NULL,
-	  "[deprecated use / kbd:lang:<value> instead] Keyboard active language identifier" },
+	  "[DEPRECATED, use / kbd:lang:<value>] Keyboard active language identifier" },
 	{ "kbd-fn-key", COMMAND_LINE_VALUE_REQUIRED, "<value>", NULL, NULL, -1, NULL,
-	  "[deprecated use /kbd:fn-key:<value> instead] Function key value" },
+	  "[DEPRECATED, use /kbd:fn-key:<value>] Function key value" },
 	{ "kbd-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "[deprecated use /list:kbd instead] List keyboard layouts" },
+	  "[DEPRECATED, use /list:kbd] List keyboard layouts" },
 	{ "kbd-scancode-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "[deprecated use list:kbd-scancode instead] List keyboard RDP scancodes" },
+	  "[DEPRECATED, use list:kbd-scancode] List keyboard RDP scancodes" },
 	{ "kbd-lang-list", COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "[deprecated use /list:kbd-lang instead] List keyboard languages" },
+	  "[DEPRECATED, use /list:kbd-lang] List keyboard languages" },
 	{ "kbd-remap", COMMAND_LINE_VALUE_REQUIRED,
-	  "[deprecated use /kbd:remap instead] List of <key>=<value>,... pairs to remap scancodes",
-	  NULL, NULL, -1, NULL, "Keyboard scancode remapping" },
+	  "[DEPRECATED, use /kbd:remap] List of <key>=<value>,... pairs to remap scancodes", NULL, NULL,
+	  -1, NULL, "Keyboard scancode remapping" },
 	{ "kbd-subtype", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL,
-	  "[deprecated use /kbd:subtype instead]Keyboard subtype" },
+	  "[DEPRECATED, use /kbd:subtype]Keyboard subtype" },
 	{ "kbd-type", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL,
-	  "[deprecated use /kbd:type instead] Keyboard type" },
+	  "[DEPRECATED, use /kbd:type] Keyboard type" },
 	{ "kbd-unicode", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
-	  "[deprecated use /kbd:unicode[:on|off] instead] Send unicode symbols, e.g. use the local "
+	  "[DEPRECATED, use /kbd:unicode[:on|off]] Send unicode symbols, e.g. use the local "
 	  "keyboard map. ATTENTION: Does not work with every "
 	  "RDP server!" },
 #endif
@@ -275,11 +276,11 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "microphone", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>]", NULL, NULL, -1,
 	  "mic", "Audio input (microphone)" },
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "smartcard-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "[deprecated use /list:smartcard instead] List smartcard informations" },
+	  "[DEPRECATED, use /list:smartcard] List smartcard informations" },
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "[deprecated use /list:monitor instead] List detected monitors" },
+	  "[DEPRECATED, use /list:monitor] List detected monitors" },
 #endif
 	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<id>[,<id>[,...]]", NULL, NULL, -1, NULL,
 	  "Select monitors to use" },
@@ -289,7 +290,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Send mouse motion with relative addressing" },
 #if defined(CHANNEL_TSMF_CLIENT)
 	{ "multimedia", COMMAND_LINE_VALUE_OPTIONAL, "[sys:<sys>,][dev:<dev>,][decoder:<decoder>]",
-	  NULL, NULL, -1, "mmr", "[DEPRECATED] Redirect multimedia (video) use /video instead" },
+	  NULL, NULL, -1, "mmr", "[DEPRECATED], use /video] Redirect multimedia (video)" },
 #endif
 	{ "multimon", COMMAND_LINE_VALUE_OPTIONAL, "force", NULL, NULL, -1, NULL,
 	  "Use multiple monitors" },
@@ -303,9 +304,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "[modem|broadband|broadband-low|broadband-high|wan|lan|auto]", NULL, NULL, -1, NULL,
 	  "Network connection type" },
 	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "nscodec", "NSCodec support" },
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "offscreen-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "offscreen bitmap cache" },
+	  "[DEPRECATED, use /cache:offscreen[:on|off]] offscreen bitmap cache" },
 #endif
 	{ "orientation", COMMAND_LINE_VALUE_REQUIRED, "[0|90|180|270]", NULL, NULL, -1, NULL,
 	  "Orientation of display in degrees" },
@@ -359,15 +360,15 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Scaling factor for app store applications" },
 	{ "sec", COMMAND_LINE_VALUE_REQUIRED, "[rdp|tls|nla|ext]", NULL, NULL, -1, NULL,
 	  "Force specific protocol security" },
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "[deprecated use /sec:ext instead] NLA extended protocol security" },
+	  "[DEPRECATED, use /sec:ext] NLA extended protocol security" },
 	{ "sec-nla", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
-	  "[deprecated use /sec:nla instead] NLA protocol security" },
+	  "[DEPRECATED, use /sec:nla] NLA protocol security" },
 	{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
-	  "[deprecated use /sec:rdp instead] RDP protocol security" },
+	  "[DEPRECATED, use /sec:rdp] RDP protocol security" },
 	{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
-	  "[deprecated use /sec:tls instead] TLS protocol security" },
+	  "[DEPRECATED, use /sec:tls] TLS protocol security" },
 #endif
 	{ "serial", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<path>[,<driver>[,permissive]]]", NULL, NULL,
 	  -1, "tty", "Redirect serial device" },
@@ -416,16 +417,16 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "servers have a buggy TLS "
 	  "version negotiation and might fail without this. Defaults to TLS 1.2 if no argument is "
 	  "supplied. Use 1.0 for windows 7" },
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "tls-ciphers", COMMAND_LINE_VALUE_REQUIRED, "[netmon|ma|ciphers]", NULL, NULL, -1, NULL,
-	  "[deprecated, use /tls:ciphers instead] Allowed TLS ciphers" },
+	  "[DEPRECATED, use /tls:ciphers] Allowed TLS ciphers" },
 	{ "tls-seclevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "1", NULL, -1, NULL,
-	  "[deprecated, use /tls:seclevel instead]TLS security level - defaults to 1" },
+	  "[DEPRECATED, use /tls:seclevel] TLS security level - defaults to 1" },
 	{ "tls-secrets-file", COMMAND_LINE_VALUE_REQUIRED, "<filename>", NULL, NULL, -1, NULL,
-	  "[deprecated, use /tls:secrets:file instead] File were TLS secrets will be stored in the "
+	  "[DEPRECATED, use /tls:secrets:file] File were TLS secrets will be stored in the "
 	  "SSLKEYLOGFILE format" },
 	{ "enforce-tlsv1_2", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "[deprecated, use /tls:enforce-tlsv1_2 instead] Force use of TLS1.2 for connection. Some "
+	  "[DEPRECATED, use /tls:enforce:1.2] Force use of TLS1.2 for connection. Some "
 	  "servers have a buggy TLS version negotiation and "
 	  "might fail without this" },
 #endif
@@ -433,9 +434,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Alt+Ctrl+Enter to toggle fullscreen" },
 	{ "tune", COMMAND_LINE_VALUE_REQUIRED, "<setting:value>,<setting:value>", "", NULL, -1, NULL,
 	  "[experimental] directly manipulate freerdp settings, use with extreme caution!" },
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "tune-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "[deprecated use /list:tune instead] Print options allowed for /tune" },
+	  "[DEPRECATED, use /list:tune] Print options allowed for /tune" },
 #endif
 	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[[<domain>\\]<user>|<user>[@<domain>]]", NULL, NULL, -1,
 	  NULL, "Username" },

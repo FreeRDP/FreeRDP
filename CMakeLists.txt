@@ -148,6 +148,11 @@ if (WITH_FREERDP_DEPRECATED)
 	add_definitions(-DWITH_FREERDP_DEPRECATED)
 endif()
 
+option(WITH_FREERDP_DEPRECATED_COMMANDLINE "Build FreeRDP deprecated command line options" OFF)
+if (WITH_FREERDP_DEPRECATED_COMMANDLINE)
+    add_definitions(-DWITH_FREERDP_DEPRECATED_COMMANDLINE)
+endif()
+
 # Make paths absolute
 if (CMAKE_INSTALL_PREFIX)
 	get_filename_component(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)
