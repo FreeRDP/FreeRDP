@@ -192,7 +192,7 @@ struct rdp_rdp
 	UINT32 errorInfo;
 	UINT32 finalize_sc_pdus;
 	BOOL resendFocus;
-	BOOL AwaitCapabilities;
+
 	UINT64 inBytes;
 	UINT64 inPackets;
 	UINT64 outBytes;

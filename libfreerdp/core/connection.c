@@ -1467,7 +1467,6 @@ BOOL rdp_server_reactivate(rdpRdp* rdp)
 	if (!rdp_send_demand_active(rdp))
 		return FALSE;
 
-	rdp->AwaitCapabilities = TRUE;
 	return TRUE;
 }
 
@@ -1492,7 +1491,6 @@ BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 	switch (state)
 	{
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
-			rdp->AwaitCapabilities = FALSE;
 			break;
 
 		case CONNECTION_STATE_FINALIZATION:
