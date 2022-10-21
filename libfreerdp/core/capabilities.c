@@ -547,10 +547,10 @@ static BOOL rdp_apply_order_capability_set(rdpSettings* settings, const rdpSetti
 
 	if (settings->OrderSupportFlags & ORDER_FLAGS_EXTRA_SUPPORT)
 	{
-		if (settings->OrderSupportFlagsEx & CACHE_BITMAP_V3_SUPPORT)
+		if (src->OrderSupportFlagsEx & CACHE_BITMAP_V3_SUPPORT)
 			BitmapCacheV3Enabled = TRUE;
 
-		if (settings->OrderSupportFlagsEx & ALTSEC_FRAME_MARKER_SUPPORT)
+		if (src->OrderSupportFlagsEx & ALTSEC_FRAME_MARKER_SUPPORT)
 			FrameMarkerCommandEnabled = TRUE;
 	}
 
@@ -562,7 +562,7 @@ static BOOL rdp_apply_order_capability_set(rdpSettings* settings, const rdpSetti
 	else
 		settings->BitmapCacheV3Enabled = FALSE;
 
-	if (settings->FrameMarkerCommandEnabled && !src->FrameMarkerCommandEnabled)
+	if (FrameMarkerCommandEnabled && !src->FrameMarkerCommandEnabled)
 		settings->FrameMarkerCommandEnabled = FALSE;
 
 	return TRUE;
