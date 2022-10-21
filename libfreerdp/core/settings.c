@@ -341,10 +341,21 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 {
 	size_t x;
 	char* base;
+	char* issuers[] = { "FreeRDP", "FreeRDP-licenser" };
 	rdpSettings* settings = (rdpSettings*)calloc(1, sizeof(rdpSettings));
 
 	if (!settings)
 		return NULL;
+
+	if (!freerdp_settings_set_string(settings, FreeRDP_ServerLicenseCompanyName, "FreeRDP"))
+		goto out_fail;
+	if (!freerdp_settings_set_string(settings, FreeRDP_ServerLicenseProductName,
+	                                 "FreeRDP-licensing-server"))
+		goto out_fail;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerLicenseProductVersion, 1))
+		goto out_fail;
+	if (!freerdp_server_license_issuers_copy(settings, issuers, ARRAYSIZE(issuers)))
+		goto out_fail;
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_HasHorizontalWheel, TRUE) ||
@@ -729,6 +740,7 @@ out_fail:
 
 static void freerdp_settings_free_internal(rdpSettings* settings)
 {
+	freerdp_server_license_issuers_free(settings);
 	freerdp_target_net_addresses_free(settings);
 	freerdp_device_collection_free(settings);
 	freerdp_static_channel_collection_free(settings);
@@ -778,6 +790,10 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_ClientRandom, data, len))
 			return FALSE;
 	}
+	if (!freerdp_server_license_issuers_copy(_settings, settings->ServerLicenseProductIssuers,
+	                                         settings->ServerLicenseProductIssuersCount))
+		return FALSE;
+
 	{
 		const void* data = freerdp_settings_get_pointer(settings, FreeRDP_ServerCertificate);
 		const UINT32 len = freerdp_settings_get_uint32(settings, FreeRDP_ServerCertificateLength);
@@ -1060,6 +1076,9 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	_settings->ReceivedCapabilities = NULL;
 	_settings->ReceivedCapabilityData = NULL;
 	_settings->ReceivedCapabilityDataSizes = NULL;
+
+	_settings->ServerLicenseProductIssuersCount = 0;
+	_settings->ServerLicenseProductIssuers = NULL;
 
 	_settings->XSelectionAtom = NULL;
 	if (!rc)
