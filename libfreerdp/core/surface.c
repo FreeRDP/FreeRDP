@@ -177,6 +177,9 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 
 	if (!update->SurfaceFrameMarker)
 	{
+		WINPR_ASSERT(update->context);
+		if (freerdp_settings_get_bool(update->context->settings, FreeRDP_DeactivateClientDecoding))
+			return TRUE;
 		WLog_ERR(TAG, "Missing callback update->SurfaceFrameMarker");
 		return FALSE;
 	}
