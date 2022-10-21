@@ -550,10 +550,13 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 
 static int peer_recv_pdu(freerdp_peer* client, wStream* s)
 {
-	if (tpkt_verify_header(s))
+	int rc = tpkt_verify_header(s);
+	if (rc > 0)
 		return peer_recv_tpkt_pdu(client, s);
-	else
+	else if (rc == 0)
 		return peer_recv_fastpath_pdu(client, s);
+	else
+		return rc;
 }
 
 static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void* extra)

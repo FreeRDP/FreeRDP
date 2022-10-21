@@ -960,8 +960,10 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 
 	em = Stream_GetPosition(s);
 	Stream_SetPosition(s, bm);
-	tpkt_write_header(s, (UINT16)length);
-	tpdu_write_connection_request(s, (UINT16)length - 5);
+	if (!tpkt_write_header(s, (UINT16)length))
+		goto fail;
+	if (!tpdu_write_connection_request(s, (UINT16)length - 5))
+		goto fail;
 	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
 	rc = (transport_write(nego->transport, s) >= 0);
