@@ -2,7 +2,9 @@
 #include <winpr/path.h>
 #include <winpr/crypto.h>
 #include <winpr/pipe.h>
+
 #include <freerdp/freerdp.h>
+#include <freerdp/gdi/gdi.h>
 #include <freerdp/client/cmdline.h>
 
 static HANDLE s_sync = NULL;
@@ -23,6 +25,9 @@ static int runInstance(int argc, char* argv[], freerdp** inst, DWORD timeout)
 
 	if (inst)
 		*inst = context->instance;
+
+	if (!freerdp_settings_set_bool(context->settings, FreeRDP_DeactivateClientDecoding, TRUE))
+		return FALSE;
 
 	if (freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE) < 0)
 		goto finish;
