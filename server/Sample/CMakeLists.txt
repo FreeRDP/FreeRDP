@@ -48,6 +48,9 @@ if (WIN32)
   set ( SRCS ${SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
+# We need this in runtime path for TestConnect
+file(COPY test_icon.ppm DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(${MODULE_NAME} ${SRCS})
 
 list(APPEND LIBS freerdp-server)
