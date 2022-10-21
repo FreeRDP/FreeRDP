@@ -41,8 +41,30 @@ static BOOL rdp_write_synchronize_pdu(wStream* s, const rdpSettings* settings)
 	return TRUE;
 }
 
+static BOOL rdp_recv_sync_pdu(rdpRdp* rdp, wStream* s, const char* what)
+{
+	UINT16 msgType, targetUser;
+
+	WINPR_UNUSED(rdp);
+	if (!Stream_CheckAndLogRequiredLengthEx(TAG, WLOG_WARN, s, 4, "%s(%s:%" PRIuz ") %s",
+	                                        __FUNCTION__, __FILE__, __LINE__, what))
+		return FALSE;
+	Stream_Read_UINT16(s, msgType);
+	if (msgType != SYNCMSGTYPE_SYNC)
+	{
+		WLog_WARN(TAG, "%s: Invalid messageType=0x%04" PRIx16 ", expected 0x%04" PRIx16, what,
+		          msgType, SYNCMSGTYPE_SYNC);
+		return FALSE;
+	}
+	Stream_Read_UINT16(s, targetUser);
+	WLog_VRB(TAG, "%s: targetUser=0x%04" PRIx16, what, targetUser);
+	return TRUE;
+}
+
 BOOL rdp_recv_server_synchronize_pdu(rdpRdp* rdp, wStream* s)
 {
+	if (!rdp_recv_sync_pdu(rdp, s, "[MS-RDPBCGR] 2.2.1.19 Server Synchronize PDU"))
+		return FALSE;
 	return rdp_finalize_set_flag(rdp, FINALIZE_SC_SYNCHRONIZE_PDU);
 }
 
@@ -65,24 +87,8 @@ BOOL rdp_send_server_synchronize_pdu(rdpRdp* rdp)
 
 BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 messageType;
-
-	WINPR_ASSERT(rdp);
-	WINPR_ASSERT(s);
-
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!rdp_recv_sync_pdu(rdp, s, "[MS-RDPBCGR] 2.2.1.14 Client Synchronize PDU"))
 		return FALSE;
-
-	Stream_Read_UINT16(s, messageType); /* messageType (2 bytes) */
-
-	if (messageType != SYNCMSGTYPE_SYNC)
-	{
-		WLog_WARN(TAG, "client synchronize PDU message type invalid, got %" PRIu16, messageType);
-		return FALSE;
-	}
-
-	/* targetUser (2 bytes) */
-	Stream_Seek_UINT16(s);
 	return rdp_finalize_set_flag(rdp, FINALIZE_CS_SYNCHRONIZE_PDU);
 }
 
