@@ -704,7 +704,8 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		goto end;
 	}
 
-	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
+	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID))
+		goto end;
 	rdp_write_security_header(s, SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC);
 	length = key_len + 8;
 	Stream_Write_UINT32(s, length);
@@ -1015,6 +1016,9 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 	UINT16 length;
 	UINT16 channelId;
 
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->mcs);
+
 	/* If the MCS message channel has been joined... */
 	if (rdp->mcs->messageChannelId != 0)
 	{
@@ -1070,6 +1074,7 @@ int rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 
 	if ((securityFlags & SEC_LICENSE_PKT) == 0)
 		return -1;
+
 	status = license_recv(rdp->license, s);
 
 	if (status < 0)
