@@ -564,14 +564,14 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
  * @param channel_id channel id
  */
 
-void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
+BOOL rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 {
-	int body_length;
 	DomainMCSPDU MCSPDU;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
 	WINPR_ASSERT(s);
+	WINPR_ASSERT(length >= RDP_PACKET_HEADER_MAX_LENGTH);
 
 	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataIndication
 	                                     : DomainMCSPDU_SendDataRequest;
@@ -579,18 +579,22 @@ void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 	if ((rdp->sec_flags & SEC_ENCRYPT) &&
 	    (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS))
 	{
-		int pad;
-		body_length = length - RDP_PACKET_HEADER_MAX_LENGTH - 16;
-		pad = 8 - (body_length % 8);
+		const UINT16 body_length = length - RDP_PACKET_HEADER_MAX_LENGTH;
+		const UINT16 pad = 8 - (body_length % 8);
 
 		if (pad != 8)
 			length += pad;
 	}
 
-	mcs_write_domain_mcspdu_header(s, MCSPDU, length, 0);
-	per_write_integer16(s, rdp->mcs->userId, MCS_BASE_CHANNEL_ID); /* initiator */
-	per_write_integer16(s, channelId, 0);                          /* channelId */
-	Stream_Write_UINT8(s, 0x70);                                   /* dataPriority + segmentation */
+	if (!mcs_write_domain_mcspdu_header(s, MCSPDU, length, 0))
+		return FALSE;
+	if (!per_write_integer16(s, rdp->mcs->userId, MCS_BASE_CHANNEL_ID)) /* initiator */
+		return FALSE;
+	if (!per_write_integer16(s, channelId, 0)) /* channelId */
+		return FALSE;
+	if (!Stream_EnsureRemainingCapacity(s, 3))
+		return FALSE;
+	Stream_Write_UINT8(s, 0x70); /* dataPriority + segmentation */
 	/*
 	 * We always encode length in two bytes, even though we could use
 	 * only one byte if length <= 0x7F. It is just easier that way,
@@ -599,6 +603,7 @@ void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 	 */
 	length = (length - RDP_PACKET_HEADER_MAX_LENGTH) | 0x8000;
 	Stream_Write_UINT16_BE(s, length); /* userData (OCTET_STRING) */
+	return TRUE;
 }
 
 static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 sec_flags,
@@ -811,11 +816,8 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 	UINT16 length;
 	UINT32 pad;
 
-	if (!s)
-		return FALSE;
-
-	if (!rdp)
-		goto fail;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
 
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
@@ -1044,8 +1046,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_SYNCHRONIZE:
 			if (!rdp_recv_server_synchronize_pdu(rdp, cs))
 			{
-				WLog_ERR(TAG,
-				         "DATA_PDU_TYPE_SYNCHRONIZE - rdp_recv_server_synchronize_pdu() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_SYNCHRONIZE - rdp_recv_synchronize_pdu() failed");
 				goto out_fail;
 			}
 
@@ -2099,9 +2100,7 @@ BOOL rdp_reset(rdpRdp* rdp)
 		goto fail;
 
 	rdp->errorInfo = 0;
-	rdp_finalize_reset_flags(rdp, TRUE);
-
-	rc = TRUE;
+	rc = rdp_finalize_reset_flags(rdp, TRUE);
 
 fail:
 	return rc;
