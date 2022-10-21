@@ -860,7 +860,8 @@ static BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	Stream_SetPosition(s, bm);
 	if (!tpkt_write_header(s, (UINT16)length))
 		goto out;
-	tpdu_write_data(s);
+	if (!tpdu_write_data(s))
+		goto out;
 	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
 	status = transport_write(mcs->transport, s);
@@ -973,7 +974,8 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	Stream_SetPosition(s, bm);
 	if (!tpkt_write_header(s, (UINT16)length))
 		goto out;
-	tpdu_write_data(s);
+	if (!tpdu_write_data(s))
+		goto out;
 	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
 	status = transport_write(mcs->transport, s);
