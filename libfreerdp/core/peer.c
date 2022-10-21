@@ -748,7 +748,6 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 		}
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
-			if (!rdp->AwaitCapabilities)
 			{
 				if (client->Capabilities && !client->Capabilities(client))
 				{
@@ -762,8 +761,6 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 				}
 				else
 				{
-					rdp->AwaitCapabilities = TRUE;
-
 					if (s)
 					{
 						ret = peer_recv_pdu(client, s);
