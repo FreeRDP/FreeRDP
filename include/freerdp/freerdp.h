@@ -615,6 +615,9 @@ owned by rdpRdp */
 
 	FREERDP_API BOOL freerdp_channels_from_mcs(rdpSettings* settings, const rdpContext* context);
 
+	FREERDP_API BOOL freerdp_is_valid_mcs_create_request(const BYTE* data, size_t size);
+	FREERDP_API BOOL freerdp_is_valid_mcs_create_response(const BYTE* data, size_t size);
+
 #ifdef __cplusplus
 }
 #endif

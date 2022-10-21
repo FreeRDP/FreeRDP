@@ -1183,3 +1183,82 @@ HANDLE freerdp_abort_event(rdpContext* context)
 	WINPR_ASSERT(context);
 	return utils_get_abort_event(context->rdp);
 }
+
+static void test_mcs_free(rdpMcs* mcs)
+{
+	if (!mcs)
+		return;
+
+	rdpTransport* transport = mcs->transport;
+	rdpContext* context = transport_get_context(transport);
+	if (context)
+	{
+		rdpSettings* settings = context->settings;
+		freerdp_settings_free(settings);
+	}
+	free(context);
+	transport_free(transport);
+
+	mcs_free(mcs);
+}
+
+static rdpMcs* test_mcs_new(void)
+{
+	rdpTransport* transport = NULL;
+	rdpSettings* settings = freerdp_settings_new(0);
+	rdpContext* context = calloc(1, sizeof(rdpContext));
+
+	if (!settings)
+		goto fail;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDumpReplay, TRUE))
+		goto fail;
+
+	if (!context)
+		goto fail;
+	context->settings = settings;
+	transport = transport_new(context);
+	if (!transport)
+		goto fail;
+	return mcs_new(transport);
+
+fail:
+	transport_free(transport);
+	free(context);
+	freerdp_settings_free(settings);
+
+	return NULL;
+}
+
+BOOL freerdp_is_valid_mcs_create_request(const BYTE* data, size_t size)
+{
+
+	wStream sbuffer = { 0 };
+	wStream* s = Stream_StaticConstInit(&sbuffer, data, size);
+
+	WINPR_ASSERT(data || (size == 0));
+	WINPR_ASSERT(s);
+
+	rdpMcs* mcs = test_mcs_new();
+	WINPR_ASSERT(mcs);
+
+	BOOL result = mcs_recv_connect_initial(mcs, s);
+	test_mcs_free(mcs);
+	return result;
+}
+
+BOOL freerdp_is_valid_mcs_create_response(const BYTE* data, size_t size)
+{
+
+	wStream sbuffer = { 0 };
+	wStream* s = Stream_StaticConstInit(&sbuffer, data, size);
+
+	WINPR_ASSERT(data || (size == 0));
+	WINPR_ASSERT(s);
+
+	rdpMcs* mcs = test_mcs_new();
+	WINPR_ASSERT(mcs);
+
+	BOOL result = mcs_recv_connect_response(mcs, s);
+	test_mcs_free(mcs);
+	return result;
+}
