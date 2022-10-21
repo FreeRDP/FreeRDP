@@ -34,13 +34,12 @@ static BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp);
 
 static BOOL rdp_write_synchronize_pdu(wStream* s, const rdpSettings* settings)
 {
-	WINPR_ASSERT(s);
-	WINPR_ASSERT(settings);
+	const UINT32 PduSource = freerdp_settings_get_uint32(settings, FreeRDP_PduSource);
 
 	if (Stream_GetRemainingCapacity(s) < 4)
 		return FALSE;
-	Stream_Write_UINT16(s, SYNCMSGTYPE_SYNC);    /* messageType (2 bytes) */
-	Stream_Write_UINT16(s, settings->PduSource); /* targetUser (2 bytes) */
+	Stream_Write_UINT16(s, SYNCMSGTYPE_SYNC); /* messageType (2 bytes) */
+	Stream_Write_UINT16(s, PduSource);        /* targetUser (2 bytes) */
 	return TRUE;
 }
 
@@ -73,9 +72,6 @@ BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
-	if (!rdp_finalize_set_flag(rdp, FINALIZE_SC_SYNCHRONIZE_PDU))
-		return FALSE;
-
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
@@ -89,7 +85,7 @@ BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s)
 
 	/* targetUser (2 bytes) */
 	Stream_Seek_UINT16(s);
-	return TRUE;
+	return rdp_finalize_set_flag(rdp, FINALIZE_CS_SYNCHRONIZE_PDU);
 }
 
 BOOL rdp_send_client_synchronize_pdu(rdpRdp* rdp)
