@@ -1214,6 +1214,21 @@ int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securityFlags)
 		return multitransport_server_recv_response(rdp->multitransport, s, &hr) ? 0 : -1;
 	}
 
+	if (securityFlags & SEC_LICENSE_PKT)
+	{
+		return license_recv(rdp->license, s);
+	}
+
+	if (securityFlags & SEC_LICENSE_ENCRYPT_CS)
+	{
+		return license_recv(rdp->license, s);
+	}
+
+	if (securityFlags & SEC_LICENSE_ENCRYPT_SC)
+	{
+		return license_recv(rdp->license, s);
+	}
+
 	return 1;
 }
 
