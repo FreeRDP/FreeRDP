@@ -558,6 +558,10 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_finalize_set_flag(rdp, FINALIZE_DEACTIVATE_REACTIVATE))
 			return FALSE;
+
+		rdp->was_deactivated = TRUE;
+		rdp->deactivated_height = freerdp_settings_get_uint32(rdp->settings, FreeRDP_DesktopHeight);
+		rdp->deactivated_width = freerdp_settings_get_uint32(rdp->settings, FreeRDP_DesktopWidth);
 	}
 
 	/*
@@ -675,6 +679,8 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 				          GrantId, ControlId);
 				return FALSE;
 			}
+			if (!rdp_send_server_control_granted_pdu(rdp))
+				return FALSE;
 			return rdp_finalize_set_flag(rdp, FINALIZE_CS_CONTROL_REQUEST_PDU);
 		case CTRLACTION_COOPERATE:
 			if (!rdp_finalize_is_flag_set(rdp, FINALIZE_CS_SYNCHRONIZE_PDU))

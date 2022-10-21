@@ -46,6 +46,7 @@ FREERDP_LOCAL BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStr
 FREERDP_LOCAL BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_client_connect_license(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL int rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL int rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state);
 
 FREERDP_LOCAL CONNECTION_STATE rdp_get_state(const rdpRdp* rdp);
