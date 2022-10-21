@@ -1316,15 +1316,16 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 {
 	UINT32 option_value;
 	socklen_t option_len;
-	freerdp_peer* client;
-	client = (freerdp_peer*)calloc(1, sizeof(freerdp_peer));
+	freerdp_peer* client = (freerdp_peer*)calloc(1, sizeof(freerdp_peer));
 
 	if (!client)
 		return NULL;
 
 	option_value = TRUE;
 	option_len = sizeof(option_value);
-	setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&option_value, option_len);
+
+	if (sockfd >= 0)
+		setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&option_value, option_len);
 
 	if (client)
 	{
@@ -1365,6 +1366,28 @@ void freerdp_peer_free(freerdp_peer* client)
 	sspi_FreeAuthIdentity(&client->identity);
 	closesocket((SOCKET)client->sockfd);
 	free(client);
+}
+
+static BOOL frerdp_peer_transport_setup(freerdp_peer* client)
+{
+	rdpRdp* rdp;
+
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->context);
+
+	rdp = client->context->rdp;
+	WINPR_ASSERT(rdp);
+
+	if (!transport_attach(rdp->transport, client->sockfd))
+		return FALSE;
+
+	if (!transport_set_recv_callbacks(rdp->transport, peer_recv_callback, client))
+		return FALSE;
+
+	if (!transport_set_blocking_mode(rdp->transport, FALSE))
+		return FALSE;
+
+	return TRUE;
 }
 
 BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settings)
@@ -1418,11 +1441,9 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 		goto fail;
 	}
 
-	if (!transport_attach(rdp->transport, client->sockfd))
+	if (!frerdp_peer_transport_setup(client))
 		goto fail;
 
-	transport_set_recv_callbacks(rdp->transport, peer_recv_callback, client);
-	transport_set_blocking_mode(rdp->transport, FALSE);
 	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
 	client->HasMoreToRead = freerdp_peer_has_more_to_read;
