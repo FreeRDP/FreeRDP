@@ -25,6 +25,7 @@
 #include <winpr/winsock.h>
 
 #include "info.h"
+#include "display.h"
 #include "certificate.h"
 
 #include <freerdp/log.h>
@@ -34,6 +35,8 @@
 #include "peer.h"
 
 #define TAG FREERDP_TAG("core.peer")
+
+static int peer_recv_pdu(freerdp_peer* client, wStream* s);
 
 static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char* name,
                                                 UINT32 flags)
@@ -437,6 +440,14 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	if (freerdp_shall_disconnect_context(rdp->context))
 		return 0;
 
+	if (rdp_get_state(rdp) <= CONNECTION_STATE_LICENSING)
+	{
+		if (!rdp_read_security_header(s, &securityFlags, NULL))
+			return -1;
+
+		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
+	}
+
 	if (settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(s, &securityFlags, &length))
@@ -507,6 +518,124 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	return 0;
 }
 
+static int peer_recv_handle_auto_detect(freerdp_peer* client, wStream* s)
+{
+	int ret = -1;
+	rdpRdp* rdp;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(client->context);
+
+	rdp = client->context->rdp;
+	WINPR_ASSERT(rdp);
+
+	settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
+	{
+		switch (rdp_get_state(rdp))
+		{
+			case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST:
+			{
+				if (autodetect_send_connecttime_rtt_measure_request(rdp->autodetect, 0x23))
+					ret = 0;
+				rdp_server_transition_to_state(rdp,
+				                               CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE);
+			}
+			break;
+			case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE:
+			{
+				ret = peer_recv_pdu(client, s);
+				if (ret >= 0)
+				{
+					switch (autodetect_get_state(rdp->autodetect))
+					{
+						case AUTODETECT_STATE_COMPLETE:
+							rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
+							ret = 1; /* Rerun in next state */
+							break;
+						case AUTODETECT_STATE_RESPONSE:
+							rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
+							ret = 1; /* Rerun in next state */
+							break;
+						default:
+							break;
+					}
+				}
+			}
+			break;
+			default:
+				WLog_ERR(TAG, "Invalid autodetect state %s", rdp_get_state_string(rdp));
+				break;
+		}
+	}
+	else
+	{
+		rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
+
+		ret = 1; /* Rerun in next state */
+	}
+
+	return ret;
+}
+
+static int peer_recv_handle_licensing(freerdp_peer* client, wStream* s)
+{
+	int ret = -1;
+	rdpRdp* rdp;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(client->context);
+
+	rdp = client->context->rdp;
+	WINPR_ASSERT(rdp);
+
+	settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
+	switch (license_get_state(rdp->license))
+	{
+		case LICENSE_STATE_INITIAL:
+		{
+			const rdpSettings* settings = rdp->settings;
+			const BOOL required =
+			    freerdp_settings_get_bool(settings, FreeRDP_ServerLicenseRequired);
+
+			if (required)
+			{
+				if (!license_server_configure(rdp->license))
+					ret = -3;
+				else if (!license_server_send_request(rdp->license))
+					ret = -2;
+				else
+					ret = 0;
+			}
+			else
+			{
+				if (license_send_valid_client_error_packet(rdp))
+					ret = 1; /* Rerun in next state, might be capabilities */
+			}
+		}
+		break;
+		case LICENSE_STATE_COMPLETED:
+			ret = 1; /* Licensing completed, continue in next state */
+			break;
+		case LICENSE_STATE_ABORTED:
+			ret = -1;
+			break;
+		default:
+			ret = peer_recv_pdu(client, s);
+			break;
+	}
+
+	return ret;
+}
+
 static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 {
 	rdpRdp* rdp;
@@ -548,15 +677,24 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 	return fastpath_recv_inputs(fastpath, s);
 }
 
-static int peer_recv_pdu(freerdp_peer* client, wStream* s)
+int peer_recv_pdu(freerdp_peer* client, wStream* s)
 {
 	int rc = tpkt_verify_header(s);
+
 	if (rc > 0)
 		return peer_recv_tpkt_pdu(client, s);
 	else if (rc == 0)
 		return peer_recv_fastpath_pdu(client, s);
 	else
 		return rc;
+}
+
+static int peer_unexpected_client_message(rdpRdp* rdp, UINT32 flag)
+{
+	char buffer[1024] = { 0 };
+	WLog_WARN(TAG, "Unexpected client message in state %s, missing flag %s",
+	          rdp_get_state_string(rdp), rdp_finalize_flags_to_str(flag, buffer, sizeof(buffer)));
+	return 0; /* we ignore this as per spec input PDU are already allowed */
 }
 
 static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void* extra)
@@ -581,6 +719,11 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 	switch (rdp_get_state(rdp))
 	{
 		case CONNECTION_STATE_INITIAL:
+			rdp_server_transition_to_state(rdp, CONNECTION_STATE_NEGO);
+			ret = 1;
+			break;
+
+		case CONNECTION_STATE_NEGO:
 			if (!rdp_server_accept_nego(rdp, s))
 			{
 				WLog_ERR(TAG, "%s: %s - rdp_server_accept_nego() fail", __FUNCTION__,
@@ -596,8 +739,7 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 				if (SelectedProtocol & PROTOCOL_HYBRID)
 				{
 					SEC_WINNT_AUTH_IDENTITY* identity = nego_get_identity(rdp->nego);
-					sspi_CopyAuthIdentity(&client->identity,
-					                      (const SEC_WINNT_AUTH_IDENTITY_INFO*)identity);
+					sspi_CopyAuthIdentity(&client->identity, identity);
 					IFCALLRET(client->Logon, client->authenticated, client, &client->identity,
 					          TRUE);
 					nego_free_nla(rdp->nego);
@@ -607,11 +749,16 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 					IFCALLRET(client->Logon, client->authenticated, client, &client->identity,
 					          FALSE);
 				}
+				rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_REQUEST);
 				ret = 0;
 			}
 			break;
 
-		case CONNECTION_STATE_NEGO:
+		case CONNECTION_STATE_NLA:
+			WINPR_ASSERT(FALSE); // TODO
+			break;
+
+		case CONNECTION_STATE_MCS_CREATE_REQUEST:
 			if (!rdp_server_accept_mcs_connect_initial(rdp, s))
 			{
 				WLog_ERR(TAG,
@@ -624,7 +771,7 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 
 			break;
 
-		case CONNECTION_STATE_MCS_CONNECT:
+		case CONNECTION_STATE_MCS_ERECT_DOMAIN:
 			if (!rdp_server_accept_mcs_erect_domain_request(rdp, s))
 			{
 				WLog_ERR(TAG,
@@ -637,7 +784,7 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 
 			break;
 
-		case CONNECTION_STATE_MCS_ERECT_DOMAIN:
+		case CONNECTION_STATE_MCS_ATTACH_USER:
 			if (!rdp_server_accept_mcs_attach_user_request(rdp, s))
 			{
 				WLog_ERR(TAG,
@@ -650,7 +797,7 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 
 			break;
 
-		case CONNECTION_STATE_MCS_ATTACH_USER:
+		case CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST:
 			if (!rdp_server_accept_mcs_channel_join_request(rdp, s))
 			{
 				WLog_ERR(TAG,
@@ -694,125 +841,241 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 			}
 			else
 			{
+				rdp_server_transition_to_state(rdp,
+				                               CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST);
+				ret = 1;
+			}
+			break;
+
+		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST:
+		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE:
+			if (settings->EarlyCapabilityFlags & RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT)
+			{
+				ret = peer_recv_handle_auto_detect(client, s);
+			}
+			else
+			{
 				rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
-				ret = 2; /* Rerun, NULL stream */
+				ret = 1;
 			}
 			break;
 
 		case CONNECTION_STATE_LICENSING:
-		{
-			LicenseCallbackResult res;
-
-			if (!client->LicenseCallback)
-			{
-				WLog_ERR(TAG,
-				         "%s: LicenseCallback has been removed, assuming "
-				         "licensing is ok (please fix your app)",
-				         __FUNCTION__);
-				res = LICENSE_CB_COMPLETED;
-			}
-			else
-				res = client->LicenseCallback(client, s);
-
-			switch (res)
-			{
-				case LICENSE_CB_INTERNAL_ERROR:
-					WLog_ERR(TAG,
-					         "%s: %s - callback internal "
-					         "error, aborting",
-					         __FUNCTION__, rdp_get_state_string(rdp));
-					break;
-
-				case LICENSE_CB_ABORT:
-					break;
-
-				case LICENSE_CB_IN_PROGRESS:
-					ret = 0;
-					break;
-
-				case LICENSE_CB_COMPLETED:
-					rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
-					ret = 2; /* Rerun, NULL stream */
-					break;
-
-				default:
-					WLog_ERR(TAG,
-					         "%s: CONNECTION_STATE_LICENSING - unknown license callback "
-					         "result %d",
-					         __FUNCTION__, res);
-					ret = 0;
-					break;
-			}
-
+			ret = peer_recv_handle_licensing(client, s);
+			if (ret > 0)
+				rdp_server_transition_to_state(
+				    rdp, CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_REQUEST);
 			break;
-		}
 
-		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
+		case CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_REQUEST:
+			if (settings->SupportMultitransport)
 			{
-				if (client->Capabilities && !client->Capabilities(client))
-				{
-				}
-				else if (!rdp_send_demand_active(rdp))
-				{
-					WLog_ERR(TAG,
-					         "%s: %s - "
-					         "rdp_send_demand_active() fail",
-					         __FUNCTION__, rdp_get_state_string(rdp));
-				}
+				if (!multitransport_server_send_request(rdp->multitransport))
+					ret = -23;
 				else
 				{
-					if (s)
-					{
-						ret = peer_recv_pdu(client, s);
-						if (ret < 0)
-						{
-							WLog_ERR(TAG,
-							         "%s: %s - "
-							         "peer_recv_pdu() fail",
-							         __FUNCTION__, rdp_get_state_string(rdp));
-						}
-					}
-					else
-						ret = 0;
+					rdp_server_transition_to_state(
+					    rdp, CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_RESPONSE);
+					ret = 1;
 				}
 			}
 			else
 			{
-				/**
-				 * During reactivation sequence the client might sent some input or channel data
-				 * before receiving the Deactivate All PDU. We need to process them as usual.
-				 */
-				ret = peer_recv_pdu(client, s);
-				if (ret < 0)
-				{
-					WLog_ERR(TAG,
-					         "%s: %s - "
-					         "peer_recv_pdu() fail",
-					         __FUNCTION__, rdp_get_state_string(rdp));
-				}
+				rdp_server_transition_to_state(
+				    rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE);
+				ret = 1; /* Rerun, initialize next state */
 			}
-
+			break;
+		case CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_RESPONSE:
+			ret = peer_recv_pdu(client, s);
 			break;
 
-		case CONNECTION_STATE_FINALIZATION:
-			ret = peer_recv_pdu(client, s);
-			if (ret < 0)
+		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE:
+			if (client->Capabilities && !client->Capabilities(client))
 			{
-				WLog_ERR(TAG, "%s: %s - peer_recv_pdu() fail", __FUNCTION__,
+				WLog_ERR(TAG, "[%s] freerdp_peer::Capabilities() callback failed",
 				         rdp_get_state_string(rdp));
 			}
+			else if (!rdp_send_demand_active(rdp))
+			{
+				WLog_ERR(TAG, "[%s] rdp_send_demand_active() fail", rdp_get_state_string(rdp));
+			}
+			else
+			{
+				rdp_server_transition_to_state(
+				    rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT);
+				ret = 1;
+			}
+			break;
+
+		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT:
+			if (settings->EarlyCapabilityFlags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU)
+			{
+				MONITOR_DEF* monitors = NULL;
+
+				IFCALL(client->AdjustMonitorsLayout, client);
+
+				/* client supports the monitorLayout PDU, let's send him the monitors if any */
+				ret = -1;
+				if (freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) == 0)
+				{
+					const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+					const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+					const rdpMonitor primary = { .x = 0,
+						                         .y = 0,
+						                         .width = w,
+						                         .height = h,
+						                         .is_primary = TRUE,
+						                         .orig_screen = 0,
+						                         .attributes = { .physicalWidth = w,
+						                                         .physicalHeight = h,
+						                                         .orientation =
+						                                             ORIENTATION_LANDSCAPE,
+						                                         .desktopScaleFactor = 100,
+						                                         .deviceScaleFactor = 100 } };
+					if (!freerdp_settings_set_pointer_array(settings, FreeRDP_MonitorDefArray, 0,
+					                                        &primary))
+						ret = -2;
+					else if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, 1))
+						ret = -3;
+				}
+				if (ret < -1)
+				{
+				}
+				else if (!display_convert_rdp_monitor_to_monitor_def(
+				             settings->MonitorCount, settings->MonitorDefArray, &monitors))
+				{
+				}
+				else if (!freerdp_display_send_monitor_layout(rdp->context, settings->MonitorCount,
+				                                              monitors))
+				{
+				}
+				else
+					ret = 0;
+				free(monitors);
+			}
+			else
+				ret = 0;
+			rdp_server_transition_to_state(rdp,
+			                               CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE);
+			break;
+
+		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE:
+			/**
+			 * During reactivation sequence the client might sent some input or channel data
+			 * before receiving the Deactivate All PDU. We need to process them as usual.
+			 */
+			ret = peer_recv_pdu(client, s);
+			break;
+
+		case CONNECTION_STATE_FINALIZATION_SYNC:
+			rdp_finalize_reset_flags(rdp, FALSE);
+			ret = peer_recv_pdu(client, s);
+			if (rdp_finalize_is_flag_set(rdp, FINALIZE_CS_SYNCHRONIZE_PDU))
+			{
+				if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_COOPERATE))
+					ret = -2;
+			}
+			else
+				ret = peer_unexpected_client_message(rdp, FINALIZE_CS_SYNCHRONIZE_PDU);
+			break;
+		case CONNECTION_STATE_FINALIZATION_COOPERATE:
+			ret = peer_recv_pdu(client, s);
+			if (rdp_finalize_is_flag_set(rdp, FINALIZE_CS_CONTROL_COOPERATE_PDU))
+			{
+				if (!rdp_server_transition_to_state(rdp,
+				                                    CONNECTION_STATE_FINALIZATION_REQUEST_CONTROL))
+					ret = -2;
+			}
+			else
+				ret = peer_unexpected_client_message(rdp, FINALIZE_CS_CONTROL_COOPERATE_PDU);
+			break;
+		case CONNECTION_STATE_FINALIZATION_REQUEST_CONTROL:
+			ret = peer_recv_pdu(client, s);
+			if (rdp_finalize_is_flag_set(rdp, FINALIZE_CS_CONTROL_REQUEST_PDU))
+			{
+				if (!rdp_server_transition_to_state(
+				        rdp, CONNECTION_STATE_FINALIZATION_PERSISTENT_KEY_LIST))
+					ret = -2;
+			}
+			else
+				ret = peer_unexpected_client_message(rdp, FINALIZE_CS_CONTROL_REQUEST_PDU);
+			break;
+		case CONNECTION_STATE_FINALIZATION_PERSISTENT_KEY_LIST:
+			if (freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled) &&
+			    !rdp_finalize_is_flag_set(rdp, FINALIZE_DEACTIVATE_REACTIVATE))
+			{
+				ret = peer_recv_pdu(client, s);
+
+				if (rdp_finalize_is_flag_set(rdp, FINALIZE_CS_PERSISTENT_KEY_LIST_PDU))
+				{
+					if (!rdp_server_transition_to_state(rdp,
+					                                    CONNECTION_STATE_FINALIZATION_FONT_LIST))
+						ret = -2;
+				}
+				else
+					ret = peer_unexpected_client_message(rdp,
+					                                     CONNECTION_STATE_FINALIZATION_FONT_LIST);
+			}
+			else
+			{
+				if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_FONT_LIST))
+					ret = -2;
+				else
+					ret = 1;
+			}
+			break;
+		case CONNECTION_STATE_FINALIZATION_FONT_LIST:
+			ret = peer_recv_pdu(client, s);
+			if (rdp_finalize_is_flag_set(rdp, FINALIZE_CS_FONT_LIST_PDU))
+			{
+				if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_ACTIVE))
+					ret = -2;
+				update_reset_state(rdp->update);
+			}
+			else
+				ret = peer_unexpected_client_message(rdp, FINALIZE_CS_FONT_LIST_PDU);
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
-			ret = peer_recv_pdu(client, s);
-			if (ret < 0)
+			if (!client->connected)
 			{
-				WLog_ERR(TAG, "%s: %s - peer_recv_pdu() fail", __FUNCTION__,
-				         rdp_get_state_string(rdp));
+				/**
+				 * PostConnect should only be called once and should not
+				 * be called after a reactivation sequence.
+				 */
+				IFCALLRET(client->PostConnect, client->connected, client);
 			}
+			if (!client->connected)
+			{
+				switch (rdp_get_state(rdp))
+				{
+					case CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE:
+						ret = 1;
+						break;
+					case CONNECTION_STATE_ACTIVE:
+					default:
+						ret = -24;
+						break;
+				}
+			}
+			else
+			{
+				if (!client->activated)
+					IFCALLRET(client->Activate, client->activated, client);
 
+				if (!client->activated)
+					ret = -23;
+				else
+					ret = peer_recv_pdu(client, s);
+			}
 			break;
 
+			/* States that must not happen in server state machine */
+		case CONNECTION_STATE_FINALIZATION_CLIENT_SYNC:
+		case CONNECTION_STATE_FINALIZATION_CLIENT_COOPERATE:
+		case CONNECTION_STATE_FINALIZATION_CLIENT_GRANTED_CONTROL:
+		case CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP:
 		default:
 			WLog_ERR(TAG, "%s state %d", rdp_get_state_string(rdp), rdp_get_state(rdp));
 			break;
@@ -830,9 +1093,6 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		{
 			default:
 				rc = peer_recv_callback_internal(transport, s, extra);
-				break;
-			case 2:
-				rc = peer_recv_callback_internal(transport, NULL, extra);
 				break;
 		}
 	} while (rc > 0);
