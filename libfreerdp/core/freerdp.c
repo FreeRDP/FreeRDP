@@ -68,16 +68,17 @@
  *  @return TRUE if successful. FALSE otherwise.
  *
  */
-BOOL freerdp_connect(freerdp* instance)
+static int freerdp_connect_begin(freerdp* instance)
 {
+	BOOL rc;
 	UINT status2 = CHANNEL_RC_OK;
 	rdpRdp* rdp;
 	BOOL status = TRUE;
 	rdpSettings* settings;
-	ConnectionResultEventArgs e = { 0 };
+	UINT32 KeyboardLayout;
 
 	if (!instance)
-		return FALSE;
+		return -1;
 
 	WINPR_ASSERT(instance->context);
 
@@ -86,7 +87,7 @@ BOOL freerdp_connect(freerdp* instance)
 	freerdp_set_last_error_log(instance->context, FREERDP_ERROR_SUCCESS);
 	clearChannelError(instance->context);
 	if (!utils_reset_abort(instance->context->rdp))
-		return FALSE;
+		return -1;
 
 	rdp = instance->context->rdp;
 	WINPR_ASSERT(rdp);
@@ -97,7 +98,7 @@ BOOL freerdp_connect(freerdp* instance)
 	freerdp_channels_register_instance(instance->context->channels, instance);
 
 	if (!freerdp_settings_set_default_order_support(settings))
-		return FALSE;
+		return -1;
 
 	IFCALLRET(instance->PreConnect, status, instance);
 	instance->ConnectionCallbackState = CLIENT_STATE_PRECONNECT_PASSED;
@@ -109,19 +110,29 @@ BOOL freerdp_connect(freerdp* instance)
 		if (!rdp->originalSettings)
 			return 0;
 
-		BOOL ok = IFCALLRESULT(TRUE, instance->LoadChannels, instance);
-		if (!ok)
+		WINPR_ASSERT(instance->LoadChannels);
+		if (!instance->LoadChannels(instance))
 			return 0;
 
 		status2 = freerdp_channels_pre_connect(instance->context->channels, instance);
 	}
 
-	if (settings->KeyboardLayout == KBD_JAPANESE ||
-	    settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
+	KeyboardLayout = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout);
+	switch (KeyboardLayout)
 	{
-		settings->KeyboardType = KBD_TYPE_JAPANESE;
-		settings->KeyboardSubType = 2;
-		settings->KeyboardFunctionKey = 12;
+		case KBD_JAPANESE:
+		case KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002:
+		{
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardType, KBD_TYPE_JAPANESE))
+				return -1;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardSubType, 2))
+				return -1;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardFunctionKey, 12))
+				return -1;
+		}
+		break;
+		default:
+			break;
 	}
 
 	if (!status || (status2 != CHANNEL_RC_OK))
@@ -129,37 +140,60 @@ BOOL freerdp_connect(freerdp* instance)
 		freerdp_set_last_error_if_not(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
 
 		WLog_ERR(TAG, "freerdp_pre_connect failed");
-		goto freerdp_connect_finally;
+		return 0;
 	}
 
-	status = rdp_client_connect(rdp);
+	rc = rdp_client_connect(rdp);
+
+	/* --authonly tests the connection without a UI */
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_AuthenticationOnly))
+	{
+		WLog_ERR(TAG, "Authentication only, exit status %" PRId32 "", rc);
+		return 0;
+	}
+
+	return rc ? 1 : 0;
+}
+
+BOOL freerdp_connect(freerdp* instance)
+{
+	BOOL status = FALSE;
+	ConnectionResultEventArgs e = { 0 };
+	const int rc = freerdp_connect_begin(instance);
+	rdpRdp* rdp;
+	UINT status2 = ERROR_INTERNAL_ERROR;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	rdp = instance->context->rdp;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->settings);
+
+	if (rc < 0)
+		return FALSE;
+
+	if (rc == 0)
+		goto freerdp_connect_finally;
 
 	/* Pointers might have changed inbetween */
-	settings = rdp->context->settings;
-	if (rdp && rdp->settings)
 	{
 		rdp_update_internal* up = update_cast(rdp->update);
 
-		/* --authonly tests the connection without a UI */
-		if (rdp->settings->AuthenticationOnly)
+		if (freerdp_settings_get_bool(rdp->settings, FreeRDP_DumpRemoteFx))
 		{
-			WLog_ERR(TAG, "Authentication only, exit status %" PRId32 "", status);
-			goto freerdp_connect_finally;
-		}
-
-		if (rdp->settings->DumpRemoteFx)
-		{
-			up->pcap_rfx = pcap_open(rdp->settings->DumpRemoteFxFile, TRUE);
+			up->pcap_rfx = pcap_open(
+			    freerdp_settings_get_string(rdp->settings, FreeRDP_DumpRemoteFxFile), TRUE);
 
 			if (up->pcap_rfx)
 				up->dump_rfx = TRUE;
 		}
 	}
 
-	if (status)
+	if (rc > 0)
 	{
 		pointer_cache_register_callbacks(instance->context->update);
-		IFCALLRET(instance->PostConnect, status, instance);
+		status = IFCALLRESULT(TRUE, instance->PostConnect, instance);
 		instance->ConnectionCallbackState = CLIENT_STATE_POSTCONNECT_PASSED;
 
 		if (status)
@@ -167,6 +201,7 @@ BOOL freerdp_connect(freerdp* instance)
 	}
 	else
 	{
+		status2 = CHANNEL_RC_OK;
 		if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_CONNECT_TRANSPORT_FAILED)
 			status = freerdp_reconnect(instance);
 		else
@@ -183,14 +218,14 @@ BOOL freerdp_connect(freerdp* instance)
 		goto freerdp_connect_finally;
 	}
 
-	if (settings->PlayRemoteFx)
+	if (rdp->settings->PlayRemoteFx)
 	{
 		wStream* s;
 		rdp_update_internal* update = update_cast(instance->context->update);
 		pcap_record record = { 0 };
 
 		WINPR_ASSERT(update);
-		update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
+		update->pcap_rfx = pcap_open(rdp->settings->PlayRemoteFxFile, FALSE);
 		status = FALSE;
 
 		if (!update->pcap_rfx)
