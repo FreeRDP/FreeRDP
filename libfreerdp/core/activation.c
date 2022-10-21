@@ -625,7 +625,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 		} while (0);
 	}
 
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
+	rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE);
 
 	for (timeout = 0; timeout < freerdp_settings_get_uint32(rdp->settings, FreeRDP_TcpAckTimeout);
 	     timeout += 100)
@@ -710,8 +710,6 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 				          GrantId, ControlId);
 				return FALSE;
 			}
-			if (!rdp_send_server_control_granted_pdu(rdp))
-				return FALSE;
 			return rdp_finalize_set_flag(rdp, FINALIZE_CS_CONTROL_REQUEST_PDU);
 		case CTRLACTION_COOPERATE:
 			if (!rdp_finalize_is_flag_set(rdp, FINALIZE_CS_SYNCHRONIZE_PDU))
@@ -767,26 +765,21 @@ BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_recv_client_font_list_pdu(s))
 		return FALSE;
+	rdp_finalize_set_flag(rdp, FINALIZE_CS_FONT_LIST_PDU);
 
-	if (settings->SupportMonitorLayoutPdu && settings->MonitorCount && peer->AdjustMonitorsLayout &&
-	    peer->AdjustMonitorsLayout(peer))
-	{
-		/* client supports the monitorLayout PDU, let's send him the monitors if any */
-		MONITOR_DEF* monitors = NULL;
+	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_SYNC);
+	if (!rdp_send_server_synchronize_pdu(rdp))
+		return FALSE;
 
-		if (!display_convert_rdp_monitor_to_monitor_def(settings->MonitorCount,
-		                                                settings->MonitorDefArray, &monitors))
-			return FALSE;
+	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_COOPERATE);
+	if (!rdp_send_server_control_cooperate_pdu(rdp))
+		return FALSE;
 
-		if (!freerdp_display_send_monitor_layout(rdp->context, settings->MonitorCount, monitors))
-		{
-			free(monitors);
-			return FALSE;
-		}
+	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_GRANTED_CONTROL);
+	if (!rdp_send_server_control_granted_pdu(rdp))
+		return FALSE;
 
-		free(monitors);
-	}
-
+	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP);
 	if (!rdp_send_server_font_map_pdu(rdp))
 		return FALSE;
 
@@ -804,6 +797,7 @@ BOOL rdp_server_accept_client_persistent_key_list_pdu(rdpRdp* rdp, wStream* s)
 	if (!rdp_recv_client_persistent_key_list_pdu(s))
 		return FALSE;
 
+	rdp_finalize_set_flag(rdp, FINALIZE_CS_PERSISTENT_KEY_LIST_PDU);
 	// TODO: Actually do something with this
 	return TRUE;
 }
