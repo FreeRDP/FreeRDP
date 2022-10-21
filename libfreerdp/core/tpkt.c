@@ -65,18 +65,19 @@
  * @return BOOL
  */
 
-BOOL tpkt_verify_header(wStream* s)
+int tpkt_verify_header(wStream* s)
 {
 	BYTE version;
 
-	WINPR_ASSERT(s);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+		return -1;
 
 	Stream_Peek_UINT8(s, version);
 
 	if (version == 3)
-		return TRUE;
+		return 1;
 	else
-		return FALSE;
+		return 0;
 }
 
 /**

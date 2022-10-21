@@ -28,7 +28,7 @@
 
 #define TPKT_HEADER_LENGTH 4
 
-FREERDP_LOCAL BOOL tpkt_verify_header(wStream* s);
+FREERDP_LOCAL int tpkt_verify_header(wStream* s);
 FREERDP_LOCAL BOOL tpkt_read_header(wStream* s, UINT16* length);
 FREERDP_LOCAL BOOL tpkt_write_header(wStream* s, UINT16 length);
 #define tpkt_ensure_stream_consumed(s, length) \
