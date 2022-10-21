@@ -28,8 +28,6 @@
 
 static BOOL rdp_recv_client_font_list_pdu(wStream* s);
 static BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s);
-static BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, wStream* s);
-static BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, wStream* s);
 static BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp);
 
 static BOOL rdp_write_synchronize_pdu(wStream* s, const rdpSettings* settings)
@@ -105,39 +103,43 @@ BOOL rdp_send_client_synchronize_pdu(rdpRdp* rdp)
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE, rdp->mcs->userId);
 }
 
-static BOOL rdp_recv_control_pdu(wStream* s, UINT16* action)
+static BOOL rdp_recv_control_pdu(wStream* s, UINT16* action, UINT16* grantId, UINT32* controlId)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(action);
+	WINPR_ASSERT(grantId);
+	WINPR_ASSERT(controlId);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
-	Stream_Read_UINT16(s, *action); /* action (2 bytes) */
-	Stream_Seek_UINT16(s);          /* grantId (2 bytes) */
-	Stream_Seek_UINT32(s);          /* controlId (4 bytes) */
+	Stream_Read_UINT16(s, *action);    /* action (2 bytes) */
+	Stream_Read_UINT16(s, *grantId);   /* grantId (2 bytes) */
+	Stream_Read_UINT32(s, *controlId); /* controlId (4 bytes) */
 	return TRUE;
 }
 
-static BOOL rdp_write_client_control_pdu(wStream* s, UINT16 action)
+static BOOL rdp_write_client_control_pdu(wStream* s, UINT16 action, UINT16 grantId,
+                                         UINT32 controlId)
 {
 	WINPR_ASSERT(s);
 	if (Stream_GetRemainingCapacity(s) < 8)
 		return FALSE;
-	Stream_Write_UINT16(s, action); /* action (2 bytes) */
-	Stream_Write_UINT16(s, 0);      /* grantId (2 bytes) */
-	Stream_Write_UINT32(s, 0);      /* controlId (4 bytes) */
+	Stream_Write_UINT16(s, action);    /* action (2 bytes) */
+	Stream_Write_UINT16(s, grantId);   /* grantId (2 bytes) */
+	Stream_Write_UINT32(s, controlId); /* controlId (4 bytes) */
 	return TRUE;
 }
 
 BOOL rdp_recv_server_control_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 action;
+	UINT16 action, grantId;
+	UINT32 controlId;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
-	if (rdp_recv_control_pdu(s, &action) == FALSE)
+	if (!rdp_recv_control_pdu(s, &action, &grantId, &controlId))
 		return FALSE;
 
 	switch (action)
@@ -153,7 +155,8 @@ BOOL rdp_recv_server_control_pdu(rdpRdp* rdp, wStream* s)
 			char buffer[128] = { 0 };
 			WLog_WARN(TAG, "Unexpected control PDU %s",
 			          rdp_ctrlaction_string(action, buffer, sizeof(buffer)));
-			return TRUE;
+
+			return FALSE;
 		}
 	}
 }
@@ -197,9 +200,24 @@ static BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp)
 BOOL rdp_send_client_control_pdu(rdpRdp* rdp, UINT16 action)
 {
 	wStream* s = rdp_data_pdu_init(rdp);
+	UINT16 GrantId = 0;
+	UINT16 ControlId = 0;
+
+	switch (action)
+	{
+		case CTRLACTION_COOPERATE:
+		case CTRLACTION_REQUEST_CONTROL:
+			break;
+		default:
+			WLog_WARN(TAG,
+			          "Invalid client control PDU::action 0x%04" PRIx16 ", not allowed by client",
+			          action);
+			return FALSE;
+	}
+
 	if (!s)
 		return FALSE;
-	if (!rdp_write_client_control_pdu(s, action))
+	if (!rdp_write_client_control_pdu(s, action, GrantId, ControlId))
 	{
 		Stream_Free(s, TRUE);
 		return FALSE;
@@ -392,6 +410,9 @@ BOOL rdp_recv_client_font_list_pdu(wStream* s)
 {
 	WINPR_ASSERT(s);
 	/* 2.2.1.18 Client Font List PDU */
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+		return FALSE;
+
 	return Stream_SafeSeek(s, 8);
 }
 
@@ -493,39 +514,17 @@ BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
 	WINPR_ASSERT(s);
+	WINPR_ASSERT(!freerdp_settings_get_bool(rdp->settings, FreeRDP_ServerMode));
 
-	if (rdp->settings->ServerMode)
-		return rdp_recv_server_font_map_pdu(rdp, s);
-	else
-		return rdp_recv_client_font_map_pdu(rdp, s);
-}
-
-BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, wStream* s)
-{
-	WINPR_ASSERT(rdp);
-	WINPR_ASSERT(s);
-
-	WLog_WARN(TAG, "Invalid PDU received: FONT_MAP only allowed client -> server");
-	return rdp_finalize_set_flag(rdp, FINALIZE_SC_FONT_MAP_PDU);
-}
-
-BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, wStream* s)
-{
-	WINPR_ASSERT(rdp);
-	WINPR_ASSERT(s);
-
-	if (!rdp_finalize_set_flag(rdp, FINALIZE_SC_FONT_MAP_PDU))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) >= 8)
-	{
-		Stream_Seek_UINT16(s); /* numberEntries (2 bytes) */
-		Stream_Seek_UINT16(s); /* totalNumEntries (2 bytes) */
-		Stream_Seek_UINT16(s); /* mapFlags (2 bytes) */
-		Stream_Seek_UINT16(s); /* entrySize (2 bytes) */
-	}
+	Stream_Seek_UINT16(s); /* numberEntries (2 bytes) */
+	Stream_Seek_UINT16(s); /* totalNumEntries (2 bytes) */
+	Stream_Seek_UINT16(s); /* mapFlags (2 bytes) */
+	Stream_Seek_UINT16(s); /* entrySize (2 bytes) */
 
-	return TRUE;
+	return rdp_finalize_set_flag(rdp, FINALIZE_SC_FONT_MAP_PDU);
 }
 
 BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp)
@@ -571,10 +570,13 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	{
 		do
 		{
+			UINT32 ShareId;
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 				break;
 
-			Stream_Read_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
+			Stream_Read_UINT32(s, ShareId); /* shareId (4 bytes) */
+			if (!freerdp_settings_set_uint32(rdp->settings, FreeRDP_ShareId, ShareId))
+				return FALSE;
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 				break;
@@ -623,9 +625,10 @@ BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 		goto fail;
 
 	WINPR_ASSERT(rdp->settings);
-	Stream_Write_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
-	Stream_Write_UINT16(s, 1);                      /* lengthSourceDescriptor (2 bytes) */
-	Stream_Write_UINT8(s, 0);                       /* sourceDescriptor (should be 0x00) */
+	const UINT32 ShareId = freerdp_settings_get_uint32(rdp->settings, FreeRDP_ShareId);
+	Stream_Write_UINT32(s, ShareId); /* shareId (4 bytes) */
+	Stream_Write_UINT16(s, 1);       /* lengthSourceDescriptor (2 bytes) */
+	Stream_Write_UINT8(s, 0);        /* sourceDescriptor (should be 0x00) */
 
 	WINPR_ASSERT(rdp->mcs);
 	status = rdp_send_pdu(rdp, s, PDU_TYPE_DEACTIVATE_ALL, rdp->mcs->userId);
@@ -636,18 +639,75 @@ fail:
 
 BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 action;
+	UINT16 action = 0;
+	UINT16 GrantId = 0;
+	UINT32 ControlId = 0;
+	const CONNECTION_STATE state = rdp_get_state(rdp);
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
-	if (!rdp_recv_control_pdu(s, &action))
+	if (!rdp_recv_control_pdu(s, &action, &GrantId, &ControlId))
 		return FALSE;
 
-	if (action == CTRLACTION_REQUEST_CONTROL)
+	switch (action)
 	{
-		if (!rdp_send_server_control_granted_pdu(rdp))
+
+		case CTRLACTION_REQUEST_CONTROL:
+			if (!rdp_finalize_is_flag_set(rdp, FINALIZE_CS_CONTROL_COOPERATE_PDU))
+			{
+				char abuffer[128] = { 0 };
+				char buffer[1024] = { 0 };
+				WLog_WARN(TAG,
+				          "Received action=%s with GrantId=0x%04" PRIx16 ", ControlId=0x%08" PRIx32
+				          " in unexpected state %s [missing %s]",
+				          rdp_ctrlaction_string(action, abuffer, sizeof(abuffer)), GrantId,
+				          ControlId, rdp_state_string(state),
+				          rdp_finalize_flags_to_str(FINALIZE_CS_CONTROL_COOPERATE_PDU, buffer,
+				                                    sizeof(buffer)));
+				return FALSE;
+			}
+			if ((GrantId != 0) || (ControlId != 0))
+			{
+				WLog_WARN(TAG,
+				          "Received CTRLACTION_COOPERATE with GrantId=0x%04" PRIx16
+				          " != 0x00, ControlId=0x%08" PRIx32 " != 0x00",
+				          GrantId, ControlId);
+				return FALSE;
+			}
+			return rdp_finalize_set_flag(rdp, FINALIZE_CS_CONTROL_REQUEST_PDU);
+		case CTRLACTION_COOPERATE:
+			if (!rdp_finalize_is_flag_set(rdp, FINALIZE_CS_SYNCHRONIZE_PDU))
+			{
+				char abuffer[128] = { 0 };
+				char buffer[1024] = { 0 };
+				WLog_WARN(
+				    TAG,
+				    "Received action=%s with GrantId=0x%04" PRIx16 ", ControlId=0x%08" PRIx32
+				    " in unexpected state %s [missing %s]",
+				    rdp_ctrlaction_string(action, abuffer, sizeof(abuffer)), GrantId, ControlId,
+				    rdp_state_string(state),
+				    rdp_finalize_flags_to_str(FINALIZE_CS_SYNCHRONIZE_PDU, buffer, sizeof(buffer)));
+				return FALSE;
+			}
+			if ((GrantId != 0) || (ControlId != 0))
+			{
+				WLog_WARN(TAG,
+				          "Received CTRLACTION_COOPERATE with GrantId=0x%04" PRIx16
+				          " != 0x00, ControlId=0x%08" PRIx32 " != 0x00",
+				          GrantId, ControlId);
+				return FALSE;
+			}
+			return rdp_finalize_set_flag(rdp, FINALIZE_CS_CONTROL_COOPERATE_PDU);
+		default:
+		{
+			char abuffer[128] = { 0 };
+			WLog_WARN(TAG,
+			          "Received unexpected action=%s with GrantId=0x%04" PRIx16
+			          ", ControlId=0x%08" PRIx32,
+			          rdp_ctrlaction_string(action, abuffer, sizeof(abuffer)), GrantId, ControlId);
 			return FALSE;
+		}
 	}
 
 	return TRUE;
