@@ -174,7 +174,7 @@ static const test tests[] = {
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "--invalid", 0 },
 	  { { 0 } } },
-#if defined(WITH_FREERDP_DEPRECATED)
+#if defined(WITH_FREERDP_DEPRECATED_CMDLINE)
 	{ COMMAND_LINE_STATUS_PRINT,
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "/kbd-list", 0 },
