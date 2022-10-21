@@ -1411,6 +1411,9 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 		const RECTANGLE_16 rect = { destPt->x, destPt->y, destPt->x + cacheEntry->width,
 			                        destPt->y + cacheEntry->height };
 
+		if (rectangle_is_empty(&rect))
+			continue;
+
 		if (!is_rect_valid(&rect, surface->width, surface->height))
 			goto fail;
 
