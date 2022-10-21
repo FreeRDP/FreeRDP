@@ -1097,11 +1097,11 @@ int rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 {
 	size_t pos;
-	UINT16 width;
-	UINT16 height;
 	UINT16 length;
-	width = rdp->settings->DesktopWidth;
-	height = rdp->settings->DesktopHeight;
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(rdp->settings);
 
 	pos = Stream_GetPosition(s);
 
@@ -1125,36 +1125,7 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		return rc;
 	}
 
-	if (freerdp_shall_disconnect_context(rdp->context))
-		return 0;
-
-	if (!rdp_send_confirm_active(rdp))
-		return -1;
-
-	if (!input_register_client_callbacks(rdp->input))
-	{
-		WLog_ERR(TAG, "error registering client callbacks");
-		return -1;
-	}
-
-	/**
-	 * The server may request a different desktop size during Deactivation-Reactivation sequence.
-	 * In this case, the UI should be informed and do actual window resizing at this point.
-	 */
-	if (width != rdp->settings->DesktopWidth || height != rdp->settings->DesktopHeight)
-	{
-		BOOL status = TRUE;
-		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
-
-		if (!status)
-		{
-			WLog_ERR(TAG, "client desktop resize callback failed");
-			return -1;
-		}
-	}
-
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);
-	return rdp_client_connect_finalize(rdp);
+	return rdp_client_connect_confirm_active(rdp, s);
 }
 
 int rdp_client_connect_finalize(rdpRdp* rdp)
@@ -1638,4 +1609,51 @@ BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp)
 	}
 
 	return TRUE;
+}
+
+int rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s)
+{
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->settings);
+	WINPR_ASSERT(s);
+
+	const UINT32 width = rdp->settings->DesktopWidth;
+	const UINT32 height = rdp->settings->DesktopHeight;
+
+	if (!rdp_send_confirm_active(rdp))
+		return -1;
+
+	if (!input_register_client_callbacks(rdp->input))
+	{
+		WLog_ERR(TAG, "error registering client callbacks");
+		return -1;
+	}
+
+	/**
+	 * The server may request a different desktop size during Deactivation-Reactivation sequence.
+	 * In this case, the UI should be informed and do actual window resizing at this point.
+	 */
+	const BOOL deactivate_reactivate =
+	    rdp->was_deactivated && ((rdp->deactivated_width != rdp->settings->DesktopWidth) ||
+	                             (rdp->deactivated_height != rdp->settings->DesktopHeight));
+	const BOOL resolution_change =
+	    ((width != rdp->settings->DesktopWidth) || (height != rdp->settings->DesktopHeight));
+	if (deactivate_reactivate || resolution_change)
+	{
+		BOOL status = TRUE;
+		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
+
+		if (!status)
+		{
+			WLog_ERR(TAG, "client desktop resize callback failed");
+			return -1;
+		}
+	}
+
+	WINPR_ASSERT(rdp->context);
+	if (freerdp_shall_disconnect_context(rdp->context))
+		return 0;
+
+	rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);
+	return rdp_client_connect_finalize(rdp);
 }
