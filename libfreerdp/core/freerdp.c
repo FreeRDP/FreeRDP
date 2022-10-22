@@ -74,7 +74,7 @@ BOOL freerdp_connect(freerdp* instance)
 	rdpRdp* rdp;
 	BOOL status = TRUE;
 	rdpSettings* settings;
-	ConnectionResultEventArgs e;
+	ConnectionResultEventArgs e = { 0 };
 
 	if (!instance)
 		return FALSE;
@@ -135,6 +135,7 @@ BOOL freerdp_connect(freerdp* instance)
 	status = rdp_client_connect(rdp);
 
 	/* Pointers might have changed inbetween */
+	settings = rdp->context->settings;
 	if (rdp && rdp->settings)
 	{
 		rdp_update_internal* up = update_cast(rdp->update);
