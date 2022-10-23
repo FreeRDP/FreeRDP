@@ -613,6 +613,8 @@ BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t olen)
 
 void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx)
 {
+	if (!ctx)
+		return;
 #if defined(WITH_OPENSSL)
 	if (ctx->mdctx)
 	{
