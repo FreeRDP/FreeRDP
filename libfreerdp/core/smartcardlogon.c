@@ -339,6 +339,13 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 			goto endofloop;
 		}
 
+		if (!crypto_check_eku(cert->certificate->px509, NID_ms_smartcard_login))
+		{
+			WLog_DBG(TAG, "discarding certificate without Smartcard Login EKU for key %s",
+			         cert->keyName);
+			goto endofloop;
+		}
+
 		if (!treat_sc_cert(cert))
 		{
 			WLog_DBG(TAG, "error treating cert");
