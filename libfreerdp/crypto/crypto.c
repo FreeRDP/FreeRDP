@@ -868,6 +868,30 @@ char* crypto_cert_issuer(X509* xcert)
 	return issuer;
 }
 
+BOOL crypto_check_eku(X509* xcert, int nid)
+{
+	BOOL ret = FALSE;
+	STACK_OF(ASN1_OBJECT) * oid_stack;
+	ASN1_OBJECT* oid;
+
+	if (!xcert)
+		return FALSE;
+
+	oid = OBJ_nid2obj(nid);
+	if (!oid)
+		return FALSE;
+
+	oid_stack = X509_get_ext_d2i(xcert, NID_ext_key_usage, NULL, NULL);
+	if (!oid_stack)
+		return FALSE;
+
+	if (sk_ASN1_OBJECT_find(oid_stack, oid) >= 0)
+		ret = TRUE;
+
+	sk_ASN1_OBJECT_pop_free(oid_stack, ASN1_OBJECT_free);
+	return ret;
+}
+
 static int verify_cb(int ok, X509_STORE_CTX* csc)
 {
 	if (ok != 1)

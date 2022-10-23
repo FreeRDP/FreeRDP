@@ -69,6 +69,7 @@ extern "C"
 	FREERDP_API char* crypto_cert_get_upn(X509* x509);
 	FREERDP_API void crypto_cert_dns_names_free(int count, int* lengths, char** dns_names);
 	FREERDP_API char* crypto_cert_issuer(X509* xcert);
+	FREERDP_API BOOL crypto_check_eku(X509* scert, int nid);
 	FREERDP_API void crypto_cert_print_info(X509* xcert);
 	FREERDP_API void crypto_cert_free(CryptoCert cert);
 
