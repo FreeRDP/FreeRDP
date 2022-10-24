@@ -8,6 +8,9 @@ Notewhorth changes:
    on OpenSSL deprecation status WITH_INTERNAL_MD5)
 
 Fixed issues:
+* Backported #8341: Null checks in winpr_Digest_Free
+* Backported #8335: Missing NULL return in winpr_Digest_New
+* Backported #8192: Support for audin version 2 microphone channel
 
 For a complete and detailed change log since the last release run:
 git log 2.8.1..2.8.x
