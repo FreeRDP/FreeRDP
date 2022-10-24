@@ -184,8 +184,8 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 
 	path = (const WCHAR*)Stream_Pointer(irp->input);
 	FileId = irp->devman->id_sequence++;
-	file = drive_file_new(drive->path, path, PathLength, FileId, DesiredAccess, CreateDisposition,
-	                      CreateOptions, FileAttributes, SharedAccess);
+	file = drive_file_new(drive->path, path, PathLength / sizeof(WCHAR), FileId, DesiredAccess,
+	                      CreateDisposition, CreateOptions, FileAttributes, SharedAccess);
 
 	if (!file)
 	{
@@ -639,8 +639,8 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Stream_Write_UINT32(irp->output, 0); /* Length */
 	}
-	else if (!drive_file_query_directory(file, FsInformationClass, InitialQuery, path, PathLength,
-	                                     irp->output))
+	else if (!drive_file_query_directory(file, FsInformationClass, InitialQuery, path,
+	                                     PathLength / sizeof(WCHAR), irp->output))
 	{
 		irp->IoStatus = drive_map_windows_err(GetLastError());
 	}
