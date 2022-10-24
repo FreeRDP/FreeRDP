@@ -108,7 +108,20 @@ int _wcscmp(const WCHAR* string1, const WCHAR* string2)
 
 	Data_Read_UINT16(string1, value1);
 	Data_Read_UINT16(string2, value2);
-	return value1 - value2;
+	return (int)value1 - value2;
+}
+
+int _wcsncmp(const WCHAR* string1, const WCHAR* string2, size_t count)
+{
+	for (size_t x = 0; x < count; x++)
+	{
+		const WCHAR a = string1[x];
+		const WCHAR b = string2[x];
+
+		if (a != b)
+			return (int)a - b;
+	}
+	return 0;
 }
 
 /* _wcslen -> wcslen */
