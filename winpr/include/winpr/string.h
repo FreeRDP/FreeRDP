@@ -60,6 +60,7 @@ extern "C"
 	WINPR_API int _strnicmp(const char* string1, const char* string2, size_t count);
 
 	WINPR_API int _wcscmp(const WCHAR* string1, const WCHAR* string2);
+	WINPR_API int _wcsncmp(const WCHAR* string1, const WCHAR* string2, size_t count);
 
 	WINPR_API size_t _wcslen(const WCHAR* str);
 	WINPR_API size_t _wcsnlen(const WCHAR* str, size_t maxNumberOfElements);
@@ -73,6 +74,7 @@ extern "C"
 #else
 
 #define _wcscmp wcscmp
+#define _wcsncmp wcsncmp
 #define _wcslen wcslen
 #define _wcsnlen wcsnlen
 #define _wcschr wcschr
