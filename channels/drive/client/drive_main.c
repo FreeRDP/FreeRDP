@@ -626,6 +626,9 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 	Stream_Read_UINT32(irp->input, PathLength);
 	Stream_Seek(irp->input, 23); /* Padding */
 	path = (WCHAR*)Stream_Pointer(irp->input);
+	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, PathLength))
+		return ERROR_INVALID_DATA;
+
 	file = drive_get_file_by_id(drive, irp->FileId);
 
 	if (file == NULL)
