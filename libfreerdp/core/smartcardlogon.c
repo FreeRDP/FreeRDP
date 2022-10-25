@@ -108,7 +108,10 @@ void smartcardCertList_Free(SmartcardCertInfo** cert_list, DWORD count)
 		return;
 
 	for (DWORD i = 0; i < count; i++)
-		smartcardCertInfo_Free(cert_list[i]);
+	{
+		SmartcardCertInfo* cert = cert_list[i];
+		smartcardCertInfo_Free(cert);
+	}
 
 	free(cert_list);
 }
@@ -463,7 +466,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 	}
 	else
 	{
-		NCryptProviderName* names;
+		NCryptProviderName* names = NULL;
 		DWORD nproviders, i;
 
 		status = NCryptEnumStorageProviders(&nproviders, &names, NCRYPT_SILENT_FLAG);
@@ -476,8 +479,9 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		for (i = 0; i < nproviders; i++)
 		{
 			char providerNameStr[256] = { 0 };
+			const NCryptProviderName* name = &names[i];
 
-			if (WideCharToMultiByte(CP_UTF8, 0, names[i].pszName, -1, providerNameStr,
+			if (WideCharToMultiByte(CP_UTF8, 0, name->pszName, -1, providerNameStr,
 			                        sizeof(providerNameStr), NULL, FALSE) <= 0)
 			{
 				_snprintf(providerNameStr, sizeof(providerNameStr), "<unknown>");
@@ -486,17 +490,17 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 			}
 
 			WLog_DBG(TAG, "exploring CSP '%s'", providerNameStr);
-			if (csp && _wcscmp(names[i].pszName, csp) != 0)
+			if (csp && _wcscmp(name->pszName, csp) != 0)
 			{
 				WLog_DBG(TAG, "CSP '%s' filtered out", providerNameStr);
 				continue;
 			}
 
-			status = NCryptOpenStorageProvider(&provider, names[i].pszName, 0);
+			status = NCryptOpenStorageProvider(&provider, name->pszName, 0);
 			if (status != ERROR_SUCCESS)
 				continue;
 
-			if (!list_provider_keys(settings, provider, names[i].pszName, scope, userFilter,
+			if (!list_provider_keys(settings, provider, name->pszName, scope, userFilter,
 			                        domainFilter, &cert_list, &count))
 				WLog_INFO(TAG, "error when retrieving keys in CSP '%s'", providerNameStr);
 
@@ -544,15 +548,69 @@ static char* create_temporary_file(void)
 	return path;
 }
 
+static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const char* certPEM)
+{
+	WINPR_ASSERT(privKeyPEM);
+	WINPR_ASSERT(certPEM);
+
+	SmartcardCertInfo* cert = calloc(1, sizeof(SmartcardCertInfo));
+	if (!cert)
+		goto fail;
+
+	SmartcardKeyInfo* info = cert->key_info = calloc(1, sizeof(SmartcardKeyInfo));
+	if (!info)
+		goto fail;
+
+	cert->certificate = crypto_cert_pem_read(certPEM);
+	if (!cert->certificate)
+	{
+		WLog_ERR(TAG, "unable to read smartcard certificate");
+		goto fail;
+	}
+
+	if (!treat_sc_cert(cert))
+	{
+		WLog_ERR(TAG, "unable to treat smartcard certificate");
+		goto fail;
+	}
+
+	if (ConvertToUnicode(CP_UTF8, 0, "FreeRDP Emulator", -1, &cert->reader, 0) < 0)
+		goto fail;
+
+	if (ConvertToUnicode(CP_UTF8, 0, "Private Key 00", -1, &cert->containerName, 0) < 0)
+		goto fail;
+
+	/* compute PKINIT args FILE:<cert file>,<key file>
+	 *
+	 * We need files for PKINIT to read, so write the certificate to some
+	 * temporary location and use that.
+	 */
+	info->keyPath = create_temporary_file();
+	WLog_DBG(TAG, "writing PKINIT key to %s", info->keyPath);
+	if (!write_pem(info->keyPath, privKeyPEM))
+		goto fail;
+
+	info->certPath = create_temporary_file();
+	WLog_DBG(TAG, "writing PKINIT cert to %s", info->certPath);
+	if (!write_pem(info->certPath, certPEM))
+		goto fail;
+
+	int res = allocating_sprintf(&cert->pkinitArgs, "FILE:%s,%s", info->certPath, info->keyPath);
+	if (res <= 0)
+		goto fail;
+
+	return cert;
+fail:
+	smartcardCertInfo_Free(cert);
+	return NULL;
+}
+
 static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** scCerts,
                                         DWORD* retCount)
 {
 	BOOL rc = FALSE;
 	int res;
 	SmartcardCertInfo** cert_list = NULL;
-	SmartcardCertInfo* cert = NULL;
-	char* keyPath = create_temporary_file();
-	char* certPath = create_temporary_file();
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(scCerts);
@@ -575,50 +633,12 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
 	if (!cert_list)
 		goto out_error;
 
-	*cert_list = calloc(1, sizeof(SmartcardCertInfo));
-	if (!(*cert_list))
-		goto out_error;
-	cert = *cert_list;
-
-	cert->key_info = calloc(1, sizeof(SmartcardKeyInfo));
-	if (!cert->key_info)
-		goto out_error;
-
-	cert->certificate = crypto_cert_pem_read(certPEM);
-	if (!cert->certificate)
 	{
-		WLog_ERR(TAG, "unable to read smartcard certificate");
-		goto out_error;
+		SmartcardCertInfo* cert = smartcardCertInfo_New(privKeyPEM, certPEM);
+		if (!cert)
+			goto out_error;
+		cert_list[0] = cert;
 	}
-
-	if (!treat_sc_cert(cert))
-	{
-		WLog_ERR(TAG, "unable to treat smartcard certificate");
-		goto out_error;
-	}
-
-	if (ConvertToUnicode(CP_UTF8, 0, "FreeRDP Emulator", -1, &cert->reader, 0) < 0)
-		goto out_error;
-
-	if (ConvertToUnicode(CP_UTF8, 0, "Private Key 00", -1, &cert->containerName, 0) < 0)
-		goto out_error;
-
-	/* compute PKINIT args FILE:<cert file>,<key file>
-	 *
-	 * We need files for PKINIT to read, so write the certificate to some
-	 * temporary location and use that.
-	 */
-	WLog_DBG(TAG, "writing PKINIT cert/key to %s and %s", keyPath, certPath);
-	if (!write_pem(keyPath, privKeyPEM))
-		goto out_error;
-	if (!write_pem(certPath, certPEM))
-		goto out_error;
-	res = allocating_sprintf(&cert->pkinitArgs, "FILE:%s,%s", certPath, keyPath);
-	if (res <= 0)
-		goto out_error;
-
-	cert->key_info->certPath = certPath;
-	cert->key_info->keyPath = keyPath;
 
 	rc = TRUE;
 	*scCerts = cert_list;
