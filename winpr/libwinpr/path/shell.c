@@ -689,6 +689,33 @@ cleanup:
 #endif
 }
 
+BOOL winpr_MoveFileEx(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags)
+{
+#ifndef _WIN32
+	return MoveFileExA(lpExistingFileName, lpNewFileName, dwFlags);
+#else
+	BOOL result = FALSE;
+	LPWSTR lpExistingFileNameW = NULL;
+	LPWSTR lpNewFileNameW = NULL;
+
+	if (!lpExistingFileName || !lpNewFileName)
+		return FALSE;
+
+	if (ConvertToUnicode(CP_UTF8, 0, lpExistingFileName, -1, &lpExistingFileNameW, 0) < 1)
+		goto cleanup;
+
+	if (ConvertToUnicode(CP_UTF8, 0, lpNewFileName, -1, &lpNewFileNameW, 0) < 1)
+		goto cleanup;
+
+	result = MoveFileExW(lpExistingFileNameW, lpNewFileNameW, dwFlags);
+
+cleanup:
+	free(lpExistingFileNameW);
+	free(lpNewFileNameW);
+	return result;
+#endif
+}
+
 BOOL winpr_DeleteFile(const char* lpFileName)
 {
 #ifndef _WIN32
