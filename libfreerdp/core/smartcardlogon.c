@@ -115,6 +115,8 @@ void smartcardCertList_Free(SmartcardCertInfo** cert_list, DWORD count)
 
 static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 {
+	WINPR_ASSERT(scCert);
+
 	scCert->upn = crypto_cert_get_upn(scCert->certificate->px509);
 	if (!scCert->upn)
 	{
@@ -517,6 +519,9 @@ out:
 
 static BOOL write_pem(const char* file, const char* pem)
 {
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(pem);
+
 	size_t rc, size = strlen(pem) + 1;
 	FILE* fp = winpr_fopen(file, "w");
 	if (!fp)
@@ -553,6 +558,19 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
 	WINPR_ASSERT(scCerts);
 	WINPR_ASSERT(retCount);
 
+	const char* privKeyPEM = freerdp_settings_get_string(settings, FreeRDP_SmartcardPrivateKey);
+	const char* certPEM = freerdp_settings_get_string(settings, FreeRDP_SmartcardCertificate);
+	if (!privKeyPEM)
+	{
+		WLog_ERR(TAG, "Invalid smartcard private key PEM, aborting");
+		goto out_error;
+	}
+	if (!certPEM)
+	{
+		WLog_ERR(TAG, "Invalid smartcard certificate PEM, aborting");
+		goto out_error;
+	}
+
 	cert_list = calloc(1, sizeof(SmartcardCertInfo*));
 	if (!cert_list)
 		goto out_error;
@@ -566,8 +584,7 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
 	if (!cert->key_info)
 		goto out_error;
 
-	cert->certificate =
-	    crypto_cert_pem_read(freerdp_settings_get_string(settings, FreeRDP_SmartcardCertificate));
+	cert->certificate = crypto_cert_pem_read(certPEM);
 	if (!cert->certificate)
 	{
 		WLog_ERR(TAG, "unable to read smartcard certificate");
@@ -592,9 +609,9 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
 	 * temporary location and use that.
 	 */
 	WLog_DBG(TAG, "writing PKINIT cert/key to %s and %s", keyPath, certPath);
-	if (!write_pem(keyPath, freerdp_settings_get_string(settings, FreeRDP_SmartcardPrivateKey)))
+	if (!write_pem(keyPath, privKeyPEM))
 		goto out_error;
-	if (!write_pem(certPath, freerdp_settings_get_string(settings, FreeRDP_SmartcardCertificate)))
+	if (!write_pem(certPath, certPEM))
 		goto out_error;
 	res = allocating_sprintf(&cert->pkinitArgs, "FILE:%s,%s", certPath, keyPath);
 	if (res <= 0)
