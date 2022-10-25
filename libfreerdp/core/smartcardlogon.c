@@ -44,7 +44,6 @@ struct SmartcardKeyInfo_st
 
 static void delete_file(char* path)
 {
-	WCHAR* wpath = NULL;
 	if (!path)
 		return;
 
@@ -53,20 +52,23 @@ static void delete_file(char* path)
 		FILE* fp = winpr_fopen(path, "r+");
 		if (fp)
 		{
+			const char buffer[8192] = { 0 };
 			INT64 x, size = 0;
 			int rs = _fseeki64(fp, 0, SEEK_END);
 			if (rs == 0)
 				size = _ftelli64(fp);
 			_fseeki64(fp, 0, SEEK_SET);
-			for (x = 0; x < size; x++)
-				fputc(0, fp);
+
+			for (x = 0; x < size; x += sizeof(buffer))
+			{
+				fwrite(buffer, MIN(sizeof(buffer), size - x), 1, fp);
+			}
+
 			fclose(fp);
 		}
 	}
 
-	ConvertToUnicode(CP_UTF8, 0, path, -1, &wpath, 0);
-	DeleteFileW(wpath);
-	free(wpath);
+	winpr_DeleteFile(path);
 	free(path);
 }
 
