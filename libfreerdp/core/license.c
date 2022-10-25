@@ -189,13 +189,12 @@ out:
 
 static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, const char* hostname)
 {
-	char hash[41];
+	char hash[41] = { 0 };
 	FILE* fp;
 	char* licenseStorePath = NULL;
-	char filename[MAX_PATH], filenameNew[MAX_PATH];
+	char filename[MAX_PATH] = { 0 }, filenameNew[MAX_PATH] = { 0 };
 	char *filepath = NULL, *filepathNew = NULL;
-	WCHAR* wFilepathNew = NULL;
-	WCHAR* wFilepath = NULL;
+
 	size_t written;
 	BOOL ret = FALSE;
 
@@ -232,10 +231,6 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, cons
 
 	if (!(filepathNew = GetCombinedPath(licenseStorePath, filenameNew)))
 		goto out;
-	if (ConvertToUnicode(CP_UTF8, 0, filepathNew, -1, &wFilepathNew, 0) <= 0)
-		goto out;
-	if (ConvertToUnicode(CP_UTF8, 0, filepath, -1, &wFilepath, 0) <= 0)
-		goto out;
 
 	fp = winpr_fopen(filepathNew, "wb");
 	if (!fp)
@@ -246,16 +241,14 @@ static BOOL saveCal(rdpSettings* settings, const BYTE* data, size_t length, cons
 
 	if (written != 1)
 	{
-		DeleteFileW(wFilepathNew);
+		winpr_DeleteFile(filepathNew);
 		goto out;
 	}
 
-	ret = MoveFileExW(wFilepathNew, wFilepath, MOVEFILE_REPLACE_EXISTING);
+	ret = winpr_MoveFileEx(filepathNew, filepath, MOVEFILE_REPLACE_EXISTING);
 
 out:
-	free(wFilepathNew);
 	free(filepathNew);
-	free(wFilepath);
 	free(filepath);
 	free(licenseStorePath);
 	return ret;
