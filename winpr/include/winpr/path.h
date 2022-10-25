@@ -336,6 +336,7 @@ extern "C"
 #endif
 
 	WINPR_API BOOL winpr_MoveFile(LPCSTR lpExistingFileName, LPCSTR lpNewFileName);
+	WINPR_API BOOL winpr_MoveFileEx(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags);
 	WINPR_API BOOL winpr_DeleteFile(const char* lpFileName);
 	WINPR_API BOOL winpr_RemoveDirectory(LPCSTR lpPathName);
 	WINPR_API BOOL winpr_PathFileExists(const char* pszPath);
