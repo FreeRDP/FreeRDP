@@ -813,7 +813,7 @@ static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts
 	{
 		const CmdLineSubOptions* opt = &opts[xx];
 
-		if (option_equals(opt->optname, arg))
+		if (option_starts_with(opt->optname, arg))
 		{
 			const size_t optlen = strlen(opt->optname);
 			const char* val = &arg[optlen];
