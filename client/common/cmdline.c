@@ -1873,7 +1873,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			{
 				const char* val = ptr[x];
 #ifdef WITH_GFX_H264
-				if (_strnicmp("AVC444", val, 7) == 0)
+				if (_strnicmp("AVC444", val, 6) == 0)
 				{
 					const int bval = parse_on_off_option(val);
 					if (bval < 0)
@@ -1882,7 +1882,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 						GfxH264 = bval > 0;
 					codecSelected = TRUE;
 				}
-				else if (_strnicmp("AVC420", val, 7) == 0)
+				else if (_strnicmp("AVC420", val, 6) == 0)
 				{
 					const int bval = parse_on_off_option(val);
 					if (bval < 0)
@@ -1893,7 +1893,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				}
 				else
 #endif
-				    if (_strnicmp("RFX", val, 4) == 0)
+				    if (_strnicmp("RFX", val, 3) == 0)
 				{
 					const int bval = parse_on_off_option(val);
 					if (bval < 0)
