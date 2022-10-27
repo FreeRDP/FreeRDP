@@ -2042,11 +2042,12 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				{
 					const size_t olen = strlen(old);
 					const size_t alen = strlen(now);
-					char* tmp = calloc(olen + alen + 1, sizeof(char));
+					const size_t tlen = olen + alen + 2;
+					char* tmp = calloc(tlen, sizeof(char));
 					if (!tmp)
 						rc = COMMAND_LINE_ERROR_MEMORY;
 					else
-						_snprintf(tmp, olen + alen + 1, "%s,%s", old, now);
+						_snprintf(tmp, tlen, "%s,%s", old, now);
 					now = tmp;
 				}
 
