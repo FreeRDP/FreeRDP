@@ -177,8 +177,6 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
 
 	for (i = 0; i < file_descriptor_count; i++)
 	{
-		int c;
-		UINT64 lastWriteTime;
 		const FILEDESCRIPTORW* file = &file_descriptor_array[i];
 
 		/*
@@ -199,15 +197,24 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
 		}
 
 		Stream_Write_UINT32(s, file->dwFlags);          /* flags (4 bytes) */
-		Stream_Zero(s, 32);                             /* reserved1 (32 bytes) */
+		Stream_Write_UINT32(s, file->clsid.Data1);
+		Stream_Write_UINT16(s, file->clsid.Data2);
+		Stream_Write_UINT16(s, file->clsid.Data3);
+		WINPR_ASSERT(sizeof(file->clsid.Data4) == 8);
+		Stream_Write(s, &file->clsid.Data4, sizeof(file->clsid.Data4));
+		Stream_Write_INT32(s, file->sizel.cx);
+		Stream_Write_INT32(s, file->sizel.cy);
+		Stream_Write_INT32(s, file->pointl.x);
+		Stream_Write_INT32(s, file->pointl.y);
 		Stream_Write_UINT32(s, file->dwFileAttributes); /* fileAttributes (4 bytes) */
-		Stream_Zero(s, 16);                             /* reserved2 (16 bytes) */
-		lastWriteTime = filetime_to_uint64(file->ftLastWriteTime);
-		Stream_Write_UINT64(s, lastWriteTime);       /* lastWriteTime (8 bytes) */
+		Stream_Write_UINT64(s, filetime_to_uint64(file->ftCreationTime));
+		Stream_Write_UINT64(s, filetime_to_uint64(file->ftLastAccessTime));
+		Stream_Write_UINT64(
+		    s, filetime_to_uint64(file->ftLastWriteTime)); /* lastWriteTime (8 bytes) */
 		Stream_Write_UINT32(s, file->nFileSizeHigh); /* fileSizeHigh (4 bytes) */
 		Stream_Write_UINT32(s, file->nFileSizeLow);  /* fileSizeLow (4 bytes) */
-		for (c = 0; c < 260; c++)                    /* cFileName (520 bytes) */
-			Stream_Write_UINT16(s, file->cFileName[c]);
+		Stream_Write_UTF16_String(s, file->cFileName,
+		                          ARRAYSIZE(file->cFileName)); /* cFileName (520 bytes) */
 	}
 
 	Stream_SealLength(s);

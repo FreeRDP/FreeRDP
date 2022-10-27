@@ -59,7 +59,6 @@ struct synthetic_file
 {
 	WCHAR* local_name;
 	WCHAR* remote_name;
-	FILETIME last_write_time;
 
 	HANDLE fd;
 	INT64 offset;
@@ -104,7 +103,9 @@ static struct synthetic_file* make_synthetic_file(const WCHAR* local_name, const
 		goto fail;
 
 	file->dwFileAttributes = fd.dwFileAttributes;
-	file->last_write_time = fd.ftLastWriteTime;
+	file->ftCreationTime = fd.ftCreationTime;
+	file->ftLastWriteTime = fd.ftLastWriteTime;
+	file->ftLastAccessTime = fd.ftLastAccessTime;
 	file->nFileSizeHigh = fd.nFileSizeHigh;
 	file->nFileSizeLow = fd.nFileSizeLow;
 
