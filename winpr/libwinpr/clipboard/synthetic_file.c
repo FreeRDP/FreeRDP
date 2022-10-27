@@ -330,9 +330,9 @@ static BOOL do_add_directory_contents_to_list(wClipboard* clipboard, const WCHAR
 		BOOL bRet = FindNextFileW(hFind, &FileData);
 		if (!bRet)
 		{
-			WLog_WARN(TAG, "FindNextFile failed (%" PRIu32 ")", GetLastError());
 			if (ERROR_NO_MORE_FILES == GetLastError())
 				return TRUE;
+			WLog_WARN(TAG, "FindNextFile failed (%" PRIu32 ")", GetLastError());
 			return FALSE;
 		}
 
