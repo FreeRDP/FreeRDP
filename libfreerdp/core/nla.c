@@ -1373,9 +1373,8 @@ BOOL nla_send(rdpNla* nla)
 	/* errorCode [4] INTEGER */
 	if (nla->errorCode && nla->peerVersion >= 3 && nla->peerVersion != 5)
 	{
-		char buffer[1024];
-		WLog_DBG(TAG, "   ----->> error code %s 0x%08" PRIx32,
-		         winpr_strerror(nla->errorCode, buffer, sizeof(buffer)), nla->errorCode);
+		WLog_DBG(TAG, "   ----->> error code %s 0x%08" PRIx32, NtStatus2Tag(nla->errorCode),
+		         nla->errorCode);
 		if (!WinPrAsn1EncContextualInteger(enc, 4, nla->errorCode))
 			goto fail;
 	}
@@ -1496,8 +1495,8 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 				if (!WinPrAsn1DecReadInteger(&dec2, &val))
 					return -1;
 				nla->errorCode = (UINT)val;
-				WLog_DBG(TAG, "   <<----- error code %s 0x%08" PRIx32,
-				         winpr_strerror(nla->errorCode, buffer, sizeof(buffer)), nla->errorCode);
+				WLog_DBG(TAG, "   <<----- error code %s 0x%08" PRIx32, NtStatus2Tag(nla->errorCode),
+				         nla->errorCode);
 				break;
 			case 5:
 				WLog_DBG(TAG, "   <<----- client nonce");
