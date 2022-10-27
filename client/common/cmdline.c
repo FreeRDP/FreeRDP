@@ -763,7 +763,7 @@ static BOOL read_pem_file(rdpSettings* settings, size_t id, const char* file)
 	BOOL rc = FALSE;
 	FILE* fp = winpr_fopen(file, "r");
 	if (!fp)
-		return FALSE;
+		goto fail;
 	rs = _fseeki64(fp, 0, SEEK_END);
 	if (rs < 0)
 		goto fail;
@@ -774,7 +774,7 @@ static BOOL read_pem_file(rdpSettings* settings, size_t id, const char* file)
 	if (rs < 0)
 		goto fail;
 
-	if (!freerdp_settings_set_string_len(settings, id, NULL, s + 1ull))
+	if (!freerdp_settings_set_string_len(settings, id, NULL, (size_t)s + 1ull))
 		goto fail;
 
 	ptr = freerdp_settings_get_string_writable(settings, id);
@@ -783,7 +783,14 @@ static BOOL read_pem_file(rdpSettings* settings, size_t id, const char* file)
 		goto fail;
 	rc = TRUE;
 fail:
-	fclose(fp);
+	if (!rc)
+	{
+		char buffer[8192] = { 0 };
+		WLog_WARN(TAG, "Failed to read file '%s' [%s]", file,
+		          winpr_strerror(errno, buffer, sizeof(buffer)));
+	}
+	if (fp)
+		fclose(fp);
 	return rc;
 }
 
