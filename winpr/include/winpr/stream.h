@@ -467,8 +467,48 @@ extern "C"
 		return TRUE;
 	}
 
-	WINPR_API BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t length);
-	WINPR_API BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t length);
+	WINPR_API BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t charLength);
+	WINPR_API BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t charLength);
+
+	/** \brief Reads a WCHAR string from a stream and converts it to UTF-8 and returns a newly
+	 * allocated string
+	 *
+	 *  \param s The stream to read data from
+	 *  \param wcharLength The number of WCHAR characters to read (NOT the size in bytes!)
+	 *  \param pUtfCharLength Ignored if \b NULL, otherwise will be set to the number of
+	 *         characters in the resulting UTF-8 string
+	 *  \return A '\0' terminated UTF-8 encoded string or NULL for any failure.
+	 */
+	WINPR_API char* Stream_Read_UTF16_String_As_UTF8(wStream* s, size_t wcharLength,
+	                                                 size_t* pUtfCharLength);
+
+	/** \brief Reads a WCHAR string from a stream and converts it to UTF-8 and
+	 *  writes it to the supplied buffer
+	 *
+	 *  \param s The stream to read data from
+	 *  \param wcharLength The number of WCHAR characters to read (NOT the size in bytes!)
+	 *  \param utfBuffer A pointer to a buffer holding the result string
+	 *  \param utfBufferCharLength The size of the result buffer
+	 *  \return The char length (strlen) of the result string or -1 for failure
+	 */
+	WINPR_API SSIZE_T Stream_Read_UTF16_String_As_UTF8_Buffer(wStream* s, size_t wcharLength,
+	                                                          char* utfBuffer,
+	                                                          size_t utfBufferCharLength);
+
+	/** \brief Writes a UTF-8 string UTF16 encoded to the stream. If the UTF-8
+	 *  string is short, the remainig characters are filled up with '\0'
+	 *
+	 *  \param s The stream to write to
+	 *  \param wcharLength the length (in WCHAR characters) to write
+	 *  \param src The source data buffer with the UTF-8 data
+	 *  \param length The length in bytes of the UTF-8 buffer
+	 *  \param fill If \b TRUE fill the unused parts of the wcharLength with 0
+	 *
+	 *  \b return number of used characters for success, /b -1 for failure
+	 */
+	WINPR_API SSIZE_T Stream_Write_UTF16_String_From_UTF8(wStream* s, size_t wcharLength,
+	                                                      const char* src, size_t length,
+	                                                      BOOL fill);
 
 	/* StreamPool */
 
