@@ -60,6 +60,10 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.cmdline")
 
+static BOOL option_starts_with(const char* what, const char* val);
+static BOOL option_ends_with(const char* str, const char* ext);
+static BOOL option_equals(const char* what, const char* val);
+
 static BOOL freerdp_client_print_codepages(const char* arg)
 {
 	size_t count = 0;
@@ -106,11 +110,10 @@ static BOOL freerdp_path_valid(const char* path, BOOL* special)
 	if (!path)
 		return FALSE;
 
-	isSpecial = (strncmp(path, "*", 2) == 0) ||
-	                    (strncmp(path, DynamicDrives, sizeof(DynamicDrives)) == 0) ||
-	                    (strncmp(path, "%", 2) == 0)
-	                ? TRUE
-	                : FALSE;
+	isSpecial =
+	    (option_equals("*", path) || option_equals(DynamicDrives, path) || option_equals("%", path))
+	        ? TRUE
+	        : FALSE;
 	if (!isSpecial)
 		isPath = winpr_PathFileExists(path);
 
@@ -144,11 +147,11 @@ static char* name_from_path(const char* path)
 	const char* name = "NULL";
 	if (path)
 	{
-		if (_strnicmp(path, "%", 2) == 0)
+		if (option_equals("%", path))
 			name = "home";
-		else if (_strnicmp(path, "*", 2) == 0)
+		else if (option_equals("*", path))
 			name = "hotplug-all";
-		else if (_strnicmp(path, "DynamicDrives", 2) == 0)
+		else if (option_equals("DynamicDrives", path))
 			name = "hotplug";
 		else
 			name = path;
@@ -549,7 +552,7 @@ static int freerdp_client_command_line_pre_filter(void* context, int index, int 
 
 		if (length > 4)
 		{
-			if (_stricmp(&(argv[index])[length - 4], ".rdp") == 0)
+			if (option_ends_with(argv[index], ".rdp"))
 			{
 				settings = (rdpSettings*)context;
 
@@ -562,7 +565,7 @@ static int freerdp_client_command_line_pre_filter(void* context, int index, int 
 
 		if (length > 13)
 		{
-			if (_stricmp(&(argv[index])[length - 13], ".msrcIncident") == 0)
+			if (option_ends_with(argv[index], ".msrcIncident"))
 			{
 				settings = (rdpSettings*)context;
 
@@ -583,7 +586,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 	WINPR_ASSERT(params);
 	WINPR_ASSERT(count > 0);
 
-	if (strcmp(params[0], "drive") == 0)
+	if (option_equals(params[0], "drive"))
 	{
 		BOOL rc;
 		if (count < 2)
@@ -597,7 +600,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 
 		return rc;
 	}
-	else if (strcmp(params[0], "printer") == 0)
+	else if (option_equals(params[0], "printer"))
 	{
 		RDPDR_DEVICE* printer;
 
@@ -619,7 +622,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 
 		return TRUE;
 	}
-	else if (strcmp(params[0], "smartcard") == 0)
+	else if (option_equals(params[0], "smartcard"))
 	{
 		RDPDR_DEVICE* smartcard;
 
@@ -642,7 +645,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 
 		return TRUE;
 	}
-	else if (strcmp(params[0], "serial") == 0)
+	else if (option_equals(params[0], "serial"))
 	{
 		RDPDR_DEVICE* serial;
 
@@ -665,7 +668,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 
 		return TRUE;
 	}
-	else if (strcmp(params[0], "parallel") == 0)
+	else if (option_equals(params[0], "parallel"))
 	{
 		RDPDR_DEVICE* parallel;
 
@@ -809,10 +812,10 @@ static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts
 	for (xx = 0; xx < count; xx++)
 	{
 		const CmdLineSubOptions* opt = &opts[xx];
-		size_t optlen = strlen(opt->optname);
 
-		if (strncmp(opt->optname, arg, optlen) == 0)
+		if (option_equals(opt->optname, arg))
 		{
+			const size_t optlen = strlen(opt->optname);
 			const char* val = &arg[optlen];
 			BOOL status;
 
@@ -1229,7 +1232,7 @@ static UINT32 freerdp_get_keyboard_layout_for_type(const char* name, DWORD type)
 	for (x = 0; x < count; x++)
 	{
 		const RDP_KEYBOARD_LAYOUT* layout = &layouts[x];
-		if (_stricmp(layout->name, name) == 0)
+		if (option_equals(layout->name, name))
 		{
 			return layout->code;
 		}
@@ -1269,7 +1272,7 @@ static int freerdp_detect_command_line_pre_filter(void* context, int index, int 
 
 		if (length > 4)
 		{
-			if (_stricmp(&(argv[index])[length - 4], ".rdp") == 0)
+			if (option_ends_with(argv[index], ".rdp"))
 			{
 				return 1;
 			}
@@ -1277,7 +1280,7 @@ static int freerdp_detect_command_line_pre_filter(void* context, int index, int 
 
 		if (length > 13)
 		{
-			if (_stricmp(&(argv[index])[length - 13], ".msrcIncident") == 0)
+			if (option_ends_with(argv[index], ".msrcIncident"))
 			{
 				return 1;
 			}
@@ -1532,22 +1535,22 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 
 		if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 		{
-			if (_strnicmp("tune", arg->Value, 5) == 0)
+			if (option_equals("tune", arg->Value))
 				freerdp_client_print_tune_list(settings);
-			else if (_strnicmp("kbd", arg->Value, 4) == 0)
+			else if (option_equals("kbd", arg->Value))
 				freerdp_client_print_keyboard_list();
-			else if (_strnicmp("kbd-lang", arg->Value, 8) == 0)
+			else if (option_equals("kbd-lang", arg->Value))
 			{
 				const char* val = NULL;
-				if (_strnicmp("kbd-lang:", arg->Value, 9) == 0)
+				if (option_starts_with("kbd-lang:", arg->Value))
 					val = &arg->Value[9];
 				freerdp_client_print_codepages(val);
 			}
-			else if (_strnicmp("kbd-scancode", arg->Value, 13) == 0)
+			else if (option_equals("kbd-scancode", arg->Value))
 				freerdp_client_print_scancodes();
-			else if (_strnicmp("monitor", arg->Value, 8) == 0)
+			else if (option_equals("monitor", arg->Value))
 				settings->ListMonitors = TRUE;
-			else if (_strnicmp("smartcard", arg->Value, 10) == 0)
+			else if (option_equals("smartcard", arg->Value))
 				freerdp_smartcard_list(settings);
 			else
 				return COMMAND_LINE_ERROR;
@@ -1623,17 +1626,6 @@ out:
 	return status;
 }
 
-static BOOL ends_with(const char* str, const char* ext)
-{
-	const size_t strLen = strlen(str);
-	const size_t extLen = strlen(ext);
-
-	if (strLen < extLen)
-		return FALSE;
-
-	return _strnicmp(&str[strLen - extLen], ext, extLen) == 0;
-}
-
 /**
  * parses a string value with the format <v1>x<v2>
  *
@@ -1704,15 +1696,44 @@ static BOOL setSmartcardEmulation(const char* value, rdpSettings* settings)
 	return TRUE;
 }
 
+BOOL option_starts_with(const char* what, const char* val)
+{
+	WINPR_ASSERT(what);
+	WINPR_ASSERT(val);
+	const size_t wlen = strlen(what);
+
+	return _strnicmp(what, val, wlen) == 0;
+}
+
+BOOL option_ends_with(const char* str, const char* ext)
+{
+	WINPR_ASSERT(str);
+	WINPR_ASSERT(ext);
+	const size_t strLen = strlen(str);
+	const size_t extLen = strlen(ext);
+
+	if (strLen < extLen)
+		return FALSE;
+
+	return _strnicmp(&str[strLen - extLen], ext, extLen) == 0;
+}
+
+BOOL option_equals(const char* what, const char* val)
+{
+	WINPR_ASSERT(what);
+	WINPR_ASSERT(val);
+	return _stricmp(what, val) == 0;
+}
+
 static int parse_on_off_option(const char* value)
 {
 	WINPR_ASSERT(value);
 	const char* sep = strchr(value, ':');
 	if (!sep)
 		return 1;
-	if (_strnicmp("on", &sep[1], 3) == 0)
+	if (option_equals("on", &sep[1]))
 		return 1;
-	if (_strnicmp("off", &sep[1], 4) == 0)
+	if (option_equals("off", &sep[1]))
 		return 0;
 	return -1;
 }
@@ -1723,11 +1744,11 @@ static int parse_tls_ciphers(rdpSettings* settings, const char* Value)
 	if (!Value)
 		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-	if (strcmp(Value, "netmon") == 0)
+	if (option_equals(Value, "netmon"))
 	{
 		ciphers = "ALL:!ECDH:!ADH:!DHE";
 	}
-	else if (strcmp(Value, "ma") == 0)
+	else if (option_equals(Value, "ma"))
 	{
 		ciphers = "AES128-SHA";
 	}
@@ -1787,7 +1808,7 @@ static int parse_tls_enforce(rdpSettings* settings, const char* Value)
 		for (size_t x = 0; x < ARRAYSIZE(map); x++)
 		{
 			const struct map_t* cur = &map[x];
-			if (_stricmp(cur->name, Value) == 0)
+			if (option_equals(cur->name, Value))
 			{
 				version = cur->version;
 				break;
@@ -1806,13 +1827,13 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	int rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 	CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "tls")
 	{
-		if (strncmp("ciphers:", arg->Value, 8) == 0)
+		if (option_starts_with("ciphers:", arg->Value))
 			rc = parse_tls_ciphers(settings, &arg->Value[8]);
-		else if (strncmp("seclevel:", arg->Value, 9) == 0)
+		else if (option_starts_with("seclevel:", arg->Value))
 			rc = parse_tls_seclevel(settings, &arg->Value[9]);
-		else if (strncmp("secrets-file:", arg->Value, 13) == 0)
+		else if (option_starts_with("secrets-file:", arg->Value))
 			rc = parse_tls_secrets_file(settings, &arg->Value[13]);
-		else if (strncmp("enforce:", arg->Value, 8) == 0)
+		else if (option_starts_with("enforce:", arg->Value))
 			rc = parse_tls_enforce(settings, &arg->Value[8]);
 	}
 
@@ -1873,7 +1894,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			{
 				const char* val = ptr[x];
 #ifdef WITH_GFX_H264
-				if (_strnicmp("AVC444", val, 6) == 0)
+				if (option_starts_with("AVC444", val))
 				{
 					const int bval = parse_on_off_option(val);
 					if (bval < 0)
@@ -1882,7 +1903,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 						GfxH264 = bval > 0;
 					codecSelected = TRUE;
 				}
-				else if (_strnicmp("AVC420", val, 6) == 0)
+				else if (option_starts_with("AVC420", val))
 				{
 					const int bval = parse_on_off_option(val);
 					if (bval < 0)
@@ -1893,7 +1914,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				}
 				else
 #endif
-				    if (_strnicmp("RFX", val, 3) == 0)
+				    if (option_starts_with("RFX", val))
 				{
 					const int bval = parse_on_off_option(val);
 					if (bval < 0)
@@ -1902,7 +1923,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 						RemoteFxCodec = bval > 0;
 					codecSelected = TRUE;
 				}
-				else if (_strnicmp("progressive", val, 11) == 0)
+				else if (option_starts_with("progressive", val))
 				{
 					const int bval = parse_on_off_option(val);
 					if (bval < 0)
@@ -1911,7 +1932,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 						GfxProgressive = bval > 0;
 					codecSelected = TRUE;
 				}
-				else if (_strnicmp("mask:", val, 5) == 0)
+				else if (option_starts_with("mask:", val))
 				{
 					ULONGLONG v;
 					const char* uv = &val[5];
@@ -1920,7 +1941,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 					else
 						settings->GfxCapsFilter = (UINT32)v;
 				}
-				else if (_strnicmp("small-cache", val, 11) == 0)
+				else if (option_starts_with("small-cache", val))
 				{
 					const int bval = parse_on_off_option(val);
 					if (bval < 0)
@@ -1928,7 +1949,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxSmallCache, bval > 0))
 						rc = COMMAND_LINE_ERROR;
 				}
-				else if (_strnicmp("thin-client", val, 11) == 0)
+				else if (option_starts_with("thin-client", val))
 				{
 					const int bval = parse_on_off_option(val);
 					if (bval < 0)
@@ -2028,7 +2049,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		{
 			const char* val = ptr[x];
 
-			if (_strnicmp("remap:", val, 6) == 0)
+			if (option_starts_with("remap:", val))
 			{
 				/* Append this new occurance to the already existing list */
 				char* now = strdup(&val[6]);
@@ -2058,11 +2079,11 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				}
 				free(now);
 			}
-			else if (_strnicmp("layout:", val, 7) == 0)
+			else if (option_starts_with("layout:", val))
 			{
 				rc = parse_kbd_layout(settings, &val[7]);
 			}
-			else if (_strnicmp("lang:", val, 5) == 0)
+			else if (option_starts_with("lang:", val))
 			{
 				LONGLONG ival;
 				const BOOL isInt = value_to_int(&val[5], &ival, 1, UINT32_MAX);
@@ -2072,7 +2093,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				                                      (UINT32)ival))
 					rc = COMMAND_LINE_ERROR;
 			}
-			else if (_strnicmp("type:", val, 5) == 0)
+			else if (option_starts_with("type:", val))
 			{
 				LONGLONG ival;
 				const BOOL isInt = value_to_int(&val[5], &ival, 1, UINT32_MAX);
@@ -2081,7 +2102,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				else if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardType, (UINT32)ival))
 					rc = COMMAND_LINE_ERROR;
 			}
-			else if (_strnicmp("subtype:", val, 8) == 0)
+			else if (option_starts_with("subtype:", val))
 			{
 				LONGLONG ival;
 				const BOOL isInt = value_to_int(&val[8], &ival, 1, UINT32_MAX);
@@ -2091,7 +2112,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				                                      (UINT32)ival))
 					rc = COMMAND_LINE_ERROR;
 			}
-			else if (_strnicmp("fn-key:", val, 7) == 0)
+			else if (option_starts_with("fn-key:", val))
 			{
 				LONGLONG ival;
 				const BOOL isInt = value_to_int(&val[7], &ival, 1, UINT32_MAX);
@@ -2101,7 +2122,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				                                      (UINT32)ival))
 					rc = COMMAND_LINE_ERROR;
 			}
-			else if (_strnicmp("unicode", val, 7) == 0)
+			else if (option_starts_with("unicode", val))
 			{
 				const int bval = parse_on_off_option(val);
 				if (bval < 0)
@@ -2158,18 +2179,17 @@ static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		struct app_map
 		{
 			const char* name;
-			size_t nlen;
 			size_t id;
 			int (*fkt)(rdpSettings* settings, const char* value);
 		};
 		const struct app_map amap[] = {
-			{ "program:", 8, FreeRDP_RemoteApplicationProgram, parse_app_option_program },
-			{ "workdir:", 8, FreeRDP_RemoteApplicationWorkingDir, NULL },
-			{ "name:", 5, FreeRDP_RemoteApplicationName, NULL },
-			{ "icon:", 5, FreeRDP_RemoteApplicationIcon, NULL },
-			{ "cmd:", 4, FreeRDP_RemoteApplicationCmdLine, NULL },
-			{ "file:", 5, FreeRDP_RemoteApplicationFile, NULL },
-			{ "guid:", 5, FreeRDP_RemoteApplicationGuid, NULL },
+			{ "program:", FreeRDP_RemoteApplicationProgram, parse_app_option_program },
+			{ "workdir:", FreeRDP_RemoteApplicationWorkingDir, NULL },
+			{ "name:", FreeRDP_RemoteApplicationName, NULL },
+			{ "icon:", FreeRDP_RemoteApplicationIcon, NULL },
+			{ "cmd:", FreeRDP_RemoteApplicationCmdLine, NULL },
+			{ "file:", FreeRDP_RemoteApplicationFile, NULL },
+			{ "guid:", FreeRDP_RemoteApplicationGuid, NULL },
 		};
 		for (size_t x = 0; x < count; x++)
 		{
@@ -2179,11 +2199,12 @@ static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			for (size_t y = 0; y < ARRAYSIZE(amap); y++)
 			{
 				const struct app_map* cur = &amap[y];
-				if (_strnicmp(val, cur->name, cur->nlen) == 0)
+				if (option_starts_with(val, cur->name))
 				{
+					const char* xval = &val[strlen(cur->name)];
 					if (cur->fkt)
-						rc = cur->fkt(settings, &val[cur->nlen]);
-					else if (!freerdp_settings_set_string(settings, cur->id, &val[cur->nlen]))
+						rc = cur->fkt(settings, xval);
+					else if (!freerdp_settings_set_string(settings, cur->id, xval))
 						rc = COMMAND_LINE_ERROR_MEMORY;
 
 					handled = TRUE;
@@ -2226,23 +2247,23 @@ static int parse_cache_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 	{
 		const char* val = ptr[x];
 
-		if (_strnicmp("codec:", val, 6) == 0)
+		if (option_starts_with("codec:", val))
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheV3Enabled, TRUE))
 				rc = COMMAND_LINE_ERROR;
-			else if (strcmp(arg->Value, "rfx") == 0)
+			else if (option_equals(arg->Value, "rfx"))
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE))
 					rc = COMMAND_LINE_ERROR;
 			}
-			else if (strcmp(arg->Value, "nsc") == 0)
+			else if (option_equals(arg->Value, "nsc"))
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE))
 					rc = COMMAND_LINE_ERROR;
 			}
 
 #if defined(WITH_JPEG)
-			else if (strcmp(arg->Value, "jpeg") == 0)
+			else if (option_equals(arg->Value, "jpeg"))
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_JpegCodec, TRUE))
 					rc = COMMAND_LINE_ERROR;
@@ -2253,7 +2274,7 @@ static int parse_cache_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 
 #endif
 		}
-		else if (_strnicmp("persist-file:", val, 13) == 0)
+		else if (option_starts_with("persist-file:", val))
 		{
 
 			if (!freerdp_settings_set_string(settings, FreeRDP_BitmapCachePersistFile, &val[13]))
@@ -2268,25 +2289,25 @@ static int parse_cache_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			else
 			{
-				if (_strnicmp("bitmap", val, 6) == 0)
+				if (option_starts_with("bitmap", val))
 				{
 					if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheEnabled, bval > 0))
 						rc = COMMAND_LINE_ERROR;
 				}
-				else if (_strnicmp("glyph", val, 5) == 0)
+				else if (option_starts_with("glyph", val))
 				{
 					if (!freerdp_settings_set_uint32(settings, FreeRDP_GlyphSupportLevel,
 					                                 bval > 0 ? GLYPH_SUPPORT_FULL
 					                                          : GLYPH_SUPPORT_NONE))
 						rc = COMMAND_LINE_ERROR;
 				}
-				else if (_strnicmp("persist", val, 7) == 0)
+				else if (option_starts_with("persist", val))
 				{
 					if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled,
 					                               bval > 0))
 						rc = COMMAND_LINE_ERROR;
 				}
-				else if (_strnicmp("offscreen", val, 9) == 0)
+				else if (option_starts_with("offscreen", val))
 				{
 					if (!freerdp_settings_set_uint32(settings, FreeRDP_OffscreenSupportLevel, bval))
 						rc = COMMAND_LINE_ERROR;
@@ -2320,8 +2341,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	 * legacy command line syntax. */
 	if (argc > 1)
 	{
-		ext = ends_with(argv[1], ".rdp");
-		assist = ends_with(argv[1], ".msrcIncident");
+		ext = option_ends_with(argv[1], ".rdp");
+		assist = option_ends_with(argv[1], ".msrcIncident");
 	}
 
 	if (!ext && !assist)
@@ -2482,11 +2503,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					next++;
 				}
 
-				if (_strnicmp(cur, "fqdn", 5) == 0)
+				if (option_equals("fqdn", cur))
 					mask = 0x06U;
-				else if (_strnicmp(cur, "ip", 3) == 0)
+				else if (option_equals("ip", cur))
 					mask = 0x05U;
-				else if (_strnicmp(cur, "netbios", 8) == 0)
+				else if (option_equals("netbios", cur))
 					mask = 0x03U;
 				else
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2613,7 +2634,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
-				if (_stricmp(arg->Value, "force") == 0)
+				if (option_equals(arg->Value, "force"))
 				{
 					settings->ForceMultimon = TRUE;
 				}
@@ -2926,7 +2947,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			WINPR_ASSERT(arg->Value);
-			if (_stricmp(arg->Value, "rpc") == 0)
+			if (option_equals(arg->Value, "rpc"))
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, TRUE) ||
 				    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, FALSE) ||
@@ -2939,7 +2960,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				if (c)
 				{
 					*c++ = '\0';
-					if (_stricmp(c, "no-websockets") != 0)
+					if (!option_equals(c, "no-websockets"))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets,
@@ -2947,13 +2968,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
 
-				if (_stricmp(arg->Value, "http") == 0)
+				if (option_equals(arg->Value, "http"))
 				{
 					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, FALSE) ||
 					    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, TRUE))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
-				else if (_stricmp(arg->Value, "auto") == 0)
+				else if (option_equals(arg->Value, "auto"))
 				{
 					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, TRUE) ||
 					    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, TRUE))
@@ -2970,13 +2991,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			UINT32 type = 0;
 
-			if (_stricmp(arg->Value, "none") == 0)
+			if (option_equals(arg->Value, "none"))
 				type = TSC_PROXY_MODE_NONE_DIRECT;
-			else if (_stricmp(arg->Value, "direct") == 0)
+			else if (option_equals(arg->Value, "direct"))
 				type = TSC_PROXY_MODE_DIRECT;
-			else if (_stricmp(arg->Value, "detect") == 0)
+			else if (option_equals(arg->Value, "detect"))
 				type = TSC_PROXY_MODE_DETECT;
-			else if (_stricmp(arg->Value, "default") == 0)
+			else if (option_equals(arg->Value, "default"))
 				type = TSC_PROXY_MODE_DEFAULT;
 			else
 			{
@@ -3072,7 +3093,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			{
 				if (!freerdp_settings_set_string(settings, FreeRDP_TransportDumpFile, args[1]))
 					failed = TRUE;
-				else if (strcmp(args[0], "replay") == 0)
+				else if (option_equals(args[0], "replay"))
 				{
 					if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDump, FALSE))
 						failed = TRUE;
@@ -3080,7 +3101,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					                                    TRUE))
 						failed = TRUE;
 				}
-				else if (strcmp(args[0], "record") == 0)
+				else if (option_equals(args[0], "record"))
 				{
 					if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDump, TRUE))
 						failed = TRUE;
@@ -3127,12 +3148,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 				for (x = 0; (x < count) && (rc == 0); x++)
 				{
-					const char usesel[14] = "use-selection:";
+					const char* usesel = "use-selection:";
 
 					const char* cur = ptr.pc[x];
-					if (_strnicmp(usesel, cur, sizeof(usesel)) == 0)
+					if (option_starts_with(usesel, cur))
 					{
-						const char* val = &cur[sizeof(usesel)];
+						const char* val = &cur[strlen(usesel)];
 						if (!copy_value(val, &settings->XSelectionAtom))
 							rc = COMMAND_LINE_ERROR_MEMORY;
 						settings->RedirectClipboard = TRUE;
@@ -3191,20 +3212,20 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			UINT32 type = 0;
 
-			if (_stricmp(arg->Value, "modem") == 0)
+			if (option_equals(arg->Value, "modem"))
 				type = CONNECTION_TYPE_MODEM;
-			else if (_stricmp(arg->Value, "broadband") == 0)
+			else if (option_equals(arg->Value, "broadband"))
 				type = CONNECTION_TYPE_BROADBAND_HIGH;
-			else if (_stricmp(arg->Value, "broadband-low") == 0)
+			else if (option_equals(arg->Value, "broadband-low"))
 				type = CONNECTION_TYPE_BROADBAND_LOW;
-			else if (_stricmp(arg->Value, "broadband-high") == 0)
+			else if (option_equals(arg->Value, "broadband-high"))
 				type = CONNECTION_TYPE_BROADBAND_HIGH;
-			else if (_stricmp(arg->Value, "wan") == 0)
+			else if (option_equals(arg->Value, "wan"))
 				type = CONNECTION_TYPE_WAN;
-			else if (_stricmp(arg->Value, "lan") == 0)
+			else if (option_equals(arg->Value, "lan"))
 				type = CONNECTION_TYPE_LAN;
-			else if ((_stricmp(arg->Value, "autodetect") == 0) ||
-			         (_stricmp(arg->Value, "auto") == 0) || (_stricmp(arg->Value, "detect") == 0))
+			else if ((option_equals(arg->Value, "autodetect")) ||
+			         (option_equals(arg->Value, "auto")) || (option_equals(arg->Value, "detect")))
 			{
 				type = CONNECTION_TYPE_AUTODETECT;
 			}
@@ -3271,9 +3292,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "gdi")
 		{
-			if (_stricmp(arg->Value, "sw") == 0)
+			if (option_equals(arg->Value, "sw"))
 				settings->SoftwareGdi = TRUE;
-			else if (_stricmp(arg->Value, "hw") == 0)
+			else if (option_equals(arg->Value, "hw"))
 				settings->SoftwareGdi = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gfx")
@@ -3336,17 +3357,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					{
 						const char* val = ptr.pc[x];
 
-						if (_strnicmp("AVC444", val, 7) == 0)
+						if (option_starts_with("AVC444", val))
 						{
 							settings->GfxH264 = TRUE;
 							settings->GfxAVC444 = TRUE;
 						}
-						else if (_strnicmp("AVC420", val, 7) == 0)
+						else if (option_starts_with("AVC420", val))
 						{
 							settings->GfxH264 = TRUE;
 							settings->GfxAVC444 = FALSE;
 						}
-						else if (_strnicmp("mask:", val, 5) == 0)
+						else if (option_starts_with("mask:", val))
 						{
 							ULONGLONG v;
 							const char* uv = &val[5];
@@ -3375,9 +3396,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!arg->Value)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-			if (strcmp(arg->Value, "video") == 0)
+			if (option_equals(arg->Value, "video"))
 				settings->RemoteFxCodecMode = 0x00;
-			else if (strcmp(arg->Value, "image") == 0)
+			else if (option_equals(arg->Value, "image"))
 				settings->RemoteFxCodecMode = 0x02;
 		}
 		CommandLineSwitchCase(arg, "frame-ack")
@@ -3450,13 +3471,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					free(ptr);
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
-				if (strcmp("rdp", cur) == 0) /* Standard RDP */
+				if (option_equals("rdp", cur)) /* Standard RDP */
 					RdpSecurity = bval > 0;
-				else if (strcmp("tls", cur) == 0) /* TLS */
+				else if (option_equals("tls", cur)) /* TLS */
 					TlsSecurity = bval > 0;
-				else if (strcmp("nla", cur) == 0) /* NLA */
+				else if (option_equals("nla", cur)) /* NLA */
 					NlaSecurity = bval > 0;
-				else if (strcmp("ext", cur) == 0) /* NLA Extended */
+				else if (option_equals("ext", cur)) /* NLA Extended */
 					ExtSecurity = bval > 0;
 				else
 				{
@@ -3493,13 +3514,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 				for (i = 0; i < count; i++)
 				{
-					if (!strcmp(ptr.pc[i], "40"))
+					if (option_equals(ptr.pc[i], "40"))
 						settings->EncryptionMethods |= ENCRYPTION_METHOD_40BIT;
-					else if (!strcmp(ptr.pc[i], "56"))
+					else if (option_equals(ptr.pc[i], "56"))
 						settings->EncryptionMethods |= ENCRYPTION_METHOD_56BIT;
-					else if (!strcmp(ptr.pc[i], "128"))
+					else if (option_equals(ptr.pc[i], "128"))
 						settings->EncryptionMethods |= ENCRYPTION_METHOD_128BIT;
-					else if (!strcmp(ptr.pc[i], "FIPS"))
+					else if (option_equals(ptr.pc[i], "FIPS"))
 						settings->EncryptionMethods |= ENCRYPTION_METHOD_FIPS;
 					else
 						WLog_ERR(TAG, "unknown encryption method '%s'", ptr.pc[i]);
@@ -3516,7 +3537,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			{
 				if (!arg->Value)
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-				promptForPassword = (_strnicmp(arg->Value, "force", 6) == 0);
+				promptForPassword = (option_equals(arg->Value, "force"));
 
 				if (!promptForPassword)
 					return COMMAND_LINE_ERROR;
@@ -3622,25 +3643,25 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				const char deny[] = "deny";
 				const char ignore[] = "ignore";
 				const char tofu[] = "tofu";
-				const char name[5] = "name:";
-				const char fingerprints[12] = "fingerprint:";
+				const char name[] = "name:";
+				const char fingerprints[] = "fingerprint:";
 
 				const char* cur = ptr.pc[x];
-				if (_strnicmp(deny, cur, sizeof(deny)) == 0)
+				if (option_equals(deny, cur))
 					settings->AutoDenyCertificate = TRUE;
-				else if (_strnicmp(ignore, cur, sizeof(ignore)) == 0)
+				else if (option_equals(ignore, cur))
 					settings->IgnoreCertificate = TRUE;
-				else if (_strnicmp(tofu, cur, 4) == 0)
+				else if (option_equals(tofu, cur))
 					settings->AutoAcceptCertificate = TRUE;
-				else if (_strnicmp(name, cur, sizeof(name)) == 0)
+				else if (option_starts_with(name, cur))
 				{
-					const char* val = &cur[sizeof(name)];
+					const char* val = &cur[strnlen(name, sizeof(name))];
 					if (!freerdp_settings_set_string(settings, FreeRDP_CertificateName, val))
 						rc = COMMAND_LINE_ERROR_MEMORY;
 				}
-				else if (_strnicmp(fingerprints, cur, sizeof(fingerprints)) == 0)
+				else if (option_starts_with(fingerprints, cur))
 				{
-					const char* val = &cur[sizeof(fingerprints)];
+					const char* val = &cur[strnlen(fingerprints, sizeof(fingerprints))];
 					if (!append_value(val, &settings->CertificateAcceptedFingerprints))
 						rc = COMMAND_LINE_ERROR_MEMORY;
 				}
@@ -3725,7 +3746,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					}
 
 					/* sticky:[on|off] */
-					if (_strnicmp(cur, "sticky:", 7) == 0)
+					if (option_starts_with("sticky:", cur))
 					{
 						Floatbar &= ~0x02u;
 
@@ -3738,29 +3759,29 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 					/* default:[visible|hidden] */
-					else if (_strnicmp(cur, "default:", 8) == 0)
+					else if (option_starts_with("default:", cur))
 					{
 						const char* val = cur + 8;
 						Floatbar &= ~0x04u;
 
-						if (_strnicmp(val, "visible", 8) == 0)
+						if (option_equals("visible", val))
 							Floatbar |= 0x04u;
-						else if (_strnicmp(val, "hidden", 7) == 0)
+						else if (option_equals("hidden", val))
 							Floatbar &= ~0x04u;
 						else
 							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 					/* show:[always|fullscreen|window] */
-					else if (_strnicmp(cur, "show:", 5) == 0)
+					else if (option_starts_with("show:", cur))
 					{
 						const char* val = cur + 5;
 						Floatbar &= ~0x30u;
 
-						if (_strnicmp(val, "always", 7) == 0)
+						if (option_equals("always", val))
 							Floatbar |= 0x30u;
-						else if (_strnicmp(val, "fullscreen", 11) == 0)
+						else if (option_equals("fullscreen", val))
 							Floatbar |= 0x10u;
-						else if (_strnicmp(val, "window", 7) == 0)
+						else if (option_equals("window", val))
 							Floatbar |= 0x20u;
 						else
 							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -3838,17 +3859,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			settings->BitmapCacheV3Enabled = TRUE;
 
-			if (strcmp(arg->Value, "rfx") == 0)
+			if (option_equals(arg->Value, "rfx"))
 			{
 				settings->RemoteFxCodec = TRUE;
 			}
-			else if (strcmp(arg->Value, "nsc") == 0)
+			else if (option_equals(arg->Value, "nsc"))
 			{
 				freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE);
 			}
 
 #if defined(WITH_JPEG)
-			else if (strcmp(arg->Value, "jpeg") == 0)
+			else if (option_equals(arg->Value, "jpeg"))
 			{
 				settings->JpegCodec = TRUE;
 
