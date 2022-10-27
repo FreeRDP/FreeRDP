@@ -104,6 +104,13 @@ static struct synthetic_file* make_synthetic_file(const WCHAR* local_name, const
 	if (!file->remote_name)
 		goto fail;
 
+	const size_t len = _wcslen(file->remote_name);
+	for (size_t x = 0; x < len; x++)
+	{
+		if (file->remote_name[x] == '/')
+			file->remote_name[x] = '\\';
+	}
+
 	file->dwFileAttributes = fd.dwFileAttributes;
 	file->ftCreationTime = fd.ftCreationTime;
 	file->ftLastWriteTime = fd.ftLastWriteTime;
