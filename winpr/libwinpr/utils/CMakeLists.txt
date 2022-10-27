@@ -23,8 +23,7 @@ set(COLLECTIONS_SRCS
 	collections/Queue.c
 	collections/Stack.c
 	collections/PubSub.c
-	collections/BipBuffer.c
-	collections/BitStream.c
+        collections/BitStream.c
 	collections/Reference.c
 	collections/ArrayList.c
 	collections/LinkedList.c
