@@ -71,6 +71,8 @@ struct synthetic_file
 	DWORD nFileSizeLow;
 };
 
+void free_synthetic_file(struct synthetic_file* file);
+
 static struct synthetic_file* make_synthetic_file(const WCHAR* local_name, const WCHAR* remote_name)
 {
 	struct synthetic_file* file = NULL;
@@ -111,19 +113,14 @@ static struct synthetic_file* make_synthetic_file(const WCHAR* local_name, const
 
 	return file;
 fail:
-	free(file->local_name);
-	free(file->remote_name);
-	free(file);
-
+	free_synthetic_file(file);
 	return NULL;
 }
 
 static UINT synthetic_file_read_close(struct synthetic_file* file, BOOL force);
 
-static void free_synthetic_file(void* the_file)
+void free_synthetic_file(struct synthetic_file* file)
 {
-	struct synthetic_file* file = the_file;
-
 	if (!file)
 		return;
 
@@ -992,6 +989,12 @@ static void* convert_filedescriptors_to_mate_copied_files(wClipboard* clipboard,
 	return pDstData;
 }
 
+static void array_free_synthetic_file(void* the_file)
+{
+	struct synthetic_file* file = the_file;
+	free_synthetic_file(file);
+}
+
 static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 {
 	wObject* obj;
@@ -1038,7 +1041,7 @@ static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 		goto error;
 
 	obj = ArrayList_Object(clipboard->localFiles);
-	obj->fnObjectFree = free_synthetic_file;
+	obj->fnObjectFree = array_free_synthetic_file;
 
 	if (!ClipboardRegisterSynthesizer(clipboard, local_file_format_id, file_group_format_id,
 	                                  convert_uri_list_to_filedescriptors))

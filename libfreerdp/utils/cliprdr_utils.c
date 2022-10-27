@@ -197,6 +197,7 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
 		}
 
 		Stream_Write_UINT32(s, file->dwFlags);          /* flags (4 bytes) */
+
 		Stream_Write_UINT32(s, file->clsid.Data1);
 		Stream_Write_UINT16(s, file->clsid.Data2);
 		Stream_Write_UINT16(s, file->clsid.Data3);
