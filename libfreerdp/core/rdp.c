@@ -399,9 +399,6 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 		}
 		else
 			WLog_ERR(TAG, "%s missing context=%p", __FUNCTION__, context);
-
-		/* Ensure the connection is terminated */
-		utils_abort_connect(rdp);
 	}
 	else
 	{
