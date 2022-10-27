@@ -182,7 +182,7 @@ WINPR_HMAC_CTX* winpr_HMAC_New(void)
 	if (!(ctx->hmac = (HMAC_CTX*)calloc(1, sizeof(HMAC_CTX))))
 		goto fail;
 
-	HMAC_CTX_init(hmac);
+	HMAC_CTX_init(ctx->hmac);
 #else
 
 	if (!(ctx->hmac = HMAC_CTX_new()))
@@ -196,6 +196,7 @@ WINPR_HMAC_CTX* winpr_HMAC_New(void)
 
 fail:
 	winpr_HMAC_Free(ctx);
+	return NULL;
 }
 
 BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, size_t keylen)
