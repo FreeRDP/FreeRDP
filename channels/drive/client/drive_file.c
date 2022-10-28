@@ -44,13 +44,12 @@
 #include "drive_file.h"
 
 #ifdef WITH_DEBUG_RDPDR
-#define DEBUG_WSTR(msg, wstr)                                            \
-	do                                                                   \
-	{                                                                    \
-		LPSTR lpstr;                                                     \
-		ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &lpstr, 0, NULL, NULL); \
-		WLog_DBG(TAG, msg, lpstr);                                       \
-		free(lpstr);                                                     \
+#define DEBUG_WSTR(msg, wstr)                              \
+	do                                                     \
+	{                                                      \
+		char lpstr[1024] = { 0 };                          \
+		ConvertWCharToUtf8(wstr, lpstr, ARRAYSIZE(lpstr)); \
+		WLog_DBG(TAG, msg, lpstr);                         \
 	} while (0)
 #else
 #define DEBUG_WSTR(msg, wstr) \
@@ -121,8 +120,7 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
 	if (_wcsstr(&fullpath[base_path_length], dotdot))
 	{
 		char abuffer[MAX_PATH] = { 0 };
-		ConvertFromUnicode(CP_UTF8, 0, &fullpath[base_path_length], -1, (char**)&abuffer,
-		                   ARRAYSIZE(abuffer) - 1, NULL, NULL);
+		ConvertWCharToUtf8(&fullpath[base_path_length], abuffer, ARRAYSIZE(abuffer));
 
 		WLog_WARN(TAG, "[rdpdr] received invalid file path '%s' from server, aborting!",
 		          &abuffer[base_path_length]);

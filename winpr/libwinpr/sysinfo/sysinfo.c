@@ -402,7 +402,11 @@ BOOL GetComputerNameW(LPWSTR lpBuffer, LPDWORD lpnSize)
 	rc = GetComputerNameA(buffer, lpnSize);
 
 	if (rc && (*lpnSize > 0))
-		ConvertToUnicode(CP_UTF8, 0, buffer, (int)*lpnSize, &lpBuffer, (int)*lpnSize);
+	{
+		const SSIZE_T res = ConvertUtf8NToWChar(buffer, *lpnSize, lpBuffer, *lpnSize);
+		rc = res > 0;
+	}
+
 	free(buffer);
 
 	return rc;
@@ -520,7 +524,10 @@ BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD 
 	rc = GetComputerNameExA(NameType, lpABuffer, lpnSize);
 
 	if (rc && (*lpnSize > 0))
-		ConvertToUnicode(CP_UTF8, 0, lpABuffer, *lpnSize, &lpBuffer, *lpnSize);
+	{
+		const SSIZE_T res = ConvertUtf8NToWChar(lpABuffer, *lpnSize, lpBuffer, *lpnSize);
+		rc = res > 0;
+	}
 
 	free(lpABuffer);
 	return rc;

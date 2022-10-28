@@ -80,7 +80,6 @@ typedef struct
 static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	char* path = NULL;
-	int status;
 	WCHAR* ptr;
 	UINT32 PathLength;
 	if (!Stream_SafeSeek(irp->input, 28))
@@ -90,17 +89,14 @@ static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 4))
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, PathLength);
+	if (PathLength < sizeof(WCHAR))
+		return ERROR_INVALID_DATA;
 	ptr = (WCHAR*)Stream_Pointer(irp->input);
 	if (!Stream_SafeSeek(irp->input, PathLength))
 		return ERROR_INVALID_DATA;
-	status = ConvertFromUnicode(CP_UTF8, 0, ptr, PathLength / 2, &path, 0, NULL, NULL);
-
-	if (status < 1)
-		if (!(path = (char*)calloc(1, 1)))
-		{
-			WLog_ERR(TAG, "calloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
+	path = ConvertWCharNToUtf8Alloc(ptr, PathLength / sizeof(WCHAR), NULL);
+	if (!path)
+		return CHANNEL_RC_NO_MEMORY;
 
 	parallel->id = irp->devman->id_sequence++;
 	parallel->file = open(parallel->path, O_RDWR);

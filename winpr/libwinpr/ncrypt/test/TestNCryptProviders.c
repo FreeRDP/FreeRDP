@@ -30,16 +30,19 @@ int TestNCryptProviders(int argc, char* argv[])
 	DWORD nproviders, i;
 	NCryptProviderName* providers;
 
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	status = NCryptEnumStorageProviders(&nproviders, &providers, NCRYPT_SILENT_FLAG);
 	if (status != ERROR_SUCCESS)
 		return -1;
 
 	for (i = 0; i < nproviders; i++)
 	{
-		char providerNameStr[256];
+		const NCryptProviderName* provider = &providers[i];
+		char providerNameStr[256] = { 0 };
 
-		WideCharToMultiByte(CP_UTF8, 0, providers[i].pszName, -1, providerNameStr,
-		                    sizeof(providerNameStr), NULL, FALSE);
+		ConvertWCharToUtf8(provider->pszName, providerNameStr, ARRAYSIZE(providerNameStr));
 		printf("%d: %s\n", i, providerNameStr);
 	}
 

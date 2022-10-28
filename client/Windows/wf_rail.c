@@ -179,9 +179,8 @@ static void PrintRailWindowState(const WINDOW_ORDER_INFO* orderInfo,
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
-		char* title = NULL;
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)windowState->titleInfo.string,
-		                   windowState->titleInfo.length / 2, &title, 0, NULL, NULL);
+		char* title = ConvertWCharNToUtf8Alloc(windowState->titleInfo.string,
+		                                       windowState->titleInfo.length / sizeof(WCHAR), NULL);
 		WLog_INFO(TAG, "\tTitleInfo: %s (length = %hu)", title, windowState->titleInfo.length);
 		free(title);
 	}
@@ -462,9 +461,9 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 					/* error handled below */
 				}
 			}
-			else if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)windowState->titleInfo.string,
-			                            windowState->titleInfo.length / 2, &title, 0, NULL,
-			                            NULL) < 1)
+			else if (!(title = ConvertWCharNToUtf8Alloc(
+			               windowState->titleInfo.string,
+			               windowState->titleInfo.length / sizeof(WCHAR), NULL)))
 			{
 				WLog_ERR(TAG, "failed to convert window title");
 				/* error handled below */
@@ -484,7 +483,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			return FALSE;
 		}
 
-		ConvertToUnicode(CP_UTF8, 0, railWindow->title, -1, &titleW, 0);
+		titleW = ConvertUtf8ToWCharAlloc(railWindow->title, NULL);
 		hInstance = GetModuleHandle(NULL);
 
 		wndClassEx.cbSize = sizeof(WNDCLASSEX);
@@ -589,8 +588,9 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 				return FALSE;
 			}
 		}
-		else if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)windowState->titleInfo.string,
-		                            windowState->titleInfo.length / 2, &title, 0, NULL, NULL) < 1)
+		else if (!(title = ConvertWCharNToUtf8Alloc(windowState->titleInfo.string,
+		                                            windowState->titleInfo.length / sizeof(WCHAR),
+		                                            NULL)))
 		{
 			WLog_ERR(TAG, "failed to convert window title");
 			return FALSE;
@@ -598,7 +598,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 		free(railWindow->title);
 		railWindow->title = title;
-		ConvertToUnicode(CP_UTF8, 0, railWindow->title, -1, &titleW, 0);
+		titleW = ConvertUtf8ToWCharAlloc(railWindow->title, NULL);
 		SetWindowTextW(railWindow->hWnd, titleW);
 		free(titleW);
 	}

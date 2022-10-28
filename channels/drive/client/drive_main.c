@@ -62,8 +62,6 @@ typedef struct
 	rdpContext* rdpcontext;
 } DRIVE_DEVICE;
 
-static UINT sys_code_page = 0;
-
 static DWORD drive_map_windows_err(DWORD fs_errno)
 {
 	DWORD rc;
@@ -443,10 +441,6 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 {
 	UINT32 FsInformationClass;
 	wStream* output = NULL;
-	char* volumeLabel = { "FREERDP" };
-	char* diskType = { "FAT32" };
-	WCHAR* outStr = NULL;
-	int length;
 	DWORD lpSectorsPerCluster;
 	DWORD lpBytesPerSector;
 	DWORD lpNumberOfFreeClusters;
@@ -468,20 +462,16 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 	switch (FsInformationClass)
 	{
 		case FileFsVolumeInformation:
-
+		{
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
-			if ((length = ConvertToUnicode(sys_code_page, 0, volumeLabel, -1, &outStr, 0) * 2) <= 0)
-			{
-				WLog_ERR(TAG, "ConvertToUnicode failed!");
-				return CHANNEL_RC_NO_MEMORY;
-			}
+			const WCHAR volumeLabel[] = { 'F', 'R', 'E', 'E', 'R', 'D', 'P', '\0' };
+			const size_t length = 17ul + sizeof(volumeLabel);
 
-			Stream_Write_UINT32(output, 17 + length); /* Length */
+			Stream_Write_UINT32(output, length); /* Length */
 
-			if (!Stream_EnsureRemainingCapacity(output, 17 + length))
+			if (!Stream_EnsureRemainingCapacity(output, length))
 			{
 				WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
-				free(outStr);
 				return CHANNEL_RC_NO_MEMORY;
 			}
 
@@ -490,12 +480,12 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			Stream_Write_UINT32(output,
 			                    wfad.ftCreationTime.dwHighDateTime);      /* VolumeCreationTime */
 			Stream_Write_UINT32(output, lpNumberOfFreeClusters & 0xffff); /* VolumeSerialNumber */
-			Stream_Write_UINT32(output, length);                          /* VolumeLabelLength */
+			Stream_Write_UINT32(output, sizeof(volumeLabel));             /* VolumeLabelLength */
 			Stream_Write_UINT8(output, 0);                                /* SupportsObjects */
 			/* Reserved(1), MUST NOT be added! */
-			Stream_Write(output, outStr, length); /* VolumeLabel (Unicode) */
-			free(outStr);
-			break;
+			Stream_Write(output, volumeLabel, sizeof(volumeLabel)); /* VolumeLabel (Unicode) */
+		}
+		break;
 
 		case FileFsSizeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232107.aspx */
@@ -514,19 +504,14 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			break;
 
 		case FileFsAttributeInformation:
-
+		{
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
-			if ((length = ConvertToUnicode(sys_code_page, 0, diskType, -1, &outStr, 0) * 2) <= 0)
-			{
-				WLog_ERR(TAG, "ConvertToUnicode failed!");
-				return CHANNEL_RC_NO_MEMORY;
-			}
+			const WCHAR diskType[] = { 'F', 'A', 'T', '3', '2', '\0' };
+			const size_t length = 12ul + sizeof(diskType);
+			Stream_Write_UINT32(output, length); /* Length */
 
-			Stream_Write_UINT32(output, 12 + length); /* Length */
-
-			if (!Stream_EnsureRemainingCapacity(output, 12 + length))
+			if (!Stream_EnsureRemainingCapacity(output, length))
 			{
-				free(outStr);
 				WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 				return CHANNEL_RC_NO_MEMORY;
 			}
@@ -534,10 +519,10 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			Stream_Write_UINT32(output, FILE_CASE_SENSITIVE_SEARCH | FILE_CASE_PRESERVED_NAMES |
 			                                FILE_UNICODE_ON_DISK); /* FileSystemAttributes */
 			Stream_Write_UINT32(output, MAX_PATH);                 /* MaximumComponentNameLength */
-			Stream_Write_UINT32(output, length);                   /* FileSystemNameLength */
-			Stream_Write(output, outStr, length);                  /* FileSystemName (Unicode) */
-			free(outStr);
-			break;
+			Stream_Write_UINT32(output, sizeof(diskType));         /* FileSystemNameLength */
+			Stream_Write(output, diskType, sizeof(diskType));      /* FileSystemName (Unicode) */
+		}
+		break;
 
 		case FileFsFullSizeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232104.aspx */
@@ -947,9 +932,9 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		if ((pathLength > 1) && (path[pathLength - 1] == '/'))
 			pathLength--;
 
-		if (ConvertToUnicode(sys_code_page, 0, path, pathLength, &drive->path, 0) <= 0)
+		drive->path = ConvertUtf8NToWCharAlloc(path, pathLength, NULL);
+		if (!drive->path)
 		{
-			WLog_ERR(TAG, "ConvertToUnicode failed!");
 			error = CHANNEL_RC_NO_MEMORY;
 			goto out_error;
 		}
@@ -1018,8 +1003,6 @@ UINT drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	WINPR_ASSERT(drive);
 
 #ifndef WIN32
-	sys_code_page = CP_UTF8;
-
 	if (strcmp(drive->Path, "*") == 0)
 	{
 		/* all drives */
@@ -1047,8 +1030,6 @@ UINT drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	error =
 	    drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path, drive->automount);
 #else
-	sys_code_page = GetACP();
-
 	/* Special case: path[0] == '*' -> export all drives */
 	/* Special case: path[0] == '%' -> user home dir */
 	if (strcmp(drive->Path, "%") == 0)

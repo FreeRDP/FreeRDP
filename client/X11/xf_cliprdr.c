@@ -1932,15 +1932,15 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 }
 
 #ifdef WITH_FUSE
-static char* xf_cliprdr_fuse_split_basename(char* name, int len)
+static const char* xf_cliprdr_fuse_split_basename(const char* name, size_t len)
 {
-	int s = len - 1;
 	WINPR_ASSERT(name || (len <= 0));
-	for (; s >= 0; s--)
+	for (size_t s = len; s > 0; s--)
 	{
-		if (*(name + s) == '\\')
+		char c = name[s - 1];
+		if (c == '\\')
 		{
-			return name + s;
+			return &name[s - 1];
 		}
 	}
 	return NULL;
@@ -2025,13 +2025,13 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 		}
 
 		free(curName);
-		size_t curLen = _wcsnlen(descriptor->cFileName, ARRAYSIZE(descriptor->cFileName));
-		int newLen = ConvertFromUnicode(CP_UTF8, 0, descriptor->cFileName, (int)curLen, &curName, 0,
-		                                NULL, NULL);
+		curName =
+		    ConvertWCharNToUtf8Alloc(descriptor->cFileName, ARRAYSIZE(descriptor->cFileName), NULL);
 		if (!curName)
 			break;
 
-		char* split_point = xf_cliprdr_fuse_split_basename(curName, newLen);
+		const char* split_point = xf_cliprdr_fuse_split_basename(
+		    curName, strnlen(curName, ARRAYSIZE(descriptor->cFileName)));
 
 		UINT64 ticks;
 		xfCliprdrFuseInode* parent;

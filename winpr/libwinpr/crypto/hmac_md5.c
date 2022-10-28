@@ -3,6 +3,7 @@
 
 #include "hmac_md5.h"
 #include "md5.h"
+#include <string.h>
 
 void hmac_md5_init(WINPR_HMAC_MD5_CTX* ctx, const unsigned char* key, size_t key_len)
 {

@@ -70,7 +70,7 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 BOOL utf8_string_to_rail_string(const char* string, RAIL_UNICODE_STRING* unicode_string)
 {
 	WCHAR* buffer = NULL;
-	int length = 0;
+	size_t len = 0;
 	free(unicode_string->string);
 	unicode_string->string = NULL;
 	unicode_string->length = 0;
@@ -78,16 +78,16 @@ BOOL utf8_string_to_rail_string(const char* string, RAIL_UNICODE_STRING* unicode
 	if (!string || strlen(string) < 1)
 		return TRUE;
 
-	length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0);
+	buffer = ConvertUtf8ToWCharAlloc(string, &len);
 
-	if ((length < 0) || ((size_t)length * sizeof(WCHAR) > UINT16_MAX))
+	if (!buffer || (len * sizeof(WCHAR) > UINT16_MAX))
 	{
 		free(buffer);
 		return FALSE;
 	}
 
 	unicode_string->string = (BYTE*)buffer;
-	unicode_string->length = (UINT16)length * sizeof(WCHAR);
+	unicode_string->length = (UINT16)len * sizeof(WCHAR);
 	return TRUE;
 }
 

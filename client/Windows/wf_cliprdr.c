@@ -1902,16 +1902,10 @@ static UINT wf_cliprdr_server_format_list(CliprdrClientContext* context,
 
 		if (format->formatName)
 		{
-			int size = MultiByteToWideChar(CP_UTF8, 0, format->formatName,
-			                               strlen(format->formatName), NULL, 0);
-			mapping->name = calloc(size + 1, sizeof(WCHAR));
+			mapping->name = ConvertUtf8ToWCharAlloc(format->formatName, NULL);
 
 			if (mapping->name)
-			{
-				MultiByteToWideChar(CP_UTF8, 0, format->formatName, strlen(format->formatName),
-				                    mapping->name, size);
 				mapping->local_format_id = RegisterClipboardFormatW((LPWSTR)mapping->name);
-			}
 		}
 		else
 		{

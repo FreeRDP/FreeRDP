@@ -274,9 +274,8 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 	if (lpName)
 	{
-		int rc = ConvertFromUnicode(CP_UTF8, 0, lpName, -1, &name, 0, NULL, NULL);
-
-		if (rc < 0)
+		name = ConvertWCharToUtf8Alloc(lpName, NULL);
+		if (!name)
 			return NULL;
 	}
 

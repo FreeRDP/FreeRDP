@@ -224,8 +224,8 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		if (!cert)
 			goto out;
 
-		if (ConvertFromUnicode(CP_UTF8, 0, keyName->pszName, -1, &cert->keyName, 0, NULL, NULL) <=
-		    0)
+		cert->keyName = ConvertWCharToUtf8Alloc(keyName->pszName, NULL);
+		if (!cert->keyName)
 			goto endofloop;
 
 		WLog_DBG(TAG, "opening key %s", cert->keyName);
@@ -431,17 +431,16 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 
 	if (reader)
 	{
-		int res;
 		size_t readerSz = strlen(reader);
 		char* scopeStr = malloc(4 + readerSz + 1 + 1);
 		if (!scopeStr)
 			goto out;
 
 		_snprintf(scopeStr, readerSz + 5, "\\\\.\\%s\\", reader);
-		res = ConvertToUnicode(CP_UTF8, 0, scopeStr, -1, &scope, 0);
+		scope = ConvertUtf8NToWCharAlloc(scopeStr, readerSz + 5, NULL);
 		free(scopeStr);
 
-		if (res <= 0)
+		if (!scope)
 			goto out;
 	}
 
@@ -483,8 +482,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 			char providerNameStr[256] = { 0 };
 			const NCryptProviderName* name = &names[i];
 
-			if (WideCharToMultiByte(CP_UTF8, 0, name->pszName, -1, providerNameStr,
-			                        sizeof(providerNameStr), NULL, FALSE) <= 0)
+			if (ConvertWCharToUtf8(name->pszName, providerNameStr, ARRAYSIZE(providerNameStr)) < 0)
 			{
 				_snprintf(providerNameStr, sizeof(providerNameStr), "<unknown>");
 				WLog_ERR(TAG, "unable to convert provider name to char*, will show it as '%s'",
@@ -576,10 +574,12 @@ static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const ch
 		goto fail;
 	}
 
-	if (ConvertToUnicode(CP_UTF8, 0, "FreeRDP Emulator", -1, &cert->reader, 0) < 0)
+	cert->reader = ConvertUtf8ToWCharAlloc("FreeRDP Emulator", NULL);
+	if (!cert->reader)
 		goto fail;
 
-	if (ConvertToUnicode(CP_UTF8, 0, "Private Key 00", -1, &cert->containerName, 0) < 0)
+	cert->containerName = ConvertUtf8ToWCharAlloc("Private Key 00", NULL);
+	if (!cert->containerName)
 		goto fail;
 
 	/* compute PKINIT args FILE:<cert file>,<key file>
@@ -682,7 +682,7 @@ BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** 
 	if (freerdp_settings_get_bool(settings, FreeRDP_SmartcardEmulation))
 		return smartcard_sw_enumerateCerts(settings, scCerts, retCount);
 
-	if (CspName && ConvertToUnicode(CP_UTF8, 0, CspName, -1, &csp, 0) <= 0)
+	if (CspName && (!(csp = ConvertUtf8ToWCharAlloc(CspName, NULL))))
 	{
 		WLog_ERR(TAG, "error while converting CSP to WCHAR");
 		return FALSE;

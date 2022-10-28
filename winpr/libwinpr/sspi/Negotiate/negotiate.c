@@ -388,7 +388,7 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken* token)
 	/* mechToken [2] OCTET STRING */
 	if (token->mechToken.cbBuffer)
 	{
-		if (!WinPrAsn1EncContextualOctetString(enc, 2, &mechToken))
+		if (WinPrAsn1EncContextualOctetString(enc, 2, &mechToken) == 0)
 			goto cleanup;
 		WLog_DBG(TAG, "\tmechToken [2] (%li bytes)", token->mechToken.cbBuffer);
 	}
@@ -396,7 +396,7 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken* token)
 	/* mechListMIC [3] OCTET STRING */
 	if (token->mic.cbBuffer)
 	{
-		if (!WinPrAsn1EncContextualOctetString(enc, 3, &mechListMic))
+		if (WinPrAsn1EncContextualOctetString(enc, 3, &mechListMic) == 0)
 			goto cleanup;
 		WLog_DBG(TAG, "\tmechListMIC [3] (%li bytes)", token->mic.cbBuffer);
 	}
@@ -881,7 +881,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 
 	if (pszTargetName)
 	{
-		if (ConvertToUnicode(CP_UTF8, 0, pszTargetName, -1, &pszTargetNameW, 0) <= 0)
+		pszTargetNameW = ConvertUtf8ToWCharAlloc(pszTargetName, NULL);
+		if (!pszTargetNameW)
 			return SEC_E_INTERNAL_ERROR;
 	}
 

@@ -388,9 +388,16 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 
 	if (nego->PreconnectionBlob)
 	{
-		cchPCB = (UINT16)ConvertToUnicode(CP_UTF8, 0, nego->PreconnectionBlob, -1, &wszPCB, 0);
+		size_t len = 0;
+		wszPCB = ConvertUtf8ToWCharAlloc(nego->PreconnectionBlob, &len);
+		if (len > UINT16_MAX - 1)
+		{
+			free(wszPCB);
+			return FALSE;
+		}
+		cchPCB = len;
 		cchPCB += 1; /* zero-termination */
-		cbSize += cchPCB * 2;
+		cbSize += cchPCB * sizeof(WCHAR);
 	}
 
 	s = Stream_New(NULL, cbSize);
@@ -410,7 +417,7 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 
 	if (wszPCB)
 	{
-		Stream_Write(s, wszPCB, cchPCB * 2); /* wszPCB */
+		Stream_Write(s, wszPCB, cchPCB * sizeof(WCHAR)); /* wszPCB */
 		free(wszPCB);
 	}
 

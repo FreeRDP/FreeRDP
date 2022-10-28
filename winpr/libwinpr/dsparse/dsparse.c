@@ -53,7 +53,7 @@ DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName
 	char* InstanceNameA = NULL;
 	char* ReferrerA = NULL;
 	char* pszSpnA = NULL;
-	DWORD length;
+	size_t length;
 
 	WINPR_ASSERT(ServiceClass);
 	WINPR_ASSERT(ServiceName);
@@ -65,26 +65,26 @@ DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName
 
 	if (ServiceClass)
 	{
-		int rc = ConvertFromUnicode(CP_UTF8, 0, ServiceClass, -1, &ServiceClassA, 0, NULL, NULL);
-		if (rc <= 0)
+		ServiceClassA = ConvertWCharToUtf8Alloc(ServiceClass, NULL);
+		if (!ServiceClassA)
 			goto fail;
 	}
 	if (ServiceName)
 	{
-		int rc = ConvertFromUnicode(CP_UTF8, 0, ServiceName, -1, &ServiceNameA, 0, NULL, NULL);
-		if (rc <= 0)
+		ServiceNameA = ConvertWCharToUtf8Alloc(ServiceName, NULL);
+		if (!ServiceNameA)
 			goto fail;
 	}
 	if (InstanceName)
 	{
-		int rc = ConvertFromUnicode(CP_UTF8, 0, InstanceName, -1, &InstanceNameA, 0, NULL, NULL);
-		if (rc <= 0)
+		InstanceNameA = ConvertWCharToUtf8Alloc(InstanceName, NULL);
+		if (!InstanceNameA)
 			goto fail;
 	}
 	if (Referrer)
 	{
-		int rc = ConvertFromUnicode(CP_UTF8, 0, Referrer, -1, &ReferrerA, 0, NULL, NULL);
-		if (rc <= 0)
+		ReferrerA = ConvertWCharToUtf8Alloc(Referrer, NULL);
+		if (!ReferrerA)
 			goto fail;
 	}
 	res = DsMakeSpnA(ServiceClassA, ServiceNameA, InstanceNameA, InstancePort, ReferrerA,
@@ -92,8 +92,7 @@ DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName
 
 	if (res == ERROR_SUCCESS)
 	{
-		int rc = ConvertToUnicode(CP_UTF8, 0, pszSpnA, *pcSpnLength, &pszSpn, length);
-		if (rc <= 0)
+		if (ConvertUtf8NToWChar(pszSpnA, *pcSpnLength, pszSpn, length) < 0)
 			res = ERROR_OUTOFMEMORY;
 	}
 

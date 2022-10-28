@@ -543,7 +543,8 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 
 #endif
 
-	if (ConvertFromUnicode(CP_UTF8, 0, path, -1, &dup, 0, NULL, NULL) <= 0)
+	dup = ConvertWCharToUtf8Alloc(path, NULL);
+	if (!dup)
 		return FALSE;
 
 #ifdef __OS2__
@@ -586,12 +587,16 @@ BOOL PathIsRelativeA(LPCSTR pszPath)
 BOOL PathIsRelativeW(LPCWSTR pszPath)
 {
 	LPSTR lpFileNameA = NULL;
-	BOOL ret;
+	BOOL ret = FALSE;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, pszPath, -1, &lpFileNameA, 0, NULL, NULL) < 1)
-		return FALSE;
+	if (!pszPath)
+		goto fail;
 
+	lpFileNameA = ConvertWCharToUtf8Alloc(pszPath, NULL);
+	if (!lpFileNameA)
+		goto fail;
 	ret = PathIsRelativeA(lpFileNameA);
+fail:
 	free(lpFileNameA);
 	return ret;
 }
@@ -609,12 +614,16 @@ BOOL PathFileExistsA(LPCSTR pszPath)
 BOOL PathFileExistsW(LPCWSTR pszPath)
 {
 	LPSTR lpFileNameA = NULL;
-	BOOL ret;
+	BOOL ret = FALSE;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, pszPath, -1, &lpFileNameA, 0, NULL, NULL) < 1)
-		return FALSE;
+	if (!pszPath)
+		goto fail;
+	lpFileNameA = ConvertWCharToUtf8Alloc(pszPath, NULL);
+	if (!lpFileNameA)
+		goto fail;
 
 	ret = winpr_PathFileExists(lpFileNameA);
+fail:
 	free(lpFileNameA);
 	return ret;
 }
@@ -644,12 +653,14 @@ BOOL PathIsDirectoryEmptyA(LPCSTR pszPath)
 BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath)
 {
 	LPSTR lpFileNameA = NULL;
-	BOOL ret;
-
-	if (ConvertFromUnicode(CP_UTF8, 0, pszPath, -1, &lpFileNameA, 0, NULL, NULL) < 1)
-		return FALSE;
-
+	BOOL ret = FALSE;
+	if (!pszPath)
+		goto fail;
+	lpFileNameA = ConvertWCharToUtf8Alloc(pszPath, NULL);
+	if (!lpFileNameA)
+		goto fail;
 	ret = PathIsDirectoryEmptyA(lpFileNameA);
+fail:
 	free(lpFileNameA);
 	return ret;
 }
@@ -674,10 +685,11 @@ BOOL winpr_MoveFile(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
 	if (!lpExistingFileName || !lpNewFileName)
 		return FALSE;
 
-	if (ConvertToUnicode(CP_UTF8, 0, lpExistingFileName, -1, &lpExistingFileNameW, 0) < 1)
+	lpExistingFileNameW = ConvertUtf8ToWCharAlloc(lpExistingFileName, NULL);
+	if (!lpExistingFileNameW)
 		goto cleanup;
-
-	if (ConvertToUnicode(CP_UTF8, 0, lpNewFileName, -1, &lpNewFileNameW, 0) < 1)
+	lpNewFileNameW = ConvertUtf8ToWCharAlloc(lpNewFileName, NULL);
+	if (!lpNewFileNameW)
 		goto cleanup;
 
 	result = MoveFileW(lpExistingFileNameW, lpNewFileNameW);
@@ -701,10 +713,11 @@ BOOL winpr_MoveFileEx(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwF
 	if (!lpExistingFileName || !lpNewFileName)
 		return FALSE;
 
-	if (ConvertToUnicode(CP_UTF8, 0, lpExistingFileName, -1, &lpExistingFileNameW, 0) < 1)
+	lpExistingFileNameW = ConvertUtf8ToWCharAlloc(lpExistingFileName, NULL);
+	if (!lpExistingFileNameW)
 		goto cleanup;
-
-	if (ConvertToUnicode(CP_UTF8, 0, lpNewFileName, -1, &lpNewFileNameW, 0) < 1)
+	lpNewFileNameW = ConvertUtf8ToWCharAlloc(lpNewFileName, NULL);
+	if (!lpNewFileNameW)
 		goto cleanup;
 
 	result = MoveFileExW(lpExistingFileNameW, lpNewFileNameW, dwFlags);
@@ -726,7 +739,8 @@ BOOL winpr_DeleteFile(const char* lpFileName)
 
 	if (lpFileName)
 	{
-		if (ConvertToUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameW, 0) < 1)
+		lpFileNameW = ConvertUtf8ToWCharAlloc(lpFileName, NULL);
+		if (!lpFileNameW)
 			goto cleanup;
 	}
 
@@ -748,7 +762,8 @@ BOOL winpr_RemoveDirectory(LPCSTR lpPathName)
 
 	if (lpPathName)
 	{
-		if (ConvertToUnicode(CP_UTF8, 0, lpPathName, -1, &lpPathNameW, 0) < 1)
+		lpPathNameW = ConvertUtf8ToWCharAlloc(lpPathName, NULL);
+		if (!lpPathNameW)
 			goto cleanup;
 	}
 
@@ -762,17 +777,19 @@ cleanup:
 
 BOOL winpr_PathFileExists(const char* pszPath)
 {
+	if (!pszPath)
+		return FALSE;
 #ifndef _WIN32
 	return PathFileExistsA(pszPath);
 #else
-	WCHAR* pszPathW = NULL;
+	WCHAR* pathW = ConvertUtf8ToWCharAlloc(pszPath, NULL);
 	BOOL result = FALSE;
 
-	if (ConvertToUnicode(CP_UTF8, 0, pszPath, -1, &pszPathW, 0) < 1)
+	if (!pathW)
 		return FALSE;
 
-	result = PathFileExistsW(pszPathW);
-	free(pszPathW);
+	result = PathFileExistsW(pathW);
+	free(pathW);
 
 	return result;
 #endif
@@ -780,13 +797,15 @@ BOOL winpr_PathFileExists(const char* pszPath)
 
 BOOL winpr_PathMakePath(const char* path, LPSECURITY_ATTRIBUTES lpAttributes)
 {
+	if (!path)
+		return FALSE;
 #ifndef _WIN32
 	return PathMakePathA(path, lpAttributes);
 #else
-	WCHAR* pathW = NULL;
+	WCHAR* pathW = ConvertUtf8ToWCharAlloc(path, NULL);
 	BOOL result = FALSE;
 
-	if (ConvertToUnicode(CP_UTF8, 0, path, -1, &pathW, 0) < 1)
+	if (!pathW)
 		return FALSE;
 
 	result = SHCreateDirectoryExW(NULL, pathW, lpAttributes) == ERROR_SUCCESS;

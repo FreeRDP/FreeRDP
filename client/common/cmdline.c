@@ -2059,7 +2059,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			if (option_starts_with("remap:", val))
 			{
 				/* Append this new occurance to the already existing list */
-				char* now = strdup(&val[6]);
+				char* now = _strdup(&val[6]);
 				const char* old =
 				    freerdp_settings_get_string(settings, FreeRDP_KeyboardRemappingList);
 

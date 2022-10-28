@@ -545,7 +545,6 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
                                            size_t* pEncryptedSize)
 {
 	BOOL rc;
-	int status;
 	size_t cbPasswordW;
 	size_t cbPassStubW;
 	size_t EncryptedSize;
@@ -554,25 +553,18 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	BYTE* pbIn = NULL;
 	BYTE* pbOut = NULL;
 	size_t cbOut, cbIn, cbFinal;
-	WCHAR* PasswordW = NULL;
-	WCHAR* PassStubW = NULL;
-	status = ConvertToUnicode(CP_UTF8, 0, password, -1, &PasswordW, 0);
+	WCHAR* PasswordW = ConvertUtf8ToWCharAlloc(password, &cbPasswordW);
+	WCHAR* PassStubW = ConvertUtf8ToWCharAlloc(passStub, &cbPassStubW);
 
-	if (status <= 0)
-		return NULL;
+	if (!PasswordW || !PassStubW)
+		goto fail;
 
-	cbPasswordW = (size_t)(status - 1) * 2UL;
-
+	cbPasswordW = (cbPasswordW) * sizeof(WCHAR);
+	cbPassStubW = (cbPassStubW) * sizeof(WCHAR);
 	if (!winpr_Digest(WINPR_MD_MD5, (BYTE*)PasswordW, cbPasswordW, (BYTE*)PasswordHash,
 	                  sizeof(PasswordHash)))
 		goto fail;
 
-	status = ConvertToUnicode(CP_UTF8, 0, passStub, -1, &PassStubW, 0);
-
-	if (status <= 0)
-		goto fail;
-
-	cbPassStubW = (size_t)(status - 1) * 2UL;
 	EncryptedSize = cbPassStubW + 4;
 	pbIn = (BYTE*)calloc(1, EncryptedSize);
 	pbOut = (BYTE*)calloc(1, EncryptedSize);
@@ -626,8 +618,7 @@ static BOOL freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* pas
 	BOOL rc = FALSE;
 	int status = 0;
 	size_t cbPasswordW;
-	int cchOutW = 0;
-	WCHAR* pbOutW = NULL;
+	size_t cchOutW = 0;
 	WINPR_CIPHER_CTX* aesDec = NULL;
 	WCHAR* PasswordW = NULL;
 	BYTE* pbIn = NULL;
@@ -640,15 +631,14 @@ static BOOL freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* pas
 	if (!file || !password)
 		return FALSE;
 
-	status = ConvertToUnicode(CP_UTF8, 0, password, -1, &PasswordW, 0);
-
-	if (status <= 0)
+	PasswordW = ConvertUtf8ToWCharAlloc(password, &cbPasswordW);
+	if (!PasswordW)
 	{
 		WLog_ERR(TAG, "Failed to parse ASSISTANCE file: Conversion from UCS2 to UTF8 failed");
 		return FALSE;
 	}
 
-	cbPasswordW = (size_t)(status - 1) * 2UL;
+	cbPasswordW = (cbPasswordW) * sizeof(WCHAR);
 
 	if (!winpr_Digest(WINPR_MD_SHA1, (BYTE*)PasswordW, cbPasswordW, PasswordHash,
 	                  sizeof(PasswordHash)))
@@ -683,17 +673,17 @@ static BOOL freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* pas
 
 	cbOut += cbFinal;
 	cbFinal = 0;
-	pbOutW = (WCHAR*)pbOut;
 
-	if (cbOut > INT_MAX / 2)
-		goto fail;
+	union
+	{
+		const WCHAR* wc;
+		const BYTE* b;
+	} cnv;
 
-	cchOutW = (int)cbOut / 2;
-	file->ConnectionString2 = NULL;
-	status =
-	    ConvertFromUnicode(CP_UTF8, 0, pbOutW, cchOutW, &file->ConnectionString2, 0, NULL, NULL);
-
-	if (status <= 0)
+	cnv.b = pbOut;
+	cchOutW = cbOut / sizeof(WCHAR);
+	file->ConnectionString2 = ConvertWCharNToUtf8Alloc(cnv.wc, cchOutW, NULL);
+	if (!file->ConnectionString2)
 	{
 		WLog_ERR(TAG, "Failed to parse ASSISTANCE file: Conversion from UCS2 to UTF8 failed");
 		goto fail;

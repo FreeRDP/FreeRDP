@@ -166,7 +166,7 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 	{
 #ifdef UNICODE
 		SecPkgCredentials_KdcUrlW secAttr = { NULL };
-		ConvertToUnicode(CP_UTF8, 0, auth->kerberosSettings.kdcUrl, -1, &secAttr.KdcUrl, 0);
+		secAttr.KdcUrl = ConvertUtf8ToWCharAlloc(auth->kerberosSettings.kdcUrl, NULL);
 
 		if (!secAttr.KdcUrl)
 			return FALSE;
@@ -597,7 +597,10 @@ const char* credssp_auth_pkg_name(rdpCredsspAuth* auth)
 	WINPR_ASSERT(auth && auth->info);
 #ifdef UNICODE
 	if (!auth->pkgNameA)
-		ConvertFromUnicode(CP_UTF8, 0, auth->info->Name, -1, &auth->pkgNameA, 0, NULL, NULL);
+	{
+		WINPR_ASSERT(auth->info->Name);
+		auth->pkgNameA = ConvertUtf8ToWCharAlloc(auth->info->Name, NULL);
+	}
 	return auth->pkgNameA;
 #else
 	return auth->info->Name;
@@ -823,9 +826,7 @@ static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 
 	if (settings->AuthenticationPackageList)
 	{
-		ConvertToUnicode(CP_UTF8, 0, settings->AuthenticationPackageList, -1, &auth->package_list,
-		                 0);
-
+		auth->package_list = ConvertUtf8ToWCharAlloc(settings->AuthenticationPackageList, NULL);
 		if (!auth->package_list)
 			return FALSE;
 	}
@@ -839,11 +840,7 @@ static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 static TCHAR* tcs_strdup_from_char(const char* str)
 {
 #ifdef UNICODE
-	TCHAR* ret;
-	if (ConvertToUnicode(CP_UTF8, 0, str, -1, &ret, 0) <= 0)
-		return NULL;
-
-	return ret;
+	return ConvertUtf8ToWCharAlloc(str, NULL);
 #else
 	return _strdup(str);
 #endif
@@ -872,15 +869,13 @@ BOOL credssp_auth_set_spn(rdpCredsspAuth* auth, const char* service, const char*
 	sprintf_s(auth->spn, length, "%s/%s", service, hostname);
 #else
 	{
-		TCHAR* serviceW = NULL;
-		TCHAR* hostnameW = NULL;
+		TCHAR* serviceW = ConvertUtf8ToWCharAlloc(service, NULL);
+		TCHAR* hostnameW = ConvertUtf8ToWCharAlloc(hostname, NULL);
 
-		if (ConvertToUnicode(CP_UTF8, 0, service, -1, &serviceW, 0) <= 0)
-			return FALSE;
-
-		if (ConvertToUnicode(CP_UTF8, 0, hostname, -1, &hostnameW, 0) <= 0)
+		if (!serviceW || !hostnameW)
 		{
 			free(serviceW);
+			free(hostnameW);
 			return FALSE;
 		}
 

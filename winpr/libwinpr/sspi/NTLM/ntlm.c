@@ -45,7 +45,6 @@ static char* NTLM_PACKAGE_NAME = "NTLM";
 
 static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
-	int status;
 	char* ws = Workstation;
 	DWORD nSize = 0;
 	CHAR* computerName;
@@ -78,17 +77,16 @@ static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 			return -1;
 	}
 
-	context->Workstation.Buffer = NULL;
-	status = ConvertToUnicode(CP_UTF8, 0, ws, -1, &context->Workstation.Buffer, 0);
+	size_t len = 0;
+	context->Workstation.Buffer = ConvertUtf8ToWCharAlloc(ws, &len);
 
 	if (!Workstation)
 		free(ws);
 
-	if (status <= 0)
+	if (!context->Workstation.Buffer || (len > UINT16_MAX / sizeof(WCHAR)))
 		return -1;
 
-	context->Workstation.Length = (USHORT)(status - 1);
-	context->Workstation.Length *= 2;
+	context->Workstation.Length = (USHORT)(len * sizeof(WCHAR));
 	return 1;
 }
 
@@ -116,7 +114,6 @@ static int ntlm_SetContextServicePrincipalNameW(NTLM_CONTEXT* context, LPWSTR Se
 
 static int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
-	int status;
 	char* name = TargetName;
 	DWORD nSize = 0;
 	CHAR* computerName = NULL;
@@ -151,18 +148,21 @@ static int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 		CharUpperA(name);
 	}
 
-	context->TargetName.pvBuffer = NULL;
-	status = ConvertToUnicode(CP_UTF8, 0, name, -1, (LPWSTR*)&context->TargetName.pvBuffer, 0);
+	size_t len = 0;
+	context->TargetName.pvBuffer = ConvertUtf8ToWCharAlloc(name, &len);
 
-	if (status <= 0)
+	if (!context->TargetName.pvBuffer || (len > UINT16_MAX / sizeof(WCHAR)))
 	{
+		free(context->TargetName.pvBuffer);
+		context->TargetName.pvBuffer = NULL;
+
 		if (!TargetName)
 			free(name);
 
 		return -1;
 	}
 
-	context->TargetName.cbBuffer = (USHORT)((status - 1) * 2);
+	context->TargetName.cbBuffer = (USHORT)(len * sizeof(WCHAR));
 
 	if (!TargetName)
 		free(name);
@@ -350,23 +350,30 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = SEC_E_INSUFFICIENT_MEMORY;
 	SEC_WCHAR* principal = NULL;
 	SEC_WCHAR* package = NULL;
 
 	if (pszPrincipal)
-		ConvertToUnicode(CP_UTF8, 0, pszPrincipal, -1, &principal, 0);
+	{
+		principal = ConvertUtf8ToWCharAlloc(pszPrincipal, NULL);
+		if (!principal)
+			goto fail;
+	}
 	if (pszPackage)
-		ConvertToUnicode(CP_UTF8, 0, pszPackage, -1, &package, 0);
+	{
+		package = ConvertUtf8ToWCharAlloc(pszPackage, NULL);
+		if (!package)
+			goto fail;
+	}
 
 	status =
 	    ntlm_AcquireCredentialsHandleW(principal, package, fCredentialUse, pvLogonID, pAuthData,
 	                                   pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
 
-	if (principal)
-		free(principal);
-	if (package)
-		free(package);
+fail:
+	free(principal);
+	free(package);
 
 	return status;
 }
@@ -676,7 +683,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(
 
 	if (pszTargetName)
 	{
-		if (ConvertToUnicode(CP_UTF8, 0, pszTargetName, -1, &pszTargetNameW, 0) <= 0)
+		pszTargetNameW = ConvertUtf8ToWCharAlloc(pszTargetName, NULL);
+		if (!pszTargetNameW)
 			return SEC_E_INTERNAL_ERROR;
 	}
 
@@ -779,37 +787,28 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_IDENTITY)
 	{
-		int status;
-		char* UserA = NULL;
-		char* DomainA = NULL;
 		SSPI_CREDENTIALS* credentials;
+		const SecPkgContext_AuthIdentity empty = { 0 };
 		SecPkgContext_AuthIdentity* AuthIdentity = (SecPkgContext_AuthIdentity*)pBuffer;
+
+		WINPR_ASSERT(AuthIdentity);
+		*AuthIdentity = empty;
+
 		context->UseSamFileDatabase = FALSE;
 		credentials = context->credentials;
-		ZeroMemory(AuthIdentity, sizeof(SecPkgContext_AuthIdentity));
-		UserA = AuthIdentity->User;
 
 		if (credentials->identity.UserLength > 0)
 		{
-			WINPR_ASSERT(credentials->identity.UserLength <= INT_MAX);
-			status =
-			    ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)credentials->identity.User,
-			                       (int)credentials->identity.UserLength, &UserA, 256, NULL, NULL);
-
-			if (status <= 0)
+			if (ConvertWCharNToUtf8(credentials->identity.User, credentials->identity.UserLength,
+			                        AuthIdentity->User, ARRAYSIZE(AuthIdentity->User)) <= 0)
 				return SEC_E_INTERNAL_ERROR;
 		}
 
-		DomainA = AuthIdentity->Domain;
-
 		if (credentials->identity.DomainLength > 0)
 		{
-			WINPR_ASSERT(credentials->identity.DomainLength <= INT_MAX);
-			status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)credentials->identity.Domain,
-			                            (int)credentials->identity.DomainLength, &DomainA, 256,
-			                            NULL, NULL);
-
-			if (status <= 0)
+			if (ConvertWCharNToUtf8(credentials->identity.Domain,
+			                        credentials->identity.DomainLength, AuthIdentity->Domain,
+			                        ARRAYSIZE(AuthIdentity->Domain)) <= 0)
 				return SEC_E_INTERNAL_ERROR;
 		}
 

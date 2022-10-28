@@ -291,7 +291,6 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	WCHAR* wname = NULL;
 	size_t wlen;
 	char* path = NULL;
-	int rc;
 	UINT32 flags = 0;
 	void* DriverName = NULL;
 	UINT32 DriverNameLen = 0;
@@ -302,17 +301,17 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	UINT32 PrinterNameLen = 0;
 	WCHAR* wptr = NULL;
 
-	if (!settings || !printer)
+	if (!settings || !printer || !printer->name)
 		return FALSE;
 
-	rc = ConvertToUnicode(CP_UTF8, 0, printer->name, -1, &wname, 0);
+	wname = ConvertUtf8ToWCharAlloc(printer->name, &wlen);
 
-	if (rc <= 0)
+	if (!wname)
 		goto fail;
 
-	wlen = _wcslen(wname) + 1;
+	wlen++;
 	path = get_printer_config_path(settings, wname, wlen * sizeof(WCHAR));
-	PrinterNameLen = (wlen + 1) * sizeof(WCHAR);
+	PrinterNameLen = wlen * sizeof(WCHAR);
 
 	if (!path)
 		goto fail;
@@ -326,8 +325,11 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 
 	if (!printer_read_setting(path, PRN_CONF_DRIVER, &DriverName, &DriverNameLen))
 	{
-		DriverNameLen =
-		    ConvertToUnicode(CP_UTF8, 0, printer->driver, -1, (LPWSTR*)&DriverName, 0) * 2 + 1;
+		size_t len = 0;
+		DriverName = ConvertUtf8ToWCharAlloc(printer->driver, &len);
+		if (!DriverName)
+			goto fail;
+		DriverNameLen = (len + 1) * sizeof(WCHAR);
 	}
 
 	if (!printer_read_setting(path, PRN_CONF_DATA, &CachedPrinterConfigData, &CachedFieldsLen))
@@ -385,19 +387,18 @@ static BOOL printer_save_default_config(const rdpSettings* settings, rdpPrinter*
 	WCHAR* driver = NULL;
 	size_t wlen, dlen;
 	char* path = NULL;
-	int rc;
 
-	if (!settings || !printer)
+	if (!settings || !printer || !printer->name || !printer->driver)
 		return FALSE;
 
-	rc = ConvertToUnicode(CP_UTF8, 0, printer->name, -1, &wname, 0);
+	wname = ConvertUtf8ToWCharAlloc(printer->name, NULL);
 
-	if (rc <= 0)
+	if (wname)
 		goto fail;
 
-	rc = ConvertToUnicode(CP_UTF8, 0, printer->driver, -1, &driver, 0);
+	driver = ConvertUtf8ToWCharAlloc(printer->driver, NULL);
 
-	if (rc <= 0)
+	if (driver)
 		goto fail;
 
 	wlen = _wcslen(wname) + 1;

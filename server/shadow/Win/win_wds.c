@@ -732,7 +732,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	}
 
 	{
-		int status1 = -1, status2 = -1;
+		int status2 = -1;
 		char* ConnectionString2;
 		BSTR bstrConnectionString;
 		hr = subsystem->pInvitation->lpVtbl->get_ConnectionString(subsystem->pInvitation,
@@ -744,14 +744,12 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 			return -1;
 		}
 
-		status1 = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)bstrConnectionString,
-		                             ((UINT32*)bstrConnectionString)[-1], &(ConnectionString2), 0,
-		                             NULL, NULL);
+		ConnectionString2 = ConvertWCharToUtf8Alloc(bstrConnectionString, NULL);
 		SysFreeString(bstrConnectionString);
 		status2 = freerdp_assistance_set_connection_string2(file, ConnectionString2, "Shadow123!");
 		free(ConnectionString2);
 
-		if ((status1 < 1) || (status2 < 1))
+		if ((!ConnectionString2) || (status2 < 1))
 		{
 			WLog_ERR(TAG, "failed to convert connection string");
 			return -1;

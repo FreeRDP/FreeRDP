@@ -427,8 +427,8 @@ static BOOL tsg_packet_quarrequest_to_string(char** buffer, size_t* length,
 	{
 		if (caps->nameLength > INT_MAX)
 			return FALSE;
-		if (ConvertFromUnicode(CP_UTF8, 0, caps->machineName, (int)caps->nameLength, &name, 0, NULL,
-		                       NULL) < 0)
+		name = ConvertWCharNToUtf8Alloc(caps->machineName, caps->nameLength, NULL);
+		if (!name)
 			return FALSE;
 	}
 
@@ -529,8 +529,8 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 	{
 		if (caps->certChainLen > INT_MAX)
 			return FALSE;
-		if (ConvertFromUnicode(CP_UTF8, 0, caps->certChainData, (int)caps->certChainLen, &strdata,
-		                       0, NULL, NULL) <= 0)
+		strdata = ConvertWCharNToUtf8Alloc(caps->certChainData, caps->certChainLen, NULL);
+		if (!strdata)
 			return FALSE;
 	}
 
@@ -1660,9 +1660,8 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			if (!TsProxyReadPacketSTringMessage(tsg, pdu->s, &packetStringMessage))
 				goto fail;
 
-			ConvertFromUnicode(CP_UTF8, 0, packetStringMessage.msgBuffer,
-			                   packetStringMessage.msgBytes / 2, &messageText, 0, NULL, NULL);
-
+			messageText = ConvertWCharNToUtf8Alloc(
+			    packetStringMessage.msgBuffer, packetStringMessage.msgBytes / sizeof(WCHAR), NULL);
 			WLog_INFO(TAG, "Consent Message: %s", messageText);
 			free(messageText);
 
@@ -1683,9 +1682,8 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			if (!TsProxyReadPacketSTringMessage(tsg, pdu->s, &packetStringMessage))
 				goto fail;
 
-			ConvertFromUnicode(CP_UTF8, 0, packetStringMessage.msgBuffer,
-			                   packetStringMessage.msgBytes / 2, &messageText, 0, NULL, NULL);
-
+			messageText = ConvertWCharNToUtf8Alloc(
+			    packetStringMessage.msgBuffer, packetStringMessage.msgBytes / sizeof(WCHAR), NULL);
 			WLog_INFO(TAG, "Service Message: %s", messageText);
 			free(messageText);
 
@@ -2330,17 +2328,15 @@ DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events, DWORD count)
 static BOOL tsg_set_hostname(rdpTsg* tsg, const char* hostname)
 {
 	free(tsg->Hostname);
-	tsg->Hostname = NULL;
-	ConvertToUnicode(CP_UTF8, 0, hostname, -1, &tsg->Hostname, 0);
-	return TRUE;
+	tsg->Hostname = ConvertUtf8ToWCharAlloc(hostname, NULL);
+	return tsg->Hostname != NULL;
 }
 
 static BOOL tsg_set_machine_name(rdpTsg* tsg, const char* machineName)
 {
 	free(tsg->MachineName);
-	tsg->MachineName = NULL;
-	ConvertToUnicode(CP_UTF8, 0, machineName, -1, &tsg->MachineName, 0);
-	return TRUE;
+	tsg->MachineName = ConvertUtf8ToWCharAlloc(machineName, NULL);
+	return tsg->MachineName != NULL;
 }
 
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)

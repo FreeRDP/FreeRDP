@@ -369,9 +369,17 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(
 	char* package = NULL;
 
 	if (pszPrincipal)
-		ConvertFromUnicode(CP_UTF8, 0, pszPrincipal, -1, &principal, 0, NULL, NULL);
+	{
+		principal = ConvertWCharToUtf8Alloc(pszPrincipal, NULL);
+		if (!principal)
+			return SEC_E_INSUFFICIENT_MEMORY;
+	}
 	if (pszPackage)
-		ConvertFromUnicode(CP_UTF8, 0, pszPackage, -1, &package, 0, NULL, NULL);
+	{
+		package = ConvertWCharToUtf8Alloc(pszPackage, NULL);
+		if (!package)
+			return SEC_E_INSUFFICIENT_MEMORY;
+	}
 
 	status =
 	    kerberos_AcquireCredentialsHandleA(principal, package, fCredentialUse, pvLogonID, pAuthData,
@@ -989,7 +997,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(
 	char* target_name = NULL;
 
 	if (pszTargetName)
-		ConvertFromUnicode(CP_UTF8, 0, pszTargetName, -1, &target_name, 0, NULL, NULL);
+	{
+		target_name = ConvertWCharToUtf8Alloc(pszTargetName, NULL);
+		if (!target_name)
+			return SEC_E_INSUFFICIENT_MEMORY;
+	}
 
 	status = kerberos_InitializeSecurityContextA(phCredential, phContext, target_name, fContextReq,
 	                                             Reserved1, TargetDataRep, pInput, Reserved2,
@@ -1367,9 +1379,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(PCredHandle 
 
 			if (KdcUrl)
 			{
-				ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)KdcUrl, -1, &credentials->kdc_url, 0, NULL,
-				                   NULL);
-
+				credentials->kdc_url = ConvertWCharToUtf8Alloc(KdcUrl, NULL);
 				if (!credentials->kdc_url)
 					return SEC_E_INSUFFICIENT_MEMORY;
 			}

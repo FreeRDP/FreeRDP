@@ -66,8 +66,8 @@ int TestClipboardFormats(int argc, char* argv[])
 		WCHAR* pDstData;
 		DstSize = 0;
 		pDstData = (WCHAR*)ClipboardGetData(clipboard, CF_UNICODETEXT, &DstSize);
-		pSrcData = NULL;
-		ConvertFromUnicode(CP_UTF8, 0, pDstData, -1, &pSrcData, 0, NULL, NULL);
+		pSrcData = ConvertWCharNToUtf8Alloc(pDstData, DstSize / sizeof(WCHAR), NULL);
+
 		fprintf(stderr, "ClipboardGetData (synthetic): %s\n", pSrcData);
 		free(pDstData);
 		free(pSrcData);

@@ -621,7 +621,6 @@ static UINT
 wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
                                        const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
-	int cnv;
 	UINT rc = CHANNEL_RC_OK;
 	BYTE* data;
 	LPWSTR cdata;
@@ -673,16 +672,16 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 				rc = ERROR_INTERNAL_ERROR;
 			else
 			{
-				cdata = NULL;
-				cnv = ConvertToUnicode(CP_UTF8, 0, (LPCSTR)data, (int)size, &cdata, 0);
+				size_t len = 0;
+				cdata = ConvertUtf8NToWCharAlloc(data, size, &len);
 				free(data);
 				data = NULL;
 
-				if (cnv < 0)
+				if (len == 0)
 					rc = ERROR_INTERNAL_ERROR;
 				else
 				{
-					size = (size_t)cnv;
+					size = (size_t)len;
 					data = (BYTE*)cdata;
 					size *= sizeof(WCHAR);
 				}
@@ -715,7 +714,6 @@ static UINT
 wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
                                         const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
-	int cnv;
 	UINT rc = ERROR_INTERNAL_ERROR;
 	UINT32 size;
 	LPSTR cdata = NULL;
@@ -741,16 +739,14 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	switch (clipboard->responseFormat)
 	{
 		case CF_UNICODETEXT:
-			cnv = ConvertFromUnicode(CP_UTF8, 0, wdata, (int)(size / sizeof(WCHAR)), &cdata, 0,
-			                         NULL, NULL);
-
-			if (cnv < 0)
+			cdata = ConvertWCharNToUtf8Alloc(wdata, size / sizeof(WCHAR), NULL);
+			if (!cdata)
 				return ERROR_INTERNAL_ERROR;
 
 			data = cdata;
 			size = 0;
-			if (cnv > 0)
-				size = (UINT32)strnlen(data, (size_t)cnv);
+			if (cdata)
+				size = (UINT32)strnlen(data, size);
 			break;
 
 		default:

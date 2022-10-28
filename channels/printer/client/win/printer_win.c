@@ -237,8 +237,10 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 {
 	rdpWinPrinter* win_printer;
 	DWORD needed = 0;
-	int status;
 	PRINTER_INFO_2* prninfo = NULL;
+
+	if (!name)
+		return NULL;
 
 	win_printer = (rdpWinPrinter*)calloc(1, sizeof(rdpWinPrinter));
 	if (!win_printer)
@@ -246,7 +248,8 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 
 	win_printer->printer.backend = &win_driver->driver;
 	win_printer->printer.id = win_driver->id_sequence++;
-	if (ConvertFromUnicode(CP_UTF8, 0, name, -1, &win_printer->printer.name, 0, NULL, NULL) < 1)
+	win_printer->printer.name = ConvertWCharToUtf8Alloc(name, NULL);
+	if (!win_printer->printer.name)
 		goto fail;
 
 	if (!win_printer->printer.name)
@@ -277,13 +280,11 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	}
 
 	if (drivername)
-		status = ConvertFromUnicode(CP_UTF8, 0, drivername, -1, &win_printer->printer.driver, 0,
-		                            NULL, NULL);
+		win_printer->printer.driver = ConvertWCharToUtf8Alloc(drivername, NULL);
 	else
-		status = ConvertFromUnicode(CP_UTF8, 0, prninfo->pDriverName, -1,
-		                            &win_printer->printer.driver, 0, NULL, NULL);
+		win_printer->printer.driver = ConvertWCharToUtf8Alloc(prninfo->pDriverName, NULL);
 	GlobalFree(prninfo);
-	if (!win_printer->printer.driver || (status <= 0))
+	if (!win_printer->printer.driver)
 		goto fail;
 
 	win_printer->printer.AddRef(&win_printer->printer);
@@ -393,13 +394,13 @@ static rdpPrinter* printer_win_get_printer(rdpPrinterDriver* driver, const char*
 
 	if (name)
 	{
-		ConvertToUnicode(CP_UTF8, 0, name, -1, &nameW, 0);
+		nameW = ConvertUtf8ToWCharAlloc(name, NULL);
 		if (!nameW)
 			return NULL;
 	}
 	if (driverName)
 	{
-		ConvertToUnicode(CP_UTF8, 0, driverName, -1, &driverNameW, 0);
+		driverNameW = ConvertUtf8ToWCharAlloc(driverName, NULL);
 		if (!driverNameW)
 			return NULL;
 	}

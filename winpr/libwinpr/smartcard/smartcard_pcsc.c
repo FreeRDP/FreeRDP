@@ -850,11 +850,13 @@ static LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext, LPWSTR msz
 
 	if (status == SCARD_S_SUCCESS)
 	{
-		int rc = ConvertToUnicode(CP_UTF8, 0, *pMszGroupsA, (int)*pcchGroups, conv.lppstr, 0);
-		if (rc < 0)
+		size_t size = 0;
+		WCHAR* str = ConvertUtf8NToWCharAlloc(*pMszGroupsA, *pcchGroups, &size);
+		if (!str)
 			return SCARD_E_NO_MEMORY;
-		*pcchGroups = (DWORD)rc;
-		PCSC_AddMemoryBlock(hContext, conv.lpstr);
+		*conv.lppstr = str;
+		*pcchGroups = (DWORD)size;
+		PCSC_AddMemoryBlock(hContext, str);
 		PCSC_SCardFreeMemory_Internal(hContext, *pMszGroupsA);
 	}
 
@@ -989,17 +991,25 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 	mszGroups = NULL; /* mszGroups is not supported by pcsc-lite */
 
 	if (mszGroups)
-		ConvertFromUnicode(CP_UTF8, 0, mszGroups, -1, (char**)&mszGroupsA, 0, NULL, NULL);
-
-	status = PCSC_SCardListReaders_Internal(hContext, mszGroupsA, (LPSTR)&mszReadersA, pcchReaders);
+	{
+		mszGroupsA = ConvertWCharToUtf8Alloc(mszGroups, NULL);
+		if (!mszGroups)
+			return SCARD_E_NO_MEMORY;
+	}
 
 	if (status == SCARD_S_SUCCESS)
 	{
-		int rc = ConvertToUnicode(CP_UTF8, 0, *pMszReadersA, (int)*pcchReaders, conv.lppstr, 0);
-		if (rc < 0)
+		size_t size = 0;
+		WCHAR* str = ConvertUtf8NToWCharAlloc(*pMszReadersA, *pcchReaders, &size);
+
+		if (!str || (size > UINT32_MAX))
+		{
+			free(mszGroupsA);
 			return SCARD_E_NO_MEMORY;
-		*pcchReaders = (DWORD)rc;
-		PCSC_AddMemoryBlock(hContext, conv.lpstr);
+		}
+		*conv.lppstr = str;
+		*pcchReaders = (DWORD)size;
+		PCSC_AddMemoryBlock(hContext, str);
 		PCSC_SCardFreeMemory_Internal(hContext, *pMszReadersA);
 	}
 
@@ -1150,7 +1160,8 @@ static LONG WINAPI PCSC_SCardListCardsW(SCARDCONTEXT hContext, LPCBYTE pbAtr,
 	if (cardName)
 	{
 		size_t toCopy = strlen(cardName) + 1;
-		MultiByteToWideChar(CP_UTF8, 0, cardName, -1, output, toCopy);
+		if (ConvertUtf8ToWChar(cardName, output, toCopy) < 0)
+			return SCARD_F_INTERNAL_ERROR;
 		output += toCopy;
 	}
 
@@ -1650,14 +1661,15 @@ static LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext, DWORD dwTim
 
 	for (index = 0; index < cReaders; index++)
 	{
-		states[index].szReader = NULL;
-		ConvertFromUnicode(CP_UTF8, 0, rgReaderStates[index].szReader, -1,
-		                   (char**)&(states[index].szReader), 0, NULL, NULL);
-		states[index].pvUserData = rgReaderStates[index].pvUserData;
-		states[index].dwCurrentState = rgReaderStates[index].dwCurrentState;
-		states[index].dwEventState = rgReaderStates[index].dwEventState;
-		states[index].cbAtr = rgReaderStates[index].cbAtr;
-		CopyMemory(&(states[index].rgbAtr), &(rgReaderStates[index].rgbAtr), 36);
+		const LPSCARD_READERSTATEW curReader = &rgReaderStates[index];
+		LPSCARD_READERSTATEA cur = &states[index];
+
+		cur->szReader = ConvertWCharToUtf8Alloc(curReader->szReader, NULL);
+		cur->pvUserData = curReader->pvUserData;
+		cur->dwCurrentState = curReader->dwCurrentState;
+		cur->dwEventState = curReader->dwEventState;
+		cur->cbAtr = curReader->cbAtr;
+		CopyMemory(&(cur->rgbAtr), &(curReader->rgbAtr), ARRAYSIZE(cur->rgbAtr));
 	}
 
 	status = PCSC_SCardGetStatusChange_Internal(hContext, dwTimeout, states, cReaders);
@@ -1766,7 +1778,11 @@ static LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext, LPCWSTR szReader, D
 		return SCARD_E_INVALID_HANDLE;
 
 	if (szReader)
-		ConvertFromUnicode(CP_UTF8, 0, szReader, -1, &szReaderA, 0, NULL, NULL);
+	{
+		szReaderA = ConvertWCharToUtf8Alloc(szReader, NULL);
+		if (!szReaderA)
+			return SCARD_E_INSUFFICIENT_BUFFER;
+	}
 
 	status = PCSC_SCardConnect_Internal(hContext, szReaderA, dwShareMode, dwPreferredProtocols,
 	                                    phCard, pdwActiveProtocol);
@@ -2020,17 +2036,17 @@ static LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard, LPSTR mszReaderN
 
 		if (unicode)
 		{
-			int pcsc_cchReaderLenW =
-			    ConvertToUnicode(CP_UTF8, 0, tReader, (int)*pcchReaderLen, &conv.pw, 0);
+			size_t size = 0;
+			conv.pw = ConvertUtf8NToWCharAlloc(tReader, *pcchReaderLen, &size);
 
-			if ((pcsc_cchReaderLenW <= 0) || (conv.pw == NULL))
+			if (conv.pw == NULL)
 			{
 				status = ERROR_NOT_ENOUGH_MEMORY;
 				goto out_fail;
 			}
 
 			free(tReader);
-			conv.pw[pcsc_cchReaderLen - 1] = L'\0';
+
 			PCSC_AddMemoryBlock(hContext, conv.pw);
 			*dst.ppw = conv.pw;
 		}
@@ -2444,8 +2460,7 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 		if (status != SCARD_S_SUCCESS)
 			return status;
 
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)pbAttrW, (int)*pcbAttrLen, (char**)&namePCSC, 0,
-		                   NULL, NULL);
+		namePCSC = ConvertWCharNToUtf8Alloc(pbAttrW, *pcbAttrLen, NULL);
 		PCSC_SCardFreeMemory_Internal(hContext, pbAttrW);
 	}
 	else
@@ -2462,20 +2477,21 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 
 	if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W)
 	{
-		WCHAR* friendlyNameW = NULL;
+		size_t size = 0;
+		WCHAR* friendlyNameW = ConvertUtf8ToWCharAlloc(namePCSC, &size);
 		/* length here includes null terminator */
-		int rc = ConvertToUnicode(CP_UTF8, 0, (char*)namePCSC, -1, &friendlyNameW, 0);
-		if ((rc < 0) || (!friendlyNameW))
+
+		if (!friendlyNameW)
 			status = SCARD_E_NO_MEMORY;
 		else
 		{
-			length = (size_t)rc;
+			length = size;
 
 			if (cbAttrLen == SCARD_AUTOALLOCATE)
 			{
-				WINPR_ASSERT(length <= UINT32_MAX / 2);
+				WINPR_ASSERT(length <= UINT32_MAX / sizeof(WCHAR));
 				*conv.ppw = friendlyNameW;
-				*pcbAttrLen = (UINT32)length * 2U;
+				*pcbAttrLen = (UINT32)length * sizeof(WCHAR);
 				PCSC_AddMemoryBlock(hContext, friendlyNameW);
 			}
 			else
@@ -2484,9 +2500,9 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 					status = SCARD_E_INSUFFICIENT_BUFFER;
 				else
 				{
-					WINPR_ASSERT(length <= UINT32_MAX / 2);
-					CopyMemory(pbAttr, (BYTE*)friendlyNameW, (length * 2));
-					*pcbAttrLen = (UINT32)length * 2U;
+					WINPR_ASSERT(length <= UINT32_MAX / sizeof(WCHAR));
+					CopyMemory(pbAttr, (BYTE*)friendlyNameW, (length * sizeof(WCHAR)));
+					*pcbAttrLen = (UINT32)length * sizeof(WCHAR);
 				}
 				free(friendlyNameW);
 			}
@@ -2772,6 +2788,9 @@ static LONG WINAPI PCSC_SCardDlgExtendedError(void)
 
 static char* card_id_and_name_a(const UUID* CardIdentifier, LPCSTR LookupName)
 {
+	WINPR_ASSERT(CardIdentifier);
+	WINPR_ASSERT(LookupName);
+
 	size_t len = strlen(LookupName) + 34;
 	char* id = malloc(len);
 	if (!id)
@@ -2788,9 +2807,9 @@ static char* card_id_and_name_a(const UUID* CardIdentifier, LPCSTR LookupName)
 static char* card_id_and_name_w(const UUID* CardIdentifier, LPCWSTR LookupName)
 {
 	char* res;
-	char* tmp = NULL;
-
-	ConvertFromUnicode(CP_UTF8, 0, LookupName, -1, &tmp, 0, NULL, NULL);
+	char* tmp = ConvertWCharToUtf8Alloc(LookupName, NULL);
+	if (!tmp)
+		return NULL;
 	res = card_id_and_name_a(CardIdentifier, tmp);
 	free(tmp);
 	return res;

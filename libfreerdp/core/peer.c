@@ -824,7 +824,8 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 
 				if (SelectedProtocol & PROTOCOL_HYBRID)
 				{
-					SEC_WINNT_AUTH_IDENTITY* identity = nego_get_identity(rdp->nego);
+					SEC_WINNT_AUTH_IDENTITY_INFO* identity =
+					    (SEC_WINNT_AUTH_IDENTITY_INFO*)nego_get_identity(rdp->nego);
 					sspi_CopyAuthIdentity(&client->identity, identity);
 					IFCALLRET(client->Logon, client->authenticated, client, &client->identity,
 					          TRUE);
@@ -1250,10 +1251,11 @@ static BOOL freerdp_peer_send_server_redirection_pdu(
 
 	if (targetNetAddress)
 	{
+		size_t len = 0;
 		redirFlags |= LB_TARGET_NET_ADDRESS;
 
-		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)targetNetAddress, -1, &targetNetAddressW, 0);
-		targetNetAddressLength = (strlen(targetNetAddress) + 1) * sizeof(WCHAR);
+		targetNetAddressW = ConvertUtf8ToWCharAlloc(targetNetBiosName, &len);
+		targetNetAddressLength = (len + 1) * sizeof(WCHAR);
 
 		length += 4 + targetNetAddressLength;
 	}
@@ -1268,50 +1270,55 @@ static BOOL freerdp_peer_send_server_redirection_pdu(
 
 	if (userName)
 	{
+		size_t len = 0;
 		redirFlags |= LB_USERNAME;
 
-		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)userName, -1, &userNameW, 0);
-		userNameLength = (strlen(userName) + 1) * sizeof(WCHAR);
+		userNameW = ConvertUtf8ToWCharAlloc(userName, &len);
+		userNameLength = (len + 1) * sizeof(WCHAR);
 
 		length += 4 + userNameLength;
 	}
 
 	if (domain)
 	{
+		size_t len = 0;
 		redirFlags |= LB_DOMAIN;
 
-		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)domain, -1, &domainW, 0);
-		domainLength = (strlen(domain) + 1) * sizeof(WCHAR);
+		domainW = ConvertUtf8ToWCharAlloc(domain, &len);
+		domainLength = (len + 1) * sizeof(WCHAR);
 
 		length += 4 + domainLength;
 	}
 
 	if (password)
 	{
+		size_t len = 0;
 		redirFlags |= LB_PASSWORD;
 
-		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)password, -1, &passwordW, 0);
-		passwordLength = (strlen(password) + 1) * sizeof(WCHAR);
+		passwordW = ConvertUtf8ToWCharAlloc(password, &len);
+		passwordLength = (len + 1) * sizeof(WCHAR);
 
 		length += 4 + passwordLength;
 	}
 
 	if (targetFQDN)
 	{
+		size_t len = 0;
 		redirFlags |= LB_TARGET_FQDN;
 
-		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)targetFQDN, -1, &targetFQDNW, 0);
-		targetFQDNLength = (strlen(targetFQDN) + 1) * sizeof(WCHAR);
+		targetFQDNW = ConvertUtf8ToWCharAlloc(targetFQDN, &len);
+		targetFQDNLength = (len + 1) * sizeof(WCHAR);
 
 		length += 4 + targetFQDNLength;
 	}
 
 	if (targetNetBiosName)
 	{
+		size_t len = 0;
 		redirFlags |= LB_TARGET_NETBIOS_NAME;
 
-		ConvertToUnicode(CP_UTF8, 0, (LPCSTR)targetNetBiosName, -1, &targetNetBiosNameW, 0);
-		targetNetBiosNameLength = (strlen(targetNetBiosName) + 1) * sizeof(WCHAR);
+		targetNetBiosNameW = ConvertUtf8ToWCharAlloc(targetNetBiosName, &len);
+		targetNetBiosNameLength = (len + 1) * sizeof(WCHAR);
 
 		length += 4 + targetNetBiosNameLength;
 	}
@@ -1333,9 +1340,9 @@ static BOOL freerdp_peer_send_server_redirection_pdu(
 		targetNetAddressesWLength = calloc(targetNetAddressesCount, sizeof(UINT32));
 		for (i = 0; i < targetNetAddressesCount; i++)
 		{
-			ConvertToUnicode(CP_UTF8, 0, (LPCSTR)targetNetAddresses[i], -1, &targetNetAddressesW[i],
-			                 0);
-			targetNetAddressesWLength[i] = (strlen(targetNetAddresses[i]) + 1) * sizeof(WCHAR);
+			size_t len = 0;
+			targetNetAddressesW[i] = ConvertUtf8ToWCharAlloc(targetNetAddresses[i], &len);
+			targetNetAddressesWLength[i] = (len + 1) * sizeof(WCHAR);
 			targetNetAddressesLength += 4 + targetNetAddressesWLength[i];
 		}
 

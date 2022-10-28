@@ -105,20 +105,22 @@ static BOOL test_DsMakeSpnW(void)
 
 	if (_wcscmp(Spn, testSpn) != 0)
 	{
-		char buffer1[8192];
-		char buffer2[8192];
+		char buffer1[8192] = { 0 };
+		char buffer2[8192] = { 0 };
 		char* SpnA = buffer1;
 		char* testSpnA = buffer2;
-		ConvertFromUnicode(CP_UTF8, 0, Spn, -1, &SpnA, sizeof(SpnA), NULL, NULL);
-		ConvertFromUnicode(CP_UTF8, 0, testSpn, -1, &testSpnA, sizeof(testSpnA), NULL, NULL);
+
+		ConvertWCharToUtf8(Spn, SpnA, ARRAYSIZE(buffer1));
+		ConvertWCharToUtf8(testSpn, testSpnA, ARRAYSIZE(buffer2));
 		printf("DsMakeSpnW: SPN mismatch: Actual: %s, Expected: %s\n", SpnA, testSpnA);
 		goto fail;
 	}
 
 	{
-		char buffer[8192];
+		char buffer[8192] = { 0 };
 		char* SpnA = buffer;
-		ConvertFromUnicode(CP_UTF8, 0, Spn, -1, &SpnA, sizeof(SpnA), NULL, NULL);
+
+		ConvertWCharToUtf8(Spn, SpnA, ARRAYSIZE(buffer));
 		printf("DsMakeSpnW: %s\n", SpnA);
 	}
 

@@ -250,7 +250,6 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 
 BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize)
 {
-	int res;
 	BOOL rc = FALSE;
 	char* name;
 
@@ -264,7 +263,7 @@ BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG
 	if (!GetUserNameExA(NameFormat, name, nSize))
 		goto fail;
 
-	res = ConvertToUnicode(CP_UTF8, 0, name, -1, &lpNameBuffer, *nSize);
+	const SSIZE_T res = ConvertUtf8ToWChar(name, lpNameBuffer, *nSize);
 	if (res < 0)
 		goto fail;
 

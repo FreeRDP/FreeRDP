@@ -328,10 +328,7 @@ static WCHAR* wf_window_get_title(rdpSettings* settings)
 	name = settings->ServerHostname;
 
 	if (settings->WindowTitle)
-	{
-		ConvertToUnicode(CP_UTF8, 0, settings->WindowTitle, -1, &windowTitle, 0);
-		return windowTitle;
-	}
+		return ConvertUtf8ToWCharAlloc(settings->WindowTitle, NULL);
 
 	port = (settings->ServerPort != 3389);
 	size = strlen(name) + 16 + wcslen(prefix);
