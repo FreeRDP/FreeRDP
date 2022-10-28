@@ -551,76 +551,82 @@ int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2)
 
 #endif
 
-int ConvertLineEndingToLF(char* str, int size)
+size_t ConvertLineEndingToLF(char* str, size_t size)
 {
-	int status;
-	char* end;
-	char* pInput;
-	char* pOutput;
-	end = &str[size];
-	pInput = pOutput = str;
+	size_t skip = 0;
 
-	while (pInput < end)
+	WINPR_ASSERT(str || (size == 0));
+	for (size_t x = 0; x < size; x++)
 	{
-		if ((pInput[0] == '\r') && (pInput[1] == '\n'))
+		char c = str[x];
+		switch (c)
 		{
-			*pOutput++ = '\n';
-			pInput += 2;
-		}
-		else
-		{
-			*pOutput++ = *pInput++;
+			case '\r':
+				str[x - skip] = '\n';
+				if ((x + 1 < size) && (str[x + 1] == '\n'))
+					skip++;
+				break;
+			default:
+				str[x - skip] = c;
+				break;
 		}
 	}
-
-	status = (int)(pOutput - str);
-	return status;
+	return size - skip;
 }
 
-char* ConvertLineEndingToCRLF(const char* str, int* size)
+char* ConvertLineEndingToCRLF(const char* str, size_t* size)
 {
-	int count;
-	char* newStr;
-	char* pOutput;
-	const char* end;
-	const char* pInput;
-	end = &str[*size];
-	count = 0;
-	pInput = str;
+	WINPR_ASSERT(size);
+	const size_t s = *size;
+	WINPR_ASSERT(str || (s == 0));
 
-	while (pInput < end)
-	{
-		if (*pInput == '\n')
-			count++;
-
-		pInput++;
-	}
-
-	newStr = (char*)malloc(*size + (count * 2) + 1);
-
-	if (!newStr)
+	*size = 0;
+	if (s == 0)
 		return NULL;
 
-	pInput = str;
-	pOutput = newStr;
-
-	while (pInput < end)
+	size_t linebreaks = 0;
+	for (size_t x = 0; x < s - 1; x++)
 	{
-		if ((*pInput == '\n') && ((pInput > str) && (pInput[-1] != '\r')))
+		char c = str[x];
+		switch (c)
 		{
-			*pOutput++ = '\r';
-			*pOutput++ = '\n';
+			case '\r':
+			case '\n':
+				linebreaks++;
+				break;
+			default:
+				break;
 		}
-		else
-		{
-			*pOutput++ = *pInput;
-		}
-
-		pInput++;
 	}
+	char* cnv = calloc(s + linebreaks * 2ull + 1ull, sizeof(char));
+	if (!cnv)
+		return NULL;
 
-	*size = (int)(pOutput - newStr);
-	return newStr;
+	size_t pos = 0;
+	for (size_t x = 0; x < s; x++)
+	{
+		const char c = str[x];
+		switch (c)
+		{
+			case '\r':
+				cnv[pos++] = '\r';
+				cnv[pos++] = '\n';
+				break;
+			case '\n':
+				/* Do not duplicate existing \r\n sequences */
+				if ((x > 0) && (str[x - 1] != '\r'))
+				{
+					cnv[pos++] = '\r';
+					cnv[pos++] = '\n';
+				}
+				break;
+			default:
+				cnv[pos++] = c;
+				break;
+		}
+	}
+	*size = pos;
+	return cnv;
 }
 
 char* StrSep(char** stringp, const char* delim)
