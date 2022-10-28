@@ -209,10 +209,10 @@ extern "C"
 	                                 int cchWideChar, LPSTR* lpMultiByteStr, int cbMultiByte,
 	                                 LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
 
-	WINPR_API void ByteSwapUnicode(WCHAR* wstr, int length);
+	WINPR_API void ByteSwapUnicode(WCHAR* wstr, size_t length);
 
-	WINPR_API int ConvertLineEndingToLF(char* str, int size);
-	WINPR_API char* ConvertLineEndingToCRLF(const char* str, int* size);
+	WINPR_API size_t ConvertLineEndingToLF(char* str, size_t size);
+	WINPR_API char* ConvertLineEndingToCRLF(const char* str, size_t* size);
 
 	WINPR_API char* StrSep(char** stringp, const char* delim);
 
