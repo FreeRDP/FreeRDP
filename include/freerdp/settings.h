@@ -1847,6 +1847,21 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id,
 	                                             const char* param);
 
+	FREERDP_API BOOL freerdp_settings_set_string_from_utf16(rdpSettings* settings, size_t id,
+	                                                        const WCHAR* param);
+
+	FREERDP_API BOOL freerdp_settings_set_string_from_utf16N(rdpSettings* settings, size_t id,
+	                                                         const WCHAR* param, size_t length);
+	/** \brief Return an allocated UTF16 string
+	 *
+	 * \param settings A pointer to the settings struct to use
+	 * \param id The settings identifier
+	 *
+	 * \return An allocated, '\0' terminated WCHAR string or NULL
+	 */
+	FREERDP_API WCHAR* freerdp_settings_get_string_as_utf16(const rdpSettings* settings, size_t id,
+	                                                        size_t* pCharLen);
+
 	FREERDP_API const void* freerdp_settings_get_pointer(const rdpSettings* settings, size_t id);
 	FREERDP_API void* freerdp_settings_get_pointer_writable(rdpSettings* settings, size_t id);
 	FREERDP_API BOOL freerdp_settings_set_pointer(rdpSettings* settings, size_t id,
