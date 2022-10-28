@@ -1020,8 +1020,11 @@ BOOL GetDiskFreeSpaceW(LPCWSTR lpwRootPathName, LPDWORD lpSectorsPerCluster,
 {
 	LPSTR lpRootPathName;
 	BOOL ret;
+	if (!lpwRootPathName)
+		return FALSE;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpwRootPathName, -1, &lpRootPathName, 0, NULL, NULL) <= 0)
+	lpRootPathName = ConvertWCharToUtf8Alloc(lpwRootPathName, NULL);
+	if (!lpRootPathName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return FALSE;
@@ -1213,9 +1216,10 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	HANDLE hFile;
-	WCHAR* lpFileNameW = NULL;
+	if (!lpFileName)
+		return NULL;
 
-	ConvertToUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameW, 0);
+	WCHAR* lpFileNameW = ConvertUtf8ToWCharAlloc(lpFileName, NULL);
 
 	if (!lpFileNameW)
 		return NULL;
@@ -1284,13 +1288,12 @@ DWORD GetFullPathNameA(LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, L
 	WCHAR* lpFileNameW = NULL;
 	WCHAR* lpBufferW = NULL;
 	WCHAR* lpFilePartW = NULL;
-	DWORD nBufferLengthW = nBufferLength * 2;
+	DWORD nBufferLengthW = nBufferLength * sizeof(WCHAR);
 
 	if (!lpFileName || (nBufferLength < 1))
 		return 0;
 
-	ConvertToUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameW, 0);
-
+	lpFileNameW = ConvertUtf8ToWCharAlloc(lpFileName, NULL);
 	if (!lpFileNameW)
 		return 0;
 
@@ -1301,7 +1304,7 @@ DWORD GetFullPathNameA(LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, L
 
 	dwStatus = GetFullPathNameW(lpFileNameW, nBufferLengthW, lpBufferW, &lpFilePartW);
 
-	ConvertFromUnicode(CP_UTF8, 0, lpBufferW, nBufferLengthW, &lpBuffer, nBufferLength, NULL, NULL);
+	ConvertWCharNToUtf8(lpBufferW, nBufferLengthW / sizeof(WCHAR), lpBuffer, nBufferLength);
 
 	if (lpFilePart)
 		lpFilePart = lpBuffer + (lpFilePartW - lpBufferW);
@@ -1434,10 +1437,12 @@ FILE* winpr_fopen(const char* path, const char* mode)
 	if (!path || !mode)
 		return NULL;
 
-	if (ConvertToUnicode(CP_UTF8, 0, path, -1, &lpPathW, 0) < 1)
+	lpPathW = ConvertUtf8ToWCharAlloc(path, NULL);
+	if (!lpPathW)
 		goto cleanup;
 
-	if (ConvertToUnicode(CP_UTF8, 0, mode, -1, &lpModeW, 0) < 1)
+	lpModeW = ConvertUtf8ToWCharAlloc(mode, NULL);
+	if (!lpModeW)
 		goto cleanup;
 
 	result = _wfopen(lpPathW, lpModeW);

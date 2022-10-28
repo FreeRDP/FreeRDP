@@ -148,9 +148,8 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
 	if (!pDeviceObjectEx)
 		return STATUS_NO_MEMORY;
 
-	ConvertFromUnicode(CP_UTF8, 0, DeviceName->Buffer, DeviceName->Length / 2,
-	                   &(pDeviceObjectEx->DeviceName), 0, NULL, NULL);
-
+	pDeviceObjectEx->DeviceName =
+	    ConvertWCharNToUtf8Alloc(DeviceName->Buffer, DeviceName->Length / sizeof(WCHAR), NULL);
 	if (!pDeviceObjectEx->DeviceName)
 	{
 		free(pDeviceObjectEx);

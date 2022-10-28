@@ -129,7 +129,8 @@ BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchS
 
 	if (bStatus)
 	{
-		MultiByteToWideChar(CP_ACP, 0, lpProfileDirA, cchSizeA, lpProfileDir, *lpcchSize);
+		SSIZE_T size = ConvertUtf8NToWChar(lpProfileDirA, cchSizeA, lpProfileDir, *lpcchSize);
+		bStatus = size >= 0;
 	}
 
 	if (lpProfileDirA)

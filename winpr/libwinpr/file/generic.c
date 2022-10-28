@@ -274,14 +274,20 @@ HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	LPSTR lpFileNameA = NULL;
-	HANDLE hdl;
-
-	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameA, 0, NULL, NULL) < 1)
+	HANDLE hdl = NULL;
+	if (!lpFileName)
 		return NULL;
+	char* lpFileNameA = ConvertWCharToUtf8Alloc(lpFileName, NULL);
+
+	if (!lpFileNameA)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		goto fail;
+	}
 
 	hdl = CreateFileA(lpFileNameA, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
 	                  dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+fail:
 	free(lpFileNameA);
 	return hdl;
 }
@@ -295,13 +301,16 @@ BOOL DeleteFileA(LPCSTR lpFileName)
 
 BOOL DeleteFileW(LPCWSTR lpFileName)
 {
-	LPSTR lpFileNameA = NULL;
+	if (!lpFileName)
+		return FALSE;
+	LPSTR lpFileNameA = ConvertWCharToUtf8Alloc(lpFileName, NULL);
 	BOOL rc = FALSE;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameA, 0, NULL, NULL) < 1)
-		return FALSE;
+	if (!lpFileNameA)
+		goto fail;
 
 	rc = DeleteFileA(lpFileNameA);
+fail:
 	free(lpFileNameA);
 	return rc;
 }
@@ -493,9 +502,11 @@ BOOL WINAPI GetFileAttributesExW(LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInf
                                  LPVOID lpFileInformation)
 {
 	BOOL ret;
-	LPSTR lpCFileName;
+	if (!lpFileName)
+		return FALSE;
+	LPSTR lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, NULL);
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpCFileName, 0, NULL, NULL) <= 0)
+	if (!lpCFileName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return FALSE;
@@ -521,9 +532,10 @@ DWORD WINAPI GetFileAttributesA(LPCSTR lpFileName)
 DWORD WINAPI GetFileAttributesW(LPCWSTR lpFileName)
 {
 	DWORD ret;
-	LPSTR lpCFileName;
-
-	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpCFileName, 0, NULL, NULL) <= 0)
+	if (!lpFileName)
+		return FALSE;
+	LPSTR lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, NULL);
+	if (!lpCFileName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return FALSE;
@@ -643,6 +655,9 @@ BOOL SetFileAttributesW(LPCWSTR lpFileName, DWORD dwFileAttributes)
 	BOOL ret;
 	LPSTR lpCFileName;
 
+	if (!lpFileName)
+		return FALSE;
+
 	if (dwFileAttributes & ~FILE_ATTRIBUTE_READONLY)
 	{
 		char buffer[8192] = { 0 };
@@ -651,7 +666,8 @@ BOOL SetFileAttributesW(LPCWSTR lpFileName, DWORD dwFileAttributes)
 		WLog_WARN(TAG, "[%s] Unsupported flags %s, ignoring!", __FUNCTION__, flags);
 	}
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpCFileName, 0, NULL, NULL) <= 0)
+	lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, NULL);
+	if (!lpCFileName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return FALSE;
@@ -1032,9 +1048,6 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 static BOOL ConvertFindDataAToW(LPWIN32_FIND_DATAA lpFindFileDataA,
                                 LPWIN32_FIND_DATAW lpFindFileDataW)
 {
-	size_t length;
-	WCHAR* unicodeFileName;
-
 	if (!lpFindFileDataA || !lpFindFileDataW)
 		return FALSE;
 
@@ -1046,35 +1059,23 @@ static BOOL ConvertFindDataAToW(LPWIN32_FIND_DATAA lpFindFileDataA,
 	lpFindFileDataW->nFileSizeLow = lpFindFileDataA->nFileSizeLow;
 	lpFindFileDataW->dwReserved0 = lpFindFileDataA->dwReserved0;
 	lpFindFileDataW->dwReserved1 = lpFindFileDataA->dwReserved1;
-	unicodeFileName = NULL;
-	length = ConvertToUnicode(CP_UTF8, 0, lpFindFileDataA->cFileName, -1, &unicodeFileName, 0);
 
-	if (length == 0)
+	if (ConvertUtf8NToWChar(lpFindFileDataA->cFileName, ARRAYSIZE(lpFindFileDataA->cFileName),
+	                        lpFindFileDataW->cFileName, ARRAYSIZE(lpFindFileDataW->cFileName)) < 0)
 		return FALSE;
 
-	if (length > MAX_PATH)
-		length = MAX_PATH;
-
-	CopyMemory(lpFindFileDataW->cFileName, unicodeFileName, length * sizeof(WCHAR));
-	free(unicodeFileName);
-	length =
-	    ConvertToUnicode(CP_UTF8, 0, lpFindFileDataA->cAlternateFileName, -1, &unicodeFileName, 0);
-
-	if (length == 0)
-		return TRUE;
-
-	if (length > 14)
-		length = 14;
-
-	CopyMemory(lpFindFileDataW->cAlternateFileName, unicodeFileName, length * sizeof(WCHAR));
-	free(unicodeFileName);
-	return TRUE;
+	return ConvertUtf8NToWChar(lpFindFileDataA->cAlternateFileName,
+	                           ARRAYSIZE(lpFindFileDataA->cAlternateFileName),
+	                           lpFindFileDataW->cAlternateFileName,
+	                           ARRAYSIZE(lpFindFileDataW->cAlternateFileName)) >= 0;
 }
 
 HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 {
 	LPSTR utfFileName = NULL;
 	HANDLE h;
+	if (!lpFileName)
+		return FALSE;
 	LPWIN32_FIND_DATAA fd = (LPWIN32_FIND_DATAA)calloc(1, sizeof(WIN32_FIND_DATAA));
 
 	if (!fd)
@@ -1083,7 +1084,8 @@ HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &utfFileName, 0, NULL, NULL) <= 0)
+	utfFileName = ConvertWCharToUtf8Alloc(lpFileName, NULL);
+	if (!utfFileName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		free(fd);
@@ -1246,16 +1248,19 @@ BOOL CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttribu
 
 BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	char* utfPathName = NULL;
-	BOOL ret;
+	if (!lpPathName)
+		return FALSE;
+	char* utfPathName = ConvertWCharToUtf8Alloc(lpPathName, NULL);
+	BOOL ret = FALSE;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpPathName, -1, &utfPathName, 0, NULL, NULL) <= 0)
+	if (!utfPathName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return FALSE;
+		goto fail;
 	}
 
 	ret = CreateDirectoryA(utfPathName, lpSecurityAttributes);
+fail:
 	free(utfPathName);
 	return ret;
 }
@@ -1274,16 +1279,19 @@ BOOL RemoveDirectoryA(LPCSTR lpPathName)
 
 BOOL RemoveDirectoryW(LPCWSTR lpPathName)
 {
-	char* utfPathName = NULL;
-	BOOL ret;
+	if (!lpPathName)
+		return FALSE;
+	char* utfPathName = ConvertWCharToUtf8Alloc(lpPathName, NULL);
+	BOOL ret = FALSE;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpPathName, -1, &utfPathName, 0, NULL, NULL) <= 0)
+	if (!utfPathName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return FALSE;
+		goto fail;
 	}
 
 	ret = RemoveDirectoryA(utfPathName);
+fail:
 	free(utfPathName);
 	return ret;
 }
@@ -1321,25 +1329,21 @@ BOOL MoveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags)
 
 BOOL MoveFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, DWORD dwFlags)
 {
-	LPSTR lpCExistingFileName;
-	LPSTR lpCNewFileName;
-	BOOL ret;
+	if (!lpExistingFileName || !lpNewFileName)
+		return FALSE;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpExistingFileName, -1, &lpCExistingFileName, 0, NULL,
-	                       NULL) <= 0)
+	LPSTR lpCExistingFileName = ConvertWCharToUtf8Alloc(lpExistingFileName, NULL);
+	LPSTR lpCNewFileName = ConvertWCharToUtf8Alloc(lpNewFileName, NULL);
+	BOOL ret = FALSE;
+
+	if (!lpCExistingFileName || !lpCNewFileName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return FALSE;
-	}
-
-	if (ConvertFromUnicode(CP_UTF8, 0, lpNewFileName, -1, &lpCNewFileName, 0, NULL, NULL) <= 0)
-	{
-		free(lpCExistingFileName);
-		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return FALSE;
+		goto fail;
 	}
 
 	ret = MoveFileExA(lpCExistingFileName, lpCNewFileName, dwFlags);
+fail:
 	free(lpCNewFileName);
 	free(lpCExistingFileName);
 	return ret;
@@ -1361,6 +1365,8 @@ BOOL MoveFileW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName)
 
 int UnixChangeFileMode(const char* filename, int flags)
 {
+	if (!filename)
+		return -1;
 #ifndef _WIN32
 	mode_t fl = 0;
 	fl |= (flags & 0x4000) ? S_ISUID : 0;
@@ -1378,9 +1384,9 @@ int UnixChangeFileMode(const char* filename, int flags)
 	return chmod(filename, fl);
 #else
 	int rc;
-	WCHAR* wfl = NULL;
+	WCHAR* wfl = ConvertUtf8ToWCharAlloc(filename, NULL);
 
-	if (ConvertToUnicode(CP_UTF8, 0, filename, -1, &wfl, 0) <= 0)
+	if (!wfl)
 		return -1;
 
 	/* Check for unsupported flags. */

@@ -301,7 +301,7 @@ static BOOL ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList
 static int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
 {
 	char* name;
-	int status;
+	int status = -1;
 	DWORD nSize = 0;
 	CHAR* computerName;
 
@@ -332,15 +332,18 @@ static int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FO
 	if (type == ComputerNameNetBIOS)
 		CharUpperA(name);
 
-	status = ConvertToUnicode(CP_UTF8, 0, name, -1, &pName->Buffer, 0);
+	size_t len = 0;
+	pName->Buffer = ConvertUtf8ToWCharAlloc(name, &len);
 
-	if (status <= 0)
+	if (!pName->Buffer || (len == 0) || (len > UINT16_MAX / sizeof(WCHAR)))
 	{
+		free(pName->Buffer);
+		pName->Buffer = NULL;
 		free(name);
 		return status;
 	}
 
-	pName->Length = (USHORT)((status - 1) * 2);
+	pName->Length = (USHORT)((len) * sizeof(WCHAR));
 	pName->MaximumLength = pName->Length;
 	free(name);
 	return 1;

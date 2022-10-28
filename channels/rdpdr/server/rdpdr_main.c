@@ -241,8 +241,9 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 
 	if (UnicodeFlag)
 	{
-		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)Stream_Pointer(s), -1,
-		                       &(context->priv->ClientComputerName), 0, NULL, NULL) < 1)
+		context->priv->ClientComputerName =
+		    Stream_Read_UTF16_String_As_UTF8(s, ComputerNameLen / sizeof(WCHAR), NULL);
+		if (!context->priv->ClientComputerName)
 		{
 			WLog_ERR(TAG, "failed to convert client computer name");
 			return ERROR_INVALID_DATA;
@@ -251,6 +252,7 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	else
 	{
 		context->priv->ClientComputerName = _strdup((char*)Stream_Pointer(s));
+		Stream_Seek(s, ComputerNameLen);
 
 		if (!context->priv->ClientComputerName)
 		{
@@ -259,7 +261,6 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 		}
 	}
 
-	Stream_Seek(s, ComputerNameLen);
 	WLog_DBG(TAG, "ClientComputerName: %s", context->priv->ClientComputerName);
 	return CHANNEL_RC_OK;
 }
@@ -2057,7 +2058,6 @@ static void rdpdr_server_write_device_iorequest(wStream* s, UINT32 deviceId, UIN
 static UINT rdpdr_server_read_file_directory_information(wStream* s,
                                                          FILE_DIRECTORY_INFORMATION* fdi)
 {
-	int rc;
 	UINT32 fileNameLength;
 	WINPR_ASSERT(fdi);
 	ZeroMemory(fdi, sizeof(FILE_DIRECTORY_INFORMATION));
@@ -2079,12 +2079,9 @@ static UINT rdpdr_server_read_file_directory_information(wStream* s,
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, fileNameLength))
 		return ERROR_INVALID_DATA;
 
-	WINPR_ASSERT(fileNameLength / 2U <= INT_MAX);
-	WINPR_ASSERT(sizeof(fdi->FileName) < INT_MAX);
-	rc = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)Stream_Pointer(s), (int)fileNameLength / 2,
-	                         fdi->FileName, (int)sizeof(fdi->FileName), NULL, NULL);
-	WINPR_ASSERT(rc >= 0);
-	Stream_Seek(s, fileNameLength);
+	if (Stream_Read_UTF16_String_As_UTF8_Buffer(s, fileNameLength / sizeof(WCHAR), fdi->FileName,
+	                                            ARRAYSIZE(fdi->FileName)) < 0)
+		return ERROR_INVALID_DATA;
 	return CHANNEL_RC_OK;
 }
 
@@ -2127,13 +2124,9 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 	WINPR_ASSERT(pathLength <= UINT32_MAX);
 	Stream_Write_UINT32(s, (UINT32)pathLength); /* PathLength (4 bytes) */
 	                                            /* Convert the path to Unicode. */
-	{
-		int rc;
-		WINPR_ASSERT(pathLength <= INT_MAX);
-		rc = MultiByteToWideChar(CP_ACP, 0, path, -1, (LPWSTR)Stream_Pointer(s), (int)pathLength);
-		WINPR_ASSERT(rc >= 0);
-	}
-	Stream_Seek(s, pathLength);
+	if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path,
+	                                        pathLength / sizeof(WCHAR), TRUE) < 0)
+		return ERROR_INTERNAL_ERROR;
 	return rdpdr_seal_send_free_request(context, s);
 }
 
@@ -2262,11 +2255,9 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 	/* Convert the path to Unicode. */
 	if (pathLength > 0)
 	{
-		int rc;
-		WINPR_ASSERT(pathLength <= INT_MAX);
-		rc = MultiByteToWideChar(CP_ACP, 0, path, -1, (LPWSTR)Stream_Pointer(s), (int)pathLength);
-		WINPR_ASSERT(rc >= 0);
-		Stream_Seek(s, pathLength);
+		if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path,
+		                                        pathLength / sizeof(WCHAR), TRUE) < 0)
+			return ERROR_INTERNAL_ERROR;
 	}
 
 	return rdpdr_seal_send_free_request(context, s);
@@ -2312,11 +2303,9 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 	/* Convert the path to Unicode. */
 	if (pathLength > 0)
 	{
-		int rc;
-		WINPR_ASSERT(pathLength < INT_MAX);
-		rc = MultiByteToWideChar(CP_ACP, 0, path, -1, (LPWSTR)Stream_Pointer(s), (int)pathLength);
-		WINPR_ASSERT(rc >= 0);
-		Stream_Seek(s, pathLength);
+		if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path,
+		                                        pathLength / sizeof(WCHAR), TRUE) < 0)
+			return ERROR_INTERNAL_ERROR;
 	}
 
 	return rdpdr_seal_send_free_request(context, s);

@@ -238,9 +238,8 @@ LONG RegOpenCurrentUser(REGSAM samDesired, PHKEY phkResult)
 LONG RegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
 {
 	LONG rc;
-	char* str = NULL;
-	int res = ConvertFromUnicode(CP_UTF8, 0, lpSubKey, -1, &str, 0, NULL, NULL);
-	if (res < 0)
+	char* str = ConvertWCharToUtf8Alloc(lpSubKey, NULL);
+	if (!str)
 		return ERROR_FILE_NOT_FOUND;
 
 	rc = RegOpenKeyExA(hKey, str, ulOptions, samDesired, phkResult);
@@ -369,7 +368,8 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWOR
 	key = (RegKey*)hKey;
 	WINPR_ASSERT(key);
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpValueName, -1, &valueName, 0, NULL, NULL) <= 0)
+	valueName = ConvertWCharToUtf8Alloc(lpValueName, NULL);
+	if (!valueName)
 		goto end;
 
 	pValue = key->values;
@@ -394,14 +394,20 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWOR
 					if (lpData != NULL)
 					{
 						DWORD size;
+						union
+						{
+							WCHAR* wc;
+							BYTE* b;
+						} cnv;
 						WINPR_ASSERT(lpcbData);
 
+						cnv.b = lpData;
 						size = *lpcbData;
 						*lpcbData = (DWORD)length;
 						if (size < length)
 							return ERROR_MORE_DATA;
-						ConvertToUnicode(CP_UTF8, 0, pValue->data.string, length, (WCHAR**)&lpData,
-						                 length);
+						if (ConvertUtf8NToWChar(pValue->data.string, length, cnv.wc, length) < 0)
+							return ERROR_OUTOFMEMORY;
 					}
 					else if (lpcbData)
 						*lpcbData = (UINT32)length;

@@ -528,11 +528,9 @@ BOOL client_cli_choose_smartcard(SmartcardCertInfo** cert_list, DWORD count, DWO
 	for (DWORD i = 0; i < count; i++)
 	{
 		const SmartcardCertInfo* cert = cert_list[i];
-		char* reader = NULL;
-		char* container_name = NULL;
+		char* reader = ConvertWCharToUtf8Alloc(cert->reader, NULL);
+		char* container_name = ConvertWCharToUtf8Alloc(cert->containerName, NULL);
 
-		ConvertFromUnicode(CP_UTF8, 0, cert->reader, -1, &reader, 0, NULL, NULL);
-		ConvertFromUnicode(CP_UTF8, 0, cert->containerName, -1, &container_name, 0, NULL, NULL);
 		printf("[%" PRIu32
 		       "] %s\n\tReader: %s\n\tUser: %s@%s\n\tSubject: %s\n\tIssuer: %s\n\tUPN: %s\n",
 		       i, container_name, reader, cert->userHint, cert->domainHint, cert->subject,
@@ -865,8 +863,8 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 	printf("%.*S\n", (int)length, message);
 #else
 	{
-		LPSTR msg;
-		if (ConvertFromUnicode(CP_UTF8, 0, message, (int)(length / 2), &msg, 0, NULL, NULL) < 1)
+		LPSTR msg = ConvertWCharNToUtf8Alloc(message, length / sizeof(WCHAR), NULL);
+		if (!msg)
 		{
 			printf("Failed to convert message!\n");
 			return FALSE;

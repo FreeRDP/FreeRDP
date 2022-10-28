@@ -39,24 +39,17 @@
 static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId, const void* data,
                                           UINT32* pSize)
 {
-	int size;
+	size_t size;
 	char* pDstData = NULL;
 
 	if (formatId == CF_UNICODETEXT)
 	{
-		size_t wsize;
-		char* str = NULL;
-
-		if (*pSize > INT32_MAX)
-			return NULL;
-
-		wsize = _wcsnlen(data, (*pSize) / 2);
-		size = ConvertFromUnicode(CP_UTF8, 0, (LPCWSTR)data, wsize, (CHAR**)&str, 0, NULL, NULL);
+		char* str = ConvertWCharNToUtf8Alloc(data, *pSize / sizeof(WCHAR), &size);
 
 		if (!str)
 			return NULL;
 
-		pDstData = ConvertLineEndingToCRLF((const char*)str, &size);
+		pDstData = ConvertLineEndingToCRLF(str, &size);
 		free(str);
 		*pSize = size;
 		return pDstData;
@@ -67,8 +60,8 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
 	         (formatId == ClipboardGetFormatId(clipboard, "TEXT")) ||
 	         (formatId == ClipboardGetFormatId(clipboard, "STRING")))
 	{
-		size = (INT64)*pSize;
-		pDstData = ConvertLineEndingToCRLF((const char*)data, &size);
+		size = *pSize;
+		pDstData = ConvertLineEndingToCRLF(data, &size);
 
 		if (!pDstData)
 			return NULL;
@@ -120,8 +113,7 @@ static void* clipboard_synthesize_cf_locale(wClipboard* clipboard, UINT32 format
 static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 formatId,
                                                  const void* data, UINT32* pSize)
 {
-	int size;
-	int status;
+	size_t size;
 	char* crlfStr = NULL;
 	WCHAR* pDstData = NULL;
 
@@ -131,22 +123,26 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
 	    (formatId == ClipboardGetFormatId(clipboard, "TEXT")) ||
 	    (formatId == ClipboardGetFormatId(clipboard, "STRING")))
 	{
+		size_t len = 0;
 		if (!pSize || (*pSize > INT32_MAX))
 			return NULL;
 
-		size = (int)*pSize;
+		size = *pSize;
 		crlfStr = ConvertLineEndingToCRLF((const char*)data, &size);
 
 		if (!crlfStr)
 			return NULL;
 
-		status = ConvertToUnicode(CP_UTF8, 0, crlfStr, size, &pDstData, 0);
+		pDstData = ConvertUtf8NToWCharAlloc(crlfStr, size, &len);
 		free(crlfStr);
 
-		if (status <= 0)
+		if ((len < 1) || (len > UINT32_MAX / sizeof(WCHAR)))
+		{
+			free(pDstData);
 			return NULL;
+		}
 
-		*pSize = status * 2;
+		*pSize = len * sizeof(WCHAR);
 	}
 
 	return (void*)pDstData;
@@ -161,14 +157,12 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
 static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 formatId,
                                               const void* data, UINT32* pSize)
 {
-	INT64 size;
+	size_t size;
 	char* pDstData = NULL;
 
 	if (formatId == CF_UNICODETEXT)
 	{
-		size_t wsize = _wcsnlen(data, (*pSize) / 2);
-		size =
-		    ConvertFromUnicode(CP_UTF8, 0, (LPCWSTR)data, wsize, (CHAR**)&pDstData, 0, NULL, NULL);
+		pDstData = ConvertWCharNToUtf8Alloc(data, *pSize / sizeof(WCHAR), &size);
 
 		if (!pDstData)
 			return NULL;
@@ -188,14 +182,14 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 	         (formatId == ClipboardGetFormatId(clipboard, "STRING")))
 	{
 		int rc;
-		size = (INT64)*pSize;
+		size = *pSize;
 		pDstData = (char*)malloc(size);
 
 		if (!pDstData)
 			return NULL;
 
 		CopyMemory(pDstData, data, size);
-		rc = ConvertLineEndingToLF((char*)pDstData, (int)size);
+		rc = ConvertLineEndingToLF(pDstData, size);
 		if (rc < 0)
 		{
 			free(pDstData);
@@ -371,10 +365,11 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 			/* Check if we have WCHAR, convert to UTF-8 */
 			if ((pSrcData.cpb[0] == 0xFF) && (pSrcData.cpb[1] == 0xFE))
 			{
-				char* utfString = NULL;
-				ConvertFromUnicode(CP_UTF8, 0, &pSrcData.pv[1], (int)(SrcSize - 2) / 2, &utfString,
-				                   0, NULL, NULL);
+				char* utfString =
+				    ConvertWCharNToUtf8Alloc(&pSrcData.pv[1], SrcSize / sizeof(WCHAR), NULL);
 				free(pSrcData.pv);
+				if (!utfString)
+					goto fail;
 				pSrcData.cpc = utfString;
 			}
 		}

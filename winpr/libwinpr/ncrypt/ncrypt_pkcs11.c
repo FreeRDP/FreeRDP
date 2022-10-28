@@ -533,7 +533,7 @@ static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 
 static void wprintKeyName(LPWSTR str, CK_SLOT_ID slotId, CK_BYTE* id, CK_ULONG idLen)
 {
-	char asciiName[128];
+	char asciiName[128] = { 0 };
 	char* ptr = asciiName;
 	const CK_BYTE* bytePtr;
 	CK_ULONG i;
@@ -551,7 +551,8 @@ static void wprintKeyName(LPWSTR str, CK_SLOT_ID slotId, CK_BYTE* id, CK_ULONG i
 	for (i = 0; i < idLen; i++, id++, ptr += 2)
 		snprintf(ptr, 3, "%.2x", *id);
 
-	MultiByteToWideChar(CP_UTF8, 0, asciiName, strlen(asciiName), str, (strlen(asciiName) + 1));
+	ConvertUtf8NToWChar(asciiName, ARRAYSIZE(asciiName), str,
+	                    strnlen(asciiName, ARRAYSIZE(asciiName)) + 1);
 }
 
 static size_t parseHex(const char* str, const char* end, CK_BYTE* target)
@@ -611,8 +612,7 @@ static SECURITY_STATUS parseKeyName(LPCWSTR pszKeyName, CK_SLOT_ID* slotId, CK_B
 	char asciiKeyName[128] = { 0 };
 	char* pos;
 
-	if (WideCharToMultiByte(CP_UTF8, 0, pszKeyName, _wcslen(pszKeyName) + 1, asciiKeyName,
-	                        sizeof(asciiKeyName) - 1, "?", FALSE) <= 0)
+	if (ConvertWCharToUtf8(pszKeyName, asciiKeyName, ARRAYSIZE(asciiKeyName)) < 0)
 		return NTE_BAD_KEY;
 
 	if (*asciiKeyName != '\\')
@@ -661,10 +661,9 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		 * card reader
 		 */
 		char asciiScope[128 + 6] = { 0 };
-		int asciiScopeLen;
+		size_t asciiScopeLen;
 
-		if (WideCharToMultiByte(CP_UTF8, 0, pszScope, _wcslen(pszScope) + 1, asciiScope,
-		                        sizeof(asciiScope) - 1, "?", NULL) <= 0)
+		if (ConvertWCharToUtf8(pszScope, asciiScope, ARRAYSIZE(asciiScope)) < 0)
 			return NTE_INVALID_PARAMETER;
 
 		if (strstr(asciiScope, "\\\\.\\") != asciiScope)
@@ -846,14 +845,15 @@ static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, BYTE* piv
 		return NTE_BAD_KEY;
 
 	fix_padded_string((char*)slot_info.slotDescription, sizeof(slot_info.slotDescription));
-	if (ConvertToUnicode(
-	        CP_UTF8, 0, (char*)slot_info.slotDescription,
-	        strnlen((char*)slot_info.slotDescription, sizeof(slot_info.slotDescription)), &reader,
-	        0) < 0)
-		return NTE_NO_MEMORY;
+	reader = ConvertUtf8NToWCharAlloc((char*)slot_info.slotDescription,
+	                                  ARRAYSIZE(slot_info.slotDescription), NULL);
+	ret = NTE_NO_MEMORY;
+	if (!reader)
+		goto out;
 
+	ret = NTE_BAD_KEY;
 	if (SCardEstablishContext(SCARD_SCOPE_USER, NULL, NULL, &context) != SCARD_S_SUCCESS)
-		return NTE_BAD_KEY;
+		goto out;
 
 	if (SCardConnectW(context, reader, SCARD_SHARE_SHARED, SCARD_PROTOCOL_Tx, &card, &proto) !=
 	    SCARD_S_SUCCESS)
@@ -893,11 +893,18 @@ static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, BYTE* piv
 	         piv_tag[1], piv_tag[2]);
 
 	/* And convert it to UTF-16 */
-	if (MultiByteToWideChar(CP_UTF8, 0, container_name, PIV_CONTAINER_NAME_LEN, (WCHAR*)output,
-	                        output_len) == PIV_CONTAINER_NAME_LEN)
+	union
+	{
+		WCHAR* wc;
+		BYTE* b;
+	} cnv;
+	cnv.b = output;
+	if (ConvertUtf8NToWChar(container_name, ARRAYSIZE(container_name), cnv.wc,
+	                        output_len / sizeof(WCHAR)) > 0)
 		ret = ERROR_SUCCESS;
 
 out:
+	free(reader);
 	if (card)
 		SCardDisconnect(card, SCARD_LEAVE_CARD);
 	if (context)
@@ -968,11 +975,17 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 			*pcbResult = 2 * (strnlen((char*)slotInfo.slotDescription, SLOT_DESC_SZ) + 1);
 			if (pbOutput)
 			{
+				union
+				{
+					WCHAR* wc;
+					BYTE* b;
+				} cnv;
+				cnv.b = pbOutput;
 				if (cbOutput < *pcbResult)
 					return NTE_NO_MEMORY;
 
-				if (MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)slotInfo.slotDescription, -1,
-				                        (LPWSTR)pbOutput, cbOutput) <= 0)
+				if (ConvertUtf8ToWChar((char*)slotInfo.slotDescription, cnv.wc,
+				                       cbOutput / sizeof(WCHAR)) < 0)
 					return NTE_NO_MEMORY;
 			}
 			return ERROR_SUCCESS;
@@ -1071,11 +1084,18 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 				/* Otherwise, at least for GIDS cards the label will be the correct value */
 				if (ret == NTE_NOT_FOUND)
 				{
-					*pcbResult =
-					    MultiByteToWideChar(CP_UTF8, 0, label, attr.ulValueLen, (LPWSTR)pbOutput,
-					                        pbOutput ? cbOutput / sizeof(WCHAR) : 0) *
-					    sizeof(WCHAR);
-					ret = ERROR_SUCCESS;
+					union
+					{
+						WCHAR* wc;
+						BYTE* b;
+					} cnv;
+					const size_t olen = pbOutput ? cbOutput / sizeof(WCHAR) : 0;
+					cnv.b = pbOutput;
+					SSIZE_T size = ConvertUtf8NToWChar(label, attr.ulValueLen, cnv.wc, olen);
+					if (size < 0)
+						ret = ERROR_CONVERT_TO_LARGE;
+					else
+						ret = ERROR_SUCCESS;
 				}
 			}
 

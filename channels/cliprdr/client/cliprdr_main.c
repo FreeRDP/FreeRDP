@@ -619,9 +619,7 @@ static UINT cliprdr_client_capabilities(CliprdrClientContext* context,
 static UINT cliprdr_temp_directory(CliprdrClientContext* context,
                                    const CLIPRDR_TEMP_DIRECTORY* tempDirectory)
 {
-	int length;
 	wStream* s;
-	WCHAR* wszTempDir = NULL;
 	cliprdrPlugin* cliprdr;
 
 	WINPR_ASSERT(context);
@@ -630,7 +628,8 @@ static UINT cliprdr_temp_directory(CliprdrClientContext* context,
 	cliprdr = (cliprdrPlugin*)context->handle;
 	WINPR_ASSERT(cliprdr);
 
-	s = cliprdr_packet_new(CB_TEMP_DIRECTORY, 0, 260 * sizeof(WCHAR));
+	const size_t tmpDirCharLen = sizeof(tempDirectory->szTempDir) / sizeof(WCHAR);
+	s = cliprdr_packet_new(CB_TEMP_DIRECTORY, 0, tmpDirCharLen * sizeof(WCHAR));
 
 	if (!s)
 	{
@@ -638,19 +637,13 @@ static UINT cliprdr_temp_directory(CliprdrClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	length = ConvertToUnicode(CP_UTF8, 0, tempDirectory->szTempDir, -1, &wszTempDir, 0);
-
-	if (length < 0)
+	if (Stream_Write_UTF16_String_From_UTF8(s, tmpDirCharLen - 1, tempDirectory->szTempDir,
+	                                        ARRAYSIZE(tempDirectory->szTempDir), TRUE) < 0)
 		return ERROR_INTERNAL_ERROR;
-
 	/* Path must be 260 UTF16 characters with '\0' termination.
 	 * ensure this here */
-	if (length >= 260)
-		length = 259;
+	Stream_Write_UINT16(s, 0);
 
-	Stream_Write_UTF16_String(s, wszTempDir, length);
-	Stream_Zero(s, 520 - (length * sizeof(WCHAR)));
-	free(wszTempDir);
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "TempDirectory: %s", tempDirectory->szTempDir);
 	return cliprdr_packet_send(cliprdr, s);
 }

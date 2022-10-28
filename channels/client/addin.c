@@ -148,8 +148,10 @@ error_out:
 static HANDLE FindFirstFileUTF8(LPCSTR pszSearchPath, WIN32_FIND_DATAW* FindData)
 {
 	HANDLE hdl = INVALID_HANDLE_VALUE;
-	WCHAR* wpath = NULL;
-	if (ConvertToUnicode(CP_UTF8, 0, pszSearchPath, -1, &wpath, 0) <= 0)
+	if (!pszSearchPath)
+		return hdl;
+	WCHAR* wpath = ConvertUtf8ToWCharAlloc(pszSearchPath, NULL);
+	if (!wpath)
 		return hdl;
 
 	hdl = FindFirstFileW(wpath, FindData);
@@ -254,7 +256,9 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 			goto error_out;
 		}
 
-		if (ConvertFromUnicode(CP_UTF8, 0, FindData.cFileName, -1, &cFileName, 0, NULL, NULL) <= 0)
+		cFileName =
+		    ConvertWCharNToUtf8Alloc(FindData.cFileName, ARRAYSIZE(FindData.cFileName), NULL);
+		if (!cFileName)
 			goto skip;
 
 		nDashes = 0;

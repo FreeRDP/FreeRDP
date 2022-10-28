@@ -331,21 +331,19 @@ fail:
 WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPCWSTR User, UINT32 UserLength, LPCWSTR Domain,
                                 UINT32 DomainLength)
 {
-	int rc;
 	WINPR_SAM_ENTRY* entry = NULL;
 	char* utfUser = NULL;
 	char* utfDomain = NULL;
-	const UINT32 UserCharLength = UserLength / sizeof(WCHAR);
-	const UINT32 DomainCharLength = DomainLength / sizeof(WCHAR);
-	if ((UserCharLength > INT_MAX) || (DomainCharLength > INT_MAX))
+	size_t userCharLen = 0;
+	size_t domainCharLen = 0;
+
+	utfUser = ConvertWCharNToUtf8Alloc(User, UserLength / sizeof(WCHAR), &userCharLen);
+	if (!utfUser)
 		goto fail;
-	rc = ConvertFromUnicode(CP_UTF8, 0, User, (int)UserCharLength, &utfUser, 0, NULL, NULL);
-	if ((rc < 0) || ((size_t)rc != UserCharLength))
+	utfDomain = ConvertWCharNToUtf8Alloc(Domain, DomainLength / sizeof(WCHAR), &domainCharLen);
+	if (!utfDomain)
 		goto fail;
-	rc = ConvertFromUnicode(CP_UTF8, 0, Domain, (int)DomainCharLength, &utfDomain, 0, NULL, NULL);
-	if ((rc < 0) || ((size_t)rc != DomainCharLength))
-		goto fail;
-	entry = SamLookupUserA(sam, utfUser, UserCharLength, utfDomain, DomainCharLength);
+	entry = SamLookupUserA(sam, utfUser, userCharLen, utfDomain, domainCharLen);
 fail:
 	free(utfUser);
 	free(utfDomain);

@@ -135,9 +135,7 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
  */
 static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
-	int status;
 	UINT32 ChannelNameLen;
-	char* pChannelName = NULL;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
@@ -160,20 +158,10 @@ static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* head
 		return ERROR_INVALID_DATA;
 	}
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, ChannelNameLen))
-		return ERROR_INVALID_DATA;
-
-	ZeroMemory(header->ChannelName, sizeof(header->ChannelName));
-	pChannelName = (char*)header->ChannelName;
-	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)Stream_Pointer(s), ChannelNameLen / 2,
-	                            &pChannelName, 32, NULL, NULL);
-	Stream_Seek(s, ChannelNameLen);
-
-	if (status <= 0)
-	{
-		WLog_ERR(TAG, "ConvertFromUnicode failed!");
+	if (Stream_Read_UTF16_String_As_UTF8_Buffer(s, ChannelNameLen / sizeof(WCHAR),
+	                                            header->ChannelName,
+	                                            ARRAYSIZE(header->ChannelName)) < 0)
 		return ERROR_INTERNAL_ERROR;
-	}
 
 	return CHANNEL_RC_OK;
 }
@@ -358,12 +346,11 @@ static UINT remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s,
  */
 static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 {
-	int status;
-	UINT error;
+	UINT error = ERROR_INTERNAL_ERROR;
 	wStream* s = NULL;
-	int cbExpertBlobW = 0;
+	size_t cbExpertBlobW = 0;
 	WCHAR* expertBlobW = NULL;
-	int cbRaConnectionStringW = 0;
+	size_t cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
 	REMDESK_CTL_AUTHENTICATE_PDU pdu = { 0 };
 	rdpSettings* settings;
@@ -382,25 +369,19 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	WINPR_ASSERT(settings);
 
 	pdu.raConnectionString = settings->RemoteAssistanceRCTicket;
-	status = ConvertToUnicode(CP_UTF8, 0, pdu.raConnectionString, -1, &raConnectionStringW, 0);
+	raConnectionStringW = ConvertUtf8ToWCharAlloc(pdu.raConnectionString, &cbRaConnectionStringW);
 
-	if (status <= 0)
-	{
-		WLog_ERR(TAG, "ConvertToUnicode failed!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
-	cbRaConnectionStringW = status * 2;
-	status = ConvertToUnicode(CP_UTF8, 0, pdu.expertBlob, -1, &expertBlobW, 0);
-
-	if (status <= 0)
-	{
-		WLog_ERR(TAG, "ConvertToUnicode failed!");
-		error = ERROR_INTERNAL_ERROR;
+	if (!raConnectionStringW || (cbRaConnectionStringW > UINT32_MAX / sizeof(WCHAR)))
 		goto out;
-	}
 
-	cbExpertBlobW = status * 2;
+	cbRaConnectionStringW = cbRaConnectionStringW * sizeof(WCHAR);
+
+	expertBlobW = ConvertUtf8ToWCharAlloc(pdu.expertBlob, &cbExpertBlobW);
+
+	if (!expertBlobW || (cbExpertBlobW > UINT32_MAX / sizeof(WCHAR)))
+		goto out;
+
+	cbExpertBlobW = cbExpertBlobW * sizeof(WCHAR);
 	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_AUTHENTICATE,
 	                           cbRaConnectionStringW + cbExpertBlobW);
 	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
@@ -434,12 +415,12 @@ out:
  */
 static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 {
-	int status;
 	UINT error;
+	size_t length;
 	wStream* s = NULL;
-	int cbRaConnectionStringW = 0;
+	size_t cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
-	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu;
+	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu = { 0 };
 	rdpSettings* settings;
 
 	WINPR_ASSERT(remdesk);
@@ -448,15 +429,12 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 	WINPR_ASSERT(settings);
 
 	pdu.raConnectionString = settings->RemoteAssistanceRCTicket;
-	status = ConvertToUnicode(CP_UTF8, 0, pdu.raConnectionString, -1, &raConnectionStringW, 0);
+	raConnectionStringW = ConvertUtf8ToWCharAlloc(pdu.raConnectionString, &length);
 
-	if (status <= 0)
-	{
-		WLog_ERR(TAG, "ConvertToUnicode failed!");
+	if (!raConnectionStringW)
 		return ERROR_INTERNAL_ERROR;
-	}
 
-	cbRaConnectionStringW = status * 2;
+	cbRaConnectionStringW = length * sizeof(WCHAR);
 	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_REMOTE_CONTROL_DESKTOP,
 	                           cbRaConnectionStringW);
 	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
@@ -488,12 +466,11 @@ out:
  */
 static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 {
-	int status;
-	UINT error;
+	UINT error = ERROR_INTERNAL_ERROR;
 	wStream* s;
-	int cbExpertBlobW = 0;
+	size_t cbExpertBlobW = 0;
 	WCHAR* expertBlobW = NULL;
-	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu;
+	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu = { 0 };
 
 	WINPR_ASSERT(remdesk);
 
@@ -504,15 +481,12 @@ static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 	}
 
 	pdu.expertBlob = remdesk->ExpertBlob;
-	status = ConvertToUnicode(CP_UTF8, 0, pdu.expertBlob, -1, &expertBlobW, 0);
+	expertBlobW = ConvertUtf8ToWCharAlloc(pdu.expertBlob, &cbExpertBlobW);
 
-	if (status <= 0)
-	{
-		WLog_ERR(TAG, "ConvertToUnicode failed!");
-		return ERROR_INTERNAL_ERROR;
-	}
+	if (!expertBlobW || (cbExpertBlobW > UINT32_MAX / sizeof(WCHAR)))
+		goto out;
 
-	cbExpertBlobW = status * 2;
+	cbExpertBlobW = cbExpertBlobW * sizeof(WCHAR);
 	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_VERIFY_PASSWORD, cbExpertBlobW);
 	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 

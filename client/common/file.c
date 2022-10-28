@@ -694,15 +694,11 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 
 	if ((buffer[0] == BOM_UTF16_LE[0]) && (buffer[1] == BOM_UTF16_LE[1]))
 	{
-		int clength;
 		LPCWSTR uc = (LPCWSTR)(&buffer[2]);
-		size = size / 2 - 1;
+		size = size / sizeof(WCHAR) - 1;
 
-		if (size > INT_MAX)
-			return FALSE;
-
-		clength = (int)size;
-		if (ConvertFromUnicode(CP_UTF8, 0, uc, clength, &copy, 0, NULL, NULL) < 0)
+		copy = ConvertWCharNToUtf8Alloc(uc, size, NULL);
+		if (!copy)
 		{
 			WLog_ERR(TAG, "Failed to convert RDP file from UCS2 to UTF8");
 			return FALSE;
@@ -1125,22 +1121,19 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 	{
 		if (unicode)
 		{
-			int length;
+			size_t len = 0;
+			unicodestr = ConvertUtf8NToWCharAlloc(buffer, size, &len);
 
-			if (size > INT_MAX)
+			if (!unicodestr)
 			{
 				free(buffer);
-				free(unicodestr);
 				fclose(fp);
 				return FALSE;
 			}
 
-			length = (int)size;
-			ConvertToUnicode(CP_UTF8, 0, buffer, length, &unicodestr, 0);
-
 			/* Write multi-byte header */
-			if ((length < 0) || (fwrite(BOM_UTF16_LE, sizeof(BYTE), 2, fp) != 2) ||
-			    (fwrite(unicodestr, 2, (size_t)length, fp) != (size_t)length))
+			if ((fwrite(BOM_UTF16_LE, sizeof(BYTE), 2, fp) != 2) ||
+			    (fwrite(unicodestr, sizeof(WCHAR), len, fp) != len))
 			{
 				free(buffer);
 				free(unicodestr);

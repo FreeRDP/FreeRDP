@@ -12,26 +12,22 @@ static TCHAR testDirectory2File2[] = _T("TestDirectory2File2");
 int TestFileFindNextFile(int argc, char* argv[])
 {
 	char* str;
-	int length;
+	size_t length = 0;
 	BOOL status;
 	HANDLE hFind;
 	LPTSTR BasePath;
 	WIN32_FIND_DATA FindData;
-	TCHAR FilePath[PATHCCH_MAX_CCH];
+	TCHAR FilePath[PATHCCH_MAX_CCH] = { 0 };
 	WINPR_UNUSED(argc);
 	str = argv[1];
 #ifdef UNICODE
-	length = MultiByteToWideChar(CP_UTF8, 0, str, strlen(str), NULL, 0);
-	BasePath = (WCHAR*)calloc((length + 1), sizeof(WCHAR));
+	BasePath = ConvertUtf8ToWChar(str, &length);
 
 	if (!BasePath)
 	{
 		_tprintf(_T("Unable to allocate memory"));
 		return -1;
 	}
-
-	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR)BasePath, length * sizeof(WCHAR));
-	BasePath[length] = 0;
 #else
 	BasePath = _strdup(str);
 

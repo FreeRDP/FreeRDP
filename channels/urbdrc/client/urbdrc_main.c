@@ -43,25 +43,6 @@
 
 #include <urbdrc_helpers.h>
 
-static BOOL Stream_Write_UTF16_String_From_Utf8(wStream* s, const char* utf8, size_t len)
-{
-	BOOL ret;
-	WCHAR* utf16;
-	int rc;
-
-	if (len > INT_MAX)
-		return FALSE;
-
-	rc = ConvertToUnicode(CP_UTF8, 0, utf8, (int)len, &utf16, 0);
-
-	if (rc < 0)
-		return FALSE;
-
-	ret = Stream_Write_UTF16_String(s, utf16, (size_t)rc);
-	free(utf16);
-	return ret;
-}
-
 static IWTSVirtualChannel* get_channel(IUDEVMAN* idevman)
 {
 	IWTSVirtualChannelManager* channel_mgr;
@@ -323,34 +304,50 @@ static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEV
 	Stream_Write_UINT32(out, 0x00000001);                /* NumUsbDevice */
 	Stream_Write_UINT32(out, pdev->get_UsbDevice(pdev)); /* UsbDevice */
 	Stream_Write_UINT32(out, (UINT32)InstanceIdLen + 1); /* cchDeviceInstanceId */
-	Stream_Write_UTF16_String_From_Utf8(out, strInstanceId, InstanceIdLen);
+	if (Stream_Write_UTF16_String_From_UTF8(out, InstanceIdLen, strInstanceId, InstanceIdLen,
+	                                        TRUE) < 0)
+		goto fail;
 	Stream_Write_UINT16(out, 0);
 	Stream_Write_UINT32(out, HardwareIdsLen[0] + HardwareIdsLen[1] + 3); /* cchHwIds */
-	/* HardwareIds 1 */
-	Stream_Write_UTF16_String_From_Utf8(out, HardwareIds[0], HardwareIdsLen[0]);
+	                                                                     /* HardwareIds 1 */
+	if (Stream_Write_UTF16_String_From_UTF8(out, HardwareIdsLen[0], HardwareIds[0],
+	                                        HardwareIdsLen[0], TRUE) < 0)
+		goto fail;
 	Stream_Write_UINT16(out, 0);
-	Stream_Write_UTF16_String_From_Utf8(out, HardwareIds[1], HardwareIdsLen[1]);
+	if (Stream_Write_UTF16_String_From_UTF8(out, HardwareIdsLen[1], HardwareIds[1],
+	                                        HardwareIdsLen[1], TRUE) < 0)
+		goto fail;
 	Stream_Write_UINT16(out, 0);
 	Stream_Write_UINT16(out, 0);                    /* add "\0" */
 	Stream_Write_UINT32(out, (UINT32)cchCompatIds); /* cchCompatIds */
 	/* CompatibilityIds */
-	Stream_Write_UTF16_String_From_Utf8(out, CompatibilityIds[0], CompatibilityIdLen[0]);
+	if (Stream_Write_UTF16_String_From_UTF8(out, CompatibilityIdLen[0], CompatibilityIds[0],
+	                                        CompatibilityIdLen[0], TRUE) < 0)
+		goto fail;
 	Stream_Write_UINT16(out, 0);
-	Stream_Write_UTF16_String_From_Utf8(out, CompatibilityIds[1], CompatibilityIdLen[1]);
+	if (Stream_Write_UTF16_String_From_UTF8(out, CompatibilityIdLen[1], CompatibilityIds[1],
+	                                        CompatibilityIdLen[1], TRUE) < 0)
+		goto fail;
 	Stream_Write_UINT16(out, 0);
-	Stream_Write_UTF16_String_From_Utf8(out, CompatibilityIds[2], CompatibilityIdLen[2]);
+	if (Stream_Write_UTF16_String_From_UTF8(out, CompatibilityIdLen[2], CompatibilityIds[2],
+	                                        CompatibilityIdLen[2], TRUE) < 0)
+		goto fail;
 	Stream_Write_UINT16(out, 0);
 
 	if (pdev->isCompositeDevice(pdev))
 	{
-		Stream_Write_UTF16_String_From_Utf8(out, composite_str, composite_len);
+		if (Stream_Write_UTF16_String_From_UTF8(out, composite_len, composite_str, composite_len,
+		                                        TRUE) < 0)
+			goto fail;
 		Stream_Write_UINT16(out, 0);
 	}
 
 	Stream_Write_UINT16(out, 0x0000);                     /* add "\0" */
 	Stream_Write_UINT32(out, (UINT32)ContainerIdLen + 1); /* cchContainerId */
 	/* ContainerId */
-	Stream_Write_UTF16_String_From_Utf8(out, strContainerId, ContainerIdLen);
+	if (Stream_Write_UTF16_String_From_UTF8(out, ContainerIdLen, strContainerId, ContainerIdLen,
+	                                        TRUE) < 0)
+		goto fail;
 	Stream_Write_UINT16(out, 0);
 	/* USB_DEVICE_CAPABILITIES 28 bytes */
 	Stream_Write_UINT32(out, 0x0000001c);                                /* CbSize */
@@ -368,6 +365,10 @@ static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEV
 
 	Stream_Write_UINT32(out, 0x50); /* NoAckIsochWriteJitterBufferSizeInMs, >=10 or <=512 */
 	return stream_write_and_free(callback->plugin, callback->channel, out);
+
+fail:
+	Stream_Free(out, TRUE);
+	return ERROR_INTERNAL_ERROR;
 }
 
 /**

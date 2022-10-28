@@ -1037,17 +1037,16 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 	UINT32 packetSize = 16;
 	UINT16 fieldsPresent = 0;
 	WCHAR* PAACookie = NULL;
-	int PAACookieLen = 0;
+	size_t PAACookieLen = 0;
 	const UINT32 capabilities = HTTP_CAPABILITY_TYPE_QUAR_SOH |
 	                            HTTP_CAPABILITY_MESSAGING_CONSENT_SIGN |
 	                            HTTP_CAPABILITY_MESSAGING_SERVICE_MSG;
 
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
 	{
-		PAACookieLen =
-		    ConvertToUnicode(CP_UTF8, 0, rdg->settings->GatewayAccessToken, -1, &PAACookie, 0);
+		PAACookie = ConvertUtf8ToWCharAlloc(rdg->settings->GatewayAccessToken, &PAACookieLen);
 
-		if (!PAACookie || (PAACookieLen < 0) || (PAACookieLen > UINT16_MAX / 2))
+		if (!PAACookie || (PAACookieLen > UINT16_MAX / sizeof(WCHAR)))
 		{
 			free(PAACookie);
 			return FALSE;
@@ -1095,18 +1094,20 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 {
 	wStream* s;
 	BOOL status;
-	WCHAR* clientName = NULL;
-	UINT32 packetSize;
-	int clientNameLen =
-	    ConvertToUnicode(CP_UTF8, 0, rdg->settings->ClientHostname, -1, &clientName, 0);
+	WINPR_ASSERT(rdg);
+	size_t clientNameLen = 0;
+	WCHAR* clientName =
+	    freerdp_settings_get_string_as_utf16(rdg->settings, FreeRDP_ClientHostname, &clientNameLen);
 
-	if (!clientName || (clientNameLen < 0) || (clientNameLen > UINT16_MAX / 2))
+	if (!clientName || (clientNameLen >= UINT16_MAX / sizeof(WCHAR)))
 	{
 		free(clientName);
 		return FALSE;
 	}
 
-	packetSize = 12 + (UINT32)clientNameLen * sizeof(WCHAR);
+	clientNameLen++; // length including terminating '\0'
+
+	size_t packetSize = 12ull + clientNameLen * sizeof(WCHAR);
 	s = Stream_New(NULL, packetSize);
 
 	if (!s)
@@ -1119,7 +1120,7 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 	Stream_Write_UINT16(s, 0);                         /* Reserved (2 bytes) */
 	Stream_Write_UINT32(s, packetSize);                /* PacketLength (4 bytes) */
 	Stream_Write_UINT16(s, 0);                         /* FieldsPresent (2 bytes) */
-	Stream_Write_UINT16(s, (UINT16)clientNameLen * 2); /* Client name string length */
+	Stream_Write_UINT16(s, (UINT16)clientNameLen * sizeof(WCHAR)); /* Client name string length */
 	Stream_Write_UTF16_String(s, clientName, (size_t)clientNameLen);
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
@@ -1139,13 +1140,18 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	wStream* s = NULL;
 	BOOL status = FALSE;
 	WCHAR* serverName = NULL;
-	int serverNameLen =
-	    ConvertToUnicode(CP_UTF8, 0, rdg->settings->ServerHostname, -1, &serverName, 0);
-	UINT32 packetSize = 16 + ((UINT32)serverNameLen) * 2;
+	size_t serverNameLen = 0;
 
-	if ((serverNameLen < 0) || (serverNameLen > UINT16_MAX / 2))
+	WINPR_ASSERT(rdg);
+	serverName =
+	    freerdp_settings_get_string_as_utf16(rdg->settings, FreeRDP_ServerHostname, &serverNameLen);
+	ConvertUtf8ToWCharAlloc(rdg->settings->ServerHostname, &serverNameLen);
+
+	if (!serverName || (serverNameLen >= UINT16_MAX / sizeof(WCHAR)))
 		goto fail;
 
+	serverNameLen++; // length including terminating '\0'
+	size_t packetSize = 16ull + serverNameLen * sizeof(WCHAR);
 	s = Stream_New(NULL, packetSize);
 
 	if (!s)
@@ -1158,7 +1164,7 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	Stream_Write_UINT8(s, 0);                        /* Number of alternative resources (1 byte) */
 	Stream_Write_UINT16(s, (UINT16)rdg->settings->ServerPort); /* Resource port (2 bytes) */
 	Stream_Write_UINT16(s, 3);                                 /* Protocol number (2 bytes) */
-	Stream_Write_UINT16(s, (UINT16)serverNameLen * 2);
+	Stream_Write_UINT16(s, (UINT16)serverNameLen * sizeof(WCHAR));
 	Stream_Write_UTF16_String(s, serverName, (size_t)serverNameLen);
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);

@@ -1,5 +1,6 @@
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
 #include <winpr/wlog.h>
@@ -99,7 +100,10 @@ typedef struct
 static int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* domain,
                                  const char* password)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
+
+	WINPR_ASSERT(ntlm);
+
 	SecInvalidateHandle(&(ntlm->context));
 	ntlm->table = InitSecurityInterfaceEx(TEST_SSPI_INTERFACE);
 	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
@@ -204,8 +208,9 @@ static void test_ntlm_client_uninit(TEST_NTLM_CLIENT* ntlm)
 
 static int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 
+	WINPR_ASSERT(ntlm);
 	if (ntlm->outputBuffer[0].pvBuffer)
 	{
 		free(ntlm->outputBuffer[0].pvBuffer);
@@ -265,8 +270,7 @@ static int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 
 static TEST_NTLM_CLIENT* test_ntlm_client_new(void)
 {
-	TEST_NTLM_CLIENT* ntlm;
-	ntlm = (TEST_NTLM_CLIENT*)calloc(1, sizeof(TEST_NTLM_CLIENT));
+	TEST_NTLM_CLIENT* ntlm = (TEST_NTLM_CLIENT*)calloc(1, sizeof(TEST_NTLM_CLIENT));
 
 	if (!ntlm)
 		return NULL;
@@ -308,7 +312,10 @@ typedef struct
 
 static int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
+
+	WINPR_ASSERT(ntlm);
+
 	ntlm->UseNtlmV2Hash = TRUE;
 	SecInvalidateHandle(&(ntlm->context));
 	ntlm->table = InitSecurityInterfaceEx(TEST_SSPI_INTERFACE);
@@ -375,7 +382,10 @@ static void test_ntlm_server_uninit(TEST_NTLM_SERVER* ntlm)
 
 static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
+
+	WINPR_ASSERT(ntlm);
+
 	ntlm->inputBufferDesc.ulVersion = SECBUFFER_VERSION;
 	ntlm->inputBufferDesc.cBuffers = 1;
 	ntlm->inputBufferDesc.pBuffers = ntlm->inputBuffer;
@@ -431,8 +441,7 @@ static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 
 static TEST_NTLM_SERVER* test_ntlm_server_new(void)
 {
-	TEST_NTLM_SERVER* ntlm;
-	ntlm = (TEST_NTLM_SERVER*)calloc(1, sizeof(TEST_NTLM_SERVER));
+	TEST_NTLM_SERVER* ntlm = (TEST_NTLM_SERVER*)calloc(1, sizeof(TEST_NTLM_SERVER));
 
 	if (!ntlm)
 		return NULL;

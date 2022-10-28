@@ -417,27 +417,23 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 
 	if (dtz != NULL)
 	{
-		int status;
+		const TIME_ZONE_INFORMATION empty = { 0 };
+
 		WLog_DBG(TAG, "tz: Bias=%" PRId32 " sn='%s' dln='%s'", dtz->Bias, dtz->StandardName,
 		         dtz->DaylightName);
-		tz->Bias = dtz->Bias;
-		tz->StandardBias = 0;
-		tz->DaylightBias = 0;
-		ZeroMemory(tz->StandardName, sizeof(tz->StandardName));
-		ZeroMemory(tz->DaylightName, sizeof(tz->DaylightName));
-		status = MultiByteToWideChar(CP_UTF8, 0, dtz->StandardName, -1, tz->StandardName,
-		                             sizeof(tz->StandardName) / sizeof(WCHAR) - 1);
 
-		if (status < 1)
+		*tz = empty;
+		tz->Bias = dtz->Bias;
+
+		if (ConvertUtf8ToWChar(dtz->StandardName, tz->StandardName, ARRAYSIZE(tz->StandardName)) <
+		    0)
 		{
 			WLog_ERR(TAG, "StandardName conversion failed - using default");
 			goto out_error;
 		}
 
-		status = MultiByteToWideChar(CP_UTF8, 0, dtz->DaylightName, -1, tz->DaylightName,
-		                             sizeof(tz->DaylightName) / sizeof(WCHAR) - 1);
-
-		if (status < 1)
+		if (ConvertUtf8ToWChar(dtz->DaylightName, tz->DaylightName, ARRAYSIZE(tz->DaylightName)) <
+		    0)
 		{
 			WLog_ERR(TAG, "DaylightName conversion failed - using default");
 			goto out_error;

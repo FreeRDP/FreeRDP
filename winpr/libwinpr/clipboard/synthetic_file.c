@@ -487,10 +487,10 @@ static BOOL process_uri(wClipboard* clipboard, const char* uri, size_t uri_len)
 		 * '\0' and '/' bytes. But we need to make some decision here.
 		 * Assuming UTF-8 is currently the most sane thing.
 		 */
-		if (ConvertToUnicode(CP_UTF8, 0, name, -1, &wname, 0))
-		{
+		wname = ConvertUtf8ToWCharAlloc(name, NULL);
+		if (wname)
 			result = process_file_name(clipboard, wname, clipboard->localFiles);
-		}
+
 		free(name);
 		free(wname);
 	}
@@ -830,13 +830,14 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	/* Get total size of file/folder names under first level folder only */
 	for (x = 0; x < count; x++)
 	{
-		if (_wcschr(descriptors[x].cFileName, backslash) == NULL)
+		const FILEDESCRIPTORW* dsc = &descriptors[x];
+
+		if (_wcschr(dsc->cFileName, backslash) == NULL)
 		{
-			size_t curLen = _wcsnlen(descriptors[x].cFileName, ARRAYSIZE(descriptors[x].cFileName));
-			alloc += WideCharToMultiByte(CP_UTF8, 0, descriptors[x].cFileName, (int)curLen, NULL, 0,
-			                             NULL, NULL);
-			/* # (1 char) -> %23 (3 chars) , the first char is replaced inplace */
-			alloc += count_special_chars(descriptors[x].cFileName) * 2;
+			alloc += ARRAYSIZE(dsc->cFileName) *
+			         8; /* Overallocate, just take the biggest value the result path can have */
+			            /* # (1 char) -> %23 (3 chars) , the first char is replaced inplace */
+			alloc += count_special_chars(dsc->cFileName) * 2;
 			alloc += decoration_len;
 		}
 	}
@@ -855,19 +856,19 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 
 	for (x = 0; x < count; x++)
 	{
+		const FILEDESCRIPTORW* dsc = &descriptors[x];
 		BOOL fail = TRUE;
-		if (_wcschr(descriptors[x].cFileName, backslash) != NULL)
+		if (_wcschr(dsc->cFileName, backslash) != NULL)
 		{
 			continue;
 		}
-		int rc;
-		const FILEDESCRIPTORW* cur = &descriptors[x];
-		size_t curLen = _wcsnlen(cur->cFileName, ARRAYSIZE(cur->cFileName));
-		char* curName = NULL;
+		int rc = -1;
+		char curName[520] = { 0 };
 		const char* stop_at = NULL;
 		const char* previous_at = NULL;
-		rc = ConvertFromUnicode(CP_UTF8, 0, cur->cFileName, (int)curLen, &curName, 0, NULL, NULL);
-		if (rc < 0)
+
+		if (ConvertWCharNToUtf8(dsc->cFileName, ARRAYSIZE(dsc->cFileName), curName,
+		                        ARRAYSIZE(curName)) < 0)
 			goto loop_fail;
 
 		rc = _snprintf(&dst[pos], alloc - pos, "%s%s/", lineprefix, clipboard->delegate.basePath);
@@ -905,10 +906,8 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 		if ((rc < 0) || fail)
 		{
 			free(dst);
-			free(curName);
 			return NULL;
 		}
-		free(curName);
 
 		pos += (size_t)rc;
 	}

@@ -128,7 +128,8 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 		return FALSE;
 	}
 
-	if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, str, 0, NULL, NULL) < 1)
+	*str = ConvertWCharNToUtf8Alloc(wstr, length / sizeof(WCHAR), NULL);
+	if (!*str)
 	{
 		WLog_ERR(TAG, "rdp_redirection_read_string failure: string conversion failed");
 		return FALSE;

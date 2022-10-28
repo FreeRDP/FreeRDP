@@ -402,10 +402,11 @@ size_t ber_write_char_to_unicode_octet_string(wStream* s, const char* str)
 	size_t size = 0;
 	size_t length = strlen(str) + 1;
 	size += ber_write_universal_tag(s, BER_TAG_OCTET_STRING, FALSE);
-	size += ber_write_length(s, length * 2);
-	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR)Stream_Pointer(s), length * 2);
-	Stream_Seek(s, length * 2);
-	return size + length * 2;
+	size += ber_write_length(s, length * sizeof(WCHAR));
+
+	if (Stream_Write_UTF16_String_From_UTF8(s, length, str, length, TRUE) < 0)
+		return 0;
+	return size + length * sizeof(WCHAR);
 }
 
 size_t ber_write_contextual_unicode_octet_string(wStream* s, BYTE tag, LPWSTR str)
@@ -429,10 +430,10 @@ size_t ber_write_contextual_char_to_unicode_octet_string(wStream* s, BYTE tag, c
 
 	ret = ber_write_contextual_tag(s, tag, inner_len, TRUE);
 	ret += ber_write_universal_tag(s, BER_TAG_OCTET_STRING, FALSE);
-	ret += ber_write_length(s, len * 2);
-	if (MultiByteToWideChar(CP_UTF8, 0, str, len, (LPWSTR)Stream_Pointer(s), len * 2) < 0)
+	ret += ber_write_length(s, len * sizeof(WCHAR));
+
+	if (Stream_Write_UTF16_String_From_UTF8(s, len, str, len, TRUE) < 0)
 		return 0;
-	Stream_Seek(s, len * 2);
 
 	return ret + len;
 }
@@ -461,23 +462,16 @@ BOOL ber_read_unicode_octet_string(wStream* s, LPWSTR* str)
 
 BOOL ber_read_char_from_unicode_octet_string(wStream* s, char** str)
 {
-	size_t length, outLen;
+	size_t length;
 	char* ptr;
 
+	*str = NULL;
 	if (!ber_read_octet_string_tag(s, &length))
 		return FALSE;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
-		return FALSE;
-
-	outLen = (length / 2) + 1;
-	ptr = malloc(outLen);
+	ptr = Stream_Read_UTF16_String_As_UTF8(s, length / sizeof(WCHAR), NULL);
 	if (!ptr)
 		return FALSE;
-	ptr[outLen - 1] = 0;
-
-	WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)Stream_Pointer(s), length, ptr, outLen, NULL, FALSE);
-	Stream_Seek(s, length);
 	*str = ptr;
 	return TRUE;
 }

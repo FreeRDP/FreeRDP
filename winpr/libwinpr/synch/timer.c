@@ -377,13 +377,15 @@ fail:
 HANDLE CreateWaitableTimerW(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManualReset,
                             LPCWSTR lpTimerName)
 {
-	int rc;
 	HANDLE handle;
 	LPSTR name = NULL;
-	rc = ConvertFromUnicode(CP_UTF8, 0, lpTimerName, -1, &name, 0, NULL, NULL);
 
-	if (rc < 0)
-		return NULL;
+	if (lpTimerName)
+	{
+		name = ConvertWCharToUtf8Alloc(lpTimerName, NULL);
+		if (!name)
+			return NULL;
+	}
 
 	handle = CreateWaitableTimerA(lpTimerAttributes, bManualReset, name);
 	free(name);
@@ -405,13 +407,15 @@ HANDLE CreateWaitableTimerExA(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCSTR lp
 HANDLE CreateWaitableTimerExW(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCWSTR lpTimerName,
                               DWORD dwFlags, DWORD dwDesiredAccess)
 {
-	int rc;
 	HANDLE handle;
 	LPSTR name = NULL;
-	rc = ConvertFromUnicode(CP_UTF8, 0, lpTimerName, -1, &name, 0, NULL, NULL);
 
-	if (rc < 0)
-		return NULL;
+	if (lpTimerName)
+	{
+		name = ConvertWCharToUtf8Alloc(lpTimerName, NULL);
+		if (!name)
+			return NULL;
+	}
 
 	handle = CreateWaitableTimerExA(lpTimerAttributes, name, dwFlags, dwDesiredAccess);
 	free(name);

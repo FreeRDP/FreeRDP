@@ -72,8 +72,8 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 
 	TargetName[len - 1] = 0;
 
-	int result = ConvertToUnicode(CP_UTF8, 0, TargetName, -1, &TargetNameW, 0);
-	if (result <= 0)
+	TargetNameW = ConvertUtf8ToWCharAlloc(TargetName, NULL);
+	if (!TargetNameW)
 		goto fail;
 
 	if (!CredReadW(TargetNameW, CRED_TYPE_GENERIC, 0, &Credential))
@@ -85,9 +85,8 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 
 		if (PasswordW)
 		{
-			result = ConvertFromUnicode(CP_UTF8, 0, PasswordW, -1, &Password, 0, NULL, NULL);
-			if (result)
-				freerdp_settings_set_string(settings, idPassword, Password);
+			if (!freerdp_settings_set_string_from_utf16(settings, idPassword, PasswordW))
+				goto fail;
 		}
 	}
 
@@ -97,9 +96,8 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 
 		if (UserNameW)
 		{
-			result = ConvertFromUnicode(CP_UTF8, 0, UserNameW, -1, &UserName, 0, NULL, NULL);
-			if (result)
-				freerdp_settings_set_string(settings, idUsername, UserName);
+			if (!freerdp_settings_set_string_from_utf16(settings, idUsername, UserNameW))
+				goto fail;
 		}
 	}
 

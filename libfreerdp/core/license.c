@@ -367,11 +367,13 @@ static void license_print_product_info(const LICENSE_PRODUCT_INFO* productInfo)
 	char* ProductId = NULL;
 
 	WINPR_ASSERT(productInfo);
+	WINPR_ASSERT(productInfo->pbCompanyName);
+	WINPR_ASSERT(productInfo->pbProductId);
 
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)productInfo->pbCompanyName,
-	                   productInfo->cbCompanyName / 2, &CompanyName, 0, NULL, NULL);
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)productInfo->pbProductId, productInfo->cbProductId / 2,
-	                   &ProductId, 0, NULL, NULL);
+	CompanyName = ConvertWCharToUtf8Alloc(productInfo->pbCompanyName,
+	                                      productInfo->cbCompanyName / sizeof(WCHAR));
+	ProductId =
+	    ConvertWCharToUtf8Alloc(productInfo->pbProductId, productInfo->cbProductId / sizeof(WCHAR));
 	WLog_INFO(TAG, "ProductInfo:");
 	WLog_INFO(TAG, "\tdwVersion: 0x%08" PRIX32 "", productInfo->dwVersion);
 	WLog_INFO(TAG, "\tCompanyName: %s", CompanyName);
@@ -2683,7 +2685,7 @@ BOOL license_server_send_request(rdpLicense* license)
 BOOL license_server_configure(rdpLicense* license)
 {
 
-	int len;
+	size_t len;
 	wStream* s;
 	UINT32 algs[] = { KEY_EXCHANGE_ALG_RSA };
 	UINT32 x;
@@ -2715,17 +2717,15 @@ BOOL license_server_configure(rdpLicense* license)
 		return FALSE;
 
 	license->ProductInfo->dwVersion = ProductVersion;
-	len = ConvertToUnicode(CP_UTF8, 0, CompanyName, -1,
-	                       (WCHAR**)&license->ProductInfo->pbCompanyName, 0);
-	if (!license->ProductInfo->pbCompanyName)
+	license->ProductInfo->pbCompanyName = (BYTE*)ConvertUtf8ToWCharAlloc(CompanyName, &len);
+	if (!license->ProductInfo->pbCompanyName || (len > UINT32_MAX / sizeof(WCHAR)))
 		return FALSE;
-	license->ProductInfo->cbCompanyName = len * sizeof(WCHAR);
+	license->ProductInfo->cbCompanyName = (UINT32)len * sizeof(WCHAR);
 
-	len = ConvertToUnicode(CP_UTF8, 0, ProductName, -1, (WCHAR**)&license->ProductInfo->pbProductId,
-	                       0);
-	if (!license->ProductInfo->pbProductId)
+	license->ProductInfo->pbProductId = (BYTE*)ConvertUtf8ToWCharAlloc(ProductName, &len);
+	if (!license->ProductInfo->pbProductId || (len > UINT32_MAX / sizeof(WCHAR)))
 		return FALSE;
-	license->ProductInfo->cbProductId = len * sizeof(WCHAR);
+	license->ProductInfo->cbProductId = (UINT32)len * sizeof(WCHAR);
 
 	if (!license_read_binary_blob_data(license->KeyExchangeList, BB_KEY_EXCHG_ALG_BLOB, algs,
 	                                   sizeof(algs)))

@@ -876,8 +876,7 @@ static BOOL updateEarlyServerCaps(rdpSettings* settings, UINT32 earlyCapabilityF
 BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 {
 	char buffer[2048] = { 0 };
-	char strbuffer[65] = { 0 };
-	char* strptr = strbuffer;
+	char strbuffer[130] = { 0 };
 	UINT32 version;
 	BYTE connectionType = 0;
 	UINT32 clientColorDepth;
@@ -913,15 +912,16 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	Stream_Read_UINT32(s, settings->ClientBuild);    /* ClientBuild (4 bytes) */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
-	if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)Stream_Pointer(s), 32 / 2, &strptr,
-	                       ARRAYSIZE(strbuffer), NULL, NULL) < 1)
+	if (Stream_Read_UTF16_String_As_UTF8_Buffer(s, 32 / sizeof(WCHAR), strbuffer,
+	                                            ARRAYSIZE(strbuffer)) < 0)
 	{
 		WLog_ERR(TAG, "failed to convert client host name");
 		return FALSE;
 	}
 
-	Stream_Seek(s, 32);
-	freerdp_settings_set_string(settings, FreeRDP_ClientHostname, strbuffer);
+	if (!freerdp_settings_set_string(settings, FreeRDP_ClientHostname, strbuffer))
+		return FALSE;
+
 	Stream_Read_UINT32(s, settings->KeyboardType);        /* KeyboardType (4 bytes) */
 	Stream_Read_UINT32(s, settings->KeyboardSubType);     /* KeyboardSubType (4 bytes) */
 	Stream_Read_UINT32(s, settings->KeyboardFunctionKey); /* KeyboardFunctionKey (4 bytes) */
@@ -980,15 +980,15 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		if (blockLength < 64)
 			break;
 
-		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)Stream_Pointer(s), 64 / 2, &strptr,
-		                       ARRAYSIZE(strbuffer), NULL, NULL) < 1)
+		if (Stream_Read_UTF16_String_As_UTF8_Buffer(s, 64 / sizeof(WCHAR), strbuffer,
+		                                            ARRAYSIZE(strbuffer)) < 0)
 		{
 			WLog_ERR(TAG, "failed to convert the client product identifier");
 			return FALSE;
 		}
 
-		Stream_Seek(s, 64); /* clientDigProductId (64 bytes) */
-		freerdp_settings_set_string(settings, FreeRDP_ClientProductId, strbuffer);
+		if (!freerdp_settings_set_string(settings, FreeRDP_ClientProductId, strbuffer))
+			return FALSE;
 		blockLength -= 64;
 
 		if (blockLength < 1)
@@ -1122,13 +1122,13 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 {
 	char buffer[2048] = { 0 };
 	WCHAR* clientName = NULL;
-	int clientNameLength;
+	size_t clientNameLength;
 	BYTE connectionType;
 	UINT16 highColorDepth;
 	UINT16 supportedColorDepths;
 	UINT16 earlyCapabilityFlags;
 	WCHAR* clientDigProductId = NULL;
-	int clientDigProductIdLength;
+	size_t clientDigProductIdLength;
 	rdpContext* context;
 	rdpSettings* settings;
 
@@ -1143,9 +1143,10 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 
 	if (!gcc_write_user_data_header(s, CS_CORE, 234))
 		return FALSE;
-	clientNameLength = ConvertToUnicode(CP_UTF8, 0, settings->ClientHostname, -1, &clientName, 0);
-	clientDigProductIdLength =
-	    ConvertToUnicode(CP_UTF8, 0, settings->ClientProductId, -1, &clientDigProductId, 0);
+	clientName = ConvertUtf8ToWCharAlloc(settings->ClientHostname, &clientNameLength);
+	clientDigProductId =
+	    ConvertUtf8ToWCharAlloc(settings->ClientProductId, &clientDigProductIdLength);
+
 	Stream_Write_UINT32(s, settings->RdpVersion);    /* Version */
 	Stream_Write_UINT16(s, settings->DesktopWidth);  /* DesktopWidth */
 	Stream_Write_UINT16(s, settings->DesktopHeight); /* DesktopHeight */

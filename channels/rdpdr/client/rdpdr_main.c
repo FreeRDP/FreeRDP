@@ -502,7 +502,8 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		if (device_ext->path == NULL)
 			continue;
 
-		if (ConvertFromUnicode(CP_UTF8, 0, device_ext->path, -1, &path, 0, NULL, FALSE) <= 0)
+		path = ConvertWCharToUtf8Alloc(device_ext->path, NULL);
+		if (!path)
 			continue;
 
 		/* not plugable device */
@@ -809,7 +810,6 @@ static BOOL device_already_plugged(rdpdrPlugin* rdpdr, const hotplug_dev* device
 {
 	BOOL rc = FALSE;
 	WCHAR* path = NULL;
-	int status;
 
 	if (!rdpdr || !device)
 		return TRUE;
@@ -817,9 +817,10 @@ static BOOL device_already_plugged(rdpdrPlugin* rdpdr, const hotplug_dev* device
 		return TRUE;
 
 	WINPR_ASSERT(rdpdr->devman);
+	WINPR_ASSERT(device->path);
 
-	status = ConvertToUnicode(CP_UTF8, 0, device->path, -1, &path, 0);
-	if (status <= 0)
+	path = ConvertUtf8ToWCharAlloc(device->path, NULL);
+	if (!path)
 		return TRUE;
 
 	rc = device_foreach(rdpdr, TRUE, device_not_plugged, path);
@@ -836,7 +837,6 @@ struct hotplug_delete_arg
 
 static BOOL hotplug_delete_foreach(ULONG_PTR key, void* element, void* data)
 {
-	int rc;
 	char* path = NULL;
 	BOOL dev_found = FALSE;
 	struct hotplug_delete_arg* arg = (struct hotplug_delete_arg*)data;
@@ -850,9 +850,9 @@ static BOOL hotplug_delete_foreach(ULONG_PTR key, void* element, void* data)
 	    !device_ext->automount)
 		return TRUE;
 
-	rc = ConvertFromUnicode(CP_UTF8, 0, device_ext->path, -1, &path, 0, NULL, NULL);
-
-	if ((rc <= 0) || !path)
+	WINPR_ASSERT(device_ext->path);
+	path = ConvertWCharToUtf8Alloc(device_ext->path, NULL);
+	if (!path)
 		return FALSE;
 
 	/* not plugable device */
@@ -1162,7 +1162,7 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 {
 	wStream* s;
 	WCHAR* computerNameW = NULL;
-	int computerNameLenW;
+	size_t computerNameLenW;
 
 	WINPR_ASSERT(rdpdr);
 
@@ -1172,10 +1172,12 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 		GetComputerNameA(rdpdr->computerName, &size);
 	}
 
-	computerNameLenW = ConvertToUnicode(CP_UTF8, 0, rdpdr->computerName, -1, &computerNameW, 0) * 2;
+	WINPR_ASSERT(rdpdr->computerName);
+	computerNameW = ConvertUtf8ToWCharAlloc(rdpdr->computerName, &computerNameLenW);
+	computerNameLenW *= sizeof(WCHAR);
 	WINPR_ASSERT(computerNameLenW >= 0);
 
-	s = StreamPool_Take(rdpdr->pool, 16U + (size_t)computerNameLenW);
+	s = StreamPool_Take(rdpdr->pool, 16U + computerNameLenW);
 
 	if (!s)
 	{

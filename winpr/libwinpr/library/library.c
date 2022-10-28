@@ -113,9 +113,8 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 	if (!lpLibFileName)
 		return NULL;
 
-	status = ConvertToUnicode(CP_UTF8, 0, lpLibFileName, -1, &filenameW, 0);
-
-	if (status < 1)
+	filenameW = ConvertUtf8ToWCharAlloc(lpLibFileName, NULL);
+	if (filenameW)
 		return NULL;
 
 	hModule = LoadLibraryW(filenameW);
@@ -138,14 +137,14 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 
 HMODULE LoadLibraryW(LPCWSTR lpLibFileName)
 {
+	if (!lpLibFileName)
+		return NULL;
 #if defined(_UWP)
 	return LoadPackagedLibrary(lpLibFileName, 0);
 #else
-	char* name = NULL;
 	HMODULE module;
-	int rc = ConvertFromUnicode(CP_UTF8, 0, lpLibFileName, -1, &name, 0, NULL, NULL);
-
-	if (rc < 0)
+	char* name = ConvertWCharToUtf8Alloc(lpLibFileName, NULL);
+	if (!name)
 		return NULL;
 
 	module = LoadLibraryA(name);
@@ -232,6 +231,12 @@ HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
 DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 {
 	DWORD status;
+	if (!lpFilename)
+	{
+		SetLastError(ERROR_INTERNAL_ERROR);
+		return 0;
+	}
+
 	char* name = calloc(nSize, sizeof(char));
 	if (!name)
 	{
@@ -248,9 +253,7 @@ DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 
 	if (status > 0)
 	{
-		int rc = ConvertToUnicode(CP_UTF8, 0, name, (int)status, &lpFilename, (int)nSize);
-
-		if (rc < 0)
+		if (ConvertUtf8NToWChar(name, status, lpFilename, nSize) < 0)
 		{
 			free(name);
 			SetLastError(ERROR_INTERNAL_ERROR);
@@ -345,11 +348,14 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 
 HMODULE LoadLibraryX(LPCSTR lpLibFileName)
 {
+	if (!lpLibFileName)
+		return NULL;
+
 #if defined(_WIN32)
 	HMODULE hm = NULL;
-	WCHAR* wstr = NULL;
-	int rc = ConvertToUnicode(CP_UTF8, 0, lpLibFileName, -1, &wstr, 0);
-	if (rc > 0)
+	WCHAR* wstr = ConvertUtf8ToWCharAlloc(lpLibFileName, NULL);
+
+	if (wstr)
 		hm = LoadLibraryW(wstr);
 	free(wstr);
 	return hm;
@@ -360,11 +366,12 @@ HMODULE LoadLibraryX(LPCSTR lpLibFileName)
 
 HMODULE LoadLibraryExX(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
+	if (!lpLibFileName)
+		return NULL;
 #if defined(_WIN32)
 	HMODULE hm = NULL;
-	WCHAR* wstr = NULL;
-	int rc = ConvertToUnicode(CP_UTF8, 0, lpLibFileName, -1, &wstr, 0);
-	if (rc > 0)
+	WCHAR* wstr = ConvertUtf8ToWCharAlloc(lpLibFileName, NULL);
+	if (wstr)
 		hm = LoadLibraryExW(wstr, hFile, dwFlags);
 	free(wstr);
 	return hm;

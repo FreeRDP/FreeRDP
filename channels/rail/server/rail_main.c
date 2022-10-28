@@ -665,36 +665,26 @@ static UINT rail_read_exec_order(wStream* s, RAIL_EXEC_ORDER* exec)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)exeLen + workLen + argLen))
 		return ERROR_INVALID_DATA;
 
+	if (exeLen > 0)
 	{
-		const int len = exeLen / sizeof(WCHAR);
-		int rc;
-		const WCHAR* str = (const WCHAR*)Stream_Pointer(s);
-		rc = ConvertFromUnicode(CP_UTF8, 0, str, len, &exec->RemoteApplicationProgram, 0, NULL,
-		                        NULL);
-		if (rc != len)
+		const SSIZE_T len = exeLen / sizeof(WCHAR);
+		exec->RemoteApplicationProgram = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
+		if (!exec->RemoteApplicationProgram)
 			goto fail;
-		Stream_Seek(s, exeLen);
 	}
+	if (workLen > 0)
 	{
-		const int len = workLen / sizeof(WCHAR);
-		int rc;
-
-		const WCHAR* str = (const WCHAR*)Stream_Pointer(s);
-		rc = ConvertFromUnicode(CP_UTF8, 0, str, len, &exec->RemoteApplicationProgram, 0, NULL,
-		                        NULL);
-		if (rc != len)
+		const SSIZE_T len = workLen / sizeof(WCHAR);
+		exec->RemoteApplicationWorkingDir = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
+		if (!exec->RemoteApplicationWorkingDir)
 			goto fail;
-		Stream_Seek(s, workLen);
 	}
+	if (argLen > 0)
 	{
-		const int len = argLen / sizeof(WCHAR);
-		int rc;
-		const WCHAR* str = (const WCHAR*)Stream_Pointer(s);
-		rc = ConvertFromUnicode(CP_UTF8, 0, str, len, &exec->RemoteApplicationProgram, 0, NULL,
-		                        NULL);
-		if (rc != len)
+		const SSIZE_T len = argLen / sizeof(WCHAR);
+		exec->RemoteApplicationArguments = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
+		if (!exec->RemoteApplicationArguments)
 			goto fail;
-		Stream_Seek(s, argLen);
 	}
 
 	return CHANNEL_RC_OK;

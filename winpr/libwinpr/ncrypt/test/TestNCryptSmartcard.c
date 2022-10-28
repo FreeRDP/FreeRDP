@@ -74,18 +74,18 @@ int TestNCryptSmartcard(int argc, char* argv[])
 
 	for (j = 0; j < providerCount; j++)
 	{
+		const NCryptProviderName* name = &names[j];
 		NCRYPT_PROV_HANDLE provider;
 		char providerNameStr[256] = { 0 };
 		PVOID enumState = NULL;
 		size_t i = 0;
 		NCryptKeyName* keyName = NULL;
 
-		if (WideCharToMultiByte(CP_UTF8, 0, names[j].pszName, -1, providerNameStr,
-		                        sizeof(providerNameStr), NULL, FALSE) <= 0)
+		if (ConvertWCharToUtf8(name->pszName, providerNameStr, ARRAYSIZE(providerNameStr)) < 0)
 			continue;
 		printf("provider %ld: %s\n", j, providerNameStr);
 
-		status = NCryptOpenStorageProvider(&provider, names[j].pszName, 0);
+		status = NCryptOpenStorageProvider(&provider, name->pszName, 0);
 		if (status != ERROR_SUCCESS)
 			continue;
 
@@ -98,8 +98,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 			WCHAR reader[1024] = { 0 };
 			PBYTE certBytes = NULL;
 
-			if (WideCharToMultiByte(CP_UTF8, 0, keyName->pszName, -1, keyNameStr,
-			                        sizeof(keyNameStr), NULL, FALSE) <= 0)
+			if (ConvertWCharToUtf8(keyName->pszName, keyNameStr, ARRAYSIZE(keyNameStr)) < 0)
 				continue;
 
 			printf("\tkey %ld: %s\n", i, keyNameStr);
@@ -116,9 +115,9 @@ int TestNCryptSmartcard(int argc, char* argv[])
 			if (status == ERROR_SUCCESS)
 			{
 				char readerStr[1024] = { 0 };
-				if (WideCharToMultiByte(CP_UTF8, 0, reader, cbOutput, readerStr, sizeof(readerStr),
-				                        NULL, FALSE) > 0)
-					printf("\treader: %s\n", readerStr);
+
+				ConvertWCharNToUtf8(reader, cbOutput, readerStr, ARRAYSIZE(readerStr));
+				printf("\treader: %s\n", readerStr);
 			}
 
 			cbOutput = 0;

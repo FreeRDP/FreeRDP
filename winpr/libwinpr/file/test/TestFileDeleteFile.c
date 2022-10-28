@@ -7,7 +7,7 @@
 
 int TestFileDeleteFile(int argc, char* argv[])
 {
-	BOOL rc;
+	BOOL rc = FALSE;
 	int fd;
 	char validA[] = "/tmp/valid-test-file-XXXXXX";
 	char validW[] = "/tmp/valid-test-file-XXXXXX";
@@ -41,8 +41,9 @@ int TestFileDeleteFile(int argc, char* argv[])
 	if (fd < 0)
 		return -1;
 
-	ConvertToUnicode(CP_UTF8, 0, validW, -1, &validWW, 0);
-	rc = DeleteFileW(validWW);
+	validWW = ConvertUtf8NToWCharAlloc(validW, ARRAYSIZE(validW), NULL);
+	if (validWW)
+		rc = DeleteFileW(validWW);
 	free(validWW);
 	if (!rc)
 		return -1;

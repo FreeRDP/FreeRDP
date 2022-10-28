@@ -376,15 +376,14 @@ int sspi_SetAuthIdentityA(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, c
                           const char* password)
 {
 	int rc;
-	int unicodePasswordLenW;
-	LPWSTR unicodePassword = NULL;
-	unicodePasswordLenW = ConvertToUnicode(CP_UTF8, 0, password, -1, &unicodePassword, 0);
+	size_t unicodePasswordLenW = 0;
+	LPWSTR unicodePassword = ConvertUtf8ToWCharAlloc(password, &unicodePasswordLenW);
 
-	if (unicodePasswordLenW <= 0)
+	if (!unicodePassword || (unicodePasswordLenW == 0))
 		return -1;
 
 	rc = sspi_SetAuthIdentityWithUnicodePassword(identity, user, domain, unicodePassword,
-	                                             (ULONG)(unicodePasswordLenW - 1));
+	                                             (ULONG)(unicodePasswordLenW));
 	free(unicodePassword);
 	return rc;
 }
@@ -393,30 +392,28 @@ int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, c
                                             const char* domain, LPWSTR password,
                                             ULONG passwordLength)
 {
-	int status;
-
 	sspi_FreeAuthIdentity(identity);
 	identity->Flags &= ~SEC_WINNT_AUTH_IDENTITY_ANSI;
 	identity->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-	if (user)
+	if (user && (strlen(user) > 0))
 	{
-		status = ConvertToUnicode(CP_UTF8, 0, user, -1, (LPWSTR*)&(identity->User), 0);
-
-		if (status <= 0)
+		size_t len = 0;
+		identity->User = ConvertUtf8ToWCharAlloc(user, &len);
+		if (!identity->User || (len == 0) || (len > ULONG_MAX))
 			return -1;
 
-		identity->UserLength = (ULONG)(status - 1);
+		identity->UserLength = (ULONG)len;
 	}
 
-	if (domain)
+	if (domain && (strlen(domain) > 0))
 	{
-		status = ConvertToUnicode(CP_UTF8, 0, domain, -1, (LPWSTR*)&(identity->Domain), 0);
-
-		if (status <= 0)
+		size_t len = 0;
+		identity->Domain = ConvertUtf8ToWCharAlloc(domain, &len);
+		if (!identity->Domain || (len == 0) || (len > ULONG_MAX))
 			return -1;
 
-		identity->DomainLength = (ULONG)(status - 1);
+		identity->DomainLength = len;
 	}
 
 	identity->Password = (UINT16*)calloc(1, (passwordLength + 1) * sizeof(WCHAR));
@@ -666,26 +663,23 @@ BOOL sspi_CopyAuthIdentityFieldsA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, 
 		if (!sspi_GetAuthIdentityPasswordW((void*)identity, &PasswordW, &PasswordLength))
 			goto cleanup;
 
-		if (UserW && UserLength)
+		if (UserW && (UserLength > 0))
 		{
-			ConvertFromUnicode(CP_UTF8, 0, UserW, UserLength, pUser, 0, NULL, NULL);
-
+			*pUser = ConvertWCharNToUtf8Alloc(UserW, UserLength, NULL);
 			if (!(*pUser))
 				goto cleanup;
 		}
 
-		if (DomainW && DomainLength)
+		if (DomainW && (DomainLength > 0))
 		{
-			ConvertFromUnicode(CP_UTF8, 0, DomainW, DomainLength, pDomain, 0, NULL, NULL);
-
+			*pDomain = ConvertWCharNToUtf8Alloc(DomainW, DomainLength, NULL);
 			if (!(*pDomain))
 				goto cleanup;
 		}
 
-		if (PasswordW && PasswordLength)
+		if (PasswordW && (PasswordLength > 0))
 		{
-			ConvertFromUnicode(CP_UTF8, 0, PasswordW, PasswordLength, pPassword, 0, NULL, NULL);
-
+			*pPassword = ConvertWCharNToUtf8Alloc(PasswordW, PasswordLength, NULL);
 			if (!(*pPassword))
 				goto cleanup;
 		}
@@ -727,27 +721,29 @@ BOOL sspi_CopyAuthIdentityFieldsW(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, 
 		if (!sspi_GetAuthIdentityPasswordA((void*)identity, &PasswordA, &PasswordLength))
 			goto cleanup;
 
-		if (UserA && UserLength)
+		if (UserA && (UserLength > 0))
 		{
-			ConvertToUnicode(CP_UTF8, 0, UserA, UserLength, pUser, 0);
+			WCHAR* ptr = ConvertUtf8NToWCharAlloc(UserA, UserLength, NULL);
+			*pUser = ptr;
 
-			if (!(*pUser))
+			if (!ptr)
 				goto cleanup;
 		}
 
-		if (DomainA && DomainLength)
+		if (DomainA && (DomainLength > 0))
 		{
-			ConvertToUnicode(CP_UTF8, 0, DomainA, DomainLength, pDomain, 0);
-
-			if (!(*pDomain))
+			WCHAR* ptr = ConvertUtf8NToWCharAlloc(DomainA, DomainLength, NULL);
+			*pDomain = ptr;
+			if (!ptr)
 				goto cleanup;
 		}
 
-		if (PasswordA && PasswordLength)
+		if (PasswordA && (PasswordLength > 0))
 		{
-			ConvertToUnicode(CP_UTF8, 0, PasswordA, PasswordLength, pPassword, 0);
+			WCHAR* ptr = ConvertUtf8NToWCharAlloc(PasswordA, PasswordLength, NULL);
 
-			if (!(*pPassword))
+			*pPassword = ptr;
+			if (!ptr)
 				goto cleanup;
 		}
 
@@ -837,11 +833,8 @@ BOOL sspi_CopyAuthPackageListA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, cha
 			PackageListLength = ((SEC_WINNT_AUTH_IDENTITY_EX2*)pAuthData)->PackageListLength / 2;
 		}
 
-		if (PackageListW && PackageListLength)
-		{
-			ConvertFromUnicode(CP_UTF8, 0, PackageListW, PackageListLength, &PackageList, 0, NULL,
-			                   NULL);
-		}
+		if (PackageListW && (PackageListLength > 0))
+			PackageList = ConvertWCharNToUtf8Alloc(PackageListW, PackageListLength, NULL);
 	}
 
 	if (PackageList)
@@ -1032,12 +1025,15 @@ static const SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const
 
 static const SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameA(const SEC_CHAR* Name)
 {
-	int status;
 	SEC_WCHAR* NameW = NULL;
-	const SecurityFunctionTableW* table;
-	status = ConvertToUnicode(CP_UTF8, 0, Name, -1, &NameW, 0);
+	const SecurityFunctionTableW* table = NULL;
 
-	if (status <= 0)
+	if (!Name)
+		return NULL;
+
+	NameW = ConvertUtf8ToWCharAlloc(Name, NULL);
+
+	if (!NameW)
 		return NULL;
 
 	table = sspi_GetSecurityFunctionTableWByNameW(NameW);

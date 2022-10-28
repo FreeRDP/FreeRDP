@@ -185,9 +185,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 {
 	wStream* s;
 	UINT32 index;
-	int cchWideChar;
-	LPWSTR lpWideCharStr;
-	int formatNameSize;
+	size_t formatNameSize = 0;
 	char* szFormatName;
 	WCHAR* wszFormatName;
 	BOOL asciiNames = FALSE;
@@ -234,20 +232,21 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 				wszFormatName = NULL;
 
 				if (szFormatName)
-					formatNameSize =
-					    ConvertToUnicode(CP_UTF8, 0, szFormatName, -1, &wszFormatName, 0);
-
-				if (formatNameSize < 0)
 				{
-					Stream_Free(s, TRUE);
-					return NULL;
+					wszFormatName = ConvertUtf8ToWCharAlloc(szFormatName, &formatNameSize);
+
+					if (!wszFormatName)
+					{
+						Stream_Free(s, TRUE);
+						return NULL;
+					}
 				}
 
 				if (formatNameSize > 15)
 					formatNameSize = 15;
 
 				/* size in bytes  instead of wchar */
-				formatNameSize *= 2;
+				formatNameSize *= sizeof(WCHAR);
 
 				if (wszFormatName)
 					Stream_Write(s, wszFormatName, (size_t)formatNameSize);
@@ -264,14 +263,15 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 		{
 			format = (CLIPRDR_FORMAT*)&(formatList->formats[index]);
 			length += 4;
-			formatNameSize = 2;
+			formatNameSize = sizeof(WCHAR);
 
 			if (format->formatName)
-				formatNameSize =
-				    MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1, NULL, 0) * 2;
-
-			if (formatNameSize < 0)
-				return NULL;
+			{
+				SSIZE_T size = ConvertUtf8ToWChar(format->formatName, NULL, 0);
+				if (size < 0)
+					return NULL;
+				formatNameSize = (size_t)size * sizeof(WCHAR);
+			}
 
 			length += (UINT32)formatNameSize;
 		}
@@ -300,17 +300,12 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 					return NULL;
 				}
 
-				lpWideCharStr = (LPWSTR)Stream_Pointer(s);
-				cchWideChar = (int)(rem / 2);
-				formatNameSize = MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1,
-				                                     lpWideCharStr, cchWideChar) *
-				                 2;
-				if (formatNameSize < 0)
+				const size_t len = strnlen(format->formatName, rem / sizeof(WCHAR));
+				if (Stream_Write_UTF16_String_From_UTF8(s, len, format->formatName, len, TRUE) < 0)
 				{
 					Stream_Free(s, TRUE);
 					return NULL;
 				}
-				Stream_Seek(s, (size_t)formatNameSize);
 			}
 			else
 			{
@@ -478,16 +473,11 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 			{
 				if (wszFormatName[0])
 				{
-					/* ConvertFromUnicode always returns a null-terminated
-					 * string on success, even if the source string isn't.
-					 */
-					if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, 16,
-					                       &(formats[index].formatName), 0, NULL, NULL) < 1)
-					{
-						WLog_ERR(TAG, "failed to convert short clipboard format name");
-						error = ERROR_INTERNAL_ERROR;
+					CLIPRDR_FORMAT* format = &formats[index];
+
+					format->formatName = ConvertWCharNToUtf8Alloc(wszFormatName, 16, NULL);
+					if (!format->formatName)
 						goto error_out;
-					}
 				}
 			}
 
@@ -543,13 +533,10 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 			if (formatNameLength)
 			{
-				if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, formatNameLength,
-				                       &format->formatName, 0, NULL, NULL) < 1)
-				{
-					WLog_ERR(TAG, "failed to convert long clipboard format name");
-					error = ERROR_INTERNAL_ERROR;
+				format->formatName =
+				    ConvertWCharNToUtf8Alloc(wszFormatName, formatNameLength, NULL);
+				if (!format->formatName)
 					goto error_out;
-				}
 			}
 
 			index++;

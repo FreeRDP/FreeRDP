@@ -72,9 +72,10 @@ static HANDLE open_file(const char* name, DWORD dwDesiredAccess, DWORD dwShareMo
                         DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes)
 {
 	HANDLE fp;
-	WCHAR* wfile = NULL;
-	int rc = ConvertToUnicode(CP_UTF8, 0, name, -1, &wfile, 0);
-	if (rc <= 0)
+	if (!name)
+		return INVALID_HANDLE_VALUE;
+	WCHAR* wfile = ConvertUtf8ToWCharAlloc(name, NULL);
+	if (!wfile)
 		return INVALID_HANDLE_VALUE;
 
 	fp = CreateFileW(wfile, dwDesiredAccess, 0, NULL, dwCreationDisposition, dwFlagsAndAttributes,
@@ -124,10 +125,12 @@ static void certificate_store_uninit(rdpCertificateStore* certificate_store)
 static BOOL ensure_path_exists(const char* path)
 {
 	BOOL res = FALSE;
-	WCHAR* wpath = NULL;
+	if (!path)
+		return FALSE;
 	/* Use wide character functions to allow proper unicode handling on windows */
-	int rc = ConvertToUnicode(CP_UTF8, 0, path, -1, &wpath, 0);
-	if (rc <= 0)
+	WCHAR* wpath = ConvertUtf8ToWCharAlloc(path, NULL);
+
+	if (!wpath)
 		return FALSE;
 
 	if (!PathFileExistsW(wpath))
@@ -368,7 +371,7 @@ static WCHAR* certificate_get_cert_file_name(rdpCertificateStore* store,
 	if (!pem)
 		goto fail;
 
-	ConvertToUnicode(CP_UTF8, 0, pem, -1, &wpem, 0);
+	wpem = ConvertUtf8ToWCharAlloc(pem, NULL);
 fail:
 	free(pem);
 	winpr_Digest_Free(ctx);

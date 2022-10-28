@@ -626,31 +626,13 @@ static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTIT
 	if (identity->Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE)
 	{
 		if (identity->User)
-		{
-			int r;
-			WINPR_ASSERT(identity->UserLength <= INT_MAX);
-			r = ConvertFromUnicode(CP_UTF8, 0, identity->User, (int)identity->UserLength, &user, 0,
-			                       NULL, NULL);
-			WINPR_ASSERT(r > 0);
-		}
+			user = ConvertWCharNToUtf8Alloc(identity->User, identity->UserLength, NULL);
 
 		if (identity->Domain)
-		{
-			int r;
-			WINPR_ASSERT(identity->DomainLength <= INT_MAX);
-			r = ConvertFromUnicode(CP_UTF8, 0, identity->Domain, (int)identity->DomainLength,
-			                       &domain, 0, NULL, NULL);
-			WINPR_ASSERT(r > 0);
-		}
+			domain = ConvertWCharNToUtf8Alloc(identity->Domain, identity->DomainLength, NULL);
 
 		if (identity->Password)
-		{
-			int r;
-			WINPR_ASSERT(identity->PasswordLength <= INT_MAX);
-			r = ConvertFromUnicode(CP_UTF8, 0, identity->Password, (int)identity->PasswordLength,
-			                       &password, 0, NULL, NULL);
-			WINPR_ASSERT(r > 0);
-		}
+			password = ConvertWCharNToUtf8Alloc(identity->Password, identity->PasswordLength, NULL);
 	}
 	else
 	{
