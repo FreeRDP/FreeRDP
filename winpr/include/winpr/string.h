@@ -191,12 +191,19 @@ extern "C"
 
 	/* Unicode Conversion */
 
-	WINPR_API int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
-	                                  int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar);
+#if defined(WITH_WINPR_DEPRECATED)
+	WINPR_API WINPR_DEPRECATED_VAR("Use ConvertUtf8ToWChar instead",
+	                               int MultiByteToWideChar(UINT CodePage, DWORD dwFlags,
+	                                                       LPCSTR lpMultiByteStr, int cbMultiByte,
+	                                                       LPWSTR lpWideCharStr, int cchWideChar));
 
-	WINPR_API int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
-	                                  int cchWideChar, LPSTR lpMultiByteStr, int cbMultiByte,
-	                                  LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
+	WINPR_API WINPR_DEPRECATED_VAR("Use ConvertWCharToUtf8 instead",
+	                               int WideCharToMultiByte(UINT CodePage, DWORD dwFlags,
+	                                                       LPCWSTR lpWideCharStr, int cchWideChar,
+	                                                       LPSTR lpMultiByteStr, int cbMultiByte,
+	                                                       LPCSTR lpDefaultChar,
+	                                                       LPBOOL lpUsedDefaultChar));
+#endif
 
 #endif
 

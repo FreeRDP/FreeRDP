@@ -112,7 +112,9 @@
  *
  */
 
-/*
+/** \deprecated We no longer export this function, see ConvertUtf8ToWChar family of functions for a
+ * replacement
+ *
  * Conversion to Unicode (UTF-16)
  * MultiByteToWideChar: http://msdn.microsoft.com/en-us/library/windows/desktop/dd319072/
  *
@@ -151,14 +153,20 @@
  *
  */
 
-int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte,
+#if !defined(WITH_WINPR_DEPRECATED)
+static
+#endif
+    int
+    MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte,
                         LPWSTR lpWideCharStr, int cchWideChar)
 {
 	return int_MultiByteToWideChar(CodePage, dwFlags, lpMultiByteStr, cbMultiByte, lpWideCharStr,
 	                               cchWideChar);
 }
 
-/*
+/** \deprecated We no longer export this function, see ConvertWCharToUtf8 family of functions for a
+ * replacement
+ *
  * Conversion from Unicode (UTF-16)
  * WideCharToMultiByte: http://msdn.microsoft.com/en-us/library/windows/desktop/dd374130/
  *
@@ -195,7 +203,11 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int
  *
  */
 
-int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
+#if !defined(WITH_WINPR_DEPRECATED)
+static
+#endif
+    int
+    WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
                         LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
                         LPBOOL lpUsedDefaultChar)
 {
