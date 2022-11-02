@@ -394,12 +394,19 @@ extern "C"
 	 */
 	WINPR_API WCHAR* ConvertMszUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize);
 
-	WINPR_API int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
-	                               int cbMultiByte, LPWSTR* lpWideCharStr, int cchWideChar);
+#if defined(WITH_WINPR_DEPRECATED)
+	WINPR_API WINPR_DEPRECATED_VAR("Use ConvertUtf8ToWChar functions instead",
+	                               int ConvertToUnicode(UINT CodePage, DWORD dwFlags,
+	                                                    LPCSTR lpMultiByteStr, int cbMultiByte,
+	                                                    LPWSTR* lpWideCharStr, int cchWideChar));
 
-	WINPR_API int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
-	                                 int cchWideChar, LPSTR* lpMultiByteStr, int cbMultiByte,
-	                                 LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
+	WINPR_API WINPR_DEPRECATED_VAR("Use ConvertWCharToUtf8 functions instead",
+	                               int ConvertFromUnicode(UINT CodePage, DWORD dwFlags,
+	                                                      LPCWSTR lpWideCharStr, int cchWideChar,
+	                                                      LPSTR* lpMultiByteStr, int cbMultiByte,
+	                                                      LPCSTR lpDefaultChar,
+	                                                      LPBOOL lpUsedDefaultChar));
+#endif
 
 	WINPR_API void ByteSwapUnicode(WCHAR* wstr, size_t length);
 
