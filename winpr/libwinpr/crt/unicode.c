@@ -217,7 +217,7 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
  * be null-terminated and the required length for the converted string will be
  * calculated accordingly.
  */
-
+#if defined(WITH_WINPR_DEPRECATED)
 int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte,
                      LPWSTR* lpWideCharStr, int cchWideChar)
 {
@@ -275,6 +275,7 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cb
 
 	return status;
 }
+#endif
 
 /**
  * ConvertFromUnicode is a convenience wrapper for WideCharToMultiByte:
@@ -288,7 +289,7 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cb
  * be null-terminated and the required length for the converted string will be
  * calculated accordingly.
  */
-
+#if defined(WITH_WINPR_DEPRECATED)
 int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
                        LPSTR* lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
                        LPBOOL lpUsedDefaultChar)
@@ -344,6 +345,7 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 
 	return status;
 }
+#endif
 
 /**
  * Swap Unicode byte order (UTF16LE <-> UTF16BE)

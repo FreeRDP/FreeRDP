@@ -915,6 +915,7 @@ fail:
 	return rc;
 }
 
+#if defined(WITH_WINPR_DEPRECATED)
 static BOOL test_unicode_uppercasing(BYTE* lower, BYTE* upper)
 {
 	WCHAR* lowerW = NULL;
@@ -944,7 +945,9 @@ static BOOL test_unicode_uppercasing(BYTE* lower, BYTE* upper)
 	printf("success\n\n");
 	return TRUE;
 }
+#endif
 
+#if defined(WITH_WINPR_DEPRECATED)
 static BOOL test_ConvertFromUnicode_wrapper(void)
 {
 	const BYTE src1[] =
@@ -1150,6 +1153,7 @@ fail:
 	free(dst);
 	return FALSE;
 }
+#endif
 
 int TestUnicodeConversion(int argc, char* argv[])
 {
@@ -1243,14 +1247,15 @@ int TestUnicodeConversion(int argc, char* argv[])
 		return -1;
 
 	/* Uppercasing */
-
+#if defined(WITH_WINPR_DEPRECATED)
 	printf("Uppercasing\n");
 
 	if (!test_unicode_uppercasing(ru_Administrator_lower, ru_Administrator_upper))
 		return -1;
+#endif
 
-	/* ConvertFromUnicode */
-
+		/* ConvertFromUnicode */
+#if defined(WITH_WINPR_DEPRECATED)
 	printf("ConvertFromUnicode\n");
 
 	if (!test_ConvertFromUnicode_wrapper())
@@ -1262,6 +1267,7 @@ int TestUnicodeConversion(int argc, char* argv[])
 
 	if (!test_ConvertToUnicode_wrapper())
 		return -1;
+#endif
 	/*
 
 	    printf("----------------------------------------------------------\n\n");
