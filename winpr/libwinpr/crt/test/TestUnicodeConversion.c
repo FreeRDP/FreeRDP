@@ -327,6 +327,8 @@ static BOOL test_conversion(const testcase_t* testcases, size_t count)
 	return TRUE;
 }
 
+#if defined(WITH_WINPR_DEPRECATED)
+
 #define compare_win_utf16(what, buffersize, rc, inputlen, test) \
 	compare_win_utf16_int((what), (buffersize), (rc), (inputlen), (test), __FUNCTION__, __LINE__)
 static BOOL compare_win_utf16_int(const WCHAR* what, size_t buffersize, int rc, int inputlen,
@@ -487,7 +489,9 @@ static BOOL compare_win_utf8_int(const char* what, size_t buffersize, SSIZE_T rc
 
 	return TRUE;
 }
+#endif
 
+#if defined(WITH_WINPR_DEPRECATED)
 static BOOL test_win_convert_to_utf16(const testcase_t* test)
 {
 	const size_t len[] = { TESTCASE_BUFFER_SIZE, test->utf16len, test->utf16len + 1,
@@ -557,7 +561,9 @@ static BOOL test_win_convert_to_utf16_n(const testcase_t* test)
 	}
 	return TRUE;
 }
+#endif
 
+#if defined(WITH_WINPR_DEPRECATED)
 static BOOL test_win_convert_to_utf8(const testcase_t* test)
 {
 	const size_t len[] = { TESTCASE_BUFFER_SIZE, test->utf8len, test->utf8len + 1,
@@ -651,7 +657,9 @@ static BOOL test_win_conversion(const testcase_t* testcases, size_t count)
 	}
 	return TRUE;
 }
+#endif
 
+#if defined(WITH_WINPR_DEPRECATED)
 /* Letters */
 
 static BYTE c_cedilla_UTF8[] = "\xC3\xA7\x00";
@@ -836,7 +844,9 @@ fail:
 
 	return rc;
 }
+#endif
 
+#if defined(WITH_WINPR_DEPRECATED)
 static int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr,
                                  int expected_cbMultiByte)
 {
@@ -914,6 +924,7 @@ fail:
 
 	return rc;
 }
+#endif
 
 #if defined(WITH_WINPR_DEPRECATED)
 static BOOL test_unicode_uppercasing(BYTE* lower, BYTE* upper)
@@ -1163,6 +1174,7 @@ int TestUnicodeConversion(int argc, char* argv[])
 	if (!test_conversion(unit_testcases, ARRAYSIZE(unit_testcases)))
 		return -1;
 
+#if defined(WITH_WINPR_DEPRECATED)
 	if (!test_win_conversion(unit_testcases, ARRAYSIZE(unit_testcases)))
 		return -1;
 
@@ -1246,7 +1258,9 @@ int TestUnicodeConversion(int argc, char* argv[])
 	if (convert_utf16_to_utf8(ch_HowAreYou_UTF16, ch_HowAreYou_UTF8, ch_HowAreYou_cbMultiByte) < 1)
 		return -1;
 
-	/* Uppercasing */
+#endif
+
+		/* Uppercasing */
 #if defined(WITH_WINPR_DEPRECATED)
 	printf("Uppercasing\n");
 
