@@ -142,8 +142,6 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, si
 		         chunkLength);
 		return FALSE;
 	}
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
-		return FALSE;
 
 	IFCALLRET(instance->ReceiveChannelData, rc, instance, channelId, Stream_Pointer(s), chunkLength,
 	          flags, length);
