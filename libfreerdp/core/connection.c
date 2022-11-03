@@ -240,7 +240,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	/* make sure SSL is initialize for earlier enough for crypto, by taking advantage of winpr SSL
 	 * FIPS flag for openssl initialization */
 	DWORD flags = WINPR_SSL_INIT_DEFAULT;
-	UINT32 timeout;
+	UINT64 dueDate, now;
 
 	WINPR_ASSERT(rdp);
 
@@ -381,19 +381,46 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			return FALSE;
 	}
 
-	for (timeout = 0; timeout < freerdp_settings_get_uint32(settings, FreeRDP_TcpAckTimeout);
-	     timeout += 100)
+	now = GetTickCount64();
+	dueDate = now + freerdp_settings_get_uint32(settings, FreeRDP_TcpAckTimeout);
+
+	for (; now < dueDate; now = GetTickCount64())
 	{
-		if (rdp_check_fds(rdp) < 0)
+		HANDLE events[MAXIMUM_WAIT_OBJECTS];
+		DWORD status;
+		DWORD nevents = freerdp_get_event_handles(rdp->context, events, ARRAYSIZE(events));
+		if (!nevents)
 		{
-			freerdp_set_last_error_if_not(rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+			WLog_ERR(TAG, "error retrieving connection events");
 			return FALSE;
+		}
+
+		status = WaitForMultipleObjectsEx(nevents, events, FALSE, (dueDate - now), TRUE);
+		switch (status)
+		{
+			case WAIT_TIMEOUT:
+				/* will make us quit with a timeout */
+				now = dueDate + 1;
+				continue;
+			case WAIT_ABANDONED:
+			case WAIT_FAILED:
+				return FALSE;
+			case WAIT_IO_COMPLETION:
+				continue;
+			case WAIT_OBJECT_0:
+			default:
+				/* handles all WAIT_OBJECT_0 + [0 .. MAXIMUM_WAIT_OBJECTS-1] cases */
+				if (rdp_check_fds(rdp) < 0)
+				{
+					freerdp_set_last_error_if_not(rdp->context,
+					                              FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+					return FALSE;
+				}
+				break;
 		}
 
 		if (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE)
 			return TRUE;
-
-		Sleep(100);
 	}
 
 	WLog_ERR(TAG, "Timeout waiting for activation");
