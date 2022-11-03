@@ -30,7 +30,7 @@
 
 #define TAG FREERDP_TAG("core.gateway.ntlm")
 
-#define AUTH_PKG CREDSSP_AUTH_PKG_NTLM
+#define AUTH_PKG NTLM_SSP_NAME
 
 static wStream* rpc_auth_http_request(HttpContext* http, const char* method, int contentLength,
                                       const SecBuffer* authToken, const char* auth_scheme)

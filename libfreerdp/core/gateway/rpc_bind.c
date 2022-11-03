@@ -33,7 +33,7 @@
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 
-#define AUTH_PKG CREDSSP_AUTH_PKG_NTLM
+#define AUTH_PKG NTLM_SSP_NAME
 
 /**
  * Connection-Oriented RPC Protocol Client Details:

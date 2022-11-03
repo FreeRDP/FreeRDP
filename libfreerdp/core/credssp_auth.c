@@ -66,6 +66,9 @@ struct rdp_credssp_auth
 	ULONG flags;
 	SecPkgContext_Sizes sizes;
 	enum AUTH_STATE state;
+#ifdef UNICODE
+	char* pkgNameA;
+#endif
 };
 
 static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* message);
@@ -588,10 +591,16 @@ size_t credssp_auth_trailer_size(rdpCredsspAuth* auth)
 	return auth->sizes.cbSecurityTrailer;
 }
 
-const TCHAR* credssp_auth_pkg_name(rdpCredsspAuth* auth)
+const char* credssp_auth_pkg_name(rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth && auth->info);
+#ifdef UNICODE
+	if (!auth->pkgNameA)
+		ConvertFromUnicode(CP_UTF8, 0, auth->info->Name, -1, &auth->pkgNameA, 0, NULL, NULL);
+	return auth->pkgNameA;
+#else
 	return auth->info->Name;
+#endif
 }
 
 void credssp_auth_free(rdpCredsspAuth* auth)
@@ -639,6 +648,9 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 	free(auth->spn);
 	sspi_SecBufferFree(&auth->input_buffer);
 	sspi_SecBufferFree(&auth->output_buffer);
+#ifdef UNICODE
+	free(auth->pkgNameA);
+#endif
 
 	free(auth);
 }
