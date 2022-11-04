@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.Build.NoTargets">
+	<Target Name="BuildAllCpp" BeforeTargets="Build">
+		<MSBuild Projects="UiPath.FreeRdpWrapper\UiPath.FreeRdpWrapper.vcxproj"
+				 BuildInParallel="false"
+				 Properties="Configuration=$(Configuration);Platform=x64" />
+	</Target>
+	<Target Name="CleanAllCpp" BeforeTargets="Clean">
+		<MSBuild Projects="UiPath.FreeRdpWrapper\UiPath.FreeRdpWrapper.vcxproj"
+				 Properties="Configuration=$(Configuration);Platform=x64" 
+				 BuildInParallel="false"
+				 Targets="Clean"  />
+		<Exec Command="RMDIR /S /Q $(CppOutDir)" />
+	</Target>
+	<ItemGroup>
+		<ProjectReference Include="UiPath.FreeRdpWrapper\UiPath.FreeRdpWrapper.vcxproj" />
+	</ItemGroup>
+</Project>

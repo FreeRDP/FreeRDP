@@ -1,13 +1,7 @@
 name: $(Date:yyyyMMdd)$(Rev:-rr)
 
-
-resources:
-  repositories:
-  - repository: common
-    type: github
-    name: UiPath/AzurePipelinesTemplates
-    ref: refs/tags/uipath.retain.build.1.0.1
-    endpoint: "GitHub connection"
+trigger: 
+  - uipath
 
 pool:
   vmImage: 'windows-2022'
@@ -16,11 +10,78 @@ pool:
   - visualstudio
 
 steps:
-- task: CmdLine@2
-  name: 'getVersions'
+- task: NuGetToolInstaller@1
+  displayName: 'Use NuGet'
+
+- task: NuGetAuthenticate@0
+
+- script: |
+    call .ci\Scripts\getVars
+   
+    cmake --version
+    perl -v
+    msbuild -version
+
+    set
+  name: getVersions
+
+- script: .\.ci\Scripts\getOpenSsl
+  displayName: getOpenSsl
+- script: .\.ci\Scripts\buildOpenSsl
+  displayName: buildOpenSsl
+- script: .\.ci\Scripts\buildFreeRDP Release
+  displayName: buildFreeRDP
+
+- task: NuGetCommand@2
+  displayName: restore
   inputs:
-    script: |
-      set
-      perl -v
-      cmake --version
-      msbuild -version
+    command: 'restore'
+    restoreSolution: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.sln'
+
+- task: MSBuild@1
+  displayName: build
+  inputs:
+    solution: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.sln' 
+    platform: 'x64'
+    configuration: 'Release'
+    msbuildArchitecture: 'x64'
+    msbuildArguments: "/p:VersionSuffix=$(Build.BuildNumber)"
+
+- task: DotNetCoreCLI@2
+  displayName: 'test'
+  inputs:
+    command: 'test'
+    arguments: '--no-build /p:Configuration=Release'
+    projects: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.Tests\UiPath.FreeRdp.Tests.csproj'
+
+- task: MSBuild@1
+  displayName: restore (UseNugetRef)
+  inputs:
+    solution: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.sln' 
+    platform: 'x64'
+    configuration: 'Release'
+    msbuildArchitecture: 'x64'
+    msbuildArguments: "/t:restore /p:VersionSuffix=$(Build.BuildNumber) /p:UseNugetRef=true"
+
+- task: MSBuild@1
+  displayName: build (UseNugetRef)
+  inputs:
+    solution: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.sln' 
+    platform: 'x64'
+    configuration: 'Release'
+    msbuildArchitecture: 'x64'
+    msbuildArguments: "/p:VersionSuffix=$(Build.BuildNumber) /p:UseNugetRef=true"
+
+- task: DotNetCoreCLI@2
+  displayName: 'test (UseNugetRef)'
+  inputs:
+    command: 'test'
+    arguments: '--no-build /p:Configuration=Release /p:UseNugetRef=true'
+    projects: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.Tests\UiPath.FreeRdp.Tests.csproj'
+
+- task: NuGetCommand@2
+  displayName: 'NuGet Push to UiPath-Internal'
+  inputs:
+    command: push
+    packagesToPush: 'Output\nugets\UiPath.FreeRdpClient.*.nupkg'
+    publishVstsFeed: '5b98d55c-1b14-4a03-893f-7a59746f1246/788028a9-5a01-48ee-b925-3af51ae46294'

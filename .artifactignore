@@ -1,0 +1,17 @@
+**/*
+# include freerdp build headers
+
+!Build/x86/include/freerdp/**/*.*
+!Build/x86/winpr/include/winpr/**/*.*
+!Build/x64/include/freerdp/**/*.*
+!Build/x64/winpr/include/winpr/**/*.*
+# include freerdp libs
+!Build/x86/Debug/**/*.*
+!Build/x86/Release/**/*.*
+!Build/x64/Debug/**/*.*
+!Build/x64/Release/**/*.*
+
+# include freerdp sources headers
+!include/freerdp/**/*.*
+!winpr/include/winpr/**/*.*
+
