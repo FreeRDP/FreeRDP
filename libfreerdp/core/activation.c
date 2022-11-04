@@ -518,35 +518,42 @@ BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(!freerdp_settings_get_bool(rdp->settings, FreeRDP_ServerMode));
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
-		return FALSE;
-
-	Stream_Read_UINT16(s, numberEntries); /* numberEntries (2 bytes) */
-	if (numberEntries != 0)
+	/* Do not fail here, see https://github.com/FreeRDP/FreeRDP/issues/925 */
+	if (Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
+		Stream_Read_UINT16(s, numberEntries); /* numberEntries (2 bytes) */
+		if (numberEntries != 0)
+			WLog_WARN(
+			    TAG,
+			    "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::numberEntries != 0 "
+			    "[%" PRIu16 "]",
+			    numberEntries);
+		Stream_Read_UINT16(s, totalNumEntries); /* totalNumEntries (2 bytes) */
+		if (totalNumEntries != 0)
+			WLog_WARN(
+			    TAG,
+			    "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::totalNumEntries != "
+			    "0 [%" PRIu16 "]",
+			    totalNumEntries);
+		Stream_Read_UINT16(s, mapFlags); /* mapFlags (2 bytes) */
+		if (mapFlags != 0)
+			WLog_WARN(
+			    TAG,
+			    "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::mapFlags != 0x0003 "
+			    "(FONTLIST_FIRST | FONTLIST_LAST) "
+			    "[0x%04" PRIx16 "]",
+			    mapFlags);
+		Stream_Read_UINT16(s, entrySize); /* entrySize (2 bytes) */
+		if (entrySize != 4)
+			WLog_WARN(TAG,
+			          "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::entrySize != 4 "
+			          "[%" PRIu16 "]",
+			          entrySize);
+	}
+	else
 		WLog_WARN(TAG,
-		          "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::numberEntries != 0 "
-		          "[%" PRIu16 "]",
-		          numberEntries);
-	Stream_Read_UINT16(s, totalNumEntries); /* totalNumEntries (2 bytes) */
-	if (totalNumEntries != 0)
-		WLog_WARN(TAG,
-		          "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::totalNumEntries != "
-		          "0 [%" PRIu16 "]",
-		          totalNumEntries);
-	Stream_Read_UINT16(s, mapFlags); /* mapFlags (2 bytes) */
-	if (mapFlags != 0)
-		WLog_WARN(TAG,
-		          "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::mapFlags != 0x0003 "
-		          "(FONTLIST_FIRST | FONTLIST_LAST) "
-		          "[0x%04" PRIx16 "]",
-		          mapFlags);
-	Stream_Read_UINT16(s, entrySize); /* entrySize (2 bytes) */
-	if (entrySize != 4)
-		WLog_WARN(
-		    TAG,
-		    "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::entrySize != 4 [%" PRIu16
-		    "]",
-		    entrySize);
+		          "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU) paylaod size is "
+		          "0 instead of 8");
 
 	return rdp_finalize_set_flag(rdp, FINALIZE_SC_FONT_MAP_PDU);
 }
