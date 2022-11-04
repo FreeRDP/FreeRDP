@@ -524,8 +524,8 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	size_t reserveSize;
 	size_t portLen;
 	size_t hostLen;
-	const char connect[8] = "CONNECT";
-	const char httpheader[17] = " HTTP/1.1" CRLF "Host: ";
+	const char connect[] = "CONNECT ";
+	const char httpheader[] = " HTTP/1.1" CRLF "Host: ";
 
 	WINPR_ASSERT(bufferedBio);
 	WINPR_ASSERT(hostname);
@@ -534,16 +534,16 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 
 	hostLen = strlen(hostname);
 	portLen = strnlen(port_str, sizeof(port_str));
-	reserveSize = ARRAYSIZE(connect) + (hostLen + 1 + portLen) * 2 + ARRAYSIZE(httpheader);
+	reserveSize = strlen(connect) + (hostLen + 1 + portLen) * 2 + strlen(httpheader);
 	s = Stream_New(NULL, reserveSize);
 	if (!s)
 		goto fail;
 
-	Stream_Write(s, connect, ARRAYSIZE(connect));
+	Stream_Write(s, connect, strlen(connect));
 	Stream_Write(s, hostname, hostLen);
 	Stream_Write_UINT8(s, ':');
 	Stream_Write(s, port_str, portLen);
-	Stream_Write(s, httpheader, ARRAYSIZE(httpheader));
+	Stream_Write(s, httpheader, strlen(httpheader));
 	Stream_Write(s, hostname, hostLen);
 	Stream_Write_UINT8(s, ':');
 	Stream_Write(s, port_str, portLen);
@@ -566,14 +566,13 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 				sprintf_s(creds, size, "%s:%s", proxyUsername, proxyPassword);
 				base64 = crypto_base64_encode((const BYTE*)creds, size - 1);
 
-				if (!base64 ||
-				    !Stream_EnsureRemainingCapacity(s, ARRAYSIZE(basic) + strlen(base64)))
+				if (!base64 || !Stream_EnsureRemainingCapacity(s, strlen(basic) + strlen(base64)))
 				{
 					free(base64);
 					free(creds);
 					goto fail;
 				}
-				Stream_Write(s, basic, ARRAYSIZE(basic));
+				Stream_Write(s, basic, strlen(basic));
 				Stream_Write(s, base64, strlen(base64));
 
 				free(base64);
