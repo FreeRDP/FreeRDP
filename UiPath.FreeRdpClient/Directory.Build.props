@@ -1,0 +1,30 @@
+<Project>
+	<PropertyGroup>
+		<AppVersion>2.5.0</AppVersion>
+		<Product>UiPath</Product>
+		<Company>UiPath</Company>
+		<Authors>UiPath</Authors>
+		<Copyright>© UiPath</Copyright>
+		<NeutralLanguage>en</NeutralLanguage>
+	</PropertyGroup>
+	<PropertyGroup>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<SolutionDir>$(MSBuildThisFileDirectory)</SolutionDir>
+		<CppOutDir>$(MSBuildThisFileDirectory)\..\Output\bin</CppOutDir>
+		<NugetsOutDir>$(MSBuildThisFileDirectory)\..\Output\nugets</NugetsOutDir>
+		<IsConfigurationRelease Condition="'$(Configuration)'=='Release'">true</IsConfigurationRelease>
+		<!-- Disable synchronous async methods warning 1998 -->
+		<!-- disable warning for no XML doc for public members 1591-->
+		<!-- NU5048 - The 'PackageIconUrl'/'iconUrl' element is deprecated; MS still recommends we add it: https://docs.microsoft.com/en-us/nuget/reference/msbuild-targets-->
+		<!-- NU5104 - A stable release of a package should not have a prerelease dependency. Either modify the version spec of dependency "NuGet.Versioning [4.7.0-preview4.5065, )" or update the version field in the nuspec. -->
+		<!-- NU5118 - File is not added because the package already contains file; If project X references project P1 and P2, and P2 references project P1, then the creating a package for X will try to pack P1's files twice -->
+		<!-- NU5125 - The 'licenseUrl' element will be deprecated. Consider using the 'license' element instead-->
+		<NoWarn>1998,1591,NU5048,NU5104,NU5118,NU5125</NoWarn>
+	</PropertyGroup>
+</Project>

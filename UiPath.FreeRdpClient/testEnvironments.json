@@ -1,0 +1,29 @@
+﻿{
+  "version": "1",
+  "environments": [
+    {
+      "name": "winS2022 local",
+      "type": "ssh",
+      "remoteUri": "ssh://Administrator@WinS2022Tests:22",
+      "localRoot": "..\\..\\"
+    },
+    {
+      "name": "winS2019 local",
+      "type": "ssh",
+      "remoteUri": "ssh://User@WinS2019Tests:22",
+      "localRoot": "..\\..\\"
+    },
+    {
+      "name": "win11 local",
+      "type": "ssh",
+      "remoteUri": "ssh://User@Win11Tests:22",
+      "localRoot": "..\\..\\"
+    },
+    {
+      "name": "win10 x86 local",
+      "type": "ssh",
+      "remoteUri": "ssh://User@Win10-x86Tests:22",
+      "localRoot": "..\\..\\"
+    }
+  ]
+}

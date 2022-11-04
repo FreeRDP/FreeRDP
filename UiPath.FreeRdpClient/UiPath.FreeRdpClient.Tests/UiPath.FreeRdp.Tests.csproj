@@ -1,0 +1,63 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsTestProject>true</IsTestProject>
+		<IsPackable>false</IsPackable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<UserSecretsId>57c50d74-20d6-40cc-b246-b316d10bf8c8</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="NativeMethods.json" />
+		<None Remove="NativeMethods.txt" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AdditionalFiles Include="NativeMethods.json" />
+		<AdditionalFiles Include="NativeMethods.txt" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
+		<PackageReference Include="MartinCostello.Logging.XUnit" Version="0.3.0" />
+		<PackageReference Include="coverlet.collector" Version="3.1.2" GeneratePathProperty="true">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<ExcludeAssets>build</ExcludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+		<PackageReference Include="Moq" Version="4.16.1" />
+		<PackageReference Include="Nito.Disposables" Version="2.2.1" />
+		<PackageReference Include="Shouldly" Version="4.0.3" />
+		<PackageReference Include="xunit" Version="2.4.1" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
+		<PackageReference Include="NuGet.Frameworks" Version="6.3.0" />
+		<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.2.63-beta">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Windows.SDK.Win32Metadata" Version="33.0.18-preview" />
+		<PackageReference Include="Microsoft.Windows.SDK.Win32Docs" Version="0.1.8-alpha" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\UiPath.FreeRdpClient\UiPath.FreeRdpClient.csproj" />
+	</ItemGroup>
+
+	<Choose>
+		<When Condition="'$(UseNugetRef)'!=''">
+			<PropertyGroup>
+				<RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources>
+				<RestoreSources Condition="Exists('$(NugetsOutDir)')">$(NugetsOutDir);https://api.nuget.org/v3/index.json;$(RestoreSources)</RestoreSources>
+			</PropertyGroup>
+			<ItemGroup>
+				<PackageReference Condition="Exists('$(NugetsOutDir)')" Include="UiPath.FreeRdpClient" Version="*-*" />
+				<ProjectReference Update="..\UiPath.FreeRdpClient\UiPath.FreeRdpClient.csproj">
+					<ReferenceOutputAssembly>False</ReferenceOutputAssembly>
+				</ProjectReference>
+			</ItemGroup>
+		</When>
+		<Otherwise></Otherwise>
+	</Choose>
+</Project>
