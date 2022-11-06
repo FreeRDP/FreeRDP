@@ -91,8 +91,9 @@ struct proxy_plugin
 	proxyFilterFn ServerFetchTargetAddr; /* 133 */
 	proxyFilterFn ServerPeerLogon;       /* 134 */
 	proxyFilterFn ChannelCreate;         /* 135 passthrough drdynvc channel create data */
-
-	UINT64 reserved5[160 - 136]; /* 136-159 */
+	proxyFilterFn UnicodeEvent;          /* 136 */
+	proxyFilterFn MouseExEvent;          /* 137 */
+	UINT64 reserved5[160 - 138];         /* 138-159 */
 
 	/* Runtime data fields */
 	proxyPluginsManager* mgr; /* 160 */ /** Set during plugin registration */
@@ -140,12 +141,25 @@ typedef struct proxy_keyboard_event_info
 	UINT16 rdp_scan_code;
 } proxyKeyboardEventInfo;
 
+typedef struct proxy_unicode_event_info
+{
+	UINT16 flags;
+	UINT16 code;
+} proxyUnicodeEventInfo;
+
 typedef struct proxy_mouse_event_info
 {
 	UINT16 flags;
 	UINT16 x;
 	UINT16 y;
 } proxyMouseEventInfo;
+
+typedef struct proxy_mouse_ex_event_info
+{
+	UINT16 flags;
+	UINT16 x;
+	UINT16 y;
+} proxyMouseExEventInfo;
 
 typedef struct
 {

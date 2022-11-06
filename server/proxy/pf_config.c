@@ -867,12 +867,59 @@ static BOOL config_plugin_keyboard_event(proxyPlugin* plugin, proxyData* pdata, 
 	return rc;
 }
 
+static BOOL config_plugin_unicode_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+{
+	BOOL rc;
+	const struct config_plugin_data* custom;
+	const proxyConfig* cfg;
+	const proxyUnicodeEventInfo* event_data = (const proxyUnicodeEventInfo*)(param);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(event_data);
+
+	WINPR_UNUSED(event_data);
+
+	custom = plugin->custom;
+	WINPR_ASSERT(custom);
+
+	cfg = custom->config;
+	WINPR_ASSERT(cfg);
+
+	rc = cfg->Keyboard;
+	WLog_DBG(TAG, "%s: %s", __FUNCTION__, rc ? "TRUE" : "FALSE");
+	return rc;
+}
+
 static BOOL config_plugin_mouse_event(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
 	BOOL rc;
 	const struct config_plugin_data* custom;
 	const proxyConfig* cfg;
 	const proxyMouseEventInfo* event_data = (const proxyMouseEventInfo*)(param);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(event_data);
+
+	WINPR_UNUSED(event_data);
+
+	custom = plugin->custom;
+	WINPR_ASSERT(custom);
+
+	cfg = custom->config;
+	WINPR_ASSERT(cfg);
+
+	rc = cfg->Mouse;
+	return rc;
+}
+
+static BOOL config_plugin_mouse_ex_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+{
+	BOOL rc;
+	const struct config_plugin_data* custom;
+	const proxyConfig* cfg;
+	const proxyMouseExEventInfo* event_data = (const proxyMouseExEventInfo*)(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -1048,7 +1095,9 @@ BOOL pf_config_plugin(proxyPluginsManager* plugins_manager, void* userdata)
 	plugin.PluginUnload = config_plugin_unload;
 
 	plugin.KeyboardEvent = config_plugin_keyboard_event;
+	plugin.UnicodeEvent = config_plugin_unicode_event;
 	plugin.MouseEvent = config_plugin_mouse_event;
+	plugin.MouseExEvent = config_plugin_mouse_ex_event;
 	plugin.ClientChannelData = config_plugin_client_channel_data;
 	plugin.ServerChannelData = config_plugin_server_channel_data;
 	plugin.ChannelCreate = config_plugin_channel_create;

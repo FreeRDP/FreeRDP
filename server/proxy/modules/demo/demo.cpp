@@ -212,9 +212,46 @@ static BOOL demo_filter_keyboard_event(proxyPlugin* plugin, proxyData* pdata, vo
 	return TRUE;
 }
 
+static BOOL demo_filter_unicode_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+{
+	proxyPluginsManager* mgr;
+	auto event_data = static_cast<const proxyUnicodeEventInfo*>(param);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(event_data);
+
+	mgr = plugin->mgr;
+	WINPR_ASSERT(mgr);
+
+	if (event_data == nullptr)
+		return FALSE;
+
+	if (event_data->code == 'b')
+	{
+		/* user typed 'B', that means bye :) */
+		std::cout << "C++ demo plugin: aborting connection" << std::endl;
+		mgr->AbortConnect(mgr, pdata);
+	}
+
+	return TRUE;
+}
+
 static BOOL demo_mouse_event(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
 	auto event_data = static_cast<const proxyMouseEventInfo*>(param);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(event_data);
+
+	WLog_INFO(TAG, "%s", __FUNCTION__);
+	return TRUE;
+}
+
+static BOOL demo_mouse_ex_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+{
+	auto event_data = static_cast<const proxyMouseExEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -319,7 +356,9 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 	plugin.ServerChannelsFree = demo_server_channels_free;
 	plugin.ServerSessionEnd = demo_server_session_end;
 	plugin.KeyboardEvent = demo_filter_keyboard_event;
+	plugin.UnicodeEvent = demo_filter_unicode_event;
 	plugin.MouseEvent = demo_mouse_event;
+	plugin.MouseExEvent = demo_mouse_ex_event;
 	plugin.ClientChannelData = demo_client_channel_data;
 	plugin.ServerChannelData = demo_server_channel_data;
 	plugin.DynamicChannelCreate = demo_dynamic_channel_create;
