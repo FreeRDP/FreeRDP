@@ -52,8 +52,12 @@ static const char* pf_modules_get_filter_type_string(PF_FILTER_TYPE result)
 	{
 		case FILTER_TYPE_KEYBOARD:
 			return "FILTER_TYPE_KEYBOARD";
+		case FILTER_TYPE_UNICODE:
+			return "FILTER_TYPE_UNICODE";
 		case FILTER_TYPE_MOUSE:
 			return "FILTER_TYPE_MOUSE";
+		case FILTER_TYPE_MOUSE_EX:
+			return "FILTER_TYPE_MOUSE_EX";
 		case FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA:
 			return "FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA";
 		case FILTER_TYPE_SERVER_PASSTHROUGH_CHANNEL_DATA:
@@ -252,8 +256,16 @@ static BOOL pf_modules_ArrayList_ForEachFkt(void* data, size_t index, va_list ap
 			result = IFCALLRESULT(TRUE, plugin->KeyboardEvent, plugin, pdata, param);
 			break;
 
+		case FILTER_TYPE_UNICODE:
+			result = IFCALLRESULT(TRUE, plugin->UnicodeEvent, plugin, pdata, param);
+			break;
+
 		case FILTER_TYPE_MOUSE:
 			result = IFCALLRESULT(TRUE, plugin->MouseEvent, plugin, pdata, param);
+			break;
+
+		case FILTER_TYPE_MOUSE_EX:
+			result = IFCALLRESULT(TRUE, plugin->MouseExEvent, plugin, pdata, param);
 			break;
 
 		case FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA:

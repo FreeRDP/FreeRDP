@@ -29,7 +29,9 @@
 typedef enum
 {
 	FILTER_TYPE_KEYBOARD,                              /* proxyKeyboardEventInfo */
+	FILTER_TYPE_UNICODE,                               /* proxyUnicodeEventInfo */
 	FILTER_TYPE_MOUSE,                                 /* proxyMouseEventInfo */
+	FILTER_TYPE_MOUSE_EX,                              /* proxyMouseExEventInfo */
 	FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA,       /* proxyChannelDataEventInfo */
 	FILTER_TYPE_SERVER_PASSTHROUGH_CHANNEL_DATA,       /* proxyChannelDataEventInfo */
 	FILTER_TYPE_CLIENT_PASSTHROUGH_DYN_CHANNEL_CREATE, /* proxyChannelDataEventInfo */
