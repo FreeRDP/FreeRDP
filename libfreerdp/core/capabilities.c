@@ -1082,7 +1082,8 @@ static BOOL rdp_apply_pointer_capability_set(rdpSettings* settings, const rdpSet
 	if (!src->ColorPointerFlag)
 		settings->ColorPointerFlag = FALSE;
 
-	settings->PointerCacheSize = src->PointerCacheSize;
+	if (settings->ServerMode)
+		settings->PointerCacheSize = src->PointerCacheSize;
 
 	return TRUE;
 }
