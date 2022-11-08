@@ -1131,13 +1131,15 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, UINT32 x, UINT32 y, U
 	appWindow->y = y;
 	appWindow->width = width;
 	appWindow->height = height;
-	xf_AppWindowCreate(xfc, appWindow);
+
+	if (!xf_AppWindowCreate(xfc, appWindow))
+		goto fail;
 	if (!HashTable_Insert(xfc->railWindows, &appWindow->windowId, (void*)appWindow))
-	{
-		rail_window_free(appWindow);
-		return NULL;
-	}
+		goto fail;
 	return appWindow;
+fail:
+	rail_window_free(appWindow);
+	return NULL;
 }
 
 BOOL xf_rail_del_window(xfContext* xfc, UINT64 id)

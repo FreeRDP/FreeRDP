@@ -51,6 +51,7 @@
 #include "xf_input.h"
 #endif
 
+#include "xf_gfx.h"
 #include "xf_rail.h"
 #include "xf_input.h"
 #include "xf_keyboard.h"
@@ -783,7 +784,7 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 	return 1;
 }
 
-int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
+BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 {
 	XGCValues gcv = { 0 };
 	int input_mask;
@@ -815,9 +816,13 @@ int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	                                  xfc->depth, InputOutput, xfc->visual, 0, &xfc->attribs);
 
 	if (!appWindow->handle)
-		return -1;
+		return FALSE;
 
 	appWindow->gc = XCreateGC(xfc->display, appWindow->handle, GCGraphicsExposures, &gcv);
+
+	if (!xf_AppWindowResize(xfc, appWindow))
+		return FALSE;
+
 	class_hints = XAllocClassHint();
 
 	if (class_hints)
@@ -859,7 +864,7 @@ int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	if (xfc->_XWAYLAND_MAY_GRAB_KEYBOARD)
 		xf_SendClientEvent(xfc, appWindow->handle, xfc->_XWAYLAND_MAY_GRAB_KEYBOARD, 1, 1);
 
-	return 1;
+	return TRUE;
 }
 
 void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, int maxWidth, int maxHeight,
@@ -1111,14 +1116,25 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 
 	if (settings->SoftwareGdi)
 	{
-		XPutImage(xfc->display, xfc->primary, appWindow->gc, xfc->image, ax, ay, ax, ay, width,
+		XPutImage(xfc->display, appWindow->pixmap, appWindow->gc, xfc->image, ax, ay, x, y, width,
 		          height);
 	}
 
-	XCopyArea(xfc->display, xfc->primary, appWindow->handle, appWindow->gc, ax, ay, width, height,
-	          x, y);
+	XCopyArea(xfc->display, appWindow->pixmap, appWindow->handle, appWindow->gc, x, y, width,
+	          height, x, y);
 	XFlush(xfc->display);
 	xf_unlock_x11(xfc);
+}
+
+static void xf_AppWindowDestroyImage(xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(appWindow);
+	if (appWindow->image)
+	{
+		appWindow->image->data = NULL;
+		XDestroyImage(appWindow->image);
+		appWindow->image = NULL;
+	}
 }
 
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
@@ -1131,6 +1147,11 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 
 	if (appWindow->gc)
 		XFreeGC(xfc->display, appWindow->gc);
+
+	if (appWindow->pixmap)
+		XFreePixmap(xfc->display, appWindow->pixmap);
+
+	xf_AppWindowDestroyImage(appWindow);
 
 	if (appWindow->handle)
 	{
@@ -1184,4 +1205,97 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 
 	free(pKeys);
 	return NULL;
+}
+
+UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
+{
+	XImage* image = NULL;
+	UINT rc = ERROR_INTERNAL_ERROR;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(surface);
+
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId);
+	if (!appWindow)
+	{
+		WLog_VRB(TAG, "[%s] Failed to find a window for id=0x%08" PRIx64, __func__,
+		         surface->windowId);
+		return CHANNEL_RC_OK;
+	}
+
+	const BOOL swGdi = freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_SoftwareGdi);
+	UINT32 nrects = 0;
+	const RECTANGLE_16* rects = region16_rects(&surface->invalidRegion, &nrects);
+
+	xf_lock_x11(xfc);
+	if (swGdi)
+	{
+		if (appWindow->surfaceId != surface->surfaceId)
+		{
+			xf_AppWindowDestroyImage(appWindow);
+			appWindow->surfaceId = surface->surfaceId;
+		}
+		if (appWindow->width != (INT64)surface->width)
+			xf_AppWindowDestroyImage(appWindow);
+		if (appWindow->height != (INT64)surface->height)
+			xf_AppWindowDestroyImage(appWindow);
+
+		if (!appWindow->image)
+		{
+			appWindow->image =
+			    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0, surface->data,
+			                 surface->width, surface->height, xfc->scanline_pad, surface->scanline);
+			if (!appWindow->image)
+			{
+				WLog_WARN(TAG,
+				          "[%s] Failed create a XImage[%" PRIu32 "x%" PRIu32 ", scanline=%" PRIu32
+				          ", bpp=%" PRIu32 "] for window id=0x%08" PRIx64,
+				          __func__, surface->width, surface->height, surface->scanline, xfc->depth,
+				          surface->windowId);
+				goto fail;
+			}
+			appWindow->image->byte_order = LSBFirst;
+			appWindow->image->bitmap_bit_order = LSBFirst;
+		}
+
+		image = appWindow->image;
+	}
+	else
+	{
+		xfGfxSurface* xfSurface = (xfGfxSurface*)surface;
+		image = xfSurface->image;
+	}
+
+	for (UINT32 x = 0; x < nrects; x++)
+	{
+		const RECTANGLE_16* rect = &rects[x];
+		const UINT32 width = rect->right - rect->left;
+		const UINT32 height = rect->bottom - rect->top;
+
+		XPutImage(xfc->display, appWindow->pixmap, appWindow->gc, image, rect->left, rect->top,
+		          rect->left, rect->top, width, height);
+
+		XCopyArea(xfc->display, appWindow->pixmap, appWindow->handle, appWindow->gc, rect->left,
+		          rect->top, width, height, rect->left, rect->top);
+	}
+
+	rc = CHANNEL_RC_OK;
+fail:
+	XFlush(xfc->display);
+	xf_unlock_x11(xfc);
+	return rc;
+}
+
+BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+
+	if (appWindow->pixmap != 0)
+		XFreePixmap(xfc->display, appWindow->pixmap);
+	appWindow->pixmap =
+	    XCreatePixmap(xfc->display, xfc->drawable, appWindow->width, appWindow->height, xfc->depth);
+	xf_AppWindowDestroyImage(appWindow);
+
+	return appWindow->pixmap != 0;
 }

@@ -23,6 +23,7 @@
 #include <X11/Xlib.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/gdi/gfx.h>
 
 typedef struct xf_app_window xfAppWindow;
 
@@ -155,6 +156,9 @@ struct xf_app_window
 	BOOL maxHorz;
 	BOOL minimized;
 	BOOL rail_ignore_configure;
+
+	Pixmap pixmap;
+	XImage* image;
 };
 
 void xf_ewmhints_init(xfContext* xfc);
@@ -178,8 +182,11 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
                           unsigned long* nitems, unsigned long* bytes, BYTE** prop);
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...);
 
-int xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow);
+BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow);
 int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow);
+
+BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow);
+
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, const char* name);
 void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height);
 void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state);
@@ -190,6 +197,8 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 
 void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UINT32 ex_style);
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
                          int height);
+UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface);
+
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow);
 void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, int maxWidth, int maxHeight,
                             int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight,
