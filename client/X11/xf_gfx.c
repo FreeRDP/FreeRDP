@@ -118,6 +118,13 @@ fail:
 	return rc;
 }
 
+static UINT xf_WindowUpdate(RdpgfxClientContext* context, xfGfxSurface* surface)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(surface);
+	return IFCALLRESULT(CHANNEL_RC_OK, context->UpdateWindowFromSurface, context, &surface->gdi);
+}
+
 static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 {
 	UINT16 count;
@@ -147,16 +154,16 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 		/* If UpdateSurfaceArea callback is available, the output has already been updated. */
 		if (context->UpdateSurfaceArea)
 		{
-			if (surface->gdi.windowId != 0)
+			if (surface->gdi.handleInUpdateSurfaceArea)
 				continue;
 		}
 
-		status = ERROR_INTERNAL_ERROR;
-
 		if (surface->gdi.outputMapped)
 			status = xf_OutputUpdate(xfc, surface);
+		else if (surface->gdi.windowMapped)
+			status = xf_WindowUpdate(context, surface);
 
-		if (status != 0)
+		if (status != CHANNEL_RC_OK)
 			break;
 	}
 
@@ -170,10 +177,8 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 	UINT16 count;
 	UINT32 index;
 	UINT status = ERROR_INTERNAL_ERROR;
-	xfGfxSurface* surface;
-	RECTANGLE_16 invalidRect;
-	RECTANGLE_16 surfaceRect;
-	RECTANGLE_16 intersection;
+	RECTANGLE_16 invalidRect = { 0 };
+	RECTANGLE_16 intersection = { 0 };
 	UINT16* pSurfaceIds = NULL;
 	RdpgfxClientContext* context;
 
@@ -199,9 +204,10 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 	}
 	for (index = 0; index < count; index++)
 	{
-		surface = (xfGfxSurface*)context->GetSurfaceData(context, pSurfaceIds[index]);
+		RECTANGLE_16 surfaceRect = { 0 };
+		xfGfxSurface* surface = (xfGfxSurface*)context->GetSurfaceData(context, pSurfaceIds[index]);
 
-		if (!surface || !surface->gdi.outputMapped)
+		if (!surface || (!surface->gdi.outputMapped && !surface->gdi.windowMapped))
 			continue;
 
 		surfaceRect.left = surface->gdi.outputOriginX;
@@ -352,7 +358,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	surface->image->byte_order = LSBFirst;
 	surface->image->bitmap_bit_order = LSBFirst;
-	surface->gdi.outputMapped = FALSE;
+
 	region16_init(&surface->gdi.invalidRegion);
 
 	if (context->SetSurfaceData(context, surface->gdi.surfaceId, (void*)surface) != CHANNEL_RC_OK)
@@ -390,7 +396,7 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 
 	if (surface)
 	{
-		if (surface->gdi.windowId > 0)
+		if (surface->gdi.windowMapped)
 			IFCALL(context->UnmapWindowForSurface, context, surface->gdi.windowId);
 
 #ifdef WITH_GFX_H264
@@ -414,6 +420,24 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 	return status;
 }
 
+static UINT xf_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurface* surface)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(surface);
+
+	rdpGdi* gdi = (rdpGdi*)context->custom;
+	WINPR_ASSERT(gdi);
+
+	xfContext* xfc = (xfContext*)gdi->context;
+	WINPR_ASSERT(gdi->context);
+
+//	if (freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
+//		return xf_AppUpdateWindowFromSurface(xfc, surface);
+
+	WLog_WARN(TAG, "[%s] function not implemented", __func__);
+	return CHANNEL_RC_OK;
+}
+
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 {
 	rdpGdi* gdi;
@@ -434,6 +458,7 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 		gfx->CreateSurface = xf_CreateSurface;
 		gfx->DeleteSurface = xf_DeleteSurface;
 	}
+	gfx->UpdateWindowFromSurface = xf_UpdateWindowFromSurface;
 }
 
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)
