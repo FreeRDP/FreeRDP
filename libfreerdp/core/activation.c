@@ -630,8 +630,8 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 		} while (0);
 	}
 
-	return rdp_client_transition_to_state(
-	           rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE) == 0;
+	return rdp_client_transition_to_state(rdp,
+	                                      CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE);
 }
 
 BOOL rdp_send_deactivate_all(rdpRdp* rdp)
