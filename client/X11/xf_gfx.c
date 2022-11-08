@@ -431,8 +431,8 @@ static UINT xf_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurfa
 	xfContext* xfc = (xfContext*)gdi->context;
 	WINPR_ASSERT(gdi->context);
 
-//	if (freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
-//		return xf_AppUpdateWindowFromSurface(xfc, surface);
+	if (freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
+		return xf_AppUpdateWindowFromSurface(xfc, surface);
 
 	WLog_WARN(TAG, "[%s] function not implemented", __func__);
 	return CHANNEL_RC_OK;

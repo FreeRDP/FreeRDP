@@ -807,6 +807,8 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 			appWindow->width = event->width;
 			appWindow->height = event->height;
 
+			xf_AppWindowResize(xfc, appWindow);
+
 			/*
 			 * Additional checks for not in a local move and not ignoring configure to send
 			 * position update to server, also should the window not be focused then do not
