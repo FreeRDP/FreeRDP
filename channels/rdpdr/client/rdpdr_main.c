@@ -1390,10 +1390,16 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 		return error;
 	}
 
-	IFCALLRET(irp->device->IRPRequest, error, irp->device, irp);
+	if (irp->device->IRPRequest)
+		IFCALLRET(irp->device->IRPRequest, error, irp->device, irp);
+	else
+		irp->Discard(irp);
 
-	if (error)
+	if (error != CHANNEL_RC_OK)
+	{
 		WLog_ERR(TAG, "device->IRPRequest failed with error %" PRIu32 "", error);
+		irp->Discard(irp);
+	}
 
 	return error;
 }
