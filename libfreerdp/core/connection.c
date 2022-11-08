@@ -1223,13 +1223,13 @@ int rdp_client_connect_finalize(rdpRdp* rdp)
 	return 0;
 }
 
-int rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
+BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 {
-	int status = 0;
 	const char* name = rdp_state_string(state);
 
 	WLog_DBG(TAG, "%s %s --> %s", __FUNCTION__, rdp_get_state_string(rdp), name);
-	rdp_set_state(rdp, state);
+	if (!rdp_set_state(rdp, state))
+		return FALSE;
 
 	switch (state)
 	{
@@ -1239,12 +1239,13 @@ int rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 		case CONNECTION_STATE_FINALIZATION_PERSISTENT_KEY_LIST:
 		case CONNECTION_STATE_FINALIZATION_FONT_LIST:
 			update_reset_state(rdp->update);
-			rdp_finalize_reset_flags(rdp, FALSE);
+			if (!rdp_finalize_reset_flags(rdp, FALSE))
+				return FALSE;
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
 		{
-			ActivatedEventArgs activatedEvent;
+			ActivatedEventArgs activatedEvent = { 0 };
 			rdpContext* context = rdp->context;
 			EventArgsInit(&activatedEvent, "libfreerdp");
 			activatedEvent.firstActivation =
@@ -1259,7 +1260,7 @@ int rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 	}
 
 	{
-		ConnectionStateChangeEventArgs stateEvent;
+		ConnectionStateChangeEventArgs stateEvent = { 0 };
 		rdpContext* context = rdp->context;
 		EventArgsInit(&stateEvent, "libfreerdp");
 		stateEvent.state = rdp_get_state(rdp);
@@ -1267,7 +1268,7 @@ int rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 		PubSub_OnConnectionStateChange(rdp->pubSub, context, &stateEvent);
 	}
 
-	return status;
+	return TRUE;
 }
 
 BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
