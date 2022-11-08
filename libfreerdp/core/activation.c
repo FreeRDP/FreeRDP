@@ -542,7 +542,7 @@ BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s)
 			    "0 [%" PRIu16 "]",
 			    totalNumEntries);
 		Stream_Read_UINT16(s, mapFlags); /* mapFlags (2 bytes) */
-		if (mapFlags != 0)
+		if (mapFlags != (FONTLIST_FIRST | FONTLIST_LAST))
 			WLog_WARN(
 			    TAG,
 			    "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::mapFlags != 0x0003 "
