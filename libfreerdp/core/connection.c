@@ -24,6 +24,7 @@
 #include "info.h"
 #include "input.h"
 #include "rdp.h"
+#include "peer.h"
 
 #include "connection.h"
 #include "transport.h"
@@ -1550,8 +1551,9 @@ BOOL rdp_server_reactivate(rdpRdp* rdp)
 		return FALSE;
 
 	rdp_finalize_set_flag(rdp, FINALIZE_DEACTIVATE_REACTIVATE);
-	return rdp_server_transition_to_state(rdp,
-	                                      CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE);
+	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE))
+		return FALSE;
+	return rdp_peer_handle_state_demand_active(client) > 0;
 }
 
 BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
