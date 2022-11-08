@@ -42,6 +42,8 @@ struct gdi_gfx_surface
 	UINT64 windowId;
 	UINT32 outputTargetWidth;
 	UINT32 outputTargetHeight;
+	BOOL windowMapped;
+	BOOL handleInUpdateSurfaceArea;
 };
 typedef struct gdi_gfx_surface gdiGfxSurface;
 

@@ -31,7 +31,7 @@
 /**
  * Client Interface
  */
-
+typedef struct gdi_gfx_surface gdiGfxSurface;
 typedef struct s_rdpgfx_client_context RdpgfxClientContext;
 
 typedef UINT (*pcRdpgfxResetGraphics)(RdpgfxClientContext* context,
@@ -83,6 +83,9 @@ typedef UINT (*pcRdpgfxSetCacheSlotData)(RdpgfxClientContext* context, UINT16 ca
 typedef void* (*pcRdpgfxGetCacheSlotData)(RdpgfxClientContext* context, UINT16 cacheSlot);
 
 typedef UINT (*pcRdpgfxUpdateSurfaces)(RdpgfxClientContext* context);
+
+typedef UINT (*pcRdpgfxUpdateWindowFromSurface)(RdpgfxClientContext* context,
+                                                gdiGfxSurface* surface);
 
 typedef UINT (*pcRdpgfxUpdateSurfaceArea)(RdpgfxClientContext* context, UINT16 surfaceId,
                                           UINT32 nrRects, const RECTANGLE_16* rects);
@@ -147,6 +150,7 @@ struct s_rdpgfx_client_context
 	/* No locking required */
 	pcRdpgfxUpdateSurfaces UpdateSurfaces;
 	pcRdpgfxUpdateSurfaceArea UpdateSurfaceArea;
+	pcRdpgfxUpdateWindowFromSurface UpdateWindowFromSurface;
 
 	/* These callbacks allow crating/destroying a window directly
 	 * mapped to a surface.
