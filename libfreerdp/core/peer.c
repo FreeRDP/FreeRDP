@@ -724,6 +724,57 @@ int rdp_peer_handle_state_demand_active(freerdp_peer* client)
 	return ret;
 }
 
+/** \brief Handle server peer state ACTIVE:
+ *  On initial run (not connected, not activated) do not read data
+ *
+ *  \return -1 in case of an error, 0 if no data needs to be processed, 1 to let
+ *  the state machine run again and 2 if peer_recv_pdu must be called.
+ */
+static int rdp_peer_handle_state_active(freerdp_peer* client)
+{
+	int ret = -1;
+
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->context);
+
+	rdpRdp* rdp = client->context->rdp;
+	WINPR_ASSERT(rdp);
+
+	if (!client->connected)
+	{
+		/**
+		 * PostConnect should only be called once and should not
+		 * be called after a reactivation sequence.
+		 */
+		IFCALLRET(client->PostConnect, client->connected, client);
+	}
+	if (!client->connected)
+	{
+		switch (rdp_get_state(rdp))
+		{
+			case CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE:
+				ret = 1;
+				break;
+			case CONNECTION_STATE_ACTIVE:
+			default:
+				ret = -24;
+				break;
+		}
+	}
+	else if (!client->activated)
+	{
+		IFCALLRET(client->Activate, client->activated, client);
+
+		if (!client->activated)
+			ret = -23;
+		else
+			ret = 0;
+	}
+	else
+		ret = 2;
+	return ret;
+}
+
 static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void* extra)
 {
 	UINT32 SelectedProtocol;
@@ -1040,48 +1091,24 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 			break;
 		case CONNECTION_STATE_FINALIZATION_FONT_LIST:
 			ret = peer_recv_pdu(client, s);
-			if (rdp_finalize_is_flag_set(rdp, FINALIZE_CS_FONT_LIST_PDU))
+			if (ret >= 0)
 			{
-				if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_ACTIVE))
-					ret = -2;
-				update_reset_state(rdp->update);
+				if (rdp_finalize_is_flag_set(rdp, FINALIZE_CS_FONT_LIST_PDU))
+				{
+					if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_ACTIVE))
+						ret = -2;
+					update_reset_state(rdp->update);
+					ret = 1;
+				}
+				else
+					ret = peer_unexpected_client_message(rdp, FINALIZE_CS_FONT_LIST_PDU);
 			}
-			else
-				ret = peer_unexpected_client_message(rdp, FINALIZE_CS_FONT_LIST_PDU);
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
-			if (!client->connected)
-			{
-				/**
-				 * PostConnect should only be called once and should not
-				 * be called after a reactivation sequence.
-				 */
-				IFCALLRET(client->PostConnect, client->connected, client);
-			}
-			if (!client->connected)
-			{
-				switch (rdp_get_state(rdp))
-				{
-					case CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE:
-						ret = 1;
-						break;
-					case CONNECTION_STATE_ACTIVE:
-					default:
-						ret = -24;
-						break;
-				}
-			}
-			else
-			{
-				if (!client->activated)
-					IFCALLRET(client->Activate, client->activated, client);
-
-				if (!client->activated)
-					ret = -23;
-				else
-					ret = peer_recv_pdu(client, s);
-			}
+			ret = rdp_peer_handle_state_active(client);
+			if (ret > 1)
+				ret = peer_recv_pdu(client, s);
 			break;
 
 			/* States that must not happen in server state machine */
