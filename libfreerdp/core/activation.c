@@ -586,7 +586,6 @@ BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp)
 BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 {
 	UINT16 lengthSourceDescriptor;
-	UINT32 timeout;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
@@ -631,27 +630,8 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 		} while (0);
 	}
 
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE);
-
-	for (timeout = 0; timeout < freerdp_settings_get_uint32(rdp->settings, FreeRDP_TcpAckTimeout);
-	     timeout += 100)
-	{
-		if (rdp_check_fds(rdp) < 0)
-			return FALSE;
-
-		WINPR_ASSERT(rdp->context);
-		if (freerdp_shall_disconnect_context(rdp->context))
-			return TRUE;
-
-		if (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE)
-			return TRUE;
-
-		Sleep(100);
-	}
-
-	WLog_ERR(TAG, "Timeout waiting for activation");
-	freerdp_set_last_error_if_not(rdp->context, FREERDP_ERROR_CONNECT_ACTIVATION_TIMEOUT);
-	return FALSE;
+	return rdp_client_transition_to_state(
+	           rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE) == 0;
 }
 
 BOOL rdp_send_deactivate_all(rdpRdp* rdp)
