@@ -697,6 +697,33 @@ static int peer_unexpected_client_message(rdpRdp* rdp, UINT32 flag)
 	return 0; /* we ignore this as per spec input PDU are already allowed */
 }
 
+int rdp_peer_handle_state_demand_active(freerdp_peer* client)
+{
+	int ret = -1;
+
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->context);
+
+	rdpRdp* rdp = client->context->rdp;
+	WINPR_ASSERT(rdp);
+
+	if (client->Capabilities && !client->Capabilities(client))
+	{
+		WLog_ERR(TAG, "[%s] freerdp_peer::Capabilities() callback failed",
+		         rdp_get_state_string(rdp));
+	}
+	else if (!rdp_send_demand_active(rdp))
+	{
+		WLog_ERR(TAG, "[%s] rdp_send_demand_active() fail", rdp_get_state_string(rdp));
+	}
+	else
+	{
+		rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT);
+		ret = 1;
+	}
+	return ret;
+}
+
 static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void* extra)
 {
 	UINT32 SelectedProtocol;
@@ -891,21 +918,7 @@ static int peer_recv_callback_internal(rdpTransport* transport, wStream* s, void
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE:
-			if (client->Capabilities && !client->Capabilities(client))
-			{
-				WLog_ERR(TAG, "[%s] freerdp_peer::Capabilities() callback failed",
-				         rdp_get_state_string(rdp));
-			}
-			else if (!rdp_send_demand_active(rdp))
-			{
-				WLog_ERR(TAG, "[%s] rdp_send_demand_active() fail", rdp_get_state_string(rdp));
-			}
-			else
-			{
-				rdp_server_transition_to_state(
-				    rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT);
-				ret = 1;
-			}
+			ret = rdp_peer_handle_state_demand_active(client);
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT:
