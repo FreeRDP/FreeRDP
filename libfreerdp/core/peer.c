@@ -322,7 +322,7 @@ static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
 	return TRUE;
 }
 
-static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 totalLength)
+static int peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 totalLength)
 {
 	BYTE type;
 	UINT16 length;
@@ -342,7 +342,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 totalLen
 
 	if (!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type,
 	                                &compressed_len))
-		return FALSE;
+		return -1;
 
 #ifdef WITH_DEBUG_RDP
 	WLog_DBG(TAG, "recv %s Data PDU (0x%02" PRIX8 "), length: %" PRIu16 "",
@@ -353,40 +353,40 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 totalLen
 	{
 		case DATA_PDU_TYPE_SYNCHRONIZE:
 			if (!rdp_recv_client_synchronize_pdu(client->context->rdp, s))
-				return FALSE;
+				return -1;
 
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
 			if (!rdp_server_accept_client_control_pdu(client->context->rdp, s))
-				return FALSE;
+				return -1;
 
 			break;
 
 		case DATA_PDU_TYPE_INPUT:
 			if (!input_recv(client->context->rdp->input, s))
-				return FALSE;
+				return -1;
 
 			break;
 
 		case DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST:
 			if (!rdp_server_accept_client_persistent_key_list_pdu(client->context->rdp, s))
-				return FALSE;
+				return -1;
 			break;
 
 		case DATA_PDU_TYPE_FONT_LIST:
 			if (!rdp_server_accept_client_font_list_pdu(client->context->rdp, s))
-				return FALSE;
+				return -1;
 
-			break;
+			return 1; // State changed, trigger rerun
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
 			mcs_send_disconnect_provider_ultimatum(client->context->rdp->mcs);
-			return FALSE;
+			return -1;
 
 		case DATA_PDU_TYPE_FRAME_ACKNOWLEDGE:
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
-				return FALSE;
+				return -1;
 
 			Stream_Read_UINT32(s, client->ack_frame_id);
 			IFCALL(update->SurfaceFrameAcknowledge, update->context, client->ack_frame_id);
@@ -394,13 +394,13 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 totalLen
 
 		case DATA_PDU_TYPE_REFRESH_RECT:
 			if (!update_read_refresh_rect(update, s))
-				return FALSE;
+				return -1;
 
 			break;
 
 		case DATA_PDU_TYPE_SUPPRESS_OUTPUT:
 			if (!update_read_suppress_output(update, s))
-				return FALSE;
+				return -1;
 
 			break;
 
@@ -409,7 +409,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 totalLen
 			break;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
@@ -472,10 +472,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		switch (pduType)
 		{
 			case PDU_TYPE_DATA:
-				if (!peer_recv_data_pdu(client, s, pduLength))
-					return -1;
-
-				break;
+				return peer_recv_data_pdu(client, s, pduLength);
 
 			case PDU_TYPE_CONFIRM_ACTIVE:
 				if (!rdp_server_accept_confirm_active(rdp, s, pduLength))
