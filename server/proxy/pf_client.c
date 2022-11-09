@@ -667,19 +667,15 @@ static void pf_client_set_security_settings(pClientContext* pc)
 	freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, config->ClientTlsSecurity);
 	freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, config->ClientNlaSecurity);
 
-	/* Smartcard authentication currently does not work with NLA */
 	if (pf_client_use_proxy_smartcard_auth(settings))
 	{
-		freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE);
-		freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE);
+		/* Smartcard authentication requires smartcard redirection to be enabled */
 		freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards, TRUE);
+
+		/* Reset username/domain, we will get that info later from the sc cert */
+		freerdp_settings_set_string(settings, FreeRDP_Username, NULL);
+		freerdp_settings_set_string(settings, FreeRDP_Domain, NULL);
 	}
-
-	if (!config->ClientNlaSecurity)
-		return;
-
-	if (!settings->Username || !settings->Password)
-		return;
 }
 
 static BOOL pf_client_connect_without_nla(pClientContext* pc)
