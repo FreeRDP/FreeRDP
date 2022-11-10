@@ -165,6 +165,26 @@ size_t _wcsnlen(const WCHAR* str, size_t max)
 	return x;
 }
 
+/* _wcsstr -> wcsstr */
+
+WCHAR* _wcsstr(const WCHAR* str, const WCHAR* strSearch)
+{
+	WINPR_ASSERT(str);
+	WINPR_ASSERT(strSearch);
+
+	if (strSearch[0] == '\0')
+		return str;
+
+	const size_t searchLen = _wcslen(strSearch);
+	while (*str)
+	{
+		if (_wcsncmp(str, strSearch, searchLen) == 0)
+			return str;
+		str++;
+	}
+	return NULL;
+}
+
 /* _wcschr -> wcschr */
 
 WCHAR* _wcschr(const WCHAR* str, WCHAR value)
