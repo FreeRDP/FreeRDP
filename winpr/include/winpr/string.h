@@ -65,6 +65,8 @@ extern "C"
 	WINPR_API size_t _wcslen(const WCHAR* str);
 	WINPR_API size_t _wcsnlen(const WCHAR* str, size_t maxNumberOfElements);
 
+	WINPR_API WCHAR* _wcsstr(const WCHAR* str, const WCHAR* strSearch);
+
 	WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c);
 	WINPR_API WCHAR* _wcsrchr(const WCHAR* str, WCHAR c);
 
@@ -77,6 +79,7 @@ extern "C"
 #define _wcsncmp wcsncmp
 #define _wcslen wcslen
 #define _wcsnlen wcsnlen
+#define _wcsstr wcsstr
 #define _wcschr wcschr
 #define _wcsrchr wcsrchr
 
