@@ -50,7 +50,9 @@ typedef enum
 #include <freerdp/settings.h>
 #include <freerdp/transport_io.h>
 
-typedef int (*TransportRecv)(rdpTransport* transport, wStream* stream, void* extra);
+#include "state.h"
+
+typedef state_run_t (*TransportRecv)(rdpTransport* transport, wStream* stream, void* extra);
 
 FREERDP_LOCAL wStream* transport_send_stream_init(rdpTransport* transport, size_t size);
 FREERDP_LOCAL BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port,

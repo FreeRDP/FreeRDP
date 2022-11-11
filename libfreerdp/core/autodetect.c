@@ -735,7 +735,7 @@ static BOOL autodetect_recv_netchar_request(rdpAutoDetect* autodetect, wStream* 
 	return success;
 }
 
-int autodetect_recv_request_packet(rdpAutoDetect* autodetect, wStream* s)
+state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, wStream* s)
 {
 	AUTODETECT_REQ_PDU autodetectReqPdu = { 0 };
 	const rdpSettings* settings;
@@ -748,7 +748,7 @@ int autodetect_recv_request_packet(rdpAutoDetect* autodetect, wStream* s)
 	WINPR_ASSERT(settings);
 
 	if (!Stream_CheckAndLogRequiredLength(AUTODETECT_TAG, s, 6))
-		return -1;
+		return STATE_RUN_FAILED;
 
 	Stream_Read_UINT8(s, autodetectReqPdu.headerLength);    /* headerLength (1 byte) */
 	Stream_Read_UINT8(s, autodetectReqPdu.headerTypeId);    /* headerTypeId (1 byte) */
@@ -823,10 +823,10 @@ fail:
 		autodetect->state = AUTODETECT_STATE_REQUEST;
 	else
 		autodetect->state = AUTODETECT_STATE_FAIL;
-	return success ? 0 : -1;
+	return success ? STATE_RUN_SUCCESS : STATE_RUN_FAILED;
 }
 
-int autodetect_recv_response_packet(rdpAutoDetect* autodetect, wStream* s)
+state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, wStream* s)
 {
 	AUTODETECT_RSP_PDU autodetectRspPdu = { 0 };
 	const rdpSettings* settings;
@@ -904,7 +904,7 @@ fail:
 	else
 		autodetect->state = AUTODETECT_STATE_FAIL;
 
-	return success ? 0 : -1;
+	return success ? STATE_RUN_SUCCESS : STATE_RUN_FAILED;
 }
 
 rdpAutoDetect* autodetect_new(rdpContext* context)

@@ -52,6 +52,7 @@
 #include "rdp.h"
 #include "proxy.h"
 #include "utils.h"
+#include "state.h"
 
 #define TAG FREERDP_TAG("core.transport")
 
@@ -1107,7 +1108,7 @@ int transport_drain_output_buffer(rdpTransport* transport)
 int transport_check_fds(rdpTransport* transport)
 {
 	int status;
-	int recv_status;
+	state_run_t recv_status;
 	wStream* received;
 	UINT64 now = GetTickCount64();
 	UINT64 dueDate = 0;
@@ -1173,15 +1174,17 @@ int transport_check_fds(rdpTransport* transport)
 		Stream_Release(received);
 
 		/* session redirection or activation */
-		if (recv_status == 1 || recv_status == 2)
+		if (recv_status == STATE_RUN_REDIRECT || recv_status == STATE_RUN_ACTIVE)
 		{
 			return recv_status;
 		}
 
-		if (recv_status < 0)
+		if (state_run_failed(recv_status))
 		{
+			char buffer[64] = { 0 };
 			WLog_Print(transport->log, WLOG_ERROR,
-			           "transport_check_fds: transport->ReceiveCallback() - %i", recv_status);
+			           "transport_check_fds: transport->ReceiveCallback() - %s",
+			           state_run_result_string(recv_status, buffer, ARRAYSIZE(buffer)));
 			return -1;
 		}
 

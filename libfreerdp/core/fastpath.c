@@ -616,13 +616,13 @@ out_fail:
 	return -1;
 }
 
-int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
+state_run_t fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
 {
-	int rc = -2;
+	state_run_t rc = STATE_RUN_FAILED;
 	rdpUpdate* update;
 
 	if (!fastpath || !fastpath->rdp || !fastpath->rdp->update || !s)
-		return -1;
+		return STATE_RUN_FAILED;
 
 	update = fastpath->rdp->update;
 
@@ -634,16 +634,16 @@ int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
 		if (fastpath_recv_update_data(fastpath, s) < 0)
 		{
 			WLog_ERR(TAG, "fastpath_recv_update_data() fail");
-			rc = -3;
+			rc = STATE_RUN_FAILED;
 			goto fail;
 		}
 	}
 
-	rc = 0;
+	rc = STATE_RUN_SUCCESS;
 fail:
 
 	if (!update_end_paint(update))
-		return -4;
+		return STATE_RUN_FAILED;
 
 	return rc;
 }
@@ -832,7 +832,7 @@ static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, wStream* s)
 	return TRUE;
 }
 
-int fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s)
+state_run_t fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s)
 {
 	BYTE i;
 
@@ -846,7 +846,7 @@ int fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s)
 		 * as one additional byte here.
 		 */
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
-			return -1;
+			return STATE_RUN_FAILED;
 
 		Stream_Read_UINT8(s, fastpath->numberEvents); /* eventHeader (1 byte) */
 	}
@@ -854,10 +854,10 @@ int fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s)
 	for (i = 0; i < fastpath->numberEvents; i++)
 	{
 		if (!fastpath_recv_input_event(fastpath, s))
-			return -1;
+			return STATE_RUN_FAILED;
 	}
 
-	return 0;
+	return STATE_RUN_SUCCESS;
 }
 
 static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)

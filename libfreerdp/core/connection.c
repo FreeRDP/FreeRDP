@@ -185,7 +185,7 @@
  *channel messages (exchanged between client-side plug-ins and server-side applications).
  */
 
-static int rdp_client_connect_finalize(rdpRdp* rdp);
+static state_run_t rdp_client_connect_finalize(rdpRdp* rdp);
 static BOOL rdp_set_state(rdpRdp* rdp, CONNECTION_STATE state);
 
 static BOOL rdp_client_reset_codecs(rdpContext* context)
@@ -383,7 +383,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	}
 
 	/* everything beyond this point is event-driven and non blocking */
-	transport_set_recv_callbacks(rdp->transport, rdp_recv_callback, rdp);
+	if (!transport_set_recv_callbacks(rdp->transport, rdp_recv_callback, rdp))
+		return FALSE;
 
 	now = GetTickCount64();
 	dueDate = now + freerdp_settings_get_uint32(settings, FreeRDP_TcpAckTimeout);
@@ -1098,30 +1099,30 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 	return FALSE;
 }
 
-int rdp_client_connect_license(rdpRdp* rdp, wStream* s)
+state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 {
-	int status;
+	state_run_t status = STATE_RUN_FAILED;
 	LICENSE_STATE state;
 	UINT16 length, channelId, securityFlags;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
-		return -1;
+		return STATE_RUN_FAILED;
 
 	if (!rdp_read_security_header(s, &securityFlags, &length))
-		return -1;
+		return STATE_RUN_FAILED;
 
 	if (securityFlags & SEC_ENCRYPT)
 	{
 		if (!rdp_decrypt(rdp, s, &length, securityFlags))
-			return -1;
+			return STATE_RUN_FAILED;
 	}
 
 	if ((securityFlags & SEC_LICENSE_PKT) == 0)
-		return -1;
+		return STATE_RUN_FAILED;
 
 	status = license_recv(rdp->license, s);
 
-	if (status < 0)
+	if (state_run_failed(status))
 		return status;
 
 	state = license_get_state(rdp->license);
@@ -1129,7 +1130,7 @@ int rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	{
 		case LICENSE_STATE_ABORTED:
 			WLog_ERR(TAG, "license connection sequence aborted.");
-			return -1;
+			return STATE_RUN_FAILED;
 		case LICENSE_STATE_COMPLETED:
 			if (rdp->settings->MultitransportFlags)
 			{
@@ -1141,13 +1142,13 @@ int rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 				rdp_client_transition_to_state(
 				    rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE);
 			}
-			return 0;
+			return STATE_RUN_SUCCESS;
 		default:
-			return 0;
+			return STATE_RUN_SUCCESS;
 	}
 }
 
-int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
+state_run_t rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 {
 	size_t pos;
 	UINT16 length;
@@ -1160,28 +1161,28 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_recv_demand_active(rdp, s))
 	{
-		int rc;
+		state_run_t rc;
 		UINT16 channelId;
 
 		Stream_SetPosition(s, pos);
 		if (!rdp_recv_get_active_header(rdp, s, &channelId, &length))
-			return -1;
+			return STATE_RUN_FAILED;
 		/* Was Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 		 * but the headers aren't always that length,
 		 * so that could result in a bad offset.
 		 */
 		rc = rdp_recv_out_of_sequence_pdu(rdp, s);
-		if (rc < 0)
+		if (state_run_failed(rc))
 			return rc;
 		if (!tpkt_ensure_stream_consumed(s, length))
-			return -1;
+			return STATE_RUN_FAILED;
 		return rc;
 	}
 
-	return 0;
+	return STATE_RUN_SUCCESS;
 }
 
-int rdp_client_connect_finalize(rdpRdp* rdp)
+state_run_t rdp_client_connect_finalize(rdpRdp* rdp)
 {
 	/**
 	 * [MS-RDPBCGR] 1.3.1.1 - 8.
@@ -1191,15 +1192,15 @@ int rdp_client_connect_finalize(rdpRdp* rdp)
 	 */
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_SYNC);
 	if (!rdp_send_client_synchronize_pdu(rdp))
-		return -1;
+		return STATE_RUN_FAILED;
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_COOPERATE);
 	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_COOPERATE))
-		return -1;
+		return STATE_RUN_FAILED;
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_REQUEST_CONTROL);
 	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL))
-		return -1;
+		return STATE_RUN_FAILED;
 
 	/**
 	 * [MS-RDPBCGR] 2.2.1.17
@@ -1213,15 +1214,15 @@ int rdp_client_connect_finalize(rdpRdp* rdp)
 	{
 		rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_PERSISTENT_KEY_LIST);
 		if (!rdp_send_client_persistent_key_list_pdu(rdp))
-			return -1;
+			return STATE_RUN_FAILED;
 	}
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_FONT_LIST);
 	if (!rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST))
-		return -1;
+		return STATE_RUN_FAILED;
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_SYNC);
-	return 0;
+	return STATE_RUN_SUCCESS;
 }
 
 BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
@@ -1711,7 +1712,7 @@ BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp)
 	return TRUE;
 }
 
-int rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s)
+state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s)
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
@@ -1721,12 +1722,12 @@ int rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s)
 	const UINT32 height = rdp->settings->DesktopHeight;
 
 	if (!rdp_send_confirm_active(rdp))
-		return -1;
+		return STATE_RUN_FAILED;
 
 	if (!input_register_client_callbacks(rdp->input))
 	{
 		WLog_ERR(TAG, "error registering client callbacks");
-		return -1;
+		return STATE_RUN_FAILED;
 	}
 
 	/**
@@ -1746,13 +1747,13 @@ int rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s)
 		if (!status)
 		{
 			WLog_ERR(TAG, "client desktop resize callback failed");
-			return -1;
+			return STATE_RUN_FAILED;
 		}
 	}
 
 	WINPR_ASSERT(rdp->context);
 	if (freerdp_shall_disconnect_context(rdp->context))
-		return 0;
+		return STATE_RUN_SUCCESS;
 
 	return rdp_client_connect_finalize(rdp);
 }

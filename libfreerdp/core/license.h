@@ -23,6 +23,7 @@
 #define FREERDP_LIB_CORE_LICENSE_H
 
 #include "rdp.h"
+#include "state.h"
 
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/crypto/certificate.h>
@@ -58,7 +59,7 @@ typedef struct
 
 FREERDP_LOCAL BOOL license_send_valid_client_error_packet(rdpRdp* rdp);
 
-FREERDP_LOCAL int license_recv(rdpLicense* license, wStream* s);
+FREERDP_LOCAL state_run_t license_recv(rdpLicense* license, wStream* s);
 
 /* the configuration is applied from settings. Set FreeRDP_ServerLicense* settings */
 FREERDP_LOCAL BOOL license_server_configure(rdpLicense* license);
