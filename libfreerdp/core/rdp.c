@@ -1812,6 +1812,8 @@ static int rdp_recv_callback_int(rdpTransport* transport, wStream* s, void* extr
 				         "%s: %s - "
 				         "rdp_client_connect_demand_active() - %i",
 				         __FUNCTION__, rdp_get_state_string(rdp), status);
+			else if (status == 1)
+				status = 1;
 			else
 			{
 				if (!rdp->settings->SupportMonitorLayoutPdu)
