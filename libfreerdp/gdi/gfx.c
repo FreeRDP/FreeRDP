@@ -1617,7 +1617,11 @@ static UINT gdi_MapSurfaceToOutput(RdpgfxClientContext* context,
 		goto fail;
 
 	if (surface->windowMapped)
+	{
+		WLog_WARN(TAG, "[%s] sufrace already windowMapped when trying to set outputMapped",
+		          __func__);
 		goto fail;
+	}
 
 	surface->outputMapped = TRUE;
 	surface->outputOriginX = surfaceToOutput->outputOriginX;
@@ -1644,7 +1648,12 @@ gdi_MapSurfaceToScaledOutput(RdpgfxClientContext* context,
 		goto fail;
 
 	if (surface->windowMapped)
+	{
+		WLog_WARN(TAG, "[%s] sufrace already windowMapped when trying to set outputMapped",
+		          __func__);
 		goto fail;
+	}
+
 	surface->outputMapped = TRUE;
 	surface->outputOriginX = surfaceToOutput->outputOriginX;
 	surface->outputOriginY = surfaceToOutput->outputOriginY;
@@ -1674,12 +1683,20 @@ static UINT gdi_MapSurfaceToWindow(RdpgfxClientContext* context,
 		goto fail;
 
 	if (surface->outputMapped)
+	{
+		WLog_WARN(TAG, "[%s] sufrace already outputMapped when trying to set windowMapped",
+		          __func__);
 		goto fail;
+	}
 
 	if (surface->windowMapped)
 	{
 		if (surface->windowId != surfaceToWindow->windowId)
+		{
+			WLog_WARN(TAG, "[%s] sufrace windowId mismatch, has %" PRIu64 ", expected %" PRIu64,
+			          __func__, surface->windowId, surfaceToWindow->windowId);
 			goto fail;
+		}
 	}
 	surface->windowMapped = TRUE;
 
@@ -1708,12 +1725,20 @@ gdi_MapSurfaceToScaledWindow(RdpgfxClientContext* context,
 		goto fail;
 
 	if (surface->outputMapped)
+	{
+		WLog_WARN(TAG, "[%s] sufrace already outputMapped when trying to set windowMapped",
+		          __func__);
 		goto fail;
+	}
 
 	if (surface->windowMapped)
 	{
 		if (surface->windowId != surfaceToWindow->windowId)
+		{
+			WLog_WARN(TAG, "[%s] sufrace windowId mismatch, has %" PRIu64 ", expected %" PRIu64,
+			          __func__, surface->windowId, surfaceToWindow->windowId);
 			goto fail;
+		}
 	}
 	surface->windowMapped = TRUE;
 
