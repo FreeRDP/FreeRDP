@@ -23,6 +23,7 @@
 typedef struct rdp_multitransport rdpMultitransport;
 
 #include "rdp.h"
+#include "state.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/api.h>
@@ -35,7 +36,8 @@ typedef enum
 	INITIATE_REQUEST_PROTOCOL_UDPFECL = 0x02
 } MultitransportRequestProtocol;
 
-FREERDP_LOCAL int multitransport_client_recv_request(rdpMultitransport* multitransport, wStream* s);
+FREERDP_LOCAL state_run_t multitransport_client_recv_request(rdpMultitransport* multitransport,
+                                                             wStream* s);
 FREERDP_LOCAL BOOL multitransport_server_send_request(rdpMultitransport* multitransport);
 
 FREERDP_LOCAL BOOL multitransport_server_recv_response(rdpMultitransport* multitransport,

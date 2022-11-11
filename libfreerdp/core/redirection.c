@@ -235,14 +235,14 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 	return 0;
 }
 
-static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
+static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT16 flags;
 	UINT16 length;
 	rdpRedirection* redirection = rdp->redirection;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
-		return -1;
+		return STATE_RUN_FAILED;
 
 	Stream_Read_UINT16(s, flags);                  /* flags (2 bytes) */
 	Stream_Read_UINT16(s, length);                 /* length (2 bytes) */
@@ -269,7 +269,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_TARGET_NET_ADDRESS)
 	{
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddress), 80))
-			return -1;
+			return STATE_RUN_FAILED;
 	}
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
@@ -281,17 +281,17 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		 * 0020  30 30 0d 0a                                      00..
 		 */
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
-			return -1;
+			return STATE_RUN_FAILED;
 
 		Stream_Read_UINT32(s, redirection->LoadBalanceInfoLength);
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, redirection->LoadBalanceInfoLength))
-			return -1;
+			return STATE_RUN_FAILED;
 
 		redirection->LoadBalanceInfo = (BYTE*)malloc(redirection->LoadBalanceInfoLength);
 
 		if (!redirection->LoadBalanceInfo)
-			return -1;
+			return STATE_RUN_FAILED;
 
 		Stream_Read(s, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
 		WLog_DBG(TAG, "loadBalanceInfo:");
@@ -302,7 +302,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_USERNAME)
 	{
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->Username), 512))
-			return -1;
+			return STATE_RUN_FAILED;
 
 		WLog_DBG(TAG, "Username: %s", redirection->Username);
 	}
@@ -310,7 +310,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_DOMAIN)
 	{
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->Domain), 52))
-			return FALSE;
+			return STATE_RUN_FAILED;
 
 		WLog_DBG(TAG, "Domain: %s", redirection->Domain);
 	}
@@ -339,7 +339,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		 * end of the buffer which won't get counted in PasswordLength.
 		 */
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
-			return -1;
+			return STATE_RUN_FAILED;
 
 		Stream_Read_UINT32(s, redirection->PasswordLength);
 
@@ -349,15 +349,15 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		 */
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, redirection->PasswordLength))
-			return -1;
+			return STATE_RUN_FAILED;
 
 		if (redirection->PasswordLength > LB_PASSWORD_MAX_LENGTH)
-			return -1;
+			return STATE_RUN_FAILED;
 
 		redirection->Password = (BYTE*)calloc(1, redirection->PasswordLength + sizeof(WCHAR));
 
 		if (!redirection->Password)
-			return -1;
+			return STATE_RUN_FAILED;
 
 		Stream_Read(s, redirection->Password, redirection->PasswordLength);
 		WLog_DBG(TAG, "PasswordCookie:");
@@ -369,7 +369,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_TARGET_FQDN)
 	{
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetFQDN), 512))
-			return -1;
+			return STATE_RUN_FAILED;
 
 		WLog_DBG(TAG, "TargetFQDN: %s", redirection->TargetFQDN);
 	}
@@ -377,7 +377,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 	{
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetBiosName), 32))
-			return -1;
+			return STATE_RUN_FAILED;
 
 		WLog_DBG(TAG, "TargetNetBiosName: %s", redirection->TargetNetBiosName);
 	}
@@ -385,17 +385,17 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_CLIENT_TSV_URL)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
-			return -1;
+			return STATE_RUN_FAILED;
 
 		Stream_Read_UINT32(s, redirection->TsvUrlLength);
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, redirection->TsvUrlLength))
-			return -1;
+			return STATE_RUN_FAILED;
 
 		redirection->TsvUrl = (BYTE*)malloc(redirection->TsvUrlLength);
 
 		if (!redirection->TsvUrl)
-			return -1;
+			return STATE_RUN_FAILED;
 
 		Stream_Read(s, redirection->TsvUrl, redirection->TsvUrlLength);
 		WLog_DBG(TAG, "TsvUrl:");
@@ -409,7 +409,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		UINT32 targetNetAddressesLength;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
-			return -1;
+			return STATE_RUN_FAILED;
 
 		Stream_Read_UINT32(s, targetNetAddressesLength);
 		Stream_Read_UINT32(s, redirection->TargetNetAddressesCount);
@@ -417,14 +417,14 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		redirection->TargetNetAddresses = (char**)calloc(count, sizeof(char*));
 
 		if (!redirection->TargetNetAddresses)
-			return FALSE;
+			return STATE_RUN_FAILED;
 
 		WLog_DBG(TAG, "TargetNetAddressesCount: %" PRIu32 "", redirection->TargetNetAddressesCount);
 
 		for (i = 0; i < count; i++)
 		{
 			if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddresses[i]), 80))
-				return FALSE;
+				return STATE_RUN_FAILED;
 
 			WLog_DBG(TAG, "TargetNetAddresses[%" PRIuz "]: %s", i,
 			         redirection->TargetNetAddresses[i]);
@@ -438,21 +438,21 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	}
 
 	if (redirection->flags & LB_NOREDIRECT)
-		return 0;
+		return STATE_RUN_SUCCESS;
 
-	return 1;
+	return STATE_RUN_REDIRECT;
 }
 
-int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)
+state_run_t rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)
 {
-	int status = 0;
+	state_run_t status = STATE_RUN_SUCCESS;
 
 	if (!Stream_SafeSeek(s, 2)) /* pad2Octets (2 bytes) */
-		return -1;
+		return STATE_RUN_FAILED;
 
 	status = rdp_recv_server_redirection_pdu(rdp, s);
 
-	if (status < 0)
+	if (state_run_failed(status))
 		return status;
 
 	if (Stream_GetRemainingLength(s) >= 1)

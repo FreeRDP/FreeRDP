@@ -72,12 +72,12 @@ static BOOL multitransport_compare(const rdpMultitransport* srv, const rdpMultit
 	return TRUE;
 }
 
-int multitransport_client_recv_request(rdpMultitransport* multitransport, wStream* s)
+state_run_t multitransport_client_recv_request(rdpMultitransport* multitransport, wStream* s)
 {
 	WINPR_ASSERT(multitransport);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
-		return -1;
+		return STATE_RUN_FAILED;
 
 	Stream_Read_UINT32(s, multitransport->requestId);         /* requestId (4 bytes) */
 	Stream_Read_UINT16(s, multitransport->requestedProtocol); /* requestedProtocol (2 bytes) */
@@ -85,7 +85,7 @@ int multitransport_client_recv_request(rdpMultitransport* multitransport, wStrea
 	Stream_Read(s, multitransport->securityCookie,
 	            sizeof(multitransport->securityCookie)); /* securityCookie (16 bytes) */
 
-	return 0;
+	return STATE_RUN_SUCCESS;
 }
 
 BOOL multitransport_server_send_request(rdpMultitransport* multitransport)

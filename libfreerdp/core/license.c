@@ -336,8 +336,8 @@ static BOOL license_write_server_upgrade_license(const rdpLicense* license, wStr
 static BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
                                       BYTE* signature);
 static BOOL license_read_license_info(rdpLicense* license, wStream* s);
-static int license_client_recv(rdpLicense* license, wStream* s);
-static int license_server_recv(rdpLicense* license, wStream* s);
+static state_run_t license_client_recv(rdpLicense* license, wStream* s);
+static state_run_t license_server_recv(rdpLicense* license, wStream* s);
 
 #define PLATFORMID (CLIENT_OS_ID_WINNT_POST_52 | CLIENT_IMAGE_ID_MICROSOFT)
 
@@ -422,7 +422,7 @@ static BOOL license_ensure_state(rdpLicense* license, LICENSE_STATE state, UINT3
 	return TRUE;
 }
 
-int license_recv(rdpLicense* license, wStream* s)
+state_run_t license_recv(rdpLicense* license, wStream* s)
 {
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->rdp);
@@ -837,7 +837,7 @@ int license_client_recv(rdpLicense* license, wStream* s)
 	WINPR_ASSERT(license);
 
 	if (!license_read_preamble(s, &bMsgType, &flags, &wMsgSize)) /* preamble (4 bytes) */
-		return -1;
+		return STATE_RUN_FAILED;
 
 	DEBUG_LICENSE("Receiving %s Packet", license_request_type_string(bMsgType));
 
@@ -849,55 +849,55 @@ int license_client_recv(rdpLicense* license, wStream* s)
 				license_set_state(license, LICENSE_STATE_CONFIGURED);
 
 			if (!license_ensure_state(license, LICENSE_STATE_CONFIGURED, bMsgType))
-				return -1;
+				return STATE_RUN_FAILED;
 
 			if (!license_read_license_request_packet(license, s))
-				return -1;
+				return STATE_RUN_FAILED;
 
 			if (!license_answer_license_request(license))
-				return -1;
+				return STATE_RUN_FAILED;
 
 			license_set_state(license, LICENSE_STATE_NEW_REQUEST);
 			break;
 
 		case PLATFORM_CHALLENGE:
 			if (!license_ensure_state(license, LICENSE_STATE_NEW_REQUEST, bMsgType))
-				return -1;
+				return STATE_RUN_FAILED;
 
 			if (!license_read_platform_challenge_packet(license, s))
-				return -1;
+				return STATE_RUN_FAILED;
 
 			if (!license_send_platform_challenge_response(license))
-				return -1;
+				return STATE_RUN_FAILED;
 			license_set_state(license, LICENSE_STATE_PLATFORM_CHALLENGE_RESPONSE);
 			break;
 
 		case NEW_LICENSE:
 		case UPGRADE_LICENSE:
 			if (!license_ensure_state(license, LICENSE_STATE_PLATFORM_CHALLENGE_RESPONSE, bMsgType))
-				return -1;
+				return STATE_RUN_FAILED;
 			if (!license_read_new_or_upgrade_license_packet(license, s))
-				return -1;
+				return STATE_RUN_FAILED;
 			break;
 
 		case ERROR_ALERT:
 			if (!license_read_error_alert_packet(license, s))
-				return -1;
+				return STATE_RUN_FAILED;
 			break;
 
 		default:
 			WLog_ERR(TAG, "invalid bMsgType:%" PRIu8 "", bMsgType);
-			return -1;
+			return STATE_RUN_FAILED;
 	}
 
 	if (!tpkt_ensure_stream_consumed(s, length))
-		return -1;
-	return 0;
+		return STATE_RUN_FAILED;
+	return STATE_RUN_SUCCESS;
 }
 
-int license_server_recv(rdpLicense* license, wStream* s)
+state_run_t license_server_recv(rdpLicense* license, wStream* s)
 {
-	int rc = -1;
+	state_run_t rc = STATE_RUN_FAILED;
 	BYTE flags;
 	BYTE bMsgType;
 	UINT16 wMsgSize;
@@ -961,7 +961,7 @@ int license_server_recv(rdpLicense* license, wStream* s)
 				license->type = LICENSE_TYPE_ISSUED;
 				license_set_state(license, LICENSE_STATE_COMPLETED);
 
-				rc = 2; /* License issued, switch state */
+				rc = STATE_RUN_CONTINUE; /* License issued, switch state */
 			}
 			break;
 
@@ -978,11 +978,11 @@ int license_server_recv(rdpLicense* license, wStream* s)
 	if (!tpkt_ensure_stream_consumed(s, length))
 		goto fail;
 
-	if (rc < 0)
-		rc = 0;
+	if (!state_run_success(rc))
+		rc = STATE_RUN_SUCCESS;
 
 fail:
-	if (rc < 0)
+	if (state_run_failed(rc))
 	{
 		if (flags & EXTENDED_ERROR_MSG_SUPPORTED)
 			license_send_error_alert(license, ERR_INVALID_CLIENT, ST_TOTAL_ABORT, NULL);

@@ -4505,7 +4505,8 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		 * We can receive a Save Session Info Data PDU containing a LogonErrorInfo
 		 * structure at this point from the server to indicate a connection error.
 		 */
-		if (rdp_recv_data_pdu(rdp, s) < 0)
+		state_run_t rc = rdp_recv_data_pdu(rdp, s);
+		if (state_run_failed(rc))
 			return FALSE;
 
 		return FALSE;

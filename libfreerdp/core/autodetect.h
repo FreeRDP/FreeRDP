@@ -30,6 +30,8 @@
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>
 
+#include "state.h"
+
 typedef enum
 {
 	AUTODETECT_STATE_INITIAL,
@@ -41,8 +43,8 @@ typedef enum
 
 FREERDP_LOCAL rdpAutoDetect* autodetect_new(rdpContext* context);
 FREERDP_LOCAL void autodetect_free(rdpAutoDetect* autodetect);
-FREERDP_LOCAL int autodetect_recv_request_packet(rdpAutoDetect* autodetect, wStream* s);
-FREERDP_LOCAL int autodetect_recv_response_packet(rdpAutoDetect* autodetect, wStream* s);
+FREERDP_LOCAL state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, wStream* s);
+FREERDP_LOCAL state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, wStream* s);
 
 FREERDP_LOCAL AUTODETECT_STATE autodetect_get_state(rdpAutoDetect* autodetect);
 

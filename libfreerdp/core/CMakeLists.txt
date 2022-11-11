@@ -48,6 +48,8 @@ set(${MODULE_PREFIX}_GATEWAY_SRCS
 	${${MODULE_PREFIX}_GATEWAY_DIR}/ncacn_http.h)
 
 set(${MODULE_PREFIX}_SRCS
+    state.h
+    state.c
 	utils.c
 	utils.h
 	streamdump.c

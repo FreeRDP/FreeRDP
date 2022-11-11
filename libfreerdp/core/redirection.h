@@ -31,7 +31,7 @@ typedef struct rdp_redirection rdpRedirection;
 #include <winpr/wlog.h>
 #include <winpr/stream.h>
 
-FREERDP_LOCAL int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL state_run_t rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
 
 FREERDP_LOCAL int rdp_redirection_apply_settings(rdpRdp* rdp);
 
