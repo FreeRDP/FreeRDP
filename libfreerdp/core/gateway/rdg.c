@@ -1771,9 +1771,18 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			return FALSE;
 
 		response = http_response_recv(tls, TRUE);
-
+		/* MS RD Gateway seems to just terminate the tls connection without
+		 * sending an answer if it is not happy with the http request */
 		if (!response)
+		{
+			WLog_INFO(TAG, "RD Gateway HTTP transport broken.");
+			http_context_enable_websocket_upgrade(rdg->http, FALSE);
+			if (rpcFallback)
+				*rpcFallback = TRUE;
+			credssp_auth_free(rdg->auth);
+			rdg->auth = NULL;
 			return FALSE;
+		}
 
 		StatusCode = http_response_get_status_code(response);
 
@@ -1788,6 +1797,8 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 					*rpcFallback = TRUE;
 
 				http_response_free(response);
+				credssp_auth_free(rdg->auth);
+				rdg->auth = NULL;
 				return FALSE;
 			}
 			default:
@@ -1811,7 +1822,15 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 
 				response = http_response_recv(tls, TRUE);
 				if (!response)
+				{
+					WLog_INFO(TAG, "RD Gateway HTTP transport broken.");
+					http_context_enable_websocket_upgrade(rdg->http, FALSE);
+					if (rpcFallback)
+						*rpcFallback = TRUE;
+					credssp_auth_free(rdg->auth);
+					rdg->auth = NULL;
 					return FALSE;
+				}
 			}
 		}
 		credssp_auth_free(rdg->auth);
@@ -1828,7 +1847,13 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 		response = http_response_recv(tls, TRUE);
 
 		if (!response)
+		{
+			WLog_INFO(TAG, "RD Gateway HTTP transport broken.");
+			http_context_enable_websocket_upgrade(rdg->http, FALSE);
+			if (rpcFallback)
+				*rpcFallback = TRUE;
 			return FALSE;
+		}
 	}
 
 	statusCode = http_response_get_status_code(response);
