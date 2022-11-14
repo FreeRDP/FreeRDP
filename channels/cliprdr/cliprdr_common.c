@@ -475,8 +475,6 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 			{
 				if (wszFormatName[0])
 				{
-					CLIPRDR_FORMAT* format = &formats[index];
-
 					format->formatName = ConvertWCharNToUtf8Alloc(wszFormatName, 16, NULL);
 					if (!format->formatName)
 						goto error_out;

@@ -691,7 +691,6 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 	}
 	else
 	{
-		TSMF_STREAM* stream = sample->stream;
 		UINT64 ack_anticipation_time = get_current_time();
 		BOOL buffer_filled = TRUE;
 
