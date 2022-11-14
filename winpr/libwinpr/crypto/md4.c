@@ -72,7 +72,7 @@
  * their own translation unit avoids the problem.
  */
 #if defined(__i386__) || defined(__x86_64__) || defined(__vax__)
-#define SET(n) (*(winpr_MD4_u32plus*)&ptr[(n)*4])
+#define SET(n) (*(const winpr_MD4_u32plus*)&ptr[(n)*4])
 #define GET(n) SET(n)
 #else
 #define SET(n)                                                                                    \
