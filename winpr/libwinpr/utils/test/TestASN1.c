@@ -130,7 +130,7 @@ int TestASN1Read(int argc, char* argv[])
 }
 
 static const BYTE oid1_val[] = { 1 };
-static const WinPrAsn1_OID oid1 = { sizeof(oid1_val), (BYTE*)oid1_val };
+static const WinPrAsn1_OID oid1 = { sizeof(oid1_val), (const BYTE*)oid1_val };
 static BYTE oid2_val[] = { 2, 2 };
 static WinPrAsn1_OID oid2 = { sizeof(oid2_val), oid2_val };
 static BYTE oid3_val[] = { 3, 3, 3 };
