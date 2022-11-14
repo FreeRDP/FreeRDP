@@ -19,4 +19,4 @@ option(WITH_OPENSLES "Enable sound and microphone redirection using OpenSLES" ON
 
 set(ANDROID_APP_TARGET_SDK 21 CACHE STRING "Application target android SDK")
 set(ANDROID_APP_MIN_SDK 14 CACHE STRING "Application minimum android SDK requirement")
-option(WITH_MEDIACODEC "Use MediaCodec API" ON)
+option(WITH_MEDIACODEC "[experimental] Use MediaCodec API (currently no fallback if no device support)" OFF)
