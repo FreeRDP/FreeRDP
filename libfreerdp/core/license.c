@@ -2693,7 +2693,7 @@ BOOL license_server_configure(rdpLicense* license)
 	UINT32 ProductVersion, issuerCount;
 	const char* CompanyName;
 	const char* ProductName;
-	const char** issuers;
+	const char* const* issuers;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->rdp);
@@ -2705,8 +2705,8 @@ BOOL license_server_configure(rdpLicense* license)
 	ProductName = freerdp_settings_get_string(settings, FreeRDP_ServerLicenseProductName);
 	ProductVersion = freerdp_settings_get_uint32(settings, FreeRDP_ServerLicenseProductVersion);
 	issuerCount = freerdp_settings_get_uint32(settings, FreeRDP_ServerLicenseProductIssuersCount);
-	issuers =
-	    (const char**)freerdp_settings_get_pointer(settings, FreeRDP_ServerLicenseProductIssuers);
+	issuers = (const char* const*)freerdp_settings_get_pointer(settings,
+	                                                           FreeRDP_ServerLicenseProductIssuers);
 
 	WINPR_ASSERT(CompanyName);
 	WINPR_ASSERT(ProductName);

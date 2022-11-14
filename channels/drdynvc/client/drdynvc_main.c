@@ -256,13 +256,13 @@ static BOOL channelIdMatch(const void* k1, const void* k2)
 {
 	WINPR_ASSERT(k1);
 	WINPR_ASSERT(k2);
-	return *((UINT32*)k1) == *((UINT32*)k2);
+	return *((const UINT32*)k1) == *((const UINT32*)k2);
 }
 
 static UINT32 channelIdHash(const void* id)
 {
 	WINPR_ASSERT(id);
-	return *((UINT32*)id);
+	return *((const UINT32*)id);
 }
 
 static void channelByIdCleanerFn(void* value)
