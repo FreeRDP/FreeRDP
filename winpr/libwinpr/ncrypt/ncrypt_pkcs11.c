@@ -1259,7 +1259,8 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 	while (*modulePaths)
 	{
 		HANDLE library = LoadLibrary(*modulePaths);
-		CK_RV (*c_get_function_list)(CK_FUNCTION_LIST_PTR_PTR);
+		typedef CK_RV (*c_get_function_list_t)(CK_FUNCTION_LIST_PTR_PTR);
+		c_get_function_list_t c_get_function_list;
 
 		WLog_DBG(TAG, "Trying pkcs11-helper module '%s'", *modulePaths);
 		if (!library)
@@ -1268,7 +1269,7 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 			goto out_load_library;
 		}
 
-		c_get_function_list = GetProcAddress(library, "C_GetFunctionList");
+		c_get_function_list = (c_get_function_list_t)GetProcAddress(library, "C_GetFunctionList");
 		if (!c_get_function_list)
 		{
 			status = NTE_PROV_TYPE_ENTRY_BAD;
