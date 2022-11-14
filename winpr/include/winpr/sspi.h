@@ -1424,17 +1424,17 @@ extern "C"
 	WINPR_API int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity,
 	                                                      const char* user, const char* domain,
 	                                                      LPWSTR password, ULONG passwordLength);
-	WINPR_API UINT32 sspi_GetAuthIdentityVersion(void* identity);
-	WINPR_API UINT32 sspi_GetAuthIdentityFlags(void* identity);
-	WINPR_API BOOL sspi_GetAuthIdentityUserDomainW(void* identity, WCHAR** pUser,
-	                                               UINT32* pUserLength, WCHAR** pDomain,
+	WINPR_API UINT32 sspi_GetAuthIdentityVersion(const void* identity);
+	WINPR_API UINT32 sspi_GetAuthIdentityFlags(const void* identity);
+	WINPR_API BOOL sspi_GetAuthIdentityUserDomainW(const void* identity, const WCHAR** pUser,
+	                                               UINT32* pUserLength, const WCHAR** pDomain,
 	                                               UINT32* pDomainLength);
-	WINPR_API BOOL sspi_GetAuthIdentityUserDomainA(void* identity, char** pUser,
-	                                               UINT32* pUserLength, char** pDomain,
+	WINPR_API BOOL sspi_GetAuthIdentityUserDomainA(const void* identity, const char** pUser,
+	                                               UINT32* pUserLength, const char** pDomain,
 	                                               UINT32* pDomainLength);
-	WINPR_API BOOL sspi_GetAuthIdentityPasswordW(void* identity, WCHAR** pPassword,
+	WINPR_API BOOL sspi_GetAuthIdentityPasswordW(const void* identity, const WCHAR** pPassword,
 	                                             UINT32* pPasswordLength);
-	WINPR_API BOOL sspi_GetAuthIdentityPasswordA(void* identity, char** pPassword,
+	WINPR_API BOOL sspi_GetAuthIdentityPasswordA(const void* identity, const char** pPassword,
 	                                             UINT32* pPasswordLength);
 	WINPR_API BOOL sspi_CopyAuthIdentityFieldsA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity,
 	                                            char** pUser, char** pDomain, char** pPassword);
