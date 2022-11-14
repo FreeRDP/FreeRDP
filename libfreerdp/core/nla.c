@@ -1162,7 +1162,6 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 			                   { 3, FreeRDP_ContainerName },
 			                   { 4, FreeRDP_CspName } };
 		WinPrAsn1_OctetString octet_string = { 0 };
-		BOOL ret;
 
 		/* TSSmartCardCreds */
 		if (!WinPrAsn1EncSeqContainer(enc))
@@ -1173,9 +1172,9 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 		octet_string.data =
 		    (BYTE*)freerdp_settings_get_string_as_utf16(settings, FreeRDP_Password, &s);
 		octet_string.len = s * sizeof(WCHAR);
-		ret = WinPrAsn1EncContextualOctetString(enc, 0, &octet_string) > 0;
+		const BOOL res = WinPrAsn1EncContextualOctetString(enc, 0, &octet_string) > 0;
 		free(octet_string.data);
-		if (!ret)
+		if (!res)
 			goto out;
 
 		/* cspData [1] SEQUENCE */
@@ -1196,10 +1195,10 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 			octet_string.len = len * sizeof(WCHAR);
 			if (octet_string.len)
 			{
-				ret = WinPrAsn1EncContextualOctetString(enc, cspData_fields[i].tag, &octet_string) >
+				const BOOL res2 = WinPrAsn1EncContextualOctetString(enc, cspData_fields[i].tag, &octet_string) >
 				      0;
 				free(octet_string.data);
-				if (!ret)
+				if (!res2)
 					goto out;
 			}
 		}
