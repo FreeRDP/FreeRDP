@@ -1302,8 +1302,8 @@ size_t WinPrAsn1DecReadSet(WinPrAsn1Decoder* dec, WinPrAsn1Decoder* target)
 	return ret;
 }
 
-size_t readContextualTag(WinPrAsn1Decoder* dec, wStream* s, WinPrAsn1_tagId* tagId,
-                         WinPrAsn1Decoder* ctxtDec)
+static size_t readContextualTag(WinPrAsn1Decoder* dec, wStream* s, WinPrAsn1_tagId* tagId,
+                                WinPrAsn1Decoder* ctxtDec)
 {
 	size_t ret;
 	WinPrAsn1_tag ftag;
