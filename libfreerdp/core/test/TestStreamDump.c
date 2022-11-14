@@ -38,7 +38,8 @@ static BOOL test_entry_read_write(void)
 	sr = Stream_New(NULL, 1024);
 	if (!sr || !sw)
 	{
-		fprintf(stderr, "[%s] Could not create iostreams sw=%p, sr=%p\n", __FUNCTION__, sw, sr);
+		fprintf(stderr, "[%s] Could not create iostreams sw=%p, sr=%p\n", __FUNCTION__, (void*)sw,
+		        (void*)sr);
 		goto fail;
 	}
 

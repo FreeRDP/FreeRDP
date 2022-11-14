@@ -82,7 +82,8 @@ int TestString(int argc, char* argv[])
 
 	if (p != NULL)
 	{
-		printf("_wcschr error: return value mismatch: Actual: %p, Expected: NULL\n", p);
+		printf("_wcschr error: return value mismatch: Actual: %p, Expected: NULL\n",
+		       (const void*)p);
 		return -1;
 	}
 
