@@ -485,7 +485,7 @@ int TestClientRdpFile(int argc, char* argv[])
 	puValue = (const UINT32*)freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, 0);
 	if (!puValue)
 	{
-		printf("FreeRDP_MonitorIds has invalid value %p", puValue);
+		printf("FreeRDP_MonitorIds has invalid value %p", (const void*)puValue);
 		goto fail;
 	}
 	if ((puValue[0] != 3) || (puValue[1] != 2) || (puValue[2] != 42) || (puValue[3] != 23))
