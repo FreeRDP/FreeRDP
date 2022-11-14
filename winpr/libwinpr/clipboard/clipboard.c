@@ -687,7 +687,7 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 			if (is_dos_drive(&uri[prefixLen + 1], uri_len - prefixLen - 1))
 			{
 				// Dos and Windows file URI
-				localName = (char*)(uri + prefixLen + 1);
+				localName = (const char*)(uri + prefixLen + 1);
 				localLen = uri_len - prefixLen - 1;
 			}
 			else
