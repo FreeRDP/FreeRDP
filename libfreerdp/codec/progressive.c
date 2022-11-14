@@ -1677,7 +1677,7 @@ static void CALLBACK progressive_process_tiles_tile_work_callback(PTP_CALLBACK_I
 			                                    param->context);
 			break;
 		default:
-			WLog_Print(param->progressive->log, WLOG_ERROR, "Invalid block type %04 (%s)" PRIx16,
+			WLog_Print(param->progressive->log, WLOG_ERROR, "Invalid block type %04" PRIx16 " (%s)",
 			           param->tile->blockType,
 			           progressive_get_block_type_string(param->tile->blockType));
 			break;
