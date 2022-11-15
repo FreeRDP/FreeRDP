@@ -35,6 +35,10 @@
 #include "../log.h"
 #define TAG WINPR_TAG("crt")
 
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
+
 BOOL winpr_str_append(const char* what, char* buffer, size_t size, const char* separator)
 {
 	const size_t used = strnlen(buffer, size);

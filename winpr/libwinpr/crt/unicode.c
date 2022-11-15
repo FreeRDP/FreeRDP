@@ -351,6 +351,205 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 
 void ByteSwapUnicode(WCHAR* wstr, size_t length)
 {
+	WINPR_ASSERT(wstr || (length == 0));
+
 	for (size_t x = 0; x < length; x++)
 		wstr[x] = _byteswap_ushort(wstr[x]);
+}
+
+SSIZE_T ConvertWCharToUtf8(const WCHAR* wstr, char* str, size_t len)
+{
+	if (!wstr)
+		return 0;
+
+	const int rc =
+	    WideCharToMultiByte(CP_UTF8, 0, wstr, -1, str, (int)MIN(INT32_MAX, len), NULL, NULL);
+	if (rc <= 0)
+		return rc;
+	else if (rc == len)
+	{
+		if (str && (str[rc - 1] != '\0'))
+			return rc;
+	}
+	return rc - 1;
+}
+
+SSIZE_T ConvertWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t len)
+{
+	BOOL isNullTerminated = FALSE;
+	if (wlen == 0)
+		return 0;
+
+	WINPR_ASSERT(wstr);
+	size_t iwlen = _wcsnlen(wstr, wlen);
+
+	if (wlen > INT32_MAX)
+		return -1;
+
+	if (iwlen < wlen)
+	{
+		isNullTerminated = TRUE;
+		iwlen++;
+	}
+	const int rc = WideCharToMultiByte(CP_UTF8, 0, wstr, (int)iwlen, str, (int)MIN(INT32_MAX, len),
+	                                   NULL, NULL);
+	if ((rc <= 0) || ((len > 0) && (rc > len)))
+		return -1;
+	else if (!isNullTerminated)
+	{
+		if (str && (rc < len))
+			str[rc] = '\0';
+		return rc;
+	}
+	else if (rc == len)
+	{
+		if (str && (str[rc - 1] != '\0'))
+			return rc;
+	}
+	return rc - 1;
+}
+
+SSIZE_T ConvertUtf8ToWChar(const char* str, WCHAR* wstr, size_t wlen)
+{
+	if (!str)
+		return 0;
+
+	const int iwlen = MIN(INT32_MAX, wlen);
+	const int rc = MultiByteToWideChar(CP_UTF8, 0, str, -1, wstr, iwlen);
+	if (rc <= 0)
+		return rc;
+	else if (iwlen == rc)
+	{
+		if (wstr && (wstr[rc - 1] != '\0'))
+			return rc;
+	}
+	return rc - 1;
+}
+
+SSIZE_T ConvertUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t wlen)
+{
+	size_t ilen = strnlen(str, len);
+	BOOL isNullTerminated = FALSE;
+	if (len == 0)
+		return 0;
+
+	WINPR_ASSERT(str);
+
+	if (len > INT32_MAX)
+		return -1;
+	if (ilen < len)
+	{
+		isNullTerminated = TRUE;
+		ilen++;
+	}
+
+	const int iwlen = MIN(INT32_MAX, wlen);
+	const int rc = MultiByteToWideChar(CP_UTF8, 0, str, (int)ilen, wstr, (int)iwlen);
+	if ((rc <= 0) || ((wlen > 0) && (rc > iwlen)))
+		return -1;
+	if (!isNullTerminated)
+	{
+		if (wstr && (rc < iwlen))
+			wstr[rc] = '\0';
+		return rc;
+	}
+	else if (rc == iwlen)
+	{
+		if (wstr && (wstr[rc - 1] != '\0'))
+			return rc;
+	}
+	return rc - 1;
+}
+
+char* ConvertWCharToUtf8Alloc(const WCHAR* wstr, size_t* pUtfCharLength)
+{
+	char* tmp = NULL;
+	const SSIZE_T rc = ConvertWCharToUtf8(wstr, NULL, 0);
+	if (pUtfCharLength)
+		*pUtfCharLength = 0;
+	if (rc <= 0)
+		return NULL;
+	tmp = calloc((size_t)rc + 3ull, sizeof(char));
+	if (!tmp)
+		return NULL;
+	const SSIZE_T rc2 = ConvertWCharToUtf8(wstr, tmp, (size_t)rc + 2ull);
+	if (rc2 <= 0)
+	{
+		free(tmp);
+		return NULL;
+	}
+	WINPR_ASSERT(rc == rc2);
+	if (pUtfCharLength)
+		*pUtfCharLength = (size_t)rc2;
+	return tmp;
+}
+
+char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pUtfCharLength)
+{
+	char* tmp = NULL;
+	const SSIZE_T rc = ConvertWCharNToUtf8(wstr, wlen, NULL, 0);
+
+	if (pUtfCharLength)
+		*pUtfCharLength = 0;
+	if (rc <= 0)
+		return NULL;
+	tmp = calloc((size_t)rc + 3ull, sizeof(char));
+	if (!tmp)
+		return NULL;
+	const SSIZE_T rc2 = ConvertWCharNToUtf8(wstr, wlen, tmp, (size_t)rc + 2ull);
+	if (rc2 <= 0)
+	{
+		free(tmp);
+		return NULL;
+	}
+	WINPR_ASSERT(rc == rc2);
+	if (pUtfCharLength)
+		*pUtfCharLength = (size_t)rc2;
+	return tmp;
+}
+
+WCHAR* ConvertUtf8ToWCharAlloc(const char* str, size_t* pSize)
+{
+	WCHAR* tmp = NULL;
+	const SSIZE_T rc = ConvertUtf8ToWChar(str, NULL, 0);
+	if (pSize)
+		*pSize = 0;
+	if (rc <= 0)
+		return NULL;
+	tmp = calloc((size_t)rc + 3ull, sizeof(WCHAR));
+	if (!tmp)
+		return NULL;
+	const SSIZE_T rc2 = ConvertUtf8ToWChar(str, tmp, (size_t)rc + 2ull);
+	if (rc2 <= 0)
+	{
+		free(tmp);
+		return NULL;
+	}
+	WINPR_ASSERT(rc == rc2);
+	if (pSize)
+		*pSize = (size_t)rc2;
+	return tmp;
+}
+
+WCHAR* ConvertUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize)
+{
+	WCHAR* tmp = NULL;
+	const SSIZE_T rc = ConvertUtf8NToWChar(str, len, NULL, 0);
+	if (pSize)
+		*pSize = 0;
+	if (rc <= 0)
+		return NULL;
+	tmp = calloc((size_t)rc + 3ull, sizeof(WCHAR));
+	if (!tmp)
+		return NULL;
+	const SSIZE_T rc2 = ConvertUtf8NToWChar(str, len, tmp, (size_t)rc + 2ull);
+	if (rc2 <= 0)
+	{
+		free(tmp);
+		return NULL;
+	}
+	WINPR_ASSERT(rc == rc2);
+	if (pSize)
+		*pSize = (size_t)rc2;
+	return tmp;
 }
