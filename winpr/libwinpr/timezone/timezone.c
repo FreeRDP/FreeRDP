@@ -168,14 +168,7 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 }
 
 #if defined(ANDROID)
-#include <jni.h>
-static JavaVM* jniVm = NULL;
-
-JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
-{
-	jniVm = vm;
-	return JNI_VERSION_1_6;
-}
+#include "../utils/android.h"
 
 static char* winpr_get_android_timezone_identifier(void)
 {
