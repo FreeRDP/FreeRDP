@@ -57,8 +57,14 @@ void* winpr_execinfo_backtrace(DWORD size)
 		return NULL;
 	}
 
+	const int rc = backtrace(data->buffer, size);
+	if (rc < 0)
+	{
+		free(data);
+		return NULL;
+	}
 	data->max = size;
-	data->used = backtrace(data->buffer, size);
+	data->used = (size_t)rc;
 	return data;
 }
 
