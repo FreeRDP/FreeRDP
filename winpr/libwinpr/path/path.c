@@ -853,7 +853,7 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 	}
 	else if (dwFlags == PATH_STYLE_NATIVE)
 	{
-		if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR)
+#if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR)
 		{
 			/* Unix-style to Windows-style */
 
@@ -863,7 +863,7 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 					pszPath[index] = PATH_BACKSLASH_CHR;
 			}
 		}
-		else if (PATH_SEPARATOR_CHR == PATH_SLASH_CHR)
+#elif (PATH_SEPARATOR_CHR == PATH_SLASH_CHR)
 		{
 			/* Windows-style to Unix-style */
 
@@ -873,11 +873,12 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 					pszPath[index] = PATH_SLASH_CHR;
 			}
 		}
-		else
+#else
 		{
 			/* Unexpected error */
 			return E_FAIL;
 		}
+#endif
 	}
 	else
 	{
