@@ -2332,6 +2332,13 @@ void rdp_free(rdpRdp* rdp)
 	}
 }
 
+BOOL rdp_io_callback_set_event(rdpRdp* rdp, BOOL set)
+{
+	if (!rdp)
+		return FALSE;
+	return transport_io_callback_set_event(rdp->transport, set);
+}
+
 const rdpTransportIo* rdp_get_io_callbacks(rdpRdp* rdp)
 {
 	if (!rdp)

@@ -393,8 +393,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	for (; now < dueDate; now = GetTickCount64())
 	{
-		HANDLE events[MAXIMUM_WAIT_OBJECTS];
-		DWORD status;
+		HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		DWORD status = 0;
 		DWORD nevents = freerdp_get_event_handles(rdp->context, events, ARRAYSIZE(events));
 		if (!nevents)
 		{

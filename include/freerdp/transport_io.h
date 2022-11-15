@@ -55,6 +55,8 @@ extern "C"
 	};
 	typedef struct rdp_transport_io rdpTransportIo;
 
+	FREERDP_API BOOL freerdp_io_callback_set_event(rdpContext* context, BOOL reset);
+
 	FREERDP_API const rdpTransportIo* freerdp_get_io_callbacks(rdpContext* context);
 	FREERDP_API BOOL freerdp_set_io_callbacks(rdpContext* context,
 	                                          const rdpTransportIo* io_callbacks);
