@@ -526,7 +526,8 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 #elif defined(_WIN32)
 	return (SHCreateDirectoryExW(NULL, path, lpAttributes) == ERROR_SUCCESS);
 #else
-	const WCHAR delim = PathGetSeparatorW(PATH_STYLE_NATIVE);
+	const WCHAR wdelim = PathGetSeparatorW(PATH_STYLE_NATIVE);
+	const char delim = PathGetSeparatorA(PATH_STYLE_NATIVE);
 	char* dup;
 	char* p;
 	BOOL result = TRUE;
@@ -538,7 +539,7 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 
 #else
 
-	if (!path || *path != delim)
+	if (!path || *path != wdelim)
 		return FALSE;
 
 #endif
@@ -548,7 +549,7 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 		return FALSE;
 
 #ifdef __OS2__
-	p = (strlen(dup) > 3) && (dup[1] == L':') && (dup[2] == delim)) ? &dup[3] : dup;
+	p = (strlen(dup) > 3) && (dup[1] == ':') && (dup[2] == delim)) ? &dup[3] : dup;
 
 	while (p)
 #else
