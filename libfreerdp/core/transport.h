@@ -87,6 +87,8 @@ FREERDP_LOCAL int transport_drain_output_buffer(rdpTransport* transport);
 FREERDP_LOCAL wStream* transport_receive_pool_take(rdpTransport* transport);
 FREERDP_LOCAL int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);
 
+FREERDP_LOCAL BOOL transport_io_callback_set_event(rdpTransport* transport, BOOL set);
+
 FREERDP_LOCAL const rdpTransportIo* transport_get_io_callbacks(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_set_io_callbacks(rdpTransport* transport,
                                               const rdpTransportIo* io_callbacks);

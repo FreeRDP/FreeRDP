@@ -1172,6 +1172,12 @@ const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length)
 	return (const char*)nego_get_routing_token(context->rdp->nego, length);
 }
 
+BOOL freerdp_io_callback_set_event(rdpContext* context, BOOL set)
+{
+	WINPR_ASSERT(context);
+	return rdp_io_callback_set_event(context->rdp, set);
+}
+
 const rdpTransportIo* freerdp_get_io_callbacks(rdpContext* context)
 {
 	WINPR_ASSERT(context);
