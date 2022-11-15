@@ -355,8 +355,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 		return FALSE;
 	}
 
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_NLA);
-	return TRUE;
+	return rdp_client_transition_to_state(rdp, CONNECTION_STATE_NLA);
 }
 
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, DWORD timeout)
