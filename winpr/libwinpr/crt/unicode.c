@@ -3,6 +3,8 @@
  * Unicode Conversion (CRT)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2022 Armin Novak <anovak@thincast.com>
+ * Copyright 2022 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +20,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/assert.h>
 
 #include <errno.h>
 #include <wctype.h>
@@ -26,14 +29,13 @@
 #include <winpr/error.h>
 #include <winpr/print.h>
 
+#ifndef MIN
+#define MIN(a, b) (a) < (b) ? (a) : (b)
+#endif
+
 #ifndef _WIN32
 
-#if defined(WITH_ICU)
-#include <unicode/ucnv.h>
-#include <unicode/ustring.h>
-#else
-#include "utf.h"
-#endif
+#include "unicode.h"
 
 #include "../log.h"
 #define TAG WINPR_TAG("unicode")
@@ -152,87 +154,8 @@
 int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte,
                         LPWSTR lpWideCharStr, int cchWideChar)
 {
-	LPWSTR targetStart;
-#if !defined(WITH_ICU)
-	const BYTE* sourceStart;
-	int length;
-	ConversionResult result;
-#endif
-
-	/* If cbMultiByte is 0, the function fails */
-
-	if ((cbMultiByte == 0) || (cbMultiByte < -1))
-		return 0;
-
-	/* If cbMultiByte is -1, the string is null-terminated */
-
-	if (cbMultiByte == -1)
-	{
-		size_t len = strnlen((const char*)lpMultiByteStr, INT32_MAX);
-		if (len >= INT32_MAX)
-			return 0;
-		cbMultiByte = (int)len + 1;
-	}
-
-	/*
-	 * if cchWideChar is 0, the function returns the required buffer size
-	 * in characters for lpWideCharStr and makes no use of the output parameter itself.
-	 */
-#if defined(WITH_ICU)
-	{
-		UErrorCode error;
-		int32_t targetLength;
-		int32_t targetCapacity;
-
-		switch (CodePage)
-		{
-			case CP_ACP:
-			case CP_UTF8:
-				break;
-
-			default:
-				WLog_ERR(TAG, "Unsupported encoding %u", CodePage);
-				return 0;
-		}
-
-		targetStart = lpWideCharStr;
-		targetCapacity = cchWideChar;
-		error = U_ZERO_ERROR;
-
-		if (cchWideChar == 0)
-		{
-			u_strFromUTF8(NULL, 0, &targetLength, lpMultiByteStr, cbMultiByte, &error);
-			cchWideChar = targetLength;
-		}
-		else
-		{
-			u_strFromUTF8(targetStart, targetCapacity, &targetLength, lpMultiByteStr, cbMultiByte,
-			              &error);
-			cchWideChar = U_SUCCESS(error) ? targetLength : 0;
-		}
-	}
-#else
-
-	if (cchWideChar == 0)
-	{
-		sourceStart = (const BYTE*)lpMultiByteStr;
-		targetStart = (WCHAR*)NULL;
-		result = ConvertUTF8toUTF16(&sourceStart, &sourceStart[cbMultiByte], &targetStart, NULL,
-		                            strictConversion);
-		length = targetStart - ((WCHAR*)NULL);
-	}
-	else
-	{
-		sourceStart = (const BYTE*)lpMultiByteStr;
-		targetStart = lpWideCharStr;
-		result = ConvertUTF8toUTF16(&sourceStart, &sourceStart[cbMultiByte], &targetStart,
-		                            &targetStart[cchWideChar], strictConversion);
-		length = targetStart - ((WCHAR*)lpWideCharStr);
-	}
-
-	cchWideChar = (result == conversionOK) ? length : 0;
-#endif
-	return cchWideChar;
+	return int_MultiByteToWideChar(CodePage, dwFlags, lpMultiByteStr, cbMultiByte, lpWideCharStr,
+	                               cchWideChar);
 }
 
 /*
@@ -276,89 +199,8 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
                         LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
                         LPBOOL lpUsedDefaultChar)
 {
-#if !defined(WITH_ICU)
-	int length;
-	const WCHAR* sourceStart;
-	ConversionResult result;
-	BYTE* targetStart;
-#else
-	char* targetStart;
-#endif
-
-	/* If cchWideChar is 0, the function fails */
-
-	if ((cchWideChar == 0) || (cchWideChar < -1))
-		return 0;
-
-	/* If cchWideChar is -1, the string is null-terminated */
-
-	if (cchWideChar == -1)
-	{
-		size_t len = _wcslen(lpWideCharStr);
-		if (len >= INT32_MAX)
-			return 0;
-		cchWideChar = (int)len + 1;
-	}
-
-	/*
-	 * if cbMultiByte is 0, the function returns the required buffer size
-	 * in bytes for lpMultiByteStr and makes no use of the output parameter itself.
-	 */
-#if defined(WITH_ICU)
-	{
-		UErrorCode error;
-		int32_t targetLength;
-		int32_t targetCapacity;
-
-		switch (CodePage)
-		{
-			case CP_ACP:
-			case CP_UTF8:
-				break;
-
-			default:
-				WLog_ERR(TAG, "Unsupported encoding %u", CodePage);
-				return 0;
-		}
-
-		targetStart = lpMultiByteStr;
-		targetCapacity = cbMultiByte;
-		error = U_ZERO_ERROR;
-
-		if (cbMultiByte == 0)
-		{
-			u_strToUTF8(NULL, 0, &targetLength, lpWideCharStr, cchWideChar, &error);
-			cbMultiByte = targetLength;
-		}
-		else
-		{
-			u_strToUTF8(targetStart, targetCapacity, &targetLength, lpWideCharStr, cchWideChar,
-			            &error);
-			cbMultiByte = U_SUCCESS(error) ? targetLength : 0;
-		}
-	}
-#else
-
-	if (cbMultiByte == 0)
-	{
-		sourceStart = (const WCHAR*)lpWideCharStr;
-		targetStart = (BYTE*)NULL;
-		result = ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar], &targetStart, NULL,
-		                            strictConversion);
-		length = targetStart - ((BYTE*)NULL);
-	}
-	else
-	{
-		sourceStart = (const WCHAR*)lpWideCharStr;
-		targetStart = (BYTE*)lpMultiByteStr;
-		result = ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar], &targetStart,
-		                            &targetStart[cbMultiByte], strictConversion);
-		length = targetStart - ((BYTE*)lpMultiByteStr);
-	}
-
-	cbMultiByte = (result == conversionOK) ? length : 0;
-#endif
-	return cbMultiByte;
+	return int_WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar, lpMultiByteStr,
+	                               cbMultiByte, lpDefaultChar, lpUsedDefaultChar);
 }
 
 #endif
