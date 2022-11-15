@@ -78,7 +78,16 @@ public class LibFreeRDP
 		try
 		{
 			System.loadLibrary("freerdp-android");
+
+			/* Load dependent libraries too to trigger JNI_OnLoad calls */
 			String version = freerdp_get_jni_version();
+			String[] versions = version.split(".");
+			if (versions.length > 0)
+			{
+				System.loadLibrary("freerdp-client" + versions[0]);
+				System.loadLibrary("freerdp" + versions[0]);
+				System.loadLibrary("winpr" + versions[0]);
+			}
 			Pattern pattern = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+).*");
 			Matcher matcher = pattern.matcher(version);
 			if (!matcher.matches() || (matcher.groupCount() < 3))

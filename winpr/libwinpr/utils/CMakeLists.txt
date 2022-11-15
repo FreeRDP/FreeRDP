@@ -105,6 +105,7 @@ set(SRCS
 	ssl.c)
 
 if (ANDROID)
+	list(APPEND SRCS android.h android.c)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
     if (NOT HAVE_UNWIND_H)
         message("[backtrace] android NDK without unwind.h, falling back to corkscrew")
