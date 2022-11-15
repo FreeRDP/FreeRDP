@@ -243,7 +243,8 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 	settings->ServerMode = TRUE;
 	settings->FrameAcknowledge = 0;
 	settings->LocalConnection = client->local;
-	rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL);
+	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
+		return FALSE;
 
 	if (settings->PrivateKeyFile)
 	{
@@ -543,8 +544,9 @@ static state_run_t peer_recv_handle_auto_detect(freerdp_peer* client, wStream* s
 			{
 				if (autodetect_send_connecttime_rtt_measure_request(rdp->autodetect, 0x23))
 					ret = STATE_RUN_SUCCESS;
-				rdp_server_transition_to_state(rdp,
-				                               CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE);
+				if (!rdp_server_transition_to_state(
+				        rdp, CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE))
+					return STATE_RUN_FAILED;
 			}
 			break;
 			case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE:
@@ -555,11 +557,13 @@ static state_run_t peer_recv_handle_auto_detect(freerdp_peer* client, wStream* s
 					switch (autodetect_get_state(rdp->autodetect))
 					{
 						case AUTODETECT_STATE_COMPLETE:
-							rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
+							if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
+								return STATE_RUN_FAILED;
 							ret = STATE_RUN_CONTINUE; /* Rerun in next state */
 							break;
 						case AUTODETECT_STATE_RESPONSE:
-							rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
+							if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
+								return STATE_RUN_FAILED;
 							ret = STATE_RUN_CONTINUE; /* Rerun in next state */
 							break;
 						default:
@@ -575,7 +579,8 @@ static state_run_t peer_recv_handle_auto_detect(freerdp_peer* client, wStream* s
 	}
 	else
 	{
-		rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
+		if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
+			return STATE_RUN_FAILED;
 
 		ret = STATE_RUN_CONTINUE; /* Rerun in next state */
 	}
@@ -719,7 +724,9 @@ state_run_t rdp_peer_handle_state_demand_active(freerdp_peer* client)
 	}
 	else
 	{
-		rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT);
+		if (!rdp_server_transition_to_state(rdp,
+		                                    CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT))
+			return STATE_RUN_FAILED;
 		ret = STATE_RUN_CONTINUE;
 	}
 	return ret;
@@ -798,8 +805,8 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 	switch (rdp_get_state(rdp))
 	{
 		case CONNECTION_STATE_INITIAL:
-			rdp_server_transition_to_state(rdp, CONNECTION_STATE_NEGO);
-			ret = STATE_RUN_CONTINUE;
+			if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_NEGO))
+				ret = STATE_RUN_CONTINUE;
 			break;
 
 		case CONNECTION_STATE_NEGO:
@@ -828,8 +835,8 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 					IFCALLRET(client->Logon, client->authenticated, client, &client->identity,
 					          FALSE);
 				}
-				rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_REQUEST);
-				ret = STATE_RUN_SUCCESS;
+				if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_REQUEST))
+					ret = STATE_RUN_SUCCESS;
 			}
 			break;
 
@@ -903,9 +910,9 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			}
 			if (state_run_success(ret))
 			{
-				rdp_server_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE);
-
-				if (Stream_GetRemainingLength(s) > 0)
+				if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE))
+					ret = STATE_RUN_FAILED;
+				else if (Stream_GetRemainingLength(s) > 0)
 					ret = STATE_RUN_CONTINUE; /* Rerun function */
 			}
 			break;
@@ -920,9 +927,9 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			}
 			else
 			{
-				rdp_server_transition_to_state(rdp,
-				                               CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST);
-				ret = STATE_RUN_CONTINUE;
+				if (rdp_server_transition_to_state(
+				        rdp, CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST))
+					ret = STATE_RUN_CONTINUE;
 			}
 			break;
 
@@ -934,16 +941,19 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			}
 			else
 			{
-				rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
-				ret = STATE_RUN_CONTINUE;
+				if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
+					ret = STATE_RUN_CONTINUE;
 			}
 			break;
 
 		case CONNECTION_STATE_LICENSING:
 			ret = peer_recv_handle_licensing(client, s);
 			if (ret == STATE_RUN_CONTINUE)
-				rdp_server_transition_to_state(
-				    rdp, CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_REQUEST);
+			{
+				if (!rdp_server_transition_to_state(
+				        rdp, CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_REQUEST))
+					ret = STATE_RUN_FAILED;
+			}
 			break;
 
 		case CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_REQUEST:
@@ -953,16 +963,16 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 					ret = STATE_RUN_FAILED;
 				else
 				{
-					rdp_server_transition_to_state(
-					    rdp, CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_RESPONSE);
-					ret = STATE_RUN_CONTINUE;
+					if (rdp_server_transition_to_state(
+					        rdp, CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_RESPONSE))
+						ret = STATE_RUN_CONTINUE;
 				}
 			}
 			else
 			{
-				rdp_server_transition_to_state(
-				    rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE);
-				ret = STATE_RUN_CONTINUE; /* Rerun, initialize next state */
+				if (rdp_server_transition_to_state(
+				        rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE))
+					ret = STATE_RUN_CONTINUE; /* Rerun, initialize next state */
 			}
 			break;
 		case CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_RESPONSE:
@@ -1023,8 +1033,9 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			}
 			else
 				ret = STATE_RUN_SUCCESS;
-			rdp_server_transition_to_state(rdp,
-			                               CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE);
+			if (!rdp_server_transition_to_state(
+			        rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE))
+				ret = STATE_RUN_FAILED;
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE:

@@ -260,7 +260,7 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s, RDP_BITMAP_PERS
 	Stream_Write_UINT16(s, 0);                                   /* pad3 (2 bytes) */
 	                                                             /* entries */
 
-	if (!Stream_EnsureRemainingCapacity(s, info->keyCount * 8))
+	if (!Stream_EnsureRemainingCapacity(s, info->keyCount * 8ull))
 		return FALSE;
 
 	for (index = 0; index < info->keyCount; index++)
@@ -312,7 +312,7 @@ static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 
 	for (index = 0; index < count; index++)
 	{
-		PERSISTENT_CACHE_ENTRY cacheEntry;
+		PERSISTENT_CACHE_ENTRY cacheEntry = { 0 };
 
 		if (persistent_cache_read_entry(persistent, &cacheEntry) < 1)
 			continue;
@@ -753,19 +753,27 @@ BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	rdp_finalize_set_flag(rdp, FINALIZE_CS_FONT_LIST_PDU);
 
-	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_SYNC);
+	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_SYNC))
+		return FALSE;
+
 	if (!rdp_send_server_synchronize_pdu(rdp))
 		return FALSE;
 
-	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_COOPERATE);
+	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_COOPERATE))
+		return FALSE;
+
 	if (!rdp_send_server_control_cooperate_pdu(rdp))
 		return FALSE;
 
-	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_GRANTED_CONTROL);
+	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_GRANTED_CONTROL))
+		return FALSE;
+
 	if (!rdp_send_server_control_granted_pdu(rdp))
 		return FALSE;
 
-	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP);
+	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP))
+		return FALSE;
+
 	if (!rdp_send_server_font_map_pdu(rdp))
 		return FALSE;
 
