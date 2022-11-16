@@ -2964,15 +2964,27 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			else
 			{
 				char* c = strchr(arg->Value, ',');
-				if (c)
+				while (c)
 				{
+					char* next = strchr(c + 1, ',');
+					if (next)
+						*next = '\0';
 					*c++ = '\0';
-					if (!option_equals(c, "no-websockets"))
+					if (option_equals(c, "no-websockets"))
+					{
+						if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets,
+						                               FALSE))
+							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					else if (option_equals(c, "extauth-sspi-ntlm"))
+					{
+						if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpExtAuthSspiNtln,
+						                               TRUE))
+							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					else
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
-					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets,
-					                               FALSE))
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					c = next;
 				}
 
 				if (option_equals(arg->Value, "http"))
