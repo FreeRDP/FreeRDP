@@ -57,6 +57,8 @@ static int runInstance(int argc, char* argv[], freerdp** inst, DWORD timeout)
 	rc = 0;
 finish:
 	freerdp_client_context_free(context);
+	if (inst)
+		*inst = NULL;
 	return rc;
 }
 
@@ -137,14 +139,17 @@ static int testAbort(int port)
 
 	WaitForSingleObject(s_sync, INFINITE);
 	Sleep(100); /* Wait until freerdp_connect has been called */
-	freerdp_abort_connect_context(instance->context);
-
-	if (!freerdp_shall_disconnect_context(instance->context))
+	if (instance)
 	{
-		CloseHandle(s_sync);
-		CloseHandle(thread);
-		s_sync = NULL;
-		return -1;
+		freerdp_abort_connect_context(instance->context);
+
+		if (!freerdp_shall_disconnect_context(instance->context))
+		{
+			CloseHandle(s_sync);
+			CloseHandle(thread);
+			s_sync = NULL;
+			return -1;
+		}
 	}
 
 	status = WaitForSingleObject(thread, 20000);
