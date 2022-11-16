@@ -1984,8 +1984,9 @@ state_run_t rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			Stream_SetPosition(s, start);
 		rc = rdp_recv_callback_int(transport, s, extra);
 
-		WLog_VRB(TAG, "(client)[%s -> %s] current return %s", old, rdp_get_state_string(rdp),
-		         state_run_result_string(rc, buffer, sizeof(buffer)));
+		WLog_VRB(TAG, "(client)[%s -> %s] current return %s [%" PRIuz " bytes not processed]", old,
+		         rdp_get_state_string(rdp), state_run_result_string(rc, buffer, sizeof(buffer)),
+		         Stream_GetRemainingLength(s));
 	} while ((rc == STATE_RUN_TRY_AGAIN) || (rc == STATE_RUN_CONTINUE));
 	return rc;
 }
